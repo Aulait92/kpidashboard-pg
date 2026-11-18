@@ -142,7 +142,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
                       <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
                         <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.percent}%` }} />
                       </div>
-                      <div className="mt-1 text-[11px] text-[color:var(--muted)]">Onboarding {ob.percent} %{ob.waitingYou ? ` · ${ob.waitingYou} bei dir` : ""}</div>
+                      <div className="mt-1 text-[11px] text-[color:var(--muted)]">Onboarding {ob.percent} %{ob.waitingYou ? ` · ${ob.waitingYou} bei Ihnen` : ""}</div>
                     </div>
                   ) : null}
                   <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />

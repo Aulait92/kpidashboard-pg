@@ -27,7 +27,7 @@ describe("Neuigkeiten", () => {
 
   beforeAll(async () => {
     requireTestDb();
-    const a = await makeCustomer({ plan: "software" });
+    const a = await makeCustomer({ plan: "software", retainerMonthly: 990 });
     const b = await makeCustomer({ plan: "service" });
     software = a.id;
     service = b.id;
@@ -75,6 +75,12 @@ describe("Neuigkeiten", () => {
   it("Push nur mit Häkchen und nur einmal je Eintrag", async () => {
     // Ein Login mit Push beim Software-Kunden
     const sub = await prisma.pushSubscription.create({ data: { endpoint: `https://push.test/${tag}`, p256dh: "x", auth: "y", userId: ownerId } });
+    // Reiner Pay-per-Lead-Kunde (ohne Betreuungsgebühr, ohne Onboarding) mit Push
+    const pplKunde = await makeCustomer({ plan: "software" });
+    customers.push(pplKunde.id);
+    const ppl = pplKunde.id;
+    const pplUser = await makeBuyer(ppl, "owner");
+    const subPpl = await prisma.pushSubscription.create({ data: { endpoint: `https://push.test/${tag}-ppl`, p256dh: "x", auth: "y", userId: pplUser.id } });
     try {
       const ohne = await saveUpdate({ title: `Ohne Push ${tag}`, body: "Ein kurzer Text für Kunden.", kind: "neu", audience: "software", publish: true, push: false });
       expect(ohne).toMatchObject({ ok: true, pushed: 0 });
@@ -88,12 +94,14 @@ describe("Neuigkeiten", () => {
       expect(mit.ok).toBe(true);
       expect(pushState.calls.map((c) => c.customerId)).toContain(software);
       expect(pushState.calls.map((c) => c.customerId)).not.toContain(service);
+      // Reine Pay-per-Lead-Kunden bekommen keine Neuigkeiten-Push (Ole, 18.11.2026)
+      expect(pushState.calls.map((c) => c.customerId)).not.toContain(ppl);
       const before = pushState.calls.length;
       // erneut speichern mit Häkchen → kein zweiter Push
       if (mit.ok) await saveUpdate({ id: mit.id, title: `Mit Push ${tag}`, body: "Ein kurzer Text für Kunden.", kind: "verbessert", audience: "software", publish: true, push: true });
       expect(pushState.calls.length).toBe(before);
     } finally {
-      await prisma.pushSubscription.delete({ where: { id: sub.id } });
+      await prisma.pushSubscription.deleteMany({ where: { id: { in: [sub.id, subPpl.id] } } });
     }
   });
 });

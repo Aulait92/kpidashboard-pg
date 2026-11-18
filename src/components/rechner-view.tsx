@@ -35,7 +35,7 @@ import {
   type StaffelStufe,
 } from "@/lib/rechner";
 import { cplSpanne, type CplInfo } from "@/lib/rechner";
-import { bestandPacksText, PRICE_LIST, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
+import { bestandPacksText, prepayPossible, PRICE_LIST, TERM_MONTHS, VORAUSZAHLUNG, type OfferTerm } from "@/lib/offer-pricing";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import type { VermittlerTyp } from "@/lib/provision";
 
@@ -275,14 +275,19 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 value={input.laufzeit}
                 options={[
                   { value: "12m", label: `12 Monate (${eur(PRICE_LIST.setup12m)})` },
+                  // 6 Monate nur auf Nachfrage (Ole, 18.11.2026): nur sichtbar, wenn per Link (lz=6) gewählt
+                  ...(input.laufzeit === "6m" ? [{ value: "6m", label: `6 Monate (${eur(PRICE_LIST.setup6m)})` }] : []),
                   { value: "3m", label: `3 Monate (${eur(PRICE_LIST.setup3m)})` },
                   { value: "none", label: `Ohne Laufzeit (${eur(PRICE_LIST.setupNoTerm)})` },
                 ]}
-                onChange={(v) => set({ laufzeit: v as OfferTerm, jaehrlich: v === "12m" ? input.jaehrlich : false })}
+                onChange={(v) => set({ laufzeit: v as OfferTerm, jaehrlich: prepayPossible(v) ? input.jaehrlich : false })}
               />
-              <label className={`mt-3 flex items-center gap-2 text-sm ${input.laufzeit !== "12m" ? "opacity-50" : ""}`}>
-                <input type="checkbox" className="h-4 w-4" checked={input.jaehrlich} disabled={input.laufzeit !== "12m"} onChange={(e) => set({ jaehrlich: e.target.checked })} />
-                Jährlich im Voraus zahlen: 2 Monate geschenkt
+              {/* Vorauszahlung (Ole, 18.11.2026): 12 Monate jährlich (2 geschenkt), 6 Monate im Voraus (1 geschenkt) */}
+              <label className={`mt-3 flex items-center gap-2 text-sm ${!prepayPossible(input.laufzeit) ? "opacity-50" : ""}`}>
+                <input type="checkbox" className="h-4 w-4" checked={input.jaehrlich} disabled={!prepayPossible(input.laufzeit)} onChange={(e) => set({ jaehrlich: e.target.checked })} />
+                {input.laufzeit === "6m"
+                  ? `6 Monate im Voraus zahlen: ${VORAUSZAHLUNG["6m"].freeMonths} Monat geschenkt`
+                  : `Jährlich im Voraus zahlen: ${VORAUSZAHLUNG["12m"].freeMonths} Monate geschenkt`}
               </label>
               {makler ? (
                 <div className="mt-4 grid gap-3 sm:grid-cols-2" data-bestand-eingaben>
@@ -402,7 +407,7 @@ function Ergebnis({ r, bestand, storno }: { r: RechnerResult; bestand: BestandRe
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">
             <span className="text-[color:var(--muted)]">Setup ({eur(r.setup)}) wieder drin</span>
-            <b className="block tabular-nums">{r.setupMonate != null ? `nach ${zahl(Math.max(r.setupMonate, 0.1), 1)} Monaten` : "–"}</b>
+            <b className="block tabular-nums">{r.setupMonate != null ? `nach ${zahl(Math.max(r.setupMonate, 0.1), 1)} Monaten` : "nicht absehbar"}</b>
           </div>
           <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">
             <span className="text-[color:var(--muted)]">Überschuss im ersten Jahr</span>
@@ -527,7 +532,7 @@ function MaklerErgebnis({
                       <tr key={z.budget} className={`border-t border-[color:var(--border)] ${aktiv ? "bg-[color:var(--brand-soft)] font-semibold" : ""}`}>
                         <td className="px-3 py-1.5">{eur(z.budget)}{aktiv ? <span className="ml-1 text-xs font-normal text-[color:var(--muted)]">Ihre Wahl</span> : null}</td>
                         <td className="px-3 py-1.5 text-right">
-                          {z.kostenJeVertrag != null ? eur(z.kostenJeVertrag) : "–"}
+                          {z.kostenJeVertrag != null ? eur(z.kostenJeVertrag) : "keine Verträge"}
                           {stufe ? <span className="block text-[11px] font-normal text-[color:var(--muted)]">höhere Betreuungsstufe</span> : null}
                         </td>
                         <td className="px-3 py-1.5 text-right">{eur(z.courtageJahrNach12)}</td>
@@ -817,7 +822,10 @@ function NumField({
 
 function Segmented({ value, options, onChange }: { value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
   return (
-    <div className="grid grid-flow-col gap-1 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-1" role="radiogroup">
+    <div
+      className={`grid gap-1 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-1 ${options.length > 3 ? "grid-cols-2 sm:grid-flow-col sm:grid-cols-none" : "grid-flow-col"}`}
+      role="radiogroup"
+    >
       {options.map((o) => (
         <button
           key={o.value}

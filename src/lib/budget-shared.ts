@@ -2,7 +2,7 @@
 // Live-Vorschau, Preisstufe und Freigabe. Nutzbar im Browser und auf dem Server.
 // Alle Beträge netto in EUR; Werte kommen aus PRICE_LIST, nichts hart codiert.
 
-import { PRICE_LIST } from "@/lib/offer-pricing";
+import { isPrepaid, LISTENPREISE_ALT, listenMonatspreis, PRICE_LIST } from "@/lib/offer-pricing";
 
 export type BudgetLine = { product: string; dailyBudget: number };
 
@@ -27,8 +27,7 @@ export const monthlyOf = (lines: BudgetLine[]) =>
 
 /** Listenpreis Betreuung + Software für dieses Budget (wie im Angebot: Stufe + weitere Produkte). */
 export function listFeeFor(monthlyBudget: number, productCount: number): number | null {
-  const t = tierFor(monthlyBudget);
-  return t ? t.monthly + Math.max(0, productCount - 1) * PRICE_LIST.extraProductMonthly : null;
+  return listenMonatspreis(monthlyBudget, productCount);
 }
 
 export type BudgetContext = {
@@ -79,13 +78,14 @@ export function previewChange(current: BudgetLine[], next: BudgetLine[], ctx: Bu
   const tierTo = service ? null : tierFor(monthlyTo);
   const overIndividual = !service && monthlyTo > PRICE_LIST.individualFrom;
   const tierChange = !service && !overIndividual && (tierFrom?.index ?? -1) !== (tierTo?.index ?? -1);
-  const listFrom = listFeeFor(monthlyFrom, current.length);
-  const listTo = listFeeFor(monthlyTo, next.length);
-  const pricing: PricingMode = service
-    ? "fixed"
-    : ctx.feeMonthly == null || listFrom == null || Math.abs(ctx.feeMonthly - listFrom) > 0.5 || ctx.billingInterval === "year"
-      ? "individual"
-      : "list";
+  const passt = (list: number | null) => ctx.feeMonthly != null && list != null && Math.abs(ctx.feeMonthly - list) <= 0.5;
+  // Kunden zum alten Listenpreis (bis 18.11.2026: 1.000/1.400/1.800 €) behalten ihre vereinbarte Staffel (Preisstaffel laut
+  // Angebot): Stufenwechsel automatisch nach der alten Staffel, sonst bleibt der Preis. Neue Kunden: aktuelle Staffel.
+  const alteStaffel = !passt(listFeeFor(monthlyFrom, current.length)) && passt(listenMonatspreis(monthlyFrom, current.length, LISTENPREISE_ALT));
+  const staffel = alteStaffel ? LISTENPREISE_ALT : PRICE_LIST.tiers;
+  const listFrom = listenMonatspreis(monthlyFrom, current.length, staffel);
+  const listTo = listenMonatspreis(monthlyTo, next.length, staffel);
+  const pricing: PricingMode = service ? "fixed" : !passt(listFrom) || isPrepaid(ctx.billingInterval) ? "individual" : "list";
   const feeFrom = ctx.feeMonthly;
   const feeTo = pricing === "fixed" ? ctx.feeMonthly : pricing === "list" ? listTo : null;
   const leads = (m: number) => (ctx.cpl > 0 ? Math.round(m / ctx.cpl) : 0);
@@ -131,7 +131,7 @@ export function decideApproval(p: BudgetPreview, ctx: Pick<BudgetContext, "billi
     return {
       kind: "apply",
       price: "manual",
-      reason: ctx.billingInterval === "year" ? "annual" : ctx.feeMonthly == null ? "no_offer_price" : "individual_terms",
+      reason: isPrepaid(ctx.billingInterval) ? "annual" : ctx.feeMonthly == null ? "no_offer_price" : "individual_terms",
     };
   }
   if (p.feeTo != null && p.feeFrom != null && Math.abs(p.feeTo - p.feeFrom) > 0.005) return { kind: "apply", price: "auto" };

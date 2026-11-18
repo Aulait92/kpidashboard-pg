@@ -10,7 +10,7 @@
 // Für Umsatz (Admin) und Kosten des Kunden (/buyer/zahlen): bestandPackSpend, bestandPackRevenueRows.
 
 import { prisma } from "@/lib/prisma";
-import { PRICE_LIST, eur } from "@/lib/offer-pricing";
+import { PRICE_LIST, eur, isPrepaid } from "@/lib/offer-pricing";
 import { PROVIDER } from "@/lib/legal-texts";
 import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
@@ -75,8 +75,8 @@ export async function purchasePack(
   const metadata = { pg_kind: "bestand_paket", pack: pack.id, customer_id: customerId, messages: String(option.messages) };
   try {
     const billing = await import("@/lib/billing");
-    if (c.billingInterval === "year") {
-      // Jahreszahler: die nächste Abo-Rechnung kommt erst zur Verlängerung → eigene Rechnung sofort
+    if (isPrepaid(c.billingInterval)) {
+      // Vorauszahler (jährlich oder 6 Monate): die nächste Abo-Rechnung kommt erst zur Verlängerung → eigene Rechnung sofort
       const r = await billing.chargeNow({
         stripeCustomerId: c.stripeCustomerId!,
         lines: [{ description, amountEur: option.price }],
@@ -119,7 +119,7 @@ export async function purchasePack(
       source === "auto"
         ? `Ihr Kontingent für Kampagnen-Nachrichten war aufgebraucht. Wie eingestellt haben wir automatisch ein Zusatzpaket mit ${de(option.messages)} Nachrichten für ${eur(option.price)} netto nachgebucht, damit Ihre Kampagnen weiterlaufen.`
         : `vielen Dank, Ihr Zusatzpaket mit ${de(option.messages)} Kampagnen-Nachrichten ist ab sofort freigeschaltet (${eur(option.price)} netto, einmalig).`,
-      `Das Paket gilt bis ${fmtDate(expiresAt)}. Verbraucht wird zuerst Ihr Monatskontingent, dann das älteste Paket. Der Betrag erscheint als eigener Posten ${c.billingInterval === "year" ? "auf einer eigenen Rechnung" : "auf Ihrer nächsten Rechnung"}.`,
+      `Das Paket gilt bis ${fmtDate(expiresAt)}. Verbraucht wird zuerst Ihr Monatskontingent, dann das älteste Paket. Der Betrag erscheint als eigener Posten ${isPrepaid(c.billingInterval) ? "auf einer eigenen Rechnung" : "auf Ihrer nächsten Rechnung"}.`,
       ...(autoInfo
         ? [`Diesen Monat automatisch nachgebucht: ${eur(autoInfo.spent)} von höchstens ${eur(autoInfo.max ?? 0)}. Ändern oder abschalten können Sie das unter Bestand.`]
         : []),

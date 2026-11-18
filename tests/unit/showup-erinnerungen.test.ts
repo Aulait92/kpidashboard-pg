@@ -107,7 +107,8 @@ describe("Terminbeginn: Frage am Termin und Pushes", () => {
   it("Push ohne Knöpfe mit Deep-Link aufs Entscheidungsblatt, Name wie „Frau Becker“", () => {
     const name = leadLabel({ fullName: "Anna Becker", salutation: "Frau" });
     expect(name).toBe("Frau Becker");
-    expect(leadLabel({ fullName: "Anna Becker" })).toBe("Anna Becker");
+    expect(leadLabel({ fullName: "Anna Becker" })).toBe("Frau Becker");
+    expect(leadLabel({ fullName: "Kim Becker" })).toBe("Kim Becker");
     expect(leadLabel(null)).toBe("Ihr Kontakt");
     const p = startPush({ appointmentId: "a1", name, startsAt: START });
     expect(p).toMatchObject({ title: "Ist Frau Becker da?", url: "/buyer/termine/a1" });

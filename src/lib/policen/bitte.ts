@@ -13,6 +13,11 @@
 // Kranken/BU/Leben je Vermittler (regeln.ts gesundheitFreigegeben, Standard aus): aus = die Bitte nennt nur
 // Haftpflicht, Hausrat und Kfz, die Einwilligung ohne den Satzteil zu Gesundheitsangaben (eigene Textversion).
 // Einwilligung, Tor, keine KI in diesem Paket, Ablage und Löschung gelten immer.
+//
+// Auflage A9 (Rechtsprüfung, Stand 18.11.2026; Ole will keinen dritten Knopf): Der Einwilligungstext endet (vor dem
+// Link) mit „Ohne automatisches Auslesen? Dann antworten Sie einfach „ohne KI“.“ Das Stichwort (istOhneKi, nur Regeln)
+// wird vor und nach dem Klick auf „Einverstanden“ erkannt (lib/policen/server.ts kiAbwaehlen): ki = false im Nachweis,
+// feste Bestätigung (ohneKiBestaetigung), ausgelesene Werte gelöscht, künftig nichts ausgelesen.
 
 import { a, type Ansprache, type Salutation } from "@/lib/ansprache";
 import type { Person } from "@/lib/policen/regeln";
@@ -25,10 +30,17 @@ export type PolicenBitte = Nachricht & { einwilligung: Nachricht };
 export type BitteVermittler = Person & { anrede?: Salutation | null; name?: string | null };
 
 /** Versionen des Einwilligungstexts (stehen im Nachweis; bei jeder inhaltlichen Änderung hochzählen). */
-export const EINWILLIGUNG_TEXT_VERSION = "2026-11-18.g1";
+// g2/s2 (A9): mit dem Satz zu „ohne KI“; g1/s1 ohne ihn (nur noch für Nachweise zu bereits gesendeten Texten).
+export const EINWILLIGUNG_TEXT_VERSION = "2026-11-18.g2";
 /** Fassung ohne Gesundheitsangaben (Kranken/BU/Leben für diesen Vermittler nicht freigegeben). */
-export const EINWILLIGUNG_TEXT_VERSION_SACH = "2026-11-18.s1";
+export const EINWILLIGUNG_TEXT_VERSION_SACH = "2026-11-18.s2";
 export const einwilligungTextVersion = (gesundheitAn: boolean) => (gesundheitAn ? EINWILLIGUNG_TEXT_VERSION : EINWILLIGUNG_TEXT_VERSION_SACH);
+/** Textversion zu einem gesendeten Wortlaut: mit Gesundheitsteil (g) bzw. ohne (s), mit A9-Satz (2) bzw. ohne (1). */
+export function einwilligungTextVersionAus(wortlaut: string): string {
+  const g = /Gesundheitsangaben enthalten/.test(wortlaut);
+  if (OHNE_KI_SATZ_RE.test(wortlaut)) return einwilligungTextVersion(g);
+  return g ? "2026-11-18.g1" : "2026-11-18.s1";
+}
 
 export const PAYLOAD_JA = "policen:ja";
 export const PAYLOAD_NEIN = "policen:nein";
@@ -70,12 +82,14 @@ export function einwilligungText(o: { an: Ansprache; wer: string; firma?: string
   const mitFirma = firma && !o.wer.toLowerCase().includes(firma.toLowerCase()) ? `${o.wer} (${firma})` : o.wer;
   const gesundheit = o.gesundheitAn ? ", auch wenn sie Gesundheitsangaben enthalten, z. B. bei Kranken-, BU- oder Lebensversicherung" : "";
   const infos = o.link ? ` Infos: ${o.link}` : "";
-  return a(
-    o.an,
-    `Kurz zum Datenschutz: Ich bin einverstanden, dass ${mitFirma} meine hier gesendeten Policen zur Vorbereitung des Termins speichert und die Vertragsdaten automatisch auslesen lässt (KI-Dienst in der EU)${gesundheit}. Beteiligt sind WhatsApp (Meta, Zugriff auch aus den USA möglich) und der Dienstleister performancegrowth. Widerruf jederzeit mit „Widerruf“.${infos}`,
-    `Kurz zum Datenschutz: Ich bin einverstanden, dass ${mitFirma} meine hier gesendeten Policen zur Vorbereitung des Termins speichert und die Vertragsdaten automatisch auslesen lässt (KI-Dienst in der EU)${gesundheit}. Beteiligt sind WhatsApp (Meta, Zugriff auch aus den USA möglich) und der Dienstleister performancegrowth. Widerruf jederzeit mit „Widerruf“.${infos}`,
-  );
+  const kern = `Kurz zum Datenschutz: Ich bin einverstanden, dass ${mitFirma} meine hier gesendeten Policen zur Vorbereitung des Termins speichert und die Vertragsdaten automatisch auslesen lässt (KI-Dienst in der EU)${gesundheit}. Beteiligt sind WhatsApp (Meta, Zugriff auch aus den USA möglich) und der Dienstleister performancegrowth. Widerruf jederzeit mit „Widerruf“.`;
+  return `${kern} ${ohneKiSatz(o.an)}${infos}`;
 }
+/** Auflage A9: Ablehnung nur des Auslesens per Stichwort, ohne dritten Knopf (letzter Satz vor dem Link). */
+export const ohneKiSatz = (an: Ansprache) =>
+  a(an, "Ohne automatisches Auslesen? Dann antworte einfach „ohne KI“.", "Ohne automatisches Auslesen? Dann antworten Sie einfach „ohne KI“.");
+/** Erkennt den A9-Satz in einer gesendeten Einwilligung (beide Fassungen). */
+export const OHNE_KI_SATZ_RE = /Ohne automatisches Auslesen\? Dann (antworte|antworten Sie) einfach/;
 /** Erkennt die Einwilligungsnachricht (auch als Nachfrage). */
 export const EINWILLIGUNG_RE = /Ich bin einverstanden, dass .+ meine hier gesendeten Policen/;
 
@@ -138,6 +152,10 @@ export const nachEinwilligungText = (an: Ansprache) =>
     "Danke! Schicken Sie die Policen gern als Foto oder PDF. Seiten mit Gesundheitsangaben können Sie schwärzen, wenn Sie sie nicht besprechen möchten.",
   );
 
+/** Feste Bestätigung auf das Stichwort „ohne KI“ (A9); der Assistent antwortet darauf nicht zusätzlich. */
+export const ohneKiBestaetigung = (an: Ansprache) =>
+  a(an, "Alles klar, deine Unterlagen werden nur gespeichert und nicht automatisch ausgelesen.", "Alles klar, Ihre Unterlagen werden nur gespeichert und nicht automatisch ausgelesen.");
+
 /** Nach „Lieber nicht“: freundlich, der Termin findet trotzdem statt, kein Upload-Link (Oles Wortlaut). */
 export const lieberNichtText = (an: Ansprache) =>
   a(
@@ -169,4 +187,55 @@ export function einwilligungsAntwort(payloadOderText: string | null | undefined)
 /** Ist dieser Text (Knopftitel „Einverstanden“ bzw. Payload policen:ja) die Einwilligung zu den Policen? */
 export function istPolicenEinwilligungsKnopf(text: string | null | undefined): boolean {
   return einwilligungsAntwort(text) === "ja";
+}
+
+// ─── Stichwort „ohne KI“ (Auflage A9, nur Regeln) ───────────────────────────
+
+/** Kleinbuchstaben, Anführungszeichen und Satzzeichen zu Leerzeichen („KI-Auslesen“ → „ki auslesen“). */
+const flach = (t: string) =>
+  t
+    .toLowerCase()
+    .replace(/[„“”"'‚‘’»«`´]/g, " ")
+    .replace(/[.,!?;:()[\]\-\u2013\u2014_/*]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const KI_WORT = String.raw`(?:ki|ai|kuenstliche intelligenz|künstliche intelligenz)`;
+const AUSLESEN_WORT = String.raw`(?:(?:das |die )?(?:automatische[sn]? |maschinelle[sn]? )?(?:auslesen|auswertung|auswerten|erfassung))`;
+/** „ohne KI“, „keine KI“, „ohne (automatisches) Auslesen“, „bitte ohne KI auslesen“. */
+const OHNE_RE = new RegExp(String.raw`\b(?:ohne|keine?)(?: (?:eine?n?|die|den))? (?:${KI_WORT}|${AUSLESEN_WORT})\b`);
+/** „nicht (automatisch) auslesen“, „nicht auswerten“ (als Frage kein Stichwort: „Wurde das nicht ausgelesen?“). */
+const NICHT_RE = /\bnicht (?:automatisch |per ki |mit ki |maschinell )?(?:auslesen|ausgelesen|auswerten|ausgewertet)\b/;
+/** „Bist du keine KI?“, „Das ist doch keine KI“: Frage nach dem Assistenten, kein Stichwort. */
+const UEBER_DEN_ASSISTENTEN_RE = new RegExp(String.raw`\b(?:bist|sind|ist|bin|seid|waere|wäre|war|bleibt)\b(?: \S+){0,3} keine? ${KI_WORT}\b`);
+/** Wunsch nach einem Menschen im Chat („keine KI, ich will mit einem Menschen sprechen“): Sache des Vermittlers. */
+const MENSCH_RE = /\b(?:mensch\w*|echte[nmr]? person|bot|chatbot|roboter|sprechen|reden|telefonier\w*|anrufen)\b/;
+/** Rückfragen dazu („Was heißt ohne KI?“): kein Stichwort. */
+const RUECKFRAGE_RE = /^(?:was|wie|warum|wieso|weshalb|wozu|wofür|wofuer|welche[srnm]?)\b/;
+
+/**
+ * Stichwort „ohne KI“ samt Varianten (keine KI, ohne Auslesen, nicht auslesen), Groß/Klein, mit oder ohne
+ * Anführungszeichen, auch im Satz („Ja, aber ohne KI bitte“). Nicht: Fragen nach dem Assistenten („Ist das eine
+ * KI?“, „Bist du keine KI?“), Rückfragen („Was heißt ohne KI?“), „nicht ohne KI“, der Wunsch nach einem Menschen.
+ */
+export function istOhneKi(text: string | null | undefined): boolean {
+  const roh = (text ?? "").trim();
+  if (!roh || roh.length > 500) return false;
+  const t = flach(roh);
+  const ohne = OHNE_RE.test(t);
+  if (!ohne && !(NICHT_RE.test(t) && !roh.includes("?"))) return false;
+  if (/\bnicht ohne\b/.test(t)) return false;
+  if (UEBER_DEN_ASSISTENTEN_RE.test(t) || MENSCH_RE.test(t)) return false;
+  if (roh.includes("?") && RUECKFRAGE_RE.test(t)) return false;
+  return true;
+}
+
+/** Rest einer Nachricht ohne das Stichwort („Ja, aber ohne KI“ → „ja“), für eine getippte Zustimmung mit Stichwort. */
+export function ohneStichwort(text: string | null | undefined): string {
+  return flach(text ?? "")
+    .replace(new RegExp(OHNE_RE.source, "g"), " ")
+    .replace(new RegExp(NICHT_RE.source, "g"), " ")
+    .replace(/\b(aber|bitte|und|doch|nur|dann|gerne?)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }

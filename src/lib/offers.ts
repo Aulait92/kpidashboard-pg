@@ -16,13 +16,15 @@ import {
   normalizeTerm,
   offerAddOns,
   PRICE_LIST,
+  prepayFreeMonthsFor,
+  prepayPossible,
   resolveOfferChoice,
+  TERM_SHORT,
+  termOptionsFor,
   type OfferPackage,
   type OfferProduct,
   type OfferTerm,
 } from "@/lib/offer-pricing";
-
-const TERM_SHORT: Record<OfferTerm, string> = { "12m": "12 Monate", "3m": "3 Monate", none: "ohne Laufzeit" };
 import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
@@ -30,6 +32,7 @@ import { audit } from "@/lib/audit";
 import { referralSetupDiscount } from "@/lib/kollegen";
 import { checkBusiness, type BusinessInput } from "@/lib/unternehmer";
 import { contractSummaryLines, hasPriceStep, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
+import { parseAbrechnungstag } from "@/lib/abrechnungstag";
 
 
 export type OfferFormInput = {
@@ -48,10 +51,17 @@ export type OfferFormInput = {
   introMonths?: number | null;
   specialTerms?: string | null;
   startDate?: string | null; // YYYY-MM-DD
+  /** Abrechnungstag 1 bis 28 (lib/abrechnungstag.ts); leer = wie Start. */
+  billingDay?: number | null;
+  /** Zeit vom Start bis zum ersten Abrechnungstag kostenlos („kostenloser Start“, Standard aus = anteilig). */
+  billingFreeStart?: boolean;
   validDays?: number;
   /** Aktive Verkäufer gesamt (bekommen Leads); 3 inklusive, Mitglieder ohne Leads kostenlos. */
   seats?: number | null;
-  /** Jährlich im Voraus (nur 12 Monate Laufzeit, nicht mit Startpreis). */
+  /**
+   * „Jahreszahlung anbieten“ (nur 12 Monate Laufzeit, nicht mit Startpreis): Der Kunde wählt bei der Annahme
+   * monatlich (vorausgewählt) oder jährlich im Voraus (Ole, 18.11.2026; vorher war das Angebot dann nur jährlich).
+   */
   annual?: boolean;
   /** Bestandskunden-Modul dazubuchen. */
   bestandModule?: boolean;
@@ -145,6 +155,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }
   const term = normalizeTerm(input.term);
+  const abrechnungstag = parseAbrechnungstag(input.billingDay);
+  if (!abrechnungstag.ok) throw new Error(abrechnungstag.error);
   // Empfehlungsrabatt: automatisch für gültig empfohlene Kontakte, vom Admin übersteuerbar
   let discount: { amount: number; label: string; referralId: string } | null = null;
   const wanted = input.setupDiscount;
@@ -186,8 +198,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
         : "Ab 10.000 € Werbebudget gibt es keinen Listenpreis, bitte die Monatsgebühr individuell eintragen.",
     );
   }
-  if (input.annual && term !== "12m") throw new Error("Jährliche Vorauszahlung geht nur mit 12 Monaten Laufzeit.");
-  if (input.annual && input.introMonthlyFee != null) throw new Error("Startpreis und jährliche Vorauszahlung lassen sich nicht kombinieren.");
+  if (input.annual && !prepayPossible(term)) throw new Error("Vorauszahlung geht nur mit 6 oder 12 Monaten Laufzeit.");
+  if (input.annual && input.introMonthlyFee != null) throw new Error("Startpreis und Vorauszahlung lassen sich nicht kombinieren.");
 
   const choosesStart = input.customerChoice !== false;
   // Mit Sonderpreis passt ein anderes Setup nicht zur Vereinbarung → Laufzeit fest.
@@ -243,13 +255,18 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             // Modul gebucht: Monatspreis; null = nicht gebucht
             bestandMonthly: price.bestandActive ? price.bestandFee : null,
             empfehlungMonthly: price.empfehlungActive ? price.empfehlungFee : null,
-            annualPrepay: price.annual,
-            annualFreeMonths: price.annual ? PRICE_LIST.annualFreeMonths : null,
+            // Vorauszahlung angeboten (6 oder 12 Monate): Kunde wählt bei der Annahme, monatlich vorausgewählt
+            annualPrepay: false,
+            annualChoice: price.annual,
+            annualFreeMonths: price.annual ? prepayFreeMonthsFor(term) : null,
             introMonthlyFee: input.introMonthlyFee ?? null,
             introMonths: input.introMonthlyFee != null ? (input.introMonths ?? null) : null,
             specialTerms: test ? "Testangebot: kostenlos, ohne Zahlung. Dient nur zum Ausprobieren und wird danach gelöscht." : input.specialTerms?.trim() || null,
             isTest: test,
             startDate: input.startDate ? new Date(`${input.startDate}T12:00:00Z`) : null,
+            billingDay: abrechnungstag.day,
+            // „Gratis“ nur mit eigenem Abrechnungstag (sonst gibt es keine Zeit davor)
+            billingFreeStart: abrechnungstag.day != null && input.billingFreeStart === true,
             customerChoosesTerm: choosesTerm,
             customerChoosesStart: choosesStart,
             allowPayLater: input.allowPayLater === true && !test,
@@ -312,12 +329,15 @@ export async function acceptOffer(
     /** Wahl des Kunden (nur wenn im Angebot freigegeben; serverseitig geprüft). */
     term?: string | null;
     startDate?: string | null;
+    /** Zahlweise: true = jährlich im Voraus, false = monatlich (nur mit „Jahreszahlung anbieten“); fehlt = Vorauswahl. */
+    annual?: boolean | null;
   },
 ): Promise<AcceptResult> {
   const offer = await getOfferByToken(token);
   if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
   if (offer.status === "accepted") return { ok: true };
   if (offer.status === "superseded") return { ok: false, error: "Dieses Angebot wurde durch eine neuere Version ersetzt." };
+  if (offer.status === "declined") return { ok: false, error: "Dieses Angebot ist nicht mehr gültig, melden Sie sich gern bei mir." };
   if (offer.validUntil.getTime() < Date.now()) return { ok: false, error: "Dieses Angebot ist abgelaufen. Bitte fordern Sie ein neues an." };
   if (!offer.termsUrl || !offer.dpaUrl) return { ok: false, error: "Die Online-Annahme ist für dieses Angebot noch nicht freigeschaltet." };
   if (!opts.termsAccepted) return { ok: false, error: "Bitte bestätigen Sie AGB und Auftragsverarbeitungsvertrag." };
@@ -335,12 +355,15 @@ export async function acceptOffer(
       startIso: offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
       annualPrepay: offer.annualPrepay,
       annualFreeMonths: offer.annualFreeMonths,
+      annualChoice: offer.annualChoice,
       choosesTerm: offer.customerChoosesTerm,
       choosesStart: offer.customerChoosesStart,
+      // 6 Monate zur Wahl erst für Angebote ab dem Livegang (ältere bleiben wie verschickt)
+      termOptions: termOptionsFor(offer.createdAt, offer.term),
       setupDiscount: offer.setupDiscount == null ? null : Number(offer.setupDiscount),
       setupListFee: offer.setupListFee == null ? null : Number(offer.setupListFee),
     },
-    { term: opts.term, startDate: opts.startDate },
+    { term: opts.term, startDate: opts.startDate, annual: opts.annual },
     berlinTodayIso(),
   );
   if (!choice.ok) return { ok: false, error: choice.error };
@@ -376,7 +399,7 @@ export async function acceptOffer(
   if (updated.count === 0) return { ok: false, error: "Dieses Angebot kann nicht mehr angenommen werden." };
   // Ab hier mit den angenommenen Werten weiterarbeiten.
   const accepted = { ...offer, term: choice.term, startDate, annualPrepay: choice.annualPrepay, annualFreeMonths: choice.annualFreeMonths };
-  const chosenText = `${TERM_SHORT[choice.term]}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
+  const chosenText = `${TERM_SHORT[choice.term]}${offer.annualChoice && prepayPossible(choice.term) ? (choice.annualPrepay ? (choice.term === "6m" ? ", 6 Monate im Voraus" : ", jährlich im Voraus") : ", monatlich") : ""}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
   await audit("offer.accept", {
     entity: "Offer",
     entityId: offer.id,
@@ -388,7 +411,8 @@ export async function acceptOffer(
       startDate: choice.startIso,
       setupFee: choice.setupFee,
       annualPrepay: choice.annualPrepay,
-      chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart,
+      annualChoice: offer.annualChoice,
+      chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart || offer.annualChoice,
       company: business.company,
       vatId: business.vatId,
       asBusiness: true,
@@ -445,7 +469,9 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
-  offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> & Parameters<typeof offerAddOnsOf>[0],
+  offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart">> &
+    Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null }> = {},
 ): ContractSummaryInput {
   const add = offerAddOns(offerAddOnsOf(offer));
@@ -458,7 +484,9 @@ export function offerSummaryInput(
     monthlyTotal: add.monthlyTotal,
     intro,
     annual: chosen.annual ?? offer.annualPrepay,
-    freeMonths: chosen.freeMonths ?? offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths,
+    freeMonths: chosen.freeMonths ?? offer.annualFreeMonths ?? prepayFreeMonthsFor(chosen.term ?? offer.term),
+    billingDay: offer.billingDay ?? null,
+    freeStart: !!offer.billingFreeStart,
   };
 }
 
@@ -499,6 +527,8 @@ export function offerAddOnsOf(o: {
   empfehlungMonthly?: unknown;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
+  /** Laufzeit: bestimmt den Vorauszahlungszeitraum (6 oder 12 Monate). */
+  term?: string | null;
 }) {
   return {
     monthlyFee: Number(o.monthlyFee),
@@ -509,5 +539,6 @@ export function offerAddOnsOf(o: {
     empfehlungMonthly: o.empfehlungMonthly == null ? null : Number(o.empfehlungMonthly),
     annualPrepay: o.annualPrepay,
     annualFreeMonths: o.annualFreeMonths,
+    term: o.term ?? null,
   };
 }

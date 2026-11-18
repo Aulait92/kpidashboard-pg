@@ -11,6 +11,7 @@ import type { LinkedInPost } from "@/generated/prisma/client";
 import { postText } from "@/lib/linkedin/text";
 import { loadTrustFacts } from "@/lib/linkedin/trust";
 import { createAiImage, type ImageGenerator, type ImageStyle } from "@/lib/linkedin/ai-image";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 const DAY = 86_400_000;
 
@@ -81,7 +82,7 @@ export function validateDrafts(x: unknown, n: number, photoIds: string[] = []): 
 type PostRow = Pick<LinkedInPost, "id" | "text" | "hypothesis" | "impressions" | "reactions" | "comments" | "reposts" | "publishedAt" | "status" | "photoId" | "icpShare">;
 
 const when = (d: Date | null) =>
-  d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d) : "–";
+  d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d) : KEINE_ANGABE;
 const pct = (x: number) => `${Math.round(x * 100)} %`;
 
 function block(p: PostRow, all: Scored[], share: number | null): string {

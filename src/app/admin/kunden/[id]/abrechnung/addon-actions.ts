@@ -11,6 +11,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { changeBillingInterval, setBestandModule, setEmpfehlungModule, syncSeatBilling, type AddOnResult } from "@/lib/billing";
+import { normalizeRhythmus } from "@/lib/offer-pricing";
 
 async function requireAdmin() {
   const s = await getCurrentSession();
@@ -97,6 +98,6 @@ export async function saveQuotaAction(fd: FormData): Promise<void> {
 export async function billingIntervalAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const id = String(fd.get("customerId") ?? "");
-  const interval = fd.get("interval") === "year" ? "year" : "month";
+  const interval = normalizeRhythmus(fd.get("interval"));
   return done(id, await changeBillingInterval(id, interval));
 }

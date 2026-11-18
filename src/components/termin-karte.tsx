@@ -6,13 +6,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, Check, ClipboardList, MoreHorizontal, Phone, Presentation, Send, Video, CalendarSync, type LucideIcon } from "lucide-react";
+import { CalendarClock, Check, ClipboardCheck, ClipboardList, MoreHorizontal, Phone, Presentation, Send, Video, CalendarSync, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { buttonClass, Card } from "@/components/ui";
 import { ActionMenu } from "@/components/ui/menu";
 import { NextStepButton } from "@/components/next-step";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
+import { BeratungsdokuSheet } from "@/components/beratungsdoku-sheet";
 import { useToast } from "@/components/ui/toast";
 import { terminArtLabel } from "@/lib/termin-art";
 import type { TerminAktion, TerminKartenAktionen } from "@/lib/termin-karte";
@@ -29,6 +30,8 @@ export type TerminKartenDaten = {
   erschienen: boolean;
   /** Termin hat schon begonnen (für „Läuft“ statt „Gleich“) */
   begonnen: boolean;
+  /** als vorbereitet markiert */
+  vorbereitet?: boolean;
 };
 
 const LABEL: Record<TerminAktion, string> = {
@@ -39,7 +42,11 @@ const LABEL: Record<TerminAktion, string> = {
   angebot: "Angebot senden",
   praesentation: "Präsentation",
   verschieben: "Verschieben",
+  beratungsdoku: "Beratungsdokumentation",
 };
+/** Beratungsdokumentation (Paket B): als Hauptknopf ausgeschrieben, als Zweitknopf kurz (Handy, halbe Breite) */
+const BD_HAUPT = "Beratungsdokumentation erstellen";
+const BD_ZWEIT = "Dokumentation";
 const ICON: Record<TerminAktion, LucideIcon> = {
   vorbereiten: ClipboardList,
   videocall: Video,
@@ -48,6 +55,7 @@ const ICON: Record<TerminAktion, LucideIcon> = {
   angebot: Send,
   praesentation: Presentation,
   verschieben: CalendarSync,
+  beratungsdoku: ClipboardCheck,
 };
 
 export function TerminKarte({
@@ -70,6 +78,7 @@ export function TerminKarte({
   const router = useRouter();
   const [verschieben, setVerschieben] = useState(false);
   const [angebotOffen, setAngebotOffen] = useState(false);
+  const [dokuOffen, setDokuOffen] = useState(false);
   const toast = useToast();
   const wechsel = a.naechsterWechsel ? new Date(a.naechsterWechsel).getTime() : null;
 
@@ -92,10 +101,13 @@ export function TerminKarte({
   // Ein Blatt für alle Stellen (P3): über die App senden oder „Habe ich selbst gesendet“
   const angebotMail = () => setAngebotOffen(true);
 
+  // Schon vorbereitet: „Vorbereitung“ (ansehen) statt „Vorbereiten“
+  const beschriftung = (x: TerminAktion) => (x === "vorbereiten" && t.vorbereitet ? "Vorbereitung" : LABEL[x]);
+
   function knopf(x: TerminAktion, haupt: boolean) {
     const variant = haupt ? "primary" : "secondary";
     const size = haupt ? "md" : "sm";
-    const cls = "w-full min-w-0 sm:w-auto [&_svg]:shrink-0";
+    const cls = cn("w-full min-w-0 overflow-hidden whitespace-nowrap @xl:w-auto [&_svg]:shrink-0", !haupt && "gap-1 px-2 @xl:gap-1.5 @xl:px-3");
     const Icon = ICON[x];
     if (x === "ergebnis") {
       return (
@@ -113,14 +125,21 @@ export function TerminKarte({
     if (x === "verschieben") {
       return (
         <button key={x} type="button" onClick={() => setVerschieben(true)} className={buttonClass(variant, size, cls)} data-termin-aktion={x}>
-          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {LABEL[x]}
+          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> <span className="truncate">{beschriftung(x)}</span>
         </button>
       );
     }
     if (x === "angebot") {
       return (
         <button key={x} type="button" onClick={angebotMail} className={buttonClass(variant, size, cls)} data-termin-aktion={x}>
-          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {LABEL[x]}
+          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> <span className="truncate">{beschriftung(x)}</span>
+        </button>
+      );
+    }
+    if (x === "beratungsdoku") {
+      return (
+        <button key={x} type="button" onClick={() => setDokuOffen(true)} className={buttonClass(variant, size, cls)} aria-label={BD_HAUPT} data-termin-aktion={x}>
+          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {haupt ? BD_HAUPT : BD_ZWEIT}
         </button>
       );
     }
@@ -130,7 +149,7 @@ export function TerminKarte({
     const daten = { "data-termin-aktion": x, ...(x === "vorbereiten" ? { "data-termin-vorbereiten": "" } : {}), ...(x === "praesentation" ? { "data-termin-praesentation": "" } : {}) };
     const inhalt = (
       <>
-        <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {LABEL[x]}
+        <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> <span className="truncate">{beschriftung(x)}</span>
       </>
     );
     return h.startsWith("/") ? (
@@ -144,14 +163,15 @@ export function TerminKarte({
     );
   }
 
-  const mehr = a.mehr.filter((x) => x === "verschieben" || x === "angebot" || x === "ergebnis" || !!href[x]);
-  const zweit = a.zweit.filter((x) => x === "verschieben" || x === "angebot" || x === "ergebnis" || !!href[x]);
+  const machbar = (x: TerminAktion) => x === "verschieben" || x === "angebot" || x === "ergebnis" || x === "beratungsdoku" || !!href[x];
+  const mehr = a.mehr.filter(machbar);
+  const zweit = a.zweit.filter(machbar);
   const status =
     a.phase === "jetzt" ? (t.begonnen ? "Läuft" : "Gleich") : a.phase === "nachher" ? (t.erschienen ? "Erschienen" : "Vorbei") : null;
 
   return (
-    <Card className="mb-5" menus>
-      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center" data-termin-karte={a.phase} data-termin-haupt={a.haupt}>
+    <Card className="mb-5 @container" menus>
+      <div className="flex flex-col gap-3 px-5 py-4 @xl:flex-row @xl:items-center" data-termin-karte={a.phase} data-termin-haupt={a.haupt}>
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <CalendarClock className="h-5 w-5 shrink-0 text-[color:var(--brand)]" />
           <div className="min-w-0">
@@ -174,26 +194,29 @@ export function TerminKarte({
               {/* Zusage des Leads (Kalenderfrage im Chat bzw. „Ja, passt“), Ole 17.11.2026 */}
               {t.zugesagt ? <span className="font-medium text-emerald-700" data-termin-zugesagt>· zugesagt</span> : null}
               {t.komplettcheck ? <span className="font-medium text-[color:var(--brand-dark)]" data-termin-komplettcheck>· Komplettcheck</span> : null}
+              {t.vorbereitet ? <span className="font-medium text-emerald-700" data-termin-vorbereitet>· vorbereitet</span> : null}
             </div>
           </div>
         </div>
         {/* Handy: Hauptknopf über die ganze Breite, darunter Zweitknöpfe und „Mehr“ */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {knopf(a.haupt, true)}
+        <div className="flex flex-col gap-2 @xl:flex-row @xl:items-center">
+          {knopf(a.haupt, !a.ruhig)}
           {zweit.length || mehr.length ? (
-            <div className="grid gap-2 sm:flex sm:items-center [&>*]:min-w-0" style={{ gridTemplateColumns: [...zweit.map(() => "minmax(0,1fr)"), ...(mehr.length ? ["auto"] : [])].join(" ") }}>
+            <div className="grid gap-2 @xl:flex @xl:items-center [&>*]:min-w-0" style={{ gridTemplateColumns: [...zweit.map(() => "minmax(0,1fr)"), ...(mehr.length ? ["auto"] : [])].join(" ") }}>
               {zweit.map((x) => knopf(x, false))}
               {mehr.length ? (
                 <ActionMenu
                   label="Mehr"
-                  labelClassName="sr-only sm:not-sr-only"
+                  labelClassName="sr-only @xl:not-sr-only"
+                  chevronClassName="hidden @xl:block"
                   icon={MoreHorizontal}
                   items={mehr.map((x) => ({
-                    label: LABEL[x],
+                    label: beschriftung(x),
                     icon: ICON[x],
                     onSelect: () => {
                       if (x === "verschieben") return setVerschieben(true);
                       if (x === "angebot") return angebotMail();
+                      if (x === "beratungsdoku") return setDokuOffen(true);
                       const h = href[x];
                       if (!h) return;
                       if (x === "videocall") window.open(h, "_blank", "noreferrer");
@@ -207,6 +230,15 @@ export function TerminKarte({
         </div>
       </div>
       <RescheduleDialog appointmentId={t.id} open={verschieben} onClose={() => setVerschieben(false)} onChanged={() => router.refresh()} />
+      <BeratungsdokuSheet
+        ziel={dokuOffen ? { appointmentId: t.id, name } : null}
+        onClose={() => setDokuOffen(false)}
+        onError={(message) => toast.show({ message, tone: "error" })}
+        onDone={(message) => {
+          toast.show({ message });
+          router.refresh();
+        }}
+      />
       <AngebotSendenSheet
         ziel={angebotOffen ? { appointmentId: t.id, name } : null}
         onClose={() => setAngebotOffen(false)}

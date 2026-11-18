@@ -21,9 +21,9 @@ describe("anredeAusVorname", () => {
 });
 
 describe("Anrede in Texten an Leads", () => {
-  it("nie aus dem Vornamen (Ole, 17.11.2026): ohne Anrede im Formular der volle Name", () => {
-    expect(anredeName("sie", { fullName: "Julia Schneider" })).toBe("Julia Schneider");
-    expect(anredeName("sie", { firstName: "Thomas", lastName: "Weber" })).toBe("Thomas Weber");
+  it("aus eindeutigem Vornamen (Ole, 18.11.2026), sonst der volle Name", () => {
+    expect(anredeName("sie", { fullName: "Julia Schneider" })).toBe("Frau Schneider");
+    expect(anredeName("sie", { firstName: "Thomas", lastName: "Weber" })).toBe("Herr Weber");
     expect(anredeName("sie", { fullName: "Kim Weber" })).toBe("Kim Weber");
   });
   it("Formular-Anrede hat Vorrang, Divers oder Keine Angabe bleibt neutral", () => {
@@ -37,8 +37,9 @@ describe("Anrede in Texten an Leads", () => {
 
 describe("Kontakt: Anrede vorausgefüllt", () => {
   const lead = (x: { name?: string; formData?: unknown; contactOverrides?: unknown }) => ({ name: x.name ?? "Julia Schneider", phone: null, email: null, formData: x.formData ?? [], contactOverrides: x.contactOverrides ?? null });
-  it("nie aus dem Vornamen (Ole, 17.11.2026); Formular oder Korrektur im Kontakt gelten", () => {
-    expect(currentStammdaten(lead({})).salutation).toBeNull();
+  it("aus eindeutigem Vornamen (Ole, 18.11.2026); Formular oder Korrektur im Kontakt gehen vor", () => {
+    expect(currentStammdaten(lead({})).salutation).toBe("Frau");
+    expect(currentStammdaten(lead({ formData: [{ label: "Anrede", value: "Herr" }] })).salutation).toBe("Herr");
     expect(currentStammdaten(lead({ formData: [{ label: "Anrede", value: "Frau" }] })).salutation).toBe("Frau");
     expect(currentStammdaten(lead({ contactOverrides: { salutation: "keine" } })).salutation).toBeNull();
     expect(currentStammdaten(lead({ formData: [{ label: "Anrede", value: "Divers" }] })).salutation).toBeNull();

@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]|sicherheit
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|spaeter-nachholen[&vorschau=1|&ausfuehren=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]|sicherheit|nutzung-woche[&tage=7] (weitere: siehe WEITERE unten)
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -400,7 +400,8 @@ async function ppl() {
  * (Antworten mit Instantly-ID = Abgleich, ohne = Webhook), Postfächer, Kampagnen und Webhooks laut Instantly.
  *   &email=…   Kontakt zur Adresse (Id, Name, Stufe, Daten), Antworten (Zeitpunkte, Postfach, Weg), Follow-up und
  *              die Mails dieser Adresse laut Instantly (IDs, Zeitpunkte, Postfach, ob im CRM)
- *   &name=…    Treffer der Kontaktsuche (umlaut-tolerant) mit Id, Name, Stufe
+ *   &name=…    Treffer der Kontaktsuche (umlaut-tolerant) mit Id, Name, Stufe, gespeicherten Antworten (Datum, Einstufung,
+ *              erste 120 Zeichen), Instantly-Interessenstatus (gespeichert und live) und Später-Follow-up (ja/nein, geplant für)
  *   &nachholen=1  Vorschau „Antworten nachholen“ (90 Tage), nur Zahlen je Postfach
  */
 async function instantly(params: URLSearchParams) {
@@ -513,7 +514,9 @@ async function instantly(params: URLSearchParams) {
   const name = (params.get("name") ?? "").trim();
   if (name) {
     const { kontaktSucheWhere } = await import("@/lib/vertrieb/suche");
-    out.suche = await prisma.salesContact.findMany({ where: kontaktSucheWhere(name), take: 10, orderBy: { updatedAt: "desc" }, select: { id: true, name: true, stage: true, createdAt: true } });
+    const treffer = await prisma.salesContact.findMany({ where: kontaktSucheWhere(name), take: 10, orderBy: { updatedAt: "desc" }, select: { id: true, name: true, stage: true, createdAt: true, email: true } });
+    // Ole, 18.11.2026 (Tetenborg): Antworten, Instantly-Interesse und Später-Follow-up je Treffer, ohne Adressen
+    out.suche = await Promise.all(treffer.map(async ({ email: adresse, ...t }) => ({ ...t, ...(await spaeterBefund(t.id, adresse, hasKey)) })));
   }
 
   if (params.get("nachholen") === "1" && hasKey) {
@@ -522,6 +525,70 @@ async function instantly(params: URLSearchParams) {
     out.nachholenVorschau = { ...zahlen, beispiele: liste.length };
   }
   return out;
+}
+
+/**
+ * Befund je Kontakt (q=instantly&name=…): gespeicherte Antworten (Datum, Einstufung, erste 120 Zeichen ohne Zitat),
+ * Instantly-Interessenstatus (gespeichert je Kampagne und, mit Schlüssel, live laut Instantly), Später-Follow-up
+ * und was die Später-Regeln heute zur letzten Antwort sagen. Nur lesend.
+ */
+async function spaeterBefund(contactId: string, adresse: string, hasKey: boolean) {
+  const [{ stripQuoted, leadInterest }, { isLaterInterest, isClearDecline }] = await Promise.all([import("@/lib/vertrieb/instantly"), import("@/lib/vertrieb/spaeter")]);
+  const c = await prisma.salesContact.findUnique({
+    where: { id: contactId },
+    select: {
+      emails: { where: { direction: "IN" }, orderBy: { sentAt: "desc" }, take: 10, select: { sentAt: true, sentiment: true, isAutoReply: true, instantlyId: true, campaign: true, text: true } },
+      campaigns: { select: { interest: true, replyCount: true, lastReplyAt: true, campaign: { select: { name: true } } } },
+      followups: { orderBy: { createdAt: "desc" }, take: 3, select: { status: true, activeFor: true, nextAt: true, dueAt: true, timing: true, source: true, step: true, stopReason: true, createdAt: true } },
+    },
+  });
+  if (!c) return {};
+  const antworten = c.emails.map((e) => ({
+    datum: e.sentAt,
+    status: e.isAutoReply ? "automatisch" : (e.sentiment ?? "ohne"),
+    weg: e.instantlyId ? "Abgleich" : e.campaign === "manuell" ? "von Hand" : "Webhook",
+    anfang: stripQuoted(e.text ?? "").replace(/\s+/g, " ").slice(0, 120),
+  }));
+  const letzte = c.emails.find((e) => !e.isAutoReply);
+  const letzterText = letzte ? stripQuoted(letzte.text ?? "") : "";
+  let instantlyLive: unknown = null;
+  if (hasKey && adresse) {
+    instantlyLive = await leadInterest(adresse).catch((e: unknown) => ({ fehler: e instanceof Error ? e.message.slice(0, 200) : "Fehler" }));
+  }
+  const aktiv = c.followups.find((f) => f.activeFor);
+  return {
+    antworten,
+    instantlyInteresse: {
+      gespeichert: c.campaigns.map((l) => ({ kampagne: l.campaign.name, interesse: l.interest, antworten: l.replyCount, letzteAntwort: l.lastReplyAt })),
+      live: instantlyLive,
+    },
+    spaeterFollowup: aktiv
+      ? { ja: true, status: aktiv.status, geplantFuer: aktiv.nextAt, zeitpunkt: aktiv.timing, schritt: aktiv.step, quelle: aktiv.source }
+      : { ja: false, frueher: c.followups.map((f) => ({ status: f.status, angelegt: f.createdAt, grund: f.stopReason })) },
+    regelZurLetztenAntwort: letzte ? { spaeter: isLaterInterest(letzterText, letzte.sentAt), klareAbsage: isClearDecline(letzterText) } : null,
+  };
+}
+
+/**
+ * Später-Follow-ups nachholen (Ole, 18.11.2026, lib/vertrieb/spaeter-nachholen.ts). Ausnahme in dieser sonst nur
+ * lesenden Route: schreibt NUR mit dem eindeutigen Parameter &ausfuehren=1 (und ohne &vorschau=1), mit Audit-Eintrag.
+ * Es wird nie etwas gesendet; Termine liegen mindestens 3 Tage in der Zukunft.
+ *   q=spaeter-nachholen[&vorschau=1]  Trockenliste (Name, Agentur, Termin, Grund, Zitat), ändert nichts
+ *   q=spaeter-nachholen&ausfuehren=1  plant die fehlenden ein
+ *   &tage=60 (1 bis 90), &ki=0 ohne KI (nur Regeln), &kontakt=<id>[,<id>] nur diese Kontakte
+ */
+async function spaeterNachholenDiagnose(params: URLSearchParams) {
+  const { spaeterNachholen } = await import("@/lib/vertrieb/spaeter-nachholen");
+  const ausfuehren = params.get("ausfuehren") === "1" && params.get("vorschau") !== "1";
+  const tage = Math.min(90, Math.max(1, Math.round(Number(params.get("tage") ?? 60)) || 60));
+  const kontakte = (params.get("kontakt") ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+  return spaeterNachholen({
+    vorschau: !ausfuehren,
+    tage,
+    ki: params.get("ki") !== "0",
+    nurKontakte: kontakte.length ? kontakte : undefined,
+    actor: { role: "system", email: "ops-diagnose" },
+  });
 }
 
 /**
@@ -637,18 +704,29 @@ async function sicherheitStatus() {
   };
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), sicherheit: sicherheitStatus };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), sicherheit: sicherheitStatus };
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
 //   q=vermittler-anrede[&alle=1]  Kunden ohne Anrede in den Anbieterangaben, nur ID und Name (lib/ops/vermittler-anrede.ts)
 //   q=admin-nutzung[&tage=30]              Nutzung des Admins: Änderungsprotokoll je Aktion, Klicks je Funktion und Seite, nur Zahlen (lib/ops/admin-nutzung.ts)
+//   q=mail-strecke[&tage=7]                Mail-Strecke ohne WhatsApp: Schalter, Schritte, Auslöser, Gründe, Termine, SMS, Kandidaten (lib/ops/mail-strecke.ts)
+//   q=investoren[&sicht=gesamt]           Investoren-Kennzahlen (Geld › Auswertung): Datenlücken, Kennzahlen, KI-Kosten, Gegenprobe mit der Übersicht (lib/ops/investoren.ts)
+//   q=tarif-vorschlaege                    Tarifkatalog lernt von Vermittlern: Vorschläge je Status und Quelle, offene, empfohlene, übernommene, nur Anzahlen (lib/ops/tarif-vorschlaege.ts)
 //   q=mail-eingang[&tage=7]                Antwortadresse mit Eingang: Schalter, Einrichtung, Zählung, letzte Eingänge, Fehler, ohne Inhalte (lib/ops/mail-eingang.ts)
+//   q=preise-offen                         Neue Listenpreise 990/1.390/1.790 €: umgestellte und noch alte offene Angebote (Nummer, Name, alt, neu; lib/ops/preise-offen.ts)
+//   q=nutzung-woche[&tage=7][&gruppe=software|ppl]  Usability-Woche im Vermittlerbereich: aktive Kunden/Nutzer, Top- und ungenutzte Seiten/Aktionen, Abbrüche, Fehler-Toasts, Feedback/NPS, Support, Hilfe-Themen, Aufgaben, nächster Schritt, erste Reaktion, Admin-Nutzung; letzte N Tage gegen die N davor, nur Zahlen (lib/ops/nutzung-woche.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
+  pakete: async () => (await import("@/lib/ops/pakete")).paketeDiagnose(),
+  investoren: async (p) => (await import("@/lib/ops/investoren")).investorenDiagnose(p),
   "mail-eingang": async (p) => (await import("@/lib/ops/mail-eingang")).mailEingangDiagnose(p),
+  "mail-strecke": async (p) => (await import("@/lib/ops/mail-strecke")).mailStreckeDiagnose(p),
   "anzeige-abdeckung": async (p) => (await import("@/lib/ops/anzeige-abdeckung")).anzeigeAbdeckung(p),
   "vermittler-anrede": async (p) => (await import("@/lib/ops/vermittler-anrede")).vermittlerAnrede(p),
   "admin-nutzung": async (p) => (await import("@/lib/ops/admin-nutzung")).adminNutzung(p),
+  "tarif-vorschlaege": async () => (await import("@/lib/ops/tarif-vorschlaege")).tarifVorschlaegeDiagnose(),
+  "preise-offen": async () => (await import("@/lib/ops/preise-offen")).preiseOffenDiagnose(),
+  "nutzung-woche": async (p) => (await import("@/lib/ops/nutzung-woche")).nutzungWocheGetrennt(p),
 };
 
 export async function GET(req: Request): Promise<Response> {

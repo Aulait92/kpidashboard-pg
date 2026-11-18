@@ -8,7 +8,7 @@ export function sessionIdOf(conn: { sessionEnc: string | null }): string | null 
   return conn.sessionEnc ? decryptSecret(conn.sessionEnc) : null;
 }
 import { getAppUrl } from "@/lib/email";
-import { classify, netCost, type CostAction, type CostPurposeKey, type Rule } from "@/lib/bank/rules";
+import { classify, istKiKosten, netCost, type CostAction, type CostPurposeKey, type Rule } from "@/lib/bank/rules";
 import type { ParsedTx } from "@/lib/bank/csv";
 import * as eb from "@/lib/bank/enable-banking";
 
@@ -169,17 +169,26 @@ export async function applyRulesToOpen(): Promise<number> {
 }
 
 /** Netto-Kosten je Monat (YYYY-MM, Berliner Zeit) und Zweck aus zugeordneten Buchungen. */
+/**
+ * Zugeordnete Ausgaben (netto) je Monat und Zweck. „ki“ zählt in „software“ mit (direkte Kosten, Marge und BWA
+ * unverändert) und steht zusätzlich als „davon KI-Dienste“ in `ki` (auch ältere „software“-Buchungen von KI-Anbietern,
+ * istKiKosten in rules.ts). Die Summe aller Zwecke ist also ppl + software + akquise + betrieb (ohne ki).
+ */
 export async function monthlyBankCosts(from: Date): Promise<Map<string, Record<CostPurposeKey, number>>> {
   const rows = await prisma.bankTransaction.findMany({
     where: { status: "zugeordnet", bookingDate: { gte: from }, amount: { lt: 0 }, costPurpose: { not: null } },
-    select: { bookingDate: true, amount: true, costPurpose: true, vatIncluded: true },
+    select: { bookingDate: true, amount: true, costPurpose: true, vatIncluded: true, counterparty: true, purpose: true },
   });
   const out = new Map<string, Record<CostPurposeKey, number>>();
+  const r2 = (x: number) => Math.round(x * 100) / 100;
   for (const r of rows) {
     const m = r.bookingDate.toISOString().slice(0, 7);
-    const cur = out.get(m) ?? { ppl: 0, software: 0, akquise: 0, betrieb: 0 };
-    const k = (["ppl", "software", "akquise", "betrieb"].includes(r.costPurpose!) ? r.costPurpose : "betrieb") as CostPurposeKey;
-    cur[k] = Math.round((cur[k] + netCost(Number(r.amount), r.vatIncluded)) * 100) / 100;
+    const cur = out.get(m) ?? { ppl: 0, software: 0, ki: 0, akquise: 0, betrieb: 0 };
+    const p = r.costPurpose === "ki" ? "software" : r.costPurpose!;
+    const k = (["ppl", "software", "akquise", "betrieb"].includes(p) ? p : "betrieb") as CostPurposeKey;
+    const net = netCost(Number(r.amount), r.vatIncluded);
+    cur[k] = r2(cur[k] + net);
+    if (istKiKosten(r)) cur.ki = r2(cur.ki + net);
     out.set(m, cur);
   }
   return out;

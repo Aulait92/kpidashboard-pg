@@ -19,6 +19,7 @@ import type { MetaLead } from "@/lib/meta-leads";
 import { consentStateOf, parseDisclaimerResponses, type ConsentNachweis, type DisclaimerResponse } from "@/lib/einwilligung-leadformular";
 import { logTestLead } from "@/lib/testlead";
 import { adData, adFromFlat, adFromMetaLead, mergeAd, type LeadAd } from "@/lib/anzeige";
+import { handleInboundLead } from "@/lib/vertrieb/inbound";
 
 export type IncomingLead = {
   externalId: string | null;
@@ -135,8 +136,37 @@ export function extract(inc: Pick<IncomingLead, "fields">, labels: Record<string
   return { name, phone, email, answers };
 }
 
-/** reentry: dieselbe Person beim selben Kunden erneut eingetragen, kein neuer Lead (lib/lead-erneut.ts) */
-export type IngestResult = { status: "created" | "duplicate" | "unassigned" | "reentry"; leadId?: string };
+/** reentry: dieselbe Person beim selben Kunden erneut eingetragen, kein neuer Lead (lib/lead-erneut.ts).
+ *  vertrieb: Formular gehört dem Vertrieb (VertriebLeadForm), Lead ging als Vermittler-Lead in den Vertrieb. */
+export type IngestResult = { status: "created" | "duplicate" | "unassigned" | "reentry" | "vertrieb"; leadId?: string; contactId?: string };
+
+/** Lead eines Vertriebsformulars im Format, das lib/vertrieb/inbound.ts (parseLead) auch vom Zap bekommt. */
+export function vertriebPayload(inc: IncomingLead, formName: string | null): Record<string, unknown> {
+  const ad = inc.ad ?? null;
+  return {
+    leadgen_id: inc.externalId,
+    form_id: inc.formId,
+    page_id: inc.pageId,
+    created_time: inc.createdAt,
+    form_name: formName,
+    campaign_name: ad?.adCampaignName ?? inc.campaignName,
+    adset_name: ad?.adSetName ?? null,
+    ad_name: ad?.adName ?? inc.adName,
+    platform: ad?.adPlatform ?? null,
+    field_data: Object.entries(inc.fields).map(([name, v]) => ({ name, values: [v] })),
+  };
+}
+
+/** Formular gehört dem Vertrieb (Oles eigene Vermittler-Leads): direkt in den Vertrieb, mit Push an Ole. */
+async function ingestVertrieb(inc: IncomingLead, form: { id: string; formName: string | null }): Promise<IngestResult> {
+  const r = await handleInboundLead(vertriebPayload(inc, form.formName), "META_ADS", { externalId: inc.externalId, notify: true });
+  await prisma.vertriebLeadForm.update({ where: { id: form.id }, data: { lastLeadAt: new Date() } }).catch(() => {});
+  if ("ignored" in r) {
+    reportError(new Error(`Vertriebs-Lead ohne Kontaktdaten: ${r.ignored}`), "lead-intake-vertrieb", { form: inc.formId, lead: inc.externalId });
+    return { status: "vertrieb" };
+  }
+  return { status: r.duplicate ? "duplicate" : "vertrieb", contactId: r.contactId || undefined };
+}
 
 export async function ingestLead(
   inc: IncomingLead,
@@ -153,6 +183,9 @@ export async function ingestLead(
     });
     if (again) return { status: "duplicate", leadId: again.leadId };
   }
+  // Formular des Vertriebs (Lead-Eingang → „Vertrieb (eigene Vermittler-Leads)“): kein Kunden-Lead
+  const vertrieb = inc.formId ? await prisma.vertriebLeadForm.findFirst({ where: { formId: inc.formId, active: true }, select: { id: true, formName: true } }) : null;
+  if (vertrieb) return ingestVertrieb(inc, vertrieb);
   const source = inc.formId ? await prisma.leadSource.findFirst({ where: { formId: inc.formId, active: true } }) : null;
   const customerId = source?.customerId ?? override?.customerId ?? null;
   const productKey = source?.productKey ?? override?.productKey ?? null;

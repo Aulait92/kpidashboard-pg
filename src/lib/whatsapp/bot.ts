@@ -900,6 +900,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           leadId: conversation.leadId,
           conversationId: conversation.id,
           start,
+          bookedVia: "bot",
           mode,
           summary: eventSummary(mode, name, product),
           description: buildEventDescription({

@@ -26,11 +26,11 @@ export function costsForSicht<T extends { ppl: number; metaPpl: number }>(costs:
   return sicht === "kern" ? costs.map((c) => ({ ...c, ppl: 0, metaPpl: 0 })) : costs;
 }
 
-/** „Juni–November 2026“, „Juni 2026–Januar 2027“ oder „seit Juni 2026“ (läuft). */
+/** „Juni bis November 2026“, „Juni 2026 bis Januar 2027“ oder „seit Juni 2026“ (läuft). */
 export function pilotLabel(from: string, to: string | null): string {
   if (!to || to < from) return `seit ${longLabel(from, true)}`;
   const sameYear = from.slice(0, 4) === to.slice(0, 4);
-  return `${longLabel(from, !sameYear)}–${longLabel(to, true)}`;
+  return `${longLabel(from, !sameYear)} bis ${longLabel(to, true)}`;
 }
 
 /** Ist der Pilot abgeschlossen (Ende gesetzt und vor dem laufenden Monat)? */

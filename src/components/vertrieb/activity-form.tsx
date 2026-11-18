@@ -14,7 +14,16 @@ function addWorkdaysLocal(n: number): string {
   return d.toLocaleDateString("sv-SE");
 }
 
-export function ActivityForm({ contactId, hasOpenTasks }: { contactId: string; hasOpenTasks: boolean }) {
+export function ActivityForm({
+  contactId,
+  hasOpenTasks,
+  offenesAngebot = null,
+}: {
+  contactId: string;
+  hasOpenTasks: boolean;
+  /** Bei „Verloren“: „Offenes Angebot auch als abgelehnt markieren?“ (Standard ja, gleicher Grund) */
+  offenesAngebot?: { id: string; number: string } | null;
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const [outcomeId, setOutcomeId] = useState("nicht_erreicht");
   const outcome = OUTCOMES.find((o) => o.id === outcomeId)!;
@@ -67,6 +76,12 @@ export function ActivityForm({ contactId, hasOpenTasks }: { contactId: string; h
           <select name="lossReason" className="input" defaultValue="KEIN_BEDARF">
             {LOSS_REASONS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
           </select>
+          {offenesAngebot ? (
+            <label className="mt-2 flex items-center gap-2 text-sm" data-angebot-ablehnen>
+              <input type="checkbox" name="declineOfferId" value={offenesAngebot.id} defaultChecked className="h-4 w-4" />
+              Offenes Angebot {offenesAngebot.number} auch als abgelehnt markieren
+            </label>
+          ) : null}
         </div>
       )}
       <div>

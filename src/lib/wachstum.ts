@@ -87,7 +87,11 @@ const eur2 = new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumF
 /** „1.261 €“ (ganze Euro). */
 export const euro = (n: number) => `${eur0.format(Math.round(n))} €`;
 /** „+ 2.618 €“ bzw. „− 1.261 €“ (echtes Minuszeichen, kein Gedankenstrich). */
-export const euroMitVorzeichen = (n: number) => (Math.round(n) < 0 ? `− ${euro(-n)}` : `+ ${euro(n)}`);
+// Gerundet 0 ohne Vorzeichen-Fehler („+ -0 €“, Ole 18.11.2026)
+export const euroMitVorzeichen = (n: number) => {
+  const r = Math.round(n);
+  return r < 0 ? `− ${euro(-r)}` : r === 0 ? euro(0) : `+ ${euro(r)}`;
+};
 /** „1,55 €“ */
 export const euroCent = (n: number) => `${eur2.format(n)} €`;
 /** „74 %“ */

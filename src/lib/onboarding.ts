@@ -21,6 +21,8 @@ import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { validLoginEmail } from "@/lib/login-email";
+import { ersterAbrechnungstag } from "@/lib/abrechnungstag";
+import { rhythmusFuer } from "@/lib/offer-pricing";
 
 const DAY = 24 * 60 * 60 * 1000;
 const INVITE_TTL_MS = 7 * DAY;
@@ -729,10 +731,19 @@ function billingTermsOf(offer: {
   bestandMonthly: unknown;
   empfehlungMonthly?: unknown;
   annualPrepay: boolean;
+  /** Laufzeit: Vorauszahlung mit 6 Monaten = halbjährlich, sonst jährlich */
+  term?: string | null;
   allowBankTransfer?: boolean;
   bankTransferDays?: number;
   zahlweise?: string | null;
+  startDate?: Date | null;
+  billingDay?: number | null;
 }) {
+  // Abrechnungstag (lib/abrechnungstag.ts): Tag und erster Abrechnungstag an den Kunden (Laufzeit und Kündigung zählen ab dann).
+  // Vorauszahlung: Abrechnungstag gilt nicht (voller Betrag zum Start, Zeitraum ab Start), daher keiner gespeichert.
+  const billingDay = offer.annualPrepay ? null : (offer.billingDay ?? null);
+  const startIso = offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
+  const firstBillingIso = startIso ? ersterAbrechnungstag(startIso, billingDay) : null;
   const seatsBilled = offer.seats != null && offer.seatsIncluded != null && Number(offer.seatMonthly ?? 0) > 0
     ? Math.max(0, offer.seats - offer.seatsIncluded)
     : 0;
@@ -740,7 +751,7 @@ function billingTermsOf(offer: {
     // Makler-Angebot → Kunde ist Makler (Provisionssätze, Vertrags-Garantie)
     ...(offer.vermittlerTyp === "makler" ? { vermittlerTyp: "makler" } : {}),
     ...(offer.seatsIncluded != null ? { seatsIncluded: offer.seatsIncluded, seatMonthly: offer.seatMonthly == null ? null : Number(offer.seatMonthly), seatsBilled } : {}),
-    billingInterval: offer.annualPrepay ? "year" : "month",
+    billingInterval: rhythmusFuer(offer.term, offer.annualPrepay),
     ...(offer.bestandMonthly != null ? { bestandMonthly: Number(offer.bestandMonthly), existingCustomersEnabled: true, bestandRequestedAt: null } : {}),
     // Empfehlungen & Bewertungen im Angebot: ab Start freigeschaltet und berechnet (keine Testphase)
     ...(offer.empfehlungMonthly != null
@@ -749,5 +760,6 @@ function billingTermsOf(offer: {
     // Überweisung nur auf Anfrage (lib/ueberweisung.ts): Freigabe und Zahlungsziel gehen an den Kunden über
     ...(offer.allowBankTransfer ? { allowBankTransfer: true, bankTransferDays: offer.bankTransferDays ?? 14 } : {}),
     ...(offer.zahlweise === "ueberweisung" ? { zahltPerUeberweisung: true } : {}),
+    ...(offer.startDate ? { billingDay, billingStart: firstBillingIso ? new Date(`${firstBillingIso}T12:00:00Z`) : null } : {}),
   };
 }

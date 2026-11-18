@@ -33,6 +33,7 @@ import {
   type BudgetLine,
   type BudgetPreview,
 } from "@/lib/budget-shared";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const eur = (n: number) => `${Math.round(n).toLocaleString("de-DE")} €`;
@@ -275,7 +276,7 @@ export async function changeBudget(input: BudgetChangeInput, now = new Date()): 
     await adminTask(
       info.contactId,
       `Preis prüfen ${info.name}: neue Betreuungsstufe ${preview.tierTo?.label ?? ""}`.trim(),
-      `Individuelle Konditionen (${approval.kind === "apply" && approval.price === "manual" ? reasonLabel(approval.reason) : ""}). Bisher ${preview.feeFrom != null ? eur(preview.feeFrom) : "–"} netto/Monat; Listenpreis neu ${preview.tierTo ? eur(preview.tierTo.monthly) : "–"}. Bitte Preis festlegen, dem Kunden bestätigen und in Stripe anpassen.`,
+      `Individuelle Konditionen (${approval.kind === "apply" && approval.price === "manual" ? reasonLabel(approval.reason) : ""}). Bisher ${preview.feeFrom != null ? eur(preview.feeFrom) : KEINE_ANGABE} netto/Monat; Listenpreis neu ${preview.tierTo ? eur(preview.tierTo.monthly) : KEINE_ANGABE}. Bitte Preis festlegen, dem Kunden bestätigen und in Stripe anpassen.`,
       immediate ? now : eff,
     );
   }
@@ -307,7 +308,7 @@ export async function changeBudget(input: BudgetChangeInput, now = new Date()): 
 }
 
 function reasonLabel(r: string | null | undefined): string {
-  return r === "annual" ? "Jahreszahler" : r === "no_offer_price" ? "kein Listenpreis hinterlegt" : r === "individual_budget" ? "über Listenpreis" : "abweichender Preis";
+  return r === "annual" ? "Vorauszahler" : r === "no_offer_price" ? "kein Listenpreis hinterlegt" : r === "individual_budget" ? "über Listenpreis" : "abweichender Preis";
 }
 
 export async function mailCustomer(info: { contactId: string | null; contactName: string | null; to: string[] }, m: { subject: string; paragraphs: string[]; list?: string[] }) {

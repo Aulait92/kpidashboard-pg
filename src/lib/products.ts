@@ -1,3 +1,4 @@
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 export const PRODUCTS = ["Wechsel", "Neugeschäft", "Kinderwunsch"] as const;
 export type Product = (typeof PRODUCTS)[number];
 
@@ -12,7 +13,7 @@ const DISPLAY_LABELS: Record<string, string> = {
 };
 
 export function displayProduct(source: string | null | undefined): string {
-  if (!source) return "–";
+  if (!source) return KEINE_ANGABE;
   return DISPLAY_LABELS[source] ?? source;
 }
 

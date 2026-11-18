@@ -221,18 +221,23 @@ Seiten aus der Liste „Seiten“ unten.
   Einzelsumme, Rabatt in Prozent und Euro, Endbeitrag und die Staffel; die Bedingung und der Satz „Die Versicherungen
   sind auch einzeln abschließbar“ stehen klein darunter. Nimmt Ihr Kunde im Termin eine Sparte heraus oder wählt eine
   andere Stufe, rechnet die Folie sofort neu.
-- **Chance im Termin und Ihr Schutz im Überblick:** Über den Angeboten stehen höchstens zwei erkannte Lücken aus
-  Formular, Chat und Ihren Verträgen, je mit einem Satz als Gesprächsöffner (z. B. Hund ohne Hundehaftpflicht, mit
-  Hinweis, wenn sie im Bundesland Pflicht ist). **Ins Angebot** nimmt die Sparte „bei Bedarf“ dazu: Sie steht in der
-  Präsentation erst auf der Folie **Ihr Schutz im Überblick** (Ampel: bei uns, woanders versichert, prüfen, Lücke) und
-  kommt mit **Mit anschauen** in Vergleich und Beitrag; ab dem zweiten passenden Vertrag erscheint sofort der
-  Kombi-Rabatt. **Gleich zeigen** nimmt sie direkt ins Angebot. Unter **Schutz im Überblick** stellen Sie je Sparte ein,
-  was Ihr Kunde schon hat und wo (Versicherer, Ablauf, ungefährer Beitrag); bei „woanders versichert“ zeigt die Folie
-  den Bündelvorteil und den Wechsel-Service.
-- **Vorsorge-Thema:** Unter „Chance im Termin“ steht höchstens ein großes Thema (PKV-Check, Berufsunfähigkeit,
-  Risikoleben und Altersvorsorge, Pflegevorsorge) mit einem Satz als Gesprächsöffner, abgeleitet nur aus Beruf,
-  Lebenslage und Alter, nie aus Gesundheitsangaben. Dafür vereinbaren Sie einen eigenen Termin; gespeichert wird
-  nichts. Themen, die Sie nicht anbieten, schalten Sie unter **Einstellungen → Präsentation** ab.
+- **Was hat Ihr Kunde schon?** In Schritt 1 steht unter den Versicherungen der Bereich **Was hat Frau Becker
+  schon?**. Je Versicherung tippen Sie **Ja, bei mir**, **Ja, woanders**, **Weiß nicht** oder **Nein**; bei
+  **Ja, woanders** wählen Sie Versicherer und Tarif aus der Liste und tragen Ablauf und ungefähren Beitrag ein.
+  Beantwortete Zeilen klappen auf eine Zeile zu (z. B. „Hausrat · Ja, woanders · HUK Classic, 8 €“), Antippen öffnet
+  sie wieder. Oben stehen mit Glühbirne die Tipps: höchstens zwei erkannte Lücken aus Formular, Chat und Ihren
+  Verträgen (z. B. Hund ohne Hundehaftpflicht, mit Hinweis, wenn sie im Bundesland Pflicht ist) und höchstens ein
+  Vorsorge-Thema, je mit einer Frage für das Gespräch. **+ Versicherung hinzufügen** sucht über alle Versicherungen,
+  auch PKV, BU, Rente oder Kfz (Abkürzungen wie „PKV“ oder „BU“ funktionieren). Der Schalter **Ins Angebot** nimmt eine
+  Versicherung „bei Bedarf“ dazu: Sie steht in der Präsentation erst auf der Folie **Ihr Schutz im Überblick** (Ampel:
+  bei uns, woanders versichert, prüfen, Lücke) und kommt mit **Mit anschauen** in Vergleich und Beitrag; ab dem zweiten
+  passenden Vertrag erscheint sofort der Kombi-Rabatt. **Gleich zeigen** nimmt sie direkt ins Angebot. Unter **So sieht
+  es der Kunde** sehen Sie die Ampel der Folie. Alles wird automatisch gespeichert. Gesundheitsangaben werden hier nicht
+  erfasst, nur ob und wo Ihr Kunde versichert ist.
+- **Vorsorge-Thema:** Das Vorsorge-Thema (PKV-Check, Berufsunfähigkeit, Risikoleben und Altersvorsorge,
+  Pflegevorsorge) wird nur aus Beruf, Lebenslage und Alter abgeleitet, nie aus Gesundheitsangaben. Dafür vereinbaren
+  Sie meist einen eigenen Termin. Themen, die Sie nicht anbieten, schalten Sie unter **Einstellungen → Präsentation**
+  ab.
 - **Link für Ihren Kunden:** Unter der Präsentation erstellt **Link erstellen** einen persönlichen Link mit dem Stand aus
   dem Termin, ohne Schalter zum Umstellen, 14 Tage gültig. Kopieren, per WhatsApp oder E-Mail schicken, bei
   Bedarf **Link beenden**.
@@ -305,8 +310,9 @@ Seiten aus der Liste „Seiten“ unten.
   **Einstellungen → E-Mail-Postfach** oder im Einrichtungs-Fragebogen um. Es gilt für den Assistenten,
   WhatsApp-Vorlagen, Termin-Nachrichten, Termin-E-Mails, die Buchungsseite und die E-Mail-Vorlagen.
 - **Anrede**: Bei „Sie“ beginnen Nachrichten mit „Guten Tag Frau Schneider,“ bzw. „Guten Tag Herr Schneider,“, wenn die
-  Anrede bekannt ist (Feld Anrede oder Geschlecht im Leadformular, Anrede beim Bestandskunden). Sonst mit vollem Namen
-  („Guten Tag Julia Schneider,“), ohne Nachnamen mit „Guten Tag,“. Die Anrede wird nie aus dem Vornamen geraten.
+  Anrede bekannt ist (Feld Anrede oder Geschlecht im Leadformular, Anrede beim Bestandskunden) oder der Vorname eindeutig
+  ist (Julia, Peter). Bei Vornamen, die beides sein können (Andrea, Kim, Sascha), mit vollem Namen („Guten Tag Andrea
+  Schneider,“), ohne Nachnamen mit „Guten Tag,“. Die Anrede können Sie im Kontakt jederzeit ändern.
   Bei „Du“: „Hallo Julia,“. Das gilt auch für den Assistenten im weiteren Chat.
 - **Namen in Nachrichten**: „Ihre Buchung bei …“ und „digitaler Assistent von …“ nennen Ihren Firmennamen; „Ihr
   Videocall mit …“ nennt die Person, bei Teams den zuständigen Berater (Anzeigename unter **Team**).
@@ -849,11 +855,12 @@ Seiten aus der Liste „Seiten“ unten.
   das Werbebudget pro Monat (Tagesbudget × 30), die erwarteten Leads pro Monat (mit dem eigenen Leadpreis der
   letzten 30 Tage, sonst mit einem üblichen Leadpreis) und die Betreuungsstufe. Unter 20 € pro Tag erscheint der
   Hinweis „Lead-Garantie gilt ab 20 €/Tag“.
-  - Betreuungsstufen (Betreuung + Software, netto im Monat): bis 3.000 € Werbebudget 1.000 €, 3.000 – 6.000 €
-    1.400 €, 6.000 – 10.000 € 1.800 €; jedes weitere Produkt 350 €. Wechselt die Stufe (nach oben oder unten),
-    steht das deutlich da, z. B. „Mit 3.300 € Werbebudget pro Monat gilt die nächste Betreuungsstufe
-    (3.000 – 6.000 €): 1.400 € statt 1.000 € netto im Monat, ab dem nächsten Abrechnungsmonat.“ Dann ist das
-    Häkchen „Ich habe den neuen Monatspreis zur Kenntnis genommen“ Pflicht.
+  - Betreuungsstufen (Betreuung + Software, netto im Monat, seit 18.11.2026): bis 3.000 € Werbebudget 990 €,
+    3.000 – 6.000 € 1.390 €, 6.000 – 10.000 € 1.790 €; jedes weitere Produkt 350 €. Wer vorher zum damaligen
+    Listenpreis (1.000 €, 1.400 €, 1.800 €) abgeschlossen hat, behält seinen Preis und die Staffel aus seinem Angebot.
+    Wechselt die Stufe (nach oben oder unten), steht das deutlich da, z. B. „Mit 3.300 € Werbebudget pro Monat gilt
+    die nächste Betreuungsstufe (3.000 – 6.000 €): 1.390 € statt 990 € netto im Monat, ab dem nächsten
+    Abrechnungsmonat.“ Dann ist das Häkchen „Ich habe den neuen Monatspreis zur Kenntnis genommen“ Pflicht.
   - Ab wann: sofort oder ab einem Datum (bis 4 Monate im Voraus). Erhöhen und senken gilt immer sofort bzw. zum
     Datum, ohne Freigabe. Die neue Stufe gilt ab dem folgenden Abrechnungsmonat. Die Anzeigen bei Meta stellen
     wir in der Regel innerhalb eines Werktags um. Bestätigung kommt per E-Mail.
@@ -1511,6 +1518,22 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
     nur, wenn die KI mit Verarbeitung in der EU eingerichtet ist, und nie bei Kranken, Zahn, BU, Leben oder Pflege;
     das Ergebnis ist als „Entwurf der KI, bitte prüfen“ markiert und darf keine eigenen Beträge, Versicherer oder
     Empfehlungen ergänzen. Steht die Vorlage in den Einstellungen auf **Aus**, gibt es Haken und Vorschlag nicht.
+  - **Gründe vorschlagen (seit 18.11.2026):** Der Rat (die am Termin gewählten Tarife) steht ohne KI im Feld. Die
+    Gründe schlägt die KI mit Verarbeitung in der EU vor, im Feld **Rat und Gründe** der Gesprächszusammenfassung und
+    im Feld **Empfehlung mit Begründung** der Beratungsdokumentation. Steht dort noch „[bitte ergänzen]“, erscheint der
+    Vorschlag beim Öffnen von selbst, gelb markiert unter dem Feld; sonst über **Gründe vorschlagen** bzw.
+    **Begründung vorschlagen**. Er kommt erst mit **Übernehmen** ins Feld, bleibt dort änderbar und wird mit dem
+    normalen Senden bzw. Ablegen gespeichert; **Verwerfen** lässt das Feld unverändert. Grundlage sind die gewählten
+    Tarife (Versicherer, Tarif, Beitrag, Leistungen aus dem Katalog) und der Text unter Wünsche und Bedürfnisse
+    (Angaben, Notizen, „Was hat … schon?“), ohne Gesundheitsangaben und nie mit Dokumenten oder PDFs. Bei Kranken,
+    Zahn, BU, Leben, Pflege und Unfall sieht die KI nur Sparte, Versicherer, Tarif und Beitrag. Ohne gewählten Tarif
+    oder ohne Angaben zum Bedarf ist der Knopf aus, darunter steht, was fehlt. Der Vorschlag nennt keine neuen
+    Beträge oder Versicherer, vergleicht nicht und verspricht nichts; die Inhalte verantworten Sie.
+  - **Beratungsdokumentation nach dem Termin:** einschalten unter **Einstellungen** oder in der **Einrichtung**
+    (Frage „Beratungsdokumentation vorbereiten?“ mit **Ja, vorbereiten** oder **Nein**). Wer die Frage nie beantwortet
+    hat, sieht sie einmal nach dem ersten Termin-Ergebnis (Angebot oder Abschluss) in „Wie lief der Termin?“; nach
+    **Ja** lässt sich die Dokumentation zu diesem Termin gleich erstellen. Nach der Antwort fragt die App nicht mehr,
+    ändern können Sie es jederzeit unter Einstellungen. Nur der Inhaber des Kontos entscheidet.
   - **Aufbewahrung:** Wird ein Kontakt auf Wunsch gelöscht, bleibt nur die Beratungsdokumentation als Nachweis
     (10 Jahre ab Erstellung, danach automatisch gelöscht); am gelöschten Kontakt steht sie mit Datum zum Öffnen.
     Bei Vertragsende werden auch diese PDFs mit allen Daten gelöscht (vorher Export).

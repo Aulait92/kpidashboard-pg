@@ -7,7 +7,7 @@
 //
 // Texte gehen an Interessenten: keine Gedankenstriche (Bis-Striche in Zahlenbereichen sind ok), Minus als „−“.
 
-import { ABSCHLUSSBONUS_STANDARD, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, type OfferTerm } from "@/lib/offer-pricing";
+import { ABSCHLUSSBONUS_STANDARD, betreuungsSatz, eurText, monthlyBudgetOf, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, VORAUSZAHLUNG, type OfferTerm } from "@/lib/offer-pricing";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 
 export type VerkaufsAudience = "vertreter" | "makler";
@@ -99,6 +99,8 @@ export type AngebotFuerFolien = {
   empfehlungMonthly: number | null;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
+  /** Jahreszahlung angeboten: Kunde wählt bei der Annahme (fehlt bei Alt-Daten = nein). */
+  annualChoice?: boolean;
   customerChoosesTerm: boolean;
   setupDiscount: number | null;
   introMonthlyFee: number | null;
@@ -120,8 +122,15 @@ export function aktuellesAngebot<T extends { status: string; isTest?: boolean; c
   return [...offers].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).find((o) => !o.isTest && o.status !== "superseded" && o.status !== "declined") ?? null;
 }
 
-const TERM_KURZ: Record<OfferTerm, string> = { none: "Ohne Laufzeit", "3m": "Mit 3 Monaten", "12m": "Mit 12 Monaten" };
-const TERM_SATZ: Record<OfferTerm, string> = { none: "ohne Vertragslaufzeit", "3m": "bei 3 Monaten Laufzeit", "12m": "bei 12 Monaten Laufzeit" };
+const TERM_KURZ: Record<OfferTerm, string> = { none: "Ohne Laufzeit", "3m": "Mit 3 Monaten", "6m": "Mit 6 Monaten", "12m": "Mit 12 Monaten" };
+const TERM_SATZ: Record<OfferTerm, string> = { none: "ohne Vertragslaufzeit", "3m": "bei 3 Monaten Laufzeit", "6m": "bei 6 Monaten Laufzeit", "12m": "bei 12 Monaten Laufzeit" };
+/** Laufzeiten auf der Folie „Setup“ (Listenpreise bzw. Kunde wählt). */
+// 6 Monate nur auf Nachfrage (Ole, 18.11.2026): nicht in den Listenpreisen, nur wenn das Angebot auf 6 Monate steht
+const TERM_FOLIE: OfferTerm[] = ["none", "3m", "12m"];
+const termFolie = (term: OfferTerm): OfferTerm[] => (term === "6m" ? ["none", "3m", "6m", "12m"] : TERM_FOLIE);
+const geschenkt = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"} geschenkt`;
+/** Vorauszahlung als Satz (Listenpreise): beide Varianten. */
+const VORAUS_LISTE = `Jährlich im Voraus: ${geschenkt(VORAUSZAHLUNG["12m"].freeMonths)}`;
 
 export type PaketDaten = {
   quelle: "angebot" | "liste";
@@ -133,20 +142,23 @@ export type PaketDaten = {
   setupMarke: string;
   setupHinweis: string | null;
   monatlich: { label: string; detail?: string; betrag: string; summe?: boolean }[];
-  /** Monatlich netto für die Rechnung (Betreuung + Software inkl. Zusätze); Liste: 1.000 € (Werbebudget bis 3.000 €). */
+  /** Monatlich netto für die Rechnung (Betreuung + Software inkl. Zusätze); Liste: 990 € (Werbebudget bis 3.000 €, PRICE_LIST.tiers). */
   monatlichNetto: number;
   jaehrlich: string | null;
   startpreis: string | null;
   /** Setup für die Rechnung (netto) und wie es zustande kommt */
   setupRechnung: { betrag: number; satz: string };
   produkte: { name: string; tagesbudget: number }[];
+  /** Satz zur Preisstufe bzw. zum vereinbarten Preis (nur mit Angebot, wie auf der Angebotsseite). */
+  betreuungsSatz: string | null;
   team: string;
   pause: string;
   /** Abschlussbonus: Setup vorher/nachher (netto); bis = Frist, null = „heute“ (Listenpreise, noch kein Angebot). */
   bonus: { betrag: number; setupVorher: number; setupNachher: number; bis: Date | null; spaeter?: boolean } | null;
 };
 
-const eur0 = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: n % 1 ? 2 : 0, minimumFractionDigits: n % 1 ? 2 : 0 }).format(n)} €`;
+// Beträge wie im ganzen Angebot (ganze Euro ohne „,00“, sonst mit Cent)
+const eur0 = eurText;
 
 function produkteVon(raw: unknown): { name: string; tagesbudget: number }[] {
   return (Array.isArray(raw) ? raw : []).flatMap((p) => {
@@ -160,7 +172,7 @@ function produkteVon(raw: unknown): { name: string; tagesbudget: number }[] {
 export function paketDaten(angebot: AngebotFuerFolien | null, audience: VerkaufsAudience): PaketDaten {
   const team = `${PRICE_LIST.seatsIncluded} Berater inklusive, jeder weitere ${PRICE_LIST.seatMonthly} € netto im Monat.`;
   if (!angebot) {
-    const terms: OfferTerm[] = ["none", "3m", "12m"];
+    const terms = TERM_FOLIE;
     return {
       quelle: "liste",
       name: null,
@@ -178,10 +190,11 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
         { label: `Werbebudget ab ${eur0(PRICE_LIST.individualFrom)}`, betrag: "individuelles Angebot" },
       ],
       monatlichNetto: PRICE_LIST.tiers[0].monthly,
-      jaehrlich: `Jährlich im Voraus: ${PRICE_LIST.annualFreeMonths} Monate geschenkt`,
+      jaehrlich: VORAUS_LISTE,
       startpreis: null,
       setupRechnung: audience === "makler" ? { betrag: PRICE_LIST.setup12m, satz: TERM_SATZ["12m"] } : { betrag: PRICE_LIST.setupNoTerm, satz: TERM_SATZ.none },
       produkte: [],
+      betreuungsSatz: null,
       team,
       pause: `Anzeigen stoppen automatisch. Sie zahlen dann nur ${PRICE_LIST.softwareFee} € netto für die Software.`,
       bonus: (() => {
@@ -202,12 +215,14 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     seatMonthly: angebot.seatMonthly,
     bestandMonthly: angebot.bestandMonthly,
     empfehlungMonthly: angebot.empfehlungMonthly,
-    annualPrepay: angebot.annualPrepay,
+    // Vorauszahlung zur Wahl: Betrag trotzdem nennen (Wahl bei der Annahme); Zeitraum nach Laufzeit (6 bzw. 12 Monate)
+    annualPrepay: angebot.annualPrepay || !!angebot.annualChoice,
     annualFreeMonths: angebot.annualFreeMonths,
+    term,
   });
   const rabatt = angebot.setupDiscount != null && angebot.setupDiscount > 0 ? angebot.setupDiscount : null;
   const setup = angebot.customerChoosesTerm
-    ? (["none", "3m", "12m"] as OfferTerm[]).map((t) => ({ label: TERM_KURZ[t], betrag: setupForChoice(t, Math.max(1, produkte.length), rabatt), markiert: t === term }))
+    ? termFolie(term).map((t) => ({ label: TERM_KURZ[t], betrag: setupForChoice(t, Math.max(1, produkte.length), rabatt), markiert: t === term }))
     : [{ label: TERM_KURZ[term], betrag: angebot.setupFee, markiert: true }];
   const monatlich: PaketDaten["monatlich"] = [
     {
@@ -237,13 +252,23 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     monatlich,
     monatlichNetto: add.monthlyTotal,
     jaehrlich: add.annual && add.annualTotal != null
-      ? `Jährlich im Voraus: ${eur0(add.annualTotal)} netto für 12 Monate, ${add.freeMonths} Monate geschenkt`
-      : term === "12m" || angebot.customerChoosesTerm
-        ? `Jährlich im Voraus: ${PRICE_LIST.annualFreeMonths} Monate geschenkt`
-        : null,
+      ? `${angebot.annualChoice && !angebot.annualPrepay ? "Wahlweise " : ""}${add.prepayMonths === 6 ? "6 Monate im Voraus" : `${angebot.annualChoice && !angebot.annualPrepay ? "j" : "J"}ährlich im Voraus`}: ${eur0(add.annualTotal)} netto für ${add.prepayMonths} Monate, ${geschenkt(add.freeMonths)}`
+      : angebot.customerChoosesTerm
+        ? VORAUS_LISTE
+        : term === "12m"
+          ? `Jährlich im Voraus: ${geschenkt(VORAUSZAHLUNG["12m"].freeMonths)}`
+          : term === "6m"
+            ? `6 Monate im Voraus: ${geschenkt(VORAUSZAHLUNG["6m"].freeMonths)}`
+            : null,
     startpreis: intro,
     setupRechnung: { betrag: angebot.setupFee, satz: TERM_SATZ[term] },
     produkte,
+    betreuungsSatz: betreuungsSatz({
+      package: angebot.package,
+      monthlyBudget: monthlyBudgetOf(produkte.map((x) => ({ name: x.name, dailyBudget: x.tagesbudget }))),
+      productCount: produkte.length,
+      monthlyFee: angebot.monthlyFee,
+    }),
     team: software ? `Ihr Angebot: ${seats} Berater, davon ${inkl} inklusive. Jeder weitere ${eur0(add.hasSeats ? add.seatMonthly : PRICE_LIST.seatMonthly)} netto im Monat.` : team,
     pause: software ? `Anzeigen stoppen automatisch. Sie zahlen dann nur ${PRICE_LIST.softwareFee} € netto für die Software.` : "Anzeigen stoppen automatisch, die Betreuung pausiert mit.",
     bonus: angebot.abschlussBonus
@@ -327,7 +352,7 @@ export type VerkaufsFolie = { id: string; titel: string; html: string };
 
 const e = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const zahl = (n: number) => new Intl.NumberFormat("de-DE", { maximumFractionDigits: 0 }).format(n);
-const euro = (n: number) => `${zahl(n)} €`;
+const euro = eurText;
 const monate = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(n)} ${n === 1 ? "Monat" : "Monaten"}`;
 const MINUS = "−";
 
@@ -361,6 +386,7 @@ export function verkaufsCss(): string {
 .vk-setup{display:grid;gap:10px;margin-top:12px}
 .vk-setup>div{border:1px solid #e2e8f0;border-radius:12px;padding:12px 12px 10px;position:relative}
 .vk-setup span{display:block;font-size:12.5px;color:#64748b}.vk-setup b{display:block;font-size:30px;letter-spacing:-.02em;margin-top:2px}.vk-setup small{font-size:11.5px;color:#64748b}
+.vk-setup-4{gap:8px}.vk-setup-4>div{padding:10px 8px 8px}.vk-setup-4 b{font-size:22px}.vk-setup-4 span{font-size:11.5px}
 .vk-setup .an{background:#2563eb;border-color:#2563eb;color:#fff}.vk-setup .an span,.vk-setup .an small{color:rgba(255,255,255,.85)}
 .vk-setup .marke{font-style:normal;position:absolute;top:-9px;right:10px;background:#047857;color:#fff;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px}
 .vk-kacheln{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -400,11 +426,11 @@ const angebotChip = (p: PaketDaten) =>
 export function paketFolie(p: PaketDaten, audience: VerkaufsAudience, nr: number, gesamt: number): string {
   const budget =
     p.quelle === "angebot" && p.produkte.some((x) => x.tagesbudget > 0)
-      ? `zahlen Sie direkt an Meta. Laut Angebot: ${p.produkte.map((x) => `${euro(x.tagesbudget)} pro Tag`).join(" und ")}.`
+      ? `zahlen Sie direkt an Meta. Laut Angebot: ${p.produkte.map((x) => `${euro(x.tagesbudget)} pro Tag`).join(" und ")}.${p.betreuungsSatz ? ` ${p.betreuungsSatz}` : ""}`
       : audience === "makler"
         ? "zahlen Sie direkt an Meta. Empfehlung für Makler: ab 40 € pro Tag."
         : "zahlen Sie direkt an Meta. Empfehlung: 20–50 € pro Tag und Produkt.";
-  const setup = `<div class="vk-setup" style="grid-template-columns:repeat(${p.setup.length},1fr)">${p.setup
+  const setup = `<div class="vk-setup${p.setup.length > 3 ? " vk-setup-4" : ""}" style="grid-template-columns:repeat(${p.setup.length},1fr)">${p.setup
     .map((s) => `<div class="${s.markiert ? "an" : ""}">${s.markiert && p.setup.length > 1 ? `<em class="marke">${e(p.setupMarke)}</em>` : ""}<span>${e(s.label)}</span><b>${e(euro(s.betrag))}</b><small>netto</small></div>`)
     .join("")}</div>`;
   const inhalt = `<div class="vk-chips"><span class="vk-chip">Ihr Paket</span>${angebotChip(p)}</div>

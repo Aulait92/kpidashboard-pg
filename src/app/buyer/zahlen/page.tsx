@@ -7,7 +7,6 @@ import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { PageHeader } from "@/components/buyer-shell";
 import { WerbungKarten } from "@/app/buyer/konto/werbung-karten";
 import { LiveUpdated } from "@/components/live-updated";
-import { MonthlyForecast } from "@/components/monthly-forecast";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
@@ -41,6 +40,7 @@ import { Kennzahl } from "@/components/wachstum/kennzahl";
 import { ChancenKachel } from "@/components/wachstum/chancen-kachel";
 import { Trichter } from "@/components/wachstum/trichter";
 import { HebelKarte } from "@/components/wachstum/hebel";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 type SearchParams = Promise<{
   range?: string;
@@ -334,7 +334,7 @@ async function BuyerDashboardBody({
         <Kennzahl
           data="wert"
           label="Wert pro Kunde"
-          wert={wert != null ? euro(wert) : "–"}
+          wert={wert != null ? euro(wert) : NOCH_KEINE_DATEN}
           ton={wert != null ? "geld" : "normal"}
           unter={
             wert == null
@@ -345,7 +345,7 @@ async function BuyerDashboardBody({
         <Kennzahl
           data="euro"
           label="Aus 1 € werden"
-          wert={r != null ? euroCent(r) : "–"}
+          wert={r != null ? euroCent(r) : NOCH_KEINE_DATEN}
           ton={r != null && r >= 1 ? "geld" : "normal"}
           unter={r == null ? "ohne Kosten im Zeitraum" : `${mitBestand ? "inkl. Bestand" : "ohne Bestand"}${r < 1 ? ", Ziel über 1 €" : ""}`}
         />
@@ -385,64 +385,90 @@ async function BuyerDashboardBody({
               {proStufe.map(([l, v]) => (
                 <div key={l} className="rounded-[var(--radius-md)] bg-[color:var(--background)] p-3 ring-1 ring-inset ring-[color:var(--border)]">
                   <div className="text-sm text-[color:var(--muted)]">Kosten {l}</div>
-                  <div className="mt-0.5 text-lg font-semibold tabular-nums sm:text-xl">{v != null ? euro(v) : "–"}</div>
+                  <div className="mt-0.5 text-lg font-semibold tabular-nums sm:text-xl">{v != null ? euro(v) : NOCH_KEINE_DATEN}</div>
                 </div>
               ))}
             </div>
 
-            <div>
-              <h3 className="text-[15px] font-semibold">Gewinn in diesem Zeitraum</h3>
+            {/* Vereinfacht (Ole, 18.11.2026): eine Zahl, darunter Provision minus Kosten; Einzelposten aufklappbar */}
+            <div data-gewinn>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-[15px] font-semibold">Gewinn in diesem Zeitraum</h3>
+                <span className={`shrink-0 whitespace-nowrap text-xl font-semibold tabular-nums ${(mitBestand ? cur.gewinnMitBestand : cur.gewinn) < 0 ? "text-rose-700" : "text-emerald-700"}`} data-gewinn-wert>
+                  {euroMitVorzeichen(mitBestand ? cur.gewinnMitBestand : cur.gewinn)}
+                </span>
+              </div>
               <dl className="mt-2 space-y-1 tabular-nums">
-                {breakdown.map(([l, v]) => (
-                  <div key={l} className="flex justify-between gap-3">
-                    <dt className="text-[color:var(--muted)]">{l}</dt>
-                    <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(v)}</dd>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[color:var(--muted)]">{provLabel}</dt>
+                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(prov.firstYear)}</dd>
+                </div>
+                {mitBestand ? (
+                  <div className="flex justify-between gap-3" data-kuenftiger-bestand>
+                    <dt className="text-[color:var(--muted)]">{bestandWort} (5 Jahre)</dt>
+                    <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinnMitBestand - cur.gewinn)}</dd>
                   </div>
-                ))}
-                <div className="flex justify-between gap-3 border-t border-[color:var(--border)] pt-1 font-semibold" data-gewinn-nur-jetzt>
-                  <dt>Gewinn nur aus {makler ? "Courtage 1. Jahr" : "Abschlussprovision"}</dt>
-                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinn)}</dd>
-                </div>
-                <div className="flex justify-between gap-3 font-semibold" data-kuenftiger-bestand>
-                  <dt>Inkl. Bestand dieser Kunden (5 Jahre)</dt>
-                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinnMitBestand)}</dd>
-                </div>
-                <div className="flex justify-between gap-3 text-[color:var(--muted)]">
-                  <dt>Ergebnis im Vorzeitraum</dt>
-                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(ergebnisVorher)}</dd>
+                ) : null}
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[color:var(--muted)]">Kosten</dt>
+                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinn - prov.firstYear)}</dd>
                 </div>
               </dl>
-              <p className="mt-2 text-sm text-[color:var(--muted)]" data-prov-aus>
-                {provLabel} {provisionAusText(prov, makler)}
-                {provSub.length ? `; ${provSub.join("; ")}` : ""}.
+              <p className="mt-2 text-sm text-[color:var(--muted)]" data-gewinn-nur-jetzt>
+                {mitBestand ? `Ohne Bestand: ${euroMitVorzeichen(cur.gewinn)} · ` : `Mit Bestand (5 Jahre): ${euroMitVorzeichen(cur.gewinnMitBestand)} · `}
+                Vorzeitraum: {euroMitVorzeichen(ergebnisVorher)}
               </p>
+              <details className="group/e mt-2 [&>summary::-webkit-details-marker]:hidden">
+                <summary className="inline-flex cursor-pointer items-center gap-1 text-sm font-medium text-[color:var(--brand)]">
+                  Einzelposten
+                  <ChevronDown className="h-3.5 w-3.5 transition group-open/e:rotate-180" />
+                </summary>
+                <dl className="mt-2 space-y-1 text-sm tabular-nums">
+                  {breakdown
+                    .filter(([, v]) => Math.round(v) !== 0)
+                    .map(([l, v]) => (
+                      <div key={l} className="flex justify-between gap-3">
+                        <dt className="text-[color:var(--muted)]">{l}</dt>
+                        <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(v)}</dd>
+                      </div>
+                    ))}
+                </dl>
+                <p className="mt-2 text-sm text-[color:var(--muted)]" data-prov-aus>
+                  {provLabel} {provisionAusText(prov, makler)}
+                  {provSub.length ? `; ${provSub.join("; ")}` : ""}.
+                </p>
+              </details>
             </div>
 
             <div data-gesamtbestand>
-              <h3 className="text-[15px] font-semibold">{bestandWort} aller Ihrer Verträge</h3>
-              <p className="mt-1">
-                <span className="font-semibold text-emerald-700">{euroMitVorzeichen(bestand.perYear)} pro Jahr</span> aus {formatNumber(bestand.contracts)}{" "}
-                {bestand.contracts === 1 ? "laufendem Vertrag" : "laufenden Verträgen"}, in 5 Jahren nach Storno{" "}
-                <span className="font-semibold">{euro(bestand.inYears)}</span>.
-              </p>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-[15px] font-semibold">{bestandWort}</h3>
+                <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-emerald-700">{euroMitVorzeichen(bestand.perYear)} pro Jahr</span>
+              </div>
               <p className="mt-1 text-sm text-[color:var(--muted)]">
-                Alle Verträge, die Sie über die App abgeschlossen haben, auch aus früheren Zeiträumen. Stornoquote {stornoPct} pro Jahr (
+                Aus {formatNumber(bestand.contracts)} {bestand.contracts === 1 ? "laufendem Vertrag" : "laufenden Verträgen"}, in 5 Jahren {euro(bestand.inYears)} (Storno {stornoPct},{" "}
                 <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">ändern</a>).
                 {bestand.real.quote != null ? (
-                  <span data-storno-real> Tatsächlich: {(Math.round(bestand.real.quote * 1000) / 10).toLocaleString("de-DE")} % pro Jahr.</span>
+                  <span data-storno-real> Tatsächlich: {(Math.round(bestand.real.quote * 1000) / 10).toLocaleString("de-DE")} %.</span>
                 ) : null}
               </p>
             </div>
 
-            <details className="group/f rounded-[var(--radius-md)] ring-1 ring-inset ring-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden">
-              <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-[15px] font-semibold">
-                Hochrechnung für diesen Monat
-                <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open/f:rotate-180" />
-              </summary>
-              <div className="border-t border-[color:var(--border)] p-2 sm:p-3">
-                <MonthlyForecast forecast={forecast} />
-              </div>
-            </details>
+{(() => {
+              // Hochrechnung als ein Satz statt Tabelle (Ole, 18.11.2026): nur Abschlüsse und Gewinn bis Monatsende
+              const zeile = (l: string) => forecast.rows.find((r) => r.label === l);
+              const abschluesse = zeile("Abschlüsse");
+              const gewinn = zeile("Gewinn");
+              if (!abschluesse || !gewinn || forecast.daysElapsed < 3) return null;
+              const monat = new Intl.DateTimeFormat("de-DE", { month: "long" }).format(forecast.monthStart);
+              const n = Math.round(abschluesse.projected);
+              return (
+                <p className="text-sm text-[color:var(--muted)]" data-hochrechnung>
+                  Wenn der {monat} so weiterläuft: etwa {formatNumber(n)} {n === 1 ? "Abschluss" : "Abschlüsse"}, Gewinn{mitBestand ? " ohne Bestand" : ""}{" "}
+                  <span className="font-medium text-[color:var(--foreground)]">{euroMitVorzeichen(gewinn.projected)}</span> (Vormonat {euroMitVorzeichen(gewinn.previousFull)}).
+                </p>
+              );
+            })()}
 
             {bestand.growth.some((g) => g.total > 0) ? (
               <BestandGrowthSection

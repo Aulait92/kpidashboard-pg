@@ -1,18 +1,21 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { OfferDocument, offerProducts, toOfferDoc } from "@/components/offer-document";
 import { getCurrentSession } from "@/lib/auth";
 import { getOfferByToken, markOfferViewed, offerAddOnsOf, offerSummaryInput } from "@/lib/offers";
+import { zaehltAlsGeoeffnet } from "@/lib/offer-view";
 import {
   abschlussBonusJetzt,
   addDaysIso,
   berlinTodayIso,
+  eurText,
   normalizeTerm,
   offerAddOns,
-  PRICE_LIST,
+  prepayFreeMonthsFor,
   setupForChoice,
   startDateBounds,
-  TERM_OPTIONS,
+  termOptionsFor,
   type OfferTerm,
 } from "@/lib/offer-pricing";
 import { AcceptForm, type OfferChoiceProps } from "./accept-form";
@@ -66,17 +69,21 @@ export default async function OfferPage({
     );
   }
 
-  // Aufrufe durch eingeloggte Admins (Vorschau) zählen nicht als „gesehen“.
+  // Als „geöffnet“ zählt nur der Interessent: nicht eingeloggte Admins oder Vermittler, nicht Link-Vorschauen
+  // und Scanner (lib/offer-view.ts, Ole 18.11.2026).
   const session = await getCurrentSession().catch(() => null);
-  if (session?.role !== "ADMIN") await markOfferViewed(offer.id);
+  const ua = (await headers().catch(() => null))?.get("user-agent") ?? null;
+  if (zaehltAlsGeoeffnet({ sessionRole: session?.role ?? null, userAgent: ua })) await markOfferViewed(offer.id);
 
   const expired = offer.validUntil.getTime() < nowMs();
+  // Als abgelehnt markiert (Ole, 18.11.2026): Hinweis statt Annahme, kein Bonus, kein Entscheidungs-Call
+  const abgelehnt = offer.status === "declined";
   const canAccept = (offer.status === "draft" || offer.status === "sent") && !expired && offer.termsUrl && offer.dpaUrl;
   // Abschlussbonus (Ole, 16.11.2026): nur echte Angebote mit Online-Zahlung, solange die Frist läuft
-  const bonus = !offer.isTest && billingEnabled() ? abschlussBonusJetzt(offer, new Date(nowMs())) : null;
+  const bonus = !offer.isTest && !abgelehnt && billingEnabled() ? abschlussBonusJetzt(offer, new Date(nowMs())) : null;
   // Entscheidungs-Call (Ole, 17.11.2026), geprüft beim Aufruf: schon gebucht → Termin mit Link zum Verschieben,
   // sonst Buchungslink. Nach der Annahme nur noch ein gebuchter Termin, kein Buchungslink mehr.
-  const call = offer.salesContactId && offer.status !== "superseded" && !offer.ohneEntscheidungsCall ? await entscheidungsCallStand(offer.salesContactId, new Date(nowMs())).catch(() => null) : null;
+  const call = offer.salesContactId && offer.status !== "superseded" && !abgelehnt && !offer.ohneEntscheidungsCall ? await entscheidungsCallStand(offer.salesContactId, new Date(nowMs())).catch(() => null) : null;
   const callText = call && (offer.status !== "accepted" || call.art === "gebucht") ? entscheidungsCallText(call) : null;
 
   return (
@@ -90,7 +97,9 @@ export default async function OfferPage({
             <Download className="h-4 w-4" /> Als PDF herunterladen
           </a>
         </div>
-        {offer.status === "accepted" && offer.isTest ? (
+        {abgelehnt ? (
+          <NichtMehrGueltig mail={process.env.OFFER_REPLY_TO?.trim() || null} />
+        ) : offer.status === "accepted" && offer.isTest ? (
           <div className="mx-auto mb-6 flex max-w-[880px] items-start gap-3 rounded-[20px] border border-emerald-200 bg-emerald-50 px-6 py-5 text-emerald-900 sm:px-10" data-testangebot-angenommen>
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
@@ -113,7 +122,7 @@ export default async function OfferPage({
         ) : null}
         <OfferDocument offer={doc} collapseAgb />
         {callText ? <EntscheidungsCallBox text={callText} /> : null}
-        {offer.status === "accepted" ? null : (
+        {offer.status === "accepted" || abgelehnt ? null : (
           <div id="annehmen" className="mx-auto mt-6 max-w-[880px] scroll-mt-4 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-8 sm:px-12">
             <section>
               <h2 className="text-lg font-bold">Angebot annehmen</h2>
@@ -174,11 +183,28 @@ export default async function OfferPage({
   );
 }
 
-const TERM_CHOICE_LABEL: Record<OfferTerm, string> = { "12m": "12 Monate", "3m": "3 Monate", none: "Ohne Laufzeit" };
+/** Abgelehntes Angebot: kurzer Hinweis in Sie-Form statt der Annahme, mit Antwortweg, wenn hinterlegt. */
+function NichtMehrGueltig({ mail }: { mail: string | null }) {
+  return (
+    <div className="mx-auto mb-6 flex max-w-[880px] items-start gap-3 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-5 sm:px-10" data-angebot-nicht-mehr-gueltig>
+      <Clock className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--muted)]" />
+      <div>
+        <p className="font-semibold">Dieses Angebot ist nicht mehr gültig, melden Sie sich gern bei mir.</p>
+        {mail ? (
+          <a href={`mailto:${mail}`} className="mt-3 inline-flex h-10 items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-4 text-sm font-semibold hover:bg-[color:var(--surface-sunken)]">
+            E-Mail schreiben
+          </a>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+const TERM_CHOICE_LABEL: Record<OfferTerm, string> = { "12m": "12 Monate", "6m": "6 Monate", "3m": "3 Monate", none: "Ohne Laufzeit" };
 
 /** Vorberechnete Wahl für die Angebotsseite (null = feste Konditionen wie bisher). */
 function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>): OfferChoiceProps | null {
-  if (!offer.customerChoosesTerm && !offer.customerChoosesStart) return null;
+  if (!offer.customerChoosesTerm && !offer.customerChoosesStart && !offer.annualChoice) return null;
   const count = offerProducts(offer.products).length || 1;
   const fixedTerm = normalizeTerm(offer.term);
   const add = offerAddOns(offerAddOnsOf(offer));
@@ -189,15 +215,21 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
     choosesTerm: offer.customerChoosesTerm,
     choosesStart: offer.customerChoosesStart,
     initialTerm: fixedTerm,
-    options: (offer.customerChoosesTerm ? TERM_OPTIONS : [fixedTerm]).map((t) => ({
+    // 6 Monate zur Wahl erst für Angebote ab dem Livegang (lib/offer-pricing.ts termOptionsFor)
+    options: (offer.customerChoosesTerm ? termOptionsFor(offer.createdAt, offer.term) : [fixedTerm]).map((t) => ({
       term: t,
       label: TERM_CHOICE_LABEL[t],
       setup: offer.customerChoosesTerm ? setupForChoice(t, count, discount) : Number(offer.setupFee),
       list: discount ? (offer.customerChoosesTerm ? setupForChoice(t, count) : fixedList) : null,
     })),
     monthlyTotal: add.monthlyTotal,
-    annualOffered: offer.annualPrepay,
-    freeMonths: offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths,
+    annualOffered: offer.annualPrepay || offer.annualChoice,
+    // „Vorauszahlung anbieten“: Kunde wählt monatlich oder im Voraus (6 bzw. 12 Monate; Vorauswahl monatlich, Ole 18.11.2026)
+    choosesAnnual: offer.annualChoice,
+    initialAnnual: offer.annualPrepay,
+    // Geschenkte Monate für die Laufzeit des Angebots (andere Laufzeiten: Standard, prepayFreeMonthsFor)
+    freeMonths: offer.annualFreeMonths ?? prepayFreeMonthsFor(fixedTerm),
+    legacyAnnual: offer.annualPrepay && !offer.annualChoice,
     start: startDateBounds(berlinTodayIso(new Date(nowMs())), offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null),
   };
 }
@@ -229,7 +261,7 @@ function payLaterProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByTo
   return bounds ? { ...bounds, current: tagIso(offer.paymentReminderAt) } : null;
 }
 
-const eurBonus = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(n)} €`;
+const eurBonus = eurText;
 const TAG_FMT = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long" });
 
 /** „heute bis 23:59 Uhr“, „morgen bis 23:59 Uhr“ oder „bis Dienstag, 17. November, 23:59 Uhr“. */

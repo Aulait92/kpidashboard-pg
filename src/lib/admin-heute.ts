@@ -9,11 +9,13 @@ import { onboardingProgressFor } from "@/lib/onboarding";
 import { stuckSetups } from "@/lib/selbst-einrichtung";
 import { shortName, isTerminReview } from "@/lib/vertrieb/crm";
 import { dayBounds, openTasks } from "@/lib/vertrieb/queries";
+import { ladeErgebnisFehlt } from "@/lib/vertrieb/termine-uebersicht-server";
 import { offeneGarantieFaelle } from "@/lib/garantien-server";
 import { GARANTIE_LABEL, heuteTitel, monatName, type Kennzahlen } from "@/lib/garantien";
 import { loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import { monthLabel } from "@/lib/monatsbericht/shared";
+import { reportError } from "@/lib/monitoring";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -138,7 +140,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
   const { start, tomorrow } = dayBounds();
   const week = new Date(now.getTime() - 7 * DAY);
   const [
-    tasks,
+    alleTasks,
     meetings,
     staleOffers,
     overdueCustomers,
@@ -153,6 +155,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     helpDown,
     feedback,
     supportRequests,
+    ergebnisFehlt,
   ] = await Promise.all([
     openTasks({ dueAt: { lt: tomorrow } }),
     prisma.salesMeeting.findMany({
@@ -209,6 +212,11 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       orderBy: { at: "asc" },
       take: 10,
       select: { id: true, at: true, customerId: true, meta: true },
+    }),
+    // Termine Stufe 2: Termin ohne Ergebnis ab dem nächsten Morgen (lib/vertrieb/termine-uebersicht.ts)
+    ladeErgebnisFehlt(now).catch((err: unknown) => {
+      reportError(err, "admin-heute-termin-ergebnis");
+      return [] as HeuteItem[];
     }),
   ]);
 
@@ -476,6 +484,10 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       since: m.startAt,
     });
   }
+  // „Ergebnis fehlt“ ersetzt die zugehörige Nachfrage „Wie lief der Termin?“ (gleiche Knöpfe, kein doppelter Punkt)
+  items.push(...ergebnisFehlt);
+  const ersetzt = new Set(ergebnisFehlt.map((i) => (i.quick?.kind === "termin" ? i.quick.taskId : null)).filter(Boolean));
+  const tasks = alleTasks.filter((t) => !ersetzt.has(t.id));
   const overdue = tasks.filter((t) => t.dueAt < start);
   const shown = tasks.slice(0, 6);
   for (const t of shown) {
@@ -677,6 +689,10 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
   const taxItem = rechnungItem(await loadTaxNumber());
   if (taxItem) items.push(taxItem);
 
+  // ── Tarifkatalog: Empfehlungen aus Einträgen der Vermittler (Ole, 18.11.2026) ──
+  const tarifItem = tarifEmpfehlungItem(await import("@/lib/tarif-vorschlaege-server").then((m) => m.tarifEmpfehlungen()).catch(() => 0));
+  if (tarifItem) items.push(tarifItem);
+
   const dismissed = userId ? await activeDismissals(userId, now) : [];
   return { items: rankItems(withoutDismissed(items, dismissed)), auto: await loadAuto(now) };
 }
@@ -693,6 +709,25 @@ export function rechnungItem(taxNumber: string | null): HeuteItem | null {
     detail: "Auf Stripe-Rechnungen fehlt die USt-IdNr. bzw. Steuernummer. Einmal eintragen, dann steht sie auf jeder Rechnung.",
     action: { label: "Eintragen", href: "/admin/einstellungen/rechnungsangaben" },
     later: TOMORROW,
+  };
+}
+
+/**
+ * Punkt „Tarifkatalog: Empfehlungen prüfen“, sobald Vorschläge von Vermittlern als „Empfohlen“ gelten (ab 3 verschiedenen
+ * Vermittlern mit demselben Wert, lib/tarif-vorschlaege.ts). Schlüssel mit der Zahl: neue Empfehlungen zeigen ihn wieder.
+ */
+export function tarifEmpfehlungItem(anzahl: number): HeuteItem | null {
+  if (anzahl <= 0) return null;
+  return {
+    key: `tarif:empfohlen-${anzahl}`,
+    area: "System",
+    tone: "info",
+    icon: "star",
+    title: anzahl === 1 ? "Tarifkatalog: 1 Empfehlung von Vermittlern" : `Tarifkatalog: ${anzahl} Empfehlungen von Vermittlern`,
+    detail: "Mehrere Vermittler haben denselben Wert eingetragen · übernehmen oder ablehnen",
+    action: { label: "Prüfen", href: "/admin/neu/einstellungen/tarife" },
+    later: TOMORROW,
+    approval: true,
   };
 }
 

@@ -50,6 +50,8 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "outreach_zahn",
   "outreach_pkv",
   "outreach_privatschutz",
+  // Reine Hausrat-Leads (Ole hat die Einreichung am 18.11.2026 freigegeben): „zu Ihrer Hausratversicherung“
+  "outreach_hausrat",
   "booking_confirmation",
   "reminder",
   "reminder_soon",
@@ -226,6 +228,7 @@ const V6_BEISPIEL: Partial<Record<NoticePurpose, { thema: string; frage: { sie: 
   outreach_zahn: { thema: "Zahnzusatzversicherung", frage: { sie: "Welcher Tarifbaustein ist Ihnen am wichtigsten", du: "Welcher Tarifbaustein ist dir am wichtigsten" } },
   outreach_pkv: { thema: "private Krankenversicherung", frage: { sie: "Wie sind Sie aktuell beruflich aufgestellt", du: "Wie bist du aktuell beruflich aufgestellt" } },
   outreach_privatschutz: { thema: "Privatschutz", frage: { sie: "Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu", du: "Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu" } },
+  outreach_hausrat: { thema: "Hausrat", frage: { sie: "Sind Sie bei Hausrat schon versichert, oder wäre es neu", du: "Bist du bei Hausrat schon versichert, oder wäre es neu" } },
 };
 
 /** Beispiel für das Produkt im Erstanschreiben (passt zum Artikel im Text: „zur …“ bzw. „zum Thema …“). */
@@ -234,6 +237,7 @@ const PRODUKT_BEISPIEL: Partial<Record<NoticePurpose, string>> = {
   outreach_zahn: "Zahnzusatzversicherung",
   outreach_pkv: "privaten Krankenversicherung",
   outreach_privatschutz: "Privatschutz",
+  outreach_hausrat: "Hausratversicherung",
 };
 
 export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | Ansprache = "du", names?: TemplateNames | null, labels?: string[]): string[] {
@@ -354,6 +358,7 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   outreach_zahn: { title: "Erste Nachricht: Zahnzusatz", when: "Wenige Minuten nach dem Formular, mit der ersten Frage und der Erstinformation als PDF." },
   outreach_pkv: { title: "Erste Nachricht: private Krankenversicherung", when: "Wenige Minuten nach dem Formular, mit der ersten Frage und der Erstinformation als PDF." },
   outreach_privatschutz: { title: "Erste Nachricht: Privatschutz", when: "Wenige Minuten nach dem Formular, mit der ersten Frage und der Erstinformation als PDF." },
+  outreach_hausrat: { title: "Erste Nachricht: Hausrat", when: "Wenige Minuten nach dem Formular, wenn nur Hausrat angefragt wurde, mit der ersten Frage und der Erstinformation als PDF." },
   booking_confirmation: { title: "Terminbestätigung", when: "Sobald ein Lead einen Termin gebucht hat." },
   reminder: { title: "Terminerinnerung", when: "Etwa 24 Stunden vor dem Termin." },
   reminder_soon: { title: "Kurz vor dem Termin", when: "Etwa eine Stunde vor dem Termin: passt alles?" },

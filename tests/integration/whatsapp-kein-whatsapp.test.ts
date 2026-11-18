@@ -112,14 +112,15 @@ describe("Kein WhatsApp", () => {
     expect(p!.body).toContain("+49 152");
     expect(pushes.some((x) => x.to === "admins")).toBe(false);
 
-    // E-Mail über das Postfach des Inhabers, Sie-Form, ohne Anrede im Formular mit vollem Namen (Ole, 17.11.2026), ohne Gedankenstriche
+    // Erstmail der Mail-Strecke (Ole, 18.11.2026, lib/mail-strecke) über das Postfach des Inhabers, Sie-Form, ohne Anrede
+    // im Formular neutral „Guten Tag,“, ohne Gedankenstriche (statt der früheren Einmal-Mail „Kurz zu …“)
     expect(mails).toHaveLength(1);
-    expect(mails[0]).toMatchObject({ userId: ownerId, to: lead.email, subject: "Kurz zu Ihrer Zahnzusatzversicherung" });
+    expect(mails[0]).toMatchObject({ userId: ownerId, to: lead.email, subject: "Ihre Anfrage zur Zahnzusatzversicherung" });
     expect(mails[0].text.startsWith("Guten Tag,")).toBe(true);
-    expect(mails[0].text).toMatch(/Antworten Sie gern|Termin wählen/);
+    expect(mails[0].text).toMatch(/Per WhatsApp kam meine Nachricht leider nicht an/);
     expect(mails[0].text).not.toMatch(/[–—]/);
     // Verlauf: protokolliert im Versandweg (lib/mail/kontakt-mail.ts, Test kontakt-mail-verlauf.test.ts)
-    expect(mails[0].protokoll).toMatchObject({ art: "kein_whatsapp", leadId: lead.id });
+    expect(mails[0].protokoll).toMatchObject({ art: "mail_strecke", leadId: lead.id });
 
     // Ganz oben auf der Anrufliste, mit Grund
     const list = await getCallbackLeads(customerId);

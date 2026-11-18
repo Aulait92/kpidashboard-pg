@@ -13,6 +13,9 @@ import { fmtDate } from "@/lib/vertrieb/dates";
 import { LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { MAIL_FILTERS, coldMailStand, kontakteFilter, ladeKontakte } from "@/lib/vertrieb/kontakte-liste";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import { ladeMetaLeads } from "@/lib/vertrieb/meta-leads";
+import { META_ANSICHT, MetaLeads, metaPfad } from "@/components/admin-neu/vertrieb/meta-leads";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Kontakte | performancegrowth Admin" };
 
@@ -21,6 +24,21 @@ export const metadata = { title: "Kontakte | performancegrowth Admin" };
 export default async function KontaktePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireAuth();
   const sp = await searchParams;
+  const aktionen = (
+    <ButtonLink href={`${KONTAKTE}/neu`} variant="primary" size="md" icon={Plus}>
+      Kontakt
+    </ButtonLink>
+  );
+  // Ansicht „Meta-Leads“ (Ole, 18.11.2026): Vermittler aus Meta-Formularen mit Stand und Trichter
+  if (sp.ansicht === META_ANSICHT) {
+    const daten = await ladeMetaLeads({ zeitraum: sp.zeitraum, stand: sp.stand });
+    return (
+      <Seite titel="Verkaufen" reiter="verkaufen" aktionen={aktionen}>
+        <AnsichtWahl meta />
+        <MetaLeads daten={daten} />
+      </Seite>
+    );
+  }
   const f = kontakteFilter(sp);
   const { total, contacts, pages, filtered } = await ladeKontakte(f);
   const seite = (n: number) => {
@@ -30,15 +48,8 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
   };
 
   return (
-    <Seite
-      titel="Verkaufen"
-      reiter="verkaufen"
-      aktionen={
-        <ButtonLink href={`${KONTAKTE}/neu`} variant="primary" size="md" icon={Plus}>
-          Kontakt
-        </ButtonLink>
-      }
-    >
+    <Seite titel="Verkaufen" reiter="verkaufen" aktionen={aktionen}>
+      <AnsichtWahl meta={false} />
       <div className="mb-4" data-funktion="page-q--suche-nach-agentur-name-e-mail-ort-telefon page-stage--filter-stufe page-mail-filters--filter-cold-mail-erhalten-keine-geoeffnet page-li--filter-linkedin-status-und-plz-beginnt-mit">
         <FilterChips
           searchPlaceholder="Agentur, Name, E-Mail, Ort, Telefon"
@@ -194,5 +205,24 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
         </nav>
       ) : null}
     </Seite>
+  );
+}
+
+/** Umschalter oben: alle Kontakte oder nur Meta-Leads (Quelle: Meta-Formular). */
+function AnsichtWahl({ meta }: { meta: boolean }) {
+  const klasse = (aktiv: boolean) =>
+    cn(
+      "inline-flex min-h-10 items-center rounded-full px-3 text-sm font-medium sm:min-h-8",
+      aktiv ? "bg-[color:var(--foreground)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
+    );
+  return (
+    <nav className="mb-3 flex gap-1" aria-label="Ansicht" data-funktion="meta-leads--ansicht-quelle-meta-formular">
+      <Link href={KONTAKTE} aria-current={!meta ? "page" : undefined} className={klasse(!meta)}>
+        Alle Kontakte
+      </Link>
+      <Link href={metaPfad({})} aria-current={meta ? "page" : undefined} className={klasse(meta)}>
+        Meta-Leads
+      </Link>
+    </nav>
   );
 }

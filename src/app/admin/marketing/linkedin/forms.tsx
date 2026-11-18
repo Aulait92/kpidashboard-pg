@@ -252,13 +252,13 @@ export function SettingsForm(props: {
       </label>
       <label className="block">
         <span className="text-sm font-semibold">Über mich</span>
-        <span className="block text-sm text-[color:var(--muted)]">Wer du bist, was du erlebt hast, deine Haltung, Tonfall (Du/Sie). Nur was hier steht, darf die KI als Fakt verwenden.</span>
+        <span className="block text-sm text-[color:var(--muted)]">Wer Sie sind, was Sie erlebt haben, Ihre Haltung, Tonfall (Du/Sie). Nur was hier steht, darf die KI als Fakt verwenden.</span>
         <textarea name="about" defaultValue={props.about} rows={6} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-sm" placeholder="z. B. Gründer von performancegrowth, vorher … Ich schreibe per Du, direkt, ohne Floskeln …" />
       </label>
       <label className="block">
         <span className="text-sm font-semibold">Trust-Material</span>
         <span className="block text-sm text-[color:var(--muted)]">
-          Echte Kunden-Cases, Ergebnisse, Kundenstimmen. Nur was hier steht, darf die KI als Case oder Zitat verwenden. Namen nur, wenn du sie ausdrücklich freigibst (z. B. „Name darf genannt werden“). Zahlen aus der Software (Leads, Termine, Reaktionszeit, NPS) kommen automatisch dazu.
+          Echte Kunden-Cases, Ergebnisse, Kundenstimmen. Nur was hier steht, darf die KI als Case oder Zitat verwenden. Namen nur, wenn Sie sie ausdrücklich freigeben (z. B. „Name darf genannt werden“). Zahlen aus der Software (Leads, Termine, Reaktionszeit, NPS) kommen automatisch dazu.
         </span>
         <textarea name="trustNotes" defaultValue={props.trustNotes} rows={6} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-sm" placeholder="z. B. Allianz-Agentur, Tierkrankenversicherung Katze: 100 Leads → 12 Abschlüsse → 4.300 € Nettoprämie, Provision knapp 2.500 € (WhatsApp vom Kunden liegt als Screenshot in den Fotos)." />
       </label>

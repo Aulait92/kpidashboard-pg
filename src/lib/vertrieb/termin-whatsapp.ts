@@ -29,6 +29,7 @@ import {
   ZAHLUNG_TEMPLATE_SIE,
   ZAHLUNG_TEMPLATE_SIE_V2,
 } from "@/lib/angebot-zahlungserinnerung";
+import { BONUS_TEMPLATE_PURPOSE, BONUS_VORLAGEN } from "@/lib/vertrieb/bonus-erinnerung";
 
 export const TERMIN_TEMPLATE_NAME = "pg_vertrieb_termin_v1";
 export const TERMIN_TEMPLATE_PURPOSE = "vertrieb_termin";
@@ -158,6 +159,8 @@ export const SUPPORT_TEMPLATES: SupportTemplate[] = [
   { name: ZAHLUNG_TEMPLATE_DU, body: ZAHLUNG_TEMPLATE_BODY_DU, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
   { name: ZAHLUNG_TEMPLATE_SIE_V2, body: ZAHLUNG_TEMPLATE_BODY_SIE_V2, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
   { name: ZAHLUNG_TEMPLATE_DU_V2, body: ZAHLUNG_TEMPLATE_BODY_DU_V2, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
+  // Erinnerung am letzten Tag des Abschlussbonus (lib/vertrieb/bonus-erinnerung.ts), Sie/Du, mit bzw. ohne „später zahlen“
+  ...BONUS_VORLAGEN.map(({ name, body, examples, purpose }) => ({ name, body, examples: [...examples], purpose })),
 ];
 
 export function supportTemplateRequest(t: SupportTemplate): CreateTemplateInput {
@@ -621,6 +624,7 @@ const LABEL: Record<string, string> = {
   vertrieb_erinnerung: "Terminerinnerung",
   vertrieb_gleich: "Termin gleich",
   [ZAHLUNG_TEMPLATE_PURPOSE]: "Zahlungserinnerung",
+  [BONUS_TEMPLATE_PURPOSE]: "Bonus-Erinnerung",
 };
 
 /**

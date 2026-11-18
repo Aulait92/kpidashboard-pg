@@ -42,6 +42,7 @@ export function angebotFuerFolien(o: OfferRow): AngebotFuerFolien {
     empfehlungMonthly: num(o.empfehlungMonthly),
     annualPrepay: o.annualPrepay,
     annualFreeMonths: o.annualFreeMonths,
+    annualChoice: o.annualChoice,
     customerChoosesTerm: o.customerChoosesTerm,
     setupDiscount: num(o.setupDiscount),
     introMonthlyFee: num(o.introMonthlyFee),

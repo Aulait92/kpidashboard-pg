@@ -3,7 +3,7 @@
 // „Bestandskunden-Modul“, anteilig ab heute. Ohne laufendes Abo mit Zahlungsart (oder bei
 // Nur-Betreuung / Zahlungsverzug) bleibt der bisherige Weg „Modul anfragen“.
 import { prisma } from "@/lib/prisma";
-import { PRICE_LIST, eur } from "@/lib/offer-pricing";
+import { PRICE_LIST, eur, normalizeRhythmus, RHYTHMUS_MONATE } from "@/lib/offer-pricing";
 import { PROVIDER } from "@/lib/legal-texts";
 import { sendCustomerMail, getAppUrl } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
@@ -56,7 +56,13 @@ export async function selfBookBestand(customerId: string, actor: AuditActor & { 
   const res = await setBestandModule(customerId, "book", { requireStripe: true, proration: withdraw ? "none" : "create_prorations", actor });
   if (!res.ok) return { ok: false, error: res.error, fallback: true };
   const price = PRICE_LIST.bestandModuleMonthly;
-  const terms = bestandTerms({ annual: before.billingInterval === "year", monthlyNet: price, freeMonths: PRICE_LIST.annualFreeMonths });
+  const rhythmus = normalizeRhythmus(before.billingInterval);
+  const terms = bestandTerms({
+    annual: rhythmus !== "month",
+    monthlyNet: price,
+    freeMonths: rhythmus === "halfyear" ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths,
+    prepayMonths: RHYTHMUS_MONATE[rhythmus],
+  });
   await notify({
     customerId,
     name: before.name,

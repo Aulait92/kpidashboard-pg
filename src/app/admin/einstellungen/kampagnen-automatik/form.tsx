@@ -38,7 +38,7 @@ export function AutomationForm({ s }: { s: AutomationSettings }) {
           name="budgetSync"
           checked={s.budgetSync}
           title="Budgetänderungen automatisch bei Meta umsetzen"
-          text="Ändert ein Kunde sein Werbebudget, stellt die App das Tagesbudget der passenden Kampagne um – nur bei genau einer passenden Kampagne, der Status bleibt unverändert. Sonst Aufgabe „Meta-Budget …“ mit Grund."
+          text="Ändert ein Kunde sein Werbebudget, stellt die App das Tagesbudget der passenden Kampagne um, aber nur bei genau einer passenden Kampagne. Der Status bleibt unverändert. Sonst Aufgabe „Meta-Budget …“ mit Grund."
         />
         <Toggle
           name="autoLaunch"
@@ -50,7 +50,7 @@ export function AutomationForm({ s }: { s: AutomationSettings }) {
           name="refresh"
           checked={s.refresh}
           title="Müde Anzeigen erkennen und neue Anzeigen vorbereiten"
-          text="Wöchentliche Prüfung laufender Kampagnen. Bei Ermüdung legt das Agenten-Team 2–3 neue Anzeigen pausiert in derselben Anzeigengruppe an (höchstens alle 14 Tage je Kampagne). Pausiert und aktiviert wird nichts automatisch."
+          text="Wöchentliche Prüfung laufender Kampagnen. Bei Ermüdung legt das Agenten-Team 2 bis 3 neue Anzeigen pausiert in derselben Anzeigengruppe an (höchstens alle 14 Tage je Kampagne). Pausiert und aktiviert wird nichts automatisch."
         />
       </div>
       <div className="space-y-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-sm)]">

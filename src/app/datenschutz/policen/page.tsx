@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { loadErstinfoByToken } from "@/lib/erstinformation";
 import { datenschutzPolicenAbschnitte } from "@/lib/policen/datenschutz-text";
 import { DATENSCHUTZ_VERSION } from "@/lib/policen/regeln";
@@ -6,7 +5,8 @@ import { LeadLegalFooter } from "@/components/lead-legal-footer";
 
 // Langfassung zur Einwilligung „Unterlagen per WhatsApp“ (Ole, 17.11.2026, lib/policen): öffentliche Seite des
 // Vermittlers (lib/policen/verantwortlicher.ts policenDatenschutzUrl). k = Token der Erstinformation (zufällig, ändert
-// sich nicht). Texte: lib/policen/datenschutz-text.ts.
+// sich nicht). Texte: lib/policen/datenschutz-text.ts. Ohne bzw. mit unbekanntem k (Link abgeschnitten oder von Hand
+// eingetippt) keine 404, sondern ein Hinweis mit der nächsten Handlung (Usability-Check 18.11.2026).
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Datenschutz: Unterlagen per WhatsApp", robots: { index: false, follow: false } };
 
@@ -16,7 +16,7 @@ export default async function DatenschutzPolicenPage({ searchParams }: Props) {
   const { k } = await searchParams;
   const token = Array.isArray(k) ? k[0] : k;
   const e = token ? await loadErstinfoByToken(token) : null;
-  if (!e) notFound();
+  if (!e) return <LinkUnvollstaendig />;
   const abschnitte = datenschutzPolicenAbschnitte(e.an, { name: e.daten.name, firma: e.daten.firma, anschrift: e.daten.anschrift, telefon: e.daten.telefon, email: e.daten.email });
 
   return (
@@ -38,5 +38,18 @@ export default async function DatenschutzPolicenPage({ searchParams }: Props) {
       </main>
       <LeadLegalFooter customerId={e.customerId} />
     </>
+  );
+}
+
+function LinkUnvollstaendig() {
+  return (
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-[15px] leading-relaxed" data-datenschutz-policen-ohne-link>
+        <h1 className="text-xl font-bold">Unterlagen per WhatsApp</h1>
+        <p className="mt-3">
+          Dieser Link ist nicht vollständig. Bitte öffnen Sie den Link direkt aus der WhatsApp-Nachricht Ihres Beraters, dann sehen Sie den Datenschutzhinweis mit seinen Angaben.
+        </p>
+      </div>
+    </main>
   );
 }

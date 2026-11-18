@@ -66,7 +66,7 @@ export default async function KundenPage() {
                 <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.percent}%` }} />
               </div>
               <div className="mt-1 text-xs text-slate-500">
-                Onboarding {ob.percent} % · offen: {ob.waitingCustomer} Kunde, {ob.waitingYou} du
+                Onboarding {ob.percent} % · offen: {ob.waitingCustomer} Kunde, {ob.waitingYou} Sie
               </div>
             </div>
           )}

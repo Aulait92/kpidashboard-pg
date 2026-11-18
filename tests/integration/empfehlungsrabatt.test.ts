@@ -261,9 +261,9 @@ describe("Empfehlungsrabatt auf die Einrichtung", () => {
     const contactId = await referred("dokument");
     const offer = await offerFor(contactId);
     const html = renderToStaticMarkup(createElement(OfferDocument, { offer: toOfferDoc(offer) }));
-    expect(html).toMatch(/<s[^>]*data-offer-setup-list[^>]*>990,00\s€<\/s>/);
+    expect(html).toMatch(/<s[^>]*data-offer-setup-list[^>]*>990\s€<\/s>/);
     expect(html).toContain("Empfehlungsrabatt (empfohlen von Erna Empfehler)");
-    expect(html).toMatch(/data-offer-setup-discount[^>]*>− 300,00\s€/);
+    expect(html).toMatch(/data-offer-setup-discount[^>]*>− 300\s€/);
     // Laufzeitwahl zeigt die Preise nach Rabatt
     expect(html).toMatch(/12 Monate \(Setup 690\s€\)/);
     expect(html).toMatch(/ohne Laufzeit \(<!-- -->?2\.190\s€\)|ohne Laufzeit \(2\.190\s€\)/);

@@ -17,7 +17,7 @@ import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting } from "@/lib/offer-links";
-import { berlinTodayIso, PRICE_LIST } from "@/lib/offer-pricing";
+import { berlinTodayIso, isPrepaid, PRICE_LIST } from "@/lib/offer-pricing";
 import { berlinEndOfDay, fmtIso } from "@/lib/vertrag-laufzeit";
 import { canonicalProductKey, displayProduct } from "@/lib/products";
 import { bestandVisible } from "@/lib/bestand/sichtbar";
@@ -69,6 +69,8 @@ async function customerFor(customerId: string) {
       isTest: true,
       stripeCustomerId: true,
       retainerStart: true,
+      billingDay: true,
+      billingStart: true,
       retainerMonthly: true,
       billingInterval: true,
       cancelRequestedAt: true,
@@ -82,7 +84,8 @@ async function customerFor(customerId: string) {
   });
   if (!c) return null;
   const offer = c.onboarding?.offerId ? await prisma.offer.findUnique({ where: { id: c.onboarding.offerId }, select: { startDate: true, contactName: true, softwareFee: true } }) : null;
-  const start = c.retainerStart ?? offer?.startDate ?? null;
+  // Abrechnungsmonate zählen ab dem ersten Abrechnungstag (lib/abrechnungstag.ts), sonst ab dem Start
+  const start = (c.billingDay != null ? c.billingStart : null) ?? c.retainerStart ?? offer?.startDate ?? null;
   return { c, offer, startIso: start ? berlinIso(start) : null, contactId: c.salesContact?.id ?? c.onboarding?.salesContactId ?? null };
 }
 
@@ -111,7 +114,7 @@ export async function halteContext(customerId: string, now = new Date()): Promis
   if (!r) return null;
   const s = await loadHalteSettings();
   const todayIso = berlinIso(now);
-  const annual = r.c.billingInterval === "year";
+  const annual = isPrepaid(r.c.billingInterval);
   const [last, pause] = await Promise.all([lastDiscountIso(customerId), prisma.customerPause.findFirst({ where: { customerId, status: { in: ["planned", "active"] } }, select: { id: true } })]);
   return {
     s,

@@ -24,6 +24,7 @@ import { PplVersandPostfach } from "@/app/admin/ppl/ppl-versand";
 import { HvkReabgleich } from "@/app/admin/ppl/hvk-client";
 import { AirtableNachholen } from "@/app/admin/ppl/nachholen";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 
@@ -240,7 +241,7 @@ async function Bezuege({ subs, syncAus }: { subs: Subs; syncAus: boolean }) {
                       ? q
                         ? `${q.quota} / Woche ${fmtWeek(start)}`
                         : `nichts bezahlt für ${fmtWeek(start)}`
-                      : `${s.goal ?? s.testQuantity ?? "–"} ${s.period === "month" ? "/ Monat" : "einmalig"}`;
+                      : `${s.goal ?? s.testQuantity ?? KEINE_ANGABE} ${s.period === "month" ? "/ Monat" : "einmalig"}`;
                   return (
                     <li key={s.id}>
                       <Link href={`${PFAD}/bezug/${s.id}`} className={`flex items-center gap-3 px-4 py-3 text-sm hover:bg-[color:var(--surface-sunken)] sm:px-5 ${s.active ? "" : "opacity-60"}`}>
@@ -289,7 +290,7 @@ function StornoPruefen({
                 </div>
                 <div className="text-xs text-[color:var(--muted)]">
                   {l.customer.name} · {l.source}
-                  {l.stornoNote ? ` · „${l.stornoNote}“` : ""} · geliefert {l.deliveredAt ? dt(l.deliveredAt) : "–"} · {eur(Number(l.revenues[0]?.amount ?? 0))}
+                  {l.stornoNote ? ` · „${l.stornoNote}“` : ""} · geliefert {l.deliveredAt ? dt(l.deliveredAt) : KEINE_ANGABE} · {eur(Number(l.revenues[0]?.amount ?? 0))}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -433,7 +434,7 @@ async function Import() {
                 <Badge tone={r.action === "übersprungen" ? "danger" : r.action === "neu" ? "success" : r.action === "unverändert" ? "neutral" : "warning"}>{r.action}</Badge>
               </div>
               <div className="text-xs text-[color:var(--muted)]">
-                {r.goal ?? "–"} {r.period === "month" ? "/ Monat" : r.period === "once" ? "einmalig" : "/ Woche"} · {eur(r.price)} · {r.filters || "ohne Filter"} · Storno {r.stornoDays ? `${r.stornoDays} Tage` : "–"} · {r.delivery}
+                {r.goal ?? KEINE_ANGABE} {r.period === "month" ? "/ Monat" : r.period === "once" ? "einmalig" : "/ Woche"} · {eur(r.price)} · {r.filters || "ohne Filter"} · Storno {r.stornoDays ? `${r.stornoDays} Tage` : KEINE_ANGABE} · {r.delivery}
               </div>
               {r.note ? <div className="text-xs text-rose-700">{r.note}</div> : null}
               {r.changes.length ? <div className="text-xs">{r.changes.join(" · ")}</div> : null}

@@ -15,6 +15,7 @@
 import { prisma } from "@/lib/prisma";
 import { describe, runSequences, SEQUENCES, type SequenceKind, type SequenceLogEntry } from "@/lib/lead-sequences";
 import { ERINNERUNG_ARTEN, type ErinnerungKey } from "@/lib/nachrichtenplan";
+import { tagKurz } from "@/lib/bedenkzeit";
 
 const DAY = 24 * 60 * 60 * 1000;
 /** Verschieben: höchstens so weit in die Zukunft. */
@@ -130,30 +131,67 @@ export async function jetztSenden(leadId: string, key: string, now = new Date())
   return fehler("Nicht gesendet, bitte später noch einmal versuchen.");
 }
 
-/** „Alle pausieren“: Abfolgen und Termin-Erinnerungen an den Lead warten. */
-export async function pausieren(leadId: string, now = new Date()): Promise<AktionsErgebnis> {
+/**
+ * Pausieren: Abfolgen und Termin-Erinnerungen an den Lead warten. „Später melden“ (Ole, 18.11.2026) mit `bis`: an dem Tag
+ * setzt der WhatsApp-Cron von selbst fort (pausenBeenden); ohne `bis` wie bisher bis „Fortsetzen“.
+ */
+export async function pausieren(leadId: string, now = new Date(), bis: Date | null = null): Promise<AktionsErgebnis> {
   await prisma.lead.updateMany({ where: { id: leadId, nachrichtenPausiertAt: null }, data: { nachrichtenPausiertAt: now } });
-  return { ok: true, text: "Alle automatischen Nachrichten pausiert" };
+  await prisma.lead.updateMany({ where: { id: leadId }, data: { nachrichtenPausiertBis: bis } });
+  return { ok: true, text: bis ? `Pausiert bis ${tagKurz(bis)}` : "Alle automatischen Nachrichten pausiert" };
 }
 
-/** „Fortsetzen“: laufende Abfolgen rücken um die Dauer der Pause nach (Wiedervorlage des Assistenten: Zeitpunkt bleibt). */
-export async function fortsetzen(leadId: string, now = new Date()): Promise<AktionsErgebnis> {
+/**
+ * „Fortsetzen“: laufende Abfolgen rücken um die Dauer der Pause nach (Wiedervorlage des Assistenten: Zeitpunkt bleibt).
+ * Mit `ab` (Ende von „Später melden“): der nächste Schritt kommt frühestens an diesem Tag, die folgenden rücken um dieselbe
+ * Spanne mit; Schritte, die ohnehin später geplant waren, bleiben.
+ */
+export async function fortsetzen(leadId: string, now = new Date(), opts: { ab?: Date } = {}): Promise<AktionsErgebnis> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { nachrichtenPausiertAt: true } });
   const seit = lead?.nachrichtenPausiertAt;
-  if (!seit) return { ok: true, text: "Läuft" };
+  if (!seit) {
+    await prisma.lead.updateMany({ where: { id: leadId, nachrichtenPausiertBis: { not: null } }, data: { nachrichtenPausiertBis: null } });
+    return { ok: true, text: "Läuft" };
+  }
   // Bedingt: nur einmal nachrücken, auch bei Doppelklick
-  const n = await prisma.lead.updateMany({ where: { id: leadId, nachrichtenPausiertAt: seit }, data: { nachrichtenPausiertAt: null } });
+  const n = await prisma.lead.updateMany({ where: { id: leadId, nachrichtenPausiertAt: seit }, data: { nachrichtenPausiertAt: null, nachrichtenPausiertBis: null } });
   if (!n.count) return { ok: true, text: "Läuft" };
   const delta = Math.max(0, now.getTime() - seit.getTime());
   const laufend = await prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null, nextAt: { not: null } } });
   for (const a of laufend) {
     const next = a.nextAt!;
     const recall = a.kind === "recall";
-    const neu = recall ? new Date(Math.max(next.getTime(), now.getTime())) : new Date(next.getTime() + delta);
+    const shift = recall ? 0 : opts.ab ? Math.max(0, opts.ab.getTime() - next.getTime()) : delta;
+    const neu = recall ? new Date(Math.max(next.getTime(), now.getTime())) : new Date(next.getTime() + shift);
     await prisma.leadSequence.update({
       where: { id: a.id },
-      data: { nextAt: neu, neustartAt: new Date((a.neustartAt ?? a.startedAt).getTime() + (recall ? 0 : delta)), vorabCheckStep: null },
+      data: { nextAt: neu, neustartAt: new Date((a.neustartAt ?? a.startedAt).getTime() + shift), vorabCheckStep: null },
     });
   }
   return { ok: true, text: "Automatische Nachrichten laufen wieder" };
+}
+
+/**
+ * WhatsApp-Cron: „Später melden“ ist vorbei (Lead.nachrichtenPausiertBis erreicht) → fortsetzen ab diesem Tag, mit Eintrag
+ * im Verlauf. Liefert die Zahl der fortgesetzten Kontakte.
+ */
+export async function pausenBeenden(now = new Date(), limit = 50): Promise<number> {
+  const faellig = await prisma.lead.findMany({
+    where: { nachrichtenPausiertBis: { lte: now } },
+    select: { id: true, customerId: true, nachrichtenPausiertAt: true, nachrichtenPausiertBis: true },
+    orderBy: { nachrichtenPausiertBis: "asc" },
+    take: limit,
+  });
+  let n = 0;
+  for (const l of faellig) {
+    if (!l.nachrichtenPausiertAt) {
+      await prisma.lead.update({ where: { id: l.id }, data: { nachrichtenPausiertBis: null } });
+      continue;
+    }
+    await fortsetzen(l.id, now, { ab: l.nachrichtenPausiertBis! });
+    n++;
+    const { logLeadHistory } = await import("@/lib/lead-history");
+    await logLeadHistory(l.id, "wiedervorlage", "Später melden: Tag erreicht, automatische Nachrichten laufen wieder", { customerId: l.customerId, userId: null }).catch(() => null);
+  }
+  return n;
 }

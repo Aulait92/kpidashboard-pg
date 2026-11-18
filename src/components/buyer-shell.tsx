@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { EMPFEHLUNG_MODULE_AVAILABLE, showNewBadge } from "@/lib/empfehlung/shared";
 import { NotReachedOfferHost } from "@/components/next-step";
 import { AbschlussNachherHost } from "@/components/abschluss-nachher";
+import { BeratungsdokuFrageHost } from "@/components/beratungsdoku-frage";
 import { ZurueckLink } from "@/components/zurueck-link";
 import { demoPfadAlsBuyer } from "@/lib/app-demo/weiche";
 
@@ -147,7 +148,7 @@ export function BuyerShell({
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
-          <Link href="/buyer" className="flex shrink-0 items-center gap-2">
+          <Link href="/buyer" onClick={zurStartseite} className="flex shrink-0 items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
               <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
             </span>
@@ -227,8 +228,21 @@ export function BuyerShell({
     </div>
     <NotReachedOfferHost />
     <AbschlussNachherHost />
+    <BeratungsdokuFrageHost />
     </ToastProvider>
   );
+}
+
+/**
+ * Logo oben links (Ole, 18.11.2026): immer zur Startseite „Heute“. Ist sie schon offen (ohne geöffneten Kontakt), nach
+ * oben scrollen statt nichts zu tun.
+ */
+function zurStartseite(e: React.MouseEvent<HTMLAnchorElement>) {
+  if (typeof window === "undefined") return;
+  if (window.location.pathname === "/buyer" && !window.location.search) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
 function Badge({ n }: { n: number }) {
@@ -478,7 +492,7 @@ function BuyerShellA({
       <div className="min-h-dvh md:pl-60">
         {/* Rechner: Seitenleiste */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[color:var(--border)] bg-white px-3 pb-3 pt-5 md:flex">
-          <Link href="/buyer" className="mb-5 flex items-center gap-2 px-2">
+          <Link href="/buyer" onClick={zurStartseite} className="mb-5 flex items-center gap-2 px-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
               <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
             </span>
@@ -539,7 +553,7 @@ function BuyerShellA({
         {/* Handy: schmale Kopfzeile */}
         <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/90 backdrop-blur md:hidden">
           <div className="flex h-14 items-center gap-2 px-4">
-            <Link href="/buyer" aria-label="Heute" className="-m-1.5 flex items-center gap-2 p-1.5">
+            <Link href="/buyer" onClick={zurStartseite} aria-label="Heute" className="-m-1.5 flex items-center gap-2 p-1.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
                 <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
               </span>
@@ -595,6 +609,7 @@ function BuyerShellA({
       </div>
       <NotReachedOfferHost />
       <AbschlussNachherHost />
+      <BeratungsdokuFrageHost />
     </ToastProvider>
   );
 }

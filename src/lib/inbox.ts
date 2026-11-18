@@ -120,6 +120,8 @@ export type InboxData = {
    * Gesammelt am nächsten Morgen als eine Karte mit Chips, kein eigener Push.
    */
   beitragFehlt?: InboxBeitragFehlt[];
+  /** Offene Datenschutz-Anfragen (Betroffenenrechte, lib/dsgvo/server.ts), ganz oben auf Heute */
+  datenschutz?: import("@/lib/dsgvo/server").HeuteDsgvo[];
 };
 
 export type InboxBeitragFehlt = { leadId: string; name: string; sparte: string; chips: number[]; einheit: "/Jahr" | "/Monat"; ersparnis: boolean };
@@ -380,5 +382,16 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     bookingSlug: cal?.status === "connected" ? await getOrCreateBookingSlug(customerId) : null,
     noNextStep: { total: noStep.total, leads: noStep.leads.filter((l) => !outcomeLeadIds.has(l.leadId)) },
     beitragFehlt: await loadBeitragFehlt(ctx, now).catch(() => []),
+    datenschutz: await loadDatenschutz(ctx, now).catch(() => []),
   };
+}
+
+/** Offene Datenschutz-Anfragen; Berater (Team) sehen nur die ihrer Leads. */
+async function loadDatenschutz(ctx: TeamCtx, now: Date) {
+  const { offeneDsgvoAnfragen } = await import("@/lib/dsgvo/server");
+  const alle = await offeneDsgvoAnfragen(ctx.customerId, null, now);
+  if (!isAdvisor(ctx) || !alle.length) return alle;
+  const ids = alle.map((x) => x.leadId).filter((x): x is string => !!x);
+  const eigene = new Set((await prisma.lead.findMany({ where: { ...leadScope(ctx), id: { in: ids } }, select: { id: true } })).map((l) => l.id));
+  return alle.filter((x) => x.leadId && eigene.has(x.leadId));
 }

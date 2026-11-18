@@ -13,7 +13,7 @@
 // agencyCostsForRange ist rein (ohne Datenbank, getestet); loadAgencyCostConfig lädt die Daten.
 
 import { prisma } from "@/lib/prisma";
-import { PRICE_LIST, TERM_MONTHS, annualMultiplier, normalizeTerm } from "@/lib/offer-pricing";
+import { PRICE_LIST, TERM_MONTHS, isPrepaid, normalizeTerm, rhythmusFuer, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
 
 const DAY_MS = 86_400_000;
 
@@ -197,10 +197,12 @@ export async function loadAgencyCostConfig(customerId: string): Promise<AgencyCo
   if (bestand > 0 && !c.bestandGrandfathered) modules.push({ from: firstBook("billing.bestand") ?? start, until: c.bestandCancelAt, monthly: bestand });
   const empf = c.empfehlungMonthly != null ? Number(c.empfehlungMonthly) : 0;
   if (empf > 0 && !c.empfehlungFree) modules.push({ from: c.empfehlungTrialEndsAt ?? firstBook("billing.empfehlung") ?? c.empfehlungSince ?? start, until: c.empfehlungCancelAt, monthly: empf });
-  const yearly = c.billingInterval === "year" || !!accepted?.annualPrepay;
+  // Vorauszahlung: jährlich bzw. 6 Monate (Laufzeit 6m) im Voraus
+  const rhythmus = isPrepaid(c.billingInterval) ? c.billingInterval : rhythmusFuer(accepted?.term, !!accepted?.annualPrepay);
+  const yearly = isPrepaid(rhythmus);
   return {
     vatRate: PRICE_LIST.vatRate,
-    annualFactor: yearly ? annualMultiplier(accepted?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) / 12 : 1,
+    annualFactor: yearly ? rhythmusMonatsAnteil(rhythmus, accepted?.annualFreeMonths) : 1,
     base: retainer > 0
       ? [{ from: c.retainerStart, until: c.retainerEnd, monthly: retainer }]
       : accepted && Number(accepted.monthlyFee) > 0

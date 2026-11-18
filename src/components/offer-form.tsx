@@ -7,10 +7,25 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { createOfferAction } from "@/app/admin/vertrieb/offer-actions";
 import type { OfferTarget } from "@/lib/offer-links";
-import { abschlussBonusStandardTag, berlinTodayIso, bestandPacksText, computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm, type OfferVermittler } from "@/lib/offer-pricing";
+import {
+  abschlussBonusStandardTag,
+  berlinTodayIso,
+  bestandPacksText,
+  computeOfferPrice,
+  defaultStartDate,
+  eur,
+  PRICE_LIST,
+  prepayPossible,
+  VORAUSZAHLUNG,
+  withVat,
+  type OfferPackage,
+  type OfferTerm,
+  type OfferVermittler,
+} from "@/lib/offer-pricing";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
+import { abrechnungsplan, ABRECHNUNGSTAG_MAX, ersterAbrechnungstag, VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG } from "@/lib/abrechnungstag";
 
 const PRODUCT_SUGGESTIONS = [
   "TKV-Katze",
@@ -80,6 +95,9 @@ export function OfferForm({
   const [introMonths, setIntroMonths] = useState("3");
   const [specialTerms, setSpecialTerms] = useState(initial.specialTerms ?? "");
   const [startDate, setStartDate] = useState(defaultStartDate());
+  // Abrechnungstag (Ole, 18.11.2026): leer = wie Start; selten genutzt, daher aufklappbar unter dem Start
+  const [billingDay, setBillingDay] = useState("");
+  const [billingFree, setBillingFree] = useState(false);
   const [validDays, setValidDays] = useState("14");
   const [seats, setSeats] = useState(String(PRICE_LIST.seatsIncluded));
   const [annual, setAnnual] = useState(false);
@@ -109,13 +127,16 @@ export function OfferForm({
     setupOverride: num(setupOverride),
     monthlyOverride: num(monthlyOverride),
     seats: num(seats),
-    annual: annual && term === "12m",
+    annual: annual && prepayPossible(term),
     bestandModule: bestand && pkg === "software",
     empfehlungModule: empfehlung && pkg === "software",
     setupDiscount: referralDiscount ? num(discount) : null,
   });
   const softwarePkg = pkg === "software";
-  const annualPossible = term === "12m" && num(introFee) == null;
+  // Vorauszahlung (Ole, 18.11.2026): mit 12 Monaten jährlich (2 geschenkt), mit 6 Monaten 6 Monate im Voraus (1 geschenkt)
+  const annualPossible = prepayPossible(term) && num(introFee) == null;
+  const voraus = VORAUSZAHLUNG[term === "6m" ? "6m" : "12m"];
+  const geschenkt = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"} geschenkt`;
 
   function submit() {
     setError(null);
@@ -142,6 +163,8 @@ export function OfferForm({
         introMonths: num(introMonths),
         specialTerms,
         startDate: startDate || null,
+        billingDay: num(billingDay),
+        billingFreeStart: billingFree && !!billingDay,
         validDays: num(validDays) ?? 14,
         seats: softwarePkg ? num(seats) : null,
         annual: annual && annualPossible,
@@ -262,10 +285,11 @@ export function OfferForm({
         <Card>
           <CardHeader title="Laufzeit und Konditionen" />
           <div className="space-y-4 p-5">
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {(
                 [
                   ["12m", "12 Monate", `Setup ${eur(PRICE_LIST.setup12m)}`],
+                  ["6m", "6 Monate", `Setup ${eur(PRICE_LIST.setup6m)}`],
                   ["3m", "3 Monate", `Setup ${eur(PRICE_LIST.setup3m)}`],
                   ["none", "Ohne Laufzeit", `Setup ${eur(PRICE_LIST.setupNoTerm)}`],
                 ] as const
@@ -317,9 +341,12 @@ export function OfferForm({
                   onChange={(e) => setIntroMonths(e.target.value)}
                 />
               </Field>
-              <Field l="Start * (ab dann läuft die Monatsgebühr)">
-                <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-              </Field>
+              <div className="space-y-2">
+                <Field l="Start * (ab dann läuft die Monatsgebühr)">
+                  <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </Field>
+                <AbrechnungstagFeld startDate={startDate} day={billingDay} setDay={setBillingDay} free={billingFree} setFree={setBillingFree} voraus={annual && annualPossible} />
+              </div>
               <Field l="Angebot gültig (Tage)">
                 <input className={input} inputMode="numeric" value={validDays} onChange={(e) => setValidDays(e.target.value)} />
               </Field>
@@ -453,9 +480,13 @@ export function OfferForm({
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${annualPossible ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
               <input type="checkbox" name="annual" className="mt-0.5 h-4 w-4" disabled={!annualPossible} checked={annual && annualPossible} onChange={(e) => setAnnual(e.target.checked)} />
               <span>
-                <span className="block font-semibold">Jährlich im Voraus zahlen: {PRICE_LIST.annualFreeMonths} Monate geschenkt</span>
+                <span className="block font-semibold" data-vorauszahlung-label>
+                  Vorauszahlung anbieten ({geschenkt(voraus.freeMonths)})
+                </span>
                 <span className="block text-xs text-[color:var(--muted)]">
-                  {annualPossible ? `Jahresbetrag = ${12 - PRICE_LIST.annualFreeMonths} × Monatspreis inkl. Zusätze, fällig zum Start.` : "Nur mit 12 Monaten Laufzeit und ohne Startpreis."}
+                  {annualPossible
+                    ? `Der Kunde wählt bei der Annahme monatlich (vorausgewählt) oder ${term === "6m" ? "6 Monate im Voraus" : "jährlich"} für ${voraus.months - voraus.freeMonths} × Monatspreis inkl. Zusätze.`
+                    : "Nur mit 6 oder 12 Monaten Laufzeit und ohne Startpreis."}
                 </span>
               </span>
             </label>
@@ -519,7 +550,7 @@ export function OfferForm({
               <Sum k={`Monat 1–${num(introMonths) ?? "?"}`} v={eur(num(introFee)!)} sub={`${eur(withVat(num(introFee)!))} brutto`} />
             ) : null}
             <Sum
-              k={startDate ? `Paket monatlich ab ${startDate.split("-").reverse().join(".")}` : "Paket monatlich"}
+              k={startDate ? `Paket monatlich ab ${ersterAbrechnungstag(startDate, num(billingDay)).split("-").reverse().join(".")}` : "Paket monatlich"}
               v={price.monthlyFee == null ? "individuell" : eur(price.monthlyFee)}
               sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto · Pause: ${eur(price.softwareFee)}`}
             />
@@ -537,9 +568,9 @@ export function OfferForm({
             ) : null}
             {price.annualTotal != null ? (
               <Sum
-                k="Jährlich im Voraus"
+                k={price.prepayMonths === 6 ? "Oder 6 Monate im Voraus (Kunde wählt)" : "Oder jährlich (Kunde wählt)"}
                 v={eur(price.annualTotal)}
-                sub={`${PRICE_LIST.annualFreeMonths} Monate geschenkt (spart ${eur(price.annualSavings)}) · ${eur(withVat(price.annualTotal))} brutto`}
+                sub={`${geschenkt(price.prepayFreeMonths)} (spart ${eur(price.annualSavings)}) · ${eur(withVat(price.annualTotal))} brutto`}
               />
             ) : null}
             {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-rose-700">{error}</p> : null}
@@ -554,6 +585,60 @@ export function OfferForm({
         </Card>
       </div>
     </div>
+  );
+}
+
+/** Abrechnungstag unter dem Start: zugeklappt „wie Start“, aufgeklappt Tag 1 bis 28 und „Zeit bis dahin gratis“. */
+function AbrechnungstagFeld({
+  startDate,
+  day,
+  setDay,
+  free,
+  setFree,
+  voraus,
+}: {
+  startDate: string;
+  day: string;
+  setDay: (v: string) => void;
+  free: boolean;
+  setFree: (v: boolean) => void;
+  /** Vorauszahlung angeboten: gilt nur, wenn der Kunde monatlich wählt (lib/abrechnungstag.ts) */
+  voraus: boolean;
+}) {
+  const startDay = /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? Number(startDate.slice(8, 10)) : null;
+  const plan = abrechnungsplan({ startIso: startDay ? startDate : null, billingDay: day ? Number(day) : null, freeStart: free });
+  const differs = !!plan?.differs;
+  return (
+    <details className="group text-sm" data-abrechnungstag>
+      <summary className="cursor-pointer text-xs font-medium text-[color:var(--brand)]">
+        Abrechnungstag: {day ? `am ${day}.${differs ? (free ? ", kostenloser Start" : ", Zeit davor anteilig") : ""}` : "wie Start"}
+      </summary>
+      <div className="mt-2 space-y-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] p-3">
+        <label className="block space-y-1">
+          <span className={label}>Abbuchung jeweils am</span>
+          <select className={input} value={day} onChange={(e) => setDay(e.target.value)} name="billingDay">
+            <option value="">Wie Start{startDay ? ` (${startDay}.)` : ""}</option>
+            {Array.from({ length: ABRECHNUNGSTAG_MAX }, (_, i) => i + 1).map((d) => (
+              <option key={d} value={String(d)}>
+                {d}. des Monats
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={`flex items-start gap-2 ${differs ? "" : "opacity-50"}`}>
+          <input type="checkbox" className="mt-0.5 h-4 w-4" checked={free && differs} disabled={!differs} onChange={(e) => setFree(e.target.checked)} name="billingFreeStart" />
+          <span>Zeit bis zum ersten Abrechnungstag gratis</span>
+        </label>
+        <p className="text-xs text-[color:var(--muted)]" data-abrechnungstag-hinweis>
+          {differs
+            ? `Erste Abbuchung am ${plan!.firstIso.split("-").reverse().join(".")}, ${plan!.free ? "Zeit davor kostenlos" : "Zeit davor anteilig mit der ersten Abbuchung"}. Laufzeit zählt ab dann.`
+            : startDay && startDay > ABRECHNUNGSTAG_MAX
+              ? "Wie bisher: in kürzeren Monaten am Monatsletzten."
+              : "Wie bisher: Abbuchung am Starttag."}
+          {differs && voraus ? ` ${VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG}` : ""}
+        </p>
+      </div>
+    </details>
   );
 }
 

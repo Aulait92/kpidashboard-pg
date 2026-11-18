@@ -10,6 +10,7 @@ import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { fmtDate, REVIEW_SOURCE_NOTE } from "@/lib/empfehlung/shared";
 import { disconnectGbpAction } from "@/app/buyer/empfehlungen/actions";
 import { LocationPicker, ReplyEditor } from "@/components/empfehlung/client";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 const stars = (n: number) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 const monthLabel = (ym: string) => new Intl.DateTimeFormat("de-DE", { month: "short", timeZone: "UTC" }).format(new Date(`${ym}-01T00:00:00Z`));
@@ -93,9 +94,9 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
           {conn.lastSyncAt ? ` · zuletzt abgeglichen ${fmtDate(conn.lastSyncAt)}` : ""}
         </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" data-gbp-stats>
-          <Tile k="Durchschnitt" v={s.average != null ? `${s.average.toLocaleString("de-DE")} ★` : "–"} sub={s.start?.average != null ? `beim Start ${s.start.average.toLocaleString("de-DE", { maximumFractionDigits: 1 })} ★` : undefined} />
+          <Tile k="Durchschnitt" v={s.average != null ? `${s.average.toLocaleString("de-DE")} ★` : NOCH_KEINE_DATEN} sub={s.start?.average != null ? `beim Start ${s.start.average.toLocaleString("de-DE", { maximumFractionDigits: 1 })} ★` : undefined} />
           <Tile k="Bewertungen" v={String(s.count)} sub={s.start ? `${s.newSinceStart} neu seit Modulstart` : undefined} />
-          <Tile k="Antwortquote" v={s.replyRate != null ? `${s.replyRate} %` : "–"} />
+          <Tile k="Antwortquote" v={s.replyRate != null ? `${s.replyRate} %` : NOCH_KEINE_DATEN} />
           <Tile k="Offen (1–3 ★)" v={String(s.unansweredBad)} warn={s.unansweredBad > 0} />
         </div>
         <div>

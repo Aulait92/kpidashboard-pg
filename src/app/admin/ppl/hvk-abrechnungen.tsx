@@ -123,7 +123,7 @@ function InvoiceRow({ r }: { r: HvkInvoiceRow }) {
             {r.warnings.length ? <AlertTriangle className="ml-1 inline h-3.5 w-3.5 text-amber-500" /> : null}
           </span>
           <span className="text-right text-[color:var(--muted)] sm:text-left">
-            {dm(r.periodStart)} – {dmy(r.periodEnd)}
+            {dm(r.periodStart)} bis {dmy(r.periodEnd)}
           </span>
           <span className="tabular-nums sm:text-right">
             <Label>geliefert</Label>

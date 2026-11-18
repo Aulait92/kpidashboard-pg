@@ -84,7 +84,7 @@ export async function AufgabenListe({ basis, searchParams: sp }: { basis: string
               </Link>
             </>
           ) : view === "open" ? (
-            "Alles erledigt. Neue Aufgaben legst du oben oder im Kontakt an."
+            "Alles erledigt. Neue Aufgaben legen Sie oben oder im Kontakt an."
           ) : (
             "Noch nichts erledigt."
           )}

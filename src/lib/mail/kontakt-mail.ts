@@ -24,6 +24,11 @@ export const MAIL_ARTEN = {
   terminaenderung: "Terminänderung",
   bestandskampagne: "Bestandskampagne",
   kein_whatsapp: "Kein WhatsApp",
+  // Mail-Strecke für Leads ohne WhatsApp (Ole, 18.11.2026, lib/mail-strecke)
+  mail_strecke: "Erste E-Mail (ohne WhatsApp)",
+  mail_strecke_nachfassen: "Nachfassen per E-Mail",
+  // Betroffenenrechte (lib/dsgvo): Eingangsbestätigung an den Absender
+  datenschutz_bestaetigung: "Datenschutz-Anfrage: Eingangsbestätigung",
   nummer_erfragen: "Richtige Nummer erfragen",
   maklervollmacht: "Maklervollmacht",
   bewertungsbitte: "Bewertungsbitte",

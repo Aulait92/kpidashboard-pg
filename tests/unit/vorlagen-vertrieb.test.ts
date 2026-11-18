@@ -141,8 +141,8 @@ describe("Versionen und A/B-Fassungen bei der Auswahl", () => {
   const v4 = { name: "pg_outreach_v4_sie", body: "Guten Tag {{1}}, neu ok?", headerFormat: "DOCUMENT" };
   const v5 = { name: "pg_outreach_v5_sie", body: "Hallo {{1}}, danke ok?", headerFormat: "DOCUMENT" };
   const v5ohne = { name: "pg_outreach_v5_sie_ohne_name", body: "Hallo, danke ok?", headerFormat: "DOCUMENT" };
-  const lA = { name: "pg_followup_last_v4_sie", body: "Guten Tag {{1}}, A ok?", headerFormat: null };
-  const lB = { name: "pg_followup_last_v4_b_sie", body: "Guten Tag {{1}}, B ok?", headerFormat: null };
+  const lA = { name: "pg_followup_last_v5_sie", body: "Guten Tag {{1}}, A ok?", headerFormat: null };
+  const lB = { name: "pg_followup_last_v5_b_sie", body: "Guten Tag {{1}}, B ok?", headerFormat: null };
 
   it("Erstanschreiben v8, übrige v4, unveränderte Zwecke behalten v3", () => {
     expect(TEMPLATE_VERSION).toBe("v4");

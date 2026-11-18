@@ -5,8 +5,9 @@ describe("Preisstaffel im Angebot (§ 305c, § 307 Abs. 1 Satz 2 BGB, Rechtsprü
   it("nennt alle Stufen, die Grenze zum individuellen Angebot und den Wechselzeitpunkt, ohne Gedankenstriche", () => {
     const t = tierStaffelText().replace(/ /g, " ");
     for (const tier of PRICE_LIST.tiers) expect(t).toContain(tier.maxBudget.toLocaleString("de-DE"));
-    expect(t).toContain("bis 3.000 €: 1.000 €");
-    expect(t).toContain("über 3.000 bis 6.000 €: 1.400 €");
+    expect(t).toContain("bis 3.000 €: 990 €");
+    expect(t).toContain("über 3.000 bis 6.000 €: 1.390 €");
+    expect(t).toContain("über 6.000 bis 10.000 €: 1.790 €");
     expect(t).toContain("über 10.000 € individuelles Angebot");
     expect(t).toContain("ab dem folgenden Abrechnungsmonat");
     expect(t).not.toMatch(/[–—]/);
@@ -19,7 +20,7 @@ describe("computeOfferPrice", () => {
   it("Software-Paket, 1 Produkt, 12 Monate: Listenpreise", () => {
     const r = computeOfferPrice({ package: "software", term: "12m", products: [p(50)] });
     expect(r.setupFee).toBe(990);
-    expect(r.monthlyFee).toBe(1000); // Budget 50 €/Tag ≈ 1.520 €/Monat → Stufe bis 3.000 €
+    expect(r.monthlyFee).toBe(990); // Budget 50 €/Tag ≈ 1.520 €/Monat → Stufe bis 3.000 €
     expect(r.softwareFee).toBe(349);
     expect(r.individual).toBe(false);
   });
@@ -31,7 +32,7 @@ describe("computeOfferPrice", () => {
   it("3 Monate Laufzeit: Setup 1.990 €, Monatsgebühr unverändert", () => {
     const r = computeOfferPrice({ package: "software", term: "3m", products: [p(50)] });
     expect(r.setupFee).toBe(1990);
-    expect(r.monthlyFee).toBe(1000);
+    expect(r.monthlyFee).toBe(990);
     expect(setupForTerm("3m")).toBe(1990);
     expect(TERM_MONTHS["3m"]).toBe(3);
   });
@@ -43,7 +44,8 @@ describe("computeOfferPrice", () => {
   });
 
   it("unbekannte Laufzeit wird „ohne Laufzeit“", () => {
-    expect(normalizeTerm("6m")).toBe("none");
+    expect(normalizeTerm("24m")).toBe("none");
+    expect(normalizeTerm("6m")).toBe("6m");
     expect(normalizeTerm("3m")).toBe("3m");
     expect(normalizeTerm(undefined)).toBe("none");
   });
@@ -52,7 +54,7 @@ describe("computeOfferPrice", () => {
     const r = computeOfferPrice({ package: "software", term: "12m", products: [p(30), p(30, "Leben")] });
     expect(r.extraProducts).toBe(1);
     expect(r.setupFee).toBe(990);
-    expect(r.monthlyFee).toBe(1000 + 350);
+    expect(r.monthlyFee).toBe(990 + 350);
   });
 
   it("Nur Betreuung: 700 €/Monat, keine Software-Gebühr", () => {

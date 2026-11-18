@@ -330,6 +330,8 @@ export async function bookAppointment(opts: {
   leadPhone?: string | null;
   /** E-Mail an den Lead: Bestätigung (Standard), „verschoben" oder keine. */
   notifyLead?: "booked" | "rescheduled" | false;
+  /** Wie gebucht (Appointment.bookedVia): bot | booking_page | advisor | mail_strecke */
+  bookedVia?: string | null;
 }): Promise<{
   appointmentId: string;
   meetUrl: string | null;
@@ -394,6 +396,7 @@ export async function bookAppointment(opts: {
       meetUrl: videoUrl,
       status: "booked",
       manageToken,
+      bookedVia: opts.bookedVia ?? null,
     },
   });
   // Testlead (lib/testlead.ts): Buchung als Logzeile (Bot, Buchungsseite oder von Hand)

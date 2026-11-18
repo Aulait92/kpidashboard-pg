@@ -37,8 +37,8 @@ describe("Sicht Kerngeschäft / Gesamt", () => {
   });
 
   it("Pilot-Beschriftung", () => {
-    expect(pilotLabel("2026-06", "2026-11")).toBe("Juni–November 2026");
-    expect(pilotLabel("2026-06", "2027-01")).toBe("Juni 2026–Januar 2027");
+    expect(pilotLabel("2026-06", "2026-11")).toBe("Juni bis November 2026");
+    expect(pilotLabel("2026-06", "2027-01")).toBe("Juni 2026 bis Januar 2027");
     expect(pilotLabel("2026-06", null)).toBe("seit Juni 2026");
     expect(pilotEnded("2026-11", "2026-12")).toBe(true);
     expect(pilotEnded("2026-11", "2026-11")).toBe(false);

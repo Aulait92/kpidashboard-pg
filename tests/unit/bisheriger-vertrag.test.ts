@@ -284,4 +284,15 @@ describe("Vergleichsfolie mit „Ihr bisheriger Vertrag“", () => {
     for (const z of zellen.filter(Boolean)) expect(z).toContain(WERT_PRUEFEN);
     expect(zellen.join("")).not.toMatch(/nein-z|nicht enthalten/);
   });
+
+  it("ein „nein“ aus dem Tarifkatalog zeigt in der Spalte „laut Police prüfen“, keinen Strich (Ole, 18.11.2026)", () => {
+    const a = auswahl();
+    const werte = Object.fromEntries(a.sparten[0].schema.merkmale.map((m) => [m.key, "nein"]));
+    a.sparten[0].bisher = hand({ gesellschaft: "Ostsee Versicherung", beitrag: 5, werte });
+    const html = vergleichsfolie(a)!.html;
+    const zellen = [...html.matchAll(/<td class="bisher">(.*?)<\/td>/g)].map((m) => m[1]).filter(Boolean);
+    expect(zellen.length).toBeGreaterThan(0);
+    for (const z of zellen) expect(z).toContain(WERT_PRUEFEN);
+    expect(zellen.join("")).not.toMatch(/nein-z/);
+  });
 });

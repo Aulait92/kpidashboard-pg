@@ -1,13 +1,13 @@
 "use server";
 
-// Lead-Detail: laufende Nachfass-Abfolge stoppen bzw. für eine Bedenkzeit pausieren (Paket P5).
+// Lead-Detail: laufende Nachfass-Abfolge stoppen bzw. „Später melden“ (Bedenkzeit P5 und Pause P6 in einem Blatt).
 
 import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/audit";
 import { getCurrentSession } from "@/lib/auth";
 import { writableCustomerId } from "@/lib/buyer-write";
-import { bedenkzeitAusDatum, bedenkzeitDatum, istBedenkzeitWahl, tagKurz } from "@/lib/bedenkzeit";
-import { startBedenkzeit, stopSequences } from "@/lib/lead-sequences";
+import { stopSequences } from "@/lib/lead-sequences";
+import { spaeterMelden, type SpaeterErgebnis, type SpaeterWann } from "@/lib/spaeter-melden";
 import { recordUsage } from "@/lib/usage";
 
 export async function stopLeadSequenceAction(leadId: string): Promise<{ ok: boolean; error?: string }> {
@@ -24,21 +24,20 @@ export async function stopLeadSequenceAction(leadId: string): Promise<{ ok: bool
 }
 
 /**
- * Bedenkzeit eintragen („meldet sich am …“): 1 Woche, 2 Wochen, Ende des Monats oder ein Datum (YYYY-MM-DD). Das
- * Nachfassen zum Angebot pausiert und startet an dem Tag neu (lib/lead-sequences.ts startBedenkzeit).
+ * „Später melden“ (Ole, 18.11.2026, ein Blatt statt „Alle pausieren“ und „Bedenkzeit eintragen“): 1 Woche, 2 Wochen, Ende
+ * des Monats, ein Datum (YYYY-MM-DD) oder ohne Datum. Mit Angebot: Bedenkzeit (Nachfassen zum Angebot startet am Tag
+ * neu), sonst Pause bis zu dem Tag. Optional die E-Mail „Wie besprochen“ mit dem Tag (lib/spaeter-melden.ts).
  */
-export async function bedenkzeitAction(leadId: string, wann: { wahl?: string; datum?: string }): Promise<{ ok: true; bis: string; text: string } | { ok: false; error: string }> {
+export async function spaeterMeldenAction(leadId: string, wann: SpaeterWann, opts: { mail?: boolean } = {}): Promise<SpaeterErgebnis> {
   const customerId = await writableCustomerId(leadId);
   if (!customerId) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
-  const now = new Date();
-  const bis = istBedenkzeitWahl(wann.wahl) ? bedenkzeitDatum(wann.wahl, now) : bedenkzeitAusDatum(wann.datum, now);
-  if (!bis) return { ok: false, error: "Bitte ein Datum ab morgen wählen (höchstens 90 Tage)." };
   const session = await getCurrentSession();
-  const seq = await startBedenkzeit(leadId, bis, { quelle: "vermittler", userId: session?.userId ?? null, now });
-  if (!seq) return { ok: false, error: "Kontakt nicht gefunden." };
-  await audit("lead.bedenkzeit", { entity: "Lead", entityId: leadId, customerId, details: { bis: bis.toISOString() } });
-  await recordUsage("action", "sequence.bedenkzeit");
+  const res = await spaeterMelden(leadId, { wahl: wann.wahl, datum: wann.datum, ohneDatum: !!wann.ohneDatum }, { userId: session?.userId ?? null, mail: !!opts.mail });
+  if (res.ok) {
+    await audit(res.weg === "bedenkzeit" ? "lead.bedenkzeit" : "lead.spaeter_melden", { entity: "Lead", entityId: leadId, customerId, details: { weg: res.weg, bis: res.bis, mail: res.mail } });
+    await recordUsage("action", `sequence.spaeter.${res.weg}`);
+  }
   revalidatePath(`/buyer/leads/${leadId}`);
   revalidatePath("/buyer");
-  return { ok: true, bis: bis.toISOString(), text: `Pausiert bis ${tagKurz(bis)}` };
+  return res;
 }

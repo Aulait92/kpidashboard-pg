@@ -10,6 +10,7 @@ import type { DealOfferRow } from "@/components/deal-offers-card";
 import { ueberweisungAktiv } from "@/lib/mahnwesen";
 import { erinnerungsGrenzen, naechsteErinnerung, zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
 import { abschlussBonusFrist, abschlussBonusGesichert, abschlussBonusJetzt, berlinTodayIso } from "@/lib/offer-pricing";
+import { ablehnGrundLabel, kannAblehnen, kannWiederOeffnen } from "@/lib/vertrieb/angebot-ablehnen";
 
 type OfferRef = { dealId: string | null; salesContactId: string | null };
 
@@ -83,6 +84,11 @@ export function toOfferRow(o: Offer): DealOfferRow {
     isTest: o.isTest,
     startDate: o.startDate ? o.startDate.toISOString().slice(0, 10) : null,
     startShiftedFrom: o.startShiftedFrom ? o.startShiftedFrom.toISOString().slice(0, 10) : null,
+    billingDay: o.billingDay,
+    billingFreeStart: o.billingFreeStart,
+    annualChoice: o.annualChoice,
+    annualPrepay: o.annualPrepay,
+    term: o.term,
     allowPayLater: o.allowPayLater,
     allowBankTransfer: o.allowBankTransfer,
     bankTransferDays: o.bankTransferDays,
@@ -100,6 +106,11 @@ export function toOfferRow(o: Offer): DealOfferRow {
     abschlussBonusGewaehrt: o.abschlussBonusGewaehrt == null ? null : Number(o.abschlussBonusGewaehrt),
     abschlussBonusAbgelaufen: o.abschlussBonus != null && !abschlussBonusJetzt(o),
     abschlussBonusGesichert: abschlussBonusGesichert(o),
+    declinedAt: o.declinedAt?.toISOString() ?? null,
+    declineReason: o.status === "declined" ? ablehnGrundLabel(o.declineReason) : null,
+    declineNote: o.declineNote,
+    kannAblehnen: kannAblehnen(o),
+    kannWiederOeffnen: kannWiederOeffnen(o, new Date()),
   };
 }
 

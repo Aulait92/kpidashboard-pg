@@ -10,6 +10,7 @@
 import { endOfDay, startOfMonth } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { displayProduct } from "@/lib/products";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 export type AdChannel = "Meta" | "Outbrain" | "TikTok" | "Google";
 
@@ -117,7 +118,7 @@ export async function listAdspendAttribution(
     const product = c.product;
     if (!product) continue;
     const parsed = parseNote(c.note);
-    const channel = parsed?.channel ?? "–";
+    const channel = parsed?.channel ?? KEINE_ANGABE;
     const campaign = parsed?.campaign ?? c.note ?? "(unbekannt)";
     const amount = decToNumber(c.amount);
     matchedTotal += amount;

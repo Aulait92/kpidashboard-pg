@@ -4,8 +4,9 @@ import { Badge, Button, ButtonLink, Card, CardHeader, EmptyState } from "@/compo
 import { SubmitButton } from "@/components/submit-button";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { Meldung } from "@/components/admin-neu/leads/ansichten";
-import { assignFormAction, dismissUnassignedAction, toggleSourceAction } from "@/app/admin/lead-eingang/actions";
-import { loadLeadEingang } from "@/app/admin/lead-eingang/daten";
+import { ZielWahl } from "@/components/admin-neu/leads/ziel-wahl";
+import { assignFormAction, dismissUnassignedAction, toggleSourceAction, toggleVertriebFormAction } from "@/app/admin/lead-eingang/actions";
+import { VERTRIEB_ZIEL, loadLeadEingang } from "@/app/admin/lead-eingang/daten";
 
 export const metadata = { title: "Lead-Eingang | performancegrowth Admin" };
 
@@ -22,12 +23,12 @@ const eur = (n: number) => `${n.toLocaleString("de-DE")} €`;
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string; ok?: string; err?: string; form?: string; neu?: string }> }) {
   const sp = await searchParams;
-  const { diag, sources, customers, productOptions, unassigned, forms, formsError, base, metaReady } = await loadLeadEingang(sp.page);
+  const { diag, sources, customers, productOptions, unassigned, forms, formsError, base, metaReady, vertriebForms } = await loadLeadEingang(sp.page);
   const offen = unassigned.reduce((a, u) => a + u._count._all, 0);
   const zuordnenOffen = !!(sp.form || sp.page || sp.neu || sp.err);
 
   return (
-    <Seite titel="Liefern" reiter="liefern" untertitel="Jedes Leadformular einem Kunden zuordnen, dann kommen Leads direkt in die App.">
+    <Seite titel="Liefern" reiter="liefern" untertitel="Jedes Leadformular einem Kunden oder dem Vertrieb zuordnen, dann kommen Leads direkt in die App.">
       <Meldung ok={sp.ok} err={sp.err} />
       {!metaReady ? (
         <p className="mb-4 rounded-[var(--radius-md)] bg-amber-50 px-4 py-2.5 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">
@@ -51,7 +52,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
                       </div>
                     </div>
                     <ButtonLink href={`${PFAD}?form=${u.formId ?? ""}#zuordnen`} variant="primary">
-                      Kunde wählen
+                      Zuordnen
                     </ButtonLink>
                     <form action={dismissUnassignedAction} data-funktion="actions-dismissunassignedaction--wartende-leads-ohne-zuordnung-verwerfen">
                       <input type="hidden" name="formId" value={u.formId ?? ""} />
@@ -73,15 +74,36 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
             <CardHeader
               title="Zuordnungen"
               icon={Workflow}
-              count={sources.filter((s) => s.active).length}
+              count={sources.filter((s) => s.active).length + vertriebForms.filter((f) => f.active).length}
               actions={
                 <ButtonLink href={`${PFAD}?neu=1#zuordnen`} icon={Plus}>
                   Zuordnung
                 </ButtonLink>
               }
             />
-            {sources.length ? (
+            {sources.length || vertriebForms.length ? (
               <ul className="divide-y divide-[color:var(--border)] text-sm">
+                {/* Formulare des Vertriebs (Oles eigene Vermittler-Leads) zuerst */}
+                {vertriebForms.map((f) => (
+                  <li key={f.id} className={`flex items-center gap-3 px-4 py-3 sm:px-5 ${f.active ? "" : "opacity-60"}`} data-funktion="lead-eingang--vertriebsformulare-in-den-zuordnungen">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">
+                        {f.formName ?? `Formular ${f.formId}`} → Vertrieb
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[color:var(--muted)]">
+                        <Badge tone="brand">Vermittler-Leads</Badge>
+                        <span>· {f.lastLeadAt ? `zuletzt ${fmt(f.lastLeadAt)}` : "noch kein Lead"}</span>
+                        {!f.active ? <Badge>pausiert</Badge> : null}
+                      </div>
+                    </div>
+                    <form action={toggleVertriebFormAction}>
+                      <input type="hidden" name="id" value={f.id} />
+                      <SubmitButton pendingLabel="…" className="h-10 px-2 text-xs font-medium text-[color:var(--brand)] hover:underline sm:h-8">
+                        {f.active ? "Pausieren" : "Aktivieren"}
+                      </SubmitButton>
+                    </form>
+                  </li>
+                ))}
                 {sources.map((s) => (
                   <li key={s.id} className={`flex items-center gap-3 px-4 py-3 sm:px-5 ${s.active ? "" : "opacity-60"}`}>
                     <div className="min-w-0 flex-1">
@@ -164,41 +186,31 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
                   <input name="formId" required defaultValue={sp.form ?? ""} placeholder="Formular-ID, z. B. 1909684100014197" inputMode="numeric" className={input} />
                 )}
               </label>
-              <label className="block space-y-1">
-                <span className="text-xs font-medium text-[color:var(--muted)]">Kunde</span>
-                <select name="customerId" required className={input} defaultValue="">
-                  <option value="" disabled>
-                    Kunde wählen
-                  </option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block space-y-1">
-                <span className="text-xs font-medium text-[color:var(--muted)]">Produkt</span>
-                <input name="productKey" required list="neu-lead-products" placeholder="z. B. Privatschutz" className={input} />
-                <datalist id="neu-lead-products">
-                  {productOptions.map((p) => (
-                    <option key={p} value={p} />
-                  ))}
-                </datalist>
-              </label>
-              <details className="md:col-span-2" data-funktion="actions-assignformaction--beim-zuordnen-lead-preis-ppl-und-airtable-bezug">
-                <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-medium text-[color:var(--muted)]">Erweitert: Lead-Preis (Pay-per-Lead) und Airtable-Bezug</summary>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <label className="block space-y-1">
-                    <span className="text-xs font-medium text-[color:var(--muted)]">Lead-Preis netto</span>
-                    <input name="leadPrice" inputMode="decimal" placeholder="leer = kein Lead-Preis" className={input} />
-                  </label>
-                  <label className="block space-y-1">
-                    <span className="text-xs font-medium text-[color:var(--muted)]">Airtable-Bezug für Stornogründe</span>
-                    <input name="bezugAirtableId" placeholder="rec… (leer bei Retainer-Kunden)" className={input} />
-                  </label>
-                </div>
-              </details>
+              {/* Ziel: Kunde (mit Produkt) oder Vertrieb (Oles eigene Vermittler-Leads, ohne Produkt) */}
+              <div className="contents" data-funktion="lead-eingang--formular-dem-vertrieb-zuordnen">
+                <ZielWahl
+                  customers={customers}
+                  productOptions={productOptions}
+                  vertriebWert={VERTRIEB_ZIEL}
+                  inputClass={input}
+                  listId="neu-lead-products"
+                  erweitert={
+                    <details className="md:col-span-2" data-funktion="actions-assignformaction--beim-zuordnen-lead-preis-ppl-und-airtable-bezug">
+                      <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-medium text-[color:var(--muted)]">Erweitert: Lead-Preis (Pay-per-Lead) und Airtable-Bezug</summary>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <label className="block space-y-1">
+                          <span className="text-xs font-medium text-[color:var(--muted)]">Lead-Preis netto</span>
+                          <input name="leadPrice" inputMode="decimal" placeholder="leer = kein Lead-Preis" className={input} />
+                        </label>
+                        <label className="block space-y-1">
+                          <span className="text-xs font-medium text-[color:var(--muted)]">Airtable-Bezug für Stornogründe</span>
+                          <input name="bezugAirtableId" placeholder="rec… (leer bei Retainer-Kunden)" className={input} />
+                        </label>
+                      </div>
+                    </details>
+                  }
+                />
+              </div>
               <div className="flex flex-wrap items-center gap-3 md:col-span-2">
                 <SubmitButton pendingLabel="Wird zugeordnet …" className="h-10 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-sm font-semibold text-white">
                   Zuordnen

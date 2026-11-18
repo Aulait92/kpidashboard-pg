@@ -3,6 +3,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { Badge, Card } from "@/components/ui";
 import { ImportButton } from "./import-button";
 import { AdminBack } from "@/components/admin/admin-back";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 export const dynamic = "force-dynamic";
 
@@ -61,11 +62,11 @@ export default async function ImportPage() {
                     <div className="text-xs text-[color:var(--muted)]">{r.active ? "aktiv" : "inaktiv"}</div>
                   </td>
                   <td className="px-3 py-2 tabular-nums">
-                    {r.goal ?? "–"} {r.period === "month" ? "/ Monat" : r.period === "once" ? "einmalig" : "/ Woche"}
+                    {r.goal ?? KEINE_ANGABE} {r.period === "month" ? "/ Monat" : r.period === "once" ? "einmalig" : "/ Woche"}
                   </td>
                   <td className="px-3 py-2 tabular-nums">{eur(r.price)}</td>
-                  <td className="px-3 py-2 text-xs text-[color:var(--muted)]">{r.filters || "–"}</td>
-                  <td className="px-3 py-2 text-xs">{r.stornoDays ? `${r.stornoDays} Tage` : "–"}</td>
+                  <td className="px-3 py-2 text-xs text-[color:var(--muted)]">{r.filters || KEINE_ANGABE}</td>
+                  <td className="px-3 py-2 text-xs">{r.stornoDays ? `${r.stornoDays} Tage` : KEINE_ANGABE}</td>
                   <td className="px-3 py-2 text-xs">{r.delivery}</td>
                   <td className="px-3 py-2">
                     <Badge tone={r.action === "übersprungen" ? "danger" : r.action === "neu" ? "success" : r.action === "unverändert" ? "neutral" : "warning"}>{r.action}</Badge>

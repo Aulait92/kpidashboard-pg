@@ -10,6 +10,8 @@ import { addDays, fromDayKey } from "@/lib/vertrieb/dates";
 import type { SalesActivityType as ActivityType, SalesCustomerStage as CustomerStage, SalesLossReason as LossReason, SalesStage as Stage, SalesTaskType as TaskType } from "@/generated/prisma/enums";
 import { importContactsCsv } from "@/lib/vertrieb/import-contacts";
 import { ensureSource } from "@/lib/vertrieb/source";
+import { setzeStufe } from "@/lib/vertrieb/stufe";
+import { offenesAngebotAblehnen } from "@/lib/vertrieb/angebot-ablehnen-server";
 import { connectCalendly, syncCalendly } from "@/lib/vertrieb/calendly";
 import { handleInboundLead } from "@/lib/vertrieb/inbound";
 import { enrichContact } from "@/lib/vertrieb/contact-enrich";
@@ -89,6 +91,9 @@ export async function logActivity(fd: FormData) {
   });
   if (stage === "GEWONNEN") await ensureSource(contactId);
   if (stage) await stopFollowupOnStage(contactId, stage);
+  // Verloren mit offenem Angebot: „Offenes Angebot auch als abgelehnt markieren?“ (Ole, 18.11.2026)
+  const declineOfferId = s(fd, "declineOfferId");
+  if (stage === "VERLOREN" && declineOfferId) await offenesAngebotAblehnen(contactId, declineOfferId, lossReason ?? "SONSTIGES");
   // „Später wieder“: Follow-up per Mail im Instantly-Thread statt nur Aufgabe (ersetzt die 60-Tage-Aufgabe)
   if (outcome.id === "spaeter") {
     const due = s(fd, "taskDue");
@@ -102,24 +107,10 @@ export async function setStage(fd: FormData) {
   const contactId = s(fd, "contactId")!;
   const stage = s(fd, "stage") as Stage;
   const lossReason = s(fd, "lossReason") as LossReason | null;
-  const competitor = s(fd, "competitor");
-  const before = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { stage: true, customerStage: true } });
-  await prisma.salesContact.update({
-    where: { id: contactId },
-    data: {
-      stage,
-      lossReason: stage === "VERLOREN" ? lossReason ?? "SONSTIGES" : null,
-      competitor,
-      customerStage: stage === "GEWONNEN" && !before.customerStage ? "VERTRAG" : undefined,
-    },
-  });
-  if (before.stage !== stage) {
-    await prisma.salesActivity.create({
-      data: { contactId, type: "STATUS", outcome: `${STAGE_LABEL[before.stage]} → ${STAGE_LABEL[stage]}` },
-    });
-  }
-  if (stage === "GEWONNEN") await ensureSource(contactId);
-  await stopFollowupOnStage(contactId, stage);
+  await setzeStufe(contactId, stage, { lossReason, competitor: s(fd, "competitor") });
+  // „Offenes Angebot auch als abgelehnt markieren?“ (Ole, 18.11.2026): gleicher Grund
+  const offerId = s(fd, "declineOfferId");
+  if (stage === "VERLOREN" && offerId) await offenesAngebotAblehnen(contactId, offerId, lossReason);
   refresh(contactId);
 }
 
@@ -307,7 +298,7 @@ async function changeCustomerStage(contactId: string, next: CustomerStage) {
     data: {
       contactId,
       type: "STATUS",
-      outcome: `Kunde: ${c.customerStage ? CUSTOMER_LABEL[c.customerStage] : "–"} → ${CUSTOMER_LABEL[next]}`,
+      outcome: `Kunde: ${c.customerStage ? CUSTOMER_LABEL[c.customerStage] : "noch kein Kunde"} → ${CUSTOMER_LABEL[next]}`,
     },
   });
   await ensureSource(contactId);
@@ -468,6 +459,16 @@ export async function updateLinkedIn(fd: FormData) {
     await prisma.salesActivity.create({ data: { contactId, type: "LINKEDIN", outcome: `LinkedIn: ${LI_LABEL[status] ?? status}` } });
   }
   refresh(contactId);
+}
+
+/** „WhatsApp erlaubt“ in der Kontaktakte (Ole, 18.11.2026): von Hand setzen bzw. entfernen, gilt statt der Automatik. */
+export async function setWhatsappErlaubtAction(contactId: string, erlaubt: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAuth();
+  if (!contactId) return { ok: false, error: "Kontakt fehlt." };
+  const { setzeWhatsappErlaubt } = await import("@/lib/vertrieb/bonus-erinnerung-server");
+  await setzeWhatsappErlaubt(contactId, erlaubt);
+  refresh(contactId);
+  return { ok: true };
 }
 
 // ─── Verlauf bearbeiten ─────────────────────────────────────────────────

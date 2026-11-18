@@ -7,6 +7,7 @@
 // - runOffeneFragen (Cron): Assistent fragt nach dem Telefonat die offenen Punkte ab, mit Bezug aufs Gespräch.
 // - runAnrufErinnerungen (Cron): Push „Was ist bei … rausgekommen?“ 15 Minuten nach „Anrufen“ ohne Ergebnis.
 
+import { NUR_PPL_WHERE } from "@/lib/customer-package";
 import Anthropic from "@anthropic-ai/sdk";
 import { jsonAusAntwort, jsonAusgabe } from "@/lib/ki-json";
 import { prisma } from "@/lib/prisma";
@@ -256,6 +257,8 @@ export async function runAnrufErinnerungen(now = new Date(), deps: { push?: (use
       callStartedAt: { lte: new Date(now.getTime() - CALL_REMINDER_AFTER_MS), gt: new Date(now.getTime() - CALL_PAUSE_MAX_MS) },
       callReminderAt: null,
       erasedAt: null,
+      // Nicht an reine Pay-per-Lead-Kunden (Ole, 18.11.2026)
+      NOT: { customer: NUR_PPL_WHERE },
     },
     take: 50,
     select: { id: true, name: true, customerId: true, assignedUserId: true, callStartedAt: true },

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { STEP_TEXT } from "@/components/first-day";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardCheck, ClipboardList, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -14,6 +14,9 @@ import { HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, Sk
 import { SoArbeitet } from "@/components/so-arbeitet";
 import { ladeSoArbeitet } from "@/lib/so-arbeitet-server";
 import { ServiceMails } from "@/app/buyer/einstellungen/assistent/service-mails";
+import { BeratungsdokuSchalter } from "@/components/beratungsdoku-schalter";
+import { BeratungsdokuEinrichtungFrage } from "@/components/beratungsdoku-frage";
+import { BD_FRAGE_TEXT, BD_FRAGE_TITEL } from "@/lib/beratungsdoku";
 import { serviceMailsDaten } from "@/lib/mail/service-mails-daten";
 import { impressumUrlAus } from "@/lib/impressum-fehlt";
 import { ErstinfoForm } from "./erstinfo-form";
@@ -123,6 +126,11 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const impressumFehlt = !impressumUrlAus(ob.websiteInfo);
   // P8 „So arbeitet Ihr Assistent“ und M9 „Service-Mails in Ihrem Namen“ (beide nur mit Software)
   const soArbeitet = software ? await ladeSoArbeitet(ctx.customerId, produkt) : null;
+  // Beratungsdokumentation (Paket B): kein Pflichtschritt, zählt nicht in den Fortschritt. Nie beantwortet: sichtbare
+  // Ja/Nein-Frage (Ole, 18.11.2026, „Ja“ empfohlen); danach der Schalter eingeklappt.
+  const bdKunde = software ? await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { beratungsdokuAn: true, beratungsdokuGefragtAt: true } }) : null;
+  const bdAn = software ? (bdKunde?.beratungsdokuAn ?? false) : null;
+  const bdFragen = software && !bdKunde?.beratungsdokuAn && !bdKunde?.beratungsdokuGefragtAt;
   const mails = software && !done("serviceMails") ? await serviceMailsDaten(ctx.customerId, ctx.userId, ctx.email) : null;
   // Einrichtung ohne Ole (18.11.2026): Logo, Gesellschaften, Testlead selbst
   const [logo, vertrieb, waVerbunden, eiTel] = software
@@ -409,6 +417,38 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               </p>
             )}
           </Step>
+        ) : null}
+
+        {bdFragen ? (
+          <section
+            id="beratungsdoku"
+            className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]"
+            data-einrichtung-frage="beratungsdoku"
+          >
+            <div className="flex items-start gap-2.5 px-5 pb-3 pt-3.5">
+              <ClipboardCheck className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand)]" />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[15px] font-semibold tracking-tight">{BD_FRAGE_TITEL}</h2>
+                <p className="mt-0.5 text-sm text-[color:var(--muted)]">{BD_FRAGE_TEXT}</p>
+              </div>
+            </div>
+            <BeratungsdokuEinrichtungFrage darf={!readOnly} />
+          </section>
+        ) : bdAn !== null ? (
+          <details
+            id="beratungsdoku"
+            open={schritt === "beratungsdoku"}
+            className="group overflow-hidden rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border)] bg-[color:var(--surface)] [&>summary::-webkit-details-marker]:hidden"
+            data-einrichtung-optional="beratungsdoku"
+          >
+            <summary className="flex cursor-pointer items-center gap-2.5 px-5 py-3.5 group-open:border-b group-open:border-[color:var(--border)]">
+              <ClipboardCheck className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+              <span className="flex-1 text-[15px] font-semibold tracking-tight">Beratungsdokumentation</span>
+              <span className="text-xs font-medium text-[color:var(--muted)]">{bdAn ? "an" : "aus"}</span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+            </summary>
+            <BeratungsdokuSchalter an={bdAn} darf={!readOnly} />
+          </details>
         ) : null}
 
         <Step n={nextNo()} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">

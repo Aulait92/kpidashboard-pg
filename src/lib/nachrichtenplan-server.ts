@@ -85,6 +85,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
       followUpAt: true,
       followUpNote: true,
       nachrichtenPausiertAt: true,
+      nachrichtenPausiertBis: true,
       customer: { select: { name: true, leadAddress: true, mailAblauf: true } },
     },
   });
@@ -180,6 +181,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     anrufplan: { followUpAt: lead.followUpAt, followUpNote: lead.followUpNote, callAttempts: lead.callAttempts, callPlanStartedAt: lead.callPlanStartedAt, lastCallAttemptAt: lead.lastCallAttemptAt },
     anrufAusloeserAt,
     pausiertAt: lead.nachrichtenPausiertAt,
+    pausiertBis: lead.nachrichtenPausiertBis,
     // Aktive Aufgabe = die Wiedervorlage auf „Heute“; erledigt, sobald sie dort abgehakt ist
     vorschlaege: aufgaben.filter((t) => t.status === "wartet" || (!!lead.followUpAt && lead.followUpNote === t.note)),
     mailAus: await import("@/lib/mail/ablauf").then((m) => {

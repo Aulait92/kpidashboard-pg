@@ -57,10 +57,11 @@ function Erklaerschritt(p: Parameters<typeof ServiceMails>[0]) {
   const router = useRouter();
   const toast = useToast();
   const [pending, start] = useTransition();
-  const [angaben, setAngaben] = useState<SignaturAngaben>(p.angaben);
+  // Vorausgefüllt zum Bestätigen (Ole, 18.11.2026): Telefon aus dem CRM, Anrede aus dem Vornamen
+  const [angaben, setAngaben] = useState<SignaturAngaben>(() => ({ ...p.angaben, telefon: p.angaben.telefon || p.vorschlaege?.telefon || "" }));
   const [stufen, setStufen] = useState(p.stufen);
   const [liste, setListe] = useState(false);
-  const [anrede, setAnrede] = useState("");
+  const [anrede, setAnrede] = useState<string>(p.vorschlaege?.anrede ?? "");
   const vorschau = useLiveVorschau(p.vorschau, angaben, p.fehlend.length > 0);
   const anredeOffen = p.anredeFehlt && p.canEdit && !anrede;
 
@@ -95,10 +96,12 @@ function Erklaerschritt(p: Parameters<typeof ServiceMails>[0]) {
 
       {(p.fehlend.length || p.anredeFehlt) && p.canEdit ? (
         <div className="mt-5" data-service-mails-angaben>
-          <p className="mb-2 text-sm font-medium">Für Ihre Signatur fehlt noch:</p>
+          <p className="mb-2 text-sm font-medium">{p.vorschlaege?.anrede || p.vorschlaege?.telefon ? "Für Ihre Signatur, bitte kurz prüfen:" : "Für Ihre Signatur fehlt noch:"}</p>
           {p.anredeFehlt ? (
             <label className="mb-3 block" data-signatur-feld="anrede">
-              <span className="mb-1 block text-xs font-medium text-[color:var(--muted)]">Anrede (Ihre Kunden lesen z. B. „Herr Kannapinn“)</span>
+              <span className="mb-1 block text-xs font-medium text-[color:var(--muted)]">
+                Anrede (Ihre Kunden lesen z. B. „Herr Kannapinn“){p.vorschlaege?.anrede && anrede === p.vorschlaege.anrede ? ", vorausgewählt, bitte prüfen" : ""}
+              </span>
               <select value={anrede} onChange={(e) => setAnrede(e.target.value)} className={`${input} sm:w-48`} required>
                 <option value="">Bitte wählen</option>
                 <option value="Herr">Herr</option>

@@ -62,7 +62,7 @@ function groupByDay(slots: Slot[]): { label: string; slots: Slot[] }[] {
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string }>;
+  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string; t?: string }>;
 };
 
 export default async function BookingPage({ params, searchParams }: Props) {
@@ -108,6 +108,18 @@ export default async function BookingPage({ params, searchParams }: Props) {
         select: { name: true, email: true, phone: true },
       });
       if (l) prefill = { name: l.name ?? "", email: l.email ?? "", phone: l.phone ?? "" };
+    }
+  }
+
+  // Lead-Kontext aus der Mail-Strecke („Andere Zeit“, lib/mail-strecke): Name und E-Mail vorbelegt, Telefon freiwillig
+  let streckeT: string | null = null;
+  if (sp.t && conn) {
+    const { pruefeStreckenToken } = await import("@/lib/mail-strecke/token");
+    const sid = pruefeStreckenToken(sp.t);
+    const s = sid ? await prisma.leadMailStrecke.findUnique({ where: { id: sid }, select: { customerId: true, lead: { select: { name: true, email: true, phone: true, erasedAt: true } } } }) : null;
+    if (s && s.customerId === conn.customerId && !s.lead.erasedAt) {
+      streckeT = sp.t;
+      prefill = { name: s.lead.name ?? "", email: s.lead.email ?? "", phone: s.lead.phone ?? "" };
     }
   }
 
@@ -315,9 +327,11 @@ export default async function BookingPage({ params, searchParams }: Props) {
             />
             <PhoneField
               name="phone"
-              label="Handynummer (für WhatsApp/Anruf)"
+              label={streckeT ? "Telefonnummer (freiwillig, nur für einen Anruf)" : "Handynummer (für WhatsApp/Anruf)"}
+              required={!streckeT}
               defaultInternational={prefill?.phone}
             />
+            {streckeT ? <input type="hidden" name="t" value={streckeT} /> : null}
             {/* Bot-Falle: für Menschen unsichtbar. Bewusst ein Name, den
                 Autofill/Passwortmanager nicht zuordnen (früher „website" →
                 wurde von Passwortmanagern befüllt und blockierte echte Leads). */}

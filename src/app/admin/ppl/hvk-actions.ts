@@ -24,7 +24,7 @@ function rowsOf(results: { ok: boolean; result?: HvkProcessResult; error?: strin
       ? {
           ok: true,
           invoiceNo: r.result.invoiceNo,
-          period: `${de(r.result.periodStart)} – ${de(r.result.periodEnd)}`,
+          period: `${de(r.result.periodStart)} bis ${de(r.result.periodEnd)}`,
           status: r.result.status,
           delivered: r.result.delivered,
           billed: r.result.billed,

@@ -29,6 +29,9 @@ export type NachholenEintrag = {
   betreff: string | null;
   kontakt: "neu" | "vorhanden";
   spaeter: boolean;
+  /** nur mit mitText (Später-Nachholen, lib/vertrieb/spaeter-nachholen.ts): eigener Text ohne Zitat, Kontakt-Id */
+  text?: string;
+  contactId?: string | null;
 };
 
 export type NachholenErgebnis = {
@@ -80,7 +83,11 @@ async function contactBlocked(contactId: string): Promise<boolean> {
  * Vorschau (anwenden = false: nichts wird geschrieben) bzw. Nachholen fehlender Antworten.
  * Instantly wird nur gelesen.
  */
-export async function nachholenAntworten(opts: { tage?: number; anwenden?: boolean; now?: Date } = {}): Promise<NachholenErgebnis> {
+export async function nachholenAntworten(
+  opts: { tage?: number; anwenden?: boolean; now?: Date; planen?: boolean; mitText?: boolean } = {},
+): Promise<NachholenErgebnis> {
+  // planen = false: Antworten nur speichern, Später-Follow-ups plant der Aufrufer (lib/vertrieb/spaeter-nachholen.ts)
+  const planen = opts.planen !== false;
   const tage = opts.tage ?? 90;
   const anwenden = !!opts.anwenden;
   const now = opts.now ?? new Date();
@@ -160,7 +167,7 @@ export async function nachholenAntworten(opts: { tage?: number; anwenden?: boole
       if (contactId && (await replyKnown(contactId, subject, sentAt))) {
         r.schonImCrm++;
         // Webhook-Antwort ohne Instantly-ID: ID nachtragen (recordReply erkennt die Doppelte, legt nichts an)
-        if (anwenden) await recordReply(contactId, reply);
+        if (anwenden) await recordReply(contactId, reply, { planen });
         continue;
       }
       // Abwesenheitsnotizen und Eingangsbestätigungen holen wir nicht nach
@@ -182,7 +189,16 @@ export async function nachholenAntworten(opts: { tage?: number; anwenden?: boole
       }
       const box = e.eaccount ?? "?";
       r.postfaecher[box] = (r.postfaecher[box] ?? 0) + 1;
-      r.liste.push({ at: sentAt.toISOString(), lead: leadEmail, postfach: e.eaccount ?? null, kampagne: campaign, betreff: subject, kontakt: newLeads.has(leadEmail) ? "neu" : "vorhanden", spaeter });
+      r.liste.push({
+        at: sentAt.toISOString(),
+        lead: leadEmail,
+        postfach: e.eaccount ?? null,
+        kampagne: campaign,
+        betreff: subject,
+        kontakt: newLeads.has(leadEmail) ? "neu" : "vorhanden",
+        spaeter,
+        ...(opts.mitText ? { text: stripQuoted(text ?? "").slice(0, 2000), contactId: contactId ?? null } : {}),
+      });
       if (!anwenden) continue;
 
       if (!contactId) {
@@ -196,7 +212,7 @@ export async function nachholenAntworten(opts: { tage?: number; anwenden?: boole
         if (!prev) await prisma.salesCampaignLead.create({ data: { contactId, campaignId: c.id, replyCount: 1, lastReplyAt: sentAt } });
         else if (!prev.replyCount) await prisma.salesCampaignLead.update({ where: key, data: { replyCount: 1, lastReplyAt: sentAt } });
       }
-      if (await recordReply(contactId, reply)) r.nachgeholt++;
+      if (await recordReply(contactId, reply, { planen })) r.nachgeholt++;
     }
   } while (cursor);
 

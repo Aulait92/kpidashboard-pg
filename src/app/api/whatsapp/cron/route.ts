@@ -34,6 +34,7 @@ import { syncTemplates } from "@/lib/whatsapp/template-submit";
 //   5. Erinnerung „Leads ohne nächsten Schritt“ um 8 Uhr (siehe lib/next-step-reminder.ts)
 //   6. Rückmeldung an Meta (Conversions API für CRM) alle 15 Minuten (siehe lib/capi/server.ts)
 //   7. Zahlungserinnerung für angenommene, unbezahlte Angebote (siehe lib/angebot-zahlungserinnerung.ts)
+//   7a. Erinnerung vor Ablauf des Abschlussbonus (siehe lib/vertrieb/bonus-erinnerung.ts)
 //   8. Mahnwesen für offene Rechnungen (nur mit MAHNWESEN=on, lib/mahnwesen-server.ts)
 // Per WHATSAPP_WEBHOOK_SECRET gesichert: Header „Authorization: Bearer …“ oder
 // x-cron-token (x-webhook-secret und ?token= nur noch im Übergang, lib/cron-auth.ts).
@@ -57,6 +58,9 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-outreach");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Mail-Strecke für Leads ohne WhatsApp (lib/mail-strecke): eigener Minuten-Cron /api/mail-strecke/cron; hier als
+  // Rückfall, falls dieser noch nicht eingerichtet ist (Ablauf ist idempotent)
+  after(() => import("@/lib/mail-strecke/server").then((m) => m.runMailStrecke()).catch((e: unknown) => reportError(e, "cron-mail-strecke")));
   // Absagen über die Kalendereinladung (Lead oder Berater) erkennen — vor den
   // Erinnerungen, damit abgesagte Termine keine Erinnerung mehr bekommen.
   const responses = await checkAppointmentResponses().catch((e: unknown) => {
@@ -146,6 +150,11 @@ async function handle(req: Request): Promise<Response> {
             reportError(e, "cron-retention");
             return null;
           }),
+          // Vorauszahlung (6 oder 12 Monate): Erinnerung 30 Tage vor Ende des Zahlungszeitraums, einmal je Zeitraum
+          vorauszahlung: await import("@/lib/vorauszahlung-erinnerung").then((m) => m.remindPrepayEnd(now)).catch((e: unknown) => {
+            reportError(e, "cron-vorauszahlung-erinnerung");
+            return null;
+          }),
           // Logins im Abo nachziehen (z. B. nach Startpreis-Phase oder Abo-Start)
           seats: await reconcileSeatBilling().catch((e: unknown) => {
             reportError(e, "cron-seats");
@@ -191,6 +200,11 @@ async function handle(req: Request): Promise<Response> {
   // Empfehlungen & Bewertungen: Testphase/Abrechnung, Nachfrage nach Abschluss, Bitte um Empfehlung, Dank
   const empfehlungen = await runEmpfehlungen(now).catch((e: unknown) => {
     reportError(e, "cron-empfehlungen");
+    return null;
+  });
+  // „Später melden“ am Kontakt: Tag erreicht → automatische Nachrichten laufen wieder (lib/nachrichtenplan-aktionen.ts)
+  const spaeterFortgesetzt = await import("@/lib/nachrichtenplan-aktionen").then((m) => m.pausenBeenden(now)).catch((e: unknown) => {
+    reportError(e, "cron-spaeter-melden");
     return null;
   });
   // Nachfass-Abfolgen (WhatsApp Mo–Sa 9–19 Uhr, Anruf-Aufgaben jederzeit)
@@ -292,6 +306,14 @@ async function handle(req: Request): Promise<Response> {
     .then((m) => m.runZahlungserinnerungen(now))
     .catch((e: unknown) => {
       reportError(e, "cron-zahlungserinnerung");
+      return null;
+    });
+  // Vertrieb: Erinnerung vor Ablauf des Abschlussbonus für verschickte Angebote (Mail Tag vor Ablauf und letzter Tag,
+  // Push an Ole ab 9 Uhr, WhatsApp ab 13 Uhr nur mit „WhatsApp erlaubt“, lib/vertrieb/bonus-erinnerung-server.ts)
+  const bonusErinnerung = await import("@/lib/vertrieb/bonus-erinnerung-server")
+    .then((m) => m.runBonusErinnerungen(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-bonus-erinnerung");
       return null;
     });
   // Mahnwesen (nur mit MAHNWESEN=on): stündlich Stripe- und Bankabgleich, dann Erinnerung, Mahnungen, Anruf-Aufgabe
@@ -419,7 +441,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, naechsterSchritt, abschlussFrage, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, naechsterSchritt, abschlussFrage, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

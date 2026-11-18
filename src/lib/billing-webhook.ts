@@ -8,6 +8,7 @@ import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { cancelScheduleForOffer, createScheduleForOffer } from "@/lib/billing";
+import { abrechnungsplan } from "@/lib/abrechnungstag";
 import { startOnboarding } from "@/lib/onboarding";
 import { markPaymentOverdue, markPaymentReceived } from "@/lib/pause";
 import { mahnwesenAktiv } from "@/lib/mahnwesen";
@@ -173,7 +174,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         await logActivity(
           offer,
           paid ? `Zahlung für ${offer.number} eingegangen` : `Zahlung für ${offer.number} eingerichtet (SEPA wird bestätigt)`,
-          `Setup: ${eur(session.amount_total)} brutto${shiftedTo ? ` · Monatsgebühr ab ${shiftedTo.split("-").reverse().join(".")} (Start verschoben)` : offer.startDate ? ` · Monatsgebühr ab ${offer.startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}` : ""}`,
+          `Setup: ${eur(session.amount_total)} brutto${monatsgebuehrAb(offer, shiftedTo)}`,
         );
         await notify(
           `💶 ${paid ? "Bezahlt" : "Zahlung eingerichtet"}: ${offer.company ?? offer.contactName}`,
@@ -288,4 +289,21 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
     default:
       return;
   }
+}
+
+/**
+ * Verlaufszeile „Monatsgebühr ab …“: erster Abrechnungstag (lib/abrechnungstag.ts), bei verschobenem Start mit Hinweis.
+ * Vorauszahlung: „Jahresbeitrag ab …“ bzw. „Beitrag für 6 Monate ab …“ am Start (Abrechnungstag gilt nicht).
+ */
+function monatsgebuehrAb(
+  offer: { startDate: Date | null; billingDay: number | null; billingFreeStart: boolean; annualPrepay: boolean; term: string },
+  shiftedTo: string | null,
+): string {
+  const startIso = shiftedTo ?? (offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null);
+  const plan = abrechnungsplan({ startIso, billingDay: offer.billingDay, freeStart: offer.billingFreeStart, annual: offer.annualPrepay });
+  if (!plan) return "";
+  const ab = plan.firstIso.split("-").reverse().join(".");
+  const zusatz = plan.differs ? `, jeweils am ${plan.day}.${plan.free ? ", kostenloser Start" : ", Zeit davor anteilig"}` : "";
+  const was = offer.annualPrepay ? (offer.term === "6m" ? "Beitrag für 6 Monate" : "Jahresbeitrag") : "Monatsgebühr";
+  return ` · ${was} ab ${ab}${zusatz}${shiftedTo ? " (Start verschoben)" : ""}`;
 }

@@ -4,6 +4,7 @@ import { formatDateTime } from "@/lib/format";
 import type { CustomerUsage, computeUsageReport } from "@/lib/usage-report";
 import type { HelpQuestion } from "@/lib/hilfe-report";
 import type { loadSupportRequests } from "@/lib/support-server";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 // Nutzung des Kunden-CRMs (gemeinsam für /admin/nutzung und /admin/neu/zahlen/qualitaet): Hilfe-Anfragen an das Team,
 // Fragen an die KI-Hilfe und je Kunde Aktivität, genutzte Funktionen, Fehler, Feedback und liegen gebliebene Aufgaben.
@@ -20,7 +21,7 @@ const ACTION_LABELS: Record<string, string> = {
   "chat.reply": "Chat beantwortet",
   "chat.takeover": "Chat übernommen",
   "chat.bot_on": "Assistent wieder an",
-  "chat.done": "„Braucht dich“ erledigt",
+  "chat.done": "„Braucht Sie“ erledigt",
   "chat.followup": "Nachfassen gesendet",
   "pipeline.move": "Pipeline verschoben",
   "lead.save": "Lead gespeichert",
@@ -75,7 +76,7 @@ export function KiHilfeKarte({ help }: { help: HelpQuestion[] }) {
           }
         />
         {help.length === 0 ? (
-          <EmptyState icon={Sparkles} title="Noch keine Fragen" text="Hier steht, was Vertreter die KI-Hilfe fragen – und was sie nicht verstehen." />
+          <EmptyState icon={Sparkles} title="Noch keine Fragen" text="Hier steht, was Vertreter die KI-Hilfe fragen und was sie nicht verstehen." />
         ) : (
           <ul className="divide-y divide-[color:var(--border)]">
             {help.map((h) => (
@@ -141,7 +142,7 @@ function CustomerCard({ c }: { c: CustomerUsage }) {
           <ul className="space-y-1 text-sm">
             <Stalled label="Termine ohne Ergebnis (> 1 Tag)" n={c.stalled.outcomesOpen} />
             <Stalled label="Wiedervorlagen überfällig" n={c.stalled.followUpsOverdue} />
-            <Stalled label="„Braucht dich“ > 24 h offen" n={c.stalled.attentionOver24h} />
+            <Stalled label="„Braucht Sie“ > 24 h offen" n={c.stalled.attentionOver24h} />
             <li className="flex justify-between text-[color:var(--muted)]">
               <span>Offene Rückrufe</span>
               <span className="tabular-nums">{c.stalled.callbacksOpen}</span>
@@ -150,7 +151,7 @@ function CustomerCard({ c }: { c: CustomerUsage }) {
           {stalledTotal > 0 ? (
             <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-700">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Kunde arbeitet Aufgaben nicht ab – nachfragen oder Ablauf vereinfachen.
+              Kunde arbeitet Aufgaben nicht ab: nachfragen oder Ablauf vereinfachen.
             </p>
           ) : null}
         </section>
@@ -201,7 +202,7 @@ function CustomerCard({ c }: { c: CustomerUsage }) {
                 <li key={i} className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2">
                   „{f.text}“
                   <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
-                    {formatDateTime(new Date(f.at))} · {f.path ?? "–"}
+                    {formatDateTime(new Date(f.at))} · {f.path ?? KEINE_ANGABE}
                   </div>
                 </li>
               ))}

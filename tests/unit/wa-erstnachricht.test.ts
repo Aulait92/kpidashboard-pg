@@ -257,7 +257,7 @@ describe("C) Vermittler-Nennung", () => {
     expect(humanHandoverReply("sie", names)).toContain("Ich habe Herrn Kannapinn Bescheid gegeben, Herr Kannapinn meldet sich persönlich bei Ihnen.");
   });
 
-  it("Nachfass-Vorlagen (vorgemerkt) und Freitext: gebeugt aus den Anbieterangaben", () => {
+  it("Nachfass-Vorlagen (seit 18.11.2026 zur Einreichung freigegeben) und Freitext: gebeugt aus den Anbieterangaben", () => {
     const names = templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", "Herr");
     expect(noticeText("followup_noshow", "sie", names, { fullName: "Max Muster", salutation: "Herr" }, [])).toContain("neuen Termin mit Herrn Kannapinn finden?");
     expect(noticeText("followup_noshow", "du", names, { fullName: "Max Muster" }, [])).toContain("neuen Termin mit Ole finden?");
@@ -265,13 +265,18 @@ describe("C) Vermittler-Nennung", () => {
     const who = { firm: "Agentur", advisor: "Susanne Meier", vermittler: { name: "Susanne Meier", anrede: "Frau" as const } };
     expect(noticeText("followup", "sie", who, null, ["heute", "morgen"])).toContain("mit Frau Meier hätte ich");
     // neu eingereichte Vorlagen P3/P5 (Ole, 17.11.2026): Vermittler nach der Regel fest im Text, wie in der Erstnachricht
+    // Nachfassen v5 (Ole, 18.11.2026): ebenso followup, followup_noshow (followup_last nennt den Vermittler nur in Fassung b)
     for (const p of ["offer_bedenkzeit", "followup_offer_selbst"] as NoticePurpose[]) {
       expect(templateBodyFor(p, names, "sie")).toContain("digitale KI-Assistent von Herrn Kannapinn.");
       expect(templateBodyFor(p, names, "du")).toContain("digitale KI-Assistent von Ole.");
       expect(templateBodyFor(p, names, "sie")).not.toContain("Ole Kannapinn");
     }
-    // eingereichte Texte ändern sich dadurch nicht (keine ungewollte Neueinreichung)
-    for (const p of ["followup", "followup_noshow", "booking_confirmation"] as NoticePurpose[]) {
+    expect(templateBodyFor("followup", names, "sie")).toContain("Gespräch mit Herrn Kannapinn hätte ich");
+    expect(templateBodyFor("followup", names, "du")).toContain("Gespräch mit Ole hätte ich");
+    expect(templateBodyFor("followup_noshow", names, "sie")).toContain("neuen Termin mit Herrn Kannapinn finden?");
+    expect(templateBodyFor("followup_last", names, "sie", "b")).toContain("Soll Herr Kannapinn sich noch um Ihre Anfrage kümmern?");
+    // andere eingereichte Texte ändern sich dadurch nicht (keine ungewollte Neueinreichung)
+    for (const p of ["booking_confirmation", "followup_last"] as NoticePurpose[]) {
       expect(templateBodyFor(p, names, "sie")).toBe(templateBodyFor(p, templateNamesOf("Agentur Ole Kannapinn"), "sie"));
     }
   });

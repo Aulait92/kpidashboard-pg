@@ -201,13 +201,13 @@ export function AgentSettings(p: {
             Nicht erreicht: WhatsApp sofort, Anruf-Aufgabe an Tag 2, letzte WhatsApp an Tag 6. Angebot: WhatsApp an Tag 3, Anruf an
             Tag 7. Nicht erschienen: WhatsApp sofort (neuer Termin per Chat, kein Link), Anruf an Tag 2. Chat ruht (Lead antwortet dem Assistenten nicht):
             WhatsApp nach 2 und 8 Stunden, nach ca. 20 Stunden (nur im offenen Fenster), letzte an Tag 3. Stoppt bei Antwort, Termin, Abschluss,
-            Kein Interesse, Reklamation oder „Stopp“. WhatsApp nur Mo–Sa 9–19 Uhr.
+            Kein Interesse, Reklamation oder „Stopp“. WhatsApp nur Mo bis Sa, 9 bis 19 Uhr.
           </div>
         </div>
         <Switch label="Automatisch nachfassen" checked={p.sequencesEnabled} onChange={(next) => setFollowUpSequencesAction(p.customerId, next)} />
         {p.sequencesEnabled && p.sequenceTemplatesMissing.length ? (
           <p className="w-full text-xs font-medium text-amber-700">
-            Ohne freigegebene Vorlage geht außerhalb des 24-h-Fensters keine WhatsApp raus – stattdessen entsteht eine Anruf-Aufgabe. Es
+            Ohne freigegebene Vorlage geht außerhalb des 24-h-Fensters keine WhatsApp raus. Stattdessen entsteht eine Anruf-Aufgabe. Es
             fehlen: {p.sequenceTemplatesMissing.join(", ")}.
           </p>
         ) : null}

@@ -13,6 +13,8 @@ const HARD_NO = [
   /sehen sie (bitte )?(davon )?ab/, /\b(nie|niemals|grundsätzlich nicht|generell nicht|auf keinen fall)\b/,
   /auch (in zukunft|später|künftig|zukünftig|dann) (nicht|kein)/, /(haben|habe) (uns|mich) (dagegen|anders) entschieden/,
   /\b(ruhestand|rente gehe|in rente|geschäftsaufgabe|agentur (wird )?(aufgegeben|geschlossen))\b/,
+  // Ole, 18.11.2026 (Timo Janiel: „lösch mich bitte aus deinem Verteiler“)
+  /\blösch\w*/, /\bverteiler\b/, /austragen/, /\bentfernen sie\b/, /(e-?mail|adresse|daten) (bitte )?(entfernen|löschen)/,
 ];
 
 // Ausdrücklich „später“ ohne konkreten Zeitpunkt
@@ -38,6 +40,30 @@ const RECONTACT = [
   /(kontaktieren|schreiben|rufen) sie (mich|uns)/, /versuchen sie es/, /gerne (wieder|nochmal|noch einmal|erneut)/,
   /darauf zurück(kommen)?/, /dann (gerne|gern|sehr gerne)/, /(ab|im|nach) \S+ (gerne|gern)/, /dann (wieder|nochmal|mehr)/,
 ];
+
+// Ole, 18.11.2026 (Norbert Tetenborg fehlte im Später-Follow-up): breitere Regeln als Absicherung, auch ohne KI.
+// „später“ ohne Datum zählt mit „nicht jetzt“, „melden Sie sich wieder“ oder Interesse, aber nicht kurzfristig.
+const LATER_WORD = /\bspäter\b/;
+const SHORT_TERM =
+  /übermorgen|\b(heute|morgen|gleich|nachher|diese woche|nächste woche|kommende woche|später am (tag|vormittag|nachmittag|abend)|im laufe des tages)\b|später (zurück|an)?rufen|später (noch ?mal |noch einmal )?an\b/;
+const WANT = /\b(interesse|interessant|gerne?|vielleicht|eventuell|evtl|bedarf|leads)\b/;
+// Konkreter Termin- oder Rückrufwunsch: positive Antwort, kein Später
+const IMMEDIATE = /\b(termin\w*|anruf\w*|telefon\w*|rückruf\w*|zurückrufen|gespräch\w*|call)\b/;
+// „Aktuell nicht, aber …“: der Teil nach „aber“ muss nach später oder Interesse klingen („aber danke“ ist eine Absage)
+const NOT_NOW_BUT = /\b(aktuell|derzeit|momentan|zurzeit|zur zeit|im moment|gerade|jetzt|vorerst|noch)\b(\s+\S+){0,4}?\s+(nicht|kein\w*)\b[^.!?]{0,80}?\b(aber|jedoch|doch)\b([^.!?]{0,100})/;
+/** Hinweis auf einen späteren Zeitpunkt (für klare Absagen und als Vorfilter der KI) */
+const LATER_HINT =
+  /später|zukunft|zukünftig|künftig|(nächste[nms]?|kommende[nms]?|neue[nms]?) (jahr|quartal|monat|saison)|jahres(anfang|beginn|ende|wechsel)|quartal|\bin \S+ (wochen|monat\w*|jahr\w*)\b|halbe[nms]? jahr|frühjahr|frühling|sommer|herbst|winter|januar|februar|märz|maerz|april|\bmai\b|juni|juli|august|september|oktober|november|dezember|\b20\d\d\b|zu früh|noch nicht|(wieder|noch ?mal|noch einmal|erneut) (melden|kontaktieren|anschreiben|zukommen|in kontakt)|melden sie sich (gerne |gern |bitte )?(wieder|noch ?mal|im|in|ab|nach|anfang|mitte|ende)\b|(wir melden uns|ich melde mich)\b|(kommen|komme) (\S+ ){0,3}?auf sie zu|wenn es (wieder |besser |dann )?passt|zu viel los/;
+// Klare Absagen ohne Hinweis auf später
+const DECLINE = [
+  /kein(en)? interesse/, /nicht interessiert/, /kein(en)? bedarf/, /nein,? danke/, /brauchen? (keine|nichts)/, /sind (bereits|schon) (gut )?versorgt/,
+  /not interested/, /lieber nicht/, /verzichte/, /kein(en)? mehrwert/, /nicht relevant/,
+  /nicht (be)?nötig/, /(benötige|brauche)n? (\S+ ){0,3}?nicht\b/, /kein(en)? (bedarf|interesse|nutzen|use)\b/,
+];
+// Hebt eine Absage nur auf, wenn ausdrücklich von später die Rede ist (eine Jahreszahl allein reicht nicht:
+// „kein Interesse, 2027/2028 höre ich auf“)
+const LATER_WORDS =
+  /später|zukunft|zukünftig|künftig|noch nicht|zu früh|\berst\b|vielleicht|eventuell|\bevtl\b|gerne?\b|(wieder|noch ?mal|nochmals|noch einmal|erneut) (melden|kontaktieren|anschreiben|zukommen|in kontakt|ansprechen|anrufen|schreiben)|melden sie sich/;
 
 const MONTHS: [RegExp, number, string][] = [
   [/januar/, 1, "Januar"], [/februar/, 2, "Februar"], [/m(ä|ae)rz/, 3, "März"], [/april/, 4, "April"], [/\bmai\b/, 5, "Mai"],
@@ -136,20 +162,75 @@ function candidates(t: string, ref: Ymd): Cand[] {
 }
 
 /** Text normalisieren (klein, Umlaute vereinheitlicht, Leerraum). */
+// Zitierter Verlauf, auch ohne Zeilenumbruch (Mails kommen oft als eine Zeile an)
+const ZITAT =
+  /(^|\s)(am\s.{3,120}?\sschrieb\b|on\s.{3,120}?\swrote\b|-{3,}\s*(original|ursprüngliche)|von:\s.{0,200}?\b(gesendet|datum|sent|an):|from:\s.{0,200}?\bsent:|gesendet von meinem|>\s)/i;
+// Grußformel bzw. Signatur: danach folgen Name, Adresse, Bilder, Rechtstexte
+const GRUSS =
+  /(^|\s)(mfg\b|vg\b|lg\b|(mit )?((freundlich|herzlich|best|lieb|viel|sonnig|schön)\w* )?(grüß|grüss)e?n?\b|gruß\b|gruss\b|\[cid:)/i;
+// Signatur ohne Grußformel („nein Danke Max Muster Bezirksdirektion … Telefon: …“): ab Funktion oder Kontaktzeile
+const SIGNATUR =
+  /(^|\s)(bezirksdirektion|generalvertretung|hauptvertretung|generalagentur|agentur der|vertretung der|geschäftsstelle|tel\.|telefon:?|mobil:?|fax:?|e-?mail:|www\.|sitz der|registergericht|handelsregister|amtsgericht|geschäftsführer|ust-?id)/i;
+
+/**
+ * Nur die eigenen Zeilen der Antwort (Ole, 18.11.2026): ohne zitierte Cold-Mail und ohne Signatur. Sonst machen
+ * „melden Sie sich gerne“ aus unserer Mail oder Monatsnamen aus der Signatur eine Absage zum Später-Interesse.
+ */
+export function eigenerText(text: string | null | undefined): string {
+  let t = (text ?? "").trim();
+  const z = t.search(ZITAT);
+  if (z > 0) t = t.slice(0, z);
+  const g = t.search(GRUSS);
+  // Grußformel ganz vorne („Liebe Grüße zurück, …“) nicht abschneiden
+  if (g > 8) t = t.slice(0, g);
+  const sig = t.search(SIGNATUR);
+  if (sig > 8) t = t.slice(0, sig);
+  return t.trim();
+}
+
 function norm(text: string | null | undefined): string {
-  return (text ?? "").toLowerCase().replace(/ae(?=r?z)/g, "ä").replace(/\s+/g, " ").trim();
+  return eigenerText(text).toLowerCase().replace(/ae(?=r?z)/g, "ä").replace(/\s+/g, " ").trim();
 }
 
 /** Antwort mit Später-Interesse (statt Absage)? */
 export function isLaterInterest(text: string | null | undefined, at: Date = new Date()): boolean {
   const t = norm(text);
   if (!t || HARD_NO.some((r) => r.test(t))) return false;
+  if (isClearDecline(text)) return false;
   if (LATER_PHRASE.some((r) => r.test(t))) return true;
   const ref = parseKey(dayKey(at));
   // Kurzfristiges („nächste Woche“, „morgen“) ist kein Später-Interesse, sondern eine normale Antwort.
   const dated = candidates(t, ref).filter((c) => cmp(c.at, addDaysYmd(ref, 20)) >= 0);
-  if (!dated.length) return false;
-  return NOT_NOW.some((r) => r.test(t)) || RECONTACT.some((r) => r.test(t));
+  const notNow = NOT_NOW.some((r) => r.test(t));
+  const recontact = RECONTACT.some((r) => r.test(t));
+  if (dated.length) {
+    if (notNow || recontact) return true;
+    // „Nächstes Jahr gerne.“, „Im Frühjahr vielleicht.“ (aber nicht „Termin am 15. Januar?“)
+    if (WANT.test(t) && !IMMEDIATE.test(t)) return true;
+  }
+  // „Momentan nicht, später vielleicht.“, „Ich hätte später Interesse an Leads.“
+  if (LATER_WORD.test(t) && !SHORT_TERM.test(t) && (notNow || recontact || WANT.test(t))) return true;
+  // „Aktuell nicht, aber gerne wieder melden.“
+  const but = t.match(NOT_NOW_BUT);
+  if (but && (LATER_HINT.test(but[5]) || (WANT.test(but[5]) && !IMMEDIATE.test(but[5])))) return true;
+  return false;
+}
+
+/**
+ * Klare Absage („kein Interesse“, „bitte nicht mehr schreiben“, Ruhestand …) ohne Hinweis auf später:
+ * nie ins Später-Follow-up, auch wenn die KI es anders sieht.
+ */
+export function isClearDecline(text: string | null | undefined): boolean {
+  const t = norm(text);
+  if (!t) return false;
+  if (HARD_NO.some((r) => r.test(t))) return true;
+  return DECLINE.some((r) => r.test(t)) && !(LATER_HINT.test(t) && LATER_WORDS.test(t.replace(/kein\w* (interesse|bedarf)/g, "")));
+}
+
+/** Text mit möglichem Später-Bezug (Zeitangabe, „aktuell nicht“, „melden Sie sich“): nur dann lohnt die KI-Prüfung. */
+export function hasLaterHint(text: string | null | undefined): boolean {
+  const t = norm(text);
+  return !!t && (LATER_HINT.test(t) || NOT_NOW.some((r) => r.test(t)) || RECONTACT.some((r) => r.test(t)));
 }
 
 export type LaterTiming = {

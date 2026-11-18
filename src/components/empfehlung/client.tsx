@@ -46,9 +46,12 @@ export function EmpfehlungBookButton({
   reason,
   autoOpen = false,
   label,
+  prepayMonths,
 }: {
   trial: boolean;
   annual: boolean;
+  /** Vorauszahlung: Monate je Zahlungszeitraum (6 oder 12) */
+  prepayMonths?: number;
   monthly: number;
   readOnly: boolean;
   reason?: string | null;
@@ -57,7 +60,7 @@ export function EmpfehlungBookButton({
 }) {
   const [open, setOpen] = useState(autoOpen && !readOnly && !reason);
   const [state, action, pending] = useActionState<ModuleActionState, FormData>(bookEmpfehlungAction, {});
-  const terms = bookingTerms({ trial, annual });
+  const terms = bookingTerms({ trial, annual, prepayMonths });
   useEffect(() => {
     if (state.ok) haptic("success");
     else if (state.error) haptic("error");
@@ -119,7 +122,7 @@ export function EmpfehlungBookButton({
   );
 }
 
-export function EmpfehlungCancelButton({ cancelAt, trialEndsAt, readOnly, annual }: { cancelAt: string | null; trialEndsAt: string | null; readOnly: boolean; annual: boolean }) {
+export function EmpfehlungCancelButton({ cancelAt, trialEndsAt, readOnly, annual, prepayMonths }: { cancelAt: string | null; trialEndsAt: string | null; readOnly: boolean; annual: boolean; prepayMonths?: number }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<ModuleActionState, FormData>(cancelEmpfehlungAction, {});
   const [bookState, bookAction, booking] = useActionState<ModuleActionState, FormData>(bookEmpfehlungAction, {});
@@ -149,7 +152,7 @@ export function EmpfehlungCancelButton({ cancelAt, trialEndsAt, readOnly, annual
             {inTrial
               ? `Das Modul endet mit Ihrer Testphase am ${fmtDate(trialEndsAt!)}. Es entstehen keine Kosten.`
               : annual
-                ? "Das Modul läuft bis zum Ende Ihres bezahlten Abrechnungsjahres und wird danach nicht mehr berechnet. Eine anteilige Erstattung gibt es nicht."
+                ? `Das Modul läuft bis zum Ende Ihres bezahlten ${prepayMonths === 6 ? "Zahlungszeitraums" : "Abrechnungsjahres"} und wird danach nicht mehr berechnet. Eine anteilige Erstattung gibt es nicht.`
                 : "Das Modul läuft bis zum Ende des aktuellen Abrechnungsmonats und wird danach nicht mehr berechnet."}{" "}
             Danach gehen keine neuen Anfragen mehr raus.
           </p>

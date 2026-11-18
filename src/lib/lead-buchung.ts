@@ -57,6 +57,7 @@ export async function bookForLead(opts: { customerId: string; leadId: string; st
       leadId: lead.id,
       conversationId,
       start: opts.start,
+      bookedVia: "advisor",
       mode: opts.mode,
       summary: eventSummary(opts.mode, name, lead.source),
       description: buildEventDescription({

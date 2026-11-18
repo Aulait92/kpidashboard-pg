@@ -132,7 +132,7 @@ async function gesperrt(contactId: string | null): Promise<boolean> {
 }
 
 /** Gibt es eine neuere Version des Angebots (gleicher Kontakt bzw. Deal)? */
-async function ersetzt(o: { id: string; createdAt: Date; salesContactId: string | null; dealId: string | null }): Promise<boolean> {
+export async function ersetzt(o: { id: string; createdAt: Date; salesContactId: string | null; dealId: string | null }): Promise<boolean> {
   const owner = o.salesContactId ? { salesContactId: o.salesContactId } : o.dealId ? { dealId: o.dealId } : null;
   if (!owner) return false;
   return !!(await prisma.offer.findFirst({

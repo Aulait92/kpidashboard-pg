@@ -33,7 +33,7 @@ export function parseBookingUrl(raw: string | null | undefined): BookingHost | n
 }
 
 /** Seiten für Endkunden (mit Unterseiten). Auf der Buchungsadresse erlaubt, auf der App-Adresse umgeleitet. */
-export const END_CUSTOMER_PREFIXES = ["/book", "/empfehlung", "/einwilligung", "/vollmacht", "/abmelden", "/erstinformation", "/beratung", "/datenschutz", "/ihr-angebot", "/rueckruf"] as const;
+export const END_CUSTOMER_PREFIXES = ["/book", "/empfehlung", "/einwilligung", "/vollmacht", "/abmelden", "/erstinformation", "/beratung", "/datenschutz", "/ihr-angebot", "/rueckruf", "/t", "/dokumentation"] as const;
 
 /**
  * Live-Demo der Beratungspräsentation (Ole, 15.11.2026): auf der Buchungsadresse unter /demo (intern /demo/beratung),
@@ -50,7 +50,7 @@ const SUPPORT_PREFIXES = ["/api/abmelden", "/_next", "/icon", "/apple-icon", "/f
  */
 export const RESERVED_SEGMENTS: ReadonlySet<string> = new Set([
   // Buchungsadresse
-  "book", "empfehlung", "einwilligung", "vollmacht", "abmelden", "erstinformation", "beratung", "datenschutz", "ihr-angebot", "rueckruf", "demo", "api", "_next", "icon", "apple-icon", "monitoring",
+  "book", "empfehlung", "einwilligung", "vollmacht", "abmelden", "erstinformation", "beratung", "datenschutz", "ihr-angebot", "rueckruf", "t", "dokumentation", "demo", "api", "_next", "icon", "apple-icon", "monitoring",
   // App (nur auf der App-Adresse)
   "admin", "angebot", "buyer", "email-bestaetigen", "empfehlen", "feedback", "forgot-password", "login", "logout", "login-karten",
   "microsoft-freigabe", "rechner", "rechtliches", "reset-password", "sicherheit", "status", "videos", "fonts", "sw", "manifest",

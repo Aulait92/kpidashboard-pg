@@ -2,8 +2,9 @@
 // Fassung. Die bessere Fassung wird automatisch Standard (Cron, Audit-Log „whatsapp.ab_promote“); hier nur lesen.
 import { abOverview, ALPHA, ANTWORT_STUNDEN, MIN_JE_FASSUNG, type AbOverview, type VariantStats } from "@/lib/whatsapp/ab-test";
 import { PURPOSE_LABELS, templateTextFor, type TemplateVariant } from "@/lib/whatsapp/templates";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
-const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 1000) / 10} %` : "–");
+const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 1000) / 10} %` : NOCH_KEINE_DATEN);
 const dateDE = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 
 function statusText(t: AbOverview): string {

@@ -106,7 +106,7 @@ Zapier“ filtern und die Liste abgleichen.
 | „Monatlich erhaltene Leads zurücksetzen“ | setzt Monatszähler in Airtable zurück (veraltet) | **aus** | Schritt B |
 | Anids Privatschutz-Zap (Meta-Formular 1909684100014197 → Airtable) | Kundenleads von Anid nach Airtable | **bleibt an**, bis das Formular in der App Anid zugeordnet ist (`docs/livegang.md` Schritt 6), dann **aus** | Schritt A2/B. **Blockiert Schritt C:** solange er läuft, kommen Anids Leads nur über den Airtable-Sync in die App |
 | Workflow „meta-privatschutz-anid-to-airtable“ (neue Zapier-Workflows) | Versuch vom 08.11. für denselben Weg | ist schon **aus**; nicht einschalten, nach Schritt B löschen (Ole) | Schritt B |
-| „Allianz Lead Ads“ | eigene Meta-Kampagnen → `/api/vertrieb/leads/webhook` | **bleibt an** (eigener Vertrieb, nicht Airtable) | nie im Rahmen dieser Abschaltung |
+| „Allianz Lead Ads“ | eigene Meta-Kampagnen → `/api/vertrieb/leads/webhook` | **bleibt an** (eigener Vertrieb, nicht Airtable); seit 18.11.2026 ersetzbar, siehe Abschnitt 7 | unabhängig von dieser Abschaltung (Abschnitt 7) |
 | „Gmail to Webhooks on New Email Match“ | LinkedIn-Nachrichten → `/api/vertrieb/linkedin/message` | **bleibt an** (eigener Vertrieb) | nie im Rahmen dieser Abschaltung |
 | Lead-Webhook nach `/api/leads/eingang` (falls noch aktiv) | Kundenleads über Zapier in die App | **prüfen**: wenn aktiv, durch Meta-Webhook bzw. `/api/leads/pool` ersetzen, dann **aus** | vor Schritt D (sonst läuft Kunden-Leadverkehr weiter über Zapier) |
 
@@ -139,3 +139,23 @@ Werte hier nie eintragen. In der App liegen Geheimnisse nur in Railway-Variablen
 | E | Ole | Airtable-Base archivieren (erst nach C, frühestens nach Abschluss der Stornos alter Leads, siehe Abschnitt 3); vorher Export (CSV je Tabelle) ablegen | App läuft weiter, Herzschlag grün; keine Airtable-Fehler in Sentry | Base aus dem Archiv wiederherstellen |
 | F | Ole + PG | Zugangsdaten tauschen bzw. löschen (Tabelle 6.2); nach E alle `AIRTABLE_*` aus Railway (live-app, staging-app) entfernen | Prüfpunkte aus 6.2; `q=variablen` der Diagnose zeigt keine Fehler | siehe 6.2 |
 | G | Ole | Zapier-Tarif prüfen (nur noch Vertriebs-Zaps), laufende Kosten unter Einstellungen → Laufende Kosten anpassen | Rechnung | Tarif zurück |
+
+## 7. Zap „Allianz Lead Ads“ ersetzen: eigene Vermittler-Leads direkt aus Meta (18.11.2026)
+
+Oles eigene Vertriebs-Leads (Vermittler über das eigene Meta-Leadformular) kommen ohne Zapier in den Vertrieb:
+Formular im Admin dem Vertrieb zuordnen, dann liefert der Meta-Webhook `/api/meta/leadgen` jeden Lead direkt an
+`handleInboundLead` (`lib/vertrieb/inbound.ts`, Quelle META_ADS, gleiche Feldzuordnung wie beim Zap). Pro Lead:
+Kontakt (oder bestehender Kontakt hochgestuft), Eingang, Verlauf, Aufgabe „Anrufen“, Push „Neuer Vermittler-Lead“
+an Ole (und Telegram, falls `TELEGRAM_BOT_TOKEN` und `TELEGRAM_ADMIN_USER_ID` gesetzt sind; aus mit
+`VERTRIEB_LEAD_TELEGRAM=aus`). Dubletten: gleiche Meta-Lead-ID (direkt und Zap) bzw. derselbe Kontakt innerhalb von
+24 Stunden, wenn ein Weg keine Lead-ID mitschickt, ergibt nur einen Eingang und eine Aufgabe. Zap und Direktweg
+dürfen deshalb während der Umstellung parallel laufen. Übersicht: Verkaufen → Kontakte → „Meta-Leads“.
+
+| # | Schritt | Prüfpunkt | Rückweg |
+|---|---|---|---|
+| 1 | Admin → Liefern → Lead-Eingang → „Formular zuordnen“: Facebook-Seite wählen, „Formulare laden“, Formular wählen, Ziel **„Vertrieb (eigene Vermittler-Leads)“**, „Zuordnen“ | Meldung „Formular dem Vertrieb zugeordnet. Seite für den Meta-Webhook abonniert.“; unter Zuordnungen „… → Vertrieb“. Wartende Leads dieses Formulars (Ohne Zuordnung) sind übernommen | „Pausieren“ an der Zuordnung (Leads landen dann wieder unter „Ohne Zuordnung“) |
+| 2 | Kommt „Seite konnte nicht abonniert werden“: Systemnutzer auf der Seite „Volle Kontrolle“ geben, dann erneut „Zuordnen“. Meta-Verbindung (unten auf der Seite) muss „bereit“ sein | Meta Business Suite → Seite → Einstellungen → Integrationen: unsere App hat Zugriff auf Leads | wie 1 |
+| 3 | Testlead über Metas Lead-Testtool (developers.facebook.com/tools/lead-ads-testing): Seite und Formular wählen, „Lead erstellen“ | Push „Neuer Vermittler-Lead“ mit „Name, Agentur, Ort“; Kontakt unter Verkaufen → Kontakte → Meta-Leads (Stand „Neu“, Aufgabe heute). Läuft der Zap noch, kommt trotzdem nur ein Kontakt und ein Push | Testkontakt löschen |
+| 4 | Zap „Allianz Lead Ads“ in Zapier ausschalten (nicht löschen) | 1 bis 2 Tage: neue echte Leads kommen weiter an (Meta-Leads, Push), Zapier-Verlauf ohne Läufe | Zap wieder an (Dubletten fängt die App ab) |
+| 5 | Nach einer Woche ohne Auffälligkeiten: Zap löschen, Tarif prüfen (6.3 G) | | |
+

@@ -3,14 +3,17 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { offerAdminHref } from "@/lib/offer-links";
 import { Badge } from "@/components/ui";
 import { fmtTag, tagIso } from "@/lib/angebot-zahlungserinnerung";
+import { BonusHinweis } from "@/components/vertrieb/bonus-hinweis";
 import { ANGEBOT_FILTER, ANGEBOT_ZUSTAND, ladeAngebote } from "@/lib/vertrieb/angebote-uebersicht";
+import { ablehnGruendeText } from "@/lib/vertrieb/angebot-ablehnen";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 export const metadata = { title: "Angebote | Vertrieb" };
 export const dynamic = "force-dynamic";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 const date = (d: Date | null) =>
-  d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d) : "–";
+  d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d) : NOCH_KEINE_DATEN;
 
 const ZUSTAND = ANGEBOT_ZUSTAND;
 const FILTER = ANGEBOT_FILTER;
@@ -20,7 +23,7 @@ const FILTER = ANGEBOT_FILTER;
 export default async function AngebotePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireAuth();
   const sp = await searchParams;
-  const { filter, shown, count, kennzahlen } = await ladeAngebote(sp.f);
+  const { filter, shown, count, kennzahlen, ablehnGruende } = await ladeAngebote(sp.f);
   const { sent, angenommen, offen, geoeffnet } = kennzahlen;
 
   return (
@@ -33,7 +36,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { l: "Verschickt", v: String(sent.length) },
-          { l: "Geöffnet", v: sent.length ? `${Math.round((geoeffnet.length / sent.length) * 100)} %` : "–", s: `${geoeffnet.length} von ${sent.length}` },
+          { l: "Geöffnet", v: sent.length ? `${Math.round((geoeffnet.length / sent.length) * 100)} %` : NOCH_KEINE_DATEN, s: `${geoeffnet.length} von ${sent.length}` },
           { l: "Angenommen", v: String(angenommen.length), s: sent.length ? `${Math.round((angenommen.length / sent.length) * 100)} % Annahmequote` : undefined },
           { l: "Offen (monatlich)", v: eur(offen.reduce((s, r) => s + Number(r.monthlyFee), 0)), s: `${offen.length} offene Angebote` },
         ].map((k) => (
@@ -44,6 +47,12 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
           </div>
         ))}
       </div>
+
+      {ablehnGruende.length ? (
+        <p className="text-sm" data-ablehngruende>
+          <span className="font-medium">Abgelehnt:</span> {ablehnGruendeText(ablehnGruende)}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap gap-1.5" data-angebote-filter>
         {FILTER.map((f) => (
@@ -95,9 +104,13 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
                   <td className="px-4 py-2.5 text-right tabular-nums">{eur(Number(o.setupFee))}</td>
                   <td className="px-4 py-2.5 tabular-nums">{date(o.sentAt)}</td>
                   <td className="px-4 py-2.5 tabular-nums">{date(o.viewedAt)}</td>
-                  <td className={`px-4 py-2.5 tabular-nums ${o.z === "abgelaufen" ? "text-amber-700" : ""}`}>{date(o.validUntil)}</td>
+                  <td className={`px-4 py-2.5 tabular-nums ${o.z === "abgelaufen" ? "text-amber-700" : ""}`}>
+                    {date(o.validUntil)}
+                    {o.bonus ? <BonusHinweis b={o.bonus} /> : null}
+                  </td>
                   <td className="px-4 py-2.5">
                     <Badge tone={ZUSTAND[o.z].tone}>{o.z === "angenommen" ? `Angenommen ${date(o.acceptedAt)}` : ZUSTAND[o.z].label}</Badge>
+                    {o.grund ? <div className="mt-1 text-xs text-[color:var(--muted)]">{o.grund}</div> : null}
                     {o.zahlungOffen ? (
                       <div className="mt-1 text-xs text-amber-700" data-zahlung-offen>
                         Zahlung offen

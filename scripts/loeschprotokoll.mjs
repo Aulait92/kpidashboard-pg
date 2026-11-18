@@ -53,6 +53,7 @@ export async function pruefe(url) {
       leads: await q(`SELECT count(*)::int AS n FROM "Loeschprotokoll" p JOIN "Lead" l ON l.id = p."entityId" WHERE p.art = 'lead' AND l."erasedAt" IS NULL`),
       kunden: await q(`SELECT count(*)::int AS n FROM "Loeschprotokoll" p JOIN "Customer" c ON c.id = p."entityId" WHERE p.art = 'kunde' AND c."dataDeletedAt" IS NULL`),
       dokumente: await q(`SELECT count(*)::int AS n FROM "Loeschprotokoll" p JOIN "LeadDocument" d ON d.id = p."entityId" WHERE p.art = 'policen_dokument'`),
+      auszuege: await q(`SELECT count(*)::int AS n FROM "Loeschprotokoll" p JOIN "PolicenAuszug" a ON a.id = p."entityId" WHERE p.art = 'policen_auszug'`),
       kontakte: await q(`SELECT count(*)::int AS n FROM "Loeschprotokoll" p JOIN "SalesContact" s ON s.id = p."entityId" WHERE p.art = 'vertriebskontakt'`),
     };
     const eintraege = await q(`SELECT count(*)::int AS n FROM "Loeschprotokoll"`);

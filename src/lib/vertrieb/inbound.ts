@@ -10,6 +10,7 @@ import { normalizeLinkedInUrl } from "@/lib/vertrieb/linkedin";
 import { scheduleAddressEnrichment } from "@/lib/vertrieb/address-enrich";
 import { captureFromLead } from "@/lib/vertrieb/kontaktdaten-server";
 import { reportError } from "@/lib/monitoring";
+import { meldeVertriebLead } from "@/lib/vertrieb/lead-meldung";
 
 const K = {
   email: ["email", "emailadresse", "mail", "eMail", "workemail", "businessemail"],
@@ -122,45 +123,88 @@ export function parseLead(raw: unknown): ParsedLead {
 
 const SOURCE_TEXT: Record<string, string> = SOURCE_LABEL;
 
-export async function handleInboundLead(raw: unknown, source = "META_ADS", opts: { taskTitle?: string; activity?: string } = {}) {
+/** Meta-Lead-ID aus dem Payload (Zap: id/leadgen_id, Meta-Webhook: leadgen_id). Nur Ziffernfolgen, damit z. B. die
+ *  ID eines Website-Formulars nicht als Meta-Lead gilt. */
+export function metaLeadId(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const top = raw as Record<string, unknown>;
+  for (const k of ["leadgen_id", "leadgenId", "lead_id", "leadId", "id"]) {
+    const v = top[k];
+    const t = typeof v === "number" ? String(v) : typeof v === "string" ? v.trim() : "";
+    if (/^\d{6,}$/.test(t)) return t;
+  }
+  return null;
+}
+
+/** Ohne Lead-ID (z. B. Zap ohne ID-Feld): derselbe Kontakt kam innerhalb dieses Zeitraums schon über Meta. */
+const DUBLETTE_FENSTER = 24 * 3600_000;
+
+export type InboundResult =
+  | { ignored: string }
+  | { ok: true; created: boolean; matched: string | null; contactId: string; duplicate?: boolean };
+
+export async function handleInboundLead(
+  raw: unknown,
+  source = "META_ADS",
+  opts: { taskTitle?: string; activity?: string; externalId?: string | null; notify?: boolean } = {},
+): Promise<InboundResult> {
   const l = parseLead(raw);
   if (!l.email && !l.phone && !l.lastName && !l.firstName && !l.linkedinUrl) return { ignored: "keine Kontaktdaten erkannt" };
   const label = SOURCE_TEXT[source] ?? source;
+  // Dublettenschutz (Ole, 18.11.2026): derselbe Meta-Lead direkt und über den Zap → nur ein Eingang, eine Aufgabe
+  const externalId = opts.externalId ?? (source === "META_ADS" ? metaLeadId(raw) : null);
+  if (externalId) {
+    const dup = await prisma.salesInboundLead.findUnique({ where: { externalId }, select: { contactId: true } });
+    if (dup) return { ok: true, created: false, matched: "lead-id", contactId: dup.contactId ?? "", duplicate: true };
+  }
   const matcher = await Matcher.load();
   const m =
     matcher.match({ url: l.linkedinUrl, slug: normalizeLinkedInUrl(l.linkedinUrl), firstName: null, lastName: null, email: l.email, company: null, location: null, status: null, connectedAt: null, messageAt: null, repliedAt: null, list: null, tags: null }) ??
     matcher.match({ url: null, slug: null, firstName: l.firstName, lastName: l.lastName, email: null, company: null, location: l.city, status: null, connectedAt: null, messageAt: null, repliedAt: null, list: null, tags: null });
 
-  let contactId = m?.id ?? null;
+  let contactId = m?.id ?? (l.email ? await findContactIdByEmail(l.email) : null);
+  if (contactId && source === "META_ADS") {
+    // Gleicher Kontakt kam eben schon über Meta, einer der beiden Wege ohne Lead-ID → Dublette
+    const recent = await prisma.salesInboundLead.findFirst({
+      where: {
+        contactId,
+        source: "META_ADS",
+        createdAt: { gte: new Date(Date.now() - DUBLETTE_FENSTER) },
+        ...(externalId ? { externalId: null } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+    if (recent) {
+      if (externalId) await prisma.salesInboundLead.update({ where: { id: recent.id }, data: { externalId } }).catch(() => {});
+      return { ok: true, created: false, matched: "kontakt-24h", contactId, duplicate: true };
+    }
+  }
   let created = false;
   if (!contactId) {
     const fullName = [l.firstName, l.lastName].filter(Boolean).join(" ");
     const slug = normalizeLinkedInUrl(l.linkedinUrl);
     const email = l.email ?? (slug ? `linkedin-${slug}@ohne-email.invalid` : `lead-${Date.now()}@ohne-email.invalid`);
-    const existing = l.email ? await findContactIdByEmail(email) : null;
-    if (existing) contactId = existing;
-    else {
-      const c = await prisma.salesContact.create({
-        data: {
-          email,
-          name: l.company ?? (fullName || email),
-          firstName: l.firstName,
-          lastName: l.lastName,
-          phone: l.phone,
-          linkedinUrl: l.linkedinUrl,
-          city: l.city,
-          zip: l.zip,
-          stage: "INTERESSE",
-          customerSource: source,
-          customerSourceNote: [l.campaign, l.ad].filter(Boolean).join(" · ") || null,
-          description: `Lead über ${label}`,
-        },
-      });
-      contactId = c.id;
-      created = true;
-      // Adresse aus dem Impressum ergänzen (im Hintergrund, blockiert nichts)
-      await scheduleAddressEnrichment(c.id);
-    }
+    const c = await prisma.salesContact.create({
+      data: {
+        email,
+        name: l.company ?? (fullName || email),
+        firstName: l.firstName,
+        lastName: l.lastName,
+        phone: l.phone,
+        linkedinUrl: l.linkedinUrl,
+        city: l.city,
+        zip: l.zip,
+        stage: "INTERESSE",
+        customerSource: source,
+        customerSourceNote: [l.campaign, l.ad].filter(Boolean).join(" · ") || null,
+        description: `Lead über ${label}`,
+      },
+    });
+    contactId = c.id;
+    created = true;
+    // Adresse aus dem Impressum ergänzen (im Hintergrund, blockiert nichts)
+    await scheduleAddressEnrichment(c.id);
   }
 
   if (!created) {
@@ -193,21 +237,30 @@ export async function handleInboundLead(raw: unknown, source = "META_ADS", opts:
     l.answers,
   ].filter(Boolean).join("\n");
 
-  await prisma.salesInboundLead.create({
-    data: {
-      contactId,
-      source,
-      name: [l.firstName, l.lastName].filter(Boolean).join(" ") || null,
-      email: l.email,
-      phone: l.phone,
-      campaign: l.campaign,
-      ad: l.ad,
-      form: l.form,
-      answers: [l.message, l.answers].filter(Boolean).join("\n") || null,
-      created,
-      payload: (raw ?? {}) as Prisma.InputJsonValue,
-    },
-  });
+  try {
+    await prisma.salesInboundLead.create({
+      data: {
+        contactId,
+        source,
+        externalId,
+        name: [l.firstName, l.lastName].filter(Boolean).join(" ") || null,
+        email: l.email,
+        phone: l.phone,
+        campaign: l.campaign,
+        ad: l.ad,
+        form: l.form,
+        answers: [l.message, l.answers].filter(Boolean).join("\n") || null,
+        created,
+        payload: (raw ?? {}) as Prisma.InputJsonValue,
+      },
+    });
+  } catch (err) {
+    // Gleichzeitiger Doppel-Eingang (Meta-Webhook + Zap) → Unique-Konflikt auf der Lead-ID = Dublette
+    if (externalId && err instanceof Error && /Unique constraint|P2002/.test(err.message)) {
+      return { ok: true, created: false, matched: "lead-id", contactId, duplicate: true };
+    }
+    throw err;
+  }
   await prisma.salesActivity.create({
     data: {
       contactId,
@@ -219,5 +272,10 @@ export async function handleInboundLead(raw: unknown, source = "META_ADS", opts:
   await prisma.salesTask.create({
     data: { contactId, title: opts.taskTitle ?? `Neuen ${label}-Lead anrufen`, type: "ANRUF", dueAt: new Date(), note: info.slice(0, 500) || null },
   });
+  if (opts.notify) {
+    await meldeVertriebLead({ contactId, name: [l.firstName, l.lastName].filter(Boolean).join(" ") || null, company: l.company, city: l.city, zip: l.zip }).catch((e) =>
+      reportError(e, "vertrieb-lead-meldung"),
+    );
+  }
   return { ok: true, created, matched: m?.via ?? null, contactId };
 }

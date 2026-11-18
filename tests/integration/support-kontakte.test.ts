@@ -107,7 +107,7 @@ describe("Support-Nummer: Kunde oder Interessent", () => {
     expect(await sendTerminConfirmation(meeting.id, inv, null)).toBe("sent");
     expect(sent).toHaveLength(1);
     const conv = await prisma.conversation.findFirstOrThrow({ where: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: PH_I }, include: { messages: true } });
-    expect(conv.messages.at(-1)?.body).toContain("Guten Tag Max Muster");
+    expect(conv.messages.at(-1)?.body).toContain("Guten Tag Herr Muster");
     expect(conv.messages.at(-1)?.body).toContain("per Video: https://zoom.us/j/1");
     expect((await prisma.salesMeeting.findUniqueOrThrow({ where: { id: meeting.id } })).waConfirmStatus).toBe("sent");
   });

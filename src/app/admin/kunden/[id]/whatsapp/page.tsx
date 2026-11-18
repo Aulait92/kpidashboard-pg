@@ -53,17 +53,38 @@ async function BestandModuleCard({ customerId }: { customerId: string }) {
   );
 }
 
-/** 360dialog: Nummer nachträglich finden bzw. von Hand zuordnen (lib/whatsapp/dialog360-match.ts). */
+/**
+ * WhatsApp-Verbindung (Admin v2 A5, Ole 18.11.2026): Stand und eine Hauptaktion „Verbindung reparieren“ (auch bei
+ * verbundenen Kunden, z. B. wenn keine Nachrichten mehr ankommen). Ohne Verbindung zusätzlich zurücksetzen und freie
+ * 360dialog-Nummern von Hand zuordnen (lib/whatsapp/dialog360-match.ts).
+ */
 async function D360Card({ customerId }: { customerId: string }) {
-  if (!selfConnectEnabled()) return null;
-  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true } });
-  if (acc?.status === "connected" && acc.apiKeyEnc) return null;
-  const free = await freePartnerChannels().catch(() => []);
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true, phoneNumber: true } });
+  if (!selfConnectEnabled() && !acc) return null;
+  const verbunden = acc?.status === "connected" && !!acc.apiKeyEnc;
+  const free = verbunden ? [] : await freePartnerChannels().catch(() => []);
+  const stand = verbunden
+    ? `Verbunden${acc?.phoneNumber ? `: +${acc.phoneNumber.replace(/^\+/, "")}` : ""}`
+    : acc?.status === "invited"
+      ? "Einladung von 360dialog verschickt"
+      : acc?.status === "pending"
+        ? "Nummer wird eingerichtet"
+        : acc?.status === "error"
+          ? "Fehler beim Verbinden"
+          : "Nicht verbunden";
   return (
     <Card className="max-w-5xl">
-      <CardHeader title="360dialog-Nummer zuordnen" />
-      <div className="px-5 pb-5">
-        <D360Assign customerId={customerId} resettable={acc ? (acc.status === "invited" ? "Einladung von 360dialog verschickt" : acc.status === "pending" ? "Nummer wird eingerichtet" : acc.status) : null} free={free.slice(0, 20).map((c) => ({ id: c.id, phone: c.phone, name: c.name, clientName: c.clientName, availability: c.availability, createdAt: c.createdAt }))} />
+      <CardHeader title="WhatsApp-Verbindung" />
+      <div className="px-5 pb-5 pt-4">
+        <p className={`mb-3 text-sm font-medium ${verbunden ? "text-emerald-700" : "text-amber-800"}`} data-verbindung-stand>
+          {stand}
+        </p>
+        <D360Assign
+          customerId={customerId}
+          verbunden={verbunden}
+          resettable={acc && !verbunden ? (acc.status === "invited" ? "Einladung von 360dialog verschickt" : acc.status === "pending" ? "Nummer wird eingerichtet" : acc.status) : null}
+          free={free.slice(0, 20).map((c) => ({ id: c.id, phone: c.phone, name: c.name, clientName: c.clientName, availability: c.availability, createdAt: c.createdAt }))}
+        />
       </div>
     </Card>
   );

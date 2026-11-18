@@ -1,3 +1,5 @@
+import { KEINE_ANGABE } from "@/lib/platzhalter";
+
 const eur = new Intl.NumberFormat("de-DE", {
   style: "currency",
   currency: "EUR",
@@ -31,17 +33,17 @@ const dateTimeFmt = new Intl.DateTimeFormat("de-DE", {
 });
 
 export function formatEUR(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "–";
+  if (value == null || !Number.isFinite(value)) return KEINE_ANGABE;
   return eur.format(value);
 }
 
 export function formatPercent(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "–";
+  if (value == null || !Number.isFinite(value)) return KEINE_ANGABE;
   return pct.format(value);
 }
 
 export function formatNumber(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "–";
+  if (value == null || !Number.isFinite(value)) return KEINE_ANGABE;
   return num.format(value);
 }
 
@@ -56,7 +58,7 @@ export function formatDateTime(value: Date | string): string {
 }
 
 export function formatDuration(hours: number | null | undefined): string {
-  if (hours == null || !Number.isFinite(hours)) return "–";
+  if (hours == null || !Number.isFinite(hours)) return KEINE_ANGABE;
   if (hours < 1) return `${Math.round(hours * 60)} min`;
   if (hours < 48) return `${num.format(hours)} h`;
   return `${num.format(hours / 24)} d`;

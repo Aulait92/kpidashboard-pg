@@ -19,6 +19,7 @@ import { startSequence, stopSequences } from "@/lib/lead-sequences";
 import { registerCallAttempt, type CallAttemptResult } from "@/lib/call-attempts";
 import { fmtAttemptAt } from "@/lib/call-plan";
 import { anrufErledigt } from "@/lib/telefonat-server";
+import { bdFrageFaellig } from "@/lib/beratungsdoku-server";
 
 type LeadPrev = {
   status: string | null;
@@ -49,7 +50,15 @@ export type UndoSnapshot =
       prev: { needsAttention: boolean; attentionReason: string | null; attentionAt: string | null };
     };
 
-export type InboxResult = { ok: true; undo?: UndoSnapshot; attempt?: CallAttemptResult & { nextLabel: string | null } } | { ok: false; error: string };
+export type InboxResult =
+  | {
+      ok: true;
+      undo?: UndoSnapshot;
+      attempt?: CallAttemptResult & { nextLabel: string | null };
+      /** Einmal fragen: Beratungsdokumentation vorbereiten? (nach dem ersten Termin-Ergebnis, BeratungsdokuFrageHost) */
+      bdFrage?: boolean;
+    }
+  | { ok: false; error: string };
 
 const leadSelect = {
   id: true,
@@ -242,9 +251,12 @@ export async function appointmentOutcomeResult(
   if (outcome === "no_show") await startSequence(lead.id, "no_show").catch((e) => console.error("[lead-sequences]", e));
   await recordUsage("action", `outcome.${outcome}`);
   refresh();
+  // Nach einem Gespräch (Angebot, Abschluss) einmal fragen, ob die Beratungsdokumentation vorbereitet werden soll
+  const bdFrage = outcome === "offer" || outcome === "closed" ? await bdFrageFaellig(await getBuyerContext()).catch(() => false) : false;
   return {
     ok: true,
     undo: { kind: "lead", leadId: lead.id, prev, appointment: { id: appt.id, status: appt.status, attendance: appt.attendance } },
+    ...(bdFrage ? { bdFrage } : {}),
   };
 }
 

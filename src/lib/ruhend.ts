@@ -24,7 +24,7 @@ import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting } from "@/lib/offer-links";
-import { berlinTodayIso, annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
+import { berlinTodayIso, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
 import { fmtIso } from "@/lib/vertrag-laufzeit";
 import { eraseCustomerData } from "@/lib/erasure";
 import {
@@ -68,7 +68,7 @@ export function mrrFromFields(
   annualFreeMonths: number | null = null,
 ): number {
   const monthly = n(c.retainerMonthly) + c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly) + n(c.empfehlungMonthly);
-  const factor = c.billingInterval === "year" ? annualMultiplier(annualFreeMonths ?? PRICE_LIST.annualFreeMonths) / 12 : 1;
+  const factor = rhythmusMonatsAnteil(c.billingInterval, annualFreeMonths);
   return r2(monthly * factor);
 }
 

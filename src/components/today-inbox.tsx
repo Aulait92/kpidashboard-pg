@@ -51,13 +51,17 @@ import { abschlussEinTipp } from "@/components/abschluss-nachher";
 import { BeitragFehltKarte } from "@/components/beitrag-fehlt-karte";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
 import { attemptMessage, emitNotReachedOffer, LostSheet, NextStepSheet } from "@/components/next-step";
+import { emitBdFrage } from "@/components/beratungsdoku-frage";
 import { NEXT_STEP_LABEL } from "@/lib/lead-next-step";
 import { TerminAnwesenheit } from "@/components/termin-anwesenheit";
 import { anwesenheitsFrage } from "@/lib/showup";
 import { AngebotSendenSheet, type AngebotZiel } from "@/components/angebot-senden";
 import { ANGEBOT_AUFGABE, ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
 import { MorgenAutomatisch } from "@/components/morgen-automatisch";
+import { DatenschutzKarte } from "@/components/datenschutz-karte";
 import type { AutomatischeNachrichten } from "@/lib/nachrichtenplan-server";
+import { CrossSellZusatzKnopf } from "@/components/bestand/cross-sell-angebot";
+import { istCrossSellAufgabe, type CrossSellVerkauf } from "@/lib/cross-sell-verkauf";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -112,7 +116,10 @@ export function TodayInbox({
   zuVorbereiten = [],
   anrufen = null,
   automatisch = null,
+  weiteresProdukt = null,
 }: {
+  /** Wiedervorlage „Weiteres Produkt anbieten?“: Zusatz-Knopf zum Bestandskunden-Modul (nur verfügbar und nicht gebucht) */
+  weiteresProdukt?: CrossSellVerkauf | null;
   /** „Morgen: 3 automatische Nachrichten“ (Paket P6) */
   automatisch?: AutomatischeNachrichten | null;
   /** Deep-Link aus dem Push „… hat noch nicht geantwortet. Jetzt anrufen?“ (/buyer?anrufen=<leadId>): Anruf-Blatt öffnen */
@@ -174,6 +181,8 @@ export function TodayInbox({
       }
       // Nach „nicht erreicht“: Versuch X von 6, nächster Versuch, Nachricht „Nicht erreicht“ anbieten
       if (res.attempt && who && !res.attempt.offered) emitNotReachedOffer(who.leadId, who.name, res.attempt);
+      // Erstes Termin-Ergebnis: einmal fragen, ob die Beratungsdokumentation vorbereitet werden soll
+      if (res.bdFrage) emitBdFrage(key.startsWith("o:") && who ? { appointmentId: key.slice(2), name: who.name } : null);
       const undo = res.undo;
       toast.show({
         message: res.attempt ? attemptMessage(message, res.attempt) : message,
@@ -270,7 +279,7 @@ export function TodayInbox({
   }, [callMode]);
   const noStep = data.noNextStep.leads.filter((l) => !hidden.has(`n:${l.leadId}`));
   const noStepTotal = Math.max(noStep.length, data.noNextStep.total - (data.noNextStep.leads.length - noStep.length));
-  const nothing = appointments.length + outcomes.length + angebote.length + openCalls.length + chats.length + calls.length + noStep.length === 0;
+  const nothing = appointments.length + outcomes.length + angebote.length + openCalls.length + chats.length + calls.length + noStep.length + (data.datenschutz?.length ?? 0) === 0;
   const noStepHref = leadHref.startsWith("/buyer?") ? "/buyer/kontakte?ansicht=ohne-schritt" : "/buyer/leads?ansicht=ohne-schritt";
 
   const laterSheet = (c: CallItem) =>
@@ -366,6 +375,7 @@ export function TodayInbox({
           <EmptyState icon={Check} title="Alles erledigt" text="Neue Aufgaben erscheinen hier von selbst." />
         </Card>
       ) : null}
+      {data.datenschutz?.length ? <DatenschutzKarte items={data.datenschutz} leadUrl={leadUrl} /> : null}
       {chats.length > 0 ? (
         <Card>
           <div id="chats" className="scroll-mt-20" />
@@ -531,7 +541,8 @@ export function TodayInbox({
                               appointmentId: o.id,
                               name: o.name,
                               key,
-                              spaeter: () => run(key, `${o.name}: Angebot steht unter „Angebote senden“`, () => appointmentOutcomeResult(o.id, "offer", null)),
+                              spaeter: () =>
+                                run(key, `${o.name}: Angebot steht unter „Angebote senden“`, () => appointmentOutcomeResult(o.id, "offer", null), { leadId: o.leadId, name: o.name }),
                             }),
                           0,
                         ),
@@ -540,7 +551,13 @@ export function TodayInbox({
                       label: "Abschluss",
                       icon: Trophy,
                       onSelect: () =>
-                        setTimeout(() => askWin(o.leadId, o.name, (v, sp) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v, sp))), 0),
+                        setTimeout(
+                          () =>
+                            askWin(o.leadId, o.name, (v, sp) =>
+                              run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v, sp), { leadId: o.leadId, name: o.name }),
+                            ),
+                          0,
+                        ),
                     },
                     { label: "Nicht erschienen", icon: UserX, onSelect: () => run(key, `${o.name}: steht jetzt bei Anrufen`, () => appointmentOutcomeResult(o.id, "no_show", null)) },
                     { label: "Verloren", icon: ThumbsDown, tone: "danger", onSelect: () => setTimeout(() => setSheet({ kind: "lost", key, leadId: o.leadId, name: o.name, appointmentId: o.id }), 0) },
@@ -629,6 +646,7 @@ export function TodayInbox({
                     {c.overdue ? <span className="font-medium text-rose-600">Überfällig · </span> : null}
                     {c.reason}
                   </p>
+                  {weiteresProdukt && c.kind === "followup" && istCrossSellAufgabe(c.reason) ? <CrossSellZusatzKnopf verkauf={weiteresProdukt} /> : null}
                 </div>
                 {c.phone ? (
                   <span

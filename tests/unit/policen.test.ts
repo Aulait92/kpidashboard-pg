@@ -25,8 +25,12 @@ import {
 import {
   einwilligungsAntwort,
   einwilligungTextVersion,
+  einwilligungTextVersionAus,
   EINWILLIGUNG_RE,
+  istOhneKi,
   istPolicenEinwilligungsKnopf,
+  ohneKiBestaetigung,
+  ohneStichwort,
   lieberNichtText,
   NACHFRAGE_RE,
   nachEinwilligungText,
@@ -82,7 +86,7 @@ describe("Einwilligung (Rechtsprüfung A1, Oles Freigabe)", () => {
   it("eigene interaktive Nachricht: Wortlaut mit Vor- und Nachname, Firma, Link, Gesundheitsteil nur bei Freigabe", () => {
     const b = policenBitte({ an: "sie", vermittler: herr, gesundheitAn: true, firma: "Kannapinn Versicherungen", datenschutzUrl: LINK });
     expect(b.einwilligung.text).toBe(
-      `Kurz zum Datenschutz: Ich bin einverstanden, dass Ole Kannapinn (Kannapinn Versicherungen) meine hier gesendeten Policen zur Vorbereitung des Termins speichert und die Vertragsdaten automatisch auslesen lässt (KI-Dienst in der EU), auch wenn sie Gesundheitsangaben enthalten, z. B. bei Kranken-, BU- oder Lebensversicherung. Beteiligt sind WhatsApp (Meta, Zugriff auch aus den USA möglich) und der Dienstleister performancegrowth. Widerruf jederzeit mit „Widerruf“. Infos: ${LINK}`,
+      `Kurz zum Datenschutz: Ich bin einverstanden, dass Ole Kannapinn (Kannapinn Versicherungen) meine hier gesendeten Policen zur Vorbereitung des Termins speichert und die Vertragsdaten automatisch auslesen lässt (KI-Dienst in der EU), auch wenn sie Gesundheitsangaben enthalten, z. B. bei Kranken-, BU- oder Lebensversicherung. Beteiligt sind WhatsApp (Meta, Zugriff auch aus den USA möglich) und der Dienstleister performancegrowth. Widerruf jederzeit mit „Widerruf“. Ohne automatisches Auslesen? Dann antworten Sie einfach „ohne KI“. Infos: ${LINK}`,
     );
     expect(b.einwilligung.fusszeile).toBe("Ihr Termin findet auch ohne Unterlagen statt.");
     expect(b.einwilligung.knoepfe.map((k) => k.title)).toEqual(["Einverstanden", "Lieber nicht"]);
@@ -92,6 +96,12 @@ describe("Einwilligung (Rechtsprüfung A1, Oles Freigabe)", () => {
     expect(sach.einwilligung.text).toContain("dass Ole Kannapinn meine hier gesendeten Policen");
     expect(sach.einwilligung.text).toContain("(KI-Dienst in der EU). Beteiligt");
     expect(einwilligungTextVersion(true)).not.toBe(einwilligungTextVersion(false));
+    // Auflage A9: Satz zu „ohne KI“ am Ende (vor dem Link), Du-Fassung, neue Textversion
+    expect(policenBitte({ an: "du", vermittler: ole, firma: "X" }).einwilligung.text).toMatch(/Widerruf jederzeit mit „Widerruf“\. Ohne automatisches Auslesen\? Dann antworte einfach „ohne KI“\.$/);
+    expect([einwilligungTextVersion(true), einwilligungTextVersion(false)]).toEqual(["2026-11-18.g2", "2026-11-18.s2"]);
+    expect(einwilligungTextVersionAus(b.einwilligung.text)).toBe("2026-11-18.g2");
+    expect(einwilligungTextVersionAus(sach.einwilligung.text)).toBe("2026-11-18.s2");
+    expect(einwilligungTextVersionAus(b.einwilligung.text.replace(/ Ohne automatisches Auslesen\?.*„ohne KI“\./, ""))).toBe("2026-11-18.g1");
   });
 
   it("hält die WhatsApp-Grenzen ein (Text 1.024, Fußzeile 60, Knöpfe 20), auch als Nachfrage und mit langen Namen", () => {
@@ -114,7 +124,7 @@ describe("Einwilligung (Rechtsprüfung A1, Oles Freigabe)", () => {
   it("Texte ohne Gedankenstriche, Du ohne Sie", () => {
     for (const an of ["sie", "du"] as const) {
       const b = policenBitte({ an, vermittler: herr, gesundheitAn: true, firma: "X", datenschutzUrl: LINK });
-      for (const t of [b.text, b.einwilligung.text, b.einwilligung.fusszeile ?? "", policenNachfrage({ an, vermittler: herr }).text, nachEinwilligungText(an), lieberNichtText(an)]) {
+      for (const t of [b.text, b.einwilligung.text, b.einwilligung.fusszeile ?? "", policenNachfrage({ an, vermittler: herr }).text, nachEinwilligungText(an), lieberNichtText(an), ohneKiBestaetigung(an)]) {
         expect(t).not.toMatch(GEDANKENSTRICH);
       }
     }
@@ -144,6 +154,75 @@ describe("Widerruf nur nach Regeln (keine KI)", () => {
     for (const t of ["Termin löschen", "kann ich meinen alten Vertrag widerrufen?", "Ich habe nicht mehr Zeit", "ja", "Passt 10 Uhr?"]) {
       expect(istWiderruf(t), t).toBe(false);
     }
+  });
+});
+
+describe("Stichwort „ohne KI“ (Auflage A9, nur Regeln)", () => {
+  it("erkennt das Stichwort und Varianten, Groß/Klein, mit und ohne Anführungszeichen, auch im Satz", () => {
+    for (const t of [
+      "ohne KI",
+      "Ohne KI",
+      "OHNE KI",
+      "„ohne KI“",
+      "\"ohne ki\"",
+      "'ohne KI'",
+      "ohne KI.",
+      "ohne KI!",
+      "Ohne KI?",
+      "keine KI",
+      "Keine KI bitte",
+      "kein KI",
+      "ohne Auslesen",
+      "Ohne automatisches Auslesen",
+      "Ohne automatisches Auslesen bitte.",
+      "nicht auslesen",
+      "Bitte nicht auslesen",
+      "bitte nicht automatisch auslesen",
+      "Ja, aber ohne KI",
+      "Einverstanden, aber bitte ohne KI",
+      "ich möchte keine KI-Auswertung",
+      "Ohne KI-Auslesen bitte",
+      "Gerne ohne künstliche Intelligenz",
+      "Machen Sie das bitte ohne KI",
+      "Geht das auch ohne KI?",
+    ]) {
+      expect(istOhneKi(t), t).toBe(true);
+    }
+  });
+  it("keine Fehlauslösung bei normalen Sätzen mit „KI“ oder ähnlichen Wörtern", () => {
+    for (const t of [
+      "Ist das eine KI?",
+      "Bist du eine KI?",
+      "Bist du keine KI?",
+      "Sie sind doch keine KI, oder?",
+      "Das ist keine KI, oder?",
+      "KI finde ich spannend",
+      "Ich habe keine Kinder",
+      "ohne Kinder",
+      "keine Ahnung",
+      "Was heißt ohne KI?",
+      "Was bedeutet „ohne KI“?",
+      "Wurde das nicht ausgelesen?",
+      "Bitte nicht ohne KI",
+      "Keine KI, ich will mit einem Menschen sprechen",
+      "Einverstanden",
+      "ja",
+      "Widerruf",
+      "",
+      null,
+    ]) {
+      expect(istOhneKi(t), String(t)).toBe(false);
+    }
+  });
+  it("Rest ohne Stichwort für eine getippte Zustimmung („Ja, aber ohne KI“ → „ja“)", () => {
+    expect(ohneStichwort("Ja, aber ohne KI")).toBe("ja");
+    expect(ohneStichwort("Einverstanden, aber bitte ohne KI!")).toBe("einverstanden");
+    expect(ohneStichwort("„ohne KI“")).toBe("");
+    expect(ohneStichwort("Nein, ohne KI")).toBe("nein");
+  });
+  it("feste Bestätigung in beiden Fassungen, ohne Gedankenstriche", () => {
+    expect(ohneKiBestaetigung("sie")).toBe("Alles klar, Ihre Unterlagen werden nur gespeichert und nicht automatisch ausgelesen.");
+    expect(ohneKiBestaetigung("du")).toBe("Alles klar, deine Unterlagen werden nur gespeichert und nicht automatisch ausgelesen.");
   });
 });
 
@@ -242,6 +321,7 @@ describe("Datenschutzhinweise und Opt-in", () => {
       expect(t).toContain("90 Tage");
       expect(t).toMatch(/Widerruf/);
       expect(t).toMatch(/Meta/);
+      expect(t).toContain("„ohne KI“"); // Auflage A9
       expect(t).not.toMatch(GEDANKENSTRICH);
     }
     expect(ERINNERUNG_OPTIN_TEXT).toContain("STOP");

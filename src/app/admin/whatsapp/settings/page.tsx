@@ -25,6 +25,7 @@ import { AbTestCard } from "./ab-test-card";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import { AgentSettings, ResubmitTemplateButton, SubmitTemplatesButton, TemplateApproved, TemplateAutoStatus, TemplateEditor } from "./controls";
 import { AdminBack } from "@/components/admin/admin-back";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "WhatsApp-Einstellungen | performancegrowth Admin" };
@@ -241,7 +242,7 @@ export default async function WhatsAppSettingsPage({
                     </span>
                   ) : c.whatsAppAccount?.dialog360ChannelId ? (
                     <span className={`text-sm ${c.whatsAppAccount.status === "error" ? "text-red-700" : "text-amber-700"}`}>
-                      {c.whatsAppAccount.status === "error" ? "Selbst verbinden fehlgeschlagen – Key von Hand eintragen" : "Kunde verbindet selbst · wird eingerichtet"}
+                      {c.whatsAppAccount.status === "error" ? "Selbst verbinden fehlgeschlagen, Key von Hand eintragen" : "Kunde verbindet selbst · wird eingerichtet"}
                     </span>
                   ) : (
                     <span className="text-sm text-[color:var(--muted)]">nicht verbunden</span>
@@ -324,7 +325,7 @@ export default async function WhatsAppSettingsPage({
                       <li key={t.id} className="flex items-start gap-3 px-4 py-3">
                         <div className="min-w-0 flex-1 text-sm">
                           <div className="font-medium">
-                            {PURPOSE_LABELS[t.purpose as NoticePurpose] ?? (t.purpose || "–")}{" "}
+                            {PURPOSE_LABELS[t.purpose as NoticePurpose] ?? (t.purpose || KEINE_ANGABE)}{" "}
                             <span className="text-sm font-normal text-[color:var(--muted)]">{t.name}</span>
                           </div>
                           <p className="mt-0.5 line-clamp-2 text-sm text-[color:var(--muted)]">{t.body}</p>

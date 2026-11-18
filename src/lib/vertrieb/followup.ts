@@ -157,7 +157,10 @@ async function ensureAgainTask(contactId: string, dueAt: Date, note: string) {
  * Neue Mail vom Kontakt (aus recordReply). Abwesenheitsnotiz nach Mail 1 verschiebt Mail 2,
  * echte Antwort stoppt; ist sie selbst ein „später“, wird neu eingeplant.
  */
-export async function onIncomingReply(contactId: string, r: { emailId: string; sentiment: string; isAutoReply: boolean; text: string; sentAt: Date }) {
+export async function onIncomingReply(
+  contactId: string,
+  r: { emailId: string; sentiment: string; isAutoReply: boolean; text: string; sentAt: Date; dueAt?: Date | null; timing?: string | null },
+) {
   const active = await prisma.salesFollowup.findUnique({ where: { activeFor: contactId } });
   if (r.isAutoReply) {
     if (!active || active.step !== 1) return;
@@ -172,14 +175,16 @@ export async function onIncomingReply(contactId: string, r: { emailId: string; s
   }
   if (r.sentiment !== "SPAETER") return;
   const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { stage: true } });
-  if (!c || STOP_STAGES.includes(c.stage)) return;
+  // „Kein Interesse“ aus Instantly kam vor dem Antworttext (Webhook-Reihenfolge): der Text „später“ hat Vorrang
+  if (!c || (STOP_STAGES.includes(c.stage) && !(c.stage === "VERLOREN" && (await nurAutomatischVerloren(contactId))))) return;
   if (c.stage !== "SPAETER") {
     await prisma.salesContact.update({ where: { id: contactId }, data: { stage: "SPAETER", lossReason: null } });
     await prisma.salesActivity.create({ data: { contactId, type: "STATUS", outcome: `${STAGE_LABEL[c.stage]} → ${STAGE_LABEL.SPAETER}`, note: "Antwort: gerne später" } });
   }
   // Ältere Antworten (z. B. beim ersten vollständigen Abgleich) nicht ungefragt anschreiben
   const old = Date.now() - r.sentAt.getTime() > 14 * 86_400_000;
-  await planFollowup(contactId, { source: "ANTWORT", replyEmailId: r.emailId, status: old ? "FREIGABE" : "GEPLANT" });
+  // Zeitpunkt aus der KI-Einstufung (lib/vertrieb/spaeter-ki.ts), sonst aus dem Text
+  await planFollowup(contactId, { source: "ANTWORT", replyEmailId: r.emailId, status: old ? "FREIGABE" : "GEPLANT", dueAt: r.dueAt ?? undefined, timing: r.dueAt ? r.timing ?? null : undefined });
 }
 
 /** Ab wann eine Mail des Kontakts als „neue Antwort“ zählt */
@@ -219,7 +224,7 @@ type Ctx = {
 
 /** Anrede-Zeile nach der zentralen Regel (lib/ansprache.ts): „Guten Tag Frau Meier,“ / „Guten Tag Anna Meier,“ / „Guten Tag,“. */
 export function greetingFor(c: { salutation: string | null; firstName: string | null; lastName: string | null }): string {
-  // Nur mit echtem Nachnamen (nicht aus dem Vornamen ableiten)
+  // Nur mit echtem Nachnamen; Herr/Frau nach der zentralen Regel (auch eindeutiger Vorname)
   return anredeZeile("sie", { salutation: c.salutation, firstName: c.firstName, lastName: c.lastName });
 }
 
@@ -585,9 +590,12 @@ export async function planExistingFollowups(now = new Date()) {
 
 const classifyLater = (text: string, at: Date) => !!text && isLaterInterest(text, at);
 
-/** Vergangene/zu frühe Termine über die nächsten Werktage verteilen (je Postfach perDay am Tag). */
-function spread<T extends { dueAt: Date; eaccount: string; contactId: string }>(items: T[], now: Date, perDay: number) {
-  const tomorrow = nextWorkdayKey(dayKey(addDays(now, 1)));
+/**
+ * Vergangene/zu frühe Termine über die nächsten Werktage verteilen (je Postfach perDay am Tag).
+ * start: frühester Tag (YYYY-MM-DD, Standard: nächster Werktag nach `now`).
+ */
+export function spread<T extends { dueAt: Date; eaccount: string; contactId: string }>(items: T[], now: Date, perDay: number, start?: string) {
+  const tomorrow = nextWorkdayKey(start ?? dayKey(addDays(now, 1)));
   const overdue = items.filter((p) => dayKey(p.dueAt) < tomorrow).sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime());
   const used = new Map<string, number>();
   let day = tomorrow;
@@ -667,4 +675,19 @@ export async function runFollowups(now = new Date(), opts: { llm?: LlmCall; limi
     else out.skipped++;
   }
   return out;
+}
+
+/**
+ * Stufe „Verloren“ kam nur automatisch (Instantly „Kein Interesse“ bzw. Absage per Mail, lib/vertrieb/instantly.ts onDecline)
+ * und wurde danach nicht von Hand geändert. „Falsche Person“ und „Verloren“ aus Instantly zählen nicht.
+ */
+export async function nurAutomatischVerloren(contactId: string): Promise<boolean> {
+  const auto = await prisma.salesActivity.findFirst({
+    where: { contactId, type: "NOTIZ", outcome: { in: ["Instantly: Kein Interesse", "Absage per Mail"] }, note: { startsWith: "Automatisch auf „Verloren“" } },
+    orderBy: { occurredAt: "desc" },
+    select: { occurredAt: true },
+  });
+  if (!auto) return false;
+  const vonHand = await prisma.salesActivity.findFirst({ where: { contactId, type: "STATUS", occurredAt: { gt: auto.occurredAt } }, select: { id: true } });
+  return !vonHand;
 }

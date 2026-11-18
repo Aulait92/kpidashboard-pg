@@ -45,6 +45,11 @@ export type KatalogTarif = {
    * bei der Tarifwahl „bitte prüfen“.
    */
   ungeprueft?: boolean;
+  /**
+   * Merkmale, deren Wert Vermittler bestätigt haben (Ole, 18.11.2026, lib/tarif-vorschlaege.ts): übernommene Vorschläge
+   * aus der Datenbank, zur Laufzeit über die Datei gelegt. Gelten nicht mehr als „ungeprüft“.
+   */
+  bestaetigt?: string[];
 };
 
 /**
@@ -576,6 +581,12 @@ export function katalogAus(schemaRaw: unknown, dateien: { gesellschaft: string; 
   const tarife = dateien.filter((d) => d.sparte !== "buendel").flatMap((d) => parseTarifDatei(d.json, d)).filter((t) => keys.has(t.sparte));
   return { sparten, tarife, buendel };
 }
+
+/** Merkmal noch nicht gegengeprüft: Tarif ungeprüft und das Merkmal nicht von Vermittlern bestätigt (lib/tarif-vorschlaege.ts). */
+export const merkmalUngeprueft = (t: { ungeprueft?: boolean; bestaetigt?: string[] }, key: string) => !!t.ungeprueft && !(t.bestaetigt ?? []).includes(key);
+
+/** „bitte prüfen“ an Tarifkarte bzw. Tarifliste: mindestens ein Merkmal der Folie ist noch ungeprüft. */
+export const werteZuPruefen = (t: { ungeprueft?: boolean; bestaetigt?: string[] }, keys: string[]) => !!t.ungeprueft && (!keys.length || keys.some((k) => merkmalUngeprueft(t, k)));
 
 export const sparteVon = (k: Katalog, key: string): KatalogSparte | undefined => k.sparten.find((s) => s.key === key);
 

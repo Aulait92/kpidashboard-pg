@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 
-export type D360AssignState = { ok?: boolean; message?: string; error?: string };
+export type D360AssignState = { ok?: boolean; message?: string; error?: string; schritte?: { ok: boolean; text: string }[] };
 
 function describe(r: Awaited<ReturnType<typeof import("@/lib/whatsapp/dialog360-match").checkConnection>>): D360AssignState {
   if (r.status === "connected") return { ok: true, message: `Verbunden${r.phone ? `: +${r.phone.replace(/^\+/, "")}` : ""}. Vorlagen werden eingereicht.` };
@@ -41,4 +41,20 @@ export async function d360ResetAction(_prev: D360AssignState, fd: FormData): Pro
   revalidatePath("/buyer/einrichtung");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, message: "Zurückgesetzt. Der Kunde sieht wieder „WhatsApp verbinden“." };
+}
+
+/**
+ * Admin: „Verbindung reparieren“ (Admin v2 A5, Ole 18.11.2026): Nummer suchen bzw. Webhook neu setzen, notfalls neuer Key,
+ * danach Vorlagen abgleichen (lib/whatsapp/dialog360-match.ts repairConnection). Ein Knopf, Ergebnis je Schritt ein Satz.
+ */
+export async function d360RepairAction(_prev: D360AssignState, fd: FormData): Promise<D360AssignState> {
+  const session = await getCurrentSession();
+  if (!session || session.role !== "ADMIN") return { error: "Nicht erlaubt." };
+  const customerId = String(fd.get("customerId") ?? "");
+  if (!customerId) return { error: "Kunde fehlt." };
+  const { repairConnection } = await import("@/lib/whatsapp/dialog360-match");
+  const r = await repairConnection(customerId, { id: session.userId ?? undefined, role: "ADMIN" });
+  revalidatePath(`/admin/kunden/${customerId}/whatsapp`);
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
+  return { ok: r.ok, schritte: r.schritte, ...(r.ok ? { message: "Verbindung läuft." } : { error: "Nicht alles ließ sich beheben." }) };
 }

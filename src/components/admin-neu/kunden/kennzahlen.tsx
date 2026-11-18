@@ -1,6 +1,7 @@
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 const TAG = 24 * 60 * 60 * 1000;
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -30,7 +31,7 @@ export async function Kennzahlen({ customerId }: { customerId: string }) {
       <Kachel label="Leads 30 T." wert={leads.toLocaleString("de-DE")} />
       <Kachel label="Termine" wert={termine.toLocaleString("de-DE")} hinweis={leads ? `${Math.round((termine / leads) * 100)} % der Leads` : undefined} />
       <Kachel label="Abschlüsse" wert={abschluesse.toLocaleString("de-DE")} />
-      <Kachel label="Kosten/Termin" wert={termine && summe ? eur(summe / termine) : "–"} hinweis={summe ? `${eur(summe)} Leadkosten` : undefined} />
+      <Kachel label="Kosten/Termin" wert={termine && summe ? eur(summe / termine) : NOCH_KEINE_DATEN} hinweis={summe ? `${eur(summe)} Leadkosten` : undefined} />
     </div>
   );
 }

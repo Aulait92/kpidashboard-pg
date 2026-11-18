@@ -34,10 +34,10 @@ import {
   erstanschreibenText,
   erstanschreibenV6Params,
   erstanschreibenV8Params,
+  erstanschreibenZweck,
   ersteFrage,
   ersteFrageKnoepfe,
   frageOhneFragezeichen,
-  outreachProdukt,
 } from "@/lib/whatsapp/erstanschreiben";
 import { fillNames, OUTREACH_PURPOSES, rankOutreach, renderTemplate, TEMPLATE_BUTTONS, templateTextFor, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { buildTemplateRequest, metaTemplateProblems, plannedTemplates, templateNameFor } from "@/lib/whatsapp/template-plan";
@@ -314,7 +314,7 @@ describe("Erstanschreiben v8 (vorher v7): Text und Parameter", () => {
       source: "Privatschutz",
       formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }],
     });
-    expect(t).toBe("Hallo Julia Schneider, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*");
+    expect(t).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*");
   });
 
   it("Parameter je Lage: Formular leer, teilweise, vollständig (Privatschutz, Sie)", () => {
@@ -334,11 +334,12 @@ describe("Erstanschreiben v8 (vorher v7): Text und Parameter", () => {
   for (const source of PRODUKTE) {
     for (const [lage, formular] of Object.entries(LAGEN)) {
       it(`${source ?? "ohne Produkt"}, Formular ${lage}: jede erste Frage endet auf „?“, Vorlage ohne „??“; Freitext gleich der vorbereiteten v8`, () => {
-        const purpose: NoticePurpose = outreachProdukt(source)?.purpose ?? "outreach";
         for (const an of ["sie", "du"] as const) {
           for (const kontakt of [{ fullName: "Julia Schneider", salutation: "Frau" as const }, { fullName: "Julia" }]) {
             const person = an === "du" ? PERSON_DU : PERSON;
             const f = formular(source);
+            // Vorlage je Produkt, nur Hausrat angefragt: outreach_hausrat (Ole, 18.11.2026)
+            const purpose: NoticePurpose = erstanschreibenZweck(source, f);
             const frage = ersteFrage(source, an, "Ole", f, person);
             expect(frage.endsWith("?"), frage).toBe(true);
             const params = erstanschreibenV8Params({ source, an, formular: f, person, kurz: "Ole" });
@@ -460,7 +461,7 @@ describe("Erstanschreiben v8: Einreichung, Auswahl und Erstinformation (Live-Tes
     expect([r.tpl.name, r.dokument, r.purpose]).toEqual(["pg_outreach_v6_sie", "vollstaendig", "outreach"]);
     const params = r.params(["Privatschutz", "Herrn Kannapinn", "Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu"]);
     const text = renderTemplate(r.tpl.body, params);
-    expect(text).toBe("Hallo Ole Kannapinn Testlead, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?*");
+    expect(text).toBe("Hallo Herr Testlead, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?*");
     expect(text).not.toMatch(/\b(deine?|dich|dir)\b/);
     // Du-Kunde bekommt weiter die Du-Fassung
     const du = rankOutreach(spaeter, P, "du", { fullName: "Ole Kannapinn Testlead" }, { pdf: "vollstaendig" });

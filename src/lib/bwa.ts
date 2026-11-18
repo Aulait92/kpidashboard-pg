@@ -102,7 +102,7 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
     if (!inRange(m)) continue;
     const net = netCost(Number(t.amount), t.vatIncluded);
     const line =
-      t.costPurpose === "ppl" ? "direkt:ppl" : t.costPurpose === "software" ? "direkt:software" : t.costPurpose === "akquise" ? "akquise:tools" : `betrieb:${betriebGroup(t.rule?.label, t.counterparty)}`;
+      t.costPurpose === "ppl" ? "direkt:ppl" : t.costPurpose === "software" || t.costPurpose === "ki" ? "direkt:software" : t.costPurpose === "akquise" ? "akquise:tools" : `betrieb:${betriebGroup(t.rule?.label, t.counterparty)}`;
     items.push({
       month: m,
       line,

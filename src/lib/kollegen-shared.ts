@@ -28,7 +28,7 @@ export const STAGE_LABEL: Record<ReferralStage, string> = {
 };
 
 export const REWARD_STATUS_LABEL: Record<string, string> = {
-  none: "–",
+  none: "noch keine",
   processing: "wird gebucht",
   credited: "gutgeschrieben (Stripe)",
   manual: "von Hand gutschreiben",

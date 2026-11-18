@@ -6,10 +6,14 @@ import {
   refreshTokenOf,
   saveConnection,
   updateTokens,
+  userIdOfKey,
   type Busy,
   type CreatedEvent,
   type NewEvent,
 } from "@/lib/calendar/tokens";
+
+import { belegtAusFreeBusy } from "@/lib/calendar/belegt-weitere";
+import { prisma } from "@/lib/prisma";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const CAL_BASE = "https://www.googleapis.com/calendar/v3";
@@ -109,25 +113,22 @@ async function accessToken(customerId: string): Promise<string> {
 /** Belegte Zeiten. Wirft bei jedem Fehler — nie still „alles frei". */
 export async function googleGetBusy(customerId: string, min: Date, max: Date): Promise<Busy[]> {
   const token = await accessToken(customerId);
+  // Weitere freigegebene Kalender nur für „belegt“ (lib/calendar/belegt-weitere.ts); nicht bei Berater-Kalendern
+  const weitere = userIdOfKey(customerId)
+    ? []
+    : ((await prisma.calendarConnection.findUnique({ where: { customerId }, select: { busyCalendarIds: true } }))?.busyCalendarIds ?? []);
   const res = await fetch(`${CAL_BASE}/freeBusy`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       timeMin: min.toISOString(),
       timeMax: max.toISOString(),
-      items: [{ id: "primary" }],
+      items: [{ id: "primary" }, ...weitere.map((id) => ({ id }))],
     }),
   });
-  const json = (await res.json().catch(() => ({}))) as {
-    calendars?: { primary?: { busy?: { start: string; end: string }[]; errors?: unknown[] } };
-  };
-  const cal = json.calendars?.primary;
-  if (!res.ok || !cal || (cal.errors && cal.errors.length > 0)) {
-    throw new Error(
-      `Google-Verfügbarkeit nicht abrufbar (${res.status}). Kalender ggf. neu verbinden.`,
-    );
-  }
-  return (cal.busy ?? []).map((b) => ({ start: new Date(b.start), end: new Date(b.end) }));
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Google-Verfügbarkeit nicht abrufbar (${res.status}). Kalender ggf. neu verbinden.`);
+  return belegtAusFreeBusy(json, weitere);
 }
 
 export async function googleCreateEvent(customerId: string, ev: NewEvent): Promise<CreatedEvent> {

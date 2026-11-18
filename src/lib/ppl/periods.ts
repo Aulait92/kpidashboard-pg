@@ -39,4 +39,4 @@ export function monthRange(now = new Date()) {
 }
 
 export const fmtDay = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit" }).format(d);
-export const fmtWeek = (start: Date) => `${fmtDay(start)}–${fmtDay(new Date(start.getTime() + 6 * 86_400_000))}`;
+export const fmtWeek = (start: Date) => `${fmtDay(start)} bis ${fmtDay(new Date(start.getTime() + 6 * 86_400_000))}`;

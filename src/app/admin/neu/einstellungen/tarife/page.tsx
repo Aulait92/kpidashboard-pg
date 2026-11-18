@@ -6,6 +6,9 @@ import { ladePreisPilot } from "@/lib/preise/pilot-server";
 import { gesellschaftName, sortiereGesellschaften, sparteVon } from "@/lib/tarifkatalog";
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import { TarifVorschlaege } from "@/components/admin-neu/einstellungen/tarif-vorschlaege";
+import { ladeTarifkatalogAktuell, ladeVorschlaege } from "@/lib/tarif-vorschlaege-server";
+import type { VorschlagStatus } from "@/lib/tarif-vorschlaege";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Tarifkatalog | performancegrowth Admin" };
@@ -13,9 +16,16 @@ export const metadata = { title: "Tarifkatalog | performancegrowth Admin" };
 // Tarifkatalog (Demo „e-tarife“): Beiträge rechnen (Pilot) je Gesellschaft und Sparte an/aus (heute
 // /admin/einstellungen/beitraege, dieselbe Server Action), dazu der Katalog nur lesend (Gesellschaften, Tarife, Sparten).
 // Der Katalog selbst liegt als Dateien unter data/tarifkatalog; Änderungen laufen über das Repository.
-export default async function Page() {
+// Oben (Ole, 18.11.2026): Vorschläge von Vermittlern übernehmen bzw. ablehnen (lib/tarif-vorschlaege*.ts); Übernommenes
+// liegt in der Datenbank über den Dateien und kommt per Export (scripts/tarif-vorschlaege-export.mjs) in die Dateien.
+const STATUS: VorschlagStatus[] = ["offen", "uebernommen", "abgelehnt"];
+
+export default async function Page({ searchParams }: { searchParams: Promise<{ vorschlaege?: string; alle?: string }> }) {
   await requireAuth();
-  const [aktiv, k] = await Promise.all([ladePreisPilot(), Promise.resolve(ladeTarifkatalog())]);
+  const sp = await searchParams;
+  const status = STATUS.find((s) => s === sp.vorschlaege) ?? "offen";
+  const kAktuell = await ladeTarifkatalogAktuell();
+  const [aktiv, k, vorschlaege] = await Promise.all([ladePreisPilot(), Promise.resolve(ladeTarifkatalog()), ladeVorschlaege(status, kAktuell)]);
 
   const pilot = new Map<string, string[]>();
   for (const s of PILOT_SCHLUESSEL) {
@@ -34,6 +44,7 @@ export default async function Page() {
 
   return (
     <EinstellungSeite pfad="/admin/neu/einstellungen/tarife" breit>
+      <TarifVorschlaege ansicht={vorschlaege} status={status} alle={sp.alle === "1"} />
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card>
           <CardHeader title="Beiträge rechnen (Pilot)" hint="in der Terminvorbereitung" />

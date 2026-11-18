@@ -1,5 +1,6 @@
 import { CalendarDays, CheckCircle2, ExternalLink } from "lucide-react";
-import { disconnectSalesCalendarAction, saveBookingTypeAction, saveSalesTimesAction } from "@/app/admin/vertrieb/buchungsseite/actions";
+import { disconnectSalesCalendarAction, saveBookingTypeAction, saveBusyCalendarsAction, saveSalesTimesAction } from "@/app/admin/vertrieb/buchungsseite/actions";
+import { BusyCalendarsForm } from "@/components/termin/busy-calendars-form";
 import { EinstellungSeite } from "@/components/admin-neu/einstellungen/rahmen";
 import { LeadTimesForm } from "@/components/calendar-sources";
 import { BookingTypeForm } from "@/components/termin/booking-type-form";
@@ -31,7 +32,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ g
   await requireAuth();
   const sp = await searchParams;
   const [conn, types, lt] = await Promise.all([
-    prisma.calendarConnection.findUnique({ where: { customerId: VERTRIEB_CUSTOMER_ID }, select: { status: true, provider: true, accountEmail: true } }),
+    prisma.calendarConnection.findUnique({ where: { customerId: VERTRIEB_CUSTOMER_ID }, select: { status: true, provider: true, accountEmail: true, busyCalendarIds: true } }),
     prisma.salesBookingType.findMany({ orderBy: { sortOrder: "asc" } }),
     loadLeadTimes(VERTRIEB_CUSTOMER_ID),
   ]);
@@ -69,6 +70,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ g
                   Trennen
                 </button>
               </form>
+              {conn!.provider === "google" ? (
+                <div className="basis-full">
+                  <BusyCalendarsForm action={saveBusyCalendarsAction} ids={conn!.busyCalendarIds} />
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="space-y-3">

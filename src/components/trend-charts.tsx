@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import type { Granularity, TimeSeriesPoint } from "@/lib/kpis";
 import { formatNumber } from "@/lib/format";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 const GRANULARITY_LABEL: Record<Granularity, string> = {
   day: "pro Tag",
@@ -75,7 +76,7 @@ export function TrendCharts({
               }}
               labelStyle={{ color: "#64748b", fontSize: 11 }}
               formatter={(value, name) => [
-                typeof value === "number" ? formatNumber(value) : "–",
+                typeof value === "number" ? formatNumber(value) : NOCH_KEINE_DATEN,
                 name,
               ]}
             />

@@ -2,10 +2,13 @@
 // Eingang über den Webhook, Einwilligung per Knopf mit Nachweis (nur anhängen), Tor ohne Einwilligung (nichts abrufen,
 // einmal nachfragen), „Lieber nicht“, Widerruf, Freigabe Kranken/BU/Leben je Vermittler, keine KI beim Dokumenteingang,
 // Ablage im (hier simulierten) privaten Bucket mit Schlüssel je Mandant, Abruf nur über signierte Links mit Protokoll,
-// Sichtbarkeit nur für den zuständigen Vermittler, Löschung 90 Tage nach dem Termin, Erinnerungs-Opt-in aus der Buchung.
+// Sichtbarkeit nur für den zuständigen Vermittler, Löschung 90 Tage nach dem Termin, Erinnerungs-Opt-in aus der Buchung,
+// Stichwort „ohne KI“ (Auflage A9) vor und nach „Einverstanden“.
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-const st: { kiAufrufe: number; ctx: unknown } = { kiAufrufe: 0, ctx: null };
+const st: { kiAufrufe: number; ctx: unknown; botTurns: number } = { kiAufrufe: 0, ctx: null, botTurns: 0 };
+// Assistent: nur zählen, ob er für eine Nachricht angestoßen wird (Stichwort „ohne KI“: nie)
+vi.mock("@/lib/whatsapp/bot", async (orig) => ({ ...(await orig<typeof import("@/lib/whatsapp/bot")>()), runBotTurn: async () => void st.botTurns++ }));
 
 const waSend = vi.fn();
 vi.mock("@/lib/whatsapp/dialog360", async (orig) => {
@@ -54,6 +57,9 @@ import { darfPolicenErinnern, erinnerungOptIn, listUnterlagen, policenErinnerung
 import { setzeSpeicherFuerTests, type Speicher } from "@/lib/policen/ablage";
 import { stimmeAvvZu, ladeFreischaltung, spaeterAvv } from "@/lib/policen/freischaltung";
 import { einladungJetzt } from "@/lib/policen/assistent";
+import { policenBitte } from "@/lib/policen/bitte";
+import { kiAbgelehnt } from "@/lib/policen/ohne-ki";
+import { ladeVergleich, nachEingang, vergleichKurz } from "@/lib/policen/auslesen/server";
 import { eraseLead } from "@/lib/erasure";
 import { GET as unterlageGET } from "@/app/api/buyer/leads/[id]/unterlagen/[docId]/route";
 import { GET as dateiGET } from "@/app/api/buyer/policen/datei/route";
@@ -150,6 +156,7 @@ describe("Policen per WhatsApp", () => {
     delete process.env.POLICEN_GESUNDHEIT_AUS;
     setzeSpeicherFuerTests(memory);
     st.kiAufrufe = 0;
+    st.botTurns = 0;
     st.ctx = null;
     waSend.mockReset();
     waSend.mockImplementation(async () => ({ messageId: `wamid.out-${uid()}`, raw: {} }));
@@ -177,7 +184,7 @@ describe("Policen per WhatsApp", () => {
     const { lead, phone } = await leadMitChat();
     await einverstanden(phone);
     const n = await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: lead.id, art: "einwilligung" } });
-    expect(n).toMatchObject({ customerId, phone, ki: true, quelle: "whatsapp", vermittlerUserId: ownerId, textVersion: "2026-11-18.s1" });
+    expect(n).toMatchObject({ customerId, phone, ki: true, quelle: "whatsapp", vermittlerUserId: ownerId, textVersion: "2026-11-18.s2" });
     expect(n.waMessageId).toMatch(/^wamid\.in-/);
     expect(n.wortlaut).toContain("Antwort (Knopf): „Einverstanden“");
     expect(texts().at(-1)).toBe("Danke! Schicken Sie die Policen gern als Foto oder PDF. Seiten mit Gesundheitsangaben können Sie schwärzen, wenn Sie sie nicht besprechen möchten.");
@@ -306,7 +313,7 @@ describe("Policen per WhatsApp", () => {
     expect(e?.text).toContain("Kfz, Kranken-, BU- oder Lebensversicherung");
     expect(e?.folge.text).toContain("auch wenn sie Gesundheitsangaben enthalten, z. B. bei Kranken-, BU- oder Lebensversicherung.");
     await einverstanden(neu.phone);
-    expect((await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: neu.lead.id, art: "einwilligung" } })).textVersion).toBe("2026-11-18.g1");
+    expect((await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: neu.lead.id, art: "einwilligung" } })).textVersion).toBe("2026-11-18.g2");
     await doc(neu.phone, "Krankenversicherung DKV.pdf");
     expect(await prisma.leadDocument.count({ where: { leadId: neu.lead.id, status: "gespeichert" } })).toBe(1);
     expect(st.kiAufrufe).toBe(0);
@@ -407,5 +414,175 @@ describe("Policen per WhatsApp", () => {
     delete process.env.POLICEN_S3_ENDPOINT;
     expect(await einladungJetzt({ conversationId: conv.id, an: "sie", person: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" } })).toBeNull();
     expect(st.kiAufrufe).toBe(0);
+  });
+
+  describe("Stichwort „ohne KI“ (Auflage A9)", () => {
+    const BESTAETIGUNG = "Alles klar, Ihre Unterlagen werden nur gespeichert und nicht automatisch ausgelesen.";
+    /** Einwilligungsnachricht, wie der Assistent sie gesendet hat (aktuelle Textversion mit dem Satz zu „ohne KI“). */
+    async function einwilligungGesendet(convId: string) {
+      const e = policenBitte({ an: "sie", vermittler: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn", anrede: "Herr", name: "Ole Kannapinn" }, firma: "Kannapinn Versicherungen" }).einwilligung;
+      expect(e.text).toContain("Ohne automatisches Auslesen? Dann antworten Sie einfach „ohne KI“.");
+      return prisma.message.create({ data: { conversationId: convId, direction: "outbound", body: e.text, sentBy: "bot", waMessageId: `wamid.frage-${uid()}` } });
+    }
+    /** Ein früheres Auslesen (Auszug mit Werten), ohne echten KI-Aufruf. */
+    async function auszug(leadId: string, documentId: string) {
+      return prisma.policenAuszug.create({
+        data: { customerId, leadId, documentId, status: "ausgelesen", sparte: "haftpflicht", sparteQuelle: "unterlage", felder: { versicherer: { w: "HUK-Coburg", s: "ok" }, beitrag: { w: 89.5, s: "ok" }, zahlweise: { w: "jaehrlich", s: "ok" } }, anbieter: "openai-eu", modell: "test", versuche: 1, ausgelesenAt: new Date(), geprueftAt: new Date() },
+      });
+    }
+    const mitSchluessel = async <T,>(fn: () => Promise<T>): Promise<T> => {
+      process.env.POLICEN_OPENAI_API_KEY = "sk-test";
+      try {
+        return await fn();
+      } finally {
+        delete process.env.POLICEN_OPENAI_API_KEY;
+      }
+    };
+
+    it("vor dem Klick: Nachweis ki = false, feste Bestätigung, kein Assistent; „Einverstanden“ danach nur zum Speichern", async () => {
+      const { lead, phone, conv } = await leadMitChat();
+      const frage = await einwilligungGesendet(conv.id);
+      await text(phone, "„Ohne KI“ bitte");
+      expect(texts()).toEqual([BESTAETIGUNG]);
+      expect(waSend).toHaveBeenCalledTimes(1);
+      expect(st.botTurns).toBe(0); // der Assistent antwortet nicht zusätzlich
+      const ohne = await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: lead.id, art: "ohne_ki" } });
+      expect(ohne).toMatchObject({ ki: false, quelle: "whatsapp", textVersion: "2026-11-18.s2", frageWaMessageId: frage.waMessageId });
+      expect(ohne.wortlaut).toContain("Stichwort „ohne KI“ per WhatsApp: „„Ohne KI“ bitte“");
+      expect(await prisma.policenNachweis.count({ where: { leadId: lead.id, art: "einwilligung" } })).toBe(0);
+      expect(await kiAbgelehnt(lead.id)).toBe(true);
+      // Ein zweites Mal: kein weiterer Nachweis
+      await text(phone, "ohne ki");
+      expect(await prisma.policenNachweis.count({ where: { leadId: lead.id, art: "ohne_ki" } })).toBe(1);
+
+      waSend.mockClear();
+      await einverstanden(phone, frage.waMessageId ?? undefined);
+      const n = await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: lead.id, art: "einwilligung" } });
+      expect(n).toMatchObject({ ki: false, textVersion: "2026-11-18.s2" });
+      expect(n.wortlaut).toContain("Per WhatsApp: „ohne KI“ (nur speichern, nicht automatisch auslesen)");
+      await doc(phone);
+      expect(await prisma.leadDocument.count({ where: { leadId: lead.id, status: "gespeichert" } })).toBe(1);
+      // Künftige Policen werden nicht ausgelesen, das Vergleichsblatt zeigt den Wunsch des Kunden
+      expect(await mitSchluessel(() => nachEingang(lead.id))).toBe(0);
+      const v = await ladeVergleich(lead.id, customerId);
+      expect(v.sperre).toBe("ohne_ki");
+      expect(v.vertraege).toEqual([]);
+      expect(v.offen.map((o) => o.status)).toEqual(["nicht_ausgelesen"]);
+      expect(await mitSchluessel(() => vergleichKurz(lead.id, customerId))).toMatchObject({ vertraege: 0, offen: 1, ohneKi: true });
+      expect(st.kiAufrufe).toBe(0);
+    });
+
+    it("„Ja, aber ohne KI“ getippt direkt nach der Einwilligung: Zustimmung nur zum Speichern", async () => {
+      const { lead, phone, conv } = await leadMitChat();
+      await einwilligungGesendet(conv.id);
+      await text(phone, "Ja, aber ohne KI");
+      const n = await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: lead.id, art: "einwilligung" } });
+      expect(n.ki).toBe(false);
+      expect(texts()[0]).toBe(BESTAETIGUNG);
+      expect(texts().at(-1)).toMatch(/^Danke! Schicken Sie die Policen gern/);
+      expect(st.botTurns).toBe(0);
+    });
+
+    it("nach dem Klick und nach dem Auslesen: Werte gelöscht (mit Protokoll), Unterlagen bleiben, Hinweis statt Werten", async () => {
+      const { lead, phone, conv } = await leadMitChat();
+      await einwilligungGesendet(conv.id);
+      await einverstanden(phone);
+      const vorher = await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: lead.id, art: "einwilligung" } });
+      expect(vorher).toMatchObject({ ki: true, textVersion: "2026-11-18.s2" });
+      await doc(phone);
+      const d = await prisma.leadDocument.findFirstOrThrow({ where: { leadId: lead.id, status: "gespeichert" } });
+      const z = await auszug(lead.id, d.id);
+      // Bisheriger Vertrag aus der Police auf der Folie (Tarifauswahl und Angebote), daneben einer von Hand
+      const termin = await prisma.appointment.create({
+        data: {
+          customerId,
+          leadId: lead.id,
+          mode: "video",
+          startsAt: new Date(Date.now() + 2 * DAY),
+          tarifauswahl: {
+            v: 1,
+            sparten: [
+              { key: "haftpflicht", label: "Privathaftpflicht", schema: { merkmale: [], bausteine: [] }, merkmale: [], bausteine: [], tarife: [], bisher: { quelle: "police", gesellschaft: "HUK-Coburg", beitrag: 89.5, zahlweise: "jahr", werte: {} } },
+              { key: "hausrat", label: "Hausrat", schema: { merkmale: [], bausteine: [] }, merkmale: [], bausteine: [], tarife: [], bisher: { quelle: "hand", gesellschaft: "Allianz", beitrag: 10, zahlweise: "monat", werte: {} } },
+            ],
+          },
+          offersJson: { items: [{ sparte: "Privathaftpflicht", gesellschaft: "X", tarif: "Y" }], bisher: [{ sparte: "Privathaftpflicht", gesellschaft: "HUK-Coburg", tarif: null, beitragMonat: 7.46, info: [], merkmale: [], ablauf: null, kuendbarZum: null, fristMonate: null }] },
+        },
+      });
+      expect((await ladeVergleich(lead.id, customerId)).vertraege).toHaveLength(1);
+
+      waSend.mockClear();
+      await text(phone, "Bitte nicht automatisch auslesen.");
+      expect(texts()).toEqual([BESTAETIGUNG]);
+      expect(st.botTurns).toBe(0);
+      // Ausgelesene Werte weg (Löschprotokoll), Unterlage bleibt
+      expect(await prisma.policenAuszug.count({ where: { leadId: lead.id } })).toBe(0);
+      expect(await prisma.loeschprotokoll.count({ where: { art: "policen_auszug", entityId: z.id, grund: "ohne_ki" } })).toBe(1);
+      expect(await prisma.leadDocument.count({ where: { leadId: lead.id, status: "gespeichert" } })).toBe(1);
+      expect(bucket.has(d.storageKey!)).toBe(true);
+      // Nachweis: Einwilligung fortgeschrieben mit ki = false (gleiche Textversion), dazu das Stichwort
+      const arten = (await prisma.policenNachweis.findMany({ where: { leadId: lead.id }, orderBy: { createdAt: "asc" } })).map((x) => [x.art, x.ki]);
+      expect(arten).toEqual([
+        ["einwilligung", true],
+        ["ohne_ki", false],
+        ["einwilligung", false],
+      ]);
+      const neu = await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: lead.id, art: "einwilligung", ki: false } });
+      expect(neu.textVersion).toBe("2026-11-18.s2");
+      expect(neu.wortlaut).toContain("Einschränkung per WhatsApp: „ohne KI“");
+      // Vergleichsblatt: Hinweis statt Werte
+      const v = await ladeVergleich(lead.id, customerId);
+      expect(v).toMatchObject({ sperre: "ohne_ki", vertraege: [] });
+      expect(v.offen).toHaveLength(1);
+      expect(JSON.stringify(v)).not.toContain("HUK-Coburg");
+      // Folie: bisheriger Vertrag aus der Police entfernt, von Hand Eingetragenes bleibt
+      const t = await prisma.appointment.findUniqueOrThrow({ where: { id: termin.id } });
+      const sparten = (t.tarifauswahl as { sparten: { key: string; bisher?: { quelle: string } }[] }).sparten;
+      expect(sparten.map((x) => [x.key, x.bisher?.quelle ?? null])).toEqual([
+        ["haftpflicht", null],
+        ["hausrat", "hand"],
+      ]);
+      const offers = t.offersJson as { items: unknown[]; bisher: unknown[] };
+      expect(offers.items).toHaveLength(1);
+      expect(offers.bisher ?? []).toEqual([]);
+      // Speichern geht weiter, Auslesen nicht mehr
+      waSend.mockClear();
+      await doc(phone, "Hausrat.pdf");
+      expect(await prisma.leadDocument.count({ where: { leadId: lead.id, status: "gespeichert" } })).toBe(2);
+      expect(await mitSchluessel(() => nachEingang(lead.id))).toBe(0);
+      expect(await prisma.policenAuszug.count({ where: { leadId: lead.id } })).toBe(0);
+      expect(st.kiAufrufe).toBe(0);
+    });
+
+    it("als Begleittext einer Datei; ohne Policen-Bezug und bei normalen Sätzen mit „KI“ antwortet weiter der Assistent", async () => {
+      const a = await leadMitChat();
+      await einverstanden(a.phone);
+      waSend.mockClear();
+      await doc(a.phone, "HUK Haftpflicht.pdf", "hier, aber ohne KI bitte");
+      expect(texts()).toEqual([BESTAETIGUNG, "Danke, ist angekommen. Haben Sie noch weitere?"]);
+      expect(await kiAbgelehnt(a.lead.id)).toBe(true);
+      expect((await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: a.lead.id, art: "einwilligung" }, orderBy: { createdAt: "desc" } })).ki).toBe(false);
+
+      // Normaler Satz mit „KI“ nach der Einwilligung: kein Stichwort, der Assistent antwortet
+      const b = await leadMitChat();
+      await einwilligungGesendet(b.conv.id);
+      await einverstanden(b.phone);
+      st.botTurns = 0;
+      waSend.mockClear();
+      await text(b.phone, "Ist das eine KI?");
+      expect(await kiAbgelehnt(b.lead.id)).toBe(false);
+      expect(await prisma.policenNachweis.count({ where: { leadId: b.lead.id, art: "ohne_ki" } })).toBe(0);
+      expect(texts()).not.toContain(BESTAETIGUNG);
+      expect(st.botTurns).toBe(1);
+
+      // Lead ohne Policen-Bitte: „ohne KI“ ist eine normale Nachricht
+      const c = await leadMitChat();
+      st.botTurns = 0;
+      waSend.mockClear();
+      await text(c.phone, "ohne KI");
+      expect(await prisma.policenNachweis.count({ where: { leadId: c.lead.id } })).toBe(0);
+      expect(texts()).not.toContain(BESTAETIGUNG);
+      expect(st.botTurns).toBe(1);
+    });
   });
 });

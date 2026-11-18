@@ -9,6 +9,7 @@ import { leadVersandKontext } from "@/lib/mail/lead-versand";
 import { fehlendeAngaben, serviceMailVorschau, signaturAngaben, type ServiceMailVorschau, type SignaturAngaben } from "@/lib/mail/service-mails";
 import { antwortEingangAn, ANTWORT_DOMAIN, kurzname } from "@/lib/mail/antwort-adresse";
 import type { VorlageKey } from "@/lib/mail/vorlagen";
+import { anredeAusVorname } from "@/lib/vorname-anrede";
 
 /** Wohin Antworten der Kunden gehen (M7). */
 export type Antwortweg = { art: "postfach" } | { art: "eigene"; adresse: string | null } | { art: "eingang"; muster: string };
@@ -21,6 +22,11 @@ export type ServiceMailsDaten = {
   fehlend: (keyof SignaturAngaben)[];
   /** Anrede des Vermittlers fehlt (Pflicht, „Herr Kannapinn“ in allen Texten) */
   anredeFehlt: boolean;
+  /**
+   * Vorschläge zum Bestätigen (Ole, 18.11.2026): Anrede aus einem eindeutigen Vornamen, Telefon aus dem Vertriebs-CRM
+   * (SalesContact des Kunden). Nur vorausgefüllt, gespeichert wird erst mit „Ja, Mails in meinem Namen senden“.
+   */
+  vorschlaege: { anrede: "Herr" | "Frau" | null; telefon: string | null };
   stufen: Record<VorlageKey, MailStufe>;
   namen: Record<VorlageKey, string>;
   kopie: { an: boolean; adresse: string | null; eigene: string | null };
@@ -47,6 +53,14 @@ export async function serviceMailsDaten(customerId: string, userId: string | nul
     prisma.erstinformation.findUnique({ where: { customerId }, select: { anrede: true } }).catch(() => null),
   ]);
   const ablauf = leseMailAblauf(c?.mailAblauf);
+  const anredeVorschlag = !erst?.anrede ? anredeAusVorname(angaben.name.trim().split(/\s+/)[0] ?? null) : null;
+  let telefonVorschlag: string | null = null;
+  if (!angaben.telefon.trim()) {
+    const crm = await prisma.salesContact
+      .findUnique({ where: { customerId }, select: { phone: true, phones: { select: { phone: true }, take: 1 } } })
+      .catch(() => null);
+    telefonVorschlag = (crm?.phone ?? crm?.phones[0]?.phone ?? "").trim() || null;
+  }
   const eigene = k.replyTo ?? email ?? null;
   return {
     mailOff: !!c?.mailFeaturesOff,
@@ -55,6 +69,7 @@ export async function serviceMailsDaten(customerId: string, userId: string | nul
     angaben,
     fehlend: fehlendeAngaben(angaben),
     anredeFehlt: !erst?.anrede,
+    vorschlaege: { anrede: anredeVorschlag === "Herr" || anredeVorschlag === "Frau" ? anredeVorschlag : null, telefon: telefonVorschlag },
     stufen: ablauf.stufen,
     namen: Object.fromEntries(ABLAUF_VORLAGEN.map((key) => [key, MAIL_ARTEN[key]])) as Record<VorlageKey, string>,
     kopie: { an: ablauf.bcc.an, adresse: ablauf.bcc.adresse, eigene },

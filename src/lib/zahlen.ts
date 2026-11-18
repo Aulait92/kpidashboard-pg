@@ -5,7 +5,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { provisionForCustomers } from "@/lib/ertrag";
-import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
+import { isPrepaid, PRICE_LIST, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
 import { monthlyBankCosts } from "@/lib/bank/server";
 import { monthlyFeeCosts } from "@/lib/whatsapp/fees";
 import { freeMonthsOf, type GarantieArt } from "@/lib/garantien";
@@ -125,9 +125,9 @@ export function retainerInputFor(
     intro: offer?.introMonthlyFee != null && offer.introMonths ? { amount: n(offer.introMonthlyFee), months: offer.introMonths } : null,
     // Weitere Logins und Bestandskunden-Modul zählen als Software (Stand heute, nicht historisch)
     extras: c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly) + n(c.empfehlungMonthly),
-    // Jährlich im Voraus: MRR = Jahresbetrag / 12 (keine Spitze im Zahlungsmonat); Pausen ohne Gutschrift
-    annualFactor: c.billingInterval === "year" ? annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) / 12 : 1,
-    pauses: c.billingInterval === "year" ? [] : c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
+    // Vorauszahlung: MRR = Betrag / Monate (jährlich 10/12, 6 Monate 5/6; keine Spitze im Zahlungsmonat); Pausen ohne Gutschrift
+    annualFactor: rhythmusMonatsAnteil(c.billingInterval, offer?.annualFreeMonths),
+    pauses: isPrepaid(c.billingInterval) ? [] : c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
     freeMonths: freeMonthsOf(garantien.map((g) => ({ art: g.art as GarantieArt, monat: g.monat, status: "gewaehrt" as const }))),
   };
 }
@@ -217,7 +217,20 @@ export async function loadLedger(now = new Date()) {
 
 // ─── Kosten je Monat und Zweck ───────────────────────────────────────────
 
-export type MonthCosts = { month: string; ppl: number; software: number; akquise: number; betrieb: number; metaPpl: number; metaAkquise: number; whatsapp: number; /** davon aus Bank & Karten (netto) */ bank?: number };
+export type MonthCosts = {
+  month: string;
+  ppl: number;
+  software: number;
+  akquise: number;
+  betrieb: number;
+  metaPpl: number;
+  metaAkquise: number;
+  whatsapp: number;
+  /** davon aus Bank & Karten (netto) */
+  bank?: number;
+  /** davon KI-Dienste aus Bank & Karten (netto, in `software` enthalten; lib/bank/rules.ts istKiKosten) */
+  ki?: number;
+};
 
 export async function loadCosts(months: string[], settings: KpiSettingsData, now = new Date()) {
   const from = monthStart(months[0]);
@@ -251,6 +264,7 @@ export async function loadCosts(months: string[], settings: KpiSettingsData, now
     const b = bank.get(m);
     if (b) {
       c.bank = r2(b.ppl + b.software + b.akquise + b.betrieb);
+      c.ki = b.ki;
       c.ppl += b.ppl;
       c.software += b.software;
       c.akquise += b.akquise;
@@ -558,7 +572,7 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
     prisma.salesEmail.findMany({ where: { direction: "IN", sentAt: { gte: s90 } }, distinct: ["contactId"], select: { contactId: true } }),
     prisma.salesMeeting.findMany({ where: { startAt: { gte: s90 } }, distinct: ["contactId"], select: { contactId: true } }),
     prisma.offer.findMany({ where: { sentAt: { gte: s90 }, status: { not: "superseded" } }, select: { status: true } }),
-    prisma.offer.count({ where: { acceptedAt: { gte: s90 } } }),
+    prisma.offer.count({ where: { acceptedAt: { gte: s90 }, status: { not: "declined" } } }),
     prisma.offer.findMany({ where: { status: "sent", validUntil: { gte: now } }, select: { monthlyFee: true } }),
     prisma.offer.findMany({
       where: { acceptedAt: { gte: new Date(now.getTime() - 180 * DAY) }, salesContactId: { not: null } },

@@ -7,7 +7,8 @@
 //   1. Anbieter eingerichtet (POLICEN_OPENAI_API_KEY bzw. ausdrücklich Bedrock), kein Notschalter, nicht pausiert (401),
 //   2. Kunde freigeschaltet (POLICEN_AUSLESEN_KUNDEN leer oder enthält ihn),
 //   3. Einwilligung des Leads mit KI (PolicenNachweis: art einwilligung, ki = true, Textversion ab
-//      AUSLESEN_MIN_TEXTVERSION; ein späterer Widerruf oder eine Ablehnung hebt sie auf),
+//      AUSLESEN_MIN_TEXTVERSION; ein späterer Widerruf oder eine Ablehnung hebt sie auf) und kein Stichwort „ohne KI“
+//      (Auflage A9, lib/policen/ohne-ki.ts; dann Sperre „ohne_ki“, Vergleichsblatt ohne Werte),
 //   4. Sparte vorab ohne KI eindeutig und freigegeben (Sach sofort, PKV/BU/Leben nur mit Nachweis „keine Speicherung“),
 //   5. Bremse: höchstens 15 Dokumente je Lead und POLICEN_AUSLESEN_MAX_PRO_TAG (Standard 200) je Tag.
 // Gespeichert wird nur das bereinigte Feldobjekt (PolicenAuszug), nie Prompt, Rohantwort oder Volltext. Logs nur mit
@@ -44,6 +45,7 @@ import {
   type Felder,
 } from "@/lib/policen/auslesen/felder";
 import { ersteSeiteText, sparteVorab } from "@/lib/policen/auslesen/sparte";
+import { kiAbgelehnt } from "@/lib/policen/ohne-ki";
 import { zusammenfassung, type Zusammenfassung } from "@/lib/policen/auslesen/zusammenfassung";
 import type { DokumentTyp } from "@/lib/policen/auslesen/anbieter/typ";
 
@@ -73,19 +75,23 @@ export async function pausiert(): Promise<boolean> {
 
 /**
  * Einwilligung mit KI für diesen Lead (Nachweis aus Policen per WhatsApp, PolicenNachweis). Maßgeblich ist der letzte
- * Eintrag zu Einwilligung, Ablehnung oder Widerruf.
+ * Eintrag zu Einwilligung, Ablehnung oder Widerruf; ein Stichwort „ohne KI“ (A9) schließt das Auslesen dauerhaft aus.
  */
 export async function kiEinwilligung(leadId: string): Promise<{ gesundheit: boolean } | null> {
   const r = await prisma.policenNachweis
     .findFirst({ where: { leadId, art: { in: ["einwilligung", "abgelehnt", "widerruf"] } }, orderBy: { createdAt: "desc" }, select: { art: true, ki: true, textVersion: true } })
     .catch(() => null);
-  return r && r.art === "einwilligung" && r.ki === true ? textVersionKi(r.textVersion) : null;
+  if (!(r && r.art === "einwilligung" && r.ki === true)) return null;
+  if (await kiAbgelehnt(leadId).catch(() => true)) return null;
+  return textVersionKi(r.textVersion);
 }
 
-export type Sperre = "aus" | "kunde" | "pause" | "einwilligung";
+/** ohne_ki = der Kunde hat das Auslesen abgelehnt (Stichwort „ohne KI“, A9). */
+export type Sperre = "aus" | "kunde" | "pause" | "einwilligung" | "ohne_ki";
 
-/** Darf für diesen Lead überhaupt ausgelesen werden? null = ja, sonst der Grund. */
+/** Darf für diesen Lead überhaupt ausgelesen werden? null = ja, sonst der Grund („ohne KI“ geht allen vor). */
 export async function sperreFuer(customerId: string, leadId: string): Promise<Sperre | null> {
+  if (await kiAbgelehnt(leadId).catch(() => true)) return "ohne_ki";
   if (!auslesenAn()) return "aus";
   // Ohne privaten Policen-Bucket ist Policen per WhatsApp aus, dann auch das Auslesen
   const { ablageBereit } = await import("@/lib/policen/ablage");
@@ -326,8 +332,10 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
   ]);
   const vertraege: VertragKarte[] = [];
   const offen: OffeneUnterlage[] = [];
+  // „ohne KI“ (A9): nie Werte zeigen, auch wenn noch ein Auszug da wäre
+  const ohneKi = sperre === "ohne_ki";
   for (const d of docs) {
-    const a = d.auszug;
+    const a = ohneKi ? null : d.auszug;
     if (a && (a.status === "ausgelesen" || a.status === "leer") && isAuslesenSparte(a.sparte)) {
       const felder = felderAus(a.felder, a.sparte);
       vertraege.push({
@@ -366,15 +374,23 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
   };
 }
 
-/** Kurzfassung für die Terminvorbereitung (Zeile mit Link); null = nichts anzuzeigen. */
+/** Kurzfassung für die Terminvorbereitung (Zeile mit Link); null = nichts anzuzeigen. ohneKi: auf Wunsch des Kunden. */
 export async function vergleichKurz(leadId: string, customerId: string, now = new Date()) {
   const n = await prisma.policenAuszug.count({ where: { leadId, customerId } });
   if (!n && !auslesenAn()) return null;
   const docs = await prisma.leadDocument.count({ where: { leadId, customerId, status: "gespeichert" } });
   if (!docs) return null;
   const v = await ladeVergleich(leadId, customerId, now);
-  if (!v.vertraege.length && (v.sperre || !v.offen.length)) return null;
-  return { vertraege: v.zusammenfassung.vertraege, monat: v.zusammenfassung.monatSumme, kuendigungen: v.zusammenfassung.kuendigungen.length, hinweise: v.zusammenfassung.doppelt.length + v.zusammenfassung.bausteine.length, offen: v.offen.length };
+  const ohneKi = v.sperre === "ohne_ki" && v.offen.length > 0;
+  if (!v.vertraege.length && !ohneKi && (v.sperre || !v.offen.length)) return null;
+  return {
+    vertraege: v.zusammenfassung.vertraege,
+    monat: v.zusammenfassung.monatSumme,
+    kuendigungen: v.zusammenfassung.kuendigungen.length,
+    hinweise: v.zusammenfassung.doppelt.length + v.zusammenfassung.bausteine.length,
+    offen: v.offen.length,
+    ohneKi,
+  };
 }
 
 type Wer = { customerId: string; userId: string | null; leadId: string };
@@ -497,6 +513,7 @@ export async function auslesenStatus(now = new Date()) {
     ...auslesenKonfigStatus({ zdr: !!e?.zdrNachweisAm, now }),
     zdrNachweisAm: e?.zdrNachweisAm?.toISOString().slice(0, 10) ?? null,
     ablage: (await import("@/lib/policen/ablage")).ablageBereit(),
+    ablageGrund: (await import("@/lib/policen/ablage")).ablageGrund(),
     pausiert: await pausiert(),
     pausiertSeit: e?.schluesselUngueltigAt?.toISOString() ?? null,
     heute: { tag: berlinTag(now), anzahl: heute?.anzahl ?? 0, limitGemeldet: !!heute?.gemeldetAt },

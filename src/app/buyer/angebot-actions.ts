@@ -22,7 +22,7 @@ import {
 } from "@/lib/zusammenfassung-server";
 import { appointmentOutcomeResult } from "@/app/buyer/inbox-actions";
 
-type Ergebnis = { ok: true; message: string } | { ok: false; error: string };
+type Ergebnis = { ok: true; message: string; /** einmal fragen: Beratungsdokumentation vorbereiten? */ bdFrage?: boolean } | { ok: false; error: string };
 
 async function zugriff(appointmentId: string) {
   const ctx = await getBuyerContext();
@@ -43,11 +43,12 @@ function aktualisieren(appointmentId: string, leadId: string) {
 }
 
 /** Termin ohne Ergebnis (vorbei): Ergebnis „Angebot gesendet“ setzen; danach die klassische Wiedervorlage wieder weg. */
-async function ergebnisSetzen(t: { id: string; status: string; startsAt: Date }, leadId: string, nachfassen: boolean) {
-  if (t.status !== "booked" || t.startsAt.getTime() > Date.now()) return;
+async function ergebnisSetzen(t: { id: string; status: string; startsAt: Date }, leadId: string, nachfassen: boolean): Promise<boolean> {
+  if (t.status !== "booked" || t.startsAt.getTime() > Date.now()) return false;
   const r = await appointmentOutcomeResult(t.id, "offer", null);
   if (!r.ok) console.error("[angebot ergebnis]", r.error);
   if (nachfassen) await angebotWiedervorlageWeg(leadId);
+  return r.ok && !!r.bdFrage;
 }
 
 export async function angebotInfoResult(appointmentId: string): Promise<{ ok: true; info: AngebotInfo } | { ok: false; error: string }> {
@@ -65,13 +66,13 @@ export async function angebotSendenResult(appointmentId: string, input: { dateiI
   if (typeof input?.dateiId !== "string" || !input.dateiId) return { ok: false, error: "Bitte zuerst das Angebot als PDF hochladen." };
   const r = await angebotSenden(appointmentId, z.ctx, { dateiId: input.dateiId, kundenlink: !!input.kundenlink, zusammenfassung: input.zusammenfassung ?? null });
   if (!r.ok) return r;
-  await ergebnisSetzen(z.t, z.leadId, r.nachfassen);
+  const bdFrage = await ergebnisSetzen(z.t, z.leadId, r.nachfassen);
   await recordUsage("action", "angebot.app");
   if (r.zusammenfassung) await recordUsage("action", `zusammenfassung.${r.zusammenfassung}`);
   aktualisieren(appointmentId, z.leadId);
   const wie = r.kanaele.length === 2 ? "per WhatsApp und E-Mail" : r.kanaele[0] === "whatsapp" ? "per WhatsApp" : "per E-Mail";
   const mit = r.zusammenfassung === "gesendet" ? " mit Zusammenfassung" : "";
-  return { ok: true, message: `Angebot ${wie}${mit} gesendet${r.hinweise.length ? `. ${r.hinweise.join(". ")}` : ""}` };
+  return { ok: true, message: `Angebot ${wie}${mit} gesendet${r.hinweise.length ? `. ${r.hinweise.join(". ")}` : ""}`, ...(bdFrage ? { bdFrage } : {}) };
 }
 
 /** „Habe ich selbst gesendet“: ein Tipp, Nachfassen nur per WhatsApp und Anruf. */
@@ -81,10 +82,10 @@ export async function angebotSelbstResult(appointmentId: string, dateiId?: strin
   if (!(await writableCustomerId(z.leadId))) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
   const r = await angebotSelbst(appointmentId, z.ctx, { dateiId: typeof dateiId === "string" ? dateiId : null });
   if (!r.ok) return r;
-  await ergebnisSetzen(z.t, z.leadId, r.nachfassen);
+  const bdFrage = await ergebnisSetzen(z.t, z.leadId, r.nachfassen);
   await recordUsage("action", "angebot.selbst");
   aktualisieren(appointmentId, z.leadId);
-  return { ok: true, message: r.nachfassen ? "Vermerkt. Die App fasst per WhatsApp nach." : "Vermerkt" };
+  return { ok: true, message: r.nachfassen ? "Vermerkt. Die App fasst per WhatsApp nach." : "Vermerkt", ...(bdFrage ? { bdFrage } : {}) };
 }
 
 /** PDF zum Termin vermerken („Angebot abgelegt am“). */

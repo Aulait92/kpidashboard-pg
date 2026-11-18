@@ -11,12 +11,13 @@ import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboa
 import { TaskForm } from "@/components/vertrieb/task-form";
 import { TaskRow } from "@/components/vertrieb/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
-import { Agentur, ColdMails, Kundendaten, NaechsterSchritt, Stammdaten, Verlauf } from "@/components/admin-neu/vertrieb/kontakt-karten";
+import { Agentur, ColdMails, Kundendaten, NaechsterSchritt, Stammdaten, Verlauf, offeneNachfrage } from "@/components/admin-neu/vertrieb/kontakt-karten";
 import { KONTAKTE, VERTRIEB_NEU_LISTE, VERTRIEB_NEU_LISTEN, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { neuerPfad } from "@/lib/admin-neu/umzug";
 import type { ImpressumInfo } from "@/lib/impressum";
 import { eur } from "@/lib/offer-pricing";
 import { toOfferRow } from "@/lib/offer-links";
+import { offenesAngebot } from "@/lib/vertrieb/angebot-ablehnen";
 import { onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -47,6 +48,9 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   const { termin } = await searchParams;
   const c = await ladeKontakt(id);
   if (!c) notFound();
+  // „Offenes Angebot auch als abgelehnt markieren?“ beim Verloren-Markieren
+  const offen = offenesAngebot(c.offers);
+  const angebotOffen = offen ? { id: offen.id, number: offen.number } : null;
   // Kunden haben eine eigene Akte (Kunden → Kundenakte)
   if (c.customerId) redirect(neuerPfad(`/admin/kunden/${c.customerId}`, { nurFertige: false }) ?? `/admin/kunden/${c.customerId}`);
   const a = await ladeKontaktakte(c);
@@ -54,6 +58,9 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   const pfad = kontaktPfad(c.id);
   const ansprechpartner = [c.salutation, c.firstName, c.lastName].filter(Boolean).join(" ");
   const adresse = [c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  // „Wie lief der Termin?“ steht oben im Nächsten Schritt, nicht noch einmal unter Aufgaben
+  const nachfrage = offeneNachfrage(a);
+  const aufgaben = a.open.filter((t) => t !== nachfrage);
   const feedback = a.onboarding ? await prisma.customerFeedback.findMany({ where: { customerId: a.onboarding.customerId }, orderBy: { sentAt: "asc" } }) : [];
 
   return (
@@ -73,7 +80,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-[color:var(--muted)]">
             <span data-funktion="actions-setstage--stufe-aendern-auswahl contact-controls-stagepicker--verloren-mit-grund-und-wettbewerber">
-              <StagePicker contactId={c.id} stage={c.stage} competitor={c.competitor} />
+              <StagePicker contactId={c.id} stage={c.stage} competitor={c.competitor} offenesAngebot={angebotOffen} />
             </span>
             {a.activeFollowup ? (
               <a href="#follow-up">
@@ -147,10 +154,11 @@ export default async function KontaktaktePage({ params, searchParams }: { params
           <div className="min-w-0 space-y-5">
             <NaechsterSchritt c={c} a={a} termin={termin ?? null} />
 
-            <Card>
+            {/* Sprungmarken #aktivitaet und #aufgaben: „Ergebnis eintragen“ bzw. „Schritt planen“ aus Verkaufen → Termine */}
+            <Card id="aktivitaet">
               <CardHeader title="Aktivität erfassen" />
               <div className="px-5 py-4" data-funktion="actions-logactivity--aktivitaet-erfassen-anruf-e-mail-notiz-ergebnis">
-                <ActivityForm contactId={c.id} hasOpenTasks={a.open.length > 0} />
+                <ActivityForm contactId={c.id} hasOpenTasks={a.open.length > 0} offenesAngebot={angebotOffen} />
               </div>
             </Card>
 
@@ -187,6 +195,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                 newOfferHref={`${pfad}/angebot`}
                 appUrl={a.appUrl}
                 offers={c.offers.map(toOfferRow)}
+                kontakt
                 mail={{ audience: audienceForContact(c), pdf: { vertreter: a.pdfs.has("vertreter"), makler: a.pdfs.has("makler") }, link: true, entscheidung: a.entscheidungsHinweis }}
                 knopf={false}
               />
@@ -204,12 +213,12 @@ export default async function KontaktaktePage({ params, searchParams }: { params
               ) : null}
             </div>
 
-            <Card>
-              <CardHeader title="Aufgaben" count={a.open.length} />
+            <Card id="aufgaben">
+              <CardHeader title="Aufgaben" count={aufgaben.length} />
               <div data-funktion="page-aufgaben--offene-aufgaben-des-kontakts-und-neue-aufgabe">
-                {a.open.length ? (
+                {aufgaben.length ? (
                   <ul className="divide-y divide-[color:var(--border)]">
-                    {a.open.map((t) => (
+                    {aufgaben.map((t) => (
                       <TaskRow key={t.id} t={t} showContact={false} />
                     ))}
                   </ul>

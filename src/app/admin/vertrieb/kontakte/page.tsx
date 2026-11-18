@@ -10,6 +10,7 @@ import { MoreFilters } from "@/components/admin/more-filters";
 import { ChevronRight, Phone, SearchX, Trash2 } from "lucide-react";
 import { EmptyState, buttonClass } from "@/components/ui";
 import { MAIL_FILTERS, kontakteFilter, ladeKontakte } from "@/lib/vertrieb/kontakte-liste";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 export default async function KontaktePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   // Suche, Filter und Seiten: lib/vertrieb/kontakte-liste.ts (gemeinsam mit dem neuen Admin)
@@ -142,10 +143,10 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
                     {bounced ? <span className="badge bg-rose-50 text-rose-700">Bounced</span>
                       : replied ? <span className="badge bg-emerald-100 text-emerald-800">Geantwortet</span>
                       : sent ? <span className={clsx("badge", opened ? "bg-sky-100 text-sky-800" : "bg-sky-50 text-sky-700")}>Gesendet{opened ? " · geöffnet" : ""}</span>
-                      : <span className="text-xs text-slate-400">–</span>}
+                      : <span className="text-xs text-slate-400">{KEINE_ANGABE}</span>}
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap">
-                    {c.linkedinStatus ? <span className={`badge ${LI_COLOR[c.linkedinStatus]}`}>{LI_LABEL[c.linkedinStatus]}</span> : <span className="text-xs text-slate-400">–</span>}
+                    {c.linkedinStatus ? <span className={`badge ${LI_COLOR[c.linkedinStatus]}`}>{LI_LABEL[c.linkedinStatus]}</span> : <span className="text-xs text-slate-400">{KEINE_ANGABE}</span>}
                   </td>
                   <td className="px-4 py-2 text-xs text-slate-600">{c.tasks[0] ? `${fmtDate(c.tasks[0].dueAt)} · ${c.tasks[0].title}` : ""}</td>
                   <td className="px-4 py-2 text-xs text-slate-500 whitespace-nowrap">{fmtDate(c.lastContactAt)}</td>

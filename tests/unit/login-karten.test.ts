@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ADMIN_START, immerNeuStart, neuStartFuer } from "@/lib/admin-neu/schalter";
 import { ADVISOR_BLOCKED_TARGET, cardClickHref, loginTarget, nextCardCounter, parseCardCounter, pickCard, safeInternalPath } from "@/lib/login-karten";
 
 describe("Login-Karten: Rotation", () => {
@@ -48,15 +49,34 @@ describe("Login-Karten: Ziel nach der Anmeldung", () => {
   it("Kunden nie in den Admin-Bereich, Admins ohne Vorschau nicht in den Kundenbereich", () => {
     expect(loginTarget({ role: "BUYER", teamRole: "owner" }, "/admin/zahlen")).toBe("/buyer");
     expect(loginTarget({ role: "BUYER", teamRole: "owner" }, "/buyerx")).toBe("/buyer");
-    expect(loginTarget({ role: "ADMIN" }, "/buyer/bestand")).toBe("/admin/heute");
+    expect(loginTarget({ role: "ADMIN" }, "/buyer/bestand")).toBe("/admin/neu");
     expect(loginTarget({ role: "ADMIN", preview: true }, "/buyer/bestand")).toBe("/buyer/bestand");
     expect(loginTarget({ role: "ADMIN" }, "/admin/kunden")).toBe("/admin/kunden");
   });
 
   it("ohne Ziel bzw. bei ungültigem Ziel: Startseite der Rolle", () => {
-    expect(loginTarget({ role: "ADMIN" }, "")).toBe("/admin/heute");
+    expect(loginTarget({ role: "ADMIN" }, "")).toBe("/admin/neu");
     expect(loginTarget({ role: "BUYER", teamRole: "owner" }, "//evil.example")).toBe("/buyer");
-    expect(loginTarget({ role: "ADMIN" }, "/login")).toBe("/admin/heute");
-    expect(loginTarget({ role: "ADMIN" }, "/api/auth/logout")).toBe("/admin/heute");
+    expect(loginTarget({ role: "ADMIN" }, "/login")).toBe("/admin/neu");
+    expect(loginTarget({ role: "ADMIN" }, "/api/auth/logout")).toBe("/admin/neu");
+  });
+
+  it("Admins: alte Startadressen (/admin, /admin/heute) führen nach der Anmeldung immer auf den neuen Admin", () => {
+    expect(loginTarget({ role: "ADMIN" }, "/admin")).toBe("/admin/neu");
+    expect(loginTarget({ role: "ADMIN" }, "/admin/")).toBe("/admin/neu");
+    expect(loginTarget({ role: "ADMIN" }, "/admin/heute")).toBe("/admin/neu");
+    expect(loginTarget({ role: "ADMIN" }, "/admin/heute/aufgaben")).toBe("/admin/heute/aufgaben");
+    expect(loginTarget({ role: "ADMIN" }, "/admin/neu/kunden")).toBe("/admin/neu/kunden");
+  });
+});
+
+describe("Admin-Start ohne Schalter", () => {
+  it("/admin führt immer auf den neuen Admin, /admin/heute nur mit Schalter", () => {
+    expect(immerNeuStart("/admin")).toBe(true);
+    expect(immerNeuStart("/admin/")).toBe(true);
+    expect(immerNeuStart("/admin/heute")).toBe(false);
+    expect(immerNeuStart("/admin/neu")).toBe(false);
+    expect(neuStartFuer("/admin/heute")).toBe(true);
+    expect(ADMIN_START).toBe("/admin/neu");
   });
 });

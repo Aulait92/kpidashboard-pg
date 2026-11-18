@@ -28,7 +28,7 @@ export default async function MonatsberichtePage({ searchParams }: { searchParam
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Monatsberichte</h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            {settings.autoSendGood ? "Nur „gut“ mit Maßnahme geht automatisch raus, alles andere prüfst du." : "Nichts geht automatisch raus: du prüfst jeden Bericht."} Die Einstufung sehen nur wir.
+            {settings.autoSendGood ? "Nur „gut“ mit Maßnahme geht automatisch raus, alles andere prüfen Sie." : "Nichts geht automatisch raus: Sie prüfen jeden Bericht."} Die Einstufung sehen nur wir.
           </p>
         </div>
         <Link href="/admin/einstellungen/monatsberichte" className="inline-flex min-h-10 items-center text-sm text-[color:var(--brand)] hover:underline">Einstellungen</Link>

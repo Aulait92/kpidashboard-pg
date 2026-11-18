@@ -94,7 +94,7 @@ describe("Konditionen am Annahme-Knopf", () => {
     expect(hasPriceStep(base)).toBe(false);
     expect(hasPriceStep({ ...base, intro: { months: 2, monthly: 1349 } })).toBe(false);
     const lines = contractSummaryLines({ ...base, annual: true }).map(nb);
-    expect(lines).toContain("Jährlich im Voraus: 13.490 € netto ab 01.12.2026.");
+    expect(lines).toContain("Jährlich im Voraus: 13.490 € netto, jedes Jahr am 01.12. fällig, das erste Mal zum Start am 01.12.2026.");
     expect(lines).toContain("Laufzeit bis 30.11.2027. Sie verlängert sich um jeweils 12 Monate, wenn Sie nicht bis 31.10.2027 kündigen.");
   });
   it("ohne Gedankenstriche", () => {

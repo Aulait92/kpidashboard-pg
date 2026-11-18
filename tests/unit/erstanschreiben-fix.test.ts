@@ -63,23 +63,24 @@ describe("1. Vorlagenwahl Erstanschreiben (rankOutreach)", () => {
     expect(rankOutreach([], PURPOSES, "sie", TESTLEAD, { pdf: "vollstaendig" })).toBeNull();
   });
 
-  it("Anrede-Fassung: mit Nachnamen „Hallo Ole Kannapinn,“ (voller Name), ohne Nachnamen die Fassung ohne Namen", () => {
+  it("Anrede-Fassung: mit Nachnamen „Hallo Herr Kannapinn,“ (eindeutiger Vorname), ohne Nachnamen die Fassung ohne Namen", () => {
     const r = rankOutreach(FREIGEGEBEN, PURPOSES, "sie", { fullName: "Ole Kannapinn" }, { pdf: "vollstaendig" });
     if (!r || !("tpl" in r)) throw new Error("keine Vorlage");
-    expect(r.params(["Privatschutz"])).toEqual(["Ole Kannapinn", "Privatschutz"]);
+    expect(r.params(["Privatschutz"])).toEqual(["Herr Kannapinn", "Privatschutz"]);
     const nurVorname = rankOutreach(FREIGEGEBEN, ["outreach"], "sie", { fullName: "Ole" }, { pdf: "vollstaendig" });
     expect(nurVorname && "tpl" in nurVorname ? nurVorname.tpl.name : nurVorname).toBe("pg_outreach_v5_sie_ohne_name");
   });
 });
 
-describe("2. Anrede: Herr/Frau nie aus dem Vornamen", () => {
-  it("Sie ohne bekannte Anrede: voller Name; mit Anrede aus Formular: Herr Nachname; Du: Vorname", () => {
-    expect(anredeName("sie", { fullName: "Ole Kannapinn" })).toBe("Ole Kannapinn");
-    expect(anredeName("sie", TESTLEAD)).toBe("Ole Kannapinn Testlead");
-    expect(anredeName("sie", { fullName: "Peter Meier" })).toBe("Peter Meier");
+describe("2. Anrede: Herr/Frau aus Formular oder eindeutigem Vornamen (Ole, 18.11.2026)", () => {
+  it("Sie: Herr Nachname, zweideutiger Vorname voller Name; Du: Vorname", () => {
+    expect(anredeName("sie", { fullName: "Ole Kannapinn" })).toBe("Herr Kannapinn");
+    expect(anredeName("sie", { fullName: "Kai Kannapinn" })).toBe("Kai Kannapinn");
+    expect(anredeName("sie", TESTLEAD)).toBe("Herr Testlead");
+    expect(anredeName("sie", { fullName: "Peter Meier" })).toBe("Herr Meier");
     expect(anredeName("sie", { fullName: "Ole Kannapinn", salutation: "Herr" })).toBe("Herr Kannapinn");
     expect(anredeName("du", { fullName: "Ole Kannapinn" })).toBe("Ole");
-    expect(anredeZeile("sie", { fullName: "Maria Schneider" })).toBe("Guten Tag Maria Schneider,");
+    expect(anredeZeile("sie", { fullName: "Maria Schneider" })).toBe("Guten Tag Frau Schneider,");
   });
 
   it("Vermittler: Sie „Herr Kannapinn“ (Dativ „Herrn“), ohne Anrede Vor- und Nachname, Du Vorname, Agentur nur als Rückfall", () => {

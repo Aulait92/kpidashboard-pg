@@ -5,6 +5,7 @@ import { CheckCircle2, Circle, XCircle } from "lucide-react";
 import { garantieStatus } from "@/lib/garantien-server";
 import { FALL_LABEL, fortschritt, GARANTIE_LABEL, monatName, STATUS_LABEL, type GarantieStatus } from "@/lib/garantien";
 import { cn } from "@/lib/utils";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 export const STATUS_TONE: Record<GarantieStatus, string> = {
   nicht_gestartet: "bg-slate-100 text-slate-600",
@@ -17,7 +18,7 @@ export const STATUS_TONE: Record<GarantieStatus, string> = {
 };
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
-const datum = (key: string | null) => (key ? new Date(`${key}T12:00:00Z`).toLocaleDateString("de-DE", { day: "numeric", month: "numeric", year: "numeric" }) : "–");
+const datum = (key: string | null) => (key ? new Date(`${key}T12:00:00Z`).toLocaleDateString("de-DE", { day: "numeric", month: "numeric", year: "numeric" }) : KEINE_ANGABE);
 
 export async function GarantienCard({ customerId }: { customerId: string }) {
   const g = await garantieStatus(customerId).catch(() => null);

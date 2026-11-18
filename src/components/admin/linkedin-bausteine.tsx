@@ -3,16 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { analyticsScopeEnabled, linkedInAvailable } from "@/lib/linkedin/api";
 import { getSettings, hasAnalyticsScope, liftLabel, liftOf, scoreOf } from "@/lib/linkedin/posts";
 import { DisconnectButton, DraftCard, ImportForm, PhotoItem, PhotoUpload, ResultEdit, SettingsForm, UnapproveButton } from "@/app/admin/marketing/linkedin/forms";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 // LinkedIn (Ole, 14.11.2026): Entwürfe der KI freigeben, Zielgruppen-Reichweite auswerten.
 // Gemeinsame Bausteine für /admin/marketing/linkedin und /admin/neu/marketing (Laden + Abschnitte).
 
 const DAY = 86_400_000;
 const fmt = (d: Date | null) =>
-  d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d) : "–";
-const fmtDay = (d: Date | null) => (d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d) : "–");
-const num = (n: number | null | undefined) => (n == null ? "–" : n.toLocaleString("de-DE"));
-const pct = (x: number | null | undefined) => (x == null ? "–" : `${Math.round(x * 100)} %`);
+  d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d) : NOCH_KEINE_DATEN;
+const fmtDay = (d: Date | null) => (d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d) : NOCH_KEINE_DATEN);
+const num = (n: number | null | undefined) => (n == null ? NOCH_KEINE_DATEN : n.toLocaleString("de-DE"));
+const pct = (x: number | null | undefined) => (x == null ? NOCH_KEINE_DATEN : `${Math.round(x * 100)} %`);
 
 const BANNER: Record<string, { tone: string; text: string }> = {
   connected: { tone: "bg-emerald-50 text-emerald-900 border-emerald-200", text: "LinkedIn ist verbunden." },
@@ -103,7 +104,7 @@ export function LinkedInKennzahlen({ d, spalten = "grid-cols-2 sm:grid-cols-4" }
   return (
     <div className={`grid gap-3 ${spalten}`}>
       {[
-        { l: "Zu schlagen", v: best ? num(scoreOf(best, share)) : "–", h: "Zielgruppen-Reichweite des besten Posts" },
+        { l: "Zu schlagen", v: best ? num(scoreOf(best, share)) : NOCH_KEINE_DATEN, h: "Zielgruppen-Reichweite des besten Posts" },
         { l: "Ø letzte 30 Tage", v: num(avg30), h: `${last30.length} Posts mit Zahlen` },
         { l: "Zielgruppe im Profil", v: pct(share), h: "Anteil Vermittler an allen Zuschauern" },
         { l: "Zur Freigabe", v: String(drafts.length), h: `${planned.length} geplant` },
@@ -234,7 +235,7 @@ export function LinkedInErgebnisse({ d }: { d: LinkedInDaten }) {
                 </div>
               </td>
               <td className="px-3 py-2 text-right align-top tabular-nums">{num(p.impressions)}</td>
-              <td className="px-3 py-2 text-right align-top tabular-nums">{p.icpShare != null ? pct(p.icpShare) : share != null ? <span className="text-[color:var(--muted)]">~{pct(share)}</span> : "–"}</td>
+              <td className="px-3 py-2 text-right align-top tabular-nums">{p.icpShare != null ? pct(p.icpShare) : share != null ? <span className="text-[color:var(--muted)]">~{pct(share)}</span> : NOCH_KEINE_DATEN}</td>
               <td className="px-3 py-2 text-right align-top font-semibold tabular-nums">{num(scoreOf(p, share))}</td>
               <td className="whitespace-nowrap px-3 py-2 align-top text-xs">{p.impressions != null ? liftLabel(liftOf(p, scored, share)) : "noch keine Zahlen"}</td>
             </tr>
@@ -270,7 +271,7 @@ export function LinkedInFotos({ d }: { d: LinkedInDaten }) {
   return (
     <>
       <p className="text-sm text-[color:var(--muted)]">
-        Fotos von dir und Beweis-Screenshots (z. B. WhatsApp eines Kunden mit Ergebnis, Namen geschwärzt). Die KI wählt je Post ein passendes Bild. Passt keins, erzeugt sie ein fotorealistisches KI-Bild oder eine Text-Grafik. Beschreibungen schreibt sie beim Hochladen selbst; bei Bedarf anpassen.
+        Fotos von Ihnen und Beweis-Screenshots (z. B. WhatsApp eines Kunden mit Ergebnis, Namen geschwärzt). Die KI wählt je Post ein passendes Bild. Passt keins, erzeugt sie ein fotorealistisches KI-Bild oder eine Text-Grafik. Beschreibungen schreibt sie beim Hochladen selbst; bei Bedarf anpassen.
       </p>
       <PhotoUpload />
       {d.photos.length ? (

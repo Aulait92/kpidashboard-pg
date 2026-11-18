@@ -9,7 +9,9 @@
 //      (sendWhatsAppNotice wirft WhatsAppUnavailableError, Abfolgen machen Anruf-Aufgaben daraus). Der Lead steht
 //      ganz oben auf Heute/Anrufliste („Kein WhatsApp: bitte direkt anrufen“), der Kontakt zeigt einen Hinweis.
 //   3. Push an den zuständigen Berater (sonst alle Logins des Kunden): „Sofort anrufen: … hat kein WhatsApp“.
-//   4. Einmal je Lead eine kurze E-Mail mit Terminlink im Namen des Vermittlers (lib/whatsapp/kein-whatsapp-mail.ts).
+//   4. Mail-Strecke (Ole, 18.11.2026, lib/mail-strecke): Erstmail mit Öffnungsfrage, zwei Zeiten und Antwortseite, dann
+//      der Takt über 10 Tage. Nur wenn die Strecke aus ist: wie bisher einmal je Lead eine kurze E-Mail mit Terminlink
+//      im Namen des Vermittlers (lib/whatsapp/kein-whatsapp-mail.ts).
 //      Rechtsgrundlage: Antwort auf die eigene Anfrage des Leads (er hat seine E-Mail-Adresse im Formular dafür
 //      angegeben), nur zur konkreten Anfrage und ohne Werbung für anderes, also keine Werbe-E-Mail im Sinne von
 //      § 7 Abs. 2 Nr. 2 UWG (keine Einwilligung nötig, wie die Terminbestätigung). Trotzdem nicht, wenn die Adresse
@@ -183,10 +185,17 @@ export async function markLeadNoWhatsApp(leadId: string, opts: { now?: Date; cod
   const open = OPEN_STATUSES.has((lead.status ?? "").trim().toLowerCase());
   const booked = await prisma.appointment.count({ where: { leadId, status: "booked", startsAt: { gt: now } } });
   if (!open || booked > 0) return "flagged";
-  const mail = await sendKeinWhatsAppMail(leadId, { now }).catch((err) => {
-    reportError(err, "kein-whatsapp-mail", { lead: leadId });
-    return { sent: false as const, reason: "error" };
-  });
+  // Mail-Strecke (Ole, 18.11.2026, lib/mail-strecke): Erstmail mit Öffnungsfrage und zwei Zeiten statt der bisherigen
+  // Einmal-Mail; diese nur noch, wenn die Strecke aus ist (MAIL_STRECKE=aus) bzw. beim Kunden nicht läuft
+  const { starteMailStrecke } = await import("@/lib/mail-strecke/server");
+  const strecke = await starteMailStrecke(leadId, "kein_whatsapp", { now });
+  const mail =
+    strecke.ergebnis === "gestartet" || strecke.ergebnis === "schon"
+      ? { sent: strecke.ergebnis === "gestartet" ? !!strecke.gesendet : false }
+      : await sendKeinWhatsAppMail(leadId, { now }).catch((err) => {
+          reportError(err, "kein-whatsapp-mail", { lead: leadId });
+          return { sent: false as const, reason: "error" };
+        });
   const { notifyLeadPush } = await import("@/lib/team");
   const { displayProduct } = await import("@/lib/products");
   const name = lead.name?.trim() || "Ein neuer Lead";

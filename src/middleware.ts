@@ -1,7 +1,7 @@
 import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
 import { LOGIN_CARD_COOKIE, LOGIN_CARD_HEADER, nextCardCounter, parseCardCounter } from "@/lib/login-karten";
-import { ADMIN_NEU_COOKIE, istAn, neuStartFuer } from "@/lib/admin-neu/schalter";
+import { ADMIN_NEU_COOKIE, immerNeuStart, istAn, neuStartFuer } from "@/lib/admin-neu/schalter";
 import { pushWeiche } from "@/lib/admin-neu/push-ziel";
 import { PUBLIC_NOT_FOUND_HTML, PUBLIC_ROBOTS_TXT, decidePublicHost, requestHost } from "@/lib/public-booking-host";
 import { APP_DEMO_HEADER, signiereDemoMarke } from "@/lib/app-demo/marke";
@@ -44,6 +44,9 @@ const PUBLIC_PREFIXES = [
   "/beratung", // Beratungspräsentation zum Nachlesen für den Kunden des Vermittlers (geheimer Link, 14 Tage)
   "/ihr-angebot", // Angebots-PDF nach dem Termin (geheimer Link je Termin, lib/angebot-senden-server.ts)
   "/rueckruf", // „Rückruf wünschen“ aus der Nachfass-Mail zum Angebot (geheimer Link je Lead)
+  "/t", // Antwortseite der Mail-Strecke für Leads ohne WhatsApp (signierter Token, lib/mail-strecke)
+  "/dokumentation", // Beratungsdokumentation für den Kunden mit Bestätigung per Klick (geheimer Link je Fassung, 30 Tage)
+  "/api/mail-strecke", // Minuten-Cron der Mail-Strecke (per WHATSAPP_WEBHOOK_SECRET gesichert)
   "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
   "/login-karten", // Bilder der Infokarten auf der Login-Seite (public/login-karten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
@@ -222,6 +225,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/beratung/") ||
     pathname.startsWith("/ihr-angebot/") ||
     pathname.startsWith("/rueckruf/") ||
+    pathname.startsWith("/t/") ||
+    pathname.startsWith("/dokumentation/") ||
     pathname === "/demo" ||
     pathname.startsWith("/demo/")
   ) {
@@ -344,7 +349,7 @@ export async function middleware(req: NextRequest) {
 
   // Neuer Admin (/admin/neu, src/lib/admin-neu): eigene Shell aus src/app/admin/neu/layout.tsx. Kennzeichen wie beim
   // Kundenbereich, damit SiteHeader die alte Admin-Shell dort nicht zusätzlich rendert. Mit eingeschaltetem
-  // Schalter „Neue Oberfläche“ (Cookie je Admin) führen /admin und /admin/heute auf den neuen Start.
+  // Schalter „Neue Oberfläche“ (Cookie je Admin) führt /admin/heute auf den neuen Start, /admin immer.
   if (role === "ADMIN") {
     if (pathname === "/admin/neu" || pathname.startsWith("/admin/neu/")) {
       const headers = new Headers(req.headers);
@@ -363,7 +368,11 @@ export async function middleware(req: NextRequest) {
       url.search = q ? `?${q}` : "";
       return NextResponse.redirect(url);
     }
-    if ((req.method === "GET" || req.method === "HEAD") && neuStartFuer(pathname) && istAn(req.cookies.get(ADMIN_NEU_COOKIE)?.value)) {
+    // /admin selbst hat keine Seite: immer auf den neuen Start, /admin/heute nur mit eingeschaltetem Schalter
+    if (
+      (req.method === "GET" || req.method === "HEAD") &&
+      (immerNeuStart(pathname) || (neuStartFuer(pathname) && istAn(req.cookies.get(ADMIN_NEU_COOKIE)?.value)))
+    ) {
       const url = req.nextUrl.clone();
       url.pathname = "/admin/neu";
       return NextResponse.redirect(url);

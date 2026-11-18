@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/buyer-shell";
 import { Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { campaignMailFor, offeredFor, channelAvailability, effectiveMode, NEEDS_EMPFEHLUNG, OCCASIONS, planAudience, TOPIC_LABEL, type Occasion, type Segment } from "@/lib/bestand/campaigns";
+import { campaignMailFor, offeredFor, channelAvailability, effectiveMode, NEEDS_EMPFEHLUNG, OCCASIONS, planAudience, TOPIC_LABEL, WEITERES_PRODUKT_NAME, type Occasion, type Segment } from "@/lib/bestand/campaigns";
+import { crossSellOffenWhere } from "@/lib/cross-sell-offen";
 import { rankTemplates, renderTemplate, templateTextFor, fillNames, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { templateNamesOf } from "@/lib/whatsapp/template-plan";
 import { startCampaignAction } from "../actions";
@@ -48,6 +49,9 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   } catch {
     /* leer */
   }
+  // „Weiteres Produkt anbieten“ aus den Kontakten (lib/cross-sell-verkauf.ts): genau die Kunden ohne weiteres Produkt,
+  // Thema je Kunde automatisch (naheliegende Ergänzung), Hauptaktion „Senden“
+  const weiteres = occasion === "cross_sell" && !!segment.ohneWeiteresProdukt;
   const topic = sp.thema ?? (segment.lacks?.[0] ? (TOPIC_LABEL[segment.lacks[0]] ?? segment.lacks[0]) : null);
   const purpose = OCCASIONS[occasion].purpose as NoticePurpose;
   const [avail, templates, allTemplates, quota, mailQuota, packBlocker, settings, sender, offered] = await Promise.all([
@@ -95,7 +99,8 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   // Vorschau wie beim Versand: Bestandskunden werden gesiezt, „Guten Tag Frau Muster,“ (Anrede aus dem Bestand)
   const linkExample = publicUrlOr("/empfehlung/…");
   // Ablauf/Wechsel: Thema kommt je Empfänger aus dem ablaufenden Vertrag, in der Vorschau ein Beispiel
-  const rest = [occasion === "empfehlung" ? linkExample : (topic ?? (occasion === "renewal" ? (TOPIC_LABEL.KFZ ?? "Kfz-Versicherung") : ""))];
+  const beispielThema = occasion === "renewal" ? (TOPIC_LABEL.KFZ ?? "Kfz-Versicherung") : weiteres ? (TOPIC_LABEL.Hausrat ?? "Hausrat") : "";
+  const rest = [occasion === "empfehlung" ? linkExample : (topic ?? beispielThema)];
   const pick = rankTemplates(templates, purpose, "sie", { firstName: "Erika", lastName: "Muster", salutation: "Frau" });
   const preview = pick
     ? renderTemplate(pick.tpl.body, pick.params(rest))
@@ -104,7 +109,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const meinname = advisorPerson(c.name, sender?.displayName ?? null);
   const def = defaultCampaignMail(occasion, "sie");
   const mailPreview = await campaignMailFor(
-    { customerId: ctx.customerId, occasion, topic, mailSubject: null, mailBody: null },
+    { customerId: ctx.customerId, occasion, topic: topic ?? (weiteres ? beispielThema : null), mailSubject: null, mailBody: null },
     { id: "vorschau", firstName: "Erika", lastName: "Muster", salutation: "Frau" },
     { recipientId: "vorschau0", customerName: c.name, imprint, meinname, empfehlungslink: occasion === "empfehlung" ? linkExample : null },
   );
@@ -114,14 +119,25 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const mailBlock = counts.email > 0 && (!avail.mailbox || !imprint || mailQuota.remaining <= 0);
   const ready = !locked && ids.length > 0 && !waBlock && !mailBlock;
   const modeHref = (k: string) => `/buyer/bestand/kampagne?${new URLSearchParams({ anlass: occasion, segment: JSON.stringify(segment), ...(topic ? { thema: topic } : {}), kanal: k })}`;
-  const excluded = Object.entries(counts.excluded).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
+  // Kontakte ohne Eintrag im Bestand (Abschluss ohne eingetragenen Vertrag) können nicht dabei sein: ehrlich mitzählen
+  const nichtImBestand = weiteres
+    ? await prisma.lead.count({ where: { customerId: ctx.customerId, ...crossSellOffenWhere(new Date()), bestandKunde: { is: null } } })
+    : 0;
+  const excluded = [
+    ...Object.entries(counts.excluded),
+    ...(nichtImBestand ? [["Ohne eingetragenen Vertrag (nicht im Bestand)", nichtImBestand] as [string, number]] : []),
+  ].sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
+  const excludedTotal = counts.excludedTotal + nichtImBestand;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <Link href="/buyer/bestand" className="text-sm text-[color:var(--brand)] hover:underline">
         ← Bestand
       </Link>
-      <PageHeader title={`Kampagne: ${OCCASIONS[occasion].label}`} subtitle={OCCASIONS[occasion].hint} />
+      <PageHeader
+        title={`Kampagne: ${weiteres ? WEITERES_PRODUKT_NAME : OCCASIONS[occasion].label}`}
+        subtitle={weiteres ? "Kunden mit Abschluss, die noch kein weiteres Produkt haben" : OCCASIONS[occasion].hint}
+      />
       {foreignLines.length ? (
         <p className={`mb-5 ${warnBox}`} data-campaign-foreign-line>
           {foreignLines.join(", ")} steht nicht bei den Sparten, die Sie anbieten. Als Ausschließlichkeitsvertreter dürfen Sie in der Regel nur Produkte Ihres
@@ -210,7 +226,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
             ) : null}
             {excluded.length ? (
               <div data-campaign-excluded>
-                <p className="font-medium">Nicht dabei ({de(counts.excludedTotal)}):</p>
+                <p className="font-medium">Nicht dabei ({de(excludedTotal)}):</p>
                 <ul className="mt-1 space-y-0.5 text-[color:var(--muted)]">
                   {excluded.map(([reason, n]) => (
                     <li key={reason} className="flex justify-between gap-3">
@@ -222,7 +238,11 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
               </div>
             ) : null}
             <p className="text-[color:var(--muted)]">
-              {occasion === "cross_sell" ? `Kunden mit ${segment.has?.join(", ")} und ohne ${segment.lacks?.join(", ")}. ` : ""}
+              {weiteres
+                ? "Ihre Kontakte mit Abschluss (mindestens 3 Wochen her) ohne weiteres Produkt. "
+                : occasion === "cross_sell"
+                  ? `Kunden mit ${segment.has?.join(", ")} und ohne ${segment.lacks?.join(", ")}. `
+                  : ""}
               Ebenfalls nicht dabei: alle, die in den letzten 30 Tagen schon angeschrieben wurden.{" "}
               {isSameNeedOccasion(occasion)
                 ? "Dieser Anlass betrifft bestehende Verträge: Per E-Mail geht er auch ohne Einwilligung, wenn Sie die Bestätigung zu § 7 Abs. 3 UWG abgegeben haben und für den Kunden der Nachweis zum Widerspruchshinweis vorliegt."
@@ -269,6 +289,8 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
                 <input name="topic" defaultValue={topic ?? ""} className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm text-[color:var(--foreground)]" />
                 {occasion === "renewal" ? (
                   <span className="mt-1 block font-normal">Jede Nachricht nennt die Sparte des Vertrags, der bei diesem Kunden abläuft. Das Thema hier gilt nur, wenn sie fehlt.</span>
+                ) : weiteres ? (
+                  <span className="mt-1 block font-normal">Leer lassen: Jede Nachricht nennt die naheliegende Ergänzung zum Vertrag des Kunden.</span>
                 ) : null}
               </label>
             ) : null}
@@ -396,7 +418,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
           Ihnen.
         </p>
         <Button type="submit" variant="primary" size="md" icon={Send} disabled={!ready || ctx.preview} data-campaign-start>
-          {notice?.kind === "pending" && counts.whatsapp > 0 ? "Kampagne vorbereiten" : "Kampagne starten"}
+          {notice?.kind === "pending" && counts.whatsapp > 0 ? "Kampagne vorbereiten" : weiteres ? "Senden" : "Kampagne starten"}
         </Button>
       </form>
     </main>

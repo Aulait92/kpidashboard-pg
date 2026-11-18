@@ -75,7 +75,7 @@ export function buckets(g: Granularity, now = new Date(), count = GRANULARITIES.
       const r = weekRange(now, -i);
       const s = berlinYmd(r.start);
       const e = berlinYmd(new Date(r.end.getTime() - DAY / 2));
-      out.push({ key: `${s.y}-${pad(s.m)}-${pad(s.d)}`, label: `${pad(s.d)}.${pad(s.m)}.–${pad(e.d)}.${pad(e.m)}.`, start: r.start, end: r.end, current: i === 0 });
+      out.push({ key: `${s.y}-${pad(s.m)}-${pad(s.d)}`, label: `${pad(s.d)}.${pad(s.m)}. bis ${pad(e.d)}.${pad(e.m)}.`, start: r.start, end: r.end, current: i === 0 });
     } else {
       const mm = new Date(Date.UTC(y, m - 1 - i, 15));
       const r = monthRange(new Date(berlinMidnight(mm.getUTCFullYear(), mm.getUTCMonth() + 1, 15)));
