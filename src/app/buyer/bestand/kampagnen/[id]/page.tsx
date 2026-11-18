@@ -1,20 +1,28 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { BarChart3, Euro, Inbox } from "lucide-react";
+import { BarChart3, ChevronDown, Euro, Inbox, Mail, MessageCircle, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { OCCASIONS, type Occasion } from "@/lib/bestand/campaigns";
+import { campaignRecipientList, OCCASIONS, type Occasion, type RecipientTone } from "@/lib/bestand/campaigns";
 import { loadCampaignStats } from "@/lib/bestand/statistik";
 import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 import { CHANNEL_MODES } from "@/lib/bestand/einwilligung";
 import { FunnelTable } from "@/components/bestand/funnel-table";
 import { ReplyForm } from "@/components/bestand/reply-form";
+import { CampaignEndButton } from "@/components/bestand/campaign-end";
 import { toggleCampaignAction } from "../../actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kampagne | performancegrowth" };
+
+const TONE: Record<RecipientTone, string> = {
+  success: "text-emerald-700",
+  warning: "text-amber-800",
+  neutral: "text-[color:var(--muted)]",
+  danger: "text-rose-700",
+};
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const STATUS: Record<string, { label: string; tone: "success" | "warning" | "neutral" }> = {
@@ -38,6 +46,7 @@ export default async function CampaignDetail({ params, searchParams }: { params:
   const mailbox = await prisma.customerCampaign.findUnique({ where: { id: s.id }, select: { senderUserId: true } }).then((c) =>
     c?.senderUserId ? prisma.mailConnection.findUnique({ where: { userId: c.senderUserId }, select: { email: true, campaignPausedUntil: true, campaignBackoff: true } }) : null,
   );
+  const recipients = await campaignRecipientList(ctx.customerId, s.id);
   const f = s.funnel;
   const sparten = Object.entries(f.gesamt.sparten);
   const gruende = Object.entries(f.gesamt.gruende).sort((a, b) => b[1] - a[1]);
@@ -62,6 +71,7 @@ export default async function CampaignDetail({ params, searchParams }: { params:
                 </button>
               </form>
             ) : null}
+            {s.status === "running" || s.status === "paused" ? <CampaignEndButton id={s.id} waiting={f.gesamt.wartend} readOnly={ctx.preview} /> : null}
           </div>
         }
       />
@@ -110,6 +120,36 @@ export default async function CampaignDetail({ params, searchParams }: { params:
             </div>
           ) : null}
         </Card>
+        {recipients && recipients.total ? (
+          <Card>
+            <details className="group" data-campaign-recipients>
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-4 font-semibold [&::-webkit-details-marker]:hidden">
+                <Users className="h-4 w-4 text-[color:var(--muted)]" />
+                <span className="flex-1">Empfänger ({recipients.total.toLocaleString("de-DE")})</span>
+                <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
+              </summary>
+              <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]" data-campaign-recipient-list>
+                {recipients.rows.map((r) => {
+                  const Icon = r.channel === "email" ? Mail : MessageCircle;
+                  return (
+                    <li key={r.id} className="px-5 py-2 text-sm sm:flex sm:items-center sm:gap-3" data-recipient-status={r.status}>
+                      <div className="flex min-w-0 items-center gap-2 sm:flex-1">
+                        <Icon className="h-3.5 w-3.5 shrink-0 text-[color:var(--muted)]" aria-label={r.channel === "email" ? "E-Mail" : "WhatsApp"} />
+                        <span className="truncate font-medium">{r.name}</span>
+                      </div>
+                      <div className={`pl-5 text-xs sm:pl-0 sm:text-right ${TONE[r.tone]}`}>{r.label}</div>
+                    </li>
+                  );
+                })}
+              </ul>
+              {recipients.total > recipients.rows.length ? (
+                <p className="px-5 py-3 text-xs text-[color:var(--muted)]">
+                  Erste {recipients.rows.length.toLocaleString("de-DE")} von {recipients.total.toLocaleString("de-DE")}.
+                </p>
+              ) : null}
+            </details>
+          </Card>
+        ) : null}
         <Card>
           <CardHeader title="Ertrag" icon={Euro} />
           <dl className="grid grid-cols-2 gap-4 px-5 pb-5 text-sm sm:grid-cols-4" data-campaign-ertrag>

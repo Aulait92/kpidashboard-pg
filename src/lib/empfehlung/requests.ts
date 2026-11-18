@@ -207,9 +207,9 @@ export async function sendReferralLinkNow(
     leadId = l.id;
     thema = empfehlungsThema(l.source);
   } else if (target.existingCustomerId) {
-    const e = await prisma.existingCustomer.findFirst({ where: { id: target.existingCustomerId, customerId }, select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true, lines: true } });
+    const e = await prisma.existingCustomer.findFirst({ where: { id: target.existingCustomerId, customerId }, select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true, blockedAt: true, lines: true } });
     if (!e) return { ok: false, error: "Kontakt nicht gefunden." };
-    if (e.optOutAt) return { ok: false, error: "Dieser Kunde möchte keine Nachrichten mehr." };
+    if (e.optOutAt || e.blockedAt) return { ok: false, error: "Dieser Kunde möchte keine Nachrichten mehr." };
     thema = empfehlungsThema(e.lines[0]);
     phone = e.phone;
     name = [e.firstName, e.lastName].filter(Boolean).join(" ") || null;

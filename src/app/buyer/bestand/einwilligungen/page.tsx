@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { redirect } from "next/navigation";
-import { Download, History, Layers, Mail, Scale, ShieldCheck, Users } from "lucide-react";
+import { Download, History, Layers, Mail, MessageSquareText, Scale, ShieldCheck, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -11,7 +11,7 @@ import { loadConsentSettings } from "@/lib/bestand/einwilligung-server";
 import { imprintFromWebsiteInfo } from "@/lib/bestand/kampagnen-mail";
 import { effectiveDailyLimit, providerDailyLimit } from "@/lib/bestand/mail-drossel";
 import { bestandMailQuota } from "@/lib/bestand/quota";
-import { BulkForm, HinweisBulkForm, LegacyForm, RechtForm, SpartenForm } from "@/components/bestand/recht-forms";
+import { AnspracheForm, BulkForm, HinweisBulkForm, LegacyForm, RechtForm, SpartenForm } from "@/components/bestand/recht-forms";
 import { isExclusiveAgent } from "@/lib/bestand/befugnis";
 import { LINE_NAMES } from "@/lib/bestand/rows";
 
@@ -185,6 +185,13 @@ export default async function EinwilligungenPage() {
               Diesen Monat {de(mailQuota.used)} von {de(mailQuota.limit)} Kampagnen-E-Mails verschickt (eigenes Kontingent, getrennt von WhatsApp). Abgemeldet:{" "}
               {de(optOuts)} für alle Kanäle, {de(emailOptOuts)} nur für E-Mail.
             </p>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Ansprache Ihrer Kunden" icon={MessageSquareText} />
+          <div className="px-5 pb-5">
+            <AnspracheForm value={settings.ansprache} readOnly={ctx.preview} />
           </div>
         </Card>
 

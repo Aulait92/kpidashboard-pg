@@ -272,6 +272,9 @@ model Customer {
   bestandLegacyConsentReviewedAt DateTime?
   bestandConsentLogs             BestandConsentLog[]
   bestandOptOuts                 BestandOptOut[]
+  // Ansprache der Bestandskunden in allen Texten an sie (Kampagnen, Geburtstag, Einwilligung, Abmeldung, Mails):
+  // "sie" | "du", entscheidet der Vermittler (Ole, 18.11.2026). Getrennt von leadAddress (Leads).
+  bestandAddress                 String                    @default("sie")
   // ─── Zusatzmodul „Empfehlungen & Bewertungen“ (seit 12.11.2026) ───
   // Freigeschaltet (Zugang); Abrechnung über empfehlungMonthly bzw. Testphase
   empfehlungEnabled              Boolean                   @default(false)
@@ -2732,6 +2735,10 @@ model ExistingCustomer {
   consentAt                DateTime? // „Einwilligung laut Versicherer“ (Importdatum); seit 14.11.2026 nur noch Altangabe, maßgeblich sind die Felder je Kanal
   consentNote              String?
   optOutAt                 DateTime? // „Stopp“ bzw. Abmeldung für alle Kanäle → keine Kampagnen mehr
+  // Vom Vermittler gesperrt („nicht mehr anschreiben“, Ole 18.11.2026): bleibt gespeichert, bekommt keine Kampagnen und
+  // Glückwünsche, wieder entsperrbar (lib/bestand/kunde-verwalten.ts)
+  blockedAt                DateTime?
+  blockedById              String?
   // Einwilligung je Kanal (Ole, 14.11.2026): ja | nein | null = unbekannt. Quelle: import | versicherer_pauschal | formular | vermittler | lead
   emailConsent             String?
   emailConsentAt           DateTime?

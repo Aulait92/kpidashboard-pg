@@ -17,7 +17,7 @@ export type UnsubscribeTarget = {
   advisor: string;
   whatsappBlocked: boolean;
   hasPhone: boolean;
-  /** Ansprache des Kunden für die Seite (nur Leads; Bestand: Sie) */
+  /** Ansprache für die Seite: Leads wie Customer.leadAddress, Bestandskunden wie Customer.bestandAddress */
   du?: boolean;
 };
 
@@ -36,9 +36,17 @@ export async function resolveUnsubscribe(token: string): Promise<UnsubscribeTarg
       ? (await prisma.campaignRecipient.findUnique({ where: { id: v.id }, select: { existingCustomerId: true } }))?.existingCustomerId
       : v.id;
   if (!ecId) return null;
-  const ec = await prisma.existingCustomer.findUnique({ where: { id: ecId }, select: { id: true, customerId: true, optOutAt: true, phone: true, customer: { select: { name: true } } } });
+  const ec = await prisma.existingCustomer.findUnique({ where: { id: ecId }, select: { id: true, customerId: true, optOutAt: true, phone: true, customer: { select: { name: true, bestandAddress: true } } } });
   if (!ec) return null;
-  return { existingCustomerId: ec.id, customerId: ec.customerId, recipientId: v.kind === "r" ? v.id : null, advisor: advisorPerson(ec.customer.name, null), whatsappBlocked: !!ec.optOutAt, hasPhone: !!ec.phone };
+  return {
+    existingCustomerId: ec.id,
+    customerId: ec.customerId,
+    recipientId: v.kind === "r" ? v.id : null,
+    advisor: advisorPerson(ec.customer.name, null),
+    whatsappBlocked: !!ec.optOutAt,
+    hasPhone: !!ec.phone,
+    du: ec.customer.bestandAddress === "du",
+  };
 }
 
 /** Abmelden: scope email (Standard, ein Klick) oder all (auch WhatsApp). */

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { optOutHash, doiToken, doiConfirmUrl, hashToken, consentUrl } from "@/lib/bestand/links";
 import { consentQuestion, consentRequestByMailAllowed, type Channel, type ConsentSettings, type ConsentSubject, type ConsentValue } from "@/lib/bestand/einwilligung";
-import { anredeZeile } from "@/lib/ansprache";
+import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { kontaktFromExisting, advisorPerson, firmDisplayName } from "@/lib/lead-anrede";
 
 export type Suppression = { email: Map<string, "email" | "all">; phone: Map<string, "email" | "all"> };
@@ -21,6 +21,7 @@ export async function loadConsentSettings(customerId: string) {
       bestandAgentConfirmedAt: true,
       bestandMailImprint: true,
       bestandLegacyConsentReviewedAt: true,
+      bestandAddress: true,
       onboarding: { select: { websiteInfo: true } },
     },
   });
@@ -32,7 +33,15 @@ export async function loadConsentSettings(customerId: string) {
     websiteInfo: c?.onboarding?.websiteInfo ?? null,
     legacyReviewedAt: c?.bestandLegacyConsentReviewedAt ?? null,
     name: c?.name ?? "",
+    /** Ansprache der Bestandskunden (Du/Sie), entscheidet der Vermittler */
+    ansprache: asAnsprache(c?.bestandAddress),
   };
+}
+
+/** Ansprache der Bestandskunden dieses Vermittlers (Standard „sie“; getrennt von der Lead-Ansprache). */
+export async function loadBestandAnsprache(customerId: string): Promise<Ansprache> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { bestandAddress: true } });
+  return asAnsprache(c?.bestandAddress);
 }
 
 export async function loadSuppression(customerId: string): Promise<Suppression> {
@@ -55,8 +64,9 @@ export type SubjectFields = {
   whatsappConsent: string | null;
   widerspruchHinweis?: string | null;
   waUnavailableAt?: Date | null;
+  blockedAt?: Date | null;
 };
-export const SUBJECT_SELECT = { phone: true, email: true, optOutAt: true, emailOptOutAt: true, emailConsent: true, whatsappConsent: true, widerspruchHinweis: true, waUnavailableAt: true } as const;
+export const SUBJECT_SELECT = { phone: true, email: true, optOutAt: true, emailOptOutAt: true, emailConsent: true, whatsappConsent: true, widerspruchHinweis: true, waUnavailableAt: true, blockedAt: true } as const;
 
 /** Angaben für die Entscheidung inklusive Sperrliste. */
 export function subjectOf(ec: SubjectFields, sup: Suppression): ConsentSubject {
@@ -260,16 +270,18 @@ export async function loadConsentPage(existingCustomerId: string) {
       optOutAt: true,
       emailConsent: true,
       whatsappConsent: true,
-      customer: { select: { name: true, existingCustomersEnabled: true, onboarding: { select: { websiteInfo: true } } } },
+      customer: { select: { name: true, existingCustomersEnabled: true, bestandAddress: true, onboarding: { select: { websiteInfo: true } } } },
     },
   });
   if (!ec || !ec.customer.existingCustomersEnabled) return null;
   const privacy = (ec.customer.onboarding?.websiteInfo as { privacyUrl?: string | null } | null)?.privacyUrl;
+  const ansprache = asAnsprache(ec.customer.bestandAddress);
   return {
     ...ec,
+    ansprache,
     advisor: advisorPerson(ec.customer.name, null),
     firm: firmDisplayName(ec.customer.name),
-    anrede: anredeZeile("sie", kontaktFromExisting(ec)),
+    anrede: anredeZeile(ansprache, kontaktFromExisting(ec)),
     privacyUrl: privacy && /^https?:\/\//.test(privacy) ? privacy : (process.env.BOOKING_PRIVACY_URL ?? "https://performancegrowth.de/datenschutz"),
   };
 }
@@ -302,6 +314,7 @@ export async function submitConsentForm(existingCustomerId: string, input: Conse
     const { token, hash } = doiToken();
     const text = consentQuestion(page.advisor, ["email"]);
     await logConsent({ customerId: page.customerId, existingCustomerId: page.id, channel: "email", action: "erteilt", source: "formular", text, address, ip: input.ip, userAgent: input.userAgent, tokenHash: hash, at: now });
+    const an = page.ansprache;
     const r = await sendTransactionalMail(page.customerId, {
       to: address,
       subject: `Bitte bestätigen: E-Mails von ${page.advisor}`,
@@ -309,10 +322,14 @@ export async function submitConsentForm(existingCustomerId: string, input: Conse
         [
           page.anrede,
           "",
-          `bitte bestätigen Sie mit einem Klick, dass ${page.advisor} Sie per E-Mail über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren darf:`,
+          a(
+            an,
+            `bitte bestätige mit einem Klick, dass ${page.advisor} dich per E-Mail über passende Angebote und Neuigkeiten zu deinen Verträgen informieren darf:`,
+            `bitte bestätigen Sie mit einem Klick, dass ${page.advisor} Sie per E-Mail über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren darf:`,
+          ),
           doiConfirmUrl(token),
           "",
-          "Wenn Sie das nicht angefragt haben, ignorieren Sie diese E-Mail einfach. Dann passiert nichts.",
+          a(an, "Wenn du das nicht angefragt hast, ignoriere diese E-Mail einfach. Dann passiert nichts.", "Wenn Sie das nicht angefragt haben, ignorieren Sie diese E-Mail einfach. Dann passiert nichts."),
           "",
           signatur,
         ].join("\n"),
@@ -323,13 +340,17 @@ export async function submitConsentForm(existingCustomerId: string, input: Conse
 }
 
 /** Bestätigungslink (Double-Opt-in) geklickt: E-Mail-Einwilligung gilt ab jetzt. */
-export async function confirmDoi(token: string, meta: { ip: string | null; userAgent: string | null }, now = new Date()): Promise<{ ok: true; advisor: string; customerId: string } | { ok: false }> {
+export async function confirmDoi(
+  token: string,
+  meta: { ip: string | null; userAgent: string | null },
+  now = new Date(),
+): Promise<{ ok: true; advisor: string; customerId: string; ansprache: Ansprache } | { ok: false }> {
   if (!/^[A-Za-z0-9_-]{20,64}$/.test(token)) return { ok: false };
   const log = await prisma.bestandConsentLog.findUnique({ where: { tokenHash: hashToken(token) } });
   if (!log || !log.existingCustomerId || log.channel !== "email") return { ok: false };
   // Link 30 Tage gültig
   if (now.getTime() - log.createdAt.getTime() > 30 * 86_400_000) return { ok: false };
-  const ec = await prisma.existingCustomer.findUnique({ where: { id: log.existingCustomerId }, select: { id: true, customerId: true, email: true, customer: { select: { name: true } } } });
+  const ec = await prisma.existingCustomer.findUnique({ where: { id: log.existingCustomerId }, select: { id: true, customerId: true, email: true, customer: { select: { name: true, bestandAddress: true } } } });
   if (!ec) return { ok: false };
   if (!log.confirmedAt) {
     await prisma.bestandConsentLog.update({ where: { id: log.id }, data: { confirmedAt: now } });
@@ -340,7 +361,7 @@ export async function confirmDoi(token: string, meta: { ip: string | null; userA
     if (log.address) await prisma.bestandOptOut.deleteMany({ where: { customerId: ec.customerId, kind: "email", hash: optOutHash("email", log.address) } });
     await logConsent({ customerId: ec.customerId, existingCustomerId: ec.id, channel: "email", action: "bestaetigt", source: "formular", text: log.text, address: log.address, ip: meta.ip, userAgent: meta.userAgent, at: now });
   }
-  return { ok: true, advisor: advisorPerson(ec.customer.name, null), customerId: ec.customerId };
+  return { ok: true, advisor: advisorPerson(ec.customer.name, null), customerId: ec.customerId, ansprache: asAnsprache(ec.customer.bestandAddress) };
 }
 
 /**
@@ -365,6 +386,15 @@ async function sendTransactionalMail(
   return { ok: r.sent };
 }
 
+/** Bitte um Einwilligung (Text vor dem persönlichen Link), je Ansprache. */
+export function consentRequestText(an: Ansprache): string {
+  return a(
+    an,
+    "darf ich dich künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu deinen Verträgen informieren? Hier kannst du das mit einem Klick festlegen und jederzeit widerrufen:",
+    "darf ich Sie künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Hier können Sie das mit einem Klick festlegen und jederzeit widerrufen:",
+  );
+}
+
 export type ConsentRequestResult = { ok: true; url: string; text: string; mailed: boolean } | { ok: false; error: string };
 
 /**
@@ -380,8 +410,10 @@ export async function requestConsent(existingCustomerId: string, customerId: str
   if (!ec) return { ok: false, error: "Kunde nicht gefunden." };
   const [settings, sup] = await Promise.all([loadConsentSettings(customerId), loadSuppression(customerId)]);
   const url = consentUrl(ec.id);
-  const anrede = anredeZeile("sie", kontaktFromExisting(ec));
-  const text = `${anrede} darf ich Sie künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Hier können Sie das mit einem Klick festlegen und jederzeit widerrufen: ${url}`;
+  const an = settings.ansprache;
+  const anrede = anredeZeile(an, kontaktFromExisting(ec));
+  const frage = consentRequestText(an);
+  const text = `${anrede} ${frage} ${url}`;
   if (!opts.byMail) {
     await logConsent({ customerId, existingCustomerId: ec.id, channel: "email", action: "angefragt", source: "vermittler", text: "Link zum Teilen erstellt", actorUserId: opts.actorUserId, at: now });
     return { ok: true, url, text, mailed: false };
@@ -391,9 +423,8 @@ export async function requestConsent(existingCustomerId: string, customerId: str
   }
   const r = await sendTransactionalMail(customerId, {
     to: ec.email!,
-    subject: "Darf ich Sie auf dem Laufenden halten?",
-    text: (signatur) =>
-      `${anrede}\n\ndarf ich Sie künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Hier können Sie das mit einem Klick festlegen und jederzeit widerrufen:\n${url}\n\n${signatur}`,
+    subject: a(an, "Darf ich dich auf dem Laufenden halten?", "Darf ich Sie auf dem Laufenden halten?"),
+    text: (signatur) => `${anrede}\n\n${frage}\n${url}\n\n${signatur}`,
   }, ec.id, "Anfrage");
   if (!r.ok) return { ok: false, error: "Die E-Mail konnte nicht gesendet werden. Bitte das Postfach prüfen." };
   await logConsent({ customerId, existingCustomerId: ec.id, channel: "email", action: "angefragt", source: "vermittler", text: "Einwilligungs-Abfrage per E-Mail gesendet", address: ec.email, actorUserId: opts.actorUserId, at: now });

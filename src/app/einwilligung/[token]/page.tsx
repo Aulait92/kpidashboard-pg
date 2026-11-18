@@ -8,6 +8,7 @@ import { verifyLink } from "@/lib/bestand/links";
 import { loadConsentPage } from "@/lib/bestand/einwilligung-server";
 import { consentQuestion } from "@/lib/bestand/einwilligung";
 import { nowMs } from "@/lib/now";
+import { a, type Ansprache } from "@/lib/ansprache";
 import { submitConsentAction } from "./actions";
 
 // Einwilligungs-Abfrage für Bestandskunden (Ole, 14.11.2026): „Darf ich Sie über passende Angebote per E-Mail
@@ -15,14 +16,15 @@ import { submitConsentAction } from "./actions";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Ihre Einwilligung", robots: { index: false, follow: false } };
 
-const ERRORS: Record<string, string> = {
-  none: "Bitte wählen Sie mindestens einen Weg aus.",
-  email: "Bitte prüfen Sie die E-Mail-Adresse.",
-  phone: "Bitte geben Sie Ihre Handynummer an.",
-  busy: "Gerade kamen sehr viele Anfragen. Bitte versuchen Sie es später noch einmal.",
+/** Fehlermeldungen je Ansprache (Einstellung des Vermittlers für seine Bestandskunden). */
+const errors = (an: Ansprache): Record<string, string> => ({
+  none: a(an, "Bitte wähle mindestens einen Weg aus.", "Bitte wählen Sie mindestens einen Weg aus."),
+  email: a(an, "Bitte prüfe die E-Mail-Adresse.", "Bitte prüfen Sie die E-Mail-Adresse."),
+  phone: a(an, "Bitte gib deine Handynummer an.", "Bitte geben Sie Ihre Handynummer an."),
+  busy: a(an, "Gerade kamen sehr viele Anfragen. Bitte versuche es später noch einmal.", "Gerade kamen sehr viele Anfragen. Bitte versuchen Sie es später noch einmal."),
   invalid: "Die Anfrage konnte nicht verarbeitet werden.",
   unavailable: "Dieser Link ist nicht (mehr) aktiv.",
-};
+});
 
 export default async function ConsentPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ ok?: string; doi?: string; wa?: string; err?: string }> }) {
   const { token } = await params;
@@ -37,6 +39,8 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
       </Shell>
     );
   }
+  const an = page.ansprache;
+  const ERRORS = errors(an);
   if (sp.ok) {
     return (
       <Shell customerId={page.customerId} advisor={page.advisor}>
@@ -46,13 +50,19 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
         <h1 className="mt-4 text-2xl font-bold tracking-tight" data-consent-done>
           Vielen Dank!
         </h1>
-        {sp.wa ? <p className="mt-2 text-[15px] text-[color:var(--muted)]">Ihre Einwilligung für WhatsApp ist gespeichert.</p> : null}
+        {sp.wa ? <p className="mt-2 text-[15px] text-[color:var(--muted)]">{a(an, "Deine Einwilligung für WhatsApp ist gespeichert.", "Ihre Einwilligung für WhatsApp ist gespeichert.")}</p> : null}
         {sp.doi ? (
           <p className="mt-2 text-[15px] text-[color:var(--muted)]" data-consent-doi>
-            Bitte bestätigen Sie noch Ihre E-Mail-Adresse: Wir haben Ihnen dafür eine E-Mail mit einem Link geschickt.
+            {a(
+              an,
+              "Bitte bestätige noch deine E-Mail-Adresse: Wir haben dir dafür eine E-Mail mit einem Link geschickt.",
+              "Bitte bestätigen Sie noch Ihre E-Mail-Adresse: Wir haben Ihnen dafür eine E-Mail mit einem Link geschickt.",
+            )}
           </p>
         ) : null}
-        <p className="mt-4 text-xs text-[color:var(--muted)]">Sie können die Einwilligung jederzeit widerrufen, zum Beispiel über den Abmeldelink in jeder E-Mail oder mit „Stopp“ per WhatsApp.</p>
+        <p className="mt-4 text-xs text-[color:var(--muted)]">
+          {a(an, "Du kannst die Einwilligung jederzeit widerrufen", "Sie können die Einwilligung jederzeit widerrufen")}, zum Beispiel über den Abmeldelink in jeder E-Mail oder mit „Stopp“ per WhatsApp.
+        </p>
       </Shell>
     );
   }
@@ -62,9 +72,16 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)]/10 text-[color:var(--brand)]">
         <ShieldCheck className="h-6 w-6" />
       </div>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight">Darf ich Sie auf dem Laufenden halten?</h1>
+      <h1 className="mt-4 text-2xl font-bold tracking-tight" data-consent-title>
+        {a(an, "Darf ich dich auf dem Laufenden halten?", "Darf ich Sie auf dem Laufenden halten?")}
+      </h1>
       <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--muted)]">
-        {page.anrede} darf ich Sie über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Wählen Sie einfach, auf welchem Weg.
+        {page.anrede}{" "}
+        {a(
+          an,
+          "darf ich dich über passende Angebote und Neuigkeiten zu deinen Verträgen informieren? Wähle einfach, auf welchem Weg.",
+          "darf ich Sie über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Wählen Sie einfach, auf welchem Weg.",
+        )}
       </p>
       {sp.err && ERRORS[sp.err] ? <p className="mt-4 rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800">{ERRORS[sp.err]}</p> : null}
       <form action={action} className="mt-5 space-y-4">
@@ -78,10 +95,10 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
             type="email"
             defaultValue={page.email ?? ""}
             autoComplete="email"
-            placeholder="Ihre E-Mail-Adresse"
+            placeholder={a(an, "Deine E-Mail-Adresse", "Ihre E-Mail-Adresse")}
             className="mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-base"
           />
-          <p className="mt-1 text-xs text-[color:var(--muted)]">Sie bekommen eine E-Mail mit einem Link zum Bestätigen.</p>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">{a(an, "Du bekommst eine E-Mail mit einem Link zum Bestätigen.", "Sie bekommen eine E-Mail mit einem Link zum Bestätigen.")}</p>
         </div>
         <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3">
           <label className="flex items-start gap-2 text-sm font-medium">
@@ -92,7 +109,11 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
             name="phone"
             type="tel"
             autoComplete="tel"
-            placeholder={page.phone ? "Ihre hinterlegte Nummer (oder eine andere eingeben)" : "Ihre Handynummer"}
+            placeholder={
+              page.phone
+                ? a(an, "Deine hinterlegte Nummer (oder eine andere eingeben)", "Ihre hinterlegte Nummer (oder eine andere eingeben)")
+                : a(an, "Deine Handynummer", "Ihre Handynummer")
+            }
             className="mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-base"
           />
         </div>
@@ -117,7 +138,9 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
         <SubmitButton pendingLabel="Wird gespeichert …" className={buttonClass("primary", "md", "h-12 w-full text-base")}>
           Einverstanden
         </SubmitButton>
-        <p className="text-center text-xs text-[color:var(--muted)]">Ohne Auswahl passiert nichts. Sie können diese Seite einfach schließen.</p>
+        <p className="text-center text-xs text-[color:var(--muted)]">
+          Ohne Auswahl passiert nichts. {a(an, "Du kannst diese Seite einfach schließen.", "Sie können diese Seite einfach schließen.")}
+        </p>
       </form>
     </Shell>
   );

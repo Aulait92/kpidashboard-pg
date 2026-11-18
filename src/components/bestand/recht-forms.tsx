@@ -2,9 +2,17 @@
 
 // Formulare unter Bestand → Einwilligungen & Versand (Ole, 14.11.2026).
 
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { Button } from "@/components/ui";
-import { bulkConsentAction, bulkHinweisAction, legacyConsentAction, saveBestandRechtAction, saveSpartenAction, type SettingsState } from "@/app/buyer/bestand/actions";
+import {
+  bulkConsentAction,
+  bulkHinweisAction,
+  legacyConsentAction,
+  saveBestandAnspracheAction,
+  saveBestandRechtAction,
+  saveSpartenAction,
+  type SettingsState,
+} from "@/app/buyer/bestand/actions";
 
 const Msg = ({ s }: { s: SettingsState }) => (s.error ? <p className="text-rose-700">{s.error}</p> : s.message ? <p className="text-emerald-700">{s.message}</p> : null);
 
@@ -164,5 +172,46 @@ export function SpartenForm({ all, selected, fromBestand, readOnly }: { all: str
         Sparten speichern
       </Button>
     </form>
+  );
+}
+
+/**
+ * Ansprache der Bestandskunden (Ole, 18.11.2026): Sie (Standard) oder Du in allen Texten an sie (Kampagnen,
+ * Glückwünsche, Einwilligungs- und Abmeldeseite, Mails). Speichert sofort beim Wechsel.
+ */
+export function AnspracheForm({ value, readOnly }: { value: "sie" | "du"; readOnly: boolean }) {
+  const [current, setCurrent] = useState(value);
+  const [state, setState] = useState<SettingsState>({});
+  const [pending, start] = useTransition();
+  const choose = (v: "sie" | "du") => {
+    if (v === current || readOnly) return;
+    setCurrent(v);
+    start(async () => setState(await saveBestandAnspracheAction(v)));
+  };
+  const options = [
+    { key: "sie" as const, title: "Sie", example: "„Guten Tag Frau Muster, haben Sie …“" },
+    { key: "du" as const, title: "Du", example: "„Hallo Erika, hast du …“" },
+  ];
+  return (
+    <div className="space-y-2 text-sm" data-ansprache-form>
+      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Ansprache Ihrer Bestandskunden">
+        {options.map((o) => (
+          <button
+            key={o.key}
+            type="button"
+            role="radio"
+            aria-checked={current === o.key}
+            disabled={readOnly || pending}
+            onClick={() => choose(o.key)}
+            data-ansprache={o.key}
+            className={`rounded-[var(--radius-md)] border px-3 py-2.5 text-left ${current === o.key ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] ring-1 ring-[color:var(--brand)]" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"}`}
+          >
+            <span className="block font-semibold">{o.title}</span>
+            <span className="block text-xs text-[color:var(--muted)]">{o.example}</span>
+          </button>
+        ))}
+      </div>
+      <Msg s={state} />
+    </div>
   );
 }

@@ -107,11 +107,12 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
     : renderTemplate(fillNames(templateTextFor(purpose, "sie"), templateNamesOf(c.name)), ["Frau Muster", ...rest]);
   const imprint = settings.imprint ?? imprintFromWebsiteInfo(settings.websiteInfo);
   const meinname = advisorPerson(c.name, sender?.displayName ?? null);
-  const def = defaultCampaignMail(occasion, "sie");
+  // E-Mail in der Ansprache, die der Vermittler für seine Bestandskunden gewählt hat (Einwilligungen & Versand)
+  const def = defaultCampaignMail(occasion, settings.ansprache);
   const mailPreview = await campaignMailFor(
     { customerId: ctx.customerId, occasion, topic: topic ?? (weiteres ? beispielThema : null), mailSubject: null, mailBody: null },
     { id: "vorschau", firstName: "Erika", lastName: "Muster", salutation: "Frau" },
-    { recipientId: "vorschau0", customerName: c.name, imprint, meinname, empfehlungslink: occasion === "empfehlung" ? linkExample : null },
+    { recipientId: "vorschau0", customerName: c.name, imprint, meinname, empfehlungslink: occasion === "empfehlung" ? linkExample : null, ansprache: settings.ansprache },
   );
 
   // Startbereit? Je Kanal nur prüfen, wenn er gebraucht wird. WhatsApp-Vorlage darf noch warten (startet nach Freigabe).
@@ -313,6 +314,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
               <p className="mt-3 text-xs text-[color:var(--muted)]">
                 Antwortet ein Kunde, übernimmt Ihr digitaler Assistent, klärt kurz den Bedarf und bietet einen Termin an. Das Gespräch erscheint als Lead in
                 Ihrer Pipeline. „Stopp“ sperrt den Kunden automatisch.
+                {settings.ansprache === "du" ? " Die erste WhatsApp-Nachricht ist eine von Meta freigegebene Vorlage und bleibt deshalb in der Sie-Form." : null}
               </p>
               {avail.waAvailable ? (
                 <p className="mt-2 text-xs text-[color:var(--muted)]" data-template-state>

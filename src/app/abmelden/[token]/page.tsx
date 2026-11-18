@@ -38,7 +38,7 @@ export default async function UnsubscribePage({ params, searchParams }: { params
       </p>
       {sp.alle || t.whatsappBlocked ? (
         <p className="mt-4 rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-sm text-emerald-900" data-unsubscribed-all>
-          Auch per WhatsApp schreiben wir Ihnen keine Angebote mehr.
+          {t.du ? "Auch per WhatsApp schreiben wir dir keine Angebote mehr." : "Auch per WhatsApp schreiben wir Ihnen keine Angebote mehr."}
         </p>
       ) : t.hasPhone ? (
         <form action={unsubscribeAllAction.bind(null, token)} className="mt-5">

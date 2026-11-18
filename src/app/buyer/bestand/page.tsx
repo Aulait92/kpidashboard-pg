@@ -95,12 +95,13 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   };
 
   const now = new Date();
-  const [total, withPhone, withEmail, optOut, volume, provision, consentSettings, suppression, legacy, noProof] = await Promise.all([
+  const [total, withPhone, withEmail, optOut, blocked, volume, provision, consentSettings, suppression, legacy, noProof] = await Promise.all([
     prisma.existingCustomer.count({ where: { customerId } }),
     // WhatsApp nur mit Opt-in (Ole, 14.11.2026)
     prisma.existingCustomer.count({ where: { customerId, phone: { not: null }, optOutAt: null, whatsappConsent: "ja" } }),
     prisma.existingCustomer.count({ where: { customerId, email: { not: null }, optOutAt: null, emailOptOutAt: null, NOT: { emailConsent: "nein" } } }),
     prisma.existingCustomer.count({ where: { customerId, optOutAt: { not: null } } }),
+    prisma.existingCustomer.count({ where: { customerId, blockedAt: { not: null } } }),
     prisma.existingCustomer.aggregate({ where: { customerId, premiumTotal: { not: null } }, _sum: { premiumTotal: true }, _count: { _all: true } }),
     loadCustomerProvision(customerId),
     loadConsentSettings(customerId),
@@ -161,7 +162,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
         title="Bestand"
         subtitle={
           total
-            ? `${total.toLocaleString("de-DE")} Kunden · ${withPhone.toLocaleString("de-DE")} mit WhatsApp-Einwilligung · ${withEmail.toLocaleString("de-DE")} mit E-Mail${optOut ? ` · ${optOut} gesperrt` : ""}`
+            ? `${total.toLocaleString("de-DE")} Kunden · ${withPhone.toLocaleString("de-DE")} mit WhatsApp-Einwilligung · ${withEmail.toLocaleString("de-DE")} mit E-Mail${optOut ? ` · ${optOut} abgemeldet` : ""}${blocked ? ` · ${blocked} gesperrt` : ""}`
             : "Ihre Bestandskunden gezielt ansprechen"
         }
         actions={
@@ -456,8 +457,14 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                         <span className="truncate font-medium" title={title}>
                           {title}
                         </span>
-                        {e.optOutAt ? <span className="shrink-0 text-xs text-rose-700">gesperrt</span> : null}
-                        {!e.optOutAt ? (
+                        {e.blockedAt ? (
+                          <span className="shrink-0 text-xs text-rose-700" data-bestand-blocked>
+                            gesperrt
+                          </span>
+                        ) : e.optOutAt ? (
+                          <span className="shrink-0 text-xs text-rose-700">abgemeldet</span>
+                        ) : null}
+                        {!e.optOutAt && !e.blockedAt ? (
                           <span className="hidden sm:inline-flex">
                             <ConsentBadges
                               email={(e.emailConsent as "ja" | "nein" | null) ?? null}
@@ -499,7 +506,14 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                       readOnly={ctx.preview}
                     />
                     {withMails.has(e.id) ? <BestandMailVerlauf existingCustomerId={e.id} name={title} /> : null}
-                    {c.empfehlungEnabled && !e.optOutAt ? <CustomerRowActions existingCustomerId={e.id} name={title} hasPhone={!!e.phone} readOnly={ctx.preview} /> : null}
+                    <CustomerRowActions
+                      existingCustomerId={e.id}
+                      name={title}
+                      hasPhone={!!e.phone}
+                      readOnly={ctx.preview}
+                      referral={c.empfehlungEnabled && !e.optOutAt && !e.blockedAt}
+                      blocked={!!e.blockedAt}
+                    />
                   </li>
                 );
               })}

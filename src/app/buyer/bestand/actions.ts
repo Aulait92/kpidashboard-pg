@@ -6,7 +6,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { FIELDS, detectMapping, importRows, isBlockedColumn, mappingBlocker, parseFile, undoLastImport, type Mapping } from "@/lib/bestand/import";
-import { createCampaign, OCCASIONS, recordEmailReply, type EmailReplyKind, type Occasion, type Segment } from "@/lib/bestand/campaigns";
+import { createCampaign, endCampaign, OCCASIONS, recordEmailReply, type EmailReplyKind, type Occasion, type Segment } from "@/lib/bestand/campaigns";
 import { QUOTA_REACHED } from "@/lib/bestand/quota";
 import { asChannelMode } from "@/lib/bestand/einwilligung";
 import { logConsent, requestConsent, setConsent, setHinweis } from "@/lib/bestand/einwilligung-server";
@@ -27,6 +27,8 @@ import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { bestandVolumeAdmin } from "@/lib/bestand/volumen";
 import { bestandVisible } from "@/lib/bestand/sichtbar";
 import { bestandMailVerlauf, type KontaktMailEintrag } from "@/lib/mail/kontakt-mail";
+import { deleteExistingCustomer, setExistingCustomerBlocked } from "@/lib/bestand/kunde-verwalten";
+import { asAnsprache } from "@/lib/ansprache";
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
@@ -471,6 +473,71 @@ export async function toggleCampaignAction(fd: FormData): Promise<void> {
   revalidatePath(`/buyer/bestand/kampagnen/${c.id}`);
 }
 
+export type EndState = { ok?: boolean; error?: string };
+
+/** Kampagne endgültig beenden (mit Bestätigung): keine weiteren Nachrichten, wartende Empfänger werden übersprungen. */
+export async function endCampaignAction(_prev: EndState, fd: FormData): Promise<EndState> {
+  try {
+    const ctx = await ownerCtx();
+    if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie das Beenden." };
+    const id = String(fd.get("id") ?? "");
+    const r = await endCampaign(ctx.customerId, id);
+    if (!r.ok) return { error: r.error };
+    await audit("bestand.kampagne_beendet", { entity: "CustomerCampaign", entityId: id, customerId: ctx.customerId, details: { wartendUebersprungen: r.skipped } });
+    revalidatePath("/buyer/bestand");
+    revalidatePath(`/buyer/bestand/kampagnen/${id}`);
+    return { ok: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}
+
+// ─── Einzelne Bestandskunden sperren und löschen (Ole, 18.11.2026) ───────
+
+export type CustomerManageState = { ok?: boolean; error?: string; message?: string };
+
+/** Sperren („nicht mehr anschreiben“) bzw. entsperren. */
+export async function blockExistingCustomerAction(existingCustomerId: string, blocked: boolean): Promise<CustomerManageState> {
+  try {
+    const ctx = await ownerCtx();
+    const r = await setExistingCustomerBlocked(ctx.customerId, existingCustomerId, blocked, ctx.userId);
+    if (!r.ok) return { error: r.error };
+    revalidatePath("/buyer/bestand");
+    return { ok: true, message: blocked ? "Gesperrt: bekommt keine Kampagnen und Glückwünsche mehr." : "Entsperrt." };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}
+
+/** Endgültig löschen (mit Bestätigung): Datensatz weg, Adressen auf der Sperrliste gegen erneuten Import. */
+export async function deleteExistingCustomerAction(_prev: CustomerManageState, fd: FormData): Promise<CustomerManageState> {
+  try {
+    const ctx = await ownerCtx();
+    if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie das Löschen." };
+    const r = await deleteExistingCustomer(ctx.customerId, String(fd.get("id") ?? ""));
+    if (!r.ok) return { error: r.error };
+    revalidatePath("/buyer/bestand");
+    return { ok: true, message: "Gelöscht." };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}
+
+/** Ansprache der Bestandskunden (Du/Sie) in allen Texten an sie. Die Lead-Ansprache bleibt unberührt. */
+export async function saveBestandAnspracheAction(value: string): Promise<SettingsState> {
+  try {
+    const ctx = await ownerCtx();
+    const ansprache = asAnsprache(value);
+    await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandAddress: ansprache } });
+    await audit("bestand.ansprache", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { ansprache } });
+    revalidatePath("/buyer/bestand/einwilligungen");
+    revalidatePath("/buyer/bestand/kampagne");
+    return { ok: true, message: "Gespeichert." };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
 export type BookState = { ok?: boolean; error?: string; fallback?: boolean; until?: string };
 
 /** Modul selbst kostenpflichtig buchen (oder Kündigung zurücknehmen) – nur Inhaber, mit Bestätigung. */
@@ -615,9 +682,9 @@ export async function referralCopyAction(existingCustomerId: string, occasion: s
   if (ctx.teamRole !== "owner") return { error: "Nur der Inhaber kann Bestandskunden verwalten." };
   const m = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { empfehlungEnabled: true, name: true } });
   if (!m?.empfehlungEnabled) return { error: "Dafür braucht es das Modul „Empfehlungen & Bewertungen“." };
-  const e = await prisma.existingCustomer.findFirst({ where: { id: existingCustomerId, customerId: ctx.customerId }, select: { firstName: true, lastName: true, optOutAt: true } });
+  const e = await prisma.existingCustomer.findFirst({ where: { id: existingCustomerId, customerId: ctx.customerId }, select: { firstName: true, lastName: true, optOutAt: true, blockedAt: true } });
   if (!e) return { error: "Kontakt nicht gefunden." };
-  if (e.optOutAt) return { error: "Dieser Kunde möchte keine Nachrichten mehr." };
+  if (e.optOutAt || e.blockedAt) return { error: "Dieser Kunde möchte keine Nachrichten mehr." };
   const link = await referralLinkOf({ customerId: ctx.customerId, existingCustomerId });
   const url = referralLinkFor(link.token);
   const settings = await loadSettings(ctx.customerId);

@@ -5,6 +5,7 @@ import { AdvisorHeader } from "@/components/empfehlung/advisor-header";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { confirmDoi } from "@/lib/bestand/einwilligung-server";
 import { requestIp } from "@/lib/rate-limit";
+import { a } from "@/lib/ansprache";
 
 // Double-Opt-in: Bestätigungslink aus der E-Mail. Erst danach gilt die E-Mail-Einwilligung.
 export const dynamic = "force-dynamic";
@@ -25,10 +26,14 @@ export default async function ConfirmPage({ params }: { params: Promise<{ token:
                 <CheckCircle2 className="h-6 w-6" />
               </div>
               <h1 className="mt-4 text-2xl font-bold tracking-tight" data-doi-confirmed>
-                Danke, Ihre E-Mail-Adresse ist bestätigt
+                {a(r.ansprache, "Danke, deine E-Mail-Adresse ist bestätigt", "Danke, Ihre E-Mail-Adresse ist bestätigt")}
               </h1>
               <p className="mt-2 text-[15px] text-[color:var(--muted)]">
-                {r.advisor} darf Sie jetzt per E-Mail über passende Angebote informieren. Abmelden können Sie sich jederzeit mit einem Klick in jeder E-Mail.
+                {a(
+                  r.ansprache,
+                  `${r.advisor} darf dich jetzt per E-Mail über passende Angebote informieren. Abmelden kannst du dich jederzeit mit einem Klick in jeder E-Mail.`,
+                  `${r.advisor} darf Sie jetzt per E-Mail über passende Angebote informieren. Abmelden können Sie sich jederzeit mit einem Klick in jeder E-Mail.`,
+                )}
               </p>
             </>
           ) : (

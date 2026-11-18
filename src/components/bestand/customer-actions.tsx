@@ -5,15 +5,25 @@
 //   Vorschau des Textes und „Senden“. Ohne Mobilnummer deaktiviert (Tooltip „keine Mobilnummer“).
 // - „…“: Im Termin zeigen (QR-Code), Text und Link zum Kopieren.
 // Texte und Anrede kommen unverändert aus lib/empfehlung (renderText, OCCASIONS).
+// Seit 18.11.2026 (Ole) im „…“-Menü jeder Zeile auch Seltenes: Sperren bzw. Entsperren (sofort, mit „Rückgängig“)
+// und Löschen (endgültig, mit Bestätigung). Ohne Empfehlungsmodul gibt es nur den „…“-Knopf.
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { Check, Copy, Link2, Loader2, MoreHorizontal, QrCode, Send, Share2 } from "lucide-react";
+import { Ban, Check, Copy, Link2, Loader2, MoreHorizontal, QrCode, Send, Share2, Trash2, Undo2 } from "lucide-react";
 import { Button, buttonClass } from "@/components/ui";
-import { ActionSheet, Sheet } from "@/components/ui/sheet";
+import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
+import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptics";
 import { referralQrAction, sendReferralLinkAction, type QrState, type ShareState } from "@/app/buyer/empfehlungen/actions";
-import { referralCopyAction, referralPreviewAction, type ReferralPreview } from "@/app/buyer/bestand/actions";
+import {
+  blockExistingCustomerAction,
+  deleteExistingCustomerAction,
+  referralCopyAction,
+  referralPreviewAction,
+  type CustomerManageState,
+  type ReferralPreview,
+} from "@/app/buyer/bestand/actions";
 
 /** Anlässe als Karten: Schlüssel wie in lib/empfehlung/shared.ts OCCASIONS ("" = ohne Anlass). */
 const CARDS: { key: string; title: string; hint: string }[] = [
@@ -25,9 +35,37 @@ const CARDS: { key: string; title: string; hint: string }[] = [
 
 const iconBtn = "h-9 w-9 px-0";
 
-export function CustomerRowActions({ existingCustomerId, name, hasPhone, readOnly }: { existingCustomerId: string; name: string; hasPhone: boolean; readOnly: boolean }) {
-  const [dialog, setDialog] = useState<null | "send" | "copy">(null);
+export function CustomerRowActions({
+  existingCustomerId,
+  name,
+  hasPhone,
+  readOnly,
+  referral = true,
+  blocked = false,
+}: {
+  existingCustomerId: string;
+  name: string;
+  hasPhone: boolean;
+  readOnly: boolean;
+  /** Empfehlungslink-Aktionen anbieten (Modul „Empfehlungen & Bewertungen“, Kunde nicht abgemeldet oder gesperrt) */
+  referral?: boolean;
+  /** Vom Vermittler gesperrt */
+  blocked?: boolean;
+}) {
+  const [dialog, setDialog] = useState<null | "send" | "copy" | "delete">(null);
   const [menu, setMenu] = useState(false);
+  const toast = useToast();
+  const [, startBlock] = useTransition();
+  const block = (on: boolean) =>
+    startBlock(async () => {
+      const r = await blockExistingCustomerAction(existingCustomerId, on);
+      if (r.error) return toast.show({ message: r.error, tone: "error" });
+      toast.show({
+        message: on ? `${name} gesperrt: keine Kampagnen und Glückwünsche mehr` : `${name} entsperrt`,
+        tone: "success",
+        ...(on ? { actionLabel: "Rückgängig", onAction: () => void blockExistingCustomerAction(existingCustomerId, false) } : {}),
+      });
+    });
   const [qrOpen, setQrOpen] = useState(false);
   const [qr, setQr] = useState<QrState | null>(null);
   const [qrPending, startQr] = useTransition();
@@ -36,19 +74,27 @@ export function CustomerRowActions({ existingCustomerId, name, hasPhone, readOnl
     if (qr?.ok) return;
     startQr(async () => setQr(await referralQrAction({ existingCustomerId })));
   };
+  const actions: SheetAction[] = [
+    ...(referral && hasPhone ? [{ label: "Empfehlungslink senden", icon: Send, onSelect: () => setDialog("send") }] : []),
+    ...(referral ? [{ label: "Im Termin zeigen (QR-Code)", icon: QrCode, onSelect: showQr }, { label: "Text und Link zum Kopieren", icon: Link2, onSelect: () => setDialog("copy") }] : []),
+    blocked ? { label: "Entsperren", icon: Undo2, onSelect: () => block(false) } : { label: "Sperren (nicht mehr anschreiben)", icon: Ban, onSelect: () => block(true) },
+    { label: "Löschen", icon: Trash2, tone: "danger", onSelect: () => setDialog("delete") },
+  ];
   return (
     <div className="flex shrink-0 items-center gap-1" data-row-actions>
       {/* Deaktivierte Knöpfe bekommen keinen Mauszeiger: Tooltip daher am umschließenden Element */}
-      <span title={hasPhone ? "Empfehlungslink per WhatsApp senden" : "keine Mobilnummer"} className="inline-flex">
-        <Button
-          icon={Send}
-          className={iconBtn}
-          aria-label={hasPhone ? `Empfehlungslink an ${name} senden` : "Empfehlungslink senden: keine Mobilnummer"}
-          disabled={readOnly || !hasPhone}
-          onClick={() => setDialog("send")}
-          data-referral-send
-        />
-      </span>
+      {referral ? (
+        <span title={hasPhone ? "Empfehlungslink per WhatsApp senden" : "keine Mobilnummer"} className="inline-flex">
+          <Button
+            icon={Send}
+            className={iconBtn}
+            aria-label={hasPhone ? `Empfehlungslink an ${name} senden` : "Empfehlungslink senden: keine Mobilnummer"}
+            disabled={readOnly || !hasPhone}
+            onClick={() => setDialog("send")}
+            data-referral-send
+          />
+        </span>
+      ) : null}
       <span title="Weitere Aktionen" className="inline-flex">
         <Button icon={MoreHorizontal} className={iconBtn} aria-label={`Weitere Aktionen für ${name}`} disabled={readOnly} onClick={() => setMenu(true)} data-row-more />
       </span>
@@ -56,13 +102,11 @@ export function CustomerRowActions({ existingCustomerId, name, hasPhone, readOnl
         open={menu}
         onClose={() => setMenu(false)}
         title={name}
-        actions={[
-          ...(hasPhone ? [{ label: "Empfehlungslink senden", icon: Send, onSelect: () => setDialog("send") }] : []),
-          { label: "Im Termin zeigen (QR-Code)", icon: QrCode, onSelect: showQr },
-          { label: "Text und Link zum Kopieren", icon: Link2, onSelect: () => setDialog("copy") },
-        ]}
+        message={blocked ? "Gesperrt: bekommt keine Kampagnen und Glückwünsche" : undefined}
+        actions={actions}
       />
-      {dialog ? <ReferralDialog existingCustomerId={existingCustomerId} name={name} mode={hasPhone ? dialog : "copy"} onClose={() => setDialog(null)} /> : null}
+      {dialog === "delete" ? <DeleteDialog existingCustomerId={existingCustomerId} name={name} onClose={() => setDialog(null)} /> : null}
+      {dialog === "send" || dialog === "copy" ? <ReferralDialog existingCustomerId={existingCustomerId} name={name} mode={hasPhone ? dialog : "copy"} onClose={() => setDialog(null)} /> : null}
       <Sheet open={qrOpen} onClose={() => setQrOpen(false)} title="Empfehlung im Termin" message="Ihr Kunde scannt den Code und leitet die Empfehlung gleich weiter.">
         <div className="space-y-3 px-5 py-4 text-center text-sm" data-referral-qr-sheet>
           {qrPending || !qr ? (
@@ -79,6 +123,37 @@ export function CustomerRowActions({ existingCustomerId, name, hasPhone, readOnl
         </div>
       </Sheet>
     </div>
+  );
+}
+
+/** Endgültig löschen (DSGVO-Löschanfrage): kurze Bestätigung, danach ist der Kunde weg und wird nie wieder angeschrieben. */
+function DeleteDialog({ existingCustomerId, name, onClose }: { existingCustomerId: string; name: string; onClose: () => void }) {
+  const [state, action, pending] = useActionState<CustomerManageState, FormData>(deleteExistingCustomerAction, {});
+  const toast = useToast();
+  useEffect(() => {
+    if (!state.ok) return;
+    haptic("success");
+    toast.show({ message: `${name} gelöscht`, tone: "success" });
+    onClose();
+  }, [state, name, onClose, toast]);
+  return (
+    <Sheet open onClose={onClose} title={`${name} löschen?`} message="Endgültig, kann nicht rückgängig gemacht werden.">
+      <form action={action} className="space-y-3 px-5 py-4 text-sm" data-customer-delete-dialog>
+        <input type="hidden" name="id" value={existingCustomerId} />
+        <ul className="list-disc space-y-1 pl-5 text-[color:var(--muted)]">
+          <li>Kontaktdaten, Verträge und Kampagnen-Verlauf dieses Kunden werden gelöscht.</li>
+          <li>Auch nach einem erneuten Import wird er nicht wieder angeschrieben.</li>
+        </ul>
+        <label className="flex items-start gap-2">
+          <input type="checkbox" name="confirm" required className="mt-0.5 h-4 w-4" data-customer-delete-confirm />
+          <span>Ich möchte {name} endgültig löschen.</span>
+        </label>
+        {state.error ? <p className="font-medium text-rose-700">{state.error}</p> : null}
+        <Button type="submit" variant="danger" size="md" className="w-full" disabled={pending} icon={pending ? Loader2 : Trash2} data-customer-delete-submit>
+          Endgültig löschen
+        </Button>
+      </form>
+    </Sheet>
   );
 }
 

@@ -304,6 +304,7 @@ function undoWhere(customerId: string, importId: string): Prisma.ExistingCustome
     customerId,
     importId,
     optOutAt: null,
+    blockedAt: null,
     lastCampaignAt: null,
     recipients: { none: { sentAt: { not: null } } },
     OR: [{ referralLink: null }, { referralLink: { lastSentAt: null } }],

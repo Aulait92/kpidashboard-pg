@@ -93,6 +93,8 @@ export type ConsentSubject = {
   suppressed?: { email?: boolean; all?: boolean };
   /** Kampagnen-WhatsApp kam mit „kein WhatsApp“ zurück (Meta 131026): künftig nur E-Mail. */
   waUnavailableAt?: Date | null;
+  /** Vom Vermittler gesperrt („nicht mehr anschreiben“): keine Kampagnen, wieder entsperrbar. */
+  blockedAt?: Date | null;
 };
 
 /** Einstellungen des Vermittlers. */
@@ -103,6 +105,7 @@ export type ConsentSettings = {
 
 export type ExclusionReason =
   | "abgemeldet"
+  | typeof BLOCKED_REASON
   | "keine Mobilnummer"
   | "keine WhatsApp-Einwilligung"
   | typeof NO_WHATSAPP_REASON
@@ -115,6 +118,9 @@ export type ExclusionReason =
   | "Cross-Selling in eine andere Sparte nur mit Einwilligung"
   | "Geburtstag mit Angebot nur mit Einwilligung"
   | "Empfehlungs- oder Bewertungsbitte nur mit Einwilligung";
+
+/** Vom Vermittler gesperrt (Bestand → Kunde → Mehr → Sperren). */
+export const BLOCKED_REASON = "gesperrt";
 
 /** Nummer ist nicht per WhatsApp erreichbar (frühere Kampagne kam mit 131026 zurück). */
 export const NO_WHATSAPP_REASON = "nicht per WhatsApp erreichbar";
@@ -132,7 +138,7 @@ export function hasUwgProof(s: Pick<ConsentSubject, "widerspruchHinweis">): bool
  * unbekannt und ohne Nachweis zum Widerspruchshinweis (per E-Mail also nur nach einer Einwilligung erreichbar).
  */
 export function lacksUwgProof(s: ConsentSubject): boolean {
-  if (!s.email || s.optOutAt || s.emailOptOutAt || s.suppressed?.all || s.suppressed?.email) return false;
+  if (!s.email || s.blockedAt || s.optOutAt || s.emailOptOutAt || s.suppressed?.all || s.suppressed?.email) return false;
   return consent(s.emailConsent) === null && !hasUwgProof(s);
 }
 
@@ -142,6 +148,7 @@ const consent = (v: string | null | undefined): ConsentValue => (v === "ja" ? "j
 
 /** Darf dieser Kunde zu diesem Anlass per WhatsApp angeschrieben werden? Strikt: nur mit Opt-in. */
 export function whatsappDecision(s: ConsentSubject): ChannelDecision {
+  if (s.blockedAt) return { ok: false, reason: BLOCKED_REASON };
   if (s.optOutAt || s.suppressed?.all) return { ok: false, reason: "abgemeldet" };
   if (!s.phone) return { ok: false, reason: "keine Mobilnummer" };
   if (s.waUnavailableAt) return { ok: false, reason: NO_WHATSAPP_REASON };
@@ -153,6 +160,7 @@ export function whatsappDecision(s: ConsentSubject): ChannelDecision {
 
 /** Darf dieser Kunde zu diesem Anlass per E-Mail angeschrieben werden? */
 export function emailDecision(s: ConsentSubject, occasion: Occasion, settings: ConsentSettings): ChannelDecision {
+  if (s.blockedAt) return { ok: false, reason: BLOCKED_REASON };
   if (s.optOutAt || s.suppressed?.all) return { ok: false, reason: "abgemeldet" };
   if (!s.email) return { ok: false, reason: "keine E-Mail-Adresse" };
   if (s.emailOptOutAt || s.suppressed?.email) return { ok: false, reason: "E-Mail abgemeldet" };
@@ -184,7 +192,7 @@ export function chooseChannel(mode: ChannelMode, s: ConsentSubject, occasion: Oc
   // Beide nicht möglich: abgemeldet geht vor, sonst der aussagekräftigere Grund der E-Mail
   const waReason = (wa as { reason: ExclusionReason }).reason;
   const mailReason = (mail as { reason: ExclusionReason }).reason;
-  if (waReason === "abgemeldet") return { channel: null, reason: waReason };
+  if (waReason === BLOCKED_REASON || waReason === "abgemeldet") return { channel: null, reason: waReason };
   return { channel: null, reason: mailReason === "keine E-Mail-Adresse" ? waReason : mailReason };
 }
 
@@ -227,7 +235,7 @@ export function countAudience(choices: ChannelChoice[], subjects: ConsentSubject
  * (E-Mail-Einwilligung oder § 7 Abs. 3 UWG), sonst nur im persönlichen Kontakt (Link kopieren, im Termin).
  */
 export function consentRequestByMailAllowed(s: ConsentSubject, settings: ConsentSettings): boolean {
-  if (s.optOutAt || s.suppressed?.all || !s.email || s.emailOptOutAt || s.suppressed?.email) return false;
+  if (s.blockedAt || s.optOutAt || s.suppressed?.all || !s.email || s.emailOptOutAt || s.suppressed?.email) return false;
   const c = consent(s.emailConsent);
   if (c === "nein") return false;
   return c === "ja" || (settings.uwgConfirmed && hasUwgProof(s));

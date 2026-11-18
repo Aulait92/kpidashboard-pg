@@ -18,6 +18,7 @@ export async function GET(): Promise<Response> {
     where: {
       customerId: ctx.customerId,
       optOutAt: null,
+      blockedAt: null,
       OR: [
         { email: { not: null }, emailConsent: null, emailOptOutAt: null },
         { phone: { not: null }, whatsappConsent: null },

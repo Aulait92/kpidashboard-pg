@@ -13,12 +13,12 @@ import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { bestandMailQuota, bestandQuota, consume, MAIL_QUOTA_REACHED, nextFunding, QUOTA_PAUSE, QUOTA_REACHED } from "@/lib/bestand/quota";
 import { displayName } from "@/lib/bestand/rows";
-import { anredeZeile, type AnredeKontakt } from "@/lib/ansprache";
+import { a, anredeZeile, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import { kontaktFromExisting } from "@/lib/lead-anrede";
 import { empfehlungsThema } from "@/lib/empfehlung/shared";
 import { BESTAND_SOURCE } from "@/lib/lead-herkunft";
-import { chooseChannel, countAudience, asChannelMode, type AudienceCounts, type Channel, type ChannelMode, type ConsentSettings, type LegalBasis } from "@/lib/bestand/einwilligung";
-import { loadConsentSettings, loadSuppression, optOutExisting, subjectOf, SUBJECT_SELECT, type Suppression } from "@/lib/bestand/einwilligung-server";
+import { BLOCKED_REASON, chooseChannel, countAudience, asChannelMode, type AudienceCounts, type Channel, type ChannelMode, type ConsentSettings, type LegalBasis } from "@/lib/bestand/einwilligung";
+import { loadBestandAnsprache, loadConsentSettings, loadSuppression, optOutExisting, subjectOf, SUBJECT_SELECT, type Suppression } from "@/lib/bestand/einwilligung-server";
 import { afterSend, bounceCheck, innerGap, isBounceError, mailSlots, providerDailyLimit, type SendOutcome, type ThrottleState } from "@/lib/bestand/mail-drossel";
 import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, imprintFromWebsiteInfo, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
 import { classifyReply, isAutoReplyText } from "@/lib/vertrieb/sentiment";
@@ -363,6 +363,7 @@ export async function createCampaign(opts: {
   if (viaWa && (await bestandQuota(opts.customerId, now)).remaining <= 0) throw new Error(QUOTA_REACHED);
   if (viaMail && !viaWa && (await bestandMailQuota(opts.customerId, now)).remaining <= 0) throw new Error(MAIL_QUOTA_REACHED);
   if (viaMail && !avail.mailbox) throw new Error("Für E-Mails bitte zuerst Ihr Postfach verbinden (Einstellungen → E-Mail-Postfach).");
+  const ansprache = await loadBestandAnsprache(opts.customerId);
   const name =
     opts.name ??
     (opts.occasion === "cross_sell"
@@ -384,8 +385,8 @@ export async function createCampaign(opts: {
       senderUserId,
       channelMode: mode,
       // Unveränderter Standardtext → null (dann gilt immer der aktuelle Standard)
-      mailSubject: ownText(opts.mailSubject, defaultCampaignMail(opts.occasion).subject, 200),
-      mailBody: ownText(opts.mailBody, defaultCampaignMail(opts.occasion).body, 5000),
+      mailSubject: ownText(opts.mailSubject, defaultCampaignMail(opts.occasion, ansprache).subject, 200),
+      mailBody: ownText(opts.mailBody, defaultCampaignMail(opts.occasion, ansprache).body, 5000),
       recipients: { create: plan.recipients.map((r) => ({ existingCustomerId: r.id, channel: r.channel, basis: r.basis })) },
     },
   });
@@ -484,6 +485,13 @@ export async function runCampaigns(now = new Date(), opts: RunOpts = {}): Promis
 
 /** Vor dem Versand neu prüfen: Kanal und Rechtsgrundlage nach aktuellem Stand (Abmeldung, Widerruf). */
 async function recheck(r: RecipientRow, c: CampaignRow, cx: { settings: ConsentSettings; sup: Suppression }, mode: ChannelMode, now: Date): Promise<Channel | null> {
+  // Inzwischen beendet, gesperrt oder gelöscht (Vermittler hat während des Laufs gehandelt): nicht mehr senden
+  const cur = await prisma.campaignRecipient.findUnique({ where: { id: r.id }, select: { status: true, campaign: { select: { status: true } }, existingCustomer: { select: { blockedAt: true } } } });
+  if (!cur || cur.status !== "queued" || cur.campaign.status !== "running") return null;
+  if (cur.existingCustomer.blockedAt) {
+    await prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: "skipped", reason: BLOCKED_REASON } });
+    return null;
+  }
   // Abstand zwischen zwei Kampagnen auch beim Versand: Wer gleichzeitig in zwei Kampagnen wartet (z. B. Ablauf und
   // Geburtstag), bekommt nicht zwei Nachrichten kurz hintereinander
   const last = r.existingCustomer.lastCampaignAt;
@@ -504,7 +512,7 @@ async function recheck(r: RecipientRow, c: CampaignRow, cx: { settings: ConsentS
 
 async function sendWhatsAppPart(
   c: CampaignRow,
-  cx: { settings: ConsentSettings; sup: Suppression },
+  cx: { settings: ConsentSettings & { ansprache: Ansprache }; sup: Suppression },
   mode: ChannelMode,
   limit: number,
   now: Date,
@@ -554,7 +562,7 @@ async function sendWhatsAppPart(
         // Empfehlung v4: Thema vor dem Link ({{2}}), ältere Fassung nur mit Link
         params: referral ? [first || "Hallo", empfehlungsThema(ec.lines[0]), referral.url] : [first || "Hallo", topic ?? (c.occasion === "renewal" ? RENEWAL_TOPIC_FALLBACK : "")],
         ...(referral ? { legacyParams: [first || "Hallo", referral.url] } : {}),
-        text: referral ? referral.text : campaignText(c.occasion as Occasion, kontakt, topic),
+        text: referral ? referral.text : campaignText(c.occasion as Occasion, kontakt, topic, cx.settings.ansprache),
         contactName: displayName(ec),
         anrede: kontakt,
       });
@@ -649,16 +657,18 @@ async function checkBounces(mb: MailboxRun, now: Date) {
 export async function campaignMailFor(
   c: { id?: string; customerId: string; occasion: string; topic: string | null; mailSubject: string | null; mailBody: string | null },
   ec: { id: string; firstName: string | null; lastName: string | null; salutation: string | null },
-  opts: { recipientId: string; customerName: string; imprint: string | null; meinname: string; empfehlungslink?: string | null },
+  opts: { recipientId: string; customerName: string; imprint: string | null; meinname: string; empfehlungslink?: string | null; ansprache?: Ansprache },
 ) {
   const { unsubscribeUrl } = await import("@/lib/bestand/links");
   const { firmDisplayName } = await import("@/lib/lead-anrede");
   const occasion = c.occasion as Occasion;
-  const def = defaultCampaignMail(occasion, "sie");
+  // Ansprache der Bestandskunden (Einstellung des Vermittlers); ohne Angabe aus der Datenbank
+  const an = opts.ansprache ?? (await loadBestandAnsprache(c.customerId));
+  const def = defaultCampaignMail(occasion, an);
   const tpl = { subject: c.mailSubject ?? def.subject, body: c.mailBody ? ohneGedankenstriche(c.mailBody) : def.body };
-  const filled = fillCampaignMail(tpl, { ansprache: "sie", kontakt: kontaktFromExisting(ec), thema: c.topic, empfehlungslink: opts.empfehlungslink, meinname: opts.meinname });
+  const filled = fillCampaignMail(tpl, { ansprache: an, kontakt: kontaktFromExisting(ec), thema: c.topic, empfehlungslink: opts.empfehlungslink, meinname: opts.meinname });
   const url = unsubscribeUrl(opts.recipientId);
-  const footer = campaignMailFooter({ firm: firmDisplayName(opts.customerName), unsubscribeUrl: url, imprint: opts.imprint });
+  const footer = campaignMailFooter({ firm: firmDisplayName(opts.customerName), unsubscribeUrl: url, imprint: opts.imprint, ansprache: an });
   return { subject: ohneGedankenstriche(filled.subject), ...buildCampaignMail(filled.body, footer), unsubscribeUrl: url };
 }
 
@@ -707,7 +717,7 @@ async function sendMailPart(
     if (!first) await sleep(innerGap(rand()));
     first = false;
     const referral = c.occasion === "empfehlung" ? await referralCampaignParts(c.customerId, ec.id, ec.firstName?.split(/\s+/)[0] || "", kontaktFromExisting(ec)) : null;
-    const mail = await campaignMailFor({ ...c, topic: await recipientTopic(c, ec) }, ec, { recipientId: r.id, customerName: c.customer.name, imprint, meinname, empfehlungslink: referral?.url ?? null });
+    const mail = await campaignMailFor({ ...c, topic: await recipientTopic(c, ec) }, ec, { recipientId: r.id, customerName: c.customer.name, imprint, meinname, empfehlungslink: referral?.url ?? null, ansprache: cx.settings.ansprache });
     const messageId = `bk-${r.id}@${(mb.email.split("@")[1] ?? "mail").toLowerCase()}`;
     const result = await sendViaPostfach(mb.userId, {
       to: ec.email!,
@@ -789,22 +799,22 @@ async function referralCampaignParts(customerId: string, existingCustomerId: str
 }
 
 /**
- * Text im offenen 24-h-Fenster (sonst gilt die freigegebene Vorlage). Bestandskunden werden gesiezt:
- * „Guten Tag Frau Schneider,“ bzw. „Guten Tag Erika Schneider,“ / „Guten Tag,“ (lib/ansprache.ts).
+ * Text im offenen 24-h-Fenster (sonst gilt die freigegebene Vorlage). Ansprache wie vom Vermittler eingestellt
+ * (Standard Sie): „Guten Tag Frau Schneider,“ bzw. „Hallo Erika,“ (lib/ansprache.ts).
  */
-export function campaignText(o: Occasion, kontakt: AnredeKontakt | string, topic: string | null): string {
-  const hi = anredeZeile("sie", typeof kontakt === "string" ? { firstName: kontakt } : kontakt).replace(/,$/, "");
+export function campaignText(o: Occasion, kontakt: AnredeKontakt | string, topic: string | null, an: Ansprache = "sie"): string {
+  const hi = anredeZeile(an, typeof kontakt === "string" ? { firstName: kontakt } : kontakt).replace(/,$/, "");
   switch (o) {
     case "cross_sell":
-      return `${hi}, viele meiner Kunden haben beim Thema ${topic ?? "Absicherung"} eine Lücke, die erst im Schadenfall auffällt. Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist? Antworten Sie einfach hier.`;
+      return `${hi}, viele meiner Kunden haben beim Thema ${topic ?? "Absicherung"} eine Lücke, die erst im Schadenfall auffällt. ${a(an, "Soll ich in 10 Minuten kurz prüfen, ob das bei dir auch so ist? Antworte einfach hier.", "Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist? Antworten Sie einfach hier.")}`;
     case "review":
-      return `${hi}, es ist Zeit für Ihren kurzen Jahres-Check: Passt Ihr Schutz noch zu Ihrer aktuellen Situation? Soll ich mir das in 10 Minuten mit Ihnen anschauen? Antworten Sie einfach hier.`;
+      return `${hi}, ${a(an, "es ist Zeit für deinen kurzen Jahres-Check: Passt dein Schutz noch zu deiner aktuellen Situation? Soll ich mir das in 10 Minuten mit dir anschauen? Antworte einfach hier.", "es ist Zeit für Ihren kurzen Jahres-Check: Passt Ihr Schutz noch zu Ihrer aktuellen Situation? Soll ich mir das in 10 Minuten mit Ihnen anschauen? Antworten Sie einfach hier.")}`;
     case "birthday":
       return `${hi}, herzlichen Glückwunsch zum Geburtstag! Alles Gute für das neue Lebensjahr.`;
     case "empfehlung":
-      return `${hi}, kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen.`;
+      return `${hi}, ${a(an, "kennst du jemanden, dem ich genauso weiterhelfen kann? Über deinen persönlichen Link", "kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link")} kann die Person ganz einfach selbst Kontakt mit mir aufnehmen.`;
     case "renewal":
-      return `${hi}, bei Ihrem Vertrag ${topic ? `(${topic}) ` : ""}steht bald ein Termin an, zu dem man gut prüfen kann, ob Beitrag und Leistung noch passen. Soll ich mir das kurz für Sie anschauen?`;
+      return `${hi}, ${a(an, "bei deinem Vertrag", "bei Ihrem Vertrag")} ${topic ? `(${topic}) ` : ""}steht bald ein Termin an, zu dem man gut prüfen kann, ob Beitrag und Leistung noch passen. ${a(an, "Soll ich mir das kurz für dich anschauen?", "Soll ich mir das kurz für Sie anschauen?")}`;
   }
 }
 
@@ -925,7 +935,8 @@ export async function handleCampaignReply(conversationId: string, from: string, 
       prisma.conversation.update({ where: { id: conversationId }, data: { botActive: false } }),
     ]);
     const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
-    await sendWhatsAppMessage({ customerId: conv.customerId, to: from, body: "Alles klar, wir schreiben Ihnen hier keine weiteren Nachrichten.", sentBy: "system" }).catch(() => {});
+    const an = await loadBestandAnsprache(conv.customerId);
+    await sendWhatsAppMessage({ customerId: conv.customerId, to: from, body: a(an, "Alles klar, wir schreiben dir hier keine weiteren Nachrichten.", "Alles klar, wir schreiben Ihnen hier keine weiteren Nachrichten."), sentBy: "system" }).catch(() => {});
     return { stop: true };
   }
   if (recipient.status === "replied") return { stop: false };
@@ -935,7 +946,13 @@ export async function handleCampaignReply(conversationId: string, from: string, 
   if (body && /^\s*kein bedarf\s*[.!]?\s*$/i.test(body)) {
     await prisma.campaignRecipient.update({ where: { id: recipient.id }, data: { status: "replied", repliedAt: now, reason: "Kein Bedarf" } });
     const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
-    await sendWhatsAppMessage({ customerId: conv.customerId, to: from, body: "Alles klar, vielen Dank für Ihre Rückmeldung! Wenn sich etwas ändert, schreiben Sie mir einfach hier.", sentBy: "system" }).catch(() => {});
+    const an = await loadBestandAnsprache(conv.customerId);
+    await sendWhatsAppMessage({
+      customerId: conv.customerId,
+      to: from,
+      body: a(an, "Alles klar, vielen Dank für deine Rückmeldung! Wenn sich etwas ändert, schreib mir einfach hier.", "Alles klar, vielen Dank für Ihre Rückmeldung! Wenn sich etwas ändert, schreiben Sie mir einfach hier."),
+      sentBy: "system",
+    }).catch(() => {});
     return { stop: false, handled: true };
   }
 
@@ -1033,4 +1050,84 @@ export async function recordEmailReply(
   }
   await prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: "replied", repliedAt: r.repliedAt ?? now, leadId, reason: null } });
   return { ok: true, kind, leadId, name };
+}
+
+// ─── Kampagne beenden und Empfängerliste (Ole, 18.11.2026) ──────────────
+
+/** Grund für Empfänger, die beim Beenden noch warteten. */
+export const ENDED_REASON = "Kampagne beendet";
+
+/**
+ * Kampagne endgültig beenden: Status „fertig“, wartende Empfänger werden übersprungen (Grund „Kampagne beendet“).
+ * Danach geht keine Nachricht mehr raus; Fortsetzen ist nicht möglich. Schon gesendete bleiben (Antworten zählen weiter).
+ */
+export async function endCampaign(customerId: string, campaignId: string, now = new Date()): Promise<{ ok: true; skipped: number } | { ok: false; error: string }> {
+  const c = await prisma.customerCampaign.findFirst({ where: { id: campaignId, customerId }, select: { id: true, status: true } });
+  if (!c) return { ok: false, error: "Kampagne nicht gefunden." };
+  if (c.status === "done") return { ok: false, error: "Die Kampagne ist schon beendet." };
+  const [, skipped] = await prisma.$transaction([
+    prisma.customerCampaign.update({ where: { id: c.id }, data: { status: "done", pausedReason: null, finishedAt: now } }),
+    prisma.campaignRecipient.updateMany({ where: { campaignId: c.id, status: "queued" }, data: { status: "skipped", reason: ENDED_REASON } }),
+  ]);
+  return { ok: true, skipped: skipped.count };
+}
+
+export type RecipientTone = "success" | "warning" | "neutral" | "danger";
+export type RecipientRowView = { id: string; existingCustomerId: string; name: string; channel: Channel; status: string; label: string; tone: RecipientTone };
+
+const dayDe = (d: Date) => d.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" });
+
+/** Status eines Empfängers in Worten (rein): „gesendet am 16.11.2026“, „wartet“, „übersprungen: abgemeldet“. */
+export function recipientStatusLabel(r: { status: string; reason: string | null; sentAt: Date | null; repliedAt: Date | null; readAt?: Date | null }): { label: string; tone: RecipientTone } {
+  switch (r.status) {
+    case "sent":
+      return { label: r.sentAt ? `gesendet am ${dayDe(r.sentAt)}${r.readAt ? ", gelesen" : ""}` : "gesendet", tone: "success" };
+    case "replied":
+      return { label: `${r.repliedAt ? `geantwortet am ${dayDe(r.repliedAt)}` : "geantwortet"}${r.reason ? `: ${r.reason}` : ""}`, tone: "success" };
+    case "queued":
+      return { label: "wartet", tone: "neutral" };
+    case "skipped":
+      return { label: `übersprungen${r.reason ? `: ${r.reason}` : ""}`, tone: "warning" };
+    case "failed":
+      return { label: r.reason?.startsWith("nicht zugestellt") ? r.reason : `nicht zugestellt${r.reason ? `: ${r.reason}` : ""}`, tone: "danger" };
+    default:
+      return { label: r.status, tone: "neutral" };
+  }
+}
+
+/** Empfängerliste einer Kampagne (nur eigene Kampagnen): zuletzt gesendete zuerst, dann wartende, dann übersprungene. */
+export async function campaignRecipientList(customerId: string, campaignId: string, opts: { take?: number } = {}): Promise<{ total: number; rows: RecipientRowView[] } | null> {
+  const c = await prisma.customerCampaign.findFirst({ where: { id: campaignId, customerId }, select: { id: true } });
+  if (!c) return null;
+  const take = opts.take ?? 500;
+  const [total, list] = await Promise.all([
+    prisma.campaignRecipient.count({ where: { campaignId: c.id } }),
+    prisma.campaignRecipient.findMany({
+      where: { campaignId: c.id },
+      orderBy: [{ sentAt: { sort: "desc", nulls: "last" } }, { status: "asc" }, { id: "asc" }],
+      take,
+      select: {
+        id: true,
+        status: true,
+        reason: true,
+        sentAt: true,
+        repliedAt: true,
+        readAt: true,
+        channel: true,
+        existingCustomerId: true,
+        existingCustomer: { select: { firstName: true, lastName: true, company: true, email: true, phone: true, externalNo: true } },
+      },
+    }),
+  ]);
+  return {
+    total,
+    rows: list.map((r) => ({
+      id: r.id,
+      existingCustomerId: r.existingCustomerId,
+      name: displayName(r.existingCustomer),
+      channel: r.channel === "email" ? "email" : "whatsapp",
+      status: r.status,
+      ...recipientStatusLabel(r),
+    })),
+  };
 }
