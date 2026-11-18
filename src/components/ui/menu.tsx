@@ -16,6 +16,7 @@ export function ActionMenu({
   items,
   className,
   labelClassName,
+  chevronClassName,
 }: {
   label: string;
   icon?: LucideIcon;
@@ -23,6 +24,8 @@ export function ActionMenu({
   className?: string;
   /** z. B. "sr-only sm:not-sr-only": am Handy nur das Symbol */
   labelClassName?: string;
+  /** z. B. "hidden @xl:block": Pfeil im schmalen Fenster weglassen, damit Nachbarknöpfe Platz haben */
+  chevronClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -44,7 +47,7 @@ export function ActionMenu({
       <button type="button" onClick={() => setOpen((o) => !o)} className={buttonClass("secondary", "sm", "w-full")} aria-label={labelClassName ? label : undefined}>
         {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
         {labelClassName ? <span className={labelClassName}>{label}</span> : label}
-        <ChevronDown className="h-3.5 w-3.5 text-[color:var(--muted)]" />
+        <ChevronDown className={cn("h-3.5 w-3.5 text-[color:var(--muted)]", chevronClassName)} />
       </button>
       {open ? (
         <div className="ui-fade-in absolute right-0 z-30 mt-1.5 w-60 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white py-1 text-sm shadow-[var(--shadow-lg)]">

@@ -102,7 +102,7 @@ export function TerminKarte({
   function knopf(x: TerminAktion, haupt: boolean) {
     const variant = haupt ? "primary" : "secondary";
     const size = haupt ? "md" : "sm";
-    const cls = "w-full min-w-0 sm:w-auto [&_svg]:shrink-0";
+    const cls = cn("w-full min-w-0 overflow-hidden whitespace-nowrap @xl:w-auto [&_svg]:shrink-0", !haupt && "gap-1 px-2 @xl:gap-1.5 @xl:px-3");
     const Icon = ICON[x];
     if (x === "ergebnis") {
       return (
@@ -120,14 +120,14 @@ export function TerminKarte({
     if (x === "verschieben") {
       return (
         <button key={x} type="button" onClick={() => setVerschieben(true)} className={buttonClass(variant, size, cls)} data-termin-aktion={x}>
-          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {LABEL[x]}
+          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> <span className="truncate">{LABEL[x]}</span>
         </button>
       );
     }
     if (x === "angebot") {
       return (
         <button key={x} type="button" onClick={angebotMail} className={buttonClass(variant, size, cls)} data-termin-aktion={x}>
-          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {LABEL[x]}
+          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> <span className="truncate">{LABEL[x]}</span>
         </button>
       );
     }
@@ -144,7 +144,7 @@ export function TerminKarte({
     const daten = { "data-termin-aktion": x, ...(x === "vorbereiten" ? { "data-termin-vorbereiten": "" } : {}), ...(x === "praesentation" ? { "data-termin-praesentation": "" } : {}) };
     const inhalt = (
       <>
-        <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {LABEL[x]}
+        <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> <span className="truncate">{LABEL[x]}</span>
       </>
     );
     return h.startsWith("/") ? (
@@ -165,8 +165,8 @@ export function TerminKarte({
     a.phase === "jetzt" ? (t.begonnen ? "Läuft" : "Gleich") : a.phase === "nachher" ? (t.erschienen ? "Erschienen" : "Vorbei") : null;
 
   return (
-    <Card className="mb-5" menus>
-      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center" data-termin-karte={a.phase} data-termin-haupt={a.haupt}>
+    <Card className="mb-5 @container" menus>
+      <div className="flex flex-col gap-3 px-5 py-4 @xl:flex-row @xl:items-center" data-termin-karte={a.phase} data-termin-haupt={a.haupt}>
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <CalendarClock className="h-5 w-5 shrink-0 text-[color:var(--brand)]" />
           <div className="min-w-0">
@@ -193,15 +193,16 @@ export function TerminKarte({
           </div>
         </div>
         {/* Handy: Hauptknopf über die ganze Breite, darunter Zweitknöpfe und „Mehr“ */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-2 @xl:flex-row @xl:items-center">
           {knopf(a.haupt, true)}
           {zweit.length || mehr.length ? (
-            <div className="grid gap-2 sm:flex sm:items-center [&>*]:min-w-0" style={{ gridTemplateColumns: [...zweit.map(() => "minmax(0,1fr)"), ...(mehr.length ? ["auto"] : [])].join(" ") }}>
+            <div className="grid gap-2 @xl:flex @xl:items-center [&>*]:min-w-0" style={{ gridTemplateColumns: [...zweit.map(() => "minmax(0,1fr)"), ...(mehr.length ? ["auto"] : [])].join(" ") }}>
               {zweit.map((x) => knopf(x, false))}
               {mehr.length ? (
                 <ActionMenu
                   label="Mehr"
-                  labelClassName="sr-only sm:not-sr-only"
+                  labelClassName="sr-only @xl:not-sr-only"
+                  chevronClassName="hidden @xl:block"
                   icon={MoreHorizontal}
                   items={mehr.map((x) => ({
                     label: LABEL[x],
