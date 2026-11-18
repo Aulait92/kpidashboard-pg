@@ -30,8 +30,8 @@ export const SCHUTZ_STATUS: Record<SchutzStatus, { label: string; kurz: string; 
 export const SCHUTZ_REIHENFOLGE: SchutzStatus[] = ["bei-uns", "woanders", "pruefen", "luecke"];
 
 /**
- * Antworten im Fenster „Schutz im Überblick“ der Terminvorbereitung (Ole, 18.11.2026): Frage „Hat Frau Becker das
- * schon?“. Ein Farbsystem (Entscheidung 18.11.2026): Die Farbpunkte nutzen dieselben Farben wie die Ampel der
+ * Antworten im Bereich „Was hat Frau Becker schon?“ der Terminvorbereitung (Ole, 18.11.2026; bis dahin Fenster „Schutz
+ * im Überblick“). Ein Farbsystem (Entscheidung 18.11.2026): Die Farbpunkte nutzen dieselben Farben wie die Ampel der
  * Präsentation (grün bei mir, blau woanders, orange weiß nicht, rot nein), damit Vorschau und Antworten zusammenpassen.
  * „Weiß nicht“ bleibt im Knopf dezent (nur Umriss), damit es nicht wie eine Entscheidung aussieht. Die Präsentation für
  * den Kunden behält die Ampel-Begriffe aus SCHUTZ_STATUS.
@@ -43,7 +43,7 @@ export const SCHUTZ_ANTWORT: Record<SchutzStatus, { label: string; farbe: string
   luecke: { label: "Nein", farbe: "#dc2626" },
 };
 
-/** Woher eine vorbelegte Antwort stammt (kleiner Hinweis im Fenster); nach einer Änderung durch den Vermittler entfällt sie. */
+/** Woher eine vorbelegte Antwort stammt (kleiner Hinweis an der Zeile); nach einer Änderung durch den Vermittler entfällt sie. */
 export type SchutzQuelle = "chat" | "formular";
 export const SCHUTZ_QUELLE_TEXT: Record<SchutzQuelle, string> = { chat: "aus dem Chat", formular: "aus dem Formular" };
 
@@ -78,6 +78,8 @@ export type SchutzZeile = { key: string; label: string; status: SchutzStatus; in
 export const SCHUTZ_MAX = 6;
 /** Höchstens so viele Chancen in der Terminvorbereitung (Teil A2) */
 export const CHANCEN_MAX = 2;
+/** Höchstens so viele Einträge im gespeicherten Überblick (alle Sparten plus Reserve für Katalog-Sparten). */
+export const SCHUTZ_EINTRAEGE_MAX = 40;
 
 /** Sparten des Überblicks mit Bezeichnung (nur Sach, Haftpflicht, Rechtsschutz, Unfall, Tier). */
 export const SCHUTZ_SPARTEN: Record<string, string> = {
@@ -387,6 +389,121 @@ export function schutzZeilen(schutz: SchutzEintrag[], angebot: string[]): Schutz
   }));
 }
 
+// ─── Bereich „Was hat Frau Becker schon?“ (Terminvorbereitung, Ole 18.11.2026) ──────────────
+// Ein Bereich statt „Chance im Termin“ und Fenster „Schutz im Überblick“: Tipp-Zeilen (die erkannten Chancen und das
+// Vorsorge-Thema) oben, dann offene, dann beantwortete Zeilen (zugeklappt); „+ Versicherung hinzufügen“ sucht über alle
+// Sparten.
+
+/** Eine Zeile im Bereich; tipp = Gesprächsfrage der erkannten Chance bzw. des Vorsorge-Themas. */
+export type SchutzBereichZeile = {
+  eintrag: SchutzEintrag;
+  tipp: string | null;
+  /** noch nicht gespeichert (Vorsorge-Thema) */
+  neu: boolean;
+};
+
+/**
+ * Reihenfolge im Bereich: zuerst die Tipps (höchstens CHANCEN_MAX Chancen, dann das Vorsorge-Thema, falls es nicht bei
+ * uns versichert ist), dann offene Zeilen („Weiß nicht“), dann beantwortete, je in der Reihenfolge des Überblicks.
+ */
+export function schutzBereich(schutz: SchutzEintrag[], angebot: string[], vorsorge?: VorsorgeThema | null): SchutzBereichZeile[] {
+  const out: SchutzBereichZeile[] = chancen(schutz, angebot).map((e) => ({ eintrag: e, tipp: e.oeffner ?? null, neu: false }));
+  if (vorsorge) {
+    const key = VORSORGE_SPARTE[vorsorge.key];
+    const da = schutz.find((s) => s.key === key);
+    const schon = out.find((z) => z.eintrag.key === key);
+    if (schon) schon.tipp = vorsorge.oeffner;
+    else if (!da) out.push({ eintrag: { key, label: SCHUTZ_SPARTEN[key] ?? vorsorge.label, status: "pruefen" }, tipp: vorsorge.oeffner, neu: true });
+    else if (da.status !== "bei-uns") out.push({ eintrag: da, tipp: vorsorge.oeffner, neu: false });
+  }
+  const rest = schutz.filter((s) => !out.some((z) => z.eintrag.key === s.key));
+  return [...out, ...rest.filter((s) => s.status === "pruefen"), ...rest.filter((s) => s.status !== "pruefen")].map((z) =>
+    "eintrag" in z ? z : { eintrag: z, tipp: null, neu: false },
+  );
+}
+
+const euroKurz = (n: number) => `${n.toFixed(2).replace(".", ",").replace(/,00$/, "")} €`;
+
+/** Zugeklappte Zeile in Teilen: [„Hausrat“, „Ja, woanders“, „HUK Classic, 8 €“] (ohne leere Teile). */
+export function schutzKurzTeile(s: SchutzEintrag): string[] {
+  const details =
+    s.status === "woanders"
+      ? [[s.versicherer, s.tarif].filter(Boolean).join(" "), s.beitrag != null ? euroKurz(s.beitrag) : null].filter(Boolean).join(", ")
+      : s.status === "bei-uns"
+        ? (s.seit ?? "")
+        : "";
+  return [s.label, SCHUTZ_ANTWORT[s.status].label, details].filter(Boolean);
+}
+/** „Hausrat · Ja, woanders · HUK Classic, 8 €“ */
+export const schutzKurz = (s: SchutzEintrag) => schutzKurzTeile(s).join(" · ");
+
+/** Abkürzungen und Alltagswörter für die Suche („PKV“, „Auto“, „Rürup“). */
+const SUCHWORTE: Record<string, string> = {
+  haftpflicht: "phv haftpflicht",
+  hausrat: "wohnung einbruch",
+  wohngebaeude: "haus gebaeude",
+  "tierhalter-hund": "hund tierhalter haftpflicht",
+  "tierhalter-pferd": "pferd tierhalter haftpflicht",
+  "katze-kranken": "katze tier",
+  "katze-op": "katze tier operation",
+  "hund-kranken": "hund tier",
+  "hund-op": "hund tier operation",
+  "pferd-op": "pferd tier operation",
+  "pferd-kranken": "pferd tier",
+  bu: "bu arbeitskraft",
+  risikoleben: "rlv leben todesfall",
+  grundfaehigkeit: "arbeitskraft",
+  pkv: "pkv krankenversicherung krankenvoll",
+  zahnzusatz: "zahn zaehne",
+  krankenhauszusatz: "stationaer kranken",
+  ambulant: "kranken heilpraktiker brille",
+  pflegezusatz: "pflege",
+  rente: "altersvorsorge rentenversicherung",
+  basisrente: "ruerup altersvorsorge rente",
+  kfz: "auto kfz motorrad",
+  "reise-kranken": "reise ausland kranken",
+  sterbegeld: "bestattung",
+  dienstunfaehigkeit: "du beamte",
+  krankentagegeld: "ktg kranken",
+  kinderinvaliditaet: "kinder",
+  reiseruecktritt: "reise storno",
+};
+const suchNorm = (t: string) =>
+  t
+    .toLocaleLowerCase("de")
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .trim();
+
+/**
+ * „+ Versicherung hinzufügen“: alle Sparten des Überblicks (ohne die schon eingetragenen); mit Suchtext zuerst die,
+ * deren Name mit dem Text beginnt, dann Treffer in Abkürzungen und Alltagswörtern, dann im Namen; sonst alphabetisch.
+ */
+export function spartenSuche(text: string, ohne: string[] = []): { key: string; label: string }[] {
+  const q = suchNorm(text);
+  const alle = Object.entries(SCHUTZ_SPARTEN)
+    .filter(([k]) => !ohne.includes(k))
+    .map(([key, label]) => ({ key, label }))
+    .sort((x, y) => x.label.localeCompare(y.label, "de"));
+  if (!q) return alle;
+  const rang = (s: { key: string; label: string }) => {
+    const name = suchNorm(s.label);
+    const worte = `${suchNorm(s.key)} ${SUCHWORTE[s.key] ?? ""}`.split(/\s+/);
+    if (name.startsWith(q) || name.split(" ").some((w) => w.startsWith(q))) return 0;
+    if (worte.some((w) => w.startsWith(q))) return 1;
+    if (name.replace(/ /g, "").includes(q.replace(/ /g, ""))) return 2;
+    return -1;
+  };
+  return alle
+    .map((s) => ({ s, r: rang(s) }))
+    .filter((x) => x.r >= 0)
+    .sort((x, y) => x.r - y.r)
+    .map((x) => x.s);
+}
+
 // ─── Vorsorge-Thema (Teil C2): große Produkte nur als Thema, ohne Gesundheitsangaben ─────────
 
 export type VorsorgeKey = "pkv" | "bu" | "risikoleben" | "pflege";
@@ -458,7 +575,8 @@ const txt = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.
 
 export function cleanSchutz(raw: unknown): SchutzEintrag[] {
   const out: SchutzEintrag[] = [];
-  for (const x of (Array.isArray(raw) ? raw : []).slice(0, 14)) {
+  // Alle Sparten erreichbar (Ole, 18.11.2026): Platz für jede Sparte des Überblicks
+  for (const x of (Array.isArray(raw) ? raw : []).slice(0, SCHUTZ_EINTRAEGE_MAX)) {
     if (!x || typeof x !== "object") continue;
     const r = x as Record<string, unknown>;
     const key = typeof r.key === "string" && /^[a-z0-9-]{2,60}$/.test(r.key) ? r.key : null;

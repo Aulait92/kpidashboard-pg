@@ -221,18 +221,23 @@ Seiten aus der Liste „Seiten“ unten.
   Einzelsumme, Rabatt in Prozent und Euro, Endbeitrag und die Staffel; die Bedingung und der Satz „Die Versicherungen
   sind auch einzeln abschließbar“ stehen klein darunter. Nimmt Ihr Kunde im Termin eine Sparte heraus oder wählt eine
   andere Stufe, rechnet die Folie sofort neu.
-- **Chance im Termin und Ihr Schutz im Überblick:** Über den Angeboten stehen höchstens zwei erkannte Lücken aus
-  Formular, Chat und Ihren Verträgen, je mit einem Satz als Gesprächsöffner (z. B. Hund ohne Hundehaftpflicht, mit
-  Hinweis, wenn sie im Bundesland Pflicht ist). **Ins Angebot** nimmt die Sparte „bei Bedarf“ dazu: Sie steht in der
-  Präsentation erst auf der Folie **Ihr Schutz im Überblick** (Ampel: bei uns, woanders versichert, prüfen, Lücke) und
-  kommt mit **Mit anschauen** in Vergleich und Beitrag; ab dem zweiten passenden Vertrag erscheint sofort der
-  Kombi-Rabatt. **Gleich zeigen** nimmt sie direkt ins Angebot. Unter **Schutz im Überblick** stellen Sie je Sparte ein,
-  was Ihr Kunde schon hat und wo (Versicherer, Ablauf, ungefährer Beitrag); bei „woanders versichert“ zeigt die Folie
-  den Bündelvorteil und den Wechsel-Service.
-- **Vorsorge-Thema:** Unter „Chance im Termin“ steht höchstens ein großes Thema (PKV-Check, Berufsunfähigkeit,
-  Risikoleben und Altersvorsorge, Pflegevorsorge) mit einem Satz als Gesprächsöffner, abgeleitet nur aus Beruf,
-  Lebenslage und Alter, nie aus Gesundheitsangaben. Dafür vereinbaren Sie einen eigenen Termin; gespeichert wird
-  nichts. Themen, die Sie nicht anbieten, schalten Sie unter **Einstellungen → Präsentation** ab.
+- **Was hat Ihr Kunde schon?** In Schritt 1 steht unter den Versicherungen der Bereich **Was hat Frau Becker
+  schon?**. Je Versicherung tippen Sie **Ja, bei mir**, **Ja, woanders**, **Weiß nicht** oder **Nein**; bei
+  **Ja, woanders** wählen Sie Versicherer und Tarif aus der Liste und tragen Ablauf und ungefähren Beitrag ein.
+  Beantwortete Zeilen klappen auf eine Zeile zu (z. B. „Hausrat · Ja, woanders · HUK Classic, 8 €“), Antippen öffnet
+  sie wieder. Oben stehen mit Glühbirne die Tipps: höchstens zwei erkannte Lücken aus Formular, Chat und Ihren
+  Verträgen (z. B. Hund ohne Hundehaftpflicht, mit Hinweis, wenn sie im Bundesland Pflicht ist) und höchstens ein
+  Vorsorge-Thema, je mit einer Frage für das Gespräch. **+ Versicherung hinzufügen** sucht über alle Versicherungen,
+  auch PKV, BU, Rente oder Kfz (Abkürzungen wie „PKV“ oder „BU“ funktionieren). Der Schalter **Ins Angebot** nimmt eine
+  Versicherung „bei Bedarf“ dazu: Sie steht in der Präsentation erst auf der Folie **Ihr Schutz im Überblick** (Ampel:
+  bei uns, woanders versichert, prüfen, Lücke) und kommt mit **Mit anschauen** in Vergleich und Beitrag; ab dem zweiten
+  passenden Vertrag erscheint sofort der Kombi-Rabatt. **Gleich zeigen** nimmt sie direkt ins Angebot. Unter **So sieht
+  es der Kunde** sehen Sie die Ampel der Folie. Alles wird automatisch gespeichert. Gesundheitsangaben werden hier nicht
+  erfasst, nur ob und wo Ihr Kunde versichert ist.
+- **Vorsorge-Thema:** Das Vorsorge-Thema (PKV-Check, Berufsunfähigkeit, Risikoleben und Altersvorsorge,
+  Pflegevorsorge) wird nur aus Beruf, Lebenslage und Alter abgeleitet, nie aus Gesundheitsangaben. Dafür vereinbaren
+  Sie meist einen eigenen Termin. Themen, die Sie nicht anbieten, schalten Sie unter **Einstellungen → Präsentation**
+  ab.
 - **Link für Ihren Kunden:** Unter der Präsentation erstellt **Link erstellen** einen persönlichen Link mit dem Stand aus
   dem Termin, ohne Schalter zum Umstellen, 14 Tage gültig. Kopieren, per WhatsApp oder E-Mail schicken, bei
   Bedarf **Link beenden**.

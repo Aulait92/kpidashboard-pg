@@ -40,7 +40,7 @@ import type { EigenerTarifZeile } from "@/lib/tarifauswahl-server";
 import { angabenText, pruefEtikett, rechnerUrl, type RechnerAngabe } from "@/lib/preise/pilot";
 import { setPreparedAction } from "./actions";
 import { eigenerTarifAction, gesellschaftAction, klaerenAction, tarifauswahlSpeichernAction } from "./neu-actions";
-import { BeitragGesamt, ChanceImTermin } from "./schutz-client";
+import { BeitragGesamt, SchutzBereich } from "./schutz-client";
 import { BisherKarte } from "./bisher-client";
 import { SCHUTZ_SPARTEN, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
@@ -524,7 +524,7 @@ function Angebote(p: {
     setAktiv(key);
   };
   /**
-   * Sparte aus „Chance im Termin“ bzw. dem Kombi-Hinweis in die Angebote: Chancen erst „bei Bedarf“ (Präsentation:
+   * Sparte aus „Was hat … schon?“ (Schalter „Ins Angebot“) bzw. dem Kombi-Hinweis in die Angebote: Chancen erst „bei Bedarf“ (Präsentation:
    * „Mit anschauen“ auf „Ihr Schutz im Überblick“), der Kombi-Hinweis gleich ins Paket. Ist sie schon da: hinspringen.
    */
   const anbieten = (key: string, direkt = false) => {
@@ -543,7 +543,7 @@ function Angebote(p: {
     });
     setAktiv(key);
   };
-  /** Schalter „In heutiges Angebot aufnehmen“ aus: Sparte aus den Angeboten nehmen (mit Rückgängig, wenn sie fest drin war). */
+  /** Schalter „Ins Angebot“ aus: Sparte aus den Angeboten nehmen (mit Rückgängig, wenn sie fest drin war). */
   const ausAngebot = (key: string) => {
     const index = p.auswahl.sparten.findIndex((x) => x.key === key);
     if (index < 0) return;
@@ -695,7 +695,8 @@ function Angebote(p: {
         ) : null}
       </div>
 
-      <ChanceImTermin
+      {/* „Was hat Frau Becker schon?“ (Ole, 18.11.2026): ein Bereich statt „Chance im Termin“ und Fenster */}
+      <SchutzBereich
         auswahl={p.auswahl}
         ro={ro}
         aendern={p.aendern}
@@ -705,6 +706,8 @@ function Angebote(p: {
         kunde={p.daten.kunde || "der Kunde"}
         speichern={{ status: p.status, erneut: p.erneut }}
         gesellschaften={p.daten.gesellschaften}
+        imKatalog={katalog.sparten.map((s) => s.key)}
+        gesundheitFrei={p.daten.gesundheitFrei ?? false}
       />
 
       {/* Schritte klar getrennt (Ole, 17.11.2026): mehr Luft um die Trennlinie */}

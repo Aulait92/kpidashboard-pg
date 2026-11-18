@@ -11,7 +11,11 @@ import {
   hundePflichtLand,
   SCHUTZ_ANTWORT,
   SCHUTZ_REIHENFOLGE,
+  SCHUTZ_SPARTEN,
   SCHUTZ_STATUS,
+  schutzBereich,
+  schutzKurz,
+  spartenSuche,
   schutzVorschlag,
   schutzZeilen,
   vorsorgeThema,
@@ -19,6 +23,7 @@ import {
   type SchutzEintrag,
 } from "@/lib/schutz-ueberblick";
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
+import { spartenGruppiert } from "@/lib/tarifkatalog";
 import { cleanTarifauswahl, sparteNeu, startAuswahl, zuAngebote } from "@/lib/tarifauswahl";
 import { folien, markeFuer } from "@/lib/praesentation";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
@@ -206,7 +211,7 @@ describe("Überblick in Tarifauswahl, Angeboten und Folie", () => {
 });
 
 describe("Schutz im Überblick verständlicher (Ole, 18.11.2026)", () => {
-  it("Antworten im Fenster: Ja, bei mir / Ja, woanders / Weiß nicht / Nein; Präsentation behält die Ampel-Begriffe", () => {
+  it("Antworten je Sparte: Ja, bei mir / Ja, woanders / Weiß nicht / Nein; Präsentation behält die Ampel-Begriffe", () => {
     expect(SCHUTZ_REIHENFOLGE.map((s) => SCHUTZ_ANTWORT[s].label)).toEqual(["Ja, bei mir", "Ja, woanders", "Weiß nicht", "Nein"]);
     expect(SCHUTZ_REIHENFOLGE.map((s) => SCHUTZ_STATUS[s].label)).toEqual(["Bei uns versichert", "Woanders versichert", "Prüfen", "Lücke"]);
     // Ein Farbsystem: Farbpunkte der Antworten = Ampel-Farben der Präsentation
@@ -261,5 +266,72 @@ describe("„Ja, woanders“ mit Tarif aus dem Katalog (Ole, 18.11.2026)", () =>
     expect(s.tarif).toBeUndefined();
     expect(s.katalogId).toBeUndefined();
     expect(woandersInfo(s)).toBe("bei Allianz");
+  });
+});
+
+describe("Ein Bereich „Was hat Frau Becker schon?“ (Ole, 18.11.2026)", () => {
+  it("„+ Versicherung hinzufügen“: alle Sparten erreichbar, auch PKV, BU, Rente und Kfz", () => {
+    const alle = spartenSuche("");
+    expect(alle.map((s) => s.key).sort()).toEqual(Object.keys(SCHUTZ_SPARTEN).sort());
+    // gruppiert ohne Verlust
+    expect(spartenGruppiert(alle).flatMap((g) => g.sparten).length).toBe(alle.length);
+    expect(spartenSuche("PKV")[0].key).toBe("pkv");
+    expect(spartenSuche("pkv").map((s) => s.key)).toEqual(["pkv"]);
+    expect(spartenSuche("BU")[0].key).toBe("bu");
+    expect(spartenSuche("Rente")[0].key).toBe("rente");
+    expect(spartenSuche("auto")[0].key).toBe("kfz");
+    expect(spartenSuche("Kranken").map((s) => s.key)).toContain("pkv");
+    expect(spartenSuche("gebäude")[0].key).toBe("wohngebaeude");
+    expect(spartenSuche("xyz")).toEqual([]);
+    // schon eingetragene Sparten fallen weg
+    expect(spartenSuche("Hausrat", ["hausrat"])).toEqual([]);
+    // alle Sparten passen in den gespeicherten Überblick
+    const voll = cleanSchutz(Object.entries(SCHUTZ_SPARTEN).map(([key, label]) => ({ key, label, status: "pruefen" })));
+    expect(voll).toHaveLength(Object.keys(SCHUTZ_SPARTEN).length);
+  });
+
+  it("Tipp-Zeilen oben (Chancen, dann Vorsorge-Thema), dann offene, dann beantwortete", () => {
+    const s: SchutzEintrag[] = [
+      { key: "haftpflicht", label: "Privathaftpflicht", status: "woanders", versicherer: "HUK" },
+      { key: "hausrat", label: "Hausrat", status: "pruefen" },
+      { key: "rechtsschutz", label: "Rechtsschutz", status: "luecke", oeffner: "Wer zahlt bei Ihnen den Anwalt?" },
+      { key: "unfall", label: "Unfall", status: "bei-uns", seit: "seit 03/2026" },
+      { key: "tierhalter-hund", label: "Hundehalterhaftpflicht", status: "pruefen", oeffner: "Hat Ihr Hund eine eigene Haftpflicht?" },
+      { key: "kfz", label: "Kfz", status: "pruefen" },
+    ];
+    const vorsorge = { key: "pkv" as const, label: "PKV-Check", oeffner: "Haben Sie das schon einmal vergleichen lassen?" };
+    const z = schutzBereich(s, ["hausrat"], vorsorge);
+    expect(z.map((x) => x.eintrag.key)).toEqual(["tierhalter-hund", "rechtsschutz", "pkv", "hausrat", "kfz", "haftpflicht", "unfall"]);
+    expect(z.filter((x) => x.tipp).map((x) => x.tipp)).toEqual(["Hat Ihr Hund eine eigene Haftpflicht?", "Wer zahlt bei Ihnen den Anwalt?", vorsorge.oeffner]);
+    // Vorsorge-Thema noch nicht im Überblick: Zeile „Weiß nicht“, gespeichert erst nach einer Antwort
+    expect(z[2]).toMatchObject({ neu: true, eintrag: { key: "pkv", label: "Private Krankenversicherung", status: "pruefen" } });
+    // bei uns versichert: kein Vorsorge-Tipp; ohne Überblick nur das Thema
+    expect(schutzBereich([{ key: "pkv", label: "PKV", status: "bei-uns" }], [], vorsorge).some((x) => x.tipp)).toBe(false);
+    expect(schutzBereich([], [], null)).toEqual([]);
+    expect(schutzBereich([], [], vorsorge).map((x) => x.eintrag.key)).toEqual(["pkv"]);
+  });
+
+  it("zugeklappte Zeile: Sparte · Antwort · Versicherer, Tarif und Beitrag", () => {
+    expect(schutzKurz({ key: "hausrat", label: "Hausrat", status: "woanders", versicherer: "HUK", tarif: "Classic", beitrag: 8 })).toBe("Hausrat · Ja, woanders · HUK Classic, 8 €");
+    expect(schutzKurz({ key: "hausrat", label: "Hausrat", status: "woanders", versicherer: "HUK", beitrag: 8.5 })).toBe("Hausrat · Ja, woanders · HUK, 8,50 €");
+    expect(schutzKurz({ key: "pkv", label: "Private Krankenversicherung", status: "woanders" })).toBe("Private Krankenversicherung · Ja, woanders");
+    expect(schutzKurz({ key: "unfall", label: "Unfall", status: "bei-uns", seit: "seit 03/2026" })).toBe("Unfall · Ja, bei mir · seit 03/2026");
+    expect(schutzKurz({ key: "unfall", label: "Unfall", status: "luecke" })).toBe("Unfall · Nein");
+    expect(hatGedankenstrich(schutzKurz({ key: "x", label: "Kfz", status: "pruefen" }))).toBe(false);
+  });
+
+  it("Präsentation unverändert: „Ja, woanders“ bei PKV steht auf der Folie nur mit Versicherer, ohne Gesundheitsangaben", () => {
+    const k = ladeTarifkatalog(path.join(__dirname, "..", "fixtures", "tarifkatalog"));
+    const a = startAuswahl(k, ["haftpflicht"], { rolle: "vertreter", gesellschaften: ["allianz"] });
+    a.schutz = [
+      { key: "haftpflicht", label: "Privathaftpflicht", status: "pruefen" },
+      { key: "pkv", label: "Private Krankenversicherung", status: "woanders", versicherer: "DKV", tarif: "BestMed", beitrag: 480 },
+    ];
+    const ang = zuAngebote(cleanTarifauswahl(JSON.parse(JSON.stringify(a)))!);
+    const pkv = ang.schutz?.find((z) => z.key === "pkv");
+    expect(pkv).toEqual({ key: "pkv", label: "Private Krankenversicherung", status: "woanders", info: "bei DKV BestMed, ca. 480 € im Monat", versicherer: "DKV" });
+    const u = folien(termin(), ang, markeFuer({ name: "Allianz Agentur Test" })).find((f) => f.id === "ueberblick")!.html;
+    expect(u).toContain('data-schutz="pkv" data-status="woanders"');
+    expect(u).toContain("Ihr Schutz im Überblick");
   });
 });
