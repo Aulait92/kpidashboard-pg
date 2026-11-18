@@ -12,7 +12,7 @@ import { FileClock, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { gesellschaftAusText } from "@/lib/tarifkatalog";
+import { bekannteGesellschaften, gesellschaftAusText, gesellschaftName } from "@/lib/tarifkatalog";
 import { betrag, empfehlungVon, tarifMonat, type SparteWahl } from "@/lib/tarifauswahl";
 import {
   beitragsUnterschiedJahr,
@@ -291,9 +291,12 @@ function BisherFormular({
             data-bisher-versicherer
           />
           <datalist id={`bisher-ges-${sp.key}`}>
-            {gesellschaften.map((g) => (
-              <option key={g.key} value={g.name} />
-            ))}
+            {/* Alle Versicherer, nicht nur die mit Tarifen im Katalog, alphabetisch (Ole, 18.11.2026: SIGNAL IDUNA fehlte) */}
+            {[...new Map([...gesellschaften, ...bekannteGesellschaften().map((key) => ({ key, name: gesellschaftName(key) }))].map((g) => [g.key, g])).values()]
+              .sort((x, y) => x.name.localeCompare(y.name, "de"))
+              .map((g) => (
+                <option key={g.key} value={g.name} />
+              ))}
           </datalist>
         </label>
 

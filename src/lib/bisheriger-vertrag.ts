@@ -444,12 +444,17 @@ const tagText = (iso: string) => {
   return `${d}.${m}.${y}`;
 };
 
+/** Übliche Kündigungsfrist in Monaten, wenn die Police keine nennt. */
+export const UEBLICHE_FRIST_MONATE = 3;
+
 /** Hinweis zur Kündigung für die Folie (ohne Anrede; Satzanfang ergänzt der Aufrufer). */
 export function kuendigungText(b: Pick<BisherSpalte, "ablauf" | "kuendbarZum" | "fristMonate">, heute: string): string {
-  const k = naechsteKuendigung(b, heute);
+  // Frist unbekannt (Ole, 18.11.2026: „hier steht immer laut police prüfen“): übliche Frist von 3 Monaten zum Ablauf
+  // (VVG § 11 Abs. 2, Standard in den Bedingungen), im Text als „übliche Frist“ gekennzeichnet
+  const ueblich = b.fristMonate == null;
+  const k = naechsteKuendigung({ ...b, fristMonate: b.fristMonate ?? UEBLICHE_FRIST_MONATE }, heute);
   if (!k) return "Kündigungsfrist laut Police prüfen.";
-  if (!k.bis) return `kündbar zum ${tagText(k.zum)}, Kündigungsfrist laut Police prüfen.`;
-  return `kündbar zum ${tagText(k.zum)} (Kündigung bis ${tagText(k.bis)}).`;
+  return `kündbar zum ${tagText(k.zum)} (Kündigung bis ${tagText(k.bis!)}${ueblich ? `, übliche Frist ${UEBLICHE_FRIST_MONATE} Monate` : ""}).`;
 }
 
 /** Beitragsunterschied im Jahr: neu minus bisher (negativ = günstiger); null ohne beide Beiträge. */

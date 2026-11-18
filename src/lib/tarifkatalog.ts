@@ -159,6 +159,20 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   figo: "Figo",
   petolo: "Petolo",
   santevet: "SantéVet",
+  // Ohne eigene Tarife im Katalog, aber in Auswahllisten (bisherige Verträge, Meine Gesellschaften, Vollmacht) nötig
+  // (Ole, 18.11.2026: „in der liste fehlen noch versicherer“)
+  adac: "ADAC",
+  dkv: "DKV",
+  lkh: "LKH",
+  "alte-oldenburger": "Alte Oldenburger",
+  hiscox: "Hiscox",
+  markel: "Markel",
+  "oeffentliche-braunschweig": "Öffentliche Braunschweig",
+  "oeffentliche-oldenburg": "Öffentliche Oldenburg",
+  feuersozietaet: "Feuersozietät",
+  lippische: "Lippische Landesbrandkasse",
+  rheinland: "Rheinland Versicherungen",
+  bbkk: "Bayerische Beamtenkrankenkasse",
 };
 /** Reihenfolge in Listen (Ole, 16.11.2026): die Vertreter-Gesellschaften zuerst, dann alle übrigen alphabetisch nach Anzeigename. */
 const REIHENFOLGE = [

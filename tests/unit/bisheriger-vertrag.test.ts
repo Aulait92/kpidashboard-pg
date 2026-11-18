@@ -213,7 +213,7 @@ describe("Kündigung und Beitragsunterschied", () => {
     expect(naechsteKuendigung({ ablauf: "2024-01-01", kuendbarZum: null, fristMonate: 3 }, "2026-11-20")).toEqual({ zum: "2028-01-01", bis: "2027-10-01" });
     expect(naechsteKuendigung({ ablauf: "2024-01-01", kuendbarZum: null, fristMonate: 1 }, "2026-11-20")).toEqual({ zum: "2027-01-01", bis: "2026-12-01" });
     expect(naechsteKuendigung({ ablauf: null, kuendbarZum: "2027-03-01", fristMonate: 3 }, "2026-11-20")).toEqual({ zum: "2027-03-01", bis: "2026-12-01" });
-    expect(kuendigungText({ ablauf: "2026-04-01", kuendbarZum: null, fristMonate: null }, "2026-11-20")).toBe("kündbar zum 01.04.2027, Kündigungsfrist laut Police prüfen.");
+    expect(kuendigungText({ ablauf: "2026-04-01", kuendbarZum: null, fristMonate: null }, "2026-11-20")).toBe("kündbar zum 01.04.2027 (Kündigung bis 01.01.2027, übliche Frist 3 Monate).");
     expect(kuendigungText({ ablauf: null, kuendbarZum: null, fristMonate: 3 }, "2026-11-20")).toBe("Kündigungsfrist laut Police prüfen.");
   });
 
