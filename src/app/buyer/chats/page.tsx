@@ -430,8 +430,9 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
             <dl className="space-y-1.5 text-sm" data-lead-angaben>
               {angaben.map((a) => (
                 <div key={a.key} className="flex items-baseline justify-between gap-3">
-                  <dt className="min-w-0 text-[color:var(--muted)]">{a.label}</dt>
-                  <dd className="max-w-[60%] shrink-0 break-words text-right font-medium">{a.value}</dd>
+                  {/* Lange Begriffe („Versicherungsinteresse“) umbrechen statt unter den Wert zu laufen */}
+                  <dt className="min-w-0 flex-1 hyphens-auto text-[color:var(--muted)] [overflow-wrap:anywhere]" lang="de">{a.label}</dt>
+                  <dd className="min-w-0 max-w-[60%] break-words text-right font-medium">{a.value}</dd>
                 </div>
               ))}
             </dl>
