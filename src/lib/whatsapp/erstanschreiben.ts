@@ -542,6 +542,8 @@ export type ErstanschreibenOpts = {
   ohneLead?: boolean;
   /** Angaben aus dem Leadformular: was schon bekannt ist, wird nicht gefragt (nur Freitext, die Vorlagen sind fest). */
   formular?: FormAntwort[] | null;
+  /** Termin schon gebucht (z. B. Dankeseite des Meta-Formulars): nie nach einem Termin fragen */
+  gebucht?: boolean;
 };
 
 /**
@@ -572,17 +574,35 @@ export function erstanschreibenKopf(o: ErstanschreibenOpts): string {
   return `${erstGruss(an, o.kontakt)} danke für ${was}${thema}! Hier schreibt der digitale KI-Assistent von ${von}.`;
 }
 
+/** Frage für schon gebuchte Leads, wenn das Formular alles beantwortet: „Gibt es vorab noch etwas, das Herr Kannapinn
+ * für den Termin wissen sollte?“ */
+export function vorabFrage(an: Ansprache, wer: string): string {
+  return a(an, `Gibt es vorab noch etwas, das ${wer} für den Termin wissen sollte?`, `Gibt es vorab noch etwas, das ${wer} für den Termin wissen sollte?`);
+}
+
 /**
  * Erste Frage des Erstanschreibens (Produkt bzw. allgemein: Telefonat), ohne Sternchen. Mit Formularangaben: die erste
  * noch offene Frage; beantwortet das Formular beide, gleich die Frage nach einem Videotermin.
  */
-export function ersteFrage(source: string | null | undefined, an: Ansprache, name: string, formular?: FormAntwort[] | null, person?: { nom: string; dat: string } | null): string {
+export function ersteFrage(
+  source: string | null | undefined,
+  an: Ansprache,
+  name: string,
+  formular?: FormAntwort[] | null,
+  person?: { nom: string; dat: string } | null,
+  opts: { gebucht?: boolean } = {},
+): string {
   const p = outreachProdukt(source);
   if (p) {
     const offen = frageplan(source, formular).offen[0];
-    return offen ? a(an, offen.du, offen.sie) : terminFrage(an, person?.dat ?? name);
+    if (offen) return a(an, offen.du, offen.sie);
+    // Schon gebucht (z. B. Dankeseite des Meta-Formulars): nie nach einem Termin fragen (Ole, 18.11.2026); nach der
+    // Antwort folgt der Komplettcheck (bot.ts, Strecke nach der Buchung)
+    if (opts.gebucht) return vorabFrage(an, person?.nom ?? name);
+    return terminFrage(an, person?.dat ?? name);
   }
   const wer = person?.nom ?? name;
+  if (opts.gebucht) return vorabFrage(an, wer);
   return a(an, `Wann erreicht ${wer} dich am besten für ein kurzes Telefonat?`, `Wann erreicht ${wer} Sie am besten für ein kurzes Telefonat?`);
 }
 
@@ -590,22 +610,22 @@ export function ersteFrage(source: string | null | undefined, an: Ansprache, nam
  * Parameter der v6-Vorlage nach dem Namen: [Thema, Vermittler im Dativ, erste offene Frage ohne „?“] (rein, testbar).
  * Die erste Frage folgt dem Frageplan mit den Formularangaben; ist alles beantwortet, die Frage nach dem Videotermin.
  */
-export function erstanschreibenV6Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string }): [string, string, string] {
-  return [erstanschreibenThema(o.source), o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person))];
+export function erstanschreibenV6Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string; gebucht?: boolean }): [string, string, string] {
+  return [erstanschreibenThema(o.source), o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person, { gebucht: o.gebucht }))];
 }
 
 /**
  * Parameter der v9-Vorlage nach dem Namen (rein, testbar): [erste offene Frage ohne „?“]; Tierkrankenversicherung
  * [Tier (Name bzw. „Ihre Katze“), erste offene Frage ohne „?“].
  */
-export function erstanschreibenV9Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string }): string[] {
-  const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person));
+export function erstanschreibenV9Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string; gebucht?: boolean }): string[] {
+  const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person, { gebucht: o.gebucht }));
   return erstanschreibenZweck(o.source, o.formular) === "outreach_tkv" ? [tierFuerErstanschreiben(o.source, o.an, o.formular), frage] : [frage];
 }
 
 /** Parameter der v8-Vorlage nach dem Namen: [Vermittler im Dativ, erste offene Frage ohne „?“] (rein, testbar). */
-export function erstanschreibenV8Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string }): [string, string] {
-  return [o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person))];
+export function erstanschreibenV8Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string; gebucht?: boolean }): [string, string] {
+  return [o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person, { gebucht: o.gebucht }))];
 }
 
 /** Knöpfe zur ersten Frage im Freitext: nur bei Frage 1 des Produkts bzw. der Telefonatsfrage, sonst keine. */
@@ -625,7 +645,7 @@ export function ersteFrageKnoepfe(source: string | null | undefined, formular?: 
  */
 export function erstanschreibenText(o: ErstanschreibenOpts, opts: { ohneFuss?: boolean } = {}): string {
   const person = o.vermittler ? { nom: o.vermittlerNom || o.vermittler, dat: o.vermittler } : null;
-  const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.name, o.formular, person));
+  const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.name, o.formular, person, { gebucht: o.gebucht }));
   // Lead hat zuerst geschrieben bzw. kein Lead: wie bisher mit Kopf und Frage darunter (v8)
   if (o.ohneLead || o.herkunft === "nachricht") return `${erstanschreibenKopf(o)}\n\n*${frage}?*`;
   // v9 (Ole, 18.11.2026): wie die Vorlage, eine Zeile ohne Vermittler; die KI-Kennzeichnung der Fußzeile steht im

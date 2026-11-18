@@ -429,7 +429,7 @@ describe("Erstinformation in der Einrichtung", () => {
 });
 
 describe("Schon über die Buchungsseite gebucht (z. B. Meta-Leadformular)", () => {
-  it("Privatschutz: Assistent meldet sich trotzdem; andere Produkte ohne Angaben-Katalog: kein Erstanschreiben", async () => {
+  it("Assistent meldet sich trotzdem bei jedem Produkt (Ole, 18.11.2026: Daten und Komplettcheck noch abfragen)", async () => {
     const mk = async (phone: string, source: string) => {
       const lead = await prisma.lead.create({ data: { customerId, name: "Julia Schneider", phone, status: "Neuer Lead", source } });
       const conv = await prisma.conversation.create({ data: { customerId, leadId: lead.id, contactPhone: phone, contactName: "Julia Schneider" } });
@@ -444,7 +444,7 @@ describe("Schon über die Buchungsseite gebucht (z. B. Meta-Leadformular)", () =
     await runOutreach(customerId);
     expect(sent.some((s) => s.to === "4917622220011")).toBe(true);
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: ps.id } })).outreachStatus).toBe("sent_booked");
-    expect(sent.some((s) => s.to === "4917622220012")).toBe(false);
-    expect((await prisma.lead.findUniqueOrThrow({ where: { id: tkv.id } })).outreachStatus).toBe("skipped_booked");
+    expect(sent.some((s) => s.to === "4917622220012")).toBe(true);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: tkv.id } })).outreachStatus).toBe("sent_booked");
   });
 });
