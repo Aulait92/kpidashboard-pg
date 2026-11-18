@@ -38,6 +38,10 @@ export async function syncFollowUpWithStatus(leadId: string, status: string | nu
       where: { id: leadId },
       data: lead?.policyDoneAt ? { followUpAt: null, followUpNote: null } : { followUpAt: new Date(), followUpNote: POLICY_TODO },
     });
+    // Paket M6: Aufgabe „Alten Vertrag kündigen“, wenn der Komplettcheck einen zu ersetzenden Vertrag zeigt (wartet dahinter)
+    await import("@/lib/lead-aufgaben")
+      .then((m) => m.planeKuendigung(leadId))
+      .catch((e) => console.error("[kuendigung]", e));
   } else if (DONE_STATUSES.has(s)) {
     await prisma.lead.updateMany({
       where: { id: leadId, followUpAt: { not: null } },

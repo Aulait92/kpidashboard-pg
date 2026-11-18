@@ -33,6 +33,7 @@ import { loadLeadHistory } from "@/lib/lead-history";
 import { listLeadFiles } from "@/lib/lead-files";
 import { listUnterlagen } from "@/lib/policen/server";
 import { mailFeaturesOffFor, postfachOf } from "@/lib/mail/postfach";
+import { ABLAUF_VORLAGEN, leseMailAblauf } from "@/lib/mail/ablauf";
 import { leadVersandKontext, resendBereit } from "@/lib/mail/lead-versand";
 import { leadAnzeigename, leadSignatur } from "@/lib/mail/lead-absender";
 import { loadVorlagen } from "@/lib/mail/vorlagen";
@@ -393,8 +394,11 @@ export async function LeadDetailBody({
     }),
     prisma.leadHistory.findMany({ where: { leadId: lead.id, kind: "notiz" }, orderBy: { createdAt: "desc" }, take: 3, select: { text: true } }),
     leadVersandKontext(customerId, { leadId: lead.id, schreiber: team.userId, nurLesen: true }),
-    prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true, mailAblauf: true } }),
   ]);
+  // Paket M6: Vorlagen mit Stufe „aus“ bekommen keinen Vorschlag in Aufgaben
+  const stufen = leseMailAblauf(customerAn?.mailAblauf).stufen;
+  const mailAus = ABLAUF_VORLAGEN.filter((k) => stufen[k] === "aus");
   const empfohlen = passendeVorlagen({
     status: lead.status,
     contactAttempts: lead.contactAttempts,
@@ -482,6 +486,7 @@ export async function LeadDetailBody({
         hasUpcomingAppointment={!!nextAppt && nextAppt.startsAt.getTime() > nowMs()}
         nameZusatz={<EinwilligungEtikett stand={einwilligung} />}
         anrufenNeutral={!!kartenTermin}
+        mailAus={mailAus}
       />
       {kartenTermin ? (
         <TerminKarte
@@ -544,6 +549,7 @@ export async function LeadDetailBody({
           provision={provision}
           policyDoneAt={lead.policyDoneAt?.toISOString() ?? null}
           mailVorschlag={!lead.erasedAt && vorlagen.some((v) => v.standardKey === "willkommen")}
+          unterlagenMail={!lead.erasedAt && !mailAus.includes("unterlagen_fehlen") && vorlagen.some((v) => v.standardKey === "unterlagen_fehlen")}
         >
           <LeadContracts leadId={lead.id} contracts={contracts} readOnly={!team.userId} />
         </AbschlussCard>

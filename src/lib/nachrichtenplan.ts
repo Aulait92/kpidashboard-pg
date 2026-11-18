@@ -114,6 +114,8 @@ export type PlanEingabe = {
     neustartAt?: Date | null;
     /** Vom Vermittler übersprungene Schritte (P6) */
     uebersprungen?: number[];
+    /** Angaben für Mail-Schritte (Paket M6, z. B. fehlende Unterlagen) */
+    daten?: unknown;
   }[];
   abfolgeKontext: SequenceCtx;
   anrufplan: { followUpAt: Date | null; followUpNote: string | null; callAttempts: number; callPlanStartedAt: Date | null; lastCallAttemptAt: Date | null };
@@ -185,6 +187,16 @@ function terminEintraege(p: PlanEingabe, t: PlanTermin): PlanEintrag[] {
   return out;
 }
 
+/** Werte der Mail-Schritte aus Paket M4/M6 für die Vorschau (wie lib/mail/abfolgen-mail.ts). */
+function mailExtra(vorlage: VorlageKey, daten: unknown): Record<string, string> {
+  if (vorlage === "wie_besprochen") return { melde_wann: "heute" };
+  if (vorlage === "unterlagen_fehlen") {
+    const f = daten && typeof daten === "object" ? (daten as Record<string, unknown>).fehlende : null;
+    return { fehlende_unterlagen: typeof f === "string" ? f : "" };
+  }
+  return {};
+}
+
 function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): PlanEintrag[] {
   const def = SEQUENCES[a.kind as SequenceKind];
   if (!def || a.stoppedAt || !a.nextAt) return [];
@@ -211,7 +223,9 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
     };
     const begleit = (art: string) => ({ key: `${art}:${a.id}:${i}`, ...(p.pausiertAt ? { pausiert: true } : {}) });
     // Angebot (P3): Vorab-Check-Push an den Vermittler am Vorabend jedes automatischen Nachfassens (WhatsApp, E-Mail)
-    if (!weg && angebot && step.action !== "call" && !(i === a.step && a.vorabCheckStep === a.step)) {
+    // Mail am selben Tag wie die WhatsApp davor (Paket M4, z. B. „Wie besprochen“ 2 Std. danach): kein zweiter Vorab-Check
+    const gleicherTag = step.day % 1 !== 0;
+    if (!weg && angebot && step.action !== "call" && !gleicherTag && !(i === a.step && a.vorabCheckStep === a.step)) {
       const versand = at;
       const zeit = vorabCheckZeit(versand);
       if (zeit.getTime() > p.now.getTime()) {
@@ -232,7 +246,14 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
       const knoepfe = step.knoepfe ?? [];
       const m = vorlagenMail({
         vorlage,
-        werte: mailWerte({ an: c.an, kontakt: c.kontakt, thema: c.topic, meinname: c.person?.nom ?? "", now: at, extra: { ...(knoepfe.includes("rueckruf") ? { rueckruf_link: "[Link Rückruf]" } : {}), ...step.zusatz?.(c) } }),
+        werte: mailWerte({
+          an: c.an,
+          kontakt: c.kontakt,
+          thema: c.topic,
+          meinname: c.person?.nom ?? "",
+          now: at,
+          extra: { ...(knoepfe.includes("rueckruf") ? { rueckruf_link: "[Link Rückruf]" } : {}), ...mailExtra(step.vorlage, a.daten), ...step.zusatz?.(c) },
+        }),
         knoepfe: [
           ...(knoepfe.includes("angebot") ? [{ label: "Angebot ansehen", href: "[Link zum Angebot]" }] : []),
           ...(knoepfe.includes("rueckruf") ? [{ label: "Rückruf wünschen", href: "[Link Rückruf]" }] : []),

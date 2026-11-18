@@ -119,3 +119,30 @@ export function fmtAttemptAt(at: Date, now: Date): string {
   const day = new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "short", day: "2-digit", month: "2-digit" }).format(at);
   return `${day} ${time} Uhr`;
 }
+
+/** „heute um 18:30 Uhr“, „morgen um 10 Uhr“, „am Donnerstag um 15 Uhr“ (für Texte an den Lead, rein). */
+export function zeitImSatz(at: Date, now: Date): string {
+  const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
+  const p = berlinParts(at);
+  const zeit = p.minute ? `${p.hour}:${String(p.minute).padStart(2, "0")} Uhr` : `${p.hour} Uhr`;
+  if (ymd(at) === ymd(now)) return `heute um ${zeit}`;
+  if (ymd(at) === ymd(plusDaysAt(now, 1, 12, 0))) return `morgen um ${zeit}`;
+  const tag = new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "long" }).format(at);
+  return `am ${tag} um ${zeit}`;
+}
+
+/**
+ * Zwei Rückrufzeiten für die Mail „Nicht erreicht“ aus dem Anrufplan (Paket M4): der geplante nächste Versuch und der
+ * danach. null, wenn kein Plan läuft oder danach kein Versuch mehr kommt (dann gelten die Standardzeiten).
+ */
+export function rueckrufZeitenAusPlan(
+  l: { followUpAt: Date | null; followUpNote: string | null; callAttempts: number; callPlanStartedAt: Date | null; lastCallAttemptAt: Date | null },
+  now: Date,
+): [string, string] | null {
+  if (!l.followUpAt || !isCallPlanNote(l.followUpNote)) return null;
+  const n = Number(/(\d+) von/.exec(l.followUpNote ?? "")?.[1] ?? l.callAttempts + 1);
+  const erst = l.followUpAt.getTime() < now.getTime() ? now : l.followUpAt;
+  const zweit = nextCallAttemptAt({ done: n, startedAt: l.callPlanStartedAt ?? l.lastCallAttemptAt ?? erst, lastAt: erst, now: erst });
+  if (!zweit) return null;
+  return [zeitImSatz(erst, now), zeitImSatz(zweit, now)];
+}

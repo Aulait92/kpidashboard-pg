@@ -68,8 +68,12 @@ export const VORLAGE_WANN: Record<VorlageKey, string> = {
   tuer_offen: "Bei Verlustgrund „kein Interesse“",
 };
 
-/** Auslöser, die schon laufen. Die übrigen automatischen Mails kommen mit den Paketen M3 und M4 („demnächst“). */
-export const AUSLOESER_AKTIV: ReadonlySet<VorlageKey> = new Set<VorlageKey>([]);
+/**
+ * Auslöser, die schon laufen (Paket M4, 18.11.2026): „Nicht erreicht“ nach dem 2. gezählten Anrufversuch, „Nicht
+ * erschienen“ als Mail-Schritt der No-Show-Abfolge, „Nachfassen Angebot“ an Tag 5, „Wie besprochen“ beim Neustart nach
+ * der Bedenkzeit (lib/mail/abfolgen-mail.ts). Die übrigen automatischen Mails kommen mit Paket M3 („demnächst“).
+ */
+export const AUSLOESER_AKTIV: ReadonlySet<VorlageKey> = new Set<VorlageKey>(["nicht_erreicht", "nicht_erschienen", "nachfassen_angebot", "wie_besprochen"]);
 
 export type MailBcc = { an: boolean; /** null = eigene Adresse des Logins */ adresse: string | null };
 

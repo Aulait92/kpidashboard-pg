@@ -1,4 +1,4 @@
-// Standardvorlagen bis Stand 2 (14.11.2026), unverändert. Beim Laden (Stand < 3) werden gespeicherte Vorlagen, die
+// Standardvorlagen bis Stand 2 (14.11.2026) und die in Stand 4 geänderten aus Stand 3 (15.11.2026), unverändert. Beim Laden (Stand < 3) werden gespeicherte Vorlagen, die
 // genau so noch beim Kunden liegen (nicht selbst geändert), auf die neue Fassung gehoben (lib/mail/vorlagen.ts).
 // Nur Betreff, Text und Schlüssel; nicht für neue Texte verwenden.
 
@@ -151,6 +151,38 @@ export const STANDARD_VORLAGEN_STAND2: Record<Ansprache, { key: string; name: st
       name: "Kein Interesse: Tür offen",
       subject: "Vielen Dank für deine Rückmeldung",
       body: "{anrede},\n\nvielen Dank für deine offene Rückmeldung. Ich respektiere deine Entscheidung und melde mich von mir aus nicht mehr bei dir.\n\nSolltest du später doch Fragen zu deiner Absicherung haben, kannst du dich gern an mich wenden.\n\nAlles Gute für dich!\n\n{signatur}",
+    },
+  ],
+};
+
+/** Stand 3 (15.11.2026) der Vorlagen, die Stand 4 (Pakete M4/M6, 18.11.2026) geändert hat. */
+export const STANDARD_VORLAGEN_STAND3: Record<Ansprache, { key: string; name: string; subject: string; body: string }[]> = {
+  sie: [
+    {
+      key: "nach_abschluss",
+      name: "Nach dem Abschluss",
+      subject: "{betreff_name}vielen Dank für Ihr Vertrauen",
+      body: "{anrede},\n\nvielen Dank für Ihr Vertrauen. Ihre Unterlagen erhalten Sie in Kürze. Wenn Sie Fragen haben, antworten Sie einfach auf diese E-Mail.\n\n{signatur}",
+    },
+    {
+      key: "wie_besprochen",
+      name: "Wie besprochen: später melden",
+      subject: "{betreff_name}wie besprochen melde ich mich später",
+      body: "{anrede},\n\nvielen Dank für das Gespräch. Wie besprochen melde ich mich am {melde_datum} wieder bei Ihnen. Haben Sie vorher Fragen, antworten Sie einfach auf diese E-Mail.\n\n{signatur}",
+    },
+  ],
+  du: [
+    {
+      key: "nach_abschluss",
+      name: "Nach dem Abschluss",
+      subject: "{betreff_name}vielen Dank für dein Vertrauen",
+      body: "{anrede},\n\nvielen Dank für dein Vertrauen. Deine Unterlagen bekommst du in Kürze. Wenn du Fragen hast, antworte einfach auf diese E-Mail.\n\n{signatur}",
+    },
+    {
+      key: "wie_besprochen",
+      name: "Wie besprochen: später melden",
+      subject: "{betreff_name}wie besprochen melde ich mich später",
+      body: "{anrede},\n\nvielen Dank für das Gespräch. Wie besprochen melde ich mich am {melde_datum} wieder bei dir. Hast du vorher Fragen, antworte einfach auf diese E-Mail.\n\n{signatur}",
     },
   ],
 };

@@ -179,6 +179,7 @@ export function AbschlussCard({
   policyDoneAt,
   readOnly = false,
   mailVorschlag = false,
+  unterlagenMail = false,
   children,
 }: {
   leadId: string;
@@ -189,6 +190,8 @@ export function AbschlussCard({
   readOnly?: boolean;
   /** Nach „Police erledigt“ die Willkommens-Mail vorschlagen (Postfach verbunden, Vorlage vorhanden) */
   mailVorschlag?: boolean;
+  /** „Unterlagen fehlen?“ neben „Police erledigt“ (Paket M6; Vorlage vorhanden, Stufe nicht „aus“) */
+  unterlagenMail?: boolean;
   /** Verträge (Cross-Selling) unter dem ersten Abschluss. */
   children?: React.ReactNode;
 }) {
@@ -241,8 +244,14 @@ export function AbschlussCard({
           <>
             <FileCheck2 className="h-4 w-4 text-amber-600" />
             <span className="font-medium">Nächster Schritt: Police fertig machen</span>
+            {!readOnly && unterlagenMail ? (
+              // Paket M6: fehlende Angaben per E-Mail anfordern (Ankreuzliste im Dialog, Erinnerung nach 3 Tagen automatisch)
+              <Button variant="ghost" size="sm" className="ml-auto" icon={Mail} onClick={() => oeffneLeadMail("unterlagen_fehlen")} data-unterlagen-mail>
+                Unterlagen fehlen?
+              </Button>
+            ) : null}
             {!readOnly ? (
-              <Button variant="primary" size="sm" className="ml-auto" disabled={pending} onClick={() => toggle(true)} data-police-done>
+              <Button variant="primary" size="sm" className={unterlagenMail ? "" : "ml-auto"} disabled={pending} onClick={() => toggle(true)} data-police-done>
                 {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                 Police erledigt
               </Button>

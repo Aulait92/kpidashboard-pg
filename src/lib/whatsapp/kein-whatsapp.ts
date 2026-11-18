@@ -169,8 +169,8 @@ export async function markLeadNoWhatsApp(leadId: string, opts: { now?: Date; cod
 
   // Assistent aus (keine Fragen mehr per WhatsApp), Nachfass-Abfolgen stoppen
   await prisma.conversation.updateMany({ where: { customerId: lead.customerId, OR: [{ leadId }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] }, data: { botActive: false } });
-  const { stopSequences } = await import("@/lib/lead-sequences");
-  await stopSequences(leadId, "Kein WhatsApp", { now }).catch((err) => reportError(err, "kein-whatsapp-sequences"));
+  const { stopSequences, BEGLEIT_KINDS } = await import("@/lib/lead-sequences");
+  await stopSequences(leadId, "Kein WhatsApp", { now, ausser: BEGLEIT_KINDS }).catch((err) => reportError(err, "kein-whatsapp-sequences"));
   const { logLeadHistory } = await import("@/lib/lead-history");
   await logLeadHistory(
     leadId,
