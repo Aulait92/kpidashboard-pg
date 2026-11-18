@@ -1,9 +1,10 @@
-// Show-up-Paket (Ole, 17.11.2026): Erscheinensquote, Vorlaufzeit der Terminvorschläge, Mail „jetzt 45 Minuten“.
+// Show-up-Paket (Ole, 17.11.2026): Erscheinensquote, Vorlaufzeit der Terminvorschläge, Mail „aktualisierter Kalendereintrag“ (ohne Dauer).
 import { describe, expect, it } from "vitest";
 import { erschienen, erscheinensquote, vorlaufGruppe } from "@/lib/erscheinensquote";
 import { MAX_VORLAUF_WERKTAGE, pickTwoSlots, werktageBis } from "@/lib/whatsapp/termin-vorschlaege";
 import { content } from "@/lib/calendar/lead-email";
 import type { CustomerEvent } from "@/lib/calendar/add-to-calendar";
+import { gleichText, stundeText, vortagText } from "@/lib/showup";
 
 const H = 60 * 60 * 1000;
 
@@ -70,7 +71,7 @@ describe("Vorlaufzeit der Terminvorschläge: höchstens 3 Werktage, Wahl bleibt 
   });
 });
 
-describe("Komplettcheck: Mail „jetzt 45 Minuten“ mit Kalenderdatei", () => {
+describe("Komplettcheck: Mail mit aktualisierter Kalenderdatei, ohne Dauer", () => {
   const ev: CustomerEvent = {
     uid: "a@termin",
     start: new Date("2026-11-18T09:00:00.000Z"),
@@ -84,13 +85,30 @@ describe("Komplettcheck: Mail „jetzt 45 Minuten“ mit Kalenderdatei", () => {
     mode: "video",
     videoUrl: "https://meet.google.com/abc",
   };
-  it("Sie und Du, ohne Gedankenstriche", () => {
+  it("Sie und Du, ohne Gedankenstriche und ohne Dauer (Ole, 17.11.2026 spät); Bestätigung und Erinnerung auch ohne", () => {
     const sie = content("updated", ev, { fullName: "Anna Becker", salutation: "Frau" }, "sie", { person: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" } });
-    expect(sie.subject).toBe("Ihr Termin mit Herrn Kannapinn: jetzt 45 Minuten");
-    expect(sie.lines.join(" ")).toContain("damit Herr Kannapinn im Termin auch kurz Ihre bestehenden Verträge mit Ihnen anschauen kann, haben wir Ihren Termin auf 45 Minuten verlängert.");
+    expect(sie.subject).toBe("Ihr Termin mit Herrn Kannapinn: aktualisierter Kalendereintrag");
+    expect(sie.lines.join(" ")).toContain("damit Herr Kannapinn im Termin auch Ihre übrigen Verträge mit Ihnen durchsehen kann, haben wir den Kalendereintrag aktualisiert.");
     expect(sie.calendar).toBe(true);
     const du = content("updated", ev, { fullName: "Anna Becker" }, "du", { person: { nom: "Ole", dat: "Ole" } });
-    expect(du.lines.join(" ")).toContain("haben wir deinen Termin auf 45 Minuten verlängert");
-    for (const x of [sie, du]) expect([x.subject, ...x.lines].join(" ")).not.toMatch(/[–—]/);
+    expect(du.lines.join(" ")).toContain("deine übrigen Verträge mit dir durchsehen kann");
+    for (const kind of ["updated", "booked", "rescheduled", "reminder"] as const) {
+      for (const an of ["sie", "du"] as const) {
+        const x = content(kind, ev, { fullName: "Anna Becker", salutation: "Frau" }, an, { person: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" } });
+        const t = [x.subject, ...x.lines].join(" ");
+        expect(t).not.toMatch(/[–—]/);
+        expect(t, `${kind} ${an}`).not.toMatch(/\d+\s*(Minuten|Min\.)/);
+      }
+    }
+    // Erinnerungen per WhatsApp (Vortag, 1 Stunde, kurz vorher) ebenfalls ohne Dauer
+    const person = { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" };
+    for (const an of ["sie", "du"] as const) {
+      const texte = [
+        vortagText({ an, hi: "Hallo,", wann: "morgen um 10 Uhr", nutzen: "In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was es kostet.", komplettcheck: true, mode: "video", meetUrl: "https://x", person, policen: "Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat." }),
+        stundeText({ an, hi: "Hallo,", mode: "video", person }),
+        gleichText({ an, hi: "Hallo,", person, startsAt: ev.start, meetUrl: "https://x" }),
+      ];
+      for (const t of texte) expect(t).not.toMatch(/\d+\s*(Minuten|Min\.)/);
+    }
   });
 });

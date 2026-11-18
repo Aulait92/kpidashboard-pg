@@ -139,7 +139,7 @@ describe("3./4. Frageplan je Produkt (Testlead mit vollständigen Formularangabe
     const plan = frageplan("Privatschutz", formular, { gesendet });
     expect(plan.gestellt?.key).toBe("frage1");
     expect(plan.gestellt?.bekannt).toBe("Versicherungsinteresse: Haftpflicht, Hausrat");
-    expect(plan.offen.map((f) => f.sie)).toEqual(["Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?"]);
+    expect(plan.offen.map((f) => f.sie)).toEqual(["Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?"]);
     const regel = ersteFrageRegel("Privatschutz", "Herr Kannapinn", { gesendet, an: "sie", formular });
     expect(regel).toMatch(/gilt als beantwortet/);
     expect(regel).toMatch(/verfolge die Frage nicht weiter/);
@@ -242,7 +242,7 @@ describe("Folgefragen nach der Buchung (Rechner-Tabelle docs/preise-pilot.md)", 
     const ort = [{ label: "Postleitzahl", value: "80331" }, { label: "Lebenssituation", value: "Single" }];
     expect(keys(["haftpflicht"], src(ort))).toEqual(["geburt", "oeffentlicherDienst"]);
     expect(keys(["hausrat"], src(ort))).toEqual(["geburt", "wohnflaeche"]);
-    expect(keys(["rechtsschutz"], src(ort))).toEqual(["geburt", "beruf"]); // Lebensbereiche legt der Vermittler fest
+    expect(keys(["rechtsschutz"], src(ort))).toEqual(["geburt", "lebensbereiche", "beruf"]); // Lebensbereiche braucht der Rechner (P2)
     expect(keys(["unfall"], src(ort))).toEqual(["geburt", "versichern", "beruf"]); // Summen legt der Vermittler fest
     expect(keys(["wohngebaeude"], src(ort))).toEqual(["adresseGebaeude", "gebaeudeFlaeche", "baujahr", "wohneinheiten", "keller", "bauweise"]);
     expect(keys(["wohngebaeude"], src(ort, { plz: "Lindenweg 3, 80331 München", gebaeude: "Bj. 1998, 140 m², Einfamilienhaus, Keller, massiv" }))).toEqual([]);
@@ -260,40 +260,46 @@ describe("Folgefragen nach der Buchung (Rechner-Tabelle docs/preise-pilot.md)", 
   });
 });
 
-describe("Buchungsnachricht und Abschluss (eine Bestätigungsfrage ganz am Schluss)", () => {
+describe("Buchungsnachricht und Schluss (kurz, die Adresse am Schluss bestätigen)", () => {
   const person = vermittlerName("sie", { name: "Ole Kannapinn", anrede: "Herr", fallback: "X" });
   const start = new Date("2026-11-18T09:00:00Z");
 
-  it("mit offenen Angebotsfragen: Buchungsnachricht ohne Frage", () => {
+  it("Buchungsnachricht kurz, ohne Frage (Video mit Link, Telefon ohne)", () => {
     const t = buchungsText({ an: "sie", start, mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person });
-    expect(t).toBe(
-      "Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link: https://meet.google.com/abc-defg-hij\n\nHerr Kannapinn hält sich diese Zeit nur für Sie frei und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
-    );
+    expect(t).toBe("Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*. Herr Kannapinn hält sich die Zeit nur für Sie frei und bereitet Ihre Beiträge vor.\nIhr Link: https://meet.google.com/abc-defg-hij");
     expect(t).not.toMatch(/\?/);
+    expect(buchungsText({ an: "sie", start, mode: "phone", meetUrl: null, person })).toBe(
+      "Ihr Telefontermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*. Herr Kannapinn hält sich die Zeit nur für Sie frei, ruft Sie an und bereitet Ihre Beiträge vor.",
+    );
   });
 
-  it("Abschluss: Angaben notiert, Bereitlegen, E-Mail, Kalenderfrage zuletzt; ohne offene Fragen direkt an der Buchungsnachricht", () => {
+  it("Schluss: Angaben notiert, Bereitlegen in einer Zeile, Adresse bestätigen zuletzt; ohne Adresse freiwillig", () => {
     const sparten: RechnerSparte[] = ["haftpflicht", "hausrat"];
     const ab = abschlussText({ an: "sie", person, bereitlegen: bereitlegenListe("Privatschutz", sparten, "sie"), email: "ole@example.com", nachFragen: true });
-    expect(ab).toMatch(/^Danke, damit sind alle wichtigen Angaben für Herrn Kannapinn notiert\./);
-    expect(ab).toContain("• Ihre IBAN, falls Sie direkt abschließen möchten");
-    expect(ab).toContain("• die Wohnfläche Ihrer Wohnung");
-    expect(ab).not.toContain("Chipnummer");
-    expect(ab.endsWith("Die Einladung mit Kalendereintrag habe ich Ihnen an ole@example.com geschickt. *Haben Sie sich den Termin schon im Kalender eingetragen?*")).toBe(true);
+    expect(ab).toBe(
+      "Danke, damit sind alle wichtigen Angaben für Herrn Kannapinn notiert. Legen Sie zum Termin gern bereit: die Wohnfläche und Ihre IBAN für einen direkten Abschluss.\n\nZum Schluss: Die Einladung mit Kalendereintrag geht an ole@example.com. Stimmt die Adresse?",
+    );
     expect((ab.match(/\?/g) ?? []).length).toBe(1);
-    const direkt = buchungsText({ an: "sie", start, mode: "video", meetUrl: "https://meet.google.com/x", person, abschluss: abschlussText({ an: "sie", person, bereitlegen: [], email: "ole@example.com", nachFragen: false }) });
-    expect(direkt.endsWith("*Haben Sie sich den Termin schon im Kalender eingetragen?*")).toBe(true);
-    expect(direkt).not.toMatch(/Stimmt die Adresse/);
+    const ohne = abschlussText({ an: "du", person: vermittlerName("du", { name: "Ole Kannapinn", anrede: "Herr", fallback: "X" }), bereitlegen: [], email: null, nachFragen: true });
+    expect(ohne.endsWith("Zum Schluss: Möchtest du die Einladung mit Kalendereintrag per E-Mail? Dann schreib mir einfach deine Adresse.")).toBe(true);
   });
 
-  it("Prompt nach der Buchung: Fragen in Reihenfolge, Abschluss, Zusage per termin_zugesagt, E-Mail nur bestätigen", () => {
+  it("Prompt nach der Buchung: Fragen in Reihenfolge, Schluss mit Adresse, termin_zugesagt bzw. update_email", () => {
     const r = nachBuchungRegel({ an: "sie", person, fragen: [{ text: "Wie lautet Ihr Geburtsdatum?", feld: "geburt" }], abschlussGesendet: false, zugesagt: false });
     expect(r).toContain("1. „Wie lautet Ihr Geburtsdatum?“ (angaben.geburt)");
     expect(r).toMatch(/Die App schickt die nächste Nachricht selbst/);
     const k = nachBuchungRegel({ an: "sie", person, fragen: [], komplettcheckOffen: true, abschlussGesendet: false, zugesagt: false });
     expect(k).toMatch(/nutze komplettcheck mit ja=true bzw\. ja=false/);
-    expect(r).toMatch(/termin_zugesagt/);
     expect(r).toMatch(/update_email/);
+    expect(r).toMatch(/Frag nicht selbst nach der E-Mail-Adresse/);
+    // Lebensbereiche werden gefragt, wenn der Rechner sie braucht (P2): kein Widerspruch im Prompt
+    expect(r).not.toMatch(/Lebensbereiche/);
+    const vor = nachBuchungRegel({ an: "sie", person, fragen: [], komplettcheckGestellt: false, abschlussGesendet: false, zugesagt: false });
+    expect(vor).toMatch(/Die App schickt gleich selbst die nächste Frage/);
+    const mail = nachBuchungRegel({ an: "sie", person, fragen: [], emailOffen: true, abschlussGesendet: true, zugesagt: false });
+    expect(mail).toMatch(/Frage nach der E-Mail-Adresse[\s\S]*update_email/);
+    const best = nachBuchungRegel({ an: "sie", person, fragen: [], adresseBestaetigenOffen: true, abschlussGesendet: true, zugesagt: false });
+    expect(best).toMatch(/Stimmt|stimmt[\s\S]*termin_zugesagt/);
   });
 
   it("Bestätigungs-Mail: Kalenderdatei mit Meet-Link", () => {

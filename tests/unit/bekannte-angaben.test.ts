@@ -45,13 +45,13 @@ describe("Bekannte Antworten aus dem Formular", () => {
   it("Freitext-Erstanschreiben fragt die erste offene Frage, sonst nach dem Videotermin", () => {
     expect(ersteFrage("TKV-Katze", "sie", "Ole", testLeadAnswers("TKV-Katze"))).toBe("Soll vor allem eine Operation abgesichert sein, oder auch die normale Tierarztbehandlung?");
     expect(ersteFrage("PKV Wechsel", "du", "Ole", testLeadAnswers("PKV Wechsel"))).toBe("Passt dir ein kurzer Videotermin mit Ole in den nächsten Tagen?");
-    expect(ersteFrage("Privatschutz", "sie", "Ole", [{ label: "Versicherungsinteresse", value: "Hausrat" }])).toBe("Wer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?");
-    // Interesse und Lebenssituation bekannt (Ole, 17.11.2026): die eine nützliche Frage, schon versichert?
-    expect(ersteFrage("Privatschutz", "sie", "Ole", testLeadAnswers("Privatschutz"))).toBe("Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?");
+    // v8 (Ole, 17.11.2026): Privatschutz öffnet mit „schon versichert?“ (je nach Interesse)
+    expect(ersteFrage("Privatschutz", "sie", "Ole", [{ label: "Versicherungsinteresse", value: "Hausrat" }])).toBe("Sind Sie bei Hausrat schon versichert, oder wäre es neu?");
+    expect(ersteFrage("Privatschutz", "sie", "Ole", testLeadAnswers("Privatschutz"))).toBe("Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?");
     // ohne Formular wie bisher
     expect(ersteFrage("TKV-Katze", "sie", "Ole")).toBe("Wie alt ist Ihre Katze?");
     const t = erstanschreibenText({ an: "du", name: "Ole", source: "Privatschutz", formular: testLeadAnswers("Privatschutz") });
-    expect(t.split("\n").at(-1)).toBe("Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?");
+    expect(t.split("\n").at(-1)).toBe("*Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*");
     expect(t).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
   });
 

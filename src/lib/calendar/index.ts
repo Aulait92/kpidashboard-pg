@@ -9,6 +9,7 @@ import {
   googleCreateEvent,
   googleDeleteEvent,
   googleUpdateEventEnd,
+  googleUpdateEventTime,
   googleGetResponses,
   googleGetBusy,
   googleHasRequiredScopes,
@@ -20,6 +21,7 @@ import {
   microsoftCreateEvent,
   microsoftDeleteEvent,
   microsoftUpdateEventEnd,
+  microsoftUpdateEventTime,
   microsoftGetResponses,
   microsoftGetBusy,
 } from "@/lib/calendar/microsoft";
@@ -75,12 +77,14 @@ export async function adapterFor(customerId: string) {
           createEvent: (ev: NewEvent) => microsoftCreateEvent(customerId, ev),
           deleteEvent: (id: string) => microsoftDeleteEvent(customerId, id),
           updateEventEnd: (id: string, end: Date) => microsoftUpdateEventEnd(customerId, id, end),
+          updateEventTime: (id: string, start: Date, end: Date) => microsoftUpdateEventTime(customerId, id, start, end),
         }
       : {
           getBusy: (min: Date, max: Date) => googleGetBusy(customerId, min, max),
           createEvent: (ev: NewEvent) => googleCreateEvent(customerId, ev),
           deleteEvent: (id: string) => googleDeleteEvent(customerId, id),
           updateEventEnd: (id: string, end: Date) => googleUpdateEventEnd(customerId, id, end),
+          updateEventTime: (id: string, start: Date, end: Date) => googleUpdateEventTime(customerId, id, start, end),
         };
 
   return {
@@ -102,6 +106,8 @@ export async function adapterFor(customerId: string) {
     deleteEvent: (id: string): Promise<void> => native.deleteEvent(id),
     // Termin verlängern (Komplettcheck, lib/komplettcheck-dauer.ts); Kalender schickt die Aktualisierung
     updateEventEnd: (id: string, end: Date): Promise<void> => native.updateEventEnd(id, end),
+    // Termin verlegen (Komplettcheck: andere Zeit mit 45 Min., gleicher Termin und gleiche Einladung)
+    updateEventTime: (id: string, start: Date, end: Date): Promise<void> => native.updateEventTime(id, start, end),
   };
 }
 

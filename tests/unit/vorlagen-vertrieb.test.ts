@@ -7,7 +7,7 @@ import { knopfAktion, knopfHinweis, slotPayload } from "@/lib/whatsapp/knopf";
 import { pickTwoSlots, slotLabel } from "@/lib/whatsapp/termin-vorschlaege";
 import { buildTemplateRequest, categoryFor, metaTemplateProblems, requestShape, withoutHeader } from "@/lib/whatsapp/template-plan";
 import {
-  ERSTINFO_FOOTER,
+  ERSTINFO_FOOTER, ERSTINFO_FOOTER_V8,
   freitextButtonsOf,
   interactiveButtons,
   isCurrentTemplateName,
@@ -41,11 +41,13 @@ describe("Erstanschreiben je Produkt", () => {
     expect(outreachProdukt("Sterbegeldversicherung")).toBeNull();
     expect(outreachProdukt(null)).toBeNull();
     // Knöpfe im Freitext = Knöpfe im Prompt, solange Frage 1 gestellt wird (Zahnzusatz neutral, Art. 9 DSGVO; Tier ohne)
-    for (const s of ["TKV Katze", "Zahnzusatz", "PKV", "Privatschutz"]) {
+    for (const s of ["TKV Katze", "Zahnzusatz", "PKV"]) {
       const p = outreachProdukt(s)!;
       expect(freitextButtonsOf(p.purpose)).toBeUndefined();
       expect(ersteFrageKnoepfe(s, [])).toEqual(p.knoepfe);
     }
+    // Privatschutz öffnet ab v8 mit „schon versichert?“ (ohne Knöpfe; die Zwischenfrage danach hat Knöpfe)
+    expect(ersteFrageKnoepfe("Privatschutz", [])).toEqual([]);
   });
 
   it("Assistent: Knopf-Antwort = Antwort auf Frage 1, dann Frage 2, dann Termine", () => {
@@ -87,8 +89,9 @@ describe("Dokument-Kopf (Erstinformation als PDF) und Antrag", () => {
     const comps = req.components as { type: string; format?: string; example?: { header_handle: string[] }; text?: string }[];
     expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
     expect(comps[0]).toEqual({ type: "HEADER", format: "DOCUMENT", example: { header_handle: [pdf] } });
-    expect(comps[2].text).toBe(ERSTINFO_FOOTER);
+    expect(comps[2].text).toBe(ERSTINFO_FOOTER_V8);
     expect(ERSTINFO_FOOTER.length).toBeLessThanOrEqual(60);
+    expect(ERSTINFO_FOOTER_V8.length).toBeLessThanOrEqual(60);
     expect(requestShape(req)).toEqual({ headerFormat: "DOCUMENT", buttons: [] });
     const plain = withoutHeader(req);
     expect((plain.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY"]);
@@ -97,7 +100,7 @@ describe("Dokument-Kopf (Erstinformation als PDF) und Antrag", () => {
     expect((zahn.components as { type: string }[]).map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
     const ohneKopf = buildTemplateRequest("outreach_zahn", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf, kopf: false });
     expect((ohneKopf.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY"]);
-    expect(ohneKopf.name).toBe("pg_outreach_zahn_v7_ohnepdf_sie");
+    expect(ohneKopf.name).toBe("pg_outreach_zahn_v8_ohnepdf_sie");
     expect(requestShape(plain).headerFormat).toBeNull();
     // Andere Zwecke bekommen nie einen Kopf
     const rem = buildTemplateRequest("reminder", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
@@ -141,11 +144,12 @@ describe("Versionen und A/B-Fassungen bei der Auswahl", () => {
   const lA = { name: "pg_followup_last_v4_sie", body: "Guten Tag {{1}}, A ok?", headerFormat: null };
   const lB = { name: "pg_followup_last_v4_b_sie", body: "Guten Tag {{1}}, B ok?", headerFormat: null };
 
-  it("Erstanschreiben v7, übrige v4, unveränderte Zwecke behalten v3", () => {
+  it("Erstanschreiben v8, übrige v4, unveränderte Zwecke behalten v3", () => {
     expect(TEMPLATE_VERSION).toBe("v4");
     expect(templateVersionFor("review_request")).toBe("v3");
-    expect(templateVersionFor("outreach_tkv")).toBe("v7");
-    expect(isCurrentTemplateName("pg_outreach_v7_sie", "outreach")).toBe(true);
+    expect(templateVersionFor("outreach_tkv")).toBe("v8");
+    expect(isCurrentTemplateName("pg_outreach_v8_sie", "outreach")).toBe(true);
+    expect(isCurrentTemplateName("pg_outreach_v7_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v6_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v5_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v4_sie", "outreach")).toBe(false);

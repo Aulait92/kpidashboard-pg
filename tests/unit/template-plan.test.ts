@@ -23,19 +23,19 @@ const ALL = [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES];
 
 describe("Vorlagen-Plan", () => {
   it("Kampagnen-Vorlagen nur mit Bestandskunden-Modul", () => {
-    // inkl. Show-up-Paket (freigegeben 17.11.2026): 15 Minuten vorher, „wartet im Videoraum“
-    expect(purposesFor({ bestand: false })).toHaveLength(16);
+    // inkl. Show-up-Paket (freigegeben 17.11.2026): 15 Minuten vorher, „wartet im Videoraum“; Angebot (P3, 17.11.2026)
+    expect(purposesFor({ bestand: false })).toHaveLength(20);
     expect(purposesFor({ bestand: false })).toContain("reschedule");
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["reminder_start", "appt_waiting"]));
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(20);
+    expect(purposesFor({ bestand: true })).toHaveLength(24);
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz"]));
   });
 
   it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
-    // Erstanschreiben v7 (17.11.2026, erste Frage nicht fett, nur mit PDF-Kopf), übrige Zwecke v4
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v7");
-    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v7_sie");
+    // Erstanschreiben v8 (17.11.2026, kurz, nur mit PDF-Kopf), übrige Zwecke v4
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v8");
+    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v8_sie");
     expect(templateNameFor("outreach_tkv", "v6", "sie_ohne_name", "a", false)).toBe("pg_outreach_tkv_v6_ohnepdf_sie_ohne_name");
     expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v4_b_sie");
     // Unveränderte Texte behalten ihre Version (keine erneute Einreichung)
@@ -61,8 +61,8 @@ describe("Vorlagen-Plan", () => {
     const body = templateBodyFor("followup_noshow", "Anid Brand");
     expect(body).toContain("Anid Brand");
     expect(body).not.toContain("[Berater]");
-    // Erstanschreiben ab v6: Vermittler als Platzhalter (Dativ, „von Herrn Kannapinn“)
-    expect(templateBodyFor("outreach", "Anid Brand")).toContain("digitale KI-Assistent von {{3}}.");
+    // Erstanschreiben ab v6: Vermittler als Platzhalter (Dativ, „von Herrn Kannapinn“), ab v8 {{2}}
+    expect(templateBodyFor("outreach", "Anid Brand")).toContain("digitale Assistent von {{2}}.");
   });
 
   it("Antrag: Beispielwerte je Platzhalter, Knöpfe wo eine Antwort erwartet wird, Abmeldeknopf bei Werbung", () => {
@@ -86,7 +86,7 @@ describe("Vorlagen-Plan", () => {
     // Knöpfe überall, wo eine Antwort erwartet wird
     // Erstanschreiben ab v6: die erste Frage ist ein Platzhalter, daher ohne Knöpfe in der Vorlage. „Wartet im Videoraum“
     // erwartet keine Antwort (nur der Link), daher ohne Knöpfe.
-    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES].filter((x) => !(OUTREACH_PURPOSES as readonly string[]).includes(x) && x !== "appt_waiting")) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
+    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES].filter((x) => !(OUTREACH_PURPOSES as readonly string[]).includes(x) && x !== "appt_waiting" && x !== "offer_send" && x !== "glueckwunsch")) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
     expect(TEMPLATE_BUTTONS.appt_waiting).toBeUndefined();
     expect(TEMPLATE_BUTTONS.reminder).toEqual(["Ja, passt", "Bitte verschieben"]);
     expect(TEMPLATE_BUTTONS.followup_noshow).toEqual(["Ja, neuer Termin", "Kein Bedarf mehr"]);

@@ -49,7 +49,7 @@ export function buildEventDescription(d: {
     .join("\n");
 }
 
-/** Titel der Einladung für den Lead (ohne Interna). */
+/** Titel der Einladung für den Lead (ohne Interna). advisorName im Dativ („mit Herrn Kannapinn“, lib/vermittler-nennung.ts). */
 export function customerEventSummary(mode: "phone" | "video", advisorName: string): string {
   return `${mode === "video" ? "Videoberatung" : "Telefonische Beratung"} mit ${advisorName}`;
 }
@@ -62,9 +62,13 @@ export function customerEventDescription(d: {
   phone: string | null;
   videoUrl: string | null;
   manageUrl: string;
+  /** Voller Name für den Gruß am Ende */
   advisorName: string;
+  /** Vermittler im Text nach der Nennungsregel („Herr Kannapinn ruft Sie an“); ohne: advisorName */
+  person?: { nom: string; dat: string };
 }): string {
   const du = d.an === "du";
+  const wer = d.person?.nom ?? d.advisorName;
   const how =
     d.mode === "video"
       ? d.videoUrl
@@ -73,8 +77,8 @@ export function customerEventDescription(d: {
           ? "Den Link zum Videocall bekommst du rechtzeitig vor dem Termin."
           : "Den Link zum Videocall bekommen Sie rechtzeitig vor dem Termin."
       : d.phone
-        ? `${d.advisorName} ruft ${du ? "dich" : "Sie"} zur vereinbarten Zeit unter +${d.phone} an.`
-        : `${d.advisorName} ruft ${du ? "dich" : "Sie"} zur vereinbarten Zeit an.`;
+        ? `${wer} ruft ${du ? "dich" : "Sie"} zur vereinbarten Zeit unter +${d.phone} an.`
+        : `${wer} ruft ${du ? "dich" : "Sie"} zur vereinbarten Zeit an.`;
   return [
     d.hi,
     du ? "vielen Dank für deine Terminbuchung!" : "vielen Dank für Ihre Terminbuchung!",

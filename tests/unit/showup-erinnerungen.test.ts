@@ -120,8 +120,8 @@ describe("Show-up-Vorlagen: freigegeben und eingereicht (17.11.2026)", () => {
   const bodyOf = (req: ReturnType<typeof buildTemplateRequest>) => (req.components as { type: string; text?: string }[]).find((c) => c.type === "BODY")!.text!;
 
   it("15 Min. und „wartet im Videoraum“ stehen in CORE_PURPOSES und werden je Fassung eingereicht (UTILITY, v5)", () => {
-    // Show-up freigegeben; vorbereitet ist nur noch der Glückwunsch zum Abschluss (P4)
-    expect(VORBEREITETE_PURPOSES).toEqual(["glueckwunsch"]);
+    // Show-up freigegeben; Glückwunsch zum Abschluss (P4) seit 17.11.2026 ebenfalls zur Einreichung freigegeben
+    expect(VORBEREITETE_PURPOSES).toEqual([]);
     for (const p of ["reminder_start", "appt_waiting"] as const) {
       expect(CORE_PURPOSES).toContain(p);
       expect(purposesFor({ bestand: false, empfehlung: false })).toContain(p);
@@ -140,7 +140,9 @@ describe("Show-up-Vorlagen: freigegeben und eingereicht (17.11.2026)", () => {
   });
 
   it("Vortag und 1 Stunde: v5 mit Oles Text wird eingereicht, nichts mehr nur vorbereitet", () => {
-    expect(VORBEREITETE_FASSUNG).toEqual({});
+    // Vortag und 1 Stunde nicht mehr nur vorbereitet (vorbereitet ist nur noch das Erstanschreiben v8 aus P2)
+    expect(VORBEREITETE_FASSUNG.reminder).toBeUndefined();
+    expect(VORBEREITETE_FASSUNG.reminder_soon).toBeUndefined();
     expect(templateNameFor("reminder", undefined, "sie")).toBe("pg_reminder_v5_sie");
     expect(templateNameFor("reminder_soon", undefined, "sie_ohne_name")).toBe("pg_reminder_soon_v5_sie_ohne_name");
     expect(templateTextFor("reminder", "sie")).toBe("Guten Tag {{1}}, kurze Erinnerung an Ihren Termin {{2}}. {{3}} So geht es los: {{4}} Passt es weiterhin?");

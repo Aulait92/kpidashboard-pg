@@ -22,6 +22,7 @@ import {
   ersteFrageKnoepfe,
   erstanschreibenText,
   erstanschreibenV6Params,
+  erstanschreibenV8Params,
   outreachProdukt,
   tierWort,
   type Herkunft,
@@ -90,9 +91,10 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   const first = firstNameOf(opts.name);
   // v6 (Ole, 17.11.2026): Vermittler als Person im Dativ („von Herrn Kannapinn“, Du Vorname), Rückfall Agentur
   const person = (an: Ansprache) => vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.firm || kurz });
-  // Parameter je gewählter Vorlage: v6 Thema, Vermittler, erste offene Frage (ohne „?“); Produkt (v5 mit Tier, v4) bzw.
-  // allgemeine Fassung (nur Name), v3 mit Link
+  // Parameter je gewählter Vorlage: v8 Vermittler, erste offene Frage (ohne „?“); v6/v7 Thema, Vermittler, Frage; Produkt
+  // (v5 mit Tier, v4) bzw. allgemeine Fassung (nur Name), v3 mit Link
   const paramsFor = (p: { version: number; ansprache: Ansprache; purpose?: NoticePurpose }): string[] => {
+    if (p.version >= 8) return [first, ...erstanschreibenV8Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
     if (p.version >= 6) {
       return [first, ...erstanschreibenV6Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
     }
@@ -105,7 +107,7 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     who,
     purpose,
     variant,
-    params: paramsFor({ version: 6, ansprache: opts.an }),
+    params: paramsFor({ version: 8, ansprache: opts.an }),
     paramsFor,
     legacyParams: [first, url],
     // Knöpfe im offenen Fenster nur, wenn sie zur gestellten Frage passen (Frage 1 bzw. Telefonat)
@@ -131,7 +133,7 @@ export async function sendOutreach(opts: { customerId: string; leadId: string; p
     customerId: opts.customerId,
     to: opts.phone,
     purpose: m.purpose,
-    params: m.paramsFor({ version: 6, ansprache: opts.an }),
+    params: m.paramsFor({ version: 8, ansprache: opts.an }),
     paramsFor: m.paramsFor,
     legacyParams: m.legacyParams,
     textButtons: m.textButtons,
@@ -146,7 +148,7 @@ export async function sendOutreach(opts: { customerId: string; leadId: string; p
   // Fenster offen (Freitext): Erstinformation unmittelbar als PDF hinterher (Nachricht 2, § 16 VersVermV; unvollständig
   // im aktuellen Stand, Rückfall Link). Als Vorlage geht das Erstanschreiben nur mit dem PDF im Kopf (rankOutreach).
   if (notice.mode === "text") {
-    await sendErstinfo({ conversationId: notice.conversationId, an: opts.an, advisorName: m.who.advisor || m.who.firm });
+    await sendErstinfo({ conversationId: notice.conversationId, an: opts.an, advisorName: vermittlerName(opts.an, { name: m.who.vermittler.name, anrede: m.who.vermittler.anrede, fallback: m.who.advisor || m.who.firm }).dat });
   }
   return notice;
 }

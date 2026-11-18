@@ -11,6 +11,8 @@ import { linkedInAvailable } from "@/lib/linkedin/api";
 import { metaDiagnostics } from "@/lib/meta-leads";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import { auslesenStatus, einstellung as auslesenEinstellung } from "@/lib/policen/auslesen/server";
+import { pauseAufhebenAction, zdrNachweisAction } from "./policen-actions";
 import { placesDailyLimit, placesKey, placesUsedToday } from "@/lib/vertrieb/contact-enrich";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
 
@@ -104,6 +106,7 @@ export default async function Page() {
     prisma.linkedInConnection.findFirst({ orderBy: { updatedAt: "desc" }, select: { name: true, expiresAt: true, status: true, lastError: true } }),
     metaDiagnostics(),
   ]);
+  const [policen, policenEinst] = await Promise.all([auslesenStatus().catch(() => null), auslesenEinstellung().catch(() => null)]);
   const placesOk = !!placesKey();
   const [placesUsed, enrichedGoogle, enrichedWeb] = await Promise.all([
     placesUsedToday().catch(() => 0),
@@ -217,6 +220,44 @@ export default async function Page() {
               </li>
             ))}
           </ul>
+        </Card>
+      ) : null}
+
+      {policen ? (
+        <Card className="mb-5" data-policen-auslesen>
+          <CardHeader title="KI für Unterlagen (Policen auslesen)" hint="nur Dokumente, getrennt vom Chat-Assistenten" />
+          <div className="space-y-3 px-5 py-4 text-sm">
+            <ul className="space-y-1.5">
+              <Check ok={policen.an} label={policen.an ? "An" : policen.notschalterAus ? "Aus (POLICEN_AUSLESEN_AN)" : "Aus: Schlüssel fehlt (POLICEN_OPENAI_API_KEY)"} />
+              <Check ok={!policen.pausiert} label={policen.pausiert ? "Pausiert: Schlüssel ungültig (401)" : "Schlüssel nicht abgelehnt"} />
+              <Check ok={policen.zdrNachweis} label={policen.zdrNachweis ? `Nachweis „keine Speicherung“ vom ${policen.zdrNachweisAm}: Kranken, BU, Leben an` : "Kein Nachweis „keine Speicherung“: nur Sachversicherungen"} />
+            </ul>
+            <p className="text-[color:var(--muted)]">
+              {policen.anbieter} · {String(policen.endpunkt ?? "")} · Modell {String(policen.modell ?? "")}
+              {"tageBisAblauf" in policen ? ` · Schlüssel bis ${policen.schluesselAblauf} (${policen.tageBisAblauf} Tage)` : ""} · heute {policen.heute.anzahl} von {policen.maxProTag}
+            </p>
+            {policen.pausiert ? (
+              <form action={pauseAufhebenAction}>
+                <Button type="submit">Pause aufheben (Schlüssel erneuert)</Button>
+              </form>
+            ) : null}
+            <form action={zdrNachweisAction} className="flex flex-wrap items-end gap-2">
+              <label className="block">
+                <span className="mb-1 block text-[13px] text-[color:var(--muted)]">Nachweis vom</span>
+                <input name="am" type="date" defaultValue={policenEinst?.zdrNachweisAm?.toISOString().slice(0, 10) ?? ""} className="h-10 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3" />
+              </label>
+              <label className="block min-w-48 flex-1">
+                <span className="mb-1 block text-[13px] text-[color:var(--muted)]">Referenz (Ablage)</span>
+                <input name="referenz" defaultValue={policenEinst?.zdrReferenz ?? ""} placeholder="z. B. OpenAI ZDR-Bestätigung, docs/recht/…" className="h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3" />
+              </label>
+              <Button type="submit">Nachweis speichern</Button>
+              {policen.zdrNachweis ? (
+                <Button type="submit" name="entfernen" value="1" variant="ghost">
+                  Entfernen
+                </Button>
+              ) : null}
+            </form>
+          </div>
         </Card>
       ) : null}
 

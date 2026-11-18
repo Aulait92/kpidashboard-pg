@@ -226,7 +226,9 @@ describe("Keine KI für Policen (Codeprüfung)", () => {
   it("lib/policen importiert keinen KI-Client und ruft keine KI auf", () => {
     const dir = join(process.cwd(), "src/lib/policen");
     const verboten = /@anthropic-ai|openai|ki-eu|bedrock|replicate|runAgent|lib\/ai\b|messages\.create|generativeai/i;
-    for (const f of readdirSync(dir)) {
+    // Ausnahme nur der Unterordner auslesen/ (Policen auslesen, Ole 18.11.2026): eigener Dokument-Zugang, nur mit
+    // Einwilligung ki = true; KI-Clients dort nur in auslesen/anbieter (tests/unit/policen-auslesen-grenze.test.ts)
+    for (const f of readdirSync(dir, { withFileTypes: true }).filter((e) => e.isFile()).map((e) => e.name)) {
       const code = readFileSync(join(dir, f), "utf8").split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n");
       expect(code, f).not.toMatch(verboten);
     }
@@ -342,12 +344,12 @@ describe("Ablauf im Assistenten", () => {
   });
 
   it("Bereitlegen-Liste ohne bisherige Policen, wenn welche geschickt wurden", () => {
-    const liste = bereitlegenListe("Privatschutz", ["hausrat", "wohngebaeude"], "sie");
-    expect(liste.some((x) => /bisherigen Policen/.test(x))).toBe(true);
+    const liste = bereitlegenListe("Privatschutz", ["hausrat", "wohngebaeude"], "sie", { komplettcheck: true });
+    expect(liste.some((x) => /bestehenden Verträge und Policen/.test(x))).toBe(true);
     const ohne = ohneBisherigePolicen(liste, true);
     expect(ohne.some((x) => /Polic/.test(x))).toBe(false);
     expect(ohneBisherigePolicen(liste, false)).toEqual(liste);
-    const du = ohneBisherigePolicen(bereitlegenListe("Privatschutz", ["haftpflicht"], "du"), true);
+    const du = ohneBisherigePolicen(bereitlegenListe("Privatschutz", ["haftpflicht"], "du", { komplettcheck: true }), true);
     expect(du.some((x) => /Polic/.test(x))).toBe(false);
   });
 });
@@ -365,3 +367,4 @@ describe("Gesundheitsangaben nicht in Felder und Notizen", () => {
     });
   });
 });
+

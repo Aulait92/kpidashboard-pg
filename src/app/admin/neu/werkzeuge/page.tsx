@@ -11,7 +11,6 @@ import {
   LifeBuoy,
   LogIn,
   MessageCircle,
-  MessageSquareWarning,
   PlugZap,
   Receipt,
   Rocket,
@@ -43,6 +42,7 @@ const GRUPPEN: { titel: string; icon: LucideIcon }[] = [
 
 /** Kurzbeschreibung und Symbol der eigenen Seiten (Ansicht aus navigation.ts). */
 const INFO: Record<string, { text: string; icon: LucideIcon }> = {
+  "w-zustand": { text: "Jobs, Meta, Stripe, Bank, LinkedIn, WhatsApp auf einen Blick", icon: Activity },
   "e-status": { text: "Störung melden, Support-Kontakt", icon: LifeBuoy },
   "e-anbindungen": { text: "Instantly, Meta, LinkedIn, Agenturliste", icon: PlugZap },
   "e-vorlagen": { text: "Support-Nummer, A/B-Tests der Vorlagen", icon: MessageCircle },
@@ -55,7 +55,6 @@ type Eintrag = { titel: string; href: string; text: string; icon: LucideIcon };
 
 /** Werkzeuge, die in einer Rolle oder Akte liegen (Adresse bleibt, hier nur der Weg dorthin). */
 const FREMD: (Eintrag & { gruppe: string })[] = [
-  { gruppe: "Zustand", titel: "WhatsApp-Zustellung", href: `${NEU}/zahlen/qualitaet`, text: "Zustellfehler, Leads ohne WhatsApp", icon: MessageSquareWarning },
   { gruppe: "Verbindungen & Importe", titel: "Bank verbinden", href: `${NEU}/zahlen/kosten`, text: "Geld › Kosten & Bank", icon: Landmark },
   { gruppe: "Verbindungen & Importe", titel: "Vertriebskalender", href: `${NEU}/vertrieb/termine`, text: "Verkaufen › Termine", icon: CalendarDays },
   { gruppe: "Meta & Werbung", titel: "Formular-Zuordnungen", href: `${NEU}/leads`, text: "Liefern › Lead-Eingang", icon: Layers },
