@@ -35,7 +35,13 @@ export function anrufZiel(c: {
     if (/angebot/.test(r)) return { ziel: "Entscheidung zum Angebot", schritte: ["Offene Fragen zum Angebot klären", "Abschluss machen oder nächsten Schritt festlegen"] };
     // Konkret statt „An das letzte Gespräch anknüpfen / Nächsten Schritt festlegen“ (Ole, 17.11.2026)
     const thema = c.source ? ` zu ${c.source}` : "";
-    const notiz = c.reason.trim() && !GENERISCH.test(c.reason.trim()) ? `Ihre Notiz aufgreifen: „${c.reason.trim().slice(0, 80)}“` : null;
+    // Eigene Notiz klar benennen (Ole, 18.11.2026: „Ihre Notiz aufgreifen“ war unglücklich): als Frage gestellt, ist sie
+    // selbst das Ziel des Anrufs („Police da und erste Zahlung erfolgt?“), sonst ein Hinweis fürs Gespräch
+    const eigene = c.reason.trim() && !GENERISCH.test(c.reason.trim()) ? c.reason.trim().slice(0, 80) : null;
+    if (eigene && eigene.endsWith("?") && !c.letzterTermin) {
+      return { ziel: "Ihre Frage klären", schritte: [`Fragen: „${eigene}“`, "Bei Bedarf gleich den nächsten Termin vereinbaren"] };
+    }
+    const notiz = eigene ? `Ihre Notiz dazu: „${eigene}“` : null;
     if (c.letzterTermin) {
       return {
         ziel: "Entscheidung nach dem Termin",

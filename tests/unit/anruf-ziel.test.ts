@@ -35,6 +35,12 @@ describe("Ziel des Anrufs", () => {
     expect(nach.schritte.join(" ")).not.toContain("Nächsten Schritt festlegen");
     const ohne = anrufZiel({ kind: "followup", reason: "Will mit Partnerin sprechen", source: "Hausrat" });
     expect(ohne.ziel).toBe("Termin vereinbaren");
-    expect(ohne.schritte[1]).toContain("Will mit Partnerin sprechen");
+    expect(ohne.schritte[1]).toBe("Ihre Notiz dazu: „Will mit Partnerin sprechen“");
+  });
+  it("Notiz als Frage ist das Ziel des Anrufs (Ole, 18.11.2026)", () => {
+    const z = anrufZiel({ kind: "followup", reason: "Police da und erste Zahlung erfolgt?", source: "Privatschutz" });
+    expect(z.ziel).toBe("Ihre Frage klären");
+    expect(z.schritte[0]).toBe("Fragen: „Police da und erste Zahlung erfolgt?“");
+    expect(z.schritte.join(" ")).not.toMatch(/Bezug nehmen|aufgreifen/);
   });
 });

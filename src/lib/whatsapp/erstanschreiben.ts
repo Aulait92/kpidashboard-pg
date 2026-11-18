@@ -23,7 +23,11 @@
 // Kopf weiter das PDF der Erstinformation. {{1}} Anrede („Frau Mustermann“, Anrede unsicher: Vor- und Nachname),
 // {{2}} Vermittler im Dativ („Herrn Kannapinn“, Du: Vorname), {{3}} erste offene Frage ohne „?“. Privatschutz fragt
 // zuerst nach bestehenden Verträgen, danach stellt die App genau eine Zwischenfrage (lib/whatsapp/zwischenfrage.ts).
-// v7 bleibt Rückfall, bis v8 bei Meta freigegeben ist (PLATZHALTER_AB).
+// v7 bleibt Rückfall, bis v8 bei Meta freigegeben ist.
+//
+// v9 (Ole, 18.11.2026): noch kürzer, eine Zeile, ohne Vermittler: „Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz!
+// *{{2}}?*“; Tierkrankenversicherung emotional mit dem Tiernamen: „Hallo {{1}}, schön, dass Sie {{2}} gut absichern
+// möchten 🐾 *{{3}}?*“. KI-Kennzeichnung in der Fußzeile (ERSTINFO_FOOTER_V9). v8 bleibt Rückfall (PLATZHALTER_AB).
 
 import { displayProduct } from "@/lib/products";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
@@ -78,6 +82,48 @@ export function erstanschreibenV8(purpose: ErstanschreibenZweck): { sie: string;
     sie: `danke für Ihre Anfrage${v8Thema(purpose, "sie")}! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*`,
     du: `danke für deine Anfrage${v8Thema(purpose, "du")}! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*`,
   };
+}
+
+/**
+ * Erstanschreiben v9 (Ole, 18.11.2026): noch kürzer, damit WhatsApp die Frage nicht hinter „Mehr lesen“ versteckt.
+ * Ohne Vermittler, ohne den Satz „Hier schreibt der digitale Assistent …“ und ohne Leerzeile; die KI-Kennzeichnung steht
+ * in der Fußzeile (ERSTINFO_FOOTER_V9). Platzhalter nach dem Namen: {{2}} erste offene Frage ohne „?“ (fett).
+ *   „Hallo Herr Pan, danke für Ihre Anfrage zum Privatschutz! *Sind Haftpflicht und Hausrat schon versichert, oder wäre
+ *   beides neu?*“
+ * Tierkrankenversicherung (Ole, 18.11.2026) emotional: {{2}} Tiername(n) bzw. „Ihre Katze“, {{3}} erste offene Frage.
+ *   „Hallo Herr Pan, schön, dass Sie Minka gut absichern möchten 🐾 *Ist Minka eine Wohnungskatze oder ein Freigänger?*“
+ */
+export function erstanschreibenV9(purpose: ErstanschreibenZweck): { sie: string; du: string } {
+  if (purpose === "outreach_tkv") {
+    return { sie: "schön, dass Sie {{2}} gut absichern möchten 🐾 *{{3}}?*", du: "schön, dass du {{2}} gut absichern möchtest 🐾 *{{3}}?*" };
+  }
+  return {
+    sie: `danke für Ihre Anfrage${v8Thema(purpose, "sie")}! *{{2}}?*`,
+    du: `danke für deine Anfrage${v8Thema(purpose, "du")}! *{{2}}?*`,
+  };
+}
+
+/** Tier im Akkusativ, wenn der Name fehlt („Ihre Katze“, „Ihren Hund“, Du „deinen Hund“). */
+const TIER_AKK: Record<Tier, { sie: string; du: string }> = {
+  katze: { sie: "Ihre Katze", du: "deine Katze" },
+  hund: { sie: "Ihren Hund", du: "deinen Hund" },
+  pferd: { sie: "Ihr Pferd", du: "dein Pferd" },
+  tier: { sie: "Ihr Tier", du: "dein Tier" },
+};
+
+/**
+ * Tier für das Erstanschreiben v9 der Tierkrankenversicherung: Name(n) aus dem Formular („Minka, Felix“, „Minka/Felix“
+ * → „Minka und Felix“, ab drei „A, B und C“), sonst „Ihre Katze“ bzw. „deinen Hund“ (Akkusativ).
+ */
+export function tierFuerErstanschreiben(source: string | null | undefined, an: Ansprache, formular?: FormAntwort[] | null): string {
+  const roh = (formular ?? []).find((x) => /tiername|name des tieres/i.test(x.label))?.value?.trim() ?? "";
+  const namen = roh
+    .split(/\s*(?:,|;|\/|&|\+|\bund\b)\s*/i)
+    .map((n) => n.trim())
+    .filter(Boolean);
+  if (namen.length === 1) return namen[0];
+  if (namen.length > 1) return `${namen.slice(0, -1).join(", ")} und ${namen.at(-1)}`;
+  return TIER_AKK[outreachProdukt(source)?.tier ?? "tier"][an];
 }
 
 /** Frage für den Platzhalter {{4}} (v6): ohne abschließendes „?“ (steht fest in der Vorlage). */
@@ -548,6 +594,15 @@ export function erstanschreibenV6Params(o: { source: string | null | undefined; 
   return [erstanschreibenThema(o.source), o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person))];
 }
 
+/**
+ * Parameter der v9-Vorlage nach dem Namen (rein, testbar): [erste offene Frage ohne „?“]; Tierkrankenversicherung
+ * [Tier (Name bzw. „Ihre Katze“), erste offene Frage ohne „?“].
+ */
+export function erstanschreibenV9Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string }): string[] {
+  const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person));
+  return erstanschreibenZweck(o.source, o.formular) === "outreach_tkv" ? [tierFuerErstanschreiben(o.source, o.an, o.formular), frage] : [frage];
+}
+
 /** Parameter der v8-Vorlage nach dem Namen: [Vermittler im Dativ, erste offene Frage ohne „?“] (rein, testbar). */
 export function erstanschreibenV8Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string }): [string, string] {
   return [o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person))];
@@ -568,12 +623,30 @@ export function ersteFrageKnoepfe(source: string | null | undefined, formular?: 
  * (Aufbau wie v8, erstanschreibenV8.)
  * Nachricht 2 ist das PDF der Erstinformation (lib/whatsapp/erstinfo-pdf.ts).
  */
-export function erstanschreibenText(o: ErstanschreibenOpts): string {
+export function erstanschreibenText(o: ErstanschreibenOpts, opts: { ohneFuss?: boolean } = {}): string {
   const person = o.vermittler ? { nom: o.vermittlerNom || o.vermittler, dat: o.vermittler } : null;
   const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.name, o.formular, person));
-  // v8 (Ole, 17.11.2026): die erste Frage wieder fett
-  return `${erstanschreibenKopf(o)}\n\n*${frage}?*`;
+  // Lead hat zuerst geschrieben bzw. kein Lead: wie bisher mit Kopf und Frage darunter (v8)
+  if (o.ohneLead || o.herkunft === "nachricht") return `${erstanschreibenKopf(o)}\n\n*${frage}?*`;
+  // v9 (Ole, 18.11.2026): wie die Vorlage, eine Zeile ohne Vermittler; die KI-Kennzeichnung der Fußzeile steht im
+  // Freitext kursiv darunter. Tierkrankenversicherung: „schön, dass Sie Minka gut absichern möchten 🐾“
+  const an = o.an;
+  const p = outreachProdukt(o.source);
+  const s = (o.source ?? "").trim();
+  const zweck = erstanschreibenZweck(o.source, o.formular);
+  const thema = p ? v8Thema(zweck as ErstanschreibenZweck, an) : s ? ` zum Thema ${erstanschreibenThema(o.source)}` : "";
+  const text =
+    zweck === "outreach_tkv"
+      ? `${erstGruss(an, o.kontakt)} schön, dass ${a(an, "du", "Sie")} ${tierFuerErstanschreiben(o.source, an, o.formular)} gut absichern ${a(an, "möchtest", "möchten")} 🐾 *${frage}?*`
+      : `${erstGruss(an, o.kontakt)} danke für ${a(an, "deine Anfrage", "Ihre Anfrage")}${thema}! *${frage}?*`;
+  return opts.ohneFuss ? text : `${text}\n\n_${ERSTANSCHREIBEN_FREITEXT_FUSS}_`;
 }
+
+/** Fußzeile der Vorlage ab Erstanschreiben v9 (Ole, 18.11.2026): KI-Kennzeichnung und PDF-Hinweis, höchstens 60 Zeichen. */
+export const ERSTINFO_FOOTER_V9 = "KI-Assistent · Erstinformation im PDF oben";
+
+/** KI-Kennzeichnung unter dem Erstanschreiben im Freitext (ohne Vorlagen-Fußzeile; das PDF folgt als eigene Nachricht). */
+export const ERSTANSCHREIBEN_FREITEXT_FUSS = "KI-Assistent · Erstinformation folgt als PDF";
 
 /** Knöpfe der bei Meta noch freigegebenen v4 (Zahnzusatz), Antworten darauf gelten als dieselbe Frage 1. */
 export const ZAHN_KNOEPFE_V4 = ["Zahnersatz", "Prophylaxe", "Beides"] as const;
