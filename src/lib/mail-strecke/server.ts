@@ -16,6 +16,7 @@
 //                 bookAppointment (Kalender sofort geblockt, Zeit beim Klick neu geprüft). Danach Komplettcheck,
 //                 Angebotsfragen, Bereitlegen, Adresse, Einladung genau einmal (lib/calendar/einladung.ts).
 
+import { NUR_PPL_WHERE, istNurPayPerLead } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 import { asAnsprache, anredeName, anredeZeile, type Ansprache } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -95,7 +96,7 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
         airtableId: true,
         externalId: true,
         formData: true,
-        customer: { select: { dormantSince: true, dataDeletedAt: true, mailFeaturesOff: true, agentConfig: { select: { active: true, outreachEnabled: true } } } },
+        customer: { select: { dormantSince: true, dataDeletedAt: true, mailFeaturesOff: true, plan: true, retainerMonthly: true, onboarding: { select: { id: true } }, agentConfig: { select: { active: true, outreachEnabled: true } } } },
       },
     });
     if (!lead || lead.erasedAt) return { ergebnis: "nicht_moeglich", grund: "nicht_gefunden" };
@@ -105,6 +106,8 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
     // (Formular, Meta, Empfehlung); von Hand angelegte Kontakte nicht. Bei „kein WhatsApp“ lief das Erstanschreiben schon.
     if (ausloeser !== "kein_whatsapp" && !(lead.airtableId || lead.externalId || lead.formData)) return { ergebnis: "nicht_moeglich", grund: "keine_anfrage" };
     const c = lead.customer;
+    // Pay-per-Lead (Ole, 18.11.2026): Leads der PPL-Kunden kontaktieren wir nie (weder Mail noch SMS)
+    if (istNurPayPerLead(c)) return { ergebnis: "nicht_moeglich", grund: "pay_per_lead" };
     if (c.dormantSince || c.dataDeletedAt) return { ergebnis: "nicht_moeglich", grund: "ruhend" };
     if (c.mailFeaturesOff) return { ergebnis: "nicht_moeglich", grund: "mail_aus" };
     if (!c.agentConfig?.active || !c.agentConfig.outreachEnabled) return { ergebnis: "nicht_moeglich", grund: "assistent_aus" };
@@ -357,6 +360,7 @@ async function stoppGrund(s: { id: string; leadId: string; reaktionAt: Date | nu
   if (s.appointmentId) return "gebucht";
   const lead = await prisma.lead.findUnique({ where: { id: s.leadId }, select: { status: true, reached: true, erasedAt: true, customerId: true, email: true, phone: true } });
   if (!lead || lead.erasedAt) return "geloescht";
+  if (await prisma.customer.count({ where: { id: lead.customerId, ...NUR_PPL_WHERE } })) return "pay_per_lead";
   if (!istOffen(lead.status)) return "status";
   if (lead.reached) return "anruf_erreicht";
   if (await prisma.appointment.count({ where: { leadId: s.leadId, status: "booked", startsAt: { gt: now } } })) return "gebucht";
@@ -379,7 +383,8 @@ export async function runMailStrecke(now = new Date()): Promise<CronErgebnis> {
     email: { not: null },
     mailStrecke: { is: null },
     OR: [{ status: null }, { status: "" }, { status: "Neuer Lead" }],
-    customer: { dormantSince: null, dataDeletedAt: null, mailFeaturesOff: false, agentConfig: { is: { active: true, outreachEnabled: true } } },
+    // Pay-per-Lead-Kunden nie (Ole, 18.11.2026): deren Leads kontaktieren wir nicht
+    customer: { dormantSince: null, dataDeletedAt: null, mailFeaturesOff: false, agentConfig: { is: { active: true, outreachEnabled: true } }, NOT: NUR_PPL_WHERE },
   };
   const [ohne, mitNummer] = await Promise.all([
     prisma.lead.findMany({
