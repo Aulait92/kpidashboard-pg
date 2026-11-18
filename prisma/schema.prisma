@@ -1649,6 +1649,9 @@ model Offer {
   // Jährlich im Voraus: Jahresbetrag = (12 − annualFreeMonths) × Monatspreis inkl. Zusätze
   annualPrepay            Boolean       @default(false)
   annualFreeMonths        Int?
+  // Jahreszahlung angeboten (Ole, 18.11.2026): Kunde wählt bei der Annahme monatlich oder jährlich im Voraus
+  // (nur mit 12 Monaten). Vor der Annahme ist annualPrepay die Vorauswahl (neu: monatlich), danach die Wahl.
+  annualChoice            Boolean       @default(false)
   // Empfehlungsrabatt auf die Einrichtung (Kollegen empfehlen, seit 14.11.2026):
   // setupListFee = Listenpreis der Einrichtung vor Rabatt (für die gewählte Laufzeit),
   // setupDiscount = vereinbarter Rabatt (netto, wird bei der Laufzeitwahl neu angewendet),

@@ -34,6 +34,9 @@ export type DealOfferRow = {
   /** Abrechnungstag (null = wie Start) und kostenloser Start bis dahin (lib/abrechnungstag.ts) */
   billingDay?: number | null;
   billingFreeStart?: boolean;
+  /** Jahreszahlung angeboten (Kunde wählt) bzw. jährlich im Voraus (nach der Annahme: Wahl des Kunden) */
+  annualChoice?: boolean;
+  annualPrepay?: boolean;
   /** „Ich zahle später“ auf der Angebotsseite erlaubt */
   allowPayLater: boolean;
   /** Überweisung nur auf Anfrage (lib/ueberweisung.ts): erlaubt, Zahlungsziel, gewählte Zahlweise, Funktion freigeschaltet */
@@ -177,6 +180,15 @@ export function DealOffersCard({
               {current.billingDay != null ? (
                 <li data-angebot-abrechnungstag>
                   Abrechnung {abrechnungstagKurz(abrechnungsplan({ startIso: current.startDate, billingDay: current.billingDay, freeStart: current.billingFreeStart }))}
+                </li>
+              ) : null}
+              {current.annualChoice || current.annualPrepay ? (
+                <li data-angebot-zahlweise>
+                  {current.status === "accepted"
+                    ? `Zahlweise: ${current.annualPrepay ? "jährlich im Voraus" : "monatlich"}${current.annualChoice ? " (vom Kunden gewählt)" : ""}`
+                    : current.annualChoice
+                      ? "Jahreszahlung angeboten, Kunde wählt bei der Annahme (monatlich vorausgewählt)"
+                      : "Zahlweise: jährlich im Voraus"}
                 </li>
               ) : null}
               {current.startShiftedFrom && current.startDate ? (

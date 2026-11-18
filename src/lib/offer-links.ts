@@ -85,6 +85,8 @@ export function toOfferRow(o: Offer): DealOfferRow {
     startShiftedFrom: o.startShiftedFrom ? o.startShiftedFrom.toISOString().slice(0, 10) : null,
     billingDay: o.billingDay,
     billingFreeStart: o.billingFreeStart,
+    annualChoice: o.annualChoice,
+    annualPrepay: o.annualPrepay,
     allowPayLater: o.allowPayLater,
     allowBankTransfer: o.allowBankTransfer,
     bankTransferDays: o.bankTransferDays,

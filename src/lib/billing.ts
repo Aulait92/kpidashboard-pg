@@ -495,7 +495,12 @@ export async function createScheduleForOffer(
       start_date: startAt > Date.now() / 1000 + 60 ? startAt : "now",
       end_behavior: "release",
       billing_mode: { type: "flexible" },
-      metadata: plan?.differs ? { ...meta, pg_billing_day: String(plan.day), pg_first_billing: plan.firstIso, pg_free_start: plan.free ? "1" : "0" } : meta,
+      // pg_interval: Zahlweise laut Angebot (bei „Jahreszahlung anbieten“ die Wahl des Kunden)
+      metadata: {
+        ...meta,
+        ...(annual ? { pg_interval: "year" } : {}),
+        ...(plan?.differs ? { pg_billing_day: String(plan.day), pg_first_billing: plan.firstIso, pg_free_start: plan.free ? "1" : "0" } : {}),
+      },
       default_settings: {
         ...(ueberweisung
           ? {

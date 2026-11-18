@@ -38,6 +38,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
         empfehlungFree: true,
         empfehlungCancelAt: true,
         empfehlungSince: true,
+        onboarding: { select: { offerId: true } },
       },
     }),
     seatUsage(customerId),
@@ -52,6 +53,10 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
   const empfState = moduleState(c);
   const total = base != null ? base + c.seatsBilled * (seatPrice ?? 0) + bestandFee + empfehlungFee : null;
   const annual = c.billingInterval === "year";
+  // Zahlweise vom Kunden im Angebot gewählt (Jahreszahlung angeboten, Ole 18.11.2026)
+  const angebot = c.onboarding?.offerId
+    ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true, annualChoice: true, annualPrepay: true } })
+    : null;
   const hidden = <input type="hidden" name="customerId" value={customerId} />;
 
   return (
@@ -205,6 +210,12 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
             {annual ? "Jährlich im Voraus" : "Monatlich"}
             {total != null ? ` · ${eur(total)}/Monat gesamt${annual ? ` · ${eur(total * annualMultiplier())} im Jahr` : ""}` : ""}
           </p>
+          {angebot?.annualChoice ? (
+            <p className="text-xs text-[color:var(--muted)]" data-admin-zahlweise-gewaehlt>
+              Im Angebot {angebot.number} vom Kunden gewählt: {angebot.annualPrepay ? "jährlich im Voraus" : "monatlich"}
+              {annual !== angebot.annualPrepay ? ", seitdem umgestellt" : ""}.
+            </p>
+          ) : null}
           <form action={billingIntervalAction} className="flex flex-wrap items-center gap-2">
             {hidden}
             <input type="hidden" name="interval" value={annual ? "month" : "year"} />
