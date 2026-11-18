@@ -39,6 +39,25 @@ const RECONTACT = [
   /darauf zurück(kommen)?/, /dann (gerne|gern|sehr gerne)/, /(ab|im|nach) \S+ (gerne|gern)/, /dann (wieder|nochmal|mehr)/,
 ];
 
+// Ole, 18.11.2026 (Norbert Tetenborg fehlte im Später-Follow-up): breitere Regeln als Absicherung, auch ohne KI.
+// „später“ ohne Datum zählt mit „nicht jetzt“, „melden Sie sich wieder“ oder Interesse, aber nicht kurzfristig.
+const LATER_WORD = /\bspäter\b/;
+const SHORT_TERM =
+  /übermorgen|\b(heute|morgen|gleich|nachher|diese woche|nächste woche|kommende woche|später am (tag|vormittag|nachmittag|abend)|im laufe des tages)\b|später (zurück|an)?rufen|später (noch ?mal |noch einmal )?an\b/;
+const WANT = /\b(interesse|interessant|gerne?|vielleicht|eventuell|evtl|bedarf|leads)\b/;
+// Konkreter Termin- oder Rückrufwunsch: positive Antwort, kein Später
+const IMMEDIATE = /\b(termin\w*|anruf\w*|telefon\w*|rückruf\w*|zurückrufen|gespräch\w*|call)\b/;
+// „Aktuell nicht, aber …“: der Teil nach „aber“ muss nach später oder Interesse klingen („aber danke“ ist eine Absage)
+const NOT_NOW_BUT = /\b(aktuell|derzeit|momentan|zurzeit|zur zeit|im moment|gerade|jetzt|vorerst|noch)\b(\s+\S+){0,4}?\s+(nicht|kein\w*)\b[^.!?]{0,80}?\b(aber|jedoch|doch)\b([^.!?]{0,100})/;
+/** Hinweis auf einen späteren Zeitpunkt (für klare Absagen und als Vorfilter der KI) */
+const LATER_HINT =
+  /später|zukunft|zukünftig|künftig|(nächste[nms]?|kommende[nms]?|neue[nms]?) (jahr|quartal|monat|saison)|jahres(anfang|beginn|ende|wechsel)|quartal|\bin \S+ (wochen|monat\w*|jahr\w*)\b|halbe[nms]? jahr|frühjahr|frühling|sommer|herbst|winter|januar|februar|märz|maerz|april|\bmai\b|juni|juli|august|september|oktober|november|dezember|\b20\d\d\b|zu früh|noch nicht|(wieder|noch ?mal|noch einmal|erneut) (melden|kontaktieren|anschreiben|zukommen|in kontakt)|melden sie sich (gerne |gern |bitte )?(wieder|noch ?mal|im|in|ab|nach|anfang|mitte|ende)\b|(wir melden uns|ich melde mich)\b|(kommen|komme) (\S+ ){0,3}?auf sie zu|wenn es (wieder |besser |dann )?passt|zu viel los/;
+// Klare Absagen ohne Hinweis auf später
+const DECLINE = [
+  /kein(en)? interesse/, /nicht interessiert/, /kein(en)? bedarf/, /nein,? danke/, /brauchen? (keine|nichts)/, /sind (bereits|schon) (gut )?versorgt/,
+  /not interested/, /lieber nicht/, /verzichte/, /kein(en)? mehrwert/, /nicht relevant/,
+];
+
 const MONTHS: [RegExp, number, string][] = [
   [/januar/, 1, "Januar"], [/februar/, 2, "Februar"], [/m(ä|ae)rz/, 3, "März"], [/april/, 4, "April"], [/\bmai\b/, 5, "Mai"],
   [/juni/, 6, "Juni"], [/juli/, 7, "Juli"], [/august/, 8, "August"], [/september/, 9, "September"], [/oktober/, 10, "Oktober"],
@@ -148,8 +167,36 @@ export function isLaterInterest(text: string | null | undefined, at: Date = new 
   const ref = parseKey(dayKey(at));
   // Kurzfristiges („nächste Woche“, „morgen“) ist kein Später-Interesse, sondern eine normale Antwort.
   const dated = candidates(t, ref).filter((c) => cmp(c.at, addDaysYmd(ref, 20)) >= 0);
-  if (!dated.length) return false;
-  return NOT_NOW.some((r) => r.test(t)) || RECONTACT.some((r) => r.test(t));
+  const notNow = NOT_NOW.some((r) => r.test(t));
+  const recontact = RECONTACT.some((r) => r.test(t));
+  if (dated.length) {
+    if (notNow || recontact) return true;
+    // „Nächstes Jahr gerne.“, „Im Frühjahr vielleicht.“ (aber nicht „Termin am 15. Januar?“)
+    if (WANT.test(t) && !IMMEDIATE.test(t)) return true;
+  }
+  // „Momentan nicht, später vielleicht.“, „Ich hätte später Interesse an Leads.“
+  if (LATER_WORD.test(t) && !SHORT_TERM.test(t) && (notNow || recontact || WANT.test(t))) return true;
+  // „Aktuell nicht, aber gerne wieder melden.“
+  const but = t.match(NOT_NOW_BUT);
+  if (but && (LATER_HINT.test(but[5]) || (WANT.test(but[5]) && !IMMEDIATE.test(but[5])))) return true;
+  return false;
+}
+
+/**
+ * Klare Absage („kein Interesse“, „bitte nicht mehr schreiben“, Ruhestand …) ohne Hinweis auf später:
+ * nie ins Später-Follow-up, auch wenn die KI es anders sieht.
+ */
+export function isClearDecline(text: string | null | undefined): boolean {
+  const t = norm(text);
+  if (!t) return false;
+  if (HARD_NO.some((r) => r.test(t))) return true;
+  return DECLINE.some((r) => r.test(t)) && !LATER_HINT.test(t);
+}
+
+/** Text mit möglichem Später-Bezug (Zeitangabe, „aktuell nicht“, „melden Sie sich“): nur dann lohnt die KI-Prüfung. */
+export function hasLaterHint(text: string | null | undefined): boolean {
+  const t = norm(text);
+  return !!t && (LATER_HINT.test(t) || NOT_NOW.some((r) => r.test(t)) || RECONTACT.some((r) => r.test(t)));
 }
 
 export type LaterTiming = {

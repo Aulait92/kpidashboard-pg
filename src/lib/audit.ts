@@ -31,6 +31,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "vertrieb.neuimport": "Vertrieb neu übernommen (Cold CRM bzw. Testumgebung)",
   "vertrieb.verknuepft": "Vertriebskontakt mit Kundenakte verknüpft",
   "vertrieb.verknuepfung_geloest": "Verknüpfung von Vertriebskontakt und Kundenakte gelöst",
+  "vertrieb.spaeter_nachholen": "Später-Follow-ups nachgeholt (übersehene Später-Antworten eingeplant, nichts gesendet)",
   "kpi.kosten": "Laufende Kosten geändert",
   "kpi.einstellungen": "Einstellungen der Zahlen-Seite geändert",
   "kpi.nachtrag": "Einmal-Umsatz nachgetragen/gelöscht",
