@@ -304,6 +304,10 @@ model Customer {
   newUi                          Boolean                   @default(false)
   // Ansprache von Leads und Kunden in allen Texten (E-Mail, WhatsApp-Assistent, Vorlagen, Termin-Nachrichten): "sie" | "du" (Ole, 14.11.2026)
   leadAddress                    String                    @default("sie")
+  // Du/Sie gegenüber dem Vermittler selbst (unserem Kunden): Begrüßung, persönliche Mails, Push (Ole, 18.11.2026).
+  // Aus dem angenommenen Angebot (Offer.mailDu), im Admin änderbar; null = unbekannt, dann Sie (lib/vermittler-ansprache.ts).
+  // Nicht verwechseln mit leadAddress (Ansprache der Leads). Die Oberfläche bleibt in Sie-Form.
+  vermittlerDu                   Boolean?
   // Policen per WhatsApp, Kranken/BU/Leben je Vermittler (Rechtsprüfung A5, Ole 18.11.2026): an, wenn der Vermittler
   // der AVV-Ergänzung (b) zugestimmt hat (Karte unter Einstellungen) UND seine Datenschutzhinweis-URL hinterlegt ist
   // (lib/policen/regeln.ts gesundheitFreigegeben). Intern/Test (Oles eigenes Konto, Testkunden): sofort an.

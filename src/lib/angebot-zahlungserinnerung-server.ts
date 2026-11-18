@@ -106,6 +106,14 @@ export async function setzeErinnerungAdmin(
   if (typeof input.allowPayLater === "boolean" && input.allowPayLater !== offer.allowPayLater) data.allowPayLater = input.allowPayLater;
   if (Object.keys(data).length) {
     await prisma.offer.update({ where: { id: offer.id }, data });
+    if (data.mailDu !== undefined) {
+      // Schon ein Kundenkonto zu diesem Angebot: Du/Sie gegenüber dem Vermittler mitziehen (lib/vermittler-ansprache.ts)
+      const ob = await prisma.onboarding.findUnique({ where: { offerId: offer.id }, select: { customerId: true } });
+      if (ob) {
+        const { setzeVermittlerDu } = await import("@/lib/vermittler-ansprache-server");
+        await setzeVermittlerDu(ob.customerId, data.mailDu);
+      }
+    }
     if (data.allowPayLater !== undefined) {
       await logOfferActivity(offer, data.allowPayLater ? `Später zahlen erlaubt (${offer.number})` : `Später zahlen nicht mehr erlaubt (${offer.number})`);
     }

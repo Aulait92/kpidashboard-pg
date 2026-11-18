@@ -25,6 +25,7 @@ import { ladeCrossSellVerkauf } from "@/lib/cross-sell-verkauf-server";
 import { istCrossSellAufgabe } from "@/lib/cross-sell-verkauf";
 import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 import { grussName } from "@/lib/vermittler-nennung";
+import { vermittlerDuAus } from "@/lib/vermittler-ansprache";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -64,7 +65,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   const morgen = morgenBerlin(new Date());
   const [data, customer, me, nudge, vorb, automatisch] = await Promise.all([
     loadInbox(ctx),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, erstinformation: { select: { name: true, anrede: true } }, onboarding: { select: { offerId: true } } } }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerDu: true, erstinformation: { select: { name: true, anrede: true } }, onboarding: { select: { offerId: true } } } }),
     ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
     // „Kollegen empfehlen“ nach positiven Momenten (nur Inhaber, nicht in der Vorschau)
     ctx.teamRole === "owner" && !ctx.preview ? loadReferralNudge(ctx.customerId).catch(() => null) : null,
@@ -93,14 +94,19 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     </div>
   );
   // Begrüßung (Ole 18.11.2026): „Herr Kannapinn“ mit Anrede aus den Anbieterangaben, Teammitglieder mit eigenem Namen,
-  // Du (laut angenommenem Angebot) mit Vorname, Firmenname im Namensfeld: nur „Guten Abend“ (lib/vermittler-nennung.ts grussName)
+  // Du (Customer.vermittlerDu, sonst angenommenes Angebot) mit Vorname, Firmenname im Namensfeld: nur „Guten Abend“ (lib/vermittler-nennung.ts grussName)
   const erstPerson = customer?.erstinformation ?? null;
   const gleichePerson = (a?: string | null, b?: string | null) => !!a && !!b && a.replace(/\s+/g, " ").trim().toLowerCase() === b.replace(/\s+/g, " ").trim().toLowerCase();
   const eigenerName = ctx.teamRole === "advisor" ? me?.displayName : (erstPerson?.name ?? me?.displayName);
-  // Du/Sie gegenüber dem Vermittler: wie in seinem angenommenen Angebot (Offer.mailDu), nicht die Ansprache der Leads
-  const vermittlerDu = customer?.onboarding?.offerId
-    ? ((await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { mailDu: true } }).catch(() => null))?.mailDu ?? false)
-    : false;
+  // Du/Sie gegenüber dem Vermittler (nicht die Ansprache der Leads): Einstellung am Kunden, sonst angenommenes Angebot
+  // (Offer.mailDu), sonst Sie (lib/vermittler-ansprache.ts). Das Angebot wird nur ohne Einstellung nachgeladen.
+  const vermittlerDu = vermittlerDuAus({
+    kunde: customer?.vermittlerDu,
+    angebot:
+      customer?.vermittlerDu == null && customer?.onboarding?.offerId
+        ? ((await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { mailDu: true } }).catch(() => null))?.mailDu ?? null)
+        : null,
+  });
   const first = grussName({
     name: eigenerName,
     anrede: gleichePerson(eigenerName, erstPerson?.name) ? (erstPerson?.anrede === "Herr" || erstPerson?.anrede === "Frau" ? erstPerson.anrede : null) : null,

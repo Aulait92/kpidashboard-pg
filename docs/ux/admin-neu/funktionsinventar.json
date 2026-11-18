@@ -1849,6 +1849,18 @@
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Anrede gegenüber dem Kunden: Sie oder Du",
+  "quelle": "app/admin/kunden/[id]/whatsapp/module-actions.ts:setVermittlerDuAction",
+  "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
+  "status": "ergänzen",
+  "demo_view": "kunde",
+  "id": "module-actions-setvermittlerduaction--anrede-gegenueber-dem-kunden-sie-oder-du",
+  "bereich": "betreuen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
   "funktion": "Stornoquote der Verträge des Kunden",
   "quelle": "components/admin/storno-quote.tsx:StornoQuoteKunde",
   "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
