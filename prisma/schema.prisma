@@ -776,6 +776,9 @@ model Lead {
   callPlanStartedAt    DateTime?
   // Anrufplan automatisch gestartet: 30 Min. nach dem Erstanschreiben ohne Antwort (Ole, 17.11.2026, lib/anruf-ausloeser.ts)
   autoCallAt           DateTime?
+  // „Alle pausieren“ unter „Nächste Nachrichten“ am Kontakt (Paket P6, lib/nachrichtenplan-aktionen.ts): solange gesetzt,
+  // warten Nachfass-Abfolgen und Termin-Erinnerungen an den Lead; „Fortsetzen“ rückt die Abfolgen um die Pause nach
+  nachrichtenPausiertAt DateTime?
   // Rückruf wünschen (Link in der Nachfass-Mail zum Angebot, Minimalseite /rueckruf/<token>, Ausbau in P5)
   rueckrufToken        String?           @unique
   rueckrufGewuenschtAt DateTime?
@@ -1399,6 +1402,8 @@ model Appointment {
   // Push „Ist … da?“ zum Terminbeginn bzw. „Ist … noch gekommen?“ nach dem Termin (je einmal)
   startPushAt           DateTime?
   afterPushAt           DateTime?
+  // Vom Vermittler übersprungene Erinnerungen (Paket P6): vortag | vortag_mail | stunde | gleich
+  erinnerungenUebersprungen String[] @default([])
   // Komplettcheck = Ja: auf 45 Min. verlängert („verlaengert“) bzw. Hinweis an den Vermittler („hinweis“)
   verlaengerung         String?
   verlaengerungAt       DateTime?
@@ -2901,6 +2906,8 @@ model LeadSequence {
   vorabCheckStep Int?
   // Bedenkzeit zum Angebot (Paket P5): Die Abfolge startet an diesem Tag neu, die Schritt-Tage zählen ab hier statt ab startedAt
   neustartAt DateTime?
+  // Vom Vermittler übersprungene Schritte (Paket P6, „Nächste Nachrichten“): werden ohne Versand weitergeschaltet
+  uebersprungen Int[] @default([])
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
