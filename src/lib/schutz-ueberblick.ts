@@ -55,6 +55,10 @@ export type SchutzEintrag = {
   status: SchutzStatus;
   /** „Woanders“: was der Kunde hat und wo (ohne Beratung, A7) */
   versicherer?: string | null;
+  /** „Woanders“: Tarifname (aus dem Katalog gewählt oder von Hand), Ole 18.11.2026 */
+  tarif?: string | null;
+  /** „Woanders“: gewählter Katalogtarif („gesellschaft/…“), null = von Hand */
+  katalogId?: string | null;
   /** ungefährer Beitrag im Monat */
   beitrag?: number | null;
   /** Ablauf bzw. Hauptfälligkeit, „2027-03“ */
@@ -361,9 +365,9 @@ export function ampelVorschau(schutz: SchutzEintrag[], sparten: { key: string; z
 }
 
 /** Info-Zeile „woanders“: „bei HUK-COBURG, Ablauf 03/2027, ca. 8 € im Monat“. */
-export function woandersInfo(s: Pick<SchutzEintrag, "versicherer" | "ablauf" | "beitrag">): string | null {
+export function woandersInfo(s: Pick<SchutzEintrag, "versicherer" | "ablauf" | "beitrag"> & Pick<Partial<SchutzEintrag>, "tarif">): string | null {
   const teile = [
-    s.versicherer ? `bei ${s.versicherer}` : null,
+    s.versicherer ? `bei ${[s.versicherer, s.tarif].filter(Boolean).join(" ")}` : null,
     s.ablauf && /^\d{4}-\d{2}$/.test(s.ablauf) ? `Ablauf ${s.ablauf.slice(5)}/${s.ablauf.slice(0, 4)}` : null,
     s.beitrag != null ? `ca. ${String(s.beitrag.toFixed(2)).replace(".", ",").replace(/,00$/, "")} € im Monat` : null,
   ].filter(Boolean);
@@ -468,6 +472,8 @@ export function cleanSchutz(raw: unknown): SchutzEintrag[] {
       label,
       status,
       ...(txt(r.versicherer, 60) ? { versicherer: txt(r.versicherer, 60) } : {}),
+      ...(txt(r.tarif, 80) ? { tarif: txt(r.tarif, 80) } : {}),
+      ...(txt(r.katalogId, 200) ? { katalogId: txt(r.katalogId, 200) } : {}),
       ...(beitrag != null ? { beitrag } : {}),
       ...(ablauf ? { ablauf } : {}),
       ...(txt(r.oeffner, 240) ? { oeffner: txt(r.oeffner, 240) } : {}),

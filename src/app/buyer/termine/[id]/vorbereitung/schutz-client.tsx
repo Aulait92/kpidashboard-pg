@@ -12,7 +12,7 @@
 //   Hinweis, wenn eine gewählte Stufe (Basis/Smart) den Rabatt verhindert.
 // Wer: Vermittler vor dem Termin. Wo: im bestehenden Angebote-Bereich, keine neue Karte.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
@@ -31,8 +31,10 @@ import {
   VORSORGE_SPARTE,
   type VorsorgeThema,
 } from "@/lib/schutz-ueberblick";
-import type { BuendelRegel, Katalog } from "@/lib/tarifkatalog";
-import { beitragsUebersicht, betrag, type Tarifauswahl } from "@/lib/tarifauswahl";
+import { gesellschaftAusText, type BuendelRegel, type Katalog } from "@/lib/tarifkatalog";
+import { beitragsUebersicht, betrag, type SparteWahl, type Tarifauswahl } from "@/lib/tarifauswahl";
+import { bisherHand } from "@/lib/bisheriger-vertrag";
+import { bisherTarifeAction, type BisherTarif } from "./neu-actions";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const Punkt = ({ farbe }: { farbe: string }) => <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: farbe }} aria-hidden />;
@@ -51,10 +53,13 @@ export function ChanceImTermin({
   vorsorge,
   kunde,
   speichern,
+  gesellschaften = [],
 }: {
   auswahl: Tarifauswahl;
   ro: boolean;
   aendern: Aendern;
+  /** Vorschlagsliste der Versicherer (wie „Bisheriger Vertrag“) */
+  gesellschaften?: { key: string; name: string }[];
   anbieten: SparteAnbieten;
   /** Sparte aus dem heutigen Angebot nehmen (Schalter im Überblick) */
   entfernen: SparteAnbieten;
@@ -130,6 +135,7 @@ export function ChanceImTermin({
         anbieten={anbieten}
         entfernen={entfernen}
         kunde={kunde}
+        gesellschaften={gesellschaften}
         speichern={speichern}
       />
     </div>
@@ -160,6 +166,7 @@ function SchutzFenster({
   entfernen,
   kunde,
   speichern,
+  gesellschaften,
 }: {
   open: boolean;
   onClose: () => void;
@@ -170,8 +177,15 @@ function SchutzFenster({
   entfernen: SparteAnbieten;
   kunde: string;
   speichern: { status: SpeicherStand; erneut: () => void };
+  gesellschaften: { key: string; name: string }[];
 }) {
   const schutz = auswahl.schutz ?? [];
+  // Sparte im Angebot (für „Bisheriger Vertrag“ aus „Ja, woanders“)
+  const anSparte = (key: string, fn: (sp: SparteWahl) => void) =>
+    aendern((a) => {
+      const sp = a.sparten.find((x) => x.key === key);
+      if (sp) fn(sp);
+    });
   const setze = (key: string, fn: (s: SchutzEintrag) => void) =>
     aendern((a) => {
       const s = a.schutz?.find((x) => x.key === key);
@@ -247,34 +261,7 @@ function SchutzFenster({
                 ))}
               </div>
               {s.status === "woanders" ? (
-                <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_auto] gap-1.5" data-woanders>
-                  <input
-                    aria-label="Versicherer"
-                    placeholder="Versicherer"
-                    disabled={ro}
-                    defaultValue={s.versicherer ?? ""}
-                    onChange={(e) => setze(s.key, (x) => void (x.versicherer = e.target.value.trim() || null))}
-                    className="h-10 min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] px-2.5 text-sm sm:h-9"
-                  />
-                  <input
-                    type="month"
-                    aria-label="Ablauf"
-                    title="Ablauf bzw. Hauptfälligkeit"
-                    disabled={ro}
-                    defaultValue={s.ablauf ?? ""}
-                    onChange={(e) => setze(s.key, (x) => void (x.ablauf = /^\d{4}-\d{2}$/.test(e.target.value) ? e.target.value : null))}
-                    className="h-10 w-[8.5rem] rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] px-2 text-sm sm:h-9"
-                  />
-                  <input
-                    inputMode="decimal"
-                    aria-label="Beitrag ungefähr im Monat"
-                    placeholder="ca. €/Mon."
-                    disabled={ro}
-                    defaultValue={s.beitrag != null ? String(s.beitrag).replace(".", ",") : ""}
-                    onChange={(e) => setze(s.key, (x) => void (x.beitrag = betrag(e.target.value)))}
-                    className="h-10 w-24 rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] px-2 text-right text-sm sm:h-9"
-                  />
-                </div>
+                <WoandersFelder s={s} ro={ro} gesellschaften={gesellschaften} setze={(fn) => setze(s.key, fn)} anSparte={(fn) => anSparte(s.key, fn)} />
               ) : null}
               {s.status !== "bei-uns" || sp ? (
                 <div className="mt-2 flex items-center gap-3">
@@ -414,6 +401,185 @@ export function BeitragGesamt({
         </div>
       ))}
       {k ? <p className="mt-1 text-xs text-[color:var(--muted)]">Beiträge ohne Kombi-Rabatt eintragen, den Rabatt rechnen wir.</p> : null}
+    </div>
+  );
+}
+
+const FELD = "h-10 w-full min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] bg-white px-2.5 text-sm sm:h-9";
+const ANDERER = "__anderer__";
+
+/**
+ * „Ja, woanders“ (Ole, 18.11.2026): Versicherer und Tarif zur Auswahl aus dem Tarifkatalog (wie „Bisheriger Vertrag“),
+ * eigene Eingabe nur, wenn er nicht dabei ist. Steht die Sparte im Angebot und ist dort noch kein bisheriger Vertrag
+ * eingetragen, wird er von hier übernommen (keine doppelte Eingabe).
+ */
+function WoandersFelder({
+  s,
+  ro,
+  gesellschaften,
+  setze,
+  anSparte,
+}: {
+  s: SchutzEintrag;
+  ro: boolean;
+  gesellschaften: { key: string; name: string }[];
+  setze: (fn: (x: SchutzEintrag) => void) => void;
+  anSparte: (fn: (sp: SparteWahl) => void) => void;
+}) {
+  const [tarife, setTarife] = useState<BisherTarif[] | null>(null);
+  const [eigenerName, setEigenerName] = useState(false);
+  const gKey = gesellschaftAusText(s.versicherer ?? null);
+  useEffect(() => {
+    if (!gKey) return;
+    let aktuell = true;
+    void bisherTarifeAction(s.key, gKey).then((r) => {
+      if (aktuell) setTarife(r.ok ? r.tarife : []);
+    });
+    return () => {
+      aktuell = false;
+    };
+  }, [gKey, s.key]);
+  const liste = gKey ? (tarife ?? []).filter((t) => t.id.startsWith(`${gKey}/`)) : [];
+  const gewaehlt = liste.find((t) => t.id === s.katalogId) ?? null;
+  const freiText = eigenerName || (!!s.tarif && !gewaehlt);
+
+  // In den bisherigen Vertrag der Sparte übernehmen, solange dort nichts von Hand steht
+  const uebernehmen = (x: Pick<SchutzEintrag, "versicherer" | "tarif" | "katalogId" | "beitrag" | "ablauf">, werte: Record<string, string> = {}) =>
+    anSparte((sp) => {
+      if (sp.bisher && sp.bisher.quelle === "hand" && sp.bisher.gesellschaft && sp.bisher.gesellschaft !== (s.versicherer ?? null)) return;
+      const b = bisherHand(sp.bisher);
+      sp.bisher = {
+        ...b,
+        gesellschaft: x.versicherer ?? null,
+        tarif: x.tarif ?? null,
+        katalogId: x.katalogId ?? null,
+        werte: x.katalogId ? werte : b.katalogId === (x.katalogId ?? null) ? b.werte : {},
+        beitrag: x.beitrag ?? b.beitrag,
+        zahlweise: x.beitrag != null ? "monat" : b.zahlweise,
+        ablauf: x.ablauf ? `${x.ablauf}-01` : b.ablauf,
+      };
+    });
+
+  return (
+    <div className="mt-2 grid grid-cols-2 gap-x-1.5 gap-y-2" data-woanders>
+      <label className="grid min-w-0 gap-0.5 text-[11px] font-medium text-[color:var(--muted)]">
+        Versicherer
+        <input
+          list={`schutz-ges-${s.key}`}
+          aria-label="Versicherer"
+          placeholder="Auswählen"
+          disabled={ro}
+          defaultValue={s.versicherer ?? ""}
+          maxLength={60}
+          onChange={(e) => {
+            const v = e.target.value.trim() || null;
+            const andere = gesellschaftAusText(v) !== gesellschaftAusText(s.versicherer ?? null);
+            setEigenerName(false);
+            setze((x) => {
+              x.versicherer = v;
+              if (andere) {
+                x.tarif = null;
+                x.katalogId = null;
+              }
+            });
+            uebernehmen({ versicherer: v, tarif: andere ? null : s.tarif, katalogId: andere ? null : s.katalogId, beitrag: s.beitrag, ablauf: s.ablauf });
+          }}
+          className={FELD}
+          data-woanders-versicherer
+        />
+        <datalist id={`schutz-ges-${s.key}`}>
+          {gesellschaften.map((g) => (
+            <option key={g.key} value={g.name} />
+          ))}
+        </datalist>
+      </label>
+      <label className="grid min-w-0 gap-0.5 text-[11px] font-medium text-[color:var(--muted)]">
+        Tarif
+        {liste.length && !freiText ? (
+          <select
+            aria-label="Tarif"
+            disabled={ro}
+            value={s.katalogId ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === ANDERER) {
+                setEigenerName(true);
+                setze((x) => {
+                  x.katalogId = null;
+                  x.tarif = null;
+                });
+                return;
+              }
+              const t = liste.find((x) => x.id === v) ?? null;
+              setze((x) => {
+                x.katalogId = t?.id ?? null;
+                x.tarif = t?.kurz ?? null;
+              });
+              uebernehmen({ versicherer: s.versicherer, tarif: t?.kurz ?? null, katalogId: t?.id ?? null, beitrag: s.beitrag, ablauf: s.ablauf }, t?.werte ?? {});
+            }}
+            className={FELD}
+            data-woanders-tarif-wahl
+          >
+            <option value="">Auswählen</option>
+            {liste.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.kurz}
+              </option>
+            ))}
+            <option value={ANDERER}>Nicht dabei</option>
+          </select>
+        ) : (
+          <input
+            aria-label="Tarif"
+            placeholder={gKey ? "Tarifname" : "Erst Versicherer"}
+            disabled={ro || (!gKey && !s.versicherer)}
+            defaultValue={s.tarif ?? ""}
+            maxLength={80}
+            onChange={(e) => {
+              const v = e.target.value.trim() || null;
+              setze((x) => {
+                x.tarif = v;
+                x.katalogId = null;
+              });
+              uebernehmen({ versicherer: s.versicherer, tarif: v, katalogId: null, beitrag: s.beitrag, ablauf: s.ablauf });
+            }}
+            className={FELD}
+            data-woanders-tarif
+          />
+        )}
+      </label>
+      <label className="grid min-w-0 gap-0.5 text-[11px] font-medium text-[color:var(--muted)]">
+        Ablauf
+        <input
+          type="month"
+          aria-label="Ablauf"
+          title="Ablauf bzw. Hauptfälligkeit"
+          disabled={ro}
+          defaultValue={s.ablauf ?? ""}
+          onChange={(e) => {
+            const v = /^\d{4}-\d{2}$/.test(e.target.value) ? e.target.value : null;
+            setze((x) => void (x.ablauf = v));
+            uebernehmen({ versicherer: s.versicherer, tarif: s.tarif, katalogId: s.katalogId, beitrag: s.beitrag, ablauf: v });
+          }}
+          className={FELD}
+        />
+      </label>
+      <label className="grid min-w-0 gap-0.5 text-[11px] font-medium text-[color:var(--muted)]">
+        Beitrag im Monat
+        <input
+          inputMode="decimal"
+          aria-label="Beitrag ungefähr im Monat"
+          placeholder="ca. €"
+          disabled={ro}
+          defaultValue={s.beitrag != null ? String(s.beitrag).replace(".", ",") : ""}
+          onChange={(e) => {
+            const v = betrag(e.target.value);
+            setze((x) => void (x.beitrag = v));
+            uebernehmen({ versicherer: s.versicherer, tarif: s.tarif, katalogId: s.katalogId, beitrag: v, ablauf: s.ablauf });
+          }}
+          className={cn(FELD, "text-right")}
+        />
+      </label>
     </div>
   );
 }

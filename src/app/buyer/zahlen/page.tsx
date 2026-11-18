@@ -390,46 +390,66 @@ async function BuyerDashboardBody({
               ))}
             </div>
 
-            <div>
-              <h3 className="text-[15px] font-semibold">Gewinn in diesem Zeitraum</h3>
+            {/* Vereinfacht (Ole, 18.11.2026): eine Zahl, darunter Provision minus Kosten; Einzelposten aufklappbar */}
+            <div data-gewinn>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-[15px] font-semibold">Gewinn in diesem Zeitraum</h3>
+                <span className={`shrink-0 whitespace-nowrap text-xl font-semibold tabular-nums ${(mitBestand ? cur.gewinnMitBestand : cur.gewinn) < 0 ? "text-rose-700" : "text-emerald-700"}`} data-gewinn-wert>
+                  {euroMitVorzeichen(mitBestand ? cur.gewinnMitBestand : cur.gewinn)}
+                </span>
+              </div>
               <dl className="mt-2 space-y-1 tabular-nums">
-                {breakdown.map(([l, v]) => (
-                  <div key={l} className="flex justify-between gap-3">
-                    <dt className="text-[color:var(--muted)]">{l}</dt>
-                    <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(v)}</dd>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[color:var(--muted)]">{provLabel}</dt>
+                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(prov.firstYear)}</dd>
+                </div>
+                {mitBestand ? (
+                  <div className="flex justify-between gap-3" data-kuenftiger-bestand>
+                    <dt className="text-[color:var(--muted)]">{bestandWort} (5 Jahre)</dt>
+                    <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinnMitBestand - cur.gewinn)}</dd>
                   </div>
-                ))}
-                <div className="flex justify-between gap-3 border-t border-[color:var(--border)] pt-1 font-semibold" data-gewinn-nur-jetzt>
-                  <dt>Gewinn nur aus {makler ? "Courtage 1. Jahr" : "Abschlussprovision"}</dt>
-                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinn)}</dd>
-                </div>
-                <div className="flex justify-between gap-3 font-semibold" data-kuenftiger-bestand>
-                  <dt>Inkl. Bestand dieser Kunden (5 Jahre)</dt>
-                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinnMitBestand)}</dd>
-                </div>
-                <div className="flex justify-between gap-3 text-[color:var(--muted)]">
-                  <dt>Ergebnis im Vorzeitraum</dt>
-                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(ergebnisVorher)}</dd>
+                ) : null}
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[color:var(--muted)]">Kosten</dt>
+                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinn - prov.firstYear)}</dd>
                 </div>
               </dl>
-              <p className="mt-2 text-sm text-[color:var(--muted)]" data-prov-aus>
-                {provLabel} {provisionAusText(prov, makler)}
-                {provSub.length ? `; ${provSub.join("; ")}` : ""}.
+              <p className="mt-2 text-sm text-[color:var(--muted)]" data-gewinn-nur-jetzt>
+                {mitBestand ? `Ohne Bestand: ${euroMitVorzeichen(cur.gewinn)} · ` : `Mit Bestand (5 Jahre): ${euroMitVorzeichen(cur.gewinnMitBestand)} · `}
+                Vorzeitraum: {euroMitVorzeichen(ergebnisVorher)}
               </p>
+              <details className="group/e mt-2 [&>summary::-webkit-details-marker]:hidden">
+                <summary className="inline-flex cursor-pointer items-center gap-1 text-sm font-medium text-[color:var(--brand)]">
+                  Einzelposten
+                  <ChevronDown className="h-3.5 w-3.5 transition group-open/e:rotate-180" />
+                </summary>
+                <dl className="mt-2 space-y-1 text-sm tabular-nums">
+                  {breakdown
+                    .filter(([, v]) => Math.round(v) !== 0)
+                    .map(([l, v]) => (
+                      <div key={l} className="flex justify-between gap-3">
+                        <dt className="text-[color:var(--muted)]">{l}</dt>
+                        <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(v)}</dd>
+                      </div>
+                    ))}
+                </dl>
+                <p className="mt-2 text-sm text-[color:var(--muted)]" data-prov-aus>
+                  {provLabel} {provisionAusText(prov, makler)}
+                  {provSub.length ? `; ${provSub.join("; ")}` : ""}.
+                </p>
+              </details>
             </div>
 
             <div data-gesamtbestand>
-              <h3 className="text-[15px] font-semibold">{bestandWort} aller Ihrer Verträge</h3>
-              <p className="mt-1">
-                <span className="font-semibold text-emerald-700">{euroMitVorzeichen(bestand.perYear)} pro Jahr</span> aus {formatNumber(bestand.contracts)}{" "}
-                {bestand.contracts === 1 ? "laufendem Vertrag" : "laufenden Verträgen"}, in 5 Jahren nach Storno{" "}
-                <span className="font-semibold">{euro(bestand.inYears)}</span>.
-              </p>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-[15px] font-semibold">{bestandWort}</h3>
+                <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-emerald-700">{euroMitVorzeichen(bestand.perYear)} pro Jahr</span>
+              </div>
               <p className="mt-1 text-sm text-[color:var(--muted)]">
-                Alle Verträge, die Sie über die App abgeschlossen haben, auch aus früheren Zeiträumen. Stornoquote {stornoPct} pro Jahr (
+                Aus {formatNumber(bestand.contracts)} {bestand.contracts === 1 ? "laufendem Vertrag" : "laufenden Verträgen"}, in 5 Jahren {euro(bestand.inYears)} (Storno {stornoPct},{" "}
                 <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">ändern</a>).
                 {bestand.real.quote != null ? (
-                  <span data-storno-real> Tatsächlich: {(Math.round(bestand.real.quote * 1000) / 10).toLocaleString("de-DE")} % pro Jahr.</span>
+                  <span data-storno-real> Tatsächlich: {(Math.round(bestand.real.quote * 1000) / 10).toLocaleString("de-DE")} %.</span>
                 ) : null}
               </p>
             </div>

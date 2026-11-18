@@ -249,3 +249,17 @@ describe("Schutz im Überblick verständlicher (Ole, 18.11.2026)", () => {
     expect(v[0].farbe).toBe(SCHUTZ_STATUS["bei-uns"].farbe);
   });
 });
+
+describe("„Ja, woanders“ mit Tarif aus dem Katalog (Ole, 18.11.2026)", () => {
+  it("speichert Tarif und Katalogtarif, zeigt den Tarif in der Info-Zeile", () => {
+    const [s] = cleanSchutz([{ key: "hausrat", label: "Hausrat", status: "woanders", versicherer: "HUK-COBURG", tarif: "Classic", katalogId: "huk-coburg/hausrat-classic", beitrag: 8, ablauf: "2027-03" }]);
+    expect(s).toMatchObject({ versicherer: "HUK-COBURG", tarif: "Classic", katalogId: "huk-coburg/hausrat-classic" });
+    expect(woandersInfo(s)).toBe("bei HUK-COBURG Classic, Ablauf 03/2027, ca. 8 € im Monat");
+  });
+  it("ohne Tarif wie bisher", () => {
+    const [s] = cleanSchutz([{ key: "hausrat", label: "Hausrat", status: "woanders", versicherer: "Allianz", tarif: "  ", katalogId: 5 }]);
+    expect(s.tarif).toBeUndefined();
+    expect(s.katalogId).toBeUndefined();
+    expect(woandersInfo(s)).toBe("bei Allianz");
+  });
+});
