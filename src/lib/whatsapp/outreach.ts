@@ -25,6 +25,7 @@ import {
   erstanschreibenZweck,
   erstanschreibenV8Params,
   erstanschreibenV9Params,
+  frageplan,
   outreachProdukt,
   tierWort,
   type Herkunft,
@@ -88,6 +89,11 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     asFormAnswers((await prisma.lead.findUnique({ where: { id: opts.leadId }, select: { formData: true } }).catch(() => null))?.formData),
   ).normal;
   // Vorlage je Produkt; nur Hausrat angefragt: eigene Fassung „zu Ihrer Hausratversicherung“ (Ole, 18.11.2026)
+  // Schon gebucht (Dankeseite des Meta-Formulars): Erstnachricht trotzdem, aber nie mit einer Terminfrage (Ole, 18.11.2026)
+  const conv0 = await prisma.conversation
+    .findUnique({ where: { customerId_contactPhone: { customerId: opts.customerId, contactPhone: opts.phone } }, select: { id: true } })
+    .catch(() => null);
+  const gebucht = await hasAppointment(opts.leadId, conv0?.id).catch(() => false);
   const purpose: NoticePurpose = erstanschreibenZweck(opts.source, formular);
   const variant = await abVariantFor(purpose, opts.leadId);
   const kurz = who.kurz || who.firm;
@@ -98,10 +104,10 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   // Frage; v6/v7 Thema, Vermittler, Frage; Produkt
   // (v5 mit Tier, v4) bzw. allgemeine Fassung (nur Name), v3 mit Link
   const paramsFor = (p: { version: number; ansprache: Ansprache; purpose?: NoticePurpose }): string[] => {
-    if (p.version >= 9) return [first, ...erstanschreibenV9Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
-    if (p.version >= 8) return [first, ...erstanschreibenV8Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
+    if (p.version >= 9) return [first, ...erstanschreibenV9Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz, gebucht })];
+    if (p.version >= 8) return [first, ...erstanschreibenV8Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz, gebucht })];
     if (p.version >= 6) {
-      return [first, ...erstanschreibenV6Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
+      return [first, ...erstanschreibenV6Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz, gebucht })];
     }
     if ((p.purpose ?? purpose) === "outreach") return p.version >= 4 ? [first] : [first, url];
     if (p.version >= 5) return [first, ...rest, ...(produkt?.purpose === "outreach_tkv" ? [tierWort(produkt.tier, p.ansprache)] : [])];
@@ -116,12 +122,12 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     paramsFor,
     legacyParams: [first, url],
     // Knöpfe im offenen Fenster nur, wenn sie zur gestellten Frage passen (Frage 1 bzw. Telefonat)
-    textButtons: ersteFrageKnoepfe(opts.source, formular),
+    textButtons: gebucht && !outreachProdukt(opts.source) ? [] : ersteFrageKnoepfe(opts.source, formular),
     document,
     documentEntwurf,
     pdfGrund,
     herkunft,
-    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, vermittler: person(opts.an).dat, vermittlerNom: person(opts.an).nom, source: opts.source, herkunft, formular }),
+    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, vermittler: person(opts.an).dat, vermittlerNom: person(opts.an).nom, source: opts.source, herkunft, formular, gebucht }),
   };
 }
 
@@ -270,19 +276,10 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         continue;
       }
 
-      // Schon über die Buchungsseite (z. B. Meta-Leadformular) gebucht: Bei Produkten mit Angaben fürs Angebot
-      // (lib/whatsapp/produkt-fragen) meldet sich der Assistent trotzdem, bestätigt den Termin im Gespräch und
-      // fragt die Angaben ab (Ole, 15.11.2026). Sonst wie bisher kein Erstanschreiben.
+      // Schon über die Buchungsseite (z. B. Dankeseite des Meta-Formulars) gebucht: Erstnachricht trotzdem (Ole,
+      // 18.11.2026: Daten und Komplettcheck werden noch abgefragt), aber ohne Terminfrage (outreachMessage, gebucht);
+      // nach der Antwort bereitet der Assistent den Termin vor (bot.ts, Strecke nach der Buchung)
       const booked = await hasAppointment(lead.id, conv?.id);
-      if (booked && !produktCheckliste(source)) {
-        logTestLead(lead, "outreach skipped", { reason: "booked" });
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: { outreachAt: new Date(), outreachStatus: "skipped_booked" },
-        });
-        result.skipped++;
-        continue;
-      }
       // Testlead (lib/testlead.ts): der Chat wurde vorher frisch begonnen; schreibt der Admin dazwischen selbst, kommt
       // das Erstanschreiben trotzdem (Ziel ist, den ganzen Ablauf zu erleben).
       if (conv && conv._count.messages > 0 && !lead.isTest) {
