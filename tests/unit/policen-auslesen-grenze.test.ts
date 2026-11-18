@@ -116,6 +116,15 @@ describe("Importgrenze Chat-Assistent / Dokument-KI", () => {
     expect(nutzer.map(rel)).toEqual(["src/lib/policen/auslesen/anbieter/openai-eu.ts"]);
   });
 
+  it("KI-Clients nur in den Adaptern (lib/policen/auslesen/anbieter), sonst nirgends in lib/policen", () => {
+    // ki-eu-konfig (nur Variablen, kein SDK) ist erlaubt
+    const verboten = /@anthropic-ai|from "openai"|"@\/lib\/ki-eu"|replicate|runAgent|messages\.create|responses\.create/i;
+    const treffer = dateien(join(SRC, "lib/policen"))
+      .filter((d) => !d.startsWith(join(AUSLESEN, "anbieter")))
+      .filter((d) => verboten.test(readFileSync(d, "utf8").split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n")));
+    expect(treffer.map(rel)).toEqual([]);
+  });
+
   it("die Dokument-KI bindet nichts aus dem Chat ein", () => {
     const chatModule = [/^src\/lib\/whatsapp\//, /^src\/lib\/kampagnen\//, /^src\/lib\/policen\/ki\.ts$/];
     for (const d of dateien(AUSLESEN)) {
