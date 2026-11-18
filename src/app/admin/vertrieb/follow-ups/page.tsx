@@ -56,7 +56,7 @@ export default async function FollowupsPage() {
       {waiting.length ? (
         <Group
           title="Wartet auf Freigabe"
-          hint="Bestehende Kontakte mit Stufe „Später“ bzw. Später-Antwort. Hier geht nichts raus, bevor du freigibst. Vergangene Zeitpunkte werden beim Freigeben über die nächsten Werktage verteilt."
+          hint="Bestehende Kontakte mit Stufe „Später“ bzw. Später-Antwort. Hier geht nichts raus, bevor Sie freigeben. Vergangene Zeitpunkte werden beim Freigeben über die nächsten Werktage verteilt."
           tone="amber"
           items={waiting}
           box={box}

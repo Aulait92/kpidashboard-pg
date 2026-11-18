@@ -49,7 +49,7 @@ export function KampagnenAgenten({
   return (
     <div className="space-y-5">
       <Card>
-        <CardHeader title="Kampagne mit KI erstellen" icon={Sparkles} hint="Alles wird pausiert angelegt – veröffentlichen tust du im Werbeanzeigenmanager." />
+        <CardHeader title="Kampagne mit KI erstellen" icon={Sparkles} hint="Alles wird pausiert angelegt. Veröffentlichen Sie im Werbeanzeigenmanager." />
         <form action={action} className="space-y-3 px-5 pb-5 text-sm">
           <input type="hidden" name="customerId" value={customerId} />
           {products.length ? (

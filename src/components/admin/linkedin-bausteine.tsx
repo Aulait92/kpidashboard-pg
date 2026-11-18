@@ -271,7 +271,7 @@ export function LinkedInFotos({ d }: { d: LinkedInDaten }) {
   return (
     <>
       <p className="text-sm text-[color:var(--muted)]">
-        Fotos von dir und Beweis-Screenshots (z. B. WhatsApp eines Kunden mit Ergebnis, Namen geschwärzt). Die KI wählt je Post ein passendes Bild. Passt keins, erzeugt sie ein fotorealistisches KI-Bild oder eine Text-Grafik. Beschreibungen schreibt sie beim Hochladen selbst; bei Bedarf anpassen.
+        Fotos von Ihnen und Beweis-Screenshots (z. B. WhatsApp eines Kunden mit Ergebnis, Namen geschwärzt). Die KI wählt je Post ein passendes Bild. Passt keins, erzeugt sie ein fotorealistisches KI-Bild oder eine Text-Grafik. Beschreibungen schreibt sie beim Hochladen selbst; bei Bedarf anpassen.
       </p>
       <PhotoUpload />
       {d.photos.length ? (

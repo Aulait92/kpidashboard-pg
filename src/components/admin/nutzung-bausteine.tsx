@@ -21,7 +21,7 @@ const ACTION_LABELS: Record<string, string> = {
   "chat.reply": "Chat beantwortet",
   "chat.takeover": "Chat übernommen",
   "chat.bot_on": "Assistent wieder an",
-  "chat.done": "„Braucht dich“ erledigt",
+  "chat.done": "„Braucht Sie“ erledigt",
   "chat.followup": "Nachfassen gesendet",
   "pipeline.move": "Pipeline verschoben",
   "lead.save": "Lead gespeichert",
@@ -142,7 +142,7 @@ function CustomerCard({ c }: { c: CustomerUsage }) {
           <ul className="space-y-1 text-sm">
             <Stalled label="Termine ohne Ergebnis (> 1 Tag)" n={c.stalled.outcomesOpen} />
             <Stalled label="Wiedervorlagen überfällig" n={c.stalled.followUpsOverdue} />
-            <Stalled label="„Braucht dich“ > 24 h offen" n={c.stalled.attentionOver24h} />
+            <Stalled label="„Braucht Sie“ > 24 h offen" n={c.stalled.attentionOver24h} />
             <li className="flex justify-between text-[color:var(--muted)]">
               <span>Offene Rückrufe</span>
               <span className="tabular-nums">{c.stalled.callbacksOpen}</span>

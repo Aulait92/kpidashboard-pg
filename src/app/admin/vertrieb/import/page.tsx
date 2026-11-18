@@ -70,7 +70,7 @@ export default async function AnbindungenPage() {
           last={lastForm?.createdAt}
           url={hook("/api/vertrieb/leads/webhook")}
           steps={[
-            "Zapier → Zap History: Lauf mit „Webhooks by Zapier“ öffnen, so findest du den Zap",
+            "Zapier → Zap History: Lauf mit „Webhooks by Zapier“ öffnen, so finden Sie den Zap",
             "Im Schritt „POST“ die URL ersetzen, testen, veröffentlichen",
             "Landingpage ohne Meta: am Ende &source=INBOUND anhängen",
           ]}

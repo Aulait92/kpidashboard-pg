@@ -69,7 +69,7 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
       </section>
 
       <section className="space-y-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5">
-        <h2 className="text-lg font-semibold">Fotos von dir</h2>
+        <h2 className="text-lg font-semibold">Fotos von Ihnen</h2>
         <LinkedInFotos d={d} />
       </section>
 
