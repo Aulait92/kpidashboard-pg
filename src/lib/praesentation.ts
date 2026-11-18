@@ -130,7 +130,7 @@ export function praesentationCss(m: Marke): string {
 .angebot ul{margin-top:10px}.angebot li{font-size:18px;margin:0 0 6px}
 .angebot li .dot{margin-top:9px;flex-basis:9px;height:9px}
 .zwei{display:grid;grid-template-columns:1fr 1fr;gap:40px}
-.ok li::before{content:"✓";color:#16a34a;font-weight:800;margin-right:10px}
+.ok li::before{content:"✔";color:#047857;font-weight:900;margin-right:10px}
 .nein li::before{content:"✕";color:#b91c1c;font-weight:800;margin-right:10px}
 .ok li,.nein li{display:block}
 .gross{font-size:96px;font-weight:800;color:var(--f);line-height:1;margin:10px 0}
@@ -161,7 +161,7 @@ export function praesentationCss(m: Marke): string {
 .stufen{display:flex;flex-wrap:wrap;gap:2px;width:100%;background:var(--f);border:2px solid var(--f);border-radius:10px;overflow:hidden;margin:8px 0 12px}
 .st{flex:1 1 auto;min-width:0;font:inherit;font-size:15px;font-weight:600;padding:7px 8px;border:0;background:#fff;color:var(--f);cursor:pointer;white-space:normal;overflow-wrap:anywhere;text-align:center}
 .st.an{background:var(--f);color:#fff}
-.st .stern{font-size:11px;margin-left:3px;position:relative;top:-5px}
+.st .stern{font-size:14px;margin-left:3px;position:relative;top:-4px}
 .stufe-fest{display:flex;align-items:center;min-height:36px;font-size:17px;font-weight:600;color:#4b5568;margin:8px 0 12px;overflow-wrap:anywhere}
 .angebote.drin{row-gap:0;grid-template-rows:auto auto auto 1fr}
 .drin .angebot{display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0;align-content:start;padding:18px 18px}
@@ -188,12 +188,12 @@ export function praesentationCss(m: Marke): string {
 .vgl thead .tarif{font-size:24px;font-weight:700}.vgl thead .tarif.lang{font-size:20px}.vgl thead .preis{font-size:30px;font-weight:800;color:var(--f)}.vgl thead .preis small{display:block;font-size:15px;font-weight:500;color:#66758f;margin-top:-2px}
 .vgl .badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--f);color:#fff;font-size:14px;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap}
 .vgl .gew{background:var(--fh)}
-.vgl .ja-z{color:#16a34a;font-weight:800;font-size:22px}.vgl .nein-z{display:inline-block;width:18px;height:2px;background:#94a3b8;vertical-align:middle}
+.vgl .ja-z{color:#047857;font-weight:900;font-size:28px;line-height:1}.vgl .nein-z{font-size:16px;color:#475569}.alle .ja-k{color:#047857;font-weight:900;font-style:normal}
 .vgl .bisher{background:#f4f6f9;color:#334155}
 .vgl.mit-bisher th,.vgl.mit-bisher td{padding:8px 10px}.vgl.mit-bisher thead th{padding-top:20px}.vgl.mit-bisher tbody th{width:22%}
 .vgl.mit-bisher .bs{font-size:14px;padding:3px 10px 3px 5px;gap:6px}.vgl.mit-bisher .bs small{white-space:nowrap;font-size:14px}.vgl.mit-bisher .bausteine{gap:6px}
 .vgl thead th.bisher{width:14%;overflow-wrap:normal;hyphens:auto}
-.vgl thead th.bisher .bt{font-size:13px;font-weight:700;color:#66758f;margin-bottom:2px}
+.vgl thead th.bisher .bt{font-size:14px;font-weight:700;color:#66758f;margin-bottom:2px}
 .vgl thead th.bisher .bg{font-size:15px;font-weight:600;color:#4b5568}
 .vgl thead th.bisher .tarif{font-size:18px}.vgl thead th.bisher .preis{font-size:22px;color:#334155}
 .vgl .pruef{font-size:15px;color:#66758f;font-style:italic}
@@ -269,7 +269,8 @@ const JA = /^(ja|✓|✔|x|enthalten|inklusive|inkl\.?)$/i;
 const NEIN = /^(nein|\u2014|\u2013|-|nicht enthalten|ohne)$/i;
 const istNein = (w: string | undefined) => !w || NEIN.test(w.trim());
 const zelle = (w: string | undefined) =>
-  istNein(w) ? `<span class="nein-z" title="nicht enthalten"></span>` : JA.test(w!.trim()) ? `<span class="ja-z">✓</span>` : e(w!);
+  // „nicht enthalten“ als Wort statt Strich, kräftiger Haken in AA-Grün (Usability-Check 18.11.2026)
+  istNein(w) ? `<span class="nein-z">nicht enthalten</span>` : JA.test(w!.trim()) ? `<span class="ja-z" aria-label="enthalten">✔</span>` : e(w!);
 
 const klein = (s: string) => s.toLocaleLowerCase("de");
 const RAND = /^[\s\-\u2013\u2014:,;/|·]+|[\s\-\u2013\u2014:,;/|·]+$/g;
@@ -371,7 +372,7 @@ function vergleichTabelle(
       }</th>`
     : "";
   const bs = mitBausteinen ? `<tr><th>Bausteine</th>${bTd("")}${v.map((i) => `<td${col(i)}>${f.schalter(i)}</td>`).join("")}</tr>` : "";
-  return `${alle.length ? `<div class="alle"><b>In allen Tarifen:</b> ${alle.map((x) => `<span>✓ ${e(x)}</span>`).join("")}</div>` : ""}<table class="vgl${b ? " mit-bisher" : ""}"><thead><tr><th></th>${bKopf}${v
+  return `${alle.length ? `<div class="alle"><b>In allen Tarifen:</b> ${alle.map((x) => `<span><i class="ja-k">✔</i> ${e(x)}</span>`).join("")}</div>` : ""}<table class="vgl${b ? " mit-bisher" : ""}"><thead><tr><th></th>${bKopf}${v
     .map((i, k) => `<th${col(i)}>${f.badge(i)}<div class="tarif${lang ? " lang" : ""}">${e(kurz[k])}</div>${f.preis(i)}${f.knopf(i)}</th>`)
     .join("")}</tr></thead><tbody>${anders.map((n) => `<tr><th>${e(n)}</th>${b ? bTd(bZelle(n)) : ""}${v.map((i) => `<td${col(i)}>${zelle(wert(i, n))}</td>`).join("")}</tr>`).join("")}${bs}</tbody></table>`;
 }

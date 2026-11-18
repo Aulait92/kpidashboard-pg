@@ -137,7 +137,8 @@ describe("Präsentation", () => {
     // Gewählte Merkmale bleiben Zeilen, auch wenn alle Stufen gleich sind (Ole, 16.11.2026)
     expect(v).toContain("<th>Mietsachschäden</th>");
     expect(v).toContain('data-tarif="1">✓ Ausgewählt');
-    expect(v).toContain('class="nein-z"');
+    // „nicht enthalten“ als Wort statt Strich (Usability-Check 18.11.2026)
+    expect(v).toContain('<span class="nein-z">nicht enthalten</span>');
     expect(v.replace(/<style>[\s\S]*?<\/style>/, "")).not.toMatch(/[\u2013\u2014]/);
     expect(fs.find((f) => f.id === "beitrag")!.html).toContain("8,15");
     const neu = tarifWaehlen(ang, 0)!;
@@ -163,7 +164,7 @@ describe("Präsentation", () => {
     expect(vgl).toHaveLength(4);
     expect(vgl[3].html.match(/data-tarif=/g)).toHaveLength(4);
     // „In allen Tarifen“ höchstens 3 Punkte, mit 4 Spalten höchstens 5 Merkmalzeilen
-    expect(vgl[0].html.match(/<span>✓ /g)).toHaveLength(3);
+    expect(vgl[0].html.match(/<span><i class="ja-k">✔<\/i> /g)).toHaveLength(3);
     expect(vgl[0].html.match(/<tr><th>Merkmal/g)?.length).toBeLessThanOrEqual(5);
     expect(summeEmpfohlen(ang)).toBe(7 + 8 + 9 + 10);
   });
@@ -291,7 +292,7 @@ describe("Präsentation: nichts abschneiden, nichts doppelt", () => {
     const drei = cleanAngebote({ items: [0, 1, 2].map((k) => ({ sparte: "Hausrat", tarif: `Hausrat ${["Basis", "Smart", "Komfort"][k]}`, beitragMonat: 5 + k, empfohlen: k === 1, merkmale: merk(k), bausteine: bs })) });
     const v = vergleich(drei)[0];
     expect(v.match(/<tr><th>M\d/g)).toHaveLength(5);
-    expect(v.match(/<span>✓ /g)).toHaveLength(3);
+    expect(v.match(/<span><i class="ja-k">✔<\/i> /g)).toHaveLength(3);
     expect(v.match(/class="bs[^"]*" data-baustein="0:/g)).toHaveLength(2);
     expect(v).toContain('<div class="tarif">Smart</div>');
     // 4 Stufen mit Bausteinen: eine Merkmalzeile weniger (gemessen)
