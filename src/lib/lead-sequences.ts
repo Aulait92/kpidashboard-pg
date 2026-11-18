@@ -38,6 +38,7 @@ import { anrufPausiert } from "@/lib/telefonat-server";
 import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 import type { VorlageKey } from "@/lib/mail/vorlagen";
 import type { Werte } from "@/lib/mail/platzhalter";
+import { hatMailAntwort } from "@/lib/mail/kontakt-mail";
 
 export type SequenceKind = "not_reached" | "offer" | "offer_selbst" | "no_show" | "silent" | "recall";
 
@@ -495,6 +496,8 @@ export async function stopReasonFor(seq: { leadId: string; customerId: string; s
     select: { body: true },
   });
   if (reply) return STOP_WORDS.test(reply.body ?? "") ? "Abgemeldet („Stopp“)" : "Lead hat geantwortet";
+  // Antwort per E-Mail an die Antwortadresse (Paket M2, lib/mail/eingang.ts); automatische Antworten zählen nicht
+  if (await hatMailAntwort(seq.leadId, seq.kind === "recall" ? new Date(seq.startedAt.getTime() + 60 * 60 * 1000) : seq.startedAt)) return "Lead hat per E-Mail geantwortet";
   if (seq.kind === "silent") {
     // Der Vermittler hat übernommen (Assistent pausiert oder eigene Nachricht): kein Nachfassen im Namen des Assistenten
     const conv = await prisma.conversation.findFirst({

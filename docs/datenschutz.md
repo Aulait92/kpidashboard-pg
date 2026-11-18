@@ -61,6 +61,16 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
   (Beschäftigtendaten des Kunden, wir verarbeiten im Auftrag). Löschung: mit dem Login
   (Kaskade) bzw. bei der endgültigen Löschung nach Vertragsende, spätestens 1 Jahr nach Ende der Abwesenheit (automatisch, täglich);
   keine Lead-Namen darin gespeichert; das Änderungsprotokoll hält den Eintrag 1 Jahr.
+- **Antworten per E-Mail (Paket M2, 18.11.2026, Schalter `MAIL_ANTWORT_EINGANG`, Standard aus):** Mails an Leads ohne
+  verbundenes Postfach tragen als Antwortadresse `<kurzname>.<code>@antwort.dein-beratungstermin.de`. Antworten nimmt Resend
+  (Receiving, Region EU, Unterauftragsverarbeiter wie beim Versand) entgegen und meldet sie per Webhook; Text und Anhänge holt
+  die App über die API. Gespeichert: Absenderadresse, Betreff, Text (ohne zitierte Mail) als Eintrag im Kontaktverlauf
+  (`ContactMail`), Anhangliste (Name, Größe, Typ) in `MailEingang`; die Anhänge selbst bleiben bei Resend (Download über die App,
+  Adresse 1 h gültig). Weiterleitung an den Vermittler bzw. zuständigen Berater per Resend. Push ohne Inhalt. Keine KI-Auswertung
+  von Inhalten oder Anhängen (Gesundheitsangaben möglich). Löschung: mit dem Lead (Art. 17, `erasure.ts`) bzw. mit den
+  Kundendaten; Eingänge ohne Kontakt (nur Ablauf, keine Inhalte) nach 90 Tagen. Bei Resend gilt deren Aufbewahrung empfangener
+  Mails. **Prüfen** vor dem Einschalten: Zweck in AVV Anlage 2 (`SUBPROCESSORS`: „Versand und Empfang von E-Mails“) und
+  Datenschutzhinweis für Leads.
 - **Terminvorbereitung, Angebote und Präsentation (15.11.2026):** Der Kunde lädt Angebote im Lead hoch
   (`LeadFile`, Art „Angebot“) oder trägt sie ein (`Appointment.offersJson`). Auslesen per Anthropic nur für Produkte
   ohne Gesundheitsangaben einer Person (`angebotOhneGesundheitsdaten`: Privatschutz, Haftpflicht, Hausrat,
@@ -89,7 +99,7 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
 | Google (Places API) | Öffentliche Unternehmensdaten von Vertriebskontakten abrufen (nur Suchtext: Agentur/Name und Ort; Antwort: öffentlicher Google-Eintrag) | | |
 | 360dialog | WhatsApp Business API; seit 14.11. auch Partner-API für das Selbst-Verbinden der Kundennummer (Konto-/Channel-ID, Telefonnummer, Anzeigename; API-Key verschlüsselt gespeichert) | | |
 | Meta | WhatsApp, Lead-Formulare, Rückmeldung der Lead-Stufen (Conversions API, seit 15.11.2026) | | |
-| Resend | E-Mail-Versand | | |
+| Resend | E-Mail-Versand; seit Paket M2 auch Empfang von Antworten (Receiving, `antwort.dein-beratungstermin.de`, Region EU) | | |
 | Airtable | Lead-Daten (bis Dezember 2026) | | |
 | Zapier | Lead-Übertragung (bis Dezember 2026) | | |
 | Sentry | Fehlerüberwachung (EU) | | |
