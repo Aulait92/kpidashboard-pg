@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { AnalyseSchalter } from "@/components/nutzungsanalyse";
 import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
 import { analysePseudonym } from "@/lib/nutzungsanalyse-server";
+import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -43,7 +44,8 @@ export default async function EinstellungenPage() {
         { href: "/buyer/provisionen", icon: Percent, color: "bg-amber-500", title: "Meine Provisionen", text: "Ihre Sätze, daraus rechnet die App Provision und Zahlen" },
         { href: "/buyer/einstellungen/meta", icon: Send, color: "bg-indigo-500", title: "Rückmeldung an Meta", text: "Meta lernt aus Ihren Ergebnissen, welche Leads abschließen" },
         { href: "/buyer/postfach", icon: Mail, color: "bg-blue-500", title: "E-Mail-Postfach", text: "Eigenes Postfach verbinden, Signatur, E-Mail-Vorlagen" },
-        { href: "/buyer/vorlagen", icon: MessageSquareText, color: "bg-emerald-500", title: "WhatsApp-Vorlagen", text: "Nachrichten, die Ihr Assistent in Ihrem Namen schickt" },
+        // Assistent (Ole, 17.11.2026, Paket M9): E-Mails in Ihrem Namen und die WhatsApp-Vorlagen an einer Stelle
+        { href: "/buyer/einstellungen/assistent", icon: MessageSquareText, color: "bg-emerald-500", title: "Assistent", text: "WhatsApp-Nachrichten und E-Mails, die in Ihrem Namen rausgehen" },
         { href: "/buyer/einstellungen/erinnerungen", icon: BellRing, color: "bg-orange-500", title: "Erinnerungen & Aufgaben", text: "Erinnerung an den nächsten Schritt, Aufgaben nach dem Abschluss" },
         ...(owner ? [{ href: "/buyer/einstellungen/branding", icon: ImageIcon, color: "bg-teal-500", title: "Präsentation", text: "Ihr Logo auf der Beratungspräsentation, als Makler der Hinweis zur Marktauswahl" }] : []),
       ],
@@ -92,6 +94,7 @@ export default async function EinstellungenPage() {
             <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
               <AnalyseSchalter status={analyse} pseudonym={ctx.userId ? analysePseudonym(ctx.userId) : null} />
             </div>
+            <PolicenFreischaltungKarte ctx={ctx} ort="einstellungen" className="mt-3 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" />
           </section>
         ) : null}
         <p className="flex flex-wrap gap-x-4 px-1 text-sm text-[color:var(--muted)] [&>a]:inline-flex [&>a]:min-h-10 [&>a]:items-center">

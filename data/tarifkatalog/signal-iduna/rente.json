@@ -27,8 +27,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/private-altersvorsorge/private-rentenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "SI Pur Invest",
@@ -47,8 +46,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/private-altersvorsorge/fondsgebundene-altersvorsorge/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -61,6 +59,7 @@
     "SI Pur Invest: eine Beitragsgarantie ist nicht genannt (reine Fondsanlage); Wert bewusst offen gelassen.",
     "Garant Invest: Anlage verteilt auf Sicherungsvermögen und Fonds je nach Garantieniveau; Optionen Sicherheit+ und Ablaufmanagement+. Dynamik 1 bis 10 %.",
     "Effektivkosten auf den Produktseiten nicht beziffert (Informationsblatt vor Abschluss).",
-    "Keine Renditeangaben aufgenommen."
+    "Keine Renditeangaben aufgenommen.",
+    "Geprüft am 17.11.2026 an Tariftabelle und Produktseiten auf signal-iduna.de."
   ]
 }

@@ -1,0 +1,172 @@
+// Bitte um Policen direkt im WhatsApp-Chat (Ole, 18.11.2026), kein Upload-Link. Reine Texte, ohne Datenbank.
+// Nach der Rechtsprüfung (docs/recht/policen-whatsapp-gesundheitsdaten.md, Auflage A1) und Oles Freigabe (18.11.2026)
+// zwei Nachrichten:
+//   1. die Bitte (Text von Ole, ohne Fußzeile, ohne Knöpfe),
+//   2. die Einwilligung als eigene interaktive Nachricht („Kurz zum Datenschutz: Ich bin einverstanden, dass …“) mit
+//      Vermittler (Vor- und Nachname), Firma und Link zu den Datenschutzhinweisen, Fußzeile „Ihr Termin findet auch
+//      ohne Unterlagen statt.“, Knöpfe „Einverstanden“ / „Lieber nicht“.
+// Kommt eine Datei vor der Einwilligung, fragt server.ts einmal mit demselben Text nach (policenNachfrage).
+//
+// WhatsApp-Grenzen (Meta, interaktive Antwort-Knöpfe): Text höchstens 1.024 Zeichen, Fußzeile höchstens 60, höchstens
+// 3 Knöpfe mit je höchstens 20 Zeichen (Test in tests/unit/policen.test.ts).
+//
+// Kranken/BU/Leben je Vermittler (regeln.ts gesundheitFreigegeben, Standard aus): aus = die Bitte nennt nur
+// Haftpflicht, Hausrat und Kfz, die Einwilligung ohne den Satzteil zu Gesundheitsangaben (eigene Textversion).
+// Einwilligung, Tor, keine KI in diesem Paket, Ablage und Löschung gelten immer.
+
+import { a, type Ansprache, type Salutation } from "@/lib/ansprache";
+import type { Person } from "@/lib/policen/regeln";
+
+export type Knopf = { id: string; title: string };
+/** Eine WhatsApp-Nachricht: Text, Knöpfe (leer = reiner Text), Fußzeile (nur mit Knöpfen). */
+export type Nachricht = { text: string; knoepfe: Knopf[]; fusszeile: string | null };
+export type PolicenBitte = Nachricht & { einwilligung: Nachricht };
+/** Vermittler wie in lib/whatsapp/gespraech.ts vermittlerName (nom/dat), dazu Anrede (er/sie) und voller Name. */
+export type BitteVermittler = Person & { anrede?: Salutation | null; name?: string | null };
+
+/** Versionen des Einwilligungstexts (stehen im Nachweis; bei jeder inhaltlichen Änderung hochzählen). */
+export const EINWILLIGUNG_TEXT_VERSION = "2026-11-18.g1";
+/** Fassung ohne Gesundheitsangaben (Kranken/BU/Leben für diesen Vermittler nicht freigegeben). */
+export const EINWILLIGUNG_TEXT_VERSION_SACH = "2026-11-18.s1";
+export const einwilligungTextVersion = (gesundheitAn: boolean) => (gesundheitAn ? EINWILLIGUNG_TEXT_VERSION : EINWILLIGUNG_TEXT_VERSION_SACH);
+
+export const PAYLOAD_JA = "policen:ja";
+export const PAYLOAD_NEIN = "policen:nein";
+
+export const KNOPF_JA = "Einverstanden";
+export const KNOPF_NEIN = "Lieber nicht";
+
+export const EINWILLIGUNG_KNOEPFE: Knopf[] = [
+  { id: PAYLOAD_JA, title: KNOPF_JA },
+  { id: PAYLOAD_NEIN, title: KNOPF_NEIN },
+];
+
+/** „Ihrem Berater“ (Rückfall in server.ts/bot.ts für beide Fälle) wird im Nominativ „Ihr Berater“. */
+function nominativ(an: Ansprache, p: Person | null): string {
+  const nom = (p?.nom ?? "").replace(/\s+/g, " ").trim();
+  if (!nom || /^(ihrem|deinem|ihr|dein) berater$/i.test(nom)) return a(an, "dein Berater", "Ihr Berater");
+  return nom;
+}
+
+/** er/sie für den Vermittler, null = unbekannt (dann ein Satz ohne Pronomen). */
+function pronomen(v: BitteVermittler | null, nom: string): "er" | "sie" | null {
+  if (v?.anrede === "Herr") return "er";
+  if (v?.anrede === "Frau") return "sie";
+  if (/^Herr\b/.test(nom) || /^(Ihr|dein) Berater$/.test(nom)) return "er";
+  if (/^Frau\b/.test(nom)) return "sie";
+  return null;
+}
+
+/** Fußzeile der Einwilligung (höchstens 60 Zeichen). */
+export const einwilligungFusszeile = (an: Ansprache) => a(an, "Dein Termin findet auch ohne Unterlagen statt.", "Ihr Termin findet auch ohne Unterlagen statt.");
+
+/**
+ * Einwilligungstext (Oles Freigabe 18.11.2026, ersetzt Text (a) der Rechtsprüfung). wer = Vor- und Nachname des
+ * Vermittlers (Identität des Verantwortlichen), firma nur, wenn sie etwas anderes sagt. gesundheitAn = Kranken/BU/Leben
+ * für diesen Vermittler freigegeben; aus = ohne den Satzteil zu Gesundheitsangaben.
+ */
+export function einwilligungText(o: { an: Ansprache; wer: string; firma?: string | null; link?: string | null; gesundheitAn: boolean }): string {
+  const firma = (o.firma ?? "").replace(/\s+/g, " ").trim();
+  const mitFirma = firma && !o.wer.toLowerCase().includes(firma.toLowerCase()) ? `${o.wer} (${firma})` : o.wer;
+  const gesundheit = o.gesundheitAn ? ", auch wenn sie Gesundheitsangaben enthalten, z. B. bei Kranken-, BU- oder Lebensversicherung" : "";
+  const infos = o.link ? ` Infos: ${o.link}` : "";
+  return a(
+    o.an,
+    `Kurz zum Datenschutz: Ich bin einverstanden, dass ${mitFirma} meine hier gesendeten Policen zur Vorbereitung des Termins speichert und die Vertragsdaten automatisch auslesen lässt (KI-Dienst in der EU)${gesundheit}. Beteiligt sind WhatsApp (Meta, Zugriff auch aus den USA möglich) und der Dienstleister performancegrowth. Widerruf jederzeit mit „Widerruf“.${infos}`,
+    `Kurz zum Datenschutz: Ich bin einverstanden, dass ${mitFirma} meine hier gesendeten Policen zur Vorbereitung des Termins speichert und die Vertragsdaten automatisch auslesen lässt (KI-Dienst in der EU)${gesundheit}. Beteiligt sind WhatsApp (Meta, Zugriff auch aus den USA möglich) und der Dienstleister performancegrowth. Widerruf jederzeit mit „Widerruf“.${infos}`,
+  );
+}
+/** Erkennt die Einwilligungsnachricht (auch als Nachfrage). */
+export const EINWILLIGUNG_RE = /Ich bin einverstanden, dass .+ meine hier gesendeten Policen/;
+
+/** Name für den Einwilligungstext: Vor- und Nachname, sonst die Anrede-Form bzw. „Ihr Berater“. */
+function vollerName(an: Ansprache, v: BitteVermittler | null): string {
+  const name = (v?.name ?? "").replace(/\s+/g, " ").trim();
+  return name.split(" ").length >= 2 ? name : nominativ(an, v);
+}
+
+/** Einwilligung als eigene interaktive Nachricht (Auflage A1). */
+export function policenEinwilligung(o: { an: Ansprache; vermittler: BitteVermittler | null; firma?: string | null; datenschutzUrl?: string | null; gesundheitAn?: boolean }): Nachricht {
+  return {
+    text: einwilligungText({ an: o.an, wer: vollerName(o.an, o.vermittler), firma: o.firma, link: o.datenschutzUrl, gesundheitAn: !!o.gesundheitAn }),
+    knoepfe: EINWILLIGUNG_KNOEPFE,
+    fusszeile: einwilligungFusszeile(o.an),
+  };
+}
+
+/**
+ * Bitte um Policen (Ole, 18.11.2026) und die Einwilligung dazu. gesundheitAn = Kranken/BU/Leben freigegeben (Standard
+ * aus): an = auch Kranken-, BU- und Lebensversicherung im Text. vermittler null = „Ihr Berater“.
+ * Senden: erst die Bitte (text, ohne Knöpfe), dann einwilligung (interaktiv) – siehe policenNachrichten.
+ */
+export function policenBitte(o: { an: Ansprache; vermittler: BitteVermittler | null; gesundheitAn?: boolean; firma?: string | null; datenschutzUrl?: string | null }): PolicenBitte {
+  const { an } = o;
+  const wer = nominativ(an, o.vermittler);
+  const sparten = o.gesundheitAn ? "Haftpflicht, Hausrat, Kfz, Kranken-, BU- oder Lebensversicherung" : "Haftpflicht, Hausrat oder Kfz";
+  const p = pronomen(o.vermittler, wer);
+  const dann = p
+    ? a(an, `Dann sieht ${p} vorher, wo du doppelt zahlst oder Lücken hast,`, `Dann sieht ${p} vorher, wo Sie doppelt zahlen oder Lücken haben,`)
+    : a(an, "Dann ist vorher klar, wo du doppelt zahlst oder Lücken hast,", "Dann ist vorher klar, wo Sie doppelt zahlen oder Lücken haben,");
+  const text = a(
+    an,
+    `Damit ${wer} deinen Termin gut vorbereiten kann: Schick bitte vorab Fotos oder PDFs deiner aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} und der Termin geht deutlich schneller.`,
+    `Damit ${wer} Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} und der Termin geht deutlich schneller.`,
+  );
+  return { text, knoepfe: [], fusszeile: null, einwilligung: policenEinwilligung(o) };
+}
+
+/** Beide Nachrichten in der Reihenfolge zum Senden. */
+export const policenNachrichten = (b: PolicenBitte): Nachricht[] => [{ text: b.text, knoepfe: b.knoepfe, fusszeile: b.fusszeile }, b.einwilligung];
+
+/**
+ * Nachfrage, wenn eine Datei vor der Einwilligung kommt (einmal je Lead): kurzer Satz und derselbe Einwilligungstext.
+ * Ohne Zustimmung wird die Datei nicht abgerufen.
+ */
+export function policenNachfrage(o: { an: Ansprache; vermittler: BitteVermittler | null; firma?: string | null; datenschutzUrl?: string | null; gesundheitAn?: boolean }): Nachricht {
+  const e = policenEinwilligung(o);
+  const vorweg = a(o.an, "Danke! Bevor ich deine Unterlagen ablege, brauche ich kurz deine Zustimmung:", "Danke! Bevor ich Ihre Unterlagen ablege, brauche ich kurz Ihre Zustimmung:");
+  return { ...e, text: `${vorweg}\n\n${e.text}` };
+}
+/** Erkennt die Nachfrage in einer unserer Nachrichten. */
+export const NACHFRAGE_RE = /^Danke! Bevor ich (deine|Ihre) Unterlagen ablege/;
+
+/** Nach „Einverstanden“, solange noch keine Datei da ist (Folgenachricht aus Text a der Rechtsprüfung). */
+export const nachEinwilligungText = (an: Ansprache) =>
+  a(
+    an,
+    "Danke! Schick die Policen gern als Foto oder PDF. Seiten mit Gesundheitsangaben kannst du schwärzen, wenn du sie nicht besprechen möchtest.",
+    "Danke! Schicken Sie die Policen gern als Foto oder PDF. Seiten mit Gesundheitsangaben können Sie schwärzen, wenn Sie sie nicht besprechen möchten.",
+  );
+
+/** Nach „Lieber nicht“: freundlich, der Termin findet trotzdem statt, kein Upload-Link (Oles Wortlaut). */
+export const lieberNichtText = (an: Ansprache) =>
+  a(
+    an,
+    "Kein Problem, dein Termin findet trotzdem statt. Bring deine Unterlagen dann einfach zum Termin mit.",
+    "Kein Problem, Ihr Termin findet trotzdem statt. Bringen Sie Ihre Unterlagen dann einfach zum Termin mit.",
+  );
+
+const norm = (t: string | null | undefined) =>
+  (t ?? "")
+    .toLowerCase()
+    .replace(/[.!]+$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+export type EinwilligungsAntwort = "ja" | "nein";
+
+/** Antwort auf die Einwilligungsnachricht (Payload oder Knopftitel); null = keine solche Antwort. */
+export function einwilligungsAntwort(payloadOderText: string | null | undefined): EinwilligungsAntwort | null {
+  const t = (payloadOderText ?? "").trim();
+  if (t === PAYLOAD_JA) return "ja";
+  if (t === PAYLOAD_NEIN) return "nein";
+  const n = norm(t);
+  if (n === norm(KNOPF_JA)) return "ja";
+  if (n === norm(KNOPF_NEIN)) return "nein";
+  return null;
+}
+
+/** Ist dieser Text (Knopftitel „Einverstanden“ bzw. Payload policen:ja) die Einwilligung zu den Policen? */
+export function istPolicenEinwilligungsKnopf(text: string | null | undefined): boolean {
+  return einwilligungsAntwort(text) === "ja";
+}

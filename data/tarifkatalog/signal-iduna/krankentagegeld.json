@@ -23,8 +23,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/krankentagegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankentagegeld Selbstständige und Freiberufler (PKV bei SIGNAL IDUNA)",
@@ -40,8 +39,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/krankentagegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankentagegeld Selbstständige und Angestellte (ohne PKV bei SIGNAL IDUNA)",
@@ -56,8 +54,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/krankentagegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -68,6 +65,7 @@
     "Höchstes Tagegeld und Leistungsdauer nicht genannt. Ende bei Berufsunfähigkeit nicht genannt (nur „nahtloser Übergang“ zur SIGNAL IDUNA BU).",
     "Wartezeit ohne SIGNAL IDUNA PKV: Wartezeiten gelten, Dauer nicht genannt (Mutterschutz: 8 Monate).",
     "Dynamik: Anpassung alle 3 Jahre an die Inflation und bei Gehaltssteigerung ohne Gesundheitsprüfung. Kinderkrankentagegeld (10 Tage je Kind, höchstens 25) nur für Angestellte mit SI-PKV.",
-    "Leistung im Ausland nicht genannt; Bedingungen nicht ausgewertet."
+    "Leistung im Ausland nicht genannt; Bedingungen nicht ausgewertet.",
+    "Geprüft am 17.11.2026 an Tariftabelle und Produktseite auf signal-iduna.de."
   ]
 }

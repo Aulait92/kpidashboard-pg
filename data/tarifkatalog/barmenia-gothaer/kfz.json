@@ -27,8 +27,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Haftpflicht + Teilkasko",
@@ -49,8 +48,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Haftpflicht + Vollkasko",
@@ -71,8 +69,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Elektro und Hybrid: Teilkasko u. a. Kurzschluss-, Überspannungs- und Tierbiss-Folgeschäden am Akku je bis 25.000 €; Vollkasko zusätzlich Allgefahrendeckung für den Akku bis 25.000 €.",
     "Rabattschutz und GAP-Deckung nicht genannt; Kaufpreisentschädigung für Gebrauchtwagen 24 bzw. 48 Monate als Zusatz erwähnt.",
     "Werkstattservice senkt den Beitrag. Mobilitäts-Schutzbrief und Auslandsschadenschutz gegen Beitrag.",
-    "BarmeniaGothaer markiert keine Stufe; Teilkasko als mittlere Stufe."
+    "BarmeniaGothaer markiert keine Stufe; Teilkasko als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an Produkttabelle und Produktseite auf barmeniagothaer.de."
   ]
 }
