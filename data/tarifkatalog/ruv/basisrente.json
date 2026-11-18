@@ -34,7 +34,8 @@
         "rentenfaktor": "ja, mit Günstigerprüfung",
         "anlage": "Fonds, Union Investment",
         "flexibel": "Zuzahlungen möglich",
-        "hinterbliebene": "ja"
+        "hinterbliebene": "ja",
+        "beitragspause": "ja"
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/altersvorsorge/private-rentenversicherung/ruerup-rente",
@@ -52,6 +53,6 @@
     "Hinterbliebenenschutz für Ehe- und eingetragene Lebenspartner sowie waisenrentenberechtigte Kinder. Beitragspause bei Safe+Smart nicht ausdrücklich genannt (Beiträge erhöhen oder reduzieren möglich).",
     "BU-Zusatz und Dynamik je Produkt nicht belegt. Effektivkosten nur im Basisinformationsblatt.",
     "Zwei Produkte ohne Markierung, keine Empfehlung gesetzt.",
-    "Geprüft am 17.11.2026 an den Produktseiten Rürup-Rente und BasisRente Safe+Smart auf ruv.de. Entfernt: Beitragspause bei der Fondsgebundenen Rürup-Rente (auf der Seite nicht genannt)."
+    "Geprüft am 17.11.2026 an den Produktseiten Rürup-Rente und BasisRente Safe+Smart auf ruv.de (Fondsgebundene Rürup-Rente: Beiträge pausieren, reduzieren oder erhöhen)."
   ]
 }

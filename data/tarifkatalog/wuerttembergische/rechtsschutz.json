@@ -31,14 +31,13 @@
         "vermieter": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/existenz/rechtsschutzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Rechtsschutz Premiumschutz",
       "kurz": "Premium",
       "stufe": 2,
-      "empfohlen": true,
+      "empfohlen": false,
       "werte": {
         "vs": "unbegrenzt (Europa)",
         "beruf": "optional",
@@ -56,14 +55,13 @@
         "vermieter": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/existenz/rechtsschutzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Rechtsschutz Premiumschutz mit PremiumPlus",
       "kurz": "PremiumPlus",
       "stufe": 3,
-      "empfohlen": false,
+      "empfohlen": true,
       "werte": {
         "vs": "unbegrenzt (Europa)",
         "beruf": "optional",
@@ -81,8 +79,7 @@
         "vermieter": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/existenz/rechtsschutzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -91,9 +88,9 @@
     "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/rechtsschutz/9706_ARB_Premium.pdf"
   ],
   "offen": [
-    "Eigener Rechtsschutz der Württembergischen. Werte aus dem Tarifvergleich der Produktseite (Abruf 17.11.2026); die Bedingungen (PDF) ließen sich nicht automatisch laden. Premium ist im Vergleich als „Tipp“ markiert.",
     "Lebensbereiche Privat, Beruf, Verkehr und Wohnen (Miete, Eigentum, Vermieter) sind frei kombinierbar, daher als „optional“. Erweiterter Straf-Rechtsschutz als zusätzlicher Baustein.",
     "Strafkaution (Darlehen) nicht auf der Seite genannt. Selbstbeteiligung wählbar, Höhe nicht genannt. Wartezeit 3 Monate nur in einzelnen Bereichen (z. B. Arbeitsrecht); Schadenersatz-, Straf- und Verkehrs-Rechtsschutz ohne Wartezeit.",
-    "Weitere Unterschiede: Familien- und Erbrecht Beratung 500/1.000/3.000 €; Auslandsaufenthalt außerhalb Europas bis 2 Jahre (Komfort) bzw. 5 Jahre; PremiumPlus mit erweitertem Mediations-Rechtsschutz bis 10.000 € und Bau-Rechtsschutz bis 10.000 €."
+    "Weitere Unterschiede: Familien- und Erbrecht Beratung 500/1.000/3.000 €; Auslandsaufenthalt außerhalb Europas bis 2 Jahre (Komfort) bzw. 5 Jahre; PremiumPlus mit erweitertem Mediations-Rechtsschutz bis 10.000 € und Bau-Rechtsschutz bis 10.000 €.",
+    "Geprüft am 17.11.2026 am Tarifvergleich der Produktseite auf wuerttembergische.de. Korrigiert: Die Markierung „Tipp“ steht bei Premium mit PremiumPlus (nicht bei Premium); Empfehlung entsprechend umgesetzt."
   ]
 }

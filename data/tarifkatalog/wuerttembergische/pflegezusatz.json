@@ -26,8 +26,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.wuerttembergische.de/gesundheit/private-pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Pflegezusatz Komfort",
@@ -46,8 +45,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.wuerttembergische.de/gesundheit/private-pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Pflegezusatz Premium",
@@ -66,8 +64,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.wuerttembergische.de/gesundheit/private-pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -78,6 +75,7 @@
     "Quelle: Tarifvergleich und Leistungen je Pflegegrad auf der Produktseite (Abruf 17.11.2026). Keine Stufe markiert, Komfort als mittlere Stufe.",
     "Monatsgeld stationär in Pflegegrad 2 bis 5 gleich (1.500, 1.750 bzw. 2.050 €); ambulant gestaffelt (Pflegegrad 2: 350, 550 bzw. 750 €). Pflegegrad 1 nur Premium 200 €.",
     "Pflege-Einmalleistung bei erstmaliger Pflegebedürftigkeit ab Pflegegrad 2. Premium zusätzlich Pflege-Airbag 1.500 €.",
-    "Dynamik ab dem 4. Versicherungsjahr auf Wunsch. Wartezeit und Demenzregelung nicht genannt."
+    "Dynamik ab dem 4. Versicherungsjahr auf Wunsch. Wartezeit und Demenzregelung nicht genannt.",
+    "Geprüft am 17.11.2026 an der Leistungstabelle der Produktseite auf wuerttembergische.de."
   ]
 }

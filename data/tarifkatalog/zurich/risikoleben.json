@@ -24,8 +24,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/34020_risikolebensversicherung_verbraucherinformationen_2026_01.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -37,6 +36,7 @@
     "Vorgezogene Leistung bei schwerer Krankheit mit Lebenserwartung von höchstens 12 Monaten.",
     "Verlängerungsoption nur wenn vereinbart, Antrag bis 5 Jahre vor Ablauf. Umtausch in eine kapitalbildende Versicherung ab dem 2. bis Ende des 10. Versicherungsjahres.",
     "Soforthilfe nach mindestens 3 Vertragsjahren. Todesfallleistung für ein Kind der versicherten Person (3 Monate bis 16 Jahre): 5.000 €.",
-    "Weltweiter Schutz, Endalter und Höchstsumme nicht in den Bedingungen gefunden. Basisschutz zur Absicherung von Baufinanzierungen nicht als eigene Stufe aufgenommen."
+    "Weltweiter Schutz, Endalter und Höchstsumme nicht in den Bedingungen gefunden. Basisschutz zur Absicherung von Baufinanzierungen nicht als eigene Stufe aufgenommen.",
+    "Geprüft am 17.11.2026 an den Verbraucherinformationen (Bedingungen 01/2026, PDF) auf zurich.de."
   ]
 }

@@ -1,7 +1,10 @@
 "use client";
 
-// E-Mail an den Lead aus dem eigenen Postfach (Ole, 13.11.2026): Vorlage wählen, anpassen,
-// Dokumente (z. B. Angebot) anhängen, senden. Danach im Verlauf.
+// E-Mail an den Lead (Ole, 13.11.2026): Vorlage wählen, anpassen, Dokumente (z. B. Angebot) anhängen, senden.
+// Danach im Verlauf. Seit 17.11.2026 (Pakete M0/M1): Versand über den Lead-Mail-Baustein, also aus dem eigenen
+// Postfach oder ohne Postfach von unserer Versanddomain mit „Name | Agentur“, Antwort an Sie, Signatur und Kopie;
+// dazu „Im eigenen Mailprogramm öffnen“ und „Text kopieren“ mit „Gesendet?“ (components/mail-wege.tsx). Bei
+// „E-Mail-Funktionen aus“ nur diese beiden.
 // Seit 14.11.2026: Vorlagen nach Phase des Kontakts sortiert (passende vorn, übrige unter „Weitere“),
 // Felder für Zusatz-Platzhalter (Termin, fehlende Unterlagen, Musterkündigung, Zusammenfassung, Datum)
 // und die passende Nachfass-Aufgabe nach dem Senden.
@@ -9,11 +12,11 @@
 import { useEffect, useEffectEvent, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, Info, Loader2, Mail, Paperclip, Pencil, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui";
+import { ChevronDown, Info, Paperclip, Pencil, Sparkles } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
-import { sendLeadMailAction, type MailPdf } from "@/app/buyer/postfach/actions";
+import { MailWege } from "@/components/mail-wege";
+import { mailSelbstGesendetAction, sendLeadMailAction, type MailPdf } from "@/app/buyer/postfach/actions";
 import {
   datumKurz,
   fehlendeUnterlagen,
@@ -90,10 +93,12 @@ export function LeadMailComposer({
   empfohlen = [],
   termin = null,
   beratung = { wuensche: "", notizen: [] },
+  appVersand = true,
 }: {
   leadId: string;
   lead: { name: string | null; source: string | null; salutation?: string | null; firstName?: string | null; lastName?: string | null };
   to: string | null;
+  /** Zeile unter dem Titel, z. B. „Von Ole Kannapinn | Agentur“ */
   from: string;
   meinname: string;
   /** E-Mail-Signatur (Postfach-Einstellungen); steht unter jeder E-Mail */
@@ -110,6 +115,8 @@ export function LeadMailComposer({
   termin?: { startsAt: string; mode: string; meetUrl: string | null } | null;
   /** Vorschlag für die Gesprächszusammenfassung und die letzten Notizen */
   beratung?: { wuensche: string; notizen: string[] };
+  /** Über die App senden möglich (Postfach oder Versanddomain); false bei „E-Mail-Funktionen aus“ */
+  appVersand?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -262,17 +269,40 @@ export function LeadMailComposer({
       });
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       toast.show({ message: res.reminder ? `E-Mail gesendet. ${res.reminder}` : `E-Mail an ${to} gesendet` });
-      setOpen(false);
-      setVorlage(null);
-      setSubject("");
-      setText(leer);
-      setFiles(new Set());
-      setDirty(false);
-      setVeraltet(false);
-      router.refresh();
-      // Nächster Schritt: fragen, wie es weitergeht (components/next-step.tsx)
-      window.dispatchEvent(new CustomEvent("pg-lead-action", { detail: { leadId } }));
+      fertig();
     });
+
+  // Nach dem Senden (App oder eigenes Mailprogramm): schließen, leeren, nach dem nächsten Schritt fragen
+  const fertig = () => {
+    setOpen(false);
+    setVorlage(null);
+    setSubject("");
+    setText(leer);
+    setFiles(new Set());
+    setDirty(false);
+    setVeraltet(false);
+    router.refresh();
+    // Nächster Schritt: fragen, wie es weitergeht (components/next-step.tsx)
+    window.dispatchEvent(new CustomEvent("pg-lead-action", { detail: { leadId } }));
+  };
+
+  // „Gesendet?“ → Ja: Eintrag im Verlauf (eigenes Mailprogramm) und dieselben Folgen wie beim Senden
+  const selbstGesendet = async () => {
+    const res = await mailSelbstGesendetAction({
+      leadId,
+      to,
+      subject,
+      text,
+      vorlageKey: key,
+      erinnern: remind,
+      erinnernTage: remindDays,
+      mitLink,
+      meldeTag: hatMelde ? felder.meldeTag : null,
+    });
+    if (!res.ok) return toast.show({ message: res.error, tone: "error" });
+    toast.show({ message: res.reminder ? `Im Verlauf eingetragen. ${res.reminder}` : "Im Verlauf eingetragen" });
+    fertig();
+  };
 
   const chip = (v: Vorlage, hervor: boolean) => (
     <button
@@ -298,7 +328,7 @@ export function LeadMailComposer({
   const nachfassen = nachfassenFuer(key, { erinnern: true, tage: remindDays, mitLink, meldeTag: hatMelde ? felder.meldeTag || "x" : null });
 
   return (
-    <Sheet open={open} onClose={() => setOpen(false)} title="E-Mail schreiben" message={`Von ${from}`}>
+    <Sheet open={open} onClose={() => setOpen(false)} title="E-Mail schreiben" message={from}>
       <div className="max-h-[calc(100dvh-10rem)] space-y-3 overflow-y-auto p-5" data-lead-mail>
         {vorlagen.length ? (
           <div className="space-y-2" data-mail-vorlagen>
@@ -547,17 +577,16 @@ export function LeadMailComposer({
           </div>
         ) : null}
         {fehlt ? <p className="text-xs text-[color:var(--muted)]">{fehlt}</p> : null}
-        <Button
-          variant="primary"
-          size="md"
-          className="w-full"
-          disabled={pending || !!fehlt || !to.trim() || !subject.trim() || !text.trim()}
-          onClick={send}
-          data-lead-mail-send
-        >
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-          Senden
-        </Button>
+        <MailWege
+          appVersand={appVersand}
+          senden={send}
+          pending={pending}
+          disabled={!!fehlt || !subject.trim() || !text.trim()}
+          mail={{ to, subject, text }}
+          signatur={signatur}
+          anhaenge={dateien.filter((d) => files.has(d.id)).map((d) => ({ name: d.fileName, url: `/api/buyer/leads/${leadId}/dateien/${d.id}` }))}
+          onGesendet={selbstGesendet}
+        />
       </div>
     </Sheet>
   );

@@ -26,8 +26,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/mobilitaet/kfz-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "HDI Motor Premium",
@@ -46,8 +45,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/mobilitaet/kfz-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -57,6 +55,7 @@
     "Neupreis: Komfort bis 12 Monate, Premium bis 48 Monate (auch Kaufpreisentschädigung für Gebrauchte).",
     "Grobe Fahrlässigkeit: Verzicht nur im Abschnitt Geschäftskunden genannt; für Privatkunden nicht belegt. Wildschäden: Premium erstattet Wertminderung bei Unfall mit Tieren; Tierarten nicht genannt.",
     "Tierbiss und Kurzschluss inkl. Folgeschäden: Komfort bis 10.000 €, E- und Hybridfahrzeuge 20.000 € (Premium bis 40.000 €); Premium-Wert für Verbrenner nicht genannt.",
-    "GAP, Mallorca und Schutzbrief nicht auf der Produktseite. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+    "GAP, Mallorca und Schutzbrief nicht auf der Produktseite. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
+    "Geprüft am 17.11.2026 am Text der Produktseite auf hdi.de."
   ]
 }

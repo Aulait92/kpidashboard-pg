@@ -29,8 +29,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "AmbulantPLUS",
@@ -52,8 +51,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -63,6 +61,7 @@
     "Zwei Tarife ohne Markierung; keine Empfehlung gesetzt. AmbulantPLUS gibt es mit oder ohne Alterungsrückstellungen (pur).",
     "Arzneimittel: gesetzliche Zuzahlungen für Heil-, Hilfs-, Arznei- und Verbandmittel und Haushaltshilfe zusammen bis 250 €/Jahr.",
     "Hörgeräte: Hilfsmittel ohne Einschränkung des Katalogs (z. B. Hörgeräte, Einlagen) bis 250 € bzw. 750 € je Jahr.",
-    "Augenlasern erstmals nach 3 Jahren, zweimal während der Laufzeit. Vorsorge inklusive Reiseschutzimpfungen."
+    "Augenlasern erstmals nach 3 Jahren, zweimal während der Laufzeit. Vorsorge inklusive Reiseschutzimpfungen.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf signal-iduna.de."
   ]
 }
