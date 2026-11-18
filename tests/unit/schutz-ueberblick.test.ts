@@ -9,6 +9,8 @@ import {
   cleanSchutz,
   cleanVorsorgeAus,
   hundePflichtLand,
+  nichtMehrVorhanden,
+  unsicherGenannt,
   SCHUTZ_ANTWORT,
   SCHUTZ_REIHENFOLGE,
   SCHUTZ_SPARTEN,
@@ -25,6 +27,7 @@ import {
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
 import { spartenGruppiert } from "@/lib/tarifkatalog";
 import { cleanTarifauswahl, sparteNeu, startAuswahl, zuAngebote } from "@/lib/tarifauswahl";
+import { vertraegeAusText } from "@/lib/whatsapp/vorvertraege";
 import { folien, markeFuer } from "@/lib/praesentation";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
@@ -333,5 +336,46 @@ describe("Ein Bereich „Was hat Frau Becker schon?“ (Ole, 18.11.2026)", () =>
     const u = folien(termin(), ang, markeFuer({ name: "Allianz Agentur Test" })).find((f) => f.id === "ueberblick")!.html;
     expect(u).toContain('data-schutz="pkv" data-status="woanders"');
     expect(u).toContain("Ihr Schutz im Überblick");
+  });
+});
+
+describe("Nicht mehr bestehende Verträge sind keine Verträge (Usability-Check 18.11.2026)", () => {
+  it("„Rechtsschutz ausgelaufen“ ist eine Lücke, nie „Ja, woanders“", () => {
+    const s = schutzVorschlag(termin({ angaben: { vorhanden: "Rechtsschutz ausgelaufen" } }), { angebot: ["rechtsschutz"] });
+    expect(s.find((x) => x.key === "rechtsschutz")).toMatchObject({ status: "luecke", quelle: "chat" });
+  });
+
+  it("gekündigt, hatte mal, nicht mehr, war mal, abgelaufen: je Satzteil, Laufendes bleibt „woanders“", () => {
+    const s = schutzVorschlag(
+      termin({ angaben: { vorhanden: "Haftpflicht bei HUK, Unfall gekündigt, Hausrat hatte ich mal und Rechtsschutz habe ich nicht mehr" } }),
+      { angebot: [] },
+    );
+    expect(status(s)).toMatchObject({ haftpflicht: "woanders", unfall: "luecke", hausrat: "luecke", rechtsschutz: "luecke" });
+    expect(nichtMehrVorhanden("Unfall war mal bei der Allianz; Hausrat abgelaufen")).toEqual(["unfall", "hausrat"]);
+    expect(nichtMehrVorhanden("Haftpflicht bei HUK")).toEqual([]);
+  });
+
+  it("überstimmt auch eine im Komplettcheck aufgeführte Sparte", () => {
+    const d = { ...termin({ angaben: { vorhanden: "Rechtsschutz ist abgelaufen" } }), komplettcheck: true, vorvertraege: { at: "2026-11-17T10:00:00Z", liste: [{ sparte: "Rechtsschutz" }] } };
+    expect(schutzVorschlag(d, { angebot: [] }).find((x) => x.key === "rechtsschutz")?.status).toBe("luecke");
+  });
+
+  it("im Zweifel „Weiß nicht“ (prüfen) statt „woanders“", () => {
+    const s = schutzVorschlag(termin({ angaben: { vorhanden: "Haftpflicht bei HUK, Rechtsschutz weiß ich nicht, glaube Unfall über den Arbeitgeber" } }), { angebot: [] });
+    expect(status(s)).toMatchObject({ haftpflicht: "woanders", rechtsschutz: "pruefen", unfall: "pruefen" });
+    expect(unsicherGenannt("Hausrat?")).toEqual(["hausrat"]);
+  });
+
+  it("Folie: keine Zeile „ersetzt Ihren bisherigen Vertrag“ bei ausgelaufenem Vertrag", () => {
+    const k = ladeTarifkatalog(path.join(__dirname, "..", "fixtures", "tarifkatalog"));
+    const a = startAuswahl(k, ["haftpflicht"], { rolle: "vertreter", gesellschaften: ["allianz"] });
+    a.schutz = schutzVorschlag(termin({ angaben: { vorhanden: "Haftpflicht ausgelaufen" } }), { angebot: ["haftpflicht"] });
+    expect(a.schutz.find((x) => x.key === "haftpflicht")?.status).toBe("luecke");
+    const u = folien(termin(), zuAngebote(a), markeFuer({ name: "Allianz Agentur Test" })).find((f) => f.id === "ueberblick")!.html;
+    expect(u).not.toContain("ersetzt Ihren bisherigen Vertrag");
+  });
+
+  it("Rückfall ohne KI: ausgelaufene Verträge kommen nicht in die Liste", () => {
+    expect(vertraegeAusText("Haftpflicht bei der HUK, Rechtsschutz ausgelaufen, Unfall hatte ich mal").map((v) => v.sparte)).toEqual(["Haftpflicht"]);
   });
 });

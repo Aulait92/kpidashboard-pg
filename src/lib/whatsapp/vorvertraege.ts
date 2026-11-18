@@ -103,6 +103,8 @@ export function vertraegeAusText(text: string | null | undefined): Vorvertrag[] 
   const teile = (text ?? "").split(/[,;\n]|\bund\b|\bsowie\b|\+/i).map((s) => s.trim()).filter(Boolean);
   const out: { sparte: string; gesellschaft: string | null }[] = [];
   for (const teil of teile) {
+    // Ausgelaufen, gekündigt, hatte mal: kein laufender Vertrag (Usability-Check 18.11.2026)
+    if (NICHT_MEHR.test(teil)) continue;
     const sparte = sparteAus(teil);
     if (!sparte) continue;
     const ges = /\b(?:bei|von)\s+(?:der|dem|den|die)?\s*([A-ZÄÖÜ][\w&+.\-ÄÖÜäöüß ]{1,30})/.exec(teil)?.[1] ?? null;
@@ -110,6 +112,9 @@ export function vertraegeAusText(text: string | null | undefined): Vorvertrag[] 
   }
   return normalisiereVertraege(out);
 }
+
+/** Nicht mehr bestehend („ausgelaufen“, „gekündigt“, „hatte ich mal“, „nicht mehr“); gleiche Regel in lib/schutz-ueberblick.ts. */
+export const NICHT_MEHR = /ausgelaufen|abgelaufen|gek(ü|ue)ndigt|beendet|\bnicht mehr\b|\bhatten? (ich |wir )?(mal|fr(ü|ue)her|bis)\b|\bwar(en)? (mal|fr(ü|ue)her)\b|\bfr(ü|ue)her mal\b|\behemal/i;
 
 /** Gängige Sparten je Lebenssituation (neutral, für „noch nicht genannt“). */
 export function gaengigeSparten(lebenssituation: string | null | undefined): VertragSparte[] {

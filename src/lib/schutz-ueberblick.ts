@@ -17,7 +17,7 @@ import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
-import { vorvertraegeAus, type VertragSparte } from "@/lib/whatsapp/vorvertraege";
+import { NICHT_MEHR, vorvertraegeAus, type VertragSparte } from "@/lib/whatsapp/vorvertraege";
 
 export type SchutzStatus = "bei-uns" | "woanders" | "pruefen" | "luecke";
 
@@ -192,6 +192,26 @@ function ausdruecklichOhne(text: string): string[] {
   return [...out];
 }
 
+/**
+ * Nicht mehr vorhanden (Usability-Check 18.11.2026): „Rechtsschutz ausgelaufen“, „Unfall gekündigt“, „Hausrat hatte ich
+ * mal“, „Haftpflicht nicht mehr“. Solche Angaben sind kein laufender Vertrag, also eine Lücke und nie „woanders“
+ * (sonst stand auf der Folie „ersetzt Ihren bisherigen Vertrag“). Je Satzteil (Komma, Semikolon, Punkt, „und“, „aber“).
+ */
+/** Unsichere Angaben („weiß nicht“, „glaube“, „evtl.“, Fragezeichen): lieber „Weiß nicht“ als „woanders“. */
+export const UNSICHER = /wei(ß|ss) (ich )?nicht|keine ahnung|unsicher|\bglaub|vielleicht|\bevtl\b|eventuell|\bm(ü|ue)sste\b|\bwohl\b|\?/i;
+
+const satzteile = (text: string) => text.split(/[,;.\n]|\bund\b|\baber\b|\bsowie\b/i).map((x) => x.trim()).filter(Boolean);
+
+/** Sparten, die laut Text nicht mehr bestehen (ausgelaufen, gekündigt, hatte mal …). */
+export function nichtMehrVorhanden(text: string): string[] {
+  return [...new Set(satzteile(text).filter((t) => NICHT_MEHR.test(t)).flatMap(spartenIm))];
+}
+
+/** Sparten, die nur unsicher genannt sind („Rechtsschutz? weiß nicht“, „glaube Unfall über den Arbeitgeber“). */
+export function unsicherGenannt(text: string): string[] {
+  return [...new Set(satzteile(text).filter((t) => UNSICHER.test(t) && !NICHT_MEHR.test(t)).flatMap(spartenIm))];
+}
+
 /** Sparte einer Vertragssparte (LeadContract.sparte) im Überblick; privatschutz ist nicht eindeutig, also keine. */
 const VERTRAG_SPARTE: Record<string, string> = {
   unfall: "unfall",
@@ -266,7 +286,8 @@ const monatJahr = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Eur
  * - Hund → Hundehalterhaftpflicht (Pflicht in BE, HB, HH, NI, ST, SH, TH, aus der PLZ), Pferd → Pferdehalterhaftpflicht
  * - Privatschutz-Kunde mit Tier → Tierkranken
  * - Rechtsschutz und Unfall für jeden Haushalt (seltener vorhanden, daher vorn)
- * Unbekanntes heißt „prüfen“, ausdrücklich Fehlendes „Lücke“, Genanntes „woanders“, Verträge bei uns „bei uns“.
+ * Unbekanntes und unsicher Genanntes heißt „prüfen“, ausdrücklich Fehlendes und nicht mehr Bestehendes („ausgelaufen“,
+ * „gekündigt“, „hatte mal“) „Lücke“, Genanntes „woanders“, Verträge bei uns „bei uns“.
  */
 export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansprache = "sie"): SchutzEintrag[] {
   const q = angabenVon(d);
@@ -301,6 +322,14 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
     ausChat.add(key);
     if (!bei.get(key)) bei.set(key, v.gesellschaft ?? null);
   }
+  // Ausgelaufen, gekündigt, hatte mal: kein laufender Vertrag, auch wenn der Komplettcheck die Sparte aufführt
+  for (const key of nichtMehrVorhanden(vorhanden)) {
+    genannt.delete(key);
+    ohne.add(key);
+  }
+  // Im Zweifel „Weiß nicht“ statt „woanders“ (der Vermittler fragt im Termin nach)
+  const unsicher = new Set(unsicherGenannt(vorhanden).filter((key) => !ohne.has(key) && !bei.get(key)));
+  for (const key of unsicher) genannt.delete(key);
   // Komplettcheck und „keine Versicherungen“: alles nicht Genannte fehlt ausdrücklich
   const keineLaut = komplettcheck && vv?.keine === true && !vv.liste.length;
   // „sonst nichts“, „keine“: alles nicht Genannte fehlt ausdrücklich
@@ -330,6 +359,7 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
     }
     const quelle: SchutzQuelle = ausChat.has(key) || keineLaut || (sonstNichts && !!q.vorhanden?.trim()) ? "chat" : "formular";
     if (genannt.has(key) && !ohne.has(key)) return { key, label, status: "woanders", ...(bei.get(key) ? { versicherer: bei.get(key) } : {}), oeffner, quelle };
+    if (unsicher.has(key)) return { key, label, status: "pruefen", oeffner };
     if (ohne.has(key) || (sonstNichts && vorhanden.trim()) || keineLaut) return { key, label, status: "luecke", oeffner, quelle };
     return { key, label, status: "pruefen", oeffner };
   });
