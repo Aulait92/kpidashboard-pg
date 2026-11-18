@@ -29,8 +29,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.hansemerkur.de/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Exklusiv",
@@ -52,8 +51,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.hansemerkur.de/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Top",
@@ -75,8 +73,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.hansemerkur.de/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -87,6 +84,7 @@
     "Einfacher Diebstahl nicht als Leistung genannt; Diebstahl aus dem Hausflur 250, 500 bzw. 1.000 €; Schlossänderung nach einfachem Diebstahl nur Top (300 €).",
     "Schmuck und Uhren bis 20.000, 25.000 bzw. 35.000 €. Bankkarten-Missbrauch nach Einbruch 250, 750 bzw. 1.500 €.",
     "Fahrraddiebstahl, Glasbruch und Naturgefahren als Zusatzbausteine. Online-Betrug und Selbstbeteiligung nicht genannt.",
-    "HanseMerkur markiert Exklusiv als „Bestseller“."
+    "HanseMerkur markiert Exklusiv als „Bestseller“.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

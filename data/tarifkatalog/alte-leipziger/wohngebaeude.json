@@ -32,8 +32,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/142/deklarationsvergleichwohngebaeudepp142pdf/deklarationsvergleich-wohngebaeude-pp142.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude classic",
@@ -59,8 +58,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/142/deklarationsvergleichwohngebaeudepp142pdf/deklarationsvergleich-wohngebaeude-pp142.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude comfort",
@@ -85,8 +83,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/142/deklarationsvergleichwohngebaeudepp142pdf/deklarationsvergleich-wohngebaeude-pp142.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -97,6 +94,7 @@
     "Quelle: Deklarationsvergleich PP 142 (Fußzeile 07.2026, Seiten Stand 07.2025) der Alte Leipziger Versicherung AG. Werte für Ein- und Zweifamilienhaus; Mehrfamilienhaus teils niedriger.",
     "Ableitungsrohre: Frost- und Bruchschäden innerhalb und außerhalb des Grundstücks. Hotel compact höchstens 120 Tage, classic und comfort 365 Tage.",
     "Photovoltaik als Gebäudebestandteil in allen Stufen versichert; Pakete Photovoltaik und Erneuerbare Energien (Allgefahren, SB 300 €) gegen Aufpreis. Elementar als Paket (SB 10 %, mind. 500 €).",
-    "Gleitender Neuwert nicht im Vergleich genannt. Tarif #selbermacher (comfort mit 1.200 € SB) nicht als Stufe geführt. Keine Empfehlung markiert."
+    "Gleitender Neuwert nicht im Vergleich genannt. Tarif #selbermacher (comfort mit 1.200 € SB) nicht als Stufe geführt. Keine Empfehlung markiert.",
+    "Geprüft am 18.11.2026 an Produktseite, Deklarationsvergleich bzw. Bedingungen der Alte Leipziger."
   ]
 }

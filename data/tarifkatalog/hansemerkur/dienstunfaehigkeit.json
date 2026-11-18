@@ -27,8 +27,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hansemerkur.de/dienstunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -39,6 +38,7 @@
     "Quelle: Produktseite hansemerkur.de und Informationsbroschüre Be Care (ML 206).",
     "Echte DU: amtsärztliches Zeugnis und Versetzungsbescheid reichen; vollständig ab Eintritt in das Beamtenverhältnis, auch für Richter.",
     "Leistung bei in bestimmten Berufen beschränkter Dienstunfähigkeit genannt; Teildienstunfähigkeit nicht ausdrücklich.",
-    "Rente fällt ab Lebenszeitverbeamtung linear (abgestimmt auf die staatliche Versorgung). Arbeitsunfähigkeit zusätzlich einschließbar."
+    "Rente fällt ab Lebenszeitverbeamtung linear (abgestimmt auf die staatliche Versorgung). Arbeitsunfähigkeit zusätzlich einschließbar.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }
