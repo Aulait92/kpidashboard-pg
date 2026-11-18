@@ -153,6 +153,22 @@ export const ROLLEN = [
 export type Rolle = (typeof ROLLEN)[number]["key"];
 
 /** Wählbare Puffer und Vorläufe in der Einstellung (Minuten). */
+/** Sparten zur Auswahl auf der Buchungsseite, wie „Welche Lead-Arten liefern wir“ auf der Webseite (Ole, 18.11.2026). */
+export const VERTRIEB_INTERESSEN = [
+  "PKV-Optimierung",
+  "Sterbegeld",
+  "Kindersparplan",
+  "Azubi-Leads mit Förderberechtigung",
+  "Privathaftpflicht",
+  "Hausrat",
+  "Rechtsschutz",
+  "Unfall",
+  "Weitere Sachversicherungen",
+  "Katze",
+  "Hund",
+  "Pferd",
+] as const;
+
 export const BUFFER_CHOICES = [0, 10, 15, 30] as const;
 export const NOTICE_CHOICES = [60, 120, 240, 720, 1440, 2880] as const;
 export const DURATION_CHOICES = [30, 45, 60] as const;
