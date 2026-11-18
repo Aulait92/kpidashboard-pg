@@ -28,8 +28,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.continentale.de/pflegeversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pflegetagegeld Komfort PG-K",
@@ -50,8 +49,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.continentale.de/pflegeversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pflegetagegeld Komfort-plus PG-K-plus",
@@ -72,8 +70,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.continentale.de/pflegeversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -85,6 +82,7 @@
     "Tagessatz 10 bis 150 € frei wählbar und je Pflegegrad bzw. ambulant und stationär unterschiedlich vereinbar; die tatsächliche Leistung bei Pflegegrad 5 hängt von der Vereinbarung ab.",
     "Einmalleistung über den Kapitalleistungstarif PG-C (ab Pflegegrad 2, 1.000 bis 10.000 €), kombinierbar mit allen drei Tarifen. PG-K und PG-K-plus mit Nachversicherungsgarantie und Sofortleistung bei Erstfeststellung durch den behandelnden Arzt; PG-E mit Optionsrecht auf Wechsel in PG-K bzw. PG-K-plus.",
     "Dynamik laut Produktseite („dynamische Erhöhung ohne Gesundheitsprüfung“), Bedingungen dazu nicht ausgewertet. Leistung bei Demenz nicht gesondert genannt.",
-    "Nicht aufgenommen: Pflegekostentarif PZ-U (erhöht die gesetzlichen Pflegeleistungen in Tarifstufen zu je 10 %)."
+    "Nicht aufgenommen: Pflegekostentarif PZ-U (erhöht die gesetzlichen Pflegeleistungen in Tarifstufen zu je 10 %).",
+    "Geprüft am 18.11.2026 an Produktseite und Vertragsinformationen bzw. Bedingungen der Continentale."
   ]
 }

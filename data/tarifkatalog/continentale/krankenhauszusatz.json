@@ -28,8 +28,7 @@
         "einbett": "nein"
       },
       "quelle": "https://www.continentale.de/zusatzversicherung-stationaer",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Tarif SG1 (Ein-Bett-Zimmer)",
@@ -50,8 +49,7 @@
         "einbett": "inklusive"
       },
       "quelle": "https://www.continentale.de/zusatzversicherung-stationaer",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -62,6 +60,7 @@
     "Leistungen aus der Leistungsübersicht der Produktseite; Erstattung über GOÄ-Höchstsatz (rechtswirksame Honorarvereinbarungen) und Wartezeiten aus Tarif SG der AVB Zusatzversicherte (Stand 01.10.2025).",
     "Wartezeit: allgemeine Wartezeit 3 Monate nach MB/KK 2009 (besondere Wartezeiten 8 Monate, z. B. Entbindung und Psychotherapie); durch ärztliches Zeugnis erlassbar, entfällt bei Unfall.",
     "Krankenhaustagegeld als eigener Tarif KHT (100 % je vollstationärem Tag, 25 % bei Kuren bis 28 Tage), daher Baustein „optional“; die Continentale empfiehlt KHT zusätzlich, markiert aber keinen SG-Tarif.",
-    "Nicht aufgenommen: Start Stationär (StartS) aus der StartLinie, leistet Wahlleistungen nur nach Unfall."
+    "Nicht aufgenommen: Start Stationär (StartS) aus der StartLinie, leistet Wahlleistungen nur nach Unfall.",
+    "Geprüft am 18.11.2026 an Produktseite und Vertragsinformationen bzw. Bedingungen der Continentale."
   ]
 }

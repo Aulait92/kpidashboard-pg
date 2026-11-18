@@ -26,8 +26,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.continentale.de/zusatzversicherung-ambulant",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Basis-Schutz CEB-PLUS-U",
@@ -46,8 +45,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.continentale.de/zusatzversicherung-ambulant",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Komfort-Schutz CEK-PLUS-U",
@@ -68,8 +66,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.continentale.de/zusatzversicherung-ambulant",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -81,6 +78,7 @@
     "Leistungen aus der Tarifübersicht der Produktseite („Einsteiger-, Basis-, Komfort-Schutz“); Continentale markiert keinen Tarif, CEB-PLUS als mittlere Stufe gesetzt.",
     "Heilpraktiker/Naturheilverfahren: CEB-PLUS bis 50 % ohne GKV-Leistung, 100 % unter Anrechnung der GKV-Leistung; CEK-PLUS bis 80 % ohne GKV-Leistung. CEB-PLUS Arzneimittel außerdem bis 50 % und 100 €; Sehhilfen bei CEB-PLUS unter Anrechnung der GKV-Leistung.",
     "Hörgeräte: nur „100 % Zuzahlungen für Hilfsmittel“ im CEK-PLUS genannt; eigene Hörgeräte-Leistung nicht belegt. Augenlaser nicht belegt; Vorsorge im CEB-PLUS nicht genannt.",
-    "Wartezeit: allgemeine Wartezeit 3 Monate (MB/KK 2009 bzw. StartA), erlassbar mit ärztlichem Zeugnis, entfällt bei Unfall und für den Auslandsschutz. CEB-PLUS und CEK-PLUS zahlen bei Leistungsfreiheit eine Pauschalleistung (mindestens 3/12 des Vorjahresbeitrags)."
+    "Wartezeit: allgemeine Wartezeit 3 Monate (MB/KK 2009 bzw. StartA), erlassbar mit ärztlichem Zeugnis, entfällt bei Unfall und für den Auslandsschutz. CEB-PLUS und CEK-PLUS zahlen bei Leistungsfreiheit eine Pauschalleistung (mindestens 3/12 des Vorjahresbeitrags).",
+    "Geprüft am 18.11.2026 an Produktseite und Vertragsinformationen bzw. Bedingungen der Continentale."
   ]
 }
