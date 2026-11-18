@@ -18,9 +18,8 @@ import {
   leereListeWeg,
   mailWerte,
   nachfassMail,
-  rueckrufPush,
-  rueckrufSeite,
 } from "@/lib/angebot-senden";
+import { rueckrufFensterPush, rueckrufTexte } from "@/lib/rueckruf";
 import { SEQUENCES } from "@/lib/lead-sequences";
 import { planeNachrichten, type PlanEingabe } from "@/lib/nachrichtenplan";
 import { STANDARD_VORLAGEN_JE } from "@/lib/mail/vorlagen";
@@ -118,12 +117,12 @@ describe("Angebot senden: Texte an den Lead", () => {
   });
 
   it("Rückruf-Seite, Pushes und Hinweise in Sie-Form", () => {
-    const t = rueckrufSeite("sie", { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" });
-    expect(t.text).toBe("Herr Kannapinn ruft Sie gern an und beantwortet Ihre Fragen zum Angebot.");
-    expect(t.danke).toBe("Danke! Herr Kannapinn meldet sich bei Ihnen.");
-    expect(rueckrufSeite("du", { nom: "Ole", dat: "Ole" }).text).toContain("ruft dich gern an");
+    const t = rueckrufTexte("sie", { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" });
+    expect(t.text).toBe("Herr Kannapinn ruft Sie im gewählten Zeitfenster an.");
+    expect(t.danke).toBe("Danke, Ihr Rückrufwunsch ist angekommen!");
+    expect(rueckrufTexte("du", { nom: "Ole", dat: "Ole" }).text).toContain("ruft dich im gewählten");
     expect(angebotAnrufPush({ leadId: "l1", name: "Frau Becker" })).toMatchObject({ title: "Frau Becker anrufen: Fragen zum Angebot?", url: "/buyer?anrufen=l1#anrufen" });
-    expect(rueckrufPush({ leadId: "l1", name: "Frau Becker" }).title).toBe("Frau Becker wünscht einen Rückruf");
+    expect(rueckrufFensterPush({ leadId: "l1", name: "Frau Becker", fenster: null, now: new Date() }).title).toBe("Frau Becker wünscht einen Rückruf");
     expect(ANGEBOT_AUFGABE).toBe("Angebot ablegen und senden");
     expect(ANGEBOT_HINWEIS).toBe("Das Nachfassen zum Angebot startet erst, wenn Sie es hier senden.");
     expect(SELBST_UPLOAD_HINWEIS).toContain("hilft bei Ihren Zahlen");

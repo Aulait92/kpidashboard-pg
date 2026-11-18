@@ -7,7 +7,7 @@ import { ansprechpartner } from "@/lib/lead-anrede";
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { firstNameOf } from "@/lib/whatsapp/templates";
 import { terminNutzenSatz, vermittlerName, zeitKurz } from "@/lib/whatsapp/gespraech";
-import { topicOf } from "@/lib/lead-sequences";
+import { istAngebotsAbfolge, topicOf } from "@/lib/lead-sequences";
 import { leadLabel } from "@/lib/showup";
 import { ANTWORT_WARTEZEIT_MS, anrufStartZeitpunkt } from "@/lib/anruf-ausloeser";
 import { planeNachrichten, type PlanEintrag } from "@/lib/nachrichtenplan";
@@ -68,7 +68,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
         conversationId: true,
       },
     }),
-    prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true, step: true, startedAt: true, nextAt: true, stoppedAt: true, vorabCheckStep: true } }),
+    prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true, step: true, startedAt: true, nextAt: true, stoppedAt: true, vorabCheckStep: true, neustartAt: true } }),
     prisma.conversation.findFirst({
       where: { customerId: lead.customerId, OR: [{ leadId }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] },
       orderBy: { lastMessageAt: "desc" },
@@ -123,7 +123,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
       kontakt: who.kontakt,
       // Angebot (P3): Thema aus der Auswahl im Termin, wie beim Senden (lib/lead-sequences.ts sendStep)
       topic:
-        (abfolgen.some((s) => s.kind === "offer" || s.kind === "offer_selbst") ? await import("@/lib/angebot-senden-server").then((m) => m.angebotThemaFuerLead(leadId)) : null) ??
+        (abfolgen.some((s) => istAngebotsAbfolge(s.kind)) ? await import("@/lib/angebot-senden-server").then((m) => m.angebotThemaFuerLead(leadId)) : null) ??
         topicOf(lead.formData, lead.source, an),
       an,
       person,
@@ -131,7 +131,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     anrufplan: { followUpAt: lead.followUpAt, followUpNote: lead.followUpNote, callAttempts: lead.callAttempts, callPlanStartedAt: lead.callPlanStartedAt, lastCallAttemptAt: lead.lastCallAttemptAt },
     anrufAusloeserAt,
     // E-Mail-Schritte (Angebot Tag 5): Text aus der Vorlage des Vermittlers
-    mailVorlagen: abfolgen.some((s) => s.kind === "offer")
+    mailVorlagen: abfolgen.some((s) => s.kind === "offer" || s.kind === "offer_bedenkzeit")
       ? { nachfassen_angebot: await import("@/lib/angebot-senden-server").then((m) => m.mailVorlage(lead.customerId, "nachfassen_angebot", an)) }
       : undefined,
   });
