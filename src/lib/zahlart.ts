@@ -19,6 +19,8 @@ export const ZAHLART_STANDARD: Zahlart = "sepa";
 
 /** Hinweis unter der Auswahl (Ole, 14.11.2026). */
 export const ZAHLART_HINWEIS = "Am einfachsten per Lastschrift, der Betrag wird monatlich automatisch eingezogen.";
+/** Hinweis bei Jahreszahlung (Zahlweise im Angebot gewählt, Ole 18.11.2026). */
+export const ZAHLART_HINWEIS_JAHR = "Am einfachsten per Lastschrift, der Betrag wird jährlich automatisch eingezogen.";
 
 export const ZAHLART_OPTIONEN: { value: Zahlart; label: string; detail: string }[] = [
   { value: "sepa", label: "Lastschrift (SEPA)", detail: "Empfohlen. Einmal die IBAN angeben, fertig." },

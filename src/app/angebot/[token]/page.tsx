@@ -182,7 +182,7 @@ const TERM_CHOICE_LABEL: Record<OfferTerm, string> = { "12m": "12 Monate", "3m":
 
 /** Vorberechnete Wahl für die Angebotsseite (null = feste Konditionen wie bisher). */
 function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>): OfferChoiceProps | null {
-  if (!offer.customerChoosesTerm && !offer.customerChoosesStart) return null;
+  if (!offer.customerChoosesTerm && !offer.customerChoosesStart && !offer.annualChoice) return null;
   const count = offerProducts(offer.products).length || 1;
   const fixedTerm = normalizeTerm(offer.term);
   const add = offerAddOns(offerAddOnsOf(offer));
@@ -200,7 +200,10 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
       list: discount ? (offer.customerChoosesTerm ? setupForChoice(t, count) : fixedList) : null,
     })),
     monthlyTotal: add.monthlyTotal,
-    annualOffered: offer.annualPrepay,
+    annualOffered: offer.annualPrepay || offer.annualChoice,
+    // „Jahreszahlung anbieten“: Kunde wählt monatlich oder jährlich (Vorauswahl monatlich, Ole 18.11.2026)
+    choosesAnnual: offer.annualChoice,
+    initialAnnual: offer.annualPrepay,
     freeMonths: offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths,
     start: startDateBounds(berlinTodayIso(new Date(nowMs())), offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null),
   };
