@@ -33,7 +33,7 @@ export function parseBookingUrl(raw: string | null | undefined): BookingHost | n
 }
 
 /** Seiten für Endkunden (mit Unterseiten). Auf der Buchungsadresse erlaubt, auf der App-Adresse umgeleitet. */
-export const END_CUSTOMER_PREFIXES = ["/book", "/empfehlung", "/einwilligung", "/abmelden", "/erstinformation", "/beratung", "/datenschutz"] as const;
+export const END_CUSTOMER_PREFIXES = ["/book", "/empfehlung", "/einwilligung", "/vollmacht", "/abmelden", "/erstinformation", "/beratung", "/datenschutz"] as const;
 
 /**
  * Live-Demo der Beratungspräsentation (Ole, 15.11.2026): auf der Buchungsadresse unter /demo (intern /demo/beratung),

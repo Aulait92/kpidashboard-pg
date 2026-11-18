@@ -34,6 +34,7 @@ const PUBLIC_PREFIXES = [
   "/abmelden", // Abmeldelink in Kampagnen-Mails (signierter Token, ein Klick ohne Login)
   "/api/abmelden", // List-Unsubscribe One-Click (POST, signierter Token)
   "/einwilligung", // Einwilligungs-Abfrage für Bestandskunden mit Double-Opt-in (signierter Token)
+  "/vollmacht", // Maklervollmacht digital für Kunden des Maklers (geheimer Link je Vollmacht, 14 Tage)
   "/email-bestaetigen", // Bestätigung einer neuen Login-E-Mail (Token aus der Mail, lib/email-aendern.ts)
   "/erstinformation", // Erstinformation des Vermittlers (§ 15 VersVermV), Link in der ersten WhatsApp-Nachricht (Token)
   "/datenschutz", // Datenschutzhinweis zu Unterlagen per WhatsApp (Langfassung der Einwilligung, Token der Erstinformation)
@@ -213,6 +214,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/empfehlung/") ||
     pathname.startsWith("/abmelden/") ||
     pathname.startsWith("/einwilligung/") ||
+    pathname.startsWith("/vollmacht/") ||
     pathname.startsWith("/erstinformation/") ||
     pathname.startsWith("/datenschutz/") ||
     pathname.startsWith("/beratung/") ||

@@ -6,6 +6,7 @@ import { NextStepButton, NextStepPrompt } from "@/components/next-step";
 import { NEXT_STEP_LABEL, pastOpenAppointmentWhere } from "@/lib/lead-next-step";
 import { nextStepStateOf } from "@/lib/lead-next-step-server";
 import { EmpfehlungLeadCard } from "@/components/empfehlung/server";
+import { MaklervollmachtCard } from "@/components/maklervollmacht-card";
 import { ButtonLink, buttonClass, Card, CardHeader } from "@/components/ui";
 import { RescheduleButton } from "@/components/reschedule-dialog";
 import { formatPhone } from "@/lib/format";
@@ -507,6 +508,8 @@ export async function LeadDetailBody({
           <span className="font-semibold">Antworten</span>
         </a>
       ) : null}
+
+      <MaklervollmachtCard leadId={lead.id} customerId={team.customerId} readOnly={!team.userId} />
 
       <EmpfehlungLeadCard leadId={lead.id} team={team} readOnly={!team.userId} />
 
