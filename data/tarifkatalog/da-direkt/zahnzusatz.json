@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.da-direkt.de/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnzusatzversicherung Premium",
@@ -45,8 +44,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.da-direkt.de/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnzusatzversicherung Premium Plus",
@@ -65,8 +63,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.da-direkt.de/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -75,9 +72,10 @@
   ],
   "offen": [
     "Erster Wert gilt im Zahnarzt-Netzwerk von DA Direkt, „extern“ außerhalb des Netzwerks. Regelversorgung in allen Tarifen 100 %.",
-    "Prophylaxe: im Netzwerk 100 %, außerhalb bis 150/180/200 € im Jahr (Satz der Seite abgeschnitten, bitte prüfen).",
     "Zahnstaffel: 750/1.100/1.500 € im 1. Jahr, 1.500/2.200/3.000 € in 2 Jahren, 2.250/3.300/4.500 € in 3 Jahren, 3.000/4.400/6.000 € in 4 Jahren, ab dem 5. Jahr unbegrenzt.",
     "Kieferorthopädie ohne GKV-Leistungspflicht: Premium 90 % (max. 1.800 €), Premium Plus 100 % (max. 2.000 €); Komfort nicht eindeutig ausgewiesen.",
-    "DA Direkt hebt Premium Plus als „Testsieger“ (Stiftung Warentest 2026) hervor."
+    "DA Direkt hebt Premium Plus als „Testsieger“ (Stiftung Warentest 2026) hervor.",
+    "Prophylaxe: bei Netzwerk-Zahnärzten 100 % für zwei Zahnreinigungen im Jahr, außerhalb des Netzwerks bis 150 € (Komfort), 180 € (Premium) bzw. 200 € (Premium Plus) im Jahr (Produktseite).",
+    "Geprüft am 18.11.2026 an Tariftabellen der Produktseiten und den verlinkten Übersichten von DA Direkt."
   ]
 }

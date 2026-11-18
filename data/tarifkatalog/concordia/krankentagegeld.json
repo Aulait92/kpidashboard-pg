@@ -20,8 +20,7 @@
         "ausland": "weltweit"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/verdienstausfall/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -30,6 +29,7 @@
   ],
   "offen": [
     "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Ein Tarif; Leistungsbeginn für Arbeitnehmer nach der Lohnfortzahlung (ab dem 43. Tag), für Selbstständige früher wählbar (Seite Vollversicherung).",
-    "Höhe des Tagegelds, Wartezeit und Ende bei Berufsunfähigkeit auf der Seite nicht genannt."
+    "Höhe des Tagegelds, Wartezeit und Ende bei Berufsunfähigkeit auf der Seite nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

@@ -32,8 +32,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.da-direkt.de/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausratversicherung Komfort",
@@ -58,8 +57,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.da-direkt.de/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausratversicherung Top",
@@ -83,8 +81,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.da-direkt.de/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -96,6 +93,7 @@
     "Wertsachen: Tarifvergleich nennt nur „Wertsachen in Ihrer Zweitwohnung“ (15.000, 25.000, 50.000 €); Wertsachengrenze in der Wohnung nicht genannt.",
     "Einfacher Diebstahl nicht als Leistung genannt; Komfort ersetzt Diebstahl von Gartenmöbeln und -geräten bis 500 € (Top laut Tabelle nicht).",
     "Elementarschäden einschließbar mit 3.500 € Selbstbeteiligung (niedrigere wählbar); Fahrraddiebstahl wenn vereinbart.",
-    "Außenversicherung weltweit: Basis 90 Tage, Komfort und Top 180 Tage (erweitert je 36 Monate). Homeassistance einschließbar."
+    "Außenversicherung weltweit: Basis 90 Tage, Komfort und Top 180 Tage (erweitert je 36 Monate). Homeassistance einschließbar.",
+    "Geprüft am 18.11.2026 an Tariftabellen der Produktseiten und den verlinkten Übersichten von DA Direkt."
   ]
 }

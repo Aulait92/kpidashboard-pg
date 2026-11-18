@@ -26,8 +26,7 @@
         "zahn": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/katze/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Katzen-Krankenvollversicherung mit Plus-Baustein",
@@ -46,8 +45,7 @@
         "zahn": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/katze/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -56,6 +54,7 @@
   "offen": [
     "Ein Tarif (TierVital-Schutz) mit wählbarem Plus-Baustein; Stufe 2 zeigt den Tarif mit Plus-Baustein. Keine Empfehlung markiert. Werte aus der Leistungsübersicht der Produktseite (Abruf 17.11.2026).",
     "Jahreshöchstentschädigung getrennt: Operationen 4.000 €, allgemeine Heilbehandlungen 2.500 €. Gesundheitspauschale (Impfungen, Wurmkur, Zeckenschutz) 100 €, mit Plus 200 €, mit Zahn-Baustein weitere 100 € (zusammen bis 300 €).",
-    "Erstattungssatz in Prozent und Selbstbeteiligung (wählbar) nicht beziffert. Wartezeit nicht genannt. Neuabschluss bis 10 Jahre."
+    "Erstattungssatz in Prozent und Selbstbeteiligung (wählbar) nicht beziffert. Wartezeit nicht genannt. Neuabschluss bis 10 Jahre.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

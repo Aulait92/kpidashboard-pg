@@ -25,8 +25,7 @@
         "lasik": "einmalig 200 €"
       },
       "quelle": "https://www.da-direkt.de/krankenzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankenzusatzversicherung Premium",
@@ -44,8 +43,7 @@
         "lasik": "einmalig 300 €"
       },
       "quelle": "https://www.da-direkt.de/krankenzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankenzusatzversicherung Premium Plus",
@@ -63,8 +61,7 @@
         "lasik": "einmalig 500 €"
       },
       "quelle": "https://www.da-direkt.de/krankenzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -76,6 +73,7 @@
     "Drei Tarife Komfort, Premium, Premium Plus mit gleichen Leistungen; sie unterscheiden sich nur in der Höhe des jährlichen Gesundheitsbudgets.",
     "Gesundheitsbudget ab dem 3. Jahr: Komfort 700 €, Premium 1.000 €, Premium Plus 2.000 € (1. Jahr 500, 600 bzw. 1.200 €).",
     "Alle ambulanten Leistungen (Vorsorge, Impfungen, Heil- und Hilfsmittel, Arzneimittel, Zuzahlungen) laufen über das Budget; Heilpraktiker als Naturheilverfahren mit eigener Grenze.",
-    "Krankenhausleistungen (Notfall-Leistungen) desselben Tarifs siehe Datei krankenhauszusatz."
+    "Krankenhausleistungen (Notfall-Leistungen) desselben Tarifs siehe Datei krankenhauszusatz.",
+    "Geprüft am 18.11.2026 an Tariftabellen der Produktseiten und den verlinkten Übersichten von DA Direkt."
   ]
 }

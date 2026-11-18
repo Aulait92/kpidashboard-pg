@@ -24,8 +24,7 @@
         "dynamik": "5 % alle 3 Jahre"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-DeutschlandPflege Premium",
@@ -42,8 +41,7 @@
         "dynamik": "5 % alle 3 Jahre"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-DeutschlandPflege Exklusiv",
@@ -60,8 +58,7 @@
         "dynamik": "5 % alle 3 Jahre"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -71,6 +68,7 @@
     "Pflegemonatsgeld als Verdopplung bzw. Erhöhung der gesetzlichen Leistung um 100, 150 oder 200 %: Pflegegrad 1 150/225/300 €, PG 2 350/525/700 €, PG 3 600/900/1.200 €, PG 4 800/1.200/1.600 €, PG 5 1.000/1.500/2.000 €.",
     "Ambulant wie stationär: DFV nennt Pflege zu Hause und im Heim gleichermaßen versichert, ohne unterschiedliche Beträge; bitte in den Bedingungen gegenprüfen.",
     "Einmalleistung: 10faches des letzten Pflegemonatsgelds (max. 7.000 €), nur ab Pflegegrad 3, Wartezeit 5 Jahre. Erhöhung einmalig um bis zu 30 % bei Lebensereignissen.",
-    "Empfehlung: DFV markiert Premium als „Unsere Empfehlung“."
+    "Empfehlung: DFV markiert Premium als „Unsere Empfehlung“.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichproben am Bild der Übersicht)."
   ]
 }
