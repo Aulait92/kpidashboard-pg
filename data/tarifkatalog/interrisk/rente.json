@@ -26,8 +26,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.interrisk.de/de/produkte/altersvorsorge/klassische-rente.php",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "IRis FondsRente",
@@ -47,8 +46,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.interrisk.de/de/produkte/altersvorsorge/iris-fondsrente.php",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -59,6 +57,7 @@
   "offen": [
     "Zwei Vorsorgekonzepte statt Leistungsstufen: klassische Rente (garantierte Verzinsung, Sicherungsvermögen) und fondsgebundene Rente IRis. Keine Empfehlung der Gesellschaft.",
     "Klassik: Hinterbliebenenschutz über Rentengarantiezeit oder Beitragsrückgewähr (Tarif ALR1 Plus); Kapitalabfindung bis 3 Monate vor Rentenbeginn. Zuzahlungen und Entnahmen nicht genannt.",
-    "IRis: Beitragsgarantie nur mit Erlebensfall-Zusatzversicherung (EZV); garantierter Rentenfaktor auf der Seite nicht genannt; Kapitalabfindung laut Steuerhinweis möglich. Nicht aufgenommen: myIndex next (Honorartarif für Honorarberater) und Altersvorsorgedepot."
+    "IRis: Beitragsgarantie nur mit Erlebensfall-Zusatzversicherung (EZV); garantierter Rentenfaktor auf der Seite nicht genannt; Kapitalabfindung laut Steuerhinweis möglich. Nicht aufgenommen: myIndex next (Honorartarif für Honorarberater) und Altersvorsorgedepot.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

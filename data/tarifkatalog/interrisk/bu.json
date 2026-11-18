@@ -31,8 +31,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/berufsunfaehigkeit-downloads/broschueren-und-leistungsueberblick/BU_pdf-09.26.8.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BU XL",
@@ -56,8 +55,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/berufsunfaehigkeit-downloads/broschueren-und-leistungsueberblick/BU_pdf-09.26.8.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BU XXL",
@@ -81,8 +79,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/berufsunfaehigkeit-downloads/broschueren-und-leistungsueberblick/BU_pdf-09.26.8.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -93,6 +90,7 @@
   "offen": [
     "Werte aus dem Leistungsprofil BU (BU 09.26, Symboltabelle S-M.A.R.T / XL / XXL). Prognosezeitraum im Leistungsprofil nicht genannt. InterRisk markiert keine Empfehlung; XL als mittlere Stufe gesetzt.",
     "S-M.A.R.T leistet nicht bei psychischen Erkrankungen und nicht bei Demenz (Tarif-Kurzübersicht LTI 1). AU-Klausel: Rente ab 6 Monaten Arbeitsunfähigkeit, bis 36 Monate; XXL zusätzlich Assistance-Leistungen und Verlängerungsoption.",
-    "Rückwirkend: keine Anzeigefristen für BU-Leistungsfälle. Umorganisation: Verzicht bei Arbeitnehmern, in XL und XXL auch bei Selbstständigen mit weniger als 5 Mitarbeitern oder Akademikern mit 90 % Bürotätigkeit."
+    "Rückwirkend: keine Anzeigefristen für BU-Leistungsfälle. Umorganisation: Verzicht bei Arbeitnehmern, in XL und XXL auch bei Selbstständigen mit weniger als 5 Mitarbeitern oder Akademikern mit 90 % Bürotätigkeit.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/kranken-tagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankentagegeld KT/FKT (Selbstständige, Freiberufler)",
@@ -37,8 +36,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/kranken-tagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -51,6 +49,7 @@
     "Zwei Produkte für verschiedene Zielgruppen, keine Leistungsstufen: Krankengeld.plus für gesetzlich versicherte Angestellte (leistet, solange die GKV Krankengeld zahlt, also in der Regel ab dem 43. Tag; auch bei Krankheit des Kindes), KT/FKT für Selbstständige und Freiberufler (Mediziner MKT ab dem 15. Tag).",
     "Krankengeld.plus: Tagegeld zusammen mit dem GKV-Krankengeld höchstens bis zum Nettoeinkommen (80 % des Brutto); Wartezeit 3 Monate, entfällt bei Unfall; monatlich kündbar (Bedingungen PM 251u, 06.25).",
     "KT/FKT: Tarifbedingungen sind auf hallesche.de nicht verlinkt; nur Angaben der Produktseite (ab dem 22. Tag, ohne zeitliche Begrenzung solange Arbeitsunfähigkeit). Höchstes Tagegeld und Wartezeit offen.",
-    "Ende bei Berufsunfähigkeit, Leistung im Ausland und Dynamik nicht belegt."
+    "Ende bei Berufsunfähigkeit, Leistung im Ausland und Dynamik nicht belegt.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

@@ -25,8 +25,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/brille-zahn-heilpraktiker-ae",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Mehr ambulanter Schutz (Tarif AE.2)",
@@ -44,8 +43,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/brille-zahn-heilpraktiker-ae",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Noch mehr ambulanter Schutz (Tarif AE.3)",
@@ -63,8 +61,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/brille-zahn-heilpraktiker-ae",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
     "Sehhilfen: 200 € alle 2 Jahre bei Änderung um mindestens 0,5 Dioptrien, sonst alle 3 Jahre. Ausland: 100 % nach Vorleistung der GKV, inklusive Rücktransport.",
     "Hörgeräte nicht ausdrücklich genannt; AE.2 und AE.3 erstatten Hilfsmittel zu 100 % bis 1.100 € im Jahr nach GKV-Vorleistung. AE.2 zusätzlich gezielte Behandlung im Ausland.",
     "Heilpraktiker (nur AE.3): 50 % bis 260 € Rechnungsbetrag im 1., 520 € im 2. und 780 € ab dem 3. Kalenderjahr; dazu Kurtagegeld 11 € (max. 21 Tage) und Inlays 30 %.",
-    "Vorsorgeuntersuchungen, Arznei- und Verbandmittel, Wartezeit und Augenlaser nicht genannt. Keine Stufe markiert; AE.2 als mittlere Stufe."
+    "Vorsorgeuntersuchungen, Arznei- und Verbandmittel, Wartezeit und Augenlaser nicht genannt. Keine Stufe markiert; AE.2 als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

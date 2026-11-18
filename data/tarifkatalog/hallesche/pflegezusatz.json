@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "OLGAflex",
@@ -42,8 +41,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
     "Zwei Produkte, keine Leistungsstufen: FÖRDERbar (staatlich gefördert mit 5 € im Monat, ohne Gesundheitsprüfung) und OLGAflex (Pflegemonatsgeld bis 4.500 €, 150 € am Tag). Keine Markierung der Hallesche.",
     "FÖRDERbar: Pflegegrad 1 bis 5 = 10, 20, 30, 50, 100 % des versicherten Pflegegeldes, ambulant und stationär gleich. Gesetzliche Wartezeit außer bei Unfall auf der Seite nicht beziffert. Einmalleistung und Beitragsbefreiung nicht genannt.",
     "OLGAflex: ambulant 10, 30, 70, 100, 100 %, stationär 10 % in Pflegegrad 1 und 100 % ab Pflegegrad 2. Extrazahlung bei erstmals Pflegegrad 4 oder 5: 60 Tagessätze (bis 9.000 €), nach Unfall 210 Tagessätze (bis 31.500 €). Weltweit gültig; Beitrag bis 60 frei wählbar.",
-    "Wartezeit OLGAflex und Leistung bei Demenz nicht genannt; Produktseite ohne verlinkte Tarifbedingungen."
+    "Wartezeit OLGAflex und Leistung bei Demenz nicht genannt; Produktseite ohne verlinkte Tarifbedingungen.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

@@ -16,15 +16,14 @@
       "empfohlen": false,
       "werte": {
         "nachversicherung": "ja, bis 50.000 €",
-        "vorgezogen": "110 % der Summe",
+        "vorgezogen": "100 % der Summe",
         "verlaengerung": "nein",
         "kinder": "über Erhöhungsgarantie",
         "laufzeit": "bis Alter 75"
       },
       "bausteine": {},
       "quelle": "https://www.hannoversche.de/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Risikolebensversicherung Plus",
@@ -33,15 +32,14 @@
       "empfohlen": true,
       "werte": {
         "nachversicherung": "ja, erweitert",
-        "vorgezogen": "110 % der Summe",
+        "vorgezogen": "100 % der Summe",
         "verlaengerung": "ja, bis 15 Jahre",
         "kinder": "+20 % für 12 Monate",
         "laufzeit": "bis Alter 75"
       },
       "bausteine": {},
       "quelle": "https://www.hannoversche.de/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Risikolebensversicherung Exklusiv",
@@ -50,15 +48,14 @@
       "empfohlen": false,
       "werte": {
         "nachversicherung": "ja, erweitert",
-        "vorgezogen": "110 % der Summe",
+        "vorgezogen": "100 % der Summe",
         "verlaengerung": "ja, bis 15 Jahre",
         "kinder": "+20 % für 12 Monate",
         "laufzeit": "bis Alter 75"
       },
       "bausteine": {},
       "quelle": "https://www.hannoversche.de/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -76,6 +73,7 @@
     "Weltweiter Schutz und Umtauschrecht stehen nicht auf der Produktseite und nicht in der Broschüre.",
     "Fallende Summe sowie Partner- und Über-Kreuz-Varianten gibt es als eigene Tarife (Rechner bzw. eigene Seiten); nicht als Baustein erfasst. Beitragsübernahme bei BU ist als Zusatzbaustein wählbar.",
     "Laufzeit 5 bis 45 Jahre, höchstens bis zum 75. Lebensjahr. Höchstsumme ohne Zusatzprüfung bewusst nicht erfasst (Gesundheitsprüfung).",
-    "Aktion bis 30.11.2026 laut Seite: 110 % Vorabauszahlung bei schwerer Krankheit; nach Aktionsende prüfen."
+    "Vorgezogene Leistung bei schwerer Krankheit laut Bedingungen 100 % der Summe; die Produktseite wirbt bis 30.11.2026 mit einer Aktion von 110 % (befristet, daher nicht übernommen).",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/gesundheit/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankentagegeld für Selbstständige (KTS)",
@@ -44,8 +43,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/gesundheit/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -54,6 +52,7 @@
   "offen": [
     "Zwei Tarife für verschiedene Zielgruppen, keine Leistungsstufen; Tarife für Ärzte (KTMA, KTMN) nicht aufgenommen. KTA bis 80 % des Bruttoentgelts, KTS bis 80 % des Gewinns vor Steuern.",
     "Leistung bis zur Genesung oder Feststellung der Berufsunfähigkeit; danach laut Produktseite 6 Monate Nachleistung. Ausland: bei vollstationärer Behandlung weltweit bis 6 Monate. Auch Leistung bei Wiedereingliederung, Reha und schwangerschaftsbedingten Erkrankungen.",
-    "Karriereklausel in der Tabelle als Symbol, nicht ausgewertet; Dynamik nicht belegt."
+    "Karriereklausel in der Tabelle als Symbol, nicht ausgewertet; Dynamik nicht belegt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

@@ -21,8 +21,7 @@
         "beitragspause": "bis 2 Jahre"
       },
       "quelle": "https://www.hannoversche.de/altersvorsorge/ruerup-rente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Basisrente / Sofort",
@@ -35,8 +34,7 @@
         "hinterbliebene": "Garantiezeit optional"
       },
       "quelle": "https://www.hannoversche.de/dam/rue-re/werbedruckstuecke/broschuere-ruerup-rente.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -49,6 +47,7 @@
     "Beitragsgarantie und garantierter Rentenfaktor nicht beziffert; die Seite nennt „hohe garantierte Leistungen“ und eine garantierte lebenslange Rente.",
     "Hinterbliebenenschutz: Beitragsrückgewähr (nur Klassik, vor Rentenbeginn) oder Rentengarantiezeit bis längstens Alter 90 (beide Varianten).",
     "Flexibler Rentenbeginn zwischen 62 und 80 Jahren; Beiträge bis zu zwei Jahre aussetzbar; dynamische Beitragszahlung möglich.",
-    "Effektivkosten auf der Seite nicht genannt. Fondsgebundene Basisrente auf hannoversche.de nicht gefunden."
+    "Effektivkosten auf der Seite nicht genannt. Fondsgebundene Basisrente auf hannoversche.de nicht gefunden.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

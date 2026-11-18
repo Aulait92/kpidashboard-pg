@@ -31,8 +31,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/gebaeudeversicherungen-downloads/wohngebaeude/broschueren-und-leistungsueberblick/WH_pdf-09.26.17.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude XL",
@@ -56,8 +55,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/gebaeudeversicherungen-downloads/wohngebaeude/broschueren-und-leistungsueberblick/WH_pdf-09.26.17.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude XXL",
@@ -81,8 +79,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/gebaeudeversicherungen-downloads/wohngebaeude/broschueren-und-leistungsueberblick/WH_pdf-09.26.17.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -93,6 +90,7 @@
   "offen": [
     "Werte aus dem Leistungsprofil Wohngebäude (WH 09.26, Symboltabelle L / XL / XXL). InterRisk markiert keine Empfehlung; XL als mittlere Stufe gesetzt.",
     "Ableitungsrohre: XL nur unterirdische Regenwasserableitungsrohre auf dem Grundstück; Zuleitungen außerhalb des Grundstücks XL bis 10.000 €. Photovoltaik: L nur als Gebäudebestandteil, XL und XXL auch auf dem Grundstück.",
-    "Kosten: Aufräumungs- und Abbruchkosten (L 50.000 €, XL 500.000 €, XXL ohne Grenze). Unbenannte Gefahren nur XXL und nur mit weiteren Naturgefahren. Wildtiere (Marder, Waschbär) nur XXL."
+    "Kosten: Aufräumungs- und Abbruchkosten (L 50.000 €, XL 500.000 €, XXL ohne Grenze). Unbenannte Gefahren nur XXL und nur mit weiteren Naturgefahren. Wildtiere (Marder, Waschbär) nur XXL.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

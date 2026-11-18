@@ -27,8 +27,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/risikoleben-downloads/broschueren-und-leistungsueberblick/RL_pdf-09.26.9.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Risikoleben XXL",
@@ -48,8 +47,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/risikoleben-downloads/broschueren-und-leistungsueberblick/RL_pdf-09.26.9.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Risikoleben XXL plus",
@@ -69,8 +67,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/risikoleben-downloads/broschueren-und-leistungsueberblick/RL_pdf-09.26.9.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -81,6 +78,7 @@
   "offen": [
     "Werte aus dem Leistungsprofil Risikoleben (RL 09.26, Symboltabelle XL / XXL / XXL plus). Die Standardmerkmale sind in allen drei Stufen gleich; die Stufen unterscheiden sich bei Zusatzleistungen.",
     "Nur XXL und XXL plus: Sofortleistung bei schweren Unfallverletzungen (25 %, max. 25.000 €) und Pflegebedürftigkeit, Soforthilfe bis 30 % (max. 25.000 €), Assistance. Nur XXL plus: 10 % Sofortleistung bei Krebs, Herzinfarkt oder Schlaganfall.",
-    "Todesfallsumme je minderjährigem Kind: XL 1.500 €, XXL 3.000 €, XXL plus 4.500 €. Fallende Summe (linear, progressiv) und Tarife auf zwei verbundene Leben wählbar. Höchstes Endalter nicht genannt. Mittlere Stufe XXL gesetzt, keine Markierung der Gesellschaft."
+    "Todesfallsumme je minderjährigem Kind: XL 1.500 €, XXL 3.000 €, XXL plus 4.500 €. Fallende Summe (linear, progressiv) und Tarife auf zwei verbundene Leben wählbar. Höchstes Endalter nicht genannt. Mittlere Stufe XXL gesetzt, keine Markierung der Gesellschaft.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

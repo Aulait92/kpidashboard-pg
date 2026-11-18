@@ -32,8 +32,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.janitos.de/media/downloads/produkte/wohngeb%C3%A4udeversicherung/leistungs%C3%BCbersicht_wohngeb%C3%A4ude_online_janitos_versicherung_ag.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude onlineMax",
@@ -58,8 +57,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.janitos.de/media/downloads/produkte/wohngeb%C3%A4udeversicherung/leistungs%C3%BCbersicht_wohngeb%C3%A4ude_online_janitos_versicherung_ag.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -70,6 +68,7 @@
     "Quelle: Leistungsübersicht Wohngebäude online (Stand 01.05.2022, Haken als Bild gelesen) und Tabelle der Produktseite. Nur zwei Linien, keine Markierung.",
     "Ableitungsrohre auf und außerhalb des Grundstücks mit 500 € Selbstbehalt (entfällt bei Gebäuden bis 10 Jahre); onlineMax mit Multi-Garantie zusätzlich unbegrenzt für jüngere oder geprüfte Leitungen.",
     "Tiere = Bissschäden durch Marder an elektrischen Anlagen (onlinePlus ohne Dämmungen und Unterspannbahnen). Grobe Fahrlässigkeit bei Obliegenheitsverletzung: onlinePlus 5 %, onlineMax 25 % der VS.",
-    "Neuwert (gleitender Neuwert) nicht ausdrücklich genannt. Elementar mit 10 % Selbstbeteiligung (500 bis 5.000 €); Allgefahren nur onlineMax; Hausschutzbrief gegen Zuschlag."
+    "Neuwert (gleitender Neuwert) nicht ausdrücklich genannt. Elementar mit 10 % Selbstbeteiligung (500 bis 5.000 €); Allgefahren nur onlineMax; Hausschutzbrief gegen Zuschlag.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }
