@@ -5,18 +5,13 @@ import { NextStepButton, NextStepPrompt } from "@/components/next-step";
 import { NEXT_STEP_LABEL, pastOpenAppointmentWhere } from "@/lib/lead-next-step";
 import { nextStepStateOf } from "@/lib/lead-next-step-server";
 import { EmpfehlungLeadCard } from "@/components/empfehlung/server";
-<<<<<<< HEAD
+import { MaklervollmachtCard } from "@/components/maklervollmacht-card";
 import { Card, CardHeader } from "@/components/ui";
 import { TerminKarte } from "@/components/termin-karte";
 import { EinwilligungEtikett } from "@/components/einwilligung-kontakt";
 import { einwilligungStand } from "@/lib/einwilligung-stand";
 import { optOutHash } from "@/lib/bestand/links";
 import { angebotOffen, terminKartenAktionen } from "@/lib/termin-karte";
-=======
-import { MaklervollmachtCard } from "@/components/maklervollmacht-card";
-import { ButtonLink, buttonClass, Card, CardHeader } from "@/components/ui";
-import { RescheduleButton } from "@/components/reschedule-dialog";
->>>>>>> claude/happy-fermi-wb05ym
 import { formatPhone } from "@/lib/format";
 import { pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";

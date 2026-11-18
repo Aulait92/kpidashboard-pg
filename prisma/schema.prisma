@@ -1411,7 +1411,6 @@ model Appointment {
   verlaengerung         String?
   verlaengerungAt       DateTime?
   // Lead hat per Knopf „Ja, passt“ bestätigt (Erinnerung am Vortag bzw. kurz vorher)
-<<<<<<< HEAD
   confirmedAt        DateTime?
   // Einladung mit Kalendereintrag an den Lead (Ole, 17.11.2026, lib/calendar/einladung.ts): genau einmal, gesendet am
   // und an welche Adresse; Änderungen danach als Aktualisierung (gleiche UID, einladungSeq + 1). Bei Buchung im
@@ -1421,9 +1420,6 @@ model Appointment {
   einladungAn          String?
   einladungSeq         Int       @default(0)
   einladungAusstehend  DateTime?
-=======
-  confirmedAt           DateTime?
->>>>>>> claude/happy-fermi-wb05ym
   // Komplettcheck nach der Buchung (Ole, 17.11.2026): true = Lead möchte, dass der Berater im Termin auch kurz schaut,
   // ob er insgesamt gut abgesichert ist; false = nein; null = nicht gefragt bzw. offen
   komplettcheck         Boolean?
@@ -1437,7 +1433,6 @@ model Appointment {
   // daraus entsteht offersJson. null = noch nicht bearbeitet (dann gelten ältere Angebote in offersJson).
   tarifauswahl          Json?
   // „Noch klären im Termin“: abgehakte Punkte (Text)
-<<<<<<< HEAD
   klaerenErledigt    String[]  @default([])
   shareToken         String?   @unique // Kundenlink zur Präsentation (nur Stand, ohne Sprechzettel), /beratung/<token>
   shareExpiresAt     DateTime? // Link läuft nach 14 Tagen ab
@@ -1450,11 +1445,6 @@ model Appointment {
   angebotKanaele     String?
   angebotDateiId     String?
   angebotToken       String?   @unique
-=======
-  klaerenErledigt       String[]  @default([])
-  shareToken            String?   @unique // Kundenlink zur Präsentation (nur Stand, ohne Sprechzettel), /beratung/<token>
-  shareExpiresAt        DateTime? // Link läuft nach 14 Tagen ab
->>>>>>> claude/happy-fermi-wb05ym
   // Empfehlungen: nach diesem Termin geprüft, ob der Empfehlungslink rausgeht (einmal je Termin)
   referralAskedAt       DateTime?
   // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.
