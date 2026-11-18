@@ -28,6 +28,8 @@ import {
   neuePlatzhalter,
   paramLabelsFor,
   PLATZHALTER_AB,
+  ERSTANSCHREIBEN_V6_PARAMS,
+  isOutreachPurpose,
   renderTemplate,
   templateTextFor,
   type NoticePurpose,
@@ -208,7 +210,8 @@ const EXAMPLES: Record<string, string> = {
   "Thema der Empfehlung": "Hausrat",
   "Thema (z. B. Haftpflicht und Hausrat)": "Haftpflicht und Hausrat",
   Angebotslink: "https://app.performancegrowth.de/ihr-angebot/abc123",
-  Tier: "Ihre Katze",
+  // Erstanschreiben v9 der Tierkrankenversicherung: Tiername aus dem Formular
+  Tier: "Minka",
 };
 
 /** Beispielwerte der Du-Fassung, wo sie sich von der Sie-Fassung unterscheiden. */
@@ -250,8 +253,6 @@ export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | An
       ? "Wir rufen Sie unter Ihrer Nummer an."
       : f === "du" && EXAMPLES_DU[label]
         ? EXAMPLES_DU[label]
-      : label === "Tier" && f === "du"
-        ? "deine Katze"
       : label === "Produkt"
         ? (PRODUKT_BEISPIEL[purpose] ?? "Versicherung")
         : label === "Thema"
@@ -270,7 +271,9 @@ export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | An
  */
 export function exampleRestFor(purpose: NoticePurpose, an: Ansprache, version?: number): string[] {
   const f = formOf(purpose, an) === "du" ? "du" : "sie_ohne_name";
-  const alt = version !== undefined && !neuePlatzhalter(purpose, version) ? PLATZHALTER_AB[purpose]?.frueher : undefined;
+  // Erstanschreiben v6/v7 (noch bei Meta freigegeben): Thema, Vermittler, Erste Frage
+  const v6 = version !== undefined && version >= 6 && version < 8 && isOutreachPurpose(purpose) ? ERSTANSCHREIBEN_V6_PARAMS : undefined;
+  const alt = v6 ?? (version !== undefined && !neuePlatzhalter(purpose, version) ? PLATZHALTER_AB[purpose]?.frueher : undefined);
   if (alt) return exampleValuesFor(purpose, f, null, alt);
   return f === "du" ? exampleValuesFor(purpose, "du").slice(1) : exampleValuesFor(purpose, "sie_ohne_name");
 }

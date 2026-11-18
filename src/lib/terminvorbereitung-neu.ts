@@ -78,6 +78,8 @@ export function kundeWill(d: VorbereitungDaten): { punkte: string[]; quelle: str
   dazu(q.interesse ?? interesseF ?? d.lead.produkt, !q.interesse && !!interesseF);
   const tier = [formWert(d, /tierart/i), formWert(d, /name des tieres|tiername/i), formWert(d, /rasse/i)].filter(Boolean).join(", ");
   dazu(q.tier ?? (tier || null), !q.tier && !!tier);
+  // Gesundheit des Tieres (TKV, Frage nach der Buchung) gut sichtbar direkt danach
+  if (q.tiergesundheit) dazu(`Gesundheit des Tieres: ${q.tiergesundheit}`);
   const lebenF = formWert(d, /lebenssituation/i);
   dazu(q.lebenssituation ?? lebenF, !q.lebenssituation && !!lebenF);
   if (q.versichern) dazu(`Versichert werden soll: ${q.versichern}`);

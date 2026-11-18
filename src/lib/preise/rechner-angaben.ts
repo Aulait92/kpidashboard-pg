@@ -64,6 +64,9 @@ export function plzAus(...texte: (string | null | undefined)[]): string | null {
   return null;
 }
 
+/** Antwort auf eine Tierfrage im Chat (lib/whatsapp/tier-fragen.ts: angaben.tier „Rasse: …; Geschlecht: …“). */
+const ausChat = (c: Ctx, label: string): string | null => c.q("tier")?.match(new RegExp(`(?:^|;\\s*)${label}:\\s*([^;]+)`, "i"))?.[1]?.trim() || null;
+
 const f = (key: string, feld: QualificationKey, sie: string, du: string, bekannt?: RegExp, knoepfe?: readonly string[]) => ({
   key,
   feld,
@@ -131,17 +134,17 @@ export const ANGABEN = {
   },
   summen: { label: "Versicherungssummen", wer: "termin", rang: 99, wert: () => null },
   tierart: { label: "Tierart", wer: "lead", rang: 10, wert: (c) => c.form(/tierart/i) ?? c.tierart },
-  rasse: { label: "Rasse", wer: "lead", rang: 11, wert: (c) => c.form(/rasse/i), fragen: [f("rasse", "tier", "Welche Rasse hat Ihr Tier?", "Welche Rasse hat dein Tier?")] },
+  rasse: { label: "Rasse", wer: "lead", rang: 11, wert: (c) => c.form(/rasse/i) ?? ausChat(c, "Rasse"), fragen: [f("rasse", "tier", "Welche Rasse hat Ihr Tier?", "Welche Rasse hat dein Tier?")] },
   geburtTier: {
     label: "Geburtsmonat und -jahr des Tieres",
     wer: "lead",
     rang: 12,
-    wert: (c) => [c.form(/geburtsmonat/i), c.form(/geburtsjahr/i)].filter(Boolean).join(" ") || c.form(/geburtsdatum.*tier|alter.*tier/i),
+    wert: (c) => [c.form(/geburtsmonat/i), c.form(/geburtsjahr/i)].filter(Boolean).join(" ") || c.form(/geburtsdatum.*tier|alter.*tier/i) || ausChat(c, "Geboren"),
     fragen: [f("geburtTier", "tier", "Wann ist Ihr Tier ungefähr geboren (Monat und Jahr)?", "Wann ist dein Tier ungefähr geboren (Monat und Jahr)?")],
   },
-  geschlechtTier: { label: "Geschlecht des Tieres", wer: "lead", rang: 13, wert: (c) => c.form(/geschlecht/i), fragen: [f("geschlechtTier", "tier", "Ist Ihr Tier männlich oder weiblich?", "Ist dein Tier männlich oder weiblich?")] },
-  haltung: { label: "Haltung (Wohnung oder Freigänger)", wer: "lead", rang: 14, wert: (c) => c.form(/haltung/i), fragen: [f("haltung", "tier", "Ist Ihre Katze eine Wohnungskatze oder ein Freigänger?", "Ist deine Katze eine Wohnungskatze oder ein Freigänger?")] },
-  hunderasse: { label: "Hunderasse", wer: "lead", rang: 11, wert: (c) => c.form(/rasse/i), fragen: [f("hunderasse", "tier", "Welche Rasse hat Ihr Hund?", "Welche Rasse hat dein Hund?")] },
+  geschlechtTier: { label: "Geschlecht des Tieres", wer: "lead", rang: 13, wert: (c) => c.form(/geschlecht/i) ?? ausChat(c, "Geschlecht"), fragen: [f("geschlechtTier", "tier", "Ist Ihr Tier männlich oder weiblich?", "Ist dein Tier männlich oder weiblich?")] },
+  haltung: { label: "Haltung (Wohnung oder Freigänger)", wer: "lead", rang: 14, wert: (c) => c.form(/haltung/i) ?? ausChat(c, "Haltung"), fragen: [f("haltung", "tier", "Ist Ihre Katze eine Wohnungskatze oder ein Freigänger?", "Ist deine Katze eine Wohnungskatze oder ein Freigänger?")] },
+  hunderasse: { label: "Hunderasse", wer: "lead", rang: 11, wert: (c) => c.form(/rasse/i) ?? ausChat(c, "Rasse"), fragen: [f("hunderasse", "tier", "Welche Rasse hat Ihr Hund?", "Welche Rasse hat dein Hund?")] },
   hunde: { label: "Hunde (Anzahl, je Hund)", wer: "lead", rang: 15, wert: (c) => c.form(/anzahl tiere/i) ?? c.q("tier"), fragen: [f("hunde", "tier", "Wie viele Hunde leben bei Ihnen?", "Wie viele Hunde leben bei dir?")] },
   pferde: { label: "Pferde (Anzahl, Rasse, Nutzung)", wer: "lead", rang: 15, wert: (c) => c.form(/anzahl tiere/i) ?? c.q("tier"), fragen: [f("pferde", "tier", "Wie viele Pferde haben Sie, welche Rasse, und wofür nutzen Sie sie?", "Wie viele Pferde hast du, welche Rasse, und wofür nutzt du sie?")] },
 } satisfies Record<string, AngabeDef>;

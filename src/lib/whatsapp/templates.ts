@@ -31,7 +31,7 @@ import { vermittlerName, type VermittlerName } from "@/lib/vermittler-nennung";
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
-import { erstanschreibenV8 } from "@/lib/whatsapp/erstanschreiben";
+import { erstanschreibenV9, ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
   | "outreach"
@@ -124,14 +124,17 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // Erstanschreiben v8 (Ole, 17.11.2026, freigegeben zum Einreichen: kurz, Thema fest je Produkt, Frage fett, Fußzeile
   // ERSTINFO_FOOTER_V8): wird eingereicht, nur mit PDF-Kopf; bis zur Freigabe bei Meta sendet die App die neueste
   // freigegebene mit PDF-Kopf (v7 bzw. v6, rankOutreach) mit deren Platzhaltern (PLATZHALTER_AB)
-  outreach: "v8",
-  outreach_tkv: "v8",
-  outreach_zahn: "v8",
-  outreach_pkv: "v8",
-  outreach_privatschutz: "v8",
+  // Erstanschreiben v9 (Ole, 18.11.2026): kurz, ohne Vermittler und ohne „Hier schreibt der digitale Assistent“,
+  // Tierkrankenversicherung mit dem Tiernamen, KI-Hinweis in der Fußzeile (ERSTINFO_FOOTER_V9); bis zur Freigabe bei
+  // Meta sendet die App v8 mit deren Platzhaltern (PLATZHALTER_AB, outreach.ts paramsFor)
+  outreach: "v9",
+  outreach_tkv: "v9",
+  outreach_zahn: "v9",
+  outreach_pkv: "v9",
+  outreach_privatschutz: "v9",
   // Reine Hausrat-Leads (Ole, 18.11.2026, zur Einreichung freigegeben): „zu Ihrer Hausratversicherung“ statt „zum
   // Privatschutz“; bis zur Freigabe bei Meta die allgemeine bzw. die Privatschutz-Fassung (outreach.ts fallbackPurposes)
-  outreach_hausrat: "v8",
+  outreach_hausrat: "v9",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern
   // (bis zur Freigabe bei Meta die bisherige v4, PLATZHALTER_AB), 15 Minuten und „wartet im Videoraum“ neu
   reminder: "v5",
@@ -173,15 +176,15 @@ export type TemplateVariant = "a" | "b";
 
 /** Weitere Parameter je Zweck (nach dem Namen; Reihenfolge wie im Text). */
 export const REST_PARAMS: Record<NoticePurpose, string[]> = {
-  // Erstanschreiben ab v8: Vermittler im Dativ, erste Frage ohne „?“ (Thema fest im Text). Ältere freigegebene
-  // Fassungen: v6/v7 Thema, Vermittler, Frage (PLATZHALTER_AB), v5 Produkt (TKV mit Tier), v4 Produkt, v3 Link
-  // (outreach.ts paramsFor)
-  outreach: ["Vermittler", "Erste Frage"],
-  outreach_tkv: ["Vermittler", "Erste Frage"],
-  outreach_zahn: ["Vermittler", "Erste Frage"],
-  outreach_pkv: ["Vermittler", "Erste Frage"],
-  outreach_privatschutz: ["Vermittler", "Erste Frage"],
-  outreach_hausrat: ["Vermittler", "Erste Frage"],
+  // Erstanschreiben ab v9: erste Frage ohne „?“ (Thema fest im Text), Tierkrankenversicherung mit Tier (Name bzw.
+  // „Ihre Katze“) davor. Ältere freigegebene Fassungen: v8 Vermittler, Frage (PLATZHALTER_AB), v6/v7 Thema, Vermittler,
+  // Frage, v5 Produkt (TKV mit Tier), v4 Produkt, v3 Link (outreach.ts paramsFor)
+  outreach: ["Erste Frage"],
+  outreach_tkv: ["Tier", "Erste Frage"],
+  outreach_zahn: ["Erste Frage"],
+  outreach_pkv: ["Erste Frage"],
+  outreach_privatschutz: ["Erste Frage"],
+  outreach_hausrat: ["Erste Frage"],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   // Ab v5 (Show-up-Paket); ältere freigegebene Fassungen: PLATZHALTER_AB
   reminder: ["Wann (z. B. morgen um 10 Uhr)", "Nutzen (ein Satz, ggf. mit Verträgen)", "Zugang (Videolink bzw. Anruf)"],
@@ -217,16 +220,16 @@ export const NAME_PARAM: Record<"du" | "sie", string> = { du: "Vorname", sie: "A
  * (z. B. „ von der Allianz“ oder „, Ihr Versicherungsmakler“, rolleText). Ohne „du“: nur gesiezt.
  */
 export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> = {
-  // Erste Nachricht an neue Leads (v8, Ole 17.11.2026; Freitext: erstanschreiben.ts erstanschreibenText): kurz, Dank
-  // mit festem Thema je Produkt, „Hier schreibt der digitale Assistent von {{2}}“, erste offene Frage fett als letzte
-  // Zeile. Die Erstinformation (§ 15/16 VersVermV) steht immer als PDF im Kopf (TEMPLATE_HEADER), die KI-Kennzeichnung
-  // in der Fußzeile (ERSTINFO_FOOTER_V8).
-  outreach: erstanschreibenV8("outreach"),
-  outreach_tkv: erstanschreibenV8("outreach_tkv"),
-  outreach_zahn: erstanschreibenV8("outreach_zahn"),
-  outreach_pkv: erstanschreibenV8("outreach_pkv"),
-  outreach_privatschutz: erstanschreibenV8("outreach_privatschutz"),
-  outreach_hausrat: erstanschreibenV8("outreach_hausrat"),
+  // Erste Nachricht an neue Leads (v9, Ole 18.11.2026; Freitext: erstanschreiben.ts erstanschreibenText): eine Zeile,
+  // Dank mit festem Thema je Produkt (Tierkrankenversicherung: „schön, dass Sie {{2}} gut absichern möchten 🐾“), erste
+  // offene Frage fett. Die Erstinformation (§ 15/16 VersVermV) steht immer als PDF im Kopf (TEMPLATE_HEADER), die
+  // KI-Kennzeichnung in der Fußzeile (ERSTINFO_FOOTER_V9).
+  outreach: erstanschreibenV9("outreach"),
+  outreach_tkv: erstanschreibenV9("outreach_tkv"),
+  outreach_zahn: erstanschreibenV9("outreach_zahn"),
+  outreach_pkv: erstanschreibenV9("outreach_pkv"),
+  outreach_privatschutz: erstanschreibenV9("outreach_privatschutz"),
+  outreach_hausrat: erstanschreibenV9("outreach_hausrat"),
   // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
   booking_confirmation: {
     du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
@@ -388,17 +391,20 @@ export const VORBEREITETE_FASSUNG: Partial<Record<NoticePurpose, VorbereiteteFas
  * freigegebene Fassungen (bis zur Freigabe der neuen bei Meta weiter im Einsatz, rankTemplates) haben die Belegung
  * `frueher`. Die Absender belegen die Platzhalter je Version der gewählten Vorlage (paramsFor, lib/whatsapp/reminders.ts).
  *   reminder, reminder_soon v5 (Show-up-Paket, Ole 17.11.2026)
- *   Erstanschreiben v8 (Ole, 17.11.2026): ohne Thema-Platzhalter (v6/v7: Thema, Vermittler, Erste Frage)
+ *   Erstanschreiben v9 (Ole, 18.11.2026): ohne Vermittler (v8: Vermittler, Erste Frage). Die v6/v7 (Thema, Vermittler,
+ *   Erste Frage) belegt outreach.ts paramsFor weiter je Version; für die Vorschau siehe ERSTANSCHREIBEN_V6_PARAMS.
  */
-const ERSTANSCHREIBEN_V6_PARAMS = ["Thema", "Vermittler", "Erste Frage"];
+export const ERSTANSCHREIBEN_V6_PARAMS = ["Thema", "Vermittler", "Erste Frage"];
+const ERSTANSCHREIBEN_V8_PARAMS = ["Vermittler", "Erste Frage"];
 export const PLATZHALTER_AB: Partial<Record<NoticePurpose, { version: number; frueher: string[] }>> = {
   reminder: { version: 5, frueher: ["Datum/Uhrzeit", "Art", "Link/Hinweis"] },
   reminder_soon: { version: 5, frueher: ["Uhrzeit", "Art", "Link/Hinweis"] },
-  outreach: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
-  outreach_tkv: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
-  outreach_zahn: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
-  outreach_pkv: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
-  outreach_privatschutz: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
+  outreach: { version: 9, frueher: ERSTANSCHREIBEN_V8_PARAMS },
+  outreach_tkv: { version: 9, frueher: ERSTANSCHREIBEN_V8_PARAMS },
+  outreach_zahn: { version: 9, frueher: ERSTANSCHREIBEN_V8_PARAMS },
+  outreach_pkv: { version: 9, frueher: ERSTANSCHREIBEN_V8_PARAMS },
+  outreach_privatschutz: { version: 9, frueher: ERSTANSCHREIBEN_V8_PARAMS },
+  outreach_hausrat: { version: 9, frueher: ERSTANSCHREIBEN_V8_PARAMS },
 };
 
 /** Hat die Vorlage dieser Textversion schon die aktuelle Platzhalter-Belegung (REST_PARAMS)? Von Hand angelegte (0): nein. */
@@ -799,10 +805,13 @@ export const ERSTINFO_FOOTER = "Oben: unsere Erstinformation, wie gesetzlich vor
 /** Fußzeile ab Erstanschreiben v8 (Ole, 17.11.2026): KI-Kennzeichnung und Hinweis auf das PDF, höchstens 60 Zeichen. */
 export const ERSTINFO_FOOTER_V8 = "KI-Assistent · Oben: Erstinformation (gesetzlich)";
 
+/** Fußzeile ab Erstanschreiben v9 (Ole, 18.11.2026): KI-Kennzeichnung und Hinweis auf das PDF, höchstens 60 Zeichen. */
+export { ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
+
 /** Fußzeile einer Vorlage mit PDF-Kopf je Textversion („v8“ bzw. 8). */
 export function erstinfoFooterFor(version: string | number): string {
   const v = typeof version === "number" ? version : Number(/^v(\d+)$/.exec(version)?.[1] ?? 0);
-  return v >= 8 ? ERSTINFO_FOOTER_V8 : ERSTINFO_FOOTER;
+  return v >= 9 ? ERSTINFO_FOOTER_V9 : v >= 8 ? ERSTINFO_FOOTER_V8 : ERSTINFO_FOOTER;
 }
 
 /** Markierung im gespeicherten Text, wenn das PDF der Erstinformation im Kopf der Vorlage mitging (ki-hinweis.ts). */

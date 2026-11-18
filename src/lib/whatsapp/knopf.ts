@@ -17,6 +17,7 @@
 //   „Ja, eingetragen“/„Nein, bitte nochmal“ (eingetragen:ja|nein) → kurzer Dank bzw. Termin mit Kalender-Links nochmal
 //   „Ja“/„Mache ich gleich“ (kalender:ja|gleich, frühere Kalenderfrage) → zugesagt, kurze Antwort
 //   „Ja“/„Nein“ zu einer Angebotsfrage (folge:<key>:ja|nein) → Assistent mit Hinweis, welche Frage beantwortet ist
+//   Tierfrage (TKV, tier:<key>:<wert>, z. B. „Ja, gesund“/„War in Behandlung“) → speichern, nächste Tierfrage bzw. Komplettcheck
 // Bedenkzeit zum Angebot (Paket P5, lib/bedenkzeit-server.ts):
 //   „1 Woche“/„2 Wochen“/„Ende des Monats“ (bedenkzeit:1w|2w|monatsende) → eintragen, kurze Bestätigung, Assistent schweigt
 // Alle anderen Knöpfe (z. B. „Katze“, „Heute“, „Ja, gern prüfen“) gehen als normale Antwort an den Assistenten.
@@ -42,6 +43,7 @@ export type KnopfAktion =
   | { aktion: "lang"; wahl: string }
   | { aktion: "policenbitte"; titel: string }
   | { aktion: "folge"; key: string; wert: string }
+  | { aktion: "tier"; key: string; wert: string; titel: string }
   | { aktion: "bedenkzeit"; wahl: "1w" | "2w" | "monatsende" };
 
 const norm = (t: string | null | undefined) => (t ?? "").trim().toLowerCase();
@@ -68,6 +70,8 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
   }
   if (p.startsWith("policenbitte:")) return { aktion: "policenbitte", titel: p.slice(13) || (text ?? "") };
   if (p === "bedenkzeit:1w" || p === "bedenkzeit:2w" || p === "bedenkzeit:monatsende") return { aktion: "bedenkzeit", wahl: p.slice(11) as "1w" | "2w" | "monatsende" };
+  const tier = /^tier:([a-zA-Z]+):([a-z]+)$/.exec(p);
+  if (tier) return { aktion: "tier", key: tier[1], wert: tier[2], titel: (text ?? "").trim() };
   const folge = /^folge:([a-zA-Z]+):(.+)$/.exec(p);
   if (folge) return { aktion: "folge", key: folge[1], wert: (text ?? folge[2]).trim() };
   if (p === "andere_zeit") return { aktion: "andere_zeit" };
@@ -208,6 +212,10 @@ export async function handleButtonReply(
     if (istPolicenEinwilligungsKnopf(k.titel)) return { handled: false };
     const s = await import("@/lib/whatsapp/termin-strecke");
     return { handled: await s.policenBitteAntwort(conversationId, s.policenKnopfArt(k.titel), now) };
+  }
+  if (k.aktion === "tier") {
+    const { tierAntwort } = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: await tierAntwort(conversationId, k.titel, { key: k.key, wert: k.wert }, now) };
   }
   if (k.aktion === "bedenkzeit") {
     const { bedenkzeitKnopf } = await import("@/lib/bedenkzeit-server");

@@ -33,9 +33,9 @@ describe("Vorlagen-Plan", () => {
   });
 
   it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
-    // Erstanschreiben v8 (17.11.2026, kurz, nur mit PDF-Kopf), übrige Zwecke v4
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v8");
-    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v8_sie");
+    // Erstanschreiben v9 (18.11.2026, kurz, nur mit PDF-Kopf), übrige Zwecke v4
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v9");
+    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v9_sie");
     expect(templateNameFor("outreach_tkv", "v6", "sie_ohne_name", "a", false)).toBe("pg_outreach_tkv_v6_ohnepdf_sie_ohne_name");
     // Nachfassen v5 (Ole, 18.11.2026, zur Einreichung freigegeben: Vermittler-Nennung)
     expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v5_b_sie");
@@ -62,8 +62,8 @@ describe("Vorlagen-Plan", () => {
     const body = templateBodyFor("followup_noshow", "Anid Brand");
     expect(body).toContain("Anid Brand");
     expect(body).not.toContain("[Berater]");
-    // Erstanschreiben ab v6: Vermittler als Platzhalter (Dativ, „von Herrn Kannapinn“), ab v8 {{2}}
-    expect(templateBodyFor("outreach", "Anid Brand")).toContain("digitale Assistent von {{2}}.");
+    // Erstanschreiben v6 bis v8: Vermittler als Platzhalter; v9 ohne Vermittler, {{2}} ist die erste Frage
+    expect(templateBodyFor("outreach", "Anid Brand")).toBe("Hallo {{1}}, danke für deine Anfrage! *{{2}}?*");
   });
 
   it("Antrag: Beispielwerte je Platzhalter, Knöpfe wo eine Antwort erwartet wird, Abmeldeknopf bei Werbung", () => {
@@ -134,7 +134,10 @@ describe("Vorlagen-Plan", () => {
     const text = previewBodyFor("outreach", "Anid Brand");
     expect(text).not.toMatch(/\{\{\d+\}\}/);
     expect(text).toContain("Julia");
-    expect(text).toContain("Anid Brand");
+    // Erstanschreiben v9 nennt den Vermittler nicht mehr; Beraternamen z. B. im Nachfassen nach verpasstem Termin
+    const noshow = previewBodyFor("followup_noshow", "Anid Brand");
+    expect(noshow).not.toMatch(/\{\{\d+\}\}/);
+    expect(noshow).toContain("Anid Brand");
     for (const p of ALL) expect(CUSTOMER_TITLES[p].title.length).toBeGreaterThan(3);
   });
 
