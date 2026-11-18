@@ -18,6 +18,7 @@ vi.mock("@/lib/mail/vorlagen-mail", async (orig) => {
 import { prisma } from "@/lib/prisma";
 import { runSequences, startSequence, startAngebotNachfassen } from "@/lib/lead-sequences";
 import { pausenBeenden } from "@/lib/nachrichtenplan-aktionen";
+import { loadNachrichtenPlan } from "@/lib/nachrichtenplan-server";
 import { spaeterMelden } from "@/lib/spaeter-melden";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
@@ -57,6 +58,9 @@ describe("Später melden", () => {
     expect((await lead(l.id)).nachrichtenPausiertBis?.toISOString()).toBe(bis.toISOString());
     await runSequences(new Date(T0.getTime() + 3 * DAY));
     expect(send).not.toHaveBeenCalled();
+    // Nächste Nachrichten zeigen die Schritte ab dem Tag (wie der Cron fortsetzt), weiter als pausiert
+    const plan = (await loadNachrichtenPlan(l.id, new Date(T0.getTime() + H))).filter((e) => e.quelle === "abfolge");
+    expect(plan[0]).toMatchObject({ at: bis.toISOString(), pausiert: true });
     // vor dem Tag: nichts
     expect(await pausenBeenden(new Date(bis.getTime() - H))).toBe(0);
     // am Tag: fortgesetzt, der erste Schritt ist ab dem Tag fällig

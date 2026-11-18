@@ -88,7 +88,7 @@ export function SpaeterMelden({ leadId, offen, onOffen, spaeter }: { leadId: str
         {spaeter.mail ? (
           <label className="flex min-h-10 cursor-pointer items-center gap-3 text-sm" data-spaeter-mail>
             <input type="checkbox" checked={mail} onChange={(e) => setMail(e.target.checked)} className="h-5 w-5 shrink-0 accent-[color:var(--brand)]" />
-            <span>Per E-Mail Bescheid geben{tag ? `, dass Sie sich am ${tag} melden` : ""}</span>
+            <span>Kontakt per E-Mail Bescheid geben</span>
           </label>
         ) : null}
         <Button variant="primary" size="md" className="h-11 w-full" disabled={busy || !tag} onClick={() => senden(false)} data-spaeter-speichern>

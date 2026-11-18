@@ -74,8 +74,11 @@ async function D360Card({ customerId }: { customerId: string }) {
           : "Nicht verbunden";
   return (
     <Card className="max-w-5xl">
-      <CardHeader title="WhatsApp-Verbindung" hint={stand} />
-      <div className="px-5 pb-5">
+      <CardHeader title="WhatsApp-Verbindung" />
+      <div className="px-5 pb-5 pt-4">
+        <p className={`mb-3 text-sm font-medium ${verbunden ? "text-emerald-700" : "text-amber-800"}`} data-verbindung-stand>
+          {stand}
+        </p>
         <D360Assign
           customerId={customerId}
           verbunden={verbunden}

@@ -128,6 +128,8 @@ export type PlanEingabe = {
   anrufAusloeserAt?: Date | null;
   /** „Alle pausieren“ am Kontakt (Lead.nachrichtenPausiertAt) */
   pausiertAt?: Date | null;
+  /** „Später melden“ mit Tag (Lead.nachrichtenPausiertBis): Abfolgen rücken so, wie der Cron am Tag fortsetzt */
+  pausiertBis?: Date | null;
   /** Offene Aufgaben nach dem Abschluss (LeadTask „wartet“ bzw. „aktiv“), Paket M7 */
   vorschlaege?: { kind: string; note: string; dueAt: Date }[];
   /** Mail-Vorlagen mit Stufe „aus“ (Einstellungen → Assistent): kein Mail-Vorschlag */
@@ -210,12 +212,15 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
   const def = SEQUENCES[a.kind as SequenceKind];
   if (!def || a.stoppedAt || !a.nextAt) return [];
   const out: PlanEintrag[] = [];
-  let prev = a.nextAt;
+  // „Später melden“ mit Tag: wie fortsetzen(…, { ab }), der nächste Schritt frühestens am Tag, die folgenden rücken mit
+  const shift = p.pausiertAt && p.pausiertBis && a.kind !== "recall" ? Math.max(0, p.pausiertBis.getTime() - a.nextAt.getTime()) : 0;
+  const nextAt = new Date(a.nextAt.getTime() + shift);
+  let prev = nextAt;
   for (let i = a.step; i < def.steps.length; i++) {
     const step = def.steps[i];
     // Bedenkzeit bzw. Pause (P5): Die Tage zählen ab dem Neustart
-    const base = a.neustartAt ?? a.startedAt;
-    const roh = i === a.step ? fruehestens(a.nextAt, p.now) : new Date(Math.max(base.getTime() + step.day * DAY, prev.getTime() + 2 * HOUR));
+    const base = new Date((a.neustartAt ?? a.startedAt).getTime() + shift);
+    const roh = i === a.step ? fruehestens(nextAt, p.now) : new Date(Math.max(base.getTime() + step.day * DAY, prev.getTime() + 2 * HOUR));
     // Angebot (P3): WhatsApp und E-Mail gehen erst im Versandfenster (Mo bis Sa 9 bis 19 Uhr) raus
     const angebot = istAngebotsAbfolge(a.kind);
     const at = angebot && step.action !== "call" ? naechsterVersand(roh) : roh;
