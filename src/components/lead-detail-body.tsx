@@ -194,9 +194,27 @@ export async function LeadDetailBody({
   });
   if (!lead) notFound();
   if (lead.erasedAt) {
+    // Gesetzliche Aufbewahrung (Paket M5, lib/erasure.ts): nur die Beratungsdokumentation bleibt als Nachweis
+    const aufbewahrt = await prisma.leadFile.findMany({
+      where: { leadId: lead.id, kind: "beratungsdoku" },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, fileName: true, createdAt: true, aufbewahrenBis: true },
+    });
     return (
       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-5 py-6 text-sm text-[color:var(--muted)]">
         Die Daten dieses Leads wurden am {formatDate(lead.erasedAt)} auf Wunsch gelöscht. Für Abrechnung und Zahlen bleibt nur ein anonymer Eintrag.
+        {aufbewahrt.length ? (
+          <ul className="mt-3 space-y-1" data-aufbewahrt>
+            {aufbewahrt.map((f) => (
+              <li key={f.id}>
+                <a href={`/api/buyer/leads/${lead.id}/dateien/${f.id}`} target="_blank" rel="noopener" className="font-medium text-[color:var(--brand)] hover:underline">
+                  Beratungsdokumentation vom {formatDate(f.createdAt)}
+                </a>
+                {f.aufbewahrenBis ? <> · gesetzliche Aufbewahrung bis {formatDate(f.aufbewahrenBis)}</> : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     );
   }

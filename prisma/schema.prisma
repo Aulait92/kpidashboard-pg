@@ -3932,7 +3932,7 @@ model LeadFile {
   leadId       String
   lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   customerId   String
-  // angebot | police | sonstiges
+  // angebot | police | sonstiges | beratungsdoku (Gesprächszusammenfassung als PDF, Paket M5)
   kind         String
   fileName     String
   contentType  String
@@ -3940,10 +3940,14 @@ model LeadFile {
   data         Bytes
   uploadedById String?
   createdAt    DateTime @default(now())
+  // Nur Beratungsdokumentation: bleibt beim Löschen des Leads bis zu diesem Zeitpunkt als Nachweis (VVG §§ 61, 62;
+  // lib/lead-files.ts BERATUNGSDOKU_AUFBEWAHRUNG_JAHRE), danach löscht der Cron sie
+  aufbewahrenBis DateTime?
 
   contracts LeadContract[]
 
   @@index([leadId])
+  @@index([aufbewahrenBis])
 }
 
 // Unterlagen, die ein Lead per WhatsApp schickt (Ole, 17.11.2026, lib/policen): Fotos oder PDFs seiner Policen,

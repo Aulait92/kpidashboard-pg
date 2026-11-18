@@ -15,7 +15,8 @@ import { fuehreNachfassenAus } from "@/lib/mail/termin-erinnerung";
 import { nachfassenFuer } from "@/lib/mail/phasen";
 import { asAnsprache } from "@/lib/ansprache";
 import { datumKurz, musterKuendigung } from "@/lib/mail/platzhalter";
-import { beratungsPdfInhalt, pdfDateiname } from "@/lib/mail/beratung";
+import { pdfDateiname } from "@/lib/mail/beratung";
+import { beraterName, beratungsPdf } from "@/lib/mail/beratung-pdf";
 import { textPdf } from "@/lib/mail/text-pdf";
 import { saveLeadFile } from "@/lib/lead-files";
 import { leadVersandKontext, resendBereit, sendeLeadMail } from "@/lib/mail/lead-versand";
@@ -208,7 +209,9 @@ export async function sendLeadMailAction(input: {
     const notes: string[] = [];
     // PDF im Kontakt unter Dokumente ablegen
     if (pdf) {
-      const saved = await saveLeadFile({ leadId: lead.id, customerId, kind: "sonstiges", fileName: pdf.fileName, data: pdf.data, userId: ctx.userId }).catch(() => null);
+      // Gesprächszusammenfassung als Beratungsdokumentation (bleibt beim Löschen als Nachweis, Paket M5)
+      const kind = input.pdf?.art === "beratung" ? "beratungsdoku" : "sonstiges";
+      const saved = await saveLeadFile({ leadId: lead.id, customerId, kind, fileName: pdf.fileName, data: pdf.data, userId: ctx.userId }).catch(() => null);
       notes.push(saved?.ok ? "PDF unter Dokumente abgelegt." : "PDF gesendet, aber nicht unter Dokumente abgelegt.");
     }
     // Nachfass-Aufgabe je Vorlage, ohne Doppelungen (lib/mail/termin-erinnerung.ts)
@@ -266,21 +269,15 @@ async function mailPdf(p: MailPdf, o: { customerId: string; userId: string; kund
     const [titel, , ...rest] = muster.split("\n");
     return { fileName: pdfDateiname("Musterkuendigung", o.kunde), data: await textPdf({ titel, bloecke: [{ text: rest.join("\n") }] }) };
   }
-  const [c, conn, me] = await Promise.all([
-    prisma.customer.findUnique({ where: { id: o.customerId }, select: { leadAddress: true } }),
-    prisma.mailConnection.findUnique({ where: { userId: o.userId }, select: { fromName: true } }),
-    prisma.user.findUnique({ where: { id: o.userId }, select: { displayName: true } }),
-  ]);
-  const berater = conn?.fromName ?? me?.displayName ?? "";
-  const inhalt = beratungsPdfInhalt({
+  const c = await prisma.customer.findUnique({ where: { id: o.customerId }, select: { leadAddress: true } });
+  return beratungsPdf({
     an: asAnsprache(c?.leadAddress),
     kunde: o.kunde,
     produkt: (o.produkt ?? "").trim() || "Versicherung",
-    berater,
-    wuensche: kurz(p.wuensche, 6000),
-    rat: kurz(p.rat, 6000),
+    berater: await beraterName(o.userId),
+    wuensche: p.wuensche,
+    rat: p.rat,
   });
-  return { fileName: pdfDateiname("Beratungsdokumentation", o.kunde), data: await textPdf({ ...inhalt, autor: berater || undefined }) };
 }
 
 
