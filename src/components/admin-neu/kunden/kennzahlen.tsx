@@ -28,10 +28,10 @@ export async function Kennzahlen({ customerId }: { customerId: string }) {
   const summe = Number(kosten._sum.acquisitionCost ?? 0);
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <Kachel label="Leads 30 T." wert={leads.toLocaleString("de-DE")} />
-      <Kachel label="Termine" wert={termine.toLocaleString("de-DE")} hinweis={leads ? `${Math.round((termine / leads) * 100)} % der Leads` : undefined} />
-      <Kachel label="Abschlüsse" wert={abschluesse.toLocaleString("de-DE")} />
-      <Kachel label="Kosten/Termin" wert={termine && summe ? eur(summe / termine) : NOCH_KEINE_DATEN} hinweis={summe ? `${eur(summe)} Leadkosten` : undefined} />
+      <Kachel label="Leads (30 Tage)" wert={leads.toLocaleString("de-DE")} />
+      <Kachel label="Termine (30 Tage)" wert={termine.toLocaleString("de-DE")} hinweis={leads ? `${Math.round((termine / leads) * 100)} % der Leads` : undefined} />
+      <Kachel label="Abschlüsse (30 Tage)" wert={abschluesse.toLocaleString("de-DE")} />
+      <Kachel label="Kosten je Termin (30 Tage)" wert={termine && summe ? eur(summe / termine) : NOCH_KEINE_DATEN} hinweis={summe ? `${eur(summe)} Leadkosten` : undefined} />
     </div>
   );
 }

@@ -112,7 +112,7 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
             </>
           ) : null}
         </dl>
-        <p className="mt-3 text-xs text-slate-500">Kein Vertriebskontakt verknüpft (Kunde aus Airtable).</p>
+        <p className="mt-3 text-xs text-slate-500">Kein Vertriebskontakt verknüpft.</p>
       </section>
       {onboarding ? (
         <OnboardingCard

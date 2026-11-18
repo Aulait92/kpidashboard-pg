@@ -527,7 +527,8 @@ export async function syncCalendlyAction(prev: ImportState): Promise<ImportState
 // ─── Lead manuell erfassen (z.B. LinkedIn-Nachricht, Empfehlung) ─────────
 export async function createLeadManually(fd: FormData) {
   await requireAuth();
-  const source = s(fd, "source") ?? "LINKEDIN";
+  // Ohne Herkunft nicht LinkedIn unterstellen (Usability-Check 18.11.2026)
+  const source = s(fd, "source") ?? "SONSTIGES";
   const r = await handleInboundLead(
     {
       first_name: s(fd, "firstName"),

@@ -226,7 +226,6 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
                       <span className="mr-0.5 truncate font-medium">{z.name}</span>
                       {z.status ? <Badge tone={z.status.tone}>{z.status.label}</Badge> : null}
                       {!z.status && z.stufe ? <span className={`badge ${CUSTOMER_COLOR[z.stufe]}`}>{CUSTOMER_LABEL[z.stufe]}</span> : null}
-                      {!z.status && !z.stufe && z.kennung !== "Intern" ? <Badge>Leads (Airtable)</Badge> : null}
                       {z.kennung ? <span className="badge bg-amber-100 text-amber-900">{z.kennung}</span> : null}
                       {z.warnung ? <Badge tone="danger">{z.warnung}</Badge> : null}
                     </div>

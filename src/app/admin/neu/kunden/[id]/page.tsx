@@ -155,7 +155,7 @@ export default async function KundeUebersicht({ params, searchParams }: { params
                     ) : null}
                   </ul>
                 ) : (
-                  <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Kein Vertriebskontakt verknüpft (Kunde aus Airtable).</p>
+                  <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Kein Vertriebskontakt verknüpft.</p>
                 )}
               </div>
             </Card>

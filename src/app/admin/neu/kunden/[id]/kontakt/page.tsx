@@ -20,7 +20,7 @@ export default async function KundeKontaktakte({ params }: { params: Promise<{ i
           <ContactPage params={Promise.resolve({ id: c.salesContact.id })} searchParams={Promise.resolve({ embedded: "1" })} />
         </div>
       ) : (
-        <p className="text-sm text-[color:var(--muted)]">Kein Vertriebskontakt verknüpft (Kunde aus Airtable).</p>
+        <p className="text-sm text-[color:var(--muted)]">Kein Vertriebskontakt verknüpft.</p>
       )}
     </KundenakteSeite>
   );

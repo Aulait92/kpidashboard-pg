@@ -57,7 +57,7 @@ export default async function KundenakteLayout({ children, params }: { children:
       </BackToList>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">{c.name.replace(/^Allianz\s+/i, "")}</h1>
-        {stage ? <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span> : <Badge>Leads (Airtable)</Badge>}
+        {stage ? <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span> : null}
         <Badge>{packageLabel(c)}</Badge>
         {c.isTest ? <TestkundeLoeschen customerId={c.id} name={c.name} whatsapp={c.whatsAppAccount?.phoneNumber ?? null} /> : null}
         {c.onboarding && !c.onboarding.liveAt ? <Badge tone="brand">Onboarding</Badge> : null}
