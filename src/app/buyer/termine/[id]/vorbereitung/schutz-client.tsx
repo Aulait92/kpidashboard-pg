@@ -13,7 +13,8 @@
 //   Hinweis, wenn eine gewählte Stufe (Basis/Smart) den Rabatt verhindert.
 
 import { useEffect, useId, useState } from "react";
-import { Check, ChevronDown, Lightbulb, Plus, Search, X } from "lucide-react";
+import { Check, ChevronDown, Lightbulb, Plus, Search, Trash2, X } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { tarifMitSparte } from "@/lib/praesentation";
 import { naechsteText, prozentMit } from "@/lib/kombi-rabatt";
@@ -77,6 +78,7 @@ export function SchutzBereich({
   gesellschaften = [],
   imKatalog,
   gesundheitFrei = false,
+  haupt = null,
 }: {
   auswahl: Tarifauswahl;
   ro: boolean;
@@ -95,7 +97,10 @@ export function SchutzBereich({
   imKatalog: string[];
   /** Gesundheitssparten für den bisherigen Vertrag freigeschaltet (lib/bisheriger-vertrag.ts bisherErlaubt) */
   gesundheitFrei?: boolean;
+  /** Sparte, für die der Lead gekommen ist (lib/terminvorbereitung-neu.ts spartenFuerTermin): nicht entfernbar */
+  haupt?: string | null;
 }) {
+  const toast = useToast();
   const schutz = auswahl.schutz ?? [];
   const angebot = auswahl.sparten.map((s) => s.key);
   // Reihenfolge, Tipps und aufgeklappte Zeilen beim Öffnen festhalten: Zeilen springen beim Beantworten nicht herum
@@ -171,10 +176,28 @@ export function SchutzBereich({
     klappe(key, true);
   };
   /** Zeile entfernen (Ole, 18.11.2026: „Hier kann ich keine Versicherungen rauslöschen“); über „Versicherung hinzufügen“ wieder da. */
-  const wegnehmen = (key: string) => {
+  // Mit „Rückgängig“ wie beim Entfernen einer Sparte aus dem Angebot (components/ui/toast.tsx)
+  const wegnehmen = (key: string, label: string) => {
+    const index = schutz.findIndex((x) => x.key === key);
+    const vorher = index >= 0 ? structuredClone(schutz[index]) : null;
+    const warDazu = dazu.includes(key);
     aendern((a) => void (a.schutz = (a.schutz ?? []).filter((x) => x.key !== key)));
     setDazu((d) => d.filter((k) => k !== key));
     setWeg((w) => [...w.filter((k) => k !== key), key]);
+    toast.show({
+      message: `${label} entfernt`,
+      actionLabel: "Rückgängig",
+      onAction: () => {
+        if (vorher)
+          aendern((a) => {
+            const liste = (a.schutz ?? []).filter((x) => x.key !== key);
+            liste.splice(Math.min(index, liste.length), 0, vorher);
+            a.schutz = liste;
+          }, true);
+        if (warDazu) setDazu((d) => [key, ...d]);
+        setWeg((w) => w.filter((k) => k !== key));
+      },
+    });
   };
   const vorschau = ampelVorschau(schutz, auswahl.sparten);
 
@@ -201,9 +224,9 @@ export function SchutzBereich({
               const vorschlag = !!s.quelle;
               const teile = schutzKurzTeile(s);
               const schalter = (s.status !== "bei-uns" || !!sp) && (imKatalog.includes(s.key) || !!sp);
-              // Entfernen (selten, daher nur an selbst beantworteten bzw. hinzugefügten Zeilen, nicht an Tipps und Vorschlägen):
-              // solange die Sparte nicht im heutigen Angebot ist (sonst erst den Schalter ausschalten)
-              const entfernbar = !ro && !sp && !tipp && !vorschlag;
+              // Entfernen (Ole, 18.11.2026): jede Zeile außer der Sparte, für die der Lead gekommen ist, solange sie nicht im
+              // heutigen Angebot ist (sonst erst den Schalter ausschalten); mit Rückgängig
+              const entfernbar = !ro && !sp && s.key !== haupt;
               return (
                 <li
                   key={s.key}
@@ -327,11 +350,11 @@ export function SchutzBereich({
                       {entfernbar ? (
                         <button
                           type="button"
-                          onClick={() => wegnehmen(s.key)}
-                          className="-mb-2 mt-1 py-2 text-[13px] font-medium text-[color:var(--muted)] hover:underline"
+                          onClick={() => wegnehmen(s.key, s.label)}
+                          className="-mb-2 mt-1 inline-flex min-h-10 items-center gap-1.5 text-[13px] font-medium text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
                           data-schutz-weg
                         >
-                          Zeile entfernen
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden /> Entfernen
                         </button>
                       ) : null}
                     </div>
