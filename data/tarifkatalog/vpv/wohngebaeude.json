@@ -29,8 +29,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/wohnen-kfz/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäudeversicherung Exklusiv",
@@ -53,8 +52,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/wohnen-kfz/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -67,6 +65,7 @@
     "Ableitungsrohre auf und außerhalb des Grundstücks nur im Exklusiv-Tarif (A1 4.4.3).",
     "Photovoltaikanlagen sind in der Wohngebäudeversicherung nicht versichert (A1 7.7.1); dafür gibt es die eigene VPV Photovoltaikversicherung.",
     "Kosten nach einem Schaden: Aufräum-, Abbruch- und Schutzkosten bis zur vereinbarten Grenze, Höhe nicht beziffert; provisorische Maßnahmen im Exklusiv bis 25.000 €.",
-    "Vandalismus und Graffiti nur Exklusiv und nur Ein- und Zweifamilienhäuser. Keine Markierung."
+    "Vandalismus und Graffiti nur Exklusiv und nur Ein- und Zweifamilienhäuser. Keine Markierung.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

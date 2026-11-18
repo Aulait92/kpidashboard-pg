@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wgv.de/gesundheit-vorsorge/gesundheit/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnzusatzversicherung OPTIMAL",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wgv.de/gesundheit-vorsorge/gesundheit/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnzusatzversicherung PLUS",
@@ -66,8 +64,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wgv.de/gesundheit-vorsorge/gesundheit/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -78,6 +75,7 @@
     "Drei Stufen laut Tarifübersicht der Produktseite und Tarifbedingungen (Abruf 17.11.2026); OPTIMAL ist als \"Unsere Empfehlung\" markiert. Versicherer: WGV-Versicherung AG.",
     "Prozentsätze beim Zahnersatz einschließlich der Vorleistung der Krankenkasse; bei Regelversorgung 100 %.",
     "Erstattungshöchstsätze in den ersten vier Jahren (BASIS 500/1.000/1.500/2.000 €, OPTIMAL 800 bis 3.200 €, PLUS 1.000 bis 4.000 €); entfallen bei Unfall.",
-    "Zahnbehandlung (Füllungen, Wurzel, Parodontose) und Prophylaxe nur OPTIMAL und PLUS; PLUS zusätzlich Schmerzbehandlung bis 200 €/Jahr. KFO für Minderjährige, insgesamt begrenzt."
+    "Zahnbehandlung (Füllungen, Wurzel, Parodontose) und Prophylaxe nur OPTIMAL und PLUS; PLUS zusätzlich Schmerzbehandlung bis 200 €/Jahr. KFO für Minderjährige, insgesamt begrenzt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

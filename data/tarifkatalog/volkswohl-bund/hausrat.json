@@ -35,8 +35,7 @@
         "notfall": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/31/documents/Verbraucherinformation.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "7 Sachen SMART",
@@ -65,8 +64,7 @@
         "notfall": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/31/documents/Verbraucherinformation.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "7 Sachen BEST",
@@ -94,8 +92,7 @@
         "notfall": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/31/documents/Verbraucherinformation.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -107,6 +104,7 @@
     "Verkauf über die Tochter PROKUNDO, Versicherer VOLKSWOHL BUND Sachversicherung AG. Quelle: Produktübersicht in der Verbraucherinformation prokundo VI H 06.2026 (Seiten 8 bis 13); Haken im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
     "Einfacher Diebstahl aus der Wohnung nicht als eigene Zeile genannt (Schlossänderung nach einfachem Diebstahl ab SMART). Fahrrad-Werte gelten ohne Erhöhung oder Zusatzbaustein Fahrradkasko.",
     "Zusatzbausteine laut Produktseite: Elementar, Glas, Fahrradkasko, Cyber, Haus- und Wohnungsschutzbrief; ob alle in EASY wählbar sind, nicht genannt. Plus-Baustein (unbenannte Gefahren) nur zu BEST; Tarifoption PRO (z. B. Wallbox) gegen Aufpreis.",
-    "SMART heißt auf der Produktseite „der Preis-Leistungs-Sieger“; als mittlere Stufe empfohlen."
+    "SMART heißt auf der Produktseite „der Preis-Leistungs-Sieger“; als mittlere Stufe empfohlen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

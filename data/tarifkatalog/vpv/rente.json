@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/private-klassische-rentenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "VPV Zukunftsplan Komfort",
@@ -43,8 +42,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/zukunftsplan/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "VPV Zukunftsplan Plus",
@@ -61,8 +59,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/zukunftsplan/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "VPV Go Invest",
@@ -78,8 +75,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/go-invest/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -95,6 +91,7 @@
     "Garantierter Rentenfaktor bei keinem Produkt beziffert. Flex Garant Invest: „geschütztes Kapital mit Zins-Zuschlag“, Höhe nicht genannt.",
     "Zukunftsplan Plus: Sicherungsniveau steigt jährlich linear von 0 % auf 75 % des Guthabens. Go Invest: keine Garantie genannt.",
     "Hinterbliebenenschutz bei Zukunftsplan Plus und Go Invest nicht ausdrücklich genannt. Effektivkosten nicht veröffentlicht.",
-    "Flex Garant Rente (Sofortrente gegen Einmalbeitrag) nicht aufgenommen; Riester-Nachfolger Altersvorsorgedepot und Frühstart-Rente erst ab 2027."
+    "Flex Garant Rente (Sofortrente gegen Einmalbeitrag) nicht aufgenommen; Riester-Nachfolger Altersvorsorgedepot und Frühstart-Rente erst ab 2027.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }
