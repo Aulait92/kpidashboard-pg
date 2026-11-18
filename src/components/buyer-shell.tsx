@@ -46,6 +46,8 @@ type NavItem = {
   icon: typeof LayoutDashboard;
   match: (p: string) => boolean;
   badge?: number;
+  /** Wort am Zähler, z. B. „neu“ (Usability-Check 18.11.2026: roter Zähler ohne Erklärung) */
+  badgeLabel?: string;
 };
 
 export function BuyerShell({
@@ -121,7 +123,7 @@ export function BuyerShell({
   // Reiter, Chats nur mit WhatsApp. Bestandskunden liegen im Profilmenü (Ole, 13.11.2026).
   const items: NavItem[] = [
     { href: "/buyer", label: "Heute", icon: Sun, match: (p) => p === "/buyer" },
-    { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads"), badge: noStepBadge },
+    { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads"), badge: noStepBadge, badgeLabel: "neu" },
     { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
     ...(showChats
       ? [{ href: "/buyer/chats", label: "Nachrichten", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]
@@ -172,7 +174,7 @@ export function BuyerShell({
                   )}
                 >
                   {it.label}
-                  {it.badge ? <Badge n={it.badge} /> : null}
+                  {it.badge ? <Badge n={it.badge} label={it.badgeLabel} /> : null}
                 </Link>
               );
             })}
@@ -214,7 +216,7 @@ export function BuyerShell({
                     <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 1.9} />
                     {it.badge ? (
                       <span className="absolute -right-2.5 -top-1.5">
-                        <Badge n={it.badge} />
+                        <Badge n={it.badge} label={it.badgeLabel} />
                       </span>
                     ) : null}
                   </span>
@@ -245,10 +247,14 @@ function zurStartseite(e: React.MouseEvent<HTMLAnchorElement>) {
   }
 }
 
-function Badge({ n }: { n: number }) {
+function Badge({ n, label }: { n: number; label?: string }) {
+  const zahl = n > 99 ? "99+" : String(n);
   return (
-    <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">
-      {n > 99 ? "99+" : n}
+    <span
+      className="inline-flex h-[18px] min-w-[18px] items-center justify-center whitespace-nowrap rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white"
+      {...(label ? { "aria-label": `${zahl} ${label}`, "data-badge-label": label } : {})}
+    >
+      {label ? `${zahl} ${label}` : zahl}
     </span>
   );
 }
@@ -478,7 +484,7 @@ function BuyerShellA({
   const owner = teamRole === "owner";
   const items: NavItem[] = [
     { href: "/buyer", label: "Heute", icon: Sun, match: (p: string) => p === "/buyer" },
-    { href: "/buyer/kontakte", label: "Kontakte", icon: Users, match: (p: string) => /^\/buyer\/(kontakte|leads|kanban)/.test(p), badge: noStepBadge },
+    { href: "/buyer/kontakte", label: "Kontakte", icon: Users, match: (p: string) => /^\/buyer\/(kontakte|leads|kanban)/.test(p), badge: noStepBadge, badgeLabel: "neu" },
     ...(showChats
       ? [{ href: "/buyer/chats", label: "Nachrichten", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]
       : []),
@@ -519,7 +525,7 @@ function BuyerShellA({
                   {it.label}
                   {it.badge ? (
                     <span className="ml-auto">
-                      <Badge n={it.badge} />
+                      <Badge n={it.badge} label={it.badgeLabel} />
                     </span>
                   ) : null}
                 </Link>
@@ -594,8 +600,8 @@ function BuyerShellA({
                     <span className="relative">
                       <Icon className="h-6 w-6" strokeWidth={active ? 2.4 : 1.9} />
                       {it.badge ? (
-                        <span className="absolute -right-2.5 -top-1.5">
-                          <Badge n={it.badge} />
+                        <span className={cn("absolute -top-1.5", it.badgeLabel ? "left-3.5" : "-right-2.5")}>
+                          <Badge n={it.badge} label={it.badgeLabel} />
                         </span>
                       ) : null}
                     </span>
