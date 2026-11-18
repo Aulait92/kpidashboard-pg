@@ -145,7 +145,8 @@ async function Start({ syncAus }: { syncAus: boolean }) {
   return (
     <div className="space-y-4">
       {/* Seitenmuster Admin v2 (A2): oben, was die Rolle Liefern braucht; Kennzahlen mit Aufschlüsselung im Fenster */}
-      <Aufmerksamkeit punkte={punkte} />
+      {/* Geparkt und Storno stehen unten als Karten mit Knöpfen, oben nur, was diese Seite nicht zeigt */}
+      <Aufmerksamkeit punkte={punkte?.filter((p) => p.key !== "parked" && !p.key.startsWith("storno")) ?? null} />
       <Kennzahlen
         werte={[
           {

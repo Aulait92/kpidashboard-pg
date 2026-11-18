@@ -59,8 +59,6 @@ export type NeuBereich = {
   ort: "oben" | "unten";
   /** Handy: direkt in der Leiste unten oder unter „Mehr“ */
   handy: "leiste" | "mehr";
-  /** Zähler an der Leiste (aus loadAdminNavCounts) */
-  zaehler?: "heute" | "chats";
   seiten: NeuSeite[];
 };
 
@@ -74,7 +72,6 @@ export const BEREICHE: NeuBereich[] = [
     pfad: n(),
     ort: "oben",
     handy: "leiste",
-    zaehler: "heute",
     seiten: [
       { view: "heute", pfad: n(), titel: "Mein Tag", alt: ["/admin/heute"], suchwoerter: "Heute Start Braucht Sie Freigaben", fertig: true },
       { view: "vertrieb-aufgaben", pfad: n("/vertrieb/aufgaben"), titel: "Aufgaben", alt: ["/admin/heute/aufgaben"], suchwoerter: "Wiedervorlage Nachfassen", fertig: true },
@@ -123,7 +120,6 @@ export const BEREICHE: NeuBereich[] = [
     pfad: n("/kunden"),
     ort: "oben",
     handy: "leiste",
-    zaehler: "chats",
     seiten: [
       { view: "kunden", pfad: n("/kunden"), titel: "Kunden", alt: ["/admin/kunden", "/admin/kunden/pipeline", "/admin/vertrieb/kunden"], reiter: { gruppe: "betreuen", label: "Kunden" }, suchwoerter: "Kundenliste Onboarding", fertig: true },
       { view: "leads-chats", pfad: n("/leads/chats"), titel: "Chats", alt: ["/admin/whatsapp"], reiter: { gruppe: "betreuen", label: "Chats" }, suchwoerter: "WhatsApp Support-Nummer Assistent", fertig: true },
@@ -188,7 +184,7 @@ export const BEREICHE: NeuBereich[] = [
     seiten: [
       { view: "werkzeuge", pfad: n("/werkzeuge"), titel: "Werkzeuge", alt: [], suchwoerter: "Technik Diagnose Verbindungen Import", fertig: true },
       { view: "e-status", pfad: n("/einstellungen/status"), titel: "Status & Support", gruppe: "Zustand", alt: ["/admin/einstellungen/status"], suchwoerter: "Störung Statusmeldung", untertitel: "Öffentliche Statusseite und Support-Kontakt im Hilfe-Chat.", fertig: true },
-      { view: "e-anbindungen", pfad: n("/einstellungen/anbindungen"), titel: "Anbindungen & Import", gruppe: "Verbindungen & Importe", alt: ["/admin/vertrieb/import"], suchwoerter: "Instantly Calendly CSV Webhook Meta-Verbindung LinkedIn", untertitel: "Woher Vertrieb und Lead-Eingang ihre Daten bekommen.", fertig: true },
+      { view: "e-anbindungen", pfad: n("/einstellungen/anbindungen"), titel: "Anbindungen & Import", gruppe: "Verbindungen & Importe", alt: ["/admin/vertrieb/import"], suchwoerter: "Instantly Webhook Meta-Verbindung LinkedIn Agenturliste", untertitel: "Woher Vertrieb und Lead-Eingang ihre Daten bekommen.", fertig: true },
       { view: "e-vorlagen", pfad: n("/einstellungen/whatsapp"), titel: "WhatsApp-Vorlagen & Support-Nummer", gruppe: "WhatsApp", alt: ["/admin/whatsapp/settings"], suchwoerter: "Vorlagen Assistent Support-Nummer A/B-Test", untertitel: "Support-Nummer und A/B-Tests der Vorlagen.", fertig: true },
       { view: "e-login", pfad: n("/einstellungen/login"), titel: "Login-Seite", gruppe: "Inhalte & Einrichtung", alt: ["/admin/einstellungen/login"], suchwoerter: "Infokarten", untertitel: "Infokarten neben dem Login, aktive Karten wechseln sich ab.", fertig: true },
       { view: "e-einrichtung", pfad: n("/einstellungen/einrichtung"), titel: "Einrichtung neuer Kunden", gruppe: "Inhalte & Einrichtung", alt: ["/admin/einstellungen/einrichtung"], suchwoerter: "Business-ID Erklärvideos Team-Kalender", untertitel: "Was neue Kunden unter Einrichtung sehen.", fertig: true },

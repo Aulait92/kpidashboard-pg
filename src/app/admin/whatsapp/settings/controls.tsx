@@ -268,7 +268,8 @@ export function AgentSettings(p: {
 // ─── Vorlagen ──────────────────────────────────────────────────────────
 export function TemplateApproved({ id, approved }: { id: string; approved: boolean }) {
   return (
-    <label className="flex shrink-0 items-center gap-2 text-sm text-[color:var(--muted)]">
+    // data-hand-freigabe: im neuen Admin ausgeblendet (Admin v2 A4, F199; globals.css), im alten bleibt der Schalter
+    <label className="flex shrink-0 items-center gap-2 text-sm text-[color:var(--muted)]" data-hand-freigabe="">
       {approved ? "freigegeben" : "wartet"}
       <Switch label="Von Meta freigegeben" checked={approved} onChange={(next) => setTemplateApprovedAction(id, next)} />
     </label>

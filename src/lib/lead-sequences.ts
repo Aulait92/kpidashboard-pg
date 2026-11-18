@@ -20,6 +20,12 @@
 // WhatsApp, danach Anruf-Aufgabe) bzw. „Habe ich selbst gesendet“ tippt („offer_selbst“: ohne E-Mail, nur WhatsApp und
 // Anruf). Der Status „Angebot gesendet“ allein startet nichts mehr (onLeadStatus), dann gilt die klassische Wiedervorlage.
 //
+// Bedenkzeit und Rückruf (Paket P5, Ole 17.11.2026, lib/bedenkzeit.ts, lib/rueckruf.ts): „meldet sich am …“ beendet die
+// laufende Angebots-Abfolge und legt „offer_bedenkzeit“ bzw. „offer_selbst_bedenkzeit“ an, die am Tag neu startet (Tage
+// ab neustartAt), zuerst mit einer WhatsApp zum Angebot (nie die Terminvorschlags-Vorlage followup). Endet sie vorher
+// (Antwort des Leads, Schalter aus), steht am Tag die Aufgabe „Bedenkzeit vorbei“ auf „Heute“. „Rückruf gewünscht“
+// pausiert die Angebots-Abfolge bis zwei Tage nach dem Zeitfenster (pauseAngebotsAbfolge, alle Schritte rücken nach).
+//
 // Termin-Nachfassen (Ole, 17.11.2026): Antwortet der Lead 2 Std. nach dem Terminvorschlag des Assistenten nicht, ist der
 // erste Schritt von „Chat ruht“ ein kurzes Nachfassen mit denselben (bzw. neu berechneten, noch freien) Zeit-Knöpfen:
 // nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
@@ -38,8 +44,17 @@ import { anrufPausiert } from "@/lib/telefonat-server";
 import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 import type { VorlageKey } from "@/lib/mail/vorlagen";
 import type { Werte } from "@/lib/mail/platzhalter";
+import { hatMailAntwort } from "@/lib/mail/kontakt-mail";
+import { BEDENKZEIT_AUFGABE, bedenkzeitNeustartText, tagKurz } from "@/lib/bedenkzeit";
 
-export type SequenceKind = "not_reached" | "offer" | "offer_selbst" | "no_show" | "silent" | "recall";
+export type SequenceKind = "not_reached" | "offer" | "offer_selbst" | "offer_bedenkzeit" | "offer_selbst_bedenkzeit" | "no_show" | "silent" | "recall";
+
+/** Abfolgen zum Angebot (Nachfassen, Vorab-Check, Thema aus dem Termin). */
+export const ANGEBOT_KINDS: SequenceKind[] = ["offer", "offer_selbst", "offer_bedenkzeit", "offer_selbst_bedenkzeit"];
+/** Neustart nach der Bedenkzeit (Paket P5). */
+export const BEDENKZEIT_KINDS: SequenceKind[] = ["offer_bedenkzeit", "offer_selbst_bedenkzeit"];
+export const istAngebotsAbfolge = (kind: string | null | undefined) => (ANGEBOT_KINDS as string[]).includes(kind ?? "");
+export const istBedenkzeitAbfolge = (kind: string | null | undefined) => (BEDENKZEIT_KINDS as string[]).includes(kind ?? "");
 
 const DAY = 24 * 60 * 60 * 1000;
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
@@ -125,6 +140,23 @@ const angebotLetzteWa = (selbst: boolean): Extract<Step, { action: "whatsapp" }>
   fallbackNote: "Angebot: letzter Versuch, anrufen",
 });
 const angebotSchluss: Extract<Step, { action: "call" }> = { day: 12, action: "call", note: "Angebot nachfassen: zum Schluss anrufen" };
+const angebotMail: Extract<Step, { action: "email" }> = {
+  day: 5,
+  action: "email",
+  titel: "E-Mail mit [Rückruf wünschen]",
+  vorlage: "nachfassen_angebot",
+  knoepfe: ["angebot", "rueckruf"],
+};
+/** Nach der Bedenkzeit (Paket P5): WhatsApp zum Angebot, Vorlage offer_bedenkzeit (bis zur Freigabe followup_offer). */
+const bedenkzeitWa = (selbst: boolean): Extract<Step, { action: "whatsapp" }> => ({
+  day: 0,
+  action: "whatsapp",
+  purpose: "offer_bedenkzeit",
+  params: (c) => [c.firstName, c.topic],
+  text: (c) => bedenkzeitNeustartText({ an: c.an, hi: c.hi, topic: c.topic, person: c.person, selbst }),
+  fallback: { purpose: "followup_offer", params: (c) => [c.firstName, c.topic] },
+  fallbackNote: BEDENKZEIT_AUFGABE,
+});
 
 export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> = {
   not_reached: {
@@ -159,16 +191,19 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
     steps: [
       angebotTag2,
       angebotAnruf,
-      {
-        day: 5,
-        action: "email",
-        titel: "E-Mail mit [Rückruf wünschen]",
-        vorlage: "nachfassen_angebot",
-        knoepfe: ["angebot", "rueckruf"],
-      },
+      angebotMail,
       angebotLetzteWa(false),
       angebotSchluss,
     ],
+  },
+  // Nach der Bedenkzeit neu (Paket P5): Tage ab neustartAt, sonst wie „offer“ bzw. „offer_selbst“
+  offer_bedenkzeit: {
+    label: "Bedenkzeit zum Angebot",
+    steps: [bedenkzeitWa(false), angebotAnruf, angebotMail, angebotLetzteWa(false), angebotSchluss],
+  },
+  offer_selbst_bedenkzeit: {
+    label: "Bedenkzeit zum Angebot",
+    steps: [bedenkzeitWa(true), angebotAnruf, angebotLetzteWa(true), angebotSchluss],
   },
   // Angebot vom Vermittler selbst gesendet (Ergänzung B): keine E-Mail von uns, nur WhatsApp und Anruf
   offer_selbst: {
@@ -409,6 +444,8 @@ export async function scheduleBotRecall(leadId: string, at: Date, note: string |
   const agent = await prisma.agentConfig.findUnique({ where: { customerId: lead.customerId }, select: { active: true } });
   if (!agent?.active) return null;
   const when = new Date(Math.min(Math.max(at.getTime(), now.getTime() + 15 * 60 * 1000), now.getTime() + 60 * DAY));
+  // Angebot liegt beim Lead (Paket P5): Bedenkzeit, danach startet das Nachfassen zum Angebot neu (nie „followup“)
+  if (await imAngebotsstand(leadId, now)) return startBedenkzeit(leadId, when, { quelle: "lead", notiz: note, now });
   await stopSequences(leadId, "Lead möchte später kontaktiert werden", { now });
   const detail = `meldet sich ${fmtWhen(when)} Uhr${note ? ` („${note.replace(/\s+/g, " ").trim().slice(0, 80)}“)` : ""}`;
   return prisma.leadSequence.create({
@@ -435,6 +472,86 @@ export async function stopSequences(leadId: string, reason: string, opts: { sinc
     await prisma.leadSequence.update({
       where: { id: r.id },
       data: { stoppedAt: now, stopReason: reason, nextAt: null, log: appendLog(r.log, { at: now.toISOString(), step: -1, action: "stop", result: "stopped", detail: reason }) },
+    });
+  }
+  return running.length;
+}
+
+/**
+ * Liegt beim Lead ein Angebot (Paket P5)? Laufendes Nachfassen zum Angebot, Phase „Angebot gesendet“ oder ein in den
+ * letzten 60 Tagen gesendetes Angebot; nicht nach Abschluss, Absage, Disqualifizierung.
+ */
+export async function imAngebotsstand(leadId: string, now = new Date()): Promise<boolean> {
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { status: true, erasedAt: true } });
+  if (!lead || lead.erasedAt) return false;
+  const s = (lead.status ?? "").trim().toLowerCase();
+  if (DONE_STATUSES.has(s)) return false;
+  if (s === "angebot gesendet") return true;
+  if (await prisma.leadSequence.count({ where: { leadId, stoppedAt: null, kind: { in: ANGEBOT_KINDS } } })) return true;
+  return (await prisma.appointment.count({ where: { leadId, angebotGesendetAt: { gt: new Date(now.getTime() - 60 * DAY) } } })) > 0;
+}
+
+/**
+ * Bedenkzeit setzen (Paket P5): laufende Abfolgen enden („Pausiert: Bedenkzeit bis …“), die Angebots-Abfolge startet am
+ * Tag `bis` neu (offer_bedenkzeit bzw. offer_selbst_bedenkzeit, je nachdem, wie das Angebot rausging). Unabhängig vom
+ * Schalter „Automatisch nachfassen“: Ist er am Tag aus, steht stattdessen die Aufgabe auf „Heute“.
+ */
+export async function startBedenkzeit(
+  leadId: string,
+  bis: Date,
+  opts: { quelle: "lead" | "vermittler"; notiz?: string | null; userId?: string | null; now?: Date },
+) {
+  const now = opts.now ?? new Date();
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, erasedAt: true, followUpNote: true } });
+  if (!lead || lead.erasedAt) return null;
+  const running = await prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { kind: true } });
+  const laufend = running.find((r) => istAngebotsAbfolge(r.kind))?.kind;
+  const selbst = laufend
+    ? laufend === "offer_selbst" || laufend === "offer_selbst_bedenkzeit"
+    : (await prisma.appointment.findFirst({ where: { leadId, angebotGesendetAt: { not: null } }, orderBy: { angebotGesendetAt: "desc" }, select: { angebotVersand: true } }))?.angebotVersand === "selbst";
+  const tag = tagKurz(bis);
+  await stopSequences(leadId, `Pausiert: Bedenkzeit bis ${tag}`, { now });
+  const n = (opts.notiz ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+  const detail = `Bedenkzeit bis ${tag} (${opts.quelle === "lead" ? "Wunsch im Chat" : "von Ihnen eingetragen"})${n ? `: „${n}“` : ""}`;
+  const seq = await prisma.leadSequence.create({
+    data: {
+      leadId,
+      customerId: lead.customerId,
+      kind: selbst ? "offer_selbst_bedenkzeit" : "offer_bedenkzeit",
+      step: 0,
+      startedAt: now,
+      nextAt: bis,
+      neustartAt: bis,
+      log: [{ at: now.toISOString(), step: -1, action: "plan", result: "planned", detail }] as unknown as Prisma.InputJsonValue,
+    },
+  });
+  // Die klassische Wiedervorlage „Angebot nachfassen“ bzw. eine frühere Bedenkzeit-Aufgabe entfällt
+  if (lead.followUpNote === "Angebot nachfassen" || lead.followUpNote === BEDENKZEIT_AUFGABE) {
+    await prisma.lead.update({ where: { id: leadId }, data: { followUpAt: null, followUpNote: null } });
+  }
+  const { logLeadHistory } = await import("@/lib/lead-history");
+  await logLeadHistory(leadId, "wiedervorlage", `${detail}, Nachfassen zum Angebot startet dann neu`, { customerId: lead.customerId, userId: opts.userId ?? null }).catch(() => null);
+  return seq;
+}
+
+/**
+ * Angebots-Abfolge pausieren (Paket P5, „Rückruf gewünscht“): alle Schritte rücken so weit nach, dass der nächste
+ * frühestens `bis` fällig ist; der Vorab-Check kommt davor neu. Liefert die Zahl der pausierten Abfolgen.
+ */
+export async function pauseAngebotsAbfolge(leadId: string, bis: Date, grund: string, now = new Date()): Promise<number> {
+  const running = await prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null, kind: { in: ANGEBOT_KINDS } } });
+  for (const r of running) {
+    const next = r.nextAt ?? now;
+    const shift = Math.max(0, bis.getTime() - Math.max(next.getTime(), now.getTime()));
+    const base = r.neustartAt ?? r.startedAt;
+    await prisma.leadSequence.update({
+      where: { id: r.id },
+      data: {
+        nextAt: new Date(Math.max(next.getTime(), now.getTime()) + shift),
+        neustartAt: new Date(base.getTime() + shift),
+        vorabCheckStep: null,
+        log: appendLog(r.log, { at: now.toISOString(), step: -1, action: "plan", result: "paused", detail: `Pausiert bis ${fmtWhen(bis)} Uhr: ${grund}` }),
+      },
     });
   }
   return running.length;
@@ -487,14 +604,16 @@ export async function stopReasonFor(seq: { leadId: string; customerId: string; s
   const reply = await prisma.message.findFirst({
     where: {
       direction: "inbound",
-      // Wiedervorlage: ein kurzes „Danke, bis morgen“ direkt danach hebt sie nicht auf
-      createdAt: { gt: seq.kind === "recall" ? new Date(seq.startedAt.getTime() + 60 * 60 * 1000) : seq.startedAt },
+      // Wiedervorlage bzw. Bedenkzeit: ein kurzes „Danke, bis dann“ direkt danach hebt sie nicht auf
+      createdAt: { gt: seq.kind === "recall" || istBedenkzeitAbfolge(seq.kind) ? new Date(seq.startedAt.getTime() + 60 * 60 * 1000) : seq.startedAt },
       conversation: { customerId: seq.customerId, OR: [{ leadId: seq.leadId }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] },
     },
     orderBy: { createdAt: "desc" },
     select: { body: true },
   });
   if (reply) return STOP_WORDS.test(reply.body ?? "") ? "Abgemeldet („Stopp“)" : "Lead hat geantwortet";
+  // Antwort per E-Mail an die Antwortadresse (Paket M2, lib/mail/eingang.ts); automatische Antworten zählen nicht
+  if (await hatMailAntwort(seq.leadId, seq.kind === "recall" ? new Date(seq.startedAt.getTime() + 60 * 60 * 1000) : seq.startedAt)) return "Lead hat per E-Mail geantwortet";
   if (seq.kind === "silent") {
     // Der Vermittler hat übernommen (Assistent pausiert oder eigene Nachricht): kein Nachfassen im Namen des Assistenten
     const conv = await prisma.conversation.findFirst({
@@ -530,6 +649,9 @@ async function createCallTask(leadId: string, note: string, now: Date): Promise<
   return "call_task";
 }
 
+/** Stopp-Gründe, nach denen am Tag der Bedenkzeit die Aufgabe „Bedenkzeit vorbei“ kommt. */
+const BEDENKZEIT_AUFGABE_GRUENDE = new Set(["Lead hat geantwortet", "Lead hat per E-Mail geantwortet", "Automatisches Nachfassen ausgeschaltet"]);
+
 export type SequenceRunResult = { due: number; sent: number; tasks: number; stopped: number; waiting: number; failed: number };
 
 /** Fällige Schritte abarbeiten (Cron alle 5 Minuten). */
@@ -553,6 +675,10 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
     const reason = await stopReasonFor(seq, now);
     if (reason) {
       await stopSequences(seq.leadId, reason, { now });
+      // Bedenkzeit (P5): Antwort vorher bzw. Nachfassen aus, der Tag bleibt als Aufgabe für den Vermittler
+      if (istBedenkzeitAbfolge(seq.kind) && seq.step === 0 && BEDENKZEIT_AUFGABE_GRUENDE.has(reason)) {
+        if ((await createCallTask(seq.leadId, BEDENKZEIT_AUFGABE, now)) === "call_task") res.tasks++;
+      }
       res.stopped++;
       continue;
     }
@@ -574,7 +700,7 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
     const claimed = await prisma.leadSequence.updateMany({
       where: { id: seq.id, step: seq.step, stoppedAt: null },
       data: next
-        ? { step: seq.step + 1, nextAt: new Date(Math.max(seq.startedAt.getTime() + next.day * DAY, now.getTime() + MIN_GAP_MS)) }
+        ? { step: seq.step + 1, nextAt: new Date(Math.max((seq.neustartAt ?? seq.startedAt).getTime() + next.day * DAY, now.getTime() + MIN_GAP_MS)) }
         : { step: seq.step + 1, nextAt: null, stoppedAt: now, stopReason: "Abgeschlossen" },
     });
     if (claimed.count === 0) continue;
@@ -670,7 +796,7 @@ async function sendStep(
   }
   const an = await anspracheOf(seq.customerId);
   const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone: lead.phone, name: lead.name });
-  const angebot = seq.kind === "offer" || seq.kind === "offer_selbst";
+  const angebot = istAngebotsAbfolge(seq.kind);
   const ctx: Ctx = {
     firstName: firstNameOf(lead.name),
     hi: anredeZeile(an, who.kontakt),
@@ -768,6 +894,7 @@ export async function loadLeadSequences(leadId: string) {
     return {
       id: s.id,
       kind: s.kind,
+      step: s.step,
       label: def?.label ?? s.kind,
       active: !s.stoppedAt,
       startedAt: s.startedAt.toISOString(),
@@ -780,7 +907,10 @@ export async function loadLeadSequences(leadId: string) {
 
 export function describe(e: SequenceLogEntry, total: number): string {
   const n = `(Schritt ${e.step + 1} von ${total})`;
+  if (e.action === "stop" && e.detail?.startsWith("Pausiert")) return e.detail;
   if (e.action === "stop") return `Abfolge beendet: ${e.detail ?? "gestoppt"}`;
+  if (e.action === "plan" && e.result === "paused") return e.detail ?? "Pausiert";
+  if (e.action === "plan" && e.detail?.startsWith("Bedenkzeit")) return e.detail;
   if (e.action === "plan") return `Wiedervorlage vom Assistenten: ${e.detail ?? "meldet sich später"}`;
   if (e.action === "call") return e.result === "kept_followup" ? `Anruf fällig, Ihre eigene Wiedervorlage bleibt ${n}` : `Anruf-Aufgabe auf „Heute“ angelegt ${n}`;
   if (e.action === "email") {

@@ -25,8 +25,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.continentale.de/basisrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BasisRente Invest Garant (Tarif BRIG)",
@@ -44,8 +43,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.continentale.de/basisrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BasisRente Invest (Tarif BRI)",
@@ -63,8 +61,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.continentale.de/basisrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -76,6 +73,7 @@
   "offen": [
     "Drei Anlagevarianten statt Leistungsstufen (klassisch, Fonds mit Mindestgarantie, reine Fonds); Werte aus der Produktseite, Vertragsinformationen nicht ausgewertet. Continentale markiert keine Variante, Invest Garant als mittlere Stufe gesetzt.",
     "Garantierter Rentenfaktor nicht auf der Produktseite genannt. Fondsvarianten: Fondswechsel 6x jährlich gebührenfrei, Fondsanlage auch nach Rentenbeginn möglich.",
-    "Hinterbliebenenleistung im Todesfall als Hinterbliebenenrente vereinbar; BU- bzw. EU-Zusatzversicherung zahlt die Beiträge weiter. Effektivkosten und Dynamik nicht ausgewertet."
+    "Hinterbliebenenleistung im Todesfall als Hinterbliebenenrente vereinbar; BU- bzw. EU-Zusatzversicherung zahlt die Beiträge weiter. Effektivkosten und Dynamik nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und Vertragsinformationen bzw. Bedingungen der Continentale."
   ]
 }

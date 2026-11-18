@@ -17,7 +17,8 @@ export function UnterlagenVomKunden({ leadId, unterlagen, titel = true }: { lead
         <ul className="divide-y divide-[color:var(--border)]">
           {unterlagen.map((u) => {
             const href = `/api/buyer/leads/${leadId}/unterlagen/${u.id}`;
-            const name = u.sparte ? `${u.sparte} · ${u.fileName}` : u.fileName;
+            // Sparte (laut Dateiname, keine KI) nur, wenn der Dateiname sie nicht schon nennt
+            const name = u.sparte && !u.fileName.toLowerCase().includes(u.sparte.toLowerCase()) ? `${u.sparte} · ${u.fileName}` : u.fileName;
             return (
               <li key={u.id} className="flex min-h-11 items-center gap-2.5 py-1.5">
                 <FileText className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />

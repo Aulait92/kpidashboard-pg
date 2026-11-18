@@ -16,6 +16,8 @@
 //   „Ja, stimmt“/„Andere Adresse“ (email:ja|andere) → Einladung (einmal) bzw. Frage nach der neuen Adresse
 //   „Ja“/„Mache ich gleich“ (kalender:ja|gleich, frühere Kalenderfrage) → zugesagt, kurze Antwort
 //   „Ja“/„Nein“ zu einer Angebotsfrage (folge:<key>:ja|nein) → Assistent mit Hinweis, welche Frage beantwortet ist
+// Bedenkzeit zum Angebot (Paket P5, lib/bedenkzeit-server.ts):
+//   „1 Woche“/„2 Wochen“/„Ende des Monats“ (bedenkzeit:1w|2w|monatsende) → eintragen, kurze Bestätigung, Assistent schweigt
 // Alle anderen Knöpfe (z. B. „Katze“, „Heute“, „Ja, gern prüfen“) gehen als normale Antwort an den Assistenten.
 // Nur echte Knopf-Klicks zählen: getippt „Nein, danke“ kann eine Antwort auf eine ganz andere Frage sein.
 
@@ -37,7 +39,8 @@ export type KnopfAktion =
   | { aktion: "email"; art: "ja" | "andere" }
   | { aktion: "lang"; wahl: string }
   | { aktion: "policenbitte"; titel: string }
-  | { aktion: "folge"; key: string; wert: string };
+  | { aktion: "folge"; key: string; wert: string }
+  | { aktion: "bedenkzeit"; wahl: "1w" | "2w" | "monatsende" };
 
 const norm = (t: string | null | undefined) => (t ?? "").trim().toLowerCase();
 const is = (t: string, k: string) => t === k.toLowerCase();
@@ -61,6 +64,7 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
     if (w === "behalten" || !Number.isNaN(new Date(w).getTime())) return { aktion: "lang", wahl: w };
   }
   if (p.startsWith("policenbitte:")) return { aktion: "policenbitte", titel: p.slice(13) || (text ?? "") };
+  if (p === "bedenkzeit:1w" || p === "bedenkzeit:2w" || p === "bedenkzeit:monatsende") return { aktion: "bedenkzeit", wahl: p.slice(11) as "1w" | "2w" | "monatsende" };
   const folge = /^folge:([a-zA-Z]+):(.+)$/.exec(p);
   if (folge) return { aktion: "folge", key: folge[1], wert: (text ?? folge[2]).trim() };
   if (p === "andere_zeit") return { aktion: "andere_zeit" };
@@ -197,6 +201,10 @@ export async function handleButtonReply(
     if (istPolicenEinwilligungsKnopf(k.titel)) return { handled: false };
     const s = await import("@/lib/whatsapp/termin-strecke");
     return { handled: await s.policenBitteAntwort(conversationId, s.policenKnopfArt(k.titel), now) };
+  }
+  if (k.aktion === "bedenkzeit") {
+    const { bedenkzeitKnopf } = await import("@/lib/bedenkzeit-server");
+    return { handled: await bedenkzeitKnopf(conversationId, k.wahl, now) };
   }
   // „Bitte verschieben“ (Show-up-Paket, Ole 17.11.2026): keine weiteren Erinnerungen zur alten Zeit; das Verschieben
   // selbst übernimmt der Assistent wie bisher (reschedule_appointment legt einen neuen Termin an)

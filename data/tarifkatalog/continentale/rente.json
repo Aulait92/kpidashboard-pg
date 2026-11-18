@@ -25,8 +25,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.continentale.de/continentale-rente-classic-pro",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Rente Invest Garant (Tarif RIG)",
@@ -41,8 +40,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.continentale.de/private-altersvorsorge",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Rente Invest (Tarif RI)",
@@ -60,8 +58,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.continentale.de/private-altersvorsorge",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "EasyRente Invest (Tarif ERI)",
@@ -76,8 +73,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.continentale.de/private-altersvorsorge",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -88,6 +84,7 @@
     "Stufen sind vier Produkte mit unterschiedlicher Anlage (klassisch, Fonds mit Garantie, Fonds ohne Garantie, investmentorientiert), keine Leistungsstufen; Rente Invest als dritte von vier Stufen gesetzt, Continentale markiert kein Produkt.",
     "Werte aus den Produktseiten; Allgemeine Vertragsinformationen (RCP, RI, RIG, ERI) nicht ausgewertet. Höhe der Garantie bei Rente Invest Garant (Prozent der Beiträge) und Höhe des garantierten Rentenfaktors nicht genannt.",
     "Fondswechsel bei den Fondsprodukten bis 6x im Jahr gebührenfrei; nach Rentenbeginn Kapitalentnahmen (RI bis 12x, RIG und ERI bis 2x). Classic Pro mit Günstiger-Prüfung zum Rentenbeginn.",
-    "Hinterbliebenenschutz und BU-Absicherung laut Produktseite bei Classic Pro und Rente Invest einschließbar; bei RIG und ERI nicht genannt. Effektivkosten, Beitragspause und Dynamik nicht ausgewertet."
+    "Hinterbliebenenschutz und BU-Absicherung laut Produktseite bei Classic Pro und Rente Invest einschließbar; bei RIG und ERI nicht genannt. Effektivkosten, Beitragspause und Dynamik nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und Vertragsinformationen bzw. Bedingungen der Continentale."
   ]
 }

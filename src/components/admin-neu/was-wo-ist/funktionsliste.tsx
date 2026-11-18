@@ -17,13 +17,14 @@ export type FunktionZeile = {
   href: string;
   /** Seite des Links, wenn sie nicht genau die Seite der Funktion ist (Detailseiten: „im Kontakt“ usw.) */
   ueber: string | null;
-  status: "vorhanden" | "offen" | "bleibt";
+  status: "vorhanden" | "offen" | "bleibt" | "entfernt";
 };
 
 const STATUS = {
   vorhanden: { label: "neu da", tone: "success" },
   offen: { label: "noch alt", tone: "warning" },
   bleibt: { label: "ohne Oberfläche", tone: "neutral" },
+  entfernt: { label: "entfällt", tone: "neutral" },
 } as const;
 
 const norm = (s: string) => s.toLowerCase().replace(/[›→]/g, " ");

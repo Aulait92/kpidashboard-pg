@@ -26,8 +26,8 @@ export async function loadNextStepFlags(leadIds: string[], now = new Date()): Pr
     prisma.appointment.findMany({ where: { leadId: { in: leadIds }, ...upcomingAppointmentWhere(now) }, select: { leadId: true } }),
     prisma.appointment.findMany({ where: { leadId: { in: leadIds }, ...pastOpenAppointmentWhere(now) }, select: { leadId: true } }),
     prisma.conversation.findMany({ where: { leadId: { in: leadIds }, ...activeBotChatWhere(now) }, select: { leadId: true } }),
-    // Wiedervorlage des Assistenten zählt wie ein aktiver Chat
-    prisma.leadSequence.findMany({ where: { leadId: { in: leadIds }, kind: "recall", stoppedAt: null }, select: { leadId: true } }),
+    // Wiedervorlage des Assistenten bzw. Bedenkzeit zum Angebot (P5) zählt wie ein aktiver Chat
+    prisma.leadSequence.findMany({ where: { leadId: { in: leadIds }, kind: { in: ["recall", "offer_bedenkzeit", "offer_selbst_bedenkzeit"] }, stoppedAt: null }, select: { leadId: true } }),
   ]);
   const get = (id: string) => out.get(id) ?? { upcoming: false, pastOpen: false, botActive: false };
   for (const a of upcoming) if (a.leadId) out.set(a.leadId, { ...get(a.leadId), upcoming: true });
