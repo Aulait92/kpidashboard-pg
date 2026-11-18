@@ -29,3 +29,15 @@ export function versichererAusKuendigung(note: string | null | undefined): strin
 export const UNTERLAGEN_TODO = "Unterlagen nachfassen";
 
 export const NACH_ABSCHLUSS_TODOS: readonly string[] = [CROSS_SELL_TODO, POLICE_TODO, KUENDIGUNG_TODO, UNTERLAGEN_TODO];
+
+/**
+ * Wiedervorlage 4 Wochen nach der Unterschrift der Maklervollmacht (Bestandsübertragung, lib/maklervollmacht/uebertragung.ts):
+ * „Übertragung bei Allianz bestätigt?“. Im Kontakt mit „Bestätigt“ und „Abgelehnt“; Heute zeigt sie in jeder Phase.
+ */
+export const UEBERTRAGUNG_TODO = "Übertragung bei";
+export const uebertragungNote = (versicherer: string) => `${UEBERTRAGUNG_TODO} ${versicherer.trim()} bestätigt?`;
+/** Versicherer aus der Wiedervorlage, null, wenn es keine Übertragungs-Wiedervorlage ist. */
+export function versichererAusUebertragung(note: string | null | undefined): string | null {
+  if (!note?.startsWith(UEBERTRAGUNG_TODO)) return null;
+  return /^Übertragung bei (.+) bestätigt\?$/.exec(note.trim())?.[1]?.trim() || null;
+}

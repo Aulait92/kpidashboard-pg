@@ -4280,6 +4280,14 @@ model LeadContract {
   // Rückbelastung der Abschlussprovision (€), mindert Provision und Gewinn im Monat von cancelledAt
   chargeback     Decimal?  @db.Decimal(12, 2)
   createdById    String?
+  // Bestandsübertragung aus der Maklervollmacht (Ole, 18.11.2026, lib/maklervollmacht/uebertragung.ts): herkunft
+  // „uebertragung“ (null = eigener Abschluss). Nur Bestandsprovision, keine Abschlussprovision; zählt in Umsatz und
+  // Kennzahlen erst ab uebertragungBestaetigtAt (Gesellschaft hat auf den Makler umgeschlüsselt). Abgelehnt = storniert.
+  herkunft                 String?
+  uebertragungBestaetigtAt DateTime?
+  vollmachtId              String?
+  // „<vollmachtId>:<Index des Vertrags>“: je Vertrag der Vollmacht höchstens einmal angelegt
+  uebertragungKey          String?   @unique
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -4287,6 +4295,7 @@ model LeadContract {
 
   @@index([customerId, signedAt])
   @@index([leadId])
+  @@index([vollmachtId])
 }
 
 // Eigenes Postfach eines Logins (Ole, 13.11.2026): E-Mails an Leads aus der App, gesendet über

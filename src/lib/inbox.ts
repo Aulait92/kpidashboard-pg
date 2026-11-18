@@ -4,7 +4,7 @@
 
 import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
 import { POLICY_TODO, wiedervorlageHinterTermin } from "@/lib/lead-followup";
-import { NACH_ABSCHLUSS_TODOS } from "@/lib/vertraege-shared";
+import { NACH_ABSCHLUSS_TODOS, UEBERTRAGUNG_TODO } from "@/lib/vertraege-shared";
 import { prisma } from "@/lib/prisma";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
@@ -169,6 +169,8 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
       // Aufgaben nach dem Abschluss (lib/lead-aufgaben.ts): „Police da …?“ nach 2, „Weiteres Produkt anbieten?“ nach 6 Wochen
       ...NACH_ABSCHLUSS_TODOS.map((t) => ({ status: "Abschluss", followUpNote: { startsWith: t } })),
+      // Bestandsübertragung bestätigt? (Maklervollmacht) in jeder Phase
+      { followUpNote: { startsWith: UEBERTRAGUNG_TODO } },
     ],
   };
   const [laterFollowUps, laterAppts] = await Promise.all([
@@ -233,6 +235,8 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
           { NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } } },
           { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
           ...NACH_ABSCHLUSS_TODOS.map((t) => ({ status: "Abschluss", followUpNote: { startsWith: t } })),
+          // Bestandsübertragung bestätigt? (Maklervollmacht) in jeder Phase
+          { followUpNote: { startsWith: UEBERTRAGUNG_TODO } },
         ],
       },
       orderBy: { followUpAt: "asc" },

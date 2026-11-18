@@ -52,8 +52,10 @@ export type ProvisionSummary = {
   /** Leads mit Abschluss, deren Verträge im Zeitraum zählen. */
   leads: number;
   byOrigin: Record<LeadOrigin, OriginSum>;
-  /** Weitere Verträge (nicht der erste Abschluss eines Leads). */
+  /** Weitere Verträge (nicht der erste Abschluss eines Leads, keine Übertragung). */
   crossSell: { contracts: number; amount: number };
+  /** Bestätigte Bestandsübertragungen aus der Maklervollmacht (nur Bestandsprovision), getrennt von Neuabschlüssen. */
+  uebertragung: { contracts: number; amount: number; leads: number };
   /** Bestandsprovision pro Jahr aus (laufenden) Verträgen dieses Zeitraums. */
   trailPerYear: number;
 };
@@ -134,6 +136,8 @@ export function summarizeProvision(
   let chargebackContracts = 0;
   let n = 0;
   const cross = { contracts: 0, amount: 0 };
+  const ueb = { contracts: 0, amount: 0 };
+  const uebLeads = new Set<string>();
   for (const c of contracts) {
     if (c.status === "storniert" && c.cancelledAt && inRange(c.cancelledAt, range) && (c.chargeback ?? 0) > 0) {
       chargeback += c.chargeback!;
@@ -154,7 +158,11 @@ export function summarizeProvision(
     const set = leadsOf.get(c.origin) ?? new Set<string>();
     set.add(c.leadId);
     leadsOf.set(c.origin, set);
-    if (!c.primary) {
+    if (c.uebertragung) {
+      ueb.contracts++;
+      ueb.amount += p.firstYear;
+      uebLeads.add(c.leadId);
+    } else if (!c.primary) {
       cross.contracts++;
       cross.amount += p.firstYear;
     }
@@ -172,6 +180,7 @@ export function summarizeProvision(
     leads: leads.size,
     byOrigin,
     crossSell: { contracts: cross.contracts, amount: r2(cross.amount) },
+    uebertragung: { contracts: ueb.contracts, amount: r2(ueb.amount), leads: uebLeads.size },
     trailPerYear: r2(trail),
   };
 }
@@ -221,12 +230,15 @@ const zahl = (n: number) => n.toLocaleString("de-DE");
  * „aus 3 Abschlüssen (4 Verträge, davon 1 Cross-Selling)“, sonst kurz. „einmalig“ nur, wenn kein Bestand des
  * 1. Jahres im Betrag steckt (Sparten mit Bestand ab dem 1. Jahr: „inkl. Bestand im 1. Jahr“).
  */
-export function provisionAusText(prov: Pick<ProvisionSummary, "contracts" | "crossSell" | "firstYear" | "abschluss">, makler: boolean): string {
+export function provisionAusText(prov: Pick<ProvisionSummary, "contracts" | "crossSell" | "firstYear" | "abschluss"> & Partial<Pick<ProvisionSummary, "uebertragung">>, makler: boolean): string {
   const cross = prov.crossSell.contracts;
-  const abschluesse = prov.contracts - cross;
-  const vertraege = cross > 0 ? ` (${zahl(prov.contracts)} ${prov.contracts === 1 ? "Vertrag" : "Verträge"}, davon ${zahl(cross)} Cross-Selling)` : "";
+  const ueb = prov.uebertragung?.contracts ?? 0;
+  const abschluesse = prov.contracts - cross - ueb;
+  const neu = prov.contracts - ueb;
+  const vertraege = cross > 0 ? ` (${zahl(neu)} ${neu === 1 ? "Vertrag" : "Verträge"}, davon ${zahl(cross)} Cross-Selling)` : "";
   const art = makler ? "im 1. Jahr" : prov.firstYear > prov.abschluss + 0.005 ? "inkl. Bestand im 1. Jahr" : "einmalig";
-  return `aus ${zahl(abschluesse)} ${abschluesse === 1 ? "Abschluss" : "Abschlüssen"}${vertraege}, ${art}`;
+  const uebText = ueb > 0 ? ` und ${zahl(ueb)} ${ueb === 1 ? "Bestandsübertragung" : "Bestandsübertragungen"}` : "";
+  return `aus ${zahl(abschluesse)} ${abschluesse === 1 ? "Abschluss" : "Abschlüssen"}${vertraege}${uebText}, ${art}`;
 }
 
 /** Gewinn eines Zeitraums aus den Teilen (rein). */

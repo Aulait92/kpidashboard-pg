@@ -51,6 +51,8 @@ import { applyStammdatenToFields, currentStammdaten, formWithOverrides } from "@
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { contractProvision, sparteInfo } from "@/lib/provision";
 import { listLeadContracts, syncPrimaryContract } from "@/lib/vertraege";
+import { versichererAusUebertragung } from "@/lib/vertraege-shared";
+import { offeneUebertragung } from "@/lib/maklervollmacht/uebertragung";
 import { LeadContracts } from "@/components/lead-contracts";
 import { anrufZiel } from "@/lib/anruf-ziel";
 import { BestehendeVertraege } from "@/components/bestehende-vertraege";
@@ -468,8 +470,9 @@ export async function LeadDetailBody({
     contracts = await listLeadContracts(lead.id, rates);
   }
   if (won && rates) {
-    const active = contracts.filter((c) => c.status === "aktiv");
-    const sum = active.map((c) => contractProvision(c, rates));
+    // Laufende Bestandsübertragungen (Maklervollmacht) zählen erst nach Bestätigung
+    const active = contracts.filter((c) => c.status === "aktiv" && c.uebertragungStand !== "laeuft");
+    const sum = active.map((c) => contractProvision({ ...c, uebertragung: !!c.uebertragungStand }, rates));
     // Beitrag je Jahr; PKV als Monatsbeitrag; Tarifoptimierung hat keinen Beitrag (premium = Ersparnis)
     const premiums = active
       .filter((c) => sparteInfo(c.sparte).rateKey !== "pkv_tarif")
@@ -495,6 +498,10 @@ export async function LeadDetailBody({
     if (berlinTag(d) === berlinTag(new Date(nowMs() + 86_400_000))) return `Morgen, ${uhr}`;
     return new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
   };
+
+  // Wiedervorlage „Übertragung bei … bestätigt?“ (Maklervollmacht): Ein-Klick in der Leiste, solange sie noch läuft
+  const uebertragungVers = versichererAusUebertragung(lead.followUpNote);
+  const uebertragungAufgabe = uebertragungVers ? await offeneUebertragung(lead.id, customerId, uebertragungVers).catch(() => null) : null;
 
   return (
     <>
@@ -526,6 +533,7 @@ export async function LeadDetailBody({
         nameZusatz={<EinwilligungEtikett stand={einwilligung} />}
         anrufenNeutral={!!kartenTermin}
         mailAus={mailAus}
+        uebertragung={uebertragungAufgabe}
       />
       {karte ? (
         <TerminKarte
@@ -647,7 +655,7 @@ export async function LeadDetailBody({
         </a>
       ) : null}
 
-      <MaklervollmachtCard leadId={lead.id} customerId={team.customerId} readOnly={!team.userId} />
+      <MaklervollmachtCard leadId={lead.id} customerId={team.customerId} readOnly={!team.userId} knoepfeInWiedervorlage={uebertragungAufgabe?.versicherer ?? null} />
 
       <EmpfehlungLeadCard leadId={lead.id} team={team} readOnly={!team.userId} />
 

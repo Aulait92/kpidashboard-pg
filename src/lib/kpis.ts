@@ -44,6 +44,11 @@ export type Kpis = {
   reachedLeads: number;
   terminLeads: number;
   closedLeads: number;
+  /**
+   * Davon gewonnen nur über eine bestätigte Bestandsübertragung (Maklervollmacht, Ole 18.11.2026): Lead ohne Abschluss,
+   * zählt in der Quote (Leads, nicht Verträge), ohne dass sein Status „Abschluss“ wird (kein Abschluss-Ereignis an Meta).
+   */
+  closedViaUebertragung?: number;
   reachabilityRate: number | null; // 0..1, Basis = nettoLeads
   terminRate: number | null; // termin / reached
   closingFromTerminRate: number | null; // closed / termin
@@ -257,6 +262,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
         reached: true,
         contactAttempts: true,
         status: true,
+        contracts: { where: { herkunft: "uebertragung", uebertragungBestaetigtAt: { not: null }, status: "aktiv" }, select: { id: true }, take: 1 },
       },
     }),
     prisma.revenue.aggregate({
@@ -305,7 +311,8 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
   const engagement = await loadEngagement(nonCancelled.map((l) => l.id));
   const reachedLeads = nonCancelled.filter((l) => isReachedLead(l, engagement)).length;
   const terminLeads = nonCancelled.filter((l) => isTerminLead(l, engagement)).length;
-  const closedLeads = nonCancelled.filter((l) => l.closedAt != null).length;
+  const closedViaUebertragung = nonCancelled.filter((l) => l.closedAt == null && l.contracts.length > 0).length;
+  const closedLeads = nonCancelled.filter((l) => l.closedAt != null).length + closedViaUebertragung;
 
   const reachabilityRate =
     nettoLeads > 0 ? reachedLeads / nettoLeads : null;
@@ -351,6 +358,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
     reachedLeads,
     terminLeads,
     closedLeads,
+    closedViaUebertragung,
     reachabilityRate,
     terminRate,
     closingFromTerminRate,
