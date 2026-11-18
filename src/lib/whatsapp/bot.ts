@@ -1102,7 +1102,12 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         content = await schlageVor(tu.input as { starts?: unknown; erneut?: unknown; einleitung?: unknown });
       } else if (tu.name === "komplettcheck") {
         if (!upcoming) content = "Es gibt noch keinen Termin.";
-        else {
+        else if (stand && strecke.komplettcheckErledigt(stand)) {
+          // Schon beantwortet (meist per Knopf): kein zweites Mal vermerken. Sonst endete der Zug ohne Antwort, weil
+          // komplettcheckAntwort den doppelten Aufruf still schluckt (Live-Test 18.11.2026: Antwort aufs Geburtsdatum
+          // blieb 7 Min. liegen, bis der Lead erneut schrieb).
+          content = "Der Komplettcheck ist schon vermerkt. Ruf komplettcheck nicht noch einmal auf, sondern antworte auf die letzte Nachricht des Leads.";
+        } else {
           zug.komplett = (tu.input as { ja?: unknown }).ja === true;
           content = "Vermerkt. Die App schickt die nächste Nachricht selbst. Schreib nichts weiter.";
         }

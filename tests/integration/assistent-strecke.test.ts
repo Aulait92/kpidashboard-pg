@@ -325,6 +325,36 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(mails).toHaveLength(1);
   });
 
+  // Live-Test 18.11.2026: Komplettcheck per Knopf, danach rief der Assistent bei der Antwort aufs Geburtsdatum noch einmal
+  // komplettcheck auf; der doppelte Vermerk wurde still geschluckt und der Lead bekam keine Antwort (erst, als er
+  // 7 Min. später erneut schrieb). Jede Antwort auf eine Angebotsfrage bekommt sofort im selben Webhook eine Antwort.
+  it("Angebotsfragen nach Komplettcheck per Knopf: Datum, Zahl und Ja/Nein werden sofort beantwortet, auch wenn der Assistent komplettcheck erneut aufruft", async () => {
+    const { appt, conv, phone } = await gebuchtPerKnopf({ qualificationData: { versichern: "Familie", vorhanden: "neu" } });
+    await knopf(phone, "komplettcheck:ja", "Ja, gern");
+    expect(gesendet().at(-1)!.body).toMatch(/Wie lautet Ihr Geburtsdatum\?$/);
+    const komplettDoppelt = { type: "tool_use" as const, id: "k", name: "komplettcheck", input: { ja: true } };
+    const antwort = async (eingabe: string, angaben: Record<string, string>, ki: string) => {
+      st.queue.push([{ type: "tool_use", id: `q-${uid()}`, name: "record_qualification", input: { zusammenfassung: "x", angaben } }, { ...komplettDoppelt, id: `k-${uid()}` }], [{ type: "text", text: ki }]);
+      const ab = gesendet().length;
+      await text(phone, eingabe);
+      return gesendet().slice(ab).map((s) => s.body);
+    };
+
+    expect(await antwort("22.08.1992", { geburt: "22.08.1992" }, "Danke! Wie groß ist Ihre Wohnung ungefähr?")).toEqual(["Danke! Wie groß ist Ihre Wohnung ungefähr?"]);
+    expect(await antwort("95", { wohnflaeche: "95 m²" }, "Danke! Sind Sie im öffentlichen Dienst tätig?")).toEqual(["Danke! Sind Sie im öffentlichen Dienst tätig?"]);
+    // Letzte Angebotsfrage: statt eigener Worte die Vertragsfrage der App
+    const letzte = await antwort("Nein", { beruf: "nicht im öffentlichen Dienst" }, "Danke, notiert.");
+    expect(letzte).toHaveLength(1);
+    expect(letzte[0]).toMatch(/^Danke! Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
+
+    const q = (await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id }, select: { qualificationData: true } })).qualificationData as Record<string, string>;
+    expect(q).toMatchObject({ geburt: "22.08.1992", wohnflaeche: "95 m²" });
+    expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).komplettcheck).toBe(true);
+    expect(await prisma.message.count({ where: { conversationId: conv.id, kind: STRECKE.komplett } })).toBe(1);
+    // Offene Einladung nicht in die folgenden Tests (runEinladungNachholen) mitnehmen
+    await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
+  });
+
   it("Pfad Nein: Angebotsfrage, Policen-Bitte nur für die Sparte, Schluss; andere Adresse (geprüft) bekommt die einzige Einladung", async () => {
     const { appt, phone } = await gebuchtPerKnopf({ qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" } });
     await knopf(phone, "komplettcheck:nein", "Nein, danke");
