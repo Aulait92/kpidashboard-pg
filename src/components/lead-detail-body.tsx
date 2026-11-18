@@ -69,6 +69,7 @@ import {
   TAIL_FIELDS,
   type ReadOnlyField,
 } from "@/lib/lead-fields";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 // Shared Lead-Detail-Inhalt — wird sowohl von /buyer/leads/[id]
 // (Vollseite) als auch vom Pipeline-Intercepting-Modal genutzt. Enthält
@@ -798,7 +799,7 @@ function ReadOnlyCard({
     // schon im Kopf und im Bearbeiten-Block.
     .filter(
       (r) =>
-        r.value != null && r.value !== "" && r.value !== "–" && r.def.key !== "Bearbeitungsstatus",
+        r.value != null && r.value !== "" && r.value !== "–" && r.value !== KEINE_ANGABE && r.def.key !== "Bearbeitungsstatus",
     );
 
   // Catch-all für fachliche Zusatzfelder, die (noch) keiner Gruppe zugeordnet
@@ -837,7 +838,7 @@ function ReadOnlyCard({
         {rows.map(({ def, value }) => (
           <DetailRow key={def.label} label={def.label}>
             {value == null ? (
-              <span className="text-[color:var(--muted)]">–</span>
+              <span className="text-[color:var(--muted)]">{KEINE_ANGABE}</span>
             ) : def.format === "chip-product" ? (
               <Chip tone="lilac">{value}</Chip>
             ) : def.format === "chip-status" ? (

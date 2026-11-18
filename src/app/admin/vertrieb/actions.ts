@@ -298,7 +298,7 @@ async function changeCustomerStage(contactId: string, next: CustomerStage) {
     data: {
       contactId,
       type: "STATUS",
-      outcome: `Kunde: ${c.customerStage ? CUSTOMER_LABEL[c.customerStage] : "–"} → ${CUSTOMER_LABEL[next]}`,
+      outcome: `Kunde: ${c.customerStage ? CUSTOMER_LABEL[c.customerStage] : "noch kein Kunde"} → ${CUSTOMER_LABEL[next]}`,
     },
   });
   await ensureSource(contactId);

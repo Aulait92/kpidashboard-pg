@@ -11,6 +11,7 @@ import { deleteManualRevenueAction, saveManualRevenueAction, saveUpdateTextsActi
 import { cn } from "@/lib/utils";
 import { pilotEnded, pilotLabel, SICHT_LABEL, type Sicht } from "@/lib/zahlen-sicht";
 import { useRouter } from "next/navigation";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 // ─── Format ──────────────────────────────────────────────────────────────
 const eur = (v: number, d = 0) => v.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: d, minimumFractionDigits: d });
@@ -276,9 +277,9 @@ export function ZahlenView({
   const tiles = [
     { lbl: "Jahresumsatz (Laufrate)", val: kEur(h.arr), delta: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : null, up: growthUp, drill: "arr" as DrillKind, note: "MRR × 12", def: "Wiederkehrender Monatsumsatz × 12. Ohne Einrichtungsgebühren." },
     { lbl: "MRR", val: kEur(h.mrr), delta: h.mrrPrev > 0 ? `${h.mrr >= h.mrrPrev ? "+" : "−"}${kEur(Math.abs(h.mrr - h.mrrPrev))}` : null, up: h.mrr >= h.mrrPrev, drill: "mrr" as DrillKind, note: `davon vertraglich ${kEur(h.contractual)}`, def: kern ? "Wiederkehrender Monatsumsatz des laufenden Monats: Software (inkl. weiterer Logins und Module) und Betreuung, ohne Pay-per-Lead (Pilot). Jahresabo: Jahresbetrag ÷ 12." : "Wiederkehrender Monatsumsatz des laufenden Monats (hochgerechnet): Software (inkl. weiterer Logins und Module), Betreuung und Pay-per-Lead nach Stornos. Jahresabo: Jahresbetrag ÷ 12." },
-    { lbl: "Wachstum zum Vormonat", val: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : "–", delta: h.avgGrowth != null ? `Ø ${h.avgGrowth >= 0 ? "+" : ""}${pct(h.avgGrowth * 100, 0)} pro Monat` : null, up: (h.avgGrowth ?? 0) >= 0, note: `${shortMonth(data.current)}* vs. ${shortMonth(data.lastComplete)}`, def: "Veränderung des MRR gegenüber dem letzten abgeschlossenen Monat; Ø = durchschnittliches Monatswachstum seit dem ersten Umsatzmonat." },
-    { lbl: "Umsatzbindung", early: h.early, val: h.retention ? `${h.retention.pct} %` : "–", delta: null, up: true, drill: h.retention ? ("retention" as DrillKind) : undefined, note: h.retention ? `${h.retention.customers} Kunden, nach ${h.retention.lag} Monaten` : "noch zu wenig Historie", def: "Umsatz im letzten abgeschlossenen Monat von Kunden, die vor 3 (ab einem Jahr Historie: 12) Monaten aktiv waren, geteilt durch deren Umsatz damals. Mit Ausbau, abzüglich Kündigungen." },
-    { lbl: "Bruttomarge", val: h.grossMargin != null ? pct(h.grossMargin * 100, 0) : "–", delta: h.grossMargin != null && h.grossMarginPrev != null ? `${h.grossMargin >= h.grossMarginPrev ? "+" : "−"}${pct(Math.abs(h.grossMargin - h.grossMarginPrev) * 100, 0).replace(" %", " Pkt.")}` : null, up: (h.grossMargin ?? 0) >= (h.grossMarginPrev ?? 0), drill: "margin" as DrillKind, note: `${longMonth(data.lastComplete)}, nach direkten Kosten`, def: kern ? "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz, ohne Pay-per-Lead: direkte Kosten = Software-Kosten (Tools, WhatsApp, laufende Kosten mit Zweck „Software“)." : "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz. Direkt: Meta-Werbung für Kunden-Leads und laufende Kosten mit Zweck „Pay-per-Lead“ oder „Software“." },
+    { lbl: "Wachstum zum Vormonat", val: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : NOCH_KEINE_DATEN, delta: h.avgGrowth != null ? `Ø ${h.avgGrowth >= 0 ? "+" : ""}${pct(h.avgGrowth * 100, 0)} pro Monat` : null, up: (h.avgGrowth ?? 0) >= 0, note: `${shortMonth(data.current)}* vs. ${shortMonth(data.lastComplete)}`, def: "Veränderung des MRR gegenüber dem letzten abgeschlossenen Monat; Ø = durchschnittliches Monatswachstum seit dem ersten Umsatzmonat." },
+    { lbl: "Umsatzbindung", early: h.early, val: h.retention ? `${h.retention.pct} %` : NOCH_KEINE_DATEN, delta: null, up: true, drill: h.retention ? ("retention" as DrillKind) : undefined, note: h.retention ? `${h.retention.customers} Kunden, nach ${h.retention.lag} Monaten` : "noch zu wenig Historie", def: "Umsatz im letzten abgeschlossenen Monat von Kunden, die vor 3 (ab einem Jahr Historie: 12) Monaten aktiv waren, geteilt durch deren Umsatz damals. Mit Ausbau, abzüglich Kündigungen." },
+    { lbl: "Bruttomarge", val: h.grossMargin != null ? pct(h.grossMargin * 100, 0) : NOCH_KEINE_DATEN, delta: h.grossMargin != null && h.grossMarginPrev != null ? `${h.grossMargin >= h.grossMarginPrev ? "+" : "−"}${pct(Math.abs(h.grossMargin - h.grossMarginPrev) * 100, 0).replace(" %", " Pkt.")}` : null, up: (h.grossMargin ?? 0) >= (h.grossMarginPrev ?? 0), drill: "margin" as DrillKind, note: `${longMonth(data.lastComplete)}, nach direkten Kosten`, def: kern ? "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz, ohne Pay-per-Lead: direkte Kosten = Software-Kosten (Tools, WhatsApp, laufende Kosten mit Zweck „Software“)." : "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz. Direkt: Meta-Werbung für Kunden-Leads und laufende Kosten mit Zweck „Pay-per-Lead“ oder „Software“." },
     { lbl: "Aktive Kunden", val: String(h.active), delta: `${h.active - h.activePrev >= 0 ? "+" : ""}${h.active - h.activePrev}`, up: h.active >= h.activePrev, drill: "active" as DrillKind, note: `${longMonth(data.lastComplete)} · ${h.churnedTotal} ${h.churnedTotal === 1 ? "Kündigung" : "Kündigungen"} seit Start`, def: "Kunden mit wiederkehrendem Umsatz im letzten abgeschlossenen Monat (ein Kunde zählt einmal, auch mit mehreren Strömen)." },
   ];
 
@@ -724,7 +725,7 @@ function Kunden({ data, investor }: { data: ZahlenData; investor: boolean }) {
             { k: "Pay-per-Lead", v: data.customersByStream.ppl },
             { k: "Betreuung", v: data.customersByStream.service },
             { k: "Software", v: data.customersByStream.software },
-            { k: "Kündigungsquote", v: data.churn ? pct(data.churn.rate * 100) : "–", s: data.churn ? `pro Monat (${data.churn.churned} von Ø ${Math.round(data.churn.avgActive)} Kunden)` : "noch zu wenig Historie" },
+            { k: "Kündigungsquote", v: data.churn ? pct(data.churn.rate * 100) : NOCH_KEINE_DATEN, s: data.churn ? `pro Monat (${data.churn.churned} von Ø ${Math.round(data.churn.avgActive)} Kunden)` : "noch zu wenig Historie" },
           ]}
         />
         <Def show={investor}>Kündigung = Kunde hatte im Vormonat wiederkehrenden Umsatz und im Monat keinen. Pay-per-Lead-Käufer, die einen Monat aussetzen, zählen dabei als Kündigung und bei Rückkehr als neu.</Def>
@@ -752,18 +753,18 @@ function Kunden({ data, investor }: { data: ZahlenData; investor: boolean }) {
 function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean }) {
   const u = data.unit;
   const m = data.margins;
-  const fmtMonths = (v: number | null) => (v == null ? "–" : `${v.toLocaleString("de-DE", { maximumFractionDigits: 1 })} Mon.`);
+  const fmtMonths = (v: number | null) => (v == null ? NOCH_KEINE_DATEN : `${v.toLocaleString("de-DE", { maximumFractionDigits: 1 })} Mon.`);
   const PURPOSE: Record<string, string> = { ppl: "direkt (Pay-per-Lead)", software: "direkt (Software)", akquise: "Kundengewinnung", betrieb: "sonstiger Betrieb" };
   return (
     <div className="space-y-3.5">
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
-        <Card title="Kundengewinnung" cap={`Was ein neuer Kunde kostet und einbringt (${u.window.map(shortMonth).join(", ") || "–"}).`}>
+        <Card title="Kundengewinnung" cap={`Was ein neuer Kunde kostet und einbringt (${u.window.map(shortMonth).join(", ") || NOCH_KEINE_DATEN}).`}>
           <KV
             items={[
-              { k: "Kosten je Neukunde (CAC)", v: u.cac != null ? eur(u.cac) : "–", s: u.cacFounder != null ? `mit Gründerzeit ${eur(u.cacFounder)}` : `${u.newCustomers} ${u.newCustomers === 1 ? "neuer Kunde" : "neue Kunden"}` },
-              { k: "Rohertrag je Kunde/Monat", v: u.grossProfitPerCustomer != null ? eur(u.grossProfitPerCustomer) : "–", s: "Umsatz − direkte Kosten" },
+              { k: "Kosten je Neukunde (CAC)", v: u.cac != null ? eur(u.cac) : NOCH_KEINE_DATEN, s: u.cacFounder != null ? `mit Gründerzeit ${eur(u.cacFounder)}` : `${u.newCustomers} ${u.newCustomers === 1 ? "neuer Kunde" : "neue Kunden"}` },
+              { k: "Rohertrag je Kunde/Monat", v: u.grossProfitPerCustomer != null ? eur(u.grossProfitPerCustomer) : NOCH_KEINE_DATEN, s: "Umsatz − direkte Kosten" },
               { k: "Amortisation", v: fmtMonths(u.payback), s: u.paybackFounder != null ? `mit Gründerzeit ${fmtMonths(u.paybackFounder)}` : undefined },
-              { k: "Kundenwert / CAC", v: u.ltvCac != null ? `${u.ltvCac.toLocaleString("de-DE", { maximumFractionDigits: 0 })}×` : "–", s: "LTV auf 24 Mon. gedeckelt, mit Gründerzeit · Ziel > 3×" },
+              { k: "Kundenwert / CAC", v: u.ltvCac != null ? `${u.ltvCac.toLocaleString("de-DE", { maximumFractionDigits: 0 })}×` : NOCH_KEINE_DATEN, s: "LTV auf 24 Mon. gedeckelt, mit Gründerzeit · Ziel > 3×" },
             ]}
           />
           <div className="mt-3 rounded-[10px] bg-[color:var(--brand-soft)] px-3 py-2.5 text-[13px]">
@@ -779,7 +780,7 @@ function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean })
               { name: "Pay-per-Lead", v: m.ppl, color: "var(--z-s1)" },
               { name: "Gesamt", v: m.total, color: "var(--foreground)" },
             ] as const
-          ).map((r) => <BarRow key={r.name} label={r.name} value={(r.v ?? 0) * 100} max={100} color={r.color} right={r.v != null ? pct(r.v * 100, 0) : "–"} />)}
+          ).map((r) => <BarRow key={r.name} label={r.name} value={(r.v ?? 0) * 100} max={100} color={r.color} right={r.v != null ? pct(r.v * 100, 0) : NOCH_KEINE_DATEN} />)}
           <p className="mt-2 text-[12.5px] text-[color:var(--muted)]">Ohne Personalkosten. Betreuung: Kunden zahlen ihr Werbebudget selbst. Software: KI, Server (als laufende Kosten „Software“ pflegen); WhatsApp-Gebühren von Meta werden automatisch aus den verschickten Nachrichten erfasst.</p>
         </Card>
       </div>
@@ -801,7 +802,7 @@ function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean })
                     <td className="py-1.5 pr-2">{c.name}</td>
                     <td className="px-2">{PURPOSE[c.purpose] ?? c.purpose}</td>
                     <td className="px-2 text-right">{eur(c.amount)}</td>
-                    <td className="pl-2 text-right">{c.share != null ? pct(c.share * 100) : "–"}</td>
+                    <td className="pl-2 text-right">{c.share != null ? pct(c.share * 100) : NOCH_KEINE_DATEN}</td>
                   </tr>
                 ))}
                 <tr className="border-t border-[color:var(--border)] font-semibold">
@@ -853,7 +854,7 @@ function Funnel({ steps, labelWidth = 150 }: { steps: { name: string; v: number 
 
 function Wirkung({ data, investor }: { data: ZahlenData; investor: boolean }) {
   const w = data.impact;
-  const speed = w.speedMedianSec == null ? "–" : w.speedMedianSec < 120 ? `${Math.round(w.speedMedianSec)} Sek.` : w.speedMedianSec < 7200 ? `${Math.round(w.speedMedianSec / 60)} Min.` : `${(w.speedMedianSec / 3600).toLocaleString("de-DE", { maximumFractionDigits: 1 })} Std.`;
+  const speed = w.speedMedianSec == null ? NOCH_KEINE_DATEN : w.speedMedianSec < 120 ? `${Math.round(w.speedMedianSec)} Sek.` : w.speedMedianSec < 7200 ? `${Math.round(w.speedMedianSec / 60)} Min.` : `${(w.speedMedianSec / 3600).toLocaleString("de-DE", { maximumFractionDigits: 1 })} Std.`;
   return (
     <div className="space-y-3.5">
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -875,7 +876,7 @@ function Wirkung({ data, investor }: { data: ZahlenData; investor: boolean }) {
         <KV
           items={[
             { k: "Erste Nachricht an den Lead", v: speed, s: "Median, Eingang → erster Kontakt" },
-            { k: "Automatisch kontaktiert", v: w.automatedShare != null ? pct(w.automatedShare * 100, 0) : "–", s: "Leads mit Nachricht vom WhatsApp-Assistenten (Kunden mit WhatsApp)" },
+            { k: "Automatisch kontaktiert", v: w.automatedShare != null ? pct(w.automatedShare * 100, 0) : NOCH_KEINE_DATEN, s: "Leads mit Nachricht vom WhatsApp-Assistenten (Kunden mit WhatsApp)" },
           ]}
         />
       </Card>
@@ -934,11 +935,11 @@ function Vertrieb({ data, v }: { data: ZahlenData; v: VertriebZahlen }) {
               { k: "Offene Angebote", v: s.openOffers, s: `${eur(s.openMrr)} MRR (heute)` },
               {
                 k: "Abschlussquote Angebote",
-                v: v.winRate != null ? pct(v.winRate * 100, 0) : "–",
+                v: v.winRate != null ? pct(v.winRate * 100, 0) : NOCH_KEINE_DATEN,
                 s: v.offersSentInRange ? `${v.acceptedOfSent} von ${v.offersSentInRange} im Zeitraum versendeten angenommen` : "keine Angebote im Zeitraum",
               },
-              { k: "Dauer bis Abschluss", v: s.cycleDays != null ? `${Math.round(s.cycleDays)} Tage` : "–", s: "Median, Erstkontakt → Vertrag (180 Tage)" },
-              { k: "Gewichtete Pipeline", v: s.weighted != null ? eur(s.weighted) : "–", s: "MRR × Abschlussquote (90 Tage)" },
+              { k: "Dauer bis Abschluss", v: s.cycleDays != null ? `${Math.round(s.cycleDays)} Tage` : NOCH_KEINE_DATEN, s: "Median, Erstkontakt → Vertrag (180 Tage)" },
+              { k: "Gewichtete Pipeline", v: s.weighted != null ? eur(s.weighted) : NOCH_KEINE_DATEN, s: "MRR × Abschlussquote (90 Tage)" },
             ]}
           />
           <h2 className="mt-4 text-[15px] font-semibold">Woher Kunden kommen</h2>
@@ -1023,7 +1024,7 @@ function VertriebSheet({ v, initial, rangeLabel, onClose }: { v: VertriebZahlen;
                       )}
                     </td>
                     <td className="whitespace-nowrap py-1.5 pr-2">{fmt(r.date)}</td>
-                    <td className="py-1.5 pr-2">{r.detail ?? "–"}</td>
+                    <td className="py-1.5 pr-2">{r.detail ?? NOCH_KEINE_DATEN}</td>
                     <td className="whitespace-nowrap py-1.5 pr-2">{r.status ?? ""}</td>
                   </tr>
                 ))}
@@ -1060,7 +1061,7 @@ function BwaTab({ d }: { d: BwaData }) {
     if (v == null) return "";
     if (r.kind === "pct") return pct(v, 0);
     const shown = displaySign(r) * v;
-    return shown === 0 ? "–" : eur2(shown);
+    return shown === 0 ? NOCH_KEINE_DATEN : eur2(shown);
   };
   const tone = (r: BwaRow, v: number | null) => (v != null && r.kind !== "pct" && displaySign(r) * v < 0 ? "text-rose-600" : "");
   return (
@@ -1229,7 +1230,7 @@ function BwaDrill({ row, items, months, onClose }: { row: BwaRow; items: BwaItem
                         i.label
                       )}
                     </td>
-                    <td className="whitespace-nowrap py-1.5 pr-2">{i.date ? new Date(`${i.date}T12:00:00Z`).toLocaleDateString("de-DE") : "–"}</td>
+                    <td className="whitespace-nowrap py-1.5 pr-2">{i.date ? new Date(`${i.date}T12:00:00Z`).toLocaleDateString("de-DE") : NOCH_KEINE_DATEN}</td>
                     <td className="py-1.5 pr-2 text-[color:var(--muted)]">{i.detail ?? ""}</td>
                     {hasGross ? <td className="whitespace-nowrap px-2 text-right">{i.gross != null ? eur(i.gross, 2) : ""}</td> : null}
                     <td className="whitespace-nowrap px-2 text-right">{eur(i.net, 2)}</td>
@@ -1261,10 +1262,10 @@ function Ppl({ data }: { data: ZahlenData }) {
       <Card title={`Lead-Wirtschaftlichkeit (${longMonth(data.lastComplete)})`}>
         <KV
           items={[
-            { k: "Meta-Kosten je verkauftem Lead", v: p.costPerLead != null ? eur(p.costPerLead, 2) : "–" },
-            { k: "Ø Verkaufspreis", v: p.avgPrice != null ? eur(p.avgPrice, 2) : "–", s: "nach Stornos" },
-            { k: "Marge Pay-per-Lead", v: p.leadMargin != null ? pct(p.leadMargin * 100, 0) : "–", s: "nach Werbung und Tools" },
-            { k: "Stornoquote", v: p.stornoQuote != null ? pct(p.stornoQuote * 100) : "–" },
+            { k: "Meta-Kosten je verkauftem Lead", v: p.costPerLead != null ? eur(p.costPerLead, 2) : NOCH_KEINE_DATEN },
+            { k: "Ø Verkaufspreis", v: p.avgPrice != null ? eur(p.avgPrice, 2) : NOCH_KEINE_DATEN, s: "nach Stornos" },
+            { k: "Marge Pay-per-Lead", v: p.leadMargin != null ? pct(p.leadMargin * 100, 0) : NOCH_KEINE_DATEN, s: "nach Werbung und Tools" },
+            { k: "Stornoquote", v: p.stornoQuote != null ? pct(p.stornoQuote * 100) : NOCH_KEINE_DATEN },
             { k: "Geparkt", v: p.parked, s: "ohne freien Käufer" },
           ]}
         />
@@ -1317,8 +1318,8 @@ function UpdateSheet({ data, onClose }: { data: ZahlenData; onClose: () => void 
           {[
             ["Jahresumsatz (Laufrate)", kEur(h.arr)],
             ["MRR", kEur(h.mrr)],
-            ["Wachstum ggü. Vormonat", h.growth != null ? `${h.growth >= 0 ? "+" : ""}${pct(h.growth * 100)}` : "–"],
-            ["Bruttomarge", h.grossMargin != null ? pct(h.grossMargin * 100, 0) : "–"],
+            ["Wachstum ggü. Vormonat", h.growth != null ? `${h.growth >= 0 ? "+" : ""}${pct(h.growth * 100)}` : NOCH_KEINE_DATEN],
+            ["Bruttomarge", h.grossMargin != null ? pct(h.grossMargin * 100, 0) : NOCH_KEINE_DATEN],
           ].map(([k, v]) => (
             <div key={k} className="rounded-[10px] border border-[#e3e9f3] p-2.5">
               <div className="text-xs text-[#66758f]">{k}</div>
@@ -1457,10 +1458,10 @@ function ActiveTable({ m }: { m: DrillMonth }) {
                   <td className="py-1.5 pr-2">
                     <CustomerName id={c.customerId} name={c.name} link={c.link} />
                   </td>
-                  <td className="px-2 text-right">{c.leads || "–"}</td>
+                  <td className="px-2 text-right">{c.leads || 0}</td>
                   <td className="px-2 text-right">{eur(c.total, 2)}</td>
                   <td className="px-2 text-[color:var(--muted)]">{c.streams.map((s) => STREAM_LABEL[s.stream]).join(", ")}</td>
-                  <td className="pl-2">{c.flags.length ? c.flags.map((f) => <Flag key={f}>{f}</Flag>) : <span className="text-[color:var(--muted)]">–</span>}</td>
+                  <td className="pl-2">{c.flags.length ? c.flags.map((f) => <Flag key={f}>{f}</Flag>) : <span className="text-[color:var(--muted)]">keine</span>}</td>
                 </tr>
               ))}
             </tbody>
@@ -1489,8 +1490,8 @@ function DrillSheet({ kind, data, onClose }: { kind: DrillKind; data: ZahlenData
   const titles: Record<DrillKind, string> = {
     arr: `Jahresumsatz (Laufrate): ${eur(h.arr)}`,
     mrr: `MRR ${longMonth(data.current)}: ${eur(h.mrr, 2)}`,
-    retention: `Umsatzbindung: ${h.retention?.pct ?? "–"} %`,
-    margin: `Bruttomarge ${longMonth(data.lastComplete)}: ${h.grossMargin != null ? pct(h.grossMargin * 100, 0) : "–"}`,
+    retention: `Umsatzbindung: ${h.retention?.pct ?? NOCH_KEINE_DATEN} %`,
+    margin: `Bruttomarge ${longMonth(data.lastComplete)}: ${h.grossMargin != null ? pct(h.grossMargin * 100, 0) : NOCH_KEINE_DATEN}`,
     active: `Aktive Kunden ${longMonth(data.lastComplete)}: ${h.active}`,
   };
   const directSum = d.directCosts.reduce((s, c) => s + c.amount, 0);
@@ -1527,7 +1528,7 @@ function DrillSheet({ kind, data, onClose }: { kind: DrillKind; data: ZahlenData
           <>
             <p className="mb-3 text-[13px] text-[color:var(--muted)]">
               ({eur(d.last.total, 2)} Umsatz − {eur(directSum, 2)} direkte Kosten) ÷ {eur(d.last.total, 2)} ={" "}
-              <b className="text-[color:var(--foreground)]">{d.last.total > 0 ? pct(((d.last.total - directSum) / d.last.total) * 100, 1) : "–"}</b>
+              <b className="text-[color:var(--foreground)]">{d.last.total > 0 ? pct(((d.last.total - directSum) / d.last.total) * 100, 1) : NOCH_KEINE_DATEN}</b>
             </p>
             <h4 className="mb-1 text-sm font-semibold">Direkte Kosten</h4>
             {d.directCosts.length ? (
@@ -1571,7 +1572,7 @@ function DrillSheet({ kind, data, onClose }: { kind: DrillKind; data: ZahlenData
                       </td>
                       <td className="px-2 text-right">{eur(r.then, 2)}</td>
                       <td className="px-2 text-right">{eur(r.now, 2)}</td>
-                      <td className="pl-2 text-right">{r.then > 0 ? `${Math.round((r.now / r.then) * 100)} %` : "–"}</td>
+                      <td className="pl-2 text-right">{r.then > 0 ? `${Math.round((r.now / r.then) * 100)} %` : NOCH_KEINE_DATEN}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1669,7 +1670,7 @@ function OneTimeCard({ data, investor }: { data: ZahlenData; investor: boolean }
                     ) : null,
                   )}
                 </div>
-                <span className="text-right font-semibold tabular-nums">{m.total ? eur(m.total) : "–"}</span>
+                <span className="text-right font-semibold tabular-nums">{eur(m.total || 0)}</span>
               </div>
             ))}
             <div className="mt-2 flex flex-wrap gap-3 text-[12px] text-[color:var(--muted)]">
@@ -1771,7 +1772,7 @@ function NachtragForm({ data }: { data: ZahlenData }) {
 }
 
 // ─── Produkte ────────────────────────────────────────────────────────────
-const dash = (v: number | null, f: (n: number) => string) => (v == null ? "–" : f(v));
+const dash = (v: number | null, f: (n: number) => string) => (v == null ? NOCH_KEINE_DATEN : f(v));
 const pct0 = (v: number) => pct(v * 100, 0);
 
 function Few() {
@@ -1830,11 +1831,11 @@ function Produkte({ p }: { p: ProdukteData }) {
                       {x.label}
                       {x.lowSample && x.leads > 0 ? <Few /> : null}
                     </td>
-                    <td className="px-2 text-right">{x.leads || "–"}</td>
+                    <td className="px-2 text-right">{x.leads || 0}</td>
                     <td className="px-2 text-right">{dash(x.cost, (v) => eur(v))}</td>
                     <td className="px-2 text-right">{dash(x.cpl, (v) => eur(v, 2))}</td>
                     <td className="px-2 text-right">{dash(x.appointmentRate, pct0)}</td>
-                    <td className="px-2 text-right">{x.closes || "–"}</td>
+                    <td className="px-2 text-right">{x.closes || 0}</td>
                     <td className="px-2 text-right">{dash(x.closeRate, pct0)}</td>
                     <td className="px-2 text-right">
                       {x.premiumsReported ? (
@@ -1842,11 +1843,11 @@ function Produkte({ p }: { p: ProdukteData }) {
                           {eur(x.premiumSum)} <span className="font-normal text-[color:var(--muted)]">({x.premiumsReported})</span>
                         </>
                       ) : (
-                        "–"
+                        NOCH_KEINE_DATEN
                       )}
                     </td>
-                    <td className="px-2 text-right">{x.provision ? eur(x.provision) : "–"}</td>
-                    <td className="pl-2 text-right">{x.pplRevenue ? eur(x.pplRevenue) : "–"}</td>
+                    <td className="px-2 text-right">{eur(x.provision || 0)}</td>
+                    <td className="pl-2 text-right">{eur(x.pplRevenue || 0)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1883,7 +1884,7 @@ function Produkte({ p }: { p: ProdukteData }) {
                     </td>
                     {cols.map((c) => {
                       const cell = r.cells[c.key];
-                      if (!cell || !cell.leads) return <td key={c.key} className="px-2 py-1.5 text-[color:var(--muted)]">–</td>;
+                      if (!cell || !cell.leads) return <td key={c.key} className="px-2 py-1.5 text-[color:var(--muted)]">0</td>;
                       return (
                         <td key={c.key} className={cn("px-2 py-1.5", cell.lowSample && "text-[color:var(--muted)]")}>
                           <div className="font-semibold text-[color:var(--foreground)]">

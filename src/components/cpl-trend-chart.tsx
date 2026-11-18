@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import type { Granularity, TimeSeriesPoint } from "@/lib/kpis";
 import { formatEUR, formatNumber } from "@/lib/format";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 const GRANULARITY_LABEL: Record<Granularity, string> = {
   day: "pro Tag",
@@ -104,7 +105,7 @@ export function CplTrendChart({
               }}
               labelStyle={{ color: "#64748b", fontSize: 11 }}
               formatter={(value, name) => {
-                if (typeof value !== "number") return ["–", name];
+                if (typeof value !== "number") return [NOCH_KEINE_DATEN, name];
                 if (name === "Ø CPL" || name === "Gesamt-Spend")
                   return [formatEUR(value), name];
                 return [formatNumber(value), name];

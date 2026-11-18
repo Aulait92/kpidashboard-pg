@@ -251,7 +251,7 @@ export function LeadTimesForm({
                 className="w-[6.5rem] sm:w-[7.25rem]"
                 disabled={readOnly}
               />
-              <span className="hidden text-[color:var(--muted)] sm:inline">–</span>
+              <span className="hidden text-[color:var(--muted)] sm:inline">bis</span>
               <TimeSelect
                 value={r[1]}
                 onChange={(v) => gemeinsamSetzen(gemeinsam.map((x, k) => (k === i ? ([x[0], v] as Range) : x)))}
@@ -320,7 +320,7 @@ export function LeadTimesForm({
                     ranges.map((r, i) => (
                       <div key={i} className="flex items-center gap-1.5 sm:flex-wrap">
                         <TimeSelect value={r[0]} onChange={(v) => update(d, i, 0, v)} max="23:45" ariaLabel={`${label} von`} className="w-[6.5rem] sm:w-[7.25rem]" disabled={readOnly} />
-                        <span className="hidden text-[color:var(--muted)] sm:inline">–</span>
+                        <span className="hidden text-[color:var(--muted)] sm:inline">bis</span>
                         <TimeSelect
                           value={r[1]}
                           onChange={(v) => update(d, i, 1, v)}

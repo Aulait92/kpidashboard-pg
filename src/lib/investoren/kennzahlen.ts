@@ -253,7 +253,7 @@ export function gegenprobe(k: InvestorKennzahlen, z: UebersichtWerte): Abgleich[
     zeile("ARR", k.arr, z.headline.arr),
     zeile("Aktive Kunden", k.aktiveKunden, z.headline.active),
     zeile("Bruttomarge", k.marge.letzter, z.headline.grossMargin),
-    zeile(`Umsatzbindung ${lag ?? "–"} Monate (%)`, b?.nrr != null ? Math.round(b.nrr * 100) : null, z.headline.retention?.pct ?? null),
+    zeile(lag ? `Umsatzbindung ${lag} Monate (%)` : "Umsatzbindung (%)", b?.nrr != null ? Math.round(b.nrr * 100) : null, z.headline.retention?.pct ?? null),
     zeile("Kündigungsquote", k.kuendigung?.quote ?? null, z.churn?.rate ?? null),
     zeile("CAC", k.cac.cac, z.unit.cac),
     zeile("CAC mit Gründerzeit", k.cac.cacMitGruender, z.unit.cacFounder),

@@ -3,9 +3,10 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { GRANULARITIES, REJECT_LABELS, type CustomerOverviewRow, type PeriodStats, type PplReport, type RejectKey } from "@/lib/ppl/auswertung";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
-const eur = (n: number | null, d = 0) => (n == null ? "–" : n.toLocaleString("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: d, maximumFractionDigits: d }));
-const num = (n: number | null) => (n == null ? "–" : n.toLocaleString("de-DE"));
+const eur = (n: number | null, d = 0) => (n == null ? NOCH_KEINE_DATEN : n.toLocaleString("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: d, maximumFractionDigits: d }));
+const num = (n: number | null) => (n == null ? NOCH_KEINE_DATEN : n.toLocaleString("de-DE"));
 const th = "whitespace-nowrap px-3 py-2 font-medium";
 const td = "whitespace-nowrap px-3 py-2 tabular-nums";
 
@@ -17,8 +18,8 @@ function Period({ p }: { p: PeriodStats }) {
         {p.delivered}
         {p.behind ? <span className="ml-1 text-xs font-normal">(soll {p.expected})</span> : null}
       </td>
-      <td className={td}>{p.ordered != null ? Math.max(0, p.ordered - p.delivered) : "–"}</td>
-      <td className={td}>{p.complaints || "–"}</td>
+      <td className={td}>{p.ordered != null ? Math.max(0, p.ordered - p.delivered) : NOCH_KEINE_DATEN}</td>
+      <td className={td}>{p.complaints || 0}</td>
       <td className={td}>{eur(p.revenue)}</td>
     </>
   );
@@ -165,19 +166,19 @@ export function PplReportView({ report }: { report: PplReport }) {
                   <td className={`${td} sticky left-0 bg-white font-medium`}>{r.label}{r.current ? " (bisher)" : ""}</td>
                   <td className={td}>{num(r.received)}</td>
                   <td className={td}>{r.delivered}</td>
-                  <td className={`${td} text-[color:var(--muted)]`} title="wartet auf Zustimmung bzw. noch in Bearbeitung">{r.pending || "–"}</td>
-                  <td className={td}>{r.rejectedTotal || "–"}</td>
+                  <td className={`${td} text-[color:var(--muted)]`} title="wartet auf Zustimmung bzw. noch in Bearbeitung">{r.pending || 0}</td>
+                  <td className={td}>{r.rejectedTotal || 0}</td>
                   {keys.map((k) => (
-                    <td key={k} className={`${td} text-[color:var(--muted)]`}>{r.rejected[k] || "–"}</td>
+                    <td key={k} className={`${td} text-[color:var(--muted)]`}>{r.rejected[k] || 0}</td>
                   ))}
-                  <td className={td}>{r.complaints || "–"}</td>
+                  <td className={td}>{r.complaints || 0}</td>
                   <td className={td}>{eur(r.cplBefore, 2)}</td>
                   <td className={td}>{eur(r.cplAfterReject, 2)}</td>
                   <td className={td}>{eur(r.cplAfterComplaints, 2)}</td>
                   <td className={td}>{eur(r.revenue)}</td>
                   <td className={td} title={`Meta ${eur(r.metaCost)}${r.otherCost ? ` + sonstige ${eur(r.otherCost)}` : ""}`}>{eur(r.spend)}</td>
                   <td className={`${td} ${r.profit < 0 ? "text-rose-700" : ""}`}>{eur(r.profit)}</td>
-                  <td className={`${td} ${r.margin != null && r.margin < 0 ? "text-rose-700" : ""}`}>{r.margin == null ? "–" : `${r.margin.toLocaleString("de-DE")} %`}</td>
+                  <td className={`${td} ${r.margin != null && r.margin < 0 ? "text-rose-700" : ""}`}>{r.margin == null ? NOCH_KEINE_DATEN : `${r.margin.toLocaleString("de-DE")} %`}</td>
                 </tr>
               ))}
             </tbody>

@@ -5,9 +5,10 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { keinWhatsAppJeKunde, keinWhatsAppQuote } from "@/lib/whatsapp/kein-whatsapp";
 import { ART_LABEL, artOf, NO_WHATSAPP_CODES } from "@/lib/whatsapp/zustellfehler";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 const DAY = 86_400_000;
-const pct = (r: number | null) => (r == null ? "–" : `${(Math.round(r * 1000) / 10).toLocaleString("de-DE")} %`);
+const pct = (r: number | null) => (r == null ? NOCH_KEINE_DATEN : `${(Math.round(r * 1000) / 10).toLocaleString("de-DE")} %`);
 
 export async function WhatsAppZustellung() {
   const now = new Date();

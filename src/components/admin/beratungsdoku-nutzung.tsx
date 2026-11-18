@@ -1,6 +1,7 @@
 import { ClipboardCheck } from "lucide-react";
 import { Card, EmptyState } from "@/components/ui";
 import type { BdNutzung } from "@/lib/beratungsdoku-server";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 // Nutzung der Beratungsdokumentation (Paket B, Ole 18.11.2026) unter Betreuen › Qualität & Nutzung: wie viele Vermittler
 // sie eingeschaltet haben und wie viele ihrer Termine im Zeitraum dokumentiert sind (gesendet, bestätigt). Daten:
@@ -26,7 +27,7 @@ export function BeratungsdokuNutzung({ n, tage }: { n: BdNutzung; tage: number }
   const kacheln = [
     { label: "Eingeschaltet", wert: zahl(n.eingeschaltet) },
     { label: `Termine (${tage} Tage)`, wert: zahl(n.termine) },
-    { label: "Dokumentiert je Termin", wert: n.jeTermin != null ? zahl(n.jeTermin) : "–" },
+    { label: "Dokumentiert je Termin", wert: n.jeTermin != null ? zahl(n.jeTermin) : NOCH_KEINE_DATEN },
     { label: "Bestätigt / gesendet", wert: `${zahl(n.bestaetigt)} / ${zahl(n.gesendet)}` },
   ];
   return (

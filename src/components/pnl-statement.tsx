@@ -1,6 +1,7 @@
 import type { PnL, PnLRow } from "@/lib/kpis";
 import { formatDate, formatEUR } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 const ppFmt = new Intl.NumberFormat("de-DE", {
   signDisplay: "exceptZero",
@@ -44,7 +45,7 @@ const TONE_CLASS = {
 };
 
 function PercentCell({ value }: { value: number | null }) {
-  if (value == null) return <span className="text-zinc-400">–</span>;
+  if (value == null) return <span className="text-zinc-400">{NOCH_KEINE_DATEN}</span>;
   return <>{(value * 100).toFixed(1).replace(".", ",")} %</>;
 }
 
@@ -213,7 +214,7 @@ function MarginRow({
           TONE_CLASS[tone],
         )}
       >
-        {ppDelta ?? "–"}
+        {ppDelta ?? NOCH_KEINE_DATEN}
       </td>
     </tr>
   );

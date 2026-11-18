@@ -407,7 +407,7 @@ function Ergebnis({ r, bestand, storno }: { r: RechnerResult; bestand: BestandRe
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">
             <span className="text-[color:var(--muted)]">Setup ({eur(r.setup)}) wieder drin</span>
-            <b className="block tabular-nums">{r.setupMonate != null ? `nach ${zahl(Math.max(r.setupMonate, 0.1), 1)} Monaten` : "–"}</b>
+            <b className="block tabular-nums">{r.setupMonate != null ? `nach ${zahl(Math.max(r.setupMonate, 0.1), 1)} Monaten` : "nicht absehbar"}</b>
           </div>
           <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">
             <span className="text-[color:var(--muted)]">Überschuss im ersten Jahr</span>
@@ -532,7 +532,7 @@ function MaklerErgebnis({
                       <tr key={z.budget} className={`border-t border-[color:var(--border)] ${aktiv ? "bg-[color:var(--brand-soft)] font-semibold" : ""}`}>
                         <td className="px-3 py-1.5">{eur(z.budget)}{aktiv ? <span className="ml-1 text-xs font-normal text-[color:var(--muted)]">Ihre Wahl</span> : null}</td>
                         <td className="px-3 py-1.5 text-right">
-                          {z.kostenJeVertrag != null ? eur(z.kostenJeVertrag) : "–"}
+                          {z.kostenJeVertrag != null ? eur(z.kostenJeVertrag) : "keine Verträge"}
                           {stufe ? <span className="block text-[11px] font-normal text-[color:var(--muted)]">höhere Betreuungsstufe</span> : null}
                         </td>
                         <td className="px-3 py-1.5 text-right">{eur(z.courtageJahrNach12)}</td>

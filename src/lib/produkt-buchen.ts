@@ -30,6 +30,7 @@ import {
   type BookingPreview,
   type CatalogItem,
 } from "@/lib/produkt-buchen-shared";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 const eur = (n: number) => `${Math.round(n).toLocaleString("de-DE")} €`;
 const eurDay = (n: number) => `${n.toLocaleString("de-DE", { maximumFractionDigits: 2 })} €/Tag`;
@@ -247,7 +248,7 @@ export async function bookProduct(input: BookInput, now = new Date()): Promise<B
     await adminTask(
       info.contactId,
       `Preis prüfen ${info.name}: ${item.name} dazugebucht`,
-      `${why}. ${preview.setupFee > 0 ? `Einrichtung ${eur(preview.setupFee)} netto${setup === "added" ? " (bereits auf der nächsten Rechnung)" : " bitte von Hand berechnen"}` : "Einrichtung kostenlos"}; Monatspreis bisher ${preview.feeFrom != null ? eur(preview.feeFrom) : "–"}, Listenpreis neu ${preview.tierTo ? eur(preview.tierTo.monthly + (ov.lines.length) * PRICE_LIST.extraProductMonthly) : "–"} netto. Bitte festlegen, bestätigen und in Stripe anpassen.`,
+      `${why}. ${preview.setupFee > 0 ? `Einrichtung ${eur(preview.setupFee)} netto${setup === "added" ? " (bereits auf der nächsten Rechnung)" : " bitte von Hand berechnen"}` : "Einrichtung kostenlos"}; Monatspreis bisher ${preview.feeFrom != null ? eur(preview.feeFrom) : KEINE_ANGABE}, Listenpreis neu ${preview.tierTo ? eur(preview.tierTo.monthly + (ov.lines.length) * PRICE_LIST.extraProductMonthly) : KEINE_ANGABE} netto. Bitte festlegen, bestätigen und in Stripe anpassen.`,
       now,
     );
   }
@@ -262,7 +263,7 @@ export async function bookProduct(input: BookInput, now = new Date()): Promise<B
   const paragraphs = [
     `vielen Dank für Ihre Buchung. Wir richten ${item.name} jetzt für Sie ein: Kampagne bei Meta, Leadformular und die Fragen Ihres WhatsApp-Assistenten. Gewünschter Start: ${wish}. Sobald alles läuft, bekommen Sie eine kurze Nachricht von uns.`,
     pricing === "list"
-      ? `${preview.setupFee > 0 ? `Die Einrichtung (${eur(preview.setupFee)} netto, einmalig) erscheint auf Ihrer nächsten Rechnung.` : "Die Einrichtung ist für Sie kostenlos."} Ab dem Start gilt Ihr neuer Monatspreis von ${preview.feeTo != null ? eur(preview.feeTo) : "–"} netto (ab dem nächsten Abrechnungsmonat).`
+      ? `${preview.setupFee > 0 ? `Die Einrichtung (${eur(preview.setupFee)} netto, einmalig) erscheint auf Ihrer nächsten Rechnung.` : "Die Einrichtung ist für Sie kostenlos."} Ab dem Start gilt Ihr neuer Monatspreis von ${preview.feeTo != null ? eur(preview.feeTo) : KEINE_ANGABE} netto (ab dem nächsten Abrechnungsmonat).`
       : "Da Ihre Konditionen individuell sind, bestätigen wir Ihnen Einrichtung und neuen Monatspreis gesondert.",
   ];
   if (sentence && pricing === "list" && preview.tierChange) paragraphs.push(sentence);

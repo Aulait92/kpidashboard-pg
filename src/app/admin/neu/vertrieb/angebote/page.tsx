@@ -10,12 +10,13 @@ import { ANGEBOT_FILTER, ANGEBOT_ZUSTAND, ladeAngebote } from "@/lib/vertrieb/an
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { cn } from "@/lib/utils";
 import { AngebotMehr } from "@/components/vertrieb/angebot-ablehnen";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 export const metadata = { title: "Angebote | performancegrowth Admin" };
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 const datum = (d: Date | null) =>
-  d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d) : "–";
+  d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d) : NOCH_KEINE_DATEN;
 
 const BASIS = "/admin/neu/vertrieb/angebote";
 
@@ -53,7 +54,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { l: "Verschickt", v: String(sent.length) },
-          { l: "Geöffnet", v: sent.length ? `${Math.round((geoeffnet.length / sent.length) * 100)} %` : "–", s: `${geoeffnet.length} von ${sent.length}` },
+          { l: "Geöffnet", v: sent.length ? `${Math.round((geoeffnet.length / sent.length) * 100)} %` : NOCH_KEINE_DATEN, s: `${geoeffnet.length} von ${sent.length}` },
           { l: "Angenommen", v: String(angenommen.length), s: sent.length ? `${Math.round((angenommen.length / sent.length) * 100)} % Annahmequote` : undefined },
           { l: "Offen (monatlich)", v: eur(offen.reduce((s, r) => s + Number(r.monthlyFee), 0)), s: `${offen.length} offene Angebote` },
         ].map((k) => (

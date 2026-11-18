@@ -12,6 +12,7 @@ import { loadMediaBuyer } from "@/app/admin/media-buyer/daten";
 import { ladeLeadpreise } from "@/lib/optimierung/leadpreis-server";
 import { LEADPREIS_TAGE, UEBER_ZIEL_EUR } from "@/lib/optimierung/leadpreis";
 import { cn } from "@/lib/utils";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 export const metadata = { title: "Werbekonten | performancegrowth Admin" };
 
@@ -122,7 +123,7 @@ function LeadpreisZelle({ k }: { k: Awaited<ReturnType<typeof ladeLeadpreise>>["
   const lp = k?.leadpreis;
   return (
     <span className="w-24 shrink-0 text-right sm:w-32" data-leadpreis={lp?.cpl ?? ""} title={k ? `Ziel: ${k.zielLabel}` : undefined}>
-      <span className={cn("block font-semibold tabular-nums", lp?.zuTeuer ? "text-rose-700" : "")}>{lp?.cpl != null ? eur(lp.cpl) : "–"}</span>
+      <span className={cn("block font-semibold tabular-nums", lp?.zuTeuer ? "text-rose-700" : "")}>{lp?.cpl != null ? eur(lp.cpl) : NOCH_KEINE_DATEN}</span>
       <span className="block text-xs text-[color:var(--muted)]">
         {lp?.ziel != null ? `Ziel ${eur(lp.ziel)}` : `${LEADPREIS_TAGE} Tage`}
         {lp?.zuTeuer && lp.ueberZiel != null ? <span className="sr-only"> (mehr als {UEBER_ZIEL_EUR} € über Ziel)</span> : null}

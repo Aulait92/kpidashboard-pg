@@ -19,6 +19,7 @@ import { waConfirmLabel } from "@/lib/vertrieb/kontaktakte";
 import { ANGEBOT_TAG, ANSICHTEN, FILTER, STUFE_TON, ansichtVon, istAbgeschlossen, stufeLabel, type Ansicht, type TerminKennzahlen, type TerminZeile } from "@/lib/vertrieb/termine-uebersicht";
 import { ladeTerminUebersicht } from "@/lib/vertrieb/termine-uebersicht-server";
 import { cn } from "@/lib/utils";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 export const metadata = { title: "Termine | performancegrowth Admin" };
 
@@ -51,7 +52,7 @@ function kennzahlen(k: TerminKennzahlen): Kennzahl[] {
     { label: "Termine diese Woche", wert: String(k.woche.anzahl), hinweis: k.woche.kommend ? `${k.woche.kommend} noch offen` : "keiner mehr offen", href: href("kommend") },
     {
       label: "Erschienen (30 Tage)",
-      wert: k.erschienen.quote == null ? "–" : prozent(k.erschienen.quote),
+      wert: k.erschienen.quote == null ? NOCH_KEINE_DATEN : prozent(k.erschienen.quote),
       hinweis: k.erschienen.basis ? `${k.erschienen.erschienen} von ${k.erschienen.basis} Terminen` : "noch kein Ergebnis",
     },
     { label: "Mit Angebot (30 Tage)", wert: String(k.angebot.anzahl), hinweis: `von ${k.angebot.gehalten} Gesprächen` },

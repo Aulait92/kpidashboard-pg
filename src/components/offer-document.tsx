@@ -318,7 +318,7 @@ export function OfferDocument({
                 v={eur(firstMonth)}
                 sub={
                   hasIntro
-                    ? `Startpreis Monat 1–${offer.introMonths}, danach ${eur(add.monthlyTotal)}`
+                    ? `Startpreis Monat 1 bis ${offer.introMonths}, danach ${eur(add.monthlyTotal)}`
                     : annualOpen
                       ? `netto · oder ${vorausName} ${eur(v.total)}, ${geschenkt(v.freeMonths)}`
                       : `${serviceOnly ? "Betreuung" : "Betreuung + Software"}${hasExtras ? " inkl. Zusätze" : ""}, netto${offer.startDate ? ` · ab ${date(offer.startDate)}` : ""}`
@@ -479,7 +479,7 @@ export function OfferDocument({
             </Tr>
           ) : null}
           {hasIntro ? (
-            <Tr k={`Startpreis Monat 1–${offer.introMonths}`}>
+            <Tr k={`Startpreis Monat 1 bis ${offer.introMonths}`}>
               <b className="text-[#111827]">{eur(offer.introMonthlyFee!)}</b> netto pro Monat zzgl. 19 % USt.
             </Tr>
           ) : null}

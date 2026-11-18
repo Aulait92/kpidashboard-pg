@@ -20,6 +20,7 @@ import { slackWebhookUrl } from "@/lib/ppl/slack";
 import { HvkAbrechnungen, HvkReklamationenReview } from "./hvk-abrechnungen";
 import { PplVersandPostfach } from "./ppl-versand";
 import { HvkReabgleich } from "./hvk-client";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
@@ -171,14 +172,14 @@ async function Subscriptions({ subs }: { subs: Subs }) {
                           {s.period === "week" ? (
                             <div className="text-xs text-[color:var(--muted)]">{q ? `${q.quota} für ${fmtWeek(start)}` : `nichts bezahlt für ${fmtWeek(start)}`}</div>
                           ) : (
-                            <div className="text-xs text-[color:var(--muted)]">{s.goal ?? s.testQuantity ?? "–"} Leads</div>
+                            <div className="text-xs text-[color:var(--muted)]">{s.goal ?? s.testQuantity ?? KEINE_ANGABE} Leads</div>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 tabular-nums">{q ? `${q.delivered} / ${q.quota}` : "–"}</td>
+                        <td className="px-3 py-2.5 tabular-nums">{q ? `${q.delivered} / ${q.quota}` : KEINE_ANGABE}</td>
                         <td className="px-3 py-2.5 tabular-nums">
                           {eur(Number(s.price))}
                         </td>
-                        <td className="px-3 py-2.5 text-xs text-[color:var(--muted)]">{filters.join(" · ") || "–"}</td>
+                        <td className="px-3 py-2.5 text-xs text-[color:var(--muted)]">{filters.join(" · ") || KEINE_ANGABE}</td>
                         <td className="px-3 py-2.5 text-xs">{DELIVERY[s.delivery] ?? s.delivery}</td>
                         <td className="px-3 py-2.5 text-right">
                           <Link href={`/admin/ppl/bezug/${s.id}`} className="text-sm font-medium text-[color:var(--brand)] hover:underline">
@@ -261,7 +262,7 @@ async function Review({ hideEmpty = false }: { hideEmpty?: boolean }) {
               </div>
               <div className="text-xs text-[color:var(--muted)]">
                 {l.stornoReason}
-                {l.stornoNote ? `: „${l.stornoNote}“` : ""} · geliefert {l.deliveredAt ? dt(l.deliveredAt) : "–"} · {eur(Number(l.revenues[0]?.amount ?? 0))}
+                {l.stornoNote ? `: „${l.stornoNote}“` : ""} · geliefert {l.deliveredAt ? dt(l.deliveredAt) : KEINE_ANGABE} · {eur(Number(l.revenues[0]?.amount ?? 0))}
               </div>
             </div>
             {(["approve", "half", "reject"] as const).map((d) => (

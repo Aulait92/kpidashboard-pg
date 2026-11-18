@@ -5,6 +5,7 @@ import { ACTION_LABEL, COST_ACTIONS, overlappingRecurring, type CostAction } fro
 import { BANK_REMIND_DAYS, bankRedirectUrl } from "@/lib/bank/server";
 import { connectBankAction, deleteRuleAction, disconnectBankAction, saveRuleAction } from "@/app/admin/einstellungen/bank/actions";
 import { SyncButton } from "@/app/admin/einstellungen/bank/forms";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 // Bank & Karten: gemeinsame Bausteine für /admin/einstellungen/bank und /admin/neu/zahlen/kosten
 // (Laden, Karte je Bank mit Verbinden/Abrufen/Trennen, Regeln).
@@ -41,7 +42,7 @@ export async function ladeBank() {
 }
 
 const fmt = (d: Date | null | undefined, time = false) =>
-  d ? d.toLocaleString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric", ...(time ? { hour: "2-digit", minute: "2-digit" } : {}) }) : "–";
+  d ? d.toLocaleString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric", ...(time ? { hour: "2-digit", minute: "2-digit" } : {}) }) : KEINE_ANGABE;
 const card = "rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-sm)] sm:p-5";
 const sel = "h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm";
 
@@ -83,7 +84,7 @@ export function BankKarte({
                 <span className="font-medium text-emerald-700">Verbunden</span> bis {fmt(c.validUntil)}
                 {soon ? <span className="ml-1 font-medium text-amber-700">· bitte bald neu verbinden</span> : null}
               </p>
-              <p>Konten: {((c.accounts as Acc[] | null) ?? []).map((a) => [a.name, a.iban].filter(Boolean).join(" ")).join(", ") || "–"}</p>
+              <p>Konten: {((c.accounts as Acc[] | null) ?? []).map((a) => [a.name, a.iban].filter(Boolean).join(" ")).join(", ") || KEINE_ANGABE}</p>
               <p>Letzter Abruf: {fmt(c.lastSyncAt, true)}</p>
               {c.lastError ? <p className="text-rose-600">Fehler: {c.lastError}</p> : null}
             </div>

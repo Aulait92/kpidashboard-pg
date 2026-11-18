@@ -1,3 +1,4 @@
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 const TZ = "Europe/Berlin";
 
 /** YYYY-MM-DD in deutscher Zeit */
@@ -39,12 +40,12 @@ export function todayKey(): string {
 }
 
 export function fmtDate(d: Date | null | undefined): string {
-  if (!d) return "–";
+  if (!d) return KEINE_ANGABE;
   return d.toLocaleDateString("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 export function fmtDateTime(d: Date | null | undefined): string {
-  if (!d) return "–";
+  if (!d) return KEINE_ANGABE;
   return d.toLocaleString("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 

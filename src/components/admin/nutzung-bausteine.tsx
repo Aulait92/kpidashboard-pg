@@ -4,6 +4,7 @@ import { formatDateTime } from "@/lib/format";
 import type { CustomerUsage, computeUsageReport } from "@/lib/usage-report";
 import type { HelpQuestion } from "@/lib/hilfe-report";
 import type { loadSupportRequests } from "@/lib/support-server";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 // Nutzung des Kunden-CRMs (gemeinsam für /admin/nutzung und /admin/neu/zahlen/qualitaet): Hilfe-Anfragen an das Team,
 // Fragen an die KI-Hilfe und je Kunde Aktivität, genutzte Funktionen, Fehler, Feedback und liegen gebliebene Aufgaben.
@@ -201,7 +202,7 @@ function CustomerCard({ c }: { c: CustomerUsage }) {
                 <li key={i} className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2">
                   „{f.text}“
                   <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
-                    {formatDateTime(new Date(f.at))} · {f.path ?? "–"}
+                    {formatDateTime(new Date(f.at))} · {f.path ?? KEINE_ANGABE}
                   </div>
                 </li>
               ))}

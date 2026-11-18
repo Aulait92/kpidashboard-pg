@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, CardHeader } from "@/components/ui";
 import type { loadLebenszyklus } from "@/lib/lebenszyklus";
 import { monthLabel } from "@/lib/revenue-ledger";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 // Kündigung, Ruhephase und Rückkehr (lib/lebenszyklus.ts), gemeinsam für /admin/zahlen/lebenszyklus und
 // /admin/neu/zahlen/kunden: Reaktivierungen je Monat neben neuen Kunden und Kündigungen, MRR-Bewegung, ruhende Konten,
@@ -9,7 +10,7 @@ import { monthLabel } from "@/lib/revenue-ledger";
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const signed = (n: number) => (n === 0 ? "0 €" : `${n > 0 ? "+" : "−"}${eur(Math.abs(n))}`);
-const pct = (x: number | null) => (x == null ? "–" : `${Math.round(x * 100)} %`);
+const pct = (x: number | null) => (x == null ? NOCH_KEINE_DATEN : `${Math.round(x * 100)} %`);
 const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
 const RETENTION: Record<string, string> = { "24m": "24 Monate", "3m": "3 Monate", sofort: "sofort" };
 const th = "px-2 py-1.5 text-right font-medium";
@@ -30,7 +31,7 @@ export function LebenszyklusAnsicht({
     {[
       { k: "Ruhende Konten", v: String(s.dormantNow), sub: s.avgDormantDays != null ? `Ø ${s.avgDormantDays} Tage ruhend` : "noch keine" },
       { k: "Reaktivierungsquote", v: pct(s.rate), sub: `${s.reactivations} von ${s.cancelled} Kündigungen zurückgekommen` },
-      { k: "Zeit bis zur Reaktivierung", v: s.medianDaysToReactivation != null ? `${s.medianDaysToReactivation} Tage` : "–", sub: s.avgDaysToReactivation != null ? `Median ab Vertragsende, Ø ${s.avgDaysToReactivation} Tage` : "Median ab Vertragsende" },
+      { k: "Zeit bis zur Reaktivierung", v: s.medianDaysToReactivation != null ? `${s.medianDaysToReactivation} Tage` : NOCH_KEINE_DATEN, sub: s.avgDaysToReactivation != null ? `Median ab Vertragsende, Ø ${s.avgDaysToReactivation} Tage` : "Median ab Vertragsende" },
       { k: "MRR aus Reaktivierungen", v: eur(d.months.reduce((a, m) => a + m.reaktiviertMrr, 0)), sub: "letzte 12 Monate, Monatsbetrag bei Rückkehr" },
     ].map((x) => (
       <div key={x.k} className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-3">
@@ -65,7 +66,7 @@ export function LebenszyklusAnsicht({
                 <td className={td}>{m.reaktiviert}</td>
                 <td className={td}>{m.gekuendigt}</td>
                 <td className={`${td} font-semibold ${m.netto < 0 ? "text-rose-700" : ""}`}>{m.netto > 0 ? `+${m.netto}` : m.netto}</td>
-                <td className={td}>{m.reaktiviertMrr ? eur(m.reaktiviertMrr) : "–"}</td>
+                <td className={td}>{eur(m.reaktiviertMrr || 0)}</td>
                 <td className={td}>{m.kuendigungenEingang}</td>
               </tr>
             ))}
@@ -249,9 +250,9 @@ export function LebenszyklusAnsicht({
                     </Link>
                   </td>
                   <td className={td}>{day(r.since)}</td>
-                  <td className={td}>{r.deleteAfter ? day(r.deleteAfter) : "–"}</td>
-                  <td className={td}>{r.retention ? (RETENTION[r.retention] ?? r.retention) : "–"}</td>
-                  <td className={td}>{r.mrr != null ? eur(r.mrr) : "–"}</td>
+                  <td className={td}>{r.deleteAfter ? day(r.deleteAfter) : NOCH_KEINE_DATEN}</td>
+                  <td className={td}>{r.retention ? (RETENTION[r.retention] ?? r.retention) : NOCH_KEINE_DATEN}</td>
+                  <td className={td}>{r.mrr != null ? eur(r.mrr) : NOCH_KEINE_DATEN}</td>
                   <td className="px-2 py-1.5">{r.reason}</td>
                 </tr>
               ))}
@@ -286,8 +287,8 @@ export function LebenszyklusAnsicht({
                     </Link>
                   </td>
                   <td className={td}>{day(r.at)}</td>
-                  <td className={td}>{r.mrr != null ? eur(r.mrr) : "–"}</td>
-                  <td className={td}>{r.dormantDays != null ? `${r.dormantDays} Tage` : "–"}</td>
+                  <td className={td}>{r.mrr != null ? eur(r.mrr) : NOCH_KEINE_DATEN}</td>
+                  <td className={td}>{r.dormantDays != null ? `${r.dormantDays} Tage` : NOCH_KEINE_DATEN}</td>
                   <td className="px-2 py-1.5">{r.reason}</td>
                 </tr>
               ))}

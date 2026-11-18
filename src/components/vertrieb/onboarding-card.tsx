@@ -4,6 +4,7 @@ import type { ChecklistItem } from "@/lib/onboarding";
 import type { ImpressumInfo } from "@/lib/impressum";
 import { checklistProgress } from "@/lib/onboarding";
 import { adminEndPauseAction, adminPlanPauseAction, goLiveAction, resendWelcomeAction, startOnboardingAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 const OWNER: Record<ChecklistItem["owner"], { label: string; cls: string }> = {
   kunde: { label: "Kunde", cls: "bg-sky-50 text-sky-700" },
@@ -197,7 +198,7 @@ function ImpressumBlock({ info }: { info: ImpressumInfo | null }) {
           {rows.map(([k, v]) => (
             <div key={k} className="contents">
               <dt className="text-slate-500">{k}</dt>
-              <dd className={v ? "text-slate-800" : "text-slate-400"}>{v ?? "–"}</dd>
+              <dd className={v ? "text-slate-800" : "text-slate-400"}>{v ?? KEINE_ANGABE}</dd>
             </div>
           ))}
         </dl>

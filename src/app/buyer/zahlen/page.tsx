@@ -40,6 +40,7 @@ import { Kennzahl } from "@/components/wachstum/kennzahl";
 import { ChancenKachel } from "@/components/wachstum/chancen-kachel";
 import { Trichter } from "@/components/wachstum/trichter";
 import { HebelKarte } from "@/components/wachstum/hebel";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 type SearchParams = Promise<{
   range?: string;
@@ -333,7 +334,7 @@ async function BuyerDashboardBody({
         <Kennzahl
           data="wert"
           label="Wert pro Kunde"
-          wert={wert != null ? euro(wert) : "–"}
+          wert={wert != null ? euro(wert) : NOCH_KEINE_DATEN}
           ton={wert != null ? "geld" : "normal"}
           unter={
             wert == null
@@ -344,7 +345,7 @@ async function BuyerDashboardBody({
         <Kennzahl
           data="euro"
           label="Aus 1 € werden"
-          wert={r != null ? euroCent(r) : "–"}
+          wert={r != null ? euroCent(r) : NOCH_KEINE_DATEN}
           ton={r != null && r >= 1 ? "geld" : "normal"}
           unter={r == null ? "ohne Kosten im Zeitraum" : `${mitBestand ? "inkl. Bestand" : "ohne Bestand"}${r < 1 ? ", Ziel über 1 €" : ""}`}
         />
@@ -384,7 +385,7 @@ async function BuyerDashboardBody({
               {proStufe.map(([l, v]) => (
                 <div key={l} className="rounded-[var(--radius-md)] bg-[color:var(--background)] p-3 ring-1 ring-inset ring-[color:var(--border)]">
                   <div className="text-sm text-[color:var(--muted)]">Kosten {l}</div>
-                  <div className="mt-0.5 text-lg font-semibold tabular-nums sm:text-xl">{v != null ? euro(v) : "–"}</div>
+                  <div className="mt-0.5 text-lg font-semibold tabular-nums sm:text-xl">{v != null ? euro(v) : NOCH_KEINE_DATEN}</div>
                 </div>
               ))}
             </div>

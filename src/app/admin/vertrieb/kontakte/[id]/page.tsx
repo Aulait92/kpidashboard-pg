@@ -409,7 +409,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               <div>
                 <label className="label">Kunden-Stufe</label>
                 <select name="customerStage" defaultValue={c.customerStage ?? ""} className="input">
-                  <option value="">{c.customerStage ? "–" : "Noch kein Kunde"}</option>
+                  <option value="">Noch kein Kunde</option>
                   {CUSTOMER_STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
                 </select>
               </div>

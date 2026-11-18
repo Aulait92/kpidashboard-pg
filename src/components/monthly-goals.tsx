@@ -17,9 +17,10 @@ import {
   saveMonthlyGoals,
   type SaveGoalState,
 } from "./monthly-goals-actions";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 function formatValue(value: number | null, format: GoalRow["format"]): string {
-  if (value == null || !Number.isFinite(value)) return "–";
+  if (value == null || !Number.isFinite(value)) return NOCH_KEINE_DATEN;
   if (format === "currency") return formatEUR(value);
   if (format === "percent") return formatPercent(value);
   return formatNumber(Math.round(value));

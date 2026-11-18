@@ -140,7 +140,7 @@ export function BuyerLeadsTable({
                 >
                   <div className="min-w-0">
                     <div className="flex min-w-0 items-center gap-2">
-                      <span className="truncate font-medium">{l.name ?? "–"}</span>
+                      <span className="truncate font-medium">{l.name ?? "Ohne Namen"}</span>
                       {l.isTest ? <TestLeadBadge /> : null}
                     </div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">
@@ -210,7 +210,7 @@ export function BuyerLeadsTable({
                     </td>
                     <td className="px-3 py-2.5 font-medium text-[color:var(--foreground)]">
                       {l.name ?? (
-                        <span className="text-[color:var(--muted)]">–</span>
+                        <span className="text-[color:var(--muted)]">Ohne Namen</span>
                       )}
                       {l.isTest ? <TestLeadBadge className="ml-2 align-middle" /> : null}
                       {l.noWhatsApp && l.phone ? <KeinWhatsAppBadge phone={l.phone} className="ml-2 align-middle" /> : null}
@@ -246,7 +246,7 @@ export function BuyerLeadsTable({
                     </td>
                     {showLeadCost ? (
                       <td className="px-3 py-2.5 text-right tabular-nums">
-                        {l.revenue > 0 ? formatEUR(l.revenue) : "–"}
+                        {formatEUR(l.revenue)}
                       </td>
                     ) : null}
                     <td className="px-3 py-2.5 text-right">

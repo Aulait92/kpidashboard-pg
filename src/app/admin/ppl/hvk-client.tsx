@@ -14,9 +14,10 @@ import {
   type HvkRunState,
 } from "./hvk-actions";
 import { versandTestAction, type VersandTestState } from "./ppl-versand-actions";
+import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 const btn = "h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold disabled:opacity-60";
-const eur = (c: number | null) => (c == null ? "–" : (Math.abs(c) / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" }));
+const eur = (c: number | null) => (c == null ? KEINE_ANGABE : (Math.abs(c) / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" }));
 const STATUS: Record<string, string> = { neu: "übernommen", vorhanden: "schon da", vorschau: "neu" };
 const STORNO: Record<string, string> = { eingetragen: "Storno eingetragen", "schon storniert": "schon storniert", "würde eingetragen": "Storno würde eingetragen", fehler: "Fehler" };
 
@@ -120,7 +121,7 @@ function ReabgleichTable({ weeks }: { weeks: HvkReabgleichWeek[] }) {
           <div className="flex flex-wrap items-baseline gap-x-2">
             <span className="font-medium">{w.invoiceNo}</span>
             <span className="text-xs text-[color:var(--muted)]">
-              {de(w.periodStart).slice(0, 6)} – {de(w.periodEnd)}
+              {de(w.periodStart).slice(0, 6)} bis {de(w.periodEnd)}
             </span>
             {w.changed ? null : <span className="text-xs text-[color:var(--muted)]">· unverändert</span>}
           </div>
