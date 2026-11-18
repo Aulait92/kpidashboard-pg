@@ -1,21 +1,19 @@
 "use client";
 
-// Cross-Selling in der Terminvorbereitung (Ole, 16.11.2026):
-// - „Chance im Termin“ (Teil A2): höchstens 2 erkannte Lücken mit Gesprächsöffner, ein Klick nimmt die Sparte als
-//   „bei Bedarf“ in die Angebote (erscheint in der Präsentation auf „Ihr Schutz im Überblick“ mit „Mit anschauen“).
-// - „Schutz im Überblick“ (Teil A7): je Sparte bei uns, woanders (Versicherer, Ablauf, ungefährer Beitrag), prüfen,
-//   Lücke; selten gebraucht, daher in einem Fenster. Seit 18.11.2026 (Ole) als Frage „Hat Frau Becker das schon?“ mit
-//   „Ja, bei mir“, „Ja, woanders“, „Weiß nicht“, „Nein“ (Präsentation behält die Ampel-Begriffe), Vorbelegung mit
-//   Hinweis „aus dem Chat“, Schalter „In heutiges Angebot aufnehmen“, Live-Vorschau der Ampel, „Fertig“ statt
-//   „Abbrechen“ (alles wird automatisch gespeichert).
+// Cross-Selling in der Terminvorbereitung:
+// - „Was hat Frau Becker schon?“ (Ole, 18.11.2026; ersetzt „Chance im Termin“ und das Fenster „Schutz im Überblick“):
+//   ein Bereich direkt in Schritt 1. Wer: Vermittler vor bzw. im Termin. Aufgabe: festhalten, was der Kunde schon hat,
+//   und passende Sparten mit einem Schalter ins Angebot nehmen. Je Sparte „Ja, bei mir“, „Ja, woanders“ (Versicherer und
+//   Tarif aus dem Katalog), „Weiß nicht“, „Nein“; erkannte Chancen und das Vorsorge-Thema stehen als Tipp-Zeilen oben
+//   (Glühbirne und Gesprächsfrage), beantwortete Zeilen klappen auf eine Zeile zu. „+ Versicherung hinzufügen“ sucht über
+//   alle Sparten (auch PKV, BU, Kfz). Überall derselbe Schalter „Ins Angebot“. „So sieht es der Kunde“ zeigt die Ampel
+//   der Folie zum Aufklappen. Alles wird automatisch gespeichert. Gesundheitsangaben gibt es hier nicht, nur ob und wo
+//   der Kunde versichert ist.
 // - Empfehlung gesamt mit Kombi-Rabatt (Rabattstufen Privatschutz-Kombi): Endbeitrag, nächste Stufe mit einem Klick,
 //   Hinweis, wenn eine gewählte Stufe (Basis/Smart) den Rabatt verhindert.
-// Wer: Vermittler vor dem Termin. Wo: im bestehenden Angebote-Bereich, keine neue Karte.
 
-import { useEffect, useState } from "react";
-import { Check, Plus } from "lucide-react";
-import { Button } from "@/components/ui";
-import { Sheet } from "@/components/ui/sheet";
+import { useEffect, useId, useState } from "react";
+import { Check, ChevronDown, Lightbulb, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { tarifMitSparte } from "@/lib/praesentation";
 import { naechsteText, prozentMit } from "@/lib/kombi-rabatt";
@@ -26,127 +24,28 @@ import {
   SCHUTZ_QUELLE_TEXT,
   SCHUTZ_REIHENFOLGE,
   SCHUTZ_SPARTEN,
+  schutzBereich,
+  schutzKurzTeile,
+  spartenSuche,
   type SchutzEintrag,
   type SchutzStatus,
-  VORSORGE_SPARTE,
   type VorsorgeThema,
 } from "@/lib/schutz-ueberblick";
-import { gesellschaftAusText, type BuendelRegel, type Katalog } from "@/lib/tarifkatalog";
+import { gesellschaftAusText, spartenGruppiert, type BuendelRegel, type Katalog } from "@/lib/tarifkatalog";
 import { beitragsUebersicht, betrag, type SparteWahl, type Tarifauswahl } from "@/lib/tarifauswahl";
-import { bisherHand } from "@/lib/bisheriger-vertrag";
+import { bisherErlaubt, bisherHand } from "@/lib/bisheriger-vertrag";
 import { bisherTarifeAction, type BisherTarif } from "./neu-actions";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
-const Punkt = ({ farbe }: { farbe: string }) => <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: farbe }} aria-hidden />;
+const Punkt = ({ farbe }: { farbe: string }) => <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: farbe }} aria-hidden />;
 
 type Aendern = (fn: (a: Tarifauswahl) => void, extern?: boolean) => void;
 
 /** Sparte als „bei Bedarf“ in die Angebote (oder, wenn sie schon da ist, dorthin springen). */
 export type SparteAnbieten = (key: string) => void;
 
-export function ChanceImTermin({
-  auswahl,
-  ro,
-  aendern,
-  anbieten,
-  entfernen,
-  vorsorge,
-  kunde,
-  speichern,
-  gesellschaften = [],
-}: {
-  auswahl: Tarifauswahl;
-  ro: boolean;
-  aendern: Aendern;
-  /** Vorschlagsliste der Versicherer (wie „Bisheriger Vertrag“) */
-  gesellschaften?: { key: string; name: string }[];
-  anbieten: SparteAnbieten;
-  /** Sparte aus dem heutigen Angebot nehmen (Schalter im Überblick) */
-  entfernen: SparteAnbieten;
-  vorsorge: VorsorgeThema | null;
-  /** Kunde im Satz: „Frau Becker“ bzw. „Julia Becker“ (Frage „Hat … das schon?“) */
-  kunde: string;
-  /** Speicherstand der Terminvorbereitung (automatisch gespeichert) */
-  speichern: { status: SpeicherStand; erneut: () => void };
-}) {
-  const [offen, setOffen] = useState(false);
-  const schutz = auswahl.schutz ?? [];
-  if (!schutz.length && !vorsorge) return null;
-  const keys = auswahl.sparten.map((s) => s.key);
-  const liste = chancen(schutz, keys);
-  return (
-    <div className="mx-4 mt-3 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3.5 py-2.5 sm:mx-5" data-chance-im-termin>
-      <div className="flex items-center gap-2">
-        <h3 className="text-[13px] font-semibold">Chance im Termin</h3>
-        <button type="button" onClick={() => setOffen(true)} className="-my-2 ml-auto py-2 text-[13px] font-medium text-[color:var(--brand)] hover:underline" data-schutz-oeffnen>
-          Schutz im Überblick
-        </button>
-      </div>
-      <p className="text-[13px] text-[color:var(--muted)]">Was Sie zusätzlich ansprechen können, ausgewählt aus Lebenslage und Angaben.</p>
-      {liste.length ? (
-        <ul className="mt-2 space-y-2">
-          {liste.map((c) => (
-            <li key={c.key} className="flex items-start gap-2.5" data-chance={c.key}>
-              <Punkt farbe={SCHUTZ_ANTWORT[c.status].farbe} />
-              <div className="min-w-0 flex-1 text-sm">
-                <span className="font-semibold">{c.label}</span>
-                {/* Ole, 18.11.2026: kein Status neben der Sparte, nur bei „Nein“ klein „fehlt“ */}
-                {c.status === "luecke" ? (
-                  <span className="ml-1.5 text-xs font-medium text-red-700" data-chance-fehlt>
-                    fehlt
-                  </span>
-                ) : null}
-                {c.oeffner ? <p className="text-[13px] text-[color:var(--muted)]">„{c.oeffner}“</p> : null}
-              </div>
-              {!ro ? (
-                <Button size="sm" icon={Plus} onClick={() => anbieten(c.key)} data-chance-anbieten>
-                  Ins Angebot
-                </Button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      ) : schutz.length ? (
-        <p className="mt-1 text-[13px] text-[color:var(--muted)]">Keine Lücke erkannt. Fragen Sie im Termin kurz nach dem übrigen Schutz.</p>
-      ) : null}
-      {vorsorge ? (
-        // Teil C2: großes Thema getrennt von den Sach-Chancen, keine Gesundheitsfragen; „Ins Angebot“ holt die Sparte
-        // aus dem Tarifkatalog (erst nach „Mit anschauen“ im Vergleich, wie die Chancen)
-        <div className="mt-2 flex items-start gap-2.5 border-t border-[color:var(--border)] pt-2" data-vorsorge-thema={vorsorge.key}>
-          <Punkt farbe={VORSORGE_FARBE} />
-          <div className="min-w-0 flex-1 text-sm">
-            <span className="font-semibold">Vorsorge: {vorsorge.label}</span>
-            <p className="text-[13px] text-[color:var(--muted)]">„{vorsorge.oeffner}“</p>
-          </div>
-          {/* Ole, 17.11.2026: mit Gesellschaft und Tarif in die Präsentation (nur Tarifmerkmale, nie Gesundheitsangaben) */}
-          {!ro ? (
-            <Button size="sm" icon={Plus} onClick={() => anbieten(VORSORGE_SPARTE[vorsorge.key])} data-vorsorge-anbieten>
-              Ins Angebot
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
-      <SchutzFenster
-        open={offen}
-        onClose={() => setOffen(false)}
-        auswahl={auswahl}
-        ro={ro}
-        aendern={aendern}
-        anbieten={anbieten}
-        entfernen={entfernen}
-        kunde={kunde}
-        gesellschaften={gesellschaften}
-        speichern={speichern}
-      />
-    </div>
-  );
-}
-
 /** Speicherstand der Terminvorbereitung (neu-client.tsx). */
 export type SpeicherStand = "ruhe" | "speichert" | "gespeichert" | "fehler";
-
-/** Lila für das Vorsorge-Thema (wie bisher bg-violet-500). */
-const VORSORGE_FARBE = "#8b5cf6";
 
 /** Ausgewählte Antwort in den Ampel-Farben der Präsentation (ein Farbsystem): bei mir grün, woanders blau, Nein rot;
  *  „Weiß nicht“ nur mit orangem Umriss (erkennbar gewählt, aber keine Entscheidung). */
@@ -156,153 +55,391 @@ function antwortKlasse(st: SchutzStatus, an: boolean): string {
   return cn("border-transparent text-white", st === "luecke" ? "bg-red-600" : st === "woanders" ? "bg-blue-600" : "bg-emerald-600");
 }
 
-function SchutzFenster({
-  open,
-  onClose,
+export function SchutzBereich({
   auswahl,
   ro,
   aendern,
   anbieten,
   entfernen,
+  vorsorge,
   kunde,
   speichern,
-  gesellschaften,
+  gesellschaften = [],
+  imKatalog,
+  gesundheitFrei = false,
 }: {
-  open: boolean;
-  onClose: () => void;
   auswahl: Tarifauswahl;
   ro: boolean;
   aendern: Aendern;
   anbieten: SparteAnbieten;
+  /** Sparte aus dem heutigen Angebot nehmen (Schalter „Ins Angebot“ aus) */
   entfernen: SparteAnbieten;
+  vorsorge: VorsorgeThema | null;
+  /** Kunde im Satz: „Frau Becker“ bzw. „Julia Becker“ (Überschrift „Was hat … schon?“) */
   kunde: string;
+  /** Speicherstand der Terminvorbereitung (automatisch gespeichert) */
   speichern: { status: SpeicherStand; erneut: () => void };
-  gesellschaften: { key: string; name: string }[];
+  /** Vorschlagsliste der Versicherer (wie „Bisheriger Vertrag“) */
+  gesellschaften?: { key: string; name: string }[];
+  /** Sparten mit Tarifen im Katalog (nur diese können ins Angebot) */
+  imKatalog: string[];
+  /** Gesundheitssparten für den bisherigen Vertrag freigeschaltet (lib/bisheriger-vertrag.ts bisherErlaubt) */
+  gesundheitFrei?: boolean;
 }) {
   const schutz = auswahl.schutz ?? [];
-  // Sparte im Angebot (für „Bisheriger Vertrag“ aus „Ja, woanders“)
-  const anSparte = (key: string, fn: (sp: SparteWahl) => void) =>
+  const angebot = auswahl.sparten.map((s) => s.key);
+  // Reihenfolge, Tipps und aufgeklappte Zeilen beim Öffnen festhalten: Zeilen springen beim Beantworten nicht herum
+  const [stand] = useState(() => {
+    const z = schutzBereich(schutz, angebot, vorsorge);
+    return {
+      order: z.map((x) => x.eintrag.key),
+      tipps: Object.fromEntries(z.filter((x) => x.tipp).map((x) => [x.eintrag.key, x.tipp as string])) as Record<string, string>,
+      vorlage: z.filter((x) => x.neu).map((x) => x.eintrag),
+    };
+  });
+  const [auf, setAuf] = useState<Set<string>>(
+    () => new Set(stand.order.filter((k) => stand.tipps[k] || schutz.find((s) => s.key === k)?.status === "pruefen")),
+  );
+  // In dieser Sitzung hinzugefügt (oben nach den Tipps, mit „Entfernen“ für Versehen)
+  const [dazu, setDazu] = useState<string[]>([]);
+  const klappe = (key: string, offen: boolean) =>
+    setAuf((x) => {
+      const n = new Set(x);
+      if (offen) n.add(key);
+      else n.delete(key);
+      return n;
+    });
+
+  const neuSeitStart = schutz.map((s) => s.key).filter((k) => !stand.order.includes(k));
+  const keys = [
+    ...stand.order.filter((k) => stand.tipps[k]),
+    ...[...dazu.filter((k) => neuSeitStart.includes(k)), ...neuSeitStart.filter((k) => !dazu.includes(k)).reverse()],
+    ...stand.order.filter((k) => !stand.tipps[k]),
+  ];
+  const zeilen = keys.flatMap((k) => {
+    const e = schutz.find((s) => s.key === k) ?? stand.vorlage.find((v) => v.key === k);
+    return e ? [{ e, tipp: stand.tipps[k] ?? null }] : [];
+  });
+  if (ro && !zeilen.length) return null;
+
+  /** Eintrag ändern; die Zeile des Vorsorge-Themas wird dabei erst angelegt. */
+  const setze = (key: string, fn: (s: SchutzEintrag) => void) =>
+    aendern((a) => {
+      let s = a.schutz?.find((x) => x.key === key);
+      if (!s) {
+        const v = stand.vorlage.find((x) => x.key === key);
+        if (!v) return;
+        s = { ...v };
+        a.schutz = [...(a.schutz ?? []), s];
+      }
+      fn(s);
+    });
+  // Bisheriger Vertrag der Sparte im Angebot (aus „Ja, woanders“); Gesundheitssparten nur mit Freischaltung
+  const anSparte = (key: string, fn: (sp: SparteWahl) => void) => {
+    if (!bisherErlaubt(key, gesundheitFrei)) return;
     aendern((a) => {
       const sp = a.sparten.find((x) => x.key === key);
       if (sp) fn(sp);
     });
-  const setze = (key: string, fn: (s: SchutzEintrag) => void) =>
-    aendern((a) => {
-      const s = a.schutz?.find((x) => x.key === key);
-      if (s) fn(s);
-    });
-  const fehlend = Object.entries(SCHUTZ_SPARTEN).filter(([k]) => !schutz.some((s) => s.key === k));
+  };
+  const hinzufuegen = (key: string) => {
+    const label = SCHUTZ_SPARTEN[key];
+    if (!label) return;
+    aendern((a) => void (a.schutz = [...(a.schutz ?? []).filter((x) => x.key !== key), { key, label, status: "pruefen" }]));
+    setDazu((d) => [key, ...d.filter((k) => k !== key)]);
+    klappe(key, true);
+  };
+  const wegnehmen = (key: string) => {
+    aendern((a) => void (a.schutz = (a.schutz ?? []).filter((x) => x.key !== key)));
+    setDazu((d) => d.filter((k) => k !== key));
+  };
   const vorschau = ampelVorschau(schutz, auswahl.sparten);
-  const fuss = (
-    <div className="flex shrink-0 items-center gap-3 border-t border-[color:var(--border)] px-5 py-3" data-schutz-fuss>
-      <SpeicherHinweis status={speichern.status} ro={ro} erneut={speichern.erneut} />
-      <Button variant="primary" size="md" className="ml-auto min-w-[7.5rem] justify-center" onClick={onClose} data-schutz-fertig>
-        Fertig
-      </Button>
-    </div>
-  );
+
   return (
-    <Sheet open={open} onClose={onClose} title="Schutz im Überblick" footer={fuss}>
-      {vorschau.length ? (
-        // Live-Vorschau der Ampel wie auf der Folie (Begriffe der Präsentation)
-        <div className="mx-5 mt-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 py-2" data-ampel-vorschau>
-          <div className="text-[11px] font-medium text-[color:var(--muted)]">So sieht es der Kunde</div>
-          <ul className="mt-1 grid gap-y-0.5">
-            {vorschau.map((z) => (
-              <li key={z.key} className="flex min-w-0 items-center gap-1.5 text-[12px]" data-ampel={z.key} data-ampel-status={z.status}>
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: z.farbe }} aria-hidden />
-                <span className="min-w-0 truncate font-medium">{z.label}</span>
-                <span className="ml-auto shrink-0" style={{ color: z.farbe }}>
-                  {z.text}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      <div className="px-5 pb-1 pt-4 text-sm font-semibold" data-schutz-frage>
-        Hat {kunde} das schon?
+    <section className="mx-4 mt-4 sm:mx-5" data-schutz-bereich>
+      {/* „Ins Angebot“ als Spaltenkopf über den Schaltern (Rand und Abstand der Zeilen: 1px + pr-1.5 bzw. sm:pr-2) */}
+      <div className="flex items-end gap-3 pb-1.5 pr-[7px] sm:pr-[9px]">
+        <h3 className="min-w-0 flex-1 text-sm font-semibold" data-schutz-frage>
+          Was hat {kunde} schon?
+        </h3>
+        {zeilen.length ? (
+          <span className="shrink-0 whitespace-nowrap text-[11px] font-medium text-[color:var(--muted)]" aria-hidden>
+            Ins Angebot
+          </span>
+        ) : null}
       </div>
-      <ul className="divide-y divide-[color:var(--border)]" data-schutz-liste>
-        {schutz.map((s) => {
-          const sp = auswahl.sparten.find((x) => x.key === s.key);
-          const hinweis = s.quelle ? SCHUTZ_QUELLE_TEXT[s.quelle] : s.status === "bei-uns" ? s.seit : null;
-          return (
-            <li key={s.key} className="px-5 py-3" data-schutz-zeile={s.key}>
-              <div className="flex items-center gap-2">
-                <Punkt farbe={SCHUTZ_ANTWORT[s.status].farbe} />
-                <span className="min-w-0 flex-1 text-sm font-semibold">{s.label}</span>
-                {hinweis ? (
-                  <span className="shrink-0 text-[11px] text-[color:var(--muted)]" data-schutz-quelle>
-                    {hinweis}
-                  </span>
-                ) : null}
-              </div>
-              <div className="mt-2 grid grid-cols-4 gap-1" role="radiogroup" aria-label={`Hat ${kunde} ${s.label} schon?`}>
-                {SCHUTZ_REIHENFOLGE.map((st) => (
-                  <button
-                    key={st}
-                    type="button"
-                    role="radio"
-                    aria-checked={s.status === st}
-                    disabled={ro}
-                    onClick={() =>
-                      setze(s.key, (x) => {
-                        x.status = st;
-                        // vom Vermittler entschieden: Hinweis „aus dem Chat“ entfällt
-                        delete x.quelle;
-                      })
-                    }
-                    className={cn("h-10 whitespace-nowrap rounded-[var(--radius-sm)] border px-0.5 text-[12px] font-semibold sm:h-8", antwortKlasse(st, s.status === st))}
-                    data-schutz-status={st}
-                  >
-                    {SCHUTZ_ANTWORT[st].label}
-                  </button>
-                ))}
-              </div>
-              {s.status === "woanders" ? (
-                <WoandersFelder s={s} ro={ro} gesellschaften={gesellschaften} setze={(fn) => setze(s.key, fn)} anSparte={(fn) => anSparte(s.key, fn)} />
-              ) : null}
-              {s.status !== "bei-uns" || sp ? (
-                <div className="mt-2 flex items-center gap-3">
-                  <span className="min-w-0 flex-1 text-[13px] text-[color:var(--muted)]">In heutiges Angebot aufnehmen</span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={!!sp}
-                    aria-label={`${s.label} in heutiges Angebot aufnehmen`}
-                    disabled={ro}
-                    onClick={() => (sp ? entfernen(s.key) : anbieten(s.key))}
-                    className={cn("relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-50", sp ? "bg-emerald-600" : "bg-slate-300")}
-                    data-schutz-angebot
-                  >
-                    <span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all", sp ? "left-[22px]" : "left-0.5")} />
-                  </button>
-                </div>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
-      {fehlend.length && !ro ? (
-        <div className="flex flex-wrap gap-1.5 border-t border-[color:var(--border)] px-5 py-3">
-          {fehlend.slice(0, 6).map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => aendern((a) => void (a.schutz = [...(a.schutz ?? []), { key: k, label, status: "pruefen" }]))}
-              className="inline-flex h-9 items-center gap-1 rounded-full border border-dashed border-[color:var(--border-strong)] px-3 text-[13px] font-medium text-[color:var(--muted)]"
-            >
-              <Plus className="h-3.5 w-3.5" /> {label}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </Sheet>
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white">
+        {zeilen.length ? (
+          <ul className="divide-y divide-[color:var(--border)]" data-schutz-liste>
+            {zeilen.map(({ e: s, tipp }) => {
+              const sp = auswahl.sparten.find((x) => x.key === s.key);
+              const offen = auf.has(s.key);
+              const hinweis = s.quelle ? SCHUTZ_QUELLE_TEXT[s.quelle] : null;
+              const teile = schutzKurzTeile(s);
+              const schalter = (s.status !== "bei-uns" || !!sp) && (imKatalog.includes(s.key) || !!sp);
+              return (
+                <li
+                  key={s.key}
+                  className="pl-2.5 pr-1.5 sm:pl-3.5 sm:pr-2"
+                  data-schutz-zeile={s.key}
+                  data-zu={offen ? "nein" : "ja"}
+                  data-tipp={tipp ? "ja" : undefined}
+                >
+                  {/* Handy: Kopf und Schalter oben, Antworten darunter; ab sm alles in einer Zeile */}
+                  <div className="flex flex-wrap items-center gap-x-2">
+                    <button
+                      type="button"
+                      aria-expanded={offen}
+                      onClick={() => klappe(s.key, !offen)}
+                      className="flex min-h-12 min-w-0 flex-1 items-center gap-2 py-2 text-left"
+                      data-schutz-kopf
+                    >
+                      {/* gleiche Breite für Glühbirne und Farbpunkt, damit die Namen untereinander stehen */}
+                      <span className={cn("flex w-4 shrink-0 justify-center", offen && tipp && "mt-0.5 self-start")}>
+                        {tipp ? <Lightbulb className="h-4 w-4 text-amber-500" aria-hidden /> : <Punkt farbe={SCHUTZ_ANTWORT[s.status].farbe} />}
+                      </span>
+                      {offen ? (
+                        <span className="min-w-0 flex-1">
+                          <span className="flex min-w-0 items-baseline gap-2">
+                            <span className="min-w-0 truncate text-sm font-semibold">{s.label}</span>
+                            {hinweis ? (
+                              <span className="shrink-0 text-[11px] font-normal text-[color:var(--muted)]" data-schutz-quelle>
+                                {hinweis}
+                              </span>
+                            ) : null}
+                          </span>
+                          {tipp ? (
+                            <span className="mt-0.5 block text-[13px] text-[color:var(--muted)]" data-schutz-tipp>
+                              <span className="font-medium text-amber-700">Tipp:</span> „{tipp}“
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : (
+                        <span className="line-clamp-2 min-w-0 flex-1 text-sm" data-schutz-kurz>
+                          <span className="font-semibold">{teile[0]}</span>
+                          <span className="text-[color:var(--muted)]">{teile.slice(1).map((t) => ` · ${t}`)}</span>
+                        </span>
+                      )}
+                      <ChevronDown className={cn("h-4 w-4 shrink-0 text-[color:var(--muted)] transition-transform", offen && "rotate-180")} aria-hidden />
+                    </button>
+                    {offen ? (
+                      <div
+                        className="order-last grid w-full grid-cols-[1fr_1.2fr_1.05fr_0.75fr] gap-1 pb-2.5 sm:order-none sm:w-[22rem] sm:grid-cols-4 sm:pb-0"
+                        role="radiogroup"
+                        aria-label={`Hat ${kunde} ${s.label} schon?`}
+                      >
+                        {SCHUTZ_REIHENFOLGE.map((st) => (
+                          <button
+                            key={st}
+                            type="button"
+                            role="radio"
+                            aria-checked={s.status === st}
+                            disabled={ro}
+                            onClick={() => {
+                              setze(s.key, (x) => {
+                                x.status = st;
+                                // vom Vermittler entschieden: Hinweis „aus dem Chat“ entfällt
+                                delete x.quelle;
+                              });
+                              // beantwortet: zuklappen; „Ja, woanders“ bleibt für Versicherer und Tarif offen
+                              if (st === "bei-uns" || st === "luecke") klappe(s.key, false);
+                            }}
+                            className={cn(
+                              "h-10 whitespace-nowrap rounded-[var(--radius-sm)] border px-0 text-[11.5px] font-semibold tracking-tight sm:h-9 sm:text-[12px]",
+                              antwortKlasse(st, s.status === st),
+                            )}
+                            data-schutz-status={st}
+                          >
+                            {SCHUTZ_ANTWORT[st].label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                    {schalter ? (
+                      <AngebotSchalter an={!!sp} label={s.label} ro={ro} onClick={() => (sp ? entfernen(s.key) : anbieten(s.key))} />
+                    ) : (
+                      <span className="w-12 shrink-0" aria-hidden />
+                    )}
+                  </div>
+                  {offen && (s.status === "woanders" || (s.status === "bei-uns" && s.seit) || (dazu.includes(s.key) && !sp && !ro)) ? (
+                    <div className="pb-3 pr-1 sm:pl-6" data-schutz-offen>
+                      {s.status === "woanders" ? (
+                        <WoandersFelder s={s} ro={ro} gesellschaften={gesellschaften} setze={(fn) => setze(s.key, fn)} anSparte={(fn) => anSparte(s.key, fn)} />
+                      ) : null}
+                      {s.status === "bei-uns" && s.seit ? <p className="mt-1.5 text-[12px] text-[color:var(--muted)]">Vertrag {s.seit}</p> : null}
+                      {dazu.includes(s.key) && !sp && !ro ? (
+                        <button
+                          type="button"
+                          onClick={() => wegnehmen(s.key)}
+                          className="-mb-2 mt-1 py-2 text-[12px] font-medium text-[color:var(--muted)] hover:underline"
+                          data-schutz-weg
+                        >
+                          Zeile entfernen
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="px-3.5 pt-3 text-[13px] text-[color:var(--muted)]" data-schutz-leer>
+            Noch nichts eingetragen.
+          </p>
+        )}
+        {!ro ? <SparteSuche ohne={[...schutz.map((s) => s.key), ...stand.vorlage.map((v) => v.key)]} dazu={hinzufuegen} /> : null}
+        {vorschau.length || (!ro && speichern.status !== "ruhe") ? (
+          <div className="flex items-start gap-3 border-t border-[color:var(--border)] px-3.5 py-2">
+            {vorschau.length ? (
+              // Ampel wie auf der Folie „Ihr Schutz im Überblick“ (Begriffe der Präsentation), selten gebraucht
+              <details className="min-w-0 flex-1" data-ampel-vorschau>
+                <summary className="cursor-pointer py-1 text-[12px] font-medium text-[color:var(--muted)]">So sieht es der Kunde</summary>
+                <ul className="mt-1 grid max-w-sm gap-y-0.5 pb-1">
+                  {vorschau.map((z) => (
+                    <li key={z.key} className="flex min-w-0 items-center gap-1.5 text-[12px]" data-ampel={z.key} data-ampel-status={z.status}>
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: z.farbe }} aria-hidden />
+                      <span className="min-w-0 truncate font-medium">{z.label}</span>
+                      <span className="ml-auto shrink-0" style={{ color: z.farbe }}>
+                        {z.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : (
+              <span className="flex-1" />
+            )}
+            <span className="py-1">
+              <SpeicherHinweis status={speichern.status} ro={ro} erneut={speichern.erneut} />
+            </span>
+          </div>
+        ) : null}
+      </div>
+    </section>
   );
 }
 
-/** Kurzer Speicherstand neben „Fertig“: „Speichert …“, „Gespeichert“, bei Fehler „Erneut versuchen“. */
+/** Schalter „Ins Angebot“ (überall derselbe): an = Sparte im heutigen Angebot. */
+function AngebotSchalter({ an, label, ro, onClick }: { an: boolean; label: string; ro: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={an}
+      aria-label={`${label} ins Angebot`}
+      disabled={ro}
+      onClick={onClick}
+      className="flex h-11 w-12 shrink-0 items-center justify-center disabled:opacity-50"
+      data-schutz-angebot
+    >
+      <span className={cn("relative h-7 w-12 rounded-full transition", an ? "bg-emerald-600" : "bg-slate-300")}>
+        <span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all", an ? "left-[22px]" : "left-0.5")} />
+      </span>
+    </button>
+  );
+}
+
+/**
+ * „+ Versicherung hinzufügen“: Suchfeld über alle Sparten (auch PKV, BU, Kfz). Ohne Suchtext gruppiert, mit Suchtext die
+ * Treffer (Abkürzungen wie „PKV“ oder „BU“ zählen); Eingabe übernimmt den ersten Treffer. Liste im Fluss der Seite (kein
+ * schwebendes Menü), damit sie am Handy über der Tastatur bedienbar bleibt.
+ */
+function SparteSuche({ ohne, dazu }: { ohne: string[]; dazu: (key: string) => void }) {
+  const [offen, setOffen] = useState(false);
+  const [q, setQ] = useState("");
+  const listeId = useId();
+  const treffer = spartenSuche(q, ohne);
+  const zu = () => {
+    setOffen(false);
+    setQ("");
+  };
+  const waehle = (key: string) => {
+    dazu(key);
+    zu();
+  };
+  if (!offen)
+    return (
+      <div className="px-3.5 py-2.5">
+        <button
+          type="button"
+          onClick={() => setOffen(true)}
+          className="inline-flex h-10 items-center gap-1.5 rounded-full border border-dashed border-[color:var(--border-strong)] px-3.5 text-[13px] font-medium text-[color:var(--brand)] sm:h-9"
+          data-schutz-hinzufuegen
+        >
+          <Plus className="h-3.5 w-3.5" /> Versicherung hinzufügen
+        </button>
+      </div>
+    );
+  const option = (s: { key: string; label: string }) => (
+    <li key={s.key} role="option" aria-selected={false}>
+      <button
+        type="button"
+        onClick={() => waehle(s.key)}
+        className="block min-h-11 w-full rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-sm hover:bg-[color:var(--surface-sunken)]"
+        data-schutz-option={s.key}
+      >
+        {s.label}
+      </button>
+    </li>
+  );
+  return (
+    <div className="border-t border-[color:var(--border)] px-2 py-2" data-schutz-suche>
+      <div className="flex items-center gap-1">
+        <label className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" aria-hidden />
+          <input
+            type="search"
+            role="combobox"
+            aria-expanded
+            aria-controls={listeId}
+            aria-label="Versicherung suchen"
+            placeholder="Suchen, z. B. PKV oder Kfz"
+            autoFocus
+            enterKeyHint="done"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && treffer[0]) {
+                e.preventDefault();
+                waehle(treffer[0].key);
+              }
+              if (e.key === "Escape") zu();
+            }}
+            className="h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] bg-white pl-8 pr-2.5 text-base sm:h-9 sm:text-sm"
+            data-schutz-suchfeld
+          />
+        </label>
+        <button
+          type="button"
+          aria-label="Suche schließen"
+          onClick={zu}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-[color:var(--surface-sunken)] sm:h-9 sm:w-9"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <ul id={listeId} role="listbox" aria-label="Versicherungen" className="mt-1 max-h-72 overflow-auto">
+        {!treffer.length ? (
+          <li className="px-3 py-2.5 text-[13px] text-[color:var(--muted)]">Nichts gefunden. Versuchen Sie einen anderen Begriff.</li>
+        ) : q.trim() ? (
+          treffer.map(option)
+        ) : (
+          spartenGruppiert(treffer).map((g) => (
+            <li key={g.label} role="presentation" data-sparten-gruppe={g.label}>
+              <div className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.label}</div>
+              <ul role="group" aria-label={g.label}>
+                {g.sparten.map(option)}
+              </ul>
+            </li>
+          ))
+        )}
+      </ul>
+    </div>
+  );
+}
+
+/** Kurzer Speicherstand am Ende des Bereichs: „Speichert …“, „Gespeichert“, bei Fehler „Erneut versuchen“. */
 function SpeicherHinweis({ status, ro, erneut }: { status: SpeicherStand; ro: boolean; erneut: () => void }) {
   if (ro) return <span className="text-xs text-[color:var(--muted)]">Vorschau</span>;
   if (status === "fehler")

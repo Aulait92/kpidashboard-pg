@@ -314,7 +314,7 @@ describe("Erstanschreiben v8 (vorher v7): Text und Parameter", () => {
       source: "Privatschutz",
       formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }],
     });
-    expect(t).toBe("Hallo Julia Schneider, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*");
+    expect(t).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*");
   });
 
   it("Parameter je Lage: Formular leer, teilweise, vollständig (Privatschutz, Sie)", () => {
@@ -460,7 +460,7 @@ describe("Erstanschreiben v8: Einreichung, Auswahl und Erstinformation (Live-Tes
     expect([r.tpl.name, r.dokument, r.purpose]).toEqual(["pg_outreach_v6_sie", "vollstaendig", "outreach"]);
     const params = r.params(["Privatschutz", "Herrn Kannapinn", "Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu"]);
     const text = renderTemplate(r.tpl.body, params);
-    expect(text).toBe("Hallo Ole Kannapinn Testlead, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?*");
+    expect(text).toBe("Hallo Herr Testlead, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?*");
     expect(text).not.toMatch(/\b(deine?|dich|dir)\b/);
     // Du-Kunde bekommt weiter die Du-Fassung
     const du = rankOutreach(spaeter, P, "du", { fullName: "Ole Kannapinn Testlead" }, { pdf: "vollstaendig" });

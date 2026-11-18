@@ -144,11 +144,13 @@ describe("Vorlagen Fassung 2", () => {
     expect(terminModus({})).toBeNull();
   });
 
-  it("Anrede: Herr/Frau Nachname nur bei bekannter Anrede, sonst Vor- und Nachname, nie geraten", () => {
+  it("Anrede: Herr/Frau Nachname bei bekannter Anrede oder eindeutigem Vornamen, sonst Vor- und Nachname", () => {
     expect(terminAnrede({ salutation: "Frau", firstName: "Julia", lastName: "Schneider" }, "Julia Schneider")).toBe("Frau Schneider");
-    expect(terminAnrede({ salutation: null, firstName: "Julia", lastName: "Schneider" }, null)).toBe("Julia Schneider");
-    expect(terminAnrede({ salutation: "Herr", firstName: "Max", lastName: "Muster" }, "Petra Weber")).toBe("Petra Weber");
-    expect(terminAnrede(null, "Max Muster")).toBe("Max Muster");
+    expect(terminAnrede({ salutation: null, firstName: "Julia", lastName: "Schneider" }, null)).toBe("Frau Schneider");
+    expect(terminAnrede({ salutation: null, firstName: "Andrea", lastName: "Schneider" }, null)).toBe("Andrea Schneider");
+    expect(terminAnrede({ salutation: "Herr", firstName: "Max", lastName: "Muster" }, "Petra Weber")).toBe("Frau Weber");
+    expect(terminAnrede(null, "Max Muster")).toBe("Herr Muster");
+    expect(terminAnrede(null, "Kim Muster")).toBe("Kim Muster");
     expect(terminAnrede({ firstName: "Max" }, "Max")).toBe("Max");
     expect(terminAnrede(null, null)).toBeNull();
   });

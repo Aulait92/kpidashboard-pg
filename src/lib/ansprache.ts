@@ -6,11 +6,11 @@
 //   Du  → „Hallo Julia,“ (ohne Namen „Hallo,“)
 //   Sie → „Guten Tag Frau Schneider,“ bzw. „Guten Tag Herr Schneider,“, wenn die Anrede bekannt ist,
 //         sonst mit vollem Namen „Guten Tag Julia Schneider,“; ohne Nachnamen „Guten Tag,“.
-//   Die Anrede wird nie aus dem Vornamen geraten (Ole, 17.11.2026; ersetzt die Regel vom 16.11.2026), nur aus
-//   Angaben: Formularfeld Anrede/Geschlecht, Korrektur im Kontakt, Bestandskunde, Vertriebs-CRM oder
-//   „Frau …“/„Herr …“ im Namen selbst.
+//   Anrede aus Angaben (Formularfeld Anrede/Geschlecht, Korrektur im Kontakt, Bestandskunde, Vertriebs-CRM oder
+//   „Frau …“/„Herr …“ im Namen selbst), sonst aus dem Vornamen, aber nur, wenn er eindeutig ist (Ole, 18.11.2026:
+//   „solange wir uns sicher sind“; Liste in lib/vorname-anrede.ts). Bewusst offen gelassen (Divers) bleibt offen.
 
-import { anredeBewusstOffen } from "@/lib/vorname-anrede";
+import { anredeAusVorname, anredeBewusstOffen } from "@/lib/vorname-anrede";
 
 export type Ansprache = "sie" | "du";
 
@@ -81,7 +81,7 @@ export function salutationFromForm(formData: unknown): Salutation | null {
 
 /**
  * Anrede-Rohwert aus Lead.formData für AnredeKontakt: „Herr“/„Frau“, „keine“ bei ausdrücklich offener Anrede
- * (Divers, keine Angabe, vom Vermittler so gewählt), sonst null (Anrede unbekannt).
+ * (Divers, keine Angabe, vom Vermittler so gewählt), sonst null (dann Anrede aus dem Vornamen, falls eindeutig).
  */
 export function anredeRohAusForm(formData: unknown): string | null {
   if (!Array.isArray(formData)) return null;
@@ -141,7 +141,8 @@ export function kontaktParts(k: AnredeKontakt | null | undefined): { first: stri
     }
   }
   if (first && last && first === last) first = "";
-  // Herr/Frau nie aus dem Vornamen raten (Ole, 17.11.2026)
+  // Eindeutiger Vorname → Herr/Frau (Ole, 18.11.2026), außer die Anrede wurde bewusst offen gelassen
+  if (!salutation && !anredeBewusstOffen(k?.salutation)) salutation = anredeAusVorname(first);
   return { first, last, salutation };
 }
 

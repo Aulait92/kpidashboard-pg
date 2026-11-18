@@ -219,7 +219,7 @@ type Ctx = {
 
 /** Anrede-Zeile nach der zentralen Regel (lib/ansprache.ts): „Guten Tag Frau Meier,“ / „Guten Tag Anna Meier,“ / „Guten Tag,“. */
 export function greetingFor(c: { salutation: string | null; firstName: string | null; lastName: string | null }): string {
-  // Nur mit echtem Nachnamen (nicht aus dem Vornamen ableiten)
+  // Nur mit echtem Nachnamen; Herr/Frau nach der zentralen Regel (auch eindeutiger Vorname)
   return anredeZeile("sie", { salutation: c.salutation, firstName: c.firstName, lastName: c.lastName });
 }
 
