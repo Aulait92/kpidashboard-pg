@@ -83,14 +83,21 @@ function plusDaysAt(base: Date, days: number, hour: number, minute: number): Dat
   return berlinWallTime(mid.getUTCFullYear(), mid.getUTCMonth() + 1, mid.getUTCDate(), hour, minute);
 }
 
-/** In ein Anruffenster schieben: nicht vor 9 Uhr, nicht ab 20 Uhr, nicht sonntags. */
-function intoWindow(at: Date): Date {
+/** Arbeitstage (0 = Sonntag … 6 = Samstag). Standard Montag bis Freitag (Ole, 18.11.2026: „Die meisten Vermittler arbeiten
+ * samstags nicht“); wer samstags Termine anbietet (freie Zeiten im Kalender), bekommt auch samstags Anrufversuche. */
+export const STANDARD_ARBEITSTAGE = [1, 2, 3, 4, 5];
+const WOCHENTAG: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+/** In ein Anruffenster schieben: nicht vor 9 Uhr, nicht ab 20 Uhr, nur an Arbeitstagen (nie sonntags). */
+function intoWindow(at: Date, arbeitstage: number[] = STANDARD_ARBEITSTAGE): Date {
+  const tage = new Set(arbeitstage.filter((d) => d >= 1 && d <= 6));
+  if (!tage.size) STANDARD_ARBEITSTAGE.forEach((d) => tage.add(d));
   let t = at;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 10; i++) {
     const p = berlinParts(t);
     if (p.hour >= LATEST_HOUR) t = plusDaysAt(t, 1, EARLIEST.hour, EARLIEST.minute);
     else if (p.hour < EARLIEST.hour) t = plusDaysAt(t, 0, EARLIEST.hour, EARLIEST.minute);
-    else if (p.weekday === "Sun") t = plusDaysAt(t, 1, p.hour, p.minute);
+    else if (!tage.has(WOCHENTAG[p.weekday] ?? 1)) t = plusDaysAt(t, 1, p.hour, p.minute);
     else return t;
   }
   return t;
@@ -100,14 +107,14 @@ function intoWindow(at: Date): Date {
  * Zeitpunkt des nächsten Versuchs nach `done` dokumentierten Versuchen, oder null, wenn alle 6 gemacht sind.
  * startedAt = erster Versuch (Tag 1), lastAt = letzter Versuch.
  */
-export function nextCallAttemptAt(opts: { done: number; startedAt: Date; lastAt: Date; now: Date }): Date | null {
+export function nextCallAttemptAt(opts: { done: number; startedAt: Date; lastAt: Date; now: Date; arbeitstage?: number[] }): Date | null {
   const next = Math.max(1, opts.done) + 1;
   if (next > CALL_ATTEMPTS_TARGET) return null;
   const slot = SLOTS[next];
   let at = "afterHours" in slot ? new Date(opts.lastAt.getTime() + slot.afterHours * HOUR) : plusDaysAt(opts.startedAt, slot.day, slot.hour, slot.minute);
   const earliest = Math.max(opts.lastAt.getTime() + MIN_GAP_MS, opts.now.getTime());
   if (at.getTime() < earliest) at = new Date(earliest);
-  return intoWindow(at);
+  return intoWindow(at, opts.arbeitstage);
 }
 
 /** Kurz für die Anzeige: „heute 14:30“, „morgen 10:00“, „Do., 19.11. 15:00“. */
@@ -138,11 +145,12 @@ export function zeitImSatz(at: Date, now: Date): string {
 export function rueckrufZeitenAusPlan(
   l: { followUpAt: Date | null; followUpNote: string | null; callAttempts: number; callPlanStartedAt: Date | null; lastCallAttemptAt: Date | null },
   now: Date,
+  arbeitstage?: number[],
 ): [string, string] | null {
   if (!l.followUpAt || !isCallPlanNote(l.followUpNote)) return null;
   const n = Number(/(\d+) von/.exec(l.followUpNote ?? "")?.[1] ?? l.callAttempts + 1);
   const erst = l.followUpAt.getTime() < now.getTime() ? now : l.followUpAt;
-  const zweit = nextCallAttemptAt({ done: n, startedAt: l.callPlanStartedAt ?? l.lastCallAttemptAt ?? erst, lastAt: erst, now: erst });
+  const zweit = nextCallAttemptAt({ done: n, startedAt: l.callPlanStartedAt ?? l.lastCallAttemptAt ?? erst, lastAt: erst, now: erst, arbeitstage });
   if (!zweit) return null;
   return [zeitImSatz(erst, now), zeitImSatz(zweit, now)];
 }

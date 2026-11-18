@@ -280,3 +280,45 @@ export async function resetWhatsAppAction(): Promise<WaCheckState> {
   revalidatePath("/buyer", "layout");
   return { ok: true, message: "Zurückgesetzt. Sie können jetzt neu beginnen." };
 }
+
+// ─── Einrichtung ohne Ole (Ole, 18.11.2026) ─────────────────────────────────
+
+export type TestleadSelbstState = { ok?: boolean; error?: string };
+
+/**
+ * „Testlead an mich schicken“: der Kunde erlebt die echte WhatsApp-Strecke auf seinem eigenen Handy (lib/testlead.ts,
+ * Lead als Test markiert, zählt nirgends). Erledigt den Schritt „Testlead“ (Onboarding.testLeadAt). Höchstens 5 am Tag.
+ */
+export async function testleadSelbstAction(_prev: TestleadSelbstState, fd: FormData): Promise<TestleadSelbstState> {
+  let ctx;
+  try {
+    ({ ctx } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const wa = await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true } });
+  if (wa?.status !== "connected") return { error: "Erst WhatsApp verbinden, dann testen." };
+  const heute = await prisma.auditLog.count({ where: { customerId: ctx.customerId, action: "lead.test_create", at: { gte: new Date(Date.now() - 86_400_000) } } });
+  if (heute >= 5) return { error: "Für heute sind genug Tests gelaufen. Morgen geht es wieder." };
+  const { createTestLead, testLeadProducts } = await import("@/lib/testlead");
+  const product = (await testLeadProducts(ctx.customerId))[0];
+  if (!product) return { error: "Noch kein Produkt eingerichtet. Bitte kurz bei uns melden." };
+  const r = await createTestLead({ customerId: ctx.customerId, phone: str(fd, "phone", 40), product, confirmed: true, name: "Test Lead" }, { id: ctx.userId, email: ctx.email, role: "BUYER" });
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/buyer", "layout");
+  return { ok: true };
+}
+
+/** „Mit welchen Gesellschaften arbeiten Sie?“ (Vorauswahl für Terminvorbereitung und Angebote, lib/tarifauswahl-server.ts) */
+export async function gesellschaftenEinrichtungAction(keys: string[]): Promise<SetupState> {
+  let ctx;
+  try {
+    ({ ctx } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const { gesellschaftenSpeichern } = await import("@/lib/tarifauswahl-server");
+  await gesellschaftenSpeichern(ctx, Array.isArray(keys) ? keys.map(String) : []);
+  revalidatePath("/buyer/einrichtung");
+  return { ok: true };
+}

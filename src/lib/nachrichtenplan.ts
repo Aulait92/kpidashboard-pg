@@ -83,6 +83,8 @@ export type PlanTermin = {
 
 export type PlanEingabe = {
   now: Date;
+  /** Arbeitstage des Vermittlers für den Anrufplan (lib/call-plan.ts), Standard Mo bis Fr */
+  arbeitstage?: number[];
   an: Ansprache;
   /** Anrede-Zeile an den Lead („Guten Tag Frau Becker,“) */
   hi: string;
@@ -302,7 +304,7 @@ function anrufVersuche(p: PlanEingabe, ab: number, erstAt: Date, startedAt: Date
   let at: Date | null = erstAt;
   for (let n = ab; n <= CALL_ATTEMPTS_TARGET && at; n++) {
     out.push({ key: `anruf:${n}`, at: iso(at), kanal: "anruf", quelle: "anrufplan", titel: callPlanNote(n), vorschau: `Aufgabe auf „Heute“: ${p.label} anrufen`, voraussichtlich: n > ab });
-    at = nextCallAttemptAt({ done: n, startedAt, lastAt: at, now: at });
+    at = nextCallAttemptAt({ done: n, startedAt, lastAt: at, now: at, arbeitstage: p.arbeitstage });
   }
   return out;
 }

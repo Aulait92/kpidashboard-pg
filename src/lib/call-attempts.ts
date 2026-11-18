@@ -12,7 +12,7 @@
 
 import { anrufErledigt } from "@/lib/telefonat-server";
 import { updateLeadEditableFields } from "@/lib/airtable-write";
-import { CALL_ATTEMPT_LOCK_MS, CALL_ATTEMPTS_TARGET, callPlanNote, fmtAttemptAt, isReplaceableCallTask, nextCallAttemptAt } from "@/lib/call-plan";
+import { CALL_ATTEMPT_LOCK_MS, CALL_ATTEMPTS_TARGET, STANDARD_ARBEITSTAGE, callPlanNote, fmtAttemptAt, isReplaceableCallTask, nextCallAttemptAt } from "@/lib/call-plan";
 import { logLeadHistory } from "@/lib/lead-history";
 import { startSequence } from "@/lib/lead-sequences";
 import { prisma } from "@/lib/prisma";
@@ -58,6 +58,14 @@ export async function ladeNichtErreichtHinweis(leadId: string, attempts: number,
     .catch(() => null);
 }
 
+/** Arbeitstage des Vermittlers aus seinen freien Zeiten im Kalender (Samstag nur, wenn er samstags Termine anbietet). */
+export async function arbeitstageFuer(customerId: string): Promise<number[]> {
+  const { loadLeadTimes } = await import("@/lib/calendar/lead-times");
+  const lt = await loadLeadTimes(customerId).catch(() => null);
+  const tage = (lt?.weekdays ?? []).filter((d) => d >= 1 && d <= 6);
+  return tage.length ? tage : STANDARD_ARBEITSTAGE;
+}
+
 /**
  * Nächsten Versuch als Wiedervorlage setzen (ohne neuen Versuch zu zählen). Gibt den Zeitpunkt zurück,
  * null wenn alle Versuche gemacht sind oder eine eigene Wiedervorlage bleibt.
@@ -65,13 +73,14 @@ export async function ladeNichtErreichtHinweis(leadId: string, attempts: number,
 export async function planNextCallAttempt(leadId: string, now = new Date()): Promise<{ nextAt: Date | null; kept: boolean }> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { callAttempts: true, lastCallAttemptAt: true, callPlanStartedAt: true, followUpAt: true, followUpNote: true },
+    select: { customerId: true, callAttempts: true, lastCallAttemptAt: true, callPlanStartedAt: true, followUpAt: true, followUpNote: true },
   });
   if (!lead) return { nextAt: null, kept: false };
+  const arbeitstage = await arbeitstageFuer(lead.customerId);
   const own = lead.followUpAt && lead.followUpAt.getTime() > now.getTime() && !isReplaceableCallTask(lead.followUpNote);
   if (own) return { nextAt: null, kept: true };
   const startedAt = lead.callPlanStartedAt ?? lead.lastCallAttemptAt ?? now;
-  const nextAt = nextCallAttemptAt({ done: lead.callAttempts, startedAt, lastAt: lead.lastCallAttemptAt ?? now, now });
+  const nextAt = nextCallAttemptAt({ done: lead.callAttempts, startedAt, lastAt: lead.lastCallAttemptAt ?? now, now, arbeitstage });
   if (!nextAt) {
     // Alle Versuche gemacht: die eigene Plan-Aufgabe entfällt, jetzt entscheidet der Berater (Gewonnen bzw. Verloren).
     if (isReplaceableCallTask(lead.followUpNote)) {

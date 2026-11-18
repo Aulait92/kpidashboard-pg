@@ -93,7 +93,8 @@ export async function sendeAbfolgenMail(seq: AbfolgenSeq, step: AbfolgenMailStep
   switch (step.vorlage) {
     case "nicht_erreicht": {
       // Die nächsten zwei Versuche aus dem Anrufplan (lib/call-plan.ts); ohne Plan die Standardzeiten
-      const z = rueckrufZeitenAusPlan(lead, now);
+      const { arbeitstageFuer } = await import("@/lib/call-attempts");
+      const z = rueckrufZeitenAusPlan(lead, now, await arbeitstageFuer(seq.customerId));
       if (z) [werte.rueckruf_1, werte.rueckruf_2] = z;
       break;
     }
