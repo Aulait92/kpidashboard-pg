@@ -201,8 +201,9 @@ export function SchutzBereich({
               const vorschlag = !!s.quelle;
               const teile = schutzKurzTeile(s);
               const schalter = (s.status !== "bei-uns" || !!sp) && (imKatalog.includes(s.key) || !!sp);
-              // Entfernen geht, solange die Sparte nicht im heutigen Angebot ist (sonst erst den Schalter ausschalten)
-              const entfernbar = !ro && !sp;
+              // Entfernen (selten, daher nur an selbst beantworteten bzw. hinzugefügten Zeilen, nicht an Tipps und Vorschlägen):
+              // solange die Sparte nicht im heutigen Angebot ist (sonst erst den Schalter ausschalten)
+              const entfernbar = !ro && !sp && !tipp && !vorschlag;
               return (
                 <li
                   key={s.key}
@@ -256,7 +257,7 @@ export function SchutzBereich({
                     </button>
                     {offen ? (
                       <div
-                        className="order-last mb-2.5 grid w-full grid-cols-[1fr_1.2fr_1.05fr_0.75fr] divide-x divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] sm:order-none sm:mb-0 sm:w-[25rem]"
+                        className="order-last mb-2.5 flex w-full divide-x divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] sm:order-none sm:mb-0 sm:grid sm:w-[25rem] sm:grid-cols-4"
                         role="radiogroup"
                         aria-label={`Hat ${kunde} ${s.label} schon?`}
                         data-schutz-segmente
@@ -285,7 +286,8 @@ export function SchutzBereich({
                                 if (!zurueck && (st === "bei-uns" || st === "luecke")) klappe(s.key, false);
                               }}
                               className={cn(
-                                "min-h-11 px-1 text-center text-[14px] font-semibold leading-tight tracking-tight transition-colors sm:min-h-10",
+                                // Handy: Breite nach Inhalt verteilt, damit „Ja, woanders“ nicht umbricht
+                                "min-h-11 flex-auto px-1.5 text-center text-[14px] font-semibold leading-tight tracking-tight transition-colors sm:min-h-10 sm:px-1",
                                 antwortKlasse(st, an, vorschlag),
                               )}
                               data-schutz-status={st}
