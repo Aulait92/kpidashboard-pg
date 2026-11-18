@@ -8,7 +8,7 @@ describe("Live-Test 17.11.2026", () => {
   it("Wunschzeit frei: direkt buchen, keine zweite Zeit; Regel steht im Prompt", () => {
     expect(WUNSCHZEIT_REGEL).toMatch(/buche sie direkt mit book_appointment/);
     expect(WUNSCHZEIT_REGEL).toMatch(/biete keine zweite Zeit an/);
-    const r = terminRegeln({ an: "sie", person, videoOnly: true, beispiel: "…", emailBekannt: true });
+    const r = terminRegeln({ an: "sie", person, formate: { telefon: false, vorOrt: false }, beispiel: "…", emailBekannt: true });
     expect(r).toContain(WUNSCHZEIT_REGEL);
   });
 

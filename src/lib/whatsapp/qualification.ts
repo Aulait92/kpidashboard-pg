@@ -17,6 +17,8 @@ export const QUALIFICATION_FIELDS = [
   { key: "bereiche", label: "Rechtsschutz-Bereiche", hint: "z. B. Privat, Beruf, Verkehr, Wohnen (Mieter)" },
   { key: "gebaeude", label: "Gebäude", hint: "z. B. 2 Wohneinheiten, Bj. 2000, 78 m², teilw. vermietet, Keller mit Wohnfläche, Wärmepumpe, PV" },
   { key: "tier", label: "Tier", hint: "z. B. Katze Bernd, männlich, geb. 01.01.2025, Abessinier, Wohnungskatze, Zähne behandelt" },
+  // Gesundheit des Tieres (TKV, feste Frage nach der Buchung, lib/whatsapp/tier-fragen.ts); keine Art.-9-Daten
+  { key: "tiergesundheit", label: "Gesundheit (Tier)", hint: "nur Tiere: z. B. gesund oder War in Behandlung: Zahnbehandlung im Frühjahr" },
   { key: "tarifwunsch", label: "Gewünschter Schutz", hint: "z. B. nur OP-Schutz oder volle Krankenversicherung" },
   { key: "vorschaeden", label: "Vorschäden (5 Jahre)", hint: "je Art mit Anzahl, z. B. Hausrat 0, Fahrraddiebstahl 1; oder offen" },
   { key: "anlass", label: "Anlass", hint: "z. B. Umzug, Schaden, Geburt" },

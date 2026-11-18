@@ -261,6 +261,11 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-abschluss-vorabend");
     return null;
   });
+  // Maklervollmacht per WhatsApp: genau eine Erinnerung 2 Tage nach dem Senden, solange nicht unterschrieben (9 bis 19 Uhr)
+  const vollmachtErinnerung = await import("@/lib/maklervollmacht/whatsapp").then((m) => m.runVollmachtErinnerungen(now)).catch((e: unknown) => {
+    reportError(e, "cron-vollmacht-erinnerung");
+    return null;
+  });
   // Telefonate (lib/telefonat-server.ts): Push „Was ist bei … rausgekommen?“ 15 Min. nach „Anrufen“ ohne Ergebnis;
   // nach dem Telefonat fragt der Assistent die offenen Punkte ab (mit Termin, im 24h-Fenster)
   const telefonate = {
@@ -441,7 +446,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, naechsterSchritt, abschlussFrage, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

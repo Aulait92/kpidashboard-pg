@@ -10,6 +10,8 @@ import { OnboardingCard } from "@/components/vertrieb/onboarding-card";
 import { SetupCard } from "@/components/admin/setup-card";
 import { NewUiCard } from "@/components/admin/new-ui-card";
 import { VermittlerCard } from "@/components/admin/vermittler-card";
+import { VermittlerAnredeCard } from "@/components/admin/vermittler-anrede-card";
+import { vermittlerAnredeLabel } from "@/lib/vermittler-ansprache";
 import { StornoQuoteKunde } from "@/components/admin/storno-quote";
 import { TestdatenCard } from "@/components/admin/testdaten-card";
 import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
@@ -41,6 +43,7 @@ export default async function KundeUebersicht({ params, searchParams }: { params
       retainerStart: true,
       metaAdAccountId: true,
       vermittlerTyp: true,
+      vermittlerDu: true,
       newUi: true,
       stornoQuote: true,
       salesContact: {
@@ -64,6 +67,7 @@ export default async function KundeUebersicht({ params, searchParams }: { params
 
   const einstellungen = [
     TYP_LABEL[c.vermittlerTyp] ?? c.vermittlerTyp,
+    `Anrede ${vermittlerAnredeLabel({ kunde: c.vermittlerDu })}`,
     `neue Oberfläche ${c.newUi ? "an" : "aus"}`,
     `Stornoquote ${c.stornoQuote != null ? `${(Math.round(Number(c.stornoQuote) * 1000) / 10).toLocaleString("de-DE")} %` : "Standard"}`,
     "Testdaten",
@@ -155,7 +159,7 @@ export default async function KundeUebersicht({ params, searchParams }: { params
                     ) : null}
                   </ul>
                 ) : (
-                  <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Kein Vertriebskontakt verknüpft (Kunde aus Airtable).</p>
+                  <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Kein Vertriebskontakt verknüpft.</p>
                 )}
               </div>
             </Card>
@@ -209,6 +213,9 @@ export default async function KundeUebersicht({ params, searchParams }: { params
                 </div>
                 <div data-funktion="module-actions-setvermittlertypaction--vermittlertyp-setzen">
                   <VermittlerCard customerId={id} />
+                </div>
+                <div data-funktion="module-actions-setvermittlerduaction--anrede-gegenueber-dem-kunden-sie-oder-du">
+                  <VermittlerAnredeCard customerId={id} />
                 </div>
                 <div data-funktion="storno-quote-stornoquotekunde--stornoquote-der-vertraege-des-kunden">
                   <StornoQuoteKunde customerId={id} />

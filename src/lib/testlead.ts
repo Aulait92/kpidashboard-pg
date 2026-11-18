@@ -108,6 +108,36 @@ export async function testLeadProducts(customerId: string): Promise<string[]> {
   return mergeProductNames(known, all.map((p) => p.name));
 }
 
+/**
+ * Produkte des Kunden für Vorschauen („So arbeitet Ihr Assistent“, Ole 18.11.2026): nur gebuchte Produkte, eigene
+ * Leadformulare, zuletzt genutzte Produkte und die Produkte aus seinem Angebot. Nie der ganze Katalog (der ist nur für
+ * Testleads gedacht und enthält Pay-per-Lead-Produkte anderer Kunden).
+ */
+export async function kundenProdukte(customerId: string): Promise<string[]> {
+  const [cps, sources, recent, ob] = await Promise.all([
+    prisma.customerProduct.findMany({ where: { customerId }, select: { product: { select: { name: true } } } }),
+    prisma.leadSource.findMany({ where: { customerId, active: true }, select: { productKey: true } }),
+    prisma.lead.findMany({
+      where: { customerId, isTest: false, source: { not: null }, NOT: { source: { in: ["Empfehlung", "Bestandskunde"] } } },
+      distinct: ["source"],
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: { source: true },
+    }),
+    prisma.onboarding.findUnique({ where: { customerId }, select: { offerId: true } }).catch(() => null),
+  ]);
+  const offer = ob?.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { products: true } }).catch(() => null) : null;
+  const ausAngebot = (Array.isArray(offer?.products) ? (offer!.products as unknown[]) : [])
+    .map((p) => (p && typeof p === "object" && typeof (p as { name?: unknown }).name === "string" ? String((p as { name: string }).name).trim() : ""))
+    .filter(Boolean);
+  return mergeProductNames(
+    cps.map((c) => c.product.name),
+    sources.map((s) => s.productKey),
+    ausAngebot,
+    recent.map((l) => l.source ?? ""),
+  );
+}
+
 /** meta = Leadformular, der Assistent schreibt zuerst; eingehend = der Lead schreibt zuerst per WhatsApp. */
 export type TestLeadHerkunft = "meta" | "eingehend";
 

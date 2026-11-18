@@ -7,7 +7,7 @@ import { a, asAnsprache } from "@/lib/ansprache";
 import { advisorDisplayName, firmDisplayName } from "@/lib/advisor-name";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { vermittlerName } from "@/lib/whatsapp/gespraech";
-import { testLeadAnswers, testLeadProducts } from "@/lib/testlead";
+import { kundenProdukte, testLeadAnswers } from "@/lib/testlead";
 import { assistentMomente, beispielVerlauf, type ChatZeile, type Moment } from "@/lib/so-arbeitet";
 
 export type SoArbeitetDaten = {
@@ -25,7 +25,7 @@ export async function ladeSoArbeitet(customerId: string, wunsch?: string | null,
   const [customer, erst, produkteRoh, who] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, leadAddress: true, ...GESUNDHEIT_FREIGABE_SELECT } }),
     prisma.erstinformation.findUnique({ where: { customerId }, select: { firma: true } }).catch(() => null),
-    testLeadProducts(customerId).catch(() => [] as string[]),
+    kundenProdukte(customerId).catch(() => [] as string[]),
     ansprechpartner({ customerId }),
   ]);
   const an = asAnsprache(customer?.leadAddress);

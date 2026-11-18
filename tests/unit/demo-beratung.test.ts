@@ -59,7 +59,7 @@ describe("Demo Beratungspräsentation", () => {
     const r = fs.find((f) => f.id.startsWith("vergleich-rechtsschutz"))!.html;
     expect(r.match(/data-tarif=/g)).toHaveLength(4);
     for (const n of ["Versicherungssumme", "Berufs-Rechtsschutz", "Wohnen", "Strafkaution (als Darlehen)"]) expect(r).toContain(`<tr><th>${n}</th>`);
-    expect(r).toContain("In allen Tarifen:</b> <span>✓ Telefonische Rechtsberatung, auch in nicht versicherten Fällen</span><span>✓ Kosten im Rechtsstreit</span><span>✓ Mediation zur Schlichtung</span></div>");
+    expect(r).toContain('In allen Tarifen:</b> <span><i class="ja-k">✔</i> Telefonische Rechtsberatung, auch in nicht versicherten Fällen</span><span><i class="ja-k">✔</i> Kosten im Rechtsstreit</span><span><i class="ja-k">✔</i> Mediation zur Schlichtung</span></div>');
     expect(r).toContain("35,69");
     expect(r).toContain("unbegrenzt");
   });

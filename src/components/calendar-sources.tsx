@@ -469,12 +469,12 @@ export function BlockTimes({
 // ─── Quellen ────────────────────────────────────────────────────────────
 
 export type SourceStatus = {
-  native: { connected: boolean; label: string | null };
+  native: { connected: boolean; label: string | null; account?: string | null };
   hasIcs: boolean;
   allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null } | null;
 };
 
-export function AllianzForm({ action, readOnly, hidden }: { action: FormAction; readOnly: boolean; hidden?: Record<string, string> }) {
+export function AllianzForm({ action, readOnly, hidden, onUseIcs }: { action: FormAction; readOnly: boolean; hidden?: Record<string, string>; onUseIcs?: () => void }) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
   return (
     <form action={formAction} className="space-y-3">
@@ -493,6 +493,11 @@ export function AllianzForm({ action, readOnly, hidden }: { action: FormAction; 
         </Submit>
         <Result state={state} />
       </div>
+      {state.next === "ics" && onUseIcs ? (
+        <button type="button" onClick={onUseIcs} className={buttonClass("secondary", "sm")} data-allianz-ics>
+          Kalender-Link (ICS) nutzen
+        </button>
+      ) : null}
     </form>
   );
 }
@@ -571,7 +576,12 @@ export function SourcePicker({
         {status.native.connected ? (
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1.5 text-[15px] font-medium text-emerald-700">
-              <CheckCircle2 className="h-4 w-4" /> {status.native.label ?? "Kalender"} verbunden
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span className="min-w-0">
+                {status.native.label ?? "Kalender"} verbunden{status.native.account ? ": " : ""}
+                {/* Adresse als Ganzes umbrechen (am Handy in die nächste Zeile statt mitten im Wort) */}
+                {status.native.account ? <span className="inline-block max-w-full break-all">{status.native.account}</span> : null}
+              </span>
             </span>
             {disconnectNativeAction && !readOnly ? (
               <form action={disconnectNativeAction}>
@@ -668,7 +678,7 @@ export function SourcePicker({
                 </form>
               </div>
             ) : (
-              <AllianzForm action={allianzAction} readOnly={readOnly} hidden={hidden} />
+              <AllianzForm action={allianzAction} readOnly={readOnly} hidden={hidden} onUseIcs={() => setWay("ics")} />
             )
           ) : null}
         </div>

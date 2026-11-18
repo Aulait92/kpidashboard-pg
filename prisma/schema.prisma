@@ -110,6 +110,9 @@ model Customer {
   // Status nach § 34d GewO: "vertreter" (Ausschließlichkeit), "mehrfachvertreter" oder "makler"; bestimmt die
   // Standard-Provisionssätze (Mehrfachvertreter rechnen wie Vertreter) und die Erstinformation (lib/erstinformation.ts)
   vermittlerTyp        String    @default("vertreter")
+  // Maklervollmacht (Ole, 18.11.2026, nur Makler): wer schickt sie den Kunden? app | eigene; null = noch nicht entschieden
+  // (Frage in der Einrichtung und als Hinweis auf „Heute“, änderbar unter Einstellungen → Assistent)
+  vollmachtVersand     String?
   // Eigene Provisionssätze je Produkt (Kundenbereich → Konto → Meine Provisionen),
   // geprüft über lib/provision.parseCustomRates; null = Standard
   provisionRates       Json?
@@ -304,6 +307,10 @@ model Customer {
   newUi                          Boolean                   @default(false)
   // Ansprache von Leads und Kunden in allen Texten (E-Mail, WhatsApp-Assistent, Vorlagen, Termin-Nachrichten): "sie" | "du" (Ole, 14.11.2026)
   leadAddress                    String                    @default("sie")
+  // Du/Sie gegenüber dem Vermittler selbst (unserem Kunden): Begrüßung, persönliche Mails, Push (Ole, 18.11.2026).
+  // Aus dem angenommenen Angebot (Offer.mailDu), im Admin änderbar; null = unbekannt, dann Sie (lib/vermittler-ansprache.ts).
+  // Nicht verwechseln mit leadAddress (Ansprache der Leads). Die Oberfläche bleibt in Sie-Form.
+  vermittlerDu                   Boolean?
   // Policen per WhatsApp, Kranken/BU/Leben je Vermittler (Rechtsprüfung A5, Ole 18.11.2026): an, wenn der Vermittler
   // der AVV-Ergänzung (b) zugestimmt hat (Karte unter Einstellungen) UND seine Datenschutzhinweis-URL hinterlegt ist
   // (lib/policen/regeln.ts gesundheitFreigegeben). Intern/Test (Oles eigenes Konto, Testkunden): sofort an.
@@ -1225,6 +1232,9 @@ model CalendarConnection {
   // Weitere Google-Kalender, die nur für „belegt“ zählen (freigegebene Kalender, z. B. alter Kalender nach Kontowechsel;
   // Ole, 18.11.2026). Kalender-ID bzw. Adresse wie in Google, abgefragt per freeBusy mit.
   busyCalendarIds String[]  @default([])
+  // Davon zuletzt nicht abrufbar (z. B. Tippfehler → notFound); werden übersprungen, Hinweis in den Einstellungen
+  // (Ole, 18.11.2026). Leer = alle lesbar.
+  busyCalendarErrors String[] @default([])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -1257,6 +1267,10 @@ model AgentConfig {
   // Terminart (Ole, 17.11.2026): Der Assistent bietet nur Videotermine an, Telefon nur, wenn der Lead Video ablehnt.
   // Standard an; der Vermittler schaltet es unter Mein Kalender aus.
   videoOnly                Boolean   @default(true)
+  // Terminarten (Ole, 18.11.2026): Termine immer per Video. Nur wenn der Lead ausdrücklich etwas anderes wünscht, darf
+  // der Assistent Telefon bzw. einen Termin vor Ort in der Agentur anbieten, und nur wenn hier freigegeben (Standard aus).
+  allowPhone               Boolean   @default(false)
+  allowOnsite              Boolean   @default(false)
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl             String?
@@ -1416,7 +1430,9 @@ model Appointment {
   customerId            String
   leadId                String?
   conversationId        String?
-  mode                  String // phone | video
+  mode                  String // phone | video | onsite
+  // Ort bei Terminen vor Ort (Agentur-Adresse zum Zeitpunkt der Buchung, Ole 18.11.2026)
+  ort                   String?
   startsAt              DateTime
   endsAt                DateTime?
   calendarEventId       String?
@@ -5103,7 +5119,7 @@ model Maklervollmacht {
   leadId       String
   lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
   token        String    @unique
-  // offen | unterschrieben | widerrufen
+  // offen | unterschrieben | widerrufen | eigene (Makler hat schon eine eigene Vollmacht, die App schickt nichts)
   status       String    @default("offen")
   // sie | du (Ansprache auf der Seite und in der Mail)
   ansprache    String    @default("sie")
@@ -5122,10 +5138,21 @@ model Maklervollmacht {
   signedUa     String?
   sentAt       DateTime?
   widerrufenAt DateTime?
+  // Kopie an den Kunden nach der Unterschrift: gesendet | fehlgeschlagen | keine_adresse (Karte und Protokoll)
+  kopieStatus  String?
+  kopieAt      DateTime?
+  // Schreiben an die Versicherer gesendet (vom Makler abgehakt): {versichererKey: ISO-Zeitpunkt}
+  uebertragung Json?
+  // Per WhatsApp gesendet (Teil 2, 18.11.2026) und genau eine Erinnerung nach 2 Tagen ohne Unterschrift:
+  // erinnerungStatus gesendet | gestoppt (Abmeldung, kein Weg), erinnerungAt Zeitpunkt
+  waSentAt         DateTime?
+  erinnerungAt     DateTime?
+  erinnerungStatus String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   @@index([leadId])
+  @@index([status, waSentAt])
   @@index([customerId])
 }
 

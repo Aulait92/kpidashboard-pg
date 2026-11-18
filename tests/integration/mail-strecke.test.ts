@@ -101,7 +101,8 @@ describe("Mail-Strecke und Betroffenenrechte", () => {
     requireTestDb();
     process.env.PUBLIC_BOOKING_URL ||= "https://termin.example.org";
     process.env.ENCRYPTION_KEY ||= Buffer.alloc(32, 7).toString("base64");
-    customerId = (await makeCustomer({ leadAddress: "sie" })).id;
+    // Software-Kunde (mit Betreuung); Pay-per-Lead-Kunden bekommen keine Strecke (eigener Test unten)
+    customerId = (await makeCustomer({ leadAddress: "sie", retainerMonthly: 990 })).id;
     ownerId = (await makeBuyer(customerId, "owner")).id;
     await prisma.mailConnection.create({ data: { userId: ownerId, customerId, provider: "smtp", email: "berater@test.local", fromName: "Anna Berater" } });
     await prisma.agentConfig.create({ data: { customerId, active: true, outreachEnabled: true, followUpSequencesEnabled: true } });
@@ -144,6 +145,22 @@ describe("Mail-Strecke und Betroffenenrechte", () => {
     await prisma.lead.update({ where: { id: hand.id }, data: { formData: Prisma.DbNull } });
     await runMailStrecke(new Date());
     expect(await prisma.leadMailStrecke.count({ where: { leadId: hand.id } })).toBe(0);
+  });
+
+  it("Pay-per-Lead-Kunde: seine Leads kontaktieren wir nie (keine Strecke, keine Mail, keine SMS)", async () => {
+    const ppl = (await makeCustomer({ leadAddress: "sie" })).id;
+    try {
+      await prisma.agentConfig.create({ data: { customerId: ppl, active: true, outreachEnabled: true } });
+      const l = await prisma.lead.create({ data: { customerId: ppl, name: "Paula Ppl", email: `ppl${++n}@example.org`, source: "Zahnzusatzversicherung", status: "Neuer Lead", formData: [{ label: "Produkt", value: "Zahn" }], createdAt: new Date(Date.now() - 2 * 60_000) } });
+      process.env.MAIL_STRECKE_SMS = "1";
+      await runMailStrecke(new Date());
+      expect(await prisma.leadMailStrecke.count({ where: { leadId: l.id } })).toBe(0);
+      expect(await starteMailStrecke(l.id, "kein_whatsapp")).toMatchObject({ ergebnis: "nicht_moeglich", grund: "pay_per_lead" });
+      expect(mails.filter((x) => x.to === l.email)).toHaveLength(0);
+      expect(sms).toHaveLength(0);
+    } finally {
+      await cleanupCustomer(ppl);
+    }
   });
 
   it("131026: Erstmail der Strecke statt der alten Einmal-Mail; 131050 startet nichts", async () => {

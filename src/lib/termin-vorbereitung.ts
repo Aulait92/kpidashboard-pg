@@ -71,19 +71,27 @@ export function abschnitte(d: VorbereitungDaten): Abschnitt[] {
   const kat = produktCheckliste(d.lead.produkt)?.key ?? null;
 
   if (kat === "tier") {
+    // Antworten auf die Tierfragen im Chat (lib/whatsapp/tier-fragen.ts) stehen in angaben.tier als „Rasse: …; …“
+    const ausChat = (label: string) => q("tier")?.match(new RegExp(`(?:^|;\\s*)${label}:\\s*([^;]+)`, "i"))?.[1]?.trim() || null;
+    const tierRest = q("tier")
+      ?.split(/;\s*/)
+      .filter((x) => !/^(geboren|rasse|geschlecht|haltung):/i.test(x))
+      .join("; ");
     return [
       {
         titel: "Allianz-Rechner Tierkrankenversicherung",
         felder: [
+          // Gesundheit zuerst (Ole, 18.11.2026): entscheidet über Annahme und Tarif
+          { label: "Gesundheit des Tieres", wert: q("tiergesundheit") },
           { label: "Postleitzahl", wert: plz },
           { label: "Tierart", wert: formWert(d.formular, /tierart/i) },
           { label: "Anzahl Tiere", wert: formWert(d.formular, /anzahl tiere/i) },
           { label: "Name des Tieres", wert: formWert(d.formular, /name des tieres|tiername/i) },
-          { label: "Geschlecht", wert: formWert(d.formular, /geschlecht/i) },
-          { label: "Geburtsmonat / -jahr", wert: [formWert(d.formular, /geburtsmonat/i), formWert(d.formular, /geburtsjahr/i)].filter(Boolean).join(" ") || null },
-          { label: "Rasse", wert: formWert(d.formular, /rasse/i) },
-          { label: "Haltung (Wohnung / Freigänger)", wert: formWert(d.formular, /haltung/i) },
-          { label: "Gesundheit (24 Monate) und weitere Tiere", wert: q("tier") },
+          { label: "Geschlecht", wert: formWert(d.formular, /geschlecht/i) ?? ausChat("Geschlecht") },
+          { label: "Geburtsmonat / -jahr", wert: [formWert(d.formular, /geburtsmonat/i), formWert(d.formular, /geburtsjahr/i)].filter(Boolean).join(" ") || ausChat("Geboren") },
+          { label: "Rasse", wert: formWert(d.formular, /rasse/i) ?? ausChat("Rasse") },
+          { label: "Haltung (Wohnung / Freigänger)", wert: formWert(d.formular, /haltung/i) ?? ausChat("Haltung") },
+          ...(tierRest ? [{ label: "Weitere Angaben zu den Tieren", wert: tierRest }] : []),
         ],
       },
       {

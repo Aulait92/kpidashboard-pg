@@ -376,6 +376,7 @@ export const SUBPROCESSORS: { name: string; purpose: string; location: string }[
   { name: "360dialog GmbH", purpose: "Anbindung der WhatsApp Business API", location: "Deutschland" },
   { name: "Meta Platforms Ireland Ltd.", purpose: "WhatsApp-Nachrichtenversand; Lead-Formulare; Rückmeldung der Lead-Stufen an das Meta-Dataset des Auftraggebers (Meta-Lead-ID, Stufe, Zeitpunkt, Vertragswert; keine Kontaktdaten, kein Produkt; abschaltbar)", location: "Irland / USA" },
   { name: "Resend (Plus Five Five, Inc.)", purpose: "Versand von E-Mails (z. B. Terminbestätigungen)", location: "USA" },
+  { name: "seven communications GmbH & Co. KG (seven.io)", purpose: "Versand von SMS an Leads (Hinweis mit Link zur Terminwahl), nur wenn der Lead nicht per WhatsApp erreichbar ist", location: "Deutschland" },
   { name: "Formagrid Inc. (Airtable)", purpose: "Lead-Datenhaltung, nur noch bis zur vollständigen Umstellung auf den direkten Lead-Eingang", location: "USA" },
   { name: "Zapier, Inc.", purpose: "Übertragung der Leads aus den Meta-Formularen, nur noch bis zur vollständigen Umstellung auf den direkten Lead-Eingang", location: "USA" },
   { name: "OpenAI, L.L.C. / OpenAI Ireland Ltd.", purpose: "Erstellung von Werbemotiven, Videos und Untertiteln für die Kampagnen des Auftraggebers; keine Lead-Daten", location: "Irland / USA" },

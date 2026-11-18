@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { STEP_TEXT } from "@/components/first-day";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardCheck, ClipboardList, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardCheck, ClipboardList, FileSignature, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -15,6 +15,8 @@ import { SoArbeitet } from "@/components/so-arbeitet";
 import { ladeSoArbeitet } from "@/lib/so-arbeitet-server";
 import { ServiceMails } from "@/app/buyer/einstellungen/assistent/service-mails";
 import { BeratungsdokuSchalter } from "@/components/beratungsdoku-schalter";
+import { VollmachtVersandWahl } from "@/components/vollmacht-versand-wahl";
+import { asVollmachtVersand, VERSAND_FRAGE } from "@/lib/maklervollmacht/regeln";
 import { BeratungsdokuEinrichtungFrage } from "@/components/beratungsdoku-frage";
 import { BD_FRAGE_TEXT, BD_FRAGE_TITEL } from "@/lib/beratungsdoku";
 import { serviceMailsDaten } from "@/lib/mail/service-mails-daten";
@@ -38,6 +40,7 @@ import { WhatsAppGuide } from "@/components/whatsapp-guide";
 import { WaCheckButton, WaPendingRefresh, WaResetButton } from "./wa-check";
 import { WaInvited } from "./wa-invited";
 import { LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
+import { loadTerminFormate } from "@/lib/termin-formate-server";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import {
   connectAllianzAction,
@@ -119,7 +122,11 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
   const calendar = await loadCalendarSetup(ctx.customerId, ctx.customerId);
-  const makler = (await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "makler";
+  const kundeBasis = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true, leadAddress: true, vollmachtVersand: true } });
+  const vermittlerTyp = kundeBasis?.vermittlerTyp ?? "vertreter";
+  const makler = vermittlerTyp === "makler";
+  // Maklervollmacht (Ole, 18.11.2026): Pflichtfrage ohne Vorauswahl, nur Makler; beantwortet eingeklappt und änderbar
+  const vvVersand = asVollmachtVersand(kundeBasis?.vollmachtVersand);
   // Erstinformation (§ 15 VersVermV) und Einwilligungstext fürs Leadformular
   const erstinfo = software ? await loadErstinfo(ctx.customerId) : null;
   // Impressum-Adresse: Pflichtangabe auf den Seiten für Endkunden, geprüft, aber nicht blockierend (Rechtsvorprüfung 16.11.2026)
@@ -216,7 +223,13 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       <div className="space-y-5">
         <Step n={nextNo()} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={isOpen("questionnaire")} id="questionnaire">
           <p className="mb-4 text-sm text-[color:var(--muted)]">Nur noch, wie Sie arbeiten möchten:</p>
-          <QuestionnaireForm software={software} initial={(ob.questionnaire ?? {}) as Record<string, never>} readOnly={readOnly} />
+          <QuestionnaireForm
+            software={software}
+            // Ansprache immer aus der echten Einstellung (Ole, 18.11.2026: Fragebogen zeigte „Sie“, gespeichert war „du“)
+            initial={{ ...((ob.questionnaire ?? {}) as Record<string, unknown>), ansprache: kundeBasis?.leadAddress === "du" ? "du" : "sie" } as unknown as Record<string, never>}
+            formate={await loadTerminFormate(ctx.customerId)}
+            readOnly={readOnly}
+          />
         </Step>
 
         <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={isOpen("app")} id="app">
@@ -272,7 +285,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <StepExits
                 laterHref={laterHref("calendar")}
                 readOnly={readOnly}
-                skips={[{ kind: "skip:calendar:gesellschaft", label: "Meine Gesellschaft erlaubt das nicht" }]}
+                skips={[{ kind: "skip:calendar:gesellschaft", label: "Mein Versicherer erlaubt das nicht" }]}
               />
             ) : null}
           </Step>
@@ -285,7 +298,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Antworten landen dort. Wir senden nur E-Mails, die Sie selbst auslösen, und lesen Ihr Postfach nicht.
             </p>
             <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-postfach-gesellschaft>
-              Manche Gesellschaften (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu verbinden. Klären Sie
+              Manche Versicherer (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu verbinden. Klären Sie
               das im Zweifel vorher. Sie können den Schritt überspringen.
             </p>
             {ob.customer.mailFeaturesOff ? (
@@ -320,7 +333,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                     <SmtpForm readOnly={readOnly} />
                   </div>
                 </details>
-                <StepExits laterHref={laterHref("mailbox")} readOnly={readOnly} skips={[{ kind: "mailbox_off", label: "Meine Gesellschaft erlaubt das nicht" }]} />
+                <StepExits laterHref={laterHref("mailbox")} readOnly={readOnly} skips={[{ kind: "mailbox_off", label: "Mein Versicherer erlaubt das nicht" }]} />
               </>
             )}
           </Step>
@@ -338,7 +351,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             </Link>
             {!provision.confirmed ? <SkipButton kind="provision" readOnly={readOnly} label="Passt so" primary /> : null}
           </div>
-          {software && vertrieb ? <GesellschaftenWahl alle={alleGesellschaften} gewaehlt={vertrieb.vertrieb.gesellschaften} readOnly={readOnly} makler={makler} /> : null}
+          {software && vertrieb ? <GesellschaftenWahl alle={alleGesellschaften} gewaehlt={vertrieb.vertrieb.gesellschaften} readOnly={readOnly} vermittlerTyp={vermittlerTyp} /> : null}
         </Step>
 
         {software && erstinfo ? (
@@ -449,6 +462,41 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             </summary>
             <BeratungsdokuSchalter an={bdAn} darf={!readOnly} />
           </details>
+        ) : null}
+
+        {makler && software ? (
+          vvVersand ? (
+            <details
+              id="maklervollmacht"
+              open={schritt === "maklervollmacht"}
+              className="group overflow-hidden rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border)] bg-[color:var(--surface)] [&>summary::-webkit-details-marker]:hidden"
+              data-einrichtung-optional="maklervollmacht"
+            >
+              <summary className="flex cursor-pointer items-center gap-2.5 px-5 py-3.5 group-open:border-b group-open:border-[color:var(--border)]">
+                <FileSignature className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                <span className="flex-1 text-[15px] font-semibold tracking-tight">Maklervollmacht</span>
+                <span className="text-xs font-medium text-[color:var(--muted)]">{vvVersand === "app" ? "die App schickt sie" : "eigene Vollmacht"}</span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+              </summary>
+              <div className="p-5">
+                <VollmachtVersandWahl wert={vvVersand} darf={!readOnly} />
+              </div>
+            </details>
+          ) : (
+            <section
+              id="maklervollmacht"
+              className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]"
+              data-einrichtung-frage="maklervollmacht"
+            >
+              <div className="flex items-start gap-2.5 px-5 pb-3 pt-3.5">
+                <FileSignature className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand)]" />
+                <h2 className="min-w-0 flex-1 text-[15px] font-semibold tracking-tight">{VERSAND_FRAGE}</h2>
+              </div>
+              <div className="px-5 pb-4">
+                <VollmachtVersandWahl wert={null} darf={!readOnly} />
+              </div>
+            </section>
+          )
         ) : null}
 
         <Step n={nextNo()} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">
@@ -570,7 +618,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 laterHref={laterHref("whatsapp")}
                 readOnly={readOnly}
                 skips={[
-                  { kind: "skip:whatsapp:gesellschaft", label: "Meine Gesellschaft erlaubt das nicht" },
+                  { kind: "skip:whatsapp:gesellschaft", label: "Mein Versicherer erlaubt das nicht" },
                   { kind: "skip:whatsapp:nicht_noetig", label: "Ohne WhatsApp arbeiten" },
                 ]}
               />

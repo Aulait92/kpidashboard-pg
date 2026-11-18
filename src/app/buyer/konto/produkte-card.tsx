@@ -1,5 +1,7 @@
 "use client";
 
+import { InfoHinweis } from "@/components/info-hinweis";
+import { BETREUUNG_ERKLAERT } from "@/lib/begriffe";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, CheckCircle2, Layers, Loader2, Minus, Plus, ShieldCheck } from "lucide-react";
 import { Badge, Card, CardHeader } from "@/components/ui";
@@ -256,7 +258,7 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
               data-book-tier
               className={`rounded-[var(--radius-md)] border-2 px-4 py-4 text-[16px] leading-snug ${p.overIndividual ? "border-sky-300 bg-sky-50 text-sky-950" : "border-amber-300 bg-amber-50 text-amber-950"}`}
             >
-              <div className="mb-1 text-xs font-bold uppercase tracking-wide">{p.overIndividual ? "Individuelles Angebot" : p.tierChange ? "Neue Betreuungsstufe" : "Individuelle Konditionen"}</div>
+              <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide">{p.tierChange && !p.overIndividual ? <InfoHinweis begriff="Betreuungsstufe" text={BETREUUNG_ERKLAERT} className="order-last" /> : null}{p.overIndividual ? "Individuelles Angebot" : p.tierChange ? "Neue Betreuungsstufe" : "Individuelle Konditionen"}</div>
               <p className="font-semibold">{sentence}</p>
             </div>
           ) : null}

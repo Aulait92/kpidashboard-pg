@@ -320,7 +320,9 @@ export async function bookAppointment(opts: {
   conversationId?: string | null;
   start: string;
   durationMin?: number;
-  mode: "phone" | "video";
+  mode: "phone" | "video" | "onsite";
+  /** Termin vor Ort: Adresse der Agentur (Kalendereintrag, Bestätigung, Erinnerung) */
+  ort?: string | null;
   summary: string;
   description?: string;
   /** Lead als Teilnehmer → der Kalender verschickt die Einladung per Mail. */
@@ -379,7 +381,12 @@ export async function bookAppointment(opts: {
     attendeeEmails: advisorEmail ? [advisorEmail] : [],
     video: opts.mode === "video" && !room,
     location:
-      room ?? (opts.mode === "phone" && opts.leadPhone ? `Telefon: Lead anrufen unter +${opts.leadPhone}` : null),
+      room ??
+      (opts.mode === "phone" && opts.leadPhone
+        ? `Telefon: Lead anrufen unter +${opts.leadPhone}`
+        : opts.mode === "onsite"
+          ? (opts.ort?.trim() || "Vor Ort in der Agentur")
+          : null),
   });
   const videoUrl = room ?? event.videoUrl;
 
@@ -389,6 +396,7 @@ export async function bookAppointment(opts: {
       leadId: opts.leadId ?? null,
       conversationId: opts.conversationId ?? null,
       mode: opts.mode,
+      ort: opts.mode === "onsite" ? opts.ort?.trim() || null : null,
       startsAt: start,
       endsAt: end,
       calendarEventId: event.eventId,
@@ -415,7 +423,7 @@ export async function bookAppointment(opts: {
   if (opts.notifyLead !== "rescheduled") {
     const payload = {
       title: `📅 Neuer Termin: ${opts.leadName ?? "Lead"}`,
-      body: `${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(start)} Uhr · ${opts.mode === "video" ? "Videocall" : "Telefonat"}`,
+      body: `${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(start)} Uhr · ${opts.mode === "video" ? "Videocall" : opts.mode === "onsite" ? "Vor Ort" : "Telefonat"}`,
       tag: `appt:${appt.id}`,
       url: "/buyer",
     };
@@ -552,14 +560,14 @@ export async function rescheduleAppointment(opts: {
   appointmentId: string;
   customerId: string;
   start: string;
-  mode?: "phone" | "video";
+  mode?: "phone" | "video" | "onsite";
   by: "lead" | "team";
   /** Keine Mail an den Lead (z. B. Übergabe an die Vertretung zur selben Zeit). */
   silent?: boolean;
 }): Promise<{ appointmentId: string; meetUrl: string | null; start: string; manageUrl: string }> {
   const old = await prisma.appointment.findFirst({
     where: { id: opts.appointmentId, customerId: opts.customerId, status: "booked" },
-    select: { id: true, leadId: true, conversationId: true, mode: true, startsAt: true, endsAt: true },
+    select: { id: true, leadId: true, conversationId: true, mode: true, ort: true, startsAt: true, endsAt: true },
   });
   if (!old) throw new Error("Termin nicht gefunden oder bereits abgesagt.");
   // Beim Verschieben bleibt die Dauer des Termins erhalten.
@@ -573,7 +581,7 @@ export async function rescheduleAppointment(opts: {
   const lead = old.leadId
     ? await prisma.lead.findUnique({ where: { id: old.leadId }, select: { source: true } })
     : null;
-  const mode = opts.mode ?? (old.mode === "video" ? "video" : "phone");
+  const mode = opts.mode ?? (old.mode === "video" ? "video" : old.mode === "onsite" ? "onsite" : "phone");
   const name = conv?.contactName ?? conv?.contactPhone ?? "Lead";
   const booked = await bookAppointment({
     customerId: opts.customerId,
@@ -582,6 +590,7 @@ export async function rescheduleAppointment(opts: {
     start: opts.start,
     durationMin: oldDuration,
     mode,
+    ort: mode === "onsite" ? old.ort : null,
     summary: eventSummary(mode, name, lead?.source ?? null),
     description: buildEventDescription({
       name,

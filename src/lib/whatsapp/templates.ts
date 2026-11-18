@@ -62,7 +62,10 @@ export type NoticePurpose =
   | "review_request"
   | "referral_request"
   | "referral_thanks"
-  | "referral_update";
+  | "referral_update"
+  // Maklervollmacht per WhatsApp (nur Makler, lib/maklervollmacht/whatsapp.ts)
+  | "maklervollmacht"
+  | "maklervollmacht_erinnerung";
 
 export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach: "Erstanschreiben (ohne Produkt)",
@@ -94,6 +97,8 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   referral_request: "Empfehlungen: Bitte um Empfehlung",
   referral_thanks: "Empfehlungen: Dank an den Empfehlenden",
   referral_update: "Empfehlungen: Rückmeldung an den Empfehlenden",
+  maklervollmacht: "Maklervollmacht: Link zum Unterschreiben (nur Makler)",
+  maklervollmacht_erinnerung: "Maklervollmacht: Erinnerung nach 2 Tagen (nur Makler)",
 };
 
 /** Erstanschreiben je Produkt (lib/whatsapp/erstanschreiben.ts wählt anhand des Leadformulars). */
@@ -209,6 +214,8 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   referral_request: ["Thema der Empfehlung", "Empfehlungslink"],
   referral_thanks: [],
   referral_update: ["Stand der Empfehlung"],
+  maklervollmacht: ["Vollmacht-Link"],
+  maklervollmacht_erinnerung: ["Vollmacht-Link"],
 };
 
 /** Bezeichnung des Namensplatzhalters je Fassung. */
@@ -335,6 +342,17 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   // Nur mit Einwilligung der empfohlenen Person (Empfehlungsseite). {{2}} = ein Satz zum Stand.
   referral_update: {
     sie: "kurze Rückmeldung zu Ihrer Empfehlung: {{2}} Vielen Dank, dass Sie an mich gedacht haben! Herzliche Grüße, [Berater]",
+  },
+  // Maklervollmacht per WhatsApp (Ole, 18.11.2026; nur Makler, Einreichung: template-plan.ts MAKLER_PURPOSES, UTILITY).
+  // Freitext im offenen Fenster: lib/maklervollmacht/texte.ts vollmachtWhatsAppText. „Vielen Dank!“ am Ende, weil Meta
+  // keinen Platzhalter am Textende annimmt.
+  maklervollmacht: {
+    du: "damit [BeraterNom] deine bestehenden Verträge übernehmen und für dich betreuen kann, unterschreibe hier bitte kurz digital die Maklervollmacht. Das dauert etwa 2 Minuten: {{2}} Vielen Dank!",
+    sie: "damit [BeraterNom] Ihre bestehenden Verträge übernehmen und für Sie betreuen kann, unterschreiben Sie hier bitte kurz digital die Maklervollmacht. Das dauert etwa 2 Minuten: {{2}} Vielen Dank!",
+  },
+  maklervollmacht_erinnerung: {
+    du: "kurze Erinnerung: Damit [BeraterNom] deine bestehenden Verträge übernehmen und für dich betreuen kann, unterschreibe hier bitte kurz digital die Maklervollmacht. Das dauert etwa 2 Minuten: {{2}} Vielen Dank!",
+    sie: "kurze Erinnerung: Damit [BeraterNom] Ihre bestehenden Verträge übernehmen und für Sie betreuen kann, unterschreiben Sie hier bitte kurz digital die Maklervollmacht. Das dauert etwa 2 Minuten: {{2}} Vielen Dank!",
   },
 };
 

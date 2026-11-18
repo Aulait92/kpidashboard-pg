@@ -13,6 +13,7 @@
 // Ablauf und Versand: lib/whatsapp/termin-strecke.ts. Keine Gedankenstriche, kurze Sätze, keine Versprechen.
 
 import { a, type Ansprache } from "@/lib/ansprache";
+import { terminArtRegel, type TerminFormate, type TerminModus } from "@/lib/termin-formate";
 import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import { angabenFuerSparte, spartenDesLeads, type AngabenQuelle, type Folgefrage, type RechnerSparte } from "@/lib/preise/rechner-angaben";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
@@ -313,7 +314,7 @@ export function vertragsFrage(an: Ansprache, familie: boolean, einleitung = "Sup
   const wer = familie
     ? a(an, "Welche Versicherungen habt ihr als Familie heute schon?", "Welche Versicherungen haben Sie und Ihre Familie heute schon?")
     : a(an, "Welche Versicherungen hast du heute schon?", "Welche Versicherungen haben Sie heute schon?");
-  return `${einleitung} ${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Gesellschaft.`;
+  return `${einleitung} ${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.`;
 }
 
 /** Erkennt die Vertragsfrage in einer Nachricht von uns. */
@@ -380,6 +381,35 @@ export function schlussSatz(an: Ansprache): string {
     "Trag dir den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreib mir einfach hier.",
     "Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.",
   );
+}
+
+/**
+ * Nach „Die Einladung ist unterwegs“ (Ole, 18.11.2026): Frage mit Knöpfen, ob der Termin im Kalender steht. Knopftitel
+ * höchstens 20 Zeichen (WhatsApp), deshalb „Nein, bitte nochmal“ statt „Nein, bitte nochmal schicken“.
+ */
+export function eingetragenFrage(an: Ansprache): string {
+  return a(an, "Konntest du den Termin in deinem Kalender eintragen?", "Konnten Sie den Termin in Ihrem Kalender eintragen?");
+}
+
+export const EINGETRAGEN_KNOEPFE: Knopf[] = [
+  { id: "eingetragen:ja", title: "Ja, eingetragen" },
+  { id: "eingetragen:nein", title: "Nein, bitte nochmal" },
+];
+
+/** Antwort auf „Ja, eingetragen“: kurzer Dank, fertig. */
+export function eingetragenDank(an: Ansprache, start: Date): string {
+  return a(an, `Super, danke dir! Dann bis ${zeitLang(start)}.`, `Super, vielen Dank! Dann bis ${zeitLang(start)}.`);
+}
+
+/**
+ * Antwort auf „Nein, bitte nochmal“: Termin als Text und Links zum Eintragen (Google-Kalender, Kalenderdatei für Apple,
+ * Outlook und andere). Ohne Links (Termin nicht ladbar) nur der Text.
+ */
+export function kalenderNochmalText(o: { an: Ansprache; start: Date; person: { dat: string }; google?: string | null; ics?: string | null; ort?: string | null }): string {
+  const kopf = a(o.an, `Kein Problem, hier ist dein Termin noch einmal: *${zeitLang(o.start)}* mit ${o.person.dat}.`, `Kein Problem, hier ist Ihr Termin noch einmal: *${zeitLang(o.start)}* mit ${o.person.dat}.`);
+  const links = [o.google ? `Google-Kalender: ${o.google}` : "", o.ics ? `Apple, Outlook und andere: ${o.ics}` : ""].filter(Boolean);
+  const tipp = links.length ? a(o.an, "Einfach antippen, dann öffnet sich der Kalendereintrag.", "Einfach antippen, dann öffnet sich der Kalendereintrag.") : "";
+  return [kopf, o.ort ? `Adresse: ${o.ort}` : "", links.join("\n"), tipp].filter(Boolean).join("\n\n");
 }
 
 /** Antwort auf „Ja, stimmt“ bzw. eine neue Adresse: „Super, die Einladung ist unterwegs. …“ (mit Adresse bei neuer). */
@@ -449,6 +479,10 @@ export const BUCHUNG_SATZ = {
     sie: "[Person] hält sich die Zeit nur für Sie frei, ruft Sie an und bereitet Ihre Beiträge vor.",
     du: "[Person] hält sich die Zeit nur für dich frei, ruft dich an und bereitet deine Beiträge vor.",
   },
+  onsite: {
+    sie: "[Person] hält sich die Zeit nur für Sie frei und bereitet Ihre Beiträge vor.",
+    du: "[Person] hält sich die Zeit nur für dich frei und bereitet deine Beiträge vor.",
+  },
 } as const;
 
 /**
@@ -456,11 +490,21 @@ export const BUCHUNG_SATZ = {
  * um 11 Uhr*. Herr Kannapinn hält sich die Zeit nur für Sie frei und bereitet Ihre Beiträge vor.\nIhr Link: …“. Ohne
  * Frage, ohne E-Mail (die Adresse bestätigt der Lead am Schluss der Strecke), Telefontermin ohne Link.
  */
-export function buchungsText(o: { an: Ansprache; start: Date; mode: "video" | "phone"; meetUrl: string | null; person: VermittlerName }): string {
+export function buchungsText(o: { an: Ansprache; start: Date; mode: TerminModus; meetUrl: string | null; person: VermittlerName; ort?: string | null }): string {
   const wann = `*${zeitLang(o.start)}*`;
   const satz = a(o.an, BUCHUNG_SATZ[o.mode].du, BUCHUNG_SATZ[o.mode].sie).split("[Person]").join(o.person.nom);
-  const kopf = o.mode === "video" ? a(o.an, "Dein Videotermin ist gebucht:", "Ihr Videotermin ist gebucht:") : a(o.an, "Dein Telefontermin ist gebucht:", "Ihr Telefontermin ist gebucht:");
-  const link = o.mode === "video" && o.meetUrl ? `\n${a(o.an, "Dein Link:", "Ihr Link:")} ${o.meetUrl}` : "";
+  const kopf =
+    o.mode === "video"
+      ? a(o.an, "Dein Videotermin ist gebucht:", "Ihr Videotermin ist gebucht:")
+      : o.mode === "onsite"
+        ? a(o.an, "Dein Termin vor Ort ist gebucht:", "Ihr Termin vor Ort ist gebucht:")
+        : a(o.an, "Dein Telefontermin ist gebucht:", "Ihr Telefontermin ist gebucht:");
+  const link =
+    o.mode === "video" && o.meetUrl
+      ? `\n${a(o.an, "Dein Link:", "Ihr Link:")} ${o.meetUrl}`
+      : o.mode === "onsite" && o.ort
+        ? `\nAdresse: ${o.ort}`
+        : "";
   return `${kopf} ${wann}. ${satz}${link}`;
 }
 
@@ -472,21 +516,19 @@ export const WUNSCHZEIT_REGEL =
   "Nennt der Lead eine konkrete Zeit (Tag und Uhrzeit, z. B. „Mittwoch um 16 Uhr“) und ist genau diese Zeit unter den freien Zeiten von get_available_slots: frag nicht noch einmal nach und biete keine zweite Zeit an, sondern buche sie direkt mit book_appointment (gleiche Regeln zur E-Mail-Adresse wie unten). Nur wenn sie belegt ist oder er nur einen Tag bzw. eine Tageszeit nennt: termin_vorschlagen mit erneut=true und den zwei nächstgelegenen freien start-Werten (bei belegter Zeit als einleitung kurz: „Um 16 Uhr ist leider schon belegt.“).";
 
 /** Prompt-Block Terminvorschlag und Buchung (vor dem Termin). beispiel = terminVorschlagText mit Platzhaltern. */
-export function terminRegeln(o: { an: Ansprache; person: VermittlerName; videoOnly: boolean; beispiel: string; emailBekannt: boolean }): string {
+export function terminRegeln(o: { an: Ansprache; person: VermittlerName; formate: TerminFormate; beispiel: string; emailBekannt: boolean }): string {
   return [
     "Terminvorschlag (sobald die Fragen vor dem Termin geklärt sind, hat Vorrang vor anderen Terminregeln):",
     "- Nutze termin_vorschlagen: Die App schickt den Vorschlag selbst, mit zwei freien Videozeiten als Knöpfe und „Andere Zeit“. Schreib dazu keinen eigenen Text und nenne keine Zeiten selbst. Kein Link, keine Buchungsseite.",
     `- So sieht der Vorschlag aus: „${o.beispiel}“`,
     "- Hat der Lead in seiner letzten Nachricht etwas gefragt, gib die kurze Antwort als einleitung mit (ein Satz, statt „Danke!“).",
     "- Keine Floskeln wie „das Gespräch vorbereiten“, keine Versprechen zu Preisen, Ersparnis oder Ergebnissen.",
-    o.videoOnly
-      ? "- Nur Videotermine: Biete ausschließlich Video an und erwähne Telefon nicht. Nur wenn der Lead Video ausdrücklich ablehnt oder nicht kann, buche einen Telefontermin (modus phone)."
-      : "- Biete die Zeiten als Videotermin an (Video zuerst). Möchte der Lead lieber telefonieren, buche Telefon.",
+    terminArtRegel(o.an, o.formate),
     "- Passt keine der beiden Zeiten („Andere Zeit“): frag kurz nach Wunschtag oder Tageszeit und hole dann mit get_available_slots freie Zeiten.",
     `- ${WUNSCHZEIT_REGEL}`,
     o.emailBekannt
-      ? "- Wählt der Lead eine Zeit (Knopf oder Text): Die E-Mail-Adresse ist bekannt, frag nicht danach. Buche sofort mit book_appointment (modus video) und genau dem start-Wert der gewählten Zeit."
-      : "- Wählt der Lead eine Zeit (Knopf oder Text): Buche sofort mit book_appointment (modus video) und genau dem start-Wert der gewählten Zeit, auch ohne E-Mail-Adresse. Frag vorher nicht danach: Die App fragt am Schluss selbst nach der Adresse für die Einladung.",
+      ? "- Wählt der Lead eine Zeit (Knopf oder Text): Die E-Mail-Adresse ist bekannt, frag nicht danach. Buche sofort mit book_appointment (modus video, außer bei einem erlaubten ausdrücklichen Wunsch, siehe Terminart) und genau dem start-Wert der gewählten Zeit."
+      : "- Wählt der Lead eine Zeit (Knopf oder Text): Buche sofort mit book_appointment (modus video, außer bei einem erlaubten ausdrücklichen Wunsch, siehe Terminart) und genau dem start-Wert der gewählten Zeit, auch ohne E-Mail-Adresse. Frag vorher nicht danach: Die App fragt am Schluss selbst nach der Adresse für die Einladung.",
     "- Nach book_appointment schickt die App die Buchungsnachricht mit Link selbst und danach die nächste Frage. Schreib dazu nichts Eigenes.",
   ].join("\n");
 }

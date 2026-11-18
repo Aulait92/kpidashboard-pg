@@ -40,7 +40,7 @@ export function ServiceMails(p: ServiceMailsDaten & {
       <div className={`${card} p-5`} data-service-mails="aus">
         <h3 className="text-lg font-semibold tracking-tight">E-Mails übernehmen Sie mit einem Tipp</h3>
         <p className="mt-1 text-[15px] text-[color:var(--muted)]">
-          Ihre Gesellschaft erlaubt keine E-Mails aus anderen Programmen. Deshalb sendet die App Ihre E-Mail-Vorlagen nicht selbst: Im Kontakt kopieren Sie den
+          Ihr Versicherer erlaubt keine E-Mails aus anderen Programmen. Deshalb sendet die App Ihre E-Mail-Vorlagen nicht selbst: Im Kontakt kopieren Sie den
           passenden Text oder öffnen ihn im eigenen Mailprogramm.
         </p>
         <Link href="/buyer/postfach" className="mt-3 inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline">
@@ -90,7 +90,7 @@ function Erklaerschritt(p: Parameters<typeof ServiceMails>[0]) {
           <b>Nichts geht verloren:</b> Sie bekommen eine Kopie jeder Mail in Ihr Postfach.
         </Punkt>
         <Punkt icon={Send}>
-          <b>Angebote und Vertragsunterlagen</b> schicken Sie weiter wie gewohnt, auf Wunsch auch aus dem System Ihrer Gesellschaft.
+          <b>Angebote und Vertragsunterlagen</b> schicken Sie weiter wie gewohnt, auf Wunsch auch aus dem System Ihres Versicherers.
         </Punkt>
       </ul>
 

@@ -6,7 +6,8 @@ export const STAGES: { id: Stage; label: string; color: string; hint: string }[]
   { id: "WIEDERVORLAGE", label: "Wiedervorlage", color: "bg-sky-100 text-sky-800", hint: "Rückruf vereinbart / später nochmal" },
   { id: "INTERESSE", label: "Interesse / Unterlagen", color: "bg-violet-100 text-violet-800", hint: "Einseiter oder Präsentation gesendet" },
   { id: "TERMIN", label: "Termin", color: "bg-indigo-100 text-indigo-800", hint: "Termin vereinbart" },
-  { id: "GEWONNEN", label: "Gewonnen", color: "bg-emerald-100 text-emerald-800", hint: "Zusage / Vertrag" },
+  // „Abschluss“ wie im Kundenbereich (Usability-Check 18.11.2026); die Stufe heißt intern weiter GEWONNEN
+  { id: "GEWONNEN", label: "Abschluss", color: "bg-emerald-100 text-emerald-800", hint: "Zusage / Vertrag" },
   { id: "SPAETER", label: "Später", color: "bg-teal-100 text-teal-800", hint: "Nächstes Jahr, ab März …" },
   { id: "VERLOREN", label: "Verloren", color: "bg-rose-100 text-rose-800", hint: "Kein Interesse / kein Bedarf" },
   { id: "UNGUELTIG", label: "Ungültig", color: "bg-zinc-200 text-zinc-600", hint: "Falsche Nummer, Blacklist, Ruhestand" },

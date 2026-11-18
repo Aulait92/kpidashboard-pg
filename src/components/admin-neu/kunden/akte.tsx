@@ -55,9 +55,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
           <span data-funktion="actions-movecustomer--kunde-eine-stufe-vor-oder-zurueck actions-dragcustomer--kunden-pipeline-vertrag-onboarding-test-aktiv">
             <StatusWahl contactId={c.salesContact.id} stage={stage} />
           </span>
-        ) : (
-          <Badge>Leads (Airtable)</Badge>
-        )}
+        ) : null}
         <Badge>{packageLabel(c)}</Badge>
         {c.isTest ? (
           <span data-funktion="test-actions-deletetestcustomeraction--testkunde-komplett-loeschen">

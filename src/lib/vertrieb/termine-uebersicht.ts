@@ -475,7 +475,7 @@ export const ansichtVon = (s: string | undefined): Ansicht => (s === "kommend" |
 export const FILTER: { key: string; label: string; match: (z: TerminZeile) => boolean }[] = [
   { key: "ohne", label: "Ohne nächsten Schritt", match: (z) => z.schritt.art === "keiner" },
   { key: "angebot", label: "Angebot offen", match: (z) => z.angebot.stand === "offen" || z.angebot.stand === "geoeffnet" },
-  { key: "gewonnen", label: "Gewonnen", match: (z) => !!z.kontakt.customerId || z.kontakt.stage === "GEWONNEN" || z.angebot.stand === "angenommen" },
+  { key: "gewonnen", label: "Abschluss", match: (z) => !!z.kontakt.customerId || z.kontakt.stage === "GEWONNEN" || z.angebot.stand === "angenommen" },
   { key: "verloren", label: "Verloren", match: (z) => z.kontakt.stage === "VERLOREN" },
 ];
 

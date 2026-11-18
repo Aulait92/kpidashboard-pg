@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
-import { CheckCircle2, Clock, Phone, Video } from "lucide-react";
+import { CheckCircle2, Clock, Mail, Phone, Video } from "lucide-react";
+import { kontaktWege, vermittlerKontakt, type VermittlerKontakt } from "@/lib/buchung-ohne-kalender";
 import { buttonClass } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -123,13 +124,23 @@ export default async function BookingPage({ params, searchParams }: Props) {
     }
   }
 
-  if (!conn || conn.status !== "connected") {
+  if (!conn) {
     return (
-      <Shell customerId={conn?.customerId}>
+      <Shell>
         <h1 className="text-xl font-bold">Online-Buchung nicht verfügbar</h1>
         <p className="mt-2 text-sm text-[color:var(--muted)]">
           Dieser Buchungslink ist ungültig oder derzeit deaktiviert.
         </p>
+      </Shell>
+    );
+  }
+  // Kalender getrennt (Usability-Check 18.11.2026): wie auf /termin ein Weg zum Termin statt einer Sackgasse
+  if (conn.status !== "connected") {
+    const an0 = asAnsprache(conn.customer.leadAddress);
+    return (
+      <Shell customerId={conn.customerId}>
+        <h1 className="text-xl font-bold">Online-Buchung gerade nicht verfügbar</h1>
+        <OhneKalender an={an0} kontakt={await vermittlerKontakt(conn.customerId)} />
       </Shell>
     );
   }
@@ -248,10 +259,10 @@ export default async function BookingPage({ params, searchParams }: Props) {
       ) : null}
 
       {days.length === 0 ? (
-        <p className="mt-6 rounded-xl bg-[color:var(--background)] p-4 text-sm">
-          Aktuell sind keine Termine online buchbar. Wir melden uns in Kürze
-          {a(an, " bei dir", " bei Ihnen")}, um einen Termin zu vereinbaren.
-        </p>
+        <div className="mt-6 rounded-xl bg-[color:var(--background)] p-4">
+          <p className="text-sm font-medium">Gerade sind keine Zeiten online frei.</p>
+          <OhneKalender an={an} kontakt={await vermittlerKontakt(conn.customerId)} />
+        </div>
       ) : (
         <form action={action} className="mt-6 space-y-6">
           <section>
@@ -379,6 +390,25 @@ export default async function BookingPage({ params, searchParams }: Props) {
         </form>
       )}
     </Shell>
+  );
+}
+
+/** Ohne Kalender bzw. ohne freie Zeiten: Rückruf per E-Mail anfragen oder anrufen (lib/buchung-ohne-kalender.ts). */
+function OhneKalender({ an, kontakt }: { an: Ansprache; kontakt: VermittlerKontakt }) {
+  const { text, wege } = kontaktWege(kontakt, an);
+  return (
+    <div data-ohne-kalender>
+      <p className="mt-2 text-sm text-[color:var(--muted)]">{text}</p>
+      {wege.length ? (
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          {wege.map((w, i) => (
+            <a key={w.art} href={w.href} className={buttonClass(i === 0 ? "primary" : "secondary", "md", "h-11 w-full sm:w-auto")} data-kontakt-weg={w.art}>
+              {w.art === "anrufen" ? <Phone className="h-4 w-4" /> : <Mail className="h-4 w-4" />} {w.label}
+            </a>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

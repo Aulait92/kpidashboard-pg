@@ -32,7 +32,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ g
   await requireAuth();
   const sp = await searchParams;
   const [conn, types, lt] = await Promise.all([
-    prisma.calendarConnection.findUnique({ where: { customerId: VERTRIEB_CUSTOMER_ID }, select: { status: true, provider: true, accountEmail: true, busyCalendarIds: true } }),
+    prisma.calendarConnection.findUnique({ where: { customerId: VERTRIEB_CUSTOMER_ID }, select: { status: true, provider: true, accountEmail: true, busyCalendarIds: true, busyCalendarErrors: true } }),
     prisma.salesBookingType.findMany({ orderBy: { sortOrder: "asc" } }),
     loadLeadTimes(VERTRIEB_CUSTOMER_ID),
   ]);
@@ -72,7 +72,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ g
               </form>
               {conn!.provider === "google" ? (
                 <div className="basis-full">
-                  <BusyCalendarsForm action={saveBusyCalendarsAction} ids={conn!.busyCalendarIds} />
+                  <BusyCalendarsForm action={saveBusyCalendarsAction} ids={conn!.busyCalendarIds} unlesbar={conn!.busyCalendarErrors.filter((id) => conn!.busyCalendarIds.includes(id))} />
                 </div>
               ) : null}
             </div>

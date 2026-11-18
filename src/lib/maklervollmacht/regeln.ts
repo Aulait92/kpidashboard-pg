@@ -24,7 +24,17 @@ const SPARTE = new Map(VV_SPARTEN.map((s) => [s.key, s]));
 export const sparteLabel = (key: string) => SPARTE.get(key)?.label ?? key;
 
 export type VvVertrag = { versicherer: string; sparte: string; vertragsnummer: string | null };
-export type VvDaten = { vorname: string; nachname: string; strasse: string; plz: string; ort: string; geburtsdatum: string; email: string | null };
+export type VvDaten = {
+  vorname: string;
+  nachname: string;
+  strasse: string;
+  plz: string;
+  ort: string;
+  geburtsdatum: string;
+  email: string | null;
+  /** Anrede aus dem Kontakt (nicht im Formular abgefragt), nur für das Schreiben an den Versicherer. Fehlt sie: neutral. */
+  anrede?: "Herr" | "Frau" | null;
+};
 
 /** Gesundheits-Einwilligung und Schweigepflichtentbindung nur, wenn mindestens ein Vertrag aus einer solchen Sparte dabei ist. */
 export const gesundheitNoetig = (vertraege: Pick<VvVertrag, "sparte">[]) => vertraege.some((v) => SPARTE.get(v.sparte)?.gesundheit);
@@ -33,12 +43,51 @@ export const gesundheitNoetig = (vertraege: Pick<VvVertrag, "sparte">[]) => vert
 export function versichererListe(vertraege: VvVertrag[]): { versicherer: string; vertraege: VvVertrag[] }[] {
   const out = new Map<string, { versicherer: string; vertraege: VvVertrag[] }>();
   for (const v of vertraege) {
-    const key = v.versicherer.trim().toLowerCase();
+    const key = versichererKey(v.versicherer);
     const e = out.get(key) ?? { versicherer: v.versicherer.trim(), vertraege: [] };
     e.vertraege.push(v);
     out.set(key, e);
   }
   return [...out.values()];
+}
+
+/** Schlüssel eines Versicherers (Gruppierung, Status je Versicherer): klein, ohne Leerzeichen am Rand. */
+export const versichererKey = (name: string) => name.trim().toLowerCase();
+
+/** Status der Übertragung je Versicherer (Maklervollmacht.uebertragung: {versichererKey: ISO-Zeitpunkt „gesendet“}). */
+export type VvUebertragung = Record<string, string>;
+
+export function leseUebertragung(raw: unknown): VvUebertragung {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const out: VvUebertragung = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) if (typeof v === "string" && v) out[k] = v;
+  return out;
+}
+
+export type VvStand = {
+  versicherer: { name: string; vertraege: number; gesendetAm: string | null }[];
+  vertraegeGesamt: number;
+  vertraegeOffen: number;
+  offen: number;
+  /** Zeile für die Karte, z. B. „3 Verträge, noch nicht übertragen“ */
+  zeile: string;
+};
+
+const vertraegeText = (n: number) => `${n} ${n === 1 ? "Vertrag" : "Verträge"}`;
+
+/** Stand der Übertragung für die Karte im Kontakt: je Versicherer offen oder gesendet, Zähler der offenen Verträge. */
+export function uebertragungsStand(vertraege: VvVertrag[], uebertragung: VvUebertragung): VvStand {
+  const gruppen = versichererListe(vertraege).map((g) => ({ name: g.versicherer, vertraege: g.vertraege.length, gesendetAm: uebertragung[versichererKey(g.versicherer)] ?? null }));
+  const vertraegeGesamt = gruppen.reduce((s, g) => s + g.vertraege, 0);
+  const vertraegeOffen = gruppen.filter((g) => !g.gesendetAm).reduce((s, g) => s + g.vertraege, 0);
+  const offen = gruppen.filter((g) => !g.gesendetAm).length;
+  const zeile =
+    vertraegeOffen === 0
+      ? `${vertraegeText(vertraegeGesamt)}, alle Schreiben gesendet`
+      : vertraegeOffen === vertraegeGesamt
+        ? `${vertraegeText(vertraegeGesamt)}, noch nicht übertragen`
+        : `${vertraegeText(vertraegeOffen)} von ${vertraegeGesamt} noch nicht übertragen`;
+  return { versicherer: gruppen, vertraegeGesamt, vertraegeOffen, offen, zeile };
 }
 
 const clean = (v: unknown, max: number) =>
@@ -74,7 +123,7 @@ export const FEHLER_TEXT: Record<VvFehler, string> = {
   geburtsdatum: "Bitte das Geburtsdatum im Format TT.MM.JJJJ eintragen.",
   email: "Bitte eine gültige E-Mail-Adresse eintragen oder das Feld leer lassen.",
   vertraege: "Bitte mindestens einen Vertrag eintragen.",
-  versicherer: "Bitte bei jedem Vertrag die Gesellschaft eintragen.",
+  versicherer: "Bitte bei jedem Vertrag den Versicherer eintragen.",
   zustimmung: "Bitte bestätigen Sie die Vollmacht mit dem Häkchen.",
   unterschrift: "Bitte unterschreiben Sie im Feld.",
 };
@@ -155,4 +204,29 @@ export function pruefeEingabe(get: (k: string) => string | null, now = new Date(
 /** {Platzhalter} füllen; unbekannte Platzhalter bleiben stehen (Test prüft, dass keiner übrig bleibt). */
 export function fuelle(text: string, werte: Record<string, string | null | undefined>): string {
   return text.replace(/\{([A-Za-z_]+)\}/g, (m, k: string) => (werte[k] != null && werte[k] !== "" ? String(werte[k]) : m));
+}
+
+// ─── Versand per WhatsApp und Entscheidung „Wer schickt sie?“ (Ole, 18.11.2026) ─────────────────────────────
+
+/** Customer.vollmachtVersand: „app“ = die App schickt sie (empfohlen), „eigene“ = eigene Vollmacht (z. B. vom Pool). */
+export type VollmachtVersand = "app" | "eigene";
+export const asVollmachtVersand = (v: unknown): VollmachtVersand | null => (v === "app" || v === "eigene" ? v : null);
+
+export const VERSAND_FRAGE = "Maklervollmacht: Wer schickt sie Ihren Kunden?";
+export const VERSAND_ANTWORTEN: { wert: VollmachtVersand; titel: string; text: string; empfohlen: boolean }[] = [
+  {
+    wert: "app",
+    titel: "Die App, automatisch nach dem Termin",
+    text: "Ihr Kunde unterschreibt digital am Handy, Sie bekommen die fertigen Schreiben an die Versicherer. Bitte schicken Sie dann keine eigene Vollmacht mehr.",
+    empfohlen: true,
+  },
+  { wert: "eigene", titel: "Ich nutze meine eigene Vollmacht", text: "Zum Beispiel die von Ihrem Pool. Die App schickt nichts von selbst, die Karte im Kontakt bleibt für Einzelfälle.", empfohlen: false },
+];
+
+/** Genau eine Erinnerung, 2 Tage nach dem Senden per WhatsApp, solange nicht unterschrieben. */
+export const ERINNERUNG_NACH_TAGE = 2;
+
+export function erinnerungGeplantAm(v: { status: string; waSentAt: Date | null; erinnerungAt: Date | null }): Date | null {
+  if (v.status !== "offen" || !v.waSentAt || v.erinnerungAt) return null;
+  return new Date(v.waSentAt.getTime() + ERINNERUNG_NACH_TAGE * 86_400_000);
 }

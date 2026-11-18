@@ -65,7 +65,7 @@ export async function saveBusyCalendarsAction(_prev: { ok?: boolean; error?: str
   await requireAuth();
   const parsed = parseWeitereKalender(String(fd.get("ids") ?? ""));
   if (!parsed.ok) return { error: parsed.error };
-  await prisma.calendarConnection.updateMany({ where: { customerId: VERTRIEB_CUSTOMER_ID }, data: { busyCalendarIds: parsed.ids } });
+  await prisma.calendarConnection.updateMany({ where: { customerId: VERTRIEB_CUSTOMER_ID }, data: { busyCalendarIds: parsed.ids, busyCalendarErrors: [] } });
   await audit("calendar.busy_calendars", { customerId: VERTRIEB_CUSTOMER_ID, entity: "CalendarConnection", details: { anzahl: parsed.ids.length } });
   revalidatePath(PATH);
   revalidatePath("/admin/neu", "layout");

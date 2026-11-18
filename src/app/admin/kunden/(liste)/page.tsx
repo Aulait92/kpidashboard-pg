@@ -114,9 +114,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
                       {testKennung(c) ? <span className="badge bg-amber-100 text-amber-900">{testKennung(c)}</span> : null}
                       {stage ? (
                         <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span>
-                      ) : c.plan === "internal" ? null : (
-                        <Badge>Leads (Airtable)</Badge>
-                      )}
+                      ) : null}
                       {c.paymentOverdueSince ? <Badge tone="danger">Zahlung offen</Badge> : null}
                       {pause ? <Badge tone="warning">{pause.kind === "dunning" ? "pausiert (Zahlung)" : "pausiert"}</Badge> : null}
                       {(() => {

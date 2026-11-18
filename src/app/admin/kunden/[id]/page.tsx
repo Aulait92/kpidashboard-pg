@@ -6,6 +6,8 @@ import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { OnboardingCard } from "@/components/vertrieb/onboarding-card";
 import { NewUiCard } from "@/components/admin/new-ui-card";
 import { VermittlerCard } from "@/components/admin/vermittler-card";
+import { VermittlerAnredeCard } from "@/components/admin/vermittler-anrede-card";
+import { vermittlerAnredeLabel } from "@/lib/vermittler-ansprache";
 import { StornoQuoteKunde } from "@/components/admin/storno-quote";
 import { GarantienCard } from "@/components/admin/garantien-card";
 import { SetupCard } from "@/components/admin/setup-card";
@@ -46,11 +48,12 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
   const notice = (await searchParams)?.einrichtung;
   const customer = await prisma.customer.findUnique({
     where: { id },
-    select: { id: true, name: true, region: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true, vermittlerTyp: true, newUi: true, stornoQuote: true, salesContact: { select: { id: true } } },
+    select: { id: true, name: true, region: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true, vermittlerTyp: true, vermittlerDu: true, newUi: true, stornoQuote: true, salesContact: { select: { id: true } } },
   });
   if (!customer) notFound();
   const summary = [
     TYP_LABEL[customer.vermittlerTyp] ?? customer.vermittlerTyp,
+    `Anrede ${vermittlerAnredeLabel({ kunde: customer.vermittlerDu })}`,
     `neue Oberfläche ${customer.newUi ? "an" : "aus"}`,
     `Stornoquote ${customer.stornoQuote != null ? `${(Math.round(Number(customer.stornoQuote) * 1000) / 10).toLocaleString("de-DE")} %` : "Standard"}`,
     "Garantie, Testdaten",
@@ -59,6 +62,7 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
     <KundenEinstellungen summary={summary}>
       <NewUiCard customerId={id} />
       <VermittlerCard customerId={id} />
+      <VermittlerAnredeCard customerId={id} />
       <StornoQuoteKunde customerId={id} />
       <GarantienCard customerId={id} />
       <TestdatenCard customerId={id} />
@@ -112,7 +116,7 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
             </>
           ) : null}
         </dl>
-        <p className="mt-3 text-xs text-slate-500">Kein Vertriebskontakt verknüpft (Kunde aus Airtable).</p>
+        <p className="mt-3 text-xs text-slate-500">Kein Vertriebskontakt verknüpft.</p>
       </section>
       {onboarding ? (
         <OnboardingCard

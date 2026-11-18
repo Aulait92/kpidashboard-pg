@@ -6,6 +6,11 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { serviceMailsDaten } from "@/lib/mail/service-mails-daten";
 import { ServiceMails } from "./service-mails";
+import { TerminFormateEinstellung } from "@/components/termin-formate";
+import { loadTerminFormate } from "@/lib/termin-formate-server";
+import { terminFormateSpeichernAction } from "./actions";
+import { VollmachtVersandWahl } from "@/components/vollmacht-versand-wahl";
+import { asVollmachtVersand } from "@/lib/maklervollmacht/regeln";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Assistent | performancegrowth" };
@@ -17,9 +22,10 @@ export const metadata = { title: "Assistent | performancegrowth" };
 export default async function AssistentPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const [c, mails] = await Promise.all([
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { plan: true } }),
+  const [c, mails, formate] = await Promise.all([
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { plan: true, vermittlerTyp: true, vollmachtVersand: true } }),
     serviceMailsDaten(ctx.customerId, ctx.userId, ctx.email),
+    loadTerminFormate(ctx.customerId),
   ]);
   const canEdit = !ctx.preview && !!ctx.userId && ctx.teamRole === "owner";
 
@@ -44,6 +50,18 @@ export default async function AssistentPage() {
             <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
           </Link>
         </section>
+        {c?.plan !== "service" ? (
+          <section id="termine">
+            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Termine</h2>
+            <TerminFormateEinstellung initial={formate} canEdit={canEdit} save={terminFormateSpeichernAction} />
+          </section>
+        ) : null}
+        {c?.vermittlerTyp === "makler" ? (
+          <section id="maklervollmacht" data-assistent-vollmacht>
+            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Maklervollmacht: Wer schickt sie?</h2>
+            <VollmachtVersandWahl wert={asVollmachtVersand(c.vollmachtVersand)} darf={canEdit} />
+          </section>
+        ) : null}
         <section id="mails">
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">E-Mails in Ihrem Namen</h2>
           <ServiceMails {...mails} canEdit={canEdit} />

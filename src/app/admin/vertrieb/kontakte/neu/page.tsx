@@ -16,7 +16,7 @@ export default async function NeuerLeadPage({ searchParams }: { searchParams: Pr
       <form action={createLeadManually} className="card grid grid-cols-1 gap-3 p-5 sm:grid-cols-2">
         <div>
           <label className="label">Woher?</label>
-          <select name="source" defaultValue={sp.quelle ?? "LINKEDIN"} className="input">
+          <select name="source" defaultValue={sp.quelle ?? "SONSTIGES"} className="input">
             {SOURCES.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
           </select>
         </div>
@@ -50,7 +50,7 @@ export default async function NeuerLeadPage({ searchParams }: { searchParams: Pr
         </div>
         <div className="sm:col-span-2">
           <label className="label">Aufgabe für heute</label>
-          <input name="taskTitle" defaultValue="Auf LinkedIn-Anfrage reagieren" className="input" />
+          <input name="taskTitle" defaultValue={sp.quelle === "LINKEDIN" ? "Auf LinkedIn-Anfrage reagieren" : "Kontakt aufnehmen"} className="input" />
         </div>
         <button className="btn-primary sm:col-span-2">Lead anlegen</button>
       </form>

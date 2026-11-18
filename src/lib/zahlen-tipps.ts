@@ -136,7 +136,7 @@ export function candidateTips(s: TipSignals): Tip[] {
     out.push({
       key: "naechster_schritt",
       title: "Jedem Lead einen nächsten Schritt geben",
-      text: `${noStep} offene Leads haben keinen nächsten Schritt (${pct(s.nextStepRate)} mit Schritt, Ziel 100 %). Legen Sie eine Wiedervorlage oder einen Termin fest oder tragen Sie Gewonnen bzw. Verloren ein.`,
+      text: `${noStep} offene Leads haben keinen nächsten Schritt (${pct(s.nextStepRate)} mit Schritt, Ziel 100 %). Legen Sie eine Wiedervorlage oder einen Termin fest oder tragen Sie Abschluss bzw. Verloren ein.`,
       href: "/buyer/kontakte?ansicht=ohne-schritt",
       cta: "Leads ansehen",
       impact: noStep * 0.3 * Math.max(closing, 0.05) * prov,

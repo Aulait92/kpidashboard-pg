@@ -185,9 +185,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               <>
                 <dt className="text-[color:var(--muted)]">Zahlweise</dt>
                 <dd data-konto-interval>
+                  {/* Rhythmus und Weg in einem (Usability-Check 18.11.2026: „Monatlich“ und „per Rechnung“ wirkten widersprüchlich) */}
                   {annual && yearly != null
                     ? `${prepayMonths === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(yearly)} netto (${prepayFree} ${prepayFree === 1 ? "Monat" : "Monate"} geschenkt)`
                     : "Monatlich"}
+                  {customer.stripeCustomerId ? "" : ", per Rechnung"}
                 </dd>
               </>
             ) : null}
@@ -415,7 +417,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               </>
             ) : (
               <p className="text-sm text-[color:var(--muted)]" data-konto-ohne-online-zahlung>
-                Sie zahlen per Rechnung. Für eine neue Rechnungsadresse oder USt-IdNr. schreiben Sie uns über „Hilfe“.
+                Sie zahlen {monthly != null ? `${annual ? (prepayMonths === 6 ? "halbjährlich im Voraus" : "jährlich im Voraus") : "monatlich"} ` : ""}per Rechnung (Überweisung). Für eine neue Rechnungsadresse oder USt-IdNr. schreiben Sie uns über „Hilfe“.
               </p>
             )}
           </div>

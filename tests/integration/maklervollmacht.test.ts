@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { decryptBytes } from "@/lib/encryption";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 import { pruefeEingabe } from "@/lib/maklervollmacht/regeln";
-import { ladeSeite, unterschreiben, vollmachtAnlegen, vollmachtFuerLead, vollmachtPdfFuer, widerrufen } from "@/lib/maklervollmacht/server";
+import { ladeSeite, uebertragungMarkieren, unterschreiben, vollmachtAnlegen, vollmachtFuerLead, vollmachtPdfFuer, widerrufen } from "@/lib/maklervollmacht/server";
 import { testPng } from "../helpers/test-png";
 
 const eingabe = (extra: Record<string, string> = {}) => {
@@ -38,7 +38,19 @@ describe("Maklervollmacht (Datenbank)", () => {
     makler = (await makeCustomer({ vermittlerTyp: "makler", leadAddress: "sie" })).id;
     vertreter = (await makeCustomer({ vermittlerTyp: "vertreter" })).id;
     await prisma.erstinformation.create({ data: { customerId: makler, token: `vv-${makler}`, name: "Max Berger", firma: "Berger Makler GmbH", anschrift: "Marktplatz 2, 84028 Landshut", registerNummer: "D-ABCD-EFGHI-12" } });
-    leadId = (await prisma.lead.create({ data: { customerId: makler, name: "Anna Muster", status: "Im Gespräch" } })).id;
+    leadId = (
+      await prisma.lead.create({
+        data: {
+          customerId: makler,
+          name: "Anna Muster",
+          status: "Im Gespräch",
+          formData: [
+            { label: "Anrede", value: "Frau" },
+            { label: "Straße", value: "Lindenweg 4" },
+          ],
+        },
+      })
+    ).id;
   });
   afterAll(async () => {
     await cleanupCustomer(makler);
@@ -52,7 +64,7 @@ describe("Maklervollmacht (Datenbank)", () => {
     const b = await vollmachtAnlegen(leadId, makler);
     expect(a.ok && b.ok && a.vollmacht.id === b.vollmacht.id).toBe(true);
     const s = await ladeSeite(a.ok ? a.vollmacht.token : "");
-    expect(s).toMatchObject({ zustand: "offen", an: "sie", vorschlag: { vorname: "Anna", nachname: "Muster" } });
+    expect(s).toMatchObject({ zustand: "offen", an: "sie", vorschlag: { vorname: "Anna", nachname: "Muster", strasse: "Lindenweg 4" } });
     expect(await ladeSeite("x".repeat(30))).toEqual({ zustand: "ungueltig" });
   });
 
@@ -61,7 +73,9 @@ describe("Maklervollmacht (Datenbank)", () => {
     const r = await unterschreiben(v.token, eingabe({ gesundheit: "ja" }), { ip: "203.0.113.7", ua: "Testgerät" });
     expect(r).toEqual({ ok: true, mailGesendet: false });
     const s = await prisma.maklervollmacht.findUniqueOrThrow({ where: { id: v.id } });
-    expect(s).toMatchObject({ status: "unterschrieben", gesundheit: true, textVersion: "maklervollmacht-2026-11-18", signedIp: "203.0.113.7" });
+    expect(s).toMatchObject({ status: "unterschrieben", gesundheit: true, textVersion: "maklervollmacht-2026-11-18", signedIp: "203.0.113.7", kopieStatus: "keine_adresse" });
+    // Anrede aus dem Kontakt (für „Ihre Kundin Frau Muster“ im Schreiben an den Versicherer)
+    expect((s.daten as { anrede?: string }).anrede).toBe("Frau");
     expect(decryptBytes(s.pdf!).subarray(0, 5).toString()).toBe("%PDF-");
     expect(await prisma.leadHistory.count({ where: { leadId, text: { contains: "Maklervollmacht unterschrieben" } } })).toBe(1);
     expect(await unterschreiben(v.token, eingabe(), { ip: null, ua: null })).toMatchObject({ ok: false });
@@ -74,6 +88,37 @@ describe("Maklervollmacht (Datenbank)", () => {
     expect(Buffer.from(pdf!.pdf.slice(0, 5)).toString()).toBe("%PDF-");
     expect(await vollmachtPdfFuer(v.id, vertreter, null)).toBeNull();
     expect(await vollmachtPdfFuer(v.id, makler, "Unbekannt AG")).toBeNull();
+    // Je Versicherer abhaken: Zähler und „offen“-PDF nur mit den noch offenen Versicherern
+    expect(k?.stand).toMatchObject({ offen: 2, zeile: "2 Verträge, noch nicht übertragen" });
+    const offenVorher = await vollmachtPdfFuer(v.id, makler, { offen: true });
+    expect(offenVorher?.name).toMatch(/^Uebertragung-Versicherer-Muster-/);
+    expect(await uebertragungMarkieren(v.id, makler, "allianz", true, null)).toBe(true);
+    expect(await uebertragungMarkieren(v.id, vertreter, "HUK-Coburg", true, null)).toBe(false);
+    expect(await uebertragungMarkieren(v.id, makler, "Unbekannt AG", true, null)).toBe(false);
+    const k2 = await vollmachtFuerLead(leadId, makler);
+    expect(k2?.stand.versicherer.map((g) => [g.name, !!g.gesendetAm])).toEqual([
+      ["Allianz", true],
+      ["HUK-Coburg", false],
+    ]);
+    expect(k2?.stand.zeile).toBe("1 Vertrag von 2 noch nicht übertragen");
+    expect((await vollmachtPdfFuer(v.id, makler, { offen: true }))?.name).toMatch(/^Uebertragung-HUK-Coburg-Muster-/);
+    expect(await prisma.leadHistory.count({ where: { leadId, text: { contains: "Schreiben an Allianz gesendet" } } })).toBe(1);
+    expect(await uebertragungMarkieren(v.id, makler, "Allianz", false, null)).toBe(true);
+    expect((await vollmachtFuerLead(leadId, makler))?.stand.offen).toBe(2);
+  });
+
+  it("mit E-Mail: Versandstatus der Kopie wird gespeichert; anderer Nachname: Anrede neutral", async () => {
+    const l = await prisma.lead.create({ data: { customerId: makler, name: "Paul Neu", status: "Im Gespräch", formData: [{ label: "Anrede", value: "Herr" }] } });
+    const a = await vollmachtAnlegen(l.id, makler);
+    if (!a.ok) throw new Error();
+    const r = await unterschreiben(a.vollmacht.token, eingabe({ email: "anna@example.com" }), { ip: null, ua: null });
+    expect(r.ok).toBe(true);
+    const s = await prisma.maklervollmacht.findUniqueOrThrow({ where: { id: a.vollmacht.id } });
+    expect(s.kopieStatus).toBe(r.ok && r.mailGesendet ? "gesendet" : "fehlgeschlagen");
+    expect(s.kopieAt).toBeInstanceOf(Date);
+    // Lead heißt Neu, unterschrieben hat Anna Muster: keine Anrede raten
+    expect((s.daten as { anrede?: string | null }).anrede).toBeNull();
+    expect((await vollmachtFuerLead(l.id, makler))?.kopieStatus).toBe(s.kopieStatus);
   });
 
   it("abgelaufener Link (14 Tage) und Widerruf", async () => {

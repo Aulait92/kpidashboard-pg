@@ -85,11 +85,11 @@ export function ohneGesundheitsangaben(text: string, opts: { tier?: boolean } = 
     .trim();
 }
 
-/** Strukturierte Angaben des Assistenten ohne Gesundheitsangaben (Feld „tier“ bleibt, Tier-Leads unverändert). */
+/** Strukturierte Angaben des Assistenten ohne Gesundheitsangaben (Felder „tier“ und „tiergesundheit“ bleiben, Tier-Leads unverändert). */
 export function angabenOhneGesundheit(angaben: unknown, opts: { tier?: boolean } = {}): unknown {
   if (!angaben || typeof angaben !== "object" || Array.isArray(angaben)) return angaben;
   return Object.fromEntries(
-    Object.entries(angaben as Record<string, unknown>).map(([k, v]) => [k, typeof v === "string" && k !== "tier" ? ohneGesundheitsangaben(v, opts) : v]),
+    Object.entries(angaben as Record<string, unknown>).map(([k, v]) => [k, typeof v === "string" && k !== "tier" && k !== "tiergesundheit" ? ohneGesundheitsangaben(v, opts) : v]),
   );
 }
 

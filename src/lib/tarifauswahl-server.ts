@@ -26,7 +26,7 @@ import { rechnerUrl } from "@/lib/preise/pilot";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import { schutzVorschlag } from "@/lib/schutz-ueberblick";
 import { asAnsprache } from "@/lib/ansprache";
-import { bisherAbgleichen, bisherVorschlag } from "@/lib/bisheriger-vertrag";
+import { bisherAbgleichen, bisherAusSchutz, bisherVorschlag, schutzVonHand } from "@/lib/bisheriger-vertrag";
 import { bisherPruefen, bisherQuellen, gesundheitFrei } from "@/lib/bisheriger-vertrag-server";
 import { auswahlAuffrischen, vorschlaegeAusBisher, vorschlaegeAusEigenemTarif } from "@/lib/tarif-vorschlaege";
 import { ladeTarifkatalogAktuell, vorschlaegeErfassen } from "@/lib/tarif-vorschlaege-server";
@@ -173,6 +173,9 @@ export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx,
   const [quellen, frei] = await Promise.all([bisherQuellen(appt.leadId, ctx.customerId), gesundheitFrei(ctx.customerId)]);
   const ab = bisherAbgleichen(auswahl.sparten, (sp) => bisherVorschlag(sp, quellen, k), frei);
   if (ab.geaendert) auswahl = { ...auswahl, sparten: ab.sparten };
+  // Eingabe in „Was hat … schon?“ (Ja, woanders) gewinnt über Chat und Police (Ole, 18.11.2026)
+  const hs = bisherAusSchutz(auswahl.sparten, auswahl.schutz, k, frei);
+  if (hs.geaendert) auswahl = { ...auswahl, sparten: hs.sparten };
   // Von Vermittlern bestätigte Katalogwerte (übernommen im Admin) in gespeicherte Auswahlen bevorstehender Termine;
   // vergangene Präsentationen bleiben, wie sie waren
   let katalogNeu = false;
@@ -183,7 +186,7 @@ export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx,
   // Vertreter sehen nur die Tarife ihrer Gesellschaft(en)
   const tarife = vertrieb.rolle === "vertreter" ? k.tarife.filter((t) => vertrieb.gesellschaften.includes(t.gesellschaft)) : k.tarife;
   const gesellschaften = sortiereGesellschaften(k.tarife.map((t) => t.gesellschaft)).map((key) => ({ key, name: k.tarife.find((t) => t.gesellschaft === key)?.gesellschaftName ?? gesellschaftName(key) }));
-  return { auswahl, quelle, katalog: { sparten: k.sparten, tarife, buendel: k.buendel }, vertrieb, gesellschaftFehlt, gesellschaften, eigene, meine, klaerenErledigt: appt.klaerenErledigt, schutzNeu, bisherNeu: ab.geaendert || katalogNeu, gesundheitFrei: frei };
+  return { auswahl, quelle, katalog: { sparten: k.sparten, tarife, buendel: k.buendel }, vertrieb, gesellschaftFehlt, gesellschaften, eigene, meine, klaerenErledigt: appt.klaerenErledigt, schutzNeu, bisherNeu: ab.geaendert || hs.geaendert || katalogNeu, gesundheitFrei: frei };
 }
 
 /**
@@ -191,8 +194,14 @@ export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx,
  * Bestätigen-Knopf mehr, die Werte kommen aus dem Katalog) und „Meine Merkmale“ für den nächsten Termin.
  */
 export async function tarifauswahlSpeichern(appointmentId: string, ctx: TeamCtx, raw: unknown): Promise<{ ok: true; auswahl: Tarifauswahl } | { ok: false; error: string }> {
-  const roh = cleanTarifauswahl(raw);
+  let roh = cleanTarifauswahl(raw);
   if (!roh) return { ok: false, error: "Ungültige Daten." };
+  // Bisheriger Vertrag aus „Was hat … schon?“ (Ja, woanders): Eingabe des Vermittlers gewinnt über Chat und Police,
+  // mit den Katalogwerten des gewählten Tarifs (ganzer Katalog, auch Gesellschaften außerhalb des eigenen Vertriebs)
+  if (roh.sparten.some((sp) => schutzVonHand(roh!.schutz?.find((x) => x.key === sp.key)))) {
+    const hs = bisherAusSchutz(roh.sparten, roh.schutz, await ladeTarifkatalogAktuell(), true);
+    if (hs.geaendert) roh = { ...roh, sparten: hs.sparten };
+  }
   // Gesundheitssparten: bisheriger Vertrag erst nach Freischaltung (auch von Hand nicht)
   const a = await bisherPruefen(roh, ctx.customerId);
   // Kombi-Rabatt: Bündelregeln aus dem Katalog als Schnappschuss mit den Angeboten (Präsentation rechnet damit)

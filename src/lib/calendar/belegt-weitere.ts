@@ -16,19 +16,28 @@ export function parseWeitereKalender(raw: string): { ok: true; ids: string[] } |
 
 type FreeBusyJson = { calendars?: Record<string, { busy?: { start: string; end: string }[]; errors?: { reason?: string }[] }> };
 
-/** Antwort von Google freeBusy zusammenführen: Hauptkalender und weitere. Wirft, wenn einer nicht abrufbar ist. */
-export function belegtAusFreeBusy(json: FreeBusyJson, weitere: string[]): Busy[] {
-  const out: Busy[] = [];
+/**
+ * Antwort von Google freeBusy zusammenführen: Hauptkalender und weitere. Wirft nur, wenn der Hauptkalender nicht
+ * abrufbar ist. Ein weiterer Kalender, der nicht lesbar ist (Tippfehler → notFound, keine Freigabe), wird übersprungen
+ * und in `unlesbar` gemeldet (Ole, 18.11.2026: sonst zeigte die Buchungsseite gar keine Zeiten mehr).
+ */
+export function belegtAusFreeBusy(json: FreeBusyJson, weitere: string[]): { busy: Busy[]; unlesbar: { id: string; grund: string }[] } {
+  const busy: Busy[] = [];
+  const unlesbar: { id: string; grund: string }[] = [];
   for (const id of ["primary", ...weitere]) {
     const cal = json.calendars?.[id];
     if (!cal || (cal.errors && cal.errors.length > 0)) {
-      throw new Error(
-        id === "primary"
-          ? "Google-Verfügbarkeit nicht abrufbar. Kalender ggf. neu verbinden."
-          : `Kalender ${id} nicht abrufbar (${cal?.errors?.[0]?.reason ?? "fehlt"}). Freigabe für das verbundene Konto prüfen.`,
-      );
+      if (id === "primary") throw new Error("Google-Verfügbarkeit nicht abrufbar. Kalender ggf. neu verbinden.");
+      unlesbar.push({ id, grund: cal?.errors?.[0]?.reason ?? "fehlt" });
+      continue;
     }
-    for (const b of cal.busy ?? []) out.push({ start: new Date(b.start), end: new Date(b.end) });
+    for (const b of cal.busy ?? []) busy.push({ start: new Date(b.start), end: new Date(b.end) });
   }
-  return out;
+  return { busy, unlesbar };
+}
+
+/** Kalender-Adresse aus der Antwort von events.list (summary des Hauptkalenders ist die Adresse des Kontos). */
+export function kontoAdresseAusSummary(summary: unknown): string | null {
+  const s = typeof summary === "string" ? summary.trim().toLowerCase() : "";
+  return /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(s) ? s : null;
 }

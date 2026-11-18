@@ -5,6 +5,9 @@ import { describe, expect, it } from "vitest";
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
 import {
   ausChat,
+  ausSchutz,
+  bisherAusSchutz,
+  bisherMitSchutz,
   ausPolice,
   beitragsUnterschiedJahr,
   bisherAbgleichen,
@@ -19,6 +22,7 @@ import {
   WERT_PRUEFEN,
   type BisherVertrag,
   type PoliceKurz,
+  type SchutzWoanders,
 } from "@/lib/bisheriger-vertrag";
 import { cleanTarifauswahl, grenzenFuer, startAuswahl, zuAngebote, type SparteWahl, type Tarifauswahl } from "@/lib/tarifauswahl";
 import { cleanAngebote } from "@/lib/angebote-daten";
@@ -294,5 +298,44 @@ describe("Vergleichsfolie mit „Ihr bisheriger Vertrag“", () => {
     expect(zellen.length).toBeGreaterThan(0);
     for (const z of zellen) expect(z).toContain(WERT_PRUEFEN);
     expect(zellen.join("")).not.toMatch(/nein-z/);
+  });
+});
+
+describe("Eingabe in „Was hat … schon?“ gewinnt über den Chat (Ole, 18.11.2026)", () => {
+  // Ole: PKV bei Debeka, Tarif NW-SB aus der Liste, Ablauf 02/2028, 704,23 €; im Chat stand „PKV bei Allianz“
+  const nwSb = k.tarife.find((t) => t.sparte === "pkv" && t.gesellschaft === "debeka" && t.kurz === "NW-SB")!;
+  const schutz: SchutzWoanders = { key: "pkv", status: "woanders", versicherer: "Debeka", tarif: "NW-SB", katalogId: nwSb.id, beitrag: 704.23, ablauf: "2028-02" };
+  const chat = ausChat({ at: "", liste: normalisiereVertraege([{ sparte: "Private Krankenversicherung", gesellschaft: "Allianz" }]) }, { key: "pkv" }, k);
+
+  it("Debeka NW-SB mit Katalogwerten, Beitrag und Ablauf statt „Allianz“ und „laut Police prüfen“", () => {
+    expect(nwSb).toBeTruthy();
+    expect(chat?.gesellschaft).toBe("Allianz");
+    const b = bisherMitSchutz(chat, schutz, { key: "pkv" }, k)!;
+    expect(b).toMatchObject({ quelle: "hand", gesellschaft: "Debeka", tarif: "NW-SB", katalogId: nwSb.id, beitrag: 704.23, zahlweise: "monat", ablauf: "2028-02-01" });
+    expect(b.werte.selbstbehalt).toBe("1.350 €");
+    const s = bisherSpalte({ key: "pkv", label: "Private Krankenversicherung" }, b, Object.keys(nwSb.werte).map((key) => ({ key, name: key })));
+    expect(s).toMatchObject({ gesellschaft: "Debeka", tarif: "NW-SB", beitragMonat: 704.23, ablauf: "2028-02-01" });
+    expect(s.merkmale.find((m) => m.name === "selbstbehalt")?.wert).toBe("1.350 €");
+    expect(s.merkmale.filter((m) => m.wert === WERT_PRUEFEN)).toHaveLength(0);
+  });
+
+  it("gilt beim Laden und Speichern für die Sparte im Angebot; nur mit Freischaltung der Gesundheitssparten", () => {
+    const sp = { ...sparte("pkv"), bisher: chat };
+    const mit = bisherAusSchutz([sp], [schutz], k, true);
+    expect(mit.geaendert).toBe(true);
+    expect(mit.sparten[0].bisher).toMatchObject({ gesellschaft: "Debeka", tarif: "NW-SB" });
+    // erneut: nichts mehr zu ändern
+    expect(bisherAusSchutz(mit.sparten, [schutz], k, true).geaendert).toBe(false);
+    expect(bisherAusSchutz([sp], [schutz], k, false).geaendert).toBe(false);
+  });
+
+  it("Vorschlag aus dem Chat (nur Versicherer) bleibt beim Chat; selbst gepflegter Vertrag einer anderen Gesellschaft bleibt", () => {
+    expect(ausSchutz({ key: "pkv", status: "woanders", versicherer: "Allianz", quelle: "chat" }, { key: "pkv" }, k)).toBeNull();
+    expect(ausSchutz({ ...schutz, status: "luecke" }, { key: "pkv" }, k)).toBeNull();
+    const eigen = hand({ gesellschaft: "HUK-COBURG", beitrag: 500 });
+    expect(bisherMitSchutz(eigen, schutz, { key: "pkv" }, k)).toBe(eigen);
+    // gleiche Gesellschaft von Hand ohne Tarif: Tarif, Werte, Beitrag und Ablauf ergänzt
+    const leer = hand({ gesellschaft: "Debeka", zeigen: true });
+    expect(bisherMitSchutz(leer, schutz, { key: "pkv" }, k)).toMatchObject({ zeigen: true, tarif: "NW-SB", beitrag: 704.23, ablauf: "2028-02-01" });
   });
 });

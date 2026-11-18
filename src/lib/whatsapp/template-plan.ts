@@ -101,8 +101,14 @@ export const CAMPAIGN_PURPOSES: NoticePurpose[] = ["campaign_cross_sell", "campa
 /** Nur mit Modul „Empfehlungen & Bewertungen“ (auch in der Testphase). */
 export const EMPFEHLUNG_PURPOSES: NoticePurpose[] = ["review_request", "referral_request", "referral_thanks", "referral_update"];
 
-export function purposesFor(opts: { bestand: boolean; empfehlung?: boolean }): NoticePurpose[] {
-  return [...CORE_PURPOSES, ...(opts.bestand ? CAMPAIGN_PURPOSES : []), ...(opts.empfehlung ? EMPFEHLUNG_PURPOSES : [])];
+/**
+ * Nur für Makler (Customer.vermittlerTyp = makler): Maklervollmacht per WhatsApp (Ole, 18.11.2026, freigegeben). Bestehende
+ * Makler mit verbundener WhatsApp bekommen sie beim nächsten Abgleich im Cron (syncTemplates) automatisch eingereicht.
+ */
+export const MAKLER_PURPOSES: NoticePurpose[] = ["maklervollmacht", "maklervollmacht_erinnerung"];
+
+export function purposesFor(opts: { bestand: boolean; empfehlung?: boolean; makler?: boolean }): NoticePurpose[] {
+  return [...CORE_PURPOSES, ...(opts.bestand ? CAMPAIGN_PURPOSES : []), ...(opts.empfehlung ? EMPFEHLUNG_PURPOSES : []), ...(opts.makler ? MAKLER_PURPOSES : [])];
 }
 
 /** Fassung zu einer Ansprache bzw. Fassung (Kampagnen/Empfehlungen: immer Sie). */
@@ -147,7 +153,9 @@ export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSI
  * alles andere ist Ansprache (MARKETING). Meta prüft und stuft ggf. selbst um.
  */
 export function categoryFor(purpose: NoticePurpose): "UTILITY" | "MARKETING" {
-  return ["booking_confirmation", "reminder", "reminder_soon", "reminder_start", "appt_waiting", "reschedule", "offer_send"].includes(purpose) ? "UTILITY" : "MARKETING";
+  return ["booking_confirmation", "reminder", "reminder_soon", "reminder_start", "appt_waiting", "reschedule", "offer_send", "maklervollmacht", "maklervollmacht_erinnerung"].includes(purpose)
+    ? "UTILITY"
+    : "MARKETING";
 }
 
 /** Firmenname, der im Text für „[Firma]“ steht (wie im Admin: ohne vorangestelltes „Allianz“). */
@@ -212,6 +220,7 @@ const EXAMPLES: Record<string, string> = {
   Angebotslink: "https://app.performancegrowth.de/ihr-angebot/abc123",
   // Erstanschreiben v9 der Tierkrankenversicherung: Tiername aus dem Formular
   Tier: "Minka",
+  "Vollmacht-Link": "https://dein-beratungstermin.de/vollmacht/abc123",
 };
 
 /** Beispielwerte der Du-Fassung, wo sie sich von der Sie-Fassung unterscheiden. */
@@ -385,6 +394,8 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   referral_request: { title: "Bitte um Empfehlung", when: "Einige Wochen nach einem Abschluss (Modul Empfehlungen & Bewertungen)." },
   referral_thanks: { title: "Dank an den Empfehlenden", when: "Sobald aus einer Empfehlung ein Abschluss wird." },
   referral_update: { title: "Rückmeldung an den Empfehlenden", when: "Wenn sich eine empfohlene Person meldet oder ein Termin zustande kommt (nur mit deren Einwilligung)." },
+  maklervollmacht: { title: "Maklervollmacht zum Unterschreiben", when: "Wenn Sie im Kontakt unter Maklervollmacht „Per WhatsApp senden“ antippen." },
+  maklervollmacht_erinnerung: { title: "Erinnerung an die Maklervollmacht", when: "Einmal, 2 Tage nach dem Senden, falls noch nicht unterschrieben." },
 };
 
 export type LocalStatus = "pending" | "approved" | "rejected" | "paused";

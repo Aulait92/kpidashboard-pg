@@ -1,13 +1,26 @@
 // Karte „Maklervollmacht“ in der Kundenakte (Ole, 18.11.2026; nur Makler, docs/rechtstexte/maklervollmacht-2026-11-18.md).
-// Je Zustand eine Hauptaktion: anfordern → Link teilen → Schreiben an die Versicherer herunterladen. Danach je Versicherer
-// der Stand der Bestandsübertragung mit „Bestätigt“ / „Abgelehnt“ (lib/maklervollmacht/uebertragung.ts).
+// Je Zustand eine Hauptaktion: per WhatsApp senden (Chat da) bzw. per E-Mail/Link → warten (Stand, Erinnerung) →
+// Schreiben an die Versicherer herunterladen. Details: components/maklervollmacht-aktionen.tsx.
+// Danach je Versicherer der Stand der Bestandsübertragung mit „Bestätigt“ / „Abgelehnt“ (lib/maklervollmacht/uebertragung.ts).
 
 import { FileSignature } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { istMakler, vollmachtFuerLead } from "@/lib/maklervollmacht/server";
+import { erinnerungGeplantAm } from "@/lib/maklervollmacht/regeln";
 import { prisma } from "@/lib/prisma";
 import { MaklervollmachtAktionen } from "@/components/maklervollmacht-aktionen";
 import { uebertragungenFuerVollmacht } from "@/lib/maklervollmacht/uebertragung";
+
+const fmt = (d: Date | null) => (d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d) : "");
+const kurz = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(d);
+
+/** „Erinnerung geplant am 20.11.“, „Erinnerung gesendet am 20.11.“, gestoppt: „keine Erinnerung“ */
+export function erinnerungZeile(v: { status: string; waSentAt: Date | null; erinnerungAt: Date | null; erinnerungStatus: string | null }): string | null {
+  if (!v.waSentAt) return null;
+  if (v.erinnerungAt) return v.erinnerungStatus === "gesendet" ? `Erinnerung gesendet am ${kurz(v.erinnerungAt)}` : "keine Erinnerung (Ihr Kunde möchte keine WhatsApp)";
+  const geplant = erinnerungGeplantAm(v);
+  return geplant ? `Erinnerung geplant am ${kurz(geplant)}` : null;
+}
 
 export async function MaklervollmachtCard({
   leadId,
@@ -29,7 +42,11 @@ export async function MaklervollmachtCard({
   if (!v && !passt) return null;
   // Bestandsübertragung je Versicherer (läuft, bestätigt, abgelehnt) mit Ein-Klick-Bestätigung
   const uebertragung = v?.status === "unterschrieben" ? await uebertragungenFuerVollmacht(v.id, customerId).catch(() => []) : [];
-  const fmt = (d: Date | null) => (d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d) : "");
+  // WhatsApp nur, wenn der Kontakt einen Chat hat und noch nicht unterschrieben ist
+  const wa =
+    v?.status === "unterschrieben" || v?.status === "eigene"
+      ? { chat: false, moeglich: false, grund: null }
+      : await import("@/lib/maklervollmacht/whatsapp").then((m) => m.whatsAppStand(leadId, customerId)).catch(() => ({ chat: false, moeglich: false, grund: null }));
   return (
     <Card className="mb-6">
       <CardHeader title="Maklervollmacht" icon={FileSignature} />
@@ -38,6 +55,7 @@ export async function MaklervollmachtCard({
           leadId={leadId}
           readOnly={readOnly}
           hatEmail={!!lead?.email}
+          wa={{ chat: wa.chat, moeglich: wa.moeglich, grund: wa.grund }}
           v={
             v
               ? {
@@ -47,8 +65,10 @@ export async function MaklervollmachtCard({
                   abgelaufen: v.abgelaufen,
                   gesendet: !!v.sentAt,
                   unterschrieben: fmt(v.signedAt),
-                  vertraege: v.vertraege.length,
-                  versicherer: v.versicherer,
+                  kopie: v.kopieStatus,
+                  stand: v.stand,
+                  waGesendet: v.waSentAt ? kurz(v.waSentAt) : null,
+                  erinnerung: erinnerungZeile(v),
                   uebertragung: uebertragung.map((g) => ({
                     versicherer: g.versicherer,
                     stand: g.stand,

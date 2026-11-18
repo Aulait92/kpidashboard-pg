@@ -40,7 +40,7 @@ export default async function NeuerKontaktPage({ searchParams }: { searchParams:
           </div>
           <div>
             <label className="label" htmlFor="nk-source">Woher?</label>
-            <select id="nk-source" name="source" defaultValue={sp.quelle ?? "LINKEDIN"} className="input">
+            <select id="nk-source" name="source" defaultValue={sp.quelle ?? "SONSTIGES"} className="input">
               {SOURCES.map((x) => (
                 <option key={x.id} value={x.id}>
                   {x.label}
@@ -61,7 +61,7 @@ export default async function NeuerKontaktPage({ searchParams }: { searchParams:
               </div>
               <div>
                 <label className="label" htmlFor="nk-task">Aufgabe für heute</label>
-                <input id="nk-task" name="taskTitle" defaultValue="Auf LinkedIn-Anfrage reagieren" className="input" />
+                <input id="nk-task" name="taskTitle" defaultValue={sp.quelle === "LINKEDIN" ? "Auf LinkedIn-Anfrage reagieren" : "Kontakt aufnehmen"} className="input" />
               </div>
             </div>
           </details>

@@ -12,7 +12,7 @@ import {
   type NewEvent,
 } from "@/lib/calendar/tokens";
 
-import { belegtAusFreeBusy } from "@/lib/calendar/belegt-weitere";
+import { belegtAusFreeBusy, kontoAdresseAusSummary } from "@/lib/calendar/belegt-weitere";
 import { prisma } from "@/lib/prisma";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -84,8 +84,27 @@ export async function googleExchangeCode(code: string, customerId: string): Prom
     refreshToken: json.refresh_token ?? null,
     expiresInSec: json.expires_in,
     scope: GOOGLE_SCOPE,
+    // Ole, 18.11.2026: Adresse des Kontos fehlte nach dem Neu-Verbinden (wurde nie gelesen und dabei auf leer gesetzt)
+    accountEmail: await googleKontoAdresse(json.access_token),
   });
 }
+
+/**
+ * Adresse des verbundenen Google-Kontos ohne zusätzliche Berechtigung: Der Hauptkalender heißt wie das Konto, und
+ * events.list (calendar.events) liefert seinen Namen als summary. null, wenn nicht ermittelbar.
+ */
+export async function googleKontoAdresse(token: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${CAL_BASE}/calendars/primary/events?maxResults=1&fields=summary`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    return kontoAdresseAusSummary(((await res.json()) as { summary?: unknown }).summary);
+  } catch {
+    return null;
+  }
+}
+
+/** Nicht lesbare weitere Kalender höchstens einmal je Stunde und Kalender-Satz protokollieren. */
+const unlesbarGeloggt = new Map<string, number>();
 
 async function accessToken(customerId: string): Promise<string> {
   const conn = await loadConnection(customerId);
@@ -114,9 +133,15 @@ async function accessToken(customerId: string): Promise<string> {
 export async function googleGetBusy(customerId: string, min: Date, max: Date): Promise<Busy[]> {
   const token = await accessToken(customerId);
   // Weitere freigegebene Kalender nur für „belegt“ (lib/calendar/belegt-weitere.ts); nicht bei Berater-Kalendern
-  const weitere = userIdOfKey(customerId)
-    ? []
-    : ((await prisma.calendarConnection.findUnique({ where: { customerId }, select: { busyCalendarIds: true } }))?.busyCalendarIds ?? []);
+  const conn = userIdOfKey(customerId)
+    ? null
+    : await prisma.calendarConnection.findUnique({ where: { customerId }, select: { busyCalendarIds: true, busyCalendarErrors: true, accountEmail: true } });
+  const weitere = conn?.busyCalendarIds ?? [];
+  // Adresse des Kontos nachtragen, falls sie fehlt (ältere Verbindungen)
+  if (conn && !conn.accountEmail) {
+    const adresse = await googleKontoAdresse(token);
+    if (adresse) await prisma.calendarConnection.updateMany({ where: { customerId, accountEmail: null }, data: { accountEmail: adresse } }).catch(() => {});
+  }
   const res = await fetch(`${CAL_BASE}/freeBusy`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -128,7 +153,20 @@ export async function googleGetBusy(customerId: string, min: Date, max: Date): P
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`Google-Verfügbarkeit nicht abrufbar (${res.status}). Kalender ggf. neu verbinden.`);
-  return belegtAusFreeBusy(json, weitere);
+  const { busy, unlesbar } = belegtAusFreeBusy(json, weitere);
+  // Nicht lesbare weitere Kalender überspringen (Hauptkalender zählt weiter), merken für den Hinweis in den Einstellungen
+  const ids = unlesbar.map((u) => u.id);
+  if (conn && ids.join(",") !== (conn.busyCalendarErrors ?? []).join(",")) {
+    await prisma.calendarConnection.updateMany({ where: { customerId }, data: { busyCalendarErrors: ids } }).catch(() => {});
+  }
+  if (unlesbar.length) {
+    const key = `${customerId}:${ids.join(",")}`;
+    if (Date.now() - (unlesbarGeloggt.get(key) ?? 0) > 60 * 60 * 1000) {
+      unlesbarGeloggt.set(key, Date.now());
+      console.warn("[google freeBusy] weitere Kalender übersprungen", { customerId, kalender: unlesbar.map((u) => `${u.id} (${u.grund})`) });
+    }
+  }
+  return busy;
 }
 
 export async function googleCreateEvent(customerId: string, ev: NewEvent): Promise<CreatedEvent> {

@@ -56,7 +56,8 @@ export function markeFuer(kunde: { name: string; vermittlerTyp?: string | null; 
   return { name, gesellschaft: null, farbe: "#2563eb", farbeHell: "#e5edff", akzent: "#2563eb", logoUrl, markthinweis };
 }
 
-export type Folie = { id: string; titel: string; html: string };
+/** produkt: Sparte einer Produktfolie (Vergleich), z. B. für „Unfall hinzugefügt“ im Termin. */
+export type Folie = { id: string; titel: string; html: string; produkt?: string };
 
 const e = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
@@ -130,7 +131,7 @@ export function praesentationCss(m: Marke): string {
 .angebot ul{margin-top:10px}.angebot li{font-size:18px;margin:0 0 6px}
 .angebot li .dot{margin-top:9px;flex-basis:9px;height:9px}
 .zwei{display:grid;grid-template-columns:1fr 1fr;gap:40px}
-.ok li::before{content:"✓";color:#16a34a;font-weight:800;margin-right:10px}
+.ok li::before{content:"✔";color:#047857;font-weight:900;margin-right:10px}
 .nein li::before{content:"✕";color:#b91c1c;font-weight:800;margin-right:10px}
 .ok li,.nein li{display:block}
 .gross{font-size:96px;font-weight:800;color:var(--f);line-height:1;margin:10px 0}
@@ -161,7 +162,7 @@ export function praesentationCss(m: Marke): string {
 .stufen{display:flex;flex-wrap:wrap;gap:2px;width:100%;background:var(--f);border:2px solid var(--f);border-radius:10px;overflow:hidden;margin:8px 0 12px}
 .st{flex:1 1 auto;min-width:0;font:inherit;font-size:15px;font-weight:600;padding:7px 8px;border:0;background:#fff;color:var(--f);cursor:pointer;white-space:normal;overflow-wrap:anywhere;text-align:center}
 .st.an{background:var(--f);color:#fff}
-.st .stern{font-size:11px;margin-left:3px;position:relative;top:-5px}
+.st .stern{font-size:14px;margin-left:3px;position:relative;top:-4px}
 .stufe-fest{display:flex;align-items:center;min-height:36px;font-size:17px;font-weight:600;color:#4b5568;margin:8px 0 12px;overflow-wrap:anywhere}
 .angebote.drin{row-gap:0;grid-template-rows:auto auto auto 1fr}
 .drin .angebot{display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0;align-content:start;padding:18px 18px}
@@ -188,7 +189,7 @@ export function praesentationCss(m: Marke): string {
 .vgl thead .tarif{font-size:24px;font-weight:700}.vgl thead .tarif.lang{font-size:20px}.vgl thead .preis{font-size:30px;font-weight:800;color:var(--f)}.vgl thead .preis small{display:block;font-size:15px;font-weight:500;color:#66758f;margin-top:-2px}
 .vgl .badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--f);color:#fff;font-size:14px;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap}
 .vgl .gew{background:var(--fh)}
-.vgl .ja-z{color:#16a34a;font-weight:800;font-size:22px}.vgl .nein-z{display:inline-block;width:18px;height:2px;background:#94a3b8;vertical-align:middle}
+.vgl .ja-z{color:#047857;font-weight:900;font-size:24px;line-height:1}.vgl .nein-z{font-size:15px;line-height:1.15;color:#475569}.vgl.mit-bisher .nein-z{font-size:14px;line-height:1.05}.alle .ja-k{color:#047857;font-weight:900;font-style:normal}
 .vgl .bisher{background:#f4f6f9;color:#334155}
 .vgl.mit-bisher th,.vgl.mit-bisher td{padding:8px 10px}.vgl.mit-bisher thead th{padding-top:20px}.vgl.mit-bisher tbody th{width:22%}
 .vgl.mit-bisher .bs{font-size:14px;padding:3px 10px 3px 5px;gap:6px}.vgl.mit-bisher .bs small{white-space:nowrap;font-size:14px}.vgl.mit-bisher .bausteine{gap:6px}
@@ -269,7 +270,8 @@ const JA = /^(ja|✓|✔|x|enthalten|inklusive|inkl\.?)$/i;
 const NEIN = /^(nein|\u2014|\u2013|-|nicht enthalten|ohne)$/i;
 const istNein = (w: string | undefined) => !w || NEIN.test(w.trim());
 const zelle = (w: string | undefined) =>
-  istNein(w) ? `<span class="nein-z" title="nicht enthalten"></span>` : JA.test(w!.trim()) ? `<span class="ja-z">✓</span>` : e(w!);
+  // „nicht enthalten“ als Wort statt Strich, kräftiger Haken in AA-Grün (Usability-Check 18.11.2026)
+  istNein(w) ? `<span class="nein-z">nicht enthalten</span>` : JA.test(w!.trim()) ? `<span class="ja-z" aria-label="enthalten">✔</span>` : e(w!);
 
 const klein = (s: string) => s.toLocaleLowerCase("de");
 const RAND = /^[\s\-\u2013\u2014:,;/|·]+|[\s\-\u2013\u2014:,;/|·]+$/g;
@@ -371,7 +373,7 @@ function vergleichTabelle(
       }</th>`
     : "";
   const bs = mitBausteinen ? `<tr><th>Bausteine</th>${bTd("")}${v.map((i) => `<td${col(i)}>${f.schalter(i)}</td>`).join("")}</tr>` : "";
-  return `${alle.length ? `<div class="alle"><b>In allen Tarifen:</b> ${alle.map((x) => `<span>✓ ${e(x)}</span>`).join("")}</div>` : ""}<table class="vgl${b ? " mit-bisher" : ""}"><thead><tr><th></th>${bKopf}${v
+  return `${alle.length ? `<div class="alle"><b>In allen Tarifen:</b> ${alle.map((x) => `<span><i class="ja-k">✔</i> ${e(x)}</span>`).join("")}</div>` : ""}<table class="vgl${b ? " mit-bisher" : ""}"><thead><tr><th></th>${bKopf}${v
     .map((i, k) => `<th${col(i)}>${f.badge(i)}<div class="tarif${lang ? " lang" : ""}">${e(kurz[k])}</div>${f.preis(i)}${f.knopf(i)}</th>`)
     .join("")}</tr></thead><tbody>${anders.map((n) => `<tr><th>${e(n)}</th>${b ? bTd(bZelle(n)) : ""}${v.map((i) => `<td${col(i)}>${zelle(wert(i, n))}</td>`).join("")}</tr>`).join("")}${bs}</tbody></table>`;
 }
@@ -541,11 +543,18 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   let spNr = -1;
   // Kündigung relativ zum Termin (Berliner Datum)
   const heute = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d.termin.startsAt);
+  // Cross-Selling im Termin (Ole, 18.11.2026): per „Mit anschauen“ dazugenommene Sparten stehen direkt hinter „Ihr Schutz
+  // im Überblick“, in der Reihenfolge des Hinzufügens (zusatzFolge). So springt das Deck vorwärts auf die neue Folie,
+  // der Beitrag bleibt dahinter und rechnet sie mit. Ohne Überblick bleibt alles an seinem Platz.
+  const mitUeberblick = !!angebote?.schutz?.length;
+  const zusatzFolien: { folie: Folie; platz: number }[] = [];
   for (const [sparte, varianten] of nachSparte) {
     spNr++;
     // Bisheriger Vertrag des Kunden (Paket P3b): Vergleich auch mit nur einem neuen Tarif
     const bisher = angebote?.bisher?.find((x) => x.sparte === sparte) ?? null;
-    if (varianten.length < 2 && !bisher) continue;
+    const zusatz = varianten.some((i) => i.zusatz);
+    // Cross-Selling: eigene Folie auch mit nur einem Tarif (sonst stünde der Preis nirgends)
+    if (varianten.length < 2 && !bisher && !(zusatz && mitUeberblick)) continue;
     // Cross-Selling: erst nach „Mit anschauen“ (Folie „Ihr Schutz im Überblick“) im Vergleich
     if (varianten.every((i) => zusatzAus(i, varianten))) continue;
     // höchstens 4 Spalten (mit bisherigem Vertrag 3 neue); die gewählte Stufe ist immer dabei
@@ -572,16 +581,21 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
             (i, k) => `<div class="angebot${i.empfohlen ? " empf" : ""}${i.gewaehlt ? " gew" : ""}">${badge(i)}<div class="tarif">${e(kurz[k])}</div>${preis(i)}${punkte(i.leistungen.slice(0, 3))}${bs(i)}${knopf(i)}</div>`,
           )
           .join("")}</div>`;
-    out.push({
+    const folie: Folie = {
       // feste ID je Sparte: das Deck bleibt beim Umschalten auf derselben Folie, auch wenn eine Sparte dazukommt
       id: `vergleich-${sparteKey(sparte)}-${spNr}`,
       titel: `Auswahl ${sparte}`,
+      produkt: sparte,
       html: R(`<h2>${e(a(an, "Deine Auswahl", "Ihre Auswahl"))}: ${e(sparte)}</h2>${html}`, undefined, "", markthinweisText(m.markthinweis, varianten)),
-    });
+    };
+    if (zusatz && mitUeberblick) zusatzFolien.push({ folie, platz: angebote?.zusatzFolge?.indexOf(sparte) ?? -1 });
+    else out.push(folie);
   }
 
   // Ihr Schutz im Überblick (Cross-Selling, Ole 16.11.2026): Ampel je Sparte, „Mit anschauen“, Kombi-Rabatt
   if (angebote?.schutz?.length) out.push(ueberblickFolie(angebote.schutz, items, beitrag?.kombi ?? null, an, R));
+  // dahinter die dazugenommenen Sparten (ohne gespeicherte Reihenfolge, z. B. ältere Daten: zuerst, wie im Angebot)
+  out.push(...zusatzFolien.sort((x, y) => x.platz - y.platz).map((x) => x.folie));
 
   const summe = beitrag?.endbeitrag ?? null;
   // Produkte als Schalter: antippen nimmt eine Sparte heraus bzw. wieder hinein (Cross-Selling-Sparten erst nach „Mit anschauen“)

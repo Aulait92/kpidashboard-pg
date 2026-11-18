@@ -115,6 +115,8 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
           ...(pkg === "software" ? { newUi: true } : {}),
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
+          // Du/Sie gegenüber dem Vermittler wie im angenommenen Angebot (lib/vermittler-ansprache.ts)
+          vermittlerDu: offer.mailDu,
           ...billingTermsOf(offer),
           ...(stripeFree ? { stripeCustomerId: offer.stripeCustomerId } : {}),
         },
@@ -131,6 +133,8 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
           newUi: pkg === "software",
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
+          // Du/Sie gegenüber dem Vermittler wie im angenommenen Angebot (lib/vermittler-ansprache.ts)
+          vermittlerDu: offer.mailDu,
           ...billingTermsOf(offer),
           ...(stripeFree ? { stripeCustomerId: offer.stripeCustomerId } : {}),
         },
@@ -278,6 +282,8 @@ async function upgradeExistingCustomer(
       ...(pkg === "software" ? { newUi: true } : {}),
       retainerMonthly: offer.monthlyFee,
       ...(offer.startDate ? { retainerStart: offer.startDate } : {}),
+      // Neues angenommenes Angebot: Du/Sie wie darin (lib/vermittler-ansprache.ts)
+      vermittlerDu: offer.mailDu,
       ...billingTermsOf(offer),
       ...(stripeFree ? { stripeCustomerId: offer.stripeCustomerId } : {}),
     },

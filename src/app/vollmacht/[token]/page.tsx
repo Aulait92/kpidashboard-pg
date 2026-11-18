@@ -36,10 +36,10 @@ export default async function VollmachtPage({ params }: { params: Promise<{ toke
       </Shell>
     );
   }
-  const gesellschaften = bekannteGesellschaften().map(gesellschaftName);
+  const versichererVorschlaege = bekannteGesellschaften().map(gesellschaftName);
   return (
     <Shell advisor={s.makler.name} customerId={s.customerId}>
-      <VollmachtFormular token={token} an={s.an} makler={s.makler} vorschlag={s.vorschlag} gesellschaften={gesellschaften} erstinfoUrl={s.erstinfoUrl} />
+      <VollmachtFormular token={token} an={s.an} makler={s.makler} vorschlag={s.vorschlag} versichererVorschlaege={versichererVorschlaege} erstinfoUrl={s.erstinfoUrl} />
     </Shell>
   );
 }

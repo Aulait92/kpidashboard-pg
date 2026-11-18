@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { InfoHinweis } from "@/components/info-hinweis";
+import { CLV_ERKLAERT, NRR_ERKLAERT, SICHT_ERKLAERT } from "@/lib/begriffe";
 import { Download } from "lucide-react";
 import { Card, CardHeader, buttonClass } from "@/components/ui";
 import { Kennzahlen } from "@/components/admin-neu/ui/kennzahlen";
@@ -49,6 +51,12 @@ export function ExportKnoepfe({ sicht }: { sicht: Sicht }) {
   );
 }
 
+/** Fachbegriffe an den Kacheln (Usability-Check 18.11.2026) */
+const INFO: Record<string, { begriff: string; text: string }> = {
+  Umsatzbindung: { begriff: "NRR", text: NRR_ERKLAERT },
+  "Kundenwert : CAC": { begriff: "CLV", text: CLV_ERKLAERT },
+};
+
 export function Auswertung({ d }: { d: InvestorenDaten }) {
   const k = d.k;
   const maxAlter = Math.max(0, ...k.kohorten.gezeigt.map((c) => c.values.length));
@@ -58,6 +66,7 @@ export function Auswertung({ d }: { d: InvestorenDaten }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-[color:var(--muted)]">{standText(d, false)}</p>
+        <div className="inline-flex items-center gap-2">
         <div role="radiogroup" aria-label="Sicht" className="inline-flex rounded-full border border-[color:var(--border)] bg-white p-0.5 text-sm">
           {(["kern", "gesamt"] as const).map((s) => (
             <Link
@@ -73,10 +82,12 @@ export function Auswertung({ d }: { d: InvestorenDaten }) {
             </Link>
           ))}
         </div>
+        <InfoHinweis begriff="Kerngeschäft und Gesamt" text={SICHT_ERKLAERT} />
+        </div>
       </div>
 
       <div data-funktion="auswertung--fuenf-kennzahlen-mrr-bindung-marge-amortisation">
-        <Kennzahlen werte={kacheln(d).map((x) => ({ label: x.label, wert: x.wert, hinweis: x.hinweis, details: { zeilen: x.zeilen, text: x.text } }))} />
+        <Kennzahlen werte={kacheln(d).map((x) => ({ label: x.label, wert: x.wert, hinweis: x.hinweis, info: INFO[x.label], details: { zeilen: x.zeilen, text: x.text } }))} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

@@ -110,6 +110,7 @@ async function termin(appointmentId: string, ctx: TeamCtx) {
     select: {
       id: true,
       startsAt: true,
+      status: true,
       offersJson: true,
       klaerenErledigt: true,
       conversationId: true,
@@ -237,6 +238,7 @@ async function infoFuer(t: Termin, ctx: TeamCtx, now: Date): Promise<BdInfo> {
     tarife,
     vertraege,
     status: lead.status,
+    ergebnis: t.status === "completed",
   });
   const k = await leadVersandKontext(lead.customerId, { leadId: lead.id, schreiber: ctx.userId ?? null, nurLesen: true });
   const email = lead.email?.trim() || conv?.contactEmail?.trim() || null;

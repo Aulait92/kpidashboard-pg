@@ -3,7 +3,7 @@
 // brauchen, Rückrufe. Alles serialisierbar für die Client-Komponente.
 
 import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
-import { POLICY_TODO } from "@/lib/lead-followup";
+import { POLICY_TODO, wiedervorlageHinterTermin } from "@/lib/lead-followup";
 import { NACH_ABSCHLUSS_TODOS, UEBERTRAGUNG_TODO } from "@/lib/vertraege-shared";
 import { prisma } from "@/lib/prisma";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
@@ -178,7 +178,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       where: { ...leadScope(ctx), followUpAt: { gte: new Date(todayStart.getTime() + DAY), lt: horizon }, ...followUpOpen },
       orderBy: { followUpAt: "asc" },
       take: 100,
-      select: { id: true, name: true, followUpAt: true, followUpNote: true },
+      select: { id: true, name: true, followUpAt: true, followUpNote: true, appointments: { where: { status: "booked", startsAt: { gt: now } }, select: { id: true }, take: 1 } },
     }),
     prisma.appointment.findMany({
       where: { ...apptScope, status: "booked", startsAt: { gte: tomorrowEnd, lt: horizon } },
@@ -279,6 +279,12 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
   // „X Leads ohne nächsten Schritt“: Termine ohne Ergebnis, die schon unter „Wie lief's?“ stehen, nicht doppelt
   const noStep = await listWithoutNextStep(leadScope(ctx), { now, take: 30 });
   const outcomeLeadIds = new Set(past.filter((a) => !POST_STATUSES.includes(a.lead?.status ?? "")).map((a) => a.leadId));
+  // Termin vor Wiedervorlage (Usability-Check 18.11.2026): Wer heute bzw. demnächst mit einem Termin oder unter
+  // „Wie lief's?“ steht, erscheint nicht zusätzlich mit seiner Wiedervorlage. Das Ergebnis des Termins erledigt sie
+  // (lib/lead-followup.ts wiedervorlageVorTerminErledigen); wird der Termin abgesagt, steht sie wieder da.
+  const mitTermin = new Set([...upcoming.map((a) => a.leadId), ...laterAppts.map((a) => a.leadId), ...outcomeLeadIds].filter((x): x is string => !!x));
+  const zeigen = (f: { id: string; followUpNote: string | null; appointments: unknown[] }) => !(wiedervorlageHinterTermin(f.followUpNote) && (f.appointments.length > 0 || mitTermin.has(f.id)));
+  const wiedervorlagen = followUps.filter(zeigen);
 
   // Auch für die Anrufliste: was der Assistent schon weiß (Ole, 16.11.2026)
   const convIds = [
@@ -298,7 +304,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
 
   return {
     upcoming: [
-      ...laterFollowUps.map((f) => ({
+      ...laterFollowUps.filter(zeigen).map((f) => ({
         key: `f:${f.id}`,
         kind: "wiedervorlage" as const,
         leadId: f.id,
@@ -316,7 +322,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       })),
     ].sort((x, y) => x.at.localeCompare(y.at)),
     // Erneut eingetragen (lib/lead-erneut.ts): ganz oben unter den Wiedervorlagen, sonst nach Fälligkeit
-    followUps: [...followUps.filter((f) => isErneutNote(f.followUpNote)), ...followUps.filter((f) => !isErneutNote(f.followUpNote))].map((f) => ({
+    followUps: [...wiedervorlagen.filter((f) => isErneutNote(f.followUpNote)), ...wiedervorlagen.filter((f) => !isErneutNote(f.followUpNote))].map((f) => ({
       leadId: f.id,
       name: f.name ?? "Lead",
       source: f.source,

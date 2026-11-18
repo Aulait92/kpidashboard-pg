@@ -73,7 +73,7 @@ describe("Kein WhatsApp", () => {
   beforeAll(async () => {
     requireTestDb();
     process.env.ENCRYPTION_KEY ||= Buffer.alloc(32, 7).toString("base64");
-    customerId =(await makeCustomer({ leadAddress: "sie" })).id;
+    customerId = (await makeCustomer({ leadAddress: "sie", retainerMonthly: 990 })).id; // Software-Kunde (Pay-per-Lead bekommt keine Strecke)
     ownerId = (await makeBuyer(customerId, "owner")).id;
     await prisma.mailConnection.create({ data: { userId: ownerId, customerId, provider: "smtp", email: "berater@test.local", fromName: "Anna Berater" } });
     await prisma.agentConfig.create({ data: { customerId, active: true, outreachEnabled: true, followUpSequencesEnabled: true } });

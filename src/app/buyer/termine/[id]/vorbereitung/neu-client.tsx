@@ -42,6 +42,8 @@ import { setPreparedAction } from "./actions";
 import { eigenerTarifAction, gesellschaftAction, klaerenAction, tarifauswahlSpeichernAction } from "./neu-actions";
 import { BeitragGesamt, SchutzBereich } from "./schutz-client";
 import { BisherKarte } from "./bisher-client";
+import { bisherErlaubt, bisherMitSchutz } from "@/lib/bisheriger-vertrag";
+import { spartenFuerTermin } from "@/lib/terminvorbereitung-neu";
 import { SCHUTZ_SPARTEN, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
@@ -484,6 +486,11 @@ function Angebote(p: {
 }) {
   const toast = useToast();
   const { katalog, vertrieb } = p.daten;
+  // Sparte, für die der Lead gekommen ist: in „Was hat … schon?“ nicht entfernbar
+  const hauptSparte = useMemo(() => {
+    const t = p.vorschau.termin;
+    return spartenFuerTermin({ ...t, termin: { ...t.termin, startsAt: new Date(t.termin.startsAt) } }, katalog)[0] ?? null;
+  }, [p.vorschau.termin, katalog]);
   const [aktiv, setAktiv] = useState<string | null>(p.auswahl.sparten[0]?.key ?? null);
   const [rechnenOffen, setRechnenOffen] = useState(false);
   // „Jetzt prüfen“: Sparte beim Rendern umstellen (ohne Effekt)
@@ -537,6 +544,11 @@ function Angebote(p: {
     const neu = sparteNeu(katalog, key, vertrieb, p.daten.meine);
     if (!neu) return;
     if (!direkt) neu.zusatz = true;
+    // „Ja, woanders“ aus „Was hat … schon?“ gleich als bisheriger Vertrag (Katalogwerte ergänzt der Server beim Speichern)
+    if (bisherErlaubt(key, p.daten.gesundheitFrei ?? false)) {
+      const b = bisherMitSchutz(neu.bisher, p.auswahl.schutz?.find((x) => x.key === key), neu, katalog);
+      if (b) neu.bisher = b;
+    }
     p.aendern((a) => {
       a.sparten.push(neu);
       if (a.schutz && !a.schutz.some((x) => x.key === key)) a.schutz.push({ key, label: SCHUTZ_SPARTEN[key] ?? neu.label, status: "pruefen" });
@@ -709,6 +721,7 @@ function Angebote(p: {
         gesellschaften={p.daten.gesellschaften}
         imKatalog={katalog.sparten.map((s) => s.key)}
         gesundheitFrei={p.daten.gesundheitFrei ?? false}
+        haupt={hauptSparte}
       />
 
       {/* Schritt 2 in eigener Karte (Ole, 18.11.2026: „Lücke zwischen 1 und 2“), wie Schritt 3 und 4 */}

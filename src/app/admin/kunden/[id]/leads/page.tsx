@@ -1,3 +1,4 @@
+import { statusLabel } from "@/lib/products";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Badge, Card, CardHeader } from "@/components/ui";
@@ -114,7 +115,7 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
                 ) : l.closedAt ? (
                   <Badge tone="success">Abschluss</Badge>
                 ) : (
-                  <span className={`shrink-0 text-xs text-[color:var(--muted)] ${l.isTest ? "hidden sm:inline" : ""}`}>{l.status ?? "Neu"}</span>
+                  <span className={`shrink-0 text-xs text-[color:var(--muted)] ${l.isTest ? "hidden sm:inline" : ""}`}>{statusLabel(l.status) ?? "Neu"}</span>
                 )}
                 {l.isTest ? <TestLeadDeleteButton customerId={id} leadId={l.id} /> : null}
               </li>

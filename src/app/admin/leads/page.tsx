@@ -1,3 +1,4 @@
+import { statusLabel } from "@/lib/products";
 import { KundenTabs } from "@/components/admin/kunden-tabs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -179,7 +180,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
                     <td className="px-3 py-2.5">{l.customer.name}</td>
                     <td className="px-3 py-2.5">{l.source ?? "-"}</td>
                     <td className="px-3 py-2.5">
-                      {storno ? <Badge tone="danger">Storno</Badge> : l.closedAt ? <Badge tone="success">Abschluss</Badge> : <span>{l.status ?? "Neu"}</span>}
+                      {storno ? <Badge tone="danger">Storno</Badge> : l.closedAt ? <Badge tone="success">Abschluss</Badge> : <span>{statusLabel(l.status) ?? "Neu"}</span>}
                     </td>
                     <td className={`whitespace-nowrap px-3 py-2.5 text-right tabular-nums ${storno ? "text-[color:var(--muted)] line-through" : ""}`}>
                       {price ? eur(price) : "-"}

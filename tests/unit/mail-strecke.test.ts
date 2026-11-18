@@ -138,6 +138,12 @@ describe("SMS", () => {
     expect(t).not.toMatch(/[–—]/);
     expect(t.length).toBeLessThan(230);
   });
+  it("mit Nummer des Vermittlers als zweitem Weg (Antworten auf die SMS geht nicht)", () => {
+    const t = smsText({ an: "sie", anredeName: "Frau Becker", person: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" }, source: "Katzenkrankenversicherung", link: "https://x/t/abc", abmelden: "https://x/t/abc?ab=1", art: "erst", telefon: "+49 151 2345678" });
+    expect(t).toContain("Lieber telefonieren? +49 151 2345678.");
+    const ohne = smsText({ an: "du", anredeName: "Julia", person: { nom: "Ole", dat: "Ole" }, source: null, link: "https://x/t/abc", abmelden: "https://x/t/abc?ab=1", art: "erinnerung", telefon: null });
+    expect(ohne).not.toContain("telefonieren");
+  });
 });
 
 describe("Takt über 10 Tage", () => {

@@ -35,11 +35,12 @@ export function formatWhenDE(d: Date): string {
 }
 
 function modeLabel(mode: string): string {
-  return mode === "video" ? "Videocall" : "Telefonat";
+  return mode === "video" ? "Videocall" : mode === "onsite" ? "Termin vor Ort" : "Telefonat";
 }
 
 /** „Ihr Telefonat“ / „Ihren Videocall“ (akk = Akkusativ). */
 function terminWort(mode: string, an: Ansprache, akk = false): string {
+  if (mode === "onsite") return `${a(an, akk ? "deinen" : "dein", akk ? "Ihren" : "Ihr")} Termin vor Ort`;
   return mode === "video" ? `${a(an, akk ? "deinen" : "dein", akk ? "Ihren" : "Ihr")} Videocall` : `${a(an, "dein", "Ihr")} Telefonat`;
 }
 
@@ -48,7 +49,8 @@ function chatHint(an: Ansprache): string {
   return a(an, "Falls etwas dazwischenkommt, antworte einfach hier, dann finden wir eine neue Zeit.", "Falls etwas dazwischenkommt, antworten Sie einfach hier, dann finden wir eine neue Zeit.");
 }
 
-function linkOrHint(mode: string, meetUrl: string | null, an: Ansprache = "du"): string {
+function linkOrHint(mode: string, meetUrl: string | null, an: Ansprache = "du", ort?: string | null): string {
+  if (mode === "onsite") return ort?.trim() ? `Adresse: ${ort.trim()}` : "Vor Ort in der Agentur.";
   return mode === "video" && meetUrl ? meetUrl : a(an, "Wir rufen dich an.", "Wir rufen Sie an.");
 }
 
@@ -66,13 +68,15 @@ export async function sendBookingConfirmation(opts: {
   startsAt: Date;
   mode: string;
   meetUrl: string | null;
+  /** Adresse bei Terminen vor Ort */
+  ort?: string | null;
   /** Link zum Absagen/Verschieben: nur noch für E-Mail/Kalender; per WhatsApp wird im Chat verschoben. */
   manageUrl?: string | null;
 }): Promise<void> {
   const an = await anspracheOf(opts.customerId);
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
   // Verschieben per Knopf „Termin verschieben“ (v4) bzw. per Chat (ältere Vorlagen: Satz im Parameter)
-  const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), linkOrHint(opts.mode, opts.meetUrl, an)];
+  const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), linkOrHint(opts.mode, opts.meetUrl, an, opts.ort)];
   const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(an)}`];
   // „Guten Tag Frau Schneider, Ihr Videocall mit Herrn Kannapinn ist bestätigt: …“ (Nennungsregel, lib/vermittler-nennung.ts)
   const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
@@ -80,6 +84,8 @@ export async function sendBookingConfirmation(opts: {
     `${anredeZeile(an, who.kontakt)} ${terminWort(opts.mode, an)} mit ${person.dat} ist bestätigt: ${params[1]}. ` +
     (opts.mode === "video" && opts.meetUrl
       ? `Hier der Link zum Videocall: ${opts.meetUrl}`
+      : opts.mode === "onsite"
+        ? linkOrHint("onsite", null, an, opts.ort)
       : a(an, `${person.nom} ruft dich zur vereinbarten Zeit an.`, `${person.nom} ruft Sie zur vereinbarten Zeit an.`)) +
     `\n\n${prepHint(an)} Bis dann! 🙂`;
   await sendWhatsAppNotice({
@@ -160,6 +166,7 @@ type TerminZeile = {
   startsAt: Date;
   createdAt: Date;
   meetUrl: string | null;
+  ort: string | null;
   komplettcheck: boolean | null;
   reminderSentAt: Date | null;
   rescheduleRequestedAt: Date | null;
@@ -176,6 +183,7 @@ const terminSelect = {
   startsAt: true,
   createdAt: true,
   meetUrl: true,
+  ort: true,
   komplettcheck: true,
   reminderSentAt: true,
   rescheduleRequestedAt: true,
@@ -261,7 +269,7 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
     if (!k || k.optedOut) continue;
     const uhr = `${new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: TZ }).format(appt.startsAt)} Uhr`;
     // Bisherige Vorlage v4: Uhrzeit, Art, Link bzw. Hinweis
-    const alt = [firstNameOf(k.conv.contactName), uhr, modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, k.an)];
+    const alt = [firstNameOf(k.conv.contactName), uhr, modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, k.an, appt.ort)];
     const text = stundeText({ an: k.an, hi: k.hi, mode: appt.mode, person: k.person });
     const neu = [alt[0], terminArtWort(appt.mode), k.person.dat];
     // Rückfall Erinnerungs-Vorlage: v4 Datum/Uhrzeit, Art, Link bzw. Hinweis; ab v5 wie am Vortag mit „heute um …“
@@ -269,7 +277,7 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
     const remAelter = [...remParams.slice(0, 3), `${remParams[3]} ${chatHint(k.an)}`];
     const remV5 = () => {
       const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video" });
-      return [alt[0], ...vortagParams({ an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, person: k.person })];
+      return [alt[0], ...vortagParams({ an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, ort: appt.ort, person: k.person })];
     };
     const send = (purpose: "reminder_soon" | "reminder") =>
       sendWhatsAppNotice({
@@ -384,9 +392,9 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
     const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video" });
     // Policen-Erinnerung im Nutzensatz (P2: höchstens 2 insgesamt, Schluss bei der ersten Police oder „habe keine“)
     const policen = await import("@/lib/whatsapp/termin-strecke").then((m) => m.policenVortagSatzFuer(appt, k.an)).catch(() => null);
-    const eingabe = { an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, person: k.person, policen };
+    const eingabe = { an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, ort: appt.ort, person: k.person, policen };
     // Bisherige Vorlage v4: Datum/Uhrzeit, Art, Link bzw. Hinweis (ältere mit Satz im Parameter)
-    const params = [firstNameOf(k.conv.contactName), formatWhenDE(appt.startsAt), modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, k.an)];
+    const params = [firstNameOf(k.conv.contactName), formatWhenDE(appt.startsAt), modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, k.an, appt.ort)];
     const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(k.an)}`];
     // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal
     // zugestellt hat (sonst nächster Cron-Lauf erneut, ohne Doppel-Mails).

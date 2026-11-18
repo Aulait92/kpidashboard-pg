@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { InfoHinweis } from "@/components/info-hinweis";
+import { bestandErklaert } from "@/lib/begriffe";
 import { EmpfehlungGrowthRow } from "@/components/empfehlung/server";
 import { ChevronDown } from "lucide-react";
 import { Suspense } from "react";
@@ -412,7 +414,9 @@ async function BuyerDashboardBody({
                 ) : null}
                 {mitBestand ? (
                   <div className="flex justify-between gap-3" data-kuenftiger-bestand>
-                    <dt className="text-[color:var(--muted)]">{bestandWort} (5 Jahre)</dt>
+                    <dt className="text-[color:var(--muted)]">
+                      {bestandWort} (5 Jahre) <InfoHinweis begriff={`${bestandWort} (5 Jahre)`} text={bestandErklaert(bestandWort)} />
+                    </dt>
                     <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinnMitBestand - cur.gewinn)}</dd>
                   </div>
                 ) : null}
@@ -449,7 +453,10 @@ async function BuyerDashboardBody({
 
             <div data-gesamtbestand>
               <div className="flex items-baseline justify-between gap-3">
-                <h3 className="text-[15px] font-semibold">{bestandWort}</h3>
+                <h3 className="text-[15px] font-semibold">
+                  {bestandWort} <span className="font-normal text-[color:var(--muted)]">(ganzer Bestand)</span>{" "}
+                  <InfoHinweis begriff={`${bestandWort} pro Jahr`} text={bestandErklaert(bestandWort)} />
+                </h3>
                 <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-emerald-700">{euroMitVorzeichen(bestand.perYear)} pro Jahr</span>
               </div>
               <p className="mt-1 text-sm text-[color:var(--muted)]">
@@ -503,7 +510,7 @@ async function BuyerDashboardBody({
             <Punkt k={makler ? "Nur 1. Jahr:" : "Nur Abschlussprovision:"}>nur, was im Zeitraum schon verdient ist.</Punkt>
             <Punkt k="Wert pro Kunde:">Provision geteilt durch die neuen Kunden; daraus die fehlenden Abschlüsse bis zum Break-even.</Punkt>
             <Punkt k="Offene Chancen:">
-              Angebote ohne Entscheidung, gebuchte Termine, Termine ohne Ergebnis und Bedenkzeiten. Realistisch = Provision bei Abschluss mal Ihre Quote
+              Angebote ohne Entscheidung, gebuchte Termine, Termine ohne Ergebnis und Bedenkzeiten (Ihr Kunde überlegt nach dem Angebot noch). Realistisch = Provision bei Abschluss mal Ihre Quote
               (Angebot {Math.round(chancen.quoten.angebot.quote * 100)} %, Termin {Math.round(chancen.quoten.termin.quote * 100)} %)
               {chancen.schaetzung ? ", bis 10 eigene Fälle je Stufe da sind mit einer Standardquote (Schätzung)" : ", aus Ihren Fällen der letzten 12 Monate"}.
             </Punkt>

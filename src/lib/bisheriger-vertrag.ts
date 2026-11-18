@@ -279,6 +279,90 @@ export function ausChat(v: Vorvertraege | null | undefined, sp: { key: string },
   };
 }
 
+/** Angabe „Ja, woanders“ aus „Was hat … schon?“ (Tarifauswahl.schutz), soweit für den bisherigen Vertrag nötig. */
+export type SchutzWoanders = {
+  key: string;
+  status: string;
+  versicherer?: string | null;
+  tarif?: string | null;
+  katalogId?: string | null;
+  beitrag?: number | null;
+  ablauf?: string | null;
+  quelle?: string | null;
+};
+
+/**
+ * Vom Vermittler eingetragen („Ja, woanders“ mit Versicherer): ohne Quelle aus Chat bzw. Formular, oder mit Angaben,
+ * die nur er macht (Tarif aus der Liste, Beitrag, Ablauf).
+ */
+export const schutzVonHand = (s: SchutzWoanders | null | undefined): s is SchutzWoanders =>
+  !!s && s.status === "woanders" && !!s.versicherer?.trim() && (!s.quelle || !!s.katalogId || s.beitrag != null || !!s.ablauf);
+
+/** Bisheriger Vertrag aus „Was hat … schon?“: Versicherer, Tarif mit Katalogwerten, Beitrag im Monat und Ablauf. */
+export function ausSchutz(s: SchutzWoanders | null | undefined, sp: { key: string }, k: Pick<Katalog, "tarife">): BisherVertrag | null {
+  if (!schutzVonHand(s)) return null;
+  const kat = (s.katalogId ? k.tarife.find((t) => t.id === s.katalogId && t.sparte === sp.key) : null) ?? katalogTarifFinden(k, sp.key, s.versicherer, s.tarif);
+  return {
+    quelle: "hand",
+    zeigen: null,
+    gesellschaft: s.versicherer?.trim() || kat?.gesellschaftName || null,
+    tarif: kat?.kurz ?? s.tarif ?? null,
+    katalogId: kat?.id ?? null,
+    werte: kat ? katalogWerte(kat) : {},
+    beitrag: s.beitrag ?? null,
+    zahlweise: "monat",
+    summe: null,
+    sb: null,
+    ablauf: s.ablauf && /^\d{4}-\d{2}$/.test(s.ablauf) ? `${s.ablauf}-01` : null,
+    kuendbarZum: null,
+    fristMonate: null,
+  };
+}
+
+/**
+ * Eingabe in „Was hat … schon?“ gewinnt über Chat und Police (Ole, 18.11.2026: Folie zeigte „Allianz“ aus dem Chat statt
+ * der eingetragenen Debeka NW-SB). Ein im Formular „Bisheriger Vertrag“ selbst gepflegter Vertrag einer anderen
+ * Gesellschaft (mit Tarif oder Beitrag) bleibt; bei gleicher Gesellschaft werden nur leere Angaben ergänzt.
+ */
+export function bisherMitSchutz(alt: BisherVertrag | null | undefined, s: SchutzWoanders | null | undefined, sp: { key: string }, k: Pick<Katalog, "tarife">): BisherVertrag | null {
+  const neu = ausSchutz(s, sp, k);
+  if (!neu) return alt ?? null;
+  if (alt?.quelle === "hand") {
+    const gleich = (gesellschaftAusText(alt.gesellschaft) ?? alt.gesellschaft?.trim().toLowerCase()) === (gesellschaftAusText(neu.gesellschaft) ?? neu.gesellschaft?.trim().toLowerCase());
+    if (gleich)
+      return {
+        ...alt,
+        tarif: alt.tarif ?? neu.tarif,
+        katalogId: alt.katalogId ?? neu.katalogId,
+        werte: Object.keys(alt.werte).length ? alt.werte : neu.werte,
+        beitrag: alt.beitrag ?? neu.beitrag,
+        zahlweise: alt.beitrag != null ? alt.zahlweise : neu.zahlweise,
+        ablauf: alt.ablauf ?? neu.ablauf,
+      };
+    if (alt.katalogId || alt.beitrag != null) return alt;
+  }
+  return { ...neu, zeigen: alt?.zeigen ?? null, summe: alt?.summe ?? null, sb: alt?.sb ?? null, kuendbarZum: alt?.kuendbarZum ?? null, fristMonate: alt?.fristMonate ?? null };
+}
+
+/** bisherMitSchutz für alle Sparten im Angebot (Laden und Speichern der Terminvorbereitung); geaendert = neu speichern. */
+export function bisherAusSchutz<T extends { key: string; bisher?: BisherVertrag | null }>(
+  sparten: T[],
+  schutz: SchutzWoanders[] | null | undefined,
+  k: Pick<Katalog, "tarife">,
+  gesundheitFrei: boolean,
+): { sparten: T[]; geaendert: boolean } {
+  let geaendert = false;
+  const out = sparten.map((sp) => {
+    const s = (schutz ?? []).find((x) => x.key === sp.key);
+    if (!schutzVonHand(s) || !bisherErlaubt(sp.key, gesundheitFrei)) return sp;
+    const neu = bisherMitSchutz(sp.bisher, s, sp, k);
+    if (!neu || (sp.bisher && JSON.stringify(sp.bisher) === JSON.stringify(neu))) return sp;
+    geaendert = true;
+    return { ...sp, bisher: neu };
+  });
+  return { sparten: out, geaendert };
+}
+
 /** Vorschlag je Sparte: Police (geprüft vor ungeprüft, neueste zuerst), sonst Chat. */
 export function bisherVorschlag(
   sp: { key: string; schema: { merkmale: SchemaEintrag[] } },

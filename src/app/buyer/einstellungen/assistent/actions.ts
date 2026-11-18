@@ -118,3 +118,24 @@ export async function serviceMailVorschauAction(angaben: Partial<SignaturAngaben
   const a = { name: feld(angaben.name, 160), firma: feld(angaben.firma, 160), telefon: feld(angaben.telefon, 60), anschrift: String(angaben.anschrift ?? "").slice(0, 300) };
   return { ok: true, vorschau: await serviceMailVorschau(ctx.customerId, { userId: ctx.userId, angaben: a }) };
 }
+
+/**
+ * Terminarten (Ole, 18.11.2026): Telefon bzw. Termin vor Ort als Ausnahme auf ausdrücklichen Wunsch des Kunden
+ * freigeben (Video immer). Gleiche Einstellung wie in der Einrichtung.
+ */
+export async function terminFormateSpeichernAction(f: { telefon?: unknown; vorOrt?: unknown }): Promise<Ergebnis> {
+  let ctx;
+  try {
+    ctx = await inhaber();
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const { asTerminFormate } = await import("@/lib/termin-formate");
+  const { saveTerminFormate } = await import("@/lib/termin-formate-server");
+  const formate = asTerminFormate(f);
+  await saveTerminFormate(ctx.customerId, formate);
+  const { audit } = await import("@/lib/audit");
+  await audit("kunde.terminarten", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: formate });
+  revalidatePath("/buyer/einstellungen/assistent");
+  return { ok: true };
+}

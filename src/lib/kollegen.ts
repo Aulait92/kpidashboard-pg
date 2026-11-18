@@ -144,7 +144,17 @@ export async function ensureReferralCode(customerId: string): Promise<string> {
 
 export const referralUrl = (code: string) => `${getAppUrl()}${referralPath(code)}`;
 
-export type Referrer = { customerId: string; person: string; agency: string; emails: string[]; salesContactId: string | null };
+export type Referrer = {
+  customerId: string;
+  person: string;
+  agency: string;
+  emails: string[];
+  salesContactId: string | null;
+  /** Makler (Vertrags-Garantie) bzw. Vertreter (Break-even-Garantie), für die Garantien auf der Empfehlungsseite */
+  makler?: boolean;
+  /** Produkte aus dem angenommenen Angebot des Empfehlers (lib/empfehlen-garantien.ts) */
+  produkte?: string[];
+};
 
 /** Empfehler zu einem Code (nur aktive, nicht interne Kunden). */
 export async function referrerByCode(code: string): Promise<Referrer | null> {
@@ -159,6 +169,7 @@ export async function referrerByCode(code: string): Promise<Referrer | null> {
           name: true,
           plan: true,
           archived: true,
+          vermittlerTyp: true,
           users: { where: { role: "BUYER" }, select: { email: true, displayName: true, teamRole: true } },
           salesContact: { select: { id: true, email: true, altEmails: true, firstName: true, lastName: true } },
           onboarding: { select: { offerId: true } },
@@ -168,13 +179,14 @@ export async function referrerByCode(code: string): Promise<Referrer | null> {
   });
   const cust = row?.customer;
   if (!cust || cust.archived || cust.plan === "internal") return null;
-  const offer = cust.onboarding?.offerId ? await prisma.offer.findUnique({ where: { id: cust.onboarding.offerId }, select: { contactName: true } }) : null;
+  const offer = cust.onboarding?.offerId ? await prisma.offer.findUnique({ where: { id: cust.onboarding.offerId }, select: { contactName: true, products: true } }) : null;
+  const produkte = (Array.isArray(offer?.products) ? (offer.products as { name?: unknown }[]) : []).flatMap((p) => (typeof p?.name === "string" && p.name.trim() ? [p.name.trim()] : []));
   const owner = cust.users.find((u) => u.teamRole === "owner");
   const contactName = [cust.salesContact?.firstName, cust.salesContact?.lastName].filter(Boolean).join(" ");
   const person = (offer?.contactName || owner?.displayName || contactName || "").trim();
   const agency = cust.name.replace(/^Allianz\s+(Versicherung\s+)?/i, "").trim();
   const emails = [...cust.users.map((u) => u.email), ...(cust.salesContact ? [cust.salesContact.email, ...cust.salesContact.altEmails] : [])];
-  return { customerId: cust.id, person: person || agency, agency, emails, salesContactId: cust.salesContact?.id ?? null };
+  return { customerId: cust.id, person: person || agency, agency, emails, salesContactId: cust.salesContact?.id ?? null, makler: cust.vermittlerTyp === "makler", produkte };
 }
 
 /** Einwilligungstext auf der Landingpage (mit Namen des Empfehlers, wird gespeichert). */

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
+import { InfoHinweis } from "@/components/info-hinweis";
 import { cn } from "@/lib/utils";
 
 // Seitenmuster Admin v2 (Paket A2): höchstens 5 Kennzahlen je Seite, Aussehen wie die Kennzahlen der Demo (kpis,
@@ -19,6 +20,8 @@ export type Kennzahl = {
   ton?: "gut" | "schlecht";
   /** Ohne Details: Link (z. B. Anker auf der Seite) */
   href?: string;
+  /** Fachbegriff in einem Satz (kleines „i“ oben rechts, components/info-hinweis.tsx) */
+  info?: { begriff: string; text: string };
   /** Inhalt des Fensters: Aufschlüsselung, ein Satz Erklärung, ein Link weiter */
   details?: { zeilen?: KennzahlDetail[]; text?: string; link?: { href: string; label: string } };
 };
@@ -42,8 +45,8 @@ export function Kennzahlen({ werte }: { werte: Kennzahl[] }) {
               {z.hinweis ? <span className="mt-0.5 block truncate text-xs text-[color:var(--muted)]">{z.hinweis}</span> : null}
             </>
           );
-          const klasse = "block rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-left shadow-[var(--shadow-sm)]";
-          return z.details ? (
+          const klasse = "block h-full w-full rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-left shadow-[var(--shadow-sm)]";
+          const kachel = z.details ? (
             <button key={z.label} type="button" onClick={() => setOffen(i)} aria-haspopup="dialog" className={cn(klasse, "transition hover:border-[color:var(--border-strong)]")}>
               {inhalt}
             </button>
@@ -55,6 +58,15 @@ export function Kennzahlen({ werte }: { werte: Kennzahl[] }) {
             <div key={z.label} className={klasse}>
               {inhalt}
             </div>
+          );
+          // „i“ neben der Kachel statt darin (kein Knopf im Knopf)
+          return z.info ? (
+            <div key={z.label} className="relative">
+              {kachel}
+              <InfoHinweis begriff={z.info.begriff} text={z.info.text} className="absolute right-2.5 top-2.5" />
+            </div>
+          ) : (
+            kachel
           );
         })}
       </section>

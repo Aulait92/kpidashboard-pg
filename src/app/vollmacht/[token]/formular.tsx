@@ -3,8 +3,9 @@
 // Formular der Maklervollmacht (Handy zuerst): 1 Daten prüfen, 2 Verträge, 3 Unterschreiben. Eingaben bleiben bei Fehlern
 // erhalten (Zustand im Browser). Unterschrift auf einer Zeichenfläche (Finger oder Maus), als PNG an den Server.
 
+import { datumBeimTippen, datumGueltig } from "@/lib/datum-eingabe";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronDown, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { a, type Ansprache } from "@/lib/ansprache";
 import { VV_SPARTEN, gesundheitNoetig, type VvDaten, type VvVertrag } from "@/lib/maklervollmacht/regeln";
@@ -19,14 +20,14 @@ export function VollmachtFormular({
   an,
   makler,
   vorschlag,
-  gesellschaften,
+  versichererVorschlaege,
   erstinfoUrl,
 }: {
   token: string;
   an: Ansprache;
   makler: VvMakler;
   vorschlag: Partial<VvDaten>;
-  gesellschaften: string[];
+  versichererVorschlaege: string[];
   erstinfoUrl: string | null;
 }) {
   const [state, action, pending] = useActionState<VollmachtState, FormData>(unterschreibenAction.bind(null, token), {});
@@ -44,6 +45,8 @@ export function VollmachtFormular({
   const [zustimmung, setZustimmung] = useState(false);
   const [signatur, setSignatur] = useState("");
   const mitGesundheit = gesundheitNoetig(vertraege);
+  // Kopie per E-Mail nur versprechen, wenn eine (plausible) Adresse eingetragen ist
+  const mitKopie = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email.trim());
 
   // Vorschau der Dokumente mit den aktuellen Eingaben
   const vorschau = useMemo(() => {
@@ -55,8 +58,8 @@ export function VollmachtFormular({
       uhrzeit: "",
       dokumentId: "wird beim Unterschreiben vergeben",
     };
-    return [vollmacht(c), maklerauftrag(c), ...(mitGesundheit ? [einwilligungGesundheit(c, an)] : [])];
-  }, [d, vertraege, makler, an, mitGesundheit]);
+    return [vollmacht(c), maklerauftrag(c), ...(mitGesundheit ? [einwilligungGesundheit(c)] : [])];
+  }, [d, vertraege, makler, mitGesundheit]);
 
   if (state.fertig) {
     return (
@@ -92,16 +95,24 @@ export function VollmachtFormular({
           </div>
           <Feld name="plz" label="PLZ" value={d.plz} onChange={(v) => setD({ ...d, plz: v.replace(/\D/g, "").slice(0, 5) })} auto="postal-code" mode="numeric" />
           <Feld name="ort" label="Ort" value={d.ort} onChange={(v) => setD({ ...d, ort: v })} auto="address-level2" />
-          <Feld name="geburtsdatum" label="Geburtsdatum" value={d.geburtsdatum} onChange={(v) => setD({ ...d, geburtsdatum: v })} placeholder="TT.MM.JJJJ" auto="bday" mode="numeric" />
-          <Feld name="email" label="E-Mail für die Kopie" value={d.email} onChange={(v) => setD({ ...d, email: v })} auto="email" type="email" />
+          {/* Geburtsdatum und E-Mail über die volle Breite: lange Adressen bleiben lesbar (Ole, 18.11.2026) */}
+          <div className="col-span-2">
+            <Feld name="geburtsdatum" label="Geburtsdatum" value={d.geburtsdatum} onChange={(v) => setD({ ...d, geburtsdatum: datumBeimTippen(v) })} placeholder="TT.MM.JJJJ" auto="bday" mode="numeric" />
+            {d.geburtsdatum.length >= 10 && !datumGueltig(d.geburtsdatum, { min: 1900, max: new Date().getFullYear() }) ? (
+              <p className="mt-1 text-sm text-red-700" role="alert">Bitte ein gültiges Datum eingeben, z. B. 22.11.1990.</p>
+            ) : null}
+          </div>
+          <div className="col-span-2">
+            <Feld name="email" label={a(an, "E-Mail für deine Kopie (optional)", "E-Mail für Ihre Kopie (optional)")} value={d.email} onChange={(v) => setD({ ...d, email: v })} auto="email" type="email" />
+          </div>
         </div>
       </section>
 
       <section>
         <h2 className="mb-1 text-base font-semibold">2. {a(an, "Deine Verträge", "Ihre Verträge")}</h2>
         <p className="mb-3 text-sm text-[color:var(--muted)]">{a(an, "Die Vertragsnummer steht auf dem Versicherungsschein. Fehlt sie, kümmert sich dein Makler darum.", "Die Vertragsnummer steht auf dem Versicherungsschein. Fehlt sie, kümmert sich Ihr Makler darum.")}</p>
-        <datalist id="vv-gesellschaften">
-          {gesellschaften.map((g) => (
+        <datalist id="vv-versicherer-liste">
+          {versichererVorschlaege.map((g) => (
             <option key={g} value={g} />
           ))}
         </datalist>
@@ -110,20 +121,34 @@ export function VollmachtFormular({
             <li key={i} className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-vv-vertrag>
               <div className="grid grid-cols-2 gap-2">
                 <div className="col-span-2">
-                  <label className={label}>Gesellschaft</label>
-                  <input list="vv-gesellschaften" value={v.versicherer} onChange={(e) => setVertrag(i, { versicherer: e.target.value })} className={feld} placeholder="z. B. Allianz" data-vv-versicherer />
+                  <label className={label}>Versicherer</label>
+                  <input list="vv-versicherer-liste" value={v.versicherer} onChange={(e) => setVertrag(i, { versicherer: e.target.value })} className={feld} placeholder="z. B. Allianz" data-vv-versicherer />
                 </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <label className={label}>Sparte</label>
-                  <select value={v.sparte} onChange={(e) => setVertrag(i, { sparte: e.target.value })} className={feld}>
-                    {VV_SPARTEN.map((s) => (
-                      <option key={s.key} value={s.key}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
+                {/* Sparte über die volle Breite und bei Bedarf zweizeilig: Die Auswahl liegt unsichtbar über der Anzeige, damit
+                    lange Sparten wie „Krankenversicherung (auch Zusatz)“ ganz lesbar bleiben und das Handy seine eigene Auswahl öffnet. */}
+                <div className="col-span-2">
+                  <label htmlFor={`vv-sparte-${i}`} className={label}>
+                    Sparte
+                  </label>
+                  <div className="relative flex min-h-12 w-full items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-2 pl-3 pr-9 text-base leading-snug focus-within:border-[color:var(--brand)]">
+                    <span aria-hidden>{VV_SPARTEN.find((s) => s.key === v.sparte)?.label ?? "Sonstige"}</span>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" aria-hidden />
+                    <select
+                      id={`vv-sparte-${i}`}
+                      value={v.sparte}
+                      onChange={(e) => setVertrag(i, { sparte: e.target.value })}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      data-vv-sparte
+                    >
+                      {VV_SPARTEN.map((s) => (
+                        <option key={s.key} value={s.key}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div className="col-span-2 sm:col-span-1">
+                <div className="col-span-2">
                   <label className={label}>Vertragsnummer</label>
                   <input value={v.vertragsnummer ?? ""} onChange={(e) => setVertrag(i, { vertragsnummer: e.target.value })} className={feld} placeholder="optional" />
                 </div>
@@ -155,7 +180,7 @@ export function VollmachtFormular({
             </span>
           </label>
         ) : null}
-        <p className="mb-2 text-sm text-[color:var(--muted)]">{hinweisUnterschrift(an, makler.name)}</p>
+        <p className="mb-2 text-sm text-[color:var(--muted)]">{hinweisUnterschrift(an, makler.name, mitKopie)}</p>
         <Unterschrift onChange={setSignatur} />
         <input type="hidden" name="unterschrift" value={signatur} />
         <label className="mt-4 flex items-start gap-3 text-sm" data-vv-zustimmung>

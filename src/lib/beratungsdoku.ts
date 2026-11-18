@@ -61,16 +61,23 @@ export type BdQuellen = ZusammenfassungQuellen & {
   vertraege?: BdVertrag[];
   /** Status des Kontakts (für den Vorschlag zur Entscheidung) */
   status?: string | null;
+  /** Termin hat ein Ergebnis („Wie lief's?“ eingetragen); sonst bleibt die Entscheidung leer */
+  ergebnis?: boolean;
 };
 
 const eur = (n: number) => `${n.toFixed(2).replace(".", ",")} €`;
 const zeile = (t: string) => t.replace(/\s+/g, " ").trim();
 
-/** Vorschlag zur Entscheidung aus dem Status (der Vermittler prüft ihn vor dem Senden). */
-export function entscheidungVorschlag(an: Ansprache, status: string | null | undefined): string {
+/**
+ * Vorschlag zur Entscheidung aus dem Status (der Vermittler prüft ihn vor dem Senden). Leer, solange kein Ergebnis
+ * eingetragen ist (Usability-Check 18.11.2026: kein „in Ruhe prüfen“ vor dem Termin-Ergebnis); ergebnis = der Termin
+ * hat ein Ergebnis („Wie lief's?“). Abschluss und Absage gelten auch ohne Termin-Ergebnis als Entscheidung.
+ */
+export function entscheidungVorschlag(an: Ansprache, status: string | null | undefined, ergebnis = false): string {
   const s = (status ?? "").trim().toLowerCase();
   if (s === "abschluss") return a(an, "Du hast dich für die Empfehlung entschieden.", "Sie haben sich für die Empfehlung entschieden.");
   if (["kein interesse", "disqualifiziert", "verloren"].includes(s)) return a(an, "Du hast dich gegen einen Abschluss entschieden.", "Sie haben sich gegen einen Abschluss entschieden.");
+  if (!ergebnis) return "";
   return a(an, "Du möchtest das Angebot in Ruhe prüfen.", "Sie möchten das Angebot in Ruhe prüfen.");
 }
 
@@ -113,7 +120,7 @@ export function beratungsdokuEntwurf(q: BdQuellen): BdInhalt {
     wuensche: basis.wuensche,
     beratung: b.join("\n").trim(),
     empfehlung: empfehlung.trim(),
-    entscheidung: entscheidungVorschlag(an, q.status),
+    entscheidung: entscheidungVorschlag(an, q.status, q.ergebnis),
     // Bewusst leer: nicht abgehakte Punkte der Terminvorbereitung sind meist Standardfragen, keine Hinweise an den Kunden
     hinweise: "",
   };

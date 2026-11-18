@@ -7,6 +7,8 @@
 // hohem Volumen ist claude-sonnet-5-5 / claude-haiku-5-5 die günstigere Wahl).
 
 import { terminArtLabel } from "@/lib/termin-art";
+import { erlaubterModus, nurVideoSatz, terminArtRegel, TERMIN_FORMATE_STANDARD, type TerminFormate, type TerminModus } from "@/lib/termin-formate";
+import { agenturOrt } from "@/lib/termin-formate-server";
 import { advisorDisplayName } from "@/lib/advisor-name";
 import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -51,6 +53,7 @@ import {
   type VermittlerName,
 } from "@/lib/whatsapp/gespraech";
 import { folgefragen, spartenDesLeads } from "@/lib/preise/rechner-angaben";
+import { istTierStrecke } from "@/lib/whatsapp/tier-fragen";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { angabenOhneGesundheit, GESUNDHEITS_REGEL, istTierLead, ohneGesundheitsangaben, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
@@ -122,14 +125,14 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "book_appointment",
     description:
-      "Bucht einen konkreten Termin im Kundenkalender, sobald der Lead eine angebotene Zeit gewählt hat (Standard: modus video; phone nur, wenn der Lead Video ablehnt). Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Video-Link erstellt. Die App schickt die Buchungsnachricht mit Link danach selbst.",
+      "Bucht einen konkreten Termin im Kundenkalender, sobald der Lead eine angebotene Zeit gewählt hat (immer modus video; phone bzw. onsite nur bei ausdrücklichem Wunsch des Leads und nur, wenn die Regel zur Terminart es erlaubt). Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Video-Link erstellt. Die App schickt die Buchungsnachricht mit Link danach selbst.",
     input_schema: {
       type: "object",
       properties: {
         modus: {
           type: "string",
-          enum: ["phone", "video"],
-          description: "Videocall (Standard) oder Telefon.",
+          enum: ["video", "phone", "onsite"],
+          description: "video (Standard), phone (Telefon) oder onsite (vor Ort in der Agentur), siehe Regel zur Terminart.",
         },
         start: {
           type: "string",
@@ -240,8 +243,8 @@ const TOOLS: Anthropic.Tool[] = [
       properties: {
         modus: {
           type: "string",
-          enum: ["phone", "video"],
-          description: "Telefon oder Videocall.",
+          enum: ["video", "phone", "onsite"],
+          description: "Videocall (Standard), Telefon oder vor Ort (nur wenn erlaubt).",
         },
         wunschzeit: {
           type: "string",
@@ -296,8 +299,8 @@ export function buildSystemPrompt(
     person?: VermittlerName;
     /** Vor- und Nachname des Vermittlers laut Anbieterangaben (für die Nennungsregel); Standard advisorName */
     vermittlerVoll?: string | null;
-    /** Kundeneinstellung „nur Video“ (AgentConfig.videoOnly, Standard an) */
-    videoOnly?: boolean;
+    /** Freigegebene Terminarten außer Video (AgentConfig.allowPhone/allowOnsite, Standard aus, lib/termin-formate.ts) */
+    formate?: TerminFormate;
     /** Nach der Buchung: Angebotsfragen, Abschluss, Zusage (nachBuchungRegel) */
     nachBuchung?: string | null;
     /** Zuletzt vorgeschlagene Zeiten (termin_vorschlagen), damit „die erste passt“ genau diese Zeit bucht */
@@ -329,7 +332,7 @@ export function buildSystemPrompt(
   const person: VermittlerName = state.person ?? { nom: state.advisorName, dat: state.advisorName };
   // „Assistent von …“: ist die Firma die Person selbst, nach der Nennungsregel („von Herrn Kannapinn“)
   const vonFirm = firm === state.advisorName ? person.dat : firm;
-  const videoOnly = state.videoOnly !== false;
+  const formate = state.formate ?? TERMIN_FORMATE_STANDARD;
   const booked = state.upcoming
     ? [
         `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${terminArtLabel(state.upcoming.mode)})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
@@ -399,7 +402,7 @@ export function buildSystemPrompt(
       ? terminRegeln({
           an,
           person,
-          videoOnly,
+          formate,
           emailBekannt: !!state.contact.email,
           beispiel: terminVorschlagText({ an, source: product, formular: state.formAnswers, person, zeiten: ["[Zeit 1]", "[Zeit 2]"], video: true }),
         })
@@ -439,9 +442,8 @@ export function buildSystemPrompt(
       "- Sobald die Fragen vor dem Termin geklärt sind (Frageplan oben, sonst meist nach 1 bis 2 Antworten), setze qualifiziert=true und mach den Terminvorschlag. Möchte der Lead schon vorher von sich aus einen Termin, mach ihn sofort.",
       "- Halte Infos mit record_qualification fest.",
       "- Erfinde niemals Termine oder Uhrzeiten: nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
-      videoOnly
-        ? "- Termine nur per Video (der Berater zeigt die Angebote am Bildschirm). Telefon nur, wenn der Lead Video ausdrücklich ablehnt oder nicht kann."
-        : "- Empfiehl Video zuerst (der Berater zeigt die Angebote am Bildschirm). Möchte der Lead lieber telefonieren, ist das in Ordnung.",
+      "- Termine finden per Video statt (der Berater zeigt die Angebote am Bildschirm).",
+      terminArtRegel(an, formate),
       "- Bei Telefonterminen ruft der Berater auf dieser Nummer an, sofern keine andere bekannt ist.",
       "- Schreibt der Lead, dass er das Angebot schon abgeschlossen bzw. den Antrag unterschrieben hat, nutze schon_abgeschlossen und frag nicht weiter nach.",
       "- Bittet der Lead, sich später zu melden (morgen, nächste Woche, heute Abend …), lege mit schedule_followup eine Wiedervorlage für dich an und bestätige ihm kurz, wann du dich meldest. Bedränge ihn nicht weiter.",
@@ -724,9 +726,11 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const knownEmail = conversation.contactEmail ?? lead?.email ?? null;
   // Termin-Strecke (Ole, 17.11.2026, lib/whatsapp/gespraech.ts): Vermittler als Person (person, oben), Angebotsfragen nach
   // der Buchung aus der Rechner-Tabelle (lib/preise/rechner-angaben.ts), Abschluss mit Kalenderfrage
-  const videoOnly = agent.videoOnly !== false;
+  const formate: TerminFormate = { telefon: agent.allowPhone === true, vorOrt: agent.allowOnsite === true };
   const angabenQuelle = (angaben: unknown) => ({ formular: form.normal, angaben });
-  const offeneFolgefragen = (angaben: unknown) => folgefragen(spartenDesLeads(lead?.source ?? null, angabenQuelle(angaben)), angabenQuelle(angaben));
+  // Tierkranken: statt der Rechner-Tabelle feste Tierfragen vor dem Komplettcheck (lib/whatsapp/tier-fragen.ts)
+  const offeneFolgefragen = (angaben: unknown) =>
+    istTierStrecke(lead?.source) ? [] : folgefragen(spartenDesLeads(lead?.source ?? null, angabenQuelle(angaben)), angabenQuelle(angaben));
   const strecke = await import("@/lib/whatsapp/termin-strecke");
   const stand = upcoming ? await strecke.streckenStand(conversation.id, upcoming.id) : null;
   const folgeVorher = upcoming ? offeneFolgefragen(conversation.qualificationData) : [];
@@ -735,6 +739,14 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     await strecke.vertraegeAntwort(conversation.id, latest.body ?? "");
     logTestLead(lead, "vorvertraege erfasst");
     return;
+  }
+  // Antwort auf eine Tierfrage (TKV, vor dem Komplettcheck): speichern, nächste Frage bzw. Komplettcheck (ohne
+  // Assistent). Eine Rückfrage des Leads beantwortet der Assistent, danach kommt die Frage noch einmal.
+  if (upcoming && stand && strecke.tierFrageOffen(stand) && latest?.direction === "inbound" && latest.createdAt > stand.tierFrageLetzte!.at && !opts.anstoss && !opts.knopfZeit) {
+    if (await strecke.tierAntwort(conversation.id, latest.body ?? "")) {
+      logTestLead(lead, "tierfrage beantwortet", { key: stand.tierFrageLetzte!.key });
+      return;
+    }
   }
   // Schluss der Strecke (P2, Ole 17.11.2026): Antwort auf die Frage nach der Adresse (übernehmen, einladen, kurze
   // Antwort) bzw. „ja“ auf „Stimmt die Adresse?“ (ohne Assistent); sonst antwortet der Assistent
@@ -816,7 +828,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     person,
     vermittlerVoll: who.vermittler.name,
-    videoOnly,
+    formate,
     nachBuchung,
     vorschlag: vorschlagStarts.length ? { starts: vorschlagStarts } : null,
     advisorName,
@@ -857,7 +869,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   let finalText = "";
   // Gebucht in diesem Zug: die App schickt die Buchungsnachricht (und die erste Angebotsfrage) selbst
   const zug: {
-    gebucht: { start: Date; mode: "video" | "phone"; meetUrl: string | null; email: string | null } | null;
+    gebucht: { start: Date; mode: TerminModus; meetUrl: string | null; email: string | null; ort: string | null } | null;
     /** Terminvorschlag der App (termin_vorschlagen) */
     vorschlag: { starts: [string, string]; text: string } | null;
     /** Komplettcheck vom Assistenten erkannt (Werkzeug komplettcheck) */
@@ -869,7 +881,11 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   /** Termin buchen (Werkzeug book_appointment bzw. Zeit-Knopf); Rückgabe = Ergebnis für den Assistenten. */
   const buche = async (input: { modus?: unknown; start?: unknown; email?: unknown }): Promise<string> => {
     let content = "ok";
-    const mode: "video" | "phone" = input.modus === "phone" ? "phone" : "video";
+    // Terminart (Ole, 18.11.2026): Video immer; Telefon bzw. vor Ort nur, wenn der Vermittler es freigegeben hat
+    const mode = erlaubterModus(input.modus, formate);
+    if (!mode)
+      return `Diese Terminart ist nicht freigegeben: NICHT buchen. Antworte dem Lead freundlich mit „${nurVideoSatz(ansprache)}“ und buche nach seiner Zustimmung per Video (modus video).`;
+    const ort = mode === "onsite" ? await agenturOrt(conversation.customerId) : null;
     const start = typeof input.start === "string" ? input.start : "";
     const rawEmail =
       typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
@@ -916,6 +932,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           attendeeEmail: email,
           leadName: lead?.name || conversation.contactName,
           leadPhone: conversation.contactPhone,
+          ort,
           // Einladung an den Lead erst, wenn Adresse und Komplettcheck feststehen (lib/calendar/einladung.ts)
           notifyLead: false,
         });
@@ -926,7 +943,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           meetUrl: res.meetUrl,
         });
         logTestLead(lead, "booking via bot", { appointment: res.appointmentId, mode });
-        zug.gebucht = { start: new Date(res.start), mode, meetUrl: res.meetUrl, email: email ?? null };
+        zug.gebucht = { start: new Date(res.start), mode, meetUrl: res.meetUrl, email: email ?? null, ort };
         content =
           `Termin gebucht für ${formatSlotDE(res.start)}` +
           (mode === "video" && res.meetUrl
@@ -1102,7 +1119,12 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         content = await schlageVor(tu.input as { starts?: unknown; erneut?: unknown; einleitung?: unknown });
       } else if (tu.name === "komplettcheck") {
         if (!upcoming) content = "Es gibt noch keinen Termin.";
-        else {
+        else if (stand && strecke.komplettcheckErledigt(stand)) {
+          // Schon beantwortet (meist per Knopf): kein zweites Mal vermerken. Sonst endete der Zug ohne Antwort, weil
+          // komplettcheckAntwort den doppelten Aufruf still schluckt (Live-Test 18.11.2026: Antwort aufs Geburtsdatum
+          // blieb 7 Min. liegen, bis der Lead erneut schrieb).
+          content = "Der Komplettcheck ist schon vermerkt. Ruf komplettcheck nicht noch einmal auf, sondern antworte auf die letzte Nachricht des Leads.";
+        } else {
           zug.komplett = (tu.input as { ja?: unknown }).ja === true;
           content = "Vermerkt. Die App schickt die nächste Nachricht selbst. Schreib nichts weiter.";
         }
@@ -1262,16 +1284,21 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
 
   // Gebucht: kurze Buchungsnachricht (Termin fett, Link), danach als eigene Nachricht der Komplettcheck (Reihenfolge P2,
   // Ole 17.11.2026; die Adresse für die Einladung kommt erst am Schluss)
-  let zweite: { text: string; buttons: Knopf[] | null; merker?: string } | null = null;
+  let zweite: { text: string; buttons: Knopf[] | null; merker?: string; daten?: Record<string, unknown> } | null = null;
   let knoepfe: Knopf[] | null = null;
   /** Nachricht der Strecke statt eigener Worte des Assistenten (Merker nach dem Senden) */
   let schritt: import("@/lib/whatsapp/termin-strecke").Schritt | null = null;
   const gebucht = zug.gebucht;
   if (gebucht) {
     const fresh = await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } });
-    finalText = buchungsText({ an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person });
-    const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData) });
-    zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+    finalText = buchungsText({ an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person, ort: gebucht.ort });
+    // Tierkranken: zuerst die Tierfragen (Gesundheit), sonst der Komplettcheck
+    const sk = await strecke.streckenKontext(conversation.id).catch(() => null);
+    if (sk?.termin) zweite = await strecke.ersteNachBuchung(sk);
+    else {
+      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData) });
+      zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+    }
   } else if (zug.vorschlag) {
     finalText = zug.vorschlag.text;
     knoepfe = terminKnoepfe(zug.vorschlag.starts);
@@ -1292,9 +1319,14 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     knoepfe = knoepfeFuerText(finalText, folgeVorher);
     const abschlussDa = !!stand?.abschlussAt || outbound.some((m) => KALENDER_FRAGE_RE.test(m.body ?? "") || EMAIL_BESTAETIGEN_RE.test(m.body ?? ""));
     if (upcoming && stand && !stand.komplettFrageAt && !abschlussDa && !knoepfe) {
-      // Termin, Strecke noch nicht begonnen (z. B. über die Buchungsseite gebucht): danach der Komplettcheck
-      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData) });
-      zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+      // Termin, Strecke noch nicht begonnen (z. B. über die Buchungsseite gebucht): danach der Komplettcheck bzw. bei
+      // Tierkranken die (offene) Tierfrage
+      const sk = await strecke.streckenKontext(conversation.id).catch(() => null);
+      if (sk?.termin?.id === upcoming.id) zweite = await strecke.ersteNachBuchung(sk);
+      else {
+        const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData) });
+        zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+      }
     } else if (upcoming && stand && strecke.policenBitteOffen(stand) && latest?.direction === "inbound" && latest.createdAt > stand.policenBitteAt! && !knoepfe) {
       // Lead hat auf die Policen-Bitte geschrieben (statt Knopf): nach der Antwort des Assistenten der Schluss
       const k = await strecke.streckenKontext(conversation.id);
@@ -1348,7 +1380,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: zweite.text, sentBy: "bot", buttons: zweite.buttons });
       if (zweite.merker) {
         const appt = await prisma.appointment.findFirst({ where: { conversationId: conversation.id, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { id: true } });
-        if (appt) await persistInternal(conversation.id, zweite.merker, { appointmentId: appt.id });
+        if (appt) await persistInternal(conversation.id, zweite.merker, { appointmentId: appt.id, ...(zweite.daten ?? {}) });
       }
       logTestLead(lead, "strecke sent", { merker: zweite.merker ?? null });
     }

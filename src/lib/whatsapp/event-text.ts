@@ -9,11 +9,11 @@ export function appUrl(): string | null {
 }
 
 export function eventSummary(
-  mode: "phone" | "video",
+  mode: "phone" | "video" | "onsite",
   name: string,
   product: string | null,
 ): string {
-  return `${mode === "video" ? "Video" : "Telefon"}-Beratung: ${name}${product ? ` (${product})` : ""}`;
+  return `${mode === "video" ? "Video" : mode === "onsite" ? "Vor-Ort" : "Telefon"}-Beratung: ${name}${product ? ` (${product})` : ""}`;
 }
 
 /** Beschreibung des Kalendereintrags: alles, was der Berater vorab braucht. */
@@ -22,7 +22,7 @@ export function buildEventDescription(d: {
   phone: string;
   email: string | null;
   product: string | null;
-  mode: "phone" | "video";
+  mode: "phone" | "video" | "onsite";
   summary: string | null;
   conversationId: string | null;
   bookedVia: "bot" | "booking_page" | "advisor" | "mail_strecke";
@@ -33,7 +33,7 @@ export function buildEventDescription(d: {
     d.phone ? `Telefon/WhatsApp: ${d.phone}` : "Telefon: keine Nummer angegeben",
     d.email ? `E-Mail: ${d.email}` : "",
     d.product ? `Produkt: ${d.product}` : "",
-    `Art: ${d.mode === "video" ? "Videocall (Video-Link im Termin)" : "Telefonat, bitte den Lead anrufen"}`,
+    `Art: ${d.mode === "video" ? "Videocall (Video-Link im Termin)" : d.mode === "onsite" ? "Vor Ort in der Agentur (auf Wunsch des Leads)" : "Telefonat, bitte den Lead anrufen (auf Wunsch des Leads)"}`,
     "",
     "Qualifizierung:",
     d.summary?.trim() || "-",
@@ -52,17 +52,19 @@ export function buildEventDescription(d: {
 }
 
 /** Titel der Einladung für den Lead (ohne Interna). advisorName im Dativ („mit Herrn Kannapinn“, lib/vermittler-nennung.ts). */
-export function customerEventSummary(mode: "phone" | "video", advisorName: string): string {
-  return `${mode === "video" ? "Videoberatung" : "Telefonische Beratung"} mit ${advisorName}`;
+export function customerEventSummary(mode: "phone" | "video" | "onsite", advisorName: string): string {
+  return `${mode === "video" ? "Videoberatung" : mode === "onsite" ? "Beratung vor Ort" : "Telefonische Beratung"} mit ${advisorName}`;
 }
 
 /** Beschreibung der Einladung für den Lead — freundlich, ohne interne Daten. hi = Anrede-Zeile (lib/ansprache.ts). */
 export function customerEventDescription(d: {
   hi: string;
   an?: "sie" | "du";
-  mode: "phone" | "video";
+  mode: "phone" | "video" | "onsite";
   phone: string | null;
   videoUrl: string | null;
+  /** Adresse bei Terminen vor Ort */
+  ort?: string | null;
   manageUrl: string;
   /** Voller Name für den Gruß am Ende */
   advisorName: string;
@@ -78,6 +80,10 @@ export function customerEventDescription(d: {
         : du
           ? "Den Link zum Videocall bekommst du rechtzeitig vor dem Termin."
           : "Den Link zum Videocall bekommen Sie rechtzeitig vor dem Termin."
+      : d.mode === "onsite"
+        ? d.ort
+          ? `Der Termin findet vor Ort statt: ${d.ort}`
+          : "Der Termin findet vor Ort in der Agentur statt."
       : d.phone
         ? `${wer} ruft ${du ? "dich" : "Sie"} zur vereinbarten Zeit unter +${d.phone} an.`
         : `${wer} ruft ${du ? "dich" : "Sie"} zur vereinbarten Zeit an.`;

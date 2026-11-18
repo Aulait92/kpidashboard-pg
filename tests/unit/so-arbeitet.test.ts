@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { assistentMomente, beispielVerlauf, nachfassTage, type BeispielEingabe, type ChatZeile } from "@/lib/so-arbeitet";
 import { erstanschreibenText } from "@/lib/whatsapp/erstanschreiben";
-import { buchungsText, einladungUnterwegs, komplettcheckFrage } from "@/lib/whatsapp/gespraech";
+import { buchungsText, eingetragenFrage, einladungUnterwegs, komplettcheckFrage } from "@/lib/whatsapp/gespraech";
 import { policenBitte } from "@/lib/policen/bitte";
 import { BEISPIEL_KONTAKT } from "@/lib/ablauf";
 import { vermittlerName } from "@/lib/vermittler-nennung";
@@ -49,11 +49,12 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
     expect(texte[6]).toMatch(/^Danke! Welche Versicherungen haben Sie heute schon\?/);
     expect(texte[7]).toBe(`Danke! ${policenBitte({ an: "sie", vermittler: { ...e.person, anrede: "Herr", name: "Ole Kannapinn" }, firma: e.firma }).text}`);
     expect(texte[8]).toMatch(/^Kurz zum Datenschutz: Ich bin einverstanden, dass Ole Kannapinn \(Kannapinn Versicherungen\)/);
-    expect(texte.at(-2)).toContain("Zum Schluss: Die Einladung mit Kalendereintrag geht an julia.becker@example.com. Stimmt die Adresse?");
-    expect(texte.at(-1)).toBe(einladungUnterwegs("sie"));
+    expect(texte.at(-3)).toContain("Zum Schluss: Die Einladung mit Kalendereintrag geht an julia.becker@example.com. Stimmt die Adresse?");
+    expect(texte.at(-2)).toBe(einladungUnterwegs("sie"));
+    expect(texte.at(-1)).toBe(eingetragenFrage("sie"));
     // Knöpfe wie im echten Chat
     const knoepfe = nachrichten(z).flatMap((x) => x.knoepfe ?? []);
-    expect(knoepfe).toEqual(expect.arrayContaining(["Nur ich", "Andere Zeit", "Ja, gern", "Nein, danke", "Einverstanden", "Lieber nicht", "Ja, stimmt", "Andere Adresse"]));
+    expect(knoepfe).toEqual(expect.arrayContaining(["Nur ich", "Andere Zeit", "Ja, gern", "Nein, danke", "Einverstanden", "Lieber nicht", "Ja, stimmt", "Andere Adresse", "Ja, eingetragen", "Nein, bitte nochmal"]));
     // Erstinformation im Kopf der Vorlage
     expect(nachrichten(z)[0].anhang).toBe("Erstinformation.pdf");
   });
@@ -71,7 +72,7 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
   it("Ohne Policen-Modul: keine Bitte, Schluss nach den Verträgen", () => {
     const texte = vomAssistenten(beispielVerlauf(eingabe("sie", { policen: false })));
     expect(texte.join("\n")).not.toContain("Policen hier in den Chat");
-    expect(texte.at(-2)).toMatch(/^Danke, das schaut sich Herr Kannapinn im Termin mit an\./);
+    expect(texte.at(-3)).toMatch(/^Danke, das schaut sich Herr Kannapinn im Termin mit an\./);
   });
 
   it("Anderes Produkt: Erstanschreiben und Terminvorschlag passen zum Produkt, keine Zwischenfrage", () => {

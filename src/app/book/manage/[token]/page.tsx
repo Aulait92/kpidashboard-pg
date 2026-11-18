@@ -89,7 +89,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
   const when = `${fmt(appt.startsAt, LONG)} Uhr`;
   const an = asAnsprache(appt.customer.leadAddress);
   const ERRORS = errorsFor(an);
-  const kind = appt.mode === "video" ? "Videocall" : "Telefonat";
+  const kind = appt.mode === "video" ? "Videocall" : appt.mode === "onsite" ? "Termin vor Ort" : "Telefonat";
 
   // Alter Link nach dem Verschieben (neuer Termin, neuer Link): zum aktuellen Termin statt „abgesagt“,
   // sonst bucht der Lead womöglich doppelt (Runde 5, 16.11.2026).
