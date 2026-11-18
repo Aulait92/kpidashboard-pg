@@ -7,7 +7,6 @@ import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { PageHeader } from "@/components/buyer-shell";
 import { WerbungKarten } from "@/app/buyer/konto/werbung-karten";
 import { LiveUpdated } from "@/components/live-updated";
-import { MonthlyForecast } from "@/components/monthly-forecast";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
@@ -454,15 +453,21 @@ async function BuyerDashboardBody({
               </p>
             </div>
 
-            <details className="group/f rounded-[var(--radius-md)] ring-1 ring-inset ring-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden">
-              <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-[15px] font-semibold">
-                Hochrechnung für diesen Monat
-                <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open/f:rotate-180" />
-              </summary>
-              <div className="border-t border-[color:var(--border)] p-2 sm:p-3">
-                <MonthlyForecast forecast={forecast} />
-              </div>
-            </details>
+{(() => {
+              // Hochrechnung als ein Satz statt Tabelle (Ole, 18.11.2026): nur Abschlüsse und Gewinn bis Monatsende
+              const zeile = (l: string) => forecast.rows.find((r) => r.label === l);
+              const abschluesse = zeile("Abschlüsse");
+              const gewinn = zeile("Gewinn");
+              if (!abschluesse || !gewinn || forecast.daysElapsed < 3) return null;
+              const monat = new Intl.DateTimeFormat("de-DE", { month: "long" }).format(forecast.monthStart);
+              const n = Math.round(abschluesse.projected);
+              return (
+                <p className="text-sm text-[color:var(--muted)]" data-hochrechnung>
+                  Wenn der {monat} so weiterläuft: etwa {formatNumber(n)} {n === 1 ? "Abschluss" : "Abschlüsse"}, Gewinn{mitBestand ? " ohne Bestand" : ""}{" "}
+                  <span className="font-medium text-[color:var(--foreground)]">{euroMitVorzeichen(gewinn.projected)}</span> (Vormonat {euroMitVorzeichen(gewinn.previousFull)}).
+                </p>
+              );
+            })()}
 
             {bestand.growth.some((g) => g.total > 0) ? (
               <BestandGrowthSection
