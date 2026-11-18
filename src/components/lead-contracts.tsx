@@ -32,6 +32,7 @@ import {
   type SparteKey,
 } from "@/lib/provision";
 import type { LeadContractView } from "@/lib/vertraege";
+import { UebertragungKnoepfe } from "@/components/uebertragung-knoepfe";
 
 const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
 const isoDay = (iso: string) => new Date(iso).toISOString().slice(0, 10);
@@ -123,15 +124,25 @@ export function LeadContracts({ leadId, contracts, readOnly = false }: { leadId:
           <li key={c.id} className={`rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-sm ${c.status === "storniert" ? "bg-[color:var(--surface-sunken,#f8fafc)]" : ""}`} data-contract={c.id}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium">{c.sparteLabel}</span>
-              {c.primary ? <Badge tone="neutral">erster Abschluss</Badge> : <Badge tone="brand">Cross-Selling</Badge>}
-              {c.status === "storniert" ? <Badge tone="danger">gekündigt bzw. storniert</Badge> : null}
+              {c.uebertragungStand ? (
+                <Badge tone="neutral">Bestandsübertragung</Badge>
+              ) : c.primary ? (
+                <Badge tone="neutral">erster Abschluss</Badge>
+              ) : (
+                <Badge tone="brand">Cross-Selling</Badge>
+              )}
+              {c.uebertragungStand === "abgelehnt" ? (
+                <Badge tone="neutral">abgelehnt</Badge>
+              ) : c.status === "storniert" ? (
+                <Badge tone="danger">gekündigt bzw. storniert</Badge>
+              ) : null}
               <span className="text-xs text-[color:var(--muted)]">{day(c.signedAt)}</span>
               {!readOnly ? (
                 <span className="ml-auto flex flex-wrap items-center gap-1">
                   <Button variant="ghost" size="sm" icon={Pencil} onClick={() => openEdit(c)} disabled={pending} aria-label="Bearbeiten">
                     Bearbeiten
                   </Button>
-                  {c.status === "aktiv" ? (
+                  {c.uebertragungStand === "laeuft" || c.uebertragungStand === "abgelehnt" ? null : c.status === "aktiv" ? (
                     <Button variant="ghost" size="sm" icon={Ban} onClick={() => setCancel(c)} disabled={pending} data-cancel-contract>
                       Vertrag gekündigt bzw. storniert
                     </Button>
@@ -156,7 +167,14 @@ export function LeadContracts({ leadId, contracts, readOnly = false }: { leadId:
                 </a>
               ) : null}
             </div>
-            {c.status === "storniert" ? (
+            {c.uebertragungStand === "laeuft" ? (
+              <div className="mt-1.5 space-y-1.5" data-uebertragung-laeuft>
+                <div className="text-xs text-amber-800">Übertragung läuft · zählt in Ihren Zahlen, sobald die Gesellschaft sie bestätigt</div>
+                {!readOnly ? <UebertragungKnoepfe leadId={leadId} ziel={{ contractId: c.id }} beitragFragen={c.premium == null} /> : null}
+              </div>
+            ) : c.uebertragungStand === "abgelehnt" ? (
+              <div className="mt-0.5 text-xs text-[color:var(--muted)]">Übertragung abgelehnt · zählt nicht in Ihren Zahlen</div>
+            ) : c.status === "storniert" ? (
               <div className="mt-0.5 text-xs text-rose-700" data-cancel-info>
                 {c.cancelledAt ? `Gekündigt bzw. storniert zum ${day(c.cancelledAt)}` : "Storniert"}
                 {c.cancelReason ? ` · ${cancelReasonLabel(c.cancelReason)}` : ""}
@@ -187,12 +205,12 @@ function CancelSheet({ contract, onClose }: { contract: LeadContractView; onClos
   const [reason, setReason] = useState<CancelReason | "">("");
   const [amount, setAmount] = useState<string | null>(null);
   const [toggle, setToggle] = useState<boolean | null>(null);
-  const p = contractProvision({ ...contract, status: "aktiv" }, rates);
+  const p = contractProvision({ ...contract, status: "aktiv", uebertragung: !!contract.uebertragungStand }, rates);
   // Vorschlag: Widerruf = volle Abschlussprovision, Leben/BU anteilig in der Stornohaftungszeit
   const suggestion = useMemo(() => {
     const d = new Date(`${date}T12:00:00.000Z`);
     if (Number.isNaN(d.getTime())) return null;
-    return suggestedChargeback({ ...contract, signedAt: new Date(contract.signedAt) }, d, reason || null, rates);
+    return suggestedChargeback({ ...contract, signedAt: new Date(contract.signedAt), uebertragung: !!contract.uebertragungStand }, d, reason || null, rates);
   }, [contract, date, reason, rates]);
   const shown = amount ?? (suggestion != null ? fmtNum(suggestion) : "");
   const chargebackOn = toggle ?? (suggestion != null && suggestion > 0);

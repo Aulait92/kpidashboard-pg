@@ -33,6 +33,7 @@ import { BESTAND_FROM_LEAD_NOTE, CROSS_SELL_TODO, POLICE_TODO } from "@/lib/vert
 import { premiumYearFor } from "@/lib/abschluss";
 import { beitragVorgabe } from "@/lib/abschluss-vorgabe";
 import { beendeAufgaben, planeAufgabe } from "@/lib/lead-aufgaben";
+import { UEBERTRAGUNG, uebertragungStand, zaehltVertrag, type UebertragungStand } from "@/lib/maklervollmacht/uebertragung-regeln";
 
 export const CONTRACT_STATUSES = ["aktiv", "storniert"] as const;
 export type ContractStatus = (typeof CONTRACT_STATUSES)[number];
@@ -179,6 +180,8 @@ type SummaryInput = {
   beitragssumme?: unknown;
   /** Herkunft des Beitrags (lib/abschluss.ts): „standard“ = geschätzt, mit „≈“ */
   premiumSource?: string | null;
+  /** Bestandsübertragung (Maklervollmacht): nur Bestand */
+  uebertragung?: boolean | null;
 };
 
 /**
@@ -348,6 +351,11 @@ export type CustomerContract = {
   campaignChannel?: string | null;
   assignedUserId: string | null;
   leadCreatedAt: Date;
+  /**
+   * Bestandsübertragung aus der Maklervollmacht (nur bestätigte werden geladen): nur Bestandsprovision, zählt ab der
+   * Bestätigung (periodAt), nie als erster Abschluss oder Cross-Selling.
+   */
+  uebertragung?: boolean;
 };
 
 /**
@@ -389,10 +397,16 @@ const num = (v: unknown) => (v == null ? null : Number(v));
  */
 export async function loadCustomerContracts(customerId: string, opts: { leadWhere?: Record<string, unknown> } = {}): Promise<CustomerContract[]> {
   const leads = await prisma.lead.findMany({
-    // Testleads zählen nicht in Provision und Gewinn (lib/testlead.ts)
-    where: { customerId, status: CLOSED_STATUS, isTest: false, ...(opts.leadWhere ?? {}) },
+    // Testleads zählen nicht in Provision und Gewinn (lib/testlead.ts). Leads ohne Abschluss nur mit bestätigter
+    // Bestandsübertragung (Maklervollmacht, Ole 18.11.2026)
+    where: {
+      customerId,
+      isTest: false,
+      AND: [{ OR: [{ status: CLOSED_STATUS }, { contracts: { some: { herkunft: UEBERTRAGUNG, uebertragungBestaetigtAt: { not: null } } } }] }, opts.leadWhere ?? {}],
+    },
     select: {
       id: true,
+      status: true,
       createdAt: true,
       closedAt: true,
       statusChangedAt: true,
@@ -418,6 +432,8 @@ export async function loadCustomerContracts(customerId: string, opts: { leadWher
           productName: true,
           rateAbschluss: true,
           rateBestand: true,
+          herkunft: true,
+          uebertragungBestaetigtAt: true,
         },
       },
     },
@@ -429,8 +445,9 @@ export async function loadCustomerContracts(customerId: string, opts: { leadWher
     const origin = leadOrigin(l);
     const sends = sendsByLead.get(l.id) ?? [];
     const base = { leadId: l.id, assignedUserId: l.assignedUserId, leadCreatedAt: l.createdAt };
+    const closed = isClosed(l.status);
     // Erster Vertrag nicht gespeichert (z. B. Abschluss aus dem Airtable-Abgleich): aus dem Lead ableiten
-    if (!l.contracts.some((c) => c.primaryLeadId)) {
+    if (closed && !l.contracts.some((c) => c.primaryLeadId)) {
       const sparte = origin === "paid" ? (sparteForSource(l.source) ?? "sonstiges") : await derivedSparte(l);
       const signedAt = l.closedAt ?? l.statusChangedAt;
       out.push({ ...base, ...attributeContract(origin, { primary: true, signedAt }, sends), id: `virtual:${l.id}`, primary: true, sparte, premium: num(l.closeValue), provisionValue: null, signedAt, periodAt: l.createdAt });
@@ -439,7 +456,10 @@ export async function loadCustomerContracts(customerId: string, opts: { leadWher
       const cancelled = c.status === "storniert";
       // Altfall: storniert ohne Grund zählt wie bisher gar nicht
       if (cancelled && !c.cancelReason) continue;
-      const primary = !!c.primaryLeadId;
+      // Bestandsübertragung zählt erst nach Bestätigung; ohne Abschluss des Leads zählen nur solche
+      const uebertragung = c.herkunft === UEBERTRAGUNG;
+      if (!zaehltVertrag(c) || (!closed && !uebertragung)) continue;
+      const primary = !!c.primaryLeadId && !uebertragung;
       out.push({
         ...base,
         ...attributeContract(origin, { primary, signedAt: c.signedAt }, sends),
@@ -460,7 +480,8 @@ export async function loadCustomerContracts(customerId: string, opts: { leadWher
         cancelReason: cancelled ? c.cancelReason : null,
         chargeback: cancelled ? num(c.chargeback) : null,
         signedAt: c.signedAt,
-        periodAt: primary ? l.createdAt : c.signedAt,
+        periodAt: primary ? l.createdAt : uebertragung ? c.uebertragungBestaetigtAt! : c.signedAt,
+        ...(uebertragung ? { uebertragung: true } : {}),
       });
     }
   }
@@ -502,6 +523,8 @@ export type LeadContractView = {
   fileName: string | null;
   status: ContractStatus;
   summary: string;
+  /** Bestandsübertragung aus der Maklervollmacht: läuft, bestätigt oder abgelehnt; null = eigener Abschluss */
+  uebertragungStand: UebertragungStand | null;
 };
 
 export async function listLeadContracts(leadId: string, rates?: ProvisionOverrides): Promise<LeadContractView[]> {
@@ -530,6 +553,8 @@ export async function listLeadContracts(leadId: string, rates?: ProvisionOverrid
       productName: true,
       rateAbschluss: true,
       rateBestand: true,
+      herkunft: true,
+      uebertragungBestaetigtAt: true,
       file: { select: { fileName: true } },
     },
   });
@@ -556,7 +581,8 @@ export async function listLeadContracts(leadId: string, rates?: ProvisionOverrid
     fileId: r.fileId,
     fileName: r.file?.fileName ?? null,
     status: r.status === "storniert" ? "storniert" : "aktiv",
-    summary: contractSummary(r, rates),
+    summary: contractSummary({ ...r, uebertragung: r.herkunft === UEBERTRAGUNG }, rates),
+    uebertragungStand: r.herkunft === UEBERTRAGUNG ? uebertragungStand(r) : null,
   }));
 }
 

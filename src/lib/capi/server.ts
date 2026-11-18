@@ -187,7 +187,8 @@ export async function detectForCustomer(customerId: string, now = new Date()): P
 
 /** Jahresbeitrag netto je Lead beim Senden (Summe der Verträge, ohne Stornierte). */
 async function premiumsFor(leadIds: string[]): Promise<Map<string, number | null>> {
-  const rows = leadIds.length ? await prisma.leadContract.findMany({ where: { leadId: { in: leadIds } }, select: { leadId: true, premium: true, status: true, sparte: true } }) : [];
+  // Bestandsübertragungen (Maklervollmacht) sind kein Abschluss aus dem Lead: nie im Wert an Meta
+  const rows = leadIds.length ? await prisma.leadContract.findMany({ where: { leadId: { in: leadIds }, herkunft: null }, select: { leadId: true, premium: true, status: true, sparte: true } }) : [];
   const by = new Map<string, { premium: number | null; status: string; kind: string }[]>();
   for (const r of rows) {
     const list = by.get(r.leadId) ?? [];

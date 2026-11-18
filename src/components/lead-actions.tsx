@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { deleteOwnTestLeadAction } from "@/app/buyer/testlead-actions";
 import { TestLeadBadge } from "@/components/test-lead-badge";
+import { UebertragungKnoepfe } from "@/components/uebertragung-knoepfe";
 import { eraseLeadAction, setLeadStatusAction, updateLeadDetailsAction } from "@/app/buyer/actions";
 import { startLeadChatAction } from "@/app/buyer/lead-manual-actions";
 import { ManualTerminForm, SlotPicker } from "@/components/lead-booking";
@@ -81,6 +82,8 @@ type Props = {
   anrufenNeutral?: boolean;
   /** Vorlagen mit Stufe „aus“ (Einstellungen → Assistent): kein Mail-Vorschlag in der Aufgabe */
   mailAus?: string[];
+  /** Wiedervorlage „Übertragung bei … bestätigt?“ mit laufender Übertragung: Ein-Klick „Bestätigt“ / „Abgelehnt“ */
+  uebertragung?: { versicherer: string; beitragFragen: boolean } | null;
 };
 
 /**
@@ -395,10 +398,13 @@ export function LeadHeaderActions(p: Props) {
         {dueLabel ? (
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-md)] border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm text-violet-900" data-followup-bar>
             <BellRing className="h-4 w-4 shrink-0" />
-            <button type="button" onClick={() => setOpen("followup")} className="-my-2 line-clamp-2 min-w-0 flex-1 py-2 text-left">
-              <b>Wiedervorlage {dueLabel}</b>
-              {dueOverdue ? <b className="text-rose-700"> · überfällig</b> : null}
-              {p.followUpNote ? ` · ${p.followUpNote}` : ""}
+            {/* line-clamp am inneren Text: sonst schaut die 3. Zeile im Innenabstand hervor */}
+            <button type="button" onClick={() => setOpen("followup")} className="-my-2 min-w-0 flex-1 py-2 text-left">
+              <span className="line-clamp-2">
+                <b>Wiedervorlage {dueLabel}</b>
+                {dueOverdue ? <b className="text-rose-700"> · überfällig</b> : null}
+                {p.followUpNote ? ` · ${p.followUpNote}` : ""}
+              </span>
             </button>
             {/* Handy: nur Symbole (40 px), damit das Datum nicht abgeschnitten wird */}
             <Button variant="ghost" icon={Pencil} onClick={() => setOpen("followup")} aria-label="Wiedervorlage ändern" className="h-10 min-w-10 shrink-0 px-2.5 sm:h-8 sm:min-w-0 sm:px-3" data-followup-edit>
@@ -407,6 +413,11 @@ export function LeadHeaderActions(p: Props) {
             <Button variant="ghost" icon={Check} onClick={() => followUp(() => clearFollowUpResult(p.leadId), "Wiedervorlage erledigt")} aria-label="Wiedervorlage erledigt" className="h-10 min-w-10 shrink-0 px-2.5 sm:h-8 sm:min-w-0 sm:px-3">
               <span className="hidden sm:inline">Erledigt</span>
             </Button>
+            {p.uebertragung ? (
+              <div className="w-full pl-7">
+                <UebertragungKnoepfe leadId={p.leadId} ziel={{ versicherer: p.uebertragung.versicherer }} beitragFragen={p.uebertragung.beitragFragen} />
+              </div>
+            ) : null}
             {aufgabeVorschlag ? (
               <div className="w-full pl-7">
                 <Button

@@ -19,6 +19,16 @@ import {
   vollmachtWiderrufenAction,
 } from "@/app/buyer/vollmacht-actions";
 
+import { UebertragungKnoepfe } from "@/components/uebertragung-knoepfe";
+
+type UebStand = { versicherer: string; stand: "laeuft" | "bestaetigt" | "abgelehnt"; beitragFragen: boolean; knoepfe: boolean };
+
+const STAND_UEB: Record<UebStand["stand"], { text: string; cls: string }> = {
+  laeuft: { text: "Übertragung läuft", cls: "text-amber-800" },
+  bestaetigt: { text: "Übertragung bestätigt", cls: "text-emerald-700" },
+  abgelehnt: { text: "Übertragung abgelehnt", cls: "text-[color:var(--muted)]" },
+};
+
 type Stand = { versicherer: { name: string; vertraege: number; gesendetAm: string | null }[]; offen: number; zeile: string };
 type V = {
   id: string;
@@ -34,6 +44,8 @@ type V = {
   waGesendet: string | null;
   /** „Erinnerung geplant am 20.11.“ bzw. „Erinnerung gesendet am 20.11.“ */
   erinnerung: string | null;
+  /** Bestandsübertragung je Versicherer (lib/maklervollmacht/uebertragung.ts) */
+  uebertragung?: UebStand[];
 };
 /** WhatsApp an diesen Kontakt: Chat vorhanden, jetzt möglich, sonst warum nicht */
 export type VvWa = { chat: boolean; moeglich: boolean; grund: string | null };
@@ -108,7 +120,7 @@ export function MaklervollmachtAktionen({ leadId, v, readOnly, hatEmail, wa }: {
   if (v?.status === "unterschrieben") {
     return (
       <div className="space-y-3">
-        <Uebertragung id={v.id} leadId={leadId} stand={v.stand} readOnly={readOnly} unterschrieben={v.unterschrieben} kopie={v.kopie} />
+        <Uebertragung id={v.id} leadId={leadId} stand={v.stand} readOnly={readOnly} unterschrieben={v.unterschrieben} kopie={v.kopie} uebertragung={v.uebertragung} />
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <a href={`/buyer/vollmacht/${v.id}/pdf`} target="_blank" rel="noopener" className="font-medium text-[color:var(--brand)] hover:underline">
             Alle Dokumente (PDF)
@@ -252,11 +264,12 @@ export function MaklervollmachtAktionen({ leadId, v, readOnly, hatEmail, wa }: {
  * Nach der Unterschrift (Ole, 18.11.2026): klare Aufgabe statt Statuszeile. Eine Hauptaktion „Schreiben an Versicherer
  * herunterladen“ (alle noch offenen in einer Datei), je Versicherer offen/gesendet zum Abhaken (gespeichert).
  */
-function Uebertragung({ id, leadId, stand, readOnly, unterschrieben, kopie }: { id: string; leadId: string; stand: Stand; readOnly: boolean; unterschrieben: string; kopie: string | null }) {
+function Uebertragung({ id, leadId, stand, readOnly, unterschrieben, kopie, uebertragung }: { id: string; leadId: string; stand: Stand; readOnly: boolean; unterschrieben: string; kopie: string | null; uebertragung?: UebStand[] }) {
   const toast = useToast();
   const [busy, start] = useTransition();
   const [gesendet, setGesendet] = useState<Record<string, string | null>>(() => Object.fromEntries(stand.versicherer.map((g) => [g.name, g.gesendetAm])));
   const zeilen = stand.versicherer.map((g) => ({ ...g, gesendetAm: gesendet[g.name] ?? null }));
+  const ueb = (name: string) => uebertragung?.find((x) => x.versicherer.toLowerCase() === name.toLowerCase()) ?? null;
   const offen = zeilen.filter((g) => !g.gesendetAm);
   const gesamt = zeilen.reduce((s, g) => s + g.vertraege, 0);
   const offenVertraege = offen.reduce((s, g) => s + g.vertraege, 0);
@@ -295,7 +308,7 @@ function Uebertragung({ id, leadId, stand, readOnly, unterschrieben, kopie }: { 
       ) : null}
       <ul className="divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]">
         {zeilen.map((g) => (
-          <li key={g.name} className="flex items-center gap-3 px-3 py-1.5 text-sm" data-vv-versicherer-zeile>
+          <li key={g.name} className="flex flex-wrap items-center gap-x-3 px-3 py-1.5 text-sm" data-vv-versicherer-zeile>
             <label className="flex min-h-10 min-w-0 flex-1 cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
@@ -311,6 +324,11 @@ function Uebertragung({ id, leadId, stand, readOnly, unterschrieben, kopie }: { 
                 <span className="block text-xs text-[color:var(--muted)]">
                   {vt(g.vertraege)} · {g.gesendetAm ? `gesendet am ${kurzDatum(g.gesendetAm)}` : "offen"}
                 </span>
+                {ueb(g.name) ? (
+                  <span className={`block text-xs ${STAND_UEB[ueb(g.name)!.stand].cls}`} data-uebertragung-stand={ueb(g.name)!.stand}>
+                    {STAND_UEB[ueb(g.name)!.stand].text}
+                  </span>
+                ) : null}
               </span>
             </label>
             <a
@@ -324,6 +342,11 @@ function Uebertragung({ id, leadId, stand, readOnly, unterschrieben, kopie }: { 
             >
               <Download className="h-4 w-4" />
             </a>
+            {ueb(g.name)?.stand === "laeuft" && ueb(g.name)!.knoepfe && !readOnly ? (
+              <div className="w-full pb-1.5 pl-8">
+                <UebertragungKnoepfe leadId={leadId} ziel={{ versicherer: g.name }} beitragFragen={ueb(g.name)!.beitragFragen} />
+              </div>
+            ) : null}
           </li>
         ))}
       </ul>

@@ -1,7 +1,8 @@
 // Maklervollmacht digital (Ole, 18.11.2026; nur Makler): anlegen, Link, öffentliche Seite laden, unterschreiben,
 // PDFs (gesamt und je Versicherer), Kopie an den Kunden, Widerruf. Rechtsgrundlage: docs/rechtstexte/maklervollmacht-2026-11-18.md.
-// Regeln/Texte rein in lib/maklervollmacht/regeln.ts und texte.ts. Bestehende Verträge bleiben in der Vollmacht (Json),
-// nicht als LeadContract (Provisionen unberührt).
+// Regeln/Texte rein in lib/maklervollmacht/regeln.ts und texte.ts. Bestehende Verträge stehen in der Vollmacht (Json);
+// nach der Unterschrift legt lib/maklervollmacht/uebertragung.ts sie als laufende Bestandsübertragung (LeadContract) an.
+// Sie zählen erst nach Bestätigung, nur mit Bestandsprovision.
 
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
@@ -228,6 +229,10 @@ export async function unterschreiben(token: string, e: VvEingabe, meta: { ip: st
   });
   await logLeadHistory(v.leadId, "dokument", `Maklervollmacht unterschrieben (${e.vertraege.length} ${e.vertraege.length === 1 ? "Vertrag" : "Verträge"})`, { customerId: v.customerId });
   await audit("maklervollmacht.unterschrieben", { entity: "Lead", entityId: v.leadId, customerId: v.customerId, details: { vollmachtId: v.id, vertraege: e.vertraege.length, gesundheit, textVersion: VV_TEXT_VERSION } });
+  // Bestandsübertragung: je Vertrag ein laufender Vertrag am Lead, Aufgabe nach 4 Wochen (darf die Unterschrift nie scheitern lassen)
+  await import("@/lib/maklervollmacht/uebertragung")
+    .then((m) => m.uebertragungenAnlegen(v.id, now))
+    .catch((err) => console.error("[maklervollmacht] Bestandsübertragung", err));
 
   const { sendToBuyersOfCustomer } = await import("@/lib/push");
   await sendToBuyersOfCustomer(v.customerId, {
@@ -427,5 +432,7 @@ export async function widerrufen(id: string, customerId: string, userId: string 
   if (!v) return false;
   await prisma.maklervollmacht.update({ where: { id: v.id }, data: { status: "widerrufen", widerrufenAt: new Date() } });
   await logLeadHistory(v.leadId, "dokument", "Maklervollmacht widerrufen", { customerId, userId });
+  // Offene Bestandsübertragungen und ihre Aufgaben entfallen; bestätigte bleiben (Umschlüsselung ist schon erfolgt)
+  await import("@/lib/maklervollmacht/uebertragung").then((m) => m.uebertragungenZurueckziehen(v.id)).catch((err) => console.error("[maklervollmacht] Widerruf Übertragung", err));
   return true;
 }
