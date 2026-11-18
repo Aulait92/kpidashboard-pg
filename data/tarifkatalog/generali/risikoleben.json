@@ -21,8 +21,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikolebensversicherung Tarif RS",
@@ -37,8 +36,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikolebensversicherung Tarif RFN",
@@ -53,8 +51,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -63,6 +60,7 @@
   "offen": [
     "Die drei Tarife sind Summenverläufe, keine Leistungsstufen: RN gleichbleibend, RS jährlich gleichmäßig fallend, RFN zunächst gleich, später fallend (Kreditabsicherung, bis etwa 30 %). Empfehlung nur als mittlere Stufe gesetzt.",
     "Nachversicherung: alle 5 Jahre und zu Anlässen (Heirat, Kind, Hausbau) ohne neue Gesundheitsprüfung; ob für alle drei Tarife, ist nicht eindeutig (Fußnote „Gilt für die Tarife RN und RS“ steht bei der Kombination mit BU, Schwerer Krankheit und Pflege).",
-    "Vorgezogene Leistung, Verlängerungsoption, Umtauschrecht, weltweiter Schutz und Endalter stehen nicht auf der Produktseite."
+    "Vorgezogene Leistung, Verlängerungsoption, Umtauschrecht, weltweiter Schutz und Endalter stehen nicht auf der Produktseite.",
+    "Geprüft am 17.11.2026 an der Produktseite auf generali.de."
   ]
 }

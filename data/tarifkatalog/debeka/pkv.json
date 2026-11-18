@@ -32,8 +32,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV102.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tarif NW",
@@ -58,8 +57,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV100.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tarif N-SB",
@@ -84,8 +82,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/ckv101.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tarif N",
@@ -110,8 +107,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV97.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -130,6 +126,7 @@
     "Zahn: 70 % für Zahnbehandlung, Zahnersatz, Kieferorthopädie und zwei Zahnreinigungen im Jahr; in den ersten zwei Kalenderjahren zusammen höchstens 750 € (nicht bei Unfall).",
     "Beitragsrückerstattung erfolgsabhängig, laut Produktseite bis zu 2 Monatsbeiträge im Jahr. Sehhilfen bis 1.000 € Rechnungsbetrag, Zeitraum in den Tarifbedingungen nicht genannt. Hilfsmittel als Beispielliste (offen), Hörgeräte bis 1.500 € je Gerät.",
     "Beihilfetarife für Beamte (Tarif B, B-Easy mit Ergänzungen BC, BG, WL; Debeka ist Marktführer bei Beamten) sind nicht aufgenommen. Tarif Nmed nur für Ärzte und Medizinstudenten, Tarif HS für Studierende; beide nicht aufgenommen.",
-    "Krankentagegeld (KT, KTmed) und Pflegezusatz (EPG, EPC) als Ergänzungstarife. Debeka markiert keine Empfehlung; dritte Stufe als mittlere Stufe gesetzt."
+    "Krankentagegeld (KT, KTmed) und Pflegezusatz (EPG, EPC) als Ergänzungstarife. Debeka markiert keine Empfehlung; dritte Stufe als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an den Tarifbedingungen (CKV97, CKV100, CKV101, CKV102) auf debeka.de."
   ]
 }

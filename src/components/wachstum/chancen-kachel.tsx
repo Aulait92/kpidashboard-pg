@@ -33,7 +33,7 @@ export function ChancenKachel({
   if (anzahl === 0) {
     return (
       <div className={KACHEL} data-kennzahl="chancen">
-        <KennzahlInhalt label="Offene Chancen" wert="0" unter="Gerade kein offenes Angebot und kein Termin" ton="normal" />
+        <KennzahlInhalt label="Offene Chancen" wert="0" unter="Gerade nichts offen" ton="normal" />
       </div>
     );
   }
@@ -53,15 +53,9 @@ export function ChancenKachel({
           ecke={<ChevronRight className="h-5 w-5 shrink-0 text-[color:var(--brand)] transition group-hover:translate-x-0.5" aria-hidden />}
           unter={
             <>
-              <span className="block">{unter.aufteilung}</span>
-              <span className="block">
-                {unter.realistisch}
-                {schaetzung ? (
-                  <span className="ml-1.5 inline-block rounded-full bg-[color:var(--surface-sunken)] px-2 py-px align-middle text-xs font-semibold text-[color:var(--muted)] ring-1 ring-inset ring-[color:var(--border)]">
-                    Schätzung
-                  </span>
-                ) : null}
-              </span>
+              <span className="block font-semibold text-[color:var(--foreground)]">{unter.realistisch}</span>
+              {/* Aufschlüsselung erst ab Tablet; auf dem Handy höchstens drei Zeilen (Ole, 18.11.2026) */}
+              <span className="hidden sm:block">{unter.aufteilung}</span>
             </>
           }
         />

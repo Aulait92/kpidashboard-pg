@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/grundfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Grundfähigkeitsversicherung comfort",
@@ -42,8 +41,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/grundfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Grundfähigkeitsversicherung premium",
@@ -60,8 +58,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/grundfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -73,6 +70,7 @@
     "Psyche: nur premium nennt Schizophrenie und schwere Depression; Demenz und geistige Leistungsfähigkeit ab comfort.",
     "Pflege als versicherte Fähigkeit ab comfort; eigene Pflegerente oder Baustein schwere Krankheiten nicht genannt.",
     "Weltweiter Schutz nicht genannt. AU-Option laut Seite nicht einschließbar.",
-    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+    "Keine Markierung; comfort als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite auf ruv.de (Symbole aus dem Seitenquelltext)."
   ]
 }

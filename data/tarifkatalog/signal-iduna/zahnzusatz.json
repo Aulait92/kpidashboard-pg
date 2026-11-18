@@ -29,8 +29,7 @@
         "kfo": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahn TOP pur",
@@ -52,8 +51,7 @@
         "kfo": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahn EXKLUSIV pur",
@@ -75,8 +73,7 @@
         "kfo": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -88,6 +85,7 @@
     "Begrenzung: PLUS und TOP im 1. Jahr bis 1.000 €, 2. bis 4. Jahr insgesamt 2.000 €; EXKLUSIV 1.000 €, 3.000 €, 4.500 €, 6.000 € in den ersten 1 bis 4 Jahren; danach siehe Wert.",
     "Zahnreinigung: Werte für Erwachsene ab 21 Jahren je Jahr; bis 20 Jahre nur EXKLUSIV.",
     "Inlays sind laut Tarifvergleich Teil des hochwertigen Zahnersatzes; Kunststofffüllungen nicht ausdrücklich genannt.",
-    "Es gibt auch Varianten ohne „pur“; nicht aufgenommen."
+    "Es gibt auch Varianten ohne „pur“; nicht aufgenommen.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf signal-iduna.de."
   ]
 }

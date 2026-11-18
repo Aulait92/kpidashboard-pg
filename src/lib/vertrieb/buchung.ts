@@ -90,6 +90,44 @@ export async function decisionBookingLink(contactId: string): Promise<string | n
 /** Persönlicher Buchungslink (z. B. Entscheidungs-Call aus Angebot und Vertriebskontakt). */
 export const personalBookingLink = (slug: string, contactId: string) => salesAppUrl(`${bookingPath(slug)}?k=${signContactToken(contactId)}`);
 
+/**
+ * Slug, wenn eine Adresse auf unsere eigene Vertriebs-Buchungsseite zeigt (performancegrowth.de/termin oder
+ * app…/termin[/<art>]), sonst null (z. B. Calendly).
+ */
+export function eigeneBuchungsArt(url: string | null | undefined): string | null {
+  let u: URL;
+  try {
+    u = new URL(String(url ?? "").trim());
+  } catch {
+    return null;
+  }
+  const origins = new Set<string>();
+  for (const x of [publicSalesBookingUrl(), salesAppUrl("/")]) {
+    try {
+      origins.add(new URL(x).origin);
+    } catch {
+      /* ungültig */
+    }
+  }
+  if (!origins.has(u.origin)) return null;
+  const m = /^\/termin(?:\/([a-z0-9-]{1,60}))?\/?$/.exec(u.pathname);
+  if (!m || m[1] === "danke" || m[1] === "verwalten") return null;
+  return m[1] ?? DEFAULT_BOOKING_TYPE;
+}
+
+/**
+ * Buchungslink für einen bekannten Vertriebskontakt (Später-Follow-ups, Calendly ablösen, Ole 17.11.2026): zeigt die
+ * eingestellte Adresse auf unsere eigene Buchungsseite und ist der Termintyp online buchbar, wird daraus der persönliche
+ * Link (Buchung hängt direkt am Kontakt, Formular vorausgefüllt). Fremde Links (Calendly) bleiben unverändert.
+ */
+export async function vertriebsLinkFuerKontakt(url: string | null | undefined, contactId: string): Promise<string | null> {
+  const raw = String(url ?? "").trim() || null;
+  const slug = eigeneBuchungsArt(raw);
+  if (!raw || !slug) return raw;
+  const t = await loadBookingType(slug).catch(() => null);
+  return t && (await bookingReady(t).catch(() => false)) ? personalBookingLink(slug, contactId) : raw;
+}
+
 /** iframe-Code für die Lovable-Seite performancegrowth.de/termin (Höhe per postMessage). */
 export function embedSnippet(): string {
   const src = salesAppUrl("/termin?einbetten=1");

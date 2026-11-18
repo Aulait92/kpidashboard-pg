@@ -31,8 +31,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Autoversicherung Premium",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -68,6 +66,7 @@
     "Tiere, Neuwert, Marder und E-Paket gelten für die Kasko (Teil- bzw. Vollkasko). Kaufwertentschädigung 12 bzw. 36 Monate.",
     "Werkstatt: Sorglos-Kasko mit Partnerwerkstatt oder freie Werkstattwahl wählbar.",
     "E-Auto: Akku-Tierbiss bis 2.500 € (Basis) bzw. 30.000 € (Premium), Neuwert für den Akku 36 Monate.",
-    "Premium zusätzlich u. a. Brems-, Betriebs- und Bruchschäden, Eigenschäden bis 100.000 € (SB 500 €), Fährrisiko, Dashcam."
+    "Premium zusätzlich u. a. Brems-, Betriebs- und Bruchschäden, Eigenschäden bis 100.000 € (SB 500 €), Fährrisiko, Dashcam.",
+    "Geprüft am 17.11.2026 an Tariftabelle und Produktseiten auf signal-iduna.de."
   ]
 }

@@ -25,8 +25,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/basis-rente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -37,6 +36,7 @@
     "Garantie laut Muster-Produktinformationsblatt: Rentenversicherung ohne gesonderte Garantieabsicherung; der Rentenfaktor ist garantiert.",
     "Hinterbliebenenschutz: Todesfallschutz mit Rente für Ehegatten und kindergeldberechtigte Kinder. Zusätzlich Risikoplan (separate Risikolebensversicherung, Wartezeit 5 Jahre außer bei Unfall).",
     "Bei Rentenbeginn Wahl zwischen sicherheitsorientierter und chancenorientierter Rente (mit Mindestrente).",
-    "Kosten (Effektivkosten) nur im Musterbeispiel, nicht übernommen. Beitragspause und Dynamik nicht genannt."
+    "Kosten (Effektivkosten) nur im Musterbeispiel, nicht übernommen. Beitragspause und Dynamik nicht genannt.",
+    "Geprüft am 17.11.2026 an Produktseite und Muster-Produktinformationsblatt (BRVA25) auf generali.de (ohne gesonderte Garantieabsicherung, Sonderzahlungen, Hinterbliebenenrente)."
   ]
 }

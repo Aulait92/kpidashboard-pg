@@ -30,8 +30,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/gesundheit/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Unfallversicherung Komfort",
@@ -54,8 +53,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/gesundheit/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Unfallversicherung Premium",
@@ -78,8 +76,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/gesundheit/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -93,6 +90,7 @@
     "Invaliditätssumme und Progression werden individuell gewählt (keine festen Werte je Stufe). Invaliditätsleistung ab jedem messbaren Invaliditätsgrad.",
     "Unfallrente in allen Stufen wählbar, ab 50 % Invalidität; Komfort und Premium mit Verdoppelung ab 70 % Invalidität.",
     "Krankenhaustagegeld in allen Stufen wählbar (Höhe frei); Unfalltagegeld, Hilfeleistungen und Familien-Management ab Komfort. Kosmetische OP inklusive Tattoos.",
-    "Todesfallleistung, Zeckenstich und Sofortleistung in Euro nicht beziffert. Baustein PremiumPlus (nur Premium): Mitwirkungsverzicht, Impfschäden, Helmbonus."
+    "Todesfallleistung, Zeckenstich und Sofortleistung in Euro nicht beziffert. Baustein PremiumPlus (nur Premium): Mitwirkungsverzicht, Impfschäden, Helmbonus.",
+    "Geprüft am 17.11.2026 am Tarifvergleich der Produktseite auf wuerttembergische.de."
   ]
 }

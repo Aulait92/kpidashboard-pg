@@ -54,9 +54,8 @@ import {
   sendNotReachedMailResult,
   type LeadStepInfo,
 } from "@/app/buyer/next-step-actions";
-import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
+import { abschlussEinTipp } from "@/components/abschluss-nachher";
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
-import { useProvisionRates } from "@/components/provision-context";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
@@ -511,7 +510,6 @@ export function NotReachedSheet({ leadId, name, attempt, onClose }: { leadId: st
 export function NextStepSheet({
   leadId,
   name,
-  source = null,
   appointmentId = null,
   title = "Wie geht es weiter?",
   fallbackOnClose = true,
@@ -520,6 +518,7 @@ export function NextStepSheet({
 }: {
   leadId: string;
   name: string;
+  /** Produkt (Lead.source); seit dem Abschluss mit einem Tipp nicht mehr nötig, bleibt für Aufrufer erhalten. */
   source?: string | null;
   /** Termin vorbei ohne Ergebnis: Ergebnis-Optionen dazu. */
   appointmentId?: string | null;
@@ -530,9 +529,8 @@ export function NextStepSheet({
   onDone: StepDone;
 }) {
   const toast = useToast();
-  const rates = useProvisionRates();
   const { info } = useStepInfo(leadId);
-  const [step, setStep] = useState<"pick" | "date" | "termin" | "terminMail" | "win" | "lost" | "offer" | "angebot">("pick");
+  const [step, setStep] = useState<"pick" | "date" | "termin" | "terminMail" | "lost" | "offer" | "angebot">("pick");
   const [busy, startBusy] = useTransition();
   const [termin, setTermin] = useState<{ link: string; whatsapp: string; subject: string; body: string } | null>(null);
   const [offer, setOffer] = useState<{ res: InboxResult; attempt: Attempt } | null>(null);
@@ -570,10 +568,9 @@ export function NextStepSheet({
       setTermin({ link: r.link, whatsapp: r.whatsapp, subject: r.subject, body: r.body });
       setStep("termin");
     });
-  const won = () => {
-    if (asksCloseValue(source, rates)) return setStep("win");
-    run(`${name}: Abschluss`, () => (appointmentId ? appointmentOutcomeResult(appointmentId, "closed", null) : callbackOutcomeResult(leadId, "won", null)));
-  };
+  // Abschluss mit einem Tipp (P4): sofort speichern, Beitrag und Glückwunsch danach im Blatt (abschluss-nachher)
+  const won = () =>
+    abschlussEinTipp(leadId, name, (v, sp) => run(`${name}: Abschluss`, () => (appointmentId ? appointmentOutcomeResult(appointmentId, "closed", v, sp) : callbackOutcomeResult(leadId, "won", v, sp))));
 
   if (step === "offer" && offer) {
     return (
@@ -627,17 +624,6 @@ export function NextStepSheet({
         title={`Wiedervorlage für ${name}`}
         onClose={() => setStep("pick")}
         onPick={(date, time) => run(time ? `${name}: Rückruf ${fmtDay(date)} ${time} Uhr` : `${name}: Wiedervorlage am ${fmtDay(date)}`, () => setFollowUpResult(leadId, { date, time }))}
-      />
-    );
-  }
-  if (step === "win") {
-    return (
-      <AbschlussSheet
-        open
-        title={`Abschluss mit ${name}`}
-        source={source}
-        onClose={() => setStep("pick")}
-        onSave={(v, sp) => run(`${name}: Abschluss`, () => (appointmentId ? appointmentOutcomeResult(appointmentId, "closed", v, sp) : callbackOutcomeResult(leadId, "won", v, sp)))}
       />
     );
   }

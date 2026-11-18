@@ -23,8 +23,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/grundfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Fähigkeitenschutz Plus",
@@ -40,8 +39,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/grundfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Fähigkeitenschutz Premium",
@@ -57,8 +55,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/grundfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -70,6 +67,7 @@
     "Psyche: Zusatzmodul „Schwere psychische Erkrankung“ (Leistung bei stationärem Aufenthalt); Zusatzmodul schwere Krankheit zahlt einmalig eine Jahresrente.",
     "Premium: Sofortleistung bei schwerem Unfall. Pflege, Nachversicherung, Weltweit und Dynamik in der Tabelle nicht genannt.",
     "Für Kinder: Fähigkeitenschutz Kids ab 6 Monaten (nicht aufgenommen).",
-    "BarmeniaGothaer markiert keine Stufe."
+    "BarmeniaGothaer markiert keine Stufe.",
+    "Geprüft am 17.11.2026 an der Produkttabelle und Produktseite auf barmeniagothaer.de."
   ]
 }

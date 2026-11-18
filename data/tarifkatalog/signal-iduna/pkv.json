@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.signal-iduna.de/produkte/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "KOMFORT-SI",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.signal-iduna.de/produkte/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "EXKLUSIV-SI",
@@ -66,8 +64,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.signal-iduna.de/produkte/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -79,6 +76,7 @@
     "Primärarzt: Nur bei START-SI ist der Facharzt an eine Überweisung gebunden (aus dem Tarifvergleich abgeleitet).",
     "START-SI: Zweibettzimmer und Chefarzt nur bei unfallbedingtem Aufenthalt. KOMFORT-SI: Einbettzimmer bei Unfall oder gegen 60 €/Tag.",
     "Zusätzlich: Gesundheitsbonus bis 900 € (KOMFORT, EXKLUSIV), Verhaltensbonus bis 300 € (EXKLUSIV); Zahnersatz inkl. Implantate ohne Bonusheft.",
-    "Hilfsmittel (offener Katalog nicht ausdrücklich genannt), Ausland, Krankentagegeld und Pflegezusatz als Baustein nicht belegt."
+    "Hilfsmittel (offener Katalog nicht ausdrücklich genannt), Ausland, Krankentagegeld und Pflegezusatz als Baustein nicht belegt.",
+    "Geprüft am 17.11.2026 an Tariftabelle und Produktseite auf signal-iduna.de."
   ]
 }

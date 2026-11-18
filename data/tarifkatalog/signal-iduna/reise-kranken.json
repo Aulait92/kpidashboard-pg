@@ -26,8 +26,7 @@
         "familie": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/auslandskrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Jahres-Reise-KV",
@@ -46,8 +45,7 @@
         "familie": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/auslandskrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -57,6 +55,7 @@
     "SIGNAL IDUNA markiert den Jahres-Reise-KV als „Empfohlen“.",
     "Tages-Reise-KV: weltweit oder weltweit ohne USA, Kanada und Karibik wählbar. Jahres-Reise-KV: Dienstreisen bis 10 Tage.",
     "Familientarif: Kinder bis 25 Jahre mitversichert. Bekannte Erkrankungen und Langzeitreise als Baustein auf der Produktseite nicht genannt.",
-    "Zahn: schmerzstillende Behandlung, einfache Füllungen und Reparatur von Zahnersatz."
+    "Zahn: schmerzstillende Behandlung, einfache Füllungen und Reparatur von Zahnersatz.",
+    "Geprüft am 17.11.2026 an Tariftabelle und Produktseite auf signal-iduna.de."
   ]
 }

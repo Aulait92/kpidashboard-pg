@@ -28,8 +28,7 @@
         "rabattschutz": "nein"
       },
       "quelle": "https://static.c.huk.de/content/dam/hukde/dokumente/produkte/allgemeine_versicherungsbedingungen_kfz.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Autoversicherung Classic",
@@ -53,8 +52,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.huk.de/fahrzeuge/kfz-versicherung/autoversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Autoversicherung Classic mit Kasko PLUS",
@@ -78,8 +76,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.huk.de/fahrzeuge/kfz-versicherung/autoversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -94,6 +91,7 @@
     "Grobe Fahrlässigkeit: Verzicht in der Kasko, Kürzung nur bei Alkohol/Rauschmitteln und ermöglichter Entwendung (AKB A.2.9). Kein Basis-Ausschluss gefunden.",
     "Kasko PLUS: Neupreis bzw. Kaufwert 36 Monate, Eigenschäden bis 100.000 € je Jahr (500 € SB), Brems-, Betriebs-, Bruchschäden, Sportgeräte bis 5.000 €.",
     "Kasko SELECT (Werkstattbindung, 20 % Kasko-Nachlass) ist eine Option in Classic; ob auch im Basis-Tarif wählbar, nicht belegt. Telematik Plus als Sparoption nicht als Stufe geführt.",
-    "Personenschäden max. 15 Mio. € je Person. Schutzbrief im Basis-Tarif nicht belegt. HUK24 (Online-Tochter) nicht aufgenommen: auf huk.de nur als Verweis, nicht als Tarif."
+    "Personenschäden max. 15 Mio. € je Person. Schutzbrief im Basis-Tarif nicht belegt. HUK24 (Online-Tochter) nicht aufgenommen: auf huk.de nur als Verweis, nicht als Tarif.",
+    "Geprüft am 17.11.2026 an Produktseite und Bedingungen auf huk.de."
   ]
 }

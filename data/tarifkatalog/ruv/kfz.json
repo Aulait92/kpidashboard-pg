@@ -30,8 +30,7 @@
         "rabattschutz": "nein"
       },
       "quelle": "https://www.ruv.de/kfz-versicherung/autoversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "KfzPolice comfort",
@@ -54,8 +53,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.ruv.de/kfz-versicherung/autoversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "KfzPolice premium",
@@ -78,8 +76,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.ruv.de/kfz-versicherung/autoversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -91,6 +88,7 @@
     "Grobe Fahrlässigkeit in comfort und premium außer bei Alkohol, Rauschmitteln und Entwendung.",
     "Marder: Tierbiss selbst ab comfort (alle Tiere außer Haus- und Nutztiere); Wert = Folgeschäden. Neupreisentschädigung ab Erstzulassung auf den Kunden; Kaufwertentschädigung Gebrauchtwagen comfort 12, premium 24 Monate.",
     "Werkstattservice (freiwillige Werkstattbindung mit Nachlass) in allen Stufen wählbar; bei classic ist der Werkstattservice Glas Pflicht. Akku-Schutz für E-Autos nicht in der Tabelle.",
-    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+    "Keine Markierung; comfort als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite auf ruv.de (Symbole aus dem Seitenquelltext)."
   ]
 }

@@ -20,8 +20,7 @@
         "kinder": "nein"
       },
       "quelle": "https://www.axa.de/pk/existenzsicherung/p/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikolebensversicherung Komfort",
@@ -34,8 +33,7 @@
         "kinder": "ja, plus Kinder-Extra"
       },
       "quelle": "https://www.axa.de/pk/existenzsicherung/p/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -48,6 +46,7 @@
     "Höchstes Endalter und höchste Summe ohne Zusatzprüfung nicht veröffentlicht.",
     "Komfort zusätzlich: Beitragsstundung 6 Monate, Kinder-Extra und Eigenheim-Extra (+25 % für 6 Monate, max. 50.000 €), +25 % bei Unfalltod (max. 50.000 €).",
     "Fallende Summe und verbundene Leben nur allgemein im Ratgeber erwähnt, nicht als Tarifoption belegt. BU-Zusatzversicherung kombinierbar.",
-    "Empfehlung: AXA markiert Komfort als „Unser Tipp“. Flyer Stand 4.21."
+    "Empfehlung: AXA markiert Komfort als „Unser Tipp“. Flyer Stand 4.21.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite auf axa.de."
   ]
 }

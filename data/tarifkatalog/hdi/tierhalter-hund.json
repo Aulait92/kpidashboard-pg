@@ -4,7 +4,7 @@
   "produkt": "Tierhalter-Haftpflicht Hund",
   "empfehlung": "keine",
   "inAllenTarifen": [
-    "Weltweiter Schutz",
+    "Innovationsgarantie",
     "Ab 2. Hund halber Beitrag",
     "Deckakt mitversichert"
   ],
@@ -19,13 +19,11 @@
         "miete": "ja",
         "fremdhueter": "ja",
         "welpen": "6 Monate",
-        "geliehen": "bis 2.500 €",
-        "ausland": "weltweit"
+        "geliehen": "bis 2.500 €"
       },
       "bausteine": {},
       "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/tierhalter-haftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tierhalter-Haftpflicht Premium",
@@ -36,13 +34,11 @@
         "vs": "50 Mio. €",
         "miete": "ja",
         "fremdhueter": "ja",
-        "forderungsausfall": "ja (Europa)",
-        "ausland": "weltweit"
+        "forderungsausfall": "ja (Europa)"
       },
       "bausteine": {},
       "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/tierhalter-haftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -51,6 +47,7 @@
   "offen": [
     "Selbstbeteiligung allgemein nicht genannt (nur 150 € bei geliehenen Sachen in Basis).",
     "Welpen: Basis 6 Monate beitragsfrei; die Vorteilsliste nennt „bis zu einem Jahr“, vermutlich Premium, bitte prüfen.",
-    "Premium zusätzlich: Gewaltopferschutz bis 50.000 €, Beitragsfreistellung bei Arbeitslosigkeit bis 12 Monate, Bestleistungsgarantie wählbar. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+    "Premium zusätzlich: Gewaltopferschutz bis 50.000 €, Beitragsfreistellung bei Arbeitslosigkeit bis 12 Monate, Bestleistungsgarantie wählbar. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
+    "Geprüft am 17.11.2026 am Text der Produktseite auf hdi.de. Entfernt: „weltweit“ (Auslandsschutz auf der Seite nicht genannt). Widerspruch auf der Seite: Jungtiere laut Vorteilsliste bis zu einem Jahr, laut Leistungsliste Basis 6 Monate beitragsfrei mitversichert; Wert 6 Monate (Basis) belassen."
   ]
 }

@@ -293,6 +293,16 @@ model Customer {
   newUi                          Boolean                   @default(false)
   // Ansprache von Leads und Kunden in allen Texten (E-Mail, WhatsApp-Assistent, Vorlagen, Termin-Nachrichten): "sie" | "du" (Ole, 14.11.2026)
   leadAddress                    String                    @default("sie")
+  // Policen per WhatsApp, Kranken/BU/Leben je Vermittler (Rechtsprüfung A5, Ole 18.11.2026): an, wenn der Vermittler
+  // der AVV-Ergänzung (b) zugestimmt hat (Karte unter Einstellungen) UND seine Datenschutzhinweis-URL hinterlegt ist
+  // (lib/policen/regeln.ts gesundheitFreigegeben). Intern/Test (Oles eigenes Konto, Testkunden): sofort an.
+  policenIntern               Boolean   @default(false)
+  policenAvvZugestimmtAt      DateTime?
+  policenAvvVersion           String?
+  policenAvvUserId            String?
+  // „Später“ auf der Freischaltkarte (Heute, Terminvorbereitung); ab 3 nur noch unter Einstellungen
+  policenAvvSpaeter           Int       @default(0)
+  policenDatenschutzUrl       String?
   // Branding für Präsentationen (Ole, 15.11.2026): Logo von der Agentur-/Makler-Webseite oder hochgeladen,
   // vom Kunden bestätigt („darf ich verwenden“)
   brandLogo                      Bytes?
@@ -301,6 +311,10 @@ model Customer {
   brandLogoConfirmedAt           DateTime?
   // Stand der Standard-E-Mail-Vorlagen (lib/mail/vorlagen.ts VORLAGEN_STAND): neue Standards beim nächsten Laden ergänzen
   mailVorlagenStand              Int                       @default(0)
+  // E-Mails in der Customer Journey (Ole, 17.11.2026, docs/plan-mail-vorlagen.md, lib/mail/ablauf.ts): Stufe je Vorlage
+  // (auto | tipp | aus), BCC-Kopie (an, Adresse; null = eigene) und wann „Ja, Mails in meinem Namen senden“ bestätigt
+  // wurde. null = Voreinstellungen laut Plan, BCC aus.
+  mailAblauf                     Json?
   existingCustomers              ExistingCustomer[]
   whatsAppErrorAlerts            WhatsAppErrorAlert[]
   manualRevenues                 ManualRevenue[]
@@ -745,6 +759,8 @@ model Lead {
   deliveredAt          DateTime?
   // Storno beim Pay-per-Lead: requested → approved | rejected | review (Prüfung durch Admin)
   stornoState          String?
+  /// Lead-ID bei Heinrich von Kleist (HvK-Abrechnung, lib/ppl/hvk-abrechnung.ts): nur sicher zugeordnete, nie überschrieben
+  hvkLeadId            String?           @unique
   stornoReason         String?
   // Grund bei „Disqualifiziert“ (lib/lead-quality.ts), z. B. falsche_nummer
   disqualifyReason     String?
@@ -807,10 +823,19 @@ model Lead {
   documents           LeadDocument[]
   // Ausgehende E-Mails an den Lead (Verlauf mit Zustellstatus, lib/mail/kontakt-mail.ts)
   mails               ContactMail[]
+  // Automatische Vorlagen-Mails: Idempotenz je Vorlage und Anlass, höchstens eine je Tag (lib/mail/vorlagen-mail.ts)
+  mailVersand         LeadMailVersand[]
   // Verträge (Abschlüsse) dieses Leads: der erste aus closedAt/closeValue, dazu Cross-Selling (lib/vertraege.ts)
   contracts           LeadContract[]
   // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
   crossSellRemindedAt DateTime?
+  // Aufgaben nach dem Abschluss, die auf die Wiedervorlage warten (lib/lead-aufgaben.ts, P7): keine verdrängt die andere
+  tasks               LeadTask[]
+  // Abschluss erkennen (P4, Ole 17.11.2026, lib/abschluss-server.ts): Vorabend-Push „Hat Frau Becker abgeschlossen?“
+  // zuletzt gesendet (je Lead höchstens einmal am Tag) und der Lead hat im Chat gesagt, er habe abgeschlossen (Werkzeug
+  // schon_abgeschlossen: Vermittler benachrichtigt, Nachfassen gestoppt, Abschluss trägt nur der Vermittler ein)
+  abschlussFrageAt    DateTime?
+  abschlussGemeldetAt DateTime?
   // Aufgabe „Police da und erste Zahlung erfolgt?“ gestellt (einmal je Lead)
   policeRemindedAt    DateTime?
   // Kunde mit Abschluss im Bestand (ExistingCustomer.leadId)
@@ -2879,6 +2904,33 @@ model LeadSequence {
 // „Heute“ der Admin-Oberfläche: Punkte, die ein Admin abgehakt oder auf später
 // gelegt hat (Schlüssel wie in lib/admin-heute.ts). Bis `until` ausgeblendet,
 // danach erscheinen sie wieder, falls das Problem noch besteht.
+// Aufgaben am Lead nach dem Abschluss (P7, Ole 17.11.2026, lib/lead-aufgaben.ts): „Police da?“, „Weiteres Produkt anbieten?“,
+// später Willkommen, Unterlagen fehlen, Kündigung (M6). Heute zeigt je Lead eine Wiedervorlage (Lead.followUpAt); ist sie
+// belegt, wartet die Aufgabe und rückt nach, sobald die Wiedervorlage erledigt ist. So verdrängt keine Aufgabe eine andere.
+model LeadTask {
+  id             String    @id @default(cuid())
+  leadId         String
+  customerId     String
+  // police | cross_sell | (M6) willkommen | unterlagen_fehlen | kuendigung …
+  kind           String
+  // Text der Wiedervorlage
+  note           String
+  // frühestens ab dann
+  dueAt          DateTime
+  // wartet | aktiv | entfallen
+  status         String    @default("wartet")
+  // nur aktivieren, solange der Lead in dieser Phase ist (z. B. „Abschluss“); null = immer
+  requiresStatus String?
+  activatedAt    DateTime?
+  endedReason    String?
+  createdAt      DateTime  @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, kind])
+  @@index([status, dueAt])
+}
+
 model AdminDismissal {
   id        String   @id @default(cuid())
   userId    String
@@ -3295,7 +3347,7 @@ model ReviewSettings {
   // Link „Bewertung schreiben“ des Google-Unternehmensprofils
   googleReviewUrl          String?
   // Tage nach dem Abschluss: Zufriedenheitsfrage bzw. Bitte um Empfehlung
-  reviewDelayDays          Int       @default(7)
+  reviewDelayDays          Int       @default(14)
   referralDelayDays        Int       @default(21)
   // Eigene Texte (null = Standard): Anfrage (direkter Draht + Google-Link),
   // Dank bei positiver Antwort, Antwort bei Kritik, Bitte um Empfehlung
@@ -3816,6 +3868,32 @@ model ContactMail {
   @@index([providerMessageId])
 }
 
+// Vorlagen-Mails an Leads (Ole, 17.11.2026, Paket M0, lib/mail/vorlagen-mail.ts): Reservierung vor dem Versand.
+// Je Lead, Vorlage und Anlass höchstens eine Mail (unique); tagesSchluessel („<leadId>:<YYYY-MM-DD>“, Berlin) nur bei
+// automatischen Mails ohne Pflicht, damit je Lead und Tag höchstens eine rausgeht. Scheitert der Versand, wird die
+// Zeile gelöscht (später neuer Versuch möglich). Keine personenbezogenen Inhalte; gelöscht mit dem Lead.
+model LeadMailVersand {
+  id              String   @id @default(cuid())
+  customerId      String
+  leadId          String
+  lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  // VorlageKey (lib/mail/vorlagen.ts)
+  vorlage         String
+  // Anlass, z. B. Termin-ID oder „anruf-2“
+  anlass          String
+  automatisch     Boolean  @default(true)
+  // Berliner Kalendertag YYYY-MM-DD
+  tag             String
+  tagesSchluessel String?  @unique
+  // reserviert | gesendet
+  status          String   @default("reserviert")
+  contactMailId   String?
+  createdAt       DateTime @default(now())
+
+  @@unique([leadId, vorlage, anlass])
+  @@index([leadId, tag])
+}
+
 // Dokumente am Lead (Ole, 13.11.2026): z. B. das Angebot, das der Vermittler geschickt hat,
 // oder die Police. Gespeichert in der Datenbank, gelöscht mit dem Lead (Art. 17).
 model LeadFile {
@@ -3857,14 +3935,17 @@ model LeadDocument {
   mimeType         String
   fileName         String
   size             Int
-  // verschlüsselt (lib/encryption.ts encryptBytes); null solange status = wartet
+  // Alte Ablage (bis 18.11.2026): verschlüsselt in der Datenbank (lib/encryption.ts encryptBytes). Neu: null.
   data             Bytes?
+  // Neue Ablage (Rechtsprüfung A6): Schlüssel im privaten Policen-Bucket (lib/policen/ablage.ts), Inhalt mit dem
+  // Schlüssel des Mandanten verschlüsselt. null solange status = wartet bzw. bei alten Unterlagen.
+  storageKey       String?
   // police | sonstig
   kind             String    @default("police")
   // Sparte laut Klassifikation, z. B. haftpflicht, hausrat, kfz, kranken, bu (lib/policen/regeln.ts SPARTEN)
   sparte           String?
   gesundheitsbezug Boolean   @default(false)
-  // Einwilligung (BestandConsentLog.id) und Zeitpunkt, nur bei Gesundheitsbezug
+  // Einwilligung (seit 18.11.2026 PolicenNachweis.id, vorher BestandConsentLog.id) und Zeitpunkt
   consentId        String?
   consentAt        DateTime?
   // Ausgelesene Vertragsdaten (nur Sachversicherungen): Gesellschaft, Sparte, Beitrag, Zahlweise, Summe, SB, Ablauf
@@ -3883,6 +3964,40 @@ model LeadDocument {
   @@index([leadId])
   @@index([customerId])
   @@index([status, createdAt])
+}
+
+// Nachweise zu Policen per WhatsApp (Rechtsprüfung A3, Ole 18.11.2026): Einwilligung (mit bzw. ohne KI), Ablehnung,
+// Widerruf, Opt-in für Erinnerungen aus der Buchung. Nur anhängen: Ein Datenbank-Trigger verbietet UPDATE und DELETE
+// (DELETE nur bei Art. 17 bzw. Vertragsende mit SET LOCAL app.policen_nachweis_loeschen = 'ja', lib/erasure.ts).
+// Bleibt nach dem Löschen der Policen als Nachweis, ohne Inhalte. Keine Fremdschlüssel (Lead-Löschung kaskadiert nicht).
+model PolicenNachweis {
+  id                 String   @id @default(cuid())
+  customerId         String
+  leadId             String?
+  // WhatsApp-Nummer des Leads
+  phone              String
+  // einwilligung | abgelehnt | widerruf | erinnerung_optin | erinnerung_stopp
+  art                String
+  // KI-Auslesen erlaubt („Ich willige ein“ = true, „Ja, aber ohne KI“ = false); null bei anderen Arten
+  ki                 Boolean?
+  // Wortlaut, wie gesendet (Einwilligungsnachricht mit Fußzeile und Knopftext bzw. Häkchentext der Buchung)
+  wortlaut           String?
+  textVersion        String?
+  // Version und Adresse der Datenschutzhinweise, auf die der Text verweist
+  datenschutzVersion String?
+  datenschutzUrl     String?
+  // WhatsApp-ID der Knopfantwort und der beantworteten Nachricht (context.id)
+  waMessageId        String?
+  frageWaMessageId   String?
+  // Zuständiger Vermittler (Lead.assignedUserId) und Name im Text
+  vermittlerUserId   String?
+  vermittlerName     String?
+  // whatsapp | buchung | vermittler | system
+  quelle             String
+  createdAt          DateTime @default(now())
+
+  @@index([customerId, phone, createdAt])
+  @@index([leadId, createdAt])
 }
 
 // Verträge je Lead (Cross-Selling, Ole 14.11.2026): Sparte, Beitrag, Datum, optional Versicherer,
@@ -3920,6 +4035,11 @@ model LeadContract {
   // Police als Dokument am Lead
   fileId         String?
   file           LeadFile? @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  // Herkunft des Beitrags (Abschluss mit einem Tipp, Ole 17.11.2026): angebot (aus der Terminvorbereitung) | vermittler
+  // (eingetragen bzw. bestätigt) | standard (typischer Beitrag der Sparte, geschätzt, „≈“). null = Altbestand
+  premiumSource  String?
+  // Einheitlicher Jahresbeitrag netto (PKV und Kranken-Zusatz: Monatsbeitrag × 12; Tarifoptimierung: null)
+  premiumYear    Decimal?  @db.Decimal(12, 2)
   // aktiv | storniert
   status         String    @default("aktiv")
   // Vertrag gekündigt bzw. storniert zum (ab hier kein Bestand mehr); Rückbelastung wird in diesem Monat gebucht
@@ -4488,6 +4608,8 @@ model HvkReklamation {
   status       String
   leadId       String?
   candidateIds String[]   @default([])
+  // Weg der automatischen Zuordnung: id | datum_plz | ort | tag_versatz (null = von Hand oder offen)
+  via          String?
   decidedAt    DateTime?
   createdAt    DateTime   @default(now())
 

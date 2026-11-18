@@ -21,6 +21,7 @@ import { ErstinfoHeuteHint } from "@/components/erstinformation-hint";
 import { listVorbereitungen } from "@/lib/termin-vorbereitung-server";
 import { ladeAutomatischeNachrichten, morgenBerlin } from "@/lib/nachrichtenplan-server";
 import { leadScope } from "@/lib/team";
+import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -76,6 +77,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   // Hinweise, die nicht dringend sind, stehen unter den Aufgaben (UX, Ole 15.11.2026)
   const hinweise = (
     <div className="mt-6 space-y-4">
+      {/* Freischaltung Kranken/BU/Leben (lib/policen/freischaltung.ts), nur Inhaber, bis zugestimmt oder 3-mal „Später“ */}
+      <PolicenFreischaltungKarte ctx={ctx} ort="karte" />
       {nudge ? <ReferralNudgeCard nudgeKey={nudge.key} title={nudge.title} text={nudge.text} /> : null}
       <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
       <EmpfehlungHeuteHint ctx={ctx} />

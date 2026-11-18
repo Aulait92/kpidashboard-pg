@@ -22,8 +22,7 @@
         "fallend": "optional"
       },
       "quelle": "https://www.ruv.de/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikolebensversicherung comfort",
@@ -38,8 +37,7 @@
         "fallend": "optional"
       },
       "quelle": "https://www.ruv.de/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikolebensversicherung premium",
@@ -54,8 +52,7 @@
         "fallend": "optional"
       },
       "quelle": "https://www.ruv.de/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -67,6 +64,7 @@
     "Nachversicherung (comfort, premium): bei gleichbleibender Summe innerhalb von 6 Monaten nach Heirat, Geburt, Berufsstart u. a., je Erhöhung mind. 2.000 €, insgesamt höchstens 60.000 €.",
     "Kinder: kein Nachversicherungsrecht für Kinder genannt, sondern Kinder-Bonus (25.000 € extra bei Tod innerhalb 6 Monaten nach Geburt oder Adoption). Dazu Bau-Bonus 25.000 € (comfort, premium) und Pflege-Bonus 10 % der Summe, max. 15.000 € (nur premium).",
     "Verlängerungsoption: einmalig bis 15 Jahre, bis 3 Jahre vor Vertragsende. Verbundene Leben nicht genannt.",
-    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+    "Keine Markierung; comfort als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite auf ruv.de (Symbole aus dem Seitenquelltext)."
   ]
 }
