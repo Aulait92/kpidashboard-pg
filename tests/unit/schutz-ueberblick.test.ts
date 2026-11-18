@@ -17,6 +17,8 @@ import {
   SCHUTZ_STATUS,
   schutzBereich,
   schutzKurz,
+  schutzOffen,
+  zitatFuer,
   spartenSuche,
   schutzVorschlag,
   schutzZeilen,
@@ -377,5 +379,43 @@ describe("Nicht mehr bestehende Verträge sind keine Verträge (Usability-Check 
 
   it("Rückfall ohne KI: ausgelaufene Verträge kommen nicht in die Liste", () => {
     expect(vertraegeAusText("Haftpflicht bei der HUK, Rechtsschutz ausgelaufen, Unfall hatte ich mal").map((v) => v.sparte)).toEqual(["Haftpflicht"]);
+  });
+});
+
+describe("„Was hat … schon?“ nach dem Usability-Check (18.11.2026)", () => {
+  it("Vorschlag mit Quelle: der Satz aus dem Chat bzw. Formular; unsicher Genanntes als Vorschlag „Weiß nicht“", () => {
+    const d = termin({
+      angaben: { vorhanden: "Haftpflicht bei der HUK. Rechtsschutz hatte ich mal, ist aber ausgelaufen. Unfall? weiß ich nicht" },
+      formular: [{ label: "Bestehende Versicherungen", value: "Hausrat bei der Allianz" }],
+    });
+    const s = schutzVorschlag(d, { angebot: [] });
+    const by = (k: string) => s.find((x) => x.key === k);
+    expect(by("haftpflicht")).toMatchObject({ status: "woanders", quelle: "chat", zitat: "Haftpflicht bei der HUK" });
+    expect(by("rechtsschutz")).toMatchObject({ status: "luecke", quelle: "chat", zitat: "Rechtsschutz hatte ich mal, ist aber ausgelaufen" });
+    expect(by("unfall")).toMatchObject({ status: "pruefen", quelle: "chat", zitat: "Unfall? weiß ich nicht" });
+    expect(by("hausrat")).toMatchObject({ status: "woanders", quelle: "formular", zitat: "Hausrat bei der Allianz" });
+    expect(zitatFuer("x".repeat(150) + " Hausrat", "hausrat")).toHaveLength(100);
+    expect(zitatFuer("nichts dazu", "hausrat")).toBeNull();
+  });
+
+  it("unbeantwortet = „prüfen“ ohne Quelle und ohne Antwort; „Weiß nicht“ gewählt zählt als beantwortet", () => {
+    expect(schutzOffen({ status: "pruefen" })).toBe(true);
+    expect(schutzOffen({ status: "pruefen", beantwortet: true })).toBe(false);
+    expect(schutzOffen({ status: "pruefen", quelle: "chat" })).toBe(false);
+    expect(schutzOffen({ status: "luecke" })).toBe(false);
+    expect(cleanSchutz([{ key: "unfall", label: "Unfall", status: "pruefen", beantwortet: true, zitat: "  Unfall?   weiß nicht " }, { key: "kfz", label: "Kfz", status: "pruefen", beantwortet: "ja" }])).toEqual([
+      { key: "unfall", label: "Unfall", status: "pruefen", beantwortet: true, zitat: "Unfall? weiß nicht" },
+      { key: "kfz", label: "Kfz", status: "pruefen" },
+    ]);
+  });
+
+  it("Ampel-Farben als Schrift auf Weiß mindestens 4,5 : 1 (WCAG AA)", () => {
+    const lum = (hex: string) => {
+      const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    };
+    for (const st of SCHUTZ_REIHENFOLGE) expect(1.05 / (lum(SCHUTZ_STATUS[st].farbe) + 0.05)).toBeGreaterThanOrEqual(4.5);
+    expect(SCHUTZ_STATUS["bei-uns"].farbe).toBe("#047857");
+    expect(SCHUTZ_STATUS.pruefen.farbe).toBe("#b45309");
   });
 });

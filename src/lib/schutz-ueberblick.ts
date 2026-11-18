@@ -22,9 +22,10 @@ import { NICHT_MEHR, vorvertraegeAus, type VertragSparte } from "@/lib/whatsapp/
 export type SchutzStatus = "bei-uns" | "woanders" | "pruefen" | "luecke";
 
 export const SCHUTZ_STATUS: Record<SchutzStatus, { label: string; kurz: string; farbe: string }> = {
-  "bei-uns": { label: "Bei uns versichert", kurz: "Bei uns", farbe: "#16a34a" },
+  // Grün und Orange dunkler (Usability-Check 18.11.2026): als Schrift auf Weiß mindestens 4,5 : 1 (WCAG AA)
+  "bei-uns": { label: "Bei uns versichert", kurz: "Bei uns", farbe: "#047857" },
   woanders: { label: "Woanders versichert", kurz: "Woanders", farbe: "#2563eb" },
-  pruefen: { label: "Prüfen", kurz: "Prüfen", farbe: "#d97706" },
+  pruefen: { label: "Prüfen", kurz: "Prüfen", farbe: "#b45309" },
   luecke: { label: "Lücke", kurz: "Lücke", farbe: "#dc2626" },
 };
 export const SCHUTZ_REIHENFOLGE: SchutzStatus[] = ["bei-uns", "woanders", "pruefen", "luecke"];
@@ -33,19 +34,19 @@ export const SCHUTZ_REIHENFOLGE: SchutzStatus[] = ["bei-uns", "woanders", "pruef
  * Antworten im Bereich „Was hat Frau Becker schon?“ der Terminvorbereitung (Ole, 18.11.2026; bis dahin Fenster „Schutz
  * im Überblick“). Ein Farbsystem (Entscheidung 18.11.2026): Die Farbpunkte nutzen dieselben Farben wie die Ampel der
  * Präsentation (grün bei mir, blau woanders, orange weiß nicht, rot nein), damit Vorschau und Antworten zusammenpassen.
- * „Weiß nicht“ bleibt im Knopf dezent (nur Umriss), damit es nicht wie eine Entscheidung aussieht. Die Präsentation für
- * den Kunden behält die Ampel-Begriffe aus SCHUTZ_STATUS.
+ * Noch nicht beantwortete Zeilen (schutzOffen) sind neutral, ohne vorausgewählte Antwort (Usability-Check 18.11.2026).
+ * Die Präsentation für den Kunden behält die Ampel-Begriffe aus SCHUTZ_STATUS.
  */
 export const SCHUTZ_ANTWORT: Record<SchutzStatus, { label: string; farbe: string }> = {
-  "bei-uns": { label: "Ja, bei mir", farbe: "#16a34a" },
+  "bei-uns": { label: "Ja, bei mir", farbe: "#047857" },
   woanders: { label: "Ja, woanders", farbe: "#2563eb" },
-  pruefen: { label: "Weiß nicht", farbe: "#d97706" },
+  pruefen: { label: "Weiß nicht", farbe: "#b45309" },
   luecke: { label: "Nein", farbe: "#dc2626" },
 };
 
 /** Woher eine vorbelegte Antwort stammt (kleiner Hinweis an der Zeile); nach einer Änderung durch den Vermittler entfällt sie. */
 export type SchutzQuelle = "chat" | "formular";
-export const SCHUTZ_QUELLE_TEXT: Record<SchutzQuelle, string> = { chat: "aus dem Chat", formular: "aus dem Formular" };
+export const SCHUTZ_QUELLE_TEXT: Record<SchutzQuelle, string> = { chat: "Aus dem Chat", formular: "Aus dem Formular" };
 
 /** Eine Sparte im Überblick, wie in der Terminvorbereitung erfasst (Tarifauswahl.schutz). */
 export type SchutzEintrag = {
@@ -69,7 +70,14 @@ export type SchutzEintrag = {
   seit?: string | null;
   /** Vorbelegt aus Chat (Angaben, Komplettcheck) bzw. Formular; null/fehlt = vom Vermittler gesetzt oder unbekannt */
   quelle?: SchutzQuelle | null;
+  /** Satz aus Chat bzw. Formular, aus dem der Vorschlag stammt (Hinweis an der Zeile, Usability-Check 18.11.2026) */
+  zitat?: string | null;
+  /** Vom Vermittler beantwortet (auch „Weiß nicht“); fehlt bei „prüfen“ ohne Quelle = noch offen */
+  beantwortet?: boolean;
 };
+
+/** Noch nicht beantwortet: weder vom Vermittler gewählt noch aus Chat, Formular oder Vertrag vorbelegt (neutral zeigen). */
+export const schutzOffen = (s: Pick<SchutzEintrag, "status" | "quelle" | "beantwortet">) => s.status === "pruefen" && !s.quelle && !s.beantwortet;
 
 /** Zeile der Folie „Ihr Schutz im Überblick“ (liegt mit den Angeboten in offersJson). */
 export type SchutzZeile = { key: string; label: string; status: SchutzStatus; info: string | null; versicherer: string | null };
@@ -212,6 +220,16 @@ export function unsicherGenannt(text: string): string[] {
   return [...new Set(satzteile(text).filter((t) => UNSICHER.test(t) && !NICHT_MEHR.test(t)).flatMap(spartenIm))];
 }
 
+/** Satz aus einer Angabe, in dem die Sparte vorkommt (Quelle eines Vorschlags), höchstens 100 Zeichen; sonst null. */
+export function zitatFuer(text: string | null | undefined, key: string): string | null {
+  const satz = (text ?? "")
+    .split(/[.;\n]/)
+    .map((t) => t.replace(/\s+/g, " ").trim())
+    .find((t) => spartenIm(t).includes(key));
+  if (!satz) return null;
+  return satz.length > 100 ? `${satz.slice(0, 99).trimEnd()}…` : satz;
+}
+
 /** Sparte einer Vertragssparte (LeadContract.sparte) im Überblick; privatschutz ist nicht eindeutig, also keine. */
 const VERTRAG_SPARTE: Record<string, string> = {
   unfall: "unfall",
@@ -294,7 +312,8 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
   const kat = produktCheckliste(d.lead.produkt)?.key ?? null;
   const formularText = d.formular.map((f) => `${f.label}: ${f.value}`).join(" ");
   // Mit „;“ getrennt, damit „keinen Rechtsschutz“ aus dem Chat nicht in die Formularangabe hineinliest
-  const vorhanden = [q.vorhanden, formWert(d, /vorhanden|bestehende|bisherige|versichert bei/i)].filter(Boolean).join("; ");
+  const formVorhanden = formWert(d, /vorhanden|bestehende|bisherige|versichert bei/i);
+  const vorhanden = [q.vorhanden, formVorhanden].filter(Boolean).join("; ");
   const alles = [q.lebenssituation, q.tier, q.gebaeude, q.wohnflaeche, q.interesse, q.anlass, d.lead.produkt, formularText].filter(Boolean).join(" ").toLocaleLowerCase("de");
   const tierText = [q.tier, formWert(d, /tierart/i), kat === "tier" ? d.lead.produkt : null].filter(Boolean).join(" ").toLocaleLowerCase("de");
   const hund = /hund/.test(tierText) || /\bhund/.test(alles);
@@ -358,9 +377,12 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
       return { key, label, status: "bei-uns", seit: seit ? `seit ${monatJahr(seit)}` : null, oeffner };
     }
     const quelle: SchutzQuelle = ausChat.has(key) || keineLaut || (sonstNichts && !!q.vorhanden?.trim()) ? "chat" : "formular";
-    if (genannt.has(key) && !ohne.has(key)) return { key, label, status: "woanders", ...(bei.get(key) ? { versicherer: bei.get(key) } : {}), oeffner, quelle };
-    if (unsicher.has(key)) return { key, label, status: "pruefen", oeffner };
-    if (ohne.has(key) || (sonstNichts && vorhanden.trim()) || keineLaut) return { key, label, status: "luecke", oeffner, quelle };
+    // Vorschlag mit Quelle: der Satz, aus dem er stammt (Usability-Check 18.11.2026)
+    const z = zitatFuer(quelle === "chat" ? q.vorhanden : formVorhanden, key);
+    const zitat = z ? { zitat: z } : {};
+    if (genannt.has(key) && !ohne.has(key)) return { key, label, status: "woanders", ...(bei.get(key) ? { versicherer: bei.get(key) } : {}), oeffner, quelle, ...zitat };
+    if (unsicher.has(key)) return { key, label, status: "pruefen", oeffner, quelle, ...zitat };
+    if (ohne.has(key) || (sonstNichts && vorhanden.trim()) || keineLaut) return { key, label, status: "luecke", oeffner, quelle, ...zitat };
     return { key, label, status: "pruefen", oeffner };
   });
   // Angebot zuerst (Reihenfolge des Angebots), dann nach Gewicht als Chance
@@ -627,6 +649,8 @@ export function cleanSchutz(raw: unknown): SchutzEintrag[] {
       ...(txt(r.oeffner, 240) ? { oeffner: txt(r.oeffner, 240) } : {}),
       ...(txt(r.seit, 30) ? { seit: txt(r.seit, 30) } : {}),
       ...(r.quelle === "chat" || r.quelle === "formular" ? { quelle: r.quelle } : {}),
+      ...(txt(r.zitat, 120) ? { zitat: txt(r.zitat, 120) } : {}),
+      ...(r.beantwortet === true ? { beantwortet: true } : {}),
     });
   }
   return out;

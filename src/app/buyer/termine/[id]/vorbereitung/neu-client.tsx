@@ -42,6 +42,7 @@ import { setPreparedAction } from "./actions";
 import { eigenerTarifAction, gesellschaftAction, klaerenAction, tarifauswahlSpeichernAction } from "./neu-actions";
 import { BeitragGesamt, SchutzBereich } from "./schutz-client";
 import { BisherKarte } from "./bisher-client";
+import { bisherErlaubt, bisherMitSchutz } from "@/lib/bisheriger-vertrag";
 import { SCHUTZ_SPARTEN, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
@@ -537,6 +538,11 @@ function Angebote(p: {
     const neu = sparteNeu(katalog, key, vertrieb, p.daten.meine);
     if (!neu) return;
     if (!direkt) neu.zusatz = true;
+    // „Ja, woanders“ aus „Was hat … schon?“ gleich als bisheriger Vertrag (Katalogwerte ergänzt der Server beim Speichern)
+    if (bisherErlaubt(key, p.daten.gesundheitFrei ?? false)) {
+      const b = bisherMitSchutz(neu.bisher, p.auswahl.schutz?.find((x) => x.key === key), neu, katalog);
+      if (b) neu.bisher = b;
+    }
     p.aendern((a) => {
       a.sparten.push(neu);
       if (a.schutz && !a.schutz.some((x) => x.key === key)) a.schutz.push({ key, label: SCHUTZ_SPARTEN[key] ?? neu.label, status: "pruefen" });

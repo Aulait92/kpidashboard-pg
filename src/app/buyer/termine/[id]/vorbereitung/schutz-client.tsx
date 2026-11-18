@@ -26,6 +26,7 @@ import {
   SCHUTZ_SPARTEN,
   schutzBereich,
   schutzKurzTeile,
+  schutzOffen,
   spartenSuche,
   type SchutzEintrag,
   type SchutzStatus,
@@ -47,12 +48,21 @@ export type SparteAnbieten = (key: string) => void;
 /** Speicherstand der Terminvorbereitung (neu-client.tsx). */
 export type SpeicherStand = "ruhe" | "speichert" | "gespeichert" | "fehler";
 
-/** Ausgewählte Antwort in den Ampel-Farben der Präsentation (ein Farbsystem): bei mir grün, woanders blau, Nein rot;
- *  „Weiß nicht“ nur mit orangem Umriss (erkennbar gewählt, aber keine Entscheidung). */
-function antwortKlasse(st: SchutzStatus, an: boolean): string {
-  if (!an) return "border-[color:var(--border)] bg-white text-[color:var(--muted)]";
-  if (st === "pruefen") return "border-amber-400 bg-amber-50 text-amber-800";
-  return cn("border-transparent text-white", st === "luecke" ? "bg-red-600" : st === "woanders" ? "bg-blue-600" : "bg-emerald-600");
+/**
+ * Segment einer Antwort (Usability-Check 18.11.2026, Skizze nachher-n2): ein Schalter je Zeile, 14 px. Gewählt in den
+ * Ampel-Farben der Präsentation (bei mir grün, woanders blau, Nein rot, „Weiß nicht“ orange umrandet); ein Vorschlag
+ * aus Chat oder Formular nur umrandet, bis der Vermittler ihn bestätigt. Unbeantwortet: nichts hervorgehoben.
+ */
+function antwortKlasse(st: SchutzStatus, an: boolean, vorschlag: boolean): string {
+  if (!an) return "bg-white text-slate-700 hover:bg-[color:var(--surface-sunken)]";
+  const umrandet: Record<SchutzStatus, string> = {
+    "bei-uns": "bg-emerald-50 text-emerald-800 ring-emerald-600",
+    woanders: "bg-blue-50 text-blue-800 ring-blue-600",
+    pruefen: "bg-amber-50 text-amber-900 ring-amber-500",
+    luecke: "bg-red-50 text-red-800 ring-red-600",
+  };
+  if (vorschlag || st === "pruefen") return cn("relative z-10 ring-2 ring-inset", umrandet[st]);
+  return cn("text-white", st === "luecke" ? "bg-red-600" : st === "woanders" ? "bg-blue-600" : "bg-emerald-700");
 }
 
 export function SchutzBereich({
@@ -97,9 +107,18 @@ export function SchutzBereich({
       vorlage: z.filter((x) => x.neu).map((x) => x.eintrag),
     };
   });
+  // Offen: Tipps, Unbeantwortetes und Vorschläge aus Chat bzw. Formular (mit Quelle, zum Bestätigen)
   const [auf, setAuf] = useState<Set<string>>(
-    () => new Set(stand.order.filter((k) => stand.tipps[k] || schutz.find((s) => s.key === k)?.status === "pruefen")),
+    () =>
+      new Set(
+        stand.order.filter((k) => {
+          const e = schutz.find((s) => s.key === k);
+          return !!stand.tipps[k] || e?.status === "pruefen" || !!e?.quelle;
+        }),
+      ),
   );
+  // Entfernte Zeilen (auch Vorsorge-Thema und Tipps), damit sie in dieser Sitzung nicht wiederkommen
+  const [weg, setWeg] = useState<string[]>([]);
   // In dieser Sitzung hinzugefügt (oben nach den Tipps, mit „Entfernen“ für Versehen)
   const [dazu, setDazu] = useState<string[]>([]);
   const klappe = (key: string, offen: boolean) =>
@@ -117,7 +136,8 @@ export function SchutzBereich({
     ...stand.order.filter((k) => !stand.tipps[k]),
   ];
   const zeilen = keys.flatMap((k) => {
-    const e = schutz.find((s) => s.key === k) ?? stand.vorlage.find((v) => v.key === k);
+    if (weg.includes(k)) return [];
+    const e =schutz.find((s) => s.key === k) ?? stand.vorlage.find((v) => v.key === k);
     return e ? [{ e, tipp: stand.tipps[k] ?? null }] : [];
   });
   if (ro && !zeilen.length) return null;
@@ -147,11 +167,14 @@ export function SchutzBereich({
     if (!label) return;
     aendern((a) => void (a.schutz = [...(a.schutz ?? []).filter((x) => x.key !== key), { key, label, status: "pruefen" }]));
     setDazu((d) => [key, ...d.filter((k) => k !== key)]);
+    setWeg((w) => w.filter((k) => k !== key));
     klappe(key, true);
   };
+  /** Zeile entfernen (Ole, 18.11.2026: „Hier kann ich keine Versicherungen rauslöschen“); über „Versicherung hinzufügen“ wieder da. */
   const wegnehmen = (key: string) => {
     aendern((a) => void (a.schutz = (a.schutz ?? []).filter((x) => x.key !== key)));
     setDazu((d) => d.filter((k) => k !== key));
+    setWeg((w) => [...w.filter((k) => k !== key), key]);
   };
   const vorschau = ampelVorschau(schutz, auswahl.sparten);
 
@@ -159,11 +182,11 @@ export function SchutzBereich({
     <section className="mx-4 mt-4 sm:mx-5" data-schutz-bereich>
       {/* „Ins Angebot“ als Spaltenkopf über den Schaltern (Rand und Abstand der Zeilen: 1px + pr-1.5 bzw. sm:pr-2) */}
       <div className="flex items-end gap-3 pb-1.5 pr-[7px] sm:pr-[9px]">
-        <h3 className="min-w-0 flex-1 text-sm font-semibold" data-schutz-frage>
+        <h3 className="min-w-0 flex-1 text-[15px] font-semibold" data-schutz-frage>
           Was hat {kunde} schon?
         </h3>
         {zeilen.length ? (
-          <span className="shrink-0 whitespace-nowrap text-[11px] font-medium text-[color:var(--muted)]" aria-hidden>
+          <span className="shrink-0 whitespace-nowrap text-[13px] font-medium text-[color:var(--muted)]" aria-hidden data-schutz-spaltenkopf>
             Ins Angebot
           </span>
         ) : null}
@@ -174,9 +197,12 @@ export function SchutzBereich({
             {zeilen.map(({ e: s, tipp }) => {
               const sp = auswahl.sparten.find((x) => x.key === s.key);
               const offen = auf.has(s.key);
-              const hinweis = s.quelle ? SCHUTZ_QUELLE_TEXT[s.quelle] : null;
+              const unbeantwortet = schutzOffen(s);
+              const vorschlag = !!s.quelle;
               const teile = schutzKurzTeile(s);
               const schalter = (s.status !== "bei-uns" || !!sp) && (imKatalog.includes(s.key) || !!sp);
+              // Entfernen geht, solange die Sparte nicht im heutigen Angebot ist (sonst erst den Schalter ausschalten)
+              const entfernbar = !ro && !sp;
               return (
                 <li
                   key={s.key}
@@ -184,6 +210,7 @@ export function SchutzBereich({
                   data-schutz-zeile={s.key}
                   data-zu={offen ? "nein" : "ja"}
                   data-tipp={tipp ? "ja" : undefined}
+                  data-unbeantwortet={unbeantwortet ? "ja" : undefined}
                 >
                   {/* Handy: Kopf und Schalter oben, Antworten darunter; ab sm alles in einer Zeile */}
                   <div className="flex flex-wrap items-center gap-x-2">
@@ -195,64 +222,78 @@ export function SchutzBereich({
                       data-schutz-kopf
                     >
                       {/* gleiche Breite für Glühbirne und Farbpunkt, damit die Namen untereinander stehen */}
-                      <span className={cn("flex w-4 shrink-0 justify-center", offen && tipp && "mt-0.5 self-start")}>
-                        {tipp ? <Lightbulb className="h-4 w-4 text-amber-500" aria-hidden /> : <Punkt farbe={SCHUTZ_ANTWORT[s.status].farbe} />}
+                      <span className={cn("flex w-4 shrink-0 justify-center", offen && (tipp || vorschlag) && "mt-1 self-start")}>
+                        {tipp ? <Lightbulb className="h-4 w-4 text-amber-600" aria-hidden /> : <Punkt farbe={unbeantwortet ? "#cbd5e1" : SCHUTZ_ANTWORT[s.status].farbe} />}
                       </span>
                       {offen ? (
                         <span className="min-w-0 flex-1">
-                          <span className="flex min-w-0 items-baseline gap-2">
-                            <span className="min-w-0 truncate text-sm font-semibold">{s.label}</span>
-                            {hinweis ? (
-                              <span className="shrink-0 text-[11px] font-normal text-[color:var(--muted)]" data-schutz-quelle>
-                                {hinweis}
+                          <span className="block min-w-0 truncate text-[15px] font-semibold">{s.label}</span>
+                          {vorschlag ? (
+                            <span
+                              className="mt-1 block w-fit max-w-full rounded-[var(--radius-sm)] border border-amber-200 bg-amber-50 px-2 py-1 text-[13px] leading-snug text-amber-900"
+                              data-schutz-quelle
+                            >
+                              <span className="font-semibold">
+                                {SCHUTZ_QUELLE_TEXT[s.quelle!]}
+                                {s.zitat ? ":" : ""}
                               </span>
-                            ) : null}
-                          </span>
+                              {s.zitat ? <> „{s.zitat}“</> : null}
+                            </span>
+                          ) : null}
                           {tipp ? (
                             <span className="mt-0.5 block text-[13px] text-[color:var(--muted)]" data-schutz-tipp>
-                              <span className="font-medium text-amber-700">Tipp:</span> „{tipp}“
+                              <span className="font-medium text-amber-800">Tipp:</span> „{tipp}“
                             </span>
                           ) : null}
                         </span>
                       ) : (
-                        <span className="line-clamp-2 min-w-0 flex-1 text-sm" data-schutz-kurz>
+                        <span className="line-clamp-2 min-w-0 flex-1 text-[15px]" data-schutz-kurz>
                           <span className="font-semibold">{teile[0]}</span>
-                          <span className="text-[color:var(--muted)]">{teile.slice(1).map((t) => ` · ${t}`)}</span>
+                          <span className="text-[color:var(--muted)]">{unbeantwortet ? " · offen" : teile.slice(1).map((t) => ` · ${t}`)}</span>
                         </span>
                       )}
                       <ChevronDown className={cn("h-4 w-4 shrink-0 text-[color:var(--muted)] transition-transform", offen && "rotate-180")} aria-hidden />
                     </button>
                     {offen ? (
                       <div
-                        className="order-last grid w-full grid-cols-[1fr_1.2fr_1.05fr_0.75fr] gap-1 pb-2.5 sm:order-none sm:w-[22rem] sm:grid-cols-4 sm:pb-0"
+                        className="order-last mb-2.5 grid w-full grid-cols-[1fr_1.2fr_1.05fr_0.75fr] divide-x divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] sm:order-none sm:mb-0 sm:w-[25rem]"
                         role="radiogroup"
                         aria-label={`Hat ${kunde} ${s.label} schon?`}
+                        data-schutz-segmente
                       >
-                        {SCHUTZ_REIHENFOLGE.map((st) => (
-                          <button
-                            key={st}
-                            type="button"
-                            role="radio"
-                            aria-checked={s.status === st}
-                            disabled={ro}
-                            onClick={() => {
-                              setze(s.key, (x) => {
-                                x.status = st;
-                                // vom Vermittler entschieden: Hinweis „aus dem Chat“ entfällt
-                                delete x.quelle;
-                              });
-                              // beantwortet: zuklappen; „Ja, woanders“ bleibt für Versicherer und Tarif offen
-                              if (st === "bei-uns" || st === "luecke") klappe(s.key, false);
-                            }}
-                            className={cn(
-                              "h-10 whitespace-nowrap rounded-[var(--radius-sm)] border px-0 text-[11.5px] font-semibold tracking-tight sm:h-9 sm:text-[12px]",
-                              antwortKlasse(st, s.status === st),
-                            )}
-                            data-schutz-status={st}
-                          >
-                            {SCHUTZ_ANTWORT[st].label}
-                          </button>
-                        ))}
+                        {SCHUTZ_REIHENFOLGE.map((st) => {
+                          const an = s.status === st && !unbeantwortet;
+                          return (
+                            <button
+                              key={st}
+                              type="button"
+                              role="radio"
+                              aria-checked={an}
+                              disabled={ro}
+                              onClick={() => {
+                                // Gewählte Antwort noch einmal antippen: wieder offen (Ole, 18.11.2026: zurücknehmen können)
+                                const zurueck = an && !vorschlag;
+                                setze(s.key, (x) => {
+                                  x.status = zurueck ? "pruefen" : st;
+                                  if (zurueck) delete x.beantwortet;
+                                  else x.beantwortet = true;
+                                  // vom Vermittler entschieden: Hinweis „Aus dem Chat“ entfällt
+                                  delete x.quelle;
+                                  delete x.zitat;
+                                });
+                                // beantwortet: zuklappen; „Ja, woanders“ bleibt für Versicherer und Tarif offen
+                                if (!zurueck && (st === "bei-uns" || st === "luecke")) klappe(s.key, false);
+                              }}
+                              className={cn(
+                                "min-h-11 px-1 text-center text-[14px] font-semibold leading-tight tracking-tight transition-colors sm:min-h-10",
+                                antwortKlasse(st, an, vorschlag),
+                              )}
+                              data-schutz-status={st}
+                            >
+                              {SCHUTZ_ANTWORT[st].label}
+                            </button>
+                          );
+                        })}
                       </div>
                     ) : null}
                     {schalter ? (
@@ -261,17 +302,31 @@ export function SchutzBereich({
                       <span className="w-12 shrink-0" aria-hidden />
                     )}
                   </div>
-                  {offen && (s.status === "woanders" || (s.status === "bei-uns" && s.seit) || (dazu.includes(s.key) && !sp && !ro)) ? (
+                  {offen && ((s.status === "woanders" && !unbeantwortet) || (s.status === "bei-uns" && s.seit) || entfernbar) ? (
                     <div className="pb-3 pr-1 sm:pl-6" data-schutz-offen>
-                      {s.status === "woanders" ? (
-                        <WoandersFelder s={s} ro={ro} gesellschaften={gesellschaften} setze={(fn) => setze(s.key, fn)} anSparte={(fn) => anSparte(s.key, fn)} />
+                      {s.status === "woanders" && !unbeantwortet ? (
+                        <WoandersFelder
+                          s={s}
+                          ro={ro}
+                          gesellschaften={gesellschaften}
+                          // Angaben eingetragen: gilt als Eingabe des Vermittlers (gewinnt über Chat und Police)
+                          setze={(fn) =>
+                            setze(s.key, (x) => {
+                              fn(x);
+                              delete x.quelle;
+                              delete x.zitat;
+                              x.beantwortet = true;
+                            })
+                          }
+                          anSparte={(fn) => anSparte(s.key, fn)}
+                        />
                       ) : null}
-                      {s.status === "bei-uns" && s.seit ? <p className="mt-1.5 text-[12px] text-[color:var(--muted)]">Vertrag {s.seit}</p> : null}
-                      {dazu.includes(s.key) && !sp && !ro ? (
+                      {s.status === "bei-uns" && s.seit ? <p className="mt-1.5 text-[13px] text-[color:var(--muted)]">Vertrag {s.seit}</p> : null}
+                      {entfernbar ? (
                         <button
                           type="button"
                           onClick={() => wegnehmen(s.key)}
-                          className="-mb-2 mt-1 py-2 text-[12px] font-medium text-[color:var(--muted)] hover:underline"
+                          className="-mb-2 mt-1 py-2 text-[13px] font-medium text-[color:var(--muted)] hover:underline"
                           data-schutz-weg
                         >
                           Zeile entfernen
@@ -583,7 +638,9 @@ function WoandersFelder({
   // In den bisherigen Vertrag der Sparte übernehmen, solange dort nichts von Hand steht
   const uebernehmen = (x: Pick<SchutzEintrag, "versicherer" | "tarif" | "katalogId" | "beitrag" | "ablauf">, werte: Record<string, string> = {}) =>
     anSparte((sp) => {
-      if (sp.bisher && sp.bisher.quelle === "hand" && sp.bisher.gesellschaft && sp.bisher.gesellschaft !== (s.versicherer ?? null)) return;
+      // Nur ein im Formular „Bisheriger Vertrag“ selbst gepflegter Vertrag (Tarif oder Beitrag) einer anderen Gesellschaft
+      // bleibt; Werte aus Chat bzw. Police ersetzt die Eingabe hier (lib/bisheriger-vertrag.ts bisherMitSchutz)
+      if (sp.bisher?.quelle === "hand" && sp.bisher.gesellschaft && sp.bisher.gesellschaft !== (s.versicherer ?? null) && (sp.bisher.katalogId || sp.bisher.beitrag != null)) return;
       const b = bisherHand(sp.bisher);
       sp.bisher = {
         ...b,
