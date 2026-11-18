@@ -92,6 +92,8 @@ Rechtliches mit Conversion-Blick (Ole, 18.11.2026): Jede rechtlich bedingte Änd
 Conversion-Texter/UX optimiert: kurz, Nutzen zuerst, Knöpfe als Handlung, Rechtliches an die Stelle der Handlung oder hinter einen
 Klick, wo zulässig. Danach prüfen, dass alle Pflichtangaben erhalten sind. Aufträge von Ole mit rechtlichem Hintergrund kommen
 meist schon optimiert; bei eigenen Funden (z. B. aus Tests) gilt die Regel selbst.
+Rechtsprüfung erfolgt intern (Ole, 18.11.2026: bis Budget für eine Anwältin da ist, keine Anwaltsfreigabe abwarten); Ergebnis
+und Auflagen stehen in docs/recht/.
 
 ## Erklärvideos aktuell halten (Ole, 15.11.2026)
 
