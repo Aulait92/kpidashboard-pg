@@ -44,6 +44,11 @@ export type AngeboteDaten = {
   schutz?: SchutzZeile[];
   /** Spalte „Ihr bisheriger Vertrag“ je Sparte auf der Vergleichsfolie (lib/bisheriger-vertrag.ts) */
   bisher?: BisherSpalte[];
+  /**
+   * Cross-Selling im Termin (Ole, 18.11.2026): Sparten in der Reihenfolge, in der sie per „Mit anschauen“ dazukamen.
+   * Ihre Folien stehen in dieser Reihenfolge direkt hinter „Ihr Schutz im Überblick“, im Termin wie im Kundenlink.
+   */
+  zusatzFolge?: string[];
 };
 
 /**
@@ -143,7 +148,17 @@ export function cleanAngebote(raw: unknown): AngeboteDaten {
   const kombi = cleanKombiRegeln(o.kombi);
   const schutz = cleanSchutzZeilen(o.schutz);
   const bisher = cleanBisherSpalten(o.bisher).filter((b) => items.some((i) => i.sparte === b.sparte));
-  return { items, quelle, ...(kombi.length ? { kombi } : {}), ...(schutz.length ? { schutz } : {}), ...(bisher.length ? { bisher } : {}) };
+  // nur Cross-Selling-Sparten, die es (noch) gibt, jede einmal
+  const zusatzSparten = new Set(items.filter((i) => i.zusatz).map((i) => i.sparte));
+  const zusatzFolge = [...new Set(Array.isArray(o.zusatzFolge) ? o.zusatzFolge.map((x) => str(x, 60)) : [])].filter((x): x is string => !!x && zusatzSparten.has(x));
+  return {
+    items,
+    quelle,
+    ...(kombi.length ? { kombi } : {}),
+    ...(schutz.length ? { schutz } : {}),
+    ...(bisher.length ? { bisher } : {}),
+    ...(zusatzFolge.length ? { zusatzFolge } : {}),
+  };
 }
 
 /** Gewählte Angebote: je Sparte die im Termin gewählte Stufe, sonst die Empfehlung. */
@@ -190,7 +205,12 @@ export function sparteSchalten(d: AngeboteDaten, item: number): AngeboteDaten | 
   const gleiche = d.items.filter((x) => x.sparte === it.sparte);
   const an = !gleiche.some((x) => x.gewaehlt);
   const ziel = an ? (gleiche.find((x) => x.empfohlen) ?? gleiche[0]) : null;
-  return { ...d, items: d.items.map((x) => (x.sparte !== it.sparte ? x : { ...x, gewaehlt: x === ziel })) };
+  const items = d.items.map((x) => (x.sparte !== it.sparte ? x : { ...x, gewaehlt: x === ziel }));
+  // Cross-Selling: Reihenfolge des Hinzufügens merken (neu hinten), herausnehmen löscht den Platz
+  if (!gleiche.some((x) => x.zusatz)) return { ...d, items };
+  const { zusatzFolge: alt, ...rest } = d;
+  const folge = [...(alt ?? []).filter((s) => s !== it.sparte), ...(an ? [it.sparte] : [])];
+  return { ...rest, items, ...(folge.length ? { zusatzFolge: folge } : {}) };
 }
 
 /** Baustein an- bzw. abschalten (Index im Angebot und im Baustein); null, wenn es ihn nicht gibt. */

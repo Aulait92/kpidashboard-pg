@@ -5,6 +5,7 @@
 
 import { useRef, useState } from "react";
 import { FolienDeck, type DeckKlick } from "@/components/folien-deck";
+import { ToastProvider } from "@/components/ui/toast";
 import { demoAngebote, demoCss, demoFolien, demoKlick } from "@/lib/demo-beratung";
 
 export function DemoAnsicht({ eingebettet }: { eingebettet?: boolean }) {
@@ -18,5 +19,7 @@ export function DemoAnsicht({ eingebettet }: { eingebettet?: boolean }) {
     stand.current = neu;
     return { ok: true as const, folien: demoFolien(neu) };
   };
-  return <FolienDeck css={css} folien={start} onKlick={onKlick} eingebettet={eingebettet} />;
+  const deck = <FolienDeck css={css} folien={start} onKlick={onKlick} eingebettet={eingebettet} />;
+  // Öffentliche Demo ohne App-Rahmen: eigener Toast für „Unfall hinzugefügt“ (eingebettet steht der Hinweis in der Folie)
+  return eingebettet ? deck : <ToastProvider>{deck}</ToastProvider>;
 }
