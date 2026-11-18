@@ -19,6 +19,7 @@ import {
 // Ab wann und für welche Produkte die Garantien gelten (gleiche Regel wie die automatische Prüfung)
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
 import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
+import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -67,6 +68,9 @@ export type OfferDoc = {
   setupListFee?: number | null;
   setupDiscount?: number | null;
   setupDiscountLabel?: string | null;
+  /** Abrechnungstag (1 bis 28, null = wie Start) und kostenloser Start bis dahin (lib/abrechnungstag.ts). */
+  billingDay?: number | null;
+  billingFreeStart?: boolean;
 };
 
 type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "empfehlungMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp" | "setupListFee" | "setupDiscount"> & {
@@ -221,6 +225,14 @@ export function OfferDocument({
   // Erster Monatsbetrag inkl. Zusätze (Startpreis gilt nur für das Paket)
   const firstMonth = round2((hasIntro ? offer.introMonthlyFee! : offer.monthlyFee) + add.seatsFee + add.bestandFee + add.empfehlungFee);
   const firstCharge = add.annualTotal ?? firstMonth;
+  // Eigener Abrechnungstag: erste Abbuchung am ersten Abrechnungstag, Zeit davor kostenlos oder anteilig
+  const plan = abrechnungsplan({
+    startIso: offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
+    billingDay: offer.billingDay,
+    freeStart: offer.billingFreeStart,
+    annual: add.annualTotal != null,
+  });
+  const billingDiffers = !!plan?.differs;
   const productNames = products.map((p) => p.name).join(" & ");
   const makler = offer.vermittlerTyp === "makler";
   // Modul ohne Aufpreis vereinbart (Sonderkondition)
@@ -401,7 +413,9 @@ export function OfferDocument({
           </Tr>
           {offer.startDate ? (
             <Tr k="Start">
-              {date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.
+              {billingDiffers
+                ? abrechnungstagSaetze(plan, { firstNet: firstCharge, annual: add.annualTotal != null }).join(" ")
+                : `${date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.`}
               {startOpen ? <Note>Vorschlag, das Startdatum wählen Sie unten bei der Annahme.</Note> : null}
             </Tr>
           ) : null}
@@ -504,11 +518,11 @@ export function OfferDocument({
           ) : null}
           <Tr k="Vertragslaufzeit">
             {add.annual
-              ? "12 Monate ab Start, jährlich im Voraus bezahlt. Danach verlängert sich der Vertrag um jeweils weitere 12 Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der Laufzeit gekündigt wird."
+              ? `12 Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, jährlich im Voraus bezahlt. Danach verlängert sich der Vertrag um jeweils weitere 12 Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der Laufzeit gekündigt wird.`
               : term === "12m"
-                ? "12 Monate ab Start, danach monatlich kündbar zum Ende des Abrechnungsmonats."
+                ? `12 Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, danach monatlich kündbar zum Ende des Abrechnungsmonats.`
                 : term === "3m"
-                  ? "3 Monate ab Start, danach monatlich kündbar zum Ende des Abrechnungsmonats."
+                  ? `3 Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, danach monatlich kündbar zum Ende des Abrechnungsmonats.`
                   : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
             {termOpen ? (
               <Note>
@@ -543,7 +557,8 @@ export function OfferDocument({
             <b className="text-[#111827]">{eur2(withVat(offer.setupFee))} brutto</b>
             <Note>
               {add.annualTotal != null ? "Jahresbetrag" : "Erste Monatsgebühr"} ({eur2(firstCharge)} netto, {eur2(withVat(firstCharge))} brutto)
-              {offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}.
+              {plan && billingDiffers ? ` am ${plan.firstIso.split("-").reverse().join(".")}` : offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}
+              {billingDiffers && !plan!.free ? " zuzüglich des anteiligen Betrags für die Zeit davor" : ""}.
               {termOpen || startOpen ? " Setup und Start richten sich nach Ihrer Wahl bei der Annahme." : ""}
             </Note>
           </Tr>

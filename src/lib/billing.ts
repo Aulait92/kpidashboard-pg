@@ -18,7 +18,8 @@ import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
-import { abschlussBonusJetzt, annualMultiplier, offerSetupDiscount, PRICE_LIST } from "@/lib/offer-pricing";
+import { abschlussBonusJetzt, annualMultiplier, berlinTodayIso, offerSetupDiscount, PRICE_LIST } from "@/lib/offer-pricing";
+import { abrechnungsplan, anteilVerteilen } from "@/lib/abrechnungstag";
 
 const round2Billing = (n: number) => Math.round(n * 100) / 100;
 import { audit, type AuditActor } from "@/lib/audit";
@@ -452,7 +453,41 @@ export async function createScheduleForOffer(
   }
   phases.push({ items: itemsFor(monthly), metadata: meta });
 
-  const startAt = offer.startDate ? Math.floor(offer.startDate.getTime() / 1000) : 0;
+  // Abrechnungstag (lib/abrechnungstag.ts): Weicht er vom Start ab, beginnt das Abo erst am ersten Abrechnungstag
+  // (Stripe-Abrechnungszyklus ab dann jeweils an diesem Tag). Die Zeit davor ist entweder kostenlos (dann gibt es
+  // vorher schlicht kein Abo: keine Testphase, keine 0-€-Rechnung) oder kommt anteilig als eigene Positionen mit
+  // Zeitraum auf die erste Rechnung. Liegt der Start schon zurück, zählt ab heute (nichts rückwirkend).
+  const todayIso = berlinTodayIso();
+  const startIso = offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
+  const plan = abrechnungsplan({
+    startIso: startIso && startIso < todayIso ? todayIso : startIso,
+    billingDay: offer.billingDay,
+    freeStart: offer.billingFreeStart,
+    annual,
+  });
+  const noon = (iso: string) => Math.floor(new Date(`${iso}T12:00:00Z`).getTime() / 1000);
+  if (plan?.differs && !plan.free) {
+    const first = phases[0].items;
+    const lineCents = first.map((it) => (it.price_data?.unit_amount ?? 0) * (it.quantity ?? 1));
+    const anteil = anteilVerteilen(lineCents, plan);
+    phases[0].add_invoice_items = first
+      .map((it, i): Stripe.SubscriptionScheduleCreateParams.Phase.AddInvoiceItem | null =>
+        anteil[i] > 0
+          ? {
+              quantity: 1,
+              price_data: { currency: "eur", product: it.price_data!.product, unit_amount: anteil[i], tax_behavior: "exclusive" },
+              ...(taxRates ? { tax_rates: taxRates } : {}),
+              // Zeitraum steht auf der Rechnung (z. B. 01.01. bis 14.01.)
+              period: { start: { type: "timestamp", timestamp: noon(plan.startIso) }, end: { type: "timestamp", timestamp: noon(plan.stubEndIso!) } },
+              metadata: { ...meta, pg_kind: "anteil_bis_abrechnungstag" },
+            }
+          : null,
+      )
+      .filter((x): x is Stripe.SubscriptionScheduleCreateParams.Phase.AddInvoiceItem => x != null);
+    if (!phases[0].add_invoice_items.length) delete phases[0].add_invoice_items;
+  }
+
+  const startAt = plan?.differs ? noon(plan.firstIso) : offer.startDate ? Math.floor(offer.startDate.getTime() / 1000) : 0;
   const products = offerProducts(offer.products).map((p) => p.name).join(", ");
   const schedule = await stripe.subscriptionSchedules.create(
     {
@@ -460,7 +495,7 @@ export async function createScheduleForOffer(
       start_date: startAt > Date.now() / 1000 + 60 ? startAt : "now",
       end_behavior: "release",
       billing_mode: { type: "flexible" },
-      metadata: meta,
+      metadata: plan?.differs ? { ...meta, pg_billing_day: String(plan.day), pg_first_billing: plan.firstIso, pg_free_start: plan.free ? "1" : "0" } : meta,
       default_settings: {
         ...(ueberweisung
           ? {
@@ -1103,6 +1138,24 @@ async function editableSubscription(stripe: Stripe, stripeCustomerId: string): P
 
 type Proration = "create_prorations" | "none";
 
+/**
+ * Einmalige Positionen einer Phase (z. B. anteiliger Betrag bis zum ersten Abrechnungstag) beim Neuschreiben der
+ * Phasen behalten. Ohne das würde Stripe sie beim Update des Zeitplans verwerfen.
+ */
+export function keptInvoiceItems(ph: Pick<Stripe.SubscriptionSchedule.Phase, "add_invoice_items">): { add_invoice_items?: Stripe.SubscriptionScheduleUpdateParams.Phase.AddInvoiceItem[] } {
+  if (!ph.add_invoice_items?.length) return {};
+  const id = (v: string | { id: string }) => (typeof v === "string" ? v : v.id);
+  return {
+    add_invoice_items: ph.add_invoice_items.map((a) => ({
+      price: id(a.price),
+      quantity: a.quantity ?? 1,
+      ...(a.tax_rates?.length ? { tax_rates: a.tax_rates.map((t) => id(t)) } : {}),
+      ...(a.period ? { period: { start: { type: a.period.start.type, ...(a.period.start.timestamp ? { timestamp: a.period.start.timestamp } : {}) }, end: { type: a.period.end.type, ...(a.period.end.timestamp ? { timestamp: a.period.end.timestamp } : {}) } } } : {}),
+      ...(a.metadata && Object.keys(a.metadata).length ? { metadata: a.metadata } : {}),
+    })),
+  };
+}
+
 /** Geplanter, noch nicht gestarteter Abo-Start des Kunden (Angebot vor dem Startdatum). */
 async function notStartedSchedule(stripe: Stripe, stripeCustomerId: string) {
   const list = await stripe.subscriptionSchedules.list({ customer: stripeCustomerId, limit: 10 });
@@ -1154,6 +1207,7 @@ async function setScheduleItem(
       start_date: ph.start_date,
       end_date: ph.end_date,
       ...(ph.metadata && Object.keys(ph.metadata).length ? { metadata: ph.metadata } : {}),
+      ...keptInvoiceItems(ph),
     };
   });
   await stripe.subscriptionSchedules.update(schedule.id, { phases, proration_behavior: "none" });
@@ -1759,6 +1813,7 @@ async function endScheduleAt(stripe: Stripe, schedule: Stripe.SubscriptionSchedu
     start_date: ph.start_date,
     end_date: i === kept.length - 1 ? ts : ph.end_date,
     ...(ph.metadata && Object.keys(ph.metadata).length ? { metadata: ph.metadata } : {}),
+    ...keptInvoiceItems(ph),
   }));
   await stripe.subscriptionSchedules.update(schedule.id, { phases, end_behavior: "cancel", proration_behavior: "none" });
   return true;

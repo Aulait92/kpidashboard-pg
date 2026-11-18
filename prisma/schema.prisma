@@ -230,6 +230,10 @@ model Customer {
   seatsBilled                    Int                       @default(0)
   // "month" | "year" (jährlich im Voraus, Jahresbetrag = (12 − Freimonate) × Monatspreis)
   billingInterval                String                    @default("month")
+  // Abrechnungstag aus dem Angebot (lib/abrechnungstag.ts): Tag im Monat (null = wie Start) und erster
+  // Abrechnungstag. Laufzeit und Abrechnungsmonate zählen ab billingStart, Leads und Kampagne ab dem Start.
+  billingDay                     Int?
+  billingStart                   DateTime?
   // Gebuchtes Bestandskunden-Modul: Monatspreis netto; null = nicht gebucht
   bestandMonthly                 Decimal?                  @db.Decimal(10, 2)
   // Bestandsschutz: nutzte das Modul schon vor der Preisliste, bleibt kostenlos freigeschaltet
@@ -1607,6 +1611,11 @@ model Offer {
   introMonths             Int?
   specialTerms            String?
   startDate               DateTime?
+  // Abrechnungstag (Ole, 18.11.2026, lib/abrechnungstag.ts): Tag im Monat (1 bis 28), an dem abgebucht wird;
+  // null = wie der Starttag. billingFreeStart: Zeit vom Start bis zum ersten Abrechnungstag kostenlos
+  // („kostenloser Start“), sonst anteilig mit der ersten Abbuchung.
+  billingDay              Int?
+  billingFreeStart        Boolean       @default(false)
   // Kunde wählt auf der Angebotsseite selbst (seit 11.11.2026): Laufzeit (nur ohne
   // Sonderpreis) und Startdatum. Bei Annahme werden term/setupFee/startDate überschrieben.
   customerChoosesTerm     Boolean       @default(false)

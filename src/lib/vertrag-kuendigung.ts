@@ -44,6 +44,8 @@ async function load(customerId: string) {
       isTest: true,
       stripeCustomerId: true,
       retainerStart: true,
+      billingDay: true,
+      billingStart: true,
       retainerEnd: true,
       billingInterval: true,
       cancelRequestedAt: true,
@@ -68,10 +70,12 @@ export async function contractCancelInfo(customerId: string, now = new Date()): 
   const { c, offer } = r;
   const start = c.retainerStart ?? offer?.startDate ?? null;
   const startIso = start ? berlinIso(start) : null;
+  // Eigener Abrechnungstag (lib/abrechnungstag.ts): Mindestlaufzeit und Abrechnungsmonate zählen ab dem ersten Abrechnungstag
+  const billingIso = c.billingDay != null && c.billingStart ? berlinIso(c.billingStart) : startIso;
   const term = normalizeTerm(offer?.term);
   const annual = c.billingInterval === "year";
   const todayIso = berlinIso(now);
-  const regular = cancelDate({ startIso, term, annual, todayIso });
+  const regular = cancelDate({ startIso: billingIso, term, annual, todayIso });
   // Halteangebot: nach angenommenem Nachlass frühestens zum Ende der vereinbarten Mindestlaufzeit
   const commitIso = c.retentionCommitUntil ? berlinIso(new Date(c.retentionCommitUntil.getTime() - 1)) : null;
   const next: CancelDate = commitIso && commitIso > regular.effectiveIso ? { ...regular, effectiveIso: commitIso, reason: "halteangebot" } : regular;

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 const OFFER_FELDER = {
   number: true, version: true, status: true, company: true, contactName: true, package: true, vermittlerTyp: true, term: true, products: true,
   setupFee: true, setupListFee: true, setupDiscount: true, setupDiscountLabel: true, monthlyFee: true, softwareFee: true, introMonthlyFee: true,
-  introMonths: true, specialTerms: true, startDate: true, customerChoosesTerm: true, customerChoosesStart: true, validUntil: true, sentAt: true,
+  introMonths: true, specialTerms: true, startDate: true, billingDay: true, billingFreeStart: true, customerChoosesTerm: true, customerChoosesStart: true, validUntil: true, sentAt: true,
   acceptedAt: true, acceptedCompany: true, acceptedAsBusiness: true, seats: true, seatsIncluded: true, seatMonthly: true, bestandMonthly: true,
   empfehlungMonthly: true, annualPrepay: true, annualFreeMonths: true, abschlussBonus: true, abschlussBonusBis: true, abschlussBonusGewaehrt: true,
   stripeCustomerId: true, stripeSubscriptionId: true, stripeScheduleId: true, paymentStatus: true, subscriptionStatus: true, paidAt: true,
@@ -23,7 +23,7 @@ export async function kundeAbrechnung(p: URLSearchParams) {
     where: { id },
     select: {
       id: true, name: true, plan: true, vermittlerTyp: true, stripeCustomerId: true, billingInterval: true, retainerMonthly: true, retainerStart: true,
-      retainerEnd: true, seatsIncluded: true, seatMonthly: true, paymentOverdueSince: true, createdAt: true,
+      retainerEnd: true, billingDay: true, billingStart: true, seatsIncluded: true, seatMonthly: true, paymentOverdueSince: true, createdAt: true,
       customerProducts: { select: { startDate: true, leadPrice: true, leadGoal: true, testMode: true, product: { select: { name: true } } } },
       salesContact: { select: { id: true, name: true } },
     },

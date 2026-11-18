@@ -11,6 +11,7 @@ import { abschlussBonusStandardTag, berlinTodayIso, bestandPacksText, computeOff
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
+import { abrechnungsplan, ABRECHNUNGSTAG_MAX, ersterAbrechnungstag } from "@/lib/abrechnungstag";
 
 const PRODUCT_SUGGESTIONS = [
   "TKV-Katze",
@@ -80,6 +81,9 @@ export function OfferForm({
   const [introMonths, setIntroMonths] = useState("3");
   const [specialTerms, setSpecialTerms] = useState(initial.specialTerms ?? "");
   const [startDate, setStartDate] = useState(defaultStartDate());
+  // Abrechnungstag (Ole, 18.11.2026): leer = wie Start; selten genutzt, daher aufklappbar unter dem Start
+  const [billingDay, setBillingDay] = useState("");
+  const [billingFree, setBillingFree] = useState(false);
   const [validDays, setValidDays] = useState("14");
   const [seats, setSeats] = useState(String(PRICE_LIST.seatsIncluded));
   const [annual, setAnnual] = useState(false);
@@ -142,6 +146,8 @@ export function OfferForm({
         introMonths: num(introMonths),
         specialTerms,
         startDate: startDate || null,
+        billingDay: num(billingDay),
+        billingFreeStart: billingFree && !!billingDay,
         validDays: num(validDays) ?? 14,
         seats: softwarePkg ? num(seats) : null,
         annual: annual && annualPossible,
@@ -317,9 +323,12 @@ export function OfferForm({
                   onChange={(e) => setIntroMonths(e.target.value)}
                 />
               </Field>
-              <Field l="Start * (ab dann läuft die Monatsgebühr)">
-                <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-              </Field>
+              <div className="space-y-2">
+                <Field l="Start * (ab dann läuft die Monatsgebühr)">
+                  <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </Field>
+                <AbrechnungstagFeld startDate={startDate} day={billingDay} setDay={setBillingDay} free={billingFree} setFree={setBillingFree} />
+              </div>
               <Field l="Angebot gültig (Tage)">
                 <input className={input} inputMode="numeric" value={validDays} onChange={(e) => setValidDays(e.target.value)} />
               </Field>
@@ -519,7 +528,7 @@ export function OfferForm({
               <Sum k={`Monat 1–${num(introMonths) ?? "?"}`} v={eur(num(introFee)!)} sub={`${eur(withVat(num(introFee)!))} brutto`} />
             ) : null}
             <Sum
-              k={startDate ? `Paket monatlich ab ${startDate.split("-").reverse().join(".")}` : "Paket monatlich"}
+              k={startDate ? `Paket monatlich ab ${ersterAbrechnungstag(startDate, num(billingDay)).split("-").reverse().join(".")}` : "Paket monatlich"}
               v={price.monthlyFee == null ? "individuell" : eur(price.monthlyFee)}
               sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto · Pause: ${eur(price.softwareFee)}`}
             />
@@ -554,6 +563,56 @@ export function OfferForm({
         </Card>
       </div>
     </div>
+  );
+}
+
+/** Abrechnungstag unter dem Start: zugeklappt „wie Start“, aufgeklappt Tag 1 bis 28 und „Zeit bis dahin gratis“. */
+function AbrechnungstagFeld({
+  startDate,
+  day,
+  setDay,
+  free,
+  setFree,
+}: {
+  startDate: string;
+  day: string;
+  setDay: (v: string) => void;
+  free: boolean;
+  setFree: (v: boolean) => void;
+}) {
+  const startDay = /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? Number(startDate.slice(8, 10)) : null;
+  const plan = abrechnungsplan({ startIso: startDay ? startDate : null, billingDay: day ? Number(day) : null, freeStart: free });
+  const differs = !!plan?.differs;
+  return (
+    <details className="group text-sm" data-abrechnungstag>
+      <summary className="cursor-pointer text-xs font-medium text-[color:var(--brand)]">
+        Abrechnungstag: {day ? `am ${day}.${differs ? (free ? ", kostenloser Start" : ", Zeit davor anteilig") : ""}` : "wie Start"}
+      </summary>
+      <div className="mt-2 space-y-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] p-3">
+        <label className="block space-y-1">
+          <span className={label}>Abbuchung jeweils am</span>
+          <select className={input} value={day} onChange={(e) => setDay(e.target.value)} name="billingDay">
+            <option value="">Wie Start{startDay ? ` (${startDay}.)` : ""}</option>
+            {Array.from({ length: ABRECHNUNGSTAG_MAX }, (_, i) => i + 1).map((d) => (
+              <option key={d} value={String(d)}>
+                {d}. des Monats
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={`flex items-start gap-2 ${differs ? "" : "opacity-50"}`}>
+          <input type="checkbox" className="mt-0.5 h-4 w-4" checked={free && differs} disabled={!differs} onChange={(e) => setFree(e.target.checked)} name="billingFreeStart" />
+          <span>Zeit bis zum ersten Abrechnungstag gratis</span>
+        </label>
+        <p className="text-xs text-[color:var(--muted)]" data-abrechnungstag-hinweis>
+          {differs
+            ? `Erste Abbuchung am ${plan!.firstIso.split("-").reverse().join(".")}, ${plan!.free ? "Zeit davor kostenlos" : "Zeit davor anteilig mit der ersten Abbuchung"}. Laufzeit zählt ab dann.`
+            : startDay && startDay > ABRECHNUNGSTAG_MAX
+              ? "Wie bisher: in kürzeren Monaten am Monatsletzten."
+              : "Wie bisher: Abbuchung am Starttag."}
+        </p>
+      </div>
+    </details>
   );
 }
 

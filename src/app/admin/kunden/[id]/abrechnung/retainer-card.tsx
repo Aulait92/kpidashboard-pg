@@ -12,10 +12,10 @@ const ymd = (d: Date | null | undefined) => (d ? new Intl.DateTimeFormat("sv-SE"
 export async function RetainerCard({ customerId, message, failed }: { customerId: string; message: string | null; failed: boolean }) {
   const c = await prisma.customer.findUnique({
     where: { id: customerId },
-    select: { retainerMonthly: true, retainerStart: true, retainerEnd: true, cancelRequestedAt: true, cancelEffectiveAt: true, cancelRequestedBy: true, cancelReason: true, onboarding: { select: { offerId: true } } },
+    select: { retainerMonthly: true, retainerStart: true, retainerEnd: true, billingDay: true, billingStart: true, cancelRequestedAt: true, cancelEffectiveAt: true, cancelRequestedBy: true, cancelReason: true, onboarding: { select: { offerId: true } } },
   });
   if (!c) return null;
-  const offer = c.onboarding?.offerId ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true } }) : null;
+  const offer = c.onboarding?.offerId ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true, billingFreeStart: true } }) : null;
   const monthly = c.retainerMonthly != null ? Number(c.retainerMonthly) : null;
   // Anti-Churn: letzte Kündigungsabsichten (Grund, gewählte Alternative, Ergebnis)
   const intents = await prisma.churnIntent.findMany({ where: { customerId }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, reason: true, note: true, offer: true, outcome: true, createdAt: true } });
@@ -68,6 +68,20 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
           {offer
             ? `Kommt aus Angebot ${offer.number}. Hier nur ändern, wenn sich der Vertrag geändert hat.`
             : "Für Kunden ohne Online-Angebot. Zählt auf der Zahlen-Seite als Betreuung und in den Lead-Kosten des Kunden. Stripe bleibt unverändert."}
+        </p>
+        <p data-admin-abrechnungstag>
+          <span className="text-[color:var(--muted)]">Abrechnungstag: </span>
+          {c.billingDay != null
+            ? `jeweils am ${c.billingDay}.${c.billingStart ? `, erste Abbuchung ${dmy(c.billingStart)}` : ""}${
+                c.billingStart && c.retainerStart && ymd(c.billingStart) !== ymd(c.retainerStart)
+                  ? offer?.billingFreeStart
+                    ? `, kostenloser Start ab ${dmy(c.retainerStart)}`
+                    : `, ${dmy(c.retainerStart)} bis davor anteilig`
+                  : ""
+              }`
+            : c.retainerStart
+              ? `wie Start (am ${Number(ymd(c.retainerStart).slice(8, 10))}.)`
+              : "wie Start"}
         </p>
         <form action={saveRetainerAction} className="flex flex-wrap items-end gap-2">
           <input type="hidden" name="customerId" value={customerId} />
