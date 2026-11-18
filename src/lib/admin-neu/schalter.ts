@@ -20,3 +20,14 @@ export function neuStartFuer(pathname: string): boolean {
   const p = pathname.replace(/\/+$/, "") || "/";
   return p === "/admin" || p === "/admin/heute";
 }
+
+/**
+ * /admin hat keine eigene Seite: führt immer auf den neuen Admin, auch ohne Schalter (Usability-Check 18.11.2026,
+ * vorher 404). /admin/heute bleibt ohne Schalter die alte Startseite.
+ */
+export function immerNeuStart(pathname: string): boolean {
+  return (pathname.replace(/\/+$/, "") || "/") === "/admin";
+}
+
+/** Startseite der Admins nach der Anmeldung: immer der neue Admin (Usability-Check 18.11.2026). */
+export const ADMIN_START = "/admin/neu";

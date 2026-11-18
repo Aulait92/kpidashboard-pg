@@ -1,7 +1,7 @@
 import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
 import { LOGIN_CARD_COOKIE, LOGIN_CARD_HEADER, nextCardCounter, parseCardCounter } from "@/lib/login-karten";
-import { ADMIN_NEU_COOKIE, istAn, neuStartFuer } from "@/lib/admin-neu/schalter";
+import { ADMIN_NEU_COOKIE, immerNeuStart, istAn, neuStartFuer } from "@/lib/admin-neu/schalter";
 import { pushWeiche } from "@/lib/admin-neu/push-ziel";
 import { PUBLIC_NOT_FOUND_HTML, PUBLIC_ROBOTS_TXT, decidePublicHost, requestHost } from "@/lib/public-booking-host";
 import { APP_DEMO_HEADER, signiereDemoMarke } from "@/lib/app-demo/marke";
@@ -349,7 +349,7 @@ export async function middleware(req: NextRequest) {
 
   // Neuer Admin (/admin/neu, src/lib/admin-neu): eigene Shell aus src/app/admin/neu/layout.tsx. Kennzeichen wie beim
   // Kundenbereich, damit SiteHeader die alte Admin-Shell dort nicht zusätzlich rendert. Mit eingeschaltetem
-  // Schalter „Neue Oberfläche“ (Cookie je Admin) führen /admin und /admin/heute auf den neuen Start.
+  // Schalter „Neue Oberfläche“ (Cookie je Admin) führt /admin/heute auf den neuen Start, /admin immer.
   if (role === "ADMIN") {
     if (pathname === "/admin/neu" || pathname.startsWith("/admin/neu/")) {
       const headers = new Headers(req.headers);
@@ -368,7 +368,11 @@ export async function middleware(req: NextRequest) {
       url.search = q ? `?${q}` : "";
       return NextResponse.redirect(url);
     }
-    if ((req.method === "GET" || req.method === "HEAD") && neuStartFuer(pathname) && istAn(req.cookies.get(ADMIN_NEU_COOKIE)?.value)) {
+    // /admin selbst hat keine Seite: immer auf den neuen Start, /admin/heute nur mit eingeschaltetem Schalter
+    if (
+      (req.method === "GET" || req.method === "HEAD") &&
+      (immerNeuStart(pathname) || (neuStartFuer(pathname) && istAn(req.cookies.get(ADMIN_NEU_COOKIE)?.value)))
+    ) {
       const url = req.nextUrl.clone();
       url.pathname = "/admin/neu";
       return NextResponse.redirect(url);
