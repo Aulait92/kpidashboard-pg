@@ -1,18 +1,25 @@
 import { generateKeyPairSync, createVerify } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { classify, matchRule, netCost, overlappingRecurring, suggestPattern, type Rule } from "@/lib/bank/rules";
+import { classify, istKiKosten, matchRule, netCost, overlappingRecurring, suggestPattern, type Rule } from "@/lib/bank/rules";
 import { parseAmount, parseBankCsv, parseDate } from "@/lib/bank/csv";
 import { fetchTransactions, makeJwt, normalizePem } from "@/lib/bank/enable-banking";
 import { fromEnableBanking } from "@/lib/bank/server";
 
 describe("Bank: Regeln", () => {
   it("Standardregeln: Tools, Meta ignorieren, Einnahmen ignorieren", () => {
-    expect(classify({ amount: -21.5, counterparty: "ANTHROPIC, PBC", purpose: "Claude Pro" }, [])).toMatchObject({ status: "zugeordnet", costPurpose: "software" });
+    expect(classify({ amount: -21.5, counterparty: "ANTHROPIC, PBC", purpose: "Claude Pro" }, [])).toMatchObject({ status: "zugeordnet", costPurpose: "ki" });
     expect(classify({ amount: -97, counterparty: "Instantly.ai", purpose: null }, [])).toMatchObject({ status: "zugeordnet", costPurpose: "akquise" });
     expect(classify({ amount: -500, counterparty: "FACEBK *ABC123", purpose: "Facebook Ads" }, [])).toMatchObject({ status: "ignoriert" });
     expect(classify({ amount: -1234, counterparty: "AMERICAN EXPRESS EUROPE", purpose: "Abrechnung" }, [])).toMatchObject({ status: "ignoriert" });
     expect(classify({ amount: 2000, counterparty: "Stripe", purpose: "Auszahlung" }, [])).toMatchObject({ status: "ignoriert", reason: "Einnahme" });
     expect(classify({ amount: -40, counterparty: "Bäckerei Schmidt", purpose: null }, [])).toMatchObject({ status: "neu" });
+  });
+  it("KI-Kosten: Zweck „ki“ oder ältere „software“-Buchung eines KI-Anbieters (Investoren-Kennzahlen)", () => {
+    expect(istKiKosten({ costPurpose: "ki", counterparty: "Irgendwer" })).toBe(true);
+    expect(istKiKosten({ costPurpose: "software", counterparty: "ANTHROPIC, PBC" })).toBe(true);
+    expect(istKiKosten({ costPurpose: "software", counterparty: "Paddle", purpose: "OpenAI API usage" })).toBe(true);
+    expect(istKiKosten({ costPurpose: "software", counterparty: "Railway Corp." })).toBe(false);
+    expect(istKiKosten({ costPurpose: "betrieb", counterparty: "OpenAI" })).toBe(false);
   });
   it("eigene Regel geht vor, längeres Muster vor kürzerem", () => {
     const own: Rule[] = [

@@ -217,7 +217,20 @@ export async function loadLedger(now = new Date()) {
 
 // ─── Kosten je Monat und Zweck ───────────────────────────────────────────
 
-export type MonthCosts = { month: string; ppl: number; software: number; akquise: number; betrieb: number; metaPpl: number; metaAkquise: number; whatsapp: number; /** davon aus Bank & Karten (netto) */ bank?: number };
+export type MonthCosts = {
+  month: string;
+  ppl: number;
+  software: number;
+  akquise: number;
+  betrieb: number;
+  metaPpl: number;
+  metaAkquise: number;
+  whatsapp: number;
+  /** davon aus Bank & Karten (netto) */
+  bank?: number;
+  /** davon KI-Dienste aus Bank & Karten (netto, in `software` enthalten; lib/bank/rules.ts istKiKosten) */
+  ki?: number;
+};
 
 export async function loadCosts(months: string[], settings: KpiSettingsData, now = new Date()) {
   const from = monthStart(months[0]);
@@ -251,6 +264,7 @@ export async function loadCosts(months: string[], settings: KpiSettingsData, now
     const b = bank.get(m);
     if (b) {
       c.bank = r2(b.ppl + b.software + b.akquise + b.betrieb);
+      c.ki = b.ki;
       c.ppl += b.ppl;
       c.software += b.software;
       c.akquise += b.akquise;
