@@ -101,7 +101,7 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 ## 22. Ihr Paket: Leads + Software
 - Setup je Laufzeit, Empfehlung 12 Monate mit 990 €.
 - Monatlich nach Werbebudget. Werbebudget zahlt er direkt an Meta.
-- Weitere Produkte 350 € monatlich, ohne Setup. Bestandskunden-Modul optional 149 €.
+- Weitere Produkte 350 € monatlich, ohne Setup. Bestandskunden-Modul: Preis auf Anfrage (Paketfrage offen, Stand 18.11.).
 - Frage: „Welches Budget pro Tag können Sie sich für den Start vorstellen?“
 
 ## 23. Und wenn es schlecht läuft? Ihr Risiko ist klar begrenzt.
