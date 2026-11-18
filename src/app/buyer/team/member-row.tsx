@@ -82,7 +82,7 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
               </Badge>
             ) : null}
           </div>
-          <div className="truncate text-sm text-[color:var(--muted)]">
+          <div className="line-clamp-2 text-sm text-[color:var(--muted)]">
             {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "Kalender verbunden" : m.owner ? "Kalender unter „Mein Kalender“" : "kein Kalender (Termine beim Inhaber)"}
           </div>
         </div>

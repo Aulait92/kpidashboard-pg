@@ -26,7 +26,7 @@ const ETIKETT: Record<Spur, string> = {
 export function AssistentZeitleiste({ momente }: { momente: Moment[] }) {
   return (
     <div data-so-arbeitet-zeitleiste>
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-medium" aria-hidden>
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-[13px] font-medium" aria-hidden>
         {SPUREN.map((s) => (
           <span key={s} className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1", ETIKETT[s])}>
             <span className={cn("h-2 w-2 rounded-full", PUNKT[s])} />
@@ -47,8 +47,8 @@ export function AssistentZeitleiste({ momente }: { momente: Moment[] }) {
               <span className="relative w-[50px] shrink-0" aria-hidden>
                 {sie ? (
                   <span
-                    className="absolute top-3 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[color:var(--brand)] text-[10px] font-bold text-white ring-2 ring-white"
-                    style={{ left: i * 16 }}
+                    className="absolute top-[11px] flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--brand)] text-xs font-bold text-white ring-2 ring-white"
+                    style={{ left: i * 16 - 1 }}
                   >
                     {m.nr}
                   </span>
@@ -62,7 +62,7 @@ export function AssistentZeitleiste({ momente }: { momente: Moment[] }) {
                   sie ? "border border-[color:var(--brand)]/25 bg-[color:var(--brand-soft)]/60" : "",
                 )}
               >
-                <p className="text-xs text-[color:var(--muted)]">
+                <p className="text-[13px] text-[color:var(--muted)]">
                   <span className="sr-only">{SPUR_NAME[m.spur]}, </span>
                   {m.wann}
                 </p>
@@ -111,7 +111,7 @@ export function BeispielChat({ zeilen, absender, hoehe = "max-h-[560px]" }: { ze
       <div className={cn("space-y-1.5 overflow-y-auto bg-[#efeae2] px-3 py-3", hoehe)} tabIndex={0} aria-label="Beispielchat">
         {zeilen.map((z, n) =>
           z.art === "hinweis" ? (
-            <p key={n} className="mx-auto w-fit rounded-md bg-white/90 px-2.5 py-1 text-center text-[11px] font-medium text-slate-600 shadow-sm">
+            <p key={n} className="mx-auto w-fit rounded-md bg-white/90 px-2.5 py-1 text-center text-xs font-medium text-slate-600 shadow-sm">
               {z.text}
             </p>
           ) : (
@@ -130,7 +130,7 @@ export function BeispielChat({ zeilen, absender, hoehe = "max-h-[560px]" }: { ze
                   ) : null}
                   {z.text ? <Text text={z.text} /> : null}
                   {z.fusszeile ? <span className="mt-1 block text-[12px] text-slate-500">{z.fusszeile}</span> : null}
-                  <span className="mt-0.5 flex items-center justify-end gap-1 text-[10.5px] text-slate-500">
+                  <span className="mt-0.5 flex items-center justify-end gap-1 text-xs text-slate-500">
                     {z.zeit}
                     {z.von === "lead" ? <CheckCheck className="h-3.5 w-3.5 text-sky-500" /> : null}
                   </span>
