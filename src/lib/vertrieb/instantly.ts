@@ -162,6 +162,19 @@ export async function leadDetails(email: string): Promise<Parameters<typeof ensu
   }
 }
 
+/** Interessenstatus eines Leads laut Instantly je Kampagne (Diagnose, nur lesend). */
+export async function leadInterest(email: string): Promise<{ kampagne: string | null; interesse: string | null; status: number | null; antworten: number }[]> {
+  const page = await api<{ items: (ApiLead & { campaign?: string | null })[] }>("/leads/list", { method: "POST", body: JSON.stringify({ search: email, limit: 10 }) });
+  return (page.items ?? [])
+    .filter((x) => x.email?.trim().toLowerCase() === email.trim().toLowerCase())
+    .map((l) => ({
+      kampagne: l.campaign ?? null,
+      interesse: l.lt_interest_status != null ? INTEREST[l.lt_interest_status] ?? `eigenes Label (${l.lt_interest_status})` : null,
+      status: l.lt_interest_status ?? null,
+      antworten: l.email_reply_count ?? 0,
+    }));
+}
+
 // Unibox-Ansicht ausdrücklich „alle“ (Primary und Others), damit keine Antwort an der Standardansicht
 // hängen bleibt. Lehnt die API den Parameter ab (400), geht es ohne ihn weiter.
 let modeAllSupported: boolean | null = null;
@@ -331,7 +344,9 @@ type Reply = {
  * erkannt. Echte Antworten erzeugen Verlaufseintrag + Aufgabe.
  * Gibt true zurück, wenn die Antwort neu war.
  */
-export async function recordReply(contactId: string, r: Reply): Promise<boolean> {
+export async function recordReply(contactId: string, r: Reply, opts: { planen?: boolean } = {}): Promise<boolean> {
+  // planen = false: nur speichern (Nachholen, lib/vertrieb/spaeter-nachholen.ts plant selbst mit Mindestabstand)
+  const planen = opts.planen !== false;
   if (r.instantlyId && (await prisma.salesEmail.findUnique({ where: { instantlyId: r.instantlyId } }))) return false;
   const dup = await prisma.salesEmail.findFirst({
     where: {
@@ -361,7 +376,17 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
   r.isAutoReply = r.isAutoReply || (!instantlyPositive && isAutoReplyText(r.subject, stripQuoted(r.text ?? "")));
   // Klare Absage im Text hat Vorrang vor Instantlys Einstufung (deren KI markiert Absagen teils als „interessiert“).
   // Ebenso Später-Interesse („aktuell nicht, aber ab März“): weder Absage noch sofortige Aufgabe, sondern Follow-up.
-  const textSentiment = classifyReply(stripQuoted(r.text ?? ""), r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""), r.sentAt);
+  const own = stripQuoted(r.text ?? "");
+  let textSentiment = classifyReply(own, r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""), r.sentAt);
+  // Regeln übersehen „später“ (Ole, 18.11.2026): KI prüft Antworten mit Hinweis auf später, nie klare Absagen
+  let spaeter: { dueAt: Date; timing: string | null } | null = null;
+  if (planen && !r.isAutoReply && textSentiment !== "SPAETER") {
+    spaeter = await import("@/lib/vertrieb/spaeter-ki").then((m) => m.spaeterPerKi(own, r.sentAt, { seed: contactId })).catch((e) => {
+      reportError(e, "spaeter-ki");
+      return null;
+    });
+    if (spaeter) textSentiment = "SPAETER";
+  }
   const sentiment: Sentiment = r.isAutoReply
     ? "NEUTRAL"
     : textSentiment === "NEGATIV" || textSentiment === "SPAETER"
@@ -419,9 +444,13 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
   if (sentiment === "POSITIV") await ensureReplyTask(contactId, snippet.slice(0, 300));
   if (sentiment === "NEGATIV") await onDecline(contactId);
   // Später-Follow-up: Später-Antwort plant ein, jede andere echte Antwort stoppt, Abwesenheitsnotiz verschiebt Mail 2
-  await import("@/lib/vertrieb/followup")
-    .then((m) => m.onIncomingReply(contactId, { emailId: saved.id, sentiment, isAutoReply: r.isAutoReply, text: stripQuoted(r.text ?? ""), sentAt: r.sentAt }))
-    .catch((e) => reportError(e, "followup-reply"));
+  if (planen) {
+    await import("@/lib/vertrieb/followup")
+      .then((m) =>
+        m.onIncomingReply(contactId, { emailId: saved.id, sentiment, isAutoReply: r.isAutoReply, text: own, sentAt: r.sentAt, dueAt: spaeter?.dueAt, timing: spaeter?.timing }),
+      )
+      .catch((e) => reportError(e, "followup-reply"));
+  }
   return true;
 }
 
