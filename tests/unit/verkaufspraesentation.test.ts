@@ -90,7 +90,7 @@ describe("Preise: Liste vs. Angebot", () => {
   it("Listenpreise wie auf Oles Folie", () => {
     const p = paketDaten(null, "vertreter");
     expect(p.quelle).toBe("liste");
-    expect(p.setup.map((s) => s.betrag)).toEqual([2490, 1990, 990]);
+    expect(p.setup.map((s) => s.betrag)).toEqual([2490, 1990, 1490, 990]);
     expect(p.setup.find((s) => s.markiert)?.label).toBe("Mit 12 Monaten");
     expect(p.monatlich.map((z) => z.betrag)).toEqual(["1.000 € netto", "1.400 € netto", "1.800 € netto", "individuelles Angebot"]);
     expect(p.monatlichNetto).toBe(1000);
@@ -109,7 +109,7 @@ describe("Preise: Liste vs. Angebot", () => {
 
   it("Angebot mit Laufzeitwahl, Empfehlungsrabatt, Modul und Jahreszahlung", () => {
     const p = paketDaten(angebot({ customerChoosesTerm: true, setupDiscount: 200, setupFee: 790, bestandMonthly: 149, annualPrepay: true, annualFreeMonths: 2, seats: 3 }), "vertreter");
-    expect(p.setup.map((s) => s.betrag)).toEqual([2290, 1790, 790]);
+    expect(p.setup.map((s) => s.betrag)).toEqual([2290, 1790, 1290, 790]);
     expect(p.setupHinweis).toBe("inklusive 200 € Empfehlungsrabatt");
     expect(p.monatlichNetto).toBe(1149);
     expect(p.jaehrlich).toBe("Jährlich im Voraus: 11.490 € netto für 12 Monate, 2 Monate geschenkt");

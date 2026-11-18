@@ -24,14 +24,16 @@ export function ModuleRequestButton({
   monthlyNet = PRICE_LIST.bestandModuleMonthly,
   annual = false,
   freeMonths = PRICE_LIST.annualFreeMonths,
+  prepayMonths,
 }: {
   requestedAt: string | null;
   readOnly: boolean;
   monthlyNet?: number;
   annual?: boolean;
   freeMonths?: number;
+  prepayMonths?: number;
 }) {
-  const terms = bestandTerms({ annual, monthlyNet, freeMonths });
+  const terms = bestandTerms({ annual, monthlyNet, freeMonths, prepayMonths });
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<RequestState, FormData>(requestBestandModuleAction, {});
   const done = state.ok || !!requestedAt;

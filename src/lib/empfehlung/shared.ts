@@ -249,7 +249,7 @@ export const fmtDate = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone:
 export const eurNet = (n: number) => `${new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n)} netto`;
 
 /** Bedingungen für das Buchungsblatt (Text, der beim Buchen klar dasteht). */
-export function bookingTerms(opts: { trial: boolean; annual: boolean; now?: Date }): { headline: string; lines: string[] } {
+export function bookingTerms(opts: { trial: boolean; annual: boolean; now?: Date; prepayMonths?: number }): { headline: string; lines: string[] } {
   const price = PRICE_LIST.empfehlungModuleMonthly;
   const now = opts.now ?? new Date();
   const lines: string[] = [];
@@ -262,7 +262,7 @@ export function bookingTerms(opts: { trial: boolean; annual: boolean; now?: Date
   }
   lines.push(
     opts.annual
-      ? "Kündbar zum Ende des bezahlten Abrechnungsjahres, keine anteilige Erstattung."
+      ? `Kündbar zum Ende des bezahlten ${opts.prepayMonths === 6 ? "Zahlungszeitraums" : "Abrechnungsjahres"}, keine anteilige Erstattung.`
       : "Monatlich kündbar zum Ende des Abrechnungsmonats, direkt hier im Kundenbereich.",
   );
   return { headline: opts.trial ? `${PRICE_LIST.empfehlungTrialDays} Tage kostenlos testen` : `${eurNet(price)} im Monat`, lines };

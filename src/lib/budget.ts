@@ -307,7 +307,7 @@ export async function changeBudget(input: BudgetChangeInput, now = new Date()): 
 }
 
 function reasonLabel(r: string | null | undefined): string {
-  return r === "annual" ? "Jahreszahler" : r === "no_offer_price" ? "kein Listenpreis hinterlegt" : r === "individual_budget" ? "über Listenpreis" : "abweichender Preis";
+  return r === "annual" ? "Vorauszahler" : r === "no_offer_price" ? "kein Listenpreis hinterlegt" : r === "individual_budget" ? "über Listenpreis" : "abweichender Preis";
 }
 
 export async function mailCustomer(info: { contactId: string | null; contactName: string | null; to: string[] }, m: { subject: string; paragraphs: string[]; list?: string[] }) {

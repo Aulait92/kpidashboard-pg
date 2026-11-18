@@ -149,6 +149,11 @@ async function handle(req: Request): Promise<Response> {
             reportError(e, "cron-retention");
             return null;
           }),
+          // Vorauszahlung (6 oder 12 Monate): Erinnerung 30 Tage vor Ende des Zahlungszeitraums, einmal je Zeitraum
+          vorauszahlung: await import("@/lib/vorauszahlung-erinnerung").then((m) => m.remindPrepayEnd(now)).catch((e: unknown) => {
+            reportError(e, "cron-vorauszahlung-erinnerung");
+            return null;
+          }),
           // Logins im Abo nachziehen (z. B. nach Startpreis-Phase oder Abo-Start)
           seats: await reconcileSeatBilling().catch((e: unknown) => {
             reportError(e, "cron-seats");

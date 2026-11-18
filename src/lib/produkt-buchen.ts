@@ -16,7 +16,7 @@ import { audit, type AuditActor } from "@/lib/audit";
 import { addInvoiceItem, billingEnabled, changeMonthlyFee, removeInvoiceItem } from "@/lib/billing";
 import { reportError } from "@/lib/monitoring";
 import { loadRechnerConfig } from "@/lib/rechner-server";
-import { PRICE_LIST } from "@/lib/offer-pricing";
+import { normalizeTerm, PRICE_LIST, TERM_MONTHS } from "@/lib/offer-pricing";
 import { berlinYmd } from "@/lib/absence";
 import { adminTask, budgetState, customerInfo, effectiveFromOf, mailCustomer, notifyAdmins } from "@/lib/budget";
 import { BUDGET_MAX_DAILY, BUDGET_MIN_DAILY, previewChange, type BudgetLine } from "@/lib/budget-shared";
@@ -462,7 +462,7 @@ export async function requestProductEnd(
   const info = await customerInfo(customerId);
   const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { retainerStart: true, onboarding: { select: { offerId: true } } } });
   const offer = c?.onboarding?.offerId ? await prisma.offer.findUnique({ where: { id: c.onboarding.offerId }, select: { term: true } }) : null;
-  const term = offer?.term === "12m" ? "12 Monate" : offer?.term === "3m" ? "3 Monate" : "ohne Mindestlaufzeit";
+  const term = TERM_MONTHS[normalizeTerm(offer?.term)] > 0 ? `${TERM_MONTHS[normalizeTerm(offer?.term)]} Monate` : "ohne Mindestlaufzeit";
   await audit("produkt.end_request", { entity: "Customer", entityId: customerId, customerId, details: { product }, ...(actor ? { actor } : {}) });
   await adminTask(
     info.contactId,

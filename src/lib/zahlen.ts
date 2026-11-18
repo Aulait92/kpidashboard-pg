@@ -5,7 +5,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { provisionForCustomers } from "@/lib/ertrag";
-import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
+import { isPrepaid, PRICE_LIST, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
 import { monthlyBankCosts } from "@/lib/bank/server";
 import { monthlyFeeCosts } from "@/lib/whatsapp/fees";
 import { freeMonthsOf, type GarantieArt } from "@/lib/garantien";
@@ -125,9 +125,9 @@ export function retainerInputFor(
     intro: offer?.introMonthlyFee != null && offer.introMonths ? { amount: n(offer.introMonthlyFee), months: offer.introMonths } : null,
     // Weitere Logins und Bestandskunden-Modul zählen als Software (Stand heute, nicht historisch)
     extras: c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly) + n(c.empfehlungMonthly),
-    // Jährlich im Voraus: MRR = Jahresbetrag / 12 (keine Spitze im Zahlungsmonat); Pausen ohne Gutschrift
-    annualFactor: c.billingInterval === "year" ? annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) / 12 : 1,
-    pauses: c.billingInterval === "year" ? [] : c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
+    // Vorauszahlung: MRR = Betrag / Monate (jährlich 10/12, 6 Monate 5/6; keine Spitze im Zahlungsmonat); Pausen ohne Gutschrift
+    annualFactor: rhythmusMonatsAnteil(c.billingInterval, offer?.annualFreeMonths),
+    pauses: isPrepaid(c.billingInterval) ? [] : c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
     freeMonths: freeMonthsOf(garantien.map((g) => ({ art: g.art as GarantieArt, monat: g.monat, status: "gewaehrt" as const }))),
   };
 }

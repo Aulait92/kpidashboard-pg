@@ -26,7 +26,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { filterRange } from "@/lib/admin-leads";
-import { offerAddOns, offerSetupDiscount, PRICE_LIST } from "@/lib/offer-pricing";
+import { normalizeTerm, offerAddOns, offerSetupDiscount, PRICE_LIST, TERM_MONTHS } from "@/lib/offer-pricing";
 import {
   ART_LABEL,
   COUNTED_STATUS,
@@ -294,6 +294,7 @@ export function buildBuchungen(src: BuchungSources, now: Date = new Date()): Buc
       empfehlungMonthly: o.empfehlungMonthly,
       annualPrepay: o.annualPrepay,
       annualFreeMonths: o.annualFreeMonths,
+      term: o.term,
     });
     const discount = offerSetupDiscount(o);
     const canceled = o.subscriptionStatus === "canceled";
@@ -313,13 +314,13 @@ export function buildBuchungen(src: BuchungSources, now: Date = new Date()): Buc
       title: `Angebot ${o.number} angenommen`,
       detail: join([
         o.products.length ? o.products.map((p) => p.name).join(", ") : null,
-        o.term === "12m" ? "12 Monate" : o.term === "3m" ? "3 Monate" : "ohne Mindestlaufzeit",
+        TERM_MONTHS[normalizeTerm(o.term)] > 0 ? `${TERM_MONTHS[normalizeTerm(o.term)]} Monate` : "ohne Mindestlaufzeit",
         discount ? `Einrichtung ${eur(discount.list)}, Rabatt ${eur(discount.discount)}` : `Einrichtung ${eur(o.setupFee)}`,
         addOns.seatsFee ? (addOns.extraSeats === 1 ? "1 weiterer Platz" : `${addOns.extraSeats} weitere Plätze`) : null,
         addOns.bestandActive ? "Bestandskunden-Modul" : null,
         addOns.empfehlungActive ? "Empfehlungen & Bewertungen" : null,
         o.introMonthlyFee != null && o.introMonths ? `Startpreis ${eur(o.introMonthlyFee)} für ${o.introMonths} Monate` : null,
-        o.annualPrepay ? "jährlich im Voraus" : null,
+        o.annualPrepay ? (o.term === "6m" ? "6 Monate im Voraus" : "jährlich im Voraus") : null,
       ]),
       oneOff: discount ? discount.list : o.setupFee,
       monthly: addOns.monthlyTotal,

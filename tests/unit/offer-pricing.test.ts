@@ -43,7 +43,8 @@ describe("computeOfferPrice", () => {
   });
 
   it("unbekannte Laufzeit wird „ohne Laufzeit“", () => {
-    expect(normalizeTerm("6m")).toBe("none");
+    expect(normalizeTerm("24m")).toBe("none");
+    expect(normalizeTerm("6m")).toBe("6m");
     expect(normalizeTerm("3m")).toBe("3m");
     expect(normalizeTerm(undefined)).toBe("none");
   });

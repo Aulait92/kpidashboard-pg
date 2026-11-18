@@ -62,10 +62,10 @@ export type Abrechnungsplan = {
 };
 
 /**
- * Plan aus Start, Abrechnungstag und „kostenloser Start“. annual: Jahreszahlung (anteilig über das Jahr).
- * null ohne Start.
+ * Plan aus Start, Abrechnungstag und „kostenloser Start“. annual: Vorauszahlung (anteilig über den Zeitraum von
+ * prepayMonths Monaten, Standard 12 = Jahreszahlung; 6 = 6 Monate im Voraus). null ohne Start.
  */
-export function abrechnungsplan(o: { startIso: string | null; billingDay?: number | null; freeStart?: boolean; annual?: boolean }): Abrechnungsplan | null {
+export function abrechnungsplan(o: { startIso: string | null; billingDay?: number | null; freeStart?: boolean; annual?: boolean; prepayMonths?: number }): Abrechnungsplan | null {
   if (!o.startIso) return null;
   const firstIso = ersterAbrechnungstag(o.startIso, o.billingDay);
   const differs = firstIso !== o.startIso;
@@ -74,7 +74,7 @@ export function abrechnungsplan(o: { startIso: string | null; billingDay?: numbe
   if (differs && !free) {
     // Zeitraum, den die erste volle Abbuchung abdecken würde, rückwärts vom ersten Abrechnungstag
     const [y, m, d] = parts(firstIso);
-    const prevIso = o.annual ? isoOf(y - 1, m, d) : isoOf(y, m - 1, d);
+    const prevIso = isoOf(y, m - (o.annual ? (o.prepayMonths ?? 12) : 1), d);
     ratio = daysBetween(o.startIso, firstIso) / daysBetween(prevIso, firstIso);
   }
   const [fy, fm, day] = parts(firstIso);
@@ -108,10 +108,11 @@ const euro = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", 
  * Sätze für die Kundenseite (Sie-Form, ohne Gedankenstriche). Leer, wenn der Abrechnungstag dem Start entspricht.
  * firstNet: Betrag der ersten vollen Abbuchung netto (Monatsbeitrag, Startpreis bzw. Jahresbeitrag).
  */
-export function abrechnungstagSaetze(plan: Abrechnungsplan | null, o: { firstNet: number; annual?: boolean }): string[] {
+export function abrechnungstagSaetze(plan: Abrechnungsplan | null, o: { firstNet: number; annual?: boolean; prepayMonths?: number }): string[] {
   if (!plan?.differs) return [];
-  const beitrag = o.annual ? "Jahresbeitrag" : "Monatsbeitrag";
-  const rhythmus = o.annual ? `danach jedes Jahr am ${kurz(plan.firstIso)}` : `jeweils am ${plan.day}.`;
+  const halb = o.annual && o.prepayMonths === 6;
+  const beitrag = halb ? "Beitrag für 6 Monate" : o.annual ? "Jahresbeitrag" : "Monatsbeitrag";
+  const rhythmus = halb ? `danach alle 6 Monate am ${plan.day}.` : o.annual ? `danach jedes Jahr am ${kurz(plan.firstIso)}` : `jeweils am ${plan.day}.`;
   const saetze = [`Start am ${lang(plan.startIso)}. Ihr ${beitrag} wird ab dem ${lang(plan.firstIso)} ${rhythmus} abgebucht.`];
   if (plan.free) saetze.push(`Die Zeit vom ${kurz(plan.startIso)} bis ${kurz(plan.stubEndIso!)} ist für Sie kostenlos.`);
   else {

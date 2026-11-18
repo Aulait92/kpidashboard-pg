@@ -2,7 +2,7 @@
 // Live-Vorschau, Preisstufe und Freigabe. Nutzbar im Browser und auf dem Server.
 // Alle Beträge netto in EUR; Werte kommen aus PRICE_LIST, nichts hart codiert.
 
-import { PRICE_LIST } from "@/lib/offer-pricing";
+import { isPrepaid, PRICE_LIST } from "@/lib/offer-pricing";
 
 export type BudgetLine = { product: string; dailyBudget: number };
 
@@ -83,7 +83,7 @@ export function previewChange(current: BudgetLine[], next: BudgetLine[], ctx: Bu
   const listTo = listFeeFor(monthlyTo, next.length);
   const pricing: PricingMode = service
     ? "fixed"
-    : ctx.feeMonthly == null || listFrom == null || Math.abs(ctx.feeMonthly - listFrom) > 0.5 || ctx.billingInterval === "year"
+    : ctx.feeMonthly == null || listFrom == null || Math.abs(ctx.feeMonthly - listFrom) > 0.5 || isPrepaid(ctx.billingInterval)
       ? "individual"
       : "list";
   const feeFrom = ctx.feeMonthly;
@@ -131,7 +131,7 @@ export function decideApproval(p: BudgetPreview, ctx: Pick<BudgetContext, "billi
     return {
       kind: "apply",
       price: "manual",
-      reason: ctx.billingInterval === "year" ? "annual" : ctx.feeMonthly == null ? "no_offer_price" : "individual_terms",
+      reason: isPrepaid(ctx.billingInterval) ? "annual" : ctx.feeMonthly == null ? "no_offer_price" : "individual_terms",
     };
   }
   if (p.feeTo != null && p.feeFrom != null && Math.abs(p.feeTo - p.feeFrom) > 0.005) return { kind: "apply", price: "auto" };

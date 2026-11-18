@@ -88,6 +88,7 @@ export function toOfferRow(o: Offer): DealOfferRow {
     billingFreeStart: o.billingFreeStart,
     annualChoice: o.annualChoice,
     annualPrepay: o.annualPrepay,
+    term: o.term,
     allowPayLater: o.allowPayLater,
     allowBankTransfer: o.allowBankTransfer,
     bankTransferDays: o.bankTransferDays,

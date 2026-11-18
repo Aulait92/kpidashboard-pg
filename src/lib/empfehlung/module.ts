@@ -10,7 +10,7 @@ import { NUR_PPL_WHERE } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
-import { PRICE_LIST } from "@/lib/offer-pricing";
+import { isPrepaid, normalizeRhythmus, PRICE_LIST, RHYTHMUS_MONATE } from "@/lib/offer-pricing";
 import { addEmpfehlungToSubscription, scheduleEmpfehlungCancel, withdrawEmpfehlungCancel } from "@/lib/billing";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting } from "@/lib/offer-links";
@@ -56,7 +56,8 @@ export async function moduleInfo(customerId: string, now = new Date()) {
     trialEndsAt: c.empfehlungTrialEndsAt,
     cancelAt: c.empfehlungCancelAt,
     monthly: c.empfehlungMonthly == null ? null : Number(c.empfehlungMonthly),
-    annual: c.billingInterval === "year",
+    annual: isPrepaid(c.billingInterval),
+    prepayMonths: RHYTHMUS_MONATE[normalizeRhythmus(c.billingInterval)],
     service: c.plan === "service",
     dismissed: c.moduleHintsDismissed ?? [],
   };
@@ -142,7 +143,7 @@ export async function bookEmpfehlung(customerId: string, opts: { actor?: AuditAc
   }
   if (state !== "inactive") return { ok: true, state, trialEndsAt: c.empfehlungTrialEndsAt };
 
-  const terms = bookingTerms({ trial: trialAvailable(c), annual: c.billingInterval === "year", now });
+  const terms = bookingTerms({ trial: trialAvailable(c), annual: isPrepaid(c.billingInterval), now, prepayMonths: RHYTHMUS_MONATE[normalizeRhythmus(c.billingInterval)] });
   if (trialAvailable(c)) {
     const trialEndsAt = trialEndFrom(now);
     // Nur einmal: gleichzeitige Klicks buchen nicht doppelt

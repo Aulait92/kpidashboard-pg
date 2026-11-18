@@ -14,7 +14,7 @@ import { LeadEmailToggle } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
-import { annualMultiplier, bestandPacksText, PRICE_LIST } from "@/lib/offer-pricing";
+import { bestandPacksText, normalizeRhythmus, PRICE_LIST, RHYTHMUS_MONATE, rhythmusFaktor, TERM_MONTHS, normalizeTerm } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
 import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
 import { empfehlungVisible, moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
@@ -119,8 +119,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const empfehlungState = moduleState(customer);
   const showEmpfehlung = empfehlungVisible(empfehlungState !== "inactive");
   const monthlyTotal = monthly != null ? monthly + seatsFee + bestandFee + empfehlungFee : null;
-  const annual = customer.billingInterval === "year";
-  const yearly = annual && monthlyTotal != null ? monthlyTotal * annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : null;
+  // Vorauszahlung: jährlich (12 Monate) oder 6 Monate im Voraus (Laufzeit 6 Monate)
+  const rhythmus = normalizeRhythmus(customer.billingInterval);
+  const annual = rhythmus !== "month";
+  const prepayMonths = RHYTHMUS_MONATE[rhythmus];
+  const prepayFree = annual ? prepayMonths - rhythmusFaktor(rhythmus, offer?.annualFreeMonths) : 0;
+  const yearly = annual && monthlyTotal != null ? monthlyTotal * rhythmusFaktor(rhythmus, offer?.annualFreeMonths) : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -154,7 +158,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <dd className="space-y-2">
                   <div>{bestandFee ? `Modul gebucht, ${eur(bestandFee)} im Monat` : "Modul freigeschaltet"}</div>
                   {customer.bestandMonthly != null ? (
-                    <ModuleCancelButton cancelAt={customer.bestandCancelAt?.toISOString() ?? null} readOnly={ctx.preview} annual={annual} />
+                    <ModuleCancelButton cancelAt={customer.bestandCancelAt?.toISOString() ?? null} readOnly={ctx.preview} annual={annual} prepayMonths={prepayMonths} />
                   ) : null}
                 </dd>
               </>
@@ -181,7 +185,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               <>
                 <dt className="text-[color:var(--muted)]">Zahlweise</dt>
                 <dd data-konto-interval>
-                  {annual && yearly != null ? `Jährlich im Voraus: ${eur(yearly)} netto (${PRICE_LIST.annualFreeMonths} Monate geschenkt)` : "Monatlich"}
+                  {annual && yearly != null
+                    ? `${prepayMonths === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(yearly)} netto (${prepayFree} ${prepayFree === 1 ? "Monat" : "Monate"} geschenkt)`
+                    : "Monatlich"}
                 </dd>
               </>
             ) : null}
@@ -213,12 +219,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <dt className="text-[color:var(--muted)]">Laufzeit</dt>
                 <dd>
                   {annual
-                    ? "12 Monate, verlängert sich um 12 Monate, wenn nicht 1 Monat vor Ende gekündigt"
-                    : offer.term === "12m"
-                      ? "12 Monate, danach monatlich kündbar"
-                      : offer.term === "3m"
-                        ? "3 Monate, danach monatlich kündbar"
-                        : "Monatlich kündbar"}
+                    ? `${prepayMonths} Monate, verlängert sich um ${prepayMonths} Monate, wenn nicht 1 Monat vor Ende gekündigt`
+                    : TERM_MONTHS[normalizeTerm(offer.term)] > 0
+                      ? `${TERM_MONTHS[normalizeTerm(offer.term)]} Monate, danach monatlich kündbar`
+                      : "Monatlich kündbar"}
                 </dd>
                 <dt className="text-[color:var(--muted)]">Pause / Urlaub</dt>
                 <dd>Jederzeit selbst einstellbar (siehe unten)</dd>
@@ -282,6 +286,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   <EmpfehlungBookButton
                     trial={trialAvailable(customer)}
                     annual={annual}
+                    prepayMonths={prepayMonths}
                     monthly={PRICE_LIST.empfehlungModuleMonthly}
                     readOnly={ctx.preview}
                     autoOpen={modul === "empfehlung"}
@@ -301,6 +306,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                         trialEndsAt={customer.empfehlungMonthly == null ? (customer.empfehlungTrialEndsAt?.toISOString() ?? null) : null}
                         readOnly={ctx.preview}
                         annual={annual}
+                        prepayMonths={prepayMonths}
                       />
                     ) : null}
                   </div>
@@ -335,7 +341,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                     requestedAt={customer.bestandRequestedAt?.toISOString() ?? null}
                     readOnly={ctx.preview}
                     annual={annual}
-                    freeMonths={PRICE_LIST.annualFreeMonths}
+                    freeMonths={prepayMonths === 6 ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths}
+                    prepayMonths={prepayMonths}
                   />
                 )}
               </li>

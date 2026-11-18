@@ -64,6 +64,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
             <EmpfehlungBookButton
               trial={info.trialAvailable}
               annual={info.annual}
+              prepayMonths={info.prepayMonths}
               monthly={PRICE_LIST.empfehlungModuleMonthly}
               readOnly={ctx.preview}
               reason={info.service ? "Das Modul gibt es nur im Paket mit Software." : null}

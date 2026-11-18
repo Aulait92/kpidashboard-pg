@@ -17,6 +17,6 @@ describe("Bestandskunden-Modul: Bedingungen je Zahlweise", () => {
   });
   it("AGB nennen beide Zahlweisen", () => {
     const text = JSON.stringify(AGB);
-    expect(text).toContain("bei jährlicher Vorauszahlung zum Ende des bezahlten Abrechnungsjahres");
+    expect(text).toContain("bei Vorauszahlung (jährlich bzw. für 6 Monate) zum Ende des bezahlten Zeitraums");
   });
 });

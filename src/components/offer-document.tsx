@@ -4,8 +4,10 @@ import { AGB, PROVIDER } from "@/lib/legal-texts";
 import {
   computeOfferPrice,
   eur,
-  jahreswahlBetraege,
   normalizeTerm,
+  TERM_MONTHS,
+  termOptionsFor,
+  vorauszahlungBetraege,
   offerAddOns,
   offerSetupDiscount,
   PRICE_LIST,
@@ -135,12 +137,15 @@ function MonthlyOverview({
   adNet,
   serviceOnly,
   annual,
+  halbjahr = false,
   intro,
 }: {
   feeNet: number;
   adNet: number;
   serviceOnly: boolean;
   annual: boolean;
+  /** Vorauszahlung für 6 Monate statt jährlich */
+  halbjahr?: boolean;
   intro: { months: number; fee: number } | null;
 }) {
   const totalNet = feeNet + adNet;
@@ -164,7 +169,7 @@ function MonthlyOverview({
         <div className={row}>
           <span className="col-span-2 sm:col-span-1">
             {serviceOnly ? "Betreuung" : "Betreuung + Software"}{" "}
-            <span className="text-[#6B7280]">(an performancegrowth{annual ? ", jährlich im Voraus, je Monat umgerechnet" : ""})</span>
+            <span className="text-[#6B7280]">(an performancegrowth{annual ? `, ${halbjahr ? "6 Monate" : "jährlich"} im Voraus, je Monat umgerechnet` : ""})</span>
           </span>
           {cell("netto", eur2(feeNet))}
           {cell("brutto", eur2(withVat(feeNet)))}
@@ -223,9 +228,16 @@ export function OfferDocument({
   const open = offer.status === "draft" || offer.status === "sent";
   const termOpen = open && !!offer.customerChoosesTerm;
   const startOpen = open && !!offer.customerChoosesStart;
-  // Jahreszahlung zur Wahl (Ole, 18.11.2026): vor der Annahme beide Beträge, danach die Wahl des Kunden
+  // Vorauszahlung zur Wahl (Ole, 18.11.2026): vor der Annahme beide Beträge, danach die Wahl des Kunden.
+  // 12 Monate: jährlich im Voraus (2 geschenkt), 6 Monate: 6 Monate im Voraus (1 geschenkt), eine Rechnung.
   const annualOpen = open && !!offer.annualChoice && !add.annual;
-  const jahr = jahreswahlBetraege(add.monthlyTotal, offer.annualFreeMonths);
+  const pm = add.prepayMonths;
+  const halb = pm === 6;
+  const vorausName = halb ? "6 Monate im Voraus" : "jährlich im Voraus";
+  const v = vorauszahlungBetraege(add.monthlyTotal, term, offer.annualFreeMonths);
+  const geschenkt = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"} geschenkt`;
+  // 12 Monate: Wortlaut wie bisher („Jahreszahlung“), 6 Monate: „Vorauszahlung“
+  const vorausWort = halb ? "Vorauszahlung" : "Jahreszahlung";
   const hasExtras = add.seatsFee > 0 || add.bestandFee > 0 || add.empfehlungFee > 0;
   const hasIntro = offer.introMonthlyFee != null && !!offer.introMonths;
   // Erster Monatsbetrag inkl. Zusätze (Startpreis gilt nur für das Paket)
@@ -237,6 +249,7 @@ export function OfferDocument({
     billingDay: offer.billingDay,
     freeStart: offer.billingFreeStart,
     annual: add.annualTotal != null,
+    prepayMonths: pm,
   });
   const billingDiffers = !!plan?.differs;
   const productNames = products.map((p) => p.name).join(" & ");
@@ -289,9 +302,9 @@ export function OfferDocument({
             />
             {add.annualTotal != null ? (
               <Stat
-                k="Jährlich im Voraus"
+                k={halb ? "6 Monate im Voraus" : "Jährlich im Voraus"}
                 v={eur(add.annualTotal)}
-                sub={`${add.freeMonths} Monate geschenkt · entspricht ${eur(round2(add.annualTotal / 12))} im Monat, netto`}
+                sub={`${geschenkt(add.freeMonths)} · entspricht ${eur(round2(add.annualTotal / pm))} im Monat, netto`}
                 accent
               />
             ) : (
@@ -302,7 +315,7 @@ export function OfferDocument({
                   hasIntro
                     ? `Startpreis Monat 1–${offer.introMonths}, danach ${eur(add.monthlyTotal)}`
                     : annualOpen
-                      ? `netto · oder jährlich im Voraus ${eur(jahr.annualTotal)}, ${jahr.freeMonths} Monate geschenkt`
+                      ? `netto · oder ${vorausName} ${eur(v.total)}, ${geschenkt(v.freeMonths)}`
                       : `${serviceOnly ? "Betreuung" : "Betreuung + Software"}${hasExtras ? " inkl. Zusätze" : ""}, netto${offer.startDate ? ` · ab ${date(offer.startDate)}` : ""}`
                 }
                 accent
@@ -310,7 +323,7 @@ export function OfferDocument({
             )}
             <Stat
               k="Laufzeit"
-              v={term === "12m" ? "12 Monate" : term === "3m" ? "3 Monate" : "Monatlich kündbar"}
+              v={TERM_MONTHS[term] > 0 ? `${TERM_MONTHS[term]} Monate` : "Monatlich kündbar"}
               sub={termOpen ? "Vorschlag, Laufzeit wählen Sie unten bei der Annahme" : "Pause jederzeit möglich"}
             />
           </div>
@@ -422,7 +435,7 @@ export function OfferDocument({
           {offer.startDate ? (
             <Tr k="Start">
               {billingDiffers
-                ? abrechnungstagSaetze(plan, { firstNet: firstCharge, annual: add.annualTotal != null }).join(" ")
+                ? abrechnungstagSaetze(plan, { firstNet: firstCharge, annual: add.annualTotal != null, prepayMonths: pm }).join(" ")
                 : `${date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.`}
               {startOpen ? <Note>Vorschlag, das Startdatum wählen Sie unten bei der Annahme.</Note> : null}
             </Tr>
@@ -442,7 +455,7 @@ export function OfferDocument({
             <b className="text-[#111827]">{eur2(offer.setupFee)}</b> netto zzgl. 19 % USt.
             <Note>
               {setupIsList
-                ? `${term === "12m" ? "Mit 12 Monaten Laufzeit" : term === "3m" ? "Mit 3 Monaten Laufzeit" : "Ohne Vertragslaufzeit"}${extra ? (PRICE_LIST.extraProductSetup > 0 ? `, inklusive ${extra} weiteres Produkt${extra > 1 ? "e" : ""}` : `, weitere Produkte ohne Einrichtungsgebühr`) : ""}`
+                ? `${TERM_MONTHS[term] > 0 ? `Mit ${TERM_MONTHS[term]} Monaten Laufzeit` : "Ohne Vertragslaufzeit"}${extra ? (PRICE_LIST.extraProductSetup > 0 ? `, inklusive ${extra} weiteres Produkt${extra > 1 ? "e" : ""}` : `, weitere Produkte ohne Einrichtungsgebühr`) : ""}`
                 : "Sonderkondition"}
             </Note>
           </Tr>
@@ -518,22 +531,27 @@ export function OfferDocument({
           ) : null}
           {add.annualTotal != null ? (
             <Tr k="Zahlweise">
-              Jährlich im Voraus: <b className="text-[#111827]">{eur2(add.annualTotal)}</b> netto pro Jahr zzgl. 19 % USt.
+              {halb ? "6 Monate im Voraus" : "Jährlich im Voraus"}: <b className="text-[#111827]">{eur2(add.annualTotal)}</b> netto {halb ? "je 6 Monate" : "pro Jahr"} zzgl. 19 % USt.
               <Note>
-                {add.freeMonths} Monate geschenkt ({12 - add.freeMonths} statt 12 Monatsbeträge), Ersparnis {eur2(add.annualSavings)}.
+                {geschenkt(add.freeMonths)} ({pm - add.freeMonths} statt {pm} Monatsbeträge), Ersparnis {eur2(add.annualSavings)}.
                 {offer.annualChoice ? " Bei der Annahme gewählt." : ""}
               </Note>
             </Tr>
           ) : annualOpen ? (
             <Tr k="Zahlweise">
               <span data-offer-zahlweise-wahl>
-                Wählen Sie bei der Annahme: monatlich <b className="text-[#111827]">{eur2(add.monthlyTotal)}</b> netto im Monat oder jährlich im Voraus{" "}
-                <b className="text-[#111827]">{eur2(jahr.annualTotal)}</b> netto im Jahr, jeweils zzgl. 19 % USt.
+                Wählen Sie bei der Annahme: monatlich <b className="text-[#111827]">{eur2(add.monthlyTotal)}</b> netto im Monat oder {vorausName}{" "}
+                <b className="text-[#111827]">{eur2(v.total)}</b> netto {halb ? "für 6 Monate" : "im Jahr"}, jeweils zzgl. 19 % USt.
               </span>
               <Note>
-                Bei Jahreszahlung {jahr.freeMonths} Monate geschenkt, Sie sparen {eur2(jahr.savings)}.
-                {termOpen ? " Jahreszahlung gibt es mit 12 Monaten Laufzeit." : ""} Der Vertrag verlängert sich dann nach 12 Monaten um jeweils weitere 12
-                Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der Laufzeit gekündigt wird. Für Pausen gibt es bei Jahreszahlung keine Gutschrift.
+                Bei {vorausWort} {geschenkt(v.freeMonths)}, Sie sparen {eur2(v.savings)}.
+                {termOpen
+                  ? halb
+                    ? " Vorauszahlung für 6 Monate gibt es mit 6 Monaten Laufzeit, jährlich im Voraus mit 12 Monaten Laufzeit (2 Monate geschenkt)."
+                    : ` Jahreszahlung gibt es mit 12 Monaten Laufzeit${termOptionsFor(offer.createdAt).includes("6m") ? ", 6 Monate im Voraus mit 6 Monaten Laufzeit (1 Monat geschenkt)" : ""}.`
+                  : ""}{" "}
+                Der Vertrag verlängert sich dann nach {pm} Monaten um jeweils weitere {pm} Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der
+                Laufzeit gekündigt wird. Für Pausen gibt es bei {vorausWort} keine Gutschrift.
               </Note>
             </Tr>
           ) : offer.annualChoice && !open ? (
@@ -541,23 +559,24 @@ export function OfferDocument({
           ) : null}
           <Tr k="Vertragslaufzeit">
             {add.annual
-              ? `12 Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, jährlich im Voraus bezahlt. Danach verlängert sich der Vertrag um jeweils weitere 12 Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der Laufzeit gekündigt wird.`
-              : term === "12m"
-                ? `12 Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, danach monatlich kündbar zum Ende des Abrechnungsmonats.`
-                : term === "3m"
-                  ? `3 Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, danach monatlich kündbar zum Ende des Abrechnungsmonats.`
-                  : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
+              ? `${pm} Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, ${vorausName} bezahlt. Danach verlängert sich der Vertrag um jeweils weitere ${pm} Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der Laufzeit gekündigt wird.`
+              : TERM_MONTHS[term] > 0
+                ? `${TERM_MONTHS[term]} Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, danach monatlich kündbar zum Ende des Abrechnungsmonats.`
+                : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
             {termOpen ? (
               <Note>
-                Laufzeit wählen Sie unten bei der Annahme: 12 Monate (Setup {eur(setupForChoice("12m", products.length || 1, choiceDiscount))}), 3 Monate (
-                {eur(setupForChoice("3m", products.length || 1, choiceDiscount))}) oder ohne Laufzeit ({eur(setupForChoice("none", products.length || 1, choiceDiscount))}),
-                jeweils netto{choiceDiscount ? `, ${discLabel} schon abgezogen` : ""}.
+                Laufzeit wählen Sie unten bei der Annahme:{" "}
+                {termOptionsFor(offer.createdAt)
+                  .map((t) => `${TERM_MONTHS[t] > 0 ? `${TERM_MONTHS[t]} Monate` : "ohne Laufzeit"} (${t === "12m" ? "Setup " : ""}${eur(setupForChoice(t, products.length || 1, choiceDiscount))})`)
+                  .join(", ")
+                  .replace(/, ([^,]*)$/, " oder $1")}
+                , jeweils netto{choiceDiscount ? `, ${discLabel} schon abgezogen` : ""}.
               </Note>
             ) : null}
           </Tr>
           <Tr k="Pause / Urlaub">
             {add.annual ? (
-              "Jederzeit möglich; die Anzeigen werden gestoppt. Bei jährlicher Vorauszahlung erfolgt für die Pausenzeit keine Gutschrift."
+              `Jederzeit möglich; die Anzeigen werden gestoppt. Bei ${halb ? "Vorauszahlung" : "jährlicher Vorauszahlung"} erfolgt für die Pausenzeit keine Gutschrift.`
             ) : offer.softwareFee > 0 ? (
               <>
                 Jederzeit möglich. Die Anzeigen werden gestoppt; in dieser Zeit fällt nur die Software-Gebühr von{" "}
@@ -579,27 +598,30 @@ export function OfferDocument({
             {" = "}
             <b className="text-[#111827]">{eur2(withVat(offer.setupFee))} brutto</b>
             <Note>
-              {add.annualTotal != null ? "Jahresbetrag" : "Erste Monatsgebühr"} ({eur2(firstCharge)} netto, {eur2(withVat(firstCharge))} brutto)
+              {add.annualTotal != null ? (halb ? "Betrag für 6 Monate" : "Jahresbetrag") : "Erste Monatsgebühr"} ({eur2(firstCharge)} netto, {eur2(withVat(firstCharge))} brutto)
               {plan && billingDiffers ? ` am ${plan.firstIso.split("-").reverse().join(".")}` : offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}
               {billingDiffers && !plan!.free ? " zuzüglich des anteiligen Betrags für die Zeit davor" : ""}.
-              {annualOpen ? ` Bei Jahreszahlung ist es der Jahresbetrag von ${eur2(jahr.annualTotal)} netto.` : ""}
+              {annualOpen ? (halb ? ` Bei Vorauszahlung ist es der Betrag von ${eur2(v.total)} netto für 6 Monate.` : ` Bei Jahreszahlung ist es der Jahresbetrag von ${eur2(v.total)} netto.`) : ""}
               {termOpen || startOpen ? " Setup und Start richten sich nach Ihrer Wahl bei der Annahme." : ""}
             </Note>
           </Tr>
         </Table>
         <MonthlyOverview
-          feeNet={add.annualTotal != null ? add.annualTotal / 12 : add.monthlyTotal ?? offer.monthlyFee}
+          feeNet={add.annualTotal != null ? add.annualTotal / pm : add.monthlyTotal ?? offer.monthlyFee}
           adNet={list.monthlyBudget}
           serviceOnly={serviceOnly}
           annual={add.annualTotal != null}
+          halbjahr={halb}
           intro={hasIntro ? { months: offer.introMonths!, fee: offer.introMonthlyFee! } : null}
         />
 
         <H3>2.1 Zahlung</H3>
         <p className="text-[#374151]">
           {add.annual
-            ? "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während des Jahres dazukommen, werden anteilig berechnet."
-            : `Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen.${annualOpen ? " Bei Jahreszahlung wird die Vergütung jährlich im Voraus eingezogen." : ""}`}
+            ? halb
+              ? "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum für jeweils 6 Monate im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während dieser 6 Monate dazukommen, werden anteilig berechnet."
+              : "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während des Jahres dazukommen, werden anteilig berechnet."
+            : `Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen.${annualOpen ? (halb ? " Bei Vorauszahlung wird die Vergütung für jeweils 6 Monate im Voraus eingezogen." : " Bei Jahreszahlung wird die Vergütung jährlich im Voraus eingezogen.") : ""}`}
         </p>
         {offer.createdAt < GUARANTEES_FROM ? (
           <>

@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { OCCASIONS, opportunities, type Occasion } from "@/lib/bestand/campaigns";
 import { toggleCampaignAction } from "./actions";
 import { bestandQuota, QUOTA_PAUSE } from "@/lib/bestand/quota";
-import { PRICE_LIST, bestandPacksText, eur } from "@/lib/offer-pricing";
+import { PRICE_LIST, bestandPacksText, eur, isPrepaid, normalizeRhythmus, RHYTHMUS_MONATE } from "@/lib/offer-pricing";
 import { displayName } from "@/lib/bestand/rows";
 import { lastUndoableImport } from "@/lib/bestand/import";
 import { autoTopUpState, packPurchaseBlocker } from "@/lib/bestand/packs";
@@ -71,7 +71,8 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
         readOnly={ctx.preview}
         canBook={check.ok}
         reason={check.ok ? null : check.reason}
-        annual={c.billingInterval === "year"}
+        annual={isPrepaid(c.billingInterval)}
+        prepayMonths={RHYTHMUS_MONATE[normalizeRhythmus(c.billingInterval)]}
       />
     );
   }
@@ -552,7 +553,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   );
 }
 
-function LockedBestand({ requestedAt, readOnly, canBook, reason, annual }: { requestedAt: string | null; readOnly: boolean; canBook: boolean; reason: string | null; annual: boolean }) {
+function LockedBestand({ requestedAt, readOnly, canBook, reason, annual, prepayMonths }: { requestedAt: string | null; readOnly: boolean; canBook: boolean; reason: string | null; annual: boolean; prepayMonths: number }) {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8" data-bestand-locked>
       <PageHeader title="Bestand" subtitle="Ihre Bestandskunden gezielt ansprechen" />
@@ -567,7 +568,11 @@ function LockedBestand({ requestedAt, readOnly, canBook, reason, annual }: { req
           <ul className="list-disc space-y-1 pl-5 text-sm text-[color:var(--muted)]">
             <li>
               {eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat,{" "}
-              {annual ? "bei Ihrer jährlichen Vorauszahlung kündbar zum Ende des bezahlten Jahres" : "monatlich kündbar"}
+              {annual
+                ? prepayMonths === 6
+                  ? "bei Ihrer Vorauszahlung kündbar zum Ende der bezahlten 6 Monate"
+                  : "bei Ihrer jährlichen Vorauszahlung kündbar zum Ende des bezahlten Jahres"
+                : "monatlich kündbar"}
             </li>
             <li>WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive</li>
             <li>Bis zu {PRICE_LIST.bestandIncludedEmails.toLocaleString("de-DE")} Kampagnen-E-Mails im Monat über Ihr eigenes Postfach inklusive</li>
@@ -585,7 +590,8 @@ function LockedBestand({ requestedAt, readOnly, canBook, reason, annual }: { req
             requestedAt={requestedAt}
             readOnly={readOnly}
             annual={annual}
-            freeMonths={PRICE_LIST.annualFreeMonths}
+            freeMonths={prepayMonths === 6 ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths}
+            prepayMonths={prepayMonths}
           />
         </div>
       </Card>

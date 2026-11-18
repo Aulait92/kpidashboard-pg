@@ -7,7 +7,21 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { createOfferAction } from "@/app/admin/vertrieb/offer-actions";
 import type { OfferTarget } from "@/lib/offer-links";
-import { abschlussBonusStandardTag, berlinTodayIso, bestandPacksText, computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm, type OfferVermittler } from "@/lib/offer-pricing";
+import {
+  abschlussBonusStandardTag,
+  berlinTodayIso,
+  bestandPacksText,
+  computeOfferPrice,
+  defaultStartDate,
+  eur,
+  PRICE_LIST,
+  prepayPossible,
+  VORAUSZAHLUNG,
+  withVat,
+  type OfferPackage,
+  type OfferTerm,
+  type OfferVermittler,
+} from "@/lib/offer-pricing";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
@@ -113,13 +127,16 @@ export function OfferForm({
     setupOverride: num(setupOverride),
     monthlyOverride: num(monthlyOverride),
     seats: num(seats),
-    annual: annual && term === "12m",
+    annual: annual && prepayPossible(term),
     bestandModule: bestand && pkg === "software",
     empfehlungModule: empfehlung && pkg === "software",
     setupDiscount: referralDiscount ? num(discount) : null,
   });
   const softwarePkg = pkg === "software";
-  const annualPossible = term === "12m" && num(introFee) == null;
+  // Vorauszahlung (Ole, 18.11.2026): mit 12 Monaten jährlich (2 geschenkt), mit 6 Monaten 6 Monate im Voraus (1 geschenkt)
+  const annualPossible = prepayPossible(term) && num(introFee) == null;
+  const voraus = VORAUSZAHLUNG[term === "6m" ? "6m" : "12m"];
+  const geschenkt = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"} geschenkt`;
 
   function submit() {
     setError(null);
@@ -268,10 +285,11 @@ export function OfferForm({
         <Card>
           <CardHeader title="Laufzeit und Konditionen" />
           <div className="space-y-4 p-5">
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {(
                 [
                   ["12m", "12 Monate", `Setup ${eur(PRICE_LIST.setup12m)}`],
+                  ["6m", "6 Monate", `Setup ${eur(PRICE_LIST.setup6m)}`],
                   ["3m", "3 Monate", `Setup ${eur(PRICE_LIST.setup3m)}`],
                   ["none", "Ohne Laufzeit", `Setup ${eur(PRICE_LIST.setupNoTerm)}`],
                 ] as const
@@ -462,11 +480,13 @@ export function OfferForm({
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${annualPossible ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
               <input type="checkbox" name="annual" className="mt-0.5 h-4 w-4" disabled={!annualPossible} checked={annual && annualPossible} onChange={(e) => setAnnual(e.target.checked)} />
               <span>
-                <span className="block font-semibold">Jahreszahlung anbieten ({PRICE_LIST.annualFreeMonths} Monate geschenkt)</span>
+                <span className="block font-semibold" data-vorauszahlung-label>
+                  Vorauszahlung anbieten ({geschenkt(voraus.freeMonths)})
+                </span>
                 <span className="block text-xs text-[color:var(--muted)]">
                   {annualPossible
-                    ? `Der Kunde wählt bei der Annahme monatlich (vorausgewählt) oder jährlich für ${12 - PRICE_LIST.annualFreeMonths} × Monatspreis inkl. Zusätze.`
-                    : "Nur mit 12 Monaten Laufzeit und ohne Startpreis."}
+                    ? `Der Kunde wählt bei der Annahme monatlich (vorausgewählt) oder ${term === "6m" ? "6 Monate im Voraus" : "jährlich"} für ${voraus.months - voraus.freeMonths} × Monatspreis inkl. Zusätze.`
+                    : "Nur mit 6 oder 12 Monaten Laufzeit und ohne Startpreis."}
                 </span>
               </span>
             </label>
@@ -548,9 +568,9 @@ export function OfferForm({
             ) : null}
             {price.annualTotal != null ? (
               <Sum
-                k="Oder jährlich (Kunde wählt)"
+                k={price.prepayMonths === 6 ? "Oder 6 Monate im Voraus (Kunde wählt)" : "Oder jährlich (Kunde wählt)"}
                 v={eur(price.annualTotal)}
-                sub={`${PRICE_LIST.annualFreeMonths} Monate geschenkt (spart ${eur(price.annualSavings)}) · ${eur(withVat(price.annualTotal))} brutto`}
+                sub={`${geschenkt(price.prepayFreeMonths)} (spart ${eur(price.annualSavings)}) · ${eur(withVat(price.annualTotal))} brutto`}
               />
             ) : null}
             {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-rose-700">{error}</p> : null}

@@ -22,6 +22,7 @@ import { offerProducts } from "@/components/offer-document";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { validLoginEmail } from "@/lib/login-email";
 import { ersterAbrechnungstag } from "@/lib/abrechnungstag";
+import { rhythmusFuer } from "@/lib/offer-pricing";
 
 const DAY = 24 * 60 * 60 * 1000;
 const INVITE_TTL_MS = 7 * DAY;
@@ -730,6 +731,8 @@ function billingTermsOf(offer: {
   bestandMonthly: unknown;
   empfehlungMonthly?: unknown;
   annualPrepay: boolean;
+  /** Laufzeit: Vorauszahlung mit 6 Monaten = halbjährlich, sonst jährlich */
+  term?: string | null;
   allowBankTransfer?: boolean;
   bankTransferDays?: number;
   zahlweise?: string | null;
@@ -746,7 +749,7 @@ function billingTermsOf(offer: {
     // Makler-Angebot → Kunde ist Makler (Provisionssätze, Vertrags-Garantie)
     ...(offer.vermittlerTyp === "makler" ? { vermittlerTyp: "makler" } : {}),
     ...(offer.seatsIncluded != null ? { seatsIncluded: offer.seatsIncluded, seatMonthly: offer.seatMonthly == null ? null : Number(offer.seatMonthly), seatsBilled } : {}),
-    billingInterval: offer.annualPrepay ? "year" : "month",
+    billingInterval: rhythmusFuer(offer.term, offer.annualPrepay),
     ...(offer.bestandMonthly != null ? { bestandMonthly: Number(offer.bestandMonthly), existingCustomersEnabled: true, bestandRequestedAt: null } : {}),
     // Empfehlungen & Bewertungen im Angebot: ab Start freigeschaltet und berechnet (keine Testphase)
     ...(offer.empfehlungMonthly != null
