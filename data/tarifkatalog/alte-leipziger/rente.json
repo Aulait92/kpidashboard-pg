@@ -27,8 +27,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/private-rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Moderne flexible Rente",
@@ -48,8 +47,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/private-rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Smarte Rente (AL_DuoSmart)",
@@ -69,8 +67,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/private-rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Flexible Fondsrente (AL_RenteFlex)",
@@ -90,8 +87,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/private-rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -108,6 +104,7 @@
     "Beitragsgarantie: Fondsrente wahlweise 1 bis 90 % der Beiträge oder ohne Garantie; Höhe des garantierten Kapitals bei Smart steht im Vertrag (nicht auf der Seite).",
     "Beitragspause: in den Bedingungen von Klassik, Flexibel, Smart und Fondsrente mit Garantien geregelt, in der Fondsrente ohne Garantien (PM 2400) nicht. Entnahmen bei Smart nicht ausgewertet.",
     "Hinterbliebenenschutz: Rentengarantiezeit vereinbar; Todesfallleistung vor Rentenbeginn nicht je Produkt ausgewertet. Norwegen-Konzept (Basis Moderne flexible Rente) und Fondsanlage mit Einmalzahlung nicht als Stufe aufgenommen.",
-    "Effektivkosten und Dynamik je Produkt nicht ausgewertet (Basisinformationsblätter). Keine Renditeangaben."
+    "Effektivkosten und Dynamik je Produkt nicht ausgewertet (Basisinformationsblätter). Keine Renditeangaben.",
+    "Geprüft am 18.11.2026 an Produktseite, Deklarationsvergleich bzw. Bedingungen der Alte Leipziger."
   ]
 }

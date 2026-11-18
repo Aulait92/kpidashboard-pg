@@ -44,7 +44,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
     { key: "ppl", label: "Pay-per-Lead geliefert", href: `${PFAD}?art=ppl`, funktion: "page-geliefert--gelieferte-leads-suchen-name-telefon-e-mail-id" },
   ];
   return (
-    <Seite titel="Leads & Kampagnen" reiter="leads" breit>
+    <Seite titel="Liefern" reiter="liefern" breit>
       <Ansichten items={ansichten} aktiv={ppl ? "ppl" : ""} />
       {ppl ? <Geliefert sp={sp} /> : <Alle sp={sp} />}
     </Seite>

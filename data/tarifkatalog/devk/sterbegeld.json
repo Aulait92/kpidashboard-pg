@@ -25,8 +25,7 @@
         "unfall": "optional"
       },
       "quelle": "https://www.devk.de/produkte/altersvorsorge/sterbegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -39,6 +38,7 @@
     "Wartezeit: Tod in den ersten 24 Monaten, dann Beitragsrückzahlung; gilt nicht bei Einmalbeitrag und nicht bei Unfalltod.",
     "Unfall-Zusatzversicherung (UZV) nur bei laufender Beitragszahlung wählbar; ob die Summe dabei verdoppelt wird, hängt von der vereinbarten UZV-Summe ab.",
     "Beitragszahlung: Ende der Zahlungsdauer wählbar (Beispiel der Broschüre bis Alter 85), nicht als feste Grenze genannt. Dynamik und Vorsorge-Service nicht genannt.",
-    "Überführung bei Tod im Ausland: bis 10.000 € in der EU, bis 15.000 € außerhalb."
+    "Überführung bei Tod im Ausland: bis 10.000 € in der EU, bis 15.000 € außerhalb.",
+    "Geprüft am 18.11.2026 an Produktseite und Produktinformation der DEVK."
   ]
 }

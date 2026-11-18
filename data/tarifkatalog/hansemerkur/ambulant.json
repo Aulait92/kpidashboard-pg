@@ -21,8 +21,7 @@
         "wartezeit": "3 Monate"
       },
       "quelle": "https://www.hansemerkur.de/ambulante-zusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Ambulant Premium (Tarif EST)",
@@ -37,8 +36,7 @@
         "wartezeit": "3 Monate"
       },
       "quelle": "https://www.hansemerkur.de/ambulante-zusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Ambulant Exklusiv (Tarif EST + EZT)",
@@ -53,8 +51,7 @@
         "wartezeit": "3 Monate"
       },
       "quelle": "https://www.hansemerkur.de/ambulante-zusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -66,6 +63,7 @@
     "Heilpraktiker: 80 % bis 1.000 € Rechnungsbetrag im Jahr ab dem 3. Jahr (1. Jahr 100 €, 2. Jahr 200 €). Brille in Komfort, Kontaktlinsen nur Premium und Exklusiv; jährlich bei Änderung um 0,5 Dioptrien.",
     "Zahnersatz: Komfort 25 %, Premium 30 % (auch Inlays, Implantate), Exklusiv 90 % mit Leistungsstaffel 420 bis 1.680 € in den ersten 4 Jahren. Wartezeit Zahn 6 Monate.",
     "Premium und Exklusiv: Reha- und Kur-Zuzahlung 10 €/Tag, Reiseimpfungen 100 €/Jahr.",
-    "Empfehlung: HanseMerkur markiert Ambulant Premium als „Bestseller“."
+    "Empfehlung: HanseMerkur markiert Ambulant Premium als „Bestseller“.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

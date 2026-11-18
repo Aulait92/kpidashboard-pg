@@ -27,7 +27,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   const zuordnenOffen = !!(sp.form || sp.page || sp.neu || sp.err);
 
   return (
-    <Seite titel="Leads & Kampagnen" reiter="leads" untertitel="Jedes Leadformular einem Kunden zuordnen, dann kommen Leads direkt in die App.">
+    <Seite titel="Liefern" reiter="liefern" untertitel="Jedes Leadformular einem Kunden zuordnen, dann kommen Leads direkt in die App.">
       <Meldung ok={sp.ok} err={sp.err} />
       {!metaReady ? (
         <p className="mb-4 rounded-[var(--radius-md)] bg-amber-50 px-4 py-2.5 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">

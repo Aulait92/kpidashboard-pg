@@ -24,8 +24,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.vkb.de/v/kfz-versicherung/auto.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Haftpflicht mit TeilkaskoPLUS",
@@ -43,8 +42,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.vkb.de/v/kfz-versicherung/auto.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Haftpflicht mit VollkaskoPLUS",
@@ -63,8 +61,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.vkb.de/v/kfz-versicherung/auto.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
     "Drei Stufen laut Tarifvergleich; VollkaskoPLUS ist als „Tarif mit den meisten Leistungen“ beschrieben, keine Empfehlung markiert.",
     "Teilkasko (ohne PLUS): Tierbiss mit Folgeschäden bis 5.000 €; TeilkaskoPLUS: Folgeschäden bei Tierbiss unbegrenzt. VollkaskoPLUS: Neupreis 36 Monate, Kaufwert 24 Monate, GAP, Auslandsschadenschutz, Eigenschäden bis 100.000 €.",
     "Verzicht auf den Einwand grober Fahrlässigkeit laut FAQ für die Kasko, Ausnahmen (Alkohol, Diebstahl) nicht im Einzelnen genannt. Rabattschutz als Baustein. Schutzbrief nicht genannt.",
-    "Deckung je verletzter Person 15 Mio. €."
+    "Deckung je verletzter Person 15 Mio. €.",
+    "Geprüft am 18.11.2026 am Tarifvergleich und Text der Produktseite."
   ]
 }

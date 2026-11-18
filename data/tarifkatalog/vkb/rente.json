@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/private-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PrivatRente FlexVario",
@@ -37,8 +36,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.vkb.de/v/private-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PrivatRente FlexInvest",
@@ -52,8 +50,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/private-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PrivatRente VisionInvest",
@@ -66,8 +63,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/private-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -77,6 +73,7 @@
     "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
     "Stufen sind Anlagekonzepte, keine Leistungsstufen: WachstumGarant (Beitragsgarantie 90 oder 100 %, 10 % Lock-in der IOK2), FlexVario (Chance-Profil wählbar, lebenslang garantierte Rente, BU-Absicherung zuwählbar), FlexInvest (reine Fondsanlage), VisionInvest (nachhaltige Fonds). Keine Empfehlung; FlexVario als mittlere Stufe gesetzt.",
     "Garantierter Rentenfaktor, Kapitalwahlrecht und Kosten stehen nicht auf der Seite. Garantie bei FlexVario, FlexInvest und VisionInvest nicht beziffert.",
-    "Keine Renditeangaben übernommen."
+    "Keine Renditeangaben übernommen.",
+    "Geprüft am 18.11.2026 an der Produktseite."
   ]
 }

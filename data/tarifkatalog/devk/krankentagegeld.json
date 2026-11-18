@@ -21,8 +21,7 @@
         "selbststaendige": "nein"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankentagegeld für Selbstständige (KT 15, KT 29)",
@@ -36,8 +35,7 @@
         "selbststaendige": "ja"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -47,6 +45,7 @@
   "offen": [
     "Stufen sind Zielgruppen, keine Leistungsstufen. Arbeitnehmer: Karenz ab dem 43., 92., 183. oder 365. Tag; Selbstständige ab dem 15. oder 29. Tag, bei stationärer Behandlung ab dem 3. Tag.",
     "Höchstes Tagegeld nicht genannt (Gehaltsnachweis erst über 20 € je Tag).",
-    "Allgemeine Wartezeit nicht beziffert, sie entfällt bei Unfall. Ende bei Berufsunfähigkeit nicht genannt."
+    "Allgemeine Wartezeit nicht beziffert, sie entfällt bei Unfall. Ende bei Berufsunfähigkeit nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Produktinformation der DEVK."
   ]
 }
