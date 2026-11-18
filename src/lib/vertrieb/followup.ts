@@ -247,7 +247,8 @@ async function contextFor(f: { contactId: string; replyEmailId: string | null; t
     hasLaterReply: !!email && (email.sentiment === "SPAETER" || isLaterInterest(theirReply, email.sentAt)),
     timing: f.timing,
     pitch: settings.pitch,
-    bookingUrl: settings.bookingUrl?.trim() || null,
+    // Eigene Buchungsseite → persönlicher Link je Kontakt (Buchung landet direkt am Kontakt); Calendly bleibt wie eingestellt
+    bookingUrl: await (await import("@/lib/vertrieb/buchung")).vertriebsLinkFuerKontakt(settings.bookingUrl, f.contactId),
   };
 }
 
