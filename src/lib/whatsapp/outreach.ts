@@ -419,6 +419,8 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
       outreachStatus: true,
       waConsent: true,
       waUnavailableAt: true,
+      // Mail-Strecke (lib/mail-strecke): ohne Nummer läuft der Kontakt per E-Mail, nicht über die Anrufliste
+      mailStrecke: { select: { schritt: true } },
       // Letzte Absage (Lead/Berater) → sofort zurückrufen statt 24 h warten.
       appointments: {
         where: {
@@ -453,6 +455,8 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
       });
       if (booked > 0) continue;
     }
+    // Ohne Nummer und mit laufender Mail-Strecke: kein Anruf möglich, die Strecke meldet sich (Anrufplan nur mit Nummer)
+    if (!l.phone && l.mailStrecke && ["neu", "erstmail"].includes(l.mailStrecke.schritt)) continue;
     const replied = l.conversations.some((c) => c._count.messages > 0);
     const status = l.outreachStatus ?? "";
 

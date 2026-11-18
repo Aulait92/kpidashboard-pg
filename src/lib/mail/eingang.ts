@@ -403,6 +403,12 @@ export async function verarbeiteMailEingang(event: EmailReceivedEvent, o: { now?
       return { ergebnis: "hinweis", grund: auto ? "auto_antwort" : "absender_unbestaetigt", eingangId: id };
     }
 
+    // Betroffenenrechte (Ole, 18.11.2026, lib/dsgvo): Anfrage ohne KI erkennen, Eingang bestätigen, Widerspruch sofort
+    // umsetzen. Die Mail geht wie jede Antwort an den Vermittler weiter. Je Eingang höchstens einmal (quelleId).
+    await import("@/lib/dsgvo/server")
+      .then((m) => m.pruefeDsgvoEingang({ customerId: lead.customerId, leadId: lead.id, kanal: "email", text: ohneZitat(text), betreff: betreffKern(mail.subject), quelleId: id, absender: from, now }))
+      .catch(() => console.error("[mail-eingang] Datenschutz-Prüfung fehlgeschlagen"));
+
     if (!zeile.weitergeleitetAt) {
       const link = await appLink(lead.id);
       const hinweise: string[] = [];

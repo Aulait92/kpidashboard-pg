@@ -57,6 +57,9 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-outreach");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Mail-Strecke für Leads ohne WhatsApp (lib/mail-strecke): eigener Minuten-Cron /api/mail-strecke/cron; hier als
+  // Rückfall, falls dieser noch nicht eingerichtet ist (Ablauf ist idempotent)
+  after(() => import("@/lib/mail-strecke/server").then((m) => m.runMailStrecke()).catch((e: unknown) => reportError(e, "cron-mail-strecke")));
   // Absagen über die Kalendereinladung (Lead oder Berater) erkennen — vor den
   // Erinnerungen, damit abgesagte Termine keine Erinnerung mehr bekommen.
   const responses = await checkAppointmentResponses().catch((e: unknown) => {

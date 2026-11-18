@@ -365,6 +365,16 @@ async function persistInbound(
     botErlaubt = false;
   }
 
+  // Betroffenenrechte (Ole, 18.11.2026, lib/dsgvo): Auskunft, Löschung, Widerspruch gegen Werbung … ohne KI erkennen,
+  // vor dem Assistenten. Anfrage anlegen, Eingang im Namen des Vermittlers bestätigen, Widerspruch sofort umsetzen,
+  // Vermittler benachrichtigen. Der Assistent antwortet darauf nicht. Nicht bei „STOPP“ (Abmeldung von WhatsApp) und
+  // nicht beim Widerruf zu Policen-Unterlagen (erkenneDsgvo grenzt ab).
+  if (!isStop && type === "text" && body && (conversation.leadId || pipeline)) {
+    const { pruefeDsgvoEingang } = await import("@/lib/dsgvo/server");
+    const d = await pruefeDsgvoEingang({ customerId, leadId: conversation.leadId, kanal: "whatsapp", text: body, quelleId: inboundMsg.id, conversationId: conversation.id, now });
+    if (d.erkannt) return;
+  }
+
   // Empfehlungen & Bewertungen: Antwort auf die Nachfrage nach dem Abschluss → KI wertet aus
   // (Kritik → Aufgabe „Kunde unzufrieden“), Assistent antwortet dann nicht.
   try {

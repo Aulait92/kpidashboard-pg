@@ -57,6 +57,7 @@ import { anwesenheitsFrage } from "@/lib/showup";
 import { AngebotSendenSheet, type AngebotZiel } from "@/components/angebot-senden";
 import { ANGEBOT_AUFGABE, ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
 import { MorgenAutomatisch } from "@/components/morgen-automatisch";
+import { DatenschutzKarte } from "@/components/datenschutz-karte";
 import type { AutomatischeNachrichten } from "@/lib/nachrichtenplan-server";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
@@ -270,7 +271,7 @@ export function TodayInbox({
   }, [callMode]);
   const noStep = data.noNextStep.leads.filter((l) => !hidden.has(`n:${l.leadId}`));
   const noStepTotal = Math.max(noStep.length, data.noNextStep.total - (data.noNextStep.leads.length - noStep.length));
-  const nothing = appointments.length + outcomes.length + angebote.length + openCalls.length + chats.length + calls.length + noStep.length === 0;
+  const nothing = appointments.length + outcomes.length + angebote.length + openCalls.length + chats.length + calls.length + noStep.length + (data.datenschutz?.length ?? 0) === 0;
   const noStepHref = leadHref.startsWith("/buyer?") ? "/buyer/kontakte?ansicht=ohne-schritt" : "/buyer/leads?ansicht=ohne-schritt";
 
   const laterSheet = (c: CallItem) =>
@@ -366,6 +367,7 @@ export function TodayInbox({
           <EmptyState icon={Check} title="Alles erledigt" text="Neue Aufgaben erscheinen hier von selbst." />
         </Card>
       ) : null}
+      {data.datenschutz?.length ? <DatenschutzKarte items={data.datenschutz} leadUrl={leadUrl} /> : null}
       {chats.length > 0 ? (
         <Card>
           <div id="chats" className="scroll-mt-20" />

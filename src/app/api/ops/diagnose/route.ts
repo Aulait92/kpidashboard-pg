@@ -627,9 +627,11 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
 //   q=vermittler-anrede[&alle=1]  Kunden ohne Anrede in den Anbieterangaben, nur ID und Name (lib/ops/vermittler-anrede.ts)
 //   q=admin-nutzung[&tage=30]              Nutzung des Admins: Änderungsprotokoll je Aktion, Klicks je Funktion und Seite, nur Zahlen (lib/ops/admin-nutzung.ts)
+//   q=mail-strecke[&tage=7]                Mail-Strecke ohne WhatsApp: Schalter, Schritte, Auslöser, Gründe, Termine, SMS, Kandidaten (lib/ops/mail-strecke.ts)
 //   q=mail-eingang[&tage=7]                Antwortadresse mit Eingang: Schalter, Einrichtung, Zählung, letzte Eingänge, Fehler, ohne Inhalte (lib/ops/mail-eingang.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "mail-eingang": async (p) => (await import("@/lib/ops/mail-eingang")).mailEingangDiagnose(p),
+  "mail-strecke": async (p) => (await import("@/lib/ops/mail-strecke")).mailStreckeDiagnose(p),
   "anzeige-abdeckung": async (p) => (await import("@/lib/ops/anzeige-abdeckung")).anzeigeAbdeckung(p),
   "vermittler-anrede": async (p) => (await import("@/lib/ops/vermittler-anrede")).vermittlerAnrede(p),
   "admin-nutzung": async (p) => (await import("@/lib/ops/admin-nutzung")).adminNutzung(p),

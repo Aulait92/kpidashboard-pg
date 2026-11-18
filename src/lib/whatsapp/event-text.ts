@@ -25,12 +25,12 @@ export function buildEventDescription(d: {
   mode: "phone" | "video";
   summary: string | null;
   conversationId: string | null;
-  bookedVia: "bot" | "booking_page" | "advisor";
+  bookedVia: "bot" | "booking_page" | "advisor" | "mail_strecke";
 }): string {
   const base = appUrl();
   return [
     `Lead: ${d.name}`,
-    `Telefon/WhatsApp: ${d.phone}`,
+    d.phone ? `Telefon/WhatsApp: ${d.phone}` : "Telefon: keine Nummer angegeben",
     d.email ? `E-Mail: ${d.email}` : "",
     d.product ? `Produkt: ${d.product}` : "",
     `Art: ${d.mode === "video" ? "Videocall (Video-Link im Termin)" : "Telefonat, bitte den Lead anrufen"}`,
@@ -43,6 +43,8 @@ export function buildEventDescription(d: {
       ? "Gebucht durch den KI-Assistenten via WhatsApp."
       : d.bookedVia === "advisor"
         ? "Vom Berater in der App gebucht."
+        : d.bookedVia === "mail_strecke"
+          ? "Vom Lead über die E-Mail-Strecke gebucht (Lead ohne WhatsApp)."
         : "Vom Lead selbst gebucht (Buchungsseite / Meta-Leadformular).",
   ]
     .filter((l, i, arr) => l !== "" || arr[i - 1] !== "")

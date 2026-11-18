@@ -32,7 +32,7 @@ export function smsAbsender(env: NodeJS.ProcessEnv = process.env): string {
 export type SmsErgebnis = { status: "sent" | "blocked" | "no_key" | "failed"; id?: string | null; error?: string | null };
 
 /** Eine SMS senden. Wirft nie. */
-export async function sendSms(to: string, text: string, opts: { fetchImpl?: typeof fetch } = {}): Promise<SmsErgebnis> {
+export async function sendSms(to: string, text: string, opts: { fetchImpl?: typeof fetch; /** eigener Absender (höchstens 11 Zeichen, sonst SMS_ABSENDER) */ from?: string | null } = {}): Promise<SmsErgebnis> {
   const key = process.env.SEVEN_API_KEY?.trim();
   if (!key) return { status: "no_key" };
   const nummer = nurDigits(to);
@@ -42,7 +42,7 @@ export async function sendSms(to: string, text: string, opts: { fetchImpl?: type
     const res = await (opts.fetchImpl ?? fetch)(URL, {
       method: "POST",
       headers: { "X-Api-Key": key, "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ to: `+${nummer}`, text: ohneGedankenstriche(text), from: smsAbsender() }),
+      body: JSON.stringify({ to: `+${nummer}`, text: ohneGedankenstriche(text), from: (opts.from ?? "").replace(/[^A-Za-z0-9 .-]/g, "").trim().slice(0, 11) || smsAbsender() }),
       signal: AbortSignal.timeout(15000),
     });
     const raw = await res.text();

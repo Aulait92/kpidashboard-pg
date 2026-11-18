@@ -810,6 +810,8 @@ model Lead {
   // Antwortadresse ohne Postfach (Paket M2, lib/mail/antwort-adresse.ts): <kurzname>.<antwortCode>@antwort.dein-beratungstermin.de.
   // 8 Zeichen base32 aus HMAC(AUTH_SECRET, Lead-ID), beim ersten Versand gesetzt, bei der Löschung geleert.
   antwortCode          String?           @unique
+  // Mail-Strecke für Leads ohne WhatsApp (Ole, 18.11.2026, lib/mail-strecke)
+  mailStrecke          LeadMailStrecke?
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revenues Revenue[]
@@ -1418,6 +1420,9 @@ model Appointment {
   einladungAn          String?
   einladungSeq         Int       @default(0)
   einladungAusstehend  DateTime?
+  // Wie gebucht (Ole, 18.11.2026, E1 Mail-Strecke, Kennzahl Anteil Termin über die Mail-Strecke):
+  // bot | booking_page | advisor | mail_strecke; null = vor diesem Feld gebucht
+  bookedVia            String?
   // Komplettcheck nach der Buchung (Ole, 17.11.2026): true = Lead möchte, dass der Berater im Termin auch kurz schaut,
   // ob er insgesamt gut abgesichert ist; false = nein; null = nicht gefragt bzw. offen
   komplettcheck      Boolean?
@@ -4825,4 +4830,108 @@ model MahnwesenSettings {
   verzugspauschale Boolean  @default(false)
   leadsPause       Boolean  @default(false)
   updatedAt        DateTime @updatedAt
+}
+
+// Mail-Strecke für Leads ohne WhatsApp (Ole, 18.11.2026, docs/plan-mailstrecke-dsgvo-investoren.md E0 bis E4, E7,
+// lib/mail-strecke): Erstmail mit Öffnungsfrage und zwei Zeiten, Antwortseite /t/<token>, Strecke nach der Buchung.
+// Token = HMAC über die ID (lib/mail-strecke/token.ts), nichts Geheimes in der Datenbank.
+model LeadMailStrecke {
+  id            String    @id @default(cuid())
+  customerId    String
+  leadId        String    @unique
+  lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  // kein_whatsapp | keine_nummer | festnetz | keine_einwilligung
+  ausloeser     String
+  // neu | erstmail | gebucht | fertig | abgemeldet | gestoppt
+  schritt       String    @default("neu")
+  // Antworten auf der Seite: { oeffnung, komplettcheck, angaben, adresse, ... } (keine Gesundheitsangaben)
+  antworten     Json?
+  // In der letzten Mail angebotene Zeiten (ISO)
+  zeiten        String[]  @default([])
+  erstmailAt    DateTime?
+  // Grund, wenn die Erstmail nicht raus konnte (keine_adresse, abgemeldet, …)
+  erstmailGrund String?
+  // Letzte Antwort auf der Seite (POST)
+  antwortAt     DateTime?
+  appointmentId String?
+  gebuchtAt     DateTime?
+  // Buchung läuft (Doppelklick-Sperre, wird nach Erfolg bzw. Fehler geleert)
+  buchungAt     DateTime?
+  // Takt nach Tag 1 (lib/mail-strecke/texte.ts TAKT): erledigte Schritte und wann zuletzt
+  stufe         Int       @default(0)
+  stufeAt       DateTime?
+  // SMS über seven.io (Schalter MAIL_STRECKE_SMS): Anzahl (höchstens 2) und zuletzt
+  smsZahl       Int       @default(0)
+  smsAt         DateTime?
+  // Erste Reaktion (Seite im Browser geöffnet, Antwort, Buchung, Mail-Antwort, Anruf erreicht): stoppt das Nachfassen
+  reaktionAt    DateTime?
+  stopGrund     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([customerId, schritt])
+  @@index([schritt, erstmailAt])
+}
+
+// Betroffenenrechte (Ole, 18.11.2026, D0, lib/dsgvo): Anfragen von Leads bzw. Kunden des Vermittlers (Auskunft,
+// Löschung, Widerspruch gegen Werbung …), erkannt ohne KI in Chat und Mail-Eingang. Frist ein Monat (Art. 12 Abs. 3).
+// Ohne Fremdschlüssel auf Lead: Anfrage und Protokoll bleiben nach einer Löschung als Nachweis (3 Jahre).
+model DsgvoAnfrage {
+  id                String    @id @default(cuid())
+  customerId        String
+  leadId            String?
+  // auskunft | loeschung | widerspruch_werbung | berichtigung | einschraenkung | uebertragbarkeit | widerruf | unklar
+  art               String
+  // whatsapp | email | formular
+  kanal             String
+  // offen | erledigt | abgelehnt
+  status            String    @default("offen")
+  eingangAt         DateTime
+  fristBis          DateTime
+  // Sofortbestätigung an den Absender (über den Eingangskanal, im Namen des Vermittlers)
+  bestaetigtAt      DateTime?
+  // Kurzer Auszug der Nachricht (höchstens 300 Zeichen, ohne Anhänge)
+  auszug            String?
+  // Quelle: Message-ID bzw. MailEingang-ID (Idempotenz je Nachricht)
+  quelleId          String?   @unique
+  erledigtAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  logs              DsgvoAnfrageLog[]
+
+  @@index([customerId, status])
+  @@index([leadId])
+}
+
+// Protokoll je Anfrage (Nachweis, Art. 5 Abs. 2), 3 Jahre aufbewahren (loeschenAb), ohne Inhalte.
+model DsgvoAnfrageLog {
+  id          String       @id @default(cuid())
+  anfrageId   String
+  anfrage     DsgvoAnfrage @relation(fields: [anfrageId], references: [id], onDelete: Cascade)
+  customerId  String
+  // eingang | bestaetigt | widerspruch_umgesetzt | erledigt | …
+  aktion      String
+  details     Json?
+  at          DateTime     @default(now())
+  loeschenAb  DateTime
+
+  @@index([anfrageId])
+  @@index([loeschenAb])
+}
+
+// Sperrliste nach Betroffenenrechten (D0): Hash von Telefon bzw. E-Mail je Vermittler. umfang „werbung“: keine
+// werblichen Nachrichten (Abfolgen, Kampagnen, Nachfassen, Meta-Rückmeldung); „geloescht“: Daten gelöscht, Importe gesperrt.
+model LeadSperre {
+  id         String   @id @default(cuid())
+  customerId String
+  // email | phone
+  kind       String
+  hash       String
+  // werbung | geloescht
+  umfang     String
+  anfrageId  String?
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, kind, hash, umfang])
+  @@index([customerId])
 }
