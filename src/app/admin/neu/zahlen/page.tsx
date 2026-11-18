@@ -1,7 +1,5 @@
 import { connection } from "next/server";
-import { ArrowRight } from "lucide-react";
 import { ZahlenView } from "@/components/admin/zahlen-view";
-import { ButtonLink } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
 import { punkteDerRolle } from "@/lib/admin-neu/rollen-server";
@@ -58,13 +56,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ z
         }}
         abschnittExtra={{ vertrieb: <KundenNachKanal /> }}
       />
-      <div className="mt-5 flex justify-end">
-        <span data-funktion="zahlen-tabs--link-leads-werbung-dashboard">
-          <ButtonLink href="/" variant="ghost" icon={ArrowRight}>
-            Leads & Werbung (Dashboard)
-          </ButtonLink>
-        </span>
-      </div>
     </Seite>
   );
 }

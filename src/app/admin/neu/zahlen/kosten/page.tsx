@@ -6,7 +6,6 @@ import { Badge, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { Aufklapp } from "@/components/admin-neu/zahlen/aufklapp";
 import { CostForm, KpiSettingsForm } from "@/app/admin/einstellungen/kosten/forms";
-import { CsvUpload } from "@/app/admin/einstellungen/bank/forms";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
 export const metadata = { title: "Kosten & Bank | performancegrowth Admin" };
@@ -83,15 +82,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
             </p>
           ) : null}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2" data-funktion="actions-connectbankaction--bank-verbinden actions-syncbankaction--umsaetze-jetzt-abrufen actions-disconnectbankaction--bank-trennen">
-            <BankKarte title="Commerzbank (Geschäftskonto)" icon={Building2} aspsp="Commerzbank" c={commerz} csv={csvCount("csv:commerzbank")} configured={configured} soon={soonOf(commerz)} csvHint="Ohne Verbindung: Online-Banking → Umsätze → Export „CSV“ und unten hochladen." />
-            <BankKarte title="American Express" icon={CreditCard} aspsp="American Express" c={amex} csv={csvCount("csv:amex")} configured={configured} soon={soonOf(amex)} csvHint="Meist nur per CSV: amex.de → Umsätze → „Herunterladen“ → Format „CSV“, einmal im Monat." />
+            <BankKarte title="Commerzbank (Geschäftskonto)" icon={Building2} aspsp="Commerzbank" c={commerz} csv={csvCount("csv:commerzbank")} configured={configured} soon={soonOf(commerz)} />
+            <BankKarte title="American Express" icon={CreditCard} aspsp="American Express" c={amex} csv={csvCount("csv:amex")} configured={configured} soon={soonOf(amex)} />
           </div>
-          <Aufklapp titel="CSV hochladen" hinweis="Commerzbank, Amex" funktion="actions-uploadcsvaction--csv-hochladen-commerzbank-amex-automatisch">
-            <Card className="p-4 sm:p-5">
-              <p className="mb-3 text-sm text-[color:var(--muted)]">Doppelt hochladen schadet nicht: vorhandene Buchungen werden übersprungen.</p>
-              <CsvUpload />
-            </Card>
-          </Aufklapp>
           <Aufklapp titel="Regeln" hinweis={`${rules.length}`} funktion="actions-saveruleaction--regel-speichern actions-deleteruleaction--regel-loeschen">
             <Card className="p-4 sm:p-5">
               {rules.length ? <p className="mb-2 text-sm text-[color:var(--muted)]">Neue Regeln entstehen beim Zuordnen mit „immer so“.</p> : null}

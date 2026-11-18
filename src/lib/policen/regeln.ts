@@ -311,7 +311,7 @@ export function gesundheitInVertraegen(qualificationData: unknown): boolean {
 export function ohneBisherigePolicen(liste: string[], geschickt: boolean): string[] {
   if (!geschickt) return liste;
   return liste
-    .filter((x) => !/bisherigen? Polic(e|en), falls vorhanden/i.test(x))
+    .filter((x) => !/bisherigen? Polic(e|en), falls vorhanden|bestehenden Verträge und Policen/i.test(x))
     .map((x) => x.replace(/die bisherige Gebäudepolice, /i, ""));
 }
 

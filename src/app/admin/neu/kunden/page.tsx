@@ -217,7 +217,7 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
         <Card>
           <ul
             className="divide-y divide-[color:var(--border)]"
-            data-funktion="page--kundenliste-mit-status-test-zahlung-offen-pause page--uebersicht-aller-kunden-mit-assistent-liste page--ruhende-konten-mit-loeschdatum-aufbewahrung kunden-tabs--unterreiter-uebersicht-pipeline-leads-pay-per page-redirect--weiterleitung-auf-kunden-pipeline-keine-eigene"
+            data-funktion="page--kundenliste-mit-status-test-zahlung-offen-pause page--uebersicht-aller-kunden-mit-assistent-liste page--ruhende-konten-mit-loeschdatum-aufbewahrung"
           >
             {sichtbar.map((z) => (
               <li key={z.key}>

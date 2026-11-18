@@ -33,8 +33,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausratversicherung Comfort-Schutz",
@@ -60,8 +59,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -74,6 +72,7 @@
     "Wertsachen in % der Versicherungssumme (Höchstentschädigung).",
     "Fahrraddiebstahl als Baustein von 500 bis 10.000 € wählbar; Onlineschutz Plus (Phishing, Online-Banking, bis 10.000 €) als Baustein.",
     "Elementarschäden laut Tariftabelle im Comfort enthalten, im Basis nicht.",
-    "Selbstbeteiligung wählbar, Höhe nicht genannt."
+    "Selbstbeteiligung wählbar, Höhe nicht genannt.",
+    "Geprüft am 18.11.2026 an den Tarifvergleichen der Produktseiten und den Basisinformationen von CosmosDirekt."
   ]
 }

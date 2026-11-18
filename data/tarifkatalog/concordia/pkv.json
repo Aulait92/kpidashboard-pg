@@ -28,8 +28,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/private-vollversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "AV mit SV 2 und ZV 1",
@@ -50,8 +49,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/private-vollversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "AV mit SV 1, ZV 1 und VV PLUS",
@@ -72,8 +70,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/private-vollversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -82,6 +79,7 @@
   "offen": [
     "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Concordia hat ein einziges Tarifwerk aus Bausteinen (AV ambulant, SV stationär, ZV Zahn, Pflege-Pflicht) plus Ergänzungstarif VV PLUS; die Stufen sind selbst gebildete Kombinationen. Keine Empfehlung markiert.",
     "Selbstbehalt über AV 1 bis AV 4: 0, 600, 1.080 oder 2.040 € (Kinder halb). Erstattungssatz ambulant in Prozent nicht genannt. ZV 1: Zahnbehandlung und Prophylaxe 100 %, Zahnersatz und Kieferorthopädie 80 %; ZV 2: 80 bzw. 60 %.",
-    "VV PLUS: Kosten über der GOÄ nach vorheriger Zusage, Kurtagegeld 150 €/Tag bis 28 Tage, Rooming-in 25 €/Tag. Krankentagegeld (KTG) und Krankenhaustagegeld (KHT) als Zusatztarife; Sehhilfen, Primärarzt und Ausland nicht ausgewertet."
+    "VV PLUS: Kosten über der GOÄ nach vorheriger Zusage, Kurtagegeld 150 €/Tag bis 28 Tage, Rooming-in 25 €/Tag. Krankentagegeld (KTG) und Krankenhaustagegeld (KHT) als Zusatztarife; Sehhilfen, Primärarzt und Ausland nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

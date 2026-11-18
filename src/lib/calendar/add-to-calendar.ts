@@ -16,6 +16,8 @@ import {
 
 export type CustomerEvent = {
   uid: string;
+  /** SEQUENCE der Einladung (Appointment.einladungSeq): Änderungen als Aktualisierung derselben UID */
+  sequence?: number;
   start: Date;
   end: Date;
   summary: string;
@@ -56,6 +58,7 @@ async function loadCustomerEvent(
       conversationId: true,
       customerId: true,
       leadId: true,
+      einladungSeq: true,
       customer: { select: { name: true, leadAddress: true } },
       lead: { select: { name: true, formData: true, contactOverrides: true, assignedUser: { select: { displayName: true } } } },
     },
@@ -82,6 +85,7 @@ async function loadCustomerEvent(
   })().catch(() => ({ nom: advisor, dat: advisor }));
   return {
     uid: `${appt.id}@termin`,
+    sequence: appt.einladungSeq,
     start: appt.startsAt,
     end: appt.endsAt ?? new Date(appt.startsAt.getTime() + 30 * 60000),
     summary: customerEventSummary(mode, person.dat),
@@ -138,6 +142,7 @@ export function buildIcs(ev: CustomerEvent): string {
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
     `UID:${ev.uid}`,
+    `SEQUENCE:${ev.sequence ?? 0}`,
     `DTSTAMP:${icsDate(new Date())}`,
     `DTSTART:${icsDate(ev.start)}`,
     `DTEND:${icsDate(ev.end)}`,

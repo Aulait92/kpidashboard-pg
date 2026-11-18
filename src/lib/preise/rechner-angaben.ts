@@ -3,8 +3,10 @@
 //   - „Beiträge rechnen“ in der Terminvorbereitung (lib/preise/pilot.ts rechnerAngaben: Angaben zum Kopieren) und
 //   - die Folgefragen des WhatsApp-Assistenten nach der Zusage zum Termin (folgefragen, lib/whatsapp/bot.ts).
 // Regeln für die Folgefragen: nur Angaben, die der Lead weiß und die für den Beitrag nötig sind; was der Vermittler im
-// Termin festlegt (Selbstbeteiligung, Summen, Lebensbereiche, Tarifwahl, Versicherungsbeginn) steht hier als „termin“
-// und wird nie gefragt; Gesundheitsangaben zu Menschen stehen nicht hier. Rein, ohne Datenbank.
+// Termin festlegt (Selbstbeteiligung, Summen, Tarifwahl, Versicherungsbeginn) steht hier als „termin“ und wird nie
+// gefragt; Gesundheitsangaben zu Menschen stehen nicht hier. Rein, ohne Datenbank.
+// Lebensbereiche (Rechtsschutz, P2): Der Rechner braucht sie für den Beitrag (docs/preise-pilot.md), der Lead kann sie
+// beantworten, also fragt der Assistent danach (nicht mehr „termin“).
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
@@ -90,7 +92,20 @@ export const ANGABEN = {
     fragen: [f("oeffentlicherDienst", "beruf", "Sind Sie im öffentlichen Dienst tätig?", "Bist du im öffentlichen Dienst tätig?", undefined, JA_NEIN)],
   },
   wohnflaeche: { label: "Wohnfläche", wer: "lead", rang: 2, wert: (c) => c.q("wohnflaeche") ?? c.form(/wohnfl(ä|a)che/i), fragen: [f("wohnflaeche", "wohnflaeche", "Wie groß ist Ihre Wohnung ungefähr?", "Wie groß ist deine Wohnung ungefähr?")] },
-  lebensbereiche: { label: "Lebensbereiche", wer: "termin", rang: 99, wert: (c) => c.q("bereiche") },
+  lebensbereiche: {
+    label: "Lebensbereiche",
+    wer: "lead",
+    rang: 5,
+    wert: (c) => c.q("bereiche"),
+    fragen: [
+      f(
+        "lebensbereiche",
+        "bereiche",
+        "Welche Bereiche soll Ihr Rechtsschutz abdecken: Privat, Beruf, Verkehr, Wohnen oder nur einen Teil davon?",
+        "Welche Bereiche soll dein Rechtsschutz abdecken: Privat, Beruf, Verkehr, Wohnen oder nur einen Teil davon?",
+      ),
+    ],
+  },
   berufsgruppe: { label: "Beruf", wer: "lead", rang: 6, wert: (c) => c.q("beruf") ?? c.form(/^beruf|t(ä|a)tigkeit/i), fragen: [f("beruf", "beruf", "Was machen Sie beruflich?", "Was machst du beruflich?")] },
   versichern: { label: "Wer versichert werden soll", wer: "lead", rang: 4, wert: (c) => c.q("versichern"), fragen: [f("versichern", "versichern", "Wer soll versichert werden: nur Sie oder auch Familienmitglieder?", "Wer soll versichert werden: nur du oder auch Familienmitglieder?")] },
   adresseGebaeude: {

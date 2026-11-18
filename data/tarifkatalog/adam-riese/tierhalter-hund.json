@@ -23,14 +23,14 @@
         "forderungsausfall": "ja",
         "neuwert": "nein",
         "nebenberuf": "nein",
-        "ausland": "Europa unbegrenzt"
+        "ausland": "Europa unbegrenzt",
+        "geliehen": "bis 200.000 €"
       },
       "bausteine": {
         "sb0": "optional"
       },
       "quelle": "https://www.adam-riese.de/downloads/260616_Leistungsuebersicht_HHV_2.1",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hundehalterhaftpflicht XXL",
@@ -46,14 +46,14 @@
         "forderungsausfall": "ja",
         "neuwert": "bis 5.000 €",
         "nebenberuf": "bis 22.000 € Umsatz",
-        "ausland": "Europa unbegrenzt"
+        "ausland": "Europa unbegrenzt",
+        "geliehen": "ja"
       },
       "bausteine": {
         "sb0": "optional"
       },
       "quelle": "https://www.adam-riese.de/downloads/260616_Leistungsuebersicht_HHV_2.1",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -62,7 +62,8 @@
   ],
   "offen": [
     "Quelle: Leistungsübersicht Hundehalterhaftpflicht (Stand 01.08.2026) und Produktseite; nur zwei Tarife XL und XXL, keine Markierung.",
-    "Geliehene oder gemietete bewegliche Sachen: „bis 200.000 €“ steht nur in einer Spalte, Zuordnung zu XL oder beiden Tarifen unklar, deshalb nicht übernommen.",
-    "Außereuropäische Aufenthalte bis 5 Jahre. XXL zusätzlich Tierarztkosten (Ausfalldeckung) bis 3.000 € und Verletzung am Versicherungsnehmer bis 1 Mio. €."
+    "Außereuropäische Aufenthalte bis 5 Jahre. XXL zusätzlich Tierarztkosten (Ausfalldeckung) bis 3.000 € und Verletzung am Versicherungsnehmer bis 1 Mio. €.",
+    "Geliehene und gemietete bewegliche Sachen: XL bis 200.000 €, XXL bis zur Versicherungssumme (Leistungsübersicht HHV 2.1, Seite 2, am Bild geprüft).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht (Symbole am Bild geprüft)."
   ]
 }

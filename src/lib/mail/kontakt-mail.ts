@@ -9,6 +9,10 @@
 // Status: versendet → zugestellt (Resend-Webhook) bzw. nicht zustellbar (Bounce) oder abgemeldet (Abmeldelink,
 // „Stopp“). Fehlgeschlagene Versuche stehen als „nicht versendet“ mit Grund im Verlauf.
 // Protokollieren darf nie den Versand scheitern lassen.
+//
+// Eingang (Paket M2, Ole 18.11.2026): Antworten an die Antwortadresse stehen als ContactMail mit richtung „eingang“
+// und Status „empfangen“ im Verlauf (lib/mail/eingang.ts). Art „antwort“ zählt für die Stopp-Regeln (hatMailAntwort),
+// automatische Antworten und Mails mit nicht bestätigtem Absender stehen nur als Hinweis da.
 
 import { prisma } from "@/lib/prisma";
 
@@ -39,6 +43,10 @@ export const MAIL_ARTEN = {
   kuendigung: "Kündigung alte Versicherung",
   wie_besprochen: "Wie besprochen",
   tuer_offen: "Kein Interesse: Tür offen",
+  // Eingang an die Antwortadresse (Paket M2, lib/mail/eingang.ts)
+  antwort: "Antwort per E-Mail",
+  antwort_auto: "Automatische Antwort",
+  antwort_ungeprueft: "E-Mail, Absender nicht bestätigt",
 } as const;
 export type MailArt = keyof typeof MAIL_ARTEN;
 
@@ -48,8 +56,12 @@ export const MAIL_STATUS = {
   nicht_zustellbar: "nicht zustellbar",
   abgemeldet: "abgemeldet",
   nicht_versendet: "nicht versendet",
+  // Eingang (Paket M2)
+  empfangen: "empfangen",
 } as const;
 export type MailStatus = keyof typeof MAIL_STATUS;
+/** Zustellstatus ausgehender Mails, die ein Ereignis setzen kann. */
+type ZustellStatus = Exclude<MailStatus, "nicht_versendet" | "versendet" | "empfangen">;
 
 /** Wem die Mail im Verlauf zugeordnet wird und was für eine Mail es ist. */
 export type MailProtokoll = {
@@ -84,8 +96,12 @@ export function mailArtLabel(art: string, label?: string | null): string {
   return label?.trim() ? `${base}: ${label.trim()}` : base;
 }
 
-/** Kurzzeile für den Lead-Verlauf (ohne Text; der steht in ContactMail). */
-export function mailVerlaufText(m: { art: string; label?: string | null; automatic: boolean; to: string; subject: string; status: string; provider?: string | null }): string {
+/** Kurzzeile für den Lead-Verlauf (ohne Text; der steht in ContactMail). Eingang: „E-Mail erhalten von …“. */
+export function mailVerlaufText(m: { art: string; label?: string | null; automatic: boolean; to: string; subject: string; status: string; provider?: string | null; richtung?: string | null }): string {
+  if (m.richtung === "eingang") {
+    const zusatz = m.art === "antwort" ? "" : ` (${mailArtLabel(m.art, m.label)})`;
+    return `E-Mail erhalten${zusatz} von ${m.to}: ${m.subject}`;
+  }
   const head = m.status === "nicht_versendet" ? "E-Mail nicht versendet" : "E-Mail";
   const vorlage = m.art !== "manuell" ? mailArtLabel(m.art, m.label) : "";
   const zusatz = [m.automatic ? "automatisch" : "", vorlage, m.provider === "mailprogramm" ? "im eigenen Mailprogramm gesendet" : ""].filter(Boolean).join(", ");
@@ -164,10 +180,10 @@ export async function protokolliereMail(p: MailProtokoll, v: MailVersand, now = 
 }
 
 /** Rangfolge: ein späteres Ereignis überschreibt nur einen schwächeren Status (Webhooks kommen ungeordnet). */
-const RANG: Record<Exclude<MailStatus, "nicht_versendet">, number> = { versendet: 0, zugestellt: 1, nicht_zustellbar: 2, abgemeldet: 3 };
+const RANG: Record<Exclude<MailStatus, "nicht_versendet" | "empfangen">, number> = { versendet: 0, zugestellt: 1, nicht_zustellbar: 2, abgemeldet: 3 };
 
-/** Neuer Status (rein): null = bleibt. „nicht versendet“ bleibt immer. */
-export function naechsterStatus(current: string, next: Exclude<MailStatus, "nicht_versendet" | "versendet">): MailStatus | null {
+/** Neuer Status (rein): null = bleibt. „nicht versendet“ und „empfangen“ bleiben immer. */
+export function naechsterStatus(current: string, next: ZustellStatus): MailStatus | null {
   if (!(current in RANG)) return null;
   return RANG[next] > RANG[current as keyof typeof RANG] ? next : null;
 }
@@ -175,7 +191,7 @@ export function naechsterStatus(current: string, next: Exclude<MailStatus, "nich
 /** Zustellstatus zu einer Message-ID setzen (Resend-Webhook, Bounce, Abmeldung). Gibt die Zahl der Einträge zurück. */
 export async function setzeMailStatus(
   providerMessageId: string,
-  status: Exclude<MailStatus, "nicht_versendet" | "versendet">,
+  status: ZustellStatus,
   opts: { reason?: string | null; now?: Date } = {},
 ): Promise<number> {
   if (!providerMessageId) return 0;
@@ -234,9 +250,42 @@ export type KontaktMailEintrag = {
   at: string;
   /** Versandweg; „mailprogramm“ = laut Vermittler im eigenen Mailprogramm gesendet */
   provider: string | null;
+  /** ausgang (Standard) oder eingang (Antwort an die Antwortadresse; `to` ist dann der Absender) */
+  richtung: "ausgang" | "eingang";
+  /** Anhänge eines Eingangs; link null = aus Sicherheitsgründen nicht übernommen */
+  anhaenge: { name: string; groesse: number; link: string | null }[];
 };
 
-const toEintrag = (m: { id: string; kind: string; label: string | null; automatic: boolean; recipient: string; subject: string; body: string; status: string; reason: string | null; createdAt: Date; provider?: string | null }): KontaktMailEintrag => ({
+type MailZeile = {
+  id: string;
+  kind: string;
+  label: string | null;
+  automatic: boolean;
+  recipient: string;
+  subject: string;
+  body: string;
+  status: string;
+  reason: string | null;
+  createdAt: Date;
+  provider?: string | null;
+  richtung?: string | null;
+  leadId?: string | null;
+  eingang?: { id: string; anhaenge: unknown } | null;
+};
+
+/** Anhänge eines Eingangs für die Anzeige (rein): Download über die App, gesperrte ohne Link. */
+export function eingangAnhaenge(leadId: string | null | undefined, eingang: { id: string; anhaenge: unknown } | null | undefined): KontaktMailEintrag["anhaenge"] {
+  if (!eingang || !Array.isArray(eingang.anhaenge)) return [];
+  return (eingang.anhaenge as { id?: unknown; name?: unknown; groesse?: unknown; erlaubt?: unknown }[])
+    .filter((a) => a && typeof a.id === "string")
+    .map((a) => ({
+      name: typeof a.name === "string" && a.name.trim() ? a.name : "Anhang",
+      groesse: typeof a.groesse === "number" ? a.groesse : 0,
+      link: a.erlaubt === true && leadId ? `/api/buyer/leads/${leadId}/mail-anhang/${eingang.id}/${a.id as string}` : null,
+    }));
+}
+
+const toEintrag = (m: MailZeile): KontaktMailEintrag => ({
   id: m.id,
   art: m.kind,
   artLabel: mailArtLabel(m.kind, m.label),
@@ -249,12 +298,14 @@ const toEintrag = (m: { id: string; kind: string; label: string | null; automati
   reason: m.reason,
   at: m.createdAt.toISOString(),
   provider: m.provider ?? null,
+  richtung: m.richtung === "eingang" ? "eingang" : "ausgang",
+  anhaenge: eingangAnhaenge(m.leadId, m.eingang),
 });
 
 /** Mails zu Verlaufseinträgen (für loadLeadHistory). */
 export async function mailsById(ids: string[]): Promise<Map<string, KontaktMailEintrag>> {
   if (!ids.length) return new Map();
-  const rows = await prisma.contactMail.findMany({ where: { id: { in: ids } } });
+  const rows = await prisma.contactMail.findMany({ where: { id: { in: ids } }, include: { eingang: { select: { id: true, anhaenge: true } } } });
   return new Map(rows.map((r) => [r.id, toEintrag(r)]));
 }
 
@@ -271,6 +322,12 @@ export async function bestandMitMails(customerId: string, existingCustomerIds: s
   return new Set(rows.map((r) => r.existingCustomerId).filter((x): x is string => !!x));
 }
 
+/** Hat der Lead seit `seit` per E-Mail geantwortet (Antwortadresse, nur echte Antworten)? Stopp-Regeln (Regel 5). */
+export async function hatMailAntwort(leadId: string, seit: Date): Promise<boolean> {
+  const n = await prisma.contactMail.count({ where: { leadId, richtung: "eingang", kind: "antwort", createdAt: { gt: seit } } });
+  return n > 0;
+}
+
 /**
  * Letzte automatische Mails an den Kontakt (für den WhatsApp-Assistenten): Art, Datum, Betreff.
  * Standard: höchstens 3 aus den letzten 14 Tagen, nur tatsächlich versendete.
@@ -283,7 +340,7 @@ export async function letzteAutomatischeMails(
   if (!or.length) return [];
   const now = opts.now ?? new Date();
   const rows = await prisma.contactMail.findMany({
-    where: { OR: or, automatic: true, status: { not: "nicht_versendet" }, createdAt: { gte: new Date(now.getTime() - (opts.days ?? 14) * 86_400_000), lte: now } },
+    where: { OR: or, automatic: true, richtung: "ausgang", status: { not: "nicht_versendet" }, createdAt: { gte: new Date(now.getTime() - (opts.days ?? 14) * 86_400_000), lte: now } },
     orderBy: { createdAt: "desc" },
     take: opts.take ?? 3,
     select: { kind: true, label: true, subject: true, createdAt: true },

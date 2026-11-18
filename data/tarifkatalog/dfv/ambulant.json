@@ -21,8 +21,7 @@
         "wartezeit": "keine"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-AmbulantSchutz Komfort",
@@ -36,8 +35,7 @@
         "wartezeit": "keine"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-AmbulantSchutz Premium",
@@ -51,8 +49,7 @@
         "wartezeit": "keine"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-AmbulantSchutz Exklusiv",
@@ -66,8 +63,7 @@
         "wartezeit": "keine"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -77,6 +73,7 @@
     "Die Stufen unterscheiden sich nur in der Leistung bei besonders schweren Krankheiten (kein Merkmal im Schema): Basis keine; Komfort 3.000 €, Premium 6.000 €, Exklusiv 12.000 € im Jahr (Krebs 5 Jahre, Infarkt und Schlaganfall 1 Jahr). Bitte auf der Folie ergänzen.",
     "Heilpraktiker und Sehhilfen nicht versichert bzw. nicht genannt (Zuzahlungen ausdrücklich ohne Sehhilfen). Hörgeräte nur über die gesetzliche Zuzahlung für Hilfsmittel (max. 100 € im Jahr gesamt).",
     "Gesetzliche Zuzahlungen für Arznei-, Verband-, Heil- und Hilfsmittel und Fahrtkosten 100 %, höchstens 100 € je Versicherungsjahr. Schutzimpfungen inkl. Reiseimpfungen 100 % bis 200 € alle 2 Jahre.",
-    "Nur für gesetzlich Versicherte. DFV markiert keine Stufe; bei 4 Stufen die dritte (Premium)."
+    "Nur für gesetzlich Versicherte. DFV markiert keine Stufe; bei 4 Stufen die dritte (Premium).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichproben am Bild der Übersicht)."
   ]
 }

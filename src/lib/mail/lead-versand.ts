@@ -14,6 +14,11 @@
 // (Customer.mailAblauf, lib/mail/ablauf.ts), geht eine Kopie an die gewählte Adresse (Standard: die eigene). Die Kopie
 // ist eine eigene Mail ohne Eintrag im Verlauf: Ein Zustellfehler der Kopie markiert nie die Mail an den Lead.
 // Mit Postfach liegt die Mail ohnehin in „Gesendet“, dort keine Kopie.
+//
+// Antwortadresse (Paket M2, Ole 18.11.2026): Auf dem Resend-Weg mit Lead und eingeschaltetem MAIL_ANTWORT_EINGANG ist
+// Reply-To <kurzname>.<leadcode>@antwort.dein-beratungstermin.de (lib/mail/antwort-adresse.ts); Antworten stehen dann im
+// Verlauf und gehen weiter an den Vermittler (lib/mail/eingang.ts). Mit verbundenem Postfach (auch wenn es einmal
+// scheitert) und bei ausgeschaltetem Schalter bleibt Reply-To die Adresse des Vermittlers.
 
 import { prisma } from "@/lib/prisma";
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
@@ -34,11 +39,33 @@ export type LeadVersandKontext = {
   vermittler: { name: string | null; anrede: Salutation | null };
   /** Verbundenes Postfach, über das gesendet wird (null: Resend) */
   postfach: { userId: string; signatur: string | null } | null;
-  /** Antwort an (nur Resend) */
+  /** Adresse des Vermittlers bzw. zuständigen Beraters (Reply-To ohne Antwortadresse, Ziel der Weiterleitung) */
   replyTo: string | undefined;
+  /** Antwortadresse mit Eingang (nur Resend, nur ohne Postfach, nur mit Schalter); null = Reply-To ist replyTo */
+  antwortAdresse?: string | null;
   /** BCC-Kopie an (nur Resend; null = aus) */
   kopieAn: string | null;
 };
+
+/**
+ * Adresse für Antworten an den Vermittler (rein): wer selbst schreibt (außer Inhaber), sonst der zuständige Berater
+ * (außer Inhaber), sonst die Berateradresse aus dem Assistenten, sonst der zuständige Inhaber, sonst der erste Inhaber.
+ */
+export function vermittlerAdresse(o: {
+  schreiber?: { email: string; teamRole: string | null } | null;
+  zustaendig?: { email: string; teamRole: string | null } | null;
+  advisorEmail?: string | null;
+  ersterInhaber?: string | null;
+}): string | undefined {
+  const v =
+    (o.schreiber && o.schreiber.teamRole !== "owner" ? o.schreiber.email : null) ||
+    (o.zustaendig && o.zustaendig.teamRole !== "owner" ? o.zustaendig.email : null) ||
+    o.advisorEmail ||
+    o.zustaendig?.email ||
+    o.ersterInhaber ||
+    undefined;
+  return v?.trim() || undefined;
+}
 
 /** Versand über unsere Versanddomain eingerichtet (Schlüssel und Absenderadresse)? */
 export function resendBereit(env: Record<string, string | undefined> = process.env): boolean {
@@ -108,13 +135,18 @@ export async function leadVersandKontext(
         .catch(() => [])
     : [];
   const conn = kandidaten.map((id) => conns.find((c) => c.userId === id)).find(Boolean) ?? null;
-  const replyTo =
-    (schreiber && schreiber.teamRole !== "owner" ? schreiber.email : null) ||
-    (assigned && lead?.assignedUser?.teamRole !== "owner" ? lead?.assignedUser?.email : null) ||
-    customer?.agentConfig?.advisorEmail ||
-    (assigned ? lead?.assignedUser?.email : null) ||
-    owners[0]?.email ||
-    undefined;
+  const replyTo = vermittlerAdresse({
+    schreiber,
+    zustaendig: assigned && lead?.assignedUser ? { email: lead.assignedUser.email, teamRole: lead.assignedUser.teamRole } : null,
+    advisorEmail: customer?.agentConfig?.advisorEmail,
+    ersterInhaber: owners[0]?.email,
+  });
+  // Antwortadresse mit Eingang (M2): nur ohne Postfach, mit Lead und eingeschaltetem Schalter
+  let antwort: string | null = null;
+  if (!conn && leadId) {
+    const { antwortEingangAn, antwortAdresseFuer } = await import("@/lib/mail/antwort-adresse");
+    if (antwortEingangAn()) antwort = await antwortAdresseFuer(leadId, { speichern: !opts.nurLesen }).catch(() => null);
+  }
 
   return {
     customerId,
@@ -122,7 +154,8 @@ export async function leadVersandKontext(
     daten: { name, agentur, anschrift: d.anschrift || null, telefon: d.telefon || null, erstinfoUrl },
     vermittler: who.vermittler,
     postfach: conn ? { userId: conn.userId, signatur: conn.user.mailSignature ?? null } : null,
-    replyTo: replyTo?.trim() || undefined,
+    replyTo,
+    antwortAdresse: antwort,
     // Kopie an die gewählte Adresse, sonst an die eigene (Schreiber, sonst Antwortadresse)
     kopieAn: bccEmpfaenger(leseMailAblauf(customer?.mailAblauf), schreiber?.email ?? replyTo ?? null),
   };
@@ -163,9 +196,11 @@ export async function sendeLeadMail(
   const subject = ohneGedankenstriche(m.subject);
   const text = ohneGedankenstriche(m.text);
   const html = m.html ? ohneGedankenstriche(m.html) : null;
+  // Antwortadresse nur, wenn kein Postfach verbunden ist (auch nicht, wenn es gerade gescheitert ist)
+  const replyTo = (!k.postfach && k.antwortAdresse) || k.replyTo;
   const res = await sendeKontaktMailResend(
     apiKey,
-    { from, to: o.to, ...(k.replyTo ? { replyTo: k.replyTo } : {}), subject, text, ...(html ? { html } : {}), ...attachments },
+    { from, to: o.to, ...(replyTo ? { replyTo } : {}), subject, text, ...(html ? { html } : {}), ...attachments },
     o.protokoll,
   );
   // Testumgebung (MAIL_NUR_AN): gilt wie bisher als erledigt, im Verlauf steht „nicht versendet“

@@ -31,8 +31,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung Comfort",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -68,6 +66,7 @@
     "Haftpflicht 100 Mio. € pauschal, Personenschäden höchstens 15 Mio. € je Person. Grobe Fahrlässigkeit nicht nach Alkohol- oder Drogenkonsum. Neuwert gilt für Neuwagen; Kaufwert bei Gebrauchtwagen ebenfalls 12 bzw. 24 Monate.",
     "Comfort zusätzlich: Leistungen bei Eigenschaden (Haftpflicht), 50 € Gutschrift auf die Selbstbeteiligung je schadenfreiem Jahr, Dachlawinen und Erdbeben, Leuchtmittel, höhere Entsorgungskosten.",
     "Zusatzbausteine laut Seite: Werkstattbindung, Rabattschutz (bis 3 Schäden frei), Schutzbrief, Fahrerschutz, Verkehrs-Rechtsschutz, Auslandsschadenschutz. Die Seite nennt außerdem eine Variante „Basis light“ (nicht aufgenommen).",
-    "E-Auto: Akku-Schutz, Neupreisentschädigung für Akkus 36 Monate, Wallbox und Ladekabel mitversichert."
+    "E-Auto: Akku-Schutz, Neupreisentschädigung für Akkus 36 Monate, Wallbox und Ladekabel mitversichert.",
+    "Geprüft am 18.11.2026 an den Tarifvergleichen der Produktseiten und den Basisinformationen von CosmosDirekt."
   ]
 }

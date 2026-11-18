@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
-import { CustomerFootersForm, InvoiceCountForm, TaxNumberForm } from "@/app/admin/einstellungen/rechnungsangaben/form";
+import { TaxNumberForm } from "@/app/admin/einstellungen/rechnungsangaben/form";
 import { EinstellungSeite, LISTE } from "@/components/admin-neu/einstellungen/rahmen";
 import { Card, CardHeader } from "@/components/ui";
 import { effectiveTaxNumber, invoiceFooter, loadTaxNumberOverride, taxNumberWarning } from "@/lib/invoice-footer";
@@ -66,22 +66,6 @@ export default async function Page() {
           )}
         </div>
       </Card>
-
-      <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
-        <summary className="flex min-h-12 cursor-pointer items-center px-5 text-[15px] font-semibold">Bestehende Kunden und Rechnungen</summary>
-        <div className="space-y-5 border-t border-[color:var(--border)] p-5">
-          <section className="space-y-2" data-funktion="actions-customerfootersaction--fusszeile-bei-bestehenden-kunden-setzen">
-            <h3 className="text-sm font-semibold">Fußzeile bei bestehenden Stripe-Kunden setzen</h3>
-            <p className="text-sm text-[color:var(--muted)]">Neue Kunden bekommen sie automatisch. Erst zählen, dann alle aktualisieren.</p>
-            <CustomerFootersForm />
-          </section>
-          <section className="space-y-2 border-t border-[color:var(--border)] pt-5" data-funktion="actions-countinvoicesaction--finalisierte-rechnungen-zaehlen">
-            <h3 className="text-sm font-semibold">Verschickte Rechnungen ohne Pflichtangaben zählen</h3>
-            <p className="text-sm text-[color:var(--muted)]">Nur Zahlen, keine Kundendaten.</p>
-            <InvoiceCountForm />
-          </section>
-        </div>
-      </details>
     </EinstellungSeite>
   );
 }

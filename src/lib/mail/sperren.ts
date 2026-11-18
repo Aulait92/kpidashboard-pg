@@ -5,12 +5,14 @@
 //                   keine gültige Adresse.
 //   Abmeldung:      Sperrliste des Vermittlers (Abmeldelink, BestandOptOut), Mail als „abgemeldet“/Spam gemeldet,
 //                   „STOPP“ per WhatsApp. Sperrt alle automatischen Mails und von Hand die werblichen Vorlagen.
-//   Nur automatisch: Stufe nicht „automatisch“, Stopp-Regeln (Abschluss, Absage), Antwort des Leads seit dem Anlass.
+//   Nur automatisch: Stufe nicht „automatisch“, Stopp-Regeln (Abschluss, Absage), Antwort des Leads seit dem Anlass
+//                   (WhatsApp oder, seit Paket M2, E-Mail an die Antwortadresse; automatische Antworten zählen nicht).
 // Tageslimit und Idempotenz stehen in vorlagen-mail.ts (Reservierung in LeadMailVersand).
 
 import { prisma } from "@/lib/prisma";
 import { optOutHash } from "@/lib/bestand/links";
 import { WERBLICH, istMailAdresse, type MailStufe } from "@/lib/mail/ablauf";
+import { hatMailAntwort } from "@/lib/mail/kontakt-mail";
 import type { VorlageKey } from "@/lib/mail/vorlagen";
 
 export type SperrGrund = "geloescht" | "ruhend" | "mail_aus" | "keine_adresse" | "abgemeldet" | "stufe" | "status" | "antwort";
@@ -34,7 +36,7 @@ export type SperrDaten = {
   adresse: string | null;
   abgemeldet: boolean;
   status: string | null;
-  /** Lead hat seit dem Anlass geantwortet (WhatsApp) */
+  /** Lead hat seit dem Anlass geantwortet (WhatsApp oder E-Mail an die Antwortadresse) */
   antwort: boolean;
 };
 
@@ -86,7 +88,7 @@ export async function istAbgemeldet(customerId: string, adresse: string, leadId?
   return !!(liste || gemeldet || stopp);
 }
 
-/** Daten für sperrGrund aus der Datenbank. `antwortSeit`: Antwort per WhatsApp seit diesem Zeitpunkt zählt. */
+/** Daten für sperrGrund aus der Datenbank. `antwortSeit`: Antwort per WhatsApp oder E-Mail seit diesem Zeitpunkt zählt. */
 export async function ladeSperrDaten(leadId: string, o: { to?: string | null; antwortSeit?: Date | null } = {}): Promise<SperrDaten & { customerId: string | null }> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
@@ -97,9 +99,10 @@ export async function ladeSperrDaten(leadId: string, o: { to?: string | null; an
   const [abgemeldet, antwort] = await Promise.all([
     adresse ? istAbgemeldet(lead.customerId, adresse, leadId) : false,
     o.antwortSeit
-      ? prisma.message
-          .count({ where: { direction: "inbound", createdAt: { gt: o.antwortSeit }, conversation: { customerId: lead.customerId, leadId } } })
-          .then((n) => n > 0)
+      ? Promise.all([
+          prisma.message.count({ where: { direction: "inbound", createdAt: { gt: o.antwortSeit }, conversation: { customerId: lead.customerId, leadId } } }),
+          hatMailAntwort(leadId, o.antwortSeit),
+        ]).then(([wa, mail]) => wa > 0 || mail)
       : false,
   ]);
   return {

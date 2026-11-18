@@ -358,10 +358,14 @@ export type NaechsteFassung = {
  * Vorbereitete neue Fassung mit ANDEREN Platzhaltern: wird NICHT eingereicht und als Vorlage nicht gesendet, bis Ole die
  * Texte freigibt. Im offenen 24-h-Fenster kann der Absender schon den neuen Text als Freitext senden. Aktivieren: Text
  * nach TEMPLATE_BODY, REST_PARAMS des Zwecks auf `params`, PURPOSE_VERSION auf `version`, Eintrag hier löschen und die
- * bisherige Belegung in PLATZHALTER_AB eintragen. Zurzeit leer (Show-up-Paket am 17.11.2026 freigegeben).
+ * bisherige Belegung in PLATZHALTER_AB eintragen.
  */
 export type VorbereiteteFassung = { version: string; du: string; sie: string; params: string[]; beispiele: { du: string[]; sie: string[] } };
 
+/**
+ * Zurzeit leer: Die in P2 vorbereitete längere v8 des Erstanschreibens („zu Haftpflicht und Hausrat 🏠 … und kläre kurz
+ * ein paar Angaben“) ist durch Oles kurze v8 aus dem Testchat (17.11.2026, erstanschreibenV8, eingereicht) ersetzt.
+ */
 export const VORBEREITETE_FASSUNG: Partial<Record<NoticePurpose, VorbereiteteFassung>> = {};
 
 /**

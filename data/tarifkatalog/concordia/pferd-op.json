@@ -27,8 +27,7 @@
         "reha": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/pferd/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pferde-Operationsversicherung mit Plus-Baustein",
@@ -48,8 +47,7 @@
         "reha": "inklusive"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/pferd/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -58,6 +56,7 @@
   "offen": [
     "Ein Tarif (TierVital-Schutz) mit wählbarem Plus-Baustein; Stufe 2 zeigt den Tarif mit Plus-Baustein. Keine Empfehlung markiert. Werte aus der Leistungsübersicht der Produktseite (Abruf 17.11.2026).",
     "Plus-Baustein: keine Jahreshöchstentschädigung, Physiotherapie/Osteopathie und regenerative Therapien je 1.000 € im Jahr, Kastration bei medizinischer Notwendigkeit, Kaiserschnitt einmalig. Zahn-Baustein für Zahnoperationen wählbar.",
-    "Erstattungssatz in Prozent und Gelenk-Chips nicht genannt. Stationäre Unterbringung bis 14 Tage. Wartezeit allgemein nicht genannt (Kolik und Unfall 5 Tage). Neuabschluss bis 20 Jahre. Keine Krankenvollversicherung für Pferde."
+    "Erstattungssatz in Prozent und Gelenk-Chips nicht genannt. Stationäre Unterbringung bis 14 Tage. Wartezeit allgemein nicht genannt (Kolik und Unfall 5 Tage). Neuabschluss bis 20 Jahre. Keine Krankenvollversicherung für Pferde.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

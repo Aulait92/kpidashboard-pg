@@ -32,8 +32,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Berufsunfähigkeitsversicherung Premium",
@@ -58,8 +57,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -71,6 +69,7 @@
     "Arbeitsunfähigkeits-Schutz und Inflations-Schutz (Rente steigt im Leistungsfall um 2 % jährlich) als zusätzliche Bausteine wählbar; AU-Leistung zusammen höchstens 24 Monate.",
     "Premium zusätzlich: je 3 Monatsrenten Einmalzahlung bei BU und bei schwerer Krankheit; Leistungs-Option Assistance (Wiedereingliederungshilfe und Umorganisationshilfe je 6 Monatsrenten, Unterstützungsleistung). Ein Verzicht auf Umorganisation ist nicht genannt.",
     "Teilzeit: bei Wechsel in Teilzeit gilt 24 Monate die Vollzeittätigkeit. Pflege: bei Hilfebedarf in mindestens zwei Aktivitäten des täglichen Lebens.",
-    "Starter-Tarif bis 30 Jahre (geringere Beiträge in den ersten 5 Jahren) ist eine Beitragsvariante, keine Stufe."
+    "Starter-Tarif bis 30 Jahre (geringere Beiträge in den ersten 5 Jahren) ist eine Beitragsvariante, keine Stufe.",
+    "Geprüft am 18.11.2026 an den Tarifvergleichen der Produktseiten und den Basisinformationen von CosmosDirekt."
   ]
 }

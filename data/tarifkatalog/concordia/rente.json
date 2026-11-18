@@ -19,8 +19,7 @@
         "kapital": "ja"
       },
       "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/privat-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat-Rente oecoinvest plus",
@@ -32,8 +31,7 @@
         "kapital": "ja"
       },
       "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/privat-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -42,6 +40,7 @@
   ],
   "offen": [
     "Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Zwei Anlagevarianten statt Leistungsstufen; keine Empfehlung. Plan Zukunft ist die Privat-Rente für Kinder (ab 15 € monatlich, ab Geburt).",
-    "Beitragsgarantie und garantierter Rentenfaktor auf der Seite nicht beziffert; Hinterbliebenenschutz, Beitragspause und Effektivkosten nicht genannt (Basisinformationsblätter verlinkt). Fondswelt Komfort nur bei invest plus."
+    "Beitragsgarantie und garantierter Rentenfaktor auf der Seite nicht beziffert; Hinterbliebenenschutz, Beitragspause und Effektivkosten nicht genannt (Basisinformationsblätter verlinkt). Fondswelt Komfort nur bei invest plus.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }
