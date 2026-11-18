@@ -4,7 +4,7 @@ import inventar from "../../../../../docs/ux/admin-neu/funktionsinventar.json";
 
 // Index aller Admin-Funktionen für die Suche ⌘K im neuen Admin (Admin v2, Paket A3): Name, neuer Ort, Link.
 // Lädt die Suche einmal beim ersten Öffnen (nicht mit jeder Seite). Nur für Admins.
-const INDEX = suchIndex(inventar as InventarEintrag[]).map(({ suchtext: _s, ...f }) => f);
+const INDEX = suchIndex(inventar as InventarEintrag[]).map((f) => ({ id: f.id, titel: f.titel, ort: f.ort, href: f.href }));
 
 export async function GET(): Promise<Response> {
   const session = await getCurrentSession();
