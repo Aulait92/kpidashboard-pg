@@ -168,6 +168,9 @@ const ZITAT =
 // Grußformel bzw. Signatur: danach folgen Name, Adresse, Bilder, Rechtstexte
 const GRUSS =
   /(^|\s)(mfg\b|vg\b|lg\b|(mit )?((freundlich|herzlich|best|lieb|viel|sonnig|schön)\w* )?(grüß|grüss)e?n?\b|gruß\b|gruss\b|\[cid:)/i;
+// Signatur ohne Grußformel („nein Danke Max Muster Bezirksdirektion … Telefon: …“): ab Funktion oder Kontaktzeile
+const SIGNATUR =
+  /(^|\s)(bezirksdirektion|generalvertretung|hauptvertretung|generalagentur|agentur der|vertretung der|geschäftsstelle|tel\.|telefon:?|mobil:?|fax:?|e-?mail:|www\.|sitz der|registergericht|handelsregister|amtsgericht|geschäftsführer|ust-?id)/i;
 
 /**
  * Nur die eigenen Zeilen der Antwort (Ole, 18.11.2026): ohne zitierte Cold-Mail und ohne Signatur. Sonst machen
@@ -180,6 +183,8 @@ export function eigenerText(text: string | null | undefined): string {
   const g = t.search(GRUSS);
   // Grußformel ganz vorne („Liebe Grüße zurück, …“) nicht abschneiden
   if (g > 8) t = t.slice(0, g);
+  const sig = t.search(SIGNATUR);
+  if (sig > 8) t = t.slice(0, sig);
   return t.trim();
 }
 

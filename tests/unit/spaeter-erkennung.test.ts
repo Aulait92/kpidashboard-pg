@@ -84,6 +84,8 @@ describe("Nur die eigenen Zeilen zählen (Fehltreffer 18.11.2026)", () => {
 
   it("eigenerText schneidet Zitat und Signatur ab, auch ohne Zeilenumbruch", () => {
     expect(eigenerText("nein Danke" + SIG + COLD)).toBe("nein Danke");
+    expect(eigenerText("nein Danke Max Muster Bezirksdirektion der Beispiel AG Telefon: 0421 1 zukünftig gerne" + COLD)).toBe("nein Danke Max Muster");
+    expect(isClearDecline("nein Danke Max Muster Bezirksdirektion der Beispiel AG Telefon: 0421 1. Wir melden uns gerne zukünftig.")).toBe(true);
     expect(eigenerText("Viele Grüße zurück, gerne im März wieder.")).toBe("Viele Grüße zurück, gerne im März wieder.");
     expect(eigenerText("Ich melde mich mit Freude im März.")).toBe("Ich melde mich mit Freude im März.");
   });
