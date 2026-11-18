@@ -23,8 +23,7 @@
         "wartezeit": "keine"
       },
       "quelle": "https://www.hansemerkur.de/pflegeversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pflege Schutz + (Tarif PGA + PGS + PZG)",
@@ -40,8 +39,7 @@
         "wartezeit": "keine"
       },
       "quelle": "https://www.hansemerkur.de/pflegeversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -52,6 +50,7 @@
     "Pflegemonatsgeld für ambulante und stationäre Pflege getrennt wählbar: ambulant 100 % erst bei Pflegegrad 5, stationär 100 % ab Pflegegrad 2, darunter anteilig. Staffel je Pflegegrad nicht veröffentlicht.",
     "Einmalige Erhöhung um je 300 € ohne Risikoprüfung bei Ereignissen (z. B. Heirat, Geburt); Vorauszahlung ab Pflegegrad 2. Pflege Schutz + übernimmt zusätzlich Assistance-Kosten bis 2.500 €.",
     "Einsteigertarif „Pflege für Einsteiger“ (PGE, 1.000 € Pflegemonatsgeld, bis 49 Jahre) nicht als Stufe aufgenommen. Dynamik und Demenz nicht genannt.",
-    "Zwei Stufen ohne Markierung der Gesellschaft: keine Empfehlung gesetzt."
+    "Zwei Stufen ohne Markierung der Gesellschaft: keine Empfehlung gesetzt.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

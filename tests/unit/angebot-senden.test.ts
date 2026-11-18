@@ -18,9 +18,8 @@ import {
   leereListeWeg,
   mailWerte,
   nachfassMail,
-  rueckrufPush,
-  rueckrufSeite,
 } from "@/lib/angebot-senden";
+import { rueckrufFensterPush, rueckrufTexte } from "@/lib/rueckruf";
 import { SEQUENCES } from "@/lib/lead-sequences";
 import { planeNachrichten, type PlanEingabe } from "@/lib/nachrichtenplan";
 import { STANDARD_VORLAGEN_JE } from "@/lib/mail/vorlagen";
@@ -118,12 +117,12 @@ describe("Angebot senden: Texte an den Lead", () => {
   });
 
   it("Rückruf-Seite, Pushes und Hinweise in Sie-Form", () => {
-    const t = rueckrufSeite("sie", { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" });
-    expect(t.text).toBe("Herr Kannapinn ruft Sie gern an und beantwortet Ihre Fragen zum Angebot.");
-    expect(t.danke).toBe("Danke! Herr Kannapinn meldet sich bei Ihnen.");
-    expect(rueckrufSeite("du", { nom: "Ole", dat: "Ole" }).text).toContain("ruft dich gern an");
+    const t = rueckrufTexte("sie", { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" });
+    expect(t.text).toBe("Herr Kannapinn ruft Sie im gewählten Zeitfenster an.");
+    expect(t.danke).toBe("Danke, Ihr Rückrufwunsch ist angekommen!");
+    expect(rueckrufTexte("du", { nom: "Ole", dat: "Ole" }).text).toContain("ruft dich im gewählten");
     expect(angebotAnrufPush({ leadId: "l1", name: "Frau Becker" })).toMatchObject({ title: "Frau Becker anrufen: Fragen zum Angebot?", url: "/buyer?anrufen=l1#anrufen" });
-    expect(rueckrufPush({ leadId: "l1", name: "Frau Becker" }).title).toBe("Frau Becker wünscht einen Rückruf");
+    expect(rueckrufFensterPush({ leadId: "l1", name: "Frau Becker", fenster: null, now: new Date() }).title).toBe("Frau Becker wünscht einen Rückruf");
     expect(ANGEBOT_AUFGABE).toBe("Angebot ablegen und senden");
     expect(ANGEBOT_HINWEIS).toBe("Das Nachfassen zum Angebot startet erst, wenn Sie es hier senden.");
     expect(SELBST_UPLOAD_HINWEIS).toContain("hilft bei Ihren Zahlen");
@@ -146,11 +145,12 @@ describe("Angebot senden: Texte an den Lead", () => {
     expect(vorabCheckFaellig({ now: new Date("2026-11-19T07:30:00Z"), versand: do10 })).toBe(true);
     expect(vorabCheckFaellig({ now: do10, versand: do10 })).toBe(false);
     const p = vorabCheckPush({ leadId: "l1", name: "Frau Becker", kanal: "whatsapp", versand: do10, now: new Date("2026-11-18T17:00:00Z") });
-    expect(p).toMatchObject({ title: "Frau Becker: Morgen fasst die App zum Angebot nach", url: "/buyer/leads/l1#nachfassen" });
-    expect(p.body).toBe("Per WhatsApp. Schon abgeschlossen oder lieber anhalten? Tippen Sie hier.");
-    expect(vorabCheckPush({ leadId: "l1", name: "Frau Becker", kanal: "email", versand: do10, now: new Date("2026-11-19T07:30:00Z") }).title).toBe("Frau Becker: Heute fasst die App zum Angebot nach");
-    expect(vorabCheckPush({ leadId: "l1", name: "Frau Becker", kanal: "email", versand: new Date("2026-11-23T08:00:00Z"), now: new Date("2026-11-20T17:00:00Z") }).title).toBe(
-      "Frau Becker: Am Montag fasst die App zum Angebot nach",
+    // P4: zugleich die Abschluss-Frage am Vorabend, Deep-Link auf das Entscheidungsblatt
+    expect(p).toMatchObject({ title: "Hat Frau Becker abgeschlossen?", url: "/buyer/abschluss?l=l1" });
+    expect(p.body).toBe("Morgen fasst die App per WhatsApp zum Angebot nach. Mit einem Tipp eintragen oder pausieren.");
+    expect(vorabCheckPush({ leadId: "l1", name: "Frau Becker", kanal: "email", versand: do10, now: new Date("2026-11-19T07:30:00Z") }).body).toBe("Heute fasst die App per E-Mail zum Angebot nach. Mit einem Tipp eintragen oder pausieren.");
+    expect(vorabCheckPush({ leadId: "l1", name: "Frau Becker", kanal: "email", versand: new Date("2026-11-23T08:00:00Z"), now: new Date("2026-11-20T17:00:00Z") }).body).toMatch(
+      /^Am Montag fasst die App per E-Mail zum Angebot nach\./,
     );
     expect(hatGedankenstrich(p.title + p.body)).toBe(false);
   });
@@ -218,7 +218,7 @@ describe("Nachfassen zum Angebot (SEQUENCES)", () => {
     const plan = planeNachrichten(p);
     // Vor jedem automatischen Nachfassen (WhatsApp, E-Mail) der Vorab-Check-Push am Vorabend um 18 Uhr
     expect(plan.map((e) => e.kanal)).toEqual(["push", "whatsapp", "anruf", "push", "push", "email", "push", "whatsapp", "anruf"]);
-    expect(plan[0]).toMatchObject({ at: "2026-11-18T17:00:00.000Z", vorschau: "Frau Becker: Morgen fasst die App zum Angebot nach" });
+    expect(plan[0]).toMatchObject({ at: "2026-11-18T17:00:00.000Z", vorschau: "Hat Frau Becker abgeschlossen?" });
     expect(plan.filter((e) => e.kanal === "push").map((e) => e.vorschau)).toContain("Frau Becker anrufen: Fragen zum Angebot?");
     // Schon gesendeter Vorab-Check für den laufenden Schritt erscheint nicht noch einmal
     expect(planeNachrichten({ ...p, abfolgen: [{ ...p.abfolgen[0], vorabCheckStep: 0 }] })[0].kanal).toBe("whatsapp");

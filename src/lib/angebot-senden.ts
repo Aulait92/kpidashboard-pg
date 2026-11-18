@@ -12,10 +12,10 @@
 // Kombi-Rabatt nur, wenn die App ihn für die Auswahl wirklich berechnet (lib/kombi-rabatt.ts über beitragAus).
 // Texte an Leads in beiden Fassungen (a(an, du, sie)), ohne Gedankenstriche; Vermittler-Oberfläche in Sie-Form.
 
+import { blattUrl } from "@/lib/abschluss";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { fuelle, werteFuer, type Werte } from "@/lib/mail/platzhalter";
-import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 
 export type AngebotWeg = "app" | "selbst";
 
@@ -27,9 +27,6 @@ export const SELBST_UPLOAD_HINWEIS = "Freiwillig, hilft bei Ihren Zahlen.";
 
 /** Notiz der klassischen Wiedervorlage (lib/lead-followup.ts), die mit dem Versand entfällt. */
 export const ANGEBOT_WIEDERVORLAGE = "Angebot nachfassen";
-/** Aufgabe nach „Rückruf wünschen“ (Minimalseite /rueckruf/<token>). */
-export const RUECKRUF_NOTIZ = "Rückruf gewünscht (Angebot)";
-
 /** Gültigkeit des Links auf das Angebots-PDF. */
 export const ANGEBOT_LINK_TAGE = 60;
 
@@ -247,7 +244,7 @@ export function vorabCheckFaellig(o: { now: Date; versand: Date }): boolean {
 
 /**
  * Vorab-Check-Push vor jedem automatischen Nachfassen zum Angebot (Ole, 17.11.2026, Ergänzung C): Der Vermittler sieht
- * am Vorabend, dass die App nachfasst, und kann es am Kontakt anhalten (z. B. schon abgeschlossen).
+ * am Vorabend, dass die App nachfasst, und trägt im Blatt mit einem Tipp den Abschluss ein oder pausiert das Nachfassen.
  */
 export function vorabCheckPush(o: { leadId: string; name: string; kanal: "whatsapp" | "email"; versand: Date; now: Date }) {
   const tagVersand = berlinTeile(o.versand).tag;
@@ -258,10 +255,12 @@ export function vorabCheckPush(o: { leadId: string; name: string; kanal: "whatsa
       : tagVersand === morgen
         ? "Morgen"
         : `Am ${new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "long" }).format(o.versand)}`;
+  // P4 (Ole, 17.11.2026): derselbe Push ist die Abschluss-Frage am Vorabend, mit Deep-Link auf das Entscheidungsblatt
+  // „Hat Frau Becker abgeschlossen?“ (Ja, abgeschlossen · Noch nicht · Nachfassen pausieren), lib/abschluss.ts
   return {
-    title: `${o.name}: ${wann} fasst die App zum Angebot nach`,
-    body: `${o.kanal === "email" ? "Per E-Mail mit Rückruf-Link." : "Per WhatsApp."} Schon abgeschlossen oder lieber anhalten? Tippen Sie hier.`,
-    url: `/buyer/leads/${encodeURIComponent(o.leadId)}#nachfassen`,
+    title: `Hat ${o.name} abgeschlossen?`,
+    body: `${wann} fasst die App ${o.kanal === "email" ? "per E-Mail" : "per WhatsApp"} zum Angebot nach. Mit einem Tipp eintragen oder pausieren.`,
+    url: blattUrl([o.leadId]),
     tag: `angebot-vorab:${o.leadId}`,
   };
 }
@@ -271,26 +270,6 @@ export function angebotAnrufTag(now: Date, tage = 3): string {
   let d = new Date(berlinUm(berlinTeile(now).tag, 12).getTime() + tage * 24 * HOUR_MS);
   if (berlinTeile(d).sonntag) d = new Date(d.getTime() + 24 * HOUR_MS);
   return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "long" }).format(d);
-}
-
-/** Push an den Vermittler, wenn der Lead auf der Rückruf-Seite „Rückruf wünschen“ getippt hat. */
-export function rueckrufPush(o: { leadId: string; name: string }) {
-  return {
-    title: `${o.name} wünscht einen Rückruf`,
-    body: "Zum Angebot. Tippen Sie, um direkt anzurufen.",
-    url: `/buyer?anrufen=${encodeURIComponent(o.leadId)}#anrufen`,
-    tag: `rueckruf:${o.leadId}`,
-  };
-}
-
-/** Texte der Rückruf-Seite (an den Lead). */
-export function rueckrufSeite(an: Ansprache, person: VermittlerName) {
-  return {
-    titel: "Rückruf wünschen",
-    text: a(an, `${person.nom} ruft dich gern an und beantwortet deine Fragen zum Angebot.`, `${person.nom} ruft Sie gern an und beantwortet Ihre Fragen zum Angebot.`),
-    knopf: "Ja, bitte anrufen",
-    danke: a(an, `Danke! ${person.nom} meldet sich bei dir.`, `Danke! ${person.nom} meldet sich bei Ihnen.`),
-  };
 }
 
 /** „Angebot gesendet am 17.11.“ bzw. „selbst gesendet am 17.11.“ / „abgelegt am 17.11.“ für Terminvorbereitung und Kontakt. */

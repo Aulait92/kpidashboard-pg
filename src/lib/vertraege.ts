@@ -18,6 +18,7 @@ import {
   premiumFactor,
   sparteForSource,
   sparteInfo,
+  sparteKind,
   contractLabel,
   SPARTEN,
   type CancelReason,
@@ -29,6 +30,9 @@ import { formatEUR } from "@/lib/format";
 import { chancen, type SchutzEintrag, type SchutzStatus } from "@/lib/schutz-ueberblick";
 import { cleanTarifauswahl } from "@/lib/tarifauswahl";
 import { BESTAND_FROM_LEAD_NOTE, CROSS_SELL_TODO, POLICE_TODO } from "@/lib/vertraege-shared";
+import { premiumYearFor } from "@/lib/abschluss";
+import { beitragVorgabe } from "@/lib/abschluss-vorgabe";
+import { beendeAufgaben, planeAufgabe } from "@/lib/lead-aufgaben";
 
 export const CONTRACT_STATUSES = ["aktiv", "storniert"] as const;
 export type ContractStatus = (typeof CONTRACT_STATUSES)[number];
@@ -173,6 +177,8 @@ type SummaryInput = {
   customerAge?: unknown;
   endAge?: unknown;
   beitragssumme?: unknown;
+  /** Herkunft des Beitrags (lib/abschluss.ts): „standard“ = geschätzt, mit „≈“ */
+  premiumSource?: string | null;
 };
 
 /**
@@ -184,13 +190,15 @@ export function contractSummary(c: SummaryInput, rates?: ProvisionOverrides): st
   const p = contractProvision({ ...c, status: "aktiv" }, rates);
   const premium = c.premium != null && Number(c.premium) > 0 ? Number(c.premium) : null;
   const parts = [contractLabel(c)];
+  // Typischer Beitrag (Abschluss mit einem Tipp, nicht bestätigt): geschätzt mit „≈“
+  const ca = c.premiumSource === "standard" ? "≈ " : "";
   if (p.basis === "honorar") {
-    if (premium != null) parts.push(`Ersparnis ${formatEUR(premium)}/Monat`);
+    if (premium != null) parts.push(`Ersparnis ${ca}${formatEUR(premium)}/Monat`);
   } else if (p.basis === "beitragssumme") {
-    if (premium != null) parts.push(`Beitrag ${formatEUR(premium / 12)}/Monat`);
+    if (premium != null) parts.push(`Beitrag ${ca}${formatEUR(premium / 12)}/Monat`);
     if (p.termYears && p.beitragssumme) parts.push(`${p.termYears} Jahre (${formatEUR(p.beitragssumme)} Beitragssumme)`);
   } else if (premium != null) {
-    parts.push(`Beitrag ${formatEUR(premium)}${sparteInfo(c.sparte).rateKey === "pkv" ? "/Monat" : ""}`);
+    parts.push(`Beitrag ${ca}${formatEUR(premium)}${sparteKind(c.sparte) === "monthly" ? "/Monat" : ""}`);
   }
   if (p.abschluss > 0) parts.push(`${p.honorar ? "Honorar (vom Kunden)" : "Provision"} ≈ ${formatEUR(p.abschluss)}`);
   if (p.trailPerYear > 0) parts.push(`Bestand ≈ ${formatEUR(p.trailPerYear)}/Jahr${p.trailFromYear2 ? " ab dem 2. Jahr" : ""}`);
@@ -247,8 +255,8 @@ export async function syncPrimaryContract(
     select: { id: true, customerId: true, status: true, closedAt: true, closeValue: true, ...LEAD_ORIGIN_SELECT },
   });
   if (!lead || !isClosed(lead.status)) return;
-  const premium = lead.closeValue != null && Number(lead.closeValue) > 0 ? lead.closeValue : null;
-  const existing = await prisma.leadContract.findUnique({ where: { primaryLeadId: lead.id }, select: { id: true, sparte: true } });
+  const entered = lead.closeValue != null && Number(lead.closeValue) > 0 ? Number(lead.closeValue) : null;
+  const existing = await prisma.leadContract.findUnique({ where: { primaryLeadId: lead.id }, select: { id: true, sparte: true, provisionValue: true } });
   // „Sonstiges“ mit eigenem Produkt kommt als ein Wert aus dem Abschluss-Dialog (lib/eigene-produkte.encodeSparte)
   const decoded = decodeSparte(opts.sparte);
   const chosen = decoded.sparte && SPARTEN.some((s) => s.key === decoded.sparte) ? asSparte(decoded.sparte) : null;
@@ -257,12 +265,22 @@ export async function syncPrimaryContract(
       ? { productName: decoded.product.name, rateAbschluss: decoded.product.rateAbschluss, rateBestand: decoded.product.rateBestand }
       : { productName: null, rateAbschluss: null, rateBestand: null }
     : {};
+  // Abschluss mit einem Tipp (P4, Ole 17.11.2026): ohne Eingabe Beitrag aus dem Angebot, sonst der typische der Sparte
+  // (premiumSource angebot | standard, lib/abschluss-vorgabe.ts); eingegeben = vermittler. Fester Altwert bleibt.
+  const beitrag = async (sparte: string, keepFixed: boolean) => {
+    if (entered != null) return { premium: entered, premiumSource: "vermittler", premiumYear: premiumYearFor(sparte, entered) };
+    if (keepFixed) return { premium: null, premiumSource: null, premiumYear: null };
+    const { loadCustomerProvision } = await import("@/lib/provision-server");
+    const v = await beitragVorgabe(lead.id, sparte, (await loadCustomerProvision(lead.customerId)).rates).catch(() => ({ premium: null, source: null }));
+    return { premium: v.premium, premiumSource: v.source, premiumYear: premiumYearFor(sparte, v.premium) };
+  };
   if (existing) {
     const takeValue = !!(opts.takeValue || opts.reopen);
+    const b = takeValue ? await beitrag(chosen ?? existing.sparte, existing.provisionValue != null) : null;
     await prisma.leadContract.update({
       where: { id: existing.id },
       data: {
-        ...(takeValue ? { premium, ...(premium != null ? { provisionValue: null } : {}) } : {}),
+        ...(b ? { ...b, ...(b.premium != null ? { provisionValue: null } : {}) } : {}),
         ...(chosen ? { sparte: chosen, ...productData } : {}),
         ...(opts.reopen ? { status: "aktiv", cancelledAt: null, cancelReason: null, chargeback: null, signedAt: lead.closedAt ?? new Date() } : {}),
       },
@@ -276,7 +294,7 @@ export async function syncPrimaryContract(
         customerId: lead.customerId,
         primaryLeadId: lead.id,
         sparte,
-        premium,
+        ...(await beitrag(sparte, false)),
         ...productData,
         signedAt: lead.closedAt ?? new Date(),
         createdById: opts.userId ?? null,
@@ -495,6 +513,7 @@ export async function listLeadContracts(leadId: string, rates?: ProvisionOverrid
       primaryLeadId: true,
       sparte: true,
       premium: true,
+      premiumSource: true,
       provisionValue: true,
       signedAt: true,
       insurer: true,
@@ -555,6 +574,8 @@ export async function addLeadContract(leadId: string, customerId: string, input:
       customerId,
       sparte: input.sparte,
       premium: input.premium,
+      premiumSource: input.premium != null ? "vermittler" : null,
+      premiumYear: premiumYearFor(input.sparte, input.premium),
       signedAt: input.signedAt,
       insurer: input.insurer,
       contractNo: input.contractNo,
@@ -565,8 +586,9 @@ export async function addLeadContract(leadId: string, customerId: string, input:
     select: { id: true },
   });
   await rememberEigenesProdukt(customerId, input).catch((err) => console.error("[vertraege] eigenes produkt", err));
-  // Erinnerung „Weiteres Produkt anbieten?“ ist damit erledigt (und kommt nicht mehr)
+  // Erinnerung „Weiteres Produkt anbieten?“ ist damit erledigt (und kommt nicht mehr, auch nicht aus der Warteschlange)
   await prisma.lead.updateMany({ where: { id: lead.id, followUpNote: { startsWith: CROSS_SELL_TODO } }, data: { followUpAt: null, followUpNote: null } });
+  await beendeAufgaben(lead.id, ["cross_sell"], "Weiterer Vertrag eingetragen");
   await prisma.lead.updateMany({ where: { id: lead.id, crossSellRemindedAt: null }, data: { crossSellRemindedAt: new Date() } });
   await syncLeadToBestand(lead.id).catch((err) => console.error("[vertraege] bestand", err));
   return { ok: true, id: c.id };
@@ -580,14 +602,18 @@ async function ownFileId(leadId: string, fileId: string | null): Promise<string 
 
 /** Vertrag bearbeiten. Beim ersten Vertrag wird der Beitrag auch am Lead (closeValue) gespiegelt. */
 export async function updateLeadContract(contractId: string, customerId: string, input: ContractInput): Promise<{ ok: true; leadId: string } | { ok: false; error: string }> {
-  const c = await prisma.leadContract.findFirst({ where: { id: contractId, customerId }, select: { id: true, leadId: true, primaryLeadId: true } });
+  const c = await prisma.leadContract.findFirst({ where: { id: contractId, customerId }, select: { id: true, leadId: true, primaryLeadId: true, premium: true, premiumSource: true } });
   if (!c) return { ok: false, error: "Vertrag nicht gefunden." };
   const fileId = await ownFileId(c.leadId, input.fileId);
+  // Unveränderter Beitrag behält seine Herkunft (Angebot, typisch); geänderter gilt als vom Vermittler eingetragen
+  const sameBeitrag = input.premium != null && c.premium != null && Number(c.premium) === input.premium;
   await prisma.leadContract.update({
     where: { id: c.id },
     data: {
       sparte: input.sparte,
       premium: input.premium,
+      premiumSource: input.premium == null ? null : sameBeitrag ? c.premiumSource : "vermittler",
+      premiumYear: premiumYearFor(input.sparte, input.premium),
       ...(input.premium != null ? { provisionValue: null } : {}),
       signedAt: input.signedAt,
       insurer: input.insurer,
@@ -773,9 +799,10 @@ export function crossSellNote(sparten: string[], luecken: Pick<SchutzEintrag, "l
 }
 
 /**
- * Cron: 6 Wochen nach dem ersten Abschluss die Wiedervorlage „Weiteres Produkt anbieten?“ auf „Heute“.
+ * Cron: 6 Wochen nach dem ersten Abschluss die Aufgabe „Weiteres Produkt anbieten?“ auf „Heute“.
  * Einmal je Lead (crossSellRemindedAt), nicht bei weiterem Abschluss, nicht wenn der Lead nicht mehr im
- * Abschluss ist, nicht über eine offene Wiedervorlage (z. B. Police) hinweg, nur wenn beim Kunden an.
+ * Abschluss ist, nur wenn beim Kunden an. Ist gerade eine andere Wiedervorlage offen (z. B. „Police da?“),
+ * wartet die Aufgabe und rückt danach nach (P7, lib/lead-aufgaben.ts), statt zu entfallen.
  */
 export async function runCrossSellReminders(now = new Date()): Promise<number> {
   const until = new Date(now.getTime() - CROSS_SELL_AFTER_DAYS * 86_400_000);
@@ -786,7 +813,6 @@ export async function runCrossSellReminders(now = new Date()): Promise<number> {
       erasedAt: null,
       closedAt: { gte: from, lte: until },
       crossSellRemindedAt: null,
-      followUpAt: null,
       customer: { crossSellReminder: true, archived: false },
       contracts: { none: { primaryLeadId: null, status: "aktiv" } },
     },
@@ -804,12 +830,11 @@ export async function runCrossSellReminders(now = new Date()): Promise<number> {
     const sparten = l.contracts.map((c) => c.sparte);
     const luecken = lueckenAusTermin(l.appointments[0]?.tarifauswahl);
     if (!sparten.length) sparten.push(sparteForSource(l.source) ?? "sonstiges");
-    // Bedingte Aktualisierung: nie doppelt (paralleler Lauf, inzwischen gesetzte Wiedervorlage)
-    const r = await prisma.lead.updateMany({
-      where: { id: l.id, crossSellRemindedAt: null, followUpAt: null, status: CLOSED_STATUS },
-      data: { crossSellRemindedAt: now, followUpAt: now, followUpNote: crossSellNote(sparten, luecken) },
-    });
-    n += r.count;
+    // Bedingte Aktualisierung: nie doppelt (paralleler Lauf)
+    const r = await prisma.lead.updateMany({ where: { id: l.id, crossSellRemindedAt: null, status: CLOSED_STATUS }, data: { crossSellRemindedAt: now } });
+    if (!r.count) continue;
+    await planeAufgabe({ leadId: l.id, customerId: l.customerId, kind: "cross_sell", note: crossSellNote(sparten, luecken), dueAt: now, requiresStatus: CLOSED_STATUS }, now);
+    n++;
   }
   return n;
 }
@@ -822,9 +847,10 @@ export const POLICE_AFTER_DAYS = 14;
 export const POLICE_WINDOW_DAYS = 7;
 
 /**
- * Cron: 2 Wochen nach dem ersten Abschluss die Wiedervorlage „Police da und erste Zahlung erfolgt?“ auf
- * „Heute“. Einmal je Lead (policeRemindedAt), nicht wenn die Police schon am Vertrag hängt, nicht über
- * eine offene Wiedervorlage hinweg, nicht bei gekündigtem ersten Vertrag, nur wenn beim Kunden an.
+ * Cron: 2 Wochen nach dem ersten Abschluss die Aufgabe „Police da und erste Zahlung erfolgt?“ auf „Heute“.
+ * Einmal je Lead (policeRemindedAt), nicht wenn die Police schon am Vertrag hängt, nicht bei gekündigtem
+ * ersten Vertrag, nur wenn beim Kunden an. Ist eine andere Wiedervorlage offen (z. B. „Police fertig machen“),
+ * wartet sie und rückt danach nach (P7, lib/lead-aufgaben.ts).
  */
 export async function runPoliceReminders(now = new Date()): Promise<number> {
   const until = new Date(now.getTime() - POLICE_AFTER_DAYS * 86_400_000);
@@ -835,21 +861,19 @@ export async function runPoliceReminders(now = new Date()): Promise<number> {
       erasedAt: null,
       closedAt: { gte: from, lte: until },
       policeRemindedAt: null,
-      followUpAt: null,
       customer: { policeReminder: true, archived: false },
       contracts: { none: { primaryLeadId: { not: null }, OR: [{ fileId: { not: null } }, { status: "storniert" }] } },
     },
-    select: { id: true },
+    select: { id: true, customerId: true },
     take: 500,
   });
   let n = 0;
   for (const l of leads) {
-    // Bedingte Aktualisierung: nie doppelt (paralleler Lauf, inzwischen gesetzte Wiedervorlage)
-    const r = await prisma.lead.updateMany({
-      where: { id: l.id, policeRemindedAt: null, followUpAt: null, status: CLOSED_STATUS },
-      data: { policeRemindedAt: now, followUpAt: now, followUpNote: POLICE_TODO },
-    });
-    n += r.count;
+    // Bedingte Aktualisierung: nie doppelt (paralleler Lauf)
+    const r = await prisma.lead.updateMany({ where: { id: l.id, policeRemindedAt: null, status: CLOSED_STATUS }, data: { policeRemindedAt: now } });
+    if (!r.count) continue;
+    await planeAufgabe({ leadId: l.id, customerId: l.customerId, kind: "police", note: POLICE_TODO, dueAt: now, requiresStatus: CLOSED_STATUS }, now);
+    n++;
   }
   return n;
 }

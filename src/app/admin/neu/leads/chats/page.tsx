@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { ChatsAnsicht, type ChatsSuche } from "@/app/admin/whatsapp/chats-ansicht";
 
-export const metadata = { title: "WhatsApp-Chats | performancegrowth Admin" };
+export const metadata = { title: "Chats | performancegrowth Admin" };
 
 // Leads & Kampagnen → WhatsApp-Chats: alle Gespräche gemischt (Leads der Kunden und Support-Nummer), filterbar
 // nach Art (Alle, Leads der Kunden, Support-Nummer, Kunden, Interessenten, Unbekannt), Status und Suche.
@@ -21,8 +21,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Cha
   }
   return (
     <Seite
-      titel="Leads & Kampagnen"
-      reiter="leads"
+      titel="Betreuen"
+      reiter="betreuen"
       breit
       aktionen={
         <Link href="/admin/whatsapp/settings" className="inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline">

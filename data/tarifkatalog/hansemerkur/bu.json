@@ -28,8 +28,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hansemerkur.de/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -39,6 +38,7 @@
     "Quelle: Leistungsübersicht der Produktseite hansemerkur.de (Tarif Profi Care).",
     "AU-Baustein: volle Rente ab 4 Monaten und voraussichtlich 6 Monaten Arbeitsunfähigkeit, bis 24 Monate.",
     "Prognosezeitraum und Nachversicherung auf der Seite nicht genannt.",
-    "Sofortleistung bis 15 Monatsrenten bei Krebs, Schlaganfall, Herzinfarkt, Querschnittslähmung, Seh-, Hör- oder Sprachverlust."
+    "Sofortleistung bis 15 Monatsrenten bei Krebs, Schlaganfall, Herzinfarkt, Querschnittslähmung, Seh-, Hör- oder Sprachverlust.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

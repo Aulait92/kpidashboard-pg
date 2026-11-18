@@ -30,8 +30,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/tiere/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -41,6 +40,7 @@
     "DEVK bietet die Tierkrankenversicherungen über den Kooperationspartner Uelzener an (Risikoträger Uelzener); Tarifangaben aus der Leistungstabelle auf devk.de.",
     "Ein Tarif mit wählbarer Erstattungshöhe (15.000 €, 25.000 € oder 50.000 € je Jahr) und Selbstbeteiligung.",
     "Reha-Baustein bis 3.000 € im Jahr mit 20 % Selbstbeteiligung je Rechnung; optionaler Krankenversicherungs-Baustein bis 3.000 € im Jahr.",
-    "Vorsorge und Gelenk-Chips in der Tabelle nicht genannt; Beitrag steigt ab dem 16. Geburtstag jährlich um 5 %."
+    "Vorsorge und Gelenk-Chips in der Tabelle nicht genannt; Beitrag steigt ab dem 16. Geburtstag jährlich um 5 %.",
+    "Geprüft am 18.11.2026 an der Leistungstabelle auf devk.de (Rohdaten mit Symbolen)."
   ]
 }

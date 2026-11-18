@@ -5,7 +5,7 @@
   "empfehlung": "mittlere Stufe",
   "inAllenTarifen": [
     "Summe 5.000 bis 12.500 €",
-    "Bezugsberechtigung frei wählbar",
+    "Beiträge längstens bis 85",
     "Ohne Gesundheitsfragen"
   ],
   "tarife": [
@@ -18,12 +18,12 @@
         "summe": "5.000 bis 12.500 €",
         "wartezeit": "3 Jahre",
         "unfall": "volle Summe sofort",
-        "ohne-gp": "ja"
+        "ohne-gp": "ja",
+        "beitragsende": "bis zum 85. Geburtstag"
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/leben/sterbegeldversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -32,6 +32,7 @@
   "offen": [
     "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
     "Ein Tarif. Volle Versicherungssumme nach drei Jahren; bei Unfalltod auch in den ersten drei Jahren die volle Summe (keine doppelte Leistung genannt).",
-    "Dauer der Beitragszahlung und Bestattungsvorsorge-Service nicht genannt."
+    "Beiträge laut FAQ längstens bis zum 85. Geburtstag. Freie Wahl der Bezugsberechtigung steht nicht ausdrücklich auf der Seite (nur Auszahlung an die Begünstigten). Bestattungsvorsorge-Service nicht genannt.",
+    "Geprüft am 18.11.2026 an der Produktseite."
   ]
 }

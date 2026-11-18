@@ -26,8 +26,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.devk.de/produkte/altersvorsorge/rente-zukunftplus/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Rente ZukunftPlus ausgewogen",
@@ -46,8 +45,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.devk.de/produkte/altersvorsorge/rente-zukunftplus/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Rente ZukunftPlus chancenorientiert",
@@ -66,8 +64,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.devk.de/produkte/altersvorsorge/rente-zukunftplus/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -79,6 +76,7 @@
     "Garantierter Rentenfaktor und Effektivkosten nicht auf der Produktseite bzw. in der Broschüre genannt (nur in den Vertragsunterlagen).",
     "Hinterbliebenenabsicherung optional, bis Alter 50 bis 20.000 € ohne Gesundheitsprüfung; zusätzlich Risikoleben-Zusatzversicherung wählbar.",
     "Flexibel: Beiträge erhöhen, senken, pausieren, Zuzahlungen und Kapitalentnahmen möglich. Auszahlung als lebenslange Rente, Kapital oder Mischung.",
-    "BU-Zusatzversicherung (Beitragsübernahme bei Berufsunfähigkeit) wählbar; Dynamik nicht genannt."
+    "BU-Zusatzversicherung (Beitragsübernahme bei Berufsunfähigkeit) wählbar; Dynamik nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Produktbroschüre 07038-502."
   ]
 }

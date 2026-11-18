@@ -21,11 +21,11 @@
         "prophylaxe": "100 €/Jahr",
         "wartezeit": "keine",
         "kfo": "80 %, max. 1.600 €",
-        "inlays": "80 %"
+        "inlays": "80 %",
+        "staffel": "4 Jahre, bis 3.200 €"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnzusatz Komfort 90",
@@ -39,11 +39,11 @@
         "prophylaxe": "150 €/Jahr",
         "wartezeit": "keine",
         "kfo": "90 %, max. 1.800 €",
-        "inlays": "90 %"
+        "inlays": "90 %",
+        "staffel": "4 Jahre, bis 3.600 €"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnzusatz Komfort 100",
@@ -57,11 +57,11 @@
         "prophylaxe": "200 €/Jahr",
         "wartezeit": "keine",
         "kfo": "100 %, max. 2.000 €",
-        "inlays": "100 %"
+        "inlays": "100 %",
+        "staffel": "4 Jahre, bis 4.000 €"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -70,6 +70,7 @@
   "offen": [
     "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Komfort 90 ist als „Unser Tipp“ markiert.",
     "Zahnersatz einschließlich Implantate, Inlays und Verblendungen; Zahnbehandlung hier Füllungen, Wurzel- und Parodontosebehandlung. Kieferorthopädie für Kinder (ab 18 nur nach Unfall).",
-    "Begrenzung in den ersten Jahren in der Tabelle nicht genannt; bitte prüfen. Schmerzausschaltung und Bleaching 100/150/200 €."
+    "Begrenzung laut FAQ der Produktseite: Komfort 80 je Versicherungsjahr 800 € (in 4 Jahren 3.200 €), Komfort 90 900 € (3.600 €), Komfort 100 1.000 € (4.000 €); ab dem 5. Versicherungsjahr und bei Unfall entfällt sie. Schmerzausschaltung und Bleaching 100/150/200 €.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

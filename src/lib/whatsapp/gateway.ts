@@ -447,6 +447,18 @@ async function persistInbound(
     }
   }
 
+  // Bedenkzeit zum Angebot (Paket P5, lib/bedenkzeit-server.ts): „ich überlege noch“ → Frage nach dem Datum mit Knöpfen
+  if (botErlaubt && type === "text" && linkedLead?.leadId && !botHint) {
+    try {
+      const { bedenkzeitImChat } = await import("@/lib/bedenkzeit-server");
+      const r = await bedenkzeitImChat(conversation.id, body, now);
+      if (r.handled) return;
+      botHint = r.hint ?? null;
+    } catch (e) {
+      console.error("[whatsapp bedenkzeit]", e);
+    }
+  }
+
   // Übernommener Chat (Assistent pausiert) bzw. neuer Kontakt ohne Lead: Berater muss antworten bzw. entscheiden.
   if (!botErlaubt) {
     const { flagAttention } = await import("@/lib/whatsapp/attention");

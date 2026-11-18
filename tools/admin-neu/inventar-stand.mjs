@@ -53,17 +53,23 @@ export function neueId(e) {
   return `${quelleKurz(e.quelle)}--${funktionKurz(e.funktion)}`;
 }
 
-/** Bereich (Ordner) aus der Demo-Ansicht. */
+/** Werkzeuge (Admin v2): Einstellungsseiten mit Technik und Einrichtung, Adresse bleibt unter /einstellungen. */
+const WERKZEUGE = new Set(["werkzeuge", "e-status", "e-anbindungen", "e-vorlagen", "e-login", "e-einrichtung", "e-protokoll"]);
+
+/**
+ * Rolle (Bereich in navigation.ts, Admin v2) aus der Demo-Ansicht. Muss zu navigation.ts passen
+ * (Test „Bereich im Inventar = Bereich der Seite“ in tests/unit/admin-neu-inventar.test.ts).
+ */
 export function bereichFuer(view) {
-  if (["heute", "mehr", "landkarte"].includes(view)) return view === "landkarte" ? "was-wo-ist" : "heute";
-  if (view.startsWith("vertrieb") || view.startsWith("kontakt") || view === "angebot-neu" || view === "praesentation") return "vertrieb";
-  if (view === "leads-ki") return "kunden";
-  if (view.startsWith("kunde")) return "kunden";
-  if (view.startsWith("leads")) return "leads";
-  if (view.startsWith("marketing")) return "marketing";
-  if (view.startsWith("zahlen")) return "zahlen";
+  if (view === "landkarte") return "was-wo-ist";
+  if (["heute", "mehr", "vertrieb-aufgaben"].includes(view)) return "mein-tag";
+  if (WERKZEUGE.has(view)) return "werkzeuge";
   if (view.startsWith("e-") || view === "einstellungen") return "einstellungen";
-  return "heute";
+  if (view.startsWith("vertrieb") || view.startsWith("kontakt") || view === "angebot-neu" || view === "praesentation" || view.startsWith("marketing")) return "verkaufen";
+  if (view === "leads-chats" || view === "leads-chat" || view === "leads-ki" || view === "zahlen-qualitaet" || view.startsWith("kunde")) return "betreuen";
+  if (view.startsWith("leads")) return "liefern";
+  if (view.startsWith("zahlen")) return "geld";
+  return "mein-tag";
 }
 
 function dateien(dir) {

@@ -12,7 +12,7 @@ export function Platzhalter({ pfad, params = {} }: { pfad: string; params?: Reco
   if (!seite) notFound();
   const bereich = BEREICHE.find((b) => b.id === seite.bereich);
   const alt = altePfad(seite, params);
-  const reiter = seite.reiter?.gruppe;
+  const reiter = (Array.isArray(seite.reiter) ? seite.reiter.at(-1) : seite.reiter)?.gruppe;
   // Reiter eines Bereichs: Kopf = Bereich (wie in der Demo); Akten und Unterseiten: eigener Titel mit „Zurück“
   const bereichsReiter = !!reiter && reiter !== "kundenakte";
   return (

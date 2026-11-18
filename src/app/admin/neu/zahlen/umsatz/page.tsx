@@ -16,7 +16,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const data = await loadZahlen(new Date(), "gesamt");
 
   return (
-    <Seite titel="Zahlen" reiter="zahlen" breit>
+    <Seite titel="Geld" reiter="geld" breit>
       <div className="space-y-5">
         <div data-funktion="zahlen-view--kunden-ohne-hinterlegte-betreuungsgebuehr" className="empty:hidden">
           <ZahlenOhneBetreuungsgebuehr data={data} />

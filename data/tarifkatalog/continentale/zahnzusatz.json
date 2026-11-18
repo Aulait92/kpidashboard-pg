@@ -29,8 +29,7 @@
         "kfo": "nein"
       },
       "quelle": "https://www.continentale.de/documents/39054/16670191/Versicherungsbedingungen+f%C3%BCr+Zusatzversicherte.pdf/71308ae8-ca9b-550a-8e09-877027d815ad?version=3.3&t=1767602243027&download=true",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "KomfortVorsorge CEZK-U",
@@ -52,8 +51,7 @@
         "kfo": "nein"
       },
       "quelle": "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ProfiVorsorge CEZP-U",
@@ -75,8 +73,7 @@
         "kfo": "nein"
       },
       "quelle": "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Exklusiv-Tarif CEZE",
@@ -98,8 +95,7 @@
         "kfo": "nein"
       },
       "quelle": "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -112,6 +108,7 @@
     "Zahnersatz-Prozente jeweils inklusive Vorleistung der GKV; CEZP-U 90 % bei mindestens fünfjähriger lückenloser Vorsorge (Bonusheft), sonst 80 %. StartZahn verdoppelt den GKV-Festzuschuss, höchstens bis zum Rechnungsbetrag; Implantate dort nur über den Festzuschuss.",
     "Leistungsstaffel: StartZahn 750/1.000/1.250 € in 2/3/4 Jahren; CEZK-U 1.000/1.500/3.000 €; CEZP-U 1.000/2.000/4.000 €; CEZE 1.500/3.000/4.500/6.000 € im 1. bis 4. Jahr.",
     "Wartezeiten: CEZK-U 8 Monate (Zahnersatz, durch Zahnarztzeugnis erlassbar); CEZP-U 3 Monate für Behandlung und Prophylaxe, 8 Monate für Zahnersatz; CEZE ohne Wartezeit.",
-    "Kieferorthopädie nur über den Kindertarif CEJ (Junior-Police), nicht als Baustein dieser Tarife. Continentale markiert keinen Tarif (CEZP-U und CEZE „Sehr gut“ bewertet); CEZP-U als dritte von vier Stufen gesetzt."
+    "Kieferorthopädie nur über den Kindertarif CEJ (Junior-Police), nicht als Baustein dieser Tarife. Continentale markiert keinen Tarif (CEZP-U und CEZE „Sehr gut“ bewertet); CEZP-U als dritte von vier Stufen gesetzt.",
+    "Geprüft am 18.11.2026 an Produktseite und Vertragsinformationen bzw. Bedingungen der Continentale."
   ]
 }

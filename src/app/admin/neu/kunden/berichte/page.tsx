@@ -31,7 +31,7 @@ export default async function MonatsberichteAlle({ searchParams }: { searchParam
   const basis = (m: string, s = stand) => `/admin/neu/kunden/berichte?monat=${m}${s ? `&stand=${s}` : ""}`;
 
   return (
-    <Seite titel="Kunden" reiter="kunden" untertitel={settings.autoSendGood ? "Nur „gut“ mit Maßnahme geht automatisch raus, alles andere prüfen Sie." : "Nichts geht automatisch raus: Sie prüfen jeden Bericht."}>
+    <Seite titel="Betreuen" reiter="betreuen" untertitel={settings.autoSendGood ? "Nur „gut“ mit Maßnahme geht automatisch raus, alles andere prüfen Sie." : "Nichts geht automatisch raus: Sie prüfen jeden Bericht."}>
       <div className="space-y-4" data-funktion="page--monatsuebersicht-aller-berichte-mit-monat-vor">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-1 text-sm">
