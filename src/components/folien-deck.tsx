@@ -6,19 +6,32 @@
 // (Ole, 15.11.2026). Klicks auf Schalter in der
 // Folie (data-tarif, data-sparte, data-baustein) gehen an onKlick; die Antwort bringt die neuen Folien.
 // Startet immer mit Folie 1 (Ole, 15.11.2026): kein gespeicherter Stand, kein Sprung per Adresse.
+// Kommt per Klick eine Produktfolie dazu (Cross-Selling „Mit anschauen“), springt das Deck vorwärts auf sie und
+// meldet „{Produkt} hinzugefügt“ (Ole, 18.11.2026); im Vollbild und eingebettet steht der Hinweis in der Folie.
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 
-export type DeckFolie = { id: string; titel: string; html: string };
+export type DeckFolie = { id: string; titel: string; html: string; produkt?: string };
 export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean };
 export type DeckAntwort = { ok: true; folien: DeckFolie[] } | { ok: false; error: string };
 
 /** Taste aus einer eingebetteten Folie (iframe, z. B. Demo auf Folie 17) an das Deck darüber. */
 export type DeckTasteNachricht = { deckTaste: "weiter" | "zurueck" };
+
+/**
+ * Wohin nach einem Klick: kam eine Folie dazu (nur beim Anschalten), auf die erste neue, mit Hinweis
+ * „{Produkt} hinzugefügt“; sonst bleibt das Deck auf derselben Folie (fällt sie weg: dieselbe Nummer, höchstens die letzte).
+ */
+export function folieNachKlick(alt: { id: string }[], aktuelleId: string | undefined, neu: DeckFolie[], aktiv: boolean, i: number): { i: number; hinweis: string | null } {
+  const n = aktiv ? neu.findIndex((x) => !alt.some((y) => y.id === x.id)) : -1;
+  if (n >= 0) return { i: n, hinweis: `${neu[n].produkt ?? neu[n].titel} hinzugefügt` };
+  const j = neu.findIndex((x) => x.id === aktuelleId);
+  return { i: j >= 0 ? j : Math.max(0, Math.min(i, neu.length - 1)), hinweis: null };
+}
 
 const WEITER = new Set(["ArrowRight", " ", "PageDown"]);
 const ZURUECK = new Set(["ArrowLeft", "PageUp"]);
@@ -47,6 +60,9 @@ export function FolienDeck({
   const [scale, setScale] = useState(0.5);
   // Vollbild im Hochformat (Handy): Folie um 90° gedreht wie im Kundenlink (UX Runde 4, Vorschlag 8)
   const [gedreht, setGedreht] = useState(false);
+  // Vollbild (echt oder nachgebaut): dort ist der Toast der Seite verdeckt
+  const [vollAn, setVollAn] = useState(false);
+  const [hinweis, setHinweis] = useState<{ text: string; n: number } | null>(null);
   const box = useRef<HTMLDivElement>(null);
   const rahmen = useRef<HTMLDivElement>(null);
   const folie = useRef<HTMLDivElement>(null);
@@ -64,11 +80,14 @@ export function FolienDeck({
     startT(async () => {
       const r = await onKlick({ tarif: t != null ? Number(t) : null, sparte: el.dataset.sparte != null, item, baustein: b, aktiv });
       if (r.ok) {
+        // Neue Produktfolie (z. B. „Mit anschauen“ nimmt eine Sparte in den Vergleich): direkt dorthin, mit Hinweis
+        const z = folieNachKlick(folien, aktuelleId, r.folien, aktiv, i);
         setFolien(r.folien);
-        // Kommt eine Folie dazu oder fällt weg (z. B. „Mit anschauen“ nimmt eine Sparte in den Vergleich), bleibt das
-        // Deck auf derselben Folie statt auf derselben Nummer
-        const j = r.folien.findIndex((x) => x.id === aktuelleId);
-        setI((x) => (j >= 0 ? j : Math.min(x, r.folien.length - 1)));
+        setI(z.i);
+        if (z.hinweis) {
+          toast.show({ message: z.hinweis, durationMs: 3000 });
+          setHinweis({ text: z.hinweis, n: Date.now() });
+        }
       } else {
         el.classList.toggle("an", !aktiv);
         toast.show({ message: r.error, tone: "error" });
@@ -77,6 +96,11 @@ export function FolienDeck({
   };
 
   const go = useCallback((n: number) => setI(Math.max(0, Math.min(folien.length - 1, n))), [folien.length]);
+  useEffect(() => {
+    if (!hinweis) return;
+    const t = setTimeout(() => setHinweis((h) => (h?.n === hinweis.n ? null : h)), 3000);
+    return () => clearTimeout(t);
+  }, [hinweis]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -113,6 +137,7 @@ export function FolienDeck({
       const w = voll ? window.innerWidth : el.clientWidth;
       const h = voll ? window.innerHeight : el.clientWidth * 0.5625;
       const hoch = voll && h > w;
+      setVollAn(voll);
       setGedreht(hoch);
       setScale(hoch ? Math.min(h / 1280, w / 720) : Math.min(w / 1280, h / 720));
     };
@@ -203,6 +228,14 @@ export function FolienDeck({
           />
           </div>
           {pseudo && gedreht ? leiste : null}
+          {(vollAn || eingebettet) && hinweis ? (
+            <div role="status" className="pointer-events-none absolute inset-x-0 top-3 flex justify-center" data-deck-hinweis>
+              <span className="ui-fade-in inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[color:var(--foreground)] px-4 py-2 text-sm text-white shadow-[var(--shadow-lg)]">
+                <Check className="h-4 w-4 text-emerald-300" />
+                {hinweis.text}
+              </span>
+            </div>
+          ) : null}
         </div>
         {pseudo && !gedreht ? leiste : null}
       </div>
