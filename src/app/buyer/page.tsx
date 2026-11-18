@@ -19,6 +19,8 @@ import { ReferralNudgeCard } from "@/components/kollegen";
 import { loadReferralNudge } from "@/lib/kollegen";
 import { ErstinfoHeuteHint } from "@/components/erstinformation-hint";
 import { listVorbereitungen } from "@/lib/termin-vorbereitung-server";
+import { ladeAutomatischeNachrichten, morgenBerlin } from "@/lib/nachrichtenplan-server";
+import { leadScope } from "@/lib/team";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -55,13 +57,16 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       </main>
     );
   }
-  const [data, customer, me, nudge, vorb] = await Promise.all([
+  const morgen = morgenBerlin(new Date());
+  const [data, customer, me, nudge, vorb, automatisch] = await Promise.all([
     loadInbox(ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } }),
     ctx.teamRole === "advisor" && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
     // „Kollegen empfehlen“ nach positiven Momenten (nur Inhaber, nicht in der Vorschau)
     ctx.teamRole === "owner" && !ctx.preview ? loadReferralNudge(ctx.customerId).catch(() => null) : null,
     listVorbereitungen(ctx).catch(() => []),
+    // „Morgen: 3 automatische Nachrichten“ (Paket P6)
+    ladeAutomatischeNachrichten(leadScope(ctx), morgen.von, morgen.bis).catch(() => null),
   ]);
   // Termine, die noch vorzubereiten sind (Angebot rechnen): Link direkt in der Terminzeile statt eigener Karte
   const zuVorbereiten = vorb.map((v) => v.id);
@@ -113,7 +118,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
             {erstinfoHint}
-            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} />
+            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} />
             {hinweise}
           </section>
           {breit ? null : (
@@ -155,7 +160,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       {erstinfoHint}
-      <TodayInbox data={data} zuVorbereiten={zuVorbereiten} anrufen={anrufen} />
+      <TodayInbox data={data} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} />
       {hinweise}
     </main>
   );

@@ -56,6 +56,8 @@ import { TerminAnwesenheit } from "@/components/termin-anwesenheit";
 import { anwesenheitsFrage } from "@/lib/showup";
 import { AngebotSendenSheet, type AngebotZiel } from "@/components/angebot-senden";
 import { ANGEBOT_AUFGABE, ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
+import { MorgenAutomatisch } from "@/components/morgen-automatisch";
+import type { AutomatischeNachrichten } from "@/lib/nachrichtenplan-server";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -110,7 +112,10 @@ export function TodayInbox({
   selectedLeadId = null,
   zuVorbereiten = [],
   anrufen = null,
+  automatisch = null,
 }: {
+  /** „Morgen: 3 automatische Nachrichten“ (Paket P6) */
+  automatisch?: AutomatischeNachrichten | null;
   /** Deep-Link aus dem Push „… hat noch nicht geantwortet. Jetzt anrufen?“ (/buyer?anrufen=<leadId>): Anruf-Blatt öffnen */
   anrufen?: string | null;
   data: InboxData;
@@ -657,6 +662,9 @@ export function TodayInbox({
           ) : null}
         </Card>
       ) : null}
+
+      {/* Dezent, eine Zeile über „Nächste Tage“ (Paket P6) */}
+      {automatisch?.anzahl ? <MorgenAutomatisch daten={automatisch} href={leadUrl} /> : null}
 
       {data.upcoming.length > 0 ? (
         <UpcomingCard

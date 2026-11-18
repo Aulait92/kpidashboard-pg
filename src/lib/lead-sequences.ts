@@ -20,6 +20,11 @@
 // WhatsApp, danach Anruf-Aufgabe) bzw. „Habe ich selbst gesendet“ tippt („offer_selbst“: ohne E-Mail, nur WhatsApp und
 // Anruf). Der Status „Angebot gesendet“ allein startet nichts mehr (onLeadStatus), dann gilt die klassische Wiedervorlage.
 //
+// Nächste Nachrichten (Paket P6, Ole 17.11.2026, lib/nachrichtenplan-aktionen.ts): Der Vermittler kann am Kontakt einzelne
+// Schritte überspringen (LeadSequence.uebersprungen: beim Fälligwerden ohne Versand weitergeschaltet), den nächsten Schritt
+// verschieben (nextAt, die folgenden rücken über neustartAt mit), sofort senden (runSequences mit nurId und sofort) und
+// alle Nachrichten an den Lead pausieren (Lead.nachrichtenPausiertAt: Abfolgen warten).
+//
 // Termin-Nachfassen (Ole, 17.11.2026): Antwortet der Lead 2 Std. nach dem Terminvorschlag des Assistenten nicht, ist der
 // erste Schritt von „Chat ruht“ ein kurzes Nachfassen mit denselben (bzw. neu berechneten, noch freien) Zeit-Knöpfen:
 // nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
@@ -390,7 +395,7 @@ export async function restartSilentSequence(leadId: string, now = new Date()) {
   if (running.some((r) => r.kind !== "silent")) return null;
   const nextAt = new Date(now.getTime() + SEQUENCES.silent.steps[0].day * DAY);
   const same = running.find((r) => r.kind === "silent");
-  if (same) return prisma.leadSequence.update({ where: { id: same.id }, data: { step: 0, startedAt: now, nextAt } });
+  if (same) return prisma.leadSequence.update({ where: { id: same.id }, data: { step: 0, startedAt: now, nextAt, neustartAt: null, uebersprungen: [] } });
   return prisma.leadSequence.create({ data: { leadId, customerId: lead.customerId, kind: "silent", step: 0, startedAt: now, nextAt } });
 }
 
@@ -529,12 +534,20 @@ async function createCallTask(leadId: string, note: string, now: Date): Promise<
 
 export type SequenceRunResult = { due: number; sent: number; tasks: number; stopped: number; waiting: number; failed: number };
 
-/** Fällige Schritte abarbeiten (Cron alle 5 Minuten). */
-export async function runSequences(now = new Date()): Promise<SequenceRunResult> {
+/**
+ * Fällige Schritte abarbeiten (Cron alle 5 Minuten). Mit `nurId` und `sofort` („Jetzt senden“ am Kontakt, Paket P6): nur
+ * diese Abfolge, auch außerhalb des Versandfensters und während einer Pause; die Stopp-Gründe gelten trotzdem.
+ */
+export async function runSequences(now = new Date(), opts: { nurId?: string; sofort?: boolean } = {}): Promise<SequenceRunResult> {
   const res: SequenceRunResult = { due: 0, sent: 0, tasks: 0, stopped: 0, waiting: 0, failed: 0 };
   const due = await prisma.leadSequence.findMany({
-    // Ruhende Konten (lib/ruhend.ts): kein Nachfassen
-    where: { stoppedAt: null, nextAt: { lte: now }, lead: { customer: { dormantSince: null } } },
+    // Ruhende Konten (lib/ruhend.ts): kein Nachfassen; „Alle pausieren“ am Kontakt (P6): Schritte warten
+    where: {
+      stoppedAt: null,
+      nextAt: { lte: now },
+      ...(opts.nurId ? { id: opts.nurId } : {}),
+      lead: { customer: { dormantSince: null }, ...(opts.sofort ? {} : { nachrichtenPausiertAt: null }) },
+    },
     orderBy: { nextAt: "asc" },
     take: 100,
   });
@@ -553,16 +566,18 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
       res.stopped++;
       continue;
     }
+    // Vom Vermittler übersprungen (P6): ohne Versand weiter, nicht aufs Versandfenster warten
+    const skip = seq.uebersprungen.includes(seq.step);
     // Offener Terminvorschlag (erster Schritt „Chat ruht“): Nachfassen mit den Zeit-Knöpfen, Mo bis Sa 8 bis 20 Uhr
     const terminNachfass =
-      seq.kind === "silent" && seq.step === 0 ? await import("@/lib/whatsapp/termin-strecke").then((m) => m.offenerTerminvorschlag(seq.leadId, seq.customerId)).catch(() => null) : null;
+      !skip && seq.kind === "silent" && seq.step === 0 ? await import("@/lib/whatsapp/termin-strecke").then((m) => m.offenerTerminvorschlag(seq.leadId, seq.customerId)).catch(() => null) : null;
     // WhatsApp und E-Mail nur im Versandfenster – Schritt wartet, Anruf-Aufgaben jederzeit.
-    if ((step.action === "whatsapp" || step.action === "email") && !(terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN) : windowOpen)) {
+    if (!skip && !opts.sofort && (step.action === "whatsapp" || step.action === "email") && !(terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN) : windowOpen)) {
       res.waiting++;
       continue;
     }
     // Vermittler telefoniert gerade bzw. hat noch kein Ergebnis eingetragen (lib/telefonat.ts): kein Nachfassen, Schritt wartet
-    if (step.action === "whatsapp" && (await anrufPausiert(seq.leadId, now))) {
+    if (!skip && !opts.sofort && step.action === "whatsapp" && (await anrufPausiert(seq.leadId, now))) {
       res.waiting++;
       continue;
     }
@@ -571,13 +586,15 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
     const claimed = await prisma.leadSequence.updateMany({
       where: { id: seq.id, step: seq.step, stoppedAt: null },
       data: next
-        ? { step: seq.step + 1, nextAt: new Date(Math.max(seq.startedAt.getTime() + next.day * DAY, now.getTime() + MIN_GAP_MS)) }
+        ? { step: seq.step + 1, nextAt: new Date(Math.max((seq.neustartAt ?? seq.startedAt).getTime() + next.day * DAY, now.getTime() + MIN_GAP_MS)) }
         : { step: seq.step + 1, nextAt: null, stoppedAt: now, stopReason: "Abgeschlossen" },
     });
     if (claimed.count === 0) continue;
 
     let entry: SequenceLogEntry;
-    if (step.action === "call") {
+    if (skip) {
+      entry = { at: now.toISOString(), step: seq.step, action: step.action, result: "skipped", detail: "von Ihnen" };
+    } else if (step.action === "call") {
       const r = await createCallTask(seq.leadId, step.note, now);
       entry = { at: now.toISOString(), step: seq.step, action: "call", result: r };
       if (r === "call_task") res.tasks++;
@@ -779,6 +796,7 @@ export function describe(e: SequenceLogEntry, total: number): string {
   const n = `(Schritt ${e.step + 1} von ${total})`;
   if (e.action === "stop") return `Abfolge beendet: ${e.detail ?? "gestoppt"}`;
   if (e.action === "plan") return `Wiedervorlage vom Assistenten: ${e.detail ?? "meldet sich später"}`;
+  if (e.action === "call" && e.result === "skipped") return `Anruf-Aufgabe übersprungen (${e.detail ?? "von Ihnen"}) ${n}`;
   if (e.action === "call") return e.result === "kept_followup" ? `Anruf fällig, Ihre eigene Wiedervorlage bleibt ${n}` : `Anruf-Aufgabe auf „Heute“ angelegt ${n}`;
   if (e.action === "email") {
     if (e.result === "sent") return `Nachfassen: E-Mail gesendet ${n}`;
@@ -793,6 +811,8 @@ export function describe(e: SequenceLogEntry, total: number): string {
       return `WhatsApp nicht möglich${e.detail ? ` (${e.detail.replace(/ – .*$/, "")})` : ""} – Anruf-Aufgabe angelegt ${n}`;
     case "kept_followup":
       return `WhatsApp nicht möglich, Ihre Wiedervorlage bleibt ${n}`;
+    case "skipped":
+      return `WhatsApp übersprungen${e.detail ? ` (${e.detail})` : ""} ${n}`;
     default:
       return `WhatsApp konnte nicht gesendet werden ${n}`;
   }

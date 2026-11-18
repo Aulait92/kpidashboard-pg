@@ -141,6 +141,9 @@ export async function sendRescheduleNotice(opts: {
   }
 }
 
+/** WhatsApp der Vortags-Erinnerung vom Vermittler übersprungen (nur intern, wie „kein Lead“ behandelt). */
+class UebersprungenError extends Error {}
+
 export type ReminderResult = { candidates: number; sent: number; errors: string[] };
 
 /** „Gleich ist es so weit“: etwa so lange vor dem Termin (Ole, 15.11.2026: kurz vorher nachfragen, ob alles passt). */
@@ -159,6 +162,7 @@ type TerminZeile = {
   reminderSentAt: Date | null;
   rescheduleRequestedAt: Date | null;
   status: string;
+  erinnerungenUebersprungen: string[];
 };
 
 const terminSelect = {
@@ -174,7 +178,18 @@ const terminSelect = {
   reminderSentAt: true,
   rescheduleRequestedAt: true,
   status: true,
+  erinnerungenUebersprungen: true,
 } as const;
+
+/**
+ * Nächste Nachrichten (Paket P6): nicht alle genannten Erinnerungen übersprungen und der Kontakt nicht pausiert („Alle
+ * pausieren“, Lead.nachrichtenPausiertAt). Termine ohne Lead laufen wie bisher.
+ */
+export function nichtAngehalten(arten: string[]) {
+  return {
+    AND: [{ NOT: { erinnerungenUebersprungen: { hasEvery: arten } } }, { OR: [{ leadId: null }, { lead: { is: { nachrichtenPausiertAt: null } } }] }],
+  };
+}
 
 function formAnswers(raw: unknown): { label: string; value: string }[] {
   if (!Array.isArray(raw)) return [];
@@ -227,6 +242,7 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
       customer: { dormantSince: null },
       conversationId: { not: null },
       startsAt: { gt: new Date(now.getTime() + 10 * 60 * 1000), lte: new Date(now.getTime() + SOON_MS) },
+      ...nichtAngehalten(["stunde"]),
     },
     select: terminSelect,
     orderBy: { startsAt: "asc" },
@@ -305,6 +321,7 @@ export async function runStartReminders(now = new Date()): Promise<ReminderResul
       customer: { dormantSince: null },
       conversationId: { not: null },
       startsAt: { gt: now, lte: new Date(now.getTime() + ERINNERUNG.gleichVorMs) },
+      ...nichtAngehalten(["gleich"]),
     },
     select: terminSelect,
     orderBy: { startsAt: "asc" },
@@ -349,6 +366,8 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
         reminderSentAt: null,
         startsAt: { gt: now, lte: new Date(now.getTime() + ERINNERUNG.vortagVorMs) },
         customer: { dormantSince: null },
+        // Nächste Nachrichten (P6): WhatsApp und Mail einzeln überspringbar
+        ...nichtAngehalten(["vortag", "vortag_mail"]),
       },
       select: terminSelect,
       orderBy: { startsAt: "asc" },
@@ -368,9 +387,13 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
     // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal
     // zugestellt hat (sonst nächster Cron-Lauf erneut, ohne Doppel-Mails).
     let delivered = false;
+    // Vom Vermittler übersprungen (P6): diesen Kanal auslassen, die Erinnerung gilt dann als erledigt
+    const waAus = appt.erinnerungenUebersprungen.includes("vortag");
+    const mailAus = appt.erinnerungenUebersprungen.includes("vortag_mail");
     // Kein Lead zugeordnet (Allowlist, lib/whatsapp/nur-leads.ts): keine WhatsApp; als erledigt markieren, sonst Dauerschleife
     let keinLead = false;
     try {
+      if (waAus) throw new UebersprungenError();
       await sendWhatsAppNotice({
         customerId: appt.customerId,
         to: k.conv.contactPhone,
@@ -385,10 +408,10 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
       });
       delivered = true;
     } catch (err) {
-      if (err instanceof WhatsAppKeinLeadError) keinLead = true;
+      if (err instanceof WhatsAppKeinLeadError || err instanceof UebersprungenError) keinLead = true;
       else result.errors.push(`${appt.id} (WhatsApp): ${err instanceof Error ? err.message : String(err)}`);
     }
-    const mail = await sendLeadEmail(appt.id, "reminder", { now }).catch(() => ({ sent: false }));
+    const mail = mailAus ? { sent: false } : await sendLeadEmail(appt.id, "reminder", { now }).catch(() => ({ sent: false }));
     if (mail.sent) delivered = true;
     if (delivered || keinLead) {
       await prisma.appointment.update({
