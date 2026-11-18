@@ -98,7 +98,8 @@ function HeuteRow({ it, ohneBereich }: { it: HeuteItem; ohneBereich?: boolean })
   const mainIsPrimary = it.tone !== "info" && q?.kind !== "task" && q?.kind !== "termin" && q?.kind !== "storno" && q?.kind !== "garantie";
 
   return (
-    <li className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4" data-heute={it.key}>
+    // „Wie lief der Termin?“: sechs Ergebnis-Knöpfe unter dem Text statt daneben (sonst wird der Text zur schmalen Spalte)
+    <li className={cn("flex flex-col gap-3 px-4 py-3.5", q?.kind !== "termin" && "sm:flex-row sm:items-center sm:gap-4")} data-heute={it.key}>
       {/* Ganze linke Seite führt zur Detailansicht (Kontakt, Kunde, Lead …) */}
       <Link href={it.action.href} className="group flex min-w-0 flex-1 gap-3 rounded-lg" title="Öffnen">
         <span className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full", TONE[it.tone])}>
@@ -110,7 +111,7 @@ function HeuteRow({ it, ohneBereich }: { it: HeuteItem; ohneBereich?: boolean })
           <div className="mt-0.5 text-sm text-[color:var(--muted)]">{it.detail}</div>
         </div>
       </Link>
-      <div className="flex w-full items-center gap-2 sm:w-auto">
+      <div className={cn("flex w-full items-center gap-2", q?.kind === "termin" ? "sm:pl-12" : "sm:w-auto")}>
         {q?.kind === "termin" ? (
           <div className="flex flex-wrap gap-1.5" data-termin-ergebnis>
             {TERMIN_REVIEW_CHOICES.map((c) => (
@@ -119,7 +120,7 @@ function HeuteRow({ it, ohneBereich }: { it: HeuteItem; ohneBereich?: boolean })
                 type="button"
                 disabled={pending}
                 onClick={() => run(() => meetingOutcomeAction(q.taskId, c.outcome))}
-                className={cn(btn, c.outcome === "gewonnen" ? primary : secondary, "px-2.5")}
+                className={cn(btn, c.outcome === "gewonnen" ? primary : secondary, "flex-none px-3")}
               >
                 {c.label}
               </button>
@@ -230,7 +231,8 @@ function HeuteRow({ it, ohneBereich }: { it: HeuteItem; ohneBereich?: boolean })
           </button>
         ) : null}
 
-        {confirm ? null : (
+        {/* Bei den Ergebnis-Knöpfen führt der Text links zur Kontaktakte, ein zweiter Knopf wäre doppelt */}
+        {confirm || q?.kind === "termin" ? null : (
           <Link href={it.action.href} className={cn(btn, "sm:px-4", mainIsPrimary ? primary : secondary)}>
             {it.icon === "phone" ? <Phone className="h-4 w-4" /> : null}
             {it.action.label}

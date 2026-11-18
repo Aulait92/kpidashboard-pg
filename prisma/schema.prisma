@@ -2125,6 +2125,8 @@ model SalesMeeting {
   taskId             String?
   /// Aufgabe „Wie lief der Termin?“ nach Terminende (lib/vertrieb/termin-review.ts)
   reviewTaskId       String?
+  /// Nachfrage 15 Minuten nach Terminende geprüft (Push gesendet oder Ergebnis schon da), damit es sie nur einmal gibt
+  reviewCheckedAt    DateTime?
   /// WhatsApp-Terminbestätigung von der Support-Nummer (lib/vertrieb/termin-whatsapp.ts):
   /// sent | no_phone | no_account | no_template | opted_out | failed | past
   waConfirmStatus    String?

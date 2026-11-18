@@ -16,12 +16,13 @@ import {
   updateCustomer,
   updateLinkedIn,
 } from "@/app/admin/vertrieb/actions";
-import { ACTIVITY_LABEL, CUSTOMER_LABEL, CUSTOMER_STAGES, SOURCES, shortName } from "@/lib/vertrieb/crm";
+import { ACTIVITY_LABEL, CUSTOMER_LABEL, CUSTOMER_STAGES, SOURCES, isTerminReview, shortName } from "@/lib/vertrieb/crm";
 import { dayKey, fmtDate, fmtDateTime, timeKey, todayKey } from "@/lib/vertrieb/dates";
 import { stripQuoted } from "@/lib/vertrieb/instantly";
 import { LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { enrichedLine, waConfirmLabel, type Kontakt, type ladeKontaktakte } from "@/lib/vertrieb/kontaktakte";
 import { cn } from "@/lib/utils";
+import { TaskRow } from "@/components/vertrieb/ui";
 import { Klappe } from "./klappe";
 
 // Karten der Kontaktakte im neuen Admin (src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx). Daten aus
@@ -40,12 +41,20 @@ const EINORDNUNG: Record<string, string> = { POSITIV: "positiv", SPAETER: "spät
 const DT = "text-[color:var(--muted)]";
 const KLEINER_LINK = "inline-flex min-h-10 items-center gap-1 text-xs font-medium text-[color:var(--brand)] hover:underline sm:min-h-0";
 
-/** Nächster Schritt: kommender Termin mit Meeting-Link und Verschieben, „Termin buchen“ (mit Link zum Entscheidungs-Call). */
+/** Offene Nachfrage „Wie lief der Termin?“: steht oben im Nächsten Schritt statt unter Aufgaben. */
+export const offeneNachfrage = (a: Pick<Akte, "open">) => a.open.find((t) => isTerminReview(t.title)) ?? null;
+
+/**
+ * Nächster Schritt: kommender Termin mit Meeting-Link und Verschieben, „Termin buchen“ (mit Link zum Entscheidungs-Call).
+ * Termine Stufe 2 (Ole, 18.11.2026): offene Nachfrage „Wie lief der Termin?“ ganz oben mit den Ergebnis-Knöpfen (#ergebnis,
+ * Ziel des Pushs nach dem Termin, von Mein Tag und von Verkaufen → Termine).
+ */
 export function NaechsterSchritt({ c, a, termin }: { c: Kontakt; a: Akte; termin: string | null }) {
   const jetzt = new Date();
   const geplant = c.meetings.filter((m) => m.status === "GEPLANT" && m.startAt >= jetzt).reverse();
   const naechster = geplant[0] ?? null;
-  const naechsteAufgabe = a.open[0] ?? null;
+  const nachfrage = offeneNachfrage(a);
+  const naechsteAufgabe = a.open.find((t) => t !== nachfrage) ?? null;
   const frueher = c.meetings.filter((m) => m !== naechster);
   return (
     <Card>
@@ -69,6 +78,11 @@ export function NaechsterSchritt({ c, a, termin }: { c: Kontakt; a: Akte; termin
           </span>
         }
       />
+      {nachfrage ? (
+        <ul id="ergebnis" className="scroll-mt-24 border-b border-[color:var(--border)] bg-[color:var(--brand-soft)]" data-termin-nachfrage>
+          <TaskRow t={nachfrage} showContact={false} />
+        </ul>
+      ) : null}
       <div className="px-5 py-4 text-sm" data-funktion="page-termine--termine-calendly-bzw-buchungsseite-mit-meeting">
         {naechster ? (
           <div>
@@ -100,7 +114,7 @@ export function NaechsterSchritt({ c, a, termin }: { c: Kontakt; a: Akte; termin
             <div className="text-xs text-[color:var(--muted)]">Kein Termin geplant · Aufgabe fällig {fmtDate(naechsteAufgabe.dueAt)}</div>
           </div>
         ) : (
-          <p className="text-[color:var(--muted)]">Kein Termin und keine offene Aufgabe.</p>
+          <p className="text-[color:var(--muted)]">{nachfrage ? "Kein Termin geplant." : "Kein Termin und keine offene Aufgabe."}</p>
         )}
       </div>
       {frueher.length ? (

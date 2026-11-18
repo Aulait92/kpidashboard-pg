@@ -8,12 +8,16 @@
 //   oder die erledigte Aufgabe „Wie lief der Termin?“ (reviewTaskId) als erledigt.
 // - Stand: Pipeline-Stufe des Kontakts und sein aktuelles Angebot (angebotZustand wie unter Verkaufen → Angebote).
 // - Nächster Schritt: frühester von offener Aufgabe (ohne „Wie lief der Termin?“), kommendem Termin, offenem Angebot.
+//
+// Stufe 2 (Ole, 18.11.2026): Kennzahlen oben (terminKennzahlen), Termine nur als Aufgabe „Termin“ in der Liste
+// (termineAusAufgaben, Art „Termin (Aufgabe)“), fehlendes Ergebnis ab dem nächsten Morgen auf Mein Tag
+// (ergebnisFehltPunkte) und die Prüfung „Ergebnis schon da?“ für den Push nach dem Termin (hatErgebnis, termin-review.ts).
 
 import type { HeuteItem } from "@/lib/admin-heute";
 import type { SalesStage } from "@/generated/prisma/enums";
 import { kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { abschlussBonusJetzt } from "@/lib/offer-pricing";
-import { OUTCOMES, STAGE_LABEL, isTerminReview, shortName } from "@/lib/vertrieb/crm";
+import { OUTCOMES, STAGE_LABEL, isTerminReview, istTerminAufgabe, shortName } from "@/lib/vertrieb/crm";
 import { angebotZustand, type AngebotZustand } from "@/lib/vertrieb/angebote-uebersicht";
 import { terminKurz } from "@/lib/vertrieb/entscheidungs-call";
 
@@ -45,9 +49,11 @@ export type UTermin = {
   bookingTypeId: string | null;
   inviteeName: string | null;
   waConfirmStatus: string | null;
+  /** Termin nur als Aufgabe „Termin“ (ohne Buchung); id ist dann die der Aufgabe */
+  aufgabe?: boolean;
 };
 export type UKontakt = { id: string; name: string; firstName: string | null; lastName: string | null; city: string | null; stage: SalesStage; customerId: string | null };
-export type UAufgabe = { id: string; contactId: string | null; title: string; dueAt: Date; doneAt: Date | null };
+export type UAufgabe = { id: string; contactId: string | null; title: string; dueAt: Date; doneAt: Date | null; createdAt?: Date };
 export type UAktivitaet = { contactId: string; type: string; outcome: string | null; note: string | null; occurredAt: Date };
 export type UAngebot = {
   id: string;
@@ -74,13 +80,15 @@ export type UAngebot = {
 export type TerminArt = "erst" | "entscheidung" | "sonstig";
 
 /** Entscheidungs-Call wie terminThema (termin-whatsapp.ts), Erstgespräch: Meta-Leads-Call bzw. Erst-/Kennenlerngespräch. */
-export function terminArt(m: { title: string; bookingSlug: string | null }): TerminArt {
+export function terminArt(m: { title: string; bookingSlug: string | null; aufgabe?: boolean }): TerminArt {
+  if (m.aufgabe) return "sonstig";
   if (m.bookingSlug === "entscheidung" || /entscheid/i.test(m.title)) return "entscheidung";
   if (m.bookingSlug === "meta-leads-call" || /meta.?leads|erstgespr|kennenlern/i.test(m.title)) return "erst";
   return "sonstig";
 }
 
-export function artLabel(m: { title: string; bookingSlug: string | null }): string {
+export function artLabel(m: { title: string; bookingSlug: string | null; aufgabe?: boolean }): string {
+  if (m.aufgabe) return "Termin (Aufgabe)";
   const art = terminArt(m);
   if (art === "entscheidung") return "Entscheidungs-Call";
   if (art === "erst") return "Erstgespräch";
@@ -88,6 +96,42 @@ export function artLabel(m: { title: string; bookingSlug: string | null }): stri
 }
 
 export const terminEnde = (m: { startAt: Date; endAt: Date | null }) => m.endAt ?? new Date(m.startAt.getTime() + DAUER);
+
+// ─── Termine nur als Aufgabe ────────────────────────────────────────────
+
+/** Buchung und Aufgabe so nah beieinander gelten als derselbe Termin (die Buchung zählt). */
+const DUBLETTE_TAGE = 3;
+/** Die Nachfrage „Wie lief der Termin?“ zu einer Termin-Aufgabe entsteht kurz nach deren Fälligkeit (termin-review.ts). */
+const NACHFRAGE_BIS_TAGE = 2;
+
+export type UTerminAufgabe = { id: string; contactId: string; title: string; dueAt: Date };
+
+/**
+ * Termine, die nur als Aufgabe „Termin“ existieren (z. B. aus „Termin vereinbart“), als Zeilen der Übersicht.
+ * `termine`: die gebuchten Termine (eine Aufgabe nahe an einer Buchung desselben Kontakts fällt weg), `aufgaben`:
+ * u. a. die Nachfragen „Wie lief der Termin?“ (die erste nach der Fälligkeit gehört zur Aufgabe, wenn kein Termin sie hat).
+ */
+export function termineAusAufgaben(terminAufgaben: UTerminAufgabe[], termine: UTermin[], aufgaben: UAufgabe[]): UTermin[] {
+  const vergeben = new Set(termine.map((m) => m.reviewTaskId).filter(Boolean));
+  const reviews = aufgaben
+    .filter((t) => isTerminReview(t.title) && !vergeben.has(t.id))
+    .sort((a, b) => (a.createdAt ?? a.dueAt).getTime() - (b.createdAt ?? b.dueAt).getTime());
+  const out: UTermin[] = [];
+  for (const t of [...terminAufgaben].sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime())) {
+    if (!istTerminAufgabe(t.title)) continue;
+    if (termine.some((m) => m.contactId === t.contactId && Math.abs(m.startAt.getTime() - t.dueAt.getTime()) <= DUBLETTE_TAGE * TAG)) continue;
+    const review = reviews.find((r) => {
+      const at = (r.createdAt ?? r.dueAt).getTime();
+      return r.contactId === t.contactId && !vergeben.has(r.id) && at >= t.dueAt.getTime() && at <= t.dueAt.getTime() + NACHFRAGE_BIS_TAGE * TAG;
+    });
+    if (review) vergeben.add(review.id);
+    out.push({
+      id: t.id, contactId: t.contactId, title: t.title, startAt: t.dueAt, endAt: null, status: "GEPLANT", cancelReason: null, reviewTaskId: review?.id ?? null,
+      bookingSlug: null, joinUrl: null, location: null, manageToken: null, bookingTypeId: null, inviteeName: null, waConfirmStatus: null, aufgabe: true,
+    });
+  }
+  return out;
+}
 
 // ─── Was passiert ist ───────────────────────────────────────────────────
 
@@ -160,6 +204,9 @@ export function terminErgebnis(m: UTermin, aktivitaeten: UAktivitaet[], bis: Dat
   if (review?.doneAt) return { art: "erledigt", notiz: null };
   return { art: "fehlt", reviewOffen: !!review && !review.doneAt };
 }
+
+/** Für die Nachfrage nach dem Termin: Ergebnis oder eigene Notiz seit Terminbeginn schon eingetragen? */
+export const hatErgebnis = (aktivitaeten: UAktivitaet[], ab: Date) => aktivitaeten.some((a) => a.occurredAt >= ab && (!!ergebnisId(a) || istHandnotiz(a)));
 
 // ─── Stand ──────────────────────────────────────────────────────────────
 
@@ -305,7 +352,8 @@ export function baueUebersicht(
       ergebnis,
       angebot: { stand: angebotStand(angebot, now), nummer: angebot?.number ?? null },
       schritt,
-      ergebnisHref: ergebnis.art === "fehlt" ? `${kontaktPfad(k.id)}${ergebnis.reviewOffen ? "#aufgaben" : "#aktivitaet"}` : null,
+      // #ergebnis: „Wie lief der Termin?“ oben in der Kontaktakte (Nächster Schritt), sonst „Aktivität erfassen“
+      ergebnisHref: ergebnis.art === "fehlt" ? `${kontaktPfad(k.id)}${ergebnis.reviewOffen ? "#ergebnis" : "#aktivitaet"}` : null,
       kommend: m.status === "GEPLANT" && terminEnde(m) > now,
     });
   }
@@ -438,4 +486,101 @@ export function zeilenDerAnsicht(zeilen: TerminZeile[], ansicht: Ansicht, now: D
   return zeilen
     .filter((z) => ansicht === "alle" || (z.termin.startAt.getTime() >= ab && z.termin.startAt <= now))
     .sort((a, b) => b.termin.startAt.getTime() - a.termin.startAt.getTime());
+}
+
+// ─── Kennzahlen (Stufe 2) ───────────────────────────────────────────────
+
+/** Rückblick der Kennzahlen „erschienen“, „mit Angebot“ und „gewonnen“. */
+export const KENNZAHL_TAGE = 30;
+
+export type TerminKennzahlen = {
+  /** Nicht abgesagte Termine dieser Woche (Mo bis So, Berlin), davon noch kommend */
+  woche: { anzahl: number; kommend: number };
+  /** Vorbei, nicht abgesagt, mit Ergebnis oder Notiz: davon nicht „Nicht erschienen“ */
+  erschienen: { quote: number | null; erschienen: number; basis: number };
+  /** Gehaltene Termine (vorbei, nicht abgesagt, nicht „Nicht erschienen“), danach Angebot verschickt */
+  angebot: { anzahl: number; gehalten: number };
+  /** Kontakte mit Termin im Zeitraum, die gewonnen sind (Kunde, Stufe Gewonnen oder Angebot angenommen) */
+  gewonnen: { anzahl: number; kontakte: number };
+};
+
+const plusTage = (tag: string, n: number) => new Date(Date.parse(`${tag}T12:00:00Z`) + n * TAG).toISOString().slice(0, 10);
+/** Montag und Sonntag der Woche von `now` (Berlin) als „JJJJ-MM-TT“. */
+export function wocheVon(now: Date): { von: string; bis: string } {
+  const heute = berlinTag(now);
+  const wt = new Date(`${heute}T12:00:00Z`).getUTCDay(); // 0 = Sonntag
+  const von = plusTage(heute, -((wt + 6) % 7));
+  return { von, bis: plusTage(von, 6) };
+}
+
+const istGewonnen = (z: TerminZeile) => !!z.kontakt.customerId || z.kontakt.stage === "GEWONNEN" || z.angebot.stand === "angenommen";
+
+/** Die vier Kennzahlen oben auf Verkaufen → Termine, aus allen geladenen Zeilen (nicht nur der Ansicht). */
+export function terminKennzahlen(zeilen: TerminZeile[], angebote: Pick<UAngebot, "salesContactId" | "sentAt">[], now: Date): TerminKennzahlen {
+  const { von, bis } = wocheVon(now);
+  const dieseWoche = zeilen.filter((z) => z.termin.status === "GEPLANT" && berlinTag(z.termin.startAt) >= von && berlinTag(z.termin.startAt) <= bis);
+
+  const ab = now.getTime() - KENNZAHL_TAGE * TAG;
+  const vorbei = zeilen.filter((z) => z.termin.status === "GEPLANT" && z.termin.startAt.getTime() >= ab && terminEnde(z.termin) <= now);
+  const nichtErschienen = (z: TerminZeile) => z.ergebnis.art === "eingetragen" && z.ergebnis.id === "nicht_erschienen";
+  const mitErgebnis = vorbei.filter((z) => z.ergebnis.art === "eingetragen" || z.ergebnis.art === "erledigt");
+  const erschienen = mitErgebnis.filter((z) => !nichtErschienen(z)).length;
+
+  // Angebot nach dem Termin: Ergebnis „Angebot geschickt“ oder ein Angebot verschickt bis zum nächsten Termin des Kontakts
+  const termineVon = gruppe(zeilen, (z) => z.termin.contactId);
+  const angeboteVon = gruppe(angebote, (o) => o.salesContactId);
+  const gehalten = vorbei.filter((z) => !nichtErschienen(z));
+  const mitAngebot = gehalten.filter((z) => {
+    if (z.ergebnis.art === "eingetragen" && z.ergebnis.id === "angebot_gesendet") return true;
+    const start = z.termin.startAt;
+    const naechster = (termineVon.get(z.termin.contactId) ?? [])
+      .filter((x) => x.termin.status === "GEPLANT" && x.termin.startAt > start)
+      .reduce<Date | null>((a, x) => (!a || x.termin.startAt < a ? x.termin.startAt : a), null);
+    return (angeboteVon.get(z.termin.contactId) ?? []).some((o) => o.sentAt && o.sentAt >= start && (!naechster || o.sentAt < naechster));
+  }).length;
+
+  const kontakte = new Map(vorbei.map((z) => [z.kontakt.id, z]));
+  return {
+    woche: { anzahl: dieseWoche.length, kommend: dieseWoche.filter((z) => z.kommend).length },
+    erschienen: { quote: mitErgebnis.length ? erschienen / mitErgebnis.length : null, erschienen, basis: mitErgebnis.length },
+    angebot: { anzahl: mitAngebot, gehalten: gehalten.length },
+    gewonnen: { anzahl: [...kontakte.values()].filter(istGewonnen).length, kontakte: kontakte.size },
+  };
+}
+
+// ─── Mein Tag: Ergebnis fehlt (Stufe 2) ─────────────────────────────────
+
+/** So lange bleibt ein fehlendes Ergebnis auf Mein Tag (danach nur noch unter Verkaufen → Termine). */
+export const HEUTE_TAGE = 14;
+
+/**
+ * Punkte für Mein Tag bzw. Admin „Heute“: Termin ohne Ergebnis ab dem Morgen nach dem Termin, bis ein Ergebnis da ist.
+ * Nur der letzte Termin je Kontakt (ein späterer Termin löst ihn ab), nicht bei gewonnenen, verlorenen oder Kunden.
+ * Mit offener Nachfrage „Wie lief der Termin?“ tragen die Ergebnis-Knöpfe direkt ein (quick „termin“).
+ * Ziele sind alte Admin-Adressen wie alle Punkte von Heute (der neue Admin leitet sie um, der #Anker bleibt).
+ */
+export function ergebnisFehltPunkte(zeilen: TerminZeile[], now: Date): HeuteItem[] {
+  const heute = berlinTag(now);
+  const ab = now.getTime() - HEUTE_TAGE * TAG;
+  const termineVon = gruppe(zeilen, (z) => z.termin.contactId);
+  const punkte: HeuteItem[] = [];
+  for (const z of zeilen) {
+    const m = z.termin;
+    if (z.ergebnis.art !== "fehlt" || istAbgeschlossen(z.kontakt)) continue;
+    if (m.startAt.getTime() < ab || berlinTag(terminEnde(m)) >= heute) continue;
+    if ((termineVon.get(m.contactId) ?? []).some((x) => x.termin.id !== m.id && x.termin.status === "GEPLANT" && x.termin.startAt > m.startAt)) continue;
+    const offen = z.ergebnis.reviewOffen && m.reviewTaskId;
+    punkte.push({
+      key: `terminergebnis:${m.id}`,
+      area: "Vertrieb",
+      tone: "bad",
+      icon: "calendar",
+      title: `Ergebnis fehlt: ${z.person}`,
+      detail: `${z.artLabel} am ${terminKurz(m.startAt)}`,
+      action: { label: "Ergebnis eintragen", href: `/admin/vertrieb/kontakte/${z.kontakt.id}#${offen ? "ergebnis" : "aktivitaet"}` },
+      since: m.startAt,
+      ...(offen ? { quick: { kind: "termin" as const, taskId: m.reviewTaskId! } } : {}),
+    });
+  }
+  return punkte.sort((a, b) => a.since!.getTime() - b.since!.getTime());
 }

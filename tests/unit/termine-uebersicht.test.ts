@@ -5,11 +5,16 @@ import {
   FILTER,
   artLabel,
   baueUebersicht,
+  ergebnisFehltPunkte,
   ersteZeile,
+  hatErgebnis,
   istHandnotiz,
   naechsterSchritt,
   terminArt,
   terminErgebnis,
+  terminKennzahlen,
+  termineAusAufgaben,
+  wocheVon,
   zeilenDerAnsicht,
   type UAngebot,
   type UAktivitaet,
@@ -117,7 +122,7 @@ describe("Zeilen und Stand", () => {
   it("Person aus der Buchung, Agentur mit Ort, Angebotsstand, Link zum Ergebnis", () => {
     const { zeilen } = baueUebersicht(daten({ termine: [termin({ inviteeName: "Max Muster", reviewTaskId: "r1" })], aufgaben: [aufgabe({ id: "r1", title: "Wie lief der Termin?" })], angebote: [angebot({ viewedAt: vor(T) })] }), NOW);
     expect(zeilen[0]).toMatchObject({ person: "Max Muster", agentur: "Allianz Versicherung Max Muster HAUPTVERTRETUNG, Köln", artLabel: "Erstgespräch", angebot: { stand: "geoeffnet" } });
-    expect(zeilen[0].ergebnisHref).toBe("/admin/neu/vertrieb/kontakte/k1#aufgaben");
+    expect(zeilen[0].ergebnisHref).toBe("/admin/neu/vertrieb/kontakte/k1#ergebnis");
   });
 
   it("aktuelles Angebot ist das zuletzt erstellte", () => {
@@ -193,5 +198,129 @@ describe("Braucht Aufmerksamkeit", () => {
     expect(titel(daten({ termine: [], angebote: [{ ...bonus, abschlussBonusBis: vor(H) }] }))).toEqual([]);
     expect(titel(daten({ termine: [], angebote: [{ ...bonus, status: "accepted", acceptedAt: vor(H), paymentStatus: "paid" }] }))).toEqual([]);
     expect(titel(daten({ termine: [], angebote: [{ ...bonus, status: "accepted", acceptedAt: vor(H) }] }))).toEqual(["Bonus läuft ab: Agentur Muster"]);
+  });
+});
+
+// ─── Stufe 2 (Ole, 18.11.2026) ──────────────────────────────────────────
+
+describe("Stufe 2: Kennzahlen", () => {
+  it("Woche von Montag bis Sonntag (Berlin)", () => {
+    expect(wocheVon(NOW)).toEqual({ von: "2026-11-16", bis: "2026-11-22" });
+    // Sonntag 23:00 Berlin gehört noch zur Woche, Montag 00:30 Berlin schon zur nächsten
+    expect(wocheVon(new Date("2026-11-22T22:00:00Z")).von).toBe("2026-11-16");
+    expect(wocheVon(new Date("2026-11-22T23:30:00Z"))).toEqual({ von: "2026-11-23", bis: "2026-11-29" });
+  });
+
+  it("Termine diese Woche, erschienen, mit Angebot, gewonnen", () => {
+    const kontakte = ["k1", "k2", "k3", "k5", "k6"].map((id) => kontakt({ id })).concat(kontakt({ id: "k4", stage: "GEWONNEN" }));
+    const termine = [
+      termin({ id: "w1", contactId: "k1", startAt: in_(T) }), // Do, kommt noch
+      termin({ id: "w2", contactId: "k2", startAt: vor(T) }), // Di, Angebot geschickt
+      termin({ id: "w3", contactId: "k3", startAt: vor(2 * T), status: "ABGESAGT" }), // Mo, abgesagt: zählt nirgends
+      termin({ id: "a1", contactId: "k3", startAt: vor(10 * T) }), // nicht erschienen
+      termin({ id: "a2", contactId: "k4", startAt: vor(12 * T) }), // Abschluss
+      termin({ id: "a3", contactId: "k5", startAt: vor(5 * T) }), // ohne Ergebnis, Angebot danach verschickt
+      termin({ id: "alt", contactId: "k6", startAt: vor(40 * T) }), // älter als 30 Tage
+    ];
+    const aktivitaeten = [
+      akt({ contactId: "k2", outcome: "Termin gehabt, Angebot geschickt", occurredAt: vor(T - H) }),
+      akt({ contactId: "k3", outcome: "Termin: nicht erschienen", occurredAt: vor(10 * T - H) }),
+      akt({ contactId: "k4", outcome: "Gewonnen / Zusage", occurredAt: vor(12 * T - H) }),
+    ];
+    const angebote = [angebot({ salesContactId: "k5", sentAt: vor(4 * T), createdAt: vor(4 * T) })];
+    const { zeilen } = baueUebersicht(daten({ termine, kontakte, aktivitaeten, angebote }), NOW);
+    expect(terminKennzahlen(zeilen, angebote, NOW)).toEqual({
+      woche: { anzahl: 2, kommend: 1 },
+      erschienen: { quote: 2 / 3, erschienen: 2, basis: 3 },
+      angebot: { anzahl: 2, gehalten: 3 },
+      gewonnen: { anzahl: 1, kontakte: 4 },
+    });
+  });
+
+  it("Angebot vor dem Termin oder nach dem nächsten Termin zählt nicht; ohne Ergebnis keine Quote", () => {
+    const termine = [termin({ id: "t1", startAt: vor(10 * T) }), termin({ id: "t2", startAt: vor(5 * T) })];
+    const angebote = [angebot({ sentAt: vor(4 * T) }), angebot({ id: "o2", sentAt: vor(20 * T) })];
+    const { zeilen } = baueUebersicht(daten({ termine, angebote }), NOW);
+    const k = terminKennzahlen(zeilen, angebote, NOW);
+    // Angebot nach t2 gehört zu t2, nicht zu t1
+    expect(k.angebot).toEqual({ anzahl: 1, gehalten: 2 });
+    expect(k.erschienen).toEqual({ quote: null, erschienen: 0, basis: 0 });
+  });
+});
+
+describe("Stufe 2: Termine nur als Aufgabe", () => {
+  it("Aufgabe „Termin“ wird ein Termin der Liste (Art „Termin (Aufgabe)“) mit ihrer Nachfrage", () => {
+    const review = aufgabe({ id: "r1", title: "Wie lief der Termin mit Max Muster?", dueAt: vor(2 * T - H), createdAt: vor(2 * T - H) });
+    const t = termineAusAufgaben(
+      [
+        { id: "ta", contactId: "k1", title: "Termin", dueAt: vor(2 * T) },
+        { id: "tv", contactId: "k1", title: "Termin aus Cold Mail vorbereiten", dueAt: vor(2 * T) },
+        { id: "tm", contactId: "k2", title: "Termin mit Erika", dueAt: in_(2 * T) },
+      ],
+      [],
+      [review],
+    );
+    expect(t.map((x) => [x.id, x.reviewTaskId, x.aufgabe])).toEqual([
+      ["ta", "r1", true],
+      ["tm", null, true],
+    ]);
+    const { zeilen } = baueUebersicht(daten({ termine: t, kontakte: [kontakt(), kontakt({ id: "k2" })], aufgaben: [review] }), NOW);
+    const z = zeilen.find((x) => x.termin.id === "ta")!;
+    expect(z).toMatchObject({ artLabel: "Termin (Aufgabe)", ergebnis: { art: "fehlt", reviewOffen: true }, ergebnisHref: "/admin/neu/vertrieb/kontakte/k1#ergebnis" });
+    expect(zeilen.find((x) => x.termin.id === "tm")).toMatchObject({ artLabel: "Termin (Aufgabe)", kommend: true, ergebnis: { art: "geplant" } });
+  });
+
+  it("Aufgabe nah an einer Buchung desselben Kontakts fällt weg; Nachfrage eines gebuchten Termins wird nicht übernommen", () => {
+    const gebucht = termin({ startAt: vor(2 * T + 2 * H), reviewTaskId: "r1" });
+    const review = aufgabe({ id: "r1", title: "Wie lief der Termin?", createdAt: vor(T) });
+    expect(termineAusAufgaben([{ id: "ta", contactId: "k1", title: "Termin", dueAt: vor(2 * T) }], [gebucht], [review])).toEqual([]);
+    const weit = termineAusAufgaben([{ id: "ta", contactId: "k1", title: "Termin", dueAt: vor(10 * T) }], [gebucht], [review]);
+    expect(weit.map((x) => [x.id, x.reviewTaskId])).toEqual([["ta", null]]);
+  });
+});
+
+describe("Stufe 2: Ergebnis schon da (Push nach dem Termin)", () => {
+  it("Ergebnis oder eigene Notiz seit Terminbeginn", () => {
+    const ab = vor(2 * H);
+    expect(hatErgebnis([akt({ outcome: "Termin gehabt, Bedenkzeit", occurredAt: vor(H) })], ab)).toBe(true);
+    expect(hatErgebnis([akt({ type: "NOTIZ", note: "Will überlegen", occurredAt: vor(H) })], ab)).toBe(true);
+    expect(hatErgebnis([akt({ outcome: "Termin gehabt, Bedenkzeit", occurredAt: vor(3 * H) })], ab)).toBe(false);
+    expect(hatErgebnis([akt({ type: "NOTIZ", note: "Automatisch angereichert", occurredAt: vor(H) })], ab)).toBe(false);
+    expect(hatErgebnis([akt({ type: "ANRUF", outcome: "Nicht erreicht (Mailbox etc.)", occurredAt: vor(H) })], ab)).toBe(false);
+  });
+});
+
+describe("Stufe 2: Mein Tag „Ergebnis fehlt“", () => {
+  const punkte = (o: Partial<Parameters<typeof baueUebersicht>[0]> = {}, now = NOW) => ergebnisFehltPunkte(baueUebersicht(daten(o), now).zeilen, now);
+
+  it("ab dem Morgen nach dem Termin, mit Link zum Ergebnis", () => {
+    const [p, ...rest] = punkte({ termine: [termin({ startAt: vor(T), inviteeName: "Max Muster" })] });
+    expect(rest).toEqual([]);
+    expect(p).toMatchObject({
+      key: "terminergebnis:m1",
+      area: "Vertrieb",
+      tone: "bad",
+      title: "Ergebnis fehlt: Max Muster",
+      detail: "Erstgespräch am Di 17.11. 15 Uhr",
+      action: { label: "Ergebnis eintragen", href: "/admin/vertrieb/kontakte/k1#aktivitaet" },
+    });
+    expect(p.quick).toBeUndefined();
+  });
+
+  it("offene Nachfrage: Ergebnis-Knöpfe direkt auf Mein Tag", () => {
+    const [p] = punkte({ termine: [termin({ startAt: vor(T), reviewTaskId: "r1" })], aufgaben: [aufgabe({ id: "r1", title: "Wie lief der Termin?" })] });
+    expect(p.quick).toEqual({ kind: "termin", taskId: "r1" });
+    expect(p.action.href).toBe("/admin/vertrieb/kontakte/k1#ergebnis");
+  });
+
+  it("nicht am selben Tag, nicht mit Ergebnis, nicht älter als 14 Tage, nicht bei Abschluss oder späterem Termin", () => {
+    expect(punkte({ termine: [termin({ startAt: vor(3 * H) })] })).toEqual([]);
+    // am nächsten Morgen (Do 07:00 Berlin) ist der Termin von Mittwoch dran
+    expect(punkte({ termine: [termin({ startAt: vor(3 * H) })] }, new Date("2026-11-19T06:00:00Z"))).toHaveLength(1);
+    expect(punkte({ termine: [termin()], aktivitaeten: [akt({ outcome: "Termin gehabt, Bedenkzeit" })] })).toEqual([]);
+    expect(punkte({ termine: [termin({ startAt: vor(15 * T) })] })).toEqual([]);
+    expect(punkte({ kontakte: [kontakt({ stage: "GEWONNEN" })] })).toEqual([]);
+    expect(punkte({ termine: [termin(), termin({ id: "m2", startAt: in_(T) })] })).toEqual([]);
+    expect(punkte({ termine: [termin({ status: "ABGESAGT" })] })).toEqual([]);
   });
 });
