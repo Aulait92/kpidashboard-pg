@@ -645,6 +645,7 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=admin-nutzung[&tage=30]              Nutzung des Admins: Änderungsprotokoll je Aktion, Klicks je Funktion und Seite, nur Zahlen (lib/ops/admin-nutzung.ts)
 //   q=mail-strecke[&tage=7]                Mail-Strecke ohne WhatsApp: Schalter, Schritte, Auslöser, Gründe, Termine, SMS, Kandidaten (lib/ops/mail-strecke.ts)
 //   q=investoren[&sicht=gesamt]           Investoren-Kennzahlen (Geld › Auswertung): Datenlücken, Kennzahlen, KI-Kosten, Gegenprobe mit der Übersicht (lib/ops/investoren.ts)
+//   q=tarif-vorschlaege                    Tarifkatalog lernt von Vermittlern: Vorschläge je Status und Quelle, offene, empfohlene, übernommene, nur Anzahlen (lib/ops/tarif-vorschlaege.ts)
 //   q=mail-eingang[&tage=7]                Antwortadresse mit Eingang: Schalter, Einrichtung, Zählung, letzte Eingänge, Fehler, ohne Inhalte (lib/ops/mail-eingang.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   investoren: async (p) => (await import("@/lib/ops/investoren")).investorenDiagnose(p),
@@ -653,6 +654,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "anzeige-abdeckung": async (p) => (await import("@/lib/ops/anzeige-abdeckung")).anzeigeAbdeckung(p),
   "vermittler-anrede": async (p) => (await import("@/lib/ops/vermittler-anrede")).vermittlerAnrede(p),
   "admin-nutzung": async (p) => (await import("@/lib/ops/admin-nutzung")).adminNutzung(p),
+  "tarif-vorschlaege": async () => (await import("@/lib/ops/tarif-vorschlaege")).tarifVorschlaegeDiagnose(),
 };
 
 export async function GET(req: Request): Promise<Response> {

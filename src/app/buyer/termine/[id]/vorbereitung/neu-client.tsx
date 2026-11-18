@@ -18,7 +18,7 @@ import { folien, type Marke } from "@/lib/praesentation";
 import type { Ansprache } from "@/lib/ansprache";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import { handleNewVersionError, isNewVersionError } from "@/lib/neue-version";
-import { auswahlDazu, auswahlWeg, gesellschaftName, spartenGruppiert, tarifeFuer, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
+import { auswahlDazu, auswahlWeg, gesellschaftName, spartenGruppiert, tarifeFuer, werteZuPruefen, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
 import {
   betrag,
   empfehlungVon,
@@ -1012,7 +1012,7 @@ function TarifKarte({
   const bs = sp.bausteine.filter((k) => (t.bausteinStatus[k] === "inklusive" || t.bausteinStatus[k] === "optional") && (anpassen || !!t.bausteine[k]?.an));
   const bName = (k: string) => sp.schema.bausteine.find((b) => b.key === k)?.kurz ?? k;
   // Nicht gegengeprüfte Katalogwerte: „bitte prüfen“ statt des Stands (wie der Richtwert beim Beitrag)
-  const pruefen = t.herkunft === "katalog" && t.werteUngeprueft;
+  const pruefen = t.herkunft === "katalog" && werteZuPruefen({ ungeprueft: t.werteUngeprueft, bestaetigt: t.werteBestaetigt }, sp.merkmale);
   const sub = [t.gesellschaft || null, sp.label, t.herkunft === "eigen" ? "Eigener Tarif" : t.herkunft === "angebot" ? "Aus dem Angebot" : !pruefen && stand(t.stand) ? `Stand ${stand(t.stand)}` : null].filter(Boolean).join(" · ");
   return (
     <div
@@ -1361,7 +1361,7 @@ function TarifeAendern({
         </div>
         <div className="mt-2 grid gap-1">
           {kat.map((t) =>
-            zeile(t.id, t.kurz, t.gesellschaftName, stand(t.stand) ? `Stand ${stand(t.stand)}` : null, gewaehlt.has(t.id), platz(tarifAusKatalog(t)), () => sp.tarife.find((x) => x.id === t.id) ?? tarifAusKatalog(t), !!t.ungeprueft),
+            zeile(t.id, t.kurz, t.gesellschaftName, stand(t.stand) ? `Stand ${stand(t.stand)}` : null, gewaehlt.has(t.id), platz(tarifAusKatalog(t)), () => sp.tarife.find((x) => x.id === t.id) ?? tarifAusKatalog(t), werteZuPruefen(t, sp.merkmale)),
           )}
           {eig.map((e) => zeile(`eigen:${e.id}`, e.kurz, e.gesellschaft, "Eigener Tarif", gewaehlt.has(`eigen:${e.id}`), platz(tarifAusEigenem(e)), () => sp.tarife.find((x) => x.id === `eigen:${e.id}`) ?? tarifAusEigenem(e)))}
           {!kat.length && !eig.length ? <p className="py-1 text-sm text-[color:var(--muted)]">Kein Tarif im Katalog. Legen Sie einen eigenen an.</p> : null}

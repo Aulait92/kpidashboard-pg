@@ -28,6 +28,8 @@ import { schutzVorschlag } from "@/lib/schutz-ueberblick";
 import { asAnsprache } from "@/lib/ansprache";
 import { bisherAbgleichen, bisherVorschlag } from "@/lib/bisheriger-vertrag";
 import { bisherPruefen, bisherQuellen, gesundheitFrei } from "@/lib/bisheriger-vertrag-server";
+import { auswahlAuffrischen, vorschlaegeAusBisher, vorschlaegeAusEigenemTarif } from "@/lib/tarif-vorschlaege";
+import { ladeTarifkatalogAktuell, vorschlaegeErfassen } from "@/lib/tarif-vorschlaege-server";
 
 /**
  * Vertreter oder Makler (Customer.vermittlerTyp; Mehrfachvertreter wie Vertreter) und Gesellschaft(en):
@@ -86,12 +88,16 @@ export async function eigeneTarife(customerId: string): Promise<EigenerTarifZeil
   }));
 }
 
-/** Eigenen Tarif anlegen (nur für diesen Kunden sichtbar). Werte nur für Merkmale der Sparte. */
+/**
+ * Eigenen Tarif anlegen (nur für diesen Kunden sichtbar). Werte nur für Merkmale der Sparte. Heißt er wie ein
+ * Katalogtarif bzw. fehlt sein Name im Katalog der Gesellschaft: Vorschlag zum Katalog (lib/tarif-vorschlaege.ts).
+ */
 export async function eigenenTarifAnlegen(
   ctx: TeamCtx,
   raw: { sparte: string; gesellschaft: string; name: string; werte?: Record<string, string | null> },
-  k: Katalog = ladeTarifkatalog(),
+  kat?: Katalog,
 ): Promise<EigenerTarifZeile | null> {
+  const k = kat ?? (await ladeTarifkatalogAktuell());
   const sparte = String(raw.sparte ?? "").slice(0, 80);
   const gesellschaft = String(raw.gesellschaft ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
   const name = String(raw.name ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
@@ -106,6 +112,7 @@ export async function eigenenTarifAnlegen(
   const r = await prisma.eigenerTarif.create({
     data: { customerId: ctx.customerId, userId: ctx.userId, sparte, gesellschaft, name, kurz: kurzName(name, s?.label), werte },
   });
+  await vorschlaegeErfassen(ctx, vorschlaegeAusEigenemTarif(k, { sparte, gesellschaft, name, werte }), "vorbereitung");
   return { id: r.id, sparte, gesellschaft, name, kurz: r.kurz, werte };
 }
 
@@ -123,14 +130,19 @@ export type TarifVorbereitung = {
   klaerenErledigt: string[];
   /** Schutz-Überblick eben vorgeschlagen (noch nicht gespeichert): die Seite speichert ihn gleich mit */
   schutzNeu: boolean;
-  /** Bisheriger Vertrag aus Police bzw. Chat neu übernommen bzw. aktualisiert: die Seite speichert gleich mit */
+  /**
+   * Bisheriger Vertrag aus Police bzw. Chat neu übernommen bzw. aktualisiert, oder von Vermittlern bestätigte
+   * Katalogwerte eingespielt: die Seite speichert gleich mit
+   */
   bisherNeu: boolean;
   /** Gesundheitssparten freigeschaltet (bisheriger Vertrag dort erst danach) */
   gesundheitFrei: boolean;
 };
 
 /** Alles für den Angebote-Teil der Seite; null, wenn der Termin nicht sichtbar ist. */
-export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx, d: VorbereitungDaten, k: Katalog = ladeTarifkatalog()): Promise<TarifVorbereitung | null> {
+export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx, d: VorbereitungDaten, kat?: Katalog): Promise<TarifVorbereitung | null> {
+  // Katalog mit den übernommenen Vorschlägen der Vermittler (lib/tarif-vorschlaege-server.ts)
+  const k = kat ?? (await ladeTarifkatalogAktuell());
   const appt = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { tarifauswahl: true, offersJson: true, klaerenErledigt: true, leadId: true } });
   if (!appt) return null;
   const [{ vertrieb, gesellschaftFehlt }, meine, eigene] = await Promise.all([vertriebFuer(ctx.customerId), meineAuswahl(ctx), eigeneTarife(ctx.customerId)]);
@@ -161,10 +173,17 @@ export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx,
   const [quellen, frei] = await Promise.all([bisherQuellen(appt.leadId, ctx.customerId), gesundheitFrei(ctx.customerId)]);
   const ab = bisherAbgleichen(auswahl.sparten, (sp) => bisherVorschlag(sp, quellen, k), frei);
   if (ab.geaendert) auswahl = { ...auswahl, sparten: ab.sparten };
+  // Von Vermittlern bestätigte Katalogwerte (übernommen im Admin) in gespeicherte Auswahlen bevorstehender Termine;
+  // vergangene Präsentationen bleiben, wie sie waren
+  let katalogNeu = false;
+  if (quelle === "gespeichert" && d.termin.startsAt.getTime() > Date.now() - 12 * 3600_000) {
+    const f = auswahlAuffrischen(auswahl, k);
+    if (f.geaendert) [auswahl, katalogNeu] = [f.auswahl, true];
+  }
   // Vertreter sehen nur die Tarife ihrer Gesellschaft(en)
   const tarife = vertrieb.rolle === "vertreter" ? k.tarife.filter((t) => vertrieb.gesellschaften.includes(t.gesellschaft)) : k.tarife;
   const gesellschaften = sortiereGesellschaften(k.tarife.map((t) => t.gesellschaft)).map((key) => ({ key, name: k.tarife.find((t) => t.gesellschaft === key)?.gesellschaftName ?? gesellschaftName(key) }));
-  return { auswahl, quelle, katalog: { sparten: k.sparten, tarife, buendel: k.buendel }, vertrieb, gesellschaftFehlt, gesellschaften, eigene, meine, klaerenErledigt: appt.klaerenErledigt, schutzNeu, bisherNeu: ab.geaendert, gesundheitFrei: frei };
+  return { auswahl, quelle, katalog: { sparten: k.sparten, tarife, buendel: k.buendel }, vertrieb, gesellschaftFehlt, gesellschaften, eigene, meine, klaerenErledigt: appt.klaerenErledigt, schutzNeu, bisherNeu: ab.geaendert || katalogNeu, gesundheitFrei: frei };
 }
 
 /**
@@ -177,7 +196,8 @@ export async function tarifauswahlSpeichern(appointmentId: string, ctx: TeamCtx,
   // Gesundheitssparten: bisheriger Vertrag erst nach Freischaltung (auch von Hand nicht)
   const a = await bisherPruefen(roh, ctx.customerId);
   // Kombi-Rabatt: Bündelregeln aus dem Katalog als Schnappschuss mit den Angeboten (Präsentation rechnet damit)
-  const ang = zuAngebote(a, ladeTarifkatalog().buendel);
+  const datei = ladeTarifkatalog();
+  const ang = zuAngebote(a, datei.buendel);
   const n = await prisma.appointment.updateMany({
     where: { id: appointmentId, ...appointmentScope(ctx) },
     data: {
@@ -187,6 +207,8 @@ export async function tarifauswahlSpeichern(appointmentId: string, ctx: TeamCtx,
     },
   });
   if (!n.count) return { ok: false, error: "Termin nicht gefunden." };
+  // Bisheriger Vertrag mit „Anderer Tarif“ einer Katalog-Gesellschaft: Tarifname als Vorschlag (nur Katalogbezug)
+  await vorschlaegeErfassen(ctx, vorschlaegeAusBisher(datei, a.sparten), "bisheriger-vertrag");
   for (const sp of a.sparten) {
     if (!sp.merkmale.length && !sp.bausteine.length) continue;
     await prisma.beraterMerkmale.upsert({
