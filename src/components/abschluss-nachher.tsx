@@ -53,6 +53,8 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
   const [glueck, setGlueck] = useState<boolean | null>(null);
   const [danke, setDanke] = useState<boolean | null>(null);
   const [dankeSelbst, setDankeSelbst] = useState(false);
+  // „Vorschau“ der WhatsApp bzw. Mail (Ole, 18.11.2026)
+  const [vorschau, setVorschau] = useState<"glueck" | "danke" | null>(null);
   const [aendern, setAendern] = useState(false);
   // Modus nach dem ersten Laden fest (Chips bleiben stehen, auch wenn ein Chip den Beitrag schon gespeichert hat)
   const [modus, setModus] = useState<"bestaetigen" | "chips" | null>(null);
@@ -95,7 +97,9 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
   const zeigeGlueck = g.moeglich && !g.gesendet;
   const d = stand.dankeMail && !stand.dankeMail.gesendet ? stand.dankeMail : null;
   const dankeAn = !!d?.app && (danke ?? d.vorausgewaehlt);
-  const glueckAktiv = zeigeGlueck && g.offen && glueckAn;
+  // Fenster offen: Freitext; sonst freigegebene Vorlage (nicht vorausgewählt)
+  const glueckSendbar = g.offen || g.vorlage;
+  const glueckAktiv = zeigeGlueck && glueckSendbar && glueckAn;
   // Was der Knopf auslöst, steht drauf
   const mitSenden = glueckAktiv && dankeAn ? " und beides senden" : glueckAktiv ? " und Glückwunsch senden" : dankeAn ? " und Danke-Mail senden" : "";
 
@@ -173,22 +177,25 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
 
       {zeigeGlueck ? (
         <div>
-          <label className={cn("flex items-start gap-2.5", !g.offen && "opacity-60")}>
+          <label className={cn("flex items-start gap-2.5", !glueckSendbar && "opacity-60")}>
             <input
               type="checkbox"
               className="mt-0.5 h-5 w-5 shrink-0 accent-[color:var(--brand)]"
-              checked={g.offen && glueckAn}
-              disabled={!g.offen || pending}
+              checked={glueckSendbar && glueckAn}
+              disabled={!glueckSendbar || pending}
               onChange={(e) => setGlueck(e.target.checked)}
               data-glueckwunsch
             />
             <span className="text-sm">
               <span className="font-medium">Glückwunsch per WhatsApp senden</span>
               <span className="mt-0.5 block text-xs text-[color:var(--muted)]">
-                {g.offen ? `„${g.text}“` : `Geht nur bis 24 Stunden nach der letzten Nachricht von ${stand.label}.`}
+                {g.offen ? null : g.vorlage ? "Als freigegebene WhatsApp-Vorlage (letzte Nachricht über 24 Stunden her)." : `Geht nur bis 24 Stunden nach der letzten Nachricht von ${stand.label}.`}
               </span>
             </span>
           </label>
+          {glueckSendbar ? (
+            <Vorschau offen={vorschau === "glueck"} umschalten={() => setVorschau(vorschau === "glueck" ? null : "glueck")} art="whatsapp" text={g.text} />
+          ) : null}
         </div>
       ) : null}
 
@@ -204,9 +211,12 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
           />
           <span className="min-w-0 text-sm">
             <span className="font-medium">Danke-Mail senden</span>
-            <span className="mt-0.5 block break-words text-xs text-[color:var(--muted)]">{d.vorschau ? `„${d.vorschau}“ an ${d.an}` : `An ${d.an}`}</span>
+            <span className="mt-0.5 block break-words text-xs text-[color:var(--muted)]">An {d.an}</span>
           </span>
         </label>
+      ) : null}
+      {d?.app ? (
+        <Vorschau offen={vorschau === "danke"} umschalten={() => setVorschau(vorschau === "danke" ? null : "danke")} art="mail" betreff={d.voll.subject} text={d.voll.text} />
       ) : d?.extern ? (
         <div className="space-y-2" data-danke-extern>
           {dankeSelbst ? (
@@ -274,5 +284,26 @@ export function AbschlussNachherHost() {
     <Sheet open={!!offen} onClose={() => setOffen(null)} title={offen ? `${offen.name}: Abschluss gespeichert` : ""}>
       <div className="p-5">{offen ? <AbschlussNachherInhalt key={offen.leadId} leadId={offen.leadId} onDone={() => setOffen(null)} /> : null}</div>
     </Sheet>
+  );
+}
+
+/** Aufklappbare Vorschau der Nachricht: WhatsApp als Sprechblase, Mail mit Betreff (Ole, 18.11.2026). */
+function Vorschau({ offen, umschalten, art, text, betreff }: { offen: boolean; umschalten: () => void; art: "whatsapp" | "mail"; text: string; betreff?: string }) {
+  return (
+    <div className="ml-[1.875rem] mt-1">
+      <button type="button" onClick={umschalten} className="text-xs font-medium text-[color:var(--brand)] hover:underline" aria-expanded={offen} data-vorschau={art}>
+        {offen ? "Vorschau schließen" : "Vorschau"}
+      </button>
+      {offen ? (
+        art === "whatsapp" ? (
+          <div className="mt-1.5 max-h-56 overflow-y-auto whitespace-pre-line rounded-[var(--radius-md)] rounded-tl-sm bg-[#e7f6e9] px-3 py-2 text-[13px] leading-snug text-slate-900">{text}</div>
+        ) : (
+          <div className="mt-1.5 max-h-64 overflow-y-auto rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-3 py-2 text-[13px] leading-snug">
+            {betreff ? <div className="mb-1.5 border-b border-[color:var(--border)] pb-1.5 font-semibold">{betreff}</div> : null}
+            <div className="whitespace-pre-line text-slate-800">{text}</div>
+          </div>
+        )
+      ) : null}
+    </div>
   );
 }

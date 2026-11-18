@@ -71,8 +71,10 @@ export function berlinDayStart(d: Date, plusDays = 0): Date {
 export type GlueckwunschStand = {
   /** WhatsApp an den Lead grundsätzlich möglich (Chat, Nummer, nicht abgemeldet) */
   moeglich: boolean;
-  /** 24-h-Fenster offen (sonst bräuchte es die Vorlage, die noch nicht eingereicht ist) */
+  /** 24-h-Fenster offen */
   offen: boolean;
+  /** Fenster zu, aber die Meta-Vorlage „glueckwunsch“ ist für diesen Kunden freigegeben (Versand als Vorlage) */
+  vorlage: boolean;
   vorausgewaehlt: boolean;
   gesendet: boolean;
   text: string;
@@ -114,7 +116,7 @@ async function chatVon(customerId: string, leadId: string, phone: string | null)
 /** Text und Stand des Glückwunsches (Ergänzung D). */
 export async function glueckwunschStand(leadId: string, customerId: string, now = new Date()): Promise<GlueckwunschStand> {
   const lead = await leadKontakt(leadId, customerId);
-  const leer: GlueckwunschStand = { moeglich: false, offen: false, vorausgewaehlt: false, gesendet: false, text: "" };
+  const leer: GlueckwunschStand = { moeglich: false, offen: false, vorlage: false, vorausgewaehlt: false, gesendet: false, text: "" };
   if (!lead) return leer;
   const conv = await chatVon(customerId, leadId, lead.phone);
   const [{ anspracheOf }, { ansprechpartner }, { vermittlerName }] = await Promise.all([
@@ -135,7 +137,15 @@ export async function glueckwunschStand(leadId: string, customerId: string, now 
     orderBy: { startsAt: "desc" },
     select: { startsAt: true },
   });
-  return { moeglich, offen, gesendet, vorausgewaehlt: offen && !gesendet && glueckwunschVorausgewaehlt(termin?.startsAt, now), text };
+  // Außerhalb des Fensters: freigegebene Vorlage (Ole, 18.11.2026); nicht vorausgewählt (Vorlagen kosten Gebühr)
+  const vorlage =
+    moeglich && !offen && !gesendet
+      ? await import("@/lib/whatsapp/templates")
+          .then((t) => t.pickApprovedTemplate(customerId, "glueckwunsch"))
+          .then((x) => !!x)
+          .catch(() => false)
+      : false;
+  return { moeglich, offen, vorlage, gesendet, vorausgewaehlt: offen && !gesendet && glueckwunschVorausgewaehlt(termin?.startsAt, now), text };
 }
 
 export async function ladeAbschlussStand(leadId: string, customerId: string, now = new Date(), opts: { userId?: string | null } = {}): Promise<AbschlussStand | null> {
@@ -218,8 +228,8 @@ export async function sendeGlueckwunsch(leadId: string, customerId: string, opts
   const g = await glueckwunschStand(leadId, customerId, now);
   if (g.gesendet) return { ok: true, gesendet: false };
   if (!g.moeglich) return { ok: false, error: "WhatsApp an diesen Kontakt ist nicht möglich." };
-  // Außerhalb des 24-h-Fensters bräuchte es die Vorlage „glueckwunsch“ (vorbereitet, noch nicht bei Meta eingereicht)
-  if (!g.offen) return { ok: false, error: "Geht nur bis 24 Stunden nach der letzten Nachricht des Kontakts." };
+  // Außerhalb des 24-h-Fensters nur mit freigegebener Vorlage „glueckwunsch“
+  if (!g.offen && !g.vorlage) return { ok: false, error: "Geht nur bis 24 Stunden nach der letzten Nachricht des Kontakts." };
   const conv = await chatVon(customerId, leadId, lead.phone);
   if (!conv?.contactPhone) return { ok: false, error: "WhatsApp an diesen Kontakt ist nicht möglich." };
   const templates = await import("@/lib/whatsapp/templates");
