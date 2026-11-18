@@ -17,6 +17,7 @@ import { usePathname } from "next/navigation";
 import { CheckCircle2, ChevronRight, ClipboardList, Clock, FileText, Loader2, Send, TriangleAlert, User, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui";
 import { MailWege } from "@/components/mail-wege";
+import { emitBdFrage } from "@/components/beratungsdoku-frage";
 import { ZusammenfassungEditor, useZfPdf, zfBereit, zfHinweis, zfStart, type ZfZustand } from "@/components/zusammenfassung-editor";
 import { FileDrop } from "@/components/ui/file-drop";
 import { Sheet } from "@/components/ui/sheet";
@@ -115,6 +116,7 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
       const r = await angebotSendenResult(ziel.appointmentId, { dateiId: datei, kundenlink, zusammenfassung: mitZf });
       if (!r.ok) return onError(r.error);
       onDone(`${ziel.name}: ${r.message}`);
+      if (r.bdFrage) emitBdFrage({ appointmentId: ziel.appointmentId, name: ziel.name });
       onClose();
     });
 
@@ -123,6 +125,7 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
       const r = await angebotSelbstResult(ziel.appointmentId);
       if (!r.ok) return onError(r.error);
       onDone(`${ziel.name}: ${r.message}`);
+      if (r.bdFrage) emitBdFrage({ appointmentId: ziel.appointmentId, name: ziel.name });
       setSchritt("selbst");
     });
 

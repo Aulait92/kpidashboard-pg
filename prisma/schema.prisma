@@ -375,6 +375,9 @@ model Customer {
   // Standard aus. Zeitpunkt des letzten Einschaltens für die Nutzungsmessung (Admin Betreuen › Qualität & Nutzung).
   beratungsdokuAn                Boolean                   @default(false)
   beratungsdokuAnAt              DateTime?
+  // Frage „Beratungsdokumentation vorbereiten?“ beantwortet (Einrichtung, einmal nach dem ersten Termin-Ergebnis oder
+  // der Schalter selbst, Ole 18.11.2026). Gesetzt = nie wieder fragen.
+  beratungsdokuGefragtAt         DateTime?
   beratungsdokus                 Beratungsdoku[]
 }
 

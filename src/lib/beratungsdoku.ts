@@ -29,6 +29,10 @@ export const BD_PFLICHT: readonly BdAbschnitt[] = ["wuensche", "beratung", "empf
 /** Ein Satz für die Oberfläche des Vermittlers (Sie-Form). */
 export const BD_VERANTWORTUNG = "Die Inhalte verantworten Sie, die App berät nicht.";
 
+/** Frage in der Einrichtung und einmal nach dem ersten Termin-Ergebnis (Ole, 18.11.2026; components/beratungsdoku-frage.tsx). */
+export const BD_FRAGE_TITEL = "Beratungsdokumentation vorbereiten?";
+export const BD_FRAGE_TEXT = "Nach jedem Termin liegt sie vorbefüllt an der Terminkarte, Sie prüfen und senden sie mit einem Tipp.";
+
 /** Wie lange der Link zur Bestätigung gilt. */
 export const BD_LINK_TAGE = 30;
 

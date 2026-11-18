@@ -51,6 +51,7 @@ import { abschlussEinTipp } from "@/components/abschluss-nachher";
 import { BeitragFehltKarte } from "@/components/beitrag-fehlt-karte";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
 import { attemptMessage, emitNotReachedOffer, LostSheet, NextStepSheet } from "@/components/next-step";
+import { emitBdFrage } from "@/components/beratungsdoku-frage";
 import { NEXT_STEP_LABEL } from "@/lib/lead-next-step";
 import { TerminAnwesenheit } from "@/components/termin-anwesenheit";
 import { anwesenheitsFrage } from "@/lib/showup";
@@ -180,6 +181,8 @@ export function TodayInbox({
       }
       // Nach „nicht erreicht“: Versuch X von 6, nächster Versuch, Nachricht „Nicht erreicht“ anbieten
       if (res.attempt && who && !res.attempt.offered) emitNotReachedOffer(who.leadId, who.name, res.attempt);
+      // Erstes Termin-Ergebnis: einmal fragen, ob die Beratungsdokumentation vorbereitet werden soll
+      if (res.bdFrage) emitBdFrage(key.startsWith("o:") && who ? { appointmentId: key.slice(2), name: who.name } : null);
       const undo = res.undo;
       toast.show({
         message: res.attempt ? attemptMessage(message, res.attempt) : message,
@@ -538,7 +541,8 @@ export function TodayInbox({
                               appointmentId: o.id,
                               name: o.name,
                               key,
-                              spaeter: () => run(key, `${o.name}: Angebot steht unter „Angebote senden“`, () => appointmentOutcomeResult(o.id, "offer", null)),
+                              spaeter: () =>
+                                run(key, `${o.name}: Angebot steht unter „Angebote senden“`, () => appointmentOutcomeResult(o.id, "offer", null), { leadId: o.leadId, name: o.name }),
                             }),
                           0,
                         ),
@@ -547,7 +551,13 @@ export function TodayInbox({
                       label: "Abschluss",
                       icon: Trophy,
                       onSelect: () =>
-                        setTimeout(() => askWin(o.leadId, o.name, (v, sp) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v, sp))), 0),
+                        setTimeout(
+                          () =>
+                            askWin(o.leadId, o.name, (v, sp) =>
+                              run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v, sp), { leadId: o.leadId, name: o.name }),
+                            ),
+                          0,
+                        ),
                     },
                     { label: "Nicht erschienen", icon: UserX, onSelect: () => run(key, `${o.name}: steht jetzt bei Anrufen`, () => appointmentOutcomeResult(o.id, "no_show", null)) },
                     { label: "Verloren", icon: ThumbsDown, tone: "danger", onSelect: () => setTimeout(() => setSheet({ kind: "lost", key, leadId: o.leadId, name: o.name, appointmentId: o.id }), 0) },

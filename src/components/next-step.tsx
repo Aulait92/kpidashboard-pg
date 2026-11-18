@@ -60,6 +60,7 @@ import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { useToast } from "@/components/ui/toast";
+import { emitBdFrage } from "@/components/beratungsdoku-frage";
 import { MailWege } from "@/components/mail-wege";
 import { mailSelbstGesendetAction } from "@/app/buyer/postfach/actions";
 import { fmtAttemptAt } from "@/lib/call-plan";
@@ -603,6 +604,8 @@ export function NextStepSheet({
         return;
       }
       onDone(res, message);
+      // Erstes Termin-Ergebnis: einmal fragen, ob die Beratungsdokumentation vorbereitet werden soll
+      if (res.bdFrage) emitBdFrage(appointmentId ? { appointmentId, name } : null);
       onClose();
     });
   };

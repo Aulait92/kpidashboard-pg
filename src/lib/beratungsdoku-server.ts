@@ -26,6 +26,9 @@ import { saveLeadFile } from "@/lib/lead-files";
 import { logLeadHistory } from "@/lib/lead-history";
 import { textPdf } from "@/lib/mail/text-pdf";
 import { beraterName } from "@/lib/mail/beratung-pdf";
+import type { VorschlagInfo } from "@/lib/mail/beratung";
+import { vorschlagInfo } from "@/lib/mail/gruende-ki";
+import { bedrockEu } from "@/lib/ki-eu-konfig";
 import {
   BD_ABSCHNITTE,
   BD_LINK_TAGE,
@@ -56,11 +59,32 @@ export async function beratungsdokuAn(customerId: string): Promise<boolean> {
   return c?.beratungsdokuAn === true;
 }
 
-/** Schalter setzen (nur Inhaber, nicht in der Vorschau). Einschalten merkt den Zeitpunkt für die Messung. */
+/**
+ * Schalter setzen (nur Inhaber, nicht in der Vorschau). Einschalten merkt den Zeitpunkt für die Messung. Jede Antwort
+ * (Schalter, Frage in der Einrichtung, Frage nach dem ersten Termin-Ergebnis) gilt als beantwortet: nie wieder fragen.
+ */
 export async function setzeBeratungsdoku(ctx: { customerId: string; teamRole?: string | null; preview?: boolean }, an: boolean, now = new Date()): Promise<boolean> {
   if (ctx.preview || ctx.teamRole === "advisor") return false;
-  await prisma.customer.update({ where: { id: ctx.customerId }, data: an ? { beratungsdokuAn: true, beratungsdokuAnAt: now } : { beratungsdokuAn: false } });
+  await prisma.customer.update({
+    where: { id: ctx.customerId },
+    data: an ? { beratungsdokuAn: true, beratungsdokuAnAt: now, beratungsdokuGefragtAt: now } : { beratungsdokuAn: false, beratungsdokuGefragtAt: now },
+  });
   return true;
+}
+
+type FrageKunde = { plan: string | null; beratungsdokuAn: boolean; beratungsdokuGefragtAt: Date | null };
+
+/** Noch fragen? Mit Software, Schalter aus und nie beantwortet (Inhaber und Vorschau prüft bdFrageFaellig). */
+export const bdFrageOffen = (c: FrageKunde | null): boolean => !!c && c.plan !== "service" && !c.beratungsdokuAn && !c.beratungsdokuGefragtAt;
+
+/**
+ * Einmal nach dem ersten Termin-Ergebnis (Angebot, Abschluss) fragen, ob die Beratungsdokumentation vorbereitet werden
+ * soll (Ole, 18.11.2026)? Nur der Inhaber (nur er darf den Schalter ändern), nicht in der Vorschau.
+ */
+export async function bdFrageFaellig(ctx: { customerId: string; teamRole?: string | null; preview?: boolean } | null): Promise<boolean> {
+  if (!ctx || ctx.preview || ctx.teamRole === "advisor") return false;
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { plan: true, beratungsdokuAn: true, beratungsdokuGefragtAt: true } });
+  return bdFrageOffen(c);
 }
 
 // ─── Gespeicherte Fassung ───────────────────────────────────────────────────────────────────
@@ -154,6 +178,8 @@ export type BdInfo = {
   ohneVersand: string | null;
   /** Letzte Fassung zu diesem Termin */
   letzte: BdLetzte | null;
+  /** „Vorschlag erstellen“ für die Begründung (null = keine EU-KI) */
+  vorschlag: VorschlagInfo;
 };
 
 async function letzteFassung(appointmentId: string): Promise<BdLetzte | null> {
@@ -231,6 +257,7 @@ async function infoFuer(t: Termin, ctx: TeamCtx, now: Date): Promise<BdInfo> {
     appVersand: !ohneVersand,
     ohneVersand,
     letzte,
+    vorschlag: vorschlagInfo({ konfig: bedrockEu(), themen: [lead.source, thema], auswahl }),
   };
 }
 

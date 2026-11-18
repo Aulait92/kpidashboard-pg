@@ -85,7 +85,7 @@ export function kiAntwortLesen(text: string): { wuensche: string; rat: string } 
   return wuensche || rat ? { wuensche, rat } : null;
 }
 
-const betraege = (t: string) =>
+export const betraege = (t: string) =>
   new Set(
     [...t.matchAll(/\d[\d.,]*\s*(€|euro\b|eur\b|%|prozent\b)/gi)].map((m) => {
       const zahl = m[0].replace(/[^\d,.]/g, "").replace(/[.,]$/, "");
@@ -93,7 +93,7 @@ const betraege = (t: string) =>
       return `${zahl}${einheit}`;
     }),
   );
-const versichererIn = (t: string) => {
+export const versichererIn = (t: string) => {
   const l = ` ${t.toLowerCase()} `;
   return VERSICHERER.filter((v) => new RegExp(`(^|[^a-zäöüß0-9])${v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=$|[^a-zäöüß0-9])`).test(l));
 };
@@ -117,7 +117,7 @@ export function kiErgebnisPruefen(eingabe: { wuensche: string; rat: string }, au
   return null;
 }
 
-type MessagesClient = { messages: { create: (body: Record<string, unknown>) => Promise<{ content: { type: string; text?: string }[] }> } };
+export type MessagesClient = { messages: { create: (body: Record<string, unknown>) => Promise<{ content: { type: string; text?: string }[] }> } };
 
 export type KiErgebnis = { ok: true; wuensche: string; rat: string } | { ok: false; error: string };
 

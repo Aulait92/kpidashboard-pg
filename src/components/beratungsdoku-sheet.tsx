@@ -4,15 +4,17 @@
 // Aufgabe: die vorbefüllte Dokumentation prüfen, ergänzen und dem Kunden in Textform schicken (Erhalt per Klick).
 // Ort: Terminkarte am Kontakt (lib/termin-karte.ts), nur bei eingeschaltetem Schalter. Zwei Ansichten mit je einer
 // Hauptaktion unten im Blatt: Bearbeiten → „Ansehen“, Ansicht → „Senden“ (ohne Versandweg: „Ablegen“). Stellen mit
-// „[bitte ergänzen]“ sind markiert und beim Antippen markiert, damit Tippen sie ersetzt.
+// „[bitte ergänzen]“ sind markiert und beim Antippen markiert, damit Tippen sie ersetzt. Die Begründung schlägt die
+// EU-KI vor (components/gruende-vorschlag.tsx), übernommen wird sie erst per Tipp.
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { CheckCircle2, Eye, FileText, Loader2, PencilLine, Send, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
+import { GruendeVorschlag } from "@/components/gruende-vorschlag";
 import { cn } from "@/lib/utils";
 import { BD_ABSCHNITTE, BD_PFLICHT, BD_TITEL, BD_VERANTWORTUNG, bdFehlt, bdPdfInhalt, type BdAbschnitt, type BdInhalt } from "@/lib/beratungsdoku";
-import { GRUENDE_ERGAENZEN, hatLuecke } from "@/lib/mail/beratung";
+import { GRUENDE_ERGAENZEN, hatLuecke, type VorschlagInfo } from "@/lib/mail/beratung";
 import type { BdInfo } from "@/lib/beratungsdoku-server";
 import { beratungsdokuAblegenResult, beratungsdokuInfoResult, beratungsdokuPdfResult, beratungsdokuSendenResult } from "@/app/buyer/beratungsdoku-actions";
 
@@ -181,15 +183,28 @@ function Blatt({ ziel, onClose, onDone, onError }: Props & { ziel: Beratungsdoku
               <CheckCircle2 className="h-4 w-4 shrink-0" /> {stand}
             </p>
           ) : null}
-          {ansicht ? <Ansicht info={info} inhalt={inhalt} pdf={pdf} onBearbeiten={() => setAnsicht(false)} /> : <Bearbeiten inhalt={inhalt} onChange={setInhalt} />}
+          {ansicht ? <Ansicht info={info} inhalt={inhalt} pdf={pdf} onBearbeiten={() => setAnsicht(false)} /> : <Bearbeiten inhalt={inhalt} onChange={setInhalt} appointmentId={id} vorschlag={info.vorschlag} onError={onError} />}
         </div>
       )}
     </Sheet>
   );
 }
 
-function Bearbeiten({ inhalt, onChange }: { inhalt: BdInhalt; onChange: (i: BdInhalt) => void }) {
+function Bearbeiten({
+  inhalt,
+  onChange,
+  appointmentId,
+  vorschlag,
+  onError,
+}: {
+  inhalt: BdInhalt;
+  onChange: (i: BdInhalt) => void;
+  appointmentId: string;
+  vorschlag: VorschlagInfo;
+  onError: (m: string) => void;
+}) {
   const refs = useRef<Partial<Record<BdAbschnitt, HTMLTextAreaElement | null>>>({});
+  const [vorschlagDa, setVorschlagDa] = useState(false);
   // Antippen einer Stelle zum Ergänzen markiert sie, Tippen ersetzt sie
   const markieren = (k: BdAbschnitt) => {
     const el = refs.current[k];
@@ -203,30 +218,48 @@ function Bearbeiten({ inhalt, onChange }: { inhalt: BdInhalt; onChange: (i: BdIn
     <div className="space-y-4 px-5 py-4" data-bd-editor>
       {BD_ABSCHNITTE.map((k) => {
         const luecke = hatLuecke(inhalt[k]);
+        // Steht der Vorschlag für die Begründung da, ersetzt er den Hinweis darunter
+        const hinweis = luecke && !(k === "empfehlung" && vorschlagDa);
         return (
-          <label key={k} className="block">
-            <span className="mb-1 flex items-baseline gap-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-              {BD_TITEL[k]}
-              {BD_PFLICHT.includes(k) ? null : <span className="font-normal normal-case tracking-normal">optional</span>}
-            </span>
-            <textarea
-              ref={(el) => {
-                refs.current[k] = el;
-              }}
-              value={inhalt[k]}
-              onChange={(e) => onChange({ ...inhalt, [k]: e.target.value })}
-              onFocus={() => markieren(k)}
-              rows={zeilen(inhalt[k])}
-              placeholder={k === "hinweise" ? HINWEISE_PLATZHALTER : undefined}
-              className={cn(feld, luecke ? "border-amber-400 bg-amber-50/40" : "border-[color:var(--border)]")}
-              data-bd-feld={k}
-            />
-            {luecke ? (
-              <span className="mt-1 flex items-center gap-1.5 text-xs text-amber-800">
-                <TriangleAlert className="h-3.5 w-3.5 shrink-0" /> {GRUENDE_ERGAENZEN} durch Ihren Text ersetzen
+          <div key={k}>
+            <label className="block">
+              <span className="mb-1 flex items-baseline gap-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+                {BD_TITEL[k]}
+                {BD_PFLICHT.includes(k) ? null : <span className="font-normal normal-case tracking-normal">optional</span>}
               </span>
+              <textarea
+                ref={(el) => {
+                  refs.current[k] = el;
+                }}
+                value={inhalt[k]}
+                onChange={(e) => onChange({ ...inhalt, [k]: e.target.value })}
+                onFocus={() => markieren(k)}
+                rows={zeilen(inhalt[k])}
+                placeholder={k === "hinweise" ? HINWEISE_PLATZHALTER : undefined}
+                className={cn(feld, luecke ? "border-amber-400 bg-amber-50/40" : "border-[color:var(--border)]")}
+                data-bd-feld={k}
+              />
+              {hinweis ? (
+                <span className="mt-1 flex items-center gap-1.5 text-xs text-amber-800">
+                  <TriangleAlert className="h-3.5 w-3.5 shrink-0" /> {GRUENDE_ERGAENZEN} durch Ihren Text ersetzen
+                </span>
+              ) : null}
+            </label>
+            {k === "empfehlung" && vorschlag ? (
+              <div className="mt-2">
+                <GruendeVorschlag
+                  appointmentId={appointmentId}
+                  info={vorschlag}
+                  wuensche={inhalt.wuensche}
+                  feld={inhalt.empfehlung}
+                  titel="Begründung"
+                  onUebernehmen={(empfehlung) => onChange({ ...inhalt, empfehlung })}
+                  onError={onError}
+                  onSichtbar={setVorschlagDa}
+                />
+              </div>
             ) : null}
-          </label>
+          </div>
         );
       })}
     </div>

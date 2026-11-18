@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { EMPFEHLUNG_MODULE_AVAILABLE, showNewBadge } from "@/lib/empfehlung/shared";
 import { NotReachedOfferHost } from "@/components/next-step";
 import { AbschlussNachherHost } from "@/components/abschluss-nachher";
+import { BeratungsdokuFrageHost } from "@/components/beratungsdoku-frage";
 import { ZurueckLink } from "@/components/zurueck-link";
 import { demoPfadAlsBuyer } from "@/lib/app-demo/weiche";
 
@@ -227,6 +228,7 @@ export function BuyerShell({
     </div>
     <NotReachedOfferHost />
     <AbschlussNachherHost />
+    <BeratungsdokuFrageHost />
     </ToastProvider>
   );
 }
@@ -607,6 +609,7 @@ function BuyerShellA({
       </div>
       <NotReachedOfferHost />
       <AbschlussNachherHost />
+      <BeratungsdokuFrageHost />
     </ToastProvider>
   );
 }

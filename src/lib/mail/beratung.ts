@@ -174,3 +174,51 @@ export function zusammenfassungFehlt(z: { wuensche: string; rat: string }): stri
   if (hatLuecke(z.wuensche) || hatLuecke(z.rat)) return `Bitte die Stellen mit ${GRUENDE_ERGAENZEN} ausfüllen.`;
   return null;
 }
+
+// ─── „Vorschlag erstellen“ für Rat und Gründe (Ole, 18.11.2026) ─────────────────────────────────
+// Der Rat (gewählte Tarife) kommt ohne KI aus der Tarifauswahl, die KI schlägt nur die Gründe vor
+// (lib/mail/gruende-ki.ts). Hier die reinen Teile, auch im Browser: ob ein Vorschlag möglich ist und das Einsetzen.
+
+/** Was der Server zum Vorschlag weiß; null = keine EU-KI eingerichtet (dann gibt es den Knopf nicht). */
+export type VorschlagInfo = {
+  /** Mindestens ein Tarif am Termin gewählt */
+  tarif: boolean;
+  /** Leistungen aus dem Katalog bei einem gewählten Tarif */
+  leistungen: boolean;
+  /** Gesundheitssparte (oder unklar): an die KI gehen nur Sparte, Versicherer, Tarif und Beitrag */
+  strikt: boolean;
+} | null;
+
+/** Steht im Text etwas zum Bedarf (mehr als „Interesse an: …“ und Überschriften)? */
+export function hatBedarf(wuensche: string): boolean {
+  return wuensche
+    .split("\n")
+    .map((z) => z.replace(/^[\s•*-]+/, "").trim())
+    .some((z) => z && !z.endsWith(":") && !/^interesse an:/i.test(z) && !hatLuecke(z));
+}
+
+/** Warum gerade kein Vorschlag geht (ein Satz, Sie-Form); null = möglich. */
+export function vorschlagGrund(v: NonNullable<VorschlagInfo>, wuensche: string): string | null {
+  if (!v.tarif) return "Für einen Vorschlag zuerst in der Terminvorbereitung den Tarif wählen.";
+  if (!v.strikt && !v.leistungen && !hatBedarf(wuensche)) return "Für einen Vorschlag fehlen noch Wünsche oder Bedarf, z. B. eine Notiz aus dem Gespräch.";
+  return null;
+}
+
+const GRUENDE_ZEILE = /^(Gründe|Begründung):[ \t]*\[bitte ergänzen\][ \t]*$/m;
+
+/** Steht die Zeile „Gründe: [bitte ergänzen]“ (bzw. „Begründung: …“) noch unverändert im Text (frischer Entwurf)? */
+export const gruendePlatzhalter = (t: string) => GRUENDE_ZEILE.test(t);
+
+/** Fehlen die Gründe noch (Zeile „Gründe: [bitte ergänzen]“ bzw. „Begründung: …“ oder gar keine solche Zeile)? */
+export const gruendeOffen = (t: string) => GRUENDE_ZEILE.test(t) || !/^(Gründe|Begründung):/m.test(t);
+
+/**
+ * Vorschlag in das Feld einsetzen: ersetzt die Zeile „Gründe: [bitte ergänzen]“ (bzw. „Begründung: …“), sonst wird er
+ * unten angehängt. Der übrige Text (Rat aus der Tarifauswahl) bleibt unverändert.
+ */
+export function gruendeEinsetzen(feld: string, gruende: string, titel: "Gründe" | "Begründung"): string {
+  const g = gruende.trim();
+  if (!g) return feld;
+  if (GRUENDE_ZEILE.test(feld)) return feld.replace(GRUENDE_ZEILE, (_m, t: string) => `${t}:\n${g}`);
+  return `${feld.trimEnd()}${feld.trim() ? "\n\n" : ""}${titel}:\n${g}`;
+}

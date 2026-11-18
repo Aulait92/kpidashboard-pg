@@ -5,11 +5,12 @@
 // bzw. abgelegt wird. Zwei Ansichten: Bearbeiten (zwei Felder) und Ansicht (so sieht das PDF aus, mit „PDF öffnen“).
 // Senden und Ablegen gibt das Blatt erst frei, wenn die aktuelle Fassung angesehen wurde (zfBereit). „Mit KI
 // formulieren“ nur, wenn der Server es erlaubt (EU-KI, keine Gesundheitssparte); das Ergebnis trägt das Kennzeichen
-// „Entwurf der KI, bitte prüfen“.
+// „Entwurf der KI, bitte prüfen“. „Gründe vorschlagen“ am Feld Rat und Gründe: components/gruende-vorschlag.tsx.
 
 import { useEffect, useState } from "react";
 import { Eye, FileText, Loader2, PencilLine, Sparkles, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui";
+import { GruendeVorschlag } from "@/components/gruende-vorschlag";
 import { beratungsPdfInhalt, hatLuecke, zusammenfassungFehlt, GRUENDE_ERGAENZEN } from "@/lib/mail/beratung";
 import type { ZusammenfassungInfo } from "@/lib/zusammenfassung-server";
 import { zusammenfassungKiResult, zusammenfassungPdfResult } from "@/app/buyer/angebot-actions";
@@ -73,6 +74,7 @@ export function ZusammenfassungEditor({
   pdf: { name: string; url: string } | null;
 }) {
   const [kiLaeuft, setKiLaeuft] = useState(false);
+  const [vorschlagDa, setVorschlagDa] = useState(false);
   const aendern = (teil: Partial<Pick<ZfZustand, "wuensche" | "rat">>) => onChange({ ...wert, ...teil, geprueft: false, ansicht: false });
 
   const mitKi = async () => {
@@ -134,10 +136,22 @@ export function ZusammenfassungEditor({
         <span className={label}>Rat und Gründe</span>
         <textarea value={wert.rat} onChange={(e) => aendern({ rat: e.target.value })} rows={zeilen(wert.rat)} className={feld} data-zf-rat />
       </label>
-      {luecke ? (
+      {luecke && !vorschlagDa ? (
         <p className="flex items-center gap-1.5 text-xs text-amber-800" data-zf-luecke>
           <TriangleAlert className="h-3.5 w-3.5 shrink-0" /> Gründe für Ihren Rat statt {GRUENDE_ERGAENZEN} eintragen.
         </p>
+      ) : null}
+      {info.vorschlag ? (
+        <GruendeVorschlag
+          appointmentId={appointmentId}
+          info={info.vorschlag}
+          wuensche={wert.wuensche}
+          feld={wert.rat}
+          titel="Gründe"
+          onUebernehmen={(rat) => onChange({ ...wert, rat, ki: true, geprueft: false, ansicht: false })}
+          onError={onError}
+          onSichtbar={setVorschlagDa}
+        />
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="secondary" size="md" icon={Eye} onClick={() => onChange({ ...wert, ansicht: true, geprueft: true })} data-zf-ansehen>

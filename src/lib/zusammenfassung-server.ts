@@ -24,6 +24,8 @@ import { bedrockEu } from "@/lib/ki-eu-konfig";
 import { zusammenfassungEntwurf, zusammenfassungFehlt } from "@/lib/mail/beratung";
 import { beraterName, beratungsPdf, type BeratungsPdf } from "@/lib/mail/beratung-pdf";
 import { kiZusammenfassung, kiZusammenfassungStatus, type KiErgebnis } from "@/lib/mail/beratung-ki";
+import { gruendeVorschlagen, vorschlagInfo, type VorschlagErgebnis } from "@/lib/mail/gruende-ki";
+import type { VorschlagInfo } from "@/lib/mail/beratung";
 import { leseMailAblauf } from "@/lib/mail/ablauf";
 import { fuelle, werteFuer } from "@/lib/mail/platzhalter";
 import { vorlageFuer } from "@/lib/mail/vorlagen-mail";
@@ -38,6 +40,8 @@ export type ZusammenfassungInfo = {
   kopf: { kunde: string; produkt: string; berater: string };
   /** Knopf „Mit KI formulieren“ zeigen (EU-KI eingerichtet, keine Gesundheitssparte) */
   ki: boolean;
+  /** „Vorschlag erstellen“ für die Gründe (null = keine EU-KI) */
+  vorschlag: VorschlagInfo;
   /** Über die App senden möglich (Adresse, Versandweg, E-Mail-Funktionen an) */
   appVersand: boolean;
   email: string | null;
@@ -157,6 +161,7 @@ async function zusammenfassungFuer(t: Termin, ctx: TeamCtx, now: Date): Promise<
     entwurf,
     kopf: { kunde: lead.name?.trim() || "", produkt: thema, berater: await beraterName(ctx.userId, vorbereitung?.termin.berater || k.daten.name) },
     ki: kiZusammenfassungStatus({ konfig: bedrockEu(), produkt: lead.source, sparten }).moeglich,
+    vorschlag: vorschlagInfo({ konfig: bedrockEu(), themen: [lead.source, thema], auswahl }),
     appVersand: !!email && !lead.customer.mailFeaturesOff && (!!k.postfach || resendBereit()),
     email,
     mail: { subject: fuelle(vorlage.subject, werte).replace(/\s+/g, " ").trim(), body: fuelle(vorlage.body, werte) },
@@ -176,6 +181,27 @@ export async function zusammenfassungKi(appointmentId: string, ctx: TeamCtx, tex
   const konfig = bedrockEu();
   if (!kiZusammenfassungStatus({ konfig, produkt: lead.source, sparten }).moeglich) return { ok: false, error: "Mit KI formulieren ist hier nicht möglich." };
   return kiZusammenfassung(sauber(text), { an, tier: istTierLead(lead.source), konfig, client: deps.client });
+}
+
+/**
+ * „Vorschlag erstellen“ für die Gründe (Gesprächszusammenfassung und Beratungsdokumentation): Tarifauswahl vom Termin,
+ * Wünsche aus dem Blatt (lib/mail/gruende-ki.ts filtert Gesundheitsangaben, strikt bei Gesundheitssparten).
+ */
+export async function gruendeVorschlag(
+  appointmentId: string,
+  ctx: TeamCtx,
+  wuensche: string,
+  deps: NonNullable<Parameters<typeof gruendeVorschlagen>[1]> = {},
+): Promise<VorschlagErgebnis> {
+  const t = await termin(appointmentId, ctx);
+  const lead = t?.lead;
+  if (!t || !lead || lead.erasedAt) return { ok: false, error: "Termin nicht gefunden." };
+  const an = asAnsprache(lead.customer.leadAddress);
+  const { thema, auswahl } = auswahlAus(t.offersJson, topicOf(lead.formData, lead.source, an));
+  return gruendeVorschlagen(
+    { an, themen: [lead.source, thema], auswahl, wuensche: String(wuensche ?? "").slice(0, 6000), tier: istTierLead(lead.source) },
+    { konfig: deps.konfig, client: deps.client },
+  );
 }
 
 /** PDF erzeugen (ohne Ablage), z. B. für „PDF öffnen“ oder das eigene Mailprogramm. */

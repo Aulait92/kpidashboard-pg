@@ -1517,6 +1517,22 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
     nur, wenn die KI mit Verarbeitung in der EU eingerichtet ist, und nie bei Kranken, Zahn, BU, Leben oder Pflege;
     das Ergebnis ist als „Entwurf der KI, bitte prüfen“ markiert und darf keine eigenen Beträge, Versicherer oder
     Empfehlungen ergänzen. Steht die Vorlage in den Einstellungen auf **Aus**, gibt es Haken und Vorschlag nicht.
+  - **Gründe vorschlagen (seit 18.11.2026):** Der Rat (die am Termin gewählten Tarife) steht ohne KI im Feld. Die
+    Gründe schlägt die KI mit Verarbeitung in der EU vor, im Feld **Rat und Gründe** der Gesprächszusammenfassung und
+    im Feld **Empfehlung mit Begründung** der Beratungsdokumentation. Steht dort noch „[bitte ergänzen]“, erscheint der
+    Vorschlag beim Öffnen von selbst, gelb markiert unter dem Feld; sonst über **Gründe vorschlagen** bzw.
+    **Begründung vorschlagen**. Er kommt erst mit **Übernehmen** ins Feld, bleibt dort änderbar und wird mit dem
+    normalen Senden bzw. Ablegen gespeichert; **Verwerfen** lässt das Feld unverändert. Grundlage sind die gewählten
+    Tarife (Versicherer, Tarif, Beitrag, Leistungen aus dem Katalog) und der Text unter Wünsche und Bedürfnisse
+    (Angaben, Notizen, „Was hat … schon?“), ohne Gesundheitsangaben und nie mit Dokumenten oder PDFs. Bei Kranken,
+    Zahn, BU, Leben, Pflege und Unfall sieht die KI nur Sparte, Versicherer, Tarif und Beitrag. Ohne gewählten Tarif
+    oder ohne Angaben zum Bedarf ist der Knopf aus, darunter steht, was fehlt. Der Vorschlag nennt keine neuen
+    Beträge oder Versicherer, vergleicht nicht und verspricht nichts; die Inhalte verantworten Sie.
+  - **Beratungsdokumentation nach dem Termin:** einschalten unter **Einstellungen** oder in der **Einrichtung**
+    (Frage „Beratungsdokumentation vorbereiten?“ mit **Ja, vorbereiten** oder **Nein**). Wer die Frage nie beantwortet
+    hat, sieht sie einmal nach dem ersten Termin-Ergebnis (Angebot oder Abschluss) in „Wie lief der Termin?“; nach
+    **Ja** lässt sich die Dokumentation zu diesem Termin gleich erstellen. Nach der Antwort fragt die App nicht mehr,
+    ändern können Sie es jederzeit unter Einstellungen. Nur der Inhaber des Kontos entscheidet.
   - **Aufbewahrung:** Wird ein Kontakt auf Wunsch gelöscht, bleibt nur die Beratungsdokumentation als Nachweis
     (10 Jahre ab Erstellung, danach automatisch gelöscht); am gelöschten Kontakt steht sie mit Datum zum Öffnen.
     Bei Vertragsende werden auch diese PDFs mit allen Daten gelöscht (vorher Export).
