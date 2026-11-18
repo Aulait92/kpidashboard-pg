@@ -74,12 +74,13 @@ export async function sendBookingConfirmation(opts: {
   // Verschieben per Knopf „Termin verschieben“ (v4) bzw. per Chat (ältere Vorlagen: Satz im Parameter)
   const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), linkOrHint(opts.mode, opts.meetUrl, an)];
   const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(an)}`];
-  // „Guten Tag Frau Schneider, Ihr Videocall mit Susanne Meier ist bestätigt: …“
+  // „Guten Tag Frau Schneider, Ihr Videocall mit Herrn Kannapinn ist bestätigt: …“ (Nennungsregel, lib/vermittler-nennung.ts)
+  const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
   const text =
-    `${anredeZeile(an, who.kontakt)} ${terminWort(opts.mode, an)} mit ${who.advisor} ist bestätigt: ${params[1]}. ` +
+    `${anredeZeile(an, who.kontakt)} ${terminWort(opts.mode, an)} mit ${person.dat} ist bestätigt: ${params[1]}. ` +
     (opts.mode === "video" && opts.meetUrl
       ? `Hier der Link zum Videocall: ${opts.meetUrl}`
-      : a(an, `${who.advisor} ruft dich zur vereinbarten Zeit an.`, `${who.advisor} ruft Sie zur vereinbarten Zeit an.`)) +
+      : a(an, `${person.nom} ruft dich zur vereinbarten Zeit an.`, `${person.nom} ruft Sie zur vereinbarten Zeit an.`)) +
     `\n\n${prepHint(an)} Bis dann! 🙂`;
   await sendWhatsAppNotice({
     customerId: opts.customerId,
@@ -114,8 +115,9 @@ export async function sendRescheduleNotice(opts: {
   // v4: Frage „Passt die neue Zeit?“ mit Knöpfen „Ja, passt“/„Bitte verschieben“; ältere Vorlagen mit Satz im Parameter
   const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), linkOrHint(opts.mode, opts.meetUrl, an)];
   const legacyParams = [...params.slice(0, 3), `${params[3]} ${change}`];
+  const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
   const text =
-    `${anredeZeile(an, who.kontakt)} wir mussten ${a(an, "deinen", "Ihren")} Termin mit ${who.advisor} leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
+    `${anredeZeile(an, who.kontakt)} wir mussten ${a(an, "deinen", "Ihren")} Termin mit ${person.dat} leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
     `\n\n${a(an, "Danke für dein Verständnis! Passt dir die neue Zeit?", "Danke für Ihr Verständnis! Passt Ihnen die neue Zeit?")}`;
   const send = (purpose: "reschedule" | "booking_confirmation") =>
     sendWhatsAppNotice({
@@ -141,6 +143,9 @@ export async function sendRescheduleNotice(opts: {
   }
 }
 
+/** WhatsApp der Vortags-Erinnerung vom Vermittler übersprungen (nur intern, wie „kein Lead“ behandelt). */
+class UebersprungenError extends Error {}
+
 export type ReminderResult = { candidates: number; sent: number; errors: string[] };
 
 /** „Gleich ist es so weit“: etwa so lange vor dem Termin (Ole, 15.11.2026: kurz vorher nachfragen, ob alles passt). */
@@ -159,6 +164,7 @@ type TerminZeile = {
   reminderSentAt: Date | null;
   rescheduleRequestedAt: Date | null;
   status: string;
+  erinnerungenUebersprungen: string[];
 };
 
 const terminSelect = {
@@ -174,7 +180,18 @@ const terminSelect = {
   reminderSentAt: true,
   rescheduleRequestedAt: true,
   status: true,
+  erinnerungenUebersprungen: true,
 } as const;
+
+/**
+ * Nächste Nachrichten (Paket P6): nicht alle genannten Erinnerungen übersprungen und der Kontakt nicht pausiert („Alle
+ * pausieren“, Lead.nachrichtenPausiertAt). Termine ohne Lead laufen wie bisher.
+ */
+export function nichtAngehalten(arten: string[]) {
+  return {
+    AND: [{ NOT: { erinnerungenUebersprungen: { hasEvery: arten } } }, { OR: [{ leadId: null }, { lead: { is: { nachrichtenPausiertAt: null } } }] }],
+  };
+}
 
 function formAnswers(raw: unknown): { label: string; value: string }[] {
   if (!Array.isArray(raw)) return [];
@@ -227,6 +244,7 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
       customer: { dormantSince: null },
       conversationId: { not: null },
       startsAt: { gt: new Date(now.getTime() + 10 * 60 * 1000), lte: new Date(now.getTime() + SOON_MS) },
+      ...nichtAngehalten(["stunde"]),
     },
     select: terminSelect,
     orderBy: { startsAt: "asc" },
@@ -305,6 +323,7 @@ export async function runStartReminders(now = new Date()): Promise<ReminderResul
       customer: { dormantSince: null },
       conversationId: { not: null },
       startsAt: { gt: now, lte: new Date(now.getTime() + ERINNERUNG.gleichVorMs) },
+      ...nichtAngehalten(["gleich"]),
     },
     select: terminSelect,
     orderBy: { startsAt: "asc" },
@@ -349,6 +368,8 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
         reminderSentAt: null,
         startsAt: { gt: now, lte: new Date(now.getTime() + ERINNERUNG.vortagVorMs) },
         customer: { dormantSince: null },
+        // Nächste Nachrichten (P6): WhatsApp und Mail einzeln überspringbar
+        ...nichtAngehalten(["vortag", "vortag_mail"]),
       },
       select: terminSelect,
       orderBy: { startsAt: "asc" },
@@ -370,9 +391,13 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
     // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal
     // zugestellt hat (sonst nächster Cron-Lauf erneut, ohne Doppel-Mails).
     let delivered = false;
+    // Vom Vermittler übersprungen (P6): diesen Kanal auslassen, die Erinnerung gilt dann als erledigt
+    const waAus = appt.erinnerungenUebersprungen.includes("vortag");
+    const mailAus = appt.erinnerungenUebersprungen.includes("vortag_mail");
     // Kein Lead zugeordnet (Allowlist, lib/whatsapp/nur-leads.ts): keine WhatsApp; als erledigt markieren, sonst Dauerschleife
     let keinLead = false;
     try {
+      if (waAus) throw new UebersprungenError();
       await sendWhatsAppNotice({
         customerId: appt.customerId,
         to: k.conv.contactPhone,
@@ -387,10 +412,10 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
       });
       delivered = true;
     } catch (err) {
-      if (err instanceof WhatsAppKeinLeadError) keinLead = true;
+      if (err instanceof WhatsAppKeinLeadError || err instanceof UebersprungenError) keinLead = true;
       else result.errors.push(`${appt.id} (WhatsApp): ${err instanceof Error ? err.message : String(err)}`);
     }
-    const mail = await sendLeadEmail(appt.id, "reminder", { now }).catch(() => ({ sent: false }));
+    const mail = mailAus ? { sent: false } : await sendLeadEmail(appt.id, "reminder", { now }).catch(() => ({ sent: false }));
     if (mail.sent) delivered = true;
     if (delivered || keinLead) {
       await prisma.appointment.update({

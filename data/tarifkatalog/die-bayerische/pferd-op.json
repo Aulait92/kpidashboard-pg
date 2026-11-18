@@ -28,8 +28,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/pferde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pferde-OP-Versicherung Top",
@@ -50,8 +49,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/pferde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pferde-OP-Versicherung Premium",
@@ -72,8 +70,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/pferde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -81,12 +78,13 @@
   ],
   "offen": [
     "Angebot der Bayerischen mit dem Partner Barmenia (Risikoträger Barmenia Allgemeine, Marke BarmeniaGothaer); gleiche Tarife wie im Ordner barmenia-gothaer, Stufen und Tabelle auf diebayerische.de geprüft (Abruf 17.11.2026). Die Bayerische markiert keine Stufe.",
-    "Laut Seite der Bayerischen Nachbehandlung Basis und Top 7 Tage, Premium 10 Tage, Notdienst in allen Stufen bis 4-fach GOT; Unterbringung Basis 15 €/Tag (7 Tage), Top 30 €/Tag (10 Tage), Premium bis 14 Tage. Weicht teils von der Barmenia-Übersicht ab; bitte prüfen.",
     "Erstattung laut Seite der Bayerischen 100 % zum 2-fachen GOT-Satz; Basis laut Barmenia-Übersicht bis 2.500 € je OP.",
     "Selbstbeteiligung wählbar 0, 250, 500 oder 1.000 € je Versicherungsfall.",
     "Gelenk-Chip-OPs: besondere Wartezeit 12 Monate.",
     "Unterbringung: Basis 15 € am Tag (7 Tage), Top 30 € am Tag (10 Tage), Premium bis 14 Tage.",
     "Vorsorge, Physiotherapie, Kastration und Kolik ohne OP auf der Produktseite nicht genannt.",
-    "Pferdekranken-Vollversicherung bietet die Bayerische nicht an (nur OP)."
+    "Pferdekranken-Vollversicherung bietet die Bayerische nicht an (nur OP).",
+    "Nachbehandlung, Notdienst und Unterbringung laut Seite der Bayerischen (Basis und Top 7 Tage, Premium 10 Tage, Notdienst bis 4-fach GOT); die Barmenia-Übersicht weicht teils ab. Übernommen sind die Werte der Bayerischen.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

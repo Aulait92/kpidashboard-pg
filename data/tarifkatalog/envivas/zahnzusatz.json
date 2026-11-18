@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DentFlex.80",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DentFlex.100",
@@ -66,8 +64,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -80,6 +77,7 @@
     "Prozentwerte mit TK-Leistung; ohne GKV-Vorleistung halber Satz (z. B. Zahnersatz 35 %, 40 %, 50 %, Behandlung 50 %).",
     "Zahnstaffel für Zahnersatz, Kronen, Inlays: 1.000 €, 2.000 €, 3.000 €, 4.000 € in den ersten 4 Jahren, ab dem 5. Jahr unbegrenzt.",
     "Kieferorthopädie: Beginn bis 20 Jahre, insgesamt max. 3.000 €; KFO-Staffel 200 € bis 800 € in den ersten 4 Jahren. Ab 21 nur unfallbedingt.",
-    "Wechselrecht: bis 49 Jahre alle 3 Jahre in eine höhere Stufe ohne Gesundheitsprüfung."
+    "Wechselrecht: bis 49 Jahre alle 3 Jahre in eine höhere Stufe ohne Gesundheitsprüfung.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

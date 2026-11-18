@@ -19,8 +19,28 @@ export type PauseOption = { wahl: string; label: string; tag: string };
 const tagAusYmd = (ymd: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "UTC", weekday: "short", day: "numeric", month: "numeric" }).format(new Date(`${ymd}T12:00:00Z`));
 
-export function LeadSequencePause({ leadId, optionen, min, max, aendern }: { leadId: string; optionen: PauseOption[]; min: string; max: string; aendern?: boolean }) {
-  const [open, setOpen] = useState(false);
+export function LeadSequencePause({
+  leadId,
+  optionen,
+  min,
+  max,
+  aendern,
+  offen,
+  onOffen,
+}: {
+  leadId: string;
+  optionen: PauseOption[];
+  min: string;
+  max: string;
+  aendern?: boolean;
+  /** Von außen geöffnet (Menü „Mehr“ unter „Nächste Nachrichten“, Paket P6): dann ohne eigenen Knopf */
+  offen?: boolean;
+  onOffen?: (o: boolean) => void;
+}) {
+  const [eigen, setEigen] = useState(false);
+  const gesteuert = offen !== undefined;
+  const open = gesteuert ? offen : eigen;
+  const setOpen = (o: boolean) => (gesteuert ? onOffen?.(o) : setEigen(o));
   const [wahl, setWahl] = useState("2w");
   const [datum, setDatum] = useState("");
   const [busy, start] = useTransition();
@@ -49,9 +69,11 @@ export function LeadSequencePause({ leadId, optionen, min, max, aendern }: { lea
 
   return (
     <>
-      <Button variant="secondary" icon={PauseCircle} onClick={() => setOpen(true)} data-nachfassen-pausieren>
-        {aendern ? "Ändern" : "Pausieren"}
-      </Button>
+      {gesteuert ? null : (
+        <Button variant="secondary" icon={PauseCircle} onClick={() => setOpen(true)} data-nachfassen-pausieren>
+          {aendern ? "Ändern" : "Pausieren"}
+        </Button>
+      )}
       <Sheet open={open} onClose={() => setOpen(false)} title="Nachfassen pausieren" message="Bis dahin fasst die App nicht nach, danach startet sie neu.">
         <div className="space-y-4 px-5 py-4" data-bedenkzeit-blatt>
           <div>

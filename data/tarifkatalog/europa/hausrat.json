@@ -35,8 +35,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Komfort-Schutz",
@@ -64,8 +63,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Premium-Schutz",
@@ -93,8 +91,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -106,6 +103,7 @@
     "Wertsachen in % der Versicherungssumme; Schmuck, Briefmarken, Münzen 20.000, 25.000 bzw. 30.000 €.",
     "Einfacher Diebstahl auf dem Grundstück: Komfort bis 2.000 €, Premium bis 5.000 €; außerhalb des Versicherungsorts je bis 1.000 €.",
     "Diebstahl aus dem Auto: Einbruchdiebstahl aus Kfz, Wohnmobil oder Anhänger.",
-    "Fahrraddiebstahl (individueller Wert), Elementar, Glas, Onlineschutz und Haus- und Wohnungsschutzbrief als Bausteine; Fahrradschutzbrief nur Premium."
+    "Fahrraddiebstahl (individueller Wert), Elementar, Glas, Onlineschutz und Haus- und Wohnungsschutzbrief als Bausteine; Fahrradschutzbrief nur Premium.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

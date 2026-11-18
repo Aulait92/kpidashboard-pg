@@ -32,8 +32,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Komfort-Schutz",
@@ -58,8 +57,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Exklusiv-Schutz",
@@ -84,8 +82,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -97,6 +94,7 @@
     "Kosten nach Schaden: Aufräumungs-, Abbruch-, Bewegungs- und Schutzkosten im Basis bis 100.000 €, sonst ohne eigene Grenze.",
     "Photovoltaik in allen Tarifen mitversichert, Wärmepumpen ab Komfort; Photovoltaik- und Energieanlagenversicherung als Zusatz.",
     "Ableitungsrohre: Frost- und Bruchschäden außerhalb des Gebäudes ab Komfort bis 2.000 €.",
-    "Tiere: Tierbiss an elektrischen Leitungen. Elementar und Haus- und Wohnungsschutzbrief als Zusatz."
+    "Tiere: Tierbiss an elektrischen Leitungen. Elementar und Haus- und Wohnungsschutzbrief als Zusatz.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

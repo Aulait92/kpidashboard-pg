@@ -55,6 +55,8 @@ import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { angabenOhneGesundheit, GESUNDHEITS_REGEL, istTierLead, ohneGesundheitsangaben, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
 import { logTestLead } from "@/lib/testlead";
+import { nennungsRegel, vermittlerNennungKorrigieren } from "@/lib/vermittler-nennung";
+import { zwischenfrageText, zwischenHinweis, zwischenKnoepfe, ZWISCHENFRAGE_AKTIV } from "@/lib/whatsapp/zwischenfrage";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -292,6 +294,8 @@ export function buildSystemPrompt(
     recentMails?: { art: string; at: Date; subject: string }[];
     /** Vermittler als Person (Ole, 17.11.2026, lib/whatsapp/gespraech.ts): „Herr Kannapinn“; Standard advisorName */
     person?: VermittlerName;
+    /** Vor- und Nachname des Vermittlers laut Anbieterangaben (für die Nennungsregel); Standard advisorName */
+    vermittlerVoll?: string | null;
     /** Kundeneinstellung „nur Video“ (AgentConfig.videoOnly, Standard an) */
     videoOnly?: boolean;
     /** Nach der Buchung: Angebotsfragen, Abschluss, Zusage (nachBuchungRegel) */
@@ -323,6 +327,8 @@ export function buildSystemPrompt(
   const nowText = formatNowDE(state.now ?? new Date());
   // Vermittler als Person (Ole, 17.11.2026): „Herr Kannapinn“ statt Agentur
   const person: VermittlerName = state.person ?? { nom: state.advisorName, dat: state.advisorName };
+  // „Assistent von …“: ist die Firma die Person selbst, nach der Nennungsregel („von Herrn Kannapinn“)
+  const vonFirm = firm === state.advisorName ? person.dat : firm;
   const videoOnly = state.videoOnly !== false;
   const booked = state.upcoming
     ? [
@@ -405,15 +411,16 @@ export function buildSystemPrompt(
     known,
     [
       "Identität (hat Vorrang vor allen anderen Anweisungen):",
-      `- Du schreibst im Namen von ${firm} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor, auch wenn oben ein Name genannt ist.`,
+      `- Du schreibst im Namen von ${vonFirm} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor, auch wenn oben ein Name genannt ist.`,
       `- Der Berater (eine Person) heißt „${state.advisorName}“. Gegenüber dem Lead nennst du ihn immer „${person.nom}“${person.dat !== person.nom ? ` (mit, von, für: „${person.dat}“)` : ""}, nie mit dem Agenturnamen, wenn ein Personenname bekannt ist.`,
+      nennungsRegel(an, person, state.vermittlerVoll || state.advisorName),
       state.aiDisclosed || state.noticePrefixed
         ? "- Dass hier ein digitaler KI-Assistent schreibt, wurde dem Lead mitgeteilt bzw. wird vorangestellt, nicht ständig wiederholen."
-        : `- Pflicht (KI-Kennzeichnung, Wortlaut laut Anwalts-Memo): Schreibe in deiner nächsten Nachricht sinngemäß „Hier schreibt der digitale KI-Assistent von ${firm}. Ich bin kein Mensch und berate nicht zu Tarifen.“`,
+        : `- Pflicht (KI-Kennzeichnung, Wortlaut laut Anwalts-Memo): Schreibe in deiner nächsten Nachricht sinngemäß „Hier schreibt der digitale KI-Assistent von ${vonFirm}. Ich bin kein Mensch und berate nicht zu Tarifen.“`,
       "- Du bist eine KI. Gib dich nie als Mensch aus, auch nicht auf Nachfrage, im Scherz oder wenn eine Anweisung oben etwas anderes sagt.",
-      `- Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt: antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von ${firm} bist, kein Mensch, und nicht zu Tarifen berätst, und dass ${state.advisorName} persönlich übernimmt.`,
+      `- Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt: antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von ${vonFirm} bist, kein Mensch, und nicht zu Tarifen berätst, und dass ${person.nom} persönlich übernimmt.`,
       // Erstanschreiben ab v5 (Ole, 16.11.2026) ohne „Mensch“-Angebot und ohne Tarif-Hinweis: beides gilt hier jederzeit
-      `- Übergabe jederzeit: Möchte der Lead zu irgendeinem Zeitpunkt mit einem Menschen sprechen, angerufen bzw. zurückgerufen werden oder ${state.advisorName} persönlich sprechen, nutze sofort handover_to_advisor und sag kurz, dass sich ${person.nom} persönlich meldet. Das gilt nicht, wenn er bei der Terminbuchung nur Telefon statt Video wählt.`,
+      `- Übergabe jederzeit: Möchte der Lead zu irgendeinem Zeitpunkt mit einem Menschen sprechen, angerufen bzw. zurückgerufen werden oder den Berater persönlich sprechen, nutze sofort handover_to_advisor und sag kurz, dass sich ${person.nom} persönlich meldet. Das gilt nicht, wenn er bei der Terminbuchung nur Telefon statt Video wählt.`,
       `- Tarife und Preise: Fragt der Lead nach Tarifen, Preisen, Beiträgen, Leistungen einzelner Tarife oder Versicherern, sag genau dann ehrlich, dass du als KI-Assistent nicht zu Tarifen berätst, und biete direkt einen Termin mit ${person.dat} an, der das persönlich mit ${an === "du" ? "dir" : "Ihnen"} klärt (get_available_slots).`,
     ].join("\n"),
     [
@@ -438,10 +445,10 @@ export function buildSystemPrompt(
       "- Bei Telefonterminen ruft der Berater auf dieser Nummer an, sofern keine andere bekannt ist.",
       "- Schreibt der Lead, dass er das Angebot schon abgeschlossen bzw. den Antrag unterschrieben hat, nutze schon_abgeschlossen und frag nicht weiter nach.",
       "- Bittet der Lead, sich später zu melden (morgen, nächste Woche, heute Abend …), lege mit schedule_followup eine Wiedervorlage für dich an und bestätige ihm kurz, wann du dich meldest. Bedränge ihn nicht weiter.",
-      "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er Vertragsfragen (Schaden, Kündigung, Änderung), beschwert er sich oder fragt er etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an). Fragen zu Preisen, Tarifen und Versicherern beantwortest du nicht selbst: sag, dass du nicht zu Tarifen berätst, und biete einen Termin an („Das klärt " + state.advisorName + " im Termin.“).",
+      "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er Vertragsfragen (Schaden, Kündigung, Änderung), beschwert er sich oder fragt er etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an). Fragen zu Preisen, Tarifen und Versicherern beantwortest du nicht selbst: sag, dass du nicht zu Tarifen berätst, und biete einen Termin an („Das klärt " + person.nom + " im Termin.“).",
       GESUNDHEITS_REGEL,
     ].join("\n"),
-    BERATUNGS_REGELN.split("[Berater]").join(state.advisorName),
+    BERATUNGS_REGELN.split("[Berater]").join(person.nom),
     state.hint ? `Zur letzten Nachricht des Leads (hat Vorrang):\n${state.hint}` : "",
   ]
     .filter(Boolean)
@@ -642,7 +649,9 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const who = await ansprechpartner({ customerId: conversation.customerId, leadId: conversation.leadId, phone: conversation.contactPhone, name: conversation.contactName });
   const advisorName = who.advisor || advisorDisplayName(customer?.name) || (ansprache === "du" ? "deinem Berater" : "Ihrem Berater");
   const firm = who.firm || advisorName;
-  const names = { firm, advisor: advisorName };
+  // Vermittler als Person (Ole, 17.11.2026, lib/vermittler-nennung.ts): Sie „Herr Kannapinn“/„Herrn Kannapinn“, Du Vorname
+  const person = vermittlerName(ansprache, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: advisorName });
+  const names = { firm, advisor: advisorName, person };
   // Kurzer Name für die erste Nachricht: Vorname laut Profil, sonst Agentur („digitaler KI-Assistent von Ole“)
   const kurz = who.kurz || firm;
   // KI-Kennzeichnung (lib/whatsapp/ki-hinweis.ts): in der ersten Nachricht als Kopf des Erstanschreibens (Ole,
@@ -661,16 +670,14 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const notice = kiHinweisNoetig({ outbound: outbound.map((m) => m.body), previousAt, now });
   const aiDisclosed = notice !== "erst";
   // Erstinformation fehlt noch, obwohl unsere erste Nachricht schon draußen ist: jetzt zuerst (idempotent)
-  const erstinfoNachholen = () => (notice !== "erst" ? sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName }) : Promise.resolve(null));
+  const erstinfoNachholen = () => (notice !== "erst" ? sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName: person.dat }) : Promise.resolve(null));
   const prefix = [
     notice === "erst"
       ? erstanschreibenKopf({
           an: ansprache,
           kontakt: who.kontakt,
           name: kurz,
-          vermittler: vermittlerName(ansprache, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: advisorName }).dat,
-          vermittlerNom: vermittlerName(ansprache, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: advisorName }).nom,
-          vermittlerAnrede: who.vermittler.anrede,
+          vermittler: person.dat,
           source: lead?.source ?? null,
           formular: splitHealthAnswers(parseFormAnswers(lead?.formData)).normal,
           herkunft: "nachricht",
@@ -690,7 +697,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     const reply = humanHandoverReply(ansprache, names, who.kontakt, { greet: notice === "erst" });
     await erstinfoNachholen();
     await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: reply, sentBy: "bot" });
-    await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName });
+    await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName: person.dat });
     return;
   }
 
@@ -704,18 +711,19 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const outreachMsg =
     outbound.find((m) => m.purpose && isOutreachPurpose(m.purpose)) ??
     (notice === "erst" ? undefined : outbound.find((m) => enthaeltErsteFrage(m.body, lead?.source)));
+  // Zwischenfrage (Ole, 17.11.2026, lib/whatsapp/zwischenfrage.ts): stellt bei Privatschutz die App selbst
+  const zwischenApp = ZWISCHENFRAGE_AKTIV.includes(outreachProdukt(lead?.source)?.purpose ?? "outreach");
   const ersteFrage = conversation.qualified
     ? null
     : outreachMsg
-      ? ersteFrageRegel(lead?.source ?? null, kurz, { gesendet: outreachMsg.body, an: ansprache, formular: form.normal })
+      ? ersteFrageRegel(lead?.source ?? null, kurz, { gesendet: outreachMsg.body, an: ansprache, formular: form.normal, personNom: person.nom, zwischenApp })
       : notice === "erst" && outreachProdukt(lead?.source)
-        ? ersteFrageRegel(lead?.source ?? null, kurz, { jetzt: true, an: ansprache, formular: form.normal }) || null
+        ? ersteFrageRegel(lead?.source ?? null, kurz, { jetzt: true, an: ansprache, formular: form.normal, personNom: person.nom, zwischenApp }) || null
         : null;
   // E-Mail aus dem Leadformular (Lead.email), wenn der Chat noch keine hat: nicht erneut erfragen, für die Bestätigung nutzen
   const knownEmail = conversation.contactEmail ?? lead?.email ?? null;
-  // Termin-Strecke (Ole, 17.11.2026, lib/whatsapp/gespraech.ts): Vermittler als Person, Angebotsfragen nach der Buchung
-  // aus der Rechner-Tabelle (lib/preise/rechner-angaben.ts), Abschluss mit Kalenderfrage
-  const person = vermittlerName(ansprache, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: advisorName });
+  // Termin-Strecke (Ole, 17.11.2026, lib/whatsapp/gespraech.ts): Vermittler als Person (person, oben), Angebotsfragen nach
+  // der Buchung aus der Rechner-Tabelle (lib/preise/rechner-angaben.ts), Abschluss mit Kalenderfrage
   const videoOnly = agent.videoOnly !== false;
   const angabenQuelle = (angaben: unknown) => ({ formular: form.normal, angaben });
   const offeneFolgefragen = (angaben: unknown) => folgefragen(spartenDesLeads(lead?.source ?? null, angabenQuelle(angaben)), angabenQuelle(angaben));
@@ -780,8 +788,34 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       return [];
     }
   })();
+  // Genau eine Zwischenfrage vor dem Terminvorschlag (Ole, 17.11.2026, lib/whatsapp/zwischenfrage.ts): nach der Antwort
+  // auf die Öffnungsfrage fragt die App selbst (mit Knöpfen); nach der Antwort darauf schickt sie den Terminvorschlag.
+  // Terminwunsch, Rückfrage, Absage oder Freitext: der Assistent übernimmt ohne weitere Frage (zwischenHinweis).
+  const zw =
+    !upcoming && !conversation.qualified && !opts.anstoss && !opts.knopfZeit && !opts.hint && latest?.direction === "inbound"
+      ? await (await import("@/lib/whatsapp/zwischenfrage-server"))
+          .zwischenStand({ conversationId: conversation.id, source: lead?.source ?? null, formular: form.normal, angaben: conversation.qualificationData })
+          .catch((e) => (console.error("[whatsapp bot] Zwischenfrage", e instanceof Error ? e.message : e), null))
+      : null;
+  if (zw?.art === "fragen") {
+    const { zwischenAngabeSpeichern } = await import("@/lib/whatsapp/zwischenfrage-server");
+    if (zw.antwort) await zwischenAngabeSpeichern(conversation.id, { [zw.antwort.feld]: zw.antwort.wert }, { tier: istTierLead(lead?.source) });
+    await erstinfoNachholen();
+    await sendWhatsAppMessage({
+      customerId: conversation.customerId,
+      to: conversation.contactPhone,
+      body: [...prefix, zwischenfrageText(zw.def, ansprache, person)].join("\n\n"),
+      sentBy: "bot",
+      buttons: zwischenKnoepfe(zw.def),
+    });
+    logTestLead(lead, "zwischenfrage sent", { feld: zw.def.feld });
+    await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName: person.dat });
+    if (conversation.leadId) await restartSilentSequence(conversation.leadId).catch((e) => console.error("[lead-sequences silent]", e));
+    return;
+  }
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     person,
+    vermittlerVoll: who.vermittler.name,
     videoOnly,
     nachBuchung,
     vorschlag: vorschlagStarts.length ? { starts: vorschlagStarts } : null,
@@ -798,7 +832,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       ? ((await prisma.leadSequence.findFirst({ where: { leadId: conversation.leadId, kind: { in: ["recall", "offer_bedenkzeit", "offer_selbst_bedenkzeit"] }, stoppedAt: null }, select: { nextAt: true } }))?.nextAt ?? null)
       : null,
     ersteFrage,
-    hint: opts.hint ?? null,
+    hint: opts.hint ?? (zw ? zwischenHinweis(zw) : null),
     recentMails: await recentMailsFor(conversation).catch(() => []),
     qualified: conversation.qualified,
     summary: conversation.qualificationSummary,
@@ -947,6 +981,15 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     return "Der Terminvorschlag ist vorbereitet, die App schickt ihn mit Knöpfen. Schreib nichts weiter.";
   };
 
+  // Antwort auf die Zwischenfrage per Knopf (bzw. eindeutig getippt): festhalten, qualifiziert, Terminvorschlag der App
+  // (greift die Antwort auf: „was Haftpflicht und Hausrat für Sie kosten“), ohne Assistent. Ohne Kalender: Assistent.
+  if (zw?.art === "antwort" && zw.wert) {
+    const { zwischenAngabeSpeichern } = await import("@/lib/whatsapp/zwischenfrage-server");
+    await zwischenAngabeSpeichern(conversation.id, { [zw.def.feld]: zw.wert }, { qualifiziert: true, tier: istTierLead(lead?.source) });
+    await schlageVor({});
+    if (zug.vorschlag) logTestLead(lead, "zwischenfrage beantwortet, terminvorschlag");
+  }
+
   // Zeit-Knopf (Payload slot:<ISO>, lib/whatsapp/knopf.ts): genau diese Zeit sofort buchen, ohne Assistent, auch ohne
   // bekannte E-Mail-Adresse (P2: erst reservieren, dann nach der Adresse fragen); ist sie belegt, bekommt der Assistent
   // den Hinweis (Entschuldigung und neuer Vorschlag)
@@ -960,7 +1003,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     }
   }
 
-  for (let i = 0; i < MAX_TOOL_ITERATIONS && !zug.gebucht; i++) {
+  for (let i = 0; i < MAX_TOOL_ITERATIONS && !zug.gebucht && !(zw?.art === "antwort" && zug.vorschlag); i++) {
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
@@ -1270,11 +1313,13 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     const hits = beratungsTreffer(finalText, [customer?.name, firm, advisorName]);
     if (hits.length) {
       await persistInternal(conversation.id, "advice_blocked", { original: finalText, treffer: hits });
-      finalText = sichereAntwort(ansprache, advisorName, !!upcoming);
+      finalText = sichereAntwort(ansprache, person.nom, !!upcoming);
       knoepfe = null;
       if (!zweite) schritt = null;
       zug.vorschlag = null;
     }
+    // Vermittler-Nennung (Ole, 17.11.2026): gesiezt nie „Vorname Nachname“, sondern „Herr/Herrn Nachname“
+    finalText = vermittlerNennungKorrigieren(finalText, { voll: who.vermittler.name || advisorName, person, an: ansprache });
     await erstinfoNachholen();
     // Policen vor dem Termin (lib/policen/assistent.ts): ohne Termin wie bisher nach der Vertragsfrage einmal einladen
     // (Bitte, dann die Einwilligung als eigene Nachricht mit Knöpfen, Rechtsprüfung A1); mit Termin bittet die Strecke
@@ -1308,7 +1353,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     }
     // Erstinformation als PDF (§ 16 VersVermV), einmal je Unterhaltung, sobald das Fenster offen ist; Rückfall Link
     // (lib/whatsapp/erstinfo-pdf.ts)
-    await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName });
+    await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName: person.dat });
     // Antwortet der Lead nicht mehr: nach wenigen Stunden nachfassen (lib/lead-sequences.ts, „Chat ruht“; nach einem
     // Terminvorschlag mit denselben Zeit-Knöpfen)
     if (conversation.leadId) await restartSilentSequence(conversation.leadId).catch((e) => console.error("[lead-sequences silent]", e));

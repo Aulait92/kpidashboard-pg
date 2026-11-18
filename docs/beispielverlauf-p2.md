@@ -9,13 +9,21 @@ alles andere ist fester Text der App. Grundlage für die Beispielchats im Onboar
 
 ## Gemeinsamer Anfang
 
-**App (Erstanschreiben v8, Freitext im 24-h-Fenster):**
+**App (Erstanschreiben v8, Oles kurze Fassung vom 17.11.2026; als Vorlage mit PDF der Erstinformation im Kopf und
+Fußzeile „KI-Assistent · Oben: Erstinformation (gesetzlich)“, im 24-h-Fenster als Freitext mit „KI-Assistent“ im Satz):**
 
-> Hallo Frau Becker, danke für Ihre Anfrage zu Haftpflicht und Hausrat 🏠! Ich bin der digitale KI-Assistent von Herrn Kannapinn und kläre kurz ein paar Angaben, damit er Ihnen für Ihre Familie den passenden Schutz zeigen kann.
+> Hallo Frau Becker, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale Assistent von Herrn Kannapinn.
 >
-> Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?
+> *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*
 
 **Frau Becker:** Beides wäre neu.
+
+**App (Zwischenfrage, nur wenn das Formular die Lebenssituation nicht kennt; hier steht „Familie mit Kindern“ im
+Formular, deshalb entfällt sie):**
+
+> Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wer soll mitversichert sein?
+>
+> _Knöpfe: [Nur ich] [Zu zweit] [Familie mit Kindern]_
 
 **App:**
 

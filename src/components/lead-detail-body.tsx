@@ -54,7 +54,7 @@ import { BestehendeVertraege } from "@/components/bestehende-vertraege";
 import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
 import { bereitlegenFuerLead, formularAus, lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { waOhneMarker } from "@/lib/wa-format";
-import { LeadSequenceCard } from "@/components/lead-sequence-card";
+import { NaechsteNachrichtenCard } from "@/components/naechste-nachrichten-card";
 import { angebotStandText } from "@/lib/angebot-senden";
 import {
   ALL_GROUP_KEYS,
@@ -607,6 +607,9 @@ export async function LeadDetailBody({
         />
       ) : null}
 
+      {/* Nächste Nachrichten (Paket P6): ersetzt „Automatisches Nachfassen“, oberhalb der Angaben */}
+      <NaechsteNachrichtenCard leadId={lead.id} readOnly={!!lead.erasedAt} />
+
       {ziel || conv?.qualificationSummary || qPoints.length || vorvertraege ? (
         <Card className="mb-6">
           {ziel ? (
@@ -670,8 +673,6 @@ export async function LeadDetailBody({
           nameImTitel={!!lead.name}
         />
       ) : null}
-
-      <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
       <LeadFiles leadId={lead.id} files={files.map((f) => ({ ...f, stand: angebotStand.get(f.id) ?? null }))} unterlagen={unterlagen} defaultKind={won ? "police" : "angebot"} />
 

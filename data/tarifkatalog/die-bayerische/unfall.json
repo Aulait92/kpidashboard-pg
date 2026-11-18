@@ -20,8 +20,7 @@
         "bergung": "bis 100.000 €"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:c5fda116-1f3a-4bca-bbc3-8d52065071f1/B%20333440%20Highlightblatt%20Unfall%20allgemein_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfall Komfort",
@@ -34,8 +33,7 @@
         "bergung": "bis 500.000 €"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:c5fda116-1f3a-4bca-bbc3-8d52065071f1/B%20333440%20Highlightblatt%20Unfall%20allgemein_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfall Prestige",
@@ -49,8 +47,7 @@
         "bergung": "unbegrenzt"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:c5fda116-1f3a-4bca-bbc3-8d52065071f1/B%20333440%20Highlightblatt%20Unfall%20allgemein_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -61,6 +58,7 @@
     "Invaliditätssumme, Progression, Leistung ab Invaliditätsgrad, Unfallrente und Krankenhaustagegeld werden individuell vereinbart und stehen weder auf der Produktseite noch im Highlightblatt. Progression nur als „ProgressionPlus optional“ bei Prestige genannt.",
     "Weitere Unterschiede: Umbaukosten Pkw und Wohnung 5.000/10.000/30.000 €, Rooming-in 30/30/60 € pro Tag, Pflegegeld nur Komfort (10 €/Tag) und Prestige (30 €/Tag), Infektionskrankheiten ab Komfort, Gipsgeld nur Prestige.",
     "Keine Gesundheitsfragen in Smart und Komfort, Prestige mit 2 Gesundheitsfragen. Bausteine ÄrzteKompass, NotfallAssistent, MehrWert zu allen Stufen (nicht im Schema).",
-    "Keine Markierung; Komfort als mittlere Stufe gesetzt."
+    "Keine Markierung; Komfort als mittlere Stufe gesetzt.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

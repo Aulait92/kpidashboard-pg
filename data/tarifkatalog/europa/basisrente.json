@@ -21,8 +21,7 @@
         "flexibel": "Sonderzahlung 4x/Jahr"
       },
       "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/klassische-basisrente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Fondsgebundene Basis-Rentenversicherung (E-BRI)",
@@ -35,8 +34,7 @@
         "flexibel": "Sonderzahlung 6x/Jahr"
       },
       "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/fondsgebundene-basisrente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -50,6 +48,7 @@
     "Klassisch: zum Garantietermin mindestens 100 % der Beiträge; Günstigerprüfung bei Rentenbeginn. Fondsgebunden: Beitragsgarantie auf der Seite nicht genannt.",
     "Garantierter Rentenfaktor in beiden Varianten, Höhe nicht genannt.",
     "Sonderzahlungen klassisch ab 500 €, fondsgebunden ab 250 €; Fondswechsel bis 6x im Jahr, Ablaufmanagement.",
-    "Hinterbliebenenschutz, Beitragspause und Effektivkosten auf den Produktseiten nicht genannt."
+    "Hinterbliebenenschutz, Beitragspause und Effektivkosten auf den Produktseiten nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

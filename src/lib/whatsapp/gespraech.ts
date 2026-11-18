@@ -12,35 +12,14 @@
 //      danach. Die Einladung geht spätestens 15 Min. nach der Buchung raus (termin-strecke.ts runEinladungNachholen).
 // Ablauf und Versand: lib/whatsapp/termin-strecke.ts. Keine Gedankenstriche, kurze Sätze, keine Versprechen.
 
-import { a, type Ansprache, type Salutation } from "@/lib/ansprache";
-import { vornameAus } from "@/lib/advisor-name";
+import { a, type Ansprache } from "@/lib/ansprache";
 import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import { angabenFuerSparte, spartenDesLeads, type AngabenQuelle, type Folgefrage, type RechnerSparte } from "@/lib/preise/rechner-angaben";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 
-/** Der Vermittler gegenüber Leads: nom „Herr Kannapinn“, dat „Herrn Kannapinn“ (mit, von), Du „Ole“. */
-export type VermittlerName = { nom: string; dat: string };
-
-/**
- * Vermittler als Person (Ole, 17.11.2026): Sie „Herr/Frau Nachname“ mit Anrede aus den Anbieterangaben, ohne Anrede
- * Vor- und Nachname; Du der Vorname. Der Agenturname (fallback) nur, wenn kein Personenname bekannt ist.
- */
-export function vermittlerName(an: Ansprache, opts: { name?: string | null; anrede?: Salutation | null; fallback: string }): VermittlerName {
-  const name = (opts.name ?? "").replace(/\s+/g, " ").trim();
-  const words = name.split(" ").filter(Boolean);
-  const person = words.length >= 2 && !!vornameAus(name);
-  if (an === "du") {
-    const v = vornameAus(name);
-    const n = v ?? opts.fallback;
-    return { nom: n, dat: n };
-  }
-  if (!person) return { nom: opts.fallback, dat: opts.fallback };
-  if (opts.anrede) {
-    const last = words.at(-1)!;
-    return { nom: `${opts.anrede} ${last}`, dat: `${opts.anrede === "Herr" ? "Herrn" : "Frau"} ${last}` };
-  }
-  return { nom: name, dat: name };
-}
+// Vermittler-Nennung zentral (Ole, 17.11.2026, lib/vermittler-nennung.ts): Sie „Herr/Frau Nachname“, gebeugt; Du Vorname
+import type { VermittlerName } from "@/lib/vermittler-nennung";
+export { vermittlerName, type VermittlerName } from "@/lib/vermittler-nennung";
 
 type Form = { label: string; value: string }[];
 const wert = (formular: Form, re: RegExp) => formular.find((x) => re.test(x.label))?.value?.trim() || null;

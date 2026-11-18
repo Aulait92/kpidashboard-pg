@@ -1,8 +1,10 @@
 # WhatsApp-Vorlage Glückwunsch zum Abschluss (P4)
 
-Stand 17.11.2026. **Nur vorbereitet, nicht eingereicht** (Zweck `glueckwunsch` steht in `VORBEREITETE_PURPOSES`,
-`src/lib/whatsapp/template-plan.ts`). Freigeben: Zweck in `CORE_PURPOSES` aufnehmen, dann reicht der Cron die Fassungen je
-Kunde bei Meta ein. Kategorie voraussichtlich MARKETING (Meta prüft und stuft selbst ein).
+Stand 17.11.2026. **Von Ole zur Einreichung freigegeben** (17.11.2026): Zweck `glueckwunsch` steht in `CORE_PURPOSES`
+(`src/lib/whatsapp/template-plan.ts`), der Cron reicht die Fassungen je Kunde bei Meta ein (mit Erstanschreiben v8 und
+den Angebots-Vorlagen). Kategorie voraussichtlich MARKETING (Meta prüft und stuft selbst ein). Offen: Der Versand
+außerhalb des 24-h-Fensters ist noch gesperrt (`sendeGlueckwunsch`); nach der Freigabe durch Meta die Sperre lösen und
+die Parameter (Name, Vermittler im Akkusativ) übergeben.
 
 Regeln (Ole, Ergänzung D im Plan): nicht automatisch, nicht per Mail. Beim Eintragen des Abschlusses der Haken
 „Glückwunsch per WhatsApp senden“, vorausgewählt nur, wenn der Termin höchstens 3 Tage zurückliegt. Bis zur Freigabe geht

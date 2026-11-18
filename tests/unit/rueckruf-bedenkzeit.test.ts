@@ -27,7 +27,7 @@ import { SEQUENCES } from "@/lib/lead-sequences";
 import { planeNachrichten, type PlanEingabe } from "@/lib/nachrichtenplan";
 import { knopfAktion } from "@/lib/whatsapp/knopf";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
-import { CORE_PURPOSES, VORBEREITET_BEDENKZEIT, buildTemplateRequest, categoryFor, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateNameFor } from "@/lib/whatsapp/template-plan";
+import { BEDENKZEIT_PURPOSES, CORE_PURPOSES, buildTemplateRequest, categoryFor, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateNameFor } from "@/lib/whatsapp/template-plan";
 import { TEMPLATE_BUTTONS } from "@/lib/whatsapp/templates";
 
 const herr = { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" };
@@ -231,10 +231,10 @@ describe("Bedenkzeit: Abfolge und Nachrichtenplan", () => {
 });
 
 describe("Vorlage offer_bedenkzeit", () => {
-  it("nur vorbereitet, Meta-tauglich, ohne Terminvorschläge, mit den Angebots-Knöpfen", () => {
-    for (const p of VORBEREITET_BEDENKZEIT) {
-      expect(CORE_PURPOSES).not.toContain(p);
-      expect(plannedTemplates(purposesFor({ bestand: true, empfehlung: true })).some((t) => t.purpose === p)).toBe(false);
+  it("zur Einreichung freigegeben (Ole, 17.11.2026), Meta-tauglich, ohne Terminvorschläge, mit den Angebots-Knöpfen", () => {
+    for (const p of BEDENKZEIT_PURPOSES) {
+      expect(CORE_PURPOSES).toContain(p);
+      expect(plannedTemplates(purposesFor({ bestand: false })).filter((t) => t.purpose === p)).toHaveLength(3);
       for (const form of ["du", "sie", "sie_ohne_name"] as const) {
         const req = buildTemplateRequest(p, { firm: "Agentur Meier", advisor: "Susanne Meier" }, undefined, form);
         const body = (req.components as { type: string; text?: string }[]).find((c) => c.type === "BODY")!.text!;

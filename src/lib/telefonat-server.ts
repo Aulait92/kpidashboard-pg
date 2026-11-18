@@ -227,8 +227,14 @@ export async function runOffeneFragen(now = new Date(), deps: { botTurn?: (conve
       skip();
       continue;
     }
-    const customer = await prisma.customer.findUnique({ where: { id: l.customerId }, select: { name: true } });
-    const berater = l.assignedUser?.displayName?.trim() || advisorDisplayName(customer?.name) || "Ihr Berater";
+    const customer = await prisma.customer.findUnique({ where: { id: l.customerId }, select: { name: true, leadAddress: true } });
+    const fallback = l.assignedUser?.displayName?.trim() || advisorDisplayName(customer?.name) || "Ihr Berater";
+    // Vermittler-Nennung (Ole, 17.11.2026, lib/vermittler-nennung.ts): gesiezt „Herr Kannapinn“, nie Vor- und Nachname
+    const berater = await (async () => {
+      const [{ ansprechpartner }, { vermittlerName }, { asAnsprache }] = await Promise.all([import("@/lib/lead-anrede"), import("@/lib/vermittler-nennung"), import("@/lib/ansprache")]);
+      const who = await ansprechpartner({ customerId: l.customerId, leadId: l.id });
+      return vermittlerName(asAnsprache(customer?.leadAddress), { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback }).nom;
+    })().catch(() => fallback);
     const anstoss = anstossNachTelefonat({ berater, termin: termin.startsAt, offen, stand: (l.needState as NeedState | null) ?? null });
     try {
       const turn = deps.botTurn ?? (async (id: string, a: string) => (await import("@/lib/whatsapp/bot")).runBotTurn(id, { anstoss: a }));

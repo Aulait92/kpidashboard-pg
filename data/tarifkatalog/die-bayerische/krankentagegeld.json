@@ -23,8 +23,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.diebayerische.de/krankenzusatzversicherungen/krankentagegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -34,6 +33,7 @@
   "offen": [
     "Angebot der Bayerischen in Kooperation mit der Barmenia Krankenversicherung AG; die Seite nennt als Beispiel den Tarif T42+ (Zusatzversicherung für Arbeitnehmer nach 42 Tagen Lohnfortzahlung). Abruf 17.11.2026.",
     "Leistung nach Ablauf der Karenzzeit bzw. Entgeltfortzahlung zeitlich unbegrenzt, auch bei Schwangerschaft; Anpassung an das Nettoeinkommen ohne Gesundheitsprüfung und Wartezeit.",
-    "Wartezeit, Ende bei Berufsunfähigkeit, Höchstbetrag und Tarife für Selbstständige auf der Seite nicht genannt (siehe Ordner barmenia-gothaer)."
+    "Wartezeit, Ende bei Berufsunfähigkeit, Höchstbetrag und Tarife für Selbstständige auf der Seite nicht genannt (siehe Ordner barmenia-gothaer).",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

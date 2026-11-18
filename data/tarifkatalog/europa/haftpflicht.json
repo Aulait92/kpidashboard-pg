@@ -16,7 +16,7 @@
       "empfohlen": false,
       "werte": {
         "vs": "10 Mio. €",
-        "forderungsausfall": "10 Mio. €",
+        "forderungsausfall": "ab 2.500 € Schaden",
         "schluessel": "25.000 €",
         "delikt": "10.000 €",
         "geliehen": "1.000 €",
@@ -24,15 +24,14 @@
         "gefaelligkeit": "5.000 €",
         "mallorca": "nein",
         "drohne": "bis 250 g",
-        "ehrenamt": "nein",
-        "sb": "ohne oder 250 €"
+        "sb": "ohne oder 250 €",
+        "neuwert": "nein"
       },
       "bausteine": {
         "oeltank": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/haftpflichtversicherung/privathaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht Komfort-Schutz",
@@ -41,7 +40,7 @@
       "empfohlen": true,
       "werte": {
         "vs": "30 Mio. €",
-        "forderungsausfall": "30 Mio. €",
+        "forderungsausfall": "ab 1.500 € Schaden",
         "schluessel": "200.000 €",
         "delikt": "30.000 €",
         "geliehen": "30.000 €",
@@ -50,14 +49,14 @@
         "mallorca": "nein",
         "drohne": "bis 1 kg",
         "ehrenamt": "ja",
-        "sb": "ohne oder 250 €"
+        "sb": "ohne oder 250 €",
+        "neuwert": "bis 3.000 €"
       },
       "bausteine": {
         "oeltank": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/haftpflichtversicherung/privathaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht Premium-Schutz",
@@ -66,7 +65,7 @@
       "empfohlen": false,
       "werte": {
         "vs": "50 Mio. €",
-        "forderungsausfall": "50 Mio. €",
+        "forderungsausfall": "ja, ohne Mindestschaden",
         "schluessel": "300.000 €",
         "delikt": "50.000 €",
         "geliehen": "50.000 €",
@@ -75,14 +74,14 @@
         "mallorca": "ja",
         "drohne": "bis 1 kg",
         "ehrenamt": "ja",
-        "sb": "ohne oder 250 €"
+        "sb": "ohne oder 250 €",
+        "neuwert": "bis 10.000 €"
       },
       "bausteine": {
         "oeltank": "inklusive"
       },
       "quelle": "https://www.europa.de/versicherungen/haftpflichtversicherung/privathaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -95,6 +94,8 @@
     "Schlüsselverlust: Wert für fremde private Schlüssel; Dienst- und Vereinsschlüssel 10.000, 50.000 bzw. 100.000 €.",
     "Mietsach- und Allmählichkeitsschäden in allen Tarifen; Höhe nicht gesondert beziffert.",
     "Mallorca-Deckung über den Kfz-Baustein, laut Tabelle nur im Premium enthalten; Öko-Baustein (Photovoltaik) in Komfort und Premium.",
-    "Heizöltank in Basis und Komfort gegen Zuschlag; Selbstbeteiligung 250 € wählbar."
+    "Heizöltank in Basis und Komfort gegen Zuschlag; Selbstbeteiligung 250 € wählbar.",
+    "Korrigiert am 18.11.2026 nach der Leistungsübersicht (Vertragsinformationen, Seiten 4 bis 7, am Bild geprüft): Forderungsausfall versichert mit Mindestschaden 2.500 € (Basis), 1.500 € (Komfort), ohne (Premium); Neuwertentschädigung Komfort 3.000 €, Premium 10.000 €. Basis: nur „Ehrenamtlicher Betreuer“ nicht versichert, Schlüsselverlust im Ehrenamt bis 10.000 €; daher kein Wert für Ehrenamt. Mallorca über den Kfz-Baustein nur im Premium.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

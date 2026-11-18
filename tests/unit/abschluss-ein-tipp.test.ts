@@ -82,9 +82,9 @@ describe("Glückwunsch (Ergänzung D)", () => {
     for (const t of [sie, du]) expect(t).not.toMatch(/[–—]/);
   });
 
-  it("Vorlage nur vorbereitet: nicht eingereicht, Text Meta-tauglich", () => {
-    expect(VORBEREITETE_PURPOSES).toContain("glueckwunsch");
-    expect(purposesFor({ bestand: true, empfehlung: true })).not.toContain("glueckwunsch");
+  it("Vorlage zur Einreichung freigegeben (Ole, 17.11.2026), Text Meta-tauglich", () => {
+    expect(VORBEREITETE_PURPOSES).not.toContain("glueckwunsch");
+    expect(purposesFor({ bestand: false })).toContain("glueckwunsch");
     expect(templateVersionFor("glueckwunsch")).toBe("v5");
     expect(REST_PARAMS.glueckwunsch).toEqual(["Vermittler (Akkusativ)"]);
     expect(templateTextFor("glueckwunsch", "sie")).toBe("Guten Tag {{1}}, schön, dass Sie sich für Ihren neuen Schutz entschieden haben! Bei Fragen erreichen Sie {{2}} jederzeit hier.");
