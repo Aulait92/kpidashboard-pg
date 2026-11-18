@@ -513,6 +513,7 @@ export async function auslesenStatus(now = new Date()) {
     ...auslesenKonfigStatus({ zdr: !!e?.zdrNachweisAm, now }),
     zdrNachweisAm: e?.zdrNachweisAm?.toISOString().slice(0, 10) ?? null,
     ablage: (await import("@/lib/policen/ablage")).ablageBereit(),
+    ablageGrund: (await import("@/lib/policen/ablage")).ablageGrund(),
     pausiert: await pausiert(),
     pausiertSeit: e?.schluesselUngueltigAt?.toISOString() ?? null,
     heute: { tag: berlinTag(now), anzahl: heute?.anzahl ?? 0, limitGemeldet: !!heute?.gemeldetAt },

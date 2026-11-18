@@ -129,9 +129,11 @@ describe("Diagnose nutzung-woche", () => {
     const res = await GET(new Request("https://app.test/api/ops/diagnose?q=nutzung-woche&tage=7", { headers: { authorization: `Bearer ${TOKEN}` } }));
     expect(res.status).toBe(200);
     const text = await res.text();
-    const j = JSON.parse(text) as { q: string; data: { tage: number } };
+    const j = JSON.parse(text) as { q: string; data: { software: { tage: number }; ppl: { tage: number }; gesamt: { tage: number } } };
     expect(j.q).toBe("nutzung-woche");
-    expect(j.data.tage).toBe(7);
+    expect(j.data.software.tage).toBe(7);
+    expect(j.data.ppl.tage).toBe(7);
+    expect(j.data.gesamt.tage).toBe(7);
     const direkt = JSON.stringify(await nutzungWoche(new URLSearchParams(), { kunden: kundenIds }));
     for (const s of [text, direkt]) {
       for (const g of geheim) expect(s).not.toContain(g);

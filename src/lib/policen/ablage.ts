@@ -40,6 +40,18 @@ export function euEndpunkt(endpoint: string): { ok: boolean; region: string } {
   return { ok: false, region: "" };
 }
 
+/** Warum die Ablage aus ist (für die Diagnose, ohne Werte): null = bereit. */
+export function ablageGrund(env: Record<string, string | undefined> = process.env): string | null {
+  const namen = ["POLICEN_S3_ENDPOINT", "POLICEN_S3_BUCKET", "POLICEN_S3_ACCESS_KEY_ID", "POLICEN_S3_SECRET_ACCESS_KEY", "POLICEN_SCHLUESSEL"];
+  const fehlt = namen.filter((n) => !(env[n] ?? "").trim());
+  if (fehlt.length) return `fehlt: ${fehlt.join(", ")}`;
+  if (!euEndpunkt((env.POLICEN_S3_ENDPOINT ?? "").trim().replace(/\/$/, "")).ok)
+    return "POLICEN_S3_ENDPOINT ist kein erlaubter EU-Endpunkt (https://s3.eu-…-N.amazonaws.com bzw. https://<id>.eu.r2.cloudflarestorage.com, ohne Bucket-Namen im Host)";
+  const n = Buffer.from((env.POLICEN_SCHLUESSEL ?? "").trim(), "base64").length;
+  if (n !== 32) return `POLICEN_SCHLUESSEL ergibt ${n} statt 32 Byte (Base64 aus „openssl rand -base64 32“)`;
+  return null;
+}
+
 /** Konfiguration, wenn vollständig und in der EU; sonst null (dann ist die Policen-Funktion aus). */
 export function ablageKonfig(env: Record<string, string | undefined> = process.env): AblageKonfig | null {
   const endpoint = (env.POLICEN_S3_ENDPOINT ?? "").trim().replace(/\/$/, "");

@@ -14,7 +14,9 @@
 
 import { adminNutzung } from "@/lib/ops/admin-nutzung";
 import { openForNextStepWhere, resultMissingWhere, withoutNextStepWhere } from "@/lib/lead-next-step";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { NUR_PPL_WHERE } from "@/lib/customer-package";
 import { REASON_LABEL, type EscalationReason } from "@/lib/support";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 
@@ -557,4 +559,26 @@ export async function ladeRohdaten(tage: number, opts: { now?: Date; kunden?: st
 
 export async function nutzungWoche(params: URLSearchParams, opts: { now?: Date; kunden?: string[] } = {}): Promise<NutzungWoche> {
   return auswerten(await ladeRohdaten(tageAus(params), opts));
+}
+
+/**
+ * Getrennt nach Kundenart (Ole, 18.11.2026: „ja trennen!“): Software-Kunden (Betreuung + Software bzw. Onboarding/Retainer)
+ * und reine Pay-per-Lead-Kunden (NUR_PPL_WHERE). &gruppe=software|ppl liefert nur eine Gruppe, sonst beide plus gesamt.
+ */
+export async function nutzungWocheGetrennt(params: URLSearchParams, opts: { now?: Date } = {}) {
+  const basis: Prisma.CustomerWhereInput = { isTest: false, archived: false, plan: { not: "internal" }, id: { notIn: AUSGESCHLOSSEN } };
+  const ppl = (await prisma.customer.findMany({ where: { AND: [basis, NUR_PPL_WHERE] }, select: { id: true } })).map((k) => k.id);
+  const pplSet = new Set(ppl);
+  const software = (await prisma.customer.findMany({ where: basis, select: { id: true } })).map((k) => k.id).filter((id) => !pplSet.has(id));
+  const gruppe = params.get("gruppe");
+  const tage = tageAus(params);
+  const lauf = async (kunden: string[]) => auswerten(await ladeRohdaten(tage, { ...opts, kunden }));
+  if (gruppe === "software") return { gruppe: "software", ...(await lauf(software)) };
+  if (gruppe === "ppl") return { gruppe: "ppl", ...(await lauf(ppl)) };
+  return {
+    hinweis: "software = Kunden mit Software/Betreuung (Onboarding oder Monatsbetrag), ppl = reine Pay-per-Lead-Kunden",
+    software: await lauf(software),
+    ppl: await lauf(ppl),
+    gesamt: await lauf([...software, ...ppl]),
+  };
 }
