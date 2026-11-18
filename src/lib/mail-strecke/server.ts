@@ -331,7 +331,8 @@ export async function sendeStreckenSms(streckeId: string, art: "erst" | "erinner
     // Je Strecke höchstens MAX_SMS: Zähler vorher belegen (parallele Läufe)
     const claim = await prisma.leadMailStrecke.updateMany({ where: { id: s.id, smsZahl: s.smsZahl }, data: { smsZahl: { increment: 1 }, smsAt: now } });
     if (!claim.count) return "max";
-    const text = smsText({ an, anredeName: an === "sie" && !who.kontakt.salutation ? null : anredeName(an, who.kontakt), person, source: lead.source, link: streckenUrl(s.id), abmelden: `${streckenUrl(s.id)}?ab=1`, art });
+    const telefon = (await prisma.erstinformation.findUnique({ where: { customerId: lead.customerId }, select: { telefon: true } }).catch(() => null))?.telefon ?? null;
+    const text = smsText({ an, anredeName: an === "sie" && !who.kontakt.salutation ? null : anredeName(an, who.kontakt), person, source: lead.source, link: streckenUrl(s.id), abmelden: `${streckenUrl(s.id)}?ab=1`, art, telefon });
     const r = await sendSms(lead.phone, text, { from: smsAbsenderFuer(who.vermittler.name ?? who.advisor) });
     if (r.status !== "sent" && r.status !== "blocked") {
       await prisma.leadMailStrecke.update({ where: { id: s.id }, data: { smsZahl: { decrement: 1 } } }).catch(() => null);

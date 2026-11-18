@@ -257,7 +257,7 @@ export function smsAbsenderFuer(name: string | null | undefined): string | null 
  * SMS der Strecke (rein), kurz mit Link auf die Antwortseite und Abmeldelink. art „erst“ = Tag 1, „erinnerung“ = Tag 4.
  * Ohne Gedankenstriche; „KI-Assistent“ als Kennzeichnung.
  */
-export function smsText(o: { an: Ansprache; anredeName: string | null; person: VermittlerName; source: string | null; link: string; abmelden: string; art: "erst" | "erinnerung" }): string {
+export function smsText(o: { an: Ansprache; anredeName: string | null; person: VermittlerName; source: string | null; link: string; abmelden: string; art: "erst" | "erinnerung"; telefon?: string | null }): string {
   const an = o.an;
   const hallo = o.anredeName ? `${a(an, "Hallo", "Hallo")} ${o.anredeName}, ` : `${a(an, "Hallo", "Guten Tag")}, `;
   const thema = anfrageThema(o.source, an);
@@ -265,7 +265,10 @@ export function smsText(o: { an: Ansprache; anredeName: string | null; person: V
     o.art === "erst"
       ? `${hallo}${a(an, "danke für deine Anfrage", "danke für Ihre Anfrage")}${thema}. Hier ist der KI-Assistent von ${o.person.dat}. ${a(an, "Termin wählen", "Termin wählen")}: ${o.link}`
       : `${hallo}${a(an, `${o.person.nom} hat noch Zeit für dich. Termin wählen`, `${o.person.nom} hat noch Zeit für Sie. Termin wählen`)}: ${o.link}`;
-  return ohneGedankenstriche(`${kern} Keine SMS mehr: ${o.abmelden}`);
+  // Antworten auf SMS mit Namen als Absender geht nicht (Ole, 18.11.2026): zweiter Weg ist die Nummer des Vermittlers
+  const tel = (o.telefon ?? "").replace(/[^\d+ ]/g, "").replace(/\s+/g, " ").trim();
+  const anrufen = tel ? ` ${a(an, "Lieber telefonieren?", "Lieber telefonieren?")} ${tel}.` : "";
+  return ohneGedankenstriche(`${kern}${anrufen} Keine SMS mehr: ${o.abmelden}`);
 }
 
 // ─── Takt (Nachtrag Ole, 18.11.2026): 10 Tage, Stopp bei jeder Reaktion ─────────────────────
