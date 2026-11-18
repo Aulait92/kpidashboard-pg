@@ -74,6 +74,8 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor, 
     prisma.referralLink.deleteMany({ where: { customerId } }),
     prisma.googleReview.deleteMany({ where: { customerId } }),
     prisma.googleBusinessConnection.deleteMany({ where: { customerId } }),
+    // Eingänge an die Antwortadresse ohne Kontakt (Paket M2)
+    prisma.mailEingang.deleteMany({ where: { customerId } }),
   ]);
   // Bestand: Kampagnen (mit Empfängern), Bestandskunden (mit Verträgen), Importe, Einwilligungsprotokoll, Postfach
   const [, existing, , consentLogs] = await prisma.$transaction([
@@ -123,7 +125,9 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     prisma.unassignedLead.deleteMany({ where: { externalId: { in: externalIds } } }),
     prisma.leadSequence.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.leadHistory.deleteMany({ where: { leadId: { in: ids } } }),
-    // Ausgehende E-Mails (Betreff, Text, Empfänger) im Kontaktverlauf
+    // Eingänge an die Antwortadresse (Paket M2, lib/mail/eingang.ts): Ablauf und Anhangliste
+    prisma.mailEingang.deleteMany({ where: { leadId: { in: ids } } }),
+    // E-Mails (Betreff, Text, Empfänger bzw. Absender) im Kontaktverlauf, ausgehend und eingegangen
     prisma.contactMail.deleteMany({ where: { leadId: { in: ids } } }),
     // Reservierungen der Vorlagen-Mails (lib/mail/vorlagen-mail.ts)
     prisma.leadMailVersand.deleteMany({ where: { leadId: { in: ids } } }),
@@ -159,6 +163,8 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
         followUpNote: null,
         callbackSnoozedUntil: null,
         referralLinkId: null,
+        // Antwortadresse: spätere Mails an den Code werden keinem Kontakt mehr zugeordnet
+        antwortCode: null,
         erasedAt: new Date(),
       },
     }),
@@ -195,6 +201,8 @@ export async function pruneTransient(now = new Date()) {
     prisma.reviewRequest.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 730 * DAY_MS) } } }),
     // Besucher der Empfehlungsseiten (nur Hash): 12 Monate
     prisma.referralVisit.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 365 * DAY_MS) } } }),
+    // Eingänge an die Antwortadresse ohne Kontakt (nur Ablauf, kein Inhalt): 90 Tage (Paket M2)
+    prisma.mailEingang.deleteMany({ where: { leadId: null, createdAt: { lt: new Date(now.getTime() - 90 * DAY_MS) } } }),
   ]);
   return { unassigned: unassigned.count, resetTokens: resetTokens.count, absences: absences.count, reviewRequests: reviewRequests.count };
 }

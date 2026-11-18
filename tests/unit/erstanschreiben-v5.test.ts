@@ -19,19 +19,19 @@ const anzahl = (t: string, s: string) => t.split(s).length - 1;
 describe("Erstanschreiben (seit v6): Text", () => {
   it("Beispiel Katze, Sie, Meta-Lead mit Nachnamen (genau so)", () => {
     expect(erstanschreibenText({ an: "sie", kontakt: MUELLER, name: "Ole", vermittler: "Herrn Schmidt", source: "Katzenversicherung (TKV)", herkunft: "anfrage" })).toBe(
-      "Hallo Herr Müller, danke für Ihre Anfrage zum Thema Katzenversicherung! Ich bin der digitale KI-Assistent von Herrn Schmidt.\n\nWie alt ist Ihre Katze?",
+      "Hallo Herr Müller, danke für Ihre Anfrage zur Katzenversicherung 🐱! Ich bin der digitale KI-Assistent von Herrn Schmidt und kläre kurz ein paar Angaben, damit er Ihnen für Ihre Katze den passenden Schutz zeigen kann.\n\nWie alt ist Ihre Katze?",
     );
   });
 
   it("Du, Lead hat zuerst geschrieben, nur Vorname", () => {
     expect(erstanschreibenText({ an: "du", kontakt: NUR_VORNAME, name: "Ole", source: "Katzenversicherung (TKV)", herkunft: "nachricht" })).toBe(
-      "Hallo Thomas, danke für deine Nachricht zum Thema Katzenversicherung! Ich bin der digitale KI-Assistent von Ole.\n\nWie alt ist deine Katze?",
+      "Hallo Thomas, danke für deine Nachricht zur Katzenversicherung 🐱! Ich bin der digitale KI-Assistent von Ole und kläre kurz ein paar Angaben, damit Ole dir für deine Katze den passenden Schutz zeigen kann.\n\nWie alt ist deine Katze?",
     );
   });
 
   it("Zahnzusatz: neutrale Frage nach dem Tarifbaustein (Art. 9 DSGVO), Sie ohne Nachnamen", () => {
     expect(erstanschreibenText({ an: "sie", kontakt: NUR_VORNAME, name: "Agentur Meier", source: "Zahnzusatz", herkunft: "anfrage" })).toBe(
-      "Hallo, danke für Ihre Anfrage zum Thema Zahnzusatzversicherung! Ich bin der digitale KI-Assistent von Agentur Meier.\n\nWelcher Tarifbaustein ist Ihnen am wichtigsten?",
+      "Hallo, danke für Ihre Anfrage zur Zahnzusatzversicherung! Ich bin der digitale KI-Assistent von Agentur Meier und kläre kurz ein paar Angaben, damit Agentur Meier Ihnen persönlich den passenden Schutz zeigen kann.\n\nWelcher Tarifbaustein ist Ihnen am wichtigsten?",
     );
   });
 
@@ -47,7 +47,10 @@ describe("Erstanschreiben (seit v6): Text", () => {
         const was = `${source} ${f.an} ${f.herkunft} ${f.kontakt?.fullName ?? "-"}`;
         expect(t.match(GRUSS) ?? [], was).toHaveLength(1);
         expect(t.startsWith("Hallo"), was).toBe(true);
-        expect(anzahl(t, name), was).toBeLessThanOrEqual(2);
+        // v8: ohne bekannte Anrede steht der Name auch im Nutzen-Halbsatz (dann höchstens dreimal, wenn die Frage ihn
+        // nennt); mit Anrede „er“/„sie“ höchstens zweimal
+        expect(anzahl(t, name), was).toBeLessThanOrEqual(ersteFrage(source, f.an, name).includes(name) ? 3 : 2);
+        expect(anzahl(erstanschreibenText({ ...f, name, source, vermittlerAnrede: "Frau" }), name), was).toBeLessThanOrEqual(2);
         expect(t, was).not.toMatch(/Mensch|berate nicht|kein Mensch/i);
         expect(t, was).not.toMatch(/[–—]/);
         expect(t, was).toContain("digitale KI-Assistent");
@@ -78,7 +81,7 @@ describe("Erstanschreiben (seit v6): Text", () => {
   it("ohne Produkt: Telefonatsfrage mit dem Vermittler; ohne Lead allgemein", () => {
     const t = erstanschreibenText({ an: "sie", kontakt: MUELLER, name: "Ole", vermittler: "Herrn Schmidt", vermittlerNom: "Herr Schmidt", source: null });
     expect(t).toBe(
-      "Hallo Herr Müller, danke für Ihre Anfrage zum Thema Versicherung! Ich bin der digitale KI-Assistent von Herrn Schmidt.\n\nWann erreicht Herr Schmidt Sie am besten für ein kurzes Telefonat?",
+      "Hallo Herr Müller, danke für Ihre Anfrage zum Thema Versicherung! Ich bin der digitale KI-Assistent von Herrn Schmidt und kläre kurz ein paar Angaben, damit er Ihnen persönlich den passenden Schutz zeigen kann.\n\nWann erreicht Herr Schmidt Sie am besten für ein kurzes Telefonat?",
     );
     expect(erstanschreibenKopf({ an: "du", kontakt: null, name: "Ole", herkunft: "nachricht", ohneLead: true })).toBe("Hallo, danke für deine Nachricht! Ich bin der digitale KI-Assistent von Ole und helfe dir gern weiter.");
   });
@@ -92,7 +95,7 @@ describe("Erstanschreiben (seit v6): Text", () => {
 describe("Erstanschreiben (seit v6): Vorlage (Meta)", () => {
   const names = { firm: "Agentur Ole Schmidt", advisor: "Ole Schmidt", kurz: "Ole" };
 
-  it("Vorlage mit Parametern ergibt denselben Text wie der Freitext", () => {
+  it("Vorlage v7 mit Parametern ergibt den bisherigen Aufbau (Freitext ist seit P2 v8, siehe erstanschreiben-v8.test.ts)", () => {
     const fall = [
       { purpose: "outreach_tkv" as const, source: "TKV Katze", sie: ["Herr Müller", "Katzenversicherung", "Herrn Schmidt", "Wie alt ist Ihre Katze"], du: ["Thomas", "Katzenversicherung", "Ole", "Wie alt ist deine Katze"] },
       { purpose: "outreach_zahn" as const, source: "Zahnzusatz", sie: ["Herr Müller", "Zahnzusatzversicherung", "Herrn Schmidt", "Welcher Tarifbaustein ist Ihnen am wichtigsten"], du: ["Thomas", "Zahnzusatzversicherung", "Ole", "Welcher Tarifbaustein ist dir am wichtigsten"] },
@@ -102,7 +105,10 @@ describe("Erstanschreiben (seit v6): Vorlage (Meta)", () => {
       for (const an of ["sie", "du"] as const) {
         const tpl = renderTemplate(fillNames(templateTextFor(f.purpose, an), names), f[an]);
         const frei = erstanschreibenText({ an, kontakt: MUELLER, name: "Ole", vermittler: an === "du" ? "Ole" : "Herrn Schmidt", vermittlerNom: an === "du" ? "Ole" : "Herr Schmidt", source: f.source });
-        expect(tpl, `${f.purpose} ${an}`).toBe(frei);
+        // gleicher Gruß, gleicher Vermittler, gleiche erste Frage am Ende
+        expect(tpl.split(" danke")[0], `${f.purpose} ${an}`).toBe(frei.split(" danke")[0]);
+        expect(frei.endsWith(`\n\n${f[an].at(-1)}?`)).toBe(true);
+        expect(tpl.endsWith(`\n\n${f[an].at(-1)}?`)).toBe(true);
       }
       // Sie ohne Namen: „Hallo,“ und Platzhalter rücken auf
       const ohne = renderTemplate(fillNames(templateTextFor(f.purpose, "sie_ohne_name"), names), f.sie.slice(1));

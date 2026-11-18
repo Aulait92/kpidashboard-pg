@@ -22,6 +22,7 @@ import {
   ersteFrageKnoepfe,
   erstanschreibenText,
   erstanschreibenV6Params,
+  erstanschreibenV8Params,
   outreachProdukt,
   tierWort,
   type Herkunft,
@@ -93,6 +94,10 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   // Parameter je gewählter Vorlage: v6 Thema, Vermittler, erste offene Frage (ohne „?“); Produkt (v5 mit Tier, v4) bzw.
   // allgemeine Fassung (nur Name), v3 mit Link
   const paramsFor = (p: { version: number; ansprache: Ansprache; purpose?: NoticePurpose }): string[] => {
+    // v8 (nur vorbereitet, noch nicht eingereicht): Interesse mit Emoji, Vermittler, Subjekt, für wen, erste Frage
+    if (p.version >= 8) {
+      return [first, ...erstanschreibenV8Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz, anrede: who.vermittler.anrede })];
+    }
     if (p.version >= 6) {
       return [first, ...erstanschreibenV6Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
     }
@@ -114,7 +119,7 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     documentEntwurf,
     pdfGrund,
     herkunft,
-    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, vermittler: person(opts.an).dat, vermittlerNom: person(opts.an).nom, source: opts.source, herkunft, formular }),
+    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, vermittler: person(opts.an).dat, vermittlerNom: person(opts.an).nom, vermittlerAnrede: who.vermittler.anrede, source: opts.source, herkunft, formular }),
   };
 }
 

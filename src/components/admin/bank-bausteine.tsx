@@ -64,7 +64,8 @@ export function BankKarte({
   aspsp: string;
   c: BankVerbindung | undefined;
   csv: { _count: number; _max: { bookingDate: Date | null } } | undefined;
-  csvHint: string;
+  /** leer = kein Hinweis (neuer Admin: kein CSV-Upload mehr) */
+  csvHint?: string;
   configured: boolean;
   soon: boolean;
 }) {
@@ -111,7 +112,7 @@ export function BankKarte({
               </>
             ) : null}
           </div>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">{csvHint}</p>
+          {csvHint ? <p className="mt-2 text-sm text-[color:var(--muted)]">{csvHint}</p> : null}
         </div>
       </div>
     </section>

@@ -34,8 +34,7 @@
         "oeltank": "nein"
       },
       "quelle": "https://www.adam-riese.de/downloads/240702_Privathaftpflicht_LU.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht XL",
@@ -62,8 +61,7 @@
         "oeltank": "nein"
       },
       "quelle": "https://www.adam-riese.de/downloads/240702_Privathaftpflicht_LU.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht XXL",
@@ -90,8 +88,7 @@
         "oeltank": "inklusive"
       },
       "quelle": "https://www.adam-riese.de/downloads/240702_Privathaftpflicht_LU.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -102,6 +99,7 @@
     "Quelle: Leistungsübersicht mit Tarifvergleich (Dateiname 07/2024, im Dokument „Stand 08.10.2019“) und Tarifkacheln der Produktseite; Haken im PDF sind Bilder, leere Zellen als „ja“, Striche als „nein“ gelesen.",
     "Adam Riese markiert keinen Tarif; XL als mittlere Stufe gesetzt.",
     "Rabattretter (geliehenes Auto) steht nicht in der Leistungsübersicht. Selbstbeteiligung wählbar (Berechnungsbeispiel mit 150 €).",
-    "Mietsachschäden an Wohnräumen in allen Tarifen bis zur Versicherungssumme; Schlüssel beruflich erst ab XL. Öltank (selbst genutztes Ein- oder Zweifamilienhaus) nur XXL."
+    "Mietsachschäden an Wohnräumen in allen Tarifen bis zur Versicherungssumme; Schlüssel beruflich erst ab XL. Öltank (selbst genutztes Ein- oder Zweifamilienhaus) nur XXL.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht (Symbole am Bild geprüft)."
   ]
 }

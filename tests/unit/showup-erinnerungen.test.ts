@@ -140,7 +140,9 @@ describe("Show-up-Vorlagen: freigegeben und eingereicht (17.11.2026)", () => {
   });
 
   it("Vortag und 1 Stunde: v5 mit Oles Text wird eingereicht, nichts mehr nur vorbereitet", () => {
-    expect(VORBEREITETE_FASSUNG).toEqual({});
+    // Vortag und 1 Stunde nicht mehr nur vorbereitet (vorbereitet ist nur noch das Erstanschreiben v8 aus P2)
+    expect(VORBEREITETE_FASSUNG.reminder).toBeUndefined();
+    expect(VORBEREITETE_FASSUNG.reminder_soon).toBeUndefined();
     expect(templateNameFor("reminder", undefined, "sie")).toBe("pg_reminder_v5_sie");
     expect(templateNameFor("reminder_soon", undefined, "sie_ohne_name")).toBe("pg_reminder_soon_v5_sie_ohne_name");
     expect(templateTextFor("reminder", "sie")).toBe("Guten Tag {{1}}, kurze Erinnerung an Ihren Termin {{2}}. {{3}} So geht es los: {{4}} Passt es weiterhin?");

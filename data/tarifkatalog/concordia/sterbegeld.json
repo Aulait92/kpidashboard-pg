@@ -22,8 +22,7 @@
         "vorsorge": "Vorsorgeportal"
       },
       "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/sterbegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -31,6 +30,7 @@
   ],
   "offen": [
     "Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Ein Tarif; Risikoträger auf der Seite nicht ausdrücklich genannt.",
-    "Volle Summe nach 24 Monaten, bei Unfalltod sofort (keine doppelte Leistung genannt). Leistung in der Wartezeit nicht beschrieben. Vermittlung von Palliativpflege und Hospizplatz, 24-Stunden-Telefonservice."
+    "Volle Summe nach 24 Monaten, bei Unfalltod sofort (keine doppelte Leistung genannt). Leistung in der Wartezeit nicht beschrieben. Vermittlung von Palliativpflege und Hospizplatz, 24-Stunden-Telefonservice.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

@@ -30,8 +30,7 @@
         "rente": "optional"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-UnfallSchutz Premium",
@@ -54,8 +53,7 @@
         "rente": "optional"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-UnfallSchutz Exklusiv",
@@ -78,8 +76,7 @@
         "rente": "optional"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -90,6 +87,7 @@
     "Exklusiv: zusätzlich 150.000 € ab 80 % Invalidität vor dem 65. Geburtstag (Vollinvalidität laut Tarifkarte bis 900.000 €).",
     "Todesfallleistung nur bei Unfall vor dem 65. Geburtstag. Krankenhaustagegeld im Ausland doppelt.",
     "Flex-Tarif mit frei wählbarer Grundsumme und Progression nicht als Stufe aufgenommen.",
-    "DFV markiert Premium als „Unsere Empfehlung“."
+    "DFV markiert Premium als „Unsere Empfehlung“.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichproben am Bild der Übersicht)."
   ]
 }

@@ -180,6 +180,17 @@ export async function googleUpdateEventEnd(customerId: string, eventId: string, 
   if (!res.ok) throw new Error(`Google-Termin konnte nicht geändert werden (${res.status}).`);
 }
 
+/** Termin auf eine andere Zeit legen (Komplettcheck mit längerer Dauer, lib/komplettcheck-dauer.ts). */
+export async function googleUpdateEventTime(customerId: string, eventId: string, start: Date, end: Date): Promise<void> {
+  const token = await accessToken(customerId);
+  const res = await fetch(`${CAL_BASE}/calendars/primary/events/${encodeURIComponent(eventId)}?sendUpdates=all`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ start: { dateTime: start.toISOString() }, end: { dateTime: end.toISOString() } }),
+  });
+  if (!res.ok) throw new Error(`Google-Termin konnte nicht geändert werden (${res.status}).`);
+}
+
 /** Termin löschen; Google schickt den Teilnehmern eine Absage. 404/410 = schon weg. */
 export async function googleDeleteEvent(customerId: string, eventId: string): Promise<void> {
   const token = await accessToken(customerId);

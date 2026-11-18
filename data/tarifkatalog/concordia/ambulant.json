@@ -24,8 +24,7 @@
         "sehhilfen": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/ambulante-zusatzversicherungen/az-kompakt/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -35,6 +34,7 @@
   "offen": [
     "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Ein Kompakttarif; daneben einzeln kombinierbare Bausteine (Prävention, Sehen und Hören, TOP-Versorgung ohne Zuzahlungen, Naturheilverfahren), nicht als Stufen geführt.",
     "Gesetzliche Zuzahlungen (Arznei, Heil- und Hilfsmittel außer Sehhilfen, Krankenhaus u. a.) 80 %, bis 300 € im Jahr. Vorsorge und Schutzimpfungen inklusive Reiseimpfungen 80 %, bis 300 € im Jahr. Telemedizin 100 %, bis 500 € im Jahr.",
-    "Wartezeit und Leistungen für Hörgeräte über die Zuzahlung hinaus nicht genannt. In den ersten 10 Jahren Wechsel in andere AZ-Tarife ohne Gesundheitsprüfung."
+    "Wartezeit und Leistungen für Hörgeräte über die Zuzahlung hinaus nicht genannt. In den ersten 10 Jahren Wechsel in andere AZ-Tarife ohne Gesundheitsprüfung.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

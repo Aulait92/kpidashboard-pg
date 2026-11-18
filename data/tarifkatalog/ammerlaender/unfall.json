@@ -27,8 +27,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:bb283acf-d98f-4ce1-9913-6d86245fcfe2/Leistungseinschluesse-im-Classic-und-Excellent-Schutz.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Excellent",
@@ -49,8 +48,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:bb283acf-d98f-4ce1-9913-6d86245fcfe2/Leistungseinschluesse-im-Classic-und-Excellent-Schutz.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -61,6 +59,7 @@
     "Quelle: „Leistungseinschlüsse in der Unfallversicherung Classic- und Excellent-Schutz“ (AUB 2024, Stand 09/2026) und Leistungsvergleich der Produktseite. Nur zwei Tarife, keine Markierung.",
     "Invaliditätsgrundsumme, Höhe der Progression, Leistung ab welchem Invaliditätsgrad und Unfallrente nicht veröffentlicht (nur im Tarifrechner).",
     "Zecken: Infektionen und Blutvergiftungen nur im Excellent-Schutz ausdrücklich versichert; Insektenstiche in beiden. Krankenhaustagegeld bei Einschluss bis 1.095 bzw. 1.825 Tage.",
-    "Excellent zusätzlich: Sofortleistung bei schweren Verletzungen, Herzinfarkt und Schlaganfall, Eigenbewegung (Zerrungen, Verrenkungen), Pflegegeld 30 € je Tag, Rooming-in unbegrenzt, tägliche Kündbarkeit. Sofort- und Alltagshilfe als Zusatz."
+    "Excellent zusätzlich: Sofortleistung bei schweren Verletzungen, Herzinfarkt und Schlaganfall, Eigenbewegung (Zerrungen, Verrenkungen), Pflegegeld 30 € je Tag, Rooming-in unbegrenzt, tägliche Kündbarkeit. Sofort- und Alltagshilfe als Zusatz.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Produktbroschüre (Symbole im PDF am Zeichensatz gegengeprüft)."
   ]
 }

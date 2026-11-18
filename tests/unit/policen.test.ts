@@ -342,12 +342,12 @@ describe("Ablauf im Assistenten", () => {
   });
 
   it("Bereitlegen-Liste ohne bisherige Policen, wenn welche geschickt wurden", () => {
-    const liste = bereitlegenListe("Privatschutz", ["hausrat", "wohngebaeude"], "sie");
-    expect(liste.some((x) => /bisherigen Policen/.test(x))).toBe(true);
+    const liste = bereitlegenListe("Privatschutz", ["hausrat", "wohngebaeude"], "sie", { komplettcheck: true });
+    expect(liste.some((x) => /bestehenden Verträge und Policen/.test(x))).toBe(true);
     const ohne = ohneBisherigePolicen(liste, true);
     expect(ohne.some((x) => /Polic/.test(x))).toBe(false);
     expect(ohneBisherigePolicen(liste, false)).toEqual(liste);
-    const du = ohneBisherigePolicen(bereitlegenListe("Privatschutz", ["haftpflicht"], "du"), true);
+    const du = ohneBisherigePolicen(bereitlegenListe("Privatschutz", ["haftpflicht"], "du", { komplettcheck: true }), true);
     expect(du.some((x) => /Polic/.test(x))).toBe(false);
   });
 });
@@ -365,3 +365,4 @@ describe("Gesundheitsangaben nicht in Felder und Notizen", () => {
     });
   });
 });
+

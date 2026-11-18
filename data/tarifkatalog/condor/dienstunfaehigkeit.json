@@ -68,6 +68,7 @@
   "offen": [
     "Kein eigenes DU-Produkt: Die DU-Klausel (inklusive spezieller DU) ist laut Kundenbroschüre automatisch in allen drei Varianten der SBU pro enthalten. Versetzt oder entlässt der Dienstherr aus gesundheitlichen Gründen, erkennt Condor das an.",
     "Beamte auf Probe und Widerruf, Teildienstunfähigkeit und Verweisung im Beamtenbereich nicht in der Broschüre; AVB 9TN07 bis 9TN09 nicht ausgewertet.",
-    "Gleiche Grundlage wie condor/bu.json."
+    "Gleiche Grundlage wie condor/bu.json.",
+    "Prüfung am 18.11.2026 nicht möglich: Produktseite und Broschüren-Links von Condor bzw. R+V liefern ohne Browser nur ein Skript, kein Dokument. Bleibt ungeprüft."
   ]
 }

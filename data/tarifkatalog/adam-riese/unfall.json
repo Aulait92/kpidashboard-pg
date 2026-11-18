@@ -29,8 +29,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.adam-riese.de/downloads/240104_Unfall_LU_Direkt.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfall XXL",
@@ -52,8 +51,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.adam-riese.de/downloads/240104_Unfall_LU_Direkt.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -64,6 +62,7 @@
     "Quelle: Leistungsübersicht Unfallversicherung (Stand 01.08.2022) und Produktseite; nur zwei Tarife XL und XXL, keine Markierung.",
     "Leistung ab welchem Invaliditätsgrad steht nicht in der Leistungsübersicht. Progression optional (225, 350 oder 500 %).",
     "Unterschiede: XXL mit Eigenbewegung, besonderen Leistungen für Kinder (Sofortleistung bei Verbrennung, privatärztliche Behandlung), Mitwirkungsanteil 75 % statt 50 %.",
-    "Weitere Bausteine: Todesfallleistung, Gipsgeld (150 € bei Knochenbruch), Notfall-Assistent."
+    "Weitere Bausteine: Todesfallleistung, Gipsgeld (150 € bei Knochenbruch), Notfall-Assistent.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht (Symbole am Bild geprüft)."
   ]
 }
