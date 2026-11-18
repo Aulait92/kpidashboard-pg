@@ -24,8 +24,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.hansemerkur.de/ruerup-rente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Basis Care Invest",
@@ -42,8 +41,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.hansemerkur.de/ruerup-rente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
     "Quelle: Produktseite hansemerkur.de; zwei Anlagemodelle, keine Leistungsstufen.",
     "Basis Care mit „hohen Garantien“; Beitragsgarantie und Rentenfaktor nicht beziffert.",
     "Hinterbliebenenversorgung vor Rentenbeginn frei vererbbar (mit Beitragsrückgewähr); nach Rentenbeginn Kapitalerhalt oder 5 Jahre Rentengarantie.",
-    "Effektivkosten in den Muster-Produktinformationsblättern, nicht ausgewertet."
+    "Effektivkosten in den Muster-Produktinformationsblättern, nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

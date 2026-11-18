@@ -4,7 +4,7 @@
 
 import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
 import { POLICY_TODO } from "@/lib/lead-followup";
-import { CROSS_SELL_TODO, POLICE_TODO } from "@/lib/vertraege-shared";
+import { NACH_ABSCHLUSS_TODOS } from "@/lib/vertraege-shared";
 import { prisma } from "@/lib/prisma";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
@@ -115,7 +115,43 @@ export type InboxData = {
   bookingSlug: string | null;
   /** Offene Leads ohne nächsten Schritt (lib/lead-next-step.ts), älteste zuerst; total = alle. */
   noNextStep: { total: number; leads: NoStepLead[] };
+  /**
+   * Abschluss mit einem Tipp (P4): Abschlüsse von gestern und älter (bis 14 Tage) mit typischem statt echtem Beitrag.
+   * Gesammelt am nächsten Morgen als eine Karte mit Chips, kein eigener Push.
+   */
+  beitragFehlt?: InboxBeitragFehlt[];
 };
+
+export type InboxBeitragFehlt = { leadId: string; name: string; sparte: string; chips: number[]; einheit: "/Jahr" | "/Monat"; ersparnis: boolean };
+
+/** Abschlüsse mit typischem Beitrag (premiumSource „standard“), ab dem Tag nach dem Abschluss, höchstens 14 Tage. */
+export async function loadBeitragFehlt(ctx: TeamCtx, now = new Date()): Promise<InboxBeitragFehlt[]> {
+  const todayStart = berlinDayStart(now);
+  const rows = await prisma.leadContract.findMany({
+    where: {
+      customerId: ctx.customerId,
+      primaryLeadId: { not: null },
+      premiumSource: "standard",
+      status: "aktiv",
+      signedAt: { lt: todayStart, gte: new Date(todayStart.getTime() - 14 * DAY) },
+      lead: { ...leadScope(ctx), status: "Abschluss", erasedAt: null },
+    },
+    orderBy: { signedAt: "desc" },
+    take: 10,
+    select: { leadId: true, sparte: true, lead: { select: { name: true, formData: true, contactOverrides: true } } },
+  });
+  if (!rows.length) return [];
+  const [{ loadCustomerProvision }, { beitragsChips, beitragEinheit }, { sparteLabel }] = await Promise.all([
+    import("@/lib/provision-server"),
+    import("@/lib/abschluss"),
+    import("@/lib/provision"),
+  ]);
+  const rates = (await loadCustomerProvision(ctx.customerId)).rates;
+  return rows.map((r) => {
+    const e = beitragEinheit(r.sparte);
+    return { leadId: r.leadId, name: leadLabel(kontaktFromLead(r.lead), r.lead.name), sparte: sparteLabel(r.sparte), chips: beitragsChips(r.sparte, rates), einheit: e.suffix, ersparnis: e.ersparnis };
+  });
+}
 
 export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
   const customerId = ctx.customerId;
@@ -129,10 +165,8 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     OR: [
       { NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } } },
       { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
-      // Cross-Selling: „Weiteres Produkt anbieten?“ 3 Wochen nach dem Abschluss (lib/vertraege)
-      { status: "Abschluss", followUpNote: { startsWith: CROSS_SELL_TODO } },
-      // „Police da und erste Zahlung erfolgt?“ 2 Wochen nach dem Abschluss (lib/vertraege)
-      { status: "Abschluss", followUpNote: POLICE_TODO },
+      // Aufgaben nach dem Abschluss (lib/lead-aufgaben.ts): „Police da …?“ nach 2, „Weiteres Produkt anbieten?“ nach 6 Wochen
+      ...NACH_ABSCHLUSS_TODOS.map((t) => ({ status: "Abschluss", followUpNote: { startsWith: t } })),
     ],
   };
   const [laterFollowUps, laterAppts] = await Promise.all([
@@ -196,8 +230,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         OR: [
           { NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } } },
           { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
-          { status: "Abschluss", followUpNote: { startsWith: CROSS_SELL_TODO } },
-          { status: "Abschluss", followUpNote: POLICE_TODO },
+          ...NACH_ABSCHLUSS_TODOS.map((t) => ({ status: "Abschluss", followUpNote: { startsWith: t } })),
         ],
       },
       orderBy: { followUpAt: "asc" },
@@ -231,7 +264,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       status: { in: ["completed", "booked"] },
       angebotGesendetAt: null,
       startsAt: { lte: now, gt: new Date(now.getTime() - 14 * DAY) },
-      lead: { status: "Angebot gesendet", erasedAt: null, sequences: { none: { stoppedAt: null, kind: { in: ["offer", "offer_selbst"] } } } },
+      lead: { status: "Angebot gesendet", erasedAt: null, sequences: { none: { stoppedAt: null, kind: { in: ["offer", "offer_selbst", "offer_bedenkzeit", "offer_selbst_bedenkzeit"] } } } },
     },
     orderBy: { startsAt: "desc" },
     take: 20,
@@ -346,5 +379,6 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     })),
     bookingSlug: cal?.status === "connected" ? await getOrCreateBookingSlug(customerId) : null,
     noNextStep: { total: noStep.total, leads: noStep.leads.filter((l) => !outcomeLeadIds.has(l.leadId)) },
+    beitragFehlt: await loadBeitragFehlt(ctx, now).catch(() => []),
   };
 }

@@ -21,8 +21,7 @@
         "ausland": "ja"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/rundumschutz/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Rundumschutz + Vorsorge (PEG+VORS)",
@@ -36,8 +35,7 @@
         "ausland": "ja"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/rundumschutz/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Rundumschutz + Vorsorge + Zahnvorsorge (PEG+VORS+ZV)",
@@ -51,8 +49,7 @@
         "ausland": "ja"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/rundumschutz/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -63,6 +60,7 @@
   "offen": [
     "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Keine Stufe markiert; PEG+VORS als mittlere Stufe.",
     "Alle Stufen: Zahnersatz 50 %, gesetzliche Zuzahlungen 100 % (bis 40 € im Jahr) und im Krankenhaus. Ab PEG+VORS Schutzimpfungen bis 200 € in 24 Monaten; PEG+VORS+ZV zusätzlich Zahnprophylaxe 100 € im Jahr, Kieferorthopädie 80 % bis 2.000 €.",
-    "Arzneimittel und Hörgeräte nicht im Rundumschutz. Einzeltarife: Sehen und Hören (Hörgeräte 800 € je Ohr in 36 Monaten, LASIK 750 € je Auge), Alternative Medizin AMed (80 %, bis 800 € in 12 Monaten)."
+    "Arzneimittel und Hörgeräte nicht im Rundumschutz. Einzeltarife: Sehen und Hören (Hörgeräte 800 € je Ohr in 36 Monaten, LASIK 750 € je Auge), Alternative Medizin AMed (80 %, bis 800 € in 12 Monaten).",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

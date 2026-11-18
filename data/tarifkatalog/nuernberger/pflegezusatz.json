@@ -23,8 +23,7 @@
         "dynamik": "10 % alle 3 Jahre"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/pflegeversicherung/pflegetagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pflegetagegeld Premium",
@@ -40,8 +39,7 @@
         "dynamik": "10 % alle 3 Jahre"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/pflegeversicherung/pflegetagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -50,6 +48,7 @@
   "offen": [
     "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Keine Stufe markiert (zwei Stufen).",
     "Premium: ambulant PG 1 bis 5 mit 10/30/60/80/100 %, stationär PG 1 10 %, ab PG 2 100 %; Einmalzahlung bei erstmals PG 2 100-fach (Unfall 200-fach, Kinder 300-fach). Komfort nur für stationäre Pflege (PG 1 10 %, ab PG 2 100 %).",
-    "Nachversicherung bei Anlässen bis 30 % ohne Gesundheitsprüfung. Staatlich geförderte Pflegevorsorge als eigenes Produkt nicht aufgenommen."
+    "Nachversicherung bei Anlässen bis 30 % ohne Gesundheitsprüfung. Staatlich geförderte Pflegevorsorge als eigenes Produkt nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

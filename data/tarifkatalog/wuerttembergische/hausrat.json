@@ -33,8 +33,7 @@
         "reise": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/wohnen/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Hausrat KomfortSchutz",
@@ -60,8 +59,7 @@
         "reise": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/wohnen/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Hausrat PremiumSchutz",
@@ -87,8 +85,7 @@
         "reise": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/wohnen/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -102,6 +99,7 @@
     "Einfacher Diebstahl (z. B. aus dem Garten) nicht im Tarifvergleich; nur Sturmschäden an Gartenmöbeln in Premium bis 5.000 €.",
     "Fahrrad nur über Baustein FahrradPlus belegt (Neuwert, bis zur Versicherungssumme, SB 150 €); ob in allen Stufen wählbar, nicht ausdrücklich genannt.",
     "Bausteine laut Produktseite: CyberPlus (Internet), ElektronikPlus, PremiumPlus (Allgefahren, nur zu Premium), FahrradPlus, Elementar, Hausrat Schutzbrief (Notfall), MobilPlus (Unterwegs), Glas.",
-    "Selbstbeteiligung, Überspannung und Hotelkosten je Stufe nicht im Tarifvergleich (Bedingungen nicht ausgewertet). Wertsachen: Urkunden und Schmuck 20.000, 25.000 bzw. 50.000 €."
+    "Selbstbeteiligung, Überspannung und Hotelkosten je Stufe nicht im Tarifvergleich (Bedingungen nicht ausgewertet). Wertsachen: Urkunden und Schmuck 20.000, 25.000 bzw. 50.000 €.",
+    "Geprüft am 17.11.2026 am Tarifvergleich der Produktseite und den Besonderen Bedingungen auf wuerttembergische.de."
   ]
 }

@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/unfall/private-unfallversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Smart",
@@ -42,8 +41,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/unfall/private-unfallversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Premium",
@@ -60,8 +58,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/unfall/private-unfallversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -71,6 +68,7 @@
     "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
     "Drei Stufen laut Tarifvergleich: Basis (feste Leistungen, nur Rente), Smart (alle Leistungen individuell wählbar), Premium (feste Leistungen). Keine Markierung; Smart als mittlere Stufe gesetzt, obwohl es eine frei wählbare Variante ist.",
     "Unfallrente laut FAQ ab 30 % oder 50 % Invalidität wählbar, lebenslang oder bis 67; Leistung ab Invaliditätsgrad je Stufe nicht belegt.",
-    "Premium zusätzlich AlltagsManager, RehaManager, Dynamisierung. Bergungskosten, Kosmetik, Zecken und Gliedertaxe nicht im Tarifvergleich."
+    "Premium zusätzlich AlltagsManager, RehaManager, Dynamisierung. Bergungskosten, Kosmetik, Zecken und Gliedertaxe nicht im Tarifvergleich.",
+    "Geprüft am 18.11.2026 am Tarifvergleich und Text der Produktseite."
   ]
 }

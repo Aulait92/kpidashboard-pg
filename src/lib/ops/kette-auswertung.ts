@@ -39,6 +39,11 @@ export type KetteLead = {
   kanal: boolean;
   metaLeadId: boolean;
   formular: boolean;
+  /** Anzeigenfelder am Lead (seit 17.11.2026, lib/anzeige.ts): Plattform, Kampagne, Anzeigengruppe, Anzeige */
+  plattform: boolean;
+  kampagne: boolean;
+  anzeigengruppe: boolean;
+  anzeige: boolean;
   // Erster Kontakt
   firstContactAt: Date | null;
   reached: boolean;
@@ -76,6 +81,25 @@ export type KetteLead = {
   hvkAbgleich: boolean;
 };
 
+/**
+ * Kundenart eines Leads (Ole, 18.11.2026, korrigiert): Pay-per-Lead nur, wenn der Lead über einen Bezug oder den Pool
+ * geliefert wurde, oder wenn er aus dem Airtable-Eingang (PplIntake) kommt UND der Kunde dieses Produkt als Bezug kauft.
+ * Vorher zählte jede Verknüpfung mit PplIntake als Pay-per-Lead; der Airtable-Eingang enthält aber alle Airtable-Leads,
+ * auch die der Vermittler-Kunden (Ergebnis: 0 Vermittler-Leads in der Bestandsaufnahme vom 17.11.).
+ */
+export function kundenartFuer(l: { bezug: boolean; pool: boolean; eingang: boolean; produkt: string | null; bezugProdukte: ReadonlySet<string> }): Kundenart {
+  if (l.bezug || l.pool) return "ppl";
+  if (l.eingang && l.produkt && l.bezugProdukte.has(l.produkt)) return "ppl";
+  return "vermittler";
+}
+
+/** Kundenart je Kunde aus den Leads: nur Pay-per-Lead, gemischt oder Vermittler. */
+export function kundenartKunde(rows: Pick<KetteLead, "kundenart">[]): Kundenart | "gemischt" {
+  const ppl = rows.filter((l) => l.kundenart === "ppl").length;
+  if (ppl && ppl === rows.length) return "ppl";
+  return ppl ? "gemischt" : "vermittler";
+}
+
 export const TERMIN_STATUS = new Set(["In Beratung", "Termin vereinbart", "Angebot/Beratung läuft"]);
 export const ANGEBOT_STATUS = new Set(["Angebot gesendet", "Angebot/Beratung läuft"]);
 export const CLOSED_STATUS = "Abschluss";
@@ -83,9 +107,9 @@ export const CLOSED_STATUS = "Abschluss";
 const MIN = 60_000;
 const DAY = 86_400_000;
 
-/** Felder, die es im Schema heute gar nicht gibt (je Stufe), damit der Bericht sie mit 0 % nicht verschweigt. */
+/** Felder, die es im Schema heute gar nicht gibt (je Stufe), damit der Bericht sie mit 0 % nicht verschweigt.
+ *  Anzeige: seit 17.11.2026 im Schema (Lead.adPlatform, adFormId, adCampaignId, adSetId, adId), zählt unter stufen.anzeige. */
 export const FEHLENDE_FELDER: Record<string, string[]> = {
-  anzeige: ["kampagneId", "kampagnenName", "anzeigengruppeId", "anzeigeId", "anzeigenName", "plattform (facebook/instagram)"],
   ersterKontakt: ["erreichtAm (Zeitpunkt des ersten echten Gesprächs)", "kontaktArt (Anruf/WhatsApp/automatisch)"],
   termin: ["terminGebuchtVon (Lead/Vermittler/Assistent) als Feld", "verschobenVon (Verweis auf den alten Termin)"],
   terminStatus: ["erschienen/nicht erschienen mit Zeitpunkt der Erfassung"],
@@ -136,6 +160,10 @@ export function auswerten(rows: KetteLead[], now: Date): Bericht {
     kanal: (l) => l.kanal,
     metaLeadId: (l) => l.metaLeadId,
     formular: (l) => l.formular,
+    plattform: (l) => l.plattform,
+    kampagne: (l) => l.kampagne,
+    anzeigengruppe: (l) => l.anzeigengruppe,
+    anzeige: (l) => l.anzeige,
   });
 
   const lead = stufe(rows, () => true, {

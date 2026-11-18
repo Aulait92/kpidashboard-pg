@@ -30,8 +30,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.hansemerkur.de/private-krankenversicherung/angestellte",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Advanced Fit",
@@ -54,8 +53,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.hansemerkur.de/private-krankenversicherung/angestellte",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Best Fit",
@@ -77,8 +75,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.hansemerkur.de/private-krankenversicherung/angestellte",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -91,6 +88,7 @@
     "Beitragsrückerstattung: Smart Fit bis 500 € erfolgsabhängig (Selbstbeteiligung 500 oder 1.000 € für ambulant und Zahn, 10 % Gesundheitsrabatt); Advanced Fit 1.000 € garantiert plus bis 500 € erfolgsabhängig (Variante Advanced Fit S: 83,33 € monatliche Beitragsstundung); Best Fit 6 Monatsbeiträge des Tarifs AZP (Variante Best Fit S: Stundung 50 % auf AZP).",
     "Primärarztprinzip in Best Fit nicht genannt (ambulant 100 % ohne Einschränkung). Hilfsmittel und Ausland nicht im Tarifvergleich.",
     "Bausteine: Krankentagegeld (Tarif T) und Pflegemonatsgeld (Tarif PG) in allen Stufen optional; ebenso Kurtagegeld (KUT) und Beitragsreduzierung ab 65 (BEN). Best Fit zusätzlich LASIK bis 4.000 € in 60 Monaten.",
-    "Empfehlung: HanseMerkur markiert Best Fit als „Bestseller“."
+    "Empfehlung: HanseMerkur markiert Best Fit als „Bestseller“.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

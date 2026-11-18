@@ -34,8 +34,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.continentale.de/documents/39054/16670358/Vertragsinformation+ImmoGuard+%E2%80%93+die+Wohngeb%C3%A4udeversicherung.pdf/54f0cc66-4d17-7cfa-3184-1fa59200cffc?version=12.1&t=1767002120381&download=true",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ImmoGuard XXL",
@@ -62,8 +61,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.continentale.de/documents/39054/16670358/Vertragsinformation+ImmoGuard+%E2%80%93+die+Wohngeb%C3%A4udeversicherung.pdf/54f0cc66-4d17-7cfa-3184-1fa59200cffc?version=12.1&t=1767002120381&download=true",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ImmoGuard TOP-Schutz",
@@ -90,8 +88,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.continentale.de/documents/39054/16670358/Vertragsinformation+ImmoGuard+%E2%80%93+die+Wohngeb%C3%A4udeversicherung.pdf/54f0cc66-4d17-7cfa-3184-1fa59200cffc?version=12.1&t=1767002120381&download=true",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -103,6 +100,7 @@
     "Elementargefahren sind wie die Grundgefahren einzeln wählbar, daher „optional“.",
     "Photovoltaik ist in allen Tarifen mitversichert, sofern im Antrag angegeben; die erweiterte Deckung für PV, Solar, Wärmepumpe und Haustechnik bietet der Baustein EnergiePlus, daher „optional“.",
     "Ableitungsrohre außerhalb des Gebäudes: XXL 5.000 €, TOP 10.000 €, jeweils gegen Zuschlag erhöhbar. Schäden durch Tiere = Tierbisse und Pickschäden durch Vögel.",
-    "Weitere Bausteine: ZukunftPlus (Mehrkosten Wiederaufbau), VermieterPlus, Schutzbrief. Glasbruch nur als eigene Glasversicherung; Selbstbeteiligung nicht ausgewertet."
+    "Weitere Bausteine: ZukunftPlus (Mehrkosten Wiederaufbau), VermieterPlus, Schutzbrief. Glasbruch nur als eigene Glasversicherung; Selbstbeteiligung nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und Vertragsinformationen bzw. Bedingungen der Continentale."
   ]
 }

@@ -38,12 +38,13 @@ const AREA_COLOR: Record<HeuteArea, string> = {
 };
 
 /** Die Liste „Braucht Sie“ mit Sofort-Aktionen und „Rückgängig“. */
-export function HeuteList({ items }: { items: HeuteItem[] }) {
+/** `ohneBereich`: Bereichszeile weglassen (Mein Tag im neuen Admin gruppiert schon nach Rolle). */
+export function HeuteList({ items, ohneBereich }: { items: HeuteItem[]; ohneBereich?: boolean }) {
   return (
     <ToastProvider>
       <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
         {items.map((it) => (
-          <HeuteRow key={it.key} it={it} />
+          <HeuteRow key={it.key} it={it} ohneBereich={ohneBereich} />
         ))}
       </ul>
     </ToastProvider>
@@ -55,7 +56,7 @@ const btn = "inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5
 const secondary = "border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)]";
 const primary = "bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]";
 
-function HeuteRow({ it }: { it: HeuteItem }) {
+function HeuteRow({ it, ohneBereich }: { it: HeuteItem; ohneBereich?: boolean }) {
   const Icon = HEUTE_ICONS[it.icon];
   const toast = useToast();
   const [hidden, setHidden] = useState(false);
@@ -104,7 +105,7 @@ function HeuteRow({ it }: { it: HeuteItem }) {
           <Icon className="h-[18px] w-[18px]" />
         </span>
         <div className="min-w-0">
-          <div className={cn("text-[11px] font-semibold uppercase tracking-wide", AREA_COLOR[it.area])}>{it.area}</div>
+          {ohneBereich ? null : <div className={cn("text-[11px] font-semibold uppercase tracking-wide", AREA_COLOR[it.area])}>{it.area}</div>}
           <div className="font-medium leading-snug group-hover:text-[color:var(--brand)] group-hover:underline">{it.title}</div>
           <div className="mt-0.5 text-sm text-[color:var(--muted)]">{it.detail}</div>
         </div>

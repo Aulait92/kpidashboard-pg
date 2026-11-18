@@ -28,8 +28,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/gesundheit/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankenvollversicherung Komfort",
@@ -50,8 +49,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/gesundheit/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankenvollversicherung Premium",
@@ -72,8 +70,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/gesundheit/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Quelle: Tabellen Ambulant, Stationär, Zahn der Produktseite (Abruf 17.11.2026); Württembergische markiert Premiumschutz mit „Tipp“. Pakete sind aus Modulen frei kombinierbar.",
     "Wahlarzt: Komfort und Premium auch über die Höchstsätze der GOÄ; Kompakt nur Belegärzte bis zu den Höchstsätzen. Zahnprophylaxe 300, 400 bzw. 500 € im Jahr.",
     "Selbstbehalt nur ambulant, frei wählbar bis 1.440 €. Beitragsrückerstattung ab dem ersten leistungsfreien Jahr (2 Monatsbeiträge, steigend bis 4).",
-    "Heilpraktiker, Osteopathie und Sehhilfen laut Seite versichert, Höhe je Paket nicht genannt. Hausarzt- und Generikaprinzip als Sparoption. Pflegezusatz im Paket nicht genannt."
+    "Heilpraktiker, Osteopathie und Sehhilfen laut Seite versichert, Höhe je Paket nicht genannt. Hausarzt- und Generikaprinzip als Sparoption. Pflegezusatz im Paket nicht genannt.",
+    "Geprüft am 17.11.2026 an der Leistungstabelle der Produktseite auf wuerttembergische.de."
   ]
 }

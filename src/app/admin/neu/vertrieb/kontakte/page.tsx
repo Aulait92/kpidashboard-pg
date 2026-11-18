@@ -31,8 +31,8 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
 
   return (
     <Seite
-      titel="Vertrieb"
-      reiter="vertrieb"
+      titel="Verkaufen"
+      reiter="verkaufen"
       aktionen={
         <ButtonLink href={`${KONTAKTE}/neu`} variant="primary" size="md" icon={Plus}>
           Kontakt

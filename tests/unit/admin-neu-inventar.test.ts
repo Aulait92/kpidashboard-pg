@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { fundstellen, stand } from "../../tools/admin-neu/inventar-stand.mjs";
-import { BEREICHE, SEITEN, bereichFuer, reiterFuer, seiteFuer, NEU_EINTRAEGE } from "@/lib/admin-neu/navigation";
+import { bereichFuer as bereichFuerView, fundstellen, stand } from "../../tools/admin-neu/inventar-stand.mjs";
+import { BEREICHE, SEITEN, bereichFuer, reiterFuer, seiteFuer, NEU_EINTRAEGE, SUCH_SEITEN } from "@/lib/admin-neu/navigation";
 import { BLEIBT, OFFEN } from "@/lib/admin-neu/offen";
 import { UMZUG, neuerPfad } from "@/lib/admin-neu/umzug";
 
@@ -76,17 +76,67 @@ describe("Navigation neuer Admin", () => {
     expect(BEREICHE.every((b) => b.seiten.some((s) => s.pfad === b.pfad))).toBe(true);
   });
 
-  it("Bereich und Seite werden aus der Adresse erkannt", () => {
-    expect(bereichFuer("/admin/neu")?.id).toBe("heute");
-    expect(bereichFuer("/admin/neu/vertrieb/kontakte/abc")?.id).toBe("vertrieb");
-    expect(bereichFuer("/admin/neu/kunden/abc/team")?.id).toBe("kunden");
+  it("Bereich und Seite werden aus der Adresse erkannt (Rollen, Admin v2)", () => {
+    expect(bereichFuer("/admin/neu")?.id).toBe("mein-tag");
+    expect(bereichFuer("/admin/neu/vertrieb/aufgaben")?.id).toBe("mein-tag");
+    expect(bereichFuer("/admin/neu/vertrieb/kontakte/abc")?.id).toBe("verkaufen");
+    expect(bereichFuer("/admin/neu/marketing/empfehlungen")?.id).toBe("verkaufen");
+    expect(bereichFuer("/admin/neu/kunden/abc/team")?.id).toBe("betreuen");
+    expect(bereichFuer("/admin/neu/leads/chats/abc")?.id).toBe("betreuen");
+    expect(bereichFuer("/admin/neu/zahlen/qualitaet")?.id).toBe("betreuen");
+    expect(bereichFuer("/admin/neu/leads/ppl/bezug/neu")?.id).toBe("liefern");
+    expect(bereichFuer("/admin/neu/leads/werbekonten/123")?.id).toBe("liefern");
+    expect(bereichFuer("/admin/neu/zahlen/kosten/zuordnen")?.id).toBe("geld");
+    expect(bereichFuer("/admin/neu/einstellungen/anbindungen")?.id).toBe("werkzeuge");
+    expect(bereichFuer("/admin/neu/einstellungen/produkte")?.id).toBe("einstellungen");
+    // Unbekannte Unterseite: Bereich der Seite darüber
+    expect(bereichFuer("/admin/neu/leads/ppl/etwas/neues")?.id).toBe("liefern");
+    expect(bereichFuer("/admin/neu/unbekannt")).toBeNull();
     expect(seiteFuer("/admin/neu/kunden/abc/team")?.view).toBe("kunde-team");
     expect(seiteFuer("/admin/neu/vertrieb/kontakte/neu")?.view).toBe("kontakt-neu");
     expect(reiterFuer("kundenakte", { id: "k1" })[0]).toEqual({ href: "/admin/neu/kunden/k1", label: "Übersicht", exact: true });
   });
 
-  it("„+ Neu“ enthält alle vereinbarten Einträge", () => {
-    expect(NEU_EINTRAEGE.map((e) => e.id)).toEqual(["kontakt", "aufgabe", "angebot", "termin", "zuordnung", "ppl-bezug", "linkedin", "neuigkeit", "kosten"]);
+  it("Rahmen v2: Mein Tag und vier Rollen oben, Werkzeuge, Einstellungen, Was wo ist unten; Handy 5 + Mehr", () => {
+    expect(BEREICHE.filter((b) => b.ort === "oben").map((b) => b.label)).toEqual(["Mein Tag", "Verkaufen", "Betreuen", "Liefern", "Geld"]);
+    expect(BEREICHE.filter((b) => b.ort === "unten").map((b) => b.label)).toEqual(["Werkzeuge", "Einstellungen", "Was wo ist"]);
+    expect(BEREICHE.filter((b) => b.handy === "leiste").map((b) => b.id)).toEqual(["mein-tag", "verkaufen", "betreuen", "liefern", "geld"]);
+  });
+
+  it("Reiter je Rolle; Start genau, Listen auch auf Unterseiten aktiv", () => {
+    const labels = (g: Parameters<typeof reiterFuer>[0]) => reiterFuer(g).map((r) => r.label);
+    expect(labels("verkaufen")).toEqual(["Pipeline", "Kontakte", "Termine", "Angebote", "Marketing"]);
+    expect(labels("marketing")).toEqual(["LinkedIn", "Empfehlungen", "Unterlagen", "Webseite & Rechner"]);
+    expect(labels("betreuen")).toEqual(["Kunden", "Chats", "Monatsberichte", "Qualität & Nutzung"]);
+    expect(labels("liefern")).toEqual(["Pay-per-Lead", "Leads", "Lead-Eingang", "Werbekonten"]);
+    expect(labels("geld")).toEqual(["Übersicht", "Umsatz & Buchungen", "Offene Posten", "Kosten & Bank", "Kunden-Lebenszyklus"]);
+    const ex = (g: Parameters<typeof reiterFuer>[0], label: string) => reiterFuer(g).find((r) => r.label === label)?.exact;
+    expect(ex("verkaufen", "Pipeline")).toBe(true);
+    expect(ex("verkaufen", "Kontakte")).toBe(false);
+    expect(ex("verkaufen", "Marketing")).toBe(false);
+    expect(ex("marketing", "LinkedIn")).toBe(true);
+    expect(ex("liefern", "Lead-Eingang")).toBe(true);
+    expect(ex("liefern", "Pay-per-Lead")).toBe(false);
+    expect(ex("betreuen", "Kunden")).toBe(true);
+  });
+
+  it("Bereich im Inventar = Bereich der Seite in navigation.ts (eine Quelle)", () => {
+    const abweichend = SEITEN.filter((s) => bereichFuerView(s.view) !== s.bereich).map((s) => `${s.view} → ${s.bereich}`);
+    expect(abweichend).toEqual([]);
+  });
+
+  it("alte Pfade bleiben: jede Seite hat ihre Adresse aus v1 (Push-Ziele, Umzug)", () => {
+    for (const p of ["/admin/neu/vertrieb", "/admin/neu/kunden", "/admin/neu/leads", "/admin/neu/leads/chats", "/admin/neu/zahlen", "/admin/neu/marketing", "/admin/neu/einstellungen/anbindungen"]) {
+      expect(seiteFuer(p), p).not.toBeNull();
+    }
+    expect(SUCH_SEITEN.find((s) => s.href === "/admin/neu/werkzeuge")?.bereich).toBe("Werkzeuge");
+  });
+
+  it("„+ Neu“ enthält alle vereinbarten Einträge, nach Rollen geordnet", () => {
+    expect(NEU_EINTRAEGE.map((e) => e.id)).toEqual(["aufgabe", "kontakt", "termin", "angebot", "linkedin", "neuigkeit", "ppl-bezug", "zuordnung", "kosten"]);
+    const reihe = BEREICHE.map((b) => b.id);
+    const idx = NEU_EINTRAEGE.map((e) => reihe.indexOf(e.rolle));
+    expect(idx.every((v, i) => v >= 0 && (i === 0 || v >= idx[i - 1]))).toBe(true);
   });
 });
 

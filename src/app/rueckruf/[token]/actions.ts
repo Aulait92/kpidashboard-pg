@@ -4,10 +4,16 @@ import { redirect } from "next/navigation";
 import { rueckrufWunsch } from "@/lib/angebot-senden-server";
 import { checkLimit, requestIp } from "@/lib/rate-limit";
 
-/** „Ja, bitte anrufen“ (öffentlich, ohne Login, Drosselung je IP). */
-export async function rueckrufAction(token: string): Promise<void> {
+/** „Rückruf anfordern“ (öffentlich, ohne Login, Drosselung je IP): Zeitfenster und freiwillige Notiz. */
+export async function rueckrufAction(token: string, form: FormData): Promise<void> {
   const ip = await requestIp();
-  if (!checkLimit("publicBooking", `rueckruf:${ip}`).ok) redirect(`/rueckruf/${token}`);
-  const r = await rueckrufWunsch(token).catch(() => null);
-  redirect(r ? `/rueckruf/${token}?danke=1` : `/rueckruf/${token}`);
+  if (!checkLimit("publicBooking", `rueckruf:${ip}`).ok) redirect(`/rueckruf/${token}?fehler=limit`);
+  const fenster = form.get("fenster");
+  const r = await rueckrufWunsch(token, { fenster: typeof fenster === "string" ? fenster : null, notiz: form.get("notiz") }).catch((e) => {
+    console.error("[rueckruf]", e);
+    return null;
+  });
+  if (!r) redirect(`/rueckruf/${token}`);
+  if (!r.ok) redirect(`/rueckruf/${token}?fehler=fenster`);
+  redirect(`/rueckruf/${token}?danke=${encodeURIComponent(r.fenster?.key ?? "bald")}${r.whatsapp ? "&wa=1" : ""}`);
 }

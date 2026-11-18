@@ -22,8 +22,7 @@
         "ausland": "ja, bei Urlaubsreisen"
       },
       "quelle": "https://www.hansemerkur.de/krankentagegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -34,6 +33,7 @@
     "Leistungsdauer und Ende bei Berufsunfähigkeit nicht auf der Produktseite genannt (nur: leistet bei vorübergehender Arbeitsunfähigkeit). Wartezeit 3 Monate, bei Unfall keine.",
     "Ausland: bei Erkrankung im Urlaub ab dem 43. Tag; kein Schutz bei Arbeit im Ausland.",
     "Für Privatversicherte und Selbstständige: Krankentagegeld als Tarif T zur privaten Krankenversicherung (siehe pkv.json), Werte nicht veröffentlicht.",
-    "Nur ein Tarif, daher Stufe „Tarif“."
+    "Nur ein Tarif, daher Stufe „Tarif“.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

@@ -6,7 +6,7 @@
   "inAllenTarifen": [
     "Haftpflicht 100 Mio. € pauschal",
     "Mallorca-Deckung",
-    "Partnerwerkstatt optional"
+    "Grobe Fahrlässigkeit versichert"
   ],
   "tarife": [
     {
@@ -21,7 +21,7 @@
         "marder": "nur Biss",
         "rabattschutz": "nein",
         "gap": "optional",
-        "werkstatt": "optional",
+        "werkstatt": "ja (im Tarif)",
         "elektro": "nein",
         "mallorca": "ja"
       },
@@ -30,8 +30,7 @@
         "rabattschutz": "nein"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/infoblatt/pp/019/infoblattleistungsvergleichkfzpp019pdf/infoblatt-leistungsvergleich-kfz-pp019.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Versicherung classic",
@@ -54,8 +53,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/infoblatt/pp/019/infoblattleistungsvergleichkfzpp019pdf/infoblatt-leistungsvergleich-kfz-pp019.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Versicherung comfort",
@@ -79,8 +77,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/infoblatt/pp/019/infoblattleistungsvergleichkfzpp019pdf/infoblatt-leistungsvergleich-kfz-pp019.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -91,6 +88,8 @@
     "Quelle: Infoblatt Leistungsvergleich Kfz PP 019 (Stand 10.2026) der Alte Leipziger Versicherung AG und Produktseite; comfort ist dort als „Unser Top Angebot“ markiert.",
     "Haftpflicht 100 Mio. € pauschal, je geschädigter Person 15 Mio. €. Neuwert für Neufahrzeuge; Kaufwertentschädigung für Gebrauchte classic 12, comfort 24 Monate.",
     "Tierbiss in allen Stufen; Folgeschäden durch Tierbiss erst ab classic. Rabattschutz, Auslandschadenschutz und Mobilitätspolice nur classic und comfort; Schutzbrief, GAP, Fahrerschutz in allen Stufen wählbar.",
-    "Höchster Neuwert des Fahrzeugs compact 75.000 €, classic 125.000 €, comfort 150.000 €."
+    "Höchster Neuwert des Fahrzeugs compact 75.000 €, classic 125.000 €, comfort 150.000 €.",
+    "Geprüft am 18.11.2026 an Produktseite, Deklarationsvergleich bzw. Bedingungen der Alte Leipziger.",
+    "Werkstattbindung laut Infoblatt PP 019: im compact fest enthalten, in classic und comfort optional gegen Mehr- oder Minderbeitrag (Symbole im PDF am Zeichensatz gegengeprüft)."
   ]
 }

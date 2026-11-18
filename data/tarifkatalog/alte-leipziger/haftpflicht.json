@@ -34,8 +34,7 @@
         "wohnung": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/703/deklarationsvergleichprivathaftpflichtpp703pdf/deklarationsvergleich-privathaftpflicht-pp703.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat-Haftpflicht classic",
@@ -62,8 +61,7 @@
         "wohnung": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/703/deklarationsvergleichprivathaftpflichtpp703pdf/deklarationsvergleich-privathaftpflicht-pp703.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat-Haftpflicht comfort",
@@ -91,8 +89,7 @@
         "wohnung": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/703/deklarationsvergleichprivathaftpflichtpp703pdf/deklarationsvergleich-privathaftpflicht-pp703.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -100,9 +97,10 @@
     "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/703/deklarationsvergleichprivathaftpflichtpp703pdf/deklarationsvergleich-privathaftpflicht-pp703.pdf"
   ],
   "offen": [
-    "Quelle: Deklarationsvergleich PP 703 (Stand 04.2025) der Alte Leipziger Versicherung AG. Symbole (Haken) sind im PDF-Text nicht lesbar; leere Felder wurden als „mitversichert bzw. bis zur Versicherungssumme“ gelesen.",
+    "Quelle: Deklarationsvergleich PP 703 (Stand 04.2025) der Alte Leipziger Versicherung AG. Haken im PDF am Zeichensatz gegengeprüft: Haken bedeutet „mitversichert bzw. bis zur Versicherungssumme“, Strich „nicht enthalten“.",
     "Forderungsausfall in allen Stufen mitversichert; die Mindestschadenhöhe (compact 2.500 €, classic 500 €, comfort ohne) steht direkt unter Gewaltopferschutz, Zuordnung bitte prüfen.",
     "Versicherungssumme classic und comfort höchstens 15 Mio. € je geschädigter Person. Rabattretter: Rabattausgleich bei geliehenen Kfz ab classic.",
-    "Pakete gegen Aufpreis: Diensthaftpflicht, Cyber, Hund, weitere Eigentumswohnung bzw. Garage. comfort ist auf der Produktseite als „Unser Top-Angebot“ markiert. Selbstbeteiligung nicht genannt."
+    "Pakete gegen Aufpreis: Diensthaftpflicht, Cyber, Hund, weitere Eigentumswohnung bzw. Garage. comfort ist auf der Produktseite als „Unser Top-Angebot“ markiert. Selbstbeteiligung nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite, Deklarationsvergleich bzw. Bedingungen der Alte Leipziger."
   ]
 }

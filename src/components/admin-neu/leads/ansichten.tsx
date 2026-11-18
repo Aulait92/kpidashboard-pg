@@ -41,28 +41,3 @@ export function Meldung({ ok, err }: { ok?: string; err?: string }) {
   );
 }
 
-/** Kennzahl wie in der Demo (kpis): Zahl groß, Beschriftung klein. */
-export function Kennzahlen({ items }: { items: { label: string; wert: string | number; warn?: boolean; href?: string }[] }) {
-  return (
-    <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-      {items.map((k) => {
-        const inner = (
-          <>
-            <div className="text-xs text-[color:var(--muted)]">{k.label}</div>
-            <div className={cn("mt-0.5 text-xl font-semibold tabular-nums", k.warn && "text-rose-700")}>{k.wert}</div>
-          </>
-        );
-        const cls = "block rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 shadow-[var(--shadow-sm)]";
-        return k.href ? (
-          <Link key={k.label} href={k.href} className={cn(cls, "hover:border-[color:var(--border-strong)]")}>
-            {inner}
-          </Link>
-        ) : (
-          <div key={k.label} className={cls}>
-            {inner}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
