@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|spaeter-nachholen[&vorschau=1|&ausfuehren=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]|sicherheit
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|spaeter-nachholen[&vorschau=1|&ausfuehren=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]|sicherheit|nutzung-woche[&tage=7] (weitere: siehe WEITERE unten)
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -715,6 +715,7 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=tarif-vorschlaege                    Tarifkatalog lernt von Vermittlern: Vorschläge je Status und Quelle, offene, empfohlene, übernommene, nur Anzahlen (lib/ops/tarif-vorschlaege.ts)
 //   q=mail-eingang[&tage=7]                Antwortadresse mit Eingang: Schalter, Einrichtung, Zählung, letzte Eingänge, Fehler, ohne Inhalte (lib/ops/mail-eingang.ts)
 //   q=preise-offen                         Neue Listenpreise 990/1.390/1.790 €: umgestellte und noch alte offene Angebote (Nummer, Name, alt, neu; lib/ops/preise-offen.ts)
+//   q=nutzung-woche[&tage=7]               Usability-Woche im Vermittlerbereich: aktive Kunden/Nutzer, Top- und ungenutzte Seiten/Aktionen, Abbrüche, Fehler-Toasts, Feedback/NPS, Support, Hilfe-Themen, Aufgaben, nächster Schritt, erste Reaktion, Admin-Nutzung; letzte N Tage gegen die N davor, nur Zahlen (lib/ops/nutzung-woche.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   pakete: async () => (await import("@/lib/ops/pakete")).paketeDiagnose(),
   investoren: async (p) => (await import("@/lib/ops/investoren")).investorenDiagnose(p),
@@ -725,6 +726,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "admin-nutzung": async (p) => (await import("@/lib/ops/admin-nutzung")).adminNutzung(p),
   "tarif-vorschlaege": async () => (await import("@/lib/ops/tarif-vorschlaege")).tarifVorschlaegeDiagnose(),
   "preise-offen": async () => (await import("@/lib/ops/preise-offen")).preiseOffenDiagnose(),
+  "nutzung-woche": async (p) => (await import("@/lib/ops/nutzung-woche")).nutzungWoche(p),
 };
 
 export async function GET(req: Request): Promise<Response> {
