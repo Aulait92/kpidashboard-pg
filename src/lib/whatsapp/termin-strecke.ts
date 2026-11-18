@@ -35,8 +35,12 @@ import {
   adresseUnvollstaendig,
   andereAdresseFrage,
   bereitlegenFuerLead,
+  EINGETRAGEN_KNOEPFE,
   EMAIL_KNOEPFE,
+  eingetragenDank,
+  eingetragenFrage,
   einladungUnterwegs,
+  kalenderNochmalText,
   istFamilie,
   KOMPLETTCHECK_KNOEPFE,
   komplettcheckFrage,
@@ -76,6 +80,9 @@ export const STRECKE = {
   /** Policen-Erinnerung 24 Std. nach der Buchung bzw. am Vortag (body.art: tag, vortag) */
   policenErinnerung: "policen_erinnerung",
   abschluss: "strecke_abschluss",
+  /** Nach „Einladung ist unterwegs“: Frage „Konnten Sie den Termin eintragen?“ bzw. die Antwort darauf (body.ja) */
+  eingetragenFrage: "eingetragen_frage",
+  eingetragen: "eingetragen_antwort",
 } as const;
 
 const HOUR = 60 * 60 * 1000;
@@ -614,6 +621,41 @@ export async function emailBestaetigt(conversationId: string, now = new Date()):
   await zusagen(k, now, "email_bestaetigt");
   await einladungPruefen(k, now);
   await sende(k, einladungUnterwegs(k.an));
+  await eingetragenFragen(k, now);
+  return true;
+}
+
+/**
+ * Nach „Die Einladung ist unterwegs“ (Ole, 18.11.2026): „Konnten Sie den Termin in Ihrem Kalender eintragen?“ mit
+ * Knöpfen [Ja, eingetragen] [Nein, bitte nochmal]. Einmal je Termin, nur im offenen 24-h-Fenster (Knöpfe gehen nur dort).
+ */
+async function eingetragenFragen(k: StreckenKontext, now: Date): Promise<void> {
+  if (!k.termin) return;
+  const conv = await prisma.conversation.findUnique({ where: { id: k.conversationId }, select: { windowExpiresAt: true } });
+  if (!conv?.windowExpiresAt || conv.windowExpiresAt <= now) return;
+  const schon = await prisma.message.findFirst({ where: { conversationId: k.conversationId, direction: "internal", kind: STRECKE.eingetragenFrage, body: { contains: k.termin.id } }, select: { id: true } });
+  if (schon) return;
+  await merke(k.conversationId, STRECKE.eingetragenFrage, { appointmentId: k.termin.id });
+  await sende(k, eingetragenFrage(k.an), EINGETRAGEN_KNOEPFE);
+}
+
+/**
+ * Antwort per Knopf auf die Frage nach dem Kalendereintrag: „Ja“ → kurzer Dank. „Nein“ → Termin noch einmal als Text mit
+ * Links zum Eintragen (Google-Kalender und Kalenderdatei .ics über den Verwaltungs-Link).
+ */
+export async function eingetragenAntwort(conversationId: string, ja: boolean, now = new Date()): Promise<boolean> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  await merke(conversationId, STRECKE.eingetragen, { appointmentId: k.termin.id, ja });
+  if (ja) {
+    await sende(k, eingetragenDank(k.an, k.termin.startsAt));
+    return true;
+  }
+  const { customerEventById, googleCalendarUrl } = await import("@/lib/calendar/add-to-calendar");
+  const ev = await customerEventById(k.termin.id).catch(() => null);
+  const google = ev ? googleCalendarUrl({ ...ev, description: "" }) : null;
+  const ics = ev?.token ? `${ev.manageUrl}/ics` : null;
+  await sende(k, kalenderNochmalText({ an: k.an, start: k.termin.startsAt, person: k.person, google, ics, ort: ev?.mode === "onsite" ? ev.ort : null }));
   return true;
 }
 
@@ -655,6 +697,7 @@ export async function emailAntwort(conversationId: string, text: string, now = n
   await zusagen(k, now, "email_genannt");
   await einladungPruefen(k, now);
   await sende(k, einladungUnterwegs(k.an, email));
+  await eingetragenFragen(k, now);
   return true;
 }
 

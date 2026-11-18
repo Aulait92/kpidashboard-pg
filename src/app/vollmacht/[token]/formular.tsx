@@ -110,7 +110,7 @@ export function VollmachtFormular({
             <li key={i} className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-vv-vertrag>
               <div className="grid grid-cols-2 gap-2">
                 <div className="col-span-2">
-                  <label className={label}>Gesellschaft</label>
+                  <label className={label}>Versicherer</label>
                   <input list="vv-gesellschaften" value={v.versicherer} onChange={(e) => setVertrag(i, { versicherer: e.target.value })} className={feld} placeholder="z. B. Allianz" data-vv-versicherer />
                 </div>
                 <div className="col-span-2 sm:col-span-1">

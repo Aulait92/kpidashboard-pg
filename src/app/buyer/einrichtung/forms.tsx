@@ -3,6 +3,8 @@
 import { useActionState, useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight, CheckCircle2, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import type { MetaCheck } from "@/lib/selbst-einrichtung";
+import type { TerminFormate } from "@/lib/termin-formate";
+import { TerminFormateFelder } from "@/components/termin-formate";
 import {
   bookHelpCallAction,
   checkMetaAccessAction,
@@ -23,7 +25,6 @@ type Answers = {
   ansprache?: "sie" | "du";
   callbackBy?: string;
   special?: string;
-  formats?: string[];
   hours?: string;
   advisorEmail?: string;
   leadEmails?: string[];
@@ -40,29 +41,13 @@ function Feedback({ state }: { state: SetupState }) {
   return null;
 }
 
-export function QuestionnaireForm({ software, initial, readOnly }: { software: boolean; initial: Answers; readOnly: boolean }) {
+export function QuestionnaireForm({ software, initial, formate, readOnly }: { software: boolean; initial: Answers; formate?: TerminFormate; readOnly: boolean }) {
   const [state, action, pending] = useActionState<SetupState, FormData>(saveQuestionnaireAction, {});
   return (
     <form action={action} className="space-y-4">
       {software ? (
         <>
-          <fieldset>
-            <legend className={label}>Wie sollen Termine stattfinden?</legend>
-            <div className="mt-2 flex flex-wrap gap-4 text-[15px]">
-              {(
-                [
-                  ["telefon", "Telefon"],
-                  ["video", "Video"],
-                  ["vorOrt", "Vor Ort in der Agentur"],
-                ] as const
-              ).map(([k, l]) => (
-                <label key={k} className="flex items-center gap-2">
-                  <input type="checkbox" name={`format_${k}`} defaultChecked={initial.formats?.includes(k) ?? (k === "telefon" || k === "video")} className="h-4 w-4 accent-[color:var(--brand)]" />
-                  {l}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <TerminFormateFelder defaultValue={formate} />
         </>
       ) : (
         <div>

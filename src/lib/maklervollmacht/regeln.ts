@@ -74,7 +74,7 @@ export const FEHLER_TEXT: Record<VvFehler, string> = {
   geburtsdatum: "Bitte das Geburtsdatum im Format TT.MM.JJJJ eintragen.",
   email: "Bitte eine gültige E-Mail-Adresse eintragen oder das Feld leer lassen.",
   vertraege: "Bitte mindestens einen Vertrag eintragen.",
-  versicherer: "Bitte bei jedem Vertrag die Gesellschaft eintragen.",
+  versicherer: "Bitte bei jedem Vertrag den Versicherer eintragen.",
   zustimmung: "Bitte bestätigen Sie die Vollmacht mit dem Häkchen.",
   unterschrift: "Bitte unterschreiben Sie im Feld.",
 };

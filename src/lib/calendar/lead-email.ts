@@ -70,9 +70,9 @@ export function istMorgen(start: Date, now: Date): boolean {
  * Betreff der Erinnerung (Ole, 17.11.2026): „Morgen um 10 Uhr: Ihr Videotermin mit Herrn Kannapinn“. Ist der Termin
  * nicht morgen, steht das Datum davor („Mittwoch, 18. November um 10:30 Uhr: …“).
  */
-export function erinnerungsBetreff(o: { start: Date; now: Date; mode: "video" | "phone"; an: Ansprache; person: VermittlerName }): string {
+export function erinnerungsBetreff(o: { start: Date; now: Date; mode: "video" | "phone" | "onsite"; an: Ansprache; person: VermittlerName }): string {
   const tag = istMorgen(o.start, o.now) ? "Morgen" : tagLang(o.start);
-  const art = o.mode === "video" ? "Videotermin" : "Telefontermin";
+  const art = o.mode === "video" ? "Videotermin" : o.mode === "onsite" ? "Termin vor Ort" : "Telefontermin";
   return `${tag} um ${uhrzeitKurz(o.start)}: ${a(o.an, "Dein", "Ihr")} ${art} mit ${o.person.dat}`;
 }
 
@@ -122,7 +122,7 @@ export function vorbereitungBlock(v: Vorbereitung | null | undefined, an: Anspra
 export function content(kind: LeadEmailKind, ev: CustomerEvent, kontakt: AnredeKontakt | string, an: Ansprache = "sie", opts: LeadEmailOpts = {}) {
   const w = when(ev.start);
   const person = opts.person ?? { nom: ev.advisorName, dat: ev.advisorName };
-  const art = ev.mode === "video" ? "Videoberatung" : "telefonische Beratung";
+  const art = ev.mode === "video" ? "Videoberatung" : ev.mode === "onsite" ? "Beratung vor Ort" : "telefonische Beratung";
   // Anrede je Ansprache des Kunden (Ole, 14.11.2026): „Guten Tag Frau Schneider,“ (bzw. voller Name / „Guten Tag,“), Du „Hallo Julia,“
   const hi = anredeZeile(an, typeof kontakt === "string" ? { fullName: kontakt } : kontakt);
   const how =
@@ -130,6 +130,8 @@ export function content(kind: LeadEmailKind, ev: CustomerEvent, kontakt: AnredeK
       ? ev.videoUrl
         ? [`Hier der Link zum Videocall: ${ev.videoUrl}`, BROWSER_HINWEIS]
         : [a(an, "Den Link zum Videocall bekommst du rechtzeitig vor dem Termin.", "Den Link zum Videocall bekommen Sie rechtzeitig vor dem Termin.")]
+      : ev.mode === "onsite"
+        ? [ev.ort ? `Der Termin findet vor Ort statt: ${ev.ort}` : "Der Termin findet vor Ort in der Agentur statt."]
       : [a(an, `${person.nom} ruft dich zur vereinbarten Zeit an.`, `${person.nom} ruft Sie zur vereinbarten Zeit an.`)];
   const dein = a(an, "Dein", "Ihr");
   const vb = vorbereitungBlock(opts.vorbereitung, an, person);

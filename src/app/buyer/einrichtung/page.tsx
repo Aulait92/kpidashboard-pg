@@ -38,6 +38,7 @@ import { WhatsAppGuide } from "@/components/whatsapp-guide";
 import { WaCheckButton, WaPendingRefresh, WaResetButton } from "./wa-check";
 import { WaInvited } from "./wa-invited";
 import { LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
+import { loadTerminFormate } from "@/lib/termin-formate-server";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import {
   connectAllianzAction,
@@ -120,7 +121,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
   const calendar = await loadCalendarSetup(ctx.customerId, ctx.customerId);
   const kundeBasis = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true, leadAddress: true } });
-  const makler = kundeBasis?.vermittlerTyp === "makler";
+  const vermittlerTyp = kundeBasis?.vermittlerTyp ?? "vertreter";
+  const makler = vermittlerTyp === "makler";
   // Erstinformation (§ 15 VersVermV) und Einwilligungstext fürs Leadformular
   const erstinfo = software ? await loadErstinfo(ctx.customerId) : null;
   // Impressum-Adresse: Pflichtangabe auf den Seiten für Endkunden, geprüft, aber nicht blockierend (Rechtsvorprüfung 16.11.2026)
@@ -221,6 +223,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             software={software}
             // Ansprache immer aus der echten Einstellung (Ole, 18.11.2026: Fragebogen zeigte „Sie“, gespeichert war „du“)
             initial={{ ...((ob.questionnaire ?? {}) as Record<string, unknown>), ansprache: kundeBasis?.leadAddress === "du" ? "du" : "sie" } as unknown as Record<string, never>}
+            formate={await loadTerminFormate(ctx.customerId)}
             readOnly={readOnly}
           />
         </Step>
@@ -278,7 +281,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <StepExits
                 laterHref={laterHref("calendar")}
                 readOnly={readOnly}
-                skips={[{ kind: "skip:calendar:gesellschaft", label: "Meine Gesellschaft erlaubt das nicht" }]}
+                skips={[{ kind: "skip:calendar:gesellschaft", label: "Mein Versicherer erlaubt das nicht" }]}
               />
             ) : null}
           </Step>
@@ -291,7 +294,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Antworten landen dort. Wir senden nur E-Mails, die Sie selbst auslösen, und lesen Ihr Postfach nicht.
             </p>
             <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-postfach-gesellschaft>
-              Manche Gesellschaften (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu verbinden. Klären Sie
+              Manche Versicherer (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu verbinden. Klären Sie
               das im Zweifel vorher. Sie können den Schritt überspringen.
             </p>
             {ob.customer.mailFeaturesOff ? (
@@ -326,7 +329,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                     <SmtpForm readOnly={readOnly} />
                   </div>
                 </details>
-                <StepExits laterHref={laterHref("mailbox")} readOnly={readOnly} skips={[{ kind: "mailbox_off", label: "Meine Gesellschaft erlaubt das nicht" }]} />
+                <StepExits laterHref={laterHref("mailbox")} readOnly={readOnly} skips={[{ kind: "mailbox_off", label: "Mein Versicherer erlaubt das nicht" }]} />
               </>
             )}
           </Step>
@@ -344,7 +347,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             </Link>
             {!provision.confirmed ? <SkipButton kind="provision" readOnly={readOnly} label="Passt so" primary /> : null}
           </div>
-          {software && vertrieb ? <GesellschaftenWahl alle={alleGesellschaften} gewaehlt={vertrieb.vertrieb.gesellschaften} readOnly={readOnly} makler={makler} /> : null}
+          {software && vertrieb ? <GesellschaftenWahl alle={alleGesellschaften} gewaehlt={vertrieb.vertrieb.gesellschaften} readOnly={readOnly} vermittlerTyp={vermittlerTyp} /> : null}
         </Step>
 
         {software && erstinfo ? (
@@ -576,7 +579,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 laterHref={laterHref("whatsapp")}
                 readOnly={readOnly}
                 skips={[
-                  { kind: "skip:whatsapp:gesellschaft", label: "Meine Gesellschaft erlaubt das nicht" },
+                  { kind: "skip:whatsapp:gesellschaft", label: "Mein Versicherer erlaubt das nicht" },
                   { kind: "skip:whatsapp:nicht_noetig", label: "Ohne WhatsApp arbeiten" },
                 ]}
               />

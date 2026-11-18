@@ -1,19 +1,27 @@
 "use client";
 
 import { useActionState } from "react";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 type State = { ok?: boolean; error?: string };
 type Action = (prev: State, fd: FormData) => Promise<State>;
 
 /** Weitere Kalender nur für „belegt“ (Vertrieb). Selten gebraucht, deshalb zugeklappt. */
-export function BusyCalendarsForm({ action, ids }: { action: Action; ids: string[] }) {
+export function BusyCalendarsForm({ action, ids, unlesbar = [] }: { action: Action; ids: string[]; unlesbar?: string[] }) {
   const [state, formAction, pending] = useActionState<State, FormData>(action, {});
   return (
-    <details className="mt-3" data-weitere-kalender>
+    <details className="mt-3" data-weitere-kalender open={unlesbar.length > 0}>
       <summary className="cursor-pointer text-sm text-[color:var(--brand)]">
         Weitere Kalender für „belegt“{ids.length ? `: ${ids.length}` : ""}
       </summary>
+      {unlesbar.length && !state.ok ? (
+        <p className="mt-2 flex items-start gap-1.5 rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200" data-weitere-kalender-unlesbar>
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Nicht abrufbar, wird übersprungen: <b>{unlesbar.join(", ")}</b>. Bitte Adresse oder Freigabe prüfen.
+          </span>
+        </p>
+      ) : null}
       <form action={formAction} className="mt-2 space-y-2">
         <label className="block text-xs font-medium text-[color:var(--muted)]">
           Kalender-Adressen, die nur Zeiten blockieren (z. B. Ihr bisheriger Kalender, für dieses Konto freigegeben)

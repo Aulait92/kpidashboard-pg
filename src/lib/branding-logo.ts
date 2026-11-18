@@ -2,11 +2,15 @@
 // Signal-Iduna-Vertretern das Logo, das die Gesellschaft auf der Agenturseite zeigt) oder hochladen. Der Kunde
 // bestätigt, dass er es für seine Beratung verwenden darf; erst dann erscheint es auf den Folien.
 
-import { fetchHtml, normalizeUrl, resolvesPrivate } from "@/lib/impressum";
+import { fetchHtmlDetail, normalizeUrl, resolvesPrivate } from "@/lib/impressum";
+import { istAllianzVertreterSeite } from "@/lib/vertreter-seite";
+import { BROWSER_UA } from "@/lib/web-fetch";
+
+export { istAllianzVertreterSeite };
+export const ALLIANZ_LOGO_HINWEIS = "Die Allianz lässt den automatischen Abruf Ihrer Vertreter-Seite nicht zu. Bitte laden Sie Ihr Logo selbst hoch.";
 
 export const LOGO_MAX_BYTES = 1_000_000;
 const TYPES = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"] as const;
-const UA = "Mozilla/5.0 (compatible; performancegrowth-branding/1.0)";
 
 const attr = (tag: string, name: string) => tag.match(new RegExp(`\\b${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, "i"))?.slice(2).find((x) => x != null) ?? null;
 
@@ -113,7 +117,7 @@ export async function bildLaden(url: string): Promise<{ data: Uint8Array; type: 
   const u = normalizeUrl(url);
   if (!u || (await resolvesPrivate(u.hostname))) return null;
   try {
-    const res = await fetch(u.toString(), { headers: { "user-agent": UA, accept: "image/*" }, redirect: "follow", signal: AbortSignal.timeout(8000) });
+    const res = await fetch(u.toString(), { headers: { "user-agent": BROWSER_UA, accept: "image/*" }, redirect: "follow", signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     if (res.url && res.url !== u.toString()) {
       const fin = normalizeUrl(res.url);
@@ -133,11 +137,18 @@ export async function bildLaden(url: string): Promise<{ data: Uint8Array; type: 
 }
 
 /** Logo von einer Webseite holen: erster Kandidat, der sich laden lässt. */
-export async function logoVonWebseite(website: string): Promise<{ data: Uint8Array; type: string; source: string } | { error: string }> {
+export async function logoVonWebseite(website: string): Promise<{ data: Uint8Array; type: string; source: string } | { error: string; hochladen?: true }> {
   const base = normalizeUrl(website);
   if (!base) return { error: "Bitte eine gültige Webseite angeben, z. B. agentur-lohmann.de." };
-  const html = await fetchHtml(base.toString());
-  if (!html) return { error: "Die Webseite ließ sich nicht laden. Bitte prüfen Sie die Adresse oder laden Sie das Logo hoch." };
+  // Ole, 18.11.2026: Die Allianz sperrt den Abruf ihrer Vertreter-Seiten vom Server (Cloudflare). Gar nicht erst versuchen.
+  if (istAllianzVertreterSeite(base.toString())) return { error: ALLIANZ_LOGO_HINWEIS, hochladen: true };
+  const page = await fetchHtmlDetail(base.toString(), 20_000);
+  if ("error" in page) {
+    return page.error === "blocked"
+      ? { error: "Diese Webseite lässt den automatischen Abruf nicht zu. Bitte laden Sie Ihr Logo selbst hoch.", hochladen: true }
+      : { error: "Die Webseite ließ sich nicht laden. Bitte prüfen Sie die Adresse oder laden Sie das Logo hoch." };
+  }
+  const html = page.html;
   for (const url of logoKandidaten(html, base.toString())) {
     const img = url.startsWith("data:") ? bildAusDataUri(url) : await bildLaden(url);
     if (img) return { ...img, source: url.startsWith("data:") ? `${base.toString()} (eingebettetes Logo)` : url };

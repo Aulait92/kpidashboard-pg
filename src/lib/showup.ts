@@ -89,7 +89,7 @@ export function uhrKurz(d: Date): string {
 
 /** „Videotermin“ bzw. „Telefontermin“. */
 export function terminArtWort(mode: string): string {
-  return mode === "video" ? "Videotermin" : "Telefontermin";
+  return mode === "video" ? "Videotermin" : mode === "onsite" ? "Termin vor Ort" : "Telefontermin";
 }
 
 /** Satz zu den Verträgen bei Komplettcheck = Ja (Ole, 17.11.2026). */
@@ -98,8 +98,10 @@ export function vertraegeBereitSatz(an: Ansprache): string {
 }
 
 /** Zugang zum Termin: Videolink bzw. „Herr Kannapinn ruft Sie an.“ */
-export function zugangText(an: Ansprache, person: VermittlerName, mode: string, meetUrl: string | null | undefined): string {
+export function zugangText(an: Ansprache, person: VermittlerName, mode: string, meetUrl: string | null | undefined, ort?: string | null): string {
   if (mode === "video") return meetUrl?.trim() || a(an, "Den Link bekommst du kurz vorher hier im Chat.", "Den Link bekommen Sie kurz vorher hier im Chat.");
+  // Termin vor Ort (Ole, 18.11.2026): Adresse der Agentur
+  if (mode === "onsite") return ort?.trim() ? `Adresse: ${ort.trim()}` : "Vor Ort in der Agentur.";
   return a(an, `${person.nom} ruft dich an.`, `${person.nom} ruft Sie an.`);
 }
 
@@ -114,6 +116,8 @@ export type VortagEingabe = {
   komplettcheck: boolean;
   mode: string;
   meetUrl: string | null | undefined;
+  /** Adresse bei Terminen vor Ort (Appointment.ort) */
+  ort?: string | null;
   person: VermittlerName;
   /** Policen-Erinnerung (P2, lib/whatsapp/termin-strecke.ts policenVortagSatzFuer), solange keine Police da ist */
   policen?: string | null;
@@ -122,7 +126,7 @@ export type VortagEingabe = {
 /** Platzhalter der Vortags-Vorlage v5 (reminder) nach dem Namen: Wann, Nutzen (+ Verträge), Zugang. */
 export function vortagParams(o: VortagEingabe): [string, string, string] {
   const nutzen = [o.nutzen, o.komplettcheck ? vertraegeBereitSatz(o.an) : "", o.policen ?? ""].filter(Boolean).join(" ");
-  return [o.wann, nutzen, zugangText(o.an, o.person, o.mode, o.meetUrl)];
+  return [o.wann, nutzen, zugangText(o.an, o.person, o.mode, o.meetUrl, o.ort)];
 }
 
 /**

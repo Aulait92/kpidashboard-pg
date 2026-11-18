@@ -28,6 +28,8 @@ import {
   buchungsText,
   EMAIL_KNOEPFE,
   einladungUnterwegs,
+  eingetragenFrage,
+  EINGETRAGEN_KNOEPFE,
   istFamilie,
   KOMPLETTCHECK_KNOEPFE,
   komplettcheckFrage,
@@ -267,5 +269,7 @@ export function beispielVerlauf(o: BeispielEingabe): ChatZeile[] {
   assistent(abschlussText({ an, person, bereitlegen: liste, email: BEISPIEL_EMAIL, nachFragen: true, einleitung }), { knoepfe: EMAIL_KNOEPFE.map((k) => k.title) });
   lead(EMAIL_KNOEPFE[0].title, 1);
   assistent(einladungUnterwegs(an));
+  assistent(eingetragenFrage(an), { knoepfe: EINGETRAGEN_KNOEPFE.map((k) => k.title) });
+  lead(EINGETRAGEN_KNOEPFE[0].title, 1);
   return out;
 }

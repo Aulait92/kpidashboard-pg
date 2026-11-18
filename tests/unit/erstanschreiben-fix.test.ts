@@ -170,7 +170,7 @@ describe("3./4. Frageplan je Produkt (Testlead mit vollständigen Formularangabe
     expect(s).toContain("In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten.");
     expect(s).toMatch(/Nutze termin_vorschlagen/);
     expect(s).toMatch(/Die E-Mail-Adresse ist bekannt, frag nicht danach/);
-    expect(s).toMatch(/Nur Videotermine/);
+    expect(s).toMatch(/Schlag immer einen Videotermin vor/);
     expect(s).not.toMatch(/Telefon geht natürlich auch/);
     expect(s).not.toMatch(/bereitet das Gespräch mit seinen Angaben vor/);
   });

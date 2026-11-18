@@ -130,7 +130,7 @@ export async function rescheduleOpenAppointment(
 export type RescheduleDialogData = {
   id: string;
   startsAt: string;
-  mode: "phone" | "video";
+  mode: "phone" | "video" | "onsite";
   durationMin: number;
   name: string | null;
   /** false = Vorschau: nur ansehen. */
@@ -181,7 +181,7 @@ export async function rescheduleDialogData(
   return {
     id: appt.id,
     startsAt: appt.startsAt.toISOString(),
-    mode: appt.mode === "video" ? "video" : "phone",
+    mode: appt.mode === "video" ? "video" : appt.mode === "onsite" ? "onsite" : "phone",
     durationMin: await rescheduleDurationMin(appt),
     name: appt.lead?.name?.trim() || conv?.contactName?.trim() || null,
     canEdit,
