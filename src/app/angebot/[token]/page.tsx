@@ -76,7 +76,7 @@ export default async function OfferPage({
   const bonus = !offer.isTest && billingEnabled() ? abschlussBonusJetzt(offer, new Date(nowMs())) : null;
   // Entscheidungs-Call (Ole, 17.11.2026), geprüft beim Aufruf: schon gebucht → Termin mit Link zum Verschieben,
   // sonst Buchungslink. Nach der Annahme nur noch ein gebuchter Termin, kein Buchungslink mehr.
-  const call = offer.salesContactId && offer.status !== "superseded" ? await entscheidungsCallStand(offer.salesContactId, new Date(nowMs())).catch(() => null) : null;
+  const call = offer.salesContactId && offer.status !== "superseded" && !offer.ohneEntscheidungsCall ? await entscheidungsCallStand(offer.salesContactId, new Date(nowMs())).catch(() => null) : null;
   const callText = call && (offer.status !== "accepted" || call.art === "gebucht") ? entscheidungsCallText(call) : null;
 
   return (

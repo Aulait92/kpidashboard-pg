@@ -14,7 +14,7 @@ import { verkaufsLinkErstellen } from "@/lib/vertrieb/verkaufspraesentation-serv
 
 /** Extras der Angebotsmail: Rechner-Link und/oder Präsentation (PDF) der gewählten Zielgruppe. */
 /** praesentationLink: Link zur Web-Präsentation (/praesentation/<token>, 14 Tage), nur bei Vertriebskontakten. */
-export type OfferMailExtras = { rechner?: boolean; praesentation?: boolean; praesentationLink?: boolean; audience?: Audience; du?: boolean };
+export type OfferMailExtras = { rechner?: boolean; praesentation?: boolean; praesentationLink?: boolean; audience?: Audience; du?: boolean; ohneEntscheidungsCall?: boolean };
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -112,7 +112,9 @@ export async function sendOfferEmailAction(
   }
   // Entscheidungs-Call (Ole, 17.11.2026), geprüft beim Versand: schon gebucht → Termin mit Link zum Verschieben,
   // sonst persönlicher Buchungslink (signiert, hängt direkt am Kontakt), solange online buchbar
-  const entscheidungsCall = offer.salesContactId ? await entscheidungsCallStand(offer.salesContactId) : null;
+  // Bitte um den Entscheidungs-Call weglassen (Ole, 18.11.2026): Häkchen im Versand, gilt dann auch für Seite und Erinnerung
+  const ohneCall = !!extras.ohneEntscheidungsCall;
+  const entscheidungsCall = offer.salesContactId && !ohneCall ? await entscheidungsCallStand(offer.salesContactId) : null;
   const disc = offerSetupDiscount(offer);
   const res = await sendOfferEmail({
     entscheidungsCall,
@@ -136,7 +138,7 @@ export async function sendOfferEmailAction(
   await prisma.offer.update({
     where: { id: offer.id },
     // Anrede merken: Zahlungserinnerung und weitere Mails zum Angebot folgen ihr
-    data: { status: "sent", sentAt: offer.sentAt ?? new Date(), mailDu: !!extras.du },
+    data: { status: "sent", sentAt: offer.sentAt ?? new Date(), mailDu: !!extras.du, ohneEntscheidungsCall: ohneCall },
   });
   await logOfferActivity(
     offer,

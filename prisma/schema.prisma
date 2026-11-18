@@ -1685,6 +1685,8 @@ model Offer {
   paymentReminderPushAt   DateTime?
   // Anrede in Kundenmails zum Angebot (gemerkt beim Versand der Angebotsmail, im Admin änderbar)
   mailDu                  Boolean       @default(false)
+  // Bitte um den Entscheidungs-Call weglassen (Ole, 18.11.2026): gilt für Angebotsmail, Angebotsseite und Zahlungserinnerung
+  ohneEntscheidungsCall   Boolean       @default(false)
   // Startdatum wurde verschoben, weil erst nach dem Start gezahlt wurde: ursprünglicher Start
   startShiftedFrom        DateTime?
   // Überweisung nur auf Anfrage (Ole, 17.11.2026, lib/ueberweisung.ts): Ole schaltet sie je Angebot frei
