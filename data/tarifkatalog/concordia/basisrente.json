@@ -19,8 +19,7 @@
         "hinterbliebene": "mind. Beitragssumme"
       },
       "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/ruerup-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Basis-Rente oecoinvest plus",
@@ -32,8 +31,7 @@
         "hinterbliebene": "mind. Beitragssumme"
       },
       "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/ruerup-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -41,6 +39,7 @@
   ],
   "offen": [
     "Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Zwei Anlagevarianten statt Leistungsstufen; keine Empfehlung.",
-    "Bei Tod vor Rentenbeginn erhalten berechtigte Hinterbliebene das Fondsguthaben, mindestens die eingezahlten Beiträge, als Rente; nach Rentenbeginn das Restkapital als Rente. Beitragsgarantie, Rentenfaktor und Kosten nicht beziffert."
+    "Bei Tod vor Rentenbeginn erhalten berechtigte Hinterbliebene das Fondsguthaben, mindestens die eingezahlten Beiträge, als Rente; nach Rentenbeginn das Restkapital als Rente. Beitragsgarantie, Rentenfaktor und Kosten nicht beziffert.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

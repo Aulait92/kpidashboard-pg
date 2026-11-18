@@ -33,8 +33,7 @@
         "vermieter": "optional"
       },
       "quelle": "https://www.ks-auxilia.de/rechtsschutzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat-, Berufs- und Verkehrs-Rechtsschutz",
@@ -63,8 +62,7 @@
         "vermieter": "optional"
       },
       "quelle": "https://www.ks-auxilia.de/rechtsschutzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "JURPRIVAT",
@@ -94,8 +92,7 @@
         "vermieter": "optional"
       },
       "quelle": "https://www.ks-auxilia.de/rechtsschutzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -110,6 +107,7 @@
     "Selbstbeteiligung wählbar: fallend 400 bis 0 € (Schadenfreiheitssystem), fest 150, 250, 500 oder 1.000 €, flexibel 300/150 € (geringere SB mit von AUXILIA empfohlenem Anwalt). Ein Tarif ganz ohne SB ist auf der Seite nicht genannt.",
     "Opfer-Rechtsschutz steht im Vergleich nur im Abschnitt Verkehr (Privat: nein); laut Broschüre ist Opfer-Rechtsschutz bei JURPRIVAT Leistungsart. Für Privat daher offen gelassen.",
     "Wartezeit: Privat bis zu 3 Monate, Beruf 6 Monate, Verkehr und Spezial-Straf-Rechtsschutz ohne Wartezeit.",
-    "Mitgliedschaft im KS e.V. (Automobilclub, u. a. Pannen- und Abschlepphilfe) ist in allen Tarifen enthalten."
+    "Mitgliedschaft im KS e.V. (Automobilclub, u. a. Pannen- und Abschlepphilfe) ist in allen Tarifen enthalten.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Produktbroschüre (Symbole im PDF am Zeichensatz gegengeprüft)."
   ]
 }

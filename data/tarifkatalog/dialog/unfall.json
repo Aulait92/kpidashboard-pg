@@ -29,8 +29,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/4984/76fcac4ed783dede5111a06ab100bac5/Leistungs%C3%BCbersicht%20Unfall.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfall Premium",
@@ -51,8 +50,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/4984/76fcac4ed783dede5111a06ab100bac5/Leistungs%C3%BCbersicht%20Unfall.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -64,6 +62,7 @@
     "Progression wahlweise 225, 350 oder 540 % (bis 65 Jahre), sonst linear. Klassik mit Integralfranchise (Leistung ab 20 % Invalidität), abwählbar; Premium ohne Franchise, Mindestgrad nicht genannt.",
     "Unfallrente (ab 35 % gestaffelt oder ab 50 %), Krankenhaustagegeld, Todesfallleistung zuwählbar. Sofortleistung: Hilfeleistung bei Schwerverletzung bis 10.000 € (bis 65 Jahre).",
     "Premium: 10 % Mehrleistung bei Helm, ÖPNV, Ehrenamt, Rettung; Koma-Geld. Kosmetische OP und Bergung je Tarif nicht ausgewertet.",
-    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali)."
+    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichproben am Bild der Übersicht)."
   ]
 }

@@ -24,8 +24,7 @@
         "inlays": "80 bis 85 %"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/zahn-zusatzversicherungen/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnbehandlungs-Tarif",
@@ -42,8 +41,7 @@
         "kfo": "80 %, bis 2.000 €/Kiefer"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/zahn-zusatzversicherungen/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ZAHN SORGLOS",
@@ -61,8 +59,7 @@
         "inlays": "100 %"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/zahn-zusatzversicherungen/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -71,6 +68,7 @@
   "offen": [
     "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). ZAHN SORGLOS ist als „Unsere Empfehlung“ markiert. Zahnersatz- und Zahnbehandlungs-Tarif sind getrennte, kombinierbare Bausteine (keine Leistungsstufen).",
     "Zahnstaffeln (Erstattungshöchstbeträge) nur für Zahnersatz und Kieferorthopädie, entfallen bei Unfall: Zahnersatz-Tarif 500/1.000/1.500/2.000 €, Behandlungs-Tarif 250/500/1.000/1.500 €, ZAHN SORGLOS 1.500/3.000/4.500 €, danach volle Leistung.",
-    "Zahnreinigung im Behandlungs-Tarif bis 150 € in zwei Kalenderjahren, ZAHN SORGLOS bis 550 €. ZAHN SORGLOS zusätzlich Schmerz- und Angstlinderung 100 %, Bleaching bis 500 € in 4 Jahren, monatlich kündbar. Kieferorthopädie KIG 3 bis 5 im Behandlungs-Tarif bis 600 € je Kiefer."
+    "Zahnreinigung im Behandlungs-Tarif bis 150 € in zwei Kalenderjahren, ZAHN SORGLOS bis 550 €. ZAHN SORGLOS zusätzlich Schmerz- und Angstlinderung 100 %, Bleaching bis 500 € in 4 Jahren, monatlich kündbar. Kieferorthopädie KIG 3 bis 5 im Behandlungs-Tarif bis 600 € je Kiefer.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

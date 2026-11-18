@@ -372,7 +372,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     expect(r3.mode).toBe("text");
     const out = sent.slice(before) as Array<{ type: string; text?: { body: string } }>;
     expect(out[0]).toMatchObject({ type: "text" });
-    expect(out[0].text?.body).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht zum Thema Katzenversicherung! Ich bin der digitale KI-Assistent von [^.\n]+\.\n\nWie alt ist Ihre Katze\?$/);
+    expect(out[0].text?.body).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht zur Katzenversicherung 🐱! Ich bin der digitale KI-Assistent von [^.\n]+ und kläre kurz ein paar Angaben, damit [^.\n]+ Ihnen für Ihre Katze den passenden Schutz zeigen kann\.\n\nWie alt ist Ihre Katze\?$/);
     // Erstinformation unvollständig: PDF im aktuellen Stand unmittelbar als Nachricht 2 (kein Link-Rückfall)
     expect(out[1]).toMatchObject({ type: "document" });
     expect(out).toHaveLength(2);

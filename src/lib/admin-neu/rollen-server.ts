@@ -6,7 +6,10 @@
 import { cache } from "react";
 import { activeDismissals, loadAdminHeute, rankItems, withoutDismissed, type HeuteItem } from "@/lib/admin-heute";
 import { reportError } from "@/lib/monitoring";
+import { NEU } from "./navigation";
 import { punkteJeRolle, rolleVonPunkt, type Rolle } from "./rollen";
+
+const SYSTEMZUSTAND = `${NEU}/werkzeuge/zustand`;
 
 /** Punkte, die nur der neue Admin zeigt (Admin v2): Leadpreis je Werbekonto mehr als 5 € über Ziel (Paket A6). */
 async function v2Punkte(userId: string): Promise<HeuteItem[]> {
@@ -23,7 +26,9 @@ async function v2Punkte(userId: string): Promise<HeuteItem[]> {
 /** Mein-Tag-Punkte des Admins, einmal je Anfrage geladen. */
 export const heuteFuer = cache(async (userId: string) => {
   const [heute, extra] = await Promise.all([loadAdminHeute(new Date(), userId), v2Punkte(userId)]);
-  return extra.length ? { ...heute, items: rankItems([...heute.items, ...extra]) } : heute;
+  // Hintergrund-Jobs/Abgleich: im neuen Admin zum Systemzustand (Paket A5) statt auf die rohe Status-Schnittstelle
+  const items = heute.items.map((i) => (i.key.startsWith("hb:") ? { ...i, action: { label: "Systemzustand", href: SYSTEMZUSTAND } } : i));
+  return { ...heute, items: extra.length ? rankItems([...items, ...extra]) : items };
 });
 
 /** Für ladeHeuteSeite: gleiche Signatur wie loadAdminHeute, aber aus dem Anfrage-Cache. */

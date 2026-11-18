@@ -206,3 +206,6 @@ body:has([data-admin-shell]) select { max-width: 100%; }
     font-size: 16px;
   }
 }
+
+/* Admin v2 A4 (F199): Vorlage von Hand als freigegeben markieren nur im alten Admin (geteilter Baustein) */
+[data-admin-neu] [data-hand-freigabe] { display: none; }

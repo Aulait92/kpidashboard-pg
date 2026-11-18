@@ -7,7 +7,7 @@
 // - id: stabil, einmal vergeben bleibt sie (auch wenn sich der Text ändert). Neu: Slug aus quelle + funktion.
 // - status_neu: „vorhanden“, wenn die id als data-funktion (bzw. als String) im Quelltext unter
 //   src/app/admin/neu oder src/components/admin-neu steht; „bleibt“ für Funktionen ohne Oberfläche
-//   (BLEIBT in src/lib/admin-neu/offen/index.ts); sonst „offen“.
+//   (BLEIBT in src/lib/admin-neu/offen/index.ts); „entfernt“ für die Liste ENTFERNT (Admin v2 A4); sonst „offen“.
 // - ort_neu: Dateien, in denen die id steht.
 // Bei Merge-Konflikten im Inventar: eine Seite nehmen und das Skript neu laufen lassen.
 
@@ -63,7 +63,7 @@ const WERKZEUGE = new Set(["werkzeuge", "e-status", "e-anbindungen", "e-vorlagen
 export function bereichFuer(view) {
   if (view === "landkarte") return "was-wo-ist";
   if (["heute", "mehr", "vertrieb-aufgaben"].includes(view)) return "mein-tag";
-  if (WERKZEUGE.has(view)) return "werkzeuge";
+  if (WERKZEUGE.has(view) || view.startsWith("w-")) return "werkzeuge";
   if (view.startsWith("e-") || view === "einstellungen") return "einstellungen";
   if (view.startsWith("vertrieb") || view.startsWith("kontakt") || view === "angebot-neu" || view === "praesentation" || view.startsWith("marketing")) return "verkaufen";
   if (view === "leads-chats" || view === "leads-chat" || view === "leads-ki" || view === "zahlen-qualitaet" || view.startsWith("kunde")) return "betreuen";
@@ -107,16 +107,18 @@ export function fundstellen(root = ROOT) {
   return map;
 }
 
-/** „bleibt“-Liste aus src/lib/admin-neu/offen/index.ts lesen (ohne TS-Import). */
-function bleibt(root = ROOT) {
+/** Liste („BLEIBT“, „ENTFERNT“) aus src/lib/admin-neu/offen/index.ts lesen (ohne TS-Import). */
+function liste(name, root = ROOT) {
   const text = readFileSync(join(root, "src/lib/admin-neu/offen/index.ts"), "utf8");
-  const block = /export const BLEIBT[^=]*=\s*\[([\s\S]*?)\];/.exec(text)?.[1] ?? "";
+  const block = new RegExp(`export const ${name}[^=]*=\\s*\\[([\\s\\S]*?)\\];`).exec(text)?.[1] ?? "";
   return new Set([...block.matchAll(/"([^"]+)"/g)].map((m) => m[1]));
 }
+const bleibt = (root = ROOT) => liste("BLEIBT", root);
 
 export function stand(inventar, root = ROOT) {
   const fund = fundstellen(root);
   const bl = bleibt(root);
+  const weg = liste("ENTFERNT", root);
   const vergeben = new Set(inventar.filter((e) => e.id).map((e) => e.id));
   return inventar.map((e) => {
     let id = e.id;
@@ -127,7 +129,7 @@ export function stand(inventar, root = ROOT) {
       vergeben.add(id);
     }
     const orte = [...(fund.get(id) ?? [])].sort();
-    const status_neu = orte.length ? "vorhanden" : bl.has(id) ? "bleibt" : "offen";
+    const status_neu = orte.length ? "vorhanden" : weg.has(id) ? "entfernt" : bl.has(id) ? "bleibt" : "offen";
     const { id: _a, bereich: _b, status_neu: _c, ort_neu: _d, ...rest } = e;
     return { ...rest, id, bereich: bereichFuer(e.demo_view), status_neu, ort_neu: orte.join(", ") };
   });
@@ -146,6 +148,6 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     writeFileSync(INVENTAR, neu);
     const s = JSON.parse(neu);
     const z = (st) => s.filter((e) => e.status_neu === st).length;
-    console.log(`Inventar geschrieben: ${s.length} Funktionen, vorhanden ${z("vorhanden")}, offen ${z("offen")}, bleibt ${z("bleibt")}.`);
+    console.log(`Inventar geschrieben: ${s.length} Funktionen, vorhanden ${z("vorhanden")}, offen ${z("offen")}, bleibt ${z("bleibt")}, entfernt ${z("entfernt")}.`);
   }
 }

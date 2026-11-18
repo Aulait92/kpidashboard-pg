@@ -30,7 +30,7 @@ import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, typ
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
-import { ERSTANSCHREIBEN_V7 } from "@/lib/whatsapp/erstanschreiben";
+import { ERSTANSCHREIBEN_V7, ERSTANSCHREIBEN_V8 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
   | "outreach"
@@ -355,11 +355,45 @@ export type NaechsteFassung = {
  * Vorbereitete neue Fassung mit ANDEREN Platzhaltern: wird NICHT eingereicht und als Vorlage nicht gesendet, bis Ole die
  * Texte freigibt. Im offenen 24-h-Fenster kann der Absender schon den neuen Text als Freitext senden. Aktivieren: Text
  * nach TEMPLATE_BODY, REST_PARAMS des Zwecks auf `params`, PURPOSE_VERSION auf `version`, Eintrag hier löschen und die
- * bisherige Belegung in PLATZHALTER_AB eintragen. Zurzeit leer (Show-up-Paket am 17.11.2026 freigegeben).
+ * bisherige Belegung in PLATZHALTER_AB eintragen. Show-up-Paket am 17.11.2026 freigegeben; zurzeit nur das
+ * Erstanschreiben v8 (P2, wartet auf Ole).
  */
 export type VorbereiteteFassung = { version: string; du: string; sie: string; params: string[]; beispiele: { du: string[]; sie: string[] } };
 
-export const VORBEREITETE_FASSUNG: Partial<Record<NoticePurpose, VorbereiteteFassung>> = {};
+/**
+ * Erstanschreiben v8 (Ole, 17.11.2026, P2), nur vorbereitet (docs/vorlagen-erstanschreiben-v8.md): konkretes Interesse
+ * mit Emoji, neutraler Nutzen-Halbsatz, erste Frage dynamisch und nicht fett. Parameter: outreach.ts paramsFor ab v8.
+ */
+const ERSTANSCHREIBEN_V8_FASSUNG = (beispielSie: string[], beispielDu: string[]): VorbereiteteFassung => ({
+  version: "v8",
+  du: ERSTANSCHREIBEN_V8.du,
+  sie: ERSTANSCHREIBEN_V8.sie,
+  params: ["Anfrage mit Interesse und Emoji", "Vermittler (Dativ)", "Vermittler als Subjekt (er, sie bzw. Vorname)", "Für wen (z. B. für Ihre Familie, sonst persönlich)", "Erste offene Frage ohne Fragezeichen"],
+  beispiele: { sie: beispielSie, du: beispielDu },
+});
+
+export const VORBEREITETE_FASSUNG: Partial<Record<NoticePurpose, VorbereiteteFassung>> = {
+  outreach: ERSTANSCHREIBEN_V8_FASSUNG(
+    ["Frau Becker", "zum Thema Versicherung", "Herrn Kannapinn", "er", "persönlich", "Wann erreicht Herr Kannapinn Sie am besten für ein kurzes Telefonat"],
+    ["Anna", "zum Thema Versicherung", "Ole", "er", "persönlich", "Wann erreicht Ole dich am besten für ein kurzes Telefonat"],
+  ),
+  outreach_tkv: ERSTANSCHREIBEN_V8_FASSUNG(
+    ["Frau Becker", "zur Katzenversicherung 🐱", "Herrn Kannapinn", "er", "für Ihre Katze", "Wie alt ist Ihre Katze"],
+    ["Anna", "zur Katzenversicherung 🐱", "Ole", "er", "für deine Katze", "Wie alt ist deine Katze"],
+  ),
+  outreach_zahn: ERSTANSCHREIBEN_V8_FASSUNG(
+    ["Frau Becker", "zur Zahnzusatzversicherung", "Herrn Kannapinn", "er", "persönlich", "Welcher Tarifbaustein ist Ihnen am wichtigsten"],
+    ["Anna", "zur Zahnzusatzversicherung", "Ole", "er", "persönlich", "Welcher Tarifbaustein ist dir am wichtigsten"],
+  ),
+  outreach_pkv: ERSTANSCHREIBEN_V8_FASSUNG(
+    ["Frau Becker", "zur privaten Krankenversicherung", "Herrn Kannapinn", "er", "persönlich", "Wie sind Sie aktuell beruflich aufgestellt"],
+    ["Anna", "zur privaten Krankenversicherung", "Ole", "er", "persönlich", "Wie bist du aktuell beruflich aufgestellt"],
+  ),
+  outreach_privatschutz: ERSTANSCHREIBEN_V8_FASSUNG(
+    ["Frau Becker", "zu Haftpflicht und Hausrat 🏠", "Herrn Kannapinn", "er", "für Ihre Familie", "Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu"],
+    ["Anna", "zu Haftpflicht und Hausrat 🏠", "Ole", "er", "für deine Familie", "Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu"],
+  ),
+};
 
 /**
  * Zwecke, deren Platzhalter sich mit einer Textversion geändert haben: ab `version` gilt REST_PARAMS, ältere

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { bereichFuer as bereichFuerView, fundstellen, stand } from "../../tools/admin-neu/inventar-stand.mjs";
 import { BEREICHE, SEITEN, bereichFuer, reiterFuer, seiteFuer, NEU_EINTRAEGE, SUCH_SEITEN } from "@/lib/admin-neu/navigation";
-import { BLEIBT, OFFEN } from "@/lib/admin-neu/offen";
+import { BLEIBT, ENTFERNT, OFFEN } from "@/lib/admin-neu/offen";
 import { UMZUG, neuerPfad } from "@/lib/admin-neu/umzug";
 
 // Abnahme des neuen Admins (docs/ux/admin-neu/README.md): Keine Funktion aus dem Inventar darf verloren gehen.
@@ -18,6 +18,7 @@ const fund: Map<string, Set<string>> = fundstellen(ROOT);
 const offenListe = Object.entries(OFFEN).flatMap(([bereich, ids]) => ids.map((id) => ({ bereich, id })));
 const offen = new Set(offenListe.map((o) => o.id));
 const bleibt = new Set(BLEIBT);
+const entfernt = new Set(ENTFERNT);
 const ids = new Set(inventar.map((e) => e.id));
 
 describe("Funktionsinventar neuer Admin", () => {
@@ -26,8 +27,8 @@ describe("Funktionsinventar neuer Admin", () => {
     expect(ids.size).toBe(inventar.length);
   });
 
-  it("keine Funktion geht verloren: vorhanden, offen oder bleibt", () => {
-    const verloren = inventar.filter((e) => !fund.has(e.id) && !offen.has(e.id) && !bleibt.has(e.id));
+  it("keine Funktion geht verloren: vorhanden, offen, bleibt oder bewusst entfernt", () => {
+    const verloren = inventar.filter((e) => !fund.has(e.id) && !offen.has(e.id) && !bleibt.has(e.id) && !entfernt.has(e.id));
     expect(
       verloren.map((e) => `${e.id} (${e.heute}: ${e.funktion})`),
       "Funktion weder im neuen UI (data-funktion) noch in src/lib/admin-neu/offen/*.ts",
@@ -37,6 +38,13 @@ describe("Funktionsinventar neuer Admin", () => {
   it("gebaute Funktionen stehen nicht mehr in der Liste „offen“", () => {
     const doppelt = offenListe.filter((o) => fund.has(o.id)).map((o) => `${o.id} → aus offen/${o.bereich}.ts streichen`);
     expect(doppelt).toEqual([]);
+  });
+
+  it("entfernte Funktionen (Admin v2 A4) stehen nirgends mehr im neuen Admin", () => {
+    expect(ENTFERNT.filter((id) => fund.has(id)).map((id) => `${id} in ${[...fund.get(id)!].join(", ")}`)).toEqual([]);
+    expect(ENTFERNT.filter((id) => !ids.has(id) || bleibt.has(id) || offen.has(id))).toEqual([]);
+    expect(new Set(ENTFERNT).size).toBe(ENTFERNT.length);
+    expect(inventar.filter((e) => e.status_neu === "entfernt").length).toBe(ENTFERNT.length);
   });
 
   it("offen und BLEIBT enthalten nur bekannte ids, jede nur einmal", () => {

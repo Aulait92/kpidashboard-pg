@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.canadalife.de/media/kundenflyer-flexibler-kapitalplan.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "GENERATION private plus",
@@ -43,8 +42,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.canadalife.de/generation-private-plus/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "GARANTIE INVESTMENT RENTE private",
@@ -59,8 +57,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.canadalife.de/media/kundenflyer-garantie-investment-rente-private.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -76,6 +73,7 @@
     "GENERATION private plus: Garantie nur bei Wahl des UWP-Fonds (Fonds mit Garantie), Höhe der Mindestgarantie selbst bestimmbar; garantierter Rentenfaktor laut Bedingungen (Stand Mai 2026). Zusatzoptionen BU-Rente und Schwere Krankheiten (33 Krankheiten).",
     "GARANTIE INVESTMENT RENTE private: garantierte lebenslange Rente, die laut Flyer nur steigen kann, sofern keine Entnahmen erfolgen; Todesfallschutz 90, 95 oder 100 % des Beitrags abzüglich Entnahmen und Renten. Beitragsgarantie im Sinne des Schemas nicht genannt.",
     "Flexibler Kapitalplan: Garantie, Rentenfaktor und Beitragspause nicht genannt.",
-    "Effektivkosten nur in Musterrechnungen, je nach Fondswahl unterschiedlich; nicht aufgenommen."
+    "Effektivkosten nur in Musterrechnungen, je nach Fondswahl unterschiedlich; nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseiten, Kundenflyern bzw. Bedingungen von Canada Life."
   ]
 }

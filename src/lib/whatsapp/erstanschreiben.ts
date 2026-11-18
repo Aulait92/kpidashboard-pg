@@ -16,6 +16,12 @@
 //
 // v7 (Ole, 17.11.2026): gleicher Text, die erste Frage aber NICHT mehr fett (ohne Sternchen), in Vorlage und Freitext.
 // v6 bleibt bei Meta freigegeben und wird gesendet, bis v7 freigegeben ist (templates.ts rankOutreach).
+//
+// v8 (Ole, 17.11.2026, P2, ERSTANSCHREIBEN_V8): statt „zum Thema Privatschutz“ das konkrete Interesse aus dem Formular
+// („zu Haftpflicht und Hausrat 🏠“, Emoji aus OutreachProdukt.emoji) und ein neutraler Nutzen-Halbsatz („und kläre kurz
+// ein paar Angaben, damit er Ihnen für Ihre Familie den passenden Schutz zeigen kann“; „Familie“ nur laut Formular,
+// keine Zahl der Fragen). Die Frage bleibt dynamisch und nicht fett. Im Freitext (24-h-Fenster) gilt v8 sofort; die
+// Vorlage ist nur vorbereitet (templates.ts VORBEREITETE_FASSUNG, docs/vorlagen-erstanschreiben-v8.md), nicht eingereicht.
 
 import { displayProduct } from "@/lib/products";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
@@ -35,6 +41,16 @@ export const ERSTANSCHREIBEN_V6 = {
 export const ERSTANSCHREIBEN_V7 = {
   sie: "danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?",
   du: "danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?",
+} as const;
+
+/**
+ * Erstanschreiben v8 (Ole, 17.11.2026, P2), nur vorbereitet: {{2}} Anfrage mit Interesse und Emoji („zu Haftpflicht und
+ * Hausrat 🏠“), {{3}} Vermittler im Dativ, {{4}} Vermittler als Subjekt („er“, „sie“, Du: Vorname), {{5}} für wen
+ * („für Ihre Familie“, „für Ihre Katze“, sonst „persönlich“), {{6}} erste offene Frage ohne „?“. Kein Platzhalter am Ende.
+ */
+export const ERSTANSCHREIBEN_V8 = {
+  sie: "danke für Ihre Anfrage {{2}}! Ich bin der digitale KI-Assistent von {{3}} und kläre kurz ein paar Angaben, damit {{4}} Ihnen {{5}} den passenden Schutz zeigen kann.\n\n{{6}}?",
+  du: "danke für deine Anfrage {{2}}! Ich bin der digitale KI-Assistent von {{3}} und kläre kurz ein paar Angaben, damit {{4}} dir {{5}} den passenden Schutz zeigen kann.\n\n{{6}}?",
 } as const;
 
 /** Frage für den Platzhalter {{4}} (v6): ohne abschließendes „?“ (steht fest in der Vorlage). */
@@ -203,6 +219,56 @@ export function erstanschreibenThema(source: string | null | undefined): string 
   if (p) return p.thema;
   const s = (source ?? "").trim();
   return s ? displayProduct(s) : "Versicherung";
+}
+
+/**
+ * Anfrage mit konkretem Interesse (v8): „zu Haftpflicht und Hausrat 🏠“ aus dem Versicherungsinteresse im Formular,
+ * „zur Katzenversicherung 🐱“, „zur privaten Krankenversicherung“; ohne erkennbares Interesse „zum Thema Privatschutz“.
+ */
+export function anfrageZu(source: string | null | undefined, formular?: FormAntwort[] | null): string {
+  const p = outreachProdukt(source);
+  const emoji = p?.emoji ? ` ${p.emoji}` : "";
+  if (p?.purpose === "outreach_privatschutz") {
+    const ausFormular = spartenWoerter((formular ?? []).find((x) => /versicherungsinteresse|^interesse\b|sparte/i.test(x.label))?.value ?? null);
+    const w = ausFormular.length ? ausFormular : spartenWoerter(source ?? null);
+    if (w.length) return `zu ${w.length === 1 ? w[0] : `${w.slice(0, -1).join(", ")} und ${w.at(-1)}`}${emoji}`;
+    return `zum Thema ${p.thema}${emoji}`;
+  }
+  if (p) return `${p.praep} ${p.produkt}${emoji}`;
+  return `zum Thema ${erstanschreibenThema(source)}`;
+}
+
+const TIER_AKK: Record<Tier, { sie: string; du: string }> = {
+  katze: { sie: "Ihre Katze", du: "deine Katze" },
+  hund: { sie: "Ihren Hund", du: "deinen Hund" },
+  pferd: { sie: "Ihr Pferd", du: "dein Pferd" },
+  tier: { sie: "Ihr Tier", du: "dein Tier" },
+};
+
+/** Für wen (v8): „für Ihre Familie“ nur, wenn Familie im Formular steht; Tier „für Ihre Katze“; sonst „persönlich“. */
+export function fuerWen(source: string | null | undefined, an: Ansprache, formular?: FormAntwort[] | null): string {
+  const p = outreachProdukt(source);
+  if (p?.purpose === "outreach_tkv") return `für ${TIER_AKK[p.tier ?? "tier"][an]}`;
+  const leben = (formular ?? []).find((x) => /lebenssituation|familienstand|zu versichernde/i.test(x.label))?.value ?? "";
+  if (/kind|familie/i.test(leben)) return a(an, "für deine Familie", "für Ihre Familie");
+  return "persönlich";
+}
+
+/**
+ * Vermittler als Subjekt im Nutzen-Halbsatz (v8): Anrede Herr bzw. „Herr Kannapinn“ → „er“, Frau → „sie“ (auch im Du,
+ * dann steht der Vorname nur einmal), sonst der Name.
+ */
+export function vermittlerSubjekt(nom: string, anrede?: string | null): string {
+  if (anrede === "Herr") return "er";
+  if (anrede === "Frau") return "sie";
+  if (/^Herr\s/.test(nom)) return "er";
+  if (/^Frau\s/.test(nom)) return "sie";
+  return nom;
+}
+
+/** Nutzen-Halbsatz (v8): „und kläre kurz ein paar Angaben, damit er Ihnen für Ihre Familie den passenden Schutz zeigen kann“. */
+export function nutzenHalbsatz(an: Ansprache, nom: string, fuer: string, anrede?: string | null): string {
+  return `und kläre kurz ein paar Angaben, damit ${vermittlerSubjekt(nom, anrede)} ${a(an, "dir", "Ihnen")} ${fuer} den passenden Schutz zeigen kann`;
 }
 
 /** Frage nach dem Termin, wenn das Formular alle Fragen vor dem Termin schon beantwortet (nur Video, Ole 17.11.2026). */
@@ -400,6 +466,8 @@ export type ErstanschreibenOpts = {
   vermittler?: string | null;
   /** Vermittler im Nominativ („Herr Kannapinn“) für die Frage nach dem Telefonat; ohne: name */
   vermittlerNom?: string | null;
+  /** Anrede des Vermittlers (Herr/Frau) für „er“/„sie“ im Nutzen-Halbsatz (v8) */
+  vermittlerAnrede?: string | null;
   /** Produkt aus dem Leadformular (Lead.source) */
   source?: string | null;
   herkunft?: Herkunft;
@@ -429,8 +497,10 @@ export function erstanschreibenKopf(o: ErstanschreibenOpts, opts: { themaImmer?:
   // v6: „danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.“
   if (o.ohneLead) return `${erstGruss(an, o.kontakt)} danke für ${was}! Ich bin der digitale KI-Assistent von ${von} und helfe ${a(an, "dir", "Ihnen")} gern weiter.`;
   // Ohne Produkt nur im Erstanschreiben „zum Thema Versicherung“ (gleich der Vorlage), in der ersten Antwort ohne Thema
-  const thema = opts.themaImmer || (o.source ?? "").trim() ? ` zum Thema ${erstanschreibenThema(o.source)}` : "";
-  return `${erstGruss(an, o.kontakt)} danke für ${was}${thema}! Ich bin der digitale KI-Assistent von ${von}.`;
+  if (!opts.themaImmer && !(o.source ?? "").trim()) return `${erstGruss(an, o.kontakt)} danke für ${was}! Ich bin der digitale KI-Assistent von ${von}.`;
+  // v8 (Ole, 17.11.2026, P2): konkretes Interesse mit Emoji und neutraler Nutzen-Halbsatz
+  const nom = o.vermittlerNom || o.vermittler?.replace(/^Herrn\s/, "Herr ") || o.name;
+  return `${erstGruss(an, o.kontakt)} danke für ${was} ${anfrageZu(o.source, o.formular)}! Ich bin der digitale KI-Assistent von ${von} ${nutzenHalbsatz(an, nom, fuerWen(o.source, an, o.formular), o.vermittlerAnrede)}.`;
 }
 
 /**
@@ -455,6 +525,27 @@ export function erstanschreibenV6Params(o: { source: string | null | undefined; 
   return [erstanschreibenThema(o.source), o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person))];
 }
 
+/**
+ * Parameter der v8-Vorlage nach dem Namen (nur vorbereitet): [Anfrage mit Interesse und Emoji, Vermittler im Dativ,
+ * Vermittler als Subjekt, für wen, erste offene Frage ohne „?“] (rein, testbar).
+ */
+export function erstanschreibenV8Params(o: {
+  source: string | null | undefined;
+  an: Ansprache;
+  formular?: FormAntwort[] | null;
+  person: { nom: string; dat: string };
+  kurz: string;
+  anrede?: string | null;
+}): [string, string, string, string, string] {
+  return [
+    anfrageZu(o.source, o.formular),
+    o.person.dat,
+    vermittlerSubjekt(o.person.nom, o.anrede),
+    fuerWen(o.source, o.an, o.formular),
+    frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person)),
+  ];
+}
+
 /** Knöpfe zur ersten Frage im Freitext: nur bei Frage 1 des Produkts bzw. der Telefonatsfrage, sonst keine. */
 export function ersteFrageKnoepfe(source: string | null | undefined, formular?: FormAntwort[] | null): string[] {
   const p = outreachProdukt(source);
@@ -463,11 +554,12 @@ export function ersteFrageKnoepfe(source: string | null | undefined, formular?: 
 }
 
 /**
- * Nachricht 1 des Erstanschreibens (Freitext im offenen Fenster), z. B.
- *   Hallo Herr Müller, danke für Ihre Anfrage zum Thema Katzenversicherung! Ich bin der digitale KI-Assistent von Herrn Kannapinn.
+ * Nachricht 1 des Erstanschreibens (Freitext im offenen Fenster, ab sofort v8), z. B.
+ *   Hallo Frau Becker, danke für Ihre Anfrage zu Haftpflicht und Hausrat 🏠! Ich bin der digitale KI-Assistent von
+ *   Herrn Kannapinn und kläre kurz ein paar Angaben, damit er Ihnen für Ihre Familie den passenden Schutz zeigen kann.
  *
- *   Wie alt ist Ihre Katze?
- * (Aufbau wie ERSTANSCHREIBEN_V7.)
+ *   Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?
+ * (Aufbau wie ERSTANSCHREIBEN_V8.)
  * Nachricht 2 ist das PDF der Erstinformation (lib/whatsapp/erstinfo-pdf.ts).
  */
 export function erstanschreibenText(o: ErstanschreibenOpts): string {

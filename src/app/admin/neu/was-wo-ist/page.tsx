@@ -22,7 +22,7 @@ export default async function Page() {
       neu: ortText(e.neu, e.demo_view, e.bereich),
       href: o.href,
       ueber: o.ueber,
-      status: e.status_neu === "vorhanden" || e.status_neu === "bleibt" ? e.status_neu : "offen",
+      status: e.status_neu === "vorhanden" || e.status_neu === "bleibt" || e.status_neu === "entfernt" ? e.status_neu : "offen",
     };
   });
   const da = zeilen.filter((z) => z.status === "vorhanden").length;

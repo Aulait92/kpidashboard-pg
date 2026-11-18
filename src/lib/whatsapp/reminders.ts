@@ -380,7 +380,9 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
     const k = await erinnerungsKontext(appt);
     if (!k) continue;
     const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video" });
-    const eingabe = { an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, person: k.person };
+    // Policen-Erinnerung im Nutzensatz (P2: höchstens 2 insgesamt, Schluss bei der ersten Police oder „habe keine“)
+    const policen = await import("@/lib/whatsapp/termin-strecke").then((m) => m.policenVortagSatzFuer(appt, k.an)).catch(() => null);
+    const eingabe = { an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, person: k.person, policen };
     // Bisherige Vorlage v4: Datum/Uhrzeit, Art, Link bzw. Hinweis (ältere mit Satz im Parameter)
     const params = [firstNameOf(k.conv.contactName), formatWhenDE(appt.startsAt), modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, k.an)];
     const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(k.an)}`];
@@ -418,6 +420,10 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
         where: { id: appt.id },
         data: { reminderSentAt: new Date() },
       });
+      if (policen && delivered && appt.conversationId) {
+        const { merke, STRECKE } = await import("@/lib/whatsapp/termin-strecke");
+        await merke(appt.conversationId, STRECKE.policenErinnerung, { appointmentId: appt.id, art: "vortag" }).catch(() => null);
+      }
       result.sent++;
     }
   }

@@ -8,11 +8,16 @@
 // Reine Funktionen (Terminvorbereitung im Browser, Präsentation, Demo). Vorschlag aus Formular, Chat und Verträgen:
 // schutzVorschlag; gespeichert wird er mit der Tarifauswahl (Appointment.tarifauswahl.schutz), danach entscheidet der
 // Vermittler.
+// P2 (Ole, 17.11.2026): Die beim Komplettcheck genannten Verträge (Lead.vorvertraege) gehen als „woanders versichert“
+// (mit Gesellschaft) in die Ampel ein. Mit Komplettcheck = Ja auch große Produkte (BU, Kfz, Altersvorsorge …), und sagt
+// der Lead „keine“, gelten die naheliegenden Sparten als Lücke. Ohne Komplettcheck nur Sach, Haftpflicht, Rechtsschutz,
+// Unfall und Tierhalter.
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
+import { vorvertraegeAus, type VertragSparte } from "@/lib/whatsapp/vorvertraege";
 
 export type SchutzStatus = "bei-uns" | "woanders" | "pruefen" | "luecke";
 
@@ -173,6 +178,31 @@ const VERTRAG_SPARTE: Record<string, string> = {
   pkv_tarif: "pkv",
 };
 
+/** Sparten, die auch ohne Komplettcheck aus den genannten Verträgen in den Überblick kommen. */
+const SACH_SPARTEN = new Set(["haftpflicht", "hausrat", "rechtsschutz", "unfall", "wohngebaeude", "tierhalter-hund", "tierhalter-pferd"]);
+
+/** Sparte eines beim Komplettcheck genannten Vertrags (lib/whatsapp/vorvertraege.ts) im Überblick; null = nicht eindeutig. */
+export function schutzSparteVonVorvertrag(sparte: VertragSparte, tier: { hund: boolean; katze: boolean; pferd: boolean }): string | null {
+  const fest: Partial<Record<VertragSparte, string>> = {
+    Haftpflicht: "haftpflicht",
+    Hausrat: "hausrat",
+    Wohngebäude: "wohngebaeude",
+    Rechtsschutz: "rechtsschutz",
+    Unfall: "unfall",
+    Berufsunfähigkeit: "bu",
+    Risikoleben: "risikoleben",
+    Altersvorsorge: "rente",
+    Kfz: "kfz",
+    Zahnzusatz: "zahnzusatz",
+    "Private Krankenversicherung": "pkv",
+    Pflege: "pflegezusatz",
+  };
+  if (fest[sparte]) return fest[sparte]!;
+  if (sparte === "Tierhalterhaftpflicht") return tier.pferd && !tier.hund ? "tierhalter-pferd" : tier.hund ? "tierhalter-hund" : null;
+  if (sparte === "Tierkranken") return tier.hund ? "hund-kranken" : tier.katze ? "katze-kranken" : tier.pferd ? "pferd-kranken" : null;
+  return null;
+}
+
 export type SchutzKontext = {
   /** Sparten im Angebot dieses Termins */
   angebot: string[];
@@ -230,6 +260,19 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
 
   const genannt = new Set(spartenIm(vorhanden));
   const ohne = new Set(ausdruecklichOhne(vorhanden));
+  // Beim Komplettcheck genannte Verträge (Lead.vorvertraege): „woanders“ mit Gesellschaft
+  const komplettcheck = d.komplettcheck === true;
+  const vv = vorvertraegeAus(d.vorvertraege);
+  const bei = new Map<string, string | null>();
+  for (const v of vv?.liste ?? []) {
+    const key = schutzSparteVonVorvertrag(v.sparte, { hund, katze, pferd });
+    if (!key || (!komplettcheck && !SACH_SPARTEN.has(key))) continue;
+    genannt.add(key);
+    ohne.delete(key);
+    if (!bei.get(key)) bei.set(key, v.gesellschaft ?? null);
+  }
+  // Komplettcheck und „keine Versicherungen“: alles nicht Genannte fehlt ausdrücklich
+  const keineLaut = komplettcheck && vv?.keine === true && !vv.liste.length;
   // „sonst nichts“, „keine“: alles nicht Genannte fehlt ausdrücklich
   const sonstNichts = /sonst (nichts|keine)|^\s*(nichts|keine|nein)\s*\.?\s*$/i.test(vorhanden.trim());
 
@@ -255,8 +298,8 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
       const seit = vertraege.get(key);
       return { key, label, status: "bei-uns", seit: seit ? `seit ${monatJahr(seit)}` : null, oeffner };
     }
-    if (genannt.has(key) && !ohne.has(key)) return { key, label, status: "woanders", oeffner };
-    if (ohne.has(key) || (sonstNichts && vorhanden.trim())) return { key, label, status: "luecke", oeffner };
+    if (genannt.has(key) && !ohne.has(key)) return { key, label, status: "woanders", ...(bei.get(key) ? { versicherer: bei.get(key) } : {}), oeffner };
+    if (ohne.has(key) || (sonstNichts && vorhanden.trim()) || keineLaut) return { key, label, status: "luecke", oeffner };
     return { key, label, status: "pruefen", oeffner };
   });
   // Angebot zuerst (Reihenfolge des Angebots), dann nach Gewicht als Chance

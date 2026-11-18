@@ -1,6 +1,9 @@
-// Termin-Strecke mit Knöpfen (Ole, 17.11.2026), gegen die Test-DB, WhatsApp, Kalender und LLM simuliert:
-//   Terminvorschlag der App mit Zeit-Knöpfen → Knopf-Klick bucht genau diese Zeit (ohne LLM) → Komplettcheck
-//   [Ja, gern] → Vermerk am Termin, Vertragsfrage → Antwort ausgewertet am Lead → Abschluss mit Kalender-Knöpfen.
+// Termin-Strecke mit Knöpfen (Ole, 17.11.2026; Reihenfolge P2), gegen die Test-DB, WhatsApp, Kalender, Mail und LLM
+// simuliert: Terminvorschlag mit Zeit-Knöpfen → Klick bucht sofort (kurze Bestätigung, auch ohne E-Mail) → Komplettcheck
+// (Ja: 45 Min. frei bzw. zwei andere Zeiten) → offene Angebotsfragen → bei Ja Vertragsfrage → Policen-Bitte (genau
+// einmal) → Schluss mit „Stimmt die Adresse?“. Einladung an den Lead genau einmal, sobald Adresse und Komplettcheck
+// feststehen, ohne Antwort nach 15 Min. (kurzfristig 5, spätestens 60 Min. vor Beginn); Änderungen danach als EINE
+// Aktualisierung. Rückfall ohne Antwort: nächster Schritt, nie Schluss bei offenen Angebotsfragen. Policen-Erinnerungen.
 //   Nachfassen 2 Std. nach dem Terminvorschlag: gleiche Zeit-Knöpfe, nur 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, nicht
 //   nach Antwort, Abmeldung, „Kein Interesse“ oder pausiertem Assistenten.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -35,7 +38,46 @@ vi.mock("@anthropic-ai/sdk", () => ({
 }));
 vi.mock("@/lib/whatsapp/erstinfo-pdf", () => ({ sendErstinfoPdf: async () => "already", sendErstinfo: async () => "already" }));
 // Kalender: freie Zeiten relativ zu slotBase, Buchung legt nur den Termin an
-const cal = { base: Date.now(), busy: new Set<string>() };
+const cal = { base: Date.now(), busy: new Set<string>(), langBelegt: false, verlegt: [] as [string, string][] };
+// Mails an den Lead (lib/calendar/lead-email.ts): Art, Adresse (Chat) und Ende des Termins beim Versand
+const mails: { id: string; kind: string; ende: string; an?: string | null }[] = [];
+// Policen-Modul (lib/policen/server.ts): Bitte nur mit Schalter, Erinnern nur mit Opt-in; Antwort auf die Einwilligung
+const policenModul = { an: true, optIn: new Set<string>() };
+vi.mock("@/lib/policen/server", async (orig) => {
+  const real = await orig<typeof import("@/lib/policen/server")>();
+  return {
+    ...real,
+    policenBitteFuerChat: async () => {
+      if (!policenModul.an) return null;
+      const { policenBitte } = await import("@/lib/policen/bitte");
+      return policenBitte({ an: "sie", vermittler: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn", anrede: "Herr" } });
+    },
+    darfPolicenErinnern: async (leadId: string) => policenModul.an && policenModul.optIn.has(leadId),
+    handlePolicenAntwort: async (conversationId: string, o: { payload?: string | null }) => {
+      if (o.payload !== "policen:ja" && o.payload !== "policen:nein") return { handled: false };
+      const { prisma } = await import("@/lib/prisma");
+      const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+      const c = await prisma.conversation.findUniqueOrThrow({ where: { id: conversationId }, select: { customerId: true, contactPhone: true } });
+      const { lieberNichtText, nachEinwilligungText } = await import("@/lib/policen/bitte");
+      await sendWhatsAppMessage({ customerId: c.customerId, to: c.contactPhone, body: o.payload === "policen:ja" ? nachEinwilligungText("sie") : lieberNichtText("sie"), sentBy: "bot" });
+      return { handled: true };
+    },
+  };
+});
+vi.mock("@/lib/calendar/lead-email", async (orig) => {
+  const real = await orig<typeof import("@/lib/calendar/lead-email")>();
+  const { prisma } = await import("@/lib/prisma");
+  return {
+    ...real,
+    sendLeadEmail: async (id: string, kind: string) => {
+      const t = await prisma.appointment.findUniqueOrThrow({ where: { id }, select: { conversationId: true, startsAt: true, endsAt: true } });
+      const conv = t.conversationId ? await prisma.conversation.findUnique({ where: { id: t.conversationId }, select: { contactEmail: true } }) : null;
+      if (!conv?.contactEmail) return { sent: false, reason: "no_email" };
+      mails.push({ id, kind, ende: (t.endsAt ?? new Date(t.startsAt.getTime() + 30 * 60_000)).toISOString(), an: conv.contactEmail });
+      return { sent: true, to: conv.contactEmail };
+    },
+  };
+});
 const slotsAb = (base: number) => {
   const iso = (h: number) => new Date(Math.ceil(base / 3600_000) * 3600_000 + h * 3600_000).toISOString();
   return [iso(3), iso(4), iso(26), iso(27), iso(50)].filter((s) => !cal.busy.has(s)).map((s) => ({ start: s, end: new Date(new Date(s).getTime() + 30 * 60_000).toISOString() }));
@@ -48,9 +90,16 @@ vi.mock("@/lib/calendar", async (orig) => {
     bookingDurationMin: async () => 30,
     bookingPausedUntil: async () => null,
     suggestSlots: async () => slotsAb(cal.base),
+    adapterFor: async () => ({
+      getBusy: async (min: Date, max: Date) => (cal.langBelegt ? [{ start: min, end: max }] : []),
+      updateEventEnd: async () => {},
+      updateEventTime: async (id: string, start: Date) => {
+        cal.verlegt.push([id, start.toISOString()]);
+      },
+    }),
     bookAppointment: async (o: { customerId: string; leadId: string | null; conversationId: string; start: string; mode: string }) => {
       if (cal.busy.has(o.start)) throw new real.SlotBusyError();
-      const a = await prisma.appointment.create({ data: { customerId: o.customerId, leadId: o.leadId, conversationId: o.conversationId, startsAt: new Date(o.start), mode: o.mode, meetUrl: "https://meet.google.com/abc-defg-hij", status: "booked" } });
+      const a = await prisma.appointment.create({ data: { customerId: o.customerId, leadId: o.leadId, conversationId: o.conversationId, startsAt: new Date(o.start), mode: o.mode, meetUrl: "https://meet.google.com/abc-defg-hij", status: "booked", calendarEventId: "ev1" } });
       return { appointmentId: a.id, meetUrl: a.meetUrl, start: o.start, manageUrl: "https://x/manage" };
     },
   };
@@ -61,17 +110,25 @@ import { encryptSecret } from "@/lib/encryption";
 import { handleInboundPayload } from "@/lib/whatsapp/gateway";
 import { runBotTurn } from "@/lib/whatsapp/bot";
 import { runSequences } from "@/lib/lead-sequences";
-import { runStreckeAbschliessen, STRECKE } from "@/lib/whatsapp/termin-strecke";
+import { emailUebernehmen, merke, policenVortagSatzFuer, runPolicenErinnerung, runStreckeAbschliessen, STRECKE } from "@/lib/whatsapp/termin-strecke";
+import { einladungFaellig, einladungSenden, runEinladungNachholen } from "@/lib/calendar/einladung";
+import { komplettcheckVerlaengern } from "@/lib/komplettcheck-dauer";
+import { vortagText } from "@/lib/showup";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 let seq = 0;
 const newPhone = () => `4917${String(Date.now()).slice(-6)}${String(++seq).padStart(3, "0")}`;
 const HOUR = 3600_000;
+/** Policen-Bitte (Text aus lib/policen/bitte.ts) */
+const POLICEN_BITTE_RE = /Termin gut vorbereiten kann: Schick(en Sie)? bitte vorab/;
+/** Termindauer in einem Text an den Lead */
+const DAUER_RE = /\d+\s*(Minuten|Min\.)/i;
 
 type Sent = { art: string; to: string; body: string; buttons: { id: string; title: string }[] | null };
 const gesendet = (): Sent[] =>
   waSend.mock.calls.map((c) => ({ art: c[0] as string, to: c[2] as string, body: String(c[3] ?? ""), buttons: c[0] === "buttons" ? (c[4] as { id: string; title: string }[]) : null }));
+
 
 describe("Termin-Strecke mit Knöpfen", () => {
   let customerId = "";
@@ -82,7 +139,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
   const text = (from: string, body: string) => inbound(from, { type: "text", text: { body } });
   const knopf = (from: string, id: string, title: string) => inbound(from, { type: "interactive", interactive: { type: "button_reply", button_reply: { id, title } } });
 
-  async function leadMitChat(o: { qualificationData?: Record<string, string>; now?: Date } = {}) {
+  async function leadMitChat(o: { qualificationData?: Record<string, string>; now?: Date; email?: string | null } = {}) {
     const now = o.now ?? new Date();
     const phone = newPhone();
     const lead = await prisma.lead.create({
@@ -90,7 +147,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
         customerId,
         name: "Julia Schneider",
         phone,
-        email: "julia@example.com",
+        email: o.email === undefined ? "julia@example.com" : o.email,
         source: "Privatschutz",
         status: "Im Gespräch",
         reached: true,
@@ -149,138 +206,239 @@ describe("Termin-Strecke mit Knöpfen", () => {
     st.queue = [];
     cal.base = Date.now();
     cal.busy.clear();
+    cal.langBelegt = false;
+    mails.length = 0;
+    policenModul.an = true;
     waSend.mockReset();
     waSend.mockImplementation(async () => ({ messageId: `wamid.out-${uid()}`, raw: {} }));
   });
 
-  it("Terminvorschlag mit Zeit-Knöpfen, Klick bucht genau diese Zeit, Komplettcheck „Ja, gern“, Verträge, Abschluss, Kalender", async () => {
-    const { lead, conv, phone } = await leadMitChat({ qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", beruf: "Angestellt, nicht öffentlicher Dienst", wohnflaeche: "95 m²" } });
-    // 1. Der Assistent entscheidet sich für den Vorschlag, die App schreibt ihn mit Knöpfen
+  // Policen-Bitte (P2, Ole 17.11.2026): jeder Lead genau einmal, ob Ja, Nein oder ohne Antwort
+  const policenBitten = (s: Sent[]) => s.filter((x) => POLICEN_BITTE_RE.test(x.body)).length;
+  // Keine konkrete Termindauer an den Lead (Ole, 17.11.2026 spät): keine Zahl mit Minuten (die Komplettcheck-Frage
+  // „ein paar Minuten länger“ ist ausdrücklich erlaubt)
+  afterEach(() => {
+    for (const s of gesendet()) expect(s.body, s.body).not.toMatch(DAUER_RE);
+  });
+  const art = (s: Sent): string =>
+    /ist gebucht:/.test(s.body)
+      ? "buchung"
+      : /insgesamt gut abgesichert/.test(s.body)
+        ? "komplettcheck"
+        : /passende Beiträge zeigen kann/.test(s.body)
+          ? "angebotsfrage"
+          : /Welche Versicherungen haben/.test(s.body)
+            ? "vertragsfrage"
+            : POLICEN_BITTE_RE.test(s.body)
+              ? "policen"
+              : /Zum Schluss:/.test(s.body)
+                ? "schluss"
+                : /Einladung ist (an \S+ )?unterwegs/.test(s.body)
+                  ? "ende"
+                  : "sonst";
+
+  async function gebuchtPerKnopf(o: Parameters<typeof leadMitChat>[0] = {}) {
+    const x = await leadMitChat(o);
+    const start = slotsAb(cal.base)[0].start;
+    await knopf(x.phone, `slot:${start}`, "Heute 16 Uhr");
+    const appt = await prisma.appointment.findFirstOrThrow({ where: { leadId: x.lead.id, status: "booked" } });
+    return { ...x, appt, start };
+  }
+
+  it("Pfad Ja: kurze Buchung, Komplettcheck, Angebotsfrage, Vertragsfrage, Policen-Bitte, Schluss; Einladung genau einmal mit 45 Min.", async () => {
+    const { lead, conv, phone } = await leadMitChat({ qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95 m²" } });
+    // Vorschlag der App mit Knöpfen
     st.queue.push([{ type: "tool_use", id: "t1", name: "termin_vorschlagen", input: {} }], [{ type: "text", text: "(ignoriert)" }]);
     await runBotTurn(conv.id);
     const vorschlag = gesendet().at(-1)!;
-    expect(vorschlag.art).toBe("buttons");
-    expect(vorschlag.body).toMatch(/^Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten\. Passt Ihnen .+ oder .+\?$/);
     expect(vorschlag.buttons!.map((b) => b.id.split(":")[0])).toEqual(["slot", "slot", "andere_zeit"]);
-    expect(vorschlag.buttons!.at(-1)!.title).toBe("Andere Zeit");
-    for (const b of vorschlag.buttons!) expect(b.title.length).toBeLessThanOrEqual(20);
     const merker = await prisma.message.findFirst({ where: { conversationId: conv.id, kind: STRECKE.vorschlag } });
     const starts = (JSON.parse(merker!.body!) as { starts: string[] }).starts;
-    expect(vorschlag.buttons![1].id).toBe(`slot:${starts[1]}`);
 
-    // 2. Klick auf die zweite Zeit: die App bucht genau diese Zeit, ohne LLM
-    waSend.mockClear();
+    // Klick: sofort gebucht (Zeit fest im Kalender), kurze Bestätigung, dann der Komplettcheck; noch keine Einladung
+    const ab = gesendet().length;
     st.ai = 0;
     await knopf(phone, vorschlag.buttons![1].id, vorschlag.buttons![1].title);
     expect(st.ai).toBe(0);
-    const appt = await prisma.appointment.findFirst({ where: { leadId: lead.id, status: "booked" } });
-    expect(appt?.startsAt.toISOString()).toBe(starts[1]);
-    const [buchung, komplett] = gesendet();
-    expect(buchung.art).toBe("text");
-    expect(buchung.body).toMatch(/^Ihr Videotermin ist gebucht: \*.+\*\.\nHier ist Ihr Link: https:\/\/meet\.google\.com\/abc-defg-hij\nDie Einladung mit Kalendereintrag ist an \S+@\S+ unterwegs\. Falls die Adresse nicht stimmt, schreiben Sie mir einfach die richtige\.\n\nHerr Kannapinn hält sich diese Zeit nur für Sie frei/);
-    // alle Angaben fürs Angebot bekannt: gleich der Komplettcheck mit Knöpfen
-    expect(komplett.art).toBe("buttons");
-    expect(komplett.body).toBe(
-      "Danke! Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können? Das dauert nur ein paar Minuten länger.",
-    );
-    expect(komplett.buttons).toEqual([
-      { id: "komplettcheck:ja", title: "Ja, gern" },
-      { id: "komplettcheck:nein", title: "Nein, danke" },
-    ]);
+    const appt = await prisma.appointment.findFirstOrThrow({ where: { leadId: lead.id, status: "booked" } });
+    expect(appt.startsAt.toISOString()).toBe(starts[1]);
+    expect(appt.einladungAusstehend).not.toBeNull();
+    expect(appt.einladungAt).toBeNull();
+    const [buchung, komplett] = gesendet().slice(ab);
+    expect(buchung.body).toMatch(/^Ihr Videotermin ist gebucht: \*.+\*\. Herr Kannapinn hält sich die Zeit nur für Sie frei und bereitet Ihre Beiträge vor\.\nIhr Link: https:\/\/meet\.google\.com\/abc-defg-hij$/);
+    expect(buchung.body.split("\n").length).toBeLessThanOrEqual(3);
+    expect(buchung.body).not.toMatch(/Einladung|Handy-Browser|dazwischenkommt/);
+    expect(komplett.buttons?.map((b) => b.id)).toEqual(["komplettcheck:ja", "komplettcheck:nein"]);
+    expect(mails).toHaveLength(0);
 
-    // 3. „Ja, gern“: Vermerk am Termin, Frage nach den Verträgen (ohne LLM, kein „Kein Bedarf“)
-    waSend.mockClear();
+    // „Ja, gern“: Kalender frei → 45 Min., dann die offene Angebotsfrage
+    const ab2 = gesendet().length;
     await knopf(phone, "komplettcheck:ja", "Ja, gern");
-    expect(st.ai).toBe(0);
-    expect((await prisma.appointment.findUnique({ where: { id: appt!.id } }))?.komplettcheck).toBe(true);
-    expect((await prisma.lead.findUnique({ where: { id: lead.id } }))?.status).not.toBe("Kein Interesse");
-    expect(gesendet().map((s) => s.body)).toEqual([
-      "Super! Welche Versicherungen haben Sie und Ihre Familie heute schon? Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Gesellschaft.",
-    ]);
+    const t2 = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } });
+    expect(t2.komplettcheck).toBe(true);
+    expect(t2.verlaengerung).toBe("verlaengert");
+    expect(t2.endsAt!.getTime() - t2.startsAt.getTime()).toBe(45 * 60_000);
+    expect(gesendet().slice(ab2).map((s) => s.body)).toEqual(["Super! Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig?"]);
+    expect(mails).toHaveLength(0);
 
-    // 4. Antwort frei: ausgewertet (hier ohne KI-Werkzeug: Rückfall per Muster), am Lead gespeichert, Abschluss
-    waSend.mockClear();
+    // Letzte Angabe → Vertragsfrage
+    st.queue.push([{ type: "tool_use", id: "q1", name: "record_qualification", input: { zusammenfassung: "x", angaben: { beruf: "nicht im öffentlichen Dienst" } } }], [{ type: "text", text: "Danke, notiert." }]);
+    await knopf(phone, "folge:oeffentlicherDienst:nein", "Nein");
+    expect(gesendet().at(-1)!.body).toMatch(/^Danke! Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
+
+    // Verträge → Policen-Bitte (Text aus dem Policen-Modul), danach die Einwilligung als eigene Nachricht mit Knöpfen
     await text(phone, "Haftpflicht bei der HUK, eine BU und Kfz");
-    const l = await prisma.lead.findUnique({ where: { id: lead.id }, select: { vorvertraege: true } });
-    expect((l?.vorvertraege as { liste: { sparte: string; gesellschaft: string | null }[] }).liste.map((v) => [v.sparte, v.gesellschaft])).toEqual([
-      ["Haftpflicht", "HUK"],
-      ["Berufsunfähigkeit", null],
-      ["Kfz", null],
-    ]);
-    const abschluss = gesendet().at(-1)!;
-    expect(abschluss.body).toBe(
-      "Danke, das schaut sich Herr Kannapinn im Termin mit an.\n\nBitte legen Sie zum Termin bereit:\n• Ihre übrigen Policen, falls Sie sie nicht geschickt haben\n• Ihre IBAN, falls Sie direkt abschließen möchten\n\n" +
-        "Die Einladung mit Kalendereintrag habe ich Ihnen an julia@example.com geschickt. *Haben Sie sich den Termin schon im Kalender eingetragen?*",
-    );
-    expect(abschluss.buttons).toEqual([
-      { id: "kalender:ja", title: "Ja" },
-      { id: "kalender:gleich", title: "Mache ich gleich" },
-    ]);
+    const [bitte, einwilligung] = gesendet().slice(-2);
+    expect(bitte.body).toMatch(/^Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen/);
+    expect(einwilligung.buttons?.map((b) => b.id)).toEqual(["policen:ja", "policen:nein"]);
 
-    // 5. „Mache ich gleich“: zugesagt
+    // „Lieber nicht“ → Antwort des Policen-Moduls, dann der Schluss mit Bereitlegen in einer Zeile und der Adresse
+    await knopf(phone, "policen:nein", "Lieber nicht");
+    const [lieber, schluss] = gesendet().slice(-2);
+    expect(lieber.body).toMatch(/^Kein Problem, Ihr Termin findet trotzdem statt/);
+    expect(schluss.body).toBe(
+      "Damit ist alles Wichtige für Herrn Kannapinn notiert. Legen Sie zum Termin gern bereit: Ihre übrigen Policen, die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.\n\n" +
+        "Zum Schluss: Die Einladung mit Kalendereintrag geht an julia@example.com. Stimmt die Adresse?",
+    );
+    expect(schluss.buttons).toEqual([
+      { id: "email:ja", title: "Ja, stimmt" },
+      { id: "email:andere", title: "Andere Adresse" },
+    ]);
+    expect(mails).toHaveLength(0);
+
+    // „Ja, stimmt“ → Einladung genau einmal (mit 45 Min.), zugesagt, Abschlusssatz
+    await knopf(phone, "email:ja", "Ja, stimmt");
+    expect(gesendet().at(-1)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(mails).toEqual([{ id: appt.id, kind: "booked", ende: t2.endsAt!.toISOString(), an: "julia@example.com" }]);
+    const t3 = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } });
+    expect(t3.confirmedAt).not.toBeNull();
+    expect(t3.einladungAt).not.toBeNull();
+    expect(t3.einladungAn).toBe("julia@example.com");
+    // Reihenfolge und genau eine Policen-Bitte
+    const an = gesendet().filter((s) => s.to === phone).map(art).filter((x) => x !== "sonst");
+    expect(an).toEqual(["buchung", "komplettcheck", "angebotsfrage", "vertragsfrage", "policen", "schluss", "ende"]); // Einwilligung und Antwort des Policen-Moduls als „sonst“
+    expect(policenBitten(gesendet())).toBe(1);
+    // Doppelter Klick: nichts doppelt
     waSend.mockClear();
-    await knopf(phone, "kalender:gleich", "Mache ich gleich");
-    expect((await prisma.appointment.findUnique({ where: { id: appt!.id } }))?.confirmedAt).not.toBeNull();
-    expect(gesendet()[0].body).toMatch(/^Danke! Die Einladung mit Kalendereintrag haben Sie per E-Mail\. Bis .+ um .+ Uhr\.$/);
-    // Doppelter Klick schickt nichts doppelt
-    waSend.mockClear();
-    await knopf(phone, "komplettcheck:ja", "Ja, gern");
-    expect(waSend).not.toHaveBeenCalled();
+    await knopf(phone, "email:ja", "Ja, stimmt");
+    await runEinladungNachholen(new Date(Date.now() + 2 * HOUR));
+    expect(mails).toHaveLength(1);
   });
 
-  it("neue E-Mail im Chat: bisherige bleibt als weitere E-Mail; Zusage auf die Kalenderfrage ohne Namen des Leads; Löschung leert alles", async () => {
+  it("Pfad Nein: Angebotsfrage, Policen-Bitte nur für die Sparte, Schluss; andere Adresse (geprüft) bekommt die einzige Einladung", async () => {
+    const { appt, phone } = await gebuchtPerKnopf({ qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" } });
+    await knopf(phone, "komplettcheck:nein", "Nein, danke");
+    expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).komplettcheck).toBe(false);
+    expect(gesendet().at(-1)!.body).toBe("Alles klar. Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig?");
+    st.queue.push([{ type: "tool_use", id: "q1", name: "record_qualification", input: { zusammenfassung: "x", angaben: { beruf: "nicht im öffentlichen Dienst" } } }], [{ type: "text", text: "Danke, notiert." }]);
+    await knopf(phone, "folge:oeffentlicherDienst:nein", "Nein");
+    const bitte = gesendet().at(-2)!;
+    expect(bitte.body).toBe(
+      "Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat oder Kfz. Dann sieht er vorher, wo Sie doppelt zahlen oder Lücken haben, und der Termin geht deutlich schneller.",
+    );
+    expect(gesendet().at(-1)!.buttons?.map((b) => b.id)).toEqual(["policen:ja", "policen:nein"]);
+    // Antwort als Text statt Knopf: der Assistent antwortet, dann der Schluss
+    st.queue.push([{ type: "text", text: "Gern, ganz in Ruhe." }]);
+    await text(phone, "Mache ich später");
+    const [antwort, schluss] = gesendet().slice(-2);
+    expect(antwort.body).toBe("Gern, ganz in Ruhe.");
+    expect(schluss.body).toBe(
+      "Danke, damit sind alle wichtigen Angaben für Herrn Kannapinn notiert. Legen Sie zum Termin gern bereit: die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.\n\n" +
+        "Zum Schluss: Die Einladung mit Kalendereintrag geht an julia@example.com. Stimmt die Adresse?",
+    );
+    // „Andere Adresse“ → Frage; unvollständige Adresse → noch einmal; gültige → Einladung an die neue, genau einmal
+    await knopf(phone, "email:andere", "Andere Adresse");
+    expect(gesendet().at(-1)!.body).toBe("Gern! An welche E-Mail-Adresse soll die Einladung gehen?");
+    // Solange keine neue Adresse da ist, geht nichts an die alte (auch nicht nach 15 Min.)
+    expect((await runEinladungNachholen(new Date(Date.now() + 30 * 60_000))).gesendet).toBe(0);
+    await text(phone, "julia.neu@example");
+    expect(gesendet().at(-1)!.body).toBe("Die Adresse scheint nicht vollständig zu sein. Schreiben Sie sie mir bitte noch einmal, z. B. name@beispiel.de.");
+    await text(phone, "julia.neu@example.com");
+    expect(gesendet().at(-1)!.body).toBe("Danke, die Einladung ist an julia.neu@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(mails.map((m) => m.kind)).toEqual(["booked"]);
+    expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).einladungAn).toBe("julia.neu@example.com");
+    expect(policenBitten(gesendet())).toBe(1);
+    expect(st.ai).toBeGreaterThan(0);
+  });
+
+  it("Komplettcheck „Ja“, Zeit danach belegt: zwei Zeiten mit 45 Min.; Wahl verlegt denselben Termin, erst danach Einladung", async () => {
+    const { appt, phone } = await gebuchtPerKnopf({ qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" } });
+    cal.langBelegt = true;
+    await knopf(phone, "komplettcheck:ja", "Ja, gern");
+    const angebot = gesendet().at(-1)!;
+    expect(angebot.body).toMatch(/^Super! Für den Komplettcheck nimmt sich Herr Kannapinn gern etwas mehr Zeit, direkt nach Ihrem Termin ist aber schon etwas anderes geplant\. Passt Ihnen auch .+ oder .+\? Sonst bleibt es bei Ihrer Zeit\.$/);
+    expect(angebot.buttons!.map((b) => b.id.split(":")[0])).toEqual(["lang", "lang", "lang"]);
+    expect(angebot.buttons![2]).toEqual({ id: "lang:behalten", title: "Zeit behalten" });
+    expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).verlaengerung).toBe("angebot");
+    // Ohne Antwort geht die Einladung nach 15 Min. trotzdem (aktueller Stand)
+    cal.langBelegt = false;
+    const wahl = angebot.buttons![1].id.slice(5);
+    await knopf(phone, angebot.buttons![1].id, angebot.buttons![1].title);
+    const t = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } });
+    expect(t.id).toBe(appt.id);
+    expect(t.startsAt.toISOString()).toBe(wahl);
+    expect(t.endsAt!.getTime() - t.startsAt.getTime()).toBe(45 * 60_000);
+    expect(t.verlaengerung).toBe("verlaengert");
+    expect(cal.verlegt).toContainEqual(["ev1", wahl]);
+    expect(gesendet().at(-1)!.body).toMatch(/^Super, Ihr Termin ist jetzt am \*.+\*\. Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig\?$/);
+    expect(mails).toHaveLength(0);
+  });
+
+  it("Komplettcheck „Ja“, Zeit belegt, „Zeit behalten“: Hinweis an den Vermittler, weiter mit der Angebotsfrage", async () => {
+    const { appt, phone } = await gebuchtPerKnopf({ qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" } });
+    cal.langBelegt = true;
+    await knopf(phone, "komplettcheck:ja", "Ja, gern");
+    await knopf(phone, "lang:behalten", "Zeit behalten");
+    const t = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } });
+    expect(t.verlaengerung).toBe("hinweis");
+    expect(t.startsAt.getTime()).toBe(appt.startsAt.getTime());
+    expect(gesendet().at(-1)!.body).toMatch(/^Alles klar, es bleibt bei \*.+\*\. Herr Kannapinn plant etwas mehr Zeit ein\. Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: /);
+  });
+
+  it("E-Mail unbekannt und Policen-Bitte aus (Schalter): sofort gebucht, Schluss fragt freiwillig nach der Adresse", async () => {
+    policenModul.an = false;
+    const { lead, conv, phone } = await gebuchtPerKnopf({ email: null, qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95", beruf: "Angestellt" } });
+    expect(st.ai).toBe(0);
+    const [buchung, komplett] = gesendet();
+    expect(buchung.body).toMatch(/^Ihr Videotermin ist gebucht: /);
+    expect(komplett.buttons?.map((b) => b.id)).toEqual(["komplettcheck:ja", "komplettcheck:nein"]);
+    await knopf(phone, "komplettcheck:nein", "Nein, danke");
+    const schluss = gesendet().at(-1)!;
+    expect(schluss.body).toBe(
+      "Alles klar, damit ist alles Wichtige für Herrn Kannapinn notiert. Legen Sie zum Termin gern bereit: die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.\n\n" +
+        "Zum Schluss: Möchten Sie die Einladung mit Kalendereintrag per E-Mail? Dann schreiben Sie mir einfach Ihre Adresse.",
+    );
+    expect(schluss.buttons).toBeNull();
+    expect(policenBitten(gesendet())).toBe(0);
+    await text(phone, "Klar, julia.becker@example.com");
+    expect(st.ai).toBe(0);
+    expect((await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } })).contactEmail).toBe("julia.becker@example.com");
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).email).toBe("julia.becker@example.com");
+    expect(gesendet().at(-1)!.body).toBe("Danke, die Einladung ist an julia.becker@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(mails.map((m) => m.kind)).toEqual(["booked"]);
+  });
+
+  it("neue E-Mail im Chat: bisherige bleibt als weitere E-Mail; Bestätigung frei formuliert; Löschung leert alles", async () => {
     const { lead, phone } = await leadMitChat();
     st.queue.push([{ type: "tool_use", id: "e1", name: "update_email", input: { email: "Julia.Neu@Example.com" } }], [{ type: "text", text: "Danke, ist übernommen." }]);
     await text(phone, "Bitte an julia.neu@example.com");
     const l = await prisma.lead.findUniqueOrThrow({ where: { id: lead.id }, select: { email: true, weitereEmails: true } });
     expect(l).toEqual({ email: "julia.neu@example.com", weitereEmails: ["julia@example.com"] });
-    // Noch einmal zurück: keine Dubletten
     st.queue.push([{ type: "tool_use", id: "e2", name: "update_email", input: { email: "JULIA@example.com" } }], [{ type: "text", text: "Gern." }]);
     await text(phone, "Doch lieber die alte Adresse julia@example.com");
     expect(await prisma.lead.findUniqueOrThrow({ where: { id: lead.id }, select: { email: true, weitereEmails: true } })).toEqual({ email: "julia@example.com", weitereEmails: ["julia.neu@example.com"] });
-
-    // Kalenderfrage mit Text bestätigt: der Assistent bekommt den Dank ohne Namen des Leads vorgegeben
-    const appt = await prisma.appointment.create({ data: { customerId, leadId: lead.id, startsAt: new Date("2026-12-02T09:00:00.000Z"), mode: "video", status: "booked", conversationId: (await prisma.conversation.findFirstOrThrow({ where: { leadId: lead.id } })).id } });
-    st.queue.push([{ type: "tool_use", id: "z1", name: "termin_zugesagt", input: {} }], [{ type: "text", text: "Vielen Dank! Ihr Termin mit Herrn Kannapinn am Mittwoch, 02.12. um 10 Uhr ist vermerkt. Bis dahin!" }]);
-    await text(phone, "Ja, hab ich eingetragen");
-    expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).confirmedAt).not.toBeNull();
-    // Tool-Ergebnis an die KI: fester Dank ohne Namen des Leads, Vermittler nach Regel
-    const toolResult = JSON.stringify(st.reqs.at(-1));
-    expect(toolResult).toContain("Vielen Dank! Ihr Termin mit Herrn Kannapinn am Mittwoch, 02.12. um 10 Uhr ist vermerkt. Bis dahin!");
-    expect(toolResult).toContain("ohne Namen des Leads");
-
+    // Mit Termin: „passt so“ frei formuliert → termin_zugesagt → die App bestätigt und lädt ein
+    const conv = await prisma.conversation.findFirstOrThrow({ where: { leadId: lead.id } });
+    const appt = await prisma.appointment.create({ data: { customerId, leadId: lead.id, startsAt: new Date(Date.now() + 3 * 24 * HOUR), mode: "video", status: "booked", conversationId: conv.id, komplettcheck: false, einladungAusstehend: new Date() } });
+    st.queue.push([{ type: "tool_use", id: "z1", name: "termin_zugesagt", input: {} }], [{ type: "text", text: "(ignoriert)" }]);
+    await text(phone, "Ja das passt so, danke");
+    const t = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } });
+    expect(t.confirmedAt).not.toBeNull();
+    expect(gesendet().at(-1)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(mails.map((m) => m.kind)).toEqual(["booked"]);
     const { eraseLead } = await import("@/lib/erasure");
     await eraseLead(lead.id);
     expect(await prisma.lead.findUniqueOrThrow({ where: { id: lead.id }, select: { email: true, weitereEmails: true } })).toEqual({ email: null, weitereEmails: [] });
-  });
-
-  it("Ja/Nein-Angabe als Knöpfe, Payload gibt dem Assistenten die Frage; „Nein, danke“ beim Komplettcheck führt direkt zum Abschluss", async () => {
-    const { lead, conv, phone } = await leadMitChat({ qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" } });
-    const start = slotsAb(cal.base)[0].start;
-    await knopf(phone, `slot:${start}`, "Heute 16 Uhr");
-    const [, folge] = gesendet();
-    expect(folge.body).toBe("Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig?");
-    expect(folge.buttons).toEqual([
-      { id: "folge:oeffentlicherDienst:ja", title: "Ja" },
-      { id: "folge:oeffentlicherDienst:nein", title: "Nein" },
-    ]);
-    // Antwort per Knopf: der Assistent hält fest; letzte Frage → die App schickt den Komplettcheck
-    waSend.mockClear();
-    st.queue.push([{ type: "tool_use", id: "q1", name: "record_qualification", input: { zusammenfassung: "x", angaben: { beruf: "nicht im öffentlichen Dienst" } } }], [{ type: "text", text: "Danke, notiert." }]);
-    await knopf(phone, "folge:oeffentlicherDienst:nein", "Nein");
-    expect(st.ai).toBeGreaterThan(0);
-    const komplett = gesendet().at(-1)!;
-    expect(komplett.body).toMatch(/^Danke! Soll Herr Kannapinn im Termin auch kurz schauen/);
-    expect(komplett.buttons?.map((b) => b.id)).toEqual(["komplettcheck:ja", "komplettcheck:nein"]);
-    // „Nein, danke“ mit Payload: kein „Kein Interesse“, sondern Abschluss
-    waSend.mockClear();
-    await knopf(phone, "komplettcheck:nein", "Nein, danke");
-    const l = await prisma.lead.findUnique({ where: { id: lead.id } });
-    expect(l?.status).not.toBe("Kein Interesse");
-    const appt = await prisma.appointment.findFirst({ where: { leadId: lead.id, status: "booked" } });
-    expect(appt?.komplettcheck).toBe(false);
-    expect(gesendet()[0].body).toMatch(/^Alles klar, damit ist alles Wichtige für Herrn Kannapinn notiert\.\n\nBitte legen Sie zum Termin bereit:\n• Ihre (bisherigen Policen, falls vorhanden|übrigen Policen, falls Sie sie nicht geschickt haben)\n/);
-    void conv;
   });
 
   it("Zeit-Knopf, Zeit inzwischen belegt: nicht gebucht, der Assistent bekommt den Hinweis", async () => {
@@ -293,19 +451,227 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(st.ai).toBe(1);
   });
 
-  it("Komplettcheck ohne Antwort: nach einer Stunde trotzdem Abschluss (nicht nachhaken), nur im Fenster", async () => {
+  describe("Einladung ohne Antwort (Rückfall) und Änderungen nach dem Versand", () => {
+    async function ausstehend(o: { startIn: number; gebuchtVor: number; antwortVor?: number; email?: string | null }) {
+      const now = new Date();
+      const { lead, conv } = await leadMitChat({ email: o.email === undefined ? "julia@example.com" : o.email });
+      await prisma.conversation.update({ where: { id: conv.id }, data: { contactEmail: o.email === undefined ? "julia@example.com" : o.email } });
+      if (o.antwortVor != null) await prisma.message.create({ data: { conversationId: conv.id, direction: "inbound", body: "Ok", createdAt: new Date(now.getTime() - o.antwortVor) } });
+      const appt = await prisma.appointment.create({
+        data: { customerId, leadId: lead.id, conversationId: conv.id, startsAt: new Date(now.getTime() + o.startIn), mode: "video", status: "booked", calendarEventId: "ev1", einladungAusstehend: new Date(now.getTime() - o.gebuchtVor) },
+      });
+      return { appt, conv, lead, now };
+    }
+    const MIN = 60_000;
+
+    it("Regel: 15 Min. ohne Antwort, kurzfristig (unter 3 Std.) 5 Min., spätestens 60 Min. vor Beginn", () => {
+      const now = new Date("2026-11-20T10:00:00Z");
+      const f = (startIn: number, gebuchtVor: number, antwortVor: number | null = null) =>
+        einladungFaellig({ startsAt: new Date(now.getTime() + startIn), gebuchtAt: new Date(now.getTime() - gebuchtVor), letzteAntwort: antwortVor == null ? null : new Date(now.getTime() - antwortVor), now });
+      expect(f(2 * 24 * HOUR, 14 * MIN)).toBe(false);
+      expect(f(2 * 24 * HOUR, 15 * MIN)).toBe(true);
+      expect(f(2 * 24 * HOUR, 30 * MIN, 10 * MIN)).toBe(false); // Lead schreibt noch
+      expect(f(2 * HOUR, 4 * MIN)).toBe(false);
+      expect(f(2 * HOUR, 5 * MIN)).toBe(true);
+      expect(f(59 * MIN, 1 * MIN, 0)).toBe(true);
+    });
+
+    it("15 Min. ohne Antwort: Einladung an die bekannte Adresse, genau einmal", async () => {
+      const a = await ausstehend({ startIn: 2 * 24 * HOUR, gebuchtVor: 14 * MIN, antwortVor: 20 * MIN });
+      expect((await runEinladungNachholen(a.now)).gesendet).toBe(0);
+      const b = await ausstehend({ startIn: 2 * 24 * HOUR, gebuchtVor: 16 * MIN, antwortVor: 20 * MIN });
+      await runEinladungNachholen(b.now);
+      expect(mails.filter((m) => m.id === b.appt.id).map((m) => m.kind)).toEqual(["booked"]);
+      expect(mails.some((m) => m.id === a.appt.id)).toBe(false);
+      await runEinladungNachholen(new Date(b.now.getTime() + HOUR));
+      expect(mails.filter((m) => m.id === b.appt.id)).toHaveLength(1);
+      expect(await einladungSenden(b.appt.id)).toBe("schon");
+      expect((await prisma.appointment.findUniqueOrThrow({ where: { id: b.appt.id } })).einladungAusstehend).toBeNull();
+    });
+
+    it("kurzfristig 5 Min., 60-Min.-Grenze auch bei laufendem Chat, ohne Adresse nichts", async () => {
+      const k = await ausstehend({ startIn: 2 * HOUR, gebuchtVor: 6 * MIN, antwortVor: 7 * MIN });
+      const g = await ausstehend({ startIn: 55 * MIN, gebuchtVor: 2 * MIN, antwortVor: 0 });
+      const o = await ausstehend({ startIn: 55 * MIN, gebuchtVor: 30 * MIN, email: null });
+      await runEinladungNachholen(new Date());
+      expect(mails.filter((m) => m.id === k.appt.id)).toHaveLength(1);
+      expect(mails.filter((m) => m.id === g.appt.id)).toHaveLength(1);
+      expect(mails.filter((m) => m.id === o.appt.id)).toHaveLength(0);
+      expect((await prisma.appointment.findUniqueOrThrow({ where: { id: o.appt.id } })).einladungAt).toBeNull();
+    });
+
+    it("Änderung nach dem Versand: neue Adresse bzw. 45 Min. als EINE Aktualisierung (gleiche UID, SEQUENCE + 1)", async () => {
+      const a = await ausstehend({ startIn: 3 * 24 * HOUR, gebuchtVor: 20 * MIN });
+      await runEinladungNachholen(a.now);
+      expect(mails.map((m) => m.kind)).toEqual(["booked"]);
+      // Neue Adresse: Einladung an die neue (Aktualisierung), die alte bekommt nichts mehr
+      await emailUebernehmen(a.conv.id, "julia.neu@example.com");
+      let t = await prisma.appointment.findUniqueOrThrow({ where: { id: a.appt.id } });
+      expect(t.einladungSeq).toBe(1);
+      expect(t.einladungAn).toBe("julia.neu@example.com");
+      expect(mails.map((m) => [m.kind, m.an])).toEqual([
+        ["booked", "julia@example.com"],
+        ["booked", "julia.neu@example.com"],
+      ]);
+      // Dieselbe Adresse noch einmal: nichts
+      await emailUebernehmen(a.conv.id, "julia.neu@example.com");
+      expect(mails).toHaveLength(2);
+      // Komplettcheck „Ja“ danach: Kalender frei → EINE Aktualisierung (aktualisierter Kalendereintrag, ohne Dauer)
+      await komplettcheckVerlaengern(a.appt.id, { angebot: true });
+      t = await prisma.appointment.findUniqueOrThrow({ where: { id: a.appt.id } });
+      expect(t.einladungSeq).toBe(2);
+      expect(mails.at(-1)?.kind).toBe("updated");
+      // Kalenderdatei: gleiche UID, SEQUENCE wie am Termin
+      const { customerEventById, buildIcs } = await import("@/lib/calendar/add-to-calendar");
+      const ics = buildIcs((await customerEventById(a.appt.id))!);
+      expect(ics).toContain(`UID:${a.appt.id}@termin`);
+      expect(ics).toContain("SEQUENCE:2");
+    });
+
+    it("Komplettcheck vor dem Versand: keine eigene Mail, die spätere Einladung hat schon 45 Min.", async () => {
+      const a = await ausstehend({ startIn: 3 * 24 * HOUR, gebuchtVor: 1 * MIN });
+      expect(await komplettcheckVerlaengern(a.appt.id, { angebot: true })).toBe("verlaengert");
+      expect(mails).toHaveLength(0);
+      await runEinladungNachholen(new Date(a.now.getTime() + 20 * MIN));
+      expect(mails).toHaveLength(1);
+      expect(new Date(mails[0].ende).getTime() - a.appt.startsAt.getTime()).toBe(45 * MIN);
+    });
+  });
+
+  describe("Rückfall ohne Antwort (nach einer Stunde der nächste Schritt, nie Schluss bei offenen Angebotsfragen)", () => {
     // Di 17.11.2026, 12 Uhr deutscher Zeit; die letzte Nachricht des Leads liegt davor
     const now = new Date("2026-11-17T11:00:00Z");
-    const { conv, lead } = await leadMitChat({ now: new Date(now.getTime() - 3 * HOUR) });
-    const appt = await prisma.appointment.create({ data: { customerId, leadId: lead.id, conversationId: conv.id, startsAt: new Date(Math.max(now.getTime(), Date.now()) + 2 * 24 * HOUR), mode: "video", status: "booked" } });
-    await prisma.conversation.update({ where: { id: conv.id }, data: { windowExpiresAt: new Date(Math.max(now.getTime(), Date.now()) + 10 * HOUR) } });
-    await prisma.message.create({ data: { conversationId: conv.id, direction: "internal", kind: STRECKE.komplettFrage, body: JSON.stringify({ appointmentId: appt.id }), sentBy: "bot", createdAt: new Date(now.getTime() - 30 * 60_000) } });
-    expect((await runStreckeAbschliessen(now)).gesendet).toBe(0); // erst 30 Minuten
-    await prisma.message.updateMany({ where: { conversationId: conv.id, kind: STRECKE.komplettFrage }, data: { createdAt: new Date(now.getTime() - 2 * HOUR) } });
-    expect((await runStreckeAbschliessen(new Date("2026-11-17T20:00:00Z"))).gesendet).toBe(0); // 21 Uhr: nicht
-    expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
-    expect(gesendet().at(-1)!.body).toMatch(/^Damit ist alles Wichtige für Herrn Kannapinn notiert\.[\s\S]*\*Haben Sie sich den Termin schon im Kalender eingetragen\?\*$/);
-    expect((await runStreckeAbschliessen(now)).gesendet).toBe(0); // nur einmal
+    async function terminMitMerker(kind: string, o: { qualificationData?: Record<string, string>; komplettcheck?: boolean; email?: string | null } = {}) {
+      const { conv, lead, phone } = await leadMitChat({ now: new Date(now.getTime() - 3 * HOUR), qualificationData: o.qualificationData, email: o.email });
+      const appt = await prisma.appointment.create({
+        data: { customerId, leadId: lead.id, conversationId: conv.id, startsAt: new Date(Math.max(now.getTime(), Date.now()) + 2 * 24 * HOUR), mode: "video", status: "booked", komplettcheck: o.komplettcheck ?? null },
+      });
+      await prisma.conversation.update({ where: { id: conv.id }, data: { windowExpiresAt: new Date(Math.max(now.getTime(), Date.now()) + 10 * HOUR) } });
+      if (o.komplettcheck != null) {
+        await prisma.message.create({ data: { conversationId: conv.id, direction: "internal", kind: STRECKE.komplettFrage, body: JSON.stringify({ appointmentId: appt.id }), sentBy: "bot", createdAt: new Date(now.getTime() - 3 * HOUR) } });
+        await prisma.message.create({ data: { conversationId: conv.id, direction: "internal", kind: STRECKE.komplett, body: JSON.stringify({ appointmentId: appt.id, ja: o.komplettcheck }), sentBy: "bot", createdAt: new Date(now.getTime() - 3 * HOUR) } });
+      }
+      await prisma.message.create({ data: { conversationId: conv.id, direction: "internal", kind, body: JSON.stringify({ appointmentId: appt.id }), sentBy: "bot", createdAt: new Date(now.getTime() - 30 * 60_000) } });
+      const alt = async () => prisma.message.updateMany({ where: { conversationId: conv.id, kind }, data: { createdAt: new Date(now.getTime() - 2 * HOUR) } });
+      return { conv, lead, phone, appt, alt };
+    }
+    const an = (phone: string) => gesendet().filter((s) => s.to === phone);
+    const ALLES = { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95", beruf: "Angestellt" };
+
+    it("Komplettcheck ohne Antwort, Angebotsfragen offen: erste Angebotsfrage, kein Schluss", async () => {
+      const t = await terminMitMerker(STRECKE.komplettFrage, { qualificationData: { versichern: "Familie", vorhanden: "neu" } });
+      expect((await runStreckeAbschliessen(now)).gesendet).toBe(0); // erst 30 Minuten
+      await t.alt();
+      expect((await runStreckeAbschliessen(new Date("2026-11-17T20:00:00Z"))).gesendet).toBe(0); // 21 Uhr: nicht
+      expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
+      expect(an(t.phone).at(-1)!.body).toBe("Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Wie lautet Ihr Geburtsdatum?");
+      expect((await runStreckeAbschliessen(now)).gesendet).toBe(0);
+      expect(an(t.phone).some((s) => /Zum Schluss:/.test(s.body))).toBe(false);
+    });
+
+    it("Pfad keine Antwort komplett: Policen-Bitte genau einmal (mit Einwilligung), dann nach 1 Std. der Schluss", async () => {
+      const t = await terminMitMerker(STRECKE.komplettFrage, { qualificationData: ALLES });
+      await t.alt();
+      expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
+      expect(an(t.phone).at(-2)!.body).toMatch(/^Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen/);
+      expect(an(t.phone).at(-1)!.buttons?.map((b) => b.id)).toEqual(["policen:ja", "policen:nein"]);
+      await prisma.message.updateMany({ where: { conversationId: t.conv.id, kind: STRECKE.policenBitte }, data: { createdAt: new Date(now.getTime() - 2 * HOUR) } });
+      expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
+      const schluss = an(t.phone).at(-1)!;
+      expect(schluss.body).toMatch(/^Damit ist alles Wichtige für Herrn Kannapinn notiert\. Legen Sie zum Termin gern bereit: [\s\S]*Zum Schluss: Die Einladung mit Kalendereintrag geht an julia@example\.com\. Stimmt die Adresse\?$/);
+      expect((await runStreckeAbschliessen(now)).gesendet).toBe(0);
+      expect(policenBitten(an(t.phone))).toBe(1);
+    });
+
+    it("Vertragsfrage ohne Antwort (Ja): die Verträge entfallen, die volle Policen-Bitte nicht", async () => {
+      const t = await terminMitMerker(STRECKE.vertragsfrage, { komplettcheck: true, qualificationData: ALLES });
+      await t.alt();
+      expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
+      expect(an(t.phone).at(-2)!.body).toMatch(/^Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen/);
+      expect(policenBitten(an(t.phone))).toBe(1);
+    });
+
+    it("Vertragsfrage ohne Antwort, Angebotsfragen offen: nichts", async () => {
+      const t = await terminMitMerker(STRECKE.vertragsfrage, { komplettcheck: true, qualificationData: { versichern: "Familie", vorhanden: "neu" } });
+      await t.alt();
+      expect((await runStreckeAbschliessen(now)).gesendet).toBe(0);
+      expect(an(t.phone)).toHaveLength(0);
+    });
+  });
+
+  describe("Policen-Erinnerungen (höchstens 2, Opt-in, Stopp)", () => {
+    async function gebeten(o: { startIn: number; gebuchtVor: number; optIn?: boolean; komplettcheck?: boolean }) {
+      const now = new Date();
+      const { conv, lead, phone } = await leadMitChat({});
+      await prisma.conversation.update({ where: { id: conv.id }, data: { windowExpiresAt: new Date(now.getTime() + 2 * HOUR) } });
+      const appt = await prisma.appointment.create({
+        data: { customerId, leadId: lead.id, conversationId: conv.id, startsAt: new Date(now.getTime() + o.startIn), mode: "video", status: "booked", komplettcheck: o.komplettcheck ?? true, createdAt: new Date(now.getTime() - o.gebuchtVor) },
+      });
+      await prisma.message.create({ data: { conversationId: conv.id, direction: "internal", kind: STRECKE.policenBitte, body: JSON.stringify({ appointmentId: appt.id, police: null }), sentBy: "bot", createdAt: new Date(now.getTime() - o.gebuchtVor) } });
+      if (o.optIn !== false) policenModul.optIn.add(lead.id);
+      return { conv, lead, phone, appt, now };
+    }
+    // Werktag 12 Uhr deutscher Zeit (Erinnerungen nur Mo bis Sa 8 bis 20 Uhr)
+    const mittag = () => {
+      const d = new Date();
+      d.setUTCHours(11, 0, 0, 0);
+      return d;
+    };
+    const nur = (phone: string) => gesendet().filter((s) => s.to === phone);
+
+    it("nie geschickt: 24 Std. nach der Buchung die Erinnerung (mit STOP), am Vortag die Zeile, danach Schluss", async () => {
+      vi.useFakeTimers({ toFake: ["Date"], shouldAdvanceTime: true });
+      vi.setSystemTime(mittag());
+      try {
+        const g = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
+        expect((await runPolicenErinnerung(new Date())).gesendet).toBeGreaterThanOrEqual(1);
+        expect(nur(g.phone).at(-1)!.body).toBe(
+          "Kurze Erinnerung: Haben Sie Ihre Policen für Haftpflicht, Hausrat oder Kfz schon zur Hand? Einfach abfotografieren und hier schicken, dann kann Herr Kannapinn alles vorbereiten.\n\nKeine Nachrichten mehr? Antworten Sie einfach STOP.",
+        );
+        await runPolicenErinnerung(new Date());
+        expect(nur(g.phone)).toHaveLength(1);
+        const satz = await policenVortagSatzFuer(g.appt, "sie");
+        expect(satz).toBe("Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.");
+        expect(vortagText({ an: "sie", hi: "Guten Tag Frau Schneider,", wann: "morgen um 10 Uhr", nutzen: "In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was es kostet.", komplettcheck: true, mode: "video", meetUrl: "https://x", person: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" }, policen: satz })).toContain(
+          "Legen Sie gern Ihre bestehenden Verträge bereit. Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.",
+        );
+        await merke(g.conv.id, STRECKE.policenErinnerung, { appointmentId: g.appt.id, art: "vortag" });
+        expect(await policenVortagSatzFuer(g.appt, "sie")).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("Termin in 2 Tagen oder weniger: keine eigene Erinnerung, nur die Zeile am Vortag", async () => {
+      vi.useFakeTimers({ toFake: ["Date"], shouldAdvanceTime: true });
+      vi.setSystemTime(mittag());
+      try {
+        const g = await gebeten({ startIn: 20 * HOUR, gebuchtVor: 25 * HOUR }); // Buchung bis Termin unter 2 Tagen
+        await runPolicenErinnerung(new Date());
+        expect(nur(g.phone)).toHaveLength(0);
+        expect(await policenVortagSatzFuer(g.appt, "sie")).not.toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("Stopp: Police da, „habe keine“, „Lieber nicht“, ohne Opt-in, Schalter aus", async () => {
+      const doc = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
+      await prisma.leadDocument.create({ data: { leadId: doc.lead.id, customerId, fileName: "hausrat.pdf", mimeType: "application/pdf", size: 10 } });
+      expect(await policenVortagSatzFuer(doc.appt, "sie")).toBeNull();
+      const keine = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
+      await prisma.message.create({ data: { conversationId: keine.conv.id, direction: "inbound", body: "Habe keine, ist alles neu" } });
+      expect(await policenVortagSatzFuer(keine.appt, "sie")).toBeNull();
+      const lieber = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
+      await prisma.message.create({ data: { conversationId: lieber.conv.id, direction: "inbound", body: "Lieber nicht" } });
+      expect(await policenVortagSatzFuer(lieber.appt, "sie")).toBeNull();
+      const ohne = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR, optIn: false });
+      expect(await policenVortagSatzFuer(ohne.appt, "sie")).toBeNull();
+      const aus = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
+      expect(await policenVortagSatzFuer(aus.appt, "sie")).not.toBeNull();
+      policenModul.an = false;
+      expect(await policenVortagSatzFuer(aus.appt, "sie")).toBeNull();
+    });
   });
 });
 

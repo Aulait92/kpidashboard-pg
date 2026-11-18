@@ -1,6 +1,6 @@
-// Live-Test Ole, 17.11.2026: freie Wunschzeit direkt buchen; Adresse der Einladung in der Buchungsnachricht nennen.
+// Live-Test Ole, 17.11.2026: freie Wunschzeit direkt buchen; Buchungsnachricht kurz, die Adresse kommt erst am Schluss.
 import { describe, expect, it } from "vitest";
-import { buchungsText, einladungAnText, terminRegeln, vermittlerName, WUNSCHZEIT_REGEL } from "@/lib/whatsapp/gespraech";
+import { abschlussText, buchungsText, EMAIL_KNOEPFE, knoepfeFuerText, terminRegeln, vermittlerName, WUNSCHZEIT_REGEL } from "@/lib/whatsapp/gespraech";
 
 const person = vermittlerName("sie", { name: "Ole Kannapinn", anrede: "Herr", fallback: "Ole" });
 
@@ -12,13 +12,14 @@ describe("Live-Test 17.11.2026", () => {
     expect(r).toContain(WUNSCHZEIT_REGEL);
   });
 
-  it("Buchungsnachricht nennt die Adresse der Einladung, ohne Gedankenstrich", () => {
-    const t = buchungsText({ an: "sie", start: new Date("2026-11-18T15:00:00Z"), mode: "video", meetUrl: "https://meet.example/x", person, email: "ole@example.de" });
-    expect(t).toContain("Hier ist Ihr Link: https://meet.example/x\nDie Einladung mit Kalendereintrag ist an ole@example.de unterwegs.");
-    expect(t).toContain("schreiben Sie mir einfach die richtige");
-    expect(t).not.toMatch(/[–—]/);
-    expect(einladungAnText("du", "a@b.de")).toContain("schreib mir einfach");
-    const ohne = buchungsText({ an: "sie", start: new Date("2026-11-18T15:00:00Z"), mode: "video", meetUrl: "https://meet.example/x", person });
-    expect(ohne).not.toContain("Einladung");
+  it("Buchungsnachricht kurz (höchstens 3 Zeilen), ohne Adresse; die Adresse wird am Schluss bestätigt (Knöpfe)", () => {
+    const t = buchungsText({ an: "sie", start: new Date("2026-11-18T10:00:00Z"), mode: "video", meetUrl: "https://meet.example/x", person });
+    expect(t).toBe("Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 11 Uhr*. Herr Kannapinn hält sich die Zeit nur für Sie frei und bereitet Ihre Beiträge vor.\nIhr Link: https://meet.example/x");
+    expect(t.split("\n").length).toBeLessThanOrEqual(3);
+    expect(t).not.toMatch(/Einladung|Handy-Browser|dazwischenkommt|[–—]/);
+    const schluss = abschlussText({ an: "sie", person, bereitlegen: [], email: "ole@example.de", nachFragen: true });
+    expect(schluss).toContain("Zum Schluss: Die Einladung mit Kalendereintrag geht an ole@example.de. Stimmt die Adresse?");
+    expect(knoepfeFuerText(schluss)).toEqual(EMAIL_KNOEPFE);
+    expect(EMAIL_KNOEPFE.map((k) => k.title)).toEqual(["Ja, stimmt", "Andere Adresse"]);
   });
 });
