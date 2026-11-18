@@ -195,6 +195,7 @@ function BisherFormular({
   const [e, setE] = useState<BisherVertrag>(() => bisherHand(sp.bisher));
   const [tarife, setTarife] = useState<BisherTarif[] | null>(null);
   const [eigenerName, setEigenerName] = useState(false);
+  const [gesFreiGewaehlt, setGesFrei] = useState(false);
   // Beim Öffnen mit dem aktuellen Stand beginnen
   const [warOffen, setWarOffen] = useState(open);
   if (open !== warOffen) {
@@ -202,6 +203,7 @@ function BisherFormular({
     if (open) {
       setE(bisherHand(sp.bisher));
       setEigenerName(false);
+      setGesFrei(false);
     }
   }
   // Tier-Kranken und Tier-OP: nur Versicherer, die diese Sparte anbieten (Ole, 18.11.2026); sonst alle Versicherer
@@ -222,6 +224,14 @@ function BisherFormular({
       ? spartenGes
       : [...new Map([...gesellschaften, ...bekannteGesellschaften().map((key) => ({ key, name: gesellschaftName(key) }))].map((g) => [g.key, g])).values()]
   ).sort((x, y) => x.name.localeCompare(y.name, "de"));
+  // Versicherer: gewählter Listeneintrag bzw. freie Eingabe („Anderer Versicherer …“)
+  const gesWahl = e.gesellschaft ? (auswahl.find((g) => g.name === e.gesellschaft || g.key === gesellschaftAusText(e.gesellschaft)) ?? null) : null;
+  const gesFrei = gesFreiGewaehlt || (!!e.gesellschaft && !gesWahl);
+  const gesSetzen = (neu: string | null) => {
+    // andere Gesellschaft: Katalogtarif passt nicht mehr
+    setE((alt) => ({ ...alt, gesellschaft: neu, ...(gesellschaftAusText(neu ?? "") !== gesellschaftAusText(alt.gesellschaft) ? { katalogId: null, tarif: null } : {}) }));
+    setEigenerName(false);
+  };
   const gKey = gesellschaftAusText(e.gesellschaft);
   // Tarife der Gesellschaft in dieser Sparte aus dem ganzen Katalog
   useEffect(() => {
@@ -294,26 +304,42 @@ function BisherFormular({
       >
         <label className="grid gap-1 text-[13px]">
           Versicherer
-          <input
+          {/* Echte Auswahlliste statt Eingabe mit Vorschlägen (Ole, 18.11.2026: mit eingetragener Gesellschaft ließ sich
+              die Liste nicht mehr öffnen); fehlt der Versicherer, „Anderer Versicherer …“ mit freier Eingabe */}
+          <select
             className={FELD}
-            list={`bisher-ges-${sp.key}`}
-            value={e.gesellschaft ?? ""}
-            placeholder="z. B. HUK-COBURG"
-            maxLength={60}
+            value={gesFrei ? ANDERER : (gesWahl?.name ?? "")}
             onChange={(ev) => {
-              const neu = ev.target.value;
-              // andere Gesellschaft: Katalogtarif passt nicht mehr
-              setE((alt) => ({ ...alt, gesellschaft: neu || null, ...(gesellschaftAusText(neu) !== gesellschaftAusText(alt.gesellschaft) ? { katalogId: null, tarif: null } : {}) }));
-              setEigenerName(false);
+              const v = ev.target.value;
+              if (v === ANDERER) {
+                setGesFrei(true);
+                gesSetzen(null);
+                return;
+              }
+              setGesFrei(false);
+              gesSetzen(v || null);
             }}
             data-bisher-versicherer
-          />
-          <datalist id={`bisher-ges-${sp.key}`}>
-            {/* Alle Versicherer alphabetisch (SIGNAL IDUNA fehlte), bei Tier-Kranken/OP nur die der Sparte (Ole, 18.11.2026) */}
+          >
+            <option value="">Bitte wählen</option>
             {auswahl.map((g) => (
-              <option key={g.key} value={g.name} />
+              <option key={g.key} value={g.name}>
+                {g.name}
+              </option>
             ))}
-          </datalist>
+            <option value={ANDERER}>Anderer Versicherer …</option>
+          </select>
+          {gesFrei ? (
+            <input
+              className={FELD}
+              value={e.gesellschaft ?? ""}
+              placeholder="Name des Versicherers"
+              maxLength={60}
+              autoFocus
+              onChange={(ev) => gesSetzen(ev.target.value || null)}
+              data-bisher-versicherer-frei
+            />
+          ) : null}
         </label>
 
         <label className="grid gap-1 text-[13px]">
