@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { withVat } from "@/lib/offer-pricing";
 import { CreditCard, Package } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Button, Card, CardHeader } from "@/components/ui";
@@ -15,6 +16,8 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Bestellen | performancegrowth" };
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+// Bruttopreise anzeigen (Ole, 19.11.2026); gespeichert und abgebucht wird netto, Stripe rechnet die USt. dazu
+const brutto = (netto: number) => eur(withVat(netto));
 const STATUS: Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   paid: { label: "bezahlt", tone: "success" },
   processing: { label: "Lastschrift läuft", tone: "success" },
@@ -84,7 +87,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
           const price = Number(s.price);
           return (
             <Card key={s.id}>
-              <CardHeader title={s.label ?? s.productKey} icon={Package} actions={<span className="text-sm text-[color:var(--muted)]">{eur(price)} je Lead</span>} />
+              <CardHeader title={s.label ?? s.productKey} icon={Package} actions={<span className="text-sm text-[color:var(--muted)]">{brutto(price)} je Lead</span>} />
               <div className="space-y-4 px-5 pb-5 text-sm">
                 <div>
                   <div className="flex items-baseline justify-between gap-3">
@@ -109,7 +112,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
 
                 {credits.amount > 0 ? (
                   <p className="rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-emerald-900">
-                    Gutschrift {eur(credits.amount)} aus {credits.leadIds.length} Storno(s) wird mit der nächsten Bestellung verrechnet.
+                    Gutschrift {brutto(credits.amount)} aus {credits.leadIds.length} Storno(s) wird mit der nächsten Bestellung verrechnet.
                   </p>
                 ) : null}
 
@@ -120,7 +123,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
                         <div>
                           <div className="font-medium">Nächste Woche ({fmtWeek(nextWeek.start)})</div>
                           <div className="text-[color:var(--muted)]">
-                            {next.quantity} Leads bestellt · {eur(Number(next.amount))} · {STATUS[next.status]?.label}
+                            {next.quantity} Leads bestellt · {brutto(Number(next.amount))} · {STATUS[next.status]?.label}
                           </div>
                         </div>
                         <form action={toggleAutoRenewAction}>
