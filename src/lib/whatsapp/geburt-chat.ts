@@ -31,6 +31,13 @@ export type GeburtErgebnis = {
   hinweis: string | null;
   /** zu merkende Nachfrage */
   merker: GeburtMerker | null;
+  /**
+   * Rückfrage, die die App wörtlich sendet (statt freier Worte des Assistenten; Ole, 19.11.2026: nach einer
+   * Quatsch-Eingabe kam „Vielen Dank, das notiere ich …“ und dann doch die Frage)
+   */
+  frage?: string;
+  /** als offen notiert: im Chat nicht weiter nach dem Geburtsdatum fragen */
+  offen?: true;
 };
 
 export function geburtImChat(o: {
@@ -53,16 +60,17 @@ export function geburtImChat(o: {
   if (p.art === "unlesbar") {
     const angabe = o.wert.replace(/\s+/g, " ").trim().slice(0, 40);
     if (gefragt("unlesbar") || gefragt("unplausibel")) {
-      return { geburt: `offen (Angabe: ${angabe})`, hinweis: "Notiert als offen. Frag nicht weiter nach dem Geburtsdatum, das klärt der Berater im Termin.", merker: null };
+      return { geburt: `offen (Angabe: ${angabe})`, hinweis: "Notiert als offen. Frag nicht weiter nach dem Geburtsdatum, das klärt der Berater im Termin.", merker: null, offen: true };
     }
     const frage = a(o.an, "Das habe ich nicht als Datum erkannt. Wie lautet dein Geburtsdatum, zum Beispiel 14.05.1985?", "Das habe ich nicht als Datum erkannt. Wie lautet Ihr Geburtsdatum, zum Beispiel 14.05.1985?");
     return {
       geburt: null,
       hinweis: `Nicht gespeichert: „${angabe}“ ist kein erkennbares Datum. Frag genau einmal freundlich neu, wörtlich: „${frage}“ Passt die nächste Antwort wieder nicht oder weiß der Lead es nicht, halte sie fest und mach weiter.`,
       merker: { art: "unlesbar", datum: angabe },
+      frage,
     };
   }
-  const offen = { geburt: `offen (Angabe: ${p.datum})`, hinweis: "Notiert als offen. Frag nicht weiter nach dem Geburtsdatum, das klärt der Berater im Termin.", merker: null };
+  const offen: GeburtErgebnis = { geburt: `offen (Angabe: ${p.datum})`, hinweis: "Notiert als offen. Frag nicht weiter nach dem Geburtsdatum, das klärt der Berater im Termin.", merker: null, offen: true };
 
   if (p.art === "unplausibel") {
     if (gefragt("unplausibel")) return offen;
@@ -71,6 +79,7 @@ export function geburtImChat(o: {
       geburt: null,
       hinweis: `Nicht gespeichert: Das Geburtsdatum ${p.datum} liegt in der Zukunft oder ergibt über 100 Jahre. Frag genau einmal freundlich neu, wörtlich: „${frage}“ Passt die nächste Antwort wieder nicht oder weiß der Lead es nicht, halte sie fest und mach weiter.`,
       merker: { art: "unplausibel", datum: p.datum },
+      frage,
     };
   }
 
@@ -88,6 +97,7 @@ export function geburtImChat(o: {
       tier: tierErgaenzen(o.tierBisher, "Geboren", p.datum),
       hinweis: `Nicht als Geburtsdatum des Leads gespeichert: ${p.datum} ergibt unter 18 Jahre, das ist sicher das Datum des Tieres (unter angaben.tier notiert). Schreib wörtlich: „${frage}“`,
       merker: { art: "tier", datum: p.datum },
+      frage,
     };
   }
   if (o.schon.some((m) => m.art === "minderjaehrig" && m.datum === p.datum)) {
@@ -103,5 +113,20 @@ export function geburtImChat(o: {
     geburt: null,
     hinweis: `Nicht gespeichert: ${p.datum} ergibt unter 18 Jahre. Frag genau einmal, wörtlich: „${frage}“ Bestätigt der Lead, halte dasselbe Datum noch einmal mit record_qualification fest (angaben.geburt). Nennt er ein anderes Datum, halte das fest.`,
     merker: { art: "minderjaehrig", datum: p.datum },
+      frage,
   };
+}
+
+/**
+ * Geburtsdatum als offen notiert: Sätze, die erneut nach dem Geburtsdatum fragen, aus der Antwort des Assistenten
+ * entfernen. Bleibt nichts übrig, eine kurze Bestätigung.
+ */
+export function ohneGeburtsFrage(text: string, an: Ansprache): string {
+  // Satzende: . ! ? vor Leerzeichen (nicht in „01.01.1980“ oder „TT.MM.JJJJ“)
+  const saetze = text.split(/(?<=[.!?])\s+/).map((x) => `${x} `);
+  const rest = saetze
+    .filter((x) => !(/geburtsdatum|geboren/i.test(x) && /\?\s*$/.test(x)))
+    .join("")
+    .trim();
+  return rest || a(an, "Danke, das klären wir dann im Termin.", "Danke, das klären wir dann im Termin.");
 }
