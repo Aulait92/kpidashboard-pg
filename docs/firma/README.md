@@ -6,6 +6,7 @@ Gemeinsames Gedächtnis des Führungsteams (Ole, 19.11.2026). Jeder Agent liest 
 - Agenten: `.claude/agents/<rolle>.md` (22 Rollen). Ändert man eine Datei, ändert sich der Agent.
 - Ausführliche Fassung mit Freigabe-Tabelle, Plan KW 47 bis 50 und „Weg zum Unicorn“: Claude-Dokument
   „Agenten-Führungsteam performancegrowth“ (claude.ai/artifact/68aut7ABgkAYrpAA7EGJJn, nur mit Freigabe von Ole sichtbar).
+- A/B-Tests: `ab-tests.md` (Lernbuch, Ablauf), Rolle `ab-test-labor`
 - Beschlüsse: `entscheidungslog.md` · Übergabe und offene Punkte: `offene-aufgaben.md` · Kalt-Mail: `kaltakquise.md`
 - Protokolle: `protokolle/JJJJ-MM-TT-<meeting>.md`
 
