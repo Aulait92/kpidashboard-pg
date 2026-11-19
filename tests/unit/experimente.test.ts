@@ -31,7 +31,7 @@ describe("Entscheidung", () => {
     const e = entscheide({ a: { n: 200, ziel: 60 }, b: { n: 200, ziel: 100 } });
     expect(e.reason).toBe("entschieden");
     expect(e.winner).toBe("b");
-    expect(e.p).toBeLessThan(0.05);
+    expect(e.p).toBeLessThan(0.01);
   });
   it("genug Daten, kein Unterschied: läuft weiter", () => {
     expect(entscheide({ a: { n: MIN_JE_FASSUNG, ziel: 20 }, b: { n: MIN_JE_FASSUNG, ziel: 21 } }).reason).toBe("kein_unterschied");

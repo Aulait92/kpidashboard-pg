@@ -3,7 +3,8 @@
 //   - Messung: Antwortquote je Fassung. Gezählt werden nur Vorlagen-Sendungen (Message.purpose/variant), die
 //     mindestens ANTWORT_STUNDEN alt sind; Antwort = eingehende Nachricht im selben Chat innerhalb dieser Zeit,
 //     ohne Abmeldung und ohne Absage („Kein Bedarf“, „Nein, danke“). Zusätzlich (nur Anzeige): Terminquote.
-//   - Entscheidung: ab MIN_JE_FASSUNG Sendungen je Fassung und p < ALPHA im zweiseitigen Zwei-Stichproben-z-Test
+//   - Entscheidung: ab MIN_JE_FASSUNG Sendungen und MIN_TREFFER Treffern bzw. Nicht-Treffern je Fassung und p < ALPHA
+//     (0,01, Ole 19.11.2026) im zweiseitigen Zwei-Stichproben-z-Test
 //     wird die bessere Fassung automatisch Standard (TemplateAbTest.winner) und im Audit-Log vermerkt.
 // Rein: zTest, decideAbWinner, variantForKey (Unit-Tests). Datenbank: abVariantFor, loadAbStats, promoteAbWinners.
 
@@ -13,7 +14,17 @@ import { prisma } from "@/lib/prisma";
 import { TEMPLATE_BODY_B, variantsFor, type NoticePurpose, type TemplateVariant } from "@/lib/whatsapp/templates";
 
 export const MIN_JE_FASSUNG = 50;
-export const ALPHA = 0.05;
+/**
+ * Signifikanzniveau (Ole, 19.11.2026: „Entscheidung erst, wenn statistisch signifikant genug“): 0,01 statt 0,05. Der
+ * Cron prüft laufend nach; bei jedem Blick kann ein Zufallsunterschied p < 0,05 erreichen, die echte Fehlerquote läge
+ * dann weit über 5 %. Mit 0,01 bleibt sie auch bei vielen Blicken klein.
+ */
+export const ALPHA = 0.01;
+/**
+ * Mindestens so viele Treffer und Nicht-Treffer je Fassung, sonst ist der z-Test nicht verlässlich (Normalnäherung;
+ * z. B. 0 gegen 4 Termine sieht deutlich aus, ist es aber nicht).
+ */
+export const MIN_TREFFER = 10;
 export const ANTWORT_STUNDEN = 72;
 const TERMIN_TAGE = 14;
 
@@ -56,6 +67,8 @@ export function decideAbWinner(s: AbStats, opts: { min?: number; alpha?: number 
   const alpha = opts.alpha ?? ALPHA;
   const t = zTest(s.a, s.b);
   if (s.a.sent < min || s.b.sent < min) return { winner: null, p: t.p, z: t.z, reason: "zu_wenig" };
+  const zuWenigTreffer = (v: VariantStats) => v.replied < MIN_TREFFER || v.sent - v.replied < MIN_TREFFER;
+  if (zuWenigTreffer(s.a) || zuWenigTreffer(s.b)) return { winner: null, p: t.p, z: t.z, reason: "zu_wenig" };
   if (!(t.p < alpha)) return { winner: null, p: t.p, z: t.z, reason: "kein_unterschied" };
   return { winner: t.z > 0 ? "b" : "a", p: t.p, z: t.z, reason: "entschieden" };
 }

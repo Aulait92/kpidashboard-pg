@@ -287,9 +287,13 @@ describe("A/B-Test: Statistik und Entscheidung", () => {
   it("Gewinner erst ab 50 je Fassung und p < 0,05", () => {
     expect(decideAbWinner({ a: { sent: 49, replied: 5 }, b: { sent: 200, replied: 150 } })).toMatchObject({ winner: null, reason: "zu_wenig" });
     expect(decideAbWinner({ a: { sent: 100, replied: 30 }, b: { sent: 100, replied: 33 } })).toMatchObject({ winner: null, reason: "kein_unterschied" });
-    expect(decideAbWinner({ a: { sent: 100, replied: 30 }, b: { sent: 100, replied: 45 } })).toMatchObject({ winner: "b", reason: "entschieden" });
+    // Signifikant genug (Ole, 19.11.2026): p unter 0,01; 30 % gegen 45 % bei je 100 (p ≈ 0,03) reicht nicht mehr
+    expect(decideAbWinner({ a: { sent: 100, replied: 30 }, b: { sent: 100, replied: 45 } })).toMatchObject({ winner: null, reason: "kein_unterschied" });
+    expect(decideAbWinner({ a: { sent: 200, replied: 60 }, b: { sent: 200, replied: 95 } })).toMatchObject({ winner: "b", reason: "entschieden" });
     expect(decideAbWinner({ a: { sent: 60, replied: 40 }, b: { sent: 60, replied: 20 } })).toMatchObject({ winner: "a" });
-    expect(decideAbWinner({ a: { sent: 30, replied: 0 }, b: { sent: 30, replied: 30 } }, { min: 20 })).toMatchObject({ winner: "b" });
+    // Zu wenige Treffer bzw. Nicht-Treffer je Fassung: keine Entscheidung, auch wenn der Unterschied riesig aussieht
+    expect(decideAbWinner({ a: { sent: 30, replied: 0 }, b: { sent: 30, replied: 30 } }, { min: 20 })).toMatchObject({ winner: null, reason: "zu_wenig" });
+    expect(decideAbWinner({ a: { sent: 100, replied: 0 }, b: { sent: 100, replied: 8 } })).toMatchObject({ winner: null, reason: "zu_wenig" });
   });
 
   it("Zuteilung fest je Lead und etwa hälftig", () => {

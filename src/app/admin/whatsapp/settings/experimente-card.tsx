@@ -1,7 +1,7 @@
 // Splittests der Lead-Reise (lib/experimente.ts): Stand je Test, Quote der Ziel-Kennzahl je Fassung. Die bessere
 // Fassung wird automatisch Standard (Cron, Audit-Log „experiment.gewinner“); hier nur lesen.
 import { experimenteUebersicht, type ExperimentUebersicht } from "@/lib/experimente";
-import { ALPHA } from "@/lib/whatsapp/ab-test";
+import { ALPHA, MIN_TREFFER } from "@/lib/whatsapp/ab-test";
 import { SPLITTEST_HYPOTHESE } from "@/lib/ab-hypothesen";
 
 const ZIEL: Record<string, string> = { termin_gebucht: "Termin gebucht", komplettcheck_ja: "Komplettcheck ja", erschienen: "Erschienen", zusage: "Zusage" };
@@ -11,7 +11,7 @@ const mitQuote = (z: number, n: number) => (n ? `${z} (${Math.round((z / n) * 10
 function stand(e: ExperimentUebersicht): string {
   if (e.winner) return `Entschieden: Fassung ${e.winner.toUpperCase()} ist Standard.`;
   if (!e.aktiv) return "Angehalten: alle sehen Fassung A.";
-  if (e.entscheidung.reason === "zu_wenig") return `Läuft: Entscheidung ab ${e.min} je Fassung.`;
+  if (e.entscheidung.reason === "zu_wenig") return `Läuft: Entscheidung ab ${e.min} Leads und ${MIN_TREFFER} Treffern je Fassung.`;
   if (e.entscheidung.reason === "entschieden") return `Fassung ${e.entscheidung.winner?.toUpperCase()} liegt klar vorn, wird beim nächsten Lauf Standard.`;
   return `Läuft: noch kein klarer Unterschied (p = ${e.p.toFixed(3)}, nötig unter ${ALPHA}).`;
 }
