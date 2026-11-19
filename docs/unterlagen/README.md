@@ -87,7 +87,7 @@ Der Header-Wert `dummy` wird vom Netzwerk-Geheimnis der Claude-Umgebung durch de
 ## Pay-per-Lead + Software (19.11.2026, Ole)
 
 Eigene kurze Präsentation für Vermittler, die Leads pro Stück kaufen wollen und dazu die Software bekommen sollen:
-`PPL-Software-Praesentation.pptx` und `.pdf` (12 Folien, Bild-Folien im selben Design, Seitenzahl „n / 12“, Sprechzettel
+`PPL-Software-Praesentation.pptx` und `.pdf` (13 Folien, Bild-Folien im selben Design, Seitenzahl „n / 13“, Sprechzettel
 als Notizen in der PPTX) und `sprechzettel-ppl-software.md` (je Folie, dazu 3 Einwände). Nicht für den Upload unter
 Marketing → Unterlagen gedacht (dort gibt es nur Vertreter/Makler), sondern zum Zeigen im Gespräch oder Versand per Mail.
 

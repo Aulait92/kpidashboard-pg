@@ -1,6 +1,6 @@
 # Sprechzettel Pay-per-Lead + Software (Stand 19.11.2026)
 
-Für `PPL-Software-Praesentation.pptx/.pdf` (12 Folien). Für Vermittler, die Leads pro Stück kaufen wollen; Ziel ist,
+Für `PPL-Software-Praesentation.pptx/.pdf` (13 Folien). Für Vermittler, die Leads pro Stück kaufen wollen; Ziel ist,
 zusätzlich die Software zu verkaufen. Grundregel: Fragen stellen, Zahlen des Gegenübers einsammeln, keine Quoten oder
 Ergebnisse versprechen. Leadpreise ohne „brutto“ oder „netto“ nennen (Ole, 19.11.2026: Umsatzsteuer auf Leads wird
 gerade rechtlich geprüft), Software immer „349 € netto im Monat“.
@@ -53,13 +53,20 @@ Beispiel: 20 Leads Privatschutz zu 35 € = 700 €, plus Software 349 € netto
 Fragen: „Wie viele Termine machen Sie heute aus 20 gekauften Leads? Was bringt Ihnen ein Abschluss?“ Dann mit seinen Werten nachrechnen.
 „Mit mehr Leads verteilt sich die Software auf mehr Termine. In der App sehen Sie später Ihre echten Kosten pro Termin und pro Abschluss.“
 
-## 11. Ihr Paket: Software + Leads
+## 11. Mehr Leads, günstigere Abschlüsse
+
+„Bei gleichen Quoten rechnen wir einmal mit 100 statt 20 Leads im Monat: Dann kostet ein Abschluss rund 192 € statt 262 €.
+Der Grund ist einfach: Die Software kostet immer 349 €, egal wie viele Leads Sie bearbeiten. Bei 4 Abschlüssen sind das
+87 € je Abschluss, bei 20 Abschlüssen nur noch 17 €. Starten Sie klein, und erhöhen Sie, sobald Sie Ihre eigenen Zahlen
+in der App sehen.“
+
+## 12. Ihr Paket: Software + Leads
 Software 349 € netto im Monat (zzgl. USt.), keine Einrichtungsgebühr, monatlich kündbar; auf Wunsch 3 Monate Laufzeit.
 Enthalten: Assistent, Terminbuchung, Erinnerungen, Pipeline und Nachfassen, Terminvorbereitung, Auswertung bis Kosten pro Abschluss, WhatsApp-Gebühren, 3 aktive Verkäufer (jeder weitere 49 € netto im Monat).
 Leads werden separat abgerechnet, je Bestellung.
 Frage: „Mit welchem Produkt und wie vielen Leads möchten Sie starten?“
 
-## 12. Ihr Start in 3 Schritten
+## 13. Ihr Start in 3 Schritten
 Angebot annehmen, WhatsApp und Kalender verbinden (ca. 5 Minuten, auf Wunsch gemeinsam), erste Leads bestellen.
 Abschlussfrage: „Spricht etwas dagegen, dass wir diese Woche mit Ihren ersten Leads starten?“
 Bei Bedenkzeit: Folgetermin direkt im Kalender festmachen.
