@@ -45,7 +45,7 @@ import { BeitragGesamt, SchutzBereich } from "./schutz-client";
 import { BisherKarte } from "./bisher-client";
 import { bisherErlaubt, bisherMitSchutz } from "@/lib/bisheriger-vertrag";
 import { spartenFuerTermin } from "@/lib/terminvorbereitung-neu";
-import { SCHUTZ_SPARTEN, schutzBereich, type VorsorgeThema } from "@/lib/schutz-ueberblick";
+import { SCHUTZ_SPARTEN, schutzFragenStand, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 import { beitraegeVollstaendig, ersteOffene, naechsteOffene, preiseStand, zeilenStand, type ZeilenStand } from "@/lib/angebot-ablauf";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
@@ -639,13 +639,17 @@ function Angebote(p: {
   const weiter = sp ? naechsteOffene(p.auswahl, sp.key) : null;
   const weiterLabel = weiter ? p.auswahl.sparten.find((s) => s.key === weiter)?.label : null;
   const kunde = p.daten.kunde || "der Kunde";
-  // Tipps fürs Gespräch (Glühbirnen-Zeilen) als Hinweis an der zugeklappten Karte „Was hat … schon?“
-  const tipps = useMemo(
-    () => schutzBereich(p.auswahl.schutz ?? [], p.auswahl.sparten.map((s) => s.key), p.daten.vorsorge ?? null).filter((x) => x.tipp).length,
-    // nur beim ersten Anzeigen, wie die Reihenfolge im Bereich selbst
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
+  // „Was hat … schon?“ füllt die Cross-Selling-Folie (Ole, 19.11.2026: sonst wird der Teil übersprungen): Zähler wie bei
+  // den Beiträgen, und der Hinweis am Hauptknopf führt dorthin, sobald die Beiträge fertig sind
+  const fragen = schutzFragenStand(p.auswahl.schutz ?? [], p.auswahl.sparten, p.daten.vorsorge ?? null);
+  const fragenOffen = fragen.von - fragen.beantwortet;
+  const schutzKarte = useRef<HTMLDetailsElement>(null);
+  const zuSchutz = () => {
+    const el = schutzKarte.current;
+    if (!el) return;
+    el.open = true;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <>
@@ -891,23 +895,47 @@ function Angebote(p: {
             {p.auswahl.sparten.length ? (
               <BeitragGesamt auswahl={p.auswahl} katalog={katalog} ro={ro} anbieten={(key) => anbieten(key, true)} aendern={p.aendern} />
             ) : null}
-            <p className={cn("mt-2 text-[13px]", fertig ? "font-medium text-emerald-700" : "text-[color:var(--muted)]")} data-angebot-fertig>
-              {fertig ? "Fertig für den Termin. Im Termin teilen Sie die Präsentation." : "Fehlende Beiträge bleiben in der Präsentation leer."}
-            </p>
+            {fertig && fragenOffen && !ro ? (
+              <button type="button" onClick={zuSchutz} className="mt-2 inline-flex min-h-10 items-center gap-1 text-left text-[13px] font-medium text-[color:var(--brand)] hover:underline sm:min-h-0" data-angebot-fertig="fragen">
+                Noch {fragenOffen} {fragenOffen === 1 ? "Frage" : "Fragen"} für die Cross-Selling-Folie
+                <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              </button>
+            ) : (
+              <p className={cn("mt-2 text-[13px]", fertig ? "font-medium text-emerald-700" : "text-[color:var(--muted)]")} data-angebot-fertig>
+                {fertig ? "Fertig für den Termin. Im Termin teilen Sie die Präsentation." : "Fehlende Beiträge bleiben in der Präsentation leer."}
+              </p>
+            )}
           </div>
           {p.fuss}
         </div>
       </Card>
 
-      {/* „Was hat Frau Becker schon?“ (Ole, 18.11.2026): fürs Gespräch und die Folie „Ihr Schutz im Überblick“; zugeklappt wie „Mehr zum Kunden“ */}
+      {/* „Was hat Frau Becker schon?“ (Ole, 18.11.2026): füllt die Folie „Ihr Schutz im Überblick“; zugeklappt wie „Mehr zum
+          Kunden“. Zweck im Kopf (Ole, 19.11.2026: „nicht, dass er den zweiten Teil überspringt“): Cross-Selling-Folie und Zähler
+          wie „0 von 1 Beiträgen“; Kopf am Handy zweizeilig statt Titel und Zusatz übereinander. */}
       <details
-        className="group mt-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]"
+        ref={schutzKarte}
+        className="group mt-3 scroll-mt-20 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]"
         open={p.schutzOffen || undefined}
         data-schutz-karte
       >
-        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3.5 text-[15px] font-semibold sm:px-5 [&::-webkit-details-marker]:hidden">
-          <span className="min-w-0 flex-1">Was hat {kunde} schon?</span>
-          <span className="shrink-0 text-[13px] font-medium text-[color:var(--muted)]">{tipps ? `${tipps} ${tipps === 1 ? "Tipp" : "Tipps"} fürs Gespräch` : "Fürs Gespräch"}</span>
+        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3 sm:px-5 [&::-webkit-details-marker]:hidden">
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold tracking-tight">Was hat {kunde} schon?</span>
+            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-[13px] text-[color:var(--muted)]" data-schutz-zweck>
+                Cross-Selling-Folie „Ihr Schutz im Überblick“
+              </span>
+              {fragen.von ? (
+                <span
+                  className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", fragenOffen ? "bg-[color:var(--surface-sunken)] text-[color:var(--muted)]" : "bg-emerald-50 text-emerald-700")}
+                  data-schutz-stand={`${fragen.beantwortet}/${fragen.von}`}
+                >
+                  {fragenOffen ? `${fragen.beantwortet} von ${fragen.von} Fragen` : "Fertig"}
+                </span>
+              ) : null}
+            </span>
+          </span>
           <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" aria-hidden />
         </summary>
         <div className="border-t border-[color:var(--border)] pb-4">

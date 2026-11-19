@@ -441,6 +441,26 @@ export function schutzZeilen(schutz: SchutzEintrag[], angebot: string[]): Schutz
   }));
 }
 
+/**
+ * Stand für „Was hat Frau Becker schon?“ (Ole, 19.11.2026: der Vermittler soll sehen, dass das die Cross-Selling-Folie
+ * füllt): Fragen = Zeilen, die auf der Folie „Ihr Schutz im Überblick“ stehen (schutzZeilen, höchstens SCHUTZ_MAX) und
+ * nicht fest im Angebot sind (die zeigt die Folie ohnehin als „Im Angebot“); beantwortet = nicht mehr schutzOffen.
+ */
+export function schutzFragenStand(
+  gespeichert: SchutzEintrag[],
+  sparten: { key: string; zusatz?: boolean }[],
+  vorsorge?: VorsorgeThema | null,
+): { beantwortet: number; von: number } {
+  // Das Vorsorge-Thema steht als offene Zeile im Bereich, gespeichert wird es erst mit der Antwort
+  const vk = vorsorge ? VORSORGE_SPARTE[vorsorge.key] : null;
+  const schutz: SchutzEintrag[] =
+    vk && !gespeichert.some((s) => s.key === vk) ? [...gespeichert, { key: vk, label: SCHUTZ_SPARTEN[vk] ?? vorsorge!.label, status: "pruefen" }] : gespeichert;
+  const fest = new Set(sparten.filter((s) => !s.zusatz).map((s) => s.key));
+  const aufFolie = schutzZeilen(schutz, sparten.map((s) => s.key)).filter((z) => !fest.has(z.key));
+  const offen = aufFolie.filter((z) => schutz.some((s) => s.key === z.key && schutzOffen(s))).length;
+  return { beantwortet: aufFolie.length - offen, von: aufFolie.length };
+}
+
 // ─── Bereich „Was hat Frau Becker schon?“ (Terminvorbereitung, Ole 18.11.2026) ──────────────
 // Ein Bereich statt „Chance im Termin“ und Fenster „Schutz im Überblick“: Tipp-Zeilen (die erkannten Chancen und das
 // Vorsorge-Thema) oben, dann offene, dann beantwortete Zeilen (zugeklappt); „+ Versicherung hinzufügen“ sucht über alle
