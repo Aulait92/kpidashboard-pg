@@ -8,7 +8,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Calculator, CalendarDays, Check, ChevronDown, Copy, ExternalLink, Phone, Plus, Presentation, RotateCcw, Search, Send, Star, Video, X } from "lucide-react";
+import { ArrowRight, Calculator, CalendarDays, Check, ChevronDown, Copy, ExternalLink, Phone, Plus, Presentation, RotateCcw, Search, Send, Video, X } from "lucide-react";
 import { Button, buttonClass, Card } from "@/components/ui";
 import { ActionSheet, Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
@@ -44,7 +44,8 @@ import { BeitragGesamt, SchutzBereich } from "./schutz-client";
 import { BisherKarte } from "./bisher-client";
 import { bisherErlaubt, bisherMitSchutz } from "@/lib/bisheriger-vertrag";
 import { spartenFuerTermin } from "@/lib/terminvorbereitung-neu";
-import { SCHUTZ_SPARTEN, type VorsorgeThema } from "@/lib/schutz-ueberblick";
+import { SCHUTZ_SPARTEN, schutzBereich, type VorsorgeThema } from "@/lib/schutz-ueberblick";
+import { beitraegeVollstaendig, ersteOffene, naechsteOffene, preiseStand, zeilenStand, type ZeilenStand } from "@/lib/angebot-ablauf";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
 
@@ -207,7 +208,6 @@ export function VorbereitungNeu(p: {
   const [pruefHinweis, setPruefHinweis] = useState(false);
   const [springeZu, setSpringeZu] = useState<{ key: string; n: number } | null>(null);
   const ungeprueft = ungepruefteBeitraege(auswahl);
-  const fertigFuerPraesentation = beitraegeVollstaendig(auswahl);
   const oeffnen = async (e: React.MouseEvent) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
     if (ungepruefteBeitraege(ref.current).length) {
@@ -271,7 +271,7 @@ export function VorbereitungNeu(p: {
           <Button variant="ghost" size="md" icon={vorbereitet ? RotateCcw : Check} disabled={p.readOnly} onClick={vorbereitetUmschalten} data-termin-vorbereitet>
             {vorbereitet ? "Doch nicht vorbereitet" : "Als vorbereitet markieren"}
           </Button>
-          {/* Hauptknopf ist Schritt 3 unten; oben nur als Abkürzung (eine Hauptaktion je Seite) */}
+          {/* Hauptknopf steht am Ende des Angebots; oben nur als Abkürzung (eine Hauptaktion je Seite) */}
           <a href={praesentation} onClick={oeffnen} className={buttonClass("secondary", "md")} data-praesentation-oeffnen>
             <Presentation className="h-4 w-4" /> Präsentation öffnen
           </a>
@@ -303,43 +303,30 @@ export function VorbereitungNeu(p: {
         }}
         neuLaden={() => router.refresh()}
         springeZu={springeZu}
-      />
-
-      {/* Schritt 3 (Ole, 17.11.2026): Abschluss mit klarer nächster Handlung; am Handy übernimmt die feste Leiste */}
-      <Card className="mt-3 hidden md:block" data-schritt-3>
-        <div className="flex flex-wrap items-center gap-3 px-5 py-4">
-          <span
-            className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", fertigFuerPraesentation ? "bg-emerald-600" : "bg-[color:var(--foreground)]")}
-            aria-hidden
-          >
-            3
-          </span>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-[15px] font-semibold tracking-tight">Präsentation öffnen</h3>
-            <p className="mt-0.5 text-[13px] text-[color:var(--muted)]">
-              {fertigFuerPraesentation ? "Alles eingetragen. Im Termin teilen Sie diese Präsentation." : "Erst Beiträge eintragen, dann zeigt die Präsentation Ihre Preise."}
-            </p>
-          </div>
-          <a href={praesentation} onClick={oeffnen} className={buttonClass(angebotJetzt ? "secondary" : "primary", "md")} data-praesentation-schritt>
+        schutzOffen={!!p.kopf.komplettcheck}
+        fuss={
+          // Eine Hauptaktion am Ende des Angebots (Ole, 19.11.2026); am Handy übernimmt die feste Leiste
+          <a href={praesentation} onClick={oeffnen} className={buttonClass(angebotJetzt ? "secondary" : "primary", "md", "max-md:hidden")} data-praesentation-schritt>
             <Presentation className="h-4 w-4" /> Präsentation öffnen
           </a>
-        </div>
-      </Card>
+        }
+      />
 
-      {/* Schritt 4 (Paket P3, Ole 17.11.2026): nach dem Termin das Angebot der Gesellschaft senden; startet das Nachfassen */}
-      {p.leadId ? (
+      {/* Angebot senden (Paket P3, Ole 17.11.2026): erst nach dem Termin bzw. wenn es schon abgelegt oder gesendet ist; vorher
+          ohne Nutzen und nur verwirrend (Ole, 19.11.2026). Startet das Nachfassen. */}
+      {p.leadId && (p.angebot?.vorbei || p.angebot?.stand || p.angebot?.gesendet) ? (
         <Card className="mt-3">
           <div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5" data-schritt-4>
             <span
-              className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", p.angebot?.gesendet ? "bg-emerald-600" : "bg-[color:var(--foreground)]")}
+              className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white", p.angebot?.gesendet ? "bg-emerald-600" : "bg-[color:var(--foreground)]")}
               aria-hidden
             >
-              {p.angebot?.gesendet ? <Check className="h-4 w-4" strokeWidth={3} /> : 4}
+              {p.angebot?.gesendet ? <Check className="h-4 w-4" strokeWidth={3} /> : <Send className="h-3.5 w-3.5" />}
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="text-[15px] font-semibold tracking-tight">Angebot senden</h3>
               <p className={cn("mt-0.5 text-[13px]", p.angebot?.gesendet ? "font-medium text-emerald-700" : "text-[color:var(--muted)]")} data-angebot-stand>
-                {p.angebot?.stand ?? (p.angebot?.vorbei ? ANGEBOT_HINWEIS : "Nach dem Termin: PDF der Gesellschaft hochladen und senden.")}
+                {p.angebot?.stand ?? ANGEBOT_HINWEIS}
               </p>
             </div>
             <Button
@@ -468,6 +455,14 @@ function Klaeren({ id, punkte, erledigt: start, readOnly }: { id: string; punkte
 // ─── Angebote ───────────────────────────────────────────────────────────────────────────────
 
 
+/**
+ * Angebot für den Termin (Ole, 19.11.2026: „immer noch nicht sofort verständlich“, Entwurf docs/ux/2026-11-19-angebot-einfach.md).
+ * Wer: Vermittler am Vortag oder kurz vor dem Termin, oft am Handy. Aufgabe: je Versicherung den Beitrag der Empfehlung
+ * eintragen, dann die Präsentation öffnen. Eine Zeile je Versicherung (Stand, Empfehlung, Beitrag) statt Reiter und
+ * Schritte; aufgeklappt ist immer nur eine (zuerst die erste ohne Beitrag), „Weiter“ führt zur nächsten offenen.
+ * Seltenes (Tarife tauschen, Merkmale, Bausteine, bisheriger Vertrag, Folienvorschau am Handy) in der aufgeklappten Zeile.
+ * „Was hat … schon?“ als eigene, zugeklappte Karte darunter (offen bei gewünschtem Komplettcheck).
+ */
 function Angebote(p: {
   id: string;
   leadId: string | null;
@@ -481,8 +476,12 @@ function Angebote(p: {
   vorschau: Parameters<typeof VorbereitungNeu>[0]["vorschau"];
   vorSpeichern: () => Promise<void>;
   neuLaden: () => void;
-  /** „Jetzt prüfen“ im Hinweis vor der Präsentation: diese Sparte zeigen */
+  /** „Jetzt prüfen“ im Hinweis vor der Präsentation: diese Versicherung aufklappen */
   springeZu: { key: string; n: number } | null;
+  /** „Was hat … schon?“ gleich aufgeklappt (Komplettcheck gewünscht) */
+  schutzOffen: boolean;
+  /** Hauptaktion am Ende des Angebots („Präsentation öffnen“) */
+  fuss: ReactNode;
 }) {
   const toast = useToast();
   const { katalog, vertrieb } = p.daten;
@@ -491,23 +490,34 @@ function Angebote(p: {
     const t = p.vorschau.termin;
     return spartenFuerTermin({ ...t, termin: { ...t.termin, startsAt: new Date(t.termin.startsAt) } }, katalog)[0] ?? null;
   }, [p.vorschau.termin, katalog]);
-  const [aktiv, setAktiv] = useState<string | null>(p.auswahl.sparten[0]?.key ?? null);
+  // Aufgeklappte Zeile: beim Öffnen die erste Versicherung ohne Beitrag, sonst keine (alles fertig: ruhige Übersicht)
+  const [offenKey, setOffenKey] = useState<string | null>(() => ersteOffene(p.auswahl));
   const [rechnenOffen, setRechnenOffen] = useState(false);
-  // „Jetzt prüfen“: Sparte beim Rendern umstellen (ohne Effekt)
+  // Zeile nach dem Aufklappen sichtbar machen (die vorige klappt darüber zu und verschiebt die Seite)
+  const zeigen = (key: string | null) => {
+    setOffenKey(key);
+    setAnpassen(false);
+    if (!key) return;
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-angebot-zeile="${key}"]`);
+      if (el && el.getBoundingClientRect().top < 64) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+  // „Jetzt prüfen“: Zeile beim Rendern umstellen (ohne Effekt)
   const [gesprungen, setGesprungen] = useState(p.springeZu);
   if (p.springeZu !== gesprungen) {
     setGesprungen(p.springeZu);
-    if (p.springeZu) setAktiv(p.springeZu.key);
+    if (p.springeZu) setOffenKey(p.springeZu.key);
   }
-  const sp = p.auswahl.sparten.find((s) => s.key === aktiv) ?? p.auswahl.sparten[0] ?? null;
+  const sp = p.auswahl.sparten.find((s) => s.key === offenKey) ?? null;
   const [eigene, setEigene] = useState(p.daten.eigene);
   const ro = p.readOnly;
-  const schritt1 = p.auswahl.sparten.length > 0 && !p.daten.gesellschaftFehlt;
-  const schritt2 = beitraegeVollstaendig(p.auswahl);
-  // Selten Gebrauchtes (Merkmale, Bausteine, Tarife ändern, „In Präsentation“) erst nach „Anpassen“
+  const stand = preiseStand(p.auswahl);
+  const fertig = beitraegeVollstaendig(p.auswahl);
+  // Selten Gebrauchtes (Merkmale, Bausteine, Tarife tauschen, „In Präsentation“) erst nach „Mehr“
   const [anpassen, setAnpassen] = useState(false);
 
-  /** Änderung an der aktiven Sparte */
+  /** Änderung an der aufgeklappten Versicherung */
   const anSparte = (fn: (s: SparteWahl) => void, extern = false) =>
     p.aendern((a) => {
       const s = a.sparten.find((x) => x.key === sp?.key);
@@ -528,17 +538,18 @@ function Angebote(p: {
       // auch im Überblick (Folie „Ihr Schutz im Überblick“), falls es ihn gibt
       if (a.schutz && SCHUTZ_SPARTEN[key] && !a.schutz.some((x) => x.key === key)) a.schutz.push({ key, label: SCHUTZ_SPARTEN[key], status: "pruefen" });
     });
-    setAktiv(key);
+    zeigen(key);
   };
   /**
-   * Sparte aus „Was hat … schon?“ (Schalter „Ins Angebot“) bzw. dem Kombi-Hinweis in die Angebote: Chancen erst „bei Bedarf“ (Präsentation:
-   * „Mit anschauen“ auf „Ihr Schutz im Überblick“), der Kombi-Hinweis gleich ins Paket. Ist sie schon da: hinspringen.
+   * Sparte aus „Was hat … schon?“ (Schalter „Ins Angebot“) bzw. dem Kombi-Hinweis ins Angebot: Chancen erst „bei Bedarf“
+   * (Präsentation: „Mit anschauen“ auf „Ihr Schutz im Überblick“), der Kombi-Hinweis gleich ins Paket und aufgeklappt.
+   * Aus „Was hat … schon?“ bleibt die Zeile zu, damit die Seite unter dem Finger nicht springt.
    */
   const anbieten = (key: string, direkt = false) => {
     const da = p.auswahl.sparten.find((s) => s.key === key);
     if (da) {
       if (direkt && da.zusatz) p.aendern((a) => void delete a.sparten.find((s) => s.key === key)!.zusatz);
-      setAktiv(key);
+      if (direkt) zeigen(key);
       return;
     }
     const neu = sparteNeu(katalog, key, vertrieb, p.daten.meine);
@@ -553,15 +564,15 @@ function Angebote(p: {
       a.sparten.push(neu);
       if (a.schutz && !a.schutz.some((x) => x.key === key)) a.schutz.push({ key, label: SCHUTZ_SPARTEN[key] ?? neu.label, status: "pruefen" });
     });
-    setAktiv(key);
+    if (direkt) zeigen(key);
   };
-  /** Schalter „Ins Angebot“ aus: Sparte aus den Angeboten nehmen (mit Rückgängig, wenn sie fest drin war). */
+  /** Schalter „Ins Angebot“ aus: Sparte aus dem Angebot nehmen (mit Rückgängig, wenn sie fest drin war). */
   const ausAngebot = (key: string) => {
     const index = p.auswahl.sparten.findIndex((x) => x.key === key);
     if (index < 0) return;
     const vorher = structuredClone(p.auswahl.sparten[index]);
     p.aendern((a) => void (a.sparten = a.sparten.filter((x) => x.key !== key)));
-    if (sp?.key === key) setAktiv(p.auswahl.sparten.find((x) => x.key !== key)?.key ?? null);
+    if (offenKey === key) setOffenKey(null);
     if (!vorher.zusatz)
       toast.show({
         message: `${vorher.label} aus dem Angebot genommen`,
@@ -574,13 +585,13 @@ function Angebote(p: {
     const vorher = structuredClone(sp);
     const index = p.auswahl.sparten.findIndex((x) => x.key === sp.key);
     p.aendern((a) => void (a.sparten = a.sparten.filter((x) => x.key !== vorher.key)));
-    setAktiv(p.auswahl.sparten.find((x) => x.key !== vorher.key)?.key ?? null);
+    setOffenKey(null);
     toast.show({
-      message: `${vorher.label} entfernt`,
+      message: `${vorher.label} aus dem Angebot genommen`,
       actionLabel: "Rückgängig",
       onAction: () => {
         p.aendern((a) => void a.sparten.splice(Math.min(index, a.sparten.length), 0, vorher), true);
-        setAktiv(vorher.key);
+        setOffenKey(vorher.key);
       },
     });
   };
@@ -592,6 +603,7 @@ function Angebote(p: {
     if (r.auswahl) {
       const neu = r.auswahl;
       p.aendern((a) => void (a.sparten = neu.sparten), true);
+      setOffenKey(ersteOffene(neu));
     }
     p.neuLaden();
   };
@@ -602,88 +614,232 @@ function Angebote(p: {
   const rechner = sp && rechnerTarif && rechnerAdresse ? { url: rechnerAdresse, gesellschaft: rechnerTarif.gesellschaft, angaben: p.daten.rechnen.angaben[sp.key] ?? [] } : null;
 
   const gesellschaftsListe = [...new Map([...p.daten.gesellschaften, ...STANDARD_GESELLSCHAFTEN.map((key) => ({ key, name: gesellschaftName(key) }))].map((g) => [g.key, g])).values()];
+  const weiter = sp ? naechsteOffene(p.auswahl, sp.key) : null;
+  const weiterLabel = weiter ? p.auswahl.sparten.find((s) => s.key === weiter)?.label : null;
+  const kunde = p.daten.kunde || "der Kunde";
+  // Tipps fürs Gespräch (Glühbirnen-Zeilen) als Hinweis an der zugeklappten Karte „Was hat … schon?“
+  const tipps = useMemo(
+    () => schutzBereich(p.auswahl.schutz ?? [], p.auswahl.sparten.map((s) => s.key), p.daten.vorsorge ?? null).filter((x) => x.tipp).length,
+    // nur beim ersten Anzeigen, wie die Reihenfolge im Bereich selbst
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   return (
     <>
-    <Card id="angebote" className="mt-5" menus>
-      <div className="flex items-center gap-3 border-b border-[color:var(--border)] px-4 py-3.5 sm:px-5">
-        <h2 className="text-[15px] font-semibold tracking-tight">Angebot erstellen</h2>
-        <SpeicherStatus status={p.status} readOnly={ro} erneut={p.erneut} />
-      </div>
-
-      <Schritt nr={1} titel="Versicherungen wählen" hinweis="Was möchten Sie im Termin anbieten?" fertig={schritt1} />
-
-      {p.daten.gesellschaftFehlt ? (
-        <div className="mx-4 mt-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm sm:mx-5" data-gesellschaft-waehlen>
-          <p className="font-medium">Welche Gesellschaft vertreten Sie?</p>
-          {/* Häufig: die drei Vertreter-Gesellschaften als Knöpfe; alle übrigen Katalog-Gesellschaften in einer Auswahl */}
-          <div className="mt-2 flex flex-wrap gap-2">
-            {gesellschaftsListe
-              .filter((g) => STANDARD_GESELLSCHAFTEN.includes(g.key))
-              .map((g) => (
-                <Button key={g.key} size="sm" disabled={ro} onClick={() => void gesellschaftWaehlen([g.key])}>
-                  {g.name}
-                </Button>
-              ))}
-            <select
-              aria-label="Andere Gesellschaft"
-              disabled={ro}
-              value=""
-              onChange={(e) => e.target.value && void gesellschaftWaehlen([e.target.value])}
-              className="h-9 min-w-0 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium"
-              data-gesellschaft-andere
-            >
-              <option value="">Andere …</option>
-              {gesellschaftsListe
-                .filter((g) => !STANDARD_GESELLSCHAFTEN.includes(g.key))
-                .map((g) => (
-                  <option key={g.key} value={g.key}>
-                    {g.name}
-                  </option>
-                ))}
-              <option value="andere">Nicht in der Liste</option>
-            </select>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Sparten-Reiter, vorausgewählt aus dem Formular */}
-      <div className="relative flex flex-wrap gap-1.5 px-4 pt-3 sm:px-5" role="tablist" data-sparten>
-        {p.auswahl.sparten.map((s) => {
-          const e = empfehlungVon(s);
-          const m = e ? tarifMonat(s, e) : null;
-          const an = s.key === sp?.key;
-          return (
+      <Card id="angebote" className="mt-5 scroll-mt-20" menus data-angebot>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[color:var(--border)] px-4 py-3.5 sm:px-5">
+          <h2 className="text-[15px] font-semibold tracking-tight">Angebot für den Termin</h2>
+          {stand.von ? (
             <span
-              key={s.key}
-              className={cn(
-                "inline-flex h-10 items-center rounded-full border text-sm font-semibold sm:h-9",
-                an ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white" : "border-[color:var(--border)] bg-white",
-              )}
+              className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", fertig ? "bg-emerald-50 text-emerald-700" : "bg-[color:var(--surface-sunken)] text-[color:var(--muted)]")}
+              data-preise-stand={`${stand.fertig}/${stand.von}`}
             >
-              <button type="button" role="tab" aria-selected={an} onClick={() => setAktiv(s.key)} className={cn("inline-flex h-full items-center gap-1.5 pl-3.5", an && !ro ? "pr-1" : "pr-3.5")}>
-                {s.label}
-                {s.zusatz ? (
-                  <small className={cn("text-xs font-medium", an ? "opacity-80" : "text-[color:var(--muted)]")}>bei Bedarf</small>
-                ) : (
-                  <small className={cn("text-xs font-medium", an ? "opacity-80" : m == null ? "text-amber-700" : "text-[color:var(--muted)]")}>{m != null ? eur(m) : "Beitrag fehlt"}</small>
-                )}
-              </button>
-              {/* Ole, 16.11.2026: „ich kann kein Produkt wieder entfernen“ (stand nur unter „Tarife ändern“) */}
-              {an && !ro ? (
-                <button type="button" aria-label={`${s.label} entfernen`} title={`${s.label} entfernen`} onClick={sparteWeg} className="mr-0.5 flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/20 sm:mr-1 sm:h-7 sm:w-7" data-sparte-entfernen>
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              ) : null}
+              {fertig ? "Fertig" : `${stand.fertig} von ${stand.von} Beiträgen`}
             </span>
-          );
-        })}
+          ) : null}
+          <SpeicherStatus status={p.status} readOnly={ro} erneut={p.erneut} />
+        </div>
+
+        {p.daten.gesellschaftFehlt ? (
+          <div className="mx-4 mt-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm sm:mx-5" data-gesellschaft-waehlen>
+            <p className="font-medium">Welche Gesellschaft vertreten Sie?</p>
+            {/* Häufig: die drei Vertreter-Gesellschaften als Knöpfe; alle übrigen Katalog-Gesellschaften in einer Auswahl */}
+            <div className="mt-2 flex flex-wrap gap-2">
+              {gesellschaftsListe
+                .filter((g) => STANDARD_GESELLSCHAFTEN.includes(g.key))
+                .map((g) => (
+                  <Button key={g.key} size="sm" disabled={ro} onClick={() => void gesellschaftWaehlen([g.key])}>
+                    {g.name}
+                  </Button>
+                ))}
+              <select
+                aria-label="Andere Gesellschaft"
+                disabled={ro}
+                value=""
+                onChange={(e) => e.target.value && void gesellschaftWaehlen([e.target.value])}
+                className="h-9 min-w-0 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium"
+                data-gesellschaft-andere
+              >
+                <option value="">Andere …</option>
+                {gesellschaftsListe
+                  .filter((g) => !STANDARD_GESELLSCHAFTEN.includes(g.key))
+                  .map((g) => (
+                    <option key={g.key} value={g.key}>
+                      {g.name}
+                    </option>
+                  ))}
+                <option value="andere">Nicht in der Liste</option>
+              </select>
+            </div>
+          </div>
+        ) : null}
+
+        {p.auswahl.sparten.length ? (
+          <>
+            {!fertig ? (
+              <p className="px-4 pt-3 text-[13px] text-[color:var(--muted)] sm:px-5">Je Versicherung den Beitrag aus Ihrem Tarifrechner eintragen. Nötig ist nur Ihre Empfehlung.</p>
+            ) : null}
+            <ul className="mx-4 mt-3 divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)] sm:mx-5" data-angebot-liste>
+              {p.auswahl.sparten.map((s) => {
+                const zs = zeilenStand(s);
+                const e = empfehlungVon(s);
+                const m = e ? tarifMonat(s, e) : null;
+                const auf = s.key === sp?.key;
+                return (
+                  <li key={s.key} className="scroll-mt-20" data-angebot-zeile={s.key} data-stand={zs}>
+                    <button
+                      type="button"
+                      aria-expanded={auf}
+                      onClick={() => zeigen(auf ? null : s.key)}
+                      className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left"
+                      data-angebot-kopf
+                    >
+                      <StandPunkt stand={zs} />
+                      <span className="min-w-0 flex-1">
+                        <b className="block hyphens-auto break-words text-[15px] font-semibold leading-snug" lang="de">
+                          {s.label}
+                        </b>
+                        <span className="line-clamp-2 text-xs text-[color:var(--muted)]">
+                          {s.zusatz ? "Nur bei Bedarf in der Präsentation" : e ? `Empfehlung: ${[e.gesellschaft, e.kurz].filter(Boolean).join(" ")}` : "Noch kein Tarif gewählt"}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-right text-sm">
+                        {zs === "fertig" ? (
+                          <b className="font-semibold tabular-nums">{eur(m!)}</b>
+                        ) : zs === "offen" ? (
+                          <span className="font-semibold text-amber-700">Beitrag fehlt</span>
+                        ) : m != null ? (
+                          <span className="tabular-nums text-[color:var(--muted)]">{eur(m)}</span>
+                        ) : (
+                          <span className="text-[color:var(--muted)]">bei Bedarf</span>
+                        )}
+                      </span>
+                      <ChevronDown className={cn("h-4 w-4 shrink-0 text-[color:var(--muted)] transition-transform", auf && "rotate-180")} aria-hidden />
+                    </button>
+                    {auf && sp ? (
+                      <div className="grid gap-5 border-t border-[color:var(--border)] px-3.5 pb-4 pt-3 lg:grid-cols-[minmax(0,1fr)_360px]" data-angebot-offen>
+                        <div className="min-w-0">
+                          {sp.zusatz ? (
+                            // Cross-Selling: erst bei Bedarf, in der Präsentation über „Mit anschauen“
+                            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-[13px]" data-zusatz-hinweis>
+                              <span className="min-w-0 flex-1 text-[color:var(--muted)]">Bei Bedarf: in der Präsentation erst über „Mit anschauen“.</span>
+                              {!ro ? (
+                                <button type="button" onClick={() => anSparte((x) => void delete x.zusatz)} className="-my-2 py-2 font-semibold text-[color:var(--brand)] hover:underline" data-zusatz-aus>
+                                  Gleich zeigen
+                                </button>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {rechner ? (
+                            <div className="mb-3 grid gap-2 sm:flex sm:flex-wrap" data-beitraege-zeile>
+                              <Button size="md" icon={Calculator} onClick={() => setRechnenOffen(true)} data-beitraege-rechnen>
+                                Beiträge rechnen
+                              </Button>
+                              <BeitraegeRechnen open={rechnenOffen} onClose={() => setRechnenOffen(false)} sparte={sp.label} {...rechner} />
+                            </div>
+                          ) : null}
+
+                          <div className="grid grid-cols-1 gap-2.5" data-tarife>
+                            {sp.tarife.length ? (
+                              sp.tarife.map((t) => <TarifKarte key={t.id} sp={sp} t={t} version={p.version} ro={ro} anpassen={anpassen} anTarif={anTarif} anSparte={anSparte} />)
+                            ) : (
+                              <p className="py-2 text-sm text-[color:var(--muted)]">
+                                Noch kein Tarif.{" "}
+                                {!ro ? (
+                                  <button type="button" className="font-medium text-[color:var(--brand)] hover:underline" onClick={() => setAnpassen(true)}>
+                                    Tarif wählen
+                                  </button>
+                                ) : null}
+                              </p>
+                            )}
+                            {/* Bisheriger Vertrag des Kunden: Spalte „Ihr bisheriger Vertrag“ auf der Vergleichsfolie (Paket P3b) */}
+                            <BisherKarte key={sp.key} sp={sp} ro={ro} gesundheitFrei={p.daten.gesundheitFrei ?? false} gesellschaften={p.daten.gesellschaften} anSparte={anSparte} />
+                          </div>
+
+                          {/* Mehr (zugeklappt): Tarife, Merkmale, Bausteine und was auf der Folie steht */}
+                          <button
+                            type="button"
+                            aria-expanded={anpassen}
+                            onClick={() => setAnpassen((x) => !x)}
+                            className="mt-3 flex min-h-10 items-center gap-1.5 text-left text-sm font-medium text-[color:var(--brand)] hover:underline"
+                            data-anpassen
+                          >
+                            Mehr: Tarife, Merkmale, Bausteine
+                            <ChevronDown className={cn("h-4 w-4 transition", anpassen && "rotate-180")} />
+                          </button>
+                          {anpassen ? (
+                            <>
+                              {!ro ? (
+                                <TarifeAendern
+                                  key={sp.key}
+                                  sp={sp}
+                                  katalog={katalog}
+                                  vertrieb={vertrieb}
+                                  gesellschaften={p.daten.gesellschaften}
+                                  eigene={eigene}
+                                  anSparte={anSparte}
+                                  eigenerDazu={(x) => setEigene((xs) => [...xs, x])}
+                                />
+                              ) : null}
+                              <Auswahl
+                                titel="Meine Merkmale"
+                                weitere="Weitere Merkmale"
+                                schema={sp.schema.merkmale}
+                                gewaehlt={sp.merkmale}
+                                max={grenzenFuer(sp).merkmale}
+                                nummern
+                                ro={ro}
+                                setze={(liste) => anSparte((x) => void (x.merkmale = liste))}
+                              />
+                              <Auswahl
+                                titel="Bausteine"
+                                weitere="Weitere Bausteine"
+                                schema={sp.schema.bausteine}
+                                gewaehlt={sp.bausteine}
+                                max={grenzenFuer(sp).bausteine}
+                                ro={ro}
+                                setze={(liste) => anSparte((x) => void (x.bausteine = liste))}
+                              />
+                            </>
+                          ) : null}
+
+                          {/* Weiter zur nächsten Versicherung ohne Beitrag; Entfernen selten, daher klein rechts */}
+                          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+                            {weiter && weiterLabel ? (
+                              <Button size="md" onClick={() => zeigen(weiter)} className="w-full min-w-0 sm:w-auto" data-angebot-weiter>
+                                <span className="truncate">Weiter: {weiterLabel}</span>
+                                <ArrowRight className="h-4 w-4 shrink-0" />
+                              </Button>
+                            ) : null}
+                            {!ro ? (
+                              <button type="button" onClick={sparteWeg} className="ml-auto min-h-9 text-[13px] font-medium text-[color:var(--muted)] hover:text-rose-700" data-sparte-entfernen>
+                                Aus dem Angebot nehmen
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <Vorschau auswahl={p.auswahl} sparte={sp} daten={p.vorschau} katalog={katalog} />
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        ) : (
+          <p className="px-4 pt-4 text-sm text-[color:var(--muted)] sm:px-5" data-angebot-leer>
+            Noch keine Versicherung im Angebot. Fügen Sie unten eine hinzu, z. B. Hausrat.
+          </p>
+        )}
+
         {nochFrei.length && !ro ? (
-          <details className="sm:relative">
-            <summary className="inline-flex h-10 cursor-pointer list-none items-center gap-1 rounded-full border border-dashed sm:h-9 border-[color:var(--border-strong)] bg-white px-3.5 text-sm font-medium text-[color:var(--muted)] [&::-webkit-details-marker]:hidden">
-              <Plus className="h-3.5 w-3.5" /> Versicherung
+          <details className="relative mx-4 mt-3 sm:mx-5" data-sparten>
+            <summary className="inline-flex h-10 cursor-pointer list-none items-center gap-1.5 rounded-full border border-dashed border-[color:var(--border-strong)] bg-white px-3.5 text-sm font-medium text-[color:var(--muted)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand-dark)] [&::-webkit-details-marker]:hidden">
+              <Plus className="h-4 w-4" /> Versicherung ins Angebot
             </summary>
-            <div className="absolute left-4 z-20 mt-1 max-h-96 w-64 overflow-auto sm:left-0 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1 shadow-[var(--shadow-lg)]">
+            <div className="absolute left-0 z-20 mt-1 max-h-96 w-72 max-w-[calc(100vw-4rem)] overflow-auto rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1 shadow-[var(--shadow-lg)]">
               {/* Gruppiert (Ole, 17.11.2026: alle Versicherungsprodukte, z. B. BU und PKV nach dem Komplettcheck) */}
               {spartenGruppiert(nochFrei).map((g) => (
                 <div key={g.label} data-sparten-gruppe={g.label}>
@@ -706,137 +862,67 @@ function Angebote(p: {
             </div>
           </details>
         ) : null}
-      </div>
 
-      {/* „Was hat Frau Becker schon?“ (Ole, 18.11.2026): ein Bereich statt „Chance im Termin“ und Fenster */}
-      <SchutzBereich
-        auswahl={p.auswahl}
-        ro={ro}
-        aendern={p.aendern}
-        anbieten={(key) => anbieten(key)}
-        entfernen={ausAngebot}
-        vorsorge={p.daten.vorsorge ?? null}
-        kunde={p.daten.kunde || "der Kunde"}
-        speichern={{ status: p.status, erneut: p.erneut }}
-        gesellschaften={p.daten.gesellschaften}
-        imKatalog={katalog.sparten.map((s) => s.key)}
-        gesundheitFrei={p.daten.gesundheitFrei ?? false}
-        haupt={hauptSparte}
-      />
-
-      {/* Schritt 2 in eigener Karte (Ole, 18.11.2026: „Lücke zwischen 1 und 2“), wie Schritt 3 und 4 */}
-    </Card>
-    <Card className="mt-3" menus>
-      <Schritt
-        nr={2}
-        titel={sp ? `Beiträge eintragen: ${sp.label}` : "Beiträge eintragen"}
-        hinweis={
-          p.auswahl.sparten.length > 1
-            ? "Im eigenen Tarifrechner rechnen und hier eintragen, je Versicherung oben im Reiter. Der Stern markiert Ihre Empfehlung."
-            : "Im eigenen Tarifrechner rechnen und hier eintragen. Der Stern markiert Ihre Empfehlung."
-        }
-        fertig={schritt2}
-      />
-      {sp ? (
-        <div className="grid gap-5 px-4 pb-5 pt-3 sm:px-5 lg:grid-cols-[minmax(0,1fr)_400px]">
-          <div className="min-w-0">
-            {sp.zusatz ? (
-              // Cross-Selling: erst bei Bedarf, in der Präsentation über „Mit anschauen“
-              <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-[13px]" data-zusatz-hinweis>
-                <span className="min-w-0 flex-1 text-[color:var(--muted)]">Bei Bedarf: in der Präsentation erst über „Mit anschauen“.</span>
-                {!ro ? (
-                  <button type="button" onClick={() => anSparte((s) => void delete s.zusatz)} className="-my-2 py-2 font-semibold text-[color:var(--brand)] hover:underline" data-zusatz-aus>
-                    Gleich zeigen
-                  </button>
-                ) : null}
-              </div>
+        {/* Abschluss: Gesamtbeitrag und die eine Hauptaktion */}
+        <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-[color:var(--border)] px-4 py-4 sm:px-5" data-angebot-fuss>
+          <div className="min-w-0 flex-1 basis-64 [&>[data-empfehlung-gesamt]]:mt-0">
+            {p.auswahl.sparten.length ? (
+              <BeitragGesamt auswahl={p.auswahl} katalog={katalog} ro={ro} anbieten={(key) => anbieten(key, true)} aendern={p.aendern} />
             ) : null}
-            {rechner ? (
-              // Mit Rechner: beide Wege zum Beitrag in einer Zeile statt Knopf über der Ablagefläche
-              <div className="grid gap-2 sm:flex sm:flex-wrap" data-beitraege-zeile>
-                <Button size="md" icon={Calculator} onClick={() => setRechnenOffen(true)} data-beitraege-rechnen>
-                  Beiträge rechnen
-                </Button>
-                <BeitraegeRechnen
-                  open={rechnenOffen}
-                  onClose={() => setRechnenOffen(false)}
-                  sparte={sp.label}
-                  {...rechner}
-                />
-              </div>
-            ) : null}
-
-            <div className="mt-3.5 grid grid-cols-1 gap-2.5" data-tarife>
-              {sp.tarife.length ? (
-                sp.tarife.map((t) => <TarifKarte key={t.id} sp={sp} t={t} version={p.version} ro={ro} anpassen={anpassen} anTarif={anTarif} anSparte={anSparte} />)
-              ) : (
-                <p className="py-3 text-sm text-[color:var(--muted)]">
-                  Noch kein Tarif gewählt. Öffnen Sie unten „Tarife ändern“ oder legen Sie einen eigenen Tarif an.
-                </p>
-              )}
-              {/* Bisheriger Vertrag des Kunden: Spalte „Ihr bisheriger Vertrag“ auf der Vergleichsfolie (Paket P3b) */}
-              <BisherKarte key={sp.key} sp={sp} ro={ro} gesundheitFrei={p.daten.gesundheitFrei ?? false} gesellschaften={p.daten.gesellschaften} anSparte={anSparte} />
-            </div>
-
-            {/* Anpassen (zugeklappt): Merkmale, Bausteine, Tarife und was auf der Folie steht */}
-            <button
-              type="button"
-              aria-expanded={anpassen}
-              onClick={() => setAnpassen((x) => !x)}
-              className="mt-4 inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline"
-              data-anpassen
-            >
-              Anpassen: Tarife, Merkmale, Bausteine
-              <ChevronDown className={cn("h-4 w-4 transition", anpassen && "rotate-180")} />
-            </button>
-            {anpassen ? (
-              <>
-                <Auswahl
-                  titel="Meine Merkmale"
-                  weitere="Weitere Merkmale"
-                  schema={sp.schema.merkmale}
-                  gewaehlt={sp.merkmale}
-                  max={grenzenFuer(sp).merkmale}
-                  nummern
-                  ro={ro}
-                  setze={(liste) => anSparte((s) => void (s.merkmale = liste))}
-                />
-                <Auswahl
-                  titel="Bausteine"
-                  weitere="Weitere Bausteine"
-                  schema={sp.schema.bausteine}
-                  gewaehlt={sp.bausteine}
-                  max={grenzenFuer(sp).bausteine}
-                  ro={ro}
-                  setze={(liste) => anSparte((s) => void (s.bausteine = liste))}
-                />
-
-                {!ro ? (
-                  <TarifeAendern
-                    key={sp.key}
-                    sp={sp}
-                    katalog={katalog}
-                    vertrieb={vertrieb}
-                    gesellschaften={p.daten.gesellschaften}
-                    eigene={eigene}
-                    anSparte={anSparte}
-                    eigenerDazu={(e) => setEigene((xs) => [...xs, e])}
-                    sparteWeg={sparteWeg}
-                  />
-                ) : null}
-              </>
-            ) : null}
+            <p className={cn("mt-2 text-[13px]", fertig ? "font-medium text-emerald-700" : "text-[color:var(--muted)]")} data-angebot-fertig>
+              {fertig ? "Fertig für den Termin. Im Termin teilen Sie die Präsentation." : "Fehlende Beiträge bleiben in der Präsentation leer."}
+            </p>
           </div>
-
-          <Vorschau auswahl={p.auswahl} sparte={sp} daten={p.vorschau} katalog={katalog}>
-            <BeitragGesamt auswahl={p.auswahl} katalog={katalog} ro={ro} anbieten={(key) => anbieten(key, true)} aendern={p.aendern} />
-          </Vorschau>
+          {p.fuss}
         </div>
-      ) : (
-        <p className="px-5 py-6 text-sm text-[color:var(--muted)]">Noch keine Versicherung. Wählen Sie oben „+ Versicherung“, z. B. Hausrat.</p>
-      )}
-    </Card>
+      </Card>
+
+      {/* „Was hat Frau Becker schon?“ (Ole, 18.11.2026): fürs Gespräch und die Folie „Ihr Schutz im Überblick“; zugeklappt wie „Mehr zum Kunden“ */}
+      <details
+        className="group mt-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]"
+        open={p.schutzOffen || undefined}
+        data-schutz-karte
+      >
+        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3.5 text-[15px] font-semibold sm:px-5 [&::-webkit-details-marker]:hidden">
+          <span className="min-w-0 flex-1">Was hat {kunde} schon?</span>
+          <span className="shrink-0 text-[13px] font-medium text-[color:var(--muted)]">{tipps ? `${tipps} ${tipps === 1 ? "Tipp" : "Tipps"} fürs Gespräch` : "Fürs Gespräch"}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" aria-hidden />
+        </summary>
+        <div className="border-t border-[color:var(--border)] pb-4">
+          <SchutzBereich
+            auswahl={p.auswahl}
+            ro={ro}
+            aendern={p.aendern}
+            anbieten={(key) => anbieten(key)}
+            entfernen={ausAngebot}
+            vorsorge={p.daten.vorsorge ?? null}
+            kunde={kunde}
+            speichern={{ status: p.status, erneut: p.erneut }}
+            gesellschaften={p.daten.gesellschaften}
+            imKatalog={katalog.sparten.map((s) => s.key)}
+            gesundheitFrei={p.daten.gesundheitFrei ?? false}
+            haupt={hauptSparte}
+            ohneTitel
+          />
+        </div>
+      </details>
     </>
+  );
+}
+
+/** Stand einer Angebotszeile: grüner Haken (Beitrag da), orangefarbener Ring (Beitrag fehlt), grauer Ring (bei Bedarf). */
+function StandPunkt({ stand }: { stand: ZeilenStand }) {
+  return (
+    <span
+      className={cn(
+        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+        stand === "fertig" ? "bg-emerald-600 text-white" : stand === "offen" ? "border-2 border-amber-500" : "border-2 border-slate-300",
+      )}
+      aria-label={stand === "fertig" ? "Beitrag eingetragen" : stand === "offen" ? "Beitrag fehlt" : "bei Bedarf"}
+      role="img"
+    >
+      {stand === "fertig" ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
+    </span>
   );
 }
 
@@ -923,37 +1009,6 @@ function BeitraegeRechnen({
   );
 }
 
-/** Schritt-Kopf (Ole, 17.11.2026: „idiotensicherer in Schritte unterteilen“): Nummer bzw. Haken, Titel, ein Satz. */
-function Schritt({ nr, titel, hinweis, fertig, rechts }: { nr: number; titel: string; hinweis?: ReactNode; fertig: boolean; rechts?: ReactNode }) {
-  return (
-    <div className={cn("flex items-start gap-3 px-4 sm:px-5", nr <= 2 ? "pt-4" : "pt-7")} data-schritt={nr} data-schritt-fertig={fertig ? "ja" : "nein"}>
-      <span
-        className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", fertig ? "bg-emerald-600" : "bg-[color:var(--foreground)]")}
-        aria-hidden
-      >
-        {fertig ? <Check className="h-4 w-4" strokeWidth={3} /> : nr}
-      </span>
-      <div className="min-w-0 flex-1">
-        <h3 className="text-[15px] font-semibold tracking-tight">{titel}</h3>
-        {hinweis ? <p className="mt-0.5 text-[13px] text-[color:var(--muted)]">{hinweis}</p> : null}
-      </div>
-      {rechts}
-    </div>
-  );
-}
-
-/** Sind für alle Versicherungen (außer „bei Bedarf“) Beiträge zur Empfehlung eingetragen? */
-export function beitraegeVollstaendig(a: Tarifauswahl): boolean {
-  const pflicht = a.sparten.filter((s) => !s.zusatz);
-  return (
-    pflicht.length > 0 &&
-    pflicht.every((s) => {
-      const e = empfehlungVon(s);
-      return !!e && tarifMonat(s, e) != null;
-    })
-  );
-}
-
 function SpeicherStatus({ status, readOnly, erneut }: { status: Status; readOnly: boolean; erneut: () => void }) {
   if (readOnly) return <span className="ml-auto text-xs text-[color:var(--muted)]">Vorschau: wird nicht gespeichert</span>;
   if (status === "fehler")
@@ -977,7 +1032,24 @@ function SpeicherStatus({ status, readOnly, erneut }: { status: Status; readOnly
 }
 
 /** Betrag eingeben („11,40“); eigener Text, damit „11,“ beim Tippen stehen bleibt. */
-function GeldFeld({ wert, onWert, label, klein, ro, className }: { wert: number | null; onWert: (n: number | null) => void; label: string; klein?: boolean; ro: boolean; className?: string }) {
+/** `optional`: kein Pflichtfeld (Tarif neben der Empfehlung), daher nicht gelb und „optional“ als Platzhalter. */
+function GeldFeld({
+  wert,
+  onWert,
+  label,
+  klein,
+  ro,
+  className,
+  optional,
+}: {
+  wert: number | null;
+  onWert: (n: number | null) => void;
+  label: string;
+  klein?: boolean;
+  ro: boolean;
+  className?: string;
+  optional?: boolean;
+}) {
   const [text, setText] = useState(geld(wert));
   const leer = betrag(text) == null;
   return (
@@ -985,14 +1057,14 @@ function GeldFeld({ wert, onWert, label, klein, ro, className }: { wert: number 
       className={cn(
         "flex items-center rounded-[var(--radius-sm)] border bg-white focus-within:border-[color:var(--brand)] focus-within:ring-2 focus-within:ring-[color:var(--brand-soft)]",
         klein ? "h-8 w-[84px] shrink-0 px-1.5" : "h-10 w-32 px-2.5",
-        leer && !klein ? "border-amber-300 bg-amber-50" : "border-[color:var(--border-strong)]",
+        leer && !klein && !optional ? "border-amber-300 bg-amber-50" : "border-[color:var(--border-strong)]",
         className,
       )}
     >
       <input
         inputMode="decimal"
         aria-label={label}
-        placeholder={klein ? "0,00" : "Beitrag"}
+        placeholder={klein ? "0,00" : optional ? "optional" : "Beitrag"}
         disabled={ro}
         value={text}
         onChange={(e) => {
@@ -1033,7 +1105,8 @@ function TarifKarte({
   const bName = (k: string) => sp.schema.bausteine.find((b) => b.key === k)?.kurz ?? k;
   // Nicht gegengeprüfte Katalogwerte: „bitte prüfen“ statt des Stands (wie der Richtwert beim Beitrag)
   const pruefen = t.herkunft === "katalog" && werteZuPruefen({ ungeprueft: t.werteUngeprueft, bestaetigt: t.werteBestaetigt }, sp.merkmale);
-  const sub = [t.gesellschaft || null, sp.label, t.herkunft === "eigen" ? "Eigener Tarif" : t.herkunft === "angebot" ? "Aus dem Angebot" : !pruefen && stand(t.stand) ? `Stand ${stand(t.stand)}` : null].filter(Boolean).join(" · ");
+  // ohne Spartenname: steht schon in der Zeile darüber (Ole, 19.11.2026)
+  const sub = [t.gesellschaft || null, t.herkunft === "eigen" ? "Eigener Tarif" : t.herkunft === "angebot" ? "Aus dem Angebot" : !pruefen && stand(t.stand) ? `Stand ${stand(t.stand)}` : null].filter(Boolean).join(" · ");
   return (
     <div
       className={cn(
@@ -1059,23 +1132,28 @@ function TarifKarte({
             ) : null}
           </span>
         </span>
-        <button
-          type="button"
-          disabled={ro}
-          aria-pressed={empf}
-          aria-label={empf ? "Ihre Empfehlung" : "Als Empfehlung markieren"}
-          title={empf ? "Ihre Empfehlung" : "Als Empfehlung markieren"}
-          onClick={() =>
-            anSparte((s) => {
-              s.empfohlen = t.id;
-              const x = s.tarife.find((y) => y.id === t.id);
-              if (x) x.zeigen = true;
-            })
-          }
-          className={cn("flex h-10 w-10 items-center justify-center rounded-lg", empf ? "text-amber-500" : "text-slate-400 hover:text-amber-500")}
-        >
-          <Star className="h-5 w-5" fill={empf ? "currentColor" : "none"} />
-        </button>
+        {/* Etikett statt Stern (Ole, 19.11.2026: „Was heißt der Stern?“): Empfehlung ist der Tarif, der einen Beitrag braucht */}
+        {empf ? (
+          <span className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-[color:var(--brand-soft)] px-2.5 text-xs font-semibold text-[color:var(--brand-dark)]" data-empfehlung>
+            <Check className="h-3.5 w-3.5" strokeWidth={3} />
+            <span className="hidden sm:inline">Ihre</span> Empfehlung
+          </span>
+        ) : !ro ? (
+          <button
+            type="button"
+            onClick={() =>
+              anSparte((s) => {
+                s.empfohlen = t.id;
+                const x = s.tarife.find((y) => y.id === t.id);
+                if (x) x.zeigen = true;
+              })
+            }
+            className="inline-flex h-9 shrink-0 items-center rounded-[var(--radius-sm)] px-2.5 text-[13px] font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
+            data-empfehlen
+          >
+            Empfehlen
+          </button>
+        ) : null}
       </div>
       {/* Ruhige Spalte (Ole, 16.11.2026): Beitrag füllt die Breite, Zahlweise bündig rechts; darunter Monatsbetrag und Folie */}
       <div className="mt-2.5 flex items-center gap-2">
@@ -1084,6 +1162,7 @@ function TarifKarte({
           wert={t.beitrag}
           label={`Beitrag ${t.kurz}`}
           ro={ro}
+          optional={!empf}
           className="w-auto min-w-0 flex-1"
           onWert={(n) =>
             anTarif(t.id, (x) => {
@@ -1273,7 +1352,6 @@ function TarifeAendern({
   eigene,
   anSparte,
   eigenerDazu,
-  sparteWeg,
 }: {
   sp: SparteWahl;
   katalog: Katalog;
@@ -1282,7 +1360,6 @@ function TarifeAendern({
   eigene: EigenerTarifZeile[];
   anSparte: (fn: (s: SparteWahl) => void) => void;
   eigenerDazu: (e: EigenerTarifZeile) => void;
-  sparteWeg: () => void;
 }) {
   const toast = useToast();
   const makler = vertrieb.rolle === "makler";
@@ -1341,11 +1418,9 @@ function TarifeAendern({
   );
 
   return (
-    <details className="group mt-4" data-tarife-aendern>
-      <summary className="inline-flex min-h-9 cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
-        {/* Zustand sichtbar wie bei „Weitere Bausteine“ (Ole, 16.11.2026: „aufgeklappt müsste aus dem + ein Minus werden“) */}
-        Tarife ändern <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
-      </summary>
+    // Unter „Mehr“ direkt offen (Ole, 19.11.2026: keine Klappe in der Klappe)
+    <div className="mt-3" data-tarife-aendern>
+      <div className="text-sm font-semibold">Tarife tauschen</div>
       <div className="mt-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] p-3">
         <label className="flex h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] bg-white px-2.5">
           <Search className="h-4 w-4 text-[color:var(--muted)]" />
@@ -1406,13 +1481,8 @@ function TarifeAendern({
             }}
           />
         ) : null}
-        <div className="mt-3 border-t border-[color:var(--border)] pt-2">
-          <button type="button" onClick={sparteWeg} className="text-[13px] font-medium text-[color:var(--muted)] hover:text-rose-700">
-            {sp.label} entfernen
-          </button>
-        </div>
       </div>
-    </details>
+    </div>
   );
 }
 
@@ -1475,14 +1545,14 @@ function Vorschau({
   sparte,
   daten,
   katalog,
-  children,
 }: {
   auswahl: Tarifauswahl;
   sparte: SparteWahl;
   daten: Parameters<typeof VorbereitungNeu>[0]["vorschau"];
   katalog: Katalog;
-  children: ReactNode;
 }) {
+  // Handy und Tablet: zum Aufklappen (Ole, 19.11.2026: Eingabe zuerst); ab lg immer daneben
+  const [auf, setAuf] = useState(false);
   const termin = useMemo<VorbereitungDaten>(() => ({ ...daten.termin, termin: { ...daten.termin.termin, startsAt: new Date(daten.termin.termin.startsAt) } }), [daten.termin]);
   const { html, nr, von } = useMemo(() => {
     const fs = folien(termin, zuAngebote(auswahl, katalog.buendel), daten.marke, daten.ansprache);
@@ -1506,17 +1576,27 @@ function Vorschau({
   }, [html, scale]);
   return (
     <div className="self-start lg:sticky lg:top-6" data-folien-vorschau>
-      <div className="mb-2 flex items-center gap-2 text-[13px] font-semibold">
+      <button
+        type="button"
+        aria-expanded={auf}
+        onClick={() => setAuf((x) => !x)}
+        className="flex min-h-10 w-full items-center gap-2 text-[13px] font-semibold lg:pointer-events-none lg:mb-2 lg:min-h-0"
+        data-folie-zeigen
+      >
         <Presentation className="h-4 w-4" /> So sieht die Folie aus
         <span className="ml-auto font-medium text-[color:var(--muted)]">
           Folie {nr} von {von}
         </span>
-      </div>
+        <ChevronDown className={cn("h-4 w-4 text-[color:var(--muted)] transition lg:hidden", auf && "rotate-180")} aria-hidden />
+      </button>
       <style dangerouslySetInnerHTML={{ __html: daten.css }} />
-      <div ref={box} className="relative w-full overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]" style={{ aspectRatio: "16 / 9" }}>
+      <div
+        ref={box}
+        className={cn("relative w-full overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)] lg:block", auf ? "block" : "hidden")}
+        style={{ aspectRatio: "16 / 9" }}
+      >
         <div ref={deck} className="deck pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width: 1280, height: 720, transform: `scale(${scale})` }} dangerouslySetInnerHTML={{ __html: html }} aria-hidden />
       </div>
-      {children}
     </div>
   );
 }

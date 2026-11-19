@@ -79,6 +79,7 @@ export function SchutzBereich({
   imKatalog,
   gesundheitFrei = false,
   haupt = null,
+  ohneTitel = false,
 }: {
   auswahl: Tarifauswahl;
   ro: boolean;
@@ -99,6 +100,8 @@ export function SchutzBereich({
   gesundheitFrei?: boolean;
   /** Sparte, für die der Lead gekommen ist (lib/terminvorbereitung-neu.ts spartenFuerTermin): nicht entfernbar */
   haupt?: string | null;
+  /** Überschrift steht schon an der Karte (neu-client.tsx, zugeklappte Karte „Was hat … schon?“) */
+  ohneTitel?: boolean;
 }) {
   const toast = useToast();
   const schutz = auswahl.schutz ?? [];
@@ -205,11 +208,11 @@ export function SchutzBereich({
     <section className="mx-4 mt-4 sm:mx-5" data-schutz-bereich>
       {/* „Ins Angebot“ als Spaltenkopf über den Schaltern (Rand und Abstand der Zeilen: 1px + pr-1.5 bzw. sm:pr-2) */}
       <div className="flex items-end gap-3 pb-1.5 pr-[7px] sm:pr-[9px]">
-        <h3 className="min-w-0 flex-1 text-[15px] font-semibold" data-schutz-frage>
+        <h3 className={cn("min-w-0 flex-1 text-[15px] font-semibold", ohneTitel && "sr-only")} data-schutz-frage>
           Was hat {kunde} schon?
         </h3>
         {zeilen.length ? (
-          <span className="shrink-0 whitespace-nowrap text-[13px] font-medium text-[color:var(--muted)]" aria-hidden data-schutz-spaltenkopf>
+          <span className="ml-auto shrink-0 whitespace-nowrap text-[13px] font-medium text-[color:var(--muted)]" aria-hidden data-schutz-spaltenkopf>
             Ins Angebot
           </span>
         ) : null}
