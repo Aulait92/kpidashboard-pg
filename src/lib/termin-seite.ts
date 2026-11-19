@@ -37,7 +37,14 @@ export function terminBestaetigung(
   return { ton: "offen", text: "Noch nicht bestätigt" };
 }
 
-export type ErinnerungsZeile = { key: string; titel: string; stand: "gesendet" | "geplant" | "uebersprungen" | "pausiert"; wann: string | null };
+export type ErinnerungsZeile = {
+  key: string;
+  titel: string;
+  stand: "gesendet" | "geplant" | "uebersprungen" | "pausiert";
+  wann: string | null;
+  /** Schlüssel im Nachrichtenplan (erinnerung:<termin>:<art>) für Überspringen bzw. „Doch senden“; null bei gesendeten */
+  planKey: string | null;
+};
 
 const KURZ: Record<string, string> = {
   vortag: "WhatsApp am Vortag",
@@ -57,7 +64,7 @@ export function erinnerungsZeilen(
     ...(t.soonReminderSentAt ? [{ key: "stunde", at: t.soonReminderSentAt }] : []),
     ...(t.startReminderSentAt ? [{ key: "gleich", at: t.startReminderSentAt }] : []),
   ];
-  const zeilen: (ErinnerungsZeile & { ms: number })[] = gesendet.map((g) => ({ key: g.key, titel: KURZ[g.key], stand: "gesendet", wann: zeitKurzRelativ(g.at, now), ms: g.at.getTime() }));
+  const zeilen: (ErinnerungsZeile & { ms: number })[] = gesendet.map((g) => ({ key: g.key, titel: KURZ[g.key], stand: "gesendet", wann: zeitKurzRelativ(g.at, now), planKey: null, ms: g.at.getTime() }));
   for (const e of plan) {
     if (e.quelle !== "erinnerung" || e.terminId !== t.id) continue;
     const art = e.key.split(":")[2] ?? "";
@@ -68,8 +75,9 @@ export function erinnerungsZeilen(
       titel: KURZ[art] ?? e.titel,
       stand: e.uebersprungen ? "uebersprungen" : e.pausiert ? "pausiert" : "geplant",
       wann: e.uebersprungen ? null : zeitKurzRelativ(at, now),
+      planKey: e.key,
       ms: at.getTime(),
     });
   }
-  return zeilen.sort((a, b) => a.ms - b.ms).map((z) => ({ key: z.key, titel: z.titel, stand: z.stand, wann: z.wann }));
+  return zeilen.sort((a, b) => a.ms - b.ms).map((z) => ({ key: z.key, titel: z.titel, stand: z.stand, wann: z.wann, planKey: z.planKey }));
 }

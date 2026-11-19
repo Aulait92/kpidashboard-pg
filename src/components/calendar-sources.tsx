@@ -125,7 +125,13 @@ export function LeadTimesForm({
   hidden,
   source = "none",
   fixedDuration,
+  nurBeiAenderung = false,
 }: {
+  /**
+   * „Zeiten speichern“ erst bei einer Änderung zeigen, am Handy als feste Leiste über der Navigation (Mein Kalender,
+   * UX-Runde Team C, Ole 19.11.2026). Einrichtung und Admin zeigen den Knopf wie bisher immer.
+   */
+  nurBeiAenderung?: boolean;
   initial: LeadTimesInitial;
   /** Termindauer kommt von woanders (z. B. Termintyp der Vertriebs-Buchungsseite): Auswahl ausblenden */
   fixedDuration?: number;
@@ -139,9 +145,16 @@ export function LeadTimesForm({
    */
   source?: "none" | "ics" | "allianz";
 }) {
-  const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
-  const [, startTransition] = useTransition();
   const init = initialSchedule(initial);
+  // Gespeicherter Stand (für nurBeiAenderung): Dauer, Takt und Zeiten je Tag in fester Reihenfolge
+  const standVon = (dauer: number, takt: number, tage: Days) => JSON.stringify([dauer, takt, DAYS.map(([d]) => tage[d] ?? [])]);
+  const [gespeichert, setGespeichert] = useState(() => standVon(fixedDuration ?? initial.durationMin ?? 30, init.step, init.days));
+  const [state, formAction, pending] = useActionState<SourceResult, FormData>(async (prev, fd) => {
+    const r = await action(prev, fd);
+    if (r.ok) setGespeichert(String(fd.get("_stand") ?? ""));
+    return r;
+  }, {});
+  const [, startTransition] = useTransition();
   const [duration, setDuration] = useState<number>(fixedDuration ?? initial.durationMin ?? 30);
   const [step, setStep] = useState<number>(init.step);
   const [days, setDays] = useState<Days>(init.days);
@@ -198,6 +211,7 @@ export function LeadTimesForm({
       {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
       <input type="hidden" name="duration" value={duration} />
       <input type="hidden" name="schedule" value={JSON.stringify({ step, days })} />
+      <input type="hidden" name="_stand" value={standVon(duration, step, days)} />
       <fieldset hidden={fixedDuration != null}>
         <legend className="text-sm font-medium">Termindauer</legend>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -374,12 +388,24 @@ export function LeadTimesForm({
             ? "Tragen Sie diese Zeiten als Serie „Leadtermine“ in Ihren Allianz-Kalender ein und stellen Sie „Anzeigen als: Frei“ ein. So bucht dort niemand anderes hinein, und wir sehen die Zeiten weiter als frei."
             : "Termine werden nur angeboten, wenn Sie in Ihrem Kalender frei sind. Wenn Sie diese Zeiten dort markieren möchten (z. B. als Serie „Leadtermine“), dann nur mit „Anzeigen als: Frei“."}
       </p>
-      <div className="flex flex-wrap items-center gap-3">
-        <Submit pending={pending} disabled={readOnly}>
-          Zeiten speichern
-        </Submit>
+      {!nurBeiAenderung ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <Submit pending={pending} disabled={readOnly}>
+            Zeiten speichern
+          </Submit>
+          <Result state={state} />
+        </div>
+      ) : !readOnly && (standVon(duration, step, days) !== gespeichert || pending || state.error) ? (
+        <div
+          className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white/95 px-4 py-3 shadow-[var(--shadow-md)] backdrop-blur md:bottom-4"
+          data-zeiten-speichern
+        >
+          <span className="min-w-0 flex-1 text-sm">{state.error ? <Result state={state} /> : "Ungespeicherte Änderungen"}</span>
+          <Submit pending={pending}>Zeiten speichern</Submit>
+        </div>
+      ) : (
         <Result state={state} />
-      </div>
+      )}
     </form>
   );
 }

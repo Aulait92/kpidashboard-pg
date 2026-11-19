@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { BellRing, Check, CircleAlert, MessageCircle, UserRound, UserX } from "lucide-react";
+import { Check, MessageCircle, UserRound, UserX } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Card } from "@/components/ui";
 import { TerminAnwesenheit } from "@/components/termin-anwesenheit";
@@ -16,8 +16,8 @@ import { wartetStand } from "@/lib/showup-server";
 import { angebotOffen, terminKartenAktionen, terminPhase } from "@/lib/termin-karte";
 import { loadNachrichtenPlan } from "@/lib/nachrichtenplan-server";
 import { erinnerungsZeilen, terminBestaetigung } from "@/lib/termin-seite";
-import { cn } from "@/lib/utils";
 import { WieLiefEs } from "./wie-lief-es";
+import { ErinnerungenBox } from "./erinnerungen-box";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Termin | performancegrowth" };
@@ -157,40 +157,8 @@ export default async function TerminPage({ params }: { params: Promise<{ id: str
       ) : null}
 
       {/* Show-up sichtbar (Ole, 19.11.2026): Zusage und Erinnerungen an den Kunden, solange der Termin ansteht */}
-      {bestaetigung || erinnerungen.length ? (
-        <Card className="mb-5" data-termin-erinnerungen>
-          <div className="px-5 py-3.5 text-sm">
-            <h2 className="mb-2 text-[13px] font-semibold text-[color:var(--muted)]">Erinnerungen an {label}</h2>
-            {bestaetigung ? (
-              <p
-                className={cn(
-                  "flex items-center gap-2 font-medium",
-                  bestaetigung.ton === "ok" ? "text-emerald-700" : bestaetigung.ton === "verschieben" ? "text-rose-700" : "text-amber-800",
-                )}
-                data-termin-bestaetigung={bestaetigung.ton}
-              >
-                {bestaetigung.ton === "ok" ? <Check className="h-4 w-4" /> : <CircleAlert className="h-4 w-4" />}
-                {bestaetigung.text}
-              </p>
-            ) : null}
-            {erinnerungen.length ? (
-              <ul className={cn("space-y-1", bestaetigung && "mt-2")}>
-                {erinnerungen.map((e) => (
-                  <li key={e.key} className="flex items-center gap-2" data-erinnerung={e.stand}>
-                    <BellRing className={cn("h-3.5 w-3.5 shrink-0", e.stand === "gesendet" ? "text-emerald-600" : "text-[color:var(--muted)]")} />
-                    <span className={cn("min-w-0 flex-1", e.stand === "uebersprungen" && "text-[color:var(--muted)] line-through")}>{e.titel}</span>
-                    <span className="shrink-0 text-[color:var(--muted)]">
-                      {e.stand === "gesendet" ? `gesendet ${e.wann}` : e.stand === "uebersprungen" ? "übersprungen" : e.stand === "pausiert" ? "pausiert" : e.wann}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {bestaetigung?.ton === "offen" && !erinnerungen.some((e) => e.stand !== "uebersprungen") ? (
-              <p className="mt-1 text-[color:var(--muted)]">Keine Erinnerung geplant. Ein kurzer Anruf vorher hilft.</p>
-            ) : null}
-          </div>
-        </Card>
+      {(bestaetigung || erinnerungen.length) && t.leadId ? (
+        <ErinnerungenBox leadId={t.leadId} label={label} bestaetigung={bestaetigung} zeilen={erinnerungen} readOnly={ctx.preview} />
       ) : null}
 
       <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">

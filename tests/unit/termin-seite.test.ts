@@ -60,9 +60,9 @@ describe("erinnerungsZeilen", () => {
       now,
     );
     expect(z).toEqual([
-      { key: "vortag", titel: "WhatsApp am Vortag", stand: "gesendet", wann: "heute 10:00" },
-      { key: "stunde", titel: "WhatsApp 1 Stunde vorher", stand: "geplant", wann: "morgen 09:00" },
-      { key: "gleich", titel: "WhatsApp 15 Minuten vorher", stand: "geplant", wann: "morgen 09:45" },
+      { key: "vortag", titel: "WhatsApp am Vortag", stand: "gesendet", wann: "heute 10:00", planKey: null },
+      { key: "stunde", titel: "WhatsApp 1 Stunde vorher", stand: "geplant", wann: "morgen 09:00", planKey: "erinnerung:a1:stunde" },
+      { key: "gleich", titel: "WhatsApp 15 Minuten vorher", stand: "geplant", wann: "morgen 09:45", planKey: "erinnerung:a1:gleich" },
     ]);
   });
   it("übersprungen ohne Zeit, pausiert als pausiert; Gesendetes nicht doppelt", () => {
@@ -71,10 +71,10 @@ describe("erinnerungsZeilen", () => {
       [eintrag("vortag_mail", "2026-11-19T12:00:00.000Z", { uebersprungen: true }), eintrag("gleich", "2026-11-19T12:45:00.000Z", { pausiert: true }), eintrag("stunde", "2026-11-19T12:00:00.000Z")],
       now,
     );
-    expect(z.map((x) => [x.key, x.stand, x.wann])).toEqual([
-      ["stunde", "gesendet", "heute 11:00"],
-      ["vortag_mail", "uebersprungen", null],
-      ["gleich", "pausiert", "heute 13:45"],
+    expect(z.map((x) => [x.key, x.stand, x.wann, x.planKey])).toEqual([
+      ["stunde", "gesendet", "heute 11:00", null],
+      ["vortag_mail", "uebersprungen", null, "erinnerung:a1:vortag_mail"],
+      ["gleich", "pausiert", "heute 13:45", "erinnerung:a1:gleich"],
     ]);
   });
 });

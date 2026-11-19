@@ -207,12 +207,12 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
       ) : null}
 
       {setup ? (
-        // Eine Karte für die Zeiten (UX-Runde Team C, 19.11.2026): „Zeit blockieren“ ist die Ausnahme dazu, früher eigene Karte
-        <Card className="mt-5">
+        // Eine Karte für die Zeiten (UX-Runde Team C, 19.11.2026): „Zeit blockieren“ ist die Ausnahme dazu, früher eigene Karte; „menus“: ohne overflow-hidden, damit die Speichern-Leiste kleben kann
+        <Card className="mt-5" menus>
           <CardHeader title="Wann dürfen Leads Termine buchen?" icon={Clock} />
           <div className="p-5">
             <p className="mb-4 text-sm text-[color:var(--muted)]">Unser Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind.</p>
-            <LeadTimesForm initial={setup.leadTimes} action={saveLeadTimesAction} readOnly={ro} source={setup.source} />
+            <LeadTimesForm initial={setup.leadTimes} action={saveLeadTimesAction} readOnly={ro} source={setup.source} nurBeiAenderung />
           </div>
           <div className="border-t border-[color:var(--border)] p-5" data-zeit-blockieren>
             <h3 className="flex items-center gap-2 text-[15px] font-semibold">

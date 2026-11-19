@@ -295,11 +295,14 @@ export function VorbereitungNeu(p: {
         </div>
       </div>
 
+      {/* Handy: „Noch klären im Termin“ nach dem Angebot (Ole, 19.11.2026: vorher zählt das Angebot, die Punkte erst im
+          Termin). Desktop unverändert: Kunde und Klären nebeneinander, das Angebot darunter über die ganze Breite. */}
       <div className="grid gap-4 md:grid-cols-2 md:gap-5">
-        {p.willKarte}
-        <Klaeren id={p.id} punkte={p.klaeren.punkte} erledigt={p.klaeren.erledigt} readOnly={p.readOnly} />
-      </div>
-
+        <div className="order-1 min-w-0">{p.willKarte}</div>
+        <div className="order-3 min-w-0 md:order-2" data-klaeren-platz>
+          <Klaeren id={p.id} punkte={p.klaeren.punkte} erledigt={p.klaeren.erledigt} readOnly={p.readOnly} />
+        </div>
+        <div className="order-2 min-w-0 md:order-3 md:col-span-2 [&>#angebote]:mt-0">
       <Angebote
         key={p.angebote.vertrieb.gesellschaften.join(",")}
         id={p.id}
@@ -328,6 +331,8 @@ export function VorbereitungNeu(p: {
           </a>
         }
       />
+        </div>
+      </div>
 
       {/* Angebot senden (Paket P3, Ole 17.11.2026): erst nach dem Termin bzw. wenn es schon abgelegt oder gesendet ist; vorher
           ohne Nutzen und nur verwirrend (Ole, 19.11.2026). Startet das Nachfassen. */}

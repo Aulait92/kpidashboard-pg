@@ -77,8 +77,11 @@ Einrichtung und Admin stehen. SUS nachher ≈ 87. Offen: zwei blaue Knöpfe („
 Beide schon nah am Ziel (SUS ≈ 90 bzw. 88). Abschluss: „Noch nicht“ meldet nur noch „Nachfassen läuft weiter“, wenn
 wirklich eines läuft, sonst „Bleibt offen“. Vergleichsblatt unverändert.
 
-## Offen für Ole
-- Kalender: „Kopieren“ (Buchungsseite) und „Zeiten speichern“ sind beide blau; die Bausteine teilen sich Einrichtung
-  und Admin. Vorschlag: „Zeiten speichern“ nur bei Änderung zeigen (wie jetzt bei den Provisionen).
-- Terminvorbereitung am Handy: „Noch klären im Termin“ steht vor dem Angebot. Vorschlag: am Handy nach dem Angebot.
-- Terminseite: Erinnerungen dort direkt überspringen (heute nur im Kontakt unter „Nächste Nachrichten“).
+## Nachgezogen (Ole, 19.11.2026)
+- Kalender: „Zeiten speichern“ erscheint erst bei einer Änderung, am Handy als feste Leiste über der Navigation
+  (`LeadTimesForm` mit `nurBeiAenderung`, nur in Mein Kalender; Einrichtung und Admin zeigen den Knopf wie bisher).
+  Damit ist „Kopieren“ (Buchungsseite) der einzige blaue Knopf ohne Änderung. SUS Kalender ≈ 90.
+- Terminvorbereitung am Handy: „Noch klären im Termin“ steht nach dem Angebot (CSS-Reihenfolge, Desktop unverändert).
+- Terminseite: In „Erinnerungen an Frau Winter“ lässt sich jede geplante Erinnerung mit „Überspringen“ aussetzen und mit
+  „Doch senden“ wieder aktivieren (gleiche Server-Aktion wie „Nächste Nachrichten“ im Kontakt, mit Rückgängig).
+- „Präsentation öffnen“ markiert weiter automatisch als vorbereitet.
