@@ -17,6 +17,9 @@ Fassung 19.11.2026, Folientausch (Ole): „Niemand geht ran? Egal, der Lead buch
 Bildern korrigiert (zweite Ziffer aus derselben Folie übernommen); PDF: Seiten 11 und 12 mit den neuen Bildern (Folie 13
 mit dem Assistenten steht danach weiter als 8 Einzelbilder); Web-Folien vertreter/11, 12 und makler/11, 12 neu,
 Titelliste in `verkaufspraesentation.ts` und Sprechzettel angepasst. Video (13) und Live-Demo (17) bleiben, wo sie sind.
+Kennzeichen angeglichen (Ole: „ja, kennzeichen angleichen“): Folie 10 jetzt 01 „Nicht erreicht“, 02 „Zu spät angerufen“
+(Texte der oberen Kästen getauscht, Nummern stehen fest), Folie 11 „Problem 01 gelöst“, Folie 12 „Problem 02 + 03 gelöst“,
+Folie 14 bleibt „Problem 04 gelöst“. Ziffern aus der Nachbarfolie übernommen; PPTX, PDF (Seiten 10 bis 12), Web-Folien 10 bis 12.
 
 Fassung 19.11.2026 (Branch `claude/vertreter-folien-screenshots`, nur Vertreter): App-Screenshots auf Folie 15 („Heute“ mit
 neuen Leads oben, Termin mit Zusammenfassung, „Wie lief es?“; Satz jetzt „Nach dem Gespräch: 2 Klicks“), 16 (neue
