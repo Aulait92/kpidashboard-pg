@@ -3,10 +3,10 @@
 import { randomBytes } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { angebotOhneGesundheitsdaten, angeboteAuslesen, bausteinSchalten, cleanAngebote, sparteSchalten, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
+import { angebotOhneGesundheitsdaten, angeboteAuslesen, bausteinSchalten, cleanAngebote, paketWaehlen, sparteSchalten, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
 import { einwandFolien, folien, markeFuer, paketName, praesentationCss } from "@/lib/praesentation";
 import { beitragAus, beitragEffektiv } from "@/lib/angebote-daten";
-import { praesentationsVariante } from "@/lib/praesentation-variante";
+import { praesentationsVariante } from "@/lib/praesentation-variante-server";
 import { zusageAm } from "@/lib/praesentation-messung";
 import { asAnsprache } from "@/lib/ansprache";
 import { logoDataUri } from "@/lib/branding-logo";
@@ -178,8 +178,8 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
   const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp, maklerMarkthinweis: kunde?.maklerMarkthinweis }, logo);
   const an = asAnsprache(kunde?.leadAddress);
   const angebote = ang?.bestaetigt ? ang.angebote : null;
-  // Fassung (lib/praesentation-variante.ts): seit 19.11.2026 für alle B (Abschluss-Dramaturgie)
-  const variante = praesentationsVariante(d.leadId ?? appointmentId);
+  // Fassung (lib/praesentation-variante-server.ts): B Standard, C im Splittest; beim Laden nur lesen, nicht zuteilen
+  const variante = await praesentationsVariante(d.leadId ?? appointmentId);
   const zugesagtAm = await zusageAm(appointmentId);
   const fs = folien(d, angebote, marke, an, { variante, zugesagtAm });
   // Für den Kundenlink (Abschluss-Leiste): gewählte Tarife und Beitrag wie auf der Folie „Ihre Entscheidung“
@@ -218,6 +218,9 @@ export const bausteinUmschalten = (appointmentId: string, ctx: TeamCtx, item: nu
 export const tarifUmschalten = (appointmentId: string, ctx: TeamCtx, item: number) => auswahlAendern(appointmentId, ctx, (d) => tarifWaehlen(d, item));
 
 export const sparteUmschalten = (appointmentId: string, ctx: TeamCtx, item: number) => auswahlAendern(appointmentId, ctx, (d) => sparteSchalten(d, item));
+
+/** Fassung C, Folie „Ihre Entscheidung“: ein Paket wählen (je Sparte eine Stufe, Indizes im Angebot). */
+export const paketUmschalten = (appointmentId: string, ctx: TeamCtx, items: number[]) => auswahlAendern(appointmentId, ctx, (d) => paketWaehlen(d, items));
 
 // ─── Kundenlink (Ole, 15.11.2026): der Stand aus dem Termin zum Nachlesen, ohne Schalter und Sprechzettel ─────
 

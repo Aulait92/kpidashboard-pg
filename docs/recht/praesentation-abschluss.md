@@ -32,3 +32,34 @@ Sprechhinweise, Messung „Folie erreicht“ und Zusage (`PraesentationEreignis`
 2. Sozialen Beweis (Bewertungen, „die meisten wählen …“) erst mit echten, belegbaren Daten des Vermittlers zeigen.
 3. Abschlussquote nicht als Werbeaussage gegenüber Vermittlern oder auf der Webseite verwenden, bevor der Test
    ausgewertet ist.
+
+## Nachtrag: Herausforderer Fassung C (interne Rechtsprüfung, 19.11.2026)
+
+Gegenstand: Splittest „praesentation“ (lib/experimente.ts, a = B Standard, b = C), startet angehalten. C: Einstieg mit
+dem Anliegen des Kunden, Beitrag auf der Entscheidungsfolie, Wahl zwischen „Unsere Empfehlung“ und „Etwas günstiger“,
+bisheriger Vertrag in Euro, „Unverbindlich. Den Antrag füllen wir gemeinsam aus.“ am Knopf.
+
+- **Zwei Pakete statt Ja oder Nein (§ 5 UWG, § 61 VVG, IDD Art. 20):** Beide Pakete bestehen nur aus Tarifen der
+  bestätigten Angebote, Preise je Paket mit Kombi-Rabatt gerechnet (wie „Ihr Beitrag“), „rund … am Tag“ aus dem
+  Monatsbeitrag. Die Empfehlung bleibt als solche gekennzeichnet und vorausgewählt. „Etwas günstiger“ ist je Sparte die
+  nächste echte Stufe unter der Empfehlung (keine Köder-Stufe, nicht künstlich verschlechtert); was dort anders ist,
+  steht an der Karte („Unterschied: ohne …“, abweichende Werte), damit die Wahl informiert ist. Bei einer Auswahl von
+  Hand steht sie als „Ihre Auswahl“ neben der Empfehlung, nichts wird still ersetzt.
+- **Hinweis nach § 7a VVG** (auch einzeln abschließbar, Bedingung des Kombi-Rabatts) steht auf der Entscheidungsfolie,
+  sobald ein Paket den Kombi-Rabatt enthält; C hat keine eigene Folie „Ihr Beitrag“.
+- **Bisheriger Vertrag in Euro** nur, wenn für die Sparte ein bisheriger Beitrag erfasst ist (von Hand, Police oder
+  Chat, wie die Spalte auf der Vergleichsfolie): „Ihr bisheriger Vertrag …: … im Monat. Ihre Auswahl: … mehr bzw.
+  weniger im Jahr als bisher“, neutral, ohne Ersparnisversprechen, auch wenn es teurer wird.
+- **Kein Vertragsschluss per Klick:** wie B; in C steht „Unverbindlich“ zusätzlich direkt am Knopf im Termin.
+- Kein sozialer Beweis, keine Dringlichkeit, kein „Garantie“ (Tests prüfen das). Ergebnisse des Komplettchecks
+  („Sie zahlen vielleicht doppelt“) bekommen keine eigene Folie: Es gibt keine geprüfte Erkennung doppelter Verträge,
+  eine solche Aussage wäre ohne Datengrundlage irreführend; der Überblick (Ampel) bleibt.
+- **Datenschutz Splittest:** Zuteilung je Lead-ID (pseudonym, ExperimentZuteilung), erst ab einer gezeigten Folie bzw.
+  der Zusage; keine neuen Personendaten, kein Cookie.
+
+Auflagen C:
+1. Erst einschalten, wenn Ole die Fassung gesehen hat (Vorschau /demo/beratung?fassung=c).
+2. Wählt der Kunde „Etwas günstiger“ bzw. eine Auswahl abweichend von der Empfehlung, trägt der Vermittler das in der
+   Beratungsdokumentation unter „Entscheidung des Kunden“ ein (der Entwurf lässt dafür Platz; ein automatischer
+   Satz folgt mit der nächsten Überarbeitung der Dokumentation).
+3. Abschlussquote von C erst nach Auswertung (ab 100 Präsentationen je Fassung, p < 0,05) als Standard übernehmen.

@@ -31,6 +31,11 @@ export type ExperimentDef = {
   b: string;
   /** Mindestens so viele Einheiten je Fassung vor einer Entscheidung (Standard MIN_JE_FASSUNG) */
   min?: number;
+  /**
+   * false = startet angehalten (alle sehen Fassung a), bis der Test eingeschaltet wird: Zeile in „Experiment“ mit
+   * aktiv = true (SQL siehe Kopf von lib/praesentation-variante.ts) oder diesen Eintrag entfernen. Ohne Angabe läuft er.
+   */
+  aktiv?: false;
 };
 
 /**
@@ -55,11 +60,25 @@ export const EXPERIMENTE = {
     a: "Bisher: alle Zeiten, Pflicht-Haken Datenschutz, „Termin verbindlich buchen“",
     b: "Neu: nächste Tage zuerst, Nutzen in einer Zeile, Datenschutz als Hinweis, „Kostenlos Termin buchen“",
   },
+  // Beratungspräsentation (19.11.2026): Herausforderer C gegen Standard B, Einheit Lead-ID (lib/praesentation-variante-server.ts).
+  // Startet angehalten, bis Ole die Fassung gesehen hat (Vorschau /demo/beratung?fassung=c).
+  praesentation: {
+    titel: "Beratungspräsentation im Termin",
+    ziel: "zusage",
+    a: "Fassung B (Standard): Begrüßung, Beitrag und Entscheidung auf getrennten Folien, ein Paket mit „Ja, so machen wir es“",
+    b: "Fassung C: Einstieg mit dem Anliegen, Beitrag auf der Entscheidungsfolie, Wahl zwischen zwei Paketen, bisheriger Vertrag in Euro",
+    // Termine sind seltener als Leads und der Cron prüft stündlich: erst ab 100 Präsentationen je Fassung entscheiden
+    min: 100,
+    aktiv: false,
+  },
 } as const satisfies Record<string, ExperimentDef>;
 
 export type ExperimentKey = keyof typeof EXPERIMENTE;
 
 const def = (key: string): ExperimentDef | null => (key in EXPERIMENTE ? EXPERIMENTE[key as ExperimentKey] : null);
+
+/** Läuft der Test? Gespeicherter Stand vor dem Startwert im Code (aktiv: false = startet angehalten). */
+export const laeuft = (d: ExperimentDef, row: { aktiv: boolean } | null | undefined): boolean => (row ? row.aktiv : d.aktiv !== false);
 
 /** Alle Experimente aus (Notschalter EXPERIMENTE_AUS=1): alle bekommen Fassung a bzw. den Gewinner. */
 export function experimenteAus(env: Record<string, string | undefined> = process.env): boolean {
@@ -115,10 +134,11 @@ export function experimenteCacheLeeren(): void {
  */
 export async function variante(experiment: string, einheit: string | null | undefined, o: { merken?: boolean } = {}): Promise<Variante> {
   try {
-    if (!def(experiment)) return "a";
+    const d = def(experiment);
+    if (!d) return "a";
     const s = (await stand()).get(experiment);
     if (s?.winner === "a" || s?.winner === "b") return s.winner;
-    if (!einheit || s?.aktiv === false || experimenteAus()) return "a";
+    if (!einheit || !laeuft(d, s) || experimenteAus()) return "a";
     const v = zuteilen(experiment, einheit);
     if (o.merken === false) return v;
     await prisma.experimentZuteilung.createMany({ data: [{ experiment, einheit, variante: v }], skipDuplicates: true });
@@ -215,7 +235,7 @@ export async function experimenteUebersicht(): Promise<ExperimentUebersicht[]> {
         ziel: d.ziel,
         a: d.a,
         b: d.b,
-        aktiv: row?.aktiv ?? true,
+        aktiv: laeuft(d, row),
         stats,
         quoteA: q.quoteA,
         quoteB: q.quoteB,
@@ -260,7 +280,7 @@ export async function promoteExperimentWinners(now = new Date()): Promise<{ key:
   const out: { key: string; winner: Variante }[] = [];
   for (const [key, d] of Object.entries(EXPERIMENTE as Record<string, ExperimentDef>)) {
     const row = await prisma.experiment.findUnique({ where: { key } });
-    if (row?.winner || row?.aktiv === false) continue;
+    if (row?.winner || !laeuft(d, row)) continue;
     const stats = await experimentStats(key);
     const e = entscheide(stats, d.min ?? MIN_JE_FASSUNG);
     if (!e.winner) continue;

@@ -54,7 +54,7 @@ export function FolienListe({ css, folien, onFolie }: { css: string; folien: { i
     <>
       {klein ? <p className="mb-2 text-sm text-[color:var(--muted)]">Zum Vergrößern eine Folie antippen.</p> : null}
       <div ref={ref} className="flex flex-col gap-4" data-kundenfolien>
-        <style>{`${css}\n.nurlesen .bs,.nurlesen .wahl,.nurlesen .teil,.nurlesen .st{cursor:default;pointer-events:none}\n.nurlesen .zusage{display:none}`}</style>
+        <style>{`${css}\n.nurlesen .bs,.nurlesen .wahl,.nurlesen .teil,.nurlesen .st,.nurlesen .pk{cursor:default;pointer-events:none}\n.nurlesen .zusage,.nurlesen .zusage-zeile{display:none}`}</style>
         {folien.map((f, i) => (
           <div
             key={f.id}

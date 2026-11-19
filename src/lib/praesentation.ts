@@ -7,7 +7,7 @@
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { spartenVon, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
-import { beitragAus, beitragEffektiv, type AngebotItem, type AngeboteDaten } from "@/lib/angebote-daten";
+import { beitragAus, beitragEffektiv, paketWaehlen, type AngebotItem, type AngeboteDaten, type BeitragsUebersicht } from "@/lib/angebote-daten";
 import { anzahlFuer, bedingungText, naechsteText, prozentFuer, staffelLeiste, type KombiErgebnis } from "@/lib/kombi-rabatt";
 import { SCHUTZ_STATUS, type SchutzZeile } from "@/lib/schutz-ueberblick";
 import { a, type Ansprache } from "@/lib/ansprache";
@@ -249,6 +249,24 @@ export function praesentationCss(m: Marke): string {
 .einwand .gegen>div{border-radius:18px;padding:24px 28px;background:var(--fh)}
 .einwand .gegen span{display:block;font-size:20px;color:#4b5568;margin-bottom:6px}.einwand .gegen b{font-size:40px;color:var(--f)}
 .einwand .gegen .schaden{background:#fef2f2}.einwand .gegen .schaden b{font-size:26px;color:#7f1d1d;line-height:1.3}
+.einstieg .zitate{margin-top:26px}
+.ablauf{display:flex;flex-wrap:wrap;gap:10px 30px;margin-top:30px;font-size:20px;color:#4b5568}.ablauf b{color:var(--f);margin-right:8px}
+.pakete{display:grid;gap:20px;margin-bottom:16px;align-items:stretch}
+.pk{font:inherit;text-align:left;display:flex;flex-direction:column;gap:6px;border:2px solid #e3e9f3;background:#fff;color:#0b1220;border-radius:18px;padding:16px 22px;line-height:1.25}
+button.pk{cursor:pointer}
+.pk.an{border:3px solid var(--f);background:var(--fh);padding:15px 21px}
+.pk-kopf{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;color:var(--f)}
+.pk-wahl{flex:0 0 26px;width:26px;height:26px;border-radius:99px;border:2px solid #cbd5e1;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:transparent;background:#fff}
+.pk.an .pk-wahl{background:var(--f);border-color:var(--f);color:#fff}
+.pk-zeile{display:flex;justify-content:space-between;gap:12px;font-size:20px;color:#1f2937}.pk-zeile b{white-space:nowrap}
+.pk-ohne{font-size:16px;color:#475569}
+.pk-summe{margin-top:auto;border-top:2px solid #e3e9f3;padding-top:8px;font-size:18px;color:#4b5568}.pk-summe b{font-size:34px;color:var(--f);white-space:nowrap}
+.pk-tag{font-size:17px;color:#334155}
+.pakete .beginn{border-radius:18px;padding:20px 24px;background:#f4f6f9;color:#0b1220}.pakete .beginn span,.pakete .beginn em{color:#4b5568}.pakete .beginn b{font-size:30px;color:var(--f)}
+.vergleich-bisher{display:flex;flex-wrap:wrap;gap:4px 24px;margin:0 0 12px;font-size:18px;color:#334155}.vergleich-bisher b{color:#0b1220}
+.pakete~.sicher-reihe{margin-bottom:16px}
+.zusage-zeile{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
+.zusage-zeile .unverbindlich{font-size:18px;color:#4b5568}
 `;
 }
 
@@ -465,6 +483,13 @@ export const SPRECHHINWEIS: Record<string, string> = {
 
 const hinweisFuer = (id: string) => SPRECHHINWEIS[id.startsWith("vergleich-") ? "vergleich" : id];
 
+/** Sprechhinweise der Fassung C, wo sie von B abweichen (Einstieg, Entscheidung mit einem bzw. zwei Paketen). */
+export const SPRECHHINWEIS_C = {
+  situation: "Begrüßen, Ablauf in einem Satz. Dann vorlesen und fragen: Stimmt das so, fehlt etwas? Den Kunden erzählen lassen.",
+  zweiPakete: "Beide Pakete in je einem Satz nennen, beim kleineren sagen, was fehlt. Dann fragen: Welches passt besser zu Ihnen? Schweigen. Gewähltes Paket antippen, bei Ja „Ja, so machen wir es“.",
+  einPaket: "Kurz zusammenfassen, Beitrag nennen, Beginn vorschlagen und fragen: Sollen wir das so machen? Bei Ja: „Ja, so machen wir es“ antippen.",
+} as const;
+
 /** Cross-Selling-Sparte, die (noch) nicht im Vergleich ist: kein Vergleich, kein Beitrag, nur im Überblick. */
 const zusatzAus = (i: AngebotItem, items?: AngebotItem[]) => !!i.zusatz && !(items ?? []).some((x) => x.sparte === i.sparte && x.gewaehlt) && !i.gewaehlt;
 
@@ -478,15 +503,32 @@ const zusatzAus = (i: AngebotItem, items?: AngebotItem[]) => !!i.zusatz && !(ite
  * Variante B (Splittest, Ole 19.11.2026, Abschluss-Dramaturgie): ohne „Worauf es ankommt“ (das Schadenbeispiel macht
  * das Risiko greifbar), Beitrag mit „pro Tag“ groß, Entscheidung mit Zusammenfassung (Tarife, Beitrag, Beginn),
  * Einwänden vorweg (Widerruf, Unterlagen, Kündigung des bisherigen Vertrags) und dem Schritt „Ja, so machen wir es“.
- * Standard ist A (bisherige Fassung).
+ * Seit 19.11.2026 Standard für alle Termine (ohne Angabe: A, nur noch für Tests).
+ *
+ * Variante C (Herausforderer gegen B, Splittest „praesentation“, 19.11.2026; Analyse mit Vertriebscoach, UX, Texter,
+ * vier Personas und Rechtsblick): wie B, aber
+ *   1. Einstieg mit dem Anliegen des Kunden: Begrüßung und „Das haben Sie uns gesagt“ auf einer Folie („Darum geht es
+ *      Ihnen“, Prüffrage „Stimmt das so?“), Ablauf in einer Zeile.
+ *   2. Kein eigener „Ihr Beitrag“: Der Beitrag steht einmal, direkt an der Entscheidung (bis zur Entscheidung zwei
+ *      Folien weniger als B).
+ *   3. Entscheidung als Wahl zwischen zwei Paketen statt Ja oder Nein: Empfehlung und je Sparte eine Stufe kleiner
+ *      (echte Preise aus den bestätigten Angeboten, Kombi-Rabatt je Paket gerechnet, was im kleineren fehlt, steht
+ *      dabei). Antippen wählt das Paket (data-paket), danach ein Schritt „Ja, so machen wir es“.
+ *   4. Bisheriger Vertrag in Euro an der Entscheidung, wenn erfasst (Beitrag im Monat und Unterschied im Jahr).
+ *   5. „Unverbindlich“ direkt am Knopf (wie im Kundenlink), für Kunden, die einen Klick für eine Unterschrift halten.
+ * Keine Köder-Stufe (die kleinere ist die nächste echte Stufe, nicht die billigste), kein sozialer Beweis, keine
+ * Dringlichkeit, keine Ersparnisversprechen. Ergebnisse des Komplettchecks bleiben auf „Ihr Schutz im Überblick“.
  */
 export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Marke, an: Ansprache = "sie", opt: FolienOptionen = {}): Folie[] {
   const fs = folienRoh(d, angebote, m, an, opt);
-  return fs.map((f) => (hinweisFuer(f.id) ? { ...f, hinweis: hinweisFuer(f.id) } : f));
+  // Fassung C setzt eigene Hinweise an der Folie (Einstieg, Entscheidung mit zwei Paketen)
+  return fs.map((f) => (f.hinweis || !hinweisFuer(f.id) ? f : { ...f, hinweis: hinweisFuer(f.id) }));
 }
 
 function folienRoh(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Marke, an: Ansprache, opt: FolienOptionen): Folie[] {
-  const B = opt.variante === "B";
+  // C (Herausforderer, 19.11.2026) baut auf B auf: alles aus B, dazu die Abweichungen im Kopf dieser Funktion
+  const C = opt.variante === "C";
+  const B = opt.variante === "B" || C;
   const q = Object.fromEntries(qualificationPoints(d.angaben).map((p) => [p.key, p.value])) as Partial<Record<QualificationKey, string>>;
   const vorname = d.lead.name.split(/\s+/)[0] ?? d.lead.name;
   const anrede = an === "du" ? vorname : d.lead.name;
@@ -507,7 +549,7 @@ function folienRoh(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Mark
   const beitrag = angebote ? beitragAus(angebote) : null;
   const out: Folie[] = [];
 
-  out.push({
+  if (!C) out.push({
     id: "titel",
     titel: "Begrüßung",
     html: R(
@@ -528,7 +570,23 @@ function folienRoh(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Mark
     q.gebaeude ?? null,
     q.vorhanden ? `Bisher: ${q.vorhanden}` : null,
   ].filter((x): x is string => !!x).slice(0, 4);
-  out.push({
+  // C: Begrüßung und Situation auf einer Folie, Überschrift ist das Anliegen des Kunden (Folien-ID bleibt „situation“,
+  // zählt also wie in B noch nicht als gezeigte Präsentation)
+  if (C) out.push({
+    id: "situation",
+    titel: "Darum geht es",
+    hinweis: SPRECHHINWEIS_C.situation,
+    html: R(
+      `${m.logoUrl ? `<img class="titellogo" src="${e(m.logoUrl)}" alt="">` : ""}<h1>${e(a(an, `Darum geht es dir, ${vorname}`, `Darum geht es Ihnen, ${anrede}`))}</h1><p class="sub">${e(d.lead.produkt)} · mit ${e(d.termin.berater)}</p>${
+        situation.length
+          ? `<div class="zitate">${situation.map((x) => `<div class="zitat">${e(x)}</div>`).join("")}</div>`
+          : `<p class="sub" style="margin-top:26px">${e(a(an, "Erzähl kurz, worum es dir geht.", "Erzählen Sie kurz, worum es Ihnen geht."))}</p>`
+      }<div class="ablauf"><span><b>1</b>${e(a(an, "Deine Situation", "Ihre Situation"))}</span><span><b>2</b>Unsere Empfehlung</span><span><b>3</b>${e(a(an, "Deine Entscheidung", "Ihre Entscheidung"))}</span></div>`,
+      a(an, "Stimmt das so?", "Stimmt das so?"),
+      "titel einstieg",
+    ),
+  });
+  else out.push({
     id: "situation",
     titel: "Das haben Sie uns gesagt",
     html: R(
@@ -680,7 +738,8 @@ function folienRoh(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Mark
           })
           .join("")}</div>`
       : "";
-  out.push({
+  // C: der Beitrag steht auf der Entscheidungsfolie (je Paket), keine eigene Folie
+  if (!C) out.push({
     id: "beitrag",
     titel: "Ihr Beitrag",
     html: R(
@@ -717,7 +776,8 @@ function folienRoh(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Mark
       ...(wechsel ? [a(an, "Bei der Kündigung deines bisherigen Vertrags helfen wir", "Bei der Kündigung Ihres bisherigen Vertrags helfen wir")] : []),
     ];
     const zugesagt = !!opt.zugesagtAm;
-    out.push({
+    if (C) out.push(entscheidungC({ angebote, an, R, ab, alt, sicher, zugesagt }));
+    else out.push({
       id: "entscheidung",
       titel: "Ihre Entscheidung",
       html: R(
@@ -762,6 +822,125 @@ function folienRoh(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Mark
     ),
   });
   return out;
+}
+
+// ─── Fassung C: Entscheidung mit zwei Paketen (19.11.2026) ───────────────────────────────────
+
+export type PaketArt = "empfehlung" | "guenstiger" | "auswahl";
+
+export type EntscheidungsPaket = {
+  art: PaketArt;
+  /** Index im Angebot je Sparte (Reihenfolge der gewählten Sparten) */
+  items: number[];
+  gewaehlt: boolean;
+  beitrag: BeitragsUebersicht;
+  /** Unterschied zur Empfehlung, höchstens 2: zuerst „ohne …“ (Merkmal fehlt), dann andere Werte („Versicherungssumme 20 Mio. €“) */
+  fehlt: string[];
+};
+
+/**
+ * Pakete für die Folie „Ihre Entscheidung“ (Fassung C). Empfehlung = je gewählter Sparte die empfohlene Stufe (sonst
+ * die gewählte); günstiger = je Sparte die nächste günstigere echte Stufe (nicht die billigste: keine Köder-Stufe).
+ * Weicht die Auswahl im Termin von beiden ab, steht sie selbst als „Ihre Auswahl“ neben der Empfehlung. Ein Paket,
+ * wenn es nichts zu wählen gibt. Beiträge mit Kombi-Rabatt je Paket (beitragAus), nur aus den bestätigten Angeboten.
+ */
+export function entscheidungsPakete(angebote: AngeboteDaten | null): EntscheidungsPaket[] {
+  const items = angebote?.items ?? [];
+  const gew = items.filter((i) => i.gewaehlt && !zusatzAus(i, items));
+  if (!angebote || !gew.length) return [];
+  const preis = (i: AngebotItem) => beitragEffektiv(i);
+  const idx = (i: AngebotItem) => items.indexOf(i);
+  const empf = gew.map((g) => items.find((x) => x.sparte === g.sparte && x.empfohlen) ?? g);
+  const kleiner = empf.map((x) => {
+    const p = preis(x);
+    if (p == null) return x;
+    const guenstiger = items.filter((y) => y.sparte === x.sparte && preis(y) != null && preis(y)! < p - 0.005);
+    return guenstiger.length ? guenstiger.reduce((best, y) => (preis(y)! > preis(best)! ? y : best)) : x;
+  });
+  const gleich = (xs: AngebotItem[], ys: AngebotItem[]) => xs.every((x, k) => x === ys[k]);
+  // Ehrlich zeigen, was im anderen Paket anders ist (nicht nur das Fehlende), damit niemand es für gleichwertig hält
+  // Je Sparte zuerst „ohne …“, dann andere Werte; reihum über die Sparten, damit jede Sparte vorkommt
+  const fehltGegen = (xs: AngebotItem[]) => {
+    const jeSparte = xs.map((x, k) => {
+      if (x === empf[k]) return [];
+      const paare = empf[k].merkmale.filter((mm) => !istNein(mm.wert)).map((mm) => ({ mm, w: x.merkmale.find((y) => y.name === mm.name)?.wert }));
+      const ohne = paare.filter((p) => istNein(p.w)).map((p) => `ohne ${p.mm.name}`);
+      const anders = paare.filter((p) => !istNein(p.w) && klein(p.w!) !== klein(p.mm.wert) && !JA.test(p.w!.trim())).map((p) => `${p.mm.name} ${p.w}`);
+      return [...ohne, ...anders];
+    });
+    const out: string[] = [];
+    for (let r = 0; out.length < 2 && jeSparte.some((l) => l.length > r); r++) for (const l of jeSparte) if (l[r] && out.length < 2) out.push(l[r]);
+    return out;
+  };
+  const paket = (art: PaketArt, xs: AngebotItem[]): EntscheidungsPaket => {
+    const ids = xs.map(idx);
+    return { art, items: ids, gewaehlt: gleich(xs, gew), beitrag: beitragAus(paketWaehlen(angebote, ids) ?? angebote), fehlt: art === "empfehlung" ? [] : fehltGegen(xs) };
+  };
+  if (gleich(gew, empf)) return gleich(kleiner, empf) ? [paket("empfehlung", empf)] : [paket("empfehlung", empf), paket("guenstiger", kleiner)];
+  if (gleich(gew, kleiner)) return [paket("empfehlung", empf), paket("guenstiger", kleiner)];
+  return [paket("auswahl", gew), paket("empfehlung", empf)];
+}
+
+function entscheidungC(x: {
+  angebote: AngeboteDaten | null;
+  an: Ansprache;
+  R: (inhalt: string, frage?: string, cls?: string, hinweis?: string | null) => string;
+  ab: string;
+  alt: string;
+  sicher: string[];
+  zugesagt: boolean;
+}): Folie {
+  const { angebote, an, R } = x;
+  const items = angebote?.items ?? [];
+  const pakete = entscheidungsPakete(angebote);
+  const zwei = pakete.length > 1;
+  const kopf: Record<PaketArt, string> = { empfehlung: "Unsere Empfehlung", guenstiger: "Etwas günstiger", auswahl: a(an, "Deine Auswahl", "Ihre Auswahl") };
+  const karte = (p: EntscheidungsPaket) => {
+    const zeilen = p.items
+      .map((k) => {
+        const i = items[k];
+        const pr = beitragEffektiv(i);
+        return `<span class="pk-zeile"><span>${e(paketName(i))}</span>${pr != null ? `<b>${eur(pr)}</b>` : ""}</span>`;
+      })
+      .join("");
+    const end = p.beitrag.endbeitrag;
+    const inhalt = `<span class="pk-kopf">${zwei ? `<span class="pk-wahl">✓</span>` : ""}${e(kopf[p.art])}</span>${zeilen}${
+      p.fehlt.length ? `<span class="pk-ohne">Unterschied: ${e(p.fehlt.join(", "))}</span>` : ""
+    }${
+      end != null
+        ? `<span class="pk-summe"><b>${eur(end)}</b> im Monat</span><span class="pk-tag">rund ${eur(end / 30)} am Tag${p.beitrag.rabatt ? `, mit Kombi-Rabatt ${prozent(p.beitrag.rabatt.prozent)}` : ""}</span>`
+        : ""
+    }`;
+    // Zwei Pakete: antippen wählt (data-paket, wie eine Stufe im Vergleich); eines: nur Anzeige
+    return zwei
+      ? `<button type="button" class="pk${p.gewaehlt ? " an" : ""}" data-paket="${p.items.join(",")}" data-paket-art="${p.art}" aria-pressed="${p.gewaehlt}">${inhalt}</button>`
+      : `<div class="pk an" data-paket-art="${p.art}">${inhalt}</div>`;
+  };
+  const gewaehlt = pakete.find((p) => p.gewaehlt) ?? pakete[0];
+  // Bisheriger Vertrag in Euro (wenn erfasst): je Sparte des gewählten Pakets Beitrag bisher und Unterschied im Jahr
+  const bisher = (gewaehlt?.items ?? [])
+    .flatMap((k) => {
+      const i = items[k];
+      const b = angebote?.bisher?.find((y) => y.sparte === i.sparte);
+      const diff = b ? beitragsUnterschiedJahr(beitragEffektiv(i), b.beitragMonat) : null;
+      return b?.beitragMonat != null && diff != null
+        ? [`<span>${e(a(an, "Dein bisheriger Vertrag", "Ihr bisheriger Vertrag"))} ${e(i.sparte)}: ${eur(b.beitragMonat)} im Monat. ${e(a(an, "Deine Auswahl", "Ihre Auswahl"))}: <b>${e(unterschiedText(diff))}</b></span>`]
+        : [];
+    })
+    .slice(0, 2);
+  const kombi = pakete.find((p) => p.beitrag.rabatt)?.beitrag.kombi ?? null;
+  const spalten = zwei ? "minmax(0,1fr) minmax(0,1fr) 250px" : "minmax(0,3fr) minmax(0,2fr)";
+  const html = R(
+    `<h2>${e(a(an, "Deine Entscheidung", "Ihre Entscheidung"))}</h2><div class="pakete" style="grid-template-columns:${spalten}" data-pakete="${pakete.length}">${
+      pakete.length ? pakete.map(karte).join("") : `<div class="pk"><p class="leer-klein">${e(a(an, "Dein Angebot stellen wir gemeinsam zusammen.", "Ihr Angebot stellen wir gemeinsam zusammen."))}</p></div>`
+    }<div class="beginn"><span>Unser Vorschlag</span><b>Schutz ab ${e(x.ab)}</b><em>oder ab ${e(x.alt)}</em></div></div>${
+      bisher.length ? `<div class="vergleich-bisher" data-bisher-euro>${bisher.join("")}</div>` : ""
+    }<div class="sicher-reihe">${x.sicher.map((s) => `<span>${icon("check", 26)}${e(s)}</span>`).join("")}</div><div class="zusage-zeile"><button type="button" class="zusage${x.zugesagt ? " an" : ""}" data-zusage>${
+      x.zugesagt ? "✓ Zugesagt" : "Ja, so machen wir es"
+    }</button><span class="unverbindlich">${e(a(an, "Unverbindlich. Den Antrag füllen wir gemeinsam aus.", "Unverbindlich. Den Antrag füllen wir gemeinsam aus."))}</span></div>${kombi ? kombiFussnote(kombi) : ""}`,
+    zwei ? a(an, "Welches Paket passt besser zu dir?", "Welches Paket passt besser zu Ihnen?") : a(an, "Sollen wir das so machen?", "Sollen wir das so machen?"),
+  );
+  return { id: "entscheidung", titel: "Ihre Entscheidung", html, hinweis: zwei ? SPRECHHINWEIS_C.zweiPakete : SPRECHHINWEIS_C.einPaket };
 }
 
 // ─── Kombi-Rabatt und Schutz-Überblick (Ole, 16.11.2026) ─────────────────────────────────────
@@ -954,6 +1133,6 @@ export function einwandFolien(d: VorbereitungDaten, angebote: AngeboteDaten | nu
 /** Alle Folien als HTML-Dokument (PDF, Querformat 1280×720 je Seite); eingepasst wie in der Ansicht. */
 export function praesentationHtml(fs: Folie[], m: Marke, titel: string): string {
   const einpassen = `<script>(function(){var f=${folienEinpassen.toString()};f(document);if(document.fonts)document.fonts.ready.then(function(){f(document)})})()</script>`;
-  // Knopf „Ja, so machen wir es“ nur in der Ansicht (im PDF wirkt er nicht)
-  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${e(titel)}</title><style>@page{size:1280px 720px;margin:0}body{margin:0}.slide{break-after:page}${praesentationCss(m)}.zusage{display:none}</style></head><body><div class="deck">${fs.map((f) => f.html).join("")}</div>${einpassen}</body></html>`;
+  // Knopf „Ja, so machen wir es“ (Fassung C mit dem Satz daneben) nur in der Ansicht (im PDF wirkt er nicht)
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${e(titel)}</title><style>@page{size:1280px 720px;margin:0}body{margin:0}.slide{break-after:page}${praesentationCss(m)}.zusage{display:none}.zusage-zeile{display:none}</style></head><body><div class="deck">${fs.map((f) => f.html).join("")}</div>${einpassen}</body></html>`;
 }
