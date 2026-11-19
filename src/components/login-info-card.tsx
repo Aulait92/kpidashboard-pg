@@ -1,4 +1,11 @@
 import { ArrowRight } from "lucide-react";
+import { PRICE_LIST } from "@/lib/offer-pricing";
+
+/** Platzhalter in Kartentexten: {preisSparte} = Monatspreis je weiterer Sparte (netto) aus der Preisliste. */
+export function kartenText(t: string): string {
+  const eur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(PRICE_LIST.extraProductMonthly);
+  return t.replaceAll("{preisSparte}", eur);
+}
 
 export type LoginCardContent = { badge: string | null; title: string; text: string | null; linkText: string | null; linkUrl: string | null };
 
@@ -38,7 +45,7 @@ export function LoginInfoCard({
           {info.title}
         </h2>
         {info.text ? (
-          <p className={`mx-auto mt-3 max-w-md whitespace-pre-line ${compact ? "text-sm" : "text-[15px]"} leading-relaxed text-[color:var(--muted)]`}>{info.text}</p>
+          <p className={`mx-auto mt-3 max-w-md whitespace-pre-line ${compact ? "text-sm" : "text-[15px]"} leading-relaxed text-[color:var(--muted)]`}>{kartenText(info.text)}</p>
         ) : null}
         {info.linkUrl && info.linkText ? (
           <a
