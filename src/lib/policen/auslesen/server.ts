@@ -191,6 +191,8 @@ export async function liesUnterlageAus(documentId: string, o: { sparte?: Auslese
   if (sperre) return { status: `gesperrt:${sperre}` };
 
   const alt = doc.auszug;
+  // Vom Vermittler als „Andere“ markiert (keine der auslesbaren Sparten): nicht erneut versuchen
+  if (alt?.status === "andere" && !o.sparte) return { status: "andere" };
   if (alt && !o.sparte) {
     if (alt.status === "ausgelesen" || alt.status === "leer") return { status: alt.status };
     if (alt.status === "laeuft" && now.getTime() - alt.updatedAt.getTime() < LAEUFT_MS) return { status: "laeuft" };
@@ -418,9 +420,15 @@ export async function bestaetigeAuszug(w: Wer, id: string, ja: boolean): Promise
 }
 
 /** Sparte wählen (Sparte unklar oder abweichend) und auslesen. */
-export async function waehleSparte(w: Wer, documentId: string, sparte: AuslesenSparte): Promise<AuslesenErgebnis> {
+export async function waehleSparte(w: Wer, documentId: string, sparte: AuslesenSparte | "andere"): Promise<AuslesenErgebnis> {
   const doc = await prisma.leadDocument.findFirst({ where: { id: documentId, leadId: w.leadId, customerId: w.customerId, status: "gespeichert" }, select: { id: true } });
   if (!doc) return null;
+  // „Andere“ (Ole, 19.11.2026: Unfall, Tier, Zahn usw. werden nicht ausgelesen): erledigt, bleibt im Original abrufbar
+  if (sparte === "andere") {
+    const data = { status: "andere", sparte: "andere", sparteQuelle: "vermittler" };
+    await prisma.policenAuszug.upsert({ where: { documentId: doc.id }, update: data, create: { customerId: w.customerId, leadId: w.leadId, documentId: doc.id, ...data } });
+    return { status: "andere" };
+  }
   return liesUnterlageAus(doc.id, { sparte });
 }
 
