@@ -5,7 +5,7 @@ Werkzeuge für die drei Erklärvideos im Kundenbereich:
 | Video | Ziel-Datei (public/videos) | Szenen | Aufnahme |
 |---|---|---|---|
 | Kurzversion (ca. 1 Min.) | `einfuehrung-kurz.mp4` | `KURZ` in `scenes_oa.py` | `rec_ev.js kurz` |
-| Ausführlich (ca. 3:50 Min.) | `einfuehrung-ausfuehrlich.mp4` | `LANG` in `scenes_oa.py` | `rec_ev.js lang` |
+| Ausführlich (ca. 3:40 Min.) | `einfuehrung-ausfuehrlich.mp4` | `LANG` in `scenes_oa.py` | `rec_ev.js lang` |
 | WhatsApp verbinden (ca. 3:20 Min.) | `whatsapp-verbinden.mp4` | `wa_scenes.py` | `wa_rec.js` (App-Teile echt, 360dialog/Meta aus `cards/wa_mock.html`) |
 
 Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`).
@@ -39,7 +39,9 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
 - Mehrere Agenten mit eigenem `next dev` (je 4 bis 8 GB) sprengen den Speicher, und `next dev` ist für die Aufnahme zu langsam (Szenen laufen aus dem Takt). Besser: `NODE_OPTIONS=--max-old-space-size=8192 npx next build --webpack`, dann `npx next start -p <Port>` (Port 3123 ggf. belegt, dann z. B. 3131 und `APP=http://localhost:3131`).
 - Playwright 1.65 erwartet `ffmpeg-1013` (VP9). Ohne Download: `mkdir -p /var/tmp/pwb/ffmpeg-1013 && ln -s /usr/bin/ffmpeg /var/tmp/pwb/ffmpeg-1013/ffmpeg-linux && touch /var/tmp/pwb/ffmpeg-1013/INSTALLATION_COMPLETE`, dann `PLAYWRIGHT_BROWSERS_PATH=/var/tmp/pwb PW_CHROME=/usr/bin/google-chrome`. Das alte `ffmpeg-1011` liefert stumm keine Datei.
 - Nur das Bild neu, Text gleich: Ton je Szene aus dem bisherigen MP4 schneiden (Sprechbeginn per `silencedetect`, ab 0,15 s davor, Länge `dur` aus `kurz.json`), so am 19.11.2026 für „Kurz“ gemacht.
-- `scenes_oa.py` (LANG) und `rec_ev.js` sind schon auf die Oberfläche vom 19.11.2026 angepasst („Abschluss“ statt „Gewonnen“, Kontakte mit „Zu erledigen“, Wachstum „Rechnet sich das?“ und „Vom Lead zum Kunden“, „Kosten & Ertrag“ entfällt). „Ausführlich“ ist damit noch nicht neu vertont: dafür braucht die Umgebung Zugang zu api.openai.com (TTS) und huggingface.co (faster-whisper-Modell für `check_oa.py`).
+- `scenes_oa.py` (LANG) und `rec_ev.js` sind schon auf die Oberfläche vom 19.11.2026 angepasst („Abschluss“ statt „Gewonnen“, Kontakte mit „Zu erledigen“, Wachstum „Rechnet sich das?“ und „Vom Lead zum Kunden“, „Kosten & Ertrag“ entfällt). „Ausführlich“ am 19.11.2026 neu vertont und aufgenommen (Terminvorbereitung neu: Beiträge aus dem Tarifrechner, „Präsentation öffnen“; Angaben und „Notizen & Verlauf“ im rechten Kontaktbereich).
+- `check_oa.py`: Das faster-whisper-Modell liegt auf CDN-Hosts von Hugging Face (`us.aws.cdn.hf.co`, `cas-server.xethub.hf.co`), nicht auf huggingface.co. Sind die gesperrt, hört das Skript automatisch mit OpenAI `whisper-1` über api.openai.com gegen (erzwingen: `CHECK_OA_OPENAI=1`).
+- Reicht der Speicher nicht für `next build` (8 GB Heap, mehrere Agenten parallel), kann ein frischer `.next`-Build eines anderen Worktrees (ohne `cache`) kopiert und mit `next start` gestartet werden, sofern sich die gezeigten Seiten seitdem nicht geändert haben.
 
 ### Zusatz für „WhatsApp verbinden“ (Stand 15.11.2026)
 
@@ -56,7 +58,7 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
 | Video | Seiten (Routen) | Begriffe und Knöpfe im Sprechertext |
 |---|---|---|
 | Kurz (`kurz.json`, `public/videos/einfuehrung-kurz*`) | /buyer (Heute), Termin im Kontakt, /buyer/chats, /buyer/kontakte, /buyer/wachstum (mit Werbebudget) | Heute, „Wartet auf Sie“, Termin, Assistent, Nachrichten, Kontakte (Liste, Pipeline), Wachstum, Werbebudget, KI-Hilfe |
-| Ausführlich (`lang.json`, `public/videos/einfuehrung-ausfuehrlich*`) | /buyer (Heute mit Kontakt rechts), Terminvorbereitung (/buyer/termine/…/vorbereitung), Anrufliste, /buyer/chats, /buyer/kontakte (Liste, Pipeline), /buyer/wachstum (Trichter, Werbebudget, Produkte, Pause), /buyer/kalender, /buyer/team | Heute, Kontakte, Nachrichten, Wachstum, „Wartet auf Sie“, „Wie lief es?“, Phase, Gewonnen, Verloren, Angaben, Notizen, „Vorbereiten: Angebot rechnen“, Präsentation, Anrufliste, Wiedervorlagen, „Festlegen“, Pipeline, Vertriebstrichter, Werbebudget, Pause, Mein Kalender, Team, KI-Hilfe |
+| Ausführlich (`lang.json`, `public/videos/einfuehrung-ausfuehrlich*`) | /buyer (Heute mit Kontakt rechts), Terminvorbereitung (/buyer/termine/…/vorbereitung), Anrufliste, /buyer/chats, /buyer/kontakte (Liste, Pipeline), /buyer/wachstum (Trichter, Werbebudget, Produkte, Pause), /buyer/kalender, /buyer/team | Heute, Kontakte, Nachrichten, Wachstum, „Wartet auf Sie“, „Wie lief es?“, Phase, Abschluss, Verloren, Angaben, Notizen, „Vorbereiten: Angebot rechnen“, Tarifrechner, „Präsentation öffnen“, Anrufliste, Wiedervorlagen, „Zu erledigen“, „Festlegen“, Pipeline, „Rechnet sich das?“, „Vom Lead zum Kunden“, Werbebudget, Pause, Mein Kalender, Team, KI-Hilfe |
 | WhatsApp verbinden (`wa.json`, `public/videos/whatsapp-verbinden*`) | /buyer/einrichtung (Schritt WhatsApp), /buyer/whatsapp-verbinden, Seiten von 360dialog und Meta | „WhatsApp verbinden“, „Jetzt WhatsApp verbinden“, „Erledigt“, „Fast geschafft“, Fünfzehn-Minuten-Termin |
 
 ## 2. Prüfen, ob sich etwas Grundlegendes geändert hat
