@@ -17,6 +17,8 @@
 //   5. Löschprotokoll (art „vertriebskontakt_art17“): greift nach einer Wiederherstellung der Datenbank erneut.
 //   6. Audit „vertrieb.geloescht_art17“ nur mit Kontakt-ID, Datum und Quelle.
 // Widerspruch ohne Löschverlangen löscht nicht (Sperrvermerk statt Löschung, docs/datenschutz.md).
+// Abmahnung bzw. rechtliche Drohung löscht nie automatisch, auch mit Löschverlangen (recordReply, Ole 19.11.2026):
+// Belege sichern, Löschung erst nach Prüfung per Knopf.
 
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";

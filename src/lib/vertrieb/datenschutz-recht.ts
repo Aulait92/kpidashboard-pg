@@ -60,13 +60,15 @@ export function rechtsAufgabeTitel(art: RechtsArt, eingang: Date): string {
 }
 
 export const ABMAHNUNG_HINWEIS = "Keine Unterlassungserklärung unterschreiben. Zur Prüfung an Claude geben.";
+/** Abmahnung löscht nie automatisch, auch bei ausdrücklichem Löschverlangen (Ole, 19.11.2026). */
+export const ABMAHNUNG_LOESCHUNG = "Löschung erst nach Prüfung per Knopf (Belege sichern).";
 
 /** Notiz der Aufgabe (ohne Inhalte der Mail). */
 export function rechtsAufgabeNotiz(art: RechtsArt): string {
   const vorlage = "Kontaktakte → Datenschutz und Recht: Vorlage prüfen und senden.";
   switch (art) {
     case "abmahnung":
-      return `${ABMAHNUNG_HINWEIS} Nicht selbst antworten, keine Zahlung zusagen. Der Kontakt ist gesperrt (App und Instantly).`;
+      return `${ABMAHNUNG_HINWEIS} ${ABMAHNUNG_LOESCHUNG} Nicht selbst antworten, keine Zahlung zusagen. Der Kontakt ist gesperrt (App und Instantly).`;
     case "auskunft":
       return `Auskunft (Art. 15) schicken: ${vorlage} Der Kontakt ist gesperrt.`;
     case "loeschung":

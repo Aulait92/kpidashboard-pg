@@ -251,6 +251,7 @@ und sperrt den Kontakt dauerhaft („nie kontaktieren“, Instantly-Blocklist).
 - **Löschverlangen (Art. 17)**: „löschen Sie meine Daten“, „Löschung meiner Daten“, „Art. 17“, „Recht auf
   Vergessenwerden“ → automatische Löschung (`lib/vertrieb/art17.ts`, Löschkonzept). Nicht „löschen Sie mich aus dem
   Verteiler“ (Austragung). Mit Auskunftsfrage in derselben Antwort: erst Auskunft (Aufgabe), dann von Hand löschen.
+  Mit Abmahnung bzw. rechtlicher Drohung in derselben Antwort: nie automatisch löschen (Belege sichern, Ole 19.11.2026).
 - **Auskunft beantworten:** Diagnose `q=vertrieb-auskunft&email=…` (oder `&id=…`, Suche `&suche=…`) liefert Anrede,
   Name, Firma, gespeicherte Felder, Herkunft (Liste, Quell-URL, Abrufdatum), Empfänger (Instantly mit Kampagnen,
   Google, Termine, WhatsApp), Datum aller Mails an den Kontakt und den Sperrstatus mit Mails nach der Sperre.
@@ -284,7 +285,9 @@ und sperrt den Kontakt dauerhaft („nie kontaktieren“, Instantly-Blocklist).
 3. **Aufgabe an Ole:** Auskunft („Auskunft nach Art. 15 beantworten, Frist …“), Löschung („Löschung bestätigen
    (Art. 17), Frist …“), Widerspruch („Widerspruch bestätigen, Frist …“): **Frist 7 Tage** (gesetzlich ein Monat).
    Abmahnung („Abmahnung bzw. rechtliche Drohung: sofort prüfen“): sofort fällig, **Push an alle Admins**, Text:
-   „Keine Unterlassungserklärung unterschreiben. Zur Prüfung an Claude geben.“ Auto-Löschung wie bisher.
+   „Keine Unterlassungserklärung unterschreiben. Zur Prüfung an Claude geben. Löschung erst nach Prüfung per Knopf
+   (Belege sichern).“ Auto-Löschung wie bisher, **außer bei Abmahnung** (Ole, 19.11.2026): dann nie automatisch löschen,
+   auch bei ausdrücklichem Löschverlangen; nur Sperre (Person und eigene Domain), Fall, Aufgabe und Push.
 4. **Antwortvorlagen** in der Kontaktakte (Karte „Datenschutz und Recht“, nur mit Fall): Widerspruch bestätigen,
    Löschung bestätigen (mit Löschdatum und Hinweis auf den Sperrvermerk), Auskunft nach Art. 15 (aus der Akte:
    gespeicherte Felder, Mails an den Kontakt, Herkunft mit Quelle, Quell-URL und Abrufdatum, Zweck, Art. 6 Abs. 1 lit. f,

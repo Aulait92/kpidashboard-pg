@@ -387,7 +387,8 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
       if (art) {
         await prisma.salesEmail.update({ where: { id: dup.id }, data: { isAutoReply: false, sentiment: "NEGATIV" } });
         await rechtsFallAusAntwort(contactId, { ...r, instantlyId: dup.instantlyId ?? r.instantlyId, eaccount: dup.eaccount ?? r.eaccount }, dup.id, art, b.grund);
-        if (b.loeschen) {
+        // Abmahnung (Ole, 19.11.2026): nie automatisch löschen, Belege sichern; Löschung erst nach Prüfung per Knopf
+        if (b.loeschen && art !== "abmahnung") {
           await import("@/lib/vertrieb/art17")
             .then((m) => m.vertriebArt17Loeschen(contactId, { quelle: "antwort", eingang: r.sentAt, auskunftOffen: b.auskunft, grund: b.grund ?? "widerspruch" }))
             .catch((e) => reportError(e, "vertrieb-art17"));
@@ -496,7 +497,8 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
       .catch((e) => reportError(e, "followup-reply"));
   }
   // Löschverlangen (Art. 17): zuletzt, damit nichts danach wieder Daten anlegt
-  if (befund?.loeschen) {
+  // Abmahnung (Ole, 19.11.2026): nie automatisch löschen, Belege sichern; Löschung erst nach Prüfung per Knopf
+  if (befund?.loeschen && rechtsArt !== "abmahnung") {
     await import("@/lib/vertrieb/art17")
       .then((m) => m.vertriebArt17Loeschen(contactId, { quelle: "antwort", eingang: r.sentAt, auskunftOffen: befund.auskunft, grund: sperrGrund ?? "widerspruch" }))
       .catch((e) => reportError(e, "vertrieb-art17"));

@@ -68,6 +68,7 @@ describe("Unterart", () => {
     expect(rechtsAufgabeTitel("widerspruch", eingang)).toBe("Widerspruch bestätigen, Frist 26.11.2026");
     expect(rechtsAufgabeTitel("abmahnung", eingang)).toBe("Abmahnung bzw. rechtliche Drohung: sofort prüfen");
     expect(rechtsAufgabeNotiz("abmahnung")).toContain("Keine Unterlassungserklärung unterschreiben. Zur Prüfung an Claude geben.");
+    expect(rechtsAufgabeNotiz("abmahnung")).toContain("Löschung erst nach Prüfung per Knopf (Belege sichern).");
     expect(ABMAHNUNG_HINWEIS).toBe("Keine Unterlassungserklärung unterschreiben. Zur Prüfung an Claude geben.");
   });
 });

@@ -136,6 +136,24 @@ describe("Datenschutz und Recht: Erkennen und Fall anlegen", () => {
     expect(await rechtsFaelleVon(c.id)).toHaveLength(1);
   });
 
+  it("Abmahnung mit Löschverlangen: keine automatische Löschung, nur Sperre, Aufgabe mit Hinweis (Ole, 19.11.2026)", async () => {
+    const c = await makeContact(`chef@${dom("abmahnloesch")}`);
+    const nach = await antwort(c.id, "Löschen Sie umgehend meine Daten. Ich habe die Sache an meinen Anwalt übergeben, Schadensersatz behalte ich mir vor.");
+    expect(nach.emails[0].rechtsArt).toBe("abmahnung");
+    expect(nach.art17GeloeschtAt).toBeNull();
+    expect(nach.email).toBe(c.email);
+    expect(nach.emails).toHaveLength(1); // Beleg bleibt
+    expect(nach.nieKontaktierenAt).not.toBeNull();
+    expect(nach.sperrHashes).toContain(domainHash(dom("abmahnloesch")));
+    expect(calls.filter((x) => x.method === "DELETE")).toHaveLength(0);
+    const aufgabe = nach.tasks.find((t) => t.title === "Abmahnung bzw. rechtliche Drohung: sofort prüfen");
+    expect(aufgabe?.note).toContain("Keine Unterlassungserklärung unterschreiben. Zur Prüfung an Claude geben.");
+    expect(aufgabe?.note).toContain("Löschung erst nach Prüfung per Knopf (Belege sichern).");
+    expect(push.calls).toHaveLength(1);
+    const [fall] = await rechtsFaelleVon(c.id);
+    expect(fall).toMatchObject({ art: "abmahnung", loeschAt: null });
+  });
+
   it("Widerspruch: Frist 7 Tage; Sperre lässt sich nicht aufheben; normales Löschen bleibt gesperrt", async () => {
     const c = await makeContact(`kontakt@${dom("wider")}`);
     const eingang = new Date("2026-11-19T10:00:00Z");
