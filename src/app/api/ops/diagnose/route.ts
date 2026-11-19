@@ -715,6 +715,7 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=tarif-vorschlaege                    Tarifkatalog lernt von Vermittlern: Vorschläge je Status und Quelle, offene, empfohlene, übernommene, nur Anzahlen (lib/ops/tarif-vorschlaege.ts)
 //   q=mail-eingang[&tage=7]                Antwortadresse mit Eingang: Schalter, Einrichtung, Zählung, letzte Eingänge, Fehler, ohne Inhalte (lib/ops/mail-eingang.ts)
 //   q=preise-offen                         Neue Listenpreise 990/1.390/1.790 €: umgestellte und noch alte offene Angebote (Nummer, Name, alt, neu; lib/ops/preise-offen.ts)
+//   q=praesentation-quote[&tage=30][&kunde=<id>]  Beratungspräsentation: Abschlussquote je Präsentation je Vermittler und Splittest-Variante (A bisher, B Abschluss-Dramaturgie), Zusagen im Termin und im Kundenlink (lib/praesentation-messung.ts)
 //   q=nutzung-woche[&tage=7][&gruppe=software|ppl]  Usability-Woche im Vermittlerbereich: aktive Kunden/Nutzer, Top- und ungenutzte Seiten/Aktionen, Abbrüche, Fehler-Toasts, Feedback/NPS, Support, Hilfe-Themen, Aufgaben, nächster Schritt, erste Reaktion, Admin-Nutzung; letzte N Tage gegen die N davor, nur Zahlen (lib/ops/nutzung-woche.ts)
 //   q=cash[&jahr=2026]                      Geld: Bankverbindungen mit Live-Kontostand, Bewegungen 30/90 Tage je Konto und Zweck, Kosten je Monat, Stripe-Guthaben und offene Rechnungen, USt-Schätzung aus den Kontoauszügen; nur Summen (lib/ops/cash.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
@@ -729,6 +730,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "preise-offen": async () => (await import("@/lib/ops/preise-offen")).preiseOffenDiagnose(),
   cash: async (p) => (await import("@/lib/ops/cash")).cashDiagnose(p),
   "nutzung-woche": async (p) => (await import("@/lib/ops/nutzung-woche")).nutzungWocheGetrennt(p),
+  "praesentation-quote": async (p) => (await import("@/lib/praesentation-messung")).praesentationQuoteDiagnose(p),
 };
 
 export async function GET(req: Request): Promise<Response> {

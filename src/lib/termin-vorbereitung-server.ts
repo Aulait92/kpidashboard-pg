@@ -4,7 +4,10 @@ import { randomBytes } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { angebotOhneGesundheitsdaten, angeboteAuslesen, bausteinSchalten, cleanAngebote, sparteSchalten, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
-import { folien, markeFuer, praesentationCss } from "@/lib/praesentation";
+import { einwandFolien, folien, markeFuer, paketName, praesentationCss } from "@/lib/praesentation";
+import { beitragAus, beitragEffektiv } from "@/lib/angebote-daten";
+import { praesentationsVariante } from "@/lib/praesentation-variante";
+import { zusageAm } from "@/lib/praesentation-messung";
 import { asAnsprache } from "@/lib/ansprache";
 import { logoDataUri } from "@/lib/branding-logo";
 import { appointmentScope, type TeamCtx } from "@/lib/team";
@@ -173,8 +176,27 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
   ]);
   const logo = kunde?.brandLogo && kunde.brandLogoType && kunde.brandLogoConfirmedAt ? logoDataUri(new Uint8Array(kunde.brandLogo), kunde.brandLogoType) : null;
   const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp, maklerMarkthinweis: kunde?.maklerMarkthinweis }, logo);
-  const fs = folien(d, ang?.bestaetigt ? ang.angebote : null, marke, asAnsprache(kunde?.leadAddress));
-  return { d, marke, folien: fs, css: praesentationCss(marke), angeboteBestaetigt: !!ang?.bestaetigt };
+  const an = asAnsprache(kunde?.leadAddress);
+  const angebote = ang?.bestaetigt ? ang.angebote : null;
+  // Splittest (lib/praesentation-variante.ts): fest je Lead, A = bisher, B = Abschluss-Dramaturgie
+  const variante = praesentationsVariante(d.leadId ?? appointmentId);
+  const zugesagtAm = await zusageAm(appointmentId);
+  const fs = folien(d, angebote, marke, an, { variante, zugesagtAm });
+  // Für den Kundenlink (Abschluss-Leiste): gewählte Tarife und Beitrag wie auf der Folie „Ihre Entscheidung“
+  const summe = angebote ? beitragAus(angebote).endbeitrag : null;
+  const produkte = (angebote?.items ?? []).filter((i) => i.gewaehlt && beitragEffektiv(i) != null).map((i) => paketName(i));
+  return {
+    d,
+    marke,
+    folien: fs,
+    einwaende: einwandFolien(d, angebote, marke, an),
+    css: praesentationCss(marke),
+    angeboteBestaetigt: !!ang?.bestaetigt,
+    variante,
+    zugesagtAm,
+    an,
+    abschluss: { summe, produkte },
+  };
 }
 
 /**
@@ -228,6 +250,36 @@ export async function loadKundenPraesentation(token: string, now = new Date()) {
   if (!a?.shareExpiresAt || a.shareExpiresAt <= now || !a.offersConfirmedAt) return null;
   const p = await loadPraesentation(a.id, { customerId: a.customerId, userId: null, teamRole: "owner" });
   if (!p) return null;
+  // ohne Sprechhinweise und Einwand-Folien (nur für den Vermittler)
   const folien = p.folien.map((f) => ({ id: f.id, titel: f.titel, html: f.html }));
-  return { customerId: a.customerId, name: p.d.lead.name, berater: p.d.termin.berater, marke: p.marke, folien, css: p.css, bis: a.shareExpiresAt };
+  return {
+    customerId: a.customerId,
+    name: p.d.lead.name,
+    berater: p.d.termin.berater,
+    marke: p.marke,
+    folien,
+    css: p.css,
+    bis: a.shareExpiresAt,
+    variante: p.variante,
+    zugesagtAm: p.zugesagtAm,
+    an: p.an,
+    abschluss: p.abschluss,
+  };
+}
+
+/** Termin zum Kundenlink für die Messung (Folie erreicht, Zusage); null, wenn unbekannt oder abgelaufen. */
+export async function kundenlinkTermin(token: string, now = new Date()): Promise<{ appointmentId: string; customerId: string; leadId: string | null; name: string | null } | null> {
+  if (!/^[A-Za-z0-9_-]{20,64}$/.test(token)) return null;
+  const a = await prisma.appointment.findUnique({
+    where: { shareToken: token },
+    select: { id: true, customerId: true, leadId: true, shareExpiresAt: true, offersConfirmedAt: true, lead: { select: { name: true } } },
+  });
+  if (!a?.shareExpiresAt || a.shareExpiresAt <= now || !a.offersConfirmedAt) return null;
+  return { appointmentId: a.id, customerId: a.customerId, leadId: a.leadId, name: a.lead?.name ?? null };
+}
+
+/** Termin im Sichtbereich des Logins für die Messung im Deck; null sonst. */
+export async function terminFuerMessung(appointmentId: string, ctx: TeamCtx): Promise<{ appointmentId: string; customerId: string; leadId: string | null } | null> {
+  const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { id: true, customerId: true, leadId: true } });
+  return a ? { appointmentId: a.id, customerId: a.customerId, leadId: a.leadId } : null;
 }

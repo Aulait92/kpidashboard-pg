@@ -61,7 +61,7 @@ export default async function PraesentationPage({ params, searchParams }: { para
               Als PDF
             </ButtonLink>
           </div>
-          <Deck id={id} css={p.css} folien={p.folien} interaktiv={!ctx.preview} />
+          <Deck id={id} css={p.css} folien={p.folien} einwaende={p.einwaende} interaktiv={!ctx.preview} />
         </>
       )}
       {/* Selten: Logo-Hinweis unter den Folien statt neben dem Knopf (16.11.2026) */}
@@ -75,7 +75,12 @@ export default async function PraesentationPage({ params, searchParams }: { para
       ) : null}
       {ctx.demo ? null : (
         <div className="mt-6">
-          <Kundenlink id={id} start={linkStart} bereit={p.angeboteBestaetigt && !ctx.preview} />
+          <Kundenlink
+            id={id}
+            start={linkStart}
+            bereit={p.angeboteBestaetigt && !ctx.preview}
+            zusage={p.zugesagtAm ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" }).format(p.zugesagtAm) : null}
+          />
         </div>
       )}
     </main>

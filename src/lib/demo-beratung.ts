@@ -6,7 +6,7 @@
 import { bausteinSchalten, sparteSchalten, tarifWaehlen, type AngeboteDaten, type AngebotItem } from "@/lib/angebote-daten";
 import type { KombiRegel } from "@/lib/kombi-rabatt";
 import type { SchutzZeile } from "@/lib/schutz-ueberblick";
-import { folien, praesentationCss, type Folie, type Marke } from "@/lib/praesentation";
+import { einwandFolien, folien, praesentationCss, type Folie, type Marke } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
 export const DEMO_KUNDE = "Dominik Schmid";
@@ -187,9 +187,17 @@ export function demoAngebote(): AngeboteDaten {
 
 export const demoCss = () => praesentationCss(DEMO_MARKE);
 
-/** Folien der Demo zum aktuellen Stand (Sie-Form, wie im Termin). */
-export function demoFolien(angebote: AngeboteDaten, now = new Date()): Folie[] {
-  return folien(demoTermin(now), angebote, DEMO_MARKE, "sie");
+/**
+ * Folien der Demo zum aktuellen Stand (Sie-Form, wie im Termin). Die Demo zeigt die neue Fassung B (Abschluss-
+ * Dramaturgie, lib/praesentation-variante.ts); zugesagtAm: nach „Ja, so machen wir es“ in der Demo.
+ */
+export function demoFolien(angebote: AngeboteDaten, now = new Date(), zugesagtAm: Date | null = null): Folie[] {
+  return folien(demoTermin(now), angebote, DEMO_MARKE, "sie", { variante: "B", zugesagtAm });
+}
+
+/** Einwand-Folien der Demo (Sprungziele im Deck). */
+export function demoEinwaende(angebote: AngeboteDaten, now = new Date()): Folie[] {
+  return einwandFolien(demoTermin(now), angebote, DEMO_MARKE, "sie");
 }
 
 /** Klick auf einen Schalter der Folie (wie im Termin, nur im Browser). null = unbekannter Schalter. */

@@ -12,6 +12,7 @@ import { anzahlFuer, bedingungText, naechsteText, prozentFuer, staffelLeiste, ty
 import { SCHUTZ_STATUS, type SchutzZeile } from "@/lib/schutz-ueberblick";
 import { a, type Ansprache } from "@/lib/ansprache";
 import { folienEinpassen } from "@/lib/folien-einpassen";
+import type { PraesentationVariante } from "@/lib/praesentation-variante";
 import { beitragsUnterschiedJahr, kuendigungText, unterschiedText, WERT_PRUEFEN, type BisherSpalte } from "@/lib/bisheriger-vertrag";
 
 export type Marke = {
@@ -56,8 +57,14 @@ export function markeFuer(kunde: { name: string; vermittlerTyp?: string | null; 
   return { name, gesellschaft: null, farbe: "#2563eb", farbeHell: "#e5edff", akzent: "#2563eb", logoUrl, markthinweis };
 }
 
-/** produkt: Sparte einer Produktfolie (Vergleich), z. B. für „Unfall hinzugefügt“ im Termin. */
-export type Folie = { id: string; titel: string; html: string; produkt?: string };
+/**
+ * produkt: Sparte einer Produktfolie (Vergleich), z. B. für „Unfall hinzugefügt“ im Termin.
+ * hinweis: Sprechhinweis nur für den Vermittler (unter dem Deck, nie in der Folie, nicht im Kundenlink und PDF).
+ */
+export type Folie = { id: string; titel: string; html: string; produkt?: string; hinweis?: string };
+
+/** Splittest (lib/praesentation-variante.ts) und Stand der Zusage für die Abschlussfolie. */
+export type FolienOptionen = { variante?: PraesentationVariante; zugesagtAm?: Date | null };
 
 const e = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
@@ -219,10 +226,29 @@ export function praesentationCss(m: Marke): string {
 .sz{display:grid;grid-template-columns:22px 270px minmax(0,1fr) auto;align-items:center;gap:6px 16px;border:2px solid #e3e9f3;border-radius:16px;padding:10px 16px;min-height:64px}
 .sz .ampel{width:18px;height:18px;border-radius:99px}
 .sz b{font-size:22px}.sz .stl{font-size:17px;font-weight:700}.sz .info{display:block;font-size:17px;color:#4b5568;font-weight:400;margin-top:2px}
-.mit{font:inherit;border:2px solid var(--f);background:#fff;color:var(--f);border-radius:10px;padding:6px 14px;font-size:17px;font-weight:700;cursor:pointer;white-space:nowrap}
-.mit.an{background:var(--f);color:#fff}
+.sz .mit{font:inherit;border:2px solid var(--f);background:#fff;color:var(--f);border-radius:10px;padding:6px 14px;font-size:17px;font-weight:700;cursor:pointer;white-space:nowrap}
+.sz .mit.an{background:var(--f);color:#fff}
 .kombi-zeile{margin-top:14px;font-size:20px;color:#1f2937}.kombi-zeile b{color:var(--f)}
 .kontakt span{color:#1f2937}
+.tag-preis{font-size:30px;line-height:1.3;color:#1f2937;margin:4px 0 6px}.tag-preis b{color:var(--f);font-size:38px}
+.abschluss{display:grid;grid-template-columns:3fr 2fr;gap:24px;margin-bottom:22px}
+.abschluss>div{border-radius:18px;padding:24px 28px}
+.paket{border:2px solid var(--f)}
+.paket-liste{display:grid;gap:8px}.paket-liste li{display:flex;justify-content:space-between;gap:16px;margin:0;font-size:24px;color:#1f2937}.paket-liste li b{white-space:nowrap}
+.paket-summe{display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-top:2px solid #e3e9f3;margin-top:14px;padding-top:12px;font-size:20px;color:#4b5568}
+.paket-summe b{font-size:36px;color:var(--f);white-space:nowrap}.paket-summe small{font-size:18px;font-weight:500;color:#66758f}
+.leer-klein{font-size:22px;color:#66758f;margin:0}
+.beginn{background:var(--f);color:#fff;display:flex;flex-direction:column;justify-content:center}
+.beginn span{font-size:20px;color:rgba(255,255,255,.85)}.beginn b{font-size:34px;margin:4px 0}.beginn em{font-style:normal;font-size:20px;color:rgba(255,255,255,.85)}
+.sicher-reihe{display:flex;flex-wrap:wrap;gap:10px 28px;margin-bottom:26px;color:#1f2937;font-size:21px}
+.sicher-reihe span{display:inline-flex;align-items:center;gap:8px}.sicher-reihe svg{color:#047857}
+.zusage{font:inherit;display:inline-flex;align-items:center;justify-content:center;min-width:420px;padding:18px 40px;border:0;border-radius:14px;background:var(--a);color:#fff;font-size:28px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.zusage.an{background:#047857}
+.einwand .punkte li{font-size:26px}
+.einwand .gegen{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:26px}
+.einwand .gegen>div{border-radius:18px;padding:24px 28px;background:var(--fh)}
+.einwand .gegen span{display:block;font-size:20px;color:#4b5568;margin-bottom:6px}.einwand .gegen b{font-size:40px;color:var(--f)}
+.einwand .gegen .schaden{background:#fef2f2}.einwand .gegen .schaden b{font-size:26px;color:#7f1d1d;line-height:1.3}
 `;
 }
 
@@ -400,12 +426,44 @@ const BEISPIEL: Record<string, { szene: string; ohne: string; mit: string }> = {
   unfall: { szene: "Sie stürzen beim Wandern und brauchen lange Reha.", ohne: "In der Freizeit zahlt die gesetzliche Unfallversicherung nicht.", mit: "Sie bekommen je nach Tarif eine Leistung, z. B. für den Umbau der Wohnung." },
 };
 
+/** Du-Fassung der Schadenbeispiele (19.11.2026: bisher stand das Beispiel auch bei „du“ in Sie-Form). */
+const BEISPIEL_DU: Record<string, { szene: string; ohne: string; mit: string }> = {
+  haftpflicht: { szene: "Beim Besuch bei Freunden stößt du aus Versehen den neuen Fernseher um.", ohne: "Du zahlst den Schaden selbst.", mit: "Dein Versicherer prüft und zahlt berechtigte Forderungen. Unberechtigte wehrt er für dich ab." },
+  hausrat: { szene: "Die Waschmaschine läuft aus, Möbel und Elektrogeräte sind beschädigt.", ohne: "Du ersetzt alles selbst.", mit: "Dein Hausrat wird im versicherten Umfang ersetzt, je nach Tarif zum Neuwert." },
+  rechtsschutz: { szene: "Der Vermieter behält die Kaution ein, du willst dich wehren.", ohne: "Anwalt und Gericht zahlst du selbst.", mit: "Die Kosten für Anwalt und Gericht werden im versicherten Umfang übernommen." },
+  wohngebaeude: { szene: "Ein Sturm deckt Teile des Dachs ab, Regen dringt ein.", ohne: "Reparatur und Folgeschäden zahlst du selbst.", mit: "Der Schaden am Haus wird im versicherten Umfang reguliert." },
+  tier: { szene: "Dein Tier verschluckt etwas und muss operiert werden.", ohne: "Die OP kostet schnell mehrere tausend Euro, die du selbst zahlst.", mit: "Die Kosten werden im versicherten Umfang erstattet." },
+  unfall: { szene: "Du stürzt beim Wandern und brauchst lange Reha.", ohne: "In der Freizeit zahlt die gesetzliche Unfallversicherung nicht.", mit: "Du bekommst je nach Tarif eine Leistung, z. B. für den Umbau der Wohnung." },
+};
+
+const beispielFuer = (k: string, an: Ansprache) => (an === "du" ? (BEISPIEL_DU[k] ?? BEISPIEL_DU.haftpflicht) : (BEISPIEL[k] ?? BEISPIEL.haftpflicht));
+
 const ersterDesMonats = (d: Date, plus: number) => {
   const p = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", year: "numeric", month: "numeric" }).formatToParts(d);
   const y = Number(p.find((x) => x.type === "year")!.value);
   const mo = Number(p.find((x) => x.type === "month")!.value) - 1 + plus;
   return new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, mo, 1)));
 };
+
+/**
+ * Sprechhinweise für den Vermittler (Sales-Coach, 19.11.2026): ein Satz je Folie, was er sagt bzw. fragt. Nur unter
+ * dem Deck (zum Aufklappen), nie in der Folie. Vergleichsfolien: Schlüssel „vergleich“.
+ */
+export const SPRECHHINWEIS: Record<string, string> = {
+  titel: "Ablauf in einem Satz nennen, dann fragen: Passt es, wenn wir uns 20 Minuten nehmen?",
+  situation: "Vorlesen und fragen: Stimmt das so, hat sich etwas geändert? Dann den Kunden erzählen lassen.",
+  risiken: "Fragen, was am wichtigsten ist, und genau dort einsteigen.",
+  beispiel: "Fragen: Ist Ihnen oder jemandem in Ihrem Umfeld so etwas schon passiert? Zuhören.",
+  empfehlung: "Je Karte ein Satz zum Wunsch des Kunden, in seinen Worten. Noch keinen Preis nennen.",
+  vergleich: "Mit der Empfehlung beginnen, den Unterschied zur kleineren Stufe in einem Satz erklären, dann den Kunden wählen lassen.",
+  ueberblick: "Lücken ruhig benennen. „Mit anschauen“ nur, wenn der Kunde zustimmt, sonst für den nächsten Termin merken.",
+  beitrag: "Beitrag nennen, dann schweigen. Erst danach fragen: Passt das für Sie?",
+  entscheidung: "Kurz zusammenfassen, Beginn vorschlagen und fragen: Sollen wir das so machen? Bei Ja: „Ja, so machen wir es“ antippen.",
+  weiter: "Antrag jetzt gemeinsam ausfüllen, nicht auf später verschieben.",
+  danke: "Nach Empfehlungen fragen: Wem in Ihrem Umfeld würde das auch helfen?",
+};
+
+const hinweisFuer = (id: string) => SPRECHHINWEIS[id.startsWith("vergleich-") ? "vergleich" : id];
 
 /** Cross-Selling-Sparte, die (noch) nicht im Vergleich ist: kein Vergleich, kein Beitrag, nur im Überblick. */
 const zusatzAus = (i: AngebotItem, items?: AngebotItem[]) => !!i.zusatz && !(items ?? []).some((x) => x.sparte === i.sparte && x.gewaehlt) && !i.gewaehlt;
@@ -416,8 +474,19 @@ const zusatzAus = (i: AngebotItem, items?: AngebotItem[]) => !!i.zusatz && !(ite
  * pro Monat (und Tag), vorgeschlagener Beginn als Standard mit Alternative, Widerruf als Sicherheit, Prüffrage in der
  * Fußzeile (kein langer Monolog). Keine Köder-Stufen, keine künstliche Dringlichkeit, kein „Garantie“.
  * angebote = bestätigte Angebote (sonst Platzhalter).
+ *
+ * Variante B (Splittest, Ole 19.11.2026, Abschluss-Dramaturgie): ohne „Worauf es ankommt“ (das Schadenbeispiel macht
+ * das Risiko greifbar), Beitrag mit „pro Tag“ groß, Entscheidung mit Zusammenfassung (Tarife, Beitrag, Beginn),
+ * Einwänden vorweg (Widerruf, Unterlagen, Kündigung des bisherigen Vertrags) und dem Schritt „Ja, so machen wir es“.
+ * Standard ist A (bisherige Fassung).
  */
-export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Marke, an: Ansprache = "sie"): Folie[] {
+export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Marke, an: Ansprache = "sie", opt: FolienOptionen = {}): Folie[] {
+  const fs = folienRoh(d, angebote, m, an, opt);
+  return fs.map((f) => (hinweisFuer(f.id) ? { ...f, hinweis: hinweisFuer(f.id) } : f));
+}
+
+function folienRoh(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Marke, an: Ansprache, opt: FolienOptionen): Folie[] {
+  const B = opt.variante === "B";
   const q = Object.fromEntries(qualificationPoints(d.angaben).map((p) => [p.key, p.value])) as Partial<Record<QualificationKey, string>>;
   const vorname = d.lead.name.split(/\s+/)[0] ?? d.lead.name;
   const anrede = an === "du" ? vorname : d.lead.name;
@@ -443,7 +512,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     titel: "Begrüßung",
     html: R(
       `${m.logoUrl ? `<img class="titellogo" src="${e(m.logoUrl)}" alt="">` : ""}<h1>${e(a(an, `Dein Schutz, ${anrede}`, `Ihr Schutz, ${anrede}`))}</h1><p class="sub">${e(d.lead.produkt)} · mit ${e(d.termin.berater)}</p>
-<div class="agenda"><div><b>1</b>${e(a(an, "Deine Situation", "Ihre Situation"))}</div><div><b>2</b>Unsere Empfehlung</div><div><b>3</b>So geht es weiter</div></div>
+<div class="agenda"><div><b>1</b>${e(a(an, "Deine Situation", "Ihre Situation"))}</div><div><b>2</b>Unsere Empfehlung</div><div><b>3</b>${B ? e(a(an, "Deine Entscheidung", "Ihre Entscheidung")) : "So geht es weiter"}</div></div>
 <p class="hinweis">${e(a(an, "Frag jederzeit dazwischen.", "Fragen Sie jederzeit dazwischen."))}</p>`,
       undefined,
       "titel",
@@ -471,7 +540,8 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   });
 
   const top = sparten.slice(0, 4);
-  out.push({
+  // B: das Schadenbeispiel macht das Risiko greifbar, die Kacheln wiederholen nur die Sparten (eine Folie weniger)
+  if (!B) out.push({
     id: "risiken",
     titel: "Worauf es ankommt",
     html: R(
@@ -482,7 +552,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     ),
   });
 
-  const b = BEISPIEL[sparten[0]] ?? BEISPIEL.haftpflicht;
+  const b = beispielFuer(sparten[0], an);
   out.push({
     id: "beispiel",
     titel: "Ein Beispiel aus dem Alltag",
@@ -616,7 +686,9 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     html: R(
       `<h2>${e(a(an, "Dein Beitrag", "Ihr Beitrag"))}</h2>${
         summe != null
-          ? `<div class="gross">${eur(summe)} <span class="einheit">im Monat</span></div>${kombiBeitrag(beitrag, an)}<p class="sub">Das sind rund ${eur(summe / 30)} am Tag.</p>${staffelHtml(beitrag?.kombi ?? null)}${produkte}${wahl.some((i) => i.bausteine.length) ? wahl.map((i) => schalter(items, i, mehrere)).join("") : ""}${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}${kombiFussnote(beitrag?.kombi ?? null)}`
+          ? `<div class="gross">${eur(summe)} <span class="einheit">im Monat</span></div>${kombiBeitrag(beitrag, an)}${
+              B ? `<p class="tag-preis" data-pro-tag>Das sind rund <b>${eur(summe / 30)}</b> am Tag.</p>` : `<p class="sub">Das sind rund ${eur(summe / 30)} am Tag.</p>`
+            }${staffelHtml(beitrag?.kombi ?? null)}${produkte}${wahl.some((i) => i.bausteine.length) ? wahl.map((i) => schalter(items, i, mehrere)).join("") : ""}${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}${kombiFussnote(beitrag?.kombi ?? null)}`
           : `<div class="leer">${e(a(an, "Deinen Beitrag rechnen wir gemeinsam.", "Ihren Beitrag rechnen wir gemeinsam."))}</div>${produkte}`
       }`,
       a(an, "Passt das für dich?", "Passt das für Sie?"),
@@ -625,7 +697,38 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
 
   const ab = ersterDesMonats(d.termin.startsAt, 1);
   const alt = ersterDesMonats(d.termin.startsAt, 2);
-  out.push({
+  if (B) {
+    // Abschluss-Dramaturgie (19.11.2026): alles für die Entscheidung auf einer Folie, Einwände vorweg, ein klarer Schritt
+    const gew = items.filter((i) => i.gewaehlt && !zusatzAus(i, items));
+    const zeilen = gew
+      .map((i) => {
+        const p = beitragEffektiv(i);
+        return `<li><span>${e(paketName(i))}</span>${p != null ? `<b>${eur(p)}</b>` : ""}</li>`;
+      })
+      .join("");
+    const mitKombi = !!beitrag?.rabatt;
+    // Wechsel-Service nur, wenn der Kunde einen bisherigen Vertrag für eine gewählte Sparte hat
+    const wechsel =
+      gew.some((i) => angebote?.bisher?.some((x) => x.sparte === i.sparte)) ||
+      (angebote?.schutz ?? []).some((z) => z.status === "woanders" && gew.some((i) => (i.kombi?.sparte ?? sparteKey(i.sparte)) === z.key));
+    const sicher = [
+      a(an, "14 Tage Widerrufsrecht", "14 Tage Widerrufsrecht"),
+      a(an, "Unterlagen und Beratungsdokumentation per E-Mail", "Unterlagen und Beratungsdokumentation per E-Mail"),
+      ...(wechsel ? [a(an, "Bei der Kündigung deines bisherigen Vertrags helfen wir", "Bei der Kündigung Ihres bisherigen Vertrags helfen wir")] : []),
+    ];
+    const zugesagt = !!opt.zugesagtAm;
+    out.push({
+      id: "entscheidung",
+      titel: "Ihre Entscheidung",
+      html: R(
+        `<h2>${e(a(an, "Deine Entscheidung", "Ihre Entscheidung"))}</h2><div class="abschluss"><div class="paket">${
+          gew.length ? `<ul class="paket-liste">${zeilen}</ul>` : `<p class="leer-klein">${e(a(an, "Dein Angebot stellen wir gemeinsam zusammen.", "Ihr Angebot stellen wir gemeinsam zusammen."))}</p>`
+        }${summe != null ? `<div class="paket-summe"><span>${mitKombi ? "Zusammen, mit Kombi-Rabatt" : gew.length === 1 ? a(an, "Dein Beitrag", "Ihr Beitrag") : "Zusammen"}</span><b>${eur(summe)} <small>im Monat</small></b></div>` : ""}</div><div class="beginn"><span>Unser Vorschlag</span><b>Schutz ab ${e(ab)}</b><em>oder ab ${e(alt)}</em></div></div>
+<div class="sicher-reihe">${sicher.map((x) => `<span>${icon("check", 26)}${e(x)}</span>`).join("")}</div>
+<button type="button" class="zusage${zugesagt ? " an" : ""}" data-zusage>${zugesagt ? "✓ Zugesagt" : "Ja, so machen wir es"}</button>`,
+      ),
+    });
+  } else out.push({
     id: "entscheidung",
     titel: "Ihre Entscheidung",
     html: R(
@@ -682,6 +785,17 @@ function kombiBeitrag(b: ReturnType<typeof beitragAus> | null, an: Ansprache): s
 /** „Hausrat Smart“ (ohne doppeltes Spartenwort, wenn der Tarifname es schon enthält). */
 export const tarifMitSparte = (b: { sparte: string; tarif: string | null }) =>
   !b.tarif ? b.sparte : b.tarif.toLocaleLowerCase("de").startsWith(b.sparte.toLocaleLowerCase("de")) ? b.tarif : `${b.sparte} ${b.tarif}`;
+
+/**
+ * Name eines gewählten Tarifs für Zusammenfassungen (Folie „Ihre Entscheidung“, Kundenlink): der Tarifname, wenn er die
+ * Sparte schon nennt („Haftpflicht Komfort“ bei „Privathaftpflicht“), sonst Sparte und Tarif („Hausrat Komfort“).
+ */
+export function paketName(b: { sparte: string; tarif: string | null }): string {
+  const t = b.tarif?.trim();
+  if (!t) return b.sparte;
+  const erstes = klein(t.split(/\s+/)[0]);
+  return erstes.length >= 4 && klein(b.sparte).includes(erstes) ? t : tarifMitSparte(b);
+}
 
 const aufzaehlungOder = (xs: string[]) => (xs.length < 2 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} oder ${xs[xs.length - 1]}`);
 
@@ -759,8 +873,87 @@ function ueberblickFolie(
   };
 }
 
+// ─── Einwände (Sales-Coach, 19.11.2026) ────────────────────────────────────────────────────────────
+// Optionale Folien außerhalb der Reihenfolge: der Vermittler springt im Termin über „Einwände“ hin und wieder zurück.
+// Nicht im Kundenlink und nicht im PDF. Sachlich, ohne Druck, ohne Versprechen; Preise nur aus den Angeboten.
+
+/** Kurzname im Menü des Vermittlers je Einwand-Folie. */
+export const EINWAND_MENUE: Record<string, string> = {
+  "einwand-preis": "Zu teuer",
+  "einwand-nachdenken": "Noch nachdenken",
+  "einwand-vorhanden": "Schon versichert",
+  "einwand-partner": "Erst mit Partner besprechen",
+};
+
+export function einwandFolien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Marke, an: Ansprache = "sie"): Folie[] {
+  const R = (inhalt: string, frage?: string) => rahmen(m, inhalt, "einwand", frage);
+  const items = angebote?.items ?? [];
+  const gew = items.filter((i) => i.gewaehlt && !zusatzAus(i, items));
+  const summe = angebote ? beitragAus(angebote).endbeitrag : null;
+  // kleinste Stufe je gewählter Sparte (ohne Kombi-Rabatt gerechnet, daher nur nennen, wenn klar günstiger)
+  const kleinste = gew.length
+    ? gew.reduce<number | null>((s, g) => {
+        const ps = items.filter((x) => x.sparte === g.sparte).map((x) => x.beitragMonat).filter((x): x is number => x != null);
+        return s == null || !ps.length ? null : s + Math.min(...ps);
+      }, 0)
+    : null;
+  const sparte = sparteKey(gew[0]?.sparte ?? items[0]?.sparte ?? d.lead.produkt);
+  const b = beispielFuer(sparte, an);
+  const punkte2 = (xs: string[]) => `<div class="punkte">${punkte(xs)}</div>`;
+  const folie = (id: string, titel: string, inhalt: string, frage: string, hinweis: string): Folie => ({ id, titel, html: R(inhalt, frage), hinweis });
+  return [
+    folie(
+      "einwand-preis",
+      EINWAND_MENUE["einwand-preis"],
+      `<h2>${e(a(an, "Lohnt sich das für dich?", "Lohnt sich das für Sie?"))}</h2><div class="gegen">${
+        summe != null ? `<div><span>${e(a(an, "Dein Schutz", "Ihr Schutz"))}</span><b>rund ${eur(summe / 30)}</b><span>am Tag</span></div>` : ""
+      }<div class="schaden"><span>${e(b.szene)}</span><b>${e(b.ohne)}</b></div></div>${punkte2([
+        ...(kleinste != null && summe != null && kleinste < summe - 0.5
+          ? [a(an, `Die kleinste Stufe je Versicherung kostet zusammen ${eur(kleinste)} im Monat.`, `Die kleinste Stufe je Versicherung kostet zusammen ${eur(kleinste)} im Monat.`)]
+          : []),
+        a(an, "Bausteine, die du nicht brauchst, lassen wir weg.", "Bausteine, die Sie nicht brauchen, lassen wir weg."),
+      ])}`,
+      a(an, "Was wäre für dich ein guter Beitrag?", "Was wäre für Sie ein guter Beitrag?"),
+      "Nicht verteidigen. Fragen, welcher Beitrag passt, und gemeinsam eine kleinere Stufe oder weniger Bausteine anschauen.",
+    ),
+    folie(
+      "einwand-nachdenken",
+      EINWAND_MENUE["einwand-nachdenken"],
+      `<h2>${e(a(an, "In Ruhe entscheiden", "In Ruhe entscheiden"))}</h2>${punkte2([
+        a(an, "Was ist noch offen: die Leistung, der Beitrag oder der Zeitpunkt?", "Was ist noch offen: die Leistung, der Beitrag oder der Zeitpunkt?"),
+        a(an, "Alles bekommst du per Link zum Nachlesen.", "Alles bekommen Sie per Link zum Nachlesen."),
+        a(an, "Nach dem Abschluss hast du 14 Tage Widerrufsrecht, ohne Angabe von Gründen.", "Nach dem Abschluss haben Sie 14 Tage Widerrufsrecht, ohne Angabe von Gründen."),
+      ])}`,
+      a(an, "Was genau möchtest du dir noch überlegen?", "Was genau möchten Sie sich noch überlegen?"),
+      "Den offenen Punkt finden und gleich klären. Bleibt es beim Nachdenken: Link schicken und einen festen Rückruftermin ausmachen.",
+    ),
+    folie(
+      "einwand-vorhanden",
+      EINWAND_MENUE["einwand-vorhanden"],
+      `<h2>${e(a(an, "Du bist schon versichert?", "Sie sind schon versichert?"))}</h2>${punkte2([
+        a(an, "Wir vergleichen deinen Vertrag Punkt für Punkt mit dem neuen.", "Wir vergleichen Ihren Vertrag Punkt für Punkt mit dem neuen."),
+        a(an, "Lohnt sich ein Wechsel nicht, sagen wir dir das.", "Lohnt sich ein Wechsel nicht, sagen wir Ihnen das."),
+        a(an, "Wechselst du, beginnt der neue Schutz, wenn der alte endet. Bei der Kündigung helfen wir.", "Wechseln Sie, beginnt der neue Schutz, wenn der alte endet. Bei der Kündigung helfen wir."),
+      ])}`,
+      a(an, "Was steht in deinem bisherigen Vertrag?", "Was steht in Ihrem bisherigen Vertrag?"),
+      "Police zeigen lassen oder Daten aufnehmen. Ehrlich bleiben: Ist der alte Vertrag gleich gut, nicht wechseln lassen.",
+    ),
+    folie(
+      "einwand-partner",
+      EINWAND_MENUE["einwand-partner"],
+      `<h2>${e(a(an, "Gemeinsam entscheiden", "Gemeinsam entscheiden"))}</h2>${punkte2([
+        a(an, "Du bekommst den Link mit allen Folien zum Zeigen.", "Sie bekommen den Link mit allen Folien zum Zeigen."),
+        a(an, "Gern erklären wir es euch auch zu zweit, in einem kurzen Termin.", "Gern erklären wir es Ihnen auch zu zweit, in einem kurzen Termin."),
+      ])}`,
+      a(an, "Wann passt es euch beiden?", "Wann passt es Ihnen beiden?"),
+      "Fragen, was der Partner wissen möchte, und gleich einen kurzen Termin zu zweit vorschlagen.",
+    ),
+  ];
+}
+
 /** Alle Folien als HTML-Dokument (PDF, Querformat 1280×720 je Seite); eingepasst wie in der Ansicht. */
 export function praesentationHtml(fs: Folie[], m: Marke, titel: string): string {
   const einpassen = `<script>(function(){var f=${folienEinpassen.toString()};f(document);if(document.fonts)document.fonts.ready.then(function(){f(document)})})()</script>`;
-  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${e(titel)}</title><style>@page{size:1280px 720px;margin:0}body{margin:0}.slide{break-after:page}${praesentationCss(m)}</style></head><body><div class="deck">${fs.map((f) => f.html).join("")}</div>${einpassen}</body></html>`;
+  // Knopf „Ja, so machen wir es“ nur in der Ansicht (im PDF wirkt er nicht)
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${e(titel)}</title><style>@page{size:1280px 720px;margin:0}body{margin:0}.slide{break-after:page}${praesentationCss(m)}.zusage{display:none}</style></head><body><div class="deck">${fs.map((f) => f.html).join("")}</div>${einpassen}</body></html>`;
 }

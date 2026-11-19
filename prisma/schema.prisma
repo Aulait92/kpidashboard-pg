@@ -400,6 +400,7 @@ model Customer {
   // der Schalter selbst, Ole 18.11.2026). Gesetzt = nie wieder fragen.
   beratungsdokuGefragtAt         DateTime?
   beratungsdokus                 Beratungsdoku[]
+  praesentationEreignisse        PraesentationEreignis[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -1513,6 +1514,7 @@ model Appointment {
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  praesentationEreignisse PraesentationEreignis[]
 
   @@index([customerId, startsAt])
   @@index([einladungAusstehend])
@@ -5235,4 +5237,25 @@ model Beratungsdoku {
   @@unique([appointmentId, inhaltHash])
   @@index([customerId, createdAt])
   @@index([leadId])
+}
+
+/// Messung der Beratungspräsentation (Ole, 19.11.2026, lib/praesentation-messung.ts): Folie erreicht und Zusage
+/// („Ja, so machen wir es“) je Termin, Quelle (termin = Deck des Vermittlers, kundenlink = /beratung/<token>) und
+/// Splittest-Variante (A | B, lib/praesentation-variante.ts). Kennzahl „Abschlussquote je Präsentation“ je Vermittler.
+/// Keine neuen Personendaten: kein Name, keine IP, kein Gerät; je Termin, Quelle, Art und Folie höchstens ein Eintrag.
+model PraesentationEreignis {
+  id            String   @id @default(cuid())
+  customerId    String
+  appointmentId String
+  quelle        String // termin | kundenlink
+  art           String // folie | zusage
+  folie         String   @default("")
+  variante      String // A | B
+  createdAt     DateTime @default(now())
+
+  customer    Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@unique([appointmentId, quelle, art, folie])
+  @@index([customerId, createdAt])
 }

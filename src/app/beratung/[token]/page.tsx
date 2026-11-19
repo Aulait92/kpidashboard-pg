@@ -4,7 +4,8 @@ import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { loadKundenPraesentation } from "@/lib/termin-vorbereitung-server";
 import { prisma } from "@/lib/prisma";
 import { a, asAnsprache } from "@/lib/ansprache";
-import { FolienListe } from "./folien-liste";
+import { mitAbschlussLeiste } from "@/lib/praesentation-variante";
+import { KundenAbschluss } from "./abschluss";
 
 // Kundenlink zur Beratung (Ole, 15.11.2026): der Stand aus dem Termin zum Nachlesen, ohne Schalter und Sprechzettel.
 // Geheimer Link je Termin, läuft nach 14 Tagen ab.
@@ -39,10 +40,12 @@ export default async function BeratungPage({ params }: { params: Promise<{ token
       </>
     );
   }
+  // Splittest B: feste Abschluss-Leiste unten, Platz dafür unter dem Fuß der Seite
+  const leiste = mitAbschlussLeiste(p.variante, p.abschluss.produkte);
   return (
-    <>
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6" data-kundenlink>
-        <h1 className="text-xl font-bold [text-wrap:balance]">Ihre Beratung, {p.name}</h1>
+    <div className={leiste ? "flex flex-1 flex-col pb-32" : "contents"}>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6" data-kundenlink data-variante={p.variante}>
+        <h1 className="text-xl font-bold [text-wrap:balance]">{a(p.an, `Deine Beratung, ${p.name.split(/\s+/)[0]}`, `Ihre Beratung, ${p.name}`)}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
           {p.marke.name.toLowerCase().includes(p.berater.toLowerCase()) ? p.marke.name : `Mit ${p.berater}, ${p.marke.name}`}. Dieser Link ist bis zum {datum(p.bis)} erreichbar.
         </p>
@@ -53,10 +56,20 @@ export default async function BeratungPage({ params }: { params: Promise<{ token
           <FileDown className="h-4 w-4" /> Als PDF speichern
         </a>
         <div className="mt-4">
-          <FolienListe css={p.css} folien={p.folien} />
+          <KundenAbschluss
+            token={token}
+            css={p.css}
+            folien={p.folien}
+            variante={p.variante}
+            zugesagt={!!p.zugesagtAm}
+            summe={p.abschluss.summe}
+            produkte={p.abschluss.produkte}
+            berater={p.berater}
+            an={p.an}
+          />
         </div>
       </main>
       <LeadLegalFooter customerId={p.customerId} />
-    </>
+    </div>
   );
 }
