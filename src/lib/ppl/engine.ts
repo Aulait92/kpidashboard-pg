@@ -271,6 +271,13 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
     wasParked,
     delivery: report ?? { channel: sub.delivery as DeliveryReport["channel"], label: sub.delivery, targets: [], ok: false, error: "Zustellung abgebrochen" },
   });
+  // Kontingent (bzw. Gebiet) mit dieser Zustellung voll: einmal an Admins und Slack melden (wirft nie)
+  try {
+    const { pruefeKontingentVoll } = await import("@/lib/ppl/kontingent-voll");
+    await pruefeKontingentVoll(sub.id, areaId, now);
+  } catch (err) {
+    reportError(err, "ppl-kontingent-voll", { sub: sub.id });
+  }
   return lead.id;
 }
 
