@@ -16,6 +16,7 @@ import {
   computeOfferPrice,
   defaultStartDate,
   eur,
+  PPL_SOFTWARE_TERMS,
   PRICE_LIST,
   prepayPossible,
   PRODUKT_VORSCHLAEGE,
@@ -124,15 +125,22 @@ export function OfferForm({
     monthlyOverride: num(monthlyOverride),
     seats: num(seats),
     annual: annual && prepayPossible(term),
-    bestandModule: bestand && pkg === "software",
-    empfehlungModule: empfehlung && pkg === "software",
+    bestandModule: bestand && pkg !== "service",
+    empfehlungModule: empfehlung && pkg !== "service",
     setupDiscount: referralDiscount ? num(discount) : null,
   });
-  const softwarePkg = pkg === "software";
+  // Paket mit Software (Betreuung + Software oder Pay-per-Lead + Software): Verkäufer und Module buchbar
+  const softwarePkg = pkg !== "service";
+  // Pay-per-Lead + Software (Ole, 19.11.2026): keine Produkte, kein Werbebudget, keine Einrichtung, Laufzeit ohne oder 3 Monate
+  const ppl = pkg === "ppl_software";
+  const waehlePaket = (k: OfferPackage) => {
+    setPkg(k);
+    if (k === "ppl_software" && !PPL_SOFTWARE_TERMS.includes(term)) setTerm("none");
+  };
   // Produktwahl durch den Kunden nur zum Listenpreis (wie lib/offers.ts createOffer)
-  const produktWahlMoeglich = softwarePkg && !test && num(setupOverride) == null && num(monthlyOverride) == null && num(introFee) == null && !price.individual;
+  const produktWahlMoeglich = pkg === "software" && !test && num(setupOverride) == null && num(monthlyOverride) == null && num(introFee) == null && !price.individual;
   // Vorauszahlung (Ole, 18.11.2026): mit 12 Monaten jährlich (3 geschenkt seit 19.11.2026), mit 6 Monaten 6 Monate im Voraus (1 geschenkt)
-  const annualPossible = prepayPossible(term) && num(introFee) == null;
+  const annualPossible = !ppl && prepayPossible(term) && num(introFee) == null;
   const voraus = VORAUSZAHLUNG[term === "6m" ? "6m" : "12m"];
   const geschenkt = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"} geschenkt`;
 
@@ -153,11 +161,11 @@ export function OfferForm({
         package: pkg,
         term,
         products: parsedProducts,
-        setupOverride: num(setupOverride),
+        setupOverride: ppl ? null : num(setupOverride),
         // Empfohlener Kontakt: Wert aus dem Feld (0 = bewusst kein Rabatt), sonst automatisch
-        setupDiscount: referralDiscount ? (num(discount) ?? 0) : undefined,
+        setupDiscount: ppl ? null : referralDiscount ? (num(discount) ?? 0) : undefined,
         monthlyOverride: num(monthlyOverride),
-        introMonthlyFee: num(introFee),
+        introMonthlyFee: ppl ? null : num(introFee),
         introMonths: num(introMonths),
         specialTerms,
         startDate: startDate || null,
@@ -172,11 +180,11 @@ export function OfferForm({
         vermittlerTyp: vermittler,
         customerChoice,
         customerChoosesProducts: customerProducts && produktWahlMoeglich,
-        allowPayLater: allowPayLater && !test,
+        allowPayLater: allowPayLater && !test && !ppl,
         allowBankTransfer: ueberweisungVerfuegbar && allowBankTransfer && !test,
         bankTransferDays: num(bankTransferDays),
-        abschlussBonus: bonusAn && !test ? (num(bonusBetrag) ?? 300) : 0,
-        abschlussBonusBis: bonusAn && !test ? bonusBis : null,
+        abschlussBonus: bonusAn && !test && !ppl ? (num(bonusBetrag) ?? 300) : 0,
+        abschlussBonusBis: bonusAn && !test && !ppl ? bonusBis : null,
         test,
       });
       if (!res.ok) {
@@ -204,11 +212,13 @@ export function OfferForm({
         </Card>
 
         <Card>
-          <CardHeader title="Kunde ist …" hint="Makler: Vertrags-Garantie statt Break-even-Garantie. Der Status geht auch in die Erstinformation." />
+          <CardHeader title="Kunde ist …" hint={ppl ? "Der Status geht in die Erstinformation." : "Makler: Vertrags-Garantie statt Break-even-Garantie. Der Status geht auch in die Erstinformation."} />
+          {ppl ? null : (
           <p className="flex flex-wrap items-center gap-x-1.5 px-5 pt-3 text-xs text-[color:var(--muted)]" data-garantie-erklaert>
             Break-even-Garantie <InfoHinweis begriff="Break-even-Garantie" text={BREAKEVEN_ERKLAERT} /> · Vertrags-Garantie{" "}
             <InfoHinweis begriff="Vertrags-Garantie" text={VERTRAGSGARANTIE_ERKLAERT} />
           </p>
+          )}
           <div className="grid gap-2 p-5 sm:grid-cols-3" role="radiogroup" aria-label="Vertreter, Mehrfachvertreter oder Makler">
             {(
               [
@@ -227,7 +237,7 @@ export function OfferForm({
                 className={`min-w-0 rounded-[var(--radius-md)] border px-4 py-3 text-left text-sm transition ${vermittler === k ? "border-[color:var(--brand)] bg-[color:var(--brand-soft,#EFF6FF)] ring-2 ring-[color:var(--brand)]/20" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"}`}
               >
                 <div className="font-semibold">{t}</div>
-                <div className="text-xs text-[color:var(--muted)]">{s}</div>
+                <div className="text-xs text-[color:var(--muted)]">{ppl ? s.split(" · ")[0] : s}</div>
               </button>
             ))}
           </div>
@@ -235,17 +245,19 @@ export function OfferForm({
 
         <Card>
           <CardHeader title="Paket" />
-          <div className="grid gap-2 p-5 sm:grid-cols-2">
+          <div className="grid gap-2 p-5 sm:grid-cols-3" data-paket-wahl>
             {(
               [
                 ["software", "Betreuung + Software", "Leads, WhatsApp-Assistent, Terminbuchung, Pipeline"],
                 ["service", "Nur Betreuung", `Leads per E-Mail + Kundenbereich · ${eur(PRICE_LIST.serviceOnlyMonthly)} / Monat · Pause 0 €`],
+                ["ppl_software", "Pay-per-Lead + Software", `Nur Software · ${eur(PRICE_LIST.softwareFee)} / Monat · ohne Einrichtung · Leads separat pro Stück`],
               ] as const
             ).map(([k, t, s]) => (
               <button
                 key={k}
                 type="button"
-                onClick={() => setPkg(k)}
+                data-paket={k}
+                onClick={() => waehlePaket(k)}
                 className={`rounded-[var(--radius-md)] border px-4 py-3 text-left text-sm transition ${pkg === k ? "border-[color:var(--brand)] bg-[color:var(--brand-soft,#EFF6FF)] ring-2 ring-[color:var(--brand)]/20" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"}`}
               >
                 <div className="font-semibold">{t}</div>
@@ -255,6 +267,7 @@ export function OfferForm({
           </div>
         </Card>
 
+        {ppl ? null : (
         <Card>
           <CardHeader title="Produkte und Werbebudget" hint="1. Produkt im Grundpaket, jedes weitere +350 € pro Monat (ohne Setup)" />
           <div className="space-y-3 p-5">
@@ -285,18 +298,23 @@ export function OfferForm({
             </Button>
           </div>
         </Card>
+        )}
 
         <Card>
           <CardHeader title="Laufzeit und Konditionen" />
           <div className="space-y-4 p-5">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {(
-                [
+              {(ppl
+                ? ([
+                    ["none", "Ohne Laufzeit", "monatlich kündbar · ohne Einrichtung"],
+                    ["3m", "3 Monate", "danach monatlich · ohne Einrichtung"],
+                  ] as const)
+                : ([
                   ["12m", "12 Monate", `Setup ${eur(PRICE_LIST.setup12m)}`],
                   ["6m", "6 Monate", `Setup ${eur(PRICE_LIST.setup6m)}`],
                   ["3m", "3 Monate", `Setup ${eur(PRICE_LIST.setup3m)}`],
                   ["none", "Ohne Laufzeit", `Setup ${eur(PRICE_LIST.setupNoTerm)}`],
-                ] as const
+                ] as const)
               ).map(([k, t, s]) => (
                 <button
                   key={k}
@@ -310,10 +328,12 @@ export function OfferForm({
               ))}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
+              {ppl ? null : (
               <Field l={`Setup abweichend (Liste: ${eur(price.listSetup)})`}>
                 <input className={input} inputMode="decimal" placeholder="leer = Listenpreis" value={setupOverride} onChange={(e) => setSetupOverride(e.target.value)} />
               </Field>
-              {referralDiscount ? (
+              )}
+              {referralDiscount && !ppl ? (
                 <Field l={`${referralDiscount.label}: Rabatt auf die Einrichtung (netto)`}>
                   <input
                     className={input}
@@ -333,6 +353,8 @@ export function OfferForm({
               <Field l={`Monatlich abweichend (Liste: ${price.listMonthly == null ? "individuell" : eur(price.listMonthly)})`}>
                 <input className={input} inputMode="decimal" placeholder={price.listMonthly == null ? "bitte eintragen" : "leer = Listenpreis"} value={monthlyOverride} onChange={(e) => setMonthlyOverride(e.target.value)} />
               </Field>
+              {ppl ? null : (
+              <>
               <Field l="Startpreis pro Monat (optional, Rabatt zum Einstieg)">
                 <input className={input} inputMode="decimal" placeholder="leer = kein Startpreis" value={introFee} onChange={(e) => setIntroFee(e.target.value)} />
               </Field>
@@ -345,6 +367,8 @@ export function OfferForm({
                   onChange={(e) => setIntroMonths(e.target.value)}
                 />
               </Field>
+              </>
+              )}
               <div className="space-y-2">
                 <Field l="Start * (ab dann läuft die Monatsgebühr)">
                   <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
@@ -372,6 +396,8 @@ export function OfferForm({
                 </span>
               </span>
             </label>
+            {ppl ? null : (
+            <>
             <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-produktwahl-toggle>
               <input
                 type="checkbox"
@@ -439,6 +465,8 @@ export function OfferForm({
                 </span>
               </span>
             </label>
+            </>
+            )}
             <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-zahlung-nachtraeglich-toggle>
               <input
                 type="checkbox"
@@ -515,6 +543,7 @@ export function OfferForm({
                 Ab {PRICE_LIST.seatIndividualFrom} aktiven Verkäufern individuell: bitte oben „Monatlich abweichend“ eintragen (alle Verkäufer inklusive).
               </p>
             ) : null}
+            {ppl ? null : (
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${annualPossible ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
               <input type="checkbox" name="annual" className="mt-0.5 h-4 w-4" disabled={!annualPossible} checked={annual && annualPossible} onChange={(e) => setAnnual(e.target.checked)} />
               <span>
@@ -528,6 +557,7 @@ export function OfferForm({
                 </span>
               </span>
             </label>
+            )}
             {/* Bestandskunden-Modul nur, solange es für alle verfügbar ist (lib/bestand/sichtbar.ts) */}
             {BESTAND_MODULE_AVAILABLE || bestand ? (
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${softwarePkg ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
@@ -578,19 +608,23 @@ export function OfferForm({
         <Card>
           <CardHeader title="Zusammenfassung" />
           <div className="space-y-3 p-5 text-sm">
-            <Sum k="Werbebudget / Monat" v={`≈ ${eur(price.monthlyBudget)}`} sub={price.tierLabel} />
-            <Sum
+            {ppl ? (
+              <Sum k="Paket" v="Pay-per-Lead + Software" sub="Leads separat pro Stück, kein Werbebudget" />
+            ) : (
+              <Sum k="Werbebudget / Monat" v={`≈ ${eur(price.monthlyBudget)}`} sub={price.tierLabel} />
+            )}
+            {ppl ? <Sum k="Einrichtung" v={eur(0)} sub="keine Einrichtungsgebühr" /> : <Sum
               k="Setup einmalig"
               v={eur(price.setupFee)}
               sub={`${price.setupDiscount > 0 ? `statt ${eur(price.listSetup)}, ${referralDiscount?.label ?? "Empfehlungsrabatt"} ${eur(price.setupDiscount)} · ` : ""}${eur(withVat(price.setupFee))} brutto · bei Annahme`}
-            />
+            />}
             {num(introFee) != null ? (
               <Sum k={`Monat 1–${num(introMonths) ?? "?"}`} v={eur(num(introFee)!)} sub={`${eur(withVat(num(introFee)!))} brutto`} />
             ) : null}
             <Sum
               k={startDate ? `Paket monatlich ab ${ersterAbrechnungstag(startDate, num(billingDay)).split("-").reverse().join(".")}` : "Paket monatlich"}
               v={price.monthlyFee == null ? "individuell" : eur(price.monthlyFee)}
-              sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto · Pause: ${eur(price.softwareFee)}`}
+              sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto${ppl ? (term === "none" ? " · monatlich kündbar" : " · 3 Monate, dann monatlich") : ` · Pause: ${eur(price.softwareFee)}`}`}
             />
             {price.extraSeats > 0 ? (
               <Sum

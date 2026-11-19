@@ -193,8 +193,24 @@ export function rhythmusAusStripe(rec: { interval?: string | null; interval_coun
 /** Vertreter oder Makler: bestimmt die Garantien (Break-even bzw. Vertrags-Garantie). */
 /** Mehrfachvertreter rechnet wie Vertreter (Preise, Break-even-Garantie), Status geht in die Erstinformation. */
 export type OfferVermittler = "vertreter" | "mehrfachvertreter" | "makler";
-export type OfferPackage = "software" | "service";
+/**
+ * Pakete: „software“ = Betreuung + Software (Kampagnen + Software), „service“ = Nur Betreuung (Kampagnen ohne Software),
+ * „ppl_software“ = Pay-per-Lead + Software (Ole, 19.11.2026): nur die Software, ohne Betreuung, ohne eigene Kampagnen und
+ * ohne Werbebudget; Leads kauft der Kunde weiter per Stück (Pay-per-Lead, /buyer/bestellen), separat abgerechnet.
+ */
+export type OfferPackage = "software" | "service" | "ppl_software";
 export type OfferProduct = { name: string; dailyBudget: number };
+
+/** Paket Pay-per-Lead + Software (auch Wert von Customer.plan und Onboarding.package). */
+export const PPL_SOFTWARE = "ppl_software" as const;
+/** Unbekannte Werte → „software“ (Standard). */
+export const normalizePackage = (p: unknown): OfferPackage => (p === "service" || p === PPL_SOFTWARE ? p : "software");
+/** Paket mit Software (WhatsApp-Assistent, Kalender, Pipeline): alles außer „Nur Betreuung“. */
+export const mitSoftware = (p: unknown): boolean => p !== "service";
+/** Paket mit eigenen Meta-Kampagnen, Werbebudget und Betreuung: alles außer Pay-per-Lead + Software. */
+export const mitKampagnen = (p: unknown): boolean => p !== PPL_SOFTWARE;
+/** Pay-per-Lead + Software: wählbare Laufzeiten (Standard ohne Mindestlaufzeit, optional 3 Monate). */
+export const PPL_SOFTWARE_TERMS: readonly OfferTerm[] = ["none", "3m"];
 
 export type OfferInput = {
   /** Standard: Betreuung + Software. */
@@ -273,6 +289,9 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
   const listSetup = baseSetup + extraProducts * PRICE_LIST.extraProductSetup;
 
   const serviceOnly = input.package === "service";
+  // Pay-per-Lead + Software: fester Preis = Software-Gebühr, keine Einrichtung, kein Werbebudget, keine Produkte
+  const ppl = input.package === PPL_SOFTWARE;
+  if (ppl) return computePplSoftwarePrice(input);
   const tier = serviceOnly ? null : PRICE_LIST.tiers.find((t) => monthlyBudget <= t.maxBudget);
   const individual = !serviceOnly && !tier;
   const base = serviceOnly ? PRICE_LIST.serviceOnlyMonthly : (tier?.monthly ?? null);
@@ -330,6 +349,56 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
     annualSavings: prepay?.savings ?? 0,
     prepayMonths: annual ? prepayMonthsFor(input.term) : 0,
     prepayFreeMonths: annual ? prepayFreeMonthsFor(input.term) : 0,
+  };
+}
+
+/**
+ * Pay-per-Lead + Software (Ole, 19.11.2026): Software-Gebühr {@link PRICE_LIST.softwareFee} netto im Monat, keine
+ * Einrichtung (auch kein Empfehlungsrabatt oder Setup abweichend), keine Produkte und kein Werbebudget, keine
+ * Vorauszahlung (Laufzeit nur ohne oder 3 Monate). Aktive Verkäufer und Module wie im Paket Betreuung + Software.
+ * „Monatlich abweichend“ (Sonderkondition) bleibt möglich.
+ */
+function computePplSoftwarePrice(input: OfferInput): OfferPrice {
+  const seatsIncluded = PRICE_LIST.seatsIncluded;
+  const seats = Math.max(1, Math.round(Number(input.seats ?? seatsIncluded) || seatsIncluded));
+  const seatsIndividual = seats >= PRICE_LIST.seatIndividualFrom;
+  const extraSeats = Math.max(0, seats - seatsIncluded);
+  const seatsFee = seatsIndividual ? 0 : extraSeats * PRICE_LIST.seatMonthly;
+  const bestandActive = !!input.bestandModule;
+  const bestandFee = bestandActive ? PRICE_LIST.bestandModuleMonthly : 0;
+  const empfehlungActive = !!input.empfehlungModule;
+  const empfehlungFee = empfehlungActive ? PRICE_LIST.empfehlungModuleMonthly : 0;
+  const listBase = seatsIndividual ? null : PRICE_LIST.softwareFee;
+  const monthlyFee = input.monthlyOverride != null && input.monthlyOverride >= 0 ? input.monthlyOverride : listBase;
+  const monthlyTotal = monthlyFee == null ? null : round2(monthlyFee + seatsFee + bestandFee + empfehlungFee);
+  return {
+    monthlyBudget: 0,
+    tierLabel: "Pay-per-Lead + Software",
+    individual: seatsIndividual,
+    baseSetup: 0,
+    extraProducts: 0,
+    listSetup: 0,
+    listMonthly: listBase,
+    setupFee: 0,
+    setupDiscount: 0,
+    monthlyFee: monthlyFee == null ? null : round2(monthlyFee),
+    // Software-Anteil = ganze Monatsgebühr (Umsatzbuch: Strom „software“, Abo-Position „Software“)
+    softwareFee: monthlyFee == null ? PRICE_LIST.softwareFee : round2(monthlyFee),
+    seats,
+    seatsIncluded,
+    extraSeats,
+    seatsFee: round2(seatsFee),
+    seatsIndividual,
+    bestandFee,
+    bestandActive,
+    empfehlungFee,
+    empfehlungActive,
+    monthlyTotal,
+    annual: false,
+    annualTotal: null,
+    annualSavings: 0,
+    prepayMonths: 0,
+    prepayFreeMonths: 0,
   };
 }
 
@@ -472,6 +541,7 @@ export const TERM_SHORT: Record<OfferTerm, string> = { "12m": "12 Monate", "6m":
 export const PACKAGE_LABEL: Record<OfferPackage, string> = {
   software: "Betreuung + Software",
   service: "Nur Betreuung",
+  ppl_software: "Pay-per-Lead + Software",
 };
 
 /** Startdatum-Vorschlag: der 1. des Folgemonats (YYYY-MM-DD). */
@@ -525,8 +595,9 @@ export function startDateBounds(todayIso: string, presetIso: string | null): { m
   return { min, max, preset };
 }
 
-/** Listen-Setup je Laufzeit inkl. weiterer Produkte, optional nach Empfehlungsrabatt (nie unter 0). */
-export function setupForChoice(term: OfferTerm, productCount: number, discount: number | null = null): number {
+/** Listen-Setup je Laufzeit inkl. weiterer Produkte, optional nach Empfehlungsrabatt (nie unter 0). Pay-per-Lead + Software: 0. */
+export function setupForChoice(term: OfferTerm, productCount: number, discount: number | null = null, pkg?: string | null): number {
+  if (pkg === PPL_SOFTWARE) return 0;
   const list = setupForTerm(term) + Math.max(0, productCount - 1) * PRICE_LIST.extraProductSetup;
   return applySetupDiscount(list, null, discount).fee;
 }
@@ -542,8 +613,10 @@ export const TERM_6M_AB = new Date("2026-11-18T13:00:00Z");
  * 6 Monate bietet Ole nur an, wenn jemand ausdrücklich danach fragt (Ole, 18.11.2026): Zur Wahl steht sie nur, wenn
  * das Angebot selbst auf 6 Monate steht, sonst nie (auch nicht in Präsentation und Rechner).
  */
-export const termOptionsFor = (createdAt: Date | null | undefined, term?: OfferTerm | string | null): readonly OfferTerm[] =>
-  term === "6m" && (!createdAt || createdAt.getTime() >= TERM_6M_AB.getTime()) ? TERM_OPTIONS : TERM_OPTIONS.filter((t) => t !== "6m");
+export const termOptionsFor = (createdAt: Date | null | undefined, term?: OfferTerm | string | null, pkg?: string | null): readonly OfferTerm[] =>
+  pkg === PPL_SOFTWARE
+    ? PPL_SOFTWARE_TERMS
+    : term === "6m" && (!createdAt || createdAt.getTime() >= TERM_6M_AB.getTime()) ? TERM_OPTIONS : TERM_OPTIONS.filter((t) => t !== "6m");
 
 /** Gespeicherter Stand eines Angebots, soweit für die Kundenwahl nötig. */
 export type OfferChoiceSnapshot = {
@@ -563,6 +636,8 @@ export type OfferChoiceSnapshot = {
   /** Vereinbarter Empfehlungsrabatt (netto) und Listenpreis vor Rabatt; fehlt = keiner. */
   setupDiscount?: number | null;
   setupListFee?: number | null;
+  /** Paket des Angebots (Pay-per-Lead + Software: Einrichtung immer 0). */
+  package?: string | null;
 };
 
 export type OfferChoiceResult =
@@ -599,8 +674,8 @@ export function resolveOfferChoice(
       term = wantedTerm as OfferTerm;
     }
     // Empfehlungsrabatt gilt für jede Laufzeit
-    setupFee = setupForChoice(term, snap.productCount, hasDiscount ? snap.setupDiscount : null);
-    if (hasDiscount) setupListFee = setupForChoice(term, snap.productCount);
+    setupFee = setupForChoice(term, snap.productCount, hasDiscount ? snap.setupDiscount : null, snap.package);
+    if (hasDiscount) setupListFee = setupForChoice(term, snap.productCount, null, snap.package);
   } else if (wantedTerm != null && wantedTerm !== fixedTerm) {
     return { ok: false, error: "Die Laufzeit ist in diesem Angebot fest vereinbart." };
   }
@@ -739,7 +814,7 @@ export type ListenpreisUmstellungInput = {
 
 /** Alter und neuer Monatspreis, wenn das Angebot offen ist und noch den alten Listenpreis hat; sonst null. */
 export function listenpreisUmstellung(o: ListenpreisUmstellungInput): { alt: number; neu: number } | null {
-  if (!(o.status === "draft" || o.status === "sent") || o.acceptedAt || o.isTest || o.package === "service") return null;
+  if (!(o.status === "draft" || o.status === "sent") || o.acceptedAt || o.isTest || o.package === "service" || o.package === PPL_SOFTWARE) return null;
   if (o.seats != null && o.seats >= PRICE_LIST.seatIndividualFrom) return null;
   const products = (Array.isArray(o.products) ? o.products : []).flatMap((p) => {
     const r = (p ?? {}) as { name?: unknown; dailyBudget?: unknown };
@@ -792,7 +867,7 @@ export function staffelDesPreises(monthlyBudget: number, productCount: number, m
  * bzw. der vereinbarte Preis bei Sonderkondition. null für „Nur Betreuung“ (Preis hängt nicht vom Budget ab).
  */
 export function betreuungsSatz(o: { package?: string | null; monthlyBudget: number; productCount: number; monthlyFee: number }): string | null {
-  if (o.package === "service") return null;
+  if (o.package === "service" || o.package === PPL_SOFTWARE) return null;
   const tiers = staffelDesPreises(o.monthlyBudget, o.productCount, o.monthlyFee);
   const bereich = tiers ? preisstufeBereich(o.monthlyBudget, tiers) : null;
   if (!bereich) return `Für Betreuung und Software gilt Ihr vereinbarter Preis: ${eur(o.monthlyFee)} netto im Monat.`;

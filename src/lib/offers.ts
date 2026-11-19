@@ -14,7 +14,11 @@ import {
   berlinTodayIso,
   isIsoDate,
   computeOfferPrice,
+  mitSoftware,
+  normalizePackage,
   normalizeTerm,
+  PPL_SOFTWARE,
+  PPL_SOFTWARE_TERMS,
   offerAddOns,
   PRICE_LIST,
   prepayFreeMonthsFor,
@@ -160,20 +164,26 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   // E-Mail ist Pflicht: Ohne sie entsteht nach der Zahlung kein Login für den Kunden.
   const email = normalizeLoginEmail(input.email ?? "");
   if (!LOGIN_EMAIL_RE.test(email) || email.endsWith(".invalid")) throw new Error("Bitte eine gültige E-Mail-Adresse des Empfängers angeben.");
-  if (products.length === 0) throw new Error("Bitte mindestens ein Produkt angeben.");
-
-  const pkg: OfferPackage = input.package === "service" ? "service" : "software";
+  const pkg: OfferPackage = normalizePackage(input.package);
+  // Pay-per-Lead + Software (Ole, 19.11.2026): keine Produkte und kein Werbebudget (Leads kommen per Stück aus Pay-per-Lead)
+  const ppl = pkg === PPL_SOFTWARE;
+  if (ppl) products.length = 0;
+  else if (products.length === 0) throw new Error("Bitte mindestens ein Produkt angeben.");
   const vermittlerTyp = input.vermittlerTyp === "makler" ? "makler" : input.vermittlerTyp === "mehrfachvertreter" ? "mehrfachvertreter" : "vertreter";
   if (!input.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.startDate)) {
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }
   const term = normalizeTerm(input.term);
+  if (ppl && !PPL_SOFTWARE_TERMS.includes(term)) throw new Error("Pay-per-Lead + Software gibt es ohne Mindestlaufzeit oder mit 3 Monaten.");
+  if (ppl && (input.introMonthlyFee != null || input.annual)) throw new Error("Pay-per-Lead + Software hat keinen Startpreis und keine Vorauszahlung.");
   const abrechnungstag = parseAbrechnungstag(input.billingDay);
   if (!abrechnungstag.ok) throw new Error(abrechnungstag.error);
   // Empfehlungsrabatt: automatisch für gültig empfohlene Kontakte, vom Admin übersteuerbar
   let discount: { amount: number; label: string; referralId: string } | null = null;
-  const wanted = input.setupDiscount;
-  if ("salesContactId" in owner && owner.salesContactId) {
+  const wanted = ppl ? null : input.setupDiscount;
+  if (ppl) {
+    // keine Einrichtung, also auch kein Empfehlungsrabatt darauf
+  } else if ("salesContactId" in owner && owner.salesContactId) {
     const d = await referralSetupDiscount(owner.salesContactId);
     const amount = wanted !== undefined ? wanted : d?.eligible ? d.amount : null;
     if (amount != null && Number.isFinite(amount) && amount > 0) {
@@ -275,10 +285,10 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             monthlyFee: price.monthlyFee!,
             softwareFee: price.softwareFee,
             // Zusätze (nur Paket mit Software): Logins, Modul, Zahlweise
-            seats: pkg === "software" ? price.seats : null,
-            seatsIncluded: pkg === "software" ? price.seatsIncluded : null,
+            seats: mitSoftware(pkg) ? price.seats : null,
+            seatsIncluded: mitSoftware(pkg) ? price.seatsIncluded : null,
             // Ab seatIndividualFrom sind alle Logins im individuellen Preis enthalten (0 €)
-            seatMonthly: pkg === "software" ? (price.seatsIndividual || test ? 0 : PRICE_LIST.seatMonthly) : null,
+            seatMonthly: mitSoftware(pkg) ? (price.seatsIndividual || test ? 0 : PRICE_LIST.seatMonthly) : null,
             // Modul gebucht: Monatspreis; null = nicht gebucht
             bestandMonthly: price.bestandActive ? price.bestandFee : null,
             empfehlungMonthly: price.empfehlungActive ? price.empfehlungFee : null,
@@ -298,7 +308,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             customerChoosesTerm: choosesTerm,
             customerChoosesStart: choosesStart,
             customerChoosesProducts: choosesProducts,
-            allowPayLater: input.allowPayLater === true && !test,
+            // „Später zahlen“ betrifft die Einrichtung: ohne Einrichtung (Pay-per-Lead + Software) nicht nötig
+            allowPayLater: input.allowPayLater === true && !test && !ppl,
             allowBankTransfer: input.allowBankTransfer === true && !test,
             bankTransferDays: parseZahlungsziel(input.bankTransferDays),
             abschlussBonus:
@@ -407,7 +418,8 @@ export async function acceptOffer(
       choosesTerm: offer.customerChoosesTerm,
       choosesStart: offer.customerChoosesStart,
       // 6 Monate zur Wahl erst für Angebote ab dem Livegang (ältere bleiben wie verschickt)
-      termOptions: termOptionsFor(offer.createdAt, offer.term),
+      termOptions: termOptionsFor(offer.createdAt, offer.term, offer.package),
+      package: offer.package,
       setupDiscount: offer.setupDiscount == null ? null : Number(offer.setupDiscount),
       setupListFee: offer.setupListFee == null ? null : Number(offer.setupListFee),
     },
@@ -524,7 +536,7 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
   offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
-    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears">> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "package">> &
     Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null }> = {},
 ): ContractSummaryInput {
@@ -543,6 +555,7 @@ export function offerSummaryInput(
     freeStart: !!offer.billingFreeStart,
     prepayAtAcceptance: vorauszahlungMitAnnahme(offer),
     paymentInArrears: !!offer.paymentInArrears,
+    paket: offer.package ?? null,
   };
 }
 

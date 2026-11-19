@@ -7,6 +7,7 @@ import {
   betreuungsSatz,
   computeOfferPrice,
   eur,
+  PPL_SOFTWARE,
   normalizeTerm,
   staffelDesPreises,
   TERM_MONTHS,
@@ -29,7 +30,7 @@ import {
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
 import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
-import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -226,6 +227,9 @@ export function OfferDocument({
   const products = offerProducts(offer.products);
   const term: OfferTerm = normalizeTerm(offer.term);
   const serviceOnly = offer.package === "service";
+  // Pay-per-Lead + Software (Ole, 19.11.2026): nur Software, keine Einrichtung, kein Werbebudget, keine Garantien
+  const ppl = offer.package === PPL_SOFTWARE;
+  const paketName = ppl ? "Software" : serviceOnly ? "Betreuung" : "Betreuung + Software";
   const list = computeOfferPrice({ package: serviceOnly ? "service" : "software", term, products });
   const extra = Math.max(0, products.length - 1);
   // Empfehlungsrabatt: Listenpreis durchgestrichen, eigene Zeile „Empfehlungsrabatt (empfohlen von …)“
@@ -302,8 +306,8 @@ export function OfferDocument({
               Angebot · {date(offer.createdAt)}
             </p>
             <h1 lang="de" className="mt-5 hyphens-auto break-words text-[28px] font-bold leading-[1.15] tracking-tight sm:text-[38px]">
-              {serviceOnly ? "Leadgenerierung" : "Leadgenerierung + Software"}
-              {productNames ? (
+              {ppl ? "Pay-per-Lead + Software" : serviceOnly ? "Leadgenerierung" : "Leadgenerierung + Software"}
+              {productNames && !ppl ? (
                 <>
                   <br />
                   <span className="text-[#7aa2ff]">({productNames})</span>
@@ -311,18 +315,24 @@ export function OfferDocument({
               ) : null}
             </h1>
             <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-[#c9d2e3]">
-              {serviceOnly
+              {ppl
+                ? "Ihr digitaler Assistent schreibt Ihre Pay-per-Lead-Leads per WhatsApp an, fragt den Bedarf ab und bucht Termine direkt in Ihren Kalender."
+                : serviceOnly
                 ? "Exklusive Versicherungs-Leads über Facebook & Instagram, in Echtzeit per E-Mail und im Kundenbereich."
                 : "Exklusive Versicherungs-Leads über Facebook & Instagram, mit digitalem Assistenten, der die Leads per WhatsApp anschreibt und direkt Termine in Ihrem Kalender bucht."}
             </p>
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-6 border-y border-white/15 py-6 sm:grid-cols-3 print:grid-cols-3">
-            <Stat
-              k="Setup"
-              v={eur(offer.setupFee)}
-              sub={disc ? `einmalig, netto zzgl. 19 % USt. · statt ${eur(disc.list)} (${discLabel})` : "einmalig, netto zzgl. 19 % USt."}
-            />
+            {ppl && offer.setupFee === 0 ? (
+              <Stat k="Einrichtung" v={eur(0)} sub="keine Einrichtungsgebühr" />
+            ) : (
+              <Stat
+                k="Setup"
+                v={eur(offer.setupFee)}
+                sub={disc ? `einmalig, netto zzgl. 19 % USt. · statt ${eur(disc.list)} (${discLabel})` : "einmalig, netto zzgl. 19 % USt."}
+              />
+            )}
             {add.annualTotal != null ? (
               <Stat
                 k={halb ? "6 Monate im Voraus" : "Jährlich im Voraus"}
@@ -339,7 +349,7 @@ export function OfferDocument({
                     ? `Startpreis Monat 1 bis ${offer.introMonths}, danach ${eur(add.monthlyTotal)}`
                     : annualOpen
                       ? `netto · oder ${vorausName} ${eur(v.total)}, ${geschenkt(v.freeMonths)}`
-                      : `${serviceOnly ? "Betreuung" : "Betreuung + Software"}${hasExtras ? " inkl. Zusätze" : ""}, netto${offer.startDate ? ` · ab ${date(offer.startDate)}` : ""}`
+                      : `${paketName}${hasExtras ? " inkl. Zusätze" : ""}, netto${offer.startDate ? ` · ab ${date(offer.startDate)}` : ""}${ppl ? " · Leads separat" : ""}`
                 }
                 accent
               />
@@ -347,7 +357,7 @@ export function OfferDocument({
             <Stat
               k="Laufzeit"
               v={TERM_MONTHS[term] > 0 ? `${TERM_MONTHS[term]} Monate` : "Monatlich kündbar"}
-              sub={termOpen ? "Vorschlag, Laufzeit wählen Sie unten bei der Annahme" : "Pause jederzeit möglich"}
+              sub={termOpen ? "Vorschlag, Laufzeit wählen Sie unten bei der Annahme" : ppl ? (TERM_MONTHS[term] > 0 ? "danach monatlich kündbar" : "keine Mindestlaufzeit") : "Pause jederzeit möglich"}
             />
           </div>
 
@@ -385,6 +395,10 @@ export function OfferDocument({
       {/* ── Inhalt ────────────────────────────────────────────────── */}
       {part !== "cover" ? (
       <div className="offer-body mt-6 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-10 text-[15px] leading-relaxed sm:px-12 print:mt-0 print:rounded-none print:border-0 print:p-0">
+        {ppl ? (
+          <PplSoftwareBody offer={offer} term={term} add={add} firstMonth={firstMonth} termOpen={termOpen} startOpen={startOpen} arrears={arrears} ersteText={ersteText} billingDiffers={billingDiffers} plan={plan} />
+        ) : (
+        <>
         <H2>1. Angebotsgegenstand und Umfang</H2>
         <p className="mt-3 text-[#374151]">
           Gegenstand dieses Angebots ist die Generierung exklusiver Interessenten-Datensätze („Leads“) für die unten
@@ -770,6 +784,8 @@ export function OfferDocument({
             )}
           </>
         ) : null}
+        </>
+        )}
         {offer.specialTerms ? (
           <>
             <H3>2.3 Sondervereinbarung</H3>
@@ -854,6 +870,185 @@ export function OfferDocument({
       </div>
       ) : null}
     </article>
+  );
+}
+
+/**
+ * Inhalt „Pay-per-Lead + Software“ (Ole, 19.11.2026): Software ohne Betreuung und ohne eigene Kampagnen, keine Einrichtung,
+ * kein Werbebudget, keine Garantien; Leads separat per Stück nach den Pay-per-Lead-Bedingungen. Keine Gedankenstriche.
+ */
+function PplSoftwareBody({
+  offer,
+  term,
+  add,
+  firstMonth,
+  termOpen,
+  startOpen,
+  arrears,
+  ersteText,
+  billingDiffers,
+  plan,
+}: {
+  offer: OfferDoc;
+  term: OfferTerm;
+  add: ReturnType<typeof offerAddOns>;
+  firstMonth: number;
+  termOpen: boolean;
+  startOpen: boolean;
+  arrears: boolean;
+  ersteText: string;
+  billingDiffers: boolean;
+  plan: ReturnType<typeof abrechnungsplan>;
+}) {
+  const hasExtras = add.seatsFee > 0 || add.bestandFee > 0 || add.empfehlungFee > 0;
+  const monthlyIsList = Math.abs(offer.monthlyFee - PRICE_LIST.softwareFee) < 0.01;
+  const months = TERM_MONTHS[term];
+  return (
+    <>
+      <H2>1. Angebotsgegenstand und Umfang</H2>
+      <p className="mt-3 text-[#374151]">
+        Gegenstand dieses Angebots ist die Bereitstellung unserer Software zur Bearbeitung Ihrer Leads, ohne Betreuung und ohne
+        eigene Werbekampagnen.
+      </p>
+      <Table>
+        <Tr k="Software">
+          Digitaler Assistent auf WhatsApp (Erstkontakt, Bedarfsfragen, Terminbuchung), Terminbuchung im eigenen Kalender mit
+          Erinnerungen, „Heute“-Liste, Pipeline, Wiedervorlagen und Auswertungen bis zu den Kosten pro Abschluss.
+        </Tr>
+        <Tr k="Leads">
+          <span data-offer-ppl-leads>{PPL_LEADS_SEPARAT}</span>
+          <Note>Bestellt wird im Kundenbereich unter „Leads bestellen“. Ihr Assistent übernimmt jeden gelieferten Lead automatisch.</Note>
+        </Tr>
+        {add.hasSeats ? (
+          <Tr k="Verkäufer">
+            {add.seats} {add.seats === 1 ? "aktiver Verkäufer" : "aktive Verkäufer"}, davon {add.seatsIncluded} inklusive. Aktiv ist, wer Leads bekommt.
+            Mitglieder ohne Leads (z. B. Assistenz) sind kostenlos. Weitere Mitglieder fügen Sie jederzeit im Kundenbereich unter „Team“ hinzu.
+          </Tr>
+        ) : null}
+        {add.bestandActive ? (
+          <Tr k="Bestandskunden-Modul">
+            Bestand importieren und gezielt per WhatsApp ansprechen (Lücken, Jahresgespräch, Geburtstag, Ablauf). Inklusive WhatsApp-Gebühren für bis zu{" "}
+            {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten je Kalendermonat. Mehr Nachrichten jederzeit als Zusatzpaket: {bestandPacksText()}.
+          </Tr>
+        ) : null}
+        {offer.startDate ? (
+          <Tr k="Start">
+            {billingDiffers
+              ? abrechnungstagSaetze(plan, { firstNet: firstMonth }).join(" ")
+              : arrears
+                ? `${date(offer.startDate)}. Ab diesem Tag läuft die Leistung, bezahlt wird jeweils nachträglich für den abgelaufenen Monat, erstmals ${ersteText}.`
+                : `${date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.`}
+            {startOpen ? <Note>Vorschlag, das Startdatum wählen Sie unten bei der Annahme.</Note> : null}
+          </Tr>
+        ) : null}
+      </Table>
+
+      <H2 className="mt-12">2. Preise und Zahlungsbedingungen</H2>
+      <Table>
+        <Tr k="Einrichtung">
+          {offer.setupFee > 0 ? (
+            <>
+              <b className="text-[#111827]">{eur(offer.setupFee)}</b> netto zzgl. 19 % USt. <Note>Sonderkondition</Note>
+            </>
+          ) : (
+            <>
+              <b className="text-[#111827]">Keine Einrichtungsgebühr</b>
+              <Note>Die Einrichtung machen Sie selbst im Kundenbereich (ca. 20 bis 30 Minuten), auf Wunsch gemeinsam in einem 15-Minuten-Termin.</Note>
+            </>
+          )}
+        </Tr>
+        <Tr k="Monatliche Vergütung">
+          <b className="text-[#111827]">{eur(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. (Software)
+          <Note>{monthlyIsList ? "Paket Pay-per-Lead + Software" : "Sonderkondition"}</Note>
+        </Tr>
+        {add.extraSeats > 0 ? (
+          <Tr k={`Weitere Verkäufer (${add.extraSeats})`}>
+            {add.seatMonthly > 0 ? (
+              <>
+                <b className="text-[#111827]">{eur(add.seatsFee)}</b> netto pro Monat ({add.extraSeats} × {eur(add.seatMonthly)})
+                <Note>Jeder weitere aktive Verkäufer {eur(add.seatMonthly)} netto pro Monat, tagesgenau ab dem Tag, an dem er Leads bekommt, bis zum Abschalten.</Note>
+              </>
+            ) : (
+              "Im individuellen Monatspreis enthalten."
+            )}
+          </Tr>
+        ) : null}
+        {add.bestandActive ? (
+          <Tr k="Bestandskunden-Modul">
+            {add.bestandFee === 0 ? (
+              <>
+                <b className="text-[#111827]">Ohne Aufpreis</b> (Sonderkondition)
+              </>
+            ) : (
+              <>
+                <b className="text-[#111827]">{eur(add.bestandFee)}</b> netto pro Monat
+              </>
+            )}
+          </Tr>
+        ) : null}
+        {add.empfehlungActive ? (
+          <Tr k="Empfehlungen & Bewertungen">
+            {add.empfehlungFee === 0 ? (
+              <>
+                <b className="text-[#111827]">Ohne Aufpreis</b> (Sonderkondition)
+              </>
+            ) : (
+              <>
+                <b className="text-[#111827]">{eur(add.empfehlungFee)}</b> netto pro Monat
+              </>
+            )}
+            <Note>Nach jedem Abschluss automatisch um eine Google-Bewertung und später um eine Empfehlung bitten, mit Empfehlungsseite und Auswertung.</Note>
+          </Tr>
+        ) : null}
+        {hasExtras ? (
+          <Tr k="Monatlich gesamt">
+            <b className="text-[#111827]">{eur(add.monthlyTotal)}</b> netto pro Monat zzgl. 19 % USt.
+          </Tr>
+        ) : null}
+        <Tr k="Leads">
+          Separat per Stück zum Preis je Lead laut Bestellung, nicht Teil der Monatsgebühr. Keine Mindestabnahme.
+        </Tr>
+        {arrears ? (
+          <Tr k="Zahlweise">
+            Monatlich nachträglich: <b className="text-[#111827]">{eur(firstMonth)}</b> netto jeweils für den abgelaufenen Leistungsmonat, erstmals {ersteText}.
+          </Tr>
+        ) : null}
+        <Tr k="Vertragslaufzeit">
+          {months > 0
+            ? `${months} Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, danach monatlich kündbar zum Ende des ${arrears ? "jeweiligen Leistungsmonats" : "Abrechnungsmonats"}.`
+            : `Keine Mindestlaufzeit, monatlich kündbar zum Ende des jeweiligen ${arrears ? "Leistungsmonats" : "Abrechnungsmonats"}.`}
+          {termOpen ? <Note>Laufzeit wählen Sie unten bei der Annahme: ohne Mindestlaufzeit oder 3 Monate, jeweils ohne Einrichtungsgebühr.</Note> : null}
+        </Tr>
+        <Tr k="WhatsApp-Gebühren">
+          {PRICE_LIST.whatsappIncluded ? "Im Preis enthalten (Erstkontakt, Erinnerungen, Nachfassen ohne Begrenzung)." : "Gebühren von Meta nach Verbrauch, in der Regel 10–40 € im Monat."}
+        </Tr>
+        <Tr k="Bei Annahme fällig">
+          {offer.setupFee > 0 ? (
+            <>
+              <b className="text-[#111827]">{eur(offer.setupFee)}</b> netto zzgl. 19 % USt. {eur(vatOf(offer.setupFee))} = <b className="text-[#111827]">{eur(withVat(offer.setupFee))} brutto</b>
+            </>
+          ) : (
+            <>
+              <b className="text-[#111827]">{eur(0)}</b>, Sie hinterlegen nur Ihre Zahlungsart
+            </>
+          )}
+          <Note>
+            {arrears
+              ? `Die erste Monatsgebühr (${eur(firstMonth)} netto, ${eur(withVat(firstMonth))} brutto) wird nachträglich ${ersteText} fällig.`
+              : `Erste Monatsgebühr (${eur(firstMonth)} netto, ${eur(withVat(firstMonth))} brutto)${plan && billingDiffers ? ` am ${plan.firstIso.split("-").reverse().join(".")}` : offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}.`}
+            {startOpen ? " Der Start richtet sich nach Ihrer Wahl bei der Annahme." : ""}
+          </Note>
+        </Tr>
+      </Table>
+
+      <H3>2.1 Zahlung</H3>
+      <p className="text-[#374151]">
+        {arrears
+          ? "Die monatliche Vergütung wird jeweils nachträglich für den abgelaufenen Leistungsmonat fällig, erstmals einen Monat nach dem Startdatum, und per SEPA-Lastschrift oder Karte automatisch eingezogen."
+          : "Die monatliche Vergütung wird ab dem Startdatum monatlich im Voraus per SEPA-Lastschrift oder Karte automatisch eingezogen."}{" "}
+        Bestellte Leads werden je Bestellung separat berechnet.
+      </p>
+    </>
   );
 }
 

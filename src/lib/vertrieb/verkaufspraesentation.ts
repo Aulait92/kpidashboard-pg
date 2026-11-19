@@ -223,11 +223,11 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
   });
   const rabatt = angebot.setupDiscount != null && angebot.setupDiscount > 0 ? angebot.setupDiscount : null;
   const setup = angebot.customerChoosesTerm
-    ? termFolie(term).map((t) => ({ label: TERM_KURZ[t], betrag: setupForChoice(t, Math.max(1, produkte.length), rabatt), markiert: t === term }))
+    ? termFolie(term).map((t) => ({ label: TERM_KURZ[t], betrag: setupForChoice(t, Math.max(1, produkte.length), rabatt, angebot.package), markiert: t === term }))
     : [{ label: TERM_KURZ[term], betrag: angebot.setupFee, markiert: true }];
   const monatlich: PaketDaten["monatlich"] = [
     {
-      label: PACKAGE_LABEL[software ? "software" : "service"],
+      label: PACKAGE_LABEL[angebot.package === "ppl_software" ? "ppl_software" : software ? "software" : "service"],
       detail: produkte.length ? produkte.map((p) => `${p.name}${p.tagesbudget ? ` (${eur0(p.tagesbudget)} pro Tag)` : ""}`).join(", ") : undefined,
       betrag: `${eur0(angebot.monthlyFee)} netto`,
     },

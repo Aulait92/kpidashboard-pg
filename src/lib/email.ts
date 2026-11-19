@@ -356,8 +356,8 @@ export function offerBonusLine(b: { betrag: number; bis: Date }, du: boolean, sp
 }
 
 /** Teilschritte der Einrichtung in der Reihenfolge der Einrichtungsseite. */
-export function setupParts(software: boolean, whatsappSelfConnect: boolean): string {
-  const parts = ["kurzer Fragebogen", "Freigabe Ihres Meta-Werbekontos"];
+export function setupParts(software: boolean, whatsappSelfConnect: boolean, meta = true): string {
+  const parts = ["kurzer Fragebogen", ...(meta ? ["Freigabe Ihres Meta-Werbekontos"] : [])];
   if (software) parts.push("Kalender verbinden");
   if (software && whatsappSelfConnect) parts.push("WhatsApp verbinden");
   return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} und ${parts[parts.length - 1]}` : parts[0];
@@ -368,7 +368,8 @@ export async function sendOnboardingWelcomeEmail(opts: {
   to: string;
   /** z. B. „Hallo Herr Weber,“ */
   greeting: string;
-  packageType: "software" | "service";
+  /** „ppl_software“ = Pay-per-Lead + Software: ohne Meta-Freigabe und ohne Kampagne. */
+  packageType: "software" | "service" | "ppl_software";
   startDate: Date | null;
   products: string[];
   setPasswordUrl: string | null;
@@ -387,18 +388,28 @@ export async function sendOnboardingWelcomeEmail(opts: {
   const start = opts.startDate
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.startDate)
     : null;
-  const software = opts.packageType === "software";
+  const ppl = opts.packageType === "ppl_software";
+  const software = opts.packageType === "software" || ppl;
   const products = opts.products.length ? opts.products.join(", ") : null;
   const accessUrl = opts.setPasswordUrl ?? opts.loginUrl;
   const steps = [
     opts.setPasswordUrl
       ? "Zugang einrichten: Über den Button legen Sie Ihr Passwort fest (Link 7 Tage gültig)."
       : `Einloggen unter ${opts.loginUrl} mit ${opts.to}.`,
-    `Einrichtung im Kundenbereich (ca. 20 bis 30 Minuten, Sie können jederzeit unterbrechen): ${setupParts(software, !!opts.whatsappSelfConnect)}. Auf Wunsch machen wir das gemeinsam in einem 15-Minuten-Termin, den Sie direkt in der Einrichtung buchen.`,
+    `Einrichtung im Kundenbereich (ca. 20 bis 30 Minuten, Sie können jederzeit unterbrechen): ${setupParts(software, !!opts.whatsappSelfConnect, !ppl)}. Auf Wunsch machen wir das gemeinsam in einem 15-Minuten-Termin, den Sie direkt in der Einrichtung buchen.`,
+    ...(ppl
+      ? [
+          "Leads bestellen Sie wie gewohnt per Stück (Pay-per-Lead), sie werden separat abgerechnet.",
+          start
+            ? `Start am ${start}: Der digitale Assistent schreibt Ihre Leads per WhatsApp an und bucht Termine in Ihren Kalender.`
+            : "Zum Start: Der digitale Assistent schreibt Ihre Leads per WhatsApp an und bucht Termine in Ihren Kalender.",
+        ]
+      : [
     "Den Rest erledigen wir: Kampagne, Werbemittel und Leadformular. Sie bekommen Bescheid, sobald alles startklar ist.",
     start
       ? `Start am ${start}: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`
       : `Start: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`,
+        ]),
   ];
   const greeting = escapeHtml(opts.greeting);
   try {

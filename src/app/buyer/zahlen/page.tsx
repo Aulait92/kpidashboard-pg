@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { mitKampagnen } from "@/lib/offer-pricing";
 import { InfoHinweis } from "@/components/info-hinweis";
 import { bestandErklaert } from "@/lib/begriffe";
 import { EmpfehlungGrowthRow } from "@/components/empfehlung/server";
@@ -77,7 +78,11 @@ export default async function BuyerPage({
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
   const renderedAt = nowMs();
   // Bestandskunden-Modul: Link, Kampagnen-Zahlen und Hinweise nur, wenn es freigeschaltet ist (Ole, 17.11.2026)
-  const bestandAn = !!(await prisma.customer.findUnique({ where: { id: session.customerId }, select: { existingCustomersEnabled: true } }))?.existingCustomersEnabled;
+  const kundeInfo = await prisma.customer.findUnique({ where: { id: session.customerId }, select: { existingCustomersEnabled: true, plan: true } });
+  const bestandAn = !!kundeInfo?.existingCustomersEnabled;
+  // Pay-per-Lead + Software (Ole, 19.11.2026): kein Werbebudget, keine Produkte, keine Pause; Leads per Stück bestellen
+  const kampagnen = mitKampagnen(kundeInfo?.plan);
+  const bestellbar = (await prisma.leadSubscription.count({ where: { customerId: session.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } })) > 0;
 
   // Vor dem ersten Lead: Hinweis statt Nullen (Ole, 15.11.2026)
   if (await nochOhneLeads(session.customerId)) {
@@ -86,7 +91,7 @@ export default async function BuyerPage({
         <PageHeader title="Wachstum" />
         <ZahlenNochLeer customerId={session.customerId} now={renderedAt} />
         <div className="mt-6 space-y-6">
-          <WerbungKarten customerId={session.customerId} readOnly={session.preview} />
+          {kampagnen ? <WerbungKarten customerId={session.customerId} readOnly={session.preview} /> : <LeadsBestellenKarte bestellbar={bestellbar} />}
         </div>
       </main>
     );
@@ -114,14 +119,18 @@ export default async function BuyerPage({
 
         {/* Eine Seite für Zahlen, Werbebudget, Produkte und Pause (UX, Ole 15.11.2026): Sprungmarken, seit 18.11.2026 dezent */}
         <nav className="-mt-2 mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Auf dieser Seite">
-          <a href="#budget" className={SPRUNG}>Werbebudget</a>
-          <a href="#produkte" className={SPRUNG}>Produkte</a>
-          <a href="#pause" className={SPRUNG}>Pause</a>
+          {kampagnen ? (
+            <>
+              <a href="#budget" className={SPRUNG}>Werbebudget</a>
+              <a href="#produkte" className={SPRUNG}>Produkte</a>
+              <a href="#pause" className={SPRUNG}>Pause</a>
+            </>
+          ) : null}
           <a href="#monatsberichte" className={SPRUNG} data-sprung-monatsberichte>Monatsberichte</a>
           {bestandAn ? (
             <a href="/buyer/bestand" className={SPRUNG}>Bestandskunden</a>
           ) : null}
-          {(await prisma.leadSubscription.count({ where: { customerId: session.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } })) > 0 ? (
+          {bestellbar ? (
             <a href="/buyer/bestellen" className={SPRUNG}>Leads bestellen</a>
           ) : null}
         </nav>
@@ -150,10 +159,16 @@ export default async function BuyerPage({
             <MonatsberichteKunde customerId={session.customerId} />
           </div>
         </Suspense>
-        <section className="mt-8 space-y-6" aria-label="Werbung und Produkte">
-          <h2 className="text-lg font-semibold tracking-tight">Werbung und Produkte</h2>
-          <WerbungKarten customerId={session.customerId} readOnly={session.preview} />
-        </section>
+        {kampagnen ? (
+          <section className="mt-8 space-y-6" aria-label="Werbung und Produkte">
+            <h2 className="text-lg font-semibold tracking-tight">Werbung und Produkte</h2>
+            <WerbungKarten customerId={session.customerId} readOnly={session.preview} />
+          </section>
+        ) : (
+          <section className="mt-8" aria-label="Leads bestellen">
+            <LeadsBestellenKarte bestellbar={bestellbar} />
+          </section>
+        )}
       </main>
     </PullToRefresh>
   );
@@ -532,3 +547,24 @@ function Punkt({ k, children }: { k: string; children: React.ReactNode }) {
   );
 }
 
+/**
+ * Pay-per-Lead + Software: statt Werbebudget, Produkten und Pause eine Karte zum Bestellen (eine Hauptaktion). Ohne
+ * eingerichteten Bezug: kurzer Hinweis, dass wir ihn einrichten (Aufgabe aus dem Onboarding).
+ */
+function LeadsBestellenKarte({ bestellbar }: { bestellbar: boolean }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-4" data-leads-bestellen-karte>
+      <div className="min-w-0">
+        <div className="font-semibold">Leads bestellen</div>
+        <p className="text-sm text-[color:var(--muted)]">
+          {bestellbar ? "Exklusive Leads pro Woche, Ihr Assistent schreibt jeden sofort an." : "Wir richten Ihren Bezug gerade ein und melden uns, sobald Sie bestellen können."}
+        </p>
+      </div>
+      {bestellbar ? (
+        <a href="/buyer/bestellen" className="inline-flex h-11 items-center rounded-[var(--radius-md)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white hover:bg-[color:var(--brand-dark)]">
+          Jetzt bestellen
+        </a>
+      ) : null}
+    </div>
+  );
+}
