@@ -98,37 +98,21 @@ describe("Demo: Ihr Schutz im Überblick und Kombi-Rabatt", () => {
   const idx = (d: ReturnType<typeof demoAngebote>, sparte: string) => d.items.findIndex((i) => i.sparte === sparte);
   const folie = (d: ReturnType<typeof demoAngebote>, id: string) => demoFolien(d, am).find((f) => f.id === id)?.html ?? "";
 
-  it("Start: nur Haftpflicht gewählt, Überblick mit Ampel in 4 Zuständen, noch kein Rabatt", () => {
+  it("Start (Ole, 19.11.2026): Haftpflicht, Hausrat und Rechtsschutz gewählt, Kombi-Rabatt 10 %, Unfall als Lücke", () => {
     const d = demoAngebote();
-    expect(beitragAus(d)).toMatchObject({ einzelSumme: 8.4, rabatt: null, endbeitrag: 8.4 });
+    expect(beitragAus(d)).toMatchObject({ einzelSumme: 57.29, rabatt: { prozent: 10, euro: 5.73 }, endbeitrag: 51.56 });
     const ids = demoFolien(d, am).map((f) => f.id);
-    expect(ids.filter((x) => x.startsWith("vergleich-"))).toEqual(["vergleich-haftpflicht-0"]);
+    const vergleich = ids.filter((x) => x.startsWith("vergleich-"));
+    expect(vergleich).toHaveLength(3);
+    expect(vergleich.map((x) => x.split("-")[1])).toEqual(["haftpflicht", "hausrat", "rechtsschutz"]);
     expect(ids.indexOf("ueberblick")).toBe(ids.indexOf("beitrag") - 1);
     const u = folie(d, "ueberblick");
     expect(u).toContain('data-schutz="haftpflicht" data-status="bei-uns"');
-    expect(u).toContain("Wechsel-Service");
-    expect(u).toContain('data-schutz="hausrat" data-status="pruefen"');
-    expect(u).toContain('data-schutz="rechtsschutz" data-status="pruefen"');
+    expect(u).toContain('data-schutz="hausrat" data-status="bei-uns"');
+    expect(u).toContain('data-schutz="rechtsschutz" data-status="bei-uns"');
     expect(u).toContain('data-schutz="unfall" data-status="luecke"');
-    expect(u.match(/Mit anschauen/g)).toHaveLength(3);
-    expect(u).toContain("Mit Hausrat dazu sparen Sie 5 % auf alles");
-    expect(u).toContain("Wollen wir das gleich mit anschauen oder beim nächsten Termin?");
-    // Empfehlung und Beitrag ohne die Sparten „bei Bedarf“
-    expect(text(folie(d, "empfehlung"))).not.toContain("Hausrat");
-    const b = folie(d, "beitrag");
-    expect(b).toContain("8,40");
-    expect(b).toContain("Noch 1 Vertrag bis 5 %");
-    expect(b).not.toContain("data-kombi-rabatt");
-  });
-
-  it("Mit anschauen: Hausrat 5 %, Rechtsschutz 10 % (Noch 1 Vertrag bis 15 %), Unfall 15 %; wieder ab rechnet zurück", () => {
-    let d = demoAngebote();
-    d = demoKlick(d, k({ tarif: idx(d, "Hausrat"), sparte: true }))!;
-    expect(beitragAus(d)).toMatchObject({ einzelSumme: 21.6, rabatt: { prozent: 5, euro: 1.08 }, endbeitrag: 20.52 });
-    expect(demoFolien(d, am).some((f) => f.id === "vergleich-hausrat-1")).toBe(true);
-    expect(folie(d, "ueberblick")).toContain("✓ Im Vergleich");
-    d = demoKlick(d, k({ tarif: idx(d, "Rechtsschutz"), sparte: true }))!;
-    expect(beitragAus(d)).toMatchObject({ einzelSumme: 57.29, rabatt: { prozent: 10, euro: 5.73 }, endbeitrag: 51.56 });
+    expect(u.match(/Mit anschauen/g)).toHaveLength(1);
+    expect(u).toContain("Mit Unfall dazu sparen Sie 15 % auf alles");
     const b = folie(d, "beitrag");
     expect(b).toContain("51,56");
     expect(text(b).replace(/\s+/g, " ")).toContain("statt 57,29 € : Kombi-Rabatt 10 % (−5,73 €)");
@@ -136,25 +120,29 @@ describe("Demo: Ihr Schutz im Überblick und Kombi-Rabatt", () => {
     expect(b).toContain("Noch 1 Vertrag bis 15 %");
     expect(b).toContain("Die Versicherungen sind auch einzeln abschließbar.");
     expect(b).toContain("Kombi-Rabatt ab 2 Verträgen der Linie Komfort oder Premium, Laufzeit 3 Jahre.");
-    expect(folie(d, "ueberblick")).toContain("Mit Unfall dazu sparen Sie 15 % auf alles");
+  });
+
+  it("Mit anschauen: Unfall 15 %; Sparten wieder herausnehmen rechnet zurück", () => {
+    let d = demoAngebote();
     d = demoKlick(d, k({ tarif: idx(d, "Unfall"), sparte: true }))!;
     expect(beitragAus(d)).toMatchObject({ einzelSumme: 70.69, rabatt: { prozent: 15 }, endbeitrag: 60.08 });
-    // Kunde nimmt Rechtsschutz wieder heraus (Beitragsfolie): 3 Verträge, 10 %
+    expect(folie(d, "ueberblick")).toContain("✓ Im Vergleich");
     d = demoKlick(d, k({ tarif: idx(d, "Rechtsschutz"), sparte: true }))!;
     expect(beitragAus(d).rabatt?.prozent).toBe(10);
+    d = demoKlick(d, k({ tarif: idx(d, "Hausrat"), sparte: true }))!;
+    expect(beitragAus(d).rabatt?.prozent).toBe(5);
   });
 
   it("Smart statt Komfort verhindert den Rabatt für diese Sparte und sagt es", () => {
     let d = demoAngebote();
-    d = demoKlick(d, k({ tarif: idx(d, "Hausrat"), sparte: true }))!;
     d = demoKlick(d, k({ tarif: idx(d, "Hausrat") }))!; // Hausrat Smart
-    expect(beitragAus(d)).toMatchObject({ rabatt: null });
+    expect(beitragAus(d).rabatt?.prozent).toBe(5);
     expect(folie(d, "beitrag")).toContain("<span>Hausrat Smart zählt nicht (nur Komfort oder Premium).</span>");
   });
 
   it("ohne Gedankenstriche und ohne echte Gesellschaft", () => {
     let d = demoAngebote();
-    for (const s of ["Hausrat", "Rechtsschutz", "Unfall"]) d = demoKlick(d, k({ tarif: idx(d, s), sparte: true }))!;
+    d = demoKlick(d, k({ tarif: idx(d, "Unfall"), sparte: true }))!;
     const html = demoFolien(d, am).map((f) => f.html).join("\n");
     expect(html).not.toMatch(/allianz|\baxa\b|signal iduna/i);
     expect(hatGedankenstrich(text(html).replace(/\s—\s/g, " "))).toBe(false);
