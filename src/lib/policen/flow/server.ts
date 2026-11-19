@@ -430,7 +430,7 @@ export type FlowDatei = {
   /** Aufbau des Eintrags ohne Werte (nur Feldnamen) fürs Protokoll, wenn die Datei nicht geladen werden kann */
   felder: string;
 };
-export type FlowAntwort = { token: string; ohneKi: boolean; dateien: FlowDatei[]; /** Feldnamen der Antwort ohne Werte (Protokoll) */ felder: string };
+export type FlowAntwort = { token: string; ohneKi: boolean; dateien: FlowDatei[] };
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
@@ -495,7 +495,7 @@ export function leseFlowAntwort(raw: unknown): FlowAntwort | null {
     };
   });
   const ohne = j.ohne_ki;
-  return { token, ohneKi: ohne === true || ohne === "true", dateien, felder: feldnamen(j) };
+  return { token, ohneKi: ohne === true || ohne === "true", dateien };
 }
 
 export type FlowLadeErgebnis = { ok: true; data: Buffer } | { ok: false; grund: "zu_gross" | "fehler"; detail?: string };
@@ -587,7 +587,8 @@ export async function runPolicenFlowErinnerungen(now = new Date()): Promise<{ ge
       const arten = await prisma.message.findMany({ where: { conversationId: b.conversationId, direction: "internal", kind: strecke.STRECKE.policenErinnerung, body: { contains: appointmentId } }, select: { body: true } });
       const schon = arten.map((x) => (JSON.parse(x.body ?? "{}") as { art?: string }).art).filter((x): x is "tag" | "vortag" => x === "tag" || x === "vortag");
       const welche = faelligeErinnerung({ bitteAt: stand.policenBitteAt, terminAt: t.startsAt, gesendet: schon, now });
-      if (!welche) continue;
+      // Erinnerung 2 (Vortag 18 Uhr) entfällt: dafür steht ein Satz in der Vortags-Terminerinnerung (A8 a, 19.11.2026)
+      if (!welche || welche === "erinnerung2") continue;
       if (!(await strecke.policenErinnernErlaubt(b.conversationId, t.leadId, stand))) continue;
       const conv = await prisma.conversation.findUnique({ where: { id: b.conversationId }, select: { botActive: true, optedOutAt: true } });
       if (!conv?.botActive || conv.optedOutAt) continue;

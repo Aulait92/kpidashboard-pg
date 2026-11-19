@@ -61,7 +61,7 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - „Der Assistent fasst nach, nicht Sie.“
 
 ## 15. Jeden Morgen wissen Sie, wen Sie anrufen
-- Startseite „Heute“ zeigen: Termine mit Zusammenfassung, Ergebnis mit einem Klick.
+- Startseite „Heute“ zeigen: neue Leads ganz oben, Termine mit Zusammenfassung des Assistenten, nach dem Gespräch „Ergebnis“ antippen.
 - Keine Dokumentation am Abend.
 
 ## 16. Perfekt vorbereitet in jeden Termin
@@ -86,6 +86,7 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 
 ## 20. Sie wissen jederzeit, ob es sich rechnet
 - Kosten je Lead, je Termin, je Abschluss und Ertrag, automatisch aus dem Werbekonto.
+- In der App unter „Wachstum“: „Rechnet sich das?“ mit Gewinn im Zeitraum, Wert pro Kunde und „Aus 1 € werden …“.
 - „Ihre Kampagnen werden laufend nach Umsatz je Werbe-Euro optimiert.“ Nicht sagen, dass Daten anderer Kunden genutzt werden.
 - „Sie sehen jeden Monat schwarz auf weiß, was es Ihnen bringt.“
 

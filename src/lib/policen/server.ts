@@ -263,14 +263,19 @@ export async function hatPolicenDokumente(leadId: string | null | undefined): Pr
  * Widerruf, kein „STOPP“, noch kein Dokument, und ein gebuchter Termin in der Zukunft (nicht abgesagt). Jede Erinnerung
  * nennt den Abmeldehinweis „STOP“ (P2).
  */
-export async function policenErinnerungStatus(leadId: string, now = new Date()): Promise<{ darf: boolean; grund: string }> {
+export async function policenErinnerungStatus(leadId: string, now = new Date(), o: { ohneOptIn?: boolean } = {}): Promise<{ darf: boolean; grund: string }> {
   if (!policenAn()) return { darf: false, grund: "funktion_aus" };
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { customerId: true, phone: true, erasedAt: true } });
   if (!lead || lead.erasedAt) return { darf: false, grund: "kein_lead" };
   const arten = await prisma.policenNachweis.findMany({ where: { leadId }, orderBy: { createdAt: "asc" }, select: { art: true } });
   const letzteOptIn = arten.map((x) => x.art).lastIndexOf("erinnerung_optin");
-  if (letzteOptIn < 0) return { darf: false, grund: "kein_optin" };
-  if (arten.slice(letzteOptIn).some((x) => x.art === "erinnerung_stopp")) return { darf: false, grund: "stopp" };
+  if (o.ohneOptIn) {
+    // Satz in der Vortags-Terminerinnerung (A8 a, Ole 19.11.2026): ohne Opt-in, aber jeder Erinnerungs-Stopp gilt
+    if (arten.some((x) => x.art === "erinnerung_stopp")) return { darf: false, grund: "stopp" };
+  } else {
+    if (letzteOptIn < 0) return { darf: false, grund: "kein_optin" };
+    if (arten.slice(letzteOptIn).some((x) => x.art === "erinnerung_stopp")) return { darf: false, grund: "stopp" };
+  }
   if (arten.some((x) => x.art === "abgelehnt")) return { darf: false, grund: "lieber_nicht" };
   if (arten.some((x) => x.art === "widerruf")) return { darf: false, grund: "widerruf" };
   if (await hatPolicenDokumente(leadId)) return { darf: false, grund: "dokument_da" };
@@ -282,6 +287,14 @@ export async function policenErinnerungStatus(leadId: string, now = new Date()):
 }
 export async function darfPolicenErinnern(leadId: string, now = new Date()): Promise<boolean> {
   return (await policenErinnerungStatus(leadId, now)).darf;
+}
+
+/**
+ * Darf der Policen-Satz in die Vortags-Terminerinnerung (A8 a, Rechtsprüfung 19.11.2026)? Wie darfPolicenErinnern,
+ * aber ohne Opt-in: der Satz ist Teil der ohnehin verschickten Servicenachricht, keine eigene Erinnerung.
+ */
+export async function darfPolicenVortagSatz(leadId: string, now = new Date()): Promise<boolean> {
+  return (await policenErinnerungStatus(leadId, now, { ohneOptIn: true })).darf;
 }
 
 
@@ -951,7 +964,9 @@ export async function handleFlowAntwort(o: {
   }
   await setzeBody(o.messageId, `Formular „Policen senden“: ${ok === 1 ? "1 Dokument" : `${ok} Dokumente`} für den Vermittler`);
   if (fehler) console.error("[policen formular] dateien nicht geladen", fehler, fehlerGruende.join(", "));
-  if (!antwort.dateien.length) console.error("[policen formular] Antwort ohne Dateien", antwort.felder);
+  if (!antwort.dateien.length) console.error("[policen formular] Antwort ohne Dateien");
+  // Aufbau der Antwort ohne Inhalte (nur Schlüssel und Typen), um Abweichungen von Meta/360dialog zu erkennen
+  if (fehler || !antwort.dateien.length) console.error("[policen formular] aufbau", formularAufbau(o.responseJson));
 
   if (o.botErlaubt) {
     const c = await flow.flowChat(chat.id, now).catch(() => null);
@@ -1271,4 +1286,28 @@ export async function prunePolicen(now = new Date()) {
     logFehler("verwaist", e);
   }
   return { wartet, geloescht, aktualisiert, erinnert: erinnern.size, verwaist };
+}
+
+/** Schlüssel und Typen der Formular-Antwort ohne Werte (Protokoll bei Ladefehlern). */
+export function formularAufbau(raw: unknown): string {
+  let j: unknown = raw;
+  if (typeof raw === "string") {
+    try {
+      j = JSON.parse(raw);
+    } catch {
+      return "kein JSON";
+    }
+  }
+  const art = (v: unknown): string => (Array.isArray(v) ? `array(${v.length})` : v === null ? "null" : typeof v);
+  if (!j || typeof j !== "object") return art(j);
+  return Object.entries(j as Record<string, unknown>)
+    .map(([k, v]) => {
+      if (Array.isArray(v) && v.length) {
+        const e = v[0];
+        const innen = e && typeof e === "object" ? `{${Object.entries(e as Record<string, unknown>).map(([ik, iv]) => `${ik}:${art(iv)}`).join(",")}}` : art(e);
+        return `${k}:${art(v)}[${innen}]`;
+      }
+      return `${k}:${art(v)}`;
+    })
+    .join(" ");
 }

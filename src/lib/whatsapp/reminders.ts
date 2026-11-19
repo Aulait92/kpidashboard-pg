@@ -391,7 +391,7 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
     if (!k) continue;
     const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video" });
     // Policen-Erinnerung im Nutzensatz (P2: höchstens 2 insgesamt, Schluss bei der ersten Police oder „habe keine“)
-    const policen = await import("@/lib/whatsapp/termin-strecke").then((m) => m.policenVortagSatzFuer(appt, k.an)).catch(() => null);
+    const policen = await import("@/lib/whatsapp/termin-strecke").then((m) => m.policenVortagSatzFuer(appt, k.an, { person: k.person })).catch(() => null);
     const eingabe = { an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, ort: appt.ort, person: k.person, policen };
     // Bisherige Vorlage v4: Datum/Uhrzeit, Art, Link bzw. Hinweis (ältere mit Satz im Parameter)
     const params = [firstNameOf(k.conv.contactName), formatWhenDE(appt.startsAt), modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, k.an, appt.ort)];

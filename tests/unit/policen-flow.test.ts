@@ -386,7 +386,6 @@ describe("Antwort des Formulars (nfm_reply)", () => {
     expect(a?.dateien.map((d) => d.id)).toEqual(["42", null, "987"]);
     expect(a?.dateien[1].encryption?.iv).toBe("b");
     expect(a?.dateien[1].felder).toBe("cdn_url,encryption_metadata[encrypted_hash,iv,encryption_key,hmac_key,plaintext_hash]");
-    expect(a?.felder).toBe("flow_token,fotos,pdfs");
     expect(a?.dateien[0].felder).not.toContain("x.jpg");
   });
 });

@@ -12,15 +12,40 @@ const BASE_URL =
 
 export type SendResult = { messageId: string | null; raw: unknown };
 
+/**
+ * Fehler beim Verbindungsaufbau (nichts wurde gesendet): darf ohne Gefahr einer doppelten Nachricht wiederholt werden.
+ * Anlass (Ole, 19.11.2026): Nach einem Neustart scheiterten Antworten des Assistenten mit „Connect Timeout“ an
+ * waba-v2.360dialog.io, der Lead bekam keine Antwort.
+ */
+export function istVerbindungsaufbauFehler(err: unknown): boolean {
+  const cause = (err as { cause?: { code?: unknown } } | null)?.cause;
+  const code = typeof cause?.code === "string" ? cause.code : "";
+  return ["UND_ERR_CONNECT_TIMEOUT", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "ENETUNREACH", "EHOSTUNREACH"].includes(code);
+}
+
+/** Wartezeiten vor dem 2. und 3. Versuch (Millisekunden). */
+export const SENDE_WIEDERHOLUNG_MS = [1_000, 4_000];
+
 async function postMessage(apiKey: string, body: unknown): Promise<SendResult> {
-  const res = await fetch(`${BASE_URL}/messages`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "D360-API-KEY": apiKey,
-    },
-    body: JSON.stringify(body),
-  });
+  let res: Response | null = null;
+  for (let versuch = 0; ; versuch++) {
+    try {
+      res = await fetch(`${BASE_URL}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "D360-API-KEY": apiKey,
+        },
+        body: JSON.stringify(body),
+      });
+      break;
+    } catch (err) {
+      const warten = SENDE_WIEDERHOLUNG_MS[versuch];
+      if (warten === undefined || !istVerbindungsaufbauFehler(err)) throw err;
+      console.warn(`[360dialog] Verbindung fehlgeschlagen, Versuch ${versuch + 2} in ${warten} ms`);
+      await new Promise((r) => setTimeout(r, warten));
+    }
+  }
   const text = await res.text();
   let json: Record<string, unknown> | null = null;
   try {
