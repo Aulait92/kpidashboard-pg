@@ -5,7 +5,7 @@ import { DisconnectButton } from "@/app/admin/marketing/linkedin/forms";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
 import { EinstellungSeite, LISTE } from "@/components/admin-neu/einstellungen/rahmen";
 import { Button, Card, CardHeader, buttonClass } from "@/components/ui";
-import { ContactDataBackfill, ContactsImport, CopyField, InstantlyNachholen } from "@/components/vertrieb/import-forms";
+import { ContactDataBackfill, ContactsImport, CopyField, InstantlyNachholen, SperrenNachholen } from "@/components/vertrieb/import-forms";
 import { getAppUrl } from "@/lib/email";
 import { linkedInAvailable } from "@/lib/linkedin/api";
 import { metaDiagnostics } from "@/lib/meta-leads";
@@ -127,6 +127,9 @@ export default async function Page() {
             {adresse(hook("/api/vertrieb/instantly/webhook"))}
             <div data-funktion="import-forms-instantlynachholen--fehlende-instantly-antworten-der-letzten-90-tage">
               <InstantlyNachholen hasKey={!!process.env.INSTANTLY_API_KEY} />
+            </div>
+            <div data-funktion="import-forms-sperrennachholen--austragungen-aus-bisherigen-antworten-sperren">
+              <SperrenNachholen />
             </div>
             <Schritte steps={["Instantly → Settings → Integrations → Webhooks", "Bestehenden Webhook bearbeiten, URL ersetzen, „All Events“"]} />
           </Quelle>

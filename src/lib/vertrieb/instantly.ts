@@ -6,6 +6,8 @@ import { CAMPAIGN_STATUS } from "@/lib/vertrieb/crm";
 import { captureFromLead, captureFromMail } from "@/lib/vertrieb/kontaktdaten-server";
 import { indexMailPhones } from "@/lib/telefonsuche-server";
 import { classifyReply, isAutoReplyText, sentimentFromInstantly, type Sentiment } from "@/lib/vertrieb/sentiment";
+import { sperrGrundAusAntwort } from "@/lib/vertrieb/nie-kontaktieren";
+import { instantlySperreErneuern, nieKontaktierenSetzen } from "@/lib/vertrieb/nie-kontaktieren-server";
 
 const API = "https://api.instantly.ai/api/v2";
 
@@ -377,10 +379,12 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
   // Klare Absage im Text hat Vorrang vor Instantlys Einstufung (deren KI markiert Absagen teils als „interessiert“).
   // Ebenso Später-Interesse („aktuell nicht, aber ab März“): weder Absage noch sofortige Aufgabe, sondern Follow-up.
   const own = stripQuoted(r.text ?? "");
-  let textSentiment = classifyReply(own, r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""), r.sentAt);
+  // „Nie kontaktieren“ (Ole, 19.11.2026): Austragung, Widerspruch, Datenschutzfrage. Immer eine Absage, nie „später“.
+  const sperrGrund = r.isAutoReply ? null : sperrGrundAusAntwort(r.text, r.subject);
+  let textSentiment: Sentiment = sperrGrund ? "NEGATIV" : classifyReply(own, r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""), r.sentAt);
   // Regeln übersehen „später“ (Ole, 18.11.2026): KI prüft Antworten mit Hinweis auf später, nie klare Absagen
   let spaeter: { dueAt: Date; timing: string | null } | null = null;
-  if (planen && !r.isAutoReply && textSentiment !== "SPAETER") {
+  if (planen && !r.isAutoReply && !sperrGrund && textSentiment !== "SPAETER") {
     spaeter = await import("@/lib/vertrieb/spaeter-ki").then((m) => m.spaeterPerKi(own, r.sentAt, { seed: contactId })).catch((e) => {
       reportError(e, "spaeter-ki");
       return null;
@@ -439,6 +443,10 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
     await prisma.salesActivity.create({
       data: { contactId, type: "COLD_MAIL", outcome: label, note: r.subject ? `${r.subject}\n\n${snippet}` : snippet, occurredAt: r.sentAt },
     });
+  }
+  // Sperren (Follow-up stoppen, bei Datenschutzfragen Aufgabe „Auskunft nach Art. 15“, Instantly-Blocklist)
+  if (sperrGrund) {
+    await nieKontaktierenSetzen(contactId, sperrGrund, { at: r.sentAt, quelle: "Antwort per Mail" }).catch((e) => reportError(e, "nie-kontaktieren"));
   }
   // Aufgabe nur bei positiver Antwort; Absage räumt offene Antwort-Aufgaben weg
   if (sentiment === "POSITIV") await ensureReplyTask(contactId, snippet.slice(0, 300));
@@ -582,7 +590,10 @@ async function saveLead(contactId: string, campaignId: string, d: LeadData, camp
   });
   if (d.unsubscribed && !prev?.unsubscribed) {
     await import("@/lib/vertrieb/followup").then((m) => m.stopFollowup(contactId, "Abgemeldet")).catch((e) => reportError(e, "followup-stop"));
+    await nieKontaktierenSetzen(contactId, "austragen", { quelle: `Abmeldung in Instantly, Kampagne „${campaignName}“` }).catch((e) => reportError(e, "nie-kontaktieren"));
   }
+  // Gesperrter Kontakt taucht in einer weiteren Kampagne auf (Liste erneut hochgeladen): in Instantly erneut sperren
+  if (!prev) await instantlySperreErneuern(contactId);
   if (d.sentAt && !prev?.sentAt) {
     await prisma.salesActivity.create({
       data: { contactId, type: "COLD_MAIL", outcome: "Gesendet", note: `Kampagne: ${campaignName}`, occurredAt: d.sentAt },
@@ -705,6 +716,11 @@ export async function handleWebhook(p: Record<string, unknown>) {
   switch (type) {
     case "email_sent":
       await prisma.salesCampaignLead.upsert({ where: key, create: { ...base, sentAt: at, status: "Aktiv" }, update: { sentAt: at } });
+      // Instantly hat einen gesperrten Kontakt angeschrieben: Sperre in Instantly erneut durchsetzen (nächster Cron)
+      if (await prisma.salesContact.findFirst({ where: { id: contact.id, nieKontaktierenAt: { not: null } }, select: { id: true } })) {
+        await instantlySperreErneuern(contact.id);
+        reportError(new Error("Instantly hat einen Kontakt mit „nie kontaktieren“ angeschrieben"), "nie-kontaktieren-versand", { kampagne: name });
+      }
       if (!prev?.sentAt) {
         await prisma.salesActivity.create({ data: { contactId: contact.id, type: "COLD_MAIL", outcome: "Gesendet", note: `Kampagne: ${name}${p.step ? ` (Schritt ${p.step})` : ""}`, occurredAt: at } });
       }
@@ -744,6 +760,7 @@ export async function handleWebhook(p: Record<string, unknown>) {
     case "lead_unsubscribed":
       await prisma.salesCampaignLead.upsert({ where: key, create: { ...base, unsubscribed: true, status: "Abgemeldet" }, update: { unsubscribed: true, status: "Abgemeldet" } });
       await import("@/lib/vertrieb/followup").then((m) => m.stopFollowup(contact.id, "Abgemeldet")).catch((e) => reportError(e, "followup-stop"));
+      await nieKontaktierenSetzen(contact.id, "austragen", { at, quelle: `Abmeldung in Instantly, Kampagne „${name}“` }).catch((e) => reportError(e, "nie-kontaktieren"));
       break;
     case "lead_interested":
     case "lead_meeting_booked":

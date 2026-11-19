@@ -471,6 +471,46 @@ export async function setWhatsappErlaubtAction(contactId: string, erlaubt: boole
   return { ok: true };
 }
 
+/** „Nie kontaktieren“ in der Kontaktakte (Ole, 19.11.2026): von Hand setzen (Grund „manuell“) bzw. aufheben. */
+export async function setNieKontaktierenAction(contactId: string, an: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAuth();
+  if (!contactId) return { ok: false, error: "Kontakt fehlt." };
+  const m = await import("@/lib/vertrieb/nie-kontaktieren-server");
+  if (an) await m.nieKontaktierenSetzen(contactId, "manuell", { quelle: "von Hand in der Kontaktakte" });
+  else await m.nieKontaktierenAufheben(contactId);
+  await audit(an ? "vertrieb.nie_kontaktieren" : "vertrieb.nie_kontaktieren_aufgehoben", { entity: "SalesContact", entityId: contactId });
+  refresh(contactId);
+  return { ok: true };
+}
+
+// ─── Sperren aus bisherigen Antworten nachholen (Vorschau, dann Anwenden) ─
+export type SperrNachholState = { ok: boolean; message: string; ergebnis?: import("@/lib/vertrieb/nie-kontaktieren-server").SperrNachholErgebnis } | null;
+
+/** Einmaliger Nachhol-Lauf (Ole, 19.11.2026): Austragungen, Widersprüche, Datenschutzfragen und Abmeldungen sperren. */
+export async function sperrenNachholenAction(_p: SperrNachholState, fd: FormData): Promise<SperrNachholState> {
+  await requireAuth();
+  const anwenden = s(fd, "mode") === "anwenden";
+  try {
+    const { sperrenAusAntworten } = await import("@/lib/vertrieb/nie-kontaktieren-server");
+    const r = await sperrenAusAntworten({ anwenden });
+    const n = (x: number, one: string, many: string) => `${x.toLocaleString("de-DE")} ${x === 1 ? one : many}`;
+    const neu = r.neu.austragen + r.neu.widerspruch + r.neu.datenschutz;
+    if (anwenden) {
+      await audit("vertrieb.sperren_nachholen", { entity: "SalesContact", details: { ...r.neu, schonGesperrt: r.schonGesperrt, uebersprungen: r.uebersprungen, aufgaben: r.aufgaben, ...r.instantly } });
+      refresh();
+    }
+    const teile = `${r.neu.austragen} Austragung, ${r.neu.widerspruch} Widerspruch, ${r.neu.datenschutz} Datenschutz`;
+    const message = anwenden
+      ? `${n(neu, "Kontakt", "Kontakte")} gesperrt (${teile}), ${n(r.aufgaben, "Aufgabe", "Aufgaben")} „Auskunft nach Art. 15“.`
+      : neu
+        ? `${n(neu, "Kontakt wird", "Kontakte werden")} gesperrt (${teile}). ${n(r.schonGesperrt, "ist", "sind")} schon gesperrt.`
+        : `Keine neuen Sperren. ${n(r.schonGesperrt, "Kontakt ist", "Kontakte sind")} schon gesperrt.`;
+    return { ok: true, message, ergebnis: r };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 // ─── Verlauf bearbeiten ─────────────────────────────────────────────────
 export async function updateActivity(fd: FormData) {
   await requireAuth();

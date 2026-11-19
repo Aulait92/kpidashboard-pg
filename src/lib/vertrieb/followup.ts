@@ -70,6 +70,8 @@ export async function planFollowup(contactId: string, opts: PlanOpts) {
   const now = opts.now ?? new Date();
   const contact = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { stage: true } });
   if (!contact || STOP_STAGES.includes(contact.stage)) return null;
+  // „Nie kontaktieren“ bzw. Sperrliste: kein Follow-up per Mail (Ole, 19.11.2026)
+  if (await kontaktGesperrt(contactId)) return null;
   const email = await threadEmailFor(contactId, opts.replyEmailId);
   if (!email) return null;
   let dueAt = opts.dueAt;

@@ -42,6 +42,25 @@ jeder. Einwand-Kategorien: Kein Bedarf/ausgelastet, Hat schon Anbieter, Läuft �
 der Adresse, Falsche Person, Ruhestand, Macht Marketing selbst; ohne Treffer „Kein Interesse ohne Begründung“.
 `SalesContact.lossReason` wird nicht genutzt, weil die App bei Absagen automatisch „Kein Interesse“ setzt.
 
+## Gesperrt: nie kontaktieren (seit 19.11.2026)
+
+Abschnitt „Gesperrt (nie kontaktieren)“ bzw. `data.gesperrt` (auch in `q=instantly`): Kontakte mit
+`SalesContact.nieKontaktierenAt` je Grund (`austragen`, `widerspruch`, `datenschutz`, `bounce_hart`, `manuell`),
+in Instantly noch offene Sperren und offene Aufgaben „Auskunft nach Art. 15“. Nur Zahlen, keine Adressen.
+
+- Automatisch gesetzt bei Antworten mit Austragungs- oder Widerspruchswunsch bzw. Datenschutzfrage (eigener Text,
+  ohne Zitat und Signatur, `src/lib/vertrieb/nie-kontaktieren.ts`) und bei Abmeldung in Instantly; von Hand in der
+  Kontaktakte (Stammdaten → E-Mail → „Nie kontaktieren“).
+- Gesetzt heißt: keine Nachricht mehr aus der App (`kontaktGesperrt`), Adresse auf der Instantly-Blocklist
+  (`POST /api/v2/block-lists-entries`), in jeder Kampagne Interessenstatus „kein Interesse“
+  (`POST /api/v2/leads/update-interest-status`). Nur mit `INSTANTLY_AUTO_SYNC=1`; Fehler wiederholt der
+  Instantly-Cron alle 15 Minuten. Datenschutzfragen: Aufgabe „Auskunft nach Art. 15 beantworten, Frist …“ (ein Monat).
+- Nachhol-Lauf über alle bisherigen Antworten und Abmeldungen: Einstellungen → Anbindungen & Import → Instantly →
+  „Austragungen aus bisherigen Antworten sperren“ (Vorschau, dann sperren; mehrfach ausführbar). Nur zählen:
+  `q=instantly&sperren=1`. Übersprungen werden Kontakte mit späterer Zusage, Termin oder Kundenkonto.
+- Harte Bounces setzt die App nicht automatisch (sonst wären auch WhatsApp-Terminbestätigungen gesperrt); sie fallen
+  beim Abgleich vor einem Upload (`vorUploadPruefen`) heraus, ebenso Sperrliste, Abmeldungen und Instantly-Blocklist.
+
 ## Was lokal fehlt (und was die Instantly-API stattdessen bräuchte)
 
 | Wunsch | Lokal? | Weg über die Instantly-API (v2), nicht eingebaut, nicht aufgerufen |

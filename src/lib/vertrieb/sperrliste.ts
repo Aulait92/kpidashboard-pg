@@ -2,8 +2,9 @@
 // (Follow-ups, Später-Abfolge, Zahlungserinnerung, WhatsApp über die Support-Nummer). Anlass: Unterlassungsvertrag
 // (Az. ABCNX), jede weitere Werbe-Mail wäre eine Vertragsstrafe. Einzelne Adressen stehen nur als SHA-256-Hash im
 // Code (keine personenbezogenen Daten im Repo); weitere Einträge ohne Deploy über VERTRIEB_SPERRLISTE
-// (kommagetrennt, Adressen oder @domain). Cold-Mail-Kampagnen in Instantly selbst sperrt das nicht: dort die
-// Blocklist von Instantly pflegen.
+// (kommagetrennt, Adressen oder @domain). Dazu je Kontakt das Merkmal „nie kontaktieren“ (Ole, 19.11.2026,
+// lib/vertrieb/nie-kontaktieren-server.ts): Austragung, Widerspruch, Datenschutzfrage, Abmeldung, von Hand. Gesetzt
+// trägt es die Adresse auch in die Instantly-Blocklist ein und stoppt die Kampagnen; die feste Liste hier nicht.
 
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
@@ -36,10 +37,11 @@ export function emailGesperrt(email: string | null | undefined): boolean {
   return env.emails.has(e) || SPERR_EMAIL_HASHES.includes(hash(e));
 }
 
-/** Vertriebskontakt gesperrt? Hauptadresse, weitere Adressen oder Cold-Mail-Abmeldung. */
+/** Vertriebskontakt gesperrt? „Nie kontaktieren“, Hauptadresse, weitere Adressen oder Cold-Mail-Abmeldung. */
 export async function kontaktGesperrt(contactId: string | null | undefined): Promise<boolean> {
   if (!contactId) return false;
-  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true, altEmails: true } });
+  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true, altEmails: true, nieKontaktierenAt: true } });
+  if (c?.nieKontaktierenAt) return true;
   if (c && [c.email, ...c.altEmails].some(emailGesperrt)) return true;
   return !!(await prisma.salesCampaignLead.findFirst({ where: { contactId, unsubscribed: true }, select: { id: true } }));
 }

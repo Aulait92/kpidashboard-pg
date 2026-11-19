@@ -4,6 +4,7 @@ import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
 import { ConfirmButton } from "@/components/vertrieb/confirm-button";
 import { ContactEmails, ContactPhones } from "@/components/vertrieb/contact-merge";
 import { WhatsappErlaubt } from "@/components/vertrieb/whatsapp-erlaubt";
+import { NieKontaktieren } from "@/components/vertrieb/nie-kontaktieren";
 import { AdminRescheduleButton, AdminTerminButton, type TerminTypeOption } from "@/components/termin/admin-termin";
 import { adminBookTerminAction, adminRescheduleTerminAction } from "@/app/admin/vertrieb/buchungsseite/actions";
 import {
@@ -337,6 +338,7 @@ export function Stammdaten({ c, a }: { c: Kontakt; a: Akte }) {
         <dt className={DT}>E-Mail</dt>
         <dd className="min-w-0" data-funktion="actions-addcontactemailaction--weitere-e-mail-hinzufuegen-entfernen-zur-haupt-e actions-updateprimaryemailaction--haupt-e-mail-korrigieren">
           <ContactEmails contactId={c.id} email={c.email} altEmails={c.altEmails} sources={a.emailSources} />
+          <NieKontaktieren contactId={c.id} seit={c.nieKontaktierenAt} grund={c.nieKontaktierenGrund} />
         </dd>
         <dt className={DT}>Telefon</dt>
         <dd className="min-w-0">

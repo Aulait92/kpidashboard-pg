@@ -352,6 +352,10 @@ async function handle(req: Request): Promise<Response> {
       } catch (e) {
         reportError(e, "cron-instantly");
       }
+      // „Nie kontaktieren“: offene bzw. fehlgeschlagene Sperren in Instantly (Blocklist, Kampagnen) wiederholen
+      await import("@/lib/vertrieb/nie-kontaktieren-server")
+        .then((m) => m.instantlySperrenNachholen())
+        .catch((e: unknown) => reportError(e, "cron-nie-kontaktieren"));
     });
   }
   // Calendly: stündlich die Termine abgleichen (Sicherheitsnetz, falls ein Webhook nicht ankommt; Ole 16.11.2026:
