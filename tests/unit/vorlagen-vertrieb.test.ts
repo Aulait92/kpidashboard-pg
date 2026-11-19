@@ -299,4 +299,15 @@ describe("A/B-Test: Statistik und Entscheidung", () => {
     expect(b).toBeGreaterThan(900);
     expect(b).toBeLessThan(1100);
   });
+
+  it("Zuteilung je Vorlage unabhängig (nicht nur Parität der Zeichen, Korrektur 19.11.2026)", () => {
+    let gleich = 0;
+    for (let i = 0; i < 2000; i++) if (variantForKey("outreach_tkv", `lead-${i}`) === variantForKey("outreach_zahn", `lead-${i}`)) gleich++;
+    // gekoppelt wären es 0 oder 2000; unabhängig etwa die Hälfte
+    expect(gleich).toBeGreaterThan(900);
+    expect(gleich).toBeLessThan(1100);
+    // Zeichen mit gleicher Parität vertauscht: früher immer dieselbe Fassung
+    const vs = new Set(["ab", "ba", "cd", "dc", "ef", "fe", "gh", "hg"].map((k) => variantForKey("outreach_tkv", k)));
+    expect(vs.size).toBe(2);
+  });
 });

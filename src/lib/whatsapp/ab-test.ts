@@ -7,6 +7,7 @@
 //     wird die bessere Fassung automatisch Standard (TemplateAbTest.winner) und im Audit-Log vermerkt.
 // Rein: zTest, decideAbWinner, variantForKey (Unit-Tests). Datenbank: abVariantFor, loadAbStats, promoteAbWinners.
 
+import { createHash } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { TEMPLATE_BODY_B, variantsFor, type NoticePurpose, type TemplateVariant } from "@/lib/whatsapp/templates";
@@ -59,14 +60,17 @@ export function decideAbWinner(s: AbStats, opts: { min?: number; alpha?: number 
   return { winner: t.z > 0 ? "b" : "a", p: t.p, z: t.z, reason: "entschieden" };
 }
 
-/** Feste, gleichverteilte Zuteilung je Zweck und Schlüssel (FNV-1a). */
+/**
+ * Feste, gleichverteilte Zuteilung je Zweck und Schlüssel (SHA-256, wie lib/experimente.ts zuteilen).
+ * Korrektur 19.11.2026 (Ole: „ja korrigieren“): vorher FNV-1a mit „% 2“. Das unterste Bit hängt dabei nur an der
+ * Parität der Zeichen (XOR und Multiplikation mit einer ungeraden Zahl), der Zweck kippt es höchstens; alle Vorlagen-
+ * Tests eines Leads waren so vollständig gekoppelt.
+ * Auswertung bleibt richtig: loadAbStats zählt die bei jeder Sendung gespeicherte Fassung (Message.variant) und
+ * rechnet nichts neu aus. Alte Sendungen behalten ihre Fassung, neu verteilt werden nur künftige Sendungen; beide
+ * Zuteilungen sind je Fassung zufällig gegenüber Antwortverhalten, daher keine Verzerrung durch die Umstellung.
+ */
 export function variantForKey(purpose: string, key: string): TemplateVariant {
-  let h = 0x811c9dc5;
-  for (const ch of `${purpose}:${key}`) {
-    h ^= ch.codePointAt(0)!;
-    h = Math.imul(h, 0x01000193) >>> 0;
-  }
-  return h % 2 === 0 ? "a" : "b";
+  return createHash("sha256").update(`ab:${purpose}:${key}`).digest()[0] % 2 === 0 ? "a" : "b";
 }
 
 /** Zwecke mit laufendem bzw. entschiedenem A/B-Test. */
