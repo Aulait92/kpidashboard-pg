@@ -394,3 +394,12 @@ Stand 18.11.: Limit nach 12 Abfragen erneut erreicht, resets_at 2026-11-18T22:24
 - Einwilligung nur mit zwei Knöpfen „Einverstanden“ und „Lieber nicht“. Speichern und KI-Auslesen werden gebündelt eingewilligt, ohne getrennte Option „ohne KI“. Begründung Ole: sonst wählen fast alle die Option ohne KI. Rechtliche Einordnung: Das Angebot bleibt insgesamt freiwillig (der Termin findet auch ohne Unterlagen statt), daher kein Kopplungsproblem nach Art. 7 Abs. 4 DSGVO. Offen ist, ob ErwG 43 hier eine getrennte Einwilligung verlangt (Anwaltsfrage 11). Restrisiko leicht erhöht, von Ole bewusst getragen.
   - Nachtrag 18.11.: Nach der Nachrecherche (Art. 4 Nr. 2, Art. 7 DSGVO, EuGH C-252/21, alle [LDH]) ist die Bündelung vertretbar, aber das Restrisiko eher mittel als leicht erhöht. Empfehlung ohne dritten Knopf: Auflage A9 (Stichwort „ohne KI“), senkt es auf gering bis mittel. Entscheidung über A9 liegt bei Ole.
 - Livegang aller Sparten. Gesundheitssparten je Vermittler erst nach Zustimmung zur AVV-Ergänzung (A5). KI-Auslesen für Kranken, BU und Leben erst mit Nachweis der Null-Speicherung (K2).
+
+## Entscheidung 19.11.2026: Policen-Strecke v2 für alle Software-Kunden
+
+Ole hat am 19.11.2026 entschieden, die Policen-Strecke v2 (WhatsApp-Formular statt Bitte und Einwilligung,
+`POLICEN_FLOW=1`, `POLICEN_FLOW_KUNDEN` leer) für alle Software-Kunden ohne Pay-per-Lead einzuschalten, nicht nur für
+einen Pilotkreis. Hinweis vorab: Die AVV-Ergänzung (Anlage 2, Unterauftragsverarbeiter für das Auslesen) liegt noch
+nicht bei allen Kunden vor. Auflage: Ergänzung zeitnah an alle betroffenen Kunden senden. Unverändert gilt: Kranken,
+BU und Leben werden nur mit Freigabe je Vermittler und Nachweis „keine Speicherung“ automatisch ausgelesen (K2).
+Rücknahme jederzeit über `POLICEN_FLOW=0`; dann gilt wieder Bitte mit Einwilligung.
