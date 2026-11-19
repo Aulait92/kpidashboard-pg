@@ -81,6 +81,7 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 ## 19. Ihr Kunde schickt seine Policen. Sie sehen vorher, wo er doppelt zahlt. (neu ab 18.11.)
 - Nach der Terminbuchung bittet der Assistent den Kunden per WhatsApp, Fotos oder PDFs seiner aktuellen Policen zu schicken, aller Sparten und nur mit seiner Einwilligung; kommt nichts, erinnert er freundlich daran.
 - Die Vertragsdaten werden automatisch ausgelesen, und Sie bekommen in der Terminvorbereitung ein Vergleichsblatt: Beiträge im Monat, Verträge mit Kündigungstermin in den nächsten 3 Monaten, Doppelversicherungen und fehlende Bausteine.
+- Im Termin steht sein alter Vertrag direkt neben den neuen Tarifen (Spalte „Ihr bisheriger Vertrag“ auf der Vergleichsfolie): Beitrag, Leistungen und darunter der Unterschied im Jahr und bis wann er kündigen kann. Was in der Police nicht eindeutig steht, zeigt die Folie als „laut Police prüfen“.
 - Kernsatz: „Ihr Kunde schickt seine Policen, Sie sehen vor dem Termin, wo er doppelt zahlt.“ Das macht Termine kürzer und besser und öffnet den Weg zum Komplettcheck und zu weiteren Verträgen.
 - Keine Zahlen versprechen; bei Datenschutzfragen: Einwilligung des Kunden, Speicherung in der EU, nur Sie sehen die Unterlagen, automatische Löschung. Nebenbei erwähnen: Der Assistent stellt Zwischenfragen vor dem Termin und schickt die Einladung erst, wenn alles feststeht.
 
