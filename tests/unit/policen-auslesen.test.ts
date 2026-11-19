@@ -146,14 +146,24 @@ describe("Sparte vorab, ohne KI", () => {
   it("Vermittler geht vor, sonst Unterlage und Seite 1; Widerspruch oder Unklarheit: nicht auslesen", () => {
     expect(sparteVorab({ vermittler: "kfz", unterlage: "hausrat" })).toEqual({ sparte: "kfz", quelle: "vermittler" });
     expect(sparteVorab({ unterlage: "hausrat", text: "Ihre Hausratversicherung" })).toEqual({ sparte: "hausrat", quelle: "unterlage" });
-    expect(sparteVorab({ unterlage: "kranken" })).toEqual({ sparte: "pkv", quelle: "unterlage" });
+    // „kranken“ ist Voll- oder Zusatzversicherung: die Seite entscheidet
+    expect(sparteVorab({ unterlage: "kranken" })).toBeNull();
+    expect(sparteVorab({ unterlage: "kranken", text: "Ihre Zahnzusatzversicherung" })).toEqual({ sparte: "krankenzusatz", quelle: "text" });
+    expect(sparteVorab({ unterlage: "kranken", text: "Krankheitskostenvollversicherung" })).toEqual({ sparte: "pkv", quelle: "text" });
     expect(sparteVorab({ text: "Versicherungsschein Privathaftpflicht" })).toEqual({ sparte: "haftpflicht", quelle: "text" });
     expect(sparteVorab({ unterlage: "hausrat", text: "Kraftfahrtversicherung Teilkasko" })).toBeNull();
     expect(sparteVorab({ text: "Hausrat und Privathaftpflicht im Paket" })).toBeNull();
     expect(sparteVorab({ unterlage: "haftpflicht", text: "Hausrat und Privathaftpflicht im Paket" })).toEqual({ sparte: "haftpflicht", quelle: "unterlage" });
-    expect(sparteVorab({ unterlage: "unfall" })).toBeNull();
-    expect(sparteVorab({ unterlage: "tier" })).toBeNull();
-    expect(sparteVorab({ text: "Hundehalterhaftpflicht" })).toBeNull();
+    // Weitere Sparten (Ole, 19.11.2026)
+    expect(sparteVorab({ unterlage: "unfall" })).toEqual({ sparte: "unfall", quelle: "unterlage" });
+    expect(sparteVorab({ unterlage: "tier" })).toEqual({ sparte: "tier", quelle: "unterlage" });
+    expect(sparteVorab({ text: "Hundehalterhaftpflicht" })).toEqual({ sparte: "tier", quelle: "text" });
+    expect(sparteVorab({ text: "Tierkrankenversicherung für Ihre Katze" })).toEqual({ sparte: "tier", quelle: "text" });
+    expect(sparteVorab({ text: "Reiserücktrittsversicherung Jahrespolice" })).toEqual({ sparte: "reise", quelle: "text" });
+    expect(sparteVorab({ text: "Ihre Unfallversicherung" })).toEqual({ sparte: "unfall", quelle: "text" });
+    // „Sonstige“ vom Vermittler, Seite nennt eine Gesundheitssparte: die gilt (Schutz nach K2)
+    expect(sparteVorab({ vermittler: "sonstige", text: "Glasversicherung" })).toEqual({ sparte: "sonstige", quelle: "vermittler" });
+    expect(sparteVorab({ vermittler: "sonstige", text: "Pflegetagegeld" })).toEqual({ sparte: "pflege", quelle: "text" });
     expect(sparteVorab({})).toBeNull();
     expect(spartenImText("Berufsunfähigkeitsversicherung")).toEqual(["bu"]);
   });
@@ -175,8 +185,10 @@ describe("Schalter und Konfiguration", () => {
     expect(auslesenAn({ ...key, POLICEN_AUSLESEN_ANBIETER: "bedrock-eu" })).toBe(false);
   });
   it("Sach sofort, PKV/BU/Leben nur mit Nachweis „keine Speicherung“", () => {
-    expect(freigegebeneSparten({ zdr: false }, {})).toEqual(["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz"]);
-    expect(freigegebeneSparten({ zdr: true }, {})).toEqual(["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz", "pkv", "bu", "leben"]);
+    expect(freigegebeneSparten({ zdr: false }, {})).toEqual(["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz", "tier", "reise", "sonstige"]);
+    expect(freigegebeneSparten({ zdr: true }, {})).toEqual([
+      "haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz", "unfall", "tier", "reise", "krankenzusatz", "pflege", "pkv", "bu", "leben", "sonstige",
+    ]);
     expect(freigegebeneSparten({ zdr: false }, { POLICEN_AUSLESEN_SPARTEN: "hausrat,pkv" })).toEqual(["hausrat"]);
   });
   it("Einwilligung: nur KI-Textversionen (Policen per WhatsApp ab 2026-11-18.s2/.g2 mit „ohne KI“, Text (a) ab a-2026-11-17)", () => {

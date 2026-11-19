@@ -217,7 +217,7 @@ export async function liesUnterlageAus(documentId: string, o: { sparte?: Auslese
   }
 
   // Sparte vorab, ohne KI: Vermittler, Unterlage, Textebene Seite 1 (nur lokal)
-  const text = typ === "application/pdf" && !vermittlerSparte ? await ersteSeiteText(daten) : "";
+  const text = typ === "application/pdf" && (!vermittlerSparte || vermittlerSparte === "sonstige") ? await ersteSeiteText(daten) : "";
   const vorab = sparteVorab({ vermittler: vermittlerSparte, unterlage: doc.sparte, text });
   if (!vorab) {
     await setze({ status: "sparte_offen", sparte: null, sparteQuelle: null });
@@ -253,8 +253,10 @@ export async function liesUnterlageAus(documentId: string, o: { sparte?: Auslese
     return { status: "fehler" };
   }
   const b = bereinige(r.roh, vorab.sparte);
-  // Andere Sparte laut Dokument: nichts übernehmen (im Zweifel nicht auslesen); der Vermittler kann die Sparte wählen
-  if (b.sparte !== vorab.sparte) {
+  // Andere Sparte laut Dokument: nichts übernehmen (im Zweifel nicht auslesen); der Vermittler kann die Sparte wählen.
+  // „Sonstige“: passt, solange die KI keine der genauen Sparten erkennt
+  const passt = b.sparte === vorab.sparte || (vorab.sparte === "sonstige" && (b.sparte === "andere" || b.sparte === null));
+  if (!passt) {
     await setze({ status: "sparte_abweichend", sparte: vorab.sparte, sparteQuelle: vorab.quelle, felder: Prisma.DbNull, versuche: { increment: 1 }, anbieter: anbieter.name, modell: r.modell, ausgelesenAt: now });
     log("sparte-abweichend", { anbieter: anbieter.name });
     return { status: "sparte_abweichend" };
@@ -320,16 +322,18 @@ export type Vergleich = {
 };
 
 /** Daten für das Vergleichsblatt. Zugriff prüft der Aufrufer (leadScope); in der Admin-Vorschau nie aufrufen. */
+/** Sparten zur Wahl im Vergleichsblatt: alle, eingeschränkt nur durch POLICEN_AUSLESEN_SPARTEN (nicht durch K2). */
+const alleSparten = () => freigegebeneSparten({ zdr: true });
+
 export async function ladeVergleich(leadId: string, customerId: string, now = new Date()): Promise<Vergleich> {
   const { loadBestandVisible } = await import("@/lib/bestand/sichtbar-server");
-  const [docs, sperre, zdr, bestand] = await Promise.all([
+  const [docs, sperre, bestand] = await Promise.all([
     prisma.leadDocument.findMany({
       where: { leadId, customerId, status: "gespeichert" },
       orderBy: { createdAt: "asc" },
       select: { id: true, sparte: true, createdAt: true, auszug: true },
     }),
     sperreFuer(customerId, leadId),
-    zdrHinterlegt(),
     loadBestandVisible(customerId).catch(() => false),
   ]);
   const vertraege: VertragKarte[] = [];
@@ -371,7 +375,9 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
       vertraege.map((v) => ({ id: v.id, sparte: v.sparte, felder: v.felder, geprueft: v.geprueft })),
       now,
     ),
-    sparten: freigegebeneSparten({ zdr }),
+    // Alle Sparten zur Wahl (Ole, 19.11.2026); noch nicht freigegebene (Gesundheitssparten ohne Nachweis) enden als
+    // „gesperrt“ mit Hinweis, statt dass der Vermittler die passende Sparte gar nicht findet
+    sparten: alleSparten(),
     bestand,
   };
 }
@@ -432,7 +438,7 @@ export async function waehleSparte(w: Wer, documentId: string, sparte: AuslesenS
   return liesUnterlageAus(doc.id, { sparte });
 }
 
-const BESTAND_LINIE: Record<AuslesenSparte, string> = {
+const BESTAND_LINIE: Record<AuslesenSparte, string | null> = {
   haftpflicht: "Haftpflicht",
   hausrat: "Hausrat",
   kfz: "KFZ",
@@ -441,6 +447,13 @@ const BESTAND_LINIE: Record<AuslesenSparte, string> = {
   pkv: "Kranken",
   bu: "BU",
   leben: "Vorsorge",
+  unfall: "Unfall",
+  tier: "Tier",
+  reise: "Reise",
+  krankenzusatz: "Kranken",
+  pflege: "Pflege",
+  // keine passende Linie im Bestand
+  sonstige: null,
 };
 export const POLICEN_BESTAND_NOTIZ = "Aus Unterlagen vom Kunden übernommen";
 
@@ -451,6 +464,8 @@ export const POLICEN_BESTAND_NOTIZ = "Aus Unterlagen vom Kunden übernommen";
 export async function uebernimmInBestand(w: Wer, id: string): Promise<{ existingContractId: string } | null> {
   const a = await auszugVon(w, id);
   if (!a || !isAuslesenSparte(a.sparte) || a.status !== "ausgelesen") return null;
+  const linie = BESTAND_LINIE[a.sparte];
+  if (!linie) return null;
   const { loadBestandVisible } = await import("@/lib/bestand/sichtbar-server");
   if (!(await loadBestandVisible(w.customerId))) return null;
   if (a.existingContractId) {
@@ -468,7 +483,7 @@ export async function uebernimmInBestand(w: Wer, id: string): Promise<{ existing
   const vertrag = await prisma.existingContract.create({
     data: {
       existingCustomerId: ec.id,
-      line: BESTAND_LINIE[a.sparte],
+      line: linie,
       product: s("tarifname"),
       insurer: s("versicherer"),
       contractNo: s("versicherungsnummer"),

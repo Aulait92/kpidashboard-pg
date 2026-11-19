@@ -316,7 +316,7 @@ const GRUND: Record<string, string> = {
   sparte_offen: "Welche Sparte ist das?",
   sparte_abweichend: "Die Unterlage passt nicht zur Sparte. Welche ist es?",
   andere: "Andere Sparte, wird nicht automatisch ausgelesen. Bitte im Original ansehen.",
-  gesperrt: "Diese Sparte wird nicht automatisch ausgelesen.",
+  gesperrt: "Diese Sparte wird noch nicht automatisch ausgelesen. Bitte im Original ansehen.",
   limit: "Nicht automatisch ausgelesen.",
   fehler: "Konnte nicht ausgelesen werden.",
   laeuft: "Wird ausgelesen …",
@@ -329,6 +329,9 @@ const SPERRE: Record<string, string> = {
   pause: "Automatisches Auslesen ist gerade nicht verfügbar.",
   kunde: "Automatisches Auslesen ist für Ihr Konto noch nicht freigeschaltet.",
 };
+
+/** Sparten, die beim Wählen direkt sichtbar sind; alle anderen hinter „Weitere“. */
+const HAEUFIG: readonly AuslesenSparte[] = ["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz", "unfall"];
 
 function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich; href: (docId: string) => string; readOnly: boolean }) {
   const toast = useToast();
@@ -348,6 +351,8 @@ function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich
   // (Ole, 19.11.2026: „wenn ich hier draufklicke, passiert nichts und die Buttons werden grau“)
   const [gewaehlt, setGewaehlt] = useState<{ doc: string; sparte: AuslesenSparte | "andere" } | null>(null);
   const label = (s: AuslesenSparte | "andere") => (s === "andere" ? "Andere" : SPARTE_LABEL[s]);
+  // Häufige Sparten direkt, der Rest hinter „Weitere“ (je Unterlage)
+  const [mehr, setMehr] = useState<string | null>(null);
   const waehle = (o: OffeneUnterlage, s: AuslesenSparte | "andere") => {
     setGewaehlt({ doc: o.documentId, sparte: s });
     start(async () => {
@@ -384,11 +389,18 @@ function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich
               </p>
               {waehlen ? (
                 <div className="mt-2 flex flex-wrap gap-1.5 pl-6" data-sparte-waehlen>
-                  {[...v.sparten, "andere" as const].map((s) => (
-                    <Button key={s} variant={diese?.sparte === s ? "primary" : s === "andere" ? "ghost" : undefined} onClick={() => waehle(o, s)} disabled={pending} data-sparte={s}>
-                      {label(s)}
+                  {v.sparten
+                    .filter((s) => mehr === o.documentId || HAEUFIG.includes(s) || diese?.sparte === s)
+                    .map((s) => (
+                      <Button key={s} variant={diese?.sparte === s ? "primary" : undefined} onClick={() => waehle(o, s)} disabled={pending} data-sparte={s}>
+                        {label(s)}
+                      </Button>
+                    ))}
+                  {mehr !== o.documentId && v.sparten.some((s) => !HAEUFIG.includes(s)) ? (
+                    <Button variant="ghost" onClick={() => setMehr(o.documentId)} disabled={pending} data-weitere-sparten>
+                      Weitere …
                     </Button>
-                  ))}
+                  ) : null}
                 </div>
               ) : null}
               {!v.sperre && !readOnly && o.status === "fehler" ? (
