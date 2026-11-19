@@ -1,4 +1,4 @@
-# Sprechzettel Vertriebspräsentation (Stand 17.11.2026)
+# Sprechzettel Vertriebspräsentation (Stand 19.11.2026: Folien 11 und 12 getauscht)
 
 Gilt für die Vertreter-Fassung (24 Folien). Makler-Fassung (25 Folien): nach Folie 21 kommt „Mit Tarifvergleich: alles zurück nach 7 Monaten“ (Notiz unten), danach verschiebt sich alles um eins.
 Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeanteil unter der Hälfte.
@@ -44,13 +44,13 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - Auf die Antwort von Folie 6 zurückkommen: „Kennen Sie das?“
 - „Die Software löst genau das, automatisch.“
 
-## 11. Sonntag, 21:47 Uhr
-- Die Geschichte erzählen: Formular am Sonntagabend, 9 Minuten später steht der Termin.
-- „Sie haben dabei nichts getan.“
-
-## 12. Niemand geht ran? Egal, der Lead bucht selbst.
+## 11. Niemand geht ran? Egal, der Lead bucht selbst.
 - WhatsApp statt Anruf, der Assistent stellt die richtigen Fragen, der Lead bucht direkt einen Termin.
 - „Sie führen nur noch das Beratungsgespräch.“
+
+## 12. Sonntag, 21:47 Uhr
+- Die Geschichte erzählen: Formular am Sonntagabend, 9 Minuten später steht der Termin.
+- „Sie haben dabei nichts getan.“
 
 ## 13. So arbeitet Ihr digitaler Assistent (Video)
 - Video laufen lassen, nicht dazwischenreden.
