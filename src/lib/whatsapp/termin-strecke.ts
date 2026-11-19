@@ -61,7 +61,20 @@ import {
 import { istTierStrecke, offeneTierFragen, tierAntwortAuswerten, tierFrage, type TierFrageKey } from "@/lib/whatsapp/tier-fragen";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
 import { ZWISCHEN_TEXT } from "@/lib/whatsapp/zwischenfrage";
-import { normalisiereVertraege, sagtKeine, VORVERTRAEGE_SCHEMA, vertraegeAusText, type Vorvertraege, type Vorvertrag } from "@/lib/whatsapp/vorvertraege";
+import {
+  fehlendeVersicherer,
+  normalisiereVertraege,
+  sagtKeine,
+  versichererNachfrage,
+  versichererZuordnen,
+  VERTRAG_SPARTEN,
+  VORVERTRAEGE_SCHEMA,
+  vertraegeAusText,
+  vorvertraegeAus,
+  type VertragSparte,
+  type Vorvertraege,
+  type Vorvertrag,
+} from "@/lib/whatsapp/vorvertraege";
 
 /** Merker (interne Nachrichten) der Strecke. */
 export const STRECKE = {
@@ -77,6 +90,8 @@ export const STRECKE = {
   langAntwort: "komplett_zeiten_antwort",
   vertragsfrage: "vertragsfrage",
   vorvertraege: "vorvertraege",
+  /** Einmalige Nachfrage nach den Gesellschaften (body.sparten: Sparten ohne Versicherer), Ole 19.11.2026 */
+  versichererFrage: "versicherer_frage",
   /** Erste Angebotsfrage von der App gestellt (nach dem Komplettcheck bzw. als Rückfall) */
   angebotsfragen: "angebotsfragen",
   /** Policen-Bitte (body.police: Wort für die Erinnerung, null = alle Policen) */
@@ -245,6 +260,8 @@ export type StreckenStand = {
   angebotsfragenAt: Date | null;
   vertragsfrageAt: Date | null;
   vorvertraegeErfasst: boolean;
+  /** Nachfrage nach den Gesellschaften gestellt (wartet auf Antwort, solange vorvertraegeErfasst false ist) */
+  versichererFrage: { at: Date; sparten: VertragSparte[] } | null;
   policenBitteAt: Date | null;
   /** Wort der Policen-Bitte für die Erinnerung (null = alle Policen) */
   policenPolice: string | null;
@@ -270,6 +287,7 @@ const STAND_KINDS: string[] = [
   STRECKE.angebotsfragen,
   STRECKE.vertragsfrage,
   STRECKE.vorvertraege,
+  STRECKE.versichererFrage,
   STRECKE.policenBitte,
   STRECKE.policenAntwort,
   STRECKE.policenErinnerung,
@@ -312,6 +330,11 @@ export async function streckenStand(conversationId: string, appointmentId: strin
     angebotsfragenAt: at(STRECKE.angebotsfragen),
     vertragsfrageAt: at(STRECKE.vertragsfrage),
     vorvertraegeErfasst: !!at(STRECKE.vorvertraege),
+    versichererFrage: (() => {
+      const f = erste(STRECKE.versichererFrage);
+      const sp = f ? daten(f.body).sparten : null;
+      return f ? { at: f.createdAt, sparten: (Array.isArray(sp) ? sp : []).filter((x): x is VertragSparte => (VERTRAG_SPARTEN as readonly string[]).includes(x)) } : null;
+    })(),
     policenBitteAt: bitte?.createdAt ?? null,
     policenPolice: typeof daten(bitte?.body ?? null).police === "string" ? (daten(bitte!.body).police as string) : null,
     policenAntwortAt: at(STRECKE.policenAntwort),
@@ -482,7 +505,8 @@ export async function tierAntwort(conversationId: string, text: string, knopf: {
   const f = naechsteTierFrage(k, [...stand.tierBeantwortet, ...r.beantwortet]);
   if (f) {
     await merke(conversationId, STRECKE.tierFrage, { appointmentId: k.termin.id, key: f.key });
-    await sende(k, /^Danke!/.test(f.text) ? f.text : `Danke! ${f.text}`, f.buttons);
+    // ohne „Danke!“ davor: Fragen, die selbst mit Dank beginnen, und die Bitte um ein passendes Datum
+    await sende(k, /^(Danke\b|Das Datum)/.test(f.text) ? f.text : `Danke! ${f.text}`, f.buttons);
   } else {
     await sendeKomplettcheck(k);
   }
@@ -901,14 +925,45 @@ export async function extrahiereVertraege(text: string): Promise<{ liste: Vorver
 }
 
 
-/** Antwort auf die Vertragsfrage: auswerten, am Lead speichern, dann die Policen-Bitte bzw. der Schluss. true = erledigt. */
+/**
+ * Antwort auf die Vertragsfrage: auswerten, am Lead speichern, dann die Policen-Bitte bzw. der Schluss. Fehlt zu
+ * genannten Sparten der Versicherer, kommt genau einmal die Nachfrage (Ole, 19.11.2026); deren Antwort ergänzt die
+ * Gesellschaften (versichererAntwort), „weiß nicht“ bzw. keine Antwort: weiter ohne zweite Frage. true = erledigt.
+ */
 export async function vertraegeAntwort(conversationId: string, text: string, now = new Date()): Promise<boolean> {
   const k = await streckenKontext(conversationId, now);
   if (!k?.termin) return false;
+  const stand = await streckenStand(conversationId, k.termin.id);
+  if (stand.versichererFrage) return versichererAntwort(k, stand.versichererFrage.sparten, text);
   const { liste, keine } = await extrahiereVertraege(text);
   const wert: Vorvertraege = { at: now.toISOString(), liste, ...(keine ? { keine: true } : {}) };
   if (k.leadId) await prisma.lead.update({ where: { id: k.leadId }, data: { vorvertraege: wert as unknown as Prisma.InputJsonValue } });
+  const fehlend = fehlendeVersicherer(liste);
+  const nachfrage = versichererNachfrage(fehlend, k.an, k.person.nom);
+  if (nachfrage) {
+    await merke(conversationId, STRECKE.versichererFrage, { appointmentId: k.termin.id, sparten: fehlend });
+    await sende(k, nachfrage);
+    return true;
+  }
   await merke(conversationId, STRECKE.vorvertraege, { appointmentId: k.termin.id, anzahl: liste.length, keine });
+  const s = await naechsterSchritt(k, { einleitung: "Danke!", schlussEinleitung: abschlussEinleitung(k.an, k.person, "vertraege") });
+  if (s) await sendeSchritt(k, s);
+  return true;
+}
+
+/** Antwort auf die Nachfrage nach den Gesellschaften: zuordnen, ergänzen, weiter (nie eine zweite Nachfrage). */
+async function versichererAntwort(k: StreckenKontext, sparten: VertragSparte[], text: string): Promise<boolean> {
+  if (!k.termin) return false;
+  const zu = versichererZuordnen(sparten, text);
+  if (Object.keys(zu).length && k.leadId) {
+    const lead = await prisma.lead.findUnique({ where: { id: k.leadId }, select: { vorvertraege: true } });
+    const v = vorvertraegeAus(lead?.vorvertraege);
+    if (v) {
+      const liste = v.liste.map((x) => (!x.gesellschaft && zu[x.sparte] ? { ...x, gesellschaft: zu[x.sparte]! } : x));
+      await prisma.lead.update({ where: { id: k.leadId }, data: { vorvertraege: { ...v, liste } as unknown as Prisma.InputJsonValue } });
+    }
+  }
+  await merke(k.conversationId, STRECKE.vorvertraege, { appointmentId: k.termin.id, nachfrage: true, ergaenzt: Object.keys(zu).length });
   const s = await naechsterSchritt(k, { einleitung: "Danke!", schlussEinleitung: abschlussEinleitung(k.an, k.person, "vertraege") });
   if (s) await sendeSchritt(k, s);
   return true;
@@ -946,7 +1001,7 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
   const offen = await prisma.message.findMany({
     where: {
       direction: "internal",
-      kind: { in: [STRECKE.tierFrage, STRECKE.komplettFrage, STRECKE.langAngebot, STRECKE.vertragsfrage, STRECKE.policenBitte] },
+      kind: { in: [STRECKE.tierFrage, STRECKE.komplettFrage, STRECKE.langAngebot, STRECKE.vertragsfrage, STRECKE.versichererFrage, STRECKE.policenBitte] },
       createdAt: { lte: new Date(now.getTime() - HOUR), gte: new Date(now.getTime() - 48 * HOUR) },
     },
     orderBy: { createdAt: "asc" },
@@ -970,7 +1025,7 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
         : policenBitteOffen(stand)
         ? { art: "policen", seit: stand.policenBitteAt! }
         : stand.vertragsfrageAt && !stand.vorvertraegeErfasst
-          ? { art: "vertraege", seit: stand.vertragsfrageAt }
+          ? { art: "vertraege", seit: stand.versichererFrage?.at ?? stand.vertragsfrageAt }
           : langAngebotOffen(stand)
             ? { art: "lang", seit: stand.langAngebotAt! }
             : stand.komplettFrageAt && !komplettcheckErledigt(stand)

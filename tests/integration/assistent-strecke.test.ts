@@ -288,8 +288,18 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await knopf(phone, "folge:oeffentlicherDienst:nein", "Nein");
     expect(gesendet().at(-1)!.body).toMatch(/^Danke! (Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: )?Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
 
-    // Verträge → Policen-Bitte (Text aus dem Policen-Modul), danach die Einwilligung als eigene Nachricht mit Knöpfen
+    // Verträge ohne Gesellschaft bei BU und Kfz → genau eine Nachfrage (Ole, 19.11.2026)
     await text(phone, "Haftpflicht bei der HUK, eine BU und Kfz");
+    expect(gesendet().at(-1)!.body).toBe("Danke! Wissen Sie noch, bei welcher Gesellschaft die Berufsunfähigkeit und die Kfz sind? Dann kann Herr Kannapinn gezielt vergleichen.");
+    // Antwort (Tippfehler, eine Sparte unbekannt) → ergänzt, keine zweite Nachfrage; dann Policen-Bitte (Text aus dem
+    // Policen-Modul) und die Einwilligung als eigene Nachricht mit Knöpfen
+    await text(phone, "BU bei der Allainz, Kfz weiß ich nicht");
+    const vv = (await prisma.lead.findUniqueOrThrow({ where: { id: lead.id }, select: { vorvertraege: true } })).vorvertraege as { liste: { sparte: string; gesellschaft: string | null }[] };
+    expect(vv.liste.map((v) => [v.sparte, v.gesellschaft])).toEqual([
+      ["Haftpflicht", "HUK-Coburg"],
+      ["Berufsunfähigkeit", "Allianz"],
+      ["Kfz", null],
+    ]);
     const [bitte, einwilligung] = gesendet().slice(-2);
     expect(bitte.body).toMatch(/^Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen/);
     expect(einwilligung.buttons?.map((b) => b.id)).toEqual(["policen:ja", "policen:nein"]);
@@ -384,7 +394,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       return gesendet().slice(ab).map((s) => s.body);
     };
 
-    expect(await antwort("22.08.1992", { geburt: "22.08.1992" }, "Danke! Wie groß ist Ihre Wohnung ungefähr?")).toEqual(["Danke! Wie groß ist Ihre Wohnung ungefähr?"]);
+    expect(await antwort("22.08.1992", { geburt: "22.08.1992" }, "Danke! Wie viele Quadratmeter Wohnfläche hat Ihre Wohnung? Bitte als Zahl, zum Beispiel 72.")).toEqual(["Danke! Wie viele Quadratmeter Wohnfläche hat Ihre Wohnung? Bitte als Zahl, zum Beispiel 72."]);
     expect(await antwort("95", { wohnflaeche: "95 m²" }, "Danke! Sind Sie im öffentlichen Dienst tätig?")).toEqual(["Danke! Sind Sie im öffentlichen Dienst tätig?"]);
     // Letzte Angebotsfrage: statt eigener Worte die Vertragsfrage der App
     const letzte = await antwort("Nein", { beruf: "nicht im öffentlichen Dienst" }, "Danke, notiert.");
@@ -648,7 +658,14 @@ describe("Termin-Strecke mit Knöpfen", () => {
       expect((await angaben(x.conv.id)).tier).toBe("Minka, 4 Jahre; Rasse: Hauskatze/Mischling");
       expect(gesendet().at(-1)!.body).toBe("Danke! Hat Minka schon eine Tierversicherung?");
       await text(x.phone, "nein");
-      expect(gesendet().at(-1)!.body).toBe("Danke! Für das Angebot braucht Herr Kannapinn noch Ihr Geburtsdatum. Wie lautet es?");
+      expect(gesendet().at(-1)!.body).toBe("Danke! Für das Angebot braucht Herr Kannapinn noch Ihr eigenes Geburtsdatum als Versicherungsnehmer. Wie lautet es?");
+      // Live-Test 19.11.2026: das Geburtsdatum der Katze kam als Antwort → beim Tier notiert, einmal nach dem eigenen gefragt
+      await text(x.phone, "23.09.2025");
+      expect((await angaben(x.conv.id)).geburt).toBeUndefined();
+      expect((await angaben(x.conv.id)).tier).toBe("Minka, 4 Jahre; Rasse: Hauskatze/Mischling; Datum aus dem Chat: 23.09.2025");
+      expect(gesendet().at(-1)!.body).toBe(
+        "Danke, das ist sicher das Geburtsdatum von Minka, das habe ich notiert. Für den Vertrag braucht Herr Kannapinn noch Ihr eigenes Geburtsdatum.",
+      );
       await text(x.phone, "14.05.1985");
       const komplett = gesendet().at(-1)!;
       expect(komplett.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind|Oft zahlen Menschen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen, wo Sie)/);

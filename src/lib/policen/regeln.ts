@@ -54,6 +54,17 @@ export function minderjaehrig(formData: unknown, now = new Date()): boolean {
 }
 
 /**
+ * Minderjährig laut Chat: Der Lead hat bestätigt, dass ein Geburtsdatum unter 18 sein eigenes ist (Conversation.
+ * qualificationData.geburt mit „eigenes, bestätigt“, lib/whatsapp/geburt-chat.ts). Unbestätigte Daten zählen nicht.
+ */
+export function minderjaehrigLautChat(qualificationData: unknown, now = new Date()): boolean {
+  if (!qualificationData || typeof qualificationData !== "object" || Array.isArray(qualificationData)) return false;
+  const g = (qualificationData as Record<string, unknown>).geburt;
+  if (typeof g !== "string" || !/eigenes, bestätigt/.test(g)) return false;
+  return minderjaehrig([{ label: "Geburtsdatum", value: g.replace(/\s*\(.*\)\s*$/, "") }], now);
+}
+
+/**
  * Notschalter POLICEN_WHATSAPP_AUS (Railway-Variable): Bitte um Policen, Einwilligung und Ablage aus. Sonst ist die
  * Funktion an, sobald die Ablage eingerichtet ist (ablage.ts ablageBereit: privater EU-Bucket und Schlüssel).
  */

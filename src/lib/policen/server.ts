@@ -56,6 +56,7 @@ import {
   loeschDatum,
   mimeErlaubt,
   minderjaehrig,
+  minderjaehrigLautChat,
   minderjaehrigText,
   nichtGeladenText,
   policenNotAus,
@@ -104,10 +105,12 @@ type Chat = { id: string; customerId: string; leadId: string; contactPhone: stri
 async function chatOf(conversationId: string): Promise<Chat | null> {
   const c = await prisma.conversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, customerId: true, leadId: true, contactPhone: true, contactName: true, lead: { select: { erasedAt: true, formData: true } } },
+    select: { id: true, customerId: true, leadId: true, contactPhone: true, contactName: true, qualificationData: true, lead: { select: { erasedAt: true, formData: true } } },
   });
   if (!c?.leadId || c.lead?.erasedAt) return null;
-  return { id: c.id, customerId: c.customerId, leadId: c.leadId, contactPhone: c.contactPhone, contactName: c.contactName, minderjaehrig: minderjaehrig(c.lead?.formData) };
+  // Formular oder im Chat bestätigtes Geburtsdatum unter 18 (lib/whatsapp/geburt-chat.ts)
+  const minderjaehrigJa = minderjaehrig(c.lead?.formData) || minderjaehrigLautChat(c.qualificationData);
+  return { id: c.id, customerId: c.customerId, leadId: c.leadId, contactPhone: c.contactPhone, contactName: c.contactName, minderjaehrig: minderjaehrigJa };
 }
 
 type Sprecher = { an: Ansprache; person: Person; vermittler: BitteVermittler; firma: string | null; datenschutzUrl: string | null; gesundheitAn: boolean };

@@ -30,7 +30,8 @@ import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { sendErstinfo } from "@/lib/whatsapp/erstinfo-pdf";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
-import { mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
+import { cleanQualificationData, mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
+import { GEBURT_MERKER, geburtImChat, type GeburtMerker } from "@/lib/whatsapp/geburt-chat";
 import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
@@ -59,7 +60,7 @@ import { angabenOhneGesundheit, GESUNDHEITS_REGEL, istTierLead, ohneGesundheitsa
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
 import { logTestLead } from "@/lib/testlead";
 import { nennungsRegel, vermittlerNennungKorrigieren } from "@/lib/vermittler-nennung";
-import { zwischenfrageText, zwischenHinweis, zwischenKnoepfe, ZWISCHENFRAGE_AKTIV } from "@/lib/whatsapp/zwischenfrage";
+import { zwischenfrageText, zwischenHinweis, zwischenKnoepfe, zwischenNachfrageText, ZWISCHENFRAGE_AKTIV } from "@/lib/whatsapp/zwischenfrage";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -818,11 +819,19 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       to: conversation.contactPhone,
       body: [...prefix, zwischenfrageText(zw.def, ansprache, person)].join("\n\n"),
       sentBy: "bot",
-      buttons: zwischenKnoepfe(zw.def),
+      buttons: zwischenKnoepfe(zw.def).length ? zwischenKnoepfe(zw.def) : null,
     });
     logTestLead(lead, "zwischenfrage sent", { feld: zw.def.feld });
     await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName: person.dat });
     if (conversation.leadId) await restartSilentSequence(conversation.leadId).catch((e) => console.error("[lead-sequences silent]", e));
+    return;
+  }
+  // Freie Zahl unklar (Wohnfläche als Spanne bzw. unplausibel): genau einmal nachfragen, ohne Assistent
+  if (zw?.art === "nachfragen") {
+    const { zwischenAngabeSpeichern } = await import("@/lib/whatsapp/zwischenfrage-server");
+    if (zw.wert) await zwischenAngabeSpeichern(conversation.id, { [zw.def.feld]: zw.wert }, { tier: istTierLead(lead?.source) });
+    await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: zwischenNachfrageText(zw.nachfrage, ansprache), sentBy: "bot" });
+    logTestLead(lead, "zwischenfrage nachgefragt", { feld: zw.def.feld, art: zw.nachfrage });
     return;
   }
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
@@ -1005,9 +1014,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
 
   // Antwort auf die Zwischenfrage per Knopf (bzw. eindeutig getippt): festhalten, qualifiziert, Terminvorschlag der App
   // (greift die Antwort auf: „was Haftpflicht und Hausrat für Sie kosten“), ohne Assistent. Ohne Kalender: Assistent.
-  if (zw?.art === "antwort" && zw.wert) {
+  // „weiß nicht“ bzw. zweite unklare Zahl (ohneWert): ohne Wert weiter, der Vermittler fragt im Termin
+  if (zw?.art === "antwort" && (zw.wert || zw.ohneWert)) {
     const { zwischenAngabeSpeichern } = await import("@/lib/whatsapp/zwischenfrage-server");
-    await zwischenAngabeSpeichern(conversation.id, { [zw.def.feld]: zw.wert }, { qualifiziert: true, tier: istTierLead(lead?.source) });
+    await zwischenAngabeSpeichern(conversation.id, zw.wert ? { [zw.def.feld]: zw.wert } : {}, { qualifiziert: true, tier: istTierLead(lead?.source) });
     await schlageVor({});
     if (zug.vorschlag) logTestLead(lead, "zwischenfrage beantwortet, terminvorschlag");
   }
@@ -1066,11 +1076,41 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         const tier = istTierLead(lead?.source);
         const angaben = angabenOhneGesundheit(istZahnLead(lead?.source) ? neutralZahnAngaben(input.angaben) : input.angaben, { tier });
         if (typeof input.zusammenfassung === "string") input.zusammenfassung = ohneGesundheitsangaben(input.zusammenfassung, { tier });
-        await persistInternal(conversation.id, "qualification", { ...input, angaben }); // Audit-Log
-        // Strukturierte Punkte zusätzlich zum Fließtext; neue Angaben ergänzen die bisherigen.
         const prevData = (
           await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } })
         )?.qualificationData;
+        // Geburtsdatum prüfen (lib/whatsapp/geburt-chat.ts): unter 18, Zukunft oder über 100 nicht ungeprüft übernehmen
+        const geburtWert = angaben && typeof angaben === "object" && !Array.isArray(angaben) ? (angaben as Record<string, unknown>).geburt : undefined;
+        if (typeof geburtWert === "string" && geburtWert.trim()) {
+          const schon = (
+            await prisma.message.findMany({ where: { conversationId: conversation.id, direction: "internal", kind: GEBURT_MERKER }, select: { body: true } })
+          ).flatMap((m) => {
+            try {
+              const x = JSON.parse(m.body ?? "{}") as GeburtMerker;
+              return x && typeof x.art === "string" && typeof x.datum === "string" ? [x] : [];
+            } catch {
+              return [];
+            }
+          });
+          const tierName = form.normal.find((x) => /tiername|name des tieres|name (der katze|des hundes|des pferdes)/i.test(x.label))?.value?.trim() || null;
+          const g = geburtImChat({
+            wert: geburtWert,
+            tierLead: tier,
+            tierBisher: typeof (angaben as Record<string, unknown>).tier === "string" ? ((angaben as Record<string, unknown>).tier as string) : (cleanQualificationData(prevData).tier ?? null),
+            tierName: tierName && tierName.length <= 30 ? tierName : null,
+            an: ansprache,
+            person: person.nom,
+            schon,
+          });
+          const ang = angaben as Record<string, unknown>;
+          if (g.geburt === null) delete ang.geburt;
+          else ang.geburt = g.geburt;
+          if (g.tier) ang.tier = g.tier;
+          if (g.merker) await persistInternal(conversation.id, GEBURT_MERKER, g.merker);
+          if (g.hinweis) content = g.hinweis;
+        }
+        await persistInternal(conversation.id, "qualification", { ...input, angaben }); // Audit-Log
+        // Strukturierte Punkte zusätzlich zum Fließtext; neue Angaben ergänzen die bisherigen.
         const data = angaben !== undefined ? mergeQualificationData(prevData, angaben) : undefined;
         await prisma.conversation.update({
           where: { id: conversation.id },

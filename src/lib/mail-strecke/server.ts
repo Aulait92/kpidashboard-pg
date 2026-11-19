@@ -703,8 +703,16 @@ export async function angabenSpeichern(streckeId: string, werte: Record<string, 
   const ff = folgefragen(spartenDesLeads(lead.source, quelle), quelle).slice(0, 5);
   const neu: Record<string, string> = {};
   for (const f of ff) {
-    const v = (werte[f.key] ?? "").replace(/\s+/g, " ").trim().slice(0, 200);
+    let v = (werte[f.key] ?? "").replace(/\s+/g, " ").trim().slice(0, 200);
     if (!v) continue;
+    // Wohnfläche als Zahl („ca. 75 qm“ → „75 m²“, Spanne → „ca. 70 m²“); Unklares bleibt wie eingegeben
+    if (f.key === "wohnflaeche") {
+      const { qmText, wohnflaecheLesen } = await import("@/lib/wohnflaeche");
+      const r = wohnflaecheLesen(v);
+      if (r?.art === "zahl") v = qmText(r.qm);
+      else if (r?.art === "spanne") v = `ca. ${qmText(r.qm)}`;
+      else if (r?.art === "weiss_nicht") continue;
+    }
     neu[f.feld] = neu[f.feld] ? `${neu[f.feld]}; ${v}` : v;
   }
   const { mergeQualificationData, cleanQualificationData } = await import("@/lib/whatsapp/qualification");

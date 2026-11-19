@@ -48,7 +48,7 @@ function tierCheckliste(): ProduktCheckliste {
       "  • Gesundheit des Tieres: Hatte oder hat es in den letzten 24 Monaten Krankheiten, Unfallfolgen, Symptome, Beeinträchtigungen, Verhaltensauffälligkeiten oder Befunde, die noch keine Behandlung brauchen? Erst ja oder nein fragen; bei ja, welche Bereiche betroffen sind (z. B. Zähne, Haut und Fell, Augen, Ohren, Magen und Darm, Gelenke bzw. Bewegungsapparat, Herz, Harnorgane) (angaben.tier)",
       "  • Genaues Geburtsdatum des Tieres: nur nebenbei, wenn es sich ergibt. Monat und Jahr aus dem Formular reichen, nicht extra fragen (angaben.tier)",
       "  • Geburtsdatum des Halters, also des Leads (für den Antrag) (angaben.geburt)",
-      "  • Besteht schon eine Tierversicherung, und wenn ja, wann läuft sie ab (angaben.vorhanden)",
+      "  • Besteht schon eine Tierversicherung, und wenn ja, wann läuft sie ab (Monat und Jahr, angaben.vorhanden)",
       "  • Welcher Schutz gewünscht ist: nur Operationen (OP-Schutz) oder volle Krankenversicherung, also auch Tierarztbehandlungen ohne OP. Neutral fragen, ohne zu empfehlen (angaben.tarifwunsch)",
       "- Gesundheitsangaben zum Tier sachlich und ohne Wertung aufnehmen. Sag nichts dazu, ob oder wie sie den Versicherungsschutz beeinflussen: das klärt der Berater.",
       "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel, lass den Rest offen: der Berater klärt ihn im Termin.",

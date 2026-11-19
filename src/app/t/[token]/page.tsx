@@ -241,7 +241,7 @@ function NachBuchung({ st, token }: { st: SeitenStand; token: string }) {
             ) : (
               <label key={f.key} className="block">
                 <span className="mb-1 block text-sm font-medium">{f.text}</span>
-                <input name={`f_${f.key}`} className="w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2.5 text-base focus:border-[color:var(--brand)] focus:outline-none" />
+                <input name={`f_${f.key}`} {...(f.key === "wohnflaeche" ? { inputMode: "decimal" as const } : {})} className="w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2.5 text-base focus:border-[color:var(--brand)] focus:outline-none" />
               </label>
             ),
           )}
