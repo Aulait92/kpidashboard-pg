@@ -11,6 +11,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
+import { AGENT_CONFIRM_VERSION } from "@/lib/bestand/befugnis";
 
 const PASSWORT = "Test1234!test";
 const DAY = 86_400_000;
@@ -104,10 +105,10 @@ async function main() {
     bestandMonthly: 99,
     bestandUwgConfirmedAt: ago(20),
     bestandAgentConfirmedAt: ago(21),
-    bestandAgentConfirmedVersion: "2026-11-15",
+    bestandAgentConfirmedVersion: AGENT_CONFIRM_VERSION,
     bestandMailImprint: "Testagentur Bestand, Musterstraße 1, 80331 München, Tel. 089 000000, Vermittlerregister D-XXXX-XXXXX-XX",
   });
-  await kunde(ID.leer, "Testagentur Bestand leer", { ...basis, existingCustomersEnabled: true, bestandSichtbar: true, bestandAgentConfirmedAt: ago(2), bestandAgentConfirmedVersion: "2026-11-15" });
+  await kunde(ID.leer, "Testagentur Bestand leer", { ...basis, existingCustomersEnabled: true, bestandSichtbar: true, bestandAgentConfirmedAt: ago(2), bestandAgentConfirmedVersion: AGENT_CONFIRM_VERSION });
   await kunde(ID.neu, "Testagentur Bestand neu", { ...basis, existingCustomersEnabled: false, bestandSichtbar: true });
   await login("bestand@test.local", ID.main, "Markus Testmann");
   await login("bestand-leer@test.local", ID.leer, "Lena Leer");
