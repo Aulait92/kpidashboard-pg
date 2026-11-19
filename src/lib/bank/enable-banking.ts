@@ -141,3 +141,34 @@ export async function fetchTransactions(accountUid: string, dateFrom: string, ma
   }
   return out;
 }
+
+export type EbBalance = {
+  name?: string | null;
+  balance_amount: { amount: string; currency: string };
+  balance_type?: string | null;
+  reference_date?: string | null;
+  last_change_date_time?: string | null;
+};
+
+/** Kontostände eines Kontos (nur lesen, wird nicht gespeichert). */
+export async function fetchBalances(accountUid: string): Promise<EbBalance[]> {
+  const r = await call<{ balances?: EbBalance[] }>(`/accounts/${encodeURIComponent(accountUid)}/balances`);
+  return r.balances ?? [];
+}
+
+/** Maßgeblicher Kontostand: gebuchter Tagesendsaldo (CLBD), sonst verfügbarer Zwischensaldo (ITAV), sonst der erste. */
+export function pickBalance(list: EbBalance[]): { betrag: number; waehrung: string; art: string; datum: string | null } | null {
+  const valid = list.filter((b) => Number.isFinite(Number(b.balance_amount?.amount)) && b.balance_amount?.amount !== "");
+  const typ = (b: EbBalance) => (b.balance_type ?? "").replace(/[^a-z]/gi, "").toUpperCase();
+  const b =
+    valid.find((x) => typ(x) === "CLBD" || typ(x) === "CLOSINGBOOKED") ??
+    valid.find((x) => typ(x) === "ITAV" || typ(x) === "INTERIMAVAILABLE") ??
+    valid[0];
+  if (!b) return null;
+  return {
+    betrag: Math.round(Number(b.balance_amount.amount) * 100) / 100,
+    waehrung: b.balance_amount.currency || "EUR",
+    art: b.balance_type || "unbekannt",
+    datum: b.reference_date ?? b.last_change_date_time?.slice(0, 10) ?? null,
+  };
+}
