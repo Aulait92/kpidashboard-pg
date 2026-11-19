@@ -3,6 +3,12 @@ import { beitragAus, cleanAngebote, sparteSchalten, type AngeboteDaten } from "@
 import { demoAngebote, demoFolien } from "@/lib/demo-beratung";
 import { folieNachKlick } from "@/components/folien-deck";
 
+/** Ausgangslage dieser Tests: nur Haftpflicht gewählt, Hausrat, Rechtsschutz und Unfall als Zusatz (die Live-Demo startet seit 19.11.2026 mit drei Sparten). */
+const nurHaftpflicht = (): ReturnType<typeof demoAngebote> => {
+  const d = demoAngebote();
+  return { ...d, items: d.items.map((i) => (i.sparte === "Hausrat" || i.sparte === "Rechtsschutz" ? { ...i, zusatz: true, gewaehlt: false } : i)) };
+};
+
 // Cross-Selling im Termin (Ole, 18.11.2026): per „Mit anschauen“ dazugenommene Produkte stehen direkt hinter
 // „Ihr Schutz im Überblick“ (nicht davor), in der Reihenfolge des Hinzufügens; der Beitrag bleibt dahinter und rechnet
 // sie mit; das Deck springt auf die neue Folie mit „{Produkt} hinzugefügt“.
@@ -21,7 +27,7 @@ const klick = (vorher: AngeboteDaten, sparte: string) => {
 
 describe("Präsentation: hinzugefügte Produkte hinter der aktuellen Folie", () => {
   it("0 Produkte: Überblick direkt vor dem Beitrag, keine Reihenfolge gespeichert", () => {
-    const d = demoAngebote();
+    const d = nurHaftpflicht();
     const x = ids(d);
     expect(x.filter((id) => id.startsWith("vergleich-"))).toEqual(["vergleich-haftpflicht-0"]);
     expect(x.indexOf("ueberblick")).toBe(x.indexOf("beitrag") - 1);
@@ -30,7 +36,7 @@ describe("Präsentation: hinzugefügte Produkte hinter der aktuellen Folie", () 
   });
 
   it("1 Produkt: Folie direkt nach dem Überblick, Sprung dorthin mit Hinweis, Beitrag dahinter rechnet mit", () => {
-    const { nachher, neu, z } = klick(demoAngebote(), "Unfall");
+    const { nachher, neu, z } = klick(nurHaftpflicht(), "Unfall");
     const x = neu.map((f) => f.id);
     expect(x.indexOf("vergleich-unfall-3")).toBe(x.indexOf("ueberblick") + 1);
     expect(x.indexOf("beitrag")).toBe(x.indexOf("vergleich-unfall-3") + 1);
@@ -43,7 +49,7 @@ describe("Präsentation: hinzugefügte Produkte hinter der aktuellen Folie", () 
 
   it("2 Produkte: das zweite hinter dem ersten (Reihenfolge des Hinzufügens, nicht des Angebots), Beitrag am Ende", () => {
     // Unfall steht im Angebot hinter Hausrat; zuerst Unfall, dann Hausrat
-    const eins = klick(demoAngebote(), "Unfall");
+    const eins = klick(nurHaftpflicht(), "Unfall");
     const zwei = klick(eins.nachher, "Hausrat");
     const x = zwei.neu.map((f) => f.id);
     const u = x.indexOf("ueberblick");
@@ -59,7 +65,7 @@ describe("Präsentation: hinzugefügte Produkte hinter der aktuellen Folie", () 
   });
 
   it("Herausnehmen und wieder dazu: Platz frei, dann hinten; kein Sprung beim Herausnehmen", () => {
-    let d = dazu(dazu(demoAngebote(), "Unfall"), "Hausrat");
+    let d = dazu(dazu(nurHaftpflicht(), "Unfall"), "Hausrat");
     const alt = demoFolien(d, am);
     d = dazu(d, "Unfall"); // wieder heraus
     expect(d.zusatzFolge).toEqual(["Hausrat"]);
@@ -74,7 +80,7 @@ describe("Präsentation: hinzugefügte Produkte hinter der aktuellen Folie", () 
   });
 
   it("Produkt mit nur einem Tarif bekommt ebenfalls eine Folie mit Preis", () => {
-    const d0 = demoAngebote();
+    const d0 = nurHaftpflicht();
     const d: AngeboteDaten = { ...d0, items: d0.items.filter((i) => i.tarif !== "Unfall Smart") };
     const n = dazu(d, "Unfall");
     const f = demoFolien(n, am).find((x) => x.id.startsWith("vergleich-unfall"))!;
@@ -83,12 +89,12 @@ describe("Präsentation: hinzugefügte Produkte hinter der aktuellen Folie", () 
   });
 
   it("Bereinigen: unbekannte oder doppelte Sparten fallen aus der Reihenfolge", () => {
-    const d = cleanAngebote({ ...demoAngebote(), zusatzFolge: ["Unfall", "Unfall", "Privathaftpflicht", "Gibt es nicht", 3, "Hausrat"] });
+    const d = cleanAngebote({ ...nurHaftpflicht(), zusatzFolge: ["Unfall", "Unfall", "Privathaftpflicht", "Gibt es nicht", 3, "Hausrat"] });
     expect(d.zusatzFolge).toEqual(["Unfall", "Hausrat"]);
   });
 
   it("Tarif wählen bzw. Baustein schalten ohne neue Folie: Deck bleibt auf der aktuellen Folie", () => {
-    const fs = demoFolien(demoAngebote(), am);
+    const fs = demoFolien(nurHaftpflicht(), am);
     expect(folieNachKlick(fs, "vergleich-haftpflicht-0", fs, true, 4)).toEqual({ i: fs.findIndex((f) => f.id === "vergleich-haftpflicht-0"), hinweis: null });
   });
 });
