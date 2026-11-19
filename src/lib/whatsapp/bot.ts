@@ -90,10 +90,12 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "get_available_slots",
     description:
-      "Liefert freie Termin-Vorschläge aus dem echten Kundenkalender (nächste Werktage). Erst nach erfolgter Qualifizierung nutzen, um dem Lead konkrete Zeiten anzubieten. Gib dem Lead die zurückgegebenen Zeiten in natürlicher Sprache (Datum + Uhrzeit) zur Auswahl.",
+      "Liefert freie Termin-Vorschläge aus dem echten Kundenkalender (ohne ab: die nächsten freien Zeiten). Erst nach erfolgter Qualifizierung nutzen, um dem Lead konkrete Zeiten anzubieten. Nennt der Lead einen Wunschtag oder einen späteren Zeitraum (z. B. „Dienstag“, „nächste Woche“, „erst im Dezember“), immer mit ab = diesem Tag aufrufen: dann kommen freie Zeiten ab diesem Tag, auch Wochen im Voraus. Sag nie, ein Tag sei „noch nicht frei“, ohne vorher mit ab gesucht zu haben.",
     input_schema: {
       type: "object",
-      properties: {},
+      properties: {
+        ab: { type: "string", description: "Optional: Wunschtag des Leads als Datum JJJJ-MM-TT (deutsche Zeit), z. B. der nächste Dienstag. Höchstens 90 Tage im Voraus." },
+      },
     },
   },
   {
@@ -478,6 +480,16 @@ export function parseBerlinTime(s: string): Date | null {
   );
   const asBerlin = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
   return new Date(guess.getTime() - (asBerlin - guess.getTime()));
+}
+
+/** Wunschtag „JJJJ-MM-TT“ als Suchbeginn (00:00 deutsche Zeit); nur Zukunft bis 90 Tage, sonst null. */
+export function wunschTagAb(raw: unknown, now = new Date()): Date | null {
+  if (typeof raw !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(raw.trim())) return null;
+  const d = parseBerlinTime(`${raw.trim()}T00:00:00`);
+  if (!d) return null;
+  // Heute oder Vergangenheit: normale Suche ab jetzt; mehr als 90 Tage: nicht zulässig
+  if (d.getTime() <= now.getTime() || d.getTime() > now.getTime() + 90 * 24 * 3600_000) return null;
+  return d;
 }
 
 /** Slot-Startzeit für den Bot lesbar machen (deutsche Lokalzeit). */
@@ -1133,7 +1145,11 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       } else if (tu.name === "get_available_slots") {
         try {
           const durationMin = await bookingDurationMin(conversation.customerId, conversation.leadId).catch(() => 30);
-          const slots: Slot[] = await suggestSlots(conversation.customerId, durationMin, 6, "lead", 10, conversation.leadId);
+          // Wunschtag des Leads (Ole, 19.11.2026): kann er nur später, bekommt er den späteren Termin, statt wieder die nächsten Zeiten
+          const ab = wunschTagAb((tu.input as { ab?: unknown }).ab);
+          const slots: Slot[] = ab
+            ? await suggestSlots(conversation.customerId, durationMin, 6, "lead", 14, conversation.leadId, ab)
+            : await suggestSlots(conversation.customerId, durationMin, 6, "lead", 10, conversation.leadId);
           // Berater abwesend (Urlaub, Krank …): ab wann wieder Termine gehen – ohne Grund.
           const pausedUntil = await bookingPausedUntil(conversation.customerId, conversation.leadId).catch(() => null);
           const absenceNote = pausedUntil

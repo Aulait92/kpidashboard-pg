@@ -21,7 +21,9 @@ import {
   vermittlerName,
   vertragsFrage,
   VERTRAGSFRAGE_RE,
+  WUNSCHZEIT_REGEL,
 } from "@/lib/whatsapp/gespraech";
+import { wunschTagAb } from "@/lib/whatsapp/bot";
 import { knopfAktion, knopfHinweis } from "@/lib/whatsapp/knopf";
 import { folgefragen, spartenDesLeads, type RechnerSparte } from "@/lib/preise/rechner-angaben";
 import { testLeadAnswers } from "@/lib/testlead";
@@ -497,3 +499,37 @@ describe("Erstanschreiben v9: Einreichung, Auswahl und Erstinformation (Live-Tes
   });
 });
 
+
+// Tier: gewünschter Umfang aus dem Chat geht vor der Kampagne (Ole, 19.11.2026: „nur OP“, Satz sagte „Krankenversicherung“)
+describe("Terminnutzen Tier: OP oder Krankenversicherung nach Wunsch des Leads", () => {
+  const satz = (angaben?: unknown, source = "Tierkrankenversicherung Katze") =>
+    terminNutzenSatz({ source, formular: [{ label: "Name des Tieres", value: "Minka" }], angaben, an: "sie", person: PERSON });
+  it("nur OP im Chat: OP-Versicherung, auch bei Kampagne Krankenversicherung", () => {
+    expect(satz({ tarifwunsch: "nur OP-Schutz" })).toContain("was eine OP-Versicherung für Minka kostet");
+  });
+  it("auch Behandlungen: Krankenversicherung, auch bei OP-Kampagne", () => {
+    expect(satz({ tarifwunsch: "volle Krankenversicherung (auch Tierarztbehandlung)" }, "Katzen-OP-Versicherung")).toContain("eine Krankenversicherung für Minka");
+  });
+  it("ohne Angabe oder offen: wie die Kampagne", () => {
+    expect(satz(undefined, "Katzen-OP-Versicherung")).toContain("eine OP-Versicherung");
+    expect(satz({ tarifwunsch: "offen" })).toContain("eine Krankenversicherung");
+  });
+});
+
+// Wunschtag: Suche ab diesem Tag statt immer der nächsten Zeiten (Ole, 19.11.2026: „Dienstag ist leider noch nicht frei“)
+describe("Terminsuche ab Wunschtag", () => {
+  const now = new Date("2026-11-19T22:00:00Z");
+  it("liest JJJJ-MM-TT als 0 Uhr deutscher Zeit", () => {
+    expect(wunschTagAb("2026-11-24", now)?.toISOString()).toBe("2026-11-23T23:00:00.000Z");
+  });
+  it("ignoriert Vergangenheit, mehr als 90 Tage und Unsinn", () => {
+    expect(wunschTagAb("2026-11-18", now)).toBeNull();
+    expect(wunschTagAb("2027-03-30", now)).toBeNull();
+    expect(wunschTagAb("Dienstag", now)).toBeNull();
+    expect(wunschTagAb(undefined, now)).toBeNull();
+  });
+  it("Regel nennt die Suche ab Wunschtag und keine abgelehnten Zeiten", () => {
+    expect(WUNSCHZEIT_REGEL).toContain("ab = diesem Tag");
+    expect(WUNSCHZEIT_REGEL).toContain("nie noch einmal anbieten");
+  });
+});
