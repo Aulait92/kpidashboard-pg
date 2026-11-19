@@ -130,6 +130,13 @@ export async function loadAbStats(purpose: NoticePurpose, now = new Date()): Pro
            )) AS booked
     FROM "Message" m
     WHERE m."purpose" = ${purpose} AND m."direction" = 'outbound' AND m."variant" IN ('a', 'b') AND m."createdAt" <= ${until}
+      -- Über alle Kunden hinweg, aber ohne Testleads und Testkunden (Ole, 19.11.2026: eigene Tests verfälschen sonst)
+      AND NOT EXISTS (
+        SELECT 1 FROM "Conversation" c
+        LEFT JOIN "Lead" l ON l."id" = c."leadId"
+        JOIN "Customer" cu ON cu."id" = c."customerId"
+        WHERE c."id" = m."conversationId" AND (coalesce(l."isTest", false) OR cu."isTest")
+      )
     GROUP BY m."variant"
   `);
   const of = (v: string): VariantStats => {

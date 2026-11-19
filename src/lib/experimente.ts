@@ -193,6 +193,11 @@ export async function experimentStats(experiment: string): Promise<ExperimentSta
            )) AS ziel
     FROM "ExperimentZuteilung" z
     WHERE z."experiment" = ${experiment}
+      -- Über alle Kunden hinweg, ohne Testleads und Testkunden (Ole, 19.11.2026); Einheit ist meist die Lead-ID
+      AND NOT EXISTS (
+        SELECT 1 FROM "Lead" l JOIN "Customer" cu ON cu."id" = l."customerId"
+        WHERE l."id" = z."einheit" AND (l."isTest" OR cu."isTest")
+      )
     GROUP BY z."variante"
   `);
   const of = (v: Variante): FassungStats => {
