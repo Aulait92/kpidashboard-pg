@@ -325,6 +325,8 @@ async function sendLeadEmailInner(
   if (c.calendar && kind !== "reminder") {
     await prisma.appointment.updateMany({ where: { id: appointmentId, einladungAt: null }, data: { einladungAt: now } });
     await prisma.appointment.update({ where: { id: appointmentId }, data: { einladungAn: to } }).catch(() => null);
+    // Merkfeld je Termin und Adresse (auch für Einladungen von der Buchungsseite, lib/calendar/einladung.ts)
+    await import("@/lib/calendar/einladung").then((m) => m.adresseVormerken(appointmentId, to)).catch(() => null);
   }
   return { sent: true, to };
 }

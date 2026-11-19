@@ -229,11 +229,19 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-strecke");
       return { error: e instanceof Error ? e.message : String(e) };
     });
-  // Einladung an den Lead ohne Antwort: 15 Min. (kurzfristig 5 Min.), spätestens 60 Min. vor Beginn (lib/calendar/einladung.ts)
+  // Einladung an den Lead ohne Antwort: 30 Min. (kurzfristig 5 Min.), spätestens 60 Min. vor Beginn; ohne Adresse ein
+  // Link zum Eintragen per WhatsApp (lib/whatsapp/einladung-rueckfall.ts). Bei 5-Min.-Takt geht „5 Min.“ nach 5 bis 10 Min.
   const einladungen = await import("@/lib/calendar/einladung")
     .then((m) => m.runEinladungNachholen(now))
     .catch((e: unknown) => {
       reportError(e, "cron-einladung");
+      return { error: e instanceof Error ? e.message : String(e) };
+    });
+  // „Konnten Sie den Termin eintragen?“ frühestens 10 Min. nach dem Versand der Einladung (nicht in derselben Minute)
+  const kalenderFrage = await import("@/lib/whatsapp/einladung-rueckfall")
+    .then((m) => m.runKalenderFrage(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-kalender-frage");
       return { error: e instanceof Error ? e.message : String(e) };
     });
   // Policen-Erinnerung 24 Std. nach der Buchung (nur bei mehr als 2 Tagen bis zum Termin)
@@ -466,7 +474,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, kalenderFrage, policenErinnerung, abTests, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, supportTemplates, status });
 }
 
 export const GET = handle;
