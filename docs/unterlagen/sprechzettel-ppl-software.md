@@ -49,7 +49,7 @@ Startseite „Heute“: neue Leads ganz oben, Termine mit der Zusammenfassung de
 
 ## 10. Rechnen Sie mit Ihren Zahlen
 Ausdrücklich sagen: „Das ist ein Rechenbeispiel, keine Zusage. Setzen wir Ihre Zahlen ein.“
-Beispiel: 20 Leads Privatschutz zu 35 € = 700 €, plus Software 349 € netto = 1.049 € im Monat. Wenn daraus 4 Termine und 2 Abschlüsse werden, kostet ein Termin etwa 262 € und ein Abschluss etwa 525 €.
+Beispiel: 20 Leads Privatschutz zu 35 € = 700 €, plus Software 349 € netto = 1.049 € im Monat. Wenn daraus 8 Termine und 4 Abschlüsse werden, kostet ein Termin etwa 131 € und ein Abschluss etwa 262 €.
 Fragen: „Wie viele Termine machen Sie heute aus 20 gekauften Leads? Was bringt Ihnen ein Abschluss?“ Dann mit seinen Werten nachrechnen.
 „Mit mehr Leads verteilt sich die Software auf mehr Termine. In der App sehen Sie später Ihre echten Kosten pro Termin und pro Abschluss.“
 
