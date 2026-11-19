@@ -21,6 +21,7 @@ export {
   bausteinSchalten,
   cleanAngebote,
   gewaehlte,
+  paketWaehlen,
   sparteSchalten,
   summeEmpfohlen,
   tarifWaehlen,

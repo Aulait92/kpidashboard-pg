@@ -38,7 +38,7 @@ describe("Terminarten", () => {
     expect(nurVideoSatz("du")).toBe("Der Termin findet per Video statt, das geht ganz einfach an deinem Handy, ohne App.");
     for (const t of [nurVideoSatz("sie"), nurVideoSatz("du"), TERMIN_FORMATE_TEXT]) expect(t).not.toMatch(/[–—]/);
     expect(TERMIN_FORMATE_TEXT).toBe(
-      "Ihre Termine finden per Video statt. Das bringt die meisten Termine, weil Ihre Kunden ohne Anfahrt teilnehmen können. Falls ein Kunde ausdrücklich etwas anderes wünscht, darf Ihr Assistent auch anbieten:",
+      "Ihre Termine finden per Video statt, nur auf ausdrücklichen Wunsch Ihres Kunden darf Ihr Assistent auch anbieten:",
     );
   });
 

@@ -1,12 +1,12 @@
 // Dokumente vom Kunden (Policen per WhatsApp, Ole 18.11.2026) in der Terminvorbereitung: „3 Dokumente erhalten“ bzw.
 // „Noch keine Dokumente“, je Dokument Öffnen und Herunterladen (kurzlebiger signierter Link, jeder Abruf protokolliert).
 // Keine ausgelesenen Werte (keine KI). Gleiche Daten wie im Kontakt (components/lead-files.tsx).
-// Ohne Zwei-Faktor-Login (AVV § 5) steht oben ein Hinweis mit „Jetzt einrichten“, die Namen sind dann keine Links;
+// Ohne Zwei-Faktor-Login (AVV § 5) steht oben ein Hinweis als Link zur Einrichtung, die Namen sind dann keine Links;
 // ungeprüfte Dateien (Virenprüfung steht aus) tragen „wird geprüft“.
 
-import { Download, FileText } from "lucide-react";
+import { ChevronRight, Download, FileText, ShieldCheck } from "lucide-react";
 import type { UnterlageView } from "@/lib/policen/server";
-import { ZweiFaktorHinweis } from "@/components/security/zwei-faktor-hinweis";
+import { zweiFaktorHref } from "@/components/security/zwei-faktor-hinweis";
 
 const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(new Date(iso));
 
@@ -17,7 +17,23 @@ export function UnterlagenVomKunden({ leadId, unterlagen, titel = true, zurueck 
   return (
     <div data-unterlagen-vorbereitung data-anzahl={unterlagen.length}>
       {titel ? <h3 className="mb-1 text-[13px] font-semibold text-[color:var(--muted)]">{dokumenteTitel(unterlagen.length)}</h3> : null}
-      {ohne2fa ? <ZweiFaktorHinweis zurueck={zurueck ?? `/buyer/leads/${leadId}#dokumente`} className="mb-2" /> : null}
+      {/* Kompakt statt gelbem Kasten mit blauem Knopf (UX-Runde Team C, 19.11.2026): die Hauptaktion der Terminvorbereitung
+          ist „Präsentation öffnen“; Titel und Begründung bleiben gleich (AVV § 5), ein Tipp führt zur Einrichtung */}
+      {ohne2fa ? (
+        <a
+          href={zweiFaktorHref(zurueck ?? `/buyer/leads/${leadId}#dokumente`)}
+          className="mb-1 flex min-h-11 items-center gap-2.5 rounded-[var(--radius-md)] bg-amber-50 px-3 py-2 text-amber-900 ring-1 ring-inset ring-amber-200 hover:bg-amber-100"
+          data-zwei-faktor-hinweis
+          data-zwei-faktor-einrichten
+        >
+          <ShieldCheck className="h-4 w-4 shrink-0 text-amber-700" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">Zum Öffnen Zwei-Faktor-Login einrichten</span>
+            <span className="block text-xs text-amber-800">Policen können Gesundheitsangaben enthalten. Einmal einrichten, dauert etwa eine Minute.</span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0" />
+        </a>
+      ) : null}
       {unterlagen.length ? (
         <ul className="divide-y divide-[color:var(--border)]">
           {unterlagen.map((u) => {

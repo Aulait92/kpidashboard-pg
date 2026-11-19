@@ -72,7 +72,7 @@ export async function TeamStats({ customerId, range, mitBestand = false }: { cus
   const provLabel = makler ? "Courtage 1. Jahr" : "Abschlussprovision";
 
   return (
-    <Card data-team-stats>
+    <Card id="team-zeitraum">
       <CardHeader title="Team im Zeitraum" icon={UsersRound} />
       {/* Handy (UX-Runde 19.11.2026): eine Zeile je Person statt 9 Spalten zum Wischen. Name, Provision, Weg zum Abschluss,
           Warnung nur, wenn Leads ohne nächsten Schritt sind. Am Rechner bleibt die Tabelle. */}

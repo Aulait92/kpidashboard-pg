@@ -4,7 +4,7 @@
 // geheimen Link. Gespeichert werden nur Termin, Folie und Variante (lib/praesentation-messung.ts), keine IP, kein Gerät.
 
 import { ereignisSpeichern, FOLIE_ID } from "@/lib/praesentation-messung";
-import { kundenlinkTermin } from "@/lib/termin-vorbereitung-server";
+import { kundenlinkPaketWaehlen, kundenlinkTermin } from "@/lib/termin-vorbereitung-server";
 import { reportError } from "@/lib/monitoring";
 
 export async function kundenlinkFolieAction(token: string, folie: string): Promise<void> {
@@ -31,4 +31,17 @@ export async function kundenlinkZusageAction(token: string): Promise<{ ok: boole
       .catch((e) => reportError(e, "kundenlink-zusage-push"));
   }
   return { ok: true };
+}
+
+/** Fassung C: Paket auf „Ihre Entscheidung“ wählen (vor der Zusage); bringt Folien und Leiste zur neuen Auswahl. */
+export async function kundenlinkPaketAction(
+  token: string,
+  items: number[],
+): Promise<{ ok: true; folien: { id: string; html: string }[]; summe: number | null; produkte: string[] } | { ok: false }> {
+  if (typeof token !== "string") return { ok: false };
+  const p = await kundenlinkPaketWaehlen(token, items).catch((e) => {
+    reportError(e, "kundenlink-paket");
+    return null;
+  });
+  return p ? { ok: true, folien: p.folien.map((f) => ({ id: f.id, html: f.html })), summe: p.abschluss.summe, produkte: p.abschluss.produkte } : { ok: false };
 }

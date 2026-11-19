@@ -29,7 +29,7 @@ import {
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
 import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
-import { addMonthsIso, fmtIso, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -85,6 +85,8 @@ export type OfferDoc = {
   billingFreeStart?: boolean;
   /** Vorauszahlung mit der Annahme fällig (seit 19.11.2026; Annahmen davor: zum Start). */
   prepayAtAcceptance?: boolean;
+  /** Zahlung nachträglich für den abgelaufenen Leistungsmonat (Ole, 19.11.2026; nur monatlich). */
+  paymentInArrears?: boolean;
 };
 
 type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "empfehlungMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp" | "setupListFee" | "setupDiscount"> & {
@@ -265,6 +267,11 @@ export function OfferDocument({
     annual: add.annualTotal != null,
   });
   const billingDiffers = !!plan?.differs;
+  // Zahlung nachträglich (Ole, 19.11.2026): Leistung ab Start, Abbuchung jeweils einen Monat später für den Vormonat
+  const arrears = !!offer.paymentInArrears && add.annualTotal == null && !annualOpen;
+  const ersteIso = arrears && startIso ? nachtraeglichErsteIso(startIso) : null;
+  const ersterMonat = ersteIso ? nachtraeglichLeistungsmonat(ersteIso) : null;
+  const ersteText = ersteIso ? `am ${fmtIso(ersteIso)}` : "einen Monat nach dem Start";
   const productNames = products.map((p) => p.name).join(" & ");
   const makler = offer.vermittlerTyp === "makler";
   // Modul ohne Aufpreis vereinbart (Sonderkondition)
@@ -451,7 +458,9 @@ export function OfferDocument({
                   ? mitAnnahme
                     ? `${date(offer.startDate)}. Ab diesem Tag läuft die Laufzeit: ${eur(add.annualTotal)} netto ${vorausName}, ${vorauszahlungFaellig(startIso, pm, { mitAnnahme })}.`
                     : `${date(offer.startDate)}. Ab diesem Tag läuft die Vergütung: ${eur(add.annualTotal)} netto ${vorausName}, ${vorauszahlungFaellig(startIso, pm)}.`
-                  : `${date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.`}
+                  : arrears
+                    ? `${date(offer.startDate)}. Ab diesem Tag läuft die Leistung, bezahlt wird jeweils nachträglich für den abgelaufenen Monat, erstmals ${ersteText}.`
+                    : `${date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.`}
               {add.annualTotal != null && mitAnnahme ? <Note>{VORAUSZAHLUNG_MIT_ANNAHME}</Note> : null}
               {annualOpen && billingDiffers ? (
                 <Note>
@@ -578,15 +587,25 @@ export function OfferDocument({
                 Laufzeit gekündigt wird. Für Pausen gibt es bei {vorausWort} keine Gutschrift.
               </Note>
             </Tr>
+          ) : arrears ? (
+            <Tr k="Zahlweise">
+              Monatlich nachträglich: <b className="text-[#111827]">{eur(firstMonth)}</b> netto jeweils für den abgelaufenen Leistungsmonat, erstmals {ersteText}
+              {ersterMonat ? ` für ${fmtIso(ersterMonat.fromIso)} bis ${fmtIso(ersterMonat.toIso)}` : ""}.
+              <Note>Auch nach der Mindestlaufzeit zahlen Sie nachträglich. Die Zahlung für den letzten Monat folgt nach Vertragsende.</Note>
+            </Tr>
           ) : offer.annualChoice && !open ? (
             <Tr k="Zahlweise">Monatlich im Voraus, bei der Annahme gewählt.</Tr>
           ) : null}
           <Tr k="Vertragslaufzeit">
             {add.annual
               ? `${pm} Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, ${vorausName} bezahlt. Danach verlängert sich der Vertrag um jeweils weitere ${pm} Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der Laufzeit gekündigt wird.`
-              : TERM_MONTHS[term] > 0
-                ? `${TERM_MONTHS[term]} Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, danach monatlich kündbar zum Ende des Abrechnungsmonats.`
-                : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
+              : arrears
+                ? TERM_MONTHS[term] > 0
+                  ? `${TERM_MONTHS[term]} Monate ab Start, danach monatlich kündbar zum Ende des jeweiligen Leistungsmonats.`
+                  : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Leistungsmonats."
+                : TERM_MONTHS[term] > 0
+                  ? `${TERM_MONTHS[term]} Monate ab ${billingDiffers ? "dem ersten Abrechnungstag" : "Start"}, danach monatlich kündbar zum Ende des Abrechnungsmonats.`
+                  : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
             {termOpen ? (
               <Note>
                 Laufzeit wählen Sie unten bei der Annahme:{" "}
@@ -629,6 +648,26 @@ export function OfferDocument({
                 {termOpen || startOpen ? " Setup und Start richten sich nach Ihrer Wahl bei der Annahme." : ""}
               </Note>
             </Tr>
+          ) : arrears ? (
+            <Tr k="Bei Annahme fällig">
+              {offer.setupFee > 0 ? (
+                <>
+                  <b className="text-[#111827]">{eur(offer.setupFee)}</b> netto (Setup) zzgl. 19 % USt. {eur(vatOf(offer.setupFee))}
+                  {" = "}
+                  <b className="text-[#111827]">{eur(withVat(offer.setupFee))} brutto</b>
+                </>
+              ) : (
+                <>
+                  <b className="text-[#111827]">{eur(0)}</b>, keine Einrichtungsgebühr
+                </>
+              )}
+              <Note>
+                {offer.setupFee > 0 ? "" : "Bei der Annahme hinterlegen Sie nur Ihre Zahlungsart. "}
+                Die erste Monatsgebühr ({eur(firstMonth)} netto, {eur(withVat(firstMonth))} brutto) wird nachträglich {ersteText} fällig
+                {ersterMonat ? `, für den Monat ${fmtIso(ersterMonat.fromIso)} bis ${fmtIso(ersterMonat.toIso)}` : ""}.
+                {startOpen ? " Der Start richtet sich nach Ihrer Wahl bei der Annahme." : ""}
+              </Note>
+            </Tr>
           ) : (
           <Tr k="Bei Annahme fällig">
             <b className="text-[#111827]">{eur(offer.setupFee)}</b> netto (Setup) zzgl. 19 % USt. {eur(vatOf(offer.setupFee))}
@@ -667,7 +706,9 @@ export function OfferDocument({
               : halb
                 ? "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum für jeweils 6 Monate im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während dieser 6 Monate dazukommen, werden anteilig berechnet."
                 : "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während des Jahres dazukommen, werden anteilig berechnet."
-            : `Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen.${
+            : arrears
+              ? `${offer.setupFee > 0 ? "Die Setupgebühr wird mit Vertragsschluss fällig. " : ""}Die monatliche Vergütung wird jeweils nachträglich für den abgelaufenen Leistungsmonat fällig, erstmals einen Monat nach dem Startdatum, und per SEPA-Lastschrift oder Karte automatisch eingezogen. Das gilt auch nach der Mindestlaufzeit; die Vergütung für den letzten Monat wird nach Vertragsende eingezogen.`
+              : `Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen.${
                 annualOpen
                   ? mitAnnahme
                     ? halb

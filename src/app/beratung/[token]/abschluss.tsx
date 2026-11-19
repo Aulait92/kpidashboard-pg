@@ -3,6 +3,8 @@
 // Kundenlink mit Abschluss-Schritt (Splittest B, 19.11.2026): Folien zum Nachlesen und unten eine feste Leiste mit
 // Auswahl, Beitrag und „Ja, so machen wir es“. Der Klick ist unverbindlich (kein Vertragsschluss): Er meldet dem
 // Vermittler die Zusage, der Antrag folgt mit ihm. Variante A: nur die Folien (bisher). Beide messen „Folie erreicht“.
+// Fassung C: Vor der Zusage wählt der Kunde auf „Ihre Entscheidung“ eines der Pakete; Folien und Leiste zeigen sofort
+// die neue Auswahl, die Zusage gilt für sie (der Vermittler sieht sie im Termin und in der Beratungsdokumentation).
 
 import { useCallback, useState, useTransition } from "react";
 import { Check } from "lucide-react";
@@ -10,18 +12,18 @@ import { Button } from "@/components/ui";
 import { a, type Ansprache } from "@/lib/ansprache";
 import { mitAbschlussLeiste, type PraesentationVariante } from "@/lib/praesentation-variante";
 import { FolienListe } from "./folien-liste";
-import { kundenlinkFolieAction, kundenlinkZusageAction } from "./actions";
+import { kundenlinkFolieAction, kundenlinkPaketAction, kundenlinkZusageAction } from "./actions";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
 export function KundenAbschluss({
   token,
   css,
-  folien,
+  folien: folienStart,
   variante,
   zugesagt: start,
-  summe,
-  produkte,
+  summe: summeStart,
+  produkte: produkteStart,
   berater,
   an,
 }: {
@@ -38,11 +40,21 @@ export function KundenAbschluss({
   const [zugesagt, setZugesagt] = useState(start);
   const [fehler, setFehler] = useState(false);
   const [pending, run] = useTransition();
+  const [stand, setStand] = useState({ folien: folienStart, summe: summeStart, produkte: produkteStart });
+  const { folien, summe, produkte } = stand;
   const onFolie = useCallback((id: string) => void kundenlinkFolieAction(token, id).catch(() => {}), [token]);
+  const onPaket = (items: number[]) => {
+    if (pending) return;
+    run(async () => {
+      const r = await kundenlinkPaketAction(token, items).catch(() => ({ ok: false as const }));
+      setFehler(!r.ok);
+      if (r.ok) setStand({ folien: r.folien, summe: r.summe, produkte: r.produkte });
+    });
+  };
   const mitLeiste = mitAbschlussLeiste(variante, produkte);
   return (
     <>
-      <FolienListe css={css} folien={folien} onFolie={onFolie} />
+      <FolienListe css={css} folien={folien} onFolie={onFolie} onPaket={variante === "C" && !zugesagt ? onPaket : undefined} />
       {mitLeiste ? (
         <div
           className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--border)] bg-white/95 px-4 pt-3 shadow-[var(--shadow-lg)] backdrop-blur"

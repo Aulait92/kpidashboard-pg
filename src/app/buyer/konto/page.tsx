@@ -13,7 +13,7 @@ import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
-import { bestandPacksText, freimonateKunde, normalizeRhythmus, PRICE_LIST, RHYTHMUS_MONATE, rhythmusFaktor, TERM_MONTHS, normalizeTerm } from "@/lib/offer-pricing";
+import { berlinTodayIso, bestandPacksText, freimonateKunde, normalizeRhythmus, PRICE_LIST, RHYTHMUS_MONATE, rhythmusFaktor, TERM_MONTHS, normalizeTerm } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
 import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
 import { empfehlungVisible, moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
@@ -24,7 +24,8 @@ import { VertragKuendigen } from "./vertrag-kuendigen";
 import { Aufbewahrung } from "./aufbewahrung";
 import { loadRetentionView } from "@/lib/ruhend";
 import { loadHalteKonto } from "@/lib/halteangebote-server";
-import { fmtIso } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, fmtIso, naechsteNachtraeglicheAbbuchung, naechsteRegulaereRechnung } from "@/lib/vertrag-laufzeit";
+import { abrechnungsplan } from "@/lib/abrechnungstag";
 import { bestandVisible } from "@/lib/bestand/sichtbar";
 
 export const dynamic = "force-dynamic";
@@ -85,7 +86,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   });
   if (!customer) redirect("/buyer");
   const offer = customer.onboarding?.offerId
-    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true, annualFreeMonths: true } })
+    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true, annualFreeMonths: true, paymentInArrears: true, startDate: true, introMonths: true, billingDay: true, acceptedAt: true, paidAt: true } })
     : null;
 
   let invoices: CustomerInvoice[] = [];
@@ -127,6 +128,28 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const freimonate = freimonateKunde(customer, offer);
   const prepayFree = annual ? prepayMonths - rhythmusFaktor(rhythmus, freimonate) : 0;
   const yearly = annual && monthlyTotal != null ? monthlyTotal * rhythmusFaktor(rhythmus, freimonate) : null;
+  // Zahlung nachträglich (Ole, 19.11.2026): nächste Abbuchung mit dem Leistungsmonat, für den sie gilt (nach einer
+  // Kündigung höchstens noch die für den letzten Monat)
+  const arrearsStart = !annual && offer?.paymentInArrears ? (customer.retainerStart ?? offer.startDate) : null;
+  const naechsteNachtraeglich = arrearsStart
+    ? naechsteNachtraeglicheAbbuchung(berlinTodayIso(arrearsStart), today, cancelInfo?.requested?.effectiveIso ?? null)
+    : null;
+  // Nächste reguläre Rechnung (Vorauszahlung oder monatlich im Voraus) nur, wenn der Betrag feststeht: Angebot mit Start,
+  // keine Pause, kein Nachlass, keine Einführungsphase, kein Testkonto. Sonst nichts anzeigen.
+  // Abo-Beginn wie bei Stripe (lib/billing createScheduleForOffer): Start, lag er beim Abschluss schon zurück, der Tag des Abschlusses
+  const regAbschluss = offer?.paidAt ?? offer?.acceptedAt ?? null;
+  const regStartRoh = offer?.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
+  const regStart = regStartRoh && regAbschluss ? [regStartRoh, berlinTodayIso(regAbschluss)].sort()[1] : null;
+  const naechsteIso =
+    !arrearsStart && regStart && monthlyTotal != null && !pause && !halte?.percentOff && !customer.isTest && !(offer?.introMonths && today < addMonthsIso(regStart, offer.introMonths))
+      ? naechsteRegulaereRechnung({
+          anchorIso: annual ? regStart : (abrechnungsplan({ startIso: regStart, billingDay: offer?.billingDay ?? null })?.firstIso ?? regStart),
+          monate: annual ? prepayMonths : 1,
+          ab: annual ? 1 : 0,
+          todayIso: today,
+          endIso: cancelInfo?.requested?.effectiveIso ?? null,
+        })
+      : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -144,9 +167,24 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <span className="text-[15px] text-[color:var(--muted)]">netto {annual ? (prepayMonths === 6 ? "für 6 Monate" : "im Jahr") : "im Monat"}</span>
               </div>
               <div className="mt-1 text-[15px]" data-konto-interval>
-                {annual ? `Im Voraus, ${prepayFree} ${prepayFree === 1 ? "Monat" : "Monate"} geschenkt` : "Monatlich"}
+                {annual
+                  ? `Im Voraus, ${prepayFree} ${prepayFree === 1 ? "Monat" : "Monate"} geschenkt`
+                  : arrearsStart
+                    ? "Monatlich, jeweils nachträglich für den abgelaufenen Monat"
+                    : "Monatlich"}
                 {customer.stripeCustomerId ? "" : ", per Rechnung"}, zzgl. USt.
               </div>
+              {/* Nächste Rechnung (Ole, 19.11.2026): nur, wenn die App Datum und Betrag sicher kennt (lib/vertrag-laufzeit) */}
+              {naechsteNachtraeglich ? (
+                <div className="mt-1 text-[15px] text-[color:var(--muted)]" data-konto-nachtraeglich>
+                  Nächste Abbuchung am {fmtIso(naechsteNachtraeglich.chargeIso)}: {eur(monthlyTotal)} netto für {fmtIso(naechsteNachtraeglich.fromIso)} bis{" "}
+                  {fmtIso(naechsteNachtraeglich.toIso)}
+                </div>
+              ) : naechsteIso ? (
+                <div className="mt-1 text-[15px] text-[color:var(--muted)]" data-konto-naechste-rechnung>
+                  Nächste Rechnung am {fmtIso(naechsteIso)}: {eur(annual && yearly != null ? yearly : monthlyTotal)} netto
+                </div>
+              ) : null}
             </div>
           ) : null}
           <dl className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-2 p-5 text-[15px] sm:grid-cols-[150px_1fr]">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/buyer-shell";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
@@ -151,8 +152,13 @@ export default async function WhatsAppHelpPage({ searchParams }: { searchParams:
         <IntroVideo kind="whatsapp" />
       </section>
 
-      <section>
-        <h2 className="mb-1 text-lg font-semibold tracking-tight">So sieht es aus</h2>
+      {/* Nachschlagen statt Lesepflicht: die 15 Bildschirme zugeklappt (UX-Runde 19.11.2026, am Handy war die Seite 9 Bildschirme lang) */}
+      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)]" data-wa-bildschirme>
+        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-5 py-3 [&::-webkit-details-marker]:hidden">
+          <span className="flex-1 text-[15px] font-semibold tracking-tight">So sieht es aus: alle {SCREENS.length} Bildschirme</span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+        </summary>
+        <div className="px-5 pb-5">
         <p className="mb-4 text-sm text-[color:var(--muted)]">
           Die Kästen zeigen den Ablauf mit einer neuen Nummer vereinfacht. Texte und Aussehen bei 360dialog und Meta können etwas abweichen, die
           Reihenfolge stimmt. Mit einer Nummer aus der WhatsApp Business App wählen Sie bei der Frage „Yes, Business app“ und scannen später einen
@@ -181,7 +187,8 @@ export default async function WhatsAppHelpPage({ searchParams }: { searchParams:
             </li>
           ))}
         </ol>
-      </section>
+        </div>
+      </details>
 
       <p className="mt-8 text-sm">
         <Link href="/buyer/einrichtung#whatsapp" className="inline-flex min-h-11 items-center font-medium text-[color:var(--brand)] underline">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState, useTransition } from "react";
-import { Check, RotateCcw } from "lucide-react";
+import { Check, ChevronDown, RotateCcw } from "lucide-react";
 import { Badge, Button, Card } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -121,6 +121,17 @@ function example(r: Row, typ: VermittlerTyp): string {
   return "";
 }
 
+/** Satz kurz für die Zeile, z. B. „55 % Abschluss · 10 % Bestand“ (zum Abgleich mit der Provisionsliste). */
+function satz(r: Row): string {
+  const da = (x: string) => x.trim() !== "" && x.trim() !== "0";
+  const bestand = (x: string) => (da(x) ? ` · ${x.trim()} % Bestand` : "");
+  if (r.kind === "monthly") return da(r.months) ? `${r.months.trim()} Monatsbeiträge${bestand(r.trail)}` : `fest ${r.fallbackAmount.trim()} €`;
+  if (r.kind === "beitragssumme") return `${r.promille.trim() || "0"} ‰ der Beitragssumme${bestand(r.trail)}`;
+  if (r.kind === "honorar") return da(r.fixedAmount) ? `Honorar fest ${r.fixedAmount.trim()} €` : `Honorar: ${r.months.trim() || "0"} Monate Ersparnis`;
+  const teile = [da(r.rate) ? `${r.rate.trim()} % Abschluss` : null, da(r.trail) ? `${r.trail.trim()} % Bestand` : null].filter(Boolean);
+  return teile.length ? teile.join(" · ") : "keine Provision";
+}
+
 export function ProvisionForm({
   typ: initialTyp,
   typKnown = false,
@@ -151,7 +162,17 @@ export function ProvisionForm({
     Object.fromEntries(Object.entries(custom).map(([k, v]) => [k, toRow(v as RateSpec)])),
   );
   const [storno, setStorno] = useState(initialStorno != null ? fmt(initialStorno * 100) : "");
-  const [state, action, pending] = useActionState<ProvisionFormState, FormData>(saveProvisionAction, {});
+  // Offene Zeile (immer nur eine) und gespeicherter Stand: „Speichern“ erscheint erst bei einer Änderung
+  const [offen, setOffen] = useState<ProductKey | null>(null);
+  const [gespeichert, setGespeichert] = useState<string | null>(null);
+  const [state, action, pending] = useActionState<ProvisionFormState, FormData>(async (prev, fd) => {
+    const r = await saveProvisionAction(prev, fd);
+    if (r.ok) {
+      setGespeichert(String(fd.get("payload") ?? ""));
+      toast.show({ message: "Gespeichert. Ihre Zahlen rechnen ab jetzt damit." });
+    }
+    return r;
+  }, {});
   const [taking, startTake] = useTransition();
 
   // Produkte, die der Kunde bei uns gewählt hat (auch Tarifoptimierung beim Vertreter, wenn er solche Leads hat)
@@ -186,6 +207,8 @@ export function ProvisionForm({
     storno: stornoNum == null ? null : stornoValid ? stornoNum / 100 : "ungültig",
   });
   const disabled = !canEdit;
+  const [anfang] = useState(payload);
+  const geaendert = payload !== (gespeichert ?? anfang);
 
   function takeReal() {
     if (real.quote == null) return;
@@ -198,9 +221,12 @@ export function ProvisionForm({
     });
   }
 
+  // Eine Zeile je Produkt (UX-Runde Team C, 19.11.2026, wie „Angebot für den Termin“): Name und Satz auf einen Blick,
+  // Felder nur in der aufgeklappten Zeile (immer nur eine offen). Vorher: je Produkt eine Karte mit 3 bis 7 Feldern.
   function renderRow(p: (typeof PROVISION_PRODUCTS)[number]) {
     const r = rowFor(p.key);
     const ownVal = isOwn(p.key);
+    const auf = offen === p.key;
     const stornoField =
       r.kind === "percent" || r.kind === "beitragssumme" || (r.kind === "monthly" && p.key !== "pkv") ? (
         <Field
@@ -212,87 +238,102 @@ export function ProvisionForm({
         />
       ) : null;
     return (
-      <Card key={p.key}>
-        <div className="p-5" data-provision-row={p.key}>
-          <fieldset className="min-w-0" disabled={disabled}>
-            <legend className="sr-only">{p.label}</legend>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-[15px] font-semibold">{p.label}</h2>
-              <div className="flex items-center gap-2">
-                <Badge tone={ownVal ? "info" : "neutral"}>{ownVal ? "Eigener Wert" : "Standard"}</Badge>
+      <li key={p.key} data-provision-row={p.key} data-offen={auf || undefined}>
+        <button
+          type="button"
+          onClick={() => setOffen(auf ? null : p.key)}
+          aria-expanded={auf}
+          className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left hover:bg-[color:var(--surface-sunken)] sm:px-5"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold">{p.label}</span>
+            <span className="block text-sm text-[color:var(--muted)]" data-provision-satz>
+              {satz(r)}
+            </span>
+          </span>
+          {ownVal ? <Badge tone="info">Eigener Wert</Badge> : null}
+          <ChevronDown className={`h-4 w-4 shrink-0 text-[color:var(--muted)] transition ${auf ? "rotate-180" : ""}`} />
+        </button>
+        {auf ? (
+          <div className="border-t border-[color:var(--border)] px-4 pb-4 pt-3 sm:px-5">
+            <fieldset className="min-w-0" disabled={disabled}>
+              <legend className="sr-only">{p.label}</legend>
+              {r.kind === "monthly" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label={p.key === "pkv" ? `Monatsbeiträge Provision (höchstens ${fmt(PKV_MAX_MONTHS)})` : "Monatsbeiträge Provision"}
+                    suffix="×"
+                    value={r.months}
+                    onChange={(v) => update(p.key, { months: v })}
+                  />
+                  {p.key === "pkv" ? (
+                    <Field label="Ohne Beitragsangabe" suffix="€" value={r.fallbackAmount} onChange={(v) => update(p.key, { fallbackAmount: v })} />
+                  ) : (
+                    <>
+                      <Field label="Bestandsprovision pro Jahr" suffix="% vom Jahresbeitrag" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
+                      <Field label="Typischer Monatsbeitrag (wenn keiner eingetragen ist)" suffix="€" value={r.defaultMonthly} onChange={(v) => update(p.key, { defaultMonthly: v })} />
+                      {stornoField}
+                    </>
+                  )}
+                  {p.key === "pkv" ? (
+                    <p className="text-xs text-[color:var(--muted)] sm:col-span-2">
+                      Nach § 50 VAG höchstens 3,3 % der Bruttobeitragssumme über 25 Jahre, also höchstens {fmt(PKV_MAX_MONTHS)} Monatsbeiträge.
+                    </p>
+                  ) : null}
+                </div>
+              ) : r.kind === "beitragssumme" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label={typ === "makler" ? "Abschlusscourtage" : "Abschlussprovision"} suffix="‰ der Beitragssumme" value={r.promille} onChange={(v) => update(p.key, { promille: v })} />
+                  <Field label="Bestands- bzw. Betreuungsprovision pro Jahr (ab dem 1. Jahr)" suffix="% vom Jahresbeitrag" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
+                  <Field label="Typischer Monatsbeitrag (wenn keiner eingetragen ist)" suffix="€" value={r.defaultMonthly} onChange={(v) => update(p.key, { defaultMonthly: v })} />
+                  <Field label="Laufzeit ohne Angabe" suffix="Jahre" value={r.defaultYears} onChange={(v) => update(p.key, { defaultYears: v })} />
+                  <Field label="Endalter, wenn das Alter bekannt ist (optional)" suffix="Jahre" value={r.defaultEndAge} onChange={(v) => update(p.key, { defaultEndAge: v })} />
+                  <Field label="Stornohaftungszeit" suffix="Monate" value={r.haftungMonate} onChange={(v) => update(p.key, { haftungMonate: v })} />
+                  {stornoField}
+                  <p className="text-xs text-[color:var(--muted)] sm:col-span-2">
+                    Beitragssumme = Monatsbeitrag × 12 × Laufzeit. Wird der Vertrag innerhalb der Stornohaftungszeit gekündigt, schlagen wir eine anteilige Rückbelastung
+                    vor (verbleibende Monate geteilt durch die Haftungszeit).
+                  </p>
+                </div>
+              ) : r.kind === "honorar" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Honorar (vom Kunden): Monate Ersparnis" suffix="×" value={r.months} onChange={(v) => update(p.key, { months: v })} />
+                  <Field label="Oder fester Betrag je Abschluss (optional)" suffix="€" value={r.fixedAmount} onChange={(v) => update(p.key, { fixedAmount: v })} />
+                  <Field label="Monatliche Ersparnis ohne Angabe" suffix="€" value={r.defaultSavings} onChange={(v) => update(p.key, { defaultSavings: v })} />
+                  <p className="text-xs text-[color:var(--muted)] sm:col-span-2">
+                    Bei der Tarifoptimierung nach § 204 VVG zahlt der Kunde ein Honorar, es gibt keine Bestandsprovision. Es zählt im Gewinn als Ertrag. Bitte mit Ihrer
+                    Honorarvereinbarung abgleichen.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Abschlussprovision" suffix="%" value={r.rate} onChange={(v) => update(p.key, { rate: v })} />
+                  <Field
+                    label={typ === "vertreter" && parse(r.rate) > 0 ? "Bestandsprovision pro Jahr (ab 2. Jahr)" : "Bestandsprovision pro Jahr"}
+                    suffix="%"
+                    value={r.trail}
+                    onChange={(v) => update(p.key, { trail: v })}
+                  />
+                  <Field label="Typischer Jahresbeitrag (wenn keiner eingetragen ist)" suffix="€" value={r.defaultPremium} onChange={(v) => update(p.key, { defaultPremium: v })} />
+                  {stornoField}
+                </div>
+              )}
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <p className="min-w-0 flex-1 text-sm text-[color:var(--muted)]">{example(r, typ)}</p>
                 {ownVal && canEdit ? (
-                  <button type="button" onClick={() => reset(p.key)} className="inline-flex items-center gap-1 text-sm font-medium text-[color:var(--brand)]">
+                  <button type="button" onClick={() => reset(p.key)} className="inline-flex min-h-9 items-center gap-1 text-sm font-medium text-[color:var(--brand)]">
                     <RotateCcw className="h-3.5 w-3.5" /> Auf Standard
                   </button>
                 ) : null}
               </div>
-            </div>
-            {r.kind === "monthly" ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field
-                  label={p.key === "pkv" ? `Monatsbeiträge Provision (höchstens ${fmt(PKV_MAX_MONTHS)})` : "Monatsbeiträge Provision"}
-                  suffix="×"
-                  value={r.months}
-                  onChange={(v) => update(p.key, { months: v })}
-                />
-                {p.key === "pkv" ? (
-                  <Field label="Ohne Beitragsangabe" suffix="€" value={r.fallbackAmount} onChange={(v) => update(p.key, { fallbackAmount: v })} />
-                ) : (
-                  <>
-                    <Field label="Bestandsprovision pro Jahr" suffix="% vom Jahresbeitrag" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
-                    <Field label="Typischer Monatsbeitrag (wenn keiner eingetragen ist)" suffix="€" value={r.defaultMonthly} onChange={(v) => update(p.key, { defaultMonthly: v })} />
-                    {stornoField}
-                  </>
-                )}
-                {p.key === "pkv" ? (
-                  <p className="text-xs text-[color:var(--muted)] sm:col-span-2">
-                    Nach § 50 VAG höchstens 3,3 % der Bruttobeitragssumme über 25 Jahre, also höchstens {fmt(PKV_MAX_MONTHS)} Monatsbeiträge.
-                  </p>
-                ) : null}
-              </div>
-            ) : r.kind === "beitragssumme" ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label={typ === "makler" ? "Abschlusscourtage" : "Abschlussprovision"} suffix="‰ der Beitragssumme" value={r.promille} onChange={(v) => update(p.key, { promille: v })} />
-                <Field label="Bestands- bzw. Betreuungsprovision pro Jahr (ab dem 1. Jahr)" suffix="% vom Jahresbeitrag" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
-                <Field label="Typischer Monatsbeitrag (wenn keiner eingetragen ist)" suffix="€" value={r.defaultMonthly} onChange={(v) => update(p.key, { defaultMonthly: v })} />
-                <Field label="Laufzeit ohne Angabe" suffix="Jahre" value={r.defaultYears} onChange={(v) => update(p.key, { defaultYears: v })} />
-                <Field label="Endalter, wenn das Alter bekannt ist (optional)" suffix="Jahre" value={r.defaultEndAge} onChange={(v) => update(p.key, { defaultEndAge: v })} />
-                <Field label="Stornohaftungszeit" suffix="Monate" value={r.haftungMonate} onChange={(v) => update(p.key, { haftungMonate: v })} />
-                {stornoField}
-                <p className="text-xs text-[color:var(--muted)] sm:col-span-2">
-                  Beitragssumme = Monatsbeitrag × 12 × Laufzeit. Wird der Vertrag innerhalb der Stornohaftungszeit gekündigt, schlagen wir eine anteilige Rückbelastung
-                  vor (verbleibende Monate geteilt durch die Haftungszeit).
-                </p>
-              </div>
-            ) : r.kind === "honorar" ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Honorar (vom Kunden): Monate Ersparnis" suffix="×" value={r.months} onChange={(v) => update(p.key, { months: v })} />
-                <Field label="Oder fester Betrag je Abschluss (optional)" suffix="€" value={r.fixedAmount} onChange={(v) => update(p.key, { fixedAmount: v })} />
-                <Field label="Monatliche Ersparnis ohne Angabe" suffix="€" value={r.defaultSavings} onChange={(v) => update(p.key, { defaultSavings: v })} />
-                <p className="text-xs text-[color:var(--muted)] sm:col-span-2">
-                  Bei der Tarifoptimierung nach § 204 VVG zahlt der Kunde ein Honorar, es gibt keine Bestandsprovision. Es zählt im Gewinn als Ertrag. Bitte mit Ihrer
-                  Honorarvereinbarung abgleichen.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Abschlussprovision" suffix="%" value={r.rate} onChange={(v) => update(p.key, { rate: v })} />
-                <Field
-                  label={typ === "vertreter" && parse(r.rate) > 0 ? "Bestandsprovision pro Jahr (ab 2. Jahr)" : "Bestandsprovision pro Jahr"}
-                  suffix="%"
-                  value={r.trail}
-                  onChange={(v) => update(p.key, { trail: v })}
-                />
-                <Field label="Typischer Jahresbeitrag (wenn keiner eingetragen ist)" suffix="€" value={r.defaultPremium} onChange={(v) => update(p.key, { defaultPremium: v })} />
-                {stornoField}
-              </div>
-            )}
-            <p className="mt-3 text-sm text-[color:var(--muted)]">{example(r, typ)}</p>
-          </fieldset>
-        </div>
-      </Card>
+            </fieldset>
+          </div>
+        ) : null}
+      </li>
     );
   }
+
+  const stornoAnzeige = stornoNum != null && stornoValid ? `${fmt(stornoNum)} %` : `${fmt(STORNO_PRO_JAHR * 100)} % (Standard)`;
 
   return (
     <form action={action} className="space-y-5">
@@ -300,9 +341,6 @@ export function ProvisionForm({
       {readOnlyReason ? (
         <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]">{readOnlyReason}</p>
       ) : null}
-      <p className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-erfahrungswerte>
-        Standardwerte sind Erfahrungswerte. Bitte mit Ihrer Provisionsliste abgleichen.
-      </p>
 
       {changeTyp ? (
         <Card>
@@ -331,25 +369,48 @@ export function ProvisionForm({
           </div>
         </Card>
       ) : (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]" data-typ-known>
-          <input type="hidden" name="typ" value={typ} />
-          <span>
-            Sie arbeiten als <b>{typ === "makler" ? "Makler" : "Vertreter"}</b>, die Sätze sind passend vorausgefüllt.
-          </span>
-          {!disabled ? (
+        <input type="hidden" name="typ" value={typ} />
+      )}
+
+      <Card>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-[color:var(--border)] px-4 py-3.5 sm:px-5" data-typ-known={changeTyp ? undefined : ""}>
+          <h2 className="text-[15px] font-semibold tracking-tight">{changeTyp ? "Ihre Sätze" : `Ihre Sätze als ${typ === "makler" ? "Makler" : "Vertreter"}`}</h2>
+          {!changeTyp && !disabled ? (
             <button type="button" onClick={() => setChangeTyp(true)} className="text-sm font-semibold text-[color:var(--brand)]">
               Ändern
             </button>
           ) : null}
+          {/* Hinweis bleibt (Erfahrungswerte), aber als ein Satz statt gelbem Kasten (UX-Runde Team C) */}
+          <p className="w-full text-sm text-[color:var(--muted)]" data-erfahrungswerte>
+            Vorausgefüllt mit Erfahrungswerten. Bitte mit Ihrer Provisionsliste abgleichen.
+          </p>
         </div>
-      )}
-
-      <Card>
-        <div className="p-5" id="storno" data-stornoquote>
-          <fieldset className="min-w-0" disabled={disabled}>
-            <legend className="mb-1 text-[15px] font-semibold">Stornoquote pro Jahr</legend>
+        {visible.length === 0 ? (
+          <p className="px-4 py-4 text-sm text-[color:var(--muted)] sm:px-5">Hier erscheinen Ihre Produkte, sobald Sie sie bei uns gebucht haben. Bis dahin rechnen wir mit unseren Standardwerten.</p>
+        ) : (
+          <ul className="divide-y divide-[color:var(--border)]">{visible.map((p) => renderRow(p))}</ul>
+        )}
+        {more.length ? (
+          <details className="group border-t border-[color:var(--border)]" open={more.some((p) => isOwn(p.key))} data-weitere-sparten>
+            <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3 text-[15px] font-semibold sm:px-5 [&::-webkit-details-marker]:hidden">
+              Weitere Sparten
+              <span className="font-normal text-[color:var(--muted)]">{more.length}</span>
+              <ChevronDown className="ml-auto h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
+            </summary>
+            <p className="px-4 pb-2 text-sm text-[color:var(--muted)] sm:px-5">Für weitere Abschlüsse bei Ihren Kunden, z. B. Haftpflicht zum Tierschutz oder eine BU.</p>
+            <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]">{more.map((p) => renderRow(p))}</ul>
+          </details>
+        ) : null}
+        {/* Selten: allgemeine Stornoquote (früher eigene Karte vor den Produkten) */}
+        <details className="group border-t border-[color:var(--border)]" open={!stornoValid} id="storno" data-stornoquote>
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3 text-[15px] font-semibold sm:px-5 [&::-webkit-details-marker]:hidden">
+            Stornoquote pro Jahr
+            <span className="font-normal text-[color:var(--muted)]">{stornoAnzeige}</span>
+            <ChevronDown className="ml-auto h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
+          <fieldset className="min-w-0 px-4 pb-4 sm:px-5" disabled={disabled}>
+            <legend className="sr-only">Stornoquote pro Jahr</legend>
             <p className="mb-3 text-sm text-[color:var(--muted)]">
-              {/* Ein Satz statt vier (UX Runde 4) */}
               So viele Verträge fallen pro Jahr im Schnitt weg, leer bedeutet {fmt(STORNO_PRO_JAHR * 100)} %; alle Prognosen rechnen damit.
             </p>
             <div className="max-w-xs">
@@ -372,38 +433,22 @@ export function ProvisionForm({
               )}
             </p>
           </fieldset>
-        </div>
+        </details>
       </Card>
 
-      {visible.length === 0 ? (
-        <Card>
-          <div className="p-5 text-sm text-[color:var(--muted)]">
-            Hier erscheinen Ihre Produkte, sobald Sie sie bei uns gebucht haben. Bis dahin rechnen wir mit unseren Standardwerten.
-          </div>
-        </Card>
-      ) : null}
-      {visible.map((p) => renderRow(p))}
-
-      {more.length ? (
-        <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white" open={more.some((p) => isOwn(p.key))} data-weitere-sparten>
-          <summary className="cursor-pointer px-5 py-4 text-[15px] font-semibold">Weitere Sparten (Cross-Selling)</summary>
-          <div className="space-y-4 border-t border-[color:var(--border)] p-4">
-            <p className="text-sm text-[color:var(--muted)]">
-              Für weitere Abschlüsse bei Ihren Kunden, z. B. Haftpflicht zum Tierschutz oder eine BU. Vorausgefüllt mit üblichen Werten je Sparte. Tragen Sie Ihre
-              Sätze ein, damit die Schätzung passt.
-            </p>
-            {more.map((p) => renderRow(p))}
-          </div>
-        </details>
-      ) : null}
-
-      {canEdit ? (
-        <div className="flex flex-wrap items-center gap-3">
+      {/* Speichern erscheint erst bei einer Änderung, am Handy fest über der Navigation (eine Hauptaktion) */}
+      {canEdit && (geaendert || pending || state.error) ? (
+        <div
+          className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white/95 px-4 py-3 shadow-[var(--shadow-md)] backdrop-blur md:bottom-4"
+          data-provision-speichern
+        >
+          <span className="min-w-0 flex-1 text-sm">
+            {state.error && !geaendert ? <span className="font-medium text-rose-700" role="alert">{state.error}</span> : "Ungespeicherte Änderungen"}
+            {state.error && geaendert ? <span className="block font-medium text-rose-700" role="alert">{state.error}</span> : null}
+          </span>
           <Button type="submit" variant="primary" size="md" icon={Check} disabled={pending || !stornoValid}>
             {pending ? "Speichere …" : "Speichern"}
           </Button>
-          {state.ok ? <span className="text-sm font-medium text-emerald-700" role="status">Gespeichert. Ihre Zahlen rechnen ab jetzt damit.</span> : null}
-          {state.error ? <span className="text-sm font-medium text-rose-700" role="alert">{state.error}</span> : null}
         </div>
       ) : null}
     </form>

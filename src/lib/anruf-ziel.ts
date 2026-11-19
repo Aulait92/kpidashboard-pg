@@ -24,6 +24,8 @@ export function anrufZiel(c: {
   known?: string | null;
   /** Letzter Termin mit dem Kontakt (schon vorbei), für konkretes Nachfassen (Ole, 17.11.2026: „1 und 2 nichtssagend“). */
   letzterTermin?: Date | null;
+  /** Woher `reason` stammt: „chat“ = Anliegen des Kunden aus dem Chat (nie als „Ihre Notiz“, Ole 19.11.2026). Standard: eigene Notiz. */
+  herkunft?: "notiz" | "chat";
 }): AnrufZiel {
   const r = c.reason.toLowerCase();
   // Weiß der Assistent schon etwas (steht im Anrufmodus darüber), nur bestätigen statt neu abfragen (16.11.2026)
@@ -38,10 +40,18 @@ export function anrufZiel(c: {
     // Eigene Notiz klar benennen (Ole, 18.11.2026: „Ihre Notiz aufgreifen“ war unglücklich): als Frage gestellt, ist sie
     // selbst das Ziel des Anrufs („Police da und erste Zahlung erfolgt?“), sonst ein Hinweis fürs Gespräch
     const eigene = c.reason.trim() && !GENERISCH.test(c.reason.trim()) ? c.reason.trim().slice(0, 80) : null;
-    if (eigene && eigene.endsWith("?") && !c.letzterTermin) {
+    // Worte des Kunden sind nie „Ihre Notiz“ (Ole, 19.11.2026): Anliegen aus dem Chat bzw. Rückrufwunsch so benennen
+    const vomKunden = c.herkunft === "chat" || /^rückrufwunsch:/i.test(c.reason.trim());
+    if (eigene && eigene.endsWith("?") && !c.letzterTermin && !vomKunden) {
       return { ziel: "Ihre Frage klären", schritte: [`Fragen: „${eigene}“`, "Bei Bedarf gleich den nächsten Termin vereinbaren"] };
     }
-    const notiz = eigene ? `Ihre Notiz dazu: „${eigene}“` : null;
+    const notiz = !eigene
+      ? null
+      : c.herkunft === "chat"
+        ? `Anliegen aus dem Chat: „${eigene}“`
+        : vomKunden
+          ? eigene
+          : `Ihre Notiz dazu: „${eigene}“`;
     if (c.letzterTermin) {
       return {
         ziel: "Entscheidung nach dem Termin",

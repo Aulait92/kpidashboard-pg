@@ -125,7 +125,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
                         </div>
                         <form action={toggleAutoRenewAction}>
                           <input type="hidden" name="orderId" value={next.id} />
-                          <button className="text-sm font-medium text-[color:var(--brand)] hover:underline">
+                          <button className="inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline">
                             {next.autoRenew ? "Automatische Verlängerung beenden" : "Jede Woche wiederholen"}
                           </button>
                         </form>

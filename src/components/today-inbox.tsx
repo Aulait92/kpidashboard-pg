@@ -62,6 +62,8 @@ import { DatenschutzKarte } from "@/components/datenschutz-karte";
 import type { AutomatischeNachrichten } from "@/lib/nachrichtenplan-server";
 import { CrossSellZusatzKnopf } from "@/components/bestand/cross-sell-angebot";
 import { istCrossSellAufgabe, type CrossSellVerkauf } from "@/lib/cross-sell-verkauf";
+import { eingangAlter, neuerLeadGrund } from "@/lib/eingang-alter";
+import { istWartenderNeuerLead } from "@/lib/neue-leads-shared";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -72,10 +74,8 @@ const time = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 const day = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric" }).format(new Date(iso));
-const ago = (iso: string) => {
-  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  return d <= 0 ? "heute" : d === 1 ? "gestern" : `vor ${d} Tagen`;
-};
+// Bei neuen Leads zählt jede Minute: „vor 4 Min.“ statt „heute“ (UX-Runde 19.11.2026)
+const ago = (iso: string) => eingangAlter(iso);
 
 const since = (iso: string) => {
   const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
@@ -98,6 +98,8 @@ type CallItem = {
   known?: string | null;
   /** Wiedervorlage: „Erledigt, kein weiterer Anruf nötig“ erlaubt (lib/inbox.ts InboxFollowUp.erledigtOk) */
   erledigtOk?: boolean;
+  /** Neuer Lead (urgent): Zeile in „Neue Leads“ mit Produkt und Wartezeit */
+  neu?: { grund: string; seit: string };
 };
 
 type SheetState =
@@ -224,6 +226,7 @@ export function TodayInbox({
     conversationId: c.conversationId,
     urgent: c.urgent,
     known: c.known ?? null,
+    ...(c.urgent ? { neu: { grund: neuerLeadGrund(c.reason), seit: ago(c.createdAt) } } : {}),
   });
   const urgentIds = new Set(data.callbacks.filter((c) => c.urgent).map((c) => c.leadId));
   const calls: CallItem[] = [
@@ -243,7 +246,12 @@ export function TodayInbox({
     })),
     ...data.callbacks.filter((c) => !c.urgent).map(toCallback),
   ].filter((c) => !hidden.has(c.key));
-  const visibleCalls = showAll ? calls : calls.slice(0, 6);
+  // Neue Leads ohne WhatsApp (bzw. ohne Erstanschreiben) stehen in einer eigenen Karte ganz oben: Zeit bis Erstkontakt
+  // ist die wichtigste Zahl des Tages (UX-Runde 19.11.2026). Die Anrufliste beginnt weiter mit ihnen.
+  // Gleiche Regel wie der Zähler „N neu“ an Kontakte (lib/neue-leads.ts)
+  const neueLeads = calls.filter(istWartenderNeuerLead);
+  const restCalls = calls.filter((c) => !istWartenderNeuerLead(c));
+  const visibleCalls = showAll ? restCalls : restCalls.slice(0, 6);
   const current = callMode ? callMode.queue[callMode.i] : null;
   const advance = () =>
     setCallMode((m) => {
@@ -367,6 +375,43 @@ export function TodayInbox({
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   const sel = (leadId: string | null | undefined) =>
     newUi && leadId && leadId === selectedLeadId ? "xl:bg-[color:var(--brand-soft)] xl:hover:bg-[color:var(--brand-soft)]" : undefined;
+  /** Eine Anruf-Zeile (Neue Leads und Anrufen). Neue Leads: Produkt, Grund und Wartezeit, „Anrufen“ als Hauptaktion. */
+  const callRow = (c: CallItem, hauptaktion = false) => (
+    <TapRow key={c.key} className={sel(c.leadId)} onTap={() => openDetailOnDesktop(c.leadId) || callSheet(c)}>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-medium">{c.name}</div>
+        <p className="truncate text-xs text-[color:var(--muted)]">
+          {c.neu ? (
+            <>
+              <span className="font-semibold text-rose-600" data-call-urgent>
+                {c.neu.seit}
+              </span>
+              {` · ${[c.neu.grund, c.source].filter(Boolean).join(" · ")}`}
+            </>
+          ) : (
+            <>
+              {c.overdue ? <span className="font-medium text-amber-700">Überfällig · </span> : null}
+              {c.reason}
+            </>
+          )}
+        </p>
+        {weiteresProdukt && c.kind === "followup" && istCrossSellAufgabe(c.reason) ? <CrossSellZusatzKnopf verkauf={weiteresProdukt} /> : null}
+      </div>
+      {c.phone ? (
+        <span
+          onClick={(e) => {
+            stop(e);
+            if (newUi) markCall(c);
+          }}
+        >
+          <ButtonLink href={`tel:+${c.phone}`} variant={hauptaktion ? "primary" : "secondary"} icon={Phone}>
+            Anrufen
+          </ButtonLink>
+        </span>
+      ) : null}
+      {more}
+    </TapRow>
+  );
 
   return (
     <div className="space-y-6">
@@ -376,6 +421,13 @@ export function TodayInbox({
         </Card>
       ) : null}
       {data.datenschutz?.length ? <DatenschutzKarte items={data.datenschutz} leadUrl={leadUrl} /> : null}
+      {neueLeads.length > 0 ? (
+        <Card className="ring-1 ring-rose-200">
+          <div id="neue-leads" className="scroll-mt-20" data-neue-leads />
+          <CardHeader icon={Phone} title="Neue Leads: jetzt anrufen" count={neueLeads.length} />
+          <ul className="divide-y divide-[color:var(--border)]">{neueLeads.map((c) => callRow(c, true))}</ul>
+        </Card>
+      ) : null}
       {chats.length > 0 ? (
         <Card>
           <div id="chats" className="scroll-mt-20" />
@@ -621,56 +673,30 @@ export function TodayInbox({
         </Card>
       ) : null}
 
-      {calls.length > 0 ? (
+      {restCalls.length > 0 ? (
         <Card>
           <div id="anrufen" className="scroll-mt-20" />
           <CardHeader
             icon={Phone}
             title="Anrufen"
-            count={calls.length}
+            count={restCalls.length}
             actions={
               newUi && calls.some((c) => c.phone) ? (
-                <Button variant="primary" icon={PlayCircle} onClick={() => setCallMode({ queue: calls.filter((c) => c.phone), i: 0 })}>
+                // Eine Hauptaktion je Seite: Gibt es neue Leads, ist deren „Anrufen“ die Hauptaktion
+                <Button variant={neueLeads.length ? "secondary" : "primary"} icon={PlayCircle} onClick={() => setCallMode({ queue: calls.filter((c) => c.phone), i: 0 })}>
                   Anrufliste starten
                 </Button>
               ) : undefined
             }
           />
-          <ul className="divide-y divide-[color:var(--border)]">
-            {visibleCalls.map((c) => (
-              <TapRow key={c.key} className={sel(c.leadId)} onTap={() => openDetailOnDesktop(c.leadId) || callSheet(c)}>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{c.name}</div>
-                  <p className="truncate text-xs text-[color:var(--muted)]">
-                    {c.urgent ? <span className="font-semibold text-rose-600" data-call-urgent>Sofort · </span> : null}
-                    {c.overdue ? <span className="font-medium text-rose-600">Überfällig · </span> : null}
-                    {c.reason}
-                  </p>
-                  {weiteresProdukt && c.kind === "followup" && istCrossSellAufgabe(c.reason) ? <CrossSellZusatzKnopf verkauf={weiteresProdukt} /> : null}
-                </div>
-                {c.phone ? (
-                  <span
-                    onClick={(e) => {
-                      stop(e);
-                      if (newUi) markCall(c);
-                    }}
-                  >
-                    <ButtonLink href={`tel:+${c.phone}`} variant="secondary" icon={Phone}>
-                      Anrufen
-                    </ButtonLink>
-                  </span>
-                ) : null}
-                {more}
-              </TapRow>
-            ))}
-          </ul>
-          {calls.length > 6 ? (
+          <ul className="divide-y divide-[color:var(--border)]">{visibleCalls.map((c) => callRow(c))}</ul>
+          {restCalls.length > 6 ? (
             <button
               type="button"
               onClick={() => setShowAll((v) => !v)}
               className="w-full border-t border-[color:var(--border)] py-2.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]"
             >
-              {showAll ? "Weniger anzeigen" : `Alle ${calls.length} anzeigen`}
+              {showAll ? "Weniger anzeigen" : `Alle ${restCalls.length} anzeigen`}
             </button>
           ) : null}
         </Card>
@@ -860,9 +886,17 @@ function UpcomingCard({
     else groups.push({ key: k, label: dayLabel(it.at), rows: [it] });
   }
   return (
-    <Card data-upcoming>
+    // Kommende Tage sind keine Aufgabe für heute: zugeklappt wie „Aufräumen“ (Ole, 19.11.2026)
+    <details data-upcoming className="group overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
       <div id="naechste-tage" className="scroll-mt-20" />
-      <CardHeader icon={CalendarDays} title="Nächste Tage" count={items.length} />
+      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2.5 px-5 py-3.5 [&::-webkit-details-marker]:hidden">
+        <CalendarDays className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+        <span className="min-w-0 flex-1 text-[15px] font-semibold">
+          Nächste Tage <span className="ml-1 font-normal text-[color:var(--muted)]">{items.length}</span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)] transition group-open:rotate-90" />
+      </summary>
+      <div className="border-t border-[color:var(--border)]">
       {groups.map((g) => (
         <div key={g.key}>
           <div className="bg-[color:var(--surface-sunken,#f8fafc)] px-5 py-1.5 text-xs font-semibold text-[color:var(--muted)]">{g.label}</div>
@@ -917,7 +951,8 @@ function UpcomingCard({
           {all ? "Weniger anzeigen" : `Alle ${items.length} anzeigen`}
         </button>
       ) : null}
-    </Card>
+      </div>
+    </details>
   );
 }
 
@@ -961,7 +996,7 @@ function CallModePanel({
         </div>
         <div className="flex flex-1 flex-col justify-center px-6 py-8 md:flex-none">
           {item.urgent ? <div className="mb-2 text-base font-semibold text-rose-600">Sofort anrufen</div> : null}
-          {item.overdue ? <div className="mb-2 text-base font-semibold text-rose-600">Überfällig</div> : null}
+          {item.overdue ? <div className="mb-2 text-base font-semibold text-amber-700">Überfällig</div> : null}
           {/* Name öffnet den Kontakt (Ole, 16.11.2026: „mit 1 Klick öffnen können“) */}
           <Link href={kontaktHref} onClick={onEnd} aria-label={`${item.name}: Kontakt öffnen`} className="group inline-flex min-h-11 items-center gap-1.5 self-start text-3xl font-semibold tracking-tight hover:text-[color:var(--brand)]" data-anruf-kontakt>
             {item.name}

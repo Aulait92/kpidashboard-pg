@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
-import { Gift, QrCode, Users } from "lucide-react";
+import { ChevronDown, Gift, QrCode, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui";
 import { ReferralShare } from "@/components/kollegen";
@@ -54,32 +54,23 @@ export default async function KollegenEmpfehlenPage() {
       <PageHeader back="/buyer/einstellungen" title="Kollegen empfehlen" subtitle="Kennen Sie Vermittler, denen neue Kunden helfen würden?" />
       <div className="space-y-5">
         {/* Ganz oben: was beide Seiten konkret bekommen (aus den Einstellungen) */}
-        <div className={`grid gap-3 ${lines.kollege ? "sm:grid-cols-2" : ""}`} data-kollegen-kacheln>
+        <div className={`grid gap-3 ${lines.kollege ? "grid-cols-2" : ""}`} data-kollegen-kacheln>
           {lines.kollege ? (
             <div className="rounded-[var(--radius-lg)] border border-emerald-200 bg-emerald-50 p-4" data-kollegen-kachel="kollege">
               <div className="text-sm font-medium text-emerald-800">Ihr Kollege bekommt</div>
-              <div className="mt-1 text-xl font-semibold tracking-tight text-emerald-950">{lines.kollege}</div>
+              <div className="mt-1 text-lg font-semibold tracking-tight text-emerald-950 sm:text-xl">{lines.kollege}</div>
             </div>
           ) : null}
           <div className="rounded-[var(--radius-lg)] border border-[color:var(--brand)]/30 bg-[color:var(--brand-soft,#EFF6FF)] p-4" data-kollegen-kachel="sie">
             <div className="text-sm font-medium text-[color:var(--brand)]">Sie bekommen</div>
-            <div className="mt-1 text-xl font-semibold tracking-tight">{lines.sie}</div>
+            <div className="mt-1 text-lg font-semibold tracking-tight sm:text-xl">{lines.sie}</div>
             <div className="mt-0.5 text-xs text-[color:var(--muted)]">je Kollege, der Kunde wird, auf Ihrer nächsten Rechnung</div>
           </div>
         </div>
 
-        <Card>
-          <CardHeader title="Ihr Dankeschön" icon={Gift} />
-          <div className="space-y-2 p-5 text-[15px]" data-kollegen-praemie>
-            <p className="font-medium">{rewardSentence(settings, monthly)}</p>
-            {benefit ? <p className="text-[color:var(--muted)]">Auf der Seite Ihres Kollegen steht: „{benefit}“</p> : null}
-            <p className="text-sm text-[color:var(--muted)]">
-              So geht&apos;s: Link teilen → Ihr Kollege fragt ein Erstgespräch an → wird er Kunde und ist seine erste Zahlung da, schreiben wir Ihnen die Prämie automatisch gut.
-            </p>
-            {!settings.enabled ? <p className="text-sm font-medium text-amber-700">Das Empfehlungsprogramm ist gerade pausiert.</p> : null}
-          </div>
-        </Card>
+        {!settings.enabled ? <p className="text-sm font-medium text-amber-700">Das Empfehlungsprogramm ist gerade pausiert.</p> : null}
 
+        {/* Eine Aufgabe: Link teilen. Text und QR-Code nur bei Bedarf (UX-Runde 19.11.2026) */}
         <Card>
           <CardHeader title="Link teilen" icon={Users} />
           <div className="p-5">
@@ -90,26 +81,27 @@ export default async function KollegenEmpfehlenPage() {
                 {link.hinweis ?? "Der Empfehlungslink ist gerade nicht verfügbar."}
               </p>
             )}
+            {qr ? (
+              <details className="mt-1" data-kollegen-qr>
+                <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
+                  <QrCode className="h-4 w-4" /> QR-Code für Visitenkarte oder Veranstaltung
+                </summary>
+                <div className="mt-2 flex flex-col items-center gap-3 sm:flex-row sm:items-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- Data-URL, kein Bild-Optimierer nötig */}
+                  <img src={qr} alt="QR-Code zum Empfehlungslink" width={180} height={180} className="rounded-[var(--radius-sm)] border border-[color:var(--border)]" />
+                  <div className="text-sm text-[color:var(--muted)]">
+                    Kollegen scannen den Code mit der Handykamera und landen direkt auf Ihrer Empfehlungsseite.
+                    <div className="mt-2">
+                      <a href={qr} download="performancegrowth-empfehlung.png" className="font-medium text-[color:var(--brand)] underline">
+                        QR-Code herunterladen
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            ) : null}
           </div>
         </Card>
-
-        {qr ? (
-          <Card>
-            <CardHeader title="QR-Code" icon={QrCode} hint="z. B. für Veranstaltungen oder die Visitenkarte" />
-            <div className="flex flex-col items-center gap-3 p-5 sm:flex-row sm:items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element -- Data-URL, kein Bild-Optimierer nötig */}
-              <img src={qr} alt="QR-Code zum Empfehlungslink" width={180} height={180} className="rounded-[var(--radius-sm)] border border-[color:var(--border)]" />
-              <div className="text-sm text-[color:var(--muted)]">
-                Kollegen scannen den Code mit der Handykamera und landen direkt auf Ihrer Empfehlungsseite.
-                <div className="mt-2">
-                  <a href={qr} download="performancegrowth-empfehlung.png" className="font-medium text-[color:var(--brand)] underline">
-                    QR-Code herunterladen
-                  </a>
-                </div>
-              </div>
-            </div>
-          </Card>
-        ) : null}
 
         <Card>
           <CardHeader title="Ihre Empfehlungen" count={rows.length || undefined} hint={won ? `${won} Kunde${won === 1 ? "" : "n"} geworben` : undefined} />
@@ -131,6 +123,21 @@ export default async function KollegenEmpfehlenPage() {
             </ul>
           )}
         </Card>
+
+        <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)]" data-kollegen-praemie>
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2.5 px-5 py-3 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
+            <Gift className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+            <span className="flex-1">So funktioniert die Prämie</span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
+          <div className="space-y-2 px-5 pb-4 text-[15px]">
+            <p>{rewardSentence(settings, monthly)}</p>
+            {benefit ? <p className="text-[color:var(--muted)]">Auf der Seite Ihres Kollegen steht: „{benefit}“</p> : null}
+            <p className="text-sm text-[color:var(--muted)]">
+              So geht&apos;s: Link teilen, Ihr Kollege fragt ein Erstgespräch an. Wird er Kunde und ist seine erste Zahlung da, schreiben wir Ihnen die Prämie automatisch gut.
+            </p>
+          </div>
+        </details>
       </div>
     </main>
   );

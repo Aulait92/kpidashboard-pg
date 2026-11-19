@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
@@ -84,6 +85,14 @@ export default async function TeamPage() {
           <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]" data-seat-summary>
             {seatSummary(seats)}
           </p>
+        ) : null}
+
+        {/* Auswertung je Person steht unter Wachstum (Karte „Team im Zeitraum“), Ole 19.11.2026: kurzer Weg dorthin */}
+        {members.length > 1 ? (
+          <Link href="/buyer/wachstum#team-zeitraum" className="flex items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-[15px] hover:border-[color:var(--brand)]" data-team-zeitraum-link>
+            <span>Leads, Abschlüsse und Provision je Person</span>
+            <span className="text-sm font-medium text-[color:var(--brand)]">Team im Zeitraum</span>
+          </Link>
         ) : null}
 
         <InviteForm readOnly={readOnly} costHint={seats && addsSeatCost(seats) ? addSeatCostHint(seats.price) : null} />

@@ -1,5 +1,6 @@
 "use client";
 
+import { eingangKurz } from "@/lib/kontakt-liste";
 import { berlinTodayIso } from "@/lib/offer-pricing";
 import { LEAD_MAIL_EVENT, oeffneLeadMail } from "@/components/lead-mail";
 import { KUENDIGUNG_TODO, POLICE_TODO, versichererAusKuendigung } from "@/lib/vertraege-shared";
@@ -308,33 +309,11 @@ export function LeadHeaderActions(p: Props) {
               <ChevronDown className="h-3.5 w-3.5" />
             </button>
           )}
-          <span>eingegangen {new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(p.createdAt))}</span>
+          {/* Relativ wie in der Liste (UX-Runde 19.11.2026): „vor 4 Min.“ zeigt, wie dringend der Anruf ist */}
+          <span suppressHydrationWarning title={new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(p.createdAt))}>
+            eingegangen {eingangKurz(new Date(p.createdAt))}
+          </span>
         </div>
-        {/* Handy (Ole, 16.11.2026: „Wo kann ich auf gewonnen/verloren setzen?“): oben rechts ist dafür kein Platz */}
-        {!p.storniert ? (
-          <div className="mt-3 grid grid-cols-2 gap-1.5 sm:hidden" data-gewonnen-verloren>
-            <button
-              type="button"
-              onClick={() => !won && askWin()}
-              className={cn(
-                "inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius-md)] border text-sm font-medium",
-                won ? "border-emerald-600 bg-emerald-600 text-white" : "border-[color:var(--border)] bg-white text-emerald-700",
-              )}
-            >
-              <Trophy className="h-4 w-4" /> Abschluss
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpen("lost")}
-              className={cn(
-                "inline-flex h-10 items-center justify-center rounded-[var(--radius-md)] border text-sm font-medium",
-                lost ? "border-rose-600 bg-rose-600 text-white" : "border-[color:var(--border)] bg-white text-rose-700",
-              )}
-            >
-              Verloren
-            </button>
-          </div>
-        ) : null}
 
         {/* Schmal (Handy, Fenster rechts auf Heute): Kacheln mit Symbol über dem Text; 4 in einer Reihe, sonst 3 je Reihe,
             ab 448 px Breite alle in einer Reihe. Breit (ab 672 px, Container-Abfrage): Knöpfe in einer Zeile. */}
@@ -380,6 +359,32 @@ export function LeadHeaderActions(p: Props) {
           />
           <ActionTile icon={MoreHorizontal} label="Mehr" onClick={() => setOpen("more")} />
         </div>
+        {/* Handy (Ole, 16.11.2026: „Wo kann ich auf gewonnen/verloren setzen?“): oben rechts ist dafür kein Platz.
+            UX-Runde 19.11.2026: unter den Aktionen, damit „Anrufen“ als Erstes kommt; ruhiger und flacher */}
+        {!p.storniert ? (
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5 sm:hidden" data-gewonnen-verloren>
+            <button
+              type="button"
+              onClick={() => !won && askWin()}
+              className={cn(
+                "inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius-md)] border text-sm font-medium",
+                won ? "border-emerald-600 bg-emerald-600 text-white" : "border-[color:var(--border)] bg-white text-emerald-700",
+              )}
+            >
+              <Trophy className="h-4 w-4" /> Abschluss
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen("lost")}
+              className={cn(
+                "inline-flex h-10 items-center justify-center rounded-[var(--radius-md)] border text-sm font-medium",
+                lost ? "border-rose-600 bg-rose-600 text-white" : "border-[color:var(--border)] bg-white text-rose-700",
+              )}
+            >
+              Verloren
+            </button>
+          </div>
+        ) : null}
 
         {p.botRecall ? (
           <div className="mt-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm text-sky-900" data-bot-recall-bar>

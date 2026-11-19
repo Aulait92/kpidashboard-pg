@@ -17,9 +17,9 @@ import { ProvisionRatesProvider } from "@/components/provision-context";
 import { LeadBookingHost } from "@/components/lead-booking";
 import type { ShellAbsence } from "@/components/absence-sheet";
 import { berlinYmd, currentOrNextAbsence, toAbsenceView } from "@/lib/absence";
-import { leadScope, memberName } from "@/lib/team";
+import { memberName } from "@/lib/team";
 import { unreadUpdateCount } from "@/lib/neuigkeiten";
-import { nowMs } from "@/lib/now";
+import { wartendeNeueLeads } from "@/lib/neue-leads";
 import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 import { AppDemoRahmen } from "@/components/app-demo-rahmen";
 import { demoTourZiele } from "@/lib/app-demo/tour-server";
@@ -111,22 +111,10 @@ export default async function BuyerLayout({
 
   // Neuigkeiten: ungelesene Einträge des Logins (Vorschau: keine Markierung)
   const updatesUnread = ctx?.userId && !ctx.preview ? await unreadUpdateCount(ctx.userId, ctx.customerId).catch(() => 0) : 0;
-  // Zähler an „Kontakte“ (UX-Überarbeitung, Ole 15.11.2026): neue Kontakte der letzten 30 Tage, mit denen noch niemand
-  // gesprochen hat. Leads ohne nächsten Schritt stehen auf „Heute“ unter „Aufräumen“.
-  const noStepBadge = ctx
-    ? await prisma.lead
-        .count({
-          where: {
-            ...leadScope(ctx),
-            erasedAt: null,
-            closedAt: null,
-            reached: false,
-            OR: [{ status: null }, { status: "Neuer Lead" }],
-            createdAt: { gte: new Date(nowMs() - 30 * 24 * 3600_000) },
-          },
-        })
-        .catch(() => 0)
-    : 0;
+  // Zähler „N neu“ an „Kontakte“ (Ole, 19.11.2026): nur neue Leads, die wirklich auf den Vermittler warten, dieselbe
+  // Menge wie die Karte „Neue Leads: jetzt anrufen“ auf Heute (lib/neue-leads.ts). Leads, die der Assistent per
+  // WhatsApp betreut, zählen nicht.
+  const noStepBadge = ctx ? await wartendeNeueLeads(ctx).then((l) => l.length).catch(() => 0) : 0;
 
   return (
     <>

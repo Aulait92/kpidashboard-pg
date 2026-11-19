@@ -52,14 +52,6 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
       ) : null}
       {sp.postfach === "consent" && microsoftAdminConsentUrl() ? <MicrosoftAdminConsent url={microsoftAdminConsentUrl()!} /> : null}
 
-      {ctx.teamRole === "owner" ? (
-        <Card>
-          <div className="p-5">
-            <MailFeaturesToggle on={!ansprache?.mailFeaturesOff} readOnly={readOnly} />
-          </div>
-        </Card>
-      ) : null}
-
       <Card>
         <CardHeader title="Ihr Postfach" icon={Mail} />
         <div className="space-y-4 p-5">
@@ -129,9 +121,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
       <Card id="signatur">
         <CardHeader title="Signatur" icon={PenLine} />
         <div className="p-5">
-          <p className="mb-3 text-sm text-[color:var(--muted)]">
-            Steht automatisch unter jeder E-Mail an Leads (auch ohne Vorlage). In einer Vorlage können Sie die Stelle mit {"{signatur}"} selbst bestimmen.
-          </p>
+          <p className="mb-3 text-sm text-[color:var(--muted)]">Steht automatisch unter jeder E-Mail an Ihre Kontakte.</p>
           <SignaturForm signatur={me?.mailSignature ?? ""} readOnly={readOnly} />
         </div>
       </Card>
@@ -139,7 +129,11 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
       <Card id="vorlagen">
         <CardHeader title="Vorlagen" icon={Mail} />
         <div className="p-5">
-          <p className="mb-3 text-sm text-[color:var(--muted)]">
+          <p className="mb-3 text-sm text-[color:var(--muted)]">Name, Anrede und Terminlink setzt die App beim Schreiben selbst ein. Passende Vorlagen stehen im Fenster vorn.</p>
+          {/* Technische Platzhalter-Liste zum Aufklappen (UX-Runde 19.11.2026: vorher zwei lange Absätze) */}
+          <details className="mb-4 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" data-platzhalter-hilfe>
+            <summary className="cursor-pointer text-sm font-medium">Platzhalter für eigene Vorlagen</summary>
+          <p className="mb-3 mt-3 text-sm text-[color:var(--muted)]">
             Platzhalter werden beim Schreiben ersetzt: {PLATZHALTER.join(", ")}. {"{anrede}"} wird je nach Ansprache zu „Guten Tag Frau Beispiel“
             (Sie; ohne bekannte Anrede „Guten Tag Anna Beispiel“, ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du). {"{terminlink}"} ist der persönliche Buchungslink des Kontakts; steht schon ein
             Termin an, fällt der Satz weg.
@@ -148,6 +142,8 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
             Diese Platzhalter füllen Sie beim Schreiben über Felder im Fenster: {ZUSATZ_PLATZHALTER.join(", ")}. Im Fenster stehen die Vorlagen vorn, die zur Phase des
             Kontakts passen.
           </p>
+          <p className="text-sm text-[color:var(--muted)]">In einer Vorlage bestimmen Sie die Stelle der Signatur mit {"{signatur}"}.</p>
+          </details>
           {ctx.teamRole === "owner" ? (
             <div className="mb-4">
               <AnspracheForm current={asAnsprache(ansprache?.leadAddress)} readOnly={readOnly} />
@@ -156,6 +152,14 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
           <VorlagenListe vorlagen={vorlagen} readOnly={readOnly} />
         </div>
       </Card>
+      {/* Seltene Einstellung ans Ende (UX-Runde 19.11.2026): die Seite beginnt mit dem Verbinden */}
+      {ctx.teamRole === "owner" ? (
+        <Card>
+          <div className="p-5">
+            <MailFeaturesToggle on={!ansprache?.mailFeaturesOff} readOnly={readOnly} />
+          </div>
+        </Card>
+      ) : null}
     </main>
   );
 }

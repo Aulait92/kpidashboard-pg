@@ -58,7 +58,8 @@ export function AbschlussBlattKarte({ eintrag, mehrere = false }: { eintrag: Bla
       <Card className="px-5 py-3">
         <p className="flex items-center gap-2 text-sm text-[color:var(--muted)]" data-blatt-erledigt={stand}>
           <Check className="h-4 w-4 text-emerald-600" />
-          {eintrag.label}: {stand === "fertig" ? "Abschluss gespeichert" : stand === "pausiert" ? "Nachfassen 1 Woche pausiert" : "Nachfassen läuft weiter"}
+          {eintrag.label}: {/* „Noch nicht“ ohne laufendes Nachfassen: nicht „läuft weiter“ behaupten (UX-Runde Team C) */}
+          {stand === "fertig" ? "Abschluss gespeichert" : stand === "pausiert" ? "Nachfassen 1 Woche pausiert" : eintrag.nachfassenLaeuft ? "Nachfassen läuft weiter" : "Bleibt offen"}
         </p>
       </Card>
     );

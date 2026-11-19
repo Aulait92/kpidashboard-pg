@@ -4,7 +4,8 @@
 // Vertriebspräsentation (Admin, Kontakt): Folie (1280×720) skaliert ins Fenster, ← → bzw. Leertaste, Wischen am Handy,
 // Vollbild zum Teilen im Videocall (am Handy ohne Vollbild-API: Folie über den ganzen Bildschirm). Keine Sprechzettel
 // (Ole, 15.11.2026). Klicks auf Schalter in der
-// Folie (data-tarif, data-sparte, data-baustein) gehen an onKlick; die Antwort bringt die neuen Folien.
+// Folie (data-tarif, data-sparte, data-baustein, data-paket) gehen an onKlick; die Antwort bringt die neuen Folien.
+// data-paket (Fassung C, Folie „Ihre Entscheidung“): je Sparte eine Stufe auf einmal wählen („2,4“ = Indizes im Angebot).
 // Startet immer mit Folie 1 (Ole, 15.11.2026): kein gespeicherter Stand, kein Sprung per Adresse.
 // Kommt per Klick eine Produktfolie dazu (Cross-Selling „Mit anschauen“), springt das Deck vorwärts auf sie und
 // meldet „{Produkt} hinzugefügt“ (Ole, 18.11.2026); im Vollbild und eingebettet steht der Hinweis in der Folie.
@@ -20,7 +21,14 @@ import { useToast } from "@/components/ui/toast";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 
 export type DeckFolie = { id: string; titel: string; html: string; produkt?: string; hinweis?: string };
-export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean };
+export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean; paket?: number[] };
+
+/** „2,4“ aus data-paket; null, wenn es kein gültiges Paket ist. */
+export function paketAusAttribut(v: string | undefined): number[] | null {
+  if (!v || !/^\d{1,2}(,\d{1,2}){0,7}$/.test(v)) return null;
+  return v.split(",").map(Number);
+}
+
 export type DeckAntwort = { ok: true; folien: DeckFolie[] } | { ok: false; error: string };
 
 /** Taste aus einer eingebetteten Folie (iframe, z. B. Demo auf Folie 17) an das Deck darüber. */
@@ -108,6 +116,23 @@ export function FolienDeck({
       return;
     }
     if (!onKlick || pending) return;
+    // Paket (Fassung C): das angetippte wird gewählt, das andere nicht mehr; ein gewähltes erneut antippen ändert nichts
+    const pk = (ev.target as HTMLElement).closest<HTMLElement>("[data-paket]");
+    if (pk) {
+      const paket = paketAusAttribut(pk.dataset.paket);
+      if (!paket || pk.classList.contains("an")) return;
+      const vorher = [...(folie.current?.querySelectorAll<HTMLElement>("[data-paket]") ?? [])].map((x) => [x, x.classList.contains("an")] as const);
+      vorher.forEach(([x]) => x.classList.toggle("an", x === pk));
+      startT(async () => {
+        const r = await onKlick({ tarif: null, sparte: false, item: -1, baustein: -1, aktiv: true, paket });
+        if (r.ok) setFolien(r.folien);
+        else {
+          vorher.forEach(([x, an]) => x.classList.toggle("an", an));
+          toast.show({ message: r.error, tone: "error" });
+        }
+      });
+      return;
+    }
     const el = (ev.target as HTMLElement).closest<HTMLElement>("[data-baustein],[data-tarif],[data-sparte]");
     if (!el) return;
     const t = el.dataset.tarif ?? el.dataset.sparte;

@@ -1650,6 +1650,10 @@ model Offer {
   // („kostenloser Start“), sonst anteilig mit der ersten Abbuchung.
   billingDay              Int?
   billingFreeStart        Boolean       @default(false)
+  // Zahlung nachträglich (Ole, 19.11.2026, Sonderkondition): Vergütung jeweils nachträglich für den abgelaufenen
+  // Leistungsmonat, erste Abbuchung Start + 1 Monat (gleicher Tag), auch nach der Mindestlaufzeit; die letzte Zahlung folgt
+  // nach Vertragsende. Nur monatlich (nicht mit Vorauszahlung, Abrechnungstag oder kostenlosem Start), Start am 1. bis 28.
+  paymentInArrears        Boolean       @default(false)
   // Kunde wählt auf der Angebotsseite selbst (seit 11.11.2026): Laufzeit (nur ohne
   // Sonderpreis) und Startdatum. Bei Annahme werden term/setupFee/startDate überschrieben.
   customerChoosesTerm     Boolean       @default(false)
@@ -5297,7 +5301,7 @@ model Beratungsdoku {
 
 /// Messung der Beratungspräsentation (Ole, 19.11.2026, lib/praesentation-messung.ts): Folie erreicht und Zusage
 /// („Ja, so machen wir es“) je Termin, Quelle (termin = Deck des Vermittlers, kundenlink = /beratung/<token>) und
-/// Splittest-Variante (A | B, lib/praesentation-variante.ts). Kennzahl „Abschlussquote je Präsentation“ je Vermittler.
+/// Splittest-Variante (A | B | C, lib/praesentation-variante.ts). Kennzahl „Abschlussquote je Präsentation“ je Vermittler.
 /// Keine neuen Personendaten: kein Name, keine IP, kein Gerät; je Termin, Quelle, Art und Folie höchstens ein Eintrag.
 model PraesentationEreignis {
   id            String   @id @default(cuid())

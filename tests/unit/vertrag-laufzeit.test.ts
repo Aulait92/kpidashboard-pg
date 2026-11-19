@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  naechsteRegulaereRechnung,
   berlinEndOfDay,
   cancelDate,
   cancelDateText,
@@ -101,5 +102,19 @@ describe("Konditionen am Annahme-Knopf", () => {
     for (const l of [...contractSummaryLines({ ...base, intro: { months: 3, monthly: 0 } }), ...contractSummaryLines({ ...base, term: "none", setup: 0 })]) {
       expect(hatGedankenstrich(l)).toBe(false);
     }
+  });
+});
+
+describe("naechsteRegulaereRechnung (Konto: nächste Rechnung)", () => {
+  it("monatlich im Voraus: nächster Abrechnungstag ab heute, Monatsende wie Stripe", () => {
+    expect(naechsteRegulaereRechnung({ anchorIso: "2026-05-03", monate: 1, ab: 0, todayIso: "2026-11-19" })).toBe("2026-12-03");
+    expect(naechsteRegulaereRechnung({ anchorIso: "2026-05-03", monate: 1, ab: 0, todayIso: "2026-12-03" })).toBe("2026-12-03");
+    expect(naechsteRegulaereRechnung({ anchorIso: "2026-01-31", monate: 1, ab: 0, todayIso: "2026-02-10" })).toBe("2026-02-28");
+    expect(naechsteRegulaereRechnung({ anchorIso: "2026-12-01", monate: 1, ab: 0, todayIso: "2026-11-19" })).toBe("2026-12-01");
+  });
+  it("Vorauszahlung: erst die Verlängerung; nach Vertragsende keine Rechnung", () => {
+    expect(naechsteRegulaereRechnung({ anchorIso: "2026-11-01", monate: 12, ab: 1, todayIso: "2026-11-19" })).toBe("2027-11-01");
+    expect(naechsteRegulaereRechnung({ anchorIso: "2026-05-03", monate: 1, ab: 0, todayIso: "2026-11-19", endIso: "2026-12-02" })).toBeNull();
+    expect(naechsteRegulaereRechnung({ anchorIso: "2026-05-03", monate: 1, ab: 0, todayIso: "2026-11-19", endIso: "2027-01-02" })).toBe("2026-12-03");
   });
 });

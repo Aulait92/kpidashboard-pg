@@ -35,7 +35,7 @@ export function OrderForm(p: {
               key={w}
               type="button"
               onClick={() => setWeek(w)}
-              className={`rounded-full px-3 py-1.5 font-medium transition ${week === w ? "bg-white shadow-sm" : "text-[color:var(--muted)]"}`}
+              className={`min-h-10 rounded-full px-3 py-1.5 font-medium transition ${week === w ? "bg-white shadow-sm" : "text-[color:var(--muted)]"}`}
             >
               {w === "0" ? `Ab sofort (${p.weekLabels.this})` : `Nächste Woche (${p.weekLabels.next})`}
             </button>
@@ -46,7 +46,7 @@ export function OrderForm(p: {
       )}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white">
-          <button type="button" aria-label="Weniger" onClick={() => setQty((q) => Math.max(p.min, q - step))} className="flex h-10 w-10 items-center justify-center text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
+          <button type="button" aria-label="Weniger" onClick={() => setQty((q) => Math.max(p.min, q - step))} className="flex h-11 w-11 items-center justify-center text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
             <Minus className="h-4 w-4" />
           </button>
           <input
@@ -54,10 +54,10 @@ export function OrderForm(p: {
             inputMode="numeric"
             value={qty}
             onChange={(e) => setQty(Math.max(0, Number(e.target.value.replace(/\D/g, "")) || 0))}
-            className="h-10 w-16 border-x border-[color:var(--border)] text-center text-base font-semibold tabular-nums outline-none"
+            className="h-11 w-16 border-x border-[color:var(--border)] text-center text-base font-semibold tabular-nums outline-none"
             aria-label="Anzahl Leads"
           />
-          <button type="button" aria-label="Mehr" onClick={() => setQty((q) => q + step)} className="flex h-10 w-10 items-center justify-center text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
+          <button type="button" aria-label="Mehr" onClick={() => setQty((q) => q + step)} className="flex h-11 w-11 items-center justify-center text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
             <Plus className="h-4 w-4" />
           </button>
         </div>
@@ -69,8 +69,8 @@ export function OrderForm(p: {
           </div>
         </div>
       </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="autoRenew" defaultChecked className="h-4 w-4" />
+      <label className="flex min-h-10 items-center gap-2 text-sm">
+        <input type="checkbox" name="autoRenew" defaultChecked className="h-5 w-5" />
         Jede Woche wiederholen (bis ich es ändere)
       </label>
       {state.error ? <p className="text-sm text-rose-700">{state.error}</p> : null}

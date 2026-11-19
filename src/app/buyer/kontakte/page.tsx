@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 // Neue Oberfläche: „Kontakte“ = Leads-Liste und Pipeline auf einer Seite.
 // Ein Klick auf einen Kontakt öffnet die Details als ganze Seite
-// (/buyer/kontakte/[id]) mit „Alle Kontakte“ zurück.
+// (/buyer/kontakte/[id]) mit „Kontakte“ zurück.
 
 type SearchParams = Promise<{
   range?: string;

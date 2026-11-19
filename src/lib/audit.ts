@@ -29,6 +29,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "lead.export": "Leads exportiert (CSV)",
   "lead.storno": "Lead storniert",
   "vertrieb.neuimport": "Vertrieb neu übernommen (Cold CRM bzw. Testumgebung)",
+  "vertrieb.import_liste": "Öffentliche Vermittlerliste importiert (nach Vorschau, nichts verschickt)",
+  "vertrieb.instantly_portion": "Tagesportion der Vermittlerliste für Instantly heruntergeladen (gemischt, je Domain begrenzt)",
   "vertrieb.verknuepft": "Vertriebskontakt mit Kundenakte verknüpft",
   "vertrieb.verknuepfung_geloest": "Verknüpfung von Vertriebskontakt und Kundenakte gelöst",
   "vertrieb.nie_kontaktieren": "Vertriebskontakt von Hand auf „nie kontaktieren“ gesetzt",

@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { FileDrop } from "@/components/ui/file-drop";
+import { LISTEN_GRUENDE, LISTEN_GRUND_LABEL, istVermittlerListe, summeUebersprungen, type ListenErgebnis } from "@/lib/vertrieb/vermittler-format";
 import { backfillContactDataAction, connectCalendlyAction, instantlyNachholenAction, sperrenNachholenAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
 
 // Server-Action-Grenze liegt bei 16 MB (next.config.ts)
@@ -12,13 +13,118 @@ function Result({ state }: { state: ImportState }) {
   return <p className={`text-sm ${state.ok ? "text-emerald-700" : "text-rose-600"}`}>{state.message}</p>;
 }
 
+/**
+ * Agenturliste (Numbers-Export) oder öffentlich gesammelte Vermittlerliste (Semikolon, erkannt an der Kopfzeile).
+ * Die Vermittlerliste wird gleich nach der Auswahl geprüft (Trockenlauf) und erst mit dem Knopf angelegt.
+ */
 export function ContactsImport() {
   const [state, action, pending] = useActionState(importContactsAction, null);
+  const [file, setFile] = useState<File | null>(null);
+  const [liste, setListe] = useState(false);
+  const [, startTransition] = useTransition();
+
+  function senden(modus: "pruefen" | "importieren", f: File | null = file) {
+    if (!f) return;
+    const fd = new FormData();
+    fd.set("file", f);
+    fd.set("modus", modus);
+    startTransition(() => action(fd));
+  }
+
+  async function waehlen(files: File[]) {
+    const f = files[0] ?? null;
+    setFile(f);
+    const erkannt = f ? istVermittlerListe(await f.slice(0, 4096).text()) : false;
+    setListe(erkannt);
+    if (f && erkannt) senden("pruefen", f);
+  }
+
+  const r = state?.liste;
+  const vorschau = liste && file && r && !r.angewendet ? r : null;
+  const fertig = r?.angewendet ? r : null;
   return (
-    <form action={action} className="space-y-3">
-      <FileDrop name="file" accept=".csv,text/csv" maxBytes={CSV_MAX_BYTES} label="CSV auswählen" pendingLabel="Wird importiert …" required />
-      <button className="btn-primary" disabled={pending}>{pending ? "Importiere … (kann 1 Min. dauern)" : "Agenturliste importieren"}</button>
-      <Result state={state} />
+    <div className="space-y-3" data-kontakte-import>
+      <FileDrop accept=".csv,text/csv" maxBytes={CSV_MAX_BYTES} label="CSV auswählen" value={file ? [file] : []} onFiles={waehlen} busy={pending} pendingLabel={liste && !vorschau ? "Wird geprüft …" : "Wird importiert …"} />
+      {!liste && (
+        <button className="btn-primary" disabled={pending || !file} onClick={() => senden("importieren")}>
+          {pending ? "Importiere … (kann 1 Min. dauern)" : "Agenturliste importieren"}
+        </button>
+      )}
+      {liste && pending && !vorschau && <p className="text-sm text-slate-500">Vermittlerliste erkannt, wird geprüft …</p>}
+      {vorschau && <ListenVorschau r={vorschau} pending={pending} onImport={() => senden("importieren")} />}
+      {fertig && <ListenVorschau r={fertig} />}
+      {state?.message ? <Result state={state} /> : null}
+    </div>
+  );
+}
+
+/** Vorschau bzw. Ergebnis der Vermittlerliste: neu, übersprungen je Grund, je Gesellschaft. */
+export function ListenVorschau({ r, pending = false, onImport }: { r: ListenErgebnis; pending?: boolean; onImport?: () => void }) {
+  const zahl = (n: number) => n.toLocaleString("de-DE");
+  const gruende = LISTEN_GRUENDE.filter((g) => r.uebersprungen[g] > 0);
+  return (
+    <div className="space-y-3 rounded-lg border border-slate-200 p-4 text-sm" data-vermittlerliste-vorschau>
+      <p className="font-medium">
+        Vermittlerliste · {zahl(r.zeilen)} Zeilen: <span className="text-emerald-700">{zahl(r.neu)} {r.angewendet ? "angelegt" : "neu"}</span>, {zahl(summeUebersprungen(r))} übersprungen
+      </p>
+      {gruende.length > 0 && (
+        <ul className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 text-slate-600">
+          {gruende.map((g) => (
+            <li key={g} className="contents">
+              <span>
+                {LISTEN_GRUND_LABEL[g]}
+                {g === "vorhanden" && r.ergaenzt > 0 ? ` (${zahl(r.ergaenzt)} mit leeren Feldern ergänzt)` : ""}
+              </span>
+              <span className="text-right tabular-nums">{zahl(r.uebersprungen[g])}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <details>
+        <summary className="cursor-pointer text-slate-500">Je Gesellschaft ({r.jeGesellschaft.length})</summary>
+        <ul className="mt-2 grid max-h-72 grid-cols-[1fr_auto_auto] gap-x-4 gap-y-0.5 overflow-y-auto text-slate-600">
+          <li className="contents text-xs text-slate-400">
+            <span>Gesellschaft</span>
+            <span className="text-right">neu</span>
+            <span className="text-right">Zeilen</span>
+          </li>
+          {r.jeGesellschaft.map((g) => (
+            <li key={g.name} className="contents">
+              <span className="truncate">{g.name}</span>
+              <span className="text-right tabular-nums">{zahl(g.neu)}</span>
+              <span className="text-right tabular-nums text-slate-400">{zahl(g.zeilen)}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
+      {onImport && (
+        <div className="space-y-1">
+          <button className="btn-primary" disabled={pending || r.neu + r.ergaenzt === 0} onClick={onImport}>
+            {pending ? "Importiere …" : r.neu > 0 ? `${zahl(r.neu)} Kontakte importieren` : `${zahl(r.ergaenzt)} Kontakte ergänzen`}
+          </button>
+          <p className="text-xs text-slate-500">Nichts wird verschickt; neue Kontakte landen in der Stufe „Neu“, die Gesellschaft steht als Versicherer.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Tagesportion der Vermittlerliste für Instantly (CSV): gemischt nach Gesellschaft und Mail-Domain, je Ziel-Domain
+ * höchstens N am Tag. Erneut am selben Tag: dieselbe Portion.
+ */
+export function InstantlyPortion({ proDomain }: { proDomain: number }) {
+  return (
+    <form method="post" action="/admin/vertrieb/import/instantly-portion" className="flex flex-wrap items-end gap-3" data-instantly-portion>
+      <label className="text-sm">
+        <span className="mb-1 block text-slate-500">Kontakte heute</span>
+        <input name="menge" type="number" min={1} max={5000} defaultValue={500} className="input w-28" />
+      </label>
+      <label className="text-sm">
+        <span className="mb-1 block text-slate-500">je Domain höchstens</span>
+        <input name="proDomain" type="number" min={1} max={500} defaultValue={proDomain} className="input w-28" />
+      </label>
+      <button className="btn-ghost">Portion herunterladen</button>
     </form>
   );
 }

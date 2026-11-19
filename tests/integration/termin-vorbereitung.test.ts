@@ -3,7 +3,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { angeboteAuslesenErlaubt, angeboteSpeichern, auslesenUndSpeichern, bausteinUmschalten, kundenlinkBeenden, kundenlinkErstellen, kundenlinkStand, loadKundenPraesentation, tarifUmschalten, listVorbereitungen, loadAngebote, loadPraesentation, loadVorbereitung, setPrepared } from "@/lib/termin-vorbereitung-server";
 import { loadLogoStand, logoBestaetigen, logoEntfernen, logoHochladen } from "@/lib/branding-logo-server";
-import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
+import { cleanupCustomer, makeCustomer, nurFassungB, requireTestDb } from "./db";
+
+// Prüft Fassung B (Standard) der Präsentation
+nurFassungB();
 
 const HOUR = 60 * 60 * 1000;
 

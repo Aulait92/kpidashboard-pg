@@ -78,7 +78,10 @@ z Abschlüsse (Quote)“, rote Zeile nur bei offenen Leads ohne nächsten Schrit
 Anmeldung & Sicherheit, Zwei-Faktor-Login, Präsentation (Branding), Ablauf: klare Aufgabe je Karte, keine Änderung nötig
 (SUS je etwa 88 bis 90).
 
-## Offen für Ole
-- Konto: nächste Rechnung (Datum, Betrag) direkt unter „Sie zahlen“ anzeigen, sobald Stripe-Rechnungen für alle laufen.
-- Assistent: Terminarten-Text (components/termin-formate) hat 3 Sätze, wird auch in der Einrichtung genutzt; kürzen gemeinsam entscheiden.
-- Team: „Team im Zeitraum“ zusätzlich auf der Team-Seite (Agentur-Persona sucht es dort), oder Link dorthin.
+## Nachgezogen nach Oles Freigabe (19.11.2026)
+- Konto „Sie zahlen“: nächste Rechnung mit Datum und Betrag, nur wenn sicher bekannt (Angebot mit Start und Abschluss,
+  keine Pause, kein Nachlass, keine Einführungsphase, kein Testkonto; lib/vertrag-laufzeit `naechsteRegulaereRechnung`).
+  Zahlung nachträglich: „Nächste Abbuchung am … für … bis …“ mit Betrag. Sonst keine Zeile.
+- Terminarten-Text (Einrichtung und Assistent) in einem Satz.
+- Team-Seite: Link „Team im Zeitraum“ zur Karte unter Wachstum (#team-zeitraum).
+- Hilfe (docs/hilfe.md): neuer Ort von „Neue Leads per E-Mail“, „Sie zahlen“ mit nächster Rechnung, Team-Auswertung.

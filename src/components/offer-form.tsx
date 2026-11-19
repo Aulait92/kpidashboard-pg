@@ -109,6 +109,8 @@ export function OfferForm({
   const [customerChoice, setCustomerChoice] = useState(true);
   // „Ich zahle später“ auf der Angebotsseite (Ole, 16.11.2026): nur für Kunden mit spätem Start, Standard aus
   const [allowPayLater, setAllowPayLater] = useState(false);
+  // Zahlung nachträglich (Ole, 19.11.2026): Sonderkondition, nur monatlich (nicht mit Vorauszahlung oder Abrechnungstag)
+  const [arrears, setArrears] = useState(false);
   // Überweisung nur auf Anfrage des Kunden (Ole, 17.11.2026): Standard aus, Zahlungsziel Standard 14 Tage
   const [allowBankTransfer, setAllowBankTransfer] = useState(false);
   const [bankTransferDays, setBankTransferDays] = useState(String(UEBERWEISUNG_TAGE_STANDARD));
@@ -167,6 +169,7 @@ export function OfferForm({
         startDate: startDate || null,
         billingDay: num(billingDay),
         billingFreeStart: billingFree && !!billingDay,
+        paymentInArrears: arrears && !test,
         validDays: num(validDays) ?? 14,
         seats: softwarePkg ? num(seats) : null,
         annual: annual && annualPossible,
@@ -422,6 +425,24 @@ export function OfferForm({
                 <span className="block font-semibold">Später zahlen erlauben</span>
                 <span className="block text-xs text-[color:var(--muted)]">
                   Nach der Annahme kann der Kunde „Ich zahle später“ wählen und den Tag der Zahlungserinnerung festlegen (spätestens 14 Tage vor dem Start).
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-zahlung-nachtraeglich-toggle>
+              <input
+                type="checkbox"
+                name="paymentInArrears"
+                className="mt-0.5 h-4 w-4"
+                checked={arrears && !test}
+                disabled={test || (!arrears && ((annual && annualPossible) || !!billingDay))}
+                onChange={(e) => setArrears(e.target.checked)}
+              />
+              <span>
+                <span className="block font-semibold">Zahlung nachträglich (für den abgelaufenen Monat)</span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  {arrears && ((annual && annualPossible) || !!billingDay)
+                    ? "Geht nur monatlich: bitte Vorauszahlung und Abrechnungstag abwählen."
+                    : "Erste Abbuchung einen Monat nach dem Start, nur monatlich, Start am 1. bis 28."}
                 </span>
               </span>
             </label>

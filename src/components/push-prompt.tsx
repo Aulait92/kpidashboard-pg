@@ -7,7 +7,6 @@
 
 import { useEffect, useState } from "react";
 import { Bell, BellOff, BellRing, Share, X } from "lucide-react";
-import { Button } from "@/components/ui";
 import { usePush } from "@/lib/use-push";
 
 const DISMISS_KEY = "pg-push-hint-dismissed";
@@ -25,6 +24,7 @@ function dismissedRecently(): boolean {
 export function PushHint() {
   const { status, busy, message, needsInstall, enable } = usePush();
   const [hidden, setHidden] = useState(true);
+  const [howTo, setHowTo] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setHidden(dismissedRecently()), 0);
@@ -43,42 +43,51 @@ export function PushHint() {
     setHidden(true);
   };
 
+  // Eine schmale Zeile statt Karte mit großem blauem Knopf (Ole, 19.11.2026: konkurrierte mit der Hauptaktion der Seite)
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 pt-4 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--brand-soft)] p-3 sm:flex-nowrap sm:items-center sm:p-4">
-        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[color:var(--brand)] sm:mt-0">
-          <Bell className="h-4 w-4" />
+    <div className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6 lg:px-8" data-push-hint>
+      <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface)] py-1 pl-3 pr-1 text-sm">
+        <Bell className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
+        <span className="min-w-0 flex-1 truncate text-[color:var(--muted)]">
+          <span className="font-medium text-[color:var(--foreground)]">Benachrichtigungen</span>
+          <span className="hidden font-medium text-[color:var(--foreground)] sm:inline"> aus</span>
+          <span className="hidden sm:inline">: neue Leads, Antworten und Termine sofort aufs Handy</span>
         </span>
-        <div className="min-w-0 flex-1 basis-[calc(100%-5.5rem)] text-sm sm:basis-auto">
-          <div className="font-semibold text-[color:var(--foreground)]">Benachrichtigungen einschalten</div>
-          {status === "unsupported" ? (
-            <p className="text-[color:var(--muted)]">
-              Auf dem iPhone: unten auf die drei Punkte (…) und dann auf <Share className="inline h-3.5 w-3.5 align-[-2px]" /> „Teilen“
-              tippen, dann „Zum Home-Bildschirm“. Danach die App über das neue Symbol öffnen und hier einschalten.
-            </p>
-          ) : (
-            <p className="text-[color:var(--muted)]">
-              Dann erfahren Sie sofort von neuen Leads, Antworten und Terminen, auch wenn die App zu ist.
-            </p>
-          )}
-          {message ? <p className="mt-1 text-xs text-[color:var(--muted)]">{message}</p> : null}
-        </div>
+        {status === "off" ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void enable()}
+            className="inline-flex min-h-10 shrink-0 items-center rounded-full px-3 font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)] disabled:opacity-50"
+          >
+            Einschalten
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setHowTo((v) => !v)}
+            aria-expanded={howTo}
+            className="inline-flex min-h-10 shrink-0 items-center rounded-full px-3 font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
+          >
+            So geht&apos;s
+          </button>
+        )}
         <button
           type="button"
           onClick={dismiss}
           aria-label="Hinweis ausblenden"
-          className="rounded-full p-1 text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--foreground)] sm:order-last"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]"
         >
           <X className="h-4 w-4" />
         </button>
-        {status === "off" ? (
-          <div className="w-full pl-12 sm:w-auto sm:pl-0">
-            <Button variant="primary" size="md" disabled={busy} onClick={() => void enable()} className="w-full sm:w-auto">
-              Einschalten
-            </Button>
-          </div>
-        ) : null}
       </div>
+      {status === "unsupported" && howTo ? (
+        <p className="mt-1 px-3 text-sm text-[color:var(--muted)]">
+          Auf dem iPhone: unten auf die drei Punkte (…) und dann auf <Share className="inline h-3.5 w-3.5 align-[-2px]" /> „Teilen“
+          tippen, dann „Zum Home-Bildschirm“. Danach die App über das neue Symbol öffnen und hier einschalten.
+        </p>
+      ) : null}
+      {message ? <p className="mt-1 px-3 text-xs text-[color:var(--muted)]">{message}</p> : null}
     </div>
   );
 }

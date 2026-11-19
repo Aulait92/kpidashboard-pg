@@ -37,6 +37,18 @@ describe("Ziel des Anrufs", () => {
     expect(ohne.ziel).toBe("Termin vereinbaren");
     expect(ohne.schritte[1]).toBe("Ihre Notiz dazu: „Will mit Partnerin sprechen“");
   });
+  it("Worte des Kunden nie als „Ihre Notiz“ (Ole, 19.11.2026)", () => {
+    const chat = anrufZiel({ kind: "followup", reason: "Möchte lieber angerufen werden", source: "Hausrat", herkunft: "chat" });
+    expect(chat.schritte[1]).toBe("Anliegen aus dem Chat: „Möchte lieber angerufen werden“");
+    const frage = anrufZiel({ kind: "followup", reason: "Was kostet das mit Fahrrad?", source: "Hausrat", herkunft: "chat" });
+    expect(frage.ziel).toBe("Termin vereinbaren");
+    expect(frage.schritte[1]).toBe("Anliegen aus dem Chat: „Was kostet das mit Fahrrad?“");
+    const rueckruf = anrufZiel({ kind: "followup", reason: "Rückrufwunsch: so bald wie möglich · „Bitte abends“", source: "PKV" });
+    expect(rueckruf.schritte[1]).toBe("Rückrufwunsch: so bald wie möglich · „Bitte abends“");
+    for (const z of [chat, frage, rueckruf]) expect(z.schritte.join(" ")).not.toContain("Ihre Notiz");
+    // eigene Notiz bleibt wie bisher
+    expect(anrufZiel({ kind: "followup", reason: "Will mit Partnerin sprechen", source: "Hausrat" }).schritte[1]).toBe("Ihre Notiz dazu: „Will mit Partnerin sprechen“");
+  });
   it("Notiz als Frage ist das Ziel des Anrufs (Ole, 18.11.2026)", () => {
     const z = anrufZiel({ kind: "followup", reason: "Police da und erste Zahlung erfolgt?", source: "Privatschutz" });
     expect(z.ziel).toBe("Ihre Frage klären");

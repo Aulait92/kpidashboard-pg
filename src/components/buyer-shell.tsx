@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import {
   Settings,
   BarChart3,
+  Gift,
   ChevronDown,
   Columns3,
   ListChecks,
@@ -69,7 +70,7 @@ export function BuyerShell({
 }: {
   /** Öffentliche App-Demo (/app-demo): ohne Suche, KI-Hilfe, Profilmenü, Push und Nutzungsmessung. */
   demo?: boolean;
-  /** Leads ohne nächsten Schritt (Zähler an „Kontakte“ bzw. „Leads“, lib/lead-next-step.ts). */
+  /** Neue Leads, die auf den Vermittler warten (Zähler „N neu“ an „Kontakte“ bzw. „Leads“, lib/neue-leads.ts). */
   noStepBadge?: number;
   /** Ungelesene Neuigkeiten des Logins (Profilmenü). */
   updatesUnread?: number;
@@ -191,7 +192,8 @@ export function BuyerShell({
 
       <div className="flex-1 pb-20 md:pb-0">
         {absence ? <AbsenceControl data={absence} /> : null}
-        <PushHint />
+        {/* Einrichtung hat dafür einen eigenen Schritt („App aufs Handy und Mitteilungen“), dort kein zweiter Hinweis */}
+        {pathname.startsWith("/buyer/einrichtung") ? null : <PushHint />}
         {children}
       </div>
       <BuyerSearch storageKey={displayName} />
@@ -428,6 +430,17 @@ function ProfileMenu({
             <Megaphone className="h-4 w-4" /> Neuigkeiten
             {updatesUnread > 0 ? <span className="ml-auto h-2 w-2 rounded-full bg-[color:var(--brand)]" aria-label="Ungelesene Neuigkeiten" /> : null}
           </Link>
+          {/* Kollegen-Empfehlungen (UX-Runde 19.11.2026): bisher nur über Einstellungen erreichbar */}
+          {owner ? (
+            <Link
+              href="/buyer/empfehlen"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+              data-menu-empfehlen
+            >
+              <Gift className="h-4 w-4" /> Kollegen empfehlen
+            </Link>
+          ) : null}
           <form action="/api/auth/logout" method="post" className="border-t border-[color:var(--border)]">
             <button
               type="submit"
@@ -578,7 +591,7 @@ function BuyerShellA({
 
         <div className="pb-20 md:pb-0">
           {absence ? <AbsenceControl data={absence} /> : null}
-          {demo ? null : <PushHint />}
+          {demo || pathname.startsWith("/buyer/einrichtung") ? null : <PushHint />}
           {children}
         </div>
         {demo ? null : <BuyerSearch storageKey={displayName} />}

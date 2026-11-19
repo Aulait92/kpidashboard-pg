@@ -51,10 +51,6 @@ export function ReferralShare({ url, defaultText, readOnly }: { url: string; def
           </button>
         </div>
       </div>
-      <label className="block">
-        <span className="text-sm font-medium">Nachricht an Kollegen (können Sie anpassen)</span>
-        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={8} className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 py-2 text-[15px] leading-relaxed outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20" />
-      </label>
       <div className="grid gap-2 sm:grid-cols-3">
         {canShare ? (
           <button type="button" onClick={share} disabled={readOnly} className={`${btn} bg-[color:var(--brand)] text-white`}>
@@ -80,6 +76,19 @@ export function ReferralShare({ url, defaultText, readOnly }: { url: string; def
           <Mail className="h-4 w-4" /> E-Mail
         </a>
       </div>
+      {/* Fertiger Text, nur bei Bedarf anpassen: zugeklappt, damit Teilen die eine Aufgabe bleibt (UX-Runde 19.11.2026) */}
+      <details className="group" data-kollegen-nachricht>
+        <summary className="inline-flex min-h-10 cursor-pointer list-none items-center text-sm font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
+          Nachricht ansehen oder anpassen
+        </summary>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={8}
+          aria-label="Nachricht an Kollegen"
+          className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 py-2 text-base leading-relaxed outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20"
+        />
+      </details>
     </div>
   );
 }

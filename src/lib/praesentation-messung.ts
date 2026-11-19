@@ -7,13 +7,14 @@
 // im Kundenlink). Abschluss = Zusage („Ja, so machen wir es“) oder Kontakt als abgeschlossen eingetragen (Lead.closedAt
 // ab dem Termintag). Abschlussquote = Abschlüsse / Präsentationen.
 //
-// Seit 19.11.2026 zeigen alle Termine Fassung B (lib/praesentation-variante.ts); Variante je Ereignis und die Auswertung
-// je Variante bleiben für den nächsten Test. Die Zusage geht zusätzlich als Ziel „zusage“ an das Experiment-Modul
-// (zählt erst, wenn ein Test „praesentation“ eingetragen ist und den Lead zugeteilt hat).
+// Fassung je Lead (lib/praesentation-variante-server.ts): B Standard, C Herausforderer im Experiment „praesentation“.
+// Zugeteilt wird erst, wenn eine Folie zählt (zaehltAlsGezeigt) oder der Kunde zusagt; die Zusage geht zusätzlich als
+// Ziel „zusage“ an das Experiment-Modul (zählt nur bei zugeteiltem Lead, also nicht, solange der Test angehalten ist).
 
 import { prisma } from "@/lib/prisma";
 import { ereignis } from "@/lib/experimente";
-import { PRAESENTATION_EXPERIMENT, PRAESENTATION_VARIANTEN, praesentationsVariante, type PraesentationVariante } from "@/lib/praesentation-variante";
+import { PRAESENTATION_EXPERIMENT, PRAESENTATION_VARIANTEN, type PraesentationVariante } from "@/lib/praesentation-variante";
+import { praesentationsVariante } from "@/lib/praesentation-variante-server";
 
 export type EreignisQuelle = "termin" | "kundenlink";
 export type EreignisArt = "folie" | "zusage";
@@ -36,7 +37,8 @@ export async function ereignisSpeichern(e: {
   const folie = e.art === "zusage" ? "" : (e.folie ?? "");
   if (e.art === "folie" && !FOLIE_ID.test(folie)) return false;
   const einheit = e.leadId ?? e.appointmentId;
-  const variante = praesentationsVariante(einheit);
+  // Zuteilung im Splittest erst ab einer gezeigten Folie bzw. der Zusage (Begrüßung allein zählt nicht)
+  const variante = await praesentationsVariante(einheit, { merken: e.art === "zusage" || zaehltAlsGezeigt(folie) });
   const r = await prisma.praesentationEreignis.createMany({
     data: [{ customerId: e.customerId, appointmentId: e.appointmentId, quelle: e.quelle, art: e.art, folie, variante }],
     skipDuplicates: true,
@@ -77,7 +79,7 @@ export function auswerten(ereignisse: Ereignis[], abgeschlossen: Set<string>): R
   const out: Record<string, Record<PraesentationVariante, QuoteZeile>> = {};
   for (const [id, es] of je) {
     const v = (PRAESENTATION_VARIANTEN as readonly string[]).includes(es[0].variante) ? (es[0].variante as PraesentationVariante) : "A";
-    const z = ((out[es[0].customerId] ??= { A: leer(), B: leer() }) as Record<PraesentationVariante, QuoteZeile>)[v];
+    const z = ((out[es[0].customerId] ??= { A: leer(), B: leer(), C: leer() }) as Record<PraesentationVariante, QuoteZeile>)[v];
     const zusageT = es.some((e) => e.art === "zusage" && e.quelle === "termin");
     const zusageK = es.some((e) => e.art === "zusage" && e.quelle === "kundenlink");
     const link = es.filter((e) => e.quelle === "kundenlink");
@@ -116,7 +118,7 @@ export async function praesentationQuoteDiagnose(p: URLSearchParams) {
   const kunde = p.get("kunde") ?? undefined;
   const je = await abschlussquoteLaden(new Date(Date.now() - tage * TAG), kunde);
   const namen = new Map((await prisma.customer.findMany({ where: { id: { in: Object.keys(je) } }, select: { id: true, name: true } })).map((c) => [c.id, c.name]));
-  const summe: Record<PraesentationVariante, QuoteZeile> = { A: leer(), B: leer() };
+  const summe: Record<PraesentationVariante, QuoteZeile> = { A: leer(), B: leer(), C: leer() };
   for (const k of Object.values(je))
     for (const v of PRAESENTATION_VARIANTEN) {
       const s = summe[v];
@@ -131,7 +133,7 @@ export async function praesentationQuoteDiagnose(p: URLSearchParams) {
   for (const v of PRAESENTATION_VARIANTEN) summe[v].abschlussquote = summe[v].praesentationen ? Math.round((summe[v].abschluesse / summe[v].praesentationen) * 1000) / 1000 : null;
   return {
     tage,
-    erklaerung: "Abschlussquote je Präsentation = (Zusage im Termin oder Kundenlink bzw. Kontakt abgeschlossen) / Termine mit gezeigter Präsentation; Varianten A (bisher) und B (Abschluss-Dramaturgie).",
+    erklaerung: "Abschlussquote je Präsentation = (Zusage im Termin oder Kundenlink bzw. Kontakt abgeschlossen) / Termine mit gezeigter Präsentation; Varianten A (alt, abgeschaltet), B (Standard, Abschluss-Dramaturgie) und C (Herausforderer im Splittest „praesentation“).",
     summe,
     jeVermittler: Object.entries(je).map(([id, v]) => ({ kunde: namen.get(id) ?? id, ...v })),
   };

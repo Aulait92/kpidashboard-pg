@@ -54,12 +54,16 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     // Vor dem Go-live steht die Erstinformation schon als Schritt in der Einrichtungs-Karte; die gelbe Warnung
     // mit Feldnamen wäre doppelt (Runde 5, 16.11.2026).
     const ob = await prisma.onboarding.findUnique({ where: { customerId: ctx.customerId }, select: { liveAt: true } });
+    // Vor dem Start ist die Einrichtung die eine Aufgabe: ihre Karte zuerst, das Einführungsvideo darunter
+    // (UX-Runde 19.11.2026, am Handy stand das Video vor dem ersten Schritt).
+    const vorStart = !!ob && !ob.liveAt;
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <PageHeader title="Willkommen" subtitle="Schön, dass Sie da sind." />
-        {introCard}
-        {!ob || ob.liveAt ? erstinfoHint : null}
+        {vorStart ? null : introCard}
+        {vorStart ? null : erstinfoHint}
         <FirstDay customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} whatsapp={whatsapp} />
+        {vorStart && introCard ? <div className="mt-5">{introCard}</div> : null}
       </main>
     );
   }
@@ -132,11 +136,12 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     // Kontakt. Handy/Tablet: Liste → Kontakt (Zurück „Heute“).
     const { lead } = await searchParams;
     const selected = lead && /^[\w-]{1,64}$/.test(lead) ? lead : null;
-    // Desktop ohne Auswahl: rechts gleich die erste Aufgabe statt einer leeren Fläche (UX, Ole 15.11.2026)
+    // Desktop ohne Auswahl: rechts gleich die erste Aufgabe statt einer leeren Fläche (UX, Ole 15.11.2026).
+    // Neue Leads zuerst (UX-Runde 19.11.2026: Zeit bis Erstkontakt), sie stehen auch links ganz oben.
     const ersteAufgabe =
+      data.callbacks.find((c) => c.urgent)?.leadId ??
       data.appointments.find((a) => a.leadId)?.leadId ??
       data.outcomes[0]?.leadId ??
-      data.callbacks.find((c) => c.urgent)?.leadId ??
       data.followUps[0]?.leadId ??
       data.callbacks[0]?.leadId ??
       data.noNextStep.leads[0]?.leadId ??

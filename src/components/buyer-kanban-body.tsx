@@ -79,7 +79,13 @@ export async function BuyerKanbanBody({
   });
 
   // Nächster Schritt: gleiche Regel wie Liste und „Heute“ (Termin, Wiedervorlage, Bot-Gespräch)
-  const [flags, noWhatsApp] = await Promise.all([loadNextStepFlags(leadRows.map((l) => l.id)), keinWhatsAppIds(leadRows)]);
+  const [flags, noWhatsApp, waitingChats] = await Promise.all([
+    loadNextStepFlags(leadRows.map((l) => l.id)),
+    keinWhatsAppIds(leadRows),
+    // Antwort im Chat wartet: wie in der Liste zeigen (UX-Runde 19.11.2026)
+    prisma.conversation.findMany({ where: { customerId, leadId: { in: leadRows.map((l) => l.id) }, needsAttention: true }, select: { leadId: true } }),
+  ]);
+  const waiting = new Set(waitingChats.map((c) => c.leadId));
 
   // Storno-Leads werden im Pipeline-Board nicht angezeigt — der Storno
   // läuft über den dedizierten StornoDialog im Leads-Tab oder Lead-Detail.
@@ -104,6 +110,7 @@ export async function BuyerKanbanBody({
       ...contractInfo(l.contracts),
       ...(noWhatsApp.has(l.id) ? { phone: l.phone, noWhatsApp: true } : {}),
       ...(l.isTest ? { isTest: true } : {}),
+      ...(waiting.has(l.id) ? { waiting: true } : {}),
     }));
 
   return (

@@ -121,7 +121,7 @@ export function AcceptForm({
   return (
     <form action={action} className="space-y-4">
       {choice && hasChoice ? (
-        <ChoiceFields choice={choice} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} />
+        <ChoiceFields choice={choice} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} />
       ) : null}
       <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm sm:p-5" data-accept-summary aria-live="polite">
         <div className="font-semibold">Das vereinbaren Sie mit dem Klick</div>
@@ -239,6 +239,7 @@ function ChoiceFields({
   setStartDate,
   annual: annualPick,
   setAnnual,
+  arrears = false,
 }: {
   choice: OfferChoiceProps;
   term: OfferTerm;
@@ -247,6 +248,8 @@ function ChoiceFields({
   setStartDate: (d: string) => void;
   annual: boolean;
   setAnnual: (v: boolean) => void;
+  /** Zahlung nachträglich für den abgelaufenen Monat (Ole, 19.11.2026) */
+  arrears?: boolean;
 }) {
   const opt = choice.options.find((o) => o.term === term) ?? choice.options[0];
   // Vorauszahlung mit 6 Monaten (6 Monate im Voraus) oder 12 Monaten (jährlich); zur Wahl angeboten → Wahl des
@@ -343,7 +346,11 @@ function ChoiceFields({
               <span className="text-[color:var(--muted)]"> · {eur(withVat(opt.setup))} brutto</span>
             </div>
             <div>
-              <span className="text-[color:var(--muted)]">Monatlich{startDate ? ` ab ${fmtDate(startDate)}` : ""}: </span>
+              <span className="text-[color:var(--muted)]">
+                {arrears
+                  ? `Monatlich nachträglich, erstmals ${startDate ? `am ${fmtDate(addMonthsIso(startDate, 1))}` : "einen Monat nach dem Start"}: `
+                  : `Monatlich${startDate ? ` ab ${fmtDate(startDate)}` : ""}: `}
+              </span>
               <b data-testid="choice-recurring">{eur(choice.monthlyTotal)} netto</b>
               <span className="text-[color:var(--muted)]"> · {eur(withVat(choice.monthlyTotal))} brutto</span>
             </div>
