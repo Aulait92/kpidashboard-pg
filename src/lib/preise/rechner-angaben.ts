@@ -76,6 +76,12 @@ const f = (key: string, feld: QualificationKey, sie: string, du: string, bekannt
   ...(knoepfe ? { knoepfe: [...knoepfe] } : {}),
 });
 
+/** Wohnfläche als genaue Zahl (Ole, 19.11.2026: Bereiche reichen dem Rechner nicht); gleiche Frage wie die Zwischenfrage. */
+export const WOHNFLAECHE_FRAGE = {
+  sie: "Wie viele Quadratmeter Wohnfläche hat Ihre Wohnung? Bitte als Zahl, zum Beispiel 72.",
+  du: "Wie viele Quadratmeter Wohnfläche hat deine Wohnung? Bitte als Zahl, zum Beispiel 72.",
+} as const;
+
 /** Alle Angaben der Rechner. */
 export const ANGABEN = {
   plz: { label: "Postleitzahl", wer: "lead", rang: 5, wert: (c) => c.plz, fragen: [f("plz", "plz", "Wie lautet Ihre Postleitzahl?", "Wie lautet deine Postleitzahl?")] },
@@ -94,7 +100,7 @@ export const ANGABEN = {
     wert: (c) => c.q("beruf"),
     fragen: [f("oeffentlicherDienst", "beruf", "Sind Sie im öffentlichen Dienst tätig?", "Bist du im öffentlichen Dienst tätig?", undefined, JA_NEIN)],
   },
-  wohnflaeche: { label: "Wohnfläche", wer: "lead", rang: 2, wert: (c) => c.q("wohnflaeche") ?? c.form(/wohnfl(ä|a)che/i), fragen: [f("wohnflaeche", "wohnflaeche", "Wie groß ist Ihre Wohnung ungefähr?", "Wie groß ist deine Wohnung ungefähr?")] },
+  wohnflaeche: { label: "Wohnfläche", wer: "lead", rang: 2, wert: (c) => c.q("wohnflaeche") ?? c.form(/wohnfl(ä|a)che/i), fragen: [f("wohnflaeche", "wohnflaeche", WOHNFLAECHE_FRAGE.sie, WOHNFLAECHE_FRAGE.du)] },
   lebensbereiche: {
     label: "Lebensbereiche",
     wer: "lead",

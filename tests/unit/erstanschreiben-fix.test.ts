@@ -231,7 +231,7 @@ describe("Folgefragen nach der Buchung (Rechner-Tabelle docs/preise-pilot.md)", 
     expect(sparten).toEqual(["haftpflicht", "hausrat"]);
     const fr = folgefragen(sparten, s);
     expect(fr.map((f) => f.key)).toEqual(["geburt", "wohnflaeche", "oeffentlicherDienst"]);
-    expect(fr.map((f) => f.sie)).toEqual(["Wie lautet Ihr Geburtsdatum?", "Wie groß ist Ihre Wohnung ungefähr?", "Sind Sie im öffentlichen Dienst tätig?"]);
+    expect(fr.map((f) => f.sie)).toEqual(["Wie lautet Ihr Geburtsdatum?", "Wie viele Quadratmeter Wohnfläche hat Ihre Wohnung? Bitte als Zahl, zum Beispiel 72.", "Sind Sie im öffentlichen Dienst tätig?"]);
     expect(fr[2].knoepfe).toEqual(["Ja", "Nein"]);
     expect(folgefrageText(fr[0], "sie", "Herr Kannapinn", true)).toBe("Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Wie lautet Ihr Geburtsdatum?");
     // Nutzen stand schon in der Zwischenfrage (Ole, 19.11.2026): knapp, Fragen mit Knöpfen wörtlich

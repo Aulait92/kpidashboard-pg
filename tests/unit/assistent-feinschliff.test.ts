@@ -285,7 +285,8 @@ describe("Bestehende Verträge (KI-Extraktion tolerant, Rückfall per Muster)", 
 
   it("Rückfall ohne KI: „Haftpflicht bei der HUK, Hausrat und eine BU“", () => {
     expect(vertraegeAusText("Haftpflicht bei der HUK, Hausrat und eine BU").map((v) => [v.sparte, v.gesellschaft])).toEqual([
-      ["Haftpflicht", "HUK"],
+      // bekannte Versicherer mit vollem Namen (Ole, 19.11.2026: auch Kurzformen und Tippfehler erkennen)
+      ["Haftpflicht", "HUK-Coburg"],
       ["Hausrat", null],
       ["Berufsunfähigkeit", null],
     ]);

@@ -78,11 +78,11 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
   const knopf = (from: string, id: string, title: string) => inbound(from, { type: "interactive", interactive: { type: "button_reply", button_reply: { id, title } } });
 
   // Lead nach dem Erstanschreiben v8 (Vorlage mit PDF und Fußzeile), Formular nur mit Versicherungsinteresse
-  async function leadNachErstanschreiben() {
+  async function leadNachErstanschreiben(formData: { label: string; value: string }[] = [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }]) {
     const now = new Date();
     const phone = newPhone();
     const lead = await prisma.lead.create({
-      data: { customerId, name: "Julia Schneider", phone, email: "julia@example.com", source: "Privatschutz", status: "Neuer Lead", outreachAt: now, formData: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }] },
+      data: { customerId, name: "Julia Schneider", phone, email: "julia@example.com", source: "Privatschutz", status: "Neuer Lead", outreachAt: now, formData },
     });
     const conv = await prisma.conversation.create({
       data: {
@@ -183,5 +183,31 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
     const antwort = gesendet().at(-1)!.body;
     expect(antwort).toBe("Gern! Herr Kannapinn meldet sich, und der Termin mit Herrn Kannapinn dauert nur 20 Minuten.");
     expect(await prisma.message.count({ where: { conversationId: conv.id, body: { contains: "Wer soll mitversichert sein?" } } })).toBe(1);
+  });
+
+  it("Wohnfläche als Zahl ohne Knöpfe: Spanne → einmal genauer nachfragen → Zahl → Terminvorschlag (Ole, 19.11.2026)", async () => {
+    const { conv, phone } = await leadNachErstanschreiben([
+      { label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" },
+      { label: "Familienstand", value: "verheiratet" },
+    ]);
+    await text(phone, "Beides neu");
+    const frage = gesendet().at(-1)!;
+    expect(frage.body).toBe("Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wie viele Quadratmeter Wohnfläche hat Ihre Wohnung? Bitte als Zahl, zum Beispiel 72.");
+    expect(frage.buttons ?? null).toBeNull();
+
+    await text(phone, "60 bis 80");
+    expect(st.ai).toBe(0);
+    expect(gesendet().at(-1)!.body).toBe("Danke! Wissen Sie es etwas genauer? Eine Zahl reicht.");
+    let c = await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } });
+    expect(c.qualificationData).toMatchObject({ wohnflaeche: "ca. 70 m²" });
+    expect(c.qualified).toBe(false);
+
+    await text(phone, "ca. 72 qm");
+    expect(st.ai).toBe(0);
+    expect(gesendet().at(-1)!.body).toMatch(/^Danke! In einem kurzen(, kostenlosen)? Videotermin zeigt Ihnen Herr Kannapinn/);
+    c = await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } });
+    expect(c.qualificationData).toMatchObject({ vorhanden: "Beides neu", wohnflaeche: "72 m²" });
+    expect(c.qualified).toBe(true);
+    expect(await prisma.message.count({ where: { conversationId: conv.id, direction: "outbound", body: { contains: "etwas genauer" } } })).toBe(1);
   });
 });

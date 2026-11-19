@@ -143,7 +143,7 @@ export function standardAblauf(o: AblaufEingabe): AblaufPhase[] {
           hinweis: "danach die Erstinformation als PDF",
         },
         ...(zwischen
-          ? [{ key: "zwischenfrage", wann: "nach der Antwort", kanal: "whatsapp" as const, titel: "Zwischenfrage", vorschau: `${zwischenfrageText(zwischen, an, person)} [${zwischenKnoepfe(zwischen).map((k) => k.title).join("] [")}]` }]
+          ? [{ key: "zwischenfrage", wann: "nach der Antwort", kanal: "whatsapp" as const, titel: "Zwischenfrage", vorschau: [zwischenfrageText(zwischen, an, person), ...zwischenKnoepfe(zwischen).map((k) => `[${k.title}]`)].join(" ") }]
           : []),
         {
           key: "terminvorschlag",

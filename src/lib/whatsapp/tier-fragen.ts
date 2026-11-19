@@ -8,13 +8,16 @@
 //   1. Gesundheit: „Ist Minka aktuell gesund?“ [Ja, gesund] [War in Behandlung]; bei Behandlung frei: was und wann
 //   2. nur wenn das Formular es nicht liefert: Geburtsjahr, Rasse, Geschlecht, Haltung (nur Katzen); Kastration nie
 //   3. weitere Tiere (Anzahl > 1, eine Frage für alle), gewünschter Schutz (nur wenn aus Frage 2 des Erstanschreibens
-//      noch offen), bestehende Tierversicherung (bei Ja: bis wann), Geburtsdatum des Halters
+//      noch offen), bestehende Tierversicherung (bei Ja: bis wann, Monat und Jahr), Geburtsdatum des Halters
+//   4. Geburtsdatum des Halters geprüft (Ole, 19.11.2026): unter 18 ist meist das Datum des Tieres (wird dort notiert, dann
+//      einmal nach dem eigenen gefragt), Zukunft oder über 100 einmal neu fragen; danach nie weiter nachbohren
 // Gesundheitsangaben zu Tieren sind keine Art.-9-Daten (lib/gesundheitsdaten.ts istTierLead).
 // Rein, ohne Datenbank (testbar).
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationData, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
+import { ablaufBeispiel, ablaufLesen, geburtsdatumPruefen, monatJahrText } from "@/lib/datum-antwort";
 
 export type TierFrageKey =
   | "gesundheit"
@@ -27,7 +30,11 @@ export type TierFrageKey =
   | "tarifwunsch"
   | "vorhanden"
   | "vorhandenAblauf"
-  | "geburt";
+  | "geburt"
+  /** nach einem Datum unter 18 (meist das des Tieres): einmal nach dem eigenen fragen */
+  | "geburtEigen"
+  /** nach einem Datum in der Zukunft oder über 100 Jahren: einmal neu fragen */
+  | "geburtNochmal";
 
 export type TierKnopf = { id: string; title: string };
 export type TierFrage = { key: TierFrageKey; text: string; buttons: TierKnopf[] | null };
@@ -64,6 +71,14 @@ const WORT: Record<Art, { sie: string; du: string; plural: string; pluralDu: str
 
 const PLURAL: Record<Art, string> = { katze: "Katzen", hund: "Hunde", pferd: "Pferde", tier: "Tiere" };
 
+/** „von Minka“ bzw. „Ihrer Katze“ (Genitiv, ohne Name). */
+const GENITIV: Record<Art, { sie: string; du: string }> = {
+  katze: { sie: "Ihrer Katze", du: "deiner Katze" },
+  hund: { sie: "Ihres Hundes", du: "deines Hundes" },
+  pferd: { sie: "Ihres Pferdes", du: "deines Pferdes" },
+  tier: { sie: "Ihres Tieres", du: "deines Tieres" },
+};
+
 /** „Minka“ bzw. „Ihre Katze“ (Nominativ). */
 function wer(an: Ansprache, i: TierInfo): string {
   return i.name ?? a(an, WORT[i.art].du, WORT[i.art].sie);
@@ -92,8 +107,8 @@ function bekannt(q: TierQuelle) {
 
 const knopf = (key: TierFrageKey, wert: string, title: string): TierKnopf => ({ id: `tier:${key}:${wert}`, title });
 
-/** Text und Knöpfe einer Frage. person = „Herr Kannapinn“. */
-export function tierFrage(key: TierFrageKey, q: TierQuelle, an: Ansprache, person: string): TierFrage {
+/** Text und Knöpfe einer Frage. person = „Herr Kannapinn“; jetzt für das Beispiel der Ablauffrage. */
+export function tierFrage(key: TierFrageKey, q: TierQuelle, an: Ansprache, person: string, jetzt: Date = new Date()): TierFrage {
   const i = tierInfo(q);
   const mehrere = i.anzahl > 1;
   const w = wer(an, i);
@@ -156,14 +171,41 @@ export function tierFrage(key: TierFrageKey, q: TierQuelle, an: Ansprache, perso
     case "vorhanden":
       return { key, text: mehrere ? a(an, "Hast du für deine Tiere schon eine Tierversicherung?", "Haben Sie für Ihre Tiere schon eine Tierversicherung?") : `Hat ${w} schon eine Tierversicherung?`, buttons: [knopf(key, "nein", "Nein"), knopf(key, "ja", "Ja")] };
     case "vorhandenAblauf":
-      return { key, text: "Bis wann läuft die Versicherung ungefähr? Der Monat reicht.", buttons: null };
+      // Ole, 19.11.2026: „Der Monat reicht“ wurde als „ohne Jahr“ gelesen
+      return { key, text: `Bis wann läuft die Versicherung ungefähr? Monat und Jahr reichen, zum Beispiel ${ablaufBeispiel(jetzt)}.`, buttons: null };
     case "geburt":
-      return { key, text: a(an, `Für das Angebot braucht ${person} noch dein Geburtsdatum. Wie lautet es?`, `Für das Angebot braucht ${person} noch Ihr Geburtsdatum. Wie lautet es?`), buttons: null };
+      return {
+        key,
+        text: a(
+          an,
+          `Für das Angebot braucht ${person} noch dein eigenes Geburtsdatum als Versicherungsnehmer. Wie lautet es?`,
+          `Für das Angebot braucht ${person} noch Ihr eigenes Geburtsdatum als Versicherungsnehmer. Wie lautet es?`,
+        ),
+        buttons: null,
+      };
+    case "geburtEigen": {
+      const von = i.name ? `von ${i.name}` : a(an, GENITIV[i.art].du, GENITIV[i.art].sie);
+      return {
+        key,
+        text: a(
+          an,
+          `Danke, das ist sicher das Geburtsdatum ${von}, das habe ich notiert. Für den Vertrag braucht ${person} noch dein eigenes Geburtsdatum.`,
+          `Danke, das ist sicher das Geburtsdatum ${von}, das habe ich notiert. Für den Vertrag braucht ${person} noch Ihr eigenes Geburtsdatum.`,
+        ),
+        buttons: null,
+      };
+    }
+    case "geburtNochmal":
+      return {
+        key,
+        text: a(an, "Das Datum scheint nicht zu passen. Wie lautet dein Geburtsdatum, zum Beispiel 14.05.1985?", "Das Datum scheint nicht zu passen. Wie lautet Ihr Geburtsdatum, zum Beispiel 14.05.1985?"),
+        buttons: null,
+      };
   }
 }
 
 /** Reihenfolge der Fragen. */
-const REIHE: TierFrageKey[] = ["gesundheit", "gesundheitDetail", "geburtTier", "rasse", "geschlecht", "haltung", "weitere", "tarifwunsch", "vorhanden", "vorhandenAblauf", "geburt"];
+const REIHE: TierFrageKey[] = ["gesundheit", "gesundheitDetail", "geburtTier", "rasse", "geschlecht", "haltung", "weitere", "tarifwunsch", "vorhanden", "vorhandenAblauf", "geburt", "geburtEigen", "geburtNochmal"];
 
 /** Offene Fragen in der Reihenfolge (nur was fehlt und noch nicht beantwortet ist). Leer = alles da. */
 export function offeneTierFragen(q: TierQuelle, beantwortet: ReadonlySet<string>): TierFrageKey[] {
@@ -182,6 +224,9 @@ export function offeneTierFragen(q: TierQuelle, beantwortet: ReadonlySet<string>
     vorhanden: !b.vorhanden,
     vorhandenAblauf: b.vorhandenOffen,
     geburt: !b.geburt,
+    // nur nach einer unpassenden Antwort auf „geburt“ (tierAntwortAuswerten markiert die jeweils andere als beantwortet)
+    geburtEigen: !b.geburt && beantwortet.has("geburt"),
+    geburtNochmal: !b.geburt && beantwortet.has("geburt"),
   };
   return REIHE.filter((k) => fehlt[k] && !beantwortet.has(k));
 }
@@ -218,7 +263,7 @@ const NEIN = /^(nein|nee|ne|nö|noe|no|leider nein|leider nicht|nicht)\b/;
  * Antwort auf eine Tierfrage auswerten (Knopf: wert aus der Payload, sonst Text). null = keine Antwort auf die Frage
  * (z. B. eine Rückfrage des Leads): dann antwortet der Assistent, und die Frage kommt noch einmal.
  */
-export function tierAntwortAuswerten(key: TierFrageKey, text: string, knopfWert: string | null, q: TierQuelle): TierAuswertung | null {
+export function tierAntwortAuswerten(key: TierFrageKey, text: string, knopfWert: string | null, q: TierQuelle, jetzt: Date = new Date()): TierAuswertung | null {
   const roh = (text ?? "").replace(/\s+/g, " ").trim();
   const t = norm(roh);
   if (!knopfWert && (!t || (roh.includes("?") && !WEISS_NICHT.test(t)))) return null;
@@ -271,10 +316,33 @@ export function tierAntwortAuswerten(key: TierFrageKey, text: string, knopfWert:
       if (knopfWert === "ja" || (JA.test(t) && t.split(" ").length <= 2)) return { angaben: { vorhanden: "Tierversicherung vorhanden" }, beantwortet: [key] };
       return { angaben: { vorhanden: offen ? "offen" : `Tierversicherung: ${roh}` }, beantwortet: [key, "vorhandenAblauf"] };
     }
-    case "vorhandenAblauf":
-      return { angaben: { vorhanden: offen ? "Tierversicherung vorhanden, Ablauf offen" : `Tierversicherung vorhanden, läuft bis ${roh}` }, beantwortet: [key] };
+    case "vorhandenAblauf": {
+      // Monat und Jahr lesen („03/27“, „März“, „Ende des Jahres“); weiß nicht: offen, nicht nachfragen; sonst wie gesagt
+      const ab = offen ? "weiss_nicht" : ablaufLesen(roh, jetzt);
+      const wert = ab === "weiss_nicht" ? "Tierversicherung vorhanden, Ablauf offen" : `Tierversicherung vorhanden, läuft bis ${ab ? monatJahrText(ab) : roh}`;
+      return { angaben: { vorhanden: wert }, beantwortet: [key] };
+    }
     case "geburt":
-      return { angaben: { geburt: offen ? "offen" : roh }, beantwortet: [key] };
+    case "geburtEigen":
+    case "geburtNochmal": {
+      const alle: TierFrageKey[] = ["geburt", "geburtEigen", "geburtNochmal"];
+      const p = offen ? ({ art: "unbekannt" } as const) : geburtsdatumPruefen(roh, jetzt);
+      if (p.art === "unbekannt") return { angaben: { geburt: "offen" }, beantwortet: alle };
+      if (p.art === "ok") return { angaben: { geburt: p.datum }, beantwortet: alle };
+      if (p.art === "unlesbar") return { angaben: { geburt: roh }, beantwortet: alle };
+      if (key === "geburt" && p.art === "minderjaehrig") {
+        // Meist das Datum des Tieres: dort notieren, wenn noch leer oder gleich (Jahr), dann einmal nach dem eigenen fragen
+        const tierBisher = [form(q.formular, /geburtsmonat/i), form(q.formular, /geburtsjahr|geburtsdatum.*tier|alter.*tier/i), /(?:^|;\s*)Geboren:\s*([^;]+)/i.exec(g.tier ?? "")?.[1]]
+          .filter(Boolean)
+          .join(" ");
+        // weicht es vom bekannten ab, bleibt das bekannte stehen und das Datum steht daneben (der Vermittler klärt es)
+        const passt = !tierBisher || tierBisher.includes(String(p.jahr));
+        return { angaben: { tier: tierErgaenzen(g.tier, passt ? "Geboren" : "Datum aus dem Chat", p.datum) }, beantwortet: ["geburt", "geburtNochmal"] };
+      }
+      if (key === "geburt") return { angaben: {}, beantwortet: ["geburt", "geburtEigen"] };
+      // zweite Antwort passt wieder nicht: festhalten, nicht weiter nachfragen (klärt der Vermittler im Termin)
+      return { angaben: { geburt: `offen (Angabe: ${p.datum})` }, beantwortet: alle };
+    }
   }
   return null;
 }

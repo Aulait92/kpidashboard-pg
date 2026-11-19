@@ -107,7 +107,8 @@ export function vertraegeAusText(text: string | null | undefined): Vorvertrag[] 
     if (NICHT_MEHR.test(teil)) continue;
     const sparte = sparteAus(teil);
     if (!sparte) continue;
-    const ges = /\b(?:bei|von)\s+(?:der|dem|den|die)?\s*([A-ZÄÖÜ][\w&+.\-ÄÖÜäöüß ]{1,30})/.exec(teil)?.[1] ?? null;
+    // bekannte Versicherer auch klein geschrieben oder vertippt („kfz huk“, „bei der allainz“)
+    const ges = versichererAus(teil) ?? /\b(?:bei|von)\s+(?:der|dem|den|die)?\s*([A-ZÄÖÜ][\w&+.\-ÄÖÜäöüß ]{1,30})/.exec(teil)?.[1] ?? null;
     out.push({ sparte, gesellschaft: ges });
   }
   return normalisiereVertraege(out);
@@ -190,3 +191,175 @@ export const VORVERTRAEGE_SCHEMA = {
     },
   },
 } as const;
+
+// ─── Versicherer erkennen und einmal nachfragen (Ole, 19.11.2026) ─────────────────────────────────────────────────────
+// Nach der Vertragsfrage („… Gern auch mit Versicherer.“) genau einmal nachfragen, wenn zu genannten Sparten die
+// Gesellschaft fehlt. Versicherer auch bei Kurzformen und Tippfehlern („SI“, „Signal Idnua“, „Allainz“).
+
+/** Anzeigename je Versicherer mit Schreibweisen (Kleinschreibung; Liste wie VERSICHERER in beratungs-sperre.ts). */
+const VERSICHERER_NAMEN: [string, string[]][] = [
+  ["Signal Iduna", ["signal iduna", "signal-iduna", "signaliduna", "signal", "iduna", "si"]],
+  ["HUK-Coburg", ["huk-coburg", "huk coburg", "huk", "huk24"]],
+  ["Allianz", ["allianz"]],
+  ["ERGO", ["ergo"]],
+  ["AXA", ["axa"]],
+  ["Sparkasse", ["sparkasse", "sparkassenversicherung"]],
+  ["Provinzial", ["provinzial"]],
+  ["DEVK", ["devk"]],
+  ["R+V", ["r+v", "r + v", "r und v", "ruv"]],
+  ["Gothaer", ["gothaer"]],
+  ["Debeka", ["debeka"]],
+  ["LVM", ["lvm"]],
+  ["VHV", ["vhv"]],
+  ["Zurich", ["zurich", "zürich"]],
+  ["Generali", ["generali"]],
+  ["Barmenia", ["barmenia"]],
+  ["Continentale", ["continentale"]],
+  ["Württembergische", ["württembergische", "wuerttembergische", "wüba"]],
+  ["Nürnberger", ["nürnberger", "nuernberger"]],
+  ["Alte Leipziger", ["alte leipziger"]],
+  ["HanseMerkur", ["hansemerkur", "hanse merkur"]],
+  ["Uelzener", ["uelzener"]],
+  ["Agila", ["agila"]],
+  ["Petplan", ["petplan"]],
+  ["Petprotect", ["petprotect"]],
+  ["DKV", ["dkv"]],
+  ["HDI", ["hdi"]],
+  ["WWK", ["wwk"]],
+  ["VGH", ["vgh"]],
+  ["ARAG", ["arag"]],
+  ["Hallesche", ["hallesche"]],
+  ["Concordia", ["concordia"]],
+  ["Swiss Life", ["swiss life", "swisslife"]],
+  ["Helvetia", ["helvetia"]],
+  ["Baloise", ["baloise", "basler"]],
+  ["Die Bayerische", ["die bayerische", "bayerische"]],
+  ["CosmosDirekt", ["cosmosdirekt", "cosmos direkt"]],
+  ["Hannoversche", ["hannoversche"]],
+  ["Itzehoer", ["itzehoer"]],
+  ["Mecklenburgische", ["mecklenburgische"]],
+  ["Getsafe", ["getsafe"]],
+  ["Stuttgarter", ["stuttgarter"]],
+  ["Volkswohl Bund", ["volkswohl bund"]],
+  ["Canada Life", ["canada life"]],
+  ["Roland", ["roland rechtsschutz", "roland"]],
+  ["Advocard", ["advocard"]],
+  ["Münchener Verein", ["münchener verein"]],
+  ["WGV", ["wgv"]],
+  ["Janitos", ["janitos"]],
+  ["Ammerländer", ["ammerländer"]],
+  ["Interlloyd", ["interlloyd"]],
+  ["Haftpflichtkasse", ["haftpflichtkasse"]],
+  ["Universa", ["universa"]],
+  ["Neodigital", ["neodigital"]],
+  ["Wefox", ["wefox"]],
+  ["Lemonade", ["lemonade"]],
+  ["Mannheimer", ["mannheimer"]],
+  ["Rhion", ["rhion"]],
+  ["Domcura", ["domcura"]],
+  ["Hiscox", ["hiscox"]],
+];
+
+/** Abstand zweier Wörter (Einfügen, Löschen, Ersetzen, Vertauschen benachbarter Zeichen). */
+function abstand(x: string, y: string): number {
+  const d: number[][] = Array.from({ length: x.length + 1 }, (_, i) => Array.from({ length: y.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)));
+  for (let i = 1; i <= x.length; i++)
+    for (let j = 1; j <= y.length; j++) {
+      const k = x[i - 1] === y[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + k);
+      if (i > 1 && j > 1 && x[i - 1] === y[j - 2] && x[i - 2] === y[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  return d[x.length][y.length];
+}
+
+/** Wörter, die nie als vertippter Versicherer gelten (Sparten und Füllwörter). */
+const KEIN_VERSICHERER = /^(haftpflicht|hausrat|unfall|rechtsschutz|kranken|zahnzusatz|pflege|rente|leben|auto|versicherung|versichert|gesellschaft|vertrag|vertr(ä|a)ge|beides|beide|alles|alle|generell|signale?n?|allein|alleine)$/;
+
+/** Alle Versicherer in Textreihenfolge, ohne Doppelte. Kurze Namen (unter 5 Zeichen) nur exakt, längere auch vertippt. */
+export function versichererAlle(text: string | null | undefined): string[] {
+  const t = ` ${(text ?? "").toLowerCase().replace(/[„“"'.,;:!?()]/g, " ").replace(/\s+/g, " ").trim()} `;
+  if (!t.trim()) return [];
+  const woerter = t.trim().split(" ");
+  const treffer: { pos: number; name: string }[] = [];
+  for (const [name, formen] of VERSICHERER_NAMEN) {
+    let pos = -1;
+    for (const f of formen) {
+      const i = t.indexOf(` ${f} `);
+      if (i >= 0 && (pos < 0 || i < pos)) pos = i;
+    }
+    // Tippfehler: ein bzw. zwei Wörter gegen Formen ab 5 Zeichen (bis 9 Zeichen ein Fehler, darüber zwei)
+    for (const f of pos < 0 ? formen : []) {
+      if (f.length < 5) continue;
+      const n = f.split(" ").length;
+      const grenze = f.length >= 10 ? 2 : 1;
+      for (let i = 0; i + n <= woerter.length && pos < 0; i++) {
+        const w = woerter.slice(i, i + n).join(" ");
+        if (n === 1 && KEIN_VERSICHERER.test(w)) continue;
+        if (Math.abs(w.length - f.length) <= grenze && abstand(w, f) <= grenze) pos = t.indexOf(` ${w} `);
+      }
+      if (pos >= 0) break;
+    }
+    if (pos >= 0) treffer.push({ pos, name });
+  }
+  return [...new Set(treffer.sort((x, y) => x.pos - y.pos).map((x) => x.name))];
+}
+
+/** Erster Versicherer im Text („bei der Signal Idnua“, „HUK“, „bei der Sparkasse“); null = keiner erkannt. */
+export function versichererAus(text: string | null | undefined): string | null {
+  return versichererAlle(text)[0] ?? null;
+}
+
+/** Sparten ohne Gesellschaft (ohne „Sonstige“), in Listenreihenfolge, ohne Doppelte. */
+export function fehlendeVersicherer(liste: readonly Vorvertrag[]): VertragSparte[] {
+  const mit = new Set(liste.filter((v) => v.gesellschaft).map((v) => v.sparte));
+  return [...new Set(liste.filter((v) => !v.gesellschaft && v.sparte !== "Sonstige" && !mit.has(v.sparte)).map((v) => v.sparte))];
+}
+
+/** Sparte im Satz („die Haftpflicht“, „die private Krankenversicherung“). */
+const SPARTE_IM_SATZ: Partial<Record<VertragSparte, string>> = {
+  "Private Krankenversicherung": "private Krankenversicherung",
+  Tierkranken: "Tierversicherung",
+};
+
+/**
+ * Nachfrage nach den Gesellschaften (eine Nachricht, ohne Knöpfe). Bis 3 Sparten mit Namen, darüber allgemein.
+ * person = Vermittler wie in den übrigen Texten („Herr Kannapinn“ bzw. „Ole“). null = nichts zu fragen.
+ */
+export function versichererNachfrage(fehlend: readonly VertragSparte[], an: "du" | "sie", person: string): string | null {
+  if (!fehlend.length) return null;
+  let teil = "bei welchen Gesellschaften die Verträge sind";
+  if (fehlend.length <= 3) {
+    const w = fehlend.map((s) => `die ${SPARTE_IM_SATZ[s] ?? s}`);
+    const l = w.length === 1 ? w[0] : `${w.slice(0, -1).join(", ")} und ${w.at(-1)}`;
+    teil = `bei welcher Gesellschaft ${l} ${w.length === 1 ? "ist" : "sind"}`;
+  }
+  return an === "du" ? `Danke! Weißt du noch, ${teil}? Dann kann ${person} gezielt vergleichen.` : `Danke! Wissen Sie noch, ${teil}? Dann kann ${person} gezielt vergleichen.`;
+}
+
+/**
+ * Antwort auf die Nachfrage den offenen Sparten zuordnen: „Haftpflicht bei der Allianz, Hausrat bei der HUK“ je Sparte,
+ * „beide Allianz“ bzw. ein Name für alle, mehrere Namen ohne Sparte in der Reihenfolge der Frage. Leer bei „weiß nicht“
+ * oder wenn nichts erkannt wurde.
+ */
+export function versichererZuordnen(fehlend: readonly VertragSparte[], text: string | null | undefined): Partial<Record<VertragSparte, string>> {
+  const out: Partial<Record<VertragSparte, string>> = {};
+  const t = (text ?? "").trim();
+  if (!t || !fehlend.length) return out;
+  const teile = t.split(/[,;\n]|\bund\b|\bsowie\b/i).map((s) => s.trim()).filter(Boolean);
+  const ohneSparte: string[] = [];
+  for (const teil of teile) {
+    const ges = versichererAus(teil);
+    const sparte = sparteAus(teil);
+    if (ges && sparte && fehlend.includes(sparte)) out[sparte] = ges;
+    else if (ges && !sparte) ohneSparte.push(ges);
+  }
+  const rest = fehlend.filter((s) => !out[s]);
+  if (rest.length && ohneSparte.length === 1) for (const s of rest) out[s] = ohneSparte[0];
+  else if (rest.length && ohneSparte.length === rest.length) rest.forEach((s, i) => (out[s] = ohneSparte[i]));
+  // Unbekannte Gesellschaft bei nur einer offenen Sparte: „bei der Gartenbau-Versicherung“
+  if (!Object.keys(out).length && fehlend.length === 1) {
+    const g = /\b(?:bei|von)\s+(?:der|dem|den|die)?\s*([A-Za-zÄÖÜäöüß][\w&+.\-ÄÖÜäöüß ]{1,30})/i.exec(t)?.[1]?.trim();
+    if (g && !/^(nicht|keine?|mir|uns)\b/i.test(g)) out[fehlend[0]] = g.replace(/[.!]+$/, "");
+  }
+  return out;
+}

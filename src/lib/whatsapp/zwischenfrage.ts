@@ -15,6 +15,7 @@ import { enthaeltErsteFrage, frageplan, outreachProdukt, type FormAntwort } from
 import { isOutreachPurpose, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import type { Knopf } from "@/lib/whatsapp/gespraech";
+import { qmText, wohnflaecheLesen } from "@/lib/wohnflaeche";
 
 /** Eine mögliche Zwischenfrage: Feld, Erkennung im Formular, Frage (ohne Einleitung) und Knöpfe (höchstens 3, je 20 Zeichen). */
 export type ZwischenDef = {
@@ -27,6 +28,10 @@ export type ZwischenDef = {
   sie: string;
   du: string;
   knoepfe: string[];
+  /** Freie Zahl statt Knöpfen (Wohnfläche in m², Ole 19.11.2026); frühere Knopfantworten bleiben gültig */
+  zahl?: { alteKnoepfe: string[] };
+  /** Frühere Fassungen der Frage (laufende Chats erkennen die Frage weiter) */
+  frueher?: string[];
   /** Nur für dieses Tier (Tierkrankenversicherung) */
   tier?: "katze" | "hund";
 };
@@ -49,9 +54,12 @@ const PRIVATSCHUTZ_WOHNFLAECHE: ZwischenDef = {
   feld: "wohnflaeche",
   bekannt: /wohnfl(ä|a)che|quadratmeter|m²/i,
   bekanntAngaben: ["wohnflaeche"],
-  sie: "Wie groß ist Ihre Wohnung ungefähr?",
-  du: "Wie groß ist deine Wohnung ungefähr?",
-  knoepfe: ["Bis 60 m²", "60 bis 100 m²", "Über 100 m²"],
+  // Ole, 19.11.2026: Bereiche reichen dem Rechner nicht, die genaue Zahl als freie Eingabe
+  sie: "Wie viele Quadratmeter Wohnfläche hat Ihre Wohnung? Bitte als Zahl, zum Beispiel 72.",
+  du: "Wie viele Quadratmeter Wohnfläche hat deine Wohnung? Bitte als Zahl, zum Beispiel 72.",
+  knoepfe: [],
+  zahl: { alteKnoepfe: ["Bis 60 m²", "60 bis 100 m²", "Über 100 m²"] },
+  frueher: ["Wie groß ist Ihre Wohnung ungefähr?", "Wie groß ist deine Wohnung ungefähr?"],
 };
 
 const PRIVATSCHUTZ_OEFFENTLICH: ZwischenDef = {
@@ -98,7 +106,7 @@ export function zwischenfrageText(def: ZwischenDef, an: Ansprache, person: Vermi
   return `${zwischenEinleitung(an, person)} ${a(an, def.du, def.sie)}`;
 }
 
-/** Knöpfe der Zwischenfrage (Payload zwischen:<feld>:<wert>; die Antwort kommt als Text an den Assistenten bzw. bot.ts). */
+/** Knöpfe der Zwischenfrage (Payload zwischen:<feld>:<wert>; die Antwort kommt als Text an den Assistenten bzw. bot.ts). Leer bei freier Zahl. */
 export function zwischenKnoepfe(def: ZwischenDef): Knopf[] {
   return def.knoepfe.map((k) => ({ id: `zwischen:${def.feld}:${k.toLowerCase().replace(/[^a-zäöüß0-9]+/g, "_")}`, title: k }));
 }
@@ -106,6 +114,36 @@ export function zwischenKnoepfe(def: ZwischenDef): Knopf[] {
 /** Erkennt eine Zwischenfrage in einer Nachricht von uns. */
 export const ZWISCHEN_TEXT = "im Termin gleich passende Beiträge zeigen kann:";
 export const ZWISCHEN_RE = /im Termin gleich passende Beiträge zeigen kann:/;
+
+/**
+ * Einmalige Nachfrage bei freier Zahl (Wohnfläche): nach einer Spanne („60 bis 80“) bzw. einer unplausiblen Zahl
+ * („1.200“). Danach nie wieder, unklare Antworten gehen ohne Wert weiter (der Vermittler fragt im Termin).
+ */
+export function zwischenNachfrageText(art: "spanne" | "unplausibel", an: Ansprache): string {
+  return art === "spanne"
+    ? a(an, "Danke! Weißt du es etwas genauer? Eine Zahl reicht.", "Danke! Wissen Sie es etwas genauer? Eine Zahl reicht.")
+    : a(
+        an,
+        "Die Zahl scheint nicht zu passen. Wie viele Quadratmeter Wohnfläche hat deine Wohnung? Bitte als Zahl, zum Beispiel 72.",
+        "Die Zahl scheint nicht zu passen. Wie viele Quadratmeter Wohnfläche hat Ihre Wohnung? Bitte als Zahl, zum Beispiel 72.",
+      );
+}
+export const ZWISCHEN_NACHFRAGE_RE = /^Danke! (Weißt du|Wissen Sie) es etwas genauer\? Eine Zahl reicht\.$|^Die Zahl scheint nicht zu passen\. Wie viele Quadratmeter/;
+
+/** Antwort auf eine Zwischenfrage mit freier Zahl (Wohnfläche). nachfrage = Antwort auf die einmalige Nachfrage. */
+function zahlSchritt(def: ZwischenDef, antwort: string, nachfrage: boolean): ZwischenSchritt {
+  const alt = def.zahl!.alteKnoepfe.find((k) => k.toLowerCase() === antwort.trim().toLowerCase().replace(/[.!]+$/, ""));
+  if (alt) return { art: "antwort", def, wert: alt, frei: false };
+  const r = wohnflaecheLesen(antwort);
+  if (r?.art === "zahl") return { art: "antwort", def, wert: qmText(r.qm), frei: false };
+  if (r?.art === "weiss_nicht") return { art: "antwort", def, wert: null, frei: false, ohneWert: true };
+  const ohneWert: ZwischenSchritt = { art: "antwort", def, wert: null, frei: false, ohneWert: true };
+  // Keine Zahl: Freitext, Rückfrage oder Terminwunsch übernimmt der Assistent; nach der Nachfrage geht es ohne Wert weiter
+  if (!r) return nachfrage && schlichteAntwort(antwort) ? ohneWert : { art: "antwort", def, wert: null, frei: true };
+  if (!nachfrage) return { art: "nachfragen", def, nachfrage: r.art, wert: r.art === "spanne" ? `ca. ${qmText(r.qm)}` : null };
+  // zweite unklare Antwort: nicht weiter fragen (eine Spanne bleibt als ca.-Wert gespeichert)
+  return ohneWert;
+}
 
 /** Die nächste noch unbekannte Zwischenfrage des Produkts (null = keine offen bzw. nicht aktiv). */
 export function offeneZwischenfrage(
@@ -164,8 +202,13 @@ function neutral(m: VerlaufNachricht): boolean {
 export type ZwischenSchritt =
   /** Jetzt die Zwischenfrage stellen; die Antwort auf die Öffnungsfrage steht in `antwort` (für feld) */
   | { art: "fragen"; def: ZwischenDef; antwort: { feld: QualificationKey; wert: string } | null }
-  /** Antwort auf die Zwischenfrage: wert = Knopfwert bzw. erkannte Antwort; frei = Freitext/Terminwunsch, der Assistent übernimmt */
-  | { art: "antwort"; def: ZwischenDef; wert: string | null; frei: boolean }
+  /**
+   * Antwort auf die Zwischenfrage: wert = Knopfwert bzw. erkannte Antwort; frei = Freitext/Terminwunsch, der Assistent
+   * übernimmt; ohneWert = „weiß nicht“ bzw. zweite unklare Antwort: ohne Wert weiter zum Terminvorschlag
+   */
+  | { art: "antwort"; def: ZwischenDef; wert: string | null; frei: boolean; ohneWert?: boolean }
+  /** Freie Zahl unklar (Spanne, unplausibel): einmal nachfragen; wert = vorläufig zu speichern (Mittelwert der Spanne) */
+  | { art: "nachfragen"; def: ZwischenDef; nachfrage: "spanne" | "unplausibel"; wert: string | null }
   /** Antwort auf die Öffnungsfrage mit Terminwunsch, Rückfrage oder Absage: nicht weiterfragen */
   | { art: "ueberspringen" };
 
@@ -201,9 +244,16 @@ export function zwischenSchritt(o: {
   // Zwischenfrage schon gestellt: nur die Antwort direkt darauf zählt, danach nie wieder
   const gestellt = v.findIndex((m) => m.direction === "outbound" && ZWISCHEN_RE.test(m.body ?? ""));
   if (gestellt >= 0) {
-    if (v.indexOf(unsere) !== gestellt) return null;
-    const def = (ZWISCHENFRAGEN[p.purpose] ?? []).find((d) => (unsere.body ?? "").includes(d.sie) || (unsere.body ?? "").includes(d.du)) ?? (ZWISCHENFRAGEN[p.purpose] ?? [])[0];
+    // Antwort auf die einmalige Nachfrage (freie Zahl): unsere letzte ist die Nachfrage direkt nach der Zwischenfrage
+    const idx = v.indexOf(unsere);
+    const nachfrage =
+      idx !== gestellt && ZWISCHEN_NACHFRAGE_RE.test(unsere.body ?? "") && v.slice(gestellt + 1, idx).every((m) => m.direction !== "outbound" || neutral(m));
+    if (idx !== gestellt && !nachfrage) return null;
+    const frage = v[gestellt].body ?? "";
+    const def = (ZWISCHENFRAGEN[p.purpose] ?? []).find((d) => [d.sie, d.du, ...(d.frueher ?? [])].some((x) => frage.includes(x))) ?? (ZWISCHENFRAGEN[p.purpose] ?? [])[0];
     if (!def) return null;
+    if (def.zahl) return zahlSchritt(def, antwort, nachfrage);
+    if (nachfrage) return null;
     const wert = zwischenWert(def, antwort);
     return { art: "antwort", def, wert, frei: !wert };
   }

@@ -213,9 +213,11 @@ export function beispielVerlauf(o: BeispielEingabe): ChatZeile[] {
   const zwischen = offeneZwischenfrage(produkt, formular, null);
   let angaben: Record<string, string> | null = null;
   if (zwischen) {
-    assistent(zwischenfrageText(zwischen, an, person), { knoepfe: zwischen.knoepfe });
-    lead(zwischen.knoepfe[0], 1);
-    angaben = { [zwischen.feld]: zwischen.knoepfe[0] };
+    // freie Zahl (Wohnfläche) ohne Knöpfe: Beispielantwort „72“
+    const beispiel = zwischen.knoepfe[0] ?? (zwischen.zahl ? "72" : "");
+    assistent(zwischenfrageText(zwischen, an, person), zwischen.knoepfe.length ? { knoepfe: zwischen.knoepfe } : {});
+    lead(beispiel, 1);
+    angaben = { [zwischen.feld]: zwischen.zahl ? `${beispiel} m²` : beispiel };
   }
 
   // 3. Terminvorschlag mit zwei Zeiten (früheste und früheste an einem anderen Tag)

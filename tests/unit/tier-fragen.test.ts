@@ -36,9 +36,9 @@ describe("Tierfragen (TKV)", () => {
     expect(tierFrage("gesundheit", ohneName, "sie", "Herr Kannapinn").text).toBe("Ist Ihre Katze aktuell gesund?");
     expect(tierFrage("gesundheit", ohneName, "du", "Ole").text).toBe("Ist deine Katze aktuell gesund?");
     expect(tierFrage("gesundheitDetail", katze(), "du", "Ole").text).toBe("Danke! Was war es ungefähr, und wann? Ein Stichwort reicht, z. B. Zahnbehandlung im Frühjahr. Ole bespricht das im Termin mit dir.");
-    expect(tierFrage("geburt", katze(), "du", "Ole").text).toBe("Für das Angebot braucht Ole noch dein Geburtsdatum. Wie lautet es?");
+    expect(tierFrage("geburt", katze(), "du", "Ole").text).toBe("Für das Angebot braucht Ole noch dein eigenes Geburtsdatum als Versicherungsnehmer. Wie lautet es?");
     expect(tierFrage("haltung", ohneName, "du", "Ole").text).toBe("Ist deine Katze eine Wohnungskatze oder ein Freigänger?");
-    for (const k of ["gesundheit", "gesundheitDetail", "geburtTier", "rasse", "geschlecht", "haltung", "weitere", "tarifwunsch", "vorhanden", "vorhandenAblauf", "geburt"] as const) {
+    for (const k of ["gesundheit", "gesundheitDetail", "geburtTier", "rasse", "geschlecht", "haltung", "weitere", "tarifwunsch", "vorhanden", "vorhandenAblauf", "geburt", "geburtEigen", "geburtNochmal"] as const) {
       for (const an of ["sie", "du"] as const) {
         const f = tierFrage(k, katze(), an, "Herr Kannapinn");
         expect(f.text).not.toMatch(/[–—]/);
@@ -71,6 +71,59 @@ describe("Tierfragen (TKV)", () => {
     expect(tierAntwortAuswerten("vorhandenAblauf", "März 2027", null, q)?.angaben.vorhanden).toBe("Tierversicherung vorhanden, läuft bis März 2027");
     expect(tierAntwortAuswerten("vorhanden", "Ja, bei der Uelzener bis Juni", null, q)?.beantwortet).toEqual(["vorhanden", "vorhandenAblauf"]);
     expect(tierAntwortAuswerten("tarifwunsch", "Auch Behandlungen", "voll", q)?.angaben.tarifwunsch).toBe("volle Krankenversicherung (auch Tierarztbehandlung)");
+  });
+
+  it("Ablauf der Tierversicherung: Monat und Jahr mit Beispiel in etwa 4 Monaten, Antworten gelesen (Ole, 19.11.2026)", () => {
+    const heute = new Date("2026-11-19T10:00:00Z");
+    const q = katze({ angaben: { vorhanden: "Tierversicherung vorhanden" } });
+    for (const an of ["sie", "du"] as const) {
+      expect(tierFrage("vorhandenAblauf", q, an, "Herr Kannapinn", heute).text).toBe("Bis wann läuft die Versicherung ungefähr? Monat und Jahr reichen, zum Beispiel 03/2027.");
+    }
+    expect(tierFrage("vorhandenAblauf", q, "sie", "Herr Kannapinn", new Date("2026-12-31T23:30:00Z")).text).toMatch(/zum Beispiel 05\/2027\.$/);
+    const ab = (t: string) => tierAntwortAuswerten("vorhandenAblauf", t, null, q, heute)?.angaben.vorhanden;
+    expect(ab("03/27")).toBe("Tierversicherung vorhanden, läuft bis März 2027");
+    expect(ab("im März")).toBe("Tierversicherung vorhanden, läuft bis März 2027");
+    expect(ab("Ende des Jahres")).toBe("Tierversicherung vorhanden, läuft bis Dezember 2026");
+    expect(ab("weiß ich nicht genau")).toBe("Tierversicherung vorhanden, Ablauf offen");
+    expect(ab("k.A.")).toBe("Tierversicherung vorhanden, Ablauf offen");
+    expect(ab("Uelzener, jährlich")).toBe("Tierversicherung vorhanden, läuft bis Uelzener, jährlich");
+    expect(tierAntwortAuswerten("vorhandenAblauf", "keine Ahnung", null, q, heute)?.beantwortet).toEqual(["vorhandenAblauf"]);
+  });
+
+  it("Geburtsdatum des Halters geprüft: Tierdatum, Tippfehler, echtes Datum, weiß nicht (Ole, 19.11.2026)", () => {
+    const heute = new Date("2026-11-19T10:00:00Z");
+    const q = katze();
+    expect(tierFrage("geburt", q, "sie", "Herr Kannapinn").text).toBe("Für das Angebot braucht Herr Kannapinn noch Ihr eigenes Geburtsdatum als Versicherungsnehmer. Wie lautet es?");
+    expect(tierFrage("geburt", q, "du", "Ole").text).toBe("Für das Angebot braucht Ole noch dein eigenes Geburtsdatum als Versicherungsnehmer. Wie lautet es?");
+    // echtes Datum
+    expect(tierAntwortAuswerten("geburt", "14.5.1985", null, q, heute)).toEqual({ angaben: { geburt: "14.05.1985" }, beantwortet: ["geburt", "geburtEigen", "geburtNochmal"] });
+    // Datum der Katze (Formular: März 2022): neben dem bekannten notiert, dann einmal nach dem eigenen fragen
+    const katzenDatum = tierAntwortAuswerten("geburt", "23.09.2025", null, q, heute)!;
+    expect(katzenDatum.angaben.geburt).toBeUndefined();
+    expect(katzenDatum.angaben.tier).toBe("Datum aus dem Chat: 23.09.2025");
+    const nach = offeneTierFragen(q, new Set(["gesundheit", "tarifwunsch", "vorhanden", ...katzenDatum.beantwortet]));
+    expect(nach).toEqual(["geburtEigen"]);
+    expect(tierFrage("geburtEigen", q, "sie", "Herr Kannapinn").text).toBe(
+      "Danke, das ist sicher das Geburtsdatum von Minka, das habe ich notiert. Für den Vertrag braucht Herr Kannapinn noch Ihr eigenes Geburtsdatum.",
+    );
+    const ohneName = katze({ formular: ohne(/tiername/i) });
+    expect(tierFrage("geburtEigen", ohneName, "du", "Ole").text).toBe("Danke, das ist sicher das Geburtsdatum deiner Katze, das habe ich notiert. Für den Vertrag braucht Ole noch dein eigenes Geburtsdatum.");
+    // ohne bekanntes Tierdatum bzw. gleiches Jahr: als Geburtsdatum des Tieres
+    const ohneJahr = katze({ formular: ohne(/geburts(jahr|monat)/i) });
+    expect(tierAntwortAuswerten("geburt", "23.09.2025", null, ohneJahr, heute)?.angaben.tier).toBe("Geboren: 23.09.2025");
+    // danach das eigene
+    expect(tierAntwortAuswerten("geburtEigen", "14.05.1985", null, q, heute)?.angaben.geburt).toBe("14.05.1985");
+    // Tippfehler in der Zukunft: einmal neu fragen
+    const zukunft = tierAntwortAuswerten("geburt", "1.1.2090", null, q, heute)!;
+    expect(zukunft.angaben).toEqual({});
+    expect(offeneTierFragen(q, new Set(["gesundheit", "tarifwunsch", "vorhanden", ...zukunft.beantwortet]))).toEqual(["geburtNochmal"]);
+    expect(tierFrage("geburtNochmal", q, "sie", "Herr Kannapinn").text).toBe("Das Datum scheint nicht zu passen. Wie lautet Ihr Geburtsdatum, zum Beispiel 14.05.1985?");
+    // zweites unpassendes Datum: offen, keine weitere Frage
+    const zweite = tierAntwortAuswerten("geburtNochmal", "1.1.1900", null, q, heute)!;
+    expect(zweite.angaben.geburt).toBe("offen (Angabe: 01.01.1900)");
+    expect(offeneTierFragen(q, new Set(["gesundheit", "tarifwunsch", "vorhanden", ...zukunft.beantwortet, ...zweite.beantwortet]))).toEqual([]);
+    // weiß nicht: weiter
+    expect(tierAntwortAuswerten("geburt", "weiß ich nicht", null, q, heute)?.angaben.geburt).toBe("offen");
   });
 
   it("Angaben zum Tier anhängen, gleiche Angabe ersetzen, höchstens 200 Zeichen", () => {
