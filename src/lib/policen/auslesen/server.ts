@@ -47,7 +47,7 @@ import {
 import { ausUnterlagenSparte, ersteSeiteText, sparteVorab } from "@/lib/policen/auslesen/sparte";
 import { plausibel } from "@/lib/policen/auslesen/plausibel";
 import { kiAbgelehnt } from "@/lib/policen/ohne-ki";
-import { zusammenfassung, type Zusammenfassung } from "@/lib/policen/auslesen/zusammenfassung";
+import { heuteBerlin, KUENDIGUNG_SPARTEN, kuendigungsfenster, zusammenfassung, type Zusammenfassung } from "@/lib/policen/auslesen/zusammenfassung";
 import type { DokumentTyp } from "@/lib/policen/auslesen/anbieter/typ";
 
 const TYPEN: readonly DokumentTyp[] = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
@@ -303,6 +303,8 @@ export type VertragKarte = {
   sparte: AuslesenSparte;
   felder: Felder;
   monat: number | null;
+  /** ausgelesen = mit Werten; leer = nichts gefunden */
+  status: "ausgelesen" | "leer";
   geprueft: boolean;
   uebernommen: boolean;
   ausgelesenAt: string | null;
@@ -317,6 +319,8 @@ export type Vergleich = {
   sparten: AuslesenSparte[];
   /** Bestandskunden-Modul sichtbar? Nur dann „In Bestand übernehmen“. */
   bestand: boolean;
+  /** Heute in Europe/Berlin (JJJJ-MM-TT), für Kündigungsangaben auf den Karten */
+  heute: string;
 };
 
 /** Sparten aller Unterlagen (Auszug, sonst Einordnung der Unterlage) für „Nicht geschickt“; ohne Sparte gezählt. */
@@ -359,6 +363,7 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
         sparte: a.sparte,
         felder,
         monat: monatsbetrag(felder),
+        status: a.status === "leer" ? "leer" : "ausgelesen",
         geprueft: !!a.geprueftAt,
         uebernommen: !!a.uebernommenAt,
         ausgelesenAt: a.ausgelesenAt?.toISOString() ?? null,
@@ -387,6 +392,7 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
     ),
     sparten: freigegebeneSparten({ zdr }),
     bestand,
+    heute: heuteBerlin(now),
   };
 }
 
@@ -490,8 +496,56 @@ export async function uebernimmInBestand(w: Wer, id: string): Promise<{ existing
   await refreshBestandSummary(ec.id);
   await prisma.policenAuszug.update({ where: { id }, data: { uebernommenAt: new Date(), uebernommenVonId: w.userId, existingContractId: vertrag.id, geprueftAt: a.geprueftAt ?? new Date(), geprueftVonId: a.geprueftVonId ?? w.userId } });
   await audit("policen.auslesen_bestand", { entity: "PolicenAuszug", entityId: id, customerId: w.customerId, details: { leadId: w.leadId, existingContractId: vertrag.id }, actor: { id: w.userId, role: "BUYER" } });
-  await logLeadHistory(w.leadId, "dokument", `${SPARTE_LABEL[a.sparte]} in den Bestand übernommen`, { customerId: w.customerId, userId: w.userId });
+  // Kündigungsfrist (vorsichtig, nur Sach) als Notiz im Verlauf; renewalDate bleibt der Kündigungstermin
+  const fe = KUENDIGUNG_SPARTEN.includes(a.sparte) ? kuendigungsfenster(f, heuteBerlin(new Date())) : null;
+  const frist = fe?.bis ? `, Kündigung bis ${fe.bis.slice(8, 10)}.${fe.bis.slice(5, 7)}.${fe.bis.slice(0, 4)} laut Unterlage` : "";
+  await logLeadHistory(w.leadId, "dokument", `${SPARTE_LABEL[a.sparte]} in den Bestand übernommen${frist}`, { customerId: w.customerId, userId: w.userId });
   return { existingContractId: vertrag.id };
+}
+
+/** Höchstens so viele Verträge je Sammelaktion (Schutz gegen übergroße Listen). */
+const SAMMEL_MAX = 50;
+const sammelIds = (ids: unknown): string[] => (Array.isArray(ids) ? [...new Set(ids.filter((x): x is string => typeof x === "string"))].slice(0, SAMMEL_MAX) : []);
+
+/**
+ * „Alle als geprüft markieren“ (Paket 2): setzt geprueftAt nur für die angezeigten, ausgelesenen, noch ungeprüften
+ * Auszüge dieses Leads (der Vermittler hat sie auf der Seite gesehen). Bei „ohne KI“ werden keine Werte gezeigt, also
+ * auch nichts markiert. Ein Audit-Eintrag für die Sammelaktion.
+ */
+export async function bestaetigeAlle(w: Wer, ids: unknown): Promise<number> {
+  const liste = sammelIds(ids);
+  if (!liste.length || (await kiAbgelehnt(w.leadId).catch(() => true))) return 0;
+  const l = await prisma.policenAuszug.findMany({
+    where: { id: { in: liste }, leadId: w.leadId, customerId: w.customerId, status: "ausgelesen", geprueftAt: null, uebernommenAt: null },
+    select: { id: true },
+  });
+  if (!l.length) return 0;
+  const treffer = l.map((a) => a.id);
+  await prisma.policenAuszug.updateMany({ where: { id: { in: treffer } }, data: { geprueftAt: new Date(), geprueftVonId: w.userId } });
+  await audit("policen.auslesen_geprueft_alle", { entity: "Lead", entityId: w.leadId, customerId: w.customerId, details: { anzahl: treffer.length, auszuege: treffer }, actor: { id: w.userId, role: "BUYER" } });
+  return treffer.length;
+}
+
+/**
+ * „n Verträge in Bestand übernehmen“ (Paket 2, K7): nur mit sichtbarem Bestandsmodul und nur Auszüge, die der Vermittler
+ * schon geprüft hat (geprueftAt gesetzt). Ungeprüfte werden nie übernommen; uebernimmInBestand würde sie sonst still als
+ * geprüft markieren. null: Bestandsmodul nicht sichtbar bzw. „ohne KI“.
+ */
+export async function uebernimmAlle(w: Wer, ids: unknown): Promise<{ uebernommen: number; fehler: number } | null> {
+  const { loadBestandVisible } = await import("@/lib/bestand/sichtbar-server");
+  if (!(await loadBestandVisible(w.customerId))) return null;
+  if (await kiAbgelehnt(w.leadId).catch(() => true)) return null;
+  const liste = sammelIds(ids);
+  if (!liste.length) return { uebernommen: 0, fehler: 0 };
+  const l = await prisma.policenAuszug.findMany({
+    where: { id: { in: liste }, leadId: w.leadId, customerId: w.customerId, status: "ausgelesen", geprueftAt: { not: null }, uebernommenAt: null },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  let uebernommen = 0;
+  for (const a of l) if (await uebernimmInBestand(w, a.id)) uebernommen++;
+  if (uebernommen) await audit("policen.auslesen_bestand_alle", { entity: "Lead", entityId: w.leadId, customerId: w.customerId, details: { anzahl: uebernommen }, actor: { id: w.userId, role: "BUYER" } });
+  return { uebernommen, fehler: l.length - uebernommen };
 }
 
 // ─── Täglich (Cron 03:00 UTC) und Diagnose ──────────────────────────────────

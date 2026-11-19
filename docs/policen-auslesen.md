@@ -7,14 +7,27 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
 
 - **Terminvorbereitung** (Karte „Das will der Kunde“ bzw. „Unterlagen vom Kunden“): eine Zeile „Vergleichsblatt“ mit
   Anzahl Verträge, Summe im Monat und Hinweisen; führt auf `/buyer/termine/{id}/vorbereitung/vertraege`.
-- **Vergleichsblatt:** oben Summe der Monatsbeiträge, Kündigungstermine in den nächsten 3 Monaten (mit „Kündigung bis“),
-  Hinweise „Zum Ansprechen“ (gleiche Sparte zweimal; Haftpflicht ohne Forderungsausfall bzw. Schlüsselverlust, Hausrat
-  ohne Elementar bzw. Unterversicherungsverzicht, Wohngebäude ohne Elementar, nur wenn das Dokument ausdrücklich „nein“
-  sagt). Je Vertrag eine Karte mit den gefundenen Feldern, „Ausgelesen, bitte prüfen“, unsichere Felder „bitte prüfen“,
-  Link „Original“. Knöpfe: „Bearbeiten“ (Speichern gilt als geprüft), „Werte stimmen“, danach „In Bestand übernehmen“.
-  Unten Unterlagen, die nicht ausgelesen wurden, mit der nächsten Handlung (Sparte wählen, erneut versuchen, Original).
-- **Fragen für den Termin** (19.11.2026, `auslesen/zusammenfassung.ts`, rein; Anzeige folgt mit dem Umbau der
-  Vertragsseite): feste Vorlagen, Sie-Form, Euro nur als Beitrag „laut Unterlage“. Reihenfolge: Kündigungsfristen
+- **Vertragsseite** (bis 19.11.2026 „Vergleichsblatt“; Route und Dateinamen bleiben; Paket 2 „Champions League“,
+  Logik rein in `auslesen/vertragsseite.ts`): Titel „Verträge: {Name}“ ohne Untertitel. Kopf: Beiträge im Monat groß,
+  darunter Jahr, Anzahl, „n bitte prüfen“, ein K6-Satz „Maschinell ausgelesen: bitte vor dem Termin mit dem Original
+  prüfen.“ (ohne Zwei-Faktor-Login dahinter der Link zur Einrichtung). Darunter „Fragen für den Termin“ (3 sichtbar, Rest
+  unter „Mehr (n)“), jede mit Nummer und Sprung zur Karte, die dieselbe Nummer trägt. Karten sortiert: mit Frage, dann
+  mit unsicheren Feldern, dann ungeprüft, dann Rest. Sichtbar: Beitrag im Monat, „Kündigung bis“ (nur Sach, vorsichtig)
+  bzw. Laufzeit, Deckungs- bzw. Versicherungssumme, Wer ist versichert, SF-Klassen, Kasko, Rechtsschutz-Bausteine,
+  BU-/Rente, Bausteine mit „nein“ und immer alle unsicheren Felder; Badge „Bitte prüfen“ je ungeprüfter Karte, „bitte
+  prüfen“ am Feld. Ein Tipp auf den Kartenkopf zeigt „Alle Angaben“ (Beitrag laut Unterlage, Kündigung zum, Laufzeit,
+  Tarif, Vers.-Nr., SB …), „Original“ und „Bearbeiten“ (Speichern gilt als geprüft). „Werte stimmen“ je Karte und
+  „In Bestand übernehmen“ je Karte entfallen.
+  Genau eine Hauptaktion (am Handy fest unten über der Navigation): „Alle als geprüft markieren (n)“ (nur angezeigte,
+  ausgelesene, ungeprüfte Auszüge; `bestaetigeAlle`, Audit `policen.auslesen_geprueft_alle`), danach nur mit sichtbarem
+  Bestandsmodul „n Verträge in Bestand übernehmen“ (`uebernimmAlle`: nur Auszüge mit `geprueftAt`, nie ungeprüfte, keine
+  stille Prüfungsfiktion; je Vertrag `uebernimmInBestand` mit Audit `policen.auslesen_bestand`, Kündigungsfrist als Notiz
+  im Verlauf; Sammel-Audit `policen.auslesen_bestand_alle`). Ohne Bestandsmodul danach nur „Alle geprüft“. Bei „ohne KI“
+  passiert beides nicht. Ohne ausgelesene Verträge: Hauptaktion „Zur Terminvorbereitung“, der Grund (z. B. „Nicht
+  ausgelesen auf Wunsch des Kunden.“) steht einmal oben, die Unterlagen bleiben zu öffnen. Unten Unterlagen, die nicht
+  ausgelesen wurden (Sparte wählen, erneut versuchen, Original).
+- **Fragen für den Termin** (19.11.2026, `auslesen/zusammenfassung.ts`, rein; Anzeige auf der Vertragsseite, Spickzettel
+  in der Terminvorbereitung folgt): feste Vorlagen, Sie-Form, Euro nur als Beitrag „laut Unterlage“. Reihenfolge: Kündigungsfristen
   (nach Tagen, dann Beitrag), doppelt, Bausteine „nein“, nicht geschickt. Regeln (K8): Kündigungen nur Sach (Haftpflicht,
   Hausrat, Wohngebäude, Rechtsschutz, Kfz); „doppelt“ nur Haftpflicht, Hausrat, Rechtsschutz (mit beiden Versicherern,
   Summe nur, wenn alle Beiträge bekannt); nie PKV, BU, Leben. Frist vorsichtig: „bis“ = (Termin minus Frist) minus
