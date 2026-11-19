@@ -393,7 +393,11 @@ function PaymentBox({
   return (
     <div id="zahlung" className={`${box} scroll-mt-4 border-[#e5e7eb] bg-white`}>
       <div className="font-semibold">
-        {returned === "abgebrochen" ? "Die Zahlung wurde nicht abgeschlossen." : "Angebot angenommen. Es fehlt nur noch die Zahlung."}
+        {returned === "abgebrochen"
+          ? "Die Zahlung wurde nicht abgeschlossen."
+          : returned === "fehler"
+            ? "Angebot angenommen. Die Zahlungsseite ließ sich gerade nicht öffnen, bitte noch einmal versuchen."
+            : "Angebot angenommen. Es fehlt nur noch die Zahlung."}
       </div>
       <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">
         {vorausJetzt

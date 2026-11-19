@@ -9,6 +9,8 @@ import { checkLimit, clientIp, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { parseZahlart } from "@/lib/zahlart";
 import { setzeErinnerungPerToken } from "@/lib/angebot-zahlungserinnerung-server";
 import { richteUeberweisungEin, ueberweisungMoeglich } from "@/lib/ueberweisung";
+import { reportError } from "@/lib/monitoring";
+import { sendToAdmins } from "@/lib/push";
 
 export type AcceptState = { ok?: boolean; error?: string; checkoutUrl?: string };
 
@@ -67,6 +69,11 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
       }
       const checkout = await createCheckoutForOffer(offer.id, zahlart);
       if ("url" in checkout) redirect(checkout.url);
+      // Zahlungsseite nicht erstellt (Ole, 19.11.2026): nie „Auftrag bestätigt, Zugang kommt per Mail“ zeigen, obwohl
+      // nichts bezahlt ist. Fehler melden und auf die Zahlungsansicht mit „Zahlung erneut starten“ leiten.
+      reportError(new Error(`Checkout nach Annahme fehlgeschlagen: ${checkout.error}`), "angebot-checkout", { offer: offer.id });
+      await sendToAdmins({ title: "Zahlung nach Annahme hängt", body: `${offer.number}: Zahlungsseite konnte nicht erstellt werden (${checkout.error})`, url: offer.salesContactId ? `/admin/vertrieb/kontakte/${offer.salesContactId}` : "/admin" }).catch(() => {});
+      redirect(`/angebot/${token}?zahlung=fehler#zahlung`);
     }
   }
   return { ok: true };
