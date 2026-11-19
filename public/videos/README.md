@@ -14,24 +14,26 @@ Bild neu aufgenommen am 19.11.2026 (Heute mit „Angebote senden“ und „Start
 - **Wachstum: Ihre Zahlen**: Und unter ‚Wachstum‘ sehen Sie direkt Ihre Zahlen und Ihr Werbebudget.
 - **outro**: Fragen? Die KI-Hilfe unten links ist jederzeit für Sie da. Viel Erfolg!
 
-## Ausführliche Version (ca. 3:50 Min.)
+## Ausführliche Version (ca. 3:40 Min.)
+
+Neu aufgenommen und vertont am 19.11.2026 (Phase „Abschluss“ statt „Gewonnen“, Kontakte mit „Zu erledigen“, Wachstum mit „Rechnet sich das?“ und „Vom Lead zum Kunden“, Terminvorbereitung mit Beiträgen aus dem Tarifrechner und „Präsentation öffnen“). Ton mit OpenAI whisper-1 gegengehört.
 
 - **intro**: Willkommen bei Performance Growth. In den nächsten Minuten zeigen wir Ihnen Schritt für Schritt, wie Sie mit der Software arbeiten.
 - **Die vier Bereiche**: Links finden Sie die vier Bereiche: Heute, Kontakte, Nachrichten und Wachstum. Auf dem Handy finden Sie dieselben Bereiche unten am Bildschirmrand.
-- **Heute: Ihr Startpunkt**: ‚Heute‘ ist Ihr Startpunkt. Ganz oben steht, wer auf Sie wartet, dann Ihre Termine, offene Ergebnisse unter ‚Wie lief es?‘ und Ihre Anrufe. Am Computer öffnet sich rechts direkt die erste Aufgabe.
+- **Heute: Ihr Startpunkt**: ‚Heute‘ ist Ihr Startpunkt. Ganz oben stehen neue Leads und wer auf Sie wartet, dann Ihre Termine, offene Ergebnisse unter ‚Wie lief es?‘ und Ihre Anrufe. Am Computer öffnet sich rechts direkt die erste Aufgabe.
 - **Wartet auf Sie**: Unter ‚Wartet auf Sie‘ stehen Leads, die geantwortet haben. Mit ‚Antworten‘ öffnen Sie direkt den Chat.
 - **Ihre Termine**: Bei Ihren Terminen sehen Sie die Zusammenfassung des Assistenten: Lebenssituation, Interesse und Rückfragen. Anrufen oder Videocall starten Sie mit einem Klick.
-- **Phase und Ergebnis**: Oben im Kontakt sehen Sie die Phase. Ein Klick ändert sie. Mit ‚Gewonnen‘ oder ‚Verloren‘ schließen Sie einen Lead ab.
+- **Phase und Ergebnis**: Oben im Kontakt sehen Sie die Phase. Ein Klick ändert sie. Mit ‚Abschluss‘ oder ‚Verloren‘ schließen Sie einen Lead ab.
 - **Angaben und Notizen**: Darunter stehen alle Angaben aus dem Formular und Ihre Notizen.
-- **Termin vorbereiten**: Unter dem Termin steht ‚Vorbereiten: Angebot rechnen‘. Dort laden Sie Ihre Angebote hoch, und mit ‚Präsentation‘ zeigen Sie sie im Termin.
+- **Termin vorbereiten**: Unter dem Termin steht ‚Vorbereiten: Angebot rechnen‘. Dort tragen Sie die Beiträge aus Ihrem Tarifrechner ein, und mit ‚Präsentation öffnen‘ zeigen Sie das Angebot im Termin.
 - **Anrufliste**: In der Anrufliste stehen Rückrufe und fällige Wiedervorlagen. Überfälliges ist rot markiert. Nach dem Anruf tragen Sie das Ergebnis ein, den Rest erledigt die App.
 - **Nachrichten**: Unter ‚Nachrichten‘ finden Sie alle WhatsApp-Gespräche mit Ihren Leads.
 - **Ihr WhatsApp-Assistent**: Ihr Assistent schreibt jeden neuen Lead in wenigen Minuten an, in Ihrem Namen. Er stellt die wichtigsten Fragen und bucht den Termin in eine freie Zeit Ihres Kalenders. Bestätigung und Erinnerung schickt er automatisch.
 - **Selbst schreiben**: Möchten Sie selbst antworten, schreiben Sie einfach los. Dann hält sich der Assistent in diesem Chat zurück.
-- **Kontakte**: Unter ‚Kontakte‘ sehen Sie alle Leads als Liste, mit Phase und nächstem Schritt. Fehlt ein nächster Schritt, legen Sie ihn mit ‚Festlegen‘ fest.
+- **Kontakte**: Unter ‚Kontakte‘ sehen Sie zuerst, was zu erledigen ist, jeweils mit Phase und nächstem Schritt. Fehlt ein nächster Schritt, legen Sie ihn mit ‚Festlegen‘ fest.
 - **Pipeline**: In der Pipeline sehen Sie jeden Lead nach Phase. Am Computer ziehen Sie Karten einfach in die nächste Spalte. Leads ohne Interesse stehen gesammelt unter ‚Verloren‘.
-- **Wachstum: Ihr Vertriebstrichter**: Unter ‚Wachstum‘ sehen Sie direkt Ihre Zahlen. Der Vertriebstrichter zeigt, wie viele Leads Sie erreichen, wie viele einen Termin bekommen und wie viele abschließen.
-- **Werbebudget, Produkte und Pause**: Darunter sehen Sie Kosten und Ertrag. Weiter unten stellen Sie Ihr Werbebudget ein, sehen Ihre Produkte und tragen eine Pause ein, zum Beispiel für den Urlaub.
+- **Wachstum: Rechnet sich das?**: Unter ‚Wachstum‘ sehen Sie zuerst, ob sich Ihre Werbung rechnet. Darunter zeigt ‚Vom Lead zum Kunden‘, wie viele Leads Sie erreichen, wie viele einen Termin bekommen und wie viele Kunden werden.
+- **Werbebudget, Produkte und Pause**: Weiter unten stellen Sie Ihr Werbebudget ein, sehen Ihre Produkte und tragen eine Pause ein, zum Beispiel für den Urlaub.
 - **Mein Kalender**: Unter ‚Mein Kalender‘ verbinden Sie Ihren Google- oder Outlook-Kalender und legen fest, wann Leads Termine buchen dürfen. Der Assistent bietet nur diese Zeiten an, und nur, wenn Sie dann frei sind.
 - **Team**: Arbeiten Sie im Team? Dann laden Sie unter ‚Team‘ Ihre Berater ein. Neue Leads werden automatisch reihum verteilt.
 - **outro**: Wenn Sie Fragen haben, hilft Ihnen die KI-Hilfe unten links sofort weiter, und mit einem Klick erreichen Sie unser Team. Viel Erfolg mit Performance Growth!

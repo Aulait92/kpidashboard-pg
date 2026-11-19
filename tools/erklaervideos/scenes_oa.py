@@ -25,7 +25,7 @@ LANG=[
  ("termin","Ihre Termine","Bei Ihren Terminen sehen Sie die Zusammenfassung des Assistenten: Lebenssituation, Interesse und Rückfragen. Anrufen oder Videocall starten Sie mit einem Klick."),
  ("phase","Phase und Ergebnis","Oben im Kontakt sehen Sie die Phase. Ein Klick ändert sie. Mit ‚Abschluss‘ oder ‚Verloren‘ schließen Sie einen Lead ab."),
  ("notizen","Angaben und Notizen","Darunter stehen alle Angaben aus dem Formular und Ihre Notizen."),
- ("vorbereiten","Termin vorbereiten","Unter dem Termin steht ‚Vorbereiten: Angebot rechnen‘. Dort laden Sie Ihre Angebote hoch, und mit ‚Präsentation‘ zeigen Sie sie im Termin."),
+ ("vorbereiten","Termin vorbereiten","Unter dem Termin steht ‚Vorbereiten: Angebot rechnen‘. Dort tragen Sie die Beiträge aus Ihrem Tarifrechner ein, und mit ‚Präsentation öffnen‘ zeigen Sie das Angebot im Termin."),
  ("anrufliste","Anrufliste","In der Anrufliste stehen Rückrufe und fällige Wiedervorlagen. Überfälliges ist rot markiert. Nach dem Anruf tragen Sie das Ergebnis ein, den Rest erledigt die App."),
  ("nachrichten","Nachrichten","Unter ‚Nachrichten‘ finden Sie alle WhatsApp-Gespräche mit Ihren Leads."),
  ("chat","Ihr WhatsApp-Assistent","Ihr Assistent schreibt jeden neuen Lead in wenigen Minuten an, in Ihrem Namen. Er stellt die wichtigsten Fragen und bucht den Termin in eine freie Zeit Ihres Kalenders. Bestätigung und Erinnerung schickt er automatisch."),
