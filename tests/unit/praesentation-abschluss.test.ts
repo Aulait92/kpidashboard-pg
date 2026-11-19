@@ -94,6 +94,20 @@ describe("Fassung A bleibt, Fassung B mit Abschluss", () => {
     expect(praesentationHtml(z, m, "T")).toContain(".zusage{display:none}");
   });
 
+  it("Überblick: unbeantwortete Sparte neutral „Gleich besprechen“, beantwortetes „Weiß nicht“ bleibt „Prüfen“", () => {
+    const x = folien(d, {
+      ...ang,
+      schutz: [
+        { key: "rechtsschutz", label: "Rechtsschutz", status: "pruefen", info: null, versicherer: null, offen: true },
+        { key: "unfall", label: "Unfall", status: "pruefen", info: null, versicherer: null },
+      ],
+    }, m, "sie", { variante: "B" });
+    const u = folie(x, "ueberblick");
+    expect(u).toContain('data-schutz="rechtsschutz" data-status="offen"');
+    expect(u).toContain("Gleich besprechen");
+    expect(u).toContain('data-schutz="unfall" data-status="pruefen"');
+  });
+
   it("B in der Du-Fassung", () => {
     const du = folien(d, ang, m, "du", { variante: "B" });
     expect(folie(du, "entscheidung")).toContain("Deine Entscheidung");
