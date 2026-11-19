@@ -1366,15 +1366,27 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.text, sentBy: "bot", buttons: policen.buttons });
       await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.folge.text, sentBy: "bot", buttons: policen.folge.buttons, footer: policen.folge.footer });
     }
-    // Policen-Strecke v2 (POLICEN_FLOW): statt der Einleitung die Chat-Nachricht mit Formular (lib/policen/flow)
-    const flowSent = schritt?.flow
-      ? await import("@/lib/policen/flow/server")
-          .then((m) => m.sendeFlowNachricht(conversation.id, "bitte", { vorweg: prefix.filter(Boolean).join("\n\n") || null }))
-          .catch((e) => {
-            console.error("[policen flow bitte]", e instanceof Error ? e.name : "Fehler");
-            return null;
-          })
-      : null;
+    // Policen-Strecke v2 (POLICEN_FLOW): statt der Einleitung die Chat-Nachricht mit Formular (lib/policen/flow). Scheitert
+    // das Senden (Produktionsfehler 19.11.2026), nie ohne Antwort: Fehler an Sentry, Flow für den Kunden gestört und
+    // sofort die bisherige Bitte mit Einwilligung (bzw. der nächste Schritt) als normale Antwort unten.
+    let flowSent: { messageId: string | null } | null = null;
+    if (schritt?.flow) {
+      const r = await import("@/lib/policen/flow/server")
+        .then((m) => m.sendeFlowNachrichtSicher(conversation.id, "bitte", { vorweg: prefix.filter(Boolean).join("\n\n") || null }))
+        .catch(() => ({ gesendet: null, fehler: true, vorwegGesendet: false }));
+      if (r.gesendet) flowSent = r.gesendet;
+      else {
+        if ("vorwegGesendet" in r && r.vorwegGesendet) prefix.splice(0);
+        const k = await strecke.streckenKontext(conversation.id).catch(() => null);
+        const alt = k?.termin ? await strecke.rueckfallSchritt(k, schritt.text) : null;
+        logTestLead(lead, "policen flow rückfall", { alt: !!alt });
+        schritt = alt;
+        if (alt) {
+          finalText = alt.text;
+          knoepfe = alt.buttons;
+        } else knoepfe = null;
+      }
+    }
     const sent = flowSent ?? (await sendWhatsAppMessage({
       customerId: conversation.customerId,
       to: conversation.contactPhone,

@@ -7,9 +7,17 @@
 //
 // Abweichung vom Mockup (begründet): Meta erlaubt PhotoPicker und DocumentPicker NICHT auf demselben Bildschirm
 // (Doku „Media upload“, Stand 19.11.2026). Darum zwei gleich aufgebaute Bildschirme mit denselben Punkten und demselben
-// Knopf: POLICEN (Fotos, Kamera oder Galerie, Hauptweg „Foto der ersten Seite“) und POLICEN_PDF (PDFs), verbunden über
-// einen Link „Lieber PDFs senden“ bzw. „Lieber Fotos senden“ (navigate, keine Daten an uns). Die Zeile „Ihr Termin
-// findet auch ohne Policen statt.“ steht im Hinweis über dem Knopf (Footer-Untertitel höchstens 15 Zeichen).
+// Knopf: POLICEN (Fotos, Kamera oder Galerie, Hauptweg „Foto der ersten Seite“) und POLICEN_PDF (PDFs), erreichbar über
+// den Link „Lieber PDFs senden“ (navigate, keine Daten an uns); zurück zu den Fotos geht es mit dem Zurück-Pfeil des
+// Formulars. Die Zeile „Ihr Termin findet auch ohne Policen statt.“ steht im Hinweis über dem Knopf (Footer-Untertitel
+// höchstens 15 Zeichen).
+//
+// Einstiegs-Bildschirm (Produktionsfehler 19.11.2026, 360dialog 400 #131009 „Specified screen POLICEN is not allowed as
+// first screen of this flow. Allowed screen name is: <none>“): Ohne Endpoint leitet Meta das Routing aus den
+// navigate-Aktionen ab; Einstieg ist nur ein Bildschirm, auf den kein anderer navigiert. Die erste Fassung verlinkte
+// POLICEN und POLICEN_PDF gegenseitig (Kreis), damit gab es keinen Einstieg und jede Flow-Nachricht mit
+// flow_action_payload.screen = POLICEN scheiterte. Darum kein Link zurück, und pruefeFlowJson verlangt genau einen
+// Einstieg (SCREEN_FOTOS) ohne Kreis.
 //
 // Grenzen laut developers.facebook.com/docs/whatsapp/flows/reference (components, media_upload), abgerufen 19.11.2026:
 //   TextHeading/TextSubheading 80, TextBody 4096 (markdown ab 5.1), OptIn-Text 120 (höchstens 5 je Bildschirm),
@@ -46,7 +54,7 @@ export type FlowJson = { version: string; screens: Screen[] };
 
 const durchreichen = () => Object.fromEntries(DATEN_KEYS.map((k) => [k, `\${data.${k}}`]));
 
-function bildschirm(o: { id: string; picker: Komponente; wechsel: { text: string; ziel: string }; antwortKey: string; formName: string }): Screen {
+function bildschirm(o: { id: string; picker: Komponente; wechsel: { text: string; ziel: string } | null; antwortKey: string; formName: string }): Screen {
   return {
     id: o.id,
     title: FORMULAR.titel,
@@ -58,7 +66,7 @@ function bildschirm(o: { id: string; picker: Komponente; wechsel: { text: string
       children: [
         { type: "TextBody", text: FORMULAR.intro },
         o.picker,
-        { type: "EmbeddedLink", text: o.wechsel.text, "on-click-action": { name: "navigate", next: { type: "screen", name: o.wechsel.ziel }, payload: durchreichen() } },
+        ...(o.wechsel ? [{ type: "EmbeddedLink", text: o.wechsel.text, "on-click-action": { name: "navigate", next: { type: "screen", name: o.wechsel.ziel }, payload: durchreichen() } }] : []),
         { type: "TextSubheading", text: "${data.ueberschrift}" },
         { type: "TextBody", markdown: true, text: "${data.punkt1}" },
         { type: "TextBody", markdown: true, text: "${data.punkt2}" },
@@ -102,7 +110,8 @@ export function policenFlowJson(): FlowJson {
           "max-file-size-kb": maxKb,
           "allowed-mime-types": ["application/pdf"],
         },
-        wechsel: { text: FORMULAR.zuFotos, ziel: SCREEN_FOTOS },
+        // Kein Link zurück (Kreis = kein Einstiegs-Bildschirm bei Meta, siehe oben): Zurück-Pfeil des Formulars
+        wechsel: null,
         antwortKey: "pdfs",
         formName: "pdfs",
       }),
@@ -115,6 +124,49 @@ export const flowJsonText = (f: FlowJson = policenFlowJson()) => JSON.stringify(
 export const flowJsonHash = (f: FlowJson = policenFlowJson()) => createHash("sha256").update(flowJsonText(f)).digest("hex");
 
 // ─── Prüfung gegen die bekannten Regeln ─────────────────────────────────────
+
+/** Ziele der navigate-Aktionen je Bildschirm (Routing, wie Meta es ohne Endpoint ableitet). */
+function navigateZiele(f: FlowJson): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const s of f.screens) {
+    const ziele: string[] = [];
+    const walk = (v: unknown) => {
+      if (!v || typeof v !== "object") return;
+      if (Array.isArray(v)) return v.forEach(walk);
+      const o = v as Record<string, unknown>;
+      const a = o["on-click-action"] as { name?: string; next?: { name?: string } } | undefined;
+      if (a?.name === "navigate" && a.next?.name) ziele.push(a.next.name);
+      Object.values(o).forEach(walk);
+    };
+    walk(s.layout);
+    out.set(s.id, ziele);
+  }
+  return out;
+}
+
+/**
+ * Einstiegs-Bildschirme laut Routing: Bildschirme, auf die keiner navigiert. Meta erlaubt als flow_action_payload.screen
+ * bzw. navigate_screen nur einen davon (sonst 400 #131009 „… not allowed as first screen … Allowed screen name is: <none>“).
+ */
+export function einstiegsBildschirme(f: FlowJson = policenFlowJson()): string[] {
+  const ziele = new Set([...navigateZiele(f).values()].flat());
+  return f.screens.map((s) => s.id).filter((id) => !ziele.has(id));
+}
+
+/** Kreis im Routing (A → B → A)? */
+function hatKreis(f: FlowJson): boolean {
+  const z = navigateZiele(f);
+  const stand = new Map<string, 1 | 2>();
+  const besuche = (id: string): boolean => {
+    if (stand.get(id) === 1) return true;
+    if (stand.get(id) === 2) return false;
+    stand.set(id, 1);
+    if ((z.get(id) ?? []).some(besuche)) return true;
+    stand.set(id, 2);
+    return false;
+  };
+  return f.screens.some((s) => besuche(s.id));
+}
 
 const LIMITS: Record<string, Record<string, number>> = {
   TextHeading: { text: 80 },
@@ -150,6 +202,11 @@ export function pruefeFlowJson(f: FlowJson, daten: Partial<FormularDaten>[] = []
   if (ids.size !== f.screens.length) fehler.push("Bildschirm-IDs doppelt");
   if (JSON.stringify(f).includes("data_exchange")) fehler.push("data_exchange ist nicht erlaubt (A2)");
   if ("data_api_version" in f || "routing_model" in f) fehler.push("kein Endpoint");
+  if (f.screens.length) {
+    if (hatKreis(f)) fehler.push("Routing mit Kreis (Meta: kein Einstiegs-Bildschirm)");
+    const einstieg = einstiegsBildschirme(f);
+    if (einstieg.length !== 1 || einstieg[0] !== SCREEN_FOTOS) fehler.push(`Einstieg muss genau ${SCREEN_FOTOS} sein (ist: ${einstieg.join(", ") || "keiner"})`);
+  }
   for (const s of f.screens) {
     if (!/^[A-Z][A-Z_]*$/.test(s.id) || s.id === "SUCCESS") fehler.push(`${s.id}: ungültige ID`);
     const kids = s.layout.children;

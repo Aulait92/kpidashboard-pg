@@ -123,9 +123,8 @@ export const FORMULAR = {
   intro: "Meist reicht ein Foto der ersten Seite. Gern mehrere Verträge auf einmal.",
   fotos: "Fotos aufnehmen oder wählen",
   pdfs: "PDFs auswählen",
-  /** Wechsel zwischen Fotos und PDFs (Meta: Foto- und Dateiauswahl nicht auf demselben Bildschirm) */
+  /** Wechsel zu den PDFs (Meta: Foto- und Dateiauswahl nicht auf demselben Bildschirm); zurück per Zurück-Pfeil */
   zuPdfs: "Lieber PDFs senden",
-  zuFotos: "Lieber Fotos senden",
   ohneKi: "Lieber ohne KI: nur speichern",
   datenschutz: "Datenschutzhinweise",
 } as const;

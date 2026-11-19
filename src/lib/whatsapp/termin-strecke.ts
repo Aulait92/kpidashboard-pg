@@ -137,7 +137,7 @@ export function policenVortagSatz(an: Ansprache): string {
  * null = schon gebeten, Funktion aus (Notschalter, Ablage nicht eingerichtet), Minderjährige, Lead sagt „keine
  * Versicherungen“ bzw. gelöschter Lead.
  */
-async function policenBitteSchritt(k: StreckenKontext, einleitung: string | null): Promise<Schritt | null> {
+async function policenBitteSchritt(k: StreckenKontext, einleitung: string | null, ohneFlow = false): Promise<Schritt | null> {
   if (!k.leadId) return null;
   const lead = await prisma.lead.findUnique({ where: { id: k.leadId }, select: { erasedAt: true, vorvertraege: true } });
   if (!lead || lead.erasedAt) return null;
@@ -147,7 +147,8 @@ async function policenBitteSchritt(k: StreckenKontext, einleitung: string | null
   // Policen-Strecke v2 (POLICEN_FLOW, lib/policen/flow): Chat-Nachricht mit Formular statt Bitte und Einwilligung; die
   // Nachricht nennt keine Sparten, darum auch für Tierkranken (Formular ohne Gesundheitssatz). Gesendet wird in
   // sendeSchritt bzw. bot.ts (flow = true); text ist nur die Einleitung für den Rückfall.
-  const flow = await import("@/lib/policen/flow/server").then((m) => m.policenFlowMoeglich(k.conversationId)).catch(() => false);
+  // ohneFlow: Rückfall, nachdem das Senden des Formulars scheiterte (sendeSchritt bzw. bot.ts)
+  const flow = ohneFlow ? false : await import("@/lib/policen/flow/server").then((m) => m.policenFlowMoeglich(k.conversationId)).catch(() => false);
   if (flow) return { text: einleitung ?? "Danke!", buttons: null, merker: STRECKE.policenBitte, daten: { police: null, flow: true }, flow: true };
   if (istTierStrecke(k.source) && k.termin?.komplettcheck !== true) return null;
   const { policenBitteFuerChat } = await import("@/lib/policen/server");
@@ -510,7 +511,7 @@ export type Schritt = {
  */
 export async function naechsterSchritt(
   k: StreckenKontext,
-  o: { einleitung?: string | null; schlussEinleitung?: string | null; vertraegeUeberspringen?: boolean; policenUeberspringen?: boolean } = {},
+  o: { einleitung?: string | null; schlussEinleitung?: string | null; vertraegeUeberspringen?: boolean; policenUeberspringen?: boolean; ohneFlow?: boolean } = {},
 ): Promise<Schritt | null> {
   if (!k.termin) return null;
   const stand = await streckenStand(k.conversationId, k.termin.id);
@@ -518,7 +519,7 @@ export async function naechsterSchritt(
   if (k.termin.komplettcheck === true && !stand.vertragsfrageAt) return { text: vertragsFrage(k.an, k.familie, o.einleitung ?? "Danke!", k.person), buttons: null, merker: STRECKE.vertragsfrage };
   if (stand.vertragsfrageAt && !stand.vorvertraegeErfasst && !o.vertraegeUeberspringen) return null;
   if (!stand.policenBitteAt) {
-    const bitte = await policenBitteSchritt(k, o.einleitung ?? null).catch(() => null);
+    const bitte = await policenBitteSchritt(k, o.einleitung ?? null, o.ohneFlow === true).catch(() => null);
     if (bitte) return bitte;
   }
   if (policenBitteOffen(stand) && !o.policenUeberspringen) return null;
@@ -529,13 +530,32 @@ export async function naechsterSchritt(
 /** Schritt senden und merken. */
 export async function sendeSchritt(k: StreckenKontext, s: Schritt): Promise<void> {
   if (!k.termin) return;
-  await merkeSchritt(k.conversationId, k.termin.id, s);
   if (s.flow) {
-    await import("@/lib/policen/flow/server").then((m) => m.sendeFlowNachricht(k.conversationId, "bitte"));
+    // Policen-Strecke v2: Formular senden. Scheitert das (Fehler bei 360dialog/Meta, Flow gestört) oder geht es nicht
+    // raus, nie ohne Antwort aufhören (Produktionsfehler 19.11.2026): sofort die bisherige Bitte mit Einwilligung bzw.,
+    // wo die nicht passt, der nächste Schritt. Merker erst nach dem Senden, damit der Rückfall die Bitte noch stellt.
+    const r = await import("@/lib/policen/flow/server").then((m) => m.sendeFlowNachrichtSicher(k.conversationId, "bitte"));
+    if (r.gesendet) {
+      await merkeSchritt(k.conversationId, k.termin.id, s);
+      return;
+    }
+    const alt = await rueckfallSchritt(k, s.text);
+    if (alt) await sendeSchritt(k, alt);
+    else await sende(k, s.text, null);
     return;
   }
+  await merkeSchritt(k.conversationId, k.termin.id, s);
   await sende(k, s.text, s.buttons);
   if (s.folge) await sendeFolge(k, s.folge);
+}
+
+/** Schritt ohne Formular (Rückfall nach gescheitertem Flow-Versand): bisherige Policen-Bitte bzw. der Schluss. */
+export async function rueckfallSchritt(k: StreckenKontext, einleitung: string | null): Promise<Schritt | null> {
+  const alt = await naechsterSchritt(k, { einleitung, ohneFlow: true }).catch((e) => {
+    console.error("[strecke rückfall]", e instanceof Error ? e.name : "Fehler");
+    return null;
+  });
+  return alt && !alt.flow ? alt : null;
 }
 
 /** Folgenachricht eines Schritts (Einwilligung mit Knöpfen und Fußzeile). */

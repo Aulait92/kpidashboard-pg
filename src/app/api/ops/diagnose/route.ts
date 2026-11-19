@@ -736,8 +736,19 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=experimente                          Splittests der Lead-Reise: laufende Tests, Quoten je Fassung, Gewinner, nur Zahlen (lib/experimente.ts)
 //   q=vertrieb-auskunft&email=…|&id=…|&suche=…  Auskunft nach Art. 15 für einen Vertriebskontakt (Felder, Herkunft, Empfänger, Mails, Sperre); Suche nur ID, Name, Firma, Status (lib/ops/vertrieb-auskunft.ts)
 //   q=vertrieb-dsgvo[&tage=60]             Antworten mit Datenschutz- bzw. Widerspruchsbezug und Löschverlangen, nur Anzahlen (lib/ops/vertrieb-auskunft.ts)
+//   q=bot-stumm[&tage=7][&aufgaben=1]     Lead-Nachrichten ohne Antwort des Assistenten binnen 2 Min. (Ausnahmen wie im Sicherheitsnetz
+//                                          lib/whatsapp/bot-stumm.ts), echte Leads und Testleads getrennt, nur IDs und Zeit. Ausnahme in
+//                                          dieser lesenden Route: &aufgaben=1 legt für echte, bis heute unbeantwortete Fälle je eine Aufgabe
+//                                          beim Vermittler an (idempotent je Nachricht, Audit-Eintrag), sendet nichts
+//   q=policen-flow[&meta=1]                Policen-Strecke v2: Schalter, Flow je Kunde (Status, Hash aktuell?, Einstieg, Fehler, Vorlagen
+//                                          je Status); &meta=1 fragt den Status bei Meta live ab (nur lesend)
 //   q=cash[&jahr=2026]                      Geld: Bankverbindungen mit Live-Kontostand, Bewegungen 30/90 Tage je Konto und Zweck, Kosten je Monat, Stripe-Guthaben und offene Rechnungen, USt-Schätzung aus den Kontoauszügen; nur Summen (lib/ops/cash.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
+  "bot-stumm": async (p) => {
+    const tage = Math.min(30, Math.max(1, Math.round(Number(p.get("tage") ?? 7)) || 7));
+    return (await import("@/lib/whatsapp/bot-stumm")).botStummDiagnose({ tage, aufgaben: p.get("aufgaben") === "1" });
+  },
+  "policen-flow": async (p) => (await import("@/lib/policen/flow/server")).policenFlowDiagnose({ meta: p.get("meta") === "1" }),
   pakete: async () => (await import("@/lib/ops/pakete")).paketeDiagnose(),
   investoren: async (p) => (await import("@/lib/ops/investoren")).investorenDiagnose(p),
   "mail-eingang": async (p) => (await import("@/lib/ops/mail-eingang")).mailEingangDiagnose(p),

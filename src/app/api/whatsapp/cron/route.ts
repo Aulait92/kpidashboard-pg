@@ -458,6 +458,13 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-policen-flow");
       return null;
     });
+  // Sicherheitsnetz „Assistent stumm“ (lib/whatsapp/bot-stumm.ts): Rückfall zum Minuten-Cron der Mail-Strecke
+  const botStumm = await import("@/lib/whatsapp/bot-stumm")
+    .then((m) => m.runBotStumm(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-bot-stumm");
+      return null;
+    });
   // Support-Nummer: Vorlage für die Terminbestätigung im Vertrieb einreichen bzw. Freigabe nachziehen
   const supportTemplates = await import("@/lib/vertrieb/termin-whatsapp")
     .then((m) => m.syncSupportTemplates(now))
@@ -466,7 +473,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
 }
 
 export const GET = handle;

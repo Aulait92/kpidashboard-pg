@@ -30,7 +30,7 @@ import {
   WIDERRUF_FUSSZEILE,
   type FlowTextKontext,
 } from "@/lib/policen/flow/texte";
-import { flowJsonHash, MAX_DATEIEN_JE_SENDEN, policenFlowJson, pruefeFlowJson, SCREEN_FOTOS, SCREEN_PDFS, type FlowJson } from "@/lib/policen/flow/flow-json";
+import { einstiegsBildschirme, flowJsonHash, MAX_DATEIEN_JE_SENDEN, policenFlowJson, pruefeFlowJson, SCREEN_FOTOS, SCREEN_PDFS, type FlowJson } from "@/lib/policen/flow/flow-json";
 import { entschluesseleFlowMedium, FlowMediaFehler, pruefeSha256, type EncryptionMetadata } from "@/lib/policen/flow/krypto";
 import { faelligeErinnerung, leseFlowAntwort, vorlagenAntrag, vorlagenName } from "@/lib/policen/flow/server";
 import { textVersionKi } from "@/lib/policen/auslesen/konfig";
@@ -262,6 +262,22 @@ describe("Flow JSON", () => {
     expect(fehler.join("\n")).toMatch(/nicht deklariert/);
     // Zu lange dynamische Texte
     expect(pruefeFlowJson(f, [{ ...varianten[0], ueberschrift: "x".repeat(81) }]).join()).toMatch(/TextSubheading.text länger als 80/);
+  });
+
+  it("Einstieg (Produktionsfehler 19.11.2026, #131009 „Allowed screen name is: <none>“): genau POLICEN, kein Kreis; ein Link zurück wird gemeldet", () => {
+    expect(einstiegsBildschirme(f)).toEqual([SCREEN_FOTOS]);
+    expect(pruefeFlowJson(f)).toEqual([]);
+    // Nur POLICEN verlinkt auf POLICEN_PDF; zurück geht es mit dem Zurück-Pfeil
+    const links = (id: string) => JSON.stringify(f.screens.find((s) => s.id === id)!.layout).match(/"navigate"/g)?.length ?? 0;
+    expect(links(SCREEN_FOTOS)).toBe(1);
+    expect(links(SCREEN_PDFS)).toBe(0);
+    // Die erste Fassung (Links in beide Richtungen) hatte keinen Einstieg
+    const kreis = JSON.parse(JSON.stringify(f)) as FlowJson;
+    const zurueck = { type: "EmbeddedLink", text: "Lieber Fotos senden", "on-click-action": { name: "navigate", next: { type: "screen", name: SCREEN_FOTOS }, payload: {} } };
+    kreis.screens[1].layout.children.splice(2, 0, zurueck);
+    expect(einstiegsBildschirme(kreis)).toEqual([]);
+    expect(pruefeFlowJson(kreis).join("\n")).toMatch(/Kreis/);
+    expect(pruefeFlowJson(kreis).join("\n")).toMatch(/Einstieg muss genau POLICEN sein \(ist: keiner\)/);
   });
 
   it("Hash ändert sich mit dem Inhalt (neuer Flow)", () => {

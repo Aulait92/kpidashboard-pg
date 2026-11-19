@@ -37,7 +37,7 @@ import { mapRemoteStatus, TEMPLATE_LANGUAGE } from "@/lib/whatsapp/template-plan
 import type { Ansprache } from "@/lib/ansprache";
 import { gesundheitInText } from "@/lib/policen/regeln";
 import { createFlow, getFlow, listFlows, publishFlow, uploadFlowJson } from "@/lib/policen/flow/dialog360-flows";
-import { flowJsonHash, flowJsonText, MAX_DATEIEN_JE_SENDEN, pruefeFlowJson, policenFlowJson, SCREEN_FOTOS } from "@/lib/policen/flow/flow-json";
+import { einstiegsBildschirme, flowJsonHash, flowJsonText, MAX_DATEIEN_JE_SENDEN, pruefeFlowJson, policenFlowJson, SCREEN_FOTOS } from "@/lib/policen/flow/flow-json";
 import { entschluesseleFlowMedium, FlowMediaFehler, pruefeSha256, type EncryptionMetadata } from "@/lib/policen/flow/krypto";
 import {
   bestaetigung,
@@ -80,14 +80,37 @@ export function flowKundeErlaubt(customerId: string, env: Env = process.env): bo
 export type VorlagenStand = Record<string, { status: string; category: string | null; grund: string | null }>;
 export type AktiverFlow = { flowId: string; jsonHash: string; vorlagen: VorlagenStand };
 
-/** Flow für diesen Kunden nutzbar? Schalter an, Kunde erlaubt, kein Pay-per-Lead, Flow veröffentlicht. */
+/**
+ * Status „gestört“ (Ole, 19.11.2026): Senden scheiterte bei 360dialog/Meta. Der Flow bleibt für diesen Kunden aus, bis
+ * sich das Flow JSON ändert (neuer Flow) oder jemand den Status zurücksetzt; die Strecke nimmt solange die bisherige
+ * Bitte mit Einwilligung (lib/policen/bitte.ts).
+ */
+export const STATUS_GESTOERT = "gestoert";
+
+let einstiegOk: boolean | null = null;
+/** Einstieg des aktuellen Flow JSON ist genau SCREEN_FOTOS (das senden Nachricht und Vorlage als screen). */
+function einstiegPasst(): boolean {
+  if (einstiegOk === null) {
+    const e = einstiegsBildschirme();
+    einstiegOk = e.length === 1 && e[0] === SCREEN_FOTOS;
+  }
+  return einstiegOk;
+}
+
+/**
+ * Flow für diesen Kunden nutzbar? Schalter an, Kunde erlaubt, kein Pay-per-Lead, Flow bei Meta veröffentlicht (Status
+ * PUBLISHED laut letzter Prüfung im Cron, nicht gestört) UND aus dem aktuellen Flow JSON (gleicher Hash), dessen
+ * einziger Einstieg der gesendete Bildschirm SCREEN_FOTOS ist. Ein älterer Flow (anderer Hash) wird nie benutzt,
+ * auch wenn er als veröffentlicht geführt wird: Der Cron legt dann zuerst den neuen an.
+ */
 export async function aktiverFlow(customerId: string, env: Env = process.env): Promise<AktiverFlow | null> {
   if (!flowSchalterAn(env) || !flowKundeErlaubt(customerId, env)) return null;
+  if (!einstiegPasst()) return null;
   const [rec, ppl] = await Promise.all([
     prisma.policenFlow.findUnique({ where: { customerId } }),
     prisma.customer.count({ where: { id: customerId, ...NUR_PPL_WHERE } }),
   ]);
-  if (ppl || !rec?.flowId || rec.status !== "veroeffentlicht" || !rec.jsonHash) return null;
+  if (ppl || !rec?.flowId || rec.status !== "veroeffentlicht" || !rec.jsonHash || rec.jsonHash !== flowJsonHash()) return null;
   return { flowId: rec.flowId, jsonHash: rec.jsonHash, vorlagen: (rec.vorlagen as VorlagenStand | null) ?? {} };
 }
 
@@ -251,6 +274,60 @@ const PAYLOAD_KNOPF2: Record<VorlagenArt, string> = { bitte: PAYLOAD_SPAETER, er
  * Datenschutzhinweis).
  */
 export async function sendeFlowNachricht(conversationId: string, art: FlowArt, o: { now?: Date; nachricht?: Nachricht; vorweg?: string | null } = {}): Promise<{ messageId: string | null; weg: "vorlage" | "flow" } | null> {
+  const st = { vorwegGesendet: false };
+  try {
+    return await sendeFlowNachrichtRoh(conversationId, art, o, st);
+  } catch (e) {
+    throw new FlowSendeFehler(e, st.vorwegGesendet);
+  }
+}
+
+/** Senden scheiterte (360dialog/Meta); vorwegGesendet: der Text davor ist schon beim Lead. */
+export class FlowSendeFehler extends Error {
+  constructor(
+    readonly ursache: unknown,
+    readonly vorwegGesendet: boolean,
+  ) {
+    super(ursache instanceof Error ? ursache.message : String(ursache));
+    this.name = "FlowSendeFehler";
+  }
+}
+
+/** Flow dieses Kunden als gestört markieren (nur ein veröffentlichter) und den Fehler melden (Sentry). */
+export async function flowGestoert(customerId: string, err: unknown, wo: string): Promise<void> {
+  const ursache = err instanceof FlowSendeFehler ? err.ursache : err;
+  reportError(ursache, "policen-flow-senden", { customer: customerId, wo });
+  const msg = ursache instanceof Error ? ursache.message.slice(0, 400) : "Fehler";
+  await prisma.policenFlow
+    .updateMany({ where: { customerId, status: "veroeffentlicht" }, data: { status: STATUS_GESTOERT, fehler: `Senden (${wo}): ${msg}` } })
+    .catch((e) => console.error("[policen flow gestört]", e instanceof Error ? e.name : "Fehler"));
+}
+
+export type FlowSendeErgebnis = { gesendet: { messageId: string | null; weg: "vorlage" | "flow" } } | { gesendet: null; fehler: boolean; vorwegGesendet: boolean };
+
+/**
+ * Wie sendeFlowNachricht, wirft aber nie (Produktionsfehler 19.11.2026: ein 400 von 360dialog brach den Bot-Turn ab, der
+ * Lead bekam keine Antwort). Bei einem Fehler: Sentry, Flow für den Kunden „gestört“ (aktiverFlow liefert null), und
+ * der Aufrufer sendet die bisherige Bitte mit Einwilligung.
+ */
+export async function sendeFlowNachrichtSicher(conversationId: string, art: FlowArt, o: { now?: Date; nachricht?: Nachricht; vorweg?: string | null } = {}): Promise<FlowSendeErgebnis> {
+  try {
+    const r = await sendeFlowNachricht(conversationId, art, o);
+    return r ? { gesendet: r } : { gesendet: null, fehler: false, vorwegGesendet: false };
+  } catch (e) {
+    const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { customerId: true } }).catch(() => null);
+    if (conv) await flowGestoert(conv.customerId, e, art);
+    else reportError(e, "policen-flow-senden", { conversation: conversationId });
+    return { gesendet: null, fehler: true, vorwegGesendet: e instanceof FlowSendeFehler && e.vorwegGesendet };
+  }
+}
+
+async function sendeFlowNachrichtRoh(
+  conversationId: string,
+  art: FlowArt,
+  o: { now?: Date; nachricht?: Nachricht; vorweg?: string | null },
+  st: { vorwegGesendet: boolean },
+): Promise<{ messageId: string | null; weg: "vorlage" | "flow" } | null> {
   const now = o.now ?? new Date();
   const c = await flowChat(conversationId, now);
   if (!c || !c.datenschutzUrl) return null;
@@ -265,7 +342,10 @@ export async function sendeFlowNachricht(conversationId: string, art: FlowArt, o
   const vorlageOk = !!v && v.status === "approved" && (!c.fensterOffen || (v.category ?? "").toLowerCase() === "utility");
   if (!vorlageOk && !c.fensterOffen) return null;
   const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
-  if (o.vorweg?.trim() && c.fensterOffen) await sendWhatsAppMessage({ customerId: c.customerId, to: c.phone, body: o.vorweg, sentBy: "bot" });
+  if (o.vorweg?.trim() && c.fensterOffen) {
+    await sendWhatsAppMessage({ customerId: c.customerId, to: c.phone, body: o.vorweg, sentBy: "bot" });
+    st.vorwegGesendet = true;
+  }
   const datenText = daten as unknown as Record<string, string>;
   const res =
     vorlageOk && art !== "weitere"
@@ -311,10 +391,7 @@ export async function sendeFlowNachricht(conversationId: string, art: FlowArt, o
 
 /** Bestätigung nach dem Absenden mit Knopf „Weitere senden“; ohne aktiven Flow als Text mit Fußzeile. */
 export async function sendeBestaetigung(conversationId: string, n: Nachricht, now = new Date()): Promise<void> {
-  const r = await sendeFlowNachricht(conversationId, "weitere", { now, nachricht: n }).catch((e) => {
-    console.error("[policen flow bestätigung]", e instanceof Error ? e.name : "Fehler");
-    return null;
-  });
+  const r = (await sendeFlowNachrichtSicher(conversationId, "weitere", { now, nachricht: n })).gesendet;
   if (r) return;
   const c = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { customerId: true, contactPhone: true } });
   if (!c) return;
@@ -464,7 +541,7 @@ export async function runPolicenFlowErinnerungen(now = new Date()): Promise<{ ge
       if (!(await strecke.policenErinnernErlaubt(b.conversationId, t.leadId, stand))) continue;
       const conv = await prisma.conversation.findUnique({ where: { id: b.conversationId }, select: { botActive: true, optedOutAt: true } });
       if (!conv?.botActive || conv.optedOutAt) continue;
-      const r = await sendeFlowNachricht(b.conversationId, welche, { now });
+      const r = (await sendeFlowNachrichtSicher(b.conversationId, welche, { now })).gesendet;
       if (!r) continue;
       await strecke.merke(b.conversationId, strecke.STRECKE.policenErinnerung, { appointmentId, art: welche === "erinnerung1" ? "tag" : "vortag", flow: true });
       gesendet++;
@@ -517,6 +594,21 @@ export async function syncPolicenFlowFuerKunde(customerId: string, now = new Dat
   const name = `policen_senden_${hash.slice(0, 8)}`;
   let rec = await prisma.policenFlow.upsert({ where: { customerId }, create: { customerId }, update: {} });
   const setze = (data: Parameters<typeof prisma.policenFlow.update>[0]["data"]) => prisma.policenFlow.update({ where: { customerId }, data });
+  // Gestört (Senden scheiterte): nicht wieder einschalten, solange es derselbe Flow ist; neues Flow JSON = neuer Flow
+  if (rec.status === STATUS_GESTOERT && rec.jsonHash === hash) {
+    await setze({ checkedAt: now });
+    return { customerId, status: STATUS_GESTOERT, vorlagen: {}, fehler: rec.fehler ?? undefined };
+  }
+  // Veröffentlicht geführt: Status bei Meta nachprüfen (DEPRECATED, BLOCKED, THROTTLED … → nicht mehr senden).
+  // Netzfehler ändern nichts.
+  if (rec.status === "veroeffentlicht" && rec.jsonHash === hash && rec.flowId) {
+    const r = await getFlow(apiKey, rec.flowId).catch(() => null);
+    if (r?.status && r.status !== "PUBLISHED") {
+      await setze({ status: "fehler", fehler: `Status bei Meta: ${r.status}`, checkedAt: now });
+      reportError(new Error(`Policen-Flow nicht mehr veröffentlicht: ${r.status}`), "policen-flow-status", { customer: customerId });
+      return { customerId, status: "fehler", vorlagen: {}, fehler: `Status bei Meta: ${r.status}` };
+    }
+  }
 
   if (rec.jsonHash !== hash || !rec.flowId || rec.status !== "veroeffentlicht") {
     try {
@@ -617,4 +709,30 @@ export async function syncPolicenFlows(now = new Date(), opts: { limit?: number 
     if (!e || e.status === "fehler") fehler++;
   }
   return { geprueft, fehler };
+}
+
+/**
+ * Diagnose (q=policen-flow): Schalter, Einstieg des aktuellen Flow JSON, je Kunde Status, ob der Hash aktuell ist, Fehler
+ * und Vorlagen je Status; meta = true fragt den Status bei Meta live ab (nur lesend, GET).
+ */
+export async function policenFlowDiagnose(o: { meta: boolean }) {
+  const hash = flowJsonHash();
+  const rows = await prisma.policenFlow.findMany({ orderBy: { updatedAt: "desc" }, take: 100 });
+  const kunden = await Promise.all(
+    rows.map(async (r) => {
+      const vorlagen: Record<string, number> = {};
+      for (const v of Object.values((r.vorlagen as VorlagenStand | null) ?? {})) vorlagen[v.status] = (vorlagen[v.status] ?? 0) + 1;
+      let meta: unknown = undefined;
+      if (o.meta && r.flowId) {
+        const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: r.customerId }, select: { apiKeyEnc: true } });
+        meta = acc?.apiKeyEnc
+          ? await getFlow(decryptSecret(acc.apiKeyEnc), r.flowId)
+              .then((f) => ({ status: f.status, fehler: f.validationErrors.length }))
+              .catch((e: unknown) => ({ fehler: e instanceof Error ? e.message.slice(0, 200) : "Fehler" }))
+          : { fehler: "kein Schlüssel" };
+      }
+      return { kundeId: r.customerId, status: r.status, flowId: r.flowId, hashAktuell: r.jsonHash === hash, fehler: r.fehler, vorlagen, checkedAt: r.checkedAt, publishedAt: r.publishedAt, ...(o.meta ? { meta } : {}) };
+    }),
+  );
+  return { schalter: flowSchalterAn(), pilotKunden: (process.env.POLICEN_FLOW_KUNDEN ?? "").trim() || null, einstieg: einstiegsBildschirme(), gesendeterScreen: SCREEN_FOTOS, hash: hash.slice(0, 12), kunden };
 }

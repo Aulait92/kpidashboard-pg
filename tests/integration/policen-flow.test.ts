@@ -444,4 +444,56 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     expect((calls("flow")[0][3] as { data: Record<string, string> }).data.punkt2).not.toContain("Gesundheitsangaben");
     await prisma.customer.update({ where: { id: customerId }, data: { policenIntern: false } });
   });
+
+  it("Produktionsfehler 19.11.2026: Flow-Versand wirft (360dialog 400 #131009) → Turn läuft weiter, Lead bekommt die bisherige Bitte mit Einwilligung, Flow gestört", async () => {
+    process.env.POLICEN_FLOW = "1";
+    await flowVeroeffentlicht(customerId);
+    const { conv, termin } = await leadMitTermin();
+    await prisma.appointment.update({ where: { id: termin.id }, data: { komplettcheck: true } });
+    await strecke.merke(conv.id, strecke.STRECKE.vertragsfrage, { appointmentId: termin.id });
+    waSend.mockImplementation(async (art: string) => {
+      if (art === "flow")
+        throw new Error('360dialog 400: {"error":{"code":131009,"message":"(#131009) Parameter value is not valid","error_data":{"details":"Specified screen POLICEN is not allowed as first screen of this flow. Allowed screen name is: <none>."}}}');
+      return { messageId: `wamid.out-${uid()}`, raw: {} };
+    });
+    // Antwort auf die Komplettcheck-Frage: wirft nicht
+    await expect(strecke.vertraegeAntwort(conv.id, "Haftpflicht bei der HUK")).resolves.toBe(true);
+    expect(calls("flow")).toHaveLength(1);
+    // Bisherige Bitte (Text) und Einwilligung (Knöpfe)
+    const texte = [...calls("text"), ...calls("buttons")].map((c) => String(c[3] ?? ""));
+    expect(texte.join("\n")).toMatch(/Policen/);
+    const einw = calls("buttons").find((c) => String(c[3]).startsWith("Kurz zum Datenschutz"));
+    expect(einw).toBeTruthy();
+    // Flow für diesen Kunden gestört: aktiverFlow null, Sync schaltet ihn nicht wieder ein
+    const rec = await prisma.policenFlow.findUniqueOrThrow({ where: { customerId } });
+    expect(rec.status).toBe(flow.STATUS_GESTOERT);
+    expect(rec.fehler).toMatch(/131009/);
+    expect(await flow.aktiverFlow(customerId)).toBeNull();
+    const sync = await flow.syncPolicenFlowFuerKunde(customerId);
+    expect(sync.status).toBe(flow.STATUS_GESTOERT);
+    expect(flowApi.create).not.toHaveBeenCalled();
+    // Merker der Bitte ohne flow (bisherige Erinnerungen gelten)
+    const stand = await strecke.streckenStand(conv.id, termin.id);
+    expect(stand.policenBitteAt).toBeTruthy();
+    expect(stand.policenFlow).toBe(false);
+    // Nächster Lead: gleich die bisherige Bitte, ohne Flow-Versuch
+    const b = await leadMitTermin();
+    const k = (await strecke.streckenKontext(b.conv.id))!;
+    const s = (await strecke.naechsterSchritt(k))!;
+    expect(s.flow).toBeUndefined();
+    expect(s.folge?.buttons.map((x) => x.title)).toEqual(["Einverstanden", "Lieber nicht"]);
+  });
+
+  it("aktiverFlow nur für das aktuelle Flow JSON (Einstieg POLICEN, kein Kreis): alter veröffentlichter Flow wird nicht benutzt; Meta-Status nicht mehr PUBLISHED → aus", async () => {
+    process.env.POLICEN_FLOW = "1";
+    await prisma.policenFlow.create({ data: { customerId, flowId: "flow-alt", name: "policen_senden_alt", jsonHash: "alt".padEnd(64, "0"), status: "veroeffentlicht" } });
+    expect(await flow.aktiverFlow(customerId)).toBeNull();
+    await flowVeroeffentlicht(customerId);
+    expect(await flow.aktiverFlow(customerId)).not.toBeNull();
+    flowApi.get.mockResolvedValue({ id: "flow-123", name: "x", status: "DEPRECATED", validationErrors: [] });
+    flowApi.list.mockResolvedValue([]);
+    const r = await flow.syncPolicenFlowFuerKunde(customerId);
+    expect(r.status).toBe("fehler");
+    expect(await flow.aktiverFlow(customerId)).toBeNull();
+  });
 });
