@@ -76,6 +76,8 @@ export type OfferDoc = {
   /** Kunde wählt Laufzeit bzw. Startdatum bei der Annahme (vorher = Vorschlag). */
   customerChoosesTerm?: boolean;
   customerChoosesStart?: boolean;
+  /** Kunde wählt Produkte und Tagesbudget bei der Annahme (Ole, 19.11.2026; Werte hier = Vorschlag). */
+  customerChoosesProducts?: boolean;
   /** Empfehlungsrabatt: Listenpreis der Einrichtung, vereinbarter Rabatt, Zeile im Angebot. */
   setupListFee?: number | null;
   setupDiscount?: number | null;
@@ -240,6 +242,7 @@ export function OfferDocument({
   const open = offer.status === "draft" || offer.status === "sent";
   const termOpen = open && !!offer.customerChoosesTerm;
   const startOpen = open && !!offer.customerChoosesStart;
+  const produkteOpen = open && !!offer.customerChoosesProducts;
   // Vorauszahlung zur Wahl (Ole, 18.11.2026): vor der Annahme beide Beträge, danach die Wahl des Kunden.
   // 12 Monate: jährlich im Voraus (3 geschenkt, PRICE_LIST.annualFreeMonths), 6 Monate: 6 Monate im Voraus (1 geschenkt), eine Rechnung.
   const annualOpen = open && !!offer.annualChoice && !add.annual;
@@ -449,6 +452,7 @@ export function OfferDocument({
             )}{" "}
             Das Werbebudget zahlen Sie direkt an Meta, es ist nicht Teil unserer Rechnung.
             {budgetSatz ? <Note>{budgetSatz}</Note> : null}
+            {produkteOpen ? <Note>Vorschlag: Produkte und Tagesbudget wählen Sie unten bei der Annahme.</Note> : null}
           </Tr>
           {offer.startDate ? (
             <Tr k="Start">

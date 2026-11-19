@@ -643,6 +643,85 @@ export function resolveOfferChoice(
   };
 }
 
+// ─── Produkte und Tagesbudget wählt der Kunde (Ole, 19.11.2026) ─────────────────────────────────────────────
+// Auf der Angebotsseite wählt der Kunde Produkte (Sparten) und das Tagesbudget je Produkt, wenn das Angebot es
+// freigibt (Offer.customerChoosesProducts; nur Listenpreis, Paket mit Software, kein Startpreis, kein Testangebot).
+// Der Server rechnet die Monatsgebühr bei der Annahme verbindlich nach der Staffel neu (nie Werte vom Client).
+
+/** Vorschläge für Produkte (Admin-Formular und Angebotsseite). */
+export const PRODUKT_VORSCHLAEGE = [
+  "TKV-Katze",
+  "TKV-Hund",
+  "TKV-Pferd",
+  "Privatschutz",
+  "Unfallversicherung",
+  "Krankenhauszusatz",
+  "Zahnzusatz",
+  "Kindersparplan",
+  "Berufsunfähigkeit",
+  "Sterbegeld",
+] as const;
+
+/** Wählbare Tagesbudgets je Produkt (€ pro Tag). */
+export const TAGESBUDGET_STUFEN = [20, 25, 30, 40, 50, 60, 80, 100] as const;
+
+/** Höchstens so viele Produkte wählt der Kunde selbst (mehr: im Gespräch, individuell). */
+export const KUNDE_MAX_PRODUKTE = 5;
+
+/** Listen-Monatsgebühr (Betreuung + Software) für diese Produkte; null = individuell (ab 10.000 € Werbebudget). */
+export function listenMonatsgebuehr(products: OfferProduct[]): number | null {
+  const p = computeOfferPrice({ package: "software", term: "none", products });
+  return p.individual ? null : p.listMonthly;
+}
+
+/** Wahl der Produkte: erlaubte Namen und Tagesbudgets für dieses Angebot (Vorschläge plus die Werte im Angebot). */
+export function produktWahlOptionen(angebot: OfferProduct[]): { namen: string[]; stufen: number[] } {
+  const namen = [...new Set([...angebot.map((p) => p.name.trim()).filter(Boolean), ...PRODUKT_VORSCHLAEGE])];
+  const stufen = [...new Set([...TAGESBUDGET_STUFEN, ...angebot.map((p) => p.dailyBudget).filter((d) => Number.isFinite(d) && d > 0)])].sort((a, b) => a - b);
+  return { namen, stufen };
+}
+
+export type ProduktWahlErgebnis = { ok: true; products: OfferProduct[]; monthlyFee: number; geaendert: boolean } | { ok: false; error: string };
+
+/**
+ * Prüft die Produktwahl des Kunden und berechnet die Monatsgebühr nach der Staffel neu.
+ * Ohne Freigabe muss die Wahl der Vorgabe entsprechen (oder fehlen). Nur Namen und Tagesbudgets aus
+ * {@link produktWahlOptionen}, keine doppelten Produkte, 1 bis {@link KUNDE_MAX_PRODUKTE}, kein individueller Preis.
+ */
+export function resolveProduktWahl(
+  snap: { products: OfferProduct[]; monthlyFee: number; choosesProducts: boolean },
+  wanted: unknown,
+): ProduktWahlErgebnis {
+  const vorgabe = { ok: true as const, products: snap.products, monthlyFee: snap.monthlyFee, geaendert: false };
+  if (wanted == null) return vorgabe;
+  if (!Array.isArray(wanted)) return { ok: false, error: "Bitte die Produkte erneut wählen." };
+  const products: OfferProduct[] = [];
+  for (const w of wanted as unknown[]) {
+    const o = (w ?? {}) as { name?: unknown; dailyBudget?: unknown };
+    const name = typeof o.name === "string" ? o.name.trim() : "";
+    const daily = Number(o.dailyBudget);
+    if (!name || !Number.isFinite(daily)) return { ok: false, error: "Bitte die Produkte erneut wählen." };
+    products.push({ name, dailyBudget: daily });
+  }
+  const gleich =
+    products.length === snap.products.length && products.every((p, i) => p.name === snap.products[i]?.name.trim() && p.dailyBudget === snap.products[i]?.dailyBudget);
+  if (gleich) return vorgabe;
+  if (!snap.choosesProducts) return { ok: false, error: "Die Produkte sind in diesem Angebot fest vereinbart." };
+  if (products.length < 1) return { ok: false, error: "Bitte mindestens ein Produkt wählen." };
+  if (products.length > Math.max(KUNDE_MAX_PRODUKTE, snap.products.length)) {
+    return { ok: false, error: `Online wählen Sie bis zu ${KUNDE_MAX_PRODUKTE} Produkte. Für mehr sprechen Sie uns gern an.` };
+  }
+  const { namen, stufen } = produktWahlOptionen(snap.products);
+  if (products.some((p) => !namen.includes(p.name))) return { ok: false, error: "Bitte ein Produkt aus der Liste wählen." };
+  if (new Set(products.map((p) => p.name)).size !== products.length) return { ok: false, error: "Jedes Produkt bitte nur einmal wählen." };
+  if (products.some((p) => !stufen.includes(p.dailyBudget))) return { ok: false, error: "Bitte ein Tagesbudget aus der Liste wählen." };
+  const monthlyFee = listenMonatsgebuehr(products);
+  if (monthlyFee == null) {
+    return { ok: false, error: `Ab ${PRICE_LIST.individualFrom.toLocaleString("de-DE")} € Werbebudget im Monat gibt es ein individuelles Angebot. Bitte ein kleineres Budget wählen oder uns ansprechen.` };
+  }
+  return { ok: true, products, monthlyFee, geaendert: true };
+}
+
 // ─── Preisumstellung 18.11.2026: 1.000/1.400/1.800 € → 990/1.390/1.790 € ─────────────────────────────────────
 // Offene Angebote (Entwurf/verschickt, nicht angenommen) zum alten Listenpreis bekommen den neuen Listenpreis
 // (Migration 20261118999500_listenpreise_990, gleiche Regel in SQL). Sonderkonditionen (Monatspreis abweichend von
