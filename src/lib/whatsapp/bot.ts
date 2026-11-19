@@ -115,7 +115,7 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "komplettcheck",
     description:
-      "Der Lead hat auf die Frage geantwortet, ob der Berater im Termin auch schauen soll, ob er insgesamt gut abgesichert ist. Die App vermerkt das am Termin und schickt die nächste Nachricht selbst.",
+      "Der Lead hat auf die Frage geantwortet, ob der Berater im Termin auch kurz über seine übrigen Versicherungen schauen soll (Komplettcheck). Die App vermerkt das am Termin und schickt die nächste Nachricht selbst.",
     input_schema: {
       type: "object",
       properties: { ja: { type: "boolean", description: "true = ja, gern; false = nein." } },
@@ -984,6 +984,9 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     }
     if (starts.length < 2) return "Keine zwei freien Zeiten gefunden. Frag den Lead nach seiner Wunschzeit und nutze propose_appointment.";
     const pair: [string, string] = [starts[0], starts[1]];
+    // Splittest terminvorschlag_kostenlos (lib/experimente.ts): nur der erste Vorschlag (mit Nutzensatz) zählt
+    const kostenlos =
+      input.erneut === true ? false : (await import("@/lib/experimente").then((m) => m.variante("terminvorschlag_kostenlos", conversation.leadId ?? conversation.id)).catch(() => "a")) === "b";
     const text = terminVorschlagText({
       an: ansprache,
       source: lead?.source ?? null,
@@ -994,6 +997,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       einleitung: typeof input.einleitung === "string" ? input.einleitung : null,
       erneut: input.erneut === true,
       video: true,
+      kostenlos,
     });
     zug.vorschlag = { starts: pair, text };
     return "Der Terminvorschlag ist vorbereitet, die App schickt ihn mit Knöpfen. Schreib nichts weiter.";
@@ -1296,7 +1300,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     const sk = await strecke.streckenKontext(conversation.id).catch(() => null);
     if (sk?.termin) zweite = await strecke.ersteNachBuchung(sk);
     else {
-      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData) });
+      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id) });
       zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
     }
   } else if (zug.vorschlag) {
@@ -1324,7 +1328,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       const sk = await strecke.streckenKontext(conversation.id).catch(() => null);
       if (sk?.termin?.id === upcoming.id) zweite = await strecke.ersteNachBuchung(sk);
       else {
-        const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData) });
+        const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id) });
         zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
       }
     } else if (upcoming && stand && strecke.policenBitteOffen(stand) && latest?.direction === "inbound" && latest.createdAt > stand.policenBitteAt! && !knoepfe) {

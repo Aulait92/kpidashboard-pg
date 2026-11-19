@@ -435,6 +435,8 @@ export async function bookAppointment(opts: {
   // CRM mitführen: Termin ⇒ In Beratung, Erstkontakt setzen (DB + Airtable).
   if (opts.notifyLead !== "rescheduled") {
     await recordLeadProgress(opts.leadId, "booked");
+    // Splittests der Lead-Reise (lib/experimente.ts): Ziel „termin_gebucht“ für alle Tests dieses Leads bzw. Chats
+    await import("@/lib/experimente").then((m) => m.zielErreicht([opts.leadId, opts.conversationId], "termin_gebucht")).catch(() => null);
   }
   // Lead-Mail (Bestätigung/Verschiebung) — darf die Buchung nie scheitern lassen.
   const notify = opts.notifyLead === undefined ? "booked" : opts.notifyLead;

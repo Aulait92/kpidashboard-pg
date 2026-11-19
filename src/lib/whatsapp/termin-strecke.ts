@@ -28,6 +28,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { advisorDisplayName } from "@/lib/advisor-name";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
+import type { Variante } from "@/lib/experimente";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { folgefragen, folgefrageText, spartenDesLeads, type Folgefrage } from "@/lib/preise/rechner-angaben";
@@ -379,12 +380,17 @@ async function sende(k: StreckenKontext, body: string, buttons?: Knopf[] | null)
   await sendWhatsAppMessage({ customerId: k.customerId, to: k.phone, body, sentBy: "bot", buttons: buttons ?? null });
 }
 
+/** Fassung der Komplettcheck-Frage (Splittest komplettcheck_text, lib/experimente.ts; Einheit Lead, sonst Chat). */
+export async function komplettcheckVariante(einheit: string | null | undefined): Promise<Variante> {
+  return import("@/lib/experimente").then((m) => m.variante("komplettcheck_text", einheit)).catch(() => "a" as const);
+}
+
 /**
  * Komplettcheck-Frage mit Knöpfen (Text und Knöpfe; der Aufrufer sendet und setzt den Merker). Mit prefix entfällt das
- * „Danke!“ am Anfang der Frage.
+ * „Danke!“ am Anfang der Frage. variante: Splittest komplettcheck_text (ohne Angabe die neue Fassung b).
  */
-export function komplettcheckNachricht(k: Pick<StreckenKontext, "an" | "person" | "familie">, prefix?: string | null): { text: string; buttons: Knopf[] } {
-  const frage = komplettcheckFrage(k.an, k.person, k.familie);
+export function komplettcheckNachricht(k: Pick<StreckenKontext, "an" | "person" | "familie"> & { variante?: Variante }, prefix?: string | null): { text: string; buttons: Knopf[] } {
+  const frage = komplettcheckFrage(k.an, k.person, k.familie, k.variante ?? "b");
   return { text: prefix ? `${prefix} ${frage.replace(/^Danke!\s*/, "")}` : frage, buttons: KOMPLETTCHECK_KNOEPFE };
 }
 
@@ -393,7 +399,7 @@ export async function sendeKomplettcheck(k: StreckenKontext, prefix?: string | n
   if (!k.termin) return false;
   const stand = await streckenStand(k.conversationId, k.termin.id);
   if (stand.komplettFrageAt || stand.abschlussAt) return false;
-  const m = komplettcheckNachricht(k, prefix);
+  const m = komplettcheckNachricht({ ...k, variante: await komplettcheckVariante(k.leadId ?? k.conversationId) }, prefix);
   await merke(k.conversationId, STRECKE.komplettFrage, { appointmentId: k.termin.id });
   await sende(k, m.text, m.buttons);
   return true;
@@ -444,7 +450,7 @@ export async function ersteNachBuchung(
     const f = naechsteTierFrage(k, s.tierBeantwortet);
     if (f && !s.komplettFrageAt && !s.abschlussAt) return { text: f.text, buttons: f.buttons, merker: STRECKE.tierFrage, daten: { key: f.key } };
   }
-  const m = komplettcheckNachricht(k);
+  const m = komplettcheckNachricht({ ...k, variante: await komplettcheckVariante(k.leadId ?? k.conversationId) });
   return { text: m.text, buttons: m.buttons, merker: STRECKE.komplettFrage };
 }
 
@@ -504,7 +510,7 @@ export async function naechsterSchritt(
   if (!k.termin) return null;
   const stand = await streckenStand(k.conversationId, k.termin.id);
   if (stand.abschlussAt) return null;
-  if (k.termin.komplettcheck === true && !stand.vertragsfrageAt) return { text: vertragsFrage(k.an, k.familie, o.einleitung ?? "Danke!"), buttons: null, merker: STRECKE.vertragsfrage };
+  if (k.termin.komplettcheck === true && !stand.vertragsfrageAt) return { text: vertragsFrage(k.an, k.familie, o.einleitung ?? "Danke!", k.person), buttons: null, merker: STRECKE.vertragsfrage };
   if (stand.vertragsfrageAt && !stand.vorvertraegeErfasst && !o.vertraegeUeberspringen) return null;
   if (!stand.policenBitteAt) {
     const bitte = await policenBitteSchritt(k, o.einleitung ?? null).catch(() => null);
@@ -625,6 +631,7 @@ export async function komplettcheckAntwort(conversationId: string, ja: boolean, 
   await prisma.appointment.update({ where: { id: k.termin.id }, data: { komplettcheck: ja } });
   k.termin.komplettcheck = ja;
   await merke(conversationId, STRECKE.komplett, { appointmentId: k.termin.id, ja });
+  if (ja) await import("@/lib/experimente").then((m) => m.zielErreicht([k.leadId, conversationId], "komplettcheck_ja")).catch(() => null);
   if (ja && k.leadId) {
     const { logLeadHistory } = await import("@/lib/lead-history");
     await logLeadHistory(k.leadId, "notiz", "Komplettcheck gewünscht (per WhatsApp)", { customerId: k.customerId, userId: null });

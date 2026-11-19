@@ -43,8 +43,11 @@ export async function bookPublicAction(
   const name = String(formData.get("name") ?? "").trim().slice(0, 80);
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const emailRaw = String(formData.get("email") ?? "").trim().toLowerCase();
-  const consent = formData.get("consent") === "on";
+  // Splittest buchungsseite_kompakt (lib/experimente.ts): Fassung b ohne Pflicht-Haken, Datenschutz als Hinweis am
+  // Knopf (Verarbeitung zur Terminvereinbarung nach Art. 6 Abs. 1 lit. b DSGVO, keine Einwilligung nötig)
+  const consent = formData.get("consent") === "on" || formData.get("datenschutz") === "hinweis";
   const erinnerung = formData.get("erinnerung") === "on";
+  const aufruf = seitenAufruf(formData.get("xv"));
 
   if (!start || Number.isNaN(new Date(start).getTime())) fail("slot");
   if (!name) fail("name");
@@ -54,7 +57,7 @@ export async function bookPublicAction(
     const { pruefeStreckenToken } = await import("@/lib/mail-strecke/token");
     const streckeId = pruefeStreckenToken(streckeToken);
     if (!streckeId) fail("invalid");
-    await bookViaStrecke(slug, customerId, streckeId!, streckeToken, { start, mode, name, phone, email: emailRaw, consent });
+    await bookViaStrecke(slug, customerId, streckeId!, streckeToken, { start, mode, name, phone, email: emailRaw, consent, aufruf });
   }
   if (!phone) fail("phone");
   if (!EMAIL_RE.test(emailRaw)) fail("email");
@@ -139,6 +142,7 @@ export async function bookPublicAction(
       leadPhone: phone,
     });
     appointmentId = res.appointmentId;
+    if (aufruf) await import("@/lib/experimente").then((m) => m.ereignis("buchungsseite_kompakt", aufruf, "termin_gebucht")).catch(() => null);
     await prisma.message.create({
       data: {
         conversationId: conversation.id,
@@ -188,7 +192,7 @@ async function bookViaStrecke(
   customerId: string,
   streckeId: string,
   token: string,
-  f: { start: string; mode: "phone" | "video"; name: string; phone: string | null; email: string; consent: boolean },
+  f: { start: string; mode: "phone" | "video"; name: string; phone: string | null; email: string; consent: boolean; aufruf: string | null },
 ): Promise<never> {
   const fail = (code: string): never => redirect(`/book/${slug}?t=${encodeURIComponent(token)}&err=${code}`);
   if (!EMAIL_RE.test(f.email)) fail("email");
@@ -225,6 +229,13 @@ async function bookViaStrecke(
       bookedVia: "mail_strecke",
     });
     await prisma.leadMailStrecke.update({ where: { id: s!.id }, data: { appointmentId: res.appointmentId, gebuchtAt: new Date(), buchungAt: null, schritt: "gebucht", reaktionAt: new Date(), antwortAt: new Date() } });
+    // Splittests: Buchung über die Seite, als Nächstes zeigt /t die Komplettcheck-Frage (Zuteilung beim Klick)
+    await import("@/lib/experimente")
+      .then(async (m) => {
+        if (f.aufruf) await m.ereignis("buchungsseite_kompakt", f.aufruf, "termin_gebucht");
+        await m.variante("komplettcheck_text", lead!.id);
+      })
+      .catch(() => null);
   } catch (err) {
     await prisma.leadMailStrecke.update({ where: { id: s!.id }, data: { buchungAt: null } }).catch(() => null);
     if (err instanceof SlotBusyError) fail("taken");
@@ -232,4 +243,56 @@ async function bookViaStrecke(
     fail("error");
   }
   redirect(`/t/${token}`);
+}
+
+/** Seitenaufruf-ID für den Splittest der Buchungsseite (zufällige UUID je Aufruf, kein Bezug zur Person). */
+function seitenAufruf(v: FormDataEntryValue | null): string | null {
+  const x = typeof v === "string" ? v.trim() : "";
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x) ? x : null;
+}
+
+/**
+ * Buchungsseite im Browser angezeigt (nach dem Laden, Skript): Zuteilung im Splittest buchungsseite_kompakt. Abrufe
+ * ohne Skript (Link-Vorschau, Scanner) zählen so nicht mit.
+ */
+export async function buchungsseiteGezeigtAction(aufruf: string): Promise<void> {
+  const id = seitenAufruf(aufruf);
+  if (!id) return;
+  if (!checkLimit("publicBooking", `gezeigt:${await requestIp()}`).ok) return;
+  await import("@/lib/experimente").then((m) => m.variante("buchungsseite_kompakt", id)).catch(() => null);
+}
+
+/**
+ * Komplettcheck auf der Bestätigungsseite (Ole, 19.11.2026: wer über /book bucht, wurde bisher nie gefragt). Termin über
+ * den geheimen Verwaltungs-Token, nur einmal (komplettcheck noch offen), Ja: Termin verlängern bzw. Hinweis an den
+ * Vermittler. Merker für die WhatsApp-Strecke, damit der Assistent nicht noch einmal fragt.
+ */
+export async function komplettcheckBuchungAction(slug: string, formData: FormData): Promise<void> {
+  const token = String(formData.get("token") ?? "");
+  const ja = formData.get("ja") === "1";
+  if (!token || !checkLimit("publicBooking", `kc:${await requestIp()}`).ok) redirect(`/book/${slug}`);
+  const conn = await prisma.calendarConnection.findUnique({ where: { bookingSlug: slug }, select: { customerId: true } });
+  const t = conn ? await prisma.appointment.findFirst({ where: { manageToken: token, customerId: conn.customerId }, select: { id: true, leadId: true, conversationId: true, customerId: true, status: true, startsAt: true } }) : null;
+  if (!t) redirect(`/book/${slug}`);
+  const now = new Date();
+  const r =
+    t!.status === "booked" && t!.startsAt > now
+      ? await prisma.appointment.updateMany({ where: { id: t!.id, komplettcheck: null }, data: { komplettcheck: ja } })
+      : { count: 0 };
+  if (r.count) {
+    if (t!.conversationId) {
+      const { merke, STRECKE } = await import("@/lib/whatsapp/termin-strecke");
+      await merke(t!.conversationId, STRECKE.komplettFrage, { appointmentId: t!.id, via: "buchungsseite" });
+      await merke(t!.conversationId, STRECKE.komplett, { appointmentId: t!.id, ja, via: "buchungsseite" });
+    }
+    if (t!.leadId) {
+      const { logLeadHistory } = await import("@/lib/lead-history");
+      await logLeadHistory(t!.leadId, "notiz", ja ? "Komplettcheck gewünscht (Buchungsseite)" : "Kein Komplettcheck gewünscht (Buchungsseite)", { customerId: t!.customerId, userId: null }).catch(() => null);
+    }
+    if (ja) {
+      await import("@/lib/komplettcheck-dauer").then((m) => m.komplettcheckVerlaengern(t!.id, { now })).catch(() => null);
+      await import("@/lib/experimente").then((m) => m.zielErreicht([t!.leadId, t!.conversationId, t!.id], "komplettcheck_ja")).catch(() => null);
+    }
+  }
+  redirect(`/book/${slug}?ok=1&a=${t!.id}&kc=${ja ? "1" : "0"}`);
 }

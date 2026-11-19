@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { AbTestCard } from "@/app/admin/whatsapp/settings/ab-test-card";
+import { ExperimenteCard } from "@/app/admin/whatsapp/settings/experimente-card";
 import { SupportInboxCard } from "@/app/admin/whatsapp/settings/support-card";
 import { EinstellungSeite } from "@/components/admin-neu/einstellungen/rahmen";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -21,6 +22,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
       </div>
       <div className="[&>section]:mt-0 [&>section]:rounded-[var(--radius-lg)] [&>section]:shadow-[var(--shadow-md)]" data-funktion="ab-test-card--a-b-tests-der-vorlagen-mit-antwort-und">
         <AbTestCard />
+        <ExperimenteCard />
       </div>
       <p className="text-sm text-[color:var(--muted)]">
         Assistent, Nummer und Vorlagen je Kunde (bis die Kundenakte sie hat):{" "}

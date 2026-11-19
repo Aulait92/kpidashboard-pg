@@ -160,6 +160,8 @@ export async function setzeAnwesenheit(
   if (antwort === "da") {
     await prisma.appointment.update({ where: { id: t.id }, data: { attendance: "erschienen", attendanceAt: now } });
     if (t.leadId && vorher !== "erschienen") await logLeadHistory(t.leadId, "status", "Termin: erschienen", { customerId: opts.customerId, userId: opts.userId ?? null });
+    // Splittests der Lead-Reise (lib/experimente.ts): Ziel „erschienen“
+    await import("@/lib/experimente").then((m) => m.zielErreicht([t.leadId, t.id], "erschienen")).catch(() => null);
     return { ok: true, anwesenheit: "erschienen" };
   }
   if (vorher === "fehlt") return { ok: true, anwesenheit: "fehlt" };

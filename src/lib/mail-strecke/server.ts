@@ -558,7 +558,8 @@ export async function seitenStand(streckeId: string, now = new Date()): Promise<
     bereitlegen: termin ? bereitlegenFuerLead({ source: lead.source, formular, angaben: lead.needData, an, komplettcheck: termin.komplettcheck === true }) : [],
     email: lead.email,
     familie,
-    komplettcheckText: komplettcheckFrage(an, person, familie),
+    // Splittest komplettcheck_text (lib/experimente.ts): hier nur lesen (GET); zugeteilt wird beim Buchen (terminFestmachen)
+    komplettcheckText: komplettcheckFrage(an, person, familie, nach === "komplettcheck" ? await import("@/lib/experimente").then((m) => m.variante("komplettcheck_text", lead.id, { merken: false })).catch(() => "a" as const) : "b"),
   };
 }
 
@@ -652,6 +653,8 @@ export async function terminFestmachen(streckeId: string, o: { start: string; mo
     await prisma.leadMailStrecke.update({ where: { id: s.id }, data: { appointmentId: res.appointmentId, gebuchtAt: now, buchungAt: null, schritt: "gebucht", antwortAt: now, reaktionAt: s.reaktionAt ?? now } });
     const { slotLabel } = await import("@/lib/whatsapp/termin-vorschlaege");
     await logLeadHistory(lead.id, "status", `Termin über die E-Mail-Strecke gebucht: ${slotLabel(res.start)}, ${o.mode === "video" ? "Video" : "Telefon"}.`, { customerId: lead.customerId, userId: null }).catch(() => null);
+    // Als Nächstes zeigt die Seite die Komplettcheck-Frage: Zuteilung im Splittest jetzt (Klick, kein Link-Scanner)
+    await import("@/lib/experimente").then((m) => m.variante("komplettcheck_text", lead.id)).catch(() => null);
     return { ok: true, appointmentId: res.appointmentId };
   } catch (err) {
     const { SlotBusyError } = await import("@/lib/calendar");
@@ -684,6 +687,7 @@ export async function komplettcheckSetzen(streckeId: string, ja: boolean, now = 
   if (r.count) {
     await logLeadHistory(s.leadId, "status", ja ? "Komplettcheck gewünscht (über die E-Mail-Strecke)." : "Kein Komplettcheck gewünscht (über die E-Mail-Strecke).", { customerId: s.customerId, userId: null }).catch(() => null);
     if (ja) await import("@/lib/komplettcheck-dauer").then((m) => m.komplettcheckVerlaengern(s.appointmentId!, { now })).catch(() => null);
+    if (ja) await import("@/lib/experimente").then((m) => m.zielErreicht([s.leadId], "komplettcheck_ja")).catch(() => null);
   }
   await einladungPruefen(s.id, now);
   return { ok: true };

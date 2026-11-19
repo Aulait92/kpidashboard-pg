@@ -200,17 +200,31 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
     expect(du).toBe("Dein Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*. Ole hält sich die Zeit nur für dich frei und bereitet deine Beiträge vor.\nDein Link: https://meet.google.com/x");
   });
 
-  it("Komplettcheck: Sie, Familie, Du", () => {
-    expect(komplettcheckFrage("sie", PERSON, true)).toBe(
+  it("Komplettcheck: Sie, Familie, Du (Fassung a bisher, b neu mit „doppelt zahlen und sparen“)", () => {
+    // Fassung a (bisher) im Splittest komplettcheck_text
+    expect(komplettcheckFrage("sie", PERSON, true, "a")).toBe(
       "Danke! Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können? Das dauert nur ein paar Minuten länger.",
     );
-    expect(komplettcheckFrage("sie", PERSON, false)).toContain("ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können?");
-    expect(komplettcheckFrage("du", PERSON_DU, false)).toBe(
+    expect(komplettcheckFrage("du", PERSON_DU, false, "a")).toBe(
       "Danke! Soll Ole im Termin auch kurz schauen, ob du insgesamt gut abgesichert bist und wo du vielleicht etwas sparen kannst? Das dauert nur ein paar Minuten länger.",
     );
-    expect(komplettcheckFrage("du", PERSON_DU, true)).toContain("ob du und deine Familie insgesamt gut abgesichert seid und wo ihr vielleicht etwas sparen könnt?");
-    for (const an of ["sie", "du"] as const) for (const fam of [true, false]) expect((komplettcheckFrage(an, an === "du" ? PERSON_DU : PERSON, fam).match(/\?/g) ?? []).length).toBe(1);
-    for (const t of [komplettcheckFrage("sie", PERSON, true), komplettcheckFrage("du", PERSON_DU, true)]) expect(t).toMatch(KOMPLETTCHECK_RE);
+    // Fassung b (Standard, Ole 19.11.2026): Leitmotiv doppelt zahlen und sparen, „können“ statt Versprechen, kostenlos
+    expect(komplettcheckFrage("sie", PERSON, false)).toBe(
+      "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll Herr Kannapinn im Termin kurz drüberschauen, wo Sie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
+    );
+    expect(komplettcheckFrage("sie", PERSON, true)).toContain("wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können?");
+    expect(komplettcheckFrage("du", PERSON_DU, false)).toBe(
+      "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll Ole im Termin kurz drüberschauen, wo du vielleicht doppelt zahlst und sparen kannst? Kostenlos und nur ein paar Minuten länger.",
+    );
+    expect(komplettcheckFrage("du", PERSON_DU, true)).toContain("wo ihr als Familie vielleicht doppelt zahlt und sparen könnt?");
+    for (const v of ["a", "b"] as const)
+      for (const an of ["sie", "du"] as const)
+        for (const fam of [true, false]) {
+          const t = komplettcheckFrage(an, an === "du" ? PERSON_DU : PERSON, fam, v);
+          expect((t.match(/\?/g) ?? []).length).toBe(1);
+          expect(t).toMatch(KOMPLETTCHECK_RE);
+          expect(t).not.toMatch(/[–—]|werden Sie sparen|garantiert|Minuten? länger als|\d+ ?Min/);
+        }
     expect(KOMPLETTCHECK_KNOEPFE.map((k) => k.title)).toEqual(["Ja, gern", "Nein, danke"]);
     expect(KALENDER_KNOEPFE.map((k) => k.title)).toEqual(["Ja", "Mache ich gleich"]);
   });
