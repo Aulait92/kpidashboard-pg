@@ -19,3 +19,8 @@ Free-Plan: wenige Abfragen pro Tag. Jeden Tag die nächsten offenen Fragen abfra
 Letzter Lauf: 18.11.2026 Abend (nach Reset 22:24 UTC): 7 Abfragen erfolgreich (C-413/23 P per resolve_reference und Volltext, Art. 28 DSGVO, DSGVO-Volltext, Volltext C-252/21, § 203 StGB per Suche und Volltext), die 8. Abfrage (resolve_reference BGH VIII ZR 53/09) wurde mit Limit beantwortet: limit_type „day“, Plan „free“, Upgrade https://legaldatahunter.com/pricing, resets_at 2026-11-19T14:07:00+00:00. Tipp für Normfragen: resolve_reference auf einen Erwägungsgrund („Recital 26 Regulation (EU) 2016/679“, include_full_text) liefert die ganze DSGVO in einer Abfrage. Nicht erreicht: 7, 8, 9. Nächste: BGH VIII ZR 53/09 und BGH VI ZR 225/17 (Rest von 6 und 10), Benchmark-Rest aus 11 (GeschGehG, § 44b UrhG, §§ 305c, 307 BGB, EDSA 07/2020), dann 7, 8, 9, dann Rest von 1, 2, 4, 5.
 
 Vorheriger Lauf: 18.11.2026 tagsüber, 12 Abfragen, dann Limit (resets_at 2026-11-18T22:24:00+00:00).
+
+## Entscheidung Ole 19.11.2026: E-Mail-Outreach wird hochgefahren
+- Kaltmails an Vermittler ohne Einwilligung werden bewusst weitergeführt und ausgebaut (Risiko § 7 Abs. 2 Nr. 2 UWG bekannt und von Claude benannt).
+- Ole verzichtet auf eine Fußzeile mit Datenschutzhinweis (Art. 14, Art. 21 Abs. 4 DSGVO). Restrisiko: höhere Bußgeldbemessung bei Behördenverfahren.
+- Ausgleich: Prozess für Anfragen (Erkennen, Sperren inkl. Domain, Frist 7 Tage, Vorlagen, Löschknopf mit Hash-Sperrvermerk, Nachweisprotokoll, Abmahnungen nie ungeprüft unterschreiben) an PG Software beauftragt.
