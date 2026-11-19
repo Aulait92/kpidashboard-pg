@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { NextStepReminderToggle } from "@/components/next-step-reminder-toggle";
 import { CrossSellReminderToggle, PoliceReminderToggle } from "@/app/buyer/provisionen/cross-sell-toggle";
 import { canEditProvision } from "@/lib/provision-server";
+import { LeadEmailToggle } from "@/app/buyer/konto/pause-card";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Erinnerungen & Aufgaben | performancegrowth" };
@@ -14,13 +15,17 @@ export default async function ErinnerungenPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const [aufgaben, me] = await Promise.all([
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { crossSellReminder: true, policeReminder: true } }).catch(() => null),
+    prisma.customer
+      .findUnique({ where: { id: ctx.customerId }, select: { crossSellReminder: true, policeReminder: true, leadEmail: true, onboarding: { select: { questionnaire: true } } } })
+      .catch(() => null),
     ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { nextStepReminder: true } }) : null,
   ]);
   const canEditAufgaben = canEditProvision(ctx);
+  // „Neue Leads per E-Mail“ (vorher unter Konto & Rechnungen, UX-Runde 19.11.2026): gilt für das ganze Konto, nur der Inhaber
+  const leadMail = ctx.teamRole !== "advisor" && aufgaben?.onboarding ? aufgaben : null;
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
-      <PageHeader back="/buyer/einstellungen" title="Erinnerungen & Aufgaben" subtitle="Was die App Sie erinnert und welche Aufgaben sie auf „Heute“ anlegt." />
+      <PageHeader back="/buyer/einstellungen" title="Erinnerungen & Aufgaben" subtitle="Woran die App Sie erinnert und welche Aufgaben sie auf „Heute“ anlegt." />
       <div className="space-y-6" data-erinnerungen>
         <section>
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Für Sie persönlich</h2>
@@ -28,6 +33,18 @@ export default async function ErinnerungenPage() {
             <NextStepReminderToggle initial={me?.nextStepReminder ?? true} disabled={!ctx.userId || ctx.preview} />
           </div>
         </section>
+        {leadMail ? (
+          <section id="neue-leads">
+            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Neue Leads</h2>
+            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-5 py-3 shadow-[var(--shadow-sm)]" data-erinnerungen-lead-mail>
+              <LeadEmailToggle
+                enabled={leadMail.leadEmail}
+                email={((leadMail.onboarding?.questionnaire ?? {}) as { leadEmails?: string[] }).leadEmails?.join(", ") || ctx.email}
+                readOnly={ctx.preview}
+              />
+            </div>
+          </section>
+        ) : null}
         <section id="aufgaben">
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Aufgaben nach dem Abschluss</h2>
           <div className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">

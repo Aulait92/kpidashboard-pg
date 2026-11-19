@@ -69,10 +69,43 @@ export async function TeamStats({ customerId, range, mitBestand = false }: { cus
   const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)} %` : "keine Angabe");
   const makler = data.typ === "makler";
 
+  const provLabel = makler ? "Courtage 1. Jahr" : "Abschlussprovision";
+
   return (
-    <Card className="mt-6">
+    <Card data-team-stats>
       <CardHeader title="Team im Zeitraum" icon={UsersRound} />
-      <div className="overflow-x-auto">
+      {/* Handy (UX-Runde 19.11.2026): eine Zeile je Person statt 9 Spalten zum Wischen. Name, Provision, Weg zum Abschluss,
+          Warnung nur, wenn Leads ohne nächsten Schritt sind. Am Rechner bleibt die Tabelle. */}
+      <ul className="divide-y divide-[color:var(--border)] sm:hidden" data-team-stats-liste>
+        {list.map(({ key, name, row }) => {
+          const r = row ?? empty();
+          const st = steps.get(key === "none" ? null : key);
+          const warn = st?.rate != null && st.rate < NEXT_STEP_WARN_BELOW && st.withoutNextStep > 0;
+          return (
+            <li key={key} className="px-5 py-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 truncate font-medium">{name}</span>
+                <span className="shrink-0 font-semibold tabular-nums">{formatEUR(mitBestand ? r.umsatz + r.future : r.umsatz)}</span>
+              </div>
+              <div className="mt-0.5 text-sm tabular-nums text-[color:var(--muted)]">
+                {formatNumber(r.leads)} {r.leads === 1 ? "Lead" : "Leads"} · {formatNumber(r.termine)} {r.termine === 1 ? "Termin" : "Termine"} · {formatNumber(r.closed)}{" "}
+                {r.closed === 1 ? "Abschluss" : "Abschlüsse"}
+                {r.leads > 0 ? ` (${pct(r.closed, r.leads)})` : ""}
+              </div>
+              {warn ? (
+                <div className="mt-0.5 text-sm font-semibold text-rose-600">
+                  {st!.withoutNextStep} {st!.withoutNextStep === 1 ? "offener Lead" : "offene Leads"} ohne nächsten Schritt
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="border-t border-[color:var(--border)] px-5 py-2.5 text-xs text-[color:var(--muted)] sm:hidden">
+        Betrag: {provLabel}
+        {mitBestand ? " inkl. künftigem Bestand (5 Jahre)" : ""}, geschätzt.
+      </p>
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead className="border-b border-[color:var(--border)] text-left text-xs text-[color:var(--muted)]">
             <tr>
@@ -86,7 +119,7 @@ export async function TeamStats({ customerId, range, mitBestand = false }: { cus
                 Nächster Schritt
               </th>
               <th className="px-3 py-2.5 text-right" title="Geschätzt aus Sparte und Beitrag, inklusive Empfehlungen und Cross-Selling">
-                {makler ? "Courtage 1. Jahr" : "Abschlussprovision"}
+                {provLabel}
               </th>
               <th className={`${mitBestand ? "px-3" : "px-5"} py-2.5 text-right`} title="Laufend pro Jahr aus den Verträgen dieses Zeitraums">
                 Bestand pro Jahr

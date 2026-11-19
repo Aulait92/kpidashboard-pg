@@ -41,17 +41,23 @@ export default async function EinstellungenPage() {
         { href: "/buyer/konto/sicherheit", icon: ShieldCheck, color: "bg-slate-600", title: "Anmeldung & Sicherheit", text: "Passwort und Anmeldung" },
       ],
     },
+    // UX-Runde 19.11.2026: „Arbeiten“ (7 Zeilen) in zwei Gruppen nach Aufgabe, Häufiges zuerst; „Mehr“ steht ganz unten
     {
-      title: "Arbeiten",
+      title: "Kunden ansprechen",
       items: [
-        { href: "/buyer/kalender", icon: CalendarDays, color: "bg-emerald-600", title: "Mein Kalender", text: "Kalender verbinden und Zeiten für Termine festlegen" },
-        { href: "/buyer/provisionen", icon: Percent, color: "bg-amber-500", title: "Meine Provisionen", text: "Ihre Sätze, daraus rechnet die App Provision und Zahlen" },
-        { href: "/buyer/einstellungen/meta", icon: Send, color: "bg-indigo-500", title: "Rückmeldung an Meta", text: "Meta lernt aus Ihren Ergebnissen, welche Leads abschließen" },
-        { href: "/buyer/postfach", icon: Mail, color: "bg-blue-500", title: "E-Mail-Postfach", text: "Eigenes Postfach verbinden, Signatur, E-Mail-Vorlagen" },
         // Assistent (Ole, 17.11.2026, Paket M9): E-Mails in Ihrem Namen und die WhatsApp-Vorlagen an einer Stelle
         { href: "/buyer/einstellungen/assistent", icon: MessageSquareText, color: "bg-emerald-500", title: "Assistent", text: "WhatsApp-Nachrichten und E-Mails, die in Ihrem Namen rausgehen" },
-        { href: "/buyer/einstellungen/erinnerungen", icon: BellRing, color: "bg-orange-500", title: "Erinnerungen & Aufgaben", text: "Erinnerung an den nächsten Schritt, Aufgaben nach dem Abschluss" },
+        { href: "/buyer/einstellungen/erinnerungen", icon: BellRing, color: "bg-orange-500", title: "Erinnerungen & Aufgaben", text: "E-Mail bei neuen Leads, tägliche Erinnerung, Aufgaben nach dem Abschluss" },
+        { href: "/buyer/postfach", icon: Mail, color: "bg-blue-500", title: "E-Mail-Postfach", text: "Eigenes Postfach verbinden, Signatur, E-Mail-Vorlagen" },
+      ],
+    },
+    {
+      title: "Termine und Zahlen",
+      items: [
+        { href: "/buyer/kalender", icon: CalendarDays, color: "bg-emerald-600", title: "Mein Kalender", text: "Kalender verbinden und Zeiten für Termine festlegen" },
         ...(owner ? [{ href: "/buyer/einstellungen/branding", icon: ImageIcon, color: "bg-teal-500", title: "Präsentation", text: "Ihr Logo auf der Beratungspräsentation, als Makler der Hinweis zur Marktauswahl" }] : []),
+        { href: "/buyer/provisionen", icon: Percent, color: "bg-amber-500", title: "Meine Provisionen", text: "Ihre Sätze, daraus rechnet die App Provision und Zahlen" },
+        { href: "/buyer/einstellungen/meta", icon: Send, color: "bg-indigo-500", title: "Rückmeldung an Meta", text: "Meta lernt aus Ihren Ergebnissen, welche Leads abschließen" },
       ],
     },
     {
@@ -67,26 +73,14 @@ export default async function EinstellungenPage() {
       <PageHeader back="/buyer" title="Einstellungen" />
       <div className="space-y-6" data-einstellungen>
         {groups
-          .filter((g) => g.items.length)
+          .filter((g) => g.items.length && g.title !== "Mehr")
           .map((g) => (
             <section key={g.title}>
               <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.title}</h2>
               <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
                 {g.items.map((i) => (
                   <li key={i.href}>
-                    <Link href={i.href} className="flex min-h-[64px] items-center gap-4 px-5 py-3 transition hover:bg-[color:var(--surface-sunken)]">
-                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-white ${i.color}`}>
-                        <i.icon className="h-5 w-5" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-medium">{i.title}</span>
-                        <span className="line-clamp-2 block text-sm text-[color:var(--muted)]">{i.text}</span>
-                      </span>
-                      {i.badge ? (
-                        <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white">{i.badge}</span>
-                      ) : null}
-                      <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
-                    </Link>
+                    <Zeile i={i} />
                   </li>
                 ))}
               </ul>
@@ -109,6 +103,20 @@ export default async function EinstellungenPage() {
             <PolicenFreischaltungKarte ctx={ctx} ort="einstellungen" className="mt-3 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" />
           </section>
         ) : null}
+        {groups
+          .filter((g) => g.items.length && g.title === "Mehr")
+          .map((g) => (
+            <section key={g.title}>
+              <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.title}</h2>
+              <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
+                {g.items.map((i) => (
+                  <li key={i.href}>
+                    <Zeile i={i} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
         <p className="flex flex-wrap gap-x-4 px-1 text-sm text-[color:var(--muted)] [&>a]:inline-flex [&>a]:min-h-10 [&>a]:items-center">
           <a href="https://performancegrowth.de/impressum" target="_blank" rel="noopener noreferrer" className="hover:underline">Impressum</a>
           <a href="https://performancegrowth.de/datenschutz" target="_blank" rel="noopener noreferrer" className="hover:underline">Datenschutz</a>
@@ -116,5 +124,24 @@ export default async function EinstellungenPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+/** Eine Zeile der Einstellungen: Symbol, Titel, ein Satz, Pfeil. */
+function Zeile({ i }: { i: Item }) {
+  return (
+    <Link href={i.href} className="flex min-h-[64px] items-center gap-4 px-5 py-3 transition hover:bg-[color:var(--surface-sunken)]">
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-white ${i.color}`}>
+        <i.icon className="h-5 w-5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium">{i.title}</span>
+        <span className="line-clamp-2 block text-sm text-[color:var(--muted)]">{i.text}</span>
+      </span>
+      {i.badge ? (
+        <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white">{i.badge}</span>
+      ) : null}
+      <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+    </Link>
   );
 }

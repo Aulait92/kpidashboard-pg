@@ -1,9 +1,9 @@
 "use client";
 
-// Einstellungen: tägliche Erinnerung um 8 Uhr „Leads ohne nächsten Schritt“ an bzw. aus (je Login).
+// Einstellungen: tägliche Erinnerung um 8 Uhr „Leads ohne nächsten Schritt“ an bzw. aus (je Login). Seit der UX-Runde
+// 19.11.2026 ohne Symbol und mit dem gleichen Schalter wie die übrigen Zeilen (das Symbol ließ die Zeile wie einen Link wirken).
 
 import { useState, useTransition } from "react";
-import { BellRing } from "lucide-react";
 import { setNextStepReminderAction } from "@/app/buyer/next-step-actions";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
@@ -25,9 +25,6 @@ export function NextStepReminderToggle({ initial, disabled = false }: { initial:
     });
   return (
     <div className="flex min-h-[64px] items-center gap-4 px-5 py-3" data-next-step-reminder>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-amber-500 text-white">
-        <BellRing className="h-5 w-5" />
-      </span>
       <span className="min-w-0 flex-1">
         <span className="block font-medium">Tägliche Erinnerung um 8 Uhr</span>
         <span className="block text-sm text-[color:var(--muted)]">Per Push und E-Mail, wenn Leads keinen nächsten Schritt haben oder ein Termin-Ergebnis fehlt</span>
@@ -39,7 +36,7 @@ export function NextStepReminderToggle({ initial, disabled = false }: { initial:
         aria-label="Tägliche Erinnerung"
         disabled={pending || disabled}
         onClick={toggle}
-        className={cn("relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-50", on ? "bg-emerald-600" : "bg-slate-300")}
+        className={cn("relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-50", on ? "bg-[color:var(--brand)]" : "bg-slate-300")}
       >
         <span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all", on ? "left-[22px]" : "left-0.5")} />
       </button>

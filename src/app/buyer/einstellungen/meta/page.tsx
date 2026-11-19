@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, ChevronDown, Circle } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -59,32 +59,12 @@ export default async function MetaRueckmeldungPage() {
           {!canEdit ? (
             <p className="px-5 pb-4 text-xs text-[color:var(--muted)]">{ctx.preview ? "Vorschau: nur lesen." : "Nur der Inhaber kann das ändern."}</p>
           ) : null}
-        </Card>
-
-        <Card>
-          <CardHeader title="Was an Meta geht" />
-          <div className="space-y-3 px-5 py-4 text-sm">
-            <p>Nur für Leads aus Ihren Meta-Formularen, je Lead und Stufe einmal:</p>
-            <ul className="list-disc space-y-1 pl-5">
-              <li>die Lead-ID, die Meta selbst vergeben hat</li>
-              <li>die Stufe: Lead, Erreicht, Termin vereinbart oder Abschluss</li>
-              <li>der Zeitpunkt</li>
-              <li>beim Abschluss der Jahresbeitrag (falls eingetragen)</li>
-            </ul>
-            <p className="text-[color:var(--muted)]">
-              Nicht gesendet werden Name, Telefonnummer, E-Mail, Gesprächsinhalte und welches Produkt abgeschlossen wurde. Leads aus Empfehlungen, Ihrem
-              Bestand oder anderen Quellen bleiben außen vor. Meta nimmt nur Ergebnisse der letzten 7 Tage an.
-            </p>
-            <p>
-              Je vollständiger Sie Abschlüsse mit Beitrag eintragen, desto besser lernt Meta, welche Leads abschließen, und desto bessere Leads bekommen Sie.
-            </p>
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader title="Status" actions={<Badge tone={status.tone}>{status.label}</Badge>} />
-          <div className="space-y-4 px-5 py-4 text-sm">
-            <p>{status.text}</p>
+          {/* Schalter und Stand in einer Karte (UX-Runde 19.11.2026) */}
+          <div className="space-y-4 border-t border-[color:var(--border)] px-5 py-4 text-sm" data-capi-status>
+            <div className="flex items-start justify-between gap-3">
+              <p>{status.text}</p>
+              <Badge tone={status.tone}>{status.label}</Badge>
+            </div>
             <p className="text-[color:var(--muted)]" data-capi-counts>
               Letzte 7 Tage: {o.counts7d.sent} gesendet{o.counts7d.queued ? `, ${o.counts7d.queued} warten` : ""}
               {o.counts7d.failed ? `, ${o.counts7d.failed} mit Fehler` : ""}
@@ -120,8 +100,49 @@ export default async function MetaRueckmeldungPage() {
           </div>
         </Card>
 
-        <WindowCard title="Letzte 30 Tage" w={o.windows.d30} />
-        <WindowCard title="Letzte 90 Tage" w={o.windows.d90} />
+        {/* UX-Runde 19.11.2026: Status zuerst, Einzelheiten und Auswertung aufklappbar (Inhalt unverändert) */}
+        <Card>
+          <details className="group [&>summary::-webkit-details-marker]:hidden" data-capi-was>
+            <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-3 px-5 py-3">
+              <span className="font-semibold">Was genau an Meta geht</span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-[color:var(--border)]">
+              <div className="space-y-3 px-5 py-4 text-sm">
+                <p>Nur für Leads aus Ihren Meta-Formularen, je Lead und Stufe einmal:</p>
+                <ul className="list-disc space-y-1 pl-5">
+                  <li>die Lead-ID, die Meta selbst vergeben hat</li>
+                  <li>die Stufe: Lead, Erreicht, Termin vereinbart oder Abschluss</li>
+                  <li>der Zeitpunkt</li>
+                  <li>beim Abschluss der Jahresbeitrag (falls eingetragen)</li>
+                </ul>
+                <p className="text-[color:var(--muted)]">
+                  Nicht gesendet werden Name, Telefonnummer, E-Mail, Gesprächsinhalte und welches Produkt abgeschlossen wurde. Leads aus Empfehlungen, Ihrem
+                  Bestand oder anderen Quellen bleiben außen vor. Meta nimmt nur Ergebnisse der letzten 7 Tage an.
+                </p>
+                <p>
+                  Je vollständiger Sie Abschlüsse mit Beitrag eintragen, desto besser lernt Meta, welche Leads abschließen, und desto bessere Leads bekommen Sie.
+                </p>
+              </div>
+            </div>
+          </details>
+        </Card>
+
+        <Card>
+          <details className="group [&>summary::-webkit-details-marker]:hidden" data-capi-auswertung>
+            <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-3 px-5 py-3">
+              <span>
+                <span className="block font-semibold">Auswertung und Empfehlung</span>
+                <span className="block text-sm text-[color:var(--muted)]">Letzte 30 und 90 Tage</span>
+              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+            </summary>
+            <div className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]">
+              <WindowCard title="Letzte 30 Tage" w={o.windows.d30} />
+              <WindowCard title="Letzte 90 Tage" w={o.windows.d90} />
+            </div>
+          </details>
+        </Card>
 
         <p className="px-1 text-sm text-[color:var(--muted)]">
           Beiträge tragen Sie beim Abschluss im Kontakt ein, Ihre Sätze stehen unter{" "}
@@ -139,7 +160,7 @@ function WindowCard({ title, w }: { title: string; w: CapiWindow }) {
   const { stats, rec } = w;
   const checks = [rec.checks.volume, rec.checks.coverage, rec.checks.stage];
   return (
-    <Card>
+    <div>
       <CardHeader title={title} hint={`${stats.leads} Leads aus Meta-Formularen`} />
       <div className="space-y-4 px-5 py-4 text-sm">
         {stats.leads === 0 ? (
@@ -191,6 +212,6 @@ function WindowCard({ title, w }: { title: string; w: CapiWindow }) {
           </>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
