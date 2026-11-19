@@ -123,7 +123,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
               className="contents"
               data-funktion="contact-controls-contactmore--menue-website-linkedin-profil-oeffnen actions-deletecontact--kontakt-loeschen actions-mergecontactsaction--kontakte-zusammenfuehren-mit-suche-nach"
             >
-              <ContactMore contactId={c.id} name={name} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={a.duplicates} />
+              <ContactMore contactId={c.id} name={name} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={a.duplicates} geloescht={!!c.art17GeloeschtAt} />
             </span>
           </div>
         </div>

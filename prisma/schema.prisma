@@ -1926,6 +1926,12 @@ model SalesContact {
   instantlyGesperrtAt     DateTime?
   instantlySperreVersuche Int                 @default(0)
   instantlySperreFehler   String?
+  /// Auf Verlangen gelöscht (Art. 17 DSGVO, Ole 19.11.2026, lib/vertrieb/art17.ts): Hülle ohne Personenbezug mit
+  /// Sperrvermerk. Name „Gelöscht auf Verlangen (Art. 17 DSGVO)“, E-Mail geloescht-<id>@art17.invalid
+  art17GeloeschtAt        DateTime?
+  /// SHA-256 der früheren Adressen (klein geschrieben, ohne Leerzeichen): Importe, Uploads und Antworten erkennen die
+  /// Adresse wieder, ohne sie im Klartext zu speichern (lib/vertrieb/sperrliste.ts)
+  sperrHashes             String[]            @default([])
   // Kundenkonto in der Plattform (ab Onboarding)
   customerId         String?             @unique
   customer           Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -1952,6 +1958,7 @@ model SalesContact {
   phones               SalesContactPhone[]
 
   @@index([altEmails], type: Gin)
+  @@index([sperrHashes], type: Gin)
   @@index([stage])
   @@index([nieKontaktierenAt])
   @@index([customerStage])

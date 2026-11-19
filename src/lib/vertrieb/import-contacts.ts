@@ -5,7 +5,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { normalizeEmail } from "@/lib/vertrieb/contact-merge";
 import { detectInsurer } from "@/lib/vertrieb/contact-enrich";
 import { ownEmailDomain } from "@/lib/vertrieb/dubletten";
-import { emailGesperrt } from "@/lib/vertrieb/sperrliste";
+import { emailGesperrt, geloeschteAdressen } from "@/lib/vertrieb/sperrliste";
 import { mischen } from "@/lib/vertrieb/mischen";
 import { LISTEN_GRUENDE, istVermittlerListe, type ListenErgebnis, type ListenGrund } from "@/lib/vertrieb/vermittler-format";
 
@@ -60,6 +60,9 @@ export async function importContactsCsv(text: string): Promise<ImportStats> {
   const stats: ImportStats = { rows: rows.length, created: 0, updated: 0, withStatus: 0, tasks: 0, skipped: 0 };
   const now = new Date();
   const seen = new Set<string>();
+  // Feste Sperrliste und auf Verlangen gelöschte Adressen (Art. 17, nur als Hash gespeichert) nie wieder anlegen
+  const emailIdx = idx("email");
+  const geloescht = await geloeschteAdressen(emailIdx >= 0 ? rows.map((r) => r[emailIdx]?.trim().toLowerCase()) : []);
 
   type Pending = { data: Prisma.SalesContactCreateInput; legacy?: { text: string; date: Date | null } };
   const toCreate: Pending[] = [];
@@ -72,7 +75,7 @@ export async function importContactsCsv(text: string): Promise<ImportStats> {
       return v ? v : undefined;
     };
     const email = get("email")?.toLowerCase();
-    if (!email || seen.has(email)) {
+    if (!email || seen.has(email) || geloescht.has(email) || emailGesperrt(email)) {
       stats.skipped++;
       continue;
     }
@@ -324,6 +327,7 @@ export async function importVermittlerListe(text: string, opts: { anwenden?: boo
   });
   const zeilen = parsed.data.map(listenZeile);
 
+  const geloescht = await geloeschteAdressen(zeilen.map((z) => z.email));
   const [kontakte, gesperrteLeads, logins] = await Promise.all([
     prisma.salesContact.findMany({
       select: {
@@ -383,6 +387,8 @@ export async function importVermittlerListe(text: string, opts: { anwenden?: boo
     if (gesehen.has(z.email)) return "doppelt";
     gesehen.add(z.email);
     if (emailGesperrt(z.email)) return "sperrliste";
+    // Auf Verlangen gelöscht (Art. 17): Sperrvermerk nur als Hash
+    if (geloescht.has(z.email)) return "nie_kontaktieren";
     const k = nachEmail.get(z.email);
     const d = eigeneDomain(z.email);
     if (loginAdressen.has(z.email) || (k && istKunde(k)) || (d && kundenDomains.has(d))) return "kunde";

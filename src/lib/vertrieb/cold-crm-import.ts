@@ -94,6 +94,8 @@ export async function importFromColdCrm(source: ImportSource = "cold"): Promise<
   } finally {
     await src.end().catch(() => {});
   }
+  // Auf Verlangen gelöschte Kontakte (Art. 17): alte Verlaufseinträge, Mails usw. mit derselben Kontakt-ID wieder entfernen
+  await import("@/lib/vertrieb/art17").then((m) => m.art17HuellenBereinigen());
   return report;
 }
 

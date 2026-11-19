@@ -505,6 +505,25 @@ export async function setNieKontaktierenAction(contactId: string, an: boolean): 
   return { ok: true };
 }
 
+/**
+ * „Auf Verlangen löschen (Art. 17)“ in der Kontaktakte (Ole, 19.11.2026): Löschverlangen per Mail oder Telefon. Gleiche
+ * Logik wie bei einer Antwort (lib/vertrieb/art17.ts): Kunden, Angebote, Leads und Empfehlungen werden nur gesperrt.
+ */
+export async function art17LoeschenAction(contactId: string): Promise<{ ok: boolean; message: string }> {
+  await requireAuth();
+  if (!contactId) return { ok: false, message: "Kontakt fehlt." };
+  const { vertriebArt17Loeschen, ART17_AUSNAHME_LABEL } = await import("@/lib/vertrieb/art17");
+  const r = await vertriebArt17Loeschen(contactId, { quelle: "admin" });
+  refresh(contactId);
+  if (r.status === "geloescht") {
+    return { ok: true, message: r.instantly === "fehler" ? "Gelöscht. Instantly war nicht erreichbar: Aufgabe zum Nachholen angelegt." : "Gelöscht. Der Sperrvermerk bleibt." };
+  }
+  if (r.status === "ausnahme") {
+    return { ok: false, message: `Nicht gelöscht (${(r.gruende ?? []).map((g) => ART17_AUSNAHME_LABEL[g]).join(", ")}). Kontakt gesperrt, Aufgabe „Löschverlangen prüfen“ angelegt.` };
+  }
+  return { ok: r.status === "schon_geloescht", message: r.status === "schon_geloescht" ? "Schon gelöscht." : "Kontakt nicht gefunden." };
+}
+
 // ─── Sperren aus bisherigen Antworten nachholen (Vorschau, dann Anwenden) ─
 export type SperrNachholState = { ok: boolean; message: string; ergebnis?: import("@/lib/vertrieb/nie-kontaktieren-server").SperrNachholErgebnis } | null;
 

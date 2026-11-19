@@ -8,7 +8,7 @@
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { contactIdsByEmails } from "@/lib/vertrieb/contact-merge";
-import { emailGesperrt } from "@/lib/vertrieb/sperrliste";
+import { emailGesperrt, geloeschteAdressen } from "@/lib/vertrieb/sperrliste";
 import { AUSKUNFT_AUFGABE, SPERR_GRUND_LABEL, auskunftsAufgabe, sperrGrundAusAntwort, type SperrGrund } from "@/lib/vertrieb/nie-kontaktieren";
 
 const API = "https://api.instantly.ai/api/v2";
@@ -22,7 +22,7 @@ export function instantlySchreibbar(): boolean {
   return !!process.env.INSTANTLY_API_KEY && process.env.INSTANTLY_AUTO_SYNC === "1";
 }
 
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
+export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   for (let attempt = 0; ; attempt++) {
     res = await fetch(API + path, {
@@ -42,7 +42,7 @@ const adressenVon = (c: { email: string; altEmails: string[] }) =>
   [...new Set([c.email, ...c.altEmails].map((e) => e.trim().toLowerCase()).filter((e) => e.includes("@")))];
 
 /** Adresse auf der Instantly-Blocklist? Sonst eintragen. */
-async function aufBlocklist(email: string): Promise<"vorhanden" | "eingetragen"> {
+export async function aufBlocklist(email: string): Promise<"vorhanden" | "eingetragen"> {
   const q = new URLSearchParams({ search: email, limit: "10" });
   const page = await api<{ items?: { bl_value?: string }[] }>(`/block-lists-entries?${q}`);
   if ((page.items ?? []).some((e) => e.bl_value?.trim().toLowerCase() === email)) return "vorhanden";
@@ -321,6 +321,8 @@ export async function instantlyBlocklist(): Promise<Set<string>> {
 export async function vorUploadPruefen(emails: string[], opts: { blocklist?: Set<string> } = {}): Promise<UploadPruefung> {
   const liste = [...new Set(emails.map((e) => e.trim().toLowerCase()).filter((e) => e.includes("@")))];
   const ids = await contactIdsByEmails(liste);
+  // Auf Verlangen gelöscht (Art. 17): nur noch als Hash bekannt
+  const geloescht = await geloeschteAdressen(liste);
   const kontaktIds = [...new Set(ids.values())];
   const [kontakte, leads] = await Promise.all([
     prisma.salesContact.findMany({ where: { id: { in: kontaktIds }, nieKontaktierenAt: { not: null } }, select: { id: true } }),
@@ -335,7 +337,7 @@ export async function vorUploadPruefen(emails: string[], opts: { blocklist?: Set
     const domain = email.split("@").pop()!;
     const grund: UploadSperrGrund | null = emailGesperrt(email)
       ? "sperrliste"
-      : id && nie.has(id)
+      : geloescht.has(email) || (id && nie.has(id))
         ? "nie_kontaktieren"
         : id && abgemeldet.has(id)
           ? "abgemeldet"

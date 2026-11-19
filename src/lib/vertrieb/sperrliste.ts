@@ -21,6 +21,9 @@ export const SPERR_EMAIL_HASHES: readonly string[] = [
 const hash = (email: string) => createHash("sha256").update(email).digest("hex");
 const norm = (email: string) => email.trim().toLowerCase();
 
+/** SHA-256 (hex) einer Adresse, klein geschrieben und ohne Leerzeichen (Sperrvermerk gelöschter Kontakte). */
+export const emailHash = (email: string) => hash(norm(email));
+
 function envEintraege(): { emails: Set<string>; domains: string[] } {
   const raw = (process.env.VERTRIEB_SPERRLISTE ?? "").split(",").map(norm).filter(Boolean);
   return { emails: new Set(raw.filter((e) => !e.startsWith("@"))), domains: raw.filter((e) => e.startsWith("@")).map((d) => d.slice(1)) };
@@ -35,6 +38,31 @@ export function emailGesperrt(email: string | null | undefined): boolean {
   const domains = [...SPERR_DOMAINS, ...env.domains];
   if (domains.some((d) => domain === d || domain.endsWith(`.${d}`))) return true;
   return env.emails.has(e) || SPERR_EMAIL_HASHES.includes(hash(e));
+}
+
+/**
+ * Adressen von Kontakten, die auf Verlangen gelöscht wurden (Art. 17, lib/vertrieb/art17.ts). Dort steht nur noch der
+ * SHA-256-Hash (SalesContact.sperrHashes). Liefert die Adressen aus der Eingabe, die gesperrt sind (klein geschrieben).
+ */
+export async function geloeschteAdressen(emails: (string | null | undefined)[]): Promise<Set<string>> {
+  const nachHash = new Map<string, string>();
+  for (const e of emails) if (e && e.includes("@")) nachHash.set(emailHash(e), norm(e));
+  const out = new Set<string>();
+  if (!nachHash.size) return out;
+  const hashes = [...nachHash.keys()];
+  for (let i = 0; i < hashes.length; i += 1000) {
+    const teil = hashes.slice(i, i + 1000);
+    const rows = await prisma.salesContact.findMany({ where: { sperrHashes: { hasSome: teil } }, select: { sperrHashes: true } });
+    for (const r of rows) for (const h of r.sperrHashes) if (nachHash.has(h)) out.add(nachHash.get(h)!);
+  }
+  return out;
+}
+
+/** Hülle des auf Verlangen gelöschten Kontakts zu dieser Adresse (über den Hash) oder null. */
+export async function geloeschterKontaktId(email: string | null | undefined): Promise<string | null> {
+  if (!email?.includes("@")) return null;
+  const c = await prisma.salesContact.findFirst({ where: { sperrHashes: { has: emailHash(email) } }, select: { id: true } });
+  return c?.id ?? null;
 }
 
 /** Vertriebskontakt gesperrt? „Nie kontaktieren“, Hauptadresse, weitere Adressen oder Cold-Mail-Abmeldung. */

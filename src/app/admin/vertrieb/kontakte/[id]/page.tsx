@@ -119,7 +119,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             defaultType={defaultTermin}
             decisionLink={decisionLink}
           />
-          <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} />
+          <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} geloescht={!!c.art17GeloeschtAt} />
         </div>
       </div>
       <DuplicateHint contactId={c.id} contactName={shortName(c.name)} duplicates={duplicates} />

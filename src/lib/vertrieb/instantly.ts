@@ -6,7 +6,7 @@ import { CAMPAIGN_STATUS } from "@/lib/vertrieb/crm";
 import { captureFromLead, captureFromMail } from "@/lib/vertrieb/kontaktdaten-server";
 import { indexMailPhones } from "@/lib/telefonsuche-server";
 import { classifyReply, isAutoReplyText, sentimentFromInstantly, type Sentiment } from "@/lib/vertrieb/sentiment";
-import { sperrGrundAusAntwort } from "@/lib/vertrieb/nie-kontaktieren";
+import { dsgvoAusAntwort } from "@/lib/vertrieb/nie-kontaktieren";
 import { instantlySperreErneuern, nieKontaktierenSetzen } from "@/lib/vertrieb/nie-kontaktieren-server";
 
 const API = "https://api.instantly.ai/api/v2";
@@ -70,6 +70,9 @@ export async function ensureInstantlyContact(
   const email = rawEmail.trim().toLowerCase();
   const existing = await findContactIdByEmail(email);
   if (existing) return { id: existing, created: false };
+  // Auf Verlangen gelöscht (Art. 17): nicht neu anlegen, sondern der Hülle zuordnen (recordReply speichert dort nichts)
+  const huelle = await import("@/lib/vertrieb/sperrliste").then((m) => m.geloeschterKontaktId(email));
+  if (huelle) return { id: huelle, created: false };
   const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
   const firstName = str(lead.firstName);
   const lastName = str(lead.lastName);
@@ -349,6 +352,11 @@ type Reply = {
 export async function recordReply(contactId: string, r: Reply, opts: { planen?: boolean } = {}): Promise<boolean> {
   // planen = false: nur speichern (Nachholen, lib/vertrieb/spaeter-nachholen.ts plant selbst mit Mindestabstand)
   const planen = opts.planen !== false;
+  // Auf Verlangen gelöscht (Art. 17): keinen Inhalt speichern, nur Aufgabe „im Postfach lesen“
+  if ((await prisma.salesContact.findUnique({ where: { id: contactId }, select: { art17GeloeschtAt: true } }))?.art17GeloeschtAt) {
+    await import("@/lib/vertrieb/art17").then((m) => m.art17NeueNachricht(contactId, r.sentAt)).catch((e) => reportError(e, "vertrieb-art17"));
+    return false;
+  }
   if (r.instantlyId && (await prisma.salesEmail.findUnique({ where: { instantlyId: r.instantlyId } }))) return false;
   const dup = await prisma.salesEmail.findFirst({
     where: {
@@ -380,7 +388,9 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
   // Ebenso Später-Interesse („aktuell nicht, aber ab März“): weder Absage noch sofortige Aufgabe, sondern Follow-up.
   const own = stripQuoted(r.text ?? "");
   // „Nie kontaktieren“ (Ole, 19.11.2026): Austragung, Widerspruch, Datenschutzfrage. Immer eine Absage, nie „später“.
-  const sperrGrund = r.isAutoReply ? null : sperrGrundAusAntwort(r.text, r.subject);
+  // Ausdrückliches Löschverlangen (Art. 17) löscht danach automatisch (lib/vertrieb/art17.ts).
+  const befund = r.isAutoReply ? null : dsgvoAusAntwort(r.text, r.subject);
+  const sperrGrund = befund?.grund ?? null;
   let textSentiment: Sentiment = sperrGrund ? "NEGATIV" : classifyReply(own, r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""), r.sentAt);
   // Regeln übersehen „später“ (Ole, 18.11.2026): KI prüft Antworten mit Hinweis auf später, nie klare Absagen
   let spaeter: { dueAt: Date; timing: string | null } | null = null;
@@ -458,6 +468,12 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
         m.onIncomingReply(contactId, { emailId: saved.id, sentiment, isAutoReply: r.isAutoReply, text: own, sentAt: r.sentAt, dueAt: spaeter?.dueAt, timing: spaeter?.timing }),
       )
       .catch((e) => reportError(e, "followup-reply"));
+  }
+  // Löschverlangen (Art. 17): zuletzt, damit nichts danach wieder Daten anlegt
+  if (befund?.loeschen) {
+    await import("@/lib/vertrieb/art17")
+      .then((m) => m.vertriebArt17Loeschen(contactId, { quelle: "antwort", eingang: r.sentAt, auskunftOffen: befund.auskunft, grund: sperrGrund ?? "widerspruch" }))
+      .catch((e) => reportError(e, "vertrieb-art17"));
   }
   return true;
 }

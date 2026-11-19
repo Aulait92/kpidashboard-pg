@@ -3,9 +3,9 @@
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ChevronDown, ExternalLink, GitMerge, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronDown, ExternalLink, GitMerge, MoreHorizontal, ShieldX, Trash2 } from "lucide-react";
 import { MergeSheet, type MergeCandidate } from "@/components/vertrieb/contact-merge";
-import { deleteContact, setStage } from "@/app/admin/vertrieb/actions";
+import { art17LoeschenAction, deleteContact, setStage } from "@/app/admin/vertrieb/actions";
 import { Button } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
 import { LOSS_REASONS, STAGES } from "@/lib/vertrieb/crm";
@@ -107,19 +107,26 @@ export function ContactMore({
   url,
   linkedinUrl,
   duplicates = [],
+  geloescht = false,
 }: {
   contactId: string;
   name: string;
   url: string | null;
   linkedinUrl: string | null;
   duplicates?: MergeCandidate[];
+  /** schon auf Verlangen gelöscht (Art. 17): kein zweites Löschen anbieten */
+  geloescht?: boolean;
 }) {
-  const [open, setOpen] = useState<"menu" | "delete" | "merge" | null>(null);
+  const [open, setOpen] = useState<"menu" | "delete" | "merge" | "art17" | null>(null);
   const [pending, start] = useTransition();
+  const [art17Info, setArt17Info] = useState<string | null>(null);
+  const router = useRouter();
   const actions: SheetAction[] = [
     ...(url ? [{ label: "Website öffnen", icon: ExternalLink, href: url }] : []),
     ...(linkedinUrl ? [{ label: "LinkedIn-Profil öffnen", icon: ExternalLink, href: linkedinUrl }] : []),
     { label: "Mit anderem Kontakt zusammenführen", icon: GitMerge, onSelect: () => setTimeout(() => setOpen("merge"), 0) },
+    // Löschverlangen per Mail oder Telefon (Art. 17, Ole 19.11.2026): gleiche Logik wie bei einer Antwort
+    ...(geloescht ? [] : [{ label: "Auf Verlangen löschen (Art. 17)", icon: ShieldX, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("art17"), 0) }]),
     { label: "Kontakt löschen", icon: Trash2, tone: "danger", onSelect: () => setTimeout(() => setOpen("delete"), 0) },
   ];
   return (
@@ -140,6 +147,37 @@ export function ContactMore({
           >
             Endgültig löschen
           </Button>
+        </div>
+      </Sheet>
+      <Sheet
+        open={open === "art17"}
+        onClose={() => {
+          setOpen(null);
+          setArt17Info(null);
+        }}
+        title="Auf Verlangen löschen (Art. 17)?"
+        message="Name, Adressen, Verlauf und Mails werden gelöscht, auch in Instantly. Gesperrt bleibt der Kontakt. Kunden und Leads werden nicht gelöscht, dafür gibt es eine Aufgabe."
+      >
+        <div className="p-5">
+          {art17Info ? (
+            <p className="text-sm" role="status">{art17Info}</p>
+          ) : (
+            <Button
+              variant="danger"
+              size="md"
+              className="w-full"
+              disabled={pending}
+              onClick={() =>
+                start(async () => {
+                  const r = await art17LoeschenAction(contactId).catch(() => ({ ok: false, message: "Löschen fehlgeschlagen." }));
+                  setArt17Info(r.message);
+                  router.refresh();
+                })
+              }
+            >
+              Daten löschen, Sperre behalten
+            </Button>
+          )}
         </div>
       </Sheet>
     </>
