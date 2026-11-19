@@ -20,12 +20,17 @@
 //   Tierfrage (TKV, tier:<key>:<wert>, z. B. „Ja, gesund“/„War in Behandlung“) → speichern, nächste Tierfrage bzw. Komplettcheck
 // Bedenkzeit zum Angebot (Paket P5, lib/bedenkzeit-server.ts):
 //   „1 Woche“/„2 Wochen“/„Ende des Monats“ (bedenkzeit:1w|2w|monatsende) → eintragen, kurze Bestätigung, Assistent schweigt
-// Alle anderen Knöpfe (z. B. „Katze“, „Heute“, „Ja, gern prüfen“) gehen als normale Antwort an den Assistenten.
+// Erstanschreiben v10/v11 (Ole, 19.11.2026, erstanschreiben.ts ERSTANSCHREIBEN_V10): Knopf auf die feste erste Frage
+//   (Vorlage oder Freitext, Fassung a oder b) → Antwort sofort im Feld der Frage festhalten (TKV „Nur Operationen“ →
+//   tarifwunsch „nur OP-Schutz“), der Assistent bekommt einen Hinweis, bestätigt kurz und fragt nicht erneut.
+// Alle anderen Knöpfe (z. B. „Katze“, „Ja, gern prüfen“) gehen als normale Antwort an den Assistenten.
 // Nur echte Knopf-Klicks zählen: getippt „Nein, danke“ kann eine Antwort auf eine ganz andere Frage sein.
 
 import { a, asAnsprache } from "@/lib/ansprache";
 import { prisma } from "@/lib/prisma";
-import { KNOPF } from "@/lib/whatsapp/templates";
+import { KNOPF, OUTREACH_PURPOSES } from "@/lib/whatsapp/templates";
+import { erstfrageKnopfWert } from "@/lib/whatsapp/erstanschreiben";
+import { mergeQualificationData } from "@/lib/whatsapp/qualification";
 import { WUNSCHZEIT_REGEL } from "@/lib/whatsapp/gespraech";
 
 export type KnopfAktion =
@@ -116,6 +121,31 @@ export function knopfHinweis(k: KnopfAktion, now = new Date()): string | null {
   }
 }
 
+/** Hinweis an den Assistenten nach einem Knopf auf die feste erste Frage (v10/v11, rein, testbar). */
+export function erstfrageHinweis(e: { feld: string; wert: string; frage: string; knopf: string }): string {
+  return `Der Lead hat per Knopf „${e.knopf}“ auf unsere erste Frage („${e.frage}“) geantwortet. Schon festgehalten: angaben.${e.feld} = „${e.wert}“. Bestätige kurz, frag das nicht erneut und mach mit dem Frageplan weiter.`;
+}
+
+/**
+ * Knopf auf die feste erste Frage des Erstanschreibens (v10/v11, Ole 19.11.2026): am Erstanschreiben des Chats erkennen,
+ * Antwort im Feld der Frage speichern (wie record_qualification) und den Hinweis für den Assistenten liefern.
+ * null = kein Knopf dieser Frage.
+ */
+async function erstfrageKnopf(conversationId: string, text: string | null | undefined): Promise<string | null> {
+  const erst = await prisma.message.findFirst({
+    where: { conversationId, direction: "outbound", purpose: { in: [...OUTREACH_PURPOSES] } },
+    orderBy: { createdAt: "desc" },
+    select: { body: true, purpose: true },
+  });
+  const e = erst ? erstfrageKnopfWert(erst.body, text, erst.purpose) : null;
+  if (!e) return null;
+  const prev = (await prisma.conversation.findUnique({ where: { id: conversationId }, select: { qualificationData: true } }))?.qualificationData;
+  const data = mergeQualificationData(prev, { [e.feld]: e.wert });
+  if (data) await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: data } });
+  await prisma.message.create({ data: { conversationId, direction: "internal", kind: "qualification", body: JSON.stringify({ angaben: { [e.feld]: e.wert }, via: "erstfrage_knopf" }), sentBy: "system" } });
+  return erstfrageHinweis(e);
+}
+
 /** Lead „verloren“ mit Grund „Kein Interesse“ und Notiz „kein Bedarf“ (wie Verloren im Kontakt, ohne Warnung). */
 async function markLostKeinBedarf(leadId: string, now: Date): Promise<boolean> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, status: true, airtableId: true, erasedAt: true } });
@@ -156,7 +186,12 @@ export async function handleButtonReply(
   now = new Date(),
 ): Promise<{ handled: boolean; hint?: string | null; zeit?: string | null }> {
   const k = knopfAktion(inbound.kind, inbound.text, inbound.payload);
-  if (!k) return { handled: false };
+  if (!k) {
+    // Knopf auf die feste erste Frage (v10/v11): festhalten, der Assistent antwortet mit Hinweis
+    if (inbound.kind !== "button" && inbound.kind !== "interactive") return { handled: false };
+    const hint = await erstfrageKnopf(conversationId, inbound.text);
+    return hint ? { handled: false, hint } : { handled: false };
+  }
   const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { id: true, customerId: true, leadId: true } });
   if (!conv) return { handled: false };
   const an = asAnsprache((await prisma.customer.findUnique({ where: { id: conv.customerId }, select: { leadAddress: true } }))?.leadAddress);
