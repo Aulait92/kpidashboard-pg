@@ -20,7 +20,7 @@ Test entsteht im Team, lernt aus den bisherigen Tests und entwickelt Hypothesen 
    Fallzahl), bei Pflichtangaben oder Gesundheitsdaten Recht und Datenschutz.
 3. Liefere 3 bis 5 Hypothesen mit Begründung aus den Lehren, wähle eine (genau eine Änderung je Test), formuliere
    Fassung B wörtlich (Sie und Du), Ziel-Kennzahl und Mindestmenge, lass Red Team kurz prüfen.
-4. Trage den Test vor dem Start ins Lernbuch ein; nach der Entscheidung Ergebnis und Lehre, dann sofort den nächsten Test.
+4. Trage den Test vor dem Start ins Lernbuch ein und die Hypothese in `src/lib/ab-hypothesen.ts` (Admin › Liefern › A/B-Tests); nach der Entscheidung Ergebnis und Lehre, dann sofort den nächsten Test.
 
 ## Zielwerte
 - Haupt-KPI: Antwortquote und Terminquote der Lead-Reise

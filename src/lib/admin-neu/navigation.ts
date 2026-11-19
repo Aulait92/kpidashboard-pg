@@ -154,6 +154,7 @@ export const BEREICHE: NeuBereich[] = [
       { view: "leads-alle", pfad: n("/leads/alle"), titel: "Alle Leads", alt: ["/admin/leads"], reiter: { gruppe: "liefern", label: "Leads" }, fertig: true },
       { view: "leads", pfad: n("/leads"), titel: "Lead-Eingang", alt: ["/admin/lead-eingang"], reiter: { gruppe: "liefern", label: "Lead-Eingang" }, suchwoerter: "Formulare Zuordnung Meta", fertig: true },
       { view: "leads-optimierung", pfad: n("/leads/werbekonten"), titel: "Werbekonten", alt: ["/admin/optimierung", "/admin/media-buyer"], reiter: { gruppe: "liefern", label: "Werbekonten" }, suchwoerter: "Optimierung Media Buyer Budget Pool", fertig: true },
+      { view: "leads-ab-tests", pfad: n("/leads/ab-tests"), titel: "A/B-Tests", alt: [], reiter: { gruppe: "liefern", label: "A/B-Tests" }, suchwoerter: "Splittest Experiment Vorlagen Fassung Antwortquote Terminquote Erstanschreiben Hypothese", fertig: true },
       { view: "leads-bezug", pfad: n("/leads/ppl/bezug/[id]"), titel: "Bezug", alt: ["/admin/ppl/bezug/[id]"], fertig: true },
       { view: "leads-konto", pfad: n("/leads/werbekonten/[id]"), titel: "Werbekonto", alt: ["/admin/optimierung/[id]"], fertig: true },
     ],

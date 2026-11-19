@@ -2,10 +2,11 @@
 // Fassung wird automatisch Standard (Cron, Audit-Log „experiment.gewinner“); hier nur lesen.
 import { experimenteUebersicht, type ExperimentUebersicht } from "@/lib/experimente";
 import { ALPHA } from "@/lib/whatsapp/ab-test";
-import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
+import { SPLITTEST_HYPOTHESE } from "@/lib/ab-hypothesen";
 
-const ZIEL: Record<string, string> = { termin_gebucht: "Termin gebucht", komplettcheck_ja: "Komplettcheck ja", erschienen: "Erschienen", zusage: "Zusage in der Präsentation" };
-const pct = (z: number, n: number) => (n ? `${Math.round((z / n) * 1000) / 10} %` : NOCH_KEINE_DATEN);
+const ZIEL: Record<string, string> = { termin_gebucht: "Termin gebucht", komplettcheck_ja: "Komplettcheck ja", erschienen: "Erschienen", zusage: "Zusage" };
+// Ohne Einheiten nur die Zahl (kein „noch keine Daten“, bricht auf dem Handy um)
+const mitQuote = (z: number, n: number) => (n ? `${z} (${Math.round((z / n) * 1000) / 10} %)` : String(z));
 
 function stand(e: ExperimentUebersicht): string {
   if (e.winner) return `Entschieden: Fassung ${e.winner.toUpperCase()} ist Standard.`;
@@ -26,18 +27,24 @@ export async function ExperimenteCard() {
         {liste.map((e) => (
           <li key={e.key} className="rounded-lg border border-[color:var(--border)] p-3">
             <div className="font-medium">
-              {e.titel} <span className="font-normal text-[color:var(--muted)]">· Ziel: {ZIEL[e.ziel] ?? e.ziel}</span>
+              {e.titel}
             </div>
+            {SPLITTEST_HYPOTHESE[e.key] && <p className="mt-0.5">Hypothese: {SPLITTEST_HYPOTHESE[e.key]}</p>}
             <p className="mt-0.5 text-[color:var(--muted)]">{stand(e)}</p>
             <table className="mt-2 w-full max-w-xl">
+              <thead className="text-xs text-[color:var(--muted)]">
+                <tr>
+                  <th className="pr-3 text-left font-normal">Fassung</th>
+                  <th className="pr-3 text-right font-normal">Leads</th>
+                  <th className="text-right font-normal">{ZIEL[e.ziel] ?? "Ziel erreicht"}</th>
+                </tr>
+              </thead>
               <tbody>
                 {(["a", "b"] as const).map((v) => (
                   <tr key={v} className={e.winner === v ? "font-semibold text-emerald-800" : undefined}>
-                    <td className="py-1 pr-3 align-top">Fassung {v.toUpperCase()}</td>
+                    <td className="py-1 pr-3 align-top">{v.toUpperCase()}</td>
                     <td className="py-1 pr-3 text-right tabular-nums">{e.stats[v].n}</td>
-                    <td className="py-1 text-right tabular-nums">
-                      {e.stats[v].ziel} ({pct(e.stats[v].ziel, e.stats[v].n)})
-                    </td>
+                    <td className="py-1 text-right tabular-nums">{mitQuote(e.stats[v].ziel, e.stats[v].n)}</td>
                   </tr>
                 ))}
               </tbody>
