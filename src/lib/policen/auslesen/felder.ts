@@ -324,6 +324,14 @@ export function monatsbetrag(f: Felder): number | null {
   return Math.round((b / RATEN[z]) * 100) / 100;
 }
 
+/** Jahresbetrag aus Beitrag und Zahlweise (gerundet auf Cent, direkt aus dem Beitrag); null ohne beides. */
+export function jahresbetrag(f: Felder): number | null {
+  const b = f.beitrag?.w;
+  const z = f.zahlweise?.w;
+  if (typeof b !== "number" || typeof z !== "string" || !RATEN[z]) return null;
+  return Math.round(b * (12 / RATEN[z]) * 100) / 100;
+}
+
 const euro = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
 const tag = (iso: string) => {
   const [y, m, d] = iso.split("-");

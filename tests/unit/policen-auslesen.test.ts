@@ -28,6 +28,7 @@ import {
 import { sparteVorab, spartenImText } from "@/lib/policen/auslesen/sparte";
 import { naechsteKuendigung, zusammenfassung } from "@/lib/policen/auslesen/zusammenfassung";
 import { AUSLESEN_SYSTEM } from "@/lib/policen/auslesen/prompt";
+import { plausibel, unplausibel } from "@/lib/policen/auslesen/plausibel";
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 
 const GESUNDHEITS_FELD_RE = /zuschlag|ausschlu|diagnos|vorerkrank|gewicht|groesse|größe|raucher|gesundheit|krankheit|bmi/i;
@@ -157,6 +158,76 @@ describe("Sparte vorab, ohne KI", () => {
     expect(sparteVorab({})).toBeNull();
     expect(spartenImText("Berufsunfähigkeitsversicherung")).toEqual(["bu"]);
   });
+
+  it("erweiterte Stichworte: PHV, Autoversicherung, Haftpflicht und Kfz allein, Kfz-Haftpflicht ist Kfz", () => {
+    expect(sparteVorab({ text: "Versicherungsschein PHV Single" })).toEqual({ sparte: "haftpflicht", quelle: "text" });
+    expect(sparteVorab({ text: "Ihre Autoversicherung 2027" })).toEqual({ sparte: "kfz", quelle: "text" });
+    expect(sparteVorab({ text: "Nachtrag zum Vertrag Haftpflicht, Deckungssumme 50 Mio." })).toEqual({ sparte: "haftpflicht", quelle: "text" });
+    expect(sparteVorab({ text: "Beitragsrechnung Kfz, amtl. Kennzeichen" })).toEqual({ sparte: "kfz", quelle: "text" });
+    // Kfz-Police mit Zeile „Haftpflicht“ bzw. „Kfz-Haftpflichtversicherung“: nur Kfz, nicht zwei Sparten
+    expect(spartenImText("Kfz-Haftpflichtversicherung Teilkasko Haftpflicht 100 Mio.")).toEqual(["kfz"]);
+    expect(spartenImText("Kraftfahrtversicherung, Insassen-Unfallversicherung")).toEqual(["kfz"]);
+    // Haftpflicht-Komposita anderer Sparten sind keine Privathaftpflicht
+    expect(sparteVorab({ text: "Haus- und Grundbesitzerhaftpflichtversicherung" })).toBeNull();
+    expect(sparteVorab({ text: "Berufshaftpflichtversicherung für Architekten" })).toBeNull();
+    expect(sparteVorab({ text: "Bauherrenhaftpflicht" })).toBeNull();
+    expect(spartenImText("Wohngebäudeversicherung inkl. Grundbesitzerhaftpflicht")).toEqual(["wohngebaeude"]);
+    // Schwache Wörter zählen nicht neben einem eindeutigen
+    expect(spartenImText("Rechtsschutzversicherung Verkehr für Kfz")).toEqual(["rechtsschutz"]);
+    expect(spartenImText("Privathaftpflicht, Schäden durch Kfz nicht versichert")).toEqual(["haftpflicht"]);
+  });
+
+  it("Glas allein bleibt offen, mit Hausrat bzw. Wohngebäude eindeutig", () => {
+    expect(sparteVorab({ text: "Glasversicherung Glasbruch" })).toBeNull();
+    expect(sparteVorab({ text: "Hausrat- und Glasversicherung" })).toEqual({ sparte: "hausrat", quelle: "text" });
+    expect(sparteVorab({ text: "Wohngebäudeversicherung mit Glasbruch" })).toEqual({ sparte: "wohngebaeude", quelle: "text" });
+  });
+
+  it("PKV, BU und Leben nie aus schwachen Stichworten", () => {
+    for (const t of ["Leben", "Rente 2027", "BU", "Tarif Kranken", "Beihilfe", "Vorsorge", "Gesundheit", "Haftpflicht für Ärzte"]) {
+      const r = spartenImText(t);
+      for (const s of ["pkv", "bu", "leben"]) expect(r, t).not.toContain(s);
+    }
+  });
+});
+
+describe("Plausibilitätsregeln", () => {
+  const f = (x: Record<string, unknown>): Felder => Object.fromEntries(Object.entries(x).map(([k, w]) => [k, { w: w as never, s: "ok" as const }]));
+
+  it("Ablauf vor Beginn: beide bitte prüfen", () => {
+    const r = plausibel(f({ beginn: "2026-05-01", ablauf: "2025-05-01", versicherer: "HUK" }), "hausrat");
+    expect(r.beginn.s).toBe("pruefen");
+    expect(r.ablauf.s).toBe("pruefen");
+    expect(r.versicherer.s).toBe("ok");
+    expect(r.ablauf.w).toBe("2025-05-01");
+    expect(unplausibel(f({ beginn: "2024-05-01", ablauf: "2025-05-01" }), "hausrat")).toEqual([]);
+  });
+
+  it("Kündigungsfrist über 12 Monate", () => {
+    expect(unplausibel(f({ kuendigungsfrist_monate: 13 }), "kfz")).toEqual(["kuendigungsfrist_monate"]);
+    expect(unplausibel(f({ kuendigungsfrist_monate: 12 }), "kfz")).toEqual([]);
+  });
+
+  it("Monatsbeitrag Sach über 500 €, Personenversicherung nicht", () => {
+    expect(unplausibel(f({ beitrag: 6100, zahlweise: "jaehrlich" }), "haftpflicht")).toEqual(["beitrag"]);
+    expect(unplausibel(f({ beitrag: 6000, zahlweise: "jaehrlich" }), "haftpflicht")).toEqual([]);
+    expect(unplausibel(f({ beitrag: 900, zahlweise: "monatlich" }), "pkv")).toEqual([]);
+  });
+
+  it("Deckungssumme unter 1 Mio.", () => {
+    expect(unplausibel(f({ deckungssumme: 500_000 }), "haftpflicht")).toEqual(["deckungssumme"]);
+    expect(unplausibel(f({ deckungssumme: 1_000_000 }), "haftpflicht")).toEqual([]);
+  });
+
+  it("Versicherungssumme unter 1.000 €", () => {
+    expect(unplausibel(f({ versicherungssumme: 650 }), "hausrat")).toEqual(["versicherungssumme"]);
+    expect(unplausibel(f({ versicherungssumme: 65_000 }), "hausrat")).toEqual([]);
+  });
+
+  it("nichts auffällig: dasselbe Objekt zurück", () => {
+    const x = f({ beitrag: 10, zahlweise: "monatlich" });
+    expect(plausibel(x, "hausrat")).toBe(x);
+  });
 });
 
 describe("Schalter und Konfiguration", () => {
@@ -227,9 +298,9 @@ describe("Zusammenfassung", () => {
     expect(z.monatSumme).toBe(5 + 8 + 10 + 612.4);
     expect(z.vertraege).toBe(4);
     expect(z.ungeprueft).toBe(3);
-    expect(z.doppelt).toEqual(["haftpflicht"]);
+    expect(z.doppelt).toEqual([{ sparte: "haftpflicht", ids: ["a", "b"], versicherer: ["HUK", "Allianz"], monatSumme: 13 }]);
     expect(z.bausteine.map((b) => b.text)).toEqual(["Haftpflicht ohne Forderungsausfall", "Hausrat ohne Elementarschäden"]);
-    expect(z.kuendigungen).toEqual([{ id: "a", sparte: "haftpflicht", versicherer: "HUK", zum: "2027-01-01", bis: "2026-12-01" }]);
+    expect(z.kuendigungen).toEqual([{ id: "a", sparte: "haftpflicht", versicherer: "HUK", zum: "2027-01-01", bis: "2026-11-30", jahresbetrag: 60, tageBis: 12, verpasst: null, genannt: false }]);
     // Keine Hinweise zu PKV/BU/Leben (kein Risiko-Scoring, K8)
     expect(z.bausteine.some((b) => /Kranken|BU|Leben/.test(b.text))).toBe(false);
   });
@@ -243,8 +314,8 @@ describe("Zusammenfassung", () => {
   });
 
   it("nächste Kündigung: Ablauf jährlich fortgeschrieben, genannter Termin geht vor", () => {
-    expect(naechsteKuendigung(f({ ablauf: "2020-03-01", kuendigungsfrist_monate: 3 }), "2026-11-18")).toEqual({ zum: "2027-03-01", bis: "2026-12-01" });
-    expect(naechsteKuendigung(f({ ablauf: "2020-01-01", kuendigungsfrist_monate: 3 }), "2026-11-18")).toEqual({ zum: "2028-01-01", bis: "2027-10-01" });
+    expect(naechsteKuendigung(f({ ablauf: "2020-03-01", kuendigungsfrist_monate: 3 }), "2026-11-18")).toEqual({ zum: "2027-03-01", bis: "2026-11-30" });
+    expect(naechsteKuendigung(f({ ablauf: "2020-01-01", kuendigungsfrist_monate: 3 }), "2026-11-18")).toEqual({ zum: "2028-01-01", bis: "2027-09-30" });
     expect(naechsteKuendigung(f({ naechster_kuendigungstermin: "2027-02-01", ablauf: "2020-01-01" }), "2026-11-18")).toEqual({ zum: "2027-02-01", bis: null });
     expect(naechsteKuendigung(f({}), "2026-11-18")).toBeNull();
   });

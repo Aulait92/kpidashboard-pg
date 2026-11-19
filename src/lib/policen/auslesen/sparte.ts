@@ -13,24 +13,38 @@ export function ausUnterlagenSparte(s: string | null | undefined): AuslesenSpart
   return isAuslesenSparte(s) ? s : null;
 }
 
-// Reihenfolge wie lib/policen/regeln.ts: Tier zuerst (Tierhalterhaftpflicht, Tier-OP), dann Personen-, dann Sach
+// Reihenfolge wie lib/policen/regeln.ts: Tier zuerst (Tierhalterhaftpflicht, Tier-OP), dann Personen-, dann Sach.
+// PKV, BU und Leben nur aus eindeutigen Wörtern (nie aus schwachen Stichworten unten).
+// Haftpflicht-Komposita anderer Sparten zählen nicht als Privathaftpflicht (Kfz-Haftpflicht, Haus- und
+// Grundbesitzerhaftpflicht, Bauherren-, Berufs-, Betriebs-, Tierhalter-, Gewässerschadenhaftpflicht).
+const NICHT_PRIVAT = "(?<!kfz[- ]?|kraftfahrzeug[- ]?|fahrzeug[- ]?|grundbesitzer[- ]?|bauherren[- ]?|berufs[- ]?|betriebs[- ]?|halter[- ]?|gew(?:ä|ae)sserschaden[- ]?|vermögensschaden[- ]?|amts[- ]?|dienst[- ]?)";
 const STICHWORTE: [RegExp, AuslesenSparte | "andere"][] = [
   [/(tier|hunde?|katzen?|pferde?)\s*-?\s*(op|kranken|halter|haftpflicht)/i, "andere"],
-  [/pflegeversicherung|pflegetagegeld|unfallversicherung|zahnzusatz/i, "andere"],
+  // Insassen-Unfall ist ein Baustein der Kfz-Versicherung, keine eigene Unfallversicherung
+  [/pflegeversicherung|pflegetagegeld|(?<!insassen[- ]?)unfallversicherung|zahnzusatz/i, "andere"],
   [/berufsunf(ä|ae)higkeit|\bbuz\b|\bbu-rente\b/i, "bu"],
   [/krankenversicherung|krankheitskosten|krankentagegeld|\bpkv\b/i, "pkv"],
   [/lebensversicherung|risikolebens|rentenversicherung|altersvorsorge|r(ü|ue)rup|riester/i, "leben"],
   [/wohngeb(ä|ae)ude|geb(ä|ae)udeversicherung/i, "wohngebaeude"],
   [/hausrat/i, "hausrat"],
   [/rechtsschutz/i, "rechtsschutz"],
-  [/kraftfahrt|kfz-versicherung|kfz-haftpflicht|teilkasko|vollkasko|fahrzeugversicherung/i, "kfz"],
-  [/privathaftpflicht|haftpflichtversicherung|privat-haftpflicht/i, "haftpflicht"],
+  [/kraftfahrt|kfz-versicherung|kfz-haftpflicht|teilkasko|vollkasko|fahrzeugversicherung|auto-?versicherung/i, "kfz"],
+  [new RegExp(`privathaftpflicht|privat-haftpflicht|\\bphv\\b|${NICHT_PRIVAT}haftpflichtversicherung`, "i"), "haftpflicht"],
 ];
 
-/** Alle Sparten, die ein Text nennt (Seite 1). */
+// Schwache Stichworte: nur, wenn kein eindeutiges Wort auf der Seite steht (z. B. Kfz-Police mit Zeile „Haftpflicht“
+// würde sonst zwei Sparten ergeben). Glas allein bleibt offen (Hausrat oder Wohngebäude, nicht eindeutig).
+const SCHWACH: [RegExp, AuslesenSparte][] = [
+  [new RegExp(`${NICHT_PRIVAT}haftpflicht`, "i"), "haftpflicht"],
+  [/\bkfz\b|\bpkw\b/i, "kfz"],
+];
+
+/** Alle Sparten, die ein Text nennt (Seite 1). Schwache Stichworte nur, wenn kein eindeutiges Wort vorkommt. */
 export function spartenImText(text: string): (AuslesenSparte | "andere")[] {
   const t = text.replace(/\s+/g, " ");
-  return [...new Set(STICHWORTE.filter(([re]) => re.test(t)).map(([, s]) => s))];
+  const stark = [...new Set(STICHWORTE.filter(([re]) => re.test(t)).map(([, s]) => s))];
+  if (stark.length) return stark;
+  return [...new Set(SCHWACH.filter(([re]) => re.test(t)).map(([, s]) => s))];
 }
 
 /**

@@ -13,6 +13,17 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
   sagt). Je Vertrag eine Karte mit den gefundenen Feldern, „Ausgelesen, bitte prüfen“, unsichere Felder „bitte prüfen“,
   Link „Original“. Knöpfe: „Bearbeiten“ (Speichern gilt als geprüft), „Werte stimmen“, danach „In Bestand übernehmen“.
   Unten Unterlagen, die nicht ausgelesen wurden, mit der nächsten Handlung (Sparte wählen, erneut versuchen, Original).
+- **Fragen für den Termin** (19.11.2026, `auslesen/zusammenfassung.ts`, rein; Anzeige folgt mit dem Umbau der
+  Vertragsseite): feste Vorlagen, Sie-Form, Euro nur als Beitrag „laut Unterlage“. Reihenfolge: Kündigungsfristen
+  (nach Tagen, dann Beitrag), doppelt, Bausteine „nein“, nicht geschickt. Regeln (K8): Kündigungen nur Sach (Haftpflicht,
+  Hausrat, Wohngebäude, Rechtsschutz, Kfz); „doppelt“ nur Haftpflicht, Hausrat, Rechtsschutz (mit beiden Versicherern,
+  Summe nur, wenn alle Beiträge bekannt); nie PKV, BU, Leben. Frist vorsichtig: „bis“ = (Termin minus Frist) minus
+  1 Tag; „noch n Tage“ nur mit Frist aus dem Dokument, Tagesgrenze Europe/Berlin; verpasste Frist mit nächster
+  Kündigung; ohne Frist „Kündigungsfrist im Original prüfen“. „Nicht geschickt“ (Haftpflicht, Hausrat, Rechtsschutz)
+  gegen die Sparten aller Unterlagen, entfällt bei „ohne KI“, ohne Auszug oder wenn eine Unterlage keine Sparte hat.
+- **Plausibilität** (`auslesen/plausibel.ts`, nach `bereinige()`): „bitte prüfen“ bei Ablauf vor Beginn,
+  Kündigungsfrist über 12 Monate, Monatsbeitrag Sach über 500 €, Deckungssumme unter 1 Mio., Versicherungssumme unter
+  1.000 €. Werte bleiben unverändert.
 - Nur der zuständige Vermittler bzw. Inhaber (`appointmentScope`, `writableCustomerId`). Admin-Vorschau: keine Inhalte.
 - Keine Beratung, keine Bewertung: keine Hinweise zu PKV, BU, Leben (K8, kein Risiko-Scoring).
 
@@ -26,8 +37,10 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
    `.g1` (`konfig.ts textVersionKi`). PKV, BU und Leben nur mit der Fassung, die Gesundheitsangaben nennt (`.gN`).
    Ablehnung, Widerruf, alte Einwilligungen oder fehlende Tabelle: nie.
 4. **Sparte vorab, ohne KI** (K2): Wahl des Vermittlers, sonst Sparte der Unterlage (Dateiname/Begleittext) und
-   Stichworte auf Seite 1 der PDF-Textebene (lokal mit pdf.js). Widerspruch, mehrere Sparten oder unklar: nicht
-   auslesen, der Vermittler wählt. Meldet die KI danach eine andere Sparte: nichts übernommen.
+   Stichworte auf Seite 1 der PDF-Textebene (lokal mit pdf.js; dazu PHV, Autoversicherung; „Haftpflicht“ bzw. „Kfz“
+   allein nur, wenn kein eindeutiges Wort dasteht; Kfz-, Grundbesitzer-, Berufs-Haftpflicht zählen nicht als
+   Privathaftpflicht; Glas allein bleibt offen; PKV, BU, Leben nie aus schwachen Stichworten). Widerspruch, mehrere
+   Sparten oder unklar: nicht auslesen, der Vermittler wählt. Meldet die KI danach eine andere Sparte: nichts übernommen.
 5. **Sparte freigegeben** (K2): Haftpflicht, Hausrat, Kfz, Wohngebäude, Rechtsschutz sofort. PKV, BU, Leben erst,
    wenn im Admin (Einstellungen → Anbindungen → „KI für Unterlagen“) der Nachweis „keine Speicherung“ beim Anbieter
    mit Datum und Referenz hinterlegt ist (OpenAI: EU-Projekt mit Zero Data Retention). Optional einschränkbar mit

@@ -24,7 +24,9 @@ const DT = "text-[color:var(--muted)]";
 export function Vergleichsblatt({ terminId, leadId, v, readOnly }: { terminId: string; leadId: string; v: Vergleich; readOnly: boolean }) {
   const z = v.zusammenfassung;
   const original = (docId: string) => `/api/buyer/leads/${leadId}/unterlagen/${docId}`;
-  const hinweise = [...z.doppelt.map((s) => `${SPARTE_LABEL[s]} zweimal vorhanden`), ...z.bausteine.map((b) => b.text)];
+  const hinweise = [...z.doppelt.map((d) => `${SPARTE_LABEL[d.sparte]} zweimal vorhanden`), ...z.bausteine.map((b) => b.text)];
+  // Verpasste Fristen zeigt erst die neue Fragenliste (Paket 2); hier nur Kündigungen der nächsten 3 Monate
+  const kuendbar = z.kuendigungen.filter((k) => !k.verpasst);
 
   return (
     <div className="space-y-4" data-vergleichsblatt>
@@ -46,9 +48,9 @@ export function Vergleichsblatt({ terminId, leadId, v, readOnly }: { terminId: s
                 <p className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold">
                   <CalendarClock className="h-4 w-4 text-[color:var(--muted)]" /> Kündbar in den nächsten 3 Monaten
                 </p>
-                {z.kuendigungen.length ? (
+                {kuendbar.length ? (
                   <ul className="space-y-1">
-                    {z.kuendigungen.map((k) => (
+                    {kuendbar.map((k) => (
                       <li key={k.id}>
                         <span className="font-medium">{SPARTE_LABEL[k.sparte]}</span>
                         {k.versicherer ? <span className={DT}> ({k.versicherer})</span> : null}: zum {tag(k.zum)}

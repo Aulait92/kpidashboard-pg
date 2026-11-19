@@ -44,7 +44,8 @@ import {
   type AuslesenSparte,
   type Felder,
 } from "@/lib/policen/auslesen/felder";
-import { ersteSeiteText, sparteVorab } from "@/lib/policen/auslesen/sparte";
+import { ausUnterlagenSparte, ersteSeiteText, sparteVorab } from "@/lib/policen/auslesen/sparte";
+import { plausibel } from "@/lib/policen/auslesen/plausibel";
 import { kiAbgelehnt } from "@/lib/policen/ohne-ki";
 import { zusammenfassung, type Zusammenfassung } from "@/lib/policen/auslesen/zusammenfassung";
 import type { DokumentTyp } from "@/lib/policen/auslesen/anbieter/typ";
@@ -251,6 +252,7 @@ export async function liesUnterlageAus(documentId: string, o: { sparte?: Auslese
     return { status: "fehler" };
   }
   const b = bereinige(r.roh, vorab.sparte);
+  b.felder = plausibel(b.felder, vorab.sparte);
   // Andere Sparte laut Dokument: nichts übernehmen (im Zweifel nicht auslesen); der Vermittler kann die Sparte wählen
   if (b.sparte !== vorab.sparte) {
     await setze({ status: "sparte_abweichend", sparte: vorab.sparte, sparteQuelle: vorab.quelle, felder: Prisma.DbNull, versuche: { increment: 1 }, anbieter: anbieter.name, modell: r.modell, ausgelesenAt: now });
@@ -317,6 +319,19 @@ export type Vergleich = {
   bestand: boolean;
 };
 
+/** Sparten aller Unterlagen (Auszug, sonst Einordnung der Unterlage) für „Nicht geschickt“; ohne Sparte gezählt. */
+function unterlagenSparten(docs: { sparte: string | null; auszug: { sparte: string | null } | null }[]) {
+  const sparten: AuslesenSparte[] = [];
+  let ohne = 0;
+  for (const d of docs) {
+    const ausgelesen = d.auszug?.sparte;
+    const sp = isAuslesenSparte(ausgelesen) ? ausgelesen : ausUnterlagenSparte(d.sparte);
+    if (sp) sparten.push(sp);
+    else if (!d.sparte || d.sparte === "sonstig") ohne++;
+  }
+  return { unterlagenSparten: sparten, unterlagenOhneSparte: ohne };
+}
+
 /** Daten für das Vergleichsblatt. Zugriff prüft der Aufrufer (leadScope); in der Admin-Vorschau nie aufrufen. */
 export async function ladeVergleich(leadId: string, customerId: string, now = new Date()): Promise<Vergleich> {
   const { loadBestandVisible } = await import("@/lib/bestand/sichtbar-server");
@@ -368,6 +383,7 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
     zusammenfassung: zusammenfassung(
       vertraege.map((v) => ({ id: v.id, sparte: v.sparte, felder: v.felder, geprueft: v.geprueft })),
       now,
+      { ...unterlagenSparten(docs), ohneKi },
     ),
     sparten: freigegebeneSparten({ zdr }),
     bestand,
