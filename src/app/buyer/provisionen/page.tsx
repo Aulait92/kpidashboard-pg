@@ -41,7 +41,7 @@ export default async function ProvisionenPage() {
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader back="/buyer/einstellungen"
         title="Meine Provisionen"
-        subtitle="Damit schätzt die App bei jedem Abschluss Ihre Provision. Vorausgefüllt mit üblichen Werten, passen Sie sie bei Bedarf an Ihren Vertrag an."
+        subtitle="Damit schätzt die App bei jedem Abschluss Ihre Provision."
       />
       <ProvisionForm
         typ={provision.typ}
