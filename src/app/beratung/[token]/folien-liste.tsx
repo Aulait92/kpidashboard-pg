@@ -5,12 +5,32 @@
 // Handy (16.11.2026): Auf 390 px ist die Schrift einer 1280-px-Folie rund 7 px groß. Antippen öffnet die Folie
 // bildschirmfüllend, im Hochformat quer gedreht, damit sie lesbar ist.
 // Messung (19.11.2026): jede Folie, die zur Hälfte sichtbar war, einmal melden (onFolie); keine Lesedauer, kein Gerät.
+// Fassung C (19.11.2026): mit onPaket sind die Paketkarten auf „Ihre Entscheidung“ antippbar (auch in der großen
+// Ansicht); ohne bleiben sie reine Anzeige wie alle anderen Schalter.
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 
-export function FolienListe({ css, folien, onFolie }: { css: string; folien: { id: string; html: string }[]; onFolie?: (id: string) => void }) {
+/** Antippen einer Paketkarte: die Indizes aus data-paket, sonst null (dann normal weiter, z. B. vergrößern). */
+function paketAusKlick(ev: React.MouseEvent): number[] | null {
+  const el = (ev.target as HTMLElement).closest<HTMLElement>("[data-paket]");
+  const v = el?.dataset.paket;
+  return v && /^\d{1,2}(,\d{1,2}){0,7}$/.test(v) ? v.split(",").map(Number) : null;
+}
+
+export function FolienListe({
+  css,
+  folien,
+  onFolie,
+  onPaket,
+}: {
+  css: string;
+  folien: { id: string; html: string }[];
+  onFolie?: (id: string) => void;
+  /** Paket gewählt (Fassung C, vor der Zusage) */
+  onPaket?: (items: number[]) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
   const [gross, setGross] = useState<number | null>(null);
@@ -54,13 +74,23 @@ export function FolienListe({ css, folien, onFolie }: { css: string; folien: { i
     <>
       {klein ? <p className="mb-2 text-sm text-[color:var(--muted)]">Zum Vergrößern eine Folie antippen.</p> : null}
       <div ref={ref} className="flex flex-col gap-4" data-kundenfolien>
-        <style>{`${css}\n.nurlesen .bs,.nurlesen .wahl,.nurlesen .teil,.nurlesen .st,.nurlesen .pk{cursor:default;pointer-events:none}\n.nurlesen .zusage,.nurlesen .zusage-zeile{display:none}`}</style>
+        <style>{`${css}\n.nurlesen .bs,.nurlesen .wahl,.nurlesen .teil,.nurlesen .st,.nurlesen .pk{cursor:default;pointer-events:none}\n.nurlesen .zusage,.nurlesen .zusage-zeile{display:none}${
+          // Handy: erst vergrößern (Folie antippen), dort das Paket wählen; ab Tablet direkt in der Liste
+          onPaket ? "\n.nurlesen button.pk{cursor:pointer;pointer-events:auto}" : ""
+        }`}</style>
         {folien.map((f, i) => (
           <div
             key={f.id}
             data-folie-id={f.id}
             className="relative w-full overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] shadow-[var(--shadow-sm)]"
             style={{ aspectRatio: "16 / 9" }}
+            onClickCapture={(ev) => {
+              const p = onPaket ? paketAusKlick(ev) : null;
+              if (p) {
+                ev.stopPropagation();
+                onPaket!(p);
+              }
+            }}
           >
             <div className="deck nurlesen absolute left-0 top-0" style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: f.html }} />
             {klein ? (
@@ -69,13 +99,13 @@ export function FolienListe({ css, folien, onFolie }: { css: string; folien: { i
           </div>
         ))}
       </div>
-      {gross != null ? <FolieGross html={folien[gross].html} onClose={() => setGross(null)} /> : null}
+      {gross != null ? <FolieGross html={folien[gross].html} onClose={() => setGross(null)} onPaket={onPaket} /> : null}
     </>
   );
 }
 
 /** Eine Folie bildschirmfüllend; im Hochformat um 90° gedreht. */
-function FolieGross({ html, onClose }: { html: string; onClose: () => void }) {
+function FolieGross({ html, onClose, onPaket }: { html: string; onClose: () => void; onPaket?: (items: number[]) => void }) {
   const [vp, setVp] = useState({ w: 390, h: 844 });
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -104,7 +134,19 @@ function FolieGross({ html, onClose }: { html: string; onClose: () => void }) {
   const s = Math.min(breite / 1280, hoehe / 720);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90" onClick={onClose} role="dialog" aria-modal="true" data-folie-vollbild>
-      <div ref={ref} style={{ width: 1280 * s, height: 720 * s }} className="relative shrink-0 overflow-hidden rounded-md bg-white">
+      <div
+        ref={ref}
+        style={{ width: 1280 * s, height: 720 * s }}
+        className="relative shrink-0 overflow-hidden rounded-md bg-white"
+        onClick={(ev) => {
+          // Paketkarte antippen wählt, statt die große Ansicht zu schließen
+          const p = onPaket ? paketAusKlick(ev) : null;
+          if (p) {
+            ev.stopPropagation();
+            onPaket!(p);
+          }
+        }}
+      >
         <div className="deck nurlesen absolute left-0 top-0" style={{ width: 1280, height: 720, transform: `scale(${s})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: html }} />
       </div>
       <button

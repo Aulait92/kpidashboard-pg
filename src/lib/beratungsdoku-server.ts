@@ -18,6 +18,8 @@ import { prisma } from "@/lib/prisma";
 import { asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { appointmentScope, type TeamCtx } from "@/lib/team";
 import { beitragAus, beitragEffektiv, cleanAngebote, gewaehlte } from "@/lib/angebote-daten";
+import { abweichungVonEmpfehlung } from "@/lib/praesentation";
+import { zusageAm } from "@/lib/praesentation-messung";
 import { angebotThema, kombiSatz } from "@/lib/angebot-senden";
 import { topicOf } from "@/lib/lead-sequences";
 import { istTierLead } from "@/lib/gesundheitsdaten";
@@ -138,12 +140,17 @@ function tarifeAus(offersJson: unknown, fallbackThema: string) {
   const alle = d.items.filter((i) => !i.zusatz);
   const items = gewaehlte(d).filter((i) => !i.zusatz);
   const thema = items.length ? angebotThema(items.map((i) => i.sparte), fallbackThema) : fallbackThema;
+  // „Empfehlung mit Begründung“ nennt die empfohlene Stufe je Sparte, auch wenn der Kunde anders gewählt hat (die Wahl
+  // steht dann unter „Entscheidung des Kunden“); ohne Empfehlung die gewählte
+  const empfohlen = items.map((i) => d.items.find((x) => x.sparte === i.sparte && x.empfohlen) ?? i);
   return {
     thema,
-    auswahl: items.map((i) => ({ sparte: i.sparte, gesellschaft: i.gesellschaft, tarif: i.tarif, beitrag: beitragEffektiv(i), leistungen: i.leistungen })),
+    auswahl: empfohlen.map((i) => ({ sparte: i.sparte, gesellschaft: i.gesellschaft, tarif: i.tarif, beitrag: beitragEffektiv(i), leistungen: i.leistungen })),
     tarife: alle.map((i) => ({ sparte: i.sparte, gesellschaft: i.gesellschaft, tarif: i.tarif, beitrag: beitragEffektiv(i), gewaehlt: i.gewaehlt })),
     kombi: kombiSatz(beitragAus(d).rabatt, thema),
     schutz: d.schutz ?? [],
+    // Auswahl abweichend von der Empfehlung (Vermerk unter „Entscheidung des Kunden“, wenn zugesagt)
+    abweichung: abweichungVonEmpfehlung(d),
   };
 }
 
@@ -221,7 +228,8 @@ async function infoFuer(t: Termin, ctx: TeamCtx, now: Date): Promise<BdInfo> {
     import("@/lib/mail/lead-versand"),
   ]);
   const { klaerenPunkte } = await import("@/lib/terminvorbereitung-neu");
-  const { thema, auswahl, tarife, kombi, schutz } = tarifeAus(t.offersJson, topicOf(lead.formData, lead.source, an));
+  const { thema, auswahl, tarife, kombi, schutz, abweichung } = tarifeAus(t.offersJson, topicOf(lead.formData, lead.source, an));
+  const zusage = !!(await zusageAm(t.id));
   const entwurf = beratungsdokuEntwurf({
     an,
     produkt: thema,
@@ -239,6 +247,8 @@ async function infoFuer(t: Termin, ctx: TeamCtx, now: Date): Promise<BdInfo> {
     vertraege,
     status: lead.status,
     ergebnis: t.status === "completed",
+    zusage,
+    abweichung,
   });
   const k = await leadVersandKontext(lead.customerId, { leadId: lead.id, schreiber: ctx.userId ?? null, nurLesen: true });
   const email = lead.email?.trim() || conv?.contactEmail?.trim() || null;

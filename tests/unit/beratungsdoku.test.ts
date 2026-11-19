@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { BD_ABSCHNITTE, bdFehlt, bdMail, bdPdfInhalt, bdSauber, bdSeitenText, beratungsdokuEntwurf, entscheidungVorschlag } from "@/lib/beratungsdoku";
+import { abweichungVermerk, BD_ABSCHNITTE, bdFehlt, bdMail, bdPdfInhalt, bdSauber, bdSeitenText, beratungsdokuEntwurf, entscheidungVorschlag } from "@/lib/beratungsdoku";
 import { GRUENDE_ERGAENZEN } from "@/lib/mail/beratung";
 import { terminKartenAktionen } from "@/lib/termin-karte";
 
@@ -150,3 +150,28 @@ describe("Terminkarte mit Beratungsdokumentation", () => {
     expect([vorher.haupt, ...vorher.zweit, ...vorher.mehr]).not.toContain("beratungsdoku");
   });
 });
+
+describe("Beratungsdokumentation: Vermerk bei Abweichung von der Empfehlung (Präsentation Fassung C)", () => {
+  const ab = { statt: [{ sparte: "Privathaftpflicht", gewaehlt: "Haftpflicht Smart", empfohlen: "Haftpflicht Komfort" }], unterschied: ["ohne Schlüsselverlust beruflich", "Versicherungssumme 20 Mio. €"], guenstiger: true };
+
+  it("Sie und Du, welche Tarife statt welcher Empfehlung, Unterschied laut Folie, ohne Gedankenstriche", () => {
+    expect(abweichungVermerk("sie", ab)).toBe(
+      "Sie haben sich trotz unserer Empfehlung für die günstigere Variante entschieden: Haftpflicht Smart statt Haftpflicht Komfort.\nUnterschied laut Präsentation: ohne Schlüsselverlust beruflich, Versicherungssumme 20 Mio. €.",
+    );
+    expect(abweichungVermerk("du", ab)).toMatch(/^Du hast dich trotz unserer Empfehlung für die günstigere Variante entschieden/);
+    const zwei = { ...ab, statt: [...ab.statt, { sparte: "Hausrat", gewaehlt: "Hausrat Smart", empfohlen: "Hausrat Komfort" }], unterschied: [], guenstiger: false };
+    expect(abweichungVermerk("sie", zwei)).toBe("Sie haben sich abweichend von unserer Empfehlung entschieden: Haftpflicht Smart statt Haftpflicht Komfort und Hausrat Smart statt Hausrat Komfort.");
+    expect(strich.test(abweichungVermerk("sie", ab) + abweichungVermerk("du", zwei))).toBe(false);
+  });
+
+  it("im Entwurf nur mit Zusage bzw. Abschluss; Absage hat Vorrang; Zusage ohne Abweichung: für die Empfehlung", () => {
+    expect(beratungsdokuEntwurf({ ...quellen, zusage: true, abweichung: ab }).entscheidung).toContain("trotz unserer Empfehlung");
+    expect(beratungsdokuEntwurf({ ...quellen, status: "Abschluss", abweichung: ab }).entscheidung).toContain("trotz unserer Empfehlung");
+    expect(beratungsdokuEntwurf({ ...quellen, abweichung: ab }).entscheidung).toBe("");
+    expect(beratungsdokuEntwurf({ ...quellen, status: "kein Interesse", zusage: true, abweichung: ab }).entscheidung).toBe("Sie haben sich gegen einen Abschluss entschieden.");
+    expect(beratungsdokuEntwurf({ ...quellen, zusage: true }).entscheidung).toBe("Sie haben sich für die Empfehlung entschieden.");
+    // Der Vermerk ist fertiger Text (keine Stelle zum Ergänzen), der Vermittler kann ihn trotzdem ändern
+    expect(beratungsdokuEntwurf({ ...quellen, zusage: true, abweichung: ab }).entscheidung).not.toContain(GRUENDE_ERGAENZEN);
+  });
+});
+

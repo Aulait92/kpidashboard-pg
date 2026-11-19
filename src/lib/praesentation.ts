@@ -505,8 +505,8 @@ const zusatzAus = (i: AngebotItem, items?: AngebotItem[]) => !!i.zusatz && !(ite
  * Einwänden vorweg (Widerruf, Unterlagen, Kündigung des bisherigen Vertrags) und dem Schritt „Ja, so machen wir es“.
  * Seit 19.11.2026 Standard für alle Termine (ohne Angabe: A, nur noch für Tests).
  *
- * Variante C (Herausforderer gegen B, Splittest „praesentation“, 19.11.2026; Analyse mit Vertriebscoach, UX, Texter,
- * vier Personas und Rechtsblick): wie B, aber
+ * Variante C (Herausforderer gegen B, Splittest „praesentation“, 19.11.2026, von Ole freigegeben; Analyse mit
+ * Vertriebscoach, UX, Texter, vier Personas und Rechtsblick): wie B, aber
  *   1. Einstieg mit dem Anliegen des Kunden: Begrüßung und „Das haben Sie uns gesagt“ auf einer Folie („Darum geht es
  *      Ihnen“, Prüffrage „Stimmt das so?“), Ablauf in einer Zeile.
  *   2. Kein eigener „Ihr Beitrag“: Der Beitrag steht einmal, direkt an der Entscheidung (bis zur Entscheidung zwei
@@ -839,6 +839,47 @@ export type EntscheidungsPaket = {
 };
 
 /**
+ * Unterschied einer Auswahl zur Empfehlung (gleiche Reihenfolge der Sparten), wie an der Paketkarte: ehrlich zeigen,
+ * was anders ist (nicht nur das Fehlende), damit niemand es für gleichwertig hält. Je Sparte zuerst „ohne …“, dann
+ * andere Werte; reihum über die Sparten, damit jede Sparte vorkommt; höchstens max.
+ */
+function unterschiedeZu(empf: AngebotItem[], xs: AngebotItem[], max = 2): string[] {
+  const jeSparte = xs.map((x, k) => {
+    if (x === empf[k]) return [];
+    const paare = empf[k].merkmale.filter((mm) => !istNein(mm.wert)).map((mm) => ({ mm, w: x.merkmale.find((y) => y.name === mm.name)?.wert }));
+    const ohne = paare.filter((p) => istNein(p.w)).map((p) => `ohne ${p.mm.name}`);
+    const anders = paare.filter((p) => !istNein(p.w) && klein(p.w!) !== klein(p.mm.wert) && !JA.test(p.w!.trim())).map((p) => `${p.mm.name} ${p.w}`);
+    return [...ohne, ...anders];
+  });
+  const out: string[] = [];
+  for (let r = 0; out.length < max && jeSparte.some((l) => l.length > r); r++) for (const l of jeSparte) if (l[r] && out.length < max) out.push(l[r]);
+  return out;
+}
+
+/** Gewählte Tarife weichen von der Empfehlung ab (Beratungsdokumentation, Vermerk zur Entscheidung des Kunden). */
+export type AbweichungVonEmpfehlung = {
+  /** je abweichender Sparte: gewählter und empfohlener Tarif (Namen wie auf der Folie) */
+  statt: { sparte: string; gewaehlt: string; empfohlen: string }[];
+  /** Unterschied laut Folie („ohne …“, andere Werte), höchstens 2 */
+  unterschied: string[];
+  /** Auswahl günstiger als die Empfehlung (Beitrag mit Kombi-Rabatt); null ohne Beiträge */
+  guenstiger: boolean | null;
+};
+
+/** null, wenn die Auswahl der Empfehlung entspricht (oder es keine Empfehlung bzw. keine Auswahl gibt). */
+export function abweichungVonEmpfehlung(angebote: AngeboteDaten | null): AbweichungVonEmpfehlung | null {
+  const items = angebote?.items ?? [];
+  const gew = items.filter((i) => i.gewaehlt && !zusatzAus(i, items));
+  if (!angebote || !gew.length) return null;
+  const empf = gew.map((g) => items.find((x) => x.sparte === g.sparte && x.empfohlen) ?? g);
+  const statt = gew.flatMap((g, k) => (g === empf[k] ? [] : [{ sparte: g.sparte, gewaehlt: paketName(g), empfohlen: paketName(empf[k]) }]));
+  if (!statt.length) return null;
+  const jetzt = beitragAus(angebote).endbeitrag;
+  const rat = beitragAus(paketWaehlen(angebote, empf.map((x) => items.indexOf(x))) ?? angebote).endbeitrag;
+  return { statt, unterschied: unterschiedeZu(empf, gew), guenstiger: jetzt != null && rat != null ? jetzt < rat - 0.005 : null };
+}
+
+/**
  * Pakete für die Folie „Ihre Entscheidung“ (Fassung C). Empfehlung = je gewählter Sparte die empfohlene Stufe (sonst
  * die gewählte); günstiger = je Sparte die nächste günstigere echte Stufe (nicht die billigste: keine Köder-Stufe).
  * Weicht die Auswahl im Termin von beiden ab, steht sie selbst als „Ihre Auswahl“ neben der Empfehlung. Ein Paket,
@@ -858,20 +899,7 @@ export function entscheidungsPakete(angebote: AngeboteDaten | null): Entscheidun
     return guenstiger.length ? guenstiger.reduce((best, y) => (preis(y)! > preis(best)! ? y : best)) : x;
   });
   const gleich = (xs: AngebotItem[], ys: AngebotItem[]) => xs.every((x, k) => x === ys[k]);
-  // Ehrlich zeigen, was im anderen Paket anders ist (nicht nur das Fehlende), damit niemand es für gleichwertig hält
-  // Je Sparte zuerst „ohne …“, dann andere Werte; reihum über die Sparten, damit jede Sparte vorkommt
-  const fehltGegen = (xs: AngebotItem[]) => {
-    const jeSparte = xs.map((x, k) => {
-      if (x === empf[k]) return [];
-      const paare = empf[k].merkmale.filter((mm) => !istNein(mm.wert)).map((mm) => ({ mm, w: x.merkmale.find((y) => y.name === mm.name)?.wert }));
-      const ohne = paare.filter((p) => istNein(p.w)).map((p) => `ohne ${p.mm.name}`);
-      const anders = paare.filter((p) => !istNein(p.w) && klein(p.w!) !== klein(p.mm.wert) && !JA.test(p.w!.trim())).map((p) => `${p.mm.name} ${p.w}`);
-      return [...ohne, ...anders];
-    });
-    const out: string[] = [];
-    for (let r = 0; out.length < 2 && jeSparte.some((l) => l.length > r); r++) for (const l of jeSparte) if (l[r] && out.length < 2) out.push(l[r]);
-    return out;
-  };
+  const fehltGegen = (xs: AngebotItem[]) => unterschiedeZu(empf, xs);
   const paket = (art: PaketArt, xs: AngebotItem[]): EntscheidungsPaket => {
     const ids = xs.map(idx);
     return { art, items: ids, gewaehlt: gleich(xs, gew), beitrag: beitragAus(paketWaehlen(angebote, ids) ?? angebote), fehlt: art === "empfehlung" ? [] : fehltGegen(xs) };

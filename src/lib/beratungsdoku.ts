@@ -63,7 +63,42 @@ export type BdQuellen = ZusammenfassungQuellen & {
   status?: string | null;
   /** Termin hat ein Ergebnis („Wie lief's?“ eingetragen); sonst bleibt die Entscheidung leer */
   ergebnis?: boolean;
+  /** Kunde hat in der Präsentation zugesagt („Ja, so machen wir es“, im Termin oder im Kundenlink) */
+  zusage?: boolean;
+  /** Gewählte Tarife weichen von der Empfehlung ab (lib/praesentation.ts abweichungVonEmpfehlung) */
+  abweichung?: BdAbweichung | null;
 };
+
+/** Wie AbweichungVonEmpfehlung in lib/praesentation.ts (hier nur der Typ, die Datei bleibt ohne Folien-Code). */
+export type BdAbweichung = { statt: { sparte: string; gewaehlt: string; empfohlen: string }[]; unterschied: string[]; guenstiger: boolean | null };
+
+const undListe = (xs: string[]) => (xs.length < 2 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} und ${xs[xs.length - 1]}`);
+
+/**
+ * Vermerk zur Entscheidung, wenn der Kunde abweichend von der Empfehlung zusagt (Präsentation Fassung C: „Etwas
+ * günstiger“ bzw. eigene Auswahl; Rechtsprüfung docs/recht/praesentation-abschluss.md, Auflage C2). Welche Tarife
+ * statt welcher Empfehlung, der Unterschied wie auf der Folie. Der Vermittler kann den Text vor dem Senden ändern.
+ */
+export function abweichungVermerk(an: Ansprache, ab: BdAbweichung): string {
+  const statt = undListe(ab.statt.map((x) => `${zeile(x.gewaehlt)} statt ${zeile(x.empfohlen)}`));
+  const satz = ab.guenstiger
+    ? a(an, `Du hast dich trotz unserer Empfehlung für die günstigere Variante entschieden: ${statt}.`, `Sie haben sich trotz unserer Empfehlung für die günstigere Variante entschieden: ${statt}.`)
+    : a(an, `Du hast dich abweichend von unserer Empfehlung entschieden: ${statt}.`, `Sie haben sich abweichend von unserer Empfehlung entschieden: ${statt}.`);
+  return ab.unterschied.length ? `${satz}\nUnterschied laut Präsentation: ${ab.unterschied.map(zeile).join(", ")}.` : satz;
+}
+
+/**
+ * Entscheidung im Entwurf: abgelehnt bleibt abgelehnt; mit Zusage bzw. Abschluss und abweichender Auswahl der Vermerk,
+ * mit Zusage ohne Abweichung „für die Empfehlung entschieden“; sonst der Vorschlag aus dem Status.
+ */
+function entscheidungEntwurf(q: BdQuellen): string {
+  const basis = entscheidungVorschlag(q.an, q.status, q.ergebnis);
+  const s = (q.status ?? "").trim().toLowerCase();
+  if (["kein interesse", "disqualifiziert", "verloren"].includes(s)) return basis;
+  if (q.abweichung?.statt.length && (q.zusage || s === "abschluss")) return abweichungVermerk(q.an, q.abweichung);
+  if (q.zusage && !basis) return entscheidungVorschlag(q.an, "abschluss");
+  return basis;
+}
 
 const eur = (n: number) => `${n.toFixed(2).replace(".", ",")} €`;
 const zeile = (t: string) => t.replace(/\s+/g, " ").trim();
@@ -120,7 +155,7 @@ export function beratungsdokuEntwurf(q: BdQuellen): BdInhalt {
     wuensche: basis.wuensche,
     beratung: b.join("\n").trim(),
     empfehlung: empfehlung.trim(),
-    entscheidung: entscheidungVorschlag(an, q.status, q.ergebnis),
+    entscheidung: entscheidungEntwurf(q),
     // Bewusst leer: nicht abgehakte Punkte der Terminvorbereitung sind meist Standardfragen, keine Hinweise an den Kunden
     hinweise: "",
   };

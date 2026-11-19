@@ -58,8 +58,16 @@ bisheriger Vertrag in Euro, „Unverbindlich. Den Antrag füllen wir gemeinsam a
   der Zusage; keine neuen Personendaten, kein Cookie.
 
 Auflagen C:
-1. Erst einschalten, wenn Ole die Fassung gesehen hat (Vorschau /demo/beratung?fassung=c).
-2. Wählt der Kunde „Etwas günstiger“ bzw. eine Auswahl abweichend von der Empfehlung, trägt der Vermittler das in der
-   Beratungsdokumentation unter „Entscheidung des Kunden“ ein (der Entwurf lässt dafür Platz; ein automatischer
-   Satz folgt mit der nächsten Überarbeitung der Dokumentation).
+1. Erst einschalten, wenn Ole die Fassung gesehen hat: erledigt, Ole hat C am 19.11.2026 freigegeben; der Test läuft
+   ab dem Deploy (anhalten: Kopf von lib/praesentation-variante.ts).
+2. Abweichung von der Empfehlung dokumentieren: umgesetzt. Sagt der Kunde (Termin oder Kundenlink) zu und weicht die
+   Auswahl von der Empfehlung ab, steht im Entwurf der Beratungsdokumentation unter „Entscheidung des Kunden“, welche
+   Tarife er statt welcher Empfehlung gewählt hat, bei der günstigeren Variante „trotz unserer Empfehlung“, und der
+   Unterschied wie auf der Folie (lib/beratungsdoku.ts abweichungVermerk). Der Vermittler prüft und ändert den Text
+   vor dem Senden wie bisher.
 3. Abschlussquote von C erst nach Auswertung (ab 100 Präsentationen je Fassung, p < 0,05) als Standard übernehmen.
+
+Kundenlink, Paketwahl (19.11.2026): Vor der Zusage kann der Kunde im Link eines der gezeigten Pakete antippen (nur
+diese, keine freie Kombination; nach der Zusage nicht mehr). Die Leiste zeigt danach Tarife und Beitrag dieser Wahl,
+die Zusage bleibt unverbindlich und gilt für sie. Keine neuen Personendaten (es ändert sich nur die Tarifauswahl des
+Termins, wie wenn der Vermittler im Termin umschaltet).

@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { angebotOhneGesundheitsdaten, angeboteAuslesen, bausteinSchalten, cleanAngebote, paketWaehlen, sparteSchalten, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
-import { einwandFolien, folien, markeFuer, paketName, praesentationCss } from "@/lib/praesentation";
+import { einwandFolien, entscheidungsPakete, folien, markeFuer, paketName, praesentationCss } from "@/lib/praesentation";
 import { beitragAus, beitragEffektiv } from "@/lib/angebote-daten";
 import { praesentationsVariante } from "@/lib/praesentation-variante-server";
 import { zusageAm } from "@/lib/praesentation-messung";
@@ -279,6 +279,24 @@ export async function kundenlinkTermin(token: string, now = new Date()): Promise
   });
   if (!a?.shareExpiresAt || a.shareExpiresAt <= now || !a.offersConfirmedAt) return null;
   return { appointmentId: a.id, customerId: a.customerId, leadId: a.leadId, name: a.lead?.name ?? null };
+}
+
+/**
+ * Kundenlink, Fassung C: der Kunde wählt auf „Ihre Entscheidung“ eines der gezeigten Pakete (nur diese, keine freie
+ * Kombination), solange er noch nicht zugesagt hat. Danach zeigen Folien, Leiste, Termin und Beratungsdokumentation
+ * die neue Auswahl; die Zusage gilt für sie. null, wenn Link, Fassung oder Paket nicht passen.
+ */
+export async function kundenlinkPaketWaehlen(token: string, items: number[], now = new Date()) {
+  if (!/^[A-Za-z0-9_-]{20,64}$/.test(token) || !Array.isArray(items) || !items.length || items.length > 8 || !items.every((n) => Number.isInteger(n) && n >= 0 && n < 20)) return null;
+  const a = await prisma.appointment.findUnique({ where: { shareToken: token }, select: { id: true, leadId: true, shareExpiresAt: true, offersConfirmedAt: true, offersJson: true } });
+  if (!a?.shareExpiresAt || a.shareExpiresAt <= now || !a.offersConfirmedAt) return null;
+  if ((await praesentationsVariante(a.leadId ?? a.id)) !== "C" || (await zusageAm(a.id))) return null;
+  const d = cleanAngebote(a.offersJson);
+  if (!entscheidungsPakete(d).some((p) => p.items.length === items.length && p.items.every((x, k) => x === items[k]))) return null;
+  const neu = paketWaehlen(d, items);
+  if (!neu) return null;
+  await prisma.appointment.update({ where: { id: a.id }, data: { offersJson: neu as unknown as Prisma.InputJsonValue } });
+  return loadKundenPraesentation(token, now);
 }
 
 /** Termin im Sichtbereich des Logins für die Messung im Deck; null sonst. */

@@ -31,17 +31,19 @@ const text = (html: string) => html.replace(/<style>[\s\S]*?<\/style>/g, "").rep
 const folie = (fs: { id: string; html: string }[], id: string) => fs.find((f) => f.id === id)!.html;
 
 describe("Splittest-Variante", () => {
-  it("Experiment „praesentation“: a = B (Standard), b = C, Ziel Zusage, startet angehalten", () => {
+  it("Experiment „praesentation“: a = B (Standard), b = C, Ziel Zusage, läuft ab dem Deploy (Ole, 19.11.2026)", () => {
     expect(varianteAusExperiment("a")).toBe("B");
     expect(varianteAusExperiment("b")).toBe("C");
     expect(istVariante("C")).toBe(true);
     expect(istVariante("D")).toBe(false);
     const def = EXPERIMENTE[PRAESENTATION_EXPERIMENT];
     expect(def.ziel).toBe("zusage");
-    expect(def.aktiv).toBe(false);
-    // ohne gespeicherten Stand angehalten, eingeschaltet erst mit Zeile aktiv = true
-    expect(laeuft(def, null)).toBe(false);
-    expect(laeuft(def, { aktiv: true })).toBe(true);
+    expect("aktiv" in def).toBe(false);
+    // ohne gespeicherten Stand läuft er; eine Zeile mit aktiv = false hält ihn an
+    expect(laeuft(def, null)).toBe(true);
+    expect(laeuft(def, { aktiv: false })).toBe(false);
+    expect(laeuft({ ...def, aktiv: false }, null)).toBe(false);
+    expect(laeuft({ ...def, aktiv: false }, { aktiv: true })).toBe(true);
     expect(laeuft(EXPERIMENTE.komplettcheck_text, null)).toBe(true);
     expect(laeuft(EXPERIMENTE.komplettcheck_text, { aktiv: false })).toBe(false);
     expect(mitAbschlussLeiste("B", ["Hausrat Komfort"])).toBe(true);

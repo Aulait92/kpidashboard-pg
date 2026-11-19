@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { cleanAngebote } from "@/lib/angebote";
 import { paketWaehlen, sparteSchalten, tarifWaehlen } from "@/lib/angebote-daten";
-import { entscheidungsPakete, folien, markeFuer, praesentationHtml, SPRECHHINWEIS_C } from "@/lib/praesentation";
+import { abweichungVonEmpfehlung, entscheidungsPakete, folien, markeFuer, praesentationHtml, SPRECHHINWEIS_C } from "@/lib/praesentation";
 import { auswerten, type Ereignis } from "@/lib/praesentation-messung";
 import { demoAngebote, demoFassung, demoFolien, demoKlick } from "@/lib/demo-beratung";
 import { paketAusAttribut } from "@/components/folien-deck";
@@ -153,6 +153,31 @@ describe("Fassung C: Entscheidung mit zwei Paketen", () => {
     const z = folien(d, ang, m, "sie", { variante: "C", zugesagtAm: new Date() });
     expect(folie(z, "entscheidung")).toContain("✓ Zugesagt");
     expect(praesentationHtml(z, m, "T")).toContain(".zusage-zeile{display:none}");
+  });
+});
+
+describe("Abweichung von der Empfehlung (für die Beratungsdokumentation)", () => {
+  it("null bei Empfehlung; sonst welche Tarife statt welcher, Unterschied wie auf der Karte, günstiger ja oder nein", () => {
+    expect(abweichungVonEmpfehlung(ang)).toBeNull();
+    expect(abweichungVonEmpfehlung(null)).toBeNull();
+    expect(abweichungVonEmpfehlung(paketWaehlen(ang, [0, 2]))).toEqual({
+      statt: [{ sparte: "Privathaftpflicht", gewaehlt: "Haftpflicht Smart", empfohlen: "Haftpflicht Komfort" }],
+      unterschied: ["ohne Schlüsselverlust"],
+      guenstiger: true,
+    });
+    const demo = demoAngebote();
+    const hausrat = demo.items.findIndex((i) => i.sparte === "Hausrat");
+    // Hausrat dazu (Empfehlung), dann Haftpflicht Smart: günstiger, Kombi-Rabatt fällt weg und ist eingerechnet
+    const d2 = tarifWaehlen(sparteSchalten(demo, hausrat)!, 1)!;
+    expect(abweichungVonEmpfehlung(d2)!.guenstiger).toBe(true);
+    // teurer als die Empfehlung (Premium statt Komfort): abweichend, nicht „günstiger“
+    const teurer = cleanAngebote({
+      items: [
+        { sparte: "Hausrat", tarif: "Hausrat Komfort", beitragMonat: 8.2, empfohlen: true, gewaehlt: false },
+        { sparte: "Hausrat", tarif: "Hausrat Premium", beitragMonat: 11.4, gewaehlt: true },
+      ],
+    });
+    expect(abweichungVonEmpfehlung(teurer)).toMatchObject({ statt: [{ gewaehlt: "Hausrat Premium", empfohlen: "Hausrat Komfort" }], guenstiger: false });
   });
 });
 

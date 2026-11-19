@@ -33,7 +33,7 @@ export type ExperimentDef = {
   min?: number;
   /**
    * false = startet angehalten (alle sehen Fassung a), bis der Test eingeschaltet wird: Zeile in „Experiment“ mit
-   * aktiv = true (SQL siehe Kopf von lib/praesentation-variante.ts) oder diesen Eintrag entfernen. Ohne Angabe läuft er.
+   * aktiv = true oder diesen Eintrag entfernen. Ohne Angabe läuft er (eine Zeile mit aktiv = false hält ihn an).
    */
   aktiv?: false;
 };
@@ -61,7 +61,7 @@ export const EXPERIMENTE = {
     b: "Neu: nächste Tage zuerst, Nutzen in einer Zeile, Datenschutz als Hinweis, „Kostenlos Termin buchen“",
   },
   // Beratungspräsentation (19.11.2026): Herausforderer C gegen Standard B, Einheit Lead-ID (lib/praesentation-variante-server.ts).
-  // Startet angehalten, bis Ole die Fassung gesehen hat (Vorschau /demo/beratung?fassung=c).
+  // Ole hat C am 19.11.2026 freigegeben: läuft ab dem Deploy (kein Eintrag in „Experiment“ nötig; anhalten per aktiv = false).
   praesentation: {
     titel: "Beratungspräsentation im Termin",
     ziel: "zusage",
@@ -69,7 +69,6 @@ export const EXPERIMENTE = {
     b: "Fassung C: Einstieg mit dem Anliegen, Beitrag auf der Entscheidungsfolie, Wahl zwischen zwei Paketen, bisheriger Vertrag in Euro",
     // Termine sind seltener als Leads und der Cron prüft stündlich: erst ab 100 Präsentationen je Fassung entscheiden
     min: 100,
-    aktiv: false,
   },
 } as const satisfies Record<string, ExperimentDef>;
 

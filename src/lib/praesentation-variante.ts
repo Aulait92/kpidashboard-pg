@@ -5,14 +5,12 @@
 // Anliegen des Kunden, Beitrag auf der Entscheidungsfolie, Wahl zwischen zwei Paketen, bisheriger Vertrag in Euro.
 //
 // Zuteilung (nur auf dem Server, lib/praesentation-variante-server.ts): Experiment PRAESENTATION_EXPERIMENT in
-// lib/experimente.ts, a = B (Standard), b = C, Ziel „zusage“. Es startet angehalten (aktiv: false) und läuft erst, wenn
-// Ole die Fassung gesehen und eingeschaltet hat; angehalten, Notschalter EXPERIMENTE_AUS oder Fehler: alle B.
-// Vorschau: /demo/beratung?fassung=c (Demo ohne Parameter bleibt B).
-// Einschalten (eins von beiden; wirkt nach höchstens 5 Minuten, Zwischenspeicher in lib/experimente.ts):
-//   a) Datenbank: INSERT INTO "Experiment" ("key", "ziel", "aktiv", "updatedAt") VALUES ('praesentation', 'zusage', true, now())
-//      ON CONFLICT ("key") DO UPDATE SET "aktiv" = true, "updatedAt" = now();
-//   b) Code: in EXPERIMENTE.praesentation die Zeile `aktiv: false` entfernen und deployen.
-// Anhalten: UPDATE "Experiment" SET "aktiv" = false WHERE "key" = 'praesentation'; (alle wieder B, Zuteilungen bleiben).
+// lib/experimente.ts, a = B (Standard), b = C, Ziel „zusage“. Von Ole am 19.11.2026 freigegeben, läuft ab dem Deploy.
+// Angehalten, Notschalter EXPERIMENTE_AUS oder Fehler: alle B. Nach der Entscheidung (ab 100 je Fassung, p < 0,05)
+// sehen alle den Gewinner. Vorschau: /demo/beratung?fassung=c (Demo ohne Parameter bleibt B).
+// Anhalten (wirkt nach höchstens 5 Minuten, Zwischenspeicher in lib/experimente.ts):
+//   INSERT INTO "Experiment" ("key", "ziel", "aktiv", "updatedAt") VALUES ('praesentation', 'zusage', false, now())
+//   ON CONFLICT ("key") DO UPDATE SET "aktiv" = false, "updatedAt" = now();   (alle wieder B, Zuteilungen bleiben)
 // Stand: Diagnose q=experimente (Zusagequote je Fassung) und q=praesentation-quote (Abschlussquote je Variante).
 // Diese Datei läuft auch im Browser (Kundenlink), daher hier nur Typen und reine Helfer.
 
