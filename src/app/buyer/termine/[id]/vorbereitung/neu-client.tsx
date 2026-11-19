@@ -8,7 +8,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Calculator, CalendarDays, Check, ChevronDown, Copy, ExternalLink, Phone, Plus, Presentation, RotateCcw, Search, Send, Video, X } from "lucide-react";
+import { ArrowRight, Calculator, CalendarDays, Check, ChevronDown, CircleAlert, Copy, ExternalLink, Phone, Plus, Presentation, RotateCcw, Search, Send, Video, X } from "lucide-react";
 import { Button, buttonClass, Card } from "@/components/ui";
 import { ActionSheet, Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
@@ -216,9 +216,16 @@ export function VorbereitungNeu(p: {
       setPruefHinweis(true);
       return;
     }
-    if (!offen.current && !laeuft.current) return;
+    // Vor dem Termin gilt „Präsentation öffnen“ als vorbereitet (UX-Runde Team C, 19.11.2026): die Aufgabe auf „Heute“
+    // erledigt sich, ohne extra Haken (Vorbereitung in einem Zug)
+    const markieren = !vorbereitet && !p.readOnly && !p.angebot?.vorbei;
+    if (!offen.current && !laeuft.current && !markieren) return;
     e.preventDefault();
-    await speichern();
+    if (offen.current || laeuft.current) await speichern();
+    if (markieren) {
+      setVorbereitet(true);
+      await setPreparedAction(p.id, true).catch(() => null);
+    }
     router.push(praesentation);
   };
 
@@ -254,6 +261,15 @@ export function VorbereitungNeu(p: {
               <span className="inline-flex h-7 items-center gap-1 rounded-full bg-emerald-50 px-2.5 text-[13px] font-medium text-emerald-700" data-termin-zugesagt>
                 <Check className="h-3.5 w-3.5" /> zugesagt
               </span>
+            ) : !p.angebot?.vorbei ? (
+              // Show-up sichtbar (UX-Runde Team C): ohne Zusage kurz anrufen; Erinnerungen stehen am Termin
+              <a
+                href={`/buyer/termine/${p.id}`}
+                className="inline-flex h-7 items-center gap-1 rounded-full bg-amber-50 px-2.5 text-[13px] font-medium text-amber-800 ring-1 ring-inset ring-amber-200 hover:bg-amber-100"
+                data-termin-unbestaetigt
+              >
+                <CircleAlert className="h-3.5 w-3.5" /> noch nicht bestätigt
+              </a>
             ) : null}
             {/* Lead möchte auch einen kurzen Blick auf seine gesamte Absicherung (WhatsApp nach der Buchung, Ole 17.11.2026) */}
             {p.kopf.komplettcheck ? (
