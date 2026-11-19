@@ -9,7 +9,9 @@ durchsuchbar). Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Se
 Fassung 19.11.2026 (Branch `claude/vertreter-folien-screenshots`, nur Vertreter): App-Screenshots auf Folie 15 („Heute“ mit
 neuen Leads oben, Termin mit Zusammenfassung, „Wie lief es?“; Satz jetzt „Nach dem Gespräch: 2 Klicks“), 16 (neue
 Terminvorbereitung) und 20 („Wachstum“ mit „Rechnet sich das?“) neu, sonst unverändert; in PPTX und PDF (Seiten 22, 23, 27)
-ersetzt, Web-Folien vertreter/15, 16, 20 neu. Makler-Fassung noch mit den alten Screenshots. Zum Hochladen Bonusfolie wie unten einfügen.
+ersetzt, Web-Folien vertreter/15, 16, 20 neu. Zum Hochladen Bonusfolie wie unten einfügen.
+Makler (19.11.2026, Ole: „makler auch nachziehen“): dieselben drei Folien (15, 16, 20, Seitenzahl „n / 25“), PDF Seiten 22, 23, 27,
+Web-Folien makler/15, 16, 20 neu.
 
 Fassung eca12945 (17.11.2026, Branch `claude/loving-mendel-j965x3`, nur die vier Präsentationen und
 `sprechzettel-vertrieb.md` übernommen; `docs/webseite/policen-abschnitt.md` nicht, siehe docs/webseite-offen.md):
