@@ -32,7 +32,7 @@ import { startOnboarding } from "@/lib/onboarding";
 import { audit } from "@/lib/audit";
 import { referralSetupDiscount } from "@/lib/kollegen";
 import { checkBusiness, type BusinessInput } from "@/lib/unternehmer";
-import { contractSummaryLines, hasPriceStep, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
+import { contractSummaryLines, hasPriceStep, NACHTRAEGLICH_MAX_STARTTAG, nachtraeglichStartOk, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 import { parseAbrechnungstag } from "@/lib/abrechnungstag";
 
 
@@ -56,6 +56,11 @@ export type OfferFormInput = {
   billingDay?: number | null;
   /** Zeit vom Start bis zum ersten Abrechnungstag kostenlos („kostenloser Start“, Standard aus = anteilig). */
   billingFreeStart?: boolean;
+  /**
+   * Zahlung nachträglich (Ole, 19.11.2026): Vergütung jeweils nachträglich für den abgelaufenen Leistungsmonat, erste
+   * Abbuchung Start + 1 Monat. Nur monatlich: nicht mit Vorauszahlung, Abrechnungstag oder kostenlosem Start.
+   */
+  paymentInArrears?: boolean;
   validDays?: number;
   /** Aktive Verkäufer gesamt (bekommen Leads); 3 inklusive, Mitglieder ohne Leads kostenlos. */
   seats?: number | null;
@@ -201,6 +206,11 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   }
   if (input.annual && !prepayPossible(term)) throw new Error("Vorauszahlung geht nur mit 6 oder 12 Monaten Laufzeit.");
   if (input.annual && input.introMonthlyFee != null) throw new Error("Startpreis und Vorauszahlung lassen sich nicht kombinieren.");
+  const nachtraeglich = input.paymentInArrears === true && !test;
+  if (nachtraeglich) {
+    const fehler = nachtraeglichFehler({ annual: !!input.annual, billingDay: abrechnungstag.day, billingFreeStart: !!input.billingFreeStart, startIso: input.startDate });
+    if (fehler) throw new Error(fehler);
+  }
 
   const choosesStart = input.customerChoice !== false;
   // Mit Sonderpreis passt ein anderes Setup nicht zur Vereinbarung → Laufzeit fest.
@@ -268,6 +278,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             billingDay: abrechnungstag.day,
             // „Gratis“ nur mit eigenem Abrechnungstag (sonst gibt es keine Zeit davor)
             billingFreeStart: abrechnungstag.day != null && input.billingFreeStart === true,
+            paymentInArrears: nachtraeglich,
             customerChoosesTerm: choosesTerm,
             customerChoosesStart: choosesStart,
             allowPayLater: input.allowPayLater === true && !test,
@@ -368,6 +379,9 @@ export async function acceptOffer(
     berlinTodayIso(),
   );
   if (!choice.ok) return { ok: false, error: choice.error };
+  if (offer.paymentInArrears && (choice.annualPrepay || !nachtraeglichStartOk(choice.startIso))) {
+    return { ok: false, error: choice.annualPrepay ? "Bei nachträglicher Zahlung ist nur monatliche Zahlung möglich." : `Bei nachträglicher Zahlung wählen Sie bitte einen Start zwischen dem 1. und ${NACHTRAEGLICH_MAX_STARTTAG}. eines Monats.` };
+  }
   const startDate = choice.startIso ? new Date(`${choice.startIso}T12:00:00Z`) : null;
   // Konditionen wie direkt am Annahme-Knopf (Startpreis mit Übergang braucht ein eigenes Häkchen)
   const summary = offerSummaryInput(offer, { term: choice.term, startIso: choice.startIso, setup: choice.setupFee, annual: choice.annualPrepay, freeMonths: choice.annualFreeMonths });
@@ -473,7 +487,7 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
   offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
-    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance">> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears">> &
     Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null }> = {},
 ): ContractSummaryInput {
@@ -491,7 +505,19 @@ export function offerSummaryInput(
     billingDay: offer.billingDay ?? null,
     freeStart: !!offer.billingFreeStart,
     prepayAtAcceptance: vorauszahlungMitAnnahme(offer),
+    paymentInArrears: !!offer.paymentInArrears,
   };
+}
+
+/**
+ * Zahlung nachträglich (Ole, 19.11.2026) nur monatlich: nicht mit Vorauszahlung, eigenem Abrechnungstag oder kostenlosem
+ * Start; Start am 1. bis 28. (sonst verschiebt Stripe die Abbuchung in kurzen Monaten). null = passt.
+ */
+export function nachtraeglichFehler(o: { annual: boolean; billingDay: number | null | undefined; billingFreeStart?: boolean; startIso?: string | null }): string | null {
+  if (o.annual) return "Zahlung nachträglich geht nur mit monatlicher Zahlung, nicht mit Vorauszahlung.";
+  if (o.billingDay != null || o.billingFreeStart) return "Zahlung nachträglich lässt sich nicht mit eigenem Abrechnungstag oder kostenlosem Start kombinieren.";
+  if (!nachtraeglichStartOk(o.startIso)) return `Bei Zahlung nachträglich bitte einen Start zwischen dem 1. und ${NACHTRAEGLICH_MAX_STARTTAG}. eines Monats wählen.`;
+  return null;
 }
 
 async function sendAcceptanceMail(offer: OfferRecord, summary: ContractSummaryInput) {

@@ -9,6 +9,7 @@ import { reportError } from "@/lib/monitoring";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { cancelScheduleForOffer, createScheduleForOffer } from "@/lib/billing";
 import { abrechnungsplan } from "@/lib/abrechnungstag";
+import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
 import { startOnboarding } from "@/lib/onboarding";
 import { markPaymentOverdue, markPaymentReceived } from "@/lib/pause";
 import { mahnwesenAktiv } from "@/lib/mahnwesen";
@@ -21,6 +22,8 @@ export const HANDLED_EVENTS = [
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
+  // Zahlung nachträglich (Ole, 19.11.2026): Abo-Rechnung im Entwurf mit dem abgelaufenen Leistungsmonat beschriften
+  "invoice.created",
   "invoice.paid",
   "invoice.payment_failed",
   "invoice.overdue",
@@ -226,6 +229,12 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       }
       return;
     }
+    case "invoice.created": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const { labelArrearsInvoice } = await import("@/lib/billing");
+      await labelArrearsInvoice(invoice);
+      return;
+    }
     case "invoice.paid":
     case "invoice.payment_failed":
     case "invoice.overdue": {
@@ -297,7 +306,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
  * Vorauszahlung mit der Annahme bezahlt (prepayRenewal, Ole 19.11.2026): „Jahresbeitrag bezahlt, nächster am …“.
  */
 function monatsgebuehrAb(
-  offer: { startDate: Date | null; billingDay: number | null; billingFreeStart: boolean; annualPrepay: boolean; term: string },
+  offer: { startDate: Date | null; billingDay: number | null; billingFreeStart: boolean; annualPrepay: boolean; term: string; paymentInArrears?: boolean },
   shiftedTo: string | null,
   prepayRenewal: string | null = null,
 ): string {
@@ -306,6 +315,10 @@ function monatsgebuehrAb(
     return ` · ${was} bezahlt, nächster am ${prepayRenewal.split("-").reverse().join(".")}${shiftedTo ? " (Start verschoben)" : ""}`;
   }
   const startIso = shiftedTo ?? (offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null);
+  // Zahlung nachträglich (Ole, 19.11.2026): erste Abbuchung einen Monat nach dem Start
+  if (offer.paymentInArrears && !offer.annualPrepay && startIso) {
+    return ` · Monatsgebühr nachträglich, Leistung ab ${startIso.split("-").reverse().join(".")}, erste Abbuchung am ${nachtraeglichErsteIso(startIso).split("-").reverse().join(".")}${shiftedTo ? " (Start verschoben)" : ""}`;
+  }
   const plan = abrechnungsplan({ startIso, billingDay: offer.billingDay, freeStart: offer.billingFreeStart, annual: offer.annualPrepay });
   if (!plan) return "";
   const ab = plan.firstIso.split("-").reverse().join(".");

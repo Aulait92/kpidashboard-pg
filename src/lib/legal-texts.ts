@@ -55,10 +55,12 @@
 // fällig (vorher: zum Start), der Zahlungszeitraum und die Laufzeit beginnen weiter mit dem Startdatum, jeder weitere
 // Zeitraum ist zu seinem Beginn fällig. Übergangssatz: Verträge, die vor dem 19.11.2026 angenommen wurden, bleiben bei
 // „zum Start“ (gleiche URL für alle Fassungen, siehe 15.11.2026). Begründung und Prüfung: docs/recht/vorauszahlung-mit-annahme.md.
+// 19.11.2026 (Fassung 2, Ole): „Vergütung und Zahlung“: Sonderregel für im Angebot vereinbarte nachträgliche Zahlung
+// (Offer.paymentInArrears). Ändert nichts für bestehende Verträge. Prüfung: docs/recht/zahlung-nachtraeglich.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "19.11.2026";
+export const LEGAL_VERSION = "19.11.2026 (Fassung 2)";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -135,7 +137,8 @@ export const AGB: LegalSection[] = [
     // Prüfen: Preisstaffel vollständig im Angebot (Rechtsprüfung Thema 6), jährliche Vorauszahlung, WhatsApp-Gebühren
     title: "Vergütung und Zahlung",
     items: [
-      "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus. Alle Preise sind netto zuzüglich Umsatzsteuer.",
+      // Prüfen: Sonderregel Zahlung nachträglich (19.11.2026, Fassung 2; docs/recht/zahlung-nachtraeglich.md)
+      "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus. Ist im Angebot nachträgliche Zahlung vereinbart, wird die monatliche Vergütung abweichend davon jeweils nachträglich für den abgelaufenen Leistungsmonat fällig, erstmals einen Monat nach dem Startdatum; das gilt bis zum Vertragsende, die Vergütung für den letzten Leistungsmonat wird danach fällig. Alle Preise sind netto zuzüglich Umsatzsteuer.",
       "Die monatliche Vergütung richtet sich nach dem vereinbarten Werbebudget und der im Angebot vollständig genannten Preisstaffel. Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat; der Kundenbereich zeigt die neue Vergütung vor der Änderung an.",
       // Prüfen: Vorauszahlung für 6 Monate (Laufzeit 6 Monate, 18.11.2026); Fälligkeit mit Vertragsschluss (19.11.2026)
       { sub: "Vorauszahlung", text: "Ist sie vereinbart, wird die Vergütung für 12 Monate (jährlich, mit 12 Monaten Laufzeit) bzw. für 6 Monate (mit 6 Monaten Laufzeit) im Voraus gezahlt (Nachlass laut Angebot). Die Vorauszahlung für den ersten Zahlungszeitraum ist mit Vertragsschluss fällig, die für jeden weiteren Zahlungszeitraum zu dessen Beginn. Zahlungszeiträume und Laufzeit beginnen mit dem Startdatum. Für Verträge, die vor dem 19.11.2026 angenommen wurden, ist die erste Vorauszahlung zum Start fällig. Im Zahlungszeitraum hinzukommende Verkäufer oder Module werden anteilig berechnet. Eine Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung des Kunden aus wichtigem Grund." },

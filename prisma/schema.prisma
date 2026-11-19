@@ -1650,6 +1650,10 @@ model Offer {
   // („kostenloser Start“), sonst anteilig mit der ersten Abbuchung.
   billingDay              Int?
   billingFreeStart        Boolean       @default(false)
+  // Zahlung nachträglich (Ole, 19.11.2026, Sonderkondition): Vergütung jeweils nachträglich für den abgelaufenen
+  // Leistungsmonat, erste Abbuchung Start + 1 Monat (gleicher Tag), auch nach der Mindestlaufzeit; die letzte Zahlung folgt
+  // nach Vertragsende. Nur monatlich (nicht mit Vorauszahlung, Abrechnungstag oder kostenlosem Start), Start am 1. bis 28.
+  paymentInArrears        Boolean       @default(false)
   // Kunde wählt auf der Angebotsseite selbst (seit 11.11.2026): Laufzeit (nur ohne
   // Sonderpreis) und Startdatum. Bei Annahme werden term/setupFee/startDate überschrieben.
   customerChoosesTerm     Boolean       @default(false)

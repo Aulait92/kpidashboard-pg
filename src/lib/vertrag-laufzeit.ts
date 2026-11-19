@@ -151,6 +151,8 @@ export type ContractSummaryInput = {
    * lib/offer-pricing.ts vorauszahlungMitAnnahme). Fehlt = wie vorher: zum Start.
    */
   prepayAtAcceptance?: boolean;
+  /** Zahlung nachträglich für den abgelaufenen Leistungsmonat (Offer.paymentInArrears, nur monatlich). */
+  paymentInArrears?: boolean;
 };
 
 /**
@@ -165,9 +167,48 @@ export function addMonthsIso(startIso: string, months: number): string {
   const [y, m, d] = parts(startIso);
   const total = m - 1 + months;
   const ty = y + Math.floor(total / 12);
-  const tm = (total % 12) + 1;
+  // auch rückwärts (months < 0)
+  const tm = (((total % 12) + 12) % 12) + 1;
   return iso(ty, tm, Math.min(d, daysInMonth(ty, tm)));
 }
+
+// ─── Zahlung nachträglich (Ole, 19.11.2026, Offer.paymentInArrears) ───
+// Bezahlt wird jeweils nachträglich für den abgelaufenen Leistungsmonat: Leistungsmonat k läuft vom Start + (k − 1)
+// Monate bis zum Tag vor Start + k Monate, abgebucht am Start + k Monate (gleicher Tag wie der Start, wie Stripe).
+// Damit die Tage nie abgeschnitten werden, ist der Start dann der 1. bis 28. eines Monats.
+
+/** Letzter erlaubter Starttag im Monat bei nachträglicher Zahlung. */
+export const NACHTRAEGLICH_MAX_STARTTAG = 28;
+
+/** Starttag bei nachträglicher Zahlung erlaubt (1. bis 28.)? */
+export const nachtraeglichStartOk = (startIso: string | null | undefined) => !startIso || parts(startIso)[2] <= NACHTRAEGLICH_MAX_STARTTAG;
+
+/** Erste nachträgliche Abbuchung (Start + 1 Monat). */
+export const nachtraeglichErsteIso = (startIso: string) => addMonthsIso(startIso, 1);
+
+/** Leistungsmonat, für den am Abbuchungstag `chargeIso` nachträglich bezahlt wird (Vormonat bis Vortag). */
+export function nachtraeglichLeistungsmonat(chargeIso: string): { fromIso: string; toIso: string } {
+  const [y, m, d] = parts(chargeIso);
+  return { fromIso: addMonthsIso(chargeIso, -1), toIso: iso(y, m, d - 1) };
+}
+
+/**
+ * Nächste nachträgliche Abbuchung ab heute (inklusive) mit dem Leistungsmonat, für den sie gilt.
+ * endIso = letzter Vertragstag (gekündigt): danach kommt nur noch die Zahlung für den letzten Monat.
+ */
+export function naechsteNachtraeglicheAbbuchung(startIso: string, todayIso: string, endIso?: string | null): { chargeIso: string; fromIso: string; toIso: string } | null {
+  for (let k = 1; k < 1200; k++) {
+    const chargeIso = addMonthsIso(startIso, k);
+    if (chargeIso < todayIso) continue;
+    const lm = nachtraeglichLeistungsmonat(chargeIso);
+    if (endIso && lm.fromIso > endIso) return null;
+    return { chargeIso, ...lm };
+  }
+  return null;
+}
+
+/** Fester Satz zur letzten Zahlung (Sie-Form, ohne Gedankenstriche). */
+export const NACHTRAEGLICH_LETZTE_ZAHLUNG = "Auch danach zahlen Sie nachträglich, die Zahlung für den letzten Monat folgt nach Vertragsende.";
 
 /**
  * Vorauszahlung mit Annahme fällig (Ole, 19.11.2026): fester Satz für Angebot, Annahmeseite, Angebotsmail und Hilfe
@@ -242,8 +283,32 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   const plan = abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, freeStart: i.freeStart, annual });
   const billIso = plan?.firstIso ?? i.startIso;
   const start = billIso ? fmtIso(billIso) : null;
+  // Zahlung nachträglich (Ole, 19.11.2026): nur monatlich, ohne eigenen Abrechnungstag
+  const arrears = !!i.paymentInArrears && !annual;
+  const ersteNachtraeglich = arrears && i.startIso ? `am ${fmtIso(nachtraeglichErsteIso(i.startIso))}` : "einen Monat nach dem Start";
   if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, fällig mit der Annahme.`);
-  if (annual) {
+  else if (arrears) lines.push(`Bei Annahme fällig: ${eur(0)}, ohne Einrichtungsgebühr.`);
+  if (arrears) {
+    if (hasPriceStep(i)) {
+      const d = priceStepDates(i.startIso, i.intro!.months);
+      lines.push(
+        d
+          ? `Startpreis: ${eur(i.intro!.monthly)} netto im Monat vom ${start} bis ${fmtIso(d.introEndIso)} (${i.intro!.months} ${i.intro!.months === 1 ? "Monat" : "Monate"}).`
+          : `Startpreis: ${eur(i.intro!.monthly)} netto im Monat in den ersten ${i.intro!.months} Monaten.`,
+      );
+      lines.push(`Danach automatisch ${eur(i.monthlyTotal)} netto im Monat${d ? ` ab ${fmtIso(d.regularFromIso)}` : ""}.`);
+      lines.push(`Bezahlt wird jeweils nachträglich für den abgelaufenen Monat, erstmals ${ersteNachtraeglich}.`);
+    } else {
+      lines.push(`Monatlich: ${eur(i.monthlyTotal)} netto, jeweils nachträglich für den abgelaufenen Monat, erstmals ${ersteNachtraeglich}.`);
+    }
+    if (i.term === "none") {
+      lines.push("Ohne Mindestlaufzeit, kündbar zum Ende des jeweiligen Leistungsmonats. Die Zahlung für den letzten Monat folgt nach Vertragsende.");
+    } else {
+      const months = TERM_MONTHS[i.term];
+      const end = i.startIso ? periodEndIso(i.startIso, months) : null;
+      lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach monatlich kündbar zum Ende des jeweiligen Leistungsmonats. ${NACHTRAEGLICH_LETZTE_ZAHLUNG}`);
+    }
+  } else if (annual) {
     lines.push(`${pm === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(prepayTotal)} netto, ${vorauszahlungFaellig(billIso, pm, { mitAnnahme: i.prepayAtAcceptance })}.`);
     if (i.prepayAtAcceptance) lines.push(VORAUSZAHLUNG_MIT_ANNAHME);
   } else if (hasPriceStep(i)) {
@@ -257,7 +322,7 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   } else {
     lines.push(`Monatlich: ${eur(i.monthlyTotal)} netto${start ? ` ab ${start}` : " ab Start"}, im Voraus.`);
   }
-  if (plan?.differs) {
+  if (plan?.differs && !arrears) {
     const firstNet = hasPriceStep(i) ? i.intro!.monthly : i.monthlyTotal;
     lines.push(abrechnungstagSaetze(plan, { firstNet }).join(" "));
   }
@@ -270,6 +335,8 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
         ? `Laufzeit bis ${fmtIso(end)}. Sie verlängert sich um jeweils ${pm} Monate, wenn Sie nicht bis ${fmtIso(deadline)} kündigen.`
         : `Laufzeit ${pm} Monate ab Start. Sie verlängert sich um jeweils ${pm} Monate, wenn Sie nicht einen Monat vor Ende kündigen.`,
     );
+  } else if (arrears) {
+    // Laufzeit steht schon oben (nachträgliche Zahlung)
   } else if (i.term === "none") {
     lines.push("Ohne Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats.");
   } else {

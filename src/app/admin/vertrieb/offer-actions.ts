@@ -8,6 +8,7 @@ import { getAppUrl, sendOfferEmail } from "@/lib/email";
 import { createOffer, type OfferFormInput } from "@/lib/offers";
 import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount, prepayPossible } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
+import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
 import { verkaufsLinkErstellen } from "@/lib/vertrieb/verkaufspraesentation-server";
@@ -129,6 +130,10 @@ export async function sendOfferEmailAction(
     bonusSpaeter: offer.allowPayLater,
     // Vorauszahlung vereinbart oder zur Wahl: Fälligkeit mit der Annahme (Ole, 19.11.2026)
     vorauszahlung: (offer.annualPrepay || offer.annualChoice) && prepayPossible(offer.term),
+    // Zahlung nachträglich (Ole, 19.11.2026): Zeile zur Zahlung statt Vorauszahlung
+    nachtraeglich: offer.paymentInArrears
+      ? { ersteIso: offer.startDate ? nachtraeglichErsteIso(offer.startDate.toISOString().slice(0, 10)) : null, setup: Number(offer.setupFee) }
+      : null,
     rechnerUrl: rechner,
     praesentationUrl,
     attachment,
