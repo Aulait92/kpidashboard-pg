@@ -6,6 +6,11 @@ Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unveränder
 Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 24 Folien, Makler 25 (Fassung eca12945). Die Folien sind Bilder (Text nicht
 durchsuchbar). Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Setup“ (hängt an der Preisänderung, die Ole noch bestätigt).
 
+Fassung 19.11.2026 (Branch `claude/vertreter-folien-screenshots`, nur Vertreter): App-Screenshots auf Folie 15 („Heute“ mit
+neuen Leads oben, Termin mit Zusammenfassung, „Wie lief es?“; Satz jetzt „Nach dem Gespräch: 2 Klicks“), 16 (neue
+Terminvorbereitung) und 20 („Wachstum“ mit „Rechnet sich das?“) neu, sonst unverändert; in PPTX und PDF (Seiten 22, 23, 27)
+ersetzt, Web-Folien vertreter/15, 16, 20 neu. Makler-Fassung noch mit den alten Screenshots. Zum Hochladen Bonusfolie wie unten einfügen.
+
 Fassung eca12945 (17.11.2026, Branch `claude/loving-mendel-j965x3`, nur die vier Präsentationen und
 `sprechzettel-vertrieb.md` übernommen; `docs/webseite/policen-abschnitt.md` nicht, siehe docs/webseite-offen.md):
 - Neue Folie 19 „Ihr Kunde schickt seine Policen. Sie sehen vorher, wo er doppelt zahlt.“ (Rubrik „Ihre Software“),
