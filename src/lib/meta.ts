@@ -88,6 +88,8 @@ export type MetaSyncResult = {
   matched: { campaign: string; product: string; spend: number }[];
   unmatched: { campaign: string; spend: number }[];
   errors: string[];
+  /** Konten aus META_AD_ACCOUNT_IDS, die einem Kunden gehören und deshalb nicht als Agentur-Kosten zählen */
+  skippedCustomerOwned?: string[];
 };
 
 function getEnv() {
@@ -237,7 +239,10 @@ export async function syncMeta(
   const customerOwned = await customerOwnedAdAccounts();
 
   for (const accountId of accounts) {
-    if (customerOwned.has(accountId)) continue;
+    if (customerOwned.has(accountId)) {
+      (result.skippedCustomerOwned ??= []).push(accountId);
+      continue;
+    }
     try {
       const rows = await fetchInsights(accountId, token, since, until);
       result.accounts.push({ id: accountId, rows: rows.length });
@@ -274,7 +279,7 @@ export async function syncMeta(
       }
     } catch (err) {
       result.errors.push(
-        err instanceof Error ? err.message : String(err),
+        `act_${accountId}: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }
