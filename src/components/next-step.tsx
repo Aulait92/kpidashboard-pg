@@ -14,6 +14,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
+import { portalZiel } from "@/lib/portal-ziel";
 import {
   AlertTriangle,
   ArrowRight,
@@ -915,7 +916,7 @@ export function NextStepButton({
             <div onClick={(e) => e.stopPropagation()}>
               <NextStepSheet leadId={leadId} name={name} source={source} appointmentId={appointmentId} fallbackOnClose={false} onClose={() => setOpen(false)} onDone={done} />
             </div>,
-            document.body,
+            portalZiel(),
           )
         : null}
     </>

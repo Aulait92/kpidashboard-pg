@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { portalZiel } from "@/lib/portal-ziel";
 import { impact } from "@/lib/haptics";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -101,7 +102,11 @@ export function Sheet({
       </div>
     </div>
   );
-  return typeof document === "undefined" ? fenster : createPortal(fenster, document.body);
+  if (typeof document === "undefined") return fenster;
+  // In einem offenen <dialog> (showModal, z. B. Kontakt-Fenster über der Liste) liegt alles andere im Hintergrund
+  // und ist nicht bedienbar („Mehr“ öffnete nichts, Ole 19.11.2026). Dann in den obersten offenen Dialog hängen,
+  // sonst wie bisher an <body>.
+  return createPortal(fenster, portalZiel());
 }
 
 export function ActionSheet({
