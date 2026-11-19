@@ -394,7 +394,8 @@ export async function LeadDetailBody({
       ? anrufZiel({
           letzterTermin,
           kind: gesprochen ? "followup" : "callback",
-          reason: lead.followUpNote ?? (lead.status === "Angebot gesendet" ? "Angebot nachfassen" : (conv?.attentionReason ?? "")),
+          // Wartet der Kontakt im Chat, steht sein Anliegen schon oben („Wartet auf Sie“), nicht als „Ihre Notiz“ (UX-Runde 19.11.2026)
+          reason: lead.followUpNote ?? (lead.status === "Angebot gesendet" ? "Angebot nachfassen" : conv?.needsAttention ? "" : (conv?.attentionReason ?? "")),
           source: lead.source,
           known: conv?.qualificationSummary ?? null,
         })
@@ -535,6 +536,47 @@ export async function LeadDetailBody({
         mailAus={mailAus}
         uebertragung={uebertragungAufgabe}
       />
+      {/* UX-Runde 19.11.2026: Was jetzt auf Sie wartet, steht direkt unter den Aktionen (Reaktionszeit) */}
+      {conv?.needsAttention ? (
+        <a
+          href={`/buyer/chats?c=${conv.id}`}
+          className="mb-5 flex items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
+        >
+          <MessageCircle className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <b>Wartet auf Sie:</b> {waOhneMarker(conv.attentionReason) ?? "Bitte beim Kontakt melden."}
+          </span>
+          <span className="font-semibold">Antworten</span>
+        </a>
+      ) : null}
+
+      {noWhatsApp ? (
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-900" data-kein-whatsapp>
+          <PhoneCall className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <b>Kein WhatsApp:</b> Diese Nummer ist nicht per WhatsApp erreichbar, der Assistent schreibt nicht. Bitte direkt anrufen.
+            {lead.waUnavailableMailAt ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}
+          </span>
+          {lead.phone ? (
+            <a href={`tel:+${lead.phone}`} className="font-semibold">
+              {formatPhone(lead.phone)} anrufen
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+
+      <LeadLegalCard einwilligung={einwilligung} health={health} />
+
+      {lead.stornoState === "review" || lead.stornoState === "rejected" ? (
+        <div
+          className={`mb-5 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${lead.stornoState === "review" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-rose-200 bg-rose-50 text-rose-900"}`}
+        >
+          {lead.stornoState === "review"
+            ? `Storno eingereicht (${lead.stornoReason ?? "Grund"}), wird geprüft.`
+            : `Storno abgelehnt (${lead.stornoReason ?? "Grund"}). Bei Fragen melden Sie sich gern.`}
+        </div>
+      ) : null}
+
       {karte ? (
         <TerminKarte
           t={{
@@ -564,11 +606,13 @@ export async function LeadDetailBody({
         />
       ) : null}
       {/* „Ergebnis fehlt“ übernimmt die Terminkarte („Ergebnis eintragen“) */}
-      {stepState === "missing" || (stepState === "result_missing" && !kartenTermin) ? (
+      {(stepState === "missing" && !conv?.needsAttention) || (stepState === "result_missing" && !kartenTermin) ? (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900" data-next-step-hint>
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span className="min-w-0 flex-1">
-            <b>{NEXT_STEP_LABEL[stepState]}.</b> {stepState === "result_missing" ? "Der Termin ist vorbei. Wie ist er gelaufen?" : "Legen Sie fest, wie es weitergeht."}
+            {/* Handy: nur die Überschrift, der Knopf sagt den Rest (UX-Runde 19.11.2026: vorher drei Zeilen) */}
+            <b>{NEXT_STEP_LABEL[stepState]}.</b>{" "}
+            <span className="hidden sm:inline">{stepState === "result_missing" ? "Der Termin ist vorbei. Wie ist er gelaufen?" : "Legen Sie fest, wie es weitergeht."}</span>
           </span>
           {team.userId ? <NextStepButton leadId={lead.id} name={lead.name ?? "Lead"} source={lead.source} appointmentId={resultMissingAppt} resultMissing={stepState === "result_missing"} /> : null}
         </div>
@@ -602,76 +646,6 @@ export async function LeadDetailBody({
           dateien={files.map((f) => ({ id: f.id, fileName: f.fileName, kind: f.kind }))}
         />
       )}
-
-      {won ? (
-        <AbschlussCard
-          leadId={lead.id}
-          closedAt={lead.closedAt?.toISOString() ?? null}
-          beitrag={beitrag}
-          provision={provision}
-          policyDoneAt={lead.policyDoneAt?.toISOString() ?? null}
-          mailVorschlag={!lead.erasedAt && vorlagen.some((v) => v.standardKey === "willkommen")}
-          unterlagenMail={!lead.erasedAt && !mailAus.includes("unterlagen_fehlen") && vorlagen.some((v) => v.standardKey === "unterlagen_fehlen")}
-        >
-          <LeadContracts leadId={lead.id} contracts={contracts} readOnly={!team.userId} />
-        </AbschlussCard>
-      ) : null}
-
-      {lead.stornoState === "review" || lead.stornoState === "rejected" ? (
-        <div
-          className={`mb-5 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${lead.stornoState === "review" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-rose-200 bg-rose-50 text-rose-900"}`}
-        >
-          {lead.stornoState === "review"
-            ? `Storno eingereicht (${lead.stornoReason ?? "Grund"}), wird geprüft.`
-            : `Storno abgelehnt (${lead.stornoReason ?? "Grund"}). Bei Fragen melden Sie sich gern.`}
-        </div>
-      ) : null}
-
-      {noWhatsApp ? (
-        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-900" data-kein-whatsapp>
-          <PhoneCall className="h-4 w-4 shrink-0" />
-          <span className="min-w-0 flex-1">
-            <b>Kein WhatsApp:</b> Diese Nummer ist nicht per WhatsApp erreichbar, der Assistent schreibt nicht. Bitte direkt anrufen.
-            {lead.waUnavailableMailAt ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}
-          </span>
-          {lead.phone ? (
-            <a href={`tel:+${lead.phone}`} className="font-semibold">
-              {formatPhone(lead.phone)} anrufen
-            </a>
-          ) : null}
-        </div>
-      ) : null}
-
-      {conv?.needsAttention ? (
-        <a
-          href={`/buyer/chats?c=${conv.id}`}
-          className="mb-5 flex items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
-        >
-          <MessageCircle className="h-4 w-4 shrink-0" />
-          <span className="min-w-0 flex-1">
-            <b>Wartet auf Sie:</b> {waOhneMarker(conv.attentionReason) ?? "Bitte beim Kontakt melden."}
-          </span>
-          <span className="font-semibold">Antworten</span>
-        </a>
-      ) : null}
-
-      <MaklervollmachtCard leadId={lead.id} customerId={team.customerId} readOnly={!team.userId} knoepfeInWiedervorlage={uebertragungAufgabe?.versicherer ?? null} />
-
-      <EmpfehlungLeadCard leadId={lead.id} team={team} readOnly={!team.userId} />
-
-      <LeadLegalCard einwilligung={einwilligung} health={health} />
-
-      {members.length > 1 ? (
-        <LeadAssignee
-          leadId={lead.id}
-          current={lead.assignedUserId}
-          members={members.map((m) => ({ id: m.id, name: m.displayName ?? m.email, costHint: assignCost.get(m.id) ?? null }))}
-          readOnly={!team.userId}
-        />
-      ) : null}
-
-      {/* Nächste Nachrichten (Paket P6): ersetzt „Automatisches Nachfassen“, oberhalb der Angaben */}
-      <NaechsteNachrichtenCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
       {ziel || conv?.qualificationSummary || qPoints.length || vorvertraege ? (
         <Card className="mb-6">
@@ -720,6 +694,36 @@ export async function LeadDetailBody({
           ) : null}
         </Card>
       ) : null}
+
+      {won ? (
+        <AbschlussCard
+          leadId={lead.id}
+          closedAt={lead.closedAt?.toISOString() ?? null}
+          beitrag={beitrag}
+          provision={provision}
+          policyDoneAt={lead.policyDoneAt?.toISOString() ?? null}
+          mailVorschlag={!lead.erasedAt && vorlagen.some((v) => v.standardKey === "willkommen")}
+          unterlagenMail={!lead.erasedAt && !mailAus.includes("unterlagen_fehlen") && vorlagen.some((v) => v.standardKey === "unterlagen_fehlen")}
+        >
+          <LeadContracts leadId={lead.id} contracts={contracts} readOnly={!team.userId} />
+        </AbschlussCard>
+      ) : null}
+
+      {/* Nächste Nachrichten (Paket P6): ersetzt „Automatisches Nachfassen“, oberhalb der Angaben */}
+      <NaechsteNachrichtenCard leadId={lead.id} readOnly={!!lead.erasedAt} />
+
+      {members.length > 1 ? (
+        <LeadAssignee
+          leadId={lead.id}
+          current={lead.assignedUserId}
+          members={members.map((m) => ({ id: m.id, name: m.displayName ?? m.email, costHint: assignCost.get(m.id) ?? null }))}
+          readOnly={!team.userId}
+        />
+      ) : null}
+
+      <MaklervollmachtCard leadId={lead.id} customerId={team.customerId} readOnly={!team.userId} knoepfeInWiedervorlage={uebertragungAufgabe?.versicherer ?? null} />
+
+      <EmpfehlungLeadCard leadId={lead.id} team={team} readOnly={!team.userId} />
 
       {fetchError ? (
         <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">

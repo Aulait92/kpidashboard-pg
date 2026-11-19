@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { erstinfoName, type ErstinfoWeb } from "@/lib/erstinformation-shared";
 import { CheckCircle2, ChevronRight, Clock, FileText, Info, MessageCircle, TriangleAlert } from "lucide-react";
@@ -97,14 +98,21 @@ export default async function VorlagenPage() {
             const inGruppe = rows.filter((r) => gruppeVon(CUSTOMER_TITLES[r.purpose].title) === g);
             if (!inGruppe.length) return null;
             const offen = inGruppe.filter((r) => r.badge.label !== "Freigegeben").length;
+            // Nur Abgelehntes ist eine Warnung; „in Prüfung“ ist normal und braucht nichts vom Vermittler (UX-Runde 19.11.2026)
+            const abgelehnt = inGruppe.filter((r) => r.badge.label === "Abgelehnt" || r.badge.label === "Pausiert").length;
             return (
               <details key={g} className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white" data-vorlagen-gruppe>
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
                   <span className="min-w-0 flex-1 text-[15px] font-semibold">
                     {g} <span className="font-normal text-[color:var(--muted)]">· {inGruppe.length}</span>
                   </span>
-                  <span className={cn("shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium", offen ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700")}>
-                    {offen ? `${offen} noch nicht freigegeben` : "Alle freigegeben"}
+                  <span
+                    className={cn(
+                      "shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium",
+                      abgelehnt ? "bg-rose-50 text-rose-700" : offen ? "bg-slate-100 text-slate-600" : "bg-emerald-50 text-emerald-700",
+                    )}
+                  >
+                    {abgelehnt ? `${abgelehnt} abgelehnt` : offen ? (connected ? `${offen} in Prüfung` : `${offen} warten auf WhatsApp`) : "Alle freigegeben"}
                   </span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)] transition group-open:rotate-90" />
                 </summary>
@@ -159,7 +167,13 @@ export default async function VorlagenPage() {
               </details>
             );
           })}
-          <p className="text-sm text-[color:var(--muted)]">Sie möchten einen Text anders formulieren? Schreiben Sie uns, wir passen ihn an und reichen ihn neu ein.</p>
+          <p className="text-sm text-[color:var(--muted)]">
+            Sie möchten einen Text anders formulieren?{" "}
+            <Link href="/buyer/hilfe" className="font-medium text-[color:var(--brand)] hover:underline">
+              Schreiben Sie uns
+            </Link>
+            , wir passen ihn an und reichen ihn neu ein.
+          </p>
         </div>
       )}
     </main>

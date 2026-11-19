@@ -17,7 +17,7 @@ import {
   type LeadStatus,
   type PipelinePhase,
 } from "@/lib/products";
-import { formatDate, formatEUR } from "@/lib/format";
+import { formatEUR } from "@/lib/format";
 import { closeValueField, closeValueLabel, sumProvision } from "@/lib/provision";
 import { asksCloseValue } from "@/components/abschluss-sheet";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,7 @@ import { isLostStatus } from "@/lib/lead-lost";
 import { LostSheet, useStepDone } from "@/components/next-step";
 import { KeinWhatsAppBadge } from "@/components/kein-whatsapp-badge";
 import { TestLeadBadge } from "@/components/test-lead-badge";
+import { eingangKurz } from "@/lib/kontakt-liste";
 
 export type KanbanLead = {
   id: string;
@@ -52,6 +53,8 @@ export type KanbanLead = {
   phone?: string | null;
   /** Nicht per WhatsApp erreichbar, frühe Phase (lib/kein-whatsapp-kennzeichen.ts). */
   noWhatsApp?: boolean;
+  /** Kontakt hat im Chat geschrieben und wartet (wie „Antwort wartet“ in der Liste). */
+  waiting?: boolean;
 };
 
 
@@ -253,10 +256,9 @@ export function KanbanBoard({
     );
   }
 
-  // Spalten füllen den verfügbaren Platz gleichmäßig. Unter ~1100 px
+  // Spalten füllen den verfügbaren Platz (leere schmaler, siehe gridTemplateColumns). Unter ~1100 px
   // (≈ 6 × 180 px) kippt das Layout auf horizontalen Scroll mit fixen
   // Min-Breiten — Mobile-Fallback, damit Karten lesbar bleiben.
-  const totalColumns = COLUMNS.length + (sonstige.length > 0 ? 1 : 0);
   const singleProduct = new Set(leads.map((l) => l.source ?? "")).size <= 1;
   const mobileCol =
     COLUMNS.find((c) => c.key === mobilePhase) ??
@@ -320,7 +322,11 @@ export function KanbanBoard({
         className="grid gap-2"
         style={{
           minWidth: minBoardWidth,
-          gridTemplateColumns: `repeat(${totalColumns}, minmax(0, 1fr))`,
+          // Leere Phasen schmal (UX-Runde 19.11.2026): mehr Platz für Spalten mit Kontakten, Ablegen geht weiter
+          gridTemplateColumns: [
+            ...COLUMNS.map((c) => ((buckets.get(c.key) ?? []).length ? "minmax(0, 1fr)" : "minmax(0, 0.75fr)")),
+            ...(sonstige.length > 0 ? ["minmax(0, 1fr)"] : []),
+          ].join(" "),
         }}
       >
         {COLUMNS.map((col) => {
@@ -621,31 +627,41 @@ function KanbanCard({
         dragging && "opacity-50",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 font-medium text-[color:var(--foreground)] break-words">
-          {lead.name ?? (
-            <span className="text-[color:var(--muted)]">unbenannt</span>
-          )}
-          {lead.isTest ? <TestLeadBadge className="ml-1.5 align-middle" /> : null}
-        </div>
-        {lead.noNextStep ? (
-          <span title={lead.resultMissing ? "Ergebnis fehlt: Termin vorbei, bitte Ergebnis eintragen" : "Kein nächster Schritt: Wiedervorlage, Termin, Abschluss oder Verloren"} className="shrink-0 text-amber-500">
-            <AlertTriangle className="h-4 w-4" />
-          </span>
-        ) : null}
-        {subStatus ? (
-          <span className="shrink-0 rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)]">
-            {subStatus}
-          </span>
-        ) : null}
+      {/* UX-Runde 19.11.2026: Name über die volle Breite (vorher brach er neben den Abzeichen Buchstabe für Buchstabe um) */}
+      <div className="min-w-0 font-medium text-[color:var(--foreground)] [overflow-wrap:anywhere]">
+        {lead.name ?? (
+          <span className="text-[color:var(--muted)]">unbenannt</span>
+        )}
+        {lead.isTest ? <TestLeadBadge className="ml-1.5 align-middle" /> : null}
       </div>
+      {lead.waiting || lead.noNextStep || subStatus ? (
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          {/* Als Text statt nur Warndreieck mit Tooltip (am Handy gibt es kein Überfahren mit der Maus) */}
+          {lead.waiting ? (
+            <span className="text-[11px] font-semibold text-rose-600" data-kanban-hinweis="antwort">
+              Antwort wartet
+            </span>
+          ) : lead.noNextStep ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700" data-kanban-hinweis>
+              <AlertTriangle className="h-3.5 w-3.5" />
+              {lead.resultMissing ? "Ergebnis fehlt" : "Nächster Schritt fehlt"}
+            </span>
+          ) : null}
+          {subStatus ? (
+            <span className="rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)]">
+              {subStatus}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
         {hideProduct ? (
-          <span>Eingang {formatDate(lead.createdAt)}</span>
+          <span suppressHydrationWarning>Eingang {eingangKurz(new Date(lead.createdAt))}</span>
         ) : (
           <>
             <span className="truncate">{displayProduct(lead.source)}</span>
-            <span className="shrink-0 tabular-nums">{formatDate(lead.createdAt)}</span>
+            {/* Wie in der Liste: „vor 2 Std.“ statt Datum (UX-Runde 19.11.2026) */}
+            <span suppressHydrationWarning className="shrink-0 tabular-nums">{eingangKurz(new Date(lead.createdAt))}</span>
           </>
         )}
         {columns && onMove ? (

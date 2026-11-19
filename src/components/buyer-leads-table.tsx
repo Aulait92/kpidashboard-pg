@@ -16,6 +16,7 @@ import { berlinTodayIso } from "@/lib/offer-pricing";
 import { NextStepButton } from "@/components/next-step";
 import { KeinWhatsAppBadge } from "@/components/kein-whatsapp-badge";
 import { TestLeadBadge } from "@/components/test-lead-badge";
+import { eingangKurz, frischUnberuehrt } from "@/lib/kontakt-liste";
 
 export type { StornogrundOption };
 
@@ -46,6 +47,10 @@ export type BuyerLeadRow = {
   noWhatsApp?: boolean;
   /** Testlead (lib/testlead.ts): Abzeichen „Test“. */
   isTest?: boolean;
+  /** Lead hat im Chat geschrieben und wartet auf eine Antwort. */
+  waiting?: boolean;
+  /** Assistent ist im Gespräch (zählt als nächster Schritt). */
+  botActive?: boolean;
 };
 
 function formatAppt(d: Date): string {
@@ -79,6 +84,28 @@ function statusText(
   return labels[l.status] ?? l.status;
 }
 
+/** Text und Farbe des nächsten Schritts; null = Knopf „Festlegen“ bzw. nichts. */
+function naechsterSchritt(l: BuyerLeadRow, termin: (d: Date) => string): { text: string; cls: string } | null {
+  if (l.waiting) return { text: "Antwort wartet", cls: "font-semibold text-rose-600" };
+  if (l.appointment) return { text: `Termin ${termin(new Date(l.appointment.startsAt))} · ${terminArtKurz(l.appointment.mode)}`, cls: "font-medium text-blue-700" };
+  if (l.followUpAt) return { text: followUpText(l.followUpAt), cls: cn("font-medium", followUpOverdue(l.followUpAt) ? "text-rose-600" : "text-violet-700") };
+  if (l.callback && !l.noWhatsApp) return { text: "Rückruf nötig", cls: "font-medium text-amber-700" };
+  if (l.botActive && !l.noNextStep) return { text: "Assistent schreibt", cls: "text-[color:var(--muted)]" };
+  // Frisch und noch unberührt: sichtbar machen statt leerer Zelle (Reaktionszeit)
+  if (!l.noNextStep && frischUnberuehrt(l)) return { text: "Noch kein Kontakt", cls: "font-semibold text-rose-600" };
+  return null;
+}
+
+/** Eingang: „vor 4 Min.“ in Rot, solange ein frischer Lead noch unberührt ist und der Assistent nicht schreibt (Reaktionszeit). */
+function Eingang({ l }: { l: BuyerLeadRow }) {
+  const frisch = frischUnberuehrt(l) && !l.botActive;
+  return (
+    <span suppressHydrationWarning className={cn("tabular-nums", frisch && "font-semibold text-rose-600")} data-eingang={frisch ? "frisch" : undefined}>
+      {eingangKurz(new Date(l.createdAt))}
+    </span>
+  );
+}
+
 function isCancelled(status: string | null): boolean {
   return !!status && status.toLowerCase().startsWith("storno");
 }
@@ -107,6 +134,8 @@ export function BuyerLeadsTable({
   const router = useRouter();
   const [openStorno, setOpenStorno] = useState<BuyerLeadRow | null>(null);
   const singleProduct = new Set(leads.map((l) => l.source ?? "")).size <= 1;
+  // Spalte „Lead-Kosten“ nur mit echten Kosten (UX-Runde 19.11.2026: sonst überall 0,00 €)
+  const costColumn = showLeadCost && leads.some((l) => l.revenue > 0);
 
   if (leads.length === 0) {
     return (
@@ -123,7 +152,6 @@ export function BuyerLeadsTable({
           <h2 className="text-base font-semibold tracking-tight">
             {title} <span className="font-normal text-[color:var(--muted)]">· {leads.length}</span>
           </h2>
-          <span className="hidden text-xs text-[color:var(--muted)] sm:inline">Zeile anklicken für Details</span>
         </div>
 
         {/* Handy: Karten statt Tabelle */}
@@ -131,6 +159,7 @@ export function BuyerLeadsTable({
           {leads.map((l) => {
             const cancelled = isCancelled(l.status);
             const label = statusText(l, statusLabels, cancelled);
+            const schritt = naechsterSchritt(l, formatAppt);
             return (
               <li key={l.id}>
                 <button
@@ -143,30 +172,21 @@ export function BuyerLeadsTable({
                       <span className="truncate font-medium">{l.name ?? "Ohne Namen"}</span>
                       {l.isTest ? <TestLeadBadge /> : null}
                     </div>
-                    <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-                      eingegangen {formatDate(l.createdAt)}
+                    <div className="mt-0.5 text-[13px] text-[color:var(--muted)]">
+                      <Eingang l={l} />
                       {singleProduct ? "" : ` · ${displayProduct(l.source)}`}
                     </div>
-                    {l.appointment ? (
-                      <div className="mt-1 text-xs font-medium text-blue-700">
-                        Termin {formatAppt(new Date(l.appointment.startsAt))} ·{" "}
-                        {terminArtKurz(l.appointment.mode)}
-                      </div>
-                    ) : l.followUpAt ? (
-                      <div className={cn("mt-1 text-xs font-medium", followUpOverdue(l.followUpAt) ? "text-rose-600" : "text-violet-700")}>{followUpText(l.followUpAt)}</div>
-                    ) : l.callback && !l.noWhatsApp ? (
-                      <div className="mt-1 text-xs font-medium text-amber-700">Rückruf nötig</div>
-                    ) : null}
+                    {schritt ? <div className={cn("mt-1 text-[13px]", schritt.cls)}>{schritt.text}</div> : null}
                   </div>
                   <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset", statusToneClass(cancelled ? "Storno" : l.status))}>
                     {label}
                   </span>
                 </button>
-                {l.noNextStep || (l.noWhatsApp && l.phone) ? (
+                {(l.noNextStep && !schritt) || (l.noWhatsApp && l.phone) ? (
                   <div className="-mt-1 flex flex-wrap items-center gap-2 px-4 pb-3">
                     {l.noWhatsApp && l.phone ? <KeinWhatsAppBadge phone={l.phone} /> : null}
-                    {l.noNextStep ? (
-                      <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label="Nächsten Schritt festlegen" />
+                    {l.noNextStep && !schritt ? (
+                      <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label={l.resultMissing ? "Ergebnis eintragen" : "Nächsten Schritt festlegen"} />
                     ) : null}
                   </div>
                 ) : null}
@@ -184,7 +204,7 @@ export function BuyerLeadsTable({
                 {singleProduct ? null : <th className="px-3 py-2.5 text-left">Produkt</th>}
                 <th className="px-3 py-2.5 text-left">Phase</th>
                 <th className="px-3 py-2.5 text-left">Nächster Schritt</th>
-                {showLeadCost ? (
+                {costColumn ? (
                   <th className="px-3 py-2.5 text-right">Lead-Kosten</th>
                 ) : null}
                 <th className="px-3 py-2.5 text-right"></th>
@@ -205,8 +225,8 @@ export function BuyerLeadsTable({
                     }}
                     className="cursor-pointer border-b border-[color:var(--border)] transition hover:bg-[color:var(--brand-soft)]/40 last:border-b-0"
                   >
-                    <td className="px-3 py-2.5 tabular-nums text-[color:var(--foreground)]">
-                      {formatDate(l.createdAt)}
+                    <td className="whitespace-nowrap px-3 py-2.5 text-[color:var(--foreground)]" title={formatDate(l.createdAt)}>
+                      <Eingang l={l} />
                     </td>
                     <td className="px-3 py-2.5 font-medium text-[color:var(--foreground)]">
                       {l.name ?? (
@@ -231,20 +251,16 @@ export function BuyerLeadsTable({
                         </span>
                     </td>
                     <td className="px-3 py-2.5">
-                        {l.appointment ? (
-                          <span className="text-xs text-blue-700">
-                            {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
-                            {terminArtKurz(l.appointment.mode)}
-                          </span>
-                        ) : l.followUpAt ? (
-                          <span className={cn("text-xs font-medium", followUpOverdue(l.followUpAt) ? "text-rose-600" : "text-violet-700")}>{followUpText(l.followUpAt)}</span>
-                        ) : l.callback && !l.noWhatsApp ? (
-                          <span className="text-xs font-medium text-amber-700">Rückruf nötig</span>
+                      {(() => {
+                        const schritt = naechsterSchritt(l, (d) => `${formatAppt(d)} Uhr`);
+                        return schritt ? (
+                          <span className={cn("text-[13px]", schritt.cls)}>{schritt.text}</span>
                         ) : l.noNextStep ? (
-                          <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label="Festlegen" />
-                        ) : null}
+                          <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label={l.resultMissing ? "Ergebnis eintragen" : "Festlegen"} />
+                        ) : null;
+                      })()}
                     </td>
-                    {showLeadCost ? (
+                    {costColumn ? (
                       <td className="px-3 py-2.5 text-right tabular-nums">
                         {formatEUR(l.revenue)}
                       </td>
