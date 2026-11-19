@@ -178,7 +178,7 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
   const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp, maklerMarkthinweis: kunde?.maklerMarkthinweis }, logo);
   const an = asAnsprache(kunde?.leadAddress);
   const angebote = ang?.bestaetigt ? ang.angebote : null;
-  // Splittest (lib/praesentation-variante.ts): fest je Lead, A = bisher, B = Abschluss-Dramaturgie
+  // Fassung (lib/praesentation-variante.ts): seit 19.11.2026 für alle B (Abschluss-Dramaturgie)
   const variante = praesentationsVariante(d.leadId ?? appointmentId);
   const zugesagtAm = await zusageAm(appointmentId);
   const fs = folien(d, angebote, marke, an, { variante, zugesagtAm });

@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { cleanAngebote } from "@/lib/angebote";
 import { einwandFolien, folien, markeFuer, paketName, praesentationHtml, SPRECHHINWEIS } from "@/lib/praesentation";
-import { mitAbschlussLeiste, praesentationsVariante } from "@/lib/praesentation-variante";
+import { mitAbschlussLeiste, PRAESENTATION_EXPERIMENT, praesentationsVariante } from "@/lib/praesentation-variante";
+import { EXPERIMENTE } from "@/lib/experimente";
 import { auswerten, zaehltAlsGezeigt, type Ereignis } from "@/lib/praesentation-messung";
 import { demoAngebote, demoEinwaende, demoFolien } from "@/lib/demo-beratung";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
@@ -30,13 +31,17 @@ const text = (html: string) => html.replace(/<style>[\s\S]*?<\/style>/g, "").rep
 const folie = (fs: { id: string; html: string }[], id: string) => fs.find((f) => f.id === id)!.html;
 
 describe("Splittest-Variante", () => {
-  it("fest je Lead, beide Varianten kommen vor, ohne Lead B", () => {
-    expect(praesentationsVariante("lead_abc")).toBe(praesentationsVariante("lead_abc"));
-    const vs = Array.from({ length: 400 }, (_, i) => praesentationsVariante(`cl${i}x${i * 7}`));
-    const b = vs.filter((v) => v === "B").length;
-    expect(b).toBeGreaterThan(140);
-    expect(b).toBeLessThan(260);
+  it("seit 19.11.2026 für alle Fassung B (auch ohne Lead und bei EXPERIMENTE_AUS), kein Test eingetragen", () => {
+    const vs = new Set(Array.from({ length: 400 }, (_, i) => praesentationsVariante(`cl${i}x${i * 7}`)));
+    expect([...vs]).toEqual(["B"]);
     expect(praesentationsVariante(null)).toBe("B");
+    process.env.EXPERIMENTE_AUS = "1";
+    try {
+      expect(praesentationsVariante("lead_abc")).toBe("B");
+    } finally {
+      delete process.env.EXPERIMENTE_AUS;
+    }
+    expect(PRAESENTATION_EXPERIMENT in EXPERIMENTE).toBe(false);
     expect(mitAbschlussLeiste("B", ["Hausrat Komfort"])).toBe(true);
     expect(mitAbschlussLeiste("A", ["Hausrat Komfort"])).toBe(false);
     expect(mitAbschlussLeiste("B", [])).toBe(false);

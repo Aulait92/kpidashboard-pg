@@ -7,11 +7,13 @@
 // im Kundenlink). Abschluss = Zusage („Ja, so machen wir es“) oder Kontakt als abgeschlossen eingetragen (Lead.closedAt
 // ab dem Termintag). Abschlussquote = Abschlüsse / Präsentationen.
 //
-// Beim Zusammenführen mit dem Experiment-Modul (src/lib/experimente.ts): in ereignisSpeichern zusätzlich
-// ereignis("praesentation", leadId, art === "zusage" ? "zusage" : `folie:${folie}`) aufrufen.
+// Seit 19.11.2026 zeigen alle Termine Fassung B (lib/praesentation-variante.ts); Variante je Ereignis und die Auswertung
+// je Variante bleiben für den nächsten Test. Die Zusage geht zusätzlich als Ziel „zusage“ an das Experiment-Modul
+// (zählt erst, wenn ein Test „praesentation“ eingetragen ist und den Lead zugeteilt hat).
 
 import { prisma } from "@/lib/prisma";
-import { praesentationsVariante, PRAESENTATION_VARIANTEN, type PraesentationVariante } from "@/lib/praesentation-variante";
+import { ereignis } from "@/lib/experimente";
+import { PRAESENTATION_EXPERIMENT, PRAESENTATION_VARIANTEN, praesentationsVariante, type PraesentationVariante } from "@/lib/praesentation-variante";
 
 export type EreignisQuelle = "termin" | "kundenlink";
 export type EreignisArt = "folie" | "zusage";
@@ -33,10 +35,13 @@ export async function ereignisSpeichern(e: {
 }): Promise<boolean> {
   const folie = e.art === "zusage" ? "" : (e.folie ?? "");
   if (e.art === "folie" && !FOLIE_ID.test(folie)) return false;
+  const einheit = e.leadId ?? e.appointmentId;
+  const variante = praesentationsVariante(einheit);
   const r = await prisma.praesentationEreignis.createMany({
-    data: [{ customerId: e.customerId, appointmentId: e.appointmentId, quelle: e.quelle, art: e.art, folie, variante: praesentationsVariante(e.leadId ?? e.appointmentId) }],
+    data: [{ customerId: e.customerId, appointmentId: e.appointmentId, quelle: e.quelle, art: e.art, folie, variante }],
     skipDuplicates: true,
   });
+  if (e.art === "zusage") await ereignis(PRAESENTATION_EXPERIMENT, einheit, "zusage");
   return r.count > 0;
 }
 

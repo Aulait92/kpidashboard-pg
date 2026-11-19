@@ -231,6 +231,8 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           marke: p.marke,
           css: p.css,
           ansprache: asAnsprache(kunde?.leadAddress),
+          // Vorschau in der Fassung, die der Kunde im Termin sieht (seit 19.11.2026 für alle B)
+          variante: p.variante,
         }}
       />
     </main>

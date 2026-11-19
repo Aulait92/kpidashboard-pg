@@ -5,7 +5,6 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { demoAngebote } from "@/lib/demo-beratung";
 import { abschlussquoteLaden, ereignisSpeichern, zusageAm } from "@/lib/praesentation-messung";
-import { praesentationsVariante } from "@/lib/praesentation-variante";
 import { kundenlinkErstellen, kundenlinkTermin, loadKundenPraesentation, loadPraesentation } from "@/lib/termin-vorbereitung-server";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
@@ -41,17 +40,19 @@ describe("Präsentation: Messung und Zusage (Datenbank)", () => {
     expect(await zusageAm(appt.id)).toBeInstanceOf(Date);
     const rows = await prisma.praesentationEreignis.findMany({ where: { appointmentId: appt.id } });
     expect(rows).toHaveLength(2);
-    expect(new Set(rows.map((r) => r.variante))).toEqual(new Set([praesentationsVariante(lead.id)]));
+    expect(new Set(rows.map((r) => r.variante))).toEqual(new Set(["B"]));
+    // Ohne eingetragenen Test keine Zuteilung im Experiment-Modul (die Zusage-Meldung ist dann ohne Wirkung)
+    expect(await prisma.experimentZuteilung.count({ where: { experiment: "praesentation" } })).toBe(0);
   });
 
   it("Präsentation und Kundenlink kennen Variante, Zusage und Abschluss-Daten", async () => {
     const { lead, appt } = await termin("Julia Neu");
     const p = (await loadPraesentation(appt.id, ctx))!;
-    expect(p.variante).toBe(praesentationsVariante(lead.id));
+    expect(p.variante).toBe("B");
     expect(p.einwaende).toHaveLength(4);
     expect(p.abschluss.produkte).toEqual(["Haftpflicht Komfort"]);
     expect(p.abschluss.summe).toBe(8.4);
-    expect(p.folien.map((f) => f.id).includes("risiken")).toBe(p.variante === "A");
+    expect(p.folien.map((f) => f.id).includes("risiken")).toBe(false);
     const link = (await kundenlinkErstellen(appt.id, ctx))!;
     const t = (await kundenlinkTermin(link.token))!;
     expect(t).toMatchObject({ appointmentId: appt.id, customerId, leadId: lead.id });
@@ -61,7 +62,8 @@ describe("Präsentation: Messung und Zusage (Datenbank)", () => {
     expect(k.zugesagtAm).toBeInstanceOf(Date);
     // Kundenlink ohne Sprechhinweise
     expect(k.folien.every((f) => !("hinweis" in f))).toBe(true);
-    if (k.variante === "B") expect(k.folien.find((f) => f.id === "entscheidung")!.html).toContain("✓ Zugesagt");
+    expect(k.variante).toBe("B");
+    expect(k.folien.find((f) => f.id === "entscheidung")!.html).toContain("✓ Zugesagt");
   });
 
   it("Abschlussquote je Präsentation: Zusage oder abgeschlossener Kontakt", async () => {

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 import { folien, type Marke } from "@/lib/praesentation";
 import type { Ansprache } from "@/lib/ansprache";
+import type { PraesentationVariante } from "@/lib/praesentation-variante";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import { handleNewVersionError, isNewVersionError } from "@/lib/neue-version";
 import { auswahlDazu, auswahlWeg, gesellschaftName, spartenGruppiert, tarifeFuer, werteZuPruefen, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
@@ -92,7 +93,7 @@ export function VorbereitungNeu(p: {
   mehr: ReactNode;
   klaeren: { punkte: string[]; erledigt: string[] };
   angebote: AngeboteProps;
-  vorschau: { termin: Omit<VorbereitungDaten, "termin"> & { termin: Omit<VorbereitungDaten["termin"], "startsAt"> & { startsAt: string } }; marke: Marke; css: string; ansprache: Ansprache };
+  vorschau: { termin: Omit<VorbereitungDaten, "termin"> & { termin: Omit<VorbereitungDaten["termin"], "startsAt"> & { startsAt: string } }; marke: Marke; css: string; ansprache: Ansprache; variante: PraesentationVariante };
   /** Schritt 4 nach dem Termin (Paket P3): Stand („Angebot gesendet am …“) und ob der Termin schon begonnen hat */
   angebot?: { stand: string | null; gesendet: boolean; vorbei: boolean };
 }) {
@@ -1555,12 +1556,12 @@ function Vorschau({
   const [auf, setAuf] = useState(false);
   const termin = useMemo<VorbereitungDaten>(() => ({ ...daten.termin, termin: { ...daten.termin.termin, startsAt: new Date(daten.termin.termin.startsAt) } }), [daten.termin]);
   const { html, nr, von } = useMemo(() => {
-    const fs = folien(termin, zuAngebote(auswahl, katalog.buendel), daten.marke, daten.ansprache);
+    const fs = folien(termin, zuAngebote(auswahl, katalog.buendel), daten.marke, daten.ansprache, { variante: daten.variante });
     // Sparte „bei Bedarf“: steht erst auf „Ihr Schutz im Überblick“
     let i = sparte.zusatz ? fs.findIndex((f) => f.id === "ueberblick") : fs.findIndex((f) => f.id.startsWith("vergleich-") && f.titel === `Auswahl ${sparte.label}`);
     if (i < 0) i = fs.findIndex((f) => f.id === "empfehlung");
     return { html: fs[i]?.html ?? "", nr: i + 1, von: fs.length };
-  }, [auswahl, sparte.label, sparte.zusatz, termin, daten.marke, daten.ansprache, katalog.buendel]);
+  }, [auswahl, sparte.label, sparte.zusatz, termin, daten.marke, daten.ansprache, daten.variante, katalog.buendel]);
   const box = useRef<HTMLDivElement>(null);
   const deck = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
