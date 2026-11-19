@@ -47,7 +47,7 @@ describe("Entscheidung", () => {
   });
   it("jedes Experiment hat ein Ziel und beide Fassungen beschrieben, ohne Gedankenstriche", () => {
     for (const d of Object.values(EXPERIMENTE)) {
-      expect(["termin_gebucht", "komplettcheck_ja", "erschienen"]).toContain(d.ziel);
+      expect(["termin_gebucht", "komplettcheck_ja", "erschienen", "zusage"]).toContain(d.ziel);
       expect(d.a.length).toBeGreaterThan(5);
       expect(d.b.length).toBeGreaterThan(5);
     }

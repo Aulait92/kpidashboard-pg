@@ -3,7 +3,7 @@
 // Bausteine im Termin an- bzw. abschalten (Ole, 15.11.2026): neuer Beitrag sofort auf den Folien.
 
 import { getBuyerContext } from "@/lib/buyer-context";
-import { bausteinUmschalten, kundenlinkBeenden, kundenlinkErstellen, loadPraesentation, sparteUmschalten, tarifUmschalten, terminFuerMessung } from "@/lib/termin-vorbereitung-server";
+import { bausteinUmschalten, kundenlinkBeenden, kundenlinkErstellen, loadPraesentation, paketUmschalten, sparteUmschalten, tarifUmschalten, terminFuerMessung } from "@/lib/termin-vorbereitung-server";
 import { ereignisSpeichern, FOLIE_ID } from "@/lib/praesentation-messung";
 import { recordUsage } from "@/lib/usage";
 import { publicUrlOr } from "@/lib/public-url";
@@ -25,6 +25,16 @@ export async function tarifAction(appointmentId: string, item: number, ganzeSpar
   if (!Number.isInteger(item) || item < 0 || item >= 20) return { ok: false, error: "Ungültig." };
   const p = ganzeSparte ? await sparteUmschalten(appointmentId, ctx, item) : await tarifUmschalten(appointmentId, ctx, item);
   return p ? { ok: true, folien: p.folien } : { ok: false, error: "Tarif nicht gefunden. Sind die Angebote bestätigt?" };
+}
+
+/** Fassung C, Folie „Ihre Entscheidung“: ein Paket wählen (je Sparte eine Stufe). */
+export async function paketAction(appointmentId: string, items: number[]): Promise<{ ok: true; folien: Folie[] } | { ok: false; error: string }> {
+  const ctx = await getBuyerContext();
+  if (!ctx) return { ok: false, error: "Bitte neu anmelden." };
+  if (ctx.preview) return { ok: false, error: "In der Vorschau nicht möglich." };
+  if (!Array.isArray(items) || !items.length || items.length > 8 || !items.every((n) => Number.isInteger(n) && n >= 0 && n < 20)) return { ok: false, error: "Ungültig." };
+  const p = await paketUmschalten(appointmentId, ctx, items);
+  return p ? { ok: true, folien: p.folien } : { ok: false, error: "Paket nicht gefunden. Sind die Angebote bestätigt?" };
 }
 
 const linkDatum = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" }).format(d);

@@ -198,6 +198,18 @@ export function tarifWaehlen(d: AngeboteDaten, item: number): AngeboteDaten | nu
   return { ...d, items: d.items.map((x, i) => (x.sparte === it.sparte ? { ...x, gewaehlt: i === item } : x)) };
 }
 
+/**
+ * Paket wählen (Präsentation Fassung C, Folie „Ihre Entscheidung“): je Sparte genau eine Stufe, wie mehrmals
+ * tarifWaehlen. Höchstens eine Stufe je Sparte und nur gewählte Sparten (nichts kommt neu dazu); sonst null.
+ */
+export function paketWaehlen(d: AngeboteDaten, items: number[]): AngeboteDaten | null {
+  if (!items.length || items.length > 8 || items.some((i) => !Number.isInteger(i) || !d.items[i])) return null;
+  const sparten = items.map((i) => d.items[i].sparte);
+  if (new Set(sparten).size !== sparten.length) return null;
+  if (!sparten.every((s) => d.items.some((x) => x.sparte === s && x.gewaehlt))) return null;
+  return items.reduce<AngeboteDaten>((s, i) => tarifWaehlen(s, i)!, d);
+}
+
 /** Ganze Sparte im Termin ab- bzw. wieder zuwählen (dann mit der Empfehlung, sonst der ersten Stufe). */
 export function sparteSchalten(d: AngeboteDaten, item: number): AngeboteDaten | null {
   const it = d.items[item];

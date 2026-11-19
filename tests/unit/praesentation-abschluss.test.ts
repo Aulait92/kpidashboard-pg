@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { cleanAngebote } from "@/lib/angebote";
 import { einwandFolien, folien, markeFuer, paketName, praesentationHtml, SPRECHHINWEIS } from "@/lib/praesentation";
-import { mitAbschlussLeiste, PRAESENTATION_EXPERIMENT, praesentationsVariante } from "@/lib/praesentation-variante";
-import { EXPERIMENTE } from "@/lib/experimente";
+import { istVariante, mitAbschlussLeiste, PRAESENTATION_EXPERIMENT, varianteAusExperiment } from "@/lib/praesentation-variante";
+import { EXPERIMENTE, laeuft } from "@/lib/experimente";
 import { auswerten, zaehltAlsGezeigt, type Ereignis } from "@/lib/praesentation-messung";
 import { demoAngebote, demoEinwaende, demoFolien } from "@/lib/demo-beratung";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
@@ -31,18 +31,23 @@ const text = (html: string) => html.replace(/<style>[\s\S]*?<\/style>/g, "").rep
 const folie = (fs: { id: string; html: string }[], id: string) => fs.find((f) => f.id === id)!.html;
 
 describe("Splittest-Variante", () => {
-  it("seit 19.11.2026 für alle Fassung B (auch ohne Lead und bei EXPERIMENTE_AUS), kein Test eingetragen", () => {
-    const vs = new Set(Array.from({ length: 400 }, (_, i) => praesentationsVariante(`cl${i}x${i * 7}`)));
-    expect([...vs]).toEqual(["B"]);
-    expect(praesentationsVariante(null)).toBe("B");
-    process.env.EXPERIMENTE_AUS = "1";
-    try {
-      expect(praesentationsVariante("lead_abc")).toBe("B");
-    } finally {
-      delete process.env.EXPERIMENTE_AUS;
-    }
-    expect(PRAESENTATION_EXPERIMENT in EXPERIMENTE).toBe(false);
+  it("Experiment „praesentation“: a = B (Standard), b = C, Ziel Zusage, läuft ab dem Deploy (Ole, 19.11.2026)", () => {
+    expect(varianteAusExperiment("a")).toBe("B");
+    expect(varianteAusExperiment("b")).toBe("C");
+    expect(istVariante("C")).toBe(true);
+    expect(istVariante("D")).toBe(false);
+    const def = EXPERIMENTE[PRAESENTATION_EXPERIMENT];
+    expect(def.ziel).toBe("zusage");
+    expect("aktiv" in def).toBe(false);
+    // ohne gespeicherten Stand läuft er; eine Zeile mit aktiv = false hält ihn an
+    expect(laeuft(def, null)).toBe(true);
+    expect(laeuft(def, { aktiv: false })).toBe(false);
+    expect(laeuft({ ...def, aktiv: false }, null)).toBe(false);
+    expect(laeuft({ ...def, aktiv: false }, { aktiv: true })).toBe(true);
+    expect(laeuft(EXPERIMENTE.komplettcheck_text, null)).toBe(true);
+    expect(laeuft(EXPERIMENTE.komplettcheck_text, { aktiv: false })).toBe(false);
     expect(mitAbschlussLeiste("B", ["Hausrat Komfort"])).toBe(true);
+    expect(mitAbschlussLeiste("C", ["Hausrat Komfort"])).toBe(true);
     expect(mitAbschlussLeiste("A", ["Hausrat Komfort"])).toBe(false);
     expect(mitAbschlussLeiste("B", [])).toBe(false);
   });

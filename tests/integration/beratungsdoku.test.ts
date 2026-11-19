@@ -217,6 +217,23 @@ describe("Beratungsdokumentation (Paket B)", () => {
     expect(await prisma.leadFile.count({ where: { leadId: lead.id, kind: "beratungsdoku" } })).toBe(1);
   });
 
+  it("Zusage abweichend von der Empfehlung: Vermerk unter „Entscheidung des Kunden“, ohne Zusage nicht", async () => {
+    const { t } = await termin();
+    // Kunde wählt die günstigere Stufe (Basis statt Komfort)
+    await prisma.appointment.update({
+      where: { id: t.id },
+      data: { offersJson: { ...offers, items: offers.items.map((i) => ({ ...i, gewaehlt: i.tarif === "Basis" })) } },
+    });
+    expect((await ladeBeratungsdoku(t.id, ctx(), T0))!.entwurf.entscheidung).not.toContain("trotz unserer Empfehlung");
+    await prisma.praesentationEreignis.create({ data: { customerId, appointmentId: t.id, quelle: "kundenlink", art: "zusage", folie: "", variante: "C" } });
+    const e = (await ladeBeratungsdoku(t.id, ctx(), T0))!.entwurf.entscheidung;
+    expect(e).toBe("Sie haben sich trotz unserer Empfehlung für die günstigere Variante entschieden: Privathaftpflicht Basis statt Privathaftpflicht Komfort.");
+    // „Empfehlung mit Begründung“ nennt weiter die empfohlene Stufe
+    const info = (await ladeBeratungsdoku(t.id, ctx(), T0))!;
+    expect(info.entwurf.empfehlung).toContain("Komfort");
+    expect(info.entwurf.empfehlung).not.toContain("Basis");
+  });
+
   it("Messung: eingeschaltete Vermittler, Termine und dokumentierte Termine je Kunde", async () => {
     const c4 = await makeCustomer({ beratungsdokuAn: true, beratungsdokuAnAt: T0 });
     try {
