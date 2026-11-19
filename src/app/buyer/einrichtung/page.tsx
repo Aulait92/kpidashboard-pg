@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
-import { STEP_TEXT } from "@/components/first-day";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardCheck, ClipboardList, FileSignature, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronDown, ClipboardCheck, ClipboardList, FileSignature, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -26,7 +25,7 @@ import { loadErstinfo } from "@/lib/erstinformation";
 import { vermittlerStatusLabel } from "@/lib/erstinformation-shared";
 import { SmtpForm } from "@/app/buyer/postfach/forms";
 import { googleMailAvailable, microsoftMailAvailable } from "@/lib/mail/postfach";
-import { appInstalled, loadSetupSettings, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
+import { appInstalled, loadSetupSettings, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
 import { helpCallSlots } from "@/lib/help-call";
 import { InstallApp } from "@/components/install-app";
 import { getAppUrl } from "@/lib/email";
@@ -83,10 +82,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const newUi = await isNewUi(ctx.customerId);
   const provision = await loadCustomerProvision(ctx.customerId);
   const appDone = await appInstalled(ctx.customerId);
-  const steps = setupSteps(ob, items, { appDone, provisionDone: provision.confirmed });
   // Eine Zählung wie auf der Startseite und im Menü: nur Schritte, die der Kunde selbst erledigt
   const progress = customerSetupProgress(items, { appDone, provisionDone: provision.confirmed });
-  const custSteps = steps.filter((st) => st.owner === "kunde" && st.key !== "login");
   const overall = { done: progress.done, total: progress.total, percent: progress.percent, open: progress.open };
   // Live und nichts mehr offen = fertig. Live mit offenen Software-Schritten (z. B. nach Paketwechsel): Fortschritt zeigen.
   const fertig = !!ob.liveAt && overall.open.length === 0;
@@ -180,48 +177,17 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken,#f1f5f9)]">
             <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${fertig ? 100 : overall.percent}%` }} />
           </div>
-          {!fertig ? (
-            <ul className="mt-4 divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]" data-setup-steps>
-              {custSteps.map((st) => {
-                const t = STEP_TEXT[st.key] ?? { label: st.label, icon: Circle };
-                const Icon = st.done ? CheckCircle2 : t.icon;
-                const inner = (
-                  <>
-                    <Icon className={`h-4 w-4 shrink-0 ${st.done ? "text-emerald-600" : "text-[color:var(--brand)]"}`} />
-                    <span className={`flex-1 ${st.done ? "text-[color:var(--muted)] line-through decoration-[color:var(--border-strong)]" : ""}`}>{t.label}</span>
-                    {st.done ? <span className="text-xs text-[color:var(--muted)]">Erledigt</span> : <ArrowRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />}
-                  </>
-                );
-                return (
-                  <li key={st.key}>
-                    {st.done ? (
-                      <span className="flex items-center gap-3 px-4 py-3 text-sm font-medium">{inner}</span>
-                    ) : (
-                      <a href={st.href} className="flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-[color:var(--surface-sunken,#f8fafc)] hover:text-[color:var(--brand)]">
-                        {inner}
-                      </a>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
+          {/* Keine zweite Liste der Schritte mehr (UX-Runde 19.11.2026): Die Schritte darunter zeigen Stand und Inhalt,
+              der nächste offene ist aufgeklappt und markiert. Am Handy steht er so auf dem ersten Bildschirm. */}
           <p className="mt-3 text-sm text-[color:var(--muted)]">
             {progress.complete ? "Den Rest erledigen wir." : "Ca. 20 bis 30 Minuten für Sie, jederzeit unterbrechbar. Den Rest erledigen wir."}
           </p>
           {!ob.liveAt ? <OurPart ours={progress.ours} startDate={ob.startDate} /> : null}
-          {newUi && !readOnly ? (
-            <p className="mt-3 text-sm">
-              <Link href="/buyer/einfuehrung" className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--brand)]" data-einrichtung-video>
-                <PlayCircle className="h-4 w-4" /> So arbeiten Sie mit der Software: Einführungsvideo (ca. 3 Minuten)
-              </Link>
-            </p>
-          ) : null}
         </div>
       </Card>
 
       <div className="space-y-5">
-        <Step n={nextNo()} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={isOpen("questionnaire")} id="questionnaire">
+        <Step n={nextNo()} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={isOpen("questionnaire")} id="questionnaire" current={current === "questionnaire"}>
           <p className="mb-4 text-sm text-[color:var(--muted)]">Nur noch, wie Sie arbeiten möchten:</p>
           <QuestionnaireForm
             software={software}
@@ -232,7 +198,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           />
         </Step>
 
-        <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={isOpen("app")} id="app">
+        <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={isOpen("app")} id="app" current={current === "app"}>
           <VideoHint url={video("app")} />
           <InstallApp appUrl={appHost()} />
           {!appDone ? (
@@ -243,7 +209,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         </Step>
 
         {software ? (
-          <Step n={nextNo()} title="Kalender und freie Zeiten" icon={CalendarDays} done={done("calendar")} open={isOpen("calendar")} id="calendar">
+          <Step n={nextNo()} title="Kalender und freie Zeiten" icon={CalendarDays} done={done("calendar")} open={isOpen("calendar")} id="calendar" current={current === "calendar"}>
             <p className="mb-4 text-sm text-[color:var(--muted)]">
               Damit Leads nur Termine bekommen, wenn Sie wirklich Zeit haben.
             </p>
@@ -292,7 +258,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         ) : null}
 
         {software ? (
-          <Step n={nextNo()} title="E-Mail-Postfach verbinden" icon={Mail} done={done("mailbox")} open={isOpen("mailbox")} id="mailbox">
+          <Step n={nextNo()} title="E-Mail-Postfach verbinden" icon={Mail} done={done("mailbox")} open={isOpen("mailbox")} id="mailbox" current={current === "mailbox"}>
             <p className="mb-3 text-sm text-[color:var(--muted)]">
               Damit schreiben Sie Leads direkt aus der App an, mit Vorlagen und auf Wunsch mit dem Angebot im Anhang. Die E-Mails gehen über Ihr eigenes Postfach,
               Antworten landen dort. Wir senden nur E-Mails, die Sie selbst auslösen, und lesen Ihr Postfach nicht.
@@ -339,7 +305,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
-        <Step n={nextNo()} title="Provisionen prüfen (1 Minute)" icon={Percent} done={provision.confirmed} open={isOpen("provision")} id="provision">
+        <Step n={nextNo()} title="Provisionen prüfen (1 Minute)" icon={Percent} done={provision.confirmed} open={isOpen("provision")} id="provision" current={current === "provision"}>
           {/* Typ aus dem angenommenen Angebot bekannt → nicht mehr danach fragen. */}
           <p className="text-sm text-[color:var(--muted)]">{provisionSetupHint(provision.typ, !!ob.offerId)}</p>
           {/* Rückmeldung an Meta (lib/capi) */}
@@ -355,7 +321,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         </Step>
 
         {software && erstinfo ? (
-          <Step n={nextNo()} title="Erstinformation für Ihre Leads" icon={FileText} done={done("erstinfo")} open={isOpen("erstinfo")} id="erstinfo">
+          <Step n={nextNo()} title="Erstinformation für Ihre Leads" icon={FileText} done={done("erstinfo")} open={isOpen("erstinfo")} id="erstinfo" current={current === "erstinfo"}>
             <p className="mb-3 text-sm text-[color:var(--muted)]">
               Als Versicherungsvermittler müssen Sie Ihren Kunden beim ersten Kontakt die Erstinformation geben (§ 15 VersVermV), als PDF. Wir erstellen sie
               aus Ihrem Angebot und Impressum. Ihr Assistent schickt das PDF jedem neuen Lead per WhatsApp und hängt es an die Terminbestätigung per E-Mail. Bitte
@@ -411,14 +377,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         ) : null}
 
         {soArbeitet ? (
-          <Step n={nextNo()} title="So arbeitet Ihr Assistent" icon={Route} done={done("assistent")} open={isOpen("assistent")} id="assistent">
+          <Step n={nextNo()} title="So arbeitet Ihr Assistent" icon={Route} done={done("assistent")} open={isOpen("assistent")} id="assistent" current={current === "assistent"}>
             <SoArbeitet d={soArbeitet} produktHref={(p) => `/buyer/einrichtung?schritt=assistent&produkt=${encodeURIComponent(p)}#assistent`} />
             {!done("assistent") ? <WeiterButton kind="gesehen:assistent" next={laterHref("assistent")} readOnly={readOnly} /> : null}
           </Step>
         ) : null}
 
         {software ? (
-          <Step n={nextNo()} title="Service-Mails in Ihrem Namen" icon={Mail} done={done("serviceMails")} open={isOpen("serviceMails")} id="serviceMails">
+          <Step n={nextNo()} title="Service-Mails in Ihrem Namen" icon={Mail} done={done("serviceMails")} open={isOpen("serviceMails")} id="serviceMails" current={current === "serviceMails"}>
             {mails ? (
               <ServiceMails {...mails} canEdit={!readOnly} weiterHref={laterHref("serviceMails")} />
             ) : (
@@ -499,7 +465,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           )
         ) : null}
 
-        <Step n={nextNo()} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">
+        <Step n={nextNo()} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess" current={current === "metaAccess"}>
           <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto und Leads kommen direkt bei Ihnen an. Das Budget bleibt bei Ihnen.</p>
           <VideoHint url={video("metaAccess")} />
           <p className="mt-4 text-[15px] font-medium">So geben Sie uns Zugriff (ca. 3 Minuten)</p>
@@ -610,7 +576,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         </Step>
 
         {waEnabled ? (
-          <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp">
+          <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp" current={current === "whatsapp"}>
             <VideoHint url={video("whatsapp")} />
             <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} email={ctx.email} />
             {!done("whatsapp") ? (
@@ -627,7 +593,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         ) : null}
 
         {has("bestandImport") ? (
-          <Step n={nextNo()} title="Kundenliste hochladen" icon={Upload} done={done("bestandImport")} open={isOpen("bestandImport")} id="bestandImport">
+          <Step n={nextNo()} title="Kundenliste hochladen" icon={Upload} done={done("bestandImport")} open={isOpen("bestandImport")} id="bestandImport" current={current === "bestandImport"}>
             <p className="text-sm text-[color:var(--muted)]">
               Für Ihre Bestandskunden-Kampagnen: Laden Sie Ihre Kundenliste als Excel oder CSV hoch. Die App erkennt die Spalten und zeigt vorher eine Vorschau.
             </p>
@@ -641,7 +607,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         ) : null}
 
         {has("reviewLink") ? (
-          <Step n={nextNo()} title="Google-Bewertungslink hinterlegen" icon={Star} done={done("reviewLink")} open={isOpen("reviewLink")} id="reviewLink">
+          <Step n={nextNo()} title="Google-Bewertungslink hinterlegen" icon={Star} done={done("reviewLink")} open={isOpen("reviewLink")} id="reviewLink" current={current === "reviewLink"}>
             <p className="text-sm text-[color:var(--muted)]">
               Für Empfehlungen und Bewertungen: Mit Ihrem Link „Bewertung schreiben“ aus dem Google-Unternehmensprofil bittet die App zufriedene Kunden um eine Bewertung.
             </p>
@@ -657,7 +623,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         ) : null}
 
         {has("team") ? (
-          <Step n={nextNo()} title="Team einladen" icon={Users} done={done("team")} open={isOpen("team")} id="team">
+          <Step n={nextNo()} title="Team einladen" icon={Users} done={done("team")} open={isOpen("team")} id="team" current={current === "team"}>
             <p className="text-sm text-[color:var(--muted)]">Laden Sie Ihre Berater ein. Jeder bekommt einen eigenen Login und sieht nur seine Leads.</p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Link href="/buyer/team" className={buttonClass("primary", "md")}>
@@ -668,7 +634,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
-        <Step n={nextNo()} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start"}>
+        <Step n={nextNo()} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start"} current={current === "start" && !ob.liveAt}>
           {software && waVerbunden && !ob.liveAt ? (
             <div className="mb-4">
               <TestleadSelbst phone={eiTel} readOnly={readOnly} schonGetestet={!!ob.testLeadAt} />
@@ -697,6 +663,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </p>
         </Step>
       </div>
+      {/* Einführungsvideo unter den Schritten, damit am Handy der nächste Schritt auf den ersten Bildschirm passt (UX-Runde 19.11.2026) */}
+      {newUi && !readOnly ? (
+        <p className="mt-5 text-sm">
+          <Link href="/buyer/einfuehrung" className="inline-flex min-h-11 items-center gap-1.5 font-semibold text-[color:var(--brand)]" data-einrichtung-video>
+            <PlayCircle className="h-4 w-4" /> So arbeiten Sie mit der Software: Einführungsvideo (ca. 3 Minuten)
+          </Link>
+        </p>
+      ) : null}
     </main>
   );
 }
@@ -753,8 +727,11 @@ function Step({
   done,
   open,
   id,
+  current = false,
   children,
 }: {
+  /** Nächster offener Schritt: hervorgehoben mit „Als Nächstes“ (UX-Runde 19.11.2026). */
+  current?: boolean;
   id?: string;
   n: number;
   title: string;
@@ -766,13 +743,18 @@ function Step({
 }) {
   // Erledigte Schritte sind zugeklappt (antippen zum Ansehen), offene aufgeklappt.
   return (
-    <details id={id} open={open} className="group overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
+    <details
+      id={id}
+      open={open}
+      data-schritt-aktuell={current ? "" : undefined}
+      className={`group scroll-mt-20 overflow-hidden rounded-[var(--radius-lg)] border bg-[color:var(--surface)] shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden ${current ? "border-[color:var(--brand)] ring-2 ring-[color:var(--brand)]/15" : "border-[color:var(--border)]"}`}
+    >
       <summary className="flex cursor-pointer items-center gap-2.5 px-5 py-3.5 group-open:border-b group-open:border-[color:var(--border)]">
         {done ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" /> : <Icon className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />}
         <span className={`flex-1 text-[15px] font-semibold tracking-tight ${done ? "text-[color:var(--muted)]" : ""}`}>
           {n}. {title}
         </span>
-        {done ? <span className="text-xs font-semibold text-emerald-700">erledigt</span> : null}
+        {done ? <span className="text-xs font-semibold text-emerald-700">erledigt</span> : current ? <span className="text-xs font-semibold text-[color:var(--brand)]">Als Nächstes</span> : null}
         <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
       </summary>
       <div className="p-5">{children}</div>

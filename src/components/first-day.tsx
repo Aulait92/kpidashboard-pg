@@ -209,14 +209,15 @@ function BeforeStart({
                     <span className="font-medium">
                       Einrichtung: {progress.done} von {progress.total} erledigt
                     </span>
-                    <span className="text-[color:var(--muted)]">jederzeit unterbrechbar</span>
+                    <span className="hidden text-[color:var(--muted)] sm:inline">jederzeit unterbrechbar</span>
                   </div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken,#f1f5f9)]">
                     <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${Math.max(progress.percent, 4)}%` }} />
                   </div>
                 </div>
-                <ul className="mt-4 divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]">
-                  {next.map((s) => {
+                {/* Nur die nächsten drei Schritte, damit „Einrichtung fortsetzen“ am Handy ohne Scrollen sichtbar bleibt (UX-Runde 19.11.2026) */}
+                <ul className="mt-4 divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]" data-start-schritte>
+                  {next.slice(0, 3).map((s) => {
                     const t = STEP_TEXT[s.key] ?? { label: s.label, icon: Circle };
                     const Icon = t.icon;
                     return (
@@ -232,6 +233,15 @@ function BeforeStart({
                       </li>
                     );
                   })}
+                  {next.length > 3 ? (
+                    <li>
+                      <Link href="/buyer/einrichtung" className="flex items-center gap-3 px-4 py-3 text-sm text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken,#f8fafc)] hover:text-[color:var(--brand)]">
+                        <span className="w-4 shrink-0" />
+                        <span className="flex-1">und {next.length - 3} weitere</span>
+                        <ArrowRight className="h-4 w-4 shrink-0" />
+                      </Link>
+                    </li>
+                  ) : null}
                 </ul>
               </>
             )
