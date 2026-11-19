@@ -79,7 +79,32 @@ const WIDERSPRUCH = [
   // „meinen Anwalt“, „unsere Rechtsanwältin“; nicht „Ihr Anwalt für …“, „Anwaltskanzlei-Kunden“, „Anwälte als Kunden“
   /\b(mein|meinen|meinem|meine|unser|unseren|unserem|unsere) (\S+ )?(rechts)?anw(a|ä)lt(in|e|en|s)?\b(?!-?(s)?kanzlei)/,
   /\b(rechts)?anw(a|ä)lt(in|e|en)? (\S+ ){0,2}?(einschalten|eingeschaltet|beauftragen|beauftragt|übergeben|weiterleiten|weitergeleitet|prüfen lassen|vorlegen)\b/,
+  // Datenschutzverstoß als Vorwurf (Ole, 19.11.2026)
+  /\bdatenschutz-?verstoß\w*/, /\bverstoß\w* gegen (den |die )?(datenschutz|ds-?gvo|uwg)/, /\bverstößt (\S+ ){0,3}?gegen (den |die |das )?(datenschutz|ds-?gvo|uwg|gesetz)/,
 ];
+
+// Abmahnung bzw. rechtliche Drohung (Ole, 19.11.2026, Datenschutz und Recht): Abmahnung, Unterlassungserklärung,
+// § 7 UWG, Schadensersatz, Aufsicht, Anwalt, Kanzlei im Drohkontext. Unterart „abmahnung“ (sofort an Ole, Push); sperrt
+// wie ein Widerspruch. „Unterlassen Sie …“ allein bleibt ein Widerspruch.
+const KANZLEI_VERB =
+  "(einschalten|eingeschaltet|beauftragen|beauftragt|übergeben|übergebe|weiterleiten|weitergeleitet|weiterleite|prüfen lassen|vorlegen|informieren|informiert|kontaktieren|kontaktiert|zukommen|melden|meldet|wenden|einreichen|eingereicht)";
+export const ABMAHNUNG: RegExp[] = [
+  /\babmahn\w*/,
+  /\bunterlassungs-?erklärung\w*/, /\bstrafbewehrt\w*/, /\bvertragsstrafe\w*/, /\bunterlassungsanspruch\w*/,
+  /\buwg\b/,
+  /\bschadens?ersatz\w*/, /\bart(ikel|\.)?\s?82\b/,
+  /\blandesdatenschutz\w*/, /\bdatenschutzbehörde\w*/, /\blandesbeauftragte\w* für (den )?datenschutz/, /\bbeschwerde (bei|an) (der|die|den) (\S+ )?(aufsicht|datenschutz|behörde)/,
+  /\banwaltlich\w*/, /\banwaltskosten\b/, /\brechtliche schritte\b/, /\bnamens und in vollmacht\b/,
+  /\b(mein|meinen|meinem|meine|unser|unseren|unserem|unsere) (\S+ )?(rechts)?anw(a|ä)lt(in|e|en|s)?\b(?!-?(s)?kanzlei)/,
+  /\b(rechts)?anw(a|ä)lt(in|e|en)? (\S+ ){0,2}?(einschalten|eingeschaltet|beauftragen|beauftragt|übergeben|weiterleiten|weitergeleitet|prüfen lassen|vorlegen)\b/,
+  // Kanzlei nur im Drohkontext („an meine Kanzlei weitergeleitet“, „unsere Kanzlei wird sich melden“), nicht „Maklerkanzlei Muster“
+  new RegExp(`\\b(meine|meiner|unsere|unserer|die|eine|einer|der) (\\S+ )?(rechts|anwalts)?kanzlei (\\S+ ){0,4}?${KANZLEI_VERB}\\b`),
+  new RegExp(`\\b${KANZLEI_VERB} (\\S+ ){0,2}?(an|über|durch) (meine|unsere|eine|die) (\\S+ )?(rechts|anwalts)?kanzlei\\b`),
+  /\b(an|über|durch) (meine|unsere) (rechts|anwalts)kanzlei\b/,
+  // Schreiben einer Kanzlei: „namens unserer Mandantin“, „wir vertreten die rechtlichen Interessen“
+  /\b(namens|im auftrag|im namen) (unserer|unseres|meiner|meines) mandant\w*/, /\b(wir|ich) vertret\w* (\S+ ){0,4}?(mandant\w*|rechtlichen interessen)/,
+];
+
 // Aufsichtsbehörde: nur mit Datenschutz-Bezug bzw. ohne BaFin (Versicherungsaufsicht ist ein Absagegrund, kein Widerspruch)
 const AUFSICHT = /\baufsichtsbehörde\w*/;
 const BAFIN = /\bbafin\b/;
@@ -142,6 +167,8 @@ export type DsgvoBefund = {
   loeschen: boolean;
   /** Auskunft im engeren Sinn (Art. 15, Herkunft, Einwilligungsnachweis): vor dem Löschen beantworten */
   auskunft: boolean;
+  /** Abmahnung bzw. rechtliche Drohung (Anwalt, Kanzlei, Schadensersatz, Aufsicht, § 7 UWG): sofort an Ole */
+  abmahnung: boolean;
 };
 
 /**
@@ -152,28 +179,26 @@ export type DsgvoBefund = {
 export function dsgvoAusAntwort(text: string | null | undefined, subject?: string | null): DsgvoBefund {
   const betreff = (subject ?? "").replace(/^((re|aw|antw|wg|fwd?)\s*:\s*)+/i, "").toLowerCase();
   const t = `${betreff}\n${norm(text)}`.replace(VERNEINT, " ");
-  const out: DsgvoBefund = { grund: null, loeschen: false, auskunft: false };
+  const out: DsgvoBefund = { grund: null, loeschen: false, auskunft: false, abmahnung: false };
   if (!t.trim()) return out;
   out.auskunft = AUSKUNFT.some((r) => r.test(t));
   out.loeschen = LOESCHEN.some((r) => r.test(t));
   const dsb = DSB.test(t);
   const dsgvoAllgemein = DSGVO.test(t) && DSGVO_BEZUG.test(t);
   const aufsicht = AUFSICHT.test(t) && (!BAFIN.test(t) || /datenschutz/.test(t));
+  out.abmahnung = aufsicht || ABMAHNUNG.some((r) => r.test(t));
   if (out.auskunft || dsb || (dsgvoAllgemein && !out.loeschen)) out.grund = "datenschutz";
-  else if (out.loeschen || aufsicht || WIDERSPRUCH.some((r) => r.test(t))) out.grund = "widerspruch";
+  else if (out.loeschen || out.abmahnung || WIDERSPRUCH.some((r) => r.test(t))) out.grund = "widerspruch";
   else if (AUSTRAGEN.some((r) => r.test(t))) out.grund = "austragen";
   return out;
 }
 
-/** Frist für die Auskunft nach Art. 15 DSGVO: ein Monat ab Eingang (Art. 12 Abs. 3), gleicher Kalendertag. */
+/** Eigene Frist für Datenschutzanfragen (Ole, 19.11.2026): 7 Tage ab Eingang (gesetzlich ein Monat, Art. 12 Abs. 3). */
+export const DATENSCHUTZ_FRIST_TAGE = 7;
+
+/** Frist für Auskunft, Löschung und Widerspruch: 7 Tage ab Eingang (Ole, 19.11.2026; vorher ein Monat). */
 export function auskunftsFrist(eingang: Date): Date {
-  const d = new Date(eingang);
-  const tag = d.getUTCDate();
-  d.setUTCDate(1);
-  d.setUTCMonth(d.getUTCMonth() + 1);
-  const letzter = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
-  d.setUTCDate(Math.min(tag, letzter));
-  return d;
+  return new Date(eingang.getTime() + DATENSCHUTZ_FRIST_TAGE * 86_400_000);
 }
 
 export const AUSKUNFT_AUFGABE = "Auskunft nach Art. 15 beantworten";
@@ -183,14 +208,14 @@ export const AUSKUNFT_VOR_LOESCHUNG_AUFGABE = "Auskunft und Löschverlangen: ers
 /** „TT.MM.JJJJ“ in Berliner Zeit */
 export const datumDe = (d: Date) => d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Berlin" });
 
-/** Titel einer Datenschutz-Aufgabe mit Frist von einem Monat, z. B. „Löschverlangen prüfen (Kunde/Lead), Frist 19.12.2026“. */
+/** Titel einer Datenschutz-Aufgabe mit Frist (7 Tage), z. B. „Löschverlangen prüfen (Kunde/Lead), Frist 26.11.2026“. */
 export const aufgabeMitFrist = (titel: string, eingang: Date) => `${titel}, Frist ${datumDe(auskunftsFrist(eingang))}`;
 
 /** Einziger Verlaufseintrag eines auf Verlangen gelöschten Kontakts (ohne Personenbezug). */
 export const art17Vermerk = (at: Date) => `Personenbezogene Daten am ${datumDe(at)} auf Verlangen gelöscht (Art. 17 DSGVO). Sperrvermerk bleibt.`;
 export const ART17_NAME = "Gelöscht auf Verlangen (Art. 17 DSGVO)";
 
-/** Titel der Admin-Aufgabe, z. B. „Auskunft nach Art. 15 beantworten, Frist 19.12.2026“. */
+/** Titel der Admin-Aufgabe, z. B. „Auskunft nach Art. 15 beantworten, Frist 26.11.2026“. */
 export function auskunftsAufgabe(eingang: Date): string {
   return aufgabeMitFrist(AUSKUNFT_AUFGABE, eingang);
 }

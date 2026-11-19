@@ -22,7 +22,9 @@ import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { ownEmailDomain } from "@/lib/vertrieb/dubletten";
-import { emailHash } from "@/lib/vertrieb/sperrliste";
+import { domainHash, emailHash } from "@/lib/vertrieb/sperrliste";
+import { loeschungProtokollieren, sperrDomains } from "@/lib/vertrieb/datenschutz-recht-server";
+import { RECHT_AUFGABE } from "@/lib/vertrieb/datenschutz-recht";
 import { ART17_NAME, AUSKUNFT_VOR_LOESCHUNG_AUFGABE, LOESCH_PRUEFEN_AUFGABE, aufgabeMitFrist, art17Vermerk, type SperrGrund } from "@/lib/vertrieb/nie-kontaktieren";
 import { api as instantlyApi, aufBlocklist, instantlySchreibbar, nieKontaktierenSetzen } from "@/lib/vertrieb/nie-kontaktieren-server";
 
@@ -46,7 +48,8 @@ export type Art17Ergebnis = {
 const INSTANTLY_AUFGABE = "Instantly: Löschung (Art. 17) von Hand nachholen";
 const NACHRICHT_AUFGABE = "Neue Nachricht einer auf Verlangen gelöschten Adresse";
 export const COLD_CRM_AUFGABE = "Im alten Cold CRM (Airtable) löschen";
-const BLEIBENDE_AUFGABEN = [{ title: { startsWith: INSTANTLY_AUFGABE } }, { title: { startsWith: NACHRICHT_AUFGABE } }, { title: { startsWith: COLD_CRM_AUFGABE } }];
+// Aufgaben ohne Personenbezug, die die Löschung überdauern (auch „Löschung bestätigen“ usw. aus Datenschutz und Recht)
+const BLEIBENDE_AUFGABEN = [INSTANTLY_AUFGABE, NACHRICHT_AUFGABE, COLD_CRM_AUFGABE, ...Object.values(RECHT_AUFGABE)].map((t) => ({ title: { startsWith: t } }));
 export const art17Email = (contactId: string) => `geloescht-${contactId}@art17.invalid`;
 
 const norm = (e: string | null | undefined) => (e ?? "").trim().toLowerCase();
@@ -97,9 +100,10 @@ async function aufgabe(contactId: string, titel: string, eingang: Date, now: Dat
   return true;
 }
 
-/** Instantly: Blocklist und Leads löschen. Fehlertext ohne Adressen. */
-async function instantlyLoeschen(liste: string[]): Promise<{ ok: true } | { ok: false; fehler: string }> {
+/** Instantly: Blocklist (Adressen und eigene Domains) und Leads löschen. Fehlertext ohne Adressen. */
+async function instantlyLoeschen(liste: string[], domains: string[] = []): Promise<{ ok: true } | { ok: false; fehler: string }> {
   try {
+    for (const d of domains) await aufBlocklist(d);
     for (const email of liste) {
       await aufBlocklist(email);
       const page = await instantlyApi<{ items?: { id: string; email?: string | null }[] }>("/leads/list", { method: "POST", body: JSON.stringify({ search: email, limit: 100 }) });
@@ -112,7 +116,7 @@ async function instantlyLoeschen(liste: string[]): Promise<{ ok: true } | { ok: 
     return { ok: true };
   } catch (e) {
     let msg = e instanceof Error ? e.message : String(e);
-    for (const a of liste) msg = msg.split(a).join("[Adresse]");
+    for (const a of [...liste, ...domains]) msg = msg.split(a).join("[Adresse]");
     msg = msg.replace(/[^\s@]+@[^\s@]+/g, "[Adresse]");
     reportError(new Error(msg), "vertrieb-art17-instantly");
     return { ok: false, fehler: msg.slice(0, 300) };
@@ -130,6 +134,8 @@ type Opts = {
   grund?: SperrGrund;
   now?: Date;
   actor?: AuditActor;
+  /** für das Nachweisprotokoll: Admin-Login bzw. „automatisch“ */
+  wer?: string;
 };
 
 /**
@@ -138,7 +144,7 @@ type Opts = {
 export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Promise<Art17Ergebnis> {
   const now = opts.now ?? new Date();
   const eingang = opts.eingang ?? now;
-  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true, altEmails: true, art17GeloeschtAt: true, nieKontaktierenAt: true, nieKontaktierenGrund: true } });
+  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true, altEmails: true, sperrHashes: true, art17GeloeschtAt: true, nieKontaktierenAt: true, nieKontaktierenGrund: true } });
   if (!c) return { status: "nicht_gefunden" };
   if (c.art17GeloeschtAt) return { status: "schon_geloescht" };
   const ausLoeschprotokoll = opts.quelle === "loeschprotokoll";
@@ -171,7 +177,9 @@ export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Prom
   }
 
   const liste = await adressen(contactId, c);
-  const hashes = [...new Set(liste.map(emailHash))];
+  // Sperrvermerk: Adressen und eigene Agentur-Domain (nie Freemail bzw. Konzern, Ole 19.11.2026) nur als Hash
+  const domains = ausLoeschprotokoll ? [] : await sperrDomains(liste);
+  const hashes = [...new Set([...c.sperrHashes, ...liste.map(emailHash), ...domains.map(domainHash)])];
   // „Überall“ (Ole, 19.11.2026): weitere Vertriebskontakte mit dieser Adresse (Haupt- oder Zusatzadresse) ganz löschen
   // (nur die Adressen des Verlangens werden gesperrt, nicht weitere Adressen dieser Kontakte, z. B. eine Sammeladresse)
   const weitere = ausLoeschprotokoll ? [] : await weitereKontakte(contactId, liste);
@@ -180,7 +188,7 @@ export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Prom
   if (!ausLoeschprotokoll) {
     if (!instantlySchreibbar()) instantly = "aus";
     else {
-      const r = await instantlyLoeschen(liste);
+      const r = await instantlyLoeschen(liste, domains);
       instantly = r.ok ? "erledigt" : "fehler";
       if (!r.ok) fehler = r.fehler;
     }
@@ -211,6 +219,8 @@ export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Prom
         note: "Die App hat alles gelöscht. Im alten Cold CRM bzw. Airtable den Kontakt aus der Löschanfrage (Adresse im Postfach) ebenfalls löschen, falls er dort noch steht.",
       },
     });
+    // Nachweisprotokoll „Datenschutz und Recht“: Löschdatum am Fall (ohne Fall: neuer Fall „Löschung“)
+    await loeschungProtokollieren(contactId, { eingang, at: now, wer: opts.wer, quelle: opts.quelle === "admin" ? "admin" : "antwort" });
     const { protokolliereLoeschung } = await import("@/lib/loeschprotokoll");
     await protokolliereLoeschung(
       [{ art: "vertriebskontakt_art17", entityId: contactId, grund: "art17" }, ...weitere.map((id) => ({ art: "vertriebskontakt" as const, entityId: id, grund: "art17" }))],

@@ -184,6 +184,12 @@ export async function mergeContacts(keepId: string, dropId: string, actorLabel =
       data.detectedData = { emails: { ...rd.emails, ...kd.emails }, removed: [...new Set([...(kd.removed ?? []), ...(rd.removed ?? [])])] } as Prisma.InputJsonValue;
     }
     const customerId = !keep.customerId && drop.customerId ? drop.customerId : null;
+    // Sperre bleibt (Ole, 19.11.2026): „nie kontaktieren“ und Sperrvermerke (Hashes) des zweiten Kontakts übernehmen,
+    // Instantly erneut sperren (jetzt auch für die Adressen des ersten Kontakts)
+    if (drop.nieKontaktierenAt && !keep.nieKontaktierenAt) {
+      Object.assign(data, { nieKontaktierenAt: drop.nieKontaktierenAt, nieKontaktierenGrund: drop.nieKontaktierenGrund, instantlyGesperrtAt: null, instantlySperreVersuche: 0, instantlySperreFehler: null });
+    } else if (keep.nieKontaktierenAt && drop.nieKontaktierenAt) Object.assign(data, { instantlyGesperrtAt: null, instantlySperreVersuche: 0 });
+    if (drop.sperrHashes.length) data.sperrHashes = { set: [...new Set([...keep.sperrHashes, ...drop.sperrHashes])] };
 
     // Erst den zweiten Kontakt löschen (E-Mail und Kundenkonto sind eindeutig), dann übernehmen
     await tx.salesContact.delete({ where: { id: dropId } });

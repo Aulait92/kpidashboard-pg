@@ -21,7 +21,8 @@ let instantlyKaputt = false;
 const blocklist: string[] = [];
 
 async function makeContact(extra: Record<string, unknown> = {}) {
-  const email = `sperre-${tag}-${++n}@agentur.test`;
+  // je Kontakt eine eigene Agentur-Domain (ein Datenschutzfall sperrt sonst die gemeinsame Domain mit, Ole 19.11.2026)
+  const email = `sperre-${tag}-${++n}@agentur${n}-${tag}.test`;
   emails.push(email);
   return prisma.salesContact.create({ data: { email, name: `Agentur ${n}`, ...extra } });
 }
@@ -116,7 +117,7 @@ describe("Nie kontaktieren", () => {
     const nach = await antwort(c.id, "Woher haben Sie meine E-Mail-Adresse? Ich verlange Auskunft nach Art. 15 DSGVO.", eingang);
     expect(nach.nieKontaktierenGrund).toBe("datenschutz");
     const aufgaben = nach.tasks.filter((t) => t.title.startsWith("Auskunft nach Art. 15"));
-    expect(aufgaben.map((t) => t.title)).toEqual(["Auskunft nach Art. 15 beantworten, Frist 19.12.2026"]);
+    expect(aufgaben.map((t) => t.title)).toEqual(["Auskunft nach Art. 15 beantworten, Frist 26.11.2026"]);
     // keine Antwort-Aufgabe für den Vertrieb
     expect(nach.tasks.filter((t) => t.title === "Auf Cold-Mail-Antwort reagieren")).toHaveLength(0);
   });
@@ -251,7 +252,7 @@ describe("Nie kontaktieren", () => {
     expect(grund).toEqual({ [aus.id]: "austragen", [ds.id]: "datenschutz", [umentschieden.id]: null, [nichts.id]: null, [abgemeldet.id]: "austragen" });
     // Zeitpunkt der Antwort, nicht des Laufs
     expect(stand.find((c) => c.id === aus.id)!.nieKontaktierenAt!.toISOString()).toBe(alt.toISOString());
-    expect(await prisma.salesTask.findMany({ where: { contactId: ds.id }, select: { title: true } })).toEqual([{ title: "Auskunft nach Art. 15 beantworten, Frist 01.11.2026" }]);
+    expect(await prisma.salesTask.findMany({ where: { contactId: ds.id }, select: { title: true } })).toEqual([{ title: "Auskunft nach Art. 15 beantworten, Frist 08.10.2026" }]);
     // Instantly im selben Lauf gesperrt
     expect(stand.filter((c) => c.nieKontaktierenAt).every((c) => c.instantlyGesperrtAt)).toBe(true);
     expect(posts("/block-lists-entries").map((p) => p.body?.bl_value)).toEqual(expect.arrayContaining([aus.email, ds.email, abgemeldet.email]));

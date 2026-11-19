@@ -620,7 +620,7 @@ async function instantlyAuswertung() {
     }),
     prisma.salesEmail.findMany({
       where: { direction: "IN" },
-      select: { contactId: true, campaign: true, eaccount: true, subject: true, text: true, sentiment: true, isAutoReply: true, sentAt: true },
+      select: { contactId: true, campaign: true, eaccount: true, subject: true, text: true, sentiment: true, rechtsArt: true, isAutoReply: true, sentAt: true },
     }),
     prisma.salesMeeting.findMany({ select: { contactId: true, status: true, createdAt: true } }),
   ]);

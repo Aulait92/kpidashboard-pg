@@ -6,7 +6,8 @@ import { normalizeEmail } from "@/lib/vertrieb/contact-merge";
 import { detectInsurer } from "@/lib/vertrieb/contact-enrich";
 import { ownEmailDomain } from "@/lib/vertrieb/dubletten";
 import { emailGesperrt, geloeschteAdressen } from "@/lib/vertrieb/sperrliste";
-import { mischen } from "@/lib/vertrieb/mischen";
+import { sperrDomainVon } from "@/lib/vertrieb/datenschutz-recht";
+import { mailDomain, mischen } from "@/lib/vertrieb/mischen";
 import { LISTEN_GRUENDE, istVermittlerListe, type ListenErgebnis, type ListenGrund } from "@/lib/vertrieb/vermittler-format";
 
 function parseGermanDate(s: string | undefined): Date | null {
@@ -340,8 +341,12 @@ export async function importVermittlerListe(text: string, opts: { anwenden?: boo
   ]);
   type Kontakt = (typeof kontakte)[number];
   const abgemeldet = new Set(gesperrteLeads.map((l) => l.contactId));
+  // Fall „Datenschutz und Recht“ sperrt immer (Ole, 19.11.2026), auch ohne „nie kontaktieren“
+  const rechtsFall = new Set(
+    (await prisma.datenschutzFallEreignis.findMany({ where: { contactId: { not: null } }, distinct: ["contactId"], select: { contactId: true } })).map((r) => r.contactId!),
+  );
   const istKunde = (k: Kontakt) => !!k.customerId || !!k.customerStage;
-  const istGesperrt = (k: Kontakt) => !!k.nieKontaktierenAt || abgemeldet.has(k.id);
+  const istGesperrt = (k: Kontakt) => !!k.nieKontaktierenAt || abgemeldet.has(k.id) || rechtsFall.has(k.id);
   const adressen = (k: Kontakt) => [k.email, ...k.altEmails].map((e) => e.trim().toLowerCase());
 
   // Haupt- vor weiterer Adresse
@@ -366,12 +371,16 @@ export async function importVermittlerListe(text: string, opts: { anwenden?: boo
     const d = ownEmailDomain(e);
     if (d) kundenDomains.add(d);
   }
+  // Konzern- bzw. Portal-Domains (feste Liste oder mehr als 3 Vertriebskontakte) sperren nie die ganze Domain, nur die
+  // Person (Ole, 19.11.2026, lib/vertrieb/datenschutz-recht.ts)
+  const kontakteJeDomain = new Map<string, number>();
+  for (const k of kontakte) for (const d of new Set(adressen(k).map((a) => mailDomain(a)))) kontakteJeDomain.set(d, (kontakteJeDomain.get(d) ?? 0) + 1);
   for (const k of kontakte) {
     const ziel = istKunde(k) ? kundenDomains : istGesperrt(k) ? sperrDomains : null;
     if (!ziel) continue;
     for (const a of adressen(k)) {
       const d = ownEmailDomain(a);
-      if (d) ziel.add(d);
+      if (d && (ziel === kundenDomains || sperrDomainVon(a, kontakteJeDomain.get(mailDomain(a)) ?? 0))) ziel.add(d);
     }
   }
 

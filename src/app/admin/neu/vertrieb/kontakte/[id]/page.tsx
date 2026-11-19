@@ -6,6 +6,8 @@ import { DealOffersCard } from "@/components/deal-offers-card";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
 import { ContactMore, StagePicker } from "@/components/vertrieb/contact-controls";
 import { DuplicateHint } from "@/components/vertrieb/contact-merge";
+import { DatenschutzRechtKarte } from "@/components/vertrieb/datenschutz-recht";
+import { fallZeilen, rechtsFaelleVon } from "@/lib/vertrieb/datenschutz-recht-server";
 import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card";
 import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
 import { TaskForm } from "@/components/vertrieb/task-form";
@@ -62,6 +64,8 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   const nachfrage = offeneNachfrage(a);
   const aufgaben = a.open.filter((t) => t !== nachfrage);
   const feedback = a.onboarding ? await prisma.customerFeedback.findMany({ where: { customerId: a.onboarding.customerId }, orderBy: { sentAt: "asc" } }) : [];
+  // Datenschutz und Recht (Ole, 19.11.2026): Fälle mit Frist und Antwortvorlagen
+  const rechtsFaelle = fallZeilen(await rechtsFaelleVon(c.id));
 
   return (
     <Seite
@@ -123,7 +127,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
               className="contents"
               data-funktion="contact-controls-contactmore--menue-website-linkedin-profil-oeffnen actions-deletecontact--kontakt-loeschen actions-mergecontactsaction--kontakte-zusammenfuehren-mit-suche-nach"
             >
-              <ContactMore contactId={c.id} name={name} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={a.duplicates} geloescht={!!c.art17GeloeschtAt} />
+              <ContactMore contactId={c.id} name={name} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={a.duplicates} geloescht={!!c.art17GeloeschtAt} gesperrt={!!c.nieKontaktierenAt || rechtsFaelle.length > 0} />
             </span>
           </div>
         </div>
@@ -152,6 +156,11 @@ export default async function KontaktaktePage({ params, searchParams }: { params
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <div className="min-w-0 space-y-5">
+            {rechtsFaelle.length ? (
+              <div data-funktion="datenschutz-recht--antwortvorlage-pruefen-und-senden">
+                <DatenschutzRechtKarte contactId={c.id} faelle={rechtsFaelle} />
+              </div>
+            ) : null}
             <NaechsterSchritt c={c} a={a} termin={termin ?? null} />
 
             {/* Sprungmarken #aktivitaet und #aufgaben: „Ergebnis eintragen“ bzw. „Schritt planen“ aus Verkaufen → Termine */}

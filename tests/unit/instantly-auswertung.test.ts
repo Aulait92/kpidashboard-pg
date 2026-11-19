@@ -110,6 +110,7 @@ describe("auswerten", () => {
       positiv: 2, // a (Text) + e (Instantly „Interessiert“ ohne Text)
       spaeter: 0,
       absagen: 1,
+      recht: 0,
       neutral: 0,
       bounces: 1,
       abmeldungen: 1,
@@ -117,7 +118,7 @@ describe("auswerten", () => {
     });
     expect(r.kampagnen.letzte30[0]).toMatchObject({ angeschrieben: 3, geoeffnet: 1, antworten: 2, positiv: 2, absagen: 0, bounces: 1, abmeldungen: 0, termine: 1 });
 
-    expect(r.postfaecher.gesamt).toEqual([{ postfach: "ver…@beispiel.de", antworten: 2, positiv: 1, spaeter: 0, absagen: 1, neutral: 0, termine: 1 }]);
+    expect(r.postfaecher.gesamt).toEqual([{ postfach: "ver…@beispiel.de", antworten: 2, positiv: 1, spaeter: 0, absagen: 1, recht: 0, neutral: 0, termine: 1 }]);
     expect(r.einwaende.gesamt).toEqual([{ kategorie: "Kein Bedarf, ausgelastet", anzahl: 1 }]);
     expect(r.einwaende.letzte30).toEqual([]);
   });
@@ -149,5 +150,22 @@ describe("auswerten", () => {
     expect(md).not.toContain("Geheimer");
     expect(md).not.toContain("vertrieb.max@");
     expect(JSON.stringify(r)).not.toContain("Geheimer");
+  });
+
+  it("Datenschutz/Recht (Ole, 19.11.2026): eigene Spalte und Einwand, nie neutral oder Absage", () => {
+    const antworten = [
+      antwort("a", "Allianz Okt", { sentiment: "NEUTRAL", rechtsArt: "abmahnung", text: "Ich mahne Sie ab." }),
+      antwort("b", "Allianz Okt", { sentiment: "NEGATIV", rechtsArt: "widerspruch", text: "Kein Bedarf, keine Werbung mehr." }),
+      antwort("c", "Allianz Okt", { sentiment: "NEGATIV", text: "Kein Bedarf." }),
+    ];
+    const leads = ["a", "b", "c"].map((x) => lead(x, "k1", { replyCount: 1, lastReplyAt: tage(4) }));
+    const r = auswerten({ kampagnen, leads, antworten, termine: [], jetzt: JETZT });
+    expect(r.kampagnen.gesamt[0]).toMatchObject({ antworten: 3, recht: 2, absagen: 1, neutral: 0 });
+    expect(r.postfaecher.gesamt[0]).toMatchObject({ recht: 2, absagen: 1, neutral: 0 });
+    expect(r.einwaende.gesamt).toEqual([
+      { kategorie: "Datenschutz/Recht", anzahl: 2 },
+      { kategorie: "Kein Bedarf, ausgelastet", anzahl: 1 },
+    ]);
+    expect(alsMarkdown(r)).toContain("Datenschutz/Recht");
   });
 });

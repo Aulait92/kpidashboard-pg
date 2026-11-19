@@ -73,6 +73,10 @@ export async function instantlySperren(contactId: string, now = new Date()): Pro
       await aufBlocklist(email);
       await inKampagnenStoppen(email);
     }
+    // Fall „Datenschutz und Recht“ (Ole, 19.11.2026): eigene Agentur-Domain ebenfalls auf die Blocklist (nie Freemail,
+    // nie Konzern- bzw. Portal-Domain, lib/vertrieb/datenschutz-recht.ts)
+    const dr = await import("@/lib/vertrieb/datenschutz-recht-server");
+    if (await dr.hatRechtsFall(contactId)) for (const d of await dr.sperrDomains(adressenVon(c))) await aufBlocklist(d);
     await prisma.salesContact.update({ where: { id: contactId }, data: { instantlyGesperrtAt: now, instantlySperreFehler: null } });
     return "erledigt";
   } catch (e) {
@@ -167,14 +171,18 @@ async function auskunftsAufgabeAnlegen(contactId: string, eingang: Date, now: Da
       title: auskunftsAufgabe(eingang),
       type: "SONSTIGES",
       dueAt: eingang < now ? now : eingang,
-      note: "Der Kontakt fragt nach Datenschutz bzw. Herkunft der Adresse. Antwort mit Auskunft (Herkunft der Daten, Zweck, gespeicherte Angaben) persönlich schicken. Der Kontakt ist gesperrt: die App schreibt ihn nicht mehr an.",
+      note: "Der Kontakt fragt nach Datenschutz bzw. Herkunft der Adresse. Auskunft schicken: Kontaktakte → Datenschutz und Recht → Vorlage „Auskunft (Art. 15)“ prüfen und senden. Der Kontakt ist gesperrt: die App schreibt ihn nicht mehr an.",
     },
   });
   return true;
 }
 
-/** Merkmal von Hand aufheben (Kontaktakte). Die Instantly-Blocklist bleibt, dort bei Bedarf selbst entfernen. */
+/**
+ * Merkmal von Hand aufheben (Kontaktakte). Die Instantly-Blocklist bleibt, dort bei Bedarf selbst entfernen. Nie bei
+ * einem Fall „Datenschutz und Recht“ (Ole, 19.11.2026): dann bleibt die Sperre (Rückgabe false).
+ */
 export async function nieKontaktierenAufheben(contactId: string, now = new Date()) {
+  if (await prisma.datenschutzFallEreignis.findFirst({ where: { contactId }, select: { id: true } })) return false;
   const r = await prisma.salesContact.updateMany({
     where: { id: contactId, nieKontaktierenAt: { not: null } },
     data: { nieKontaktierenAt: null, nieKontaktierenGrund: null, instantlyGesperrtAt: null, instantlySperreVersuche: 0, instantlySperreFehler: null },
@@ -324,11 +332,14 @@ export async function vorUploadPruefen(emails: string[], opts: { blocklist?: Set
   // Auf Verlangen gelöscht (Art. 17): nur noch als Hash bekannt
   const geloescht = await geloeschteAdressen(liste);
   const kontaktIds = [...new Set(ids.values())];
-  const [kontakte, leads] = await Promise.all([
+  const { kontakteMitRechtsFall } = await import("@/lib/vertrieb/datenschutz-recht-server");
+  const [kontakte, leads, recht] = await Promise.all([
     prisma.salesContact.findMany({ where: { id: { in: kontaktIds }, nieKontaktierenAt: { not: null } }, select: { id: true } }),
     prisma.salesCampaignLead.findMany({ where: { contactId: { in: kontaktIds }, OR: [{ unsubscribed: true }, { bounced: true }] }, select: { contactId: true, unsubscribed: true, bounced: true } }),
+    // Fall „Datenschutz und Recht“ sperrt immer, auch wenn „nie kontaktieren“ (fälschlich) fehlt
+    kontakteMitRechtsFall(kontaktIds),
   ]);
-  const nie = new Set(kontakte.map((k) => k.id));
+  const nie = new Set([...kontakte.map((k) => k.id), ...recht]);
   const abgemeldet = new Set(leads.filter((l) => l.unsubscribed).map((l) => l.contactId));
   const bounce = new Set(leads.filter((l) => l.bounced).map((l) => l.contactId));
   const out: UploadPruefung = { erlaubt: [], gesperrt: [], zaehler: { sperrliste: 0, nie_kontaktieren: 0, abgemeldet: 0, bounce_hart: 0, blocklist: 0 } };

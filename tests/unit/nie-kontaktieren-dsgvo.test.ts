@@ -92,7 +92,7 @@ describe("Löschverlangen (Art. 17)", () => {
 
   it("Auskunft und Löschung zugleich: Datenschutz mit Auskunft", () => {
     const b = dsgvoAusAntwort("Woher haben Sie meine Adresse? Löschen Sie meine Daten.");
-    expect(b).toEqual({ grund: "datenschutz", loeschen: true, auskunft: true });
+    expect(b).toEqual({ grund: "datenschutz", loeschen: true, auskunft: true, abmahnung: false });
   });
 
   it("Austragung ist kein Löschverlangen", () => {
@@ -104,12 +104,12 @@ describe("Löschverlangen (Art. 17)", () => {
   });
 
   it("Widerspruch ohne Löschverlangen bleibt ohne Löschung", () => {
-    expect(dsgvoAusAntwort("Ich widerspreche der Nutzung meiner Daten zu Werbezwecken.")).toEqual({ grund: "widerspruch", loeschen: false, auskunft: false });
+    expect(dsgvoAusAntwort("Ich widerspreche der Nutzung meiner Daten zu Werbezwecken.")).toEqual({ grund: "widerspruch", loeschen: false, auskunft: false, abmahnung: false });
   });
 
   it("Datenschutzhinweise in der Signatur lösen nichts aus", () => {
     const t =
       "Kein Bedarf.\n\nMit freundlichen Grüßen\nMax Muster\nDatenschutz: Sie haben das Recht auf Löschung (Art. 17 DSGVO), Datenschutzbeauftragter: dsb@beispiel.de";
-    expect(dsgvoAusAntwort(t)).toEqual({ grund: null, loeschen: false, auskunft: false });
+    expect(dsgvoAusAntwort(t)).toEqual({ grund: null, loeschen: false, auskunft: false, abmahnung: false });
   });
 });
