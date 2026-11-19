@@ -25,7 +25,7 @@ export function demoTermin(now = new Date()): VorbereitungDaten {
     angaben: {
       lebenssituation: "Single, zieht gerade in eine größere Mietwohnung",
       versichern: "nur Dominik",
-      interesse: "Haftpflicht, gern alles aus einer Hand",
+      interesse: "Haftpflicht, Hausrat und Rechtsschutz, gern alles aus einer Hand",
       wohnflaeche: "68 m², ständig bewohnt",
       vorhanden: "alte Haftpflicht von 2012, sonst nichts",
     },
@@ -167,9 +167,9 @@ const unfall = (tarif: string, beitrag: number, x: { grundsumme: string; progres
   });
 
 /**
- * Live-Demo Cross-Selling (Ole, 16.11.2026): Dominik Schmid hat Haftpflicht angefragt (Komfort gewählt). Hausrat,
- * Rechtsschutz und Unfall stehen auf „Ihr Schutz im Überblick“ und kommen per „Mit anschauen“ in den Vergleich; ab dem
- * zweiten Vertrag rechnet die Beitragsfolie den Kombi-Rabatt.
+ * Live-Demo Cross-Selling (Ole, 16.11.2026; 19.11.2026): Dominik Schmid hat Haftpflicht, Hausrat und Rechtsschutz angefragt
+ * (je Komfort gewählt, Kombi-Rabatt 10 %). Unfall steht auf „Ihr Schutz im Überblick“ als Lücke und kommt per
+ * „Mit anschauen“ in den Vergleich.
  */
 export function demoAngebote(): AngeboteDaten {
   const t = demoTarife();
@@ -180,7 +180,8 @@ export function demoAngebote(): AngeboteDaten {
   ].map((i) => {
     const sparte = SPARTE_KEY[i.sparte];
     const linie = (i.tarif ?? "").split(" ").pop() ?? null;
-    const zusatz = sparte !== "haftpflicht";
+    // Standard (Ole, 19.11.2026): Haftpflicht, Hausrat und Rechtsschutz im Vergleich, nur Unfall kommt per „Mit anschauen“ dazu
+    const zusatz = sparte === "unfall";
     return { ...i, kombi: { gruppe: "demo", sparte, linie }, ...(zusatz ? { zusatz: true, gewaehlt: false } : {}) };
   });
   return { items, quelle: t.quelle, kombi: [DEMO_KOMBI], schutz: DEMO_SCHUTZ };
