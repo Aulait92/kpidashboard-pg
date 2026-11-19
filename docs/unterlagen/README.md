@@ -81,6 +81,22 @@ done; done
 Der Header-Wert `dummy` wird vom Netzwerk-Geheimnis der Claude-Umgebung durch den echten Schlüssel ersetzt
 (Railway-Variable `OPS_UPLOAD_TOKEN` am Service „live-app“). Danach mit `GET /api/ops/unterlagen` prüfen.
 
+## Pay-per-Lead + Software (19.11.2026, Ole)
+
+Eigene kurze Präsentation für Vermittler, die Leads pro Stück kaufen wollen und dazu die Software bekommen sollen:
+`PPL-Software-Praesentation.pptx` und `.pdf` (12 Folien, Bild-Folien im selben Design, Seitenzahl „n / 12“, Sprechzettel
+als Notizen in der PPTX) und `sprechzettel-ppl-software.md` (je Folie, dazu 3 Einwände). Nicht für den Upload unter
+Marketing → Unterlagen gedacht (dort gibt es nur Vertreter/Makler), sondern zum Zeigen im Gespräch oder Versand per Mail.
+
+- Neu gebaut (HTML im Design der Vertreter-Folien, mit Chrome als Bild gerendert): 1 Titel, 2 Ihr Ziel, 3 Warum gekaufte
+  Leads verbrennen (Probleme 01 bis 04 wie Vertreter-Folie 10, damit „Problem … gelöst“ auf den übernommenen Folien passt),
+  4 Leads und Preise, 10 Beispielrechnung, 11 Paket, 12 Start in 3 Schritten.
+- Übernommen aus `Vertreter-Praesentation.pptx` (Seitenzahl ersetzt): 5 „Niemand geht ran?“ (Vertreter 11),
+  6 „Sonntag, 21:47 Uhr“ (12), 7 „Kein Lead geht mehr verloren“ (14), 8 „Heute“ (15), 9 Terminvorbereitung (16).
+- Preise: Leads 17/22/35/65 € je Lead ohne Zusatz „brutto/netto“ (Umsatzsteuer auf Leads wird geprüft), Software
+  349 € netto im Monat, keine Einrichtung, monatlich kündbar oder 3 Monate, 3 aktive Verkäufer inklusive (weitere 49 €).
+  Ändern sich Preise, Folien 4, 10, 11 und den Sprechzettel anpassen.
+
 ## Web-Präsentation (Ole, 15.11.2026)
 
 Die Folien gibt es auch als Web-Präsentation (Vollbild, Pfeiltasten, Wischen am Handy, PDF der Zielgruppe), ohne Sprechzettel:
