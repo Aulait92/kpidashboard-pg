@@ -96,7 +96,7 @@ async function main() {
   const ahead = (d: number) => new Date(now.getTime() + d * DAY);
 
   // ── Kunden (Vermittler) ──
-  const basis = { plan: "software", vermittlerTyp: "vertreter", isTest: false, bestandAddress: "sie" };
+  const basis = { plan: "software", vermittlerTyp: "vertreter", isTest: false, newUi: true, bestandAddress: "sie" };
   await kunde(ID.main, "Testagentur Bestand", {
     ...basis,
     existingCustomersEnabled: true,
