@@ -10,10 +10,28 @@ import type { TeamCtx } from "@/lib/team";
 import { moduleInfo, recentClosings } from "@/lib/empfehlung/module";
 import { loadEmpfehlungStats, type EmpfehlungStats } from "@/lib/empfehlung/requests";
 import { BAD_REVIEW_TASK } from "@/lib/empfehlung/google-business";
-import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, EMPFEHLUNG_MODULE_AVAILABLE, FEEDBACK_CONSENT_TEXT, HINTS, WAECHTER_HREF, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
+import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, EMPFEHLUNG_MODULE_AVAILABLE, HINTS, WAECHTER_HREF, feedbackConsentQuestion, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
+import { asAnsprache } from "@/lib/ansprache";
 import { FeedbackConsentToggle, ModuleHint, OptOutToggle, ReferralLinkButton } from "@/components/empfehlung/client";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
+/**
+ * Abschluss-Karte im Kontakt: Einwilligung in Nachfrage, Google-Bewertung und gelegentliche Empfehlungsbitte, direkt
+ * beim Abschluss mit einem Tipp (Paket 1). Nur mit aktivem Modul, Handynummer und ohne STOPP. Ohne sie geht keine Bitte raus.
+ */
+export async function EmpfehlungConsentRow({ leadId, customerId, readOnly }: { leadId: string; customerId: string; readOnly: boolean }) {
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { status: true, phone: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true } });
+  if (!lead || lead.status !== "Abschluss" || !lead.phone || lead.erasedAt || lead.feedbackOptOutAt) return null;
+  const info = await moduleInfo(customerId);
+  if (!info?.active) return null;
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } });
+  return (
+    <div className="border-t border-[color:var(--border)] px-5 py-2" data-abschluss-einwilligung>
+      <FeedbackConsentToggle leadId={leadId} consent={!!lead.feedbackConsentAt} question={feedbackConsentQuestion(asAnsprache(c?.leadAddress))} readOnly={readOnly} />
+    </div>
+  );
+}
 
 /** Kontaktakte: Stand der Nachfrage, „Nicht anfragen“, Empfehlungslink – bzw. dezenter Hinweis nach einem frischen Abschluss. */
 export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: string; team: TeamCtx & { preview?: boolean }; readOnly: boolean }) {
@@ -83,8 +101,6 @@ export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: s
             : null;
   const referred = lead.ownReferralLink?._count.referredLeads ?? 0;
   const canOptOut = isClosed && (!r || r.status === "scheduled" || r.status === "off");
-  // Einwilligung in Nachfrage und Bitten: bestätigen, solange noch nichts gesendet ist (nach STOPP nicht mehr)
-  const canConsent = isClosed && !!lead.phone && !lead.feedbackOptOutAt && (!r || r.status === "scheduled" || r.status === "off");
 
   return (
     <Card className="mb-5" data-empfehlung-lead>
@@ -93,16 +109,14 @@ export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: s
         {status ? <p>{status}</p> : null}
         {lead.feedbackOptOutAt ? (
           <p className="text-[color:var(--muted)]">Der Kunde hat mit STOPP widersprochen: keine Nachfrage, Bewertungs- oder Empfehlungsbitte mehr.</p>
-        ) : isClosed && !lead.feedbackConsentAt ? (
+        ) : isClosed && lead.phone && !lead.feedbackConsentAt ? (
           <p className="rounded-[var(--radius-md)] bg-amber-50 px-3 py-2 text-amber-900" data-feedback-consent-missing>
-            Die Nachfrage mit Bitte um eine Google-Bewertung und später um eine Empfehlung geht nur mit Einwilligung raus. Fragen Sie im Gespräch, ob das in
-            Ordnung ist, und bestätigen Sie es hier.
+            Ohne Zustimmung des Kunden geht keine Nachricht raus: Häkchen „Kunde hat zugestimmt“ in der Abschluss-Karte.
           </p>
         ) : null}
         {referral ? <p className="text-[color:var(--muted)]">{referral}</p> : null}
         {referred ? <p className="font-medium text-emerald-700">{referred === 1 ? "1 Empfehlung" : `${referred} Empfehlungen`} über den Link dieses Kunden.</p> : null}
         <div className="flex flex-wrap items-start gap-3">
-          {canConsent ? <FeedbackConsentToggle leadId={leadId} consent={!!lead.feedbackConsentAt} text={FEEDBACK_CONSENT_TEXT} readOnly={readOnly} /> : null}
           {canOptOut ? <OptOutToggle leadId={leadId} off={r?.status === "off"} readOnly={readOnly} /> : null}
           <ReferralLinkButton leadId={leadId} readOnly={readOnly} />
         </div>

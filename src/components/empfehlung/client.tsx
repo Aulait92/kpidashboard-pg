@@ -31,7 +31,7 @@ import {
   type ShareState,
   type TestState,
 } from "@/app/buyer/empfehlungen/actions";
-import { EMPFEHLUNG_MODULE_AVAILABLE, DEFAULT_TEXTS, FOLLOWUP_LIMITS, OCCASIONS, OFFER_LIMITS, OFFER_PRESETS, REWARD_LIMITS, REWARD_SAFE_LIMIT, TEXT_LABELS, bookingTerms, offerWarning, renderText, rewardWarning, type Occasion, type OfferKind, type TextKey } from "@/lib/empfehlung/shared";
+import { EMPFEHLUNG_MODULE_AVAILABLE, DEFAULT_TEXTS, FEEDBACK_CONSENT_LABEL, FOLLOWUP_LIMITS, OCCASIONS, OFFER_LIMITS, OFFER_PRESETS, REWARD_LIMITS, REWARD_SAFE_LIMIT, TEXT_LABELS, bookingTerms, offerWarning, renderText, rewardWarning, type Occasion, type OfferKind, type TextKey } from "@/lib/empfehlung/shared";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
@@ -220,34 +220,47 @@ function ModuleHintInner({ hintKey, title, text, cta = "30 Tage kostenlos testen
 // ─── Kontaktakte: „Nicht anfragen“, „Geklärt“, Empfehlungslink ─────────────
 
 /** Einwilligung in Nachfrage, Bewertungs- und Empfehlungsbitte (im Gespräch eingeholt) je Kontakt bestätigen. */
-export function FeedbackConsentToggle({ leadId, consent, text, readOnly }: { leadId: string; consent: boolean; text: string; readOnly: boolean }) {
+/**
+ * Einwilligung beim Abschluss (Paket 1, 19.11.2026): ein Häkchen, nie vorausgefüllt, speichert mit einem Tipp
+ * (Zeitpunkt, Quelle „vermittler“, Wortlaut). Der Satz zum Vorlesen ist aufklappbar.
+ */
+export function FeedbackConsentToggle({ leadId, consent, question, readOnly }: { leadId: string; consent: boolean; question: string; readOnly: boolean }) {
   const [value, setValue] = useState(consent);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const [titel, rest] = FEEDBACK_CONSENT_LABEL.split(": ");
   return (
-    <span className="inline-flex flex-col gap-1" data-feedback-consent>
-      {!value ? <span className="text-xs text-[color:var(--muted)]">Bestätigt wird: „{text}“</span> : null}
-      <span className="inline-flex flex-wrap items-center gap-2">
-        <Button
-          variant={value ? "secondary" : "primary"}
+    <div className="space-y-1" data-feedback-consent>
+      <label className="flex min-h-11 cursor-pointer items-start gap-3 py-1">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-5 w-5 shrink-0 accent-emerald-600"
+          checked={value}
           disabled={readOnly || pending}
-          onClick={() =>
+          onChange={(e) => {
+            const next = e.target.checked;
             start(async () => {
-              const r = await setFeedbackConsentAction(leadId, !value);
+              const r = await setFeedbackConsentAction(leadId, next);
               if (r.ok) {
-                setValue(!value);
+                setValue(next);
                 setError(null);
                 haptic("selection");
               } else setError(r.error ?? "Hat nicht geklappt.");
-            })
-          }
+            });
+          }}
           data-feedback-consent-toggle
-        >
-          {value ? "Einwilligung zurücknehmen" : "Kunde ist einverstanden"}
-        </Button>
-        {error ? <span className="text-xs text-rose-700">{error}</span> : null}
-      </span>
-    </span>
+        />
+        <span className="text-sm">
+          <b>{titel}:</b> {rest}
+          {pending ? <Loader2 className="ml-1 inline h-3.5 w-3.5 animate-spin" /> : null}
+        </span>
+      </label>
+      <details className="pl-8 text-sm" data-feedback-consent-satz>
+        <summary className="cursor-pointer text-[color:var(--brand)]">Satz zum Vorlesen</summary>
+        <p className="mt-1 text-[color:var(--muted)]">„{question}“</p>
+      </details>
+      {error ? <p className="pl-8 text-xs text-rose-700">{error}</p> : null}
+    </div>
   );
 }
 

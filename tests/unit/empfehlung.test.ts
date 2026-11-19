@@ -52,10 +52,10 @@ describe("Empfehlungen & Bewertungen – Regeln", () => {
 
   it("Nachfrage: erst direkter Draht, dann Google-Link – in Standardtext und Vorlage", () => {
     const t = renderText(DEFAULT_TEXTS.review, { vorname: "Julia", link: "LINK", vertreter: "Max Muster", anrede: { fullName: "Julia Schneider", salutation: "w" } });
-    expect(t.startsWith("Guten Tag Frau Schneider, ich hoffe")).toBe(true);
+    expect(t.startsWith("Guten Tag Frau Schneider, passt bei Ihrem")).toBe(true);
     // Ohne Nachnamen: „Guten Tag,“ (nie „Hallo Julia“ zusammen mit Sie)
-    expect(renderText(DEFAULT_TEXTS.review, { vorname: "Julia", link: "LINK", vertreter: "X" }).startsWith("Guten Tag, ich hoffe")).toBe(true);
-    expect(t.indexOf("antworten Sie mir einfach direkt hier")).toBeLessThan(t.indexOf("LINK"));
+    expect(renderText(DEFAULT_TEXTS.review, { vorname: "Julia", link: "LINK", vertreter: "X" }).startsWith("Guten Tag, passt bei Ihrem")).toBe(true);
+    expect(t.indexOf("antworten Sie einfach hier")).toBeLessThan(t.indexOf("LINK"));
     expect(t).toContain("Max Muster");
     const tpl = templateBodyFor("review_request", "Max Muster");
     expect(tpl.indexOf("direkt hier")).toBeLessThan(tpl.indexOf("{{2}}"));
@@ -76,7 +76,11 @@ describe("Empfehlungen & Bewertungen – Regeln", () => {
     expect(validateText("review", "Hallo {Vorname}, über 5 Sterne freue ich mich: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
     expect(validateText("review", "Hallo {Vorname}, wenn Sie zufrieden waren, gern eine Bewertung: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
     expect(validateText("review", "Hallo {Vorname}, über eine positive Bewertung freue ich mich: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
-    expect(validateText("referral", "Empfehlen Sie mich: {empfehlungslink}")).toBeNull();
+    expect(validateText("referral", "Empfehlen Sie mich: {empfehlungslink} Keine Nachrichten mehr? STOPP.")).toBeNull();
+    // Empfehlungsbitte, Dank bei Lob und Dank an Empfehlende nennen STOPP (Widerspruch), der Dank braucht den Link
+    expect(validateText("referral", "Empfehlen Sie mich: {empfehlungslink}")).toMatch(/STOPP/);
+    expect(validateText("praiseReferral", "Danke! {Link}")).toMatch(/STOPP/);
+    expect(validateText("referralThanks", "Danke für Ihre Empfehlung! STOPP")).toMatch(/\{Link\}/);
     expect(validateText("referral", "Für jede Empfehlung gibt es einen Gutschein: {Link}")).toMatch(/Prämien/);
     expect(validateText("thanks", "")).toBeNull();
   });
@@ -185,7 +189,8 @@ describe("Empfehlungen – Angebot, Anlässe, Trichter, Dankeschön (14.11.2026)
     expect(shareText("Max Muster", "LINK", o)).toContain("LINK");
     expect(shareText("Max Muster", "LINK")).toContain("Kontakt aufnehmen");
     expect(signatureLine("LINK", o)).toContain("Versicherungs-Check");
-    expect(signatureLine("LINK", null)).toContain("weiterempfehlen");
+    expect(signatureLine("LINK", null)).toContain("Kennen Sie jemanden");
+    expect(signatureLine("LINK", null, "du")).toContain("Kennst du jemanden");
   });
 
   it("Lob: Dank mit Empfehlungslink, ohne Google-Link und ohne Anreiz", () => {
@@ -266,7 +271,7 @@ describe("Empfehlungen – Angebot, Anlässe, Trichter, Dankeschön (14.11.2026)
 
   it("Mit Dankeschön dürfen eigene Empfehlungstexte es nennen, die Google-Nachfrage nie", () => {
     expect(validateText("referral", "Hallo {Vorname}, als Dank gibt es einen Gutschein: {Link}")).toMatch(/Prämien/);
-    expect(validateText("referral", "Hallo {Vorname}, als Dank gibt es einen Gutschein: {Link}", { rewardActive: true })).toBeNull();
+    expect(validateText("referral", "Hallo {Vorname}, als Dank gibt es einen Gutschein: {Link} STOPP", { rewardActive: true })).toBeNull();
     expect(validateText("review", "Hallo {Vorname}, für Ihre Bewertung gibt es einen Gutschein: {Link}", { rewardActive: true })).toMatch(/Prämien/);
   });
 
