@@ -19,6 +19,8 @@ import { a, asAnsprache } from "@/lib/ansprache";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 
 export const BOT_STUMM_MERKER = "bot_stumm";
+/** Merker: Assistent hat für diese Nachricht einen zweiten Versuch bekommen */
+export const BOT_NOCHMAL_MERKER = "bot_nochmal";
 /** Ohne Antwort nach so vielen Millisekunden gilt eine Nachricht als unbeantwortet. */
 export const BOT_STUMM_GRENZE_MS = 2 * 60 * 1000;
 /** Der Cron schaut so weit zurück (ältere Fälle: Diagnose mit &aufgaben=1). */
@@ -81,11 +83,11 @@ export async function stummAufgabeAnlegen(o: { leadId: string; customerId: strin
   return planeAufgabe({ leadId: o.leadId, customerId: o.customerId, kind: aufgabeArt(o.messageId), note: stummAufgabe(o.leadName), dueAt: now }, now);
 }
 
-type Ergebnis = { geprueft: number; gemeldet: number; geantwortet: number };
+type Ergebnis = { geprueft: number; gemeldet: number; geantwortet: number; nachgeholt: number };
 
 /** Im Cron: unbeantwortete Lead-Nachrichten finden und abfangen (siehe oben). */
 export async function runBotStumm(now = new Date()): Promise<Ergebnis> {
-  const erg: Ergebnis = { geprueft: 0, gemeldet: 0, geantwortet: 0 };
+  const erg: Ergebnis = { geprueft: 0, gemeldet: 0, geantwortet: 0, nachgeholt: 0 };
   // Kandidaten: jüngste eingehende Nachricht je Chat, älter als die Grenze, Lead-Chat mit aktivem Assistenten
   const eingang = await prisma.message.findMany({
     where: {
@@ -113,6 +115,10 @@ export async function runBotStumm(now = new Date()): Promise<Ergebnis> {
     erg.geprueft++;
     try {
       const r = await abfangen(conversationId, m, now);
+      if (r === "nochmal") {
+        erg.nachgeholt++;
+        continue;
+      }
       if (r) erg.gemeldet++;
       if (r === "mit_antwort") erg.geantwortet++;
     } catch (e) {
@@ -122,7 +128,7 @@ export async function runBotStumm(now = new Date()): Promise<Ergebnis> {
   return erg;
 }
 
-async function abfangen(conversationId: string, m: { id: string; createdAt: Date }, now: Date): Promise<"mit_antwort" | "ohne_antwort" | false> {
+async function abfangen(conversationId: string, m: { id: string; createdAt: Date }, now: Date): Promise<"mit_antwort" | "ohne_antwort" | "nochmal" | false> {
   // Jüngere eingehende Nachricht innerhalb der Grenze: dann wird diese geprüft (nächster Lauf)
   const juenger = await prisma.message.count({ where: { conversationId, direction: "inbound", createdAt: { gt: m.createdAt } } });
   if (juenger) return false;
@@ -142,6 +148,22 @@ async function abfangen(conversationId: string, m: { id: string; createdAt: Date
   if (!agent?.active) return false;
   const { anrufPausiert } = await import("@/lib/telefonat-server");
   if (await anrufPausiert(conv.leadId, now)) return false;
+
+  // Erst ein zweiter Versuch des Assistenten (Ole, 19.11.2026: Antwort ging bei einem Neustart bzw. Verbindungsfehler
+  // verloren). Genau einmal je Nachricht; bleibt die Nachricht danach weiter unbeantwortet, folgt im nächsten Lauf die
+  // Übergabe an den Menschen wie unten.
+  const versucht = await prisma.message.count({ where: { conversationId, direction: "internal", kind: BOT_NOCHMAL_MERKER, body: { contains: m.id } } });
+  if (!versucht) {
+    await prisma.message.create({ data: { conversationId, direction: "internal", kind: BOT_NOCHMAL_MERKER, body: JSON.stringify({ messageId: m.id, at: now.toISOString() }), sentBy: "system" } });
+    try {
+      const { runBotTurn } = await import("@/lib/whatsapp/bot");
+      await runBotTurn(conversationId);
+    } catch (e) {
+      reportError(e, "bot-stumm-nochmal", { conversation: conversationId });
+    }
+    const jetztBeantwortet = await prisma.message.count({ where: { conversationId, direction: "outbound", createdAt: { gt: m.createdAt } } });
+    return jetztBeantwortet ? "nochmal" : false;
+  }
 
   // Genau einmal: Assistent pausieren (nur wenn noch aktiv; ein paralleler Lauf bekommt count 0) und Merker setzen
   const pause = await prisma.conversation.updateMany({ where: { id: conversationId, botActive: true }, data: { botActive: false } });

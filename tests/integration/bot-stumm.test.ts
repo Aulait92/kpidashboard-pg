@@ -13,6 +13,9 @@ vi.mock("@/lib/whatsapp/dialog360", async (orig) => {
     sendButtons: (...a: unknown[]) => waSend("buttons", ...a),
   };
 });
+// Zweiter Versuch des Assistenten (Ole, 19.11.2026): Standard bleibt stumm, einzelne Tests antworten
+const botTurn = vi.fn();
+vi.mock("@/lib/whatsapp/bot", () => ({ runBotTurn: (...a: unknown[]) => botTurn(...a) }));
 const push = vi.fn();
 vi.mock("@/lib/push", () => {
   const rec = async (...a: unknown[]) => {
@@ -24,7 +27,7 @@ vi.mock("@/lib/push", () => {
 
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";
-import { BOT_STUMM_MERKER, botStummDiagnose, runBotStumm } from "@/lib/whatsapp/bot-stumm";
+import { BOT_NOCHMAL_MERKER, BOT_STUMM_MERKER, botStummDiagnose, runBotStumm } from "@/lib/whatsapp/bot-stumm";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -62,10 +65,30 @@ describe("Sicherheitsnetz Assistent stumm", () => {
     waSend.mockReset();
     waSend.mockImplementation(async () => ({ messageId: `wamid.out-${uid()}`, raw: {} }));
     push.mockReset();
+    botTurn.mockReset();
+    botTurn.mockImplementation(async () => {});
+  });
+
+  it("erst ein zweiter Versuch des Assistenten; antwortet er, keine Übergabe", async () => {
+    const { conv } = await chat({ minutenAlt: 3 });
+    botTurn.mockImplementation(async (id: string) => {
+      await prisma.message.create({ data: { conversationId: id, direction: "outbound", kind: "text", body: "Danke!", sentBy: "bot" } });
+    });
+    const r = await runBotStumm();
+    expect(botTurn).toHaveBeenCalledWith(conv.id);
+    expect(r.nachgeholt).toBeGreaterThanOrEqual(1);
+    expect(await prisma.message.count({ where: { conversationId: conv.id, kind: BOT_NOCHMAL_MERKER } })).toBe(1);
+    expect(await prisma.message.count({ where: { conversationId: conv.id, kind: BOT_STUMM_MERKER } })).toBe(0);
+    expect((await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } })).botActive).toBe(true);
   });
 
   it("über 2 Min. ohne Antwort: Antwort an den Lead, Aufgabe, Push, Assistent pausiert; genau einmal", async () => {
     const { conv, lead, msg } = await chat({ minutenAlt: 3 });
+    // 1. Lauf: zweiter Versuch (bleibt stumm), noch keine Übergabe
+    await runBotStumm();
+    expect(botTurn).toHaveBeenCalledWith(conv.id);
+    expect(await prisma.message.count({ where: { conversationId: conv.id, kind: BOT_STUMM_MERKER } })).toBe(0);
+    // 2. Lauf: Übergabe
     const r = await runBotStumm();
     expect(r.gemeldet).toBeGreaterThanOrEqual(1);
     const texte = waSend.mock.calls.filter((c) => c[0] === "text" && c[2] === conv.contactPhone).map((c) => String(c[3]));

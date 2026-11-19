@@ -51,6 +51,17 @@ prüfen, dann `deploy_project`) und die Liste leeren. Nur auf Oles ausdrücklich
   Neue Texte an Leads immer in beiden Fassungen (`a(an, du, sie)`); die Oberfläche für Vermittler bleibt Sie-Form.
 
 
+## A/B-Tests bei Conversion-Nachrichten (Ole, 19.11.2026)
+
+Bei allen conversion-wichtigen Nachrichten an Leads (Erstanschreiben, Terminvorschlag, Erinnerungen, Nachfassen,
+Angebot) läuft immer ein A/B-Test, und es wird ständig neu getestet:
+- Jede dieser Nachrichten hat eine B-Fassung mit einer klaren Hypothese (im Kommentar), technisch über `TEMPLATE_BODY_B`
+  (`src/lib/whatsapp/templates.ts`, Auswertung `src/lib/whatsapp/ab-test.ts`) bzw. `src/lib/experimente.ts`.
+- Ist ein Test entschieden, wird der Gewinner Standard und im selben Arbeitsgang die nächste B-Fassung angelegt.
+  Kein Zeitraum ohne laufenden Test.
+- Neue Fassungen, die Ole direkt freigibt, werden sofort Standard (kein Test nötig); die B-Fassung kommt trotzdem dazu.
+- Erstanschreiben: Entscheidung erst ab 150 Sendungen je Fassung (Antwortquote 72 h), Terminquote mit ansehen.
+
 ## UX-Regel (Ole, 15.11.2026): Jedes Feature wird gestaltet, nicht angehängt
 
 Vor dem Bauen jedes Features, das Nutzer sehen, kurz festhalten (im Commit oder in der Rückmeldung):
