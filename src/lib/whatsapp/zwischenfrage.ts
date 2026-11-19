@@ -11,7 +11,7 @@
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import type { VermittlerName } from "@/lib/vermittler-nennung";
-import { enthaeltErsteFrage, frageplan, outreachProdukt, type FormAntwort } from "@/lib/whatsapp/erstanschreiben";
+import { enthaeltErsteFrage, erstfrageKnopfWert, frageplan, outreachProdukt, type FormAntwort } from "@/lib/whatsapp/erstanschreiben";
 import { isOutreachPurpose, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import type { Knopf } from "@/lib/whatsapp/gespraech";
@@ -264,8 +264,9 @@ export function zwischenSchritt(o: {
   const offen = offeneZwischenfrage(o.source, o.formular, o.angaben, { aktiv: o.aktiv });
   if (!offen) return null;
   const feld = (frageplan(o.source, o.formular, { gesendet: unsere.body }).gestellt?.feld ?? null) as QualificationKey | null;
-  // Antwort auf die Öffnungsfrage festhalten, nicht wenn sie dasselbe Feld wie die Zwischenfrage betrifft
-  const wert = antwort.replace(/\s+/g, " ").slice(0, 160);
+  // Antwort auf die Öffnungsfrage festhalten, nicht wenn sie dasselbe Feld wie die Zwischenfrage betrifft. Knopf der
+  // festen Frage aus v10/v11 (Ole, 19.11.2026): derselbe Wert wie in knopf.ts („Alles neu“ → „noch nichts versichert …“)
+  const wert = erstfrageKnopfWert(unsere.body, antwort, unsere.purpose)?.wert ?? antwort.replace(/\s+/g, " ").slice(0, 160);
   return { art: "fragen", def: offen, antwort: feld && feld !== offen.feld && feld !== ("wunsch" as QualificationKey) ? { feld, wert } : null };
 }
 

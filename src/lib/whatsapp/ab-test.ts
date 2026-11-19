@@ -3,16 +3,26 @@
 //   - Messung: Antwortquote je Fassung. Gezählt werden nur Vorlagen-Sendungen (Message.purpose/variant), die
 //     mindestens ANTWORT_STUNDEN alt sind; Antwort = eingehende Nachricht im selben Chat innerhalb dieser Zeit,
 //     ohne Abmeldung und ohne Absage („Kein Bedarf“, „Nein, danke“). Zusätzlich (nur Anzeige): Terminquote.
-//   - Entscheidung: ab MIN_JE_FASSUNG Sendungen je Fassung und p < ALPHA im zweiseitigen Zwei-Stichproben-z-Test
+//   - Entscheidung: ab MIN_JE_FASSUNG Sendungen je Fassung (Erstanschreiben ab MIN_JE_FASSUNG_ERSTANSCHREIBEN = 150) und p < ALPHA im zweiseitigen Zwei-Stichproben-z-Test
 //     wird die bessere Fassung automatisch Standard (TemplateAbTest.winner) und im Audit-Log vermerkt.
 // Rein: zTest, decideAbWinner, variantForKey (Unit-Tests). Datenbank: abVariantFor, loadAbStats, promoteAbWinners.
 
 import { createHash } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { TEMPLATE_BODY_B, variantsFor, type NoticePurpose, type TemplateVariant } from "@/lib/whatsapp/templates";
+import { isOutreachPurpose, TEMPLATE_BODY_B, variantsFor, type NoticePurpose, type TemplateVariant } from "@/lib/whatsapp/templates";
 
 export const MIN_JE_FASSUNG = 50;
+/**
+ * Erstanschreiben v10 gegen v11 (Ole, 19.11.2026): erst ab 150 Sendungen je Fassung entscheiden. Die erste Nachricht
+ * ist der wichtigste Text, kleine Unterschiede in der Antwortquote sollen nicht zufällig gewinnen. Andere Zwecke: 50.
+ */
+export const MIN_JE_FASSUNG_ERSTANSCHREIBEN = 150;
+
+/** Mindestmenge je Fassung für diesen Zweck (rein). */
+export function minJeFassung(purpose: string): number {
+  return isOutreachPurpose(purpose) ? MIN_JE_FASSUNG_ERSTANSCHREIBEN : MIN_JE_FASSUNG;
+}
 export const ALPHA = 0.05;
 export const ANTWORT_STUNDEN = 72;
 const TERMIN_TAGE = 14;
@@ -50,7 +60,7 @@ export function zTest(a: VariantStats, b: VariantStats): { z: number; p: number;
 
 export type AbDecision = { winner: TemplateVariant | null; p: number; z: number; reason: "zu_wenig" | "kein_unterschied" | "entschieden" };
 
-/** Gewinner bestimmen: erst ab genug Sendungen je Fassung und bei signifikantem Unterschied. */
+/** Gewinner bestimmen: erst ab genug Sendungen je Fassung (opts.min, siehe minJeFassung) und bei signifikantem Unterschied. */
 export function decideAbWinner(s: AbStats, opts: { min?: number; alpha?: number } = {}): AbDecision {
   const min = opts.min ?? MIN_JE_FASSUNG;
   const alpha = opts.alpha ?? ALPHA;
@@ -97,9 +107,16 @@ export async function abVariantFor(purpose: NoticePurpose, key: string | null | 
 // Antworten, die keine Zustimmung sind (Abmeldung, Absage per Knopf), zählen nicht als Antwort
 const KEINE_ANTWORT = ["keine nachrichten mehr", "kein bedarf", "kein bedarf mehr", "nein, danke", "nein danke"];
 
-/** Kennzahlen je Fassung (nur Vorlagen-Sendungen, die alt genug sind, um eine Antwort zu sehen). */
+/**
+ * Kennzahlen je Fassung (nur Vorlagen-Sendungen, die alt genug sind, um eine Antwort zu sehen).
+ * Erstanschreiben (Ole, 19.11.2026): gezählt wird erst ab der ersten Sendung der Fassung b. Davor gingen nur ältere
+ * Textversionen raus (bis v9, gespeichert als „a“), die nicht zum Test v10 gegen v11 gehören.
+ */
 export async function loadAbStats(purpose: NoticePurpose, now = new Date()): Promise<AbStats> {
   const until = new Date(now.getTime() - ANTWORT_STUNDEN * 3600_000);
+  const abB = isOutreachPurpose(purpose)
+    ? Prisma.sql`AND m."createdAt" >= (SELECT MIN(f."createdAt") FROM "Message" f WHERE f."purpose" = ${purpose} AND f."direction" = 'outbound' AND f."variant" = 'b')`
+    : Prisma.empty;
   const rows = await prisma.$queryRaw<{ variant: string; sent: bigint; replied: bigint; booked: bigint }[]>(Prisma.sql`
     SELECT m."variant" AS variant,
            COUNT(*) AS sent,
@@ -116,7 +133,7 @@ export async function loadAbStats(purpose: NoticePurpose, now = new Date()): Pro
                AND ap."createdAt" > m."createdAt" AND ap."createdAt" <= m."createdAt" + make_interval(days => ${TERMIN_TAGE})
            )) AS booked
     FROM "Message" m
-    WHERE m."purpose" = ${purpose} AND m."direction" = 'outbound' AND m."variant" IN ('a', 'b') AND m."createdAt" <= ${until}
+    WHERE m."purpose" = ${purpose} AND m."direction" = 'outbound' AND m."variant" IN ('a', 'b') AND m."createdAt" <= ${until} ${abB}
     GROUP BY m."variant"
   `);
   const of = (v: string): VariantStats => {
@@ -136,7 +153,7 @@ export async function abOverview(now = new Date()): Promise<AbOverview[]> {
       const stats = await loadAbStats(purpose, now);
       const row = saved.find((s) => s.purpose === purpose);
       const winner = row?.winner === "a" || row?.winner === "b" ? row.winner : null;
-      return { purpose, stats, decision: decideAbWinner(stats), winner, decidedAt: row?.decidedAt ?? null };
+      return { purpose, stats, decision: decideAbWinner(stats, { min: minJeFassung(purpose) }), winner, decidedAt: row?.decidedAt ?? null };
     }),
   );
 }
@@ -151,7 +168,7 @@ export async function promoteAbWinners(now = new Date()): Promise<{ purpose: Not
     const row = await prisma.templateAbTest.findUnique({ where: { purpose } });
     if (row?.winner) continue;
     const stats = await loadAbStats(purpose, now);
-    const d = decideAbWinner(stats);
+    const d = decideAbWinner(stats, { min: minJeFassung(purpose) });
     if (!d.winner) continue;
     const data = { winner: d.winner, decidedAt: now, stats: { ...stats, p: d.p, z: d.z } as unknown as Prisma.InputJsonValue };
     const claimed = row

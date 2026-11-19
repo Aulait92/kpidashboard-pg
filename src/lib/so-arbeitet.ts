@@ -19,7 +19,7 @@ import { SEQUENCES } from "@/lib/lead-sequences";
 import { leadLabel, startPush } from "@/lib/showup";
 import { anrufPush } from "@/lib/anruf-ausloeser";
 import { BEISPIEL_KONTAKT } from "@/lib/ablauf";
-import { ERSTINFO_FOOTER_V9, ersteFrageKnoepfe, erstanschreibenText, frageplan, outreachProdukt, type FormAntwort } from "@/lib/whatsapp/erstanschreiben";
+import { erstanschreibenFusszeile, ersteFrageKnoepfe, erstanschreibenText, frageplan, outreachProdukt, type FormAntwort } from "@/lib/whatsapp/erstanschreiben";
 import { offeneZwischenfrage, zwischenfrageText, ZWISCHENFRAGEN, ZWISCHENFRAGE_AKTIV } from "@/lib/whatsapp/zwischenfrage";
 import {
   abschlussEinleitung,
@@ -200,12 +200,13 @@ export function beispielVerlauf(o: BeispielEingabe): ChatZeile[] {
     out.push({ art: "nachricht", von: "assistent", text, ...extra, zeit: zeit(plusMin) });
   const lead = (text: string, plusMin = 1) => out.push({ art: "nachricht", von: "lead", text, zeit: zeit(plusMin) });
 
-  // 1. Erstanschreiben v9 (Vorlage mit der Erstinformation als PDF im Kopf, KI-Kennzeichnung in der Fußzeile)
+  // 1. Erstanschreiben v10 (Vorlage mit der Erstinformation als PDF im Kopf, feste Frage mit Knöpfen, KI-Kennzeichnung in
+  // der Fußzeile; beantwortet das Formular die feste Frage schon, v9)
   out.push({ art: "hinweis", text: "Heute" });
   assistent(erstanschreibenText({ an, kontakt, name: person.nom, vermittler: person.dat, vermittlerNom: person.nom, source: produkt, formular }, { ohneFuss: true }), {
     anhang: "Erstinformation.pdf",
     knoepfe: ersteFrageKnoepfe(produkt, formular),
-    fusszeile: ERSTINFO_FOOTER_V9,
+    fusszeile: erstanschreibenFusszeile(produkt, formular),
   });
   lead(ersteAntwort(produkt, formular, an), 3);
 

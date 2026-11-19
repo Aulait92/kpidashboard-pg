@@ -61,3 +61,45 @@ describe("A/B-Test: Messung und automatische Übernahme", () => {
     expect((await abOverview(now)).find((t) => t.purpose === PURPOSE)).toMatchObject({ winner: "b" });
   });
 });
+
+// Erstanschreiben v10 gegen v11 (Ole, 19.11.2026): erst ab 150 Sendungen je Fassung; gezählt wird erst ab der ersten
+// Sendung der Fassung b (ältere Textversionen bis v9 wurden als „a“ gespeichert und gehören nicht zum Test).
+describe("A/B-Test Erstanschreiben: Mindestmenge 150 und Start mit der ersten Fassung b", () => {
+  const P = "outreach_pkv" as const;
+  let customerId = "";
+  const now = new Date();
+  let tel = 0;
+
+  beforeAll(async () => {
+    requireTestDb();
+    await prisma.templateAbTest.deleteMany({ where: { purpose: P } });
+    customerId = (await makeCustomer()).id;
+  });
+  afterAll(async () => {
+    await prisma.templateAbTest.deleteMany({ where: { purpose: P } });
+    await prisma.auditLog.deleteMany({ where: { action: "whatsapp.ab_promote", entityId: P } });
+    await cleanupCustomer(customerId);
+  });
+
+  async function seed(variant: "a" | "b", n: number, replied: number, sentAt: Date) {
+    for (let i = 0; i < n; i++) {
+      const conv = await prisma.conversation.create({ data: { customerId, contactPhone: `49172${String(++tel).padStart(7, "0")}` } });
+      await prisma.message.create({ data: { conversationId: conv.id, direction: "outbound", kind: "template", body: "x", purpose: P, variant, createdAt: sentAt } });
+      if (i < replied) await prisma.message.create({ data: { conversationId: conv.id, direction: "inbound", body: "Angestellt", createdAt: new Date(sentAt.getTime() + 3600_000) } });
+    }
+  }
+
+  it("alte v9-Sendungen vor der ersten b zählen nicht; bei 100 je Fassung noch keine Entscheidung, ab 150 schon", async () => {
+    await seed("a", 80, 0, new Date(now.getTime() - 20 * DAY)); // v9 (gespeichert als „a“), vor dem Test
+    await seed("a", 100, 20, new Date(now.getTime() - 10 * DAY));
+    await seed("b", 100, 45, new Date(now.getTime() - 10 * DAY));
+    const s = await loadAbStats(P, now);
+    expect(s.a).toMatchObject({ sent: 100, replied: 20 });
+    expect(s.b).toMatchObject({ sent: 100, replied: 45 });
+    expect((await promoteAbWinners(now)).some((x) => x.purpose === P)).toBe(false);
+    expect((await abOverview(now)).find((t) => t.purpose === P)?.decision.reason).toBe("zu_wenig");
+    await seed("a", 50, 10, new Date(now.getTime() - 9 * DAY));
+    await seed("b", 50, 23, new Date(now.getTime() - 9 * DAY));
+    expect(await promoteAbWinners(now)).toContainEqual({ purpose: P, winner: "b" });
+  });
+});

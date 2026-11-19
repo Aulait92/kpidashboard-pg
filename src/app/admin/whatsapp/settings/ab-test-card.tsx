@@ -1,6 +1,6 @@
 // A/B-Tests der WhatsApp-Vorlagen (lib/whatsapp/ab-test.ts): Stand je Vorlage, Antwortquote und Terminquote je
 // Fassung. Die bessere Fassung wird automatisch Standard (Cron, Audit-Log „whatsapp.ab_promote“); hier nur lesen.
-import { abOverview, ALPHA, ANTWORT_STUNDEN, MIN_JE_FASSUNG, type AbOverview, type VariantStats } from "@/lib/whatsapp/ab-test";
+import { abOverview, ALPHA, ANTWORT_STUNDEN, MIN_JE_FASSUNG, MIN_JE_FASSUNG_ERSTANSCHREIBEN, minJeFassung, type AbOverview, type VariantStats } from "@/lib/whatsapp/ab-test";
 import { PURPOSE_LABELS, templateTextFor, type TemplateVariant } from "@/lib/whatsapp/templates";
 import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
@@ -9,7 +9,7 @@ const dateDE = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe
 
 function statusText(t: AbOverview): string {
   if (t.winner) return `Entschieden${t.decidedAt ? ` am ${dateDE(t.decidedAt)}` : ""}: Fassung ${t.winner.toUpperCase()} ist jetzt Standard für alle neuen Leads.`;
-  if (t.decision.reason === "zu_wenig") return `Läuft: Entscheidung ab ${MIN_JE_FASSUNG} Sendungen je Fassung.`;
+  if (t.decision.reason === "zu_wenig") return `Läuft: Entscheidung ab ${minJeFassung(t.purpose)} Sendungen je Fassung.`;
   return `Läuft: noch kein klarer Unterschied (p = ${t.decision.p.toFixed(3)}, nötig unter ${ALPHA}).`;
 }
 
@@ -38,7 +38,7 @@ export async function AbTestCard() {
       <p className="mt-1 text-[color:var(--muted)]">
         Jeder Lead bekommt fest eine der beiden Fassungen. Gezählt werden Vorlagen-Sendungen, die mindestens {ANTWORT_STUNDEN} Stunden alt sind;
         Antwort heißt: der Lead hat innerhalb dieser Zeit geschrieben (ohne Abmeldung und ohne „Kein Bedarf“). Ab {MIN_JE_FASSUNG} Sendungen je
-        Fassung und einem klaren Unterschied (z-Test, p unter {ALPHA}) wird die bessere Fassung automatisch Standard.
+        Fassung (erste Nachricht an neue Leads: ab {MIN_JE_FASSUNG_ERSTANSCHREIBEN}) und einem klaren Unterschied (z-Test, p unter {ALPHA}) wird die bessere Fassung automatisch Standard.
       </p>
       <ul className="mt-3 space-y-4">
         {tests.map((t) => (
