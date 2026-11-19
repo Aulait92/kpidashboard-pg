@@ -247,7 +247,7 @@ export function beispielVerlauf(o: BeispielEingabe): ChatZeile[] {
   }
 
   // 6. Komplettcheck „Ja“: bestehende Verträge
-  assistent(vertragsFrage(an, familie, fragen[0] ? "Danke!" : "Super!"));
+  assistent(vertragsFrage(an, familie, fragen[0] ? "Danke!" : "Super!", person));
   lead("Kfz bei der Allianz und eine Unfallversicherung bei der HUK.", 3);
 
   // 7. Policen-Bitte (Policen-Modul, mit „Danke!“ nach der Antwort) und die Einwilligung als eigene Nachricht; auf

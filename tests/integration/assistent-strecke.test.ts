@@ -116,6 +116,7 @@ import { komplettcheckVerlaengern } from "@/lib/komplettcheck-dauer";
 import { vortagText } from "@/lib/showup";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 import { testLeadAnswers } from "@/lib/testlead";
+import { KOMPLETTCHECK_RE } from "@/lib/whatsapp/gespraech";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 let seq = 0;
@@ -224,7 +225,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
   const art = (s: Sent): string =>
     /ist gebucht:/.test(s.body)
       ? "buchung"
-      : /insgesamt gut abgesichert/.test(s.body)
+      : KOMPLETTCHECK_RE.test(s.body)
         ? "komplettcheck"
         : /passende Beiträge zeigen kann/.test(s.body)
           ? "angebotsfrage"
@@ -285,7 +286,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     // Letzte Angabe → Vertragsfrage
     st.queue.push([{ type: "tool_use", id: "q1", name: "record_qualification", input: { zusammenfassung: "x", angaben: { beruf: "nicht im öffentlichen Dienst" } } }], [{ type: "text", text: "Danke, notiert." }]);
     await knopf(phone, "folge:oeffentlicherDienst:nein", "Nein");
-    expect(gesendet().at(-1)!.body).toMatch(/^Danke! Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
+    expect(gesendet().at(-1)!.body).toMatch(/^Danke! (Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: )?Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
 
     // Verträge → Policen-Bitte (Text aus dem Policen-Modul), danach die Einwilligung als eigene Nachricht mit Knöpfen
     await text(phone, "Haftpflicht bei der HUK, eine BU und Kfz");
@@ -388,7 +389,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     // Letzte Angebotsfrage: statt eigener Worte die Vertragsfrage der App
     const letzte = await antwort("Nein", { beruf: "nicht im öffentlichen Dienst" }, "Danke, notiert.");
     expect(letzte).toHaveLength(1);
-    expect(letzte[0]).toMatch(/^Danke! Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
+    expect(letzte[0]).toMatch(/^Danke! (Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: )?Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
 
     const q = (await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id }, select: { qualificationData: true } })).qualificationData as Record<string, string>;
     expect(q).toMatchObject({ geburt: "22.08.1992", wohnflaeche: "95 m²" });
@@ -631,7 +632,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
         { id: "tier:gesundheit:gesund", title: "Ja, gesund" },
         { id: "tier:gesundheit:behandlung", title: "War in Behandlung" },
       ]);
-      expect(gesendet().some((s) => /insgesamt gut abgesichert/.test(s.body))).toBe(false);
+      expect(gesendet().some((s) => KOMPLETTCHECK_RE.test(s.body))).toBe(false);
 
       await knopf(x.phone, "tier:gesundheit:behandlung", "War in Behandlung");
       expect(gesendet().at(-1)!.body).toBe("Danke! Was war es ungefähr, und wann? Ein Stichwort reicht, z. B. Zahnbehandlung im Frühjahr. Herr Kannapinn bespricht das im Termin mit Ihnen.");
@@ -650,7 +651,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       expect(gesendet().at(-1)!.body).toBe("Danke! Für das Angebot braucht Herr Kannapinn noch Ihr Geburtsdatum. Wie lautet es?");
       await text(x.phone, "14.05.1985");
       const komplett = gesendet().at(-1)!;
-      expect(komplett.body).toMatch(/^Danke! Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind/);
+      expect(komplett.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind|Viele zahlen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen, wo Sie)/);
       expect(komplett.buttons?.map((b) => b.id)).toEqual(["komplettcheck:ja", "komplettcheck:nein"]);
       // Geschlecht, Geburtsjahr, Haltung, Schutzwunsch (Formular bzw. Erstanschreiben) und Kastration nie gefragt
       expect(gesendet().some((s) => /männlich|geboren|Wohnungskatze|Operation|kastriert/i.test(s.body))).toBe(false);
@@ -691,7 +692,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       st.ai = 0;
       await text(x.phone, "Ja, sie ist kerngesund");
       expect((await angaben(x.conv.id)).tiergesundheit).toBe("gesund");
-      expect(gesendet().at(-1)!.body).toMatch(/^Danke! Soll Herr Kannapinn im Termin auch kurz schauen/);
+      expect(gesendet().at(-1)!.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen|Viele zahlen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen)/);
       expect(st.ai).toBe(0);
       // Doppelter Klick auf den alten Knopf: nichts
       const n = gesendet().length;
@@ -708,7 +709,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       await prisma.conversation.update({ where: { id: x.conv.id }, data: { windowExpiresAt: new Date(Math.max(now.getTime(), Date.now()) + 10 * HOUR) } });
       await prisma.message.create({ data: { conversationId: x.conv.id, direction: "internal", kind: STRECKE.tierFrage, body: JSON.stringify({ appointmentId: appt.id, key: "gesundheit" }), sentBy: "bot", createdAt: new Date(now.getTime() - 2 * HOUR) } });
       expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
-      expect(gesendet().at(-1)!.body).toMatch(/^Noch eine kurze Frage: Soll Herr Kannapinn im Termin auch kurz schauen/);
+      expect(gesendet().at(-1)!.body).toMatch(/^Noch eine kurze Frage: (Soll Herr Kannapinn im Termin auch kurz schauen|Viele zahlen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen)/);
       expect((await runStreckeAbschliessen(now)).gesendet).toBe(0);
     });
   });

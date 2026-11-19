@@ -13,6 +13,7 @@
 // Ablauf und Versand: lib/whatsapp/termin-strecke.ts. Keine Gedankenstriche, kurze Sätze, keine Versprechen.
 
 import { a, type Ansprache } from "@/lib/ansprache";
+import type { Variante } from "@/lib/experimente";
 import { terminArtRegel, type TerminFormate, type TerminModus } from "@/lib/termin-formate";
 import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import { angabenFuerSparte, spartenDesLeads, type AngabenQuelle, type Folgefrage, type RechnerSparte } from "@/lib/preise/rechner-angaben";
@@ -78,11 +79,13 @@ const TIER_AKK = { katze: ["deine Katze", "Ihre Katze"], hund: ["deinen Hund", "
  * zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten.“
  * Kein „doppelt zahlen“, keine Versprechen zu Preisen, Ersparnis oder Eignung.
  */
-export function terminNutzenSatz(o: { source: string | null | undefined; formular: Form; angaben?: unknown; an: Ansprache; person: VermittlerName; video?: boolean }): string {
+export function terminNutzenSatz(o: { source: string | null | undefined; formular: Form; angaben?: unknown; an: Ansprache; person: VermittlerName; video?: boolean; kostenlos?: boolean }): string {
   const { an, person } = o;
   const p = outreachProdukt(o.source);
   const purpose = p?.purpose ?? null;
-  const art = o.video === false ? "In einem kurzen Termin" : "In einem kurzen Videotermin";
+  // Splittest terminvorschlag_kostenlos (lib/experimente.ts): Fassung b mit „kostenlosen“
+  const kurz = o.kostenlos ? "kurzen, kostenlosen" : "kurzen";
+  const art = o.video === false ? `In einem ${kurz} Termin` : `In einem ${kurz} Videotermin`;
   const zeigt = `${art} zeigt ${a(an, "dir", "Ihnen")} ${person.nom},`;
   const achten = a(an, "und worauf du achten solltest", "und worauf Sie achten sollten");
   if (purpose === "outreach_tkv") {
@@ -175,10 +178,12 @@ export function terminVorschlagText(o: {
   einleitung?: string | null;
   video?: boolean;
   erneut?: boolean;
+  /** Splittest terminvorschlag_kostenlos, Fassung b: „In einem kurzen, kostenlosen Videotermin …“ */
+  kostenlos?: boolean;
 }): string {
   const frage = a(o.an, `Passt dir ${o.zeiten[0]} oder ${o.zeiten[1]}?`, `Passt Ihnen ${o.zeiten[0]} oder ${o.zeiten[1]}?`);
   const einleitung = o.einleitung?.replace(/\s+/g, " ").trim() || (o.dank === false || o.erneut ? null : "Danke!");
-  const nutzen = o.erneut ? null : terminNutzenSatz({ source: o.source, formular: o.formular, angaben: o.angaben, an: o.an, person: o.person, video: o.video });
+  const nutzen = o.erneut ? null : terminNutzenSatz({ source: o.source, formular: o.formular, angaben: o.angaben, an: o.an, person: o.person, video: o.video, kostenlos: o.kostenlos });
   return [einleitung, nutzen, frage].filter(Boolean).join(" ");
 }
 
@@ -247,15 +252,16 @@ export function bereitlegenPunkte(liste: readonly string[]): string[] {
 }
 
 /**
- * Komplettcheck-Satz für Termin-Mails (nur bei Komplettcheck „Ja“), ohne Dauer in Minuten (Ole, 17.11.2026):
- * „Wie gewünscht schaut Herr Kannapinn im Termin auch, ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht
- * etwas sparen können.“
+ * Komplettcheck-Satz für Termin-Mails (nur bei Komplettcheck „Ja“), ohne Dauer in Minuten (Ole, 17.11.2026; Leitmotiv
+ * „doppelt zahlen und sparen“, Ole 19.11.2026, passt zu beiden Fassungen der Frage): „Wie gewünscht schaut Herr
+ * Kannapinn im Termin auch kurz, wo Sie vielleicht doppelt zahlen und sparen können und ob Sie insgesamt gut
+ * abgesichert sind.“
  */
 export function komplettcheckMailSatz(an: Ansprache, person: { nom: string }, familie: boolean): string {
   const wer = familie
-    ? a(an, "ob du und deine Familie insgesamt gut abgesichert seid und wo ihr vielleicht etwas sparen könnt", "ob Sie und Ihre Familie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können")
-    : a(an, "ob du insgesamt gut abgesichert bist und wo du vielleicht etwas sparen kannst", "ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können");
-  return `Wie gewünscht schaut ${person.nom} im Termin auch, ${wer}.`;
+    ? a(an, "wo ihr als Familie vielleicht doppelt zahlt und sparen könnt und ob ihr insgesamt gut abgesichert seid", "wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können und ob Sie insgesamt gut abgesichert sind")
+    : a(an, "wo du vielleicht doppelt zahlst und sparen kannst und ob du insgesamt gut abgesichert bist", "wo Sie vielleicht doppelt zahlen und sparen können und ob Sie insgesamt gut abgesichert sind");
+  return `Wie gewünscht schaut ${person.nom} im Termin auch kurz, ${wer}.`;
 }
 
 /** Frühere Kalenderfrage (bis 17.11.2026; Knöpfe in alten Nachrichten werden weiter verarbeitet, kalenderAntwort). */
@@ -282,7 +288,7 @@ export const KALENDER_KNOEPFE: Knopf[] = [
 
 /**
  * Komplettcheck nach der Buchung (Ole, 17.11.2026), zentral zum Feilen; [Person] = „Herr Kannapinn“. Knöpfe
- * „Ja, gern“ / „Nein, danke“. Bei Familie „Sie und Ihre Familie“.
+ * „Ja, gern“ / „Nein, danke“. Bei Familie „Sie und Ihre Familie“. Fassung a (bisher) im Splittest komplettcheck_text.
  */
 export const KOMPLETTCHECK_TEXT = {
   sie: "Danke! Soll [Person] im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können? Das dauert nur ein paar Minuten länger.",
@@ -291,14 +297,26 @@ export const KOMPLETTCHECK_TEXT = {
   duFamilie: "Danke! Soll [Person] im Termin auch kurz schauen, ob du und deine Familie insgesamt gut abgesichert seid und wo ihr vielleicht etwas sparen könnt? Das dauert nur ein paar Minuten länger.",
 } as const;
 
-/** Komplettcheck-Frage (KOMPLETTCHECK_TEXT) für Ansprache und Lebenssituation. */
-export function komplettcheckFrage(an: Ansprache, person: VermittlerName, familie: boolean): string {
-  const t = an === "du" ? (familie ? KOMPLETTCHECK_TEXT.duFamilie : KOMPLETTCHECK_TEXT.du) : familie ? KOMPLETTCHECK_TEXT.sieFamilie : KOMPLETTCHECK_TEXT.sie;
+/**
+ * Fassung b (Ole, 19.11.2026: Kernbotschaft „doppelt zahlen und sparen“), Standard außerhalb des Splittests: Nutzen
+ * konkret über doppelte Verträge und Sparen, „können“ statt Versprechen, kostenlos, keine Minutenangabe.
+ */
+export const KOMPLETTCHECK_TEXT_B = {
+  sie: "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo Sie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
+  sieFamilie: "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
+  du: "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo du vielleicht doppelt zahlst und sparen kannst? Kostenlos und nur ein paar Minuten länger.",
+  duFamilie: "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo ihr als Familie vielleicht doppelt zahlt und sparen könnt? Kostenlos und nur ein paar Minuten länger.",
+} as const;
+
+/** Komplettcheck-Frage für Ansprache und Lebenssituation; variante a = bisher (KOMPLETTCHECK_TEXT), b = neu (Standard). */
+export function komplettcheckFrage(an: Ansprache, person: VermittlerName, familie: boolean, variante: Variante = "b"): string {
+  const T = variante === "a" ? KOMPLETTCHECK_TEXT : KOMPLETTCHECK_TEXT_B;
+  const t = an === "du" ? (familie ? T.duFamilie : T.du) : familie ? T.sieFamilie : T.sie;
   return t.split("[Person]").join(person.nom);
 }
 
-/** Erkennt die Komplettcheck-Frage in einer Nachricht von uns. */
-export const KOMPLETTCHECK_RE = /im Termin auch kurz schauen, ob .+ insgesamt gut abgesichert/;
+/** Erkennt die Komplettcheck-Frage (beide Fassungen) in einer Nachricht von uns. */
+export const KOMPLETTCHECK_RE = /im Termin auch kurz schauen, ob .+ insgesamt gut abgesichert|im Termin kurz drüberschauen, wo .+ doppelt zahl/;
 
 /** Knöpfe zum Komplettcheck (Payload, damit „Nein, danke“ nicht als „kein Bedarf“ gilt). */
 export const KOMPLETTCHECK_KNOEPFE: Knopf[] = [
@@ -310,11 +328,13 @@ export const KOMPLETTCHECK_KNOEPFE: Knopf[] = [
  * Bei Komplettcheck „Ja“ (nach den Angebotsfragen, P2): Frage nach den bestehenden Verträgen (eigene Nachricht, ohne
  * Knöpfe). einleitung: „Super!“ direkt nach dem Knopf, „Danke!“ nach der letzten Angebotsfrage.
  */
-export function vertragsFrage(an: Ansprache, familie: boolean, einleitung = "Super!"): string {
+export function vertragsFrage(an: Ansprache, familie: boolean, einleitung = "Super!", person?: { nom: string } | null): string {
   const wer = familie
     ? a(an, "Welche Versicherungen habt ihr als Familie heute schon?", "Welche Versicherungen haben Sie und Ihre Familie heute schon?")
     : a(an, "Welche Versicherungen hast du heute schon?", "Welche Versicherungen haben Sie heute schon?");
-  return `${einleitung} ${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.`;
+  // Grund in einem Halbsatz (Leitmotiv „doppelt zahlen“, Ole 19.11.2026): wer weiß wofür, antwortet eher
+  const warum = person ? `${a(an, `Damit ${person.nom} sieht, ob du irgendwo doppelt zahlst:`, `Damit ${person.nom} sieht, ob Sie irgendwo doppelt zahlen:`)} ` : "";
+  return `${einleitung} ${warum}${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.`;
 }
 
 /** Erkennt die Vertragsfrage in einer Nachricht von uns. */
@@ -567,7 +587,7 @@ export function nachBuchungRegel(o: {
     lines.push("- Die App schickt gleich selbst die nächste Frage. Beantworte nur kurz, was der Lead geschrieben hat, und stell keine eigene Frage.");
   } else if (o.komplettcheckOffen) {
     lines.push(
-      `- Offen ist die Frage, ob ${o.person.nom} im Termin auch schauen soll, ob der Lead insgesamt gut abgesichert ist. Antwortet er darauf (ja oder nein, auch frei formuliert), nutze komplettcheck mit ja=true bzw. ja=false. Die App schickt dann die nächste Nachricht selbst: schreib nichts dazu.`,
+      `- Offen ist die Frage, ob ${o.person.nom} im Termin auch kurz über die übrigen Versicherungen schauen soll (Komplettcheck: wo der Lead vielleicht doppelt zahlt und sparen kann). Antwortet er darauf (ja oder nein, auch frei formuliert), nutze komplettcheck mit ja=true bzw. ja=false. Die App schickt dann die nächste Nachricht selbst: schreib nichts dazu.`,
     );
   } else if (o.fragen.length) {
     lines.push(

@@ -149,7 +149,7 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
     expect(st.ai).toBe(0);
     const vorschlag = gesendet().at(-1)!;
     expect(vorschlag.art).toBe("buttons");
-    expect(vorschlag.body).toMatch(/^Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Sie kosten und worauf Sie achten sollten\. Passt Ihnen .+ oder .+\?$/);
+    expect(vorschlag.body).toMatch(/^Danke! In einem kurzen(, kostenlosen)? Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Sie kosten und worauf Sie achten sollten\. Passt Ihnen .+ oder .+\?$/);
     expect(vorschlag.buttons!.map((b) => b.id.split(":")[0])).toEqual(["slot", "slot", "andere_zeit"]);
     c = await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } });
     expect(c.qualificationData).toMatchObject({ vorhanden: "Beides neu", versichern: "Nur ich" });
@@ -166,7 +166,7 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
     expect(st.ai).toBeGreaterThan(0);
     expect(JSON.stringify(st.reqs[0])).toContain("Stell keine weitere Frage");
     expect(await prisma.message.count({ where: { conversationId: conv.id, body: { contains: "Wer soll mitversichert sein?" } } })).toBe(0);
-    expect(gesendet().at(-1)!.body).toMatch(/^Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn/);
+    expect(gesendet().at(-1)!.body).toMatch(/^Danke! In einem kurzen(, kostenlosen)? Videotermin zeigt Ihnen Herr Kannapinn/); // Splittest terminvorschlag_kostenlos
   });
 
   it("Freitext statt Knopf auf die Zwischenfrage: nicht erneut fragen, der Assistent übernimmt; Vermittler gesiezt nie mit Vor- und Nachnamen", async () => {

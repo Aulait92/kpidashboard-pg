@@ -4776,6 +4776,46 @@ model CustomerLifecycleEvent {
   @@index([kind, at])
 }
 
+// Splittests der Lead-Reise (Ole, 19.11.2026: „konstant Splittests fahren“, lib/experimente.ts): Experiment mit
+// Ziel-Kennzahl, feste Zuteilung je Einheit (Lead, sonst Chat, Termin bzw. Seitenaufruf) und Ziel-Ereignisse.
+// Gewinner automatisch ab MIN je Fassung und p < 0,05 (Audit „experiment.gewinner“). Ohne Personendaten.
+model Experiment {
+  key       String    @id
+  // Ziel-Kennzahl, z. B. termin_gebucht | komplettcheck_ja | erschienen
+  ziel      String
+  // false = angehalten: alle bekommen den Gewinner bzw. Fassung a
+  aktiv     Boolean   @default(true)
+  winner    String? // a | b
+  decidedAt DateTime?
+  // Kennzahlen zum Zeitpunkt der Entscheidung { a: { n, ziel }, b: …, p, z }
+  stats     Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model ExperimentZuteilung {
+  id         String   @id @default(cuid())
+  experiment String
+  // Lead-ID (bzw. Chat-, Termin- oder Seitenaufruf-ID), nie Name, Nummer oder Adresse
+  einheit    String
+  variante   String // a | b
+  createdAt  DateTime @default(now())
+
+  @@unique([experiment, einheit])
+  @@index([experiment, variante])
+}
+
+model ExperimentEreignis {
+  id         String   @id @default(cuid())
+  experiment String
+  einheit    String
+  ziel       String
+  createdAt  DateTime @default(now())
+
+  @@unique([experiment, einheit, ziel])
+  @@index([experiment, ziel])
+}
+
 // A/B-Test je WhatsApp-Vorlage (lib/whatsapp/ab-test.ts): zwei Fassungen (a, b), je Lead fest zugeteilt.
 // Nach genug Volumen wird die bessere automatisch Standard (winner) und im Audit-Log vermerkt.
 model TemplateAbTest {

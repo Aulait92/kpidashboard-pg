@@ -22,6 +22,7 @@ import {
 import { CalendarCard } from "./calendar-card";
 import { SupportInboxCard } from "./support-card";
 import { AbTestCard } from "./ab-test-card";
+import { ExperimenteCard } from "./experimente-card";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import { AgentSettings, ResubmitTemplateButton, SubmitTemplatesButton, TemplateApproved, TemplateAutoStatus, TemplateEditor } from "./controls";
 import { AdminBack } from "@/components/admin/admin-back";
@@ -129,6 +130,7 @@ export default async function WhatsAppSettingsPage({
       <SupportInboxCard status={sp.support ?? null} />
 
       <AbTestCard />
+      <ExperimenteCard />
 
       <form
         action={addCustomerAction}

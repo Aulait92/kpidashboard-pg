@@ -81,6 +81,7 @@ import { pruefeDsgvoEingang } from "@/lib/dsgvo/server";
 import { sendeVorlagenMail } from "@/lib/mail/vorlagen-mail";
 import { loadInbox } from "@/lib/inbox";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { KOMPLETTCHECK_RE } from "@/lib/whatsapp/gespraech";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 let n = 0;
@@ -234,7 +235,7 @@ describe("Mail-Strecke und Betroffenenrechte", () => {
     await terminFestmachen(s.id, { start: s.zeiten[0], mode: "video" });
     let st = await seitenStand(s.id);
     expect(st?.nach).toBe("komplettcheck");
-    expect(st?.komplettcheckText).toMatch(/insgesamt gut abgesichert/);
+    expect(st?.komplettcheckText).toMatch(KOMPLETTCHECK_RE);
     expect(st?.komplettcheckText).not.toMatch(/\d+ Minuten/);
     await komplettcheckSetzen(s.id, false);
     st = await seitenStand(s.id);

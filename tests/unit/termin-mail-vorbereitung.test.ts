@@ -15,6 +15,7 @@ import {
   bereitlegenListe,
   buchungsText,
   KOMPLETTCHECK_TEXT,
+  KOMPLETTCHECK_TEXT_B,
   komplettcheckMailSatz,
   vermittlerName,
 } from "@/lib/whatsapp/gespraech";
@@ -70,7 +71,7 @@ describe("Bestätigung bzw. Einladung mit Vorbereitung", () => {
     const c = content("booked", ev(), { fullName: "Julia Schneider", salutation: "Frau" }, "sie", { person: HERR, vorbereitung: vb(true) });
     const b = leadEmailBody(c, ev(), leadSignatur(DATEN));
     expect(b.text).toContain(BROWSER_HINWEIS);
-    expect(b.text).toContain("Wie gewünscht schaut Herr Kannapinn im Termin auch, ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können.");
+    expect(b.text).toContain("Wie gewünscht schaut Herr Kannapinn im Termin auch kurz, wo Sie vielleicht doppelt zahlen und sparen können und ob Sie insgesamt gut abgesichert sind.");
     expect(b.text).toContain("Legen Sie sich zum Termin bitte bereit:\n• Ihre bestehenden Verträge und Policen");
     expect(b.text).toContain("• Ihre IBAN, falls Sie direkt abschließen möchten");
     expect(b.html).toContain("<ul");
@@ -91,7 +92,7 @@ describe("Bestätigung bzw. Einladung mit Vorbereitung", () => {
   it("Du und Familie", () => {
     const c = content("booked", ev(), { firstName: "Julia", lastName: "Schneider" }, "du", { person: DU, vorbereitung: vb(true, "du", true) });
     const t = leadEmailBody(c, ev(), leadSignatur(DATEN)).text;
-    expect(t).toContain("Wie gewünscht schaut Ole im Termin auch, ob du und deine Familie insgesamt gut abgesichert seid und wo ihr vielleicht etwas sparen könnt.");
+    expect(t).toContain("Wie gewünscht schaut Ole im Termin auch kurz, wo ihr als Familie vielleicht doppelt zahlt und sparen könnt und ob ihr insgesamt gut abgesichert seid.");
     expect(t).toContain("Leg dir zum Termin bitte bereit:");
     expect(t).toContain("• Die Geburtsdaten aller Personen, die mitversichert werden sollen");
   });
@@ -151,7 +152,7 @@ describe("Keine Termindauer in Minuten in Lead-Texten (Ole, 17.11.2026)", () => 
         expect(abschlussText({ an, person, bereitlegen: liste, email: "a@b.de", nachFragen: true })).not.toMatch(MINUTEN_RE);
       }
     }
-    for (const t of Object.values(KOMPLETTCHECK_TEXT)) expect(t).not.toMatch(MINUTEN_RE);
+    for (const t of [...Object.values(KOMPLETTCHECK_TEXT), ...Object.values(KOMPLETTCHECK_TEXT_B)]) expect(t).not.toMatch(MINUTEN_RE);
   });
 
   it("Mail-Vorlagen (Standardfassungen) ohne Minutenangabe", () => {

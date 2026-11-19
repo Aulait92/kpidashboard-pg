@@ -251,6 +251,14 @@ async function handle(req: Request): Promise<Response> {
           return null;
         })
       : undefined;
+  // Splittests der Lead-Reise (lib/experimente.ts): gleiche Regel, einmal je Stunde
+  const experimente =
+    now.getUTCMinutes() < 5
+      ? await import("@/lib/experimente").then((m) => m.promoteExperimentWinners(now)).catch((e: unknown) => {
+          reportError(e, "cron-experimente");
+          return null;
+        })
+      : undefined;
   // Nächster Schritt: tägliche Erinnerung ab 8 Uhr Berlin an den zuständigen Berater (Sperre je Tag und Login)
   const naechsterSchritt = await import("@/lib/next-step-reminder").then((m) => m.runNextStepReminders(now)).catch((e: unknown) => {
     reportError(e, "cron-next-step-reminder");
@@ -454,7 +462,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, supportTemplates, status });
 }
 
 export const GET = handle;

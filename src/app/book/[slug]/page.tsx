@@ -11,7 +11,10 @@ import { AddToCalendar } from "@/components/add-to-calendar";
 import { PhoneField } from "@/components/phone-field";
 import { SubmitButton } from "@/components/submit-button";
 import { bookingDurationMin, suggestSlots, type Slot } from "@/lib/calendar";
-import { bookPublicAction } from "./actions";
+import { bookPublicAction, komplettcheckBuchungAction } from "./actions";
+import { Gezeigt } from "./gezeigt";
+import { randomUUID } from "node:crypto";
+import { variante, type Variante } from "@/lib/experimente";
 import { nowMs } from "@/lib/now";
 import { ERINNERUNG_OPTIN_TEXT } from "@/lib/policen/regeln";
 
@@ -63,7 +66,7 @@ function groupByDay(slots: Slot[]): { label: string; slots: Slot[] }[] {
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string; t?: string }>;
+  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string; t?: string; kc?: string }>;
 };
 
 export default async function BookingPage({ params, searchParams }: Props) {
@@ -152,9 +155,22 @@ export default async function BookingPage({ params, searchParams }: Props) {
   if (sp.ok && sp.a) {
     const appt = await prisma.appointment.findFirst({
       where: { id: sp.a, customerId: conn.customerId },
-      select: { startsAt: true, mode: true, meetUrl: true, manageToken: true },
+      select: { id: true, leadId: true, conversationId: true, status: true, startsAt: true, mode: true, meetUrl: true, manageToken: true, komplettcheck: true },
     });
     if (appt) {
+      // Komplettcheck direkt nach der Buchung (Ole, 19.11.2026): wer über die Seite bucht, wurde bisher nicht gefragt.
+      // Nur einmal, nur solange offen, nicht für den Vermittler selbst (Rückrufliste).
+      const kcOffen = appt.komplettcheck === null && appt.status === "booked" && appt.startsAt.getTime() > nowMs() && !!appt.manageToken && !sp.lead;
+      let kcFrage: string | null = null;
+      if (kcOffen) {
+        const { komplettcheckFrage, istFamilie, formularAus, vermittlerName } = await import("@/lib/whatsapp/gespraech");
+        const { ansprechpartner } = await import("@/lib/lead-anrede");
+        const lead = appt.leadId ? await prisma.lead.findUnique({ where: { id: appt.leadId }, select: { formData: true, name: true, needData: true } }) : null;
+        const who = await ansprechpartner({ customerId: conn.customerId, leadId: appt.leadId, phone: null, name: lead?.name ?? null });
+        const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || advisor });
+        const v = await variante("komplettcheck_text", appt.leadId ?? appt.conversationId ?? appt.id);
+        kcFrage = komplettcheckFrage(an, person, istFamilie(formularAus(lead?.formData), lead?.needData), v).replace(/^Danke! /, "");
+      }
       return (
         <Shell customerId={conn?.customerId}>
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
@@ -183,8 +199,26 @@ export default async function BookingPage({ params, searchParams }: Props) {
               ? a(an, "Die Bestätigung mit dem Link zum Videocall bekommst du per WhatsApp und E-Mail.", "Die Bestätigung mit dem Link zum Videocall bekommen Sie per WhatsApp und E-Mail.")
               : a(an, "Wir rufen dich zur vereinbarten Zeit an. Die Bestätigung bekommst du per WhatsApp und E-Mail.", "Wir rufen Sie zur vereinbarten Zeit an. Die Bestätigung bekommen Sie per WhatsApp und E-Mail.")}
           </p>
+          {kcFrage ? (
+            <form action={komplettcheckBuchungAction.bind(null, slug)} className="mt-5 rounded-xl bg-[color:var(--brand-soft)] p-4" data-komplettcheck>
+              <input type="hidden" name="token" value={appt.manageToken ?? ""} />
+              <p className="text-[15px] font-semibold leading-snug">{kcFrage}</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button name="ja" value="1" className={buttonClass("primary", "md", "h-12 w-full text-base")} data-ja>
+                  Ja, gern
+                </button>
+                <button name="ja" value="0" className={buttonClass("secondary", "md", "h-12 w-full text-base")} data-nein>
+                  Nein, danke
+                </button>
+              </div>
+            </form>
+          ) : sp.kc === "1" ? (
+            <p className="mt-4 text-sm font-medium text-emerald-700" data-komplettcheck-ja>
+              {a(an, "Super, im Termin wird auch kurz geschaut, wo du vielleicht doppelt zahlst und sparen kannst.", "Super, im Termin wird auch kurz geschaut, wo Sie vielleicht doppelt zahlen und sparen können.")}
+            </p>
+          ) : null}
           {appt.mode === "video" && appt.meetUrl ? (
-            <a href={appt.meetUrl} className={buttonClass("primary", "md", "mt-4 w-full")}>
+            <a href={appt.meetUrl} className={buttonClass(kcFrage ? "secondary" : "primary", "md", "mt-4 w-full")}>
               <Video className="h-4 w-4" /> Link zum Videocall
             </a>
           ) : null}
@@ -220,6 +254,13 @@ export default async function BookingPage({ params, searchParams }: Props) {
   }
   const days = groupByDay(slots);
   const action = bookPublicAction.bind(null, slug);
+  // Splittest buchungsseite_kompakt (lib/experimente.ts): je Aufruf eine zufällige ID, kein Cookie und kein Bezug zur
+  // Person; gezählt wird erst, wenn die Seite im Browser angezeigt wurde (Gezeigt). Nicht bei Buchung durch den Vermittler.
+  const aufruf = prefill && !streckeT ? null : randomUUID();
+  const v: Variante = aufruf ? await variante("buchungsseite_kompakt", aufruf, { merken: false }) : "a";
+  const kompakt = v === "b";
+  const nah = kompakt ? days.slice(0, NAH_TAGE) : days;
+  const spaeter = kompakt ? days.slice(NAH_TAGE) : [];
   // Zeitstempel für die Bot-Falle (echte Menschen brauchen > 3 s).
   const renderedAt = nowMs();
   const ERRORS = errorsFor(an);
@@ -250,6 +291,11 @@ export default async function BookingPage({ params, searchParams }: Props) {
         <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--surface-sunken)] px-2.5 py-1">
           <Video className="h-3.5 w-3.5" /> Video oder <Phone className="h-3.5 w-3.5" /> Telefon
         </span>
+        {kompakt ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800" data-kostenlos>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Kostenlos und unverbindlich
+          </span>
+        ) : null}
       </div>
 
       {error ? (
@@ -264,37 +310,24 @@ export default async function BookingPage({ params, searchParams }: Props) {
           <OhneKalender an={an} kontakt={await vermittlerKontakt(conn.customerId)} />
         </div>
       ) : (
-        <form action={action} className="mt-6 space-y-6">
+        <form action={action} className="mt-6 space-y-6" data-fassung={aufruf ? v : undefined}>
+          {aufruf ? <input type="hidden" name="xv" value={aufruf} /> : null}
+          {aufruf ? <Gezeigt aufruf={aufruf} /> : null}
           <section>
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
               <StepNo n={1} /> {a(an, "Wähle eine Uhrzeit", "Wählen Sie eine Uhrzeit")}
             </h2>
-            <div className="space-y-4">
-              {days.map((day) => (
-                <div key={day.label}>
-                  <div className="mb-1.5 text-xs font-medium text-[color:var(--muted)]">
-                    {day.label}
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                    {day.slots.map((s) => (
-                      <label
-                        key={s.start}
-                        className="cursor-pointer rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-2.5 text-center text-sm font-semibold tabular-nums transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand)] has-checked:text-white"
-                      >
-                        <input
-                          type="radio"
-                          name="start"
-                          value={s.start}
-                          required
-                          className="sr-only"
-                        />
-                        {fmt(new Date(s.start), { hour: "2-digit", minute: "2-digit" })}
-                      </label>
-                    ))}
-                  </div>
+            <Tage days={nah} />
+            {spaeter.length ? (
+              <details className="group mt-4" data-weitere-tage>
+                <summary className="cursor-pointer list-none rounded-[var(--radius-sm)] border border-dashed border-[color:var(--border)] py-2.5 text-center text-sm font-medium text-[color:var(--brand-dark)] group-open:hidden">
+                  Weitere Tage anzeigen
+                </summary>
+                <div className="mt-1">
+                  <Tage days={spaeter} />
                 </div>
-              ))}
-            </div>
+              </details>
+            ) : null}
           </section>
 
           <section>
@@ -358,6 +391,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
               className="absolute -left-[9999px] h-0 w-0 opacity-0"
             />
             <input type="hidden" name="rendered_at" value={String(renderedAt)} />
+            {kompakt ? <input type="hidden" name="datenschutz" value="hinweis" /> : (
             <label className="flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
               <input type="checkbox" name="consent" required className="mt-0.5" />
               <span>
@@ -374,6 +408,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
                 .
               </span>
             </label>
+            )}
             {/* Opt-in für Erinnerungen zur Terminvorbereitung (lib/policen, Rechtsprüfung A8), nicht vorausgewählt */}
             <label className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
               <input type="checkbox" name="erinnerung" className="mt-0.5" data-erinnerung-optin />
@@ -385,11 +420,46 @@ export default async function BookingPage({ params, searchParams }: Props) {
             pendingLabel="Wird gebucht …"
             className={buttonClass("primary", "md", "h-12 w-full text-base")}
           >
-            Termin verbindlich buchen
+            {kompakt ? "Kostenlos Termin buchen" : "Termin verbindlich buchen"}
           </SubmitButton>
+          {kompakt ? (
+            <p className="-mt-3 text-center text-xs leading-relaxed text-[color:var(--muted)]" data-datenschutz-hinweis>
+              {a(an, "Deine Angaben nutzen wir nur für den Termin und die Beratung.", "Ihre Angaben nutzen wir nur für den Termin und die Beratung.")}{" "}
+              <a href={privacyUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                Datenschutz
+              </a>
+            </p>
+          ) : null}
         </form>
       )}
     </Shell>
+  );
+}
+
+/** Fassung b der Buchungsseite: so viele Tage sofort sichtbar, der Rest hinter „Weitere Tage anzeigen“. */
+const NAH_TAGE = 3;
+
+/** Freie Zeiten je Tag als Auswahl (eine Gruppe „start“ über alle Tage). */
+function Tage({ days }: { days: { label: string; slots: Slot[] }[] }) {
+  return (
+    <div className="space-y-4">
+      {days.map((day) => (
+        <div key={day.label}>
+          <div className="mb-1.5 text-xs font-medium text-[color:var(--muted)]">{day.label}</div>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {day.slots.map((s) => (
+              <label
+                key={s.start}
+                className="cursor-pointer rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-2.5 text-center text-sm font-semibold tabular-nums transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand)] has-checked:text-white"
+              >
+                <input type="radio" name="start" value={s.start} required className="sr-only" />
+                {fmt(new Date(s.start), { hour: "2-digit", minute: "2-digit" })}
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
