@@ -20,6 +20,7 @@ import {
   setupForChoice,
   tierStaffelText,
   vatOf,
+  vorauszahlungMitAnnahme,
   withVat,
   type OfferProduct,
   type OfferTerm,
@@ -28,7 +29,7 @@ import {
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
 import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
-import { vorauszahlungFaellig } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, fmtIso, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -82,6 +83,8 @@ export type OfferDoc = {
   /** Abrechnungstag (1 bis 28, null = wie Start) und kostenloser Start bis dahin (lib/abrechnungstag.ts). */
   billingDay?: number | null;
   billingFreeStart?: boolean;
+  /** Vorauszahlung mit der Annahme fällig (seit 19.11.2026; Annahmen davor: zum Start). */
+  prepayAtAcceptance?: boolean;
 };
 
 type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "empfehlungMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp" | "setupListFee" | "setupDiscount"> & {
@@ -238,6 +241,8 @@ export function OfferDocument({
   // Vorauszahlung zur Wahl (Ole, 18.11.2026): vor der Annahme beide Beträge, danach die Wahl des Kunden.
   // 12 Monate: jährlich im Voraus (3 geschenkt, PRICE_LIST.annualFreeMonths), 6 Monate: 6 Monate im Voraus (1 geschenkt), eine Rechnung.
   const annualOpen = open && !!offer.annualChoice && !add.annual;
+  // Vorauszahlung mit der Annahme fällig, Laufzeit ab Start (Ole, 19.11.2026); ältere Annahmen: zum Start
+  const mitAnnahme = vorauszahlungMitAnnahme(offer);
   const pm = add.prepayMonths;
   const halb = pm === 6;
   const vorausName = halb ? "6 Monate im Voraus" : "jährlich im Voraus";
@@ -443,11 +448,16 @@ export function OfferDocument({
               {billingDiffers
                 ? abrechnungstagSaetze(plan, { firstNet: firstCharge }).join(" ")
                 : add.annualTotal != null
-                  ? `${date(offer.startDate)}. Ab diesem Tag läuft die Vergütung: ${eur(add.annualTotal)} netto ${vorausName}, ${vorauszahlungFaellig(startIso, pm)}.`
+                  ? mitAnnahme
+                    ? `${date(offer.startDate)}. Ab diesem Tag läuft die Laufzeit: ${eur(add.annualTotal)} netto ${vorausName}, ${vorauszahlungFaellig(startIso, pm, { mitAnnahme })}.`
+                    : `${date(offer.startDate)}. Ab diesem Tag läuft die Vergütung: ${eur(add.annualTotal)} netto ${vorausName}, ${vorauszahlungFaellig(startIso, pm)}.`
                   : `${date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.`}
+              {add.annualTotal != null && mitAnnahme ? <Note>{VORAUSZAHLUNG_MIT_ANNAHME}</Note> : null}
               {annualOpen && billingDiffers ? (
                 <Note>
-                  Bei {vorausWort} ist der volle {halb ? "Betrag für 6 Monate" : "Jahresbetrag"} schon zum Start am {date(offer.startDate)} fällig.
+                  {mitAnnahme
+                    ? `Bei ${vorausWort} gilt der Abrechnungstag nicht. ${VORAUSZAHLUNG_MIT_ANNAHME}`
+                    : `Bei ${vorausWort} ist der volle ${halb ? "Betrag für 6 Monate" : "Jahresbetrag"} schon zum Start am ${date(offer.startDate)} fällig.`}
                 </Note>
               ) : null}
               {startOpen ? <Note>Vorschlag, das Startdatum wählen Sie unten bei der Annahme.</Note> : null}
@@ -607,6 +617,19 @@ export function OfferDocument({
                 : "Gebühren von Meta nach Verbrauch, in der Regel 10–40 € im Monat."}
             </Tr>
           )}
+          {add.annualTotal != null && mitAnnahme ? (
+            <Tr k="Bei Annahme fällig">
+              <b className="text-[#111827]">{eur(offer.setupFee + add.annualTotal)}</b> netto (Setup {eur(offer.setupFee)} und {halb ? "Vorauszahlung für 6 Monate" : "Jahresbetrag"}{" "}
+              {eur(add.annualTotal)}) zzgl. 19 % USt. {eur(vatOf(offer.setupFee + add.annualTotal))}
+              {" = "}
+              <b className="text-[#111827]">{eur(withVat(offer.setupFee + add.annualTotal))} brutto</b>
+              <Note>
+                {VORAUSZAHLUNG_MIT_ANNAHME}
+                {startIso ? ` Die nächste Vorauszahlung ist am ${fmtIso(addMonthsIso(startIso, pm))} fällig.` : ""}
+                {termOpen || startOpen ? " Setup und Start richten sich nach Ihrer Wahl bei der Annahme." : ""}
+              </Note>
+            </Tr>
+          ) : (
           <Tr k="Bei Annahme fällig">
             <b className="text-[#111827]">{eur(offer.setupFee)}</b> netto (Setup) zzgl. 19 % USt. {eur(vatOf(offer.setupFee))}
             {" = "}
@@ -616,11 +639,14 @@ export function OfferDocument({
               {plan && billingDiffers ? ` am ${plan.firstIso.split("-").reverse().join(".")}` : offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}
               {billingDiffers && !plan!.free ? " zuzüglich des anteiligen Betrags für die Zeit davor" : ""}.
               {annualOpen
-                ? `${halb ? ` Bei Vorauszahlung ist es der Betrag von ${eur(v.total)} netto für 6 Monate` : ` Bei Jahreszahlung ist es der Jahresbetrag von ${eur(v.total)} netto`}${billingDiffers ? `, fällig zum Start am ${date(offer.startDate!)}` : ""}.`
+                ? mitAnnahme
+                  ? `${halb ? ` Bei Vorauszahlung kommt der Betrag von ${eur(v.total)} netto für 6 Monate dazu` : ` Bei Jahreszahlung kommt der Jahresbetrag von ${eur(v.total)} netto dazu`}. ${VORAUSZAHLUNG_MIT_ANNAHME}`
+                  : `${halb ? ` Bei Vorauszahlung ist es der Betrag von ${eur(v.total)} netto für 6 Monate` : ` Bei Jahreszahlung ist es der Jahresbetrag von ${eur(v.total)} netto`}${billingDiffers ? `, fällig zum Start am ${date(offer.startDate!)}` : ""}.`
                 : ""}
               {termOpen || startOpen ? " Setup und Start richten sich nach Ihrer Wahl bei der Annahme." : ""}
             </Note>
           </Tr>
+          )}
         </Table>
         <MonthlyOverview
           feeNet={add.annualTotal != null ? add.annualTotal / pm : add.monthlyTotal ?? offer.monthlyFee}
@@ -634,10 +660,24 @@ export function OfferDocument({
         <H3>2.1 Zahlung</H3>
         <p className="text-[#374151]">
           {add.annual
-            ? halb
-              ? "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum für jeweils 6 Monate im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während dieser 6 Monate dazukommen, werden anteilig berechnet."
-              : "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während des Jahres dazukommen, werden anteilig berechnet."
-            : `Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen.${annualOpen ? (halb ? " Bei Vorauszahlung wird die Vergütung für jeweils 6 Monate im Voraus eingezogen." : " Bei Jahreszahlung wird die Vergütung jährlich im Voraus eingezogen.") : ""}`}
+            ? mitAnnahme
+              ? halb
+                ? "Die Setupgebühr und die Vorauszahlung für die ersten 6 Monate werden mit Vertragsschluss fällig, danach die Vergütung für jeweils 6 Monate im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Die Laufzeit beginnt mit dem Start der Kampagne. Weitere aktive Verkäufer, die während dieser 6 Monate dazukommen, werden anteilig berechnet."
+                : "Die Setupgebühr und die Vorauszahlung für die ersten 12 Monate werden mit Vertragsschluss fällig, danach die Vergütung jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Die Laufzeit beginnt mit dem Start der Kampagne. Weitere aktive Verkäufer, die während des Jahres dazukommen, werden anteilig berechnet."
+              : halb
+                ? "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum für jeweils 6 Monate im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während dieser 6 Monate dazukommen, werden anteilig berechnet."
+                : "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während des Jahres dazukommen, werden anteilig berechnet."
+            : `Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen.${
+                annualOpen
+                  ? mitAnnahme
+                    ? halb
+                      ? " Bei Vorauszahlung wird die Vergütung für die ersten 6 Monate mit Vertragsschluss fällig, danach für jeweils 6 Monate im Voraus."
+                      : " Bei Jahreszahlung wird die Vergütung für die ersten 12 Monate mit Vertragsschluss fällig, danach jährlich im Voraus."
+                    : halb
+                      ? " Bei Vorauszahlung wird die Vergütung für jeweils 6 Monate im Voraus eingezogen."
+                      : " Bei Jahreszahlung wird die Vergütung jährlich im Voraus eingezogen."
+                  : ""
+              }`}
         </p>
         {offer.createdAt < GUARANTEES_FROM ? (
           <>

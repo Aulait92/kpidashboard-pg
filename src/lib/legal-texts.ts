@@ -51,10 +51,14 @@
 // Bei Kunden mit angenommenem Vertrag: Mitteilung in Textform nach AGB „Änderungen dieser AGB“.
 // 18.11.2026 (neuer Stand, Ole): Laufzeit 6 Monate und Vorauszahlung für 6 Monate (1 Monat geschenkt): „Laufzeit und
 // Kündigung“, „Vorauszahlung“, Zusatzmodule und Pause gelten für beide Vorauszahlungen (jährlich bzw. 6 Monate).
+// 19.11.2026 (neuer Stand „19.11.2026“, Ole): „Vorauszahlung“: Der erste Zahlungszeitraum ist mit Vertragsschluss
+// fällig (vorher: zum Start), der Zahlungszeitraum und die Laufzeit beginnen weiter mit dem Startdatum, jeder weitere
+// Zeitraum ist zu seinem Beginn fällig. Übergangssatz: Verträge, die vor dem 19.11.2026 angenommen wurden, bleiben bei
+// „zum Start“ (gleiche URL für alle Fassungen, siehe 15.11.2026). Begründung und Prüfung: docs/recht/vorauszahlung-mit-annahme.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "18.11.2026";
+export const LEGAL_VERSION = "19.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -133,8 +137,8 @@ export const AGB: LegalSection[] = [
     items: [
       "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus. Alle Preise sind netto zuzüglich Umsatzsteuer.",
       "Die monatliche Vergütung richtet sich nach dem vereinbarten Werbebudget und der im Angebot vollständig genannten Preisstaffel. Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat; der Kundenbereich zeigt die neue Vergütung vor der Änderung an.",
-      // Prüfen: Vorauszahlung für 6 Monate (Laufzeit 6 Monate, 18.11.2026)
-      { sub: "Vorauszahlung", text: "Ist sie vereinbart, ist die Vergütung für 12 Monate (jährlich, mit 12 Monaten Laufzeit) bzw. für 6 Monate (mit 6 Monaten Laufzeit) zum Start und danach zu Beginn jedes Zahlungszeitraums fällig (Nachlass laut Angebot). Im Zahlungszeitraum hinzukommende Verkäufer oder Module werden anteilig berechnet. Eine Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung des Kunden aus wichtigem Grund." },
+      // Prüfen: Vorauszahlung für 6 Monate (Laufzeit 6 Monate, 18.11.2026); Fälligkeit mit Vertragsschluss (19.11.2026)
+      { sub: "Vorauszahlung", text: "Ist sie vereinbart, wird die Vergütung für 12 Monate (jährlich, mit 12 Monaten Laufzeit) bzw. für 6 Monate (mit 6 Monaten Laufzeit) im Voraus gezahlt (Nachlass laut Angebot). Die Vorauszahlung für den ersten Zahlungszeitraum ist mit Vertragsschluss fällig, die für jeden weiteren Zahlungszeitraum zu dessen Beginn. Zahlungszeiträume und Laufzeit beginnen mit dem Startdatum. Für Verträge, die vor dem 19.11.2026 angenommen wurden, ist die erste Vorauszahlung zum Start fällig. Im Zahlungszeitraum hinzukommende Verkäufer oder Module werden anteilig berechnet. Eine Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung des Kunden aus wichtigem Grund." },
       "Die Meta-Gebühren für WhatsApp-Nachrichten an Leads sind in der Vergütung enthalten. Rechnungen sind innerhalb von 7 Tagen zu zahlen. Bei mehr als 30 Tagen Zahlungsverzug darf der Anbieter die Kampagnen nach Ankündigung pausieren, bis die Zahlung eingeht.",
     ],
   },

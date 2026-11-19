@@ -38,6 +38,8 @@ export type DealOfferRow = {
   /** Jahreszahlung angeboten (Kunde wählt) bzw. jährlich im Voraus (nach der Annahme: Wahl des Kunden) */
   annualChoice?: boolean;
   annualPrepay?: boolean;
+  /** Vorauszahlung mit der Annahme fällig (seit 19.11.2026, Offer.prepayAtAcceptance) */
+  prepayAtAcceptance?: boolean;
   /** Laufzeit ("none" | "3m" | "6m" | "12m"): Vorauszahlung mit 6 Monaten = 6 Monate im Voraus */
   term?: string;
   /** „Ich zahle später“ auf der Angebotsseite erlaubt */
@@ -198,7 +200,7 @@ export function DealOffersCard({
               ) : null}
               {current.billingDay != null ? (
                 <li data-angebot-abrechnungstag>
-                  Abrechnung {abrechnungstagKurz(abrechnungsplan({ startIso: current.startDate, billingDay: current.billingDay, freeStart: current.billingFreeStart, annual: !!current.annualPrepay }))}
+                  Abrechnung {abrechnungstagKurz(abrechnungsplan({ startIso: current.startDate, billingDay: current.billingDay, freeStart: current.billingFreeStart, annual: !!current.annualPrepay }), { mitAnnahme: !current.acceptedAt || !!current.prepayAtAcceptance })}
                   {current.annualChoice && current.status !== "accepted" ? <span className="block text-[color:var(--muted)]">{VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG}</span> : null}
                 </li>
               ) : null}

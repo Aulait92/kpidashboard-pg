@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { getAppUrl, sendOfferEmail } from "@/lib/email";
 import { createOffer, type OfferFormInput } from "@/lib/offers";
-import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount } from "@/lib/offer-pricing";
+import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount, prepayPossible } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
@@ -127,6 +127,8 @@ export async function sendOfferEmailAction(
       : null,
     bonus: offer.isTest ? null : abschlussBonusJetzt(offer),
     bonusSpaeter: offer.allowPayLater,
+    // Vorauszahlung vereinbart oder zur Wahl: Fälligkeit mit der Annahme (Ole, 19.11.2026)
+    vorauszahlung: (offer.annualPrepay || offer.annualChoice) && prepayPossible(offer.term),
     rechnerUrl: rechner,
     praesentationUrl,
     attachment,

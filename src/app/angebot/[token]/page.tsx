@@ -76,6 +76,8 @@ export default async function OfferPage({
   if (zaehltAlsGeoeffnet({ sessionRole: session?.role ?? null, userAgent: ua })) await markOfferViewed(offer.id);
 
   const expired = offer.validUntil.getTime() < nowMs();
+  // Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026): Setup und erster Zeitraum auf einer Rechnung
+  const vorausJetzt = offer.annualPrepay && offer.prepayAtAcceptance && !offer.isTest;
   // Als abgelehnt markiert (Ole, 18.11.2026): Hinweis statt Annahme, kein Bonus, kein Entscheidungs-Call
   const abgelehnt = offer.status === "declined";
   const canAccept = (offer.status === "draft" || offer.status === "sent") && !expired && offer.termsUrl && offer.dpaUrl;
@@ -117,7 +119,8 @@ export default async function OfferPage({
             bonus={bonus}
             ueberweisungTage={ueberweisungMoeglich(offer) ? offer.bankTransferDays : null}
             ueberweisung={offer.zahlweise === "ueberweisung" ? { iban: offer.ueberweisungIban, tage: offer.bankTransferDays } : null}
-            rechnung={Number(offer.setupFee) - Number(offer.abschlussBonusGewaehrt ?? 0) >= STRIPE_MIN_EUR}
+            rechnung={vorausJetzt || Number(offer.setupFee) - Number(offer.abschlussBonusGewaehrt ?? 0) >= STRIPE_MIN_EUR}
+            vorausJetzt={vorausJetzt}
           />
         ) : null}
         <OfferDocument offer={doc} collapseAgb />
@@ -300,6 +303,7 @@ function PaymentBox({
   rechnung,
   ueberweisungTage = null,
   ueberweisung = null,
+  vorausJetzt = false,
 }: {
   token: string;
   status: string;
@@ -313,6 +317,8 @@ function PaymentBox({
   ueberweisungTage?: number | null;
   /** Kunde hat „Per Überweisung zahlen“ gewählt: virtuelle IBAN und Zahlungsziel */
   ueberweisung?: { iban: string | null; tage: number } | null;
+  /** Vorauszahlung mit der Annahme fällig: Setup und Vorauszahlung auf einer Rechnung */
+  vorausJetzt?: boolean;
 }) {
   const box = "mx-auto mb-6 max-w-[880px] rounded-[20px] border px-6 py-5 sm:px-10";
   if (ueberweisung && status !== "paid") {
@@ -322,9 +328,11 @@ function PaymentBox({
         <div>
           <div className="font-semibold">Vielen Dank! Ihre Rechnung kommt per E-Mail.</div>
           <p className="mt-1 text-sm">
-            {rechnung
-              ? `Bitte überweisen Sie das Setup innerhalb von ${ueberweisung.tage} Tagen. Die laufende Vergütung bekommen Sie ab dem Start ebenfalls als Rechnung.`
-              : "Die laufende Vergütung bekommen Sie ab dem Start als Rechnung."}{" "}
+            {vorausJetzt
+              ? `Bitte überweisen Sie Setup und Vorauszahlung innerhalb von ${ueberweisung.tage} Tagen. Die Laufzeit beginnt mit dem Start der Kampagne, die nächste Vorauszahlung bekommen Sie ebenfalls als Rechnung.`
+              : rechnung
+                ? `Bitte überweisen Sie das Setup innerhalb von ${ueberweisung.tage} Tagen. Die laufende Vergütung bekommen Sie ab dem Start ebenfalls als Rechnung.`
+                : "Die laufende Vergütung bekommen Sie ab dem Start als Rechnung."}{" "}
             Ihren Zugang zur Einrichtung erhalten Sie gleich per E-Mail.
           </p>
           {ueberweisung.iban ? (
@@ -374,7 +382,9 @@ function PaymentBox({
         {returned === "abgebrochen" ? "Die Zahlung wurde nicht abgeschlossen." : "Angebot angenommen. Es fehlt nur noch die Zahlung."}
       </div>
       <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">
-        Richten Sie jetzt die Zahlung ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe.
+        {vorausJetzt
+          ? "Richten Sie jetzt die Zahlung ein: Fällig sind Setup und Vorauszahlung, die Laufzeit beginnt mit dem Start der Kampagne. Die Zahlung läuft sicher über Stripe."
+          : "Richten Sie jetzt die Zahlung ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe."}
       </p>
       {bonus ? <BonusHinweis bonus={bonus} zahlung /> : null}
       <PayButton token={token} ueberweisungTage={ueberweisungTage} />

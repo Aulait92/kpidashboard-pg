@@ -174,7 +174,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         await logActivity(
           offer,
           paid ? `Zahlung für ${offer.number} eingegangen` : `Zahlung für ${offer.number} eingerichtet (SEPA wird bestätigt)`,
-          `Setup: ${eur(session.amount_total)} brutto${monatsgebuehrAb(offer, shiftedTo)}`,
+          `${session.metadata?.pg_prepay_renewal ? "Setup und Vorauszahlung" : "Setup"}: ${eur(session.amount_total)} brutto${monatsgebuehrAb(offer, shiftedTo, session.metadata?.pg_prepay_renewal ?? null)}`,
         );
         await notify(
           `💶 ${paid ? "Bezahlt" : "Zahlung eingerichtet"}: ${offer.company ?? offer.contactName}`,
@@ -294,11 +294,17 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
 /**
  * Verlaufszeile „Monatsgebühr ab …“: erster Abrechnungstag (lib/abrechnungstag.ts), bei verschobenem Start mit Hinweis.
  * Vorauszahlung: „Jahresbeitrag ab …“ bzw. „Beitrag für 6 Monate ab …“ am Start (Abrechnungstag gilt nicht).
+ * Vorauszahlung mit der Annahme bezahlt (prepayRenewal, Ole 19.11.2026): „Jahresbeitrag bezahlt, nächster am …“.
  */
 function monatsgebuehrAb(
   offer: { startDate: Date | null; billingDay: number | null; billingFreeStart: boolean; annualPrepay: boolean; term: string },
   shiftedTo: string | null,
+  prepayRenewal: string | null = null,
 ): string {
+  if (prepayRenewal) {
+    const was = offer.term === "6m" ? "Beitrag für 6 Monate" : "Jahresbeitrag";
+    return ` · ${was} bezahlt, nächster am ${prepayRenewal.split("-").reverse().join(".")}${shiftedTo ? " (Start verschoben)" : ""}`;
+  }
   const startIso = shiftedTo ?? (offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null);
   const plan = abrechnungsplan({ startIso, billingDay: offer.billingDay, freeStart: offer.billingFreeStart, annual: offer.annualPrepay });
   if (!plan) return "";

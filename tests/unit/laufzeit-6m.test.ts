@@ -293,7 +293,7 @@ describe("Angebotsseite: Zahlweise bei 6 Monaten", () => {
     start: { min: "2026-11-25", max: "2027-02-16", preset: "2027-01-01" },
     ...o,
   });
-  const pricing: ContractSummaryInput = { term: "6m", startIso: "2027-01-01", setup: 1490, monthlyTotal: 1098, intro: null, annual: false, freeMonths: 1 };
+  const pricing: ContractSummaryInput = { term: "6m", startIso: "2027-01-01", setup: 1490, monthlyTotal: 1098, intro: null, annual: false, freeMonths: 1, prepayAtAcceptance: true };
   const form = (c: OfferChoiceProps, extra: Record<string, unknown> = {}) =>
     renderToStaticMarkup(createElement(AcceptForm, { token: "tok", termsUrl: "https://app.test/agb", dpaUrl: "https://app.test/avv", defaultName: "Sara Sechs", pricing, choice: c, ...extra }));
 
@@ -311,9 +311,13 @@ describe("Angebotsseite: Zahlweise bei 6 Monaten", () => {
 
   it("6 Monate im Voraus gewählt: Betrag, Verlängerung, Lastschrift alle 6 Monate", () => {
     const t = text(form(choice({ initialAnnual: true }), { payment: true }));
-    expect(t).toContain("6 Monate im Voraus: 5.490 € netto, alle 6 Monate fällig, das erste Mal zum Start am 01.01.2027, dann am 01.07.2027.");
+    // Seit 19.11.2026: mit der Annahme fällig, Laufzeit ab Start
+    expect(t).toContain("6 Monate im Voraus: 5.490 € netto, alle 6 Monate fällig, das erste Mal mit der Annahme, dann am 01.07.2027.");
+    expect(t).toContain("Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne.");
     expect(t).toContain("Laufzeit bis 30.06.2027. Sie verlängert sich um jeweils 6 Monate, wenn Sie nicht bis 31.05.2027 kündigen.");
-    expect(t).toMatch(/6 Monate im Voraus ab 01\.01\.2027: 5\.490 € netto/);
+    // 1.490 € Setup + 5.490 € = 6.980 € netto jetzt, danach alle 6 Monate ab der Verlängerung
+    expect(t).toMatch(/Jetzt fällig \(Setup und Vorauszahlung\): 6\.980 € netto/);
+    expect(t).toMatch(/Danach alle 6 Monate ab 01\.07\.2027: 5\.490 € netto/);
     expect(t).toContain("der Betrag wird alle 6 Monate automatisch eingezogen.");
     expect(hatGedankenstrich(t)).toBe(false);
   });
@@ -377,11 +381,18 @@ describe("Angebotsdokument mit 6 Monaten", () => {
   });
 
   it("nach der Annahme mit Vorauszahlung: Betrag je 6 Monate, Verlängerung um 6 Monate", () => {
-    const t = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ status: "accepted", annualPrepay: true }) })));
+    // Angenommen vor dem 19.11.2026: Vorauszahlung zum Start (Text unverändert)
+    const t = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ status: "accepted", annualPrepay: true, acceptedAt: new Date("2026-11-18T17:00:00Z"), prepayAtAcceptance: false }) })));
     expect(t).toMatch(/6 Monate im Voraus: 5\.490 € netto je 6 Monate/);
     expect(t).toMatch(/1 Monat geschenkt \(5 statt 6 Monatsbeträge\), Ersparnis 1\.098 €/);
     expect(t).toMatch(/6 Monate ab Start, 6 Monate im Voraus bezahlt\. Danach verlängert sich der Vertrag um jeweils weitere 6 Monate/);
     expect(t).toMatch(/Betrag für 6 Monate \(5\.490 € netto/);
+    // Ab 19.11.2026: Setup und Vorauszahlung bei Annahme fällig, Laufzeit ab Start
+    const neu = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ status: "accepted", annualPrepay: true, acceptedAt: new Date("2026-11-19T17:00:00Z"), prepayAtAcceptance: true }) })));
+    expect(neu).toMatch(/Bei Annahme fällig 6\.980 € netto \(Setup 1\.490 € und Vorauszahlung für 6 Monate 5\.490 €\)/);
+    expect(neu).toContain("Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne. Die nächste Vorauszahlung ist am 01.07.2027 fällig.");
+    expect(neu).toContain("alle 6 Monate fällig, das erste Mal mit der Annahme, dann am 01.07.2027.");
+    expect(neu).toContain("Die Setupgebühr und die Vorauszahlung für die ersten 6 Monate werden mit Vertragsschluss fällig");
   });
 
   it("Altangebot (vor der Einführung) mit Laufzeitwahl: Liste ohne 6 Monate", () => {

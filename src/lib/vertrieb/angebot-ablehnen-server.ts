@@ -9,7 +9,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { logOfferActivity } from "@/lib/offer-links";
-import { berlinTodayIso, isIsoDate } from "@/lib/offer-pricing";
+import { berlinTodayIso, isIsoDate, PRICE_LIST } from "@/lib/offer-pricing";
+import { audit } from "@/lib/audit";
 import { fmtTag } from "@/lib/angebot-zahlungserinnerung";
 import { fromDayKey } from "@/lib/vertrieb/dates";
 import { AGAIN_TASK, stopFollowup } from "@/lib/vertrieb/followup";
@@ -101,7 +102,12 @@ export async function offenesAngebotAblehnen(contactId: string, offerId: string,
 
 export type WiederOeffnenErgebnis = { ok: true; status: string } | { ok: false; error: string };
 
-/** „Wieder öffnen“: vorherigen Status herstellen, solange das Angebot noch gültig wäre. */
+/**
+ * „Wieder öffnen“: vorherigen Status herstellen, solange das Angebot noch gültig wäre.
+ * Jahresvorauszahlung (Ole, 19.11.2026): Ein nicht angenommenes Angebot mit 12 Monaten und gespeicherten 2 geschenkten
+ * Monaten (Stand bis 18.11.2026) bekommt dabei den aktuellen Standard (3), wie die offenen Angebote in der Migration
+ * 20261119000300_jahr_3_monate; Eintrag im Änderungsprotokoll (AuditLog „offer.jahr_3_monate“) und im Verlauf.
+ */
 export async function angebotWiederOeffnen(offerId: string, now = new Date()): Promise<WiederOeffnenErgebnis> {
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
   if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
@@ -112,11 +118,19 @@ export async function angebotWiederOeffnen(offerId: string, now = new Date()): P
     return { ok: false, error: "Es gibt schon eine neuere Version dieses Angebots." };
   }
   const status = statusVorAblehnung(offer);
+  const freiNeu = status !== "accepted" && !offer.acceptedAt && offer.term === "12m" && offer.annualFreeMonths === 2 ? PRICE_LIST.annualFreeMonths : null;
   const done = await prisma.offer.updateMany({
     where: { id: offer.id, status: "declined" },
-    data: { status, declinedAt: null, declineReason: null, declineNote: null, declinedPrevStatus: null },
+    data: { status, declinedAt: null, declineReason: null, declineNote: null, declinedPrevStatus: null, ...(freiNeu != null ? { annualFreeMonths: freiNeu } : {}) },
   });
   if (done.count !== 1) return { ok: false, error: "Das Angebot wurde gerade geändert. Bitte die Seite neu laden." };
-  await logOfferActivity(offer, `Angebot ${offer.number} wieder geöffnet`, `Status wieder: ${STATUS_LABEL[status]}. Vorher abgelehnt (${ablehnGrundLabel(offer.declineReason)}).`);
+  if (freiNeu != null) {
+    await audit("offer.jahr_3_monate", { entity: "Offer", entityId: offer.id, details: { number: offer.number, alt: 2, neu: freiNeu, anlass: "wieder geöffnet" } });
+  }
+  await logOfferActivity(
+    offer,
+    `Angebot ${offer.number} wieder geöffnet`,
+    `Status wieder: ${STATUS_LABEL[status]}. Vorher abgelehnt (${ablehnGrundLabel(offer.declineReason)}).${freiNeu != null ? ` Jahreszahlung jetzt mit ${freiNeu} geschenkten Monaten (vorher 2).` : ""}`,
+  );
   return { ok: true, status };
 }

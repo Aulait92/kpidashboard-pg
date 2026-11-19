@@ -841,6 +841,9 @@ Seiten aus der Liste „Seiten“ unten.
 - Zahlweise: monatlich oder im Voraus. Jährlich im Voraus (nur mit 12 Monaten Laufzeit): 3 Monate geschenkt, Jahresbetrag =
   9 × Monatspreis inkl. Zusätze. 6 Monate im Voraus (nur mit 6 Monaten Laufzeit): 1 Monat geschenkt. Es gilt, was im
   angenommenen Angebot steht (Jahreszahlung vor dem 19.11.2026: 2 Monate geschenkt). Umstellen: bitte bei uns melden.
+  Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne. Setup und erste
+  Vorauszahlung stehen auf einer Rechnung (Leistungszeitraum ab Start), die nächste Vorauszahlung kommt zur Verlängerung
+  (Start plus 12 bzw. 6 Monate). Angenommen vor dem 19.11.2026: erste Vorauszahlung war zum Start fällig.
 - Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
 - WhatsApp-Gebühren von Meta sind im Preis enthalten, es kommt nichts dazu. Für Leads (Erstkontakt, Erinnerungen,
   Nachfassen) ohne Begrenzung<!-- bestand-modul -->; für Bestandskunden-Kampagnen bis 500 Nachrichten im Monat, mehr mit Zusatzpaketen

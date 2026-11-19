@@ -179,11 +179,15 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     const a = await prisma.offer.findUniqueOrThrow({ where: { id: o.id } });
     expect(a).toMatchObject({ annualPrepay: true, annualFreeMonths: 3, annualChoice: true });
     const text = st.mails.find((m) => m.subject.startsWith("Ihre Auftragsbestätigung"))!.list!.join(" ");
-    expect(text).toMatch(/Jährlich im Voraus: 9\.792\s€ netto, jedes Jahr am \d\d\.\d\d\. fällig, das erste Mal zum Start am/);
+    // Seit 19.11.2026: Vorauszahlung mit der Annahme fällig, Laufzeit ab Start
+    expect(text).toMatch(/Jährlich im Voraus: 9\.792\s€ netto, jedes Jahr am \d\d\.\d\d\. fällig, das erste Mal mit der Annahme, dann am/);
+    expect(text).toContain("Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne.");
+    expect(a.prepayAtAcceptance).toBe(true);
     expect(text).toMatch(/verlängert sich um jeweils 12 Monate/);
     expect(hatGedankenstrich(text)).toBe(false);
 
     await prisma.offer.update({ where: { id: o.id }, data: { stripeCustomerId: "cus_jw_j" } });
+    // Bezahlseite ohne Vorauszahlung (Metadaten pg_prepay_*, z. B. vor dem 19.11.2026 geöffnet): Abo wie bisher ab Start
     await createScheduleForOffer(o.id, checkout(o.id));
     const p = zeitplan();
     const items = p.phases[0].items;
@@ -214,7 +218,8 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
       const start = o.startDate!.toISOString().slice(0, 10);
       const startDe = start.split("-").reverse().join(".");
       const mail = st.mails.find((m) => /Auftragsbestätigung/.test(m.subject))!.list!.join(" ").replace(/\u00a0/g, " ");
-      expect(mail).toContain(`Jährlich im Voraus: 9.792 € netto, jedes Jahr am ${startDe.slice(0, 6)} fällig, das erste Mal zum Start am ${startDe}.`);
+      const naechstes = `${startDe.slice(0, 6)}${Number(startDe.slice(6)) + 1}`;
+      expect(mail).toContain(`Jährlich im Voraus: 9.792 € netto, jedes Jahr am ${startDe.slice(0, 6)} fällig, das erste Mal mit der Annahme, dann am ${naechstes}.`);
       expect(mail).not.toMatch(/anteilig|kostenlos|jeweils am 15\./);
       expect(hatGedankenstrich(mail)).toBe(false);
 

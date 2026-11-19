@@ -146,6 +146,11 @@ export type ContractSummaryInput = {
   /** Abrechnungstag (lib/abrechnungstag.ts): null/fehlt = wie Start; freeStart = Zeit davor kostenlos */
   billingDay?: number | null;
   freeStart?: boolean;
+  /**
+   * Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026; offene und ab dann angenommene Angebote,
+   * lib/offer-pricing.ts vorauszahlungMitAnnahme). Fehlt = wie vorher: zum Start.
+   */
+  prepayAtAcceptance?: boolean;
 };
 
 /**
@@ -155,20 +160,57 @@ export type ContractSummaryInput = {
 export const billingStartIso = (i: Pick<ContractSummaryInput, "startIso" | "billingDay"> & Partial<Pick<ContractSummaryInput, "annual" | "term">>): string | null =>
   abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, annual: !!i.annual && !!i.term && prepayPossible(i.term) })?.firstIso ?? i.startIso;
 
-/**
- * Fälligkeit der Vorauszahlung (Ole, 18.11.2026: voller Betrag zum Start, ein eigener Abrechnungstag gilt dafür
- * nicht): „jedes Jahr am 18.11. fällig, das erste Mal zum Start am 18.11.2026“ bzw. bei 6 Monaten
- * „alle 6 Monate fällig, das erste Mal zum Start am 18.11.2026, dann am 18.05.2027“. Ohne Punkt am Ende.
- */
-export function vorauszahlungFaellig(startIso: string | null, months: number): string {
-  if (!startIso) return months === 6 ? "fällig zum Start, danach alle 6 Monate" : "fällig zum Start, danach jedes Jahr";
-  if (months !== 6) return `jedes Jahr am ${fmtIso(startIso).slice(0, 6)} fällig, das erste Mal zum Start am ${fmtIso(startIso)}`;
-  // Nächste Abbuchung wie bei Stripe: gleicher Tag 6 Monate später, in kürzeren Monaten der Monatsletzte
+/** Gleicher Tag `months` Monate später, in kürzeren Monaten der Monatsletzte (wie die Abbuchung bei Stripe). */
+export function addMonthsIso(startIso: string, months: number): string {
   const [y, m, d] = parts(startIso);
   const total = m - 1 + months;
   const ty = y + Math.floor(total / 12);
   const tm = (total % 12) + 1;
-  return `alle 6 Monate fällig, das erste Mal zum Start am ${fmtIso(startIso)}, dann am ${fmtIso(iso(ty, tm, Math.min(d, daysInMonth(ty, tm))))}`;
+  return iso(ty, tm, Math.min(d, daysInMonth(ty, tm)));
+}
+
+/**
+ * Vorauszahlung mit Annahme fällig (Ole, 19.11.2026): fester Satz für Angebot, Annahmeseite, Angebotsmail und Hilfe
+ * (Sie-Form, ohne Gedankenstriche; passt auch zur Du-Form, weil ohne Anrede).
+ */
+export const VORAUSZAHLUNG_MIT_ANNAHME = "Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne.";
+
+/**
+ * Erster Zahlungszeitraum einer Vorauszahlung, die mit der Annahme fällig wird (Ole, 19.11.2026). Der Zeitraum beginnt
+ * mit dem Start; liegt der schon zurück, wie beim Bezahlen nach dem Start am nächsten Monatsersten (heute, wenn heute
+ * der 1. ist; lib/angebot-zahlungserinnerung.ts verschobenerStart), ohne Start heute. renewalIso = Beginn des nächsten
+ * Zeitraums (gleicher Tag `months` Monate später, wie Stripe), toIso = Tag davor (letzter bezahlter Tag).
+ */
+export function ersterVorauszahlungszeitraum(startIso: string | null, months: number, todayIso: string): { fromIso: string; toIso: string; renewalIso: string } {
+  let fromIso = startIso ?? todayIso;
+  if (fromIso < todayIso) {
+    const [y, m, d] = parts(todayIso);
+    fromIso = d === 1 ? todayIso : iso(y, m + 1, 1);
+  }
+  const renewalIso = addMonthsIso(fromIso, months);
+  const [ry, rm, rd] = parts(renewalIso);
+  return { fromIso, toIso: iso(ry, rm, rd - 1), renewalIso };
+}
+
+/**
+ * Fälligkeit der Vorauszahlung (ein eigener Abrechnungstag gilt dafür nicht). Ohne Punkt am Ende.
+ * - mitAnnahme (Annahme ab 19.11.2026): „jedes Jahr am 18.11. fällig, das erste Mal mit der Annahme, dann am
+ *   18.11.2027“ bzw. „alle 6 Monate fällig, das erste Mal mit der Annahme, dann am 18.05.2027“
+ * - sonst (Ole, 18.11.2026, voller Betrag zum Start): „jedes Jahr am 18.11. fällig, das erste Mal zum Start am
+ *   18.11.2026“ bzw. „alle 6 Monate fällig, das erste Mal zum Start am 18.11.2026, dann am 18.05.2027“
+ */
+export function vorauszahlungFaellig(startIso: string | null, months: number, opts: { mitAnnahme?: boolean } = {}): string {
+  if (opts.mitAnnahme) {
+    if (!startIso) return months === 6 ? "fällig mit der Annahme, danach alle 6 Monate" : "fällig mit der Annahme, danach jedes Jahr";
+    const next = fmtIso(addMonthsIso(startIso, months));
+    return months === 6
+      ? `alle 6 Monate fällig, das erste Mal mit der Annahme, dann am ${next}`
+      : `jedes Jahr am ${fmtIso(startIso).slice(0, 6)} fällig, das erste Mal mit der Annahme, dann am ${next}`;
+  }
+  if (!startIso) return months === 6 ? "fällig zum Start, danach alle 6 Monate" : "fällig zum Start, danach jedes Jahr";
+  if (months !== 6) return `jedes Jahr am ${fmtIso(startIso).slice(0, 6)} fällig, das erste Mal zum Start am ${fmtIso(startIso)}`;
+  // Nächste Abbuchung wie bei Stripe: gleicher Tag 6 Monate später, in kürzeren Monaten der Monatsletzte
+  return `alle 6 Monate fällig, das erste Mal zum Start am ${fmtIso(startIso)}, dann am ${fmtIso(addMonthsIso(startIso, months))}`;
 }
 
 /** Startpreis mit Übergang in die reguläre Vergütung? Dann ist ein eigenes Häkchen Pflicht. */
@@ -202,7 +244,8 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   const start = billIso ? fmtIso(billIso) : null;
   if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, fällig mit der Annahme.`);
   if (annual) {
-    lines.push(`${pm === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(prepayTotal)} netto, ${vorauszahlungFaellig(billIso, pm)}.`);
+    lines.push(`${pm === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(prepayTotal)} netto, ${vorauszahlungFaellig(billIso, pm, { mitAnnahme: i.prepayAtAcceptance })}.`);
+    if (i.prepayAtAcceptance) lines.push(VORAUSZAHLUNG_MIT_ANNAHME);
   } else if (hasPriceStep(i)) {
     const d = priceStepDates(billIso, i.intro!.months);
     lines.push(

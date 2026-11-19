@@ -2,6 +2,7 @@ import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { MAIL_BLOCKED_TEXT, mailClient, wasBlocked } from "@/lib/mail-guard";
 import { PROVIDER } from "@/lib/legal-texts";
 import { eur } from "@/lib/offer-pricing";
+import { VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 import { entscheidungsCallMailText, entscheidungsCallText, type EntscheidungsCall } from "@/lib/vertrieb/entscheidungs-call";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
@@ -256,6 +257,8 @@ export async function sendOfferEmail(opts: {
   bonus?: { betrag: number; bis: Date } | null;
   /** „Später zahlen“ erlaubt: Bonus gilt schon bei Annahme bis zur Frist */
   bonusSpaeter?: boolean;
+  /** Vorauszahlung vereinbart oder zur Wahl (Ole, 19.11.2026): Satz zur Fälligkeit mit der Annahme */
+  vorauszahlung?: boolean;
 }): Promise<SendResult & { subject?: string; text?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
@@ -271,6 +274,7 @@ export async function sendOfferEmail(opts: {
   const subject = `${t.subject} (${opts.number})`;
   const discount = opts.discount ? offerDiscountLine(opts.discount) : null;
   const bonusText = opts.bonus ? offerBonusLine(opts.bonus, !!opts.du, !!opts.bonusSpaeter) : null;
+  const vorausText = opts.vorauszahlung ? OFFER_MAIL_VORAUSZAHLUNG : null;
   const text = [
     opts.greeting,
     "",
@@ -281,6 +285,7 @@ export async function sendOfferEmail(opts: {
     "",
     ...(discount ? [discount.text, ""] : []),
     ...(bonusText ? [bonusText, ""] : []),
+    ...(vorausText ? [vorausText, ""] : []),
     ...(rechner ? [`${t.rechner}:`, rechner, ""] : []),
     ...(praes ? [`${t.praesentation}:`, praes, ""] : []),
     ...(terminText ? [terminText, ""] : []),
@@ -303,6 +308,7 @@ export async function sendOfferEmail(opts: {
           <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
           ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
           ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
+          ${vorausText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(vorausText)}</p>` : ""}
           ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
           ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}
           ${termin ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(termin.satz)}${termin.url ? ` <a href="${escapeHtml(termin.url)}" style="color:#2563eb;font-weight:600">${escapeHtml(termin.linkLabel)}</a>` : ""}</p>` : ""}
@@ -318,6 +324,9 @@ export async function sendOfferEmail(opts: {
     return { ok: false, error: err instanceof Error ? err.message : "Versand fehlgeschlagen" };
   }
 }
+
+/** Zeile zur Vorauszahlung in der Angebotsmail (Ole, 19.11.2026; ohne Anrede, passt zu Sie und Du). */
+export const OFFER_MAIL_VORAUSZAHLUNG = `Zahlung im Voraus: ${VORAUSZAHLUNG_MIT_ANNAHME}`;
 
 /** Zeile zum Abschlussbonus in der Angebotsmail (ohne Gedankenstriche). */
 export function offerBonusLine(b: { betrag: number; bis: Date }, du: boolean, spaeter = false): string {
