@@ -70,7 +70,7 @@ export function BuyerShell({
 }: {
   /** Öffentliche App-Demo (/app-demo): ohne Suche, KI-Hilfe, Profilmenü, Push und Nutzungsmessung. */
   demo?: boolean;
-  /** Leads ohne nächsten Schritt (Zähler an „Kontakte“ bzw. „Leads“, lib/lead-next-step.ts). */
+  /** Neue Leads, die auf den Vermittler warten (Zähler „N neu“ an „Kontakte“ bzw. „Leads“, lib/neue-leads.ts). */
   noStepBadge?: number;
   /** Ungelesene Neuigkeiten des Logins (Profilmenü). */
   updatesUnread?: number;

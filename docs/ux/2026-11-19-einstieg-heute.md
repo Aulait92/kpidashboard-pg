@@ -24,7 +24,12 @@ Hauptaktion: „Anrufliste starten“ war primär, auch wenn ein neuer Lead wart
 3. Wartezeiten in Minuten und Stunden (`src/lib/eingang-alter.ts`), „Überfällig“ in Bernstein statt Rot; Rot nur noch für
    „neu und wartet“.
 4. Desktop: rechts öffnet sich zuerst der neue Lead.
-5. „Nächste Tage“ (keine Aufgabe für heute) zeigt 4 statt 8 Zeilen, der Rest hinter „Alle anzeigen“.
+5. „Nächste Tage“ (keine Aufgabe für heute) ist zugeklappt wie „Aufräumen“ (Ole, 19.11.2026).
+6. Zähler „N neu“ an Kontakte zählt nur noch neue Leads, die auf den Vermittler warten, dieselbe Menge wie die Karte
+   „Neue Leads“ (`src/lib/neue-leads.ts`, eine Funktion für beide). Vorher: alle neuen Kontakte der letzten 30 Tage,
+   auch die, die der Assistent per WhatsApp betreut.
+7. Hinweis „Benachrichtigungen einschalten“ (alle Seiten): eine schmale Zeile mit Glocke, „Benachrichtigungen aus“,
+   Textknopf „Einschalten“ und Schließen statt Karte mit großem blauem Knopf (Ole, 19.11.2026).
 
 Gemessen (Handy 390 px, Demo-Kunde): Der neue Lead stand vorher bei rund 1.100 px (fünfte Karte, unter dem ersten
 Bildschirm), nachher bei rund 380 px (erste Karte). Desktop: rechts war der Termin von morgen offen, jetzt der neue Lead.
@@ -80,11 +85,7 @@ Tippziele auf 40 bis 44 px (Woche wählen, Plus/Minus, „Jede Woche wiederholen
 
 Neuigkeiten (seit 15.11. kompakt, ältere zugeklappt) und Einführung (drei Videos) erfüllen die Regeln.
 
-## Offen (Entscheidung Ole)
+## Entscheidungen Ole (19.11.2026, „3x ja“)
 
-- Hinweis „Benachrichtigungen einschalten“ steht mit blauem Knopf über jeder Seite, bis er weggeklickt oder erledigt ist.
-  Er ist wichtig für die Zeit bis Erstkontakt, konkurriert aber mit der Hauptaktion. Vorschlag: am Handy einzeilig
-  („Benachrichtigungen aus · Einschalten“).
-- Zähler „6 neu“ an Kontakte: Mit WhatsApp schreibt der Assistent diese Leads an, der rote Zähler wirkt trotzdem wie eine
-  Aufgabe. Vorschlag: nur Leads zählen, die auf „Heute“ unter „Neue Leads“ stehen.
-- „Nächste Tage“ ganz zuklappen wie „Aufräumen“ (heute 4 Zeilen sichtbar).
+Benachrichtigungs-Hinweis als schmale Zeile, Zähler an Kontakte wie die Karte „Neue Leads“, „Nächste Tage“ zugeklappt:
+umgesetzt (siehe Heute, Punkte 5 bis 7).

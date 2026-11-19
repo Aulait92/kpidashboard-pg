@@ -63,6 +63,7 @@ import type { AutomatischeNachrichten } from "@/lib/nachrichtenplan-server";
 import { CrossSellZusatzKnopf } from "@/components/bestand/cross-sell-angebot";
 import { istCrossSellAufgabe, type CrossSellVerkauf } from "@/lib/cross-sell-verkauf";
 import { eingangAlter, neuerLeadGrund } from "@/lib/eingang-alter";
+import { istWartenderNeuerLead } from "@/lib/neue-leads-shared";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -247,8 +248,9 @@ export function TodayInbox({
   ].filter((c) => !hidden.has(c.key));
   // Neue Leads ohne WhatsApp (bzw. ohne Erstanschreiben) stehen in einer eigenen Karte ganz oben: Zeit bis Erstkontakt
   // ist die wichtigste Zahl des Tages (UX-Runde 19.11.2026). Die Anrufliste beginnt weiter mit ihnen.
-  const neueLeads = calls.filter((c) => c.urgent);
-  const restCalls = calls.filter((c) => !c.urgent);
+  // Gleiche Regel wie der Zähler „N neu“ an Kontakte (lib/neue-leads.ts)
+  const neueLeads = calls.filter(istWartenderNeuerLead);
+  const restCalls = calls.filter((c) => !istWartenderNeuerLead(c));
   const visibleCalls = showAll ? restCalls : restCalls.slice(0, 6);
   const current = callMode ? callMode.queue[callMode.i] : null;
   const advance = () =>
@@ -872,8 +874,7 @@ function UpcomingCard({
   shift: (it: InboxData["upcoming"][number], days: number) => void;
 }) {
   const [all, setAll] = useState(false);
-  // Kommende Tage sind keine Aufgabe für heute: 4 Zeilen statt 8, der Rest mit „Alle anzeigen“ (UX-Runde 19.11.2026)
-  const shown = all ? items : items.slice(0, 4);
+  const shown = all ? items : items.slice(0, 8);
   const dayKey = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
   const dayLabel = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long" }).format(new Date(iso));
   const time = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
@@ -885,9 +886,17 @@ function UpcomingCard({
     else groups.push({ key: k, label: dayLabel(it.at), rows: [it] });
   }
   return (
-    <Card data-upcoming>
+    // Kommende Tage sind keine Aufgabe für heute: zugeklappt wie „Aufräumen“ (Ole, 19.11.2026)
+    <details data-upcoming className="group overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
       <div id="naechste-tage" className="scroll-mt-20" />
-      <CardHeader icon={CalendarDays} title="Nächste Tage" count={items.length} />
+      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2.5 px-5 py-3.5 [&::-webkit-details-marker]:hidden">
+        <CalendarDays className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+        <span className="min-w-0 flex-1 text-[15px] font-semibold">
+          Nächste Tage <span className="ml-1 font-normal text-[color:var(--muted)]">{items.length}</span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)] transition group-open:rotate-90" />
+      </summary>
+      <div className="border-t border-[color:var(--border)]">
       {groups.map((g) => (
         <div key={g.key}>
           <div className="bg-[color:var(--surface-sunken,#f8fafc)] px-5 py-1.5 text-xs font-semibold text-[color:var(--muted)]">{g.label}</div>
@@ -933,7 +942,7 @@ function UpcomingCard({
           </ul>
         </div>
       ))}
-      {items.length > 4 ? (
+      {items.length > 8 ? (
         <button
           type="button"
           onClick={() => setAll((v) => !v)}
@@ -942,7 +951,8 @@ function UpcomingCard({
           {all ? "Weniger anzeigen" : `Alle ${items.length} anzeigen`}
         </button>
       ) : null}
-    </Card>
+      </div>
+    </details>
   );
 }
 

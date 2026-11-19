@@ -6,7 +6,7 @@ import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
 import { POLICY_TODO, wiedervorlageHinterTermin } from "@/lib/lead-followup";
 import { NACH_ABSCHLUSS_TODOS, UEBERTRAGUNG_TODO } from "@/lib/vertraege-shared";
 import { prisma } from "@/lib/prisma";
-import { getCallbackLeads } from "@/lib/whatsapp/outreach";
+import { callbackLeadsFor } from "@/lib/neue-leads";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
 import { appointmentScope, conversationScope, isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
 import { listWithoutNextStep, type NoStepLead } from "@/lib/lead-next-step-server";
@@ -224,7 +224,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       orderBy: { attentionAt: "desc" },
       select: { id: true, contactName: true, contactPhone: true, attentionReason: true, attentionAt: true },
     }),
-    getCallbackLeads(customerId, isAdvisor(ctx) ? leadScope(ctx) : undefined),
+    callbackLeadsFor(ctx),
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true } }),
     prisma.lead.findMany({
       where: {
