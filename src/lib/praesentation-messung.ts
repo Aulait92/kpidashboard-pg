@@ -17,7 +17,8 @@ import { PRAESENTATION_EXPERIMENT, PRAESENTATION_VARIANTEN, type PraesentationVa
 import { praesentationsVariante } from "@/lib/praesentation-variante-server";
 
 export type EreignisQuelle = "termin" | "kundenlink";
-export type EreignisArt = "folie" | "zusage";
+/** mitanschauen: Cross-Selling, „Mit anschauen“ auf „Ihr Schutz im Überblick“ (folie = „sparte-<Index>“, je Termin einmal je Sparte) */
+export type EreignisArt = "folie" | "zusage" | "mitanschauen";
 
 /** Folien-IDs aus dem Deck: Kleinbuchstaben, Ziffern, Bindestrich. */
 export const FOLIE_ID = /^[a-z0-9-]{1,48}$/;
@@ -35,7 +36,7 @@ export async function ereignisSpeichern(e: {
   folie?: string;
 }): Promise<boolean> {
   const folie = e.art === "zusage" ? "" : (e.folie ?? "");
-  if (e.art === "folie" && !FOLIE_ID.test(folie)) return false;
+  if (e.art !== "zusage" && !FOLIE_ID.test(folie)) return false;
   const einheit = e.leadId ?? e.appointmentId;
   // Zuteilung im Splittest erst ab einer gezeigten Folie bzw. der Zusage (Begrüßung allein zählt nicht)
   const variante = await praesentationsVariante(einheit, { merken: e.art === "zusage" || zaehltAlsGezeigt(folie) });
@@ -65,9 +66,11 @@ export type QuoteZeile = {
   kundenlinkGeoeffnet: number;
   /** Kundenlink: Termine, bei denen die Folie „Ihre Entscheidung“ erreicht wurde */
   kundenlinkEntscheidung: number;
+  /** Termine mit mindestens einem „Mit anschauen“ (Cross-Selling) */
+  mitAnschauen: number;
 };
 
-const leer = (): QuoteZeile => ({ praesentationen: 0, abschluesse: 0, abschlussquote: null, zusagenTermin: 0, zusagenKundenlink: 0, kundenlinkGeoeffnet: 0, kundenlinkEntscheidung: 0 });
+const leer = (): QuoteZeile => ({ praesentationen: 0, abschluesse: 0, abschlussquote: null, zusagenTermin: 0, zusagenKundenlink: 0, kundenlinkGeoeffnet: 0, kundenlinkEntscheidung: 0, mitAnschauen: 0 });
 
 /**
  * Reine Auswertung: je Vermittler (customerId) und Variante. abgeschlossen = Termine, deren Kontakt ab dem Termintag
@@ -87,6 +90,7 @@ export function auswerten(ereignisse: Ereignis[], abgeschlossen: Set<string>): R
     if (link.some((e) => e.folie === "entscheidung")) z.kundenlinkEntscheidung++;
     if (zusageT) z.zusagenTermin++;
     if (zusageK) z.zusagenKundenlink++;
+    if (es.some((e) => e.art === "mitanschauen")) z.mitAnschauen++;
     if (!es.some((e) => e.art === "folie" && zaehltAlsGezeigt(e.folie))) continue;
     z.praesentationen++;
     if (zusageT || zusageK || abgeschlossen.has(id)) z.abschluesse++;

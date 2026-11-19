@@ -12,7 +12,7 @@ import { bausteinAction, folieAction, paketAction, tarifAction, zusageAction } f
 
 export function Deck({ id, css, folien, einwaende, interaktiv = true }: { id: string; css: string; folien: DeckFolie[]; einwaende?: DeckFolie[]; interaktiv?: boolean }) {
   const onKlick = (k: DeckKlick) =>
-    k.paket ? paketAction(id, k.paket) : k.tarif != null ? tarifAction(id, k.tarif, k.sparte) : bausteinAction(id, k.item, k.baustein, k.aktiv);
+    k.paket ? paketAction(id, k.paket) : k.tarif != null ? tarifAction(id, k.tarif, k.sparte, k.sparte && k.aktiv && k.folie === "ueberblick") : bausteinAction(id, k.item, k.baustein, k.aktiv);
   const onFolie = useCallback((f: string) => void folieAction(id, f).catch(() => {}), [id]);
   return (
     <FolienDeck

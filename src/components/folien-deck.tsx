@@ -21,7 +21,7 @@ import { useToast } from "@/components/ui/toast";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 
 export type DeckFolie = { id: string; titel: string; html: string; produkt?: string; hinweis?: string };
-export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean; paket?: number[] };
+export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean; paket?: number[]; /** Folie, auf der geklickt wurde (Messung „Mit anschauen“) */ folie?: string };
 
 /** „2,4“ aus data-paket; null, wenn es kein gültiges Paket ist. */
 export function paketAusAttribut(v: string | undefined): number[] | null {
@@ -141,7 +141,7 @@ export function FolienDeck({
     el.classList.toggle("an", aktiv);
     const aktuelleId = folien[i]?.id;
     startT(async () => {
-      const r = await onKlick({ tarif: t != null ? Number(t) : null, sparte: el.dataset.sparte != null, item, baustein: b, aktiv });
+      const r = await onKlick({ tarif: t != null ? Number(t) : null, sparte: el.dataset.sparte != null, item, baustein: b, aktiv, folie: aktuelleId });
       if (r.ok) {
         // Neue Produktfolie (z. B. „Mit anschauen“ nimmt eine Sparte in den Vergleich): direkt dorthin, mit Hinweis
         const z = folieNachKlick(folien, aktuelleId, r.folien, aktiv, i);

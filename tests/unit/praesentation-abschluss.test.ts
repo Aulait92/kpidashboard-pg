@@ -183,8 +183,10 @@ describe("Messung: Abschlussquote je Präsentation", () => {
         ev("t2", "termin", "folie", "beitrag"),
         ev("t2", "kundenlink", "folie", "entscheidung"),
         ev("t2", "kundenlink", "zusage", ""),
-        // t3: B, gezeigt, kein Abschluss
+        // t3: B, gezeigt, kein Abschluss, zwei Sparten „Mit anschauen“ (zählt als ein Termin)
         ev("t3", "termin", "folie", "empfehlung"),
+        ev("t3", "termin", "mitanschauen", "sparte-2"),
+        ev("t3", "termin", "mitanschauen", "sparte-3"),
         // t4: B, nur Titel (zählt nicht)
         ev("t4", "termin", "folie", "titel"),
         // t5: A, gezeigt, Kontakt abgeschlossen
@@ -194,7 +196,7 @@ describe("Messung: Abschlussquote je Präsentation", () => {
       ],
       new Set(["t5"]),
     );
-    expect(r.k1.B).toMatchObject({ praesentationen: 3, abschluesse: 2, zusagenTermin: 1, zusagenKundenlink: 1, kundenlinkGeoeffnet: 1, kundenlinkEntscheidung: 1 });
+    expect(r.k1.B).toMatchObject({ praesentationen: 3, abschluesse: 2, zusagenTermin: 1, zusagenKundenlink: 1, kundenlinkGeoeffnet: 1, kundenlinkEntscheidung: 1, mitAnschauen: 1 });
     expect(r.k1.B.abschlussquote).toBeCloseTo(0.667, 3);
     expect(r.k1.A).toMatchObject({ praesentationen: 1, abschluesse: 1, abschlussquote: 1 });
     expect(r.k2.A).toMatchObject({ praesentationen: 1, abschluesse: 0, abschlussquote: 0 });
