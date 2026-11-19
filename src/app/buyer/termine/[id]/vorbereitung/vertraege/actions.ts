@@ -53,7 +53,7 @@ export async function bestandAction(terminId: string, auszugId: string): Promise
 export async function sparteAction(terminId: string, documentId: string, sparte: string): Promise<Antwort> {
   const x = await wer(terminId);
   if ("error" in x) return { ok: false, error: x.error };
-  if (!isAuslesenSparte(sparte)) return { ok: false, error: "Sparte unbekannt." };
+  if (!isAuslesenSparte(sparte) && sparte !== "andere") return { ok: false, error: "Sparte unbekannt." };
   const r = await waehleSparte(x.w, documentId, sparte);
   revalidatePath(pfad(terminId));
   return r ? { ok: true, status: r.status } : { ok: false, error: "Nicht gefunden." };

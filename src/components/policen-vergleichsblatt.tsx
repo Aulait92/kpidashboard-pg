@@ -315,6 +315,7 @@ function Bearbeiten({
 const GRUND: Record<string, string> = {
   sparte_offen: "Welche Sparte ist das?",
   sparte_abweichend: "Die Unterlage passt nicht zur Sparte. Welche ist es?",
+  andere: "Andere Sparte, wird nicht automatisch ausgelesen. Bitte im Original ansehen.",
   gesperrt: "Diese Sparte wird nicht automatisch ausgelesen.",
   limit: "Nicht automatisch ausgelesen.",
   fehler: "Konnte nicht ausgelesen werden.",
@@ -345,14 +346,16 @@ function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich
 
   // Gewählte Sparte je Unterlage: Auslesen dauert einige Sekunden, solange Hinweis und Spinner statt nur grauer Knöpfe
   // (Ole, 19.11.2026: „wenn ich hier draufklicke, passiert nichts und die Buttons werden grau“)
-  const [gewaehlt, setGewaehlt] = useState<{ doc: string; sparte: AuslesenSparte } | null>(null);
-  const waehle = (o: OffeneUnterlage, s: AuslesenSparte) => {
+  const [gewaehlt, setGewaehlt] = useState<{ doc: string; sparte: AuslesenSparte | "andere" } | null>(null);
+  const label = (s: AuslesenSparte | "andere") => (s === "andere" ? "Andere" : SPARTE_LABEL[s]);
+  const waehle = (o: OffeneUnterlage, s: AuslesenSparte | "andere") => {
     setGewaehlt({ doc: o.documentId, sparte: s });
     start(async () => {
       const r = await sparteAction(terminId, o.documentId, s);
       if (!r.ok) toast.show({ message: r.error ?? "Fehler", tone: "error" });
-      else if (r.status === "ausgelesen") toast.show({ message: `${SPARTE_LABEL[s]} ausgelesen` });
-      else toast.show({ message: r.status === "sparte_abweichend" ? `Passt nicht zu ${SPARTE_LABEL[s]}. Bitte andere Sparte wählen oder im Original nachsehen.` : "Nicht ausgelesen. Bitte im Original nachsehen.", tone: "error" });
+      else if (r.status === "ausgelesen") toast.show({ message: `${SPARTE_LABEL[s as AuslesenSparte]} ausgelesen` });
+      else if (r.status === "andere") toast.show({ message: "Als andere Sparte vermerkt" });
+      else toast.show({ message: r.status === "sparte_abweichend" ? `Passt nicht zu ${label(s)}. Bitte andere Sparte wählen oder im Original nachsehen.` : "Nicht ausgelesen. Bitte im Original nachsehen.", tone: "error" });
     });
   };
 
@@ -372,18 +375,18 @@ function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
                 <a href={href(o.documentId)} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] hover:underline">
-                  {o.titel} vom {tag(o.datum)}
+                  {o.status === "sparte_abweichend" || o.status === "andere" ? "Unterlage" : o.titel} vom {tag(o.datum)}
                 </a>
               </div>
               <p className={`mt-1 flex items-center gap-1.5 pl-6 ${DT}`}>
                 {laedt ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                {diese ? `${SPARTE_LABEL[diese.sparte]} wird ausgelesen, das dauert einige Sekunden …` : text}
+                {diese ? (diese.sparte === "andere" ? "Wird gespeichert …" : `${label(diese.sparte)} wird ausgelesen, das dauert einige Sekunden …`) : text}
               </p>
               {waehlen ? (
                 <div className="mt-2 flex flex-wrap gap-1.5 pl-6" data-sparte-waehlen>
-                  {v.sparten.map((s) => (
-                    <Button key={s} variant={diese?.sparte === s ? "primary" : undefined} onClick={() => waehle(o, s)} disabled={pending}>
-                      {SPARTE_LABEL[s]}
+                  {[...v.sparten, "andere" as const].map((s) => (
+                    <Button key={s} variant={diese?.sparte === s ? "primary" : s === "andere" ? "ghost" : undefined} onClick={() => waehle(o, s)} disabled={pending} data-sparte={s}>
+                      {label(s)}
                     </Button>
                   ))}
                 </div>
