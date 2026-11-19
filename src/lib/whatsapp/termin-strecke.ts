@@ -16,8 +16,8 @@
 // (runStreckeAbschliessen, WhatsApp-Cron; nur im 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr): Tierfrage → Komplettcheck, Komplettcheck → erste
 // Angebotsfrage, Zeitangebot → Zeit behalten, Vertragsfrage → Policen-Bitte (die Verträge entfallen, die Bitte nicht),
 // Policen-Bitte → Schluss. Solange Angebotsfragen offen sind, nie der Schluss.
-// Policen-Erinnerungen (höchstens 2): 24 Std. nach der Buchung (nur bei mehr als 2 Tagen bis zum Termin,
-// runPolicenErinnerung) und eine Zeile in der Vortags-Erinnerung (policenVortagSatzFuer, lib/whatsapp/reminders.ts);
+// Policen-Erinnerungen (höchstens 2): 24 Std. nach der Buchung (nur mit Opt-in, nur bei mehr als 2 Tagen bis zum Termin,
+// runPolicenErinnerung) und ein Satz in der Vortags-Erinnerung (auch ohne Opt-in, A8 a, policenVortagSatzFuer, lib/whatsapp/reminders.ts);
 // Schluss, sobald eine Police da ist oder der Lead keine hat.
 // Merker je Termin als interne Nachrichten (kind, body mit appointmentId), damit nichts doppelt geht.
 //
@@ -141,9 +141,17 @@ export function policenErinnerungText(an: Ansprache, person: { nom: string }, po
   );
 }
 
-/** Zeile im Nutzensatz der Vortags-Erinnerung (zweite und letzte Policen-Erinnerung). */
-export function policenVortagSatz(an: Ansprache): string {
-  return a(an, "Falls noch nicht geschehen: Schick gern noch kurz deine Policen hier in den Chat.", "Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.");
+/**
+ * Satz im Nutzensatz der Vortags-Terminerinnerung (A8 a, Rechtsprüfung 19.11.2026): freiwillig, Sparte nie nennen,
+ * ohne Zeilenumbruch (steht in einer Vorlagen-Variable). person = Vermittler im Nominativ, sonst „Ihr Berater“.
+ */
+export function policenVortagSatz(an: Ansprache, person?: { nom: string } | null): string {
+  const wer = person?.nom?.trim() || a(an, "dein Berater", "Ihr Berater");
+  return a(
+    an,
+    `Wenn du magst, schick vorab deine Policen hier in den Chat (ein Foto reicht), dann kann sich ${wer} schon vorbereiten. Geht aber auch ohne.`,
+    `Wenn Sie mögen, schicken Sie vorab Ihre Policen hier in den Chat (ein Foto reicht), dann kann sich ${wer} schon vorbereiten. Geht aber auch ohne.`,
+  );
 }
 
 /**
@@ -1130,18 +1138,50 @@ export async function runPolicenErinnerung(now = new Date()): Promise<{ gesendet
   return { gesendet: gesendet + flow.gesendet };
 }
 
+/** Bisherige Policen-Erinnerungen im ganzen Chat (alle Termine, also auch vor einer Verschiebung). */
+async function policenErinnerungenImChat(conversationId: string): Promise<{ gesamt: number; vortag: boolean }> {
+  const rows = await prisma.message.findMany({ where: { conversationId, direction: "internal", kind: STRECKE.policenErinnerung }, select: { body: true } });
+  const gesendet = rows.map((r) => daten(r.body)).filter((d) => d.gesendet !== false);
+  return { gesamt: gesendet.length, vortag: gesendet.some((d) => d.art === "vortag") };
+}
+
 /**
- * Zeile für den Nutzensatz der Vortags-Erinnerung (lib/whatsapp/reminders.ts), wenn noch keine Police da ist; zählt als
- * Policen-Erinnerung (merken = true beim Versand). null = keine Zeile.
+ * Darf der Policen-Satz in die Vortags-Terminerinnerung (A8 a, Rechtsprüfung 19.11.2026)? Ohne Opt-in, weil er Teil der
+ * ohnehin verschickten Servicenachricht ist. Nur nach gestellter Policen-Bitte, ohne Police, nicht „habe keine“ oder
+ * „Lieber nicht“, kein STOP, Widerruf oder Abmeldung, nicht minderjährig, höchstens einmal je Lead (auch nach einer
+ * Verschiebung) und zusammen höchstens 2 Policen-Erinnerungen. Pay-per-Lead-Leads haben keine Strecke und damit
+ * keine Bitte. Gesundheitssparten: die Bitte geht nur, wo der Vermittler freigegeben hat (A5); der Satz nennt keine Sparte.
  */
-export async function policenVortagSatzFuer(appt: { id: string; conversationId: string | null; leadId: string | null }, an: Ansprache, o: { merken: boolean } = { merken: false }): Promise<string | null> {
+export async function policenVortagSatzErlaubt(conversationId: string, leadId: string | null, stand: StreckenStand): Promise<boolean> {
+  if (!leadId || !stand.policenBitteAt || stand.policenKeine) return false;
+  const bisher = await policenErinnerungenImChat(conversationId);
+  if (bisher.vortag || bisher.gesamt >= MAX_POLICEN_ERINNERUNGEN) return false;
+  const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { optedOutAt: true } });
+  if (conv?.optedOutAt) return false;
+  const policen = await import("@/lib/policen/server");
+  if (!(await policen.darfPolicenVortagSatz(leadId))) return false;
+  const chat = await policen.policenSprecherFuerChat(conversationId).catch(() => null);
+  if (!chat || chat.chat.minderjaehrig) return false;
+  if ((await prisma.leadDocument.count({ where: { leadId } })) > 0) return false;
+  const nachher = await prisma.message.findMany({ where: { conversationId, direction: "inbound", createdAt: { gt: stand.policenBitteAt } }, select: { body: true }, take: 30 });
+  return !nachher.some((x) => sagtKeinePolicen(x.body ?? "") || POLICEN_STOPP_RE.test(x.body ?? ""));
+}
+
+/**
+ * Satz für den Nutzensatz der Vortags-Erinnerung (lib/whatsapp/reminders.ts), wenn noch keine Police da ist; zählt als
+ * Policen-Erinnerung (gemerkt nach dem Versand). Strecke v1 und v2: in v2 ersetzt er die eigene Nachricht am Vortag um
+ * 18 Uhr (lib/policen/flow/server.ts). null = kein Satz.
+ */
+export async function policenVortagSatzFuer(
+  appt: { id: string; conversationId: string | null; leadId: string | null },
+  an: Ansprache,
+  o: { merken?: boolean; person?: { nom: string } | null } = {},
+): Promise<string | null> {
   if (!appt.conversationId) return null;
   const stand = await streckenStand(appt.conversationId, appt.id);
-  // v2: Erinnerung 2 ist eine eigene Nachricht am Vortag um 18 Uhr (lib/policen/flow/server.ts)
-  if (stand.policenFlow) return null;
-  if (!(await policenErinnernErlaubt(appt.conversationId, appt.leadId, stand))) return null;
+  if (!(await policenVortagSatzErlaubt(appt.conversationId, appt.leadId, stand))) return null;
   if (o.merken) await merke(appt.conversationId, STRECKE.policenErinnerung, { appointmentId: appt.id, art: "vortag" });
-  return policenVortagSatz(an);
+  return policenVortagSatz(an, o.person);
 }
 
 /** Letzter Terminvorschlag im Chat, solange der Lead danach nicht geschrieben hat (für das Nachfassen). */

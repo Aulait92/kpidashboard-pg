@@ -148,6 +148,8 @@ Gegenstand: Der WhatsApp-Assistent (WhatsApp Business Cloud API über 360dialog,
 
 ---
 
+**Nachtrag 19.11.2026:** Ein sachlicher Vorbereitungssatz in der Vortags-Terminerinnerung ist nach hiesiger Einschätzung keine Werbung im Sinne des § 7 UWG, weil er die gebuchte Leistung vorbereitet und keine eigene Nachricht ist (Abgrenzung zu BGH VI ZR 225/17: dort fremder Zweck). Restrisiko gering (GELB). Eigenständige Erinnerungen bleiben einwilligungspflichtig (ROT ohne Opt-in). Rechtsgrundlage DSGVO: Art. 6 Abs. 1 lit. b (vorvertragliche Maßnahme auf Anfrage), hilfsweise lit. f; Hinweis und Widerspruchsrecht in den Datenschutzhinweisen (Text c, Abschnitt „Terminerinnerungen“).
+
 ## Prüffrage 8: Art. 13 DSGVO
 
 **Ergebnis.** Der Vermittler muss bei der Erhebung informieren (Art. 13 Abs. 1, 2). Die Einwilligungsnachricht enthält nur das Nötigste; der Rest steht auf einer verlinkten Seite je Vermittler. Text (c) unten.
@@ -234,6 +236,8 @@ Folgenachricht nach Klick auf „Einverstanden“: „Danke! Schicken Sie die Po
 >
 > Empfänger: Die Unterlagen werden technisch von der Ole Kannapinn UG (haftungsbeschränkt), performancegrowth, {Anschrift}, als unserem Auftragsverarbeiter gespeichert, verschlüsselt in der EU. Die Übertragung erfolgt über WhatsApp: Dabei sind die 360dialog GmbH, Berlin, und WhatsApp Ireland Ltd. als Auftragsverarbeiter beteiligt. WhatsApp kann die Inhalte bis zu 30 Tage zwischenspeichern und Daten an Meta Platforms, Inc. und WhatsApp LLC in den USA übermitteln; Grundlage ist der Angemessenheitsbeschluss zum EU-US Data Privacy Framework (Art. 45 DSGVO), unter dem diese Unternehmen zertifiziert sind. Verbindungsdaten wie Telefonnummer und Zeitpunkte verarbeitet WhatsApp teilweise in eigener Verantwortung; dazu gelten die Datenschutzhinweise von WhatsApp. Wenn Sie WhatsApp nicht nutzen möchten, können Sie die Unterlagen über einen sicheren Upload-Link schicken oder in den Termin mitbringen.
 >
+> Terminerinnerungen: Vor Ihrem Termin erinnern wir Sie per WhatsApp an den Termin. Die Erinnerung am Vortag kann einen kurzen Hinweis enthalten, wie Sie Unterlagen vorab schicken können. Das dient der Vorbereitung des Termins, den Sie gebucht haben (Art. 6 Abs. 1 lit. b DSGVO, hilfsweise lit. f). Sie können dem jederzeit widersprechen (Art. 21 DSGVO), am einfachsten mit der Nachricht „STOP“ im Chat. (Ergänzt 19.11.2026, A8 a; in der App `src/lib/policen/datenschutz-text.ts`.)
+>
 > Speicherdauer: Wir löschen die Unterlagen 90 Tage nach Ihrem Termin (bei Absage 90 Tage nach dem geplanten Termin), sofort, wenn Sie Ihre Einwilligung widerrufen.
 >
 > Ihre Rechte: Sie können Ihre Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen, am einfachsten mit der Nachricht „Widerruf“ im Chat oder per E-Mail an {E-Mail}. Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Beschwerde bei einer Datenschutz-Aufsichtsbehörde, etwa {zuständige Landesbehörde}. Die Bereitstellung ist freiwillig; Ihr Termin findet auch ohne Unterlagen statt.
@@ -286,7 +290,10 @@ Hinweis: Strafrahmen bitte von der Anwältin am aktuellen Normtext gegenprüfen 
 - **A5 Freischaltung je Vermittler:** Funktion standardmäßig aus; Aktivierung erst nach Zustimmung zur AVV-Ergänzung (b), Bestätigung der § 203-Information und Hinterlegung der Datenschutzhinweis-URL.
 - **A6 Speicher:** Eigener privater Bucket nur für Policen, Region bzw. Rechtsraum EU fest konfiguriert, serverseitige Verschlüsselung mit mandantenbezogenem Schlüssel, Abruf nur über kurzlebige signierte URLs nach Login. Achtung: `src/lib/r2.ts` in diesem Repo nutzt Cloudflare R2 mit `region: "auto"` und öffentlicher URL für Werbebilder; diesen Client nicht für Policen wiederverwenden. Falls R2: EU-Jurisdiktion des Buckets einstellen und Cloudflare als Unterauftragnehmer (US-Konzern) aufnehmen.
 - **A7 Logging und Benachrichtigungen:** Keine Dateiinhalte, Dateinamen mit Gesundheitsbezug, Medien-URLs oder Webhook-Payloads in Anwendungslogs, Fehlertracking (Sentry) oder Analytics; Push- und E-Mail-Benachrichtigungen an den Vermittler nur neutral („Neue Unterlagen von {Lead}“).
-- **A8 Erinnerungen:** Höchstens 2, nur bei protokolliertem WhatsApp-Opt-in aus der Terminbuchung, nur bis zum Termin, Stopp bei Absage, „Lieber nicht“, „STOP“ oder Widerruf; jede Erinnerung mit Abmeldehinweis; kein werblicher Inhalt.
+- **A8 Erinnerungen (Stand 19.11.2026):** Höchstens 2 Policen-Erinnerungen je Lead, nur bis zum Termin, Stopp bei Absage, „Lieber nicht“, „habe keine“, „STOP“, Widerruf oder erster Police; kein werblicher Inhalt, Sparte nie nennen.
+  (a) **Ohne Opt-in:** genau ein Satz in der ohnehin verschickten Vortags-Terminerinnerung, höchstens einmal je Lead, nur nach gestellter Policen-Bitte, freiwillig formuliert („geht auch ohne“), ohne eigene Nachricht. Gesundheitssparten nur, wo der Vermittler freigegeben hat (A5); Upload weiter nur über Einwilligung und Tor (A1, A2). Umsetzung: `policenVortagSatzErlaubt` in `src/lib/whatsapp/termin-strecke.ts`, in der Strecke v2 ersetzt der Satz die eigene Nachricht am Vortag um 18 Uhr.
+  (b) **Eigenständige Erinnerungen** (z. B. 24 Std. nach der Bitte) nur mit protokolliertem Opt-in: Häkchen bei der Buchung (ERINNERUNG_OPTIN_TEXT) oder Tipp auf „Später schicken“ im Chat (noch nicht gebaut); jede mit Abmeldehinweis („STOP“).
+  Begründung und Restrisiko: Prüffrage 7, Nachtrag 19.11.
 - **A9 KI-Ablehnung ohne dritten Knopf (neu 18.11., Folge der Bündelung):** Satz „Ohne KI? Dann antworten Sie ‚ohne KI‘.“ im Haupttext von (a). Stichwort (auch „keine KI“, „ohne ki“) vor und nach dem Klick erkennen, `ki=false` im Protokoll (A3) setzen, Bestätigung an den Lead („Alles klar, wir lesen nichts automatisch aus.“), bereits erzeugte Feldwerte löschen. Gilt für alle Sparten.
 
 ### Weitere Pflichtpunkte (zeitnah, spätestens vor breitem Rollout)
@@ -323,7 +330,7 @@ Hinweis: Strafrahmen bitte von der Anwältin am aktuellen Normtext gegenprüfen 
 2. **Vertragskette Meta:** Wer ist WABA-Inhaber und Vertragspartner der WhatsApp Business Terms (Vermittler oder performancegrowth)? Je nachdem ist Meta Unterauftragnehmer von performancegrowth oder direkter Auftragsverarbeiter des Vermittlers; Auswirkungen auf AVV und § 203 Abs. 4 S. 2 Nr. 2.
 3. **§ 203 bei Meta und 360dialog:** Reicht die Einwilligung des Leads als Befugnis, oder braucht es eine Verschwiegenheitsverpflichtung, die Meta nicht abgibt? Genügt die Vertraulichkeitsklausel im 360dialog-DPA?
 4. **Makler und Mehrfachvertreter:** Gelten für Makler, die PKV und Leben vermitteln, § 203 Abs. 1 Nr. 7 StGB oder nicht? (Für die Software egal, für die Haftungsklausel im AVV relevant.)
-5. **§ 7 UWG:** Sind Policen-Erinnerungen bei gebuchtem Termin Werbung im Sinne von BGH VI ZR 225/17, und deckt eine Einwilligung „WhatsApp zur Terminvorbereitung“ bei der Buchung sie ab?
+5. **§ 7 UWG:** Sind Policen-Erinnerungen bei gebuchtem Termin Werbung im Sinne von BGH VI ZR 225/17, und deckt eine Einwilligung „WhatsApp zur Terminvorbereitung“ bei der Buchung sie ab? Und ist ein einzelner Vorbereitungssatz in der Terminerinnerung ohne Einwilligung zulässig?
 6. **DSFA-Pflicht:** Ist die Verarbeitung je Vermittler „umfangreich“ oder steht sie auf der für ihn zuständigen Landesliste? Wer unterschreibt die DSFA, wenn performancegrowth sie für alle erstellt?
 7. **Aufbewahrung:** Verträgt sich die 90-Tage-Löschung mit Dokumentations- und Nachweispflichten des Vermittlers (§§ 61, 62 VVG, Haftung bei Beratungsfehlern), oder sollte der Vermittler vorher in eigene Akten übernehmen?
 8. **DPF-Ausfall:** Welche Fallback-Klausel (SCC, Aussetzung) ist im AVV sinnvoll, falls der Angemessenheitsbeschluss vom EuGH aufgehoben wird?

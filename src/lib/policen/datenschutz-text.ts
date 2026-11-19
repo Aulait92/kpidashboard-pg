@@ -109,6 +109,15 @@ export function datenschutzPolicenAbschnitte(an: Ansprache, v: Vermittler): { ue
       ),
     },
     {
+      // Rechtsprüfung 19.11.2026 (A8 a): Vorbereitungshinweis in der Terminerinnerung, Widerspruchsrecht (Art. 13, Art. 21 Abs. 4)
+      ueberschrift: "Terminerinnerungen",
+      text: a(
+        an,
+        "Vor deinem Termin erinnern wir dich per WhatsApp an den Termin. Die Erinnerung am Vortag kann einen kurzen Hinweis enthalten, wie du Unterlagen vorab schicken kannst. Das dient der Vorbereitung des Termins, den du gebucht hast (Art. 6 Abs. 1 lit. b DSGVO, hilfsweise lit. f). Du kannst dem jederzeit widersprechen (Art. 21 DSGVO), am einfachsten mit der Nachricht „STOP“ im Chat.",
+        "Vor Ihrem Termin erinnern wir Sie per WhatsApp an den Termin. Die Erinnerung am Vortag kann einen kurzen Hinweis enthalten, wie Sie Unterlagen vorab schicken können. Das dient der Vorbereitung des Termins, den Sie gebucht haben (Art. 6 Abs. 1 lit. b DSGVO, hilfsweise lit. f). Sie können dem jederzeit widersprechen (Art. 21 DSGVO), am einfachsten mit der Nachricht „STOP“ im Chat.",
+      ),
+    },
+    {
       ueberschrift: a(an, "Deine Rechte", "Ihre Rechte"),
       text: a(
         an,
