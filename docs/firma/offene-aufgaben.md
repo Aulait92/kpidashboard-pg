@@ -34,7 +34,8 @@ Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der 
 - Bedrock-Freischaltung (KI in der EU).
 - LinkedIn-App anlegen; Gmail API (falls weiter gewünscht).
 - Später: Calendly im Vertrieb durch eigenes Buchungstool ersetzen.
-- Leitfaden Setter-Call prüfen und freigeben (`docs/firma/vertrieb/leitfaden-setter-call.md`, Head of Sales, 19.11.2026); offen: Zahlweise im Beratungsgespräch (Vorauszahlung zuerst empfohlen).
+- Leitfaden Setter-Call liegt als PDF unter Marketing → Unterlagen (19.11.2026). Offen: Zahlweise im Beratungsgespräch, Quoten nach 10 Setter-Calls prüfen (Erscheinen mindestens 80 %).
+- **Ab 21.11.2026 bauen:** Abschlussbonus 300 € gilt nur bei Abschluss im Beratungsgespräch (Annahme im Call), nicht mehr mit Frist bis zum Folgetag (Ole, 19.11.2026).
 
 ## Fehlende Zugänge für das Team
 Lesekopie der Datenbank ohne Klardaten (Data-Agent), Anbindung der Sitzungsaufnahmen, Meta Ads nur lesend.
