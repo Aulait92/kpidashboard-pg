@@ -10,6 +10,12 @@ import { paketAusAttribut } from "@/components/folien-deck";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
+/** Ausgangslage dieser Tests: nur Haftpflicht gewählt, Hausrat, Rechtsschutz und Unfall als Zusatz (die Live-Demo startet seit 19.11.2026 mit drei Sparten). */
+const nurHaftpflicht = (): ReturnType<typeof demoAngebote> => {
+  const d = demoAngebote();
+  return { ...d, items: d.items.map((i) => (i.sparte === "Hausrat" || i.sparte === "Rechtsschutz" ? { ...i, zusatz: true, gewaehlt: false } : i)) };
+};
+
 const d: VorbereitungDaten = {
   lead: { name: "Julia Schneider", telefon: null, email: null, adresse: null, produkt: "Privatschutz" },
   termin: { startsAt: new Date("2026-11-18T09:00:00Z"), mode: "video", berater: "Thomas Lohmann", meetUrl: null },
@@ -87,7 +93,7 @@ describe("Fassung C: Entscheidung mit zwei Paketen", () => {
   });
 
   it("Auswahl von Hand neben der Empfehlung; keine Köder-Stufe (die nächste, nicht die billigste)", () => {
-    const demo = demoAngebote();
+    const demo = nurHaftpflicht();
     // Haftpflicht Basis 4,20 / Smart 5,90 / Komfort 8,40 (empfohlen): kleiner ist Smart
     const p = entscheidungsPakete(demo);
     expect(p.map((x) => x.art)).toEqual(["empfehlung", "guenstiger"]);
@@ -103,7 +109,7 @@ describe("Fassung C: Entscheidung mit zwei Paketen", () => {
   });
 
   it("Kombi-Rabatt je Paket gerechnet, Hinweis nach § 7a VVG an der Entscheidung", () => {
-    const demo = demoAngebote();
+    const demo = nurHaftpflicht();
     const hausrat = demo.items.findIndex((i) => i.sparte === "Hausrat");
     const zwei = sparteSchalten(demo, hausrat)!;
     const p = entscheidungsPakete(zwei);
@@ -165,7 +171,7 @@ describe("Abweichung von der Empfehlung (für die Beratungsdokumentation)", () =
       unterschied: ["ohne Schlüsselverlust"],
       guenstiger: true,
     });
-    const demo = demoAngebote();
+    const demo = nurHaftpflicht();
     const hausrat = demo.items.findIndex((i) => i.sparte === "Hausrat");
     // Hausrat dazu (Empfehlung), dann Haftpflicht Smart: günstiger, Kombi-Rabatt fällt weg und ist eingerechnet
     const d2 = tarifWaehlen(sparteSchalten(demo, hausrat)!, 1)!;
@@ -187,7 +193,7 @@ describe("Paket wählen (Termin und Demo)", () => {
     expect(paketWaehlen(ang, [0, 1])).toBeNull();
     expect(paketWaehlen(ang, [9])).toBeNull();
     expect(paketWaehlen(ang, [])).toBeNull();
-    const demo = demoAngebote();
+    const demo = nurHaftpflicht();
     const unfall = demo.items.findIndex((i) => i.sparte === "Unfall");
     expect(paketWaehlen(demo, [unfall])).toBeNull();
     expect(demoKlick(ang, { tarif: null, sparte: false, item: -1, baustein: -1, aktiv: true, paket: [0, 2] })!.items[0].gewaehlt).toBe(true);
@@ -207,8 +213,8 @@ describe("Demo und Messung", () => {
     expect(demoFassung(undefined)).toBe("B");
     expect(demoFassung("b")).toBe("B");
     expect(demoFassung("C")).toBe("C");
-    expect(demoFolien(demoAngebote()).map((f) => f.id)).toContain("beitrag");
-    expect(demoFolien(demoAngebote(), new Date(), null, "C").map((f) => f.id)).not.toContain("beitrag");
+    expect(demoFolien(nurHaftpflicht()).map((f) => f.id)).toContain("beitrag");
+    expect(demoFolien(nurHaftpflicht(), new Date(), null, "C").map((f) => f.id)).not.toContain("beitrag");
   });
 
   it("Abschlussquote je Variante, C getrennt von B", () => {

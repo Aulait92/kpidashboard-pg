@@ -1,4 +1,4 @@
-# Sprechzettel Vertriebspräsentation (Stand 17.11.2026)
+# Sprechzettel Vertriebspräsentation (Stand 19.11.2026: Folien 11 und 12 getauscht)
 
 Gilt für die Vertreter-Fassung (24 Folien). Makler-Fassung (25 Folien): nach Folie 21 kommt „Mit Tarifvergleich: alles zurück nach 7 Monaten“ (Notiz unten), danach verschiebt sich alles um eins.
 Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeanteil unter der Hälfte.
@@ -44,13 +44,13 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - Auf die Antwort von Folie 6 zurückkommen: „Kennen Sie das?“
 - „Die Software löst genau das, automatisch.“
 
-## 11. Sonntag, 21:47 Uhr
-- Die Geschichte erzählen: Formular am Sonntagabend, 9 Minuten später steht der Termin.
-- „Sie haben dabei nichts getan.“
-
-## 12. Niemand geht ran? Egal, der Lead bucht selbst.
+## 11. Niemand geht ran? Egal, der Lead bucht selbst.
 - WhatsApp statt Anruf, der Assistent stellt die richtigen Fragen, der Lead bucht direkt einen Termin.
 - „Sie führen nur noch das Beratungsgespräch.“
+
+## 12. Sonntag, 21:47 Uhr
+- Die Geschichte erzählen: Formular am Sonntagabend, 9 Minuten später steht der Termin.
+- „Sie haben dabei nichts getan.“
 
 ## 13. So arbeitet Ihr digitaler Assistent (Video)
 - Video laufen lassen, nicht dazwischenreden.
@@ -81,6 +81,7 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 ## 19. Ihr Kunde schickt seine Policen. Sie sehen vorher, wo er doppelt zahlt. (neu ab 18.11.)
 - Nach der Terminbuchung bittet der Assistent den Kunden per WhatsApp, Fotos oder PDFs seiner aktuellen Policen zu schicken, aller Sparten und nur mit seiner Einwilligung; kommt nichts, erinnert er freundlich daran.
 - Die Vertragsdaten werden automatisch ausgelesen, und Sie bekommen in der Terminvorbereitung ein Vergleichsblatt: Beiträge im Monat, Verträge mit Kündigungstermin in den nächsten 3 Monaten, Doppelversicherungen und fehlende Bausteine.
+- Im Termin steht sein alter Vertrag direkt neben den neuen Tarifen (Spalte „Ihr bisheriger Vertrag“ auf der Vergleichsfolie): Beitrag, Leistungen und darunter der Unterschied im Jahr und bis wann er kündigen kann. Was in der Police nicht eindeutig steht, zeigt die Folie als „laut Police prüfen“.
 - Kernsatz: „Ihr Kunde schickt seine Policen, Sie sehen vor dem Termin, wo er doppelt zahlt.“ Das macht Termine kürzer und besser und öffnet den Weg zum Komplettcheck und zu weiteren Verträgen.
 - Keine Zahlen versprechen; bei Datenschutzfragen: Einwilligung des Kunden, Speicherung in der EU, nur Sie sehen die Unterlagen, automatische Löschung. Nebenbei erwähnen: Der Assistent stellt Zwischenfragen vor dem Termin und schickt die Einladung erst, wenn alles feststeht.
 

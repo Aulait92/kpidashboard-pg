@@ -33,8 +33,9 @@ const GEMEINSAM: Omit<VerkaufsFolieDef, "nr" | "bild">[] = [
   { titel: "Ansprache der Leads auf Social Media", art: "bild" },
   { titel: "Welche Produkte sind möglich?", art: "bild" },
   { titel: "Warum gute Leads verloren gehen", art: "bild" },
-  { titel: "Sonntag, 21:47 Uhr", art: "bild" },
+  // Folie 11/12 getauscht (Ole, 19.11.2026): erst „Der Lead bucht selbst“, dann „Sonntag, 21:47 Uhr“
   { titel: "Der Lead bucht selbst", art: "bild" },
+  { titel: "Sonntag, 21:47 Uhr", art: "bild" },
   { titel: "So arbeitet Ihr digitaler Assistent", art: "video" },
   { titel: "Kein Lead geht mehr verloren", art: "bild" },
   { titel: "Jeden Morgen wissen Sie, wen Sie anrufen", art: "bild" },

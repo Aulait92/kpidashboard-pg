@@ -6,6 +6,18 @@ Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unveränder
 Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 24 Folien, Makler 25 (Fassung eca12945). Die Folien sind Bilder (Text nicht
 durchsuchbar). Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Setup“ (hängt an der Preisänderung, die Ole noch bestätigt).
 
+Fassung 19.11.2026, Folie 19 „Policen vorab“ (Ole): statt WhatsApp-Telefon jetzt oben das Vergleichsblatt kompakt
+(Doppelt, Kündbar, Fehlt) und darunter ein echter Screenshot der Vergleichsfolie der Beratungspräsentation mit Spalte
+„Ihr bisheriger Vertrag“ neben Basis, Smart und Komfort (erfundene Daten, mit dem App-Code gerendert); links neuer
+Punkt „Alter Vertrag direkt neben den neuen Tarifen“. PPTX (Vertreter image23.jpg, Makler image24.jpg), PDF Seite 26,
+Web-Folien vertreter/19 und makler/19 neu.
+
+Fassung 19.11.2026, Folientausch (Ole): „Niemand geht ran? Egal, der Lead bucht selbst.“ ist jetzt Folie 11, „Sonntag,
+21:47 Uhr“ Folie 12 (Vertreter und Makler). PPTX: Reihenfolge in `ppt/presentation.xml` getauscht, Seitenzahl auf beiden
+Bildern korrigiert (zweite Ziffer aus derselben Folie übernommen); PDF: Seiten 11 und 12 mit den neuen Bildern (Folie 13
+mit dem Assistenten steht danach weiter als 8 Einzelbilder); Web-Folien vertreter/11, 12 und makler/11, 12 neu,
+Titelliste in `verkaufspraesentation.ts` und Sprechzettel angepasst. Video (13) und Live-Demo (17) bleiben, wo sie sind.
+
 Fassung 19.11.2026 (Branch `claude/vertreter-folien-screenshots`, nur Vertreter): App-Screenshots auf Folie 15 („Heute“ mit
 neuen Leads oben, Termin mit Zusammenfassung, „Wie lief es?“; Satz jetzt „Nach dem Gespräch: 2 Klicks“), 16 (neue
 Terminvorbereitung) und 20 („Wachstum“ mit „Rechnet sich das?“) neu, sonst unverändert; in PPTX und PDF (Seiten 22, 23, 27)
