@@ -60,7 +60,23 @@ export function UnterlagenGrid({
           <DemoLink demo={demo} />
         </div>
       ) : null}
+      <Leitfaeden />
     </div>
+  );
+}
+
+/** Gesprächsleitfäden (intern, nur Admins): PDF aus assets/unterlagen, Quelle docs/firma/vertrieb/. */
+function Leitfaeden() {
+  return (
+    <Card className="p-4 sm:p-5" data-leitfaeden>
+      <h2 className="text-base font-semibold">Leitfaden Setter-Call</h2>
+      <p className="mt-1 text-sm text-[color:var(--muted)]">15-Minuten-Telefonat vor dem Beratungsgespräch. Nur für Sie, nicht zum Weitergeben.</p>
+      <div className="mt-3">
+        <ButtonLink href="/api/admin/unterlagen/leitfaden-setter-call" external icon={FileText}>
+          PDF öffnen
+        </ButtonLink>
+      </div>
+    </Card>
   );
 }
 

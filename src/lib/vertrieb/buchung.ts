@@ -27,6 +27,7 @@ import { fmtDateTime } from "@/lib/vertrieb/dates";
 import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
 import { anredeZeile } from "@/lib/ansprache";
 import { PROVIDER } from "@/lib/legal-texts";
+import { legalUrls } from "@/lib/offers";
 import type { SalesBookingType } from "@/generated/prisma/client";
 
 /** Interner Mandant, an dem der Vertriebskalender hängt (Migration 20261118705300). */
@@ -824,6 +825,8 @@ type MailMeeting = {
   thanksPage?: boolean;
   /** Vom Team eingetragen (nicht selbst gebucht) */
   byTeam?: boolean;
+  /** Vertragsbedingungen vorab (Sales-Call, Ole 19.11.2026): Links auf AGB und AVV in der Bestätigung */
+  vertrag?: { agb: string | null; avv: string | null } | null;
 };
 
 /** Inhalt der Mail (rein, für Tests). Sie-Form, keine Gedankenstriche. */
@@ -840,6 +843,10 @@ export function inviteeMailContent(kind: InviteeMailKind, m: MailMeeting) {
         paragraphs: [m.byTeam ? `Ihr ${m.title} ist bestätigt: ${w}.` : `vielen Dank für Ihre Buchung. Ihr ${m.title} ist bestätigt: ${w}.`, how, m.confirmText ?? "Wir freuen uns auf das Gespräch."],
         button: m.thanksPage ? { label: "Vorbereitungsvideo ansehen", url: thanksLink(m.manageToken) } : manage,
         extra: m.thanksPage ? manage : null,
+        vertrag: [
+          m.vertrag?.agb ? { label: "Unsere Vertragsbedingungen (AGB)", url: m.vertrag.agb } : null,
+          m.vertrag?.avv ? { label: "Vertrag zur Auftragsverarbeitung (AVV)", url: m.vertrag.avv } : null,
+        ].filter((l): l is { label: string; url: string } => !!l),
       };
     case "rescheduled":
       return { subject: `Neuer Termin mit performancegrowth: ${w}`, greeting, paragraphs: [`Ihr Termin wurde verschoben. Neue Zeit: ${w}.`, how], button: manage, extra: null };
@@ -879,27 +886,31 @@ export async function sendInviteeMail(meetingId: string, kind: InviteeMailKind):
         inviteeEmail: true,
         manageToken: true,
         utmSource: true,
-        bookingType: { select: { confirmText: true, thanksPage: true } },
+        bookingType: { select: { confirmText: true, thanksPage: true, slug: true } },
       },
     });
     if (!m?.inviteeEmail || !m.manageToken) return false;
+    // Beratungsgespräch: Vertragsbedingungen vorab mitschicken, damit im Termin direkt beauftragt werden kann
+    const vertragUrls = m.bookingType?.slug === SALES_CALL_BOOKING_TYPE ? legalUrls() : null;
     const c = inviteeMailContent(kind, {
       ...m,
       manageToken: m.manageToken,
       confirmText: m.bookingType?.confirmText,
       thanksPage: m.bookingType?.thanksPage,
       byTeam: m.utmSource === "admin",
+      vertrag: vertragUrls ? { agb: vertragUrls.termsUrl, avv: vertragUrls.dpaUrl } : null,
     });
+    const links = [...(c.extra ? [c.extra] : []), ...(("vertrag" in c && c.vertrag) || [])];
     const res = await sendCustomerMail({
       to: m.inviteeEmail,
       subject: c.subject,
       greeting: c.greeting,
       paragraphs: c.paragraphs,
       button: c.button,
-      ...(c.extra
+      ...(links.length
         ? {
-            html: `<p style="margin:0 0 16px;font-size:15px;line-height:1.6"><a href="${c.extra.url}" style="color:#2563eb">${escapeHtml(c.extra.label)}</a></p>`,
-            textBlocks: [`${c.extra.label}: ${c.extra.url}`],
+            html: links.map((l) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6"><a href="${l.url}" style="color:#2563eb">${escapeHtml(l.label)}</a></p>`).join(""),
+            textBlocks: links.map((l) => `${l.label}: ${l.url}`),
           }
         : {}),
       signature: "Ole Kannapinn\nperformancegrowth",
