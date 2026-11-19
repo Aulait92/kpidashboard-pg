@@ -256,9 +256,24 @@ export function verguetungStandard(status: VermittlerStatus): Verguetung[] {
  * Vor- und Nachname des Vermittlers: gespeichert, sonst Vorschlag aus Impressum (Vertreter) bzw. Kundenname als Person
  * („Agentur Susanne Meier“ → „Susanne Meier“). Auch Quelle des Vornamens im Erstanschreiben (lead-anrede.ts).
  */
+// Wörter, die auf eine Firma statt eine Person hindeuten (Go-Live-Check 19.11.2026: „Herr Versicherungsbüro Sonnberg“
+// stand sonst im Pflicht-PDF nach § 15 VersVermV).
+const FIRMEN_WORT = /^(company|co\.?|inc\.?|ltd\.?|ag|ug|gmbh|kg|ohg|gbr|e\.?\s?k\.?|group|gruppe|holding|services?|solutions|consulting|partner|agentur\w*|generalagentur\w*|hauptvertretung\w*|vertretung\w*|versicherung\w*|versicherungsbüro\w*|finanz\w*|makler\w*|büro|buero|kanzlei|&|und|test)$/i;
+
+/** Sieht wie ein Personenname aus (mindestens zwei Wörter, kein Firmenwort)? */
+export function siehtNachPersonAus(name: string | null | undefined): boolean {
+  const words = clean(name).split(/\s+/).filter(Boolean);
+  return words.length >= 2 && !words.some((w) => FIRMEN_WORT.test(w.replace(/[(),.]/g, "")));
+}
+
+/** Name der Person: Gespeichertes, sonst Inhaber laut Impressum, sonst Kundenname nur wenn er nach Person aussieht, sonst leer (Pflichtfeld). */
 export function erstinfoName(saved: string | null | undefined, web: ErstinfoWeb | undefined, customerName: string | null | undefined): string {
+  if (saved != null) return saved.trim();
+  const vertreter = clean(web?.representative);
+  if (vertreter && siehtNachPersonAus(vertreter)) return vertreter;
   const person = advisorDisplayName(customerName);
-  return (saved ?? (clean(web?.representative) || (person && person.includes(" ") ? person : "") || clean(customerName))).trim();
+  if (person && siehtNachPersonAus(person)) return person.trim();
+  return "";
 }
 
 /**

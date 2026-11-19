@@ -139,9 +139,16 @@ export async function followupBuyerAction(formData: FormData): Promise<void> {
   });
   if (!conv) redirect("/buyer/chats");
   const { NoTemplateError, sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
-  const { chooseFollowup } = await import("@/lib/whatsapp/followup");
-  // Zweck/Vorlage serverseitig aus der Situation ableiten (nicht vom Client).
-  const choice = await chooseFollowup(conv.id);
+  const { ADMIN_FOLLOWUP_PURPOSES, chooseFollowup, followupOptions } = await import("@/lib/whatsapp/followup");
+  // Sperren aus der Situation (kein Interesse, Abschluss, Termin steht); die Vorlage darf der Vermittler unter den
+  // freigegebenen wählen (Ole, 19.11.2026), Parameter und Text entstehen serverseitig
+  const situation = await chooseFollowup(conv.id);
+  const gewaehlt = String(formData.get("purpose") ?? "");
+  const option =
+    situation.kind === "ok" && (ADMIN_FOLLOWUP_PURPOSES as readonly string[]).includes(gewaehlt)
+      ? ((await followupOptions(conv.id)).find((o) => o.key === gewaehlt && o.approved) ?? null)
+      : null;
+  const choice = situation.kind === "ok" && option ? { ...option, kind: "ok" as const, anrede: situation.anrede } : situation;
   let err: string | undefined;
   if (choice.kind === "blocked") {
     err = "followup_blocked";
