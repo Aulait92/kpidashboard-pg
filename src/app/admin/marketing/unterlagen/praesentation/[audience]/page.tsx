@@ -5,13 +5,13 @@ import { FolienDeck } from "@/components/folien-deck";
 import { ButtonLink } from "@/components/ui";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { listPresentations } from "@/lib/vertrieb/praesentationen";
-import { folienListe, isVerkaufsAudience, paketDaten, verkaufsCss, verkaufsFolien, VERKAUFS_AUDIENCES } from "@/lib/vertrieb/verkaufspraesentation";
+import { folienListe, isVerkaufsAudience, paketDaten, verkaufsCss, verkaufsFolien, VERKAUFS_AUDIENCES, VERKAUFS_LABEL } from "@/lib/vertrieb/verkaufspraesentation";
 import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Web-Präsentation | Unterlagen" };
 export const dynamic = "force-dynamic";
 
-const LABEL = { vertreter: "Vertreter", makler: "Makler" } as const;
+const LABEL = VERKAUFS_LABEL;
 
 // Vertriebspräsentation ohne Kontakt (Ole, 15.11.2026): Listenpreise, z. B. für Gespräche ohne Angebot oder zum Durchsehen.
 // Mit Kontakt (Preise aus dem Angebot, Link für den Interessenten): Vertrieb → Kontakt → „Präsentation“.

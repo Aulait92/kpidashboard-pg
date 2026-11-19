@@ -99,14 +99,15 @@ export async function sendOfferEmailAction(
   if (offer.salesContactId && (await import("@/lib/vertrieb/sperrliste").then((m) => m.kontaktGesperrt(offer.salesContactId)))) {
     return { ok: false, error: "Dieser Kontakt möchte nicht mehr angeschrieben werden (Kontaktakte → Nie kontaktieren)." };
   }
-  const audience: Audience = isAudience(extras.audience) ? extras.audience : "vertreter";
+  // Pay-per-Lead + Software: immer die eigene Präsentation (Ole, 20.11.2026)
+  const audience: Audience = offer.package === "ppl_software" ? "ppl" : isAudience(extras.audience) ? extras.audience : "vertreter";
   let attachment: { filename: string; content: Buffer } | null = null;
   if (extras.praesentation) {
     const file = await getPresentation(audience, "pdf");
     if (!file) return { ok: false, error: `Für ${AUDIENCE_LABEL[audience]} ist noch keine PDF-Präsentation hinterlegt (Vertrieb → Unterlagen).` };
     attachment = { filename: file.fileName.toLowerCase().endsWith(".pdf") ? file.fileName : `${file.fileName}.pdf`, content: Buffer.from(file.data) };
   }
-  const rechner = extras.rechner ? rechnerUrl(getAppUrl(), audience, offer.products) : null;
+  const rechner = extras.rechner && audience !== "ppl" ? rechnerUrl(getAppUrl(), audience, offer.products) : null;
   // Link zur Präsentation: aktiven Link verlängern bzw. neu erstellen (Fassung wie gewählt)
   let praesentationUrl: string | null = null;
   if (extras.praesentationLink) {
