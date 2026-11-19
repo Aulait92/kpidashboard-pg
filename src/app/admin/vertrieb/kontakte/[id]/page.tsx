@@ -7,6 +7,9 @@ import { stripQuoted } from "@/lib/vertrieb/instantly";
 import { TaskRow } from "@/components/vertrieb/ui";
 import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
 import { ContactEmails, ContactPhones, DuplicateHint } from "@/components/vertrieb/contact-merge";
+import { DatenschutzRechtKarte } from "@/components/vertrieb/datenschutz-recht";
+import { fallZeilen, rechtsFaelleVon } from "@/lib/vertrieb/datenschutz-recht-server";
+import { KATEGORIE_RECHT, RECHTS_ART_LABEL, istRechtsArt } from "@/lib/vertrieb/datenschutz-recht";
 import { enrichedLine as enrichedLineOf, ladeKontakt, ladeKontaktakte, waConfirmLabel } from "@/lib/vertrieb/kontaktakte";
 import { ArrowLeft, Mail, Phone, Presentation, Trash2 } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
@@ -49,6 +52,8 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
     onboarding, obOffer, acceptedOffer, freeCustomers, linkable, duplicates, decisionLink, entscheidungsHinweis, bookingTypes, defaultTermin,
     referral, referralBenefit, referralDiscount, pdfs, appUrl, praesLink, praesAufrufe, praesFassung,
   } = await ladeKontaktakte(c);
+  // Datenschutz und Recht (Ole, 19.11.2026): Fälle mit Frist und Antwortvorlagen
+  const rechtsFaelle = fallZeilen(await rechtsFaelleVon(c.id));
   const praesDatum = (d: Date, mitZeit = false) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: mitZeit ? "2-digit" : "numeric", month: mitZeit ? "2-digit" : "long", ...(mitZeit ? { year: "numeric", hour: "2-digit", minute: "2-digit" } : {}) }).format(d);
 
@@ -119,7 +124,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             defaultType={defaultTermin}
             decisionLink={decisionLink}
           />
-          <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} geloescht={!!c.art17GeloeschtAt} />
+          <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} geloescht={!!c.art17GeloeschtAt} gesperrt={!!c.nieKontaktierenAt || rechtsFaelle.length > 0} />
         </div>
       </div>
       <DuplicateHint contactId={c.id} contactName={shortName(c.name)} duplicates={duplicates} />
@@ -147,6 +152,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[3fr_2fr]">
         <div className="space-y-5">
+          {rechtsFaelle.length ? <DatenschutzRechtKarte contactId={c.id} faelle={rechtsFaelle} /> : null}
           <section className="card p-4">
             <h2 className="mb-3 font-medium">Aktivität erfassen</h2>
             <ActivityForm contactId={c.id} hasOpenTasks={open.length > 0} offenesAngebot={angebotOffen} />
@@ -182,7 +188,9 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                         <span className={`badge ${e.direction === "OUT" ? "bg-sky-100 text-sky-800" : e.isAutoReply ? "bg-slate-100 text-slate-600" : "bg-emerald-100 text-emerald-800"}`}>
                           {e.direction === "OUT" ? "Gesendet" : e.isAutoReply ? "Auto-Reply" : "Antwort"}
                         </span>
-                        {e.direction === "IN" && !e.isAutoReply && e.sentiment && (
+                        {e.direction === "IN" && e.rechtsArt ? (
+                          <span className="badge bg-rose-50 text-rose-700 ring-1 ring-rose-200">{KATEGORIE_RECHT}: {istRechtsArt(e.rechtsArt) ? RECHTS_ART_LABEL[e.rechtsArt] : e.rechtsArt}</span>
+                        ) : e.direction === "IN" && !e.isAutoReply && e.sentiment && (
                           <span className={`badge ${e.sentiment === "POSITIV" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : e.sentiment === "NEGATIV" ? "bg-rose-50 text-rose-700 ring-1 ring-rose-200" : e.sentiment === "SPAETER" ? "bg-teal-50 text-teal-700 ring-1 ring-teal-200" : "bg-slate-50 text-slate-500 ring-1 ring-slate-200"}`}>
                             {e.sentiment === "POSITIV" ? "positiv" : e.sentiment === "NEGATIV" ? "negativ" : e.sentiment === "SPAETER" ? "später" : "neutral"}
                           </span>
@@ -194,7 +202,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                         {e.fromEmail}{e.campaign ? ` · Kampagne: ${e.campaign}` : ""}
                       </div>
                       <p className="mt-2 whitespace-pre-wrap text-slate-700">{main || "(kein Text)"}</p>
-                      {e.direction === "IN" && <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-slate-400">
+                      {e.direction === "IN" && !e.rechtsArt && <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-slate-400">
                         Einordnung ändern:
                         {(["POSITIV", "SPAETER", "NEUTRAL", "NEGATIV", "AUTO"] as const)
                           .filter((x) => (x === "AUTO" ? !e.isAutoReply : e.isAutoReply || x !== e.sentiment))

@@ -66,19 +66,22 @@ export async function instantlyPortion(opts: { menge?: number; proDomain?: numbe
   });
   const zaehlen = (ks: Kontakt[]) => ks.reduce<Record<string, number>>((m, k) => ((m[k.insurer ?? "ohne Angabe"] = (m[k.insurer ?? "ohne Angabe"] ?? 0) + 1), m), {});
 
-  const heute = alle.filter((k) => portionVon(k) === tag);
+  const heuteVergeben = alle.filter((k) => portionVon(k) === tag);
   const kandidaten = alle.filter((k) => !portionVon(k) && !k.nieKontaktierenAt && k.stage === "NEU" && k.campaigns.length === 0);
-  // In Stücken prüfen (Grenze der Datenbank-Parameter je Abfrage)
+  // In Stücken prüfen (Grenze der Datenbank-Parameter je Abfrage). Die heutige Portion auch: wer seit der Vergabe
+  // gesperrt wurde (z. B. Datenschutzfall derselben Agentur-Domain), fällt beim erneuten Herunterladen heraus.
   const erlaubt = new Set<string>();
   let gesperrt = 0;
-  for (let i = 0; i < kandidaten.length; i += 5000) {
-    const p = await vorUploadPruefen(kandidaten.slice(i, i + 5000).map((k) => k.email));
+  const pruefen = [...kandidaten, ...heuteVergeben];
+  for (let i = 0; i < pruefen.length; i += 5000) {
+    const p = await vorUploadPruefen(pruefen.slice(i, i + 5000).map((k) => k.email));
     p.erlaubt.forEach((e) => erlaubt.add(e));
     gesperrt += p.gesperrt.length;
   }
   const frei = kandidaten.filter((k) => erlaubt.has(k.email.trim().toLowerCase()));
+  const heute = heuteVergeben.filter((k) => !k.nieKontaktierenAt && erlaubt.has(k.email.trim().toLowerCase()));
 
-  if (heute.length) {
+  if (heuteVergeben.length) {
     const gemischt = mischen(heute, (k) => k.insurer, (k) => k.email);
     return { tag, wiederholt: true, zeilen: gemischt.map(zeile), offen: frei.length, gesperrt, jeGesellschaft: zaehlen(heute) };
   }

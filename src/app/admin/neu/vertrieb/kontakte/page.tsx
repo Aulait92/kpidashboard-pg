@@ -5,7 +5,8 @@ import { FilterChips } from "@/components/ui/filter-chips";
 import { ConfirmButton, SelectAll } from "@/components/vertrieb/confirm-button";
 import { StageBadge } from "@/components/vertrieb/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
-import { KONTAKTE, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
+import { KONTAKTE, V, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
+import { offeneRechtsFaelle } from "@/lib/vertrieb/datenschutz-recht-server";
 import { PlzFilter } from "@/components/admin-neu/vertrieb/plz-filter";
 import { deleteContacts } from "@/app/admin/vertrieb/actions";
 import { STAGES, shortName } from "@/lib/vertrieb/crm";
@@ -34,7 +35,7 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
     const daten = await ladeMetaLeads({ zeitraum: sp.zeitraum, stand: sp.stand });
     return (
       <Seite titel="Verkaufen" reiter="verkaufen" aktionen={aktionen}>
-        <AnsichtWahl meta />
+        <AnsichtWahl meta offenRecht={await offeneRechtsFaelle()} />
         <MetaLeads daten={daten} />
       </Seite>
     );
@@ -49,7 +50,7 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
 
   return (
     <Seite titel="Verkaufen" reiter="verkaufen" aktionen={aktionen}>
-      <AnsichtWahl meta={false} />
+      <AnsichtWahl meta={false} offenRecht={await offeneRechtsFaelle()} />
       <div className="mb-4" data-funktion="page-q--suche-nach-agentur-name-e-mail-ort-telefon page-stage--filter-stufe page-mail-filters--filter-cold-mail-erhalten-keine-geoeffnet page-li--filter-linkedin-status-und-plz-beginnt-mit">
         <FilterChips
           searchPlaceholder="Agentur, Name, E-Mail, Ort, Telefon"
@@ -208,20 +209,25 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
   );
 }
 
-/** Umschalter oben: alle Kontakte oder nur Meta-Leads (Quelle: Meta-Formular). */
-function AnsichtWahl({ meta }: { meta: boolean }) {
+/** Umschalter oben: alle Kontakte, nur Meta-Leads (Quelle: Meta-Formular) oder Datenschutz und Recht (eigene Liste). */
+function AnsichtWahl({ meta, offenRecht }: { meta: boolean; offenRecht: number }) {
   const klasse = (aktiv: boolean) =>
     cn(
-      "inline-flex min-h-10 items-center rounded-full px-3 text-sm font-medium sm:min-h-8",
+      "inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-sm font-medium sm:min-h-8",
       aktiv ? "bg-[color:var(--foreground)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
     );
   return (
-    <nav className="mb-3 flex gap-1" aria-label="Ansicht" data-funktion="meta-leads--ansicht-quelle-meta-formular">
+    <nav className="mb-3 flex gap-1 overflow-x-auto [scrollbar-width:none]" aria-label="Ansicht" data-funktion="meta-leads--ansicht-quelle-meta-formular">
       <Link href={KONTAKTE} aria-current={!meta ? "page" : undefined} className={klasse(!meta)}>
         Alle Kontakte
       </Link>
       <Link href={metaPfad({})} aria-current={meta ? "page" : undefined} className={klasse(meta)}>
         Meta-Leads
+      </Link>
+      {/* Datenschutz und Recht (Ole, 19.11.2026): Fälle aus der Kaltakquise, Zähler = offene Fälle */}
+      <Link href={`${V}/datenschutz`} className={klasse(false)} data-funktion="datenschutz-liste--datenschutz-und-recht-faelle-mit-frist-und-nachweis">
+        Datenschutz
+        {offenRecht ? <span className="ml-1.5 rounded-full bg-rose-600 px-1.5 text-xs font-semibold text-white">{offenRecht}</span> : null}
       </Link>
     </nav>
   );

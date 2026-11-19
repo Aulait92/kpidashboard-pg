@@ -2072,6 +2072,9 @@ model SalesEmail {
   eaccount        String?
   isAutoReply     Boolean           @default(false)
   sentiment       String? // POSITIV, NEGATIV, NEUTRAL, SPAETER (Später-Interesse)
+  /// Kategorie „Datenschutz/Recht“ (Ole, 19.11.2026, lib/vertrieb/datenschutz-recht.ts): auskunft | loeschung |
+  /// widerspruch | abmahnung. Gesetzt = Einordnung „Datenschutz/Recht“ statt positiv/neutral, Fall im Nachweisprotokoll
+  rechtsArt       String?
   sentAt          DateTime
   createdAt       DateTime          @default(now())
   /// Telefonnummern der Signatur in SalesEmailPhone eingetragen (lib/telefonsuche-server.ts), null = noch offen
@@ -5325,4 +5328,40 @@ model PraesentationEreignis {
 
   @@unique([appointmentId, quelle, art, folie])
   @@index([customerId, createdAt])
+}
+
+// Datenschutz und Recht im Vertrieb (Ole, 19.11.2026, lib/vertrieb/datenschutz-recht-server.ts): Nachweisprotokoll je
+// Fall (Auskunft, Löschung, Widerspruch, Abmahnung aus der Kaltakquise). Nur anhängen: ein Datenbank-Trigger verbietet
+// UPDATE und DELETE (Migration 20261119003100). Je Ereignis eine Zeile (eingang, antwort, loeschung); die Liste
+// „Datenschutz und Recht“ fasst sie je Fall zusammen. Keine Mail-Inhalte, keine Namen oder Adressen des Kontakts: nur die
+// Kontakt-ID (bzw. Hülle nach Art. 17). Kein Fremdschlüssel, damit das Protokoll das Löschen des Kontakts überdauert.
+model DatenschutzFallEreignis {
+  id         String   @id @default(cuid())
+  /// gleiche ID für alle Ereignisse eines Falls
+  fallId     String
+  /// Vertriebskontakt bzw. Hülle (ohne Fremdschlüssel)
+  contactId  String?
+  /// eingang | antwort | loeschung
+  ereignis   String
+  /// auskunft | loeschung | widerspruch | abmahnung
+  art        String
+  /// Eingang der Anfrage (bei jedem Ereignis wiederholt)
+  eingangAt  DateTime
+  /// Frist (Abmahnung: Eingang = sofort)
+  fristAt    DateTime
+  /// Zeitpunkt des Ereignisses (Antwort gesendet, gelöscht)
+  at         DateTime @default(now())
+  /// „automatisch“ bzw. Admin (E-Mail-Adresse des Logins)
+  wer        String
+  /// bei antwort: gesendete Vorlage (widerspruch | loeschung | auskunft); bei eingang: Quelle (antwort | admin)
+  detail     String?
+  /// Antwortziel in Instantly (ID der eingegangenen Mail, eigenes Postfach), damit die Antwort auch nach einer Löschung
+  /// im selben Thread rausgehen kann. Keine Inhalte.
+  instantlyEmailId String?
+  postfach   String?
+  createdAt  DateTime @default(now())
+
+  @@index([fallId])
+  @@index([contactId])
+  @@index([eingangAt])
 }

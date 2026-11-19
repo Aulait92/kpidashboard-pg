@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { prisma } from "@/lib/prisma";
 import { ensureInstantlyContact, recordReply } from "@/lib/vertrieb/instantly";
 import { vertriebArt17Loeschen, art17Email } from "@/lib/vertrieb/art17";
-import { emailHash, geloeschteAdressen, kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
+import { domainHash, emailHash, geloeschteAdressen, kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 import { vorUploadPruefen } from "@/lib/vertrieb/nie-kontaktieren-server";
 import { importContactsCsv } from "@/lib/vertrieb/import-contacts";
 import { ART17_NAME } from "@/lib/vertrieb/nie-kontaktieren";
@@ -108,15 +108,19 @@ describe("Vertrieb: Löschung auf Verlangen (Art. 17)", () => {
     expect(h.name).toBe(ART17_NAME);
     expect(h.email).toBe(art17Email(c.id));
     expect(h.altEmails).toEqual([]);
-    expect(h.sperrHashes).toEqual([emailHash(c.email)]);
+    // Adresse und eigene Agentur-Domain (Datenschutz und Recht, Ole 19.11.2026: nur eigene Domains) als Hash
+    expect([...h.sperrHashes].sort()).toEqual([emailHash(c.email), domainHash(`agentur-${tag}.test`)].sort());
     expect(h.art17GeloeschtAt).not.toBeNull();
     expect(h.nieKontaktierenAt).not.toBeNull();
     expect(h.nieKontaktierenGrund).toBe("widerspruch");
     for (const f of ["salutation", "firstName", "lastName", "phone", "street", "zip", "city", "url", "description", "enrichment", "detectedData"] as const) expect(h[f]).toBeNull();
     expect(h.emails).toHaveLength(0);
-    // nur die Aufgabe fürs alte Cold CRM (ohne Adresse)
-    expect(h.tasks.map((t) => t.title)).toEqual([expect.stringMatching(/^Im alten Cold CRM \(Airtable\) löschen, Frist \d{2}\.\d{2}\.\d{4}$/)]);
-    expect(h.tasks[0].note).not.toContain(c.email);
+    // nur die Aufgaben fürs alte Cold CRM und „Löschung bestätigen“ (Datenschutz und Recht), ohne Adresse
+    expect(h.tasks.map((t) => t.title).sort()).toEqual([
+      expect.stringMatching(/^Im alten Cold CRM \(Airtable\) löschen, Frist \d{2}\.\d{2}\.\d{4}$/),
+      expect.stringMatching(/^Löschung bestätigen \(Art\. 17\), Frist \d{2}\.\d{2}\.\d{4}$/),
+    ]);
+    for (const t of h.tasks) expect(t.note ?? "").not.toContain(c.email);
     expect(await prisma.salesContact.findUnique({ where: { id: zweiter.id } })).toBeNull();
     expect(await prisma.salesActivity.count({ where: { contactId: zweiter.id } })).toBe(0);
     expect(await prisma.loeschprotokoll.count({ where: { art: "vertriebskontakt", entityId: zweiter.id } })).toBe(1);
@@ -128,7 +132,7 @@ describe("Vertrieb: Löschung auf Verlangen (Art. 17)", () => {
     expect(JSON.stringify(h)).not.toContain("Muster");
 
     // Instantly: Adresse auf der Blocklist (einmal), beide Leads dieser Adresse gelöscht (nicht der fremde)
-    expect(reqs("POST", "/block-lists-entries").map((x) => x.body)).toEqual([{ bl_value: c.email }]);
+    expect(reqs("POST", "/block-lists-entries").map((x) => x.body)).toEqual([{ bl_value: c.email }, { bl_value: `agentur-${tag}.test` }]);
     expect(blocklist).toContain(c.email);
     expect(reqs("DELETE", "/leads/").map((x) => x.path).sort()).toEqual(["/leads/lead-a", "/leads/lead-b"]);
 
@@ -154,7 +158,7 @@ describe("Vertrieb: Löschung auf Verlangen (Art. 17)", () => {
     const nach = await prisma.salesContact.findUniqueOrThrow({ where: { id: c.id }, include: { emails: true, tasks: true } });
     expect(nach.emails).toHaveLength(0);
     expect(nach.tasks.map((t) => t.title)).toContain("Neue Nachricht einer auf Verlangen gelöschten Adresse");
-    expect(nach.tasks).toHaveLength(2);
+    expect(nach.tasks).toHaveLength(3); // Cold CRM, „Löschung bestätigen“, neue Nachricht
   });
 
   it("Ausnahme: Adresse ist Lead eines Kunden → nur sperren und Aufgabe „Löschverlangen prüfen“", async () => {

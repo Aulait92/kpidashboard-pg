@@ -108,6 +108,7 @@ export function ContactMore({
   linkedinUrl,
   duplicates = [],
   geloescht = false,
+  gesperrt = false,
 }: {
   contactId: string;
   name: string;
@@ -116,6 +117,8 @@ export function ContactMore({
   duplicates?: MergeCandidate[];
   /** schon auf Verlangen gelöscht (Art. 17): kein zweites Löschen anbieten */
   geloescht?: boolean;
+  /** „nie kontaktieren“ bzw. Datenschutzfall: nur „Auf Verlangen löschen (Art. 17)“, damit der Sperrvermerk bleibt */
+  gesperrt?: boolean;
 }) {
   const [open, setOpen] = useState<"menu" | "delete" | "merge" | "art17" | null>(null);
   const [pending, start] = useTransition();
@@ -127,7 +130,7 @@ export function ContactMore({
     { label: "Mit anderem Kontakt zusammenführen", icon: GitMerge, onSelect: () => setTimeout(() => setOpen("merge"), 0) },
     // Löschverlangen per Mail oder Telefon (Art. 17, Ole 19.11.2026): gleiche Logik wie bei einer Antwort
     ...(geloescht ? [] : [{ label: "Auf Verlangen löschen (Art. 17)", icon: ShieldX, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("art17"), 0) }]),
-    { label: "Kontakt löschen", icon: Trash2, tone: "danger", onSelect: () => setTimeout(() => setOpen("delete"), 0) },
+    ...(gesperrt || geloescht ? [] : [{ label: "Kontakt löschen", icon: Trash2, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("delete"), 0) }]),
   ];
   return (
     <>

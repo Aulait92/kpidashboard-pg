@@ -114,14 +114,14 @@ describe("Einstufung bleibt eine Absage", () => {
   });
 });
 
-describe("Frist für die Auskunft (ein Monat)", () => {
-  it("gleicher Kalendertag im Folgemonat, am Monatsende gekürzt", () => {
-    expect(auskunftsFrist(new Date("2026-11-19T10:00:00Z")).toISOString().slice(0, 10)).toBe("2026-12-19");
-    expect(auskunftsFrist(new Date("2027-01-31T10:00:00Z")).toISOString().slice(0, 10)).toBe("2027-02-28");
-    expect(auskunftsFrist(new Date("2026-12-15T10:00:00Z")).toISOString().slice(0, 10)).toBe("2027-01-15");
+describe("Frist für Datenschutzanfragen (7 Tage, Ole 19.11.2026; vorher ein Monat)", () => {
+  it("7 Tage ab Eingang", () => {
+    expect(auskunftsFrist(new Date("2026-11-19T10:00:00Z")).toISOString().slice(0, 10)).toBe("2026-11-26");
+    expect(auskunftsFrist(new Date("2027-01-28T10:00:00Z")).toISOString().slice(0, 10)).toBe("2027-02-04");
+    expect(auskunftsFrist(new Date("2026-12-28T10:00:00Z")).toISOString().slice(0, 10)).toBe("2027-01-04");
   });
 
   it("Titel der Aufgabe", () => {
-    expect(auskunftsAufgabe(new Date("2026-11-19T10:00:00Z"))).toBe("Auskunft nach Art. 15 beantworten, Frist 19.12.2026");
+    expect(auskunftsAufgabe(new Date("2026-11-19T10:00:00Z"))).toBe("Auskunft nach Art. 15 beantworten, Frist 26.11.2026");
   });
 });

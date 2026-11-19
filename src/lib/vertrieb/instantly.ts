@@ -6,7 +6,8 @@ import { CAMPAIGN_STATUS } from "@/lib/vertrieb/crm";
 import { captureFromLead, captureFromMail } from "@/lib/vertrieb/kontaktdaten-server";
 import { indexMailPhones } from "@/lib/telefonsuche-server";
 import { classifyReply, isAutoReplyText, sentimentFromInstantly, type Sentiment } from "@/lib/vertrieb/sentiment";
-import { dsgvoAusAntwort } from "@/lib/vertrieb/nie-kontaktieren";
+import { dsgvoAusAntwort, type AntwortSperrGrund } from "@/lib/vertrieb/nie-kontaktieren";
+import { KATEGORIE_RECHT, RECHTS_ART_LABEL, rechtsArtAusBefund, type RechtsArt } from "@/lib/vertrieb/datenschutz-recht";
 import { instantlySperreErneuern, nieKontaktierenSetzen } from "@/lib/vertrieb/nie-kontaktieren-server";
 
 const API = "https://api.instantly.ai/api/v2";
@@ -379,11 +380,30 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
     });
     // Text kam erst jetzt dazu: Nummern der Signatur für die Telefonsuche neu eintragen
     if (!dup.text && !dup.html && (r.text || r.html)) await indexMailPhones(dup.id).catch((e) => reportError(e, "telefonsuche-index"));
+    // … und auf Datenschutz bzw. Recht prüfen (Vorrang, Ole 19.11.2026): Sperre und Fall wie bei einer neuen Antwort
+    if (!dup.text && r.text && !dup.rechtsArt) {
+      const b = dsgvoAusAntwort(r.text, r.subject);
+      const art = rechtsArtAusBefund(b);
+      if (art) {
+        await prisma.salesEmail.update({ where: { id: dup.id }, data: { isAutoReply: false, sentiment: "NEGATIV" } });
+        await rechtsFallAusAntwort(contactId, { ...r, instantlyId: dup.instantlyId ?? r.instantlyId, eaccount: dup.eaccount ?? r.eaccount }, dup.id, art, b.grund);
+        // Abmahnung (Ole, 19.11.2026): nie automatisch löschen, Belege sichern; Löschung erst nach Prüfung per Knopf
+        if (b.loeschen && art !== "abmahnung") {
+          await import("@/lib/vertrieb/art17")
+            .then((m) => m.vertriebArt17Loeschen(contactId, { quelle: "antwort", eingang: r.sentAt, auskunftOffen: b.auskunft, grund: b.grund ?? "widerspruch" }))
+            .catch((e) => reportError(e, "vertrieb-art17"));
+        }
+      }
+    }
     return false;
   }
   // Eingangsbestätigungen/Abwesenheitsnotizen auch erkennen, wenn Instantly sie nicht markiert
   const instantlyPositive = sentimentFromInstantly(r.interest) === "POSITIV";
-  r.isAutoReply = r.isAutoReply || (!instantlyPositive && isAutoReplyText(r.subject, stripQuoted(r.text ?? "")));
+  const autoText = isAutoReplyText(r.subject, stripQuoted(r.text ?? ""));
+  // Datenschutz und Recht hat Vorrang (Ole, 19.11.2026): als automatisch markiert, aber im Text keine Abwesenheitsnotiz
+  // und mit Rechtsbezug (z. B. Abmahnung über ein Ticketsystem) → echte Antwort
+  if (r.isAutoReply && !autoText && rechtsArtAusBefund(dsgvoAusAntwort(r.text, r.subject))) r.isAutoReply = false;
+  r.isAutoReply = r.isAutoReply || (!instantlyPositive && autoText);
   // Klare Absage im Text hat Vorrang vor Instantlys Einstufung (deren KI markiert Absagen teils als „interessiert“).
   // Ebenso Später-Interesse („aktuell nicht, aber ab März“): weder Absage noch sofortige Aufgabe, sondern Follow-up.
   const own = stripQuoted(r.text ?? "");
@@ -391,6 +411,8 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
   // Ausdrückliches Löschverlangen (Art. 17) löscht danach automatisch (lib/vertrieb/art17.ts).
   const befund = r.isAutoReply ? null : dsgvoAusAntwort(r.text, r.subject);
   const sperrGrund = befund?.grund ?? null;
+  // Kategorie „Datenschutz/Recht“ (auskunft | loeschung | widerspruch | abmahnung), lib/vertrieb/datenschutz-recht.ts
+  const rechtsArt = befund ? rechtsArtAusBefund(befund) : null;
   let textSentiment: Sentiment = sperrGrund ? "NEGATIV" : classifyReply(own, r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""), r.sentAt);
   // Regeln übersehen „später“ (Ole, 18.11.2026): KI prüft Antworten mit Hinweis auf später, nie klare Absagen
   let spaeter: { dueAt: Date; timing: string | null } | null = null;
@@ -409,6 +431,7 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
   const saved = await prisma.salesEmail.create({
     data: {
       sentiment,
+      rechtsArt,
       contactId,
       instantlyId: r.instantlyId ?? null,
       campaign: r.campaign ?? null,
@@ -436,7 +459,9 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
   const snippet = stripQuoted(r.text ?? "").slice(0, 600) || r.subject || "";
   const label = r.isAutoReply
     ? "Automatische Antwort"
-    : `Antwort erhalten (${sentiment === "POSITIV" ? "positiv" : sentiment === "NEGATIV" ? "negativ" : sentiment === "SPAETER" ? "später wieder" : "neutral"})`;
+    : rechtsArt
+      ? `Antwort erhalten (${KATEGORIE_RECHT}: ${RECHTS_ART_LABEL[rechtsArt]})`
+      : `Antwort erhalten (${sentiment === "POSITIV" ? "positiv" : sentiment === "NEGATIV" ? "negativ" : sentiment === "SPAETER" ? "später wieder" : "neutral"})`;
   // Platzhalter aus einem früheren Abgleich (nur Zähler, ohne Text) ergänzen statt doppelt anlegen
   const placeholder = await prisma.salesActivity.findFirst({
     where: {
@@ -454,8 +479,10 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
       data: { contactId, type: "COLD_MAIL", outcome: label, note: r.subject ? `${r.subject}\n\n${snippet}` : snippet, occurredAt: r.sentAt },
     });
   }
-  // Sperren (Follow-up stoppen, bei Datenschutzfragen Aufgabe „Auskunft nach Art. 15“, Instantly-Blocklist)
-  if (sperrGrund) {
+  // Sperren (Follow-up stoppen, bei Datenschutzfragen Aufgabe „Auskunft nach Art. 15“, Instantly-Blocklist). Rechtsfall:
+  // zusätzlich eigene Domain, Aufgabe mit Frist, bei Abmahnung Push, Nachweisprotokoll (lib/vertrieb/datenschutz-recht-server.ts)
+  if (rechtsArt) await rechtsFallAusAntwort(contactId, r, saved.id, rechtsArt, sperrGrund);
+  else if (sperrGrund) {
     await nieKontaktierenSetzen(contactId, sperrGrund, { at: r.sentAt, quelle: "Antwort per Mail" }).catch((e) => reportError(e, "nie-kontaktieren"));
   }
   // Aufgabe nur bei positiver Antwort; Absage räumt offene Antwort-Aufgaben weg
@@ -470,12 +497,32 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
       .catch((e) => reportError(e, "followup-reply"));
   }
   // Löschverlangen (Art. 17): zuletzt, damit nichts danach wieder Daten anlegt
-  if (befund?.loeschen) {
+  // Abmahnung (Ole, 19.11.2026): nie automatisch löschen, Belege sichern; Löschung erst nach Prüfung per Knopf
+  if (befund?.loeschen && rechtsArt !== "abmahnung") {
     await import("@/lib/vertrieb/art17")
       .then((m) => m.vertriebArt17Loeschen(contactId, { quelle: "antwort", eingang: r.sentAt, auskunftOffen: befund.auskunft, grund: sperrGrund ?? "widerspruch" }))
       .catch((e) => reportError(e, "vertrieb-art17"));
   }
   return true;
+}
+
+/** Fall „Datenschutz und Recht“ aus einer Antwort; bei einem Fehler wenigstens sperren (Vorrang). */
+async function rechtsFallAusAntwort(contactId: string, r: Reply, emailId: string, art: RechtsArt, grund: AntwortSperrGrund | null) {
+  try {
+    const { rechtsFallAnlegen } = await import("@/lib/vertrieb/datenschutz-recht-server");
+    await rechtsFallAnlegen(contactId, {
+      art,
+      grund: grund === "datenschutz" ? "datenschutz" : "widerspruch",
+      eingang: r.sentAt,
+      quelle: "antwort",
+      emailId,
+      instantlyEmailId: r.instantlyId ?? null,
+      postfach: r.eaccount ?? null,
+    });
+  } catch (e) {
+    reportError(e, "datenschutz-recht");
+    await nieKontaktierenSetzen(contactId, grund ?? "widerspruch", { at: r.sentAt, quelle: "Antwort per Mail" }).catch((err) => reportError(err, "nie-kontaktieren"));
+  }
 }
 
 /** Absage per Mail: offene Antwort-Aufgaben entfernen, frühe Kontakte auf „Verloren – kein Interesse“. */

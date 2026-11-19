@@ -278,9 +278,20 @@ export async function instantlyNachholenAction(_p: NachholenState, fd: FormData)
 
 // ─── Kontakte löschen ───────────────────────────────────────────────────
 // Löscht auch Verlauf, Aufgaben und Cold-Mail-Status (Cascade).
+/** Gesperrte Kontakte (nie kontaktieren, Fall „Datenschutz und Recht“) nie normal löschen: der Sperrvermerk ginge
+ *  verloren und ein Import könnte sie wieder anlegen. Dafür gibt es „Auf Verlangen löschen (Art. 17)“ (Hülle mit Sperrvermerk). */
+async function gesperrteIds(ids: string[]): Promise<Set<string>> {
+  const [nie, recht] = await Promise.all([
+    prisma.salesContact.findMany({ where: { id: { in: ids }, OR: [{ nieKontaktierenAt: { not: null } }, { art17GeloeschtAt: { not: null } }] }, select: { id: true } }),
+    prisma.datenschutzFallEreignis.findMany({ where: { contactId: { in: ids } }, distinct: ["contactId"], select: { contactId: true } }),
+  ]);
+  return new Set([...nie.map((n) => n.id), ...recht.map((r) => r.contactId ?? "")]);
+}
+
 export async function deleteContact(fd: FormData) {
   await requireAuth();
   const id = s(fd, "contactId");
+  if (id && (await gesperrteIds([id])).has(id)) redirect(await ziel(`/admin/vertrieb/kontakte/${id}`));
   if (id) {
     const gone = await prisma.salesContact.delete({ where: { id } });
     await audit("contact.delete", { entity: "SalesContact", entityId: id, details: { name: gone.name } });
@@ -294,7 +305,9 @@ export async function deleteContact(fd: FormData) {
 
 export async function deleteContacts(fd: FormData) {
   await requireAuth();
-  const ids = fd.getAll("ids").filter((v): v is string => typeof v === "string" && !!v);
+  const alle = fd.getAll("ids").filter((v): v is string => typeof v === "string" && !!v);
+  const gesperrt = await gesperrteIds(alle);
+  const ids = alle.filter((id) => !gesperrt.has(id));
   if (ids.length) {
     await prisma.salesContact.deleteMany({ where: { id: { in: ids } } });
     await import("@/lib/loeschprotokoll").then((m) => m.protokolliereLoeschung(ids.map((id) => ({ art: "vertriebskontakt" as const, entityId: id, grund: "admin" }))));
@@ -417,7 +430,9 @@ export async function setReplySentiment(fd: FormData) {
   const id = s(fd, "id")!;
   const choice = s(fd, "sentiment");
   if (!choice || !["POSITIV", "NEGATIV", "NEUTRAL", "AUTO", "SPAETER"].includes(choice)) return;
-  const before = await prisma.salesEmail.findUniqueOrThrow({ where: { id }, select: { sentiment: true } });
+  const before = await prisma.salesEmail.findUniqueOrThrow({ where: { id }, select: { sentiment: true, rechtsArt: true } });
+  // Datenschutz/Recht bleibt so eingeordnet (Ole, 19.11.2026): nie neutral, positiv oder automatisch
+  if (before.rechtsArt) return;
   const e = await prisma.salesEmail.update({
     where: { id },
     data: choice === "AUTO" ? { isAutoReply: true, sentiment: "NEUTRAL" } : { isAutoReply: false, sentiment: choice },
@@ -499,7 +514,9 @@ export async function setNieKontaktierenAction(contactId: string, an: boolean): 
   if (!contactId) return { ok: false, error: "Kontakt fehlt." };
   const m = await import("@/lib/vertrieb/nie-kontaktieren-server");
   if (an) await m.nieKontaktierenSetzen(contactId, "manuell", { quelle: "von Hand in der Kontaktakte" });
-  else await m.nieKontaktierenAufheben(contactId);
+  else if (await prisma.datenschutzFallEreignis.findFirst({ where: { contactId }, select: { id: true } })) {
+    return { ok: false, error: "Fall „Datenschutz und Recht“: die Sperre bleibt dauerhaft." };
+  } else await m.nieKontaktierenAufheben(contactId);
   await audit(an ? "vertrieb.nie_kontaktieren" : "vertrieb.nie_kontaktieren_aufgehoben", { entity: "SalesContact", entityId: contactId });
   refresh(contactId);
   return { ok: true };
@@ -510,10 +527,10 @@ export async function setNieKontaktierenAction(contactId: string, an: boolean): 
  * Logik wie bei einer Antwort (lib/vertrieb/art17.ts): Kunden, Angebote, Leads und Empfehlungen werden nur gesperrt.
  */
 export async function art17LoeschenAction(contactId: string): Promise<{ ok: boolean; message: string }> {
-  await requireAuth();
+  const session = await requireAuth();
   if (!contactId) return { ok: false, message: "Kontakt fehlt." };
   const { vertriebArt17Loeschen, ART17_AUSNAHME_LABEL } = await import("@/lib/vertrieb/art17");
-  const r = await vertriebArt17Loeschen(contactId, { quelle: "admin" });
+  const r = await vertriebArt17Loeschen(contactId, { quelle: "admin", wer: session.email });
   refresh(contactId);
   if (r.status === "geloescht") {
     return { ok: true, message: r.instantly === "fehler" ? "Gelöscht. Instantly war nicht erreichbar: Aufgabe zum Nachholen angelegt." : "Gelöscht. Der Sperrvermerk bleibt." };

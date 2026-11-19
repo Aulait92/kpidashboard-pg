@@ -5,7 +5,8 @@
 // Betreffzeilen nur, wenn mindestens BETREFF_MIN_KONTAKTE verschiedene Kontakte darauf geantwortet haben
 // (personalisierte Betreffs mit Agenturnamen fallen so heraus).
 
-export type Stimmung = "POSITIV" | "NEGATIV" | "NEUTRAL" | "SPAETER";
+/** RECHT: Antwort mit Datenschutz- bzw. Rechtsfall (SalesEmail.rechtsArt, Ole 19.11.2026), nie „neutral“ */
+export type Stimmung = "POSITIV" | "NEGATIV" | "NEUTRAL" | "SPAETER" | "RECHT";
 
 export type AwKampagne = { id: string; name: string; ignored: boolean };
 export type AwLead = {
@@ -29,6 +30,8 @@ export type AwAntwort = {
   subject: string | null;
   text: string | null;
   sentiment: string | null;
+  /** Datenschutz/Recht: auskunft | loeschung | widerspruch | abmahnung (Kategorie „Datenschutz/Recht“) */
+  rechtsArt?: string | null;
   isAutoReply: boolean;
   sentAt: Date;
 };
@@ -42,12 +45,14 @@ export type KampagnenZeile = {
   positiv: number;
   spaeter: number;
   absagen: number;
+  /** Datenschutz/Recht (Auskunft, Löschung, Widerspruch, Abmahnung), zählt nicht als Absage */
+  recht: number;
   neutral: number;
   bounces: number;
   abmeldungen: number;
   termine: number;
 };
-export type PostfachZeile = { postfach: string; antworten: number; positiv: number; spaeter: number; absagen: number; neutral: number; termine: number };
+export type PostfachZeile = { postfach: string; antworten: number; positiv: number; spaeter: number; absagen: number; recht: number; neutral: number; termine: number };
 export type BetreffZeile = { kampagne: string; betreff: string; antworten: number; positiv: number; spaeter: number; absagen: number };
 export type EinwandZeile = { kategorie: string; anzahl: number };
 
@@ -128,6 +133,8 @@ export const EINWAND_KATEGORIEN: { kategorie: string; muster: RegExp[] }[] = [
   },
 ];
 export const OHNE_BEGRUENDUNG = "Kein Interesse ohne Begründung";
+/** Antworten mit Datenschutz- bzw. Rechtsfall: eigene Kategorie statt Stichwörtern (Ole, 19.11.2026) */
+export const KATEGORIE_RECHT = "Datenschutz/Recht";
 export const KATEGORIE_SPAETER = "Zeitpunkt passt nicht, später";
 
 /** Einwand-Kategorien einer Absage- oder Später-Antwort (Text ohne Zitat). */
@@ -167,6 +174,8 @@ function stimmungAusInteresse(interest: string | null): Stimmung | null {
   return null;
 }
 const alsStimmung = (s: string | null): Stimmung => (s === "POSITIV" || s === "NEGATIV" || s === "SPAETER" ? s : "NEUTRAL");
+/** Stimmung einer Antwort: Datenschutz/Recht vor der gespeicherten Einordnung */
+const stimmungVon = (a: AwAntwort): Stimmung => (a.rechtsArt ? "RECHT" : alsStimmung(a.sentiment));
 
 // ─── Auswertung ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -206,7 +215,7 @@ export function auswerten(input: { kampagnen: AwKampagne[]; leads: AwLead[]; ant
     const zeilen: KampagnenZeile[] = [];
     for (const name of namen) {
       const leads = leadsJeKampagne.get(name) ?? [];
-      const z: KampagnenZeile = { kampagne: name, angeschrieben: 0, geoeffnet: 0, antworten: 0, positiv: 0, spaeter: 0, absagen: 0, neutral: 0, bounces: 0, abmeldungen: 0, termine: 0 };
+      const z: KampagnenZeile = { kampagne: name, angeschrieben: 0, geoeffnet: 0, antworten: 0, positiv: 0, spaeter: 0, absagen: 0, recht: 0, neutral: 0, bounces: 0, abmeldungen: 0, termine: 0 };
       for (const l of leads) {
         if (l.sentAt && inFenster(l.sentAt)) z.angeschrieben++;
         if (l.openCount > 0 && (!fenster || inFenster(l.lastOpenAt))) z.geoeffnet++;
@@ -224,7 +233,7 @@ export function auswerten(input: { kampagnen: AwKampagne[]; leads: AwLead[]; ant
       const leadVon = new Map(leads.map((l) => [l.contactId, l]));
       const stimmungen = new Map<string, Stimmung>();
       for (const [cid, a] of letzte) {
-        const s = alsStimmung(a.sentiment);
+        const s = stimmungVon(a);
         stimmungen.set(cid, s === "NEUTRAL" ? (stimmungAusInteresse(leadVon.get(cid)?.interest ?? null) ?? s) : s);
       }
       for (const l of leads) {
@@ -236,6 +245,7 @@ export function auswerten(input: { kampagnen: AwKampagne[]; leads: AwLead[]; ant
         z.antworten++;
         if (s === "POSITIV") z.positiv++;
         else if (s === "SPAETER") z.spaeter++;
+        else if (s === "RECHT") z.recht++;
         else if (s === "NEGATIV") z.absagen++;
         else z.neutral++;
       }
@@ -264,12 +274,13 @@ export function auswerten(input: { kampagnen: AwKampagne[]; leads: AwLead[]; ant
     }
     const zeilen: PostfachZeile[] = [];
     for (const [postfach, kontakte] of je) {
-      const z: PostfachZeile = { postfach, antworten: 0, positiv: 0, spaeter: 0, absagen: 0, neutral: 0, termine: 0 };
+      const z: PostfachZeile = { postfach, antworten: 0, positiv: 0, spaeter: 0, absagen: 0, recht: 0, neutral: 0, termine: 0 };
       for (const [cid, a] of kontakte) {
         z.antworten++;
-        const s = alsStimmung(a.sentiment);
+        const s = stimmungVon(a);
         if (s === "POSITIV") z.positiv++;
         else if (s === "SPAETER") z.spaeter++;
+        else if (s === "RECHT") z.recht++;
         else if (s === "NEGATIV") z.absagen++;
         else z.neutral++;
         if (terminNach(cid, erste.get(postfach)!.get(cid)!, fenster)) z.termine++;
@@ -314,9 +325,9 @@ export function auswerten(input: { kampagnen: AwKampagne[]; leads: AwLead[]; ant
     const jeKontakt = new Map<string, Set<string>>();
     for (const a of antworten) {
       if (fenster && a.sentAt < fenster) continue;
-      if (a.sentiment !== "NEGATIV" && a.sentiment !== "SPAETER") continue;
+      if (a.sentiment !== "NEGATIV" && a.sentiment !== "SPAETER" && !a.rechtsArt) continue;
       const set = jeKontakt.get(a.contactId) ?? new Set<string>();
-      for (const k of einwandKategorien(a.text, a.subject, a.sentiment)) set.add(k);
+      for (const k of a.rechtsArt ? [KATEGORIE_RECHT] : einwandKategorien(a.text, a.subject, a.sentiment)) set.add(k);
       jeKontakt.set(a.contactId, set);
     }
     const zaehler = new Map<string, number>();
@@ -325,7 +336,7 @@ export function auswerten(input: { kampagnen: AwKampagne[]; leads: AwLead[]; ant
       const ks = set.size > 1 ? [...set].filter((k) => k !== OHNE_BEGRUENDUNG) : [...set];
       for (const k of ks) zaehler.set(k, (zaehler.get(k) ?? 0) + 1);
     }
-    const reihenfolge = [...EINWAND_KATEGORIEN.map((k) => k.kategorie), OHNE_BEGRUENDUNG];
+    const reihenfolge = [KATEGORIE_RECHT, ...EINWAND_KATEGORIEN.map((k) => k.kategorie), OHNE_BEGRUENDUNG];
     return [...zaehler]
       .map(([kategorie, anzahl]) => ({ kategorie, anzahl }))
       .sort((a, b) => b.anzahl - a.anzahl || reihenfolge.indexOf(a.kategorie) - reihenfolge.indexOf(b.kategorie))
@@ -352,6 +363,7 @@ export const HINWEISE = [
   "Sequenzschritte speichert die App nicht (weder beim Versand noch bei der Antwort); Auswertung je Schritt nur über die Instantly-API.",
   "Betreffzeilen aus den Antworten („Re:“ entfernt, Ziffern als #); nur Betreffs mit mindestens 3 antwortenden Kontakten, der Rest ist zusammengefasst.",
   "Einwände: Stichwort-Kategorien über Absagen und Später-Antworten, je Kontakt jede Kategorie einmal; mehrere Kategorien je Antwort möglich.",
+  "Datenschutz/Recht: Antworten mit Auskunftsverlangen, Löschverlangen, Widerspruch oder Abmahnung bzw. rechtlicher Drohung (SalesEmail.rechtsArt) zählen in eigener Spalte, nicht als Absage oder neutral, und als Einwand „Datenschutz/Recht“.",
 ];
 
 // ─── Markdown ────────────────────────────────────────────────────────────────────────────────────────
@@ -372,7 +384,7 @@ function summe<T extends Record<string, unknown>>(zeilen: T[], felder: (keyof T)
 }
 
 function kampagnenTabelle(zeilen: KampagnenZeile[]): string {
-  const felder = ["angeschrieben", "geoeffnet", "antworten", "positiv", "spaeter", "absagen", "neutral", "bounces", "abmeldungen", "termine"] as const;
+  const felder = ["angeschrieben", "geoeffnet", "antworten", "positiv", "spaeter", "absagen", "recht", "neutral", "bounces", "abmeldungen", "termine"] as const;
   const s = summe(zeilen, [...felder]);
   const zeile = (name: string, z: Record<string, number>) => [
     name,
@@ -384,20 +396,21 @@ function kampagnenTabelle(zeilen: KampagnenZeile[]): string {
     quote(z.positiv, z.angeschrieben),
     z.spaeter,
     z.absagen,
+    z.recht,
     z.neutral,
     z.bounces,
     quote(z.bounces, z.angeschrieben),
     z.abmeldungen,
     z.termine,
   ];
-  const kopf = ["Kampagne", "Angeschrieben", "Geöffnet", "Antworten", "Antwortquote", "Positiv", "Positivquote", "Später", "Absagen", "Neutral", "Bounces", "Bouncequote", "Abgemeldet", "Termine"];
+  const kopf = ["Kampagne", "Angeschrieben", "Geöffnet", "Antworten", "Antwortquote", "Positiv", "Positivquote", "Später", "Absagen", "Datenschutz/Recht", "Neutral", "Bounces", "Bouncequote", "Abgemeldet", "Termine"];
   return tabelle(kopf, zeilen.length ? [...zeilen.map((z) => zeile(z.kampagne, z as unknown as Record<string, number>)), zeile("**Summe**", s)] : []);
 }
 
 function postfachTabelle(zeilen: PostfachZeile[]): string {
-  const s = summe(zeilen, ["antworten", "positiv", "spaeter", "absagen", "neutral", "termine"]);
-  const zeile = (name: string, z: Record<string, number>) => [name, z.antworten, z.positiv, quote(z.positiv, z.antworten), z.spaeter, z.absagen, z.neutral, z.termine];
-  return tabelle(["Postfach", "Antworten", "Positiv", "Anteil positiv", "Später", "Absagen", "Neutral", "Termine"], zeilen.length ? [...zeilen.map((z) => zeile(z.postfach, z as unknown as Record<string, number>)), zeile("**Summe**", s)] : []);
+  const s = summe(zeilen, ["antworten", "positiv", "spaeter", "absagen", "recht", "neutral", "termine"]);
+  const zeile = (name: string, z: Record<string, number>) => [name, z.antworten, z.positiv, quote(z.positiv, z.antworten), z.spaeter, z.absagen, z.recht, z.neutral, z.termine];
+  return tabelle(["Postfach", "Antworten", "Positiv", "Anteil positiv", "Später", "Absagen", "Datenschutz/Recht", "Neutral", "Termine"], zeilen.length ? [...zeilen.map((z) => zeile(z.postfach, z as unknown as Record<string, number>)), zeile("**Summe**", s)] : []);
 }
 
 export function alsMarkdown(a: Auswertung): string {

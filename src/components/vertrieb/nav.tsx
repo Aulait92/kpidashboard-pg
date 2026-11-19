@@ -16,6 +16,8 @@ export const LINKS: { href: string; label: string; exact?: boolean }[] = [
   { href: `${BASE}/angebote`, label: "Angebote" },
   // Termin-Übersicht (Ole, 18.11.2026) gibt es nur im neuen Admin: die Seite leitet nach Verkaufen → Termine weiter
   { href: `${BASE}/termine`, label: "Termine" },
+  // Datenschutz und Recht (Ole, 19.11.2026): Fälle aus der Kaltakquise mit Frist und Nachweis
+  { href: `${BASE}/datenschutz`, label: "Datenschutz" },
   { href: "/admin/marketing", label: "Marketing" },
 ];
 

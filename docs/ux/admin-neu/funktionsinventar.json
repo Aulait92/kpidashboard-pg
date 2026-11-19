@@ -5386,5 +5386,29 @@
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
   "ort_neu": "src/components/admin-neu/vertrieb/meta-leads.tsx"
+ },
+ {
+  "heute": "/admin/vertrieb/datenschutz",
+  "funktion": "Datenschutz und Recht: Fälle aus der Kaltakquise mit Eingang, Frist, Antwort, Löschung (Nachweis)",
+  "quelle": "app/admin/vertrieb/datenschutz/page.tsx",
+  "neu": "Verkaufen › Kontakte › Datenschutz",
+  "status": "neu",
+  "demo_view": "vertrieb-datenschutz",
+  "id": "datenschutz-liste--datenschutz-und-recht-faelle-mit-frist-und-nachweis",
+  "bereich": "verkaufen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/datenschutz/page.tsx, src/app/admin/neu/vertrieb/kontakte/page.tsx"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Datenschutz und Recht in der Kontaktakte: Antwortvorlage (Widerspruch, Löschung, Auskunft) prüfen und senden",
+  "quelle": "components/vertrieb/datenschutz-recht.tsx",
+  "neu": "Kontaktakte › Datenschutz und Recht",
+  "status": "neu",
+  "demo_view": "kontakt",
+  "id": "datenschutz-recht--antwortvorlage-pruefen-und-senden",
+  "bereich": "verkaufen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  }
 ]

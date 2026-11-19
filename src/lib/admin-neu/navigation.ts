@@ -105,6 +105,8 @@ export const BEREICHE: NeuBereich[] = [
       { view: "marketing-empfehlungen", pfad: n("/marketing/empfehlungen"), titel: "Empfehlungen", alt: ["/admin/marketing/empfehlungen"], reiter: { gruppe: "marketing", label: "Empfehlungen" }, suchwoerter: "Marketing Kollegen empfehlen Prämie", fertig: true },
       { view: "marketing-unterlagen", pfad: n("/marketing/unterlagen"), titel: "Unterlagen", alt: ["/admin/marketing/unterlagen"], reiter: { gruppe: "marketing", label: "Unterlagen" }, suchwoerter: "Marketing Präsentation", fertig: true },
       { view: "marketing-webseite", pfad: n("/marketing/webseite"), titel: "Webseite & Rechner", alt: ["/admin/einstellungen/rechner"], reiter: { gruppe: "marketing", label: "Webseite & Rechner" }, suchwoerter: "Marketing Preise Rechner", fertig: true },
+      // Datenschutz und Recht (Ole, 19.11.2026): Liste der Fälle aus der Kaltakquise, erreichbar über Kontakte (Umschalter)
+      { view: "vertrieb-datenschutz", pfad: n("/vertrieb/datenschutz"), titel: "Datenschutz und Recht", alt: ["/admin/vertrieb/datenschutz"], suchwoerter: "DSGVO Auskunft Löschung Widerspruch Abmahnung Art. 15 Art. 17", fertig: true },
       { view: "kontakt-neu", pfad: n("/vertrieb/kontakte/neu"), titel: "Neuer Kontakt", alt: ["/admin/vertrieb/kontakte/neu"], fertig: true },
       { view: "kontakt", pfad: n("/vertrieb/kontakte/[id]"), titel: "Kontakt", alt: ["/admin/vertrieb/kontakte/[id]"], fertig: true },
       { view: "angebot-neu", pfad: n("/vertrieb/kontakte/[id]/angebot"), titel: "Angebot erstellen", alt: ["/admin/vertrieb/kontakte/[id]/angebot"], fertig: true },

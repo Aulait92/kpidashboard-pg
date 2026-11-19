@@ -5,6 +5,7 @@ import { ConfirmButton } from "@/components/vertrieb/confirm-button";
 import { ContactEmails, ContactPhones } from "@/components/vertrieb/contact-merge";
 import { WhatsappErlaubt } from "@/components/vertrieb/whatsapp-erlaubt";
 import { NieKontaktieren } from "@/components/vertrieb/nie-kontaktieren";
+import { KATEGORIE_RECHT, RECHTS_ART_LABEL, istRechtsArt } from "@/lib/vertrieb/datenschutz-recht";
 import { AdminRescheduleButton, AdminTerminButton, type TerminTypeOption } from "@/components/termin/admin-termin";
 import { adminBookTerminAction, adminRescheduleTerminAction } from "@/app/admin/vertrieb/buchungsseite/actions";
 import {
@@ -273,7 +274,13 @@ export function ColdMails({ c }: { c: Kontakt }) {
               <li key={e.id} className="px-5 py-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={e.direction === "OUT" ? "info" : e.isAutoReply ? "neutral" : "success"}>{e.direction === "OUT" ? "Gesendet" : e.isAutoReply ? "Auto-Reply" : "Antwort"}</Badge>
-                  {e.direction === "IN" && !e.isAutoReply && e.sentiment && SENTIMENT[e.sentiment] ? <Badge tone={SENTIMENT[e.sentiment].tone}>{SENTIMENT[e.sentiment].label}</Badge> : null}
+                  {e.direction === "IN" && e.rechtsArt ? (
+                    <Badge tone="danger">
+                      {KATEGORIE_RECHT}: {istRechtsArt(e.rechtsArt) ? RECHTS_ART_LABEL[e.rechtsArt] : e.rechtsArt}
+                    </Badge>
+                  ) : e.direction === "IN" && !e.isAutoReply && e.sentiment && SENTIMENT[e.sentiment] ? (
+                    <Badge tone={SENTIMENT[e.sentiment].tone}>{SENTIMENT[e.sentiment].label}</Badge>
+                  ) : null}
                   <span className="font-medium">{e.subject || "(ohne Betreff)"}</span>
                   <span className="ml-auto text-xs text-[color:var(--muted)]">{fmtDateTime(e.sentAt)}</span>
                 </div>
@@ -282,7 +289,8 @@ export function ColdMails({ c }: { c: Kontakt }) {
                   {e.campaign ? ` · Kampagne: ${e.campaign}` : ""}
                 </div>
                 <p className="mt-2 whitespace-pre-wrap">{main || "(kein Text)"}</p>
-                {e.direction === "IN" ? (
+                {/* Datenschutz/Recht bleibt so eingeordnet (nie „neutral“), Fall und Vorlagen oben in der Akte */}
+                {e.direction === "IN" && !e.rechtsArt ? (
                   <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-[color:var(--muted)]">
                     Einordnung:
                     {(["POSITIV", "SPAETER", "NEUTRAL", "NEGATIV", "AUTO"] as const)

@@ -188,7 +188,7 @@ Eingang), Media-IDs ohne Einwilligung 24 Stunden, Widerruf sofort, mit dem Lead 
 | Alle Daten eines Kunden nach Vertragsende (Ruhephase) | Weisung des Kunden: 24 Monate nach dem letzten Vertragstag (Standard), wählbar 3 Monate oder sofort, bis zur Löschung jederzeit änderbar (AGB „Daten bei Vertragsende“, AVV „Löschung und Rückgabe“, Stand 15.11.2026) | Automatisch: Cron täglich 03:00 UTC (`runRetentionCron` in `src/lib/ruhend.ts`): am Tag nach dem Vertragsende ruht das Konto (`Customer.dormantSince`, archiviert, Meta-Kampagnen pausiert, kein Zugang außer Export und Reaktivierung, keine Crons, kein Assistent, keine Kampagnen, keine Abgleiche), Erinnerung 30 und 7 Tage vorher, dann `finalDeleteCustomer`. Von Hand: Admin → Kunden → Kunde → Abrechnung → „Daten endgültig löschen (von Hand)“. Der Kunde exportiert selbst (Konto bzw. Seite „Ihr Konto ruht“). Details unten „Ruhephase und endgültige Löschung“ |
 | Leads, Chats, Termine während der Laufzeit | nach Weisung des Kunden | keine automatische Frist (Kunde entscheidet; Vermittler haben eigene Dokumentationspflichten) |
 | Vertriebskontakte ohne Vertrag | **Vorschlag**: 2 Jahre nach letzter Aktivität | noch von Hand (Kontakt → Löschen). Bei Widerspruch sofort sperren; erhalten bleibt nur der Sperrvermerk |
-| Vertriebskontakt mit Löschverlangen (Art. 17) | **sofort** (Ole, 19.11.2026) | automatisch bei ausdrücklichem Löschverlangen in einer Antwort, sonst Kontakt → Mehr → „Auf Verlangen löschen (Art. 17)“. Gelöscht: Name, Ansprechpartner, Firma, Adresse, Telefon, Website, E-Mails, Notizen, Anreicherung samt Import-Herkunft, Verlauf, Aufgaben, Mails, Follow-ups, Termine, Kampagnen-Status, Chats, Tagesportions-Markierung; weitere Vertriebskontakte mit derselben Adresse (auch als Zusatzadresse) ganz; in Instantly alle Leads der Adresse in allen Kampagnen löschen und Adresse auf die Blocklist; altes Cold CRM (Airtable, die App schreibt dort nicht): Aufgabe an Ole. Bleibt: Hülle „Gelöscht auf Verlangen (Art. 17 DSGVO)“ mit Sperrvermerk (Zeitpunkt, Grund), SHA-256 der Adressen, ein Verlaufseintrag ohne Personenbezug, Audit nur mit ID und Datum, Löschprotokoll. Nicht automatisch (über alle Kontakte mit der Adresse) bei Kunde, Login bzw. PPL-Bezieher (auch gleiche Domain), Angebot, Lead eines Kunden, Empfehlung und wenn dieselbe Antwort Auskunft verlangt (erst Auskunft): dann Sperre und Aufgabe mit Frist 1 Monat |
+| Vertriebskontakt mit Löschverlangen (Art. 17) | **sofort** (Ole, 19.11.2026) | automatisch bei ausdrücklichem Löschverlangen in einer Antwort, sonst Kontakt → Mehr → „Auf Verlangen löschen (Art. 17)“. Gelöscht: Name, Ansprechpartner, Firma, Adresse, Telefon, Website, E-Mails, Notizen, Anreicherung samt Import-Herkunft, Verlauf, Aufgaben, Mails, Follow-ups, Termine, Kampagnen-Status, Chats, Tagesportions-Markierung; weitere Vertriebskontakte mit derselben Adresse (auch als Zusatzadresse) ganz; in Instantly alle Leads der Adresse in allen Kampagnen löschen und Adresse auf die Blocklist; altes Cold CRM (Airtable, die App schreibt dort nicht): Aufgabe an Ole. Bleibt: Hülle „Gelöscht auf Verlangen (Art. 17 DSGVO)“ mit Sperrvermerk (Zeitpunkt, Grund), SHA-256 der Adressen, ein Verlaufseintrag ohne Personenbezug, Audit nur mit ID und Datum, Löschprotokoll. Nicht automatisch (über alle Kontakte mit der Adresse) bei Kunde, Login bzw. PPL-Bezieher (auch gleiche Domain), Angebot, Lead eines Kunden, Empfehlung und wenn dieselbe Antwort Auskunft verlangt (erst Auskunft): dann Sperre und Aufgabe mit Frist 7 Tage (Ole, 19.11.2026). Sperrvermerk auch als Hash der eigenen Agentur-Domain (nicht Freemail, nicht Konzern bzw. Portal, Abschnitt 5 „Datenschutz und Recht“) |
 | Angebote, Verträge, Rechnungen | 10 Jahre | nicht löschen; Stripe bewahrt Rechnungen auf |
 | Datensicherungen (Datenbank) | **höchstens 30 Tage** (Festlegung 18.11.2026) | Railway Postgres: PITR-Archiv ca. 4 Wochen, tägliche Sicherungen 6 Tage, wöchentliche 27 Tage (Railway-Doku); **monatliche Sicherungen (89 Tage) nicht einschalten**, manuelle Sicherungen (z. B. vor einem Livegang) nach spätestens 30 Tagen löschen. Einzelne Sätze lassen sich in Sicherungen nicht löschen: Jede Löschung aus Datenschutzgründen (Art. 17, Vertragsende, Widerruf und Fristen der Policen, Vertriebskontakte) steht im **Löschprotokoll** (`Loeschprotokoll`, nur IDs, keine Inhalte, 13 Monate, Kopie im privaten Policen-Bucket) und wird nach einer Wiederherstellung automatisch erneut angewendet (`lib/loeschprotokoll.ts`: beim Start der App und täglich 03:00 UTC; `docs/notfall-wiederherstellung.md`). Zeitliche Fristen greifen nach einer Wiederherstellung ohnehin von selbst. Policen-Dateien liegen nicht in der Datenbank (Bucket ohne Sicherung) und haben je Datei einen eigenen Schlüssel (Crypto-Shredding) |
 | Löschprotokoll (`Loeschprotokoll`) | 13 Monate | automatisch täglich (`pruneLoeschprotokoll`), Datenbank und Kopie im Bucket |
@@ -234,7 +234,8 @@ Der Kunde kann
 - **Widerspruch WhatsApp:** Schreibt ein Lead „Stopp“ o. Ä., übernimmt der Berater; den
   Assistenten für den Chat ausschalten. Für endgültige Ruhe Lead löschen.
 
-**Eigene Daten (wir sind Verantwortlicher):** Antwort innerhalb eines Monats (Art. 12 Abs. 3).
+**Eigene Daten (wir sind Verantwortlicher):** Antwort innerhalb eines Monats (Art. 12 Abs. 3); im Vertrieb eigene Frist
+7 Tage (Ole, 19.11.2026, unten „Datenschutz und Recht“).
 Vertriebskontakt: Kontakt öffnen → Daten einsehen bzw. löschen. Anfrage und Antwort im
 Mail-Postfach aufbewahren (Nachweis).
 
@@ -250,6 +251,7 @@ und sperrt den Kontakt dauerhaft („nie kontaktieren“, Instantly-Blocklist).
 - **Löschverlangen (Art. 17)**: „löschen Sie meine Daten“, „Löschung meiner Daten“, „Art. 17“, „Recht auf
   Vergessenwerden“ → automatische Löschung (`lib/vertrieb/art17.ts`, Löschkonzept). Nicht „löschen Sie mich aus dem
   Verteiler“ (Austragung). Mit Auskunftsfrage in derselben Antwort: erst Auskunft (Aufgabe), dann von Hand löschen.
+  Mit Abmahnung bzw. rechtlicher Drohung in derselben Antwort: nie automatisch löschen (Belege sichern, Ole 19.11.2026).
 - **Auskunft beantworten:** Diagnose `q=vertrieb-auskunft&email=…` (oder `&id=…`, Suche `&suche=…`) liefert Anrede,
   Name, Firma, gespeicherte Felder, Herkunft (Liste, Quell-URL, Abrufdatum), Empfänger (Instantly mit Kampagnen,
   Google, Termine, WhatsApp), Datum aller Mails an den Kontakt und den Sperrstatus mit Mails nach der Sperre.
@@ -257,6 +259,55 @@ und sperrt den Kontakt dauerhaft („nie kontaktieren“, Instantly-Blocklist).
 - Gelöschte Adressen kommen nicht zurück: Importe, Upload-Prüfung und neue Antworten prüfen gegen den SHA-256
   (`SalesContact.sperrHashes`); eine neue Antwort einer gelöschten Adresse wird nicht gespeichert, nur eine Aufgabe
   „im Postfach lesen“ angelegt.
+
+**Datenschutz und Recht: Prozess für Anfragen und Abmahnungen aus der Kaltakquise (Ole, 19.11.2026)**
+(`lib/vertrieb/datenschutz-recht.ts`, `datenschutz-recht-server.ts`):
+
+1. **Erkennen (Vorrang):** DSGVO, Datenschutz mit eigenem Bezug, Auskunft, Art. 15/17/21, Einwilligung, Löschung,
+   Widerspruch, Unterlassen, § 7 UWG, Aufsichtsbehörde, Schadensersatz, Anwalt, Abmahnung, Kanzlei im Drohkontext
+   („an meine Kanzlei weitergeleitet“, „namens unserer Mandantin“; nicht „Maklerkanzlei Muster“). Kategorie
+   **„Datenschutz/Recht“** (`SalesEmail.rechtsArt`) in Einordnung und Instantly-Auswertung (eigene Spalte, eigener
+   Einwand), nie „neutral“; die Einordnung lässt sich dann nicht mehr umstellen. Unterart: **abmahnung** (Abmahnung,
+   Unterlassungserklärung, Anwalt, Kanzlei, Schadensersatz, Aufsicht, § 7 UWG) vor **auskunft** vor **loeschung** vor
+   **widerspruch**. Reine Austragung ist kein Rechtsfall (nur Sperre). Instantly-„Auto-Reply“ ohne
+   Abwesenheitstext, aber mit Rechtsbezug, zählt als echte Antwort.
+2. **Sperren:** „nie kontaktieren“ (App), Instantly-Blocklist und Interessenstatus „kein Interesse“ in allen Kampagnen
+   (die API v2 kennt kein Pausieren einzelner Leads; die Blocklist stoppt jeden weiteren Sequenzschritt), Später-Follow-up
+   gestoppt, Tagesportion (auch eine heute schon vergebene) ohne den Kontakt. Bei Löschung: Instantly-Leads gelöscht.
+   **Domain nur bei eigener Agentur-Domain** (Ole): nicht Freemail, nicht Konzern bzw. Portal. Konzern/Portal = feste
+   Liste (`KONZERN_DOMAINS`: dvag.de, ergo.de, signal-iduna.net/.de, lvm.de, tecis.de, axa.de, mecklenburgische.com,
+   telis-finanz.de, provinzial.de/.com, hdi.de, ovb.de, allianz.de, allianz-agentur.de, generali.de, ruv.de, huk.de,
+   debeka.de, devk.de, zurich.de, swisslife.de, horbach.de, nuernberger.de, sparkassenversicherung.de, sv-sachsen.de,
+   lippische.de, dazu allfinanz.ag, mlp.de, swisslife-select.de, bonnfinanz.de, plansecur.de und die Versicherer aus dem
+   Dubletten-Abgleich; Unterdomains zählen mit) oder mehr als 3 verschiedene Vertriebskontakte mit der Domain. Dort nur
+   die Person. Domain-Sperre: Hash von „@domain“ in `SalesContact.sperrHashes` (auch in der Art.-17-Hülle) und
+   Domain-Eintrag in der Instantly-Blocklist.
+3. **Aufgabe an Ole:** Auskunft („Auskunft nach Art. 15 beantworten, Frist …“), Löschung („Löschung bestätigen
+   (Art. 17), Frist …“), Widerspruch („Widerspruch bestätigen, Frist …“): **Frist 7 Tage** (gesetzlich ein Monat).
+   Abmahnung („Abmahnung bzw. rechtliche Drohung: sofort prüfen“): sofort fällig, **Push an alle Admins**, Text:
+   „Keine Unterlassungserklärung unterschreiben. Zur Prüfung an Claude geben. Löschung erst nach Prüfung per Knopf
+   (Belege sichern).“ Auto-Löschung wie bisher, **außer bei Abmahnung** (Ole, 19.11.2026): dann nie automatisch löschen,
+   auch bei ausdrücklichem Löschverlangen; nur Sperre (Person und eigene Domain), Fall, Aufgabe und Push.
+4. **Antwortvorlagen** in der Kontaktakte (Karte „Datenschutz und Recht“, nur mit Fall): Widerspruch bestätigen,
+   Löschung bestätigen (mit Löschdatum und Hinweis auf den Sperrvermerk), Auskunft nach Art. 15 (aus der Akte:
+   gespeicherte Felder, Mails an den Kontakt, Herkunft mit Quelle, Quell-URL und Abrufdatum, Zweck, Art. 6 Abs. 1 lit. f,
+   Empfänger Instantly (USA, Standardvertragsklauseln), Railway (EU) und laut Akte Google, Kalender, 360dialog,
+   Speicherdauer, Rechte, kein Datenschutzbeauftragter, Ansprechpartner Ole Kannapinn, Anschrift aus `PROVIDER`).
+   Nur als Entwurf: Admin prüft, ändert und sendet von Hand als Antwort im Instantly-Thread (Postfach der Anfrage; nach
+   Art. 17 aus dem Protokoll). Diese Antwort ist die einzige Mail an einen gesperrten Kontakt (keine Werbung). Fehlt die
+   Herkunft (kein Import aus der Vermittlerliste), weist der Entwurf darauf hin. Ohne Instantly-Thread: kopieren, im
+   Postfach senden, „als beantwortet vermerken“.
+5. **Nachweisprotokoll** `DatenschutzFallEreignis` (nur anhängen; Datenbank-Trigger verbietet UPDATE und DELETE,
+   Migration 20261119003100): je Fall Ereignisse „eingang“, „antwort“, „loeschung“ mit Fall-ID, Kontakt-ID bzw. Hülle
+   (ohne Fremdschlüssel), Eingang, Art, Frist, Zeitpunkt, wer („automatisch“ bzw. Admin-Login), bei „eingang“ die
+   Instantly-ID der Anfrage und das eigene Postfach (Antwortziel). Keine Inhalte, keine Namen oder Adressen. Liste
+   **Vertrieb → Datenschutz** (alter Admin) bzw. **Verkaufen → Kontakte → Datenschutz** (neuer Admin, Zähler offener
+   Fälle). Aufbewahrung: dauerhaft als Nachweis (enthält keine Inhalte).
+6. **Sicherung gegen Wiederholung:** Jeder Versand aus der App (`kontaktGesperrt`: Follow-ups, Angebots- und
+   Erinnerungsmails, WhatsApp), jede Upload-Prüfung bzw. Tagesportion (`vorUploadPruefen`) und jeder Import prüft gegen
+   Sperrliste, Adress- und Domain-Hash und gegen alle Kontakte mit Fall. „Nie kontaktieren“ lässt sich bei einem Fall
+   nicht aufheben; gesperrte Kontakte lassen sich nicht normal löschen (nur „Auf Verlangen löschen (Art. 17)“, damit
+   der Sperrvermerk bleibt); beim Zusammenführen bleibt die Sperre.
 
 ## 6. Technische und organisatorische Maßnahmen (Nachweise)
 

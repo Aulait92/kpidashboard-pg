@@ -41,19 +41,46 @@ export function emailGesperrt(email: string | null | undefined): boolean {
 }
 
 /**
- * Adressen von Kontakten, die auf Verlangen gelöscht wurden (Art. 17, lib/vertrieb/art17.ts). Dort steht nur noch der
- * SHA-256-Hash (SalesContact.sperrHashes). Liefert die Adressen aus der Eingabe, die gesperrt sind (klein geschrieben).
+ * Sperrvermerk einer Domain (Ole, 19.11.2026, Datenschutz und Recht): SHA-256 von „@domain“, klein geschrieben. Steht in
+ * SalesContact.sperrHashes neben den Adress-Hashes; nur bei eigener Agentur-Domain (nicht Freemail, nicht Konzern bzw.
+ * Portal, lib/vertrieb/datenschutz-recht.ts sperrDomainVon).
+ */
+export const domainHash = (domain: string) => hash(`@${domain.trim().toLowerCase().replace(/^@/, "")}`);
+
+/** Domain-Teile einer Adresse, von der vollen Domain bis zur Registrierungsdomain (a.b.agentur.de → a.b.agentur.de, b.agentur.de, agentur.de). */
+function domainsVon(email: string): string[] {
+  const teile = (email.split("@").pop() ?? "").split(".").filter(Boolean);
+  const out: string[] = [];
+  for (let i = 0; i <= teile.length - 2; i++) out.push(teile.slice(i).join("."));
+  return out;
+}
+
+/**
+ * Adressen, die über einen Sperrvermerk als Hash gesperrt sind: auf Verlangen gelöscht (Art. 17, lib/vertrieb/art17.ts;
+ * dort steht nur noch der SHA-256 in SalesContact.sperrHashes) oder Domain eines Datenschutz- bzw. Rechtsfalls (Hash der
+ * Domain, lib/vertrieb/datenschutz-recht-server.ts). Liefert die Adressen aus der Eingabe, die gesperrt sind (klein
+ * geschrieben).
  */
 export async function geloeschteAdressen(emails: (string | null | undefined)[]): Promise<Set<string>> {
-  const nachHash = new Map<string, string>();
-  for (const e of emails) if (e && e.includes("@")) nachHash.set(emailHash(e), norm(e));
+  const nachHash = new Map<string, Set<string>>();
+  const merke = (h: string, e: string) => {
+    const set = nachHash.get(h) ?? new Set<string>();
+    set.add(e);
+    nachHash.set(h, set);
+  };
+  for (const roh of emails) {
+    if (!roh || !roh.includes("@")) continue;
+    const e = norm(roh);
+    merke(emailHash(e), e);
+    for (const d of domainsVon(e)) merke(domainHash(d), e);
+  }
   const out = new Set<string>();
   if (!nachHash.size) return out;
   const hashes = [...nachHash.keys()];
   for (let i = 0; i < hashes.length; i += 1000) {
     const teil = hashes.slice(i, i + 1000);
     const rows = await prisma.salesContact.findMany({ where: { sperrHashes: { hasSome: teil } }, select: { sperrHashes: true } });
-    for (const r of rows) for (const h of r.sperrHashes) if (nachHash.has(h)) out.add(nachHash.get(h)!);
+    for (const r of rows) for (const h of r.sperrHashes) for (const e of nachHash.get(h) ?? []) out.add(e);
   }
   return out;
 }
@@ -65,11 +92,17 @@ export async function geloeschterKontaktId(email: string | null | undefined): Pr
   return c?.id ?? null;
 }
 
-/** Vertriebskontakt gesperrt? „Nie kontaktieren“, Hauptadresse, weitere Adressen oder Cold-Mail-Abmeldung. */
+/**
+ * Vertriebskontakt gesperrt? „Nie kontaktieren“, Hauptadresse, weitere Adressen, Cold-Mail-Abmeldung, ein Fall
+ * „Datenschutz und Recht“ (auch wenn die Sperre von Hand aufgehoben wurde) oder ein Sperrvermerk als Hash (Adresse
+ * bzw. eigene Domain eines anderen Kontakts mit Datenschutz- oder Rechtsfall).
+ */
 export async function kontaktGesperrt(contactId: string | null | undefined): Promise<boolean> {
   if (!contactId) return false;
   const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true, altEmails: true, nieKontaktierenAt: true } });
   if (c?.nieKontaktierenAt) return true;
   if (c && [c.email, ...c.altEmails].some(emailGesperrt)) return true;
+  if (await prisma.datenschutzFallEreignis.findFirst({ where: { contactId }, select: { id: true } })) return true;
+  if (c && (await geloeschteAdressen([c.email, ...c.altEmails])).size) return true;
   return !!(await prisma.salesCampaignLead.findFirst({ where: { contactId, unsubscribed: true }, select: { id: true } }));
 }

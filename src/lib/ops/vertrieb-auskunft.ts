@@ -142,6 +142,13 @@ export async function vertriebAuskunftDiagnose(params: URLSearchParams) {
     ...(c._count.supportConversations ? ["WhatsApp über 360dialog (Support-Nummer)"] : []),
   ];
 
+  // Für die Antwortvorlage (lib/vertrieb/datenschutz-recht.ts vorlageAuskunft): weitere Empfänger aus der Akte
+  const empfaengerArten = [
+    ...(c.googleCheckedAt || c.googlePlaceId ? (["google"] as const) : []),
+    ...(c.meetings.length ? (["kalender"] as const) : []),
+    ...(c._count.supportConversations ? (["whatsapp"] as const) : []),
+  ];
+
   const sperreSeit = c.nieKontaktierenAt;
   const nachSperre = sperreSeit ? raus.filter((m) => m.datum && m.datum > tag(sperreSeit)!) : [];
   return {
@@ -154,6 +161,7 @@ export async function vertriebAuskunftDiagnose(params: URLSearchParams) {
     felder,
     herkunft: herkunft(c, c.activities),
     empfaenger,
+    empfaengerArten,
     mailsAnIhn: raus,
     antwortenVonIhm: c.emails.filter((e) => e.direction === "IN" && !e.isAutoReply).map((e) => tag(e.sentAt)),
     sperre: sperreSeit
