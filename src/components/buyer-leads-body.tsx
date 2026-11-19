@@ -22,7 +22,7 @@ import { weitereEmailsSuche } from "@/lib/lead-emails";
 import { CROSS_SELL_FILTER, CROSS_SELL_LABEL, crossSellOffenWhere } from "@/lib/cross-sell-offen";
 import { ladeCrossSellVerkauf } from "@/lib/cross-sell-verkauf-server";
 import { CrossSellLeiste } from "@/components/bestand/cross-sell-angebot";
-import { istZuTun, zuTunRang } from "@/lib/kontakt-liste";
+import { istZuTun, kontaktAnsicht, zuTunRang } from "@/lib/kontakt-liste";
 
 export async function BuyerLeadsBody({
   customerId,
@@ -58,6 +58,13 @@ export async function BuyerLeadsBody({
   // Aus dem Tipp „Weiteres Produkt anbieten“ (Zahlen): genau die dort gezählten Kunden, unabhängig vom Zeitraum
   const crossSell = !noStepView && !q && params.filter === CROSS_SELL_FILTER;
   const verlust = !noStepView && !crossSell && !q && params.verlust && params.verlust in VERLUST_LABEL ? (params.verlust as VerlustKey) : null;
+  // Standardansicht „Zu erledigen“ (Ole, 19.11.2026); bei Suche und Filtern aus Zahlen wie bisher alle Treffer
+  const viewKey = kontaktAnsicht(view, { suche: !!q, filter: !!crossSell || !!verlust });
+  // „Zu erledigen“ reicht über den Zeitraum hinaus: Wartendes bleibt sichtbar, auch wenn der Lead älter ist
+  // (ohne nächsten Schritt, fällige Wiedervorlage, Antwort im Chat). Die übrigen Ansichten zählen nur den Zeitraum.
+  const zuTunView = viewKey === "zu-tun" && !q && !crossSell && !verlust;
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
   const leadRowsAll = await prisma.lead.findMany({
     where: {
       ...leadScope(team),
@@ -76,6 +83,15 @@ export async function BuyerLeadsBody({
               { email: { contains: q, mode: "insensitive" as const } },
               ...weitereEmailsSuche(q),
               ...(qDigits.length >= 3 ? [{ phone: { contains: qDigits } }] : []),
+            ],
+          }
+        : zuTunView
+        ? {
+            OR: [
+              { createdAt: { gte: range.from, lte: range.to } },
+              withoutNextStepWhere(now),
+              { followUpAt: { lte: endOfToday }, closedAt: null, erasedAt: null },
+              { conversations: { some: { needsAttention: true } }, erasedAt: null },
             ],
           }
         : { createdAt: { gte: range.from, lte: range.to } }),
@@ -178,28 +194,35 @@ export async function BuyerLeadsBody({
   // UX-Runde 19.11.2026 (Team B): vier Ansichten statt sieben. „Zu erledigen“ sammelt alles, was auf den Vermittler
   // wartet (Antwort im Chat, Ergebnis, fällige Wiedervorlage, Rückruf, kein nächster Schritt), Dringendes zuerst.
   // Die bisherigen Ansichten bleiben per Link erreichbar (Heute, Zahlen, Erinnerung) und zeigen sich nur, solange sie offen sind.
+  // Leads im gewählten Zeitraum (bei „Zu erledigen“ lädt die Liste auch ältere Wartende)
+  const imZeitraum = (l: BuyerLeadRow) => !zuTunView || (l.createdAt >= range.from && l.createdAt <= range.to);
   const VIEWS: { key: string; label: string; match: (l: BuyerLeadRow) => boolean; nurOffen?: boolean }[] = [
-    { key: "", label: "Alle", match: () => true },
     { key: "zu-tun", label: "Zu erledigen", match: (l) => istZuTun(l, now) },
+    { key: "alle", label: "Alle", match: imZeitraum },
     // Neu: noch niemand hat gesprochen (wie der Zähler an „Kontakte“)
-    { key: "neu", label: "Neu", match: (l: BuyerLeadRow) => !l.reached && !l.closedAt && (!l.status || l.status === "Neuer Lead") },
-    { key: "termin", label: "Termin", match: (l: BuyerLeadRow) => !!l.appointment },
+    { key: "neu", label: "Neu", match: (l: BuyerLeadRow) => imZeitraum(l) && !l.reached && !l.closedAt && (!l.status || l.status === "Neuer Lead") },
+    { key: "termin", label: "Termin", match: (l: BuyerLeadRow) => imZeitraum(l) && !!l.appointment },
     { key: "rueckruf", label: "Rückruf nötig", match: (l: BuyerLeadRow) => !!l.callback, nurOffen: true },
     { key: "ohne-whatsapp", label: "Ohne WhatsApp", match: (l: BuyerLeadRow) => !!l.noWhatsApp, nurOffen: true },
     { key: "wiedervorlage", label: "Wiedervorlage fällig", match: (l) => !!l.followUpAt && new Date(l.followUpAt) <= today, nurOffen: true },
     { key: "ohne-schritt", label: "Ohne nächsten Schritt", match: (l) => !!l.noNextStep, nurOffen: true },
   ];
-  const activeView = VIEWS.find((v) => v.key === view) ?? VIEWS[0];
+  const activeView = VIEWS.find((v) => v.key === viewKey) ?? VIEWS[0];
   const phase = phases.find((p) => p.key === phaseKey);
   const byPhase = phase ? leads.filter((l) => findPhaseIn(phases, l.status)?.key === phase.key) : leads;
   const shown = byPhase.filter(activeView.match);
   if (activeView.key === "zu-tun") shown.sort((a, b) => zuTunRang(a, now) - zuTunRang(b, now));
   const hrefFor = (key: string) => {
     const next = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "ansicht") as [string, string][]);
-    if (key) next.set("ansicht", key);
+    // „Zu erledigen“ ist der Standard und braucht keinen Parameter
+    if (key && key !== "zu-tun") next.set("ansicht", key);
     const s = next.toString();
     return s ? `${basePath}?${s}` : basePath;
   };
+
+  const alleHref = `${basePath}?ansicht=alle`;
+  // Gibt es überhaupt Kontakte? (nur für leere Zustände abgefragt)
+  const hatKontakte = shown.length === 0 ? (await prisma.lead.count({ where: leadScope(team), take: 1 })) > 0 : true;
 
   return (
     <div className="space-y-4">
@@ -238,7 +261,7 @@ export async function BuyerLeadsBody({
           const dringend = v.key === "zu-tun" && !active && !!n;
           return (
             <Link
-              key={v.key || "alle"}
+              key={v.key}
               href={hrefFor(v.key)}
               scroll={false}
               className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm sm:h-8 font-medium transition ${
@@ -259,7 +282,7 @@ export async function BuyerLeadsBody({
       </nav>
       <BuyerLeadsTable
         leads={shown}
-        title={[activeView.key ? activeView.label : crossSell ? CROSS_SELL_LABEL : "Alle Kontakte", phase?.label].filter(Boolean).join(" · ")}
+        title={[crossSell ? CROSS_SELL_LABEL : activeView.key === "alle" ? "Alle Kontakte" : activeView.label, phase?.label].filter(Boolean).join(" · ")}
         statusLabels={WHATSAPP_STATUS_LABELS}
         showLeadCost={!(await loadRetainerConfig(customerId))}
         detailBase={detailBase}
@@ -269,30 +292,31 @@ export async function BuyerLeadsBody({
           crossSell && leads.length === 0 ? (
             <>
               Alle Kunden mit Abschluss haben schon ein weiteres Produkt.{" "}
-              <Link href={basePath} className="font-medium text-[color:var(--brand)] underline">
+              <Link href={alleHref} className="font-medium text-[color:var(--brand)] underline">
                 Alle Kontakte anzeigen
               </Link>
             </>
-          ) : leads.length > 0 && activeView.key === "zu-tun" ? (
+          ) : zuTunView && hatKontakte ? (
+            // Standardansicht leer (Ole, 19.11.2026): dort bleiben, Erfolg zeigen, Weg zu „Alle“
             <>
               Alles erledigt, kein Kontakt wartet auf Sie.{" "}
-              <Link href={basePath} className="font-medium text-[color:var(--brand)] underline">
+              <Link href={alleHref} className="font-medium text-[color:var(--brand)] underline" data-alle-anzeigen>
                 Alle Kontakte anzeigen
               </Link>
             </>
           ) : leads.length > 0 ? (
             <>
               Keine Kontakte in dieser Ansicht.{" "}
-              <Link href={basePath} className="font-medium text-[color:var(--brand)] underline">
+              <Link href={alleHref} className="font-medium text-[color:var(--brand)] underline">
                 Alle Kontakte anzeigen
               </Link>
             </>
           ) : q ? (
             `Kein Kontakt zu „${q}“ gefunden.`
-          ) : params.range !== "max" && (await prisma.lead.count({ where: leadScope(team), take: 1 })) > 0 ? (
+          ) : params.range !== "max" && hatKontakte ? (
             <>
               In diesem Zeitraum sind keine Kontakte eingegangen.{" "}
-              <Link href={`${basePath}?range=max`} className="font-medium text-[color:var(--brand)] underline">
+              <Link href={`${basePath}?ansicht=alle&range=max`} className="font-medium text-[color:var(--brand)] underline">
                 Gesamten Zeitraum anzeigen
               </Link>
             </>

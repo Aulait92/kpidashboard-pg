@@ -62,3 +62,8 @@ export function zuTunRang(l: ZuTunFakten, now: Date = new Date()): number {
   if (l.callback) return 4;
   return 5;
 }
+
+/** Ansicht der Kontakte-Liste: Standard „Zu erledigen“ (Ole, 19.11.2026); mit Suche oder Filter aus „Zahlen“ alle Treffer. */
+export function kontaktAnsicht(view: string | null | undefined, o: { suche?: boolean; filter?: boolean } = {}): string {
+  return view || (o.suche || o.filter ? "alle" : "zu-tun");
+}

@@ -37,7 +37,9 @@ Screenshots (1440 und 390, vorher/nachher) lagen im Arbeitsordner der Sitzung (`
 
 ## Lösung (umgesetzt)
 1. **Kontakte-Liste** (`buyer-leads-body.tsx`, `buyer-leads-table.tsx`, `lib/kontakt-liste.ts`):
-   - Vier Ansichten: **Alle · Zu erledigen · Neu · Termin**. „Zu erledigen“ sammelt Antwort im Chat, frische Leads ohne Kontakt
+   - Vier Ansichten: **Zu erledigen · Alle · Neu · Termin**. „Zu erledigen“ ist die Standardansicht (Ole, 19.11.2026; mit Suche
+     oder Filter aus „Zahlen“ alle Treffer) und reicht über den Zeitraum hinaus (ältere Kontakte ohne Schritt, mit fälliger
+     Wiedervorlage oder wartender Antwort). Ist sie leer, bleibt sie offen mit „Alles erledigt …“ und Link zu „Alle“. „Zu erledigen“ sammelt Antwort im Chat, frische Leads ohne Kontakt
      (außer der Assistent schreibt), Ergebnis fehlt, fällige Wiedervorlage, Rückruf, kein nächster Schritt; sortiert nach Dringlichkeit;
      Zähler rot, wenn etwas wartet; leerer Zustand „Alles erledigt, kein Kontakt wartet auf Sie.“
      Die bisherigen Ansichten (`rueckruf`, `ohne-whatsapp`, `wiedervorlage`, `ohne-schritt`) bleiben per Link nutzbar (Heute, Zahlen, Erinnerung) und erscheinen nur, solange sie offen sind.
@@ -77,7 +79,8 @@ Rechtliches: keine Pflichtangabe entfernt; Einwilligungshinweis rückt näher an
 | WhatsApp-Vorlagen | 82 | 91 |
 
 ## Offen (Entscheidung Ole)
-- „Zu erledigen“ als Standardansicht der Liste statt „Alle“ (heute bewusst nicht, um Gewohnheiten nicht zu brechen).
 - Im Postfach zeigen die Vorlagen-Betreffs den Rohplatzhalter „{betreff_name}“; Vorschau mit Beispielnamen wäre lesbarer.
-- Kontakt: Abschluss/Verloren für ganz neue Leads ausblenden (Ole wollte sie am 16.11. immer sichtbar).
+- Entschieden (Ole, 19.11.2026): „Zu erledigen“ ist Standard; Abschluss/Verloren bleiben sichtbar unter den Aktionen;
+  Worte des Kunden erscheinen im Gesprächsziel nie als „Ihre Notiz“ (`lib/anruf-ziel.ts`: „Anliegen aus dem Chat: …“,
+  Rückrufwunsch wörtlich), auch auf Heute.
 - Pipeline am Handy: Phase-Knopf je Karte nimmt viel Platz; Wischen zwischen Phasen wäre denkbar.

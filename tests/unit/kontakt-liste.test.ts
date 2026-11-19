@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eingangKurz, frischUnberuehrt, istZuTun, zuTunRang } from "@/lib/kontakt-liste";
+import { eingangKurz, frischUnberuehrt, istZuTun, kontaktAnsicht, zuTunRang } from "@/lib/kontakt-liste";
 
 const now = new Date("2026-11-19T15:00:00+01:00");
 const vor = (min: number) => new Date(now.getTime() - min * 60_000);
@@ -52,5 +52,16 @@ describe("Zu erledigen", () => {
       { k: "antwort", ...basis, waiting: true },
     ];
     expect(liste.sort((a, b) => zuTunRang(a, now) - zuTunRang(b, now)).map((x) => x.k)).toEqual(["antwort", "neu", "erg", "wv", "rest"]);
+  });
+});
+
+describe("Standardansicht", () => {
+  it("ohne Parameter „Zu erledigen“, mit Suche oder Filter alle, sonst wie gewählt", () => {
+    expect(kontaktAnsicht("")).toBe("zu-tun");
+    expect(kontaktAnsicht(undefined)).toBe("zu-tun");
+    expect(kontaktAnsicht("", { suche: true })).toBe("alle");
+    expect(kontaktAnsicht("", { filter: true })).toBe("alle");
+    expect(kontaktAnsicht("alle")).toBe("alle");
+    expect(kontaktAnsicht("ohne-schritt")).toBe("ohne-schritt");
   });
 });

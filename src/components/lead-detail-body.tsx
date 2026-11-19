@@ -394,8 +394,10 @@ export async function LeadDetailBody({
       ? anrufZiel({
           letzterTermin,
           kind: gesprochen ? "followup" : "callback",
-          // Wartet der Kontakt im Chat, steht sein Anliegen schon oben („Wartet auf Sie“), nicht als „Ihre Notiz“ (UX-Runde 19.11.2026)
+          // Wartet der Kontakt im Chat, steht sein Anliegen schon oben („Wartet auf Sie“) und nicht noch einmal im Ziel
           reason: lead.followUpNote ?? (lead.status === "Angebot gesendet" ? "Angebot nachfassen" : conv?.needsAttention ? "" : (conv?.attentionReason ?? "")),
+          // Anliegen aus dem Chat nie als „Ihre Notiz“ (Ole, 19.11.2026)
+          herkunft: !lead.followUpNote && lead.status !== "Angebot gesendet" && conv?.attentionReason ? "chat" : "notiz",
           source: lead.source,
           known: conv?.qualificationSummary ?? null,
         })
