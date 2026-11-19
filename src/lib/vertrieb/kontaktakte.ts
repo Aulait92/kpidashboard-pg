@@ -13,7 +13,7 @@ import { benefitSentence } from "@/lib/kollegen-shared";
 import { listPresentations } from "@/lib/vertrieb/praesentationen";
 import { aktuellesAngebot, audienceFuer } from "@/lib/vertrieb/verkaufspraesentation";
 import { aktiverVerkaufsLink, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspraesentation-server";
-import { DECISION_BOOKING_TYPE, DEFAULT_BOOKING_TYPE, SALES_CALL_BOOKING_TYPE, decisionBookingLink } from "@/lib/vertrieb/buchung";
+import { DEFAULT_BOOKING_TYPE, SALES_CALL_BOOKING_TYPE, decisionBookingLink } from "@/lib/vertrieb/buchung";
 import { entscheidungsCallStand } from "@/lib/vertrieb/entscheidungs-call-server";
 import { entscheidungsCallHinweis } from "@/lib/vertrieb/entscheidungs-call";
 import { whatsappErlaubtStand } from "@/lib/vertrieb/bonus-erinnerung-server";
@@ -82,11 +82,11 @@ export async function ladeKontaktakte(c: Kontakt) {
   const decisionLink = await decisionBookingLink(c.id).catch(() => null);
   // Angebotsmail: welche Variante zum Entscheidungs-Call rausgeht (schon gebucht → Termin, sonst Buchungslink)
   const entscheidungsHinweis = c.offers.length ? entscheidungsCallHinweis(await entscheidungsCallStand(c.id)) : null;
-  // „Termin“: Admin bucht selbst (Termintyp, Datum, Uhrzeit frei); nach einem Angebot ist der Entscheidungs-Call vorgewählt.
+  // „Termin“: Admin bucht selbst (Termintyp, Datum, Uhrzeit frei).
   const bookingTypes = await prisma.salesBookingType.findMany({ orderBy: { sortOrder: "asc" }, select: { slug: true, title: true, durationMin: true } });
-  // Ohne Angebot: Sales-Call (das kurze Telefonat bucht der Interessent selbst), Ole 19.11.2026
-  const hat = (slug: string) => bookingTypes.some((t) => t.slug === slug);
-  const defaultTermin = c.offers.length && hat(DECISION_BOOKING_TYPE) ? DECISION_BOOKING_TYPE : hat(SALES_CALL_BOOKING_TYPE) ? SALES_CALL_BOOKING_TYPE : DEFAULT_BOOKING_TYPE;
+  // Vorgewählt ist der Sales-Call (Beratungsgespräch); das kurze Telefonat bucht der Interessent selbst, den
+  // Entscheidungs-Call gibt es nicht mehr (Ole, 19.11.2026)
+  const defaultTermin = bookingTypes.some((t) => t.slug === SALES_CALL_BOOKING_TYPE) ? SALES_CALL_BOOKING_TYPE : DEFAULT_BOOKING_TYPE;
   // „Kollegen empfehlen“: von einem Kunden empfohlen → Hinweis mit Neukunden-Vorteil
   const referral = await referralForContact(c.id);
   const referralBenefit = referral ? benefitSentence(await loadReferralSettings()) : null;

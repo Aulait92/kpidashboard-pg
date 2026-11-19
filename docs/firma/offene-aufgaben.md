@@ -33,7 +33,7 @@ Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der 
 - Bedrock-Freischaltung (KI in der EU).
 - LinkedIn-App anlegen; Gmail API (falls weiter gewünscht).
 - Später: Calendly im Vertrieb durch eigenes Buchungstool ersetzen.
-- Leitfaden Setter-Call prüfen und freigeben (`docs/firma/vertrieb/leitfaden-setter-call.md`, Head of Sales, 19.11.2026); offen: Zahlweise im Beratungsgespräch (Vorauszahlung zuerst empfohlen).
+- Leitfäden Setter-Call und Beratungsgespräch prüfen und freigeben (`docs/firma/vertrieb/`, Head of Sales, 19.11.2026); offen: Zahlweise im Termin, Entscheidungs-Call standardmäßig aus, Quoten nach 10 Setter-Calls prüfen (Erscheinen mindestens 80 %).
 
 ## Fehlende Zugänge für das Team
 Lesekopie der Datenbank ohne Klardaten (Data-Agent), Anbindung der Sitzungsaufnahmen, Meta Ads nur lesend.

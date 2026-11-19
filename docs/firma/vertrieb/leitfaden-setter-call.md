@@ -1,133 +1,123 @@
 # Leitfaden Setter-Call (15 Minuten, Telefon)
 
-Stand 19.11.2026. Verfasst: Head of Sales. Für: Ole. Grundlage: `docs/firma/protokolle/2026-11-19-closing-im-call.md`,
-Preise aus `src/lib/offer-pricing.ts` (PRICE_LIST, START_MAX_DAYS) und Paketfolie in `src/lib/vertrieb/verkaufspraesentation.ts`,
-AGB `docs/rechtstexte/agb-2026-11-15-fassung-2.md` (§ 8 Pause, § 12). Regeln: Sie-Form, keine Gedankenstriche in Sätzen,
-keine Ergebnis- oder Garantieversprechen, keine erfundene Verknappung.
+Stand 19.11.2026, Fassung 2 (mit Feedback Personas und Red Team). Verfasst: Head of Sales. Für: Ole.
+Nur für **neue Inbound-Kontakte** (Buchung über performancegrowth.de/termin). Die 7 offenen Vermittler gehen direkt ins
+Beratungsgespräch. Folgeleitfaden: `leitfaden-sales-call.md`.
+Belege: `src/lib/offer-pricing.ts` (PRICE_LIST, Zeile 140 Vorauszahlung mit Annahme, 145 keine Gutschrift bei Vorauszahlung,
+541 sechs Monate nur auf Nachfrage, START_MAX_DAYS), AGB `docs/rechtstexte/agb-2026-11-15-fassung-2.md` (§ 8 Pause),
+`src/lib/unternehmer.ts` (nur Unternehmer). Regeln: Sie-Form, keine Gedankenstriche, keine Versprechen, keine Verknappung.
 
-## 1. Ziel und Ergebnis
+## 1. Ziel
 
-**Erfolgreich**, wenn am Ende alle fünf Punkte stehen:
-1. Budget-Größenordnung ausgesprochen und ohne Widerstand akzeptiert.
-2. Alle Entscheider benannt und für das Beratungsgespräch zugesagt.
-3. Wunschstart innerhalb von 90 Tagen.
-4. Zahlen: Neukunden je Monat heute, Wert eines Abschlusses, Ziel.
-5. Ausdrückliches Ja zum Rahmen: „Wenn es passt, erledigen wir den Auftrag im Termin, IBAN liegt bereit.“
+**Erfolgreich**, wenn fünf Punkte stehen: Budget-Spanne akzeptiert · alle Entscheider benannt und eingeladen · Start
+innerhalb von 90 Tagen · Zahlen (Neukunden heute, Wert eines Abschlusses, Ziel) · Ja zum Rahmen „passt es, Auftrag im Termin“.
+Dann bucht Ole im Telefonat das Beratungsgespräch (45 Min., Video). **Kein Termin**, wenn Abschnitt 4 zutrifft.
 
-Dann bucht Ole im Telefonat das Beratungsgespräch (45 Min., Video) im Adminbereich, in 2 bis 3 Tagen, mit allen Entscheidern.
-
-**Kein Termin**, wenn ein Punkt aus Abschnitt 4 zutrifft. Lieber ehrlich absagen als einen Termin, der wieder aufgeschoben wird.
-
-## 2. Ablauf mit wörtlichen Sätzen
+## 2. Ablauf
 
 **Min. 0 bis 1: Rahmen**
-> „Hallo Herr/Frau [Name], hier ist Ole Kannapinn von performancegrowth. Danke, dass Sie sich die Zeit nehmen. Ich will in
-> 15 Minuten herausfinden, ob es überhaupt passt. Wenn nicht, sage ich Ihnen das ehrlich, und Sie dürfen genauso ehrlich
-> Nein sagen. Ich stelle Ihnen ein paar Fragen, und am Ende entscheiden wir gemeinsam, ob sich ein Beratungsgespräch lohnt.
+> „Hallo Herr/Frau [Name], hier ist Ole Kannapinn von performancegrowth. Danke für Ihre Zeit. Ich will in 15 Minuten
+> herausfinden, ob es überhaupt passt. Wenn nicht, sage ich Ihnen das ehrlich, und Sie dürfen genauso ehrlich Nein sagen.
 > Passt das für Sie?“
 
 **Min. 1 bis 4: Situation**
-> „Erzählen Sie mal: Wie gewinnen Sie heute neue Kunden?“
-> „Wie viele Neukunden kommen so im Monat dazu?“
-> „Sind Sie Vertreter, und für welche Gesellschaft, oder Makler? Wie viele Berater arbeiten bei Ihnen mit Kunden?“
+> „Wie gewinnen Sie heute neue Kunden, und wie viele kommen so im Monat dazu?“
+> „Sind Sie Vertreter, für welche Gesellschaft, oder Makler? Welche Sparten machen Sie vor allem?“
+> „Gibt es Vorgaben Ihrer Gesellschaft, wie Sie Interessenten anschreiben dürfen, etwa per WhatsApp, oder welchen Kalender
+> Sie nutzen?“
+> „Wer ruft bei Ihnen neue Anfragen zurück, und wie schnell schaffen Sie das im Alltag?“
 > „Was haben Sie schon ausprobiert, Leads gekauft, Agentur, eigene Anzeigen? Was hat daran nicht gepasst?“
+Je nach Typ, falls Zeit: Makler „Mit welchem Verwaltungsprogramm arbeiten Sie?“ · Großagentur „Wie verteilen Sie Anfragen
+auf Ihre Berater, und wie viele sind es?“
 
 **Min. 4 bis 6: Ziel und Zahlen**
 > „Wo wollen Sie in zwölf Monaten stehen? Wie viele Neukunden im Monat wären ein gutes Ergebnis?“
-> „Was bringt Ihnen ein Abschluss im Schnitt, Provision oder Courtage über die Laufzeit?“
-> „Wenn wir das hochrechnen: Was wäre es Ihnen wert, wenn jeden Monat [Zielzahl] Kunden mehr dazukommen?“
-Zahlen laut wiederholen und notieren. Sie sind die Grundlage der Rechnung im Beratungsgespräch (statt Beispielzahlen).
+> „Was bringt Ihnen ein Abschluss im Schnitt?“ (Vertreter: die Abschlussprovision. Makler: die Courtage im Jahr.)
+> „Wenn [Zielzahl] Kunden im Monat mehr kommen, was bedeutet das für Sie in Euro im Jahr? Die Zahl nehme ich als Grundlage für
+> unsere Rechnung.“
 
-**Min. 6 bis 8: Budget-Framing (Größenordnung offen nennen)**
-> „Damit Sie nicht in 45 Minuten Beratung gehen und am Ende vom Preis überrascht sind, sage ich Ihnen die Größenordnung
-> jetzt schon. Betreuung und Software kosten ab 990 Euro netto im Monat. Dazu kommt das Werbebudget, das zahlen Sie direkt an
-> Meta, empfohlen sind 20 bis 50 Euro pro Tag und Produkt. Und einmalig eine Einrichtung, je nach Laufzeit zwischen 990 und
-> 2.490 Euro. Realistisch sind Sie also ab etwa 1.600 Euro im Monat dabei, Werbebudget eingerechnet. Ist das eine
-> Größenordnung, die für Sie grundsätzlich in Frage kommt?“
-Bei Ja: „Gut. Das genaue Paket rechnen wir im Beratungsgespräch mit Ihren Zahlen.“
-Nachschieben, nur als Fakt: „Wer 12 Monate im Voraus zahlt, bekommt 3 Monate geschenkt, bei 6 Monaten einen. Das schauen wir uns
-dann zusammen an.“
+**Min. 6 bis 8: Budget**
+> „Damit Sie im Beratungsgespräch nicht vom Preis überrascht werden, sage ich Ihnen die Größenordnung jetzt. Im Minimum sind es
+> etwa 1.600 Euro netto im Monat, Werbebudget eingerechnet, Makler eher bei 2.200. Das Werbebudget zahlen Sie direkt an Meta.
+> Dazu einmalig die Einrichtung: 990 Euro bei 12 Monaten Laufzeit, ohne Laufzeit 2.490. Kommt diese Größenordnung für Sie
+> grundsätzlich in Frage?“
+Nur als Fakt, wenn es passt:
+> „Wer 12 Monate im Voraus zahlt, zahlt 9 statt 12. Das wird mit dem Auftrag fällig, auch wenn Sie später starten. Monatlich
+> geht genauso.“
+Bei Frage nach Pause:
+> „Bei monatlicher Zahlung können Sie jederzeit pausieren und zahlen dann nur die Software. Wer im Voraus zahlt, kann auch
+> pausieren, bekommt dafür aber nichts gutgeschrieben.“
+Belege: 1.600 = 990 € Betreuung und Software + 20 € pro Tag Werbebudget; 2.200 = 990 € + 40 € pro Tag (Makler-Empfehlung).
+Stufen 990 / 1.390 / 1.790 € bis 3.000 / 6.000 / 10.000 € Werbebudget, darüber individuell. 6 Monate Laufzeit nur auf
+ausdrückliche Nachfrage nennen.
 
-Belege: 990 / 1.390 / 1.790 € netto bei Werbebudget bis 3.000 / 6.000 / 10.000 € im Monat, darüber individuell; Einrichtung
-990 € (12 Monate) / 1.490 € (6) / 1.990 € (3) / 2.490 € (ohne Laufzeit); Makler-Empfehlung ab 40 € pro Tag; Pause jederzeit, dann
-nur 349 € Software (AGB § 8). Makler mit 40 € pro Tag liegen bei etwa 2.200 € im Monat.
+**Min. 8 bis 9: Entscheider**
+> „Wer muss zustimmen, damit Sie starten können?“
+> „Wer im Gespräch dabei ist, kann seine Fragen direkt stellen. Wer sollte das bei Ihnen sein?“
+> „Geben Sie mir bitte seine E-Mail, dann lade ich ihn direkt mit ein.“
 
-**Min. 8 bis 9: Entscheider-Framing**
-> „Wer entscheidet außer Ihnen mit, wenn Sie so etwas starten? Partner, Ehepartner, Büroleitung, Steuerberater?“
-> „Dann machen wir es so, dass alle im Beratungsgespräch dabei sind. Sonst müssen Sie hinterher alles noch einmal erklären, und
-> die Fragen, die dann kommen, kann ich nicht beantworten. Bekommen wir das hin?“
+**Min. 9 bis 10: Start**
+> „Wann sollen die ersten Anfragen kommen? Den Start legen Sie selbst fest, bis zu 90 Tage nach dem Auftrag.“
 
-**Min. 9 bis 10: Zeitpunkt-Framing**
-> „Wann wollen Sie, dass die ersten Anfragen kommen?“
-> „Den Start legen Sie selbst fest, bis zu 90 Tage nach dem Auftrag. Sie können also heute entscheiden und trotzdem erst nach
-> dem Urlaub oder zum Quartal starten.“
+**Min. 10 bis 12: Rahmen für den Auftrag im Termin**
+> „Ich schicke Ihnen die Vertragsbedingungen vorab mit der Einladung. Wenn im Gespräch alles passt, können Sie den Auftrag
+> direkt dort erteilen, dafür bräuchten Sie Ihre IBAN. Und wenn nicht, sagen Sie Nein. Ist das ein fairer Rahmen?“
+Bei Zögern („erst drüber schlafen“):
+> „Völlig in Ordnung. Was müssten Sie im Gespräch sehen, um sicher entscheiden zu können? Das bereite ich vor.“
 
-**Min. 10 bis 12: Commitment für den Abschluss im Beratungsgespräch**
-> „Noch eine Sache, damit wir beide keine Zeit verlieren. Im Beratungsgespräch zeige ich Ihnen alles, wir rechnen mit Ihren
-> Zahlen, und Sie stellen jede Frage, die Sie haben. Wenn es dann passt, erledigen wir den Auftrag direkt im Termin, das dauert
-> ein paar Minuten. Halten Sie dafür bitte Ihre IBAN bereit. Und wenn es nicht passt, sagen Sie Nein, das ist völlig in Ordnung.
-> Ist das für Sie ein fairer Rahmen?“
-Auf ein klares Ja warten. Bei „Ich will aber erst drüber schlafen“:
-> „Verstehe ich. Was müsste im Gespräch passieren, damit Sie es direkt entscheiden können? Genau das nehme ich mir dann vor.“
+**Min. 12 bis 14: Termin buchen**
+> „Passt Ihnen [morgen] um [Uhrzeit] oder lieber [Tag] um [Uhrzeit]? Schaffen Sie die 45 Minuten am Laptop?“
+Zwei Zeiten, die erste möglichst morgen, spätestens in 3 Tagen. Im Adminbereich buchen (Termintyp „Beratungsgespräch“),
+Mitentscheider direkt einladen. Die Bestätigungsmail enthält ab dem nächsten Deploy: „Bitte laden Sie alle ein, die
+mitentscheiden. Wenn es für Sie passt, starten wir direkt im Termin: Halten Sie dafür gern Ihre IBAN bereit.“ Vertragsbedingungen
+(AGB) mitschicken.
+> „Die Einladung kommt gleich per Mail.“
 
-**Min. 12 bis 14: Termin im Call buchen (Alternativfrage)**
-> „Dann schauen wir gleich in den Kalender. Passt Ihnen [Tag] um [Uhrzeit] oder lieber [Tag] um [Uhrzeit]? Beide Male mit
-> [Name Mitentscheider].“
-Nur zwei Zeiten, beide in 2 bis 3 Tagen. Im Adminbereich buchen, Einladung geht per Mail raus (mit IBAN-Hinweis).
-> „Die Einladung kommt gleich per Mail, bitte leiten Sie sie an [Name] weiter. Ist die angekommen?“
+**Min. 14 bis 15: Zusammenfassen**
+> „Kurz zusammengefasst: von [heute] auf [Ziel] Neukunden im Monat, ein Abschluss bringt Ihnen etwa [Wert], Start um den
+> [Datum], [Name] ist dabei. Habe ich etwas vergessen? Dann bis [Tag].“
 
-**Min. 14 bis 15: Zusammenfassen und verabschieden**
-> „Kurz zusammengefasst: Sie wollen von [heute] auf [Ziel] Neukunden im Monat, ein Abschluss bringt Ihnen etwa [Wert], Start
-> um den [Datum], [Name] ist dabei, und wenn es passt, machen wir es im Termin fest. Habe ich etwas vergessen? Dann bis
-> [Tag].“
-
-## 3. Einwände im Setter-Call
+## 3. Einwände
 
 | Einwand | Antwort |
 |---|---|
-| „Schicken Sie mir einfach Infos.“ | „Mache ich gern im Anschluss. Ehrlich gesagt hilft Ihnen ein PDF aber wenig, weil die Rechnung von Ihren Zahlen abhängt. Darf ich Ihnen noch zwei Fragen stellen? Dann wissen wir beide, ob sich ein Gespräch überhaupt lohnt.“ |
-| „Was kostet das?“ | Größenordnung sofort nennen (Abschnitt 2, Min. 6 bis 8), nicht ausweichen. Danach: „Ob es sich für Sie rechnet, hängt von Ihren Zahlen ab. Deshalb frage ich danach.“ |
-| „Ich habe schon eine Agentur / kaufe Leads.“ | „Gut, dann kennen Sie das Thema. Was läuft da gut, was nicht? Bei uns gehören die Anfragen nur Ihnen, und die Software schreibt sie an und bucht Termine. Ob das besser ist als heute, sehen wir im Beratungsgespräch an Ihren Zahlen.“ |
-| „Darf ich das als Allianz-Vertreter?“ | „Das ist eine wichtige Frage, und ich will Ihnen nichts zusagen, was ich nicht weiß. Was Sie dürfen, regelt Ihr Vertrag mit der Allianz. Viele Allianz-Vertreter dürfen ihr Postfach oder ihren Kalender nicht verbinden. Dafür gibt es in der App andere Wege, zum Beispiel den Allianz-Online-Kalender oder einen Kalender-Link, und E-Mail-Funktionen lassen sich abschalten. Im Beratungsgespräch zeige ich Ihnen genau, wie Leads angeschrieben werden, auch per WhatsApp. Klären Sie das bitte vorher mit Ihrer Ansprechperson bei der Allianz, dann entscheiden Sie mit sicherem Gefühl.“ |
-| „Mein Partner hat keine Zeit.“ | „Verstehe. Dann suchen wir einen Termin, an dem er kann, auch abends oder in der nächsten Woche. Ohne ihn müssten Sie danach alles noch einmal erklären, und das kostet Sie beide mehr Zeit. Wann passt es ihm?“ Kein Termin ohne Entscheider. |
-| „Klappt das bei mir überhaupt?“ | „Das kann Ihnen niemand vorher versprechen. Ich zeige Ihnen im Gespräch echte Zahlen und was vertraglich passiert, wenn es nicht läuft. Dann entscheiden Sie.“ (Kein Ergebnisversprechen, Details erst im Beratungsgespräch, AGB § 12.) |
-| „Ich will mich nicht lange binden.“ | „Müssen Sie nicht. Es geht auch ohne Laufzeit, dann ist die Einrichtung höher. Und pausieren können Sie jederzeit, dann zahlen Sie nur die Software.“ |
-| „Jetzt ist schlecht, melden Sie sich im neuen Jahr.“ | „Den Start legen Sie ohnehin selbst fest, bis zu 90 Tage. Wollen wir das Gespräch trotzdem jetzt machen, damit im Januar alles läuft?“ Wenn Nein: Wiedervorlage mit Datum. |
+| „Schicken Sie mir einfach Infos.“ | „Schicke ich Ihnen gern. Die Rechnung hängt aber von Ihren Zahlen ab. Darf ich Ihnen dafür zwei Fragen stellen?“ |
+| „Was kostet das?“ | Budget-Satz sofort sagen (Min. 6 bis 8), dann: „Ob es sich rechnet, hängt von Ihren Zahlen ab. Deshalb frage ich danach.“ |
+| „Ich habe schon eine Agentur / kaufe Leads.“ | „Was läuft da gut, was nicht? Bei uns gehören die Anfragen nur Ihnen, und die Software schreibt sie an und bucht Termine. Ob das besser ist als heute, sehen wir im Gespräch an Ihren Zahlen.“ |
+| „Darf ich das als Allianz-Vertreter?“ | „Was Sie dürfen, regelt Ihr Vertrag mit der Allianz, das kann ich Ihnen nicht zusagen. Die App funktioniert auch ohne verbundenes Postfach, mit Ihrem Allianz-Online-Kalender. Fragen Sie Ihre Ansprechperson bitte bis [Tag vor dem Termin] konkret: Darf ich Interessenten, die mich über eine Anzeige anfragen, per WhatsApp und E-Mail über einen externen Dienstleister anschreiben lassen, und darf ich dafür meinen Allianz-Online-Kalender nutzen?“ |
+| „Mein Partner hat keine Zeit.“ | „Dann suchen wir einen Termin, an dem er kann, gern auch abends. Geben Sie mir seine E-Mail, dann lade ich ihn direkt ein.“ Kein Termin ohne Entscheider. |
+| „Klappt das bei mir überhaupt?“ | „Das kann Ihnen niemand vorher versprechen. Ich zeige Ihnen im Gespräch echte Zahlen und die vertragliche Absicherung. Dann entscheiden Sie.“ |
+| „Ich will mich nicht lange binden.“ | „Müssen Sie nicht. Es geht auch ohne Laufzeit, dann ist die Einrichtung höher.“ |
+| „Melden Sie sich im neuen Jahr.“ | „Den Start legen Sie ohnehin selbst fest, bis zu 90 Tage. Wollen wir das Gespräch trotzdem jetzt machen, damit es im Januar läuft?“ Sonst Wiedervorlage mit Datum. |
 
-## 4. Disqualifikation: höflich absagen
+## 4. Höflich absagen
 
-Absagen, wenn:
-- Budget klar nicht machbar (unter etwa 1.600 € im Monat inklusive Werbebudget, und auch keine Pause oder späterer Start hilft).
-- Ein Entscheider kommt grundsätzlich nicht ins Gespräch.
-- Start erst in mehr als 90 Tagen: dann Wiedervorlage statt Termin.
-- Die Gesellschaft verbietet Leadgewinnung über Anzeigen oder WhatsApp nach eigener Aussage ausdrücklich.
-- Erwartet werden feste Abschlüsse oder ein Ergebnisversprechen.
-- Niemand für die Nachbearbeitung der Anfragen (kein Zeitfenster für Rückrufe und Termine).
-
+Absagen, wenn: Budget-Spanne klar nicht machbar · nicht selbstständig (AGB gelten nur für Unternehmer, z. B. angestellter
+Innendienst) · ein Entscheider kommt grundsätzlich nicht ins Gespräch · Start erst in mehr als 90 Tagen (dann Wiedervorlage)
+· Gesellschaft verbietet es nach eigener Aussage ausdrücklich · erwartet feste Abschlüsse · niemand ruft Anfragen zurück.
 > „Danke für Ihre Offenheit. So wie Sie es schildern, passt es gerade nicht, und ich will Ihnen keine 45 Minuten nehmen, nur um
-> das dann zu bestätigen. Wenn sich [Budget / Start / Regelung] ändert, melden Sie sich gern, oder soll ich mich im [Monat]
-> noch einmal melden?“
+> das zu bestätigen. Soll ich mich im [Monat] noch einmal melden?“
 
-## 5. Nach dem Call im System (Vertrieb in der App)
+## 5. Eintrag im System (Vertrieb in der App)
 
-Aktivität **Anruf** am Kontakt, Notiz in diesem Format (eine Zeile je Feld):
+Aktivität **Anruf**, Notiz:
 ```
 Setter-Call [Datum]
-Budget ok: ja / nein / unklar (Größenordnung genannt: ja)
-Entscheider: [Namen, Rolle], im Beratungsgespräch dabei: ja / nein
+Budget ok: ja / nein / unklar
+Entscheider: [Namen, Rolle, E-Mail eingeladen: ja/nein]
 Start: [Wunschdatum]
-Zahlen: Neukunden heute [x]/Monat, Ziel [y]/Monat, Wert je Abschluss [z] €
-Typ: Vertreter [Gesellschaft] / Makler / Großagentur, Berater: [n]
+Zahlen: heute [x]/Monat, Ziel [y]/Monat, Wert je Abschluss [z] € (Provision bzw. Courtage im Jahr)
+Typ: Vertreter [Gesellschaft] / Makler [Verwaltungsprogramm] / Großagentur [Berater]; Sparten: [..]
+Rückruf der Anfragen: [wer, wie schnell]
+Vorgaben Gesellschaft: [WhatsApp, Kalender, E-Mail]
 Einwand: [wörtlich, kurz]
-Commitment IBAN: ja / nein
-Vorauszahlung angesprochen: ja / nein
+Rahmen Auftrag im Termin: ja / nein
 ```
-- Status: mit Termin auf **Termin**, sonst **Wiedervorlage** (mit Aufgabe und Datum) oder **Verloren** mit Grund
-  (Zu teuer, Hat Anbieter, Über Allianz, Kein Bedarf, Kein Interesse, Sonstiges).
-- Beratungsgespräch im Adminbereich buchen, Einladung mit Satz „Bitte halten Sie für den Fall eines Starts Ihre IBAN bereit.“
-- Jeder Kontakt hat danach einen nächsten Schritt mit Datum.
+Status **Termin**, sonst **Wiedervorlage** (Aufgabe mit Datum) oder **Verloren** mit Grund. Jeder Kontakt hat einen nächsten
+Schritt mit Datum.
 
 ## Offen bei Ole (Stufe A)
-- Zahlweise im Beratungsgespräch: Vorauszahlung zuerst (Empfehlung Head of Sales) oder monatlich zuerst. Im Setter-Call
-  nennen wir die Vorauszahlung nur als Fakt.
-- Abschlussbonus (300 € auf die Einrichtung) im Setter-Call nur erwähnen, wenn er mit echter, fester Frist im Angebot steht.
+- Zahlweise im Beratungsgespräch: Vorauszahlung zuerst oder monatlich zuerst (Vorschlag in `leitfaden-sales-call.md`).
+- Entscheidungs-Call nach dem Beratungsgespräch standardmäßig aus, sonst sind es drei Termine.
+- Abschlussbonus im Setter-Call nur nennen, wenn er mit echter, fester Frist im Angebot steht.
+- Nach 10 Setter-Calls Erscheinungs- und Abschlussquote prüfen (Ziel Erscheinen mindestens 80 %).
