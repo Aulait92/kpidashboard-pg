@@ -245,9 +245,22 @@ export function folgefragen(sparten: readonly RechnerSparte[], src: AngabenQuell
   return out.sort((x, y) => x.rang - y.rang || x.i - y.i).map(({ key, feld, sie, du, knoepfe }) => ({ key, feld, sie, du, ...(knoepfe ? { knoepfe } : {}) }));
 }
 
-/** Folgefrage als Text; die erste mit Nutzen: „Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: …“. */
-export function folgefrageText(fr: Folgefrage, an: Ansprache, person: string, erste: boolean): string {
+/** Kurzform, wenn der Nutzen schon in der Zwischenfrage stand (Ole, 19.11.2026: nicht zweimal „Damit … zeigen kann:“). */
+const KURZ: Record<string, { sie: string; du: string }> = {
+  geburt: { sie: "Und Ihr Geburtsdatum?", du: "Und dein Geburtsdatum?" },
+};
+
+/**
+ * Folgefrage als Text; die erste mit Nutzen: „Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: …“.
+ * nutzenGesagt: die Zwischenfrage vor dem Termin hatte schon dieselbe Einleitung, dann knapp („Und Ihr Geburtsdatum?“,
+ * sonst die Frage allein; Fragen mit Knöpfen bleiben wörtlich, damit die Knöpfe passen).
+ */
+export function folgefrageText(fr: Folgefrage, an: Ansprache, person: string, erste: boolean, o: { nutzenGesagt?: boolean } = {}): string {
   const frage = a(an, fr.du, fr.sie);
   if (!erste) return frage;
+  if (o.nutzenGesagt) {
+    const k = fr.knoepfe?.length ? null : KURZ[fr.key];
+    return k ? a(an, k.du, k.sie) : frage;
+  }
   return `${a(an, `Damit ${person} dir gleich passende Beiträge zeigen kann:`, `Damit ${person} Ihnen gleich passende Beiträge zeigen kann:`)} ${frage}`;
 }

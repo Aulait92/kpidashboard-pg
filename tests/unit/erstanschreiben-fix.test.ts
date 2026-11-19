@@ -234,6 +234,10 @@ describe("Folgefragen nach der Buchung (Rechner-Tabelle docs/preise-pilot.md)", 
     expect(fr.map((f) => f.sie)).toEqual(["Wie lautet Ihr Geburtsdatum?", "Wie groß ist Ihre Wohnung ungefähr?", "Sind Sie im öffentlichen Dienst tätig?"]);
     expect(fr[2].knoepfe).toEqual(["Ja", "Nein"]);
     expect(folgefrageText(fr[0], "sie", "Herr Kannapinn", true)).toBe("Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Wie lautet Ihr Geburtsdatum?");
+    // Nutzen stand schon in der Zwischenfrage (Ole, 19.11.2026): knapp, Fragen mit Knöpfen wörtlich
+    expect(folgefrageText(fr[0], "sie", "Herr Kannapinn", true, { nutzenGesagt: true })).toBe("Und Ihr Geburtsdatum?");
+    expect(folgefrageText(fr[0], "du", "Ole", true, { nutzenGesagt: true })).toBe("Und dein Geburtsdatum?");
+    expect(folgefrageText(fr[2], "sie", "Herr Kannapinn", true, { nutzenGesagt: true })).toBe("Sind Sie im öffentlichen Dienst tätig?");
     // Beantwortet im Chat: fällt weg
     expect(keys(sparten, src(formular, { geburt: "14.05.1985", wohnflaeche: "90 m²" }))).toEqual(["oeffentlicherDienst"]);
     expect(keys(sparten, src(formular, { geburt: "14.05.1985", wohnflaeche: "90 m²", beruf: "Angestellt, kein öffentlicher Dienst" }))).toEqual([]);

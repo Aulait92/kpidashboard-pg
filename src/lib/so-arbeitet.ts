@@ -240,7 +240,7 @@ export function beispielVerlauf(o: BeispielEingabe): ChatZeile[] {
   const sparten = spartenDesLeads(produkt, quelle);
   const fragen = folgefragen(sparten, quelle);
   if (fragen[0]) {
-    const frage = folgefrageText(fragen[0], an, person.nom, true);
+    const frage = folgefrageText(fragen[0], an, person.nom, true, { nutzenGesagt: !!zwischen });
     assistent(`Super! ${frage}`, { knoepfe: knoepfeFuerText(frage, fragen)?.map((k) => k.title) });
     lead(fragen[0].knoepfe?.[0] ?? beispielAngabe(fragen[0].key, fragen[0].sie), 2);
     if (fragen.length > 1) out.push({ art: "hinweis", text: fragen.length === 2 ? "Noch eine Frage fürs Angebot" : `Noch ${fragen.length - 1} kurze Fragen fürs Angebot` });

@@ -45,7 +45,8 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
     expect(texte[2]).toMatch(/^Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Sie kosten/);
     expect(texte[3]).toBe(buchungsText({ an: "sie", start: new Date("2026-11-20T15:00:00.000Z"), mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person: e.person }));
     expect(texte[4]).toBe(komplettcheckFrage("sie", e.person, false));
-    expect(texte[5]).toBe("Super! Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Wie lautet Ihr Geburtsdatum?");
+    // Nutzen stand schon in der Zwischenfrage: knapp, ohne zweites „Damit … zeigen kann:“ (Ole, 19.11.2026)
+    expect(texte[5]).toBe("Super! Und Ihr Geburtsdatum?");
     expect(texte[6]).toMatch(/^Danke! Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: Welche Versicherungen haben Sie heute schon\?/);
     expect(texte[7]).toBe(`Danke! ${policenBitte({ an: "sie", vermittler: { ...e.person, anrede: "Herr", name: "Ole Kannapinn" }, firma: e.firma }).text}`);
     expect(texte[8]).toMatch(/^Kurz zum Datenschutz: Ich bin einverstanden, dass Ole Kannapinn \(Kannapinn Versicherungen\)/);
@@ -64,6 +65,8 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
     const alle = vomAssistenten(z).join("\n");
     expect(alle).toContain("Hallo Julia");
     expect(alle).toContain("Damit Ole dir im Termin gleich passende Beiträge zeigen kann");
+    expect(alle).toContain("Super! Und dein Geburtsdatum?");
+    expect(alle.match(/gleich passende Beiträge zeigen kann/g)).toHaveLength(1);
     expect(alle).not.toMatch(/Herr Kannapinn|Herrn Kannapinn|\bSie\b|\bIhnen\b/);
     expect(alle).not.toMatch(/[–—]/);
     expect(vomAssistenten(beispielVerlauf(eingabe("sie"))).join("\n")).not.toMatch(/[–—]/);

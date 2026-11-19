@@ -60,6 +60,7 @@ import {
 } from "@/lib/whatsapp/gespraech";
 import { istTierStrecke, offeneTierFragen, tierAntwortAuswerten, tierFrage, type TierFrageKey } from "@/lib/whatsapp/tier-fragen";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
+import { ZWISCHEN_TEXT } from "@/lib/whatsapp/zwischenfrage";
 import { normalisiereVertraege, sagtKeine, VORVERTRAEGE_SCHEMA, vertraegeAusText, type Vorvertraege, type Vorvertrag } from "@/lib/whatsapp/vorvertraege";
 
 /** Merker (interne Nachrichten) der Strecke. */
@@ -422,7 +423,11 @@ export async function sendeAngebotsfrage(k: StreckenKontext, prefix?: string | n
   const offen = offeneAngebotsfragen(k);
   if (!offen[0]) return false;
   const stand = await streckenStand(k.conversationId, k.termin.id);
-  const frage = folgefrageText(offen[0], k.an, k.person.nom, !stand.angebotsfragenAt);
+  // Zwischenfrage vor dem Termin hatte schon „Damit … gleich passende Beiträge zeigen kann:“: nicht noch einmal
+  const nutzenGesagt =
+    !stand.angebotsfragenAt &&
+    !!(await prisma.message.findFirst({ where: { conversationId: k.conversationId, direction: "outbound", body: { contains: ZWISCHEN_TEXT } }, select: { id: true } }));
+  const frage = folgefrageText(offen[0], k.an, k.person.nom, !stand.angebotsfragenAt, { nutzenGesagt });
   if (!stand.angebotsfragenAt) await merke(k.conversationId, STRECKE.angebotsfragen, { appointmentId: k.termin.id });
   await sende(k, [prefix, frage].filter(Boolean).join(" "), knoepfeFuerText(frage, offen));
   return true;

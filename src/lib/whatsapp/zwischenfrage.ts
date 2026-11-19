@@ -104,6 +104,7 @@ export function zwischenKnoepfe(def: ZwischenDef): Knopf[] {
 }
 
 /** Erkennt eine Zwischenfrage in einer Nachricht von uns. */
+export const ZWISCHEN_TEXT = "im Termin gleich passende Beiträge zeigen kann:";
 export const ZWISCHEN_RE = /im Termin gleich passende Beiträge zeigen kann:/;
 
 /** Die nächste noch unbekannte Zwischenfrage des Produkts (null = keine offen bzw. nicht aktiv). */
