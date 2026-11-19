@@ -198,3 +198,16 @@ export async function followupOptions(conversationId: string): Promise<FollowupO
   );
 }
 
+
+/**
+ * Auswahl im Kundenbereich (Ole, 19.11.2026): freigegebene Nachfass-Vorlagen, die zur Situation passende zuerst und als
+ * „Empfohlen“ markiert (aus chooseFollowup; „Kurz nachfragen“ gehört zu „Zwei Terminvorschläge“). Leer = keine freigegeben.
+ */
+export async function nachfassOptionen(conversationId: string, choice: FollowupChoice): Promise<(FollowupOption & { empfohlen: boolean })[]> {
+  if (choice.kind !== "ok") return [];
+  const empfohlen = choice.purpose === "followup_nudge" ? "followup" : choice.purpose;
+  const alle = (await followupOptions(conversationId)).filter((o) => o.approved);
+  return alle
+    .map((o) => ({ ...o, empfohlen: o.key === empfohlen }))
+    .sort((a, b) => Number(b.empfohlen) - Number(a.empfohlen));
+}

@@ -6,7 +6,8 @@ import { NewMessageHint, StickToBottom } from "@/components/live-refresh";
 import { lastInboundAt } from "@/lib/live";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass } from "@/components/ui";
-import { chooseFollowup } from "@/lib/whatsapp/followup";
+import { chooseFollowup, nachfassOptionen } from "@/lib/whatsapp/followup";
+import { NachfassenWahl } from "./nachfassen-wahl";
 import { SubmitButton } from "@/components/submit-button";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { appointmentScope, conversationScope } from "@/lib/team";
@@ -226,6 +227,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   const { normal: formAnswers, health: healthAnswers } = splitHealthAnswers(parseFormAnswers(active?.lead?.formData));
   const windowOpen = !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > now;
   const followup = active && !windowOpen ? await chooseFollowup(active.id) : null;
+  const nachfassWahl = active && followup?.kind === "ok" ? await nachfassOptionen(active.id, followup).catch(() => []) : [];
   // „Anrufen“ wie im Kontakt (Ole, 17.11.2026): Assistent pausiert, danach „Wie lief es?“ (components/call-outcome.tsx)
   const anrufLead =
     active?.lead && (await isNewUi(ctx.customerId))
@@ -814,22 +816,15 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   {followup?.kind === "blocked" ? (
                     <p className="mt-2 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">{followup.reason}</p>
                   ) : followup?.kind === "ok" ? (
-                    <form action={followupBuyerAction} className="mt-2 space-y-2">
-                      <input type="hidden" name="conversationId" value={active.id} />
-                      <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 py-2">
-                        <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">Vorschau · {followup.label}</div>
-                        <p className="mt-1 whitespace-pre-wrap text-sm">{waFormatKnoten(followup.preview)}</p>
-                      </div>
-                      {followup.approved ? (
-                        <div className="flex justify-end">
-                          <SubmitButton pendingLabel="Sendet …" className={buttonClass("primary", "md")}>
-                            Nachfassen senden
-                          </SubmitButton>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-amber-700">Nachfassen ist noch nicht freigeschaltet. Bis dahin: anrufen.</p>
-                      )}
-                    </form>
+                    nachfassWahl.length ? (
+                      <NachfassenWahl
+                        conversationId={active.id}
+                        action={followupBuyerAction}
+                        optionen={nachfassWahl.map((o) => ({ key: o.key, label: o.label, preview: o.preview, empfohlen: o.empfohlen }))}
+                      />
+                    ) : (
+                      <p className="mt-2 text-xs text-amber-700">Nachfassen ist noch nicht freigeschaltet. Bis dahin: anrufen.</p>
+                    )
                   ) : null}
                 </div>
               )}
