@@ -61,6 +61,9 @@ Angebot) läuft immer ein A/B-Test, und es wird ständig neu getestet:
   Kein Zeitraum ohne laufenden Test.
 - Neue Fassungen, die Ole direkt freigibt, werden sofort Standard (kein Test nötig); die B-Fassung kommt trotzdem dazu.
 - Erstanschreiben: Entscheidung erst ab 150 Sendungen je Fassung (Antwortquote 72 h), Terminquote mit ansehen.
+- Entschieden wird nur bei statistischer Signifikanz (Ole, 19.11.2026): p unter 0,01 (strenger als üblich, weil laufend
+  nachgerechnet wird), mindestens 10 Treffer und 10 Nicht-Treffer je Fassung, dazu die Mindestmenge. Vorher keine
+  Entscheidung, auch nicht von Hand.
 - Jeder neue Test wird von einem ganzen Team entwickelt (Ole, 19.11.2026), geführt vom A/B-Test-Labor
   (`.claude/agents/ab-test-labor.md`): Conversion-Texter, UX/UI, Kunden-Personas, Data/BI, bei Pflichtangaben Recht und
   Datenschutz, kurz Red Team. Das Team lernt aus allen bisherigen Tests, stellt Hypothesen auf und entwickelt sie weiter.
