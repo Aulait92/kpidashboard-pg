@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|spaeter-nachholen[&vorschau=1|&ausfuehren=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]|sicherheit|nutzung-woche[&tage=7] (weitere: siehe WEITERE unten)
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1|&sperren=1]|spaeter-nachholen[&vorschau=1|&ausfuehren=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]|sicherheit|nutzung-woche[&tage=7] (weitere: siehe WEITERE unten)
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -403,6 +403,8 @@ async function ppl() {
  *   &name=…    Treffer der Kontaktsuche (umlaut-tolerant) mit Id, Name, Stufe, gespeicherten Antworten (Datum, Einstufung,
  *              erste 120 Zeichen), Instantly-Interessenstatus (gespeichert und live) und Später-Follow-up (ja/nein, geplant für)
  *   &nachholen=1  Vorschau „Antworten nachholen“ (90 Tage), nur Zahlen je Postfach
+ *   &sperren=1    Vorschau Nachhol-Lauf „nie kontaktieren“ (Austragung, Widerspruch, Datenschutz, Abmeldung), nur Zahlen
+ * Immer dabei: gesperrt (je Grund, offene und fehlgeschlagene Instantly-Sperren, offene Auskunfts-Aufgaben), ohne Adressen.
  */
 async function instantly(params: URLSearchParams) {
   const hasKey = !!process.env.INSTANTLY_API_KEY;
@@ -428,6 +430,8 @@ async function instantly(params: URLSearchParams) {
     postfaecherMitAntworten: postfaecher
       .map((p) => ({ postfach: p.eaccount ?? "(unbekannt)", antworten: p._count, letzteAntwort: p._max.sentAt, zuletztGespeichert: p._max.createdAt }))
       .sort((a, b) => String(b.letzteAntwort).localeCompare(String(a.letzteAntwort))),
+    // „Nie kontaktieren“ je Grund, offene bzw. fehlgeschlagene Instantly-Sperren (nur Zahlen, Ole 19.11.2026)
+    gesperrt: await (await import("@/lib/vertrieb/nie-kontaktieren-server")).sperrZaehler(),
   };
   if (hasKey) {
     const { instantlyRead, listCampaigns } = await import("@/lib/vertrieb/instantly");
@@ -508,7 +512,12 @@ async function instantly(params: URLSearchParams) {
         )
         .catch((e: unknown) => ({ fehler: e instanceof Error ? e.message.slice(0, 200) : "Fehler" }));
     }
-    out.adresse = { gesperrt: (await import("@/lib/vertrieb/sperrliste")).emailGesperrt(email), kontakt, inInstantly };
+    out.adresse = {
+      gesperrt: (await import("@/lib/vertrieb/sperrliste")).emailGesperrt(email),
+      nieKontaktieren: kontakt ? await prisma.salesContact.findUnique({ where: { id: kontakt.id }, select: { nieKontaktierenAt: true, nieKontaktierenGrund: true, instantlyGesperrtAt: true, instantlySperreVersuche: true, instantlySperreFehler: true } }) : null,
+      kontakt,
+      inInstantly,
+    };
   }
 
   const name = (params.get("name") ?? "").trim();
@@ -523,6 +532,11 @@ async function instantly(params: URLSearchParams) {
     const { nachholenAntworten } = await import("@/lib/vertrieb/instantly-nachholen");
     const { liste, ...zahlen } = await nachholenAntworten({ anwenden: false });
     out.nachholenVorschau = { ...zahlen, beispiele: liste.length };
+  }
+  // Vorschau Nachhol-Lauf „nie kontaktieren“ (schreibt nichts; Anwenden über Einstellungen → Anbindungen → Instantly)
+  if (params.get("sperren") === "1") {
+    const { sperrenAusAntworten } = await import("@/lib/vertrieb/nie-kontaktieren-server");
+    out.sperrenVorschau = await sperrenAusAntworten({ anwenden: false });
   }
   return out;
 }
@@ -615,7 +629,8 @@ async function instantlyAuswertung() {
     // Text nur für Absagen/Später (Einwand-Kategorien), sonst gar nicht weitergeben
     text: m.sentiment === "NEGATIV" || m.sentiment === "SPAETER" ? stripQuoted(m.text ?? "") : null,
   }));
-  const ergebnis = auswerten({ kampagnen, leads, antworten, termine });
+  const { sperrZaehler } = await import("@/lib/vertrieb/nie-kontaktieren-server");
+  const ergebnis = auswerten({ kampagnen, leads, antworten, termine, gesperrt: await sperrZaehler() });
   return { ...ergebnis, markdown: alsMarkdown(ergebnis) };
 }
 

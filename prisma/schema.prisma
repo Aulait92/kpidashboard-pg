@@ -1905,6 +1905,17 @@ model SalesContact {
   /// bzw. -erinnerung per WhatsApp bekommen oder selbst per WhatsApp geschrieben), true/false = von Hand in der Kontaktakte
   whatsappErlaubt    Boolean?
   whatsappErlaubtAt  DateTime?
+  /// „Nie kontaktieren“ (Ole, 19.11.2026, lib/vertrieb/nie-kontaktieren-server.ts): gesetzt = keine Nachricht mehr aus
+  /// der App (Später-Follow-up, Erinnerungen, WhatsApp), in Instantly gestoppt und auf der Blocklist. Automatisch bei
+  /// Austragungs- oder Widerspruchswunsch und Datenschutzfragen in Antworten, bei Abmeldung in Instantly, sonst von Hand.
+  nieKontaktierenAt       DateTime?
+  /// austragen | widerspruch | datenschutz | bounce_hart | manuell
+  nieKontaktierenGrund    String?
+  /// In Instantly erledigt (Blocklist-Eintrag, Interessenstatus „kein Interesse“ in allen Kampagnen). NULL bei gesetztem
+  /// Merkmal = noch offen: der Instantly-Cron (alle 15 Minuten) wiederholt, bis es klappt
+  instantlyGesperrtAt     DateTime?
+  instantlySperreVersuche Int                 @default(0)
+  instantlySperreFehler   String?
   // Kundenkonto in der Plattform (ab Onboarding)
   customerId         String?             @unique
   customer           Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -1932,6 +1943,7 @@ model SalesContact {
 
   @@index([altEmails], type: Gin)
   @@index([stage])
+  @@index([nieKontaktierenAt])
   @@index([customerStage])
   @@index([linkedinStatus])
   @@index([zip])

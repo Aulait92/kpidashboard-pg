@@ -5040,6 +5040,18 @@
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Austragungen aus bisherigen Antworten sperren (nie kontaktieren, Vorschau, dann sperren)",
+  "quelle": "components/vertrieb/import-forms.tsx:SperrenNachholen",
+  "neu": "Einstellungen › Anbindungen & Import › Instantly",
+  "status": "ergänzt (19.11.2026, Sperrliste für Kalt-Mails)",
+  "demo_view": "e-anbindungen",
+  "id": "import-forms-sperrennachholen--austragungen-aus-bisherigen-antworten-sperren",
+  "bereich": "werkzeuge",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
+ },
+ {
   "heute": "/admin/whatsapp/settings (je Kunde)",
   "funktion": "Assistent auch für neue Kontakte (sonst nur Leads, Coexistence-Schutz)",
   "quelle": "app/admin/whatsapp/settings/actions.ts:setNewContactsBotAction",

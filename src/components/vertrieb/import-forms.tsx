@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { FileDrop } from "@/components/ui/file-drop";
-import { backfillContactDataAction, connectCalendlyAction, instantlyNachholenAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
+import { backfillContactDataAction, connectCalendlyAction, instantlyNachholenAction, sperrenNachholenAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
 
 // Server-Action-Grenze liegt bei 16 MB (next.config.ts)
 const CSV_MAX_BYTES = 15 * 1024 * 1024;
@@ -117,6 +117,42 @@ export function InstantlyNachholen({ hasKey }: { hasKey: boolean }) {
               </li>
             ))}
           </ul>
+        )}
+      </form>
+    </details>
+  );
+}
+
+/**
+ * Einmalig rückwirkend (Ole, 19.11.2026): bisherige Antworten mit Austragungswunsch, Widerspruch oder Datenschutzfrage
+ * und Abmeldungen in Instantly auf „nie kontaktieren“ setzen. Erst Vorschau, dann sperren; mehrfach ausführbar.
+ */
+export function SperrenNachholen() {
+  const [state, action, pending] = useActionState(sperrenNachholenAction, null);
+  const r = state?.ergebnis;
+  const neu = r ? r.neu.austragen + r.neu.widerspruch + r.neu.datenschutz : 0;
+  return (
+    <details className="text-sm" data-sperren-nachholen>
+      <summary className="cursor-pointer text-slate-500">Austragungen aus bisherigen Antworten sperren</summary>
+      <form action={action} className="mt-2 space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <button name="mode" value="vorschau" className="btn-ghost" disabled={pending}>
+            {pending ? "Prüfe …" : "Vorschau"}
+          </button>
+          {r && !r.angewendet && neu > 0 && (
+            <button name="mode" value="anwenden" className="btn-primary" disabled={pending}>
+              {neu.toLocaleString("de-DE")} sperren
+            </button>
+          )}
+        </div>
+        <Result state={state} />
+        {r && (
+          <p className="text-xs text-slate-500">
+            {r.gelesen.toLocaleString("de-DE")} Antworten geprüft
+            {r.abgemeldetInInstantly ? `, ${r.abgemeldetInInstantly} Abmeldungen in Instantly` : ""}
+            {r.uebersprungen ? `, ${r.uebersprungen} übersprungen (später Termin oder Zusage)` : ""}
+            {r.angewendet && r.instantly.offen ? `, ${r.instantly.offen} in Instantly noch offen (wird alle 15 Min. wiederholt)` : ""}
+          </p>
         )}
       </form>
     </details>

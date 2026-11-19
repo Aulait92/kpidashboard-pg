@@ -94,6 +94,10 @@ export async function sendOfferEmailAction(
   if (offer.status === "superseded" || offer.status === "accepted") {
     return { ok: false, error: "Dieses Angebot ist nicht mehr offen." };
   }
+  // „Nie kontaktieren“ bzw. Sperrliste (Ole, 19.11.2026): keine Mail aus der App, auch keine Angebotsmail
+  if (offer.salesContactId && (await import("@/lib/vertrieb/sperrliste").then((m) => m.kontaktGesperrt(offer.salesContactId)))) {
+    return { ok: false, error: "Dieser Kontakt möchte nicht mehr angeschrieben werden (Kontaktakte → Nie kontaktieren)." };
+  }
   const audience: Audience = isAudience(extras.audience) ? extras.audience : "vertreter";
   let attachment: { filename: string; content: Buffer } | null = null;
   if (extras.praesentation) {

@@ -58,10 +58,15 @@ export type Auswertung = {
   postfaecher: { gesamt: PostfachZeile[]; letzte30: PostfachZeile[] };
   betreffs: BetreffZeile[];
   einwaende: { gesamt: EinwandZeile[]; letzte30: EinwandZeile[] };
+  /** „Nie kontaktieren“ je Grund (Ole, 19.11.2026), nur Zahlen; fehlt, wenn nicht übergeben */
+  gesperrt?: SperrZahlen;
   hinweise: string[];
 };
+/** Gesperrte Kontakte je Grund (austragen, widerspruch, datenschutz, bounce_hart, manuell) und offene Instantly-Sperren */
+export type SperrZahlen = { gesamt: number; jeGrund: Record<string, number>; instantlyOffen: number; auskunftAufgabenOffen: number };
 
 export const BETREFF_MIN_KONTAKTE = 3;
+const SPERR_LABEL: Record<string, string> = { austragen: "Austragung", widerspruch: "Widerspruch", datenschutz: "Datenschutzfrage", bounce_hart: "Harter Bounce", manuell: "Von Hand" };
 const TAG = 86400000;
 const POSITIV_INTERESSE = new Set(["Interessiert", "Termin gebucht", "Termin stattgefunden", "Gewonnen"]);
 const TERMIN_INTERESSE = new Set(["Termin gebucht", "Termin stattgefunden", "Gewonnen"]);
@@ -165,7 +170,7 @@ const alsStimmung = (s: string | null): Stimmung => (s === "POSITIV" || s === "N
 
 // ─── Auswertung ──────────────────────────────────────────────────────────────────────────────────────
 
-export function auswerten(input: { kampagnen: AwKampagne[]; leads: AwLead[]; antworten: AwAntwort[]; termine: AwTermin[]; jetzt?: Date }): Auswertung {
+export function auswerten(input: { kampagnen: AwKampagne[]; leads: AwLead[]; antworten: AwAntwort[]; termine: AwTermin[]; jetzt?: Date; gesperrt?: SperrZahlen }): Auswertung {
   const jetzt = input.jetzt ?? new Date();
   const ab = new Date(jetzt.getTime() - 30 * TAG);
   const aktiv = input.kampagnen.filter((k) => !k.ignored);
@@ -334,6 +339,7 @@ export function auswerten(input: { kampagnen: AwKampagne[]; leads: AwLead[]; ant
     postfaecher: { gesamt: postfachZeilen(null), letzte30: postfachZeilen(ab) },
     betreffs: betreffZeilen(),
     einwaende: { gesamt: einwandZeilen(null), letzte30: einwandZeilen(ab) },
+    ...(input.gesperrt ? { gesperrt: input.gesperrt } : {}),
     hinweise: HINWEISE,
   };
 }
@@ -416,6 +422,16 @@ export function alsMarkdown(a: Auswertung): string {
     tabelle(["Einwand", "Anzahl"], a.einwaende.gesamt.map((e) => [e.kategorie, e.anzahl])),
     "**Letzte 30 Tage**\n",
     tabelle(["Einwand", "Anzahl"], a.einwaende.letzte30.map((e) => [e.kategorie, e.anzahl])),
+    ...(a.gesperrt
+      ? [
+          "## Gesperrt (nie kontaktieren)",
+          tabelle(
+            ["Grund", "Kontakte"],
+            [...Object.entries(a.gesperrt.jeGrund).map(([g, n]) => [SPERR_LABEL[g] ?? g, n]), ["**Summe**", a.gesperrt.gesamt]],
+          ),
+          `In Instantly noch offen: ${a.gesperrt.instantlyOffen}. Offene Aufgaben „Auskunft nach Art. 15“: ${a.gesperrt.auskunftAufgabenOffen}.\n`,
+        ]
+      : []),
     "## Hinweise",
     ...a.hinweise.map((h) => `- ${h}`),
     "",
