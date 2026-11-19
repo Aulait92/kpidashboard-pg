@@ -13,7 +13,7 @@ import { reportError } from "@/lib/monitoring";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting } from "@/lib/offer-links";
 import { berlinTodayIso, isPrepaid, normalizeRhythmus, normalizeTerm, RHYTHMUS_MONATE, type OfferTerm } from "@/lib/offer-pricing";
-import { berlinEndOfDay, cancelDate, cancelDateText, fmtIso, type CancelDate } from "@/lib/vertrag-laufzeit";
+import { berlinEndOfDay, cancelDate, cancelDateText, fmtIso, nextDayIso, type CancelDate } from "@/lib/vertrag-laufzeit";
 import { billingEnabled, endSubscriptionsAt } from "@/lib/billing";
 import { normalizeRetention, retentionText, type RetentionChoice } from "@/lib/ruhend-shared";
 import { customerMrr, recordLifecycle, retentionFields } from "@/lib/ruhend";
@@ -33,7 +33,13 @@ export type ContractCancelInfo = {
   requested: { atIso: string; at: Date; effectiveIso: string; by: string | null } | null;
   /** Vertrag schon beendet (Ende in der Vergangenheit) */
   ended: boolean;
+  /** Zahlung nachträglich (Ole, 19.11.2026): die Vergütung für den letzten Monat folgt nach Vertragsende */
+  arrears?: boolean;
 };
+
+/** Satz zur letzten nachträglichen Zahlung nach dem Vertragsende (Sie-Form, ohne Gedankenstriche). */
+export const nachtraeglichLetzteZahlungText = (effectiveIso: string) =>
+  `Die Vergütung für den letzten Monat buchen wir wie vereinbart nachträglich am ${fmtIso(nextDayIso(effectiveIso))} ab, danach nichts mehr.`;
 
 async function load(customerId: string) {
   const c = await prisma.customer.findUnique({
@@ -59,7 +65,7 @@ async function load(customerId: string) {
   });
   if (!c) return null;
   const offer = c.onboarding?.offerId
-    ? await prisma.offer.findUnique({ where: { id: c.onboarding.offerId }, select: { term: true, startDate: true, number: true, contactName: true, annualPrepay: true } })
+    ? await prisma.offer.findUnique({ where: { id: c.onboarding.offerId }, select: { term: true, startDate: true, number: true, contactName: true, annualPrepay: true, paymentInArrears: true } })
     : null;
   return { c, offer };
 }
@@ -75,6 +81,8 @@ export async function contractCancelInfo(customerId: string, now = new Date()): 
   const term = normalizeTerm(offer?.term);
   // Vorauszahlung (jährlich oder 6 Monate): Ende des Zahlungszeitraums, Verlängerung um jeweils diesen Zeitraum
   const annual = isPrepaid(c.billingInterval);
+  // Zahlung nachträglich (Ole, 19.11.2026): letzte Zahlung nach Vertragsende
+  const arrears = !annual && !!offer?.paymentInArrears;
   const todayIso = berlinIso(now);
   const regular = cancelDate({ startIso: billingIso, term, annual, todayIso, prepayMonths: RHYTHMUS_MONATE[normalizeRhythmus(c.billingInterval)] });
   // Halteangebot: nach angenommenem Nachlass frühestens zum Ende der vereinbarten Mindestlaufzeit
@@ -85,7 +93,8 @@ export async function contractCancelInfo(customerId: string, now = new Date()): 
     term,
     annual,
     next,
-    nextText: cancelDateText(next, startIso),
+    nextText: arrears ? `${cancelDateText(next, startIso)} ${nachtraeglichLetzteZahlungText(next.effectiveIso)}` : cancelDateText(next, startIso),
+    arrears,
     requested:
       c.cancelRequestedAt && c.cancelEffectiveAt
         ? { atIso: berlinIso(c.cancelRequestedAt), at: c.cancelRequestedAt, effectiveIso: berlinIso(c.cancelEffectiveAt), by: c.cancelRequestedBy }
@@ -183,7 +192,7 @@ export async function cancelContract(
       greeting: await customerGreeting({ salesContactId: contactId, contactName: r?.offer?.contactName ?? null }),
       paragraphs: [
         `wir bestätigen den Eingang Ihrer Kündigung am ${fmtIso(berlinIso(now))} um ${fmtTime(now)} Uhr.`,
-        cancelDateText(info.next, info.startIso),
+        info.arrears ? `${cancelDateText(info.next, info.startIso)} ${nachtraeglichLetzteZahlungText(info.next.effectiveIso)}` : cancelDateText(info.next, info.startIso),
         "Bis dahin laufen Kampagnen, Leads und Software wie gewohnt weiter. Zusatzmodule enden mit dem Vertrag.",
         retention === "24m"
           ? `Ihre Daten bewahren wir 24 Monate auf, damit Sie jederzeit zurückkommen können. ${retentionText(effectiveIso, retention)} In dieser Zeit ruht Ihr Konto: Sie können sich anmelden, Ihre Daten herunterladen oder Ihr Konto reaktivieren.`

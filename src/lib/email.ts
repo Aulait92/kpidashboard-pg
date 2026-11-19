@@ -259,6 +259,8 @@ export async function sendOfferEmail(opts: {
   bonusSpaeter?: boolean;
   /** Vorauszahlung vereinbart oder zur Wahl (Ole, 19.11.2026): Satz zur Fälligkeit mit der Annahme */
   vorauszahlung?: boolean;
+  /** Zahlung nachträglich (Ole, 19.11.2026): erste Abbuchung (YYYY-MM-DD) und Setup netto */
+  nachtraeglich?: { ersteIso: string | null; setup: number } | null;
 }): Promise<SendResult & { subject?: string; text?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
@@ -274,7 +276,7 @@ export async function sendOfferEmail(opts: {
   const subject = `${t.subject} (${opts.number})`;
   const discount = opts.discount ? offerDiscountLine(opts.discount) : null;
   const bonusText = opts.bonus ? offerBonusLine(opts.bonus, !!opts.du, !!opts.bonusSpaeter) : null;
-  const vorausText = opts.vorauszahlung ? OFFER_MAIL_VORAUSZAHLUNG : null;
+  const vorausText = opts.nachtraeglich ? offerMailNachtraeglich(opts.nachtraeglich) : opts.vorauszahlung ? OFFER_MAIL_VORAUSZAHLUNG : null;
   const text = [
     opts.greeting,
     "",
@@ -327,6 +329,17 @@ export async function sendOfferEmail(opts: {
 
 /** Zeile zur Vorauszahlung in der Angebotsmail (Ole, 19.11.2026; ohne Anrede, passt zu Sie und Du). */
 export const OFFER_MAIL_VORAUSZAHLUNG = `Zahlung im Voraus: ${VORAUSZAHLUNG_MIT_ANNAHME}`;
+
+/**
+ * Zeile zur nachträglichen Zahlung in der Angebotsmail (Ole, 19.11.2026; ohne Anrede, passt zu Sie und Du, ohne
+ * Gedankenstriche): „Zahlung: monatlich nachträglich für den abgelaufenen Monat, erstmals am 01.01.2027. Bei Annahme
+ * fällig: 0 €.“
+ */
+export function offerMailNachtraeglich(n: { ersteIso: string | null; setup: number }): string {
+  const erste = n.ersteIso ? `am ${n.ersteIso.split("-").reverse().join(".")}` : "einen Monat nach dem Start";
+  const jetzt = n.setup > 0 ? `nur die Einrichtung (${eurMail(n.setup)} netto)` : "0 €";
+  return `Zahlung: monatlich nachträglich für den abgelaufenen Monat, erstmals ${erste}. Bei Annahme fällig: ${jetzt}.`;
+}
 
 /** Zeile zum Abschlussbonus in der Angebotsmail (ohne Gedankenstriche). */
 export function offerBonusLine(b: { betrag: number; bis: Date }, du: boolean, spaeter = false): string {

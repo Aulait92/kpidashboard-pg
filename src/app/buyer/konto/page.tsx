@@ -14,7 +14,7 @@ import { LeadEmailToggle } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
-import { bestandPacksText, freimonateKunde, normalizeRhythmus, PRICE_LIST, RHYTHMUS_MONATE, rhythmusFaktor, TERM_MONTHS, normalizeTerm } from "@/lib/offer-pricing";
+import { berlinTodayIso, bestandPacksText, freimonateKunde, normalizeRhythmus, PRICE_LIST, RHYTHMUS_MONATE, rhythmusFaktor, TERM_MONTHS, normalizeTerm } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
 import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
 import { empfehlungVisible, moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
@@ -25,7 +25,7 @@ import { VertragKuendigen } from "./vertrag-kuendigen";
 import { Aufbewahrung } from "./aufbewahrung";
 import { loadRetentionView } from "@/lib/ruhend";
 import { loadHalteKonto } from "@/lib/halteangebote-server";
-import { fmtIso } from "@/lib/vertrag-laufzeit";
+import { fmtIso, naechsteNachtraeglicheAbbuchung } from "@/lib/vertrag-laufzeit";
 import { bestandVisible } from "@/lib/bestand/sichtbar";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +86,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   });
   if (!customer) redirect("/buyer");
   const offer = customer.onboarding?.offerId
-    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true, annualFreeMonths: true } })
+    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true, annualFreeMonths: true, paymentInArrears: true, startDate: true } })
     : null;
 
   let invoices: CustomerInvoice[] = [];
@@ -128,6 +128,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const freimonate = freimonateKunde(customer, offer);
   const prepayFree = annual ? prepayMonths - rhythmusFaktor(rhythmus, freimonate) : 0;
   const yearly = annual && monthlyTotal != null ? monthlyTotal * rhythmusFaktor(rhythmus, freimonate) : null;
+  // Zahlung nachträglich (Ole, 19.11.2026): nächste Abbuchung mit dem Leistungsmonat, für den sie gilt (nach einer
+  // Kündigung höchstens noch die für den letzten Monat)
+  const arrearsStart = !annual && offer?.paymentInArrears ? (customer.retainerStart ?? offer.startDate) : null;
+  const naechsteNachtraeglich = arrearsStart
+    ? naechsteNachtraeglicheAbbuchung(berlinTodayIso(arrearsStart), today, cancelInfo?.requested?.effectiveIso ?? null)
+    : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -191,8 +197,15 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   {/* Rhythmus und Weg in einem (Usability-Check 18.11.2026: „Monatlich“ und „per Rechnung“ wirkten widersprüchlich) */}
                   {annual && yearly != null
                     ? `${prepayMonths === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(yearly)} netto (${prepayFree} ${prepayFree === 1 ? "Monat" : "Monate"} geschenkt)`
-                    : "Monatlich"}
+                    : arrearsStart
+                      ? "Monatlich, jeweils nachträglich für den abgelaufenen Monat"
+                      : "Monatlich"}
                   {customer.stripeCustomerId ? "" : ", per Rechnung"}
+                  {naechsteNachtraeglich ? (
+                    <span className="block text-[color:var(--muted)]" data-konto-nachtraeglich>
+                      Nächste Abbuchung am {fmtIso(naechsteNachtraeglich.chargeIso)} für {fmtIso(naechsteNachtraeglich.fromIso)} bis {fmtIso(naechsteNachtraeglich.toIso)}
+                    </span>
+                  ) : null}
                 </dd>
               </>
             ) : null}

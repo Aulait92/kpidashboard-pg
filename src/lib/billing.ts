@@ -34,7 +34,7 @@ import {
   type Zahlrhythmus,
 } from "@/lib/offer-pricing";
 import { abrechnungsplan, anteilVerteilen } from "@/lib/abrechnungstag";
-import { ersterVorauszahlungszeitraum, fmtIso } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, ersterVorauszahlungszeitraum, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat } from "@/lib/vertrag-laufzeit";
 
 const round2Billing = (n: number) => Math.round(n * 100) / 100;
 import { audit, type AuditActor } from "@/lib/audit";
@@ -562,7 +562,9 @@ export async function createScheduleForOffer(
   const productOfKey = { software, service, seat, bestand, empfehlung };
   const itemsFor = (total: number) => aboPositionen(offer, total).map((p) => item(productOfKey[p.key], p.monthly, p.quantity));
 
-  const meta = offerMeta(offer);
+  // Zahlung nachträglich (Ole, 19.11.2026): nur monatlich; pg_arrears steht in den Abo-Metadaten (Rechnungstext, Vertragsende)
+  const arrears = offer.paymentInArrears && rhythmus === "month";
+  const meta = { ...offerMeta(offer), ...(arrears ? { pg_arrears: "1" } : {}) };
   const intro = offer.introMonthlyFee == null ? null : Number(offer.introMonthlyFee);
   const phases: Stripe.SubscriptionScheduleCreateParams.Phase[] = [];
   if (intro != null && offer.introMonths && intro < monthly) {
@@ -582,7 +584,9 @@ export async function createScheduleForOffer(
   // Bezahlseiten ohne Vorauszahlung rechnen wie bisher zum Start) bzw. bei Überweisung (gleiche Regel wie die Rechnung)
   const voraus = vorauszahlungJetzt(offer, todayIso);
   const vorausBezahlt = voraus && (session ? !!session.metadata?.pg_prepay_renewal : !!ueberweisung) ? voraus : null;
-  const plan = abrechnungsplan({
+  const plan = arrears
+    ? null
+    : abrechnungsplan({
     startIso: startIso && startIso < todayIso ? todayIso : startIso,
     billingDay: offer.billingDay,
     freeStart: offer.billingFreeStart,
@@ -610,8 +614,14 @@ export async function createScheduleForOffer(
     if (!phases[0].add_invoice_items.length) delete phases[0].add_invoice_items;
   }
 
+  // Zahlung nachträglich: Leistung ab Start, das Abo (und damit die erste Rechnung) beginnt einen Monat später am selben
+  // Tag. Stripe rechnet im Voraus für [Abrechnung, Abrechnung + 1 Monat); fachlich bezahlt jede Rechnung den Monat davor
+  // (Rechnungstext: labelArrearsInvoice). Vorher gibt es kein Abo (keine 0-€-Rechnung).
+  const arrearsFirstIso = arrears ? nachtraeglichErsteIso(startIso ?? todayIso) : null;
   // Vorauszahlung bezahlt: Zeitraum laut Vertrag (Start, nach einem verschobenen Start der neue), Abo ab der Verlängerung
-  const startAt = vorausBezahlt
+  const startAt = arrearsFirstIso
+    ? noon(arrearsFirstIso)
+    : vorausBezahlt
     ? noon(vorausBezahlt.renewalIso)
     : plan?.differs
       ? noon(plan.firstIso)
@@ -632,6 +642,8 @@ export async function createScheduleForOffer(
         ...(plan?.differs ? { pg_billing_day: String(plan.day), pg_first_billing: plan.firstIso, pg_free_start: plan.free ? "1" : "0" } : {}),
         // Erster Zeitraum mit der Annahme bezahlt (setScheduleItem rechnet Änderungen darin anteilig ab)
         ...(vorausBezahlt ? { pg_prepaid_from: vorausBezahlt.fromIso, pg_prepaid_until: vorausBezahlt.toIso } : {}),
+        // Zahlung nachträglich: Leistungsbeginn und erste Abbuchung
+        ...(arrearsFirstIso ? { pg_arrears: "1", pg_arrears_start: startIso ?? todayIso, pg_first_billing: arrearsFirstIso } : {}),
       },
       default_settings: {
         ...(ueberweisung
@@ -646,7 +658,7 @@ export async function createScheduleForOffer(
               ...(taxIds.account_tax_ids ? { invoice_settings: { account_tax_ids: taxIds.account_tax_ids } } : {}),
             }),
         ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
-        description: `${packageName(offer)} (${products}), Angebot ${offer.number}`,
+        description: `${packageName(offer)} (${products}), Angebot ${offer.number}${arrears ? ", Vergütung jeweils nachträglich für den abgelaufenen Leistungsmonat" : ""}`,
       },
       phases,
     },
@@ -663,6 +675,78 @@ export async function createScheduleForOffer(
   });
   // Abo startet sofort: Banküberweisung als Zahlungsart der Abo-Rechnungen (sonst im Webhook beim Start)
   if (ueberweisung && subId) await setBankTransferOnSubscription(subId);
+}
+
+/** Berliner Kalendertag (YYYY-MM-DD) eines Stripe-Zeitstempels. */
+const berlinIsoOfTs = (ts: number) => berlinTodayIso(new Date(ts * 1000));
+
+/**
+ * Zahlung nachträglich (Ole, 19.11.2026): Text der Abo-Rechnung, die am Tag `chargeIso` entsteht. Stripe führt an der
+ * Position den kommenden Abrechnungszeitraum; fachlich bezahlt die Rechnung den abgelaufenen Leistungsmonat. Darum stehen
+ * Beschreibung und Zusatzfeld „Leistungszeitraum“ ausdrücklich mit „(nachträglich)“ auf der Rechnung.
+ */
+export function arrearsInvoiceText(chargeIso: string): { fromIso: string; toIso: string; description: string; field: { name: string; value: string } } {
+  const lm = nachtraeglichLeistungsmonat(chargeIso);
+  const zeitraum = `${fmtIso(lm.fromIso)} bis ${fmtIso(lm.toIso)}`;
+  return {
+    ...lm,
+    description: `Vergütung nachträglich für den Leistungszeitraum ${zeitraum}`,
+    field: { name: "Leistungszeitraum", value: `${zeitraum} (nachträglich)` },
+  };
+}
+
+/**
+ * Webhook invoice.created: Abo-Rechnung eines Kunden mit Zahlung nachträglich (Abo-Metadaten pg_arrears) im Entwurf
+ * beschriften (Beschreibung und Zusatzfeld „Leistungszeitraum“ für den abgelaufenen Monat). Stripe lässt Abo-Rechnungen
+ * eine Stunde im Entwurf, auch die erste aus dem Zeitplan. true = beschriftet. Wirft nie.
+ */
+export async function labelArrearsInvoice(invoice: Stripe.Invoice): Promise<boolean> {
+  try {
+    const stripe = stripeClient();
+    if (!stripe || invoice.status !== "draft" || !invoice.id) return false;
+    const details = (invoice as unknown as { parent?: { subscription_details?: { metadata?: Record<string, string> | null } | null } | null }).parent?.subscription_details;
+    if (details?.metadata?.pg_arrears !== "1") return false;
+    // Abrechnungstag = Beginn des Stripe-Zeitraums der Abo-Position (sonst Rechnungsdatum)
+    const line = invoice.lines?.data?.find((l) => (l as unknown as { parent?: { type?: string } }).parent?.type === "subscription_item_details") ?? invoice.lines?.data?.[0];
+    const chargeTs = line?.period?.start ?? invoice.created;
+    const t = arrearsInvoiceText(berlinIsoOfTs(chargeTs));
+    // Stripe erlaubt höchstens 4 Zusatzfelder: der Leistungszeitraum bleibt immer drin
+    const andere = (invoice.custom_fields ?? []).filter((f) => f.name !== t.field.name).slice(0, 3);
+    await stripe.invoices.update(invoice.id, {
+      description: invoice.description ? `${t.description}. ${invoice.description}`.slice(0, 1500) : t.description,
+      custom_fields: [...andere.map((f) => ({ name: f.name, value: f.value })), t.field],
+    });
+    return true;
+  } catch (err) {
+    reportError(err, "billing-arrears-label", { invoice: invoice.id ?? null });
+    return false;
+  }
+}
+
+/**
+ * Zahlung nachträglich: Ende des Stripe-Abos nach Vertragsende `endAt`. Die Abrechnung am ersten Abrechnungstag ab
+ * `endAt` bezahlt noch den letzten Leistungsmonat; danach darf nichts mehr kommen. Darum endet das Abo genau am Ende
+ * dieses Stripe-Zeitraums (nächster Abrechnungstag): Stripe rechnet den vollen letzten Monat ab, ohne Anteil und ohne
+ * weitere Rechnung. Abrechnungstage wie Stripe: Anker plus n Monate (UTC), fehlender Tag = Monatsletzter.
+ */
+export function arrearsCancelTs(anchorTs: number, endAtTs: number): number {
+  const a = new Date(anchorTs * 1000);
+  const at = (n: number) => {
+    const y = a.getUTCFullYear();
+    const m = a.getUTCMonth() + n;
+    const dim = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    return Math.floor(Date.UTC(y, m, Math.min(a.getUTCDate(), dim), a.getUTCHours(), a.getUTCMinutes(), a.getUTCSeconds()) / 1000);
+  };
+  let n = 0;
+  while (at(n) < endAtTs && n < 1200) n++;
+  return at(n + 1);
+}
+
+/** Zahlung nachträglich ohne laufendes Abo (Zeitplan noch nicht gestartet): Ende einen Monat nach dem Folgetag des Vertragsendes, mittags. */
+export function arrearsScheduleEndTs(effectiveIso: string): number {
+  const [y, m, d] = effectiveIso.split("-").map(Number);
+  const next = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+  return noonTs(addMonthsIso(next, 1));
 }
 
 /** Zahlungsart der Rechnungen per Überweisung: Stripe-Banküberweisung (virtuelle IBAN je Kunde, EUR, DE). */
@@ -1990,11 +2074,15 @@ export type ContractEndResult =
  * - Abo ohne Zeitplan bzw. in der letzten Phase: Zeitplan lösen, dann `cancel_at` am Abo
  * - Zeitplan noch nicht gestartet oder Startpreis-Phase läuft: Phasen bei `endAt` enden lassen, end_behavior „cancel“
  * Kein laufendes Abo und kein geplanter Start → ok: false (bitte von Hand prüfen).
+ * Zahlung nachträglich (Metadaten pg_arrears, Ole 19.11.2026): Das Abo endet erst nach der letzten nachträglichen
+ * Abbuchung für den letzten Leistungsmonat ({@link arrearsCancelTs}), danach kommt keine Rechnung mehr.
  */
 export async function endSubscriptionsAt(stripeCustomerId: string, endAt: Date, now = new Date()): Promise<ContractEndResult> {
   const stripe = stripeClient();
   if (!stripe) return { ok: false, error: "Stripe ist nicht eingerichtet.", changed: [] };
   const ts = Math.floor(endAt.getTime() / 1000);
+  // Letzter Vertragstag (Berlin) für Zeitpläne mit Zahlung nachträglich, die noch nicht begonnen haben
+  const effectiveIso = berlinTodayIso(new Date(endAt.getTime() - 1000));
   const changed: string[] = [];
   const unchanged: string[] = [];
   try {
@@ -2003,6 +2091,8 @@ export async function endSubscriptionsAt(stripeCustomerId: string, endAt: Date, 
     );
     const handledSchedules = new Set<string>();
     for (const sub of subs) {
+      // Zahlung nachträglich: Ende nach der Abbuchung für den letzten Leistungsmonat
+      const subTs = sub.metadata?.pg_arrears === "1" ? arrearsCancelTs(sub.billing_cycle_anchor, ts) : ts;
       const scheduleId = typeof sub.schedule === "string" ? sub.schedule : (sub.schedule?.id ?? null);
       if (scheduleId) {
         handledSchedules.add(scheduleId);
@@ -2010,18 +2100,18 @@ export async function endSubscriptionsAt(stripeCustomerId: string, endAt: Date, 
         const last = schedule.phases[schedule.phases.length - 1];
         if (schedule.status === "active" && last && last.start_date > now.getTime() / 1000) {
           // Startpreis-Phase läuft noch: den Zeitplan selbst zum Termin enden lassen
-          if (await endScheduleAt(stripe, schedule, ts)) changed.push(scheduleId);
+          if (await endScheduleAt(stripe, schedule, subTs)) changed.push(scheduleId);
           else unchanged.push(scheduleId);
           continue;
         }
         // Letzte Phase läuft: Zeitplan lösen, danach ist das Abo frei änderbar (wie detachSchedule)
         if (schedule.status === "active") await stripe.subscriptionSchedules.release(scheduleId);
       }
-      if (sub.cancel_at === ts && !sub.cancel_at_period_end) {
+      if (sub.cancel_at === subTs && !sub.cancel_at_period_end) {
         unchanged.push(sub.id);
         continue;
       }
-      await stripe.subscriptions.update(sub.id, { cancel_at: ts, proration_behavior: "none" }, { idempotencyKey: `contract-end-${sub.id}-${ts}` });
+      await stripe.subscriptions.update(sub.id, { cancel_at: subTs, proration_behavior: "none" }, { idempotencyKey: `contract-end-${sub.id}-${subTs}` });
       changed.push(sub.id);
     }
     // Abo-Start noch nicht erreicht (Angebot vor dem Startdatum)
@@ -2029,7 +2119,7 @@ export async function endSubscriptionsAt(stripeCustomerId: string, endAt: Date, 
       (s) => s.status === "not_started" && !handledSchedules.has(s.id),
     );
     for (const s of schedules) {
-      if (await endScheduleAt(stripe, s, ts)) changed.push(s.id);
+      if (await endScheduleAt(stripe, s, s.metadata?.pg_arrears === "1" ? arrearsScheduleEndTs(effectiveIso) : ts)) changed.push(s.id);
       else unchanged.push(s.id);
     }
     if (!changed.length && !unchanged.length) return { ok: false, error: "Kein laufendes Stripe-Abo gefunden.", changed };

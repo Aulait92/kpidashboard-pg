@@ -28,6 +28,7 @@ import { entscheidungsCallStand } from "@/lib/vertrieb/entscheidungs-call-server
 import { entscheidungsCallText, type EntscheidungsCallText } from "@/lib/vertrieb/entscheidungs-call";
 import { ueberweisungMoeglich } from "@/lib/ueberweisung";
 import { nowMs } from "@/lib/now";
+import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
 
 // Öffentliches Angebot per geheimem Link. ?print=1 liefert die reine
 // Druckansicht (für das PDF).
@@ -121,6 +122,7 @@ export default async function OfferPage({
             ueberweisung={offer.zahlweise === "ueberweisung" ? { iban: offer.ueberweisungIban, tage: offer.bankTransferDays } : null}
             rechnung={vorausJetzt || Number(offer.setupFee) - Number(offer.abschlussBonusGewaehrt ?? 0) >= STRIPE_MIN_EUR}
             vorausJetzt={vorausJetzt}
+            nachtraeglichAb={offer.paymentInArrears && !offer.annualPrepay && offer.startDate ? nachtraeglichErsteIso(offer.startDate.toISOString().slice(0, 10)) : null}
           />
         ) : null}
         <OfferDocument offer={doc} collapseAgb />
@@ -304,6 +306,7 @@ function PaymentBox({
   ueberweisungTage = null,
   ueberweisung = null,
   vorausJetzt = false,
+  nachtraeglichAb = null,
 }: {
   token: string;
   status: string;
@@ -319,7 +322,10 @@ function PaymentBox({
   ueberweisung?: { iban: string | null; tage: number } | null;
   /** Vorauszahlung mit der Annahme fällig: Setup und Vorauszahlung auf einer Rechnung */
   vorausJetzt?: boolean;
+  /** Zahlung nachträglich (Ole, 19.11.2026): Tag der ersten Abbuchung (YYYY-MM-DD) */
+  nachtraeglichAb?: string | null;
 }) {
+  const ersteNachtraeglich = nachtraeglichAb ? nachtraeglichAb.split("-").reverse().join(".") : null;
   const box = "mx-auto mb-6 max-w-[880px] rounded-[20px] border px-6 py-5 sm:px-10";
   if (ueberweisung && status !== "paid") {
     return (
@@ -330,7 +336,9 @@ function PaymentBox({
           <p className="mt-1 text-sm">
             {vorausJetzt
               ? `Bitte überweisen Sie Setup und Vorauszahlung innerhalb von ${ueberweisung.tage} Tagen. Die Laufzeit beginnt mit dem Start der Kampagne, die nächste Vorauszahlung bekommen Sie ebenfalls als Rechnung.`
-              : rechnung
+              : ersteNachtraeglich
+                ? `${rechnung ? `Bitte überweisen Sie das Setup innerhalb von ${ueberweisung.tage} Tagen. ` : ""}Die monatliche Vergütung bekommen Sie jeweils nachträglich für den abgelaufenen Monat als Rechnung, die erste am ${ersteNachtraeglich}.`
+                : rechnung
                 ? `Bitte überweisen Sie das Setup innerhalb von ${ueberweisung.tage} Tagen. Die laufende Vergütung bekommen Sie ab dem Start ebenfalls als Rechnung.`
                 : "Die laufende Vergütung bekommen Sie ab dem Start als Rechnung."}{" "}
             Ihren Zugang zur Einrichtung erhalten Sie gleich per E-Mail.
@@ -384,7 +392,9 @@ function PaymentBox({
       <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">
         {vorausJetzt
           ? "Richten Sie jetzt die Zahlung ein: Fällig sind Setup und Vorauszahlung, die Laufzeit beginnt mit dem Start der Kampagne. Die Zahlung läuft sicher über Stripe."
-          : "Richten Sie jetzt die Zahlung ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe."}
+          : ersteNachtraeglich
+            ? `Hinterlegen Sie jetzt Ihre Zahlungsart.${rechnung ? " Fällig ist jetzt nur das Setup." : " Jetzt wird nichts abgebucht."} Die monatliche Vergütung zahlen Sie jeweils nachträglich für den abgelaufenen Monat, erstmals am ${ersteNachtraeglich}. Die Zahlung läuft sicher über Stripe.`
+            : "Richten Sie jetzt die Zahlung ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe."}
       </p>
       {bonus ? <BonusHinweis bonus={bonus} zahlung /> : null}
       <PayButton token={token} ueberweisungTage={ueberweisungTage} />
