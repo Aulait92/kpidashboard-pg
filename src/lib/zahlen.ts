@@ -5,7 +5,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { provisionForCustomers } from "@/lib/ertrag";
-import { isPrepaid, PRICE_LIST, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
+import { freimonateKunde, isPrepaid, PRICE_LIST, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
 import { monthlyBankCosts } from "@/lib/bank/server";
 import { monthlyFeeCosts } from "@/lib/whatsapp/fees";
 import { freeMonthsOf, type GarantieArt } from "@/lib/garantien";
@@ -96,6 +96,7 @@ export const RETAINER_CUSTOMER_SELECT = {
   bestandMonthly: true,
   empfehlungMonthly: true,
   billingInterval: true,
+  prepayFreeMonths: true,
   pauses: { where: { kind: "customer", status: { in: ["active", "ended"] } }, select: { startsAt: true, endsAt: true, resumedAt: true } },
 } satisfies Prisma.CustomerSelect;
 
@@ -110,6 +111,8 @@ export function retainerInputFor(
     bestandMonthly: unknown;
     empfehlungMonthly?: unknown;
     billingInterval: string;
+    /** Freimonate je Vorauszahlungszeitraum, am Kunden eingefroren (null: laut Angebot bzw. Standard) */
+    prepayFreeMonths?: number | null;
     pauses: { startsAt: Date; endsAt: Date | null; resumedAt: Date | null }[];
   },
   offer: { softwareFee: unknown; introMonthlyFee: unknown; introMonths: number | null; annualFreeMonths: number | null } | undefined | null,
@@ -125,8 +128,9 @@ export function retainerInputFor(
     intro: offer?.introMonthlyFee != null && offer.introMonths ? { amount: n(offer.introMonthlyFee), months: offer.introMonths } : null,
     // Weitere Logins und Bestandskunden-Modul zählen als Software (Stand heute, nicht historisch)
     extras: c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly) + n(c.empfehlungMonthly),
-    // Vorauszahlung: MRR = Betrag / Monate (jährlich 10/12, 6 Monate 5/6; keine Spitze im Zahlungsmonat); Pausen ohne Gutschrift
-    annualFactor: rhythmusMonatsAnteil(c.billingInterval, offer?.annualFreeMonths),
+    // Vorauszahlung: MRR = Betrag / Monate (jährlich 9/12, Altverträge 10/12, 6 Monate 5/6; keine Spitze im
+    // Zahlungsmonat); Pausen ohne Gutschrift
+    annualFactor: rhythmusMonatsAnteil(c.billingInterval, freimonateKunde(c, offer)),
     pauses: isPrepaid(c.billingInterval) ? [] : c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
     freeMonths: freeMonthsOf(garantien.map((g) => ({ art: g.art as GarantieArt, monat: g.monat, status: "gewaehrt" as const }))),
   };
@@ -160,6 +164,7 @@ export async function loadLedger(now = new Date()) {
         bestandMonthly: true,
         empfehlungMonthly: true,
         billingInterval: true,
+        prepayFreeMonths: true,
         onboarding: { select: { offerId: true } },
         pauses: { where: { kind: "customer", status: { in: ["active", "ended"] } }, select: { startsAt: true, endsAt: true, resumedAt: true } },
       },

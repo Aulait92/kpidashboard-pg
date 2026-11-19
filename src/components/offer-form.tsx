@@ -135,7 +135,7 @@ export function OfferForm({
     setupDiscount: referralDiscount ? num(discount) : null,
   });
   const softwarePkg = pkg === "software";
-  // Vorauszahlung (Ole, 18.11.2026): mit 12 Monaten jährlich (2 geschenkt), mit 6 Monaten 6 Monate im Voraus (1 geschenkt)
+  // Vorauszahlung (Ole, 18.11.2026): mit 12 Monaten jährlich (3 geschenkt seit 19.11.2026), mit 6 Monaten 6 Monate im Voraus (1 geschenkt)
   const annualPossible = prepayPossible(term) && num(introFee) == null;
   const voraus = VORAUSZAHLUNG[term === "6m" ? "6m" : "12m"];
   const geschenkt = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"} geschenkt`;

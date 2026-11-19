@@ -13,7 +13,7 @@
 //   Termine      nur zur Info (Leads × Termin-Quote), nicht Teil der Rechnung
 //   Kosten       = (Werbebudget + Betreuung + weitere Berater) × (1,19 bei „inkl. USt.“)
 //     Betreuung:   Monatspreis nach Budget-Staffel (offer-pricing.ts)
-//     Jahreszahlung (nur 12 Monate): Betreuung + Berater × 10/12
+//     Jahreszahlung (nur 12 Monate): Betreuung + Berater × 9/12 (ANNUAL_PAID_MONTHS / 12)
 //   Überschuss   = Provision − Kosten
 //   Break-even   = kleinste Zahl Verträge n mit n × Provision(n) ≥ Kosten
 //   Setup        = Setup-Preis (990 € mit 12 Monaten, 2.490 € ohne) × USt.
@@ -705,7 +705,7 @@ export function berechne(p: RechnerProduct, i: RechnerInput, cpl: number): Rechn
   const price = computeOfferPrice({ package: "software", term: i.laufzeit, products: [{ name: p.name, dailyBudget: i.budget }] });
   const individuell = price.listMonthly == null;
   const monthlyBase = price.listMonthly ?? PRICE_LIST.tiers[PRICE_LIST.tiers.length - 1].monthly;
-  // Vorauszahlung: jährlich 10/12, 6 Monate im Voraus 5/6 je Monat
+  // Vorauszahlung: jährlich 9/12, 6 Monate im Voraus 5/6 je Monat
   const annual = rhythmusMonatsAnteil(rhythmusFuer(i.laufzeit, i.jaehrlich && prepayPossible(i.laufzeit)));
   const betreuung = monthlyBase * annual;
   const berater = Math.max(0, i.berater - SEATS_INCLUDED) * SEAT_MONTHLY * annual;

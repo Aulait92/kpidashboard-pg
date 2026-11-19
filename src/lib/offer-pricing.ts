@@ -37,8 +37,12 @@ export const PRICE_LIST = {
   seatMonthly: 49,
   /** Ab so vielen aktiven Verkäufern individuell (Preis per Sonderkondition). */
   seatIndividualFrom: 10,
-  /** Jährlich im Voraus: so viele Monate geschenkt (nur mit 12 Monaten Laufzeit). */
-  annualFreeMonths: 2,
+  /**
+   * Jährlich im Voraus: so viele Monate geschenkt (nur mit 12 Monaten Laufzeit), Jahresbetrag = (12 − 3) × Monatspreis.
+   * Seit 19.11.2026 (Ole) 3, vorher 2: angenommene Angebote und laufende Kunden behalten ihren Wert
+   * (Offer.annualFreeMonths, Customer.prepayFreeMonths), offene Angebote per Migration 20261119000300_jahr_3_monate.
+   */
+  annualFreeMonths: 3,
   /** 6 Monate im Voraus: so viele Monate geschenkt (nur mit 6 Monaten Laufzeit, Ole 18.11.2026). */
   halfYearFreeMonths: 1,
   /** Bestandskunden-Modul je Monat (netto), inkl. WhatsApp-Gebühren bis zum Kontingent. */
@@ -99,7 +103,7 @@ export const setupForTerm = (t: OfferTerm): number =>
 
 // ─── Vorauszahlung (Ole, 18.11.2026): eine Logik für 6 und 12 Monate ─────────
 // Mit 6 Monaten Laufzeit: 6 Monate im Voraus, 1 Monat geschenkt (5 Monatsbeträge). Mit 12 Monaten: jährlich im
-// Voraus, 2 Monate geschenkt (10 Monatsbeträge). Gespeichert wird beides wie bisher in Offer.annualPrepay/annualFreeMonths
+// Voraus, 3 Monate geschenkt (9 Monatsbeträge; bis 18.11.2026: 2 bzw. 10). Gespeichert wird beides wie bisher in Offer.annualPrepay/annualFreeMonths
 // (Name historisch); der Zeitraum folgt aus der Laufzeit. Am Kunden: billingInterval "halfyear" bzw. "year".
 
 export type PrepayTerm = "6m" | "12m";
@@ -111,7 +115,7 @@ export const VORAUSZAHLUNG: Record<PrepayTerm, { months: number; freeMonths: num
 export const prepayPossible = (t: unknown): t is PrepayTerm => t === "6m" || t === "12m";
 /** Monate je Vorauszahlungszeitraum (Altdaten ohne 6 Monate: 12). */
 export const prepayMonthsFor = (t: unknown): number => (t === "6m" ? 6 : 12);
-/** Geschenkte Monate je Zeitraum nach Laufzeit (Altdaten: 2). */
+/** Geschenkte Monate je Zeitraum nach Laufzeit (heutiger Standard; Altdaten ohne 6 Monate: wie 12 Monate). */
 export const prepayFreeMonthsFor = (t: unknown): number => (t === "6m" ? VORAUSZAHLUNG["6m"].freeMonths : VORAUSZAHLUNG["12m"].freeMonths);
 
 /**
@@ -145,7 +149,29 @@ export function rhythmusFaktor(r: unknown, freeMonths?: number | null): number {
   const term = n === "halfyear" ? "6m" : "12m";
   return prepayMonthsFor(term) - (freeMonths ?? prepayFreeMonthsFor(term));
 }
-/** Anteil je Monat (z. B. MRR): jährlich 10/12, halbjährlich 5/6, monatlich 1. */
+/**
+ * Geschenkte Monate eines Kunden je Vorauszahlungszeitraum: am Kunden eingefroren (Customer.prepayFreeMonths, gesetzt bei
+ * Annahme und beim Umstellen der Zahlweise), sonst laut angenommenem Angebot, sonst null (= heutiger Standard). So behalten
+ * laufende Verträge ihre Freimonate, wenn sich der Standard ändert (Jahreszahlung bis 18.11.2026: 2, seitdem 3).
+ */
+export const freimonateKunde = (
+  c: { prepayFreeMonths?: number | null },
+  offer?: { annualFreeMonths?: number | null } | null,
+): number | null => c.prepayFreeMonths ?? offer?.annualFreeMonths ?? null;
+/**
+ * Freimonate beim Umstellen der Zahlweise eines Kunden: zurück auf die Vorauszahlung des angenommenen Angebots = Wert
+ * des Angebots, sonst heutiger Standard; monatlich = null.
+ */
+export function freimonateBeiUmstellung(
+  offer: { annualPrepay?: boolean | null; annualFreeMonths?: number | null; term?: string | null } | null | undefined,
+  ziel: unknown,
+): number | null {
+  const r = normalizeRhythmus(ziel);
+  if (r === "month") return null;
+  if (offer?.annualPrepay && offer.annualFreeMonths != null && rhythmusFuer(offer.term, true) === r) return offer.annualFreeMonths;
+  return prepayFreeMonthsFor(r === "halfyear" ? "6m" : "12m");
+}
+/** Anteil je Monat (z. B. MRR): jährlich 9/12 (Altverträge 10/12), halbjährlich 5/6, monatlich 1. */
 export const rhythmusMonatsAnteil = (r: unknown, freeMonths?: number | null): number => rhythmusFaktor(r, freeMonths) / RHYTHMUS_MONATE[normalizeRhythmus(r)];
 /** Stripe-Intervall je Rhythmus: halbjährlich = Monat × 6. */
 export function stripeRecurring(r: unknown): { interval: "month" | "year"; interval_count?: number } {
@@ -263,7 +289,7 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
   const monthlyFee =
     input.monthlyOverride != null && input.monthlyOverride >= 0 ? input.monthlyOverride : listBase;
   const monthlyTotal = monthlyFee == null ? null : round2(monthlyFee + seatsFee + bestandFee + empfehlungFee);
-  // Vorauszahlung: 6 Monate (1 geschenkt) bzw. 12 Monate (2 geschenkt), gleiche Rechnung
+  // Vorauszahlung: 6 Monate (1 geschenkt) bzw. 12 Monate (3 geschenkt), gleiche Rechnung
   const annual = !!input.annual && prepayPossible(input.term);
   const prepay = annual && monthlyTotal != null ? vorauszahlungBetraege(monthlyTotal, input.term) : null;
 

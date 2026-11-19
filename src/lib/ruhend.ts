@@ -24,7 +24,7 @@ import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting } from "@/lib/offer-links";
-import { berlinTodayIso, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
+import { berlinTodayIso, freimonateKunde, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
 import { fmtIso } from "@/lib/vertrag-laufzeit";
 import { eraseCustomerData } from "@/lib/erasure";
 import {
@@ -59,16 +59,25 @@ const MRR_SELECT = {
   bestandMonthly: true,
   empfehlungMonthly: true,
   billingInterval: true,
+  prepayFreeMonths: true,
   onboarding: { select: { offerId: true } },
 } satisfies Prisma.CustomerSelect;
 
 /** Betreuung + Software + Zusätze netto je Monat (bei Jahreszahlung Jahresbetrag / 12), ohne Pay-per-Lead. */
 export function mrrFromFields(
-  c: { retainerMonthly: unknown; seatsBilled: number; seatMonthly: unknown; bestandMonthly: unknown; empfehlungMonthly: unknown; billingInterval: string },
+  c: {
+    retainerMonthly: unknown;
+    seatsBilled: number;
+    seatMonthly: unknown;
+    bestandMonthly: unknown;
+    empfehlungMonthly: unknown;
+    billingInterval: string;
+    prepayFreeMonths?: number | null;
+  },
   annualFreeMonths: number | null = null,
 ): number {
   const monthly = n(c.retainerMonthly) + c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly) + n(c.empfehlungMonthly);
-  const factor = rhythmusMonatsAnteil(c.billingInterval, annualFreeMonths);
+  const factor = rhythmusMonatsAnteil(c.billingInterval, freimonateKunde(c, { annualFreeMonths }));
   return r2(monthly * factor);
 }
 

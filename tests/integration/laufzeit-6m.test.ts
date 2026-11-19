@@ -1,7 +1,7 @@
 // Laufzeit 6 Monate (Ole, 18.11.2026): Angebot mit 6 Monaten (Setup 1.490 €), „Vorauszahlung anbieten“ (1 Monat
 // geschenkt), Annahme mit Wahl, Stripe-Zeitplan (gemockt, kein Netz): 6 Monate im Voraus = Intervall Monat × 6 mit
 // 5 Monatsbeträgen, Abrechnungstag, Überweisung, Kundenkonto „halfyear“, Kündigung und Erinnerung 30 Tage vor Ende.
-// Jahreszahlung (12 Monate, × 10) und Altangebote bleiben unverändert.
+// Jahreszahlung (12 Monate, seit 19.11.2026 × 9) und Altangebote bleiben unverändert.
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const st = vi.hoisted(() => {
@@ -147,7 +147,7 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     expect(Number(o.setupFee)).toBe(1490);
     await expect(angebot({ term: "3m" })).rejects.toThrow(/6 oder 12 Monaten/);
     const zwoelf = await angebot({ term: "12m" });
-    expect(zwoelf).toMatchObject({ annualChoice: true, annualFreeMonths: 2 });
+    expect(zwoelf).toMatchObject({ annualChoice: true, annualFreeMonths: 3 });
     expect(Number(zwoelf.setupFee)).toBe(990);
   });
 
@@ -191,14 +191,14 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     expect(zeitplan().metadata.pg_interval).toBeUndefined();
   });
 
-  it("Jahreszahlung unverändert: 12 Monate im Voraus = Intervall Jahr, × 10", async () => {
+  it("Jahreszahlung: 12 Monate im Voraus = Intervall Jahr, × 9 (3 Monate geschenkt)", async () => {
     const o = await angebot({ term: "12m" });
     expect(await accept(o.token, { annual: true })).toEqual({ ok: true });
     await prisma.offer.update({ where: { id: o.id }, data: { stripeCustomerId: "cus_6m_j" } });
     await createScheduleForOffer(o.id, checkout(o.id));
     const p = zeitplan();
     expect(p.phases[0].items.every((i) => i.price_data.recurring?.interval === "year" && i.price_data.recurring?.interval_count === undefined)).toBe(true);
-    expect(summe(p.phases[0].items)).toBe(1088000);
+    expect(summe(p.phases[0].items)).toBe(979200);
     expect(p.metadata.pg_interval).toBe("year");
   });
 

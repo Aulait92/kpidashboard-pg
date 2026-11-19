@@ -1,4 +1,4 @@
-// Jahreszahlung im Angebot zur Wahl (Ole, 18.11.2026): „Jahreszahlung anbieten (2 Monate geschenkt)“ heißt, der Kunde
+// Jahreszahlung im Angebot zur Wahl (Ole, 18.11.2026): „Jahreszahlung anbieten (3 Monate geschenkt, bis 18.11.2026: 2)“ heißt, der Kunde
 // wählt bei der Annahme monatlich (vorausgewählt) oder jährlich im Voraus. Geprüft: Speichern der Wahl, Stripe-Zeitplan
 // je Wahl (Monats- bzw. Jahrespreise, gemockt, kein Netz), Abrechnungstag (gratis und anteilig), Abschlussbonus gleich
 // für beide, Überweisung mit Jahresabo, Übernahme ins Kundenkonto, Auftragsbestätigung, feste Alt-Angebote.
@@ -89,7 +89,7 @@ function zukunftErster(): string {
 }
 const contacts: string[] = [];
 
-/** 30 € am Tag → 990 € Paket (Listenpreis seit 18.11.2026), 5 aktive Verkäufer → 2 × 49 €: monatlich gesamt 1.088 €, jährlich 10.880 €. */
+/** 30 € am Tag → 990 € Paket (Listenpreis seit 18.11.2026), 5 aktive Verkäufer → 2 × 49 €: monatlich gesamt 1.088 €, jährlich 9 × 1.088 € = 9.792 €. */
 async function angebot(extra: Partial<Parameters<typeof createOffer>[1]> = {}) {
   const tag = uid();
   const contact = await prisma.salesContact.create({ data: { name: `Jahreswahl ${tag}`, email: `jw-${tag}@example.test` } });
@@ -142,7 +142,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
 
   it("Haken = angeboten: monatlich vorausgewählt, Wahl gespeichert; nur mit 12 Monaten, nicht mit Startpreis, nicht im Testangebot", async () => {
     const o = await angebot();
-    expect(o).toMatchObject({ annualChoice: true, annualPrepay: false, annualFreeMonths: 2 });
+    expect(o).toMatchObject({ annualChoice: true, annualPrepay: false, annualFreeMonths: 3 });
     const ohne = await angebot({ annual: false });
     expect(ohne).toMatchObject({ annualChoice: false, annualPrepay: false, annualFreeMonths: null });
     await expect(angebot({ term: "3m" })).rejects.toThrow(/12 Monaten/);
@@ -173,13 +173,13 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     expect(p.metadata.pg_interval).toBeUndefined();
   });
 
-  it("Kunde wählt jährlich: Jahresabo, alle Positionen × 10 (Plätze inklusive), Auftragsbestätigung mit Jahresbetrag und Verlängerung", async () => {
+  it("Kunde wählt jährlich: Jahresabo, alle Positionen × 9 (Plätze inklusive), Auftragsbestätigung mit Jahresbetrag und Verlängerung", async () => {
     const o = await angebot();
     expect(await accept(o.token, { annual: true })).toEqual({ ok: true });
     const a = await prisma.offer.findUniqueOrThrow({ where: { id: o.id } });
-    expect(a).toMatchObject({ annualPrepay: true, annualFreeMonths: 2, annualChoice: true });
+    expect(a).toMatchObject({ annualPrepay: true, annualFreeMonths: 3, annualChoice: true });
     const text = st.mails.find((m) => m.subject.startsWith("Ihre Auftragsbestätigung"))!.list!.join(" ");
-    expect(text).toMatch(/Jährlich im Voraus: 10\.880\s€ netto, jedes Jahr am \d\d\.\d\d\. fällig, das erste Mal zum Start am/);
+    expect(text).toMatch(/Jährlich im Voraus: 9\.792\s€ netto, jedes Jahr am \d\d\.\d\d\. fällig, das erste Mal zum Start am/);
     expect(text).toMatch(/verlängert sich um jeweils 12 Monate/);
     expect(hatGedankenstrich(text)).toBe(false);
 
@@ -189,11 +189,11 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     const items = p.phases[0].items;
     expect(items.every((i) => i.price_data.recurring?.interval === "year")).toBe(true);
     expect(items.map((i) => [i.price_data.unit_amount, i.quantity])).toEqual([
-      [349000, 1],
-      [641000, 1],
-      [49000, 2],
+      [314100, 1],
+      [576900, 1],
+      [44100, 2],
     ]);
-    expect(summe(items)).toBe(1088000);
+    expect(summe(items)).toBe(979200);
     expect(p.metadata.pg_interval).toBe("year");
     expect(p.start_date).toBe(Math.floor(a.startDate!.getTime() / 1000));
   });
@@ -214,7 +214,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
       const start = o.startDate!.toISOString().slice(0, 10);
       const startDe = start.split("-").reverse().join(".");
       const mail = st.mails.find((m) => /Auftragsbestätigung/.test(m.subject))!.list!.join(" ").replace(/\u00a0/g, " ");
-      expect(mail).toContain(`Jährlich im Voraus: 10.880 € netto, jedes Jahr am ${startDe.slice(0, 6)} fällig, das erste Mal zum Start am ${startDe}.`);
+      expect(mail).toContain(`Jährlich im Voraus: 9.792 € netto, jedes Jahr am ${startDe.slice(0, 6)} fällig, das erste Mal zum Start am ${startDe}.`);
       expect(mail).not.toMatch(/anteilig|kostenlos|jeweils am 15\./);
       expect(hatGedankenstrich(mail)).toBe(false);
 
@@ -228,7 +228,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
       expect(p.metadata).not.toHaveProperty("pg_free_start");
       expect(p.phases.every((ph) => !ph.add_invoice_items)).toBe(true);
       expect(p.phases[0].items.every((i) => i.price_data.recurring?.interval === "year")).toBe(true);
-      expect(summe(p.phases[0].items)).toBe(1088000);
+      expect(summe(p.phases[0].items)).toBe(979200);
     }
   });
 
@@ -255,6 +255,8 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     const c = await prisma.customer.findUniqueOrThrow({ where: { id: ob.customerId! } });
     const start = o.startDate!.toISOString().slice(0, 10);
     expect(c.billingInterval).toBe("year");
+    // Freimonate am Kunden eingefroren (späterer Standardwechsel ändert das Abo nicht)
+    expect(c.prepayFreeMonths).toBe(3);
     expect(c.billingDay).toBeNull();
     expect(c.billingStart?.toISOString().slice(0, 10)).toBe(start);
     expect(c.retainerStart?.toISOString().slice(0, 10)).toBe(start);
@@ -293,7 +295,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     const p = zeitplan();
     expect(p.default_settings).toMatchObject({ collection_method: "send_invoice", invoice_settings: { days_until_due: 10 } });
     expect(p.phases[0].items.every((i) => i.price_data.recurring?.interval === "year")).toBe(true);
-    expect(summe(p.phases[0].items)).toBe(1088000);
+    expect(summe(p.phases[0].items)).toBe(979200);
     const ob = await prisma.onboarding.findFirstOrThrow({ where: { offerId: o.id }, select: { customerId: true } });
     const c = await prisma.customer.findUniqueOrThrow({ where: { id: ob.customerId! } });
     expect(c.billingInterval).toBe("year");
@@ -306,7 +308,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     await prisma.offer.update({ where: { id: o.id }, data: { annualChoice: false, annualPrepay: true } });
     expect(await accept(o.token, { annual: false })).toEqual({ ok: false, error: "Die Zahlweise ist in diesem Angebot fest vereinbart." });
     expect(await accept(o.token)).toEqual({ ok: true });
-    expect(await prisma.offer.findUniqueOrThrow({ where: { id: o.id } })).toMatchObject({ annualPrepay: true, annualFreeMonths: 2 });
+    expect(await prisma.offer.findUniqueOrThrow({ where: { id: o.id } })).toMatchObject({ annualPrepay: true, annualFreeMonths: 3 });
   });
 
   it("Ohne Haken: nur monatlich, eine Angabe „jährlich“ wird abgelehnt", async () => {

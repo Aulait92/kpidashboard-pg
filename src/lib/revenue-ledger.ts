@@ -112,7 +112,7 @@ export type RetainerInput = {
   pauses: { from: Date; to: Date | null }[];
   /** Monatliche Zusätze (weitere Logins, Module) – zählen als Software. */
   extras?: number;
-  /** Faktor bei jährlicher Vorauszahlung (z. B. 10/12); Standard 1. */
+  /** Faktor bei jährlicher Vorauszahlung (z. B. 9/12, Altverträge 10/12); Standard 1. */
   annualFactor?: number;
   /** Erst ab diesem Tag zählen (z. B. Kosten seit Kampagnenstart); Einführungspreis bleibt an `start`. */
   countFrom?: Date | null;

@@ -14,7 +14,7 @@ import { LeadEmailToggle } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
-import { bestandPacksText, normalizeRhythmus, PRICE_LIST, RHYTHMUS_MONATE, rhythmusFaktor, TERM_MONTHS, normalizeTerm } from "@/lib/offer-pricing";
+import { bestandPacksText, freimonateKunde, normalizeRhythmus, PRICE_LIST, RHYTHMUS_MONATE, rhythmusFaktor, TERM_MONTHS, normalizeTerm } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
 import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
 import { empfehlungVisible, moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
@@ -67,6 +67,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       seatsBilled: true,
       isTest: true,
       billingInterval: true,
+      prepayFreeMonths: true,
       bestandMonthly: true,
       existingCustomersEnabled: true,
       bestandSichtbar: true,
@@ -123,8 +124,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const rhythmus = normalizeRhythmus(customer.billingInterval);
   const annual = rhythmus !== "month";
   const prepayMonths = RHYTHMUS_MONATE[rhythmus];
-  const prepayFree = annual ? prepayMonths - rhythmusFaktor(rhythmus, offer?.annualFreeMonths) : 0;
-  const yearly = annual && monthlyTotal != null ? monthlyTotal * rhythmusFaktor(rhythmus, offer?.annualFreeMonths) : null;
+  // Freimonate wie vereinbart (am Kunden eingefroren, Jahreszahlung vor dem 19.11.2026: 2, seitdem 3)
+  const freimonate = freimonateKunde(customer, offer);
+  const prepayFree = annual ? prepayMonths - rhythmusFaktor(rhythmus, freimonate) : 0;
+  const yearly = annual && monthlyTotal != null ? monthlyTotal * rhythmusFaktor(rhythmus, freimonate) : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -343,7 +346,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                     requestedAt={customer.bestandRequestedAt?.toISOString() ?? null}
                     readOnly={ctx.preview}
                     annual={annual}
-                    freeMonths={prepayMonths === 6 ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths}
+                    freeMonths={annual ? prepayFree : PRICE_LIST.annualFreeMonths}
                     prepayMonths={prepayMonths}
                   />
                 )}

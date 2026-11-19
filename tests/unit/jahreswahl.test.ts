@@ -31,9 +31,10 @@ const snap = (o: Partial<OfferChoiceSnapshot> = {}): OfferChoiceSnapshot => ({
 });
 
 describe("Jahreswahl: Beträge und Prüfung der Wahl", () => {
-  it("Jahresbetrag = 10 × Monatspreis inkl. Zusätze, Ersparnis = 2 Monatspreise", () => {
-    expect(jahreswahlBetraege(1098)).toEqual({ annualTotal: 10980, savings: 2196, freeMonths: 2 });
-    expect(jahreswahlBetraege(1000, null)).toEqual({ annualTotal: 10000, savings: 2000, freeMonths: 2 });
+  it("Jahresbetrag = 9 × Monatspreis inkl. Zusätze, Ersparnis = 3 Monatspreise (Ole, 19.11.2026); gespeicherte 2 bleiben", () => {
+    expect(jahreswahlBetraege(1098)).toEqual({ annualTotal: 9882, savings: 3294, freeMonths: 3 });
+    expect(jahreswahlBetraege(1000, null)).toEqual({ annualTotal: 9000, savings: 3000, freeMonths: 3 });
+    expect(jahreswahlBetraege(1098, 2)).toEqual({ annualTotal: 10980, savings: 2196, freeMonths: 2 });
   });
 
   it("Wahl angeboten: ohne Angabe Vorauswahl (monatlich), jährlich nur mit 12 Monaten", () => {

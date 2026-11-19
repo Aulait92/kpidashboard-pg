@@ -49,7 +49,7 @@ const fmtDate = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europ
 export async function selfBookBestand(customerId: string, actor: AuditActor & { email?: string | null }): Promise<{ ok: true } | { ok: false; error: string; fallback?: boolean }> {
   const check = await canSelfBookBestand(customerId);
   if (!check.ok) return { ok: false, error: check.reason, fallback: true };
-  const before = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, bestandCancelAt: true, billingInterval: true } });
+  const before = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, bestandCancelAt: true, billingInterval: true, prepayFreeMonths: true } });
   if (!before) return { ok: false, error: "Konto nicht gefunden." };
   const withdraw = !!before.bestandCancelAt && before.bestandCancelAt > new Date();
   // Kündigung zurückgenommen: laufender Zeitraum ist bezahlt → Position ohne anteilige Berechnung
@@ -60,7 +60,7 @@ export async function selfBookBestand(customerId: string, actor: AuditActor & { 
   const terms = bestandTerms({
     annual: rhythmus !== "month",
     monthlyNet: price,
-    freeMonths: rhythmus === "halfyear" ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths,
+    freeMonths: before.prepayFreeMonths ?? (rhythmus === "halfyear" ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths),
     prepayMonths: RHYTHMUS_MONATE[rhythmus],
   });
   await notify({

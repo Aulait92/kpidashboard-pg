@@ -57,9 +57,9 @@ describe("Staffel seit 18.11.2026", () => {
 });
 
 describe("Vorauszahlung rechnet mit den neuen Preisen", () => {
-  it("12 Monate: 10 × 990 € = 9.900 €, 2 Monate (1.980 €) geschenkt", () => {
+  it("12 Monate: 9 × 990 € = 8.910 €, 3 Monate (2.970 €) geschenkt (Ole, 19.11.2026)", () => {
     const p = computeOfferPrice({ term: "12m", products: katze(), annual: true });
-    expect(p).toMatchObject({ monthlyTotal: 990, annual: true, annualTotal: 9900, annualSavings: 1980, prepayMonths: 12, prepayFreeMonths: 2 });
+    expect(p).toMatchObject({ monthlyTotal: 990, annual: true, annualTotal: 8910, annualSavings: 2970, prepayMonths: 12, prepayFreeMonths: 3 });
   });
 
   it("6 Monate: 5 × 990 € = 4.950 €, 1 Monat (990 €) geschenkt", () => {
@@ -68,9 +68,9 @@ describe("Vorauszahlung rechnet mit den neuen Preisen", () => {
     expect(vorauszahlungBetraege(990, "6m")).toEqual({ total: 4950, savings: 990, freeMonths: 1, months: 6, paidMonths: 5 });
   });
 
-  it("zweite Stufe mit Modul und weiterem Verkäufer: 1.390 + 149 + 49 = 1.588 € → jährlich 15.880 €", () => {
+  it("zweite Stufe mit Modul und weiterem Verkäufer: 1.390 + 149 + 49 = 1.588 € → jährlich 14.292 €", () => {
     const p = computeOfferPrice({ term: "12m", products: katze(150), seats: 4, bestandModule: true, annual: true });
-    expect(p).toMatchObject({ monthlyFee: 1390, monthlyTotal: 1588, annualTotal: 15880, annualSavings: 3176 });
+    expect(p).toMatchObject({ monthlyFee: 1390, monthlyTotal: 1588, annualTotal: 14292, annualSavings: 4764 });
   });
 });
 

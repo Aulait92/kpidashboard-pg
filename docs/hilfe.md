@@ -838,8 +838,9 @@ Seiten aus der Liste „Seiten“ unten.
   „Ich schließe diesen Vertrag als Unternehmer (§ 14 BGB)“; USt-IdNr. freiwillig. Mit Startpreis zusätzlich das Häkchen,
   dass ab dem genannten Datum automatisch die reguläre Vergütung gilt. Danach kommt eine Auftragsbestätigung per E-Mail
   mit denselben Angaben (Daten und Beträge), getrennt von der E-Mail mit dem Zugang.
-- Zahlweise: monatlich oder jährlich im Voraus (2 Monate geschenkt: Jahresbetrag = 10 × Monatspreis inkl.
-  Zusätze, nur mit 12 Monaten Laufzeit). Umstellen: bitte bei uns melden.
+- Zahlweise: monatlich oder im Voraus. Jährlich im Voraus (nur mit 12 Monaten Laufzeit): 3 Monate geschenkt, Jahresbetrag =
+  9 × Monatspreis inkl. Zusätze. 6 Monate im Voraus (nur mit 6 Monaten Laufzeit): 1 Monat geschenkt. Es gilt, was im
+  angenommenen Angebot steht (Jahreszahlung vor dem 19.11.2026: 2 Monate geschenkt). Umstellen: bitte bei uns melden.
 - Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
 - WhatsApp-Gebühren von Meta sind im Preis enthalten, es kommt nichts dazu. Für Leads (Erstkontakt, Erinnerungen,
   Nachfassen) ohne Begrenzung<!-- bestand-modul -->; für Bestandskunden-Kampagnen bis 500 Nachrichten im Monat, mehr mit Zusatzpaketen

@@ -57,7 +57,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const c = await prisma.customer.findUnique({
     where: { id: ctx.customerId },
-    select: { existingCustomersEnabled: true, bestandSichtbar: true, bestandRequestedAt: true, bestandCancelAt: true, billingInterval: true, empfehlungEnabled: true, vermittlerTyp: true },
+    select: { existingCustomersEnabled: true, bestandSichtbar: true, bestandRequestedAt: true, bestandCancelAt: true, billingInterval: true, prepayFreeMonths: true, empfehlungEnabled: true, vermittlerTyp: true },
   });
   if (!c) redirect("/buyer");
   // Modul vorerst ausgeblendet (lib/bestand/sichtbar.ts): ohne Schalter und ohne aktives Modul zurück zu Heute
@@ -73,6 +73,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
         reason={check.ok ? null : check.reason}
         annual={isPrepaid(c.billingInterval)}
         prepayMonths={RHYTHMUS_MONATE[normalizeRhythmus(c.billingInterval)]}
+        freeMonths={c.prepayFreeMonths}
       />
     );
   }
@@ -567,7 +568,24 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   );
 }
 
-function LockedBestand({ requestedAt, readOnly, canBook, reason, annual, prepayMonths }: { requestedAt: string | null; readOnly: boolean; canBook: boolean; reason: string | null; annual: boolean; prepayMonths: number }) {
+function LockedBestand({
+  requestedAt,
+  readOnly,
+  canBook,
+  reason,
+  annual,
+  prepayMonths,
+  freeMonths,
+}: {
+  requestedAt: string | null;
+  readOnly: boolean;
+  canBook: boolean;
+  reason: string | null;
+  annual: boolean;
+  prepayMonths: number;
+  /** Freimonate des Kunden (Customer.prepayFreeMonths); null = Standard */
+  freeMonths: number | null;
+}) {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8" data-bestand-locked>
       <PageHeader title="Bestand" subtitle="Ihre Bestandskunden gezielt ansprechen" />
@@ -604,7 +622,7 @@ function LockedBestand({ requestedAt, readOnly, canBook, reason, annual, prepayM
             requestedAt={requestedAt}
             readOnly={readOnly}
             annual={annual}
-            freeMonths={prepayMonths === 6 ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths}
+            freeMonths={freeMonths ?? (prepayMonths === 6 ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths)}
             prepayMonths={prepayMonths}
           />
         </div>

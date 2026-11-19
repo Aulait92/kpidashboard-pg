@@ -109,8 +109,17 @@ describe("Bestandskunden-Modul selbst buchen/kündigen", () => {
     expect(await canSelfBookBestand(c.id)).toEqual({ ok: false, reason: "Das Modul ist bereits gebucht." });
   });
 
-  it("Jahreszahler: Position im Jahresintervall (10 × Monatspreis)", async () => {
-    const { c, owner } = await customer({ billingInterval: "year" });
+  it("Jahreszahler: Position im Jahresintervall (9 × Monatspreis, 3 Monate geschenkt seit 19.11.2026)", async () => {
+    const { c, owner } = await customer({ billingInterval: "year", prepayFreeMonths: 3 });
+    st.sub!.items.data = [{ ...software(), price: { product: "prod_software", unit_amount: 314100, recurring: { interval: "year" } } }];
+    expect(await selfBookBestand(c.id, { id: owner.id, role: "kunde" })).toEqual({ ok: true });
+    const created = st.calls.find((x) => x.method === "subscriptionItems.create")!.args[0] as { price_data: { unit_amount: number; recurring: { interval: string } } };
+    expect(created.price_data.recurring.interval).toBe("year");
+    expect(created.price_data.unit_amount).toBe(134100);
+  });
+
+  it("Jahreszahler mit Altvertrag (2 Monate geschenkt): Position weiter 10 × Monatspreis", async () => {
+    const { c, owner } = await customer({ billingInterval: "year", prepayFreeMonths: 2 });
     st.sub!.items.data = [{ ...software(), price: { product: "prod_software", unit_amount: 349000, recurring: { interval: "year" } } }];
     expect(await selfBookBestand(c.id, { id: owner.id, role: "kunde" })).toEqual({ ok: true });
     const created = st.calls.find((x) => x.method === "subscriptionItems.create")!.args[0] as { price_data: { unit_amount: number; recurring: { interval: string } } };

@@ -19,7 +19,7 @@ Konfiguration, URL), `src/lib/rechner-server.ts` (DB, echte Kosten pro Lead),
 | Provision je Vertrag | Jahresbeitrag × (Abschluss-% + Bestand-% 1. Jahr) bzw. Monatsbeitrag × Monatsbeiträge |
 | Staffel | bis 3 Stufen nach Verträgen/Monat; höchste erreichte Stufe gilt für alle Verträge des Monats |
 | Kosten | (Werbebudget + Betreuung nach Budget-Staffel + weitere Berater) × 1,19 (abschaltbar) |
-| Jahreszahlung | Betreuung + Berater × 10/12 (nur mit 12 Monaten) |
+| Jahreszahlung | Betreuung + Berater × 9/12 (3 Monate geschenkt, nur mit 12 Monaten) |
 | Break-even | kleinste Zahl Verträge n mit n × Provision(n) ≥ Kosten |
 | Setup | 990 € (12 Monate), 1.990 € (3 Monate) bzw. 2.490 € (ohne Laufzeit) × USt.; URL `lz=3` = 3 Monate, `lz=0` = ohne; „wieder drin nach“ = Setup ÷ Überschuss |
 | Jahr 1 | 12 × Überschuss − Setup |

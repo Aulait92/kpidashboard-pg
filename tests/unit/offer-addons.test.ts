@@ -10,7 +10,8 @@ describe("Preise 11.11.: Logins, Jahreszahlung, Bestandskunden-Modul", () => {
       seatsIncluded: 3,
       seatMonthly: 49,
       seatIndividualFrom: 10,
-      annualFreeMonths: 2,
+      annualFreeMonths: 3,
+      halfYearFreeMonths: 1,
       bestandModuleMonthly: 149,
       bestandIncludedMessages: 500,
       whatsappIncluded: true,
@@ -64,13 +65,16 @@ describe("Preise 11.11.: Logins, Jahreszahlung, Bestandskunden-Modul", () => {
     expect(r).toMatchObject({ seats: 0, extraSeats: 0, seatsFee: 0, bestandFee: 0, monthlyTotal: 700 });
   });
 
-  it("Jährlich im Voraus: 10 × Monatspreis inkl. Zusätze, 2 Monate geschenkt", () => {
+  it("Jährlich im Voraus: 9 × Monatspreis inkl. Zusätze, 3 Monate geschenkt (Ole, 19.11.2026)", () => {
     const r = computeOfferPrice({ package: "software", term: "12m", products: [p(50)], seats: 5, bestandModule: true, annual: true });
     expect(r.monthlyTotal).toBe(990 + 98 + 149);
     expect(r.annual).toBe(true);
-    expect(r.annualTotal).toBe(1237 * 10);
-    expect(r.annualSavings).toBe(1237 * 2);
-    expect(annualMultiplier()).toBe(10);
+    expect(r.annualTotal).toBe(1237 * 9);
+    expect(r.annualSavings).toBe(1237 * 3);
+    expect(r.prepayFreeMonths).toBe(3);
+    expect(annualMultiplier()).toBe(9);
+    // Angenommene Angebote mit gespeicherten 2 Freimonaten rechnen weiter mit 10 Monatsbeträgen
+    expect(annualMultiplier(2)).toBe(10);
   });
 
   it("Jahreszahlung nur mit 12 Monaten Laufzeit", () => {

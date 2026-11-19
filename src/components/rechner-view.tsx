@@ -282,7 +282,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 ]}
                 onChange={(v) => set({ laufzeit: v as OfferTerm, jaehrlich: prepayPossible(v) ? input.jaehrlich : false })}
               />
-              {/* Vorauszahlung (Ole, 18.11.2026): 12 Monate jährlich (2 geschenkt), 6 Monate im Voraus (1 geschenkt) */}
+              {/* Vorauszahlung (Ole, 18.11.2026): 12 Monate jährlich (3 geschenkt seit 19.11.2026), 6 Monate im Voraus (1 geschenkt) */}
               <label className={`mt-3 flex items-center gap-2 text-sm ${!prepayPossible(input.laufzeit) ? "opacity-50" : ""}`}>
                 <input type="checkbox" className="h-4 w-4" checked={input.jaehrlich} disabled={!prepayPossible(input.laufzeit)} onChange={(e) => set({ jaehrlich: e.target.checked })} />
                 {input.laufzeit === "6m"

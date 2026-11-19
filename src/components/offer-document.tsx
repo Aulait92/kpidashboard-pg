@@ -12,6 +12,7 @@ import {
   TERM_MONTHS,
   termOptionsFor,
   vorauszahlungBetraege,
+  VORAUSZAHLUNG,
   offerAddOns,
   offerSetupDiscount,
   PRICE_LIST,
@@ -235,7 +236,7 @@ export function OfferDocument({
   const termOpen = open && !!offer.customerChoosesTerm;
   const startOpen = open && !!offer.customerChoosesStart;
   // Vorauszahlung zur Wahl (Ole, 18.11.2026): vor der Annahme beide Beträge, danach die Wahl des Kunden.
-  // 12 Monate: jährlich im Voraus (2 geschenkt), 6 Monate: 6 Monate im Voraus (1 geschenkt), eine Rechnung.
+  // 12 Monate: jährlich im Voraus (3 geschenkt, PRICE_LIST.annualFreeMonths), 6 Monate: 6 Monate im Voraus (1 geschenkt), eine Rechnung.
   const annualOpen = open && !!offer.annualChoice && !add.annual;
   const pm = add.prepayMonths;
   const halb = pm === 6;
@@ -560,8 +561,8 @@ export function OfferDocument({
                 Bei {vorausWort} {geschenkt(v.freeMonths)}, Sie sparen {eur(v.savings)}.
                 {termOpen
                   ? halb
-                    ? " Vorauszahlung für 6 Monate gibt es mit 6 Monaten Laufzeit, jährlich im Voraus mit 12 Monaten Laufzeit (2 Monate geschenkt)."
-                    : ` Jahreszahlung gibt es mit 12 Monaten Laufzeit${termOptionsFor(offer.createdAt, offer.term).includes("6m") ? ", 6 Monate im Voraus mit 6 Monaten Laufzeit (1 Monat geschenkt)" : ""}.`
+                    ? ` Vorauszahlung für 6 Monate gibt es mit 6 Monaten Laufzeit, jährlich im Voraus mit 12 Monaten Laufzeit (${geschenkt(VORAUSZAHLUNG["12m"].freeMonths)}).`
+                    : ` Jahreszahlung gibt es mit 12 Monaten Laufzeit${termOptionsFor(offer.createdAt, offer.term).includes("6m") ? `, 6 Monate im Voraus mit 6 Monaten Laufzeit (${geschenkt(VORAUSZAHLUNG["6m"].freeMonths)})` : ""}.`
                   : ""}{" "}
                 Der Vertrag verlängert sich dann nach {pm} Monaten um jeweils weitere {pm} Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der
                 Laufzeit gekündigt wird. Für Pausen gibt es bei {vorausWort} keine Gutschrift.

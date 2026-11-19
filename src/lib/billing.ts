@@ -23,6 +23,8 @@ import {
   berlinTodayIso,
   isPrepaid,
   offerSetupDiscount,
+  freimonateBeiUmstellung,
+  freimonateKunde,
   PRICE_LIST,
   rhythmusAusStripe,
   rhythmusFaktor,
@@ -1145,6 +1147,18 @@ const intervalOf = (sub: Stripe.Subscription): Zahlrhythmus => {
   return r.includes("year") ? "year" : r.includes("halfyear") ? "halfyear" : "month";
 };
 
+/**
+ * Geschenkte Monate des Kunden je Vorauszahlungszeitraum (lib/offer-pricing.ts freimonateKunde): Positionen eines
+ * laufenden Vertrags werden damit bepreist, nicht mit dem heutigen Standard (Jahreszahlung bis 18.11.2026: 2 geschenkt).
+ */
+async function kundenFreimonate(where: { id: string } | { stripeCustomerId: string }): Promise<number | null> {
+  const c = await prisma.customer.findUnique({ where, select: { prepayFreeMonths: true, onboarding: { select: { offerId: true } } } });
+  if (!c) return null;
+  if (c.prepayFreeMonths != null || !c.onboarding?.offerId) return c.prepayFreeMonths;
+  const offer = await prisma.offer.findUnique({ where: { id: c.onboarding.offerId }, select: { annualFreeMonths: true } });
+  return freimonateKunde(c, offer);
+}
+
 /** Laufendes Abo für Änderungen vorbereiten (Zeitplan lösen); null = noch nicht möglich. */
 async function editableSubscription(stripe: Stripe, stripeCustomerId: string): Promise<{ sub: Stripe.Subscription } | { note: string }> {
   const sub = await activeSubscription(stripe, stripeCustomerId);
@@ -1208,7 +1222,7 @@ async function setScheduleItem(
     return p ? (typeof p.product === "string" ? p.product : p.product.id) : null;
   };
   const interval = rhythmusAusStripe(priceObj(schedule.phases[0]?.items[0] as Stripe.SubscriptionSchedule.Phase.Item)?.recurring);
-  const factor = rhythmusFaktor(interval);
+  const factor = rhythmusFaktor(interval, interval === "month" ? null : await kundenFreimonate({ stripeCustomerId }));
   const phases: Stripe.SubscriptionScheduleUpdateParams.Phase[] = schedule.phases.map((ph) => {
     const items: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = ph.items
       .filter((i) => productOfItem(i) !== product)
@@ -1238,6 +1252,7 @@ async function setScheduleItem(
 
 async function setItemQuantity(
   stripe: Stripe,
+  stripeCustomerId: string,
   sub: Stripe.Subscription,
   key: "seat" | "bestand" | "empfehlung",
   quantity: number,
@@ -1247,7 +1262,7 @@ async function setItemQuantity(
   const [product, tax] = await Promise.all([productId(stripe, key), resolveTax(stripe)]);
   const item = sub.items.data.find((i) => productOf(i) === product);
   const interval = intervalOf(sub);
-  const factor = rhythmusFaktor(interval);
+  const factor = rhythmusFaktor(interval, interval === "month" ? null : await kundenFreimonate({ stripeCustomerId }));
   if (item) {
     const unit = cents(monthlyUnit * factor);
     if (quantity === 0 && key !== "seat") {
@@ -1312,7 +1327,7 @@ export async function syncSeatBilling(customerId: string, opts: { force?: boolea
           return { ok: true, changed: false, note: `${ed.note} Aufgabe „${MANUAL_SEAT_TASK}“ ist angelegt.` };
         }
         if (want > 0) note = `Berechnet ab Abo-Start am ${fmtDay(planned.startsAt)}.`;
-      } else await setItemQuantity(stripe, ed.sub, "seat", want, price);
+      } else await setItemQuantity(stripe, c.stripeCustomerId, ed.sub, "seat", want, price);
     } else {
       await manualSeatTask(customerId, {
         from: c.seatsBilled,
@@ -1362,7 +1377,7 @@ export async function setBestandModule(
           if (opts.requireStripe) return { ok: false, error: ed.note };
           note = ed.note;
         }
-      } else await setItemQuantity(stripe, ed.sub, "bestand", mode === "book" && price > 0 ? 1 : 0, price, opts.proration);
+      } else await setItemQuantity(stripe, c.stripeCustomerId, ed.sub, "bestand", mode === "book" && price > 0 ? 1 : 0, price, opts.proration);
     } else if (mode === "book" && price > 0) {
       note = "Ohne Stripe, bitte von Hand abrechnen.";
     }
@@ -1511,7 +1526,7 @@ export async function addEmpfehlungToSubscription(
       const planned = await setScheduleItem(stripe, c.stripeCustomerId, "empfehlung", monthly > 0 ? 1 : 0, monthly);
       return planned ? { ok: true, changed: true, scheduledFrom: planned.startsAt } : { ok: true, changed: false, note: ed.note };
     }
-    await setItemQuantity(stripe, ed.sub, "empfehlung", monthly > 0 ? 1 : 0, monthly, opts.proration ?? "create_prorations");
+    await setItemQuantity(stripe, c.stripeCustomerId, ed.sub, "empfehlung", monthly > 0 ? 1 : 0, monthly, opts.proration ?? "create_prorations");
     return { ok: true, changed: true };
   } catch (err) {
     reportError(err, "billing-empfehlung", { customer: customerId });
@@ -1630,9 +1645,18 @@ export async function expireBestandCancellations(now = new Date()): Promise<numb
 /** Zahlweise umstellen (monatlich ↔ jährlich bzw. 6 Monate im Voraus). Alle Positionen werden neu bepreist. */
 export async function changeBillingInterval(customerId: string, interval: Zahlrhythmus): Promise<AddOnResult> {
   try {
-    const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true, billingInterval: true } });
+    const c = await prisma.customer.findUnique({
+      where: { id: customerId },
+      select: { stripeCustomerId: true, billingInterval: true, prepayFreeMonths: true, onboarding: { select: { offerId: true } } },
+    });
     if (!c) return { ok: false, error: "Kunde nicht gefunden." };
     if (c.billingInterval === interval) return { ok: true, changed: false };
+    const offer = c.onboarding?.offerId
+      ? await prisma.offer.findUnique({ where: { id: c.onboarding.offerId }, select: { annualPrepay: true, annualFreeMonths: true, term: true } })
+      : null;
+    // Freimonate: bisheriger Wert des Kunden; neuer Rhythmus wie im angenommenen Angebot, sonst heutiger Standard
+    const bisherFrei = freimonateKunde(c, offer);
+    const neuFrei = freimonateBeiUmstellung(offer, interval);
     let note: string | undefined;
     const stripe = stripeClient();
     if (stripe && c.stripeCustomerId) {
@@ -1640,8 +1664,8 @@ export async function changeBillingInterval(customerId: string, interval: Zahlrh
       if ("note" in ed) return { ok: false, error: ed.note };
       const sub = ed.sub;
       const tax = await resolveTax(stripe);
-      const from = rhythmusFaktor(intervalOf(sub));
-      const to = rhythmusFaktor(interval);
+      const from = rhythmusFaktor(intervalOf(sub), bisherFrei);
+      const to = rhythmusFaktor(interval, neuFrei);
       await stripe.subscriptions.update(sub.id, {
         proration_behavior: "create_prorations",
         billing_cycle_anchor: { type: "now" },
@@ -1663,8 +1687,8 @@ export async function changeBillingInterval(customerId: string, interval: Zahlrh
     } else {
       note = "Ohne Stripe, bitte von Hand abrechnen.";
     }
-    await prisma.customer.update({ where: { id: customerId }, data: { billingInterval: interval } });
-    await audit("billing.interval", { entity: "Customer", entityId: customerId, customerId, details: { from: c.billingInterval, to: interval } });
+    await prisma.customer.update({ where: { id: customerId }, data: { billingInterval: interval, prepayFreeMonths: neuFrei } });
+    await audit("billing.interval", { entity: "Customer", entityId: customerId, customerId, details: { from: c.billingInterval, to: interval, freeMonths: neuFrei } });
     return { ok: true, changed: true, ...(note ? { note } : {}) };
   } catch (err) {
     reportError(err, "billing-interval", { customer: customerId });
@@ -1694,7 +1718,7 @@ export async function changeMonthlyFee(
     const sub = ed.sub;
     const [software, service, tax] = await Promise.all([productId(stripe, "software"), productId(stripe, "service"), resolveTax(stripe)]);
     const interval = intervalOf(sub);
-    const factor = rhythmusFaktor(interval);
+    const factor = rhythmusFaktor(interval, interval === "month" ? null : await kundenFreimonate({ id: customerId }));
     const swItem = sub.items.data.find((i) => productOf(i) === software);
     const svItem = sub.items.data.find((i) => productOf(i) === service);
     const swMonthly = swItem ? (swItem.price.unit_amount ?? 0) / 100 / factor : 0;

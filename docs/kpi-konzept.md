@@ -15,7 +15,7 @@ Eine Zeile je Monat × Kunde × Strom, alle Kennzahlen rechnen nur daraus.
 | Einrichtung | Angebote (setupFee) | einmalig – **nicht im MRR** |
 | WhatsApp-Gebühren | im Preis enthalten (seit 11.11.2026) | **kein Umsatz**, direkte Software-Kosten (aus den verschickten Nachrichten) |
 | Weitere Logins, Bestandskunden-Modul | Abo-Positionen | Software (wiederkehrend) |
-| Jährliche Vorauszahlung | Jahresrechnung | MRR = Jahresbetrag ÷ 12 (Monatspreis × 10/12), keine Spitze im Zahlungsmonat |
+| Jährliche Vorauszahlung | Jahresrechnung | MRR = Jahresbetrag ÷ 12 (Monatspreis × 9/12, Verträge vor dem 19.11.2026 × 10/12), keine Spitze im Zahlungsmonat |
 
 ## Kopfzeile
 Laufrate (MRR × 12) · MRR (+ vertraglicher Anteil) · Wachstum zum Vormonat ·

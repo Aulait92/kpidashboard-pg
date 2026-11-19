@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting } from "@/lib/offer-links";
-import { berlinTodayIso, eur, isPrepaid, normalizeRhythmus, RHYTHMUS_MONATE, rhythmusFaktor } from "@/lib/offer-pricing";
+import { berlinTodayIso, eur, freimonateKunde, isPrepaid, normalizeRhythmus, RHYTHMUS_MONATE, rhythmusFaktor } from "@/lib/offer-pricing";
 import { fmtIso, periodEndIso } from "@/lib/vertrag-laufzeit";
 
 /** So viele Tage vor Ende des Zahlungszeitraums geht die Erinnerung raus. */
@@ -90,6 +90,7 @@ export async function remindPrepayEnd(now = new Date()): Promise<{ sent: number;
     select: {
       id: true,
       billingInterval: true,
+      prepayFreeMonths: true,
       retainerStart: true,
       billingDay: true,
       billingStart: true,
@@ -133,7 +134,7 @@ export async function remindPrepayEnd(now = new Date()): Promise<{ sent: number;
       ? await prisma.offer.findUnique({ where: { id: c.onboarding.offerId }, select: { annualFreeMonths: true, contactName: true } })
       : null;
     const monthly = num(c.retainerMonthly) + c.seatsBilled * num(c.seatMonthly) + num(c.bestandMonthly) + num(c.empfehlungMonthly);
-    const betrag = monthly > 0 ? Math.round(monthly * rhythmusFaktor(rhythmus, offer?.annualFreeMonths) * 100) / 100 : null;
+    const betrag = monthly > 0 ? Math.round(monthly * rhythmusFaktor(rhythmus, freimonateKunde(c, offer)) * 100) / 100 : null;
     let url: string | null = null;
     try {
       url = `${getAppUrl()}/buyer/konto`;

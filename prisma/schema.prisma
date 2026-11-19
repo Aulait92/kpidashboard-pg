@@ -234,6 +234,9 @@ model Customer {
   // "month" | "year" (jährlich im Voraus, Jahresbetrag = (12 − Freimonate) × Monatspreis)
   // | "halfyear" (6 Monate im Voraus bei 6 Monaten Laufzeit, Betrag = (6 − Freimonate) × Monatspreis; Ole 18.11.2026)
   billingInterval                String                    @default("month")
+  // Geschenkte Monate je Vorauszahlungszeitraum, eingefroren bei Annahme bzw. beim Umstellen der Zahlweise
+  // (Jahreszahlung bis 18.11.2026: 2, seitdem 3; 6 Monate: 1). null = monatlich bzw. heutiger Standard (offer-pricing.ts)
+  prepayFreeMonths               Int?
   // Vorauszahlung (halbjährlich/jährlich): Erinnerung 30 Tage vor Ende verschickt für den Zeitraum, der an diesem
   // Tag endet (lib/vorauszahlung-erinnerung.ts, gegen Doppelversand)
   prepayReminderFor              DateTime?

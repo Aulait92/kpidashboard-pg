@@ -1,5 +1,5 @@
 // Laufzeit 6 Monate (Ole, 18.11.2026): Setup 1.490 €, Mindestlaufzeit 6 Monate, Vorauszahlung 6 Monate im Voraus mit
-// 1 Monat geschenkt (5 Monatsbeträge). Eine Logik für 6 und 12 Monate (12: jährlich, 2 geschenkt). Geprüft: Preise,
+// 1 Monat geschenkt (5 Monatsbeträge). Eine Logik für 6 und 12 Monate (12: jährlich, 3 geschenkt seit 19.11.2026). Geprüft: Preise,
 // Beträge und Ersparnis, Kundenwahl, Stripe-Rhythmus (Monat × 6), Abrechnungstag, Kündigung, Erinnerung, Altdaten.
 import { describe, expect, it, vi } from "vitest";
 import { createElement } from "react";
@@ -68,12 +68,14 @@ describe("Vorauszahlung: eine Logik für 6 und 12 Monate", () => {
     expect(p).toMatchObject({ monthlyTotal: 1088, annual: true, annualTotal: 5440, annualSavings: 1088, prepayMonths: 6, prepayFreeMonths: 1 });
   });
 
-  it("12 Monate: 10 Monatsbeträge, 2 Monate geschenkt, Ersparnis 2 × Monatspreis (wie bisher)", () => {
-    expect(vorauszahlungBetraege(1098, "12m")).toEqual({ total: 10980, savings: 2196, freeMonths: 2, months: 12, paidMonths: 10 });
-    expect(jahreswahlBetraege(1098)).toEqual({ annualTotal: 10980, savings: 2196, freeMonths: 2 });
-    // Neue Listenpreise: 10 × 1.088 € = 10.880 €, 2 × 1.088 € = 2.176 € geschenkt
+  it("12 Monate: 9 Monatsbeträge, 3 Monate geschenkt, Ersparnis 3 × Monatspreis (Ole, 19.11.2026)", () => {
+    expect(vorauszahlungBetraege(1098, "12m")).toEqual({ total: 9882, savings: 3294, freeMonths: 3, months: 12, paidMonths: 9 });
+    expect(jahreswahlBetraege(1098)).toEqual({ annualTotal: 9882, savings: 3294, freeMonths: 3 });
+    // Neue Listenpreise: 9 × 1.088 € = 9.792 €, 3 × 1.088 € = 3.264 € geschenkt
     const p = computeOfferPrice({ term: "12m", products: katze, seats: 5, annual: true });
-    expect(p).toMatchObject({ monthlyTotal: 1088, annualTotal: 10880, annualSavings: 2176, prepayMonths: 12, prepayFreeMonths: 2 });
+    expect(p).toMatchObject({ monthlyTotal: 1088, annualTotal: 9792, annualSavings: 3264, prepayMonths: 12, prepayFreeMonths: 3 });
+    // Gespeicherter Altwert (angenommen vor dem 19.11.2026) gilt weiter: 10 Monatsbeträge
+    expect(vorauszahlungBetraege(1098, "12m", 2)).toEqual({ total: 10980, savings: 2196, freeMonths: 2, months: 12, paidMonths: 10 });
   });
 
   it("nur mit 6 oder 12 Monaten", () => {
@@ -88,7 +90,8 @@ describe("Vorauszahlung: eine Logik für 6 und 12 Monate", () => {
     expect(offerAddOns({ ...base, annualFreeMonths: 2, term: "12m" })).toMatchObject({ annualTotal: 10980, annualSavings: 2196, prepayMonths: 12 });
     // Altdaten: kein term übergeben, annualFreeMonths 2 → wie bisher 10 ×
     expect(offerAddOns({ ...base, annualFreeMonths: 2 })).toMatchObject({ annualTotal: 10980, annualSavings: 2196, freeMonths: 2 });
-    expect(offerAddOns({ ...base, annualFreeMonths: null })).toMatchObject({ annualTotal: 10980, freeMonths: 2 });
+    // Ohne gespeicherten Wert: heutiger Standard (3 geschenkt, 9 ×)
+    expect(offerAddOns({ ...base, annualFreeMonths: null })).toMatchObject({ annualTotal: 9882, freeMonths: 3 });
   });
 
   it("Zahlrhythmus: Stripe halbjährlich = Monat × 6, Faktor und Monatsanteil", () => {
@@ -102,9 +105,11 @@ describe("Vorauszahlung: eine Logik für 6 und 12 Monate", () => {
     expect(rhythmusAusStripe({ interval: "month", interval_count: 6 })).toBe("halfyear");
     expect(rhythmusAusStripe({ interval: "month", interval_count: 1 })).toBe("month");
     expect(rhythmusAusStripe({ interval: "year", interval_count: 1 })).toBe("year");
-    expect([rhythmusFaktor("month"), rhythmusFaktor("halfyear"), rhythmusFaktor("year")]).toEqual([1, 5, 10]);
+    expect([rhythmusFaktor("month"), rhythmusFaktor("halfyear"), rhythmusFaktor("year")]).toEqual([1, 5, 9]);
+    expect(rhythmusFaktor("year", 2)).toBe(10);
     expect(rhythmusMonatsAnteil("halfyear")).toBeCloseTo(5 / 6);
-    expect(rhythmusMonatsAnteil("year")).toBeCloseTo(10 / 12);
+    expect(rhythmusMonatsAnteil("year")).toBeCloseTo(9 / 12);
+    expect(rhythmusMonatsAnteil("year", 2)).toBeCloseTo(10 / 12);
     expect(rhythmusMonatsAnteil("month")).toBe(1);
   });
 });
@@ -262,7 +267,7 @@ describe("Zusatzmodule und Präsentation", () => {
       ["Mit 3 Monaten", 1990],
       ["Mit 12 Monaten", 990],
     ]);
-    expect(liste.jaehrlich).toBe("Jährlich im Voraus: 2 Monate geschenkt");
+    expect(liste.jaehrlich).toBe("Jährlich im Voraus: 3 Monate geschenkt");
   });
 });
 

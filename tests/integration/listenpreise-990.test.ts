@@ -183,8 +183,8 @@ describe("Listenpreise 990: offene Angebote, Sonderkonditionen, angenommene", ()
     const t = await html(offen.id);
     expect(t).toMatch(/990 € netto pro Monat/);
     expect(t).toMatch(/bis 3\.000 €: 990 €; über 3\.000 bis 6\.000 €: 1\.390 €/);
-    // Vorauszahlung zur Wahl: 10 × 990 €
-    expect(t).toMatch(/9\.900 €/);
+    // Vorauszahlung zur Wahl: 9 × 990 € (3 Monate geschenkt seit 19.11.2026)
+    expect(t).toMatch(/8\.910 €/);
     expect(t).not.toMatch(/1\.000 € netto pro Monat/);
     // Satz unter dem Werbebudget (Ole, 18.11.2026): Preisstufe statt „richtet sich nach“, ohne „,00“
     expect(t).toMatch(/30 € pro Tag, etwa 900 € im Monat\. Das Werbebudget zahlen Sie direkt an Meta/);
@@ -205,7 +205,7 @@ describe("Listenpreise 990: offene Angebote, Sonderkonditionen, angenommene", ()
     expect(a).toMatch(/Damit gilt für Betreuung und Software die Preisstufe bis 3\.000 € Werbebudget im Monat: 1\.000 € netto im Monat\./);
   });
 
-  it("Annahme und Stripe: umgestelltes Angebot rechnet 990 € ab (monatlich und jährlich 9.900 €)", async () => {
+  it("Annahme und Stripe: umgestelltes Angebot rechnet 990 € ab (monatlich und jährlich 9 × 990 € = 8.910 €)", async () => {
     const m = await angebot();
     const j = await angebot();
     await prisma.$executeRawUnsafe(MIGRATION);
@@ -225,7 +225,7 @@ describe("Listenpreise 990: offene Angebote, Sonderkonditionen, angenommene", ()
     await createScheduleForOffer(j.id, checkout(j.id));
     const ji = zeitplanItems();
     expect(ji.every((i) => i.price_data.recurring?.interval === "year")).toBe(true);
-    expect(summe(ji)).toBe(990000);
+    expect(summe(ji)).toBe(891000);
   });
 
   it("Sonderkondition wird zum vereinbarten Preis abgerechnet", async () => {

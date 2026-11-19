@@ -13,7 +13,7 @@
 // agencyCostsForRange ist rein (ohne Datenbank, getestet); loadAgencyCostConfig lädt die Daten.
 
 import { prisma } from "@/lib/prisma";
-import { PRICE_LIST, TERM_MONTHS, isPrepaid, normalizeTerm, rhythmusFuer, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
+import { PRICE_LIST, TERM_MONTHS, freimonateKunde, isPrepaid, normalizeTerm, rhythmusFuer, rhythmusMonatsAnteil } from "@/lib/offer-pricing";
 
 const DAY_MS = 86_400_000;
 
@@ -161,6 +161,7 @@ export async function loadAgencyCostConfig(customerId: string): Promise<AgencyCo
         seatsBilled: true,
         seatMonthly: true,
         billingInterval: true,
+        prepayFreeMonths: true,
         bestandMonthly: true,
         bestandGrandfathered: true,
         bestandCancelAt: true,
@@ -202,7 +203,7 @@ export async function loadAgencyCostConfig(customerId: string): Promise<AgencyCo
   const yearly = isPrepaid(rhythmus);
   return {
     vatRate: PRICE_LIST.vatRate,
-    annualFactor: yearly ? rhythmusMonatsAnteil(rhythmus, accepted?.annualFreeMonths) : 1,
+    annualFactor: yearly ? rhythmusMonatsAnteil(rhythmus, freimonateKunde(c, accepted)) : 1,
     base: retainer > 0
       ? [{ from: c.retainerStart, until: c.retainerEnd, monthly: retainer }]
       : accepted && Number(accepted.monthlyFee) > 0

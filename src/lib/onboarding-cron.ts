@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
+import { PRICE_LIST } from "@/lib/offer-pricing";
 import type { FormAnswer } from "@/lib/lead-fields";
 import { readImpressum } from "@/lib/impressum";
 import { customerGreeting } from "@/lib/offer-links";
@@ -214,7 +215,7 @@ async function upsellTasks(now: Date) {
         data: {
           contactId: ob.salesContactId,
           type: "ANRUF",
-          title: "Jahresvertrag anbieten (Setup gespart, bei Jahreszahlung 2 Monate geschenkt)",
+          title: `Jahresvertrag anbieten (Setup gespart, bei Jahreszahlung ${PRICE_LIST.annualFreeMonths} Monate geschenkt)`,
           dueAt: now,
         },
       });

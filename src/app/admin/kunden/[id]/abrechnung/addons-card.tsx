@@ -1,6 +1,6 @@
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
-import { normalizeRhythmus, PRICE_LIST, RHYTHMUS_LABEL, rhythmusFaktor } from "@/lib/offer-pricing";
+import { freimonateBeiUmstellung, freimonateKunde, normalizeRhythmus, PRICE_LIST, RHYTHMUS_LABEL, rhythmusFaktor } from "@/lib/offer-pricing";
 import { bestandQuota } from "@/lib/bestand/quota";
 import { billingIntervalAction, bestandModuleAction, bestandSichtbarAction, empfehlungModuleAction, saveQuotaAction, saveSeatsAction, syncSeatsAction } from "./addon-actions";
 import { moduleState } from "@/lib/empfehlung/shared";
@@ -25,6 +25,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
         seatMonthly: true,
         seatsBilled: true,
         billingInterval: true,
+        prepayFreeMonths: true,
         bestandMonthly: true,
         bestandGrandfathered: true,
         bestandRequestedAt: true,
@@ -57,11 +58,13 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
   const annual = rhythmus !== "month";
   // Zahlweise vom Kunden im Angebot gewählt (Vorauszahlung angeboten, Ole 18.11.2026)
   const angebot = c.onboarding?.offerId
-    ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true, annualChoice: true, annualPrepay: true, term: true } })
+    ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true, annualChoice: true, annualPrepay: true, annualFreeMonths: true, term: true } })
     : null;
-  // Umstellen auf Vorauszahlung: mit 6 Monaten Laufzeit 6 Monate im Voraus (1 geschenkt), sonst jährlich (2 geschenkt)
+  // Umstellen auf Vorauszahlung: mit 6 Monaten Laufzeit 6 Monate im Voraus (1 geschenkt), sonst jährlich (3 geschenkt;
+  // zurück auf die Vorauszahlung des Angebots: wie dort vereinbart)
   const halb = angebot?.term === "6m";
   const vorausZiel = halb ? "halfyear" : "year";
+  const zielFrei = freimonateBeiUmstellung(angebot, vorausZiel) ?? 0;
   const gewaehlt = angebot?.annualPrepay ? (angebot.term === "6m" ? "6 Monate im Voraus" : "jährlich im Voraus") : "monatlich";
   const hidden = <input type="hidden" name="customerId" value={customerId} />;
 
@@ -214,7 +217,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
           <h3 className="font-semibold">Zahlweise</h3>
           <p className="text-[color:var(--muted)]" data-admin-interval>
             {RHYTHMUS_LABEL[rhythmus]}
-            {total != null ? ` · ${eur(total)}/Monat gesamt${annual ? ` · ${eur(total * rhythmusFaktor(rhythmus))} ${rhythmus === "halfyear" ? "je 6 Monate" : "im Jahr"}` : ""}` : ""}
+            {total != null ? ` · ${eur(total)}/Monat gesamt${annual ? ` · ${eur(total * rhythmusFaktor(rhythmus, freimonateKunde(c, angebot)))} ${rhythmus === "halfyear" ? "je 6 Monate" : "im Jahr"}` : ""}` : ""}
           </p>
           {angebot?.annualChoice ? (
             <p className="text-xs text-[color:var(--muted)]" data-admin-zahlweise-gewaehlt>
@@ -229,8 +232,8 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
               {annual
                 ? "Auf monatlich umstellen"
                 : halb
-                  ? `Auf 6 Monate im Voraus umstellen (${PRICE_LIST.halfYearFreeMonths} Monat geschenkt)`
-                  : `Auf jährlich umstellen (${PRICE_LIST.annualFreeMonths} Monate geschenkt)`}
+                  ? `Auf 6 Monate im Voraus umstellen (${zielFrei} ${zielFrei === 1 ? "Monat" : "Monate"} geschenkt)`
+                  : `Auf jährlich umstellen (${zielFrei} ${zielFrei === 1 ? "Monat" : "Monate"} geschenkt)`}
             </button>
             <span className="text-xs text-[color:var(--muted)]">Stripe stellt sofort um und verrechnet anteilig.</span>
           </form>

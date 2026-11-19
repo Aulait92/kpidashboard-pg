@@ -91,12 +91,12 @@ describe("Break-even-Rechner", () => {
     expect(r.breakEvenVertraege).toBe(11); // 11 × 210 = 2.310 ≥ 2.263,38
   });
 
-  it("Jahreszahlung: Betreuung und Berater × 10/12, nur mit 12 Monaten", () => {
+  it("Jahreszahlung: Betreuung und Berater × 9/12 (3 Monate geschenkt), nur mit 12 Monaten", () => {
     const monatlich = berechne(tkv, base({ berater: 5 }), 6);
     const jaehrlich = berechne(tkv, base({ berater: 5, jaehrlich: true }), 6);
     expect(monatlich.berater).toBe(98); // 2 × 49
-    expect(jaehrlich.betreuung).toBeCloseTo(990 * 10 / 12, 6);
-    expect(jaehrlich.berater).toBeCloseTo(98 * 10 / 12, 6);
+    expect(jaehrlich.betreuung).toBeCloseTo(990 * 9 / 12, 6);
+    expect(jaehrlich.berater).toBeCloseTo(98 * 9 / 12, 6);
     // Parameter: jv ohne 12 Monate wird ignoriert
     const ohneLaufzeit = inputFromParams(DEFAULT_CONFIG, { lz: "0", jv: "1" });
     expect(ohneLaufzeit.jaehrlich).toBe(false);
