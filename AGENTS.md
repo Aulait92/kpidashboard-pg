@@ -104,3 +104,10 @@ selben Arbeitsgang geprüft (README Abschnitt 2) und das betroffene Video neu au
 sich geändert haben.
 - Ausgeblendete Module (z. B. Bestandskunden-Modul, Empfehlungen & Bewertungen) dürfen in keinem Video vorkommen.
 - Neu aufgenommene Videos nur außerhalb der Hauptzeiten deployen (nicht werktags 8 bis 20 Uhr).
+
+## Agenten-Führungsteam (Ole, 19.11.2026)
+
+22 Rollen (CEO, Chief of Staff, CFO, CTO, CPO, CMO, Sales, Recht, Datenschutz, UX/UI, Personas, Red Team …) liegen als
+Subagenten in `.claude/agents/`. Gemeinsames Gedächtnis: `docs/firma/` (README mit Freigabestufen und Meetings,
+Entscheidungslog, offene Aufgaben, Kalt-Mail-Regeln, Protokolle). Wer hier weiterarbeitet, liest zuerst
+`docs/firma/offene-aufgaben.md` und trägt Beschlüsse ins Entscheidungslog ein.
