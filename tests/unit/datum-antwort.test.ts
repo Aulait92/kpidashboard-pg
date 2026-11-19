@@ -115,3 +115,21 @@ describe("geburtImChat (Assistent)", () => {
         for (const an of ["sie", "du"] as const) expect(geburtImChat({ ...basis, an, wert, tierLead }).hinweis ?? "").not.toMatch(/[–—]/);
   });
 });
+
+describe("geburtImChat: kein Datum erkennbar (Ole, 19.11.2026)", () => {
+  const basis = { an: "sie" as const, person: "Herr Kannapinn", schon: [] as GeburtMerker[], jetzt: new Date("2026-11-19T12:00:00Z") };
+  it("speichert „36272“ nicht und fragt einmal mit Beispiel nach", () => {
+    const r = geburtImChat({ ...basis, wert: "36272", tierLead: false });
+    expect(r.geburt).toBeNull();
+    expect(r.merker).toEqual({ art: "unlesbar", datum: "36272" });
+    expect(r.hinweis).toContain("zum Beispiel 14.05.1985");
+  });
+  it("notiert die zweite unlesbare Antwort als offen", () => {
+    const r = geburtImChat({ ...basis, wert: "irgendwann im Mai", tierLead: false, schon: [{ art: "unlesbar", datum: "36272" }] });
+    expect(r.geburt).toBe("offen (Angabe: irgendwann im Mai)");
+    expect(r.merker).toBeNull();
+  });
+  it("„weiß nicht“ bleibt wie bisher", () => {
+    expect(geburtImChat({ ...basis, wert: "weiß nicht", tierLead: false }).geburt).toBe("weiß nicht");
+  });
+});

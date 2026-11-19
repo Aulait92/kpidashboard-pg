@@ -952,6 +952,8 @@ export async function handleFlowAntwort(o: {
   await setzeBody(o.messageId, `Formular „Policen senden“: ${ok === 1 ? "1 Dokument" : `${ok} Dokumente`} für den Vermittler`);
   if (fehler) console.error("[policen formular] dateien nicht geladen", fehler, fehlerGruende.join(", "));
   if (!antwort.dateien.length) console.error("[policen formular] Antwort ohne Dateien");
+  // Aufbau der Antwort ohne Inhalte (nur Schlüssel und Typen), um Abweichungen von Meta/360dialog zu erkennen
+  if (fehler || !antwort.dateien.length) console.error("[policen formular] aufbau", formularAufbau(o.responseJson));
 
   if (o.botErlaubt) {
     const c = await flow.flowChat(chat.id, now).catch(() => null);
@@ -1271,4 +1273,28 @@ export async function prunePolicen(now = new Date()) {
     logFehler("verwaist", e);
   }
   return { wartet, geloescht, aktualisiert, erinnert: erinnern.size, verwaist };
+}
+
+/** Schlüssel und Typen der Formular-Antwort ohne Werte (Protokoll bei Ladefehlern). */
+export function formularAufbau(raw: unknown): string {
+  let j: unknown = raw;
+  if (typeof raw === "string") {
+    try {
+      j = JSON.parse(raw);
+    } catch {
+      return "kein JSON";
+    }
+  }
+  const art = (v: unknown): string => (Array.isArray(v) ? `array(${v.length})` : v === null ? "null" : typeof v);
+  if (!j || typeof j !== "object") return art(j);
+  return Object.entries(j as Record<string, unknown>)
+    .map(([k, v]) => {
+      if (Array.isArray(v) && v.length) {
+        const e = v[0];
+        const innen = e && typeof e === "object" ? `{${Object.entries(e as Record<string, unknown>).map(([ik, iv]) => `${ik}:${art(iv)}`).join(",")}}` : art(e);
+        return `${k}:${art(v)}[${innen}]`;
+      }
+      return `${k}:${art(v)}`;
+    })
+    .join(" ");
 }
