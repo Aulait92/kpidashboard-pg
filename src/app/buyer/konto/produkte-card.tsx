@@ -87,7 +87,7 @@ export function ProductsCard({ booked, bookable, lines, ctx, today, readOnly }: 
         {!readOnly ? <OtherProductRequest /> : null}
 
         <p className="text-sm text-[color:var(--muted)]">
-          Je weiterem Produkt: Einrichtung kostenlos{PRICE_LIST.extraProductSetupSelfService > 0 ? ` (sonst ${eur0(PRICE_LIST.extraProductSetupSelfService)})` : ""}, {eur0(PRICE_LIST.extraProductMonthly)} im Monat zusätzlich (netto). Ihr Werbebudget ändern Sie
+          {eur0(PRICE_LIST.extraProductMonthly)} im Monat je Sparte (netto), ohne Einrichtungsgebühr{PRICE_LIST.extraProductSetupSelfService > 0 ? ` (sonst ${eur0(PRICE_LIST.extraProductSetupSelfService)})` : ""}. Neue Leads in wenigen Tagen. Ihr Werbebudget ändern Sie
           oben unter <a href="#budget" className="underline">Werbebudget</a>.
         </p>
       </div>
@@ -291,7 +291,7 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
             <span>
               {p.overIndividual
                 ? "Ich möchte ein individuelles Angebot für dieses Produkt."
-                : `Ich buche ${product.name}${p.setupFee > 0 ? ` mit einmalig ${eur0(p.setupFee)} Einrichtung und` : " (Einrichtung kostenlos) mit"} dem neuen Monatspreis (netto, zzgl. USt.).`}
+                : `Ich buche ${product.name}${p.setupFee > 0 ? ` mit einmalig ${eur0(p.setupFee)} Einrichtung` : " ohne Einrichtungsgebühr"}. ${neuerMonatspreis(p) != null ? `Neuer Monatspreis ${eur0(neuerMonatspreis(p)!)}` : `Zusätzlich ${eur0(p.extraMonthly)} im Monat`} (netto, zzgl. USt.), berechnet ab Start der Kampagne; Laufzeit und Kündigung wie mein bestehender Vertrag.`}
             </span>
           </label>
 
