@@ -33,6 +33,8 @@ import type { SalesBookingType } from "@/generated/prisma/client";
 export const VERTRIEB_CUSTOMER_ID = "cust_pg_vertrieb";
 export const DEFAULT_BOOKING_TYPE = "meta-leads-call";
 export const DECISION_BOOKING_TYPE = "entscheidung";
+/** Sales-Call nach dem kurzen Telefonat (Setter): nur Ole bucht ihn im Vertriebskontakt (Ole, 19.11.2026). */
+export const SALES_CALL_BOOKING_TYPE = "sales-call";
 
 /** Vorbereitungsvideo auf der Danke-Seite (zum Tauschen: Datei oder Adresse hier ändern). */
 export const PREPARATION_VIDEO_URL = process.env.SALES_PREPARATION_VIDEO_URL?.trim() || "/praesentation/vertrieb/assistent.mp4";
@@ -57,6 +59,13 @@ export function salesAppUrl(path: string): string {
 
 export const manageLink = (token: string) => salesAppUrl(`/termin/verwalten/${token}`);
 export const thanksLink = (token: string) => salesAppUrl(`/termin/danke/${token}`);
+
+/** Kurzbeschreibung eines Termintyps im Admin (Buchungsseite). Nicht online buchbar = nur im Vertriebskontakt. */
+export function bookingTypeHint(t: { slug: string; active: boolean }): string {
+  if (!t.active) return "Nicht online buchbar, Sie buchen ihn im Vertriebskontakt";
+  if (t.slug === DEFAULT_BOOKING_TYPE) return "Erster Kontakt, auf der Webseite buchbar";
+  return "Folgetermin nach dem Angebot, persönlicher Link im Vertriebskontakt";
+}
 
 /** Pfad der Buchungsseite eines Termintyps in der App (Standardtyp: /termin). */
 export const bookingPath = (slug: string) => (slug === DEFAULT_BOOKING_TYPE ? "/termin" : `/termin/${slug}`);
@@ -173,7 +182,7 @@ export const VERTRIEB_INTERESSEN = [
 
 export const BUFFER_CHOICES = [0, 10, 15, 30] as const;
 export const NOTICE_CHOICES = [60, 120, 240, 720, 1440, 2880] as const;
-export const DURATION_CHOICES = [30, 45, 60] as const;
+export const DURATION_CHOICES = [15, 30, 45, 60] as const;
 /** Buchungsfenster: öffentlich buchbar in den nächsten N Tagen ab heute (heute zählt mit). */
 export const WINDOW_CHOICES = [3, 5, 7, 10, 14, 21, 30] as const;
 

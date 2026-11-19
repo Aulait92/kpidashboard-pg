@@ -16,6 +16,7 @@ import {
   WINDOW_CHOICES,
   VERTRIEB_CUSTOMER_ID,
   bookingPath,
+  bookingTypeHint,
   embedSnippet,
   publicSalesBookingUrl,
   salesAppUrl,
@@ -90,9 +91,9 @@ export default async function BuchungsseitePage({ searchParams }: { searchParams
         const url = t.slug === DEFAULT_BOOKING_TYPE ? publicSalesBookingUrl() : salesAppUrl(bookingPath(t.slug));
         return (
           <Card key={t.id}>
-            <CardHeader title={t.title} hint={t.slug === DEFAULT_BOOKING_TYPE ? "Erstgespräch" : "Folgetermin nach dem Angebot, persönlicher Link im Vertriebskontakt"} />
+            <CardHeader title={t.title} hint={bookingTypeHint(t)} />
             <div className="space-y-4 p-5">
-              <CopyField value={url} />
+              {t.active ? <CopyField value={url} /> : null}
               <BookingTypeForm action={saveBookingTypeAction} type={t} durations={DURATION_CHOICES} buffers={BUFFER_CHOICES} notices={NOTICE_CHOICES} windows={WINDOW_CHOICES} />
             </div>
           </Card>

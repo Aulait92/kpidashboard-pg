@@ -18,6 +18,7 @@ import {
   VERTRIEB_CUSTOMER_ID,
   WINDOW_CHOICES,
   bookingPath,
+  bookingTypeHint,
   embedSnippet,
   publicSalesBookingUrl,
   salesAppUrl,
@@ -95,9 +96,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ g
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2" data-funktion="actions-savebookingtypeaction--termintypen-bearbeiten-dauer-puffer-vorlauf">
         {types.map((t) => (
           <Card key={t.id}>
-            <CardHeader title={t.title} hint={t.slug === DEFAULT_BOOKING_TYPE ? "Erstgespräch" : "Folgetermin nach dem Angebot"} />
+            <CardHeader title={t.title} hint={bookingTypeHint(t)} />
             <div className="space-y-4 p-5">
-              <CopyField value={t.slug === DEFAULT_BOOKING_TYPE ? publicSalesBookingUrl() : salesAppUrl(bookingPath(t.slug))} />
+              {t.active ? <CopyField value={t.slug === DEFAULT_BOOKING_TYPE ? publicSalesBookingUrl() : salesAppUrl(bookingPath(t.slug))} /> : null}
               <BookingTypeForm action={saveBookingTypeAction} type={t} durations={DURATION_CHOICES} buffers={BUFFER_CHOICES} notices={NOTICE_CHOICES} windows={WINDOW_CHOICES} />
             </div>
           </Card>
