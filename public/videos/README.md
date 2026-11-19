@@ -4,6 +4,8 @@ Stimme: OpenAI gpt-4o-mini-tts, Stimme „onyx“. Aufgenommen mit Demo-Daten (n
 
 ## Kurzversion (ca. 58 Sek.), für den ersten Login
 
+Bild neu aufgenommen am 19.11.2026 (Heute mit „Angebote senden“ und „Starten“, Kontakte mit „Zu erledigen“, Wachstum mit „Rechnet sich das?“ und „Vom Lead zum Kunden“, Menüpunkt „Hilfe“). Sprechertext und Ton unverändert, der Ton ist der gegengehörte vom 16.11.2026.
+
 - **intro**: Willkommen bei Performance Growth. In einer Minute zeigen wir Ihnen das Wichtigste.
 - **Heute: alles, was heute zu tun ist**: Ihr Startpunkt ist ‚Heute‘. Ganz oben steht, wer auf Sie wartet, darunter Ihre Termine und Ihre Anrufliste.
 - **Termin antippen**: Tippen Sie auf einen Termin. Sie sehen sofort, was der Assistent schon gefragt hat.
