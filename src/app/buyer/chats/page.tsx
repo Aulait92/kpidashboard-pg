@@ -75,6 +75,14 @@ function parseFormAnswers(raw: unknown): { label: string; value: string }[] {
   );
 }
 
+/**
+ * Name im Chat: der Name aus dem Formular des Leads vor dem WhatsApp-Profilnamen (Ole, 19.11.2026: „Umit Tapsa“
+ * eingegeben, im Chat stand der Profilname „Ole“), sonst die Nummer.
+ */
+function chatName(c: { contactName: string | null; contactPhone: string; lead?: { name: string | null } | null }): string {
+  return c.lead?.name?.trim() || c.contactName?.trim() || formatPhone(c.contactPhone);
+}
+
 export default async function BuyerChatsPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
@@ -140,6 +148,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         ? {
             OR: [
               { contactName: { contains: q, mode: "insensitive" as const } },
+              { lead: { name: { contains: q, mode: "insensitive" as const } } },
               { contactEmail: { contains: q, mode: "insensitive" as const } },
               ...(qDigits.length >= 3 ? [{ contactPhone: { contains: qDigits } }] : []),
             ],
@@ -156,7 +165,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       qualified: true,
       needsAttention: true,
       lastMessageAt: true,
-      lead: { select: { status: true } },
+      lead: { select: { status: true, name: true } },
       messages: {
         where: { direction: { in: ["inbound", "outbound"] } },
         orderBy: { createdAt: "desc" },
@@ -170,7 +179,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   const inbound = await lastInboundAt(conversations.map((c) => c.id));
   const hintItems = conversations.map((c) => ({
     id: c.id,
-    name: c.contactName ?? formatPhone(c.contactPhone),
+    name: chatName(c),
     href: `/buyer/chats?c=${c.id}${listQs ? `&${listQs}` : ""}`,
     inboundAt: inbound.get(c.id) ?? null,
   }));
@@ -231,10 +240,10 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   // „Anrufen“ wie im Kontakt (Ole, 17.11.2026): Assistent pausiert, danach „Wie lief es?“ (components/call-outcome.tsx)
   const anrufLead =
     active?.lead && (await isNewUi(ctx.customerId))
-      ? { id: active.lead.id, name: active.contactName ?? active.lead.name ?? "Lead", source: active.lead.source, followUp: !!active.lead.followUpAt }
+      ? { id: active.lead.id, name: chatName(active), source: active.lead.source, followUp: !!active.lead.followUpAt }
       : null;
 
-  const name = active ? (active.contactName ?? formatPhone(active.contactPhone)) : "";
+  const name = active ? chatName(active) : "";
   // Handy-Kopfzeile: „Termin heute 11:00“ und „Vorbereiten“ (24 Stunden vorher bzw. während des Termins)
   const kopfTermin = chatKopfTermin(appointments[0] ?? null, now);
   // Hinweis „Wenn Sie schreiben, pausiert …“: am Handy weg, sobald der Vermittler hier schon selbst geschrieben hat
@@ -515,7 +524,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
     <main className="mx-auto w-full max-w-[1440px] flex-1 px-0 py-0 sm:px-6 sm:py-6 lg:px-8">
       {/* Chat übernommen bzw. Ergebnis nach „Anrufen“: fragen, wie es mit dem Lead weitergeht (falls kein Schritt) */}
       {active?.lead ? (
-        <NextStepPrompt key={active.lead.id} leadId={active.lead.id} name={active.contactName ?? "Lead"} source={active.lead.source} autoOpen={sp.schritt === "1"} />
+        <NextStepPrompt key={active.lead.id} leadId={active.lead.id} name={chatName(active)} source={active.lead.source} autoOpen={sp.schritt === "1"} />
       ) : null}
       <div className="hidden sm:block">
         <PageHeader title="Nachrichten" subtitle="WhatsApp-Gespräche mit Ihren Kontakten" />
@@ -595,7 +604,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
               conversations.map((c) => {
                 const last = c.messages[0];
                 const isActive = c.id === activeId;
-                const cname = c.contactName ?? formatPhone(c.contactPhone);
+                const cname = chatName(c);
                 const von = last?.direction === "outbound" ? (last.sentBy === "agent" || last.sentBy === "app" ? "Sie: " : "Assistent: ") : "";
                 return (
                   <Link
