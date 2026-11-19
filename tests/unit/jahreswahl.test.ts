@@ -90,7 +90,8 @@ const choice = (o: Partial<OfferChoiceProps> = {}): OfferChoiceProps => ({
   start: { min: "2026-11-25", max: "2027-02-16", preset: "2027-01-01" },
   ...o,
 });
-const pricing: ContractSummaryInput = { term: "12m", startIso: "2027-01-01", setup: 990, monthlyTotal: 1098, intro: null, annual: false, freeMonths: 2 };
+// Offenes Angebot: Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026; offerSummaryInput setzt das)
+const pricing: ContractSummaryInput = { term: "12m", startIso: "2027-01-01", setup: 990, monthlyTotal: 1098, intro: null, annual: false, freeMonths: 2, prepayAtAcceptance: true };
 const form = (c: OfferChoiceProps | null, extra: Record<string, unknown> = {}) =>
   renderToStaticMarkup(
     createElement(AcceptForm, { token: "tok", termsUrl: "https://app.test/agb", dpaUrl: "https://app.test/avv", defaultName: "Jana Jahr", pricing, choice: c, ...extra }),
@@ -114,9 +115,12 @@ describe("Jahreswahl: Texte der Angebotsseite", () => {
 
   it("Jährlich gewählt: Zusammenfassung mit Jahresbetrag und Verlängerung, Lastschrift jährlich", () => {
     const t = text(form(choice({ initialAnnual: true }), { payment: true, ueberweisungTage: 14 }));
-    expect(t).toContain("Jährlich im Voraus: 10.980 € netto, jedes Jahr am 01.01. fällig, das erste Mal zum Start am 01.01.2027.");
+    expect(t).toContain("Jährlich im Voraus: 10.980 € netto, jedes Jahr am 01.01. fällig, das erste Mal mit der Annahme, dann am 01.01.2028.");
+    expect(t).toContain("Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne.");
     expect(t).toContain("Laufzeit bis 31.12.2027. Sie verlängert sich um jeweils 12 Monate, wenn Sie nicht bis 30.11.2027 kündigen.");
-    expect(t).toMatch(/Jährlich im Voraus ab 01\.01\.2027: 10\.980 € netto/);
+    // Jetzt fällig: Setup und Jahresbetrag zusammen, danach jährlich ab der Verlängerung
+    expect(t).toMatch(/Jetzt fällig \(Setup und Vorauszahlung\): 11\.970 € netto · 14\.244,30 € brutto/);
+    expect(t).toMatch(/Danach jährlich ab 01\.01\.2028: 10\.980 € netto/);
     expect(t).toContain("der Betrag wird jährlich automatisch eingezogen.");
     // Überweisung bleibt bei Jahreszahlung wählbar, wenn am Angebot freigegeben
     expect(t).toContain("Per Überweisung zahlen");
@@ -184,7 +188,7 @@ describe("Jahreswahl: Angebotsdokument (Seite und PDF)", () => {
     expect(t).toMatch(/Wählen Sie bei der Annahme: monatlich 1\.098 € netto im Monat oder jährlich im Voraus 10\.980 € netto im Jahr/);
     expect(t).toMatch(/Bei Jahreszahlung 2 Monate geschenkt, Sie sparen 2\.196 €\./);
     expect(t).toMatch(/oder jährlich im Voraus 10\.980 €, 2 Monate geschenkt/);
-    expect(t).toMatch(/Bei Jahreszahlung ist es der Jahresbetrag von 10\.980 € netto\./);
+    expect(t).toMatch(/Bei Jahreszahlung kommt der Jahresbetrag von 10\.980 € netto dazu\. Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne\./);
     const zeile = t.slice(t.indexOf("Wählen Sie bei der Annahme"), t.indexOf("keine Gutschrift.") + 17);
     expect(hatGedankenstrich(zeile)).toBe(false);
   });
@@ -201,7 +205,9 @@ describe("Jahreswahl: Angebotsdokument (Seite und PDF)", () => {
 
   it("Abrechnungstag am 1., Start 18.11. (Ole, 18.11.2026): jährlich voller Jahresbetrag zum Start, monatlich anteilig", () => {
     const mitTag = { startDate: new Date("2026-11-18T12:00:00Z"), billingDay: 1, billingFreeStart: false };
-    const jahr = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ ...mitTag, status: "accepted", annualPrepay: true }) })));
+    // Angenommen vor dem 19.11.2026 (prepayAtAcceptance false): Vorauszahlung zum Start, Text bleibt
+    const alt = { status: "accepted", annualPrepay: true, acceptedAt: new Date("2026-11-18T10:00:00Z"), prepayAtAcceptance: false };
+    const jahr = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ ...mitTag, ...alt }) })));
     expect(jahr).toContain("18.11.2026. Ab diesem Tag läuft die Vergütung: 10.980 € netto jährlich im Voraus, jedes Jahr am 18.11. fällig, das erste Mal zum Start am 18.11.2026.");
     expect(jahr).toMatch(/Jahresbetrag \(10\.980 € netto, [\d.,]+ € brutto\) am 18\.11\.2026\./);
     expect(jahr).toContain("12 Monate ab Start, jährlich im Voraus bezahlt.");
@@ -209,11 +215,25 @@ describe("Jahreswahl: Angebotsdokument (Seite und PDF)", () => {
     const konditionen = jahr.slice(jahr.indexOf("Start 18.11.2026"), jahr.indexOf("Ihre monatlichen Kosten"));
     expect(konditionen).not.toMatch(/anteilig|kostenlos|01\.12\.2026|ersten Abrechnungstag/);
     expect(hatGedankenstrich(jahr.slice(jahr.indexOf("18.11.2026. Ab diesem Tag"), jahr.indexOf("18.11.2026. Ab diesem Tag") + 160))).toBe(false);
-    // Vor der Annahme (Kunde wählt): monatlich ab dem 1. mit Anteil, bei Jahreszahlung voller Betrag zum Start
+    // Vor der Annahme (Kunde wählt): monatlich ab dem 1. mit Anteil, bei Jahreszahlung voller Betrag mit der Annahme (19.11.2026)
     const offen = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc(mitTag) })));
     expect(offen).toContain("Ihr Monatsbeitrag wird ab dem 01.12.2026 jeweils am 1. abgebucht.");
-    expect(offen).toContain("Bei Jahreszahlung ist der volle Jahresbetrag schon zum Start am 18.11.2026 fällig.");
-    expect(offen).toContain("Bei Jahreszahlung ist es der Jahresbetrag von 10.980 € netto, fällig zum Start am 18.11.2026.");
+    expect(offen).toContain("Bei Jahreszahlung gilt der Abrechnungstag nicht. Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne.");
+    expect(offen).toContain("Bei Jahreszahlung kommt der Jahresbetrag von 10.980 € netto dazu. Die Vorauszahlung wird mit Annahme fällig");
+    expect(offen).not.toContain("zum Start am 18.11.2026 fällig");
+  });
+
+  it("Vorauszahlung mit Annahme (Ole, 19.11.2026): Setup und Jahresbetrag bei Annahme fällig, Laufzeit ab Start", () => {
+    const neu = { status: "accepted", annualPrepay: true, acceptedAt: new Date("2026-11-19T10:00:00Z"), prepayAtAcceptance: true };
+    const t = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc(neu) })));
+    expect(t).toContain("01.01.2027. Ab diesem Tag läuft die Laufzeit: 10.980 € netto jährlich im Voraus, jedes Jahr am 01.01. fällig, das erste Mal mit der Annahme, dann am 01.01.2028.");
+    expect(t).toContain("Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne.");
+    // 990 € Setup + 10.980 € Jahresbetrag = 11.970 € netto, 19 % USt. 2.274,30 € = 14.244,30 € brutto
+    expect(t).toMatch(/Bei Annahme fällig 11\.970 € netto \(Setup 990 € und Jahresbetrag 10\.980 €\) zzgl\. 19 % USt\. 2\.274,30 € = 14\.244,30 € brutto/);
+    expect(t).toContain("Die nächste Vorauszahlung ist am 01.01.2028 fällig.");
+    expect(t).toContain("Die Setupgebühr und die Vorauszahlung für die ersten 12 Monate werden mit Vertragsschluss fällig");
+    const teil = t.slice(t.indexOf("01.01.2027. Ab diesem Tag"), t.indexOf("Ihre monatlichen Kosten"));
+    expect(hatGedankenstrich(teil)).toBe(false);
   });
 
   it("ohne Haken: keine Zahlweise-Zeile", () => {

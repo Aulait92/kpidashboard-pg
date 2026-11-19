@@ -133,6 +133,12 @@ export function vorauszahlungBetraege(
   return { total, savings: round2(monthlyTotal * months - total), freeMonths: free, months, paidMonths: months - free };
 }
 
+/**
+ * Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026)? Für noch nicht angenommene Angebote ja (so gilt es bei der
+ * Annahme), für angenommene laut Offer.prepayAtAcceptance (Annahmen vor dem 19.11.2026: nein, Vorauszahlung zum Start).
+ */
+export const vorauszahlungMitAnnahme = (o: { acceptedAt?: Date | null; prepayAtAcceptance?: boolean | null }): boolean => !o.acceptedAt || !!o.prepayAtAcceptance;
+
 /** Zahlrhythmus am Kunden (Customer.billingInterval). */
 export type Zahlrhythmus = "month" | "halfyear" | "year";
 export const normalizeRhythmus = (v: unknown): Zahlrhythmus => (v === "year" || v === "halfyear" ? v : "month");

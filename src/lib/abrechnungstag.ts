@@ -13,6 +13,8 @@
 // - Vorauszahlung (jährlich bzw. 6 Monate im Voraus, Ole 18.11.2026: „Schon den vollen Betrag abrechnen“): Der
 //   Abrechnungstag gilt nicht. Der Zahlungszeitraum beginnt am Start, der volle Betrag ist zum Start fällig,
 //   nichts anteilig und kein kostenloser Start. Der Abrechnungstag gilt nur, wenn monatlich gezahlt wird.
+//   Seit 19.11.2026 (Ole) ist die Vorauszahlung schon mit der Annahme fällig (lib/billing.ts), der Zeitraum beginnt
+//   weiter am Start (Offer.prepayAtAcceptance; ältere Annahmen: zum Start).
 
 import { eur } from "@/lib/offer-pricing";
 
@@ -129,13 +131,14 @@ export function abrechnungstagSaetze(plan: Abrechnungsplan | null, o: { firstNet
   return saetze;
 }
 
-/** Kurzform für den Admin (Formular, Kundenakte). */
-export function abrechnungstagKurz(plan: Abrechnungsplan | null): string {
+/** Kurzform für den Admin (Formular, Kundenakte). mitAnnahme: Vorauszahlung mit der Annahme fällig (seit 19.11.2026). */
+export function abrechnungstagKurz(plan: Abrechnungsplan | null, opts: { mitAnnahme?: boolean } = {}): string {
   if (!plan) return "wie Start";
+  if (plan.vorauszahlung && opts.mitAnnahme) return `mit der Annahme, voller Betrag, Zeitraum ab Start am ${lang(plan.startIso)} (Vorauszahlung, Abrechnungstag gilt nicht)`;
   if (plan.vorauszahlung) return `zum Start am ${lang(plan.startIso)}, voller Betrag (Vorauszahlung, Abrechnungstag gilt nicht)`;
   if (!plan.differs) return `am ${plan.day}. (wie Start)`;
   return `am ${plan.day}., erste Abbuchung ${lang(plan.firstIso)}, ${plan.free ? `kostenloser Start bis ${kurz(plan.stubEndIso!)}` : `${kurz(plan.startIso)} bis ${kurz(plan.stubEndIso!)} anteilig`}`;
 }
 
 /** Hinweis für den Admin, wenn Vorauszahlung angeboten wird und ein eigener Abrechnungstag gesetzt ist. */
-export const VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG = "Wählt der Kunde Vorauszahlung, gilt der Abrechnungstag nicht: voller Betrag zum Start.";
+export const VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG = "Wählt der Kunde Vorauszahlung, gilt der Abrechnungstag nicht: voller Betrag mit der Annahme, Zeitraum ab Start.";

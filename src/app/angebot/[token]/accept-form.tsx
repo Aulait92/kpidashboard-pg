@@ -6,7 +6,7 @@ import { acceptOfferAction, type AcceptState } from "./actions";
 import { eur, prepayFreeMonthsFor, prepayPossible, vorauszahlungBetraege, withVat, type OfferTerm } from "@/lib/offer-pricing";
 import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
 import { ZAHLART_HINWEIS, ZAHLART_HINWEIS_HALBJAHR, ZAHLART_HINWEIS_JAHR } from "@/lib/zahlart";
-import { contractSummaryLines, hasPriceStep, priceStepAckText, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, contractSummaryLines, hasPriceStep, priceStepAckText, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 import { BUSINESS_CONFIRM_TEXT } from "@/lib/unternehmer";
 
 /** Wahl von Laufzeit/Startdatum (vom Server vorberechnet; verbindlich rechnet der Server bei Annahme neu). */
@@ -317,17 +317,38 @@ function ChoiceFields({
         </div>
       ) : null}
       <div className="grid gap-2 border-t border-[#e5e7eb] pt-3 text-sm sm:grid-cols-2" aria-live="polite">
-        <div>
-          <span className="text-[color:var(--muted)]">Jetzt fällig (Setup): </span>
-          {opt.list != null && opt.list > opt.setup ? <s className="mr-1 text-[color:var(--muted)]">{eur(opt.list)}</s> : null}
-          <b data-testid="choice-setup">{eur(opt.setup)} netto</b>
-          <span className="text-[color:var(--muted)]"> · {eur(withVat(opt.setup))} brutto</span>
-        </div>
-        <div>
-          <span className="text-[color:var(--muted)]">{annual ? (v.months === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus") : "Monatlich"}{startDate ? ` ab ${fmtDate(startDate)}` : ""}: </span>
-          <b data-testid="choice-recurring">{eur(annual ? annualTotal : choice.monthlyTotal)} netto</b>
-          <span className="text-[color:var(--muted)]"> · {eur(withVat(annual ? annualTotal : choice.monthlyTotal))} brutto</span>
-        </div>
+        {annual ? (
+          // Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026): Setup und erster Zeitraum jetzt, danach zur Verlängerung
+          <>
+            <div>
+              <span className="text-[color:var(--muted)]">Jetzt fällig (Setup und Vorauszahlung): </span>
+              <b data-testid="choice-setup">{eur(opt.setup + annualTotal)} netto</b>
+              <span className="text-[color:var(--muted)]"> · {eur(withVat(opt.setup + annualTotal))} brutto</span>
+            </div>
+            <div>
+              <span className="text-[color:var(--muted)]">
+                {v.months === 6 ? "Danach alle 6 Monate" : "Danach jährlich"}
+                {startDate ? ` ab ${fmtDate(addMonthsIso(startDate, v.months))}` : ""}:{" "}
+              </span>
+              <b data-testid="choice-recurring">{eur(annualTotal)} netto</b>
+              <span className="text-[color:var(--muted)]"> · {eur(withVat(annualTotal))} brutto</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <span className="text-[color:var(--muted)]">Jetzt fällig (Setup): </span>
+              {opt.list != null && opt.list > opt.setup ? <s className="mr-1 text-[color:var(--muted)]">{eur(opt.list)}</s> : null}
+              <b data-testid="choice-setup">{eur(opt.setup)} netto</b>
+              <span className="text-[color:var(--muted)]"> · {eur(withVat(opt.setup))} brutto</span>
+            </div>
+            <div>
+              <span className="text-[color:var(--muted)]">Monatlich{startDate ? ` ab ${fmtDate(startDate)}` : ""}: </span>
+              <b data-testid="choice-recurring">{eur(choice.monthlyTotal)} netto</b>
+              <span className="text-[color:var(--muted)]"> · {eur(withVat(choice.monthlyTotal))} brutto</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

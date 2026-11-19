@@ -29,10 +29,12 @@ import {
   rhythmusAusStripe,
   rhythmusFaktor,
   rhythmusFuer,
+  RHYTHMUS_MONATE,
   stripeRecurring,
   type Zahlrhythmus,
 } from "@/lib/offer-pricing";
 import { abrechnungsplan, anteilVerteilen } from "@/lib/abrechnungstag";
+import { ersterVorauszahlungszeitraum, fmtIso } from "@/lib/vertrag-laufzeit";
 
 const round2Billing = (n: number) => Math.round(n * 100) / 100;
 import { audit, type AuditActor } from "@/lib/audit";
@@ -179,6 +181,72 @@ const offerMeta = (offer: OfferRow) => ({
 
 const packageName = (offer: OfferRow) => (offer.package === "service" ? "Leadgenerierung" : "Leadgenerierung + Software");
 
+type AboPosition = { key: "software" | "service" | "seat" | "bestand" | "empfehlung"; monthly: number; quantity: number };
+
+/**
+ * Positionen des Abos laut Angebot (Monatsbeträge netto): Software-Anteil, Betreuung (Rest), weitere aktive Verkäufer
+ * (Menge), Bestandskunden-Modul, Empfehlungen & Bewertungen. total = Paketpreis im Monat (Startpreis oder regulär).
+ */
+function aboPositionen(offer: OfferRow, total: number): AboPosition[] {
+  const softwareFee = Math.min(Number(offer.softwareFee), Number(offer.monthlyFee));
+  const extraSeats = offer.seats != null && offer.seatsIncluded != null ? Math.max(0, offer.seats - offer.seatsIncluded) : 0;
+  const seatPrice = Number(offer.seatMonthly ?? 0);
+  const bestandPrice = Number(offer.bestandMonthly ?? 0);
+  const empfehlungPrice = Number(offer.empfehlungMonthly ?? 0);
+  const sw = Math.min(softwareFee, total);
+  const out: AboPosition[] = [];
+  if (sw > 0) out.push({ key: "software", monthly: sw, quantity: 1 });
+  if (total - sw > 0) out.push({ key: "service", monthly: total - sw, quantity: 1 });
+  // Weitere Logins als Menge einer eigenen Position (Änderungen im Team passen die Menge an)
+  if (extraSeats > 0 && seatPrice > 0) out.push({ key: "seat", monthly: seatPrice, quantity: extraSeats });
+  if (bestandPrice > 0) out.push({ key: "bestand", monthly: bestandPrice, quantity: 1 });
+  if (empfehlungPrice > 0) out.push({ key: "empfehlung", monthly: empfehlungPrice, quantity: 1 });
+  return out;
+}
+
+/** Mittag (UTC) eines Kalendertags als Stripe-Zeitstempel, wie Offer.startDate. */
+const noonTs = (iso: string) => Math.floor(new Date(`${iso}T12:00:00Z`).getTime() / 1000);
+
+export type VorauszahlungJetzt = {
+  rhythmus: Exclude<Zahlrhythmus, "month">;
+  months: number;
+  freeMonths: number;
+  /** Positionen des ersten Zeitraums (Cent je Stück für den ganzen Zeitraum) */
+  lines: { key: AboPosition["key"]; unitCents: number; quantity: number }[];
+  totalCents: number;
+  /** Leistungszeitraum: Beginn, letzter Tag (inklusive), Beginn der Verlängerung (YYYY-MM-DD) */
+  fromIso: string;
+  toIso: string;
+  renewalIso: string;
+};
+
+/**
+ * Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026): Bei Annahme mit Vorauszahlung (jährlich, 12 Monate mit 3
+ * geschenkt, bzw. 6 Monate im Voraus mit 1 geschenkt) kommt der volle Betrag des ersten Zeitraums sofort mit dem Setup
+ * auf eine Rechnung (Bezahlseite bzw. Rechnung per Überweisung). Leistungszeitraum = Start bis Start + Laufzeit
+ * ({@link ersterVorauszahlungszeitraum}). Das Stripe-Abo beginnt erst mit der Verlängerung ({@link createScheduleForOffer}),
+ * so gibt es keine Doppelberechnung und keine 0-€-Rechnung. null = monatlich, Annahme vor dem 19.11.2026
+ * (prepayAtAcceptance false: Vorauszahlung wie bisher zum Start) oder Testangebot.
+ */
+export function vorauszahlungJetzt(offer: OfferRow, todayIso = berlinTodayIso()): VorauszahlungJetzt | null {
+  const rhythmus = rhythmusFuer(offer.term, offer.annualPrepay);
+  if (rhythmus === "month" || !offer.prepayAtAcceptance || offer.isTest) return null;
+  const factor = rhythmusFaktor(rhythmus, offer.annualFreeMonths);
+  const months = RHYTHMUS_MONATE[rhythmus];
+  const lines = aboPositionen(offer, Number(offer.monthlyFee)).map((p) => ({ key: p.key, unitCents: cents(p.monthly * factor), quantity: p.quantity }));
+  const totalCents = lines.reduce((sum, l) => sum + l.unitCents * l.quantity, 0);
+  if (totalCents <= 0) return null;
+  const startIso = offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
+  return { rhythmus, months, freeMonths: months - factor, lines, totalCents, ...ersterVorauszahlungszeitraum(startIso, months, todayIso) };
+}
+
+/** „Vorauszahlung 12 Monate (3 Monate geschenkt), Leistungszeitraum 01.01.2027 bis 31.12.2027“ */
+const vorauszahlungText = (v: VorauszahlungJetzt) =>
+  `Vorauszahlung ${v.months} Monate (${v.freeMonths} ${v.freeMonths === 1 ? "Monat" : "Monate"} geschenkt), Leistungszeitraum ${fmtIso(v.fromIso)} bis ${fmtIso(v.toIso)}`;
+
+/** Zusatzfeld im Rechnungskopf (Stripe custom_fields, höchstens 4). */
+const leistungszeitraumFeld = (v: VorauszahlungJetzt) => ({ name: "Leistungszeitraum", value: `${fmtIso(v.fromIso)} bis ${fmtIso(v.toIso)}` });
+
 /**
  * Checkout mit der gewählten Zahlart (allowed_payment_method_types). Ist die Lastschrift im
  * Konto nicht freigeschaltet, lehnt Stripe ab; dann mit Lastschrift und Karte, damit der Kunde
@@ -232,10 +300,41 @@ async function reuseOrExpireCheckout(
   return null;
 }
 
+/** Beschreibung der ersten Rechnung: Setup und/oder Vorauszahlung mit Leistungszeitraum. */
+function checkoutBeschreibung(offer: OfferRow, products: string, mitSetup: boolean, voraus: VorauszahlungJetzt | null): string {
+  if (!voraus) return `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`;
+  return `${mitSetup ? "Setup und " : ""}${vorauszahlungText(voraus)}, ${packageName(offer)} (${products}), Angebot ${offer.number}`;
+}
+
+/** Rechnungsfuß und Zusatzfelder (Steuernummer), bei Vorauszahlung plus Leistungszeitraum. */
+function rechnungsKopf(d: Awaited<ReturnType<typeof loadInvoiceDefaults>>, voraus: VorauszahlungJetzt | null) {
+  const base = invoiceFooterParams(d);
+  if (!voraus) return base;
+  // Stripe erlaubt höchstens 4 Zusatzfelder: der Leistungszeitraum bleibt immer drin
+  return { ...base, custom_fields: [...(base.custom_fields ?? []).slice(0, 3), leistungszeitraumFeld(voraus)] };
+}
+
+/** Positionen der Vorauszahlung für die Bezahlseite (einmalig, Betrag für den ganzen Zeitraum). */
+async function vorauszahlungLineItems(
+  stripe: Stripe,
+  voraus: VorauszahlungJetzt,
+  tax: { automatic: boolean; rateId: string | null },
+): Promise<Stripe.Checkout.SessionCreateParams.LineItem[]> {
+  const out: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+  for (const l of voraus.lines) {
+    out.push({
+      quantity: l.quantity,
+      price_data: { currency: "eur", product: await productId(stripe, l.key), unit_amount: l.unitCents, tax_behavior: "exclusive" },
+      ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+    });
+  }
+  return out;
+}
+
 /**
  * Erstellt (oder erneuert) die Stripe-Bezahlseite für ein angenommenes
- * Angebot und gibt die URL zurück. Bezahlt wird nur das Setup; die
- * Zahlungsart wird für die Monatsgebühren gespeichert.
+ * Angebot und gibt die URL zurück. Bezahlt wird das Setup, bei Vorauszahlung mit Annahme (seit 19.11.2026) auch der
+ * erste Zeitraum ({@link vorauszahlungJetzt}); die Zahlungsart wird für die laufende Vergütung gespeichert.
  */
 export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart | null): Promise<{ url: string } | { error: string }> {
   const stripe = stripeClient();
@@ -271,11 +370,14 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
     // wäre die Bezahlseite gratis (Checkout fragt dann keine Zahlungsart ab, die Monatsgebühr ließe sich nicht
     // einziehen) bzw. unter 0,50 € (Stripe lehnt ab). Dann nur die Zahlungsart hinterlegen (Modus „setup“).
     const zuZahlen = round2Billing(setupFee - (bonus?.betrag ?? 0));
-    const mitZahlung = setupFee > 0 && zuZahlen >= STRIPE_MIN_EUR;
+    const setupMitZahlung = setupFee > 0 && zuZahlen >= STRIPE_MIN_EUR;
+    // Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026): voller Betrag des ersten Zeitraums auf dieselbe Rechnung
+    const voraus = vorauszahlungJetzt(offer);
+    const mitZahlung = setupMitZahlung || !!voraus;
     // Positionen und Zahlart dieser Bezahlseite: gleich → offene Seite wiederverwenden
     const fingerprint = crypto
       .createHash("sha256")
-      .update(JSON.stringify([mitZahlung ? "payment" : "setup", offer.package, cents(setupFee), discount ? [cents(discount.list), cents(discount.discount)] : null, bonus ? [cents(bonus.betrag), bonus.bis.getTime()] : null, zahlart ?? null, customerId, tax.automatic ? "auto" : tax.rateId]))
+      .update(JSON.stringify([mitZahlung ? "payment" : "setup", offer.package, cents(setupFee), discount ? [cents(discount.list), cents(discount.discount)] : null, bonus ? [cents(bonus.betrag), bonus.bis.getTime()] : null, zahlart ?? null, customerId, tax.automatic ? "auto" : tax.rateId, voraus ? [setupMitZahlung, voraus.totalCents, voraus.fromIso, voraus.renewalIso] : null]))
       .digest("hex")
       .slice(0, 24);
     if (offer.stripeCheckoutSessionId) {
@@ -289,7 +391,7 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
     // Stripe erlaubt einen Gutschein je Bezahlseite: Empfehlungsrabatt und Abschlussbonus zusammen
     const couponName = discount && bonus ? "Empfehlungsrabatt und Abschlussbonus" : bonus ? "Abschlussbonus" : "Empfehlungsrabatt";
     const coupon =
-      mitZahlung && nachlass > 0.005
+      setupMitZahlung && nachlass > 0.005
         ? await stripe.coupons.create(
             {
               amount_off: cents(nachlass),
@@ -317,7 +419,13 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
       client_reference_id: offer.id,
       integration_identifier: "pg-angebot-qkzvmtrb",
       // Ohne Zahlung (Bonus deckt das Setup bis auf einen Rest unter dem Mindestbetrag): das ganze Setup gilt als Bonus
-      metadata: { ...meta, pg_checkout: fingerprint, ...(bonus ? { pg_bonus: String(cents(mitZahlung ? bonus.betrag : setupFee)) } : {}) },
+      metadata: {
+        ...meta,
+        pg_checkout: fingerprint,
+        ...(bonus ? { pg_bonus: String(cents(setupMitZahlung ? bonus.betrag : setupFee)) } : {}),
+        // Vorauszahlung auf dieser Rechnung: das Abo beginnt erst mit der Verlängerung (createScheduleForOffer)
+        ...(voraus ? { pg_prepay: String(voraus.totalCents), pg_prepay_from: voraus.fromIso, pg_prepay_until: voraus.toIso, pg_prepay_renewal: voraus.renewalIso } : {}),
+      },
       ...(ablauf ? { expires_at: ablauf } : {}),
       success_url: `${base}/angebot/${offer.token}?zahlung=ok`,
       cancel_url: `${base}/angebot/${offer.token}?zahlung=abgebrochen`,
@@ -333,29 +441,35 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
             tax_id_collection: { enabled: true },
             ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
             line_items: [
-              {
-                quantity: 1,
-                price_data: {
-                  currency: "eur",
-                  product: setup,
-                  unit_amount: cents(listPreis),
-                  tax_behavior: "exclusive",
-                },
-                ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
-              },
+              ...(setupMitZahlung
+                ? [
+                    {
+                      quantity: 1,
+                      price_data: {
+                        currency: "eur",
+                        product: setup,
+                        unit_amount: cents(listPreis),
+                        tax_behavior: "exclusive" as const,
+                      },
+                      ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+                    },
+                  ]
+                : []),
+              // Vorauszahlung: dieselben Positionen wie im Abo (Software, Betreuung, Verkäufer, Module), voller Zeitraum
+              ...(voraus ? await vorauszahlungLineItems(stripe, voraus, tax) : []),
             ],
             ...(coupon ? { discounts: [{ coupon: coupon.id }] } : {}),
             payment_intent_data: {
               setup_future_usage: "off_session",
-              description: `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`,
+              description: checkoutBeschreibung(offer, products, setupMitZahlung, voraus),
               metadata: meta,
             },
             invoice_creation: {
               enabled: true,
               invoice_data: {
-                description: `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`,
+                description: checkoutBeschreibung(offer, products, setupMitZahlung, voraus),
                 metadata: meta,
-                ...invoiceFooterParams(invoiceDefaults),
+                ...rechnungsKopf(invoiceDefaults, voraus),
                 ...taxIds,
               },
             },
@@ -398,6 +512,9 @@ async function paymentMethodOf(stripe: Stripe, session: Stripe.Checkout.Session)
 /**
  * Legt nach erfolgreichem Checkout den Abo-Zeitplan an: Beginn am
  * Startdatum (oder sofort, wenn es schon erreicht ist), ggf. Startpreis-Phase.
+ * Vorauszahlung mit Annahme (Ole, 19.11.2026, {@link vorauszahlungJetzt}): Der erste Zeitraum ist mit der Bezahlseite
+ * bzw. der Rechnung per Überweisung schon berechnet, das Abo beginnt deshalb erst mit der Verlängerung (Start + 12 bzw.
+ * 6 Monate) mit dem vollen Betrag. Davor gibt es kein Abo (keine 0-€-Rechnung, keine Doppelberechnung).
  * Idempotent über den Idempotency-Key und stripeScheduleId.
  */
 export async function createScheduleForOffer(
@@ -431,7 +548,6 @@ export async function createScheduleForOffer(
   }
 
   const monthly = Number(offer.monthlyFee);
-  const softwareFee = Math.min(Number(offer.softwareFee), monthly);
   const taxRates = tax.automatic ? undefined : [tax.rateId!];
   // Vorauszahlung (lib/offer-pricing.ts VORAUSZAHLUNG): jährlich = Intervall Jahr, Betrag × (12 − Freimonate);
   // 6 Monate (Laufzeit 6m) = Intervall Monat × 6, Betrag × (6 − Freimonate). Sonst monatlich.
@@ -443,21 +559,8 @@ export async function createScheduleForOffer(
     price_data: { currency: "eur", product, unit_amount: cents(amount * factor), recurring: stripeRecurring(rhythmus), tax_behavior: "exclusive" },
     ...(taxRates ? { tax_rates: taxRates } : {}),
   });
-  const extraSeats = offer.seats != null && offer.seatsIncluded != null ? Math.max(0, offer.seats - offer.seatsIncluded) : 0;
-  const seatPrice = Number(offer.seatMonthly ?? 0);
-  const bestandPrice = Number(offer.bestandMonthly ?? 0);
-  const empfehlungPrice = Number(offer.empfehlungMonthly ?? 0);
-  const itemsFor = (total: number) => {
-    const sw = Math.min(softwareFee, total);
-    const items: Stripe.SubscriptionScheduleCreateParams.Phase.Item[] = [];
-    if (sw > 0) items.push(item(software, sw));
-    if (total - sw > 0) items.push(item(service, total - sw));
-    // Weitere Logins als Menge einer eigenen Position (Änderungen im Team passen die Menge an)
-    if (extraSeats > 0 && seatPrice > 0) items.push(item(seat, seatPrice, extraSeats));
-    if (bestandPrice > 0) items.push(item(bestand, bestandPrice));
-    if (empfehlungPrice > 0) items.push(item(empfehlung, empfehlungPrice));
-    return items;
-  };
+  const productOfKey = { software, service, seat, bestand, empfehlung };
+  const itemsFor = (total: number) => aboPositionen(offer, total).map((p) => item(productOfKey[p.key], p.monthly, p.quantity));
 
   const meta = offerMeta(offer);
   const intro = offer.introMonthlyFee == null ? null : Number(offer.introMonthlyFee);
@@ -475,6 +578,10 @@ export async function createScheduleForOffer(
   // (kein anteiliger Betrag, kein kostenloser Start); abrechnungsplan liefert dann differs = false.
   const todayIso = berlinTodayIso();
   const startIso = offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
+  // Vorauszahlung schon mit der Annahme berechnet: nur, wenn die Bezahlseite sie wirklich enthielt (Metadaten; ältere
+  // Bezahlseiten ohne Vorauszahlung rechnen wie bisher zum Start) bzw. bei Überweisung (gleiche Regel wie die Rechnung)
+  const voraus = vorauszahlungJetzt(offer, todayIso);
+  const vorausBezahlt = voraus && (session ? !!session.metadata?.pg_prepay_renewal : !!ueberweisung) ? voraus : null;
   const plan = abrechnungsplan({
     startIso: startIso && startIso < todayIso ? todayIso : startIso,
     billingDay: offer.billingDay,
@@ -503,7 +610,14 @@ export async function createScheduleForOffer(
     if (!phases[0].add_invoice_items.length) delete phases[0].add_invoice_items;
   }
 
-  const startAt = plan?.differs ? noon(plan.firstIso) : offer.startDate ? Math.floor(offer.startDate.getTime() / 1000) : 0;
+  // Vorauszahlung bezahlt: Zeitraum laut Vertrag (Start, nach einem verschobenen Start der neue), Abo ab der Verlängerung
+  const startAt = vorausBezahlt
+    ? noon(vorausBezahlt.renewalIso)
+    : plan?.differs
+      ? noon(plan.firstIso)
+      : offer.startDate
+        ? Math.floor(offer.startDate.getTime() / 1000)
+        : 0;
   const products = offerProducts(offer.products).map((p) => p.name).join(", ");
   const schedule = await stripe.subscriptionSchedules.create(
     {
@@ -516,6 +630,8 @@ export async function createScheduleForOffer(
         ...meta,
         ...(rhythmus !== "month" ? { pg_interval: rhythmus } : {}),
         ...(plan?.differs ? { pg_billing_day: String(plan.day), pg_first_billing: plan.firstIso, pg_free_start: plan.free ? "1" : "0" } : {}),
+        // Erster Zeitraum mit der Annahme bezahlt (setScheduleItem rechnet Änderungen darin anteilig ab)
+        ...(vorausBezahlt ? { pg_prepaid_from: vorausBezahlt.fromIso, pg_prepaid_until: vorausBezahlt.toIso } : {}),
       },
       default_settings: {
         ...(ueberweisung
@@ -591,13 +707,15 @@ export async function bankTransferIban(stripeCustomerId: string): Promise<string
 
 /**
  * Setup-Rechnung per Überweisung (Rechnung mit Zahlungsziel, Banküberweisung): Listenpreis als Posten,
- * Empfehlungsrabatt und Abschlussbonus als einmaliger Gutschein, wie auf der Bezahlseite. Wird finalisiert und
- * von Stripe per E-Mail verschickt. Gibt null zurück, wenn nach Rabatt und Bonus nichts zu zahlen ist.
+ * Empfehlungsrabatt und Abschlussbonus als einmaliger Gutschein, wie auf der Bezahlseite. Bei Vorauszahlung mit
+ * Annahme (Ole, 19.11.2026, {@link vorauszahlungJetzt}) kommen die Positionen des ersten Zeitraums mit Leistungszeitraum
+ * dazu. Wird finalisiert und von Stripe per E-Mail verschickt. Gibt null zurück, wenn nach Rabatt und Bonus nichts zu
+ * zahlen ist (ohne Vorauszahlung).
  */
 export async function createSetupInvoiceForOffer(
   offerId: string,
   days: number,
-): Promise<{ invoiceId: string; bonusCents: number } | null> {
+): Promise<{ invoiceId: string; bonusCents: number; prepayCents: number } | null> {
   const stripe = stripeClient();
   if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
@@ -606,7 +724,10 @@ export async function createSetupInvoiceForOffer(
   const discount = setupFee > 0 ? offerSetupDiscount(offer) : null;
   const bonus = setupFee > 0 ? abschlussBonusJetzt(offer) : null;
   const zuZahlen = round2Billing(setupFee - (bonus?.betrag ?? 0));
-  if (!(setupFee > 0) || zuZahlen < STRIPE_MIN_EUR) return null;
+  // Wie auf der Bezahlseite: Bleibt vom Setup weniger als der Mindestbetrag, gilt das ganze Setup als Bonus
+  const setupMitZahlung = setupFee > 0 && zuZahlen >= STRIPE_MIN_EUR;
+  const voraus = vorauszahlungJetzt(offer);
+  if (!setupMitZahlung && !voraus) return null;
   const [setup, tax, invoiceDefaults, taxIds] = await Promise.all([
     productId(stripe, offer.package === "service" ? "setup_service" : "setup"),
     resolveTax(stripe),
@@ -616,11 +737,11 @@ export async function createSetupInvoiceForOffer(
   const customerId = await ensureCustomer(stripe, offer);
   const meta = { ...offerMeta(offer), pg_kind: "offer_setup" };
   const products = offerProducts(offer.products).map((p) => p.name).join(", ");
-  const description = `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`;
+  const description = checkoutBeschreibung(offer, products, setupMitZahlung, voraus);
   const nachlass = round2Billing((discount?.discount ?? 0) + (bonus?.betrag ?? 0));
   const listPreis = discount ? discount.list : setupFee;
   const coupon =
-    nachlass > 0.005
+    setupMitZahlung && nachlass > 0.005
       ? await stripe.coupons.create(
           {
             amount_off: cents(nachlass),
@@ -642,29 +763,49 @@ export async function createSetupInvoiceForOffer(
       auto_advance: true,
       pending_invoice_items_behavior: "exclude",
       description,
-      metadata: meta,
+      metadata: { ...meta, ...(voraus ? { pg_prepay: String(voraus.totalCents), pg_prepay_from: voraus.fromIso, pg_prepay_until: voraus.toIso, pg_prepay_renewal: voraus.renewalIso } : {}) },
       payment_settings: BANK_TRANSFER_PAYMENT_SETTINGS,
       ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
       ...(coupon ? { discounts: [{ coupon: coupon.id }] } : {}),
-      ...invoiceFooterParams(invoiceDefaults),
+      ...rechnungsKopf(invoiceDefaults, voraus),
       ...taxIds,
     },
     { idempotencyKey: `offer-setup-invoice-${offer.id}` },
   );
-  await stripe.invoiceItems.create(
-    {
-      customer: customerId,
-      invoice: invoice.id!,
-      description,
-      price_data: { currency: "eur", product: setup, unit_amount: cents(listPreis), tax_behavior: "exclusive" },
-      ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
-      metadata: meta,
-    },
-    { idempotencyKey: `offer-setup-invoice-item-${offer.id}` },
-  );
+  if (setupMitZahlung) {
+    await stripe.invoiceItems.create(
+      {
+        customer: customerId,
+        invoice: invoice.id!,
+        description: `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`,
+        price_data: { currency: "eur", product: setup, unit_amount: cents(listPreis), tax_behavior: "exclusive" },
+        ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+        metadata: meta,
+      },
+      { idempotencyKey: `offer-setup-invoice-item-${offer.id}` },
+    );
+  }
+  if (voraus) {
+    // Vorauszahlung: Positionen wie im Abo, Leistungszeitraum Start bis Start + Laufzeit (steht an jeder Position)
+    for (const [i, l] of voraus.lines.entries()) {
+      await stripe.invoiceItems.create(
+        {
+          customer: customerId,
+          invoice: invoice.id!,
+          description: `${PRODUCT_DEFAULTS[l.key].name}, ${vorauszahlungText(voraus)}`,
+          quantity: l.quantity,
+          price_data: { currency: "eur", product: await productId(stripe, l.key), unit_amount: l.unitCents, tax_behavior: "exclusive" },
+          period: { start: noonTs(voraus.fromIso), end: noonTs(voraus.renewalIso) },
+          ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+          metadata: { ...meta, pg_kind: "offer_prepay" },
+        },
+        { idempotencyKey: `offer-prepay-invoice-item-${offer.id}-${i}` },
+      );
+    }
+  }
   const final = await stripe.invoices.finalizeInvoice(invoice.id!, {}, { idempotencyKey: `offer-setup-invoice-final-${offer.id}` });
   await stripe.invoices.sendInvoice(final.id!, {}, { idempotencyKey: `offer-setup-invoice-send-${offer.id}` });
-  return { invoiceId: final.id!, bonusCents: bonus ? cents(bonus.betrag) : 0 };
+  return { invoiceId: final.id!, bonusCents: bonus ? cents(setupMitZahlung ? bonus.betrag : setupFee) : 0, prepayCents: voraus?.totalCents ?? 0 };
 }
 
 /** Zeitplan stoppen, z. B. wenn die SEPA-Lastschrift für das Setup platzt. */
@@ -1200,10 +1341,30 @@ async function notStartedSchedule(stripe: Stripe, stripeCustomerId: string) {
 
 const fmtDay = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 
+/** Kalendertage von a bis b (YYYY-MM-DD). */
+const tageZwischen = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
+
+/**
+ * Anteil einer Mengenänderung im schon bezahlten ersten Vorauszahlungszeitraum (Vorauszahlung mit Annahme, Ole
+ * 19.11.2026): Cent für die Zeit ab heute (frühestens ab dem Start) bis zur Verlängerung, wie eine Stripe-Proration bei
+ * laufender Vorauszahlung (AGB „Vorauszahlung“: im Zahlungszeitraum hinzukommende Verkäufer oder Module anteilig).
+ * Negativ bei weniger Menge (Gutschrift). unitCents = Preis je Stück für den ganzen Zeitraum.
+ */
+export function vorauszahlungAnteilCent(o: { deltaQuantity: number; unitCents: number; fromIso: string; renewalIso: string; todayIso: string }): { cents: number; abIso: string } {
+  const abIso = o.todayIso > o.fromIso ? o.todayIso : o.fromIso;
+  const gesamt = tageZwischen(o.fromIso, o.renewalIso);
+  const rest = Math.max(0, tageZwischen(abIso, o.renewalIso));
+  if (!o.deltaQuantity || gesamt <= 0 || rest <= 0) return { cents: 0, abIso };
+  return { cents: Math.round(o.deltaQuantity * o.unitCents * (rest / gesamt)), abIso };
+}
+
 /**
  * Zusatzmodul vor dem Abo-Start (Ole, 13.11.2026: auch vor dem Startdatum selbst buchbar):
  * Position in alle Phasen des geplanten Abo-Starts aufnehmen bzw. entfernen – berechnet wird ab
  * Abo-Beginn. null = kein geplanter Start vorhanden.
+ * Vorauszahlung mit Annahme (Zeitplan mit pg_prepaid_from, Abo beginnt erst mit der Verlängerung): Die Änderung im
+ * schon bezahlten ersten Zeitraum kommt zusätzlich anteilig als offener Rechnungsposten auf die nächste Rechnung
+ * ({@link vorauszahlungAnteilCent}); anteilig = Betrag in Cent (0 = nichts anteilig), bis = letzter bezahlter Tag.
  */
 async function setScheduleItem(
   stripe: Stripe,
@@ -1211,7 +1372,7 @@ async function setScheduleItem(
   key: "seat" | "bestand" | "empfehlung",
   quantity: number,
   monthlyUnit: number,
-): Promise<{ startsAt: Date } | null> {
+): Promise<{ startsAt: Date; anteilig?: { cents: number; bisIso: string } } | null> {
   const found = await notStartedSchedule(stripe, stripeCustomerId);
   if (!found) return null;
   const schedule = await stripe.subscriptionSchedules.retrieve(found.id, { expand: ["phases.items.price"] });
@@ -1247,7 +1408,46 @@ async function setScheduleItem(
     };
   });
   await stripe.subscriptionSchedules.update(schedule.id, { phases, proration_behavior: "none" });
-  return { startsAt: new Date(schedule.phases[0].start_date * 1000) };
+  const startsAt = new Date(schedule.phases[0].start_date * 1000);
+  const prepaidFrom = schedule.metadata?.pg_prepaid_from;
+  const prepaidUntil = schedule.metadata?.pg_prepaid_until;
+  if (!prepaidFrom || !prepaidUntil || interval === "month") return { startsAt };
+  // Erster Zeitraum schon bezahlt: Mengenänderung anteilig bis zur Verlängerung (vorher stand die alte Menge im Zeitplan)
+  const alt = schedule.phases[0].items.filter((i) => productOfItem(i) === product);
+  const altMenge = alt.reduce((sum, i) => sum + (i.quantity ?? 1), 0);
+  const delta = quantity - altMenge;
+  const unitCents = delta > 0 ? cents(monthlyUnit * factor) : (priceObj(alt[0])?.unit_amount ?? cents(monthlyUnit * factor));
+  const renewalIso = berlinTodayIso(startsAt);
+  const anteil = vorauszahlungAnteilCent({ deltaQuantity: delta, unitCents, fromIso: prepaidFrom, renewalIso, todayIso: berlinTodayIso() });
+  if (anteil.cents !== 0) {
+    try {
+      // Negativer Betrag geht nur über `amount` (ohne Produkt), daher für beide Richtungen gleich
+      await stripe.invoiceItems.create({
+        customer: stripeCustomerId,
+        currency: "eur",
+        amount: anteil.cents,
+        description: `${PRODUCT_DEFAULTS[key].name}: ${delta > 0 ? "+" : ""}${delta} anteilig für die Vorauszahlung vom ${fmtIso(anteil.abIso)} bis ${fmtIso(prepaidUntil)}`,
+        period: { start: noonTs(anteil.abIso), end: noonTs(renewalIso) },
+        tax_behavior: "exclusive",
+        ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+        metadata: { pg_kind: "vorauszahlung_anteil", pg_key: key, pg_from_qty: String(altMenge), pg_to_qty: String(quantity), schedule_id: schedule.id },
+      });
+    } catch (err) {
+      // Zeitplan ist schon angepasst: nicht scheitern lassen, aber melden (Betrag von Hand nachberechnen)
+      reportError(err, "billing-vorauszahlung-anteil", { schedule: schedule.id, key, cents: String(anteil.cents) });
+    }
+  }
+  return { startsAt, anteilig: { cents: anteil.cents, bisIso: prepaidUntil } };
+}
+
+/** Hinweis nach einer Änderung vor dem Abo-Start (Admin und Kundenbereich, Sie-Form). */
+function geplantHinweis(planned: { startsAt: Date; anteilig?: { cents: number; bisIso: string } }): string {
+  if (planned.anteilig) {
+    return planned.anteilig.cents > 0
+      ? `Bis ${fmtIso(planned.anteilig.bisIso)} anteilig mit der nächsten Rechnung, ab ${fmtDay(planned.startsAt)} im Abo.`
+      : `Ab ${fmtDay(planned.startsAt)} im Abo.`;
+  }
+  return `Berechnet ab Abo-Start am ${fmtDay(planned.startsAt)}.`;
 }
 
 async function setItemQuantity(
@@ -1326,7 +1526,7 @@ export async function syncSeatBilling(customerId: string, opts: { force?: boolea
           if (want !== c.seatsBilled) await manualSeatTask(customerId, { from: c.seatsBilled, to: want, price, reason: ed.note });
           return { ok: true, changed: false, note: `${ed.note} Aufgabe „${MANUAL_SEAT_TASK}“ ist angelegt.` };
         }
-        if (want > 0) note = `Berechnet ab Abo-Start am ${fmtDay(planned.startsAt)}.`;
+        if (want > 0 || planned.anteilig?.cents) note = geplantHinweis(planned);
       } else await setItemQuantity(stripe, c.stripeCustomerId, ed.sub, "seat", want, price);
     } else {
       await manualSeatTask(customerId, {
@@ -1372,7 +1572,7 @@ export async function setBestandModule(
         // Abo startet erst noch: Modul in den geplanten Start aufnehmen
         const planned = await setScheduleItem(stripe, c.stripeCustomerId, "bestand", mode === "book" && price > 0 ? 1 : 0, price);
         if (planned) {
-          if (mode === "book" && price > 0) note = `Berechnet ab Abo-Start am ${fmtDay(planned.startsAt)}.`;
+          if (mode === "book" && price > 0) note = geplantHinweis(planned);
         } else {
           if (opts.requireStripe) return { ok: false, error: ed.note };
           note = ed.note;

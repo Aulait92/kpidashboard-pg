@@ -158,7 +158,8 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     expect(a).toMatchObject({ status: "accepted", term: "6m", annualPrepay: true, annualFreeMonths: 1 });
     const text = st.mails.find((m) => m.subject.startsWith("Ihre Auftragsbestätigung"))!.list!.join(" ");
     expect(text).toMatch(/Einrichtung: 1\.490\s€ netto/);
-    expect(text).toMatch(/6 Monate im Voraus: 5\.440\s€ netto, alle 6 Monate fällig, das erste Mal zum Start am/);
+    expect(text).toMatch(/6 Monate im Voraus: 5\.440\s€ netto, alle 6 Monate fällig, das erste Mal mit der Annahme, dann am/);
+    expect(text).toContain("Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne.");
     expect(text).toMatch(/verlängert sich um jeweils 6 Monate, wenn Sie nicht bis/);
     expect(hatGedankenstrich(text)).toBe(false);
 

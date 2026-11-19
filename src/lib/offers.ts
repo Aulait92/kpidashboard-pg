@@ -21,6 +21,7 @@ import {
   resolveOfferChoice,
   TERM_SHORT,
   termOptionsFor,
+  vorauszahlungMitAnnahme,
   type OfferPackage,
   type OfferProduct,
   type OfferTerm,
@@ -394,6 +395,8 @@ export async function acceptOffer(
       startDate,
       annualPrepay: choice.annualPrepay,
       annualFreeMonths: choice.annualFreeMonths,
+      // Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026): Setup und erster Zeitraum auf einer Rechnung (lib/billing.ts)
+      prepayAtAcceptance: choice.annualPrepay,
     },
   });
   if (updated.count === 0) return { ok: false, error: "Dieses Angebot kann nicht mehr angenommen werden." };
@@ -470,7 +473,7 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
   offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
-    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart">> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance">> &
     Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null }> = {},
 ): ContractSummaryInput {
@@ -487,6 +490,7 @@ export function offerSummaryInput(
     freeMonths: chosen.freeMonths ?? offer.annualFreeMonths ?? prepayFreeMonthsFor(chosen.term ?? offer.term),
     billingDay: offer.billingDay ?? null,
     freeStart: !!offer.billingFreeStart,
+    prepayAtAcceptance: vorauszahlungMitAnnahme(offer),
   };
 }
 

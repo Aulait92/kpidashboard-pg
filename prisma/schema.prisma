@@ -1686,6 +1686,10 @@ model Offer {
   // Vorauszahlung angeboten (Ole, 18.11.2026): Kunde wählt bei der Annahme monatlich oder im Voraus
   // (nur mit 6 oder 12 Monaten). Vor der Annahme ist annualPrepay die Vorauswahl (neu: monatlich), danach die Wahl.
   annualChoice            Boolean       @default(false)
+  // Vorauszahlung mit Annahme fällig (Ole, 19.11.2026): gesetzt bei der Annahme mit Vorauszahlung. Dann gehen Setup und
+  // Vorauszahlung des ersten Zeitraums (Leistungszeitraum ab Start) sofort auf eine Rechnung, das Stripe-Abo beginnt
+  // erst mit der Verlängerung (lib/billing.ts). false = Annahme vor dem 19.11.2026: Vorauszahlung zum Start.
+  prepayAtAcceptance      Boolean       @default(false)
   // Empfehlungsrabatt auf die Einrichtung (Kollegen empfehlen, seit 14.11.2026):
   // setupListFee = Listenpreis der Einrichtung vor Rabatt (für die gewählte Laufzeit),
   // setupDiscount = vereinbarter Rabatt (netto, wird bei der Laufzeitwahl neu angewendet),
