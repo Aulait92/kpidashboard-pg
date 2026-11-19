@@ -43,7 +43,7 @@ describe("Versicherer wählen", () => {
 describe("Terminarten in der Einrichtung", () => {
   it("Text und zwei Kästchen, beide aus, keine Pflichtauswahl", () => {
     const h = renderToStaticMarkup(createElement(TerminFormateFelder, { defaultValue: { telefon: false, vorOrt: false } }));
-    expect(h).toContain("Ihre Termine finden per Video statt.");
+    expect(h).toContain("Ihre Termine finden per Video statt,");
     expect(h).toContain("Telefon");
     expect(h).toContain("Termin vor Ort in der Agentur");
     expect(h).not.toMatch(/checked|required/);

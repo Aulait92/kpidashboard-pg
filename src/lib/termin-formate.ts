@@ -11,9 +11,9 @@ export const TERMIN_FORMATE_STANDARD: TerminFormate = { telefon: false, vorOrt: 
 /** Modus eines Termins (Appointment.mode). */
 export type TerminModus = "video" | "phone" | "onsite";
 
-/** Text über den Kästchen (Einrichtung und Einstellungen). */
+/** Text über den Kästchen (Einrichtung und Einstellungen), ein Satz (Ole, 19.11.2026). */
 export const TERMIN_FORMATE_TEXT =
-  "Ihre Termine finden per Video statt. Das bringt die meisten Termine, weil Ihre Kunden ohne Anfahrt teilnehmen können. Falls ein Kunde ausdrücklich etwas anderes wünscht, darf Ihr Assistent auch anbieten:";
+  "Ihre Termine finden per Video statt, nur auf ausdrücklichen Wunsch Ihres Kunden darf Ihr Assistent auch anbieten:";
 
 /** Freundliche Antwort, wenn der Lead etwas anderes möchte, das nicht freigegeben ist. */
 export function nurVideoSatz(an: Ansprache): string {

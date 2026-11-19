@@ -25,7 +25,7 @@ export function InviteForm({ readOnly, costHint = null }: { readOnly: boolean; c
           <input type="checkbox" checked={receivesLeads} onChange={(e) => setReceivesLeads(e.target.checked)} className="mt-1 h-4 w-4" data-invite-receives-leads />
           <span>
             <span className="font-medium">Bekommt Leads</span>
-            <span className="block text-sm text-[color:var(--muted)]">Aus für Mitglieder, die nicht verkaufen (z. B. Assistenz). Mitglieder ohne Leads sind kostenlos.</span>
+            <span className="block text-sm text-[color:var(--muted)]">Aus für Assistenz und alle, die nicht verkaufen (kostenlos).</span>
           </span>
         </label>
         <p className="text-sm text-[color:var(--muted)]">Die Person bekommt per E-Mail einen Link zum Passwort-Festlegen.</p>

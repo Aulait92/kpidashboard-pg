@@ -14,7 +14,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/kanban | Pipeline | Alle Leads nach Phase, Karten verschieben |
 | /buyer/chats | Nachrichten | WhatsApp-Gespräche mit Kontakten |
 | /buyer/wachstum | Wachstum | Zahlen (Kosten, Ertrag, Funnel, Hochrechnung, Monatsberichte), Werbebudget ändern, weiteres Produkt buchen, Pause/Urlaub (nur Inhaber; /buyer/zahlen zeigt dieselbe Seite) |
-| /buyer/konto | Konto & Rechnungen | Vertrag, Benachrichtigungen, Zahlungsart, Rechnungen, Daten herunterladen (nur Inhaber) |
+| /buyer/konto | Konto & Rechnungen | Vertrag mit „Sie zahlen“ und nächster Rechnung, Rechnungen und Zahlung, Daten herunterladen (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
 | /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Erstinformation (Pflichtangaben nach § 15 VersVermV prüfen und bestätigen oder eigenes PDF), Meta freigeben (prüfen/anfragen), Kalender, E-Mail-Postfach, WhatsApp, Kundenliste, Bewertungslink, Team, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
@@ -778,6 +778,8 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Team (nur Inhaber)
 
+- Auswertung je Person (Leads, Termine, Abschlüsse, Provision): **Wachstum → Team im Zeitraum** (auf der Team-Seite verlinkt);
+  am Handy eine Zeile je Person.
 - „Team“ im Profilmenü: Mitglieder mit Name und E-Mail einladen (Link per Mail), höchstens 10 Zugänge. Beim Einladen
   wählen Sie, ob die Person Leads bekommt („Bekommt Leads“, Standard an; aus z. B. für eine Assistenz).
 - Im Paket mit Software sind **3 aktive Verkäufer inklusive**. Aktiv ist, wer Leads bekommt (Schalter „bekommt Leads“ an).
@@ -825,8 +827,12 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Konto & Rechnungen (nur Inhaber)
 
-- Vertrag (Paket, Monatsbetrag, weitere Verkäufer, <!-- bestand-modul -->Bestandskunden-Modul, <!-- /bestand-modul -->Monatlich gesamt, Zahlweise, Laufzeit, Start),
-  Rechnungen mit Status und „Jetzt bezahlen“ bei offenen Rechnungen.
+- Oben in „Ihr Vertrag“ (seit 19.11.2026): **Sie zahlen** mit Betrag (monatlich bzw. bei Vorauszahlung für das Jahr oder
+  6 Monate), Rhythmus und Weg, darunter die **nächste Rechnung** mit Datum und Betrag (bei Zahlung nachträglich mit dem
+  Monat, für den sie gilt). Steht keine nächste Rechnung da (z. B. in einer Pause, mit Nachlass oder in der Einführungsphase),
+  kennt die App sie noch nicht sicher; die Rechnung kommt trotzdem wie vereinbart.
+- Darunter: Paket, weitere Verkäufer, <!-- bestand-modul -->Bestandskunden-Modul, <!-- /bestand-modul -->Laufzeit, Start.
+  Karte **Rechnungen und Zahlung**: Rechnungen mit Status und „Jetzt bezahlen“ bei offenen Rechnungen, Zahlungsart.
 - Laufzeit: ohne Laufzeit (Setup 2.490 €), 3 Monate (Setup 1.990 €) oder 12 Monate (Setup 990 €), jeweils netto;
   nach der Mindestlaufzeit monatlich kündbar.
 - Laufzeit und Start wählen Sie in der Regel selbst bei der Annahme des Angebots (Angebotsseite, Abschnitt
@@ -873,7 +879,8 @@ Seiten aus der Liste „Seiten“ unten.
   - Über 10.000 € Werbebudget pro Monat: keine Selbstbedienung, Knopf „Anfrage senden“; wir melden uns mit einem
     individuellen Angebot, bis dahin läuft das bisherige Budget.
   - Paket „Nur Betreuung“: Der Monatspreis hängt nicht vom Werbebudget ab.
-- Schalter „Neue Leads per E-Mail“.
+- Schalter „Neue Leads per E-Mail“: seit 19.11.2026 unter **Einstellungen → Erinnerungen & Aufgaben** (Abschnitt
+  „Neue Leads“, nur Inhaber), nicht mehr im Konto.
 - **Pause/Urlaub** (Wachstum → Karte „Pause / Urlaub“) selbst eintragen (Start, Ende, Grund): Anzeigen stoppen, reduzierte Gebühr; Pause jederzeit beenden.
   Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es nicht.
 - Kündigung oder Vertragsfragen: bitte direkt bei uns melden.

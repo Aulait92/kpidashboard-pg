@@ -85,9 +85,7 @@ export async function toggleLeadEmailAction(_prev: PauseFormState, _fd: FormData
     const ctx = await customerOnly();
     const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadEmail: true } });
     await prisma.customer.update({ where: { id: ctx.customerId }, data: { leadEmail: !c?.leadEmail } });
-    revalidatePath("/buyer/konto");
-    revalidatePath("/buyer/wachstum");
-    revalidatePath("/buyer/zahlen");
+    revalidatePath("/buyer/einstellungen/erinnerungen");
     return { ok: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Bell, CreditCard, Download, FileText, Package, Puzzle, Star, UserPlus, Users } from "lucide-react";
+import { Download, FileText, Package, Puzzle, Star, UserPlus, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { FreePeriodNotices } from "@/components/free-period-notices";
 import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
@@ -10,7 +10,6 @@ import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
 import { openPortalAction, paymentSetupAction, retentionAction } from "./actions";
 import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
-import { LeadEmailToggle } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
@@ -25,7 +24,8 @@ import { VertragKuendigen } from "./vertrag-kuendigen";
 import { Aufbewahrung } from "./aufbewahrung";
 import { loadRetentionView } from "@/lib/ruhend";
 import { loadHalteKonto } from "@/lib/halteangebote-server";
-import { fmtIso, naechsteNachtraeglicheAbbuchung } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, fmtIso, naechsteNachtraeglicheAbbuchung, naechsteRegulaereRechnung } from "@/lib/vertrag-laufzeit";
+import { abrechnungsplan } from "@/lib/abrechnungstag";
 import { bestandVisible } from "@/lib/bestand/sichtbar";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +86,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   });
   if (!customer) redirect("/buyer");
   const offer = customer.onboarding?.offerId
-    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true, annualFreeMonths: true, paymentInArrears: true, startDate: true } })
+    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true, annualFreeMonths: true, paymentInArrears: true, startDate: true, introMonths: true, billingDay: true, acceptedAt: true, paidAt: true } })
     : null;
 
   let invoices: CustomerInvoice[] = [];
@@ -134,6 +134,22 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const naechsteNachtraeglich = arrearsStart
     ? naechsteNachtraeglicheAbbuchung(berlinTodayIso(arrearsStart), today, cancelInfo?.requested?.effectiveIso ?? null)
     : null;
+  // Nächste reguläre Rechnung (Vorauszahlung oder monatlich im Voraus) nur, wenn der Betrag feststeht: Angebot mit Start,
+  // keine Pause, kein Nachlass, keine Einführungsphase, kein Testkonto. Sonst nichts anzeigen.
+  // Abo-Beginn wie bei Stripe (lib/billing createScheduleForOffer): Start, lag er beim Abschluss schon zurück, der Tag des Abschlusses
+  const regAbschluss = offer?.paidAt ?? offer?.acceptedAt ?? null;
+  const regStartRoh = offer?.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
+  const regStart = regStartRoh && regAbschluss ? [regStartRoh, berlinTodayIso(regAbschluss)].sort()[1] : null;
+  const naechsteIso =
+    !arrearsStart && regStart && monthlyTotal != null && !pause && !halte?.percentOff && !customer.isTest && !(offer?.introMonths && today < addMonthsIso(regStart, offer.introMonths))
+      ? naechsteRegulaereRechnung({
+          anchorIso: annual ? regStart : (abrechnungsplan({ startIso: regStart, billingDay: offer?.billingDay ?? null })?.firstIso ?? regStart),
+          monate: annual ? prepayMonths : 1,
+          ab: annual ? 1 : 0,
+          todayIso: today,
+          endIso: cancelInfo?.requested?.effectiveIso ?? null,
+        })
+      : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -142,13 +158,42 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <div className="space-y-5">
         <Card>
           <CardHeader title="Ihr Vertrag" icon={Package} />
-          <dl className="grid grid-cols-[150px_1fr] gap-x-4 gap-y-2 p-5 text-[15px]">
+          {/* UX-Runde 19.11.2026: zuerst die eine Antwort „Was zahle ich?“ (Betrag, Rhythmus, Weg), darunter die Einzelheiten */}
+          {monthlyTotal != null ? (
+            <div className="border-b border-[color:var(--border)] px-5 py-4" data-konto-summe>
+              <div className="text-sm text-[color:var(--muted)]">Sie zahlen</div>
+              <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+                <span className="text-[28px] font-bold leading-tight tracking-tight tabular-nums">{eur(annual && yearly != null ? yearly : monthlyTotal)}</span>
+                <span className="text-[15px] text-[color:var(--muted)]">netto {annual ? (prepayMonths === 6 ? "für 6 Monate" : "im Jahr") : "im Monat"}</span>
+              </div>
+              <div className="mt-1 text-[15px]" data-konto-interval>
+                {annual
+                  ? `Im Voraus, ${prepayFree} ${prepayFree === 1 ? "Monat" : "Monate"} geschenkt`
+                  : arrearsStart
+                    ? "Monatlich, jeweils nachträglich für den abgelaufenen Monat"
+                    : "Monatlich"}
+                {customer.stripeCustomerId ? "" : ", per Rechnung"}, zzgl. USt.
+              </div>
+              {/* Nächste Rechnung (Ole, 19.11.2026): nur, wenn die App Datum und Betrag sicher kennt (lib/vertrag-laufzeit) */}
+              {naechsteNachtraeglich ? (
+                <div className="mt-1 text-[15px] text-[color:var(--muted)]" data-konto-nachtraeglich>
+                  Nächste Abbuchung am {fmtIso(naechsteNachtraeglich.chargeIso)}: {eur(monthlyTotal)} netto für {fmtIso(naechsteNachtraeglich.fromIso)} bis{" "}
+                  {fmtIso(naechsteNachtraeglich.toIso)}
+                </div>
+              ) : naechsteIso ? (
+                <div className="mt-1 text-[15px] text-[color:var(--muted)]" data-konto-naechste-rechnung>
+                  Nächste Rechnung am {fmtIso(naechsteIso)}: {eur(annual && yearly != null ? yearly : monthlyTotal)} netto
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          <dl className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-2 p-5 text-[15px] sm:grid-cols-[150px_1fr]">
             <dt className="text-[color:var(--muted)]">Paket</dt>
             <dd>{service ? "Leadgenerierung (Betreuung)" : "Leadgenerierung + Software"}</dd>
-            {monthly != null ? (
+            {monthly != null && (seatsFee || bestandFee || empfehlungFee) ? (
               <>
-                <dt className="text-[color:var(--muted)]">{seatsFee || bestandFee || empfehlungFee ? "Paket monatlich" : "Monatlich"}</dt>
-                <dd>{eur(monthly)} netto zzgl. USt.</dd>
+                <dt className="text-[color:var(--muted)]">Paket monatlich</dt>
+                <dd>{eur(monthly)} netto</dd>
               </>
             ) : null}
             {customer.seatsIncluded != null ? (
@@ -184,29 +229,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 </dd>
               </>
             ) : null}
-            {monthlyTotal != null && (seatsFee || bestandFee || empfehlungFee) ? (
+            {annual && monthlyTotal != null ? (
               <>
-                <dt className="text-[color:var(--muted)]">Monatlich gesamt</dt>
-                <dd className="font-semibold">{eur(monthlyTotal)} netto zzgl. USt.</dd>
-              </>
-            ) : null}
-            {monthly != null ? (
-              <>
-                <dt className="text-[color:var(--muted)]">Zahlweise</dt>
-                <dd data-konto-interval>
-                  {/* Rhythmus und Weg in einem (Usability-Check 18.11.2026: „Monatlich“ und „per Rechnung“ wirkten widersprüchlich) */}
-                  {annual && yearly != null
-                    ? `${prepayMonths === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(yearly)} netto (${prepayFree} ${prepayFree === 1 ? "Monat" : "Monate"} geschenkt)`
-                    : arrearsStart
-                      ? "Monatlich, jeweils nachträglich für den abgelaufenen Monat"
-                      : "Monatlich"}
-                  {customer.stripeCustomerId ? "" : ", per Rechnung"}
-                  {naechsteNachtraeglich ? (
-                    <span className="block text-[color:var(--muted)]" data-konto-nachtraeglich>
-                      Nächste Abbuchung am {fmtIso(naechsteNachtraeglich.chargeIso)} für {fmtIso(naechsteNachtraeglich.fromIso)} bis {fmtIso(naechsteNachtraeglich.toIso)}
-                    </span>
-                  ) : null}
-                </dd>
+                <dt className="text-[color:var(--muted)]">Monatspreis</dt>
+                <dd>{eur(monthlyTotal)} netto</dd>
               </>
             ) : null}
             {PRICE_LIST.whatsappIncluded && customer.whatsAppAccount ? (
@@ -243,7 +269,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                       : "Monatlich kündbar"}
                 </dd>
                 <dt className="text-[color:var(--muted)]">Pause / Urlaub</dt>
-                <dd>Jederzeit selbst einstellbar (siehe unten)</dd>
+                <dd>
+                  Jederzeit selbst unter{" "}
+                  <Link href="/buyer/wachstum#pause" className="font-medium text-[color:var(--brand)] underline">
+                    Wachstum → Pause
+                  </Link>
+                </dd>
                 <dt className="text-[color:var(--muted)]">Vertrag</dt>
                 <dd>
                   <a href={`/angebot/${offer.token}`} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
@@ -375,8 +406,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                     </span>
                   </div>
                   <p className="text-[color:var(--muted)]">
-                    {includedPhrase(customer.seatsIncluded)}. Aktiv ist, wer Leads bekommt. Mitglieder ohne Leads (z. B. Inhaber, der nur steuert) sind kostenlos.
-                    Weitere Verkäufer legen Sie selbst im Team an, sie werden tagesgenau berechnet.
+                    {/* Inklusive steht schon oben im Vertrag (UX-Runde 19.11.2026) */}
+                    Aktiv ist, wer Leads bekommt. Mitglieder ohne Leads (z. B. Assistenz) sind kostenlos. Weitere Verkäufer legen Sie selbst im Team an,
+                    tagesgenau berechnet.
                   </p>
                   <Link href="/buyer/team" className={buttonClass("secondary", "sm")}>
                     Zum Team
@@ -387,66 +419,18 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </Card>
         ) : null}
 
-        {customer.onboarding ? (
-          <Card>
-            <CardHeader title="Benachrichtigungen" icon={Bell} />
-            <div className="p-5">
-              <LeadEmailToggle
-                enabled={customer.leadEmail}
-                email={((customer.onboarding.questionnaire ?? {}) as { leadEmails?: string[] }).leadEmails?.join(", ") || ctx.email}
-                readOnly={ctx.preview}
-              />
-            </div>
-          </Card>
-        ) : null}
-
+        {/* UX-Runde 19.11.2026: Rechnungen und Zahlung in einer Karte (vorher zwei), Rechnungen zuerst. „Neue Leads per E-Mail“
+            steht jetzt unter Einstellungen → Erinnerungen & Aufgaben, das Konto zeigt nur Vertrag und Geld. */}
         <Card>
-          <CardHeader title="Zahlung und Rechnungsdaten" icon={CreditCard} />
-          <div className="p-5">
-            {zahlung === "ok" ? (
-              <p className="mb-3 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-                Danke, Ihre Zahlungsart ist hinterlegt und gilt ab der nächsten Rechnung.
-              </p>
-            ) : null}
-            {portal && PORTAL_MSG[portal] ? <p className="mb-3 text-sm font-medium text-rose-700">{PORTAL_MSG[portal]}</p> : null}
-            {billingEnabled() && customer.stripeCustomerId ? (
-              <form action={paymentSetupAction} className="max-w-md space-y-4" data-konto-zahlart>
-                <ZahlartAuswahl />
-                <button
-                  type="submit"
-                  disabled={ctx.preview}
-                  className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
-                >
-                  Zahlungsart hinterlegen
-                </button>
-              </form>
-            ) : null}
-            {/* Ohne Online-Zahlung kein grauer Knopf ohne Ziel, sondern der Weg (UX Runde 4) */}
-            {customer.stripeCustomerId ? (
-              <>
-                <p className={`${billingEnabled() ? "mt-5" : ""} text-sm text-[color:var(--muted)]`}>Rechnungsadresse, USt-IdNr. und gespeicherte Zahlungsarten:</p>
-                <form action={openPortalAction} className="mt-2">
-                  <button type="submit" disabled={ctx.preview} className={buttonClass("secondary", "md")}>
-                    Rechnungsdaten ändern
-                  </button>
-                </form>
-              </>
-            ) : (
-              <p className="text-sm text-[color:var(--muted)]" data-konto-ohne-online-zahlung>
-                Sie zahlen {monthly != null ? `${annual ? (prepayMonths === 6 ? "halbjährlich im Voraus" : "jährlich im Voraus") : "monatlich"} ` : ""}per Rechnung (Überweisung). Für eine neue Rechnungsadresse oder USt-IdNr. schreiben Sie uns über „Hilfe“.
-              </p>
-            )}
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader title="Rechnungen" icon={FileText} count={invoices.length || undefined} />
-          {invoices.length === 0 ? (
-            <p className="p-5 text-sm text-[color:var(--muted)]">
-              {customer.stripeCustomerId ? "Noch keine Rechnungen." : "Ihre Rechnungen erhalten Sie per E-Mail."}
+          <CardHeader title="Rechnungen und Zahlung" icon={FileText} count={invoices.length || undefined} />
+          {zahlung === "ok" ? (
+            <p className="mx-5 mt-4 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+              Danke, Ihre Zahlungsart ist hinterlegt und gilt ab der nächsten Rechnung.
             </p>
-          ) : (
-            <ul className="divide-y divide-[color:var(--border)]">
+          ) : null}
+          {portal && PORTAL_MSG[portal] ? <p className="mx-5 mt-4 text-sm font-medium text-rose-700">{PORTAL_MSG[portal]}</p> : null}
+          {invoices.length > 0 ? (
+            <ul className="divide-y divide-[color:var(--border)]" data-konto-rechnungen>
               {invoices.map((inv) => {
                 const st = STATUS[inv.status ?? ""] ?? { label: inv.status ?? "", tone: "neutral" as const };
                 return (
@@ -471,12 +455,44 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 );
               })}
             </ul>
-          )}
+          ) : customer.stripeCustomerId ? (
+            <p className="px-5 pt-4 text-sm text-[color:var(--muted)]">Noch keine Rechnungen. Sie erscheinen hier, sobald die erste erstellt ist.</p>
+          ) : null}
+          <div className={`p-5 ${invoices.length > 0 ? "border-t border-[color:var(--border)]" : ""}`}>
+            {billingEnabled() && customer.stripeCustomerId ? (
+              <form action={paymentSetupAction} className="max-w-md space-y-4" data-konto-zahlart>
+                <ZahlartAuswahl />
+                <button
+                  type="submit"
+                  disabled={ctx.preview}
+                  className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+                >
+                  Zahlungsart hinterlegen
+                </button>
+              </form>
+            ) : null}
+            {/* Ohne Online-Zahlung kein grauer Knopf ohne Ziel, sondern der Weg (UX Runde 4) */}
+            {customer.stripeCustomerId ? (
+              <>
+                <p className={`${billingEnabled() ? "mt-5" : ""} text-sm text-[color:var(--muted)]`}>Rechnungsadresse, USt-IdNr. und gespeicherte Zahlungsarten:</p>
+                <form action={openPortalAction} className="mt-2">
+                  <button type="submit" disabled={ctx.preview} className={buttonClass("secondary", "md")}>
+                    Rechnungsdaten ändern
+                  </button>
+                </form>
+              </>
+            ) : (
+              <p className="text-[15px]" data-konto-ohne-online-zahlung>
+                Ihre Rechnungen kommen per E-Mail, Sie zahlen per Überweisung.{" "}
+                <span className="text-[color:var(--muted)]">Neue Rechnungsadresse oder USt-IdNr.? Schreiben Sie uns über „Hilfe“.</span>
+              </p>
+            )}
+          </div>
         </Card>
 
         <Card>
           <CardHeader title="Ihre Daten herunterladen" icon={Download} />
-          <div className="space-y-3 px-5 pb-5 text-sm" data-konto-export>
+          <div className="space-y-3 p-5 text-sm" data-konto-export>
             <p className="text-[color:var(--muted)]">
               Alle Leads, Abschlüsse, Termine und Chats als ZIP mit Excel-Dateien. Nach Vertragsende bewahren wir sie 24 Monate auf, eine frühere
               Löschung wählen Sie bei der Kündigung.

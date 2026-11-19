@@ -207,6 +207,21 @@ export function naechsteNachtraeglicheAbbuchung(startIso: string, todayIso: stri
   return null;
 }
 
+/**
+ * Nächste reguläre Rechnung (Konto, Ole 19.11.2026): erster Tag anchor + k × monate (k ≥ ab) ab heute (inklusive),
+ * gleicher Tag wie bei Stripe (addMonthsIso). Nach dem letzten Vertragstag (endIso) keine mehr: null.
+ * Monatlich im Voraus: anchor = erster Abrechnungstag, ab 0. Vorauszahlung: anchor = Start, ab 1 (der erste Zeitraum ist bezahlt).
+ */
+export function naechsteRegulaereRechnung(o: { anchorIso: string; monate: number; ab: number; todayIso: string; endIso?: string | null }): string | null {
+  if (!(o.monate > 0)) return null;
+  for (let k = o.ab; k < 1200; k++) {
+    const chargeIso = addMonthsIso(o.anchorIso, k * o.monate);
+    if (chargeIso < o.todayIso) continue;
+    return o.endIso && chargeIso > o.endIso ? null : chargeIso;
+  }
+  return null;
+}
+
 /** Fester Satz zur letzten Zahlung (Sie-Form, ohne Gedankenstriche). */
 export const NACHTRAEGLICH_LETZTE_ZAHLUNG = "Auch danach zahlen Sie nachträglich, die Zahlung für den letzten Monat folgt nach Vertragsende.";
 

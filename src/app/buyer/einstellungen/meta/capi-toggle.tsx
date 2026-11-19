@@ -10,32 +10,38 @@ export function CapiToggle({ on: initial, canEdit }: { on: boolean; canEdit: boo
   const toast = useToast();
   const [on, setOn] = useState(initial);
   const [pending, start] = useTransition();
+  const toggle = () => {
+    const next = !on;
+    setOn(next);
+    start(async () => {
+      const res = await setCapiEnabledAction(next);
+      if (!res.ok) {
+        setOn(!next);
+        toast.show({ message: res.error, tone: "error" });
+      } else toast.show({ message: next ? "Rückmeldung an" : "Rückmeldung aus" });
+    });
+  };
+  // Schalter wie in den übrigen Einstellungen (UX-Runde 19.11.2026, vorher Kästchen)
   return (
-    <label className="flex cursor-pointer items-start gap-3 p-5" data-capi-toggle>
-      <input
-        type="checkbox"
-        className="mt-1 h-4 w-4"
-        checked={on}
-        disabled={!canEdit || pending}
-        onChange={(e) => {
-          const next = e.target.checked;
-          setOn(next);
-          start(async () => {
-            const res = await setCapiEnabledAction(next);
-            if (!res.ok) {
-              setOn(!next);
-              toast.show({ message: res.error, tone: "error" });
-            } else toast.show({ message: next ? "Rückmeldung an" : "Rückmeldung aus" });
-          });
-        }}
-      />
-      <span>
+    <div className="flex items-center gap-4 p-5" data-capi-toggle>
+      <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold">Ergebnisse an Meta zurückmelden</span>
         <span className="mt-1 block text-sm text-[color:var(--muted)]">
-          Meta erfährt, welche Leads aus Ihren Anzeigen erreicht wurden, einen Termin hatten oder abgeschlossen haben. So lernt Meta, welche Leads abschließen, und
-          sucht gezielter nach ähnlichen Menschen.
+          Meta erfährt, welche Leads aus Ihren Anzeigen erreicht wurden, einen Termin hatten oder abgeschlossen haben, und sucht gezielter nach ähnlichen
+          Menschen.
         </span>
       </span>
-    </label>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label="Ergebnisse an Meta zurückmelden"
+        disabled={!canEdit || pending}
+        onClick={toggle}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-60 ${on ? "bg-[color:var(--brand)]" : "bg-slate-300"}`}
+      >
+        <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
+      </button>
+    </div>
   );
 }

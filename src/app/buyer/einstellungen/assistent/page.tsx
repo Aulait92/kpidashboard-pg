@@ -33,22 +33,44 @@ export default async function AssistentPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
       <PageHeader back="/buyer/einstellungen" title="Assistent" />
       <div className="space-y-6" data-assistent-einstellungen>
+        {/* UX-Runde 19.11.2026: beide Wege (Ablauf, WhatsApp-Vorlagen) oben in einer Liste wie unter Einstellungen; vorher stand
+            WhatsApp ganz unten unter den E-Mails und wurde übersehen */}
         <section>
-          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Ablauf</h2>
-          <Link
-            href="/buyer/einstellungen/assistent/ablauf"
-            className="flex min-h-[64px] items-center gap-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-5 py-3 shadow-[var(--shadow-sm)] transition hover:bg-[color:var(--surface-sunken)]"
-            data-assistent-ablauf
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-sky-600 text-white">
-              <Route className="h-5 w-5" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block font-medium">So arbeitet Ihr Assistent</span>
-              <span className="line-clamp-2 block text-sm text-[color:var(--muted)]">Wann er was schickt und wann Sie gefragt sind, mit Beispielchat</span>
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
-          </Link>
+          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Nachrichten</h2>
+          <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
+            <li>
+              <Link href="/buyer/einstellungen/assistent/ablauf" className="flex min-h-[64px] items-center gap-4 px-5 py-3 transition hover:bg-[color:var(--surface-sunken)]" data-assistent-ablauf>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-sky-600 text-white">
+                  <Route className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">So arbeitet Ihr Assistent</span>
+                  <span className="line-clamp-2 block text-sm text-[color:var(--muted)]">Wann er was schickt und wann Sie gefragt sind, mit Beispielchat</span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+              </Link>
+            </li>
+            {c?.plan !== "service" ? (
+              <li>
+                <Link href="/buyer/vorlagen" className="flex min-h-[64px] items-center gap-4 px-5 py-3 transition hover:bg-[color:var(--surface-sunken)]" data-assistent-whatsapp>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-emerald-500 text-white">
+                    <MessageSquareText className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">WhatsApp-Vorlagen</span>
+                    <span className="line-clamp-2 block text-sm text-[color:var(--muted)]">Nachrichten, die Ihr Assistent in Ihrem Namen schickt</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+                </Link>
+              </li>
+            ) : null}
+          </ul>
+        </section>
+        {/* E-Mails vor Terminen und Vollmacht (UX-Runde 19.11.2026): hier liegt die offene Entscheidung mit der Hauptaktion */}
+        <section id="mails">
+          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">E-Mails in Ihrem Namen</h2>
+          <ServiceMails {...mails} canEdit={canEdit} />
+          {!canEdit && !ctx.preview ? <p className="mt-2 px-1 text-xs text-[color:var(--muted)]">Nur der Inhaber kann das ändern.</p> : null}
         </section>
         {c?.plan !== "service" ? (
           <section id="termine">
@@ -60,30 +82,6 @@ export default async function AssistentPage() {
           <section id="maklervollmacht" data-assistent-vollmacht>
             <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Maklervollmacht: Wer schickt sie?</h2>
             <VollmachtVersandWahl wert={asVollmachtVersand(c.vollmachtVersand)} darf={canEdit} />
-          </section>
-        ) : null}
-        <section id="mails">
-          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">E-Mails in Ihrem Namen</h2>
-          <ServiceMails {...mails} canEdit={canEdit} />
-          {!canEdit && !ctx.preview ? <p className="mt-2 px-1 text-xs text-[color:var(--muted)]">Nur der Inhaber kann das ändern.</p> : null}
-        </section>
-        {c?.plan !== "service" ? (
-          <section>
-            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">WhatsApp</h2>
-            <Link
-              href="/buyer/vorlagen"
-              className="flex min-h-[64px] items-center gap-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-5 py-3 shadow-[var(--shadow-sm)] transition hover:bg-[color:var(--surface-sunken)]"
-              data-assistent-whatsapp
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-emerald-500 text-white">
-                <MessageSquareText className="h-5 w-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-medium">WhatsApp-Vorlagen</span>
-                <span className="line-clamp-2 block text-sm text-[color:var(--muted)]">Nachrichten, die Ihr Assistent in Ihrem Namen schickt</span>
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
-            </Link>
           </section>
         ) : null}
       </div>
