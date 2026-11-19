@@ -24,6 +24,7 @@ Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der 
 
 ## Bei Ole
 
+- Plan „1 Mio. € ARR“ (Entwurf, 19.11.2026, `docs/firma/plan-1-mio-arr.md`): Entscheidungen 1 bis 7 bis zur Führungsrunde 23.11.
 - Steuerberater: Umsatzsteuer (Betrag, Frist), Gehalt erst danach; Hinweis USt auf Vorauszahlungen.
 - Instantly: Light Speed und 60 Postfächer einrichten, Liste in der App importieren, Kampagne erst starten, wenn warm;
   Entscheidung zu den Textbefunden in `kaltakquise.md`.
