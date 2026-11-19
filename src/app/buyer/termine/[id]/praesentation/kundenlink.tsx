@@ -3,12 +3,12 @@
 // Kundenlink (Ole, 15.11.2026): der Stand aus dem Termin zum Nachlesen, 14 Tage gültig, ohne Schalter und Sprechzettel.
 
 import { useState, useTransition } from "react";
-import { Copy, Link2, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, Link2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { kundenlinkAction, kundenlinkBeendenAction } from "./actions";
 
-export function Kundenlink({ id, start, bereit }: { id: string; start: { url: string; bis: string } | null; bereit: boolean }) {
+export function Kundenlink({ id, start, bereit, zusage }: { id: string; start: { url: string; bis: string } | null; bereit: boolean; zusage?: string | null }) {
   const toast = useToast();
   const [link, setLink] = useState(start);
   const [pending, run] = useTransition();
@@ -23,6 +23,12 @@ export function Kundenlink({ id, start, bereit }: { id: string; start: { url: st
       <p className="mt-1 text-sm text-[color:var(--muted)]">
         Ihr Kunde liest die Präsentation mit Ihrer Auswahl 14 Tage lang nach.
       </p>
+      {/* „Ja, so machen wir es“ (im Termin oder im Link): nächster Schritt ist der Antrag */}
+      {zusage ? (
+        <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-emerald-800" data-zusage-stand>
+          <CheckCircle2 className="h-4 w-4" /> Zugesagt am {zusage}. Jetzt den Antrag ausfüllen.
+        </p>
+      ) : null}
       {link ? (
         <div className="mt-3 space-y-2">
           <div className="flex flex-col gap-2 sm:flex-row">

@@ -8,14 +8,18 @@
 // Startet immer mit Folie 1 (Ole, 15.11.2026): kein gespeicherter Stand, kein Sprung per Adresse.
 // Kommt per Klick eine Produktfolie dazu (Cross-Selling „Mit anschauen“), springt das Deck vorwärts auf sie und
 // meldet „{Produkt} hinzugefügt“ (Ole, 18.11.2026); im Vollbild und eingebettet steht der Hinweis in der Folie.
+// Abschluss (19.11.2026): „Ja, so machen wir es“ (data-zusage) geht an onZusage, danach eine Folie weiter. Einwände
+// (optionale Folien außerhalb der Reihenfolge) über „Einwände“ bzw. die Tasten 1 bis 4, zurück mit Esc oder Pfeil.
+// Sprechhinweise nur für den Vermittler: zum Aufklappen unter dem Deck (Standard aus, nie in der Folie, nicht im
+// Vollbild). onFolie meldet jede erreichte Folie einmal (Messung „Folie erreicht“).
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { Check, ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Expand, Lightbulb, MessageCircleQuestion, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 
-export type DeckFolie = { id: string; titel: string; html: string; produkt?: string };
+export type DeckFolie = { id: string; titel: string; html: string; produkt?: string; hinweis?: string };
 export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean };
 export type DeckAntwort = { ok: true; folien: DeckFolie[] } | { ok: false; error: string };
 
@@ -42,6 +46,9 @@ export function FolienDeck({
   onKlick,
   eingebettet,
   extra,
+  onZusage,
+  onFolie,
+  einwaende = [],
 }: {
   css: string;
   folien: DeckFolie[];
@@ -51,6 +58,12 @@ export function FolienDeck({
   eingebettet?: boolean;
   /** Weitere Knöpfe in der Leiste (z. B. PDF). */
   extra?: ReactNode;
+  /** „Ja, so machen wir es“ auf der Folie „Ihre Entscheidung“; die Antwort bringt die Folien mit „Zugesagt“. */
+  onZusage?: () => Promise<DeckAntwort>;
+  /** Jede erreichte Folie der Reihenfolge einmal (Messung). */
+  onFolie?: (id: string) => void;
+  /** Einwand-Folien (Sprungziele für den Vermittler, außerhalb der Reihenfolge). */
+  einwaende?: DeckFolie[];
 }) {
   const [folien, setFolien] = useState(start);
   const [i, setI] = useState(0);
@@ -67,8 +80,33 @@ export function FolienDeck({
   const rahmen = useRef<HTMLDivElement>(null);
   const folie = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
+  // Einwand-Folie statt der aktuellen (null = Reihenfolge)
+  const [einwand, setEinwand] = useState<number | null>(null);
+  const [einwandMenue, setEinwandMenue] = useState(false);
+  // Sprechhinweise: bei jedem Öffnen aus (nichts gespeichert, Ole 15.11.2026: Präsentation ohne Sprechzettel als Standard)
+  const [sprech, setSprech] = useState(false);
+  const gemeldet = useRef(new Set<string>());
+  const sprechUmschalten = () => setSprech((x) => !x);
 
   const onSlideClick = (ev: React.MouseEvent) => {
+    const z = (ev.target as HTMLElement).closest<HTMLElement>("[data-zusage]");
+    if (z) {
+      if (!onZusage || pending || z.classList.contains("an")) return;
+      z.classList.add("an");
+      startT(async () => {
+        const r = await onZusage();
+        if (r.ok) {
+          setFolien(r.folien);
+          setI((n) => Math.min(n + 1, r.folien.length - 1));
+          toast.show({ message: "Zusage gespeichert", durationMs: 3000 });
+          setHinweis({ text: "Zusage gespeichert", n: Date.now() });
+        } else {
+          z.classList.remove("an");
+          toast.show({ message: r.error, tone: "error" });
+        }
+      });
+      return;
+    }
     if (!onKlick || pending) return;
     const el = (ev.target as HTMLElement).closest<HTMLElement>("[data-baustein],[data-tarif],[data-sparte]");
     if (!el) return;
@@ -95,7 +133,23 @@ export function FolienDeck({
     });
   };
 
-  const go = useCallback((n: number) => setI(Math.max(0, Math.min(folien.length - 1, n))), [folien.length]);
+  const go = useCallback(
+    (n: number) => {
+      setEinwand(null);
+      setI(Math.max(0, Math.min(folien.length - 1, n)));
+    },
+    [folien.length],
+  );
+  // Aus einer Einwand-Folie führen Pfeile und Esc zurück auf die Folie, von der aus gesprungen wurde
+  const zurueckAusEinwand = useCallback(() => setEinwand(null), []);
+  useEffect(() => {
+    if (!onFolie || einwand != null) return;
+    const id = folien[i]?.id;
+    if (id && !gemeldet.current.has(id)) {
+      gemeldet.current.add(id);
+      onFolie(id);
+    }
+  }, [i, folien, einwand, onFolie]);
   useEffect(() => {
     if (!hinweis) return;
     const t = setTimeout(() => setHinweis((h) => (h?.n === hinweis.n ? null : h)), 3000);
@@ -106,9 +160,20 @@ export function FolienDeck({
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
       const richtung = WEITER.has(e.key) ? "weiter" : ZURUECK.has(e.key) ? "zurueck" : null;
-      if (e.key === "Escape") setPseudo(false);
+      // Tasten 1 bis 4: Einwand-Folie (auch im Vollbild, ohne sichtbares Menü)
+      const nr = /^[1-9]$/.test(e.key) ? Number(e.key) - 1 : -1;
+      if (!eingebettet && nr >= 0 && nr < einwaende.length) {
+        e.preventDefault();
+        setEinwand(nr);
+        return;
+      }
+      if (e.key === "Escape") {
+        if (einwand != null) return zurueckAusEinwand();
+        setPseudo(false);
+      }
       if (!richtung) return;
       e.preventDefault();
+      if (einwand != null) return zurueckAusEinwand();
       if (eingebettet && window.parent !== window) {
         window.parent.postMessage({ deckTaste: richtung } satisfies DeckTasteNachricht, window.location.origin);
         return;
@@ -128,7 +193,7 @@ export function FolienDeck({
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("message", onMsg);
     };
-  }, [i, go, eingebettet]);
+  }, [i, go, eingebettet, einwand, einwaende.length, zurueckAusEinwand]);
   useEffect(() => {
     const fit = () => {
       const el = box.current;
@@ -158,7 +223,7 @@ export function FolienDeck({
     else setPseudo(true);
   };
 
-  const f = folien[i];
+  const f = (einwand != null ? einwaende[einwand] : null) ?? folien[i];
   // Zu langer Inhalt wird kleiner statt abgeschnitten (gleich wie im PDF)
   useLayoutEffect(() => {
     const el = folie.current;
@@ -252,13 +317,72 @@ export function FolienDeck({
           </RundKnopf>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-3">
-          <Nav i={i} n={folien.length} go={go} />
-          {/* Handy: nur Symbol, damit Zurück, Zähler, Weiter und Vollbild in eine Zeile passen */}
-          <Button variant="secondary" size="md" icon={Expand} onClick={vollbild} aria-label="Vollbild" title="Vollbild" className="px-3 sm:px-4">
-            <span className="hidden sm:inline">Vollbild</span>
-          </Button>
-          {extra}
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Nav i={i} n={folien.length} go={go} einwand={einwand != null} />
+            {/* Handy: nur Symbole, damit Zurück, Zähler, Weiter und die Knöpfe in eine Zeile passen */}
+            <Button variant="secondary" size="md" icon={Expand} onClick={vollbild} aria-label="Vollbild" title="Vollbild" className="px-3 sm:px-4">
+              <span className="hidden sm:inline">Vollbild</span>
+            </Button>
+            {einwaende.length ? (
+              <Button
+                variant="secondary"
+                size="md"
+                icon={MessageCircleQuestion}
+                onClick={() => setEinwandMenue((x) => !x)}
+                aria-expanded={einwandMenue}
+                aria-label="Einwände"
+                title="Einwände (Tasten 1 bis 4)"
+                className="px-3 sm:px-4"
+                data-einwaende-knopf
+              >
+                <span className="hidden sm:inline">Einwände</span>
+              </Button>
+            ) : null}
+            {folien.some((x) => x.hinweis) ? (
+              <Button
+                variant={sprech ? "primary" : "secondary"}
+                size="md"
+                icon={Lightbulb}
+                onClick={sprechUmschalten}
+                aria-pressed={sprech}
+                aria-label="Sprechhinweise"
+                title="Sprechhinweise (nur für Sie)"
+                className="px-3 sm:px-4"
+                data-sprechhinweise-knopf
+              >
+                <span className="hidden sm:inline">Hinweise</span>
+              </Button>
+            ) : null}
+            {extra}
+          </div>
+          {einwand != null || einwandMenue ? (
+            <div className="flex flex-wrap items-center gap-2" data-einwaende>
+              {einwand != null ? (
+                <Button variant="primary" size="sm" icon={Undo2} onClick={zurueckAusEinwand}>
+                  Zurück zu Folie {i + 1}
+                </Button>
+              ) : null}
+              {einwaende.map((x, k) => (
+                <button
+                  key={x.id}
+                  type="button"
+                  onClick={() => setEinwand(k)}
+                  className={`min-h-10 rounded-full border px-3 text-sm ${
+                    einwand === k ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white" : "border-[color:var(--border)] bg-white hover:bg-[color:var(--surface-sunken)]"
+                  }`}
+                >
+                  {x.titel}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {sprech && f.hinweis ? (
+            <p className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950" data-sprechhinweis>
+              <span className="font-semibold">Nur für Sie: </span>
+              {f.hinweis}
+            </p>
+          ) : null}
         </div>
       )}
     </div>
@@ -282,16 +406,16 @@ function RundKnopf({ label, onClick, disabled, hell, children }: { label: string
   );
 }
 
-function Nav({ i, n, go }: { i: number; n: number; go: (n: number) => void }) {
+function Nav({ i, n, go, einwand }: { i: number; n: number; go: (n: number) => void; einwand?: boolean }) {
   return (
     <div className="inline-flex items-center gap-2">
-      <Button variant="secondary" size="md" icon={ChevronLeft} disabled={i === 0} onClick={() => go(i - 1)}>
+      <Button variant="secondary" size="md" icon={ChevronLeft} disabled={i === 0 && !einwand} onClick={() => go(einwand ? i : i - 1)}>
         Zurück
       </Button>
       <span className="min-w-[64px] text-center text-sm tabular-nums text-[color:var(--muted)]">
-        {i + 1} / {n}
+        {einwand ? "Einwand" : `${i + 1} / ${n}`}
       </span>
-      <Button variant="primary" size="md" icon={ChevronRight} disabled={i === n - 1} onClick={() => go(i + 1)}>
+      <Button variant="primary" size="md" icon={ChevronRight} disabled={i === n - 1 && !einwand} onClick={() => go(einwand ? i : i + 1)}>
         Weiter
       </Button>
     </div>

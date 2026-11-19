@@ -4,12 +4,13 @@
 // abgeschnitten, wie im Deck und im PDF.
 // Handy (16.11.2026): Auf 390 px ist die Schrift einer 1280-px-Folie rund 7 px groß. Antippen öffnet die Folie
 // bildschirmfüllend, im Hochformat quer gedreht, damit sie lesbar ist.
+// Messung (19.11.2026): jede Folie, die zur Hälfte sichtbar war, einmal melden (onFolie); keine Lesedauer, kein Gerät.
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 
-export function FolienListe({ css, folien }: { css: string; folien: { id: string; html: string }[] }) {
+export function FolienListe({ css, folien, onFolie }: { css: string; folien: { id: string; html: string }[]; onFolie?: (id: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
   const [gross, setGross] = useState<number | null>(null);
@@ -29,15 +30,35 @@ export function FolienListe({ css, folien }: { css: string; folien: { id: string
       aktiv = false;
     };
   }, [folien]);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !onFolie || typeof IntersectionObserver === "undefined") return;
+    const gemeldet = new Set<string>();
+    const io = new IntersectionObserver(
+      (es) => {
+        for (const e of es) {
+          const id = (e.target as HTMLElement).dataset.folieId;
+          if (e.isIntersecting && id && !gemeldet.has(id)) {
+            gemeldet.add(id);
+            onFolie(id);
+          }
+        }
+      },
+      { threshold: 0.5 },
+    );
+    el.querySelectorAll("[data-folie-id]").forEach((x) => io.observe(x));
+    return () => io.disconnect();
+  }, [folien, onFolie]);
   const klein = scale < 0.5;
   return (
     <>
       {klein ? <p className="mb-2 text-sm text-[color:var(--muted)]">Zum Vergrößern eine Folie antippen.</p> : null}
       <div ref={ref} className="flex flex-col gap-4" data-kundenfolien>
-        <style>{`${css}\n.nurlesen .bs,.nurlesen .wahl,.nurlesen .teil,.nurlesen .st{cursor:default;pointer-events:none}`}</style>
+        <style>{`${css}\n.nurlesen .bs,.nurlesen .wahl,.nurlesen .teil,.nurlesen .st{cursor:default;pointer-events:none}\n.nurlesen .zusage{display:none}`}</style>
         {folien.map((f, i) => (
           <div
             key={f.id}
+            data-folie-id={f.id}
             className="relative w-full overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] shadow-[var(--shadow-sm)]"
             style={{ aspectRatio: "16 / 9" }}
           >
