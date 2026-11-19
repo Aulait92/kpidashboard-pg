@@ -6,7 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { cleanAngebote } from "@/lib/angebote-daten";
 import { demoAngebote } from "@/lib/demo-beratung";
 import { kundenlinkErstellen, loadKundenPraesentation, loadPraesentation, sparteUmschalten } from "@/lib/termin-vorbereitung-server";
-import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { cleanupCustomer, makeBuyer, makeCustomer, nurFassungB, requireTestDb } from "./db";
+
+// Prüft Fassung B (Standard) der Präsentation
+nurFassungB();
 
 let customerId = "";
 let ctx: { customerId: string; userId: string | null; teamRole: "owner" | "advisor" };

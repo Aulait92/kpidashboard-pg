@@ -3,11 +3,12 @@
 // Neutrale Marke (PG-Blau), erfundene Tarifnamen, keine Logos echter Versicherer.
 // Reine Funktionen: Die Demo rechnet im Browser (Stufe wählen, Bausteine an/aus), ein Neuladen setzt alles zurück.
 
-import { bausteinSchalten, sparteSchalten, tarifWaehlen, type AngeboteDaten, type AngebotItem } from "@/lib/angebote-daten";
+import { bausteinSchalten, paketWaehlen, sparteSchalten, tarifWaehlen, type AngeboteDaten, type AngebotItem } from "@/lib/angebote-daten";
 import type { KombiRegel } from "@/lib/kombi-rabatt";
 import type { SchutzZeile } from "@/lib/schutz-ueberblick";
 import { einwandFolien, folien, praesentationCss, type Folie, type Marke } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
+import type { PraesentationVariante } from "@/lib/praesentation-variante";
 
 export const DEMO_KUNDE = "Dominik Schmid";
 export const DEMO_BERATER = "Max Berger";
@@ -188,12 +189,16 @@ export function demoAngebote(): AngeboteDaten {
 export const demoCss = () => praesentationCss(DEMO_MARKE);
 
 /**
- * Folien der Demo zum aktuellen Stand (Sie-Form, wie im Termin). Die Demo zeigt die neue Fassung B (Abschluss-
- * Dramaturgie, lib/praesentation-variante.ts); zugesagtAm: nach „Ja, so machen wir es“ in der Demo.
+ * Folien der Demo zum aktuellen Stand (Sie-Form, wie im Termin). Die Demo zeigt Fassung B (Standard, Abschluss-
+ * Dramaturgie); /demo/beratung?fassung=c zeigt den Herausforderer C zur Vorschau (lib/praesentation-variante.ts).
+ * zugesagtAm: nach „Ja, so machen wir es“ in der Demo.
  */
-export function demoFolien(angebote: AngeboteDaten, now = new Date(), zugesagtAm: Date | null = null): Folie[] {
-  return folien(demoTermin(now), angebote, DEMO_MARKE, "sie", { variante: "B", zugesagtAm });
+export function demoFolien(angebote: AngeboteDaten, now = new Date(), zugesagtAm: Date | null = null, variante: PraesentationVariante = "B"): Folie[] {
+  return folien(demoTermin(now), angebote, DEMO_MARKE, "sie", { variante, zugesagtAm });
 }
+
+/** Fassung aus ?fassung= (nur „c“ zeigt C, sonst B). */
+export const demoFassung = (q: string | null | undefined): PraesentationVariante => (q?.trim().toLowerCase() === "c" ? "C" : "B");
 
 /** Einwand-Folien der Demo (Sprungziele im Deck). */
 export function demoEinwaende(angebote: AngeboteDaten, now = new Date()): Folie[] {
@@ -203,7 +208,8 @@ export function demoEinwaende(angebote: AngeboteDaten, now = new Date()): Folie[
 /** Klick auf einen Schalter der Folie (wie im Termin, nur im Browser). null = unbekannter Schalter. */
 export function demoKlick(
   d: AngeboteDaten,
-  k: { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean },
+  k: { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean; paket?: number[] },
 ): AngeboteDaten | null {
+  if (k.paket) return paketWaehlen(d, k.paket);
   return k.tarif != null ? (k.sparte ? sparteSchalten(d, k.tarif) : tarifWaehlen(d, k.tarif)) : bausteinSchalten(d, k.item, k.baustein, k.aktiv);
 }

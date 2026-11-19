@@ -8,7 +8,8 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { CUSTOMER_LABEL, CUSTOMER_STAGES, OUTCOME_BY_ID, SOURCE_LABEL, STAGE_RANK, STAGE_LABEL } from "@/lib/vertrieb/crm";
 import { addDays, fromDayKey } from "@/lib/vertrieb/dates";
 import type { SalesActivityType as ActivityType, SalesCustomerStage as CustomerStage, SalesLossReason as LossReason, SalesStage as Stage, SalesTaskType as TaskType } from "@/generated/prisma/enums";
-import { importContactsCsv } from "@/lib/vertrieb/import-contacts";
+import { importContactsCsv, importVermittlerListe } from "@/lib/vertrieb/import-contacts";
+import { istVermittlerListe, summeUebersprungen, type ListenErgebnis } from "@/lib/vertrieb/vermittler-format";
 import { ensureSource } from "@/lib/vertrieb/source";
 import { setzeStufe } from "@/lib/vertrieb/stufe";
 import { offenesAngebotAblehnen } from "@/lib/vertrieb/angebot-ablehnen-server";
@@ -181,14 +182,35 @@ export async function deleteTask(fd: FormData) {
 }
 
 // ─── Import ─────────────────────────────────────────────────────────────
-export type ImportState = { ok: boolean; message: string } | null;
+export type ImportState = { ok: boolean; message: string; liste?: ListenErgebnis } | null;
 
+/**
+ * Agenturliste bzw. Vermittlerliste (erkannt an der Kopfzeile, lib/vertrieb/vermittler-format.ts). Die Vermittlerliste
+ * erst als Trockenlauf (modus „pruefen“, nichts geschrieben), angelegt wird erst mit modus „importieren“.
+ */
 export async function importContactsAction(_p: ImportState, fd: FormData): Promise<ImportState> {
   await requireAuth();
   const file = fd.get("file");
   if (!(file instanceof File) || !file.size) return { ok: false, message: "Bitte eine CSV-Datei wählen." };
   try {
-    const r = await importContactsCsv(await file.text());
+    const text = await file.text();
+    if (istVermittlerListe(text)) {
+      const anwenden = fd.get("modus") === "importieren";
+      const r = await importVermittlerListe(text, { anwenden });
+      if (!anwenden) return { ok: true, message: "", liste: r };
+      await audit("vertrieb.import_liste", {
+        entity: "SalesContact",
+        details: { datei: file.name, zeilen: r.zeilen, neu: r.neu, ergaenzt: r.ergaenzt, uebersprungen: r.uebersprungen, jeGesellschaft: r.jeGesellschaft, dauerMs: r.dauerMs },
+      });
+      refresh();
+      return {
+        ok: true,
+        message: `${r.neu.toLocaleString("de-DE")} Kontakte angelegt, ${r.ergaenzt.toLocaleString("de-DE")} ergänzt, ${summeUebersprungen(r).toLocaleString("de-DE")} übersprungen.`,
+        liste: r,
+      };
+    }
+    if (fd.get("modus") === "pruefen") return null;
+    const r = await importContactsCsv(text);
     refresh();
     return {
       ok: true,

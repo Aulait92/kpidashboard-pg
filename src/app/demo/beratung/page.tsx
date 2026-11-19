@@ -1,23 +1,26 @@
 import type { Metadata } from "next";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
+import { demoFassung } from "@/lib/demo-beratung";
 import { DemoAnsicht } from "./demo-ansicht";
 
 // Öffentliche Live-Demo der Beratungspräsentation (Ole, 15.11.2026): ohne Login, feste Beispieldaten (src/lib/demo-beratung.ts),
 // alles rechnet im Browser. Erreichbar unter www.dein-beratungstermin.de/demo und app.performancegrowth.de/demo/beratung.
 // ?eingebettet=1: knappe Ansicht für die Vertriebspräsentation (Folie „Beraten mit echten Preisen“). Startet immer mit
 // Folie 1, auch eingebettet (Ole, 15.11.2026): kein Sprung per Adresse, kein gespeicherter Stand.
+// ?fassung=c: Herausforderer C des Splittests zur Vorschau (ohne Hinweis auf der Seite; Standard bleibt B).
 export const metadata: Metadata = {
   title: "Beratungspräsentation: Live-Demo",
   description: "So sieht eine Beratung mit echten Preisen im Termin aus: Tarif wählen, Bausteine an- und abwählen, der Beitrag rechnet sich sofort neu.",
   robots: { index: false, follow: false },
 };
 
-export default async function DemoBeratungPage({ searchParams }: { searchParams: Promise<{ eingebettet?: string }> }) {
-  const { eingebettet } = await searchParams;
+export default async function DemoBeratungPage({ searchParams }: { searchParams: Promise<{ eingebettet?: string; fassung?: string }> }) {
+  const { eingebettet, fassung: q } = await searchParams;
+  const fassung = demoFassung(q);
   if (eingebettet === "1") {
     return (
       <main className="flex h-dvh w-full items-center bg-white p-1" data-demo-eingebettet>
-        <DemoAnsicht eingebettet />
+        <DemoAnsicht eingebettet fassung={fassung} />
       </main>
     );
   }
@@ -33,7 +36,7 @@ export default async function DemoBeratungPage({ searchParams }: { searchParams:
           Pfeiltasten oder per Wischen, „Vollbild“ zum Teilen im Videocall.
         </p>
         <div className="mt-4">
-          <DemoAnsicht />
+          <DemoAnsicht key={fassung} fassung={fassung} />
         </div>
         <p className="mt-3 text-sm text-[color:var(--muted)] sm:hidden">Tipp: Handy quer halten, dann wird die Folie größer.</p>
         <p className="mt-4 text-xs text-[color:var(--muted)]">

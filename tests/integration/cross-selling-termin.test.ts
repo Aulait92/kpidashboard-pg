@@ -10,7 +10,10 @@ import { loadPraesentation, loadVorbereitung, sparteUmschalten } from "@/lib/ter
 import { beitragAus, cleanAngebote } from "@/lib/angebote-daten";
 import { sparteNeu, type Tarifauswahl } from "@/lib/tarifauswahl";
 import { demoTarife } from "@/lib/demo-beratung";
-import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { cleanupCustomer, makeBuyer, makeCustomer, nurFassungB, requireTestDb } from "./db";
+
+// Prüft Fassung B (Standard) der Präsentation
+nurFassungB();
 
 const k = ladeTarifkatalog(path.join(__dirname, "..", "fixtures", "tarifkatalog"));
 let customerId = "";

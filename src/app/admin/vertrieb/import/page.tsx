@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { CalendlyForms, ColdCrmImport, ContactDataBackfill, ColdCrmReplace, ContactsImport, CopyField, InstantlyCsvImport, InstantlyNachholen, InstantlySync, SperrenNachholen } from "@/components/vertrieb/import-forms";
+import { CalendlyForms, ColdCrmImport, ContactDataBackfill, ColdCrmReplace, ContactsImport, CopyField, InstantlyCsvImport, InstantlyNachholen, InstantlyPortion, InstantlySync, SperrenNachholen } from "@/components/vertrieb/import-forms";
+import { domainTageslimit } from "@/lib/vertrieb/mischen";
 import { coldCrmReplaceAllowed, coldCrmSourceConfigured, stagingSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
 import { teamCalendarStatus } from "@/lib/help-call";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
@@ -136,8 +137,11 @@ export default async function AnbindungenPage() {
           <h2 className="font-medium">Import</h2>
           <p className="text-sm text-slate-500">{contacts.toLocaleString("de-DE")} Kontakte im Vertrieb. Erneuter Import ist sicher, Kontakte werden über die E-Mail erkannt.</p>
         </div>
-        <Item title="Agenturliste (CSV)" hint="Numbers: Ablage → Exportieren → CSV">
+        <Item title="Agentur- oder Vermittlerliste (CSV)" hint="Numbers-Export oder Vermittlerliste, diese erst mit Vorschau">
           <ContactsImport />
+        </Item>
+        <Item title="Tagesportion für Instantly (CSV)" hint="Vermittlerliste gemischt, in eine gemeinsame Kampagne laden">
+          <InstantlyPortion proDomain={domainTageslimit()} />
         </Item>
         <Item title="Instantly-Export (CSV)" hint="Nur nötig, wenn der Abgleich oben nicht reicht">
           <InstantlyCsvImport />

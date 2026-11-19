@@ -4,7 +4,7 @@ import { experimenteUebersicht, type ExperimentUebersicht } from "@/lib/experime
 import { ALPHA } from "@/lib/whatsapp/ab-test";
 import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
-const ZIEL: Record<string, string> = { termin_gebucht: "Termin gebucht", komplettcheck_ja: "Komplettcheck ja", erschienen: "Erschienen" };
+const ZIEL: Record<string, string> = { termin_gebucht: "Termin gebucht", komplettcheck_ja: "Komplettcheck ja", erschienen: "Erschienen", zusage: "Zusage in der Präsentation" };
 const pct = (z: number, n: number) => (n ? `${Math.round((z / n) * 1000) / 10} %` : NOCH_KEINE_DATEN);
 
 function stand(e: ExperimentUebersicht): string {
