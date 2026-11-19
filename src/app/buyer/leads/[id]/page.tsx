@@ -30,7 +30,7 @@ export default async function LeadDetailPage({
   const backHref = from === "kanban" ? "/buyer/kanban" : "/buyer/leads";
   const newUi = await isNewUi(session.customerId);
   // Gleiche Begriffe und gleicher Zurück-Link wie auf /buyer/kontakte/[id] (Ole, 16.11.2026: überall „Kontakte“)
-  const backLabel = from === "kanban" ? "Pipeline" : newUi ? "Alle Kontakte" : "Alle Leads";
+  const backLabel = from === "kanban" ? "Pipeline" : newUi ? "Kontakte" : "Alle Leads";
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
