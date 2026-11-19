@@ -278,6 +278,9 @@ async function main() {
     create: { id: U, email: EMAIL, displayName: "Jonas Berger", passwordHash, role: "BUYER", customerId: C, teamRole: "owner", receivesLeads: true },
     update: { email: EMAIL, displayName: "Jonas Berger", passwordHash, role: "BUYER", customerId: C, teamRole: "owner" },
   });
+  // Erstinformation (Datenschutzhinweise für Policen: /datenschutz/policen?k=pgp-erstinfo-token)
+  const erst = { name: "Jonas Berger", anrede: "Herr", firma: "Agentur Policen Test", anschrift: "Musterstraße 1, 12345 Musterstadt", telefon: "+49 30 1234567", email: EMAIL };
+  await prisma.erstinformation.upsert({ where: { customerId: C }, create: { customerId: C, token: "pgp-erstinfo-token", ...erst }, update: erst });
 
   for (const l of LEADS) {
     const leadId = `pgp-lead-${l.n}`;
@@ -352,6 +355,8 @@ async function main() {
           versuche: gelesen ? 1 : 0,
           geprueftAt: a.geprueft ? new Date(now.getTime() - 3 * H) : null,
           geprueftVonId: a.geprueft ? U : null,
+          // Nur die Haftpflicht von Lead 5 bleibt übernommen (Klicks aus der UX-Prüfung zurücksetzen)
+          ...(d.id === "pgp-doc-5a" ? {} : { uebernommenAt: null, uebernommenVonId: null, existingContractId: null }),
         };
         await prisma.policenAuszug.upsert({ where: { documentId: d.id }, create: { id: `pgp-auszug-${d.id.slice(8)}`, documentId: d.id, ...data }, update: data });
       }
@@ -361,6 +366,8 @@ async function main() {
   // Lead 5: Haftpflicht ausdrücklich in den Bestand übernehmen (echter Ablauf, idempotent)
   const { uebernimmInBestand } = await import("@/lib/policen/auslesen/server");
   const r = await uebernimmInBestand({ customerId: C, userId: U, leadId: "pgp-lead-5" }, "pgp-auszug-5a");
+  // Weitere Verträge, die beim Durchklicken übernommen wurden, wieder entfernen
+  if (r) await prisma.existingContract.deleteMany({ where: { existingCustomer: { leadId: "pgp-lead-5" }, NOT: { id: r.existingContractId } } });
   console.log(JSON.stringify({ ok: true, kunde: C, login: EMAIL, leads: LEADS.length, bestand: r?.existingContractId ?? null, termine: LEADS.map((l) => `/buyer/termine/pgp-termin-${l.n}/vorbereitung`) }, null, 1));
 }
 
