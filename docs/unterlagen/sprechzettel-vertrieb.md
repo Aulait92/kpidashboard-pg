@@ -40,7 +40,7 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - Frage: „Welche Sparte ist für Sie am wichtigsten?“
 
 ## 10. Warum gute Leads verloren gehen
-- Zu spät angerufen, nicht erreicht, Abends und am Wochenende, Nachfassen geht unter.
+- Nicht erreicht, zu spät angerufen, abends und am Wochenende, Nachfassen geht unter (Reihenfolge wie auf der Folie; Folie 11 löst Problem 01, Folie 12 die Probleme 02 und 03, Folie 14 Problem 04).
 - Auf die Antwort von Folie 6 zurückkommen: „Kennen Sie das?“
 - „Die Software löst genau das, automatisch.“
 
