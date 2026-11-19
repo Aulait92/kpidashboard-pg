@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { orderAction, type OrderFormState } from "./actions";
+import { withVat } from "@/lib/offer-pricing";
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 
@@ -62,10 +63,10 @@ export function OrderForm(p: {
           </button>
         </div>
         <div className="text-sm">
-          <div className="text-lg font-semibold tabular-nums">{eur(gross - credit)}</div>
+          <div className="text-lg font-semibold tabular-nums">{eur(withVat(gross - credit))}</div>
           <div className="text-[color:var(--muted)]">
-            {qty} × {eur(p.price)}
-            {credit > 0 ? ` − ${eur(credit)} Gutschrift` : ""} · zzgl. USt.
+            {qty} × {eur(withVat(p.price))}
+            {credit > 0 ? ` − ${eur(withVat(credit))} Gutschrift` : ""} · inkl. USt.
           </div>
         </div>
       </div>
@@ -76,7 +77,7 @@ export function OrderForm(p: {
       {state.error ? <p className="text-sm text-rose-700">{state.error}</p> : null}
       {state.message ? <p className="text-sm text-emerald-700">{state.message}</p> : null}
       <Button type="submit" variant="primary" size="md" disabled={pending || p.disabled || qty < p.min}>
-        {pending ? "Wird bestellt …" : `Bestellen und ${eur(gross - credit)} bezahlen`}
+        {pending ? "Wird bestellt …" : `Bestellen und ${eur(withVat(gross - credit))} bezahlen`}
       </Button>
     </form>
   );
