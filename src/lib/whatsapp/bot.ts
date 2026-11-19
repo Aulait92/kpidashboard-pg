@@ -31,7 +31,7 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { sendErstinfo } from "@/lib/whatsapp/erstinfo-pdf";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { cleanQualificationData, mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
-import { GEBURT_MERKER, geburtImChat, type GeburtMerker } from "@/lib/whatsapp/geburt-chat";
+import { GEBURT_MERKER, geburtImChat, ohneGeburtsFrage, type GeburtMerker } from "@/lib/whatsapp/geburt-chat";
 import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
@@ -899,6 +899,8 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     emailOk: boolean;
     email: string | null;
   } = { gebucht: null, vorschlag: null, komplett: null, emailOk: false, email: null };
+  /** Geburtsdatum geprüft (geburt-chat.ts): wörtliche Rückfrage der App bzw. als offen notiert */
+  let geburt: { frage: string | null; offen: boolean } | null = null;
   /** Termin buchen (Werkzeug book_appointment bzw. Zeit-Knopf); Rückgabe = Ergebnis für den Assistenten. */
   const buche = async (input: { modus?: unknown; start?: unknown; email?: unknown }): Promise<string> => {
     let content = "ok";
@@ -1120,6 +1122,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           if (g.tier) ang.tier = g.tier;
           if (g.merker) await persistInternal(conversation.id, GEBURT_MERKER, g.merker);
           if (g.hinweis) content = g.hinweis;
+          if (g.frage || g.offen) geburt = { frage: g.frage ?? null, offen: !!g.offen };
         }
         await persistInternal(conversation.id, "qualification", { ...input, angaben }); // Audit-Log
         // Strukturierte Punkte zusätzlich zum Fließtext; neue Angaben ergänzen die bisherigen.
@@ -1321,6 +1324,11 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       .join("\n")
       .trim();
   }
+
+  // Geburtsdatum unbrauchbar: die App fragt wörtlich nach, statt den Assistenten frei formulieren zu lassen; als offen
+  // notiert: keine erneute Frage nach dem Geburtsdatum (Ole, 19.11.2026)
+  if (geburt?.frage) finalText = geburt.frage;
+  else if (geburt?.offen && finalText) finalText = ohneGeburtsFrage(finalText, ansprache);
 
   // Komplettcheck vom Assistenten erkannt (Lead hat getippt statt geklickt): die App schickt Vertragsfrage bzw. Abschluss
   if (zug.komplett !== null) {

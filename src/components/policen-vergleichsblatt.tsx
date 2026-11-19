@@ -343,12 +343,18 @@ function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich
     void auslesenAction(terminId).finally(() => setLaeuft(false));
   }, [readOnly, v.sperre, neue, terminId]);
 
-  const waehle = (o: OffeneUnterlage, s: AuslesenSparte) =>
+  // Gewählte Sparte je Unterlage: Auslesen dauert einige Sekunden, solange Hinweis und Spinner statt nur grauer Knöpfe
+  // (Ole, 19.11.2026: „wenn ich hier draufklicke, passiert nichts und die Buttons werden grau“)
+  const [gewaehlt, setGewaehlt] = useState<{ doc: string; sparte: AuslesenSparte } | null>(null);
+  const waehle = (o: OffeneUnterlage, s: AuslesenSparte) => {
+    setGewaehlt({ doc: o.documentId, sparte: s });
     start(async () => {
       const r = await sparteAction(terminId, o.documentId, s);
       if (!r.ok) toast.show({ message: r.error ?? "Fehler", tone: "error" });
-      else if (r.status !== "ausgelesen") toast.show({ message: r.status === "sparte_abweichend" ? "Passt nicht zur gewählten Sparte. Bitte im Original nachsehen." : "Nicht ausgelesen. Bitte im Original nachsehen.", tone: "error" });
+      else if (r.status === "ausgelesen") toast.show({ message: `${SPARTE_LABEL[s]} ausgelesen` });
+      else toast.show({ message: r.status === "sparte_abweichend" ? `Passt nicht zu ${SPARTE_LABEL[s]}. Bitte andere Sparte wählen oder im Original nachsehen.` : "Nicht ausgelesen. Bitte im Original nachsehen.", tone: "error" });
     });
+  };
 
   return (
     <Card data-nicht-ausgelesen>
@@ -359,7 +365,8 @@ function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich
         {v.offen.map((o) => {
           const text = v.sperre ? SPERRE[v.sperre] : (GRUND[o.status] ?? GRUND.limit);
           const waehlen = !v.sperre && !readOnly && (o.status === "sparte_offen" || o.status === "sparte_abweichend");
-          const laedt = !v.sperre && (o.status === "neu" || o.status === "laeuft") && (laeuft || pending);
+          const diese = pending && gewaehlt?.doc === o.documentId ? gewaehlt : null;
+          const laedt = (!v.sperre && (o.status === "neu" || o.status === "laeuft") && (laeuft || pending)) || !!diese;
           return (
             <li key={o.documentId} className="px-5 py-3 text-sm" data-offen={o.status}>
               <div className="flex items-center gap-2">
@@ -370,12 +377,12 @@ function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich
               </div>
               <p className={`mt-1 flex items-center gap-1.5 pl-6 ${DT}`}>
                 {laedt ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                {text}
+                {diese ? `${SPARTE_LABEL[diese.sparte]} wird ausgelesen, das dauert einige Sekunden …` : text}
               </p>
               {waehlen ? (
                 <div className="mt-2 flex flex-wrap gap-1.5 pl-6" data-sparte-waehlen>
                   {v.sparten.map((s) => (
-                    <Button key={s} onClick={() => waehle(o, s)} disabled={pending}>
+                    <Button key={s} variant={diese?.sparte === s ? "primary" : undefined} onClick={() => waehle(o, s)} disabled={pending}>
                       {SPARTE_LABEL[s]}
                     </Button>
                   ))}

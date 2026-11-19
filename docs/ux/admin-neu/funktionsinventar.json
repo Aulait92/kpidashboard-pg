@@ -2425,15 +2425,15 @@
  },
  {
   "heute": "/admin/whatsapp/settings (global)",
-  "funktion": "A/B-Tests der Vorlagen mit Antwort- und Terminquote",
+  "funktion": "A/B-Tests der Vorlagen und Splittests der Lead-Reise mit Quoten je Fassung",
   "quelle": "app/admin/whatsapp/settings/ab-test-card.tsx",
-  "neu": "Einstellungen › WhatsApp-Vorlagen › A/B-Test",
+  "neu": "Liefern › A/B-Tests",
   "status": "abgedeckt",
-  "demo_view": "e-vorlagen",
+  "demo_view": "leads-ab-tests",
   "id": "ab-test-card--a-b-tests-der-vorlagen-mit-antwort-und",
-  "bereich": "werkzeuge",
+  "bereich": "liefern",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/whatsapp/page.tsx"
+  "ort_neu": "src/app/admin/neu/leads/ab-tests/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (global)",

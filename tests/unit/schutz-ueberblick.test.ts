@@ -16,6 +16,7 @@ import {
   SCHUTZ_SPARTEN,
   SCHUTZ_STATUS,
   schutzBereich,
+  schutzFragenStand,
   schutzKurz,
   schutzOffen,
   zitatFuer,
@@ -417,5 +418,29 @@ describe("„Was hat … schon?“ nach dem Usability-Check (18.11.2026)", () =>
     for (const st of SCHUTZ_REIHENFOLGE) expect(1.05 / (lum(SCHUTZ_STATUS[st].farbe) + 0.05)).toBeGreaterThanOrEqual(4.5);
     expect(SCHUTZ_STATUS["bei-uns"].farbe).toBe("#047857");
     expect(SCHUTZ_STATUS.pruefen.farbe).toBe("#b45309");
+  });
+});
+
+describe("schutzFragenStand (Zähler „Was hat … schon?“, 19.11.2026)", () => {
+  const e = (key: string, status: SchutzEintrag["status"], x: Partial<SchutzEintrag> = {}): SchutzEintrag => ({ key, label: SCHUTZ_SPARTEN[key] ?? key, status, ...x });
+  it("zählt nur Zeilen der Folie außerhalb des festen Angebots; Vorschläge und Beantwortetes gelten als beantwortet", () => {
+    const schutz = [
+      e("rechtsschutz", "pruefen"), // fest im Angebot: zeigt die Folie ohnehin als „Im Angebot“
+      e("unfall", "pruefen"), // offen
+      e("hausrat", "pruefen", { beantwortet: true }), // „Weiß nicht“ gewählt
+      e("haftpflicht", "luecke", { quelle: "chat" }), // Vorschlag aus dem Chat
+      e("wohngebaeude", "pruefen"), // offen, als Chance im Angebot (bei Bedarf)
+    ];
+    const sparten = [{ key: "rechtsschutz" }, { key: "wohngebaeude", zusatz: true }];
+    expect(schutzFragenStand(schutz, sparten)).toEqual({ beantwortet: 2, von: 4 });
+    expect(schutzFragenStand([], sparten)).toEqual({ beantwortet: 0, von: 0 });
+    // Vorsorge-Thema: offene Zeile im Bereich, noch nicht gespeichert
+    const vorsorge = { key: "risikoleben" as const, label: "Risikoleben", oeffner: "Frage" };
+    expect(schutzFragenStand(schutz, sparten, vorsorge)).toEqual({ beantwortet: 2, von: 5 });
+    expect(schutzFragenStand([...schutz, e("risikoleben", "luecke", { beantwortet: true })], sparten, vorsorge)).toEqual({ beantwortet: 3, von: 5 });
+  });
+  it("höchstens so viele Fragen, wie Zeilen auf die Folie passen", () => {
+    const viele = Object.keys(SCHUTZ_SPARTEN).slice(0, 10).map((k) => e(k, "pruefen"));
+    expect(schutzFragenStand(viele, []).von).toBeLessThanOrEqual(6);
   });
 });

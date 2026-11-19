@@ -2,7 +2,7 @@
 // dazu die Prüfung des vom Assistenten festgehaltenen Geburtsdatums (lib/whatsapp/geburt-chat.ts). Ole, 19.11.2026.
 import { describe, expect, it } from "vitest";
 import { ablaufBeispiel, ablaufLesen, geburtsdatumPruefen } from "@/lib/datum-antwort";
-import { BESTAETIGT, geburtImChat, type GeburtMerker } from "@/lib/whatsapp/geburt-chat";
+import { BESTAETIGT, geburtImChat, ohneGeburtsFrage, type GeburtMerker } from "@/lib/whatsapp/geburt-chat";
 import { minderjaehrigLautChat } from "@/lib/policen/regeln";
 
 const heute = new Date("2026-11-19T10:00:00Z");
@@ -131,5 +131,22 @@ describe("geburtImChat: kein Datum erkennbar (Ole, 19.11.2026)", () => {
   });
   it("„weiß nicht“ bleibt wie bisher", () => {
     expect(geburtImChat({ ...basis, wert: "weiß nicht", tierLead: false }).geburt).toBe("weiß nicht");
+  });
+});
+
+describe("Geburtsdatum: Antwort der App statt freier Worte", () => {
+  it("unlesbar: wörtliche Rückfrage, beim zweiten Mal offen", () => {
+    const g = geburtImChat({ wert: "asdfgh", tierLead: false, an: "sie", person: { nom: "Herr Berger" } as never, schon: [] } as never);
+    expect(g.frage).toBe("Das habe ich nicht als Datum erkannt. Wie lautet Ihr Geburtsdatum, zum Beispiel 14.05.1985?");
+    const g2 = geburtImChat({ wert: "qwertz", tierLead: false, an: "sie", person: "Herr Berger", schon: [{ art: "unlesbar", datum: "asdfgh" }] } as never);
+    expect(g2.offen).toBe(true);
+    expect(g2.frage).toBeUndefined();
+  });
+  it("offen: Fragen nach dem Geburtsdatum fliegen aus der Antwort", () => {
+    expect(
+      ohneGeburtsFrage("Vielen Dank, das notiere ich Ihnen für den Termin. Könnten Sie mir Ihr Geburtsdatum im Format TT.MM.JJJJ nennen, zum Beispiel 01.01.1980?", "sie"),
+    ).toBe("Vielen Dank, das notiere ich Ihnen für den Termin.");
+    expect(ohneGeburtsFrage("Wann sind Sie geboren?", "sie")).toBe("Danke, das klären wir dann im Termin.");
+    expect(ohneGeburtsFrage("Danke! Wohnen Sie zur Miete?", "sie")).toBe("Danke! Wohnen Sie zur Miete?");
   });
 });
