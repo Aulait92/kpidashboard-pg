@@ -28,8 +28,6 @@ Mit dem Teil „Was wir machen“ wird es eng; Situationsfragen kurz halten.
 > „Sind Sie Vertreter, und für welche Gesellschaft, oder Makler? Welche Sparten machen Sie vor allem?“
 > „Was haben Sie schon ausprobiert: Leads gekauft, Agentur, eigene Anzeigen? Was hat daran nicht gepasst?“
 > „Wer ruft bei Ihnen neue Anfragen zurück, und wie schnell schaffen Sie das im Alltag?“
-Nur bei Vertretern:
-> „Gibt es von Ihrer Gesellschaft Vorgaben, was Sie selbst bewerben dürfen?“
 Antwort auf „Was hat nicht gepasst“ notieren, sie kommt im Teil „Was wir machen“ wieder.
 
 **Min. 4 bis 6: Ziel und Zahlen**
@@ -48,14 +46,15 @@ Nur bei Maklern:
 Bezug auf seine Antwort von vorhin:
 > „Sie hatten erzählt, dass [bei gekauften Leads die Hälfte nicht erreichbar war / die Agentur nur Klicks geliefert hat].
 > Genau da setzen wir an.“
+Das „Ziel“ beim Budget ist ein Ziel, kein Versprechen: keine Quote, kein Payback in Monaten nennen.
 Nicht sagen: „hohe Leadqualität“ als Behauptung, Quoten, Payback oder „in der Regel bei unseren Kunden“ (keine Messung,
 § 5 UWG). Den Mechanismus beschreiben, den Vergleich zieht er selbst. Keine Aussagen über andere Anbieter.
 Belege: exklusive Anfragen AGB (`docs/rechtstexte/agb-2026-11-15-fassung-2.md`), WhatsApp-Assistent mit Terminbuchung,
 Policen vorab (Policen-Formular).
 
 **Min. 7 bis 9: Budget**
-> „Mit Ihren Zahlen rechne ich Ihnen im Beratungsgespräch genau vor, ab wann es sich für Sie trägt, inklusive Bestand,
-> Cross-Selling und Empfehlungen. Damit Sie dann nicht vom Preis überrascht werden, nenne ich Ihnen die Größenordnung jetzt:
+> „Unser Ziel ist, dass es sich für Sie schon vor Bestand, Cross-Selling und Weiterempfehlungen rechnet. Ob das bei Ihnen
+> klappt, rechne ich Ihnen im Beratungsgespräch mit Ihren Zahlen genau vor. Damit Sie dann nicht vom Preis überrascht werden, nenne ich Ihnen die Größenordnung jetzt:
 > Im Minimum sind es etwa 1.600 Euro netto im Monat, Werbebudget eingerechnet. Das Werbebudget zahlen Sie direkt an Meta.
 > Dazu kommt einmalig die Einrichtung, je nach Laufzeit 990 bis 2.490 Euro netto. Kommt diese Größenordnung für Sie
 > grundsätzlich in Frage?“
