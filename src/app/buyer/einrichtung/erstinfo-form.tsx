@@ -143,7 +143,7 @@ export function ErstinfoForm({
               <Field id="name" label="Vor- und Nachname">
                 <div className="flex gap-2">
                   {/* Anrede Pflicht für den Assistenten („Herr Kannapinn zeigt Ihnen …“), Ole 17.11.2026; „keine“ = Vor- und Nachname */}
-                  <select id="anrede" name="anrede" aria-label="Anrede" required className={`${input} w-28 shrink-0`} defaultValue={initial.anrede ?? ""}>
+                  <select id="anrede" name="anrede" aria-label="Anrede" required className={`${input.replace("w-full", "")} w-28 shrink-0`} defaultValue={initial.anrede ?? ""}>
                     <option value="" disabled>
                       Anrede
                     </option>
@@ -151,7 +151,7 @@ export function ErstinfoForm({
                     <option value="Frau">Frau</option>
                     <option value="keine">Keine</option>
                   </select>
-                  <input id="name" name="name" className={`${input} min-w-0 flex-1`} defaultValue={d.name} autoComplete="name" />
+                  <input id="name" name="name" required placeholder="Vor- und Nachname" className={`${input} min-w-0 flex-1`} defaultValue={d.name} autoComplete="name" />
                 </div>
               </Field>
               <Field id="firma" label="Firma (falls vorhanden)">
