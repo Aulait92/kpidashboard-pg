@@ -33,9 +33,10 @@ describe("Vorlagen-Plan", () => {
   });
 
   it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
-    // Erstanschreiben v9 (18.11.2026, kurz, nur mit PDF-Kopf), übrige Zwecke v4
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v9");
-    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v9_sie");
+    // Erstanschreiben v10 (19.11.2026, feste Frage, nur mit PDF-Kopf; Fassung b = v11), übrige Zwecke v4
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v10");
+    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v10_sie");
+    expect(templateNameFor("outreach_tkv", undefined, "sie", "b")).toBe("pg_outreach_tkv_v10_b_sie");
     expect(templateNameFor("outreach_tkv", "v6", "sie_ohne_name", "a", false)).toBe("pg_outreach_tkv_v6_ohnepdf_sie_ohne_name");
     // Nachfassen v5 (Ole, 18.11.2026, zur Einreichung freigegeben: Vermittler-Nennung)
     expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v5_b_sie");
@@ -62,8 +63,8 @@ describe("Vorlagen-Plan", () => {
     const body = templateBodyFor("followup_noshow", "Anid Brand");
     expect(body).toContain("Anid Brand");
     expect(body).not.toContain("[Berater]");
-    // Erstanschreiben v6 bis v8: Vermittler als Platzhalter; v9 ohne Vermittler, {{2}} ist die erste Frage
-    expect(templateBodyFor("outreach", "Anid Brand")).toBe("Hallo {{1}}, danke für deine Anfrage! *{{2}}?*");
+    // Erstanschreiben v6 bis v8: Vermittler als Platzhalter; v9 ohne Vermittler, {{2}} ist die erste Frage; v10 feste Frage
+    expect(templateBodyFor("outreach", "Anid Brand")).toBe("Hallo {{1}}, danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*");
   });
 
   it("Antrag: Beispielwerte je Platzhalter, Knöpfe wo eine Antwort erwartet wird, Abmeldeknopf bei Werbung", () => {
@@ -94,7 +95,12 @@ describe("Vorlagen-Plan", () => {
     expect(TEMPLATE_BUTTONS.followup_last).toEqual(["Ja, noch aktuell", "Nein, danke"]);
     expect(TEMPLATE_BUTTONS.booking_confirmation).toEqual(["Termin verschieben"]);
     expect(TEMPLATE_BUTTONS.campaign_cross_sell).toEqual(["Ja, gern prüfen", "Kein Bedarf", OPT_OUT_BUTTON]);
-    for (const p of OUTREACH_PURPOSES) expect(TEMPLATE_BUTTONS[p]).toBeUndefined();
+    // Erstanschreiben v10 (Ole, 19.11.2026): Antwortknöpfe der festen Frage, höchstens 3 und je 20 Zeichen (auch interaktiv)
+    for (const p of OUTREACH_PURPOSES) {
+      expect(TEMPLATE_BUTTONS[p]!.length, p).toBeGreaterThan(1);
+      expect(TEMPLATE_BUTTONS[p]!.length, p).toBeLessThanOrEqual(3);
+      for (const k of TEMPLATE_BUTTONS[p]!) expect(k.length, k).toBeLessThanOrEqual(20);
+    }
     // Erstanschreiben: kein „Später“ und keine Erlaubnisfrage
     for (const p of OUTREACH_PURPOSES) {
       expect(TEMPLATE_BUTTONS[p] ?? []).not.toContain("Später");

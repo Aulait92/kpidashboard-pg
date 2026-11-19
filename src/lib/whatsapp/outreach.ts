@@ -25,9 +25,10 @@ import {
   erstanschreibenZweck,
   erstanschreibenV8Params,
   erstanschreibenV9Params,
-  frageplan,
+  erstanschreibenV10Params,
   outreachProdukt,
   tierWort,
+  v10Moeglich,
   type Herkunft,
 } from "@/lib/whatsapp/erstanschreiben";
 import { vermittlerName } from "@/lib/whatsapp/gespraech";
@@ -100,11 +101,16 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   const first = firstNameOf(opts.name);
   // v6 (Ole, 17.11.2026): Vermittler als Person im Dativ („von Herrn Kannapinn“, Du Vorname), Rückfall Agentur
   const person = (an: Ansprache) => vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.firm || kurz });
-  // Parameter je gewählter Vorlage: v9 erste offene Frage (ohne „?“), TKV mit Tier davor; v8 Vermittler, erste offene
-  // Frage; v6/v7 Thema, Vermittler, Frage; Produkt
-  // (v5 mit Tier, v4) bzw. allgemeine Fassung (nur Name), v3 mit Link
+  // v10 (Ole, 19.11.2026): feste Frage je Zweck. Beantwortet das Formular genau diese Frage schon (bzw. allgemein: schon
+  // gebucht), bekommt der Lead weiter v9 mit der ersten offenen Frage als Platzhalter (maxVersion)
+  const v10 = v10Moeglich(opts.source, formular, { gebucht });
+  // Parameter je gewählter Vorlage: v10/v11 nur das Tier (TKV); v9 erste offene Frage (ohne „?“), TKV mit Tier davor;
+  // v8 Vermittler, erste offene Frage; v6/v7 Thema, Vermittler, Frage; Produkt
+  // (v5 mit Tier, v4) bzw. allgemeine Fassung (nur Name), v3 mit Link. Maßgeblich ist der Zweck der gewählten Vorlage
+  // (Rückfall auf die allgemeine Fassung hat kein Tier)
   const paramsFor = (p: { version: number; ansprache: Ansprache; purpose?: NoticePurpose }): string[] => {
-    if (p.version >= 9) return [first, ...erstanschreibenV9Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz, gebucht })];
+    if (p.version >= 10) return [first, ...erstanschreibenV10Params({ source: opts.source, an: p.ansprache, formular, purpose: p.purpose ?? purpose })];
+    if (p.version >= 9) return [first, ...erstanschreibenV9Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz, gebucht, purpose: p.purpose ?? purpose })];
     if (p.version >= 8) return [first, ...erstanschreibenV8Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz, gebucht })];
     if (p.version >= 6) {
       return [first, ...erstanschreibenV6Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz, gebucht })];
@@ -114,20 +120,31 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     if (p.version === 4) return [first, ...rest];
     return [first, url];
   };
+  // Höchste Textversion je Zweck (templates.ts rankOutreach): ohne v10 höchstens v9; mit v10 nie die allgemeine
+  // Telefonatsfrage für einen Produkt-Lead (Rückfall „outreach“ höchstens v9; reine Hausrat-Leads dürfen die v10 des
+  // Privatschutzes bekommen, deren Frage nach bestehenden Verträgen passt)
+  const maxVersion: Partial<Record<NoticePurpose, number>> = !v10
+    ? Object.fromEntries((["outreach", "outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat"] as const).map((x) => [x, 9]))
+    : purpose === "outreach"
+      ? {}
+      : { outreach: 9 };
   return {
     who,
     purpose,
     variant,
-    params: paramsFor({ version: 9, ansprache: opts.an }),
+    v10,
+    maxVersion,
+    params: paramsFor({ version: v10 ? 10 : 9, ansprache: opts.an }),
     paramsFor,
     legacyParams: [first, url],
-    // Knöpfe im offenen Fenster nur, wenn sie zur gestellten Frage passen (Frage 1 bzw. Telefonat)
-    textButtons: gebucht && !outreachProdukt(opts.source) ? [] : ersteFrageKnoepfe(opts.source, formular),
+    // Knöpfe im offenen Fenster nur, wenn sie zur gestellten Frage passen (v10 feste Frage, sonst Frage 1 bzw. Telefonat)
+    textButtons: ersteFrageKnoepfe(opts.source, formular, { gebucht, herkunft }),
     document,
     documentEntwurf,
     pdfGrund,
     herkunft,
-    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, vermittler: person(opts.an).dat, vermittlerNom: person(opts.an).nom, source: opts.source, herkunft, formular, gebucht }),
+    // Freitext im offenen Fenster: v10 bzw. v11 (zugeteilte Fassung) mit denselben Knöpfen, sonst v9
+    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, vermittler: person(opts.an).dat, vermittlerNom: person(opts.an).nom, source: opts.source, herkunft, formular, gebucht, variant }),
   };
 }
 
@@ -144,7 +161,7 @@ export async function sendOutreach(opts: { customerId: string; leadId: string; p
     customerId: opts.customerId,
     to: opts.phone,
     purpose: m.purpose,
-    params: m.paramsFor({ version: 9, ansprache: opts.an }),
+    params: m.params,
     paramsFor: m.paramsFor,
     legacyParams: m.legacyParams,
     textButtons: m.textButtons,
@@ -154,7 +171,11 @@ export async function sendOutreach(opts: { customerId: string; leadId: string; p
     anrede: m.who.kontakt,
     document: m.document,
     // Reine Hausrat-Leads: bis outreach_hausrat freigegeben ist, die allgemeine bzw. die Privatschutz-Fassung
-    outreach: { fallbackPurposes: m.purpose === "outreach" ? [] : m.purpose === "outreach_hausrat" ? ["outreach", "outreach_privatschutz"] : ["outreach"], documentEntwurf: m.documentEntwurf },
+    outreach: {
+      fallbackPurposes: m.purpose === "outreach" ? [] : m.purpose === "outreach_hausrat" ? ["outreach", "outreach_privatschutz"] : ["outreach"],
+      documentEntwurf: m.documentEntwurf,
+      maxVersion: m.maxVersion,
+    },
     variant: m.variant,
   });
   // Fenster offen (Freitext): Erstinformation unmittelbar als PDF hinterher (Nachricht 2, § 16 VersVermV; unvollständig

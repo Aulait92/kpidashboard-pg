@@ -14,6 +14,8 @@
 // KI-Kennzeichnung). Nur v6 wurde je
 // Fassung zusätzlich ohne Kopf eingereicht („_ohnepdf“); seit dem Live-Test 17.11.2026 geht das Erstanschreiben nie ohne
 // Erstinformation raus, die _ohnepdf-Fassungen werden nicht mehr gesendet und ab v7 nicht mehr eingereicht.
+// Erstanschreiben v10 (Ole, 19.11.2026): je Zweck die Fassungen a (v10) und b (v11, pg_<zweck>_v10_b_…) mit PDF-Kopf,
+// Fußzeile „KI-Assistent“ und den Antwortknöpfen der festen Frage (TEMPLATE_BUTTONS); Platzhalter nur Name (TKV + Tier).
 
 import {
   erstinfoFooterFor,
@@ -29,6 +31,7 @@ import {
   paramLabelsFor,
   PLATZHALTER_AB,
   ERSTANSCHREIBEN_V6_PARAMS,
+  ERSTANSCHREIBEN_V8_PARAMS,
   isOutreachPurpose,
   renderTemplate,
   templateTextFor,
@@ -280,9 +283,11 @@ export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | An
  */
 export function exampleRestFor(purpose: NoticePurpose, an: Ansprache, version?: number): string[] {
   const f = formOf(purpose, an) === "du" ? "du" : "sie_ohne_name";
-  // Erstanschreiben v6/v7 (noch bei Meta freigegeben): Thema, Vermittler, Erste Frage
-  const v6 = version !== undefined && version >= 6 && version < 8 && isOutreachPurpose(purpose) ? ERSTANSCHREIBEN_V6_PARAMS : undefined;
-  const alt = v6 ?? (version !== undefined && !neuePlatzhalter(purpose, version) ? PLATZHALTER_AB[purpose]?.frueher : undefined);
+  // Erstanschreiben v6/v7 (noch bei Meta freigegeben): Thema, Vermittler, Erste Frage; v8 Vermittler, Erste Frage
+  // (Ole, 19.11.2026: seit v10 steht in PLATZHALTER_AB die Belegung der v9)
+  const outreachAlt =
+    version !== undefined && isOutreachPurpose(purpose) ? (version >= 6 && version < 8 ? ERSTANSCHREIBEN_V6_PARAMS : version === 8 ? ERSTANSCHREIBEN_V8_PARAMS : undefined) : undefined;
+  const alt = outreachAlt ?? (version !== undefined && !neuePlatzhalter(purpose, version) ? PLATZHALTER_AB[purpose]?.frueher : undefined);
   if (alt) return exampleValuesFor(purpose, f, null, alt);
   return f === "du" ? exampleValuesFor(purpose, "du").slice(1) : exampleValuesFor(purpose, "sie_ohne_name");
 }
