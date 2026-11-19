@@ -29,6 +29,8 @@ await c.query(
 // ohne nächsten Schritt (unten „Aufräumen“, in Kontakte „Festlegen“).
 const { rows: dj } = await c.query(`SELECT id FROM "Lead" WHERE "customerId" = $1 AND name = 'Dennis Jung' LIMIT 1`, [rows[0].id]);
 if (dj[0]) {
+  // seed.ts setzt Dennis Jung inzwischen auf „Kein Interesse“; für „Wie lief es?“ braucht er eine offene Phase (19.11.2026)
+  await c.query(`UPDATE "Lead" SET status = 'Termin vereinbart' WHERE id = $1`, [dj[0].id]);
   await c.query(
     `INSERT INTO "Appointment" (id, "customerId", "leadId", mode, "startsAt", "endsAt", status, "updatedAt")
      VALUES ('ev_wie_lief', $1, $2, 'video', date_trunc('day', now()) - interval '1 day' + interval '13 hours',

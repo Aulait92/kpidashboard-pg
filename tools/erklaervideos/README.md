@@ -34,6 +34,13 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
   `EV_PART=langB EV_FROM=9 node rec_ev.js lang`, je Teil `mux.py langA …` bzw. `mux.py langB …` und mit
   `ffmpeg -f concat -c copy` aneinanderhängen. `python3 scenes_oa.py kurz` vertont nur eine Fassung.
 
+### Zusatz (Stand 19.11.2026)
+
+- Mehrere Agenten mit eigenem `next dev` (je 4 bis 8 GB) sprengen den Speicher, und `next dev` ist für die Aufnahme zu langsam (Szenen laufen aus dem Takt). Besser: `NODE_OPTIONS=--max-old-space-size=8192 npx next build --webpack`, dann `npx next start -p <Port>` (Port 3123 ggf. belegt, dann z. B. 3131 und `APP=http://localhost:3131`).
+- Playwright 1.65 erwartet `ffmpeg-1013` (VP9). Ohne Download: `mkdir -p /var/tmp/pwb/ffmpeg-1013 && ln -s /usr/bin/ffmpeg /var/tmp/pwb/ffmpeg-1013/ffmpeg-linux && touch /var/tmp/pwb/ffmpeg-1013/INSTALLATION_COMPLETE`, dann `PLAYWRIGHT_BROWSERS_PATH=/var/tmp/pwb PW_CHROME=/usr/bin/google-chrome`. Das alte `ffmpeg-1011` liefert stumm keine Datei.
+- Nur das Bild neu, Text gleich: Ton je Szene aus dem bisherigen MP4 schneiden (Sprechbeginn per `silencedetect`, ab 0,15 s davor, Länge `dur` aus `kurz.json`), so am 19.11.2026 für „Kurz“ gemacht.
+- `scenes_oa.py` (LANG) und `rec_ev.js` sind schon auf die Oberfläche vom 19.11.2026 angepasst („Abschluss“ statt „Gewonnen“, Kontakte mit „Zu erledigen“, Wachstum „Rechnet sich das?“ und „Vom Lead zum Kunden“, „Kosten & Ertrag“ entfällt). „Ausführlich“ ist damit noch nicht neu vertont: dafür braucht die Umgebung Zugang zu api.openai.com (TTS) und huggingface.co (faster-whisper-Modell für `check_oa.py`).
+
 ### Zusatz für „WhatsApp verbinden“ (Stand 15.11.2026)
 
 - Demo-Kunde mit offener Einrichtung: `DATABASE_URL=… node local/wa_einrichtung.mjs` (Login `max.mustermann@gmail.com` / `Demo12345!`, erfundene Daten, Beispielnummer +49 151 23456789).
