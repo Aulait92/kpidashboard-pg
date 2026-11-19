@@ -2,7 +2,7 @@
 // simuliert: Terminvorschlag mit Zeit-Knöpfen → Klick bucht sofort (kurze Bestätigung, auch ohne E-Mail) → Komplettcheck
 // (Ja: 45 Min. frei bzw. zwei andere Zeiten) → offene Angebotsfragen → bei Ja Vertragsfrage → Policen-Bitte (genau
 // einmal) → Schluss mit „Stimmt die Adresse?“. Einladung an den Lead genau einmal, sobald Adresse und Komplettcheck
-// feststehen, ohne Antwort nach 15 Min. (kurzfristig 5, spätestens 60 Min. vor Beginn); Änderungen danach als EINE
+// feststehen, ohne Antwort nach 30 Min. (kurzfristig 5, spätestens 60 Min. vor Beginn); Änderungen danach als EINE
 // Aktualisierung. Rückfall ohne Antwort: nächster Schritt, nie Schluss bei offenen Angebotsfragen. Policen-Erinnerungen.
 //   Nachfassen 2 Std. nach dem Terminvorschlag: gleiche Zeit-Knöpfe, nur 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, nicht
 //   nach Antwort, Abmeldung, „Kein Interesse“ oder pausiertem Assistenten.
@@ -320,13 +320,9 @@ describe("Termin-Strecke mit Knöpfen", () => {
 
     // „Ja, stimmt“ → Einladung genau einmal (mit 45 Min.), zugesagt, Abschlusssatz
     await knopf(phone, "email:ja", "Ja, stimmt");
-    expect(gesendet().at(-2)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
-    // Danach die Frage nach dem Kalendereintrag mit Knöpfen (Ole, 18.11.2026)
-    expect(gesendet().at(-1)!.body).toBe("Konnten Sie den Termin in Ihrem Kalender eintragen?");
-    expect(gesendet().at(-1)!.buttons).toEqual([
-      { id: "eingetragen:ja", title: "Ja, eingetragen" },
-      { id: "eingetragen:nein", title: "Nein, bitte nochmal" },
-    ]);
+    expect(gesendet().at(-1)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    // Die Frage nach dem Kalendereintrag kommt nicht in derselben Minute, sondern frühestens 10 Min. später über den
+    // Cron (Ole, 19.11.2026; tests/integration/einladung-rueckfall.test.ts)
     expect(mails).toEqual([{ id: appt.id, kind: "booked", ende: t2.endsAt!.toISOString(), an: "julia@example.com" }]);
     const t3 = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } });
     expect(t3.confirmedAt).not.toBeNull();
@@ -433,12 +429,12 @@ describe("Termin-Strecke mit Knöpfen", () => {
     // „Andere Adresse“ → Frage; unvollständige Adresse → noch einmal; gültige → Einladung an die neue, genau einmal
     await knopf(phone, "email:andere", "Andere Adresse");
     expect(gesendet().at(-1)!.body).toBe("Gern! An welche E-Mail-Adresse soll die Einladung gehen?");
-    // Solange keine neue Adresse da ist, geht nichts an die alte (auch nicht nach 15 Min.)
+    // Solange keine neue Adresse da ist, geht nichts an die alte (auch nicht nach 30 Min.)
     expect((await runEinladungNachholen(new Date(Date.now() + 30 * 60_000))).gesendet).toBe(0);
     await text(phone, "julia.neu@example");
     expect(gesendet().at(-1)!.body).toBe("Die Adresse scheint nicht vollständig zu sein. Schreiben Sie sie mir bitte noch einmal, z. B. name@beispiel.de.");
     await text(phone, "julia.neu@example.com");
-    expect(gesendet().at(-2)!.body).toBe("Danke, die Einladung ist an julia.neu@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(gesendet().at(-1)!.body).toBe("Danke, die Einladung ist an julia.neu@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
     expect(mails.map((m) => m.kind)).toEqual(["booked"]);
     expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).einladungAn).toBe("julia.neu@example.com");
     expect(policenBitten(gesendet())).toBe(1);
@@ -454,7 +450,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(angebot.buttons!.map((b) => b.id.split(":")[0])).toEqual(["lang", "lang", "lang"]);
     expect(angebot.buttons![2]).toEqual({ id: "lang:behalten", title: "Zeit behalten" });
     expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).verlaengerung).toBe("angebot");
-    // Ohne Antwort geht die Einladung nach 15 Min. trotzdem (aktueller Stand)
+    // Ohne Antwort geht die Einladung nach 30 Min. trotzdem (aktueller Stand)
     cal.langBelegt = false;
     const wahl = angebot.buttons![1].id.slice(5);
     await knopf(phone, angebot.buttons![1].id, angebot.buttons![1].title);
@@ -498,7 +494,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(st.ai).toBe(0);
     expect((await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } })).contactEmail).toBe("julia.becker@example.com");
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).email).toBe("julia.becker@example.com");
-    expect(gesendet().at(-2)!.body).toBe("Danke, die Einladung ist an julia.becker@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(gesendet().at(-1)!.body).toBe("Danke, die Einladung ist an julia.becker@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
     expect(mails.map((m) => m.kind)).toEqual(["booked"]);
   });
 
@@ -518,7 +514,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await text(phone, "Ja das passt so, danke");
     const t = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } });
     expect(t.confirmedAt).not.toBeNull();
-    expect(gesendet().at(-2)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(gesendet().at(-1)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
     expect(mails.map((m) => m.kind)).toEqual(["booked"]);
     const { eraseLead } = await import("@/lib/erasure");
     await eraseLead(lead.id);
@@ -538,7 +534,8 @@ describe("Termin-Strecke mit Knöpfen", () => {
   describe("Einladung ohne Antwort (Rückfall) und Änderungen nach dem Versand", () => {
     async function ausstehend(o: { startIn: number; gebuchtVor: number; antwortVor?: number; email?: string | null }) {
       const now = new Date();
-      const { lead, conv } = await leadMitChat({ email: o.email === undefined ? "julia@example.com" : o.email });
+      // Chatverlauf 20 Min. früher (letzte Nachricht 40 Min. her), damit er die Wartezeit nicht bestimmt
+      const { lead, conv } = await leadMitChat({ email: o.email === undefined ? "julia@example.com" : o.email, now: new Date(now.getTime() - 20 * 60_000) });
       await prisma.conversation.update({ where: { id: conv.id }, data: { contactEmail: o.email === undefined ? "julia@example.com" : o.email } });
       if (o.antwortVor != null) await prisma.message.create({ data: { conversationId: conv.id, direction: "inbound", body: "Ok", createdAt: new Date(now.getTime() - o.antwortVor) } });
       const appt = await prisma.appointment.create({
@@ -548,7 +545,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     }
     const MIN = 60_000;
 
-    it("Regel: 15 Min. ohne Antwort, kurzfristig (unter 3 Std.) 5 Min., spätestens 60 Min. vor Beginn", () => {
+    it("Regel der Mail-Strecke (einladungFaellig): 15 Min. ohne Antwort, kurzfristig (unter 3 Std.) 5 Min., spätestens 60 Min. vor Beginn", () => {
       const now = new Date("2026-11-20T10:00:00Z");
       const f = (startIn: number, gebuchtVor: number, antwortVor: number | null = null) =>
         einladungFaellig({ startsAt: new Date(now.getTime() + startIn), gebuchtAt: new Date(now.getTime() - gebuchtVor), letzteAntwort: antwortVor == null ? null : new Date(now.getTime() - antwortVor), now });
@@ -560,10 +557,10 @@ describe("Termin-Strecke mit Knöpfen", () => {
       expect(f(59 * MIN, 1 * MIN, 0)).toBe(true);
     });
 
-    it("15 Min. ohne Antwort: Einladung an die bekannte Adresse, genau einmal", async () => {
-      const a = await ausstehend({ startIn: 2 * 24 * HOUR, gebuchtVor: 14 * MIN, antwortVor: 20 * MIN });
+    it("30 Min. ohne Antwort (WhatsApp, einladung-rueckfall.ts): Einladung an die bekannte Adresse, genau einmal", async () => {
+      const a = await ausstehend({ startIn: 2 * 24 * HOUR, gebuchtVor: 29 * MIN, antwortVor: 35 * MIN });
       expect((await runEinladungNachholen(a.now)).gesendet).toBe(0);
-      const b = await ausstehend({ startIn: 2 * 24 * HOUR, gebuchtVor: 16 * MIN, antwortVor: 20 * MIN });
+      const b = await ausstehend({ startIn: 2 * 24 * HOUR, gebuchtVor: 31 * MIN, antwortVor: 35 * MIN });
       await runEinladungNachholen(b.now);
       expect(mails.filter((m) => m.id === b.appt.id).map((m) => m.kind)).toEqual(["booked"]);
       expect(mails.some((m) => m.id === a.appt.id)).toBe(false);
@@ -585,7 +582,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     });
 
     it("Änderung nach dem Versand: neue Adresse bzw. 45 Min. als EINE Aktualisierung (gleiche UID, SEQUENCE + 1)", async () => {
-      const a = await ausstehend({ startIn: 3 * 24 * HOUR, gebuchtVor: 20 * MIN });
+      const a = await ausstehend({ startIn: 3 * 24 * HOUR, gebuchtVor: 40 * MIN });
       await runEinladungNachholen(a.now);
       expect(mails.map((m) => m.kind)).toEqual(["booked"]);
       // Neue Adresse: Einladung an die neue (Aktualisierung), die alte bekommt nichts mehr
@@ -616,7 +613,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       const a = await ausstehend({ startIn: 3 * 24 * HOUR, gebuchtVor: 1 * MIN });
       expect(await komplettcheckVerlaengern(a.appt.id, { angebot: true })).toBe("verlaengert");
       expect(mails).toHaveLength(0);
-      await runEinladungNachholen(new Date(a.now.getTime() + 20 * MIN));
+      await runEinladungNachholen(new Date(a.now.getTime() + 35 * MIN));
       expect(mails).toHaveLength(1);
       expect(new Date(mails[0].ende).getTime() - a.appt.startsAt.getTime()).toBe(45 * MIN);
     });

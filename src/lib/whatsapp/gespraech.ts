@@ -9,7 +9,8 @@
 //   5. Nur bei Komplettcheck „Ja“: Frage nach bestehenden Verträgen (lib/whatsapp/vorvertraege.ts), Policen-Einladung.
 //   6. Schluss (abschlussText): kurze Bereitlegen-Zeile, ggf. Policen-Bitte, dann „Zum Schluss: Die Einladung mit
 //      Kalendereintrag geht an … Stimmt die Adresse?“ [Ja, stimmt] [Andere Adresse]; ohne Adresse die freiwillige Frage
-//      danach. Die Einladung geht spätestens 15 Min. nach der Buchung raus (termin-strecke.ts runEinladungNachholen).
+//      danach. Ohne Antwort geht die Einladung nach 30 Min. trotzdem raus, ohne Adresse ein Link per WhatsApp
+//      (lib/whatsapp/einladung-rueckfall.ts).
 // Ablauf und Versand: lib/whatsapp/termin-strecke.ts. Keine Gedankenstriche, kurze Sätze, keine Versprechen.
 
 import { a, type Ansprache } from "@/lib/ansprache";

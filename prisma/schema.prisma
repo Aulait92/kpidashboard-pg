@@ -1464,11 +1464,15 @@ model Appointment {
   // Einladung mit Kalendereintrag an den Lead (Ole, 17.11.2026, lib/calendar/einladung.ts): genau einmal, gesendet am
   // und an welche Adresse; Änderungen danach als Aktualisierung (gleiche UID, einladungSeq + 1). Bei Buchung im
   // WhatsApp-Assistenten ausstehend (einladungAusstehend = Buchungszeit), bis Adresse und Komplettcheck feststehen bzw.
-  // der Lead nicht mehr antwortet (15 Min., kurzfristig 5 Min., spätestens 60 Min. vor Beginn)
+  // der Lead nicht mehr antwortet (WhatsApp 30 Min., kurzfristig 5 Min., spätestens 60 Min. vor Beginn,
+  // lib/whatsapp/einladung-rueckfall.ts)
   einladungAt          DateTime?
   einladungAn          String?
   einladungSeq         Int       @default(0)
   einladungAusstehend  DateTime?
+  // Merkfeld je Termin und Adresse (Ole, 19.11.2026): an diese Adressen (klein geschrieben) ging die Einladung schon,
+  // „wa:<Beginn>“ = Link zum Eintragen per WhatsApp (ohne Adresse). Nie zweimal dieselbe Einladung an dieselbe Adresse.
+  einladungAdressen    String[]  @default([])
   // Wie gebucht (Ole, 18.11.2026, E1 Mail-Strecke, Kennzahl Anteil Termin über die Mail-Strecke):
   // bot | booking_page | advisor | mail_strecke; null = vor diesem Feld gebucht
   bookedVia            String?

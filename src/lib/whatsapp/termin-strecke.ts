@@ -10,7 +10,8 @@
 //     → Schluss: Bereitlegen in einer Zeile, „Zum Schluss: Die Einladung … geht an … Stimmt die Adresse?“
 //       [Ja, stimmt] [Andere Adresse] bzw. ohne Adresse die freiwillige Frage danach.
 // Die Einladung an den Lead geht genau einmal, sobald Adresse und Komplettcheck feststehen (lib/calendar/einladung.ts),
-// ohne Antwort spätestens nach 15 Min. (kurzfristig 5 Min., spätestens 60 Min. vor Beginn).
+// ohne Antwort nach 30 Min. (kurzfristig 5 Min., spätestens 60 Min. vor Beginn; ohne Adresse ein Link per WhatsApp,
+// lib/whatsapp/einladung-rueckfall.ts).
 // Antwortet der Lead nicht, wird nicht nachgehakt, aber nach einer Stunde der nächste Schritt geschickt
 // (runStreckeAbschliessen, WhatsApp-Cron; nur im 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr): Tierfrage → Komplettcheck, Komplettcheck → erste
 // Angebotsfrage, Zeitangebot → Zeit behalten, Vertragsfrage → Policen-Bitte (die Verträge entfallen, die Bitte nicht),
@@ -780,22 +781,23 @@ export async function emailBestaetigt(conversationId: string, now = new Date()):
   await zusagen(k, now, "email_bestaetigt");
   await einladungPruefen(k, now);
   await sende(k, einladungUnterwegs(k.an));
-  await eingetragenFragen(k, now);
   return true;
 }
 
 /**
  * Nach „Die Einladung ist unterwegs“ (Ole, 18.11.2026): „Konnten Sie den Termin in Ihrem Kalender eintragen?“ mit
  * Knöpfen [Ja, eingetragen] [Nein, bitte nochmal]. Einmal je Termin, nur im offenen 24-h-Fenster (Knöpfe gehen nur dort).
+ * Frühestens 10 Min. nach dem Versand, über den WhatsApp-Cron (Ole, 19.11.2026, einladung-rueckfall.ts runKalenderFrage).
  */
-async function eingetragenFragen(k: StreckenKontext, now: Date): Promise<void> {
-  if (!k.termin) return;
+export async function eingetragenFragen(k: StreckenKontext, now: Date): Promise<boolean> {
+  if (!k.termin) return false;
   const conv = await prisma.conversation.findUnique({ where: { id: k.conversationId }, select: { windowExpiresAt: true } });
-  if (!conv?.windowExpiresAt || conv.windowExpiresAt <= now) return;
+  if (!conv?.windowExpiresAt || conv.windowExpiresAt <= now) return false;
   const schon = await prisma.message.findFirst({ where: { conversationId: k.conversationId, direction: "internal", kind: STRECKE.eingetragenFrage, body: { contains: k.termin.id } }, select: { id: true } });
-  if (schon) return;
+  if (schon) return false;
   await merke(k.conversationId, STRECKE.eingetragenFrage, { appointmentId: k.termin.id });
   await sende(k, eingetragenFrage(k.an), EINGETRAGEN_KNOEPFE);
+  return true;
 }
 
 /**
@@ -856,7 +858,6 @@ export async function emailAntwort(conversationId: string, text: string, now = n
   await zusagen(k, now, "email_genannt");
   await einladungPruefen(k, now);
   await sende(k, einladungUnterwegs(k.an, email));
-  await eingetragenFragen(k, now);
   return true;
 }
 
