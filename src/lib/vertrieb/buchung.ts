@@ -437,6 +437,59 @@ async function pushOle(title: string, body: string, contactId: string, tag: stri
   await sendToAdmins({ title, body, url: `/admin/vertrieb/kontakte/${contactId}`, tag }).catch((e) => reportError(e, "vertrieb-buchung-push"));
 }
 
+// ─── E-Mail an uns (Ole, 19.11.2026): jede Buchung, Verschiebung und Absage über /termin auch per Mail ──
+
+export type TeamMailKind = "booked" | "rescheduled" | "cancelled";
+
+/** Inhalt der Mail an uns (rein, für Tests). */
+export function teamMailContent(
+  kind: TeamMailKind,
+  m: { title: string; startAt: Date; previousStartAt?: Date | null; name: string; email?: string | null; joinUrl?: string | null; answers?: string | null; reason?: string | null },
+) {
+  const w = when(m.startAt);
+  const head =
+    kind === "booked"
+      ? { subject: `Neuer Termin: ${m.name}, ${whenShort(m.startAt)} Uhr`, line: `${m.name} hat einen ${m.title} gebucht: ${w}.` }
+      : kind === "rescheduled"
+        ? {
+            subject: `Termin verschoben: ${m.name}, neu ${whenShort(m.startAt)} Uhr`,
+            line: `${m.name} hat den ${m.title} verschoben. Neu: ${w}${m.previousStartAt ? ` (war ${when(m.previousStartAt)})` : ""}.`,
+          }
+        : { subject: `Termin abgesagt: ${m.name}, ${whenShort(m.startAt)} Uhr`, line: `${m.name} hat den ${m.title} am ${w} abgesagt.` };
+  const list = [
+    m.email ? `E-Mail: ${m.email}` : null,
+    ...(m.answers ?? "").split("\n").map((l) => l.trim()),
+    kind !== "cancelled" && m.joinUrl ? `Videocall: ${m.joinUrl}` : null,
+    kind === "cancelled" ? `Grund: ${m.reason?.trim() || "keiner angegeben"}` : null,
+  ].filter((l): l is string => !!l);
+  return { subject: head.subject, paragraphs: [head.line], list };
+}
+
+async function mailOle(kind: TeamMailKind, contactId: string, m: Parameters<typeof teamMailContent>[1]) {
+  try {
+    const c = teamMailContent(kind, m);
+    let button: { label: string; url: string } | undefined;
+    try {
+      button = { label: "Kontakt öffnen", url: `${getAppUrl()}/admin/vertrieb/kontakte/${contactId}` };
+    } catch {
+      button = undefined; // ohne APP_URL (z. B. Tests) Mail ohne Knopf
+    }
+    const res = await sendCustomerMail({
+      to: process.env.ADMIN_EMAIL?.trim() || PROVIDER.email,
+      subject: c.subject,
+      greeting: "Hallo,",
+      paragraphs: c.paragraphs,
+      list: c.list,
+      button,
+      signature: PROVIDER.brand,
+      replyTo: m.email ?? null,
+    });
+    if (!res.ok) console.warn(`[vertrieb-buchung team-mail] ${kind} ${contactId}: ${res.error}`);
+  } catch (err) {
+    reportError(err, "vertrieb-buchung-team-mail", { contact: contactId, kind });
+  }
+}
+
 /** Öffentliche Buchung: Kontakt zuordnen bzw. anlegen, Termin anlegen, CRM, Push, E-Mail, WhatsApp. */
 export async function bookSalesMeeting(opts: {
   type: SalesBookingType;
@@ -505,6 +558,7 @@ export async function bookSalesMeeting(opts: {
   );
   await pushOle(`📅 Neue ${t.title}: ${input.name}`, `${whenShort(opts.start)} Uhr · ${input.company}`, contactId, `sales-booking:${res.meetingId}`);
   await sendInviteeMail(res.meetingId, "booked");
+  await mailOle("booked", contactId, { title: t.title, startAt: opts.start, name: input.name, email: input.email, joinUrl: res.joinUrl, answers: answersOf(input) });
   const { sendTerminConfirmation } = await import("@/lib/vertrieb/termin-whatsapp");
   await sendTerminConfirmation(
     res.meetingId,
@@ -558,6 +612,8 @@ export async function cancelSalesMeeting(token: string, opts: { reason?: string 
   });
   await pushOle(`❌ ${m.title} abgesagt: ${m.inviteeName ?? m.contact.name}`, `${whenShort(m.startAt)} Uhr${reason ? ` · ${reason.slice(0, 80)}` : ""}`, m.contactId, `sales-booking-cancel:${m.id}`);
   await sendInviteeMail(m.id, "cancelled");
+  if (opts.by !== "team")
+    await mailOle("cancelled", m.contactId, { title: m.title, startAt: m.startAt, name: m.inviteeName ?? m.contact.name, email: m.inviteeEmail, answers: m.answers, reason });
   return { ok: true, token };
 }
 
@@ -593,6 +649,7 @@ async function moveMeeting(m: MovableMeeting, t: SalesBookingType, start: Date, 
   );
   if (!admin) await pushOle(`🔁 ${t.title} verschoben: ${input.name}`, `Neu: ${whenShort(start)} Uhr (war ${whenShort(m.startAt)})`, m.contactId, `sales-booking:${res.meetingId}`);
   await sendInviteeMail(res.meetingId, "rescheduled");
+  if (!admin) await mailOle("rescheduled", m.contactId, { title: t.title, startAt: start, previousStartAt: m.startAt, name: input.name, email: m.inviteeEmail, joinUrl: res.joinUrl, answers: m.answers });
   // WhatsApp-Bestätigung zur neuen Zeit (Ole, 17.11.2026). Erinnerungen: der neue Termin startet ohne Markierungen,
   // das Fenster wird an der ursprünglichen Buchung gemessen (urspruenglichGebucht in termin-whatsapp.ts).
   const { sendTerminConfirmation } = await import("@/lib/vertrieb/termin-whatsapp");

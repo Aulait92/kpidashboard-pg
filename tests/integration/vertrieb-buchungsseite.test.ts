@@ -142,6 +142,9 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     expect(calls.pushes[0]).toContain("Neue Meta-Leads-Call");
     expect(calls.mails[0]).toMatchObject({ to: `petra.neu@${DOMAIN}` });
     expect(calls.mails[0].subject).toContain("Ihr Termin mit performancegrowth");
+    // Mail an uns (Ole, 19.11.2026)
+    expect(calls.mails[1]).toMatchObject({ to: process.env.ADMIN_EMAIL?.trim() || "ole.kannapinn@performancegrowth.de" });
+    expect(calls.mails[1].subject).toMatch(/^Neuer Termin: Petra neu, /);
     expect(calls.whatsapp).toEqual([res.meetingId]);
   });
 
@@ -213,6 +216,7 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     expect(neu).toMatchObject({ status: "GEPLANT", contactId: old.contactId, rescheduledFromId: old.id });
     expect(neu.startAt.toISOString()).toBe(at("16:00", 2).toISOString());
     expect(calls.mails[0].subject).toContain("Neuer Termin");
+    expect(calls.mails[1].subject).toMatch(/^Termin verschoben: Petra schieben, neu /);
     // WhatsApp-Bestätigung zur neuen Zeit; der neue Termin startet ohne Erinnerungs-Markierungen
     expect(calls.whatsapp.at(-1)).toBe(neu.id);
     expect(neu).toMatchObject({ waReminderAt: null, waSoonAt: null, reminderSentAt: null, soonReminderSentAt: null, waConfirmStatus: null });
@@ -231,6 +235,7 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     const follow = await prisma.salesTask.findFirst({ where: { contactId: m.contactId, type: "ANRUF" } });
     expect(follow?.title).toContain("Neuen Termin vereinbaren");
     expect(calls.mails[0].subject).toContain("Abgesagt");
+    expect(calls.mails[1].subject).toMatch(/^Termin abgesagt: Petra absage, /);
     expect(calls.pushes.at(-1)).toContain("abgesagt");
     expect(await cancelSalesMeeting(res.manageToken)).toEqual({ ok: false, error: "closed" });
     expect(await cancelSalesMeeting("gibt-es-nicht-1234567890")).toEqual({ ok: false, error: "not_found" });
