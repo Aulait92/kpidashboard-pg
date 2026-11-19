@@ -24,8 +24,10 @@ Rechtliches an die Stelle der Handlung.
 
 ## 3. Komplettcheck-Texte („doppelt zahlen und sparen“, Ole 19.11.2026)
 
-- „Viele zahlen für dieselbe Absicherung doppelt.“ ist eine Tatsachenbehauptung (UWG § 5): Beleg bereithalten (z. B.
-  doppelte Haftpflicht bei Paaren, Unfall in Kfz und eigener Police). Ohne Beleg auf „Oft zahlt man … doppelt“ umstellen.
+- Ole, 19.11.2026: „Oft zahlen Menschen für dieselbe Absicherung doppelt.“ statt der früheren Fassung mit „viele“. „Oft“ beschreibt eine
+  typische Lage ohne Mengenangabe, keine belegpflichtige Tatsachenbehauptung über einen Anteil (UWG § 5). Typische
+  Beispiele zur Hand haben, falls ein Kunde nachfragt (doppelte Haftpflicht bei Paaren, Unfall in Kfz und eigener Police).
+  Keine Zahlen oder Anteile ergänzen („jeder Dritte“, „80 %“) ohne Beleg.
 - Nur „können“, „vielleicht“: kein Ersparnis- oder Ergebnisversprechen, keine Beträge, kein „Garantie“.
 - „Kostenlos“: nur solange die Erstberatung nichts kostet (Vermittler mit Honorar müssten das abschalten können).
 - Beide Knöpfe gleich groß und neutral beschriftet („Ja, gern“, „Nein, danke“), keine Vorauswahl, kein Beschämen bei

@@ -210,11 +210,11 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
     );
     // Fassung b (Standard, Ole 19.11.2026): Leitmotiv doppelt zahlen und sparen, „können“ statt Versprechen, kostenlos
     expect(komplettcheckFrage("sie", PERSON, false)).toBe(
-      "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll Herr Kannapinn im Termin kurz drüberschauen, wo Sie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
+      "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll Herr Kannapinn im Termin kurz drüberschauen, wo Sie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
     );
     expect(komplettcheckFrage("sie", PERSON, true)).toContain("wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können?");
     expect(komplettcheckFrage("du", PERSON_DU, false)).toBe(
-      "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll Ole im Termin kurz drüberschauen, wo du vielleicht doppelt zahlst und sparen kannst? Kostenlos und nur ein paar Minuten länger.",
+      "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll Ole im Termin kurz drüberschauen, wo du vielleicht doppelt zahlst und sparen kannst? Kostenlos und nur ein paar Minuten länger.",
     );
     expect(komplettcheckFrage("du", PERSON_DU, true)).toContain("wo ihr als Familie vielleicht doppelt zahlt und sparen könnt?");
     for (const v of ["a", "b"] as const)

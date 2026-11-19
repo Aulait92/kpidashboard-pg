@@ -302,10 +302,10 @@ export const KOMPLETTCHECK_TEXT = {
  * konkret über doppelte Verträge und Sparen, „können“ statt Versprechen, kostenlos, keine Minutenangabe.
  */
 export const KOMPLETTCHECK_TEXT_B = {
-  sie: "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo Sie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
-  sieFamilie: "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
-  du: "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo du vielleicht doppelt zahlst und sparen kannst? Kostenlos und nur ein paar Minuten länger.",
-  duFamilie: "Danke! Viele zahlen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo ihr als Familie vielleicht doppelt zahlt und sparen könnt? Kostenlos und nur ein paar Minuten länger.",
+  sie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo Sie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
+  sieFamilie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
+  du: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo du vielleicht doppelt zahlst und sparen kannst? Kostenlos und nur ein paar Minuten länger.",
+  duFamilie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo ihr als Familie vielleicht doppelt zahlt und sparen könnt? Kostenlos und nur ein paar Minuten länger.",
 } as const;
 
 /** Komplettcheck-Frage für Ansprache und Lebenssituation; variante a = bisher (KOMPLETTCHECK_TEXT), b = neu (Standard). */

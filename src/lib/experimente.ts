@@ -41,7 +41,7 @@ export const EXPERIMENTE = {
     titel: "Komplettcheck-Frage nach der Buchung",
     ziel: "komplettcheck_ja",
     a: "Bisher: „ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können“",
-    b: "Neu (Ole): „Viele zahlen für dieselbe Absicherung doppelt …“, kostenlos, nur ein paar Minuten länger",
+    b: "Neu (Ole): „Oft zahlen Menschen für dieselbe Absicherung doppelt …“, kostenlos, nur ein paar Minuten länger",
   },
   terminvorschlag_kostenlos: {
     titel: "Terminvorschlag im Chat",
@@ -67,9 +67,8 @@ export function experimenteAus(env: Record<string, string | undefined> = process
 }
 
 /**
- * Feste Fassung je Experiment und Einheit (rein). SHA-256 statt variantForKey: dessen FNV-1a mit „% 2“ hängt nur an
- * der Parität der Zeichen, Tests wären dann untereinander vollständig gekoppelt (wer in Test 1 b sieht, sähe in Test 2
- * immer a bzw. immer b).
+ * Feste Fassung je Experiment und Einheit (rein, SHA-256). Eigenes Präfix „exp:“, damit Experimente und Vorlagen-Tests
+ * (variantForKey in lib/whatsapp/ab-test.ts, Präfix „ab:“) unabhängig voneinander verteilen.
  */
 export function zuteilen(experiment: string, einheit: string): Variante {
   return createHash("sha256").update(`exp:${experiment}:${einheit}`).digest()[0] % 2 === 0 ? "a" : "b";

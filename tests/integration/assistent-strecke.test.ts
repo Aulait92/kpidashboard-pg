@@ -651,7 +651,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       expect(gesendet().at(-1)!.body).toBe("Danke! Für das Angebot braucht Herr Kannapinn noch Ihr Geburtsdatum. Wie lautet es?");
       await text(x.phone, "14.05.1985");
       const komplett = gesendet().at(-1)!;
-      expect(komplett.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind|Viele zahlen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen, wo Sie)/);
+      expect(komplett.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind|Oft zahlen Menschen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen, wo Sie)/);
       expect(komplett.buttons?.map((b) => b.id)).toEqual(["komplettcheck:ja", "komplettcheck:nein"]);
       // Geschlecht, Geburtsjahr, Haltung, Schutzwunsch (Formular bzw. Erstanschreiben) und Kastration nie gefragt
       expect(gesendet().some((s) => /männlich|geboren|Wohnungskatze|Operation|kastriert/i.test(s.body))).toBe(false);
@@ -692,7 +692,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       st.ai = 0;
       await text(x.phone, "Ja, sie ist kerngesund");
       expect((await angaben(x.conv.id)).tiergesundheit).toBe("gesund");
-      expect(gesendet().at(-1)!.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen|Viele zahlen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen)/);
+      expect(gesendet().at(-1)!.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen|Oft zahlen Menschen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen)/);
       expect(st.ai).toBe(0);
       // Doppelter Klick auf den alten Knopf: nichts
       const n = gesendet().length;
@@ -709,7 +709,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       await prisma.conversation.update({ where: { id: x.conv.id }, data: { windowExpiresAt: new Date(Math.max(now.getTime(), Date.now()) + 10 * HOUR) } });
       await prisma.message.create({ data: { conversationId: x.conv.id, direction: "internal", kind: STRECKE.tierFrage, body: JSON.stringify({ appointmentId: appt.id, key: "gesundheit" }), sentBy: "bot", createdAt: new Date(now.getTime() - 2 * HOUR) } });
       expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
-      expect(gesendet().at(-1)!.body).toMatch(/^Noch eine kurze Frage: (Soll Herr Kannapinn im Termin auch kurz schauen|Viele zahlen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen)/);
+      expect(gesendet().at(-1)!.body).toMatch(/^Noch eine kurze Frage: (Soll Herr Kannapinn im Termin auch kurz schauen|Oft zahlen Menschen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen)/);
       expect((await runStreckeAbschliessen(now)).gesendet).toBe(0);
     });
   });
