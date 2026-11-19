@@ -3,11 +3,32 @@
 // Größe/Gewicht, Raucherstatus). Was die KI sonst noch liefert, verwirft bereinige(): unbekannte Felder, Felder einer
 // anderen Sparte, falsche Typen und Werte mit Gesundheitsbegriffen. Rein, ohne Datenbank, testbar.
 
-export const AUSLESEN_SPARTEN = ["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz", "pkv", "bu", "leben"] as const;
+// Ole, 19.11.2026: „alle möglichen Sparten müssen auslesbar sein“: Unfall, Tier, Reise, Krankenzusatz, Pflege und
+// „Sonstige“ (jede andere Police, nur die Grunddaten wie Versicherer, Tarif, Beitrag, Laufzeit, Kündigung)
+export const AUSLESEN_SPARTEN = [
+  "haftpflicht",
+  "hausrat",
+  "kfz",
+  "wohngebaeude",
+  "rechtsschutz",
+  "unfall",
+  "tier",
+  "reise",
+  "krankenzusatz",
+  "pflege",
+  "pkv",
+  "bu",
+  "leben",
+  "sonstige",
+] as const;
 export type AuslesenSparte = (typeof AUSLESEN_SPARTEN)[number];
 export const isAuslesenSparte = (v: unknown): v is AuslesenSparte => typeof v === "string" && (AUSLESEN_SPARTEN as readonly string[]).includes(v);
-/** Sparten, deren Unterlagen regelmäßig Gesundheitsangaben enthalten (Rechtsprüfung K2: nur mit Nachweis). */
-export const GESUNDHEITS_SPARTEN: readonly AuslesenSparte[] = ["pkv", "bu", "leben"];
+/**
+ * Sparten, deren Unterlagen regelmäßig Gesundheitsangaben enthalten (Rechtsprüfung K2: nur mit Nachweis „keine
+ * Speicherung“ und Einwilligung mit Gesundheitsangaben). Unfall und Pflege wie in lib/policen/regeln.ts (§ 203 StGB:
+ * Kranken-, Unfall-, Lebensversicherung), Krankenzusatz (Zahn, Krankenhaus) wie Kranken.
+ */
+export const GESUNDHEITS_SPARTEN: readonly AuslesenSparte[] = ["pkv", "bu", "leben", "unfall", "pflege", "krankenzusatz"];
 
 export const SPARTE_LABEL: Record<AuslesenSparte, string> = {
   haftpflicht: "Haftpflicht",
@@ -15,9 +36,15 @@ export const SPARTE_LABEL: Record<AuslesenSparte, string> = {
   kfz: "Kfz",
   wohngebaeude: "Wohngebäude",
   rechtsschutz: "Rechtsschutz",
+  unfall: "Unfall",
+  tier: "Tier",
+  reise: "Reise",
+  krankenzusatz: "Krankenzusatz",
+  pflege: "Pflege",
   pkv: "Private Krankenversicherung",
   bu: "Berufsunfähigkeit",
   leben: "Leben/Rente",
+  sonstige: "Sonstige",
 };
 
 export type FeldTyp = "text" | "betrag" | "zahl" | "ganzzahl" | "datum" | "janein" | "auswahl" | "liste";
@@ -51,15 +78,16 @@ export const FELDER: readonly Feld[] = [
   { key: "ablauf", label: "Ablauf", typ: "datum", sparten: null, beschreibung: "Ablauf bzw. Hauptfälligkeit des Vertrags" },
   { key: "kuendigungsfrist_monate", label: "Kündigungsfrist", typ: "ganzzahl", sparten: null, einheit: "Monate", beschreibung: "Kündigungsfrist in Monaten vor Ablauf" },
   { key: "naechster_kuendigungstermin", label: "Kündbar zum", typ: "datum", sparten: null, beschreibung: "nächstes Datum, zu dem der Vertrag gekündigt werden kann, nur wenn im Dokument genannt" },
-  { key: "selbstbeteiligung", label: "Selbstbeteiligung", typ: "betrag", sparten: ["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz"], einheit: "€", beschreibung: "Selbstbeteiligung je Schaden in Euro, 0 wenn keine" },
+  { key: "art", label: "Art der Versicherung", typ: "text", sparten: ["sonstige"], beschreibung: "Art der Versicherung laut Dokument, z. B. Glasversicherung, Handyversicherung, Photovoltaik" },
+  { key: "selbstbeteiligung", label: "Selbstbeteiligung", typ: "betrag", sparten: ["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz", "tier", "reise", "sonstige"], einheit: "€", beschreibung: "Selbstbeteiligung je Schaden in Euro, 0 wenn keine" },
   // Hausrat
-  { key: "versicherungssumme", label: "Versicherungssumme", typ: "betrag", sparten: ["hausrat", "wohngebaeude", "leben"], einheit: "€", beschreibung: "Versicherungssumme in Euro" },
+  { key: "versicherungssumme", label: "Versicherungssumme", typ: "betrag", sparten: ["hausrat", "wohngebaeude", "leben", "reise", "sonstige"], einheit: "€", beschreibung: "Versicherungssumme in Euro" },
   { key: "wohnflaeche", label: "Wohnfläche", typ: "zahl", sparten: ["hausrat"], einheit: "m²", beschreibung: "versicherte Wohnfläche in m²" },
   { key: "unterversicherungsverzicht", label: "Unterversicherungsverzicht", typ: "janein", sparten: ["hausrat"], beschreibung: "Unterversicherungsverzicht vereinbart" },
   { key: "elementar", label: "Elementarschäden", typ: "janein", sparten: ["hausrat", "wohngebaeude"], beschreibung: "Elementarschäden (z. B. Überschwemmung, Starkregen) mitversichert" },
   { key: "fahrrad", label: "Fahrraddiebstahl", typ: "janein", sparten: ["hausrat"], beschreibung: "Fahrraddiebstahl mitversichert" },
   // Haftpflicht
-  { key: "deckungssumme", label: "Deckungssumme", typ: "betrag", sparten: ["haftpflicht"], einheit: "€", beschreibung: "Deckungssumme für Personen- und Sachschäden in Euro" },
+  { key: "deckungssumme", label: "Deckungssumme", typ: "betrag", sparten: ["haftpflicht", "tier"], einheit: "€", beschreibung: "Deckungssumme für Personen- und Sachschäden in Euro (bei Tier nur Tierhalterhaftpflicht)" },
   {
     key: "umfang",
     label: "Wer ist versichert",
@@ -118,6 +146,73 @@ export const FELDER: readonly Feld[] = [
   { key: "dynamik", label: "Dynamik", typ: "zahl", sparten: ["bu"], einheit: "%", beschreibung: "jährliche Beitragsdynamik in Prozent, 0 wenn keine" },
   // Leben/Rente
   { key: "rente_monatlich", label: "Rente", typ: "betrag", sparten: ["leben"], einheit: "€/Monat", beschreibung: "garantierte bzw. versicherte monatliche Rente in Euro" },
+  // Unfall (nur Leistungen des Vertrags, keine Gesundheitsangaben)
+  { key: "invaliditaet_grundsumme", label: "Invalidität Grundsumme", typ: "betrag", sparten: ["unfall"], einheit: "€", beschreibung: "Grundsumme bei Invalidität in Euro" },
+  { key: "progression", label: "Progression", typ: "ganzzahl", sparten: ["unfall"], einheit: "%", beschreibung: "Progression in Prozent, z. B. 225, 350 oder 500" },
+  { key: "unfallrente", label: "Unfallrente", typ: "betrag", sparten: ["unfall"], einheit: "€/Monat", beschreibung: "monatliche Unfallrente in Euro, 0 wenn keine" },
+  { key: "todesfallsumme", label: "Todesfallsumme", typ: "betrag", sparten: ["unfall"], einheit: "€", beschreibung: "Leistung im Todesfall in Euro, 0 wenn keine" },
+  { key: "verbesserte_gliedertaxe", label: "Verbesserte Gliedertaxe", typ: "janein", sparten: ["unfall"], beschreibung: "verbesserte Gliedertaxe vereinbart" },
+  // Tier
+  {
+    key: "tierart",
+    label: "Tier",
+    typ: "auswahl",
+    sparten: ["tier"],
+    optionen: [
+      { wert: "hund", label: "Hund" },
+      { wert: "katze", label: "Katze" },
+      { wert: "pferd", label: "Pferd" },
+      { wert: "anderes", label: "anderes Tier" },
+    ],
+    beschreibung: "versichertes Tier",
+  },
+  {
+    key: "tier_umfang",
+    label: "Versichert",
+    typ: "liste",
+    sparten: ["tier"],
+    optionen: [
+      { wert: "op", label: "OP-Kosten" },
+      { wert: "kranken", label: "Tierarztkosten" },
+      { wert: "haftpflicht", label: "Tierhalterhaftpflicht" },
+    ],
+    beschreibung: "was versichert ist: OP-Kosten, Tierarztkosten (Vollschutz) oder Tierhalterhaftpflicht",
+  },
+  { key: "jahreshoechstleistung", label: "Jahreshöchstleistung", typ: "betrag", sparten: ["tier", "krankenzusatz"], einheit: "€/Jahr", beschreibung: "höchste Erstattung je Versicherungsjahr in Euro, 0 wenn unbegrenzt" },
+  { key: "erstattung_prozent", label: "Erstattung", typ: "ganzzahl", sparten: ["tier", "krankenzusatz"], einheit: "%", beschreibung: "Erstattungssatz in Prozent (bei Zahn: für Zahnersatz)" },
+  // Reise
+  {
+    key: "reise_umfang",
+    label: "Versichert",
+    typ: "liste",
+    sparten: ["reise"],
+    optionen: [
+      { wert: "ruecktritt", label: "Reiserücktritt" },
+      { wert: "abbruch", label: "Reiseabbruch" },
+      { wert: "auslandskranken", label: "Auslandsreise-Krankenversicherung" },
+      { wert: "gepaeck", label: "Reisegepäck" },
+    ],
+    beschreibung: "versicherte Bausteine der Reiseversicherung",
+  },
+  { key: "jahresvertrag", label: "Jahresvertrag", typ: "janein", sparten: ["reise"], beschreibung: "Jahresvertrag (alle Reisen im Jahr) statt Einzelreise" },
+  // Krankenzusatz (nur Leistungen, keine Gesundheitsangaben)
+  {
+    key: "zusatz_bausteine",
+    label: "Bausteine",
+    typ: "liste",
+    sparten: ["krankenzusatz"],
+    optionen: [
+      { wert: "zahnersatz", label: "Zahnersatz" },
+      { wert: "zahnbehandlung", label: "Zahnbehandlung" },
+      { wert: "prophylaxe", label: "Prophylaxe" },
+      { wert: "stationaer", label: "Krankenhaus (Einbett/Chefarzt)" },
+      { wert: "ambulant", label: "Ambulant, Heilpraktiker" },
+      { wert: "brille", label: "Brille, Kontaktlinsen" },
+    ],
+    beschreibung: "versicherte Leistungsbausteine",
+  },
+  // Pflege
+  { key: "pflegegeld_monat", label: "Pflegegeld (Pflegegrad 5)", typ: "betrag", sparten: ["pflege"], einheit: "€/Monat", beschreibung: "monatliches Pflegegeld bzw. Pflegetagegeld × 30 in Euro bei Pflegegrad 5" },
 ];
 
 const FELD = new Map(FELDER.map((f) => [f.key, f]));
@@ -163,7 +258,7 @@ export function auslesenSchema(): Record<string, unknown> {
   return {
     type: "object",
     properties: {
-      sparte: { type: "string", enum: [...AUSLESEN_SPARTEN, "andere"], description: "Sparte des Vertrags laut Dokument; andere, wenn es keine Police dieser Sparten ist" },
+      sparte: { type: "string", enum: [...AUSLESEN_SPARTEN, "andere"], description: "Sparte des Vertrags laut Dokument; sonstige für jede andere Versicherung; andere, wenn es keine Versicherungspolice ist" },
       felder: { type: "object", properties: props, required: FELDER.map((f) => f.key), additionalProperties: false },
       unsicher: { type: "array", items: { type: "string", enum: FELDER.map((f) => f.key) }, description: "Felder, deren Wert du nicht sicher ablesen konntest" },
     },

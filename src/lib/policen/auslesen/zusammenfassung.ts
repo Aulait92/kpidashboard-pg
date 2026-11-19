@@ -89,7 +89,8 @@ export function zusammenfassung(vertraege: VertragKurz[], now: Date): Zusammenfa
 
   const proSparte = new Map<AuslesenSparte, number>();
   for (const v of einzeln) proSparte.set(v.sparte, (proSparte.get(v.sparte) ?? 0) + 1);
-  const doppelt = [...proSparte].filter(([, n]) => n > 1).map(([s]) => s);
+  // „Sonstige“ sind verschiedene Versicherungen, kein Hinweis auf doppelten Schutz
+  const doppelt = [...proSparte].filter(([s, n]) => n > 1 && s !== "sonstige").map(([s]) => s);
 
   const bausteine: { id: string; text: string }[] = [];
   const nein = (v: VertragKurz, k: string) => v.felder[k]?.w === false;
