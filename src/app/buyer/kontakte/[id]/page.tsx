@@ -5,7 +5,7 @@ import { LeadDetailBody } from "@/components/lead-detail-body";
 import { getBuyerContext } from "@/lib/buyer-context";
 
 // Neue Oberfläche: Kontakt als ganze Seite (Liste verschwindet), zurück zu
-// „Alle Kontakte“ in der Darstellung, aus der man kam.
+// „Kontakte“ in der Darstellung, aus der man kam (führt zur Standardansicht „Zu erledigen“, Ole 19.11.2026).
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kontakt | performancegrowth" };
 
@@ -29,7 +29,7 @@ export default async function KontaktPage({
         className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-base font-medium text-[color:var(--brand)] hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
-        {von === "pipeline" ? "Pipeline" : "Alle Kontakte"}
+        {von === "pipeline" ? "Pipeline" : "Kontakte"}
       </Link>
       <LeadDetailBody leadId={id} team={session} newUi />
     </main>

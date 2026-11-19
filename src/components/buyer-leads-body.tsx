@@ -22,6 +22,7 @@ import { weitereEmailsSuche } from "@/lib/lead-emails";
 import { CROSS_SELL_FILTER, CROSS_SELL_LABEL, crossSellOffenWhere } from "@/lib/cross-sell-offen";
 import { ladeCrossSellVerkauf } from "@/lib/cross-sell-verkauf-server";
 import { CrossSellLeiste } from "@/components/bestand/cross-sell-angebot";
+import { istZuTun, kontaktAnsicht, zuTunRang } from "@/lib/kontakt-liste";
 
 export async function BuyerLeadsBody({
   customerId,
@@ -57,6 +58,13 @@ export async function BuyerLeadsBody({
   // Aus dem Tipp „Weiteres Produkt anbieten“ (Zahlen): genau die dort gezählten Kunden, unabhängig vom Zeitraum
   const crossSell = !noStepView && !q && params.filter === CROSS_SELL_FILTER;
   const verlust = !noStepView && !crossSell && !q && params.verlust && params.verlust in VERLUST_LABEL ? (params.verlust as VerlustKey) : null;
+  // Standardansicht „Zu erledigen“ (Ole, 19.11.2026); bei Suche und Filtern aus Zahlen wie bisher alle Treffer
+  const viewKey = kontaktAnsicht(view, { suche: !!q, filter: !!crossSell || !!verlust });
+  // „Zu erledigen“ reicht über den Zeitraum hinaus: Wartendes bleibt sichtbar, auch wenn der Lead älter ist
+  // (ohne nächsten Schritt, fällige Wiedervorlage, Antwort im Chat). Die übrigen Ansichten zählen nur den Zeitraum.
+  const zuTunView = viewKey === "zu-tun" && !q && !crossSell && !verlust;
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
   const leadRowsAll = await prisma.lead.findMany({
     where: {
       ...leadScope(team),
@@ -75,6 +83,15 @@ export async function BuyerLeadsBody({
               { email: { contains: q, mode: "insensitive" as const } },
               ...weitereEmailsSuche(q),
               ...(qDigits.length >= 3 ? [{ phone: { contains: qDigits } }] : []),
+            ],
+          }
+        : zuTunView
+        ? {
+            OR: [
+              { createdAt: { gte: range.from, lte: range.to } },
+              withoutNextStepWhere(now),
+              { followUpAt: { lte: endOfToday }, closedAt: null, erasedAt: null },
+              { conversations: { some: { needsAttention: true } }, erasedAt: null },
             ],
           }
         : { createdAt: { gte: range.from, lte: range.to } }),
@@ -119,7 +136,7 @@ export async function BuyerLeadsBody({
   // Termine für alle Kunden (nicht nur mit WhatsApp-Assistent): ohne sie zeigte die Liste bei
   // „Termin vereinbart“ mit künftigem Termin fälschlich „Kein nächster Schritt“.
   const leadIds = leadRows.map((l) => l.id);
-  const [appointments, flags, pastAppts, noWhatsApp] = await Promise.all([
+  const [appointments, flags, pastAppts, noWhatsApp, waitingChats] = await Promise.all([
     prisma.appointment.findMany({
       where: { customerId, leadId: { in: leadIds }, ...upcomingAppointmentWhere(now) },
       orderBy: { startsAt: "asc" },
@@ -132,7 +149,10 @@ export async function BuyerLeadsBody({
       select: { id: true, leadId: true },
     }),
     keinWhatsAppIds(leadRows),
+    // Lead hat im Chat geschrieben und wartet (UX-Runde 19.11.2026: in der Liste sichtbar, Reaktionszeit)
+    prisma.conversation.findMany({ where: { customerId, leadId: { in: leadIds }, needsAttention: true }, select: { leadId: true } }),
   ]);
+  const waiting = new Set(waitingChats.map((c) => c.leadId));
   const apptByLead = new Map<string, { startsAt: Date; mode: string }>();
   for (const a of appointments) {
     if (a.leadId && !apptByLead.has(a.leadId)) {
@@ -162,6 +182,8 @@ export async function BuyerLeadsBody({
     followUpAt: l.followUpAt ? l.followUpAt.toISOString() : null,
     ...(noWhatsApp.has(l.id) ? { phone: l.phone, noWhatsApp: true } : {}),
     ...(l.isTest ? { isTest: true } : {}),
+    ...(waiting.has(l.id) ? { waiting: true } : {}),
+    ...(flags.get(l.id)?.botActive ? { botActive: true } : {}),
     ...nextStepFields(stateFor(l, flags), pastByLead.get(l.id) ?? null),
   }));
 
@@ -169,29 +191,38 @@ export async function BuyerLeadsBody({
   const phases = pipelinePhasesFor(whatsapp);
   const today = new Date(nowMs());
   today.setHours(23, 59, 59, 999);
-  const VIEWS: { key: string; label: string; match: (l: BuyerLeadRow) => boolean }[] = [
-    { key: "", label: "Alle", match: () => true },
+  // UX-Runde 19.11.2026 (Team B): vier Ansichten statt sieben. „Zu erledigen“ sammelt alles, was auf den Vermittler
+  // wartet (Antwort im Chat, Ergebnis, fällige Wiedervorlage, Rückruf, kein nächster Schritt), Dringendes zuerst.
+  // Die bisherigen Ansichten bleiben per Link erreichbar (Heute, Zahlen, Erinnerung) und zeigen sich nur, solange sie offen sind.
+  // Leads im gewählten Zeitraum (bei „Zu erledigen“ lädt die Liste auch ältere Wartende)
+  const imZeitraum = (l: BuyerLeadRow) => !zuTunView || (l.createdAt >= range.from && l.createdAt <= range.to);
+  const VIEWS: { key: string; label: string; match: (l: BuyerLeadRow) => boolean; nurOffen?: boolean }[] = [
+    { key: "zu-tun", label: "Zu erledigen", match: (l) => istZuTun(l, now) },
+    { key: "alle", label: "Alle", match: imZeitraum },
     // Neu: noch niemand hat gesprochen (wie der Zähler an „Kontakte“)
-    { key: "neu", label: "Neu", match: (l: BuyerLeadRow) => !l.reached && !l.closedAt && (!l.status || l.status === "Neuer Lead") },
-    ...(whatsapp ? [{ key: "rueckruf", label: "Rückruf nötig", match: (l: BuyerLeadRow) => !!l.callback }] : []),
-    // Nur, wenn es solche Kontakte gibt (oder die Ansicht gerade offen ist): Leads ohne WhatsApp gesammelt anrufen
-    ...(view === "ohne-whatsapp" || leads.some((l) => l.noWhatsApp)
-      ? [{ key: "ohne-whatsapp", label: "Nur ohne WhatsApp", match: (l: BuyerLeadRow) => !!l.noWhatsApp }]
-      : []),
-    { key: "wiedervorlage", label: "Wiedervorlage fällig", match: (l) => !!l.followUpAt && new Date(l.followUpAt) <= today },
-    { key: "ohne-schritt", label: "Ohne nächsten Schritt", match: (l) => !!l.noNextStep },
-    ...(whatsapp ? [{ key: "termin", label: "Termin", match: (l: BuyerLeadRow) => !!l.appointment }] : []),
+    { key: "neu", label: "Neu", match: (l: BuyerLeadRow) => imZeitraum(l) && !l.reached && !l.closedAt && (!l.status || l.status === "Neuer Lead") },
+    { key: "termin", label: "Termin", match: (l: BuyerLeadRow) => imZeitraum(l) && !!l.appointment },
+    { key: "rueckruf", label: "Rückruf nötig", match: (l: BuyerLeadRow) => !!l.callback, nurOffen: true },
+    { key: "ohne-whatsapp", label: "Ohne WhatsApp", match: (l: BuyerLeadRow) => !!l.noWhatsApp, nurOffen: true },
+    { key: "wiedervorlage", label: "Wiedervorlage fällig", match: (l) => !!l.followUpAt && new Date(l.followUpAt) <= today, nurOffen: true },
+    { key: "ohne-schritt", label: "Ohne nächsten Schritt", match: (l) => !!l.noNextStep, nurOffen: true },
   ];
-  const activeView = VIEWS.find((v) => v.key === view) ?? VIEWS[0];
+  const activeView = VIEWS.find((v) => v.key === viewKey) ?? VIEWS[0];
   const phase = phases.find((p) => p.key === phaseKey);
   const byPhase = phase ? leads.filter((l) => findPhaseIn(phases, l.status)?.key === phase.key) : leads;
   const shown = byPhase.filter(activeView.match);
+  if (activeView.key === "zu-tun") shown.sort((a, b) => zuTunRang(a, now) - zuTunRang(b, now));
   const hrefFor = (key: string) => {
     const next = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "ansicht") as [string, string][]);
-    if (key) next.set("ansicht", key);
+    // „Zu erledigen“ ist der Standard und braucht keinen Parameter
+    if (key && key !== "zu-tun") next.set("ansicht", key);
     const s = next.toString();
     return s ? `${basePath}?${s}` : basePath;
   };
+
+  const alleHref = `${basePath}?ansicht=alle`;
+  // Gibt es überhaupt Kontakte? (nur für leere Zustände abgefragt)
+  const hatKontakte = shown.length === 0 ? (await prisma.lead.count({ where: leadScope(team), take: 1 })) > 0 : true;
 
   return (
     <div className="space-y-4">
@@ -222,13 +253,15 @@ export async function BuyerLeadsBody({
         fields={[{ kind: "select", key: "phase", label: "Phase", options: phases.map((p) => ({ value: p.key, label: p.label })) }]}
       />
       <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" aria-label="Ansichten">
-        {VIEWS.map((v) => {
+        {VIEWS.filter((v) => !v.nurOffen || v.key === activeView.key).map((v) => {
           // „Ohne nächsten Schritt“ zählt über alle Zeiträume (wie der Zähler an „Kontakte“).
           const n = v.key === "ohne-schritt" ? noStepTotal : noStepView ? null : byPhase.filter(v.match).length;
           const active = v.key === activeView.key;
+          // Wartet etwas, ist „Zu erledigen“ rot markiert (wie die Zähler in der Navigation)
+          const dringend = v.key === "zu-tun" && !active && !!n;
           return (
             <Link
-              key={v.key || "alle"}
+              key={v.key}
               href={hrefFor(v.key)}
               scroll={false}
               className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm sm:h-8 font-medium transition ${
@@ -236,14 +269,20 @@ export async function BuyerLeadsBody({
               }`}
             >
               {v.label}
-              {n != null ? <span className={`tabular-nums text-xs ${active ? "text-white/70" : ""}`}>{n}</span> : null}
+              {n != null ? (
+                dringend ? (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-xs font-semibold tabular-nums text-white">{n}</span>
+                ) : (
+                  <span className={`tabular-nums text-xs ${active ? "text-white/70" : ""}`}>{n}</span>
+                )
+              ) : null}
             </Link>
           );
         })}
       </nav>
       <BuyerLeadsTable
         leads={shown}
-        title={[activeView.key ? activeView.label : crossSell ? CROSS_SELL_LABEL : "Alle Kontakte", phase?.label].filter(Boolean).join(" · ")}
+        title={[crossSell ? CROSS_SELL_LABEL : activeView.key === "alle" ? "Alle Kontakte" : activeView.label, phase?.label].filter(Boolean).join(" · ")}
         statusLabels={WHATSAPP_STATUS_LABELS}
         showLeadCost={!(await loadRetainerConfig(customerId))}
         detailBase={detailBase}
@@ -253,23 +292,31 @@ export async function BuyerLeadsBody({
           crossSell && leads.length === 0 ? (
             <>
               Alle Kunden mit Abschluss haben schon ein weiteres Produkt.{" "}
-              <Link href={basePath} className="font-medium text-[color:var(--brand)] underline">
+              <Link href={alleHref} className="font-medium text-[color:var(--brand)] underline">
+                Alle Kontakte anzeigen
+              </Link>
+            </>
+          ) : zuTunView && hatKontakte ? (
+            // Standardansicht leer (Ole, 19.11.2026): dort bleiben, Erfolg zeigen, Weg zu „Alle“
+            <>
+              Alles erledigt, kein Kontakt wartet auf Sie.{" "}
+              <Link href={alleHref} className="font-medium text-[color:var(--brand)] underline" data-alle-anzeigen>
                 Alle Kontakte anzeigen
               </Link>
             </>
           ) : leads.length > 0 ? (
             <>
               Keine Kontakte in dieser Ansicht.{" "}
-              <Link href={basePath} className="font-medium text-[color:var(--brand)] underline">
+              <Link href={alleHref} className="font-medium text-[color:var(--brand)] underline">
                 Alle Kontakte anzeigen
               </Link>
             </>
           ) : q ? (
             `Kein Kontakt zu „${q}“ gefunden.`
-          ) : params.range !== "max" && (await prisma.lead.count({ where: leadScope(team), take: 1 })) > 0 ? (
+          ) : params.range !== "max" && hatKontakte ? (
             <>
               In diesem Zeitraum sind keine Kontakte eingegangen.{" "}
-              <Link href={`${basePath}?range=max`} className="font-medium text-[color:var(--brand)] underline">
+              <Link href={`${basePath}?ansicht=alle&range=max`} className="font-medium text-[color:var(--brand)] underline">
                 Gesamten Zeitraum anzeigen
               </Link>
             </>
