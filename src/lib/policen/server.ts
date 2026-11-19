@@ -922,7 +922,7 @@ export async function handleFlowAntwort(o: {
       else {
         fehler++;
         // Ursache ohne Inhalt protokollieren (Codes wie cdn 403, hash, hmac, enc_hash, ohne id; Ole 19.11.2026: Foto kam nicht an)
-        fehlerGruende.push(`${dl.detail ?? "unbekannt"} (${d.cdnUrl && d.encryption ? "cdn" : d.id ? "media" : "ohne quelle"})`);
+        fehlerGruende.push(`${("detail" in dl && dl.detail) || "unbekannt"} (${d.cdnUrl && d.encryption ? "cdn" : d.id ? "media" : "ohne quelle"})`);
       }
       await mediaWeg(chat.customerId, [d.id], apiKey);
       continue;
