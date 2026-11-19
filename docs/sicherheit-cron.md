@@ -128,8 +128,13 @@ ein „2FA“-Abzeichen bei allen, die es nutzen.
 | Weg | Schlüssel (Railway-Variable) | Header | Darf |
 |---|---|---|---|
 | `GET /api/ops/diagnose?q=…` | `OPS_READ_TOKEN` (≥ 32 Zeichen) | `Authorization: Bearer …` | nur feste, lesende Abfragen |
-| `GET/POST /api/ops/unterlagen` | `OPS_UPLOAD_TOKEN` (≥ 32 Zeichen) | `X-Ops-Upload-Token: …` | nur die Präsentationen unter Admin → Marketing → Unterlagen ersetzen bzw. auflisten (Name, Größe, Datum) |
+| `GET/POST /api/ops/unterlagen` | `OPS_UPLOAD_TOKEN` (≥ 32 Zeichen) | `X-Ops-Upload-Token: …` oder `X-Ops-Token` | nur die Präsentationen unter Admin → Marketing → Unterlagen ersetzen bzw. auflisten (Name, Größe, Datum) |
 
 - Ohne gesetzte Variable ist der jeweilige Weg aus (403). Der Lese-Schlüssel öffnet den Upload nicht.
 - Jeder Upload steht im Änderungsprotokoll („Präsentation hochgeladen (Upload-Schlüssel)“), höchstens 20 Uploads pro Stunde.
 - Schlüssel wechseln: neuen Wert in Railway und im Netzwerk-Geheimnis der Claude-Umgebung eintragen; abschalten: Variable löschen.
+
+**Beide Ops-Schlüssel in einem Header (19.11.2026):** Diagnose und Upload lesen zusätzlich `X-Ops-Token` mit mehreren
+Schlüsseln, getrennt durch Komma (`X-Ops-Token: <OPS_READ_TOKEN>,<OPS_UPLOAD_TOKEN>`). Jede Schnittstelle prüft nur
+ihren eigenen Schlüssel (`src/lib/ops-auth.ts`). Anlass: In der Cloud-Umgebung „kpidashboard-pg“ geht je Adresse nur ein
+Netzwerk-Secret.

@@ -43,6 +43,10 @@ describe("A/B-Test: Messung und automatische Übernahme", () => {
   it("zählt Antworten ohne Abmeldungen, entscheidet erst mit genug Volumen und Signifikanz", async () => {
     await seed("a", 60, 12, 5);
     await seed("b", 60, 30);
+    // Testlead bei einem echten Kunden: zählt nicht (Ole, 19.11.2026: eigene Tests verfälschen sonst die Ergebnisse)
+    const testLead = await prisma.lead.create({ data: { customerId, name: "Test", phone: "4917099999999", isTest: true } });
+    const testConv = await prisma.conversation.create({ data: { customerId, leadId: testLead.id, contactPhone: "4917099999999" } });
+    await prisma.message.create({ data: { conversationId: testConv.id, direction: "outbound", kind: "template", body: "x", purpose: PURPOSE, variant: "a", createdAt: new Date(now.getTime() - 4 * DAY) } });
     const stats = await loadAbStats(PURPOSE, now);
     expect(stats.a).toMatchObject({ sent: 60, replied: 12 });
     expect(stats.b).toMatchObject({ sent: 60, replied: 30 });

@@ -1,5 +1,5 @@
-import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { opsTokenOk } from "@/lib/ops-auth";
 import { normalizeLoginEmail } from "@/lib/login-email";
 
 // Diagnose-API (Ole, 14.11.2026): feste, nur lesende Abfragen für die Fehlersuche in Produktion,
@@ -9,13 +9,9 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 //   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1|&sperren=1]|spaeter-nachholen[&vorschau=1|&ausfuehren=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]|sicherheit|nutzung-woche[&tage=7] (weitere: siehe WEITERE unten)
 export const dynamic = "force-dynamic";
 
+// Lese-Schlüssel als Bearer oder in X-Ops-Token, auch zusammen mit dem Upload-Schlüssel (lib/ops-auth.ts)
 function authorized(req: Request): boolean {
-  const expected = (process.env.OPS_READ_TOKEN ?? "").trim();
-  if (expected.length < 32) return false;
-  const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
-  const a = Buffer.from(token);
-  const b = Buffer.from(expected);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  return opsTokenOk(req.headers, process.env.OPS_READ_TOKEN);
 }
 
 const keyMode = (k: string | undefined) => {
