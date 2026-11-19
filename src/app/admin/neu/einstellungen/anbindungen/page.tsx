@@ -5,7 +5,8 @@ import { DisconnectButton } from "@/app/admin/marketing/linkedin/forms";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
 import { EinstellungSeite, LISTE } from "@/components/admin-neu/einstellungen/rahmen";
 import { Button, Card, CardHeader, buttonClass } from "@/components/ui";
-import { ContactDataBackfill, ContactsImport, CopyField, InstantlyNachholen, SperrenNachholen } from "@/components/vertrieb/import-forms";
+import { ContactDataBackfill, ContactsImport, CopyField, InstantlyNachholen, InstantlyPortion, SperrenNachholen } from "@/components/vertrieb/import-forms";
+import { domainTageslimit } from "@/lib/vertrieb/mischen";
 import { getAppUrl } from "@/lib/email";
 import { linkedInAvailable } from "@/lib/linkedin/api";
 import { metaDiagnostics } from "@/lib/meta-leads";
@@ -267,8 +268,11 @@ export default async function Page() {
       <Card>
         <CardHeader title="Import" hint={`${contacts.toLocaleString("de-DE")} Kontakte, erkannt über die E-Mail`} />
         <ul className={LISTE}>
-          <Quelle name="Agenturliste (CSV)" was="Numbers: Ablage → Exportieren → CSV" funktion="actions-importcontactsaction--agenturliste-csv-importieren">
+          <Quelle name="Agentur- oder Vermittlerliste (CSV)" was="Numbers-Export oder Vermittlerliste, diese erst mit Vorschau" funktion="actions-importcontactsaction--agenturliste-csv-importieren">
             <ContactsImport />
+          </Quelle>
+          <Quelle name="Tagesportion für Instantly (CSV)" was="Vermittlerliste gemischt, in eine gemeinsame Kampagne laden">
+            <InstantlyPortion proDomain={domainTageslimit()} />
           </Quelle>
         </ul>
       </Card>
