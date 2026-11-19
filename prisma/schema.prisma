@@ -1662,6 +1662,9 @@ model Offer {
   // Sonderpreis) und Startdatum. Bei Annahme werden term/setupFee/startDate überschrieben.
   customerChoosesTerm     Boolean       @default(false)
   customerChoosesStart    Boolean       @default(false)
+  // Kunde wählt Produkte und Tagesbudget je Produkt (Ole, 19.11.2026; nur Listenpreis, Paket mit Software, ohne Startpreis).
+  // Bei Annahme werden products/monthlyFee mit der Wahl überschrieben (Staffel, lib/offer-pricing.ts resolveProduktWahl).
+  customerChoosesProducts Boolean       @default(false)
   validUntil              DateTime
   // Annahme (Protokoll)
   sentAt                  DateTime?

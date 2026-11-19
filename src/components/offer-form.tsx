@@ -18,6 +18,7 @@ import {
   eur,
   PRICE_LIST,
   prepayPossible,
+  PRODUKT_VORSCHLAEGE,
   VORAUSZAHLUNG,
   withVat,
   type OfferPackage,
@@ -29,18 +30,7 @@ import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { abrechnungsplan, ABRECHNUNGSTAG_MAX, ersterAbrechnungstag, VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG } from "@/lib/abrechnungstag";
 
-const PRODUCT_SUGGESTIONS = [
-  "TKV-Katze",
-  "TKV-Hund",
-  "TKV-Pferd",
-  "Privatschutz",
-  "Unfallversicherung",
-  "Krankenhauszusatz",
-  "Zahnzusatz",
-  "Kindersparplan",
-  "Berufsunfähigkeit",
-  "Sterbegeld",
-];
+const PRODUCT_SUGGESTIONS = PRODUKT_VORSCHLAEGE;
 
 const input =
   "h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
@@ -107,6 +97,8 @@ export function OfferForm({
   const [empfehlung, setEmpfehlung] = useState(false);
   const [vermittler, setVermittler] = useState<OfferVermittler>("vertreter");
   const [customerChoice, setCustomerChoice] = useState(true);
+  // Kunde wählt Produkte und Tagesbudget (Ole, 19.11.2026): Standard an, nur zum Listenpreis
+  const [customerProducts, setCustomerProducts] = useState(true);
   // „Ich zahle später“ auf der Angebotsseite (Ole, 16.11.2026): nur für Kunden mit spätem Start, Standard aus
   const [allowPayLater, setAllowPayLater] = useState(false);
   // Zahlung nachträglich (Ole, 19.11.2026): Sonderkondition, nur monatlich (nicht mit Vorauszahlung oder Abrechnungstag)
@@ -137,6 +129,8 @@ export function OfferForm({
     setupDiscount: referralDiscount ? num(discount) : null,
   });
   const softwarePkg = pkg === "software";
+  // Produktwahl durch den Kunden nur zum Listenpreis (wie lib/offers.ts createOffer)
+  const produktWahlMoeglich = softwarePkg && !test && num(setupOverride) == null && num(monthlyOverride) == null && num(introFee) == null && !price.individual;
   // Vorauszahlung (Ole, 18.11.2026): mit 12 Monaten jährlich (3 geschenkt seit 19.11.2026), mit 6 Monaten 6 Monate im Voraus (1 geschenkt)
   const annualPossible = prepayPossible(term) && num(introFee) == null;
   const voraus = VORAUSZAHLUNG[term === "6m" ? "6m" : "12m"];
@@ -177,6 +171,7 @@ export function OfferForm({
         empfehlungModule: empfehlung && softwarePkg,
         vermittlerTyp: vermittler,
         customerChoice,
+        customerChoosesProducts: customerProducts && produktWahlMoeglich,
         allowPayLater: allowPayLater && !test,
         allowBankTransfer: ueberweisungVerfuegbar && allowBankTransfer && !test,
         bankTransferDays: num(bankTransferDays),
@@ -374,6 +369,22 @@ export function OfferForm({
                   {num(setupOverride) != null || num(monthlyOverride) != null
                     ? "Mit Sonderpreis nur das Startdatum, die Laufzeit bleibt wie hier gewählt."
                     : "Ihre Auswahl hier ist der Vorschlag. Start frühestens in 7 Tagen, spätestens in 90 Tagen."}
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-produktwahl-toggle>
+              <input
+                type="checkbox"
+                name="customerChoosesProducts"
+                className="mt-0.5 h-4 w-4"
+                checked={customerProducts && produktWahlMoeglich}
+                disabled={!produktWahlMoeglich}
+                onChange={(e) => setCustomerProducts(e.target.checked)}
+              />
+              <span>
+                <span className="block font-semibold">Kunde wählt Produkte und Tagesbudget</span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  {produktWahlMoeglich ? "Preis nach Staffel, bis 5 Produkte, 20 bis 100 € am Tag." : "Nur zum Listenpreis mit Software, ohne Sonder- oder Startpreis."}
                 </span>
               </span>
             </label>

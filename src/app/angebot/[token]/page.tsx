@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { OfferDocument, offerProducts, toOfferDoc } from "@/components/offer-document";
 import { getCurrentSession } from "@/lib/auth";
-import { getOfferByToken, markOfferViewed, offerAddOnsOf, offerSummaryInput } from "@/lib/offers";
+import { getOfferByToken, markOfferViewed, offerAddOnsOf, offerProductList, offerSummaryInput } from "@/lib/offers";
 import { zaehltAlsGeoeffnet } from "@/lib/offer-view";
 import {
   abschlussBonusJetzt,
@@ -13,6 +13,7 @@ import {
   normalizeTerm,
   offerAddOns,
   prepayFreeMonthsFor,
+  produktWahlOptionen,
   setupForChoice,
   startDateBounds,
   termOptionsFor,
@@ -209,7 +210,7 @@ const TERM_CHOICE_LABEL: Record<OfferTerm, string> = { "12m": "12 Monate", "6m":
 
 /** Vorberechnete Wahl für die Angebotsseite (null = feste Konditionen wie bisher). */
 function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>): OfferChoiceProps | null {
-  if (!offer.customerChoosesTerm && !offer.customerChoosesStart && !offer.annualChoice) return null;
+  if (!offer.customerChoosesTerm && !offer.customerChoosesStart && !offer.annualChoice && !offer.customerChoosesProducts) return null;
   const count = offerProducts(offer.products).length || 1;
   const fixedTerm = normalizeTerm(offer.term);
   const add = offerAddOns(offerAddOnsOf(offer));
@@ -228,6 +229,11 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
       list: discount ? (offer.customerChoosesTerm ? setupForChoice(t, count) : fixedList) : null,
     })),
     monthlyTotal: add.monthlyTotal,
+    // Produkte und Tagesbudget (Ole, 19.11.2026): Monatsgebühr nach Staffel, Zusätze (Verkäufer, Module) bleiben
+    choosesProducts: offer.customerChoosesProducts,
+    products: offerProductList(offer.products),
+    productOptions: offer.customerChoosesProducts ? produktWahlOptionen(offerProductList(offer.products)) : undefined,
+    monthlyExtras: Math.round((add.monthlyTotal - Number(offer.monthlyFee)) * 100) / 100,
     annualOffered: offer.annualPrepay || offer.annualChoice,
     // „Vorauszahlung anbieten“: Kunde wählt monatlich oder im Voraus (6 bzw. 12 Monate; Vorauswahl monatlich, Ole 18.11.2026)
     choosesAnnual: offer.annualChoice,

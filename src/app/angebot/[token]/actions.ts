@@ -15,6 +15,16 @@ export type AcceptState = { ok?: boolean; error?: string; checkoutUrl?: string }
 /** Formularwert „rhythmus“: jahr bzw. voraus → im Voraus (jährlich bzw. 6 Monate), monat → monatlich, sonst keine Angabe. */
 const parseRhythmus = (v: FormDataEntryValue | null): boolean | null => (v === "jahr" || v === "voraus" ? true : v === "monat" ? false : null);
 
+/** Formularwert „produkte“ (JSON, nur mit Produktwahl): fehlt = wie im Angebot; Prüfung in lib/offer-pricing.ts resolveProduktWahl. */
+function parseProdukte(v: FormDataEntryValue | null): unknown {
+  if (typeof v !== "string" || !v.trim() || v.length > 4000) return null;
+  try {
+    return JSON.parse(v);
+  } catch {
+    return "ungueltig";
+  }
+}
+
 export async function acceptOfferAction(token: string, _prev: AcceptState, formData: FormData): Promise<AcceptState> {
   const h = await headers();
   const ip = clientIp(h);
@@ -33,6 +43,8 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
     startDate: typeof formData.get("startDate") === "string" ? String(formData.get("startDate")) : null,
     // Zahlweise (nur mit „Jahreszahlung anbieten“ und 12 Monaten; fehlt = Vorauswahl bzw. vereinbart)
     annual: parseRhythmus(formData.get("rhythmus")),
+    // Produkte und Tagesbudget (nur mit Freigabe am Angebot; Preis rechnet der Server neu)
+    products: parseProdukte(formData.get("produkte")),
     ip: ip === "unknown" ? null : ip,
     agent: h.get("user-agent"),
   });

@@ -4,6 +4,7 @@
 import { parseZahlungsziel } from "@/lib/mahnwesen";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { LOGIN_EMAIL_RE, normalizeLoginEmail } from "@/lib/login-email";
 import { sendToAdmins } from "@/lib/push";
@@ -19,6 +20,7 @@ import {
   prepayFreeMonthsFor,
   prepayPossible,
   resolveOfferChoice,
+  resolveProduktWahl,
   TERM_SHORT,
   termOptionsFor,
   vorauszahlungMitAnnahme,
@@ -90,6 +92,11 @@ export type OfferFormInput = {
    * Mit Sonderpreis (Setup/Monat abweichend) nur das Startdatum.
    */
   customerChoice?: boolean;
+  /**
+   * Kunde wählt Produkte und Tagesbudget auf der Angebotsseite (Standard an, Ole 19.11.2026). Nur zum Listenpreis:
+   * nicht mit Sonderpreis, Startpreis, Paket „Nur Betreuung“, individuellem Preis oder Testangebot.
+   */
+  customerChoosesProducts?: boolean;
   /** „Ich zahle später, erinnern Sie mich am …“ auf der Angebotsseite erlauben (Standard aus, Ole 16.11.2026). */
   allowPayLater?: boolean;
   /** Überweisung erlauben (nur auf Anfrage des Kunden, Standard aus, Ole 17.11.2026) und Zahlungsziel in Tagen (Standard 14). */
@@ -215,6 +222,15 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   const choosesStart = input.customerChoice !== false;
   // Mit Sonderpreis passt ein anderes Setup nicht zur Vereinbarung → Laufzeit fest.
   const choosesTerm = choosesStart && input.setupOverride == null && input.monthlyOverride == null;
+  // Produkte und Tagesbudget: nur zum Listenpreis der Staffel (Ole, 19.11.2026)
+  const choosesProducts =
+    input.customerChoosesProducts !== false &&
+    !test &&
+    pkg === "software" &&
+    input.setupOverride == null &&
+    input.monthlyOverride == null &&
+    input.introMonthlyFee == null &&
+    !price.individual;
 
   const { termsUrl, dpaUrl } = legalUrls();
   const validUntil = new Date(Date.now() + (input.validDays ?? 14) * 24 * 60 * 60 * 1000);
@@ -281,6 +297,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             paymentInArrears: nachtraeglich,
             customerChoosesTerm: choosesTerm,
             customerChoosesStart: choosesStart,
+            customerChoosesProducts: choosesProducts,
             allowPayLater: input.allowPayLater === true && !test,
             allowBankTransfer: input.allowBankTransfer === true && !test,
             bankTransferDays: parseZahlungsziel(input.bankTransferDays),
@@ -320,6 +337,14 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   throw new Error("Angebotsnummer konnte nicht vergeben werden.");
 }
 
+/** Produkte aus Offer.products (Json) als Liste; Unbrauchbares fällt weg. */
+export function offerProductList(raw: unknown): OfferProduct[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((p) => ({ name: String((p as { name?: unknown })?.name ?? "").trim(), dailyBudget: Number((p as { dailyBudget?: unknown })?.dailyBudget) || 0 }))
+    .filter((p) => p.name);
+}
+
 export async function getOfferByToken(token: string) {
   if (!token || token.length < 20) return null;
   return prisma.offer.findUnique({ where: { token } });
@@ -343,6 +368,8 @@ export async function acceptOffer(
     startDate?: string | null;
     /** Zahlweise: true = jährlich im Voraus, false = monatlich (nur mit „Jahreszahlung anbieten“); fehlt = Vorauswahl. */
     annual?: boolean | null;
+    /** Produkte mit Tagesbudget (nur mit customerChoosesProducts; serverseitig geprüft, Preis neu nach Staffel); fehlt = wie im Angebot. */
+    products?: unknown;
   },
 ): Promise<AcceptResult> {
   const offer = await getOfferByToken(token);
@@ -358,11 +385,20 @@ export async function acceptOffer(
   const business = checkBusiness(opts.business);
   if (!business.ok) return { ok: false, error: business.error };
 
+  // Produkte und Tagesbudget: Wahl prüfen, Monatsgebühr nach Staffel neu (Ole, 19.11.2026)
+  const produktWahl = resolveProduktWahl(
+    { products: offerProductList(offer.products), monthlyFee: Number(offer.monthlyFee), choosesProducts: offer.customerChoosesProducts },
+    opts.products,
+  );
+  if (!produktWahl.ok) return { ok: false, error: produktWahl.error };
+  // Ab hier gelten die gewählten Produkte und die neue Monatsgebühr (Zusammenfassung, Mail, Kontakt, Stripe aus der DB)
+  const offerEff: typeof offer = produktWahl.geaendert ? { ...offer, products: produktWahl.products, monthlyFee: new Prisma.Decimal(produktWahl.monthlyFee) } : offer;
+
   // Laufzeit/Startdatum: Wahl des Kunden prüfen und Preise serverseitig neu berechnen.
   const choice = resolveOfferChoice(
     {
       term: offer.term,
-      productCount: Array.isArray(offer.products) ? offer.products.length : 1,
+      productCount: produktWahl.products.length || 1,
       setupFee: Number(offer.setupFee),
       startIso: offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
       annualPrepay: offer.annualPrepay,
@@ -384,7 +420,7 @@ export async function acceptOffer(
   }
   const startDate = choice.startIso ? new Date(`${choice.startIso}T12:00:00Z`) : null;
   // Konditionen wie direkt am Annahme-Knopf (Startpreis mit Übergang braucht ein eigenes Häkchen)
-  const summary = offerSummaryInput(offer, { term: choice.term, startIso: choice.startIso, setup: choice.setupFee, annual: choice.annualPrepay, freeMonths: choice.annualFreeMonths });
+  const summary = offerSummaryInput(offerEff, { term: choice.term, startIso: choice.startIso, setup: choice.setupFee, annual: choice.annualPrepay, freeMonths: choice.annualFreeMonths });
   const priceStep = hasPriceStep(summary);
   if (priceStep && !opts.priceStepAck) return { ok: false, error: "Bitte bestätigen Sie den Übergang vom Startpreis in die reguläre Vergütung." };
 
@@ -411,12 +447,14 @@ export async function acceptOffer(
       annualFreeMonths: choice.annualFreeMonths,
       // Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026): Setup und erster Zeitraum auf einer Rechnung (lib/billing.ts)
       prepayAtAcceptance: choice.annualPrepay,
+      ...(produktWahl.geaendert ? { products: produktWahl.products, monthlyFee: produktWahl.monthlyFee } : {}),
     },
   });
   if (updated.count === 0) return { ok: false, error: "Dieses Angebot kann nicht mehr angenommen werden." };
   // Ab hier mit den angenommenen Werten weiterarbeiten.
-  const accepted = { ...offer, term: choice.term, startDate, annualPrepay: choice.annualPrepay, annualFreeMonths: choice.annualFreeMonths };
-  const chosenText = `${TERM_SHORT[choice.term]}${offer.annualChoice && prepayPossible(choice.term) ? (choice.annualPrepay ? (choice.term === "6m" ? ", 6 Monate im Voraus" : ", jährlich im Voraus") : ", monatlich") : ""}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
+  const accepted = { ...offerEff, term: choice.term, startDate, annualPrepay: choice.annualPrepay, annualFreeMonths: choice.annualFreeMonths };
+  const produktText = produktWahl.geaendert ? `${produktWahl.products.map((p) => `${p.name} ${p.dailyBudget} €/Tag`).join(", ")}, ` : "";
+  const chosenText = `${produktText}${TERM_SHORT[choice.term]}${offer.annualChoice && prepayPossible(choice.term) ? (choice.annualPrepay ? (choice.term === "6m" ? ", 6 Monate im Voraus" : ", jährlich im Voraus") : ", monatlich") : ""}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
   await audit("offer.accept", {
     entity: "Offer",
     entityId: offer.id,
@@ -429,7 +467,8 @@ export async function acceptOffer(
       setupFee: choice.setupFee,
       annualPrepay: choice.annualPrepay,
       annualChoice: offer.annualChoice,
-      chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart || offer.annualChoice,
+      chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart || offer.annualChoice || produktWahl.geaendert,
+      ...(produktWahl.geaendert ? { products: produktWahl.products, monthlyFee: produktWahl.monthlyFee } : {}),
       company: business.company,
       vatId: business.vatId,
       asBusiness: true,
@@ -441,9 +480,7 @@ export async function acceptOffer(
   // Deal bzw. Kontakt auf „gewonnen“ setzen und in der Historie vermerken.
   if (offer.salesContactId) {
     await setContactCustomerStage(offer, "VERTRAG");
-    const products = Array.isArray(offer.products)
-      ? (offer.products as { name?: string }[]).map((p) => p?.name).filter(Boolean).join(", ")
-      : "";
+    const products = offerProductList(offerEff.products).map((p) => p.name).join(", ");
     await prisma.salesContact
       .update({
         where: { id: offer.salesContactId },
@@ -469,7 +506,7 @@ export async function acceptOffer(
 
   // Auftragsbestätigung mit Datum und Betrag (Startpreis, Laufzeit, Kündigung); Testangebote ohne
   if (!offer.isTest && offer.email) {
-    await sendAcceptanceMail({ ...offer, company: offer.company?.trim() || business.company }, summary).catch((err) => reportError(err, "offer-accept-mail", { offer: offer.number }));
+    await sendAcceptanceMail({ ...offerEff, company: offer.company?.trim() || business.company }, summary).catch((err) => reportError(err, "offer-accept-mail", { offer: offer.number }));
   }
 
   await sendToAdmins({

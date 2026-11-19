@@ -1,9 +1,21 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { BellRing, CheckCircle2, Loader2 } from "lucide-react";
+import { BellRing, CheckCircle2, Loader2, Plus, X } from "lucide-react";
 import { acceptOfferAction, type AcceptState } from "./actions";
-import { eur, prepayFreeMonthsFor, prepayPossible, vorauszahlungBetraege, withVat, type OfferTerm } from "@/lib/offer-pricing";
+import {
+  eur,
+  KUNDE_MAX_PRODUKTE,
+  listenMonatsgebuehr,
+  monthlyBudgetOf,
+  prepayFreeMonthsFor,
+  prepayPossible,
+  PRICE_LIST,
+  vorauszahlungBetraege,
+  withVat,
+  type OfferProduct,
+  type OfferTerm,
+} from "@/lib/offer-pricing";
 import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
 import { ZAHLART_HINWEIS, ZAHLART_HINWEIS_HALBJAHR, ZAHLART_HINWEIS_JAHR } from "@/lib/zahlart";
 import { addMonthsIso, contractSummaryLines, hasPriceStep, priceStepAckText, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
@@ -18,6 +30,14 @@ export type OfferChoiceProps = {
   options: { term: OfferTerm; label: string; setup: number; list?: number | null }[];
   /** Monatlich gesamt inkl. Zusätze (netto). */
   monthlyTotal: number;
+  /** Kunde wählt Produkte und Tagesbudget (Ole, 19.11.2026); Monatsgebühr nach Staffel plus monthlyExtras. */
+  choosesProducts?: boolean;
+  /** Produkte im Angebot (Vorbelegung). */
+  products?: OfferProduct[];
+  /** Wählbare Produkte und Tagesbudgets (verbindlich prüft der Server). */
+  productOptions?: { namen: string[]; stufen: number[] };
+  /** Zusätze je Monat (weitere Verkäufer, Module), unabhängig von den Produkten. */
+  monthlyExtras?: number;
   /** Vorauszahlung im Angebot vereinbart oder zur Wahl angeboten (gilt nur mit 6 oder 12 Monaten). */
   annualOffered: boolean;
   /** „Vorauszahlung anbieten“: Kunde wählt monatlich oder im Voraus (6 Monate bzw. jährlich). */
@@ -74,6 +94,12 @@ export function AcceptForm({
   const [term, setTerm] = useState<OfferTerm>(choice?.initialTerm ?? "12m");
   const [startDate, setStartDate] = useState(choice?.start.preset ?? "");
   const [annualPick, setAnnualPick] = useState(!!choice?.initialAnnual);
+  const [produkte, setProdukte] = useState<OfferProduct[]>(choice?.products ?? []);
+  // Produktwahl: Monatsgebühr nach Staffel (null = individuell, dann keine Online-Annahme)
+  const waehltProdukte = !!choice?.choosesProducts && produkte.length > 0;
+  const gebuehr = waehltProdukte ? listenMonatsgebuehr(produkte) : null;
+  const individuell = waehltProdukte && gebuehr == null;
+  const monthlyTotal = waehltProdukte && gebuehr != null ? Math.round((gebuehr + (choice?.monthlyExtras ?? 0)) * 100) / 100 : (choice?.monthlyTotal ?? pricing.monthlyTotal);
   // Konditionen mit der aktuellen Wahl (verbindlich rechnet der Server bei der Annahme)
   const effTerm = choice?.choosesTerm ? term : pricing.term;
   const annual = choice
@@ -81,13 +107,14 @@ export function AcceptForm({
     : pricing.annual && prepayPossible(effTerm);
   const summary: ContractSummaryInput = {
     ...pricing,
+    monthlyTotal,
     term: effTerm,
     startIso: choice?.choosesStart ? startDate || null : pricing.startIso,
     setup: choice ? (choice.options.find((o) => o.term === effTerm)?.setup ?? pricing.setup) : pricing.setup,
     annual,
     ...(choice ? { freeMonths: freiFuer(choice, effTerm) } : {}),
   };
-  const hasChoice = !!choice && (choice.choosesTerm || choice.choosesStart || !!choice.choosesAnnual);
+  const hasChoice = !!choice && (choice.choosesTerm || choice.choosesStart || !!choice.choosesAnnual || !!choice.choosesProducts);
   const priceStep = hasPriceStep(summary);
 
   useEffect(() => {
@@ -121,7 +148,7 @@ export function AcceptForm({
   return (
     <form action={action} className="space-y-4">
       {choice && hasChoice ? (
-        <ChoiceFields choice={choice} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} />
+        <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} />
       ) : null}
       <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm sm:p-5" data-accept-summary aria-live="polite">
         <div className="font-semibold">Das vereinbaren Sie mit dem Klick</div>
@@ -209,7 +236,7 @@ export function AcceptForm({
       {state.error ? <p className="text-sm font-medium text-rose-700">{state.error}</p> : null}
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || individuell}
         className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white shadow-[var(--shadow-sm)] transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60 sm:w-auto"
       >
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
@@ -226,13 +253,16 @@ export function AcceptForm({
 
 /** „der hier gewählten Laufzeit, Zahlweise und dem gewählten Start“ je nach freigegebener Wahl. */
 function gewaehltText(choice: OfferChoiceProps): string {
-  const teile = [choice.choosesTerm ? "Laufzeit" : null, choice.choosesAnnual ? "Zahlweise" : null].filter(Boolean) as string[];
+  const teile = [choice.choosesProducts ? "Produkte" : null, choice.choosesTerm ? "Laufzeit" : null, choice.choosesAnnual ? "Zahlweise" : null].filter(Boolean) as string[];
   const vorne = teile.length ? `der hier gewählten ${teile.join(" und ")}` : "";
   return [vorne, choice.choosesStart ? "dem gewählten Start" : ""].filter(Boolean).join(" und ");
 }
 
 function ChoiceFields({
   choice,
+  produkte,
+  setProdukte,
+  individuell,
   term,
   setTerm,
   startDate,
@@ -242,6 +272,10 @@ function ChoiceFields({
   arrears = false,
 }: {
   choice: OfferChoiceProps;
+  produkte: OfferProduct[];
+  setProdukte: (p: OfferProduct[]) => void;
+  /** Gewähltes Werbebudget über der Staffel: individuelles Angebot, keine Online-Annahme */
+  individuell: boolean;
   term: OfferTerm;
   setTerm: (t: OfferTerm) => void;
   startDate: string;
@@ -261,6 +295,9 @@ function ChoiceFields({
   const annualTotal = v.total;
   return (
     <div className="space-y-4 rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 sm:p-5">
+      {choice.choosesProducts && choice.productOptions ? (
+        <ProduktWahl produkte={produkte} setProdukte={setProdukte} optionen={choice.productOptions} individuell={individuell} />
+      ) : null}
       {choice.choosesTerm ? (
         <fieldset>
           <legend className="text-sm font-medium">Laufzeit wählen</legend>
@@ -357,6 +394,94 @@ function ChoiceFields({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Produkte und Tagesbudget (Ole, 19.11.2026): je Produkt eine Zeile mit zwei Auswahlfeldern, darunter das Werbebudget im
+ * Monat. Feld „produkte“ (JSON); verbindlich prüft und rechnet der Server (lib/offer-pricing.ts resolveProduktWahl).
+ */
+function ProduktWahl({
+  produkte,
+  setProdukte,
+  optionen,
+  individuell,
+}: {
+  produkte: OfferProduct[];
+  setProdukte: (p: OfferProduct[]) => void;
+  optionen: { namen: string[]; stufen: number[] };
+  individuell: boolean;
+}) {
+  const feld =
+    "h-11 min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
+  const setze = (i: number, p: Partial<OfferProduct>) => setProdukte(produkte.map((x, j) => (j === i ? { ...x, ...p } : x)));
+  const frei = optionen.namen.filter((n) => !produkte.some((p) => p.name === n));
+  const budget = monthlyBudgetOf(produkte);
+  return (
+    <div role="group" aria-labelledby="produkt-wahl-titel" data-produkt-wahl className="min-w-0">
+      <div id="produkt-wahl-titel" className="text-sm font-medium">
+        Produkte und Tagesbudget
+      </div>
+      <input type="hidden" name="produkte" value={JSON.stringify(produkte)} />
+      <div className="mt-2 space-y-2 sm:max-w-md">
+        {produkte.map((p, i) => (
+          <div key={i} className="flex items-center gap-2" data-produkt-zeile>
+            <select aria-label={`Produkt ${i + 1}`} value={p.name} onChange={(e) => setze(i, { name: e.target.value })} className={`${feld} w-0 flex-1`}>
+              {optionen.namen
+                .filter((n) => n === p.name || !produkte.some((x) => x.name === n))
+                .map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+            </select>
+            <select
+              aria-label={`Tagesbudget ${p.name}`}
+              value={p.dailyBudget}
+              onChange={(e) => setze(i, { dailyBudget: Number(e.target.value) })}
+              className={`${feld} w-[124px] shrink-0`}
+            >
+              {optionen.stufen.map((d) => (
+                <option key={d} value={d}>
+                  {d} €/Tag
+                </option>
+              ))}
+            </select>
+            {produkte.length > 1 ? (
+              <button
+                type="button"
+                aria-label={`${p.name} entfernen`}
+                onClick={() => setProdukte(produkte.filter((_, j) => j !== i))}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--muted)] hover:bg-white hover:text-[#0b1220]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
+        {produkte.length < KUNDE_MAX_PRODUKTE && frei.length ? (
+          <button
+            type="button"
+            onClick={() => setProdukte([...produkte, { name: frei[0], dailyBudget: optionen.stufen.includes(20) ? 20 : optionen.stufen[0] }])}
+            className="inline-flex h-9 items-center gap-1 font-medium text-[color:var(--brand)]"
+          >
+            <Plus className="h-4 w-4" /> Produkt hinzufügen
+          </button>
+        ) : (
+          <span />
+        )}
+        <span className="text-[color:var(--muted)]" aria-live="polite" data-werbebudget>
+          Werbebudget ca. {eur(budget)} im Monat, direkt an Meta
+        </span>
+      </div>
+      {individuell ? (
+        <p className="mt-2 text-sm font-medium text-rose-700" data-produkt-individuell>
+          Ab {eur(PRICE_LIST.individualFrom)} Werbebudget im Monat gibt es ein individuelles Angebot. Bitte ein kleineres Budget wählen oder uns ansprechen.
+        </p>
+      ) : null}
     </div>
   );
 }
