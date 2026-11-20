@@ -22,7 +22,10 @@ import { normalizePhone } from "@/lib/whatsapp/phone";
 import { isReachedStatus, isValidLeadStatus } from "@/lib/products";
 import { resolvePplProduct } from "@/lib/ppl/produkt-key";
 import { funnelDef, pplFelder, pruefeAlles, saubereAntworten, type AbbruchGrund, type Fehler } from "@/lib/funnel/definition";
-import { PKV_TEXTE } from "@/lib/funnel/pkv-beitrag-texte";
+import { EINWILLIGUNG_KANAELE, EINWILLIGUNG_VERSION, einwilligungText, PKV_TEXTE } from "@/lib/funnel/pkv-beitrag-texte";
+import { experteMailAn, funnelDatenschutzEmail } from "@/lib/funnel/einstellungen";
+import type { PoolEinwilligung } from "@/lib/ppl/einwilligung-nachweis";
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { fbcAusFbclid, leadEreignis, qualitaetAn, qualitaetEventName, qualitaetsEreignis, sendeMetaEreignisse, type FunnelNutzer } from "@/lib/funnel/meta";
 
 const DAY = 86_400_000;
@@ -97,8 +100,19 @@ export type AbsendenInput = {
   url?: string | null;
 };
 
+/** Abnehmer, der den Lead bekommen hat (Danke-Seite „Dein Experte“, L9); nur wenn Name, Firma und Telefon bekannt sind. */
+export type Experte = { name: string; firma: string; telefon: string };
+
 export type AbsendenErgebnis =
-  | { ok: true; lead: boolean; status: PoolResult["status"]; meta: (() => Promise<unknown>) | null }
+  | {
+      ok: true;
+      lead: boolean;
+      status: PoolResult["status"];
+      meta: (() => Promise<unknown>) | null;
+      experte: Experte | null;
+      /** E-Mail „Dein Experte“ an den Lead (L9), zum Ausführen nach der Antwort */
+      mail: (() => Promise<unknown>) | null;
+    }
   | { ok: false; fehler: Fehler; abbruch: AbbruchGrund | null; schritt: string | null };
 
 const EVENT_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
@@ -122,6 +136,7 @@ export async function absenden(p: AbsendenInput, now = new Date()): Promise<Abse
   const vorher = await prisma.funnelBesuch.findUnique({ where: { id: p.besuchId }, select: { poolLeadId: true, quelle: true } });
   const { productKey } = await resolvePplProduct(process.env.PKV_FUNNEL_PRODUKT?.trim() || f.produkt);
   const quelle = (saubereQuelle(p.quelle) ?? (vorher?.quelle as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
+  const datenschutzEmail = funnelDatenschutzEmail();
   const r = await ingestPoolLead(
     {
       // Je Besucher genau ein Lead (doppeltes Absenden, Zurück und erneut Absenden)
@@ -130,6 +145,8 @@ export async function absenden(p: AbsendenInput, now = new Date()): Promise<Abse
       via: "funnel",
       fields: pplFelder(f, a, now),
       ad: adFromTracking(quelle),
+      // L3: Nachweis der Einwilligung je Lead, so wie angezeigt (geht an den Abnehmer statt des Texts am Bezug)
+      consent: einwilligungNachweis(f.key, datenschutzEmail, now),
     },
     now,
   );
@@ -162,7 +179,49 @@ export async function absenden(p: AbsendenInput, now = new Date()): Promise<Abse
     userAgent: p.userAgent,
   };
   const meta = neu && einw && eventId ? () => sendeMetaEreignisse([leadEreignis({ eventId, zeit: now, url: p.url, nutzer, produkt: productKey })]) : null;
-  return { ok: true, lead: neu, status: r.status, meta };
+  // Abnehmer steht fest (sofort geliefert): „Dein Experte“ auf der Danke-Seite und per E-Mail (L9)
+  const experte = r.status === "delivered" && r.leadId ? await experteFuer(r.leadId).catch(() => null) : null;
+  const mailAn = experte && neu && a.email && experteMailAn() ? experteMail({ email: a.email, vorname: a.vorname ?? "", experte, datenschutzEmail }) : null;
+  const mail = mailAn
+    ? async () => {
+        const { sendPlainMail } = await import("@/lib/email");
+        return sendPlainMail({ to: mailAn.to, subject: mailAn.subject, text: mailAn.text }).catch((err: unknown) => reportError(err, "funnel-experte-mail"));
+      }
+    : null;
+  return { ok: true, lead: neu, status: r.status, meta, experte, mail };
+}
+
+/** Einwilligungsnachweis beim Absenden (L3): Wortlaut mit eingesetzter Adresse, Fassung, Zeitpunkt, Kanäle, Knopf, Funnel. */
+export function einwilligungNachweis(funnel: string, datenschutzEmail: string, now: Date): PoolEinwilligung {
+  return { at: now.toISOString(), funnel, version: EINWILLIGUNG_VERSION, text: einwilligungText(datenschutzEmail), kanaele: [...EINWILLIGUNG_KANAELE], knopf: PKV_TEXTE.kontakt.knopf };
+}
+
+/** Name, Firma und Telefon des Abnehmers aus seiner Erstinformation; fehlt etwas, null (dann kein Kasten, keine Mail). */
+export async function experteFuer(leadId: string): Promise<Experte | null> {
+  const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { customer: { select: { erstinformation: { select: { name: true, firma: true, telefon: true } } } } } });
+  const e = l?.customer.erstinformation;
+  const t = (v: string | null | undefined) => (v ?? "").trim();
+  if (!e || !t(e.name) || !t(e.firma) || !t(e.telefon)) return null;
+  return { name: t(e.name), firma: t(e.firma), telefon: t(e.telefon) };
+}
+
+/** E-Mail „Dein Experte“ (Texte: docs/funnel/pkv-beitrag-texte-conversion.md, L9). Rein. */
+export function experteMail(p: { email: string; vorname: string; experte: Experte; datenschutzEmail: string }): { to: string; subject: string; text: string } {
+  const { name, firma, telefon } = p.experte;
+  const hallo = p.vorname.trim() ? `Hallo ${p.vorname.trim()},` : "Hallo,";
+  const text = [
+    hallo,
+    "",
+    `${name} von ${firma} ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an, und zwar von dieser Nummer: ${telefon}. Speichere sie dir am besten gleich.`,
+    "",
+    `Widerruf jederzeit per E-Mail an ${p.datenschutzEmail}.`,
+    "",
+    "Viele Grüße",
+    "pkv-tarife.com",
+    "",
+    "pkv-tarife.com ist ein Angebot der Ole Kannapinn UG (haftungsbeschränkt).",
+  ].join("\n");
+  return { to: p.email, subject: ohneGedankenstriche(`Dein Experte für die PKV-Prüfung: ${name}`), text: ohneGedankenstriche(text) };
 }
 
 // ─── Ergebnis beim Abnehmer (Cron) ────────────────────────────────────────

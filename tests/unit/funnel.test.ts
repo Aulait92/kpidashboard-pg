@@ -9,6 +9,7 @@ import {
   datumTippen,
   geburtsdatumOk,
   naechsterSchritt,
+  optionLabel,
   PKV_BEITRAG,
   pplFelder,
   pruefeAlles,
@@ -18,10 +19,21 @@ import {
   texteFuer,
   type Antworten,
 } from "@/lib/funnel/definition";
-import { PKV_TEXTE, PKV_VERSICHERER } from "@/lib/funnel/pkv-beitrag-texte";
+import { EINWILLIGUNG_KANAELE, EINWILLIGUNG_VERSION, einwilligungTeile, einwilligungText, PKV_SITUATIONEN, PKV_TEXTE, PKV_VERSICHERER } from "@/lib/funnel/pkv-beitrag-texte";
 import { decideFunnelHost, gueltigeBesuchId, parseFunnelHosts } from "@/lib/funnel/host";
+import { funnelDatenschutzEmail, experteMailAn } from "@/lib/funnel/einstellungen";
+import { markeFuer, PKV_TARIFE } from "@/lib/funnel/marken";
+import { ortAusAnschrift, partnerAus, registerNummer, type PartnerRoh } from "@/lib/funnel/partner";
+import { einwilligungKurz, leadNachweisAus, poolEinwilligung } from "@/lib/ppl/einwilligung-nachweis";
+import { einwilligungFuer } from "@/lib/ppl/delivery";
+import { machineMail } from "@/lib/ppl/lead-mail";
+import { leadPdfData } from "@/lib/ppl/lead-pdf";
+import { renderTemplate } from "@/lib/ppl/template";
+import { einwilligungStand } from "@/lib/einwilligung-stand";
+import { PROVIDER } from "@/lib/legal-texts";
+import { SPLITTEST_HYPOTHESE } from "@/lib/ab-hypothesen";
 import { fbcAusFbclid, leadEreignis, qualitaetAn, qualitaetEventName, qualitaetsEreignis, userData } from "@/lib/funnel/meta";
-import { bewerteLead, saubereQuelle, type LeadFakten } from "@/lib/funnel/server";
+import { bewerteLead, einwilligungNachweis, experteMail, saubereQuelle, type LeadFakten } from "@/lib/funnel/server";
 import { categoryLabels } from "@/lib/ppl/perspective";
 import { factsFrom } from "@/lib/ppl/engine";
 import { EXPERIMENTE } from "@/lib/experimente";
@@ -133,15 +145,39 @@ describe("Funnel-Konfiguration", () => {
     expect(factsFrom(pplFelder(f, { ...VOLL, situation: "Beamter" }, HEUTE)).civilServant).toBe(true);
   });
 
-  it("Fassung b je Schritt: Beispiel vorhanden, aber aus (alle sehen a)", () => {
-    expect(testSchritte(f)).toEqual([{ schritt: "start", experiment: "funnel_pkv_beispiel" }]);
+  it("Fassung b je Schritt: erster echter Test „Überschrift mit Anlass“ läuft, Beispiel bleibt aus", () => {
+    expect(testSchritte(f)).toEqual([{ schritt: "start", experiment: "funnel_pkv_anlass" }]);
     expect(texteFuer(schritt("start"), "a").ueberschrift).toBe(PKV_TEXTE.start.ueberschrift);
     expect(texteFuer(schritt("start"), "b").ueberschrift).toBe(PKV_TEXTE.startB.ueberschrift);
     expect(texteFuer(schritt("start"), "b").frage).toBe(PKV_TEXTE.start.frage);
     expect(texteFuer(schritt("versicherung"), "b")).toEqual(schritt("versicherung").texte);
-    const d = EXPERIMENTE.funnel_pkv_beispiel;
-    expect(d).toMatchObject({ aktiv: false, ziel: "ppl_erreicht", reifTage: 14, ohneEreignis: "ppl_unbekannt" });
+    expect(PKV_TEXTE.startB.ueberschrift.replace("\u00a0", " ")).toBe("Hat deine PKV den Beitrag zum 1. Januar erhöht? Lass deinen Tarif kostenlos prüfen");
+    expect(EXPERIMENTE.funnel_pkv_beispiel).toMatchObject({ aktiv: false });
+    const d = EXPERIMENTE.funnel_pkv_anlass;
+    expect("aktiv" in d).toBe(false); // läuft ohne Eintrag in „Experiment“
+    expect(d).toMatchObject({ ziel: "ppl_erreicht", reifTage: 14, ohneEreignis: "ppl_unbekannt", min: 150 });
     expect(d.anzeigeZiele).toEqual(expect.arrayContaining(["funnel_lead", "ppl_termin", "ppl_abschluss", "ppl_umsatz"]));
+    expect(SPLITTEST_HYPOTHESE.funnel_pkv_anlass).toBeTruthy();
+  });
+
+  it("Beschriftungen ändern sich, gespeicherte Werte nicht (Filter, Lead-PDF, Perspective-Felder)", () => {
+    const start = schritt("start");
+    const sit = schritt("situation");
+    expect(start.art === "auswahl" && start.optionen).toEqual(["Privat", "Gesetzlich"]);
+    expect(optionLabel(start, "Privat")).toBe("Privat versichert");
+    expect(sit.art === "auswahl" && sit.optionen).toEqual([...PKV_SITUATIONEN]);
+    expect(optionLabel(sit, "Beamter")).toBe("Beamtin/Beamter");
+    expect(optionLabel(sit, "Rentner")).toBe("In Rente");
+    expect(optionLabel(sit, "Angestellt")).toBe("Angestellt");
+    // Kontakt: Telefon zuerst
+    const k = schritt("kontakt");
+    expect(k.art === "absenden" && k.felder.map((x) => x.feld)).toEqual(["telefon", "email"]);
+    expect(texteFuer(k).knopf).toBe("Kostenlos prüfen lassen");
+    expect(texteFuer(schritt("beitrag")).hinweis).toBe("Gemeint ist dein ganzer Beitrag, vor Abzug eines Arbeitgeberzuschusses. Ein runder Wert reicht.");
+    expect(texteFuer(schritt("name")).fussnote).toMatch(/^Im Einzelfall möglich/);
+    expect(schritt("ende-gesetzlich")).toMatchObject({ zurueckZu: "start" });
+    expect(schritt("ende-beitrag")).toMatchObject({ zurueckZu: "beitrag" });
+    expect(f.marke).toBe("pkv-tarife");
   });
 
   it("Texte: keine Gedankenstriche, nur „bis zu 50 %“ als Zahl-Versprechen, Einwilligung nennt den Knopf", () => {
@@ -152,10 +188,43 @@ describe("Funnel-Konfiguration", () => {
       else if (v && typeof v === "object") Object.values(v).forEach(walk);
     };
     walk(PKV_TEXTE);
+    walk(PKV_TARIFE.anbieter);
+    alle.push(einwilligungText("datenschutz@example.de"), PKV_TEXTE.fortschritt(1, 7));
     for (const t of alle) expect(t, t).not.toMatch(/[–—]/);
-    expect(alle.join(" ")).not.toMatch(/sehr wahrscheinlich|garant/i);
+    // „Nicht verwenden“ laut Conversion-Dokument
+    expect(alle.join(" ")).not.toMatch(/sehr wahrscheinlich|garant|unabhängig|ohne Gesundheitsprüfung|Auswertung|Berechnung/i);
     expect(alle.filter((t) => /%/.test(t))).toEqual([PKV_TEXTE.name.ueberschrift]);
-    expect(PKV_TEXTE.kontakt.einwilligung).toContain(`„${PKV_TEXTE.kontakt.knopf}“`);
+  });
+
+  it("Einwilligung (L1): alle Pflichtbestandteile, Knopfname wörtlich, Adresse eingesetzt, Links", () => {
+    const text = einwilligungText("widerruf@pkv-tarife.example");
+    expect(text).toContain(`„${PKV_TEXTE.kontakt.knopf}“`);
+    expect(text).toContain("pkv-tarife.com (Ole Kannapinn UG)"); // Verantwortlicher
+    expect(text).toContain("aus der Partnerliste"); // Empfänger (L2)
+    for (const k of EINWILLIGUNG_KANAELE) expect(text).toContain(k); // Kanäle
+    expect(text).toContain("per Telefon, E-Mail und WhatsApp");
+    expect(text).toContain("Erstinformation erhalte ich elektronisch, auf Wunsch auf Papier"); // § 16 VersVermV
+    expect(text).toContain("Widerruf jederzeit per E-Mail an widerruf@pkv-tarife.example."); // Widerrufsweg
+    expect(text.endsWith("Datenschutz")).toBe(true);
+    const links = einwilligungTeile("x@y.de").filter((t) => typeof t !== "string" && "link" in t);
+    expect(links).toEqual([{ link: "partner", text: "Partnerliste" }, { link: "datenschutz", text: "Datenschutz" }]);
+    expect(EINWILLIGUNG_VERSION).toMatch(/^pkv-beitrag-\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("Datenschutz-Adresse: FUNNEL_DATENSCHUTZ_EMAIL, sonst Anbieter; E-Mail „Dein Experte“ abschaltbar", () => {
+    expect(funnelDatenschutzEmail({})).toBe(PROVIDER.email);
+    expect(funnelDatenschutzEmail({ FUNNEL_DATENSCHUTZ_EMAIL: " datenschutz@pkv-tarife.com " })).toBe("datenschutz@pkv-tarife.com");
+    expect(funnelDatenschutzEmail({ FUNNEL_DATENSCHUTZ_EMAIL: "kaputt" })).toBe(PROVIDER.email);
+    expect(experteMailAn({})).toBe(true);
+    expect(experteMailAn({ FUNNEL_EXPERTE_MAIL: "0" })).toBe(false);
+  });
+
+  it("Marke: Farben laut CI, Dateien unter /marken, Bilder mit Alt-Text", () => {
+    expect(markeFuer(f.marke)).toBe(PKV_TARIFE);
+    expect(PKV_TARIFE.farben).toMatchObject({ primaer: "#0E5F68", seite: "#F8F7F4", feldRand: "#7C8C9A" });
+    for (const d of Object.values(PKV_TARIFE.dateien)) expect(d).toMatch(/^\/marken\/pkv-tarife\//);
+    expect(PKV_TARIFE.bilder.start?.alt).toBe("Paar am Küchentisch prüft Unterlagen");
+    expect(PKV_TARIFE.bilder.zwischenseite?.symbolbild).toBe(true);
   });
 });
 
@@ -254,6 +323,10 @@ describe("Funnel-Adresse", () => {
     expect(d("/api/funnel/ereignis")).toMatchObject({ kind: "serve" });
     expect(d("/_next/static/x.js")).toMatchObject({ kind: "serve" });
     expect(d("/f/pkv-beitrag")).toMatchObject({ kind: "serve" });
+    expect(d("/f/pkv-beitrag/partner")).toMatchObject({ kind: "serve" });
+    expect(d("/partner")).toEqual({ kind: "rewrite", pathname: "/f/pkv-beitrag/partner", funnel: "pkv-beitrag" });
+    expect(d("/marken/pkv-tarife/hero.webp")).toMatchObject({ kind: "serve" });
+    expect(d("/marken-x")).toMatchObject({ kind: "redirect" });
     expect(d("/robots.txt")).toEqual({ kind: "robots" });
     expect(d("/login", undefined, "?utm_source=fb")).toEqual({ kind: "redirect", location: "/?utm_source=fb" });
     expect(d("/admin")).toMatchObject({ kind: "redirect" });
@@ -281,32 +354,132 @@ describe("Middleware: eigene Funnels", () => {
     return new NextRequest(`http://localhost:8080${u.pathname}${u.search}`, { headers });
   };
 
-  it("beitrag.pkv-tarife.com/ zeigt den Funnel, vergibt die Besucher-ID, nicht indexieren", async () => {
+  it("beitrag.pkv-tarife.com/ zeigt den Funnel, nicht indexieren, kein Besucher-Cookie (L4)", async () => {
     const res = await middleware(req("https://beitrag.pkv-tarife.com/?utm_source=fb"));
     expect(isRewrite(res)).toBe(true);
     expect(new URL(getRewrittenUrl(res)!).pathname).toBe("/f/pkv-beitrag");
     expect(res.headers.get("x-robots-tag")).toBe("noindex, nofollow");
-    const cookie = res.cookies.get("pf_bid");
-    expect(gueltigeBesuchId(cookie?.value)).toBeTruthy();
-    expect(cookie?.httpOnly).toBe(true);
+    expect(res.cookies.get("pf_bid")).toBeUndefined();
+    expect(res.headers.get("set-cookie") ?? "").not.toContain("pf_bid=");
+    const partner = await middleware(req("https://beitrag.pkv-tarife.com/partner"));
+    expect(new URL(getRewrittenUrl(partner)!).pathname).toBe("/f/pkv-beitrag/partner");
+    expect(partner.cookies.get("pf_bid")).toBeUndefined();
   });
 
-  it("vorhandene Besucher-ID bleibt; andere Pfade der App nicht erreichbar", async () => {
+  it("alter Cookie pf_bid wird gelöscht; andere Pfade der App nicht erreichbar", async () => {
     const id = "123e4567-e89b-12d3-a456-426614174000";
     const res = await middleware(req("https://beitrag.pkv-tarife.com/", `pf_bid=${id}`));
-    expect(res.cookies.get("pf_bid")).toBeUndefined();
+    expect(res.headers.get("set-cookie") ?? "").toMatch(/pf_bid=;.*(Max-Age=0|Expires=Thu, 01 Jan 1970)/i);
     const login = await middleware(req("https://beitrag.pkv-tarife.com/login"));
     expect(login.status).toBe(307);
     expect(new URL(getRedirectUrl(login)!).pathname).toBe("/");
   });
 
-  it("/f/pkv-beitrag auf der App-Adresse ohne Login, mit Besucher-ID", async () => {
+  it("/f/pkv-beitrag auf der App-Adresse ohne Login, ohne Besucher-Cookie", async () => {
     process.env.AUTH_SECRET ||= "localtestsecret_localtestsecret_0123456789";
     const res = await middleware(req("https://app.performancegrowth.de/f/pkv-beitrag"));
     expect(res.status).toBe(200);
     expect(getRedirectUrl(res)).toBeNull();
-    expect(res.cookies.get("pf_bid")).toBeTruthy();
+    expect(res.cookies.get("pf_bid")).toBeUndefined();
+    expect(getRedirectUrl(await middleware(req("https://app.performancegrowth.de/f/pkv-beitrag/partner")))).toBeNull();
     const api = await middleware(req("https://app.performancegrowth.de/api/funnel/ereignis"));
     expect(getRedirectUrl(api)).toBeNull();
+  });
+});
+
+describe("Partnerliste (L2)", () => {
+  const roh = (x: Partial<PartnerRoh> & { customerId: string }): PartnerRoh => ({
+    kundeName: `Kunde ${x.customerId}`,
+    isTest: false,
+    ruhend: false,
+    aktiv: true,
+    aktualisiert: new Date("2026-11-18T10:00:00Z"),
+    erstinfo: null,
+    registerNr: null,
+    ...x,
+  });
+
+  it("Ort aus der Anschrift, Registernummer nur im gültigen Format", () => {
+    expect(ortAusAnschrift("Hauptstr. 5, 50667 Köln")).toBe("Köln");
+    expect(ortAusAnschrift("Hauptstr. 5\n80331 München-Schwabing")).toBe("München-Schwabing");
+    expect(ortAusAnschrift("ohne Postleitzahl")).toBeNull();
+    expect(registerNummer(" d-abcd-12345-67 ")).toBe("D-ABCD-12345-67");
+    expect(registerNummer("12345")).toBeNull();
+  });
+
+  it("nur aktive Bezüge, ohne Testkunden und ruhende Konten, je Kunde einmal, fehlende Angaben gemeldet", () => {
+    const { partner, stand } = partnerAus([
+      roh({ customerId: "a", erstinfo: { name: "Max Muster", firma: "Muster Finanz GmbH", anschrift: "Ring 1, 10115 Berlin", registerNummer: "D-1234-ABCDE-12" } }),
+      roh({ customerId: "a", aktualisiert: new Date("2026-11-19T10:00:00Z") }),
+      roh({ customerId: "b", kundeName: "Beta Versicherungsmakler", registerNr: "D-9999-ZZZZZ-99" }),
+      roh({ customerId: "t", isTest: true, kundeName: "Testkunde" }),
+      roh({ customerId: "r", ruhend: true, kundeName: "Ruht" }),
+      roh({ customerId: "x", aktiv: false, kundeName: "Inaktiv" }),
+    ]);
+    expect(partner.map((p) => p.firma)).toEqual(["Beta Versicherungsmakler", "Muster Finanz GmbH"]);
+    expect(partner[1]).toEqual({ firma: "Muster Finanz GmbH", name: "Max Muster", ort: "Berlin", registerNummer: "D-1234-ABCDE-12", fehlt: [] });
+    expect(partner[0]).toMatchObject({ name: null, ort: null, registerNummer: "D-9999-ZZZZZ-99" });
+    expect(partner[0].fehlt).toEqual(["Firma (Erstinformation)", "Name", "Sitz (Ort)"]);
+    expect(stand?.toISOString()).toBe("2026-11-19T10:00:00.000Z");
+    expect(partnerAus([]).stand).toBeNull();
+  });
+});
+
+describe("Einwilligungsnachweis je Lead (L3)", () => {
+  const now = new Date("2026-11-20T11:00:00Z");
+  const n = einwilligungNachweis("pkv-beitrag", "datenschutz@example.de", now);
+
+  it("beim Absenden: Wortlaut mit Adresse, Fassung, Zeitpunkt, Kanäle, Knopf, Funnel", () => {
+    expect(n).toEqual({
+      at: "2026-11-20T11:00:00.000Z",
+      funnel: "pkv-beitrag",
+      version: EINWILLIGUNG_VERSION,
+      text: einwilligungText("datenschutz@example.de"),
+      kanaele: ["Telefon", "E-Mail", "WhatsApp"],
+      knopf: "Kostenlos prüfen lassen",
+    });
+    expect(poolEinwilligung(JSON.parse(JSON.stringify(n)))).toEqual(n);
+    expect(poolEinwilligung({ at: "x", text: "y" })).toBeNull();
+    expect(poolEinwilligung(null)).toBeNull();
+    expect(einwilligungKurz(n)).toContain("Kanäle: Telefon, E-Mail, WhatsApp");
+  });
+
+  it("am Lead: Nachweis wie aus dem Leadformular, zählt als vollständige Einwilligung", () => {
+    const l = leadNachweisAus(n);
+    expect(l).toMatchObject({ at: n.at, text: n.text, textVersion: EINWILLIGUNG_VERSION, kanaele: n.kanaele, knopf: n.knopf });
+    expect(einwilligungStand({ waConsent: "ja", consentData: l, meta: false })).toMatchObject({ stufe: "vollstaendig", nachweis: { text: n.text } });
+  });
+
+  it("an den Abnehmer: Nachweis statt Bezugstext (PDF, maschinenlesbare Mail, Vorlage); ohne Nachweis wie bisher", () => {
+    const sub = { consentText: "Alter Text am Bezug" };
+    const mit = einwilligungFuer(sub, { consent: n, consentAt: new Date("2026-11-20T11:00:05Z") });
+    expect(mit).toMatchObject({ text: n.text, at: now, nachweis: n });
+    expect(mit.detail).toBe(`Fassung ${EINWILLIGUNG_VERSION} · Kanäle: Telefon, E-Mail, WhatsApp`);
+    expect(einwilligungFuer(sub, { consent: null, consentAt: now })).toMatchObject({ text: "Alter Text am Bezug", detail: null });
+
+    const m = machineMail({ id: "L1", date: now, product: "PKV-Tarifoptimierung", name: "Erika Muster", phone: "4915123456781", email: "e@x.de", answers: [], consentText: mit.text, consentAt: mit.at, consentVersion: n.version, consentChannels: n.kanaele, consentButton: n.knopf, consentFunnel: n.funnel });
+    expect(m.text).toContain(`Einwilligungstext: ${n.text}`);
+    expect(m.text).toContain(`Einwilligung Fassung: ${EINWILLIGUNG_VERSION}`);
+    expect(m.text).toContain("Einwilligung Kanäle: Telefon, E-Mail, WhatsApp");
+    expect(m.json.einwilligung).toMatchObject({ text: n.text, fassung: EINWILLIGUNG_VERSION, kanaele: n.kanaele, knopf: n.knopf, funnel: "pkv-beitrag" });
+    const ohne = machineMail({ id: "L1", date: now, product: "X", name: null, phone: null, email: null, answers: [], consentText: "T", consentAt: null });
+    expect(ohne.text).not.toContain("Einwilligung Fassung");
+
+    const pdf = leadPdfData({ id: "L1", product: "PKV-Tarifoptimierung", name: "Erika", phone: null, email: null, answers: [], date: now, consentText: mit.text, consentAt: mit.at, consentDetail: mit.detail });
+    expect(pdf.einwilligung).toMatchObject({ text: n.text, zitat: true });
+    expect(pdf.einwilligung.am).toContain(EINWILLIGUNG_VERSION);
+
+    const v = renderTemplate("Name: {name}\nEinwilligung: {einwilligung}\nAm: {einwilligung_zeitpunkt}", { id: "L1", name: "Erika", phone: null, email: null, answers: [], consent: { text: n.text, at: n.at, version: n.version, kanaele: n.kanaele } });
+    expect(v).toContain(`Einwilligung: ${n.text}`);
+    expect(renderTemplate("Name: {name}\nEinwilligung: {einwilligung}", { id: "L1", name: "Erika", phone: null, email: null, answers: [] })).toBe("Name: Erika");
+  });
+
+  it("E-Mail „Dein Experte“ (L9): Du-Form, Nummer, Widerruf, keine Gedankenstriche", () => {
+    const m = experteMail({ email: "e@x.de", vorname: "Erika", experte: { name: "Max Muster", firma: "Muster Finanz GmbH", telefon: "030 1234567" }, datenschutzEmail: "datenschutz@example.de" });
+    expect(m.subject).toBe("Dein Experte für die PKV-Prüfung: Max Muster");
+    expect(m.text).toContain("Hallo Erika,");
+    expect(m.text).toContain("Max Muster von Muster Finanz GmbH ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an, und zwar von dieser Nummer: 030 1234567.");
+    expect(m.text).toContain("Widerruf jederzeit per E-Mail an datenschutz@example.de.");
+    expect(m.text).not.toMatch(/[–—]/);
   });
 });

@@ -8,7 +8,7 @@
 
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { formatBirthday, parseEuro } from "@/lib/ppl/perspective";
-import { PKV_DAUER, PKV_SITUATIONEN, PKV_TEXTE as T, PKV_VERSICHERER } from "@/lib/funnel/pkv-beitrag-texte";
+import { PKV_DAUER, PKV_SITUATION_LABEL, PKV_SITUATIONEN, PKV_TEXTE as T, PKV_VERSICHERER, PKV_VERSICHERT_LABEL } from "@/lib/funnel/pkv-beitrag-texte";
 
 export type FeldId = "versichert" | "versicherung" | "situation" | "dauer" | "beitrag" | "geburtsdatum" | "plz" | "ort" | "vorname" | "nachname" | "email" | "telefon";
 export type Antworten = Partial<Record<FeldId, string>>;
@@ -22,6 +22,14 @@ export type SchrittTexte = {
   frage?: string;
   hinweis?: string;
   knopf?: string;
+  /** Kleine Fußnote unter der Überschrift (z. B. zu „bis zu 50 %“) */
+  fussnote?: string;
+  /** Vertrauenszeile (Start), Punkte mit „·“ getrennt */
+  vertrauen?: readonly string[];
+  /** Nummerierte Liste (Danke-Seite „So geht es weiter“) */
+  liste?: readonly string[];
+  /** Kleiner Satz unter der Liste bzw. dem Knopf */
+  nachsatz?: string;
 };
 
 export type Eingabefeld = {
@@ -31,6 +39,8 @@ export type Eingabefeld = {
   platzhalter?: string;
   autocomplete?: string;
   einheit?: string;
+  /** Hinweis unter dem Feld */
+  hinweis?: string;
   /** Schmal (z. B. PLZ neben dem Ort) */
   schmal?: boolean;
 };
@@ -43,15 +53,28 @@ type Basis = {
 };
 
 export type Schritt =
-  | (Basis & { art: "auswahl"; frageNr: number; feld: FeldId; optionen: readonly string[]; spalten: 1 | 2; abbruch?: (a: Antworten) => AbbruchGrund | null })
+  | (Basis & {
+      art: "auswahl";
+      frageNr: number;
+      feld: FeldId;
+      /** Gespeicherte Werte (Filter, Lead-PDF, Perspective-Feldnamen) */
+      optionen: readonly string[];
+      /** Beschriftung je Wert, wo sie vom Wert abweicht */
+      labels?: Readonly<Record<string, string>>;
+      spalten: 1 | 2;
+      abbruch?: (a: Antworten) => AbbruchGrund | null;
+    })
   | (Basis & { art: "eingabe"; frageNr?: number; felder: Eingabefeld[]; abbruch?: (a: Antworten) => AbbruchGrund | null; vertraulich?: string })
-  | (Basis & { art: "info" })
-  | (Basis & { art: "absenden"; felder: Eingabefeld[]; einwilligung: string })
+  | (Basis & { art: "info"; bild?: "zwischenseite" })
+  // Einwilligung: lib/funnel/pkv-beitrag-texte.ts einwilligungTeile (mit Datenschutz-Adresse vom Server)
+  | (Basis & { art: "absenden"; felder: Eingabefeld[] })
   | (Basis & { art: "ende"; grund: AbbruchGrund; zurueckZu: string })
   | (Basis & { art: "danke" });
 
 export type FunnelDef = {
   key: string;
+  /** Marke (lib/funnel/marken.ts): Logo, Farben, Bilder, Anbieterzeile */
+  marke: string;
   /** Produkt im Pay-per-Lead-Eingang (Name oder Slug wie bei /api/leads/pool?produkt=…) */
   produkt: string;
   fragenGesamt: number;
@@ -62,7 +85,7 @@ export type FunnelDef = {
 
 // ─── Prüfregeln ───────────────────────────────────────────────────────────
 
-/** Mindestbeitrag: darunter lässt sich laut Perspective-Funnel nichts mehr optimieren */
+/** Mindestbeitrag: darunter bieten wir die Prüfung nicht an */
 export const MIN_BEITRAG = 650;
 export const ALTER_MIN = 18;
 export const ALTER_MAX = 99;
@@ -207,6 +230,11 @@ export function pruefeAlles(f: FunnelDef, a: Antworten, heute = new Date()): { o
 }
 
 /** Texte eines Schritts in der Fassung (b nur, wenn der Schritt einen Test hat). */
+/** Beschriftung einer Auswahl-Option (Wert bleibt gespeichert). */
+export function optionLabel(s: Schritt, wert: string): string {
+  return s.art === "auswahl" ? (s.labels?.[wert] ?? wert) : wert;
+}
+
 export function texteFuer(s: Schritt, v: Variante = "a"): SchrittTexte {
   return v === "b" && s.test ? { ...s.texte, ...s.test.b } : s.texte;
 }
@@ -258,6 +286,7 @@ export function pplFelder(f: FunnelDef, a: Antworten, heute = new Date()): Recor
 
 export const PKV_BEITRAG: FunnelDef = {
   key: "pkv-beitrag",
+  marke: "pkv-tarife",
   produkt: "pkv-tarifoptimierung",
   fragenGesamt: 7,
   quelle: "Eigener Funnel beitrag.pkv-tarife.com",
@@ -268,21 +297,22 @@ export const PKV_BEITRAG: FunnelDef = {
       frageNr: 1,
       feld: "versichert",
       optionen: ["Privat", "Gesetzlich"],
+      labels: PKV_VERSICHERT_LABEL,
       spalten: 2,
-      texte: { ueberschrift: T.start.ueberschrift, text: T.start.text, frage: T.start.frage },
+      texte: { ueberschrift: T.start.ueberschrift, text: T.start.text, vertrauen: T.start.vertrauen, frage: T.start.frage },
       abbruch: (a) => (a.versichert === "Gesetzlich" ? "gesetzlich" : null),
-      // Beispiel einer Fassung b (Experiment funnel_pkv_beispiel ist aus: alle sehen a)
-      test: { experiment: "funnel_pkv_beispiel", b: { ueberschrift: T.startB.ueberschrift } },
+      // Erster echter Test (A/B-Test-Labor, 20.11.2026): Überschrift mit Anlass „Beitragserhöhung zum 1. Januar“
+      test: { experiment: "funnel_pkv_anlass", b: { ueberschrift: T.startB.ueberschrift } },
     },
-    { id: "versicherung", art: "auswahl", frageNr: 2, feld: "versicherung", optionen: PKV_VERSICHERER, spalten: 2, texte: { frage: T.versicherung.frage } },
-    { id: "situation", art: "auswahl", frageNr: 3, feld: "situation", optionen: PKV_SITUATIONEN, spalten: 2, texte: { frage: T.situation.frage } },
+    { id: "versicherung", art: "auswahl", frageNr: 2, feld: "versicherung", optionen: PKV_VERSICHERER, spalten: 2, texte: { frage: T.versicherung.frage, hinweis: T.versicherung.hinweis } },
+    { id: "situation", art: "auswahl", frageNr: 3, feld: "situation", optionen: PKV_SITUATIONEN, labels: PKV_SITUATION_LABEL, spalten: 2, texte: { frage: T.situation.frage } },
     { id: "dauer", art: "auswahl", frageNr: 4, feld: "dauer", optionen: PKV_DAUER, spalten: 1, texte: { frage: T.dauer.frage } },
     {
       id: "beitrag",
       art: "eingabe",
       frageNr: 5,
       felder: [{ feld: "beitrag", label: T.beitrag.frage, typ: "euro", platzhalter: T.beitrag.platzhalter, einheit: T.beitrag.einheit }],
-      texte: { frage: T.beitrag.frage, knopf: T.weiter },
+      texte: { frage: T.beitrag.frage, hinweis: T.beitrag.hinweis, knopf: T.weiter },
       abbruch: (a) => {
         const n = beitragZahl(a.beitrag);
         return n != null && n < MIN_BEITRAG ? "unter_650" : null;
@@ -305,7 +335,7 @@ export const PKV_BEITRAG: FunnelDef = {
       ],
       texte: { frage: T.wohnort.frage, hinweis: T.wohnort.hinweis, knopf: T.weiter },
     },
-    { id: "fast-fertig", art: "info", texte: { ueberschrift: T.fastFertig.ueberschrift, text: [T.fastFertig.text], knopf: T.fastFertig.knopf } },
+    { id: "fast-fertig", art: "info", bild: "zwischenseite", texte: { ueberschrift: T.fastFertig.ueberschrift, text: [T.fastFertig.text], knopf: T.fastFertig.knopf } },
     {
       id: "name",
       art: "eingabe",
@@ -313,20 +343,20 @@ export const PKV_BEITRAG: FunnelDef = {
         { feld: "vorname", label: T.name.vorname, typ: "text", autocomplete: "given-name" },
         { feld: "nachname", label: T.name.nachname, typ: "text", autocomplete: "family-name" },
       ],
-      texte: { ueberschrift: T.name.ueberschrift, frage: T.name.frage, knopf: T.weiter },
+      texte: { ueberschrift: T.name.ueberschrift, fussnote: T.name.fussnote, frage: T.name.frage, knopf: T.weiter },
       vertraulich: T.name.vertraulich,
     },
     {
       id: "kontakt",
       art: "absenden",
+      // Telefon zuerst: der Experte ruft an (Conversion-Durchgang 20.11.2026)
       felder: [
+        { feld: "telefon", label: T.kontakt.telefon, typ: "tel", autocomplete: "tel", platzhalter: T.kontakt.telefonPlatzhalter, hinweis: T.kontakt.telefonHinweis },
         { feld: "email", label: T.kontakt.email, typ: "email", autocomplete: "email" },
-        { feld: "telefon", label: T.kontakt.telefon, typ: "tel", autocomplete: "tel", platzhalter: T.kontakt.telefonPlatzhalter },
       ],
-      texte: { frage: T.kontakt.frage, knopf: T.kontakt.knopf },
-      einwilligung: T.kontakt.einwilligung,
+      texte: { frage: T.kontakt.frage, hinweis: T.kontakt.hinweis, knopf: T.kontakt.knopf, nachsatz: T.kontakt.unterKnopf },
     },
-    { id: "danke", art: "danke", texte: { ueberschrift: T.danke.ueberschrift, frage: T.danke.untertitel, text: [T.danke.text] } },
+    { id: "danke", art: "danke", texte: { ueberschrift: T.danke.ueberschrift, frage: T.danke.untertitel, liste: T.danke.schritte, nachsatz: T.danke.verpasst } },
     { id: "ende-gesetzlich", art: "ende", grund: "gesetzlich", zurueckZu: "start", texte: { ueberschrift: T.endeGesetzlich.ueberschrift, text: [T.endeGesetzlich.text], knopf: T.endeGesetzlich.knopf } },
     { id: "ende-beitrag", art: "ende", grund: "unter_650", zurueckZu: "beitrag", texte: { ueberschrift: T.endeBeitrag.ueberschrift, text: [T.endeBeitrag.text], knopf: T.endeBeitrag.knopf } },
   ],
