@@ -46,7 +46,9 @@ describe("Kontaktformular der empfohlenen Person: Eingaben bleiben bei Fehlern",
     const page = src("src/app/empfehlung/[token]/kontakt/page.tsx");
     expect(page).toMatch(/const draft = sp\.err \?/);
     expect(page).toContain("defaultValue={draft?.name}");
-    expect(page).toContain("defaultChecked={draft?.consent}");
+    expect(page).toContain("defaultChecked={draft?.statusConsent ?? false}");
+    // Einwilligung als Satz unter dem Knopf (Absenden = Einwilligung), kein Häkchen mehr
+    expect(page).not.toContain('name="consent"');
     const action = src("src/app/empfehlung/[token]/kontakt/actions.ts");
     expect(action).toContain("jar.set(REFERRAL_DRAFT_COOKIE");
     expect(action).toContain("httpOnly: true");

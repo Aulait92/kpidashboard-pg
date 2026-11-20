@@ -19,7 +19,7 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 | Policen-Bitte nennt die genannten Sparten | Branch `policen-bitte-sparten` | CTO |
 | Policen-Formular: nach Oles Test `POLICEN_FLOW_KUNDEN` leeren (für alle); optional Dateiname vor Einwilligung neutral | wartet auf Test | CTO |
 | Erklärvideos „Kurz“, „Ausführlich“, „WhatsApp verbinden“ neu aufnehmen; nur außerhalb 8 bis 20 Uhr deployen | läuft in eigener Sitzung | CPO |
-| Empfehlungsmodul Champions-Umbau (3 Pakete, Plan `docs/ux/2026-11-19-empfehlung-champions.md`); Modul bleibt aus, Einschalten Stufe A | Branch `empfehlung-champions` | CPO / CTO |
+| Empfehlungsmodul Champions-Umbau (3 Pakete, Plan `docs/ux/2026-11-19-empfehlung-champions.md`); Modul bleibt aus, Einschalten Stufe A | Branch `empfehlung-champions`: Pakete 1 bis 3 gebaut (20.11.2026), offen: Screenshot Heute und Kontakt-Karte (Speicher), Einschalten-Liste in `docs/empfehlungen-modul.md` | CPO / CTO |
 
 Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der Sitzung, die sie angelegt hat.
 

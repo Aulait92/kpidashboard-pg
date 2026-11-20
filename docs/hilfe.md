@@ -1218,10 +1218,24 @@ Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, d
   geöffnet, Empfehlungsbitte, Empfehlungen). Darunter **Empfehlungslink senden** (Anlass automatisch, unter „Mehr“
   änderbar, dort auch „Nicht anfragen“) und **Im Termin zeigen**. Fehlt die Zustimmung, steht dort „Kunde hat zugestimmt“.
 - **Bitte um Empfehlung:** einige Wochen nach dem Abschluss (Standard 21 Tage), nicht bei Kritik und nicht bei offener
-  Aufgabe „unzufrieden“. Der persönliche Link führt Ihren Kunden auf eine Seite zum Teilen (WhatsApp oder Teilen-Knopf).
-  Die empfohlene Person trägt sich selbst ein (mit Einwilligung) und landet als Lead mit Quelle „Empfehlung“ bei Ihnen,
-  inklusive der üblichen ersten Nachricht. Wird daraus ein Abschluss, bekommt der Empfehlende automatisch einen Dank –
-  ohne Namen der empfohlenen Person.
+  Aufgabe „unzufrieden“. Der persönliche Link führt Ihren Kunden auf seine Seite zum Teilen (seit 20.11.2026): Er wählt
+  **An wen?** (Freunde oder Familie per Du, Kollegen oder Nachbarn per Sie) und tippt **Per WhatsApp weiterleiten**,
+  gern an mehrere. Er gibt dabei keine Daten von anderen weiter.
+- **Seite der empfohlenen Person:** sichtbar nur Name und Handynummer, E-Mail, Thema und Nachricht unter „Mehr angeben“,
+  Knopf **Rückruf anfordern**. Die Einwilligung steht als Satz direkt unter dem Knopf (Absenden gilt als Einwilligung,
+  Wortlaut und Zeitpunkt werden am Kontakt gespeichert). Darunter, wenn Ihr WhatsApp verbunden ist, „Lieber per WhatsApp
+  schreiben“. Die Seite folgt der Ansprache, die Ihr Kunde beim Teilen gewählt hat. Nach dem Absenden sieht die Person
+  Ihre Nummer mit **Nummer speichern**, damit sie Ihren Anruf erkennt (Nummer aus der Erstinformation, sonst aus dem
+  Impressum oder Ihrer WhatsApp-Nummer). Die App schreibt die empfohlene Person nicht automatisch an: Sie rufen an.
+- **Wenn eine Empfehlung reinkommt:** Push **„Empfehlung von {Vorname}: jetzt anrufen“** mit Gesprächseinstieg (ohne
+  Telefonnummer). Auf **Heute** steht der Kontakt ganz oben unter „Neue Leads: jetzt anrufen“, mit Wartezeit und dem Satz
+  „{Empfehlender} hat mir erzählt, dass …“, bis Sie das erste Mal angerufen haben. Unter **Auswertung ansehen** steht
+  die **Zeit bis zum ersten Anruf** (Median).
+- **Dank an Empfehlende:** Wird aus der Empfehlung ein Abschluss und hat die empfohlene Person der Rückmeldung zugestimmt,
+  bekommt Ihr Kunde automatisch einen Dank, ohne Namen der empfohlenen Person und mit dem Hinweis „Ihr Link funktioniert
+  weiterhin“ (nur mit seiner Zustimmung und unter der Obergrenze, sonst ohne Link). Zwei Tage später legt die App eine
+  Anruf-Aufgabe mit Gesprächssatz an („Fällt Ihnen noch jemand ein …?“), keine zweite Nachricht. Ohne Zustimmung der
+  empfohlenen Person gibt es keinen Dank, weil schon der Zeitpunkt den Abschluss verraten würde.
 - **Empfehlungsangebot:** In den Einstellungen wählen Sie, was die empfohlene Person bekommt: Versicherungs-Check,
   Kfz-Check, Absicherungs-Check oder ein eigenes Angebot. Es steht auf der Empfehlungsseite und im Text, den Ihr Kunde
   weiterleitet. Keine Prämien, Gutscheine, Geldbeträge oder Garantien im Angebot.
@@ -1232,10 +1246,11 @@ Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, d
 - **Teilen:** Im Reiter **Teilen** steht der allgemeine Empfehlungslink als großer QR-Code mit „Link kopieren“, darunter
   aufklappbar eine Zeile für Ihre **E-Mail-Signatur**. Persönliche Links senden Sie im Kontakt oder über „Heute fragen“.
   Dort steht auch der Bewertungs-Wächter für Ihr Google-Unternehmensprofil.
-- **Per WhatsApp anfragen:** Ist Ihr WhatsApp verbunden, kann die empfohlene Person mit einem Tipp schreiben statt
-  das Formular auszufüllen. Die Nachricht ist vorgeschrieben und landet als Lead mit Quelle „Empfehlung“ in Ihrem Chat.
-- **Persönlicher Link aus der Signatur:** Öffnet ein Kunde den Link aus Ihrer Signatur, kann er seine Handynummer
-  angeben und bekommt seinen persönlichen Link. So wissen Sie, von wem die Empfehlung kommt.
+- **Per WhatsApp schreiben:** Ist Ihr WhatsApp verbunden, kann die empfohlene Person unter dem Formular mit einem Tipp
+  schreiben. Die Nachricht ist vorgeschrieben (mit kurzem Code zur Zuordnung) und landet als Lead mit Quelle „Empfehlung“
+  in Ihrem Chat.
+- **Persönlicher Link aus der Signatur:** Öffnet ein Kunde den Link aus Ihrer Signatur, kann er unter „Schon Kunde?
+  Persönlichen Link holen“ seine Handynummer angeben und bekommt seinen persönlichen Link. So wissen Sie, von wem die Empfehlung kommt.
 - **Nach jedem Termin (optional, Standard aus):** Unter Einstellungen → Erweitert einschaltbar. Markieren Sie einen Termin mit einem Kunden
   als stattgefunden, geht einige Stunden später der Empfehlungslink raus (höchstens alle 180 Tage je Kontakt).
 - **Nachfassen:** Nach „Empfehlungslink senden“ oder „Im Termin zeigen“ legt die App eine Aufgabe in „Heute“ an
@@ -1280,7 +1295,7 @@ Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, d
   Platzhalter {Anrede}, {Vorname}, {Link}, {Vertreter}, {Thema}). Darunter „Test an mich senden“. Eigene Texte gelten im offenen WhatsApp-Chat; sonst sendet
   die App die von Meta freigegebene Standardvorlage (Freigabe dauert meist wenige Stunden bis zwei Tage).
 - **Auswertung ansehen:** Trichter, Bewertungsbitten, Google-Link geöffnet, Lob, Kritik (davon geklärt), Fragen,
-  Empfehlungsbitten und die letzten Bewertungsbitten. Die Provision ist geschätzt (Ihre Provisionssätze), kein Versprechen.
+  Empfehlungsbitten, Zeit bis zum ersten Anruf (Median) und die letzten Bewertungsbitten. Die Provision ist geschätzt (Ihre Provisionssätze), kein Versprechen.
 - **Rückmeldungen an Empfehlende** gibt es nur, wenn die empfohlene Person zugestimmt hat; ohne diese Zustimmung erfährt
   der Empfehlende weder Namen noch Stand. Ein Dankeschön geht nur an Empfehlende, nie an die empfohlene Person.
 - **Buchen (nur Inhaber):** Konto & Rechnungen → Zusatzmodule → „30 Tage kostenlos testen“. Bestätigungsblatt mit

@@ -37,6 +37,8 @@ import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import type { Ansprache } from "@/lib/ansprache";
+import { EMPFEHLUNG_SOURCE } from "@/lib/lead-herkunft";
+import { empfehlungReason, gespraechsEinstieg } from "@/lib/empfehlung/shared";
 import { erstinfoUrlFor } from "@/lib/erstinformation";
 import { sendErstinfo } from "@/lib/whatsapp/erstinfo-pdf";
 import { KEIN_WHATSAPP_REASON } from "@/lib/whatsapp/kein-whatsapp";
@@ -380,6 +382,8 @@ export type CallbackLead = {
   conversationId: string | null;
   /** Sofort anrufen (kein WhatsApp): steht ganz oben auf Heute/Anrufliste. */
   urgent?: boolean;
+  /** Empfohlene Person, noch nicht angerufen: ganz oben, mit Gesprächseinstieg (Modul Empfehlungen & Bewertungen) */
+  empfehlung?: { einstieg: string };
 };
 
 /** Hat dieser Kunde den WhatsApp-Agenten mit Erstanschreiben aktiv? */
@@ -418,6 +422,9 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
       phone: true,
       source: true,
       createdAt: true,
+      firstContactAt: true,
+      callStartedAt: true,
+      referralLink: { select: { kind: true, lead: { select: { name: true } }, existingCustomer: { select: { firstName: true } } } },
       outreachAt: true,
       outreachStatus: true,
       waConsent: true,
@@ -465,8 +472,15 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
 
     let reason: string | null = null;
     let urgent = false;
+    let empfehlung: CallbackLead["empfehlung"];
     const lastCancel = l.appointments[0]?.cancelledBy;
-    if (l.waUnavailableAt && !replied) {
+    if (l.source === EMPFEHLUNG_SOURCE && l.referralLink && l.phone && !l.firstContactAt && !l.callStartedAt && !l.appointments[0]) {
+      // Empfehlung: jetzt anrufen (höchste Abschlussquote, Zeit bis zum ersten Anruf zählt). Bis zum ersten Anruf ganz oben.
+      const von = l.referralLink.kind === "general" ? null : (l.referralLink.lead?.name ?? l.referralLink.existingCustomer?.firstName ?? null);
+      reason = empfehlungReason(von);
+      urgent = true;
+      empfehlung = { einstieg: gespraechsEinstieg(von) };
+    } else if (l.waUnavailableAt && !replied) {
       // Nummer nicht per WhatsApp erreichbar (lib/whatsapp/kein-whatsapp.ts): sofort, ganz oben
       reason = KEIN_WHATSAPP_REASON;
       urgent = true;
@@ -484,6 +498,9 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
       reason = "Möchte keine WhatsApp-Nachrichten („STOPP“): bitte anrufen oder per E-Mail melden";
     } else if (status.startsWith("failed")) {
       reason = "WhatsApp nicht zustellbar";
+    } else if (l.source === EMPFEHLUNG_SOURCE && status === "skipped_contact" && now - l.createdAt.getTime() >= CALLBACK_AFTER_MS) {
+      // Empfehlung ohne Erstanschreiben (Rückruf angefordert bzw. selbst geschrieben), schon angerufen, noch kein Termin
+      reason = "Empfehlung, noch kein Termin: nachfassen";
     } else if (l.outreachAt && now - l.outreachAt.getTime() >= CALLBACK_AFTER_MS) {
       reason = replied
         ? "Hat im Chat geantwortet, aber keinen Termin gebucht"
@@ -505,10 +522,11 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
         replied,
         conversationId: l.conversations[0]?.id ?? null,
         ...(urgent ? { urgent: true } : {}),
+        ...(empfehlung ? { empfehlung } : {}),
       });
     }
   }
-  // „Kein WhatsApp“ zuerst (jüngster oben), sonst wie bisher nach Eingang
-  const top = out.filter((c) => c.urgent).sort((x, y) => y.createdAt.getTime() - x.createdAt.getTime());
+  // Empfehlungen ganz oben, dann „Kein WhatsApp“ (jeweils jüngster oben), sonst wie bisher nach Eingang
+  const top = out.filter((c) => c.urgent).sort((x, y) => Number(!!y.empfehlung) - Number(!!x.empfehlung) || y.createdAt.getTime() - x.createdAt.getTime());
   return [...top, ...out.filter((c) => !c.urgent)];
 }

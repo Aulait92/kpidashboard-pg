@@ -64,6 +64,29 @@ Das Modul bleibt für Kunden ausgeblendet (`EMPFEHLUNG_MODULE_AVAILABLE = false`
   (§ 5 DDG, § 15 VersVermV).
 - `REVIEW_SOURCE_NOTE` bei jeder Anzeige von Bewertungen.
 
+## Abgleich nach Paket 3 (öffentliche Seiten, 20.11.2026)
+
+Vor dem Bauen hat ein eigener Durchgang als Conversion-Texter/UX die Texte aus Plan Abschnitt 4 gekürzt (Nutzen
+zuerst, Knöpfe als Handlung, Rechtliches an die Stelle der Handlung). Danach Abgleich der Pflichtangaben:
+
+| Pflichtangabe | Wo jetzt | Stand |
+|---|---|---|
+| Wer ({Vertreter}) | Satz unter „Rückruf anfordern“ (`contactConsentText`) | erhalten |
+| Kanäle Telefon, WhatsApp, E-Mail | derselbe Satz | erhalten |
+| Zweck „zu Ihrer Anfrage“ | derselbe Satz | erhalten |
+| Widerruf jederzeit | derselbe Satz („Widerruf jederzeit möglich.“) | erhalten |
+| Link Datenschutzerklärung | direkt hinter dem Satz („Datenschutz“, `page.privacyUrl`) | erhalten |
+| Einwilligung mit Wortlaut und Zeitstempel | `submitReferral`, `formData` „Einwilligung“ mit dem gezeigten Satz in der Ansprache der Seite | erhalten, Absenden = Einwilligung |
+| Rückmeldung an Empfehlende | eigenes Häkchen, nie vorausgefüllt, Wortlaut mit Zeitstempel | erhalten |
+| Hinweis am WhatsApp-Knopf, Ref-Code | unter „Lieber per WhatsApp schreiben“, `whatsappRequestText` | erhalten |
+| Rechtlicher Fuß | `ReferralShell` mit `LeadLegalFooter` auf Teilen-, Kontakt-, Erfolgs- und Fehlerseite | erhalten |
+| Kein Datenabfluss Dritter | kein Eingabefeld für Bekannte, Satz „Sie geben keine Daten weiter“ | erhalten |
+| Drosselung persönlicher Link | `claimPersonalLinkAction` unverändert | erhalten |
+| Keine Nachricht an Empfohlene ohne Anfrage | Formular-Leads ohne Erstanschreiben (`skipped_contact`), Vermittler ruft an | neu, strenger |
+
+Weggefallen ist nur der Satzteil „und meine Angaben dafür verarbeitet“ (Plan-Wortlaut); die Verarbeitung zur
+Bearbeitung der Anfrage stützt sich ohnehin auf Art. 6 Abs. 1 lit. b DSGVO, der Datenschutzlink steht am Satz.
+
 ## Beim Einschalten nötig (Stufe A, Ole)
 
 - Meta-Vorlagen neu einreichen: `review_request`, `referral_request`, `referral_thanks` mit STOPP-Hinweis und Link im

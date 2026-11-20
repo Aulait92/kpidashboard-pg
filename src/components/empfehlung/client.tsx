@@ -906,38 +906,7 @@ export function TestSendForm({ readOnly }: { readOnly: boolean }) {
   );
 }
 
-// ─── Öffentliche Empfehlungsseite: Teilen ──────────────────────────────────
-
-export function ShareReferral({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <div className="space-y-3">
-      <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-4 text-[15px] leading-relaxed [overflow-wrap:anywhere]">{text}</div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "md", "h-12 text-base")} onClick={() => haptic("light")}>
-          <MessageCircle className="h-4 w-4" /> Per WhatsApp teilen
-        </a>
-        <button
-          type="button"
-          className={buttonClass("secondary", "md", "h-12 text-base")}
-          onClick={async () => {
-            // Teilen-Menü des Handys, sonst Text kopieren
-            if (typeof navigator.share === "function") {
-              await navigator.share({ text }).catch(() => {});
-              return;
-            }
-            await navigator.clipboard?.writeText(text).catch(() => {});
-            setCopied(true);
-            haptic("success");
-          }}
-        >
-          {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />} {copied ? "Kopiert" : "Teilen oder kopieren"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
+// Öffentliche Empfehlungsseite: Teilen steht in components/empfehlung/teilen.tsx (eigene kleine Datei).
 
 // ─── Bewertungs-Wächter ─────────────────────────────────────────────────────
 

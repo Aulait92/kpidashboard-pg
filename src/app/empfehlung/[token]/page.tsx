@@ -1,17 +1,19 @@
 import { notFound } from "next/navigation";
-import { LeadLegalFooter } from "@/components/lead-legal-footer";
-import { AdvisorHeader } from "@/components/empfehlung/advisor-header";
-import { HeartHandshake } from "lucide-react";
+import { ChevronDown, HeartHandshake, LinkIcon } from "lucide-react";
+import { ReferralInvalidLink, ReferralShell } from "@/components/empfehlung/public-shell";
 import { loadReferralPage, contactLinkFor } from "@/lib/empfehlung/requests";
-import { shareText } from "@/lib/empfehlung/shared";
-import { ShareReferral } from "@/components/empfehlung/client";
+import { SHARE_AUDIENCES, contactLinkIn, shareIntro, shareText } from "@/lib/empfehlung/shared";
+import { a } from "@/lib/ansprache";
+import { ShareReferral } from "@/components/empfehlung/teilen";
 import { PhoneField } from "@/components/phone-field";
 import { SubmitButton } from "@/components/submit-button";
 import { buttonClass } from "@/components/ui";
 import { claimPersonalLinkAction } from "./kontakt/actions";
 
-// Seite für den Empfehlenden (Kunde des Vertreters): Danke + Empfehlung teilen.
+// Seite für den Empfehlenden (Kunde des Vertreters): Danke + Empfehlung teilen (Paket 3, 20.11.2026).
+// Eine Hauptaktion „Per WhatsApp weiterleiten“, Auswahl „An wen?“ (du/Sie). Kein Feld für Daten Dritter:
 // Die empfohlene Person trägt sich auf /empfehlung/[token]/kontakt selbst ein.
+// Ansprache dieser Seite: wie in den Nachrichten an den Empfehlenden (Customer.leadAddress bzw. bestandAddress).
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Empfehlen", robots: { index: false, follow: false } };
 
@@ -20,67 +22,63 @@ export default async function ReferralSharePage({ params, searchParams }: { para
   const claim = (await searchParams).p;
   if (!/^[\w-]{10,64}$/.test(token)) notFound();
   const page = await loadReferralPage(token, { countView: true });
-  if (!page) {
-    return (
-      <Shell>
-        <h1 className="text-xl font-bold">Link nicht mehr gültig</h1>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">Dieser Empfehlungslink ist nicht (mehr) aktiv.</p>
-      </Shell>
-    );
-  }
-  const text = shareText(page.vertreter, contactLinkFor(token), page.offer);
+  if (!page) return <ReferralInvalidLink />;
+  const an = page.recommenderAn;
+  const link = contactLinkFor(token);
+  const texts = {
+    du: shareText(page.vertreter, contactLinkIn(link, "du"), page.offerDu, "du"),
+    sie: shareText(page.vertreter, contactLinkIn(link, "sie"), page.offer, "sie"),
+  };
+  const reward = an === "du" ? page.rewardTextDu : page.rewardText;
   return (
-    <Shell customerId={page.customerId} advisor={page.vertreter} label="Ihr Berater">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
-        <HeartHandshake className="h-6 w-6" />
+    <ReferralShell customerId={page.customerId} advisor={page.vertreter} label={a(an, "Dein Berater", "Ihr Berater")}>
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
+          <HeartHandshake className="h-5 w-5" />
+        </span>
+        <h1 className="text-2xl font-bold tracking-tight">{page.recommender ? `Danke, ${page.recommender}!` : "Vielen Dank!"}</h1>
       </div>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight">{page.recommender ? `Danke, ${page.recommender}!` : "Vielen Dank!"}</h1>
-      <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--muted)]">
-        Schön, dass Sie {page.vertreter} weiterempfehlen möchten. Leiten Sie diese Nachricht einfach an Freunde, Familie oder Kollegen weiter. Die Person
-        entscheidet selbst, ob sie sich meldet. Sie müssen keine Daten von anderen weitergeben.
+      <p className="mt-3 text-[15px] leading-relaxed text-[color:var(--muted)]" data-referral-intro>
+        {shareIntro(an)}
       </p>
       {page.offer ? (
-        <div className="mt-4 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50/60 p-4" data-referral-offer>
-          <div className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Das bekommen Ihre Bekannten</div>
-          <div className="mt-1 text-base font-semibold">{page.offer.headline}</div>
-          <p className="mt-1 text-sm leading-relaxed text-[color:var(--muted)]">{page.offer.text}</p>
-        </div>
-      ) : null}
-      {page.rewardText ? (
-        <p className="mt-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-referral-reward>
-          <b>Mein Dankeschön an Sie:</b> {page.rewardText}
+        <p className="mt-3 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50/60 px-4 py-2.5 text-sm" data-referral-offer>
+          <span className="text-emerald-800">{a(an, "Deine Bekannten bekommen:", "Ihre Bekannten bekommen:")}</span> <b>{page.offer.headline}</b>
         </p>
       ) : null}
-      <div className="mt-5">
-        <ShareReferral text={text} />
+      <h2 className="mt-5 text-sm font-semibold">An wen?</h2>
+      <div className="mt-2">
+        <ShareReferral texts={texts} audiences={SHARE_AUDIENCES} />
       </div>
-      {page.general ? (
-        <form action={claimPersonalLinkAction.bind(null, token)} className="mt-6 space-y-2 border-t border-[color:var(--border)] pt-5" data-referral-claim>
-          <p className="text-sm font-semibold">Sie sind schon Kunde?</p>
-          <p className="text-xs leading-relaxed text-[color:var(--muted)]">
-            Mit Ihrer Handynummer bekommen Sie Ihren persönlichen Link. Dann weiß {page.vertreter}, dass die Empfehlung von Ihnen kommt, und kann sich bei Ihnen bedanken.
-          </p>
-          <PhoneField name="phone" label="Ihre Handynummer" />
-          {claim === "unknown" ? <p className="text-xs font-medium text-amber-700">Unter dieser Nummer haben wir Sie nicht gefunden. Sie können die Nachricht oben trotzdem einfach teilen.</p> : null}
-          {claim === "invalid" ? <p className="text-xs font-medium text-rose-700">Bitte prüfen Sie die Handynummer.</p> : null}
-          {claim === "busy" ? <p className="text-xs font-medium text-rose-700">Bitte versuchen Sie es später noch einmal.</p> : null}
-          <SubmitButton pendingLabel="Einen Moment …" className={buttonClass("secondary", "md", "h-11 w-full")}>
-            Meinen persönlichen Link holen
-          </SubmitButton>
-        </form>
+      {reward ? (
+        <p className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-referral-reward>
+          <b>{a(an, "Mein Dankeschön an dich:", "Mein Dankeschön an Sie:")}</b> {reward}
+        </p>
       ) : null}
-    </Shell>
-  );
-}
-
-function Shell({ children, advisor, label, customerId }: { children: React.ReactNode; advisor?: string; label?: string; customerId?: string | null }) {
-  return (
-    <>
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
-        {advisor ? <AdvisorHeader name={advisor} label={label} /> : null}
-        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">{children}</div>
-      </main>
-      <LeadLegalFooter customerId={customerId} />
-    </>
+      {page.general ? (
+        <details className="group mt-5 border-t border-[color:var(--border)] pt-3" data-referral-claim open={!!claim}>
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
+            <LinkIcon className="h-4 w-4" /> Schon Kunde? Persönlichen Link holen
+            <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+          </summary>
+          <form action={claimPersonalLinkAction.bind(null, token)} className="mt-2 space-y-2">
+            <p className="text-xs leading-relaxed text-[color:var(--muted)]">
+              {a(an, `Dann weiß ${page.vertreter}, dass die Empfehlung von dir kommt.`, `Dann weiß ${page.vertreter}, dass die Empfehlung von Ihnen kommt.`)}
+            </p>
+            <PhoneField name="phone" label={a(an, "Deine Handynummer", "Ihre Handynummer")} />
+            {claim === "unknown" ? (
+              <p className="text-xs font-medium text-amber-700">
+                {a(an, "Unter dieser Nummer haben wir dich nicht gefunden. Du kannst die Nachricht oben trotzdem teilen.", "Unter dieser Nummer haben wir Sie nicht gefunden. Sie können die Nachricht oben trotzdem teilen.")}
+              </p>
+            ) : null}
+            {claim === "invalid" ? <p className="text-xs font-medium text-rose-700">{a(an, "Bitte prüf die Handynummer.", "Bitte prüfen Sie die Handynummer.")}</p> : null}
+            {claim === "busy" ? <p className="text-xs font-medium text-rose-700">{a(an, "Bitte versuch es später noch einmal.", "Bitte versuchen Sie es später noch einmal.")}</p> : null}
+            <SubmitButton pendingLabel="Einen Moment …" className={buttonClass("secondary", "md", "h-11 w-full")}>
+              Link holen
+            </SubmitButton>
+          </form>
+        </details>
+      ) : null}
+    </ReferralShell>
   );
 }

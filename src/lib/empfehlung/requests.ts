@@ -67,6 +67,10 @@ import {
   type Sentiment,
   type TextKey,
   type UpdateStage,
+  contactConsentText,
+  displayAdvisorPhone,
+  thanksFollowUpNote,
+  medianHours,
 } from "@/lib/empfehlung/shared";
 
 const CLOSED = "Abschluss";
@@ -194,13 +198,20 @@ export async function generalLinkOf(customerId: string) {
  * Aufgabe „Empfehlung nachfassen“ in „Heute“ (Wiedervorlage am Lead), nur nach einem Versand
  * durch den Vertreter selbst und nur, wenn am Kontakt keine andere Wiedervorlage steht.
  */
-export async function planReferralFollowUp(customerId: string, leadId: string | null | undefined, hours: number, now = new Date(), an: Ansprache = "sie"): Promise<boolean> {
+export async function planReferralFollowUp(
+  customerId: string,
+  leadId: string | null | undefined,
+  hours: number,
+  now = new Date(),
+  an: Ansprache = "sie",
+  note: (vorname: string, an: Ansprache) => string = followUpNote,
+): Promise<boolean> {
   if (!leadId || hours <= 0) return false;
   const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId, erasedAt: null }, select: { name: true, followUpAt: true } });
   if (!lead || lead.followUpAt) return false;
   const r = await prisma.lead.updateMany({
     where: { id: leadId, followUpAt: null },
-    data: { followUpAt: new Date(now.getTime() + hours * 3600_000), followUpNote: followUpNote(firstName(lead.name), an) },
+    data: { followUpAt: new Date(now.getTime() + hours * 3600_000), followUpNote: note(firstName(lead.name), an) },
   });
   return r.count > 0;
 }
@@ -595,7 +606,11 @@ export async function sendReferralThanks(now = new Date()): Promise<number> {
         anrede,
       });
       // Nur der freie Text trägt den Link (die Vorlage referral_thanks hat bis zur Neueinreichung keinen)
-      if (withLink && r.mode === "text") await recordReferralAsk(ref, "dank");
+      if (withLink && r.mode === "text") {
+        await recordReferralAsk(ref, "dank");
+        // Dank-Schleife: nach 48 h (Einstellung „Nachfassen“) eine Anruf-Aufgabe mit Gesprächssatz, keine zweite Nachricht
+        await planReferralFollowUp(l.customerId, target.leadId, settings.followUpHours, now, an, thanksFollowUpNote).catch(() => false);
+      }
       sent++;
     } catch (err) {
       if (err instanceof NoTemplateError || /verbundenes WhatsApp/.test(String(err))) {
@@ -1228,13 +1243,24 @@ export async function loadReferralPage(token: string, opts: { countView?: boolea
       lead: { select: { name: true, erasedAt: true } },
       existingCustomer: { select: { firstName: true } },
       token: true,
-      customer: { select: { name: true, empfehlungEnabled: true, onboarding: { select: { websiteInfo: true } }, whatsAppAccount: { select: { status: true, phoneNumber: true } } } },
+      customer: {
+        select: {
+          name: true,
+          empfehlungEnabled: true,
+          leadAddress: true,
+          bestandAddress: true,
+          onboarding: { select: { websiteInfo: true } },
+          whatsAppAccount: { select: { status: true, phoneNumber: true } },
+          erstinformation: { select: { telefon: true } },
+        },
+      },
     },
   });
   if (!link || !link.customer.empfehlungEnabled || link.lead?.erasedAt) return null;
   if (opts.countView) await prisma.referralLink.update({ where: { id: link.id }, data: { views: { increment: 1 } } }).catch(() => {});
   const products = await prisma.leadSource.findMany({ where: { customerId: link.customerId, active: true }, select: { productKey: true }, distinct: ["productKey"] }).catch(() => []);
-  const privacy = (link.customer.onboarding?.websiteInfo as { privacyUrl?: string | null } | null)?.privacyUrl;
+  const web = link.customer.onboarding?.websiteInfo as { privacyUrl?: string | null; phone?: string | null } | null;
+  const privacy = web?.privacyUrl;
   const vertreter = advisorDisplayName(link.customer.name);
   const rs = await prisma.reviewSettings.findUnique({
     where: { customerId: link.customerId },
@@ -1243,18 +1269,26 @@ export async function loadReferralPage(token: string, opts: { countView?: boolea
   const reward = rs?.rewardConfirmedAt && link.kind !== "general" ? resolveReward(rs) : null;
   const wa = link.customer.whatsAppAccount;
   const recommenderName = firstName(link.lead?.name ?? link.existingCustomer?.firstName ?? null) || null;
+  // Nummer für „Nummer speichern“ auf der Erfolgsseite: Erstinformation, sonst Impressum, sonst WhatsApp-Nummer
+  const advisorPhone =
+    displayAdvisorPhone(link.customer.erstinformation?.telefon) ?? displayAdvisorPhone(web?.phone) ?? (wa?.status === "connected" ? displayAdvisorPhone(wa.phoneNumber) : null);
   return {
     customerId: link.customerId,
     linkId: link.id,
     general: link.kind === "general",
+    // Ansprache der Seite des Empfehlenden: wie in den Nachrichten an ihn (Kontakt bzw. Bestandskunde)
+    recommenderAn: asAnsprache(link.existingCustomer && !link.lead ? link.customer.bestandAddress : link.customer.leadAddress),
     // Nur auf der Seite des Empfehlenden zeigen, nie der empfohlenen Person
     rewardText: reward ? rewardSentence(reward, vertreter) : null,
+    rewardTextDu: reward ? rewardSentence(reward, vertreter, "du") : null,
+    advisorPhone,
     // Ein Tipp statt Formular: vorgeschriebene Anfrage an die WhatsApp-Nummer des Vertreters
     whatsappUrl:
       wa?.status === "connected" && wa.phoneNumber
         ? whatsappLink(wa.phoneNumber, whatsappRequestText({ vertreter, recommender: recommenderName, offer: resolveOffer(rs ?? { offerKind: null }, vertreter), token: link.token }))
         : null,
     offer: resolveOffer(rs ?? { offerKind: null }, vertreter) as ResolvedOffer | null,
+    offerDu: resolveOffer(rs ?? { offerKind: null }, vertreter, "du") as ResolvedOffer | null,
     // Rückmeldung an den Empfehlenden nur bei Links eines Kontakts
     statusUpdates: (rs?.statusUpdates ?? true) && link.kind !== "general",
     vertreter,
@@ -1280,7 +1314,18 @@ export async function countReferralVisit(page: { linkId: string; customerId: str
   });
 }
 
-export type ReferralSubmit = { name: string; phone: string; email: string | null; topic: string | null; message: string | null; consent: boolean; statusConsent?: boolean };
+export type ReferralSubmit = {
+  name: string;
+  phone: string;
+  email: string | null;
+  topic: string | null;
+  message: string | null;
+  /** Absenden = Einwilligung (Satz unter dem Knopf, contactConsentText) */
+  consent: boolean;
+  statusConsent?: boolean;
+  /** Ansprache der Kontaktseite (für den gespeicherten Wortlaut) */
+  an?: Ansprache;
+};
 
 /** Empfohlene Person trägt sich selbst ein → normaler Lead mit Quelle „Empfehlung“ und Erstkontakt-Automatik. */
 export async function submitReferral(token: string, input: ReferralSubmit, now = new Date()): Promise<{ ok: true; leadId: string | null } | { ok: false; error: "invalid" | "consent" | "busy" | "unavailable" }> {
@@ -1315,12 +1360,16 @@ export async function submitReferral(token: string, input: ReferralSubmit, now =
       referralLinkId: page.linkId,
       referralStatusConsent: statusConsent && !self,
       referralRewardStatus: self ? "entfaellt" : null,
+      // Die Person hat einen Rückruf angefordert: Der Vermittler ruft an (Push „jetzt anrufen“), keine automatische
+      // Erstnachricht an Empfohlene (Plan 19.11.2026, eigene Meta-Vorlage erst später)
+      outreachAt: now,
+      outreachStatus: "skipped_contact",
       formData: [
         { label: "Quelle", value: recName ? `Empfehlung von ${recName}` : "Empfehlung (allgemeiner Link aus der E-Mail-Signatur)" },
         ...(page.offer ? [{ label: "Angebot", value: page.offer.headline }] : []),
         ...(input.topic ? [{ label: "Thema", value: input.topic }] : []),
         ...(input.message ? [{ label: "Nachricht", value: input.message }] : []),
-        { label: "Einwilligung", value: `Kontaktaufnahme per Telefon, WhatsApp und E-Mail erlaubt (Empfehlungsseite, ${stamp})` },
+        { label: "Einwilligung", value: `Kontaktaufnahme per Telefon, WhatsApp und E-Mail erlaubt (Empfehlungsseite, ${stamp}): „${contactConsentText(page.vertreter, input.an ?? "sie")}“` },
         ...(statusConsent ? [{ label: "Rückmeldung an Empfehlende/n", value: `erlaubt (${stamp}): „${statusConsentText(recName, page.vertreter)}“` }] : []),
       ],
     },
@@ -1342,9 +1391,25 @@ export async function loadEmpfehlungStats(customerId: string, days = 90, now = n
   const sent = requests.filter((r) => r.reviewSentAt && r.reviewSentAt >= since);
   const referred = await prisma.lead.findMany({
     where: { customerId, referralLinkId: { not: null }, createdAt: { gte: since } },
-    select: { id: true, status: true, source: true, closeValue: true, _count: { select: { appointments: true } } },
+    select: {
+      id: true,
+      status: true,
+      source: true,
+      closeValue: true,
+      createdAt: true,
+      firstContactAt: true,
+      callStartedAt: true,
+      lastCallAttemptAt: true,
+      _count: { select: { appointments: true } },
+    },
   });
   const closed = referred.filter((l) => l.status === CLOSED);
+  // Zeit bis zum ersten Anruf (Median): erster Kontaktversuch, sonst „Anrufen“ getippt bzw. dokumentierter Versuch
+  const firstCallHours = medianHours(
+    referred
+      .map((l) => l.firstContactAt ?? l.callStartedAt ?? l.lastCallAttemptAt)
+      .map((at, i) => (at ? (at.getTime() - referred[i].createdAt.getTime()) / 3600_000 : NaN)),
+  );
   // Gleiche Zahl wie „davon aus Empfehlungen“ auf /buyer/zahlen: Verträge der Empfehlungs-Leads mit der Rate ihrer Sparte
   const { loadErtragData, summarizeProvision } = await import("@/lib/ertrag");
   const ertrag = await loadErtragData(customerId).catch(() => null);
@@ -1378,6 +1443,7 @@ export async function loadEmpfehlungStats(customerId: string, days = 90, now = n
     referralClosings: closed.length,
     referralProvision: Math.round(provision),
     valuePerCustomer,
+    firstCallHours,
   };
 }
 export type EmpfehlungStats = Awaited<ReturnType<typeof loadEmpfehlungStats>>;

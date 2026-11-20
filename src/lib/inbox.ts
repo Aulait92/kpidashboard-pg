@@ -81,6 +81,8 @@ export type InboxCallback = {
   urgent?: boolean;
   /** Was der Assistent im Chat schon erfahren hat (Conversation.qualificationSummary), für die Anrufliste */
   known?: string | null;
+  /** Empfohlene Person: ganz oben mit Gesprächseinstieg (lib/whatsapp/outreach.ts getCallbackLeads) */
+  empfehlung?: { einstieg: string } | null;
 };
 export type InboxFollowUp = {
   leadId: string;
@@ -387,6 +389,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       createdAt: c.createdAt.toISOString(),
       conversationId: c.conversationId,
       urgent: !!c.urgent,
+      empfehlung: c.empfehlung ?? null,
       known: c.conversationId ? (convById.get(c.conversationId)?.qualificationSummary ?? null) : null,
     })),
     bookingSlug: cal?.status === "connected" ? await getOrCreateBookingSlug(customerId) : null,

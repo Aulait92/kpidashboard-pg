@@ -11,6 +11,8 @@ import { normalizePhone } from "@/lib/whatsapp/phone";
 import { attachLeadToContact } from "@/lib/whatsapp/lead-link";
 import { sendToAdmins } from "@/lib/push";
 import { assignLead, notifyLeadPush } from "@/lib/team";
+import { EMPFEHLUNG_SOURCE } from "@/lib/lead-herkunft";
+import { empfehlungPush } from "@/lib/empfehlung/shared";
 import { reportError } from "@/lib/monitoring";
 import { runOutreach } from "@/lib/whatsapp/outreach";
 import { emailLeads } from "@/lib/onboarding-cron";
@@ -296,7 +298,16 @@ export async function ingestLead(
 export async function processNewLead(leadId: string) {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { id: true, name: true, source: true, customerId: true, isTest: true, customer: { select: { plan: true } } },
+    select: {
+      id: true,
+      name: true,
+      source: true,
+      customerId: true,
+      isTest: true,
+      customer: { select: { plan: true } },
+      // Empfehlung (Modul Empfehlungen & Bewertungen): Vorname des Empfehlenden für Push und Gesprächseinstieg
+      referralLink: { select: { kind: true, lead: { select: { name: true } }, existingCustomer: { select: { firstName: true } } } },
+    },
   });
   if (!lead) return;
   // Testlead (lib/testlead.ts): jede Station als Logzeile „[testlead <id>] …“
@@ -304,12 +315,19 @@ export async function processNewLead(leadId: string) {
   // Team (Großkunden): gleichmäßig zuteilen, Push nur an den Zuständigen.
   await assignLead(lead.id).catch((err) => reportError(err, "lead-intake-assign"));
   await attachLeadToContact(lead.id).catch((err) => reportError(err, "lead-intake-attach"));
-  await notifyLeadPush(lead.id, {
-    title: `🆕 Neuer Lead: ${lead.name ?? "ohne Name"}`,
-    body: lead.source ?? "",
-    tag: `lead-buyer:${lead.id}`,
-    url: "/buyer",
-  });
+  // Empfohlene Person hat sich eingetragen: eigener Push „Empfehlung von {Vorname}: jetzt anrufen“ mit Gesprächseinstieg
+  // (lib/empfehlung/shared.ts empfehlungPush, ohne Nummern). Geht wie jeder Push nur an Geräte mit erlaubten Mitteilungen.
+  await notifyLeadPush(
+    lead.id,
+    lead.source === EMPFEHLUNG_SOURCE && lead.referralLink
+      ? empfehlungPush(lead.id, lead.referralLink.kind === "general" ? null : (lead.referralLink.lead?.name ?? lead.referralLink.existingCustomer?.firstName ?? null))
+      : {
+          title: `🆕 Neuer Lead: ${lead.name ?? "ohne Name"}`,
+          body: lead.source ?? "",
+          tag: `lead-buyer:${lead.id}`,
+          url: "/buyer",
+        },
+  );
   logTestLead(lead, "notify push");
   {
     await emailLeads(new Date(), lead.customerId).catch((err) => reportError(err, "lead-intake-email"));

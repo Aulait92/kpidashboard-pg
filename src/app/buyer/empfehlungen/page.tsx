@@ -11,7 +11,7 @@ import { empfehlungVisible } from "@/lib/empfehlung/shared";
 import { generalLinkOf, loadEmpfehlungStats, loadReferralCandidates, loadSettings, openCritiques, openRewards, recentRequests, referralLinkFor } from "@/lib/empfehlung/requests";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { personFromCustomerName } from "@/lib/advisor-name";
-import { FEEDBACK_CONSENT_LABEL, HEUTE_VISIBLE, OFFER_PRESETS, fmtDate, resolveOffer, signatureLine } from "@/lib/empfehlung/shared";
+import { FEEDBACK_CONSENT_LABEL, HEUTE_VISIBLE, OFFER_PRESETS, fmtDate, fmtHours, resolveOffer, signatureLine } from "@/lib/empfehlung/shared";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { EmpfehlungFunnel, EmpfehlungFunnelLine, EmpfehlungWert } from "@/components/empfehlung/server";
 import { WaechterSection } from "@/components/empfehlung/waechter";
@@ -366,6 +366,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                       ["Kritik (geklärt)", `${stats.negative} (${stats.resolved})`],
                       ["Frage", stats.neutral],
                       ["Empfehlungsbitten", stats.referralsAsked],
+                      ["Zeit bis zum ersten Anruf (Median)", fmtHours(stats.firstCallHours)],
                     ].map(([k, v]) => (
                       <div key={String(k)}>
                         <dt className="text-[color:var(--muted)]">{k}</dt>

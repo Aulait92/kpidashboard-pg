@@ -13,7 +13,7 @@
 
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { FREE_PERIOD_REMINDER_DAYS } from "@/lib/free-periods";
-import { anredeName, anredeZeile, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
+import { a, anredeName, anredeZeile, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -865,4 +865,165 @@ export function pickReferralCandidates(rows: CandidateInput[], now: Date): { rea
 export function costMultiple(provision: number, cost: number = MODULE_COST_90): string | null {
   if (cost <= 0 || provision <= cost) return null;
   return `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(Math.floor((provision / cost) * 10) / 10)}-Fache`;
+}
+
+// ─── Öffentliche Seiten, Sofort-Anruf, Dank-Schleife (Paket 3, 20.11.2026) ───
+// Texte an Empfehlende und Empfohlene in Du und Sie, ohne Gedankenstriche. Die Ansprache der Kontaktseite wählt der
+// Empfehlende beim Teilen („An wen?“): Der Link trägt dann ?an=du. Ohne Angabe: Sie.
+
+/** Ansprache aus der Adresse (?an=du), sonst Sie. */
+export const anFromParam = (v: unknown): Ansprache => (v === "du" ? "du" : "sie");
+
+/** Link zur Kontaktseite in der gewählten Ansprache (Du mit ?an=du, Sie ohne Zusatz). */
+export const contactLinkIn = (link: string, an: Ansprache): string => (an === "du" ? `${link}${link.includes("?") ? "&" : "?"}an=du` : link);
+
+/** Auswahl „An wen?“ auf der Seite des Empfehlenden. Standard: Freunde oder Familie (du). */
+export const SHARE_AUDIENCES: readonly { an: Ansprache; label: string; hint: string }[] = [
+  { an: "du", label: "Freunde oder Familie", hint: "per Du" },
+  { an: "sie", label: "Kollegen oder Nachbarn", hint: "per Sie" },
+];
+
+/** Einleitung der Teilen-Seite: ein Satz, mit dem Grundsatz „keine Daten von anderen weitergeben“. */
+export function shareIntro(an: Ansprache): string {
+  return a(
+    an,
+    "Schick die Nachricht an jemanden, der gerade an Versicherungen denkt. Die Person meldet sich selbst, du gibst keine Daten weiter.",
+    "Schicken Sie die Nachricht an jemanden, der gerade an Versicherungen denkt. Die Person meldet sich selbst, Sie geben keine Daten weiter.",
+  );
+}
+
+/**
+ * Einwilligung der empfohlenen Person als Satz direkt unter dem Knopf („Absenden = Einwilligung“). Enthält alle
+ * Pflichtangaben: wer ({Vertreter}), Kanäle, Zweck, Widerruf; der Link zur Datenschutzerklärung steht dahinter.
+ * Gespeichert wird genau dieser Wortlaut mit Zeitstempel (submitReferral).
+ */
+export function contactConsentText(vertreter: string, an: Ansprache): string {
+  return a(
+    an,
+    `Mit dem Absenden bittest du ${vertreter}, dich per Telefon, WhatsApp oder E-Mail zu deiner Anfrage zu kontaktieren. Widerruf jederzeit möglich.`,
+    `Mit dem Absenden bitten Sie ${vertreter}, Sie per Telefon, WhatsApp oder E-Mail zu Ihrer Anfrage zu kontaktieren. Widerruf jederzeit möglich.`,
+  );
+}
+
+/**
+ * Kopf der Kontaktseite: ein kurzer Satz plus „Kostenlos und unverbindlich“. Wer empfohlen hat, steht darüber
+ * („Empfohlen von …“), das Angebot in der Überschrift. Der lange Angebotstext entfällt hier (390 px: Knopf ohne Scrollen).
+ */
+export function contactIntro(vertreter: string, an: Ansprache): string {
+  return a(an, `Nummer hinterlassen, ${vertreter} ruft dich an. Kostenlos und unverbindlich.`, `Nummer hinterlassen, ${vertreter} ruft Sie an. Kostenlos und unverbindlich.`);
+}
+
+/** Hinweis beim WhatsApp-Knopf: Die Person nimmt selbst Kontakt auf (Datenschutzlink dahinter). */
+export const whatsappSelfNote = (vertreter: string, an: Ansprache): string =>
+  a(an, `Die Nachricht ist vorgeschrieben. Damit nimmst du selbst Kontakt zu ${vertreter} auf.`, `Die Nachricht ist vorgeschrieben. Damit nehmen Sie selbst Kontakt zu ${vertreter} auf.`);
+
+/** Fehlermeldungen der Kontaktseite. */
+export function contactErrors(an: Ansprache): Record<string, string> {
+  return {
+    name: a(an, "Bitte gib deinen Namen an.", "Bitte geben Sie Ihren Namen an."),
+    phone: a(an, "Bitte prüf deine Handynummer.", "Bitte prüfen Sie Ihre Handynummer."),
+    email: a(an, "Bitte prüf die E-Mail-Adresse.", "Bitte prüfen Sie die E-Mail-Adresse."),
+    consent: a(an, "Bitte sende die Anfrage noch einmal ab.", "Bitte senden Sie die Anfrage noch einmal ab."),
+    busy: a(an, "Über diesen Link kamen heute schon viele Anfragen. Bitte versuch es morgen noch einmal.", "Über diesen Link kamen heute schon viele Anfragen. Bitte versuchen Sie es morgen noch einmal."),
+    unavailable: "Dieser Link ist nicht mehr aktiv.",
+    invalid: a(an, "Das hat nicht geklappt. Bitte versuch es noch einmal.", "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal."),
+  };
+}
+
+/** Erfolgsseite: Überschrift und Satz zur Nummer des Vermittlers (ohne Zusage, wann angerufen wird). */
+export function contactSuccess(vertreter: string, an: Ansprache, withPhone: boolean): { title: string; text: string } {
+  return {
+    title: a(an, "Danke, deine Anfrage ist angekommen!", "Danke, Ihre Anfrage ist angekommen!"),
+    text: withPhone
+      ? a(an, `${vertreter} meldet sich persönlich bei dir. Speicher die Nummer, dann erkennst du den Anruf:`, `${vertreter} meldet sich persönlich bei Ihnen. Speichern Sie die Nummer, dann erkennen Sie den Anruf:`)
+      : a(an, `${vertreter} meldet sich persönlich bei dir.`, `${vertreter} meldet sich persönlich bei Ihnen.`),
+  };
+}
+
+/** Kontaktkarte (vCard 3.0) des Vermittlers für „Nummer speichern“. Werte werden nach RFC 6350 maskiert. */
+export function advisorVcard(o: { name: string; phone: string; org?: string | null; note?: string | null }): string {
+  const esc = (v: string) => v.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/([,;])/g, "\\$1");
+  const tel = telValue(o.phone);
+  return [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    `FN:${esc(o.name)}`,
+    `N:${esc(o.name)};;;;`,
+    ...(o.org && o.org !== o.name ? [`ORG:${esc(o.org)}`] : []),
+    `TEL;TYPE=CELL,VOICE:${tel}`,
+    ...(o.note ? [`NOTE:${esc(o.note)}`] : []),
+    "END:VCARD",
+    "",
+  ].join("\r\n");
+}
+
+/** Anzeige einer Nummer: Ziffern mit Ländervorwahl (+49 …) bzw. freier Text aus der Erstinformation. */
+export function displayAdvisorPhone(raw: string | null | undefined): string | null {
+  const v = (raw ?? "").trim();
+  if (v.replace(/\D/g, "").length < 6) return null;
+  if (/^\d+$/.test(v)) {
+    const cc = ["49", "43", "41"].find((c) => v.startsWith(c));
+    return cc ? `+${cc} ${v.slice(cc.length, cc.length + 3)} ${v.slice(cc.length + 3)}` : `+${v}`;
+  }
+  return v;
+}
+
+/** Wählbare Nummer: „+49…“ bzw. reine Ziffern mit Ländervorwahl (WhatsApp) mit +, „0711 …“ als Ziffern. */
+export function telValue(raw: string): string {
+  const t = raw.trim();
+  const d = t.replace(/\D/g, "");
+  return t.startsWith("+") || (/^\d+$/.test(t) && !t.startsWith("0")) ? `+${d}` : d;
+}
+export const telHref = (raw: string): string => `tel:${telValue(raw)}`;
+
+// Sofort-Anruf beim Vermittler (Sie-Form): Push und Zeile oben auf „Heute“. Keine Nummern im Push.
+export const EMPFEHLUNG_PUSH_TAG = "empfehlung-lead";
+
+/** Gesprächseinstieg für den ersten Anruf bei einer empfohlenen Person. */
+export function gespraechsEinstieg(recommender: string | null | undefined): string {
+  const n = firstName(recommender);
+  return n ? `„${n} hat mir erzählt, dass …“` : "„Sie haben über meinen Empfehlungslink angefragt …“";
+}
+
+/** Push an den Vermittler, sobald sich eine empfohlene Person einträgt (ohne Telefonnummer, ohne Details). */
+export function empfehlungPush(leadId: string, recommender: string | null | undefined): { title: string; body: string; tag: string; url: string } {
+  const n = firstName(recommender);
+  return {
+    title: n ? `Empfehlung von ${n}: jetzt anrufen` : "Neue Empfehlung: jetzt anrufen",
+    body: `Einstieg: ${gespraechsEinstieg(recommender)}`,
+    tag: `${EMPFEHLUNG_PUSH_TAG}:${leadId}`,
+    url: `/buyer/leads/${leadId}`,
+  };
+}
+
+/** Grund in der Zeile auf „Heute“. */
+export const empfehlungReason = (recommender: string | null | undefined): string => {
+  const n = firstName(recommender);
+  return n ? `Empfehlung von ${n}` : "Empfehlung";
+};
+
+/**
+ * Nachfassen 48 h nach dem Dank mit Link: Anruf-Aufgabe für den Vermittler (Sie-Form) mit Gesprächssatz in der
+ * Ansprache des Kunden. Keine zweite Nachricht.
+ */
+export function thanksFollowUpNote(vorname: string | null | undefined, an: Ansprache = "sie"): string {
+  const n = vorname?.trim();
+  const satz = a(an, "„Danke noch mal für deine Empfehlung! Fällt dir noch jemand ein, dem ich genauso helfen kann?“", "„Danke noch mal für Ihre Empfehlung! Fällt Ihnen noch jemand ein, dem ich genauso helfen kann?“");
+  return `${FOLLOWUP_TASK}: ${n || "Ihren Kunden"} anrufen. Satz: ${satz}`;
+}
+
+/** Median in Stunden (für „Zeit bis zum ersten Anruf“); null ohne Werte. */
+export function medianHours(values: number[]): number | null {
+  const v = values.filter((x) => Number.isFinite(x) && x >= 0).sort((x, y) => x - y);
+  if (!v.length) return null;
+  const m = Math.floor(v.length / 2);
+  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+}
+
+/** „unter 1 Std.“, „3 Std.“, „2 Tage“ für die Auswertung. */
+export function fmtHours(h: number | null): string {
+  if (h == null) return "noch keine Werte";
+  if (h < 1) return `${Math.max(1, Math.round(h * 60))} Min.`;
+  if (h < 48) return `${Math.round(h)} Std.`;
+  return `${Math.round(h / 24)} Tage`;
 }
