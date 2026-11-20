@@ -44,6 +44,8 @@ import { erwarteteProvision, provisionForLine, quotenFor, spanneText } from "@/l
 import { terminlinkFuer } from "@/lib/bestand/terminlink";
 import { KampagneStart, type StartBlocker } from "@/components/bestand/kampagne-start";
 import { MailEditor } from "@/components/bestand/mail-editor";
+import { ErinnerungSchalter } from "@/components/bestand/erinnerung-schalter";
+import { FOLLOW_UP_OCCASIONS } from "@/lib/bestand/nachfassen";
 import { nowMs } from "@/lib/now";
 
 export const dynamic = "force-dynamic";
@@ -431,8 +433,13 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
             <p className="mt-2 text-xs text-[color:var(--muted)]">
               Beispiel mit Erika Muster. {showMail ? "Persönlich von Ihrer Adresse, ohne Tracking." : "Antworten übernimmt Ihr Assistent, „Stopp“ sperrt sofort."}
             </p>
+            {FOLLOW_UP_OCCASIONS.includes(occasion) ? (
+              <div className="mt-2 border-t border-[color:var(--border)]">
+                <ErinnerungSchalter hint="Nur ohne Antwort, kurz und freundlich. Danach nichts mehr." />
+              </div>
+            ) : null}
             {needMail || occasion === "cross_sell" || occasion === "renewal" ? (
-              <details className="group mt-2 border-t border-[color:var(--border)]" data-campaign-edit>
+              <details className={`group border-t border-[color:var(--border)] ${FOLLOW_UP_OCCASIONS.includes(occasion) ? "" : "mt-2"}`} data-campaign-edit>
                 <summary className={summary}>
                   <span className="flex-1">{needMail ? "Text bearbeiten" : "Thema ändern"}</span>
                   <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />

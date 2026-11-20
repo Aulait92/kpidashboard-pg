@@ -35,7 +35,7 @@ export function barWidth(v: number, base: number): number {
 }
 
 /** Senkrechte Balken mit Zahl und Quote, darunter Kanäle und Details im Aufklapper. */
-export function FunnelBars({ funnel }: { funnel: Funnel }) {
+export function FunnelBars({ funnel, nachErinnerung = 0 }: { funnel: Funnel; nachErinnerung?: number }) {
   const g = funnel.gesamt;
   const base = g.angeschrieben;
   const channels = (["whatsapp", "email"] as const).filter((k) => funnel[k].angeschrieben || funnel[k].wartend || funnel[k].uebersprungen || funnel[k].fehlgeschlagen);
@@ -47,7 +47,14 @@ export function FunnelBars({ funnel }: { funnel: Funnel }) {
           return (
             <li key={s.key} data-funnel-row={s.key} title={s.hint}>
               <div className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="min-w-0 truncate">{s.label}</span>
+                <span className="min-w-0 truncate">
+                  {s.label}
+                  {s.key === "geantwortet" && nachErinnerung > 0 ? (
+                    <span className="ml-1.5 text-xs text-[color:var(--muted)]" data-funnel-nach-erinnerung>
+                      davon {de(nachErinnerung)} nach Erinnerung
+                    </span>
+                  ) : null}
+                </span>
                 <span className="shrink-0 whitespace-nowrap tabular-nums">
                   <b>{de(v)}</b>
                   {s.key !== "angeschrieben" && base ? <span className="ml-1.5 text-xs text-[color:var(--muted)]">{pct(quote(v, base))}</span> : null}

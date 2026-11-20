@@ -26,6 +26,7 @@ import { classifyReply, isAutoReplyText } from "@/lib/vertrieb/sentiment";
 import { isExclusiveAgent, mayOffer, offeredLines } from "@/lib/bestand/befugnis";
 import { crossSellOffenWhere } from "@/lib/cross-sell-offen";
 import type { ProvisionOverrides } from "@/lib/provision";
+import { FOLLOW_UP_MAX_DAYS, FOLLOW_UP_OCCASIONS, followUpDecision, followUpMail, followUpText } from "@/lib/bestand/nachfassen";
 import { erwarteteProvision, nachEuro, provisionForLine, quotenFor, type EigeneZahlen, type Spanne } from "@/lib/bestand/potenzial";
 
 export type Occasion = "cross_sell" | "review" | "birthday" | "renewal" | "empfehlung";
@@ -61,6 +62,8 @@ const REFERRAL_YEAR_DAYS = 365;
 export const NAMELESS_PARAM = "und guten Tag";
 
 /** Abstand zwischen zwei Kampagnen an denselben Kunden. */
+// Ausnahme (Paket 4, 20.11.2026): genau eine Erinnerung derselben Kampagne nach 5 Werktagen (lib/bestand/nachfassen.ts),
+// nur wenn seitdem keine andere Kampagne geschrieben hat. Mit der Erinnerung beginnt der Abstand neu (lastCampaignAt).
 export const COOLDOWN_DAYS = 30;
 const DAY = 86_400_000;
 
@@ -401,6 +404,8 @@ export async function createCampaign(opts: {
   channelMode?: ChannelMode;
   mailSubject?: string | null;
   mailBody?: string | null;
+  /** „Nach 5 Werktagen einmal erinnern“ (Paket 4), Standard an */
+  followUp?: boolean;
   now?: Date;
 }) {
   const now = opts.now ?? new Date();
@@ -436,6 +441,8 @@ export async function createCampaign(opts: {
       createdById: opts.createdById ?? null,
       senderUserId,
       channelMode: mode,
+      // Nachfassen nur für Anlässe mit Erinnerung (nicht Geburtstag und Empfehlung)
+      followUp: (opts.followUp ?? true) && FOLLOW_UP_OCCASIONS.includes(opts.occasion),
       // Unveränderter Standardtext → null (dann gilt immer der aktuelle Standard)
       mailSubject: ownText(opts.mailSubject, defaultCampaignMail(opts.occasion, ansprache).subject, 200),
       mailBody: ownText(opts.mailBody, defaultCampaignMail(opts.occasion, ansprache).body, 5000),
@@ -507,7 +514,9 @@ export async function runCampaigns(now = new Date(), opts: RunOpts = {}): Promis
       await prisma.customerCampaign.update({ where: { id: c.id }, data: { status: "done", finishedAt: now } });
       continue;
     }
-    const today = await prisma.campaignRecipient.count({ where: { campaignId: c.id, sentAt: { gte: dayStart } } });
+    const today =
+      (await prisma.campaignRecipient.count({ where: { campaignId: c.id, sentAt: { gte: dayStart } } })) +
+      (await prisma.campaignRecipient.count({ where: { campaignId: c.id, followUpAt: { gte: dayStart } } }));
     // Tageslimit: verteilt große Kampagnen über mehrere Tage (schont Nummer und Postfach)
     let budget = c.dailyLimit - today;
     if (budget <= 0) continue;
@@ -530,9 +539,225 @@ export async function runCampaigns(now = new Date(), opts: RunOpts = {}): Promis
       res.failed += r.failed;
     }
   }
+  // Nachfassen (Paket 4): eine Erinnerung nach 5 Werktagen, auch für fertig verschickte Kampagnen
+  const f = await runFollowUps(now, { waWindow, mailWindow, dayStart, ctxOf, mailboxes, opts });
+  res.sent += f.sent;
+  res.mailed += f.mailed;
+  res.failed += f.failed;
   // Viele Bounces → Postfach pausiert, Warnung
   for (const mb of mailboxes.values()) await checkBounces(mb, now);
   return res;
+}
+
+const FOLLOW_UP_PER_RUN = 25;
+
+/**
+ * Erinnerungen versenden (Paket 4). Kandidaten: verschickt, keine Antwort, nicht abgemeldet, nicht unzustellbar, noch
+ * nicht erinnert, Kampagne läuft oder ist fertig verschickt und hat den Schalter an. Vor jedem Versand gelten dieselben
+ * Prüfungen wie beim ersten Versand (followUpDecision). Der Empfänger wird vor dem Versand per bedingtem Update
+ * markiert (followUpAt nur, wenn noch leer): Eine zweite Erinnerung ist damit ausgeschlossen, auch bei parallelen Läufen.
+ * Zählt aufs Kontingent (WhatsApp: Monatskontingent, E-Mail: E-Mail-Kontingent) und aufs Tageslimit der Kampagne.
+ */
+async function runFollowUps(
+  now: Date,
+  o: {
+    waWindow: boolean;
+    mailWindow: boolean;
+    dayStart: Date;
+    ctxOf: (customerId: string) => Promise<{ settings: ConsentSettings & Awaited<ReturnType<typeof loadConsentSettings>>; sup: Suppression }>;
+    mailboxes: Map<string, MailboxRun>;
+    opts: RunOpts;
+  },
+): Promise<{ sent: number; mailed: number; failed: number }> {
+  const out = { sent: 0, mailed: 0, failed: 0 };
+  const since = new Date(now.getTime() - FOLLOW_UP_MAX_DAYS * DAY);
+  const campaigns = await prisma.customerCampaign.findMany({
+    where: {
+      followUp: true,
+      status: { in: ["running", "done"] },
+      occasion: { in: [...FOLLOW_UP_OCCASIONS] },
+      customer: { dormantSince: null, existingCustomersEnabled: true },
+      recipients: { some: { status: "sent", followUpAt: null, repliedAt: null, sentAt: { gte: since } } },
+    },
+    include: { customer: { select: { name: true, existingCustomersEnabled: true, empfehlungEnabled: true } } },
+  });
+  for (const c of campaigns) {
+    const today =
+      (await prisma.campaignRecipient.count({ where: { campaignId: c.id, sentAt: { gte: o.dayStart } } })) +
+      (await prisma.campaignRecipient.count({ where: { campaignId: c.id, followUpAt: { gte: o.dayStart } } }));
+    let budget = Math.min(FOLLOW_UP_PER_RUN, c.dailyLimit - today);
+    if (budget <= 0) continue;
+    const rows = await prisma.campaignRecipient.findMany({
+      where: { campaignId: c.id, status: "sent", followUpAt: null, repliedAt: null, optOutAt: null, bouncedAt: null, sentAt: { gte: since } },
+      orderBy: [{ sentAt: "asc" }, { id: "asc" }],
+      take: 200,
+      include: { existingCustomer: true },
+    });
+    if (!rows.length) continue;
+    const cx = await o.ctxOf(c.customerId);
+    const avail = await channelAvailability(c.customerId, c.occasion as Occasion, c.senderUserId ?? c.createdById);
+    const mode = effectiveMode(asChannelMode(c.channelMode), avail.waAvailable);
+    const slug = await bookingSlugFor(c.customerId);
+    let waQuota: Awaited<ReturnType<typeof bestandQuota>> | null = null;
+    let mail: { mb: MailboxRun; slots: number; imprint: string; meinname: string } | null | undefined;
+    for (const r of rows) {
+      if (budget <= 0) break;
+      const ec = r.existingCustomer;
+      const conv = r.conversationId ? await prisma.conversation.findUnique({ where: { id: r.conversationId }, select: { windowExpiresAt: true } }) : null;
+      const d = followUpDecision({
+        occasion: c.occasion,
+        campaign: { followUp: c.followUp, status: c.status, channelMode: mode },
+        recipient: r,
+        subject: subjectOf(ec, cx.sup),
+        settings: cx.settings,
+        lastCampaignAt: ec.lastCampaignAt,
+        waWindowOpen: !!conv?.windowExpiresAt && conv.windowExpiresAt > now,
+        now,
+      });
+      if (!d.channel || ec.blockedAt) continue;
+      if (d.channel === "whatsapp") {
+        if (!o.waWindow) continue;
+        waQuota ??= await bestandQuota(c.customerId, now);
+        // Erinnerung nur aus dem Monatskontingent (Pakete bleiben für erste Nachrichten)
+        if (waQuota.includedRemaining <= 0) continue;
+        if (!(await claimFollowUp(r.id, "whatsapp", now))) continue;
+        try {
+          const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+          const { terminlinkFuer } = await import("@/lib/bestand/terminlink");
+          await sendWhatsAppMessage({ customerId: c.customerId, to: ec.phone!, body: ohneGedankenstriche(followUpText(kontaktFromExisting(ec), cx.settings.ansprache, r.sentAt!, terminlinkFuer(slug, r.id))), sentBy: "system" });
+          consume(waQuota, null);
+          await prisma.existingCustomer.update({ where: { id: ec.id }, data: { lastCampaignAt: now } });
+          out.sent++;
+          budget--;
+        } catch (err) {
+          reportError(err, "campaign-followup", { campaign: c.id });
+          await releaseFollowUp(r.id);
+          out.failed++;
+        }
+        continue;
+      }
+      if (!o.mailWindow || !avail.mailbox) continue;
+      if (mail === undefined) mail = await followUpMailbox(c, cx, avail.mailbox, o.mailboxes, now);
+      if (!mail || mail.slots <= 0) continue;
+      if (!(await claimFollowUp(r.id, "email", now))) continue;
+      const res = await sendFollowUpMail(c, r, mail, cx, slug, now, o.opts);
+      mail.slots--;
+      if (res === "ok") {
+        out.mailed++;
+        budget--;
+      } else {
+        out.failed += res === "bounce" ? 1 : 0;
+        if (res === "error") break;
+      }
+    }
+  }
+  return out;
+}
+
+/** Erinnerung belegen: nur, wenn noch keine verschickt ist und keine Antwort vorliegt (atomar). */
+async function claimFollowUp(id: string, channel: Channel, now: Date): Promise<boolean> {
+  const u = await prisma.campaignRecipient.updateMany({ where: { id, status: "sent", followUpAt: null, repliedAt: null, optOutAt: null }, data: { followUpAt: now, followUpChannel: channel } });
+  return u.count === 1;
+}
+
+/** Versand gescheitert (Postfach- oder Netzfehler): Markierung zurücknehmen, ein späterer Lauf versucht es erneut. */
+async function releaseFollowUp(id: string) {
+  await prisma.campaignRecipient.update({ where: { id }, data: { followUpAt: null, followUpChannel: null } });
+}
+
+async function followUpMailbox(
+  c: CampaignRow,
+  cx: { settings: Awaited<ReturnType<typeof loadConsentSettings>> },
+  box: NonNullable<Availability["mailbox"]>,
+  cache: Map<string, MailboxRun>,
+  now: Date,
+): Promise<{ mb: MailboxRun; slots: number; imprint: string; meinname: string } | null> {
+  const imprint = cx.settings.imprint ?? imprintFromWebsiteInfo(cx.settings.websiteInfo);
+  // Impressum-Sperre wie beim ersten Versand
+  if (!hasImprint(imprint)) return null;
+  const mb = await mailboxRun(box.userId, cache);
+  if (!mb) return null;
+  mb.sentToday ??= await mailsSentToday(mb.userId, berlinDayStart(now));
+  const mailQuota = await bestandMailQuota(c.customerId, now);
+  const slots = Math.min(mailSlots(mb.state, { sentToday: mb.sentToday, baseLimit: providerDailyLimit(mb.provider, mb.email), now }), mailQuota.remaining);
+  const { advisorPerson } = await import("@/lib/lead-anrede");
+  const sender = await prisma.user.findUnique({ where: { id: mb.userId }, select: { displayName: true } });
+  return { mb, slots, imprint: imprint!, meinname: advisorPerson(c.customer.name, sender?.displayName ?? mb.fromName) };
+}
+
+/** Kampagnen-Mails eines Postfachs heute (erste Nachrichten und Erinnerungen). */
+async function mailsSentToday(userId: string, dayStart: Date): Promise<number> {
+  const [first, follow] = await Promise.all([
+    prisma.campaignRecipient.count({ where: { channel: "email", sentAt: { gte: dayStart }, campaign: { senderUserId: userId } } }),
+    prisma.campaignRecipient.count({ where: { followUpChannel: "email", followUpAt: { gte: dayStart }, campaign: { senderUserId: userId } } }),
+  ]);
+  return first + follow;
+}
+
+async function sendFollowUpMail(
+  c: CampaignRow,
+  r: RecipientRow,
+  m: { mb: MailboxRun; imprint: string; meinname: string },
+  cx: { settings: Awaited<ReturnType<typeof loadConsentSettings>> },
+  slug: string | null,
+  now: Date,
+  opts: RunOpts,
+): Promise<SendOutcome> {
+  const ec = r.existingCustomer;
+  const an = cx.settings.ansprache;
+  const { terminlinkFuer } = await import("@/lib/bestand/terminlink");
+  const { unsubscribeUrl, unsubscribePostUrl } = await import("@/lib/bestand/links");
+  const { firmDisplayName } = await import("@/lib/lead-anrede");
+  const { sendViaPostfach } = await import("@/lib/mail/postfach");
+  // Betreff der ersten Mail (auch bei WhatsApp als erster Nachricht), bei Personenversicherungen neutral
+  const first = await campaignMailFor({ ...c, topic: await recipientTopic(c, ec) }, ec, {
+    recipientId: r.id,
+    customerName: c.customer.name,
+    imprint: m.imprint,
+    meinname: m.meinname,
+    ansprache: an,
+    extras: await recipientExtras(c, ec, r.id, slug),
+  });
+  const fu = followUpMail({ kontakt: kontaktFromExisting(ec), an, sentAt: r.sentAt!, terminlink: terminlinkFuer(slug, r.id), subject: first.subject, meinname: m.meinname });
+  const footer = campaignMailFooter({ firm: firmDisplayName(c.customer.name), unsubscribeUrl: unsubscribeUrl(r.id), imprint: m.imprint, ansprache: an });
+  const built = buildCampaignMail(ohneGedankenstriche(fu.body), footer);
+  const domain = (m.mb.email.split("@")[1] ?? "mail").toLowerCase();
+  const result = await sendViaPostfach(
+    m.mb.userId,
+    {
+      to: ec.email!,
+      subject: ohneGedankenstriche(fu.subject),
+      text: built.text,
+      html: built.html,
+      messageId: `bk-${r.id}-2@${domain}`,
+      headers: {
+        "List-Unsubscribe": `<${unsubscribePostUrl(r.id)}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        ...(r.mailMessageId ? { "In-Reply-To": `<${r.mailMessageId}>`, References: `<${r.mailMessageId}>` } : {}),
+      },
+    },
+    { customerId: c.customerId, existingCustomerId: ec.id, art: "bestandskampagne", label: `${c.name} (Erinnerung)` },
+  );
+  let outcome: SendOutcome;
+  if (result.ok) {
+    outcome = "ok";
+    await prisma.existingCustomer.update({ where: { id: ec.id }, data: { lastCampaignAt: now } });
+    m.mb.sentToday = (m.mb.sentToday ?? 0) + 1;
+  } else if (isBounceError(result.raw ?? result.error)) {
+    // Erinnerung bleibt belegt (keine zweite), Adresse gilt als unzustellbar
+    outcome = "bounce";
+    await prisma.campaignRecipient.update({ where: { id: r.id }, data: { bouncedAt: now } });
+  } else {
+    outcome = "error";
+    await releaseFollowUp(r.id);
+    reportError(new Error(result.error), "campaign-followup-mail", { campaign: c.id });
+  }
+  const u = afterSend(m.mb.state, outcome, now, (opts.rand ?? Math.random)());
+  m.mb.state = u.state;
+  await saveMailbox(m.mb);
+  if (u.warn) await warnMailbox(m.mb, u.warn);
+  if (outcome === "ok") await (opts.sleep ?? realSleep)(innerGap((opts.rand ?? Math.random)()));
+  return outcome;
 }
 
 /** Vor dem Versand neu prüfen: Kanal und Rechtsgrundlage nach aktuellem Stand (Abmeldung, Widerruf). */
@@ -753,7 +978,7 @@ async function sendMailPart(
   const mb = await mailboxRun(box.userId, cache);
   if (!mb) return out;
   const dayStart = berlinDayStart(now);
-  mb.sentToday ??= await prisma.campaignRecipient.count({ where: { channel: "email", sentAt: { gte: dayStart }, campaign: { senderUserId: mb.userId } } });
+  mb.sentToday ??= await mailsSentToday(mb.userId, dayStart);
   const mailQuota = await bestandMailQuota(c.customerId, now);
   const slots = Math.min(mailSlots(mb.state, { sentToday: mb.sentToday, baseLimit: providerDailyLimit(mb.provider, mb.email), now }), budget, mailQuota.remaining);
   if (slots <= 0) return out;
@@ -1249,11 +1474,16 @@ export const ENDED_REASON = "Kampagne beendet";
  * Danach geht keine Nachricht mehr raus; Fortsetzen ist nicht möglich. Schon gesendete bleiben (Antworten zählen weiter).
  */
 export async function endCampaign(customerId: string, campaignId: string, now = new Date()): Promise<{ ok: true; skipped: number } | { ok: false; error: string }> {
-  const c = await prisma.customerCampaign.findFirst({ where: { id: campaignId, customerId }, select: { id: true, status: true } });
+  const c = await prisma.customerCampaign.findFirst({ where: { id: campaignId, customerId }, select: { id: true, status: true, followUp: true } });
   if (!c) return { ok: false, error: "Kampagne nicht gefunden." };
-  if (c.status === "done") return { ok: false, error: "Die Kampagne ist schon beendet." };
+  // Fertig verschickt, aber Erinnerungen stehen noch aus: Beenden schaltet sie ab (Kampagnenende beendet das Nachfassen)
+  if (c.status === "done") {
+    if (!c.followUp) return { ok: false, error: "Die Kampagne ist schon beendet." };
+    await prisma.customerCampaign.update({ where: { id: c.id }, data: { followUp: false } });
+    return { ok: true, skipped: 0 };
+  }
   const [, skipped] = await prisma.$transaction([
-    prisma.customerCampaign.update({ where: { id: c.id }, data: { status: "done", pausedReason: null, finishedAt: now } }),
+    prisma.customerCampaign.update({ where: { id: c.id }, data: { status: "done", pausedReason: null, finishedAt: now, followUp: false } }),
     prisma.campaignRecipient.updateMany({ where: { campaignId: c.id, status: "queued" }, data: { status: "skipped", reason: ENDED_REASON } }),
   ]);
   return { ok: true, skipped: skipped.count };
@@ -1265,12 +1495,13 @@ export type RecipientRowView = { id: string; existingCustomerId: string; name: s
 const dayDe = (d: Date) => d.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" });
 
 /** Status eines Empfängers in Worten (rein): „gesendet am 16.11.2026“, „wartet“, „übersprungen: abgemeldet“. */
-export function recipientStatusLabel(r: { status: string; reason: string | null; sentAt: Date | null; repliedAt: Date | null; readAt?: Date | null }): { label: string; tone: RecipientTone } {
+export function recipientStatusLabel(r: { status: string; reason: string | null; sentAt: Date | null; repliedAt: Date | null; readAt?: Date | null; followUpAt?: Date | null }): { label: string; tone: RecipientTone } {
   switch (r.status) {
     case "sent":
+      if (r.followUpAt) return { label: `erinnert am ${dayDe(r.followUpAt)}`, tone: "success" };
       return { label: r.sentAt ? `gesendet am ${dayDe(r.sentAt)}${r.readAt ? ", gelesen" : ""}` : "gesendet", tone: "success" };
     case "replied":
-      return { label: `${r.repliedAt ? `geantwortet am ${dayDe(r.repliedAt)}` : "geantwortet"}${r.reason ? `: ${r.reason}` : ""}`, tone: "success" };
+      return { label: `${r.repliedAt ? `geantwortet am ${dayDe(r.repliedAt)}` : "geantwortet"}${r.followUpAt && r.repliedAt && r.repliedAt >= r.followUpAt ? " nach Erinnerung" : ""}${r.reason ? `: ${r.reason}` : ""}`, tone: "success" };
     case "queued":
       return { label: "wartet", tone: "neutral" };
     case "skipped":
@@ -1300,6 +1531,7 @@ export async function campaignRecipientList(customerId: string, campaignId: stri
         sentAt: true,
         repliedAt: true,
         readAt: true,
+        followUpAt: true,
         channel: true,
         existingCustomerId: true,
         existingCustomer: { select: { firstName: true, lastName: true, company: true, email: true, phone: true, externalNo: true } },
@@ -1317,4 +1549,63 @@ export async function campaignRecipientList(customerId: string, campaignId: stri
       ...recipientStatusLabel(r),
     })),
   };
+}
+
+export type FollowUpStats = {
+  /** Schalter an */
+  on: boolean;
+  /** Anlass mit Erinnerung */
+  supported: boolean;
+  /** verschickte Erinnerungen */
+  sent: number;
+  /** Antworten nach der Erinnerung */
+  repliesAfter: number;
+  /** noch ohne Antwort und ohne Erinnerung (im Zeitraum) */
+  pending: number;
+  /** frühester Termin der nächsten Erinnerung */
+  nextAt: Date | null;
+};
+
+/**
+ * Stand des Nachfassens einer Kampagne für das Detail (Paket 4). „Folgen“ zählt nur Empfänger, die nach den Regeln eine
+ * Erinnerung bekommen können (followUpDecision, Zeit ausgenommen); rechtlich Ausgeschlossene zählen nicht mit.
+ */
+export async function campaignFollowUpStats(campaignId: string, now = new Date()): Promise<FollowUpStats | null> {
+  const c = await prisma.customerCampaign.findUnique({ where: { id: campaignId }, select: { customerId: true, followUp: true, occasion: true, status: true, channelMode: true } });
+  if (!c) return null;
+  const { followUpDueAt, replyAfterFollowUp } = await import("@/lib/bestand/nachfassen");
+  const supported = FOLLOW_UP_OCCASIONS.includes(c.occasion as Occasion);
+  const [sent, answered, pendingRows] = await Promise.all([
+    prisma.campaignRecipient.count({ where: { campaignId, followUpAt: { not: null } } }),
+    prisma.campaignRecipient.findMany({ where: { campaignId, followUpAt: { not: null }, repliedAt: { not: null } }, select: { followUpAt: true, repliedAt: true } }),
+    supported && c.followUp
+      ? prisma.campaignRecipient.findMany({
+          where: { campaignId, status: "sent", followUpAt: null, repliedAt: null, optOutAt: null, bouncedAt: null, sentAt: { gte: new Date(now.getTime() - FOLLOW_UP_MAX_DAYS * DAY) } },
+          include: { existingCustomer: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  let pending = 0;
+  let nextAt: Date | null = null;
+  if (pendingRows.length) {
+    const [settings, sup] = await Promise.all([loadConsentSettings(c.customerId), loadSuppression(c.customerId)]);
+    for (const r of pendingRows) {
+      const due = followUpDueAt(r.sentAt!);
+      const d = followUpDecision({
+        occasion: c.occasion,
+        // Pause hält nur an, zählt aber als „folgt“
+        campaign: { followUp: true, status: "running", channelMode: asChannelMode(c.channelMode) },
+        recipient: r,
+        subject: subjectOf(r.existingCustomer, sup),
+        settings,
+        lastCampaignAt: r.existingCustomer.lastCampaignAt,
+        waWindowOpen: false,
+        now: due > now ? due : now,
+      });
+      if (!d.channel) continue;
+      pending++;
+      if (!nextAt || due < nextAt) nextAt = due;
+    }
+  }
+  return { on: c.followUp, supported, sent, repliesAfter: answered.filter(replyAfterFollowUp).length, pending, nextAt };
 }

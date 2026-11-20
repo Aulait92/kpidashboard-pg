@@ -1,5 +1,7 @@
 "use server";
 
+import { FOLLOW_UP_OCCASIONS } from "@/lib/bestand/nachfassen";
+import { WARM_DONE_REASON } from "@/lib/bestand/warm-shared";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -239,6 +241,8 @@ export async function startCampaignAction(fd: FormData): Promise<void> {
       dailyLimit: Number(fd.get("dailyLimit")) || 150,
       createdById: ctx.userId,
       channelMode,
+      // Schalter „Nach 5 Werktagen einmal erinnern“ (Standard an; ohne Feld im Formular ebenfalls an)
+      followUp: fd.get("followUpFeld") ? fd.get("followUp") === "1" : true,
       // Editor zeigt Platzhalter lesbar („[Anrede]“), gespeichert werden sie als {anrede}
       mailSubject: platzhalterAusAnzeige(String(fd.get("mailSubject") ?? "")),
       mailBody: platzhalterAusAnzeige(String(fd.get("mailBody") ?? "")),
@@ -249,7 +253,7 @@ export async function startCampaignAction(fd: FormData): Promise<void> {
   }
   if (failure === QUOTA_REACHED) redirect("/buyer/bestand?kontingent=1");
   if (!campaignId) back(failure ?? "Die Kampagne konnte nicht gestartet werden.");
-  await audit("bestand.campaign", { entity: "CustomerCampaign", entityId: campaignId, customerId: ctx.customerId, details: { occasion, segment, channelMode } });
+  await audit("bestand.campaign", { entity: "CustomerCampaign", entityId: campaignId, customerId: ctx.customerId, details: { occasion, segment, channelMode, followUp: fd.get("followUpFeld") ? fd.get("followUp") === "1" : true } });
   revalidatePath("/buyer/bestand");
   redirect(`/buyer/bestand/kampagnen/${campaignId}?gestartet=1`);
 }
@@ -504,6 +508,33 @@ export async function toggleCampaignAction(fd: FormData): Promise<void> {
   await prisma.customerCampaign.update({ where: { id: c.id }, data: { status: c.status === "running" ? "paused" : "running", pausedReason: null } });
   revalidatePath("/buyer/bestand");
   revalidatePath(`/buyer/bestand/kampagnen/${c.id}`);
+}
+
+/** „Nach 5 Werktagen einmal erinnern“ im Kampagnen-Detail an oder aus (Paket 4). Einschalten nur, solange die Kampagne nicht beendet ist. */
+export async function setCampaignFollowUpAction(fd: FormData): Promise<void> {
+  const ctx = await ownerCtx();
+  const on = fd.get("on") === "1";
+  const c = await prisma.customerCampaign.findFirst({ where: { id: String(fd.get("id") ?? ""), customerId: ctx.customerId }, select: { id: true, status: true, occasion: true } });
+  if (!c || (on && (c.status === "done" || !FOLLOW_UP_OCCASIONS.includes(c.occasion as Occasion)))) return;
+  await prisma.customerCampaign.update({ where: { id: c.id }, data: { followUp: on } });
+  await audit("bestand.erinnerung", { entity: "CustomerCampaign", entityId: c.id, customerId: ctx.customerId, details: { on } });
+  revalidatePath(`/buyer/bestand/kampagnen/${c.id}`);
+}
+
+/** Warmer Kontakt in „Heute“ erledigt (Paket 4): verschwindet aus „Nachfassen per Nachricht“, sonst ändert sich nichts. */
+export async function bestandWarmErledigtAction(recipientId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const ctx = await ownerCtx();
+    const r = await prisma.campaignRecipient.updateMany({
+      where: { id: recipientId, status: "replied", reason: null, campaign: { customerId: ctx.customerId } },
+      data: { reason: WARM_DONE_REASON },
+    });
+    if (!r.count) return { ok: false, error: "Nicht gefunden." };
+    revalidatePath("/buyer");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
 }
 
 /** Entwurf löschen (nur Entwürfe: nichts wurde verschickt; Empfänger fallen mit weg). */

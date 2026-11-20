@@ -120,6 +120,8 @@ export type InboxData = {
    * Gesammelt am nächsten Morgen als eine Karte mit Chips, kein eigener Push.
    */
   beitragFehlt?: InboxBeitragFehlt[];
+  /** Bestand Paket 4: geantwortet ohne Termin seit 2 Tagen (lib/bestand/warm.ts), nur mit sichtbarem Modul */
+  bestandWarm?: import("@/lib/bestand/warm-shared").InboxBestandWarm[];
   /** Offene Datenschutz-Anfragen (Betroffenenrechte, lib/dsgvo/server.ts), ganz oben auf Heute */
   datenschutz?: import("@/lib/dsgvo/server").HeuteDsgvo[];
 };
@@ -155,7 +157,7 @@ export async function loadBeitragFehlt(ctx: TeamCtx, now = new Date()): Promise<
   });
 }
 
-export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
+export async function loadInbox(ctx: TeamCtx & { preview?: boolean; demo?: boolean }): Promise<InboxData> {
   const customerId = ctx.customerId;
   const apptScope = appointmentScope(ctx);
   const now = new Date();
@@ -393,7 +395,17 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     noNextStep: { total: noStep.total, leads: noStep.leads.filter((l) => !outcomeLeadIds.has(l.leadId)) },
     beitragFehlt: await loadBeitragFehlt(ctx, now).catch(() => []),
     datenschutz: await loadDatenschutz(ctx, now).catch(() => []),
+    bestandWarm: await loadWarm(ctx, now, new Set([...followUpIds, ...callbacks.map((c) => c.id)])).catch(() => []),
   };
+}
+
+/** Warme Kontakte aus dem Bestand; wie das Menü (app/buyer/layout.tsx) nicht für Berater und nicht in der App-Demo. */
+async function loadWarm(ctx: TeamCtx & { preview?: boolean; demo?: boolean }, now: Date, exclude: Set<string>) {
+  if (isAdvisor(ctx) || ctx.demo) return [];
+  const { loadBestandVisible } = await import("@/lib/bestand/sichtbar-server");
+  if (!(await loadBestandVisible(ctx.customerId, { preview: ctx.preview }))) return [];
+  const { loadBestandWarm } = await import("@/lib/bestand/warm");
+  return loadBestandWarm(ctx, now, exclude);
 }
 
 /** Offene Datenschutz-Anfragen; Berater (Team) sehen nur die ihrer Leads. */

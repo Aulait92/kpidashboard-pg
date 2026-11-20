@@ -70,7 +70,12 @@ export function isSimilarLine(owned: string, offered: string): boolean {
   return !!n(owned) && n(owned) === n(offered) && n(offered) !== "sonstiges";
 }
 
-/** Warum ein Anlass ohne Einwilligung nicht geht (für Vorschau und Hilfe). */
+/**
+ * Warum ein Anlass ohne Einwilligung nicht geht (für Vorschau und Hilfe). Das Nachfassen (lib/bestand/nachfassen.ts,
+ * Paket 4) ist kein eigener Anlass: Es ist ein Schritt derselben Kampagne und gilt mit dem Anlass der Kampagne, also
+ * mit genau diesen Regeln (Cross-Selling-Erinnerung per E-Mail nur mit Einwilligung, Ablauf und Jahresgespräch auch nach
+ * § 7 Abs. 3 UWG). WhatsApp immer nur mit Opt-in.
+ */
 export const NEEDS_CONSENT_REASON: Record<Occasion, string | null> = {
   renewal: null,
   review: null,

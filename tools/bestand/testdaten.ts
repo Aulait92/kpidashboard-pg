@@ -231,10 +231,10 @@ async function main() {
   const reachable = ecs.filter((e) => e.wa || e.mail);
   const kfzOhneHausrat = reachable.filter((e) => e.lines.includes("KFZ") && !e.lines.includes("Hausrat"));
   const haftOhneRs = reachable.filter((e) => e.lines.includes("Haftpflicht") && !e.lines.includes("Rechtsschutz"));
-  type Plan = { id: string; name: string; occasion: string; topic: string | null; segment: object; status: string; pausedReason?: string; startedDaysAgo: number | null; finished?: boolean; people: Ec[]; sentShare: number; replyShare: number };
+  type Plan = { id: string; name: string; occasion: string; topic: string | null; segment: object; status: string; pausedReason?: string; followUp?: boolean; startedDaysAgo: number | null; finished?: boolean; people: Ec[]; sentShare: number; replyShare: number };
   const plans: Plan[] = [
-    { id: "bst_camp_hausrat", name: "KFZ ohne Hausrat", occasion: "cross_sell", topic: "Hausrat", segment: { has: ["KFZ"], lacks: ["Hausrat"] }, status: "running", startedDaysAgo: 6, people: kfzOhneHausrat.slice(0, 30), sentShare: 0.7, replyShare: 0.25 },
-    { id: "bst_camp_rs", name: "Haftpflicht ohne Rechtsschutz", occasion: "cross_sell", topic: "Rechtsschutz", segment: { has: ["Haftpflicht"], lacks: ["Rechtsschutz"] }, status: "paused", pausedReason: "kontingent", startedDaysAgo: 12, people: haftOhneRs.slice(0, 20), sentShare: 0.6, replyShare: 0.2 },
+    { id: "bst_camp_hausrat", name: "KFZ ohne Hausrat", occasion: "cross_sell", topic: "Hausrat", segment: { has: ["KFZ"], lacks: ["Hausrat"] }, status: "running", followUp: true, startedDaysAgo: 9, people: kfzOhneHausrat.slice(0, 30), sentShare: 0.7, replyShare: 0.25 },
+    { id: "bst_camp_rs", name: "Haftpflicht ohne Rechtsschutz", occasion: "cross_sell", topic: "Rechtsschutz", segment: { has: ["Haftpflicht"], lacks: ["Rechtsschutz"] }, status: "paused", pausedReason: "kontingent", followUp: true, startedDaysAgo: 12, people: haftOhneRs.slice(0, 20), sentShare: 0.6, replyShare: 0.2 },
     { id: "bst_camp_geb", name: "Geburtstag", occasion: "birthday", topic: null, segment: { birthdayDays: 30 }, status: "done", startedDaysAgo: 40, finished: true, people: reachable.slice(5, 17), sentShare: 1, replyShare: 0.35 },
     { id: "bst_camp_jahr", name: "Jahresgespräch", occasion: "review", topic: null, segment: {}, status: "done", startedDaysAgo: 75, finished: true, people: reachable.slice(20, 45), sentShare: 1, replyShare: 0.3 },
     { id: "bst_camp_entwurf", name: "Ablauf/Wechsel", occasion: "renewal", topic: null, segment: { renewalDays: 60 }, status: "draft", startedDaysAgo: null, people: [], sentShare: 0, replyShare: 0 },
@@ -252,6 +252,7 @@ async function main() {
         topic: p.topic,
         status: p.status,
         pausedReason: p.pausedReason ?? null,
+        followUp: p.followUp ?? false,
         createdById: userId,
         senderUserId: userId,
         startedAt,
@@ -334,6 +335,32 @@ async function main() {
         },
       });
       if (sentAt) await prisma.existingCustomer.update({ where: { id: e.id }, data: { lastCampaignAt: sentAt } });
+    }
+  }
+
+  // ── Nachfassen (Paket 4): bei „KFZ ohne Hausrat“ ist ein Teil schon erinnert, ein Teil antwortet danach, der Rest ist fällig ──
+  const { followUpDueAt } = await import("../../src/lib/bestand/nachfassen");
+  const hausrat = await prisma.campaignRecipient.findMany({ where: { campaignId: "bst_camp_hausrat", sentAt: { not: null } }, orderBy: { id: "asc" } });
+  for (const [k, r] of hausrat.entries()) {
+    const due = followUpDueAt(r.sentAt!);
+    if (due > now || k % 3 === 2) continue;
+    if (r.status === "sent") {
+      // erinnert, jede zweite davon antwortet danach (Lead im Gespräch, ohne Termin: warmer Kontakt in Heute)
+      const answers = k % 2 === 0;
+      const repliedAt = answers ? new Date(due.getTime() + 3 * 3_600_000) : null;
+      let leadId: string | null = null;
+      if (answers && repliedAt && repliedAt < now) {
+        const ec = await prisma.existingCustomer.findUnique({ where: { id: r.existingCustomerId } });
+        leadId = `bst_lead_fu_${k}`;
+        await prisma.lead.create({
+          data: { id: leadId, customerId: ID.main, source: "Bestandskunde", name: [ec?.firstName, ec?.lastName].filter(Boolean).join(" ") || "Firmenkunde", phone: ec?.phone, email: ec?.email, status: "Im Gespräch", statusChangedAt: repliedAt, assignedUserId: userId, createdAt: repliedAt },
+        });
+      }
+      await prisma.campaignRecipient.update({
+        where: { id: r.id },
+        data: { followUpAt: due, followUpChannel: r.channel === "whatsapp" ? "email" : r.channel, ...(leadId && repliedAt ? { status: "replied", repliedAt, leadId } : {}) },
+      });
+      await prisma.existingCustomer.update({ where: { id: r.existingCustomerId }, data: { lastCampaignAt: due } });
     }
   }
 

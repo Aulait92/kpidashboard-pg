@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { BarChart3, ChevronDown, Mail, MessageCircle, Users } from "lucide-react";
+import { BarChart3, BellRing, ChevronDown, Mail, MessageCircle, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { campaignRecipientList, type RecipientTone } from "@/lib/bestand/campaigns";
+import { campaignFollowUpStats, campaignRecipientList, type RecipientTone } from "@/lib/bestand/campaigns";
 import { loadCampaignStats } from "@/lib/bestand/statistik";
 import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 import { CHANNEL_MODES } from "@/lib/bestand/einwilligung";
@@ -13,7 +13,9 @@ import { FunnelBars } from "@/components/bestand/funnel-table";
 import { ReplySheetButton } from "@/components/bestand/reply-form";
 import { bestandQuota, QUOTA_PAUSE } from "@/lib/bestand/quota";
 import { CampaignEndButton } from "@/components/bestand/campaign-end";
-import { toggleCampaignAction } from "../../actions";
+import { setCampaignFollowUpAction, toggleCampaignAction } from "../../actions";
+import { FOLLOW_UP_WORKDAYS } from "@/lib/bestand/nachfassen";
+import { nowMs } from "@/lib/now";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kampagne | performancegrowth" };
@@ -47,7 +49,9 @@ export default async function CampaignDetail({ params, searchParams }: { params:
   const mailbox = await prisma.customerCampaign.findUnique({ where: { id: s.id }, select: { senderUserId: true } }).then((c) =>
     c?.senderUserId ? prisma.mailConnection.findUnique({ where: { userId: c.senderUserId }, select: { email: true, campaignPausedUntil: true, campaignBackoff: true } }) : null,
   );
-  const [recipients, quota] = await Promise.all([campaignRecipientList(ctx.customerId, s.id), s.status === "paused" ? bestandQuota(ctx.customerId) : null]);
+  const [recipients, quota, fu] = await Promise.all([campaignRecipientList(ctx.customerId, s.id), s.status === "paused" ? bestandQuota(ctx.customerId) : null, campaignFollowUpStats(s.id)]);
+  const nowDate = new Date(nowMs());
+  const tag = (d: Date) => (d <= nowDate ? "heute" : `ab ${d.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" })}`);
   const f = s.funnel;
   const sparten = Object.entries(f.gesamt.sparten);
   const gruende = Object.entries(f.gesamt.gruende).sort((a, b) => b[1] - a[1]);
@@ -127,7 +131,29 @@ export default async function CampaignDetail({ params, searchParams }: { params:
               </span>
             }
           />
-          <FunnelBars funnel={f} />
+          <FunnelBars funnel={f} nachErinnerung={fu?.repliesAfter ?? 0} />
+          {fu?.supported && (fu.on || fu.sent > 0) ? (
+            <div className="flex items-center gap-3 border-t border-[color:var(--border)] px-5 py-3 text-sm" data-campaign-followup-status>
+              <BellRing className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+              <span className="min-w-0 flex-1">
+                {fu.on ? `Erinnerung nach ${FOLLOW_UP_WORKDAYS} Werktagen` : "Erinnerung aus"}
+                <span className="block text-xs text-[color:var(--muted)]">
+                  {[fu.sent ? `${fu.sent.toLocaleString("de-DE")} verschickt` : null, fu.on && fu.pending && fu.nextAt ? `${fu.pending.toLocaleString("de-DE")} folgen ${tag(fu.nextAt)}` : null, fu.on && !fu.pending && !fu.sent ? "Nur an Kunden ohne Antwort" : null]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </span>
+              {fu.on || s.status !== "done" ? (
+                <form action={setCampaignFollowUpAction}>
+                  <input type="hidden" name="id" value={s.id} />
+                  <input type="hidden" name="on" value={fu.on ? "0" : "1"} />
+                  <button className="text-sm font-medium text-[color:var(--brand)] hover:underline disabled:opacity-50" disabled={ctx.preview}>
+                    {fu.on ? "Ausschalten" : "Einschalten"}
+                  </button>
+                </form>
+              ) : null}
+            </div>
+          ) : null}
           <details className="group border-t border-[color:var(--border)]" data-campaign-ertrag>
             <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-5 py-2 text-sm font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
               <span className="flex-1">Ertrag und Gründe</span>
