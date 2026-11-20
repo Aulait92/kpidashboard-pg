@@ -128,6 +128,11 @@ async function handle(req: Request): Promise<Response> {
             return null;
           }),
           transient: await pruneTransient(now).catch(() => null),
+          // Leads ohne Abschluss: 24 Monate nach dem letzten Kontakt anonymisieren (lib/lead-loeschfrist.ts)
+          leadLoeschfrist: await import("@/lib/lead-loeschfrist").then((m) => m.leadLoeschfrist(now)).catch((e: unknown) => {
+            reportError(e, "cron-lead-loeschfrist");
+            return null;
+          }),
           // Policen per WhatsApp: 30 Tage nach dem Termin ohne Abschluss löschen, offene Einwilligungen nach 24 h (lib/policen)
           policen: await import("@/lib/policen/server").then((m) => m.prunePolicen(now)).catch((e: unknown) => {
             reportError(e, "cron-policen");

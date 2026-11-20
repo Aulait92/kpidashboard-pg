@@ -9,7 +9,7 @@ import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist, vonUnsAbgehakt } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits, WeiterButton } from "./forms";
+import { DatenschutzUrlForm, HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits, WeiterButton } from "./forms";
 import { SoArbeitet } from "@/components/so-arbeitet";
 import { ladeSoArbeitet } from "@/lib/so-arbeitet-server";
 import { ServiceMails } from "@/app/buyer/einstellungen/assistent/service-mails";
@@ -410,6 +410,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 </a>
               </p>
             ) : null}
+            <div className="mt-3">
+              <DatenschutzUrlForm readOnly={readOnly} initial={((ob.websiteInfo as { privacyUrl?: string | null } | null)?.privacyUrl ?? null) || null} />
+            </div>
             {logo ? <LogoZeile dataUri={logo.dataUri} bestaetigt={logo.bestaetigt} readOnly={readOnly} /> : null}
           </Step>
         ) : null}
