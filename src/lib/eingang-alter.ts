@@ -17,5 +17,8 @@ export function eingangAlter(iso: string | Date, now: Date = new Date()): string
 
 /** Kurzer Grund für die Karte „Neue Leads“: der Titel sagt schon „jetzt anrufen“. */
 export function neuerLeadGrund(reason: string): string {
-  return /^kein whatsapp/i.test(reason) ? "Kein WhatsApp" : "Noch nicht kontaktiert";
+  if (/^kein whatsapp/i.test(reason)) return "Kein WhatsApp";
+  // Festnetznummer (lib/whatsapp/festnetz.ts FESTNETZ_REASON)
+  if (/^keine handynummer:/i.test(reason)) return "Keine Handynummer";
+  return "Noch nicht kontaktiert";
 }

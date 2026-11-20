@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { eingangAlter, neuerLeadGrund } from "@/lib/eingang-alter";
 import { KEIN_WHATSAPP_REASON } from "@/lib/whatsapp/kein-whatsapp";
 import { NEUER_LEAD_REASON } from "@/lib/whatsapp/outreach";
+import { FESTNETZ_REASON } from "@/lib/whatsapp/festnetz";
 
 // UX-Runde 19.11.2026 (Team A): Auf „Heute“ zählt bei neuen Leads jede Minute.
 describe("eingangAlter", () => {
@@ -31,6 +32,7 @@ describe("neuerLeadGrund", () => {
   it("kurzer Grund für die Karte „Neue Leads“", () => {
     expect(neuerLeadGrund(KEIN_WHATSAPP_REASON)).toBe("Kein WhatsApp");
     expect(neuerLeadGrund(NEUER_LEAD_REASON)).toBe("Noch nicht kontaktiert");
+    expect(neuerLeadGrund(FESTNETZ_REASON)).toBe("Keine Handynummer");
   });
 });
 
