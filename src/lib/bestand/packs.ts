@@ -198,7 +198,7 @@ export async function requestLargePack(customerId: string, opts: { messagesPerMo
 
 async function notifyAdmins(customerId: string, title: string, body: string) {
   const { sendToAdmins } = await import("@/lib/push");
-  await sendToAdmins({ title, body, url: `/admin/kunden/${customerId}/abrechnung`, tag: `bestand-paket:${customerId}` }).catch((err) => reportError(err, "bestand-paket-push"));
+  await sendToAdmins({ title, body, url: `/admin/neu/kunden/${customerId}/abrechnung`, tag: `bestand-paket:${customerId}` }).catch((err) => reportError(err, "bestand-paket-push"));
 }
 
 async function mailOwners(customerId: string, m: { subject: string; paragraphs: string[] }) {

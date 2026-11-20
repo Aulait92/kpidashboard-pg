@@ -10,9 +10,10 @@ import { Megaphone, X } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { buttonClass } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { CROSS_SELL_KAMPAGNE_HREF, crossSellLeisteText, crossSellNutzenSatz, MODUL_BUCHEN_HREF, type CrossSellVerkauf } from "@/lib/cross-sell-verkauf";
+import { CROSS_SELL_KAMPAGNE_HREF, crossSellAnbietenText, crossSellLeisteText, crossSellNutzenSatz, MODUL_BUCHEN_HREF, type CrossSellVerkauf } from "@/lib/cross-sell-verkauf";
 
-const TITEL = "Allen ein Produkt anbieten";
+/** Gleicher Begriff wie im Bestand-Cockpit und in der Kampagne. */
+const TITEL = "Weiteres Produkt anbieten";
 
 /** Blatt „Modul nicht gebucht“: ein Satz Nutzen, Hauptaktion „Modul buchen“. */
 export function CrossSellModulBlatt({ offen, onClose, verkauf }: { offen: boolean; onClose: () => void; verkauf: Pick<CrossSellVerkauf, "anzahl" | "provision"> }) {
@@ -28,7 +29,7 @@ export function CrossSellModulBlatt({ offen, onClose, verkauf }: { offen: boolea
   );
 }
 
-/** Knopf „Allen ein Produkt anbieten“: Kampagne (gebucht) bzw. Blatt (nicht gebucht). */
+/** Knopf „{n} Kunden ein weiteres Produkt anbieten“: Kampagne (gebucht) bzw. Blatt (nicht gebucht). */
 function AnbietenKnopf({ verkauf, className, children }: { verkauf: CrossSellVerkauf; className: string; children: React.ReactNode }) {
   const [offen, setOffen] = useState(false);
   if (verkauf.gebucht) {
@@ -48,7 +49,7 @@ function AnbietenKnopf({ verkauf, className, children }: { verkauf: CrossSellVer
   );
 }
 
-/** Leiste über der gefilterten Kontakte-Liste: „12 Kunden ohne weiteres Produkt · [Allen ein Produkt anbieten]“. */
+/** Leiste über der gefilterten Kontakte-Liste: „12 Kunden ohne weiteres Produkt · [12 Kunden ein weiteres Produkt anbieten]“. */
 export function CrossSellLeiste({ verkauf, filterWeg }: { verkauf: CrossSellVerkauf; filterWeg: string }) {
   return (
     <div
@@ -62,7 +63,7 @@ export function CrossSellLeiste({ verkauf, filterWeg }: { verkauf: CrossSellVerk
       {/* Handy: Zahl und X in einer Zeile, Knopf darunter über die ganze Breite */}
       <AnbietenKnopf verkauf={verkauf} className={buttonClass("primary", "sm", "order-3 w-full sm:order-2 sm:w-auto")}>
         <Megaphone className="h-3.5 w-3.5" />
-        {TITEL}
+        {crossSellAnbietenText(verkauf.anzahl)}
       </AnbietenKnopf>
       <Link href={filterWeg} aria-label="Filter entfernen" className="order-2 -mr-1 inline-flex h-10 w-10 items-center justify-center rounded-full sm:order-3 text-[color:var(--brand-dark)] hover:bg-white/60 sm:h-8 sm:w-8">
         <X className="h-4 w-4" />

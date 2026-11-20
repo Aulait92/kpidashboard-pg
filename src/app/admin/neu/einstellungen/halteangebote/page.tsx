@@ -20,8 +20,8 @@ export default async function Page() {
       </div>
       <p className="text-sm text-[color:var(--muted)]">
         „Trotzdem kündigen“ steht auf jedem Schritt. Auswertung:{" "}
-        <Link href={ziel("/admin/zahlen/lebenszyklus")} className="text-[color:var(--brand)] hover:underline">
-          Zahlen → Kunden-Lebenszyklus
+        <Link href={ziel("/admin/neu/zahlen/kunden")} className="text-[color:var(--brand)] hover:underline">
+          Geld › Kündigung & Rückkehr
         </Link>
       </p>
     </EinstellungSeite>

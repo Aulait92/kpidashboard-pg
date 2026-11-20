@@ -16,7 +16,7 @@ export async function saveCatalogItemAction(_prev: CatalogState, fd: FormData): 
     { id: session.userId, email: session.email, role: session.role },
   );
   if (!res.ok) return { error: res.error };
-  revalidatePath("/admin/einstellungen/produkte");
+  revalidatePath("/admin/neu/einstellungen/produkte");
   revalidatePath("/buyer/konto");
   return { ok: true, savedAt: Date.now() };
 }

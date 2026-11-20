@@ -250,7 +250,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "euro",
       title: `${bankOpen} ${bankOpen === 1 ? "Ausgabe" : "Ausgaben"} zuordnen`,
       detail: "Aus Konto oder Kreditkarte · ohne Zuordnung fehlen sie in Marge und Kosten",
-      action: { label: "Zuordnen", href: "/admin/einstellungen/bank/zuordnen" },
+      action: { label: "Zuordnen", href: "/admin/neu/zahlen/kosten/zuordnen" },
       later: { label: "Später", days: 3 },
     });
   }
@@ -265,7 +265,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "euro",
       title: `${name(c.name)} zahlt nicht`,
       detail: `Rechnung offen ${sinceText(since, now)}${c.pauses.length ? " · Anzeigen automatisch gestoppt, starten nach Zahlung wieder" : ""}`,
-      action: { label: "Zur Abrechnung", href: `/admin/kunden/${c.id}/abrechnung` },
+      action: { label: "Zur Abrechnung", href: `/admin/neu/kunden/${c.id}/abrechnung` },
       since,
       later: TOMORROW,
     });
@@ -279,7 +279,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "euro",
       title: `Lastschrift fehlgeschlagen: ${name(c.name)}`,
       detail: `Bestellung über ${eur(Number(o.amount))} · ohne Zahlung bekommt der Käufer keine Leads`,
-      action: { label: "Öffnen", href: `/admin/kunden/${c.id}/abrechnung` },
+      action: { label: "Öffnen", href: `/admin/neu/kunden/${c.id}/abrechnung` },
       since: o.updatedAt,
       later: TOMORROW,
     });
@@ -300,7 +300,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
             icon: "alert",
             title: `Garantie ${name(f.kunde)}: ${GARANTIE_LABEL[f.art]} verfehlt, Bedingungen fehlen`,
             detail: `${fehlend.join(" · ")} · ohne Anspruch, ${monatName(f.monat)} nur aus Kulanz kostenlos`,
-            action: { label: "Kundenakte", href: `/admin/kunden/${f.customerId}` },
+            action: { label: "Kundenakte", href: `/admin/neu/kunden/${f.customerId}` },
             since: f.createdAt,
             quick: { kind: "garantie", fallId: f.id, grundVorschlag: `Bedingungen nicht erfüllt: ${fehlend.join("; ")}`.slice(0, 500) },
           }
@@ -311,7 +311,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
             icon: "euro",
             title: heuteTitel(name(f.kunde), f.art, kz),
             detail: `Alle Bedingungen erfüllt · ${gutschrift}`,
-            action: { label: "Kundenakte", href: `/admin/kunden/${f.customerId}` },
+            action: { label: "Kundenakte", href: `/admin/neu/kunden/${f.customerId}` },
             since: f.createdAt,
             quick: { kind: "garantie", fallId: f.id, grundVorschlag: "" },
           },
@@ -331,7 +331,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "star",
       title: `${name(c.name)} möchte das Bestandskunden-Modul`,
       detail: `Angefragt ${agoText(c.bestandRequestedAt!, now)} · kurz anrufen, dann unter „Abrechnung“ buchen`,
-      action: { label: "Zur Abrechnung", href: `/admin/kunden/${c.id}/abrechnung` },
+      action: { label: "Zur Abrechnung", href: `/admin/neu/kunden/${c.id}/abrechnung` },
       since: c.bestandRequestedAt,
       later: TOMORROW,
     });
@@ -345,7 +345,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "phone",
       title: `${name(r.name)} ruht, Löschung am ${r.deleteAfter.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}`,
       detail: [`Chance zur Rückgewinnung: kurz anrufen, „Konto reaktivieren“ ist ein Klick und alle Daten sind noch da`, r.mrr ? `bisher ${eur(r.mrr)} im Monat` : null, r.reason ? `Grund: ${r.reason}` : null].filter(Boolean).join(" · "),
-      action: { label: "Kundenakte", href: `/admin/kunden/${r.id}/abrechnung` },
+      action: { label: "Kundenakte", href: `/admin/neu/kunden/${r.id}/abrechnung` },
       since: r.deleteAfter,
       later: { label: "In einer Woche", days: 7 },
     });
@@ -362,7 +362,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "check",
       title: `Onboarding ${name(ob.customer.name)}: ${plural(p.waitingYou, "Schritt wartet", "Schritte warten")} auf Sie`,
       detail: `${p.percent} % erledigt${start}`,
-      action: { label: "Checkliste öffnen", href: `/admin/kunden/${ob.customerId}` },
+      action: { label: "Checkliste öffnen", href: `/admin/neu/kunden/${ob.customerId}` },
       since: ob.startDate,
       later: TOMORROW,
     });
@@ -376,7 +376,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "alert",
       title: `Einrichtung hängt: ${name(st.name)} (seit ${st.days} Tagen)`,
       detail: `Offen beim Kunden: ${st.open.join(", ")} · Erinnerungen Tag 1/3/7 sind raus, kurz anrufen oder Hilfetermin anbieten`,
-      action: { label: "Einrichtung ansehen", href: `/admin/kunden/${st.customerId}` },
+      action: { label: "Einrichtung ansehen", href: `/admin/neu/kunden/${st.customerId}` },
       since: null,
       later: TOMORROW,
     });
@@ -406,7 +406,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "chat",
       title: `${name(customerNames.get(customerId) ?? "Kunde")} reagiert nicht auf Leads`,
       detail: `${parts.join(" · ")} · am besten kurz anrufen oder Hilfetermin anbieten`,
-      action: { label: "Kundenakte", href: `/admin/kunden/${customerId}` },
+      action: { label: "Kundenakte", href: `/admin/neu/kunden/${customerId}` },
       since: s.since,
       // „Erledigt“ = angerufen/angeschrieben; kommt nach 3 Tagen wieder, falls weiter nichts passiert
       later: { label: "Erledigt", days: 3 },
@@ -424,7 +424,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "form",
       title: unassigned.length === 1 ? "Formular ohne Zuordnung" : `${unassigned.length} Formulare ohne Zuordnung`,
       detail: `${plural(leads, "Lead wartet", "Leads warten")} im Posteingang, bis das Formular einem Kunden zugeordnet ist`,
-      action: { label: "Zuordnen", href: "/admin/lead-eingang" },
+      action: { label: "Zuordnen", href: "/admin/neu/leads" },
       since: oldest,
       later: TOMORROW,
     });
@@ -438,7 +438,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "inbox",
       title: parked.length === 1 ? "1 Lead geparkt" : `${parked.length} Leads geparkt`,
       detail: `${products} · kein Käufer mit freiem Kontingent. Ausliefern oder verwerfen.`,
-      action: { label: "Ansehen", href: "/admin/ppl?ansicht=geparkt" },
+      action: { label: "Ansehen", href: "/admin/neu/leads/ppl?ansicht=geparkt" },
       since: parked[0]?.createdAt,
       later: TOMORROW,
     });
@@ -452,7 +452,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "undo",
       title: `Reklamation prüfen: ${name(l.customer.name)}`,
       detail: `${l.name ?? "Lead"} · Grund „${reason}“${l.stornoNote ? ` · ${l.stornoNote.slice(0, 100)}` : ""}`,
-      action: { label: "Details", href: "/admin/ppl?ansicht=storno" },
+      action: { label: "Details", href: "/admin/neu/leads/ppl?ansicht=storno" },
       since: l.stornoRequestedAt,
       quick: { kind: "storno", leadId: l.id },
     });
@@ -466,7 +466,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "undo",
       title: `${rest.length} weitere ${rest.length === 1 ? "Reklamation" : "Reklamationen"} prüfen`,
       detail: `${[...new Set(rest.map((l) => name(l.customer.name)))].slice(0, 3).join(", ")} · Grund „Sonstiges“ oder hohe Quote, deshalb nicht automatisch anerkannt`,
-      action: { label: "Prüfen", href: "/admin/ppl?ansicht=storno" },
+      action: { label: "Prüfen", href: "/admin/neu/leads/ppl?ansicht=storno" },
       since: rest[0]?.stornoRequestedAt,
     });
   }
@@ -480,7 +480,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "calendar",
       title: `Termin ${m.startAt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" })} mit ${shortName(m.contact.name)}`,
       detail: m.title,
-      action: { label: "Öffnen", href: `/admin/vertrieb/kontakte/${m.contact.id}` },
+      action: { label: "Öffnen", href: `/admin/neu/vertrieb/kontakte/${m.contact.id}` },
       since: m.startAt,
     });
   }
@@ -499,7 +499,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: t.type === "ANRUF" ? "phone" : "task",
       title: t.contact && !t.title.includes(shortName(t.contact.name)) && !t.title.includes(t.contact.name) ? `${t.title}: ${shortName(t.contact.name)}` : t.title,
       detail: `${late ? `Überfällig ${sinceText(t.dueAt, now)}` : "Heute fällig"}${t.note ? ` · ${t.note.slice(0, 120)}` : ""}`,
-      action: t.contact ? { label: t.type === "ANRUF" ? "Anrufen" : "Öffnen", href: `/admin/vertrieb/kontakte/${t.contact.id}` } : { label: "Öffnen", href: "/admin/heute/aufgaben" },
+      action: t.contact ? { label: t.type === "ANRUF" ? "Anrufen" : "Öffnen", href: `/admin/neu/vertrieb/kontakte/${t.contact.id}` } : { label: "Öffnen", href: "/admin/neu/vertrieb/aufgaben" },
       since: t.dueAt,
       quick: isTerminReview(t.title) ? { kind: "termin", taskId: t.id } : { kind: "task", taskId: t.id },
     });
@@ -512,7 +512,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "task",
       title: `${tasks.length - shown.length} weitere Aufgaben heute`,
       detail: overdue.length ? `${overdue.length} insgesamt überfällig` : "Alle Aufgaben in einer Liste",
-      action: { label: "Alle Aufgaben", href: "/admin/heute/aufgaben" },
+      action: { label: "Alle Aufgaben", href: "/admin/neu/vertrieb/aufgaben" },
     });
   }
   for (const o of staleOffers) {
@@ -523,7 +523,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "offer",
       title: `Angebot nachfassen: ${o.company ?? o.contactName}`,
       detail: `Gesendet ${o.sentAt ? agoText(o.sentAt, now) : ""} · ${o.viewedAt ? "angesehen, noch nicht angenommen" : "noch nicht geöffnet"} · ${eur(Number(o.monthlyFee))}/Monat`,
-      action: { label: "Öffnen", href: o.salesContactId ? `/admin/vertrieb/kontakte/${o.salesContactId}` : "/admin/vertrieb/kontakte" },
+      action: { label: "Öffnen", href: o.salesContactId ? `/admin/neu/vertrieb/kontakte/${o.salesContactId}` : "/admin/neu/vertrieb/kontakte" },
       since: o.sentAt,
       ...(o.salesContactId ? { quick: { kind: "offer" as const, offerId: o.id, contactId: o.salesContactId } } : { later: { label: "Nachgefasst", days: 5 } }),
     });
@@ -543,7 +543,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
         icon: "chat",
         title: `Hilfe-Anfrage ${m.ref ?? ""}${m.reason ? `: ${REASON_LABEL[m.reason as EscalationReason] ?? ""}` : ""}`.trim(),
         detail: `${names.get(r.customerId) ?? "Kunde"} ${m.channel === "whatsapp" ? "schreibt per WhatsApp" : m.channel === "email" ? "schreibt per E-Mail" : "bittet um Rückmeldung"} · ${m.summary ?? ""}`,
-        action: { label: "Kunde öffnen", href: `/admin/kunden/${r.customerId}` },
+        action: { label: "Kunde öffnen", href: `/admin/neu/kunden/${r.customerId}` },
         since: r.at,
         later: { label: "Erledigt", days: 30 },
       });
@@ -560,7 +560,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "star",
       title: [feedback.length ? plural(feedback.length, "neue Rückmeldung", "neue Rückmeldungen") : "", helpDown ? `${plural(helpDown, "KI-Antwort", "KI-Antworten")} schlecht bewertet` : ""].filter(Boolean).join(" · "),
       detail: "Was Vertreter suchen oder nicht verstehen, steht unter Nutzung",
-      action: { label: "Ansehen", href: "/admin/nutzung" },
+      action: { label: "Ansehen", href: "/admin/neu/zahlen/qualitaet" },
       since: feedback[0]?.at,
       later: { label: "Gelesen", days: 30 },
     });
@@ -582,7 +582,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       title: `LinkedIn: ${plural(liDrafts.length, "Entwurf", "Entwürfe")} freigeben`,
       approval: true,
       detail: `Erster Post ${liDrafts[0].scheduledAt ? liDrafts[0].scheduledAt.toLocaleString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", minute: "2-digit" }) : ""} · ohne Freigabe geht nichts raus`,
-      action: { label: "Ansehen", href: "/admin/marketing/linkedin" },
+      action: { label: "Ansehen", href: "/admin/neu/marketing" },
       later: { label: "Morgen", days: 1 },
     });
   }
@@ -594,7 +594,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "alert",
       title: `LinkedIn: ${plural(liFailed, "Post", "Posts")} nicht veröffentlicht`,
       detail: "Fehler ansehen und neu freigeben",
-      action: { label: "Ansehen", href: "/admin/marketing/linkedin" },
+      action: { label: "Ansehen", href: "/admin/neu/marketing" },
     });
   }
   if (liConn && (liConn.status !== "ok" || liConn.expiresAt.getTime() < now.getTime() + 7 * DAY)) {
@@ -628,7 +628,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
           ? `${first.contactName ?? `+${first.contactPhone}`} wartet auf Antwort`
           : `${supportChats.length} Chats warten auf Antwort`,
       detail: `Support-Nummer${first.attentionAt ? ` · ältester ${sinceText(first.attentionAt, now)}` : ""} · Antwort nur im 24-Stunden-Fenster möglich`,
-      action: { label: "Antworten", href: supportChats.length === 1 ? `/admin/whatsapp?tab=open&c=${first.id}` : "/admin/whatsapp?tab=open&art=support" },
+      action: { label: "Antworten", href: supportChats.length === 1 ? `/admin/neu/leads/chats?tab=open&c=${first.id}` : "/admin/neu/leads/chats?tab=open&art=support" },
       since: first.attentionAt,
     });
   }
@@ -649,7 +649,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "check",
       title: `${plural(reportDrafts.length, "Monatsbericht", "Monatsberichte")} prüfen`,
       detail: `${monthLabel(month)}${weak ? ` · ${weak} schwach (Sie entscheiden: senden oder anrufen)` : ""} · ohne Freigabe geht nichts raus`,
-      action: { label: "Prüfen", href: `/admin/monatsberichte?monat=${month}` },
+      action: { label: "Prüfen", href: `/admin/neu/kunden/berichte?monat=${month}` },
       since: reportDrafts[0].createdAt,
       later: TOMORROW,
       approval: true,
@@ -664,7 +664,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "check",
       title: `Optimierung: ${plural(measures.length, "Maßnahme", "Maßnahmen")} freigeben`,
       detail: `${plural(accounts.length || 1, "Werbekonto", "Werbekonten")} · geplant ${agoText(measures[0].plannedAt, now)}`,
-      action: { label: "Freigeben", href: accounts.length === 1 ? `/admin/optimierung/${accounts[0]}` : "/admin/optimierung" },
+      action: { label: "Freigeben", href: accounts.length === 1 ? `/admin/neu/leads/werbekonten/${accounts[0]}` : "/admin/neu/leads/werbekonten" },
       since: measures[0].plannedAt,
       later: TOMORROW,
       approval: true,
@@ -678,7 +678,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "check",
       title: `Später-Follow-ups: ${plural(followupApprovals.length, "Mail", "Mails")} freigeben`,
       detail: "Kontakte, die „gerne später“ geschrieben haben · ohne Freigabe geht nichts raus",
-      action: { label: "Freigeben", href: "/admin/vertrieb/follow-ups" },
+      action: { label: "Freigeben", href: "/admin/neu/einstellungen/follow-ups" },
       since: followupApprovals[0].createdAt,
       later: TOMORROW,
       approval: true,
@@ -707,7 +707,7 @@ export function rechnungItem(taxNumber: string | null): HeuteItem | null {
     icon: "alert",
     title: "Rechnungen ohne Steuernummer",
     detail: "Auf Stripe-Rechnungen fehlt die USt-IdNr. bzw. Steuernummer. Einmal eintragen, dann steht sie auf jeder Rechnung.",
-    action: { label: "Eintragen", href: "/admin/einstellungen/rechnungsangaben" },
+    action: { label: "Eintragen", href: "/admin/neu/einstellungen/rechnungsangaben" },
     later: TOMORROW,
   };
 }

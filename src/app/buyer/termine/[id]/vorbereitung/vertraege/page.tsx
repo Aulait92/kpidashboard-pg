@@ -8,11 +8,13 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { appointmentScope } from "@/lib/team";
 import { ladeVergleich } from "@/lib/policen/auslesen/server";
+import { zweiFaktorAktiv } from "@/lib/totp-account";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Vergleichsblatt | performancegrowth" };
+export const metadata = { title: "Verträge | performancegrowth" };
 
-// Vergleichsblatt (Policen auslesen, Ole 18.11.2026): Verträge aus den Unterlagen vom Kunden, Teil der
+// Vertragsseite (Policen auslesen, Ole 18.11.2026; Paket 2 „Champions League“ 19.11.2026: Titel ohne Untertitel, das
+// Wort „Vergleichsblatt“ nicht mehr in der Oberfläche): Verträge aus den Unterlagen vom Kunden, Teil der
 // Terminvorbereitung. Nur der zuständige Vermittler bzw. Inhaber (appointmentScope); in der Admin-Vorschau keine
 // Inhalte (Rechtsprüfung: kein Zugriff von performancegrowth auf Policen).
 export default async function VergleichsblattPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,7 +32,7 @@ export default async function VergleichsblattPage({ params }: { params: Promise<
       <ZurueckLink href={zurueck} back>
         Terminvorbereitung
       </ZurueckLink>
-      <PageHeader title={`Vergleichsblatt: ${t.lead?.name ?? "Kunde"}`} subtitle="Verträge aus den Unterlagen, die der Kunde geschickt hat" />
+      <PageHeader title={`Verträge: ${t.lead?.name ?? "Kunde"}`} />
     </>
   );
   if (ctx.preview) {
@@ -43,20 +45,22 @@ export default async function VergleichsblattPage({ params }: { params: Promise<
       </main>
     );
   }
-  const v = await ladeVergleich(t.leadId, ctx.customerId);
+  const [v, zweiFaktor] = await Promise.all([ladeVergleich(t.leadId, ctx.customerId), zweiFaktorAktiv(ctx.userId)]);
+  const hier = `/buyer/termine/${t.id}/vorbereitung/vertraege`;
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-28 pt-6 sm:px-6 md:pb-10 lg:px-8">
+    // Handy: Platz für die feste Hauptaktion über der Navigation
+    <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-36 pt-6 sm:px-6 md:pb-10 lg:px-8">
       {kopf}
       {v.vertraege.length || v.offen.length ? (
-        <Vergleichsblatt terminId={t.id} leadId={t.leadId} v={v} readOnly={false} />
+        <Vergleichsblatt terminId={t.id} leadId={t.leadId} v={v} readOnly={false} ohne2fa={!zweiFaktor} zurueck={hier} terminHref={zurueck} />
       ) : (
         <Card>
           <EmptyState
             icon={FileText}
             title="Noch keine Unterlagen"
-            text="Schickt der Kunde Policen per WhatsApp, erscheinen sie hier."
+            text="Schickt der Kunde Policen per WhatsApp, erscheinen sie hier. Sonst im Termin danach fragen."
             action={
-              <ButtonLink href={zurueck} size="md">
+              <ButtonLink href={zurueck} variant="primary" size="md">
                 Zur Terminvorbereitung
               </ButtonLink>
             }

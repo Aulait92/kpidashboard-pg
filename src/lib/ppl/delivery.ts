@@ -322,14 +322,14 @@ export async function sendDelivery(leadId: string, sub: Sub): Promise<DeliveryRe
     await sendToAdmins({
       title: "⚠️ Lead nicht zugestellt",
       body: `${sub.label ?? sub.productKey}: ${report.error ?? "unbekannter Fehler"}. Lead ist gespeichert, bitte von Hand nachliefern.`,
-      url: `/admin/ppl`,
+      url: `/admin/neu/leads/ppl`,
       tag: `ppl-fail:${sub.id}`,
     }).catch(() => {});
   } else if (report.hinweis) {
     await sendToAdmins({
       title: `⚠️ ${VERSAND_NICHT_VERBUNDEN}`,
       body: `${sub.label ?? sub.productKey}: ${report.hinweis}. Bitte unter Pay-per-Lead › HvK-Abrechnungen verbinden und den Lead nochmal zustellen.`,
-      url: `/admin/ppl?ansicht=hvk`,
+      url: `/admin/neu/leads/ppl?ansicht=hvk`,
       tag: "ppl-versand-postfach",
     }).catch(() => {});
   }

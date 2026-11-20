@@ -18,7 +18,7 @@ export default async function Page() {
       <section className="space-y-2">
         <h2 className="text-sm font-semibold">Optimierung je Werbekonto</h2>
         <div data-funktion="actions-saveglobalaction--global-woechentlicher-optimierungslauf-an-aus actions-saveglobalaction--global-autopilot-fuer-alle-konten">
-          <GlobalForm enabled={opt.enabled} autopilot={opt.autopilot} />
+          <GlobalForm enabled={opt.enabled} autopilot={opt.autopilot} knopf="secondary" />
         </div>
       </section>
       <section className="space-y-2">

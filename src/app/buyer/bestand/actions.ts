@@ -1,5 +1,7 @@
 "use server";
 
+import { FOLLOW_UP_OCCASIONS } from "@/lib/bestand/nachfassen";
+import { WARM_DONE_REASON } from "@/lib/bestand/warm-shared";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -9,7 +11,8 @@ import { FIELDS, detectMapping, importRows, isBlockedColumn, mappingBlocker, par
 import { createCampaign, endCampaign, OCCASIONS, recordEmailReply, type EmailReplyKind, type Occasion, type Segment } from "@/lib/bestand/campaigns";
 import { QUOTA_REACHED } from "@/lib/bestand/quota";
 import { asChannelMode } from "@/lib/bestand/einwilligung";
-import { logConsent, requestConsent, setConsent, setHinweis } from "@/lib/bestand/einwilligung-server";
+import { platzhalterAusAnzeige } from "@/lib/bestand/kampagnen-mail";
+import { logConsent, planConsentRequests, requestConsent, sendConsentWhatsApp, setConsent, setHinweis } from "@/lib/bestand/einwilligung-server";
 import { hinweisStatement } from "@/lib/bestand/import";
 import { agentConfirmText, agentConfirmVersion, needsAgentConfirm } from "@/lib/bestand/befugnis";
 import { LINE_NAMES } from "@/lib/bestand/rows";
@@ -238,8 +241,11 @@ export async function startCampaignAction(fd: FormData): Promise<void> {
       dailyLimit: Number(fd.get("dailyLimit")) || 150,
       createdById: ctx.userId,
       channelMode,
-      mailSubject: String(fd.get("mailSubject") ?? ""),
-      mailBody: String(fd.get("mailBody") ?? ""),
+      // Schalter „Nach 5 Werktagen einmal erinnern“ (Standard an; ohne Feld im Formular ebenfalls an)
+      followUp: fd.get("followUpFeld") ? fd.get("followUp") === "1" : true,
+      // Editor zeigt Platzhalter lesbar („[Anrede]“), gespeichert werden sie als {anrede}
+      mailSubject: platzhalterAusAnzeige(String(fd.get("mailSubject") ?? "")),
+      mailBody: platzhalterAusAnzeige(String(fd.get("mailBody") ?? "")),
     });
     campaignId = campaign.id;
   } catch (err) {
@@ -247,7 +253,7 @@ export async function startCampaignAction(fd: FormData): Promise<void> {
   }
   if (failure === QUOTA_REACHED) redirect("/buyer/bestand?kontingent=1");
   if (!campaignId) back(failure ?? "Die Kampagne konnte nicht gestartet werden.");
-  await audit("bestand.campaign", { entity: "CustomerCampaign", entityId: campaignId, customerId: ctx.customerId, details: { occasion, segment, channelMode } });
+  await audit("bestand.campaign", { entity: "CustomerCampaign", entityId: campaignId, customerId: ctx.customerId, details: { occasion, segment, channelMode, followUp: fd.get("followUpFeld") ? fd.get("followUp") === "1" : true } });
   revalidatePath("/buyer/bestand");
   redirect(`/buyer/bestand/kampagnen/${campaignId}?gestartet=1`);
 }
@@ -432,6 +438,37 @@ export async function requestConsentAction(existingCustomerId: string, byMail: b
   }
 }
 
+export type BulkAskState = { ok?: boolean; error?: string; planned?: number };
+
+/**
+ * Sammelanfrage (Paket 3): Bitte um Einwilligung per E-Mail an alle, die sie bekommen dürfen. Der Vermittler hat die
+ * Zahl im Fenster bestätigt; der Versand läuft gedrosselt (runConsentRequests), jede Antwort mit Double-Opt-in.
+ */
+export async function bulkConsentRequestAction(_prev: BulkAskState, fd: FormData): Promise<BulkAskState> {
+  try {
+    const ctx = await ownerCtx();
+    if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie die Anfrage." };
+    const planned = await planConsentRequests(ctx.customerId, { actorUserId: ctx.userId });
+    await audit("bestand.consent_bulk_request", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { planned, userId: ctx.userId } });
+    revalidatePath("/buyer/bestand");
+    revalidatePath("/buyer/bestand/einwilligungen");
+    return planned ? { ok: true, planned } : { error: "Gerade darf niemand per E-Mail gefragt werden." };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}
+
+/** Einwilligungslink per WhatsApp, nur im offenen 24-h-Fenster (der Kunde hat selbst geschrieben). */
+export async function consentWhatsAppAction(existingCustomerId: string): Promise<{ ok?: boolean; error?: string }> {
+  try {
+    const ctx = await ownerCtx();
+    const r = await sendConsentWhatsApp(existingCustomerId, ctx.customerId, { actorUserId: ctx.userId });
+    return r.ok ? { ok: true } : { error: r.error };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}
+
 export type ReplyState = { ok?: boolean; error?: string; message?: string; leadId?: string | null };
 
 const REPLY_TEXT: Record<EmailReplyKind, string> = {
@@ -471,6 +508,44 @@ export async function toggleCampaignAction(fd: FormData): Promise<void> {
   await prisma.customerCampaign.update({ where: { id: c.id }, data: { status: c.status === "running" ? "paused" : "running", pausedReason: null } });
   revalidatePath("/buyer/bestand");
   revalidatePath(`/buyer/bestand/kampagnen/${c.id}`);
+}
+
+/** „Nach 5 Werktagen einmal erinnern“ im Kampagnen-Detail an oder aus (Paket 4). Einschalten nur, solange die Kampagne nicht beendet ist. */
+export async function setCampaignFollowUpAction(fd: FormData): Promise<void> {
+  const ctx = await ownerCtx();
+  const on = fd.get("on") === "1";
+  const c = await prisma.customerCampaign.findFirst({ where: { id: String(fd.get("id") ?? ""), customerId: ctx.customerId }, select: { id: true, status: true, occasion: true } });
+  if (!c || (on && (c.status === "done" || !FOLLOW_UP_OCCASIONS.includes(c.occasion as Occasion)))) return;
+  await prisma.customerCampaign.update({ where: { id: c.id }, data: { followUp: on } });
+  await audit("bestand.erinnerung", { entity: "CustomerCampaign", entityId: c.id, customerId: ctx.customerId, details: { on } });
+  revalidatePath(`/buyer/bestand/kampagnen/${c.id}`);
+}
+
+/** Warmer Kontakt in „Heute“ erledigt (Paket 4): verschwindet aus „Nachfassen per Nachricht“, sonst ändert sich nichts. */
+export async function bestandWarmErledigtAction(recipientId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const ctx = await ownerCtx();
+    const r = await prisma.campaignRecipient.updateMany({
+      where: { id: recipientId, status: "replied", reason: null, campaign: { customerId: ctx.customerId } },
+      data: { reason: WARM_DONE_REASON },
+    });
+    if (!r.count) return { ok: false, error: "Nicht gefunden." };
+    revalidatePath("/buyer");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}
+
+/** Entwurf löschen (nur Entwürfe: nichts wurde verschickt; Empfänger fallen mit weg). */
+export async function deleteDraftCampaignAction(fd: FormData): Promise<void> {
+  const ctx = await ownerCtx();
+  const id = String(fd.get("id") ?? "");
+  const r = await prisma.customerCampaign.deleteMany({ where: { id, customerId: ctx.customerId, status: "draft" } });
+  if (r.count) await audit("bestand.entwurf_geloescht", { entity: "CustomerCampaign", entityId: id, customerId: ctx.customerId });
+  revalidatePath("/buyer/bestand");
+  // Aus dem Kampagnen-Detail: zurück zum Bestand (die Detailseite gibt es danach nicht mehr)
+  if (fd.get("zurueck")) redirect("/buyer/bestand");
 }
 
 export type EndState = { ok?: boolean; error?: string };
@@ -586,7 +661,7 @@ export async function requestBestandModuleAction(_prev?: RequestState, fd?: Form
     await sendToAdmins({
       title: `Modul-Anfrage: ${c.name}`,
       body: `Bestandskunden-Modul (${PRICE_LIST.bestandModuleMonthly} €/Monat) angefragt${volume ? `, geplant: ${volume}` : ""}`,
-      url: `/admin/kunden/${ctx.customerId}/abrechnung`,
+      url: `/admin/neu/kunden/${ctx.customerId}/abrechnung`,
       tag: `bestand-request:${ctx.customerId}`,
     }).catch(() => {});
     await sendCustomerMail({

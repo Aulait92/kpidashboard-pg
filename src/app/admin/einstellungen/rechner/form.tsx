@@ -55,7 +55,9 @@ const NEW_PRODUCT: RechnerProduct = {
   crossSell: null,
 };
 
-export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataInfo: Record<string, CplData> }) {
+/** `kompakt` (neuer Admin, Verkaufen → Marketing → Webseite & Rechner, Umbau 19.11.2026): Abschnitte und Produkte
+ *  zugeklappt mit Zusammenfassung, ein Speichern-Knopf darunter. Ohne `kompakt` wie bisher (alter Admin). */
+export function RechnerForm({ config, dataInfo, kompakt = false }: { config: RechnerConfig; dataInfo: Record<string, CplData>; kompakt?: boolean }) {
   const [rows, setRows] = useState<Row[]>(() => config.products.map(toRow));
   const [texts, setTexts] = useState({ headline: config.headline, intro: config.intro, footer: config.footer, contactUrl: config.contactUrl, contactLabel: config.contactLabel, termsUrl: config.termsUrl });
   const [g, setG] = useState(config.guarantees);
@@ -77,15 +79,14 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
     >
       <input type="hidden" name="config" value={payload} />
 
-      <section className={card}>
-        <h2 className="text-base font-semibold">Produkte</h2>
+      <Abschnitt kompakt={kompakt} titel="Produkte" info={`${rows.filter((r) => r.active).length} von ${rows.length} aktiv`} offen>
         <p className="mb-3 text-sm text-[color:var(--muted)]">Aktive Produkte erscheinen im Rechner. Quoten und Kosten sind Startwerte, die Besucher ändern können.</p>
         <div className="space-y-3">
           {rows.map((r, i) => {
             const data = dataInfo[String(r.key)];
             const own = r.provisionKey === "" || r.provisionKey == null;
             return (
-              <details key={i} className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" open={i === 0}>
+              <details key={i} className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" open={!kompakt && i === 0}>
                 <summary className="flex cursor-pointer flex-wrap items-center gap-2">
                   <span className="font-medium">{String(r.name) || "Neues Produkt"}</span>
                   <span className={`rounded-full px-2 py-0.5 text-xs ${r.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{r.active ? "aktiv" : "aus"}</span>
@@ -159,10 +160,9 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
           })}
         </div>
         <button type="button" onClick={() => setRows((rs) => [...rs, toRow(NEW_PRODUCT)])} className="mt-3 text-sm font-medium text-[color:var(--brand)]">+ Produkt</button>
-      </section>
+      </Abschnitt>
 
-      <section className={card}>
-        <h2 className="text-base font-semibold">Garantien</h2>
+      <Abschnitt kompakt={kompakt} titel="Garantien" info={`${(["leads", "breakEven", "productSwap"] as const).filter((k) => g[k].enabled).length} eingeschaltet`}>
         <p className="mb-3 text-sm text-[color:var(--muted)]">Eingeschaltete Garantien erscheinen im Rechner als Kasten „Ihre Sicherheit“. Texte bitte vorher rechtlich prüfen lassen.</p>
         {(["leads", "breakEven", "productSwap"] as const).map((k) => (
           <div key={k} className="mb-4 rounded-[var(--radius-md)] border border-[color:var(--border)] p-3">
@@ -178,10 +178,9 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
             </div>
           </div>
         ))}
-      </section>
+      </Abschnitt>
 
-      <section className={card}>
-        <h2 className="mb-3 text-base font-semibold">Texte und Kontakt</h2>
+      <Abschnitt kompakt={kompakt} titel="Texte und Kontakt" info={texts.headline}>
         <div className="grid gap-3">
           <F label="Überschrift"><input className={inp} value={texts.headline} onChange={(e) => setTexts({ ...texts, headline: e.target.value })} /></F>
           <F label="Einleitung"><textarea className={`${inp} h-auto py-2`} rows={2} value={texts.intro} onChange={(e) => setTexts({ ...texts, intro: e.target.value })} /></F>
@@ -192,7 +191,7 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
           </div>
           <F label="AGB-Link unter den Garantien (/rechtliches/agb oder https://)"><input className={inp} value={texts.termsUrl} onChange={(e) => setTexts({ ...texts, termsUrl: e.target.value })} /></F>
         </div>
-      </section>
+      </Abschnitt>
 
       {state.errors?.length ? (
         <ul className="rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -200,14 +199,36 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
         </ul>
       ) : null}
       {state.ok ? <p className="text-sm font-medium text-emerald-700">Gespeichert. Der Rechner zeigt die neuen Werte.</p> : null}
-      <button disabled={pending} className="h-10 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 font-semibold text-white hover:bg-[color:var(--brand-dark)] disabled:opacity-60">
-        {pending ? "Speichere …" : "Speichern"}
-      </button>
+      <div>
+        <button disabled={pending} className="h-10 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 font-semibold text-white shadow-[var(--shadow-sm)] hover:bg-[color:var(--brand-dark)] disabled:opacity-60">
+          {pending ? "Speichere …" : "Speichern"}
+        </button>
+      </div>
     </form>
   );
 }
 
 const card = "rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-sm)] sm:p-5";
+
+/** Abschnitt des Formulars: wie bisher eine Karte mit Überschrift, mit `kompakt` zugeklappt mit Zusammenfassung rechts. */
+function Abschnitt({ kompakt, titel, info, offen = false, children }: { kompakt: boolean; titel: string; info?: string; offen?: boolean; children: React.ReactNode }) {
+  if (!kompakt)
+    return (
+      <section className={card}>
+        <h2 className={titel === "Texte und Kontakt" ? "mb-3 text-base font-semibold" : "text-base font-semibold"}>{titel}</h2>
+        {children}
+      </section>
+    );
+  return (
+    <details className={`${card} group`} open={offen}>
+      <summary className="-m-4 flex min-h-12 cursor-pointer list-none items-center gap-3 p-4 sm:-m-5 sm:p-5 [&::-webkit-details-marker]:hidden">
+        <h2 className="flex-1 text-base font-semibold">{titel}</h2>
+        {info ? <span className="min-w-0 truncate text-xs text-[color:var(--muted)]">{info}</span> : null}
+      </summary>
+      <div className="mt-6 sm:mt-7">{children}</div>
+    </details>
+  );
+}
 const inp = "h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm outline-none focus:border-[color:var(--brand)]";
 
 function F({ label, children }: { label: string; children: React.ReactNode }) {

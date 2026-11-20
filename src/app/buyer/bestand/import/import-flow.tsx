@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useMemo, useState } from "react";
-import { AlertTriangle, FileSpreadsheet, ShieldCheck, Users } from "lucide-react";
+import { AlertTriangle, ChevronDown, FileSpreadsheet, ShieldCheck, Users } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { FileDrop } from "@/components/ui/file-drop";
 import { MB } from "@/lib/file-upload";
@@ -37,6 +37,41 @@ export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: str
   const blocking = issues.filter((i) => i.block);
   const issuesOf = (k: FieldKey) => issues.filter((i) => i.field === k);
 
+  const renderField = ({ key, label, important, hint }: (typeof FIELD_GROUPS)[number]["fields"][number]) => {
+    const own = issuesOf(key);
+    const bad = own.some((i) => i.block);
+    return (
+      <label key={key} className="text-sm font-medium" data-import-field={key} data-import-field-state={bad ? "block" : own.length ? "warn" : "ok"}>
+        <span className="flex flex-wrap items-center gap-x-2">
+          {label}
+          {important ? (
+            <span className="rounded-full bg-[color:var(--brand-soft)] px-1.5 py-px text-[11px] font-medium text-[color:var(--brand-dark,var(--brand))]">empfohlen</span>
+          ) : null}
+        </span>
+        <select
+          name={`map_${key}`}
+          value={mapping[key] ?? ""}
+          onChange={(e) => setField(key, e.target.value)}
+          aria-invalid={bad || undefined}
+          className={`mt-1 ${select} ${bad ? "border-rose-400 bg-rose-50 ring-1 ring-rose-300" : own.length ? "border-amber-400" : "border-[color:var(--border)]"}`}
+        >
+          <option value="">Nicht zuordnen</option>
+          {analysis.headers!.map((h) => (
+            <option key={h} value={h}>
+              {h}
+            </option>
+          ))}
+        </select>
+        {hint && !own.length ? <span className="mt-1 block text-xs font-normal text-[color:var(--muted)]">{hint}</span> : null}
+        {own.map((i) => (
+          <span key={i.kind} className={`mt-1 block text-xs font-normal ${i.block ? "text-rose-700" : "text-amber-800"}`} data-import-issue={i.kind}>
+            {i.text}
+          </span>
+        ))}
+      </label>
+    );
+  };
+
   const withFile = (fd: FormData) => {
     if (file) fd.set("file", file);
     return fd;
@@ -53,17 +88,28 @@ export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: str
             maxBytes={15 * MB}
             label="Datei auswählen"
             pendingLabel="Wird gelesen …"
+            // Bis eine Datei geprüft ist, ist das die eine Hauptaktion der Seite
+            buttonVariant={analysis.headers ? "secondary" : "primary"}
             value={file ? [file] : []}
-            onFiles={(fs) => setFile(fs[0] ?? null)}
+            onFiles={(fs) => {
+              const f = fs[0] ?? null;
+              setFile(f);
+              // Gleich prüfen, ohne zweiten Knopf (ein Klick weniger)
+              if (f) {
+                const fd = new FormData();
+                fd.set("file", f);
+                startTransition(() => analyze(fd));
+              }
+            }}
             className="w-full"
           />
-          <Button type="submit" variant="primary" size="md" disabled={!file || analyzing}>
-            {analyzing ? "Wird gelesen …" : "Datei prüfen"}
-          </Button>
-          <p className="w-full text-sm text-[color:var(--muted)]">
-            Eine Zeile je Kunde oder je Vertrag ist beides möglich: Zeilen desselben Kunden werden über Kundennummer, Telefon oder E-Mail zusammengeführt, so
-            hat ein Kunde mehrere Verträge. Gesundheitsangaben werden nie übernommen.
-          </p>
+          {analyzing ? <p className="text-[color:var(--muted)]">Wird gelesen …</p> : null}
+          {file && analysis.error && !analyzing ? (
+            <Button type="submit" variant="secondary" size="md">
+              Erneut prüfen
+            </Button>
+          ) : null}
+          <p className="w-full text-sm text-[color:var(--muted)]">Eine Zeile je Kunde oder je Vertrag, Gesundheitsangaben werden nie übernommen.</p>
           {analysis.error ? <p className="w-full text-rose-700">{analysis.error}</p> : null}
         </form>
       </Card>
@@ -86,42 +132,30 @@ export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: str
                 <fieldset key={g.title} className="space-y-3" data-import-group={g.title}>
                   <legend className="text-base font-semibold">{g.title}</legend>
                   <p className="-mt-1 text-sm text-[color:var(--muted)]">{g.hint}</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {g.fields.map(({ key, label, important, hint }) => {
-                      const own = issuesOf(key);
-                      const bad = own.some((i) => i.block);
-                      return (
-                        <label key={key} className="text-sm font-medium" data-import-field={key} data-import-field-state={bad ? "block" : own.length ? "warn" : "ok"}>
-                          <span className="flex flex-wrap items-center gap-x-2">
-                            {label}
-                            {important ? (
-                              <span className="rounded-full bg-[color:var(--brand-soft)] px-1.5 py-px text-[11px] font-medium text-[color:var(--brand-dark,var(--brand))]">empfohlen</span>
-                            ) : null}
-                          </span>
-                          <select
-                            name={`map_${key}`}
-                            value={mapping[key] ?? ""}
-                            onChange={(e) => setField(key, e.target.value)}
-                            aria-invalid={bad || undefined}
-                            className={`mt-1 ${select} ${bad ? "border-rose-400 bg-rose-50 ring-1 ring-rose-300" : own.length ? "border-amber-400" : "border-[color:var(--border)]"}`}
-                          >
-                            <option value="">Nicht zuordnen</option>
-                            {analysis.headers!.map((h) => (
-                              <option key={h} value={h}>
-                                {h}
-                              </option>
-                            ))}
-                          </select>
-                          {hint && !own.length ? <span className="mt-1 block text-xs font-normal text-[color:var(--muted)]">{hint}</span> : null}
-                          {own.map((i) => (
-                            <span key={i.kind} className={`mt-1 block text-xs font-normal ${i.block ? "text-rose-700" : "text-amber-800"}`} data-import-issue={i.kind}>
-                              {i.text}
-                            </span>
-                          ))}
-                        </label>
-                      );
-                    })}
-                  </div>
+                  {(() => {
+                    // Handy zuerst: offen nur Felder mit Hinweis oder empfohlene ohne Zuordnung; Erkanntes im Aufklapper
+                    const needs = (k: FieldKey, important?: boolean) => issuesOf(k).length > 0 || (!!important && !mapping[k]);
+                    const shown = g.fields.filter((f) => needs(f.key, f.important));
+                    const rest = g.fields.filter((f) => !needs(f.key, f.important));
+                    const recognized = rest.filter((f) => mapping[f.key]).length;
+                    return (
+                      <>
+                        {shown.length ? <div className="grid gap-3 sm:grid-cols-2">{shown.map(renderField)}</div> : null}
+                        {rest.length ? (
+                          <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden" data-import-recognized>
+                            <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-3 py-2 text-sm">
+                              <span className="min-w-0 flex-1">
+                                <b>{de(recognized)}</b> erkannt{rest.length > recognized ? `, ${de(rest.length - recognized)} nicht zugeordnet` : ""}
+                              </span>
+                              <span className="font-medium text-[color:var(--brand)]">Prüfen</span>
+                              <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+                            </summary>
+                            <div className="grid gap-3 border-t border-[color:var(--border)] px-3 py-3 sm:grid-cols-2">{rest.map(renderField)}</div>
+                          </details>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                   {g.title === "Kunde" && !mapping.phone ? (
                     <p className="flex items-start gap-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-import-no-phone>
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -219,10 +253,10 @@ export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: str
               ) : null}
               <fieldset className="space-y-2 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" data-import-consent>
                 <legend className="px-1 font-semibold">Einwilligung in Werbung</legend>
-                <p className="text-[color:var(--muted)]">
+                <Mehr kurz="Ohne Angabe bleibt die Einwilligung „unbekannt“.">
                   Angaben aus der Datei (Spalten E-Mail- bzw. WhatsApp-Einwilligung) gelten immer. Ohne Angabe bleibt die Einwilligung „unbekannt“: Dann geht keine
                   WhatsApp-Kampagne raus, E-Mails nur zum selben Vertrag nach § 7 Abs. 3 UWG und nur mit Nachweis zum Hinweis auf das Widerspruchsrecht (unten).
-                </p>
+                </Mehr>
                 <label className="flex items-start gap-2">
                   <input type="checkbox" name="bulk_email" className="mt-0.5 h-4 w-4" checked={bulk.email} onChange={(e) => setBulk({ ...bulk, email: e.target.checked })} />
                   <span>Alle Kunden dieser Liste haben in Werbung per E-Mail eingewilligt</span>
@@ -243,11 +277,11 @@ export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: str
               </fieldset>
               <fieldset className="space-y-2 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" data-import-hinweis>
                 <legend className="px-1 font-semibold">Hinweis auf das Widerspruchsrecht (E-Mail ohne Einwilligung)</legend>
-                <p className="text-[color:var(--muted)]">
+                <Mehr kurz="Ohne diesen Nachweis gehen E-Mails nur mit Einwilligung raus.">
                   Ohne Einwilligung dürfen Sie Bestandskunden per E-Mail nur anschreiben, wenn Sie sie schon bei der Erhebung der E-Mail-Adresse darauf hingewiesen
                   haben, dass sie der Werbung jederzeit widersprechen können (§ 7 Abs. 3 UWG). Ohne diesen Nachweis gehen E-Mails nur mit Einwilligung raus.
                   {mapping.widerspruchHinweis ? " Angaben aus der Spalte der Datei gelten immer." : " Sie können dafür auch oben eine Spalte zuordnen."}
-                </p>
+                </Mehr>
                 <label className="flex items-start gap-2">
                   <input type="checkbox" name="hinweis_bulk" className="mt-0.5 h-4 w-4" checked={hinweisBulk} onChange={(e) => setHinweisBulk(e.target.checked)} data-import-hinweis-bulk />
                   <span>Alle Kunden dieser Liste wurden bei der Erhebung ihrer E-Mail-Adresse auf ihr Widerspruchsrecht hingewiesen</span>
@@ -315,7 +349,7 @@ export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: str
                   </a>
                 </p>
               ) : null}
-              <Button type="submit" variant="primary" size="md" disabled={importing || !!warning?.block || blocking.length > 0}>
+              <Button type="submit" variant="primary" size="md" className="w-full sm:w-auto" disabled={importing || !!warning?.block || blocking.length > 0}>
                 {importing ? "Wird übernommen …" : live ? `${de(live.groups.size)} Kunden übernehmen` : "Kunden übernehmen"}
               </Button>
             </div>
@@ -323,5 +357,17 @@ export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: str
         </form>
       ) : null}
     </div>
+  );
+}
+
+/** Ein Satz sichtbar, die ausführliche Erklärung (Rechtliches) hinter einem Klick. */
+function Mehr({ kurz, children }: { kurz: string; children: React.ReactNode }) {
+  return (
+    <details className="group text-[color:var(--muted)] [&>summary::-webkit-details-marker]:hidden">
+      <summary className="cursor-pointer list-none">
+        {kurz} <span className="font-medium text-[color:var(--brand)]">Mehr</span>
+      </summary>
+      <p className="mt-1">{children}</p>
+    </details>
   );
 }

@@ -453,7 +453,7 @@
   "id": "admin-heute-autorow--laeuft-von-allein-was-die-app-in-7-tagen",
   "bereich": "mein-tag",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -465,7 +465,7 @@
   "id": "admin-buchungen-neu-countneuebuchungen--hinweis-neue-buchungen-seit-letztem-besuch",
   "bereich": "mein-tag",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -477,7 +477,7 @@
   "id": "forecast-computemonthlyforecast--umsatz-bzw-gewinn-bis-heute-mit-monats",
   "bereich": "mein-tag",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -489,7 +489,7 @@
   "id": "vertrieb-blick--vertrieb-auf-einen-blick-heute-faellig",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -501,7 +501,7 @@
   "id": "vertrieb-blick--vertrieb-auf-einen-blick-naechste-termine",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -513,7 +513,7 @@
   "id": "vertrieb-blick--vertrieb-auf-einen-blick-neue-anfragen-der",
   "bereich": "mein-tag",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -525,7 +525,7 @@
   "id": "vertrieb-blick--vertrieb-auf-einen-blick-kontakte-je-stufe",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",
@@ -921,7 +921,7 @@
   "id": "actions-logactivity--aktivitaet-erfassen-anruf-e-mail-notiz-ergebnis",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
+  "ort_neu": "src/components/admin-neu/vertrieb/eintragen-knopf.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1485,7 +1485,7 @@
   "id": "actions-disconnectsalescalendaraction--vertriebskalender-verbinden-bzw-trennen",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/vertrieb/termine/page.tsx"
+  "ort_neu": "src/app/admin/neu/einstellungen/buchungsseiten/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1533,7 +1533,7 @@
   "id": "page--buchungslink-kopieren",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/vertrieb/termine/page.tsx"
+  "ort_neu": "src/app/admin/neu/einstellungen/buchungsseiten/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1543,7 +1543,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "page--status-je-quelle-instantly-calendly-formulare",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1555,7 +1555,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "page-copyfield--webhook-adressen-kopieren-und-anleitung",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1567,7 +1567,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "actions-syncinstantlyaction--jetzt-mit-instantly-abgleichen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1579,7 +1579,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-importinstantlyaction--instantly-csv-importieren",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1591,7 +1591,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-connectcalendlyaction--calendly-verbinden-und-termine-abgleichen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1603,7 +1603,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-importcontactsaction--agenturliste-csv-importieren",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1615,7 +1615,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "actions-importcoldcrmaction--daten-aus-altem-cold-crm-uebernehmen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1627,7 +1627,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "actions-replacecoldcrmaction--vertrieb-neu-importieren-ersetzt-alles",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1639,7 +1639,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-importwaalaxyaction--waalaxy-import-ohne-oberflaeche",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1651,7 +1651,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "actions-convertinboundlead--linkedin-nachrichten-ohne-zuordnung-als-lead",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1663,7 +1663,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "page-placesused--kontakte-anreichern-google-kontingent-heute",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1675,7 +1675,7 @@
   "status": "ergänzen",
   "demo_view": "e-einrichtung",
   "id": "page-team-kalender--team-kalender-fuer-hilfetermine-der-kunden",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/einrichtung/page.tsx"
  },
@@ -1809,7 +1809,7 @@
   "id": "test-actions-deletetestcustomeraction--testkunde-komplett-loeschen",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -2025,7 +2025,7 @@
   "id": "meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2037,7 +2037,7 @@
   "id": "capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2049,7 +2049,7 @@
   "id": "actions-togglesourceaction--leadformulare-des-kunden-an-aus",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2061,7 +2061,7 @@
   "id": "page--letzte-leads-mit-abschluss-storno",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -2157,7 +2157,7 @@
   "id": "account-view-protocolcard--protokoll-der-massnahmen-des-kunden",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/optimierung/page.tsx"
+  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/optimierung",
@@ -2169,7 +2169,7 @@
   "id": "actions-addmanualaction--massnahme-von-hand-eintragen-datum-art-text",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/optimierung/page.tsx"
+  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -2419,7 +2419,7 @@
   "status": "abgedeckt",
   "demo_view": "e-vorlagen",
   "id": "route-get--support-whatsapp-verbinden-360dialog",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/whatsapp/page.tsx"
  },
@@ -2947,7 +2947,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "page-diag--meta-verbindung-pruefen-token-rechte-webhook-url",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -2959,7 +2959,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "page--uebergang-webhook-fuer-zapier",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -3140,8 +3140,8 @@
   "demo_view": "leads-ppl",
   "id": "page-airtable-sync-off--anzeige-airtable-abgleich-an-aus",
   "bereich": "liefern",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -3212,8 +3212,8 @@
   "demo_view": "leads-ppl",
   "id": "actions-runimportaction--bezuege-aus-airtable-uebernehmen",
   "bereich": "liefern",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/media-buyer",
@@ -3763,7 +3763,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-disconnectaction--linkedin-verbinden-bzw-trennen-hinweis-zugang",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -3897,7 +3897,7 @@
   "id": "zahlen-view--kennzahlen-kacheln-mrr-kunden-churn-cac",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3909,7 +3909,7 @@
   "id": "zahlen-view-sicht--sicht-kerngeschaeft-oder-gesamt-mit-pay-per-lead",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3921,7 +3921,7 @@
   "id": "zahlen-view-setdrill--kachel-aufklappen-drill-down-kunden-je-kennzahl",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3932,8 +3932,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view-toggleinvestor--investoren-ansicht-interne-reiter-ausblenden",
   "bereich": "geld",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -3945,7 +3945,7 @@
   "id": "actions-saveupdatetextsaction--investoren-update-highlights-texte-speichern",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3957,7 +3957,7 @@
   "id": "zahlen-view--reiter-wachstum-umsatz-je-strom-umsatzmix",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3969,7 +3969,7 @@
   "id": "zahlen-view--reiter-kunden-kohorten-kundenbasis-abhaengigkeit",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3981,7 +3981,7 @@
   "id": "zahlen-view--reiter-wirtschaftlichkeit-kundengewinnung",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3993,7 +3993,7 @@
   "id": "zahlen-view--reiter-wirkung-beim-vertreter-pro-1-lead-bis",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4005,7 +4005,7 @@
   "id": "zahlen-view--reiter-produkte-ueber-alle-vertreter-und-je",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4017,7 +4017,7 @@
   "id": "zahlen-view--reiter-vertrieb-pipeline-woher-kunden-kommen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4029,7 +4029,7 @@
   "id": "zahlen-view--reiter-pay-per-lead-verkaufte-leads-je-monat",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4041,7 +4041,7 @@
   "id": "zahlen-view-bwa--reiter-bwa-mit-drill-down-je-zeile-und-hinweis",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4567,7 +4567,7 @@
   "status": "abgedeckt",
   "demo_view": "e-login",
   "id": "actions-savelogincardaction--infokarten-liste-neue-karte",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4579,7 +4579,7 @@
   "status": "abgedeckt",
   "demo_view": "e-login",
   "id": "actions-savelogincardaction--karte-bearbeiten-badge-titel-text-link-bild",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4591,7 +4591,7 @@
   "status": "abgedeckt",
   "demo_view": "e-login",
   "id": "actions-togglelogincardaction--karte-an-aus",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4603,7 +4603,7 @@
   "status": "ergänzen",
   "demo_view": "e-login",
   "id": "actions-movelogincardaction--reihenfolge-der-karten-aendern",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4615,7 +4615,7 @@
   "status": "abgedeckt",
   "demo_view": "e-login",
   "id": "actions-deletelogincardaction--karte-loeschen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4627,7 +4627,7 @@
   "status": "abgedeckt",
   "demo_view": "e-status",
   "id": "actions-createincidentaction--statusmeldung-veroeffentlichen-text-stufe",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
@@ -4639,7 +4639,7 @@
   "status": "ergänzen",
   "demo_view": "e-status",
   "id": "actions-resolveincidentaction--meldung-als-behoben-markieren",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
@@ -4651,7 +4651,7 @@
   "status": "ergänzen",
   "demo_view": "e-status",
   "id": "actions-deleteincidentaction--meldung-loeschen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
@@ -4663,7 +4663,7 @@
   "status": "abgedeckt",
   "demo_view": "e-status",
   "id": "page--zustand-jetzt-und-support-kontakt-anzeige",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
@@ -4699,7 +4699,7 @@
   "status": "ergänzen",
   "demo_view": "e-einrichtung",
   "id": "actions-savesetupsettingsaction--meta-business-id-und-erklaervideos-je-schritt",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/einrichtung/page.tsx"
  },
@@ -4785,7 +4785,7 @@
   "id": "actions-savekpisettingsaction--annahmen-fuer-kennzahlen-stunden-stundensatz",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4797,7 +4797,7 @@
   "id": "actions-connectbankaction--bank-verbinden",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4809,7 +4809,7 @@
   "id": "actions-syncbankaction--umsaetze-jetzt-abrufen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4821,7 +4821,7 @@
   "id": "actions-disconnectbankaction--bank-trennen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4845,7 +4845,7 @@
   "id": "actions-saveruleaction--regel-speichern",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4857,7 +4857,7 @@
   "id": "actions-deleteruleaction--regel-loeschen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4915,7 +4915,7 @@
   "status": "abgedeckt",
   "demo_view": "e-protokoll",
   "id": "page--aenderungsprotokoll-ansehen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/protokoll/page.tsx"
  },
@@ -4927,7 +4927,7 @@
   "status": "ergänzen",
   "demo_view": "e-protokoll",
   "id": "page--protokoll-filtern-nach-kunde-und-art",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/protokoll/page.tsx"
  },
@@ -4952,7 +4952,7 @@
   "demo_view": "landkarte",
   "id": "route-get--diagnose-airtable-felder-nur-technik-keine",
   "bereich": "was-wo-ist",
-  "status_neu": "bleibt",
+  "status_neu": "entfernt",
   "ort_neu": ""
  },
  {
@@ -4965,7 +4965,7 @@
   "id": "testlead-actions-sendtestleadaction--testlead-schicken-echter-ablauf-zaehlt-nirgends",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/leads",
@@ -5035,7 +5035,7 @@
   "status": "ergänzt (16.11.2026, nach dem Inventar auf claude/whatsapp-crm)",
   "demo_view": "e-anbindungen",
   "id": "import-forms-instantlynachholen--fehlende-instantly-antworten-der-letzten-90-tage",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -5047,7 +5047,7 @@
   "status": "ergänzt (19.11.2026, Sperrliste für Kalt-Mails)",
   "demo_view": "e-anbindungen",
   "id": "import-forms-sperrennachholen--austragungen-aus-bisherigen-antworten-sperren",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -5120,8 +5120,8 @@
   "demo_view": "leads-ppl",
   "id": "nachholen-airtablenachholen--lead-aus-airtable-nachholen-lead-nr-laeuft-durch",
   "bereich": "liefern",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl (Geliefert)",
@@ -5205,7 +5205,7 @@
   "id": "offene-posten--zahlungseingang-bestaetigen-oder-verwerfen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/offene-posten/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/offene-posten-liste.tsx"
  },
  {
   "heute": "(neu)",

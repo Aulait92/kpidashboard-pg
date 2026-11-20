@@ -490,5 +490,5 @@ async function reportAllianzFailure(customerId: string, err: unknown): Promise<v
     },
   });
   const { sendToAdmins } = await import("@/lib/push");
-  await sendToAdmins({ title: `⚠️ Allianz-Kalender: ${customer?.name ?? "Kunde"}`, body: "Abgleich fehlgeschlagen, bitte prüfen.", url: `/admin/kunden/${customerId}/whatsapp` }).catch(() => {});
+  await sendToAdmins({ title: `⚠️ Allianz-Kalender: ${customer?.name ?? "Kunde"}`, body: "Abgleich fehlgeschlagen, bitte prüfen.", url: `/admin/neu/kunden/${customerId}/whatsapp` }).catch(() => {});
 }

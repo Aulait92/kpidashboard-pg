@@ -71,7 +71,7 @@ describe("Bestandskunden: Import, Segmente, Kampagne, Antwort", () => {
     const ids = await segmentIds(customerId, "cross_sell", { has: ["KFZ"], lacks: ["Haftpflicht"] });
     expect(ids).toHaveLength(1); // nur Max (Erika hat Haftpflicht, Lisa kein Handy)
     const opps = await opportunities(customerId);
-    expect(opps.find((o) => o.title === "KFZ ohne Haftpflicht")?.count).toBe(1);
+    expect(opps.find((o) => o.title === "Kfz-Kunden ohne Privathaftpflicht")?.count).toBe(1);
   });
 
   it("Antwort auf die Kampagne wird zum Lead, „Stopp“ sperrt", async () => {

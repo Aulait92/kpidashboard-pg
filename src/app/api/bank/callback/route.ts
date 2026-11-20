@@ -13,12 +13,12 @@ export async function GET(req: Request) {
     new Response(null, {
       status: 303,
       headers: [
-        ["Location", new URL(ruecksprungZiel(`/admin/einstellungen/bank?${q}`, req.headers.get("cookie")), url).toString()],
+        ["Location", new URL(ruecksprungZiel(`/admin/neu/zahlen/kosten/konten?${q}`, req.headers.get("cookie")), url).toString()],
         ["Set-Cookie", neuRuecksprungCookie(null)],
       ],
     });
   const session = await getCurrentSession().catch(() => null);
-  if (!session || session.role !== "ADMIN") return Response.redirect(new URL(`/login?next=${encodeURIComponent("/admin/einstellungen/bank")}`, url), 303);
+  if (!session || session.role !== "ADMIN") return Response.redirect(new URL(`/login?next=${encodeURIComponent("/admin/neu/zahlen/kosten/konten")}`, url), 303);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   if (!code || !state) {

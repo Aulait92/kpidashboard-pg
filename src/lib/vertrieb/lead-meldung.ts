@@ -19,7 +19,7 @@ export function vertriebLeadText(l: { name?: string | null; company?: string | n
 }
 
 /** Alte Adresse der Kontaktakte: sendToAdmins leitet Admins mit neuer Oberfläche auf /admin/neu/vertrieb/kontakte/<id>. */
-export const kontaktAdresse = (contactId: string) => `/admin/vertrieb/kontakte/${contactId}`;
+export const kontaktAdresse = (contactId: string) => `/admin/neu/vertrieb/kontakte/${contactId}`;
 
 export function telegramAn(): string | null {
   const schalter = (process.env.VERTRIEB_LEAD_TELEGRAM ?? "").trim().toLowerCase();

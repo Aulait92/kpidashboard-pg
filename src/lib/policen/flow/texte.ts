@@ -92,14 +92,21 @@ export type Nachricht = { text: string; fusszeile: string | null };
 /** „Ihr Termin findet auch ohne Policen statt.“ (letzter Absatz der Chat-Nachricht, Zeile im Formular). */
 export const ohnePolicenSatz = (an: Ansprache) => a(an, "Dein Termin findet auch ohne Policen statt.", "Ihr Termin findet auch ohne Policen statt.");
 
-/** Text der Chat-Nachricht. Ohne Pronomen ein Satz ohne er/sie; ohne Termin „vor Ihrem Termin“. */
+/**
+ * Text der Chat-Nachricht. Ohne Pronomen ein Satz ohne er/sie; ohne Termin „vor Ihrem Termin“.
+ * Paket 4 (19.11.2026, docs/ux/2026-11-19-policen-champions.md): konkreter Nutzen statt Ersparnisversprechen (§ 5 UWG,
+ * K8). „ob … doppelt“ statt „wo … doppelt“ (keine Unterstellung), „was genau versichert ist“ statt „was fehlt“ (keine
+ * Lückenaussage). Verboten in allen Lead-Texten: sparen, günstiger, zu teuer, Garantie, deutlich schneller (Test).
+ */
 export function chatNachricht(k: FlowTextKontext): Nachricht {
   const tag = k.tag ? `Kleiner Tipp für ${k.tag} 💡` : a(k.an, "Kleiner Tipp für deinen Termin 💡", "Kleiner Tipp für Ihren Termin 💡");
-  const pruefung = k.pronomen ? `prüft ${k.pronomen} schon vor dem Termin` : "ist schon vor dem Termin klar";
+  const pruefung = k.pronomen ? `sieht ${k.pronomen} schon vor dem Termin` : "ist schon vor dem Termin klar";
+  // Ole 20.11.2026: sagen, dass versucht wird, Geld zu sparen (Bemühen, kein Ergebnisversprechen nach § 5 UWG)
+  const spart = `Dabei versucht ${k.pronomen ?? k.name},`;
   const kern = a(
     k.an,
-    `Wenn ${k.name} deine Policen vorab sieht, ${pruefung}, *ob du Geld sparen kannst*: doppelte Verträge, zu teure Tarife, fehlender Schutz. So wird der Termin kürzer und konkreter.`,
-    `Wenn ${k.name} Ihre Policen vorab sieht, ${pruefung}, *ob Sie Geld sparen können*: doppelte Verträge, zu teure Tarife, fehlender Schutz. So wird der Termin kürzer und konkreter.`,
+    `Wenn ${k.name} deine Policen vorab hat, ${pruefung}, *ob du etwas doppelt zahlst, wann du kündigen kannst und was genau versichert ist.* ${spart} dir Geld zu sparen. So wird der Termin kürzer und konkreter.`,
+    `Wenn ${k.name} Ihre Policen vorab hat, ${pruefung}, *ob Sie etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist.* ${spart} Ihnen Geld zu sparen. So wird der Termin kürzer und konkreter.`,
   );
   // „Termin findet auch ohne Policen statt“ als eigener letzter Absatz statt Fußzeile (Ole, 20.11.2026: zwischen Text und
   // Fußzeile kaum Platz; den Abstand setzt WhatsApp, Leerzeilen am Ende werden abgeschnitten)
@@ -189,18 +196,17 @@ export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean): Nachri
   const { an } = k;
   const angekommen = n === 1 ? "*1 Datei ist angekommen.*" : `*${n} Dateien sind angekommen.*`;
   const wann = k.tag ? `vor ${k.tag}` : a(an, "vor deinem Termin", "vor Ihrem Termin");
+  // Ohne KI steht die Bestätigung der Wahl direkt nach dem Dank (Paket 4), danach wie mit KI.
   const teile = [
     `✅ Danke, ${angekommen}`,
-    a(
-      an,
-      `${k.name} sieht sie sich ${wann} an und prüft, wo du sparen kannst. Bis dahin musst du nichts weiter tun.`,
-      `${k.name} sieht sie sich ${wann} an und prüft, wo Sie sparen können. Bis dahin müssen Sie nichts weiter tun.`,
-    ),
     ...(ki ? [] : [OHNE_KI_SATZ]),
-    "Noch eine Police vergessen? Einfach nachsenden.",
+    a(an, `${k.name} sieht sie sich ${wann} an und versucht, dir Geld zu sparen. Bis dahin musst du nichts weiter tun.`, `${k.name} sieht sie sich ${wann} an und versucht, Ihnen Geld zu sparen. Bis dahin müssen Sie nichts weiter tun.`),
+    NOCH_EINE_POLICE,
   ];
   return { text: teile.join("\n\n"), fusszeile: WIDERRUF_FUSSZEILE };
 }
+/** Letzte Zeile der Bestätigung (beide Ansprachen gleich): lädt zu weiteren Verträgen ein, Knopf „Weitere senden“. */
+export const NOCH_EINE_POLICE = "Noch eine Police, etwa Kfz oder Hausrat? Einfach nachsenden.";
 /** Zusatzsatz bei „Lieber ohne KI: nur speichern“. */
 export const OHNE_KI_SATZ = "Alles klar, wir lesen nichts automatisch aus.";
 export const BESTAETIGUNG_RE = /^✅ Danke, \*\d+ Dateie?n? (ist|sind) angekommen\.\*/;
@@ -219,27 +225,32 @@ export function spaeterAntwort(an: Ansprache, erinnern: boolean): string {
 /** Fußzeile beider Erinnerungen (A8: Abmeldehinweis). */
 export const erinnerungFusszeile = (an: Ansprache) => a(an, "Kein Interesse? Tipp „Nein, danke“ oder STOP.", "Kein Interesse? Tippen Sie „Nein, danke“ oder STOP.");
 
-/** Erinnerung 1 (24 Std. nach der Bitte, nur wenn der Termin dann mindestens 2 Tage entfernt ist). */
+/**
+ * Erinnerung 1 (24 Std. nach der Bitte, nur wenn der Termin dann mindestens 2 Tage entfernt ist). Eine Frage statt einer
+ * Erinnerung (lädt zur Antwort ein), dann der Aufwand, dann der Nutzen. Ohne Pronomen (auch in der Vorlage).
+ */
 export function erinnerung1(k: FlowTextKontext): Nachricht {
   const tag = k.tag ?? "";
   const text = a(
     k.an,
-    `Kurze Erinnerung an deinen Termin am ${tag}: Mit deinen Policen kann ${k.name} vorab prüfen, ob du Geld sparen kannst. Meist reicht ein Foto der ersten Seite.`,
-    `Kurze Erinnerung an Ihren Termin am ${tag}: Mit Ihren Policen kann ${k.name} vorab prüfen, ob Sie Geld sparen können. Meist reicht ein Foto der ersten Seite.`,
+    `Kurze Frage zu deinem Termin am ${tag}: Hast du deine Policen gerade zur Hand? Meist reicht ein Foto der ersten Seite. Dann sieht ${k.name} vorab, wann du kündigen kannst und ob du etwas doppelt zahlst.`,
+    `Kurze Frage zu Ihrem Termin am ${tag}: Haben Sie Ihre Policen gerade zur Hand? Meist reicht ein Foto der ersten Seite. Dann sieht ${k.name} vorab, wann Sie kündigen können und ob Sie etwas doppelt zahlen.`,
   );
   return { text, fusszeile: erinnerungFusszeile(k.an) };
 }
 
-/** Erinnerung 2 (Vortag 18 Uhr Berlin). Ohne Pronomen: Name statt er/sie. */
-export function erinnerung2(k: FlowTextKontext): Nachricht {
-  const art = k.video === false ? "Termin" : "Videotermin";
-  const wer = k.pronomen ?? k.name;
-  const text = a(
-    k.an,
-    `Morgen um ${k.uhrzeit ?? ""} ist dein ${art}. Wenn ${k.name} deine Policen vorher sieht, kann ${wer} gezielter vorbereiten. Wenn nicht, auch gut: Du kannst sie auch im Termin zeigen.`,
-    `Morgen um ${k.uhrzeit ?? ""} ist Ihr ${art}. Wenn ${k.name} Ihre Policen vorher sieht, kann ${wer} gezielter vorbereiten. Wenn nicht, auch gut: Sie können sie auch im Termin zeigen.`,
+/** Text der Erinnerung 2 (auch die Vorlage mit {{1}} … {{3}}). */
+function erinnerung2Text(an: Ansprache, uhrzeit: string, art: string, name: string): string {
+  return a(
+    an,
+    `Morgen um ${uhrzeit} ist dein ${art}. Noch schnell ein Foto deiner Policen? Dann kann sich ${name} gezielt vorbereiten. Sonst einfach im Termin zeigen.`,
+    `Morgen um ${uhrzeit} ist Ihr ${art}. Noch schnell ein Foto Ihrer Policen? Dann kann sich ${name} gezielt vorbereiten. Sonst einfach im Termin zeigen.`,
   );
-  return { text, fusszeile: erinnerungFusszeile(k.an) };
+}
+
+/** Erinnerung 2 (Vortag 18 Uhr Berlin). Nennt den Namen, kein er/sie. */
+export function erinnerung2(k: FlowTextKontext): Nachricht {
+  return { text: erinnerung2Text(k.an, k.uhrzeit ?? "", k.video === false ? "Termin" : "Videotermin", k.name), fusszeile: erinnerungFusszeile(k.an) };
 }
 
 /** Antwort auf „Nein, danke“ (Knopf oder getippt). */
@@ -276,12 +287,8 @@ export function vorlagenText(art: VorlagenArt, an: Ansprache): Nachricht & { kno
     const t = erinnerung1({ an, name: "{{2}}", pronomen: null, tag: "{{1}}", kiFertig: false, gesundheit: false });
     return { ...t, knopf2: KNOPF_NEIN_DANKE, beispiele: ["Donnerstag", an === "du" ? "Ole" : "Herr Kannapinn"] };
   }
-  const t = a(
-    an,
-    "Morgen um {{1}} ist dein {{2}}. Wenn {{3}} deine Policen vorher sieht, kann {{4}} gezielter vorbereiten. Wenn nicht, auch gut: Du kannst sie auch im Termin zeigen.",
-    "Morgen um {{1}} ist Ihr {{2}}. Wenn {{3}} Ihre Policen vorher sieht, kann {{4}} gezielter vorbereiten. Wenn nicht, auch gut: Sie können sie auch im Termin zeigen.",
-  );
-  return { text: t, fusszeile: erinnerungFusszeile(an), knopf2: KNOPF_NEIN_DANKE, beispiele: ["10 Uhr", "Videotermin", an === "du" ? "Ole" : "Herr Kannapinn", "er"] };
+  const t = erinnerung2Text(an, "{{1}}", "{{2}}", "{{3}}");
+  return { text: t, fusszeile: erinnerungFusszeile(an), knopf2: KNOPF_NEIN_DANKE, beispiele: ["10 Uhr", "Videotermin", an === "du" ? "Ole" : "Herr Kannapinn"] };
 }
 
 /** Werte für {{1}} … einer Vorlage (passend zu vorlagenText). */
@@ -289,5 +296,5 @@ export function vorlagenParameter(art: VorlagenArt, k: FlowTextKontext): string[
   const wer = k.pronomen ?? k.name;
   if (art === "bitte") return [k.tag ?? a(k.an, "deinen Termin", "Ihren Termin"), k.name, wer];
   if (art === "erinnerung1") return [k.tag ?? "", k.name];
-  return [k.uhrzeit ?? "", k.video === false ? "Termin" : "Videotermin", k.name, wer];
+  return [k.uhrzeit ?? "", k.video === false ? "Termin" : "Videotermin", k.name];
 }

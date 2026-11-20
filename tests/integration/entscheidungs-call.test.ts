@@ -79,7 +79,8 @@ describe("Entscheidungs-Call: gebuchter Termin statt Buchungslink", () => {
     requireTestDb();
     process.env.RESEND_API_KEY = "re_test";
     process.env.APP_URL = "https://app.test";
-    // Entscheidungs-Call online buchbar: Vertriebskalender verbunden
+    // Entscheidungs-Call online buchbar: Typ eingeschaltet (seit 19.11.2026 standardmäßig aus) und Vertriebskalender verbunden
+    await prisma.salesBookingType.updateMany({ where: { slug: "entscheidung" }, data: { active: true } });
     await prisma.customer.upsert({ where: { id: VERTRIEB_CUSTOMER_ID }, create: { id: VERTRIEB_CUSTOMER_ID, name: "performancegrowth Vertrieb", plan: "internal" }, update: {} });
     await prisma.calendarConnection.upsert({
       where: { customerId: VERTRIEB_CUSTOMER_ID },
@@ -96,6 +97,7 @@ describe("Entscheidungs-Call: gebuchter Termin statt Buchungslink", () => {
     await prisma.offer.deleteMany({ where: { salesContactId: { in: contactIds } } });
     await prisma.salesContact.deleteMany({ where: { id: { in: contactIds } } });
     await prisma.calendarConnection.deleteMany({ where: { customerId: VERTRIEB_CUSTOMER_ID } });
+    await prisma.salesBookingType.updateMany({ where: { slug: "entscheidung" }, data: { active: false } });
   });
 
   it("noch nicht gebucht: Angebotsmail mit persönlichem Buchungslink, Hinweis im Admin", async () => {

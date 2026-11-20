@@ -41,8 +41,8 @@ export default async function Page() {
       </Card>
       <p className="text-sm text-[color:var(--muted)]">
         Offene Zahlungen und Erinnerungsdatum je Angebot:{" "}
-        <Link href={ziel("/admin/vertrieb/angebote")} className="text-[color:var(--brand)] hover:underline">
-          Vertrieb → Angebote
+        <Link href={ziel("/admin/neu/vertrieb/angebote")} className="text-[color:var(--brand)] hover:underline">
+          Verkaufen › Angebote
         </Link>
       </p>
     </EinstellungSeite>

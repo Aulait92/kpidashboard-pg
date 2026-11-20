@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { kurzName } from "@/components/admin-neu/kunden/akte";
-import KundenKampagne from "@/app/admin/kunden/[id]/kampagne/page";
+import KundenKampagne from "@/app/admin/kunden/[id]/kampagne/kampagne-ansicht";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 

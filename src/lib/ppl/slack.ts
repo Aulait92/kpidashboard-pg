@@ -173,7 +173,7 @@ export async function slackInfoFor(poolLeadId: string, extra: { delivery?: Deliv
   const base = adminBase();
   const status = (["delivered", "parked", "duplicate", "invalid"].includes(pl.status) ? pl.status : "parked") as SlackLeadInfo["status"];
   const path =
-    status === "delivered" && pl.leadId ? `/admin/ppl?ansicht=geliefert&q=${encodeURIComponent(pl.leadId)}` : status === "parked" ? "/admin/ppl?ansicht=geparkt" : "/admin/ppl?ansicht=eingang";
+    status === "delivered" && pl.leadId ? `/admin/neu/leads/ppl?ansicht=geliefert&q=${encodeURIComponent(pl.leadId)}` : status === "parked" ? "/admin/neu/leads/ppl?ansicht=geparkt" : "/admin/neu/leads/ppl?ansicht=eingang";
   return {
     muted,
     info: {

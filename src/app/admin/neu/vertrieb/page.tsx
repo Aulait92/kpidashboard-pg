@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Clock, Plus, Upload } from "lucide-react";
+import { ChevronRight, Clock, Plus } from "lucide-react";
 import { Badge, ButtonLink } from "@/components/ui";
 import { Kanban, type KanbanCard, type KanbanColumn } from "@/components/vertrieb/kanban";
 import { Seite } from "@/components/admin-neu/ui/seite";
@@ -8,7 +8,9 @@ import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
 import { punkteDerRolle } from "@/lib/admin-neu/rollen-server";
 import { KONTAKTE, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { dragStage } from "@/app/admin/vertrieb/actions";
-import { neuerPfad } from "@/lib/admin-neu/umzug";
+import { Klappe } from "@/components/admin-neu/vertrieb/klappe";
+import { VerkaufenMehr } from "@/components/admin-neu/vertrieb/verkaufen-mehr";
+import { offeneRechtsFaelle } from "@/lib/vertrieb/datenschutz-recht-server";
 import { LOSS_LABEL, LOSS_REASONS, STAGES, shortName } from "@/lib/vertrieb/crm";
 import { dayKey, relDay, todayKey } from "@/lib/vertrieb/dates";
 import { LI_LABEL } from "@/lib/vertrieb/linkedin";
@@ -21,25 +23,20 @@ export const metadata = { title: "Pipeline | performancegrowth Admin" };
 // Verkaufen → Pipeline (Startseite der Rolle, Admin v2: oben „Braucht Aufmerksamkeit“): Akquise-Board wie /admin/vertrieb/pipeline (gleiche Daten aus lib/vertrieb/pipeline.ts,
 // gleiche Kanban-Komponente und Server Action dragStage, „Verloren“ fragt nach dem Grund).
 // Karte: Name, Ort, Cold-Mail-Stand, LinkedIn, Verlustgrund, nächste Aufgabe. Antippen öffnet die Kontaktakte.
+// Umbau 19.11.2026: Am Handy und Tablet (unter 1024 px) eine Liste je Stufe zum Aufklappen wie /buyer/kontakte statt
+// waagrechtem Board; „Neu“ zeigt die Agenturen mit dem höchsten Potenzial. Import, Marketing und Seltenes unter „Mehr“.
 export default async function PipelinePage() {
   await connection();
   const session = await requireAuth();
-  const [{ countOf, contacts }, punkte] = await Promise.all([ladePipeline(), punkteDerRolle(session.userId, "verkaufen")]);
+  const [{ countOf, contacts }, punkte, offenRecht] = await Promise.all([ladePipeline({ neuKarten: true }), punkteDerRolle(session.userId, "verkaufen"), offeneRechtsFaelle()]);
 
   const columns: KanbanColumn[] = STAGES.map((s) => {
     const count = countOf(s.id);
     return {
       ...s,
       count,
-      top:
-        s.id === "NEU" ? (
-          <Link href={`${KONTAKTE}?stage=NEU`} className="block rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-3 text-sm hover:bg-[color:var(--surface-sunken)]">
-            Agenturen ohne Kontakt: Liste öffnen
-            <span className="mt-0.5 block text-xs text-[color:var(--muted)]">Karten hierher ziehen setzt sie auf „Neu“ zurück.</span>
-          </Link>
-        ) : undefined,
       bottom:
-        s.id !== "NEU" && count > PIPELINE_PRO_SPALTE ? (
+        count > PIPELINE_PRO_SPALTE ? (
           <Link href={`${KONTAKTE}?stage=${s.id}`} className="block px-1 text-xs font-medium text-[color:var(--brand)] hover:underline">
             Alle {count.toLocaleString("de-DE")} in der Liste ansehen
           </Link>
@@ -78,7 +75,6 @@ export default async function PipelinePage() {
     };
   });
 
-  const importHref = neuerPfad("/admin/vertrieb/import", { nurFertige: false }) ?? "/admin/vertrieb/import";
   return (
     <Seite
       titel="Verkaufen"
@@ -86,9 +82,7 @@ export default async function PipelinePage() {
       breit
       aktionen={
         <>
-          <ButtonLink href={importHref} size="md" icon={Upload} className="hidden sm:inline-flex">
-            Import
-          </ButtonLink>
+          <VerkaufenMehr datenschutzOffen={offenRecht} />
           <ButtonLink href={`${KONTAKTE}/neu`} variant="primary" size="md" icon={Plus}>
             Kontakt
           </ButtonLink>
@@ -96,7 +90,42 @@ export default async function PipelinePage() {
       }
     >
       <Aufmerksamkeit punkte={punkte} />
-      <div data-funktion="actions-dragstage--akquise-pipeline-per-drag-drop kanban--beim-verschieben-auf-verloren-grund-abfragen">
+      {/* Handy und Tablet: Liste je Stufe (Stufe ändern in der Kontaktakte) */}
+      <div className="space-y-2 lg:hidden" data-pipeline-liste>
+        {STAGES.map((s) => {
+          const count = countOf(s.id);
+          const liste = contacts.filter((c) => c.stage === s.id);
+          return (
+            <Klappe key={s.id} titel={s.label} info={<span className="tabular-nums">{count.toLocaleString("de-DE")}</span>} offen={s.id === "TERMIN" && count > 0}>
+              {liste.length ? (
+                <ul className="divide-y divide-[color:var(--border)]">
+                  {liste.map((c) => (
+                    <li key={c.id}>
+                      <Link href={kontaktPfad(c.id)} className="flex items-center gap-2 px-5 py-3">
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{shortName(c.name)}</span>
+                          <span className="block truncate text-xs text-[color:var(--muted)]">
+                            {[c.city, c.tasks[0] ? `${c.tasks[0].title} · ${relDay(c.tasks[0].dueAt)}` : null].filter(Boolean).join(" · ") || s.hint}
+                          </span>
+                        </span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-5 py-4 text-sm text-[color:var(--muted)]">{s.hint}</p>
+              )}
+              {count > liste.length ? (
+                <Link href={`${KONTAKTE}?stage=${s.id}`} className="flex min-h-11 items-center border-t border-[color:var(--border)] px-5 text-sm font-medium text-[color:var(--brand)]">
+                  Alle {count.toLocaleString("de-DE")} ansehen
+                </Link>
+              ) : null}
+            </Klappe>
+          );
+        })}
+      </div>
+      <div className="hidden lg:block" data-funktion="actions-dragstage--akquise-pipeline-per-drag-drop kanban--beim-verschieben-auf-verloren-grund-abfragen">
         <Kanban columns={columns} cards={cards} move={dragStage} reasonColumn="VERLOREN" reasons={LOSS_REASONS} topOffset={230} />
       </div>
     </Seite>

@@ -32,12 +32,12 @@ const s = (fd: FormData, k: string) => {
 };
 
 function refresh(contactId?: string | null) {
-  revalidatePath("/admin/vertrieb", "layout");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/vertrieb", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
   // Aufgaben und Vertriebs-Kennzahlen stehen auf Heute (Admin-Makeover Runde 2)
-  revalidatePath("/admin/heute", "layout");
+  revalidatePath("/admin/neu", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Heute, Vertrieb → Aufgaben)
-  if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+  if (contactId) revalidatePath(`/admin/neu/vertrieb/kontakte/${contactId}`);
 }
 
 /** Weiterleitung nach einer Aktion: kam sie aus dem neuen Admin (/admin/neu), dorthin (fertige Seite), sonst alt.
@@ -291,16 +291,16 @@ async function gesperrteIds(ids: string[]): Promise<Set<string>> {
 export async function deleteContact(fd: FormData) {
   await requireAuth();
   const id = s(fd, "contactId");
-  if (id && (await gesperrteIds([id])).has(id)) redirect(await ziel(`/admin/vertrieb/kontakte/${id}`));
+  if (id && (await gesperrteIds([id])).has(id)) redirect(await ziel(`/admin/neu/vertrieb/kontakte/${id}`));
   if (id) {
     const gone = await prisma.salesContact.delete({ where: { id } });
     await audit("contact.delete", { entity: "SalesContact", entityId: id, details: { name: gone.name } });
     // Löschprotokoll: greift nach einer Wiederherstellung der Datenbank erneut (lib/loeschprotokoll.ts)
     await import("@/lib/loeschprotokoll").then((m) => m.protokolliereLoeschung([{ art: "vertriebskontakt", entityId: id, grund: "admin" }]));
   }
-  revalidatePath("/admin/vertrieb", "layout");
+  revalidatePath("/admin/neu/vertrieb", "layout");
   revalidatePath("/admin/neu", "layout");
-  redirect(await ziel("/admin/vertrieb/kontakte"));
+  redirect(await ziel("/admin/neu/vertrieb/kontakte"));
 }
 
 export async function deleteContacts(fd: FormData) {
@@ -312,7 +312,7 @@ export async function deleteContacts(fd: FormData) {
     await prisma.salesContact.deleteMany({ where: { id: { in: ids } } });
     await import("@/lib/loeschprotokoll").then((m) => m.protokolliereLoeschung(ids.map((id) => ({ art: "vertriebskontakt" as const, entityId: id, grund: "admin" }))));
   }
-  revalidatePath("/admin/vertrieb", "layout");
+  revalidatePath("/admin/neu/vertrieb", "layout");
   revalidatePath("/admin/neu", "layout");
 }
 
@@ -642,8 +642,8 @@ export async function createLeadManually(fd: FormData) {
     { activity: `Lead manuell erfasst (${SOURCE_LABEL[source] ?? source})`, taskTitle: s(fd, "taskTitle") ?? "Lead kontaktieren" },
   );
   refresh();
-  if ("contactId" in r && r.contactId) redirect(await ziel(`/admin/vertrieb/kontakte/${r.contactId}`));
-  redirect(await ziel("/admin/vertrieb/kontakte/neu?fehler=1"));
+  if ("contactId" in r && r.contactId) redirect(await ziel(`/admin/neu/vertrieb/kontakte/${r.contactId}`));
+  redirect(await ziel("/admin/neu/vertrieb/kontakte/neu?fehler=1"));
 }
 
 /** „Jetzt anreichern“ am Kontakt: Website und Google erneut auswerten, nur leere Felder füllen. */
@@ -694,7 +694,7 @@ export async function convertInboundLead(fd: FormData) {
   if ("contactId" in r && r.contactId) {
     await prisma.salesInboundLead.update({ where: { id }, data: { contactId: r.contactId } });
     refresh();
-    redirect(`/admin/vertrieb/kontakte/${r.contactId}`);
+    redirect(`/admin/neu/vertrieb/kontakte/${r.contactId}`);
   }
   refresh();
 }
@@ -753,7 +753,7 @@ export async function linkContactCustomer(fd: FormData) {
   if (customerId && !c.customerStage) await changeCustomerStage(contactId, CUSTOMER_STAGES[0].id);
   await audit(customerId ? "vertrieb.verknuepft" : "vertrieb.verknuepfung_geloest", { entity: "SalesContact", entityId: contactId, customerId: customerId ?? null });
   refresh(contactId);
-  if (customerId) revalidatePath(`/admin/kunden/${customerId}`);
+  if (customerId) revalidatePath(`/admin/neu/kunden/${customerId}`);
 }
 
 // ─── Weitere E-Mail-Adressen und Zusammenführen ─────────────────────────
@@ -835,5 +835,5 @@ export async function mergeContactsAction(keepId: string, dropId: string): Promi
   if (!r.ok) return { error: r.error };
   await audit("contact.merge", { entity: "SalesContact", entityId: keepId, details: { dropId, moved: r.moved } });
   refresh(keepId);
-  redirect(await ziel(`/admin/vertrieb/kontakte/${keepId}`));
+  redirect(await ziel(`/admin/neu/vertrieb/kontakte/${keepId}`));
 }

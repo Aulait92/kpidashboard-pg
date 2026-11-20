@@ -10,12 +10,12 @@ export type LoginCardFormState = { ok?: boolean; errors?: string[]; savedAt?: nu
 const actorOf = (s: { userId: string; email: string; role: string }) => ({ id: s.userId, email: s.email, role: s.role });
 
 // Rücksprung nach Anlegen bzw. Löschen: alte Seite oder die im neuen Admin (nur diese beiden, kein offener Redirect)
-const BASEN = ["/admin/einstellungen/login", "/admin/neu/einstellungen/login"];
+const BASEN = ["/admin/neu/einstellungen/login", "/admin/neu/einstellungen/login"];
 const basisAus = (fd: FormData) => (BASEN.includes(String(fd.get("basis") ?? "")) ? String(fd.get("basis")) : BASEN[0]);
 
 function refresh() {
   revalidatePath("/login");
-  revalidatePath("/admin/einstellungen/login");
+  revalidatePath("/admin/neu/einstellungen/login");
 }
 
 /** Karte anlegen oder speichern (nur Admin, mit Änderungsprotokoll). */

@@ -5,6 +5,7 @@ import { Seite } from "@/components/admin-neu/ui/seite";
 import { Chips } from "@/components/admin-neu/kunden/chips";
 import { RATING_TONE } from "@/components/admin-neu/kunden/bericht-bewertung";
 import { GenerateNow } from "@/app/admin/monatsberichte/forms";
+import { GuteFreigeben } from "@/components/admin-neu/kunden/gute-freigeben";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { listReports, loadReportSettings } from "@/lib/monatsbericht/server";
 import { monthLabel, previousMonthKey, shiftMonth, STATUS_LABEL } from "@/lib/monatsbericht/shared";
@@ -19,7 +20,9 @@ const FILTER = [
   { key: "skipped", label: "Ausgesetzt" },
 ] as const;
 
-// Kunden › Monatsberichte: alle Berichte eines Monats (blättern), Filter nach Stand, „Fehlende Berichte jetzt erstellen“.
+// Betreuen › Monatsberichte: alle Berichte eines Monats (blättern), Filter nach Stand. Hauptaktion (Umbau 20.11.2026):
+// „gute senden“ verschickt alle guten Entwürfe mit sicheren Daten; mittlere, schwache und unsichere prüfen Sie einzeln.
+// „Fehlende Berichte jetzt erstellen“ ist selten und steht klein unter der Liste.
 // Ein Klick öffnet den Bericht in der Kundenakte (Reiter Monatsberichte). Daten und Actions wie /admin/monatsberichte.
 export default async function MonatsberichteAlle({ searchParams }: { searchParams: Promise<{ monat?: string; stand?: string }> }) {
   await requireAuth();
@@ -28,12 +31,18 @@ export default async function MonatsberichteAlle({ searchParams }: { searchParam
   const stand = FILTER.some((f) => f.key === sp.stand) ? (sp.stand ?? "") : "";
   const [rows, settings] = await Promise.all([listReports(month), loadReportSettings()]);
   const sichtbar = stand ? rows.filter((r) => r.status === stand) : rows;
+  const gute = rows.filter((r) => r.status === "draft" && r.rating === "gut" && r.dataQuality !== "unsicher").length;
   const basis = (m: string, s = stand) => `/admin/neu/kunden/berichte?monat=${m}${s ? `&stand=${s}` : ""}`;
 
   return (
-    <Seite titel="Betreuen" reiter="betreuen" untertitel={settings.autoSendGood ? "Nur „gut“ mit Maßnahme geht automatisch raus, alles andere prüfen Sie." : "Nichts geht automatisch raus: Sie prüfen jeden Bericht."}>
+    <Seite
+      titel="Betreuen"
+      reiter="betreuen"
+      untertitel={settings.autoSendGood ? "Nur „gut“ mit Maßnahme geht automatisch raus, alles andere prüfen Sie." : "Nichts geht automatisch raus: Sie prüfen jeden Bericht."}
+      aktionen={gute ? <GuteFreigeben month={month} anzahl={gute} monat={monthLabel(month)} /> : undefined}
+    >
       <div className="space-y-4" data-funktion="page--monatsuebersicht-aller-berichte-mit-monat-vor">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1 text-sm">
             <Link className="btn-ghost h-10 w-10 px-0" aria-label={monthLabel(shiftMonth(month, -1))} href={basis(shiftMonth(month, -1))}>
               <ChevronLeft className="h-4 w-4" />
@@ -42,9 +51,6 @@ export default async function MonatsberichteAlle({ searchParams }: { searchParam
             <Link className="btn-ghost h-10 w-10 px-0" aria-label={monthLabel(shiftMonth(month, 1))} href={basis(shiftMonth(month, 1))}>
               <ChevronRight className="h-4 w-4" />
             </Link>
-          </div>
-          <div data-funktion="actions-generatenowaction--berichte-jetzt-erzeugen">
-            <GenerateNow month={month} />
           </div>
         </div>
 
@@ -80,10 +86,13 @@ export default async function MonatsberichteAlle({ searchParams }: { searchParam
             <EmptyState
               icon={FileText}
               title={rows.length ? "Kein Bericht in diesem Stand" : `Für ${monthLabel(month)} gibt es noch keine Berichte`}
-              text={rows.length ? undefined : "Sie entstehen automatisch ab dem 2. des Folgemonats. Fehlende lassen sich oben jetzt erstellen."}
+              text={rows.length ? undefined : "Sie entstehen automatisch ab dem 2. des Folgemonats."}
             />
           )}
         </Card>
+        <div className="flex justify-center" data-funktion="actions-generatenowaction--berichte-jetzt-erzeugen">
+          <GenerateNow month={month} />
+        </div>
       </div>
     </Seite>
   );

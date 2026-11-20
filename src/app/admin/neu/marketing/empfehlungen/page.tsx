@@ -1,7 +1,7 @@
 import { connection } from "next/server";
-import { Settings } from "lucide-react";
+import { Gift, Settings } from "lucide-react";
 import { EmpfehlungenAnsicht } from "@/components/admin/empfehlungen-ansicht";
-import { ButtonLink } from "@/components/ui";
+import { ButtonLink, Card, EmptyState } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
@@ -14,15 +14,32 @@ export default async function Page() {
   await requireAuth();
   return (
     <Seite
-      titel="Verkaufen"
+      titel="Marketing"
       reiter="marketing"
+      zurueck={{ href: "/admin/neu/vertrieb", label: "Verkaufen" }}
       aktionen={
-        <ButtonLink href="/admin/einstellungen/empfehlungen" variant="ghost" icon={Settings}>
+        <ButtonLink href="/admin/neu/einstellungen/kollegen-empfehlen" variant="ghost" icon={Settings}>
           Prämie einstellen
         </ButtonLink>
       }
     >
       <EmpfehlungenAnsicht
+        leer={
+          <div data-funktion="page--kennzahlen-und-alle-empfehlungen-mit-stand-und">
+            <Card>
+            <EmptyState
+              icon={Gift}
+              title="Noch keine Empfehlungen"
+              text="Kunden empfehlen Sie mit ihrem persönlichen Link. Kennzahlen und Prämien erscheinen hier mit der ersten Empfehlung."
+              action={
+                <ButtonLink href="/admin/neu/einstellungen/kollegen-empfehlen" variant="primary" size="md" icon={Settings}>
+                  Prämie einstellen
+                </ButtonLink>
+              }
+            />
+            </Card>
+          </div>
+        }
         funktionen={{
           kennzahlen: "page--kennzahlen-und-alle-empfehlungen-mit-stand-und",
           liste: "page--kennzahlen-und-alle-empfehlungen-mit-stand-und",

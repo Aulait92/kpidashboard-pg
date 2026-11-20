@@ -14,8 +14,8 @@ async function actor() {
 }
 
 const done = (id?: string) => {
-  revalidatePath("/admin/monatsberichte");
-  if (id) revalidatePath(`/admin/monatsberichte/${id}`);
+  revalidatePath("/admin/neu/kunden/berichte");
+  if (id) revalidatePath(`/admin/neu/kunden/berichte/${id}`);
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 };
 
@@ -68,7 +68,7 @@ export async function generateNowAction(_prev: ReportActionState, fd: FormData):
   await actor();
   const month = String(fd.get("month") ?? "") || undefined;
   if (!process.env.ANTHROPIC_API_KEY) return { error: "ANTHROPIC_API_KEY fehlt – Berichte können nicht geschrieben werden." };
-  after(() => runMonthlyReports(new Date(), { month, limit: 30 }).then(() => revalidatePath("/admin/monatsberichte")).catch((e: unknown) => reportError(e, "bericht-manuell")));
+  after(() => runMonthlyReports(new Date(), { month, limit: 30 }).then(() => revalidatePath("/admin/neu/kunden/berichte")).catch((e: unknown) => reportError(e, "bericht-manuell")));
   return { ok: true, message: "Läuft im Hintergrund – Seite in 1–2 Minuten neu laden." };
 }
 
@@ -94,6 +94,6 @@ export async function saveReportSettingsAction(_prev: ReportActionState, fd: For
     },
     a,
   );
-  revalidatePath("/admin/einstellungen/monatsberichte");
+  revalidatePath("/admin/neu/einstellungen/monatsberichte");
   return { ok: true, message: "Gespeichert." };
 }

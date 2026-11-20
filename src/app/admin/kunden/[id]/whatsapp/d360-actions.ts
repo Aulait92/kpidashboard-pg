@@ -22,7 +22,7 @@ export async function d360AssignAction(_prev: D360AssignState, fd: FormData): Pr
   if (!customerId) return { error: "Kunde fehlt." };
   const m = await import("@/lib/whatsapp/dialog360-match");
   const r = channelId ? await m.assignChannel(customerId, channelId, session.userId ?? null) : await m.checkConnection(customerId, { id: session.userId ?? undefined, role: "ADMIN" });
-  revalidatePath(`/admin/kunden/${customerId}/whatsapp`);
+  revalidatePath(`/admin/neu/kunden/${customerId}/whatsapp`);
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return describe(r);
 }
@@ -37,7 +37,7 @@ export async function d360ResetAction(_prev: D360AssignState, fd: FormData): Pro
   const r = await resetUnfinishedConnection(customerId, { id: session.userId ?? undefined, role: "ADMIN" });
   if (r.status === "none") return { ok: true, message: "Es gibt keine Verbindung, die zurückgesetzt werden müsste." };
   if (r.status === "connected") return { error: "WhatsApp ist verbunden. Eine aktive Verbindung wird hier nicht zurückgesetzt." };
-  revalidatePath(`/admin/kunden/${customerId}/whatsapp`);
+  revalidatePath(`/admin/neu/kunden/${customerId}/whatsapp`);
   revalidatePath("/buyer/einrichtung");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, message: "Zurückgesetzt. Der Kunde sieht wieder „WhatsApp verbinden“." };
@@ -54,7 +54,7 @@ export async function d360RepairAction(_prev: D360AssignState, fd: FormData): Pr
   if (!customerId) return { error: "Kunde fehlt." };
   const { repairConnection } = await import("@/lib/whatsapp/dialog360-match");
   const r = await repairConnection(customerId, { id: session.userId ?? undefined, role: "ADMIN" });
-  revalidatePath(`/admin/kunden/${customerId}/whatsapp`);
+  revalidatePath(`/admin/neu/kunden/${customerId}/whatsapp`);
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: r.ok, schritte: r.schritte, ...(r.ok ? { message: "Verbindung läuft." } : { error: "Nicht alles ließ sich beheben." }) };
 }

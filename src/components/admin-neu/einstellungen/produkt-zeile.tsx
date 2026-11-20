@@ -13,9 +13,14 @@ export function ProduktZeile({ item }: { item: CatalogItem }) {
   return (
     <details className="group" data-catalog-item={item.key}>
       <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-5 py-3 [&::-webkit-details-marker]:hidden">
-        <span className="min-w-0 flex-1 text-sm font-medium">{item.name}</span>
-        {item.enabled ? <Badge tone="success">buchbar</Badge> : <Badge>aus</Badge>}
-        {item.enabled ? item.proven ? <Badge tone="brand">bewährt</Badge> : <Badge tone="info">neu</Badge> : null}
+        {/* Lange Namen (Hundekrankenversicherung) am Handy nicht abschneiden: Etiketten rutschen unter den Namen */}
+        <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="min-w-0 text-sm font-medium [overflow-wrap:anywhere]">{item.name}</span>
+          <span className="flex gap-1.5 sm:ml-auto">
+            {item.enabled ? <Badge tone="success">buchbar</Badge> : <Badge>aus</Badge>}
+            {item.enabled ? item.proven ? <Badge tone="brand">bewährt</Badge> : <Badge tone="info">neu</Badge> : null}
+          </span>
+        </span>
         <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
       </summary>
       <form action={action} className="space-y-3 px-5 pb-4">

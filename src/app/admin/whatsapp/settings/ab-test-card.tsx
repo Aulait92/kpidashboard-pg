@@ -10,7 +10,7 @@ const dateDE = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe
 
 function statusText(t: AbOverview): string {
   if (t.winner) return `Entschieden${t.decidedAt ? ` am ${dateDE(t.decidedAt)}` : ""}: Fassung ${t.winner.toUpperCase()} ist jetzt Standard für alle neuen Leads.`;
-  if (t.decision.reason === "zu_wenig") return `Läuft: Entscheidung ab ${minJeFassung(t.purpose)} Sendungen und ${MIN_TREFFER} Antworten je Fassung.`;
+  if (t.decision.reason === "zu_wenig") return `Läuft · entschieden ab ${minJeFassung(t.purpose)} Sendungen und ${MIN_TREFFER} Antworten je Fassung`;
   return `Läuft: noch kein klarer Unterschied (p = ${t.decision.p.toFixed(3)}, nötig unter ${ALPHA}).`;
 }
 
@@ -45,7 +45,6 @@ export async function AbTestCard() {
         {tests.map((t) => (
           <li key={t.purpose} className="rounded-lg border border-[color:var(--border)] p-3">
             <div className="font-medium">{PURPOSE_LABELS[t.purpose]}</div>
-            {VORLAGEN_HYPOTHESE[t.purpose] && <p className="mt-0.5">Hypothese: {VORLAGEN_HYPOTHESE[t.purpose]}</p>}
             <p className="mt-0.5 text-[color:var(--muted)]">{statusText(t)}</p>
             <table className="mt-2 w-full max-w-xl">
               <thead className="text-xs text-[color:var(--muted)]">
@@ -62,7 +61,9 @@ export async function AbTestCard() {
               </tbody>
             </table>
             <details className="mt-2">
-              <summary className="cursor-pointer text-[color:var(--brand)]">Texte ansehen</summary>
+              <summary className="cursor-pointer text-[color:var(--brand)]">Hypothese und Texte</summary>
+              {/* Hypothese hinter dem Aufklapper (SUS-Prüfung Liefern 20.11.2026): bei sechs Erstanschreiben stand derselbe Absatz sechsmal offen */}
+              {VORLAGEN_HYPOTHESE[t.purpose] && <p className="mt-1">Hypothese: {VORLAGEN_HYPOTHESE[t.purpose]}</p>}
               {(["a", "b"] as const).map((v) => (
                 <p key={v} className="mt-1 text-[color:var(--muted)]">
                   <span className="font-medium text-[color:var(--fg,inherit)]">{v.toUpperCase()}:</span> {templateTextFor(t.purpose, "sie", v)}

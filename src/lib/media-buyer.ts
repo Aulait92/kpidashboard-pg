@@ -1581,7 +1581,7 @@ async function processPool(
           title: `Media Buyer: ${def.label} Ziel erreicht, Kunde im Rückstand`,
           body: `Pool-Summe ${base.leadsMtd}/${def.goal} erreicht, aber unter 95 %: ${list}. Filter/Gebiete prüfen, bevor gedrosselt wird.`.slice(0, 240),
           tag: `media-buyer-rueckstand:${def.key}`,
-          url: "/admin/media-buyer",
+          url: "/admin/neu/leads/werbekonten",
         }).catch(() => undefined);
       }
     }
@@ -1857,7 +1857,7 @@ async function processPool(
           title: `⚠️ Media Buyer: ${def.label} zu teuer`,
           body: `Kosten je geliefertem Lead ${cplFmt.format(costPerDelivered ?? 0)} liegen seit ${streak} Läufen über dem Höchstpreis ${cplFmt.format(maxCpl.value ?? 0)}. Budget wird nicht erhöht.`,
           tag: `media-buyer-cpl:${def.key}`,
-          url: "/admin/media-buyer",
+          url: "/admin/neu/leads/werbekonten",
         }).catch(() => undefined);
       }
     }
@@ -1887,7 +1887,7 @@ async function processPool(
           title: `Media Buyer: ${def.label} nur Regionen offen`,
           body: regionCheck.message.slice(0, 240),
           tag: `media-buyer-region:${def.key}`,
-          url: "/admin/media-buyer",
+          url: "/admin/neu/leads/werbekonten",
         }).catch(() => undefined);
       }
     }
@@ -2650,7 +2650,7 @@ async function persistAndNotify(
       title: `${icon} Media Buyer: ${r.poolLabel}`,
       body: r.reason.slice(0, 160),
       tag: `media-buyer:${r.poolKey}`,
-      url: "/admin/media-buyer",
+      url: "/admin/neu/leads/werbekonten",
     });
   }
 }

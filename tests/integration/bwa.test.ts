@@ -50,7 +50,7 @@ describe("BWA aus der Datenbank", () => {
     // (in der gemeinsamen Test-DB ggf. unter „Sonstiges“ zusammengefasst)
     const stb = b.items.find((i) => i.label === `GC RE ${tag}`)!;
     expect([`betrieb:Steuerberater ${tag}`, "betrieb:Sonstiges"]).toContain(stb.line);
-    expect(stb).toMatchObject({ month: "2026-10", net: 250, gross: 297.5, href: "/admin/einstellungen/bank/zuordnen" });
+    expect(stb).toMatchObject({ month: "2026-10", net: 250, gross: 297.5, href: "/admin/neu/zahlen/kosten/zuordnen" });
     if (stb.line === "betrieb:Sonstiges") expect(stb.detail).toContain(`Steuerberater ${tag}`);
     expect(mine("direkt:software", "2026-11")).toBe(8.1);
     expect(mine("akquise:tools", "2026-11")).toBe(300);

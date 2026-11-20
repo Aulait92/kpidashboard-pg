@@ -56,8 +56,8 @@ describe("Terminbestätigung", () => {
 describe("Support-Abzeichen", () => {
   const sc = { id: "c1", name: "Agentur Müller", stage: "TERMIN", customerStage: null, customerId: null };
   it("Interessent, Kunde, Unbekannt", () => {
-    expect(supportBadge({ salesContact: sc, linkedCustomer: null })).toMatchObject({ kind: "interessent", detail: "Agentur Müller · Termin", href: "/admin/vertrieb/kontakte/c1" });
-    expect(supportBadge({ salesContact: { ...sc, stage: "GEWONNEN", customerId: "k1" }, linkedCustomer: null })).toMatchObject({ kind: "kunde", href: "/admin/kunden/k1" });
+    expect(supportBadge({ salesContact: sc, linkedCustomer: null })).toMatchObject({ kind: "interessent", detail: "Agentur Müller · Termin", href: "/admin/neu/vertrieb/kontakte/c1" });
+    expect(supportBadge({ salesContact: { ...sc, stage: "GEWONNEN", customerId: "k1" }, linkedCustomer: null })).toMatchObject({ kind: "kunde", href: "/admin/neu/kunden/k1" });
     expect(supportBadge({ salesContact: { ...sc, customerStage: "GEKUENDIGT" }, linkedCustomer: null }).label).toBe("Kunde (gekündigt)");
     expect(supportBadge({ salesContact: null, linkedCustomer: { id: "k2", name: "Allianz X" } })).toMatchObject({ kind: "kunde", detail: "Allianz X" });
     expect(supportBadge({ salesContact: null, linkedCustomer: null }).kind).toBe("unbekannt");

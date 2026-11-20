@@ -48,7 +48,7 @@ export async function startRunAction(_prev: StartState, fd: FormData): Promise<S
     });
     if (!r.ok) return { problems: r.problems };
     after(() => processCampaignRun(r.runId).then(() => undefined));
-    revalidatePath(`/admin/kunden/${customerId}/kampagne`);
+    revalidatePath(`/admin/neu/kunden/${customerId}/kampagne`);
     revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
     return { ok: true, runId: r.runId };
   } catch (e) {
@@ -74,7 +74,7 @@ export async function buildRunAction(runId: string): Promise<RunActionState> {
     return { ok: true, message: "Lauf wird fortgesetzt …" };
   }
   after(() => buildCampaignRun(runId).then(() => undefined));
-  revalidatePath(`/admin/kunden/${run.customerId}/kampagne`);
+  revalidatePath(`/admin/neu/kunden/${run.customerId}/kampagne`);
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, message: "Wird pausiert bei Meta angelegt …" };
 }

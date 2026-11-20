@@ -59,7 +59,7 @@ export async function ladeSystemzustand(now = new Date()): Promise<Pruefung[]> {
     sicher("whatsapp", "WhatsApp-Zustellung", `${NEU}/zahlen/qualitaet`, "Ansehen", async () =>
       zustellung(await prisma.message.count({ where: { direction: "outbound", status: "failed", createdAt: { gte: new Date(now.getTime() - 14 * 86_400_000) } } })),
     ),
-    sicher("bank", "Bankverbindung", `${NEU}/zahlen/kosten`, "Kosten & Bank", async () => {
+    sicher("bank", "Bankverbindung", `${NEU}/zahlen/kosten/konten`, "Konten & Regeln", async () => {
       const k = await prisma.bankConnection.findMany({ where: { status: { not: "pending" } }, select: { aspspName: true, status: true, validUntil: true, lastError: true } });
       if (!k.length) return zugang(null, BANK_WARN_TAGE, now);
       const bewertet = k.map((c) => ({ c, b: zugang({ status: c.status, bis: c.validUntil, fehler: c.lastError }, BANK_WARN_TAGE, now) }));

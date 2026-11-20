@@ -11,11 +11,19 @@ const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", c
 const date = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d);
 const TONE: Record<ReferralStage, "neutral" | "brand" | "success" | "info"> = { eingegangen: "neutral", termin: "info", kunde: "brand", praemie: "success", abgelehnt: "neutral" };
 
-export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Partial<Record<"kennzahlen" | "rabatt" | "top" | "liste" | "praemie", string>> }) {
+export async function EmpfehlungenAnsicht({
+  funktionen = {},
+  leer,
+}: {
+  funktionen?: Partial<Record<"kennzahlen" | "rabatt" | "top" | "liste" | "praemie", string>>;
+  /** Statt Nullkacheln und leerer Tabellen, solange es keine Empfehlung gibt (leerer Zustand mit nächster Handlung) */
+  leer?: React.ReactNode;
+}) {
   const { list, top, totals } = await adminReferralOverview();
   // Trockenlauf: offene Angebote an Empfohlene ohne Empfehlungsrabatt (Knopf übernimmt)
   const backfill = await backfillReferralDiscounts({ apply: false });
   const toApply = backfill.filter((r) => r.skip == null);
+  if (leer && list.length === 0 && backfill.length === 0) return <>{leer}</>;
   return (
     <div className="space-y-6">
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-5" data-funktion={funktionen.kennzahlen}>
@@ -63,7 +71,7 @@ export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Pa
               <tr key={r.offerId}>
                 <td className="px-4 py-2 tabular-nums">{r.number}</td>
                 <td className="px-4 py-2">
-                  <Link href={`/admin/vertrieb/kontakte/${r.contactId}`} className="hover:underline">
+                  <Link href={`/admin/neu/vertrieb/kontakte/${r.contactId}`} className="hover:underline">
                     {r.company}
                   </Link>
                 </td>
@@ -96,7 +104,7 @@ export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Pa
             {top.map((t) => (
               <tr key={t.id}>
                 <td className="px-4 py-2">
-                  <Link href={`/admin/kunden/${t.id}`} className="font-medium hover:underline">
+                  <Link href={`/admin/neu/kunden/${t.id}`} className="font-medium hover:underline">
                     {t.name}
                   </Link>
                 </td>
@@ -132,7 +140,7 @@ export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Pa
                 <td className="whitespace-nowrap px-4 py-2 text-[color:var(--muted)]">{date(r.createdAt)}</td>
                 <td className="px-4 py-2">
                   {r.contactId ? (
-                    <Link href={`/admin/vertrieb/kontakte/${r.contactId}`} className="font-medium hover:underline">
+                    <Link href={`/admin/neu/vertrieb/kontakte/${r.contactId}`} className="font-medium hover:underline">
                       {r.name ?? "(gelöscht)"}
                     </Link>
                   ) : (
@@ -143,7 +151,7 @@ export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Pa
                   {r.status === "blocked" ? <span className="block text-sm text-[color:var(--muted)]">{r.blockedReason}</span> : null}
                 </td>
                 <td className="px-4 py-2">
-                  <Link href={`/admin/kunden/${r.referrer.id}`} className="hover:underline">
+                  <Link href={`/admin/neu/kunden/${r.referrer.id}`} className="hover:underline">
                     {r.referrer.name}
                   </Link>
                 </td>

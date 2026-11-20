@@ -40,7 +40,7 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
     });
 
   const actions: SheetAction[] = [
-    ...(t.contact && showContact ? [{ label: "Kontakt öffnen", icon: UserRound, tone: "primary" as const, href: `/admin/vertrieb/kontakte/${t.contact.id}` }] : []),
+    ...(t.contact && showContact ? [{ label: "Kontakt öffnen", icon: UserRound, tone: "primary" as const, href: `/admin/neu/vertrieb/kontakte/${t.contact.id}` }] : []),
     ...(t.contact?.phone ? [{ label: `Anrufen (${t.contact.phone})`, icon: Phone, href: `tel:${t.contact.phone.replace(/\s/g, "")}` }] : []),
     ...(!t.doneAt
       ? [
@@ -98,7 +98,7 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
             </>
           );
           return showContact && t.contact ? (
-            <Link href={`/admin/vertrieb/kontakte/${t.contact.id}`} className="flex min-w-0 items-start gap-2" title="Kontakt öffnen">
+            <Link href={`/admin/neu/vertrieb/kontakte/${t.contact.id}`} className="flex min-w-0 items-start gap-2" title="Kontakt öffnen">
               {body}
             </Link>
           ) : (

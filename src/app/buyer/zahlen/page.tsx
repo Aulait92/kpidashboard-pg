@@ -128,7 +128,7 @@ export default async function BuyerPage({
           ) : null}
           <a href="#monatsberichte" className={SPRUNG} data-sprung-monatsberichte>Monatsberichte</a>
           {bestandAn ? (
-            <a href="/buyer/bestand" className={SPRUNG}>Bestandskunden</a>
+            <a href="/buyer/bestand" className={SPRUNG}>Bestand</a>
           ) : null}
           {bestellbar ? (
             <a href="/buyer/bestellen" className={SPRUNG}>Leads bestellen</a>

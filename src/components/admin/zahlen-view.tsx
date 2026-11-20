@@ -424,10 +424,10 @@ export function ZahlenView({
         ))}
         {!investor ? (
           <>
-            <Link href="/admin/einstellungen/kosten" className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 text-sm text-[color:var(--muted)]">
+            <Link href="/admin/neu/zahlen/kosten" className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 text-sm text-[color:var(--muted)]">
               Laufende Kosten →
             </Link>
-            <Link href="/admin/nutzung" className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 py-1.5 text-sm text-[color:var(--muted)]">
+            <Link href="/admin/neu/zahlen/qualitaet" className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 py-1.5 text-sm text-[color:var(--muted)]">
               Nutzung →
             </Link>
           </>
@@ -820,7 +820,7 @@ function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean })
         ) : (
           <Empty>
             Noch keine Kosten im {longMonth(data.lastComplete)}. Tools wie Instantly, Zapier und Claude unter{" "}
-            <Link href="/admin/einstellungen/kosten" className="text-[color:var(--brand)]">Laufende Kosten</Link> eintragen.
+            <Link href="/admin/neu/zahlen/kosten" className="text-[color:var(--brand)]">Laufende Kosten</Link> eintragen.
           </Empty>
         )}
       </Card>
@@ -897,7 +897,7 @@ function RangeChips({ param, current, from, to }: { param: string; current: stri
       {PRODUKT_RANGES.map((r) => (
         <Link
           key={r.key}
-          href={`/admin/zahlen?${param}=${r.key}`}
+          href={`/admin/neu/zahlen?${param}=${r.key}`}
           scroll={false}
           className={cn(
             "rounded-full border px-3 py-1 text-[13px]",
@@ -1073,7 +1073,7 @@ function BwaTab({ d }: { d: BwaData }) {
         {d.ranges.map((r) => (
           <Link
             key={r.key}
-            href={`/admin/zahlen?bwa=${r.key}`}
+            href={`/admin/neu/zahlen?bwa=${r.key}`}
             scroll={false}
             className={cn(
               "rounded-full border px-3 py-1 text-[13px]",
@@ -1089,7 +1089,7 @@ function BwaTab({ d }: { d: BwaData }) {
       </div>
       <div className="flex flex-wrap gap-2 text-[12.5px]">
         {hints.openExpenses ? (
-          <Link href="/admin/einstellungen/bank/zuordnen" className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-900 hover:underline">
+          <Link href="/admin/neu/zahlen/kosten/zuordnen" className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-900 hover:underline">
             Offene, nicht zugeordnete Ausgaben: {hints.openExpenses} →
           </Link>
         ) : null}
@@ -1257,7 +1257,7 @@ function Ppl({ data }: { data: ZahlenData }) {
   return (
     <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
       <p className="text-[13px] text-[color:var(--muted)] lg:col-span-2" data-ppl-pilot>
-        Pay-per-Lead (Pilotphase {pilotLabel(data.pplPilot.from, data.pplPilot.to)}). Dieser Reiter rechnet immer mit allen Pay-per-Lead-Daten, auch in der Sicht „Kerngeschäft“. Ende der Pilotphase unter Einstellungen → Kosten.
+        Pay-per-Lead (Pilotphase {pilotLabel(data.pplPilot.from, data.pplPilot.to)}). Rechnet immer mit allen Pay-per-Lead-Daten, auch in der Sicht „Kerngeschäft“. Ende der Pilotphase unter „Annahmen für Kennzahlen“.
       </p>
       <Card title="Verkaufte Leads je Monat" cap="Nicht stornierte Leads (Revenue-Zeilen).">
         {max ? p.months.map((m) => <BarRow key={m.month} label={`${shortMonth(m.month)}${m.month === data.current ? " (bisher)" : ""}`} value={m.leads} max={max} color="var(--z-s1)" right={m.leads.toLocaleString("de-DE")} labelWidth={90} />) : <Empty />}
@@ -1365,7 +1365,7 @@ const STREAM_COLOR: Record<string, string> = { ppl: "var(--z-s1)", service: "var
 
 function CustomerName({ id, name, link }: { id: string; name: string; link: boolean }) {
   return link ? (
-    <Link href={`/admin/kunden/${id}`} className="font-medium text-[color:var(--brand)] hover:underline">
+    <Link href={`/admin/neu/kunden/${id}`} className="font-medium text-[color:var(--brand)] hover:underline">
       {name}
     </Link>
   ) : (
@@ -1390,8 +1390,8 @@ function StreamTable({ m, factor = 1 }: { m: DrillMonth; factor?: number }) {
           <tr>
             <th className={th}>Kunde</th>
             <th className="px-2 font-medium">Strom</th>
-            <th className={thR}>{factor === 12 ? "Betrag × 12" : "Betrag im Monat"}</th>
-            <th className="pl-2 font-medium">Quelle</th>
+            <th className={thR}>{factor === 12 ? "Betrag × 12" : "Betrag"}</th>
+            <th className="hidden pl-2 font-medium sm:table-cell">Quelle</th>
           </tr>
         </thead>
         <tbody>
@@ -1411,16 +1411,16 @@ function StreamTable({ m, factor = 1 }: { m: DrillMonth; factor?: number }) {
                     {STREAM_LABEL[s.stream]}
                   </span>
                 </td>
-                <td className="px-2 text-right">{eur(s.amount * factor, 2)}</td>
-                <td className="pl-2 text-[color:var(--muted)]">{s.source}</td>
+                <td className="whitespace-nowrap px-2 text-right" title={s.source}>{eur(s.amount * factor, 2)}</td>
+                <td className="hidden pl-2 text-[color:var(--muted)] sm:table-cell">{s.source}</td>
               </tr>
             )),
           )}
           <tr className="border-t border-[color:var(--border)] font-semibold">
             <td className="py-1.5 pr-2">Summe ({m.customers.length} Kunden)</td>
             <td />
-            <td className="px-2 text-right">{eur(m.total * factor, 2)}</td>
-            <td />
+            <td className="whitespace-nowrap px-2 text-right">{eur(m.total * factor, 2)}</td>
+            <td className="hidden sm:table-cell" />
           </tr>
         </tbody>
       </table>
@@ -1500,8 +1500,8 @@ function DrillSheet({ kind, data, onClose }: { kind: DrillKind; data: ZahlenData
   };
   const directSum = d.directCosts.reduce((s, c) => s + c.amount, 0);
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-950/55 px-4 py-8" role="dialog" aria-modal="true" aria-label="Woraus besteht das?" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-[920px] rounded-xl bg-white p-5 shadow-2xl sm:p-7">
+    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-950/55 px-2 py-6 sm:px-4 sm:py-8" role="dialog" aria-modal="true" aria-label="Woraus besteht das?" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-[920px] rounded-xl bg-white p-4 shadow-2xl sm:p-7">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <p className="text-[12.5px] text-[color:var(--muted)]">Woraus besteht das?{data.sicht === "kern" ? " · Kerngeschäft, ohne Pay-per-Lead" : ""}</p>
@@ -1608,8 +1608,8 @@ function MissingRetainer({ data }: { data: ZahlenData }) {
   const list = data.missingRetainer;
   return (
     <section className="mb-4 rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-950" data-missing-retainer>
-      <h2 className="text-[14px] font-semibold">Kunden ohne hinterlegte Betreuungsgebühr ({list.length})</h2>
-      <p className="mt-0.5 text-amber-900">Live mit Paket Betreuung oder Software, aber ohne Angebot und ohne Monatsbetrag. Ihr Umsatz fehlt im MRR.</p>
+      <h2 className="text-[14px] font-semibold">{list.length === 1 ? "1 Kunde" : `${list.length} Kunden`} ohne Monatsbetrag</h2>
+      <p className="mt-0.5 text-amber-900">Live, aber ohne Betreuungsgebühr: Ihr Umsatz fehlt im MRR.</p>
       <ul className="mt-2 divide-y divide-amber-200">
         {list.map((c) => (
           <li key={c.customerId} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5">
@@ -1618,8 +1618,8 @@ function MissingRetainer({ data }: { data: ZahlenData }) {
               {c.plan === "service" ? "Nur Betreuung" : c.plan === "ppl_software" ? "Pay-per-Lead + Software" : "Betreuung + Software"}
               {c.liveSince ? ` · live seit ${new Date(c.liveSince).toLocaleDateString("de-DE")}` : ""}
             </span>
-            <Link href={`/admin/kunden/${c.customerId}/abrechnung#betreuungsgebuehr`} className="ml-auto font-semibold text-[color:var(--brand)] hover:underline">
-              In der Kundenakte eintragen →
+            <Link href={`/admin/neu/kunden/${c.customerId}/abrechnung#betreuungsgebuehr`} className="ml-auto font-semibold text-[color:var(--brand)] hover:underline">
+              Betrag eintragen →
             </Link>
           </li>
         ))}
@@ -1796,7 +1796,7 @@ function Produkte({ p }: { p: ProdukteData }) {
         {PRODUKT_RANGES.map((r) => (
           <Link
             key={r.key}
-            href={`/admin/zahlen?zeitraum=${r.key}`}
+            href={`/admin/neu/zahlen?zeitraum=${r.key}`}
             scroll={false}
             className={cn(
               "rounded-full border px-3 py-1 text-[13px]",
@@ -1882,7 +1882,7 @@ function Produkte({ p }: { p: ProdukteData }) {
                 {p.matrix.map((r) => (
                   <tr key={r.customerId} className="border-t border-[color:var(--border)] align-top">
                     <td className="sticky left-0 bg-white py-1.5 pr-2">
-                      <Link href={`/admin/kunden/${r.customerId}`} className="font-medium text-[color:var(--brand)] hover:underline">
+                      <Link href={`/admin/neu/kunden/${r.customerId}`} className="font-medium text-[color:var(--brand)] hover:underline">
                         {r.name}
                       </Link>
                     </td>
@@ -1916,3 +1916,8 @@ function Produkte({ p }: { p: ProdukteData }) {
     </div>
   );
 }
+
+// Bausteine für Geld › Übersicht im neuen Admin (components/admin-neu/zahlen/uebersicht.tsx): gleiche Diagramme und
+// Fenster, aber eigene Anordnung (4 Kennzahlen, 4 Abschnitte). Die alte Seite /admin/zahlen bleibt unverändert.
+export { PALETTE as ZAHLEN_PALETTE, Tooltip as ZahlenTooltip, Wachstum, Kunden, Wirtschaft, Wirkung, Produkte, Vertrieb, BwaTab, Ppl, DrillSheet, UpdateSheet };
+export type { DrillKind as ZahlenDrill };

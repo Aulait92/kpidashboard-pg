@@ -46,7 +46,7 @@ describe("Termine Stufe 2", () => {
     await createMeetingReviews(spaeter);
     await createMeetingReviews(new Date(spaeter.getTime() + 5 * MIN));
     expect(meinePushes()).toEqual([
-      { title: `Wie lief der Termin mit Paula Push ${uid}?`, body: expect.stringContaining("Folgetermin"), url: `/admin/vertrieb/kontakte/${c.id}#ergebnis`, tag: `termin-review:${m.id}` },
+      { title: `Wie lief der Termin mit Paula Push ${uid}?`, body: expect.stringContaining("Folgetermin"), url: `/admin/neu/vertrieb/kontakte/${c.id}#ergebnis`, tag: `termin-review:${m.id}` },
     ]);
     const r = await nachfragen(c.id);
     expect(r).toHaveLength(1);
@@ -86,7 +86,7 @@ describe("Termine Stufe 2", () => {
 
     const fehlt = (await ladeErgebnisFehlt(now)).filter((p) => p.key === `terminergebnis:${m.id}`);
     expect(fehlt).toEqual([
-      expect.objectContaining({ title: `Ergebnis fehlt: Moritz Morgen ${uid}`, tone: "bad", action: { label: "Ergebnis eintragen", href: `/admin/vertrieb/kontakte/${c.id}#ergebnis` }, quick: { kind: "termin", taskId: review.id } }),
+      expect.objectContaining({ title: `Ergebnis fehlt: Moritz Morgen ${uid}`, tone: "bad", action: { label: "Ergebnis eintragen", href: `/admin/neu/vertrieb/kontakte/${c.id}#ergebnis` }, quick: { kind: "termin", taskId: review.id } }),
     ]);
     const heute = await loadAdminHeute(now);
     expect(heute.items.filter((i) => i.key === `terminergebnis:${m.id}`)).toHaveLength(1);

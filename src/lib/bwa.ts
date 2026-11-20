@@ -21,7 +21,7 @@ export type BwaData = {
 
 const n = (v: unknown) => (v == null ? 0 : Number(v));
 const r2 = (x: number) => Math.round(x * 100) / 100;
-const ZUORDNEN = "/admin/einstellungen/bank/zuordnen";
+const ZUORDNEN = "/admin/neu/zahlen/kosten/zuordnen";
 
 /** Zeitraum aus ?bwa=: Jahr (2026) oder „12m“; Standard laufendes Jahr. */
 export function bwaMonths(param: string | undefined, now = new Date()): { key: string; months: string[] } {
@@ -58,12 +58,12 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
   const nameOf = (id: string) => names.get(id) ?? (id.startsWith("nachtrag:") ? "Nachtrag (ohne Kunde)" : id.startsWith("angebot:") ? "Angebot (ohne Kundenakte)" : "Unbekannt");
   for (const p of pplCounts) {
     if (!inRange(p.month) || !(p.amount > 0)) continue;
-    items.push({ month: p.month, line: "umsatz:ppl", label: nameOf(p.customerId), net: r2(p.amount), detail: `${p.n} Leads`, href: names.has(p.customerId) ? `/admin/kunden/${p.customerId}` : null });
+    items.push({ month: p.month, line: "umsatz:ppl", label: nameOf(p.customerId), net: r2(p.amount), detail: `${p.n} Leads`, href: names.has(p.customerId) ? `/admin/neu/kunden/${p.customerId}` : null });
   }
   for (const r of ledger.rows) {
     if (r.stream === "ppl" || !inRange(r.month)) continue;
     const line = r.stream === "setup" ? "umsatz:setup" : r.stream === "software" ? "umsatz:software" : "umsatz:service";
-    items.push({ month: r.month, line, label: nameOf(r.customerId), net: r.amount, href: names.has(r.customerId) ? `/admin/kunden/${r.customerId}` : null });
+    items.push({ month: r.month, line, label: nameOf(r.customerId), net: r.amount, href: names.has(r.customerId) ? `/admin/neu/kunden/${r.customerId}` : null });
   }
 
   // ── Meta-Werbung (LEAD-Kosten): Kundengewinnung per Kampagnenname, Rest direkt ──
@@ -124,7 +124,7 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
       const v = r2(n(rc.monthlyAmount) * share);
       if (!(v > 0)) continue;
       const line = rc.purpose === "ppl" ? "direkt:ppl" : rc.purpose === "software" ? "direkt:software" : rc.purpose === "akquise" ? "akquise:tools" : `betrieb:${rc.name.slice(0, 60)}`;
-      items.push({ month: m, line, label: rc.name, net: v, detail: "laufende Kosten (von Hand)", href: "/admin/einstellungen/kosten" });
+      items.push({ month: m, line, label: rc.name, net: v, detail: "laufende Kosten (von Hand)", href: "/admin/neu/zahlen/kosten" });
     }
   }
 

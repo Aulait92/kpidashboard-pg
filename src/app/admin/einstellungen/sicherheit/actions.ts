@@ -10,7 +10,7 @@ export type { TotpState };
 export async function startTotpSetupAction(): Promise<void> {
   const session = await requireAuth();
   await startTotpSetup(session.userId);
-  revalidatePath("/admin/einstellungen/sicherheit");
+  revalidatePath("/admin/neu/einstellungen/sicherheit");
 }
 
 /** Schritt 2: Code aus der App bestätigen → aktiv, Notfall-Codes einmalig anzeigen. */
@@ -24,7 +24,7 @@ export async function confirmTotpAction(_prev: TotpState, fd: FormData): Promise
 export async function disableTotpAction(_prev: TotpState, fd: FormData): Promise<TotpState> {
   const session = await requireAuth();
   const res = await disableTotp(session.userId, String(fd.get("code") ?? ""));
-  if (res.done) revalidatePath("/admin/einstellungen/sicherheit");
+  if (res.done) revalidatePath("/admin/neu/einstellungen/sicherheit");
   return res;
 }
 

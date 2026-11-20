@@ -24,9 +24,11 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 | Policen-Bitte nennt die genannten Sparten | Branch `policen-bitte-sparten` | CTO |
 | Terminvorbereitung „Was hat … schon?“: Zweck „Cross-Selling-Folie“ und Zähler im Kopf, Hinweis am Hauptknopf (ungecommittet im Arbeitsverzeichnis, 19.11.2026); nach Freigabe committen. Danach messen: Anteil Präsentationen mit Folie `ueberblick` und „Mit anschauen“ (Ereignis fehlt noch) | wartet auf Ole | UX / CPO |
 | Policen-Formular: nach Oles Test `POLICEN_FLOW_KUNDEN` leeren (für alle); optional Dateiname vor Einwilligung neutral | wartet auf Test | CTO |
-| Admin-Umbau Nacht 19./20.11.: Umbauliste je Bereich (SUS-Ist 65 bis 74, Ziel 90) in `docs/ux/admin-neu/umbau-2026-11-19.md`; Airtable nur aus der Oberfläche, Abgleich bleibt; Abschalten des alten Admins ist Stufe A | läuft (Team der Nacht) | UX/UI / CTO |
+| Admin-Umbau Nacht 19./20.11.: zusammengeführt (Rahmen, Verkaufen, Betreuen, Liefern, Geld, Werkzeuge/Einstellungen). Der neue Admin ist der einzige, alte Adressen leiten dauerhaft weiter (`lib/admin-neu/umzug.ts`), Schalter „Neue Oberfläche“ entfernt. Airtable nur aus der Oberfläche, Abgleich bleibt. Noch unter SUS 90 (Teams: 85 bis 88): Zeilen auf Mein Tag mit vielen blauen Knöpfen (HeuteList), Aufgaben mit zwei Filterreihen, Reiter WhatsApp der Kundenakte und Chats noch alte Ansicht, Auswertung/Media Buyer am Handy breit, Geld-Diagramme mit Erklärsätzen, Kontaktakte mit 4 Kopfknöpfen. Kennzahlen-Dashboard unter `/` (Monatsziele, Speed-to-Lead) hat kein Gegenstück im Admin. Massenaktion „gute senden“ (Monatsberichte) vor Livegang auf Staging mit Testkunde prüfen | Nacharbeit | UX/UI / CTO |
+| Admin Einstellungen/Technik nach SUS-Prüfung 20.11. (Score 90): Rest unter 90 auf Einzelseiten: Halteangebote lang (10 Angebote mit Werten), Hinweisbox in Buchbare Zeiten (geteilter Baustein mit /buyer), Protokoll-Details mit Rohschlüsseln (count, geloescht), Untertitel des Systemzustands am Handy ausgeblendet, „Was wo ist“ mit technischen Inventartexten | Nacharbeit | UX/UI |
 | Garantie: Liste „Termine und Ergebnisse“ je Garantiezeitraum als Export in der Kundenakte (AGB „Wahrgenommene Termine“: auf Anfrage in Textform), bis dahin von Hand | offen | CTO / Recht |
 | Erklärvideos „Kurz“, „Ausführlich“, „WhatsApp verbinden“ neu aufnehmen; nur außerhalb 8 bis 20 Uhr deployen | läuft in eigener Sitzung | CPO |
+| Empfehlungsmodul Champions-Umbau (3 Pakete, Plan `docs/ux/2026-11-19-empfehlung-champions.md`); Modul bleibt aus, Einschalten Stufe A | Branch `empfehlung-champions`: Pakete 1 bis 3 gebaut (20.11.2026), UX-Prüfung 20.11.2026: SUS 82, 88, 91 (Übersicht, Teilen, öffentliche Seiten); offen: Screenshot Heute und Kontakt-Karte nach Umstellung auf sekundären Knopf (Speicher, OOM), Einschalten-Liste in `docs/empfehlungen-modul.md` | CPO / CTO |
 
 Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der Sitzung, die sie angelegt hat.
 
@@ -88,6 +90,11 @@ Freiburg 14 bis 15 (anteilig ca. 13 bzw. 7 bis 8). Nichts angelegt; Start nur na
 - Später: Calendly im Vertrieb durch eigenes Buchungstool ersetzen.
 - Leitfaden Setter-Call liegt als PDF unter Marketing → Unterlagen (19.11.2026). Offen: Zahlweise im Beratungsgespräch, Quoten nach 10 Setter-Calls prüfen (Erscheinen mindestens 80 %).
 - **Ab 21.11.2026 bauen:** Abschlussbonus 300 € gilt nur bei Abschluss im Beratungsgespräch (Annahme im Call), nicht mehr mit Frist bis zum Folgetag (Ole, 19.11.2026).
+
+- Bestandskunden-Modul einschalten (Stufe A): bleibt aus (`BESTAND_MODULE_AVAILABLE = false`). UX-Prüfung 20.11.2026
+  (Branch `bestand-champions`): SUS 91. Vor dem Einschalten: AVV-Ergänzung, `docs/datenschutz.md` Abschnitt Bestand,
+  Muster-Datenschutztext für Vermittler, ProductUpdate (audience software), Eintrag in `docs/webseite-offen.md`,
+  Erklärvideos prüfen, `docs/recht/bestand-champions.md` anlegen.
 
 ## Fehlende Zugänge für das Team
 Diagnose-Schnittstelle (`app.performancegrowth.de/api/ops/diagnose`, nur lesend) ist seit 19.11.2026 in der Cloud-Umgebung

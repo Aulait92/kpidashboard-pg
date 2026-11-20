@@ -697,7 +697,7 @@ export async function runMonthlyReports(now = new Date(), opts: RunOptions = {})
   }
   if (out.drafts > 0) {
     const { sendToAdmins } = await import("@/lib/push");
-    await sendToAdmins({ title: `Monatsberichte ${monthLabel(month)}`, body: `${out.drafts} Bericht(e) warten auf deine Prüfung`, url: `/admin/monatsberichte?monat=${month}` }).catch(() => {});
+    await sendToAdmins({ title: `Monatsberichte ${monthLabel(month)}`, body: `${out.drafts} Bericht(e) warten auf deine Prüfung`, url: `/admin/neu/kunden/berichte?monat=${month}` }).catch(() => {});
   }
   return out;
 }

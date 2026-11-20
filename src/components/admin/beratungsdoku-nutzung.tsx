@@ -43,7 +43,7 @@ export function BeratungsdokuNutzung({ n, tage }: { n: BdNutzung; tage: number }
       <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]">
         {n.kunden.map((k) => (
           <li key={k.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-5 py-2.5 text-sm">
-            <a href={`/admin/kunden/${k.id}`} className="min-w-0 flex-1 truncate font-medium hover:underline">
+            <a href={`/admin/neu/kunden/${k.id}`} className="min-w-0 flex-1 truncate font-medium hover:underline">
               {k.name}
             </a>
             <span className="text-xs text-[color:var(--muted)]">

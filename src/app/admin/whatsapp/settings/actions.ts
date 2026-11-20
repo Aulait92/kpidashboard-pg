@@ -71,8 +71,8 @@ export async function saveOutreachSettingsAction(formData: FormData): Promise<vo
     create: { customerId, ...data },
     update: data,
   });
-  revalidatePath("/admin/whatsapp/settings");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/einstellungen/whatsapp");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
@@ -102,8 +102,8 @@ export async function saveTemplateAction(formData: FormData): Promise<void> {
     },
     update: { purpose, status, body },
   });
-  revalidatePath("/admin/whatsapp/settings");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/einstellungen/whatsapp");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
@@ -119,8 +119,8 @@ export async function addCustomerAction(formData: FormData): Promise<void> {
     create: { customerId, active: false },
     update: {},
   });
-  revalidatePath("/admin/whatsapp/settings");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/einstellungen/whatsapp");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
@@ -129,8 +129,8 @@ export async function deleteTemplateAction(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   await prisma.messageTemplate.delete({ where: { id } }).catch(() => {});
-  revalidatePath("/admin/whatsapp/settings");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/einstellungen/whatsapp");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
@@ -146,7 +146,7 @@ export async function connectWhatsAppAction(formData: FormData): Promise<void> {
   if (!customerId) return;
   // Im neuen Admin zurück in die Kundenakte (Reiter WhatsApp), sonst wie bisher
   const back = (state: string) =>
-    adminZiel(`/admin/whatsapp/settings?wa=${state}&c=${encodeURIComponent(customerId)}#kunde-${customerId}`, `/admin/neu/kunden/${customerId}/whatsapp?wa=${state}&c=${encodeURIComponent(customerId)}`);
+    adminZiel(`/admin/neu/kunden/${encodeURIComponent(customerId)}/whatsapp?wa=${state}`, `/admin/neu/kunden/${customerId}/whatsapp?wa=${state}&c=${encodeURIComponent(customerId)}`);
 
   const apiKeyRaw = String(formData.get("apiKey") ?? "").trim();
   const phone = String(formData.get("phoneNumber") ?? "").replace(/\D/g, "").replace(/^00/, "");
@@ -191,8 +191,8 @@ export async function connectWhatsAppAction(formData: FormData): Promise<void> {
   });
   // Neuer Key: Vorlagen gleich automatisch bei Meta einreichen.
   if (ok && apiKeyRaw) await submitTemplatesForCustomer(customerId).catch((err) => reportError(err, "templates-after-admin-connect"));
-  revalidatePath("/admin/whatsapp/settings");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/einstellungen/whatsapp");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   redirect(await back(ok ? "ok" : "webhook"));
 }
@@ -237,8 +237,8 @@ export async function seedDemoAction(formData: FormData): Promise<void> {
   if (!(await demoAllowed(customerId))) throw new Error("Testdaten nur für interne Testkunden.");
   const { seedDemoData } = await import("@/lib/demo-data");
   await seedDemoData(customerId);
-  revalidatePath("/admin/whatsapp/settings");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/einstellungen/whatsapp");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/buyer");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
@@ -250,8 +250,8 @@ export async function removeDemoAction(formData: FormData): Promise<void> {
   if (!(await demoAllowed(customerId))) throw new Error("Testdaten nur für interne Testkunden.");
   const { removeDemoData } = await import("@/lib/demo-data");
   await removeDemoData(customerId);
-  revalidatePath("/admin/whatsapp/settings");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/einstellungen/whatsapp");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/buyer");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
@@ -259,8 +259,8 @@ export async function removeDemoAction(formData: FormData): Promise<void> {
 export type SaveResult = { ok: true } | { ok: false; error: string };
 
 function revalidateSettings() {
-  revalidatePath("/admin/whatsapp/settings");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/einstellungen/whatsapp");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
@@ -361,7 +361,7 @@ export async function markTestCustomerAction(formData: FormData): Promise<void> 
   const customerId = String(formData.get("customerId") ?? "");
   if (!customerId || formData.get("confirm") !== "on") return;
   await prisma.customer.update({ where: { id: customerId }, data: { plan: "internal" } });
-  revalidatePath(`/admin/kunden/${customerId}`);
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath(`/admin/neu/kunden/${customerId}`);
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }

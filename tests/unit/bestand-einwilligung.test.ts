@@ -3,7 +3,13 @@
 import { describe, expect, it } from "vitest";
 import {
   chooseChannel,
+  consentAskEligible,
   consentRequestByMailAllowed,
+  CONSENT_ASK_GAP_DAYS,
+  countsForReach,
+  offerReach,
+  reachableForOffers,
+  wantsConsentPs,
   countAudience,
   emailDecision,
   isSimilarLine,
@@ -14,7 +20,7 @@ import {
   type ConsentSubject,
 } from "@/lib/bestand/einwilligung";
 import { afterSend, bounceCheck, effectiveDailyLimit, inMailWindow, isBounceError, mailSlots, providerDailyLimit, type ThrottleState } from "@/lib/bestand/mail-drossel";
-import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, imprintFromWebsiteInfo, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
+import { buildCampaignMail, campaignMailFooter, consentPsLine, defaultCampaignMail, fillCampaignMail, imprintFromWebsiteInfo, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
 import { classifyCampaignReply, effectiveMode, inSegment, renewalTopic } from "@/lib/bestand/campaigns";
 import { attributeContract, attributeToCampaign, contractOrigin } from "@/lib/lead-herkunft";
 import { ertragOf, funnelOf, groupStats, quote, type CampaignStats, type FunnelRecipient } from "@/lib/bestand/statistik";
@@ -355,8 +361,8 @@ describe("60-Tage-Zuordnung, letzte Kampagne zählt, keine Doppelzählung", () =
 describe("Kampagnen-Mail", () => {
   it("Bestandskunden gesiezt: „Guten Tag Frau Muster,“ bzw. „Guten Tag,“ ohne Namen", () => {
     const t = fillCampaignMail(defaultCampaignMail("renewal"), { kontakt: { firstName: "Erika", lastName: "Muster", salutation: "Frau" }, thema: "Kfz-Versicherung", meinname: "Susanne Meier" });
-    expect(t.body.startsWith("Guten Tag Frau Muster,\n\nbei Ihrem Vertrag Kfz-Versicherung")).toBe(true);
-    expect(t.subject).toBe("Ihr Vertrag Kfz-Versicherung: bald steht ein Termin an");
+    expect(t.body.startsWith("Guten Tag Frau Muster,\n\nIhr Vertrag Kfz-Versicherung verlängert sich bald.")).toBe(true);
+    expect(t.subject).toBe("Ihr Vertrag Kfz-Versicherung verlängert sich bald");
     expect(fillCampaignMail(defaultCampaignMail("review"), { kontakt: null, meinname: "S" }).body.startsWith("Guten Tag,\n\n")).toBe(true);
     // Du-Fassung liegt ebenfalls vor
     expect(fillCampaignMail(defaultCampaignMail("review", "du"), { ansprache: "du", kontakt: { firstName: "Erika" }, meinname: "S" }).body.startsWith("Hallo Erika,")).toBe(true);
@@ -400,5 +406,90 @@ describe("Hinweise zu WhatsApp-Vorlagen", () => {
       const n = templateNotice(true, rows(s), ["campaign_review"], "empfehlung");
       expect(n?.text ?? "").not.toMatch(/melden Sie sich|[–—]/);
     }
+  });
+});
+
+describe("Paket 3: Einwilligung als Umsatzhebel", () => {
+  const now = D("2026-11-20T10:00:00Z");
+
+  it("Für Angebote erreichbar nur mit Einwilligung, § 7 Abs. 3 allein reicht nicht", () => {
+    expect(reachableForOffers(subject({ whatsappConsent: "ja" }))).toBe(true);
+    expect(reachableForOffers(subject({ emailConsent: "ja" }))).toBe(true);
+    expect(reachableForOffers(subject())).toBe(false);
+    expect(reachableForOffers(subject({ emailConsent: "ja", emailOptOutAt: now }))).toBe(false);
+    expect(reachableForOffers(subject({ whatsappConsent: "ja", optOutAt: now }))).toBe(false);
+    expect(reachableForOffers(subject({ whatsappConsent: "ja", blockedAt: now }))).toBe(false);
+    expect(countsForReach(subject({ optOutAt: now }))).toBe(false);
+    expect(countsForReach(subject({ email: null, phone: null }))).toBe(false);
+  });
+
+  it("Sammelanfrage überspringt Abgemeldete, Gesperrte, Sperrliste und Kunden ohne Werbeerlaubnis", () => {
+    const ok = (o: Partial<ConsentSubject>, settings = UWG, last: Date | null = null) => consentAskEligible(subject(o), settings, last, now);
+    // mit § 7 Abs. 3 (Bestätigung und Nachweis), noch ohne Einwilligung: ja
+    expect(ok({})).toBe(true);
+    // abgemeldet (alle Kanäle oder nur E-Mail), gesperrt, Sperrliste
+    expect(ok({ optOutAt: now })).toBe(false);
+    expect(ok({ emailOptOutAt: now })).toBe(false);
+    expect(ok({ blockedAt: now })).toBe(false);
+    expect(ok({ suppressed: { email: true } })).toBe(false);
+    expect(ok({ suppressed: { all: true } })).toBe(false);
+    // ohne Werbeerlaubnis per E-Mail: Bestätigung fehlt, Nachweis fehlt, „nein“, keine Adresse
+    expect(ok({}, NO_UWG)).toBe(false);
+    expect(ok({ widerspruchHinweis: null })).toBe(false);
+    expect(ok({ widerspruchHinweis: "nein" })).toBe(false);
+    expect(ok({ emailConsent: "nein" })).toBe(false);
+    expect(ok({ email: null })).toBe(false);
+    // schon erreichbar: keine Bitte nötig
+    expect(ok({ emailConsent: "ja" })).toBe(false);
+    expect(ok({ whatsappConsent: "ja" })).toBe(false);
+    // 30 Tage Abstand
+    const days = (n: number) => new Date(now.getTime() - n * 86_400_000);
+    expect(ok({}, UWG, days(CONSENT_ASK_GAP_DAYS - 1))).toBe(false);
+    expect(ok({}, UWG, days(CONSENT_ASK_GAP_DAYS))).toBe(true);
+  });
+
+  it("Kennzahl: Anteil erreichbar und Zahl der anfragbaren Kunden", () => {
+    const r = offerReach(
+      [
+        { subject: subject({ whatsappConsent: "ja" }), lastAskedAt: null },
+        { subject: subject({ emailConsent: "ja" }), lastAskedAt: null },
+        { subject: subject(), lastAskedAt: null },
+        { subject: subject({ widerspruchHinweis: null }), lastAskedAt: null },
+        { subject: subject({ optOutAt: now }), lastAskedAt: null },
+      ],
+      UWG,
+      now,
+    );
+    expect(r).toEqual({ total: 4, reachable: 2, share: 0.5, withoutConsent: 2, askable: 1 });
+    expect(offerReach([], UWG, now).share).toBe(0);
+  });
+
+  it("P.S. mit Einwilligungslink nur bei Werbeerlaubnis per E-Mail und fehlender Einwilligung", () => {
+    // § 7 Abs. 3 mit Nachweis, ohne Einwilligung: ja
+    expect(wantsConsentPs(subject(), UWG, "renewal")).toBe(true);
+    // ohne Erlaubnis nie
+    expect(wantsConsentPs(subject(), NO_UWG, "renewal")).toBe(false);
+    expect(wantsConsentPs(subject({ widerspruchHinweis: null }), UWG, "review")).toBe(false);
+    expect(wantsConsentPs(subject({ emailOptOutAt: now }), UWG, "renewal")).toBe(false);
+    expect(wantsConsentPs(subject({ blockedAt: now }), UWG, "renewal")).toBe(false);
+    // E-Mail-Einwilligung da, WhatsApp offen mit Mobilnummer: ja; WhatsApp „nein“ oder keine Nummer: nein
+    expect(wantsConsentPs(subject({ emailConsent: "ja" }), NO_UWG, "cross_sell")).toBe(true);
+    expect(wantsConsentPs(subject({ emailConsent: "ja", whatsappConsent: "nein" }), UWG, "cross_sell")).toBe(false);
+    expect(wantsConsentPs(subject({ emailConsent: "ja", phone: null }), UWG, "cross_sell")).toBe(false);
+    expect(wantsConsentPs(subject({ emailConsent: "ja", whatsappConsent: "ja" }), UWG, "cross_sell")).toBe(false);
+    // nicht in Geburtstags- und Empfehlungs-Mails
+    expect(wantsConsentPs(subject(), UWG, "birthday")).toBe(false);
+    expect(wantsConsentPs(subject({ emailConsent: "ja" }), UWG, "empfehlung")).toBe(false);
+  });
+
+  it("P.S.-Zeile in beiden Ansprachen, ohne Gedankenstriche, landet vor dem Fuß", () => {
+    const sie = consentPsLine("https://x.test/einwilligung/e1", "sie");
+    const du = consentPsLine("https://x.test/einwilligung/e1", "du");
+    expect(sie).toMatch(/^P\.S\. .*legen Sie .*https:\/\/x\.test\/einwilligung\/e1$/);
+    expect(du).toMatch(/legst du/);
+    expect(du).not.toMatch(/\bSie\b|\bIhnen\b/);
+    for (const t of [sie, du]) expect(t).not.toMatch(/[–—]/);
+    const mail = buildCampaignMail(`Text\n\n${sie}`, campaignMailFooter({ firm: "Agentur", unsubscribeUrl: "https://x.test/abmelden/r1", imprint: "Impressum" }));
+    expect(mail.text.indexOf("P.S.")).toBeLessThan(mail.text.indexOf("abmelden"));
   });
 });

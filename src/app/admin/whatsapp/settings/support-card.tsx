@@ -22,7 +22,7 @@ export async function SupportInboxCard({ status }: { status: string | null }) {
     <section id="support" className="mt-4 rounded-xl border border-[color:var(--border)] bg-white p-5 text-sm" data-support-inbox>
       <h2 className="text-base font-semibold">Support-WhatsApp (performancegrowth)</h2>
       <p className="mt-1 text-[color:var(--muted)]">
-        Eigene Nummer für Kundenanfragen. Nachrichten landen unter WhatsApp-Chats (Kunde „performancegrowth Support“), ohne Assistent, mit Push an alle Admins.
+        Eigene Nummer für Kundenanfragen. Nachrichten landen unter Chats, mit Push an alle Admins.
       </p>
       {status && STATUS[status] ? <p className="mt-3 rounded-lg bg-[color:var(--surface-sunken)] px-3 py-2">{STATUS[status]}</p> : null}
       <ul className="mt-3 space-y-1">
@@ -53,7 +53,7 @@ export async function SupportInboxCard({ status }: { status: string | null }) {
           <span className="text-amber-700">360dialog-Partnerzugang fehlt (DIALOG360_PARTNER_ID / DIALOG360_PARTNER_API_KEY).</span>
         )}
         {acc ? (
-          <Link href="/admin/whatsapp" className="rounded-lg border border-[color:var(--border)] px-4 py-2 font-medium">
+          <Link href="/admin/neu/leads/chats" className="rounded-lg border border-[color:var(--border)] px-4 py-2 font-medium">
             Zu den Chats
           </Link>
         ) : null}

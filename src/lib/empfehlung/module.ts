@@ -91,7 +91,7 @@ async function informAdmin(customerId: string, title: string, note: string, opts
       .catch((err) => reportError(err, "empfehlung-admin-task"));
   }
   const { sendToAdmins } = await import("@/lib/push");
-  await sendToAdmins({ title, body: note.slice(0, 140), url: `/admin/kunden/${customerId}/abrechnung`, tag: `empfehlung:${customerId}` }).catch(() => {});
+  await sendToAdmins({ title, body: note.slice(0, 140), url: `/admin/neu/kunden/${customerId}/abrechnung`, tag: `empfehlung:${customerId}` }).catch(() => {});
 }
 
 async function mailCustomer(customerId: string, subject: string, paragraphs: string[], list?: string[]) {

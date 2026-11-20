@@ -3,7 +3,6 @@ import { TaxNumberForm } from "@/app/admin/einstellungen/rechnungsangaben/form";
 import { EinstellungSeite, LISTE } from "@/components/admin-neu/einstellungen/rahmen";
 import { Card, CardHeader } from "@/components/ui";
 import { effectiveTaxNumber, invoiceFooter, loadTaxNumberOverride, taxNumberWarning } from "@/lib/invoice-footer";
-import { PROVIDER } from "@/lib/legal-texts";
 import { loadAccountCheck } from "@/lib/rechnungsangaben";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
@@ -28,7 +27,6 @@ export default async function Page() {
       <Card>
         <CardHeader title="USt-IdNr. bzw. Steuernummer" />
         <div className="space-y-3 p-5" data-funktion="actions-savetaxnumberaction--steuernummer-fuer-rechnungen">
-          <p className="text-sm text-[color:var(--muted)]">Standard: {PROVIDER.vatId}. Nur ausfüllen, wenn auf Rechnungen etwas anderes stehen soll.</p>
           <TaxNumberForm initial={override ?? ""} />
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">So steht es auf jeder Rechnung</p>

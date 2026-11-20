@@ -71,7 +71,7 @@ describe("Meta-Formular → Vertrieb", () => {
     expect(c.inboundLeads[0].answers).toContain("wie viele leads?: 20");
     expect(push.sendToAdmins).toHaveBeenCalledTimes(1);
     expect(push.sendToAdmins).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "Neuer Vermittler-Lead", body: `${inc.fields.full_name}, Allianz Muster, Köln`, url: `/admin/vertrieb/kontakte/${c.id}` }),
+      expect.objectContaining({ title: "Neuer Vermittler-Lead", body: `${inc.fields.full_name}, Allianz Muster, Köln`, url: `/admin/neu/vertrieb/kontakte/${c.id}` }),
     );
     const f = await prisma.vertriebLeadForm.findUniqueOrThrow({ where: { formId: vertriebForm } });
     expect(f.lastLeadAt).not.toBeNull();

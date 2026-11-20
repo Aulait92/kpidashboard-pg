@@ -62,10 +62,11 @@ function alleTexte(k: FlowTextKontext): string[] {
 describe("Texte wörtlich nach texte-v2.md", () => {
   it("Chat-Nachricht Sie und Du", () => {
     expect(chatNachricht(SIE)).toEqual({
-      text: "Kleiner Tipp für Donnerstag 💡\n\nWenn Herr Kannapinn Ihre Policen vorab sieht, prüft er schon vor dem Termin, *ob Sie Geld sparen können*: doppelte Verträge, zu teure Tarife, fehlender Schutz. So wird der Termin kürzer und konkreter.\n\n*Meist reicht ein Foto der ersten Seite.* Dauert etwa eine Minute.\n\nIhr Termin findet auch ohne Policen statt.",
+      text: "Kleiner Tipp für Donnerstag 💡\n\nWenn Herr Kannapinn Ihre Policen vorab hat, sieht er schon vor dem Termin, *ob Sie etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist.* Dabei versucht er, Ihnen Geld zu sparen. So wird der Termin kürzer und konkreter.\n\n*Meist reicht ein Foto der ersten Seite.* Dauert etwa eine Minute.\n\nIhr Termin findet auch ohne Policen statt.",
       fusszeile: null,
     });
-    expect(chatNachricht(DU).text).toContain("Wenn Ole deine Policen vorab sieht, prüft er schon vor dem Termin, *ob du Geld sparen kannst*:");
+    expect(chatNachricht(DU).text).toContain("Wenn Ole deine Policen vorab hat, sieht er schon vor dem Termin, *ob du etwas doppelt zahlst, wann du kündigen kannst und was genau versichert ist.*");
+    expect(chatNachricht({ ...SIE, pronomen: null }).text).toContain("Wenn Herr Kannapinn Ihre Policen vorab hat, ist schon vor dem Termin klar, *ob Sie etwas doppelt zahlen");
     // Als letzter Absatz statt Fußzeile (Ole, 20.11.2026: zu wenig Abstand zur Fußzeile)
     expect(chatNachricht(DU).text.endsWith("\n\nDein Termin findet auch ohne Policen statt.")).toBe(true);
     // Ohne Pronomen kein „er/sie“
@@ -115,14 +116,19 @@ describe("Texte wörtlich nach texte-v2.md", () => {
   it("Bestätigung mit Anzahl, Fußzeile Widerruf, bei ki = false der Zusatzsatz", () => {
     const b = bestaetigung(SIE, 3, true);
     expect(b.text).toBe(
-      "✅ Danke, *3 Dateien sind angekommen.*\n\nHerr Kannapinn sieht sie sich vor Donnerstag an und prüft, wo Sie sparen können. Bis dahin müssen Sie nichts weiter tun.\n\nNoch eine Police vergessen? Einfach nachsenden.",
+      "✅ Danke, *3 Dateien sind angekommen.*\n\nHerr Kannapinn sieht sie sich vor Donnerstag an und versucht, Ihnen Geld zu sparen. Bis dahin müssen Sie nichts weiter tun.\n\nNoch eine Police, etwa Kfz oder Hausrat? Einfach nachsenden.",
     );
     expect(b.fusszeile).toBe("Widerruf jederzeit: einfach „Widerruf“ schreiben.");
     expect(BESTAETIGUNG_RE.test(b.text)).toBe(true);
     expect(bestaetigung(SIE, 1, true).text).toContain("*1 Datei ist angekommen.*");
     expect(bestaetigung(SIE, 2, false).text).toContain("Alles klar, wir lesen nichts automatisch aus.");
     expect(bestaetigung(SIE, 2, true).text).not.toContain("nichts automatisch");
-    expect(bestaetigung(DU, 2, true).text).toContain("prüft, wo du sparen kannst. Bis dahin musst du nichts weiter tun.");
+    expect(bestaetigung(DU, 2, true).text).toContain("Ole sieht sie sich vor Donnerstag an und versucht, dir Geld zu sparen. Bis dahin musst du nichts weiter tun.");
+    // Ohne KI: Bestätigung der Wahl direkt nach dem Dank, dann der Ansehen-Satz
+    expect(bestaetigung(DU, 1, false).text).toBe(
+      "✅ Danke, *1 Datei ist angekommen.*\n\nAlles klar, wir lesen nichts automatisch aus.\n\nOle sieht sie sich vor Donnerstag an und versucht, dir Geld zu sparen. Bis dahin musst du nichts weiter tun.\n\nNoch eine Police, etwa Kfz oder Hausrat? Einfach nachsenden.",
+    );
+    expect(BESTAETIGUNG_RE.test(bestaetigung(DU, 1, false).text)).toBe(true);
   });
 
   it("Später, Erinnerungen, Nein danke (Sie und Du)", () => {
@@ -130,10 +136,10 @@ describe("Texte wörtlich nach texte-v2.md", () => {
     expect(spaeterAntwort("du", true)).toBe("Alles klar, kein Problem. Dein Termin findet so oder so statt. Ich erinnere dich höchstens zweimal daran.");
     // Ohne Opt-in keine Ankündigung von Erinnerungen
     expect(spaeterAntwort("sie", false)).toBe("Alles klar, kein Problem. Ihr Termin findet so oder so statt.");
-    expect(erinnerung1(SIE).text).toBe("Kurze Erinnerung an Ihren Termin am Donnerstag: Mit Ihren Policen kann Herr Kannapinn vorab prüfen, ob Sie Geld sparen können. Meist reicht ein Foto der ersten Seite.");
-    expect(erinnerung1(DU).text).toBe("Kurze Erinnerung an deinen Termin am Donnerstag: Mit deinen Policen kann Ole vorab prüfen, ob du Geld sparen kannst. Meist reicht ein Foto der ersten Seite.");
-    expect(erinnerung2(SIE).text).toBe("Morgen um 10 Uhr ist Ihr Videotermin. Wenn Herr Kannapinn Ihre Policen vorher sieht, kann er gezielter vorbereiten. Wenn nicht, auch gut: Sie können sie auch im Termin zeigen.");
-    expect(erinnerung2(DU).text).toBe("Morgen um 10 Uhr ist dein Videotermin. Wenn Ole deine Policen vorher sieht, kann er gezielter vorbereiten. Wenn nicht, auch gut: Du kannst sie auch im Termin zeigen.");
+    expect(erinnerung1(SIE).text).toBe("Kurze Frage zu Ihrem Termin am Donnerstag: Haben Sie Ihre Policen gerade zur Hand? Meist reicht ein Foto der ersten Seite. Dann sieht Herr Kannapinn vorab, wann Sie kündigen können und ob Sie etwas doppelt zahlen.");
+    expect(erinnerung1(DU).text).toBe("Kurze Frage zu deinem Termin am Donnerstag: Hast du deine Policen gerade zur Hand? Meist reicht ein Foto der ersten Seite. Dann sieht Ole vorab, wann du kündigen kannst und ob du etwas doppelt zahlst.");
+    expect(erinnerung2(SIE).text).toBe("Morgen um 10 Uhr ist Ihr Videotermin. Noch schnell ein Foto Ihrer Policen? Dann kann sich Herr Kannapinn gezielt vorbereiten. Sonst einfach im Termin zeigen.");
+    expect(erinnerung2(DU).text).toBe("Morgen um 10 Uhr ist dein Videotermin. Noch schnell ein Foto deiner Policen? Dann kann sich Ole gezielt vorbereiten. Sonst einfach im Termin zeigen.");
     expect(erinnerung2({ ...SIE, video: false }).text).toContain("ist Ihr Termin.");
     expect(erinnerung1(SIE).fusszeile).toBe("Kein Interesse? Tippen Sie „Nein, danke“ oder STOP.");
     expect(erinnerung1(DU).fusszeile).toBe("Kein Interesse? Tipp „Nein, danke“ oder STOP.");
@@ -158,6 +164,74 @@ describe("Texte wörtlich nach texte-v2.md", () => {
   it("„ohne KI“ wird nicht schlechtgeredet (kein Dark Pattern)", () => {
     const t = [formularWortlaut(formularDaten(SIE, "u")), bestaetigung(SIE, 2, false).text].join(" ");
     expect(t).not.toMatch(/ohne KI.{0,40}(schlechter|langsamer|dauert länger|nicht fertig)/i);
+  });
+});
+
+describe("Paket 4: Lead-Texte ohne Ersparnisversprechen (§ 5 UWG, K8)", () => {
+  const VARIANTEN: FlowTextKontext[] = [SIE, DU, { ...SIE, kiFertig: false, gesundheit: false, pronomen: null }, { ...DU, tag: null, video: false }];
+
+  it("kein Lead-Text verspricht Ersparnis, Preise, Geschwindigkeit oder Lücken", () => {
+    // Erlaubt ist nur das Bemühen (Ole, 20.11.2026): „versucht, dir/Ihnen (dabei) Geld zu sparen“
+    const BEMUEHEN = /versucht(?: [^,]{1,40})?, (dir|Ihnen) Geld zu sparen/g;
+    const VERBOTEN = /sparen|spar(st|t)\b|ersparnis|günstiger|zu teuer|teure|garantie|deutlich schneller|fehlt|fehlender|lücke|unterversichert|empfehl|lohnt/i;
+    for (const k of VARIANTEN) {
+      for (const t of alleTexte(k)) expect(t.replace(BEMUEHEN, ""), t).not.toMatch(VERBOTEN);
+    }
+  });
+
+  it("Chat-Nachricht, Bestätigung und Erinnerungen gibt es in beiden Ansprachen", () => {
+    for (const f of [(k: FlowTextKontext) => chatNachricht(k).text, (k: FlowTextKontext) => bestaetigung(k, 2, true).text, (k: FlowTextKontext) => bestaetigung(k, 2, false).text, (k: FlowTextKontext) => erinnerung1(k).text, (k: FlowTextKontext) => erinnerung2(k).text]) {
+      const sie = f(SIE);
+      const du = f(DU);
+      expect(sie).toMatch(/\b(Sie|Ihre[nmr]?)\b/);
+      expect(sie).not.toMatch(/\b(du|dein(e[nmr]?)?|dich|dir)\b/);
+      expect(du).toMatch(/\b(du|dein(e[nmr]?)?)\b/);
+      expect(du).not.toMatch(/\b(Sie|Ihre[nmr]?|Ihnen)\b/);
+    }
+  });
+
+  it("Formular-Wortlaut (Nachweis A3) und Textversionen sind unverändert", () => {
+    // Hashes des Formular-Wortlauts vor Paket 4 (Stand b13c3f8). Ändert sich einer, ist das eine neue Einwilligung
+    // (neue FLOW_TEXT_VERSION, textVersionKi, Stufe A), keine Textpflege.
+    const u = "https://x.de/d";
+    expect(textHash(formularWortlaut(formularDaten(SIE, u)))).toBe("d7d946b40d5fb5968f0530eee27759ffd699172bc0c5e0f59f6a6ca5a791b470");
+    expect(textHash(formularWortlaut(formularDaten(DU, u)))).toBe("ef69b86159ca91568d1891f00efd28130abcd14ae120e87bd45eced8bdc77970");
+    expect(textHash(formularWortlaut(formularDaten({ ...SIE, kiFertig: false, gesundheit: false, pronomen: null }, u)))).toBe("69a236db7f1ddb8765d44c5a8c4e33742048731f9af9ddb4d799ce7fc7b87ee2");
+    expect(FLOW_TEXT_VERSION).toBe("2026-11-19.g1");
+    expect(FLOW_TEXT_VERSION_SACH).toBe("2026-11-19.s1");
+  });
+
+  it("Abmeldehinweis „Nein, danke“ oder STOP wörtlich in beiden Erinnerungen und ihren Vorlagen", () => {
+    for (const k of [SIE, DU]) {
+      for (const n of [erinnerung1(k), erinnerung2(k), vorlagenText("erinnerung1", k.an), vorlagenText("erinnerung2", k.an)]) {
+        expect(n.fusszeile).toContain("„Nein, danke“ oder STOP");
+        expect(n.fusszeile).toBe(erinnerungFusszeile(k.an));
+      }
+    }
+    expect(vorlagenText("erinnerung1", "sie").knopf2).toBe(KNOPF_NEIN_DANKE);
+    expect(vorlagenText("erinnerung2", "du").knopf2).toBe(KNOPF_NEIN_DANKE);
+  });
+
+  it("Freiwilligkeit und Widerruf bleiben: letzter Absatz der Chat-Nachricht und Fußzeile der Bestätigung", () => {
+    // Seit 20.11.2026 als letzter Absatz statt Fußzeile (Ole)
+    expect(chatNachricht(SIE).text.endsWith("\n\nIhr Termin findet auch ohne Policen statt.")).toBe(true);
+    expect(chatNachricht(DU).text.endsWith("\n\nDein Termin findet auch ohne Policen statt.")).toBe(true);
+    expect(bestaetigung(SIE, 1, false).fusszeile).toBe(WIDERRUF_FUSSZEILE);
+  });
+
+  it("Vorlagennamen hängen am Text: alle 6 verschieden, stabil, mit Hash des Textes", () => {
+    const namen = (["bitte", "erinnerung1", "erinnerung2"] as const).flatMap((art) => (["sie", "du"] as const).map((an) => vorlagenName(art, an, "abcdef123456")));
+    expect(new Set(namen).size).toBe(6);
+    expect(namen).toEqual((["bitte", "erinnerung1", "erinnerung2"] as const).flatMap((art) => (["sie", "du"] as const).map((an) => vorlagenName(art, an, "abcdef123456"))));
+    for (const n of namen) expect(n).toMatch(/^pg_policen_(bitte|erinn1|erinn2)_abcdef_[0-9a-f]{4}_(sie|du)$/);
+    // Gerendert entsprechen die Erinnerungs-Vorlagen den Nachrichten im Fenster
+    for (const k of [SIE, DU]) {
+      for (const art of ["erinnerung1", "erinnerung2"] as const) {
+        const p = vorlagenParameter(art, k);
+        const t = vorlagenText(art, k.an).text.replace(/\{\{(\d+)\}\}/g, (_, i) => p[Number(i) - 1]);
+        expect(t).toBe((art === "erinnerung1" ? erinnerung1(k) : erinnerung2(k)).text);
+      }
+    }
   });
 });
 

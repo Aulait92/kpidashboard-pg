@@ -12,7 +12,7 @@ export async function saveSetupSettingsAction(_prev: SetupSettingsState, fd: For
   for (const k of VIDEO_STEPS) videos[k] = String(fd.get(`video_${k}`) ?? "");
   const res = await saveSetupSettings({ businessId: String(fd.get("businessId") ?? ""), videos });
   if (!res.ok) return { error: res.error };
-  revalidatePath("/admin/einstellungen/einrichtung");
+  revalidatePath("/admin/neu/einstellungen/einrichtung");
   revalidatePath("/buyer/einrichtung");
   return { ok: true };
 }

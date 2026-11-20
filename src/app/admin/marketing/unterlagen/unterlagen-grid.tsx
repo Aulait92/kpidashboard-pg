@@ -26,7 +26,7 @@ const when = (iso: string) =>
 export function UnterlagenGrid({
   slots,
   demo,
-  praesentationBasis = "/admin/marketing/unterlagen/praesentation",
+  praesentationBasis = "/admin/neu/marketing/unterlagen/praesentation",
   funktionen = {},
 }: {
   slots: UnterlagenSlot[];
@@ -38,11 +38,11 @@ export function UnterlagenGrid({
 }) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {(["vertreter", "makler", "ppl"] as const).map((a) => (
           <Card key={a} className="p-4 sm:p-5">
             <h2 className="mb-3 text-base font-semibold">{AUDIENCE_LABEL[a]}</h2>
-            <div className="space-y-3">
+            <div className="divide-y divide-[color:var(--border)]">
               <div data-funktion={funktionen.web}>
                 <WebPraesentation audience={a} basis={praesentationBasis} />
               </div>
@@ -61,6 +61,7 @@ export function UnterlagenGrid({
         </div>
       ) : null}
       <Leitfaeden />
+      <Matrix />
     </div>
   );
 }
@@ -83,6 +84,21 @@ function Leitfaeden() {
   );
 }
 
+/** Wirtschaftlichkeits-Matrix Bestandskunden vs. Mitarbeiter (Ole, 20.11.2026), PDF aus assets/unterlagen. */
+function Matrix() {
+  return (
+    <Card className="p-4 sm:p-5" data-matrix>
+      <h2 className="text-base font-semibold">Wirtschaftlichkeits-Matrix</h2>
+      <p className="mt-1 text-sm text-[color:var(--muted)]">Bestandskunden gegen Mitarbeiter: ab wann sich das Paket rechnet.</p>
+      <div className="mt-3">
+        <ButtonLink href="/api/admin/unterlagen/wirtschaftlichkeits-matrix" external icon={FileText}>
+          PDF öffnen
+        </ButtonLink>
+      </div>
+    </Card>
+  );
+}
+
 function useKopieren() {
   const [msg, setMsg] = useState<string | null>(null);
   const kopieren = (url: string) =>
@@ -98,16 +114,17 @@ function WebPraesentation({ audience, basis }: { audience: Audience; basis: stri
   const { msg, kopieren } = useKopieren();
   const pfad = `${basis}/${audience}`;
   return (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-web-praesentation={audience}>
+    <div className="pb-3" data-web-praesentation={audience}>
       <div className="flex items-start gap-3">
         <MonitorPlay className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--muted)]" />
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium">Web-Präsentation zum Durchklicken</div>
-          <div className="text-sm text-[color:var(--muted)]">{folienListe(audience).length} Folien mit Live-Demo, Listenpreise. Mit Angebotspreisen über den Kontakt.</div>
+          <div className="text-sm font-medium">Web-Präsentation</div>
+          {/* Angebotspreise zeigt die Präsentation aus der Kontaktakte (Mehr → Präsentation) */}
+          <div className="text-sm text-[color:var(--muted)]">{folienListe(audience).length} Folien, Listenpreise</div>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <ButtonLink href={pfad} icon={Presentation} variant="primary">
+      <div className="mt-2 flex flex-wrap items-center gap-2 pl-8">
+        <ButtonLink href={pfad} icon={Presentation}>
           Öffnen
         </ButtonLink>
         <Button icon={Copy} onClick={() => kopieren(`${window.location.origin}${pfad}`)}>
@@ -126,12 +143,12 @@ function DemoLink({ demo }: { demo: { haupt: string; app: string } }) {
     <Card className="p-4 sm:p-5" data-demo-link>
       <h2 className="text-base font-semibold">Live-Demo der Beratungspräsentation</h2>
       <p className="mt-1 text-sm text-[color:var(--muted)]">
-        Öffentlich, ohne Login, mit Beispieldaten: Interessenten klicken selbst Tarife und Bausteine an. Zum Mitschicken oder für die Webseite.
+        Öffentlich mit Beispieldaten, zum Mitschicken oder für die Webseite.
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <input readOnly value={demo.haupt} onFocus={(e) => e.target.select()} className="h-9 min-w-0 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 text-sm" aria-label="Link zur Live-Demo" />
         <div className="flex gap-2">
-          <Button icon={Copy} variant="primary" onClick={() => kopieren(demo.haupt)}>
+          <Button icon={Copy} onClick={() => kopieren(demo.haupt)}>
             Kopieren
           </Button>
           <ButtonLink href={demo.haupt} external icon={ExternalLink}>
@@ -181,7 +198,7 @@ function Slot({ slot }: { slot: UnterlagenSlot }) {
   }
 
   return (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-unterlage={`${slot.audience}-${slot.format}`}>
+    <div className="py-3 last:pb-0" data-unterlage={`${slot.audience}-${slot.format}`}>
       <div className="flex items-start gap-3">
         <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--muted)]" />
         <div className="min-w-0 flex-1">
@@ -191,11 +208,11 @@ function Slot({ slot }: { slot: UnterlagenSlot }) {
               {slot.file.fileName} · {formatBytes(slot.file.size)} · {when(slot.file.uploadedAt)}
             </div>
           ) : (
-            <div className="text-sm text-[color:var(--muted)]">Noch keine Datei hinterlegt</div>
+            <div className="text-sm text-[color:var(--muted)]">noch keine Datei</div>
           )}
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-2 pl-8">
         <FileDrop
           variant="button"
           instant

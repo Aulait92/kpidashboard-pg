@@ -257,7 +257,7 @@ export async function processCampaignRun(id: string, deps: CampaignDeps = defaul
     if (review.status === "rot") {
       await saveStep(state, "anlegen", { status: "uebersprungen", note: "Prüfung rot, nichts bei Meta angelegt" });
       await prisma.campaignRun.update({ where: { id }, data: { status: "blocked", finishedAt: new Date(), error: `Prüfung rot: ${review.summary}`.slice(0, 1000) } });
-      await deps.notify(`Kampagne ${row.customer.name}: Prüfung rot`, "Nichts bei Meta angelegt, bitte Befunde ansehen.", `/admin/kunden/${row.customerId}/kampagne`);
+      await deps.notify(`Kampagne ${row.customer.name}: Prüfung rot`, "Nichts bei Meta angelegt, bitte Befunde ansehen.", `/admin/neu/kunden/${row.customerId}/kampagne`);
       return "blocked";
     }
     if (!row.autoBuild) {
@@ -387,7 +387,7 @@ export async function buildCampaignRun(id: string, deps: CampaignDeps = defaultD
     await deps.notify(
       `Kampagne für ${row.customer.name} ist angelegt (pausiert)`,
       "Bitte im Werbeanzeigenmanager prüfen und veröffentlichen.",
-      built.campaignId && ctx.adAccountId ? adsManagerUrl(ctx.adAccountId, built.campaignId) : `/admin/kunden/${row.customerId}/kampagne`,
+      built.campaignId && ctx.adAccountId ? adsManagerUrl(ctx.adAccountId, built.campaignId) : `/admin/neu/kunden/${row.customerId}/kampagne`,
     );
     return "built";
   } catch (err) {
