@@ -20,5 +20,8 @@ export const SPLITTEST_HYPOTHESE: Record<string, string> = {
   buchungsseite_kompakt: "Weniger Hürden (nächste Tage zuerst, Datenschutz als Hinweis) bringen mehr Buchungen.",
   praesentation: "Einstieg mit dem Anliegen und Wahl zwischen zwei Paketen erhöhen die Zusage im Termin.",
   // Freigabe Ole 20.11.2026, gebaut (lib/experimente.ts termin_zusage, bot.ts, termin-strecke.ts)
+  // Erster Test im eigenen PKV-Funnel (A/B-Test-Labor, Freigabe Ole 20.11.2026; lib/experimente.ts funnel_pkv_anlass)
+  funnel_pkv_anlass:
+    "Eine Überschrift mit dem konkreten Anlass (Beitragserhöhung zum 1. Januar) spricht Betroffene direkt an: Es fragen eher Leute mit echtem Anliegen an, die der Experte auch erreicht.",
   termin_zusage: "Endet die Buchungsbestätigung mit der Zusage-Frage „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], erscheinen mehr Leads zum Termin.",
 };

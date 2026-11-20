@@ -5,7 +5,15 @@
 import { formatPhone } from "@/lib/format";
 import { anredeAusVorname } from "@/lib/ppl/anrede";
 
-export type TemplateLead = { id: string; name: string | null; phone: string | null; email: string | null; answers: { label: string; value: string }[] };
+export type TemplateLead = {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  answers: { label: string; value: string }[];
+  /** Einwilligungsnachweis (L3): Platzhalter {einwilligung}, {einwilligung_zeitpunkt}, {einwilligung_fassung}, {einwilligung_kanaele} */
+  consent?: { text: string; at: string; version: string; kanaele: string[] } | null;
+};
 
 const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
 
@@ -35,6 +43,12 @@ export function templateValues(l: TemplateLead): Record<string, string> {
   for (const [key, aliases] of Object.entries(ALIASES)) {
     const hit = aliases.map((a) => byLabel.get(norm(a))).find(Boolean);
     if (hit) v[key] = hit;
+  }
+  if (l.consent) {
+    v.einwilligung = l.consent.text;
+    v.einwilligung_zeitpunkt = l.consent.at;
+    v.einwilligung_fassung = l.consent.version;
+    v.einwilligung_kanaele = l.consent.kanaele.join(", ");
   }
   // Kennung bei der Leadbörse: steht nicht im Code, sondern in der Variable PPL_HVK_BROKERCODE
   if (process.env.PPL_HVK_BROKERCODE?.trim()) v.brokercode = process.env.PPL_HVK_BROKERCODE.trim();

@@ -2797,6 +2797,9 @@ model PoolLead {
   // Anzeige/UTM aus dem Funnel ohne Personendaten ({ adPlatform, adCampaignName, … }, lib/anzeige.ts); geht bei der
   // Lieferung an den Lead
   adInfo       Json?
+  // Einwilligungsnachweis aus dem eigenen Funnel (L3, § 7a UWG): { at, funnel, version, text, kanaele, knopf }
+  // (lib/ppl/einwilligung-nachweis.ts); geht bei der Lieferung an Lead.consentData und an den Abnehmer
+  consentData  Json?
   // delivered | duplicate | invalid | parked
   status       String
   reason       String?

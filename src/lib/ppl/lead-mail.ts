@@ -19,6 +19,11 @@ export type MachineLead = {
   answers: { label: string; value: string }[];
   consentText: string | null;
   consentAt: Date | null;
+  /** Nachweis aus dem eigenen Funnel (L3): Fassung, Kanäle, Knopf, Funnel */
+  consentVersion?: string | null;
+  consentChannels?: string[] | null;
+  consentButton?: string | null;
+  consentFunnel?: string | null;
   test?: boolean;
 };
 
@@ -59,6 +64,15 @@ export function machineMail(l: MachineLead): MachineMail {
   const consent: [string, string][] = [
     ["Einwilligungstext", clean(l.consentText)],
     ["Einwilligung Zeitpunkt", l.consentAt ? l.consentAt.toISOString() : ""],
+    // Nur mit Nachweis aus dem eigenen Funnel (sonst bleiben die Zeilen wie bisher)
+    ...(l.consentVersion
+      ? ([
+          ["Einwilligung Fassung", clean(l.consentVersion)],
+          ["Einwilligung Kanäle", clean((l.consentChannels ?? []).join(", "))],
+          ["Einwilligung Knopf", clean(l.consentButton)],
+          ["Einwilligung Funnel", clean(l.consentFunnel)],
+        ] as [string, string][])
+      : []),
   ];
   const json: Record<string, unknown> = {
     lead_id: l.id,
@@ -72,7 +86,11 @@ export function machineMail(l: MachineLead): MachineMail {
     plz: clean(tv.plz),
     ort: clean(tv.ort),
     antworten: Object.fromEntries(answers.map((a) => [a.frage, a.antwort])),
-    einwilligung: { text: clean(l.consentText), zeitpunkt: l.consentAt ? l.consentAt.toISOString() : "" },
+    einwilligung: {
+      text: clean(l.consentText),
+      zeitpunkt: l.consentAt ? l.consentAt.toISOString() : "",
+      ...(l.consentVersion ? { fassung: clean(l.consentVersion), kanaele: l.consentChannels ?? [], knopf: clean(l.consentButton), funnel: clean(l.consentFunnel) } : {}),
+    },
     test: !!l.test,
   };
   const line = ([k, v]: [string, string]) => `${k}: ${v}`.trimEnd();

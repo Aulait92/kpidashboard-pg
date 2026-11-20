@@ -1,6 +1,6 @@
 import { after, type NextRequest } from "next/server";
 import { clientIp, limitResponse, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit";
-import { BESUCH_COOKIE, gueltigeBesuchId } from "@/lib/funnel/host";
+import { gueltigeBesuchId } from "@/lib/funnel/host";
 import { absenden } from "@/lib/funnel/server";
 import { reportError } from "@/lib/monitoring";
 import { PKV_TEXTE } from "@/lib/funnel/pkv-beitrag-texte";
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   } catch {
     return Response.json({ ok: false }, { status: 400 });
   }
-  const besuchId = gueltigeBesuchId(req.cookies.get(BESUCH_COOKIE)?.value) ?? gueltigeBesuchId(typeof body.besuch === "string" ? body.besuch : null);
+  const besuchId = gueltigeBesuchId(typeof body.besuch === "string" ? body.besuch : null);
   if (!besuchId) return Response.json({ ok: false, fehler: {}, meldung: PKV_TEXTE.kontakt.fehlerSenden }, { status: 400 });
 
   const geladen = Number(body.geladen ?? 0);
@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
     });
     if (!r.ok) return Response.json({ ok: false, fehler: r.fehler, abbruch: r.abbruch, schritt: r.schritt }, { status: 422 });
     if (r.meta) after(r.meta);
-    return Response.json({ ok: true, lead: r.lead });
+    if (r.mail) after(r.mail);
+    return Response.json({ ok: true, lead: r.lead, experte: r.experte });
   } catch (err) {
     reportError(err, "funnel-absenden");
     return Response.json({ ok: false, fehler: {}, meldung: PKV_TEXTE.kontakt.fehlerSenden }, { status: 500 });
