@@ -1,4 +1,4 @@
-# Sprechzettel Vertriebspräsentation (Stand 19.11.2026: Folien 11 und 12 getauscht)
+# Sprechzettel Vertriebspräsentation (Stand 20.11.2026: Folien ohne Gedankenstriche, Chats in Sie-Form)
 
 Gilt für die Vertreter-Fassung (24 Folien). Makler-Fassung (25 Folien): nach Folie 21 kommt „Mit Tarifvergleich: alles zurück nach 7 Monaten“ (Notiz unten), danach verschiebt sich alles um eins.
 Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeanteil unter der Hälfte.
@@ -42,10 +42,11 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 ## 10. Warum gute Leads verloren gehen
 - Nicht erreicht, zu spät angerufen, abends und am Wochenende, Nachfassen geht unter (Reihenfolge wie auf der Folie; Folie 11 löst Problem 01, Folie 12 die Probleme 02 und 03, Folie 14 Problem 04).
 - Auf die Antwort von Folie 6 zurückkommen: „Kennen Sie das?“
-- „Die Software löst genau das, automatisch.“
+- „Die Software löst genau das: automatisch.“
 
 ## 11. Niemand geht ran? Egal, der Lead bucht selbst.
 - WhatsApp statt Anruf, der Assistent stellt die richtigen Fragen, der Lead bucht direkt einen Termin.
+- Der Chat auf der Folie siezt den Lead („Guten Tag Frau Becker …“); der Assistent siezt Leads standardmäßig.
 - „Sie führen nur noch das Beratungsgespräch.“
 
 ## 12. Sonntag, 21:47 Uhr
@@ -60,9 +61,9 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - Nachfassen automatisch: nicht erreicht, Angebot verschickt, „Ruf mich in 2 Wochen an“.
 - „Der Assistent fasst nach, nicht Sie.“
 
-## 15. Jeden Morgen wissen Sie, wen Sie anrufen
+## 15. Jeden Morgen wissen Sie, wen Sie anrufen und was er will
 - Startseite „Heute“ zeigen: neue Leads ganz oben, Termine mit Zusammenfassung des Assistenten, nach dem Gespräch „Ergebnis“ antippen.
-- Keine Dokumentation am Abend.
+- Keine Dokumentation am Abend, Notizen einfach am Handy diktieren.
 
 ## 16. Perfekt vorbereitet in jeden Termin
 - Am Vortag erscheint „Termin vorbereiten“ auf der Liste.
