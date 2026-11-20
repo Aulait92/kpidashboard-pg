@@ -98,8 +98,12 @@ import { effektiveSteuer } from "@/lib/ppl/steuer";
 import {
   aggregatePoolGoal,
   customersBehind,
+  deliveryPacing,
+  describePacing,
   goalSourceFromEnv,
+  holdForImplausible,
   holdForSourceSwitch,
+  type DeliveryPacing,
   limitForSourceSwitch,
   subscriptionMonthGoal,
   type GoalSource,
@@ -138,7 +142,11 @@ export type PoolResult = {
   poolKey: string;
   poolLabel: string;
   kind: "product" | "region";
+  // Ist: bei Zielquelle software die an die Bezüge gelieferten Leads im Monat,
+  // sonst die eingegangenen Leads (countPoolLeads).
   leadsMtd: number;
+  // Eingegangene Leads im Monat (countPoolLeads, brutto).
+  incomingMtd?: number;
   goal: number;
   projected: number;
   daysElapsed: number;
@@ -438,6 +446,8 @@ export type PoolDef = {
   // Menge mit PLZ-Filter (Regionen-Rechnung, media-buyer-regionen.ts).
   productKeys: string[];
   openSubscriptions: OpenSubscription[];
+  // Bezüge des Pools (Verwertungsquote: an sie gelieferte Leads).
+  subscriptionIds: string[];
 };
 
 function isKinderwunschCampaign(name: string): boolean {
@@ -794,6 +804,7 @@ export async function derivePoolDefs(
       customerIds: acc.kind === "product" ? null : regionCustomers,
       customerCount: selected.filter((c) => c.goal > 0).length,
       productKeys: [...new Set(acc.softwareRows.map((r) => r.sub.productKey))],
+      subscriptionIds: acc.software.map((g) => g.subscriptionId),
       openSubscriptions: acc.softwareRows.map((r) => ({
         customerId: r.sub.customerId,
         name: nameById.get(r.sub.customerId) ?? r.sub.customerId,
@@ -942,6 +953,51 @@ async function countPoolLeads(
   }
   if (channel) where.adChannel = channel;
   return prisma.lead.count({ where });
+}
+
+// Lieferungs-Pacing für Pools mit Zielquelle software (Regel siehe
+// deliveryPacing in media-buyer-ziele.ts). null = klassisch (Airtable oder
+// kein Ziel): Ist = eingegangene Leads.
+async function loadDeliveryPacing(
+  def: PoolDef,
+  p: { now: Date; monthStart: Date; mtdEnd: Date; daysElapsed: number; daysTotal: number; incomingMtd: number },
+): Promise<DeliveryPacing | null> {
+  if (def.goalSource !== "software" || def.goal <= 0) return null;
+  const days = Math.min(30, Math.max(14, envNum("MEDIA_BUYER_YIELD_DAYS", 21)));
+  const since = new Date(p.now.getTime() - days * 86_400_000);
+  const sources = [...new Set([def.product, ...def.productKeys])];
+  const [recentIncoming, recentDelivered, poolDeliveredCheck] = await Promise.all([
+    countPoolLeads(def, since, p.mtdEnd),
+    def.subscriptionIds.length
+      ? prisma.lead.count({
+          where: { subscriptionId: { in: def.subscriptionIds }, isTest: false, deliveredAt: { gte: since, lte: p.now } },
+        })
+      : Promise.resolve(0),
+    // Unabhängig gezählt: alle an Bezüge gelieferten Leads dieses Produkts im Monat.
+    prisma.lead.count({
+      where: {
+        source: { in: sources },
+        subscriptionId: { not: null },
+        isTest: false,
+        deliveredAt: { gte: p.monthStart, lte: p.now },
+        ...(def.customerIds ? { customerId: { in: def.customerIds } } : {}),
+      },
+    }),
+  ]);
+  const tolRaw = Number(process.env.MEDIA_BUYER_GOAL_TOLERANCE);
+  return deliveryPacing({
+    goal: def.goal,
+    customers: def.customers,
+    incomingMtd: p.incomingMtd,
+    recentIncoming,
+    recentDelivered,
+    poolDeliveredCheck,
+    daysElapsed: p.daysElapsed,
+    daysTotal: p.daysTotal,
+    tolerance: Number.isFinite(tolRaw) && tolRaw >= 0 && tolRaw < 1 && process.env.MEDIA_BUYER_GOAL_TOLERANCE ? tolRaw : 0.02,
+    minYield: envNum("MEDIA_BUYER_MIN_YIELD", 0.1),
+    maxYield: envNum("MEDIA_BUYER_MAX_YIELD", 1.2),
+  });
 }
 
 function matchPoolCampaigns(
@@ -1480,16 +1536,31 @@ async function processPool(
   try {
     // Pool-Leads = Brutto inkl. beider Channels — d'Hondt-Verteilung & Pool-
     // Pacing arbeiten kanal-agnostisch.
-    const leadsMtd = await countPoolLeads(def, ctx.monthStart, ctx.mtdEnd);
+    const incomingMtd = await countPoolLeads(def, ctx.monthStart, ctx.mtdEnd);
+    // Bei Zielquelle software zählt als Ist, was an die Bezüge geliefert
+    // wurde; gesteuert wird in eingehenden Leads (CPL je eingehendem Lead),
+    // das Ziel wird dafür über die Verwertungsquote übersetzt (deliveryPacing).
+    const pacing = await loadDeliveryPacing(def, {
+      now: ctx.now,
+      monthStart: ctx.monthStart,
+      mtdEnd: ctx.mtdEnd,
+      daysElapsed: ctx.daysElapsed,
+      daysTotal: ctx.daysTotal,
+      incomingMtd,
+    });
+    // Steuer-Einheiten für decideBudget/guardLearning (eingehende Leads).
+    const leadsMtd = pacing ? pacing.steerLeads : incomingMtd;
+    const steerGoal = pacing ? pacing.steerGoal : def.goal;
     const projected =
       ctx.daysElapsed > 0
         ? Math.round((leadsMtd / ctx.daysElapsed) * ctx.daysTotal)
         : 0;
-    base.leadsMtd = leadsMtd;
-    base.projected = projected;
+    base.incomingMtd = incomingMtd;
+    base.leadsMtd = pacing ? pacing.delivered : incomingMtd;
+    base.projected = pacing ? pacing.projectedDelivered : projected;
 
     // ── Rückstand je Kunde: Pool-Summe erreicht, aber ein Kunde unter 95 % ──
-    const behind = customersBehind({ goal: def.goal, leadsMtd, customers: def.customers });
+    const behind = customersBehind({ goal: def.goal, leadsMtd: base.leadsMtd, customers: def.customers });
     if (behind.length > 0) {
       const named = def.customers.filter((c) => behind.some((b) => b.customerId === c.customerId));
       base.customersBehind = named.map((c) => c.name);
@@ -1499,7 +1570,7 @@ async function processPool(
           .join(", ");
         await sendToAdmins({
           title: `Media Buyer: ${def.label} Ziel erreicht, Kunde im Rückstand`,
-          body: `Pool-Summe ${leadsMtd}/${def.goal} erreicht, aber unter 95 %: ${list}. Filter/Gebiete prüfen, bevor gedrosselt wird.`.slice(0, 240),
+          body: `Pool-Summe ${base.leadsMtd}/${def.goal} erreicht, aber unter 95 %: ${list}. Filter/Gebiete prüfen, bevor gedrosselt wird.`.slice(0, 240),
           tag: `media-buyer-rueckstand:${def.key}`,
           url: "/admin/media-buyer",
         }).catch(() => undefined);
@@ -1737,7 +1808,7 @@ async function processPool(
     const poolMax = maxBudget + outbrainMax + tiktokMax + googleMax;
     let decision = decideBudget({
       leadsMtd,
-      goal: def.goal,
+      goal: steerGoal,
       daysElapsed: ctx.daysElapsed,
       daysTotal: ctx.daysTotal,
       currentBudget,
@@ -1845,12 +1916,12 @@ async function processPool(
         hoursSinceLastChange,
         pausedDays,
         leadsMtd,
-        goal: def.goal,
+        goal: steerGoal,
         projected,
         daysLeft,
         inBoostWindow: daysLeft <= ctx.boostDays,
         costPerLead,
-        cplMtd: leadsMtd > 0 && spendMtd > 0 ? spendMtd / leadsMtd : null,
+        cplMtd: incomingMtd > 0 && spendMtd > 0 ? spendMtd / incomingMtd : null,
         maxBudget: poolMax,
         cfg: ctx.learningCfg,
       });
@@ -1896,6 +1967,22 @@ async function processPool(
       });
       decision = limited.decision;
       if (limited.changed && protectStep == null) protectStep = ctx.learningCfg.maxStep;
+    }
+
+    // ── Lieferungs-Pacing: Begründung und Plausibilitätsschutz ──
+    if (pacing) {
+      const pausesForGoal = pacing.allReached && decision.setStatus === "PAUSED";
+      decision = {
+        ...decision,
+        reason: pausesForGoal
+          ? `Alle Kunden beliefert (geliefert ${pacing.delivered}/${pacing.goal}). Kampagnen werden pausiert, um Überlieferung zu vermeiden.`
+          : `${describePacing(pacing)} ${decision.reason}`,
+      };
+      if (!pacing.plausible && pacing.problem) {
+        // Nicht pausieren, nicht hochfahren: halten. base.error löst den Push aus.
+        decision = holdForImplausible(decision, pacing.problem);
+        base.error = decision.reason;
+      }
     }
 
     base.action = decision.action;
@@ -2563,7 +2650,17 @@ export type PoolAdminRow = {
   product: string;
   region: string | null;
   goal: number;
+  // Ist: bei Zielquelle software geliefert (an die Bezüge), sonst eingegangen.
   leadsMtd: number;
+  // Eingegangene Leads im Monat (countPoolLeads, brutto).
+  incomingMtd: number;
+  // Ist = geliefert (Zielquelle software mit Ziel) statt eingegangen.
+  deliveredBased: boolean;
+  // Alle Kunden haben ihr Ziel (mit Toleranz) erreicht bzw. nichts mehr offen.
+  goalReached: boolean;
+  // Offene Lieferung und Verwertungsquote (nur deliveredBased).
+  openDelivery: number | null;
+  yieldRate: number | null;
   projected: number;
   daysElapsed: number;
   daysTotal: number;
@@ -2691,7 +2788,7 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
     const settings = await ensurePool(def);
     const maxCpl = await loadPoolMaxCpl(def, settings.maxCpl, now);
     const [
-      leadsMtd,
+      incomingMtd,
       metaLeadsMtd,
       outbrainLeadsMtd,
       tiktokLeadsMtd,
@@ -2703,7 +2800,11 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       countPoolLeads(def, monthStart, mtdEnd, "TikTok"),
       countPoolLeads(def, monthStart, mtdEnd, "Google"),
     ]);
-    const projected = Math.round((leadsMtd / daysElapsed) * daysTotal);
+    const pacing = await loadDeliveryPacing(def, { now, monthStart, mtdEnd, daysElapsed, daysTotal, incomingMtd });
+    const leadsMtd = pacing ? pacing.delivered : incomingMtd;
+    const projected = pacing
+      ? pacing.projectedDelivered
+      : Math.round((incomingMtd / daysElapsed) * daysTotal);
     const last = latestByKey.get(def.key);
     const metaSpend = metaCostByProduct.get(def.product) ?? 0;
     const outbrainSpend = outbrainCostByProduct.get(def.product) ?? 0;
@@ -2717,6 +2818,11 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       region: def.region,
       goal: def.goal,
       leadsMtd,
+      incomingMtd,
+      deliveredBased: pacing != null,
+      goalReached: pacing ? pacing.allReached : def.goal > 0 && incomingMtd >= def.goal,
+      openDelivery: pacing ? pacing.open : null,
+      yieldRate: pacing ? pacing.yieldRate : null,
       projected,
       daysElapsed,
       daysTotal,
@@ -2731,8 +2837,8 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       tiktokCampaignKeyword: settings.tiktokCampaignKeyword,
       googleCampaignKeyword: settings.googleCampaignKeyword,
       cpl:
-        def.kind === "product" && leadsMtd > 0
-          ? (costByProduct.get(def.product) ?? 0) / leadsMtd
+        def.kind === "product" && incomingMtd > 0
+          ? (costByProduct.get(def.product) ?? 0) / incomingMtd
           : null,
       metaLeadsMtd,
       metaSpendMtd: metaSpend,
