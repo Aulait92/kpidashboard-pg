@@ -1543,7 +1543,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "page--status-je-quelle-instantly-calendly-formulare",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1555,7 +1555,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "page-copyfield--webhook-adressen-kopieren-und-anleitung",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1567,7 +1567,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "actions-syncinstantlyaction--jetzt-mit-instantly-abgleichen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1579,7 +1579,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-importinstantlyaction--instantly-csv-importieren",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1591,7 +1591,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-connectcalendlyaction--calendly-verbinden-und-termine-abgleichen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1603,7 +1603,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-importcontactsaction--agenturliste-csv-importieren",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1615,7 +1615,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "actions-importcoldcrmaction--daten-aus-altem-cold-crm-uebernehmen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1627,7 +1627,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "actions-replacecoldcrmaction--vertrieb-neu-importieren-ersetzt-alles",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1639,7 +1639,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-importwaalaxyaction--waalaxy-import-ohne-oberflaeche",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "entfernt",
   "ort_neu": ""
  },
@@ -1651,7 +1651,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "actions-convertinboundlead--linkedin-nachrichten-ohne-zuordnung-als-lead",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1663,7 +1663,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "page-placesused--kontakte-anreichern-google-kontingent-heute",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -1675,7 +1675,7 @@
   "status": "ergänzen",
   "demo_view": "e-einrichtung",
   "id": "page-team-kalender--team-kalender-fuer-hilfetermine-der-kunden",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/einrichtung/page.tsx"
  },
@@ -2419,7 +2419,7 @@
   "status": "abgedeckt",
   "demo_view": "e-vorlagen",
   "id": "route-get--support-whatsapp-verbinden-360dialog",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/whatsapp/page.tsx"
  },
@@ -2947,7 +2947,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "page-diag--meta-verbindung-pruefen-token-rechte-webhook-url",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -2959,7 +2959,7 @@
   "status": "ergänzen",
   "demo_view": "e-anbindungen",
   "id": "page--uebergang-webhook-fuer-zapier",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -3763,7 +3763,7 @@
   "status": "abgedeckt",
   "demo_view": "e-anbindungen",
   "id": "actions-disconnectaction--linkedin-verbinden-bzw-trennen-hinweis-zugang",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -4567,7 +4567,7 @@
   "status": "abgedeckt",
   "demo_view": "e-login",
   "id": "actions-savelogincardaction--infokarten-liste-neue-karte",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4579,7 +4579,7 @@
   "status": "abgedeckt",
   "demo_view": "e-login",
   "id": "actions-savelogincardaction--karte-bearbeiten-badge-titel-text-link-bild",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4591,7 +4591,7 @@
   "status": "abgedeckt",
   "demo_view": "e-login",
   "id": "actions-togglelogincardaction--karte-an-aus",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4603,7 +4603,7 @@
   "status": "ergänzen",
   "demo_view": "e-login",
   "id": "actions-movelogincardaction--reihenfolge-der-karten-aendern",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4615,7 +4615,7 @@
   "status": "abgedeckt",
   "demo_view": "e-login",
   "id": "actions-deletelogincardaction--karte-loeschen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
@@ -4627,7 +4627,7 @@
   "status": "abgedeckt",
   "demo_view": "e-status",
   "id": "actions-createincidentaction--statusmeldung-veroeffentlichen-text-stufe",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
@@ -4639,7 +4639,7 @@
   "status": "ergänzen",
   "demo_view": "e-status",
   "id": "actions-resolveincidentaction--meldung-als-behoben-markieren",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
@@ -4651,7 +4651,7 @@
   "status": "ergänzen",
   "demo_view": "e-status",
   "id": "actions-deleteincidentaction--meldung-loeschen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
@@ -4663,7 +4663,7 @@
   "status": "abgedeckt",
   "demo_view": "e-status",
   "id": "page--zustand-jetzt-und-support-kontakt-anzeige",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
@@ -4699,7 +4699,7 @@
   "status": "ergänzen",
   "demo_view": "e-einrichtung",
   "id": "actions-savesetupsettingsaction--meta-business-id-und-erklaervideos-je-schritt",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/einrichtung/page.tsx"
  },
@@ -4915,7 +4915,7 @@
   "status": "abgedeckt",
   "demo_view": "e-protokoll",
   "id": "page--aenderungsprotokoll-ansehen",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/protokoll/page.tsx"
  },
@@ -4927,7 +4927,7 @@
   "status": "ergänzen",
   "demo_view": "e-protokoll",
   "id": "page--protokoll-filtern-nach-kunde-und-art",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/protokoll/page.tsx"
  },
@@ -5035,7 +5035,7 @@
   "status": "ergänzt (16.11.2026, nach dem Inventar auf claude/whatsapp-crm)",
   "demo_view": "e-anbindungen",
   "id": "import-forms-instantlynachholen--fehlende-instantly-antworten-der-letzten-90-tage",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
@@ -5047,7 +5047,7 @@
   "status": "ergänzt (19.11.2026, Sperrliste für Kalt-Mails)",
   "demo_view": "e-anbindungen",
   "id": "import-forms-sperrennachholen--austragungen-aus-bisherigen-antworten-sperren",
-  "bereich": "werkzeuge",
+  "bereich": "einstellungen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },

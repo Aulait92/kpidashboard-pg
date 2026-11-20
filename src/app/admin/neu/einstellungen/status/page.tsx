@@ -4,6 +4,7 @@ import { deleteIncidentAction, resolveIncidentAction } from "@/app/admin/einstel
 import { IncidentForm } from "@/app/admin/einstellungen/status/form";
 import { EinstellungSeite, LISTE, Zeile } from "@/components/admin-neu/einstellungen/rahmen";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
+import { NEU } from "@/lib/admin-neu/navigation";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABEL, STATUS_COMPONENTS } from "@/lib/status";
 import { currentStatus } from "@/lib/status-server";
@@ -12,7 +13,8 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 
 export const metadata = { title: "Status & Support | performancegrowth Admin" };
 
-// Status & Support (Demo „e-status“, heute /admin/einstellungen/status): Zustand jetzt und Support-Kontakt oben,
+// Statusseite & Support (Demo „e-status“, heute /admin/einstellungen/status), Unterseite des Systemzustands (dessen Zeilen
+// „Statusseite für Kunden“ und „Hintergrund-Jobs“ führen hierher): Zustand jetzt und Support-Kontakt oben,
 // Meldungen mit „Behoben“ und „Löschen“, neue Meldung eingeklappt (selten). Daten und Server Actions wie heute.
 
 const TON = { ok: "success", degraded: "warning", down: "danger" } as const;
@@ -34,6 +36,7 @@ export default async function Page() {
   return (
     <EinstellungSeite
       pfad="/admin/neu/einstellungen/status"
+      zurueck={{ href: `${NEU}/werkzeuge/zustand`, label: "Systemzustand" }}
       aktionen={
         <ButtonLink href="/status" external icon={ExternalLink}>
           Statusseite

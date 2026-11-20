@@ -53,9 +53,6 @@ export function neueId(e) {
   return `${quelleKurz(e.quelle)}--${funktionKurz(e.funktion)}`;
 }
 
-/** Werkzeuge (Admin v2): Einstellungsseiten mit Technik und Einrichtung, Adresse bleibt unter /einstellungen. */
-const WERKZEUGE = new Set(["werkzeuge", "e-status", "e-anbindungen", "e-vorlagen", "e-login", "e-einrichtung", "e-protokoll"]);
-
 /**
  * Rolle (Bereich in navigation.ts, Admin v2) aus der Demo-Ansicht. Muss zu navigation.ts passen
  * (Test „Bereich im Inventar = Bereich der Seite“ in tests/unit/admin-neu-inventar.test.ts).
@@ -63,8 +60,8 @@ const WERKZEUGE = new Set(["werkzeuge", "e-status", "e-anbindungen", "e-vorlagen
 export function bereichFuer(view) {
   if (view === "landkarte") return "was-wo-ist";
   if (["heute", "mehr", "vertrieb-aufgaben"].includes(view)) return "mein-tag";
-  if (WERKZEUGE.has(view) || view.startsWith("w-")) return "werkzeuge";
-  if (view.startsWith("e-") || view === "einstellungen") return "einstellungen";
+  // Werkzeuge und Einstellungen zusammengelegt (20.11.2026): Technik ist eine Gruppe der Einstellungen
+  if (view.startsWith("e-") || view.startsWith("w-") || view === "einstellungen" || view === "werkzeuge") return "einstellungen";
   if (view.startsWith("vertrieb") || view.startsWith("kontakt") || view === "angebot-neu" || view === "praesentation" || view.startsWith("marketing")) return "verkaufen";
   if (view === "leads-chats" || view === "leads-chat" || view === "leads-ki" || view === "zahlen-qualitaet" || view.startsWith("kunde")) return "betreuen";
   if (view.startsWith("leads")) return "liefern";

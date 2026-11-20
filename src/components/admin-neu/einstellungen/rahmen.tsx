@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ChevronRight, type LucideIcon } from "lucide-react";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { NEU, SEITEN } from "@/lib/admin-neu/navigation";
 import { neuerPfad } from "@/lib/admin-neu/umzug";
@@ -8,15 +10,14 @@ import { cn } from "@/lib/utils";
 
 export const EINSTELLUNGEN = `${NEU}/einstellungen`;
 
-export const WERKZEUGE = `${NEU}/werkzeuge`;
-
-/** Rahmen einer Einstellungsseite: „Zurück“ zur Übersicht (Einstellungen bzw. Werkzeuge, je nach Bereich in
- *  navigation.ts), Titel und Untertitel aus navigation.ts, schmale Spalte. */
+/** Rahmen einer Einstellungsseite: „Zurück“ zur Übersicht Einstellungen (Unterseiten: zur Seite darüber), Titel und
+ *  Untertitel aus navigation.ts, schmale Spalte. */
 export function EinstellungSeite({
   pfad,
   titel,
   aktionen,
   breit,
+  zurueck,
   children,
 }: {
   /** Pfad der Seite in navigation.ts (Titel und Untertitel kommen von dort) */
@@ -26,12 +27,13 @@ export function EinstellungSeite({
   aktionen?: React.ReactNode;
   /** Breite Seite (Tabellen, zwei Spalten) */
   breit?: boolean;
+  /** Abweichendes Ziel für „Zurück“ (Unterseiten wie Statusseite › Systemzustand) */
+  zurueck?: { href: string; label: string };
   children: React.ReactNode;
 }) {
   const seite = SEITEN.find((s) => s.pfad === pfad);
-  const zurueck = seite?.bereich === "werkzeuge" ? { href: WERKZEUGE, label: "Werkzeuge" } : { href: EINSTELLUNGEN, label: "Einstellungen" };
   return (
-    <Seite titel={titel ?? seite?.titel ?? ""} untertitel={titel ? undefined : seite?.untertitel} zurueck={zurueck} aktionen={aktionen}>
+    <Seite titel={titel ?? seite?.titel ?? ""} untertitel={titel ? undefined : seite?.untertitel} zurueck={zurueck ?? { href: EINSTELLUNGEN, label: "Einstellungen" }} aktionen={aktionen}>
       <div className={cn("space-y-5", breit ? "" : "max-w-3xl")}>{children}</div>
     </Seite>
   );
@@ -62,6 +64,24 @@ export function Zeile({ titel, text, rechts, className, ...rest }: { titel: Reac
         {text ? <div className="text-sm text-[color:var(--muted)]">{text}</div> : null}
       </div>
       {rechts ? <div className="flex shrink-0 items-center gap-2">{rechts}</div> : null}
+    </li>
+  );
+}
+
+/** Zeile als Link (Symbol, Titel, ein Satz, Pfeil): wie die Übersicht der Einstellungen, für Wege zu verwandten Seiten. */
+export function LinkZeile({ href, icon: Icon, titel, text }: { href: string; icon: LucideIcon; titel: string; text?: string }) {
+  return (
+    <li>
+      <Link href={href} className="flex min-h-14 items-center gap-3 px-4 py-2.5 transition hover:bg-[color:var(--surface-sunken)] sm:px-5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--brand-soft)] text-[color:var(--brand)]">
+          <Icon className="h-[18px] w-[18px]" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium">{titel}</span>
+          {text ? <span className="block truncate text-sm text-[color:var(--muted)]">{text}</span> : null}
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+      </Link>
     </li>
   );
 }
