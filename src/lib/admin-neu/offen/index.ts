@@ -49,6 +49,9 @@ export const ENTFERNT: string[] = [
   "actions-runimportaction--bezuege-aus-airtable-uebernehmen", // Bezüge werden in der App gepflegt; Logik bleibt in lib/ppl/import-airtable.ts
   "nachholen-airtablenachholen--lead-aus-airtable-nachholen-lead-nr-laeuft-durch", // Leads kommen direkt (Meta, Webhook); Logik bleibt in lib/ppl/airtable-nachholen.ts
   "route-get--diagnose-airtable-felder-nur-technik-keine", // Diagnose-Route /api/admin/airtable-fields gelöscht, ohne Oberfläche und ohne Nutzer
+  // Geld (Umbau 19.11.2026): die Investoren-Ansicht blendete nur interne Abschnitte aus und zeigte Definitionen. Das leistet
+  // jetzt die Detailseite „Für Investoren“ (Auswertung mit „So rechnen wir“, Export PDF/CSV), erreichbar aus der Übersicht.
+  "zahlen-view-toggleinvestor--investoren-ansicht-interne-reiter-ausblenden",
 ];
 
 /** Funktionen ohne Oberfläche, vom Neudesign nicht betroffen (bleiben, wie sie sind). */

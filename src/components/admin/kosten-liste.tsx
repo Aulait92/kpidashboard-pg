@@ -23,13 +23,17 @@ export function LaufendeKostenListe({ costs }: { costs: Awaited<ReturnType<typeo
       {costs.map((c) => (
         <li key={c.id} className="px-4 py-3">
           <details>
-            <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="min-w-0 flex-1 font-medium">{c.name}</span>
-              <span className="text-sm text-[color:var(--muted)]">{COST_PURPOSE_LABEL[c.purpose as CostPurpose] ?? c.purpose}</span>
-              <span className="w-28 text-right font-semibold tabular-nums">{eur(Number(c.monthlyAmount))}/Monat</span>
-              <span className="w-full text-sm text-[color:var(--muted)] sm:w-auto">
-                ab {c.startsAt.toLocaleDateString("de-DE")}
-                {c.endsAt ? ` bis ${c.endsAt.toLocaleDateString("de-DE")}` : ""}
+            <summary className="flex cursor-pointer list-none items-start gap-3 [&::-webkit-details-marker]:hidden">
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium">{c.name}</span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  {COST_PURPOSE_LABEL[c.purpose as CostPurpose] ?? c.purpose} · ab {c.startsAt.toLocaleDateString("de-DE")}
+                  {c.endsAt ? ` bis ${c.endsAt.toLocaleDateString("de-DE")}` : ""}
+                </span>
+              </span>
+              <span className="shrink-0 text-right font-semibold tabular-nums">
+                {eur(Number(c.monthlyAmount))}
+                <span className="block text-xs font-normal text-[color:var(--muted)]">im Monat</span>
               </span>
             </summary>
             <div className="mt-3 space-y-2">

@@ -163,13 +163,15 @@ export const BEREICHE: NeuBereich[] = [
     ort: "oben",
     handy: "leiste",
     seiten: [
-      { view: "zahlen", pfad: n("/zahlen"), titel: "Übersicht", alt: ["/admin/zahlen", "/"], reiter: { gruppe: "geld", label: "Übersicht" }, suchwoerter: "Zahlen Kennzahlen Investoren MRR BWA Dashboard", fertig: true },
-      { view: "zahlen-umsatz", pfad: n("/zahlen/umsatz"), titel: "Umsatz & Buchungen", alt: ["/admin/zahlen/buchungen"], reiter: { gruppe: "geld", label: "Umsatz & Buchungen" }, suchwoerter: "Rechnungen", fertig: true },
+      { view: "zahlen", pfad: n("/zahlen"), titel: "Übersicht", alt: ["/admin/zahlen", "/"], reiter: { gruppe: "geld", label: "Übersicht" }, suchwoerter: "Zahlen Kennzahlen MRR Ergebnis Gewinn BWA Wachstum Kohorten Wirtschaftlichkeit Vertrieb Pay-per-Lead Dashboard", fertig: true },
+      { view: "zahlen-umsatz", pfad: n("/zahlen/umsatz"), titel: "Umsatz", alt: ["/admin/zahlen/buchungen"], reiter: { gruppe: "geld", label: "Umsatz" }, suchwoerter: "Buchungen Rechnungen Einrichtungsgebühr Einmal-Umsatz", fertig: true },
       { view: "zahlen-offene-posten", pfad: n("/zahlen/offene-posten"), titel: "Offene Posten", alt: [], reiter: { gruppe: "geld", label: "Offene Posten" }, suchwoerter: "Mahnung Mahnwesen Überweisung offene Rechnungen Zahlungserinnerung Zahlungseingang", fertig: true },
-      { view: "zahlen-kosten", pfad: n("/zahlen/kosten"), titel: "Kosten & Bank", alt: ["/admin/einstellungen/kosten", "/admin/einstellungen/bank"], reiter: { gruppe: "geld", label: "Kosten & Bank" }, suchwoerter: "Laufende Kosten Ausgaben Karten", fertig: true },
-      { view: "zahlen-kunden", pfad: n("/zahlen/kunden"), titel: "Kunden-Lebenszyklus", alt: ["/admin/zahlen/lebenszyklus"], reiter: { gruppe: "geld", label: "Kunden-Lebenszyklus" }, suchwoerter: "Kündigung Ruhephase Rückkehr Kohorten", fertig: true },
-      { view: "zahlen-auswertung", pfad: n("/zahlen/auswertung"), titel: "Auswertung", alt: [], reiter: { gruppe: "geld", label: "Auswertung" }, suchwoerter: "Investoren Kennzahlen NRR Umsatzbindung CAC CLV LTV Kundenwert Amortisation Bruttomarge KI-Kosten Kohorten Export PDF CSV", fertig: true },
+      { view: "zahlen-kosten", pfad: n("/zahlen/kosten"), titel: "Kosten", alt: ["/admin/einstellungen/kosten"], reiter: { gruppe: "geld", label: "Kosten" }, suchwoerter: "Laufende Kosten Ausgaben", fertig: true },
+      // Detailseiten ohne Reiter (Umbau 19.11.2026: 6 Reiter → 4), erreichbar aus Übersicht bzw. Kosten und über die Suche
+      { view: "zahlen-kunden", pfad: n("/zahlen/kunden"), titel: "Kündigung & Rückkehr", alt: ["/admin/zahlen/lebenszyklus"], suchwoerter: "Kunden-Lebenszyklus Kündigung Ruhephase Rückkehr Halteangebote", fertig: true },
+      { view: "zahlen-auswertung", pfad: n("/zahlen/auswertung"), titel: "Für Investoren", alt: [], suchwoerter: "Auswertung Investoren Kennzahlen NRR Umsatzbindung CAC CLV LTV Kundenwert Amortisation Bruttomarge KI-Kosten Kohorten Export PDF CSV", fertig: true },
       { view: "zahlen-kosten", pfad: n("/zahlen/kosten/zuordnen"), titel: "Ausgaben zuordnen", alt: ["/admin/einstellungen/bank/zuordnen"], fertig: true },
+      { view: "zahlen-kosten", pfad: n("/zahlen/kosten/konten"), titel: "Konten & Regeln", alt: ["/admin/einstellungen/bank"], suchwoerter: "Bank Commerzbank American Express Amex Karten Regeln Annahmen Gründerzeit Stundensatz Pilotphase", fertig: true },
     ],
   },
   {
