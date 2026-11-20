@@ -55,3 +55,6 @@ Vor jedem Angebot: Umsatzsteuerfrage durch den Steuerberater klären. Nur Pilot,
 - **Entscheidung Ole: Abrechnung wöchentlich per Lastschrift** (Montag, Vorwoche; Stripe; Rücklastschrift = Kampagnen pausieren).
 - Vorprüfung: Umsatzsteuer voraussichtlich 19 % (`docs/recht/ust-ppl-im-kundenkonto-2026-11-20.md`); CPL gegen Budget mit
   heutigen Daten offen (`docs/firma/analysen/2026-11-20-cpl-gegen-budget.md`), Nachweis per Kontotest im Pilot.
+- **Entscheidung Ole: Software ab 50 Leads im Monat inklusive**, darunter Software-Abo zusätzlich. Auf der Rechnung steht die
+  Software trotzdem als eigene Position (349 € netto), der Leadteil sinkt entsprechend (Software-Umsatz für die Bewertung,
+  in den Kennzahlen getrennt als „Software aus Paketen“ ausweisen). Nur im neuen Modell, nicht im steuerfreien PPL aus unserem Konto.
