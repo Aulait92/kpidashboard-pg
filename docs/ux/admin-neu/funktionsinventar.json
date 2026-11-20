@@ -921,7 +921,7 @@
   "id": "actions-logactivity--aktivitaet-erfassen-anruf-e-mail-notiz-ergebnis",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
+  "ort_neu": "src/components/admin-neu/vertrieb/eintragen-knopf.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1485,7 +1485,7 @@
   "id": "actions-disconnectsalescalendaraction--vertriebskalender-verbinden-bzw-trennen",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/vertrieb/termine/page.tsx"
+  "ort_neu": "src/app/admin/neu/einstellungen/buchungsseiten/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1533,7 +1533,7 @@
   "id": "page--buchungslink-kopieren",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/vertrieb/termine/page.tsx"
+  "ort_neu": "src/app/admin/neu/einstellungen/buchungsseiten/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",

@@ -1,25 +1,25 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { CalendarDays, CheckCircle2, ChevronDown, ExternalLink, Settings, Video } from "lucide-react";
+import { CalendarDays, CalendarX2, Video } from "lucide-react";
 import { Badge, ButtonLink, Card, EmptyState, buttonClass } from "@/components/ui";
-import { CopyField } from "@/components/termin/copy-field";
 import { AdminRescheduleButton } from "@/components/termin/admin-termin";
 import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
 import { Kennzahlen, type Kennzahl } from "@/components/admin-neu/ui/kennzahlen";
 import { Seite } from "@/components/admin-neu/ui/seite";
+import { Chips } from "@/components/admin-neu/vertrieb/chips";
 import { V, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { TerminBuchen } from "@/components/admin-neu/vertrieb/termin-buchen";
-import { adminRescheduleTerminAction, disconnectSalesCalendarAction } from "@/app/admin/vertrieb/buchungsseite/actions";
-import { PROVIDER_LABELS } from "@/lib/calendar";
+import { VerkaufenMehr } from "@/components/admin-neu/vertrieb/verkaufen-mehr";
+import { adminRescheduleTerminAction } from "@/app/admin/vertrieb/buchungsseite/actions";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { DEFAULT_BOOKING_TYPE, VERTRIEB_CUSTOMER_ID, bookingPath, publicSalesBookingUrl, salesAppUrl } from "@/lib/vertrieb/buchung";
+import { VERTRIEB_CUSTOMER_ID } from "@/lib/vertrieb/buchung";
+import { offeneRechtsFaelle } from "@/lib/vertrieb/datenschutz-recht-server";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
 import { waConfirmLabel } from "@/lib/vertrieb/kontaktakte";
-import { ANGEBOT_TAG, ANSICHTEN, FILTER, STUFE_TON, ansichtVon, istAbgeschlossen, stufeLabel, type Ansicht, type TerminKennzahlen, type TerminZeile } from "@/lib/vertrieb/termine-uebersicht";
+import { ANGEBOT_TAG, FILTER, STUFE_TON, istAbgeschlossen, stufeLabel, type TerminKennzahlen, type TerminZeile } from "@/lib/vertrieb/termine-uebersicht";
 import { ladeTerminUebersicht } from "@/lib/vertrieb/termine-uebersicht-server";
 import { cn } from "@/lib/utils";
-import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 export const metadata = { title: "Termine | performancegrowth Admin" };
 
@@ -33,90 +33,96 @@ function tag(d: Date, now: Date) {
   const diff = Math.round((Date.parse(tagKey(d)) - Date.parse(tagKey(now))) / 86_400_000);
   return diff === 0 ? "heute" : diff === 1 ? "morgen" : diff === -1 ? "gestern" : tagKurz(d);
 }
-const href = (ansicht: Ansicht, f?: string) => {
+
+/** Drei Ansichten als eine Chip-Reihe (Umbau 19.11.2026): Kommende (Standard), Vergangene, Ohne Ergebnis. */
+type Sicht = "kommend" | "vergangen" | "ohne";
+const SICHTEN: { key: Sicht; label: string }[] = [
+  { key: "kommend", label: "Kommende" },
+  { key: "vergangen", label: "Vergangene" },
+  { key: "ohne", label: "Ohne Ergebnis" },
+];
+const sichtVon = (s: string | undefined): Sicht => (s === "vergangen" || s === "ohne" ? s : "kommend");
+const href = (sicht: Sicht, f?: string) => {
   const q = new URLSearchParams();
-  if (ansicht !== "30") q.set("ansicht", ansicht);
+  if (sicht !== "kommend") q.set("ansicht", sicht);
   if (f) q.set("f", f);
   const s = q.toString();
   return s ? `${BASIS}?${s}` : BASIS;
 };
-const CHIP = "inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full border px-3 text-sm font-medium sm:min-h-8";
-const chipAn = (an: boolean) =>
-  an ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]";
 const SPALTEN = "md:grid-cols-[8.5rem_minmax(0,1.3fr)_minmax(0,1.5fr)_10.5rem_11rem]";
-const prozent = (x: number) => `${Math.round(x * 100)} %`;
 
-/** Stufe 2: vier Kennzahlen oben (Woche, erschienen, mit Angebot, gewonnen; die drei letzten über 30 Tage). */
+/** Zwei Kennzahlen (Umbau 19.11.2026): Woche und Abschlüsse; „erschienen“ und „mit Angebot“ standen oft ohne Daten da. */
 function kennzahlen(k: TerminKennzahlen): Kennzahl[] {
   return [
     { label: "Termine diese Woche", wert: String(k.woche.anzahl), hinweis: k.woche.kommend ? `${k.woche.kommend} noch offen` : "keiner mehr offen", href: href("kommend") },
-    {
-      label: "Erschienen (30 Tage)",
-      wert: k.erschienen.quote == null ? NOCH_KEINE_DATEN : prozent(k.erschienen.quote),
-      hinweis: k.erschienen.basis ? `${k.erschienen.erschienen} von ${k.erschienen.basis} Terminen` : "noch kein Ergebnis",
-    },
-    { label: "Mit Angebot (30 Tage)", wert: String(k.angebot.anzahl), hinweis: `von ${k.angebot.gehalten} Gesprächen` },
-    { label: "Abschlüsse (30 Tage)", wert: String(k.gewonnen.anzahl), hinweis: `von ${k.gewonnen.kontakte} Kontakten`, ton: k.gewonnen.anzahl ? "gut" : undefined, href: href("30", "gewonnen") },
+    { label: "Abschlüsse (30 Tage)", wert: String(k.gewonnen.anzahl), hinweis: `von ${k.gewonnen.kontakte} Kontakten`, ton: k.gewonnen.anzahl ? "gut" : undefined, href: href("vergangen", "gewonnen") },
   ];
 }
 
-// Verkaufen → Termine (Ole, 18.11.2026): Übersicht über alle Vertriebstermine (eigene Buchungsseite, Calendly, von Hand),
-// damit niemand vergessen wird. Oben „Braucht Aufmerksamkeit“ (Ergebnis fehlt, kein nächster Schritt, nicht erschienen,
-// Angebot ohne Reaktion, Abschlussbonus läuft ab), darunter je Termin eine Zeile: wann, wer, Art, was passiert ist,
-// Stand, nächster Schritt. Zeile antippen öffnet die Kontaktakte. Daten: lib/vertrieb/termine-uebersicht(-server).ts.
-// Buchungslinks und Kalender (selten gebraucht) eingeklappt darunter; Einstellungen unter Einstellungen → Buchungsseiten.
-// „Termin buchen“: Kontakt wählen, dann das bestehende Fenster in der Kontaktakte (auch über „+ Neu → Termin“).
-// Stufe 2 (Ole, 18.11.2026): oben vier Kennzahlen (Kennzahlen aus Admin v2), Termine nur als Aufgabe „Termin“ mit Art
-// „Termin (Aufgabe)“ in der Liste.
+// Verkaufen → Termine (Ole, 18.11.2026): alle Vertriebstermine (eigene Buchungsseite, von Hand), damit niemand vergessen
+// wird. Oben „Braucht Aufmerksamkeit“ (Ergebnis fehlt, kein nächster Schritt, Angebot ohne Reaktion …), darunter je Termin
+// eine Zeile: wann, wer, was passiert ist, Stand, nächster Schritt. Zeile öffnet die Kontaktakte.
+// Umbau 19.11.2026 (SUS-Ziel 90): zwei Kennzahlen statt vier, eine Chip-Reihe (Kommende als Standard, Vergangene, Ohne
+// Ergebnis) statt Zeitraum-Umschalter plus vier Filter. Buchungslinks und Kalender stehen nur noch unter Einstellungen →
+// Buchungsseiten; hier nur ein Hinweis, wenn der Kalender fehlt. Ältere Filter (?f=gewonnen …) bleiben als Link nutzbar
+// (Kennzahl „Abschlüsse“) und zeigen sich dann als entfernbarer Chip.
 export default async function TerminePage({ searchParams }: { searchParams: Promise<{ buchen?: string; ansicht?: string; f?: string }> }) {
   await connection();
   await requireAuth();
   const sp = await searchParams;
-  const ansicht = ansichtVon(sp.ansicht);
-  const filter = FILTER.find((f) => f.key === sp.f)?.key;
+  const sicht = sichtVon(sp.ansicht);
+  const filter = FILTER.find((f) => f.key === sp.f);
   const now = new Date();
-  const [{ zeilen, anzahl, aufmerksamkeit, kennzahlen: kz }, conn, types] = await Promise.all([
-    ladeTerminUebersicht({ ansicht, filter }, now),
-    prisma.calendarConnection.findUnique({ where: { customerId: VERTRIEB_CUSTOMER_ID }, select: { status: true, provider: true, accountEmail: true } }),
-    prisma.salesBookingType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" }, select: { id: true, slug: true, title: true, durationMin: true, bookingWindowDays: true } }),
+  const [{ zeilen: roh, aufmerksamkeit, kennzahlen: kz }, conn, offenRecht] = await Promise.all([
+    ladeTerminUebersicht({ ansicht: sicht === "kommend" ? "kommend" : "alle", filter: filter?.key }, now),
+    prisma.calendarConnection.findUnique({ where: { customerId: VERTRIEB_CUSTOMER_ID }, select: { status: true } }),
+    offeneRechtsFaelle(),
   ]);
-  const connected = conn?.status === "connected";
-  const connect = (provider: "google" | "microsoft") => `/api/${provider}/connect?customerId=${VERTRIEB_CUSTOMER_ID}&zurueck=buchungsseite`;
-  // Einstellungen → Buchungsseiten (dieselbe alte Seite wie dieser Reiter, deshalb fester Pfad statt Umzug)
+  const zeilen =
+    sicht === "vergangen"
+      ? roh.filter((z) => !z.kommend)
+      : sicht === "ohne"
+        ? roh.filter((z) => z.ergebnis.art === "fehlt" && !istAbgeschlossen(z.kontakt))
+        : roh;
+  const ohneAnzahl = aufmerksamkeit ? aufmerksamkeit.filter((p) => p.key.startsWith("t-ergebnis:")).length : undefined;
   const einstellungen = "/admin/neu/einstellungen/buchungsseiten";
 
   return (
-    <Seite titel="Verkaufen" reiter="verkaufen" aktionen={<TerminBuchen offen={!!sp.buchen} key={sp.buchen ?? "zu"} />}>
+    <Seite
+      titel="Verkaufen"
+      reiter="verkaufen"
+      aktionen={
+        <>
+          <VerkaufenMehr datenschutzOffen={offenRecht} />
+          <TerminBuchen offen={!!sp.buchen} key={sp.buchen ?? "zu"} />
+        </>
+      }
+    >
+      {conn?.status !== "connected" ? (
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900" data-kalender-hinweis>
+          <CalendarX2 className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1">Kalender nicht verbunden, keine freien Zeiten buchbar.</span>
+          <Link href={einstellungen} className="inline-flex min-h-10 items-center font-semibold underline sm:min-h-0">
+            Verbinden
+          </Link>
+        </div>
+      ) : null}
       <div data-termine-kennzahlen>
         <Kennzahlen werte={kennzahlen(kz)} />
       </div>
       <div data-termine-aufmerksamkeit>
-        <Aufmerksamkeit punkte={aufmerksamkeit} max={4} restAufklappen leer="Alles im Griff: Jedes Gespräch hat ein Ergebnis und einen nächsten Schritt." />
+        <Aufmerksamkeit punkte={aufmerksamkeit} max={3} restAufklappen leer="Alles im Griff: Jedes Gespräch hat ein Ergebnis und einen nächsten Schritt." />
       </div>
 
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" data-termine-filter>
-        <div className="inline-flex self-start rounded-full border border-[color:var(--border)] bg-white p-0.5" role="group" aria-label="Zeitraum">
-          {ANSICHTEN.map((a) => (
-            <Link
-              key={a.key}
-              href={href(a.key, filter)}
-              aria-current={a.key === ansicht ? "page" : undefined}
-              className={cn(
-                "inline-flex min-h-9 items-center rounded-full px-3 text-sm font-medium sm:min-h-8",
-                a.key === ansicht ? "bg-[color:var(--foreground)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
-              )}
-            >
-              {a.label}
-            </Link>
-          ))}
-        </div>
-        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
-          {FILTER.map((f) => (
-            <Link key={f.key} href={href(ansicht, f.key === filter ? undefined : f.key)} aria-current={f.key === filter ? "page" : undefined} className={cn(CHIP, chipAn(f.key === filter))}>
-              {f.label} <span className="tabular-nums opacity-80">{anzahl[f.key] ?? 0}</span>
-            </Link>
-          ))}
-        </div>
+      <div data-termine-filter>
+        <Chips
+          label="Ansicht"
+          aktiv={filter ? "f" : sicht}
+          chips={[
+            ...SICHTEN.map((s) => ({ key: s.key, label: s.label, href: href(s.key), anzahl: s.key === "ohne" ? ohneAnzahl : undefined })),
+            ...(filter ? [{ key: "f", label: `${filter.label} ✕`, href: href(sicht) }] : []),
+          ]}
+        />
       </div>
 
       <Card>
@@ -139,84 +145,24 @@ export default async function TerminePage({ searchParams }: { searchParams: Prom
           ) : (
             <EmptyState
               icon={CalendarDays}
-              title={filter ? "Keine Termine mit diesem Filter." : ansicht === "kommend" ? "Keine Termine geplant." : "Keine Termine in diesem Zeitraum."}
+              title={filter ? "Keine Termine mit diesem Filter." : sicht === "ohne" ? "Zu jedem Termin ist ein Ergebnis eingetragen." : sicht === "vergangen" ? "Noch keine vergangenen Termine." : "Keine Termine geplant."}
               action={
                 filter ? (
-                  <ButtonLink href={href(ansicht)} size="md">
+                  <ButtonLink href={href(sicht)} size="md">
                     Filter entfernen
                   </ButtonLink>
-                ) : ansicht === "kommend" ? (
-                  <TerminBuchen />
-                ) : (
-                  <ButtonLink href={href("alle")} size="md">
-                    Alle Termine ansehen
+                ) : sicht === "ohne" ? (
+                  <ButtonLink href={href("kommend")} size="md">
+                    Kommende Termine ansehen
                   </ButtonLink>
+                ) : (
+                  <TerminBuchen />
                 )
               }
             />
           )}
         </div>
       </Card>
-
-      <details className="group mt-5 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" data-termine-buchungslinks>
-        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-5 text-sm font-semibold [&::-webkit-details-marker]:hidden">
-          <span className="flex-1">Buchungslinks und Kalender</span>
-          {connected ? null : <Badge tone="warning">Kalender nicht verbunden</Badge>}
-          <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
-        </summary>
-        <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]" data-funktion="page--buchungslink-kopieren">
-          {types.map((t) => (
-            <li key={t.id} className="space-y-2 px-5 py-4">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="font-medium">{t.title.replace(/\s+mit\s+.+$/, "")}</span>
-                <span className="text-xs text-[color:var(--muted)]">
-                  {t.durationMin} Min. · {t.bookingWindowDays} Tage im Voraus
-                </span>
-              </div>
-              <CopyField value={t.slug === DEFAULT_BOOKING_TYPE ? publicSalesBookingUrl() : salesAppUrl(bookingPath(t.slug))} label="Link kopieren" />
-              {t.slug !== DEFAULT_BOOKING_TYPE ? <p className="text-xs text-[color:var(--muted)]">Persönlicher Link je Kontakt: Kontaktakte → Termin buchen.</p> : null}
-            </li>
-          ))}
-          {!types.length ? <li className="px-5 py-4 text-sm text-[color:var(--muted)]">Keine Buchungsseite aktiv.</li> : null}
-        </ul>
-        <div className="border-t border-[color:var(--border)] px-5 py-4 text-sm" data-funktion="actions-disconnectsalescalendaraction--vertriebskalender-verbinden-bzw-trennen">
-          {connected ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              <span className="min-w-0 flex-1">
-                Kalender: {PROVIDER_LABELS[conn!.provider] ?? conn!.provider} verbunden{conn!.accountEmail ? ` (${conn!.accountEmail})` : ""}
-              </span>
-              <form action={disconnectSalesCalendarAction}>
-                <button type="submit" className="min-h-10 text-sm text-[color:var(--muted)] underline">
-                  Trennen
-                </button>
-              </form>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-xs text-[color:var(--muted)]">Ohne Kalender keine freien Zeiten.</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <a href={connect("google")} className={buttonClass("secondary", "md")}>
-                  Google-Kalender verbinden
-                </a>
-                <a href={connect("microsoft")} className={buttonClass("secondary", "md")}>
-                  Outlook verbinden
-                </a>
-              </div>
-            </div>
-          )}
-          <div className="mt-2 flex flex-wrap gap-x-4">
-            {connected ? (
-              <a href="/termin" target="_blank" rel="noopener" className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-[color:var(--brand)] hover:underline">
-                <ExternalLink className="h-4 w-4" /> Buchungsseite ansehen
-              </a>
-            ) : null}
-            <Link href={einstellungen} className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-[color:var(--brand)] hover:underline">
-              <Settings className="h-4 w-4" /> Einstellungen
-            </Link>
-          </div>
-        </div>
-      </details>
     </Seite>
   );
 }

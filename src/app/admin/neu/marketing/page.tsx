@@ -25,6 +25,9 @@ export const metadata = { title: "Marketing | performancegrowth Admin" };
 // Reichweite bei der Zielgruppe. Geplant, Ergebnisse je Post, Statistik, Fotos, Einstellungen und Verbindung eingeklappt.
 // Laden, Bausteine und Server Actions gemeinsam mit der alten Seite (components/admin/linkedin-bausteine.tsx,
 // app/admin/marketing/linkedin/forms.tsx). Die Rückkehr von der LinkedIn-Anmeldung landet wieder hier (lib/admin-neu/ruecksprung.ts).
+// Umbau 19.11.2026: Marketing ist kein Reiter von Verkaufen mehr (Zugang über „Mehr“ und „Braucht Aufmerksamkeit“:
+// „LinkedIn: Entwürfe freigeben“), eigener Titel mit Rückweg. Reichweite erst, wenn es Ergebnisse gibt (keine Kacheln
+// „noch keine Daten“); Einstellungen bleiben zugeklappt, die Einrichten-Liste oben führt beim ersten Mal hin.
 export default async function Page({ searchParams }: { searchParams: Promise<{ li?: string }> }) {
   await connection();
   await requireAuth();
@@ -33,14 +36,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
   const { settings } = d;
 
   return (
-    <Seite titel="Verkaufen" reiter="marketing">
+    <Seite titel="Marketing" reiter="marketing" zurueck={{ href: "/admin/neu/vertrieb", label: "Verkaufen" }}>
       {/* Push an Admins (LinkedIn, Bank, Monatsberichte, Status, Empfehlungsprämie) landet mit eingeschalteter neuer
           Oberfläche auf der neuen Seite: Marke ?von=push, Weiche in der Middleware (lib/admin-neu/push-ziel.ts) */}
       <div className="space-y-4" data-funktion="cron--push-an-admins-linkedin-bank-neu-verbinden">
         <LinkedInHinweise d={d} li={li} />
         <LinkedInEinrichten d={d} />
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div className={d.results.length ? "grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]" : "max-w-3xl"}>
           <section className="min-w-0 space-y-3" aria-label="Entwürfe zur Freigabe">
             <Card menus>
               <CardHeader title="Entwürfe zur Freigabe" count={d.drafts.length} />
@@ -57,10 +60,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
             </div>
           </section>
 
-          <section className="min-w-0 space-y-3" aria-label="Reichweite je Zielgruppe">
-            <h2 className="text-[15px] font-semibold">Reichweite bei der Zielgruppe</h2>
-            <LinkedInKennzahlen d={d} spalten="grid-cols-2" />
-          </section>
+          {d.results.length ? (
+            <section className="min-w-0 space-y-3" aria-label="Reichweite je Zielgruppe">
+              <h2 className="text-[15px] font-semibold">Reichweite bei der Zielgruppe</h2>
+              <LinkedInKennzahlen d={d} spalten="grid-cols-2" />
+            </section>
+          ) : null}
         </div>
 
         {d.planned.length ? (
@@ -68,6 +73,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
             <LinkedInGeplant d={d} />
           </Aufklapp>
         ) : null}
+        {d.results.length ? (
         <Aufklapp
           titel="Ergebnisse je Post"
           hinweis={`${d.results.length} Posts`}
@@ -76,6 +82,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
           <p className="mb-2 text-sm text-[color:var(--muted)]">Zielgruppen-Reichweite = Impressionen × Anteil Vermittler unter den Zuschauern. Vergleich mit dem Median der 30 Posts davor.</p>
           <LinkedInErgebnisse d={d} />
         </Aufklapp>
+        ) : null}
         <Aufklapp titel="Statistik hochladen" hinweis="LinkedIn-Export" funktion="actions-importaction--linkedin-statistik-excel-hochladen">
           <Card className="space-y-3 p-4 sm:p-5">
             <LinkedInStatistik d={d} />
@@ -86,7 +93,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
             <LinkedInFotos d={d} />
           </Card>
         </Aufklapp>
-        <Aufklapp titel="Einstellungen" hinweis="Zielgruppe, Über mich, Uhrzeiten" offen={!settings.about.trim()} funktion="actions-savesettingsaction--einstellungen-zielgruppe-produkte-ueber-mich">
+        <Aufklapp titel="Einstellungen" hinweis="Zielgruppe, Über mich, Uhrzeiten" id="einstellungen" funktion="actions-savesettingsaction--einstellungen-zielgruppe-produkte-ueber-mich">
           <Card className="p-4 sm:p-5">
             <LinkedInEinstellungen d={d} />
           </Card>
