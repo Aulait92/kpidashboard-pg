@@ -45,6 +45,7 @@
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
 import { displayProduct } from "@/lib/products";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
@@ -641,9 +642,11 @@ export function topicOf(formData: Prisma.JsonValue | null, source: string | null
 export async function stopReasonFor(seq: { leadId: string; customerId: string; startedAt: Date; kind?: string }, now = new Date()): Promise<string | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: seq.leadId },
-    select: { status: true, stornoState: true, erasedAt: true, phone: true, abschlussGemeldetAt: true },
+    select: { status: true, stornoState: true, erasedAt: true, phone: true, abschlussGemeldetAt: true, source: true },
   });
   if (!lead || lead.erasedAt) return "Lead gelöscht";
+  // Produkt ohne automatische Nachrichten (Ole, 20.11.2026: PKV-Tarifoptimierung, lib/lead-kontakt-sperre.ts)
+  if (ohneAutoNachrichten(lead.source)) return "Produkt ohne automatische Nachrichten";
   const unterlagen = seq.kind === "unterlagen";
   if (!unterlagen && lead.abschlussGemeldetAt && lead.abschlussGemeldetAt.getTime() >= seq.startedAt.getTime()) return "Lead meldet: schon abgeschlossen";
   if (lead.stornoState) return "Lead reklamiert";

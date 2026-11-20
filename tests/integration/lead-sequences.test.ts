@@ -139,6 +139,14 @@ describe("Nachfass-Abfolgen", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it("PKV-Tarifoptimierung: Abfolge stoppt ohne Nachricht (Ole, 20.11.2026, keine automatischen Nachrichten)", async () => {
+    const lead = await newLead({ source: "PKV-Tarifoptimierung" });
+    const seq = await startSequence(lead.id, "not_reached", T0);
+    await runSequences(T0);
+    if (seq) expect((await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq.id } })).stopReason).toBe("Produkt ohne automatische Nachrichten");
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it("„Angebot gesendet“ allein startet kein Nachfassen mehr (P3), sondern die 3-Tage-Wiedervorlage; ohne Schalter bleibt alles wie bisher", async () => {
     const lead = await newLead();
     await syncFollowUpWithStatus(lead.id, "Angebot gesendet");
