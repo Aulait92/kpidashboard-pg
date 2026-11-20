@@ -47,8 +47,13 @@ export function NeuMenue({ variante }: { variante: "breit" | "kopf" }) {
       router.push(akte ? `${pathname}?termin=${schluessel()}` : `/admin/neu/vertrieb/termine?buchen=${schluessel()}`);
       return;
     }
-    if (e.id === "angebot" && akte) {
-      router.push(`${pathname}/angebot`);
+    if (e.id === "angebot") {
+      if (akte) router.push(`${pathname}/angebot`);
+      else {
+        // Angebot gehört zu einem Kontakt: Liste öffnen und sagen, was als Nächstes kommt
+        router.push(neuerPfad(e.href) ?? e.href);
+        toast.show({ message: "Kontakt wählen, dann „Angebot erstellen“" });
+      }
       return;
     }
     router.push(neuerPfad(e.href) ?? e.href);
