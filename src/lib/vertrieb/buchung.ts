@@ -24,6 +24,7 @@ import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { findOrCreateContact, type Invitee } from "@/lib/vertrieb/calendly";
 import { Matcher } from "@/lib/vertrieb/linkedin";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
+import { erinnerungsFenster, vorlaufOk } from "@/lib/vertrieb/termin-erinnerungen";
 import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
 import { anredeZeile } from "@/lib/ansprache";
 import { PROVIDER } from "@/lib/legal-texts";
@@ -945,8 +946,6 @@ export async function recordPreparation(token: string, what: "video" | "demo", n
 
 // ─── Erinnerungen (WhatsApp-Cron) ───────────────────────────────────────
 
-const HOUR = 60 * MIN;
-
 /**
  * Erinnerung per E-Mail 24 Stunden und 1 Stunde vor Terminen der eigenen Buchungsseite
  * (Calendly-Termine erinnert Calendly per E-Mail selbst), danach WhatsApp für alle Vertriebstermine. Kurzfristig Gebuchtes bekommt keine Erinnerung,
@@ -957,19 +956,19 @@ export async function runSalesBookingReminders(now = new Date()): Promise<{ day:
   let soon = 0;
   const base = { status: "GEPLANT", manageToken: { not: null }, bookingTypeId: { not: null } } as const;
   const dayDue = await prisma.salesMeeting.findMany({
-    where: { ...base, reminderSentAt: null, startAt: { gt: new Date(now.getTime() + 2 * HOUR), lte: new Date(now.getTime() + 24 * HOUR) } },
+    where: { ...base, reminderSentAt: null, startAt: erinnerungsFenster("tag", now) },
     select: { id: true, startAt: true, createdAt: true },
     take: 100,
   });
   for (const m of dayDue) {
     const claimed = await prisma.salesMeeting.updateMany({ where: { id: m.id, reminderSentAt: null }, data: { reminderSentAt: now } });
     if (!claimed.count) continue;
-    // Erst vor kurzem (innerhalb von 26 Stunden vor Beginn) gebucht: Bestätigung reicht
-    if (m.startAt.getTime() - m.createdAt.getTime() <= 26 * HOUR) continue;
+    // Erst vor kurzem (innerhalb von 26 Stunden vor Beginn) gebucht: Bestätigung reicht (lib/vertrieb/termin-erinnerungen.ts)
+    if (!vorlaufOk("tag", "email", { startAt: m.startAt, gebucht: m.createdAt, urspruenglich: m.createdAt })) continue;
     if (await sendInviteeMail(m.id, "reminder")) day++;
   }
   const soonDue = await prisma.salesMeeting.findMany({
-    where: { ...base, soonReminderSentAt: null, startAt: { gt: new Date(now.getTime() + 10 * MIN), lte: new Date(now.getTime() + HOUR) } },
+    where: { ...base, soonReminderSentAt: null, startAt: erinnerungsFenster("gleich", now) },
     select: { id: true, startAt: true, createdAt: true, rescheduledFromId: true },
     take: 100,
   });
@@ -978,7 +977,7 @@ export async function runSalesBookingReminders(now = new Date()): Promise<{ day:
     const claimed = await prisma.salesMeeting.updateMany({ where: { id: m.id, soonReminderSentAt: null }, data: { soonReminderSentAt: now } });
     if (!claimed.count) continue;
     // Verschoben: gemessen an der ursprünglichen Buchung (wie bei WhatsApp)
-    if (m.startAt.getTime() - (await urspruenglichGebucht(m)).getTime() < 3 * HOUR) continue;
+    if (!vorlaufOk("gleich", "email", { startAt: m.startAt, gebucht: m.createdAt, urspruenglich: await urspruenglichGebucht(m) })) continue;
     if (await sendInviteeMail(m.id, "soon")) soon++;
   }
   // WhatsApp von der Support-Nummer (auch für Calendly-Termine), eigene Markierung je Art
