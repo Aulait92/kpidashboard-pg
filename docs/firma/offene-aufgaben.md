@@ -54,6 +54,7 @@ Freiburg 14 bis 15 (anteilig ca. 13 bzw. 7 bis 8). Nichts angelegt; Start nur na
 | HvK klären: November voll oder anteilig ab 16.11., Reklamationsgründe, Erstprüfung für Endkunden kostenlos, Berater vor Ort, Folgen bei Zielverfehlung | 21.11.2026 | Sales mit Ole |
 | Freigaben (Stufe A): A1 zwei Geo-Kampagnen starten, A2 Rahmen M 1.360 €, A3 Aufstockung bis 3.040 € bei Kosten je angenommenem Lead unter 40 € | 21.11.2026 | Ole |
 | Werbetexte K1, K3, K4 und Funnel-Einwilligung (Weitergabe an HvK) prüfen; Meta-Sonderkategorie Finanzprodukte für DE bestätigen; Ergebnis in `docs/recht/` | 21.11.2026 | Recht |
+| Erledigt Recht 20.11.: Texte K1, K3, K4 grün (Endfassungen mit „kostenlos“ nur für die Erstprüfung), Vorhaben gelb, `docs/recht/hvk-pkv-anzeigen-2026-11-20.md`. Vor Start: HvK per Mail Rechtsgrundlage (Makler, Versicherungsberater, Anwalt oder Partner mit Registernr.), Honorar für beauftragten Wechsel, voller Firmenname; Einwilligung mit HvK-Namen ins Formular | 21.11.2026 | Sales mit Ole, Performance Marketer |
 | K1, K3, K4 als Entwurf (pausiert), K4 ohne „Beamter“, zwei Bildvarianten Freiburg | 21.11.2026, nach A1 | Creative Director |
 | Funnel-Kopie mit Filter PLZ, Beitrag ab 450 €, kein Beamter; Lead-Ereignis nur qualifiziert; Kampagnen pausiert vorbereiten; täglich nach Abbruchregeln steuern | 21.11. bis 30.11.2026 | Performance Marketer |
 | Wechsel-Briefing `src/lib/creative-gen.ts` entschärfen („bis zu 50 %“, „keine Gesundheitsprüfung“, „jeder Anbieter“ raus) | 24.11.2026 | CTO mit Recht |
