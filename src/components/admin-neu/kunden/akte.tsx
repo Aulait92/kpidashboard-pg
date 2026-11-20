@@ -12,6 +12,7 @@ import { fmtDayShort, teamAbsences } from "@/lib/absence";
 import { memberName } from "@/lib/team";
 import { wonReferralCount } from "@/lib/kollegen";
 import { StatusWahl } from "./status-wahl";
+import { pilotAbzeichen } from "@/lib/pilot";
 
 export const kurzName = (name: string) => name.replace(/^Allianz\s+/i, "");
 
@@ -27,6 +28,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
       id: true,
       name: true,
       isTest: true,
+      pilotBis: true,
       plan: true,
       retainerMonthly: true,
       paymentOverdueSince: true,
@@ -47,6 +49,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
     ? await prisma.user.findMany({ where: { id: { in: [...absences.keys()] } }, select: { id: true, email: true, displayName: true } })
     : [];
   const stage = c.salesContact?.customerStage ?? null;
+  const pilot = pilotAbzeichen(c.pilotBis);
 
   const zeile = (
     <div className="space-y-1.5">
@@ -57,6 +60,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
           </span>
         ) : null}
         <Badge>{packageLabel(c)}</Badge>
+        {pilot ? <Badge tone={pilot.laeuft ? "brand" : "warning"}>{pilot.text}</Badge> : null}
         {c.isTest ? (
           <span data-funktion="test-actions-deletetestcustomeraction--testkunde-komplett-loeschen">
             <TestkundeLoeschen customerId={c.id} name={c.name} whatsapp={c.whatsAppAccount?.phoneNumber ?? null} zurueck="/admin/neu/kunden" />

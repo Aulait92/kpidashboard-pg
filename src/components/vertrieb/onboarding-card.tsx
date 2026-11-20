@@ -5,6 +5,8 @@ import type { ImpressumInfo } from "@/lib/impressum";
 import { checklistProgress } from "@/lib/onboarding";
 import { adminEndPauseAction, adminPlanPauseAction, goLiveAction, resendWelcomeAction, startOnboardingAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
 import { KEINE_ANGABE } from "@/lib/platzhalter";
+import { ERSTINFO_STATT_WEBSITE, erstinfoStattWebsite } from "@/lib/impressum-ersatz";
+import { EinladungslinkKopieren } from "@/components/vertrieb/einladungslink-kopieren";
 
 const OWNER: Record<ChecklistItem["owner"], { label: string; cls: string }> = {
   kunde: { label: "Kunde", cls: "bg-sky-50 text-sky-700" },
@@ -34,6 +36,8 @@ export function OnboardingCard({
   const open = items.filter((i) => !i.done);
   const waitingCustomer = open.filter((i) => i.owner === "kunde").length;
   const waitingYou = open.filter((i) => i.owner === "du").length;
+  // Ohne Website: vollständige Erstinformation statt Impressum (lib/impressum-ersatz.ts)
+  const ohneWebsite = items.some((i) => i.note === ERSTINFO_STATT_WEBSITE) || erstinfoStattWebsite(websiteInfo, !!items.find((i) => i.key === "erstinfo")?.done);
   return (
     <section className="card">
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
@@ -76,7 +80,10 @@ export function OnboardingCard({
               ) : (
                 <Circle className="h-5 w-5 shrink-0 text-slate-300" />
               )}
-              <span className={i.done ? "text-slate-500" : "text-slate-900"}>{i.label}</span>
+              <span className={i.done ? "text-slate-500" : "text-slate-900"}>
+                {i.label}
+                {i.note ? <span className="ml-1.5 text-xs text-emerald-700">· {i.note}</span> : null}
+              </span>
               <span className="ml-auto flex items-center gap-2">
                 {i.at && <span className="text-xs text-slate-400">{fmt(i.at)}</span>}
                 {!i.done && <span className={`badge ${OWNER[i.owner].cls}`}>{OWNER[i.owner].label}</span>}
@@ -93,6 +100,7 @@ export function OnboardingCard({
           <input type="hidden" name="id" value={onboarding.id} />
           <button className="btn-ghost">Willkommens-Mail erneut senden</button>
         </form>
+        {loginEmail ? <EinladungslinkKopieren onboardingId={onboarding.id} /> : null}
       </div>
       {onboarding.helpCallAt ? (
         <p className="border-t border-slate-100 px-4 py-3 text-sm">
@@ -105,7 +113,7 @@ export function OnboardingCard({
           ) : null}
         </p>
       ) : null}
-      <ImpressumBlock info={websiteInfo} />
+      <ImpressumBlock info={websiteInfo} ohneWebsite={ohneWebsite} />
       {feedback.length > 0 && (
         <ul className="space-y-1 border-t border-slate-100 px-4 py-3 text-sm">
           {feedback.map((f) => (
@@ -170,7 +178,14 @@ export function StartOnboardingCard({
   );
 }
 
-function ImpressumBlock({ info }: { info: ImpressumInfo | null }) {
+function ImpressumBlock({ info, ohneWebsite = false }: { info: ImpressumInfo | null; ohneWebsite?: boolean }) {
+  if (ohneWebsite) {
+    return (
+      <p className="border-t border-slate-100 px-4 py-3 text-xs text-emerald-700" data-erstinfo-statt-website>
+        <span className="font-medium text-slate-700">Pflichtangaben:</span> {ERSTINFO_STATT_WEBSITE} (vollständig, keine Website hinterlegt)
+      </p>
+    );
+  }
   if (!info) {
     return <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">Impressum der Website wird in Kürze automatisch gelesen …</p>;
   }

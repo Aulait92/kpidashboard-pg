@@ -43,6 +43,7 @@ import { MANUAL_SEAT_TASK, manualSeatTask, seatUsage } from "@/lib/seats-server"
 import { accountTaxIdParams, customerInvoiceSettingsCreate, customerInvoiceSettingsUpdate, invoiceFooterParams, loadInvoiceDefaults } from "@/lib/invoice-footer";
 import { allowedPaymentMethodTypes, type Zahlart } from "@/lib/zahlart";
 import { STEUERFREI_RECHNUNGSHINWEIS, type Steuer } from "@/lib/ppl/steuer";
+import { pilotLaeuft } from "@/lib/pilot";
 
 let client: Stripe | null = null;
 
@@ -1634,9 +1635,11 @@ export async function syncSeatBilling(customerId: string, opts: { force?: boolea
   try {
     const c = await prisma.customer.findUnique({
       where: { id: customerId },
-      select: { seatsIncluded: true, seatMonthly: true, seatsBilled: true, stripeCustomerId: true },
+      select: { seatsIncluded: true, seatMonthly: true, seatsBilled: true, stripeCustomerId: true, pilotBis: true },
     });
     if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+    // Pilot (Ole, 20.11.2026): bis zum Pilotende keine Plätze abrechnen; die Erinnerung zum Pilotende nennt die Abrechnung
+    if (pilotLaeuft(c.pilotBis, opts.now)) return { ok: true, changed: false, note: "Pilot läuft: Verkäufer-Plätze werden bis zum Pilotende nicht abgerechnet." };
     const price = Number(c.seatMonthly ?? 0);
     // Ohne Preis (individuelle Sonderkondition) wird nichts automatisch berechnet;
     // eine vorher berechnete Menge wird dann auf 0 gesetzt.
