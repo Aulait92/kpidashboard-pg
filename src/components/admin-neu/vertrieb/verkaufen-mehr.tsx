@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Calculator, FileText, Gift, Megaphone, MoreHorizontal, ShieldAlert, Upload } from "lucide-react";
+import { Calculator, FileText, Gift, Megaphone, MoreHorizontal, ShieldAlert } from "lucide-react";
 import { ActionMenu } from "@/components/ui/menu";
 
 // „Mehr“ im Kopf aller Verkaufen-Seiten (Admin-Umbau 19.11.2026): Marketing ist kein eigener Reiter mehr, sondern
-// liegt mit Seltenem (Import, Datenschutz, Rechner einrichten) hier. Die Leiste bleibt bei vier Reitern.
+// liegt mit Seltenem (Datenschutz, Rechner einrichten) hier. Die Leiste bleibt bei vier Reitern. Steht auf allen vier
+// Reitern (Pipeline, Kontakte, Termine, Angebote), damit es überall an derselben Stelle ist. Kein „Kontakte importieren“
+// mehr: der Import aus dem alten Cold-CRM ist entfernt (ENTFERNT F135/F136), neue Kontakte kommen per Formular oder Meta.
 
 const M = "/admin/neu/marketing";
 
@@ -32,7 +34,6 @@ export function VerkaufenMehr({ datenschutzOffen = 0 }: { datenschutzOffen?: num
             icon: ShieldAlert,
             onSelect: geh("/admin/neu/vertrieb/datenschutz"),
           },
-          { label: "Kontakte importieren", icon: Upload, onSelect: geh("/admin/neu/einstellungen/anbindungen") },
           { label: "Webseite & Rechner", icon: Calculator, onSelect: geh(`${M}/webseite`) },
         ]}
       />

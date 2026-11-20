@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { ChevronRight, FileText } from "lucide-react";
-import { Badge, Card, EmptyState } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState } from "@/components/ui";
+import { Kennzahlen, type Kennzahl } from "@/components/admin-neu/ui/kennzahlen";
+import { Chips } from "@/components/admin-neu/vertrieb/chips";
+import { VerkaufenMehr } from "@/components/admin-neu/vertrieb/verkaufen-mehr";
+import { offeneRechtsFaelle } from "@/lib/vertrieb/datenschutz-recht-server";
 import { Seite } from "@/components/admin-neu/ui/seite";
-import { kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
+import { KONTAKTE, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { fmtTag, tagIso } from "@/lib/angebot-zahlungserinnerung";
 import { offerAdminHref } from "@/lib/offer-links";
 import { BonusHinweis } from "@/components/vertrieb/bonus-hinweis";
@@ -22,13 +26,42 @@ const BASIS = "/admin/neu/vertrieb/angebote";
 
 // Vertrieb → Angebote: je Angebot die aktuelle Version mit Stand, Filter als Chips (wie /admin/vertrieb/angebote,
 // Daten aus lib/vertrieb/angebote-uebersicht.ts). Zeile öffnet die Kontaktakte bei der Angebotskarte.
+type Zeile = Awaited<ReturnType<typeof ladeAngebote>>["rows"][number];
+
+/** Eine Chip-Reihe (Umbau 19.11.2026): Offen als Standard, Entwürfe und Abgelaufene stehen unter „Alle“. */
+const CHIPS: { key: string; label: string; match: (r: Zeile) => boolean }[] = [
+  { key: "offen", label: "Offen", match: (r) => r.z === "offen" || r.z === "geoeffnet" },
+  { key: "zahlung", label: "Zahlung offen", match: (r) => r.zahlungOffen },
+  { key: "angenommen", label: "Angenommen", match: (r) => r.z === "angenommen" },
+  { key: "alle", label: "Alle", match: () => true },
+];
+const chipHref = (key: string) => (key === "offen" ? BASIS : `${BASIS}?f=${key}`);
+
+// Verkaufen → Angebote: je Angebot die aktuelle Version mit Stand (Daten aus lib/vertrieb/angebote-uebersicht.ts, wie
+// /admin/vertrieb/angebote). Zeile öffnet die Kontaktakte bei der Angebotskarte.
+// Umbau 19.11.2026 (SUS-Ziel 90): drei Kennzahlen statt vier, eine Chip-Reihe mit „Offen“ als Standard statt sechs Chips
+// in drei Zeilen; ältere Filter (?f=abgelaufen, ?f=entwurf) bleiben als Link nutzbar und erscheinen dann als eigener Chip.
 export default async function AngebotePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireAuth();
   const sp = await searchParams;
-  const { filter, shown, count, kennzahlen, ablehnGruende } = await ladeAngebote(sp.f);
+  const [{ rows, kennzahlen, ablehnGruende }, offenRecht] = await Promise.all([ladeAngebote(undefined), offeneRechtsFaelle()]);
+  const alt = ANGEBOT_FILTER.find((f) => f.key === sp.f && !CHIPS.some((c) => c.key === f.key));
+  const chip = CHIPS.find((c) => c.key === sp.f) ?? CHIPS[0];
+  const match = alt ? alt.match : chip.match;
+  const shown = rows.filter(match);
   const { sent, angenommen, offen, geoeffnet } = kennzahlen;
-  const ziel = (o: (typeof shown)[number]) => (o.salesContactId ? `${kontaktPfad(o.salesContactId)}#angebot` : offerAdminHref(o));
-  const stand = (o: (typeof shown)[number]) => (
+  const kz: Kennzahl[] = [
+    { label: "Offen (monatlich)", wert: eur(offen.reduce((s, r) => s + Number(r.monthlyFee), 0)), hinweis: `${offen.length} offene Angebote`, href: BASIS },
+    {
+      label: "Angenommen",
+      wert: String(angenommen.length),
+      hinweis: sent.length ? `${Math.round((angenommen.length / sent.length) * 100)} % von ${sent.length} verschickten` : undefined,
+      href: chipHref("angenommen"),
+    },
+    ...(sent.length ? [{ label: "Geöffnet", wert: `${Math.round((geoeffnet.length / sent.length) * 100)} %`, hinweis: `${geoeffnet.length} von ${sent.length}` }] : []),
+  ];
+  const ziel = (o: Zeile) => (o.salesContactId ? `${kontaktPfad(o.salesContactId)}#angebot` : offerAdminHref(o));
+  const stand = (o: Zeile) => (
     <>
       <Badge tone={ANGEBOT_ZUSTAND[o.z].tone}>{o.z === "angenommen" ? `Angenommen ${datum(o.acceptedAt)}` : ANGEBOT_ZUSTAND[o.z].label}</Badge>
       {o.grund ? (
@@ -45,29 +78,26 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
     </>
   );
   // „Mehr“ je Zeile: Als abgelehnt markieren bzw. Wieder öffnen (Ole, 18.11.2026)
-  const mehr = (o: (typeof shown)[number]) => (
+  const mehr = (o: Zeile) => (
     <AngebotMehr variant="icon" offer={{ id: o.id, number: o.number, kannAblehnen: o.kannAblehnen, kannWiederOeffnen: o.kannWiederOeffnen, kontakt: !!o.salesContactId }} />
   );
 
   return (
-    <Seite titel="Verkaufen" reiter="verkaufen">
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { l: "Verschickt", v: String(sent.length) },
-          { l: "Geöffnet", v: sent.length ? `${Math.round((geoeffnet.length / sent.length) * 100)} %` : NOCH_KEINE_DATEN, s: `${geoeffnet.length} von ${sent.length}` },
-          { l: "Angenommen", v: String(angenommen.length), s: sent.length ? `${Math.round((angenommen.length / sent.length) * 100)} % Annahmequote` : undefined },
-          { l: "Offen (monatlich)", v: eur(offen.reduce((s, r) => s + Number(r.monthlyFee), 0)), s: `${offen.length} offene Angebote` },
-        ].map((k) => (
-          <Card key={k.l} className="p-4">
-            <div className="text-xs text-[color:var(--muted)]">{k.l}</div>
-            <div className="mt-1 text-xl font-semibold tabular-nums">{k.v}</div>
-            {k.s ? <div className="text-xs text-[color:var(--muted)]">{k.s}</div> : null}
-          </Card>
-        ))}
-      </div>
+    <Seite titel="Verkaufen" reiter="verkaufen" aktionen={<VerkaufenMehr datenschutzOffen={offenRecht} />}>
+      <Kennzahlen werte={kz} />
 
-      {ablehnGruende.length ? (
-        <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" data-ablehngruende>
+      <Chips
+        label="Filter"
+        aktiv={alt ? alt.key : chip.key}
+        funktion="page-filter--filter-alle-verschickten-offen-angenommen page-filter-zahlung--filter-zahlung-offen"
+        chips={[
+          ...CHIPS.map((c) => ({ key: c.key, label: c.label, href: chipHref(c.key), anzahl: rows.filter(c.match).length })),
+          ...(alt ? [{ key: alt.key, label: `${alt.label} ✕`, href: BASIS }] : []),
+        ]}
+      />
+
+      {chip.key === "alle" && !alt && ablehnGruende.length ? (
+        <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" data-ablehngruende>
           <span className="font-medium">Abgelehnt:</span>
           {ablehnGruende.map((g) => (
             <span key={g.grund}>
@@ -77,28 +107,19 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
         </div>
       ) : null}
 
-      <div className="mb-4 flex flex-wrap gap-1.5" data-angebote-filter data-funktion="page-filter--filter-alle-verschickten-offen-angenommen page-filter-zahlung--filter-zahlung-offen">
-        {ANGEBOT_FILTER.map((f) => (
-          <Link
-            key={f.key}
-            href={f.key === "alle" ? BASIS : `${BASIS}?f=${f.key}`}
-            aria-current={f.key === filter.key ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-10 items-center gap-1 rounded-full border px-3 text-sm font-medium sm:min-h-8",
-              f.key === filter.key
-                ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white"
-                : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
-            )}
-          >
-            {f.label} <span className="tabular-nums opacity-80">{count(f)}</span>
-          </Link>
-        ))}
-      </div>
-
       <Card>
         <div data-funktion="page--angebotsliste-mit-versand-oeffnung-gueltigkeit deal-offers-card-pay--zahlungsstatus-des-angebots-offen-bestaetigt">
           {shown.length === 0 ? (
-            <EmptyState icon={FileText} title="Keine Angebote in dieser Ansicht." text="Angebote entstehen in der Kontaktakte, direkt im Gespräch." />
+            <EmptyState
+              icon={FileText}
+              title={chip.key === "offen" && !alt ? "Kein Angebot offen." : "Keine Angebote in dieser Ansicht."}
+              text="Angebote entstehen in der Kontaktakte, direkt im Gespräch."
+              action={
+                <ButtonLink href={`${KONTAKTE}?stage=INTERESSE`} size="md">
+                  Kontakte mit Interesse
+                </ButtonLink>
+              }
+            />
           ) : (
             <>
               {/* Handy: Liste */}

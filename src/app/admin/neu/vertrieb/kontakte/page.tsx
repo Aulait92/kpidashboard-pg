@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Phone, Plus, SearchX, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, Plus, SearchX, ShieldAlert, Trash2 } from "lucide-react";
 import { Badge, ButtonLink, Card, EmptyState, buttonClass } from "@/components/ui";
-import { FilterChips } from "@/components/ui/filter-chips";
 import { ConfirmButton, SelectAll } from "@/components/vertrieb/confirm-button";
 import { StageBadge } from "@/components/vertrieb/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { KONTAKTE, V, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { offeneRechtsFaelle } from "@/lib/vertrieb/datenschutz-recht-server";
-import { PlzFilter } from "@/components/admin-neu/vertrieb/plz-filter";
+import { SuchFilter } from "@/components/admin-neu/vertrieb/such-filter";
+import { VerkaufenMehr } from "@/components/admin-neu/vertrieb/verkaufen-mehr";
+import { prisma } from "@/lib/prisma";
 import { deleteContacts } from "@/app/admin/vertrieb/actions";
 import { STAGES, shortName } from "@/lib/vertrieb/crm";
 import { fmtDate } from "@/lib/vertrieb/dates";
@@ -22,20 +23,26 @@ export const metadata = { title: "Kontakte | performancegrowth Admin" };
 
 // Vertrieb → Kontakte: Suche und Filter (Stufe, Cold Mail, LinkedIn, PLZ) wie /admin/vertrieb/kontakte, gleiche
 // Abfrage (lib/vertrieb/kontakte-liste.ts). Handy: Liste mit Anruf-Knopf; Rechner: Tabelle mit Häkchen zum Löschen.
+// Umbau 19.11.2026 (SUS-Ziel 90): eine Zeile Suche + „Filter“ (Fenster) statt drei Zeilen Umschalter, Suche und vier
+// Filter. „Meta-Leads“ als Chip nur, wenn es Meta-Leads gibt; „Datenschutz“ als Chip nur bei offenen Fällen (sonst „Mehr“).
 export default async function KontaktePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireAuth();
   const sp = await searchParams;
+  const [offenRecht, metaAnzahl] = await Promise.all([offeneRechtsFaelle(), prisma.salesInboundLead.count({ where: { source: "META_ADS", contactId: { not: null } } })]);
   const aktionen = (
-    <ButtonLink href={`${KONTAKTE}/neu`} variant="primary" size="md" icon={Plus}>
-      Kontakt
-    </ButtonLink>
+    <>
+      <VerkaufenMehr datenschutzOffen={offenRecht} />
+      <ButtonLink href={`${KONTAKTE}/neu`} variant="primary" size="md" icon={Plus}>
+        Kontakt
+      </ButtonLink>
+    </>
   );
   // Ansicht „Meta-Leads“ (Ole, 18.11.2026): Vermittler aus Meta-Formularen mit Stand und Trichter
   if (sp.ansicht === META_ANSICHT) {
     const daten = await ladeMetaLeads({ zeitraum: sp.zeitraum, stand: sp.stand });
     return (
       <Seite titel="Verkaufen" reiter="verkaufen" aktionen={aktionen}>
-        <AnsichtWahl meta offenRecht={await offeneRechtsFaelle()} />
+        <AnsichtWahl meta metaAnzahl={metaAnzahl} offenRecht={offenRecht} />
         <MetaLeads daten={daten} />
       </Seite>
     );
@@ -50,18 +57,18 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
 
   return (
     <Seite titel="Verkaufen" reiter="verkaufen" aktionen={aktionen}>
-      <AnsichtWahl meta={false} offenRecht={await offeneRechtsFaelle()} />
       <div className="mb-4" data-funktion="page-q--suche-nach-agentur-name-e-mail-ort-telefon page-stage--filter-stufe page-mail-filters--filter-cold-mail-erhalten-keine-geoeffnet page-li--filter-linkedin-status-und-plz-beginnt-mit">
-        <FilterChips
-          searchPlaceholder="Agentur, Name, E-Mail, Ort, Telefon"
-          fields={[
-            { kind: "select", key: "stage", label: "Stufe", options: STAGES.map((s) => ({ value: s.id, label: s.label })) },
-            { kind: "select", key: "mail", label: "Cold Mail", options: Object.entries(MAIL_FILTERS).map(([value, v]) => ({ value, label: v.label })) },
-            { kind: "select", key: "li", label: "LinkedIn", options: [{ value: "none", label: "Noch nicht auf LinkedIn" }, ...LI_STATUSES.map((x) => ({ value: x.id, label: x.label }))] },
+        <SuchFilter
+          suche="Agentur, Name, E-Mail, Ort, Telefon"
+          felder={[
+            { key: "stage", label: "Stufe", options: STAGES.map((s) => ({ value: s.id, label: s.label })) },
+            { key: "mail", label: "Cold Mail", options: Object.entries(MAIL_FILTERS).map(([value, v]) => ({ value, label: v.label })) },
+            { key: "li", label: "LinkedIn", options: [{ value: "none", label: "Noch nicht auf LinkedIn" }, ...LI_STATUSES.map((x) => ({ value: x.id, label: x.label }))] },
+            { key: "plz", label: "PLZ beginnt mit", text: { placeholder: "z. B. 80", inputMode: "numeric" } },
           ]}
         >
-          <PlzFilter />
-        </FilterChips>
+          <AnsichtWahl meta={false} metaAnzahl={metaAnzahl} offenRecht={offenRecht} />
+        </SuchFilter>
       </div>
 
       <Card>
@@ -209,26 +216,37 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
   );
 }
 
-/** Umschalter oben: alle Kontakte, nur Meta-Leads (Quelle: Meta-Formular) oder Datenschutz und Recht (eigene Liste). */
-function AnsichtWahl({ meta, offenRecht }: { meta: boolean; offenRecht: number }) {
+/**
+ * Ansichten neben der Suche: Meta-Leads (Quelle: Meta-Formular) nur, wenn es welche gibt; Datenschutz und Recht nur bei
+ * offenen Fällen (sonst über „Mehr“ im Kopf). In der Ansicht Meta-Leads führt „Alle Kontakte“ zurück.
+ */
+function AnsichtWahl({ meta, metaAnzahl, offenRecht }: { meta: boolean; metaAnzahl: number; offenRecht: number }) {
   const klasse = (aktiv: boolean) =>
     cn(
-      "inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-sm font-medium sm:min-h-8",
-      aktiv ? "bg-[color:var(--foreground)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
+      "inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full border px-3 text-sm font-medium",
+      aktiv ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
     );
+  if (!meta && !metaAnzahl && !offenRecht) return null;
   return (
-    <nav className="mb-3 flex gap-1 overflow-x-auto [scrollbar-width:none]" aria-label="Ansicht" data-funktion="meta-leads--ansicht-quelle-meta-formular">
-      <Link href={KONTAKTE} aria-current={!meta ? "page" : undefined} className={klasse(!meta)}>
-        Alle Kontakte
-      </Link>
-      <Link href={metaPfad({})} aria-current={meta ? "page" : undefined} className={klasse(meta)}>
-        Meta-Leads
-      </Link>
+    <nav className={cn("flex gap-1.5 overflow-x-auto [scrollbar-width:none]", meta && "mb-3")} aria-label="Ansicht" data-funktion="meta-leads--ansicht-quelle-meta-formular">
+      {meta ? (
+        <Link href={KONTAKTE} className={klasse(false)}>
+          Alle Kontakte
+        </Link>
+      ) : null}
+      {meta || metaAnzahl ? (
+        <Link href={meta ? KONTAKTE : metaPfad({})} aria-current={meta ? "page" : undefined} className={klasse(meta)}>
+          Meta<span className="hidden sm:inline">-Leads</span>
+        </Link>
+      ) : null}
       {/* Datenschutz und Recht (Ole, 19.11.2026): Fälle aus der Kaltakquise, Zähler = offene Fälle */}
-      <Link href={`${V}/datenschutz`} className={klasse(false)} data-funktion="datenschutz-liste--datenschutz-und-recht-faelle-mit-frist-und-nachweis">
-        Datenschutz
-        {offenRecht ? <span className="ml-1.5 rounded-full bg-rose-600 px-1.5 text-xs font-semibold text-white">{offenRecht}</span> : null}
-      </Link>
+      {offenRecht ? (
+        <Link href={`${V}/datenschutz`} className={klasse(false)} data-funktion="datenschutz-liste--datenschutz-und-recht-faelle-mit-frist-und-nachweis">
+          <ShieldAlert className="h-4 w-4 sm:mr-1" aria-label="Datenschutz und Recht" />
+          <span className="hidden sm:inline">Datenschutz</span>
+          <span className="rounded-full bg-rose-600 px-1.5 text-xs font-semibold text-white sm:ml-1.5">{offenRecht}</span>
+        </Link>
+      ) : null}
     </nav>
   );
 }

@@ -58,7 +58,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ g
 
       <Card>
         <CardHeader title="Kalender" icon={CalendarDays} />
-        <div className="p-5 text-sm">
+        {/* Admin-Umbau 19.11.2026 (Verkaufen): Kalender und Buchungslinks nur noch hier, nicht mehr doppelt unter Verkaufen → Termine */}
+        <div className="p-5 text-sm" data-funktion="actions-disconnectsalescalendaraction--vertriebskalender-verbinden-bzw-trennen">
           {connected ? (
             <div className="flex flex-wrap items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -97,7 +98,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ g
           <Card key={t.id}>
             <CardHeader title={t.title} hint={t.slug === DEFAULT_BOOKING_TYPE ? "Erstgespräch" : "Folgetermin nach dem Angebot"} />
             <div className="space-y-4 p-5">
-              <CopyField value={t.slug === DEFAULT_BOOKING_TYPE ? publicSalesBookingUrl() : salesAppUrl(bookingPath(t.slug))} />
+              <div data-funktion="page--buchungslink-kopieren">
+                <CopyField value={t.slug === DEFAULT_BOOKING_TYPE ? publicSalesBookingUrl() : salesAppUrl(bookingPath(t.slug))} />
+              </div>
               <BookingTypeForm action={saveBookingTypeAction} type={t} durations={DURATION_CHOICES} buffers={BUFFER_CHOICES} notices={NOTICE_CHOICES} windows={WINDOW_CHOICES} />
             </div>
           </Card>
