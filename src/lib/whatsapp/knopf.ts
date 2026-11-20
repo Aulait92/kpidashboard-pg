@@ -10,6 +10,8 @@
 //   „Eher der Beitrag“/„Eher die Leistung“ (Angebot) → Assistent: Gespräch zum Anpassen anbieten, ohne Beträge
 // Termin-Strecke (Ole, 17.11.2026, lib/whatsapp/termin-strecke.ts), immer am Payload erkannt:
 //   Zeit-Knopf „Heute 16 Uhr“ (slot:<ISO>)        → die App bucht genau diese Zeit (bot.ts, E-Mail bekannt), sonst Hinweis
+//   „Ja, sicher“/„Lieber andere Zeit“ (zusage:ja|andere, Splittest termin_zusage Fassung b) → zugesagt, dann Komplettcheck
+//                                                    bzw. Tierfrage mit „Super, danke!“; bzw. wie „Bitte verschieben“
 //   „Ja, gern“/„Nein, danke“ (komplettcheck:ja|nein) → Komplettcheck am Termin, dann Vertragsfrage bzw. Abschluss
 //   Zeit mit 45 Min. (lang:<ISO>) / „Zeit behalten“ (lang:behalten) → Komplettcheck-Termin verlegen bzw. behalten
 //   „Schicke ich gleich“/„Nicht zur Hand“ (policenbitte:<Titel>) → Reaktion auf die Policen-Bitte, dann der Schluss
@@ -43,6 +45,7 @@ export type KnopfAktion =
   | { aktion: "andere_zeit" }
   | { aktion: "angebot"; fokus: "beitrag" | "leistung" }
   | { aktion: "komplettcheck"; ja: boolean }
+  | { aktion: "zusage"; ja: boolean }
   | { aktion: "kalender"; art: "ja" | "gleich" }
   | { aktion: "email"; art: "ja" | "andere" }
   | { aktion: "eingetragen"; ja: boolean }
@@ -67,6 +70,7 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
     return { aktion: "zeit", start: Number.isNaN(new Date(iso).getTime()) ? null : iso };
   }
   if (p === "komplettcheck:ja" || p === "komplettcheck:nein") return { aktion: "komplettcheck", ja: p.endsWith(":ja") };
+  if (p === "zusage:ja" || p === "zusage:andere") return { aktion: "zusage", ja: p.endsWith(":ja") };
   if (p === "kalender:ja" || p === "kalender:gleich") return { aktion: "kalender", art: p.endsWith(":ja") ? "ja" : "gleich" };
   if (p === "email:ja" || p === "email:andere") return { aktion: "email", art: p.endsWith(":ja") ? "ja" : "andere" };
   if (p === "eingetragen:ja" || p === "eingetragen:nein") return { aktion: "eingetragen", ja: p.endsWith(":ja") };
@@ -221,6 +225,19 @@ export async function handleButtonReply(
     return { handled: true };
   }
 
+  // Zusage-Frage unter der Buchungsbestätigung (Splittest termin_zusage, Fassung b): „Ja, sicher“ ohne Assistent;
+  // „Lieber andere Zeit“ wie „Bitte verschieben“ (Assistent bietet zwei freie Zeiten an und verlegt)
+  if (k.aktion === "zusage") {
+    const { zusageAntwort } = await import("@/lib/whatsapp/termin-strecke");
+    if (k.ja) return { handled: await zusageAntwort(conversationId, "ja", now) };
+    await zusageAntwort(conversationId, "andere", now);
+    const v: KnopfAktion = { aktion: "verschieben" };
+    await prisma.appointment.updateMany({
+      where: { status: "booked", startsAt: { gt: now }, rescheduleRequestedAt: null, OR: [{ conversationId }, ...(conv.leadId ? [{ leadId: conv.leadId }] : [])] },
+      data: { rescheduleRequestedAt: now },
+    });
+    return { handled: false, hint: knopfHinweis(v, now)?.replace("„Bitte verschieben“", "„Lieber andere Zeit“") ?? null, zeit: null };
+  }
   // Termin-Strecke nach der Buchung (lib/whatsapp/termin-strecke.ts): ohne Assistent
   if (k.aktion === "komplettcheck") {
     const { komplettcheckAntwort } = await import("@/lib/whatsapp/termin-strecke");

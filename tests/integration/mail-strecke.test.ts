@@ -80,8 +80,11 @@ import { leadAbmelden } from "@/lib/bestand/abmelden";
 import { pruefeDsgvoEingang } from "@/lib/dsgvo/server";
 import { sendeVorlagenMail } from "@/lib/mail/vorlagen-mail";
 import { loadInbox } from "@/lib/inbox";
-import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { cleanupCustomer, makeBuyer, makeCustomer, ohneSplittest, requireTestDb } from "./db";
 import { KOMPLETTCHECK_RE } from "@/lib/whatsapp/gespraech";
+
+// Buchungen im Chat immer mit Fassung a der Bestätigung (Splittest termin_zusage; Fassung b: eigener Test)
+ohneSplittest("termin_zusage");
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 let n = 0;

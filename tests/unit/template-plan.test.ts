@@ -23,12 +23,12 @@ const ALL = [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES];
 
 describe("Vorlagen-Plan", () => {
   it("Kampagnen-Vorlagen nur mit Bestandskunden-Modul", () => {
-    // inkl. Show-up-Paket (freigegeben 17.11.2026): 15 Minuten vorher, „wartet im Videoraum“; Angebot (P3, 17.11.2026)
-    expect(purposesFor({ bestand: false })).toHaveLength(21);
+    // inkl. Show-up-Paket (freigegeben 17.11.2026): 15 Minuten vorher, „wartet im Videoraum“; Angebot (P3, 17.11.2026); Halbzeit-Erinnerung (20.11.2026)
+    expect(purposesFor({ bestand: false })).toHaveLength(22);
     expect(purposesFor({ bestand: false })).toContain("reschedule");
-    expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["reminder_start", "appt_waiting"]));
+    expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["reminder_start", "appt_waiting", "appt_halbzeit"]));
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(25);
+    expect(purposesFor({ bestand: true })).toHaveLength(26);
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat"]));
   });
 

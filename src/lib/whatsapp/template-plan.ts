@@ -63,6 +63,8 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): 15 Minuten vorher, „wartet im Videoraum“
   "reminder_start",
   "appt_waiting",
+  // Halbzeit-Erinnerung (Ole, 20.11.2026: nur einreichen, noch nicht senden; Test termin_halbzeit folgt)
+  "appt_halbzeit",
   "reschedule",
   "followup",
   "followup_nudge",
@@ -156,7 +158,7 @@ export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSI
  * alles andere ist Ansprache (MARKETING). Meta prüft und stuft ggf. selbst um.
  */
 export function categoryFor(purpose: NoticePurpose): "UTILITY" | "MARKETING" {
-  return ["booking_confirmation", "reminder", "reminder_soon", "reminder_start", "appt_waiting", "reschedule", "offer_send", "maklervollmacht", "maklervollmacht_erinnerung"].includes(purpose)
+  return ["booking_confirmation", "reminder", "reminder_soon", "reminder_start", "appt_waiting", "appt_halbzeit", "reschedule", "offer_send", "maklervollmacht", "maklervollmacht_erinnerung"].includes(purpose)
     ? "UTILITY"
     : "MARKETING";
 }
@@ -224,6 +226,7 @@ const EXAMPLES: Record<string, string> = {
   // Erstanschreiben v9 der Tierkrankenversicherung: Tiername aus dem Formular
   Tier: "Minka",
   "Vollmacht-Link": "https://dein-beratungstermin.de/vollmacht/abc123",
+  "Termin (Wochentag, Datum, Uhrzeit)": "Montag, 14.12. um 10 Uhr",
 };
 
 /** Beispielwerte der Du-Fassung, wo sie sich von der Sie-Fassung unterscheiden. */
@@ -381,6 +384,7 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   reminder_soon: { title: "Kurz vor dem Termin", when: "Etwa eine Stunde vor dem Termin: passt alles?" },
   reminder_start: { title: "Gleich geht es los", when: "15 Minuten vor einem Videotermin, mit dem Link zum Videoraum." },
   appt_waiting: { title: "Sie warten im Videoraum", when: "Wenn Sie zum Terminbeginn „Fehlt noch“ antippen." },
+  appt_halbzeit: { title: "Zwischen-Erinnerung", when: "Bei Terminen mit langem Vorlauf etwa zur Hälfte der Wartezeit: steht der Termin noch? (in Vorbereitung)" },
   reschedule: { title: "Termin verschoben", when: "Wenn Ihr Team einen Termin verlegen muss, z. B. wegen Abwesenheit." },
   followup: { title: "Nachfassen mit zwei Terminvorschlägen", when: "Wenn ein Lead länger nicht geantwortet hat, mit zwei freien Zeiten aus Ihrem Kalender." },
   followup_nudge: { title: "Kurze Nachfrage", when: "Wenn ein Lead noch nicht geantwortet hat (ohne verbundenen Kalender statt der Terminvorschläge)." },

@@ -45,6 +45,7 @@ export type NoticePurpose =
   | "reminder_soon"
   | "reminder_start"
   | "appt_waiting"
+  | "appt_halbzeit"
   | "reschedule"
   | "followup"
   | "followup_nudge"
@@ -79,6 +80,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   reminder_soon: "Termin gleich: passt alles?",
   reminder_start: "Termin in 15 Minuten: Link zum Videoraum",
   appt_waiting: "Vermittler wartet im Videoraum",
+  appt_halbzeit: "Halbzeit-Erinnerung (langer Vorlauf)",
   reschedule: "Termin verschoben",
   followup: "Nachfassen mit zwei Terminvorschlägen",
   followup_nudge: "Nachfassen: kurze Nachfrage (Chat ruht)",
@@ -152,6 +154,8 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   reminder_soon: "v5",
   reminder_start: "v5",
   appt_waiting: "v5",
+  // Halbzeit-Erinnerung (Ole, 20.11.2026: nur einreichen, Test termin_halbzeit folgt)
+  appt_halbzeit: "v5",
   // P4 (Ole, 17.11.2026, Ergänzung D): Glückwunsch zum Abschluss (glueckwunsch, Einreichung siehe template-plan.ts)
   glueckwunsch: "v5",
   // Angebot nach dem Termin (Paket P3, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, ANGEBOT_PURPOSES)
@@ -203,6 +207,7 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   reminder_soon: ["Terminart (Videotermin bzw. Telefontermin)", "Vermittler (Dativ)"],
   reminder_start: ["Vermittler (Nominativ)", "Uhrzeit", "Videolink"],
   appt_waiting: ["Vermittler (Nominativ)", "Videolink"],
+  appt_halbzeit: ["Vermittler (Nominativ)", "Termin (Wochentag, Datum, Uhrzeit)"],
   reschedule: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   followup: ["Terminvorschlag 1", "Terminvorschlag 2"],
   followup_nudge: [],
@@ -268,6 +273,13 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   appt_waiting: {
     du: "{{2}} wartet schon im Videoraum auf dich. Hier ist der Link: {{3}} Bis gleich!",
     sie: "{{2}} wartet schon im Videoraum auf Sie. Hier ist der Link: {{3}} Bis gleich!",
+  },
+  // Halbzeit-Erinnerung (Ole, 20.11.2026, UTILITY): bei langem Vorlauf etwa zur Hälfte der Zeit bis zum Termin, Knöpfe
+  // [Ja, passt] [Bitte verschieben] (knopf.ts: bestätigt bzw. verschieben). Nur eingereicht (CORE_PURPOSES), noch kein
+  // Versand-Code und keine Zuteilung: Test termin_halbzeit folgt.
+  appt_halbzeit: {
+    du: "kurzer Gruß von {{2}}: Dein Termin am {{3}} steht. Passt es weiterhin?",
+    sie: "kurzer Gruß von {{2}}: Ihr Termin am {{3}} steht. Passt es weiterhin?",
   },
   reschedule: {
     du: "dein Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Passt dir die neue Zeit?",
@@ -831,6 +843,7 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   reminder: [KNOPF.passt, KNOPF.verschieben],
   reminder_soon: [KNOPF.passt, KNOPF.verschieben],
   reminder_start: [KNOPF.verschieben],
+  appt_halbzeit: [KNOPF.passt, KNOPF.verschieben],
   reschedule: [KNOPF.passt, KNOPF.verschieben],
   followup: [KNOPF.ersteZeit, KNOPF.zweiteZeit, KNOPF.andereZeit],
   followup_nudge: [KNOPF.weiter, KNOPF.keinBedarfMehr],
