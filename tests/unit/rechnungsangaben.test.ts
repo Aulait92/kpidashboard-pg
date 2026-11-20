@@ -71,7 +71,7 @@ import { rechnungItem } from "@/lib/admin-heute";
 
 const BASE = "Ole Kannapinn UG (haftungsbeschränkt) · Lorenzstraße 58 · 12209 Berlin · Geschäftsführer: Ole Kannapinn · Amtsgericht Charlottenburg, HRB 172651";
 /** Standard aus PROVIDER (legal-texts), solange in den Einstellungen nichts Abweichendes steht. */
-const STD = `${BASE} · USt-IdNr.: DE295007828`;
+const STD = `${BASE} · USt-IdNr.: DE305778241`;
 
 beforeAll(() => {
   process.env.STRIPE_SECRET_KEY = "sk_test_mock";
@@ -122,7 +122,7 @@ describe("Footer beim Anlegen von Kunden und Rechnungen", () => {
 
   it("ohne abweichenden Wert: USt-IdNr. aus den Stammdaten (PROVIDER) im Footer und als Zusatzfeld", async () => {
     await ensureStripeCustomerFor("c1");
-    expect(s.created[0].invoice_settings).toEqual({ footer: STD, custom_fields: [{ name: "USt-IdNr.", value: "DE295007828" }] });
+    expect(s.created[0].invoice_settings).toEqual({ footer: STD, custom_fields: [{ name: "USt-IdNr.", value: "DE305778241" }] });
   });
 
   it("selbst erstellte Rechnung (Vorkasse) trägt den Footer", async () => {
@@ -173,7 +173,7 @@ describe("Bestehende Stripe-Kunden aktualisieren", () => {
     s.customers = [cust("cus_a", `${BASE} · Steuernummer: 1`, [{ name: "Steuernummer", value: "1" }])];
     const run = await updateCustomerFooters({ dryRun: false, taxNumber: null });
     expect(run).toMatchObject({ affected: 1, updated: 1 });
-    expect(s.updated[0].params).toEqual({ invoice_settings: { footer: STD, custom_fields: [{ name: "USt-IdNr.", value: "DE295007828" }] } });
+    expect(s.updated[0].params).toEqual({ invoice_settings: { footer: STD, custom_fields: [{ name: "USt-IdNr.", value: "DE305778241" }] } });
     // ganz ohne Steuernummer würden alte Zusatzfelder entfernt
     expect(customerInvoiceSettingsUpdate({ footer: BASE, customFields: [] })).toEqual({ footer: BASE, custom_fields: "" });
     expect(customerUpToDate(cust("x", BASE, []) as unknown as Parameters<typeof customerUpToDate>[0], { footer: BASE, customFields: [] })).toBe(true);
@@ -189,7 +189,7 @@ describe("Bestehende Stripe-Kunden aktualisieren", () => {
 
 describe("Warnung ohne Steuernummer", () => {
   it("fällt weg: ohne Einstellung gilt die USt-IdNr. aus PROVIDER", async () => {
-    expect(await loadTaxNumber()).toBe("DE295007828");
+    expect(await loadTaxNumber()).toBe("DE305778241");
     expect(taxNumberWarning(await loadTaxNumber())).toBeNull();
     expect(rechnungItem(await loadTaxNumber())).toBeNull();
     s.taxNumber = "29/123/45678";
@@ -241,7 +241,7 @@ describe("Plausibilitätsprüfung des Stripe-Kontos", () => {
           support_address: { line1: "Hauptstraße 1", line2: null, postal_code: "15712", city: "Königs Wusterhausen", state: null, country: "DE" },
         } as never,
       },
-      "DE295007828",
+      "DE305778241",
       { testmode: true, accountTaxIds: [] },
     );
     const by = Object.fromEntries(checks.map((c) => [c.key, c]));
@@ -252,14 +252,14 @@ describe("Plausibilitätsprüfung des Stripe-Kontos", () => {
     // address_full_match ebenso
     const viaLine = checkAccount(
       { business_profile: { support_address: { line1: "address_full_match", line2: null, postal_code: "10115", city: "Berlin", state: null, country: "DE" } } as never },
-      "DE295007828",
+      "DE305778241",
       { testmode: true },
     ).find((c) => c.key === "address");
     expect(viaLine?.tone).toBe("info");
     // im Live-Konto bleibt Königs Wusterhausen eine Warnung
     const live = checkAccount(
       { business_profile: { support_address: { line1: "Hauptstraße 1", line2: null, postal_code: "15712", city: "Königs Wusterhausen", state: null, country: "DE" } } as never },
-      "DE295007828",
+      "DE305778241",
       { testmode: false },
     ).find((c) => c.key === "address");
     expect(live).toMatchObject({ ok: false, tone: "warn" });
@@ -269,17 +269,17 @@ describe("Plausibilitätsprüfung des Stripe-Kontos", () => {
   });
 
   it("zeigt an, wenn keine Standard-Steuer-ID für Rechnungen gesetzt ist", () => {
-    const without = checkAccount({ settings: { invoices: { default_account_tax_ids: [] } } as never }, "DE295007828", {
-      accountTaxIds: [{ id: "txi_pg", value: "DE295007828" }],
+    const without = checkAccount({ settings: { invoices: { default_account_tax_ids: [] } } as never }, "DE305778241", {
+      accountTaxIds: [{ id: "txi_pg", value: "DE305778241" }],
     }).find((c) => c.key === "tax_default");
     expect(without).toMatchObject({ ok: false, tone: "warn", value: "(keine gesetzt)" });
     expect(without?.hint).toMatch(/keine Standard-Steuer-ID/);
-    const missing = checkAccount({}, "DE295007828", { accountTaxIds: [] }).find((c) => c.key === "tax_default");
+    const missing = checkAccount({}, "DE305778241", { accountTaxIds: [] }).find((c) => c.key === "tax_default");
     expect(missing?.hint).toMatch(/nicht als Steuer-ID angelegt/);
-    const withDefault = checkAccount({ settings: { invoices: { default_account_tax_ids: ["txi_pg"] } } as never }, "DE295007828", {
-      accountTaxIds: [{ id: "txi_pg", value: "DE295007828" }],
+    const withDefault = checkAccount({ settings: { invoices: { default_account_tax_ids: ["txi_pg"] } } as never }, "DE305778241", {
+      accountTaxIds: [{ id: "txi_pg", value: "DE305778241" }],
     }).find((c) => c.key === "tax_default");
-    expect(withDefault).toMatchObject({ ok: true, tone: "ok", value: "DE295007828" });
+    expect(withDefault).toMatchObject({ ok: true, tone: "ok", value: "DE305778241" });
   });
 
   it("andere US-Nummer und abweichende Adresse sind Warnungen", () => {

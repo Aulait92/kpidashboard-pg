@@ -8,7 +8,7 @@ import { APP_DEMO_HEADER, signiereDemoMarke } from "@/lib/app-demo/marke";
 import { DEMO_LIMIT, buyerZuDemo, demoActionAntwort, demoWeiche, istDemoPfad, vonDemoSeite } from "@/lib/app-demo/weiche";
 import { demoDatenbankUrl } from "@/lib/app-demo/konfig";
 import { clientIp, hit } from "@/lib/rate-limit";
-import { BESUCH_COOKIE, BESUCH_COOKIE_TAGE, BESUCH_HEADER, decideFunnelHost, gueltigeBesuchId, neueBesuchId } from "@/lib/funnel/host";
+import { ALTER_BESUCH_COOKIE, decideFunnelHost } from "@/lib/funnel/host";
 
 const SESSION_COOKIE = "kpi_session";
 
@@ -60,6 +60,7 @@ const PUBLIC_PREFIXES = [
   "/api/leads/pool", // Pay-per-Lead-Eingang (Perspective/Funnels, per LEAD_WEBHOOK_TOKEN)
   "/f", // Eigene Funnels (PKV-Tarifoptimierung, lib/funnel), auch unter beitrag.pkv-tarife.com
   "/api/funnel", // Messung je Schritt und Absenden der eigenen Funnels (Rate-Limit, Bot-Schutz)
+  "/marken", // Logo, Icons und Bilder der Funnel-Marken (public/marken, lib/funnel/marken.ts)
   "/feedback", // Kunden-Feedback per Mail-Link (geheimer Token, ohne Login)
   "/api/vertrieb", // Vertriebs-Webhooks (Instantly, Calendly, Leads, LinkedIn) – per Token gesichert
   "/manifest.webmanifest",
@@ -152,15 +153,12 @@ function bookingHost(req: NextRequest): NextResponse | null {
 }
 
 /**
- * Eigene Funnels (lib/funnel, Ole 20.11.2026): ohne App-Kopfzeile und Fußzeile, nicht indexieren, Besucher-ID im
- * Erstanbieter-Cookie (neu vergeben, wenn keins da ist; die Seite liest sie aus BESUCH_HEADER). `rewrite` = Funnel-Adresse
- * (beitrag.pkv-tarife.com/ → /f/pkv-beitrag).
+ * Eigene Funnels (lib/funnel, Ole 20.11.2026): ohne App-Kopfzeile und Fußzeile, nicht indexieren. Kein Besucher-Cookie
+ * (Auflage L4, docs/recht/pkv-funnel.md): Die Seite erzeugt die Besucher-ID je Aufruf selbst; ein alter Cookie pf_bid
+ * wird gelöscht. `rewrite` = Funnel-Adresse (beitrag.pkv-tarife.com/ → /f/pkv-beitrag).
  */
 function funnelPage(req: NextRequest, rewrite?: string): NextResponse {
-  const vorhanden = gueltigeBesuchId(req.cookies.get(BESUCH_COOKIE)?.value);
-  const id = vorhanden ?? neueBesuchId();
   const headers = leadHeaders(req);
-  headers.set(BESUCH_HEADER, id);
   let res: NextResponse;
   if (rewrite) {
     const url = req.nextUrl.clone();
@@ -170,15 +168,7 @@ function funnelPage(req: NextRequest, rewrite?: string): NextResponse {
     res = NextResponse.next({ request: { headers } });
   }
   res.headers.set("X-Robots-Tag", NO_INDEX);
-  if (!vorhanden) {
-    res.cookies.set(BESUCH_COOKIE, id, {
-      path: "/",
-      ...(BESUCH_COOKIE_TAGE > 0 ? { maxAge: BESUCH_COOKIE_TAGE * 86_400 } : {}),
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
-  }
+  if (req.cookies.has(ALTER_BESUCH_COOKIE)) res.cookies.delete(ALTER_BESUCH_COOKIE);
   return res;
 }
 

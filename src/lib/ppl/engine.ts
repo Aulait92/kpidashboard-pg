@@ -11,6 +11,7 @@ import { monthRange, weekRange } from "@/lib/ppl/periods";
 import { pruefeTelefon } from "@/lib/ppl/telefon-pruefung";
 import type { DeliveryReport } from "@/lib/ppl/delivery";
 import { adData, cleanAd, hasAd, type LeadAd } from "@/lib/anzeige";
+import { leadNachweisAus, poolEinwilligung, type PoolEinwilligung } from "@/lib/ppl/einwilligung-nachweis";
 import { EXPIRED_STATUS, expiredReason, parkCutoff, parkDeadlineHint, parkExpired } from "@/lib/ppl/parken";
 import { DISCARD_STATUSES, discardCutoff, discardDeleteDays } from "@/lib/ppl/loeschfrist";
 
@@ -48,6 +49,8 @@ export type PoolInput = {
   score?: number | null;
   /** Anzeige/UTM aus dem Funnel (lib/anzeige.ts), ohne Personendaten */
   ad?: LeadAd | null;
+  /** Einwilligungsnachweis (eigener Funnel, lib/ppl/einwilligung-nachweis.ts) */
+  consent?: PoolEinwilligung | null;
 };
 
 const norm = (k: string) => k.toLowerCase().replace(/[^a-z0-9äöüß]/g, "");
@@ -145,6 +148,7 @@ export async function ingestPoolLead(input: PoolInput, now = new Date()): Promis
     score: facts.score,
     answers: answers.length ? (answers as Prisma.InputJsonValue) : Prisma.DbNull,
     adInfo: hasAd(input.ad) ? (adData(input.ad) as Prisma.InputJsonValue) : Prisma.DbNull,
+    consentData: input.consent ? (input.consent as unknown as Prisma.InputJsonValue) : Prisma.DbNull,
   };
   const save = (status: string, reason?: string) => prisma.poolLead.create({ data: { ...base, status, reason } });
 
@@ -206,7 +210,13 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
     answers: Object.fromEntries(((pl.answers ?? []) as { label: string; value: string }[]).map((a) => [a.label, a.value])),
   };
   // Ruhende Konten (lib/ruhend.ts) bekommen keine Leads
-  const subs = await prisma.leadSubscription.findMany({ where: { productKey: pl.productKey, active: true, customer: { dormantSince: null } }, include: { areas: true } });
+  // Leads mit Einwilligungsnachweis aus dem eigenen Funnel nur an Abnehmer der öffentlichen Partnerliste (L2,
+  // lib/funnel/partner.ts): Testkunden stehen dort nicht, also bekommen sie diese Leads auch nicht
+  const nurPartner = !!poolEinwilligung(pl.consentData);
+  const subs = await prisma.leadSubscription.findMany({
+    where: { productKey: pl.productKey, active: true, customer: { dormantSince: null, ...(nurPartner ? { isTest: false } : {}) } },
+    include: { areas: true },
+  });
   const cands: (AreaCandidate & { orderId: string | null; sub: SubRow })[] = [];
   const reasons: string[] = [];
   for (const sub of subs) {
@@ -245,6 +255,7 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
   // Sperre (auch für Admin-Knöpfe): nur geparkte Leads innerhalb der Frist, verfallene nie wieder verkaufen
   assertDeliverable(pl, now);
   const wasParked = pl.status === "parked" && pl.reason !== "wird verteilt";
+  const einw = poolEinwilligung(pl.consentData);
   const price = sub.price;
   const lead = await prisma.lead.create({
     data: {
@@ -261,6 +272,8 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
       createdAt: now,
       // Anzeige/UTM aus dem Funnel (lib/anzeige.ts)
       ...adData(cleanAd(pl.adInfo as Record<string, unknown> | null)),
+      // Einwilligung aus dem eigenen Funnel (L3): Nachweis am Lead; der Text nennt Telefon, E-Mail und WhatsApp
+      ...(einw ? { consentData: leadNachweisAus(einw) as unknown as Prisma.InputJsonValue, ...(einw.kanaele.includes("WhatsApp") ? { waConsent: "ja" } : {}) } : {}),
     },
     select: { id: true },
   });

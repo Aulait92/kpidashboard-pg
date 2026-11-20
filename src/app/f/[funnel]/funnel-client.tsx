@@ -3,13 +3,31 @@
 // Eigener Funnel im Browser (lib/funnel/definition.ts): eine Frage je Schritt, Auswahl per Tippen mit automatischem
 // Weiter, Zurück mit erhaltenen Eingaben (auch Zurück-Taste des Handys), Fortschritt „Frage x von 7“, Messung je
 // Schritt (/api/funnel/ereignis), Absenden (/api/funnel/absenden). Meta-Pixel erst nach Einwilligung (Cookie-Hinweis).
-// Ohne zusätzliche Bibliotheken, damit die Seite auf dem Handy schnell lädt.
+// Marke, Farben und Bilder: lib/funnel/marken.ts (CI docs/funnel/pkv-tarife-ci.md). Handy zuerst (390 px).
+// Besucher-ID kommt je Seitenaufruf vom Server und lebt nur im Seitenzustand (kein Cookie, Auflage L4).
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { datumTippen, funnelDef, naechsterSchritt, pruefeSchritt, texteFuer, type Antworten, type Eingabefeld, type Fehler, type Schritt, type Variante } from "@/lib/funnel/definition";
-import { PKV_TEXTE as T } from "@/lib/funnel/pkv-beitrag-texte";
+import Image from "next/image";
+import { useEffect, useState, type CSSProperties } from "react";
+import { datumTippen, funnelDef, naechsterSchritt, optionLabel, pruefeSchritt, texteFuer, type Antworten, type Eingabefeld, type Fehler, type Schritt, type Variante } from "@/lib/funnel/definition";
+import { einwilligungTeile, PKV_TEXTE as T } from "@/lib/funnel/pkv-beitrag-texte";
+import { markeCssVars, markeFuer, type Bild, type Marke } from "@/lib/funnel/marken";
+import { CookieHinweis, useCookieHinweisSichtbar, useMetaEinwilligung } from "./cookie-hinweis";
+import { Bildzeichen, Fusszeile, Logo } from "./marke";
 
-type Props = { funnelKey: string; besuchId: string; varianten: Record<string, Variante>; geladen: number; pixelId: string; einwilligungNoetig: boolean };
+type Props = {
+  funnelKey: string;
+  besuchId: string;
+  varianten: Record<string, Variante>;
+  geladen: number;
+  pixelId: string;
+  einwilligungNoetig: boolean;
+  /** Adresse für den Widerruf (FUNNEL_DATENSCHUTZ_EMAIL bzw. Anbieter) */
+  datenschutzEmail: string;
+  /** "" auf der Funnel-Adresse, sonst "/f/<funnel>" */
+  basis: string;
+};
+
+type Experte = { name: string; firma: string; telefon: string };
 
 type Fbq = ((...args: unknown[]) => void) & { callMethod?: (...args: unknown[]) => void; queue: unknown[]; push: unknown; loaded: boolean; version: string };
 declare global {
@@ -19,11 +37,13 @@ declare global {
   }
 }
 
-const EINWILLIGUNG_COOKIE = "pf_meta";
 const QUELLE_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id", "campaign_id", "adset_id", "ad_id", "placement", "site_source_name", "fbclid"];
 
 function ladePixel(id: string) {
-  if (window.fbq) return;
+  if (window.fbq) {
+    window.fbq("consent", "grant");
+    return;
+  }
   const n = function (...args: unknown[]) {
     if (n.callMethod) n.callMethod(...args);
     else n.queue.push(args);
@@ -41,7 +61,6 @@ function ladePixel(id: string) {
   n("init", id);
   n("track", "PageView");
 }
-
 
 /** Messung je Schritt (einmal je Seite): Herkunft nur mit dem ersten Ereignis */
 const messung = { quelleGesendet: false, gesehen: new Set<string>(), eventId: "" };
@@ -71,24 +90,20 @@ function eventId(): string {
   return messung.eventId;
 }
 
-const einwilligungHoerer = new Set<() => void>();
-function abonniereEinwilligung(fn: () => void) {
-  einwilligungHoerer.add(fn);
-  return () => {
-    einwilligungHoerer.delete(fn);
-  };
-}
-
-function leseEinwilligung(): "ja" | "nein" | null {
-  const m = /(?:^|;\s*)pf_meta=(ja|nein)/.exec(document.cookie);
-  return (m?.[1] as "ja" | "nein" | undefined) ?? null;
-}
-
+// Farben über CSS-Variablen der Marke (markeCssVars)
+const textLeise = "text-[var(--m-text-leise)]";
+const fehlerText = "text-[var(--m-fehler)]";
 const inputKlasse =
-  "block w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-lg text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 aria-[invalid=true]:border-rose-500";
+  "block min-h-14 w-full rounded-xl border border-[var(--m-feld-rand)] bg-white px-4 py-3.5 text-lg text-[var(--m-text)] outline-none transition placeholder:text-slate-400 focus:border-[var(--m-primaer)] focus:ring-4 focus:ring-[var(--m-primaer-hell)] aria-[invalid=true]:border-[var(--m-fehler)]";
+const knopf =
+  "flex min-h-14 w-full items-center justify-center rounded-xl bg-[var(--m-primaer)] px-5 py-4 text-[17px] font-semibold text-white shadow-sm transition hover:bg-[var(--m-primaer-dunkel)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--m-deko)] active:scale-[0.99] disabled:opacity-60";
+const knopfZweit =
+  "flex min-h-14 w-full items-center justify-center rounded-xl border-2 border-[var(--m-primaer)] bg-white px-5 py-3.5 text-[17px] font-semibold text-[var(--m-primaer)] transition hover:bg-[var(--m-primaer-hell)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--m-primaer-hell)]";
+const linkKlasse = "font-medium text-[var(--m-primaer)] underline underline-offset-2";
 
-export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId, einwilligungNoetig }: Props) {
+export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId, einwilligungNoetig, datenschutzEmail, basis }: Props) {
   const f = funnelDef(funnelKey)!;
+  const marke = markeFuer(f.marke);
   const [schrittId, setSchrittId] = useState(f.schritte[0].id);
   const [verlauf, setVerlauf] = useState<string[]>([]);
   const [antworten, setAntworten] = useState<Antworten>({});
@@ -96,12 +111,15 @@ export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId,
   const [gewaehlt, setGewaehlt] = useState<string | null>(null);
   const [sendet, setSendet] = useState(false);
   const [meldung, setMeldung] = useState<string | null>(null);
-  const gespeichert = useSyncExternalStore(abonniereEinwilligung, leseEinwilligung, () => "laedt" as const);
+  const [experte, setExperte] = useState<Experte | null>(null);
+  const gespeichert = useMetaEinwilligung();
   const einwilligung: "ja" | "nein" | null | "laedt" = einwilligungNoetig ? gespeichert : "ja";
+  const hinweisSichtbar = useCookieHinweisSichtbar(einwilligungNoetig);
   const [hp, setHp] = useState("");
 
   const schritt = f.schritte.find((s) => s.id === schrittId)!;
   const texte = texteFuer(schritt, varianten[schritt.id] ?? "a");
+  const partnerHref = `${basis}/partner`;
 
   const senden = (s: string, art: string, grund?: string) => ereignisSenden(f.key, besuchId, s, art, grund);
 
@@ -198,9 +216,10 @@ export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId,
           url: window.location.href.split("?")[0],
         }),
       });
-      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; lead?: boolean; fehler?: Fehler; schritt?: string | null; meldung?: string };
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; lead?: boolean; experte?: Experte | null; fehler?: Fehler; schritt?: string | null; meldung?: string };
       if (res.ok && j.ok) {
         if (j.lead && einwilligung === "ja") window.fbq?.("track", "Lead", { content_name: "PKV-Tarifoptimierung" }, { eventID: eventId() });
+        setExperte(j.experte ?? null);
         gehe("danke");
         return;
       }
@@ -219,14 +238,9 @@ export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId,
     }
   };
 
-  const entscheide = (e: "ja" | "nein") => {
-    document.cookie = `${EINWILLIGUNG_COOKIE}=${e}; path=/; max-age=${180 * 86400}; samesite=lax${location.protocol === "https:" ? "; secure" : ""}`;
-    einwilligungHoerer.forEach((fn) => fn());
-  };
-
   const zeigeFortschritt = "frageNr" in schritt && typeof schritt.frageNr === "number";
   const zeigeZurueck = verlauf.length > 0 && schritt.art !== "danke";
-  const hinweisSichtbar = einwilligung === null;
+  const istStart = schritt.id === f.schritte[0].id;
 
   const setze = (feld: keyof Antworten, wert: string) => {
     setAntworten((a) => ({ ...a, [feld]: wert }));
@@ -234,11 +248,14 @@ export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId,
   };
 
   return (
-    <div className={`flex min-h-dvh flex-col bg-slate-50 text-slate-900 ${hinweisSichtbar ? "pb-40 sm:pb-28" : ""}`}>
-      <header className="mx-auto flex w-full max-w-xl items-center justify-between px-4 pt-4">
-        <span className="text-sm font-semibold tracking-tight text-slate-700">{T.marke}</span>
+    <div
+      style={markeCssVars(marke) as CSSProperties}
+      className={`flex min-h-dvh flex-col bg-[var(--m-seite)] text-[16px] text-[var(--m-text)] ${hinweisSichtbar ? "pb-44 sm:pb-28" : ""}`}
+    >
+      <header className="mx-auto flex min-h-14 w-full max-w-xl items-center justify-between px-4 pt-2">
+        <Logo marke={marke} />
         {zeigeZurueck ? (
-          <button type="button" onClick={zurueck} className="-mr-2 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
+          <button type="button" onClick={zurueck} className={`-mr-2 min-h-11 rounded-lg px-3 text-[15px] font-medium ${textLeise} hover:bg-black/5`}>
             ‹ {T.zurueck}
           </button>
         ) : (
@@ -247,25 +264,15 @@ export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId,
       </header>
 
       <main className="mx-auto w-full max-w-xl flex-1 px-4 pb-8 pt-3">
-        {schritt.id === f.schritte[0].id && texte.ueberschrift && (
-          <div className="mb-5">
-            <h1 data-fokus="titel" tabIndex={-1} className="text-[1.6rem] font-bold leading-tight tracking-tight outline-none sm:text-3xl">
-              {texte.ueberschrift}
-            </h1>
-            {texte.text?.map((t, i) => (
-              <p key={i} className="mt-3 text-[15px] leading-relaxed text-slate-600 sm:text-base">
-                {t}
-              </p>
-            ))}
-          </div>
-        )}
+        {istStart && texte.ueberschrift && <StartKopf marke={marke} texte={texte} />}
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" aria-live="polite">
+        <section className="rounded-2xl border border-[var(--m-karte-rand)] bg-[var(--m-karte)] p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-7" aria-live="polite">
           {zeigeFortschritt && <Fortschritt nr={(schritt as { frageNr: number }).frageNr} von={f.fragenGesamt} />}
           <SchrittInhalt
             schritt={schritt}
             texte={texte}
-            istStart={schritt.id === f.schritte[0].id}
+            istStart={istStart}
+            marke={marke}
             antworten={antworten}
             fehler={fehler}
             gewaehlt={gewaehlt}
@@ -278,40 +285,55 @@ export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId,
             weiter={() => weiter(antworten)}
             absenden={absenden}
             gehe={(id) => gehe(id)}
+            datenschutzEmail={datenschutzEmail}
+            partnerHref={partnerHref}
+            experte={experte}
           />
         </section>
+        {/* Erklärung unter der Frage: Die erste Frage bleibt am Handy ohne Scrollen sichtbar */}
+        {istStart && texte.text && (
+          <div className="mt-5 space-y-3">
+            {texte.text.map((t, i) => (
+              <p key={i} className={`text-[16px] leading-relaxed ${textLeise}`}>
+                {t}
+              </p>
+            ))}
+          </div>
+        )}
       </main>
 
-      <footer className="mx-auto w-full max-w-xl px-4 pb-6 text-center text-xs text-slate-500">
-        <a href={T.impressumUrl} target="_blank" rel="noopener" className="underline-offset-2 hover:underline">
-          {T.impressum}
-        </a>
-        <span className="mx-2">·</span>
-        <a href={T.datenschutzUrl} target="_blank" rel="noopener" className="underline-offset-2 hover:underline">
-          {T.datenschutz}
-        </a>
-      </footer>
+      <Fusszeile marke={marke} partnerHref={partnerHref} />
+      <CookieHinweis einwilligungNoetig={einwilligungNoetig} />
+    </div>
+  );
+}
 
-      {hinweisSichtbar && (
-        <div role="dialog" aria-label="Cookies" className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.25)] backdrop-blur">
-          <div className="mx-auto flex max-w-xl flex-col gap-2.5 sm:flex-row sm:items-center">
-            <p className="flex-1 text-[13px] leading-snug text-slate-700">
-              {T.cookies.text}{" "}
-              <a href={T.datenschutzUrl} target="_blank" rel="noopener" className="underline">
-                {T.cookies.mehr}
-              </a>
-            </p>
-            <div className="grid grid-cols-2 gap-2 sm:flex">
-              <button type="button" onClick={() => entscheide("nein")} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800">
-                {T.cookies.ablehnen}
-              </button>
-              <button type="button" onClick={() => entscheide("ja")} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800">
-                {T.cookies.zustimmen}
-              </button>
-            </div>
-          </div>
-        </div>
+function StartKopf({ marke, texte }: { marke: Marke; texte: ReturnType<typeof texteFuer> }) {
+  const bild = marke.bilder.start;
+  return (
+    <div className="mb-4">
+      {bild && <MarkenBild bild={bild} className="mb-4 aspect-[12/5]" vorladen />}
+      <h1 data-fokus="titel" tabIndex={-1} className="text-[25px] font-bold leading-[1.2] tracking-[-0.015em] outline-none sm:text-[30px]">
+        {texte.ueberschrift}
+      </h1>
+      {texte.vertrauen && (
+        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[14px] font-medium text-[var(--m-primaer-dunkel)]" aria-label="Auf einen Blick">
+          {texte.vertrauen.map((v) => (
+            <li key={v} className="flex items-center gap-1.5">
+              <HakenKlein /> {v}
+            </li>
+          ))}
+        </ul>
       )}
+    </div>
+  );
+}
+
+function MarkenBild({ bild, className = "", vorladen = false }: { bild: Bild; className?: string; vorladen?: boolean }) {
+  return (
+    <div className={`relative overflow-hidden rounded-2xl bg-[var(--m-primaer-hell)] ${className}`}>
+      <Image src={bild.src} alt={bild.alt} width={bild.breite} height={bild.hoehe} sizes={bild.sizes} preload={vorladen} quality={75} className="h-full w-full object-cover" />
+      {bild.symbolbild && <span className="absolute bottom-1.5 right-2 rounded bg-black/45 px-1.5 py-0.5 text-[10px] font-medium text-white">{T.fastFertig.symbolbild}</span>}
     </div>
   );
 }
@@ -319,9 +341,9 @@ export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId,
 function Fortschritt({ nr, von }: { nr: number; von: number }) {
   return (
     <div className="mb-4">
-      <div className="mb-1.5 text-xs font-medium text-slate-500">{T.fortschritt(nr, von)}</div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuemin={0} aria-valuemax={von} aria-valuenow={nr}>
-        <div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${Math.round((nr / von) * 100)}%` }} />
+      <div className={`mb-1.5 text-[13px] font-medium ${textLeise}`}>{T.fortschritt(nr, von)}</div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--m-primaer-hell)]" role="progressbar" aria-valuemin={0} aria-valuemax={von} aria-valuenow={nr} aria-label={T.fortschritt(nr, von)}>
+        <div className="h-full rounded-full bg-[var(--m-primaer)] transition-all duration-300" style={{ width: `${Math.round((nr / von) * 100)}%` }} />
       </div>
     </div>
   );
@@ -331,6 +353,7 @@ type InhaltProps = {
   schritt: Schritt;
   texte: ReturnType<typeof texteFuer>;
   istStart: boolean;
+  marke: Marke;
   antworten: Antworten;
   fehler: Fehler;
   gewaehlt: string | null;
@@ -343,9 +366,12 @@ type InhaltProps = {
   weiter: () => void;
   absenden: () => void;
   gehe: (id: string) => void;
+  datenschutzEmail: string;
+  partnerHref: string;
+  experte: Experte | null;
 };
 
-const knopf = "flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-4 text-base font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99] disabled:opacity-60";
+const frageKlasse = "text-[20px] font-bold leading-snug tracking-[-0.01em] outline-none sm:text-[22px]";
 
 function SchrittInhalt(p: InhaltProps) {
   const { schritt, texte } = p;
@@ -353,9 +379,10 @@ function SchrittInhalt(p: InhaltProps) {
     return (
       <div>
         {/* Beim Start steht die große Überschrift (Fokus) über der Karte */}
-        <h2 data-fokus={p.istStart ? undefined : "titel"} tabIndex={-1} className="text-xl font-bold leading-snug tracking-tight outline-none sm:text-2xl">
+        <h2 data-fokus={p.istStart ? undefined : "titel"} tabIndex={-1} className={frageKlasse}>
           {texte.frage}
         </h2>
+        {texte.hinweis && <p className={`mt-1 text-[15px] ${textLeise}`}>{texte.hinweis}</p>}
         <div className={`mt-4 grid gap-2.5 ${schritt.spalten === 2 ? "grid-cols-2" : "grid-cols-1"}`} role="radiogroup" aria-label={texte.frage}>
           {schritt.optionen.map((o) => {
             const an = (p.gewaehlt ?? p.antworten[schritt.feld]) === o;
@@ -367,18 +394,17 @@ function SchrittInhalt(p: InhaltProps) {
                 aria-checked={an}
                 onClick={() => p.waehle(o)}
                 lang="de"
-                className={`flex min-h-14 items-center justify-between gap-2 rounded-xl border-2 py-3 text-left text-[15px] font-semibold leading-tight transition active:scale-[0.98] ${schritt.spalten === 2 ? "px-3" : "px-4"} ${
-                  an ? "border-blue-600 bg-blue-50 text-blue-900" : "border-slate-200 bg-white text-slate-800 hover:border-blue-300"
+                className={`flex min-h-14 items-center justify-between gap-2 rounded-xl border-2 py-3 text-left text-[16px] font-semibold leading-tight transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--m-primaer-hell)] ${schritt.spalten === 2 ? "px-3" : "px-4"} ${
+                  an ? "border-[var(--m-primaer)] bg-[var(--m-primaer-hell)] text-[var(--m-primaer-dunkel)]" : "border-[var(--m-option-rand)] bg-white text-[var(--m-text)] hover:border-[var(--m-primaer)]"
                 }`}
               >
-                <span className="min-w-0 hyphens-auto">{o}</span>
-                {/* Kreis nur bei einer Spalte: in zwei Spalten braucht der Name die Breite (z. B. Bayerische Beamtenkasse) */}
-                {schritt.spalten === 1 && <span aria-hidden className={`h-5 w-5 shrink-0 rounded-full border-2 ${an ? "border-blue-600 bg-blue-600 shadow-[inset_0_0_0_3px_white]" : "border-slate-300"}`} />}
+                <span className="min-w-0 hyphens-auto">{optionLabel(schritt, o).replace("/", "/\u200B")}</span>
+                {an && <HakenKlein className="h-5 w-5 shrink-0 text-[var(--m-primaer)]" />}
               </button>
             );
           })}
         </div>
-        {p.fehler[schritt.feld] && <p className="mt-2 text-sm text-rose-600">{p.fehler[schritt.feld]}</p>}
+        {p.fehler[schritt.feld] && <p className={`mt-2 text-[15px] ${fehlerText}`}>{p.fehler[schritt.feld]}</p>}
       </div>
     );
   }
@@ -394,12 +420,20 @@ function SchrittInhalt(p: InhaltProps) {
           else p.weiter();
         }}
       >
-        {texte.ueberschrift && <p className="mb-1 text-sm font-semibold text-blue-700">{texte.ueberschrift}</p>}
-        <h2 data-fokus="titel" tabIndex={-1} className="text-xl font-bold leading-snug tracking-tight outline-none sm:text-2xl">
+        {texte.ueberschrift && (
+          <div className="mb-4">
+            <p className="text-[18px] font-bold leading-snug text-[var(--m-primaer-dunkel)]">
+              {texte.ueberschrift}
+              {texte.fussnote && <sup className="ml-0.5 text-[12px]">*</sup>}
+            </p>
+            {texte.fussnote && <p className={`mt-1 text-[13px] leading-snug ${textLeise}`}>* {texte.fussnote}</p>}
+          </div>
+        )}
+        <h2 data-fokus="titel" tabIndex={-1} className={frageKlasse}>
           {texte.frage}
         </h2>
-        {texte.hinweis && <p className="mt-1 text-sm text-slate-500">{texte.hinweis}</p>}
-        <div className={`mt-4 ${schritt.felder.some((x) => x.schmal) ? "grid grid-cols-[7.5rem_1fr] gap-2.5" : "space-y-3"}`}>
+        {texte.hinweis && <p className={`mt-1 text-[15px] leading-snug ${textLeise}`}>{texte.hinweis}</p>}
+        <div className={`mt-4 ${schritt.felder.some((x) => x.schmal) ? "grid grid-cols-[7.5rem_1fr] gap-2.5" : "space-y-4"}`}>
           {schritt.felder.map((fd, i) => (
             <Feld key={fd.feld} fd={fd} einzel={einzel} wert={p.antworten[fd.feld] ?? ""} fehler={p.fehler[fd.feld]} setze={p.setze} erstes={i === 0} />
           ))}
@@ -413,38 +447,42 @@ function SchrittInhalt(p: InhaltProps) {
             </label>
           </div>
         )}
-        <button type="submit" className={`${knopf} mt-5`} disabled={p.sendet}>
-          {p.sendet ? T.kontakt.sendet : texte.knopf ?? T.weiter}
+        {/* L1: Einwilligung direkt über dem Knopf, normale Schrift */}
+        {schritt.art === "absenden" && <Einwilligung email={p.datenschutzEmail} partnerHref={p.partnerHref} />}
+        <button type="submit" className={`${knopf} ${schritt.art === "absenden" ? "mt-3" : "mt-5"}`} disabled={p.sendet}>
+          {p.sendet ? T.kontakt.sendet : (texte.knopf ?? T.weiter)}
         </button>
-        {p.meldung && <p className="mt-3 text-sm text-rose-600" role="alert">{p.meldung}</p>}
-        {"vertraulich" in schritt && schritt.vertraulich && (
-          <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-slate-500">
-            <Schloss /> {schritt.vertraulich}
+        {p.meldung && (
+          <p className={`mt-3 text-[15px] ${fehlerText}`} role="alert">
+            {p.meldung}
           </p>
         )}
-        {schritt.art === "absenden" && (
-          <>
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-slate-500">
-              <Schloss /> {T.name.vertraulich}
-            </p>
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">{schritt.einwilligung}</p>
-          </>
+        {texte.nachsatz && <p className={`mt-2.5 text-center text-[13px] ${textLeise}`}>{texte.nachsatz}</p>}
+        {"vertraulich" in schritt && schritt.vertraulich && (
+          <p className={`mt-3 flex items-center justify-center gap-1.5 text-[14px] ${textLeise}`}>
+            <Schloss /> {schritt.vertraulich}
+          </p>
         )}
       </form>
     );
   }
 
   if (schritt.art === "info") {
+    const bild = schritt.bild ? p.marke.bilder[schritt.bild] : undefined;
     return (
       <div className="text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-          <Haken />
-        </div>
-        <h2 data-fokus="titel" tabIndex={-1} className="text-2xl font-bold tracking-tight outline-none">
+        {bild ? (
+          <MarkenBild bild={bild} className="mx-auto mb-4 aspect-video max-h-40 max-w-[284px]" />
+        ) : (
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--m-primaer-hell)] text-[var(--m-primaer)]">
+            <Haken />
+          </div>
+        )}
+        <h2 data-fokus="titel" tabIndex={-1} className="text-[22px] font-bold leading-snug tracking-[-0.01em] outline-none">
           {texte.ueberschrift}
         </h2>
         {texte.text?.map((t, i) => (
-          <p key={i} className="mt-3 text-[15px] leading-relaxed text-slate-600">
+          <p key={i} className={`mt-3 text-[16px] leading-relaxed ${textLeise}`}>
             {t}
           </p>
         ))}
@@ -457,40 +495,82 @@ function SchrittInhalt(p: InhaltProps) {
 
   if (schritt.art === "danke") {
     return (
-      <div className="py-2 text-center">
-        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-          <Haken />
+      <div className="py-1">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--m-primaer)]">
+          <Bildzeichen className="h-8 w-8" hell />
         </div>
-        <h2 data-fokus="titel" tabIndex={-1} className="text-2xl font-bold tracking-tight outline-none">
+        <h2 data-fokus="titel" tabIndex={-1} className="text-center text-[22px] font-bold leading-snug tracking-[-0.01em] outline-none">
           {texte.ueberschrift}
         </h2>
-        <p className="mt-1 font-semibold text-slate-800">{texte.frage}</p>
-        {texte.text?.map((t, i) => (
-          <p key={i} className="mt-3 text-[15px] leading-relaxed text-slate-600">
-            {t}
-          </p>
-        ))}
+        {p.experte && (
+          <div className="mt-5 rounded-xl border border-[var(--m-deko)] bg-[var(--m-primaer-hell)] p-4 text-[16px]">
+            <p className="text-[13px] font-semibold uppercase tracking-wide text-[var(--m-primaer-dunkel)]">{T.danke.experte}</p>
+            <p className="mt-1 font-semibold">{p.experte.name}</p>
+            <p className={textLeise}>{p.experte.firma}</p>
+            <p className="mt-1">
+              {T.danke.experteTel}{" "}
+              <a href={`tel:${p.experte.telefon.replace(/[^\d+]/g, "")}`} className={linkKlasse}>
+                {p.experte.telefon}
+              </a>
+            </p>
+          </div>
+        )}
+        {texte.frage && <p className="mt-5 font-semibold">{texte.frage}</p>}
+        {texte.liste && (
+          <ol className="mt-3 space-y-3">
+            {texte.liste.map((t, i) => (
+              <li key={i} className="flex gap-3 text-[16px] leading-snug">
+                <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--m-primaer-hell)] text-[14px] font-bold text-[var(--m-primaer)]">
+                  {i + 1}
+                </span>
+                <span className="pt-0.5">{t}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+        {texte.nachsatz && <p className={`mt-5 border-t border-[var(--m-karte-rand)] pt-4 text-[15px] ${textLeise}`}>{texte.nachsatz}</p>}
       </div>
     );
   }
 
-  // Endseite (nicht passend): freundlich, mit Korrektur
+  // Endseite (nicht passend): freundlich, mit Rücksprung
   return (
-    <div className="py-2 text-center">
-      <h2 data-fokus="titel" tabIndex={-1} className="text-2xl font-bold tracking-tight outline-none">
+    <div className="py-1 text-center">
+      <h2 data-fokus="titel" tabIndex={-1} className="text-[22px] font-bold leading-snug tracking-[-0.01em] outline-none">
         {texte.ueberschrift}
       </h2>
       {texte.text?.map((t, i) => (
-        <p key={i} className="mt-3 text-[15px] leading-relaxed text-slate-600">
+        <p key={i} className={`mt-3 text-[16px] leading-relaxed ${textLeise}`}>
           {t}
         </p>
       ))}
       {schritt.art === "ende" && (
-        <button type="button" className="mt-6 w-full rounded-xl border-2 border-slate-200 bg-white px-5 py-3.5 text-base font-semibold text-slate-800 hover:border-blue-300" onClick={() => p.gehe(schritt.zurueckZu)}>
+        <button type="button" className={`${knopfZweit} mt-6`} onClick={() => p.gehe(schritt.zurueckZu)}>
           {texte.knopf}
         </button>
       )}
     </div>
+  );
+}
+
+/** Einwilligung (L1): Partnerliste und Datenschutz als Links in neuem Tab, Widerrufsadresse eingesetzt. */
+function Einwilligung({ email, partnerHref }: { email: string; partnerHref: string }) {
+  return (
+    <p className="mt-5 text-[13px] leading-[1.5] text-[var(--m-text)]">
+      {einwilligungTeile(email).map((t, i) =>
+        typeof t === "string" ? (
+          <span key={i}>{t}</span>
+        ) : "email" in t ? (
+          <a key={i} href={`mailto:${t.email}`} className={`${linkKlasse} break-all`}>
+            {t.email}
+          </a>
+        ) : (
+          <a key={i} href={t.link === "partner" ? partnerHref : T.datenschutzUrl} target="_blank" rel="noopener" className={linkKlasse}>
+            {t.text}
+          </a>
+        ),
+      )}
+    </p>
   );
 }
 
@@ -504,9 +584,10 @@ function Feld({ fd, einzel, wert, fehler, setze, erstes }: { fd: Eingabefeld; ei
     if (fd.typ === "euro") v = v.replace(/[^\d.,]/g, "").slice(0, 8);
     setze(fd.feld, v);
   };
+  const beschreibung = [fehler ? `${id}-fehler` : null, fd.hinweis ? `${id}-hinweis` : null].filter(Boolean).join(" ") || undefined;
   return (
     <div>
-      <label htmlFor={id} className={einzel ? "sr-only" : "mb-1 block text-sm font-medium text-slate-700"}>
+      <label htmlFor={id} className={einzel ? "sr-only" : "mb-1.5 block text-[15px] font-semibold text-[var(--m-text)]"}>
         {fd.label}
       </label>
       <div className="relative">
@@ -524,16 +605,22 @@ function Feld({ fd, einzel, wert, fehler, setze, erstes }: { fd: Eingabefeld; ei
           maxLength={fd.typ === "datum" ? 10 : 120}
           value={wert}
           aria-invalid={!!fehler}
-          aria-describedby={fehler ? `${id}-fehler` : undefined}
+          aria-describedby={beschreibung}
           onChange={(e) => aendern(e.target.value)}
           className={`${inputKlasse} ${fd.einheit ? "pr-28" : ""}`}
         />
-        {fd.einheit && <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-base text-slate-500">{fd.einheit}</span>}
+        {fd.einheit && <span className={`pointer-events-none absolute inset-y-0 right-4 flex items-center text-base ${textLeise}`}>{fd.einheit}</span>}
       </div>
-      {fehler && (
-        <p id={`${id}-fehler`} className="mt-1.5 text-sm text-rose-600">
+      {fehler ? (
+        <p id={`${id}-fehler`} className={`mt-1.5 text-[15px] ${fehlerText}`}>
           {fehler}
         </p>
+      ) : (
+        fd.hinweis && (
+          <p id={`${id}-hinweis`} className={`mt-1.5 text-[14px] ${textLeise}`}>
+            {fd.hinweis}
+          </p>
+        )
       )}
     </div>
   );
@@ -542,6 +629,14 @@ function Feld({ fd, einzel, wert, fehler, setze, erstes }: { fd: Eingabefeld; ei
 function Haken() {
   return (
     <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  );
+}
+
+function HakenKlein({ className = "h-4 w-4 shrink-0 text-[var(--m-primaer)]" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M5 12.5l4.5 4.5L19 7.5" />
     </svg>
   );

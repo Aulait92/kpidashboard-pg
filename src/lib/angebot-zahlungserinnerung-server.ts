@@ -292,6 +292,9 @@ export async function sendeVorlageAnKontakt(opts: {
     const contact = await prisma.salesContact.findUnique({ where: { id: opts.salesContactId }, select: { phone: true, firstName: true, lastName: true, salutation: true } });
     const phone = contact?.phone ? normalizePhone(contact.phone) : null;
     if (!phone) return "no_phone";
+    // Festnetz: WhatsApp kommt dort nicht an (wie termin-whatsapp); Mail-Weg bleibt
+    const { istFestnetz } = await import("@/lib/telefon-typ");
+    if (await istFestnetz(phone)) return "festnetz";
     const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: SUPPORT_CUSTOMER_ID }, select: { id: true, status: true, apiKeyEnc: true } });
     if (acc?.status !== "connected" || !acc.apiKeyEnc) return "no_account";
     const tpl = await opts.vorlage();

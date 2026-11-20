@@ -327,7 +327,7 @@ export async function supportVorlagenNutzbar(): Promise<Nutzbar> {
   };
 }
 
-type SendOutcome = "sent" | "no_account" | "no_template" | "opted_out" | "gesperrt";
+type SendOutcome = "sent" | "no_account" | "no_template" | "opted_out" | "gesperrt" | "festnetz";
 
 /**
  * Vorlage von der Support-Nummer an einen Vertriebskontakt senden und im Support-Chat sowie im
@@ -344,6 +344,9 @@ async function sendSupportTemplate(opts: {
 }): Promise<SendOutcome> {
   // Feste Sperrliste im Vertrieb (lib/vertrieb/sperrliste.ts)
   if (await kontaktGesperrt(opts.contactId)) return "gesperrt";
+  // Festnetznummern haben kein WhatsApp (Ole, 20.11.2026: Erinnerung an +49 5426 … schlug fehl): nicht senden
+  const { istFestnetz } = await import("@/lib/mail-strecke/server");
+  if (await istFestnetz(opts.phone)) return "festnetz";
   const acc = await supportAccount();
   if (!acc) return "no_account";
   if (!(await templateApproved(opts.template.name))) return "no_template";

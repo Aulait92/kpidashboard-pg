@@ -112,17 +112,29 @@ export const EXPERIMENTE = {
     min: 150,
     nurReif: "termin_vorbei",
   },
-  // Eigener PKV-Funnel (lib/funnel, Ole 20.11.2026): Beispiel, AUS. Zeigt, wie ein Schritt eine Fassung b bekommt
-  // (lib/funnel/definition.ts, Schritt „start“, test.experiment). Den ersten echten Test entwickelt das A/B-Test-Labor
-  // (docs/firma/ab-tests.md); dann hier Schlüssel, Texte und aktiv anpassen. Einheit = Besucher-ID, Zuteilung beim
-  // ersten Aufruf des Schritts. Haupt-Kennzahl: Abnehmer hat den Lead erreicht (je Besucher; Leads an Abnehmer ohne
-  // Rückmeldung zählen nicht), Neben-Kennzahlen Termin, Abschluss, verkauft und nicht storniert.
+  // Eigener PKV-Funnel (lib/funnel, Ole 20.11.2026): Beispiel, AUS und an keinem Schritt mehr (nur Muster).
+  // Einheit = Besucher-ID je Seitenaufruf (kein Cookie, Auflage L4), Zuteilung beim ersten Aufruf des Schritts.
+  // Haupt-Kennzahl: Abnehmer hat den Lead erreicht (je Besucher; Leads an Abnehmer ohne Rückmeldung zählen nicht),
+  // Neben-Kennzahlen Termin, Abschluss, verkauft und nicht storniert.
   funnel_pkv_beispiel: {
     titel: "PKV-Funnel: Überschrift der Startseite (Beispiel, aus)",
     ziel: "ppl_erreicht",
     a: "Bisher: „Viele PKV-Kunden mit Beiträgen über 700 € zahlen unnötig zu viel: …“",
     b: "Beispiel: „Über 700 € im Monat für deine PKV? …“",
     aktiv: false,
+    reifTage: 14,
+    ohneEreignis: "ppl_unbekannt",
+    anzeigeZiele: ["funnel_lead", "ppl_termin", "ppl_abschluss", "ppl_umsatz"],
+  },
+  // Erster echter Test im PKV-Funnel (A/B-Test-Labor, Freigabe Ole 20.11.2026; Lernbuch docs/firma/ab-tests.md,
+  // Hypothese lib/ab-hypothesen.ts): Überschrift der Startseite mit Anlass. Läuft ab dem Livegang (Schritt „start“,
+  // lib/funnel/definition.ts). Mindestmenge wie beim Erstanschreiben (150 je Fassung), Reife 14 Tage.
+  funnel_pkv_anlass: {
+    titel: "PKV-Funnel: Überschrift mit Anlass (Beitragserhöhung zum 1. Januar)",
+    ziel: "ppl_erreicht",
+    a: "Standard: „Über 650 € im Monat für deine PKV? Ein interner Tarifwechsel kann helfen“",
+    b: "Neu: „Hat deine PKV den Beitrag zum 1. Januar erhöht? Lass deinen Tarif kostenlos prüfen“",
+    min: 150,
     reifTage: 14,
     ohneEreignis: "ppl_unbekannt",
     anzeigeZiele: ["funnel_lead", "ppl_termin", "ppl_abschluss", "ppl_umsatz"],

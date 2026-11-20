@@ -9,6 +9,7 @@ import { createOffer, type OfferFormInput } from "@/lib/offers";
 import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount, prepayPossible } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
 import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
+import { ersteWocheAus, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
 import { aktiverVerkaufsLink, verkaufsLinkErstellen } from "@/lib/vertrieb/verkaufspraesentation-server";
@@ -170,6 +171,11 @@ async function angebotsMailVorbereiten(
     nachtraeglich: offer.paymentInArrears
       ? { ersteIso: offer.startDate ? nachtraeglichErsteIso(offer.startDate.toISOString().slice(0, 10)) : null, setup: Number(offer.setupFee) }
       : null,
+    // Erste Woche (Pay-per-Lead + Software): Menge, Preis je Lead, Summe, Steuer
+    ersteWoche: (() => {
+      const w = ersteWocheAus(offer);
+      return w ? { productKey: w.productKey, name: ersteWocheName(w), price: w.price, quantity: w.quantity } : null;
+    })(),
     rechnerUrl: rechner,
     praesentationUrl,
     du: !!extras.du,

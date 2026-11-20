@@ -82,7 +82,7 @@ export const PROVIDER = {
   register: "Amtsgericht Charlottenburg, HRB 172651",
   // Standard für den Rechnungsfuß; ein abweichender Wert unter Admin → Einstellungen →
   // Rechnungsangaben geht vor (Ole, 14.11.2026).
-  vatId: "DE295007828",
+  vatId: "DE305778241",
 };
 
 export type LegalSection = { title: string; items: (string | { sub: string; text: string })[] };

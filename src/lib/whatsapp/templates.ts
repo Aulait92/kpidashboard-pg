@@ -1063,6 +1063,9 @@ export async function sendWhatsAppNotice(opts: {
       if (!wrote) throw l.waConsent === "nein" ? new WhatsAppNoConsentError() : new WhatsAppUnavailableError();
     }
   }
+  // Festnetznummer (Ole, 20.11.2026, lib/whatsapp/festnetz.ts): nicht senden, Lead in den Anrufweg, außer er hat selbst geschrieben
+  const { pruefeFestnetz } = await import("@/lib/whatsapp/festnetz");
+  await pruefeFestnetz({ customerId: opts.customerId, to: opts.to, leadId, conversationId: existing?.id ?? null });
   // Allowlist (Ole, 16.11.2026): automatische Nachrichten nur an Leads aus der Pipeline bzw. (Kampagnen, Empfehlungen)
   // an importierte Bestandskunden. Nie an unbekannte Kontakte, z. B. private Chats der Business-App (Coexistence).
   if (!opts.manuell) {

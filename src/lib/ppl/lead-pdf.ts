@@ -27,8 +27,10 @@ export type PdfLead = {
   date: Date;
   /** Eingang des Funnel-Formulars (Zeitpunkt der Einwilligung) */
   consentAt?: Date | null;
-  /** Einwilligungstext des Funnels (LeadSubscription.consentText) */
+  /** Einwilligungstext: Nachweis am Lead (eigener Funnel, L3) bzw. LeadSubscription.consentText */
   consentText?: string | null;
+  /** Fassung und Kanäle des Nachweises, z. B. „Fassung pkv-beitrag-2026-11-20 · Kanäle: Telefon, E-Mail, WhatsApp“ */
+  consentDetail?: string | null;
   smsVerified?: boolean;
   test?: boolean;
 };
@@ -182,7 +184,7 @@ export function leadPdfData(l: PdfLead): LeadPdfData {
     { k: "Ort", v: clean(ort) },
   ].filter((c) => c.v);
   const consent = clean(l.consentText);
-  const am = l.consentAt ? pdfDate(l.consentAt) : null;
+  const am = [l.consentAt ? pdfDate(l.consentAt) : null, clean(l.consentDetail) || null].filter(Boolean).join(" · ") || null;
   return {
     produkt: clean(l.product) || "Pay-per-Lead",
     uebermitteltAm: pdfDate(l.date),

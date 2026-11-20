@@ -1,10 +1,16 @@
 // Eigener PKV-Funnel gegen die Datenbank (lib/funnel): Messung je Schritt mit Zuteilung, Absenden erzeugt einen
 // PPL-Lead mit den Perspective-Feldnamen, Besucher → Lead, Fehler und Abbruch ohne Lead, Ergebnis beim Abnehmer erst
 // nach 14 Tagen (erreicht, unbekannt), Reife-Filter und „ohneEreignis“ in experimentStats, Kennzahlen.
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { absenden, ereignisMerken, funnelReifePruefen } from "@/lib/funnel/server";
 import { funnelKennzahlen, funnelDiagnose } from "@/lib/funnel/auswertung";
+import { ladePartner } from "@/lib/funnel/partner";
+import { PKV_BEITRAG } from "@/lib/funnel/definition";
+import { EINWILLIGUNG_VERSION, einwilligungText } from "@/lib/funnel/pkv-beitrag-texte";
+import { funnelDatenschutzEmail } from "@/lib/funnel/einstellungen";
 import { experimenteCacheLeeren, experimentStats, zuteilen } from "@/lib/experimente";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
@@ -28,11 +34,12 @@ const antworten = (n: number, extra: Record<string, string> = {}) => ({
   ...extra,
 });
 const bid = (n: number) => `${run}-besuch-0000-${String(n).padStart(4, "0")}`;
-const EXP = "funnel_pkv_beispiel";
+const EXP = "funnel_pkv_anlass";
 
 describe("PKV-Funnel (Datenbank)", () => {
   let appKunde = "";
   let mailKunde = "";
+  const weitere: string[] = [];
   const vorher = process.env.PKV_FUNNEL_PRODUKT;
 
   beforeAll(async () => {
@@ -57,6 +64,8 @@ describe("PKV-Funnel (Datenbank)", () => {
     await prisma.poolLead.deleteMany({ where: { productKey: produkt } });
     await cleanupCustomer(appKunde);
     await cleanupCustomer(mailKunde);
+    await prisma.poolLead.deleteMany({ where: { productKey: `${produkt}-hook` } });
+    for (const id of weitere) await cleanupCustomer(id);
     if (vorher === undefined) delete process.env.PKV_FUNNEL_PRODUKT;
     else process.env.PKV_FUNNEL_PRODUKT = vorher;
   });
@@ -91,6 +100,14 @@ describe("PKV-Funnel (Datenbank)", () => {
     expect(labels).toEqual(expect.arrayContaining(["Geburtsdatum", "Postleitzahl", "Ort", "Aktuelle Versicherung", "Wie lange in PKV?", "Monatlicher Beitrag", "Situation", "Gesetzlich oder privat?"]));
     const lead = await prisma.lead.findUniqueOrThrow({ where: { id: pool.leadId! } });
     expect(lead).toMatchObject({ customerId: appKunde, source: produkt, adCampaignId: "120200000000001" });
+    // L3: Nachweis der Einwilligung am Pool-Lead und am gelieferten Lead (Wortlaut mit Adresse, Fassung, Kanäle, Knopf)
+    const text = einwilligungText(funnelDatenschutzEmail());
+    expect(pool.consentData).toMatchObject({ funnel: "pkv-beitrag", version: EINWILLIGUNG_VERSION, text, kanaele: ["Telefon", "E-Mail", "WhatsApp"], knopf: "Kostenlos prüfen lassen" });
+    expect(Math.abs(Date.parse((pool.consentData as { at: string }).at) - pool.createdAt.getTime())).toBeLessThan(5_000);
+    expect(lead.waConsent).toBe("ja");
+    expect(lead.consentData).toMatchObject({ text, textVersion: EINWILLIGUNG_VERSION, kanaele: ["Telefon", "E-Mail", "WhatsApp"], knopf: "Kostenlos prüfen lassen" });
+    // Abnehmer ohne Erstinformation: kein Kasten „Dein Experte“, keine Mail
+    if (r.ok) expect(r).toMatchObject({ experte: null, mail: null });
     expect(await prisma.experimentEreignis.count({ where: { einheit: bid(2), ziel: "funnel_lead" } })).toBe(1);
     expect(await prisma.funnelEreignis.count({ where: { besuchId: bid(2), schritt: "kontakt", art: "abgeschickt" } })).toBe(1);
     const nochmal = await absenden({ funnel: "pkv-beitrag", besuchId: bid(2), antworten: antworten(2), eventId: "evt-12345678", metaEinwilligung: true });
@@ -106,6 +123,55 @@ describe("PKV-Funnel (Datenbank)", () => {
     const b = await prisma.funnelBesuch.findUniqueOrThrow({ where: { id: bid(3) } });
     expect(b).toMatchObject({ metaEinwilligung: true, metaFbp: "fb.1.1700000000000.123456", metaEventId: "evt-87654321" });
     expect(b.metaFbc).toMatch(/^fb\.1\.\d+\.IwAR0abcdefghijk$/);
+  });
+
+  it("Auslieferung per Webhook: Nachweis statt Bezugstext; Abnehmer mit Erstinformation = „Dein Experte“", async () => {
+    const bodies: unknown[] = [];
+    const server = createServer((req, res) => {
+      let data = "";
+      req.on("data", (c) => (data += c));
+      req.on("end", () => {
+        bodies.push(JSON.parse(data || "{}"));
+        res.end("ok");
+      });
+    });
+    await new Promise<void>((ok) => server.listen(0, "127.0.0.1", ok));
+    const port = (server.address() as AddressInfo).port;
+    const kunde = await makeCustomer();
+    weitere.push(kunde.id);
+    await prisma.erstinformation.create({ data: { customerId: kunde.id, token: `tok-${run}`, name: "Max Muster", firma: "Muster Finanz GmbH", telefon: "030 1234567", anschrift: "Ring 1, 10115 Berlin", registerNummer: "D-1234-ABCDE-12" } });
+    await prisma.leadSubscription.create({
+      data: { customerId: kunde.id, productKey: `${produkt}-hook`, price: 50, period: "month", goal: 3, delivery: "webhook", webhookUrl: `http://127.0.0.1:${port}/hook`, consentText: "Alter Text am Bezug" },
+    });
+    process.env.PKV_FUNNEL_PRODUKT = `${produkt}-hook`;
+    try {
+      const r = await absenden({ funnel: "pkv-beitrag", besuchId: bid(6), antworten: antworten(6), metaEinwilligung: false });
+      expect(r).toMatchObject({ ok: true, lead: true, status: "delivered", experte: { name: "Max Muster", firma: "Muster Finanz GmbH", telefon: "030 1234567" } });
+      if (r.ok) expect(typeof r.mail).toBe("function");
+      expect(bodies).toHaveLength(1);
+      const body = bodies[0] as { consent?: Record<string, unknown> };
+      expect(body.consent).toMatchObject({ text: einwilligungText(funnelDatenschutzEmail()), version: EINWILLIGUNG_VERSION, channels: ["Telefon", "E-Mail", "WhatsApp"], button: "Kostenlos prüfen lassen", funnel: "pkv-beitrag" });
+      expect(JSON.stringify(body)).not.toContain("Alter Text am Bezug");
+      // Partnerliste: dieser Abnehmer mit allen Angaben
+      const { partner } = await ladePartner(PKV_BEITRAG);
+      expect(partner).toEqual([{ firma: "Muster Finanz GmbH", name: "Max Muster", ort: "Berlin", registerNummer: "D-1234-ABCDE-12", fehlt: [] }]);
+    } finally {
+      process.env.PKV_FUNNEL_PRODUKT = produkt;
+      server.close();
+    }
+  });
+
+  it("Partnerliste: nur aktive Bezüge des Produkts, ohne Testkunden", async () => {
+    const test = await makeCustomer({ isTest: true });
+    const inaktiv = await makeCustomer();
+    weitere.push(test.id, inaktiv.id);
+    await prisma.leadSubscription.create({ data: { customerId: test.id, productKey: produkt, price: 10, delivery: "app" } });
+    await prisma.leadSubscription.create({ data: { customerId: inaktiv.id, productKey: produkt, price: 10, delivery: "app", active: false } });
+    const app = await prisma.customer.findUniqueOrThrow({ where: { id: appKunde } });
+    const { partner, stand } = await ladePartner(PKV_BEITRAG);
+    expect(partner.map((x) => x.firma)).toEqual([app.name]);
+    expect(partner[0].fehlt).toEqual(["Firma (Erstinformation)", "Name", "Sitz (Ort)", "Registernummer § 34d"]);
+    expect(stand).toBeInstanceOf(Date);
   });
 
   it("Fehler und Abbruch: kein Lead", async () => {
@@ -183,5 +249,20 @@ describe("PKV-Funnel (Datenbank)", () => {
     const json = JSON.stringify(d);
     expect(json).not.toContain(run);
     expect(json).not.toMatch(/test\.local|Testa/);
+  });
+
+  it("Nur gelistete Abnehmer beliefern: Funnel-Leads gehen nie an Testkunden", async () => {
+    const test = await makeCustomer({ isTest: true });
+    weitere.push(test.id);
+    process.env.PKV_FUNNEL_PRODUKT = `${produkt}-nurtest`;
+    try {
+      await prisma.leadSubscription.create({ data: { customerId: test.id, productKey: `${produkt}-nurtest`, price: 10, period: "month", goal: 5, delivery: "app" } });
+      const r = await absenden({ funnel: "pkv-beitrag", besuchId: bid(7), antworten: antworten(7), metaEinwilligung: false });
+      expect(r).toMatchObject({ ok: true, status: "parked" });
+      expect(await prisma.lead.count({ where: { customerId: test.id } })).toBe(0);
+    } finally {
+      process.env.PKV_FUNNEL_PRODUKT = produkt;
+      await prisma.poolLead.deleteMany({ where: { productKey: `${produkt}-nurtest` } });
+    }
   });
 });

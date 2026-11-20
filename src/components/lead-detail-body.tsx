@@ -72,6 +72,7 @@ import {
   type ReadOnlyField,
 } from "@/lib/lead-fields";
 import { KEINE_ANGABE } from "@/lib/platzhalter";
+import { istFestnetz } from "@/lib/telefon-typ";
 
 // Shared Lead-Detail-Inhalt — wird sowohl von /buyer/leads/[id]
 // (Vollseite) als auch vom Pipeline-Intercepting-Modal genutzt. Enthält
@@ -493,6 +494,8 @@ export async function LeadDetailBody({
   const noWhatsApp =
     !!lead.waUnavailableAt &&
     (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId, OR: [{ leadId: lead.id }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] } } })) === 0;
+  // Grund Festnetznummer (lib/whatsapp/festnetz.ts): eigener Titel „Keine Handynummer“
+  const festnetz = noWhatsApp && (await istFestnetz(lead.phone));
   // „Heute, 10:00“ / „Morgen, 10:00“ wie auf „Heute“ (UX Runde 4), sonst „Mo., 23.11., 10:00“
   const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
   const apptFmt = (d: Date) => {
@@ -556,7 +559,15 @@ export async function LeadDetailBody({
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-900" data-kein-whatsapp>
           <PhoneCall className="h-4 w-4 shrink-0" />
           <span className="min-w-0 flex-1">
-            <b>Kein WhatsApp:</b> Diese Nummer ist nicht per WhatsApp erreichbar, der Assistent schreibt nicht. Bitte direkt anrufen.
+            {festnetz ? (
+              <>
+                <b>Keine Handynummer:</b> Festnetznummer, darum schreibt der Assistent nicht per WhatsApp. Bitte anrufen.
+              </>
+            ) : (
+              <>
+                <b>Kein WhatsApp:</b> Diese Nummer ist nicht per WhatsApp erreichbar, der Assistent schreibt nicht. Bitte direkt anrufen.
+              </>
+            )}
             {lead.waUnavailableMailAt ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}
           </span>
           {lead.phone ? (
