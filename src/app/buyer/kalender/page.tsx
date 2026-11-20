@@ -10,7 +10,7 @@ import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { bookingPageUrl } from "@/lib/public-url";
 import { prisma } from "@/lib/prisma";
 import { disconnectOwnCalendarAction } from "./actions";
-import { BlockTimes, LeadTimesForm, RemindButton, SourcePicker } from "@/components/calendar-sources";
+import { BlockTimes, LeadTimesForm, RemindButton, SourcePicker, VideoRaumForm } from "@/components/calendar-sources";
 import { userCalendarKey } from "@/lib/calendar/tokens";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import { loadTeamCalendars, providerLabel } from "@/lib/calendar/team";
@@ -25,6 +25,7 @@ import {
   removeIcsAction,
   saveIcsAction,
   saveLeadTimesAction,
+  saveVideoRaumAction,
 } from "./source-actions";
 
 export const dynamic = "force-dynamic";
@@ -122,6 +123,11 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
                   disconnectNativeAction={disconnectNativeCalendarAction}
                   allianzOption={!makler}
                 />
+              ) : null}
+              {setup ? (
+                <div className="mt-5 border-t border-[color:var(--border)] pt-4">
+                  <VideoRaumForm action={saveVideoRaumAction} readOnly={ro} initial={setup.videoRoomUrl} noetig={!!setup.status.native.app} />
+                </div>
               ) : null}
             </>
           ) : ownConnected ? (
