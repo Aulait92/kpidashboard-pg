@@ -14,10 +14,11 @@ export default async function Page() {
   await requireAuth();
   return (
     <Seite
-      titel="Verkaufen"
+      titel="Marketing"
       reiter="marketing"
+      zurueck={{ href: "/admin/neu/vertrieb", label: "Verkaufen" }}
       aktionen={
-        <ButtonLink href="/admin/einstellungen/empfehlungen" variant="ghost" icon={Settings}>
+        <ButtonLink href="/admin/neu/einstellungen/kollegen-empfehlen" variant="ghost" icon={Settings}>
           Prämie einstellen
         </ButtonLink>
       }

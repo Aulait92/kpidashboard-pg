@@ -11,6 +11,8 @@ export const metadata = { title: "Webseite & Rechner | performancegrowth Admin" 
 // Marketing → Webseite & Rechner (früher Einstellungen → Rechner und „Rechner öffnen“ in der Marketing-Leiste):
 // öffentlicher Break-even-Rechner mit Produkten, Erfahrungswerten, Texten, Kontakt-Link und Garantien.
 // Gleiches Formular und gleiche Server Action wie /admin/einstellungen/rechner.
+// Umbau 19.11.2026: Einrichtung statt Alltag, darum kein Reiter mehr (Zugang: Unterlagen → „Rechner einrichten“, „Mehr“ in
+// Verkaufen, Suche). Formular kompakt: alle Produkte und Abschnitte zugeklappt mit Zusammenfassung, Speichern bleibt unten sichtbar.
 export default async function Page() {
   await connection();
   await requireAuth();
@@ -19,8 +21,8 @@ export default async function Page() {
   const dataInfo = Object.fromEntries(config.products.map((p, i) => [p.key, data[i]]));
   return (
     <Seite
-      titel="Verkaufen"
-      reiter="marketing"
+      titel="Webseite & Rechner"
+      zurueck={{ href: "/admin/neu/marketing/unterlagen", label: "Unterlagen" }}
       aktionen={
         <span data-funktion="nav--oeffentlichen-rechner-oeffnen">
           <ButtonLink href="/rechner" external icon={ExternalLink}>
@@ -30,8 +32,7 @@ export default async function Page() {
       }
     >
       <div className="max-w-3xl" data-funktion="actions-saverechneraction--rechner-produkte-quoten-kosten-garantien-texte">
-        <p className="mb-4 text-sm text-[color:var(--muted)]">Kosten pro Lead: Echte Daten ersetzen den Erfahrungswert nur, wenn sie höher sind.</p>
-        <RechnerForm config={config} dataInfo={dataInfo} />
+        <RechnerForm config={config} dataInfo={dataInfo} kompakt />
       </div>
     </Seite>
   );
