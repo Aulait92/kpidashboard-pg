@@ -17,6 +17,8 @@ export type PartnerRoh = {
   aktualisiert: Date;
   erstinfo: { name: string | null; firma: string | null; anschrift: string | null; registerNummer: string | null } | null;
   registerNr: string | null;
+  /** Angaben für die Partnerliste am Kunden (gehen vor; z. B. Vertriebspartner eines Maklers) */
+  partnerAngaben?: { firma: string | null; anschrift: string | null; registerNr: string | null } | null;
 };
 
 export type Partner = {
@@ -55,11 +57,13 @@ export function partnerAus(rows: PartnerRoh[]): { partner: Partner[]; stand: Dat
     if (!stand || r.aktualisiert > stand) stand = r.aktualisiert;
     if (je.has(r.customerId)) continue;
     const e = r.erstinfo;
-    const firma = t(e?.firma) || t(r.kundeName);
-    const name = t(e?.name) || null;
-    const ort = ortAusAnschrift(e?.anschrift);
-    const reg = registerNummer(e?.registerNummer) ?? registerNummer(r.registerNr);
-    const fehlt = [...(!t(e?.firma) ? ["Firma (Erstinformation)"] : []), ...(!name ? ["Name"] : []), ...(!ort ? ["Sitz (Ort)"] : []), ...(!reg ? ["Registernummer § 34d"] : [])];
+    const p = r.partnerAngaben;
+    const firma = t(p?.firma) || t(e?.firma) || t(r.kundeName);
+    // Ansprechpartner: Name aus der Erstinformation, bei eigenen Partner-Angaben der Kontoname (z. B. Vertriebspartner)
+    const name = (t(p?.firma) ? t(r.kundeName) : t(e?.name)) || null;
+    const ort = ortAusAnschrift(p?.anschrift) ?? ortAusAnschrift(e?.anschrift);
+    const reg = registerNummer(p?.registerNr) ?? registerNummer(e?.registerNummer) ?? registerNummer(r.registerNr);
+    const fehlt = [...(!t(p?.firma) && !t(e?.firma) ? ["Firma (Erstinformation oder Partner-Angaben)"] : []), ...(!name ? ["Name"] : []), ...(!ort ? ["Sitz (Ort)"] : []), ...(!reg ? ["Registernummer § 34d"] : [])];
     je.set(r.customerId, { firma, name: name && name !== firma ? name : null, ort, registerNummer: reg, fehlt });
   }
   const partner = [...je.values()].sort((a, b) => a.firma.localeCompare(b.firma, "de"));
@@ -81,6 +85,9 @@ export async function ladePartner(f: FunnelDef): Promise<{ partner: Partner[]; s
           isTest: true,
           dormantSince: true,
           vermittlerRegisterNr: true,
+          partnerFirma: true,
+          partnerAnschrift: true,
+          partnerRegisterNr: true,
           erstinformation: { select: { name: true, firma: true, anschrift: true, registerNummer: true } },
         },
       },
@@ -96,6 +103,7 @@ export async function ladePartner(f: FunnelDef): Promise<{ partner: Partner[]; s
       aktualisiert: s.updatedAt,
       erstinfo: s.customer.erstinformation,
       registerNr: s.customer.vermittlerRegisterNr,
+      partnerAngaben: { firma: s.customer.partnerFirma, anschrift: s.customer.partnerAnschrift, registerNr: s.customer.partnerRegisterNr },
     })),
   );
 }

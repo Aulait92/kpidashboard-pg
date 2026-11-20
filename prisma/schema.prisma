@@ -120,6 +120,12 @@ model Customer {
   vermittlerGeprueftAt     DateTime?
   // E-Mail des Admins, der geprüft hat
   vermittlerGeprueftVon    String?
+  // Angaben für die öffentliche Partnerliste der Funnels (Ole, 20.11.2026, docs/recht/pkv-funnel.md L2): rechtlicher
+  // Empfänger der Leads, wenn er vom Kontonamen abweicht (z. B. Vertriebspartner eines Maklers). Unabhängig von der
+  // Registerprüfung oben (Umsatzsteuer).
+  partnerFirma             String?
+  partnerAnschrift         String?
+  partnerRegisterNr        String?
   // Maklervollmacht (Ole, 18.11.2026, nur Makler): wer schickt sie den Kunden? app | eigene; null = noch nicht entschieden
   // (Frage in der Einrichtung und als Hinweis auf „Heute“, änderbar unter Einstellungen → Assistent)
   vollmachtVersand     String?

@@ -170,7 +170,7 @@ describe("PKV-Funnel (Datenbank)", () => {
     const app = await prisma.customer.findUniqueOrThrow({ where: { id: appKunde } });
     const { partner, stand } = await ladePartner(PKV_BEITRAG);
     expect(partner.map((x) => x.firma)).toEqual([app.name]);
-    expect(partner[0].fehlt).toEqual(["Firma (Erstinformation)", "Name", "Sitz (Ort)", "Registernummer § 34d"]);
+    expect(partner[0].fehlt).toEqual(["Firma (Erstinformation oder Partner-Angaben)", "Name", "Sitz (Ort)", "Registernummer § 34d"]);
     expect(stand).toBeInstanceOf(Date);
   });
 

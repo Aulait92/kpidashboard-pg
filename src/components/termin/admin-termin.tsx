@@ -88,7 +88,7 @@ function TerminForm({
       {types ? (
         <label className="block text-xs font-medium text-slate-500">
           Einladung an
-          <input type="email" {...bind("email")} required placeholder="name@agentur.de" className="input mt-1" />
+          <input type="text" inputMode="email" autoComplete="off" {...bind("email")} required placeholder="name@agentur.de, weitere durch Komma" className="input mt-1" />
         </label>
       ) : null}
       {warned ? (
