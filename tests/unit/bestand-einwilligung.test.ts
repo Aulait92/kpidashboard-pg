@@ -355,8 +355,8 @@ describe("60-Tage-Zuordnung, letzte Kampagne zählt, keine Doppelzählung", () =
 describe("Kampagnen-Mail", () => {
   it("Bestandskunden gesiezt: „Guten Tag Frau Muster,“ bzw. „Guten Tag,“ ohne Namen", () => {
     const t = fillCampaignMail(defaultCampaignMail("renewal"), { kontakt: { firstName: "Erika", lastName: "Muster", salutation: "Frau" }, thema: "Kfz-Versicherung", meinname: "Susanne Meier" });
-    expect(t.body.startsWith("Guten Tag Frau Muster,\n\nbei Ihrem Vertrag Kfz-Versicherung")).toBe(true);
-    expect(t.subject).toBe("Ihr Vertrag Kfz-Versicherung: bald steht ein Termin an");
+    expect(t.body.startsWith("Guten Tag Frau Muster,\n\nIhr Vertrag Kfz-Versicherung verlängert sich bald.")).toBe(true);
+    expect(t.subject).toBe("Ihr Vertrag Kfz-Versicherung verlängert sich bald");
     expect(fillCampaignMail(defaultCampaignMail("review"), { kontakt: null, meinname: "S" }).body.startsWith("Guten Tag,\n\n")).toBe(true);
     // Du-Fassung liegt ebenfalls vor
     expect(fillCampaignMail(defaultCampaignMail("review", "du"), { ansprache: "du", kontakt: { firstName: "Erika" }, meinname: "S" }).body.startsWith("Hallo Erika,")).toBe(true);

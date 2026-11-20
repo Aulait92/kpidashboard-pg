@@ -20,7 +20,7 @@ import { BESTAND_SOURCE } from "@/lib/lead-herkunft";
 import { BLOCKED_REASON, chooseChannel, countAudience, asChannelMode, type AudienceCounts, type Channel, type ChannelMode, type ConsentSettings, type LegalBasis } from "@/lib/bestand/einwilligung";
 import { loadBestandAnsprache, loadConsentSettings, loadSuppression, optOutExisting, subjectOf, SUBJECT_SELECT, type Suppression } from "@/lib/bestand/einwilligung-server";
 import { afterSend, bounceCheck, innerGap, isBounceError, mailSlots, providerDailyLimit, type SendOutcome, type ThrottleState } from "@/lib/bestand/mail-drossel";
-import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, hasImprint, imprintFromWebsiteInfo, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
+import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, hasImprint, imprintFromWebsiteInfo, istPersonenversicherung, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
 import { classifyReply, isAutoReplyText } from "@/lib/vertrieb/sentiment";
 import { isExclusiveAgent, mayOffer, offeredLines } from "@/lib/bestand/befugnis";
 import { crossSellOffenWhere } from "@/lib/cross-sell-offen";
@@ -596,6 +596,7 @@ async function sendWhatsAppPart(
     now,
   );
   const { sendWhatsAppNotice, NoTemplateError } = await import("@/lib/whatsapp/templates");
+  const slug = await bookingSlugFor(c.customerId);
   for (const r of batch) {
     const ec = r.existingCustomer;
     if ((await recheck(r, c, cx, mode, now)) !== "whatsapp") continue;
@@ -611,9 +612,10 @@ async function sendWhatsAppPart(
         to: ec.phone!,
         purpose: OCCASIONS[c.occasion as Occasion].purpose as Parameters<typeof sendWhatsAppNotice>[0]["purpose"],
         // Empfehlung v4: Thema vor dem Link ({{2}}), ältere Fassung nur mit Link
-        params: referral ? [first || "Hallo", empfehlungsThema(ec.lines[0]), referral.url] : [first || "Hallo", topic ?? (c.occasion === "renewal" ? RENEWAL_TOPIC_FALLBACK : "")],
+        // {{2}}: bei Personenversicherungen neutral statt der Sparte (vorlagenThema)
+        params: referral ? [first || "Hallo", empfehlungsThema(ec.lines[0]), referral.url] : [first || "Hallo", vorlagenThema(c.occasion as Occasion, topic)],
         ...(referral ? { legacyParams: [first || "Hallo", referral.url] } : {}),
-        text: referral ? referral.text : campaignText(c.occasion as Occasion, kontakt, topic, cx.settings.ansprache),
+        text: referral ? referral.text : campaignText(c.occasion as Occasion, kontakt, topic, cx.settings.ansprache, await recipientExtras(c, ec, r.id, slug)),
         contactName: displayName(ec),
         anrede: kontakt,
       });
@@ -708,7 +710,7 @@ async function checkBounces(mb: MailboxRun, now: Date) {
 export async function campaignMailFor(
   c: { id?: string; customerId: string; occasion: string; topic: string | null; mailSubject: string | null; mailBody: string | null },
   ec: { id: string; firstName: string | null; lastName: string | null; salutation: string | null },
-  opts: { recipientId: string; customerName: string; imprint: string | null; meinname: string; empfehlungslink?: string | null; ansprache?: Ansprache },
+  opts: { recipientId: string; customerName: string; imprint: string | null; meinname: string; empfehlungslink?: string | null; ansprache?: Ansprache; extras?: TextExtras },
 ) {
   const { unsubscribeUrl } = await import("@/lib/bestand/links");
   const { firmDisplayName } = await import("@/lib/lead-anrede");
@@ -717,7 +719,8 @@ export async function campaignMailFor(
   const an = opts.ansprache ?? (await loadBestandAnsprache(c.customerId));
   const def = defaultCampaignMail(occasion, an);
   const tpl = { subject: c.mailSubject ?? def.subject, body: c.mailBody ? ohneGedankenstriche(c.mailBody) : def.body };
-  const filled = fillCampaignMail(tpl, { ansprache: an, kontakt: kontaktFromExisting(ec), thema: c.topic, empfehlungslink: opts.empfehlungslink, meinname: opts.meinname });
+  const x = opts.extras ?? {};
+  const filled = fillCampaignMail(tpl, { ansprache: an, kontakt: kontaktFromExisting(ec), thema: c.topic, empfehlungslink: opts.empfehlungslink, meinname: opts.meinname, terminlink: x.terminlink, datum: x.datum, anzahl: x.anzahl });
   const url = unsubscribeUrl(opts.recipientId);
   const footer = campaignMailFooter({ firm: firmDisplayName(opts.customerName), unsubscribeUrl: url, imprint: opts.imprint, ansprache: an });
   return { subject: ohneGedankenstriche(filled.subject), ...buildCampaignMail(filled.body, footer), unsubscribeUrl: url };
@@ -764,6 +767,7 @@ async function sendMailPart(
   const { unsubscribePostUrl } = await import("@/lib/bestand/links");
   const sleep = opts.sleep ?? realSleep;
   const rand = opts.rand ?? Math.random;
+  const slug = await bookingSlugFor(c.customerId);
   let first = true;
   for (const r of batch) {
     const ec = r.existingCustomer;
@@ -771,7 +775,7 @@ async function sendMailPart(
     if (!first) await sleep(innerGap(rand()));
     first = false;
     const referral = c.occasion === "empfehlung" ? await referralCampaignParts(c.customerId, ec.id, ec.firstName?.split(/\s+/)[0] || "", kontaktFromExisting(ec)) : null;
-    const mail = await campaignMailFor({ ...c, topic: await recipientTopic(c, ec) }, ec, { recipientId: r.id, customerName: c.customer.name, imprint, meinname, empfehlungslink: referral?.url ?? null, ansprache: cx.settings.ansprache });
+    const mail = await campaignMailFor({ ...c, topic: await recipientTopic(c, ec) }, ec, { recipientId: r.id, customerName: c.customer.name, imprint, meinname, empfehlungslink: referral?.url ?? null, ansprache: cx.settings.ansprache, extras: await recipientExtras(c, ec, r.id, slug) });
     const messageId = `bk-${r.id}@${(mb.email.split("@")[1] ?? "mail").toLowerCase()}`;
     const result = await sendViaPostfach(mb.userId, {
       to: ec.email!,
@@ -852,24 +856,130 @@ async function referralCampaignParts(customerId: string, existingCustomerId: str
   return { linkId: link.id, url, text: renderText(settings.texts.referral, { vorname: first, link: url, vertreter: personFromCustomerName(cust?.name ?? ""), anrede }) };
 }
 
+/** Sparte bzw. Thema → Vertragswort mit Artikel „eine“/„Ihre“ („Hausratversicherung“ statt „Hausrat“), sonst null. */
+const VERTRAG_LABEL: Record<string, string> = {
+  BU: "Berufsunfähigkeitsversicherung", KFZ: "Kfz-Versicherung", Haftpflicht: "Privathaftpflicht", Vorsorge: "Altersvorsorge",
+  Kranken: "Krankenzusatzversicherung", Wohngebäude: "Wohngebäudeversicherung", Hausrat: "Hausratversicherung", Unfall: "Unfallversicherung",
+  Rechtsschutz: "Rechtsschutzversicherung", Pflege: "Pflegevorsorge",
+};
+
+/** Vertragswort zu Sparte („KFZ“) oder Themenwort („Hausrat“); unbekannt (eigenes Thema) → null. Rein. */
+export function vertragWort(topicOrLine: string | null | undefined): string | null {
+  const t = topicOrLine?.trim();
+  if (!t) return null;
+  if (VERTRAG_LABEL[t]) return VERTRAG_LABEL[t];
+  const key = Object.keys(TOPIC_LABEL).find((k) => TOPIC_LABEL[k].toLowerCase() === t.toLowerCase());
+  if (key) return VERTRAG_LABEL[key] ?? null;
+  return Object.values(VERTRAG_LABEL).find((v) => v.toLowerCase() === t.toLowerCase()) ?? null;
+}
+
+/** Werte je Empfänger für die neuen Texte (Paket 2). */
+export type TextExtras = {
+  /** Buchungsseite mit Zuordnung (lib/bestand/terminlink.ts); ohne entfällt der Satz. */
+  terminlink?: string | null;
+  /** Ablauf/Verlängerung, formatiert („01.03.2027“) */
+  datum?: string | null;
+  /** Zahl der Verträge beim Vermittler */
+  anzahl?: number | null;
+  /** Vorhandene Sparte (Cross-Selling: „Ihre Kfz-Versicherung läuft über mich“) */
+  vorhanden?: string | null;
+};
+
+/** Ablaufdatum für Texte an Kunden („01.03.2027“, Berliner Zeit). */
+export function datumText(d: Date | null | undefined): string | null {
+  return d ? d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Berlin" }) : null;
+}
+
 /**
  * Text im offenen 24-h-Fenster (sonst gilt die freigegebene Vorlage). Ansprache wie vom Vermittler eingestellt
- * (Standard Sie): „Guten Tag Frau Schneider,“ bzw. „Hallo Erika,“ (lib/ansprache.ts).
+ * (Standard Sie): „Guten Tag Frau Schneider,“ bzw. „Hallo Erika,“ (lib/ansprache.ts). Paket 2 (20.11.2026): persönlich,
+ * ohne unbelegte Behauptung („Viele meiner Kunden haben … eine Lücke“ ist raus), Ende mit Terminlink oder „einfach
+ * mit Ja antworten“. Nie Euro, nie „Garantie“, ohne Gedankenstriche.
  */
-export function campaignText(o: Occasion, kontakt: AnredeKontakt | string, topic: string | null, an: Ansprache = "sie"): string {
+export function campaignText(o: Occasion, kontakt: AnredeKontakt | string, topic: string | null, an: Ansprache = "sie", x: TextExtras = {}): string {
   const hi = anredeZeile(an, typeof kontakt === "string" ? { firstName: kontakt } : kontakt).replace(/,$/, "");
+  const ja = x.terminlink
+    ? a(an, `Termin wählen: ${x.terminlink} oder antworte einfach mit Ja.`, `Termin wählen: ${x.terminlink} oder antworten Sie einfach mit Ja.`)
+    : a(an, "Antworte einfach mit Ja.", "Antworten Sie einfach mit Ja.");
   switch (o) {
-    case "cross_sell":
-      return `${hi}, viele meiner Kunden haben beim Thema ${topic ?? "Absicherung"} eine Lücke, die erst im Schadenfall auffällt. ${a(an, "Soll ich in 10 Minuten kurz prüfen, ob das bei dir auch so ist? Antworte einfach hier.", "Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist? Antworten Sie einfach hier.")}`;
-    case "review":
-      return `${hi}, ${a(an, "es ist Zeit für deinen kurzen Jahres-Check: Passt dein Schutz noch zu deiner aktuellen Situation? Soll ich mir das in 10 Minuten mit dir anschauen? Antworte einfach hier.", "es ist Zeit für Ihren kurzen Jahres-Check: Passt Ihr Schutz noch zu Ihrer aktuellen Situation? Soll ich mir das in 10 Minuten mit Ihnen anschauen? Antworten Sie einfach hier.")}`;
+    case "cross_sell": {
+      const neu = vertragWort(topic);
+      const hat = vertragWort(x.vorhanden);
+      const lead = hat && hat !== neu ? a(an, `deine ${hat} läuft über mich, `, `Ihre ${hat} läuft über mich, `) : "";
+      const luecke = neu
+        ? a(an, `eine ${neu} habe ich bei dir noch nicht notiert`, `eine ${neu} habe ich bei Ihnen noch nicht notiert`)
+        : a(an, `zum Thema ${topic ?? "Absicherung"} habe ich bei dir noch keinen Vertrag notiert`, `zum Thema ${topic ?? "Absicherung"} habe ich bei Ihnen noch keinen Vertrag notiert`);
+      return `${hi}, ${lead}${luecke}. ${a(an, "Soll ich kurz prüfen, ob du dort gut versorgt bist?", "Soll ich kurz prüfen, ob Sie dort gut versorgt sind?")} ${ja}`;
+    }
+    case "review": {
+      const n = x.anzahl ?? 0;
+      const zahl = n >= 2 ? a(an, `du hast ${n} Verträge bei mir. `, `Sie haben ${n} Verträge bei mir. `) : "";
+      return `${hi}, ${zahl}${zahl ? "Einmal" : "einmal"} im Jahr lohnt ein kurzer Blick, ob Beitrag und Leistung noch zu ${a(an, "deiner", "Ihrer")} Situation passen. 15 Minuten am Telefon reichen. ${ja}`;
+    }
     case "birthday":
-      return `${hi}, herzlichen Glückwunsch zum Geburtstag! Alles Gute für das neue Lebensjahr.`;
+      return `${hi}, herzlichen Glückwunsch zum Geburtstag und alles Gute für das neue Lebensjahr! ${a(an, "Hat sich bei dir etwas verändert, etwa Umzug, Familie oder Job? Dann schauen wir gern kurz gemeinsam drauf.", "Hat sich bei Ihnen etwas verändert, etwa Umzug, Familie oder Job? Dann schauen wir gern kurz gemeinsam drauf.")}`;
     case "empfehlung":
       return `${hi}, ${a(an, "kennst du jemanden, dem ich genauso weiterhelfen kann? Über deinen persönlichen Link", "kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link")} kann die Person ganz einfach selbst Kontakt mit mir aufnehmen.`;
-    case "renewal":
-      return `${hi}, ${a(an, "bei deinem Vertrag", "bei Ihrem Vertrag")} ${topic ? `(${topic}) ` : ""}steht bald ein Termin an, zu dem man gut prüfen kann, ob Beitrag und Leistung noch passen. ${a(an, "Soll ich mir das kurz für dich anschauen?", "Soll ich mir das kurz für Sie anschauen?")}`;
+    case "renewal": {
+      const v = vertragWort(topic);
+      const wer = v ? a(an, `deine ${v}`, `Ihre ${v}`) : a(an, "dein Vertrag", "Ihr Vertrag") + (topic ? ` (${topic})` : "");
+      return `${hi}, ${wer} verlängert sich ${x.datum ? `am ${x.datum}` : "bald"}. Bis dahin kann man Beitrag und Leistung noch gut vergleichen. ${a(an, "Soll ich das kurz für dich prüfen?", "Soll ich das kurz für Sie prüfen?")} ${ja}`;
+    }
   }
+}
+
+/** WhatsApp-Vorlagen-Platzhalter {{2}}: bei Personenversicherungen neutral statt der Sparte (Recht, 19.11.2026). Rein. */
+export function vorlagenThema(o: Occasion, topic: string | null): string {
+  const neutral = o === "renewal" ? RENEWAL_TOPIC_FALLBACK : "Absicherung";
+  if (!topic) return o === "renewal" ? RENEWAL_TOPIC_FALLBACK : "";
+  return istPersonenversicherung(topic) ? neutral : topic;
+}
+
+/** Buchungsseite des Vermittlers (nur mit verbundenem Kalender), sonst null: Dann entfällt der Terminlink. */
+export async function bookingSlugFor(customerId: string): Promise<string | null> {
+  const cal = await prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, bookingSlug: true } });
+  if (cal?.status !== "connected") return null;
+  if (cal.bookingSlug) return cal.bookingSlug;
+  const { getOrCreateBookingSlug } = await import("@/lib/calendar");
+  return getOrCreateBookingSlug(customerId).catch(() => null);
+}
+
+/** Werte je Empfänger: Ablaufdatum, Zahl der Verträge, vorhandene Sparte und Terminlink mit Zuordnung. */
+async function recipientExtras(
+  c: { occasion: string; segment?: Prisma.JsonValue | null },
+  ec: { id: string; nextRenewal: Date | null; lines: string[] },
+  recipientId: string,
+  slug: string | null,
+): Promise<TextExtras> {
+  const { terminlinkFuer } = await import("@/lib/bestand/terminlink");
+  const has = ((c.segment ?? {}) as Segment).has?.find((l) => ec.lines.includes(l)) ?? ec.lines[0] ?? null;
+  return {
+    terminlink: c.occasion === "birthday" || c.occasion === "empfehlung" ? null : terminlinkFuer(slug, recipientId),
+    datum: c.occasion === "renewal" ? datumText(ec.nextRenewal) : null,
+    anzahl: c.occasion === "review" ? await prisma.existingContract.count({ where: { existingCustomerId: ec.id } }).catch(() => ec.lines.length) : null,
+    vorhanden: c.occasion === "cross_sell" ? has : null,
+  };
+}
+
+/**
+ * Buchung über den Terminlink einer Kampagne (bk, lib/bestand/terminlink.ts): Empfänger gilt als geantwortet, Lead
+ * und Termin zählen für die Kampagne (Ergebnis „Termin“). Ohne Lead wird der Kampagnen-Lead angelegt und mit dem
+ * Gespräch verknüpft. Falsche Signatur oder fremder Kunde: nichts. Rückgabe: Lead für den Termin.
+ */
+export async function bookingFromCampaign(customerId: string, bk: string, conversationId: string, leadId: string | null, now = new Date()): Promise<string | null> {
+  const { pruefeTerminToken } = await import("@/lib/bestand/terminlink");
+  const rid = pruefeTerminToken(bk);
+  if (!rid) return leadId;
+  const r = await prisma.campaignRecipient.findFirst({ where: { id: rid, campaign: { customerId } }, include: { campaign: true, existingCustomer: true } });
+  if (!r) return leadId;
+  let lead = leadId ?? r.leadId;
+  if (!lead) lead = await createCampaignLead(customerId, r, [{ label: "Termin", value: "über den Terminlink der Kampagne gebucht" }]);
+  if (!leadId) await prisma.conversation.update({ where: { id: conversationId }, data: { leadId: lead } });
+  await prisma.campaignRecipient.update({
+    where: { id: r.id },
+    data: { status: r.status === "queued" ? r.status : "replied", repliedAt: r.repliedAt ?? now, leadId: r.leadId ?? lead },
+  });
+  return lead;
 }
 
 // ─── Zustellstatus (WhatsApp-Webhook) ────────────────────────────────────

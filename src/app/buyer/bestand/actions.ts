@@ -9,6 +9,7 @@ import { FIELDS, detectMapping, importRows, isBlockedColumn, mappingBlocker, par
 import { createCampaign, endCampaign, OCCASIONS, recordEmailReply, type EmailReplyKind, type Occasion, type Segment } from "@/lib/bestand/campaigns";
 import { QUOTA_REACHED } from "@/lib/bestand/quota";
 import { asChannelMode } from "@/lib/bestand/einwilligung";
+import { platzhalterAusAnzeige } from "@/lib/bestand/kampagnen-mail";
 import { logConsent, requestConsent, setConsent, setHinweis } from "@/lib/bestand/einwilligung-server";
 import { hinweisStatement } from "@/lib/bestand/import";
 import { agentConfirmText, agentConfirmVersion, needsAgentConfirm } from "@/lib/bestand/befugnis";
@@ -238,8 +239,9 @@ export async function startCampaignAction(fd: FormData): Promise<void> {
       dailyLimit: Number(fd.get("dailyLimit")) || 150,
       createdById: ctx.userId,
       channelMode,
-      mailSubject: String(fd.get("mailSubject") ?? ""),
-      mailBody: String(fd.get("mailBody") ?? ""),
+      // Editor zeigt Platzhalter lesbar („[Anrede]“), gespeichert werden sie als {anrede}
+      mailSubject: platzhalterAusAnzeige(String(fd.get("mailSubject") ?? "")),
+      mailBody: platzhalterAusAnzeige(String(fd.get("mailBody") ?? "")),
     });
     campaignId = campaign.id;
   } catch (err) {
