@@ -101,10 +101,12 @@ export const ohnePolicenSatz = (an: Ansprache) => a(an, "Dein Termin findet auch
 export function chatNachricht(k: FlowTextKontext): Nachricht {
   const tag = k.tag ? `Kleiner Tipp für ${k.tag} 💡` : a(k.an, "Kleiner Tipp für deinen Termin 💡", "Kleiner Tipp für Ihren Termin 💡");
   const pruefung = k.pronomen ? `sieht ${k.pronomen} schon vor dem Termin` : "ist schon vor dem Termin klar";
+  // Ole 20.11.2026: sagen, dass versucht wird, Geld zu sparen (Bemühen, kein Ergebnisversprechen nach § 5 UWG)
+  const spart = `Dabei versucht ${k.pronomen ?? k.name},`;
   const kern = a(
     k.an,
-    `Wenn ${k.name} deine Policen vorab hat, ${pruefung}, *ob du etwas doppelt zahlst, wann du kündigen kannst und was genau versichert ist.* So wird der Termin kürzer und konkreter.`,
-    `Wenn ${k.name} Ihre Policen vorab hat, ${pruefung}, *ob Sie etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist.* So wird der Termin kürzer und konkreter.`,
+    `Wenn ${k.name} deine Policen vorab hat, ${pruefung}, *ob du etwas doppelt zahlst, wann du kündigen kannst und was genau versichert ist.* ${spart} dir Geld zu sparen. So wird der Termin kürzer und konkreter.`,
+    `Wenn ${k.name} Ihre Policen vorab hat, ${pruefung}, *ob Sie etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist.* ${spart} Ihnen Geld zu sparen. So wird der Termin kürzer und konkreter.`,
   );
   // „Termin findet auch ohne Policen statt“ als eigener letzter Absatz statt Fußzeile (Ole, 20.11.2026: zwischen Text und
   // Fußzeile kaum Platz; den Abstand setzt WhatsApp, Leerzeilen am Ende werden abgeschnitten)
@@ -198,7 +200,7 @@ export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean): Nachri
   const teile = [
     `✅ Danke, ${angekommen}`,
     ...(ki ? [] : [OHNE_KI_SATZ]),
-    a(an, `${k.name} sieht sie sich ${wann} an. Bis dahin musst du nichts weiter tun.`, `${k.name} sieht sie sich ${wann} an. Bis dahin müssen Sie nichts weiter tun.`),
+    a(an, `${k.name} sieht sie sich ${wann} an und versucht, dir Geld zu sparen. Bis dahin musst du nichts weiter tun.`, `${k.name} sieht sie sich ${wann} an und versucht, Ihnen Geld zu sparen. Bis dahin müssen Sie nichts weiter tun.`),
     NOCH_EINE_POLICE,
   ];
   return { text: teile.join("\n\n"), fusszeile: WIDERRUF_FUSSZEILE };

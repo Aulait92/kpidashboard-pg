@@ -62,7 +62,7 @@ function alleTexte(k: FlowTextKontext): string[] {
 describe("Texte wörtlich nach texte-v2.md", () => {
   it("Chat-Nachricht Sie und Du", () => {
     expect(chatNachricht(SIE)).toEqual({
-      text: "Kleiner Tipp für Donnerstag 💡\n\nWenn Herr Kannapinn Ihre Policen vorab hat, sieht er schon vor dem Termin, *ob Sie etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist.* So wird der Termin kürzer und konkreter.\n\n*Meist reicht ein Foto der ersten Seite.* Dauert etwa eine Minute.\n\nIhr Termin findet auch ohne Policen statt.",
+      text: "Kleiner Tipp für Donnerstag 💡\n\nWenn Herr Kannapinn Ihre Policen vorab hat, sieht er schon vor dem Termin, *ob Sie etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist.* Dabei versucht er, Ihnen Geld zu sparen. So wird der Termin kürzer und konkreter.\n\n*Meist reicht ein Foto der ersten Seite.* Dauert etwa eine Minute.\n\nIhr Termin findet auch ohne Policen statt.",
       fusszeile: null,
     });
     expect(chatNachricht(DU).text).toContain("Wenn Ole deine Policen vorab hat, sieht er schon vor dem Termin, *ob du etwas doppelt zahlst, wann du kündigen kannst und was genau versichert ist.*");
@@ -116,17 +116,17 @@ describe("Texte wörtlich nach texte-v2.md", () => {
   it("Bestätigung mit Anzahl, Fußzeile Widerruf, bei ki = false der Zusatzsatz", () => {
     const b = bestaetigung(SIE, 3, true);
     expect(b.text).toBe(
-      "✅ Danke, *3 Dateien sind angekommen.*\n\nHerr Kannapinn sieht sie sich vor Donnerstag an. Bis dahin müssen Sie nichts weiter tun.\n\nNoch eine Police, etwa Kfz oder Hausrat? Einfach nachsenden.",
+      "✅ Danke, *3 Dateien sind angekommen.*\n\nHerr Kannapinn sieht sie sich vor Donnerstag an und versucht, Ihnen Geld zu sparen. Bis dahin müssen Sie nichts weiter tun.\n\nNoch eine Police, etwa Kfz oder Hausrat? Einfach nachsenden.",
     );
     expect(b.fusszeile).toBe("Widerruf jederzeit: einfach „Widerruf“ schreiben.");
     expect(BESTAETIGUNG_RE.test(b.text)).toBe(true);
     expect(bestaetigung(SIE, 1, true).text).toContain("*1 Datei ist angekommen.*");
     expect(bestaetigung(SIE, 2, false).text).toContain("Alles klar, wir lesen nichts automatisch aus.");
     expect(bestaetigung(SIE, 2, true).text).not.toContain("nichts automatisch");
-    expect(bestaetigung(DU, 2, true).text).toContain("Ole sieht sie sich vor Donnerstag an. Bis dahin musst du nichts weiter tun.");
+    expect(bestaetigung(DU, 2, true).text).toContain("Ole sieht sie sich vor Donnerstag an und versucht, dir Geld zu sparen. Bis dahin musst du nichts weiter tun.");
     // Ohne KI: Bestätigung der Wahl direkt nach dem Dank, dann der Ansehen-Satz
     expect(bestaetigung(DU, 1, false).text).toBe(
-      "✅ Danke, *1 Datei ist angekommen.*\n\nAlles klar, wir lesen nichts automatisch aus.\n\nOle sieht sie sich vor Donnerstag an. Bis dahin musst du nichts weiter tun.\n\nNoch eine Police, etwa Kfz oder Hausrat? Einfach nachsenden.",
+      "✅ Danke, *1 Datei ist angekommen.*\n\nAlles klar, wir lesen nichts automatisch aus.\n\nOle sieht sie sich vor Donnerstag an und versucht, dir Geld zu sparen. Bis dahin musst du nichts weiter tun.\n\nNoch eine Police, etwa Kfz oder Hausrat? Einfach nachsenden.",
     );
     expect(BESTAETIGUNG_RE.test(bestaetigung(DU, 1, false).text)).toBe(true);
   });
@@ -171,9 +171,11 @@ describe("Paket 4: Lead-Texte ohne Ersparnisversprechen (§ 5 UWG, K8)", () => {
   const VARIANTEN: FlowTextKontext[] = [SIE, DU, { ...SIE, kiFertig: false, gesundheit: false, pronomen: null }, { ...DU, tag: null, video: false }];
 
   it("kein Lead-Text verspricht Ersparnis, Preise, Geschwindigkeit oder Lücken", () => {
+    // Erlaubt ist nur das Bemühen (Ole, 20.11.2026): „versucht, dir/Ihnen (dabei) Geld zu sparen“
+    const BEMUEHEN = /versucht(?: [^,]{1,40})?, (dir|Ihnen) Geld zu sparen/g;
     const VERBOTEN = /sparen|spar(st|t)\b|ersparnis|günstiger|zu teuer|teure|garantie|deutlich schneller|fehlt|fehlender|lücke|unterversichert|empfehl|lohnt/i;
     for (const k of VARIANTEN) {
-      for (const t of alleTexte(k)) expect(t, t).not.toMatch(VERBOTEN);
+      for (const t of alleTexte(k)) expect(t.replace(BEMUEHEN, ""), t).not.toMatch(VERBOTEN);
     }
   });
 
