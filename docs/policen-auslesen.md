@@ -125,6 +125,18 @@ ungültig“ höchstens einmal am Tag.
 - Tests: `tests/unit/policen-auslesen-grenze.test.ts` (Importgrenze), `tests/integration/policen-auslesen.test.ts`
   (zur Laufzeit: Auslesen ohne Chat-Client, Chat-Anfrage ohne Dokumente und ohne Auszüge; gemockte SDKs).
 
+## Texte an den Lead (Strecke v2, Paket 4 vom 20.11.2026)
+
+`src/lib/policen/flow/texte.ts`: Chat-Nachricht, Bestätigung und Erinnerungen nennen einen konkreten Nutzen („ob Sie
+etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist“) statt „ob Sie Geld sparen können“
+(§ 5 UWG, K8). Der Test `tests/unit/policen-flow.test.ts` sperrt „sparen“, „günstiger“, „zu teuer“, „Garantie“,
+„deutlich schneller“, „fehlt“ und „Lücke“ in allen Lead-Texten und hält den Formular-Wortlaut (Hash) und
+`FLOW_TEXT_VERSION` fest. Formular, Fußzeilen, `BESTAETIGUNG_RE` und `istNeinDanke` sind unverändert.
+Vorlagennamen tragen jetzt zusätzlich einen Hash des Textes (`pg_policen_<art>_<flow>_<text>_<an>`): Neuer Text heißt
+neue Vorlage bei Meta. Bis sie freigegeben ist, geht im 24-Stunden-Fenster die Flow-Nachricht mit neuem Text,
+außerhalb nichts (kein Rückfall auf den alten Text). Der WhatsApp-Cron reicht die neuen Vorlagen bei `POLICEN_FLOW=1`
+selbst ein, also erst nach Oles Freigabe mergen bzw. einschalten.
+
 ## Offen
 
 - AVV-Ergänzung § 1a/§ 4 (OpenAI Ireland Ltd. als Unterauftragnehmer) und Datenschutzhinweis (c) mit KI-Absatz vor dem
