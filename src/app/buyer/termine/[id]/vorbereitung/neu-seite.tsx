@@ -24,7 +24,7 @@ import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
 import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { listUnterlagen } from "@/lib/policen/server";
 import { UnterlagenVomKunden } from "@/components/unterlagen-vom-kunden";
-import { PolicenVergleichKurz } from "@/components/policen-vergleich-kurz";
+import { ladeSpickzettelDaten, PolicenSpickzettel, unterlagenAufgeklappt } from "@/components/policen-vergleich-kurz";
 import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 import { angebotStandText } from "@/lib/angebot-senden";
 
@@ -44,7 +44,7 @@ const LISTE = "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3 gap-y-1";
 const BEZ = "break-words hyphens-auto text-[color:var(--muted)]";
 
 export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: VorbereitungDaten & { id: string; leadId: string | null }; von?: string }) {
-  const [tv, p, kunde, pilot, vomKunden, angebotStand] = await Promise.all([
+  const [tv, p, kunde, pilot, vomKunden, angebotStand, spick] = await Promise.all([
     ladeTarifvorbereitung(d.id, ctx, d),
     loadPraesentation(d.id, ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadAddress: true, vorsorgeThemenAus: true } }),
@@ -53,6 +53,8 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
     d.leadId ? listUnterlagen(d.leadId, { preview: ctx.preview, userId: ctx.userId }) : [],
     // Angebot nach dem Termin (Paket P3): abgelegt bzw. gesendet
     prisma.appointment.findUnique({ where: { id: d.id }, select: { startsAt: true, angebotAbgelegtAt: true, angebotGesendetAt: true, angebotVersand: true, angebotKanaele: true } }),
+    // Spickzettel „Verträge des Kunden“ (Policen auslesen, Paket 3): oben in „Das will der Kunde“
+    ladeSpickzettelDaten({ leadId: d.leadId, customerId: ctx.customerId, preview: ctx.preview }),
   ]);
   if (!tv || !p) return null;
   // Beiträge rechnen (Pilot, docs/preise-pilot.md): nur Rechner-Angaben der freigeschalteten Sparten
@@ -72,6 +74,10 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
         <h2 className="text-[15px] font-semibold tracking-tight">Das will der Kunde</h2>
       </div>
       <div className="px-5 py-3.5 text-sm" data-kunde-will>
+        {/* Spickzettel zuerst (Paket 3): Beiträge und die wichtigsten Fragen ohne Scrollen, ein Tipp öffnet die Vertragsseite */}
+        {d.leadId ? (
+          <PolicenSpickzettel terminId={d.id} leadId={d.leadId} daten={spick} ohne2fa={vomKunden.some((u) => u.gesperrt === "zwei_faktor")} readOnly={ctx.preview} className="mb-3" />
+        ) : null}
         {will.punkte.length ? (
           <ul className="space-y-1.5">
             {will.punkte.map((x) => (
@@ -86,14 +92,17 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
         )}
         {will.quelle ? <p className="mt-2 text-xs text-[color:var(--muted)]">{will.quelle}</p> : null}
         {/* Komplettcheck (Ole, 17.11.2026): was der Kunde schon hat, neutral „noch nicht genannt“ */}
-        <BestehendeVertraege v={vorvertraegeAus(d.vorvertraege)} lebenssituation={lebenssituationAus(d.formular, d.angaben)} className="mt-3 border-t border-[color:var(--border)] pt-3" />
-        {d.leadId ? (
-          <div className="mt-3 border-t border-[color:var(--border)] pt-3">
-            <UnterlagenVomKunden leadId={d.leadId} unterlagen={vomKunden} zurueck={`/buyer/termine/${d.id}/vorbereitung`} />
-            {/* Policen auslesen: Vergleichsblatt (eigene Seite, components/policen-vergleich-kurz.tsx) */}
-            <div className="mt-2.5">
-              <PolicenVergleichKurz terminId={d.id} leadId={d.leadId} customerId={ctx.customerId} preview={ctx.preview} />
-            </div>
+        {/* Chat-Angaben einer Sparte, die ausgelesen vorliegt, stehen nicht noch einmal da */}
+        <BestehendeVertraege
+          v={vorvertraegeAus(d.vorvertraege)}
+          lebenssituation={lebenssituationAus(d.formular, d.angaben)}
+          ausgelesen={spick?.chatAusgelesen}
+          className="mt-3 border-t border-[color:var(--border)] pt-3"
+        />
+        {/* Dateien eingeklappt; aufgeklappt, wenn sie die nächste Handlung sind (z. B. „ohne KI“) */}
+        {d.leadId && vomKunden.length ? (
+          <div className="mt-3 border-t border-[color:var(--border)] pt-1">
+            <UnterlagenVomKunden leadId={d.leadId} unterlagen={vomKunden} zurueck={`/buyer/termine/${d.id}/vorbereitung`} eingeklappt offen={unterlagenAufgeklappt(spick?.s ?? null, vomKunden.length)} />
           </div>
         ) : null}
       </div>

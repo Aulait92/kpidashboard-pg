@@ -69,6 +69,8 @@ export async function sparteAction(terminId: string, documentId: string, sparte:
   if (!isAuslesenSparte(sparte)) return { ok: false, error: "Sparte unbekannt." };
   const r = await waehleSparte(x.w, documentId, sparte);
   revalidatePath(pfad(terminId));
+  // Sparten-Wahl auch direkt im Spickzettel der Terminvorbereitung (Paket 3)
+  revalidatePath(`/buyer/termine/${terminId}/vorbereitung`);
   return r ? { ok: true, status: r.status } : { ok: false, error: "Nicht gefunden." };
 }
 

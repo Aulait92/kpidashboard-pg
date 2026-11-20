@@ -5,8 +5,19 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
 
 ## Was der Vermittler sieht
 
-- **Terminvorbereitung** (Karte „Das will der Kunde“ bzw. „Unterlagen vom Kunden“): eine Zeile „Vergleichsblatt“ mit
-  Anzahl Verträge, Summe im Monat und Hinweisen; führt auf `/buyer/termine/{id}/vorbereitung/vertraege`.
+- **Spickzettel in der Terminvorbereitung** (Paket 3, 19.11.2026; Logik rein in `auslesen/spickzettel.ts`, Anzeige
+  `components/policen-vergleich-kurz.tsx`): ganz oben in „Das will der Kunde“ ein Kasten „Verträge des Kunden“. Fertig:
+  Beiträge im Monat, Zeile „Jahr · Anzahl · n bitte prüfen“, Badge „Bitte prüfen“, bis zu 3 Fragen für den Termin (Rest
+  „Mehr (n)“), K6-Satz; Texte wortgleich mit der Vertragsseite (`kopfZeile`, `K6_SATZ`, `GRUND_TEXT`, `SPERRE_TEXT` in
+  `vertragsseite.ts`). Ein Tipp auf den Kopf öffnet die Vertragsseite, ein Tipp auf eine Frage springt zur Karte. Weitere
+  Zustände, jeweils mit nächster Handlung: nie gebeten („Ihr Assistent bittet vor dem Termin darum“, nur wenn Policen per
+  WhatsApp eingerichtet ist), gebeten am TT.MM. (aus dem Strecken-Eintrag `policen_bitte`, keine neue Spalte; „Sonst im
+  Termin nach den Policen fragen.“), Sparte offen (Chips direkt im Kasten, `sparteAction`), wird ausgelesen, ohne KI
+  (Link „Unterlagen ansehen“, Liste aufgeklappt), gesperrt (Link „Im Original ansehen“ bzw. zur Liste). Funktion aus
+  oder Konto nicht freigeschaltet: kein Kasten, die Unterlagen-Liste ist aufgeklappt. Chat-Angaben („Bestehende
+  Verträge“) einer Sparte, die ausgelesen vorliegt, werden ausgeblendet. Die Dateien stehen eingeklappt unter
+  „Unterlagen (n)“; ohne Zwei-Faktor steht „Zum Öffnen Zwei-Faktor einrichten“ am Link und die Begründung einmal darunter
+  (kein gelber Kasten mehr).
 - **Vertragsseite** (bis 19.11.2026 „Vergleichsblatt“; Route und Dateinamen bleiben; Paket 2 „Champions League“,
   Logik rein in `auslesen/vertragsseite.ts`): Titel „Verträge: {Name}“ ohne Untertitel. Kopf: Beiträge im Monat groß,
   darunter Jahr, Anzahl, „n bitte prüfen“, ein K6-Satz „Maschinell ausgelesen: bitte vor dem Termin mit dem Original
@@ -27,7 +38,7 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
   ausgelesen auf Wunsch des Kunden.“) steht einmal oben, die Unterlagen bleiben zu öffnen. Unten Unterlagen, die nicht
   ausgelesen wurden (Sparte wählen, erneut versuchen, Original).
 - **Fragen für den Termin** (19.11.2026, `auslesen/zusammenfassung.ts`, rein; Anzeige auf der Vertragsseite, Spickzettel
-  in der Terminvorbereitung folgt): feste Vorlagen, Sie-Form, Euro nur als Beitrag „laut Unterlage“. Reihenfolge: Kündigungsfristen
+  in der Terminvorbereitung): feste Vorlagen, Sie-Form, Euro nur als Beitrag „laut Unterlage“. Reihenfolge: Kündigungsfristen
   (nach Tagen, dann Beitrag), doppelt, Bausteine „nein“, nicht geschickt. Regeln (K8): Kündigungen nur Sach (Haftpflicht,
   Hausrat, Wohngebäude, Rechtsschutz, Kfz); „doppelt“ nur Haftpflicht, Hausrat, Rechtsschutz (mit beiden Versicherern,
   Summe nur, wenn alle Beiträge bekannt); nie PKV, BU, Leben. Frist vorsichtig: „bis“ = (Termin minus Frist) minus

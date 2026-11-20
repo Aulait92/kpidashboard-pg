@@ -137,3 +137,41 @@ export function hauptaktion(karten: readonly KarteDaten[], o: { bestand: boolean
 export const vertraegeText = (n: number) => (n === 1 ? "1 Vertrag" : `${n} Verträge`);
 export const hauptaktionText = (a: Exclude<Hauptaktion, null | { art: "fertig" }>) =>
   a.art === "pruefen" ? `Alle als geprüft markieren (${a.ids.length})` : `${vertraegeText(a.ids.length)} in Bestand übernehmen`;
+
+// ─── Texte aus einer Quelle (Vertragsseite und Spickzettel in der Terminvorbereitung, Paket 3) ───────────────
+
+/** K6 (Rechtsprüfung): ein Satz, gleich auf Vertragsseite und Spickzettel; dazu „Bitte prüfen“ an ungeprüften Karten. */
+export const K6_SATZ = "Maschinell ausgelesen: bitte vor dem Termin mit dem Original prüfen.";
+
+/** Warum eine Unterlage nicht ausgelesen ist (Status des Auszugs). */
+export const GRUND_TEXT: Record<string, string> = {
+  sparte_offen: "Welche Sparte ist das?",
+  sparte_abweichend: "Die Unterlage passt nicht zur Sparte. Welche ist es?",
+  gesperrt: "Diese Sparte wird nicht automatisch ausgelesen.",
+  limit: "Nicht automatisch ausgelesen.",
+  fehler: "Konnte nicht ausgelesen werden.",
+  laeuft: "Wird ausgelesen …",
+  neu: "Wird ausgelesen …",
+};
+
+/** Warum für diesen Kunden gar nicht ausgelesen wird (Sperre des Leads). */
+export const SPERRE_TEXT: Record<string, string> = {
+  einwilligung: "Ohne Zustimmung des Kunden zum Auslesen. Bitte im Original nachsehen.",
+  ohne_ki: "Nicht ausgelesen auf Wunsch des Kunden.",
+  aus: "Automatisches Auslesen ist gerade nicht verfügbar.",
+  pause: "Automatisches Auslesen ist gerade nicht verfügbar.",
+  kunde: "Automatisches Auslesen ist für Ihr Konto noch nicht freigeschaltet.",
+};
+
+const euroKopf = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+
+/** Kopf über allen Verträgen: groß die Beiträge im Monat, darunter Jahr, Anzahl und wie viele noch zu prüfen sind. */
+export function kopfZeile(z: { monatSumme: number | null; jahrSumme: number | null; vertraege: number; ungeprueft: number }): { monat: string | null; zeile: string } {
+  return {
+    monat: z.monatSumme != null ? euroKopf(z.monatSumme) : null,
+    zeile: [z.jahrSumme != null ? `${euroKopf(z.jahrSumme)} im Jahr` : null, vertraegeText(z.vertraege), z.ungeprueft ? `${z.ungeprueft} bitte prüfen` : "alle geprüft"]
+      .filter(Boolean)
+      .join(" · "),
+  };
+}
+export const MONAT_UNBEKANNT = "Beiträge nicht bekannt";

@@ -15,19 +15,34 @@ import { useToast } from "@/components/ui/toast";
 import { zweiFaktorHref } from "@/components/security/zwei-faktor-hinweis";
 import { felderFuer, SPARTE_LABEL, type AuslesenSparte, type Feld, type FeldWert } from "@/lib/policen/auslesen/felder";
 import type { OffeneUnterlage, Vergleich, VertragKarte } from "@/lib/policen/auslesen/server";
-import { fragenJeKarte, hauptaktion, hauptaktionText, kartenZeilen, SICHTBARE_FRAGEN, sortiereKarten, vertraegeText, type Hauptaktion, type Zeile } from "@/lib/policen/auslesen/vertragsseite";
+import {
+  fragenJeKarte,
+  GRUND_TEXT,
+  hauptaktion,
+  hauptaktionText,
+  K6_SATZ,
+  kartenZeilen,
+  kopfZeile,
+  MONAT_UNBEKANNT,
+  SICHTBARE_FRAGEN,
+  sortiereKarten,
+  SPERRE_TEXT,
+  vertraegeText,
+  type Hauptaktion,
+  type Zeile,
+} from "@/lib/policen/auslesen/vertragsseite";
+import { FrageNummer, vertragAnker } from "@/components/policen-frage-nummer";
 import type { Frage } from "@/lib/policen/auslesen/zusammenfassung";
 import { alleGeprueftAction, alleUebernehmenAction, auslesenAction, korrigierenAction, sparteAction } from "@/app/buyer/termine/[id]/vorbereitung/vertraege/actions";
 
-const euro = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const tag = (iso: string) => {
   const [y, m, d] = iso.slice(0, 10).split("-");
   return `${d}.${m}.${y}`;
 };
 const DT = "text-[color:var(--muted)]";
-/** K6 (Rechtsprüfung): ein Satz oben, dazu „Bitte prüfen“ an jeder ungeprüften Karte und an jedem unsicheren Feld. */
-export const K6_SATZ = "Maschinell ausgelesen: bitte vor dem Termin mit dem Original prüfen.";
-const anker = (id: string) => `vertrag-${id}`;
+// K6 (Rechtsprüfung): ein Satz oben (K6_SATZ, gleich im Spickzettel), dazu „Bitte prüfen“ an jeder ungeprüften Karte und
+// an jedem unsicheren Feld.
+const anker = vertragAnker;
 
 type Aktion = Exclude<Hauptaktion, null | { art: "fertig" }>;
 
@@ -59,6 +74,7 @@ export function Vergleichsblatt({
   const nummern = fragenJeKarte(z.fragen);
   const a = hauptaktion(v.vertraege, { bestand: v.bestand, readOnly });
   const aktion: Aktion | null = a && a.art !== "fertig" ? a : null;
+  const kopf = kopfZeile(z);
 
   const ausfuehren = (x: Aktion) =>
     start(async () => {
@@ -74,16 +90,16 @@ export function Vergleichsblatt({
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 px-5 pb-3 pt-4">
             <div className="min-w-0">
               <p className="text-2xl font-semibold tracking-tight" data-monat-summe>
-                {z.monatSumme != null ? (
+                {kopf.monat ? (
                   <>
-                    {euro(z.monatSumme)} <span className="text-base font-medium">im Monat</span>
+                    {kopf.monat} <span className="text-base font-medium">im Monat</span>
                   </>
                 ) : (
-                  "Beiträge nicht bekannt"
+                  MONAT_UNBEKANNT
                 )}
               </p>
               <p className={`mt-0.5 text-[13px] ${DT}`} data-kopf-zeile>
-                {[z.jahrSumme != null ? `${euro(z.jahrSumme)} im Jahr` : null, vertraegeText(z.vertraege), z.ungeprueft ? `${z.ungeprueft} bitte prüfen` : "alle geprüft"].filter(Boolean).join(" · ")}
+                {kopf.zeile}
               </p>
             </div>
             {aktion ? (
@@ -139,11 +155,7 @@ function HauptaktionKnopf({ a, pending, onClick, className }: { a: Aktion; pendi
   );
 }
 
-const Nummer = ({ n }: { n: number }) => (
-  <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 px-1 text-[11px] font-semibold text-amber-900" aria-label={`Frage ${n}`}>
-    {n}
-  </span>
-);
+const Nummer = FrageNummer;
 
 function FrageZeile({ f, n }: { f: Frage; n: number }) {
   const inhalt = (
@@ -441,22 +453,8 @@ function Bearbeiten({
   );
 }
 
-const GRUND: Record<string, string> = {
-  sparte_offen: "Welche Sparte ist das?",
-  sparte_abweichend: "Die Unterlage passt nicht zur Sparte. Welche ist es?",
-  gesperrt: "Diese Sparte wird nicht automatisch ausgelesen.",
-  limit: "Nicht automatisch ausgelesen.",
-  fehler: "Konnte nicht ausgelesen werden.",
-  laeuft: "Wird ausgelesen …",
-  neu: "Wird ausgelesen …",
-};
-const SPERRE: Record<string, string> = {
-  einwilligung: "Ohne Zustimmung des Kunden zum Auslesen. Bitte im Original nachsehen.",
-  ohne_ki: "Nicht ausgelesen auf Wunsch des Kunden.",
-  aus: "Automatisches Auslesen ist gerade nicht verfügbar.",
-  pause: "Automatisches Auslesen ist gerade nicht verfügbar.",
-  kunde: "Automatisches Auslesen ist für Ihr Konto noch nicht freigeschaltet.",
-};
+const GRUND = GRUND_TEXT;
+const SPERRE = SPERRE_TEXT;
 
 function Offen({ terminId, v, href, ohne2fa, readOnly, terminHref }: { terminId: string; v: Vergleich; href: (docId: string) => string; ohne2fa: boolean; readOnly: boolean; terminHref?: string }) {
   const toast = useToast();

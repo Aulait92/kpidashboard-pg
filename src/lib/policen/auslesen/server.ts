@@ -408,10 +408,37 @@ export async function vergleichKurz(leadId: string, customerId: string, now = ne
   return {
     vertraege: v.zusammenfassung.vertraege,
     monat: v.zusammenfassung.monatSumme,
-    kuendigungen: v.zusammenfassung.kuendigungen.length,
+    // Verpasste Fristen sind keine Hinweise für diesen Termin (Paket 3)
+    kuendigungen: v.zusammenfassung.kuendigungen.filter((k) => !k.verpasst).length,
     hinweise: v.zusammenfassung.doppelt.length + v.zusammenfassung.bausteine.length,
     offen: v.offen.length,
     ohneKi,
+  };
+}
+
+/** Strecken-Eintrag der Policen-Bitte im Chat (= STRECKE.policenBitte in lib/whatsapp/termin-strecke.ts; hier als Text,
+ *  weil die Dokument-KI nichts aus dem Chat einbindet; Test tests/unit/policen-spickzettel.test.ts hält beide gleich). */
+export const POLICEN_BITTE_KIND = "policen_bitte";
+
+/**
+ * Daten für den Spickzettel in der Terminvorbereitung (components/policen-vergleich-kurz.tsx, Logik in spickzettel.ts):
+ * Vergleich (nur mit Unterlagen), erste Policen-Bitte im Chat (vorhandene Strecken-Einträge, keine neue Spalte) und ob
+ * Policen per WhatsApp eingerichtet ist. Zugriff prüft der Aufrufer; in der Admin-Vorschau nie aufrufen.
+ */
+export async function ladeSpickzettel(leadId: string, customerId: string, now = new Date()) {
+  const { policenAn } = await import("@/lib/policen/server");
+  const [docs, bitte] = await Promise.all([
+    prisma.leadDocument.count({ where: { leadId, customerId, status: "gespeichert" } }),
+    prisma.message.findFirst({
+      where: { direction: "internal", kind: POLICEN_BITTE_KIND, conversation: { leadId, customerId } },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    }),
+  ]);
+  return {
+    v: docs ? await ladeVergleich(leadId, customerId, now) : null,
+    gebetenAm: bitte?.createdAt.toISOString() ?? null,
+    policenAn: policenAn(),
   };
 }
 
