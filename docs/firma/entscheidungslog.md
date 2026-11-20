@@ -4,6 +4,11 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 
 ## 19.11.2026
 
+- **Bestandskunden-Modul überarbeitet, bleibt ausgeblendet** (B umgesetzt, Einschalten A, Ole). Cockpit „Heute zuerst“,
+  Kampagne in einem Bildschirm mit Terminlink, Einwilligung als Umsatzhebel, ein automatisches Nachfassen.
+  SUS 48 → 84 → 88 → 91 (Personas: 84 bis 89), Recht intern GRÜN. Vor dem Einschalten 5 Fehler beheben und eine
+  Testwoche mit einem Allianz-Vertreter und einem Makler. Quelle: `docs/ux/2026-11-19-bestand-champions.md`
+  (Abschnitt „Ergebnis“), Branch `bestand-champions`.
 - **Führungsteam Phase 1 mit 19 Agenten** (A, Ole). Content & Brand, Partnerships, Investor Relations später.
   Alle Meetings laufen von Anfang an; an Agentenkosten wird nicht gespart.
 - **Fokus zwei Wochen:** Abschlüsse mit Vorauszahlung, Umsatzsteuer klären, neue Kunden sauber live bringen.

@@ -264,3 +264,48 @@ Ziel: Keine Antwort bleibt liegen; zweite Berührung bringt geschätzt 30 bis 50
 - Kampagnen-Ergebnis zeigt „davon nach Erinnerung“.
 - Tests: neuer `tests/unit/bestand-nachfassen.test.ts` (höchstens 1, nicht nach Antwort/Stopp/Abmeldung, Werktage, ohne Einwilligung kein WhatsApp-Nachfassen).
 - Abnahme: Testdaten zeigen Nachfass-Empfänger korrekt; keine zweite Erinnerung möglich; Heute zeigt warme Kontakte mit klarer Aktion ohne Anrufaufforderung; SUS-Schätzung Heute unverändert oder besser; Prüfungen grün.
+
+## Ergebnis (Abnahme 20.11.2026)
+
+Stand: Branch `bestand-champions`, Pakete 1 bis 4, UX-Prüfung (7b27c9d) und Recht-Fix (af1a7a6). Alles mit Testdaten, keine Live-Zahlen. Das Modul bleibt ausgeblendet (`BESTAND_MODULE_AVAILABLE` in `src/lib/bestand/sichtbar.ts`), bis Ole es einschaltet (Stufe A).
+
+### SUS-Verlauf
+48 (vorher) → 84 (Pakete 1 bis 4) → 88 (UX-Runde 2) → 91 (UX-Runde 3, interne Schätzung).
+Eindruck der Personas: 84 bis 89, nicht 91. Gründe: Cockpit am Handy noch 4.036 px lang (rund 4,8 Bildschirme), Zahlen widersprechen sich, gelber Chip ohne klare Handlung. Zustimmung je Test: Cockpit „Heute zuerst“ 3/3, Kampagne mit Erinnerung 3/3, Einwilligungsseite 2/3, Verkaufsseite gesperrt 0/3.
+
+### Persona-Noten
+| Persona | Umsatz | Einfach / Nachricht | Kernaussage |
+|---|---|---|---|
+| Allianz-Vertreter (Handy, kein Postfach) | 6/10 | einfach 8/10 | „Heute zuerst“ mit einem Knopf passt; unklar, ob WhatsApp vor der Meta-Freigabe überhaupt rausgeht. Eher wöchentlich. |
+| Makler (mehrere Gesellschaften) | 5/10 | einfach 7/10 | Ergebnis und Erinnerung gut; Ablauf in 60 Tagen zu weit hinten, Import nur per Datei (kein MVP, kein BiPRO, kein Anlass „Vollmacht“). |
+| Großagentur (mehrere Berater) | 5/10 | einfach 7/10 | Nur Agentursumme, keine Zahlen je Berater; ohne Berater-Zuordnung nicht steuerbar. |
+| Lead A (will schnell einen Preis) | | Nachricht 7/10 | Terminlink und „mit Ja antworten“ schnell; nach dem Ja muss schnell eine Rückmeldung kommen. Warme Kontakte in Heute in den Testdaten nicht sichtbar. |
+| Lead B (skeptisch) | | Nachricht 7/10 | Höchstens eine Erinnerung und „kurzes Nein“ fair; Geburtstagsnachricht mit Frage nach Veränderungen wirkt wie Verkauf, lieber nur gratulieren. |
+
+Empfehlung: Noch nicht einschalten (Stufe A, Ole). Zuerst die 5 Fehler unten beheben (Stufe B, nur Entwicklungszeit). Danach eine Testwoche mit einem echten Allianz-Vertreter und einem Makler auf Staging. Risiko: Ein enttäuschter erster Versand kostet Vertrauen in das ganze Modul.
+
+### Offene Fehler vor dem Einschalten
+1. Hauptknopf im Cockpit verspricht „12 per WhatsApp“, der Hinweis auf die ausstehende Meta-Freigabe steht erst nach dem Klick (`src/app/buyer/bestand/kampagne/page.tsx:263-264`). Status schon im Hero zeigen oder automatisch auf „Nur E-Mail“ umstellen.
+2. Kampagnenseite 390 px: klebender Knopf samt Hinweis verdeckt die Nachrichtenvorschau. Unten Abstand in Knopfhöhe.
+3. Zahlen stimmig machen: „+60 erreichbar mit Einwilligung“ gegen „17 per E-Mail fragen“, „55 von 115“ gegen 120 in der Kundenliste, „Ziel 40 % erreicht“ neben Handlungsaufforderung. Differenz in einem Satz erklären.
+4. Gelber Chip „6 Einwilligungen prüfen“ als Handlung beschriften („6 Nachweise ergänzen“) und direkt zur Liste führen.
+5. Gesperrter Zustand: statt Fließtext und Preisliste die eigenen Zahlen („Sie haben 74 Kunden mit nur einem Vertrag“), Preise nicht anfassen (Stufe A).
+
+Weitere Punkte: „Pausieren“ ins Menü, „Beenden“ mit Rückfrage und nicht neben dem Titel; Kundenliste standardmäßig „Mit Chance“ mit Chance je Zeile und kürzer; Testdaten um einen warmen Kontakt (geantwortet, kein Termin) ergänzen, damit Paket 4 in Heute prüfbar ist; Provisionskachel „+99 € pro Jahr“ beschriften („davon laufend pro Jahr“); Desktop-Screenshots 1280 px (Kampagne läuft, pausiert, fertig, Entwurf, Einwilligungen) nachholen; bewusst verschobene Persona-Lücken: Versand ohne Postfach, MVP-/BiPRO-Import und Vollmacht-Anlass, Berater-Zuordnung mit Zahlen je Berater.
+
+### Recht (interne Prüfung, keine Anwaltsprüfung, Ole 18.11.2026)
+Ampel GRÜN nach Commit af1a7a6:
+- Bitte um Einwilligung per E-Mail enthält jetzt dieselben Pflichtangaben wie Kampagnen-Mails (mit Impressum); ohne Impressum keine Einzel- oder Sammelanfrage (`src/lib/bestand/einwilligung-server.ts`).
+- Knopf „Per WhatsApp schicken“ nur bei offenem 24-h-Fenster und Werbeerlaubnis, serverseitig in `sendConsentWhatsApp` geprüft.
+- P0 erledigt: nichts vorausgewählt auf der Einwilligungsseite, voller Wortlaut über dem Knopf; Mail-Fuß mit Widerspruchshinweis, Impressum beim Versand geprüft, ohne Tracking.
+- Einwilligungslogik unverändert; Nachfassen höchstens einmal, frühestens nach 5 Werktagen, nicht nach Antwort, Abmeldung oder Bounce; 30-Tage-Abstand bleibt.
+- Personenversicherungen neutral „Ihr Vertrag“; P.S. mit Einwilligungslink nur mit Erlaubnis und nicht in Geburtstags- und Empfehlungsmails.
+
+GELB, Entscheidung Ole (Stufe B): Einwilligungslink per WhatsApp im 24-h-Fenster bleibt Graubereich (vgl. BGH VI ZR 225/17); mit dem Tor „nur bei Werbeerlaubnis“ vertretbar, ganz sicher nur, wenn der Kunde selbst nach Angeboten gefragt hat.
+Kleinigkeiten für den Conversion-Texter: Cross-Sell-Betreff bei Personenversicherung neutraler („Kurze Frage zu Ihrer Absicherung“); WhatsApp-Erinnerung um „Stopp“ ergänzen.
+
+### Beim Einschalten (Stufe A, Ole)
+`BESTAND_MODULE_AVAILABLE` auf true; ProductUpdate-Migration (neu, software, Weg **Wachstum → Bestand**, ohne Versprechen); Eintrag in `docs/webseite-offen.md`; Erklärvideos mit `betroffen.py` prüfen; WhatsApp-Vorlagen bei Meta freigeben lassen; Migration `20261120090000_bestand_nachfassen` (nur hinzufügend) beim Deploy mitnehmen; `docs/datenschutz.md` und AVV-Ergänzung „Vertragsdaten von Bestandskunden“ entscheiden; Muster-Datenschutztext für Vermittler; Recht-Bewertung als `docs/recht/bestand-champions.md` mit Freigabe ablegen.
+
+### Prüfungen
+`npx tsc --noEmit`, `npx eslint src tests --quiet` und `npx vitest run tests/unit` grün. Zwei vorher rote Fälle in `tests/unit/reschedule-notice.test.ts` (brauchten eine Datenbank) laufen jetzt mit einer Prisma-Attrappe.

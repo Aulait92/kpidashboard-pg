@@ -14,6 +14,11 @@ vi.mock("@/lib/whatsapp/templates", async (orig) => {
   };
 });
 const approved: { reschedule: boolean } = { reschedule: true };
+// Unit-Test ohne Datenbank: jede Abfrage liefert „nichts gefunden“ (Standard-Ansprache, keine Kontaktdaten).
+vi.mock("@/lib/prisma", () => {
+  const model = new Proxy({}, { get: () => async () => null });
+  return { prisma: new Proxy({}, { get: () => model }) };
+});
 
 import { sendRescheduleNotice } from "@/lib/whatsapp/reminders";
 import { SUGGESTED_TEMPLATE_TEXT, PURPOSE_PARAMS } from "@/lib/whatsapp/templates";
