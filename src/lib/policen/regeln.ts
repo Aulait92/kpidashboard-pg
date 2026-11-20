@@ -265,6 +265,26 @@ export const ERINNERUNG_OPTIN_TEXT =
   "Ich möchte per WhatsApp an die Vorbereitung meines Termins erinnert werden (z. B. an meine Unterlagen). Abmelden jederzeit mit STOP.";
 export const ERINNERUNG_OPTIN_VERSION = "2026-11-18.1";
 
+/**
+ * Splittest buchung_erinnerung (A/B-Test-Labor 20.11.2026, lib/experimente.ts, Lernbuch docs/firma/ab-tests.md).
+ * Hypothese: Steht der Nutzen vorn und ist der Text kürzer, haken mehr Leads freiwillig an (nie vorausgewählt).
+ * Pflichtangaben wie in Fassung A: Zweck (Erinnerung an die Unterlagen für den Termin), Kanal WhatsApp, Abmeldung STOP.
+ */
+export const erinnerungOptinTextB = (an: Ansprache) =>
+  a(
+    an,
+    "Damit in deinem Termin nichts fehlt: Ja, bitte per WhatsApp an meine Unterlagen erinnern. Abmelden jederzeit mit STOP.",
+    "Damit in Ihrem Termin nichts fehlt: Ja, bitte per WhatsApp an meine Unterlagen erinnern. Abmelden jederzeit mit STOP.",
+  );
+export const ERINNERUNG_OPTIN_VERSION_B = "2026-11-20.b";
+
+/** Gezeigter Wortlaut und Textstand je Fassung (Nachweis speichert genau den Text, den der Lead angehakt hat). */
+export function erinnerungOptin(fassung: "a" | "b", an: Ansprache): { text: string; version: string } {
+  return fassung === "b"
+    ? { text: erinnerungOptinTextB(an), version: `${ERINNERUNG_OPTIN_VERSION_B}.${an}` }
+    : { text: ERINNERUNG_OPTIN_TEXT, version: ERINNERUNG_OPTIN_VERSION };
+}
+
 /** Hinweis im Chatverlauf statt Dateiname oder Vorschau (auch im Admin-Chat). */
 export const CHAT_HINWEIS = "Dokument für den Vermittler";
 
