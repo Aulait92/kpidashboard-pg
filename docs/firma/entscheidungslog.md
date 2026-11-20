@@ -49,3 +49,8 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Mails, Lesezeichen) leitet dauerhaft weiter (`src/lib/admin-neu/umzug.ts`, `src/middleware.ts`). Werkzeuge ist die
   Gruppe Technik der Einstellungen. Airtable verschwindet aus der Oberfläche, der Abgleich im Hintergrund bleibt, bis
   AIRTABLE_SYNC_OFF gesetzt ist.
+- **Admin v2 ist der einzige Admin** (19.11.2026, Abnahme in der Nacht zum 20.11.): Der alte Admin und der Schalter
+  „Neue Oberfläche“ (Cookie pg_admin_neu) sind entfernt, alte Adressen leiten auf ihr Gegenstück. Airtable ist aus der
+  Oberfläche raus, der Abgleich im Hintergrund bleibt, bis AIRTABLE_SYNC_OFF gesetzt ist. Abnahme: tsc, eslint, alle
+  Unit-Tests und `next build` grün, Durchklick 124 Aufrufe (390 und 1280 px) ohne Fehler. Bewertung, SUS vorher/nachher
+  und Restliste: `docs/ux/admin-neu/umbau-2026-11-19.md` (Abschnitt „Ergebnis“).
