@@ -105,6 +105,10 @@ describe("Erstinformation: Status, Registernummer, Link", () => {
     expect(normalizeRegisterNummer("d 1abc def12 34")).toBe("D-1ABC-DEF12-34");
     expect(normalizeRegisterNummer("D1ABCDEF1234")).toBe("D-1ABC-DEF12-34");
     expect(normalizeRegisterNummer("D-1ABC-DEF12")).toBeNull();
+    // älteres Format (Ole, 20.11.2026: Allianz-Vertreter Lohmann)
+    expect(normalizeRegisterNummer("D-W-151-ALAP-38")).toBe("D-W-151-ALAP-38");
+    expect(normalizeRegisterNummer("d w 151 alap 38")).toBe("D-W-151-ALAP-38");
+    expect(normalizeRegisterNummer("D-W-15-ALAP-38")).toBeNull();
     expect(normalizeRegisterNummer("12345")).toBeNull();
     expect(normalizeRegisterNummer("")).toBeNull();
   });

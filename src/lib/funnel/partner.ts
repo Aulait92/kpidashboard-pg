@@ -42,7 +42,7 @@ export function ortAusAnschrift(anschrift: string | null | undefined): string | 
 /** Registernummer im Format D-XXXX-XXXXX-XX (Großbuchstaben); sonst null. */
 export function registerNummer(raw: string | null | undefined): string | null {
   const v = t(raw).toUpperCase();
-  return /^D-[A-Z0-9]{4}-[A-Z0-9]{5}-[A-Z0-9]{2}$/.test(v) ? v : null;
+  return /^D-[A-Z0-9]{4}-[A-Z0-9]{5}-[A-Z0-9]{2}$/.test(v) || /^D-[A-Z]-\d{3}-[A-Z0-9]{4}-\d{2}$/.test(v) ? v : null;
 }
 
 /**

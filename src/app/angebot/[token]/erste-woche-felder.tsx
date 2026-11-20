@@ -83,8 +83,8 @@ export function ErsteWocheFelder({ qty, setQty, autoRenew, setAutoRenew, ...p }:
           defaultValue={p.registerVorschlag ?? ""}
           placeholder="D-XXXX-XXXXX-XX"
           autoCapitalize="characters"
-          pattern="\s*[Dd][\s\-]?[A-Za-z0-9]{4}[\s\-]?[A-Za-z0-9]{5}[\s\-]?[A-Za-z0-9]{2}\s*"
-          title="Format D-XXXX-XXXXX-XX"
+          pattern="\s*[Dd][\s\-]?([A-Za-z0-9]{4}[\s\-]?[A-Za-z0-9]{5}[\s\-]?[A-Za-z0-9]{2}|[A-Za-z][\s\-]?[0-9]{3}[\s\-]?[A-Za-z0-9]{4}[\s\-]?[0-9]{2})\s*"
+          title="Registernummer aus dem Vermittlerregister, z. B. D-XXXX-XXXXX-XX"
           className={field}
         />
         <p className="mt-1 text-xs text-[color:var(--muted)]">

@@ -183,7 +183,7 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
   if (!["makler", "mehrfachvertreter", "vertreter"].includes(input.status)) return { ok: false, error: "Bitte Ihren Status wählen." };
   const status = input.status as VermittlerStatus;
   const reg = normalizeRegisterNummer(input.registerNummer);
-  if (!reg) return { ok: false, error: "Bitte die Registernummer im Format D-XXXX-XXXXX-XX eingeben (steht im Vermittlerregister bzw. auf Ihrer IHK-Urkunde)." };
+  if (!reg) return { ok: false, error: "Bitte die Registernummer so eingeben, wie sie im Vermittlerregister bzw. auf Ihrer IHK-Urkunde steht, z. B. D-XXXX-XXXXX-XX." };
   const url = input.url?.trim() ? normalizeErstinfoUrl(input.url) : null;
   if (input.url?.trim() && !url) return { ok: false, error: "Der Link ist ungültig. Bitte die vollständige Adresse eingeben, z. B. https://ihre-agentur.de/erstinformation." };
   const file = input.file && input.file.data.length ? input.file : null;

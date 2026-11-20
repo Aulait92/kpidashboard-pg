@@ -476,7 +476,7 @@ export async function acceptOffer(
     const quantity = opts.ersteWoche?.quantity == null ? ersteWoche.quantity : ersteWocheMenge(opts.ersteWoche.quantity);
     if (quantity == null) return { ok: false, error: `Bitte mindestens ${ERSTE_WOCHE_MIN} Leads für die erste Woche wählen.` };
     const registerNr = normalizeRegisterNummer(opts.ersteWoche?.registerNr);
-    if (!registerNr) return { ok: false, error: "Bitte Ihre Registernummer im Format D-XXXX-XXXXX-XX angeben." };
+    if (!registerNr) return { ok: false, error: "Bitte Ihre Registernummer so angeben, wie sie im Vermittlerregister steht, z. B. D-XXXX-XXXXX-XX." };
     ersteWocheWahl = { quantity, autoRenew: opts.ersteWoche?.autoRenew !== false, registerNr };
   }
 

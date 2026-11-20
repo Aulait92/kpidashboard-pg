@@ -80,14 +80,17 @@ export function statusRegisterText(v: unknown, erlaubnis: Erlaubnis = "abs1"): s
 }
 
 /**
- * Registernummer im Format D-XXXX-XXXXX-XX (IHK-Vermittlerregister; Großbuchstaben und Ziffern). Leerzeichen,
- * Kleinbuchstaben und fehlende Bindestriche werden toleriert. null = ungültig.
+ * Registernummer aus dem IHK-Vermittlerregister (Großbuchstaben und Ziffern): heutiges Format D-XXXX-XXXXX-XX
+ * oder das ältere Format D-X-XXX-XXXX-XX (z. B. D-W-151-ALAP-38, viele Allianz-Vertreter; Ole, 20.11.2026).
+ * Leerzeichen, Kleinbuchstaben und fehlende Bindestriche werden toleriert. null = ungültig.
  */
 export function normalizeRegisterNummer(raw: string | null | undefined): string | null {
   const s = (raw ?? "").toUpperCase().replace(/[\s‐-―_.]+/g, "-").replace(/-+/g, "-").trim();
   const compact = s.replace(/-/g, "");
   const m = /^D([A-Z0-9]{4})([A-Z0-9]{5})([A-Z0-9]{2})$/.exec(compact);
-  return m ? `D-${m[1]}-${m[2]}-${m[3]}` : null;
+  if (m) return `D-${m[1]}-${m[2]}-${m[3]}`;
+  const alt = /^D([A-Z])(\d{3})([A-Z0-9]{4})(\d{2})$/.exec(compact);
+  return alt ? `D-${alt[1]}-${alt[2]}-${alt[3]}-${alt[4]}` : null;
 }
 
 /** Eigene Seite des Vermittlers mit der Erstinformation (nur https bzw. http, keine internen Ziele). */
