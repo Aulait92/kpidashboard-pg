@@ -23,7 +23,8 @@ Bei „Nur Betreuung“ entfallen Kalender, WhatsApp und Einwilligung.
 
 Der Kunde trägt **Werbekonto-ID** (act_…) und **Facebook-Seite** ein und hat zwei Wege:
 
-1. **„Anfrage von uns senden lassen“**: Die App ruft die Business-to-Business-Funktionen der Meta Business Management API auf
+1. **Anfrage von uns** (seit 20.11.2026 automatisch bei „Zugriff prüfen“, wenn Werbekonto oder Seite fehlen, höchstens stündlich;
+   vorher war die Funktion nicht eingebunden): Die App ruft die Business-to-Business-Funktionen der Meta Business Management API auf
    (`POST /{BUSINESS_ID}/client_ad_accounts` mit `adaccount_id` und `permitted_tasks=["ADVERTISE","ANALYZE"]`,
    `POST /{BUSINESS_ID}/client_pages` mit `page_id` und vollen Seitenrechten). Die Admins des Kunden bekommen eine Benachrichtigung
    in Meta und bestätigen. **Hinweis laut Meta-Doku:** Seit 8.6.2021 ist der Zugang zu diesen Endpunkten eingeschränkt („Apps without
@@ -33,7 +34,10 @@ Der Kunde trägt **Werbekonto-ID** (act_…) und **Facebook-Seite** ein und hat 
    Business-ID → Werbekonto („Kampagnen verwalten“) und Seite („Volle Kontrolle“).
 
 **„Zugriff prüfen“** liest mit unserem Systemnutzer-Token (`META_ACCESS_TOKEN`) das Werbekonto, holt das Seiten-Token der Seite und
-liest ihre Leadformulare. Jedes der drei Ergebnisse steht einzeln mit verständlicher Erklärung da. Ist alles grün:
+liest ihre Leadformulare. **Zuweisung an den Systemnutzer (Ole, 20.11.2026):** Eine Freigabe an unser Business sieht der Token erst,
+wenn Werbekonto bzw. Seite dem Systemnutzer zugewiesen sind (bisher von Hand). Ist die Freigabe angekommen, weist die Prüfung selbst
+zu und liest erneut (`freigabeNachziehen` in lib/selbst-einrichtung.ts, Fehler in Sentry unter `setup-meta-zuweisung`); klappt das
+nicht, sieht der Kunde „Freigabe angekommen“ und die Admins bekommen einen Hinweis. Das gilt auch für die tägliche Nachprüfung. Jedes der drei Ergebnisse steht einzeln mit verständlicher Erklärung da. Ist alles grün:
 
 - Schritt erledigt, Werbekonto-ID und Seiten-ID stehen in der Kundenakte (`Customer.metaAdAccountId`, `metaPageId`, für die
   Kampagnen-Agenten und Leads),

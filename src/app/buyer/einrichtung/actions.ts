@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { logOfferActivity } from "@/lib/offer-links";
 import { bookHelpCall } from "@/lib/help-call";
-import { checkMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
+import { checkMetaAccess, requestMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
 import { asAnsprache } from "@/lib/ansprache";
 import { STEP_SKIP_KEYS } from "@/lib/onboarding";
 
@@ -123,7 +123,30 @@ export async function bookHelpCallAction(_prev: SetupState, fd: FormData): Promi
 
 // ─── Selbst-Einrichtung: Meta-Zugriff prüfen bzw. anfragen, Einwilligung ───
 
-export type MetaSetupState = { ok?: boolean; error?: string; message?: string; check?: MetaCheck };
+/**
+ * Fehlt der Zugriff auf Werbekonto oder Seite, schicken wir die Partneranfrage selbst (Ole, 20.11.2026: der Hinweis
+ * „oder unsere Anfrage bestätigen“ lief bisher ins Leere). Der Kunde bestätigt nur noch im Business Manager.
+ */
+async function metaAnfrageSchicken(customerId: string, check: MetaCheck): Promise<string | undefined> {
+  const adFehlt = !!check.adAccount.id && !check.adAccount.ok && !check.adAccount.geteilt;
+  const seiteFehlt = !!check.page.id && !check.page.ok && !check.page.geteilt;
+  if (!adFehlt && !seiteFehlt) return undefined;
+  const ob = await prisma.onboarding.findUnique({ where: { customerId }, select: { metaRequestedAt: true } });
+  const kuerzlich = ob?.metaRequestedAt && Date.now() - ob.metaRequestedAt.getTime() < META_ANFRAGE_PAUSE_MS;
+  let gesendet: string[] = [];
+  if (!kuerzlich) {
+    const r = await requestMetaAccess(customerId, { adAccount: adFehlt ? check.adAccount.id : null, page: seiteFehlt ? check.page.id : null }).catch(() => null);
+    gesendet = r?.ok ? r.sent : [];
+    if (!gesendet.length) return undefined;
+  }
+  const was = gesendet.length ? gesendet : [...(adFehlt ? ["Werbekonto"] : []), ...(seiteFehlt ? ["Facebook-Seite"] : [])];
+  return `Wir haben Ihnen eine Partneranfrage für ${was.join(" und ")} geschickt. Bitte bestätigen Sie sie im Business Manager unter Einstellungen → Anfragen und tippen Sie danach noch einmal auf „Zugriff prüfen“.`;
+}
+
+export type MetaSetupState = { ok?: boolean; error?: string; message?: string; hinweis?: string; check?: MetaCheck };
+
+/** Partneranfrage höchstens so oft neu schicken (Meta lehnt doppelte offene Anfragen ab). */
+const META_ANFRAGE_PAUSE_MS = 60 * 60 * 1000;
 
 export async function checkMetaAccessAction(_prev: MetaSetupState, fd: FormData): Promise<MetaSetupState> {
   try {
@@ -140,7 +163,7 @@ export async function checkMetaAccessAction(_prev: MetaSetupState, fd: FormData)
               ? "Alles freigegeben, danke! Wir kümmern uns jetzt um die Kampagne."
               : "Werbekonto, Seite und Leads sind freigegeben, danke! Wir kümmern uns jetzt um die Kampagne. Den Datensatz können Sie nachreichen.",
         }
-      : { ok: false, check: r.check };
+      : { ok: false, check: r.check, hinweis: await metaAnfrageSchicken(ctx.customerId, r.check) };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Nicht möglich." };
   }
