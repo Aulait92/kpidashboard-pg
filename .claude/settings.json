@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sS -H \"Authorization: Bearer proxy-injected\" \"https://app.performancegrowth.de/api/ops/diagnose*)"
+    ]
+  }
+}

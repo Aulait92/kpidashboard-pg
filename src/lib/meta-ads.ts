@@ -131,14 +131,31 @@ export type MetaAdSet = {
   status: string;
   effective_status: string;
   daily_budget?: string; // Cent, nur bei ABO (Budget liegt im AdSet)
+  // Lernphase (Graph API adset.learning_stage_info). Fehlt bei fehlender
+  // Berechtigung oder frischen Anzeigengruppen.
+  learning_stage_info?: {
+    status?: string; // "LEARNING" | "SUCCESS" | "FAIL" (= „Learning limited")
+    conversions?: number;
+    last_sig_edit_ts?: number;
+  } | null;
 };
 
 export async function listAdSets(campaignId: string): Promise<MetaAdSet[]> {
-  const data = (await metaGet(`${campaignId}/adsets`, {
-    fields: "id,name,status,effective_status,daily_budget",
-    limit: "50",
-  })) as { data: MetaAdSet[] };
-  return data.data ?? [];
+  // Erst mit Lernstatus; schlägt das Feld fehl (Berechtigung/API-Version),
+  // ohne. Der Media Buyer nimmt dann konservativ „unbekannt" an.
+  try {
+    const data = (await metaGet(`${campaignId}/adsets`, {
+      fields: "id,name,status,effective_status,daily_budget,learning_stage_info",
+      limit: "50",
+    })) as { data: MetaAdSet[] };
+    return data.data ?? [];
+  } catch {
+    const data = (await metaGet(`${campaignId}/adsets`, {
+      fields: "id,name,status,effective_status,daily_budget",
+      limit: "50",
+    })) as { data: MetaAdSet[] };
+    return data.data ?? [];
+  }
 }
 
 // Wo das steuerbare Tagesbudget einer Kampagne sitzt:
@@ -155,6 +172,11 @@ export type CampaignBudgetState = {
   dailyBudgetEur: number;
   // Bei ABO: die AdSets, auf die sich das Budget verteilt (für Schreibzugriff).
   adSetIds: string[];
+  // Bei ABO: das aktuelle Tagesbudget je AdSet (gleiche Reihenfolge wie
+  // adSetIds), damit Änderungen proportional verteilt werden.
+  adSetBudgetsEur?: number[];
+  // Alle Anzeigengruppen der Kampagne mit Lernstatus (CBO und ABO).
+  adSets?: MetaAdSet[];
 };
 
 function centToEur(cent: string | undefined): number {
@@ -171,8 +193,15 @@ function eurToCentString(eur: number): string {
 export async function getCampaignBudgetState(
   campaign: MetaCampaign,
 ): Promise<CampaignBudgetState> {
-  // CBO: Budget direkt am Campaign-Objekt.
+  // CBO: Budget direkt am Campaign-Objekt. Die AdSets lesen wir trotzdem
+  // für den Lernstatus (Lernphase gilt je Anzeigengruppe).
   if (campaign.daily_budget) {
+    let adSets: MetaAdSet[] = [];
+    try {
+      adSets = await listAdSets(campaign.id);
+    } catch {
+      adSets = [];
+    }
     return {
       campaignId: campaign.id,
       campaignName: campaign.name,
@@ -181,6 +210,7 @@ export async function getCampaignBudgetState(
       effective_status: campaign.effective_status,
       dailyBudgetEur: centToEur(campaign.daily_budget),
       adSetIds: [],
+      adSets,
     };
   }
 
@@ -197,6 +227,7 @@ export async function getCampaignBudgetState(
       effective_status: campaign.effective_status,
       dailyBudgetEur: 0,
       adSetIds: [],
+      adSets,
     };
   }
   const total = budgeted.reduce((s, a) => s + centToEur(a.daily_budget), 0);
@@ -208,11 +239,15 @@ export async function getCampaignBudgetState(
     effective_status: campaign.effective_status,
     dailyBudgetEur: total,
     adSetIds: budgeted.map((a) => a.id),
+    adSetBudgetsEur: budgeted.map((a) => centToEur(a.daily_budget)),
+    adSets,
   };
 }
 
 // Setzt das Tagesbudget einer Kampagne auf den gewünschten EUR-Gesamtwert.
-// Bei ABO wird der Betrag gleichmäßig auf die budgetierten AdSets verteilt.
+// Bei ABO wird der Betrag proportional zu den bisherigen AdSet-Budgets
+// verteilt (so ändert sich jede Anzeigengruppe um denselben Prozentsatz, wichtig
+// für die Lernphase); ohne bekannte Budgets gleichmäßig.
 export async function setCampaignDailyBudget(
   state: CampaignBudgetState,
   newTotalEur: number,
@@ -224,9 +259,18 @@ export async function setCampaignDailyBudget(
     return;
   }
   if (state.level === "adset") {
-    const per = newTotalEur / state.adSetIds.length;
-    for (const adSetId of state.adSetIds) {
-      await metaPost(adSetId, { daily_budget: eurToCentString(per) });
+    const budgets = state.adSetBudgetsEur;
+    const oldTotal = budgets?.reduce((s, b) => s + b, 0) ?? 0;
+    const proportional =
+      budgets != null &&
+      budgets.length === state.adSetIds.length &&
+      budgets.every((b) => b > 0) &&
+      oldTotal > 0;
+    for (let i = 0; i < state.adSetIds.length; i++) {
+      const per = proportional
+        ? (budgets[i] / oldTotal) * newTotalEur
+        : newTotalEur / state.adSetIds.length;
+      await metaPost(state.adSetIds[i], { daily_budget: eurToCentString(per) });
     }
     return;
   }

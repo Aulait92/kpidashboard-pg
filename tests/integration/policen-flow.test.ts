@@ -231,7 +231,9 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     expect(f).toBeTruthy();
     const o = f[3] as { body: string; footer: string; flowId: string; token: string; cta: string; screen: string; data: Record<string, string> };
     expect(o.body).toMatch(/^Kleiner Tipp für \S+ 💡\n\nWenn Herr Kannapinn Ihre Policen vorab sieht, prüft er schon vor dem Termin, \*ob Sie Geld sparen können\*/);
-    expect(o.footer).toBe("Ihr Termin findet auch ohne Policen statt.");
+    // Satz als letzter Absatz statt Fußzeile (Ole, 20.11.2026)
+    expect(o.body.endsWith("\n\nIhr Termin findet auch ohne Policen statt.")).toBe(true);
+    expect(o.footer ?? null).toBeNull();
     expect(o).toMatchObject({ flowId: "flow-123", cta: "Policen senden", screen: "POLICEN" });
     expect(o.data.punkt1).toBe("1. **Nur für Ihren Termin:** Herr Kannapinn (Kannapinn Versicherungen) speichert sie zur Vorbereitung.");
     // Auslesen nicht eingerichtet: neutraler Satz, ohne Freigabe Kranken/BU/Leben ohne Gesundheitssatz

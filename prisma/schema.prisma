@@ -664,6 +664,9 @@ model DeliveryPool {
   outbrainMaxDailyBudget  Decimal? @db.Decimal(12, 2)
   tiktokMaxDailyBudget    Decimal? @db.Decimal(12, 2)
   googleMaxDailyBudget    Decimal? @db.Decimal(12, 2)
+  // Höchstpreis je Lead (EUR). null = Env MEDIA_BUYER_MAX_CPL bzw. Break-even
+  // aus Lead-Preis × (1 − Stornoquote), siehe lib/media-buyer-preisgrenze.ts.
+  maxCpl                  Decimal? @db.Decimal(12, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -694,6 +697,18 @@ model MediaBuyerAction {
   // true wenn der Lauf nur simuliert wurde (dryRun) und nichts an Meta ging.
   dryRun       Boolean  @default(false)
   errorMessage String?
+  // Meta-Lernphase zum Zeitpunkt der Entscheidung: "LEARNING" | "SUCCESS" |
+  // "FAIL" („Learning limited") | "UNKNOWN"; null = kein Meta im Pool.
+  learningStatus String?
+  // Letzte wesentliche Änderung (Meta last_sig_edit_ts bzw. eigene Budgetänderung).
+  learningSince  DateTime?
+  // Vom Buyer pausierte Kampagnen ("meta:<id>,outbrain:<id>"): nur diese
+  // werden später wieder reaktiviert, von Hand pausierte nie.
+  pausedCampaignIds String?
+  // Höchstpreis je Lead zum Zeitpunkt der Entscheidung und ob der 7-Tage-CPL
+  // darüber lag (Abbruchregel: mehrere Läufe in Folge → Push).
+  maxCpl         Decimal? @db.Decimal(12, 2)
+  cplOverMax     Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   @@index([poolKey, createdAt])
