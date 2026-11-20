@@ -210,18 +210,18 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
   it("Komplettcheck: Sie, Familie, Du (Fassung a bisher, b neu mit „doppelt zahlen und sparen“)", () => {
     // Fassung a (bisher) im Splittest komplettcheck_text
     expect(komplettcheckFrage("sie", PERSON, true, "a")).toBe(
-      "Danke! Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können? Das dauert nur ein paar Minuten länger.",
+      "Danke! Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind *und wo Sie vielleicht etwas sparen können?* Das dauert nur ein paar Minuten länger.",
     );
     expect(komplettcheckFrage("du", PERSON_DU, false, "a")).toBe(
-      "Danke! Soll Ole im Termin auch kurz schauen, ob du insgesamt gut abgesichert bist und wo du vielleicht etwas sparen kannst? Das dauert nur ein paar Minuten länger.",
+      "Danke! Soll Ole im Termin auch kurz schauen, ob du insgesamt gut abgesichert bist *und wo du vielleicht etwas sparen kannst?* Das dauert nur ein paar Minuten länger.",
     );
     // Fassung b (Standard, Ole 19.11.2026): Leitmotiv doppelt zahlen und sparen, „können“ statt Versprechen, kostenlos
     expect(komplettcheckFrage("sie", PERSON, false)).toBe(
-      "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll Herr Kannapinn im Termin kurz drüberschauen, wo Sie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
+      "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll Herr Kannapinn im Termin kurz drüberschauen, *wo Sie vielleicht doppelt zahlen und sparen können?* Kostenlos und nur ein paar Minuten länger.",
     );
     expect(komplettcheckFrage("sie", PERSON, true)).toContain("wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können?");
     expect(komplettcheckFrage("du", PERSON_DU, false)).toBe(
-      "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll Ole im Termin kurz drüberschauen, wo du vielleicht doppelt zahlst und sparen kannst? Kostenlos und nur ein paar Minuten länger.",
+      "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll Ole im Termin kurz drüberschauen, *wo du vielleicht doppelt zahlst und sparen kannst?* Kostenlos und nur ein paar Minuten länger.",
     );
     expect(komplettcheckFrage("du", PERSON_DU, true)).toContain("wo ihr als Familie vielleicht doppelt zahlt und sparen könnt?");
     for (const v of ["a", "b"] as const)
