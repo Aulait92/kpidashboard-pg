@@ -80,6 +80,9 @@ const NOT_FOUND_MESSAGE = "Vertreter-Seite nicht gefunden. Bitte den Link prüfe
  */
 export function parseVertretungInput(raw: string): { vtnr: string } | { pageUrl: string } | null {
   const s = raw.trim();
+  // Ganze Adresse aus „Termin vereinbaren“ eingefügt (…bookingtime.com/?vtnr=101511203), Einrichtung 20.11.2026
+  const ausAdresse = /[?&]vtnr=(\d{6,12})\b/i.exec(s);
+  if (ausAdresse) return { vtnr: ausAdresse[1] };
   const digits = s.replace(/[\s./]/g, ""); // z. B. 30/410/2222 (Ole, 20.11.2026: mit Schrägstrichen abgelehnt)
   if (/^\d{6,12}(-\d{1,4})?$/.test(digits)) return { vtnr: digits };
   let url: URL;
