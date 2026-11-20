@@ -55,6 +55,7 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 
 ## 13. So arbeitet Ihr digitaler Assistent (Video)
 - Video laufen lassen, nicht dazwischenreden.
+- Im Video siezt der Assistent den Lead (Frau Becker), wie auf Folie 11 und 14.
 - Danach: „Was davon würde Ihnen am meisten Zeit sparen?“
 
 ## 14. Kein Lead geht mehr verloren

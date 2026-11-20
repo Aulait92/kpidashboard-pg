@@ -1,0 +1,190 @@
+<!doctype html>
+<!-- Folie 13 der Vertriebspräsentationen: Animation für das Assistenten-Video. Ablauf in render.mjs, Texte in cfg.js. Schrift Inter (lokal installiert). -->
+<html lang="de"><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:960px;height:540px;overflow:hidden;background:#edf5fe;font-family:Inter,"Noto Color Emoji",sans-serif;-webkit-font-smoothing:antialiased;color:#0f172a}
+.layer{position:absolute;left:0;top:0;width:960px;height:540px}
+.dark{background:#0f172a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.dark h1{font-weight:700;font-size:40px;letter-spacing:-.02em;line-height:1.12}
+.dark p{font-size:16.5px;color:#cbd5e1;margin-top:20px;letter-spacing:.005em}
+.logo{display:flex;align-items:center;gap:8px;margin-top:35px;font-weight:600;font-size:16.4px}
+.logo .ic{width:25.5px;height:25.5px;border-radius:6px;background:#2563eb;display:flex;align-items:center;justify-content:center;margin-right:0}
+.logo .g{color:#60a5fa;margin-left:0}
+#demo{background:#edf5fe}
+.badge{position:absolute;left:63px;top:60px;height:18.5px;padding:0 8.5px;border:1px solid #4f46e5;border-radius:4px;color:#4338ca;font-size:10px;letter-spacing:.07em;display:flex;align-items:center;font-weight:500;background:#f5f8ff}
+.htitle{position:absolute;left:63px;top:90px;font-size:33px;font-weight:700;letter-spacing:-.025em;line-height:36px}
+.steps{position:absolute;left:63px;top:185px;width:480px}
+.step{height:44px;margin-bottom:5.5px;border-radius:10px;display:flex;align-items:center;padding-left:12px;font-size:14.7px;font-weight:600;color:#9aa1ad}
+.step .n{width:28px;height:28px;border-radius:6px;background:#dae7f8;color:#3663ed;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;margin-right:12.5px}
+.step.done{color:#475569}.step.done .n{background:#1d4ed8;color:#fff}
+.step.act{background:#fff;color:#0f172a;box-shadow:0 6px 18px rgba(30,64,175,.09),0 1px 2px rgba(15,23,42,.05)}.step.act .n{background:#1d4ed8;color:#fff}
+.pill{position:absolute;left:63px;top:448.5px;height:31.5px;padding:0 13.5px;border-radius:16px;background:#1c54d6;color:#fff;font-size:12.9px;font-weight:600;display:flex;align-items:center;gap:5px}
+.plabel{position:absolute;left:642px;width:247px;top:11px;text-align:center;font-size:10.8px;font-weight:600;letter-spacing:.07em;color:#475569}
+.phone{position:absolute;left:642px;top:33px;width:247px;height:494.5px;border:8px solid #111;border-radius:42px;background:#111;box-shadow:0 18px 40px rgba(30,41,82,.16),0 4px 12px rgba(30,41,82,.08)}
+.screen{position:absolute;left:0;top:0;width:231px;height:478.5px;border-radius:34px;overflow:hidden;background:#fff}
+.scr{position:absolute;inset:0}
+.sb{position:absolute;left:0;right:0;top:0;height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 19.5px;font-size:9.75px;font-weight:600;z-index:5;margin-top:0}
+.sb .r{display:flex;align-items:center;gap:1.6px}.sb .r i{display:block;width:6.2px;height:6.2px;border-radius:50%;background:currentColor}.sb .r b{display:block;width:3.2px;height:7px;background:currentColor;margin-left:2.5px;border-radius:.5px}
+.hdr{position:absolute;left:0;right:0;top:0;background:#fff;border-bottom:1px solid #e7e6e9}
+.av{position:absolute;width:25px;height:25px;border-radius:50%;background:#dde6fd;color:#1d4ed8;font-weight:700;font-size:9.5px;display:flex;align-items:center;justify-content:center}
+.hn{position:absolute;font-size:10.45px;font-weight:600}
+.hs{position:absolute;font-size:8.6px;color:#64748b}
+/* form */
+.form{position:absolute;left:0;right:0;top:67px;bottom:0;background:#f3f4f7;padding:0 10.5px}
+.lbl{font-size:9.7px;font-weight:600;margin-top:12.5px;margin-bottom:6.5px}
+.grid{display:grid;grid-template-columns:102px 102px;gap:5.5px}
+.opt{background:#fff;border:1px solid #e5e7eb;border-radius:6px;display:flex;align-items:center;padding-left:7.5px;font-size:8.97px;line-height:11px;min-height:24px;padding-top:5.5px;padding-bottom:5.5px}
+.opt .c{flex:none;width:10px;height:10px;border:1px solid #9ca3af;border-radius:50%;margin-right:6.5px;background:#fff;position:relative}
+.opt.cb .c{border-radius:2.5px}
+.opt.on{border-color:#2563eb;background:#eef4ff}
+.opt.on .c{border-color:#2563eb}.opt.on:not(.cb) .c{border-width:3.2px}
+
+.opt.cb.on .c{background:#2563eb}
+.opt.cb.on .c::after{content:"";position:absolute;left:3px;top:1px;width:2.4px;height:4.8px;border:solid #fff;border-width:0 1.2px 1.2px 0;transform:rotate(45deg)}
+.field{background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:0 8px;margin-top:6px;height:25px;display:flex;flex-direction:column;justify-content:center}
+.field .fl{font-size:7.6px;color:#64748b}
+.field .fv{font-size:9.6px;line-height:12px;margin-top:1px}
+.field.val{height:33.5px}
+.field.foc{border-color:#2563eb}
+.consent{display:flex;margin-top:6px;font-size:7.22px;line-height:9.75px;color:#475569}
+.consent .c{flex:none;width:10px;height:10px;border:1px solid #9ca3af;border-radius:2.5px;margin:2px 5.5px 0 .5px;background:#fff;position:relative}
+.consent.on .c{background:#2563eb;border-color:#2563eb}
+.consent.on .c::after{content:"";position:absolute;left:3px;top:1px;width:2.4px;height:4.8px;border:solid #fff;border-width:0 1.2px 1.2px 0;transform:rotate(45deg)}
+.btn{margin-top:9.5px;height:29px;border-radius:6px;background:#2563eb;color:#fff;font-size:10.45px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.btn.press{background:#1d4ed8;transform:scale(.98)}
+/* success */
+.ok{position:absolute;left:0;right:0;top:193px;text-align:center}
+.ok .ci{width:43.5px;height:43.5px;border-radius:50%;background:#dcfce7;margin:0 auto;display:flex;align-items:center;justify-content:center}
+.ok h3{font-size:13.5px;font-weight:700;margin-top:13px}
+.ok p{font-size:9.7px;color:#6b7280;margin-top:7px}
+/* lock */
+.lock{background:linear-gradient(170deg,#1c3a8c 0%,#15265a 28%,#0f1a3d 55%,#1b2058 80%,#2d2a78 100%);color:#fff}
+.lock .sb{color:#fff}
+.ld{position:absolute;left:0;right:0;top:52px;text-align:center;font-size:10.5px;color:#dbe3f3}
+.lt{position:absolute;left:0;right:0;top:66px;text-align:center;font-size:50.3px;font-weight:700;letter-spacing:-.03em;line-height:56px}
+.nt{position:absolute;left:9px;width:213px;border-radius:13px;background:rgba(241,241,246,.95);color:#111;padding:8px 9px 9px 42.3px;font-size:9.4px;line-height:12.6px}
+.nt .ic{position:absolute;left:9px;top:8.5px;width:25.5px;height:25.5px;border-radius:6.5px;display:flex;align-items:center;justify-content:center}
+.nt .ap{font-size:7.6px;color:#6b7280;display:flex;justify-content:space-between;line-height:11px;letter-spacing:.01em}
+.nt .tt{font-weight:700;font-size:10.1px;line-height:12.4px}
+/* chat */
+.chat{position:absolute;left:0;right:0;top:63px;bottom:42px;background:#efeae2;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:0 8px 6.5px}
+.msg{max-width:166px;border-radius:7px;padding:5px 6.5px 3.5px;font-size:9.58px;line-height:13.3px;margin-top:4.4px;box-shadow:0 1px 1px rgba(0,0,0,.06)}
+.msg .tm{font-size:6.5px;color:#8a8f98;text-align:right;line-height:9px;margin-top:2px}
+.msg.b{background:#fff;align-self:flex-start;max-width:172px}
+.msg.l{background:#d9fdd3;align-self:flex-end;max-width:180px}
+.msg.l .tm{color:#7c9c86}
+.dots{align-self:flex-start;background:#fff;border-radius:7px;width:46px;height:20.5px;margin-top:4.4px;display:flex;align-items:center;justify-content:center;gap:4.5px}
+.dots i{width:4.5px;height:4.5px;border-radius:50%;background:#8a8f98;display:block}
+.bar{position:absolute;left:0;right:0;bottom:0;height:42px;background:#f0f0f0}
+.inp{position:absolute;left:8px;top:7.5px;width:182px;height:27px;border-radius:14px;background:#fff;font-size:9.6px;color:#9ca3af;display:flex;align-items:center;padding-left:10px;white-space:nowrap;overflow:hidden}
+.inp.t{color:#111}
+.send{position:absolute;left:196.5px;top:7.5px;width:27px;height:27px;border-radius:50%;background:#22a06b;display:flex;align-items:center;justify-content:center}
+/* app */
+.app{background:#f2f5fe}
+.apph{position:absolute;left:0;right:0;top:0;height:59.5px;background:#fff;border-bottom:1px solid #e8ebf3}
+.apph .lg{position:absolute;left:12px;top:30.5px;display:flex;align-items:center;gap:6px;font-size:11.2px;font-weight:600}
+.apph .lg .ic{width:19.5px;height:19.5px;border-radius:5px;background:#2563eb;display:flex;align-items:center;justify-content:center}
+.apph .g{color:#2563eb;margin-left:-2px}
+.ag{position:absolute;left:12px;top:72px;font-size:14.6px;font-weight:700;letter-spacing:-.005em}
+.as{position:absolute;left:12px;top:93px;font-size:8.96px;color:#64748b}
+.card{position:absolute;left:10px;right:10px;background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(15,23,42,.06);padding:10.5px 10px 10.5px}
+.card .tm{font-size:14.1px;font-weight:700;letter-spacing:-.01em}
+.card .dt{font-size:7.4px;color:#6b7280;margin-top:0}
+.card .tag{position:absolute;right:10px;top:10px;font-size:7.5px;color:#1d4ed8;border:1px solid #bfd3fb;border-radius:8px;padding:1.5px 5px;background:#eff5ff;font-weight:600}
+.card .nm{font-size:11.6px;font-weight:600;margin-top:8.5px}
+.card .su{font-size:8.96px;line-height:13px;color:#5b6474;margin-top:3px}
+.card .bt{display:flex;gap:6px;margin-top:10.5px}
+.card .bt div{flex:1;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:8.96px;font-weight:600}
+.card .bt .p{background:#2563eb;color:#fff}.card .bt .s{border:1px solid #e5e7eb;color:#111}
+.card h4{font-size:8.96px;font-weight:600;margin-bottom:4px}
+.card li{list-style:none;font-size:8.96px;line-height:13.5px;color:#374151}
+</style></head><body>
+<div id="root"></div>
+<script src="cfg.js"></script>
+<script>
+const ARROW='<svg width="55%" height="55%" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>';
+const CLOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><circle cx="12" cy="13.5" r="8"/><path d="M12 9.5v4l2.5 1.5M9.5 2.5h5M12 2.5v3"/></svg>';
+const CHECK='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const WA='<svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5" stroke-linecap="round"/></svg>';
+const SEND='<svg width="11" height="11" viewBox="0 0 24 24"><path d="M3 3l19 9-19 9 3-9z" fill="#fff"/></svg>';
+const C=window.CFG;
+const clamp=(x)=>Math.max(0,Math.min(1,x));
+const ease=(x)=>1-Math.pow(1-x,2);
+const esc=(s)=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function sb(t){return `<div class="sb"><span>${t}</span><span class="r"><i></i><i></i><i></i><b></b></span></div>`}
+function stepsHtml(k){return `<div class="badge">LIVE-DEMO</div><div class="htitle">Vom Formular zum<br>gebuchten Termin</div><div class="steps">${C.steps.map((s,i)=>`<div class="step ${i+1<k?'done':i+1==k?'act':''}"><span class="n">${i+1}</span>${s}</div>`).join("")}</div><div class="pill">${k==2?CLOCK:''}${C.pills[k-1]}</div>`}
+function leadHeader(sub){return `<div class="hdr" style="height:${sub===null?67:63}px"><div class="av" style="left:12.5px;top:${sub===null?32:29.5}px">MB</div><div class="hn" style="left:45px;top:${sub===null?34:31.5}px">${C.berater}</div><div class="hs" style="left:45px;top:${sub===null?48:45.5}px">${sub===null?C.formSub:sub}</div></div>`}
+function formScreen(n){
+  const F=C.formT;
+  const paar=n>=F.paar, haus=n>=F.haus, recht=n>=F.recht;
+  const nameFoc=n>=F.nameFoc&&n<F.telFoc, telFoc=n>=F.telFoc&&n<F.telBlur;
+  const nameChars=n<F.name0?0:Math.min(C.name.length,1+Math.floor((n-F.name0)/F.nameStep));
+  const telChars=n<F.tel0?0:Math.min(C.tel.length,1+Math.floor((n-F.tel0)/F.telStep));
+  const nm=C.name.slice(0,nameChars), tl=C.tel.slice(0,telChars);
+  const opt=(t,on,cb)=>`<div class="opt ${cb?'cb':''} ${on?'on':''}"><span class="c"></span>${t}</div>`;
+  const fld=(l,v,f)=>`<div class="field ${v?'val':''} ${f?'foc':''}"><div class="fl">${l}</div>${v?`<div class="fv">${esc(v)}</div>`:''}</div>`;
+  const press=n>=F.press&&n<F.release;
+  return `<div class="scr" style="background:#f3f4f7">${leadHeader(null)}<div class="form">
+   <div class="lbl">${C.q1}</div><div class="grid">${opt("Single")}${opt("Paar",paar)}${opt("Alleinerziehend")}${opt("Paar mit<br>Kind(ern)")}</div>
+   <div class="lbl" style="margin-top:11px">${C.q2}</div><div class="grid">${opt("Haftpflicht",0,1)}${opt("Hausrat",haus,1)}${opt("Rechtsschutz",recht,1)}${opt("Wohngebäude",0,1)}</div>
+   <div style="height:4px"></div>${fld("Name",nm,nameFoc)}${fld("Telefon",tl,telFoc)}
+   <div class="consent ${n>=F.consent?'on':''}"><span class="c"></span><span>Ja, ein spezialisierter Allianz-Experte darf mich per Telefon, E-Mail oder WhatsApp kontaktieren und mir die passende Versicherung zeigen. (Jederzeit widerrufbar.)</span></div>
+   <div class="btn ${press?'press':''}">Absenden</div></div>${sb("18:01")}</div>`;
+}
+function okScreen(){return `<div class="scr" style="background:#fff"><div class="ok"><div class="ci">${CHECK}</div><h3>Danke, das hat geklappt!</h3><p>${C.okSub}</p></div>${sb("18:02")}</div>`}
+function notif(top,ic,icbg,app,when,title,body,op=1,dy=0){return `<div class="nt" style="top:${top+dy}px;opacity:${op}"><div class="ic" style="background:${icbg}">${ic}</div><div class="ap"><span>${app}</span><span>${when}</span></div><div class="tt">${title}</div><div>${body}</div></div>`}
+function lock1(n){
+  const p=ease(clamp((n-C.T.notif1)/9));
+  return `<div class="scr lock">${sb("18:02")}<div class="ld">Sonntag, 15. November</div><div class="lt">18:02</div>${n>=C.T.notif1?notif(188,WA,'#25d366','WHATSAPP','jetzt',C.berater,C.waNotif,p,(1-p)*-14):''}</div>`;
+}
+function lock2(n){
+  const p=ease(clamp((n-C.T.notif2)/11));
+  const leadN=(dy)=>notif(188+dy,ARROW,'#2563eb','PERFORMANCEGROWTH','vor 5 Min.',`🆕 Neuer Lead: ${C.leadName}`,'Privatschutz');
+  let h=`<div class="scr lock">${sb("18:07")}<div class="ld">Sonntag, 15. November</div><div class="lt">18:07</div>`;
+  if(n<C.T.notif2) h+=leadN(0);
+  else h+=notif(188,ARROW,'#2563eb','PERFORMANCEGROWTH','jetzt',`📅 Neuer Termin: ${C.leadName}`,'Mo., 16.11., 15:00 Uhr · Telefonat',p,(1-p)*-14)+leadN(67.5*p);
+  return h+`</div>`;
+}
+function chatScreen(n){
+  const T=C.chat; let items="", status="online", time="18:02", input="";
+  for(const m of T){
+    if(m.type==="dots"){ if(n>=m.at&&n<m.until){items+=`<div class="dots"><i></i><i></i><i></i></div>`;status="schreibt …";} continue; }
+    if(m.typeFrom!==undefined&&n>=m.typeFrom&&n<m.at){ const k=Math.max(1,Math.round(clamp((n-m.typeFrom+1)/(m.typeTo-m.typeFrom+1))*m.text.length)); input=Array.from(m.text).slice(0,k).join(""); }
+    if(n>=m.at){ const p=ease(clamp((n-m.at)/6)); time=m.tm;
+      items+=`<div class="msg ${m.who}" style="opacity:${p};transform:translateY(${(1-p)*8}px)">${m.text}<div class="tm">${m.tm}${m.who==='l'?' ✓✓':''}</div></div>`; }
+  }
+  return `<div class="scr" style="background:#fff">${leadHeader(status)}<div class="chat">${items}</div><div class="bar"><div class="inp ${input?'t':''}">${input?esc(input):'Nachricht'}</div><div class="send">${SEND}</div></div>${sb(time)}</div>`;
+}
+function appScreen(n){
+  const pc=ease(clamp((n-C.T.card1)/6)), pa=ease(clamp((n-C.T.card2)/6));
+  return `<div class="scr app">${sb("18:07")}<div class="apph"><div class="lg"><span class="ic">${ARROW}</span>performance <span class="g">growth</span></div></div>
+  <div class="ag">${C.greet}</div><div class="as">Termine heute &amp; morgen</div>
+  <div style="position:absolute;left:0;right:0;top:113px;display:flex;flex-direction:column;gap:7.5px"><div class="card" style="position:relative;left:0;right:0;margin:0 10px;opacity:${pc};transform:translateY(${(1-pc)*6}px)"><div class="tm">15:00</div><div class="dt">Mo., 16.11.</div><div class="tag">✆ Telefonat</div><div class="nm">${C.leadName}</div><div class="su">${C.summary}</div><div class="bt"><div class="p">✆ Anrufen</div><div class="s">Chat</div></div></div>
+  ${n>=C.T.card2?`<div class="card" style="position:relative;left:0;right:0;margin:0 10px;opacity:${pa};transform:translateY(${(1-pa)*6}px)"><h4>Läuft automatisch:</h4><ul>${C.auto.map(x=>`<li>✓ ${x}</li>`).join("")}</ul></div>`:''}</div></div>`;
+}
+function screenFor(n){
+  const T=C.T;
+  const seq=[[0,formScreen],[T.okFade,okScreen],[T.lock1Fade,lock1],[T.chatFade,chatScreen],[T.lock2Fade,lock2],[T.appFade,appScreen]];
+  let i=0; for(let k=0;k<seq.length;k++) if(n>=seq[k][0]) i=k;
+  const cur=seq[i][1](n);
+  const dur=T.fadeLen[i]||0;
+  if(i>0&&n<seq[i][0]+dur){ const p=(n-seq[i][0]+1)/(dur+1); const prev=seq[i-1][1](n); return `<div class="scr">${prev}</div><div class="scr" style="opacity:${p}">${cur}</div>`; }
+  return cur;
+}
+function stepFor(n){const T=C.T; return n>=T.step5?5:n>=T.step4?4:n>=T.step3?3:n>=T.step2?2:1;}
+function demo(n){const k=stepFor(n); return `<div class="layer" id="demo">${stepsHtml(k)}<div class="plabel">${k==5?'IHR HANDY':'HANDY DES LEADS'}</div><div class="phone"><div class="screen">${screenFor(n)}</div></div></div>`}
+const logo=`<div class="logo"><span class="ic">${ARROW}</span><span>performance</span><span class="g">growth</span></div>`;
+function title(){return `<div class="layer dark"><h1>${C.title}</h1><p>${C.titleSub}</p>${logo}</div>`}
+function end(){return `<div class="layer dark"><h1 style="font-size:40px;position:relative;top:-3px">${C.end1}<br>${C.end2}</h1><p style="margin-top:22px">${C.endSub}</p>${logo}</div>`}
+window.render=function(n){
+  const T=C.T; let h;
+  if(n<T.demoFade) h=title();
+  else if(n<T.demoFade+T.demoFadeLen){const p=(n-T.demoFade+1)/(T.demoFadeLen+1); h=title()+`<div class="layer" style="opacity:${p}">${demo(n)}</div>`;}
+  else if(n<T.endFade) h=demo(n);
+  else if(n<T.endFade+T.endFadeLen){const p=(n-T.endFade+1)/(T.endFadeLen+1); h=demo(n)+`<div class="layer" style="opacity:${p}">${end()}</div>`;}
+  else h=end();
+  const r=document.getElementById("root"); if(r.innerHTML!==h) r.innerHTML=h;
+  return h;
+};
+</script></body></html>
