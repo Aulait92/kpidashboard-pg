@@ -39,7 +39,7 @@ import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
 import { WaCheckButton, WaPendingRefresh, WaResetButton } from "./wa-check";
 import { WaInvited } from "./wa-invited";
-import { LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
+import { LeadTimesForm, SourcePicker, VideoRaumForm } from "@/components/calendar-sources";
 import { loadTerminFormate } from "@/lib/termin-formate-server";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import {
@@ -48,6 +48,7 @@ import {
   disconnectNativeCalendarAction,
   removeIcsAction,
   saveIcsAction,
+  saveVideoRaumAction,
   saveLeadTimesAction,
 } from "@/app/buyer/kalender/source-actions";
 
@@ -270,6 +271,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               disconnectNativeAction={disconnectNativeCalendarAction}
               allianzOption={!makler}
             />
+            <div className="mt-6 border-t border-[color:var(--border)] pt-5">
+              <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={!!calendar.status.native.app} />
+            </div>
             <div className="mt-6 border-t border-[color:var(--border)] pt-5">
               <p className="text-[15px] font-medium">Wann dürfen Leads Termine buchen?</p>
               <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">

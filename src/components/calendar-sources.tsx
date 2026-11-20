@@ -805,3 +805,32 @@ export function AllianzTemplateForm({
     </form>
   );
 }
+
+/**
+ * Fester Video-Link für Videotermine (Ole, 20.11.2026: Webex-Link gehört unbedingt ins Onboarding). Ohne Google/Outlook
+ * (App-Kalender) gibt es sonst keinen Link; mit Google/Outlook ersetzt er Meet bzw. Teams.
+ */
+export function VideoRaumForm({ action, readOnly, initial, noetig }: { action: FormAction; readOnly: boolean; initial: string | null; noetig: boolean }) {
+  const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
+  return (
+    <form action={formAction} className="space-y-2" data-video-raum>
+      <label className="block text-[15px] font-medium" htmlFor="videoRoomUrl">
+        Ihr Link für Videotermine (z. B. Webex)
+      </label>
+      {noetig && !initial ? (
+        <p className="text-sm font-medium text-amber-700">Bitte eintragen: Ohne Link haben Videotermine keinen Raum.</p>
+      ) : (
+        <p className="text-sm text-[color:var(--muted)]">
+          {noetig ? "Diesen Link bekommen Ihre Kunden für jeden Videotermin." : "Leer lassen, dann erstellen wir für jeden Termin einen Meet- bzw. Teams-Link."}
+        </p>
+      )}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input id="videoRoomUrl" name="videoRoomUrl" type="url" defaultValue={initial ?? ""} className={input} placeholder="https://allianz.webex.com/meet/vorname.nachname" autoComplete="off" />
+        <Submit pending={pending} disabled={readOnly}>
+          Speichern
+        </Submit>
+      </div>
+      <Result state={state} />
+    </form>
+  );
+}

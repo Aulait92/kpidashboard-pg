@@ -18,19 +18,22 @@ export type CalendarSetupView = {
   /** Quelle der belegten Zeiten des Agentur-Kalenders (für den Hinweis bei den Lead-Zeiten). */
   source: "none" | "ics" | "allianz";
   leadTimes: LeadTimes;
+  /** Fester Video-Link (z. B. Webex) des Agentur-Kalenders */
+  videoRoomUrl: string | null;
   blocks: Awaited<ReturnType<typeof upcomingBlocks>>;
 };
 
 /** customerId = Kunde, calendarKey = Agentur-Kalender (customerId) oder user:<id>. */
 export async function loadCalendarSetup(customerId: string, calendarKey: string): Promise<CalendarSetupView> {
   const userId = userIdOfKey(calendarKey);
-  const [sources, native, leadTimes, blocks] = await Promise.all([
+  const [sources, native, leadTimes, blocks, agent] = await Promise.all([
     loadSources(customerId),
     userId
       ? prisma.advisorCalendar.findUnique({ where: { userId }, select: { status: true, provider: true, accountEmail: true } })
       : prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, provider: true, accountEmail: true } }),
     loadLeadTimes(calendarKey),
     upcomingBlocks(calendarKey),
+    prisma.agentConfig.findUnique({ where: { customerId }, select: { videoRoomUrl: true } }),
   ]);
   const a = sources.allianz;
   return {
@@ -49,6 +52,7 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
     // ICS und Allianz-Online gelten nur für den Agentur-Kalender.
     source: userId ? "none" : a ? "allianz" : sources.hasIcs ? "ics" : "none",
     leadTimes,
+    videoRoomUrl: agent?.videoRoomUrl ?? null,
     blocks,
   };
 }
