@@ -315,7 +315,8 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                                 </Link>
                                 <span className="block truncate text-xs text-[color:var(--muted)]">{c.reasonText}</span>
                               </span>
-                              <ConsentButton leadId={c.id} readOnly={ctx.preview} />
+                              {/* Knopf nur bei frischem Abschluss; sonst im nächsten Gespräch fragen bzw. QR am Tisch */}
+                              {c.frisch ? <ConsentButton leadId={c.id} readOnly={ctx.preview} /> : <span className="text-xs text-[color:var(--muted)]">Im nächsten Gespräch fragen</span>}
                               <QrIconButton leadId={c.id} readOnly={ctx.preview} />
                             </li>
                           ))}

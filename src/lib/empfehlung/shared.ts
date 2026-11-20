@@ -797,7 +797,16 @@ export type Candidate = {
   /** Anlass für den Text: nach einem Termin „Nach dem Jahresgespräch“, sonst die normale Empfehlungsbitte */
   occasion: Occasion | null;
   at: number;
+  /**
+   * Nur „Zustimmung fehlt“: Abschluss heute oder in den letzten 2 Tagen. Nur dann bietet die Liste „Kunde hat
+   * zugestimmt“ an (das Gespräch ist frisch); bei älteren Abschlüssen nur den QR-Code fürs nächste Gespräch
+   * (Persona-Test 20.11.2026: kein nachträgliches Abhaken ohne Gespräch, UWG § 7).
+   */
+  frisch?: boolean;
 };
+
+/** Zustimmung per Knopf nur so viele Tage nach dem Abschluss (danach im nächsten Gespräch fragen). */
+export const CONSENT_FRISCH_TAGE = 2;
 
 /** „heute“, „gestern“, „vor 5 Tagen“ (Kalendertage in Berlin). */
 export function relDays(at: Date, now: Date): string {
@@ -847,7 +856,8 @@ export function pickReferralCandidates(rows: CandidateInput[], now: Date): { rea
     if (!feedbackAllowed(c)) {
       if (c.status !== "Abschluss") continue;
       const closed = c.closedAt ? `Abschluss ${relDays(c.closedAt, now)}` : "Abschluss";
-      noConsent.push({ ...base, reason: reason?.reason ?? null, reasonText: reason?.text ?? closed, consent: false, occasion: null, at: c.closedAt?.getTime() ?? 0 });
+      const frisch = !!c.closedAt && now.getTime() - c.closedAt.getTime() < (CONSENT_FRISCH_TAGE + 1) * DAY_MS;
+      noConsent.push({ ...base, reason: reason?.reason ?? null, reasonText: reason?.text ?? closed, consent: false, occasion: null, at: c.closedAt?.getTime() ?? 0, frisch });
       continue;
     }
     if (!reason) continue;

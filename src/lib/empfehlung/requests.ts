@@ -1298,6 +1298,26 @@ export async function loadReferralPage(token: string, opts: { countView?: boolea
   };
 }
 
+/**
+ * Inaktiver Link (Modul aus, Kontakt gelöscht): trotzdem eine nächste Handlung für die empfohlene Person (Persona-Test
+ * 20.11.2026). Nur öffentliche Angaben des Vermittlers (Name, Telefon aus Erstinformation bzw. Impressum), nichts zum
+ * Empfehlenden. null, wenn es den Link nicht gibt.
+ */
+export async function loadInactiveReferralContact(token: string): Promise<{ customerId: string; vertreter: string; advisorPhone: string | null; an: Ansprache } | null> {
+  const link = await prisma.referralLink.findUnique({
+    where: { token },
+    select: { customerId: true, customer: { select: { name: true, leadAddress: true, dormantSince: true, onboarding: { select: { websiteInfo: true } }, erstinformation: { select: { telefon: true } } } } },
+  });
+  if (!link || link.customer.dormantSince) return null;
+  const web = link.customer.onboarding?.websiteInfo as { phone?: string | null } | null;
+  return {
+    customerId: link.customerId,
+    vertreter: advisorDisplayName(link.customer.name),
+    advisorPhone: displayAdvisorPhone(link.customer.erstinformation?.telefon) ?? displayAdvisorPhone(web?.phone),
+    an: asAnsprache(link.customer.leadAddress),
+  };
+}
+
 const BOT_UA = /bot|crawl|spider|preview|whatsapp|facebookexternalhit|slack|telegram|discord|curl|wget|headless|monitor/i;
 
 /**

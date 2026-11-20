@@ -6,7 +6,7 @@ import { REFERRAL_DRAFT_COOKIE, decodeReferralDraft } from "@/lib/empfehlung/ent
 import { buttonClass } from "@/components/ui";
 import { PhoneField } from "@/components/phone-field";
 import { SubmitButton } from "@/components/submit-button";
-import { countReferralVisit, loadReferralPage } from "@/lib/empfehlung/requests";
+import { countReferralVisit, loadInactiveReferralContact, loadReferralPage } from "@/lib/empfehlung/requests";
 import { anFromParam, contactConsentText, contactErrors, contactIntro, contactSuccess, statusConsentText, telHref, whatsappSelfNote } from "@/lib/empfehlung/shared";
 import { a } from "@/lib/ansprache";
 import { requestIp } from "@/lib/rate-limit";
@@ -18,6 +18,9 @@ import { submitReferralAction } from "./actions";
 // Handy, der Rest hinter „Mehr angeben“; Einwilligung als Satz direkt über dem Knopf (Absenden = Einwilligung,
 // Wortlaut und Zeitstempel werden gespeichert); Rückmeldung an den Empfehlenden als eigenes, freiwilliges Häkchen.
 // Ansprache: ?an=du (vom Empfehlenden beim Teilen gewählt), sonst Sie.
+/** Fehler, die am jeweiligen Feld stehen (nicht oben im Kasten) */
+const FELD_FEHLER = ["name", "phone", "email"];
+
 export const dynamic = "force-dynamic";
 
 type SP = { ok?: string; err?: string; an?: string };
@@ -41,7 +44,7 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
   const sp = await searchParams;
   const an = anFromParam(sp.an);
   const page = /^[\w-]{10,64}$/.test(token) ? await loadReferralPage(token) : null;
-  if (!page) return <ReferralInvalidLink />;
+  if (!page) return <ReferralInvalidLink kontakt={await loadInactiveReferralContact(token).catch(() => null)} />;
   const offer = an === "du" ? page.offerDu : page.offer;
   const privacyLink = (
     <a href={page.privacyUrl} target="_blank" rel="noopener noreferrer" className="underline" data-referral-privacy>
@@ -97,21 +100,28 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
       <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--muted)]" data-referral-intro>
         {contactIntro(page.vertreter, an)}
       </p>
-      {sp.err && errors[sp.err] ? (
+      {/* Fehler zu einem Feld stehen am Feld (Persona-Test 20.11.2026), oben nur allgemeine Fehler */}
+      {sp.err && errors[sp.err] && !FELD_FEHLER.includes(sp.err) ? (
         <p className="mt-3 rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800" role="alert" data-referral-error={sp.err}>
           {errors[sp.err]}
         </p>
       ) : null}
       <form action={action} className="mt-4 space-y-3" data-referral-form>
         <input type="hidden" name="an" value={an} />
-        <Field name="name" label={a(an, "Dein Name", "Ihr Name")} autoComplete="name" required defaultValue={draft?.name} invalid={sp.err === "name"} />
-        <PhoneField name="phone" label={a(an, "Deine Handynummer", "Ihre Handynummer")} defaultInternational={draft?.phone || undefined} />
+        <Field name="name" label={a(an, "Dein Name", "Ihr Name")} autoComplete="name" required defaultValue={draft?.name} error={sp.err === "name" ? errors.name : null} />
+        <PhoneField
+          name="phone"
+          label={a(an, "Deine Handynummer", "Ihre Handynummer")}
+          labelClassName="mb-1 block text-sm font-medium"
+          defaultInternational={draft?.phone || undefined}
+          error={sp.err === "phone" ? errors.phone : null}
+        />
         <details className="group" open={moreOpen} data-referral-more>
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1 text-sm font-semibold text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
             Mehr angeben (optional) <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
           </summary>
           <div className="mt-2 space-y-3">
-            <Field name="email" label="E-Mail-Adresse" type="email" autoComplete="email" defaultValue={draft?.email} invalid={sp.err === "email"} />
+            <Field name="email" label="E-Mail-Adresse" type="email" autoComplete="email" defaultValue={draft?.email} error={sp.err === "email" ? errors.email : null} />
             {page.topics.length ? (
               <label className="block text-sm font-medium">
                 Worum geht es?
@@ -178,7 +188,7 @@ function Field({
   autoComplete,
   required,
   defaultValue,
-  invalid,
+  error,
 }: {
   name: string;
   label: string;
@@ -186,8 +196,10 @@ function Field({
   autoComplete?: string;
   required?: boolean;
   defaultValue?: string;
-  invalid?: boolean;
+  /** Fehlermeldung direkt am Feld */
+  error?: string | null;
 }) {
+  const invalid = !!error;
   return (
     <label className="block text-sm font-medium">
       {label}
@@ -198,8 +210,13 @@ function Field({
         required={required}
         defaultValue={defaultValue}
         aria-invalid={invalid || undefined}
-        className={`mt-1 h-11 w-full rounded-[var(--radius-sm)] border px-3 text-base ${invalid ? "border-rose-400" : "border-[color:var(--border)]"}`}
+        className={`mt-1 h-11 w-full rounded-[var(--radius-sm)] border px-3 text-base ${invalid ? "border-rose-500 ring-1 ring-rose-500" : "border-[color:var(--border)]"}`}
       />
+      {error ? (
+        <span className="mt-1 block text-sm font-medium text-rose-700" role="alert" data-field-error={name}>
+          {error}
+        </span>
+      ) : null}
     </label>
   );
 }

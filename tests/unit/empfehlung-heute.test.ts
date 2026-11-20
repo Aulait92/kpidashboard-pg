@@ -95,6 +95,10 @@ describe("Heute fragen: wer erscheint", () => {
     expect(r.ready).toEqual([]);
     expect(r.noConsent.map((c) => c.id)).toEqual(["b", "a"]);
     expect(r.noConsent[0]).toMatchObject({ consent: false, reasonText: "Abschluss vor 3 Tagen" });
+    // Persona-Test 20.11.2026: „Kunde hat zugestimmt“ nur bei frischem Abschluss (bis 2 Tage), sonst im nächsten Gespräch
+    expect(r.noConsent[0].frisch).toBe(false);
+    const f = pickReferralCandidates([row({ id: "c", feedbackConsentAt: null, closedAt: ago(1) }), row({ id: "d", feedbackConsentAt: null, closedAt: ago(2) }), row({ id: "e", feedbackConsentAt: null, closedAt: null })], NOW);
+    expect(f.noConsent.map((c) => [c.id, c.frisch])).toEqual([["c", true], ["d", true], ["e", false]]);
     // STOPP auch dort nicht
     expect(pickReferralCandidates([row({ feedbackConsentAt: null, feedbackOptOutAt: ago(1) })], NOW).noConsent).toEqual([]);
   });

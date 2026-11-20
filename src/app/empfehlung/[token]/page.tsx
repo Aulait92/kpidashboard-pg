@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ChevronDown, HeartHandshake, LinkIcon } from "lucide-react";
 import { ReferralInvalidLink, ReferralShell } from "@/components/empfehlung/public-shell";
-import { loadReferralPage, contactLinkFor } from "@/lib/empfehlung/requests";
+import { loadInactiveReferralContact, loadReferralPage, contactLinkFor } from "@/lib/empfehlung/requests";
 import { SHARE_AUDIENCES, contactLinkIn, shareIntro, shareText } from "@/lib/empfehlung/shared";
 import { a } from "@/lib/ansprache";
 import { ShareReferral } from "@/components/empfehlung/teilen";
@@ -22,7 +22,7 @@ export default async function ReferralSharePage({ params, searchParams }: { para
   const claim = (await searchParams).p;
   if (!/^[\w-]{10,64}$/.test(token)) notFound();
   const page = await loadReferralPage(token, { countView: true });
-  if (!page) return <ReferralInvalidLink />;
+  if (!page) return <ReferralInvalidLink kontakt={await loadInactiveReferralContact(token).catch(() => null)} />;
   const an = page.recommenderAn;
   const link = contactLinkFor(token);
   const texts = {
