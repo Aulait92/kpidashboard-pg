@@ -932,3 +932,10 @@ export function neutralZahnAngaben(angaben: unknown): unknown {
 export function istZahnLead(source: string | null | undefined): boolean {
   return outreachProdukt(source)?.purpose === "outreach_zahn";
 }
+
+/**
+ * Erkennt den Hinweis an den Assistenten nach einem Knopf auf die feste erste Frage (knopf.ts erstfrageHinweis). Er darf
+ * die Zwischenfrage der App nicht verhindern (Ole, 20.11.2026, Testchat Privatschutz: nach „Alles neu“ kam nur
+ * „Verstanden …“ und keine Frage mehr).
+ */
+export const ERSTFRAGE_HINWEIS_RE = /^Der Lead hat per Knopf „[^“]*“ auf unsere erste Frage/;
