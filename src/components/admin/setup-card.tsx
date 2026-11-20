@@ -130,8 +130,8 @@ export async function SetupCard({ customerId, notice }: { customerId: string; no
         {meta ? (
           <ul className="mt-1 space-y-1 text-xs">
             {[
-              ["Werbekonto", meta.adAccount.ok, meta.adAccount.ok ? `${meta.adAccount.name ?? ""} (act_${meta.adAccount.id})` : meta.adAccount.error],
-              ["Seite", meta.page.ok, meta.page.ok ? `${meta.page.name ?? ""} (${meta.page.id})` : meta.page.error],
+              ["Werbekonto", meta.adAccount.ok, meta.adAccount.ok ? `${meta.adAccount.name ?? ""} (act_${meta.adAccount.id})` : meta.adAccount.geteilt ? `Freigabe angekommen, automatische Zuweisung fehlgeschlagen: act_${meta.adAccount.id} im Business Manager unserem Systemnutzer zuweisen (Systemnutzer → Assets hinzufügen).` : meta.adAccount.error],
+              ["Seite", meta.page.ok, meta.page.ok ? `${meta.page.name ?? ""} (${meta.page.id})` : meta.page.geteilt ? `Freigabe angekommen, automatische Zuweisung fehlgeschlagen: Seite ${meta.page.id} unserem Systemnutzer zuweisen.` : meta.page.error],
               ["Leads", meta.leads.ok, meta.leads.ok ? "Leadformulare lesbar" : meta.leads.error],
             ].map(([l, ok, d]) => (
               <li key={String(l)} className="flex gap-1.5">
