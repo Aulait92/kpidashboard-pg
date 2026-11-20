@@ -73,6 +73,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
             <LinkedInGeplant d={d} />
           </Aufklapp>
         ) : null}
+        {d.results.length ? (
         <Aufklapp
           titel="Ergebnisse je Post"
           hinweis={`${d.results.length} Posts`}
@@ -81,6 +82,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
           <p className="mb-2 text-sm text-[color:var(--muted)]">Zielgruppen-Reichweite = Impressionen × Anteil Vermittler unter den Zuschauern. Vergleich mit dem Median der 30 Posts davor.</p>
           <LinkedInErgebnisse d={d} />
         </Aufklapp>
+        ) : null}
         <Aufklapp titel="Statistik hochladen" hinweis="LinkedIn-Export" funktion="actions-importaction--linkedin-statistik-excel-hochladen">
           <Card className="space-y-3 p-4 sm:p-5">
             <LinkedInStatistik d={d} />

@@ -39,7 +39,7 @@ const chipHref = (key: string) => (key === "offen" ? BASIS : `${BASIS}?f=${key}`
 
 // Verkaufen → Angebote: je Angebot die aktuelle Version mit Stand (Daten aus lib/vertrieb/angebote-uebersicht.ts, wie
 // /admin/vertrieb/angebote). Zeile öffnet die Kontaktakte bei der Angebotskarte.
-// Umbau 19.11.2026 (SUS-Ziel 90): drei Kennzahlen statt vier, eine Chip-Reihe mit „Offen“ als Standard statt sechs Chips
+// Umbau 19.11.2026 (SUS-Ziel 90): zwei Kennzahlen statt vier, eine Chip-Reihe mit „Offen“ als Standard statt sechs Chips
 // in drei Zeilen; ältere Filter (?f=abgelaufen, ?f=entwurf) bleiben als Link nutzbar und erscheinen dann als eigener Chip.
 export default async function AngebotePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireAuth();
@@ -50,15 +50,20 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
   const match = alt ? alt.match : chip.match;
   const shown = rows.filter(match);
   const { sent, angenommen, offen, geoeffnet } = kennzahlen;
+  // Zwei Kennzahlen (am Handy eine Reihe): offenes Volumen mit Öffnungsquote, angenommen mit Annahmequote
   const kz: Kennzahl[] = [
-    { label: "Offen (monatlich)", wert: eur(offen.reduce((s, r) => s + Number(r.monthlyFee), 0)), hinweis: `${offen.length} offene Angebote`, href: BASIS },
+    {
+      label: "Offen (monatlich)",
+      wert: eur(offen.reduce((s, r) => s + Number(r.monthlyFee), 0)),
+      hinweis: [`${offen.length} offen`, sent.length ? `${Math.round((geoeffnet.length / sent.length) * 100)} % geöffnet` : null].filter(Boolean).join(" · "),
+      href: BASIS,
+    },
     {
       label: "Angenommen",
       wert: String(angenommen.length),
-      hinweis: sent.length ? `${Math.round((angenommen.length / sent.length) * 100)} % von ${sent.length} verschickten` : undefined,
+      hinweis: sent.length ? `${Math.round((angenommen.length / sent.length) * 100)} % von ${sent.length}` : undefined,
       href: chipHref("angenommen"),
     },
-    ...(sent.length ? [{ label: "Geöffnet", wert: `${Math.round((geoeffnet.length / sent.length) * 100)} %`, hinweis: `${geoeffnet.length} von ${sent.length}` }] : []),
   ];
   const ziel = (o: Zeile) => (o.salesContactId ? `${kontaktPfad(o.salesContactId)}#angebot` : offerAdminHref(o));
   const stand = (o: Zeile) => (
@@ -91,7 +96,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
         aktiv={alt ? alt.key : chip.key}
         funktion="page-filter--filter-alle-verschickten-offen-angenommen page-filter-zahlung--filter-zahlung-offen"
         chips={[
-          ...CHIPS.map((c) => ({ key: c.key, label: c.label, href: chipHref(c.key), anzahl: rows.filter(c.match).length })),
+          ...CHIPS.map((c) => ({ key: c.key, label: c.label, href: chipHref(c.key), anzahl: c.key === "offen" || c.key === "zahlung" ? rows.filter(c.match).length : undefined })),
           ...(alt ? [{ key: alt.key, label: `${alt.label} ✕`, href: BASIS }] : []),
         ]}
       />

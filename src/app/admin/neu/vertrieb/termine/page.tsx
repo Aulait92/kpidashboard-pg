@@ -101,7 +101,7 @@ export default async function TerminePage({ searchParams }: { searchParams: Prom
       {conn?.status !== "connected" ? (
         <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900" data-kalender-hinweis>
           <CalendarX2 className="h-4 w-4 shrink-0" />
-          <span className="min-w-0 flex-1">Kalender nicht verbunden: Die Buchungsseite zeigt keine freien Zeiten.</span>
+          <span className="min-w-0 flex-1">Kalender nicht verbunden, keine freien Zeiten buchbar.</span>
           <Link href={einstellungen} className="inline-flex min-h-10 items-center font-semibold underline sm:min-h-0">
             Verbinden
           </Link>

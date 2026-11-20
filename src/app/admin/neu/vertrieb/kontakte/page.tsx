@@ -100,7 +100,7 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
                       <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[color:var(--muted)]">
                         <StageBadge stage={c.stage} />
                         {c.city ? <span>{c.city}</span> : null}
-                        {c.tasks[0] ? <span>· {fmtDate(c.tasks[0].dueAt)} {c.tasks[0].title}</span> : null}
+                        {c.tasks[0] ? <span>{fmtDate(c.tasks[0].dueAt)} {c.tasks[0].title}</span> : null}
                       </span>
                     </span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />

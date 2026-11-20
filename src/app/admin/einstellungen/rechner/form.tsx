@@ -56,7 +56,7 @@ const NEW_PRODUCT: RechnerProduct = {
 };
 
 /** `kompakt` (neuer Admin, Verkaufen → Marketing → Webseite & Rechner, Umbau 19.11.2026): Abschnitte und Produkte
- *  zugeklappt mit Zusammenfassung, Speichern bleibt unten sichtbar. Ohne `kompakt` wie bisher (alter Admin). */
+ *  zugeklappt mit Zusammenfassung, ein Speichern-Knopf darunter. Ohne `kompakt` wie bisher (alter Admin). */
 export function RechnerForm({ config, dataInfo, kompakt = false }: { config: RechnerConfig; dataInfo: Record<string, CplData>; kompakt?: boolean }) {
   const [rows, setRows] = useState<Row[]>(() => config.products.map(toRow));
   const [texts, setTexts] = useState({ headline: config.headline, intro: config.intro, footer: config.footer, contactUrl: config.contactUrl, contactLabel: config.contactLabel, termsUrl: config.termsUrl });
@@ -199,7 +199,7 @@ export function RechnerForm({ config, dataInfo, kompakt = false }: { config: Rec
         </ul>
       ) : null}
       {state.ok ? <p className="text-sm font-medium text-emerald-700">Gespeichert. Der Rechner zeigt die neuen Werte.</p> : null}
-      <div className={kompakt ? "sticky bottom-20 z-10 lg:bottom-4" : undefined}>
+      <div>
         <button disabled={pending} className="h-10 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 font-semibold text-white shadow-[var(--shadow-sm)] hover:bg-[color:var(--brand-dark)] disabled:opacity-60">
           {pending ? "Speichere …" : "Speichern"}
         </button>

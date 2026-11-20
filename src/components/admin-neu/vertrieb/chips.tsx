@@ -17,7 +17,7 @@ export function Chips({ chips, aktiv, label, funktion }: { chips: Chip[]; aktiv:
             href={c.href}
             aria-current={an ? "page" : undefined}
             className={cn(
-              "inline-flex min-h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 text-sm font-medium sm:min-h-9",
+              "inline-flex min-h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2.5 text-sm sm:px-3 font-medium sm:min-h-9",
               an ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
             )}
           >

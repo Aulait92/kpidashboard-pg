@@ -12,7 +12,7 @@ export const metadata = { title: "Webseite & Rechner | performancegrowth Admin" 
 // öffentlicher Break-even-Rechner mit Produkten, Erfahrungswerten, Texten, Kontakt-Link und Garantien.
 // Gleiches Formular und gleiche Server Action wie /admin/einstellungen/rechner.
 // Umbau 19.11.2026: Einrichtung statt Alltag, darum kein Reiter mehr (Zugang: Unterlagen → „Rechner einrichten“, „Mehr“ in
-// Verkaufen, Suche). Formular kompakt: alle Produkte und Abschnitte zugeklappt mit Zusammenfassung, Speichern bleibt unten sichtbar.
+// Verkaufen, Suche). Formular kompakt: Produkte und Garantien, Texte zugeklappt mit Zusammenfassung, ein Speichern-Knopf darunter.
 export default async function Page() {
   await connection();
   await requireAuth();
