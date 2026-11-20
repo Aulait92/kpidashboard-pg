@@ -40,6 +40,14 @@ export async function LeadLegalFooter({ customerId }: { customerId?: string | nu
   // technischer Dienstleister.
   // Rechtsvorprüfung 16.11.2026: Dann heißt der Link nicht „Impressum“, sondern „Anbieterangaben (Erstinformation)“,
   // und wir legen einmalig eine Admin-Aufgabe „Impressum-URL fehlt“ an (lib/impressum-fehlt.ts, blockiert nicht).
+  // Ole, 20.11.2026 („unter Datenschutz ist PG, unter Impressum Lohmann, nicht konsistent“): Ohne eigene
+  // Datenschutz-URL des Vermittlers verlinkt „Datenschutz“ seine Datenschutzhinweise (er ist Verantwortlicher),
+  // unsere Erklärung nur als „Technischer Dienstleister“.
+  if (customerId && links.privacy === operatorPrivacy()) {
+    const { datenschutzUrlFor } = await import("@/lib/erstinformation");
+    const eigene = await datenschutzUrlFor(customerId).catch(() => null);
+    if (eigene) links = { ...links, privacy: eigene, processor: operatorPrivacy() };
+  }
   if (customerId && links.imprint === OPERATOR_IMPRINT) {
     const { erstinfoUrlFor } = await import("@/lib/erstinformation");
     const erstinfo = await erstinfoUrlFor(customerId).catch(() => null);
@@ -48,7 +56,7 @@ export async function LeadLegalFooter({ customerId }: { customerId?: string | nu
         imprint: erstinfo,
         imprintLabel: ANBIETERANGABEN_LABEL,
         privacy: links.privacy,
-        processor: links.processor ?? (links.privacy === operatorPrivacy() ? null : operatorPrivacy()),
+        processor: links.privacy === operatorPrivacy() ? null : operatorPrivacy(),
       };
     // nach dem Senden der Seite, damit der Seitenaufruf nicht wartet
     after(async () => {

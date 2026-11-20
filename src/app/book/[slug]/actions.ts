@@ -40,9 +40,12 @@ export async function bookPublicAction(
 
   const start = String(formData.get("start") ?? "");
   // Video ist Standard (Ole, 20.11.2026); Telefon nur, wenn der Vermittler es freigegeben hat
-  const { loadTerminFormate } = await import("@/lib/termin-formate-server");
-  const telefonErlaubt = (await loadTerminFormate(customerId).catch(() => ({ telefon: false }))).telefon;
-  const mode: "phone" | "video" = formData.get("mode") === "phone" && telefonErlaubt ? "phone" : "video";
+  const { agenturOrt, loadTerminFormate } = await import("@/lib/termin-formate-server");
+  const formate = await loadTerminFormate(customerId).catch(() => ({ telefon: false, vorOrt: false }));
+  const wunsch = formData.get("mode");
+  // „In der Agentur“ nur freigegeben und mit Anschrift (Ole, 20.11.2026)
+  const ort = wunsch === "onsite" && formate.vorOrt ? await agenturOrt(customerId).catch(() => null) : null;
+  const mode: "phone" | "video" | "onsite" = wunsch === "phone" && formate.telefon ? "phone" : ort ? "onsite" : "video";
   const name = String(formData.get("name") ?? "").trim().slice(0, 80);
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const emailRaw = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -63,7 +66,7 @@ export async function bookPublicAction(
     const { pruefeStreckenToken } = await import("@/lib/mail-strecke/token");
     const streckeId = pruefeStreckenToken(streckeToken);
     if (!streckeId) fail("invalid");
-    await bookViaStrecke(slug, customerId, streckeId!, streckeToken, { start, mode, name, phone, email: emailRaw, consent, aufruf });
+    await bookViaStrecke(slug, customerId, streckeId!, streckeToken, { start, mode, ort, name, phone, email: emailRaw, consent, aufruf });
   }
   if (!phone) fail("phone");
   if (!EMAIL_RE.test(emailRaw)) fail("email");
@@ -132,6 +135,7 @@ export async function bookPublicAction(
       conversationId: conversation.id,
       start,
       mode,
+      ort,
       summary: eventSummary(mode, name, product),
       description: buildEventDescription({
         name,
@@ -185,6 +189,7 @@ export async function bookPublicAction(
       leadId,
       startsAt: new Date(res.start),
       mode,
+      ort,
       meetUrl: res.meetUrl,
       manageUrl: res.manageUrl,
     }).catch((e) => console.error("[booking page confirmation]", e));
@@ -209,7 +214,7 @@ async function bookViaStrecke(
   customerId: string,
   streckeId: string,
   token: string,
-  f: { start: string; mode: "phone" | "video"; name: string; phone: string | null; email: string; consent: boolean; aufruf: string | null },
+  f: { start: string; mode: "phone" | "video" | "onsite"; ort: string | null; name: string; phone: string | null; email: string; consent: boolean; aufruf: string | null },
 ): Promise<never> {
   const fail = (code: string): never => redirect(`/book/${slug}?t=${encodeURIComponent(token)}&err=${code}`);
   if (!EMAIL_RE.test(f.email)) fail("email");
@@ -239,6 +244,7 @@ async function bookViaStrecke(
       conversationId: conv?.id ?? null,
       start: f.start,
       mode: f.mode,
+      ort: f.ort,
       summary: eventSummary(f.mode, f.name, lead!.source),
       description: buildEventDescription({ name: f.name, phone: phone ?? "", email: f.email, product: lead!.source, mode: f.mode, summary: null, conversationId: conv?.id ?? null, bookedVia: "mail_strecke" }),
       leadName: f.name,

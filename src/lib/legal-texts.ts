@@ -388,6 +388,17 @@ export const TOMS: string[] = [
   "Automatische, protokollierte Löschung der Unterlagen nach den Fristen im Abschnitt „Löschung und Rückgabe“; das Löschprotokoll wird nach einer Wiederherstellung aus der Sicherung erneut angewendet.",
 ];
 
+/** Speicher der Versicherungsunterlagen laut POLICEN_S3_ENDPOINT (Datenschutz-Prüfung A1, 20.11.2026). */
+export function policenSpeicherAnbieter(endpoint = process.env.POLICEN_S3_ENDPOINT): { name: string; location: string } | null {
+  const eu = euEndpunkt((endpoint ?? "").trim());
+  if (!eu.ok) return null;
+  return eu.region === "auto"
+    ? { name: "Cloudflare, Inc. (R2)", location: "Speicher mit EU-Jurisdiktion; Unternehmen USA" }
+    : { name: "Amazon Web Services EMEA SARL (S3)", location: `Region ${eu.region} (EU); Konzern USA` };
+}
+
+const speicher = policenSpeicherAnbieter();
+
 export const SUBPROCESSORS: { name: string; purpose: string; location: string }[] = [
   { name: "Railway Corporation", purpose: "Hosting von Anwendung und Datenbank", location: "Serverstandort EU (Amsterdam); Unternehmen USA" },
   { name: "Anthropic, PBC", purpose: "KI-System für den digitalen Assistenten: Verarbeitung der Chatnachrichten (ohne Gesundheitsangaben aus Lead-Formularen); Auslesen vom Auftraggeber hochgeladener Versicherungsangebote (nur Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierversicherungen); keine Nutzung zum Training", location: "USA" },
@@ -398,7 +409,14 @@ export const SUBPROCESSORS: { name: string; purpose: string; location: string }[
   { name: "Formagrid Inc. (Airtable)", purpose: "Lead-Datenhaltung, nur noch bis zur vollständigen Umstellung auf den direkten Lead-Eingang", location: "USA" },
   { name: "Zapier, Inc.", purpose: "Übertragung der Leads aus den Meta-Formularen, nur noch bis zur vollständigen Umstellung auf den direkten Lead-Eingang", location: "USA" },
   { name: "OpenAI, L.L.C. / OpenAI Ireland Ltd.", purpose: "Erstellung von Werbemotiven, Videos und Untertiteln für die Kampagnen des Auftraggebers; keine Lead-Daten", location: "Irland / USA" },
+  {
+    name: "OpenAI Ireland Ltd.",
+    purpose: "Auslesen von Versicherungsunterlagen, die Leads oder Kunden des Auftraggebers schicken (Sachversicherungen; Kranken-, BU- und Lebensversicherungen nur nach gesonderter Freischaltung), über den EU-Endpunkt mit Datenresidenz EU; keine Nutzung zum Training",
+    location: "EU (Datenresidenz EU); Konzern USA",
+  },
+  ...(speicher ? [{ name: speicher.name, purpose: "Verschlüsselte Ablage der Versicherungsunterlagen, die Leads oder Kunden des Auftraggebers schicken", location: speicher.location }] : []),
   { name: "Cloudflare, Inc. (R2)", purpose: "Speicherung der Werbemotive für die Kampagnen; keine Lead-Daten", location: "EU / USA" },
   { name: "Functional Software, Inc. (Sentry)", purpose: "Fehlerüberwachung; Sitzungsaufnahmen im Kundenbereich nur mit Einwilligung des einzelnen Nutzers, mit im Browser unkenntlich gemachten Texten, Eingaben und Bildern und ohne Kennungen von Leads (keine Inhalte aus Leads)", location: "Datenregion EU (Deutschland); Unternehmen USA" },
   { name: "Google Ireland Ltd. / Microsoft Ireland Operations Ltd.", purpose: "Kalenderanbindung und E-Mail-Versand über das Postfach des Auftraggebers (einzelne E-Mails und E-Mail-Kampagnen), sofern vom Auftraggeber genutzt", location: "Irland / USA" },
-];
+];import { euEndpunkt } from "@/lib/policen/ablage";
+
