@@ -1809,7 +1809,7 @@
   "id": "test-actions-deletetestcustomeraction--testkunde-komplett-loeschen",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -2025,7 +2025,7 @@
   "id": "meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2037,7 +2037,7 @@
   "id": "capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2049,7 +2049,7 @@
   "id": "actions-togglesourceaction--leadformulare-des-kunden-an-aus",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2061,7 +2061,7 @@
   "id": "page--letzte-leads-mit-abschluss-storno",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -2157,7 +2157,7 @@
   "id": "account-view-protocolcard--protokoll-der-massnahmen-des-kunden",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/optimierung/page.tsx"
+  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/optimierung",
@@ -2169,7 +2169,7 @@
   "id": "actions-addmanualaction--massnahme-von-hand-eintragen-datum-art-text",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/optimierung/page.tsx"
+  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -4965,7 +4965,7 @@
   "id": "testlead-actions-sendtestleadaction--testlead-schicken-echter-ablauf-zaehlt-nirgends",
   "bereich": "betreuen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
+  "ort_neu": "src/components/admin-neu/kunden/leads.tsx"
  },
  {
   "heute": "/admin/leads",

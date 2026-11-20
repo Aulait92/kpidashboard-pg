@@ -120,7 +120,9 @@ describe("Navigation neuer Admin", () => {
     // Admin-Umbau 19.11.2026: Marketing kein Reiter von Verkaufen mehr (über „Mehr“), Webseite & Rechner ohne Reiter
     expect(labels("verkaufen")).toEqual(["Pipeline", "Kontakte", "Termine", "Angebote"]);
     expect(labels("marketing")).toEqual(["LinkedIn", "Empfehlungen", "Unterlagen"]);
-    expect(labels("betreuen")).toEqual(["Kunden", "Chats", "Monatsberichte", "Qualität & Nutzung"]);
+    expect(labels("betreuen")).toEqual(["Kunden", "Chats", "Berichte", "Qualität"]);
+    // Kundenakte höchstens 5 Reiter (Umbau 20.11.2026): Optimierung liegt unter Leads, Monatsberichte in der Übersicht
+    expect(labels("kundenakte")).toEqual(["Übersicht", "Leads", "WhatsApp", "Abrechnung", "Team"]);
     expect(labels("liefern")).toEqual(["Pay-per-Lead", "Leads", "Lead-Eingang", "Werbekonten", "A/B-Tests"]);
     expect(labels("geld")).toEqual(["Übersicht", "Umsatz & Buchungen", "Offene Posten", "Kosten & Bank", "Kunden-Lebenszyklus", "Auswertung"]);
     const ex = (g: Parameters<typeof reiterFuer>[0], label: string) => reiterFuer(g).find((r) => r.label === label)?.exact;

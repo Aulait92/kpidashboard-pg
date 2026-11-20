@@ -1,7 +1,6 @@
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
-import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 const TAG = 24 * 60 * 60 * 1000;
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -26,12 +25,13 @@ export async function Kennzahlen({ customerId }: { customerId: string }) {
     prisma.lead.aggregate({ where: { customerId, createdAt: { gte: seit } }, _sum: { acquisitionCost: true } }),
   ]);
   const summe = Number(kosten._sum.acquisitionCost ?? 0);
+  // Ohne Leadkosten keine Kachel „noch keine Daten“ (Umbau 20.11.2026); die dritte Kachel füllt dann die Zeile
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <Kachel label="Leads (30 Tage)" wert={leads.toLocaleString("de-DE")} />
-      <Kachel label="Termine (30 Tage)" wert={termine.toLocaleString("de-DE")} hinweis={leads ? `${Math.round((termine / leads) * 100)} % der Leads` : undefined} />
-      <Kachel label="Abschlüsse (30 Tage)" wert={abschluesse.toLocaleString("de-DE")} />
-      <Kachel label="Kosten je Termin (30 Tage)" wert={termine && summe ? eur(summe / termine) : NOCH_KEINE_DATEN} hinweis={summe ? `${eur(summe)} Leadkosten` : undefined} />
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 [&>*:last-child:nth-child(odd)]:col-span-2 lg:[&>*:last-child:nth-child(odd)]:col-span-1">
+      <Kachel label="Leads" wert={leads.toLocaleString("de-DE")} hinweis="letzte 30 Tage" />
+      <Kachel label="Termine" wert={termine.toLocaleString("de-DE")} hinweis={leads ? `${Math.round((termine / leads) * 100)} % der Leads` : "letzte 30 Tage"} />
+      <Kachel label="Abschlüsse" wert={abschluesse.toLocaleString("de-DE")} hinweis="letzte 30 Tage" />
+      {termine && summe ? <Kachel label="Kosten je Termin" wert={eur(summe / termine)} hinweis={`${eur(summe)} Leadkosten`} /> : null}
     </div>
   );
 }

@@ -36,7 +36,7 @@ export default async function KundeBerichte({ params, searchParams }: { params: 
               title="Monatsberichte"
               count={reports.length}
               actions={
-                <Link href="/admin/einstellungen/monatsberichte" className="inline-flex min-h-10 items-center text-sm text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
+                <Link href="/admin/neu/einstellungen/monatsberichte" className="inline-flex min-h-10 items-center text-sm text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
                   Vorlage
                 </Link>
               }
