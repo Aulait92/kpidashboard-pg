@@ -58,6 +58,24 @@ export function WaInvited({ email, readOnly, path: initialPath = null }: { email
               <Mail className="h-4 w-4" /> {webmail.label}
             </a>
           ) : null}
+          {!done ? (
+            // Ole, 20.11.2026: „Passwort-Mail kommt nicht an“. Das Konto ist angelegt, also hilft „Forgot password?“ auf
+            // der Anmeldeseite von 360dialog: Sie schickt eine neue Mail an dieselbe Adresse.
+            <details className="mt-1 text-sm" data-wa-keine-mail>
+              <summary className="cursor-pointer font-medium text-[color:var(--brand)]">Keine E-Mail bekommen?</summary>
+              <ol className="mt-2 list-decimal space-y-1 pl-5 text-[color:var(--muted)]">
+                <li>Spam-Ordner und, bei Firmen-Postfächern, die Quarantäne prüfen. Notfalls die IT bitten, no-reply@360dialog.com zuzulassen.</li>
+                <li>
+                  Oder neue E-Mail anfordern: Anmeldeseite öffnen, dort auf <b>„Forgot password?“</b> tippen und <b className="break-all">{email}</b> eintragen. Mit dem neuen Passwort direkt anmelden.
+                </li>
+              </ol>
+              {!readOnly ? (
+                <a href="/buyer/whatsapp-verbinden?weiter=1" className={`${buttonClass("secondary", "md")} mt-2`} data-wa-passwort-vergessen>
+                  Anmeldeseite öffnen <ArrowRight className="h-4 w-4" />
+                </a>
+              ) : null}
+            </details>
+          ) : null}
           <label className="mt-2 flex cursor-pointer items-center gap-2 font-medium">
             <input type="checkbox" className="h-5 w-5" checked={done} disabled={readOnly} onChange={(e) => toggle(e.target.checked)} data-wa-invite-done />
             Erledigt, ich habe mein Passwort festgelegt
