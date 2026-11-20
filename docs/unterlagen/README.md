@@ -24,6 +24,11 @@ ohne Gedankenstriche (Startbild, Schritt 5, „Rund um die Uhr, auch am Sonntaga
 Endbild). Ersetzt: Video und Standbild in beiden PPTX (Folie 13), die 8 Einzelbilder im PDF (Seiten 13 bis 20),
 `public/praesentation/vertrieb/assistent.mp4` und `{vertreter,makler}/13.webp`. Die PPL-Präsentation enthält das Video nicht.
 
+Fassung 20.11.2026, Folie „Sonntag, 21:47 Uhr“ ans Video angeglichen (Ole): „Julia Becker interessiert sich für Privatschutz.“,
+Termin „Montag, 15:00 Uhr“ (vorher Julia, 10:00 Uhr), im Kasten „Montag früh steht Julia Becker auf Ihrer Liste,“ (drei
+Zeilen neu umbrochen). Text in Geist neu gesetzt, Seitenzahl und Kennzeichen unverändert. Vertreter und Makler Folie 12
+(PPTX image11.jpg, PDF Seite 12, Web-Folie 12), PPL Folie 10 (PPTX image10.jpg, PDF Seite 10, `ppl/10.webp`).
+
 Fassung 19.11.2026, Folie 19 „Policen vorab“ (Ole): statt WhatsApp-Telefon jetzt oben das Vergleichsblatt kompakt
 (Doppelt, Kündbar, Fehlt) und darunter ein echter Screenshot der Vergleichsfolie der Beratungspräsentation mit Spalte
 „Ihr bisheriger Vertrag“ neben Basis, Smart und Komfort (erfundene Daten, mit dem App-Code gerendert); links neuer
