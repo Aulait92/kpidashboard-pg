@@ -182,6 +182,7 @@ Eingang), Media-IDs ohne Einwilligung 24 Stunden, Widerruf sofort, mit dem Lead 
 | Google-Bewertungen (`GoogleReview`, Bewertungs-Wächter) | 2 Jahre nach Bewertung; sofort beim Trennen der Verbindung bzw. Vertragsende | automatisch im Cron (`runWaechter`), `disconnect`, `eraseCustomerData` |
 | Empfehlungslinks (`ReferralLink`) | mit dem Lead/Bestandskunden bzw. Vertragsende | `eraseLead`/`eraseCustomerData`, Kaskade |
 | Nicht zugeordnete Leads (Rohdaten aus Meta) | 30 Tage nach Zuordnung, sonst 90 Tage | automatisch (`pruneTransient`) |
+| Geparkte Pay-per-Lead-Leads ohne freien Bezug (`PoolLead` Status `parked`) | 48 h nach Eingang (`PPL_PARK_MAX_HOURS`, Ole, 20.11.2026) | automatisch im WhatsApp-Cron (`expireParked` in `src/lib/ppl/engine.ts`): Status `expired`, nie wieder ausgeliefert; Name, Telefon, E-Mail und Antworten werden entfernt. Bleiben ohne Personenbezug: Produkt, PLZ, Gesellschaft, Beitrag, Anzeige, Zeitpunkte (Auswertung „verworfen (geparkt > 48 h)“). Änderungsprotokoll `ppl.parked_expired` nur mit IDs und Anzahl. Kein Löschprotokoll nötig (zeitliche Frist greift nach einer Wiederherstellung von selbst) |
 | Passwort-Links | 7 Tage nach Ablauf | automatisch (`pruneTransient`) |
 | Sitzung (Cookie) | 30 Tage | läuft ab; 2FA-Zwischenschritt 10 Minuten |
 | Lead auf Wunsch der betroffenen Person | sofort | Lead öffnen → Mehr → „Daten löschen (Datenschutz)“ (Inhaber oder Admin). Anonymisiert den Lead, löscht Chats, Termine, Einwilligung. Umsatz und Status bleiben ohne Personenbezug |

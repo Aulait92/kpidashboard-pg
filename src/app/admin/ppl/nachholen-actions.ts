@@ -7,7 +7,7 @@ import { nachholenAusAirtable } from "@/lib/ppl/airtable-nachholen";
 
 export type NachholenState = { error?: string; message?: string };
 
-const STATUS: Record<string, string> = { delivered: "ausgeliefert", parked: "geparkt", duplicate: "Dublette", invalid: "ungültig" };
+const STATUS: Record<string, string> = { delivered: "ausgeliefert", parked: "geparkt", duplicate: "Dublette", invalid: "ungültig", expired: "verworfen (> 48 h geparkt)" };
 
 /** Admin → Pay-per-Lead → Geparkt: Lead aus Airtable (Lead-Nr.) in den App-Eingang holen. */
 export async function nachholenAction(_prev: NachholenState, fd: FormData): Promise<NachholenState> {
