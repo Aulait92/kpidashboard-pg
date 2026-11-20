@@ -239,7 +239,7 @@ export default async function WhatsAppSettingsPage({
                   <span className="flex-1 font-medium">WhatsApp-Nummer</span>
                   {c.whatsAppAccount?.status === "connected" ? (
                     <span className="text-sm text-emerald-700">
-                      ✓ verbunden{c.whatsAppAccount.phoneNumber ? ` · +${c.whatsAppAccount.phoneNumber}` : ""}
+                      ✓ verbunden{c.whatsAppAccount.phoneNumber ? ` · +${c.whatsAppAccount.phoneNumber.replace(/^\+/, "")}` : ""}
                       {c.whatsAppAccount.phoneNumberId ? "" : " · wartet auf erste Nachricht"}
                     </span>
                   ) : c.whatsAppAccount?.dialog360ChannelId ? (
@@ -351,7 +351,7 @@ export default async function WhatsAppSettingsPage({
                   </ul>
                 )}
                 <details className="border-t border-[color:var(--border)]">
-                  <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-[color:var(--brand)]">+ Vorlage hinzufügen</summary>
+                  <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">+ Vorlage hinzufügen</summary>
                   <div className="px-4 pb-4">
                     <TemplateEditor
                       customerId={c.id}

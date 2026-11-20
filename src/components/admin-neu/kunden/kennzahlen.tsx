@@ -30,7 +30,7 @@ export async function Kennzahlen({ customerId }: { customerId: string }) {
     // Drei Kacheln am Handy in einer Reihe (statt 2 + 1), mit vierter Kachel 2 × 2; Zeitraum steht einmal im Hinweis
     <div className={`grid gap-2 sm:gap-3 lg:grid-cols-4 ${termine && summe ? "grid-cols-2" : "grid-cols-3"}`}>
       <Kachel label="Leads" wert={leads.toLocaleString("de-DE")} hinweis="30 Tage" />
-      <Kachel label="Termine" wert={termine.toLocaleString("de-DE")} hinweis={leads ? `${Math.round((termine / leads) * 100)} % der Leads` : "30 Tage"} />
+      <Kachel label="Termine" wert={termine.toLocaleString("de-DE")} hinweis={leads ? `${Math.round((termine / leads) * 100)} % Quote` : "30 Tage"} />
       <Kachel label="Abschlüsse" wert={abschluesse.toLocaleString("de-DE")} hinweis="30 Tage" />
       {termine && summe ? <Kachel label="Kosten je Termin" wert={eur(summe / termine)} hinweis={`${eur(summe)} Leadkosten`} /> : null}
     </div>

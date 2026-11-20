@@ -154,6 +154,8 @@ export default async function KundeUebersicht({ params, searchParams }: { params
               )}
             </Card>
 
+            {/* Ohne Vertriebskontakt keine leere Verlaufskarte (SUS-Prüfung 20.11.2026) */}
+            {contact ? (
             <Card>
               <div data-funktion="page-contactpage-embedded--eingebettete-kontaktakte-verlauf-aufgaben">
                 <CardHeader
@@ -193,11 +195,10 @@ export default async function KundeUebersicht({ params, searchParams }: { params
                       </li>
                     ) : null}
                   </ul>
-                ) : (
-                  <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Kein Vertriebskontakt verknüpft.</p>
-                )}
+                ) : null}
               </div>
             </Card>
+            ) : null}
 
             <Card>
               <div data-funktion="page-grunddaten--grunddaten-region-betreuungsgebuehr-meta">

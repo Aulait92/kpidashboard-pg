@@ -203,8 +203,9 @@ export function AgentSettings(p: {
         </div>
         <Switch label="Automatisch nachfassen" checked={p.sequencesEnabled} onChange={(next) => setFollowUpSequencesAction(p.customerId, next)} />
         {p.sequencesEnabled && p.sequenceTemplatesMissing.length ? (
-          <p className="w-full text-xs font-medium text-amber-700" title="Ohne freigegebene Vorlage geht außerhalb des 24-h-Fensters keine WhatsApp raus. Stattdessen entsteht eine Anruf-Aufgabe.">
-            Vorlagen fehlen (sonst Anruf-Aufgabe statt WhatsApp): {p.sequenceTemplatesMissing.join(", ")}.
+          <p className="flex w-full items-center gap-1.5 text-xs font-medium text-amber-700">
+            {p.sequenceTemplatesMissing.length === 1 ? "1 Vorlage fehlt" : `${p.sequenceTemplatesMissing.length} Vorlagen fehlen`}, dort entsteht eine Anruf-Aufgabe statt WhatsApp.
+            <Hint text={`Ohne freigegebene Vorlage geht außerhalb des 24-h-Fensters keine WhatsApp raus. Es fehlen: ${p.sequenceTemplatesMissing.join(", ")}.`} />
           </p>
         ) : null}
       </div>
