@@ -347,8 +347,10 @@ export async function syncMeta(
 // Kunden gehören, überspringt syncMeta() deshalb auch.
 
 export async function customerOwnedAdAccounts(): Promise<Set<string>> {
+  // Interne Konten (z. B. „Ole Agentur“ als Testkunde mit dem PKV-Werbekonto) sind unsere eigenen Agentur-Konten:
+  // nicht überspringen, sonst fehlen ihre Kosten in Pay-per-Lead und Zahlen (Ole, 20.11.2026)
   const rows = await prisma.customer.findMany({
-    where: { metaAdAccountId: { not: null } },
+    where: { metaAdAccountId: { not: null }, plan: { not: "internal" } },
     select: { metaAdAccountId: true },
   });
   return new Set(rows.map((r) => r.metaAdAccountId!).filter(Boolean));
