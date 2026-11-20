@@ -22,7 +22,7 @@ export default async function Page() {
       <p className="text-sm text-[color:var(--muted)]">
         Empfehlungen und offene Prämien:{" "}
         <Link href={ziel("/admin/marketing/empfehlungen")} className="text-[color:var(--brand)] hover:underline">
-          Marketing → Empfehlungen
+          Verkaufen › Empfehlungen
         </Link>
       </p>
     </EinstellungSeite>

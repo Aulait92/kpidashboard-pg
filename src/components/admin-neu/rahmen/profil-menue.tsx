@@ -127,9 +127,8 @@ export function ProfilMenue({ email, variant = "kopf" }: { email: string; varian
             <Link href="/admin/neu/einstellungen" onClick={() => setOpen(false)} className={zeile}>
               <Settings className="h-4 w-4" /> Einstellungen
             </Link>
-            <Link href="/admin/neu/werkzeuge" onClick={() => setOpen(false)} className={zeile} data-profil="werkzeuge">
-              <Wrench className="h-4 w-4" /> Werkzeuge
-              <span className="ml-auto text-xs text-[color:var(--muted)]">Technik</span>
+            <Link href="/admin/neu/einstellungen#technik" onClick={() => setOpen(false)} className={zeile} data-profil="technik">
+              <Wrench className="h-4 w-4" /> Technik
             </Link>
           </div>
           <PushZeile />

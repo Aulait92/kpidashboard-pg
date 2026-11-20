@@ -57,11 +57,11 @@ export type NeuBereich = {
   hinweis?: string;
   /** Startseite des Bereichs */
   pfad: string;
-  /** Seitenleiste: oben (Mein Tag und Rollen), unten (Einstellungen) oder nur im Profilmenü (Werkzeuge, Was wo ist).
-   *  Seiten im Profilmenü markieren in der Seitenleiste „Einstellungen“. */
-  ort: "oben" | "unten" | "profil";
-  /** Handy: in der Leiste unten (höchstens 5 Punkte, wie /buyer) oder über das Profilmenü oben rechts */
-  handy: "leiste" | "profil";
+  /** Seitenleiste: oben (Mein Tag und Rollen), unten (Einstellungen), nur im Profilmenü (Was wo ist) oder keiner
+   *  (Technik: nur Rolle für Mein Tag, Seiten unter Einstellungen). Seiten im Profilmenü markieren „Einstellungen“. */
+  ort: "oben" | "unten" | "profil" | "keiner";
+  /** Handy: in der Leiste unten (höchstens 5 Punkte, wie /buyer), über das Profilmenü oben rechts oder keiner */
+  handy: "leiste" | "profil" | "keiner";
   seiten: NeuSeite[];
 };
 
@@ -175,26 +175,22 @@ export const BEREICHE: NeuBereich[] = [
     ],
   },
   {
+    // Werkzeuge und Einstellungen zusammengelegt (UX-Umbau 20.11.2026): Die Seiten der Technik stehen unter
+    // Einstellungen › Technik (Adressen bleiben). Die Rolle bleibt nur für „Mein Tag“ (Technik-Punkte wie
+    // Hintergrund-Jobs, lib/admin-neu/rollen.ts) und führt dort zum Systemzustand; in Seitenleiste und Leiste unten
+    // erscheint sie nicht mehr (ort/handy „keiner“).
     id: "werkzeuge",
-    label: "Werkzeuge",
-    kurz: "Werkzeuge",
-    hinweis: "Technik, Einrichtung",
-    pfad: n("/werkzeuge"),
-    ort: "profil",
-    handy: "profil",
-    seiten: [
-      { view: "werkzeuge", pfad: n("/werkzeuge"), titel: "Werkzeuge", alt: [], suchwoerter: "Technik Diagnose Verbindungen Import", fertig: true },
-      { view: "w-zustand", pfad: n("/werkzeuge/zustand"), titel: "Systemzustand", gruppe: "Zustand", alt: [], suchwoerter: "Diagnose Hintergrund-Jobs Heartbeat Meta Stripe Bank LinkedIn WhatsApp-Zustellung Google-Kontingent Werbekosten", fertig: true },
-      { view: "e-status", pfad: n("/einstellungen/status"), titel: "Status & Support", gruppe: "Zustand", alt: ["/admin/einstellungen/status"], suchwoerter: "Störung Statusmeldung", untertitel: "Öffentliche Statusseite und Support-Kontakt im Hilfe-Chat.", fertig: true },
-      { view: "e-anbindungen", pfad: n("/einstellungen/anbindungen"), titel: "Anbindungen & Import", gruppe: "Verbindungen & Importe", alt: ["/admin/vertrieb/import"], suchwoerter: "Instantly Webhook Meta-Verbindung LinkedIn Agenturliste", untertitel: "Woher Vertrieb und Lead-Eingang ihre Daten bekommen.", fertig: true },
-      { view: "e-vorlagen", pfad: n("/einstellungen/whatsapp"), titel: "WhatsApp-Vorlagen & Support-Nummer", gruppe: "WhatsApp", alt: ["/admin/whatsapp/settings"], suchwoerter: "Vorlagen Assistent Support-Nummer A/B-Test", untertitel: "Support-Nummer und A/B-Tests der Vorlagen.", fertig: true },
-      { view: "w-gebuehren", pfad: n("/werkzeuge/meta-gebuehren"), titel: "Meta-Gebühren", gruppe: "WhatsApp", alt: [], suchwoerter: "WhatsApp Gebühren Kosten Meta intern", fertig: true },
-      { view: "e-login", pfad: n("/einstellungen/login"), titel: "Login-Seite", gruppe: "Inhalte & Einrichtung", alt: ["/admin/einstellungen/login"], suchwoerter: "Infokarten", untertitel: "Infokarten neben dem Login, aktive Karten wechseln sich ab.", fertig: true },
-      { view: "e-einrichtung", pfad: n("/einstellungen/einrichtung"), titel: "Einrichtung neuer Kunden", gruppe: "Inhalte & Einrichtung", alt: ["/admin/einstellungen/einrichtung"], suchwoerter: "Business-ID Erklärvideos Team-Kalender", untertitel: "Was neue Kunden unter Einrichtung sehen.", fertig: true },
-      { view: "e-protokoll", pfad: n("/einstellungen/protokoll"), titel: "Änderungsprotokoll", gruppe: "Protokoll & Testdaten", alt: ["/admin/einstellungen/protokoll"], untertitel: "Wer hat wann was geändert. Einträge bleiben 1 Jahr.", fertig: true },
-    ],
+    label: "Technik",
+    kurz: "Technik",
+    pfad: n("/werkzeuge/zustand"),
+    ort: "keiner",
+    handy: "keiner",
+    seiten: [],
   },
   {
+    // Eine Seite Einstellungen (UX-Umbau 20.11.2026) mit Gruppen nach Rollen wie in der Seitenleiste, Technik zuletzt.
+    // Reihenfolge der Gruppen: GRUPPEN in src/app/admin/neu/einstellungen/page.tsx. Seiten ohne `gruppe` sind
+    // Unterseiten (Statusseite unter Systemzustand, Meta-Gebühren unter WhatsApp).
     id: "einstellungen",
     label: "Einstellungen",
     kurz: "Einstellungen",
@@ -202,20 +198,29 @@ export const BEREICHE: NeuBereich[] = [
     ort: "unten",
     handy: "profil",
     seiten: [
-      { view: "einstellungen", pfad: n("/einstellungen"), titel: "Einstellungen", alt: ["/admin/einstellungen"], fertig: true },
+      { view: "einstellungen", pfad: n("/einstellungen"), titel: "Einstellungen", alt: ["/admin/einstellungen"], suchwoerter: "Werkzeuge Technik", fertig: true },
       { view: "e-sicherheit", pfad: n("/einstellungen/sicherheit"), titel: "Zwei-Faktor & Geräte", gruppe: "Konto & Sicherheit", alt: ["/admin/einstellungen/sicherheit"], suchwoerter: "Sicherheit 2FA", untertitel: "Anmeldung schützen.", fertig: true },
       { view: "e-admins", pfad: n("/einstellungen/admins"), titel: "Admins & Rechte", gruppe: "Konto & Sicherheit", alt: [], untertitel: "Wer Zugang zum Admin hat.", fertig: true },
+      { view: "e-buchung", pfad: n("/einstellungen/buchungsseiten"), titel: "Buchungsseiten", gruppe: "Verkaufen", alt: ["/admin/vertrieb/buchungsseite"], suchwoerter: "Kalender Termintypen Zeiten", untertitel: "Interessenten buchen Vertriebstermine direkt in Ihrem Kalender.", fertig: true },
       { view: "e-followups", pfad: n("/einstellungen/follow-ups"), titel: "Später-Follow-ups", gruppe: "Verkaufen", alt: ["/admin/vertrieb/follow-ups"], untertitel: "Kontakte, die „später“ gesagt haben, bekommen zum Zeitpunkt zwei Mails.", fertig: true },
-      { view: "e-buchung", pfad: n("/einstellungen/buchungsseiten"), titel: "Buchungsseiten", gruppe: "Verkaufen", alt: ["/admin/vertrieb/buchungsseite"], untertitel: "Interessenten buchen Vertriebstermine direkt in Ihrem Kalender.", fertig: true },
-      { view: "e-halte", pfad: n("/einstellungen/halteangebote"), titel: "Halteangebote", gruppe: "Kunden", alt: ["/admin/einstellungen/halteangebote"], untertitel: "Was Kunden beim Kündigen je Grund angeboten wird.", fertig: true },
-      { view: "e-berichte", pfad: n("/einstellungen/monatsberichte"), titel: "Monatsberichte", gruppe: "Kunden", alt: ["/admin/einstellungen/monatsberichte"], suchwoerter: "automatischer Versand", untertitel: "Ab dem 2. entsteht für jeden aktiven Kunden ein Bericht über den Vormonat.", fertig: true },
-      { view: "e-neuigkeiten", pfad: n("/einstellungen/neuigkeiten"), titel: "Neuigkeiten", gruppe: "Kunden", alt: ["/admin/einstellungen/neuigkeiten"], untertitel: "Einträge unter Profil → Neuigkeiten im Kundenbereich. Entwürfe sind unsichtbar.", fertig: true },
+      { view: "e-empfehlen", pfad: n("/einstellungen/kollegen-empfehlen"), titel: "Kollegen empfehlen", gruppe: "Verkaufen", alt: ["/admin/einstellungen/empfehlungen"], suchwoerter: "Prämie Empfehlungsprogramm", untertitel: "Kunden empfehlen uns mit persönlichem Link an Kollegen.", fertig: true },
       { view: "e-produkte", pfad: n("/einstellungen/produkte"), titel: "Produkte", gruppe: "Angebot & Produkte", alt: ["/admin/einstellungen/produkte"], untertitel: "Sparten, die Kunden selbst dazubuchen können.", fertig: true },
       { view: "e-tarife", pfad: n("/einstellungen/tarife"), titel: "Tarifkatalog", gruppe: "Angebot & Produkte", alt: ["/admin/einstellungen/beitraege"], suchwoerter: "Beiträge Beitragsrechner Vorschläge Vermittler", untertitel: "Vorschläge von Vermittlern, Gesellschaften und Beiträge rechnen.", fertig: true },
-      { view: "e-automatik", pfad: n("/einstellungen/kampagnen-automatik"), titel: "Kampagnen-Automatik", gruppe: "Werbung", alt: ["/admin/einstellungen/kampagnen-automatik"], suchwoerter: "Autopilot Media Buyer Budget", untertitel: "Was das Agenten-Team selbst erledigt. Bei Meta wird nie etwas aktiviert.", fertig: true },
-      { view: "e-empfehlen", pfad: n("/einstellungen/kollegen-empfehlen"), titel: "Kollegen empfehlen", gruppe: "Marketing", alt: ["/admin/einstellungen/empfehlungen"], untertitel: "Kunden empfehlen uns mit persönlichem Link an Kollegen.", fertig: true },
-      { view: "e-rechnung", pfad: n("/einstellungen/rechnungsangaben"), titel: "Rechnungsangaben", gruppe: "Finanzen", alt: ["/admin/einstellungen/rechnungsangaben"], suchwoerter: "Steuernummer Stripe Fußzeile", untertitel: "Pflichtangaben auf jeder Stripe-Rechnung.", fertig: true },
-      { view: "e-zahlung", pfad: n("/einstellungen/zahlungserinnerungen"), titel: "Zahlungserinnerungen", gruppe: "Finanzen", alt: [], untertitel: "Angenommene, aber nicht bezahlte Angebote.", fertig: true },
+      { view: "e-neuigkeiten", pfad: n("/einstellungen/neuigkeiten"), titel: "Neuigkeiten", gruppe: "Betreuen", alt: ["/admin/einstellungen/neuigkeiten"], untertitel: "Einträge unter Profil › Neuigkeiten im Kundenbereich. Entwürfe sind unsichtbar.", fertig: true },
+      { view: "e-berichte", pfad: n("/einstellungen/monatsberichte"), titel: "Monatsberichte", gruppe: "Betreuen", alt: ["/admin/einstellungen/monatsberichte"], suchwoerter: "automatischer Versand", untertitel: "Ab dem 2. entsteht für jeden aktiven Kunden ein Bericht über den Vormonat.", fertig: true },
+      { view: "e-halte", pfad: n("/einstellungen/halteangebote"), titel: "Halteangebote", gruppe: "Betreuen", alt: ["/admin/einstellungen/halteangebote"], suchwoerter: "Kündigung", untertitel: "Was Kunden beim Kündigen je Grund angeboten wird.", fertig: true },
+      { view: "e-einrichtung", pfad: n("/einstellungen/einrichtung"), titel: "Einrichtung neuer Kunden", gruppe: "Betreuen", alt: ["/admin/einstellungen/einrichtung"], suchwoerter: "Business-ID Erklärvideos Team-Kalender Hilfetermin", untertitel: "Was neue Kunden unter Einrichtung sehen.", fertig: true },
+      { view: "e-login", pfad: n("/einstellungen/login"), titel: "Login-Seite", gruppe: "Betreuen", alt: ["/admin/einstellungen/login"], suchwoerter: "Infokarten", untertitel: "Infokarten neben dem Login, aktive Karten wechseln sich ab.", fertig: true },
+      { view: "e-automatik", pfad: n("/einstellungen/kampagnen-automatik"), titel: "Kampagnen-Automatik", gruppe: "Liefern", alt: ["/admin/einstellungen/kampagnen-automatik"], suchwoerter: "Autopilot Media Buyer Budget Optimierung", untertitel: "Was das Agenten-Team selbst erledigt. Bei Meta wird nie etwas aktiviert.", fertig: true },
+      { view: "e-rechnung", pfad: n("/einstellungen/rechnungsangaben"), titel: "Rechnungsangaben", gruppe: "Geld", alt: ["/admin/einstellungen/rechnungsangaben"], suchwoerter: "Steuernummer Stripe Fußzeile", untertitel: "Pflichtangaben auf jeder Stripe-Rechnung.", fertig: true },
+      { view: "e-zahlung", pfad: n("/einstellungen/zahlungserinnerungen"), titel: "Zahlungserinnerungen", gruppe: "Geld", alt: [], untertitel: "Angenommene, aber nicht bezahlte Angebote.", fertig: true },
+      // Technik (bis 20.11.2026 eigener Bereich „Werkzeuge“, Adressen unter /werkzeuge bleiben)
+      { view: "w-zustand", pfad: n("/werkzeuge/zustand"), titel: "Systemzustand", gruppe: "Technik", alt: [], suchwoerter: "Werkzeuge Diagnose Hintergrund-Jobs Heartbeat Meta Stripe Bank LinkedIn WhatsApp-Zustellung Google-Kontingent Werbekosten", fertig: true },
+      { view: "e-status", pfad: n("/einstellungen/status"), titel: "Statusseite & Support", alt: ["/admin/einstellungen/status"], suchwoerter: "Störung Statusmeldung Support-Kontakt", untertitel: "Störungen für Kunden melden, Support-Kontakt im Hilfe-Chat.", fertig: true },
+      { view: "e-anbindungen", pfad: n("/einstellungen/anbindungen"), titel: "Anbindungen & Import", gruppe: "Technik", alt: ["/admin/vertrieb/import"], suchwoerter: "Instantly Webhook Meta-Verbindung LinkedIn Google Agenturliste CSV Policen KI", untertitel: "Woher Vertrieb und Lead-Eingang ihre Daten bekommen.", fertig: true },
+      { view: "e-vorlagen", pfad: n("/einstellungen/whatsapp"), titel: "WhatsApp", gruppe: "Technik", alt: ["/admin/whatsapp/settings"], suchwoerter: "Vorlagen Support-Nummer 360dialog A/B-Test Meta-Gebühren", untertitel: "Support-Nummer für Hilfe-Chat und Zahlungserinnerungen.", fertig: true },
+      { view: "w-gebuehren", pfad: n("/werkzeuge/meta-gebuehren"), titel: "Meta-Gebühren", alt: [], suchwoerter: "WhatsApp Gebühren Kosten Meta intern", fertig: true },
+      { view: "e-protokoll", pfad: n("/einstellungen/protokoll"), titel: "Änderungsprotokoll", gruppe: "Technik", alt: ["/admin/einstellungen/protokoll"], suchwoerter: "Audit Verlauf", untertitel: "Wer hat wann was geändert. Einträge bleiben 1 Jahr.", fertig: true },
     ],
   },
   {

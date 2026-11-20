@@ -18,7 +18,7 @@ export default async function Page() {
       ? "Hier eingetragen. Leer lassen, um die Env-Variable META_BUSINESS_ID zu nutzen."
       : s.businessIdSource === "env"
         ? `Aus der Env-Variable (META_BUSINESS_ID bzw. PG_META_BUSINESS_ID): ${s.businessId}. Ein Eintrag hier hat Vorrang.`
-        : `Standard: ${s.businessId}. Bitte prüfen (Business Manager → Einstellungen → Unternehmensinfo).`;
+        : `Standard: ${s.businessId}. Bitte prüfen (Business Manager › Einstellungen › Unternehmensinfo).`;
   return (
     <EinstellungSeite pfad="/admin/neu/einstellungen/einrichtung">
       <Card>

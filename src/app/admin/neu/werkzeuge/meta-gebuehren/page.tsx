@@ -10,7 +10,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 
 export const metadata = { title: "Meta-Gebühren | performancegrowth Admin" };
 
-// Werkzeuge › Meta-Gebühren (Admin v2, Paket A5, F186): WhatsApp-Gebühren von Meta über alle Kunden an einem Ort,
+// Einstellungen › WhatsApp › Meta-Gebühren (Admin v2, Paket A5, F186): WhatsApp-Gebühren von Meta über alle Kunden an einem Ort,
 // laufender Monat und Vormonat, teuerste zuerst. Je Kunde weiter in der Kundenakte › WhatsApp (dort mit Abrechnung).
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
@@ -25,7 +25,7 @@ export default async function MetaGebuehren() {
   const { monat, vormonat, kunden } = await ladeMetaGebuehren();
   const summe = (k: "monat" | "vormonat") => kunden.reduce((s, x) => s + x[k], 0);
   return (
-    <Seite titel="Meta-Gebühren" untertitel="WhatsApp-Gebühren von Meta je Kunde, im Preis enthalten (interne Kosten)." zurueck={{ href: `${NEU}/werkzeuge`, label: "Werkzeuge" }}>
+    <Seite titel="Meta-Gebühren" untertitel="WhatsApp-Gebühren von Meta je Kunde, im Preis enthalten (interne Kosten)." zurueck={{ href: `${NEU}/einstellungen/whatsapp`, label: "WhatsApp" }}>
       <Kennzahlen
         werte={[
           { label: `${monatName(monat)} bisher`, wert: eur(summe("monat")), hinweis: `${kunden.filter((k) => k.monat > 0).length} Kunden` },

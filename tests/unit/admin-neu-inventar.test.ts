@@ -81,7 +81,8 @@ describe("Navigation neuer Admin", () => {
     const pfade = SEITEN.map((s) => s.pfad);
     expect(new Set(pfade).size).toBe(pfade.length);
     expect(pfade.every((p) => p === "/admin/neu" || p.startsWith("/admin/neu/"))).toBe(true);
-    expect(BEREICHE.every((b) => b.seiten.some((s) => s.pfad === b.pfad))).toBe(true);
+    // Startseite liegt im eigenen Bereich; eine Rolle ohne Platz in der Navigation (Technik, nur für Mein Tag) führt auf eine Seite eines anderen
+    expect(BEREICHE.every((b) => (b.ort === "keiner" ? SEITEN : b.seiten).some((s) => s.pfad === b.pfad))).toBe(true);
   });
 
   it("Bereich und Seite werden aus der Adresse erkannt (Rollen, Admin v2)", () => {
@@ -95,7 +96,9 @@ describe("Navigation neuer Admin", () => {
     expect(bereichFuer("/admin/neu/leads/ppl/bezug/neu")?.id).toBe("liefern");
     expect(bereichFuer("/admin/neu/leads/werbekonten/123")?.id).toBe("liefern");
     expect(bereichFuer("/admin/neu/zahlen/kosten/zuordnen")?.id).toBe("geld");
-    expect(bereichFuer("/admin/neu/einstellungen/anbindungen")?.id).toBe("werkzeuge");
+    // Werkzeuge ist seit 20.11.2026 die Gruppe „Technik“ der Einstellungen (Adressen bleiben)
+    expect(bereichFuer("/admin/neu/einstellungen/anbindungen")?.id).toBe("einstellungen");
+    expect(bereichFuer("/admin/neu/werkzeuge/zustand")?.id).toBe("einstellungen");
     expect(bereichFuer("/admin/neu/einstellungen/produkte")?.id).toBe("einstellungen");
     // Unbekannte Unterseite: Bereich der Seite darüber
     expect(bereichFuer("/admin/neu/leads/ppl/etwas/neues")?.id).toBe("liefern");
@@ -105,10 +108,10 @@ describe("Navigation neuer Admin", () => {
     expect(reiterFuer("kundenakte", { id: "k1" })[0]).toEqual({ href: "/admin/neu/kunden/k1", label: "Übersicht", exact: true });
   });
 
-  it("Rahmen (Umbau 20.11.2026): Mein Tag und vier Rollen oben, unten nur Einstellungen; Werkzeuge und Was wo ist im Profilmenü; Handy 5 Punkte ohne Mehr", () => {
+  it("Rahmen (Umbau 20.11.2026): Mein Tag und vier Rollen oben, unten nur Einstellungen (mit Technik); Was wo ist im Profilmenü; Handy 5 Punkte ohne Mehr", () => {
     expect(BEREICHE.filter((b) => b.ort === "oben").map((b) => b.label)).toEqual(["Mein Tag", "Verkaufen", "Betreuen", "Liefern", "Geld"]);
     expect(BEREICHE.filter((b) => b.ort === "unten").map((b) => b.label)).toEqual(["Einstellungen"]);
-    expect(BEREICHE.filter((b) => b.ort === "profil").map((b) => b.label)).toEqual(["Werkzeuge", "Was wo ist"]);
+    expect(BEREICHE.filter((b) => b.ort === "profil").map((b) => b.label)).toEqual(["Was wo ist"]);
     expect(BEREICHE.filter((b) => b.handy === "leiste").map((b) => b.id)).toEqual(["mein-tag", "verkaufen", "betreuen", "liefern", "geld"]);
     // Profilmenü-Seiten markieren in der Seitenleiste „Einstellungen“; sie bleiben über die Suche erreichbar
     expect(bereichFuer("/admin/neu/was-wo-ist")?.ort).toBe("profil");
@@ -143,7 +146,7 @@ describe("Navigation neuer Admin", () => {
     for (const p of ["/admin/neu/vertrieb", "/admin/neu/kunden", "/admin/neu/leads", "/admin/neu/leads/chats", "/admin/neu/zahlen", "/admin/neu/marketing", "/admin/neu/einstellungen/anbindungen"]) {
       expect(seiteFuer(p), p).not.toBeNull();
     }
-    expect(SUCH_SEITEN.find((s) => s.href === "/admin/neu/werkzeuge")?.bereich).toBe("Werkzeuge");
+    expect(SUCH_SEITEN.find((s) => s.href === "/admin/neu/werkzeuge/zustand")?.bereich).toBe("Einstellungen · Technik");
   });
 
   it("„+ Neu“ enthält alle vereinbarten Einträge, nach Rollen geordnet", () => {
