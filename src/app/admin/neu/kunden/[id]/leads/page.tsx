@@ -13,7 +13,7 @@ export const metadata = { title: "Leads | performancegrowth Admin" };
 
 // Kundenakte › Leads (Umbau 20.11.2026, früher „Kampagne & Leads“ und „Optimierung“ als zwei Reiter):
 // Was man am häufigsten braucht, steht oben: die letzten Leads. Daneben „Kampagne mit KI“ als einzige Hauptaktion,
-// Optimierung (offen, wenn Maßnahmen auf Freigabe warten), Lead-Qualität, Verlustgründe und zugeklappt die Einrichtung
+// Optimierung (zu, Zusammenfassung nennt wartende Freigaben; offen beim Sprung aus Push oder Mein Tag), Lead-Qualität, Verlustgründe und zugeklappt die Einrichtung
 // (Werbekonto, CAPI, Leadformulare). /kunden/<id>/optimierung leitet hierher (#optimierung).
 export default async function KundeLeads({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ optimierung?: string }> }) {
   await connection();
@@ -45,19 +45,6 @@ export default async function KundeLeads({ params, searchParams }: { params: Pro
             </div>
           </Card>
 
-          <div data-funktion="account-view-protocolcard--protokoll-der-massnahmen-des-kunden actions-addmanualaction--massnahme-von-hand-eintragen-datum-art-text">
-            <Aufklapp
-              id="optimierung"
-              titel="Optimierung"
-              zusammenfassung={geplant ? `${geplant} ${geplant === 1 ? "Maßnahme wartet" : "Maßnahmen warten"} auf Freigabe` : `${protokoll} ${protokoll === 1 ? "Maßnahme" : "Maßnahmen"} im Protokoll`}
-              offen={!!geplant || !!sp.optimierung}
-            >
-              <div className="-mt-5 [&>div]:!grid-cols-1">
-                <KundenOptimierung params={Promise.resolve({ id })} />
-              </div>
-            </Aufklapp>
-          </div>
-
           <div data-funktion="lead-qualitaet-card--lead-qualitaet-disqualifizierte-leads-nach-grund">
             <LeadQualitaetCard customerId={id} />
           </div>
@@ -65,6 +52,21 @@ export default async function KundeLeads({ params, searchParams }: { params: Pro
 
           <Aufklapp titel="Werbekonto & Formulare" zusammenfassung={stand}>
             <WerbekontoFormulare customerId={id} />
+          </Aufklapp>
+        </div>
+      </div>
+      {/* Volle Breite: die Konto-Ansicht (Liefern › Werbekonto) braucht Platz für zwei Spalten */}
+      <div className="mt-5">
+        <div data-funktion="account-view-protocolcard--protokoll-der-massnahmen-des-kunden actions-addmanualaction--massnahme-von-hand-eintragen-datum-art-text">
+          <Aufklapp
+            id="optimierung"
+            titel="Optimierung"
+            zusammenfassung={geplant ? `${geplant} ${geplant === 1 ? "Maßnahme wartet" : "Maßnahmen warten"} auf Freigabe` : `${protokoll} ${protokoll === 1 ? "Maßnahme" : "Maßnahmen"} im Protokoll`}
+            offen={!!sp.optimierung}
+          >
+            <div className="-mt-5">
+              <KundenOptimierung params={Promise.resolve({ id })} />
+            </div>
           </Aufklapp>
         </div>
       </div>
