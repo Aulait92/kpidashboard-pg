@@ -53,7 +53,7 @@ describe("Bekannte Antworten aus dem Formular", () => {
     const t = erstanschreibenText({ an: "du", name: "Ole", source: "Privatschutz", formular: testLeadAnswers("Privatschutz") });
     // v10 (Ole, 19.11.2026): feste Frage fett am Ende der ersten Zeile, darunter nur „KI-Assistent“
     expect(t.split("\n")[0].endsWith(" *Ist davon schon etwas versichert?*")).toBe(true);
-    expect(t.split("\n").at(-1)).toBe("_KI-Assistent_");
+    expect(t.split("\n").at(-1)).toBe("_Digitaler KI-Assistent_");
     expect(t).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
   });
 

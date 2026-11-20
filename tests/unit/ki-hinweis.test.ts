@@ -16,7 +16,7 @@ import {
 } from "@/lib/whatsapp/ki-hinweis";
 import { beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { buildSystemPrompt } from "@/lib/whatsapp/bot";
-import { ERSTINFO_FOOTER_V8, ERSTINFO_FOOTER_V9, ERSTINFO_FOOTER_V10, erstinfoFooterFor, NAECHSTE_FASSUNG, noticeText, OUTREACH_PURPOSES, TEMPLATE_BODY, TEMPLATE_BODY_B, TEMPLATE_HEADER, templateVersionFor } from "@/lib/whatsapp/templates";
+import { ERSTINFO_FOOTER_V8, ERSTINFO_FOOTER_V9, ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12, erstinfoFooterFor, NAECHSTE_FASSUNG, noticeText, OUTREACH_PURPOSES, TEMPLATE_BODY, TEMPLATE_BODY_B, TEMPLATE_HEADER, templateVersionFor } from "@/lib/whatsapp/templates";
 import { buildTemplateRequest, templateNameFor } from "@/lib/whatsapp/template-plan";
 import { erstanschreibenText } from "@/lib/whatsapp/erstanschreiben";
 import { isStopMessage } from "@/lib/whatsapp/stopp";
@@ -47,7 +47,7 @@ describe("KI-Hinweis", () => {
       // Ab v8 (Ole, 17.11.2026) steht die KI-Kennzeichnung in der festen Fußzeile unter dem Text (Meta: Footer), v9 eigene,
       // v10 nur „KI-Assistent“ (Ole, 19.11.2026)
       const fuss = erstinfoFooterFor(templateVersionFor(p));
-      expect(fuss).toBe(ERSTINFO_FOOTER_V10);
+      expect(fuss).toBe(ERSTINFO_FOOTER_V12);
       for (const b of [TEMPLATE_BODY[p], TEMPLATE_BODY_B[p]]) {
         if (!b) continue;
         expect(hasKiHinweis(`${b.sie}\n${fuss}`), p).toBe(true);
@@ -155,20 +155,20 @@ describe("KI-Hinweis nach Anwalts-Memo (Rechtsvorprüfung 16.11.2026)", () => {
 
   it("Erstanschreiben v10 (Ole, 19.11.2026): kurz, KI-Kennzeichnung in der Fußzeile, kein „Mensch“, kein Tarif-Hinweis; wird eingereicht", () => {
     for (const p of OUTREACH_PURPOSES) {
-      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v10_sie`);
+      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v12_sie`);
       const req = buildTemplateRequest(p, names, undefined, "sie", { documentExample: "https://x.de/e.pdf" });
-      expect(req.name, p).toBe(`pg_${p}_v10_sie`);
-      expect((req.components as { type: string; text?: string }[]).find((c) => c.type === "FOOTER")?.text, p).toBe(ERSTINFO_FOOTER_V10);
+      expect(req.name, p).toBe(`pg_${p}_v12_sie`);
+      expect((req.components as { type: string; text?: string }[]).find((c) => c.type === "FOOTER")?.text, p).toBe(ERSTINFO_FOOTER_V12);
       expect(NAECHSTE_FASSUNG[p], p).toBeUndefined();
       for (const t of [TEMPLATE_BODY[p].du!, TEMPLATE_BODY[p].sie, TEMPLATE_BODY_B[p]!.du!, TEMPLATE_BODY_B[p]!.sie]) {
         expect(t, p).not.toContain("Hier schreibt");
         expect(t, p).toMatch(/\*[^*]+\?\*/);
         expect(t, p).not.toMatch(/Mensch|berate nicht|[–—]/);
-        expect(hasKiHinweis(`${t}\n${ERSTINFO_FOOTER_V10}`), p).toBe(true);
+        expect(hasKiHinweis(`${t}\n${ERSTINFO_FOOTER_V12}`), p).toBe(true);
       }
     }
     // gespeicherter Text einer gesendeten v10-Vorlage trägt die Fußzeile „KI-Assistent“: der KI-Hinweis gilt als gegeben
-    expect(kiHinweisNoetig({ outbound: [`${ERSTINFO_KOPF}\nHallo, danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*\n\n${ERSTINFO_FOOTER_V10}`], previousAt: null, now: new Date() })).toBeNull();
+    expect(kiHinweisNoetig({ outbound: [`${ERSTINFO_KOPF}\nHallo, danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*\n\n${ERSTINFO_FOOTER_V12}`], previousAt: null, now: new Date() })).toBeNull();
     // gespeicherter Text einer gesendeten v9-Vorlage trägt die Fußzeile: der KI-Hinweis gilt als gegeben
     expect(kiHinweisNoetig({ outbound: [`${ERSTINFO_KOPF}\nHallo, danke für Ihre Anfrage! *Frage?*\n\n${ERSTINFO_FOOTER_V9}`], previousAt: null, now: new Date() })).toBeNull();
     // gespeicherter Text einer gesendeten v8-Vorlage trägt die Fußzeile: der KI-Hinweis gilt als gegeben

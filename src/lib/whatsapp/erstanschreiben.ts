@@ -886,12 +886,19 @@ export const ERSTANSCHREIBEN_FREITEXT_FUSS = "KI-Assistent · Erstinformation fo
  */
 export const ERSTINFO_FOOTER_V10 = "KI-Assistent";
 
+/**
+ * Fußzeile ab Erstanschreiben v12 (Ole, 19.11.2026: „digitaler Assistent statt KI-Assistent“; Recht: das Wort KI muss
+ * bleiben, KI-VO Art. 50, daher „Digitaler KI-Assistent“). Gleicher Text wie v10/v11; die neue Versionsnummer ist nur
+ * nötig, weil Meta die Fußzeile einer eingereichten Vorlage nicht ändern lässt (v10 war beim Testkunden schon eingereicht).
+ */
+export const ERSTINFO_FOOTER_V12 = "Digitaler KI-Assistent";
+
 /** KI-Kennzeichnung unter dem Erstanschreiben v10/v11 im Freitext (wie die Fußzeile der Vorlage). */
-export const ERSTANSCHREIBEN_V10_FREITEXT_FUSS = ERSTINFO_FOOTER_V10;
+export const ERSTANSCHREIBEN_V10_FREITEXT_FUSS = ERSTINFO_FOOTER_V12;
 
 /** Fußzeile, die zum Erstanschreiben dieses Leads gehört (Vorschau): v10 „KI-Assistent“, sonst die der v9. */
 export function erstanschreibenFusszeile(source: string | null | undefined, formular?: FormAntwort[] | null, opts: { gebucht?: boolean } = {}): string {
-  return v10Moeglich(source, formular, opts) ? ERSTINFO_FOOTER_V10 : ERSTINFO_FOOTER_V9;
+  return v10Moeglich(source, formular, opts) ? ERSTINFO_FOOTER_V12 : ERSTINFO_FOOTER_V9;
 }
 
 /** Knöpfe der bei Meta noch freigegebenen v4 (Zahnzusatz), Antworten darauf gelten als dieselbe Frage 1. */

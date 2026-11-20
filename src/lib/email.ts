@@ -229,15 +229,13 @@ export function offerDiscountLine(d: { label: string; discount: number; list: nu
   };
 }
 
-/** Schickt einem Interessenten den Link zu seinem Angebot. */
-export async function sendOfferEmail(opts: {
-  to: string;
+/** Inhalt der Angebotsmail (ohne Empfänger und Versand), für Versand und Vorschau gleich. */
+export type AngebotsMailInhalt = {
   /** z. B. „Hallo Herr Weber,“ */
   greeting: string;
   number: string;
   offerUrl: string;
   validUntil: Date;
-  replyTo?: string | null;
   /** Optional: Link zum Rechner (mit Budget/Zielgruppe vorausgefüllt) */
   rechnerUrl?: string | null;
   /** Optional: Link zur Web-Präsentation (/praesentation/<token>) */
@@ -247,8 +245,8 @@ export async function sendOfferEmail(opts: {
    * Verschieben, sonst persönlicher Buchungslink (/termin/entscheidung?k=…)
    */
   entscheidungsCall?: EntscheidungsCall | null;
-  /** Optional: Präsentation als PDF-Anhang */
-  attachment?: { filename: string; content: Buffer } | null;
+  /** Optional: Präsentation als PDF-Anhang (für den Aufbau zählt nur, ob es einen gibt) */
+  attachment?: { filename: string } | null;
   /** Anrede: true = Du-Form, sonst Sie */
   du?: boolean;
   /** Empfehlungsrabatt auf die Einrichtung (eigene Zeile, Listenpreis durchgestrichen). */
@@ -261,10 +259,13 @@ export async function sendOfferEmail(opts: {
   vorauszahlung?: boolean;
   /** Zahlung nachträglich (Ole, 19.11.2026): erste Abbuchung (YYYY-MM-DD) und Setup netto */
   nachtraeglich?: { ersteIso: string | null; setup: number } | null;
-}): Promise<SendResult & { subject?: string; text?: string }> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
-  if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+};
+
+/**
+ * Baut Betreff, Text und HTML der Angebotsmail (rein, ohne Versand). sendOfferEmail verschickt genau das;
+ * die Vorschau im Admin (previewOfferEmailAction) zeigt genau das (Ole, 20.11.2026).
+ */
+export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; text: string; html: string } {
   const rechner = opts.rechnerUrl ?? null;
   const praes = opts.praesentationUrl ?? null;
   const termin = opts.entscheidungsCall ? entscheidungsCallText(opts.entscheidungsCall, !!opts.du) : null;
@@ -294,6 +295,38 @@ export async function sendOfferEmail(opts: {
     ...(anhang ? [t.anhang, ""] : []),
     signatureText(),
   ].join("\n");
+  const html = `
+      <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.introHtml} ${t.accept}</p>
+        <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
+        <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
+        ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
+        ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
+        ${vorausText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(vorausText)}</p>` : ""}
+        ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
+        ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}
+        ${termin ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(termin.satz)}${termin.url ? ` <a href="${escapeHtml(termin.url)}" style="color:#2563eb;font-weight:600">${escapeHtml(termin.linkLabel)}</a>` : ""}</p>` : ""}
+        ${anhang ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.anhang}</p>` : ""}
+        ${signatureHtml()}
+      </div>`;
+  return { subject, text, html };
+}
+
+/** Schickt einem Interessenten den Link zu seinem Angebot. */
+export async function sendOfferEmail(
+  opts: Omit<AngebotsMailInhalt, "attachment"> & {
+    to: string;
+    replyTo?: string | null;
+    /** Optional: Präsentation als PDF-Anhang */
+    attachment?: { filename: string; content: Buffer } | null;
+  },
+): Promise<SendResult & { subject?: string; text?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
+  if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+  const anhang = opts.attachment ?? null;
+  const { subject, text, html } = baueAngebotsMail(opts);
   try {
     const sent = await mailClient(apiKey).emails.send({
       from,
@@ -302,21 +335,7 @@ export async function sendOfferEmail(opts: {
       subject,
       ...(anhang ? { attachments: [{ filename: anhang.filename, content: anhang.content }] } : {}),
       text,
-      html: `
-        <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.introHtml} ${t.accept}</p>
-          <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
-          <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
-          ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
-          ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
-          ${vorausText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(vorausText)}</p>` : ""}
-          ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
-          ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}
-          ${termin ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(termin.satz)}${termin.url ? ` <a href="${escapeHtml(termin.url)}" style="color:#2563eb;font-weight:600">${escapeHtml(termin.linkLabel)}</a>` : ""}</p>` : ""}
-          ${anhang ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.anhang}</p>` : ""}
-          ${signatureHtml()}
-        </div>`,
+      html,
     });
     if (wasBlocked(sent)) return { ok: false, error: MAIL_BLOCKED_TEXT };
     const { error } = sent;

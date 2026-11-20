@@ -34,9 +34,9 @@ describe("Vorlagen-Plan", () => {
 
   it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
     // Erstanschreiben v10 (19.11.2026, feste Frage, nur mit PDF-Kopf; Fassung b = v11), übrige Zwecke v4
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v10");
-    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v10_sie");
-    expect(templateNameFor("outreach_tkv", undefined, "sie", "b")).toBe("pg_outreach_tkv_v10_b_sie");
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v12");
+    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v12_sie");
+    expect(templateNameFor("outreach_tkv", undefined, "sie", "b")).toBe("pg_outreach_tkv_v12_b_sie");
     expect(templateNameFor("outreach_tkv", "v6", "sie_ohne_name", "a", false)).toBe("pg_outreach_tkv_v6_ohnepdf_sie_ohne_name");
     // Nachfassen v5 (Ole, 18.11.2026, zur Einreichung freigegeben: Vermittler-Nennung)
     expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v5_b_sie");
