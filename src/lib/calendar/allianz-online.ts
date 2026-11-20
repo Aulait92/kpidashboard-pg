@@ -80,7 +80,7 @@ const NOT_FOUND_MESSAGE = "Vertreter-Seite nicht gefunden. Bitte den Link prüfe
  */
 export function parseVertretungInput(raw: string): { vtnr: string } | { pageUrl: string } | null {
   const s = raw.trim();
-  const digits = s.replace(/[\s.]/g, "");
+  const digits = s.replace(/[\s./-]/g, ""); // z. B. 30/410/2222 (Ole, 20.11.2026: mit Schrägstrichen abgelehnt)
   if (/^\d{6,12}(-\d{1,4})?$/.test(digits)) return { vtnr: digits };
   let url: URL;
   try {
@@ -326,7 +326,7 @@ async function vtnrFromPage(pageUrl: string): Promise<string> {
  */
 export async function resolveAllianzCalendar(raw: string): Promise<AllianzCalendar> {
   const parsed = parseVertretungInput(raw);
-  if (!parsed) throw new AllianzCalendarError("Bitte den Link Ihrer Vertreter-Seite eingeben, z. B. vertretung.allianz.de/vorname.nachname.");
+  if (!parsed) throw new AllianzCalendarError("Bitte Ihre Allianz-Vertreternummer eingeben, z. B. 30/410/2222.");
   const pageUrl = "pageUrl" in parsed ? parsed.pageUrl : null;
   const vtnr = "vtnr" in parsed ? parsed.vtnr : await vtnrFromPage(parsed.pageUrl);
   const { rootOrgId } = await moduleConfig();

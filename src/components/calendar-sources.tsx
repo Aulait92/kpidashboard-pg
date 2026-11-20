@@ -506,9 +506,9 @@ export function AllianzForm({ action, readOnly, hidden, onUseIcs }: { action: Fo
     <form action={formAction} className="space-y-3">
       {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
       <label className="block text-sm font-medium" htmlFor="vertretung">
-        Link Ihrer Vertreter-Seite
+        Ihre Allianz-Vertreternummer
       </label>
-      <input id="vertretung" name="vertretung" className={input} placeholder="vertretung.allianz.de/vorname.nachname" autoComplete="off" />
+      <input id="vertretung" name="vertretung" className={input} placeholder="z. B. 30/410/2222" autoComplete="off" />
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="consent" className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--brand)]" />
         <span>Ich stimme zu, dass performancegrowth meine freien Termine aus meinem Allianz-Online-Kalender abruft.</span>
