@@ -47,6 +47,11 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
     annual: parseRhythmus(formData.get("rhythmus")),
     // Produkte und Tagesbudget (nur mit Freigabe am Angebot; Preis rechnet der Server neu)
     products: parseProdukte(formData.get("produkte")),
+    // Erste Woche (nur Pay-per-Lead + Software mit Lead-Produkt): Anzahl, Wiederholung, Registernummer
+    ersteWoche:
+      formData.get("ersteWocheMenge") != null
+        ? { quantity: formData.get("ersteWocheMenge"), autoRenew: formData.get("ersteWocheWiederholen") === "on", registerNr: String(formData.get("registerNr") ?? "") }
+        : null,
     ip: ip === "unknown" ? null : ip,
     agent: h.get("user-agent"),
   });

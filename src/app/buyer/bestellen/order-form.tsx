@@ -4,13 +4,15 @@ import { useActionState, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { orderAction, type OrderFormState } from "./actions";
-import { withVat } from "@/lib/offer-pricing";
+import { bestellBetrag, bruttoJeLead, STEUERFREI_PREISHINWEIS, type Steuer } from "@/lib/ppl/steuer";
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 
 export function OrderForm(p: {
   subscriptionId: string;
   price: number;
+  /** Umsatzsteuer dieses Bezugs für diesen Käufer (lib/ppl/steuer.ts effektiveSteuer) */
+  steuer: Steuer;
   credit: number;
   min: number;
   defaultQty: number;
@@ -21,8 +23,10 @@ export function OrderForm(p: {
   const [state, action, pending] = useActionState<OrderFormState, FormData>(orderAction, {});
   const [qty, setQty] = useState(Math.max(p.min, p.defaultQty));
   const [week, setWeek] = useState<"0" | "1">("1");
-  const gross = qty * p.price;
-  const credit = Math.min(p.credit, gross);
+  // Gleiche Rechnung wie die Abbuchung (placeOrder → chargeNow): Summe und Knopf = Abbuchungsbetrag
+  const betrag = bestellBetrag({ price: p.price, quantity: qty, credit: p.credit, steuer: p.steuer });
+  const frei = p.steuer === "steuerfrei_4_11";
+  const gutschriftBrutto = Math.round((bestellBetrag({ price: p.price, quantity: qty, credit: 0, steuer: p.steuer }).brutto - betrag.brutto) * 100) / 100;
   const step = qty >= 50 ? 10 : 5;
   return (
     <form action={action} className="space-y-3">
@@ -63,10 +67,10 @@ export function OrderForm(p: {
           </button>
         </div>
         <div className="text-sm">
-          <div className="text-lg font-semibold tabular-nums">{eur(withVat(gross - credit))}</div>
+          <div className="text-lg font-semibold tabular-nums">{eur(betrag.brutto)}</div>
           <div className="text-[color:var(--muted)]">
-            {qty} × {eur(withVat(p.price))}
-            {credit > 0 ? ` − ${eur(withVat(credit))} Gutschrift` : ""} · inkl. USt.
+            {frei ? `${qty} × ${eur(p.price)}` : `${qty} × ${eur(bruttoJeLead(p.price, p.steuer))}`}
+            {betrag.gutschrift > 0 ? ` − ${eur(gutschriftBrutto)} Gutschrift` : ""} · {frei ? STEUERFREI_PREISHINWEIS : `inkl. ${eur(betrag.steuerBetrag)} USt. (19 %)`}
           </div>
         </div>
       </div>
@@ -77,7 +81,7 @@ export function OrderForm(p: {
       {state.error ? <p className="text-sm text-rose-700">{state.error}</p> : null}
       {state.message ? <p className="text-sm text-emerald-700">{state.message}</p> : null}
       <Button type="submit" variant="primary" size="md" disabled={pending || p.disabled || qty < p.min}>
-        {pending ? "Wird bestellt …" : `Bestellen und ${eur(withVat(gross - credit))} bezahlen`}
+        {pending ? "Wird bestellt …" : `Bestellen und ${eur(betrag.brutto)} bezahlen`}
       </Button>
     </form>
   );

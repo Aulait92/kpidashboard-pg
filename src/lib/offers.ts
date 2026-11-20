@@ -40,6 +40,8 @@ import { referralSetupDiscount } from "@/lib/kollegen";
 import { checkBusiness, type BusinessInput } from "@/lib/unternehmer";
 import { contractSummaryLines, hasPriceStep, NACHTRAEGLICH_MAX_STARTTAG, nachtraeglichStartOk, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 import { parseAbrechnungstag } from "@/lib/abrechnungstag";
+import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_STANDARD, ersteWocheAus, ersteWocheMenge } from "@/lib/ppl/erste-woche-shared";
+import { normalizeRegisterNummer } from "@/lib/erstinformation-shared";
 
 
 export type OfferFormInput = {
@@ -113,6 +115,11 @@ export type OfferFormInput = {
   abschlussBonus?: number | null;
   /** Letzter Tag des Bonus (YYYY-MM-DD, gilt bis 23:59 Uhr Berlin); leer = Versandtag. */
   abschlussBonusBis?: string | null;
+  /**
+   * „Ihre erste Woche“ (nur Pay-per-Lead + Software, Ole 20.11.2026; lib/ppl/erste-woche.ts): Lead-Produkt wie im
+   * Bezug, Bezeichnung (optional), Preis je Lead netto und vorausgewählte Anzahl (Standard 20, ab 5). Leer = ohne.
+   */
+  ersteWoche?: { productKey: string; label?: string | null; price: number | null; quantity?: number | null } | null;
 };
 
 /** Rechtstexte, denen bei der Annahme zugestimmt wird (per Umgebungsvariable). */
@@ -178,6 +185,16 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   if (ppl && (input.introMonthlyFee != null || input.annual)) throw new Error("Pay-per-Lead + Software hat keinen Startpreis und keine Vorauszahlung.");
   const abrechnungstag = parseAbrechnungstag(input.billingDay);
   if (!abrechnungstag.ok) throw new Error(abrechnungstag.error);
+  // Erste Woche (Pay-per-Lead + Software): Produkt, Preis netto, Anzahl
+  let ersteWoche: { productKey: string; label: string | null; price: number; quantity: number } | null = null;
+  if (ppl && input.ersteWoche?.productKey?.trim()) {
+    const w = input.ersteWoche;
+    const wPrice = Number(w.price);
+    if (!Number.isFinite(wPrice) || wPrice <= 0) throw new Error("Bitte einen Preis je Lead für die erste Woche angeben.");
+    const quantity = w.quantity == null ? ERSTE_WOCHE_STANDARD : ersteWocheMenge(w.quantity);
+    if (quantity == null) throw new Error(`Die erste Woche braucht mindestens ${ERSTE_WOCHE_MIN} Leads.`);
+    ersteWoche = { productKey: w.productKey.trim().slice(0, 120), label: w.label?.trim().slice(0, 120) || null, price: Math.round(wPrice * 100) / 100, quantity };
+  }
   // Empfehlungsrabatt: automatisch für gültig empfohlene Kontakte, vom Admin übersteuerbar
   let discount: { amount: number; label: string; referralId: string } | null = null;
   const wanted = ppl ? null : input.setupDiscount;
@@ -323,6 +340,9 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
               !test && price.setupFee > 0 && input.abschlussBonus !== 0 && isIsoDate(input.abschlussBonusBis) && input.abschlussBonusBis >= berlinTodayIso()
                 ? berlinTagesendeIso(input.abschlussBonusBis)
                 : null,
+            ...(ersteWoche
+              ? { pplProductKey: ersteWoche.productKey, pplLabel: ersteWoche.label, pplPrice: ersteWoche.price, pplQuantity: ersteWoche.quantity, pplAutoRenew: true }
+              : {}),
             validUntil,
             termsUrl,
             dpaUrl,
@@ -381,6 +401,8 @@ export async function acceptOffer(
     annual?: boolean | null;
     /** Produkte mit Tagesbudget (nur mit customerChoosesProducts; serverseitig geprüft, Preis neu nach Staffel); fehlt = wie im Angebot. */
     products?: unknown;
+    /** Erste Woche (nur Angebote mit erster Woche): Anzahl (ab 5), jede Woche wiederholen, Registernummer (Pflicht). */
+    ersteWoche?: { quantity?: unknown; autoRenew?: boolean | null; registerNr?: string | null } | null;
   },
 ): Promise<AcceptResult> {
   const offer = await getOfferByToken(token);
@@ -395,6 +417,17 @@ export async function acceptOffer(
   if (name.length < 3) return { ok: false, error: "Bitte geben Sie Ihren vollständigen Namen ein." };
   const business = checkBusiness(opts.business);
   if (!business.ok) return { ok: false, error: business.error };
+
+  // Erste Woche (Ole, 20.11.2026): Anzahl ab 5, Registernummer Pflicht (Format D-XXXX-XXXXX-XX)
+  const ersteWoche = ersteWocheAus(offer);
+  let ersteWocheWahl: { quantity: number; autoRenew: boolean; registerNr: string } | null = null;
+  if (ersteWoche) {
+    const quantity = opts.ersteWoche?.quantity == null ? ersteWoche.quantity : ersteWocheMenge(opts.ersteWoche.quantity);
+    if (quantity == null) return { ok: false, error: `Bitte mindestens ${ERSTE_WOCHE_MIN} Leads für die erste Woche wählen.` };
+    const registerNr = normalizeRegisterNummer(opts.ersteWoche?.registerNr);
+    if (!registerNr) return { ok: false, error: "Bitte Ihre Registernummer im Format D-XXXX-XXXXX-XX angeben." };
+    ersteWocheWahl = { quantity, autoRenew: opts.ersteWoche?.autoRenew !== false, registerNr };
+  }
 
   // Produkte und Tagesbudget: Wahl prüfen, Monatsgebühr nach Staffel neu (Ole, 19.11.2026)
   const produktWahl = resolveProduktWahl(
@@ -460,13 +493,14 @@ export async function acceptOffer(
       // Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026): Setup und erster Zeitraum auf einer Rechnung (lib/billing.ts)
       prepayAtAcceptance: choice.annualPrepay,
       ...(produktWahl.geaendert ? { products: produktWahl.products, monthlyFee: produktWahl.monthlyFee } : {}),
+      ...(ersteWocheWahl ? { pplQuantity: ersteWocheWahl.quantity, pplAutoRenew: ersteWocheWahl.autoRenew, pplRegisterNr: ersteWocheWahl.registerNr } : {}),
     },
   });
   if (updated.count === 0) return { ok: false, error: "Dieses Angebot kann nicht mehr angenommen werden." };
   // Ab hier mit den angenommenen Werten weiterarbeiten.
   const accepted = { ...offerEff, term: choice.term, startDate, annualPrepay: choice.annualPrepay, annualFreeMonths: choice.annualFreeMonths };
   const produktText = produktWahl.geaendert ? `${produktWahl.products.map((p) => `${p.name} ${p.dailyBudget} €/Tag`).join(", ")}, ` : "";
-  const chosenText = `${produktText}${TERM_SHORT[choice.term]}${offer.annualChoice && prepayPossible(choice.term) ? (choice.annualPrepay ? (choice.term === "6m" ? ", 6 Monate im Voraus" : ", jährlich im Voraus") : ", monatlich") : ""}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
+  const chosenText = `${produktText}${TERM_SHORT[choice.term]}${offer.annualChoice && prepayPossible(choice.term) ? (choice.annualPrepay ? (choice.term === "6m" ? ", 6 Monate im Voraus" : ", jährlich im Voraus") : ", monatlich") : ""}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}${ersteWocheWahl ? `, erste Woche ${ersteWocheWahl.quantity} Leads${ersteWocheWahl.autoRenew ? " (jede Woche)" : ""}, Registernummer ${ersteWocheWahl.registerNr}` : ""}`;
   await audit("offer.accept", {
     entity: "Offer",
     entityId: offer.id,
@@ -481,6 +515,7 @@ export async function acceptOffer(
       annualChoice: offer.annualChoice,
       chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart || offer.annualChoice || produktWahl.geaendert,
       ...(produktWahl.geaendert ? { products: produktWahl.products, monthlyFee: produktWahl.monthlyFee } : {}),
+      ...(ersteWocheWahl ? { ersteWoche: ersteWocheWahl } : {}),
       company: business.company,
       vatId: business.vatId,
       asBusiness: true,

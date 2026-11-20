@@ -5,6 +5,7 @@ import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { areaQuotas } from "@/lib/ppl/engine";
 import { deleteAreaAction, manualOrderAction, saveAreaAction } from "../../actions";
 import { TestLeadButton } from "./test-lead-button";
+import { SteuerKarte } from "./steuer-karte";
 
 // Lieferung testen, Gebiete mit Vorrang und Bestellungen eines Bezugs: gemeinsam für /admin/ppl/bezug/[id] und
 // den neuen Admin (/admin/neu/leads/ppl/bezug/[id]).
@@ -29,6 +30,7 @@ export async function BezugZusatz({ sub }: { sub: Bezug | null }) {
   const nextWeek = weekRange(new Date(), 1).start;
   return (
     <>
+        {sub ? <SteuerKarte sub={sub} /> : null}
         {sub && testTargets.length ? (
           <TestLeadButton
             subscriptionId={sub.id}

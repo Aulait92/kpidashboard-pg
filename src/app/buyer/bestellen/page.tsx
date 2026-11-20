@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { withVat } from "@/lib/offer-pricing";
 import { CreditCard, Package } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Button, Card, CardHeader } from "@/components/ui";
@@ -8,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { fmtWeek, monthRange, weekRange } from "@/lib/ppl/periods";
 import { openCredits } from "@/lib/ppl/storno";
 import { MIN_ORDER } from "@/lib/ppl/orders";
+import { bruttoJeLead, effektiveSteuer, isSteuer, STEUERFREI_PREISHINWEIS, type Steuer } from "@/lib/ppl/steuer";
 import { OrderForm } from "./order-form";
 import { paymentSetupAction, toggleAutoRenewAction } from "./actions";
 import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
@@ -16,14 +16,16 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Bestellen | performancegrowth" };
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
-// Bruttopreise anzeigen (Ole, 19.11.2026); gespeichert und abgebucht wird netto, Stripe rechnet die USt. dazu
-const brutto = (netto: number) => eur(withVat(netto));
+// Bruttopreise anzeigen (Ole, 19.11.2026); gespeichert wird netto, Stripe rechnet die USt. dazu. Steuerfreie Leads
+// (§ 4 Nr. 11 UStG, Ole 20.11.2026): brutto = netto, mit Hinweis.
+const brutto = (netto: number, steuer: Steuer) => eur(bruttoJeLead(netto, steuer));
 const STATUS: Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   paid: { label: "bezahlt", tone: "success" },
   processing: { label: "Lastschrift läuft", tone: "success" },
   open: { label: "Zahlung offen", tone: "warning" },
   failed: { label: "Zahlung fehlgeschlagen", tone: "danger" },
   cancelled: { label: "storniert", tone: "neutral" },
+  wartet: { label: "wird vorbereitet", tone: "warning" },
 };
 
 export default async function OrderPage({ searchParams }: { searchParams: Promise<{ zahlung?: string }> }) {
@@ -33,7 +35,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
   const { zahlung } = await searchParams;
   const [subs, customer] = await Promise.all([
     prisma.leadSubscription.findMany({ where: { customerId: ctx.customerId, active: true, delivery: { in: ["app", "app_pdf"] } }, orderBy: { createdAt: "asc" } }),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { stripeCustomerId: true } }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { stripeCustomerId: true, vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true } }),
   ]);
   if (!subs.length) redirect("/buyer");
   const { hasPaymentMethod, billingEnabled } = await import("@/lib/billing");
@@ -85,9 +87,20 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
         {cards.map(({ s, current, next, credits, delivered, stornos, quota }) => {
           const pct = quota ? Math.min(100, Math.round((delivered / quota) * 100)) : 0;
           const price = Number(s.price);
+          const steuer = effektiveSteuer(s, customer).steuer;
+          const frei = steuer === "steuerfrei_4_11";
           return (
             <Card key={s.id}>
-              <CardHeader title={s.label ?? s.productKey} icon={Package} actions={<span className="text-sm text-[color:var(--muted)]">{brutto(price)} je Lead</span>} />
+              <CardHeader
+                title={s.label ?? s.productKey}
+                icon={Package}
+                actions={
+                  <span className="text-right text-sm text-[color:var(--muted)]">
+                    {brutto(price, steuer)} je Lead
+                    {frei ? <span className="block text-xs">{STEUERFREI_PREISHINWEIS}</span> : null}
+                  </span>
+                }
+              />
               <div className="space-y-4 px-5 pb-5 text-sm">
                 <div>
                   <div className="flex items-baseline justify-between gap-3">
@@ -112,18 +125,24 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
 
                 {credits.amount > 0 ? (
                   <p className="rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-emerald-900">
-                    Gutschrift {brutto(credits.amount)} aus {credits.leadIds.length} Storno(s) wird mit der nächsten Bestellung verrechnet.
+                    Gutschrift {brutto(credits.amount, steuer)} aus {credits.leadIds.length} Storno(s) wird mit der nächsten Bestellung verrechnet.
                   </p>
                 ) : null}
 
                 {s.period === "week" ? (
                   <div className="border-t border-[color:var(--border)] pt-4">
-                    {next && ["paid", "processing"].includes(next.status) ? (
+                    {[current, next].find((o) => o?.status === "wartet") ? (
+                      // Erste Woche aus dem Angebot (lib/ppl/erste-woche.ts): wartet auf Registerprüfung bzw. Zahlungsart
+                      <p className="text-[color:var(--muted)]" data-erste-woche-wartet>
+                        <b className="text-[color:var(--foreground)]">{[current, next].find((o) => o?.status === "wartet")!.quantity} Leads vorgemerkt.</b>{" "}
+                        {hasPm ? "Wir prüfen kurz Ihre Registernummer, dann buchen wir ab und die Lieferung startet." : "Bitte hinterlegen Sie oben eine Zahlungsart. Danach prüfen wir kurz Ihre Registernummer und die Lieferung startet."}
+                      </p>
+                    ) : next && ["paid", "processing"].includes(next.status) ? (
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <div className="font-medium">Nächste Woche ({fmtWeek(nextWeek.start)})</div>
                           <div className="text-[color:var(--muted)]">
-                            {next.quantity} Leads bestellt · {brutto(Number(next.amount))} · {STATUS[next.status]?.label}
+                            {next.quantity} Leads bestellt · {brutto(Number(next.amount), isSteuer(next.steuer) ? next.steuer : "steuerpflichtig")} · {STATUS[next.status]?.label}
                           </div>
                         </div>
                         <form action={toggleAutoRenewAction}>
@@ -137,6 +156,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
                       <OrderForm
                         subscriptionId={s.id}
                         price={price}
+                        steuer={steuer}
                         credit={credits.amount}
                         min={MIN_ORDER}
                         defaultQty={current?.quantity ?? next?.quantity ?? 20}

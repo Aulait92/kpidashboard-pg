@@ -114,6 +114,12 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         if (event.type === "checkout.session.completed") {
           const { savePaymentSetup } = await import("@/lib/billing");
           await savePaymentSetup(session).catch((err) => reportError(err, "billing-payment-setup"));
+          // Erste Woche aus dem Angebot (lib/ppl/erste-woche.ts): wartet sie nur noch auf die Zahlungsart, jetzt abbuchen
+          const customerId = session.metadata?.customer_id;
+          if (customerId) {
+            const { wartendeFreigeben } = await import("@/lib/ppl/erste-woche");
+            await wartendeFreigeben(customerId).catch((err) => reportError(err, "ppl-erste-woche-freigabe"));
+          }
         }
         return;
       }

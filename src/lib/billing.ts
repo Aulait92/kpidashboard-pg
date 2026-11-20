@@ -42,6 +42,7 @@ import { seatsToBill } from "@/lib/seats";
 import { MANUAL_SEAT_TASK, manualSeatTask, seatUsage } from "@/lib/seats-server";
 import { accountTaxIdParams, customerInvoiceSettingsCreate, customerInvoiceSettingsUpdate, invoiceFooterParams, loadInvoiceDefaults } from "@/lib/invoice-footer";
 import { allowedPaymentMethodTypes, type Zahlart } from "@/lib/zahlart";
+import { STEUERFREI_RECHNUNGSHINWEIS, type Steuer } from "@/lib/ppl/steuer";
 
 let client: Stripe | null = null;
 
@@ -143,6 +144,37 @@ async function resolveTax(stripe: Stripe) {
   if (!taxMode) console.info("[billing] Stripe Tax ohne aktive Registrierung – fester Steuersatz 19 % wird verwendet.");
   taxMode = { automatic: false, rateId: rate.id, checkedAt: Date.now() };
   return taxMode;
+}
+
+let exemptRate: { id: string; checkedAt: number } | null = null;
+
+/**
+ * Steuersatz 0 % für steuerfreie Leads nach § 4 Nr. 11 UStG (Ole, 20.11.2026; lib/ppl/steuer.ts). Eigener Satz statt
+ * „ohne Steuer“, damit die Rechnung die Befreiung je Position ausweist; der Pflichthinweis steht zusätzlich im Fuß.
+ */
+async function resolveExemptRate(stripe: Stripe): Promise<string> {
+  if (exemptRate && Date.now() - exemptRate.checkedAt < 10 * 60 * 1000) return exemptRate.id;
+  const rates = await stripe.taxRates.list({ active: true, limit: 100 });
+  let rate = rates.data.find((r) => r.metadata?.pg_key === "ust0_4_11");
+  if (!rate) {
+    rate = await stripe.taxRates.create({
+      display_name: "USt. (steuerfrei § 4 Nr. 11 UStG)",
+      description: STEUERFREI_RECHNUNGSHINWEIS,
+      jurisdiction: "DE",
+      country: "DE",
+      percentage: 0,
+      inclusive: false,
+      tax_type: "vat",
+      metadata: { pg_key: "ust0_4_11" },
+    });
+  }
+  exemptRate = { id: rate.id, checkedAt: Date.now() };
+  return rate.id;
+}
+
+/** Rechnungsfuß mit Pflichthinweis für steuerfreie Leads vor den Firmenangaben. */
+export function steuerfreiFooter(footer: string): string {
+  return `${STEUERFREI_RECHNUNGSHINWEIS}.\n${footer}`;
 }
 
 const cents = (eur: number) => Math.round(eur * 100);
@@ -1302,7 +1334,9 @@ export async function hasPaymentMethod(stripeCustomerId: string | null): Promise
 
 /**
  * Rechnung sofort erstellen und einziehen (Vorkasse für eine Bestellung).
- * Liefert den Stand: paid | processing (Lastschrift läuft) | open | failed.
+ * Liefert den Stand: paid | processing (Lastschrift läuft) | open | failed, dazu den Rechnungsbetrag (brutto).
+ * Immer eine eigene Rechnung nur mit diesen Positionen (pending_invoice_items_behavior „exclude“): Leads stehen nie
+ * auf einer Rechnung mit Software oder Betreuung (Rechtsprüfung 19.11.2026, EuGH C-907/19).
  */
 export async function chargeNow(opts: {
   stripeCustomerId: string;
@@ -1312,15 +1346,26 @@ export async function chargeNow(opts: {
   metadata: Record<string, string>;
   /** Stripe-Produkt der Positionen (Standard: Leads). */
   productKey?: ProductKey;
-}): Promise<{ invoiceId: string; status: "paid" | "processing" | "open" | "failed" }> {
+  /**
+   * Umsatzsteuer (lib/ppl/steuer.ts): „steuerfrei_4_11“ nur für Leads (Satz 0 % und Pflichthinweis im Rechnungsfuß),
+   * sonst 19 % wie bisher. Standard: steuerpflichtig.
+   */
+  steuer?: Steuer;
+}): Promise<{ invoiceId: string; status: "paid" | "processing" | "open" | "failed"; totalEur: number }> {
   const stripe = stripeClient();
   if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
-  const [product, tax, invoiceDefaults, taxIds] = await Promise.all([
-    productId(stripe, opts.productKey ?? "leads"),
-    resolveTax(stripe),
+  const productKey = opts.productKey ?? "leads";
+  const steuerfrei = opts.steuer === "steuerfrei_4_11";
+  if (steuerfrei && productKey !== "leads") throw new Error("Steuerfrei nach § 4 Nr. 11 UStG gibt es nur für Leads.");
+  const [product, tax, exemptRateId, invoiceDefaults, taxIds] = await Promise.all([
+    productId(stripe, productKey),
+    steuerfrei ? null : resolveTax(stripe),
+    steuerfrei ? resolveExemptRate(stripe) : null,
     loadInvoiceDefaults(),
     accountTaxIdParams(stripe),
   ]);
+  const footer = invoiceFooterParams(invoiceDefaults);
+  const automatic = !!tax?.automatic;
   const invoice = await stripe.invoices.create(
     {
       customer: opts.stripeCustomerId,
@@ -1328,13 +1373,15 @@ export async function chargeNow(opts: {
       auto_advance: true,
       pending_invoice_items_behavior: "exclude",
       description: opts.description,
-      metadata: opts.metadata,
-      ...invoiceFooterParams(invoiceDefaults),
+      metadata: { ...opts.metadata, steuer: steuerfrei ? "steuerfrei_4_11" : "steuerpflichtig" },
+      ...footer,
+      ...(steuerfrei ? { footer: steuerfreiFooter(footer.footer) } : {}),
       ...taxIds,
-      ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
+      ...(automatic ? { automatic_tax: { enabled: true } } : {}),
     },
     { idempotencyKey: `${opts.idempotencyKey}-inv` },
   );
+  const rateId = steuerfrei ? exemptRateId! : tax!.rateId;
   for (const [i, l] of opts.lines.entries()) {
     await stripe.invoiceItems.create(
       {
@@ -1342,22 +1389,23 @@ export async function chargeNow(opts: {
         invoice: invoice.id,
         description: l.description,
         price_data: { currency: "eur", product, unit_amount: cents(l.amountEur), tax_behavior: "exclusive" },
-        ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+        ...(automatic ? {} : { tax_rates: [rateId!] }),
       },
       { idempotencyKey: `${opts.idempotencyKey}-item-${i}` },
     );
   }
   const finalized = await stripe.invoices.finalizeInvoice(invoice.id!);
-  if (finalized.status === "paid") return { invoiceId: finalized.id!, status: "paid" };
+  const totalEur = (finalized.total ?? 0) / 100;
+  if (finalized.status === "paid") return { invoiceId: finalized.id!, status: "paid", totalEur };
   try {
     const paid = await stripe.invoices.pay(finalized.id!);
-    return { invoiceId: paid.id!, status: paid.status === "paid" ? "paid" : "processing" };
+    return { invoiceId: paid.id!, status: paid.status === "paid" ? "paid" : "processing", totalEur };
   } catch (err) {
     // SEPA: Zahlung läuft (Bestätigung per Webhook); Karte abgelehnt → failed
     const code = (err as { code?: string }).code;
-    if (code === "invoice_payment_intent_requires_action" || code === "payment_intent_action_required") return { invoiceId: finalized.id!, status: "open" };
+    if (code === "invoice_payment_intent_requires_action" || code === "payment_intent_action_required") return { invoiceId: finalized.id!, status: "open", totalEur };
     reportError(err, "ppl-charge", { invoice: finalized.id ?? "" });
-    return { invoiceId: finalized.id!, status: "failed" };
+    return { invoiceId: finalized.id!, status: "failed", totalEur };
   }
 }
 
