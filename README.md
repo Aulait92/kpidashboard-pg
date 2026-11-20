@@ -107,6 +107,27 @@ Guardrails über Env (alle optional):
 | `MEDIA_BUYER_PRECISION_MIN_BUDGET` | `1`  | Budget-Untergrenze im Präzisions-Fenster (EUR) |
 | `MEDIA_BUYER_NORMAL_INTERVAL_HOURS` | `12` | Drosselung im Normalbetrieb: außerhalb des Präzisions-Fensters wird höchstens alle X h wirklich nachgesteuert (auch bei häufigerem Cron-Aufruf). |
 | `MEDIA_BUYER_RUN_INTERVAL_HOURS` | _auto_ | Override für die Stunden bis zum nächsten Lauf (fürs vorausschauende Pausieren). Ohne Wert wird der Abstand **automatisch** aus den letzten echten Läufen abgeleitet. |
+| `MEDIA_BUYER_GOAL_SOURCE` | `software` | Lead-Ziele aus den Bezügen der App (`software`) oder aus Airtable (`airtable`, CustomerProduct.leadGoal). Admin zeigt immer beide mit Abweichung. |
+| `MEDIA_BUYER_GOAL_RENEWALS` | an | `0` = Verlängerungen von Wochenbestellungen nicht als „erwartet“ ins Ziel rechnen. |
+| `MEDIA_BUYER_RC_VAT` | `0.19` | Reverse-Charge-USt auf Meta-Rechnungen; für steuerfreie Leads nicht abziehbar, senkt den Höchstpreis: P × (1 − s) / (1 + USt × q). |
+| `MEDIA_BUYER_REGION_DAYS` | `30` | Zeitraum (mind. 14 Tage) für den Anteil der Leads in offenen Regionen (Regionen-Rechnung). |
+| `MEDIA_BUYER_REGION_MIN_LEADS` | `30` | Mindestzahl eingegangener Leads für die Regionen-Rechnung. |
+
+**Lead-Ziele aus der Software** (`src/lib/media-buyer-ziele.ts`, Ole 20.11.2026): Soll je Bezug bis Monatsende =
+geliefert im Monat + fest offen + erwartet. Fest offen: bezahlte Wochenbestellungen (paid/processing) mit Rest
+(Menge − schon auf die Bestellung geliefert; Woche über das Monatsende anteilig nach Tagen), Monatsziele der
+Großabnehmer (Ziel, sonst Summe der Gebietsmengen; Start mitten im Monat anteilig) minus Geliefertes, Einmal-Mengen
+minus alles Gelieferte. Erwartet: jüngste bezahlte Wochenbestellung mit „jede Woche wiederholen“ für die Restwochen.
+Offene/fehlgeschlagene/stornierte Bestellungen, pausierte/gekündigte Bezüge und ruhende Konten haben nichts offen (ihr
+Geliefertes bleibt im Soll, weil es auch im Ist steckt). Pool-Ziel = Summe; Lead-Preis und Anteil steuerfreier Leads
+gewichtet mit dem Soll. Beim Wechsel der Quelle mitten im Monat gilt im ersten Lauf ±20 % und kein Pausieren. Ist die
+Pool-Summe erreicht und ein Kunde unter 95 % seines Ziels: Push (höchstens 1x/Tag).
+
+**Regionen-Rechnung** (`src/lib/media-buyer-regionen.ts`): Sind im Produkt-Pool nur noch Bezüge mit PLZ-Grenze offen
+(z. B. Heinrich von Kleist), gilt Kosten je verwertbarem Lead = CPL je eingegangenem Lead (7 Tage) / Anteil der Leads mit
+PLZ in den offenen Regionen (30 Tage). Break-even = Lead-Preis der offenen Bezüge × (1 − Storno) / (1 + USt × q).
+Darunter weiterlaufen, darüber keine Erhöhung, über 120 % des Break-even einen Schritt (20 %) senken; Empfehlung im
+Admin und Push (1x/Tag). Pausieren oder regionale Kampagne anlegen entscheidet Ole.
 
 **Empfohlenes Setup:** den Cron **fest stündlich** laufen lassen und nie wieder
 anfassen. Im Normalbetrieb drosselt der Buyer selbst auf
