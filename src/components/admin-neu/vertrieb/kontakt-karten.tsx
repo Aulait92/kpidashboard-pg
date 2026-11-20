@@ -208,7 +208,7 @@ export function Verlauf({ c }: { c: Kontakt }) {
         {c.activities.length ? (
           <ol className="divide-y divide-[color:var(--border)]">{erste.map(zeile)}</ol>
         ) : (
-          <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch keine Aktivitäten. Oben erfassen.</p>
+          <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch nichts eingetragen. Oben „Eintragen“ tippen.</p>
         )}
         {rest.length ? (
           <details className="border-t border-[color:var(--border)]">
@@ -235,16 +235,32 @@ function AntwortEinfuegen({ contactId }: { contactId: string }) {
   );
 }
 
-/** Cold Mails: Kampagnen (geöffnet, bounced, abgemeldet), Antworten mit Einordnung, Antwort von Hand einfügen. */
-export function ColdMails({ c }: { c: Kontakt }) {
+/** Kurzinfo der Cold Mails („2 Kampagnen · 1 Antwort“). */
+function coldMailInfo(c: Kontakt) {
   const antworten = c.campaigns.reduce((n, x) => n + x.replyCount, 0);
-  const info = c.campaigns.length
+  return c.campaigns.length
     ? `${c.campaigns.length} Kampagne${c.campaigns.length === 1 ? "" : "n"} · ${antworten} Antwort${antworten === 1 ? "" : "en"}`
     : c.emails.length
       ? `${c.emails.length} Mails`
       : "keine";
+}
+
+/** Echte Antwort auf eine Cold Mail da? Dann stehen die Cold Mails offen über „Daten“ (Antwort lesen und einordnen). */
+export const hatAntwort = (c: Kontakt) => c.emails.some((e) => e.direction === "IN" && !e.isAutoReply);
+
+/** Cold Mails als eigene, offene Karte (nur wenn eine Antwort da ist). */
+export function ColdMails({ c }: { c: Kontakt }) {
   return (
-    <Klappe titel="Cold Mails" info={info} offen={c.emails.some((e) => e.direction === "IN" && !e.isAutoReply)} id="antworten" data-funktion="page-fold-cold-mails--cold-mail-kampagnen-des-kontakts-geoeffnet">
+    <Klappe titel="Cold Mails" info={coldMailInfo(c)} offen id="antworten" data-funktion="page-fold-cold-mails--cold-mail-kampagnen-des-kontakts-geoeffnet">
+      <ColdMailsInhalt c={c} />
+    </Klappe>
+  );
+}
+
+/** Cold Mails: Kampagnen (geöffnet, bounced, abgemeldet), Antworten mit Einordnung, Antwort von Hand einfügen. */
+function ColdMailsInhalt({ c }: { c: Kontakt }) {
+  return (
+    <>
       {c.campaigns.length ? (
         <ul className="space-y-2 px-5 py-4 text-sm">
           {c.campaigns.map((cl) => (
@@ -321,16 +337,15 @@ export function ColdMails({ c }: { c: Kontakt }) {
           <AntwortEinfuegen contactId={c.id} />
         </div>
       </details>
-    </Klappe>
+    </>
   );
 }
 
 /** Stammdaten: Name, E-Mails und Telefonnummern (mit Quelle, Haupt-Adresse, weitere), Adresse und LinkedIn bearbeiten. */
-export function Stammdaten({ c, a }: { c: Kontakt; a: Akte }) {
+function Stammdaten({ c, a }: { c: Kontakt; a: Akte }) {
   const adresse = [c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   return (
-    <Card>
-      <CardHeader title="Stammdaten" hint={a.extrasSummary || undefined} />
+    <Abschnitt titel="Kontakt" hinweis={a.extrasSummary || undefined}>
       <dl
         className="grid grid-cols-[116px_minmax(0,1fr)] gap-x-3 gap-y-2 px-5 py-4 text-sm"
         data-funktion="page-stammdaten--stammdaten-agenturtyp-versicherer-inhaber actions-updatecontact--kontakt-felder-allgemein-aendern-ohne"
@@ -422,7 +437,7 @@ export function Stammdaten({ c, a }: { c: Kontakt; a: Akte }) {
           </>
         ) : null}
       </dl>
-    </Card>
+    </Abschnitt>
   );
 }
 
@@ -448,10 +463,9 @@ export function Agentur({ c }: { c: Kontakt }) {
     ...(c.fax ? [["Fax", c.fax] as [string, React.ReactNode]] : []),
   ];
   return (
-    <Card>
-      <CardHeader
-        title="Agentur"
-        actions={
+    <Abschnitt
+      titel="Agentur"
+      aktion={
           <form action={enrichAddressAction} data-funktion="actions-enrichaddressaction--website-und-google-neu-auswerten-adresse">
             <input type="hidden" name="id" value={c.id} />
             <button className={buttonClass("ghost", "sm")} title="Website und Google erneut auswerten: Adresse, Öffnungszeiten, Bewertung, Social-Links (nur leere Felder)">
@@ -459,7 +473,7 @@ export function Agentur({ c }: { c: Kontakt }) {
             </button>
           </form>
         }
-      />
+    >
       <div className="space-y-3 px-5 py-4 text-sm">
         {c.ratingValue != null ? (
           <div data-kontakt-rating>
@@ -502,16 +516,16 @@ export function Agentur({ c }: { c: Kontakt }) {
         {!c.ratingValue && !c.openingHours && !zeilen.length && !social.length ? <p className={DT}>Noch keine Angaben. „Neu auswerten“ liest Webseite und Google.</p> : null}
         {ergaenzt ? <p className="text-xs text-[color:var(--muted)]">{ergaenzt}</p> : null}
       </div>
-    </Card>
+    </Abschnitt>
   );
 }
 
 /** Kundendaten (selten): Kunden-Stufe, Monatswert, Produkte, Vertragsstart, Herkunft; Verknüpfung mit der Kundenakte. */
-export function Kundendaten({ c, a }: { c: Kontakt; a: Akte }) {
+function Kundendaten({ c, a }: { c: Kontakt; a: Akte }) {
   return (
-    <Klappe
+    <Abschnitt
       titel="Kundendaten"
-      info={c.customerStage ? `${CUSTOMER_LABEL[c.customerStage]}${c.monthlyValue ? ` · ${c.monthlyValue} €/Monat` : ""}` : "noch kein Kunde"}
+      hinweis={c.customerStage ? `${CUSTOMER_LABEL[c.customerStage]}${c.monthlyValue ? ` · ${c.monthlyValue} €/Monat` : ""}` : "noch kein Kunde"}
       data-funktion="actions-updatecustomer--kundendaten-kunden-stufe-monatswert-produkte actions-linkcontactcustomer--kontakt-mit-kundenakte-verknuepfen"
     >
       <div className="px-5 py-4">
@@ -574,6 +588,46 @@ export function Kundendaten({ c, a }: { c: Kontakt; a: Akte }) {
           <button className="btn-ghost">{c.customerId ? "Verknüpfung ändern" : "Mit Kundenakte verknüpfen"}</button>
         </form>
       </div>
+    </Abschnitt>
+  );
+}
+
+/** Abschnitt in der Karte „Daten“: Überschrift (mit Kurz-Info und einer Aktion) über dem Inhalt, Trennlinie oben. */
+function Abschnitt({ titel, hinweis, aktion, children, ...rest }: { titel: string; hinweis?: string; aktion?: React.ReactNode; children: React.ReactNode; "data-funktion"?: string }) {
+  return (
+    <section className="border-t border-[color:var(--border)] first:border-t-0" {...rest}>
+      <div className="flex min-h-11 items-center justify-between gap-3 px-5 pt-3">
+        <h3 className="text-sm font-semibold">
+          {titel}
+          {hinweis ? <span className="ml-2 text-xs font-normal text-[color:var(--muted)]">{hinweis}</span> : null}
+        </h3>
+        {aktion}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * Daten (Umbau 19.11.2026): Kontakt, Agentur, Cold Mails und Kundendaten in EINER zugeklappten Karte. Im Alltag
+ * braucht es sie selten (Nummer und Mail stehen oben als Knöpfe), darum mit Kurz-Info zu, statt vier Karten untereinander.
+ */
+export function Daten({ c, a, coldMailsOben }: { c: Kontakt; a: Akte; coldMailsOben: boolean }) {
+  const ort = [c.zip, c.city].filter(Boolean).join(" ");
+  const info = [ort || null, c.insurer, c.campaigns.length || c.emails.length ? `Cold Mails: ${coldMailInfo(c)}` : null].filter(Boolean).join(" · ");
+  return (
+    <Klappe titel="Daten" info={info || "Kontakt, Agentur, Kundendaten"} id="daten">
+      <Stammdaten c={c} a={a} />
+      <Agentur c={c} />
+      {!coldMailsOben ? (
+        <section className="border-t border-[color:var(--border)]" data-funktion="page-fold-cold-mails--cold-mail-kampagnen-des-kontakts-geoeffnet">
+          <h3 className="px-5 pt-4 text-sm font-semibold">
+            Cold Mails <span className="ml-2 text-xs font-normal text-[color:var(--muted)]">{coldMailInfo(c)}</span>
+          </h3>
+          <ColdMailsInhalt c={c} />
+        </section>
+      ) : null}
+      <Kundendaten c={c} a={a} />
     </Klappe>
   );
 }

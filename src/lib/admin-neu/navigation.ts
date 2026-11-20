@@ -17,11 +17,12 @@ export const NEU = "/admin/neu";
 
 export type BereichId = "mein-tag" | "verkaufen" | "betreuen" | "liefern" | "geld" | "werkzeuge" | "einstellungen" | "was-wo-ist";
 
-/** Reiter-Leisten: je Rolle eine, dazu Marketing (zweite Leiste unter Verkaufen) und die Kundenakte. */
+/** Reiter-Leisten: je Rolle eine, dazu Marketing (eigene Leiste der Marketing-Seiten, erreichbar über „Mehr“ in Verkaufen) und die Kundenakte. */
 export type ReiterGruppe = BereichId | "marketing" | "kundenakte";
 
 /** Zweite Reiter-Leiste unter der Leiste einer Rolle (Seite zeigt beide). */
-export const OBER_REITER: Partial<Record<ReiterGruppe, ReiterGruppe>> = { marketing: "verkaufen" };
+// Admin-Umbau (19.11.2026): Marketing ist keine zweite Leiste unter Verkaufen mehr (UX-Regel: eine Reiterleiste je Seite).
+export const OBER_REITER: Partial<Record<ReiterGruppe, ReiterGruppe>> = {};
 
 type Reiter = { gruppe: ReiterGruppe; label: string };
 
@@ -88,23 +89,14 @@ export const BEREICHE: NeuBereich[] = [
     seiten: [
       { view: "vertrieb", pfad: n("/vertrieb"), titel: "Pipeline", alt: ["/admin/vertrieb/pipeline"], reiter: { gruppe: "verkaufen", label: "Pipeline" }, suchwoerter: "Vertrieb Akquise Stufen", fertig: true },
       { view: "vertrieb-kontakte", pfad: n("/vertrieb/kontakte"), titel: "Kontakte", alt: ["/admin/vertrieb/kontakte"], reiter: { gruppe: "verkaufen", label: "Kontakte" }, suchwoerter: "Vertrieb Cold Mail", fertig: true },
-      { view: "vertrieb-termine", pfad: n("/vertrieb/termine"), titel: "Termine", alt: ["/admin/vertrieb/buchungsseite"], reiter: { gruppe: "verkaufen", label: "Termine" }, suchwoerter: "Vertrieb Buchungsseite", fertig: true },
+      { view: "vertrieb-termine", pfad: n("/vertrieb/termine"), titel: "Termine", alt: ["/admin/vertrieb/buchungsseite", "/admin/vertrieb/termine"], reiter: { gruppe: "verkaufen", label: "Termine" }, suchwoerter: "Vertrieb Buchungsseite", fertig: true },
       { view: "vertrieb-angebote", pfad: n("/vertrieb/angebote"), titel: "Angebote", alt: ["/admin/vertrieb/angebote"], reiter: { gruppe: "verkaufen", label: "Angebote" }, suchwoerter: "Vertrieb", fertig: true },
-      {
-        view: "marketing",
-        pfad: n("/marketing"),
-        titel: "LinkedIn",
-        alt: ["/admin/marketing/linkedin", "/admin/marketing"],
-        reiter: [
-          { gruppe: "verkaufen", label: "Marketing" },
-          { gruppe: "marketing", label: "LinkedIn" },
-        ],
-        suchwoerter: "Marketing Entwürfe Posts",
-        fertig: true,
-      },
+      // Marketing (Admin-Umbau 19.11.2026): kein Reiter von Verkaufen mehr, sondern über „Mehr“ im Kopf von Verkaufen;
+      // die drei Marketing-Seiten haben eine eigene Leiste. Webseite & Rechner ist Einrichtung (ohne Reiter, Link in Unterlagen).
+      { view: "marketing", pfad: n("/marketing"), titel: "LinkedIn", alt: ["/admin/marketing/linkedin", "/admin/marketing"], reiter: { gruppe: "marketing", label: "LinkedIn" }, suchwoerter: "Marketing Entwürfe Posts", fertig: true },
       { view: "marketing-empfehlungen", pfad: n("/marketing/empfehlungen"), titel: "Empfehlungen", alt: ["/admin/marketing/empfehlungen"], reiter: { gruppe: "marketing", label: "Empfehlungen" }, suchwoerter: "Marketing Kollegen empfehlen Prämie", fertig: true },
       { view: "marketing-unterlagen", pfad: n("/marketing/unterlagen"), titel: "Unterlagen", alt: ["/admin/marketing/unterlagen"], reiter: { gruppe: "marketing", label: "Unterlagen" }, suchwoerter: "Marketing Präsentation", fertig: true },
-      { view: "marketing-webseite", pfad: n("/marketing/webseite"), titel: "Webseite & Rechner", alt: ["/admin/einstellungen/rechner"], reiter: { gruppe: "marketing", label: "Webseite & Rechner" }, suchwoerter: "Marketing Preise Rechner", fertig: true },
+      { view: "marketing-webseite", pfad: n("/marketing/webseite"), titel: "Webseite & Rechner", alt: ["/admin/einstellungen/rechner"], suchwoerter: "Marketing Preise Rechner Einstellungen", fertig: true },
       // Datenschutz und Recht (Ole, 19.11.2026): Liste der Fälle aus der Kaltakquise, erreichbar über Kontakte (Umschalter)
       { view: "vertrieb-datenschutz", pfad: n("/vertrieb/datenschutz"), titel: "Datenschutz und Recht", alt: ["/admin/vertrieb/datenschutz"], suchwoerter: "DSGVO Auskunft Löschung Widerspruch Abmahnung Art. 15 Art. 17", fertig: true },
       { view: "kontakt-neu", pfad: n("/vertrieb/kontakte/neu"), titel: "Neuer Kontakt", alt: ["/admin/vertrieb/kontakte/neu"], fertig: true },

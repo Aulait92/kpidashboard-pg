@@ -119,6 +119,7 @@ export function DealOffersCard({
   mail = { audience: "vertreter", pdf: { vertreter: false, makler: false } },
   knopf = true,
   kontakt = false,
+  kompakt = false,
 }: {
   newOfferHref: string;
   offers: DealOfferRow[];
@@ -128,6 +129,9 @@ export function DealOffersCard({
   knopf?: boolean;
   /** Angebote eines Vertriebskontakts: Ablehnen fragt „Kontakt auch als verloren markieren?“ */
   kontakt?: boolean;
+  /** Neuer Admin (Umbau 19.11.2026): sichtbar nur Senden, Link kopieren, Ansehen und „Mehr“; PDF, „Als verschickt
+   *  markieren“ und die Mail-Optionen (Anrede, Anhänge, Zahlung) unter „Optionen“ zugeklappt. */
+  kompakt?: boolean;
 }) {
   const [mitRechner, setMitRechner] = useState(false);
   const [mitPraesentation, setMitPraesentation] = useState(false);
@@ -234,7 +238,7 @@ export function DealOffersCard({
                 Link kopieren
               </Button>
               <ButtonLink href={`/angebot/${current.token}`} external icon={ExternalLink}>Ansehen</ButtonLink>
-              <ButtonLink href={`/angebot/${current.token}/pdf`} external icon={FileDown}>PDF</ButtonLink>
+              {!kompakt || !(current.status === "draft" || current.status === "sent") ? <ButtonLink href={`/angebot/${current.token}/pdf`} external icon={FileDown}>PDF</ButtonLink> : null}
               {current.status === "draft" || current.status === "sent" ? (
                 <>
                   <Button
@@ -251,7 +255,7 @@ export function DealOffersCard({
                   >
                     {busy === current.id ? "Sende …" : "Per E-Mail senden"}
                   </Button>
-                  {current.status === "draft" ? (
+                  {current.status === "draft" && !kompakt ? (
                     <Button icon={Send} variant="ghost" disabled={pending} onClick={() => run(current.id, () => markOfferSentAction(current.id), "Als verschickt markiert")}>
                       Als verschickt markieren
                     </Button>
@@ -273,7 +277,21 @@ export function DealOffersCard({
               />
             </div>
             {current.status === "draft" || current.status === "sent" ? (
-              <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-mail-extras>
+              kompakt ? (
+                <details className="group" data-angebot-optionen>
+                  <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-1 text-sm font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
+                    Optionen <span className="text-xs font-normal text-[color:var(--muted)]">Anrede, Anhänge, PDF, Zahlung</span>
+                  </summary>
+                  <div className="mt-2 space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <ButtonLink href={`/angebot/${current.token}/pdf`} external icon={FileDown}>PDF</ButtonLink>
+                      {current.status === "draft" ? (
+                        <Button icon={Send} variant="ghost" disabled={pending} onClick={() => run(current.id, () => markOfferSentAction(current.id), "Als verschickt markiert")}>
+                          Als verschickt markieren
+                        </Button>
+                      ) : null}
+                    </div>
+                    <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-mail-extras>
                 <div className="flex items-center gap-2" data-anrede>
                   <span className="text-xs font-medium text-[color:var(--muted)]">Anrede</span>
                   <div className="inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white p-0.5">
@@ -340,6 +358,77 @@ export function DealOffersCard({
                 {!current.isTest ? <PayLaterToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
                 {!current.isTest ? <BankTransferToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
               </div>
+                  </div>
+                </details>
+              ) : (
+                <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-mail-extras>
+                <div className="flex items-center gap-2" data-anrede>
+                  <span className="text-xs font-medium text-[color:var(--muted)]">Anrede</span>
+                  <div className="inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white p-0.5">
+                    {([false, true] as const).map((v) => (
+                      <button
+                        key={String(v)}
+                        type="button"
+                        onClick={() => setDu(v)}
+                        aria-pressed={du === v}
+                        className={`rounded-[6px] px-2.5 py-0.5 text-xs font-medium ${du === v ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"}`}
+                      >
+                        {v ? "Du" : "Sie"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {mail.entscheidung ? (
+                  <div className="space-y-1" data-entscheidungs-call>
+                    {!ohneCall ? <p className="text-xs text-[color:var(--muted)]">{mail.entscheidung}</p> : null}
+                    <label className="flex items-center gap-2" data-ohne-entscheidungs-call>
+                      <input type="checkbox" className="h-4 w-4" checked={ohneCall} onChange={(e) => setOhneCall(e.target.checked)} />
+                      Ohne Bitte um den Entscheidungs-Call
+                    </label>
+                  </div>
+                ) : null}
+                <div className="text-xs font-medium text-[color:var(--muted)]">Mit der E-Mail mitschicken</div>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" className="h-4 w-4" checked={mitRechner} onChange={(e) => setMitRechner(e.target.checked)} />
+                  Rechner-Link
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className={`flex items-center gap-2 ${pdfDa ? "" : "opacity-60"}`}>
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      disabled={!pdfDa}
+                      checked={mitPraesentation && pdfDa}
+                      onChange={(e) => setMitPraesentation(e.target.checked)}
+                    />
+                    Präsentation als PDF
+                  </label>
+                  <select
+                    aria-label="Präsentation für"
+                    value={audience}
+                    onChange={(e) => setAudience(e.target.value as Audience)}
+                    className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm"
+                  >
+                    <option value="vertreter">Vertreter</option>
+                    <option value="makler">Makler</option>
+                  </select>
+                  {!pdfDa ? (
+                    <Link href="/admin/marketing/unterlagen" className="text-xs text-[color:var(--brand)] underline">
+                      PDF unter Unterlagen hochladen
+                    </Link>
+                  ) : null}
+                </div>
+                {mail.link ? (
+                  <label className="flex items-center gap-2" data-praesentation-link>
+                    <input type="checkbox" className="h-4 w-4" checked={mitLink} onChange={(e) => setMitLink(e.target.checked)} />
+                    Link zur Präsentation zum Durchklicken (14 Tage, mit den Preisen aus dem Angebot)
+                  </label>
+                ) : null}
+                <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p>
+                {!current.isTest ? <PayLaterToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
+                {!current.isTest ? <BankTransferToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
+              </div>
+              )
             ) : null}
             {msg ? <p className="text-xs font-medium text-emerald-700">{msg}</p> : null}
           </div>
