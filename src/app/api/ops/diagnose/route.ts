@@ -336,14 +336,17 @@ async function d360kunde(params: URLSearchParams) {
   const { partnerConfig } = await import("@/lib/whatsapp/dialog360-partner");
   const cfg = partnerConfig();
   if (cfg && acc?.dialog360ClientId) {
-    const res = await fetch(`${cfg.hubUrl}/api/v2/partners/${encodeURIComponent(cfg.partnerId)}/clients/${encodeURIComponent(acc.dialog360ClientId)}`, {
+    // Einzelabruf ist bei 360dialog nicht erlaubt (405): Liste, neueste zuerst, und nach ID suchen
+    const res = await fetch(`${cfg.hubUrl}/api/v2/partners/${encodeURIComponent(cfg.partnerId)}/clients?limit=100&sort=-created_at`, {
       headers: { "X-API-Key": cfg.apiKey, Accept: "application/json" },
       signal: AbortSignal.timeout(15_000),
     }).catch(() => null);
     if (!res) bei360 = { fehler: "keine Antwort" };
     else if (!res.ok) bei360 = { fehler: `360dialog ${res.status}`, text: (await res.text()).slice(0, 300) };
     else {
-      const c = (await res.json()) as Record<string, unknown>;
+      const j = (await res.json()) as Record<string, unknown>;
+      const liste = (Object.values(j).find(Array.isArray) ?? []) as Record<string, unknown>[];
+      const c = liste.find((x) => x.id === acc.dialog360ClientId) ?? { gefunden: false, anzahl: liste.length, schluessel: Object.keys(j) };
       const info = (c.contact_info ?? {}) as Record<string, unknown>;
       bei360 = { id: c.id, name: c.name, status: c.status, created_at: c.created_at, partner_payload: c.partner_payload, email: mask(typeof info.email === "string" ? info.email : null), felder: Object.keys(c) };
     }
