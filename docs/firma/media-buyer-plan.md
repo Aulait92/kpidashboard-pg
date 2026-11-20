@@ -29,4 +29,11 @@ Der Media Buyer maximiert den **Netto-Deckungsbeitrag je Pool** unter der harten
 3. Steuerberater: Ist bei steuerfreiem Lead-Umsatz die Vorsteuer auf die Meta-Werbung abziehbar? Sonst +19 % auf jeden Lead.
 
 ## Erfolgsmessung
-3 Monate Basis; Netto-DB je Lead, Lieferquote am Monatsende, Stornoquote, Prognosefehler Tag 10/20, Termine je 100 Leads. Umstellung paarweise je Produkt, mindestens 2 Monate; Entscheidung nur bei p < 0,01.
+Wöchentlich Kosten je Netto-Lead und Lieferquote gegen die letzten 8 Wochen. Abbruchregel: Kosten je Lead an 3 Läufen in Folge über dem Höchstpreis → Push, bei Bestätigung Autopilot aus. (p < 0,01 gilt für A/B-Texte, nicht für die Budgetsteuerung.)
+
+## Änderungen nach Red-Team-Prüfung (20.11.2026)
+1. Stufe 0 ist Pflicht vor jedem weiteren Autopilot-Pool und gilt erst als erledigt, wenn ein Commit es belegt. Ergänzt: vorläufiger Höchstpreis je Lead = Break-even aus Leadpreis und Stornoquote (bis Ole die Zielmarge festlegt); Endspurt nur mit Schrittgrenze und nie über dem Höchstpreis; bei veralteten Daten halten, nie erhöhen; von Hand pausierte Kampagnen nie reaktivieren.
+2. Monatsdeckel gesamt als eigene A-Vorlage sofort an Ole (ein Wert, wirksamster Schutz vor Budget-Unfall).
+3. Netto-Zählung und Zielquelle erst nach der Preisgrenze umstellen, zum Monatswechsel, mit 2 Wochen Parallelanzeige; Wirkung auch als Kostenfolge beziffern (netto zählen heißt mehr Rohleads, also mehr Werbekosten bei gleichem Umsatz). Pausieren nach Pool-Summe kann einzelne Kunden unterbeliefern: Kundenziel neben Pool-Summe anzeigen.
+4. Vertagt: Stufe 3 (Umbau, Schattenbetrieb) und Grenzkosten-Formel. Neue Regeln laufen stattdessen erst im vorhandenen Trockenlauf. Termin-Test nur, wenn die Diagnose mindestens 50 CAPI-Termine pro Woche zeigt.
+5. Vorsteuer-Frage als CFO-Aufgabe mit Frist (Wirkung bis 19 % je Lead, größer als jede Optimierung hier).
