@@ -36,7 +36,7 @@ describe("Knopf auf die feste erste Frage (v10/v11)", () => {
   });
 
   it("TKV Freitext (b, interaktiv): „Auch Behandlungen“ bzw. „Noch unsicher“", async () => {
-    const id = await chat("outreach_tkv", "Hallo Peter, *was soll für Minka abgesichert sein?* 🐾\n\n_KI-Assistent_");
+    const id = await chat("outreach_tkv", "Hallo Peter, *was soll für Minka abgesichert sein?* 🐾\n\n_Digitaler KI-Assistent_");
     await handleButtonReply(id, { kind: "interactive", text: "Auch Behandlungen", payload: "Auch Behandlungen" });
     expect((await prisma.conversation.findUniqueOrThrow({ where: { id } })).qualificationData).toEqual({ tarifwunsch: "volle Krankenversicherung (auch Tierarztbehandlung)" });
     await handleButtonReply(id, { kind: "interactive", text: "Noch unsicher", payload: "Noch unsicher" });

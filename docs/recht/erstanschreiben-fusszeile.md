@@ -16,13 +16,14 @@ Rechts-Agenten, Ergebnis ohne Anwaltsfreigabe (AGENTS.md, interne Rechtsprüfung
 ## Ampel
 | Option | Ampel |
 |---|---|
-| PDF im Kopf, Fußzeile nur „KI-Assistent“ | grün (umgesetzt mit v10) |
+| PDF im Kopf, Fußzeile nur „KI-Assistent“ bzw. „Digitaler KI-Assistent“ | grün (umgesetzt mit v10, ab v12 „Digitaler KI-Assistent“) |
+| Fußzeile „Digitaler Assistent“ ohne das Wort KI | gelb bis rot (KI-Hinweis nicht eindeutig, Art. 50 KI-VO) |
 | PDF als zweite Nachricht erst nach der Antwort des Leads | gelb (Geschäftskontakt ohne Erstinformation, Abmahnrisiko § 3a UWG) |
 | Link statt PDF | gelb bis rot (§ 16 Abs. 3, ohne personalisierte dauerhafte Seite rot) |
 
 ## Auflagen, die erhalten bleiben
 1. Kein Erstanschreiben ohne PDF im Kopf (`ErstinfoPdfFehltError`).
-2. Fußzeile „KI-Assistent“ in Vorlage und Freitext.
+2. Fußzeile mit dem Wort „KI“ (seit 19.11.2026 „Digitaler KI-Assistent“) in Vorlage und Freitext.
 3. Erinnerungen nur an Leads, die das PDF schon haben, sonst mit PDF-Kopf.
 4. Zustimmung zur elektronischen Erstinformation im Lead-Formular; alte Meta-Formulare umstellen.
 5. Wahrheitsgemäße Antwort auf „Bist du ein Bot?“, Wiederholung des KI-Hinweises nach 30 Tagen (`ki-hinweis.ts`).
