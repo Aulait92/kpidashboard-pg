@@ -59,7 +59,7 @@ import {
   type Knopf,
   type VermittlerName,
 } from "@/lib/whatsapp/gespraech";
-import { istTierStrecke, offeneTierFragen, tierAntwortAuswerten, tierFrage, type TierFrageKey } from "@/lib/whatsapp/tier-fragen";
+import { detailNachfrageText, detailVerstaendlich, istTierStrecke, offeneTierFragen, tierAntwortAuswerten, tierFrage, type TierFrageKey } from "@/lib/whatsapp/tier-fragen";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
 import { ZWISCHEN_TEXT } from "@/lib/whatsapp/zwischenfrage";
 import {
@@ -109,6 +109,8 @@ export const STRECKE = {
   tierFrage: "tier_frage",
   /** Tierfrage beantwortet (body.keys: beantwortete Fragen) */
   tierAntwort: "tier_antwort",
+  /** Einmalige Nachfrage bei unverständlicher Antwort auf eine Tierfrage (body.key), Ole 20.11.2026 */
+  tierNachfrage: "tier_nachfrage",
   /** Zusage-Frage unter der Buchungsbestätigung (Splittest termin_zusage, Fassung b) */
   zusageFrage: "zusage_frage",
   /** Antwort auf die Zusage-Frage (body.art: ja, andere, ohne_antwort) */
@@ -576,6 +578,18 @@ export async function tierAntwort(conversationId: string, text: string, knopf: {
   const key = (knopf?.key ?? stand.tierFrageLetzte!.key) as TierFrageKey;
   if (stand.tierBeantwortet.includes(key)) return true;
   const quelle = { source: k.source, formular: k.formular, angaben: k.angaben };
+  // Unverständliche Antwort auf „Was war es ungefähr, und wann?“: genau einmal nachfragen, die zweite Antwort gilt
+  if (key === "gesundheitDetail" && !knopf && !detailVerstaendlich(text)) {
+    const schon = await prisma.message.findFirst({
+      where: { conversationId, direction: "internal", kind: STRECKE.tierNachfrage, body: { contains: `"key":"${key}"` }, createdAt: { gte: stand.tierFrageLetzte?.at ?? new Date(0) } },
+      select: { id: true },
+    });
+    if (!schon) {
+      await merke(conversationId, STRECKE.tierNachfrage, { appointmentId: k.termin.id, key });
+      await sende(k, detailNachfrageText(k.an, quelle));
+      return true;
+    }
+  }
   const r = tierAntwortAuswerten(key, text, knopf?.wert ?? null, quelle);
   if (!r) return false;
   const neu = mergeQualificationData(k.angaben, r.angaben);

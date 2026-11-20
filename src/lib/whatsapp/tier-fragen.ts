@@ -346,3 +346,30 @@ export function tierAntwortAuswerten(key: TierFrageKey, text: string, knopfWert:
   }
   return null;
 }
+
+// ─── Unverständliche Antwort auf „Was war es ungefähr, und wann?“ (Ole, 20.11.2026: „Hier wurde Quatsch geantwortet“) ───
+// Die Antwort muss nach Behandlung oder Zeit klingen (Stichwort aus Medizin bzw. Tierarzt, Körperteil, Zeitangabe, Zahl)
+// oder „weiß nicht“ sein. Sonst fragt die App genau einmal nach; die zweite Antwort wird immer übernommen.
+const DETAIL_STICHWORT =
+  /(behandl|tierarzt|klinik|\bop\b|operat|zahn|zähn|zaehn|durchfall|erbroch|erbrech|übergeb|magen|darm|haut|fell|ohr|auge|bein|pfote|pfote|hüft|hueft|knie|gelenk|kreuzband|rücken|ruecken|allergi|juck|impf|kastr|sterili|verletz|bruch|gebrochen|wunde|entzünd|entzuend|infekt|husten|schnupfen|niere|blase|harn|herz|leber|schilddrüs|diabet|tumor|krebs|zecke|floh|flöhe|wurm|würm|parasit|lahm|humpel|fieber|schnitt|biss|unfall|giardien|epilep|arthrose|gewicht|übergewicht|krank|medikament|tablette|antibiot|röntgen|roentgen|ultraschall|blut|vorsorge|kontrolle|check|untersuch|spritze|narkose|geburt|trächtig|zyste|abszess|ekzem|pilz|milben|bindehaut|katarakt|struvit|futter|vergift|atem|asthma|nase|maul|kiefer|schwanz|kralle|krallen|routine|nichts schlimmes|kleinigkeit)/;
+const DETAIL_ZEIT =
+  /(\d|januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|frühjahr|fruehjahr|frühling|fruehling|sommer|herbst|winter|woche|monat|jahr|gestern|heute|letzt|vorig|kürzlich|kuerzlich|neulich|früher|frueher|lange her|seit|welpe|kitten|baby|jung)/;
+
+/** Klingt die Antwort auf die Detailfrage zur Behandlung nach einer Angabe? (sonst einmal nachfragen) */
+export function detailVerstaendlich(text: string): boolean {
+  const t = norm(text ?? "");
+  if (!t) return false;
+  if (WEISS_NICHT.test(t) || /^(nein|nichts|keine|nix)\b/.test(t)) return true;
+  return DETAIL_STICHWORT.test(t) || DETAIL_ZEIT.test(t);
+}
+
+/** Nachfrage bei unverständlicher Antwort (eine Nachricht, ohne Knöpfe). */
+export function detailNachfrageText(an: Ansprache, q: TierQuelle): string {
+  const i = tierInfo(q);
+  const wer = i.anzahl > 1 ? a(an, "deine Tiere", "Ihre Tiere") : i.name ?? a(an, WORT[i.art].du, WORT[i.art].sie);
+  return a(
+    an,
+    `Das habe ich leider nicht ganz verstanden. Was hatte${i.anzahl > 1 ? "n" : ""} ${wer} ungefähr, und wann? Zum Beispiel: Durchfall im Sommer. Weißt du es nicht mehr, schreib einfach „weiß nicht“.`,
+    `Das habe ich leider nicht ganz verstanden. Was hatte${i.anzahl > 1 ? "n" : ""} ${wer} ungefähr, und wann? Zum Beispiel: Durchfall im Sommer. Wissen Sie es nicht mehr, schreiben Sie einfach „weiß nicht“.`,
+  );
+}
