@@ -36,6 +36,13 @@ export type ExperimentDef = {
    * aktiv = true oder diesen Eintrag entfernen. Ohne Angabe läuft er (eine Zeile mit aktiv = false hält ihn an).
    */
   aktiv?: false;
+  /**
+   * Reife-Filter für Ziele, die erst nach einem Termin feststehen (z. B. „erschienen“): gezählt werden nur Einheiten
+   * (Lead-IDs), deren Termin seit der Zuteilung mindestens 1 Tag vorbei ist oder abgesagt bzw. abgeschlossen wurde und
+   * die keinen kommenden bzw. noch nicht 1 Tag alten gebuchten Termin haben. Sonst würde der stündliche Cron künftige
+   * Termine als „nicht erschienen“ werten (termin_zusage, Ole 20.11.2026).
+   */
+  nurReif?: "termin_vorbei";
 };
 
 /**
@@ -69,6 +76,17 @@ export const EXPERIMENTE = {
     b: "Fassung C: Einstieg mit dem Anliegen, Beitrag auf der Entscheidungsfolie, Wahl zwischen zwei Paketen, bisheriger Vertrag in Euro",
     // Termine sind seltener als Leads und der Cron prüft stündlich: erst ab 100 Präsentationen je Fassung entscheiden
     min: 100,
+  },
+  // Buchungsbestätigung im WhatsApp-Assistenten (Ole, 20.11.2026 freigegeben; Lernbuch docs/firma/ab-tests.md, Hypothese
+  // lib/ab-hypothesen.ts). Einheit Lead-ID, zugeteilt nur bei der Bestätigung eines im Chat gebuchten Termins (bot.ts).
+  // Gegenproben: ereignis(„termin_zusage“, leadId, „zusage_ja“ | „zusage_andere“), Komplettcheck ja.
+  termin_zusage: {
+    titel: "Buchungsbestätigung im Chat (Zusage-Frage)",
+    ziel: "erschienen",
+    a: "Bisher: Bestätigung ohne Frage, Komplettcheck-Frage (bzw. Tierfrage) sofort als eigene Nachricht",
+    b: "Neu: Bestätigung plus fett „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], Komplettcheck erst danach",
+    min: 150,
+    nurReif: "termin_vorbei",
   },
 } as const satisfies Record<string, ExperimentDef>;
 
@@ -179,10 +197,34 @@ export async function zielErreicht(einheiten: (string | null | undefined)[], zie
   }
 }
 
-/** Zugeteilte Einheiten und Einheiten mit Ziel (nach der Zuteilung) je Fassung. */
-export async function experimentStats(experiment: string): Promise<ExperimentStats> {
+/**
+ * Reife-Filter (ExperimentDef.nurReif = „termin_vorbei“) als SQL-Bedingung auf die Zuteilung z: Die Einheit (Lead-ID) hat
+ * seit der Zuteilung (10 Min. Spielraum: gebucht wird kurz vor der Zuteilung) einen Termin, und keiner ihrer gebuchten Termine beginnt später als 1 Tag vor now. Abgesagte,
+ * abgeschlossene und als nicht erschienen eingetragene Termine zählen damit sofort, gebuchte erst 1 Tag nach Beginn.
+ */
+export function reifeBedingung(nurReif: ExperimentDef["nurReif"], now: Date): Prisma.Sql {
+  if (nurReif !== "termin_vorbei") return Prisma.sql`TRUE`;
+  const grenze = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  return Prisma.sql`(
+        EXISTS (
+          SELECT 1 FROM "Appointment" a
+          WHERE a."leadId" = z."einheit" AND a."createdAt" >= z."createdAt" - interval '10 minutes'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM "Appointment" a
+          WHERE a."leadId" = z."einheit" AND a."status" = 'booked' AND a."startsAt" > ${grenze}
+        )
+      )`;
+}
+
+/**
+ * Zugeteilte Einheiten und Einheiten mit Ziel (nach der Zuteilung) je Fassung. Mit nurReif nur reife Einheiten
+ * (reifeBedingung); alles, was entscheidet (promoteExperimentWinners, Admin, Diagnose), zählt über diese Funktion.
+ */
+export async function experimentStats(experiment: string, now = new Date()): Promise<ExperimentStats> {
   const d = def(experiment);
   const ziel = d?.ziel ?? "";
+  const reif = reifeBedingung(d?.nurReif, now);
   const rows = await prisma.$queryRaw<{ variante: string; n: bigint; ziel: bigint }[]>(Prisma.sql`
     SELECT z."variante" AS variante,
            COUNT(*) AS n,
@@ -198,6 +240,7 @@ export async function experimentStats(experiment: string): Promise<ExperimentSta
         SELECT 1 FROM "Lead" l JOIN "Customer" cu ON cu."id" = l."customerId"
         WHERE l."id" = z."einheit" AND (l."isTest" OR cu."isTest")
       )
+      AND ${reif}
     GROUP BY z."variante"
   `);
   const of = (v: Variante): FassungStats => {
@@ -285,7 +328,7 @@ export async function promoteExperimentWinners(now = new Date()): Promise<{ key:
   for (const [key, d] of Object.entries(EXPERIMENTE as Record<string, ExperimentDef>)) {
     const row = await prisma.experiment.findUnique({ where: { key } });
     if (row?.winner || !laeuft(d, row)) continue;
-    const stats = await experimentStats(key);
+    const stats = await experimentStats(key, now);
     const e = entscheide(stats, d.min ?? MIN_JE_FASSUNG);
     if (!e.winner) continue;
     const data = { winner: e.winner, decidedAt: now, stats: { ...stats, p: e.p, z: e.z } as unknown as Prisma.InputJsonValue };

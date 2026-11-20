@@ -39,6 +39,9 @@ import { humanHandoverReply, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from
 import { enthaeltErsteFrage, ERSTFRAGE_HINWEIS_RE, erstanschreibenKopf, ersteFrageRegel, formularRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import {
   buchungsText,
+  buchungsTextMitZusage,
+  istZusageText,
+  ZUSAGE_KNOEPFE,
   istFamilie,
   EMAIL_BESTAETIGEN_RE,
   KALENDER_FRAGE_RE,
@@ -651,7 +654,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       startsAt: { gt: new Date() },
     },
     orderBy: { startsAt: "asc" },
-    select: { id: true, startsAt: true, mode: true, meetUrl: true, confirmedAt: true },
+    select: { id: true, startsAt: true, mode: true, meetUrl: true, confirmedAt: true, rescheduleRequestedAt: true },
   });
 
   const customer = await prisma.customer.findUnique({
@@ -778,6 +781,17 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       return;
     }
   }
+  // Zusage-Frage unter der Buchungsbestätigung (Splittest termin_zusage, Fassung b): getipptes „ja“, „passt“, „sicher“
+  // zählt wie „Ja, sicher“ (ohne Assistent); alles andere beantwortet der Assistent (nachBuchungRegel)
+  const zusageWartet = !!stand && strecke.zusageOffen(stand);
+  if (upcoming && zusageWartet && latest?.direction === "inbound" && latest.createdAt > stand!.zusageFrageAt! && !opts.anstoss && !opts.knopfZeit && !opts.hint && istZusageText(latest.body)) {
+    if (await strecke.zusageAntwort(conversation.id, "ja")) {
+      logTestLead(lead, "zusage getippt");
+      return;
+    }
+  }
+  // „Lieber andere Zeit“ gewählt, Termin noch nicht verlegt: der Assistent bietet Zeiten an, der Komplettcheck wartet
+  const zusageAndere = !!upcoming?.rescheduleRequestedAt && stand?.zusageAntwort?.art === "andere" && !stand.komplettFrageAt && !stand.tierFrageLetzte;
   // Lead hat nach der Policen-Bitte keine Policen (bzw. keine Versicherungen): Erinnerungen entfallen, weiter zum Schluss
   if (upcoming && stand?.policenBitteAt && !stand.policenKeine && latest?.direction === "inbound" && latest.createdAt > stand.policenBitteAt && !opts.anstoss && strecke.sagtKeinePolicen(latest.body ?? "")) {
     if (strecke.policenBitteOffen(stand)) {
@@ -798,6 +812,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         adresseBestaetigenOffen: bestaetigenOffen,
         komplettcheckGestellt: !!stand?.komplettFrageAt,
         komplettcheckOffen: !!stand?.komplettFrageAt && !strecke.komplettcheckErledigt(stand),
+        zusage: zusageWartet ? "offen" : zusageAndere ? "andere" : null,
         abschlussGesendet: !!stand?.abschlussAt || outbound.some((m) => KALENDER_FRAGE_RE.test(m.body ?? "") || EMAIL_BESTAETIGEN_RE.test(m.body ?? "")),
         zugesagt: !!stand?.emailOkLetzte,
       })
@@ -891,7 +906,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   let finalText = "";
   // Gebucht in diesem Zug: die App schickt die Buchungsnachricht (und die erste Angebotsfrage) selbst
   const zug: {
-    gebucht: { start: Date; mode: TerminModus; meetUrl: string | null; email: string | null; ort: string | null } | null;
+    gebucht: { appointmentId: string; start: Date; mode: TerminModus; meetUrl: string | null; email: string | null; ort: string | null } | null;
     /** Terminvorschlag der App (termin_vorschlagen) */
     vorschlag: { starts: [string, string]; text: string } | null;
     /** Komplettcheck vom Assistenten erkannt (Werkzeug komplettcheck) */
@@ -899,7 +914,9 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     /** Adresse am Schluss bestätigt (termin_zugesagt) bzw. genannt (update_email): die App antwortet selbst */
     emailOk: boolean;
     email: string | null;
-  } = { gebucht: null, vorschlag: null, komplett: null, emailOk: false, email: null };
+    /** Zusage auf die Zusage-Frage frei formuliert (termin_zugesagt bei offener Zusage-Frage, Splittest termin_zusage) */
+    zusage: boolean;
+  } = { gebucht: null, vorschlag: null, komplett: null, emailOk: false, email: null, zusage: false };
   /** Geburtsdatum geprüft (geburt-chat.ts): wörtliche Rückfrage der App bzw. als offen notiert */
   let geburt: { frage: string | null; offen: boolean } | null = null;
   /** Termin buchen (Werkzeug book_appointment bzw. Zeit-Knopf); Rückgabe = Ergebnis für den Assistenten. */
@@ -967,7 +984,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           meetUrl: res.meetUrl,
         });
         logTestLead(lead, "booking via bot", { appointment: res.appointmentId, mode });
-        zug.gebucht = { start: new Date(res.start), mode, meetUrl: res.meetUrl, email: email ?? null, ort };
+        zug.gebucht = { appointmentId: res.appointmentId, start: new Date(res.start), mode, meetUrl: res.meetUrl, email: email ?? null, ort };
         content =
           `Termin gebucht für ${formatSlotDE(res.start)}` +
           (mode === "video" && res.meetUrl
@@ -1193,8 +1210,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           content = "Vermerkt. Die App schickt die nächste Nachricht selbst. Schreib nichts weiter.";
         }
       } else if (tu.name === "termin_zugesagt") {
+        // Zusage-Frage offen (Splittest termin_zusage, Fassung b): frei formulierte Zusage wie „Ja, sicher“
+        if (zusageWartet && !bestaetigenOffen) zug.zusage = true;
         // Adresse am Schluss bestätigt: Einladung (einmal), Termin zugesagt, Antwort der App (termin-strecke.ts)
-        zug.emailOk = true;
+        else zug.emailOk = true;
         content = "Erledigt. Die App antwortet dem Lead selbst. Schreib nichts weiter.";
       } else if (tu.name === "update_email") {
         const neu = String((tu.input as { email?: unknown }).email ?? "").trim().toLowerCase();
@@ -1310,7 +1329,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   // Iterationslimit erreicht, aber noch keine Antwort (z. B. nach mehreren
   // Tool-Aufrufen): einmal ohne Tool-Nutzung nachfragen, damit der Lead
   // garantiert eine Antwort/Bestätigung bekommt.
-  if (!finalText && !zug.gebucht && !zug.vorschlag && zug.komplett === null) {
+  if (!finalText && !zug.gebucht && !zug.vorschlag && zug.komplett === null && !zug.zusage) {
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
@@ -1337,6 +1356,12 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     logTestLead(lead, "komplettcheck", { ja: zug.komplett });
     return;
   }
+  // Zusage frei formuliert (vom Assistenten erkannt): die App antwortet wie nach „Ja, sicher“
+  if (zug.zusage) {
+    await strecke.zusageAntwort(conversation.id, "ja");
+    logTestLead(lead, "zusage erkannt");
+    return;
+  }
   // Adresse genannt bzw. am Schluss bestätigt (vom Assistenten erkannt): die App antwortet und lädt ein
   if (zug.email && (await strecke.emailAntwort(conversation.id, zug.email))) {
     logTestLead(lead, "email genannt");
@@ -1357,13 +1382,24 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   let knoepfe: Knopf[] | null = null;
   /** Nachricht der Strecke statt eigener Worte des Assistenten (Merker nach dem Senden) */
   let schritt: import("@/lib/whatsapp/termin-strecke").Schritt | null = null;
+  /** Zusage-Frage in der Buchungsnachricht (Splittest termin_zusage, Fassung b): Merker nach dem Senden */
+  let zusageGefragt = false;
   const gebucht = zug.gebucht;
   if (gebucht) {
     const fresh = await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } });
-    finalText = buchungsText({ an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person, ort: gebucht.ort });
+    const buchung = { an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person, ort: gebucht.ort };
+    finalText = buchungsText(buchung);
+    // Splittest termin_zusage (Ole, 20.11.2026, lib/experimente.ts): Zuteilung nur hier, Einheit Lead-ID. Fassung b: die
+    // Bestätigung endet mit der Zusage-Frage und Knöpfen, Komplettcheck bzw. Tierfrage erst nach dem Tipp (bzw. nach
+    // 1 Std. ohne Tipp, termin-strecke.ts runStreckeAbschliessen); Fassung a wie bisher.
+    const zusageVariante = conversation.leadId ? await import("@/lib/experimente").then((m) => m.variante("termin_zusage", conversation.leadId)).catch(() => "a" as const) : "a";
     // Tierkranken: zuerst die Tierfragen (Gesundheit), sonst der Komplettcheck
     const sk = await strecke.streckenKontext(conversation.id).catch(() => null);
-    if (sk?.termin) zweite = await strecke.ersteNachBuchung(sk);
+    if (zusageVariante === "b") {
+      finalText = buchungsTextMitZusage(buchung);
+      knoepfe = ZUSAGE_KNOEPFE;
+      zusageGefragt = true;
+    } else if (sk?.termin) zweite = await strecke.ersteNachBuchung(sk);
     else {
       const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id) });
       zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
@@ -1391,7 +1427,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       // Termin, Strecke noch nicht begonnen (z. B. über die Buchungsseite gebucht): danach der Komplettcheck bzw. bei
       // Tierkranken die (offene) Tierfrage
       const sk = await strecke.streckenKontext(conversation.id).catch(() => null);
-      if (sk?.termin?.id === upcoming.id) zweite = await strecke.ersteNachBuchung(sk);
+      // Zusage-Frage offen bzw. „Lieber andere Zeit“ und noch nicht verlegt (Splittest termin_zusage): noch keine Frage
+      // der Strecke (die kommt nach dem Tipp, nach dem Verlegen bzw. ohne Tipp nach 1 Std.)
+      if (sk?.termin?.id === upcoming.id && (zusageWartet || zusageAndere)) zweite = null;
+      else if (sk?.termin?.id === upcoming.id) zweite = await strecke.ersteNachBuchung(sk);
       else {
         const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id) });
         zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
@@ -1460,6 +1499,8 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       buttons: knoepfe,
     }));
     logTestLead(lead, "bot reply sent", { waMessageId: sent.messageId ?? "none", blocked: hits.length > 0, buttons: knoepfe?.length ?? 0 });
+    // Merker: Zusage-Frage gestellt (nur wenn die Knöpfe mitgingen, nicht nach der Beratungssperre)
+    if (zusageGefragt && gebucht && knoepfe === ZUSAGE_KNOEPFE) await persistInternal(conversation.id, strecke.STRECKE.zusageFrage, { appointmentId: gebucht.appointmentId });
     // Merker: Terminvorschlag (Zeiten fürs Nachfassen und für „die erste passt“), Komplettcheck gefragt
     if (zug.vorschlag) await persistInternal(conversation.id, strecke.STRECKE.vorschlag, { starts: zug.vorschlag.starts });
     if (schritt && upcoming) await strecke.merkeSchritt(conversation.id, upcoming.id, schritt);
