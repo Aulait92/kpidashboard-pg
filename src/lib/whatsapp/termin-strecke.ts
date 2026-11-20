@@ -77,6 +77,9 @@ import {
   type Vorvertrag,
 } from "@/lib/whatsapp/vorvertraege";
 
+/** Sparte im Satz für „… habe ich ergänzt“. */
+const SPARTE_KURZ: Partial<Record<VertragSparte, string>> = { "Private Krankenversicherung": "die private Krankenversicherung" };
+
 /** Merker (interne Nachrichten) der Strecke. */
 export const STRECKE = {
   vorschlag: "termin_vorschlag",
@@ -276,7 +279,7 @@ export type StreckenStand = {
   vertragsfrageAt: Date | null;
   vorvertraegeErfasst: boolean;
   /** Nachfrage nach den Gesellschaften gestellt (wartet auf Antwort, solange vorvertraegeErfasst false ist) */
-  versichererFrage: { at: Date; sparten: VertragSparte[] } | null;
+  versichererFrage: { at: Date; sparten: VertragSparte[]; anzahl: number } | null;
   policenBitteAt: Date | null;
   /** Wort der Policen-Bitte für die Erinnerung (null = alle Policen) */
   policenPolice: string | null;
@@ -350,10 +353,12 @@ export async function streckenStand(conversationId: string, appointmentId: strin
     angebotsfragenAt: at(STRECKE.angebotsfragen),
     vertragsfrageAt: at(STRECKE.vertragsfrage),
     vorvertraegeErfasst: !!at(STRECKE.vorvertraege),
+    // Letzte Nachfrage gilt (nach „Und PKV“ kommt höchstens eine zweite, Ole 20.11.2026); anzahl begrenzt auf zwei
     versichererFrage: (() => {
-      const f = erste(STRECKE.versichererFrage);
+      const f = letzte(STRECKE.versichererFrage);
       const sp = f ? daten(f.body).sparten : null;
-      return f ? { at: f.createdAt, sparten: (Array.isArray(sp) ? sp : []).filter((x): x is VertragSparte => (VERTRAG_SPARTEN as readonly string[]).includes(x)) } : null;
+      const anzahl = rows.filter((r) => r.kind === STRECKE.versichererFrage).length;
+      return f ? { at: f.createdAt, sparten: (Array.isArray(sp) ? sp : []).filter((x): x is VertragSparte => (VERTRAG_SPARTEN as readonly string[]).includes(x)), anzahl } : null;
     })(),
     policenBitteAt: bitte?.createdAt ?? null,
     policenPolice: typeof daten(bitte?.body ?? null).police === "string" ? (daten(bitte!.body).police as string) : null,
@@ -1028,7 +1033,7 @@ export async function vertraegeAntwort(conversationId: string, text: string, now
   const k = await streckenKontext(conversationId, now);
   if (!k?.termin) return false;
   const stand = await streckenStand(conversationId, k.termin.id);
-  if (stand.versichererFrage) return versichererAntwort(k, stand.versichererFrage.sparten, text);
+  if (stand.versichererFrage) return versichererAntwort(k, stand.versichererFrage.sparten, text, stand.versichererFrage.anzahl);
   const { liste, keine } = await extrahiereVertraege(text);
   const wert: Vorvertraege = { at: now.toISOString(), liste, ...(keine ? { keine: true } : {}) };
   if (k.leadId) await prisma.lead.update({ where: { id: k.leadId }, data: { vorvertraege: wert as unknown as Prisma.InputJsonValue } });
@@ -1045,16 +1050,37 @@ export async function vertraegeAntwort(conversationId: string, text: string, now
   return true;
 }
 
-/** Antwort auf die Nachfrage nach den Gesellschaften: zuordnen, ergänzen, weiter (nie eine zweite Nachfrage). */
-async function versichererAntwort(k: StreckenKontext, sparten: VertragSparte[], text: string): Promise<boolean> {
+/**
+ * Antwort auf die Nachfrage nach den Gesellschaften: zuordnen, ergänzen, weiter. Nennt der Lead statt einer
+ * Gesellschaft einen weiteren Vertrag („Und PKV“, Ole 20.11.2026), wird er ergänzt und genau einmal noch nach den
+ * Gesellschaften gefragt (höchstens zwei Nachfragen insgesamt).
+ */
+async function versichererAntwort(k: StreckenKontext, sparten: VertragSparte[], text: string, bisher = 1): Promise<boolean> {
   if (!k.termin) return false;
   const zu = versichererZuordnen(sparten, text);
-  if (Object.keys(zu).length && k.leadId) {
+  let neueOhne: VertragSparte[] = [];
+  if (k.leadId) {
     const lead = await prisma.lead.findUnique({ where: { id: k.leadId }, select: { vorvertraege: true } });
     const v = vorvertraegeAus(lead?.vorvertraege);
-    if (v) {
-      const liste = v.liste.map((x) => (!x.gesellschaft && zu[x.sparte] ? { ...x, gesellschaft: zu[x.sparte]! } : x));
-      await prisma.lead.update({ where: { id: k.leadId }, data: { vorvertraege: { ...v, liste } as unknown as Prisma.InputJsonValue } });
+    const vorhanden = new Set((v?.liste ?? []).map((x) => x.sparte));
+    const neu = vertraegeAusText(text).filter((x) => !vorhanden.has(x.sparte) && x.sparte !== "Sonstige");
+    if (Object.keys(zu).length || neu.length) {
+      const basis = (v?.liste ?? []).map((x) => (!x.gesellschaft && zu[x.sparte] ? { ...x, gesellschaft: zu[x.sparte]! } : x));
+      const liste = normalisiereVertraege([...basis, ...neu]);
+      const wert = { ...(v ?? { at: new Date().toISOString() }), liste, keine: false } as Vorvertraege;
+      await prisma.lead.update({ where: { id: k.leadId }, data: { vorvertraege: wert as unknown as Prisma.InputJsonValue } });
+      neueOhne = neu.filter((x) => !x.gesellschaft).map((x) => x.sparte as VertragSparte);
+    }
+    if (neu.length && neueOhne.length && bisher < 2) {
+      const offen = [...new Set([...sparten.filter((s) => !zu[s]), ...neueOhne])];
+      const frage = versichererNachfrage(offen, k.an, k.person.nom);
+      if (frage) {
+        const genannt = neu.map((x) => SPARTE_KURZ[x.sparte as VertragSparte] ?? x.sparte);
+        const ergaenzt = `${genannt.length === 1 ? genannt[0] : `${genannt.slice(0, -1).join(", ")} und ${genannt.at(-1)}`} habe ich ergänzt.`;
+        await merke(k.conversationId, STRECKE.versichererFrage, { appointmentId: k.termin.id, sparten: offen });
+        await sende(k, `Danke, ${ergaenzt} ${frage.replace(/^Danke! /, "")}`);
+        return true;
+      }
     }
   }
   await merke(k.conversationId, STRECKE.vorvertraege, { appointmentId: k.termin.id, nachfrage: true, ergaenzt: Object.keys(zu).length });
