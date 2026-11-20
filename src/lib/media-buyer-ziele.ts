@@ -300,6 +300,8 @@ export type DeliveryPacingInput = {
   /** Eingegangen / geliefert im Quoten-Fenster (14–30 Tage). */
   recentIncoming: number;
   recentDelivered: number;
+  /** Länge des Quoten-Fensters in Tagen (für das aktuelle Tempo); fehlt = Monatsschnitt. */
+  recentDays?: number;
   /** Unabhängig gezählte Pool-Lieferung im Monat (Plausibilität); null = nicht geprüft. */
   poolDeliveredCheck?: number | null;
   daysElapsed: number;
@@ -387,7 +389,14 @@ export function deliveryPacing(p: DeliveryPacingInput): DeliveryPacing {
   const steerGoal = open > 0 ? p.incomingMtd + neededIncoming : Math.max(1, p.incomingMtd);
   const steerLeads = open > 0 ? p.incomingMtd : steerGoal;
   const daysLeft = Math.max(0, p.daysTotal - p.daysElapsed);
-  const pace = p.daysElapsed > 0 ? p.incomingMtd / p.daysElapsed : 0;
+  // Tempo aus dem jüngsten Fenster (PoolLead-Eingang), sonst Monatsschnitt. Der Monatsschnitt enthält
+  // Airtable-Altbestand und reagiert träge auf Budgetänderungen (Ole, 20.11.2026).
+  const pace =
+    p.recentDays && p.recentDays > 0 && p.recentIncoming >= minSample
+      ? p.recentIncoming / p.recentDays
+      : p.daysElapsed > 0
+        ? p.incomingMtd / p.daysElapsed
+        : 0;
   const projectedDelivered = Math.round(delivered + pace * rate * daysLeft);
 
   return {

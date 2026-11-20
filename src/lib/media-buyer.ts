@@ -999,6 +999,7 @@ async function loadDeliveryPacing(
     incomingMtd: p.incomingMtd,
     recentIncoming: usePool ? poolIn : recentIncoming,
     recentDelivered: usePool ? poolOut : recentDelivered,
+    recentDays: usePool ? days : undefined,
     poolDeliveredCheck,
     daysElapsed: p.daysElapsed,
     daysTotal: p.daysTotal,
