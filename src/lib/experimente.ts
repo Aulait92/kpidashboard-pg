@@ -123,6 +123,15 @@ export const EXPERIMENTE = {
     min: 150,
     nurReif: "termin_vorbei",
   },
+  // Buchungslink nach dem 2. „Andere Zeit“ im WhatsApp-Assistenten (Ole, 20.11.2026 beauftragt: Fassung a sofort
+  // Standard; Lernbuch docs/firma/ab-tests.md, Hypothese lib/ab-hypothesen.ts). Einheit Lead-ID (sonst Chat-ID),
+  // zugeteilt nur beim Senden des Links (lib/whatsapp/knopf.ts buchungslinkSenden), Texte lib/whatsapp/buchungslink.ts.
+  buchungslink_andere_zeit: {
+    titel: "Buchungslink nach dem 2. „Andere Zeit“ im Chat",
+    ziel: "termin_gebucht",
+    a: "Standard (Ole): „Kein Problem! Suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link> Oder schreiben Sie mir einfach Ihren Wunschtag.“",
+    b: "Neu: Wunschtag im Chat zuerst, Link am Ende: „Kein Problem! Schreiben Sie mir einfach Ihren Wunschtag, oder suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link>“",
+  },
   // Eigener PKV-Funnel (lib/funnel, Ole 20.11.2026): Beispiel, AUS und an keinem Schritt mehr (nur Muster).
   // Einheit = Besucher-ID je Seitenaufruf (kein Cookie, Auflage L4), Zuteilung beim ersten Aufruf des Schritts.
   // Haupt-Kennzahl: Abnehmer hat den Lead erreicht (je Besucher; Leads an Abnehmer ohne Rückmeldung zählen nicht),

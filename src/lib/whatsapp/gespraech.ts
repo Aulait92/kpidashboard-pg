@@ -581,12 +581,12 @@ export const WUNSCHZEIT_REGEL =
 export function terminRegeln(o: { an: Ansprache; person: VermittlerName; formate: TerminFormate; beispiel: string; emailBekannt: boolean }): string {
   return [
     "Terminvorschlag (sobald die Fragen vor dem Termin geklärt sind, hat Vorrang vor anderen Terminregeln):",
-    "- Nutze termin_vorschlagen: Die App schickt den Vorschlag selbst, mit zwei freien Videozeiten als Knöpfe und „Andere Zeit“. Schreib dazu keinen eigenen Text und nenne keine Zeiten selbst. Kein Link, keine Buchungsseite.",
+    "- Nutze termin_vorschlagen: Die App schickt den Vorschlag selbst, mit zwei freien Videozeiten als Knöpfe und „Andere Zeit“. Schreib dazu keinen eigenen Text und nenne keine Zeiten selbst. Schreib nie selbst einen Link und biete keine Buchungsseite an: Den Buchungslink schickt nur die App (ab dem zweiten „Andere Zeit“).",
     `- So sieht der Vorschlag aus: „${o.beispiel}“`,
     "- Hat der Lead in seiner letzten Nachricht etwas gefragt, gib die kurze Antwort als einleitung mit (ein Satz, statt „Danke!“).",
     "- Keine Floskeln wie „das Gespräch vorbereiten“, keine Versprechen zu Preisen, Ersparnis oder Ergebnissen.",
     terminArtRegel(o.an, o.formate),
-    "- Passt keine der beiden Zeiten („Andere Zeit“): frag kurz nach Wunschtag oder Tageszeit und hole dann mit get_available_slots freie Zeiten.",
+    "- Passt keine der beiden Zeiten („Andere Zeit“): frag kurz nach Wunschtag oder Tageszeit und hole dann mit get_available_slots freie Zeiten. Hat die App schon den Buchungslink geschickt, verweise nicht noch einmal darauf; nennt der Lead einen Wunschtag, mach wie gewohnt weiter.",
     `- ${WUNSCHZEIT_REGEL}`,
     o.emailBekannt
       ? "- Wählt der Lead eine Zeit (Knopf oder Text): Die E-Mail-Adresse ist bekannt, frag nicht danach. Buche sofort mit book_appointment (modus video, außer bei einem erlaubten ausdrücklichen Wunsch, siehe Terminart) und genau dem start-Wert der gewählten Zeit."
