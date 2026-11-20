@@ -19,15 +19,14 @@ export default async function Page() {
       id: e.id,
       funktion: e.funktion,
       heute: e.heute,
-      neu: ortText(e.neu, e.demo_view, e.bereich),
+      neu: ortText(e.neu, e.demo_view, e.bereich, e.id),
       href: o.href,
       ueber: o.ueber,
       status: e.status_neu === "vorhanden" || e.status_neu === "bleibt" || e.status_neu === "entfernt" ? e.status_neu : "offen",
     };
   });
-  const da = zeilen.filter((z) => z.status === "vorhanden").length;
   return (
-    <Seite titel="Was wo ist" untertitel={`Wo jede Funktion der alten Oberfläche jetzt liegt (${da} von ${zeilen.length} umgezogen).`}>
+    <Seite titel="Was wo ist" untertitel="Funktion suchen und direkt hinspringen.">
       <Funktionsliste zeilen={zeilen} />
     </Seite>
   );

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { CheckCircle2, ChevronRight, ListChecks } from "lucide-react";
+import { CheckCircle2, ListChecks } from "lucide-react";
 import { BEREICH_SYMBOL } from "@/components/admin-neu/rahmen/symbole";
 import { PunkteGekuerzt } from "@/components/admin-neu/ui/punkte-gekuerzt";
 import { Seite } from "@/components/admin-neu/ui/seite";
@@ -76,16 +76,17 @@ export default async function HeutePage() {
                   const Icon = BEREICH_SYMBOL[rolle];
                   return (
                     <div key={rolle} data-rolle={rolle}>
+                      {/* Der Rollenname führt zur Rolle (Umbau 20.11.2026: statt eines zusätzlichen „Öffnen“-Links) */}
                       <div className="mb-2 flex items-center gap-2.5">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--brand-soft)] text-[color:var(--brand)]">
                           <Icon className="h-4 w-4" />
                         </span>
-                        <h2 className="text-base font-semibold">{b.label}</h2>
+                        <h2 className="text-base font-semibold">
+                          <Link href={b.pfad} className="hover:text-[color:var(--brand)] hover:underline">
+                            {b.label}
+                          </Link>
+                        </h2>
                         <span className="rounded-full bg-[color:var(--brand-soft)] px-2 text-xs font-semibold leading-5 text-[color:var(--brand-dark)]">{punkte.length}</span>
-                        <Link href={b.pfad} aria-label={`${b.label} öffnen`} className="ml-auto inline-flex min-h-10 items-center gap-0.5 text-sm font-medium text-[color:var(--brand)] hover:underline">
-                          Öffnen
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
                       </div>
                       {/* Die zwei dringendsten je Rolle (Umbau 20.11.2026: am Handy alle Rollen ohne langes Scrollen), Rest „Alle anzeigen“ */}
                       <PunkteGekuerzt punkte={punkte} max={2} />

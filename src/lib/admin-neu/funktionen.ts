@@ -11,8 +11,29 @@ const ohneId = SEITEN.filter((s) => !s.pfad.includes("["));
 /** Bereichsnamen der ersten Fassung, die im Ort durch die Rolle (Admin v2) ersetzt werden. Marketing bleibt als Unterpunkt. */
 const ALTE_BEREICHE = new Set(["Heute", "Vertrieb", "Kunden", "Leads & Kampagnen", "Zahlen", "Einstellungen"]);
 
+/** Rahmen-Funktionen: Ort-Texte nach dem Umbau 20.11.2026 (der Entwurfstext nannte noch „Heute“, „Mehr“ und die Demo). */
+const RAHMEN_ORT: Record<string, string> = {
+  "admin-shell-adminareas--seitenleiste-mit-bereichen-heute-vertrieb-kunden": "Seitenleiste › Mein Tag und vier Rollen",
+  "admin-shell-count--zaehler-badge-an-heute-offene-punkte": "Seitenleiste › Mein Tag › Zähler",
+  "admin-shell-count--zaehler-badge-an-chats-offene-whatsapp": "Seitenleiste › Betreuen › Zähler",
+  "admin-shell-mobilenav--handy-leiste-unten-mit-allen-bereichen": "Handy: Leiste unten (Mein Tag und vier Rollen)",
+  "admin-shell-logo--logo-fuehrt-zu-heute": "Logo führt zu Mein Tag",
+  "notifications-button-usepush--push-benachrichtigungen-aktivieren-abschalten": "Profilmenü › Push-Mitteilungen",
+  "admin-profile-menu--profilmenue-einstellungen-sicherheit-abmelden": "Profilmenü › Einstellungen, Technik, Abmelden",
+};
+
+/** Arbeitsnotizen aus dem Entwurf entfernen, z. B. „(Demo: …)“, „(… ergänzen)“, „(fehlt in Demo)“. */
+const ohneNotiz = (s: string) => s.replace(/\s*\([^)]*(Demo|ergänzen|fehlt|umstellen)[^)]*\)/g, "");
+
+/** Neuer Ort mit Rolle vorne, ohne Arbeitsnotizen des Entwurfs. `id` wählt bei Rahmen-Funktionen den aktuellen Text. */
+export function ortText(neu: string, view: string, bereich: string, id?: string): string {
+  const rahmen = id ? RAHMEN_ORT[id] : undefined;
+  if (rahmen) return rahmen;
+  return ortMitRolle(ohneNotiz(neu), view, bereich);
+}
+
 /** Neuer Ort mit Rolle vorne, z. B. „Zahlen › Qualität & Nutzung“ → „Betreuen › Qualität & Nutzung“. */
-export function ortText(neu: string, view: string, bereich: string): string {
+function ortMitRolle(neu: string, view: string, bereich: string): string {
   const teile = neu.split(" › ");
   // Rahmen (Seitenleiste, Suche, Push …) gehört zu keiner Rolle
   if (["heute", "mehr", "landkarte"].includes(view) && teile[0] !== "Heute") return neu;
@@ -56,7 +77,7 @@ export function suchIndex(inventar: InventarEintrag[]): SuchFunktion[] {
     .filter((e) => e.status_neu !== "bleibt" && e.status_neu !== "entfernt")
     .map((e) => {
       const o = ort(e.demo_view, e.bereich);
-      const text = ortText(e.neu, e.demo_view, e.bereich);
+      const text = ortText(e.neu, e.demo_view, e.bereich, e.id);
       return { id: e.id, titel: e.funktion, ort: o.ueber ? `${text} (${o.ueber})` : text, href: o.href, suchtext: normSuche(`${e.funktion} ${text} ${e.heute}`) };
     });
 }

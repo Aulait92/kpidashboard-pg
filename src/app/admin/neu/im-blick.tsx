@@ -100,7 +100,7 @@ export async function ImBlick({ forecast, neueBuchungen, auto }: { forecast: For
 
       <details className="group border-t border-[color:var(--border)]" data-im-blick-mehr="">
         <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-5 text-sm font-medium [&::-webkit-details-marker]:hidden">
-          <span className="flex-1">Mehr</span>
+          <span className="flex-1">Vertrieb und Automatik</span>
           {mehrText ? <span className="truncate text-xs font-normal text-[color:var(--muted)]">{mehrText}</span> : null}
           <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
         </summary>

@@ -7,7 +7,7 @@ import { Badge, Button, Card, EmptyState } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 // Was wo ist: durchsuchbare Liste aller Funktionen aus dem Inventar (docs/ux/admin-neu/funktionsinventar.json).
-// Je Zeile: Funktion, alter Ort, Ort im neuen Admin mit Link. Suche über alle Felder, Filter „noch alt“ nur, solange
+// Je Zeile: Funktion und Ort im Admin mit Link (der alte Ort bleibt suchbar, wird seit 20.11.2026 nicht mehr angezeigt). Suche über alle Felder, Filter „noch alt“ nur, solange
 // es offene Funktionen gibt. Umbau 20.11.2026: 25 Zeilen, dann „Mehr laden“ (vorher alle 451 auf einmal, am Handy 56.000 px).
 
 const SCHRITT = 25;
@@ -56,7 +56,7 @@ export function Funktionsliste({ zeilen }: { zeilen: FunktionZeile[] }) {
               setQ(e.target.value);
               setAnzahl(SCHRITT);
             }}
-            placeholder="Funktion, alte Seite oder neuer Ort"
+            placeholder="Funktion oder frühere Seite"
             aria-label="Funktionen suchen"
             className="min-w-0 flex-1 bg-transparent text-sm outline-none"
           />
@@ -74,9 +74,11 @@ export function Funktionsliste({ zeilen }: { zeilen: FunktionZeile[] }) {
             Noch alt ({offen})
           </button>
         ) : null}
-        <span className="w-full text-xs text-[color:var(--muted)] sm:w-auto" aria-live="polite">
-          {treffer.length} von {zeilen.length}
-        </span>
+        {suche.trim() ? (
+          <span className="w-full text-xs text-[color:var(--muted)] sm:w-auto" aria-live="polite">
+            {treffer.length} Treffer
+          </span>
+        ) : null}
       </div>
       {treffer.length ? (
         <ul className="divide-y divide-[color:var(--border)]">
@@ -85,18 +87,12 @@ export function Funktionsliste({ zeilen }: { zeilen: FunktionZeile[] }) {
               <Link href={z.href} className="block px-4 py-3 transition hover:bg-[color:var(--surface-sunken)] sm:px-5">
                 <div className="flex items-start gap-3">
                   <span className="min-w-0 flex-1 text-sm font-medium">{z.funktion}</span>
-                  <Badge tone={STATUS[z.status].tone}>{STATUS[z.status].label}</Badge>
+                  {/* Seit der Umstellung ist fast alles da: Kennzeichen nur noch für die Ausnahmen */}
+                  {z.status === "vorhanden" ? null : <Badge tone={STATUS[z.status].tone}>{STATUS[z.status].label}</Badge>}
                 </div>
-                <div className="mt-1 grid grid-cols-1 gap-x-4 gap-y-0.5 text-sm sm:grid-cols-2">
-                  <span className="min-w-0 break-words text-[color:var(--muted)]">
-                    <span className="text-xs uppercase tracking-wide">Alt </span>
-                    {z.heute}
-                  </span>
-                  <span className="min-w-0 break-words text-[color:var(--brand)]">
-                    <span className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Jetzt </span>
-                    {z.neu}
-                    {z.ueber ? <span className="text-[color:var(--muted)]"> ({z.ueber})</span> : null}
-                  </span>
+                <div className="mt-0.5 min-w-0 break-words text-sm text-[color:var(--brand)]">
+                  {z.neu}
+                  {z.ueber ? <span className="text-[color:var(--muted)]"> ({z.ueber})</span> : null}
                 </div>
               </Link>
             </li>

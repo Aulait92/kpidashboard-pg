@@ -71,7 +71,7 @@ export function Suche({ variante }: { variante: "breit" | "kopf" }) {
         // Treffer zeigen auf die heutigen Seiten; ist die neue Seite fertig, geht es dorthin.
         onSelect={(h) => router.push(neuerPfad(h.href) ?? h.href)}
         endpoint="/api/admin/search"
-        placeholder="Kontakt, Kunde, Lead, Login, Seite oder Funktion"
+        placeholder="Name, Firma, Seite oder Funktion"
         icons={ICON}
         extraHits={extra}
         extraTitle={(t) => (t.trim() ? "Seiten und Funktionen" : "Seiten")}
