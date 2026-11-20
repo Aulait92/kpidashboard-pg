@@ -13,7 +13,9 @@ export const ADMIN_NEU_COOKIE = "pg_admin_neu";
 /** Ein Jahr; der Schalter bleibt, bis der Admin ihn wieder ausschaltet. */
 export const ADMIN_NEU_MAX_AGE = 60 * 60 * 24 * 365;
 
-export const istAn = (wert: string | undefined | null) => wert === "1";
+// Neuer Admin ist Standard (Umbau 20.11.2026, Auftrag Ole 19.11.: „der neue Admin ist DER Admin“): an, solange der
+// Admin nicht ausdrücklich „Alte Oberfläche“ gewählt hat (Cookie „0“). Abschalten des alten Admins entscheidet Ole (Stufe A).
+export const istAn = (wert: string | undefined | null) => wert !== "0";
 
 /** Adressen, die bei eingeschaltetem Schalter auf den neuen Admin leiten (alles andere bleibt erreichbar). */
 export function neuStartFuer(pathname: string): boolean {

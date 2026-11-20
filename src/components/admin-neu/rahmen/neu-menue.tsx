@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 // „+ Neu“ oben rechts (Admin v2): nach Rollen geordnet, rechts steht die Rolle. Am Rechner als Menü unter dem Knopf
 // (wie in der Demo v2), am Handy im Fenster von unten. Jeder Eintrag öffnet den bestehenden Ablauf (Aufgabe im Fenster)
 // oder die bestehende Seite. Einträge stehen in NEU_EINTRAEGE (src/lib/admin-neu/navigation.ts).
-// „Termin buchen“ öffnet das Fenster der Kontaktakte (Verkaufen), siehe waehlen().
+// „Termin buchen“ öffnet das Fenster der Kontaktakte (Verkaufen), „Angebot“ in einer Kontaktakte „Angebot erstellen“, siehe waehlen().
 // Bewusst kein Markenblau: die Hauptaktion einer Seite bleibt der einzige primäre Knopf.
 
 const rolleVon = (e: NeuEintrag) => BEREICHE.find((b) => b.id === e.rolle)?.label ?? "";
@@ -40,11 +40,15 @@ export function NeuMenue({ variante }: { variante: "breit" | "kopf" }) {
       return;
     }
     schliessen();
+    // In einer Kontaktakte gelten „Termin buchen“ und „Angebot“ gleich für diesen Kontakt, sonst erst Kontakt wählen.
+    const akte = /^\/admin\/neu\/vertrieb\/kontakte\/(?!neu$)[^/]+$/.test(pathname ?? "");
     if (e.id === "termin") {
-      // „Termin buchen“ (Vertrieb): in einer Kontaktakte gleich für diesen Kontakt, sonst erst Kontakt wählen.
       // Neuer Wert bei jedem Klick, damit sich das Fenster auch auf derselben Seite wieder öffnet.
-      const akte = /^\/admin\/neu\/vertrieb\/kontakte\/(?!neu$)[^/]+$/.test(pathname ?? "");
       router.push(akte ? `${pathname}?termin=${schluessel()}` : `/admin/neu/vertrieb/termine?buchen=${schluessel()}`);
+      return;
+    }
+    if (e.id === "angebot" && akte) {
+      router.push(`${pathname}/angebot`);
       return;
     }
     router.push(neuerPfad(e.href) ?? e.href);
