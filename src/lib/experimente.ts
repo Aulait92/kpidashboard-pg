@@ -21,7 +21,18 @@ import { ALPHA, decideAbWinner, MIN_JE_FASSUNG, zTest, type AbDecision } from "@
 export type Variante = "a" | "b";
 
 /** Ziel-Kennzahlen (frei erweiterbar; dieselbe Zeichenkette bei ereignis bzw. zielErreicht verwenden). */
-export type Ziel = "termin_gebucht" | "komplettcheck_ja" | "erschienen" | (string & {});
+export type Ziel =
+  | "termin_gebucht"
+  | "komplettcheck_ja"
+  | "erschienen"
+  // Eigener Funnel (lib/funnel/server.ts), Einheit Besucher-ID
+  | "funnel_lead"
+  | "ppl_erreicht"
+  | "ppl_termin"
+  | "ppl_abschluss"
+  | "ppl_umsatz"
+  | "ppl_unbekannt"
+  | (string & {});
 
 export type ExperimentDef = {
   titel: string;
@@ -43,6 +54,19 @@ export type ExperimentDef = {
    * Termine als „nicht erschienen“ werten (termin_zusage, Ole 20.11.2026).
    */
   nurReif?: "termin_vorbei";
+  /**
+   * Reife-Filter (eigener Funnel, lib/funnel): Es zählen nur Einheiten, deren Zuteilung mindestens so viele Tage alt
+   * ist (z. B. 14 bei „ppl_umsatz“: Lead verkauft und 14 Tage nach Eingang nicht storniert). Jüngere Einheiten können
+   * das Ziel noch gar nicht erreicht haben und würden die Quote verfälschen.
+   */
+  reifTage?: number;
+  /**
+   * Einheiten mit diesem Ereignis zählen gar nicht (weder Nenner noch Zähler), z. B. „ppl_unbekannt“: Lead ging an
+   * einen Abnehmer ohne Rückmeldung in der App, Ergebnis unbekannt statt Misserfolg.
+   */
+  ohneEreignis?: Ziel;
+  /** Weitere Ziele nur zur Anzeige (z. B. „funnel_lead“ = abgeschickt); entschieden wird immer über `ziel`. */
+  anzeigeZiele?: readonly Ziel[];
 };
 
 /**
@@ -87,6 +111,21 @@ export const EXPERIMENTE = {
     b: "Neu: Bestätigung plus fett „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], Komplettcheck erst danach",
     min: 150,
     nurReif: "termin_vorbei",
+  },
+  // Eigener PKV-Funnel (lib/funnel, Ole 20.11.2026): Beispiel, AUS. Zeigt, wie ein Schritt eine Fassung b bekommt
+  // (lib/funnel/definition.ts, Schritt „start“, test.experiment). Den ersten echten Test entwickelt das A/B-Test-Labor
+  // (docs/firma/ab-tests.md); dann hier Schlüssel, Texte und aktiv anpassen. Einheit = Besucher-ID, Zuteilung beim
+  // ersten Aufruf des Schritts. Haupt-Kennzahl: Abnehmer hat den Lead erreicht (je Besucher; Leads an Abnehmer ohne
+  // Rückmeldung zählen nicht), Neben-Kennzahlen Termin, Abschluss, verkauft und nicht storniert.
+  funnel_pkv_beispiel: {
+    titel: "PKV-Funnel: Überschrift der Startseite (Beispiel, aus)",
+    ziel: "ppl_erreicht",
+    a: "Bisher: „Viele PKV-Kunden mit Beiträgen über 700 € zahlen unnötig zu viel: …“",
+    b: "Beispiel: „Über 700 € im Monat für deine PKV? …“",
+    aktiv: false,
+    reifTage: 14,
+    ohneEreignis: "ppl_unbekannt",
+    anzeigeZiele: ["funnel_lead", "ppl_termin", "ppl_abschluss", "ppl_umsatz"],
   },
 } as const satisfies Record<string, ExperimentDef>;
 
@@ -187,7 +226,7 @@ export async function zielErreicht(einheiten: (string | null | undefined)[], zie
   if (!ids.length) return;
   try {
     const keys = Object.entries(EXPERIMENTE as Record<string, ExperimentDef>)
-      .filter(([, d]) => d.ziel === ziel)
+      .filter(([, d]) => d.ziel === ziel || d.ohneEreignis === ziel || !!d.anzeigeZiele?.includes(ziel))
       .map(([k]) => k);
     if (!keys.length) return;
     const z = await prisma.experimentZuteilung.findMany({ where: { experiment: { in: keys }, einheit: { in: ids } }, select: { experiment: true, einheit: true } });
@@ -219,12 +258,19 @@ export function reifeBedingung(nurReif: ExperimentDef["nurReif"], now: Date): Pr
 
 /**
  * Zugeteilte Einheiten und Einheiten mit Ziel (nach der Zuteilung) je Fassung. Mit nurReif nur reife Einheiten
- * (reifeBedingung); alles, was entscheidet (promoteExperimentWinners, Admin, Diagnose), zählt über diese Funktion.
+ * (reifeBedingung), mit reifTage nur Zuteilungen, die mindestens so alt sind, mit ohneEreignis ohne diese Einheiten;
+ * o.ziel = anderes Ziel zur Anzeige (anzeigeZiele), o.ohneReife = Reife aus (z. B. „funnel_lead“, sofort messbar).
+ * Alles, was entscheidet (promoteExperimentWinners, Admin, Diagnose), zählt über diese Funktion.
  */
-export async function experimentStats(experiment: string, now = new Date()): Promise<ExperimentStats> {
+export async function experimentStats(experiment: string, opt: { ziel?: Ziel; ohneReife?: boolean; now?: Date } | Date = {}): Promise<ExperimentStats> {
+  // Zweites Argument: Zeitpunkt (termin_zusage, nurReif) oder Optionen (Funnel: ziel, ohneReife); beides möglich
+  const o = opt instanceof Date ? { now: opt } : opt;
+  const now = o.now ?? new Date();
   const d = def(experiment);
-  const ziel = d?.ziel ?? "";
-  const reif = reifeBedingung(d?.nurReif, now);
+  const ziel = o.ziel ?? d?.ziel ?? "";
+  const reif = reifeBedingung(o.ohneReife ? undefined : d?.nurReif, now);
+  const reifTage = o.ohneReife ? 0 : Math.max(0, Math.floor(d?.reifTage ?? 0));
+  const ohne = o.ohneReife ? null : (d?.ohneEreignis ?? null);
   const rows = await prisma.$queryRaw<{ variante: string; n: bigint; ziel: bigint }[]>(Prisma.sql`
     SELECT z."variante" AS variante,
            COUNT(*) AS n,
@@ -235,6 +281,8 @@ export async function experimentStats(experiment: string, now = new Date()): Pro
            )) AS ziel
     FROM "ExperimentZuteilung" z
     WHERE z."experiment" = ${experiment}
+      ${reifTage > 0 ? Prisma.sql`AND z."createdAt" <= now() - make_interval(days => ${reifTage}::int)` : Prisma.empty}
+      ${ohne ? Prisma.sql`AND NOT EXISTS (SELECT 1 FROM "ExperimentEreignis" u WHERE u."experiment" = z."experiment" AND u."einheit" = z."einheit" AND u."ziel" = ${ohne})` : Prisma.empty}
       -- Über alle Kunden hinweg, ohne Testleads und Testkunden (Ole, 19.11.2026); Einheit ist meist die Lead-ID
       AND NOT EXISTS (
         SELECT 1 FROM "Lead" l JOIN "Customer" cu ON cu."id" = l."customerId"

@@ -72,6 +72,9 @@ export const LIMITS = {
   publicBooking: { limit: 20, windowMs: 10 * MIN },
   offerAccept: { limit: 10, windowMs: 10 * MIN },
   publicApi: { limit: 60, windowMs: MIN },
+  // Eigene Funnels (lib/funnel): Messung je Schritt (ein Besuch erzeugt rund 25 Ereignisse) und Absenden
+  funnelEreignis: { limit: 120, windowMs: MIN },
+  funnelAbsenden: { limit: 10, windowMs: 10 * MIN },
   cspReport: { limit: 30, windowMs: MIN },
   // Nutzungsmessung im Admin (je Admin; der Browser sendet höchstens alle 15 s und beim Verlassen der Seite)
   adminNutzung: { limit: 30, windowMs: MIN },
