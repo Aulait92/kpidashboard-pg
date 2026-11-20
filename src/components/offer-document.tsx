@@ -778,8 +778,8 @@ export function OfferDocument({
               {/* Frist je Angebotsdatum: neue Angebote 120 aktive Tage, ältere behalten 90 (lib/rechner vertragTageFuer) */}
               <strong>Vertrags-Garantie (für Makler):</strong> Haben Sie nach {vertragTageFuer(offer.createdAt)} aktiven Tagen weniger als{" "}
               {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, betreuen wir Sie ohne Gebühr für Betreuung und Software weiter, auf Wunsch
-              mit einem anderen Produkt ohne Setupgebühr, bis Sie sie haben (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine
-              wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
+              mit einem anderen Produkt ohne Setupgebühr, bis Sie sie haben (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine von Ihnen
+              wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht gegen Sie) und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
             </p>
             ) : (
             <p className="mt-2 text-[#374151]">
@@ -796,7 +796,7 @@ export function OfferDocument({
                   rechnet (längstens 6 Monate).
                 </>
               )} Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten
-              Termine wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
+              Termine von Ihnen wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht gegen Sie) und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
             </p>
             )}
           </>

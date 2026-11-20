@@ -12,7 +12,7 @@ export type GarantieKarte = { title: string; text: string };
 
 const VERTRAGS_GARANTIE: GarantieKarte = {
   title: "Vertrags-Garantie (für Makler)",
-  text: `Haben Sie nach ${GARANTIE_FRISTEN.vertragTage} aktiven Tagen weniger als ${VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, betreuen wir Sie ohne Gebühr für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt, bis Sie sie haben (längstens ${GARANTIE_FRISTEN.maxFreiMonate} Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine wahrgenommen und Ergebnisse in der App eingetragen.`,
+  text: `Haben Sie nach ${GARANTIE_FRISTEN.vertragTage} aktiven Tagen weniger als ${VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, betreuen wir Sie ohne Gebühr für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt, bis Sie sie haben (längstens ${GARANTIE_FRISTEN.maxFreiMonate} Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine von Ihnen wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht gegen Sie) und Ergebnisse in der App eingetragen.`,
 };
 
 const liste = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} und ${xs[xs.length - 1]}`);
