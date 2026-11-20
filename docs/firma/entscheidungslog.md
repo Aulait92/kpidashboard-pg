@@ -9,7 +9,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   (Meta inkl. 13b-Steuer und unsere Rechnung inkl. USt), Software kommt dazu (Ole: „brutto zzgl. Software“). Abrechnung
   **wöchentlich per Lastschrift** (Ole): jeden Montag Leads der Vorwoche × 35 € minus deren Meta-Kosten, automatisch über
   Stripe; platzt die Lastschrift, pausieren die Kampagnen. Steuer: mit 19 % kalkulieren (`docs/recht/ust-ppl-im-kundenkonto-2026-11-20.md`),
-  streng getrennt vom steuerfreien PPL aus unserem Konto. Software ab 50 Leads im Monat inklusive (Ole), auf der Rechnung
+  streng getrennt vom steuerfreien PPL aus unserem Konto. Software inklusive ab 1.750 € Leadumsatz im Monat (Ole, statt „ab 50 Leads“), auf der Rechnung
   als eigene Position 349 € netto. Offen: Fragen an den Steuerberater, Pilotkunde. Siehe `protokolle/2026-11-20-ppl-im-kundenkonto.md`.
 - **Garantien: „Termine wahrgenommen“ für alle in den AGB klargestellt** (A, Ole: „ja, für alle in den AGB klarstellen“):
   Nur Absagen oder Versäumnisse des Vermittlers zählen gegen ihn; Absage, Verschiebung oder Nichterscheinen des

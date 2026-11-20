@@ -58,3 +58,9 @@ Vor jedem Angebot: Umsatzsteuerfrage durch den Steuerberater klären. Nur Pilot,
 - **Entscheidung Ole: Software ab 50 Leads im Monat inklusive**, darunter Software-Abo zusätzlich. Auf der Rechnung steht die
   Software trotzdem als eigene Position (349 € netto), der Leadteil sinkt entsprechend (Software-Umsatz für die Bewertung,
   in den Kennzahlen getrennt als „Software aus Paketen“ ausweisen). Nur im neuen Modell, nicht im steuerfreien PPL aus unserem Konto.
+- **Entscheidung Ole (ersetzt „ab 50 Leads“): Software inklusive ab 1.750 € Leadumsatz im Monat** (brutto, z. B. 50
+  Privatschutz-, rund 80 Hunde- oder rund 100 Katzen-Leads); so bleiben je Produkt mindestens etwa 600 € Marge.
+- Rechnung je Produkt (Endpreis brutto, CPL netto, 1 € Tool, ohne Storno; heute = steuerfrei aus unserem Konto):
+  Katze 2 €/17 €: heute 13,62 €, neu 11,29 €; Hund 10 €/22 €: heute 9,10 €, neu 7,49 €; Privatschutz 10 €/35 €: heute 22,10 €, neu 18,41 €.
+  Empfehlung (noch nicht ausdrücklich bestätigt): neues Modell vorerst nur für Privatschutz und ähnlich margenstarke Produkte;
+  Katze bleibt im bisherigen Modell (kaum Liquiditätsvorteil, sichtbare Marge 2 € gegen 17 €), Hund eher bisherig oder Preis erhöhen.
