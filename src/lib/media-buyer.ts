@@ -1828,10 +1828,15 @@ async function processPool(
     // ── Preisgrenze je Lead ──
     const maxCpl = await loadPoolMaxCpl(def, settings.maxCpl, ctx.now);
     base.maxCpl = maxCpl.value;
+    // Höchstpreis gilt je GELIEFERTEM Lead (Leadpreis der Bezüge). Bei Software-Zielen wird nur ein Teil der
+    // eingehenden Leads geliefert: Kosten je geliefertem Lead = CPL / Verwertungsquote (Ole, 20.11.2026:
+    // PKV 16 € CPL bei 26 % Verwertung ≈ 61 € je geliefertem Lead, über dem Höchstpreis).
+    const costPerDelivered =
+      costPerLead != null && pacing && pacing.yieldRate > 0 ? costPerLead / pacing.yieldRate : costPerLead;
     const price = applyPriceGuard({
       decision,
       currentBudget,
-      costPerLead,
+      costPerLead: costPerDelivered,
       maxCpl: maxCpl.value,
     });
     decision = price.decision;
@@ -1841,7 +1846,7 @@ async function processPool(
       if (!ctx.dryRun && shouldAlertCpl(streak, ctx.cplAlertRuns)) {
         await sendToAdmins({
           title: `⚠️ Media Buyer: ${def.label} zu teuer`,
-          body: `CPL ${cplFmt.format(costPerLead ?? 0)} liegt seit ${streak} Läufen über dem Höchstpreis ${cplFmt.format(maxCpl.value ?? 0)}. Budget wird nicht erhöht.`,
+          body: `Kosten je geliefertem Lead ${cplFmt.format(costPerDelivered ?? 0)} liegen seit ${streak} Läufen über dem Höchstpreis ${cplFmt.format(maxCpl.value ?? 0)}. Budget wird nicht erhöht.`,
           tag: `media-buyer-cpl:${def.key}`,
           url: "/admin/media-buyer",
         }).catch(() => undefined);
