@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { HalteSettings } from "@/lib/halteangebote";
 import { saveHalteAction, type HalteFormState } from "./actions";
@@ -17,17 +17,20 @@ function Num({ name, label, value, suffix, step = "1" }: { name: keyof HalteSett
   );
 }
 
+// Werte eines Angebots nur zeigen, solange es an ist (UX-Umbau 20.11.2026); die Felder bleiben im Formular und werden
+// mitgesendet, damit beim Ausschalten nichts verloren geht.
 function Block({ name, checked, title, text, children }: { name: keyof HalteSettings; checked: boolean; title: string; text: string; children?: React.ReactNode }) {
+  const [an, setAn] = useState(checked);
   return (
     <div className="space-y-3 px-5 py-4">
       <label className="flex items-start gap-3">
-        <input type="checkbox" name={name} defaultChecked={checked} className="mt-1 h-4 w-4 shrink-0" />
+        <input type="checkbox" name={name} defaultChecked={checked} onChange={(e) => setAn(e.target.checked)} className="mt-1 h-4 w-4 shrink-0" />
         <span>
           <span className="block font-medium">{title}</span>
           <span className="block text-sm text-[color:var(--muted)]">{text}</span>
         </span>
       </label>
-      {children ? <div className="space-y-2 pl-7">{children}</div> : null}
+      {children ? <div className={an ? "space-y-2 pl-7" : "hidden"}>{children}</div> : null}
     </div>
   );
 }

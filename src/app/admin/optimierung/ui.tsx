@@ -24,7 +24,8 @@ const Spin = () => <Loader2 className="h-3.5 w-3.5 animate-spin" />;
 const Msg = ({ s }: { s: OptState }) =>
   s.error ? <span className="text-sm text-rose-700">{s.error}</span> : s.info ? <span className="text-sm text-emerald-700">{s.info}</span> : s.ok ? <span className="text-sm text-emerald-700">Gespeichert.</span> : null;
 
-export function GlobalForm({ enabled, autopilot }: { enabled: boolean; autopilot: boolean }) {
+/** `knopf="secondary"`: wenn die Seite schon eine Hauptaktion hat (Einstellungen › Kampagnen-Automatik). */
+export function GlobalForm({ enabled, autopilot, knopf = "primary" }: { enabled: boolean; autopilot: boolean; knopf?: "primary" | "secondary" }) {
   const [state, action, pending] = useActionState<OptState, FormData>(saveGlobalAction, {});
   return (
     <form action={action} className="space-y-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-sm)]">
@@ -43,7 +44,7 @@ export function GlobalForm({ enabled, autopilot }: { enabled: boolean; autopilot
         </span>
       </label>
       <div className="flex items-center gap-3">
-        <button className={buttonClass("primary", "md")} disabled={pending}>
+        <button className={buttonClass(knopf, "md")} disabled={pending}>
           {pending ? <Spin /> : null} Speichern
         </button>
         <Msg s={state} />
