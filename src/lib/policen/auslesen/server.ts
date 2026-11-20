@@ -469,6 +469,8 @@ export async function bestaetigeAuszug(w: Wer, id: string, ja: boolean): Promise
   const a = await auszugVon(w, id);
   if (!a) return false;
   await prisma.policenAuszug.update({ where: { id }, data: ja ? { geprueftAt: new Date(), geprueftVonId: w.userId } : { geprueftAt: null, geprueftVonId: null } });
+  // Für „Policen je Berater“ (lib/policen/team-zahlen.ts): geprüft vor dem Termin, bleibt nach dem Löschen der Unterlage
+  if (ja) await audit("policen.auslesen_geprueft", { entity: "Lead", entityId: w.leadId, customerId: w.customerId, details: { auszug: id }, actor: { id: w.userId, role: "BUYER" } });
   return true;
 }
 
