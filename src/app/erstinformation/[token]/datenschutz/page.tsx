@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { loadErstinfoByToken } from "@/lib/erstinformation";
 import { DATENSCHUTZ_VERMITTLER_VERSION, datenschutzVermittler } from "@/lib/datenschutz-vermittler";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
+import { policenSpeicherAnbieter } from "@/lib/legal-texts";
 
 // Datenschutzhinweise im Namen des Vermittlers (Ole, 20.11.2026: „unter Datenschutz ist PG, unter Impressum Lohmann“).
 // Verantwortlich für Lead- und Termindaten ist der Vermittler, wir sind Auftragsverarbeiter. Hat der Vermittler keine
@@ -16,7 +17,7 @@ export default async function DatenschutzVermittlerPage({ params }: Props) {
   const e = await loadErstinfoByToken(token);
   if (!e) notFound();
   const d = e.daten;
-  const abschnitte = datenschutzVermittler({ name: d.name ?? "", firma: d.firma ?? "", anschrift: d.anschrift ?? "", telefon: d.telefon ?? "", email: d.email ?? "" });
+  const abschnitte = datenschutzVermittler({ name: d.name ?? "", firma: d.firma ?? "", anschrift: d.anschrift ?? "", telefon: d.telefon ?? "", email: d.email ?? "", speicher: policenSpeicherAnbieter()?.name ?? null });
   return (
     <>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">

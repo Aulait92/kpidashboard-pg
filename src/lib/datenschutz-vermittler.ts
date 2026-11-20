@@ -13,7 +13,15 @@ import { LOESCHFRIST_TAGE } from "@/lib/policen/regeln";
 
 export const DATENSCHUTZ_VERMITTLER_VERSION = "20.11.2026";
 
-export type VermittlerAngaben = { name: string; firma: string; anschrift: string; telefon: string; email: string };
+export type VermittlerAngaben = {
+  name: string;
+  firma: string;
+  anschrift: string;
+  telefon: string;
+  email: string;
+  /** Speicher der Unterlagen (legal-texts policenSpeicherAnbieter), z. B. „Cloudflare, Inc. (R2)“ */
+  speicher?: string | null;
+};
 
 const t = (s: string | null | undefined) => (s ?? "").trim();
 
@@ -104,7 +112,7 @@ export function datenschutzVermittler(v: VermittlerAngaben): { title: string; it
     {
       title: "Empfänger",
       items: [
-        "Im Auftrag des Vermittlers sind beteiligt: der technische Dienstleister mit Hosting bei Railway (Rechenzentrum in der EU) und Ablage der Unterlagen bei Amazon Web Services (Region EU), 360dialog GmbH und WhatsApp Ireland Ltd. (WhatsApp), Anthropic, PBC und OpenAI Ireland Ltd. (KI), Resend (E-Mail-Versand), seven communications GmbH & Co. KG (SMS) und Sentry (Fehlerüberwachung ohne Inhalte), dazu Google oder Microsoft, wenn der Vermittler deren Kalender oder Postfach nutzt.",
+        `Im Auftrag des Vermittlers sind beteiligt: der technische Dienstleister mit Hosting bei Railway (Rechenzentrum in der EU) und Ablage der Unterlagen bei ${t(v.speicher) || "einem Speicher mit Rechenzentrum in der EU"} (Region EU), 360dialog GmbH und WhatsApp Ireland Ltd. (WhatsApp), Anthropic, PBC und OpenAI Ireland Ltd. (KI), Resend (E-Mail-Versand), seven communications GmbH & Co. KG (SMS) und Sentry (Fehlerüberwachung ohne Inhalte), dazu Google oder Microsoft, wenn der Vermittler deren Kalender oder Postfach nutzt.`,
         "WhatsApp verarbeitet Verbindungsdaten wie Telefonnummer und Zeitpunkte teilweise in eigener Verantwortung und kann Inhalte bis zu 30 Tage zwischenspeichern.",
         "Versicherer erhalten Daten nur, soweit das für ein gewünschtes Angebot oder einen Antrag erforderlich ist, und nicht über diese Seiten. Die Daten werden nicht verkauft.",
       ],
@@ -112,13 +120,13 @@ export function datenschutzVermittler(v: VermittlerAngaben): { title: string; it
     {
       title: "Übermittlung in Drittländer",
       items: [
-        "Einige Dienstleister oder ihre Muttergesellschaften sitzen in den USA (unter anderem Anthropic, Resend, Meta, Railway, Amazon, Sentry, Google, Microsoft). Grundlage ist der Angemessenheitsbeschluss zum EU-US Data Privacy Framework, soweit das Unternehmen zertifiziert ist (Art. 45 DSGVO), sonst EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).",
+        `Einige Dienstleister oder ihre Muttergesellschaften sitzen in den USA (unter anderem Anthropic, OpenAI, Resend, Meta, Railway, ${/amazon/i.test(t(v.speicher)) ? "Amazon" : "Cloudflare"}, Sentry, Google, Microsoft). Grundlage ist der Angemessenheitsbeschluss zum EU-US Data Privacy Framework, soweit das Unternehmen zertifiziert ist (Art. 45 DSGVO), sonst EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).`,
       ],
     },
     {
       title: "Speicherdauer",
       items: [
-        "Kontaktdaten, Termine und Chatverlauf werden gelöscht, sobald sie für Termin, Beratung und Betreuung nicht mehr erforderlich sind, auf Verlangen sofort, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht.",
+        "Kontaktdaten, Termine und Chatverlauf werden gelöscht, sobald sie für Termin, Beratung und Betreuung nicht mehr erforderlich sind, spätestens 24 Monate nach dem letzten Kontakt, wenn kein Vertrag zustande gekommen ist. Auf Verlangen wird sofort gelöscht, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht.",
         "Nach einem Vertragsabschluss bewahrt der Vermittler die Beratungsdokumentation bis zu 10 Jahre auf (§§ 61, 62 VVG, Handels- und Steuerrecht). Nach einer Abmeldung bleibt nur ein pseudonymer Sperreintrag (Hashwert), damit keine weiteren Nachrichten kommen.",
       ],
     },

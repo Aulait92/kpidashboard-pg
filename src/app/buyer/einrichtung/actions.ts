@@ -109,6 +109,21 @@ export async function saveImpressumUrlAction(_prev: SetupState, fd: FormData): P
   return { ok: true };
 }
 
+/** Eigene Datenschutzseite (optional, leer = Datenschutzhinweise in Ihrem Namen), Ole 20.11.2026. */
+export async function saveDatenschutzUrlAction(_prev: SetupState, fd: FormData): Promise<SetupState> {
+  let ob;
+  try {
+    ({ ob } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const { datenschutzUrlSpeichern } = await import("@/lib/impressum-fehlt");
+  const r = await datenschutzUrlSpeichern(ob.customerId, str(fd, "privacyUrl", 300));
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/buyer", "layout");
+  return { ok: true };
+}
+
 export async function bookHelpCallAction(_prev: SetupState, fd: FormData): Promise<SetupState> {
   try {
     const { ctx } = await requireCustomer();

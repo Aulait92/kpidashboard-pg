@@ -70,3 +70,10 @@ nach Art. 13 genügt für die Buchung (lit. b, siehe `buchungsseite-komplettchec
 Abschnitt (Art. 21 Abs. 4: getrennt von anderen Informationen).
 
 Stufe: Text B (Bewertung, hier erledigt). Livegang und Änderung der AVV-Anlage: A (Ole).
+
+## Umsetzung (20.11.2026, Freigabe Ole: „live, und ja und ja“)
+- Live: Seite /erstinformation/<token>/datenschutz, verlinkt in Fußzeile und Buchungsseite, nur mit Name und Anschrift (A2, A3 erledigt).
+- A1 erledigt: SUBPROCESSORS um OpenAI Ireland (EU-Endpunkt, Auslesen von Unterlagen) und den Speicher der Unterlagen laut POLICEN_S3_ENDPOINT ergänzt; die Datenschutzhinweise nennen den Speicher ebenfalls aus der Konfiguration.
+- A5 erledigt: Leads ohne Abschluss werden 24 Monate nach dem letzten Kontakt anonymisiert (lib/lead-loeschfrist.ts, täglicher Wartungslauf, höchstens 200 je Lauf); Text „spätestens 24 Monate nach dem letzten Kontakt“.
+- Neu: optionales Feld „Eigene Datenschutzseite“ in der Einrichtung (Schritt Erstinformation).
+- Offen: A4 (Datenschutzbeauftragter), A6 (Art.-9-Einwilligung in Anfrageformularen prüfen), A7 (Rückmeldung an Meta, Art. 26).

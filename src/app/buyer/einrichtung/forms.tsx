@@ -10,7 +10,7 @@ import {
   checkMetaAccessAction,
   confirmConsentAction,
   confirmMetaAccessAction,
-  saveImpressumUrlAction,
+  saveImpressumUrlAction, saveDatenschutzUrlAction,
   saveQuestionnaireAction,
   skipSetupStepAction,
   type MetaSetupState,
@@ -144,6 +144,31 @@ export function ImpressumUrlForm({ readOnly }: { readOnly: boolean }) {
       </div>
       <Feedback state={state} />
     </form>
+  );
+}
+
+/** Eigene Datenschutzseite (optional, aufklappbar im Schritt Erstinformation; Ole 20.11.2026). */
+export function DatenschutzUrlForm({ readOnly, initial }: { readOnly: boolean; initial: string | null }) {
+  const [state, action, pending] = useActionState<SetupState, FormData>(saveDatenschutzUrlAction, {});
+  return (
+    <details className="text-sm" data-datenschutz-url>
+      <summary className="cursor-pointer font-medium text-[color:var(--brand)]">Eigene Datenschutzseite (optional)</summary>
+      <form action={action} className="mt-3 space-y-2">
+        <p className="text-[color:var(--muted)]">Leer lassen, dann zeigen Ihre Seiten für Kunden Datenschutzhinweise in Ihrem Namen.</p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input id="privacyUrl" name="privacyUrl" defaultValue={initial ?? ""} className={input} placeholder="z. B. agentur-muster.de/datenschutz" inputMode="url" autoComplete="url" disabled={readOnly || pending} aria-label="Adresse Ihrer Datenschutzseite" />
+          <button
+            type="submit"
+            disabled={pending || readOnly}
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-5 text-[15px] font-semibold transition hover:bg-[color:var(--surface-sunken)] disabled:opacity-60"
+          >
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Speichern
+          </button>
+        </div>
+        {state.ok ? <p className="flex items-center gap-1.5 font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" /> Gespeichert.</p> : <Feedback state={state} />}
+      </form>
+    </details>
   );
 }
 
