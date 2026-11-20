@@ -49,6 +49,8 @@ export type OfferChoiceProps = {
   /** Altangebot mit fest vereinbarter Jahreszahlung: gilt nur mit 12 Monaten. */
   legacyAnnual?: boolean;
   start: { min: string; max: string; preset: string };
+  /** Ohne Einrichtungsgebühr (Pay-per-Lead + Software): Laufzeiten ohne Setup-Zeile, „Jetzt fällig: 0 €“. */
+  ohneEinrichtung?: boolean;
 };
 
 const fmtDate = (iso: string) => iso.split("-").reverse().join(".");
@@ -322,8 +324,14 @@ function ChoiceFields({
                 <span className="min-w-0">
                   <span className="block font-semibold">{o.label}</span>
                   <span className="block text-xs text-[color:var(--muted)]">
-                    Setup {o.list != null && o.list > o.setup ? <s className="mr-1">{eur(o.list)}</s> : null}
-                    {eur(o.setup)} netto
+                    {choice.ohneEinrichtung ? (
+                      o.term === "none" ? "monatlich kündbar" : "danach monatlich kündbar"
+                    ) : (
+                      <>
+                        Setup {o.list != null && o.list > o.setup ? <s className="mr-1">{eur(o.list)}</s> : null}
+                        {eur(o.setup)} netto
+                      </>
+                    )}
                   </span>
                 </span>
               </label>
@@ -351,7 +359,7 @@ function ChoiceFields({
             className="mt-1 block h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20 sm:w-60"
           />
           <p className="mt-1 text-xs text-[color:var(--muted)]">
-            Ab diesem Tag läuft {annual ? "die Vergütung" : "die Monatsgebühr"}. Die Einrichtung dauert ca. 1–2 Wochen. Möglich: {fmtDate(choice.start.min)} bis{" "}
+            Ab diesem Tag läuft {annual ? "die Vergütung" : "die Monatsgebühr"}.{choice.ohneEinrichtung ? "" : " Die Einrichtung dauert ca. 1–2 Wochen."} Möglich: {fmtDate(choice.start.min)} bis{" "}
             {fmtDate(choice.start.max)}.
           </p>
         </div>
@@ -376,12 +384,20 @@ function ChoiceFields({
           </>
         ) : (
           <>
+            {choice.ohneEinrichtung ? (
+              <div>
+                <span className="text-[color:var(--muted)]">Jetzt fällig: </span>
+                <b data-testid="choice-setup">{eur(0)}</b>
+                <span className="text-[color:var(--muted)]">, keine Einrichtungsgebühr</span>
+              </div>
+            ) : (
             <div>
               <span className="text-[color:var(--muted)]">Jetzt fällig (Setup): </span>
               {opt.list != null && opt.list > opt.setup ? <s className="mr-1 text-[color:var(--muted)]">{eur(opt.list)}</s> : null}
               <b data-testid="choice-setup">{eur(opt.setup)} netto</b>
               <span className="text-[color:var(--muted)]"> · {eur(withVat(opt.setup))} brutto</span>
             </div>
+            )}
             <div>
               <span className="text-[color:var(--muted)]">
                 {arrears

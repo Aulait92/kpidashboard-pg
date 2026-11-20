@@ -490,9 +490,12 @@ export function setupSteps(
   extra: { appDone: boolean; provisionDone: boolean },
 ): SetupStep[] {
   const software = ob.package !== "service";
+  // Pay-per-Lead + Software: kein Testlead über eine eigene Kampagne (Meta und Einwilligung fehlen in der Checkliste)
+  const kampagnen = ob.package !== "ppl_software";
   const item = (k: string) => items.find((i) => i.key === k);
   const steps: SetupStep[] = [];
   for (const s of SETUP_STEPS) {
+    if (!kampagnen && s.key === "testLead") continue;
     if (!software && (s.key === "calendar" || s.key === "mailbox" || s.key === "whatsapp" || s.key === "consent" || s.key === "erstinfo" || s.key === "assistent" || s.key === "serviceMails")) continue;
     const href = `/buyer/einrichtung?schritt=${s.key}#${s.key}`;
     if (s.key === "app") steps.push({ key: s.key, label: s.label, done: extra.appDone, owner: "kunde", href });

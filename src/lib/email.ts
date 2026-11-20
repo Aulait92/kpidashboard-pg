@@ -229,15 +229,13 @@ export function offerDiscountLine(d: { label: string; discount: number; list: nu
   };
 }
 
-/** Schickt einem Interessenten den Link zu seinem Angebot. */
-export async function sendOfferEmail(opts: {
-  to: string;
+/** Inhalt der Angebotsmail (ohne Empfänger und Versand), für Versand und Vorschau gleich. */
+export type AngebotsMailInhalt = {
   /** z. B. „Hallo Herr Weber,“ */
   greeting: string;
   number: string;
   offerUrl: string;
   validUntil: Date;
-  replyTo?: string | null;
   /** Optional: Link zum Rechner (mit Budget/Zielgruppe vorausgefüllt) */
   rechnerUrl?: string | null;
   /** Optional: Link zur Web-Präsentation (/praesentation/<token>) */
@@ -247,8 +245,8 @@ export async function sendOfferEmail(opts: {
    * Verschieben, sonst persönlicher Buchungslink (/termin/entscheidung?k=…)
    */
   entscheidungsCall?: EntscheidungsCall | null;
-  /** Optional: Präsentation als PDF-Anhang */
-  attachment?: { filename: string; content: Buffer } | null;
+  /** Optional: Präsentation als PDF-Anhang (für den Aufbau zählt nur, ob es einen gibt) */
+  attachment?: { filename: string } | null;
   /** Anrede: true = Du-Form, sonst Sie */
   du?: boolean;
   /** Empfehlungsrabatt auf die Einrichtung (eigene Zeile, Listenpreis durchgestrichen). */
@@ -261,10 +259,13 @@ export async function sendOfferEmail(opts: {
   vorauszahlung?: boolean;
   /** Zahlung nachträglich (Ole, 19.11.2026): erste Abbuchung (YYYY-MM-DD) und Setup netto */
   nachtraeglich?: { ersteIso: string | null; setup: number } | null;
-}): Promise<SendResult & { subject?: string; text?: string }> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
-  if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+};
+
+/**
+ * Baut Betreff, Text und HTML der Angebotsmail (rein, ohne Versand). sendOfferEmail verschickt genau das;
+ * die Vorschau im Admin (previewOfferEmailAction) zeigt genau das (Ole, 20.11.2026).
+ */
+export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; text: string; html: string } {
   const rechner = opts.rechnerUrl ?? null;
   const praes = opts.praesentationUrl ?? null;
   const termin = opts.entscheidungsCall ? entscheidungsCallText(opts.entscheidungsCall, !!opts.du) : null;
@@ -294,6 +295,38 @@ export async function sendOfferEmail(opts: {
     ...(anhang ? [t.anhang, ""] : []),
     signatureText(),
   ].join("\n");
+  const html = `
+      <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.introHtml} ${t.accept}</p>
+        <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
+        <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
+        ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
+        ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
+        ${vorausText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(vorausText)}</p>` : ""}
+        ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
+        ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}
+        ${termin ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(termin.satz)}${termin.url ? ` <a href="${escapeHtml(termin.url)}" style="color:#2563eb;font-weight:600">${escapeHtml(termin.linkLabel)}</a>` : ""}</p>` : ""}
+        ${anhang ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.anhang}</p>` : ""}
+        ${signatureHtml()}
+      </div>`;
+  return { subject, text, html };
+}
+
+/** Schickt einem Interessenten den Link zu seinem Angebot. */
+export async function sendOfferEmail(
+  opts: Omit<AngebotsMailInhalt, "attachment"> & {
+    to: string;
+    replyTo?: string | null;
+    /** Optional: Präsentation als PDF-Anhang */
+    attachment?: { filename: string; content: Buffer } | null;
+  },
+): Promise<SendResult & { subject?: string; text?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
+  if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+  const anhang = opts.attachment ?? null;
+  const { subject, text, html } = baueAngebotsMail(opts);
   try {
     const sent = await mailClient(apiKey).emails.send({
       from,
@@ -302,21 +335,7 @@ export async function sendOfferEmail(opts: {
       subject,
       ...(anhang ? { attachments: [{ filename: anhang.filename, content: anhang.content }] } : {}),
       text,
-      html: `
-        <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.introHtml} ${t.accept}</p>
-          <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
-          <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
-          ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
-          ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
-          ${vorausText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(vorausText)}</p>` : ""}
-          ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
-          ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}
-          ${termin ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(termin.satz)}${termin.url ? ` <a href="${escapeHtml(termin.url)}" style="color:#2563eb;font-weight:600">${escapeHtml(termin.linkLabel)}</a>` : ""}</p>` : ""}
-          ${anhang ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.anhang}</p>` : ""}
-          ${signatureHtml()}
-        </div>`,
+      html,
     });
     if (wasBlocked(sent)) return { ok: false, error: MAIL_BLOCKED_TEXT };
     const { error } = sent;
@@ -356,8 +375,8 @@ export function offerBonusLine(b: { betrag: number; bis: Date }, du: boolean, sp
 }
 
 /** Teilschritte der Einrichtung in der Reihenfolge der Einrichtungsseite. */
-export function setupParts(software: boolean, whatsappSelfConnect: boolean): string {
-  const parts = ["kurzer Fragebogen", "Freigabe Ihres Meta-Werbekontos"];
+export function setupParts(software: boolean, whatsappSelfConnect: boolean, meta = true): string {
+  const parts = ["kurzer Fragebogen", ...(meta ? ["Freigabe Ihres Meta-Werbekontos"] : [])];
   if (software) parts.push("Kalender verbinden");
   if (software && whatsappSelfConnect) parts.push("WhatsApp verbinden");
   return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} und ${parts[parts.length - 1]}` : parts[0];
@@ -368,7 +387,8 @@ export async function sendOnboardingWelcomeEmail(opts: {
   to: string;
   /** z. B. „Hallo Herr Weber,“ */
   greeting: string;
-  packageType: "software" | "service";
+  /** „ppl_software“ = Pay-per-Lead + Software: ohne Meta-Freigabe und ohne Kampagne. */
+  packageType: "software" | "service" | "ppl_software";
   startDate: Date | null;
   products: string[];
   setPasswordUrl: string | null;
@@ -387,18 +407,28 @@ export async function sendOnboardingWelcomeEmail(opts: {
   const start = opts.startDate
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.startDate)
     : null;
-  const software = opts.packageType === "software";
+  const ppl = opts.packageType === "ppl_software";
+  const software = opts.packageType === "software" || ppl;
   const products = opts.products.length ? opts.products.join(", ") : null;
   const accessUrl = opts.setPasswordUrl ?? opts.loginUrl;
   const steps = [
     opts.setPasswordUrl
       ? "Zugang einrichten: Über den Button legen Sie Ihr Passwort fest (Link 7 Tage gültig)."
       : `Einloggen unter ${opts.loginUrl} mit ${opts.to}.`,
-    `Einrichtung im Kundenbereich (ca. 20 bis 30 Minuten, Sie können jederzeit unterbrechen): ${setupParts(software, !!opts.whatsappSelfConnect)}. Auf Wunsch machen wir das gemeinsam in einem 15-Minuten-Termin, den Sie direkt in der Einrichtung buchen.`,
+    `Einrichtung im Kundenbereich (ca. 20 bis 30 Minuten, Sie können jederzeit unterbrechen): ${setupParts(software, !!opts.whatsappSelfConnect, !ppl)}. Auf Wunsch machen wir das gemeinsam in einem 15-Minuten-Termin, den Sie direkt in der Einrichtung buchen.`,
+    ...(ppl
+      ? [
+          "Leads bestellen Sie wie gewohnt per Stück (Pay-per-Lead), sie werden separat abgerechnet.",
+          start
+            ? `Start am ${start}: Der digitale Assistent schreibt Ihre Leads per WhatsApp an und bucht Termine in Ihren Kalender.`
+            : "Zum Start: Der digitale Assistent schreibt Ihre Leads per WhatsApp an und bucht Termine in Ihren Kalender.",
+        ]
+      : [
     "Den Rest erledigen wir: Kampagne, Werbemittel und Leadformular. Sie bekommen Bescheid, sobald alles startklar ist.",
     start
       ? `Start am ${start}: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`
       : `Start: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`,
+        ]),
   ];
   const greeting = escapeHtml(opts.greeting);
   try {

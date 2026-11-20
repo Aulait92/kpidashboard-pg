@@ -22,7 +22,7 @@ import { offerProducts } from "@/components/offer-document";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { validLoginEmail } from "@/lib/login-email";
 import { ersterAbrechnungstag } from "@/lib/abrechnungstag";
-import { prepayFreeMonthsFor, rhythmusFuer } from "@/lib/offer-pricing";
+import { mitKampagnen, mitSoftware, normalizePackage, PACKAGE_LABEL, prepayFreeMonthsFor, rhythmusFuer } from "@/lib/offer-pricing";
 
 const DAY = 24 * 60 * 60 * 1000;
 const INVITE_TTL_MS = 7 * DAY;
@@ -84,7 +84,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
   const contact = offer.salesContactId
     ? await prisma.salesContact.findUnique({ where: { id: offer.salesContactId } })
     : null;
-  const pkg = offer.package === "service" ? "service" : "software";
+  const pkg = normalizePackage(offer.package);
 
   // 1) Kundenkonto: vorgegeben, schon am Kontakt verknüpft oder neu.
   let customerId = opts.customerId || contact?.customerId || (await bestehendesKonto(offer, contact)) || null;
@@ -112,7 +112,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
               : (await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "mehrfachvertreter"
                 ? "mehrfachvertreter"
                 : "vertreter",
-          ...(pkg === "software" ? { newUi: true } : {}),
+          ...(mitSoftware(pkg) ? { newUi: true } : {}),
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
           // Du/Sie gegenüber dem Vermittler wie im angenommenen Angebot (lib/vermittler-ansprache.ts)
@@ -130,7 +130,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
           // Vertreter oder Makler aus dem Angebot übernehmen (Provisionen, Rechner, Budget-Empfehlung)
           vermittlerTyp: offer.vermittlerTyp === "makler" || offer.vermittlerTyp === "mehrfachvertreter" ? offer.vermittlerTyp : "vertreter",
           // Neue Kunden mit Software starten direkt in der neuen Oberfläche (Ole, 11.11.).
-          newUi: pkg === "software",
+          newUi: mitSoftware(pkg),
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
           // Du/Sie gegenüber dem Vermittler wie im angenommenen Angebot (lib/vermittler-ansprache.ts)
@@ -191,7 +191,19 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
   }
 
   // 3) Aufgaben für den Vertrieb (am Kontakt, erscheinen unter Heute → Aufgaben).
-  if (contact) {
+  if (contact && !mitKampagnen(pkg)) {
+    // Pay-per-Lead + Software: keine Kampagne, kein Leadformular, kein Werbekonto. Unser Teil: Pay-per-Lead-Bezug
+    // (Produkt, Preis, Gebiet) einrichten, damit der Kunde unter „Leads bestellen“ bestellen kann, und Go-live.
+    const start = offer.startDate;
+    await prisma.salesTask
+      .createMany({
+        data: [
+          { title: "Onboarding: Pay-per-Lead-Bezug einrichten (Produkt, Preis, Gebiet, Lieferung in den Kundenbereich)", dueAt: dueBefore(start, 5, 1) },
+          { title: "Onboarding: Go-live: WhatsApp und Vorlage prüfen, live schalten", dueAt: dueBefore(start, 0, 2) },
+        ].map((t) => ({ ...t, contactId: contact.id, type: "SONSTIGES" as const })),
+      })
+      .catch((err) => reportError(err, "onboarding-tasks"));
+  } else if (contact) {
     const start = offer.startDate;
     const tasks = [
       { title: "Onboarding: Pflichtangaben (Impressum) der Agentur-Website prüfen", dueAt: dueBefore(null, 0, 1) },
@@ -222,7 +234,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
     await submitTemplatesAfterModule(customer.id);
   }
   await setContactCustomerStage(offer, "ONBOARDING");
-  await logOfferActivity(offer, `Onboarding gestartet (${pkg === "service" ? "Nur Betreuung" : "Betreuung + Software"})`, `Kundenkonto: ${customer.name}`);
+  await logOfferActivity(offer, `Onboarding gestartet (${PACKAGE_LABEL[pkg]})`, `Kundenkonto: ${customer.name}`);
   if (!loginReady) {
     // Kein Login möglich (keine E-Mail, oder die Adresse gehört schon einem anderen Konto):
     // Admin muss es von Hand anlegen, sonst kommt der Kunde nach der Zahlung nicht hinein.
@@ -271,7 +283,7 @@ async function upgradeExistingCustomer(
   onboardingId: string,
   contactId: string | null,
 ): Promise<StartResult> {
-  const pkg = offer.package === "service" ? "service" : "software";
+  const pkg = normalizePackage(offer.package);
   const stripeFree =
     offer.stripeCustomerId &&
     !(await prisma.customer.findUnique({ where: { stripeCustomerId: offer.stripeCustomerId }, select: { id: true } }));
@@ -279,7 +291,7 @@ async function upgradeExistingCustomer(
     where: { id: customerId },
     data: {
       plan: pkg,
-      ...(pkg === "software" ? { newUi: true } : {}),
+      ...(mitSoftware(pkg) ? { newUi: true } : {}),
       retainerMonthly: offer.monthlyFee,
       ...(offer.startDate ? { retainerStart: offer.startDate } : {}),
       // Neues angenommenes Angebot: Du/Sie wie darin (lib/vermittler-ansprache.ts)
@@ -295,16 +307,22 @@ async function upgradeExistingCustomer(
         data: {
           contactId,
           type: "SONSTIGES",
-          title: `Paketwechsel ${customer.name}: ${pkg === "software" ? "Software einrichten (WhatsApp, Kalender, App, Team)" : "auf Nur Betreuung umstellen"}`,
+          title: `Paketwechsel ${customer.name}: ${
+            pkg === "software"
+              ? "Software einrichten (WhatsApp, Kalender, App, Team)"
+              : pkg === "ppl_software"
+                ? "Pay-per-Lead + Software: Software einrichten, Kampagnen beenden, Pay-per-Lead-Bezug prüfen"
+                : "auf Nur Betreuung umstellen"
+          }`,
           dueAt: dueBefore(null, 0, 0),
         },
       })
       .catch((err) => reportError(err, "upgrade-task"));
   }
-  await logOfferActivity(offer, `Paketwechsel angenommen (${pkg === "service" ? "Nur Betreuung" : "Betreuung + Software"})`, `Kundenkonto: ${customer.name}`);
+  await logOfferActivity(offer, `Paketwechsel angenommen (${PACKAGE_LABEL[pkg]})`, `Kundenkonto: ${customer.name}`);
   await sendToAdmins({
     title: `⬆️ Paketwechsel: ${customer.name}`,
-    body: pkg === "software" ? "Jetzt Betreuung + Software, Einrichtung starten" : "Jetzt Nur Betreuung",
+    body: pkg === "service" ? "Jetzt Nur Betreuung" : `Jetzt ${PACKAGE_LABEL[pkg]}, Einrichtung starten`,
     url: offerAdminHref(offer),
     tag: `upgrade:${customerId}`,
   }).catch((err) => reportError(err, "upgrade-push"));
@@ -331,7 +349,7 @@ export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?:
   const res = await sendOnboardingWelcomeEmail({
     to,
     greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
-    packageType: ob.package === "service" ? "service" : "software",
+    packageType: normalizePackage(ob.package),
     startDate: ob.startDate,
     products: offer ? offerProducts(offer.products).map((p) => p.name) : [],
     setPasswordUrl,
@@ -414,7 +432,9 @@ export async function loadOnboarding(where: { customerId: string } | { id: strin
 export type OnboardingFull = NonNullable<Awaited<ReturnType<typeof loadOnboarding>>>;
 
 export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: string; paidAt: Date | null; isTest?: boolean } | null): ChecklistItem[] {
-  const software = ob.package !== "service";
+  const software = mitSoftware(ob.package);
+  // Pay-per-Lead + Software: ohne Meta-Zugriff, Leadformular-Einwilligung, Impressum der Kampagne, Kampagne und Testlead
+  const kampagnen = mitKampagnen(ob.package);
   const skip = (k: string) => stepSkipOf(ob.stepSkips, k);
   const firstLogin = ob.customer.users.map((u) => u.lastLoginAt).filter(Boolean).sort()[0] ?? null;
   const items: ChecklistItem[] = [];
@@ -432,8 +452,10 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
     { key: "welcome", label: "Willkommens-Mail verschickt", owner: "auto", done: !!ob.welcomeSentAt, at: ob.welcomeSentAt },
     { key: "login", label: "Kunde hat sich eingeloggt", owner: "kunde", done: !!firstLogin, at: firstLogin },
     { key: "questionnaire", label: "Fragebogen ausgefüllt", owner: "kunde", done: !!ob.questionnaireAt, at: ob.questionnaireAt },
-    { key: "metaAccess", label: "Meta-Zugriff (Werbekonto + Seite) erteilt", owner: "kunde", done: !!ob.metaAccessAt, at: ob.metaAccessAt, manual: "metaAccess" },
   );
+  if (kampagnen) {
+    items.push({ key: "metaAccess", label: "Meta-Zugriff (Werbekonto + Seite) erteilt", owner: "kunde", done: !!ob.metaAccessAt, at: ob.metaAccessAt, manual: "metaAccess" });
+  }
   if (software) {
     items.push(
       {
@@ -499,7 +521,7 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         done: (ob.customer.messageTemplates?.length ?? 0) > 0,
         at: null,
       },
-      {
+      ...(kampagnen ? [{
         key: "consent",
         // Einwilligung zur Kontaktaufnahme im Leadformular: die Formulare legen wir an (Ole, 13.11.2026),
         // also unser Schritt – erledigt mit der Kampagne oder per Admin-Bestätigung
@@ -507,8 +529,8 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         owner: "du",
         done: !!ob.consentAt || !!ob.consentConfirmedAt || !!ob.campaignReadyAt,
         at: ob.consentConfirmedAt ?? ob.consentAt,
-        manual: "consent",
-      },
+        manual: "consent" as const,
+      } satisfies ChecklistItem] : []),
     );
   }
   // Schritte nur für gebuchte Module bzw. ein Team (Ole, 15.11.2026)
@@ -521,12 +543,14 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
   if (ob.customer.seatsBilled > 0) {
     items.push({ key: "team", label: "Team eingeladen", owner: "kunde", done: ob.customer.users.length > 1 || !!skip("team"), at: null });
   }
-  items.push(
-    { key: "website", label: "Pflichtangaben (Impressum) geprüft", owner: "du", done: !!ob.websiteCheckedAt, at: ob.websiteCheckedAt, manual: "website" },
-    { key: "campaign", label: "Kampagne und Leadformular angelegt", owner: "du", done: !!ob.campaignReadyAt, at: ob.campaignReadyAt, manual: "campaign" },
-    { key: "testLead", label: "Testlead durchgespielt", owner: "du", done: !!ob.testLeadAt, at: ob.testLeadAt, manual: "testLead" },
-    { key: "live", label: "Live", owner: "du", done: !!ob.liveAt, at: ob.liveAt },
-  );
+  if (kampagnen) {
+    items.push(
+      { key: "website", label: "Pflichtangaben (Impressum) geprüft", owner: "du", done: !!ob.websiteCheckedAt, at: ob.websiteCheckedAt, manual: "website" },
+      { key: "campaign", label: "Kampagne und Leadformular angelegt", owner: "du", done: !!ob.campaignReadyAt, at: ob.campaignReadyAt, manual: "campaign" },
+      { key: "testLead", label: "Testlead durchgespielt", owner: "du", done: !!ob.testLeadAt, at: ob.testLeadAt, manual: "testLead" },
+    );
+  }
+  items.push({ key: "live", label: "Live", owner: "du", done: !!ob.liveAt, at: ob.liveAt });
   return items;
 }
 
@@ -682,7 +706,7 @@ export async function openSetupForExisting(customerId: string): Promise<{ ok: tr
   await prisma.onboarding.create({
     data: {
       customerId,
-      package: customer.plan === "service" ? "service" : "software",
+      package: normalizePackage(customer.plan),
       status: "running",
       welcomeSentAt: now,
       questionnaireAt: now,
@@ -706,12 +730,29 @@ export async function sendGoLiveMail(onboardingId: string) {
   const to = ob.customer.users.map((u) => u.email);
   if (to.length === 0) return;
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { contactName: true } }) : null;
-  const software = ob.package !== "service";
+  const software = mitSoftware(ob.package);
   const q = (ob.questionnaire ?? {}) as { leadEmails?: string[] };
+  const greeting = await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null });
+  if (!mitKampagnen(ob.package)) {
+    // Pay-per-Lead + Software: keine Kampagne, der Assistent übernimmt die bestellten Leads
+    const r = await sendCustomerMail({
+      to,
+      subject: "Ihr Assistent ist startklar",
+      greeting,
+      paragraphs: [
+        "alles ist eingerichtet. Jeder Lead, den Sie per Pay-per-Lead bekommen, erhält ab jetzt innerhalb weniger Minuten eine WhatsApp-Nachricht von Ihrem digitalen Assistenten und kann direkt einen Termin in Ihrem Kalender buchen.",
+        "Leads bestellen Sie wie gewohnt im Kundenbereich unter „Wachstum“. Unter „Heute“ sehen Sie, wen Sie anrufen sollten.",
+        "Tipp: Installieren Sie den Kundenbereich auf Ihrem Handy (im Browser „Zum Startbildschirm hinzufügen“). Dann haben Sie neue Leads immer dabei.",
+      ],
+      button: { label: "Zum Kundenbereich", url: `${getAppUrl()}/buyer` },
+    });
+    if (!r.ok) reportError(new Error(r.error), "onboarding-golive-mail", { onboarding: ob.id });
+    return;
+  }
   const res = await sendCustomerMail({
     to,
     subject: "Ihre Kampagne ist live 🚀",
-    greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
+    greeting,
     paragraphs: [
       "alles ist eingerichtet, Ihre Anzeigen laufen ab sofort. Die ersten Leads kommen in der Regel innerhalb von 1–3 Tagen.",
       software

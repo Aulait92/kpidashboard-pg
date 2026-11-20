@@ -9,6 +9,7 @@ import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschl
 import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
 import { abrechnungsplan, abrechnungstagKurz, VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG } from "@/lib/abrechnungstag";
 import { AngebotMehr } from "@/components/vertrieb/angebot-ablehnen";
+import { AngebotMailVorschau } from "@/components/vertrieb/angebot-mail-vorschau";
 
 export type DealOfferRow = {
   id: string;
@@ -147,7 +148,11 @@ export function DealOffersCard({
   const current = offers.find((o) => o.status !== "superseded");
   const older = offers.filter((o) => o !== current);
 
-  function run(id: string, fn: () => Promise<{ ok: boolean; error?: string; hinweis?: string }>, success: string) {
+  // Vorschau vor dem Versand (Ole, 20.11.2026): „Per E-Mail senden“ zeigt erst die Mail, „Jetzt senden“ verschickt sie
+  const [vorschau, setVorschau] = useState(false);
+  const mailExtras = { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, praesentationLink: !!mail.link && mitLink, audience, du, ohneEntscheidungsCall: !!mail.entscheidung && ohneCall };
+
+  function run(id: string, fn: () => Promise<{ ok: boolean; error?: string; hinweis?: string }>, success: string, onOk?: () => void) {
     setBusy(id);
     start(async () => {
       const res = await fn();
@@ -156,6 +161,7 @@ export function DealOffersCard({
         alert(res.error ?? "Fehler");
         return;
       }
+      onOk?.();
       flash(res.hinweis ? `${success}. ${res.hinweis}` : success);
       router.refresh();
     });
@@ -241,16 +247,20 @@ export function DealOffersCard({
                     icon={Mail}
                     disabled={pending || !current.email}
                     title={current.email ? `An ${current.email}` : "Keine E-Mail im Angebot"}
-                    onClick={() =>
-                      run(
-                        current.id,
-                        () => sendOfferEmailAction(current.id, { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, praesentationLink: !!mail.link && mitLink, audience, du, ohneEntscheidungsCall: !!mail.entscheidung && ohneCall }),
-                        `Angebot an ${current.email} gesendet`,
-                      )
-                    }
+                    onClick={() => setVorschau(true)}
+                    data-angebot-mail-senden
                   >
-                    {busy === current.id ? "Sende …" : "Per E-Mail senden"}
+                    Per E-Mail senden
                   </Button>
+                  {vorschau ? (
+                    <AngebotMailVorschau
+                      offerId={current.id}
+                      extras={mailExtras}
+                      sending={busy === current.id}
+                      onClose={() => setVorschau(false)}
+                      onSend={() => run(current.id, () => sendOfferEmailAction(current.id, mailExtras), `Angebot an ${current.email} gesendet`, () => setVorschau(false))}
+                    />
+                  ) : null}
                   {current.status === "draft" ? (
                     <Button icon={Send} variant="ghost" disabled={pending} onClick={() => run(current.id, () => markOfferSentAction(current.id), "Als verschickt markiert")}>
                       Als verschickt markieren

@@ -222,12 +222,14 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
     choosesStart: offer.customerChoosesStart,
     initialTerm: fixedTerm,
     // 6 Monate zur Wahl erst für Angebote ab dem Livegang (lib/offer-pricing.ts termOptionsFor)
-    options: (offer.customerChoosesTerm ? termOptionsFor(offer.createdAt, offer.term) : [fixedTerm]).map((t) => ({
+    options: (offer.customerChoosesTerm ? termOptionsFor(offer.createdAt, offer.term, offer.package) : [fixedTerm]).map((t) => ({
       term: t,
       label: TERM_CHOICE_LABEL[t],
-      setup: offer.customerChoosesTerm ? setupForChoice(t, count, discount) : Number(offer.setupFee),
-      list: discount ? (offer.customerChoosesTerm ? setupForChoice(t, count) : fixedList) : null,
+      setup: offer.customerChoosesTerm ? setupForChoice(t, count, discount, offer.package) : Number(offer.setupFee),
+      list: discount ? (offer.customerChoosesTerm ? setupForChoice(t, count, null, offer.package) : fixedList) : null,
     })),
+    // Pay-per-Lead + Software: keine Einrichtung, Start ohne Einrichtungszeit von unserer Seite
+    ohneEinrichtung: offer.package === "ppl_software" && Number(offer.setupFee) === 0,
     monthlyTotal: add.monthlyTotal,
     // Produkte und Tagesbudget (Ole, 19.11.2026): Monatsgebühr nach Staffel, Zusätze (Verkäufer, Module) bleiben
     choosesProducts: offer.customerChoosesProducts,
@@ -404,6 +406,8 @@ function PaymentBox({
           ? "Richten Sie jetzt die Zahlung ein: Fällig sind Setup und Vorauszahlung, die Laufzeit beginnt mit dem Start der Kampagne. Die Zahlung läuft sicher über Stripe."
           : ersteNachtraeglich
             ? `Hinterlegen Sie jetzt Ihre Zahlungsart.${rechnung ? " Fällig ist jetzt nur das Setup." : " Jetzt wird nichts abgebucht."} Die monatliche Vergütung zahlen Sie jeweils nachträglich für den abgelaufenen Monat, erstmals am ${ersteNachtraeglich}. Die Zahlung läuft sicher über Stripe.`
+            : !rechnung
+              ? "Hinterlegen Sie jetzt Ihre Zahlungsart. Jetzt wird nichts abgebucht, die monatliche Vergütung wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe."
             : "Richten Sie jetzt die Zahlung ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe."}
       </p>
       {bonus ? <BonusHinweis bonus={bonus} zahlung /> : null}

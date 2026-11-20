@@ -4,12 +4,13 @@
 
 import { prisma } from "@/lib/prisma";
 
-export const AUDIENCES = ["vertreter", "makler"] as const;
+// „ppl“: Pay-per-Lead + Software (Ole, 20.11.2026), eigene kurze Präsentation
+export const AUDIENCES = ["vertreter", "makler", "ppl"] as const;
 export type Audience = (typeof AUDIENCES)[number];
 export const FORMATS = ["pdf", "pptx"] as const;
 export type PresentationFormat = (typeof FORMATS)[number];
 
-export const AUDIENCE_LABEL: Record<Audience, string> = { vertreter: "Vertreter", makler: "Makler" };
+export const AUDIENCE_LABEL: Record<Audience, string> = { vertreter: "Vertreter", makler: "Makler", ppl: "Pay-per-Lead + Software" };
 export const FORMAT_LABEL: Record<PresentationFormat, string> = { pdf: "PDF", pptx: "PowerPoint (PPTX)" };
 export const CONTENT_TYPE: Record<PresentationFormat, string> = {
   pdf: "application/pdf",
@@ -78,7 +79,8 @@ export async function deletePresentation(audience: Audience, format: Presentatio
 }
 
 /** Zielgruppe eines Vertriebskontakts: „Makler“ laut Anreicherung, sonst Vertreter. */
-export function audienceForContact(c: { insurer?: string | null } | null | undefined): Audience {
+/** Vorauswahl im Angebotsversand (Vertreter/Makler); Pay-per-Lead + Software setzt der Versand selbst (offer-actions.ts). */
+export function audienceForContact(c: { insurer?: string | null } | null | undefined): "vertreter" | "makler" {
   return c?.insurer === "Makler" ? "makler" : "vertreter";
 }
 

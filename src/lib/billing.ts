@@ -179,7 +179,10 @@ const offerMeta = (offer: OfferRow) => ({
   sales_contact_id: offer.salesContactId ?? "",
 });
 
-const packageName = (offer: OfferRow) => (offer.package === "service" ? "Leadgenerierung" : "Leadgenerierung + Software");
+const packageName = (offer: Pick<OfferRow, "package">) =>
+  offer.package === "service" ? "Leadgenerierung" : offer.package === "ppl_software" ? "Pay-per-Lead + Software" : "Leadgenerierung + Software";
+/** „Leadgenerierung + Software (TKV-Katze)“; ohne Produkte (Pay-per-Lead + Software) nur der Paketname. */
+export const paketMitProdukten = (offer: Pick<OfferRow, "package">, products: string) => (products ? `${packageName(offer)} (${products})` : packageName(offer));
 
 type AboPosition = { key: "software" | "service" | "seat" | "bestand" | "empfehlung"; monthly: number; quantity: number };
 
@@ -302,8 +305,8 @@ async function reuseOrExpireCheckout(
 
 /** Beschreibung der ersten Rechnung: Setup und/oder Vorauszahlung mit Leistungszeitraum. */
 function checkoutBeschreibung(offer: OfferRow, products: string, mitSetup: boolean, voraus: VorauszahlungJetzt | null): string {
-  if (!voraus) return `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`;
-  return `${mitSetup ? "Setup und " : ""}${vorauszahlungText(voraus)}, ${packageName(offer)} (${products}), Angebot ${offer.number}`;
+  if (!voraus) return `Setup ${paketMitProdukten(offer, products)}, Angebot ${offer.number}`;
+  return `${mitSetup ? "Setup und " : ""}${vorauszahlungText(voraus)}, ${paketMitProdukten(offer, products)}, Angebot ${offer.number}`;
 }
 
 /** Rechnungsfuß und Zusatzfelder (Steuernummer), bei Vorauszahlung plus Leistungszeitraum. */
@@ -658,7 +661,7 @@ export async function createScheduleForOffer(
               ...(taxIds.account_tax_ids ? { invoice_settings: { account_tax_ids: taxIds.account_tax_ids } } : {}),
             }),
         ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
-        description: `${packageName(offer)} (${products}), Angebot ${offer.number}${arrears ? ", Vergütung jeweils nachträglich für den abgelaufenen Leistungsmonat" : ""}`,
+        description: `${paketMitProdukten(offer, products)}, Angebot ${offer.number}${arrears ? ", Vergütung jeweils nachträglich für den abgelaufenen Leistungsmonat" : ""}`,
       },
       phases,
     },
@@ -861,7 +864,7 @@ export async function createSetupInvoiceForOffer(
       {
         customer: customerId,
         invoice: invoice.id!,
-        description: `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`,
+        description: `Setup ${paketMitProdukten(offer, products)}, Angebot ${offer.number}`,
         price_data: { currency: "eur", product: setup, unit_amount: cents(listPreis), tax_behavior: "exclusive" },
         ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
         metadata: meta,

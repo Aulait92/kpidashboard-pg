@@ -7,12 +7,12 @@ import { ButtonLink } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { listPresentations } from "@/lib/vertrieb/praesentationen";
-import { folienListe, isVerkaufsAudience, paketDaten, verkaufsCss, verkaufsFolien, VERKAUFS_AUDIENCES } from "@/lib/vertrieb/verkaufspraesentation";
+import { folienListe, isVerkaufsAudience, paketDaten, verkaufsCss, verkaufsFolien, VERKAUFS_AUDIENCES, VERKAUFS_LABEL } from "@/lib/vertrieb/verkaufspraesentation";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Präsentation | performancegrowth Admin" };
 
-const LABEL = { vertreter: "Vertreter", makler: "Makler" } as const;
+const LABEL = VERKAUFS_LABEL;
 
 // Marketing → Unterlagen → Web-Präsentation mit Listenpreisen (wie /admin/marketing/unterlagen/praesentation/[audience]).
 // Mit Angebotspreisen und Link für den Interessenten: Vertrieb → Kontakt → „Präsentation“.
