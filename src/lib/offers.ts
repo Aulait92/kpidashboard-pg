@@ -42,6 +42,7 @@ import { contractSummaryLines, hasPriceStep, NACHTRAEGLICH_MAX_STARTTAG, nachtra
 import { parseAbrechnungstag } from "@/lib/abrechnungstag";
 import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_STANDARD, ersteWocheAus, ersteWocheMenge, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
 import { normalizeRegisterNummer } from "@/lib/erstinformation-shared";
+import { kundenkontoAus, normalizePplModell, PPL_MODELL_KUNDENKONTO, pruefeKundenkontoProdukte, type KundenkontoProdukt } from "@/lib/ppl/kundenkonto";
 import { TEST_SONDERVEREINBARUNG } from "@/lib/offer-form-werte";
 
 
@@ -121,6 +122,13 @@ export type OfferFormInput = {
    * Bezug, Bezeichnung (optional), Preis je Lead netto und vorausgewählte Anzahl (Standard 20, ab 5). Leer = ohne.
    */
   ersteWoche?: { productKey: string; label?: string | null; price: number | null; quantity?: number | null } | null;
+  /**
+   * Variante von Pay-per-Lead + Software (Ole, 20.11.2026; lib/ppl/kundenkonto.ts): fehlt/„pool“ = bisher (Leads aus
+   * unserem Pool, optional erste Woche), „kundenkonto“ = Kampagnen im eigenen Werbekonto des Kunden.
+   */
+  pplModell?: "pool" | "kundenkonto" | null;
+  /** Nur „kundenkonto“: Produkte mit Preis je Lead (Endpreis brutto) und Startmenge, zusammen mindestens 1.500 €. */
+  kundenkontoProdukte?: { name: string; preis: unknown; menge: unknown }[] | null;
 };
 
 /** Rechtstexte, denen bei der Annahme zugestimmt wird (per Umgebungsvariable). */
@@ -196,9 +204,18 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
   if (ppl && (input.introMonthlyFee != null || input.annual)) throw new Error("Pay-per-Lead + Software hat keinen Startpreis und keine Vorauszahlung.");
   const abrechnungstag = parseAbrechnungstag(input.billingDay);
   if (!abrechnungstag.ok) throw new Error(abrechnungstag.error);
+  // Variante „Kampagnen im eigenen Werbekonto“ (Ole, 20.11.2026): Produkte mit Preis je Lead und Startpaket ab 1.500 €,
+  // ohne erste Woche aus unserem Pool
+  const kundenkonto = ppl && normalizePplModell(input.pplModell) === PPL_MODELL_KUNDENKONTO;
+  let kundenkontoProdukte: KundenkontoProdukt[] | null = null;
+  if (kundenkonto) {
+    const k = pruefeKundenkontoProdukte(input.kundenkontoProdukte);
+    if (!k.ok) throw new Error(k.error);
+    kundenkontoProdukte = k.produkte;
+  }
   // Erste Woche (Pay-per-Lead + Software): Produkt, Preis netto, Anzahl
   let ersteWoche: { productKey: string; label: string | null; price: number; quantity: number } | null = null;
-  if (ppl && input.ersteWoche?.productKey?.trim()) {
+  if (ppl && !kundenkonto && input.ersteWoche?.productKey?.trim()) {
     const w = input.ersteWoche;
     const wPrice = Number(w.price);
     if (!Number.isFinite(wPrice) || wPrice <= 0) throw new Error("Bitte einen Preis je Lead für die erste Woche angeben.");
@@ -336,6 +353,9 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
     pplPrice: ersteWoche?.price ?? null,
     pplQuantity: ersteWoche?.quantity ?? null,
     pplAutoRenew: true,
+    // Variante gespeichert, damit die spätere wöchentliche Abrechnung sie findet (null = bisher)
+    pplModell: kundenkonto ? PPL_MODELL_KUNDENKONTO : null,
+    pplProdukte: kundenkontoProdukte ?? Prisma.DbNull,
     validUntil,
     termsUrl,
     dpaUrl,
@@ -567,6 +587,7 @@ export async function acceptOffer(
       chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart || offer.annualChoice || produktWahl.geaendert,
       ...(produktWahl.geaendert ? { products: produktWahl.products, monthlyFee: produktWahl.monthlyFee } : {}),
       ...(ersteWocheWahl ? { ersteWoche: ersteWocheWahl } : {}),
+      ...(offer.pplModell ? { pplModell: offer.pplModell } : {}),
       company: business.company,
       vatId: business.vatId,
       asBusiness: true,
@@ -596,6 +617,11 @@ export async function acceptOffer(
     await logOfferActivity(offer, `Angebot ${offer.number} online angenommen von ${name}: ${chosenText}`);
   }
 
+  // Variante „Kampagnen im eigenen Werbekonto“: Bei der Annahme wird nichts zusätzlich abgebucht, nur das Software-Abo
+  // läuft wie bei Pay-per-Lead + Software (Stripe, ab Start). TODO(wöchentliche Abrechnung, noch nicht gebaut): Leads
+  // der Vorwoche × Preis abzüglich Meta-Kosten per Lastschrift (lib/ppl/kundenkonto.ts wochenAbrechnung); in Monaten mit
+  // Software inklusive (softwareInklusive, ab 1.500 € Leadumsatz) die schon abgebuchte Software dort verrechnen
+  // (rechnungsPositionen: Software als eigene Position, Leadteil entsprechend kleiner).
   // Ohne Online-Zahlung startet das Onboarding direkt mit der Annahme
   // (sonst, sobald die Zahlung eingerichtet ist – siehe Stripe-Webhook). Testangebote laufen nie über Stripe.
   if (!billingEnabled() || offer.isTest) {
@@ -622,7 +648,7 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
   offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
-    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew">> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew" | "pplModell" | "pplProdukte">> &
     Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null; ersteWoche: { quantity: number; autoRenew: boolean } | null }> = {},
 ): ContractSummaryInput {
@@ -648,6 +674,7 @@ export function offerSummaryInput(
     paymentInArrears: !!offer.paymentInArrears,
     paket: offer.package ?? null,
     ersteWoche,
+    kundenkonto: kundenkontoAus(offer),
   };
 }
 

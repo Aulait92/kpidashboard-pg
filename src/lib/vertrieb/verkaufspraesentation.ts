@@ -9,6 +9,7 @@
 
 import { ABSCHLUSSBONUS_STANDARD, betreuungsSatz, eurText, monthlyBudgetOf, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, VORAUSZAHLUNG, type OfferTerm } from "@/lib/offer-pricing";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
+import { kundenkontoMailAbsatz, type KundenkontoAngebot } from "@/lib/ppl/kundenkonto";
 import { PPL_BEISPIEL, rechnerAusgabe, VERTRETER_BEISPIEL, vertreterRechnung, zahlFeld, type RechnerArt, type RechnerFest, type RechnerWerte } from "@/lib/vertrieb/folien-rechner";
 
 // „ppl“: Pay-per-Lead + Software (Ole, 20.11.2026): eigene kurze Präsentation, 19 Folien (Bilder, eine Live-Demo) (docs/unterlagen/PPL-Software-Praesentation)
@@ -142,6 +143,8 @@ export type AngebotFuerFolien = {
   abschlussBonus?: { betrag: number; bis: Date } | null;
   /** „Später zahlen“ erlaubt: Bonus gilt schon bei Annahme bis zur Frist */
   allowPayLater?: boolean;
+  /** Pay-per-Lead + Software, Variante „Kampagnen im eigenen Werbekonto“ (Ole, 20.11.2026); fehlt = bisher. */
+  kundenkonto?: KundenkontoAngebot | null;
 };
 
 /** Zielgruppe: Angebot (Makler/Vertreter) geht vor, sonst der Kontakt („Makler“ laut Anreicherung), sonst Vertreter. */
@@ -189,6 +192,8 @@ export type PaketDaten = {
   pause: string;
   /** Abschlussbonus: Setup vorher/nachher (netto); bis = Frist, null = „heute“ (Listenpreise, noch kein Angebot). */
   bonus: { betrag: number; setupVorher: number; setupNachher: number; bis: Date | null; spaeter?: boolean } | null;
+  /** Kurzer Absatz zur Variante „Kampagnen im eigenen Werbekonto“ (nur wenn im Angebot gewählt). */
+  kundenkonto?: string | null;
 };
 
 // Beträge wie im ganzen Angebot (ganze Euro ohne „,00“, sonst mit Cent)
@@ -308,6 +313,7 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     bonus: angebot.abschlussBonus
       ? { betrag: angebot.abschlussBonus.betrag, setupVorher: angebot.setupFee, setupNachher: Math.round((angebot.setupFee - angebot.abschlussBonus.betrag) * 100) / 100, bis: angebot.abschlussBonus.bis, spaeter: !!angebot.allowPayLater }
       : null,
+    kundenkonto: angebot.kundenkonto ? kundenkontoMailAbsatz(angebot.kundenkonto, PRICE_LIST.softwareFee, false) : null,
   };
 }
 
@@ -597,7 +603,7 @@ ${zeile("Ihre Provision je Abschluss", "setzen Sie Ihren Wert ein", feld("provis
 <div class="vk-zeile"><span>Kosten pro Termin ${klein("terminRechnung")}</span><b>${r("termin")}</b></div>
 <div class="vk-zeile" style="font-weight:700;padding-top:14px"><span>Kosten pro Abschluss ${klein("abschlussRechnung")}</span><b style="font-size:34px;color:#2563eb;line-height:1">${r("abschluss")}</b></div>
 </div>${r("fazit", "div", "vk-fazit")}</div>
-</div>`;
+</div>${p.kundenkonto ? `<div class="vk-gruen" style="font-weight:500;font-size:13px" data-kundenkonto>${e(p.kundenkonto)}</div>` : ""}`;
   const fuss = "Reines Rechenbeispiel, keine Zusage zu Termin- oder Abschlussquoten. Software zzgl. USt. Ihre echten Werte zeigt Ihnen die App.";
   return rahmen("Beispielrechnung", inhalt, nr, gesamt, fuss, attrs);
 }

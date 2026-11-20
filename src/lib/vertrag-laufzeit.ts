@@ -10,6 +10,7 @@
 import { eur, prepayMonthsFor, prepayPossible, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
 import { ersteWocheVertragszeile, type ErsteWocheWahl } from "@/lib/ppl/erste-woche-shared";
+import { kundenkontoSoftwareZeile, kundenkontoVertragszeilen, type KundenkontoAngebot } from "@/lib/ppl/kundenkonto";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const iso = (y: number, m: number, d: number) => {
@@ -158,6 +159,8 @@ export type ContractSummaryInput = {
   paket?: string | null;
   /** Erste Woche (nur Pay-per-Lead + Software mit Lead-Produkt): Produkt, Preis netto, Anzahl, jede Woche wiederholen. */
   ersteWoche?: ErsteWocheWahl | null;
+  /** Variante „Kampagnen im eigenen Werbekonto“ (Ole, 20.11.2026; lib/ppl/kundenkonto.ts), nur Pay-per-Lead + Software. */
+  kundenkonto?: KundenkontoAngebot | null;
 };
 
 /** Schlusssatz der Zusammenfassung; Pay-per-Lead + Software: Steuer der Software, Leads stehen mit eigener Steuer davor. */
@@ -314,7 +317,10 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   const arrears = !!i.paymentInArrears && !annual;
   const ersteNachtraeglich = arrears && i.startIso ? `am ${fmtIso(nachtraeglichErsteIso(i.startIso))}` : "einen Monat nach dem Start";
   const ppl = i.paket === "ppl_software";
-  if (ppl) lines.push("Paket: Pay-per-Lead + Software (Software ohne Betreuung und ohne eigene Kampagnen), ohne Einrichtungsgebühr.");
+  const kk = ppl && i.kundenkonto ? i.kundenkonto : null;
+  // Variante „Kampagnen im eigenen Werbekonto“: eigene Zeilen statt Paketzeile und Hinweis „Leads per Stück“
+  if (kk) lines.push(...kundenkontoVertragszeilen(kk));
+  else if (ppl) lines.push("Paket: Pay-per-Lead + Software (Software ohne Betreuung und ohne eigene Kampagnen), ohne Einrichtungsgebühr.");
   if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, fällig mit der Annahme.`);
   else if (ppl) {
     // Paketzeile nennt schon „ohne Einrichtungsgebühr“
@@ -350,6 +356,9 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
         : `Startpreis: ${eur(i.intro!.monthly)} netto im Monat in den ersten ${i.intro!.months} Monaten.`,
     );
     lines.push(`Danach automatisch ${eur(i.monthlyTotal)} netto im Monat${d ? ` ab ${fmtIso(d.regularFromIso)}` : ""}.`);
+  } else if (kk) {
+    // Software-Abo läuft wie bisher per Lastschrift; in Monaten mit Software inklusive wird es mit der Leadabrechnung verrechnet
+    lines.push(kundenkontoSoftwareZeile(i.monthlyTotal, start));
   } else {
     lines.push(`Monatlich: ${eur(i.monthlyTotal)} netto${start ? ` ab ${start}` : " ab Start"}, im Voraus.`);
   }
@@ -375,8 +384,8 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     const end = billIso ? periodEndIso(billIso, months) : null;
     lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach kündbar zum Ende des jeweiligen Abrechnungsmonats.`);
   }
-  if (ppl && i.ersteWoche) lines.push(ersteWocheVertragszeile(i.ersteWoche));
-  if (ppl) lines.push(PPL_LEADS_SEPARAT);
+  if (ppl && !kk && i.ersteWoche) lines.push(ersteWocheVertragszeile(i.ersteWoche));
+  if (ppl && !kk) lines.push(PPL_LEADS_SEPARAT);
   // Pay-per-Lead + Software: 19 % gelten für die Software; die Steuer der Leads steht an der ersten Woche bzw. an der Bestellung
   lines.push(`${KUENDIGUNG_SATZ} ${ppl ? "Preise der Software zzgl. 19 % USt." : "Alle Preise zzgl. 19 % USt."}`);
   return lines;

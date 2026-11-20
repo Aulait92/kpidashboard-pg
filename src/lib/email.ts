@@ -4,6 +4,7 @@ import { PROVIDER } from "@/lib/legal-texts";
 import { eur } from "@/lib/offer-pricing";
 import { VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 import { ersteWocheMailzeile } from "@/lib/ppl/erste-woche-shared";
+import { kundenkontoMailAbsatz, type KundenkontoAngebot } from "@/lib/ppl/kundenkonto";
 import { entscheidungsCallMailText, entscheidungsCallText, type EntscheidungsCall } from "@/lib/vertrieb/entscheidungs-call";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
@@ -262,6 +263,8 @@ export type AngebotsMailInhalt = {
   nachtraeglich?: { ersteIso: string | null; setup: number } | null;
   /** Erste Woche (Pay-per-Lead + Software, Ole 20.11.2026): Leadkosten statt nur „0 €“ */
   ersteWoche?: { productKey: string; name: string; price: number; quantity: number } | null;
+  /** Kampagnen im eigenen Werbekonto (Ole, 20.11.2026): kurzer Absatz zur Variante, Software-Listenpreis netto */
+  kundenkonto?: { angebot: KundenkontoAngebot; softwareNetto: number } | null;
 };
 
 /**
@@ -281,7 +284,11 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
   const discount = opts.discount ? offerDiscountLine(opts.discount) : null;
   const bonusText = opts.bonus ? offerBonusLine(opts.bonus, !!opts.du, !!opts.bonusSpaeter) : null;
   const vorausText = opts.nachtraeglich ? offerMailNachtraeglich(opts.nachtraeglich) : opts.vorauszahlung ? OFFER_MAIL_VORAUSZAHLUNG : null;
-  const wocheText = opts.ersteWoche ? ersteWocheMailzeile(opts.ersteWoche, !!opts.du) : null;
+  const wocheText = opts.kundenkonto
+    ? kundenkontoMailAbsatz(opts.kundenkonto.angebot, opts.kundenkonto.softwareNetto, !!opts.du)
+    : opts.ersteWoche
+      ? ersteWocheMailzeile(opts.ersteWoche, !!opts.du)
+      : null;
   const text = [
     opts.greeting,
     "",

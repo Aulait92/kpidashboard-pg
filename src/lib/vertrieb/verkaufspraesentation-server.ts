@@ -4,6 +4,7 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { abschlussBonusJetzt } from "@/lib/offer-pricing";
+import { kundenkontoAus } from "@/lib/ppl/kundenkonto";
 import {
   aktuellesAngebot,
   audienceFuer,
@@ -49,6 +50,7 @@ export function angebotFuerFolien(o: OfferRow): AngebotFuerFolien {
     introMonths: o.introMonths,
     abschlussBonus: abschlussBonusJetzt(o),
     allowPayLater: o.allowPayLater,
+    kundenkonto: kundenkontoAus(o),
   };
 }
 
