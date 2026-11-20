@@ -98,8 +98,8 @@ export const EXPERIMENTE = {
   buchung_erinnerung: {
     titel: "Buchungsseite /book: Häkchen Erinnerung zur Terminvorbereitung",
     ziel: "erinnerung_optin",
-    a: "Bisher: „Ich möchte per WhatsApp an die Vorbereitung meines Termins erinnert werden (z. B. an meine Unterlagen). Abmelden jederzeit mit STOP.“",
-    b: "Neu: „Damit in Ihrem Termin nichts fehlt: Ja, bitte per WhatsApp an meine Unterlagen erinnern. Abmelden jederzeit mit STOP.“ (Du-Fassung entsprechend)",
+    a: "Standard (Ole 20.11.2026): fett „Damit in Ihrem Termin nichts fehlt:“ Ja, bitte per WhatsApp an meine Unterlagen erinnern (empfohlen). Abmelden jederzeit mit STOP. Als grauer Kleindruck",
+    b: "Gleicher Wortlaut als hervorgehobene Karte (Rahmen, Hintergrund, größere Schrift und Häkchen)",
     min: 150,
   },
   // Beratungspräsentation (19.11.2026): Herausforderer C gegen Standard B, Einheit Lead-ID (lib/praesentation-variante-server.ts).

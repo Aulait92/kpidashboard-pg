@@ -443,11 +443,19 @@ export default async function BookingPage({ params, searchParams }: Props) {
             )}
             {/* Opt-in für Erinnerungen zur Terminvorbereitung (lib/policen, Rechtsprüfung A8), nicht vorausgewählt */}
             {erinnerungAufruf ? (
-              <label className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
+              <label
+                className={
+                  erinnerungFassung === "b"
+                    ? "mt-3 flex cursor-pointer items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--brand)] bg-[color:var(--brand-soft)] p-3 text-sm leading-relaxed"
+                    : "mt-2 flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]"
+                }
+              >
                 <input type="hidden" name="xe" value={erinnerungAufruf} />
                 <input type="hidden" name="erinnerung_fassung" value={erinnerungFassung} />
-                <input type="checkbox" name="erinnerung" className="mt-0.5" data-erinnerung-optin data-fassung={erinnerungFassung} />
-                <span>{erinnerungOptin(erinnerungFassung, an).text}</span>
+                <input type="checkbox" name="erinnerung" className={erinnerungFassung === "b" ? "mt-0.5 h-5 w-5 shrink-0" : "mt-0.5"} data-erinnerung-optin data-fassung={erinnerungFassung} />
+                <span>
+                  <b className="text-[color:var(--foreground)]">{erinnerungOptin(erinnerungFassung, an).fett}</b> {erinnerungOptin(erinnerungFassung, an).rest}
+                </span>
               </label>
             ) : null}
           </section>

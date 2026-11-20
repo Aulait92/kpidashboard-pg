@@ -25,6 +25,6 @@ export const SPLITTEST_HYPOTHESE: Record<string, string> = {
     "Eine Überschrift mit dem konkreten Anlass (Beitragserhöhung zum 1. Januar) spricht Betroffene direkt an: Es fragen eher Leute mit echtem Anliegen an, die der Experte auch erreicht.",
   // A/B-Test-Labor 20.11.2026 (lib/experimente.ts buchung_erinnerung, Wortlaut lib/policen/regeln.ts)
   buchung_erinnerung:
-    "Steht der Nutzen vorn („Damit in Ihrem Termin nichts fehlt“) und ist der Text kürzer und konkreter (Unterlagen statt „Vorbereitung“), haken mehr Leads die freiwillige WhatsApp-Erinnerung an.",
+    "Steht das freiwillige Häkchen als hervorgehobene Karte statt als grauer Kleindruck da, wird es wahrgenommen und öfter angehakt (gleicher Wortlaut, nie vorausgewählt).",
   termin_zusage: "Endet die Buchungsbestätigung mit der Zusage-Frage „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], erscheinen mehr Leads zum Termin.",
 };

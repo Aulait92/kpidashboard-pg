@@ -69,8 +69,6 @@ import {
   virenText,
   typAusMime,
   WARTEN_STUNDEN,
-  ERINNERUNG_OPTIN_TEXT,
-  ERINNERUNG_OPTIN_VERSION,
   erinnerungOptin,
   widerrufText,
   zuGrossText,
@@ -305,7 +303,7 @@ export async function darfPolicenVortagSatz(leadId: string, now = new Date()): P
  */
 export async function erinnerungOptIn(o: { customerId: string; leadId: string | null; phone: string; at?: Date; fassung?: "a" | "b"; an?: Ansprache }) {
   const { fassung, an, ...rest } = o;
-  const t = fassung === "b" ? erinnerungOptin("b", an ?? "sie") : { text: ERINNERUNG_OPTIN_TEXT, version: ERINNERUNG_OPTIN_VERSION };
+  const t = erinnerungOptin(fassung ?? "a", an ?? "sie");
   return nachweis({ ...rest, art: "erinnerung_optin", quelle: "buchung", wortlaut: t.text, textVersion: t.version });
 }
 
