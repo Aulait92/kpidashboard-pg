@@ -18,7 +18,7 @@ const inc = (t: number, action: GuardableDecision["action"] = "increase"): Guard
 describe("Höchstpreis", () => {
   it("Break-even aus Ø Lead-Preis × (1 − Storno)", () => {
     expect(computeMaxCpl({ poolOverride: null, envOverride: null, leadPrices: [50, 70], stornoRate: 0.2, defaultStorno: 0.1 }))
-      .toEqual({ value: 48, source: "break-even" });
+      .toEqual({ value: 48, source: "break-even", taxFreeShare: 0 });
     expect(computeMaxCpl({ poolOverride: null, envOverride: null, leadPrices: [60], stornoRate: null, defaultStorno: 0.1 }).value).toBe(54);
   });
   it("Pool-Feld vor Env vor Break-even", () => {
