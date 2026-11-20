@@ -59,7 +59,7 @@ export type AllianzCalendar = {
 };
 
 export class AllianzCalendarError extends Error {
-  /** "blocked": Allianz lässt den Abruf der Vertreter-Seite vom Server nicht zu (Oberfläche bietet Vertreternummer bzw. ICS an). */
+  /** "blocked": Allianz lässt den Abruf der Vertreter-Seite vom Server nicht zu (dann hilft die Vertreternummer, sie braucht die Seite nicht; Ole, 20.11.2026: Feld fragt nur nach der Seite, die Nummer nennt nur diese Meldung). */
   readonly code: "blocked" | "other";
   constructor(message: string, code: "blocked" | "other" = "other") {
     super(message);
@@ -69,8 +69,8 @@ export class AllianzCalendarError extends Error {
 }
 
 export const ALLIANZ_BLOCKED_MESSAGE =
-  "Die Allianz lässt den automatischen Abruf gerade nicht zu. Geben Sie stattdessen Ihre Vertreternummer ein oder nutzen Sie den Kalender-Link (ICS).";
-const NOT_FOUND_MESSAGE = "Vertreter-Seite nicht gefunden. Bitte den Link prüfen oder Ihre Vertreternummer eingeben.";
+  "Die Allianz lässt den Abruf Ihrer Vertreter-Seite nicht zu. Tragen Sie stattdessen Ihre Vertreternummer in das Feld ein und verbinden Sie erneut.";
+const NOT_FOUND_MESSAGE = "Vertreter-Seite nicht gefunden. Bitte den Link prüfen, z. B. vertretung.allianz.de/vorname.nachname.";
 
 // ─── Eingabe ────────────────────────────────────────────────────────────
 
@@ -304,7 +304,7 @@ async function vtnrFromPage(pageUrl: string): Promise<string> {
   const res = await fetchPage(pageUrl, { log: "allianz-seite" });
   if (!res.ok) {
     if (res.reason === "blocked") throw new AllianzCalendarError(ALLIANZ_BLOCKED_MESSAGE, "blocked");
-    if (res.reason === "network") throw new AllianzCalendarError("Die Vertreter-Seite ist gerade nicht erreichbar. Bitte später noch einmal versuchen oder Ihre Vertreternummer eingeben.");
+    if (res.reason === "network") throw new AllianzCalendarError("Die Vertreter-Seite ist gerade nicht erreichbar. Bitte später noch einmal versuchen.");
     throw new AllianzCalendarError(NOT_FOUND_MESSAGE);
   }
   const finalHost = (() => {
@@ -326,7 +326,7 @@ async function vtnrFromPage(pageUrl: string): Promise<string> {
  */
 export async function resolveAllianzCalendar(raw: string): Promise<AllianzCalendar> {
   const parsed = parseVertretungInput(raw);
-  if (!parsed) throw new AllianzCalendarError("Bitte den Link Ihrer Vertreter-Seite (vertretung.allianz.de/…) oder Ihre Vertreternummer eingeben.");
+  if (!parsed) throw new AllianzCalendarError("Bitte den Link Ihrer Vertreter-Seite eingeben, z. B. vertretung.allianz.de/vorname.nachname.");
   const pageUrl = "pageUrl" in parsed ? parsed.pageUrl : null;
   const vtnr = "vtnr" in parsed ? parsed.vtnr : await vtnrFromPage(parsed.pageUrl);
   const { rootOrgId } = await moduleConfig();

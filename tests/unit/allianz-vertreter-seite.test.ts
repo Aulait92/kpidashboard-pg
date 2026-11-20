@@ -78,7 +78,8 @@ describe("Allianz-Vertreter-Seite lesen", () => {
     expect(err).toBeInstanceOf(AllianzCalendarError);
     expect(err.code).toBe("blocked");
     expect(err.message).toBe(ALLIANZ_BLOCKED_MESSAGE);
-    expect(err.message).toContain("Die Allianz lässt den automatischen Abruf gerade nicht zu.");
+    expect(err.message).toContain("Die Allianz lässt den Abruf Ihrer Vertreter-Seite nicht zu.");
+    expect(err.message).toContain("Vertreternummer");
     expect(err.message).not.toMatch(/[–—]/);
   });
 

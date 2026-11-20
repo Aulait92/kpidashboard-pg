@@ -506,7 +506,7 @@ export function AllianzForm({ action, readOnly, hidden, onUseIcs }: { action: Fo
     <form action={formAction} className="space-y-3">
       {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
       <label className="block text-sm font-medium" htmlFor="vertretung">
-        Link Ihrer Vertreter-Seite oder Ihre Vertreternummer
+        Link Ihrer Vertreter-Seite
       </label>
       <input id="vertretung" name="vertretung" className={input} placeholder="vertretung.allianz.de/vorname.nachname" autoComplete="off" />
       <label className="flex items-start gap-2 text-sm">

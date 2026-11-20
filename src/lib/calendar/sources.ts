@@ -82,7 +82,7 @@ const fmtDay = (iso: string) =>
 /** B) Allianz-Online-Kalender verbinden (Link oder VTNR, Zustimmung nötig). */
 export async function connectAllianz(customerId: string, input: string, consent: boolean): Promise<SourceResult> {
   if (!consent) return { error: "Bitte stimmen Sie zu, dass wir Ihre freien Termine abrufen dürfen." };
-  if (!input.trim()) return { error: "Bitte den Link Ihrer Vertreter-Seite oder Ihre Vertreternummer eingeben." };
+  if (!input.trim()) return { error: "Bitte den Link Ihrer Vertreter-Seite eingeben, z. B. vertretung.allianz.de/vorname.nachname." };
   let cal: AllianzCalendar;
   let check: { count: number; first: string | null };
   try {
