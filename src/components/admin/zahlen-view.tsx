@@ -1270,6 +1270,7 @@ function Ppl({ data }: { data: ZahlenData }) {
             { k: "Marge Pay-per-Lead", v: p.leadMargin != null ? pct(p.leadMargin * 100, 0) : NOCH_KEINE_DATEN, s: "nach Werbung und Tools" },
             { k: "Stornoquote", v: p.stornoQuote != null ? pct(p.stornoQuote * 100) : NOCH_KEINE_DATEN },
             { k: "Geparkt", v: p.parked, s: "ohne freien Käufer" },
+            { k: "Verworfen (geparkt > 48 h)", v: p.expired, s: "nie verkauft, Werbekosten verloren" },
           ]}
         />
         <Link href="/" className="mt-3 inline-block text-[13px] text-[color:var(--brand)]">Alle Lead-Kennzahlen (Details) →</Link>

@@ -11,6 +11,7 @@ import { monthRange, weekRange } from "@/lib/ppl/periods";
 import { pruefeTelefon } from "@/lib/ppl/telefon-pruefung";
 import type { DeliveryReport } from "@/lib/ppl/delivery";
 import { adData, cleanAd, hasAd, type LeadAd } from "@/lib/anzeige";
+import { EXPIRED_STATUS, expiredReason, parkCutoff, parkDeadlineHint, parkExpired } from "@/lib/ppl/parken";
 
 const DAY = 86_400_000;
 export const DUPLICATE_DAYS = 30;
@@ -118,7 +119,7 @@ export async function areaQuotas(sub: SubRow & { areas: AreaRow[] }, now = new D
   );
 }
 
-export type PoolResult = { status: "delivered" | "duplicate" | "invalid" | "parked"; poolLeadId: string; leadId?: string; reason?: string };
+export type PoolResult = { status: "delivered" | "duplicate" | "invalid" | "parked" | "expired"; poolLeadId: string; leadId?: string; reason?: string };
 
 export async function ingestPoolLead(input: PoolInput, now = new Date()): Promise<PoolResult> {
   if (input.externalId) {
@@ -191,6 +192,9 @@ async function slack(poolLeadId: string, extra: { delivery?: DeliveryReport | nu
 /** Freien Bezug suchen und ausliefern; sonst geparkt lassen (Admin-Hinweis). */
 export async function distribute(poolLeadId: string, now = new Date(), notify = true): Promise<Omit<PoolResult, "poolLeadId">> {
   const pl = await prisma.poolLead.findUniqueOrThrow({ where: { id: poolLeadId } });
+  // Nur geparkte Leads innerhalb der Frist (lib/ppl/parken.ts); verfallene nie wieder ausliefern
+  if (pl.status !== "parked") return { status: pl.status as PoolResult["status"], reason: pl.reason ?? undefined };
+  if (parkExpired(pl.createdAt, now)) return { status: "parked", reason: "Frist abgelaufen" };
   const facts: PoolLeadFacts = {
     plz: pl.plz,
     insurer: pl.insurer,
@@ -224,7 +228,7 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
     await prisma.poolLead.update({ where: { id: pl.id }, data: { status: "parked", reason } });
     if (notify) await sendToAdmins({
       title: `⏸️ Lead geparkt: ${pl.productKey}`,
-      body: `${reason}. Unter Kunden → Pay-per-Lead zuweisen.`,
+      body: `${reason}. Unter Kunden → Pay-per-Lead zuweisen. Lead ${parkDeadlineHint(pl.createdAt)}.`,
       url: "/admin/ppl",
       tag: `ppl-parked:${pl.productKey}`,
     }).catch(() => {});
@@ -237,6 +241,8 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
 /** Lead beim Käufer anlegen und über den gewählten Weg zustellen. */
 export async function deliver(poolLeadId: string, sub: SubRow, orderId: string | null, now = new Date(), areaId: string | null = null): Promise<string> {
   const pl = await prisma.poolLead.findUniqueOrThrow({ where: { id: poolLeadId } });
+  // Sperre (auch für Admin-Knöpfe): nur geparkte Leads innerhalb der Frist, verfallene nie wieder verkaufen
+  assertDeliverable(pl, now);
   const wasParked = pl.status === "parked" && pl.reason !== "wird verteilt";
   const price = sub.price;
   const lead = await prisma.lead.create({
@@ -257,10 +263,17 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
     },
     select: { id: true },
   });
-  await prisma.$transaction([
-    prisma.revenue.create({ data: { customerId: sub.customerId, leadId: lead.id, amount: price, occurredAt: now } }),
-    prisma.poolLead.update({ where: { id: pl.id }, data: { status: "delivered", reason: null, leadId: lead.id, deliveredAt: now, areaId } }),
-  ]);
+  try {
+    await prisma.$transaction(async (tx) => {
+      // nur, wenn der Lead noch geparkt ist (kein paralleler Verfall bzw. keine Doppelauslieferung)
+      const claimed = await tx.poolLead.updateMany({ where: { id: pl.id, status: "parked" }, data: { status: "delivered", reason: null, leadId: lead.id, deliveredAt: now, areaId } });
+      if (claimed.count !== 1) throw new NotDeliverableError("Lead ist nicht mehr geparkt");
+      await tx.revenue.create({ data: { customerId: sub.customerId, leadId: lead.id, amount: price, occurredAt: now } });
+    });
+  } catch (err) {
+    await prisma.lead.delete({ where: { id: lead.id } }).catch(() => {});
+    throw err;
+  }
   const { sendDelivery } = await import("@/lib/ppl/delivery");
   const report = await sendDelivery(lead.id, sub).catch((err: unknown) => {
     reportError(err, "ppl-delivery", { lead: lead.id, sub: sub.id });
@@ -281,10 +294,18 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
   return lead.id;
 }
 
-/** Geparkte Leads erneut verteilen (z. B. nach neuer Bestellung). */
+export class NotDeliverableError extends Error {}
+
+/** Wirft, wenn ein Pool-Lead nicht (mehr) ausgeliefert werden darf: nicht geparkt oder Frist abgelaufen. */
+export function assertDeliverable(pl: { status: string; createdAt: Date }, now = new Date()): void {
+  if (pl.status !== "parked") throw new NotDeliverableError(pl.status === EXPIRED_STATUS ? "Lead ist verfallen und wird nicht mehr verkauft" : "Lead ist nicht geparkt");
+  if (parkExpired(pl.createdAt, now)) throw new NotDeliverableError("Frist abgelaufen: Lead wird verworfen und nicht mehr verkauft");
+}
+
+/** Geparkte Leads erneut verteilen (z. B. nach neuer Bestellung), nur innerhalb der Frist ab Eingang. */
 export async function redistributeParked(productKey?: string, now = new Date()): Promise<number> {
   const parked = await prisma.poolLead.findMany({
-    where: { status: "parked", createdAt: { gte: new Date(now.getTime() - 3 * DAY) }, ...(productKey ? { productKey } : {}) },
+    where: { status: "parked", createdAt: { gt: parkCutoff(now) }, ...(productKey ? { productKey } : {}) },
     orderBy: { createdAt: "asc" },
     take: 200,
   });
@@ -294,4 +315,28 @@ export async function redistributeParked(productKey?: string, now = new Date()):
     if (r?.status === "delivered") n++;
   }
   return n;
+}
+
+/**
+ * Verfallsjob (WhatsApp-Cron): geparkte Leads ab der Frist (PPL_PARK_MAX_HOURS, 48 h ab Eingang) endgültig verwerfen.
+ * Endstatus „expired“, Grund im Verlauf, Name, Telefon, E-Mail und Antworten werden entfernt (Datenschutz: Zweck
+ * entfallen, docs/datenschutz.md). Produkt, PLZ, Anzeige und Zeitpunkte bleiben für die Auswertung (Kosten
+ * „verworfen (geparkt > 48 h)“). Ein geparkter Lead hat keinen Lead-Datensatz beim Käufer; hängt doch einer daran
+ * (Altfall), wird er nicht angefasst und der Pool-Lead nicht verworfen, sondern gemeldet.
+ */
+export async function expireParked(now = new Date()): Promise<number> {
+  const due = await prisma.poolLead.findMany({ where: { status: "parked", createdAt: { lte: parkCutoff(now) } }, select: { id: true, leadId: true, productKey: true, createdAt: true }, take: 500 });
+  const withLead = due.filter((p) => p.leadId);
+  if (withLead.length) reportError(new Error(`Geparkte Pool-Leads mit Lead-Datensatz: ${withLead.map((p) => p.id).join(", ")}`), "ppl-expire");
+  const ids = due.filter((p) => !p.leadId).map((p) => p.id);
+  if (!ids.length) return 0;
+  const res = await prisma.poolLead.updateMany({
+    where: { id: { in: ids }, status: "parked", leadId: null },
+    data: { status: EXPIRED_STATUS, reason: expiredReason(), name: null, phone: null, email: null, answers: Prisma.DbNull },
+  });
+  if (res.count) {
+    const { audit } = await import("@/lib/audit");
+    await audit("ppl.parked_expired", { entity: "PoolLead", actor: { role: "system" }, details: { count: res.count, ids, grund: expiredReason() } });
+  }
+  return res.count;
 }

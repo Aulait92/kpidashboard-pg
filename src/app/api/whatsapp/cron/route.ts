@@ -10,7 +10,7 @@ import { berlinMonth, chargeWhatsAppFees, feeChargeDue } from "@/lib/whatsapp/fe
 import { expireBestandCancellations, reconcileSeatBilling } from "@/lib/billing";
 import { processDueBudgetFees } from "@/lib/budget";
 import { renewOrders } from "@/lib/ppl/orders";
-import { redistributeParked } from "@/lib/ppl/engine";
+import { expireParked, redistributeParked } from "@/lib/ppl/engine";
 import { hvkCronDue } from "@/lib/ppl/hvk-abrechnung";
 import { runCampaigns } from "@/lib/bestand/campaigns";
 import { runEmpfehlungen } from "@/lib/empfehlung/requests";
@@ -186,6 +186,11 @@ async function handle(req: Request): Promise<Response> {
       return null;
     }),
     redistributed: await redistributeParked(undefined, now).catch(() => null),
+    // geparkte Leads ab 48 h (PPL_PARK_MAX_HOURS) endgültig verwerfen, Kontaktdaten entfernen (Ole, 20.11.2026)
+    expired: await expireParked(now).catch((e: unknown) => {
+      reportError(e, "cron-ppl-expire");
+      return null;
+    }),
   };
   // HvK-Abrechnung: Mail „Neue Gutschrift“ (PDF) Mo–Mi stündlich 7–20 Uhr abrufen, nur lesen, je Rechnung einmal
   // (nach der Antwort, lib/ppl/hvk-abrechnung-server.ts)

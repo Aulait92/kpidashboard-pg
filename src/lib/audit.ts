@@ -62,6 +62,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "ppl.airtable_nachgeholt": "Pay-per-Lead aus Airtable nachgeholt",
   "ppl.slack_test": "Slack-Benachrichtigung getestet",
   "ppl.kontingent_voll": "Pay-per-Lead: Kontingent erreicht (Meldung an Admins und Slack)",
+  "ppl.parked_expired": "Pay-per-Lead: geparkte Leads nach Frist verworfen (Kontaktdaten entfernt)",
   "bestand.import": "Bestandskunden importiert",
   "bestand.campaign": "Bestandskunden-Kampagne gestartet",
   "bestand.module": "Modul Bestandskunden an/aus",

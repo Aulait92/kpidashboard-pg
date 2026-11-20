@@ -12,7 +12,10 @@
 2. **Verteilung** (`src/lib/ppl/engine.ts`, `rules.ts`): d'Hondt nach Kontingent und
    Geliefertem, fällige Test-Bezüge zuerst. Filter je Bezug: PLZ, schwach (Beamte oder
    Beitrag unter Grenze, Standard 700 €), Beamte, nur schwache, Score, Gesellschaften
-   ein/aus, Regeln. Kein freies Kontingent → geparkt (Push), Cron verteilt erneut.
+   ein/aus, Regeln. Kein freies Kontingent → geparkt (Push und Slack mit Frist), Cron verteilt erneut, aber nur bis
+   48 h ab Eingang (`PPL_PARK_MAX_HOURS`, `parken.ts`). Danach verwirft der Cron den Lead endgültig (Status `expired`,
+   Grund „verworfen (geparkt > 48 h)“, Name, Telefon, E-Mail, Antworten gelöscht); er wird nie wieder ausgeliefert,
+   auch nicht über „Ausliefern“ im Admin (Ole, 20.11.2026). In der Auswertung eigene Spalte mit Werbekosten.
 3. **Auslieferung** (`delivery.ts`): Kundenbereich (Push, WhatsApp-Assistent falls aktiv),
    E-Mail (optional nach Vorlage, z. B. Leadbörse Heinrich von Kleist) oder Webhook
    (Format Standard oder Convexa).

@@ -169,7 +169,10 @@ export function PplReportView({ report }: { report: PplReport }) {
                   <td className={`${td} text-[color:var(--muted)]`} title="wartet auf Zustimmung bzw. noch in Bearbeitung">{r.pending || 0}</td>
                   <td className={td}>{r.rejectedTotal || 0}</td>
                   {keys.map((k) => (
-                    <td key={k} className={`${td} text-[color:var(--muted)]`}>{r.rejected[k] || 0}</td>
+                    <td key={k} className={`${td} text-[color:var(--muted)]`}>
+                      {r.rejected[k] || 0}
+                      {k === "verfallen" && r.expiredCost ? <span className="ml-1 text-[11px]">({eur(r.expiredCost)})</span> : null}
+                    </td>
                   ))}
                   <td className={td}>{r.complaints || 0}</td>
                   <td className={td}>{eur(r.cplBefore, 2)}</td>
@@ -192,6 +195,7 @@ export function PplReportView({ report }: { report: PplReport }) {
           <p>
             Eingang und „von uns abgelehnt“ kommen aus der Airtable-Leads-Tabelle (alle eingegangenen Leads, auch nicht verteilte) und nach der Umstellung aus
             der App. Leads ohne Produkt (z. B. Pflege-Check) zählen nicht dazu. „Offen“ = wartet auf Zustimmung zur Weitergabe oder noch in Bearbeitung.
+            „verworfen (geparkt &gt; 48 h)“ = ohne freien Bezug endgültig verworfen, in Klammern ihre Werbekosten (Anzahl × Leadpreis vor Ablehnung).
           </p>
           {report.poolSince ? null : (
             <p className="font-medium text-amber-800">Noch keine Eingangsdaten – sie erscheinen nach dem nächsten Airtable-Abgleich.</p>
