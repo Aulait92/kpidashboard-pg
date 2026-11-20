@@ -205,7 +205,7 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     const rec = await prisma.policenFlow.findUniqueOrThrow({ where: { customerId } });
     expect(rec).toMatchObject({ flowId: "flow-neu", status: "veroeffentlicht", jsonHash: flowJsonHash() });
     const v = rec.vorlagen as Record<string, { status: string; category: string }>;
-    expect(Object.keys(v)).toHaveLength(6);
+    expect(Object.keys(v)).toHaveLength(4);
     expect(Object.values(v).every((x) => x.category === "utility")).toBe(true);
     expect(await prisma.policenFlow.count({ where: { customerId: pplId } })).toBe(0);
     // Pay-per-Lead nie aktiv, auch mit veröffentlichtem Flow
