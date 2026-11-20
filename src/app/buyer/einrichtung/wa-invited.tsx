@@ -75,7 +75,7 @@ export function WaInvited({ email, readOnly, path: initialPath = null }: { email
                   Anmeldeseite öffnen <ArrowRight className="h-4 w-4" />
                 </a>
               ) : null}
-              {!readOnly ? <AndereEmail /> : null}
+              <AndereEmail readOnly={readOnly} />
             </details>
           ) : null}
           <label className="mt-2 flex cursor-pointer items-center gap-2 font-medium">
@@ -137,7 +137,7 @@ export function WaInvited({ email, readOnly, path: initialPath = null }: { email
 }
 
 /** Einladung an eine andere Adresse (Ole, 20.11.2026), z. B. wenn das Firmen-Postfach die Mail von 360dialog filtert. */
-function AndereEmail() {
+function AndereEmail({ readOnly }: { readOnly: boolean }) {
   const [state, action, pending] = useActionState<WaInviteState, FormData>(inviteOtherEmailAction, {});
   if (state.ok)
     return (
@@ -153,8 +153,8 @@ function AndereEmail() {
         Oder an eine andere E-Mail schicken
       </label>
       <div className="mt-1 flex flex-wrap gap-2">
-        <input id="wa-andere-email" name="email" type="email" required autoComplete="email" placeholder="z. B. Ihre private Adresse" className="min-w-0 flex-1 rounded-[var(--radius-md)] border border-[color:var(--border)] px-3 py-2 text-[15px]" />
-        <button className={buttonClass("secondary", "md")} disabled={pending}>
+        <input id="wa-andere-email" name="email" type="email" required disabled={readOnly} autoComplete="email" placeholder="z. B. Ihre private Adresse" className="min-w-0 flex-1 rounded-[var(--radius-md)] border border-[color:var(--border)] px-3 py-2 text-[15px]" />
+        <button className={buttonClass("secondary", "md")} disabled={pending || readOnly}>
           {pending ? "Wird geschickt …" : "Einladung schicken"}
         </button>
       </div>

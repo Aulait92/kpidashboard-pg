@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
-import { AngebotErstellen, bearbeitenId, ladeAngebotKontakt } from "@/components/vertrieb/angebot-erstellen";
+import { AngebotErstellen, bearbeitenId, ladeAngebotKontakt, vorlageId } from "@/components/vertrieb/angebot-erstellen";
 import { shortName } from "@/lib/vertrieb/crm";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
@@ -28,19 +28,21 @@ export default async function AngebotErstellenPage({
 }) {
   await requireAuth();
   const { id } = await params;
-  const bearbeiten = bearbeitenId(await searchParams);
+  const sp = await searchParams;
+  const bearbeiten = bearbeitenId(sp);
+  const vorlage = bearbeiten ? null : vorlageId(sp);
   const c = await ladeAngebotKontakt(id);
   if (!c) notFound();
   const back = kontaktPfad(c.id);
   return (
     <Seite
-      titel={bearbeiten ? "Angebot bearbeiten" : "Angebot erstellen"}
+      titel={bearbeiten ? "Angebot bearbeiten" : vorlage ? "Angebot duplizieren" : "Angebot erstellen"}
       untertitel={bearbeiten ? undefined : "Der Interessent nimmt online an und zahlt per Stripe."}
       zurueck={{ href: back, label: shortName(c.name) }}
       breit
     >
       <div className="-mt-4" data-funktion={ANGEBOT_FORMULAR}>
-        <AngebotErstellen c={c} backHref={back} bearbeiten={bearbeiten} />
+        <AngebotErstellen c={c} backHref={back} bearbeiten={bearbeiten} vorlage={vorlage} />
       </div>
     </Seite>
   );

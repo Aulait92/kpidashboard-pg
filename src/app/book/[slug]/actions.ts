@@ -33,7 +33,7 @@ export async function bookPublicAction(
 
   const conn = await prisma.calendarConnection.findUnique({
     where: { bookingSlug: slug },
-    select: { customerId: true, status: true },
+    select: { customerId: true, status: true, customer: { select: { leadAddress: true } } },
   });
   if (!conn || conn.status !== "connected") fail("unavailable");
   const customerId = conn!.customerId;
@@ -52,7 +52,10 @@ export async function bookPublicAction(
   // Splittest buchungsseite_kompakt (lib/experimente.ts): Fassung b ohne Pflicht-Haken, Datenschutz als Hinweis am
   // Knopf (Verarbeitung zur Terminvereinbarung nach Art. 6 Abs. 1 lit. b DSGVO, keine Einwilligung nötig)
   const consent = formData.get("consent") === "on" || formData.get("datenschutz") === "hinweis";
-  const erinnerung = formData.get("erinnerung") === "on";
+  // Häkchen nur, wenn die Seite es gezeigt hat (Lead bucht selbst, Feld „xe“ = Aufruf-ID des Splittests buchung_erinnerung)
+  const erinnerungAufruf = seitenAufruf(formData.get("xe"));
+  const erinnerungFassung: "a" | "b" = formData.get("erinnerung_fassung") === "b" ? "b" : "a";
+  const erinnerung = !!erinnerungAufruf && formData.get("erinnerung") === "on";
   const aufruf = seitenAufruf(formData.get("xv"));
 
   if (!start || Number.isNaN(new Date(start).getTime())) fail("slot");
@@ -160,10 +163,21 @@ export async function bookPublicAction(
       },
     });
     // Opt-in für Erinnerungen zur Terminvorbereitung (Policen, Rechtsprüfung A8): nur wenn angehakt, als Nachweis
+    // Gespeichert wird genau der gezeigte Wortlaut (Fassung aus dem Formular).
     if (erinnerung) {
+      const { asAnsprache } = await import("@/lib/ansprache");
       await import("@/lib/policen/server")
-        .then((m) => m.erinnerungOptIn({ customerId, leadId, phone: phone! }))
+        .then((m) => m.erinnerungOptIn({ customerId, leadId, phone: phone!, fassung: erinnerungFassung, an: asAnsprache(conn!.customer.leadAddress) }))
         .catch((e) => console.error("[booking page erinnerung]", e instanceof Error ? e.name : "Fehler"));
+    }
+    // Splittest buchung_erinnerung: Zuteilung je Buchung, Ziel „erinnerung_optin“ nur, wenn die gezeigte Fassung passt
+    if (erinnerungAufruf) {
+      await import("@/lib/experimente")
+        .then(async (m) => {
+          const v = await m.variante("buchung_erinnerung", erinnerungAufruf);
+          if (erinnerung && v === erinnerungFassung) await m.ereignis("buchung_erinnerung", erinnerungAufruf, "erinnerung_optin");
+        })
+        .catch(() => null);
     }
     // WhatsApp-Bestätigung (Freitext im 24h-Fenster, sonst freigegebene
     // Vorlage). Fehler dürfen die Buchung nicht scheitern lassen — die

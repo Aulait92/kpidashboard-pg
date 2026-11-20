@@ -64,7 +64,8 @@ export function OfferForm({
   /** Überweisung freigeschaltet (MAHNWESEN=on, zuerst nur Staging): Schalter „Überweisung erlauben“ zeigen */
   ueberweisungVerfuegbar?: boolean;
   /** Entwurf bearbeiten (Ole, 20.11.2026): vorbefüllt mit allen Werten, „Speichern“ aktualisiert den Entwurf */
-  entwurf?: { offerId: string; werte: OfferFormWerte };
+  /** neueVersion: verschicktes Angebot als Vorlage, Speichern legt eine neue Version an (ersetzt das alte) */
+  entwurf?: { offerId: string; werte: OfferFormWerte; neueVersion?: boolean; duplikat?: boolean };
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -172,7 +173,7 @@ export function OfferForm({
     }
     start(async () => {
       const eingabe = formWerteZuInput(werte, { referral: !!referralDiscount, ueberweisungVerfuegbar });
-      const res = entwurf ? await updateOfferDraftAction(entwurf.offerId, eingabe) : await createOfferAction(target, eingabe);
+      const res = entwurf && !entwurf.neueVersion ? await updateOfferDraftAction(entwurf.offerId, eingabe) : await createOfferAction(target, eingabe);
       if (!res.ok) {
         setError(res.error);
         return;
@@ -673,10 +674,14 @@ export function OfferForm({
             {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-rose-700">{error}</p> : null}
             <Button type="button" variant="primary" size="md" className="w-full" disabled={pending} onClick={submit}>
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {entwurf ? "Speichern" : "Angebot erstellen"}
+              {entwurf?.duplikat ? "Als neuen Entwurf anlegen" : entwurf?.neueVersion ? "Als neue Version speichern" : entwurf ? "Speichern" : "Angebot erstellen"}
             </Button>
             <p className="text-xs text-[color:var(--muted)]">
-              {entwurf
+              {entwurf?.duplikat
+                ? "Neue Nummer und neuer Link. Ein noch offenes Angebot an diesen Kontakt wird dabei ersetzt."
+                : entwurf?.neueVersion
+                ? "Das verschickte Angebot wird ersetzt. Danach die neue Version per E-Mail senden."
+                : entwurf
                 ? "Nummer und Link bleiben gleich."
                 : "Die Konditionen werden beim Erstellen eingefroren. Ein früheres offenes Angebot an diesen Kontakt wird automatisch ersetzt."}
             </p>

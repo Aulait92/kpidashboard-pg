@@ -103,7 +103,8 @@ so auch auf der Seite. URL-Parameter: `st` (Storno in %), `km` (Kampagnenmonate)
 Garantie-Kasten die Lead-Garantie und die **Vertrags-Garantie** (Freigabe Ole, 11.11.):
 „Nach 120 aktiven Tagen mindestens 15 Verträge – sonst sind Betreuung und Software kostenlos,
 bis sie erreicht sind, längstens 6 Monate. Voraussetzung: mindestens 20 € Werbebudget pro
-Tag, 80 % der Termine wahrgenommen, Ergebnisse bei 80 % der Leads eingetragen.“ Die
+Tag, 80 % der Termine von Ihnen wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen
+nicht gegen Sie), Ergebnisse bei 80 % der Leads eingetragen.“ Die
 Mindestzahl kommt aus `VERTRAGS_GARANTIE_MIN_VERTRAEGE` (rechner.ts), das Mindestbudget aus
 der Lead-Garantie. Die Break-even-Garantie nach 120 Tagen gilt vorerst nur für Vertreter
 (Makler liegen nach 120 Tagen naturgemäß unter den Kosten). Seit 15.11.2026 (Ole) gelten beide
@@ -207,7 +208,9 @@ zurück Monat 12, Faktor 8,2, Kosten je Vertrag 36 €.
   Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr
   weiter – auf Wunsch mit einem anderen Produkt –, bis es sich rechnet (längstens
   6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der
-  gebuchten Termine wahrgenommen und Ergebnisse in der App eingetragen.“
+  gebuchten Termine von Ihnen wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht
+  gegen Sie) und Ergebnisse in der App eingetragen.“ Gespeicherte Texte mit der alten Formulierung gleicht
+  `normalizeConfig` an (`TERMINE_WAHRGENOMMEN_KURZ`, 20.11.2026).
 - **Produktwechsel-Garantie – Standard aus** (steckt jetzt in der Break-even-Garantie).
 
 Darunter „Details in unseren AGB“ mit Link auf `/rechtliches/agb` (in den Einstellungen

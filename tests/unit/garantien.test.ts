@@ -187,7 +187,8 @@ describe("Break-even-Garantie (Bestandsverträge: 90 Tage)", () => {
   const be = (over: Partial<GarantieInput> = {}) => bewerteBreakEven(input({ now: D("2027-03-01"), breakEvenTage: 90, ...over }), regeln);
   const termine = (ok: number, nein: number) => [
     ...Array.from({ length: ok }, () => ({ startsAt: D("2026-12-10"), status: "completed" })),
-    ...Array.from({ length: nein }, (_, i) => ({ startsAt: D("2026-12-11"), status: i % 2 ? "no_show" : "booked" })),
+    // Nicht wahrgenommen = vom Kunden abgesagt (AGB „Wahrgenommene Termine“, 20.11.2026)
+    ...Array.from({ length: nein }, () => ({ startsAt: D("2026-12-11"), status: "cancelled", cancelledBy: "advisor" })),
   ];
 
   it("vor Tag 90: läuft mit Provision/Kosten", () => {
@@ -219,9 +220,25 @@ describe("Break-even-Garantie (Bestandsverträge: 90 Tage)", () => {
     expect(e.fehlend).toEqual(["Termine nur zu 79 % wahrgenommen (mind. 80 %)"]);
     expect(be({ termine: [] }).bedingungen.find((b) => b.key === "termine")?.ok).toBe(true);
   });
-  it("zukünftige und abgesagte Termine zählen nicht", () => {
-    const t = [...termine(4, 0), { startsAt: D("2027-03-05"), status: "booked" }, { startsAt: D("2026-12-12"), status: "cancelled" }];
+  it("zukünftige und nicht vom Kunden abgesagte Termine zählen nicht", () => {
+    const t = [
+      ...termine(4, 0),
+      { startsAt: D("2027-03-05"), status: "booked" },
+      { startsAt: D("2026-12-12"), status: "cancelled" },
+      { startsAt: D("2026-12-12"), status: "cancelled", cancelledBy: "lead" },
+      { startsAt: D("2026-12-12"), status: "cancelled", cancelledBy: "team" },
+      { startsAt: D("2026-12-12"), status: "cancelled", cancelledBy: "advisor", verschoben: true },
+    ];
     expect(terminQuote(t, D("2027-03-01"))).toEqual({ n: 4, quote: 1 });
+  });
+  it("Nichterscheinen des Interessenten und Termine ohne Eintrag zählen als wahrgenommen (im Zweifel für den Kunden)", () => {
+    const t = [
+      { startsAt: D("2026-12-10"), status: "completed" },
+      { startsAt: D("2026-12-10"), status: "no_show" },
+      { startsAt: D("2026-12-10"), status: "booked" },
+      { startsAt: D("2026-12-10"), status: "cancelled", cancelledBy: "advisor" },
+    ];
+    expect(terminQuote(t, D("2027-03-01"))).toEqual({ n: 4, quote: 0.75 });
   });
   it("Ergebnisse: 54 % eingetragen → Bedingung fehlt mit klarem Text", () => {
     const l = [...leads(27, "2026-12-01"), ...leads(23, "2026-12-01", { status: "Neuer Lead" })];
@@ -329,7 +346,7 @@ describe("Vertrags-Garantie (Makler, Bestandsverträge: 90 Tage)", () => {
     expect(vg({ spend: tage("2026-12-01", 120, 10) }).fehlend).toEqual(["Werbebudget nur Ø 10 € pro Tag (mind. 20 €)"]);
     const termine = [
       ...Array.from({ length: 7 }, () => ({ startsAt: D("2026-12-10"), status: "completed" })),
-      ...Array.from({ length: 3 }, () => ({ startsAt: D("2026-12-11"), status: "no_show" })),
+      ...Array.from({ length: 3 }, () => ({ startsAt: D("2026-12-11"), status: "cancelled", cancelledBy: "advisor" })),
     ];
     expect(vg({ termine }).fehlend).toEqual(["Termine nur zu 70 % wahrgenommen (mind. 80 %)"]);
     const l = [...leads(7, "2026-12-01"), ...leads(3, "2026-12-01", { status: "Neuer Lead" })];

@@ -18,6 +18,12 @@ export function bearbeitenId(sp: { [key: string]: string | string[] | undefined 
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
+/** Angebots-ID aus ?vorlage=… (Duplizieren, Ole 20.11.2026: als neuen Entwurf anlegen) oder null. */
+export function vorlageId(sp: { [key: string]: string | string[] | undefined }): string | null {
+  const v = sp.vorlage;
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
 export function ladeAngebotKontakt(id: string) {
   return prisma.salesContact.findUnique({
     where: { id },
@@ -34,11 +40,16 @@ type AngebotKontakt = NonNullable<Awaited<ReturnType<typeof ladeAngebotKontakt>>
  * `backHref`: Kontaktakte, zu der das Formular nach dem Speichern zurückkehrt (#angebot).
  * `bearbeiten`: ID eines Entwurfs dieses Kontakts, der bearbeitet wird (sonst neues Angebot).
  */
-export async function AngebotErstellen({ c, backHref, bearbeiten = null }: { c: AngebotKontakt; backHref: string; bearbeiten?: string | null }) {
+export async function AngebotErstellen({ c, backHref, bearbeiten = null, vorlage = null }: { c: AngebotKontakt; backHref: string; bearbeiten?: string | null; vorlage?: string | null }) {
   const legal = legalUrls();
-  const entwurf = bearbeiten ? await prisma.offer.findFirst({ where: { id: bearbeiten, salesContactId: c.id } }) : null;
-  if (bearbeiten && entwurf?.status !== "draft") {
-    // Verschickt (Kunde hat den Link) oder abgeschlossen: nicht bearbeiten, sondern neue Version
+  const quelle = bearbeiten ?? vorlage;
+  const entwurf = quelle ? await prisma.offer.findFirst({ where: { id: quelle, salesContactId: c.id } }) : null;
+  // Duplizieren: jedes Angebot dieses Kontakts als Vorlage für einen neuen Entwurf
+  const duplikat = !bearbeiten && !!vorlage && !!entwurf;
+  // Verschickt (Ole, 20.11.2026): vorbefüllt bearbeiten, Speichern legt eine neue Version an
+  const neueVersion = duplikat || entwurf?.status === "sent";
+  if (quelle && entwurf?.status !== "draft" && !neueVersion) {
+    // Angenommen bzw. ersetzt: nicht bearbeiten, sondern neue Version
     return (
       <div className="mt-6 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-angebot-nicht-bearbeitbar>
         <span className="min-w-0 flex-1">
@@ -91,7 +102,7 @@ export async function AngebotErstellen({ c, backHref, bearbeiten = null }: { c: 
           ueberweisungVerfuegbar={ueberweisungAktiv()}
           backHref={backHref}
           referralDiscount={referralDiscount}
-          entwurf={entwurf ? { offerId: entwurf.id, werte: entwurfZuFormWerte(entwurf, referralDiscount) } : undefined}
+          entwurf={entwurf ? { offerId: entwurf.id, werte: entwurfZuFormWerte(entwurf, referralDiscount), neueVersion, duplikat } : undefined}
           initial={{
             contactName: person,
             company: c.name,

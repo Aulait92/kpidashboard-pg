@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, ExternalLink, FileDown, FileText, Mail, Pencil, Plus, Send } from "lucide-react";
+import { Copy, CopyPlus, ExternalLink, FileDown, FileText, Mail, Pencil, Plus, Send } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschlussBonusAction, setBankTransferAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
 import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
@@ -29,6 +29,8 @@ export type DealOfferRow = {
   paymentStatus: string;
   subscriptionStatus: string | null;
   isTest: boolean;
+  /** Paket des Angebots (z. B. ppl_software: Pay-per-Lead + Software) */
+  paket?: string | null;
   /** YYYY-MM-DD */
   startDate: string | null;
   /** Ursprünglicher Start, falls nach dem Start gezahlt wurde (YYYY-MM-DD) */
@@ -102,11 +104,11 @@ const fmt = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
-type Audience = "vertreter" | "makler";
+type Audience = "vertreter" | "makler" | "ppl";
 /** Präsentationen (PDF) je Zielgruppe vorhanden? und Vorschlag aus dem Kontakt (Makler/Vertreter). */
 export type OfferMailOptions = {
   audience: Audience;
-  pdf: Record<Audience, boolean>;
+  pdf: Partial<Record<Audience, boolean>>;
   /** Vertriebskontakt: Link zur Web-Präsentation möglich */
   link?: boolean;
   /** Welche Variante zum Entscheidungs-Call die Mail enthält (gebucht: Termin, sonst Buchungslink), lib/vertrieb/entscheidungs-call.ts */
@@ -133,10 +135,14 @@ export function DealOffersCard({
   const [mitRechner, setMitRechner] = useState(false);
   const [mitPraesentation, setMitPraesentation] = useState(false);
   const [mitLink, setMitLink] = useState(false);
-  const [audience, setAudience] = useState<Audience>(mail.audience);
+  const [gewaehlt, setAudience] = useState<Audience>(mail.audience);
   const [du, setDu] = useState(false);
   const [ohneCall, setOhneCall] = useState(false);
-  const pdfDa = mail.pdf[audience];
+  const current0 = offers.find((o) => o.status !== "superseded");
+  // Pay-per-Lead + Software: immer die eigene Präsentation (wie beim Versand, offer-actions.ts)
+  const nurPpl = current0?.paket === "ppl_software";
+  const audience: Audience = nurPpl ? "ppl" : gewaehlt;
+  const pdfDa = !!mail.pdf[audience];
   const [msg, setMsg] = useState<string | null>(null);
   const flash = (m: string) => {
     setMsg(m);
@@ -150,7 +156,7 @@ export function DealOffersCard({
 
   // Vorschau vor dem Versand (Ole, 20.11.2026): „Per E-Mail senden“ zeigt erst die Mail, „Jetzt senden“ verschickt sie
   const [vorschau, setVorschau] = useState(false);
-  const mailExtras = { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, praesentationLink: !!mail.link && mitLink, audience, du, ohneEntscheidungsCall: !!mail.entscheidung && ohneCall };
+  const mailExtras = { rechner: mitRechner && audience !== "ppl", praesentation: mitPraesentation && pdfDa, praesentationLink: !!mail.link && mitLink, audience, du, ohneEntscheidungsCall: !!mail.entscheidung && ohneCall };
 
   function run(id: string, fn: () => Promise<{ ok: boolean; error?: string; hinweis?: string }>, success: string, onOk?: () => void) {
     setBusy(id);
@@ -242,11 +248,15 @@ export function DealOffersCard({
               <ButtonLink href={`/angebot/${current.token}`} external icon={ExternalLink}>Ansehen</ButtonLink>
               <ButtonLink href={`/angebot/${current.token}/pdf`} external icon={FileDown}>PDF</ButtonLink>
               {/* Entwurf bearbeiten (Ole, 20.11.2026): gleiches Formular, vorbefüllt; verschickte Angebote nur als neue Version */}
-              {current.status === "draft" ? (
+              {current.status === "draft" || current.status === "sent" ? (
                 <ButtonLink href={`${newOfferHref}?bearbeiten=${current.id}`} icon={Pencil}>
                   Bearbeiten
                 </ButtonLink>
               ) : null}
+              {/* Duplizieren (Ole, 20.11.2026): vorbefüllt als neuen Entwurf anlegen, auch bei angenommenen Angeboten */}
+              <ButtonLink href={`${newOfferHref}?vorlage=${current.id}`} icon={CopyPlus}>
+                Duplizieren
+              </ButtonLink>
               {current.status === "draft" || current.status === "sent" ? (
                 <>
                   <Button
@@ -316,10 +326,12 @@ export function DealOffersCard({
                   </div>
                 ) : null}
                 <div className="text-xs font-medium text-[color:var(--muted)]">Mit der E-Mail mitschicken</div>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" className="h-4 w-4" checked={mitRechner} onChange={(e) => setMitRechner(e.target.checked)} />
-                  Rechner-Link
-                </label>
+                {audience !== "ppl" ? (
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" className="h-4 w-4" checked={mitRechner} onChange={(e) => setMitRechner(e.target.checked)} />
+                    Rechner-Link
+                  </label>
+                ) : null}
                 <div className="flex flex-wrap items-center gap-2">
                   <label className={`flex items-center gap-2 ${pdfDa ? "" : "opacity-60"}`}>
                     <input
@@ -331,15 +343,20 @@ export function DealOffersCard({
                     />
                     Präsentation als PDF
                   </label>
-                  <select
-                    aria-label="Präsentation für"
-                    value={audience}
-                    onChange={(e) => setAudience(e.target.value as Audience)}
-                    className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm"
-                  >
-                    <option value="vertreter">Vertreter</option>
-                    <option value="makler">Makler</option>
-                  </select>
+                  {nurPpl ? (
+                    <span className="text-sm text-[color:var(--muted)]" data-praesentation-ppl>Pay-per-Lead + Software</span>
+                  ) : (
+                    <select
+                      aria-label="Präsentation für"
+                      value={audience}
+                      onChange={(e) => setAudience(e.target.value as Audience)}
+                      className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm"
+                    >
+                      <option value="vertreter">Vertreter</option>
+                      <option value="makler">Makler</option>
+                      <option value="ppl">Pay-per-Lead + Software</option>
+                    </select>
+                  )}
                   {!pdfDa ? (
                     <Link href="/admin/marketing/unterlagen" className="text-xs text-[color:var(--brand)] underline">
                       PDF unter Unterlagen hochladen
@@ -352,7 +369,7 @@ export function DealOffersCard({
                     Link zur Präsentation zum Durchklicken (14 Tage, mit den Preisen aus dem Angebot)
                   </label>
                 ) : null}
-                <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p>
+                {audience !== "ppl" ? <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p> : null}
                 {!current.isTest ? <PayLaterToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
                 {!current.isTest ? <BankTransferToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
               </div>
@@ -366,7 +383,7 @@ export function DealOffersCard({
             {older.map((o, i) => (
               <span key={o.id}>
                 {i ? ", " : ""}
-                <Link href={`/angebot/${o.token}`} target="_blank" className="underline">{o.number}</Link>
+                <Link href={`/angebot/${o.token}`} target="_blank" className="underline">{o.number}</Link> (<Link href={`${newOfferHref}?vorlage=${o.id}`} className="underline">duplizieren</Link>)
               </span>
             ))}
           </div>

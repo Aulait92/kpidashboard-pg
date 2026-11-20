@@ -246,11 +246,14 @@ export const DEFAULT_CONFIG: RechnerConfig = {
     breakEven: {
       enabled: true,
       title: "Break-even-Garantie",
-      text: "Spätestens ab dem 5. Monat profitabel: Liegt Ihre Provision nach 4 Monaten unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt, bis es sich rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine wahrgenommen und Ergebnisse in der App eingetragen.",
+      text: "Spätestens ab dem 5. Monat profitabel: Liegt Ihre Provision nach 4 Monaten unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt, bis es sich rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine von Ihnen wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht gegen Sie) und Ergebnisse in der App eingetragen.",
     },
   },
   termsUrl: "/rechtliches/agb",
 };
+
+/** Kurzfassung der Termin-Bedingung (AGB „Wahrgenommene Termine“, 20.11.2026), ohne „mindestens“ */
+export const TERMINE_WAHRGENOMMEN_KURZ = "80 % der gebuchten Termine von Ihnen wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht gegen Sie)";
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 const str = (v: unknown, max: number, fallback: string) => (typeof v === "string" ? v.trim().slice(0, max) : fallback);
@@ -344,7 +347,9 @@ export function parseRechnerConfig(raw: unknown): { config: RechnerConfig; error
     enabled: bool(g[k]?.enabled, d.guarantees[k].enabled),
     title: str(g[k]?.title, 80, d.guarantees[k].title) || d.guarantees[k].title,
     // Gespeicherte Texte mit der alten Formulierung angleichen (Prüfung nach 4 Monaten → ab dem 5. Monat profitabel, Ole 13.11.2026)
-    text: (str(g[k]?.text, 800, d.guarantees[k].text) || d.guarantees[k].text).replace(/ab dem 4\. Monat profitabel/gi, "ab dem 5. Monat profitabel"),
+    text: (str(g[k]?.text, 800, d.guarantees[k].text) || d.guarantees[k].text).replace(/ab dem 4\. Monat profitabel/gi, "ab dem 5. Monat profitabel")
+      // AGB-Klarstellung 20.11.2026: Termine zählen nur als nicht wahrgenommen, wenn der Vermittler absagt oder fehlt
+      .replace(/80 % der gebuchten Termine wahrgenommen/g, TERMINE_WAHRGENOMMEN_KURZ),
   });
   const contactUrl = str(r.contactUrl, 400, d.contactUrl) || d.contactUrl;
   const urlOk = /^(https:\/\/|mailto:|tel:)/i.test(contactUrl);
