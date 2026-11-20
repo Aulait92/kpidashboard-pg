@@ -51,7 +51,7 @@ export function LebenszyklusAnsicht({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4" data-funktion={funktionen.kennzahlen}>
         {[
-          { k: "Ruhende Konten", v: String(s.dormantNow), sub: s.avgDormantDays != null ? `Ø ${s.avgDormantDays} Tage ruhend` : "keine" },
+          { k: "Ruhende Konten", v: String(d.dormant.length), sub: s.avgDormantDays != null ? `Ø ${s.avgDormantDays} Tage ruhend` : d.dormant.length ? "nach Vertragsende" : "keine" },
           { k: "Zurückgekommen", v: pct(s.rate), sub: `${s.reactivations} von ${s.cancelled} Kündigungen` },
           { k: "Zeit bis zur Rückkehr", v: s.medianDaysToReactivation != null ? `${s.medianDaysToReactivation} Tage` : NOCH_KEINE_DATEN, sub: "Median ab Vertragsende" },
           { k: "MRR zurückgewonnen", v: eur(d.months.reduce((a, m) => a + m.reaktiviertMrr, 0)), sub: "letzte 12 Monate" },
