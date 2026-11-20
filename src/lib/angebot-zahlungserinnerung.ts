@@ -76,6 +76,17 @@ export function erinnerungGestoppt(o: ErinnerungsAngebot, opts: { ersetzt?: bool
   return null;
 }
 
+type ErsetztQuelle = { id: string; createdAt: Date; status?: string; salesContactId: string | null; dealId: string | null };
+
+/**
+ * Gibt es eine neuere Version des Angebots (gleicher Kontakt, ohne Kontakt gleicher Deal, nicht „ersetzt“)? Gilt für
+ * Zahlungs- und Bonus-Erinnerung (ersetzt() in lib/angebot-zahlungserinnerung-server.ts) und „Geplante Nachrichten“.
+ */
+export function istErsetzt(o: ErsetztQuelle, andere: readonly ErsetztQuelle[]): boolean {
+  const gleich = (x: ErsetztQuelle) => (o.salesContactId ? x.salesContactId === o.salesContactId : !!o.dealId && x.dealId === o.dealId);
+  return andere.some((x) => x.id !== o.id && gleich(x) && x.createdAt.getTime() > o.createdAt.getTime() && x.status !== "superseded");
+}
+
 /** Erinnerungstage (YYYY-MM-DD) je Stufe. */
 export function erinnerungsPlan(o: Pick<ErinnerungsAngebot, "acceptedAt" | "startDate" | "paymentReminderAt">): string[] {
   if (!o.acceptedAt) return [];

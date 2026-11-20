@@ -412,7 +412,7 @@ export const MANUAL_FIELDS = {
 } as const;
 
 /** Kundendaten für Checkliste und Fortschritt (eine Quelle für Einrichtung, Startseite und Admin). */
-const ONBOARDING_CUSTOMER_INCLUDE = {
+export const ONBOARDING_CUSTOMER_INCLUDE = {
   users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true, mailConnection: { select: { id: true } } } },
   calendarConnection: { select: { status: true } },
   agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } },

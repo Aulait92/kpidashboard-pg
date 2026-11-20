@@ -26,12 +26,15 @@ import { recheckOpenMetaAccess, runSetupReminders } from "@/lib/selbst-einrichtu
 const DAY = 24 * 60 * 60 * 1000;
 const TZ = "Europe/Berlin";
 
+/** Geschäftszeit für Kundenmails (Mo–Fr, auch für „Geplante Nachrichten“, lib/vertrieb/geplante-nachrichten-server.ts). */
+export const GESCHAEFTSZEIT = { von: 9, bis: 18 } as const;
+
 /** Werktags 9–18 Uhr deutscher Zeit – Kundenmails nicht nachts verschicken. */
 export function isBusinessHours(now = new Date()): boolean {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", hour: "2-digit", hour12: false }).formatToParts(now);
   const wd = parts.find((p) => p.type === "weekday")?.value ?? "";
   const h = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
-  return !["Sat", "Sun"].includes(wd) && h >= 9 && h < 18;
+  return !["Sat", "Sun"].includes(wd) && h >= GESCHAEFTSZEIT.von && h < GESCHAEFTSZEIT.bis;
 }
 
 async function greetingOf(ob: { salesContactId: string | null; offerId: string | null }): Promise<string> {

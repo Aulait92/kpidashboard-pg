@@ -306,11 +306,14 @@ export function workdaysLater(d: Date, n: number, seed = ""): Date {
   return workdayMorning(key(x), seed);
 }
 
+/** Versandfenster der Später-Follow-ups: Werktag 8–17 Uhr deutsche Zeit (auch für „Geplante Nachrichten“). */
+export const SENDEFENSTER = { von: 8, bis: 17 } as const;
+
 /** Versandfenster: Werktag 8–17 Uhr deutsche Zeit. */
 export function inSendWindow(now: Date): boolean {
   if (!isWorkdayKey(dayKey(now))) return false;
   const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "numeric", hourCycle: "h23" }).format(now));
-  return hour >= 8 && hour < 17;
+  return hour >= SENDEFENSTER.von && hour < SENDEFENSTER.bis;
 }
 
 /** „im August 2026“ für den Bezug auf die damalige Antwort */
