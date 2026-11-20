@@ -113,7 +113,7 @@ export function AccountView({
           <ProtocolCard measures={detail.measures} />
         </div>
         <div className="space-y-5">
-          <Klapp zu={einklappen} id="lauf" titel="Lauf und Trockenlauf" hint="Trockenlauf: liest bei Meta nur und zeigt, was geplant würde">
+          <Klapp zu={einklappen} id="lauf" titel="Lauf und Trockenlauf" hint={einklappen ? undefined : "Trockenlauf: liest bei Meta nur und zeigt, was geplant würde"}>
             <RunPanel accountId={a.id} customerId={a.customerId} />
           </Klapp>
           <Klapp zu={einklappen} titel="Maßnahme eintragen" hint="von Hand, landet im Protokoll">
