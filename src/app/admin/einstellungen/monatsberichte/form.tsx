@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 import type { ReportSettingsView } from "@/lib/monatsbericht/server";
 import { saveReportSettingsAction, type ReportActionState } from "@/app/admin/monatsberichte/actions";
 
@@ -30,7 +30,8 @@ export function ReportSettingsForm({ s }: { s: ReportSettingsView }) {
       </label>
       {/* UX-Umbau 20.11.2026: Schwellen ändert man selten, darum eingeklappt; Standardwerte sind gesetzt */}
       <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] px-4">
-        <summary className="flex min-h-12 cursor-pointer items-center text-sm font-semibold">Einstufung gut, mittel, schwach</summary>
+        <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center text-sm font-semibold">Einstufung gut, mittel, schwach<ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
       <fieldset className="space-y-2 pb-4">
         <Num name="goodLeadsPct" label="Gut ab (Leads von der Erwartung)" value={s.goodLeadsPct} suffix="%" />
         <Num name="weakLeadsPct" label="Schwach unter (Leads von der Erwartung)" value={s.weakLeadsPct} suffix="%" />

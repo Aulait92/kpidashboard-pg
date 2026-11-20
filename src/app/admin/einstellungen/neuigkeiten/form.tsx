@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { Loader2, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Sparkles, Trash2, ChevronDown } from "lucide-react";
 import { UpdateEntry } from "@/components/neuigkeiten";
 import { AUDIENCE_LABEL, KIND_LABEL, UPDATE_AUDIENCES, UPDATE_KINDS, asKind, type UpdateView } from "@/lib/neuigkeiten-shared";
 import { deleteUpdateAction, draftUpdateAction, saveUpdateAction, type UpdateFormState } from "./actions";
@@ -95,10 +95,11 @@ function Editor({ initial, onDone }: { initial: UpdateView; onDone: () => void }
 
   return (
     <section className="space-y-4">
-      <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4">
-        <summary className="flex min-h-12 cursor-pointer items-center gap-2 text-sm font-semibold">
+      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4">
+        <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2 text-sm font-semibold">
           <Sparkles className="h-4 w-4 text-[color:var(--brand)]" /> Text mit KI aus Stichworten
-        </summary>
+        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
         <div className="pb-4">
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Stichworte: Was ist neu? Wo finden Kunden es?" className={`${input} h-20`} />
         {aiError ? <p className="mt-1 text-sm text-rose-600">{aiError}</p> : null}

@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { connection } from "next/server";
 import { NeuigkeitenAdmin } from "@/app/admin/einstellungen/neuigkeiten/form";
 import { ModuleCandidatesCard } from "@/app/admin/nutzung/module-card";
@@ -27,10 +28,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
       <details
         id="zusatzmodule"
         open={!!ankuendigung}
-        className="scroll-mt-20 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]"
+        className="group scroll-mt-20 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]"
         data-funktion="module-actions-sendannouncementaction--ankuendigung-des-zusatzmoduls-an-kunden-senden"
       >
-        <summary className="flex min-h-12 cursor-pointer items-center px-5 text-[15px] font-semibold">Ankündigung an Modul-Kandidaten</summary>
+        <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center px-5 text-[15px] font-semibold">Ankündigung an Modul-Kandidaten<ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
         <div className="border-t border-[color:var(--border)] p-3 sm:p-4 [&>section]:mb-0 [&>section]:shadow-none">
           <ModuleCandidatesCard message={ankuendigung ?? null} zurueck={BASIS} />
         </div>

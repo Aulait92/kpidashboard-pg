@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { preisPilotUmschaltenAction } from "@/app/admin/einstellungen/beitraege/actions";
 import { EinstellungSeite, LISTE, SchalterKnopf, Zeile } from "@/components/admin-neu/einstellungen/rahmen";
 import { Card, CardHeader } from "@/components/ui";
@@ -80,9 +81,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </Card>
 
         {/* UX-Umbau 20.11.2026: Nachschlagen ist selten, darum eingeklappt; je Gesellschaft eine kurze Zeile (Sparten im Tooltip) */}
-        <details className="self-start rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
-          <summary className="flex min-h-12 cursor-pointer items-center px-5 text-[15px] font-semibold">
+        <details className="group self-start rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
+          <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center px-5 text-[15px] font-semibold">
             Gesellschaften <span className="ml-1.5 font-normal text-[color:var(--muted)]">{gesellschaften.size}</span>
+          <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
           </summary>
           <ul className={`${LISTE} border-t border-[color:var(--border)]`}>
             {sortiereGesellschaften([...gesellschaften.keys()]).map((key) => {

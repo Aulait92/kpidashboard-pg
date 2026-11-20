@@ -28,8 +28,7 @@ export default async function Page() {
         </div>
       </Card>
       <p className="text-sm text-[color:var(--muted)]">
-        Je weiteres Produkt: Einrichtung {einrichtung}, {eur0(PRICE_LIST.extraProductMonthly)} im Monat (netto). Kunden buchen unter Konto & Rechnungen › Produkte; ohne „bewährt“ erscheint
-        das Abzeichen „Neu“.
+        Je weiteres Produkt: Einrichtung {einrichtung}, {eur0(PRICE_LIST.extraProductMonthly)} im Monat (netto).
       </p>
     </EinstellungSeite>
   );

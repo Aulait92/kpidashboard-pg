@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCircle2, ExternalLink } from "lucide-react";
+import { CalendarDays, CheckCircle2, ExternalLink, ChevronDown } from "lucide-react";
 import { disconnectSalesCalendarAction, saveBookingTypeAction, saveBusyCalendarsAction, saveSalesTimesAction } from "@/app/admin/vertrieb/buchungsseite/actions";
 import { BusyCalendarsForm } from "@/components/termin/busy-calendars-form";
 import { EinstellungSeite } from "@/components/admin-neu/einstellungen/rahmen";
@@ -94,7 +94,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ g
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2" data-funktion="actions-savebookingtypeaction--termintypen-bearbeiten-dauer-puffer-vorlauf">
+      <div className={`grid grid-cols-1 gap-5 ${types.length > 1 ? "lg:grid-cols-2" : ""}`} data-funktion="actions-savebookingtypeaction--termintypen-bearbeiten-dauer-puffer-vorlauf">
         {types.map((t) => (
           <Card key={t.id}>
             <CardHeader title={t.title} hint={bookingTypeHint(t)} />
@@ -117,8 +117,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ g
         </div>
       </Card>
 
-      <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]" data-funktion="page-embedsnippet--einbettungscode-fuer-die-webseite-kopieren">
-        <summary className="flex min-h-12 cursor-pointer items-center px-5 text-[15px] font-semibold">Auf der Webseite einbinden</summary>
+      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]" data-funktion="page-embedsnippet--einbettungscode-fuer-die-webseite-kopieren">
+        <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center px-5 text-[15px] font-semibold">Auf der Webseite einbinden<ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
         <div className="space-y-3 border-t border-[color:var(--border)] p-5">
           <p className="text-sm text-[color:var(--muted)]">Code für performancegrowth.de/termin. Die Höhe passt sich automatisch an.</p>
           <CopyField value={embedSnippet()} multiline label="Code kopieren" />

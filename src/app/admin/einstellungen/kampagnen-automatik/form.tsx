@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 import type { AutomationSettings } from "@/lib/kampagnen/settings";
 import { saveAutomationAction, type AutomationState } from "./actions";
 
@@ -54,8 +54,9 @@ export function AutomationForm({ s }: { s: AutomationSettings }) {
         />
       </div>
       {/* UX-Umbau 20.11.2026: Schwellen selten geändert, darum eingeklappt (Standardwerte gesetzt) */}
-      <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-5 shadow-[var(--shadow-sm)]">
-        <summary className="flex min-h-12 cursor-pointer items-center text-sm font-medium">Schwellen für müde Anzeigen</summary>
+      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-5 shadow-[var(--shadow-sm)]">
+        <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center text-sm font-medium">Schwellen für müde Anzeigen<ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
         <div className="space-y-3 pb-5">
         <p className="text-sm text-[color:var(--muted)]">Gemessen über die letzten 14 Tage.</p>
         <Num name="refreshMaxFrequency" label="Frequenz über" value={s.refreshMaxFrequency} suffix="" step="0.1" />
