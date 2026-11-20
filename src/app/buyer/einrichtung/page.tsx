@@ -863,7 +863,7 @@ function WhatsAppStep({
               <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Sie sind bei Facebook angemeldet und Admin Ihres Business Managers.</li>
             </ul>
           </div>
-          <WhatsAppGuide initialPath={parseConnectPath(weg)} readOnly={readOnly} helpHref={`/buyer/einrichtung?schritt=${hilfeSchritt}#hilfetermin`} />
+          <WhatsAppGuide initialPath={parseConnectPath(weg)} readOnly={readOnly} inviteEmail={email || undefined} helpHref={`/buyer/einrichtung?schritt=${hilfeSchritt}#hilfetermin`} />
           <WaCheckButton readOnly={readOnly} />
         </>
       )}
