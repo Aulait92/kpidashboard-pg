@@ -21,6 +21,7 @@ import { ZAHLART_HINWEIS, ZAHLART_HINWEIS_HALBJAHR, ZAHLART_HINWEIS_JAHR } from 
 import { addMonthsIso, contractSummaryLines, hasPriceStep, priceStepAckText, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 import { BUSINESS_CONFIRM_TEXT } from "@/lib/unternehmer";
 import { ErsteWocheFelder, type ErsteWocheProps } from "./erste-woche-felder";
+import { ERSTE_WOCHE_MIN, ersteWocheFaellig } from "@/lib/ppl/erste-woche-shared";
 
 /** Wahl von Laufzeit/Startdatum (vom Server vorberechnet; verbindlich rechnet der Server bei Annahme neu). */
 export type OfferChoiceProps = {
@@ -101,6 +102,12 @@ export function AcceptForm({
   const [startDate, setStartDate] = useState(choice?.start.preset ?? "");
   const [annualPick, setAnnualPick] = useState(!!choice?.initialAnnual);
   const [produkte, setProdukte] = useState<OfferProduct[]>(choice?.products ?? []);
+  // Erste Woche: Anzahl und Wiederholung hier, damit Zusammenfassung und fälliger Betrag live mitgehen
+  const [wocheQty, setWocheQty] = useState(Math.max(ERSTE_WOCHE_MIN, ersteWoche?.quantity ?? ERSTE_WOCHE_MIN));
+  const [wocheRenew, setWocheRenew] = useState(true);
+  const wocheWahl = ersteWoche
+    ? { productKey: ersteWoche.productKey, name: ersteWoche.name, price: ersteWoche.price, quantity: Math.max(ERSTE_WOCHE_MIN, wocheQty), autoRenew: wocheRenew }
+    : null;
   // Produktwahl: Monatsgebühr nach Staffel (null = individuell, dann keine Online-Annahme)
   const waehltProdukte = !!choice?.choosesProducts && produkte.length > 0;
   const gebuehr = waehltProdukte ? listenMonatsgebuehr(produkte) : null;
@@ -119,6 +126,7 @@ export function AcceptForm({
     setup: choice ? (choice.options.find((o) => o.term === effTerm)?.setup ?? pricing.setup) : pricing.setup,
     annual,
     ...(choice ? { freeMonths: freiFuer(choice, effTerm) } : {}),
+    ...(wocheWahl ? { ersteWoche: wocheWahl } : {}),
   };
   const hasChoice = !!choice && (choice.choosesTerm || choice.choosesStart || !!choice.choosesAnnual || !!choice.choosesProducts);
   const priceStep = hasPriceStep(summary);
@@ -153,9 +161,9 @@ export function AcceptForm({
 
   return (
     <form action={action} className="space-y-4">
-      {ersteWoche ? <ErsteWocheFelder {...ersteWoche} /> : null}
+      {ersteWoche ? <ErsteWocheFelder {...ersteWoche} qty={wocheQty} setQty={setWocheQty} autoRenew={wocheRenew} setAutoRenew={setWocheRenew} /> : null}
       {choice && hasChoice ? (
-        <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} />
+        <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} faellig={wocheWahl ? ersteWocheFaellig(wocheWahl) : null} />
       ) : null}
       <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm sm:p-5" data-accept-summary aria-live="polite">
         <div className="font-semibold">Das vereinbaren Sie mit dem Klick</div>
@@ -277,6 +285,7 @@ function ChoiceFields({
   annual: annualPick,
   setAnnual,
   arrears = false,
+  faellig = null,
 }: {
   choice: OfferChoiceProps;
   produkte: OfferProduct[];
@@ -291,6 +300,8 @@ function ChoiceFields({
   setAnnual: (v: boolean) => void;
   /** Zahlung nachträglich für den abgelaufenen Monat (Ole, 19.11.2026) */
   arrears?: boolean;
+  /** Erste Woche (Pay-per-Lead + Software): Leadkosten statt „Jetzt fällig: 0 €“ */
+  faellig?: ReturnType<typeof ersteWocheFaellig> | null;
 }) {
   const opt = choice.options.find((o) => o.term === term) ?? choice.options[0];
   // Vorauszahlung mit 6 Monaten (6 Monate im Voraus) oder 12 Monaten (jährlich); zur Wahl angeboten → Wahl des
@@ -389,7 +400,15 @@ function ChoiceFields({
           </>
         ) : (
           <>
-            {choice.ohneEinrichtung ? (
+            {choice.ohneEinrichtung && faellig ? (
+              // Faire Anzeige (Ole, 20.11.2026): Leadkosten der ersten Woche statt „0 €“; abgebucht nach der Registerprüfung
+              <div data-erste-woche-faellig>
+                <span className="text-[color:var(--muted)]">{faellig.label}</span>
+                <b data-testid="choice-setup">{faellig.betrag}</b>
+                <span className="text-[color:var(--muted)]">{faellig.zusatz}</span>
+                <span className="block text-xs text-[color:var(--muted)]">Keine Einrichtungsgebühr</span>
+              </div>
+            ) : choice.ohneEinrichtung ? (
               <div>
                 <span className="text-[color:var(--muted)]">Jetzt fällig: </span>
                 <b data-testid="choice-setup">{eur(0)}</b>
