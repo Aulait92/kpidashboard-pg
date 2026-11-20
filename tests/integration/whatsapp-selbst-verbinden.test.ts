@@ -112,6 +112,8 @@ describe("WhatsApp selbst verbinden (360dialog Integrated Onboarding)", () => {
     acc = await prisma.whatsAppAccount.findUniqueOrThrow({ where: { customerId } });
     expect(acc.status).toBe("connected");
     expect(decryptSecret(acc.apiKeyEnc!)).toBe("d360-secret-key");
+    // Assistent und Erstanschreiben gehen mit der Verbindung an (Ole, 20.11.2026)
+    expect(await prisma.agentConfig.findUnique({ where: { customerId }, select: { active: true, outreachEnabled: true } })).toEqual({ active: true, outreachEnabled: true });
   });
 
   it("Partner-API verweigert (403) → Fehler, Admin-Aufgabe und Push, Kunde sieht „Wir melden uns“", async () => {
