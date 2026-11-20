@@ -98,6 +98,10 @@ model Customer {
   // Testkunde (Ole, 15.11.2026): aus einem Testangebot ohne Zahlung; zählt nicht in Admin-Zahlen,
   // Buchungen, Stornoquote, Monatsbericht und Platz-Abrechnung, im Admin mit Abzeichen „Test“, löschbar.
   isTest               Boolean   @default(false)
+  // Pilot (Ole, 20.11.2026): echter Kunde, kostenlos bis zu diesem Tag (einschließlich). Kein Testkunde, zählt in
+  // allen Kennzahlen. Solange er läuft: keine automatische Abrechnung der Verkäufer-Plätze; Aufgaben 7 Tage vorher
+  // und am Ende (lib/pilot-server.ts). Ein schon laufendes Stripe-Abo bleibt unberührt (Hinweis im Admin).
+  pilotBis             DateTime?
   // E-Mail-Funktionen aus (Ole, 15.11.2026): „Meine Gesellschaft erlaubt das nicht“ in der Einrichtung.
   // Blendet E-Mail-Knopf, E-Mail-Fenster, Vorlagen-Hinweise und den E-Mail-Kanal bei Bestandskampagnen aus;
   // wieder einschaltbar unter Einstellungen → E-Mail-Postfach.

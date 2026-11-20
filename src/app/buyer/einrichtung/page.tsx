@@ -9,7 +9,9 @@ import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist, vonUnsAbgehakt } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { DatenschutzUrlForm, HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits, WeiterButton } from "./forms";
+import { DatenschutzUrlForm, HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits, WeiterButton, type AngabenInitial } from "./forms";
+import { istAllianzVertreter } from "@/lib/vertreter-seite";
+import { anredeAusVorname } from "@/lib/vorname-anrede";
 import { SoArbeitet } from "@/components/so-arbeitet";
 import { ladeSoArbeitet } from "@/lib/so-arbeitet-server";
 import { ServiceMails } from "@/app/buyer/einstellungen/assistent/service-mails";
@@ -39,7 +41,7 @@ import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
 import { WaCheckButton, WaPendingRefresh, WaResetButton } from "./wa-check";
 import { WaInvited } from "./wa-invited";
-import { LeadTimesForm, SourcePicker, VideoRaumForm } from "@/components/calendar-sources";
+import { AllianzForm, AllianzVerbunden, LeadTimesForm, SourcePicker, VideoRaumForm } from "@/components/calendar-sources";
 import { loadTerminFormate } from "@/lib/termin-formate-server";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import {
@@ -158,6 +160,37 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       ])
     : [null, null, false, ""];
   const alleGesellschaften = bekannteGesellschaften().map((key) => ({ key, name: gesellschaftName(key) }));
+  // Allianz-Vertreter (Einrichtung Herr Lohmann, 20.11.2026): Kalender nur über die Vertreternummer, Webex früh abfragen
+  const web = (ob.websiteInfo ?? null) as { sourceUrl?: string | null; impressumUrl?: string | null } | null;
+  const allianz =
+    software &&
+    istAllianzVertreter({
+      vermittlerTyp,
+      versicherer: erstinfo?.daten.versicherer,
+      kundenName: ob.customer.name,
+      gesellschaften: vertrieb?.vertrieb.gesellschaften,
+      webseite: web?.sourceUrl || web?.impressumUrl || null,
+      allianzVerbunden: !!calendar.status.allianz,
+    });
+  // Ihre Angaben (Schritt 1): einmal fragen, vorausgefüllt aus Erstinformation, Impressum, Angebot und Vertriebskontakt
+  let angaben: AngabenInitial | null = null;
+  if (software && erstinfo) {
+    const d = erstinfo.daten;
+    let telefon = d.telefon;
+    if (!telefon) {
+      const crm = await prisma.salesContact
+        .findUnique({ where: { customerId: ctx.customerId }, select: { phone: true, phones: { select: { phone: true }, take: 1 } } })
+        .catch(() => null);
+      telefon = (crm?.phone ?? crm?.phones[0]?.phone ?? "").trim();
+    }
+    angaben = {
+      anrede: erstinfo.anrede ?? anredeAusVorname(d.name.split(/\s+/)[0] ?? null) ?? "",
+      name: d.name,
+      telefon,
+      anschrift: d.anschrift,
+      registerNummer: erstinfo.registerNummer ?? d.registerNummer,
+    };
+  }
   const metaInit = {
     adAccount: ob.customer.metaAdAccountId ? `act_${ob.customer.metaAdAccountId}` : "",
     page: ob.customer.metaPageId ?? "",
@@ -228,14 +261,20 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       </Card>
 
       <div className="space-y-5">
-        <Step n={nextNo()} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={isOpen("questionnaire")} id="questionnaire" current={current === "questionnaire"}>
-          <p className="mb-4 text-sm text-[color:var(--muted)]">Nur noch, wie Sie arbeiten möchten:</p>
+        {/* Ihre Angaben (Ole, 20.11.2026, bisher „Kurzer Fragebogen“): Name, Telefon, Anschrift, Registernummer einmal am Anfang */}
+        <Step n={nextNo()} title="Ihre Angaben" icon={ClipboardList} done={done("questionnaire")} open={isOpen("questionnaire")} id="questionnaire" current={current === "questionnaire"}>
+          <p className="mb-4 text-sm text-[color:var(--muted)]">
+            {angaben ? "Einmal eintragen, wir übernehmen alles in Erstinformation, Signatur und Nachrichten." : "Nur noch, wie Sie arbeiten möchten:"}
+          </p>
           <QuestionnaireForm
             software={software}
             // Ansprache immer aus der echten Einstellung (Ole, 18.11.2026: Fragebogen zeigte „Sie“, gespeichert war „du“)
             initial={{ ...((ob.questionnaire ?? {}) as Record<string, unknown>), ansprache: kundeBasis?.leadAddress === "du" ? "du" : "sie" } as unknown as Record<string, never>}
             formate={await loadTerminFormate(ctx.customerId)}
             readOnly={readOnly}
+            angaben={angaben}
+            allianz={allianz}
+            videoRoomUrl={calendar.videoRoomUrl}
           />
         </Step>
 
@@ -266,19 +305,52 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               </p>
             ) : null}
             {gcal === "consent" && microsoftAdminConsentUrl() ? <MicrosoftAdminConsent url={microsoftAdminConsentUrl()!} /> : null}
-            <SourcePicker
-              status={calendar.status}
-              readOnly={readOnly}
-              connectLinks={{ google: "/api/google/connect", microsoft: "/api/microsoft/connect" }}
-              icsAction={saveIcsAction}
-              removeIcsAction={removeIcsAction}
-              allianzAction={connectAllianzAction}
-              disconnectAllianzAction={disconnectAllianzAction}
-              disconnectNativeAction={disconnectNativeCalendarAction}
-              allianzOption={!makler}
-            />
+            {allianz ? (
+              // Allianz-Vertreter (Ole, 20.11.2026): Microsoft 365, Kalenderfreigabe und Vertreter-Seite sind gesperrt, nur die
+              // Vertreternummer klappt. Also eine Sache zuerst, Buchungen laufen über den App-Kalender mit Einladung per Mail.
+              <div data-kalender-allianz>
+                {calendar.status.allianz ? (
+                  <AllianzVerbunden
+                    allianz={calendar.status.allianz}
+                    disconnectAction={disconnectAllianzAction}
+                    readOnly={readOnly}
+                    appKalender={!!calendar.status.native.app}
+                  />
+                ) : (
+                  <AllianzForm action={connectAllianzAction} readOnly={readOnly} />
+                )}
+              </div>
+            ) : (
+              <SourcePicker
+                status={calendar.status}
+                readOnly={readOnly}
+                connectLinks={{ google: "/api/google/connect", microsoft: "/api/microsoft/connect" }}
+                icsAction={saveIcsAction}
+                removeIcsAction={removeIcsAction}
+                allianzAction={connectAllianzAction}
+                disconnectAllianzAction={disconnectAllianzAction}
+                disconnectNativeAction={disconnectNativeCalendarAction}
+                allianzOption={!makler}
+              />
+            )}
             <div className="mt-6 border-t border-[color:var(--border)] pt-5">
-              <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={!!calendar.status.native.app} />
+              {allianz && calendar.videoRoomUrl ? (
+                // Schon in „Ihre Angaben“ eingetragen: nur anzeigen, ändern hinter einem Klick
+                <details className="text-sm" data-video-raum-bekannt>
+                  <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span className="block text-[15px] font-medium">Ihr Link für Videotermine</span>
+                    <span className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[color:var(--muted)]">
+                      <span className="min-w-0 break-all">{calendar.videoRoomUrl}</span>
+                      <span className="font-medium text-[color:var(--brand)] underline">ändern</span>
+                    </span>
+                  </summary>
+                  <div className="mt-3">
+                    <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={allianz || !!calendar.status.native.app} />
+                  </div>
+                </details>
+              ) : (
+                <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={allianz || !!calendar.status.native.app} />
+              )}
             </div>
             <div className="mt-6 border-t border-[color:var(--border)] pt-5">
               <p className="text-[15px] font-medium">Wann dürfen Leads Termine buchen?</p>
@@ -289,13 +361,39 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 </Link>
                 .
               </p>
-              <LeadTimesForm initial={calendar.leadTimes} action={saveLeadTimesAction} readOnly={readOnly} source={calendar.source} />
+              <LeadTimesForm initial={calendar.leadTimes} action={saveLeadTimesAction} readOnly={readOnly} source={calendar.source} zweitrangig={allianz && !calendar.status.allianz} />
             </div>
+            {allianz ? (
+              // Selten gebraucht: Google, Outlook oder Kalender-Link nur eingeklappt
+              <details className="group/anders mt-6 rounded-[var(--radius-md)] border border-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden" data-anderer-kalender>
+                <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-4 py-2.5">
+                  <span className="text-[15px] font-medium">Anderen Kalender verbinden</span>
+                  <span className="flex items-center gap-1 text-sm text-[color:var(--muted)]">
+                    <span className="group-open/anders:hidden">Google, Outlook, Link</span>
+                    <ChevronDown className="h-4 w-4 transition group-open/anders:rotate-180" />
+                  </span>
+                </summary>
+                <div className="border-t border-[color:var(--border)] p-4">
+                  <SourcePicker
+                    status={calendar.status}
+                    readOnly={readOnly}
+                    connectLinks={{ google: "/api/google/connect", microsoft: "/api/microsoft/connect" }}
+                    icsAction={saveIcsAction}
+                    removeIcsAction={removeIcsAction}
+                    allianzAction={connectAllianzAction}
+                    disconnectAllianzAction={disconnectAllianzAction}
+                    disconnectNativeAction={disconnectNativeCalendarAction}
+                    ohneAllianz
+                  />
+                </div>
+              </details>
+            ) : null}
             {!done("calendar") ? (
               <StepExits
                 laterHref={laterHref("calendar")}
                 readOnly={readOnly}
-                skips={[{ kind: "skip:calendar:gesellschaft", label: "Mein Versicherer erlaubt das nicht" }]}
+                // Allianz: die Vertreternummer klappt immer, „erlaubt das nicht“ wäre eine Sackgasse
+                skips={allianz ? [] : [{ kind: "skip:calendar:gesellschaft", label: "Mein Versicherer erlaubt das nicht" }]}
               />
             ) : null}
           </Step>
@@ -367,9 +465,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         {software && erstinfo ? (
           <Step n={nextNo()} title="Erstinformation für Ihre Leads" icon={FileText} done={done("erstinfo")} open={isOpen("erstinfo")} id="erstinfo" current={current === "erstinfo"}>
             <p className="mb-3 text-sm text-[color:var(--muted)]">
-              Als Versicherungsvermittler müssen Sie Ihren Kunden beim ersten Kontakt die Erstinformation geben (§ 15 VersVermV), als PDF. Wir erstellen sie
-              aus Ihrem Angebot und Impressum. Ihr Assistent schickt das PDF jedem neuen Lead per WhatsApp und hängt es an die Terminbestätigung per E-Mail. Bitte
-              prüfen und bestätigen Sie die Angaben einmal.
+              Pflicht beim ersten Kontakt (§ 15 VersVermV): Ihr Assistent schickt sie jedem neuen Lead als PDF, Sie bestätigen die Angaben nur einmal.
             </p>
             {erstinfo.vollstaendig ? (
               <div className="mb-3 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-erstinfo-fertig>
@@ -516,6 +612,30 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         <Step n={nextNo()} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess" current={current === "metaAccess"}>
           <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto und Leads kommen direkt bei Ihnen an. Das Budget bleibt bei Ihnen.</p>
           <VideoHint url={video("metaAccess")} />
+          {/* Vorprüfung (Ole, 20.11.2026, Einrichtung Herr Lohmann): ohne zweistufige Anmeldung bzw. ohne Bestätigung des zweiten
+              Admins bleibt die Partnerfreigabe hängen. Gleiches Muster wie „Vorher kurz prüfen“ bei WhatsApp. */}
+          <div className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3" data-meta-vorpruefung>
+            <p className="text-[15px] font-medium">Vorher kurz prüfen:</p>
+            <ul className="mt-2 space-y-2.5 text-[15px]">
+              <li className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                <span>
+                  <b>Zweistufige Authentifizierung</b> bei Ihrem Facebook-Konto an? Sonst lässt Meta keine Freigabe zu: einschalten unter{" "}
+                  <a href="https://accountscenter.facebook.com/password_and_security" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                    Kontenübersicht → Passwort und Sicherheit
+                  </a>
+                  .
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                <span>
+                  <b>Zweiter Admin</b> in Ihrem Business-Konto? Dann muss er die Freigabe bestätigen: Sagen Sie ihm vorher Bescheid, damit er die Anfrage im
+                  Business Manager gleich bestätigt.
+                </span>
+              </li>
+            </ul>
+          </div>
           <p className="mt-4 text-[15px] font-medium">So geben Sie uns Zugriff (ca. 3 Minuten)</p>
           <details className="my-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]">
             <summary className="cursor-pointer font-medium">Noch kein Business Manager? So legen Sie ihn an</summary>

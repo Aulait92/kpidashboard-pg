@@ -125,7 +125,7 @@ export async function FirstDay({
 // ─── Vor dem Go-live ────────────────────────────────────────────────────
 
 export const STEP_TEXT: Record<string, { label: string; icon: typeof Rocket }> = {
-  questionnaire: { label: "Kurzen Fragebogen ausfüllen", icon: ClipboardList },
+  questionnaire: { label: "Ihre Angaben eintragen", icon: ClipboardList },
   metaAccess: { label: "Meta-Werbekonto freigeben", icon: KeyRound },
   calendar: { label: "Kalender verbinden", icon: CalendarDays },
   mailbox: { label: "E-Mail-Postfach verbinden", icon: Mail },

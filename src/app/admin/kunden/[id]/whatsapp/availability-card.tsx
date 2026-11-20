@@ -45,6 +45,7 @@ export async function AvailabilityCard({ customerId }: { customerId: string }) {
                 <p>
                   VTNR {a.vtnr}
                   {a.orgName ? ` · ${a.orgName}` : ""} · frühester Buchungstag: {a.bookingDayEarliest === 0 ? "heute" : `in ${a.bookingDayEarliest} Tagen`}
+                  {setup.status.allianz?.abFruehestemTag ? " (davor schlägt die App keine Termine vor)" : a.bookingDayEarliest > 0 ? " (davor gelten die Lead-Zeiten, geprüft gegen den eigenen Kalender)" : ""}
                 </p>
                 <p className="text-xs text-[color:var(--muted)]">
                   Zustimmung: {a.consentAt ? fmt(a.consentAt) : "fehlt"} · letzter Abruf: {a.lastOkAt ? fmt(a.lastOkAt) : "noch keiner"}

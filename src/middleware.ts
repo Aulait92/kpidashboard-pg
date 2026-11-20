@@ -9,6 +9,7 @@ import { DEMO_LIMIT, buyerZuDemo, demoActionAntwort, demoWeiche, istDemoPfad, vo
 import { demoDatenbankUrl } from "@/lib/app-demo/konfig";
 import { clientIp, hit } from "@/lib/rate-limit";
 import { ALTER_BESUCH_COOKIE, decideFunnelHost } from "@/lib/funnel/host";
+import { wwwAppRedirect } from "@/lib/www-app-host";
 
 const SESSION_COOKIE = "kpi_session";
 
@@ -240,6 +241,9 @@ async function appDemo(req: NextRequest): Promise<NextResponse> {
 export async function middleware(req: NextRequest) {
   // App-Demo-Kennzeichen setzt nur die Middleware selbst (beim Umschreiben). Kommt es von außen, ist es gefälscht.
   if (req.headers.has(APP_DEMO_HEADER)) return new NextResponse("Bad Request", { status: 400, headers: { "X-Robots-Tag": NO_INDEX } });
+  // www.app.… → app.… (308, Pfad und Abfrage bleiben; lib/www-app-host.ts)
+  const ohneWww = wwwAppRedirect(requestHost(req.headers), req.nextUrl.pathname, req.nextUrl.search);
+  if (ohneWww) return NextResponse.redirect(ohneWww, 308);
   const moved = legacyRedirect(req);
   if (moved) return moved;
   const funnel = funnelHost(req);

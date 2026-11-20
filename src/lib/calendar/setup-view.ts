@@ -12,7 +12,14 @@ export type CalendarSetupView = {
   status: {
     native: { connected: boolean; label: string | null; account?: string | null; app?: boolean };
     hasIcs: boolean;
-    allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null } | null;
+    allianz: {
+      orgName: string;
+      templateName: string;
+      durationMin: number;
+      lastError: string | null;
+      /** Vor dem frühesten Allianz-Buchungstag bietet die App keine Termine an (kein Google/Outlook verbunden). */
+      abFruehestemTag: boolean;
+    } | null;
   };
   allianz: AllianzSummary | null;
   /** Quelle der belegten Zeiten des Agentur-Kalenders (für den Hinweis bei den Lead-Zeiten). */
@@ -36,6 +43,8 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
     prisma.agentConfig.findUnique({ where: { customerId }, select: { videoRoomUrl: true } }),
   ]);
   const a = sources.allianz;
+  // Google/Outlook des Agentur-Kalenders liefert belegte Zeiten auch vor dem frühesten Allianz-Buchungstag (lib/calendar/index.ts)
+  const eigenerKalender = !userId && native?.status === "connected" && native.provider !== "app";
   return {
     status: {
       native: {
@@ -46,7 +55,15 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
         app: native?.status === "connected" && native.provider === "app",
       },
       hasIcs: sources.hasIcs,
-      allianz: a ? { orgName: a.orgName, templateName: a.templateName, durationMin: a.durationMin, lastError: a.lastError } : null,
+      allianz: a
+        ? {
+            orgName: a.orgName,
+            templateName: a.templateName,
+            durationMin: a.durationMin,
+            lastError: a.lastError,
+            abFruehestemTag: a.bookingDayEarliest > 0 && !eigenerKalender,
+          }
+        : null,
     },
     allianz: a,
     // ICS und Allianz-Online gelten nur für den Agentur-Kalender.

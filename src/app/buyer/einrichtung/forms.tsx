@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { AlertTriangle, ArrowRight, CheckCircle2, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, ChevronDown, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import type { MetaCheck } from "@/lib/selbst-einrichtung";
 import type { TerminFormate } from "@/lib/termin-formate";
 import { TerminFormateFelder } from "@/components/termin-formate";
@@ -41,8 +41,153 @@ function Feedback({ state }: { state: SetupState }) {
   return null;
 }
 
-export function QuestionnaireForm({ software, initial, formate, readOnly }: { software: boolean; initial: Answers; formate?: TerminFormate; readOnly: boolean }) {
+/** Ihre Angaben (Schritt 1, Ole 20.11.2026): einmal fragen, später nur noch bestätigen. */
+export type AngabenInitial = { anrede: string; name: string; telefon: string; anschrift: string; registerNummer: string };
+
+function AngabenFelder({ a, allianz, videoRoomUrl }: { a: AngabenInitial; allianz: boolean; videoRoomUrl: string | null }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2" data-ihre-angaben>
+      <div className="min-w-0 sm:col-span-2">
+        <label className={label} htmlFor="angaben-name">
+          Ihr Name
+        </label>
+        <div className="mt-1 flex gap-2">
+          {/* Anrede: Ihre Kunden lesen „Herr Lohmann“; „Keine“ = Vor- und Nachname */}
+          <select id="angaben-anrede" name="anrede" aria-label="Anrede" required className={`${input.replace("w-full", "")} w-24 shrink-0`} defaultValue={a.anrede}>
+            <option value="" disabled>
+              Anrede
+            </option>
+            <option value="Herr">Herr</option>
+            <option value="Frau">Frau</option>
+            <option value="keine">Keine</option>
+          </select>
+          <input id="angaben-name" name="name" required placeholder="Vor- und Nachname" className={`${input} min-w-0 flex-1`} defaultValue={a.name} autoComplete="name" />
+        </div>
+      </div>
+      <div className="min-w-0 sm:col-span-2">
+        <label className={label} htmlFor="angaben-anschrift">
+          Geschäftsanschrift
+        </label>
+        <input id="angaben-anschrift" name="anschrift" required className={`${input} mt-1`} defaultValue={a.anschrift} autoComplete="street-address" placeholder="Straße Nr., PLZ Ort" />
+      </div>
+      <div className="min-w-0">
+        <label className={label} htmlFor="angaben-telefon">
+          Telefon
+        </label>
+        <input id="angaben-telefon" name="telefon" required type="tel" className={`${input} mt-1`} defaultValue={a.telefon} autoComplete="tel" placeholder="z. B. 0171 1234567" />
+      </div>
+      <div className="min-w-0">
+        <label className={label} htmlFor="angaben-register">
+          Registernummer (IHK)
+        </label>
+        <input id="angaben-register" name="registerNummer" required className={`${input} mt-1`} defaultValue={a.registerNummer} placeholder="D-XXXX-XXXXX-XX" autoComplete="off" />
+        <p className="mt-1 text-xs text-[color:var(--muted)]">
+          Steht auf Ihrer IHK-Urkunde und im{" "}
+          <a href="https://www.vermittlerregister.info" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+            Vermittlerregister
+          </a>
+          .
+        </p>
+      </div>
+      {allianz ? (
+        <div className="min-w-0 sm:col-span-2">
+          <label className={label} htmlFor="angaben-video">
+            Ihr Webex-Link (optional)
+          </label>
+          <input
+            id="angaben-video"
+            name="videoRoomUrl"
+            inputMode="url"
+            className={`${input} mt-1`}
+            defaultValue={videoRoomUrl ?? ""}
+            placeholder="https://allianz.webex.com/meet/vorname.nachname"
+            autoComplete="off"
+          />
+          <p className="mt-1 text-xs text-[color:var(--muted)]">Diesen Link bekommen Ihre Kunden für jeden Videotermin.</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function QuestionnaireForm({
+  software,
+  initial,
+  formate,
+  readOnly,
+  angaben,
+  allianz = false,
+  videoRoomUrl = null,
+}: {
+  software: boolean;
+  initial: Answers;
+  formate?: TerminFormate;
+  readOnly: boolean;
+  /** Ihre Angaben (nur mit Software): Name, Telefon, Anschrift, Registernummer */
+  angaben?: AngabenInitial | null;
+  /** Allianz-Vertreter: zusätzlich der Webex-Link */
+  allianz?: boolean;
+  videoRoomUrl?: string | null;
+}) {
   const [state, action, pending] = useActionState<SetupState, FormData>(saveQuestionnaireAction, {});
+  const ansprache = initial.ansprache ?? "sie";
+  const zusatz = software ? (
+    <>
+      <TerminFormateFelder defaultValue={formate} />
+      <fieldset>
+        <legend className={label}>Wie sollen Ihre Leads angesprochen werden?</legend>
+        <span className="block text-sm text-[color:var(--muted)]">Gilt für WhatsApp-Assistent, Termin-Nachrichten und E-Mail-Vorlagen.</span>
+        <div className="mt-2 flex flex-wrap gap-4 text-[15px]">
+          {(
+            [
+              ["sie", "Sie (förmlich)"],
+              ["du", "Du (persönlich)"],
+            ] as const
+          ).map(([k, l]) => (
+            <label key={k} className="flex min-h-10 items-center gap-2">
+              <input type="radio" name="ansprache" value={k} defaultChecked={ansprache === k} className="h-4 w-4 accent-[color:var(--brand)]" />
+              {l}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div>
+        <label className={label} htmlFor="special">Was macht Ihre Agentur besonders? (optional)</label>
+        <span className="block text-sm text-[color:var(--muted)]">Wir nutzen das für Ihre Anzeigentexte.</span>
+        <textarea id="special" name="special" rows={3} className={`${input} mt-1 h-auto py-2`} placeholder="z. B. 20 Jahre Erfahrung, Beratung auch auf Türkisch, Termine abends" defaultValue={initial.special ?? ""} />
+      </div>
+    </>
+  ) : null;
+  if (software && angaben) {
+    // Ihre Angaben vorne, Ansprache und Terminarten mit Standardwerten eingeklappt (Ole, 20.11.2026)
+    const terminarten = ["Video", ...(formate?.telefon ? ["Telefon"] : []), ...(formate?.vorOrt ? ["vor Ort"] : [])].join(", ");
+    return (
+      <form action={action} className="space-y-4" data-questionnaire="angaben">
+        <AngabenFelder a={angaben} allianz={allianz} videoRoomUrl={videoRoomUrl} />
+        <details className="group/mehr rounded-[var(--radius-md)] border border-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden" data-angaben-mehr>
+          <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-4 py-2.5">
+            <span className="text-[15px] font-medium">Ansprache und Termine</span>
+            <span className="flex items-center gap-1 text-sm text-[color:var(--muted)]">
+              {ansprache === "du" ? "Du" : "Sie"} · {terminarten}
+              <ChevronDown className="h-4 w-4 transition group-open/mehr:rotate-180" />
+            </span>
+          </summary>
+          <div className="space-y-4 border-t border-[color:var(--border)] p-4">{zusatz}</div>
+        </details>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={pending || readOnly}
+            className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+          >
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Speichern und weiter
+          </button>
+          <Feedback state={state} />
+        </div>
+      </form>
+    );
+  }
   return (
     <form action={action} className="space-y-4">
       {software ? (
