@@ -7,6 +7,7 @@ import {
   ERSTINFO_FOOTER_V8,
   ERSTINFO_FOOTER_V9,
   ERSTINFO_FOOTER_V10,
+  ERSTINFO_FOOTER_V12,
   erstinfoFooterFor,
   neuePlatzhalter,
   noticeText,
@@ -82,7 +83,7 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
     expect(tierFuerErstanschreiben("Tierkrankenversicherung", "du", [])).toBe("dein Tier");
     // Freitext gleich der Vorlage (v10) plus KI-Zeile
     const frei = erstanschreibenText({ an: "du", kontakt: { fullName: "Erika Mustermann" }, name: "Ole", vermittler: DU.dat, source: "Hundekrankenversicherung", formular: [] });
-    expect(frei).toBe("Hallo Erika, schön, dass du deinen Hund gut absichern möchtest 🐾 *Was soll abgesichert sein?*\n\n_KI-Assistent_");
+    expect(frei).toBe("Hallo Erika, schön, dass du deinen Hund gut absichern möchtest 🐾 *Was soll abgesichert sein?*\n\n_Digitaler KI-Assistent_");
     // Formular kennt den gewünschten Schutz schon: v9 mit dem Alter
     const v9 = erstanschreibenText({ an: "du", kontakt: { fullName: "Erika Mustermann" }, name: "Ole", vermittler: DU.dat, source: "Hundekrankenversicherung", formular: [{ label: "Gewünschter Schutz", value: "OP-Schutz" }] });
     expect(v9).toBe("Hallo Erika, schön, dass du deinen Hund gut absichern möchtest 🐾 *Wie alt ist dein Hund?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
@@ -109,15 +110,15 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
       expect(f).toBe(frage);
     }
     for (const p of OUTREACH_PURPOSES) {
-      expect(PURPOSE_VERSION[p]).toBe("v10");
+      expect(PURPOSE_VERSION[p]).toBe("v12");
       for (const form of ["du", "sie", "sie_ohne_name"] as const) {
         const req = buildTemplateRequest(p, templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", "Herr"), undefined, form, { documentExample: "https://x.de/e.pdf" });
         const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
         const body = comps.find((c) => c.type === "BODY")!;
         expect(metaTemplateProblems(body.text!, body.example?.body_text[0] ?? [])).toEqual([]);
-        expect(comps.find((c) => c.type === "FOOTER")?.text).toBe(ERSTINFO_FOOTER_V10);
+        expect(comps.find((c) => c.type === "FOOTER")?.text).toBe(ERSTINFO_FOOTER_V12);
         expect(comps.find((c) => c.type === "HEADER")).toBeTruthy();
-        expect(req.name).toMatch(/_v10(_|$)/);
+        expect(req.name).toMatch(/_v12(_|$)/);
         // gerendert mit Beispielwerten kurz (v7 lag bei rund 230 Zeichen und klappte ein)
         expect(renderTemplate(body.text!, body.example?.body_text[0] ?? []).length).toBeLessThanOrEqual(190);
       }
@@ -136,6 +137,9 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
     // v10 (Ole, 19.11.2026, Recht): nur die KI-Kennzeichnung
     expect(erstinfoFooterFor("v10")).toBe(ERSTINFO_FOOTER_V10);
     expect(erstinfoFooterFor(10)).toBe("KI-Assistent");
+    // v12 (Ole, 19.11.2026): „Digitaler KI-Assistent“ (Recht: das Wort KI bleibt)
+    expect(erstinfoFooterFor("v12")).toBe(ERSTINFO_FOOTER_V12);
+    expect(ERSTINFO_FOOTER_V12).toBe("Digitaler KI-Assistent");
   });
 
   it("v7 bzw. v8 bzw. v9 bleiben Rückfall mit alter Platzhalter-Belegung, bis v10 freigegeben ist", () => {
@@ -167,11 +171,11 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
 
   it("Freitext im offenen Fenster: gleicher Aufbau, Frage fett, KI-Kennzeichnung als Zeile darunter (keine Fußzeile)", () => {
     const t = erstanschreibenText({ an: "sie", kontakt: { fullName: "Erika Mustermann", salutation: "Frau" }, name: "Ole", vermittler: HERR.dat, vermittlerNom: HERR.nom, source: "Privatschutz", formular: PS_FORM });
-    expect(t).toBe("Hallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\n_KI-Assistent_");
+    expect(t).toBe("Hallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\n_Digitaler KI-Assistent_");
     expect(t).not.toMatch(/[–—]/);
     const du = erstanschreibenText({ an: "du", kontakt: { fullName: "Erika Mustermann" }, name: "Ole", vermittler: DU.dat, source: "Privatschutz", formular: PS_FORM });
     expect(du).toContain("danke für deine Anfrage zum Privatschutz! *");
-    expect(du).toMatch(/\n\n_KI-Assistent/);
+    expect(du).toMatch(/\n\n_Digitaler KI-Assistent/);
   });
 
   it("Formular kennt bestehende Verträge: dann die Mitversichert-Frage als Öffnung, nie Bekanntes", () => {

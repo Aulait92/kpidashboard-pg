@@ -31,7 +31,7 @@ import { vermittlerName, type VermittlerName } from "@/lib/vermittler-nennung";
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
-import { ERSTANSCHREIBEN_V10, erstanschreibenV10, erstanschreibenV11, ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
+import { ERSTANSCHREIBEN_V10, erstanschreibenV10, erstanschreibenV11, ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12, ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
   | "outreach"
@@ -136,14 +136,16 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // „KI-Assistent“ (ERSTINFO_FOOTER_V10), dazu Fassung b („v11“, TEMPLATE_BODY_B) im A/B-Test. Wird je Kunde eingereicht;
   // bis zur Freigabe bei Meta sendet die App v9 (bzw. älter) mit deren Platzhaltern (PLATZHALTER_AB, outreach.ts
   // paramsFor), ebenso für Leads, deren Formular die feste Frage schon beantwortet (erstanschreiben.ts v10Moeglich)
-  outreach: "v10",
-  outreach_tkv: "v10",
-  outreach_zahn: "v10",
-  outreach_pkv: "v10",
-  outreach_privatschutz: "v10",
+  // v12 (Ole, 19.11.2026): Text wie v10, Fußzeile „Digitaler KI-Assistent“ (ERSTINFO_FOOTER_V12); neue Nummer, weil Meta
+  // eingereichte Fußzeilen nicht ändern lässt. Bis zur Freigabe sendet die App v10 bzw. v9 (rankOutreach).
+  outreach: "v12",
+  outreach_tkv: "v12",
+  outreach_zahn: "v12",
+  outreach_pkv: "v12",
+  outreach_privatschutz: "v12",
   // Reine Hausrat-Leads (Ole, 18.11.2026, zur Einreichung freigegeben): „zu Ihrer Hausratversicherung“ statt „zum
   // Privatschutz“; bis zur Freigabe bei Meta die allgemeine bzw. die Privatschutz-Fassung (outreach.ts fallbackPurposes)
-  outreach_hausrat: "v10",
+  outreach_hausrat: "v12",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern
   // (bis zur Freigabe bei Meta die bisherige v4, PLATZHALTER_AB), 15 Minuten und „wartet im Videoraum“ neu
   reminder: "v5",
@@ -861,12 +863,12 @@ export const ERSTINFO_FOOTER_V8 = "KI-Assistent · Oben: Erstinformation (gesetz
 export { ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
 
 /** Fußzeile ab Erstanschreiben v10 (Ole, 19.11.2026): nur „KI-Assistent“ (Recht: Hinweis auf die Erstinformation entfällt). */
-export { ERSTINFO_FOOTER_V10 } from "@/lib/whatsapp/erstanschreiben";
+export { ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12 } from "@/lib/whatsapp/erstanschreiben";
 
 /** Fußzeile einer Vorlage mit PDF-Kopf je Textversion („v8“ bzw. 8). */
 export function erstinfoFooterFor(version: string | number): string {
   const v = typeof version === "number" ? version : Number(/^v(\d+)$/.exec(version)?.[1] ?? 0);
-  return v >= 10 ? ERSTINFO_FOOTER_V10 : v >= 9 ? ERSTINFO_FOOTER_V9 : v >= 8 ? ERSTINFO_FOOTER_V8 : ERSTINFO_FOOTER;
+  return v >= 12 ? ERSTINFO_FOOTER_V12 : v >= 10 ? ERSTINFO_FOOTER_V10 : v >= 9 ? ERSTINFO_FOOTER_V9 : v >= 8 ? ERSTINFO_FOOTER_V8 : ERSTINFO_FOOTER;
 }
 
 /** Markierung im gespeicherten Text, wenn das PDF der Erstinformation im Kopf der Vorlage mitging (ki-hinweis.ts). */

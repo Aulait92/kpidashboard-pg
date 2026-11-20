@@ -92,7 +92,7 @@ describe("Dokument-Kopf (Erstinformation als PDF) und Antrag", () => {
     const comps = req.components as { type: string; format?: string; example?: { header_handle: string[] }; text?: string }[];
     expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
     expect(comps[0]).toEqual({ type: "HEADER", format: "DOCUMENT", example: { header_handle: [pdf] } });
-    expect(comps[2].text).toBe("KI-Assistent");
+    expect(comps[2].text).toBe("Digitaler KI-Assistent");
     expect(ERSTINFO_FOOTER.length).toBeLessThanOrEqual(60);
     expect(ERSTINFO_FOOTER_V8.length).toBeLessThanOrEqual(60);
     expect(ERSTINFO_FOOTER_V9.length).toBeLessThanOrEqual(60);
@@ -104,7 +104,7 @@ describe("Dokument-Kopf (Erstinformation als PDF) und Antrag", () => {
     expect((zahn.components as { type: string }[]).map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
     const ohneKopf = buildTemplateRequest("outreach_zahn", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf, kopf: false });
     expect((ohneKopf.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY", "BUTTONS"]);
-    expect(ohneKopf.name).toBe("pg_outreach_zahn_v10_ohnepdf_sie");
+    expect(ohneKopf.name).toBe("pg_outreach_zahn_v12_ohnepdf_sie");
     expect(requestShape(plain).headerFormat).toBeNull();
     // Andere Zwecke bekommen nie einen Kopf
     const rem = buildTemplateRequest("reminder", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
@@ -151,9 +151,9 @@ describe("Versionen und A/B-Fassungen bei der Auswahl", () => {
   it("Erstanschreiben v10, übrige v4, unveränderte Zwecke behalten v3", () => {
     expect(TEMPLATE_VERSION).toBe("v4");
     expect(templateVersionFor("review_request")).toBe("v3");
-    expect(templateVersionFor("outreach_tkv")).toBe("v10");
-    expect(isCurrentTemplateName("pg_outreach_v10_sie", "outreach")).toBe(true);
-    expect(isCurrentTemplateName("pg_outreach_v10_b_sie", "outreach")).toBe(true);
+    expect(templateVersionFor("outreach_tkv")).toBe("v12");
+    expect(isCurrentTemplateName("pg_outreach_v12_sie", "outreach")).toBe(true);
+    expect(isCurrentTemplateName("pg_outreach_v12_b_sie", "outreach")).toBe(true);
     expect(isCurrentTemplateName("pg_outreach_v9_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v8_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v7_sie", "outreach")).toBe(false);

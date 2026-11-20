@@ -144,7 +144,7 @@ describe("v10: Platzhalter je Version und Fußzeile", () => {
     expect(erstinfoFooterFor(10)).toBe("KI-Assistent");
     expect(erstinfoFooterFor("v10")).toBe("KI-Assistent");
     expect(erstinfoFooterFor(9)).toBe("KI-Assistent · Erstinformation im PDF oben");
-    expect(erstanschreibenFusszeile("Privatschutz", [])).toBe("KI-Assistent");
+    expect(erstanschreibenFusszeile("Privatschutz", [])).toBe("Digitaler KI-Assistent");
     expect(erstanschreibenFusszeile("Privatschutz", [BEANTWORTET.outreach_privatschutz])).toBe("KI-Assistent · Erstinformation im PDF oben");
   });
 });
@@ -169,23 +169,23 @@ describe("v10: Rückfall auf v9, wenn das Formular die feste Frage beantwortet",
 
   it("Vorlagenwahl: höchste Version je Zweck (maxVersion), bis v10 freigegeben ist die neueste ältere", () => {
     const t = (name: string, purpose: NoticePurpose) => ({ name, purpose, body: "Hallo {{1}}, x", headerFormat: "DOCUMENT" });
-    const liste = [t("pg_outreach_tkv_v9_sie", "outreach_tkv"), t("pg_outreach_tkv_v10_sie", "outreach_tkv"), t("pg_outreach_v10_sie", "outreach")];
+    const liste = [t("pg_outreach_tkv_v9_sie", "outreach_tkv"), t("pg_outreach_tkv_v12_sie", "outreach_tkv"), t("pg_outreach_v12_sie", "outreach")];
     const kontakt = { fullName: "Peter Pan", salutation: "Herr" };
     const pick = (opts: Parameters<typeof rankOutreach>[4]) => {
       const r = rankOutreach(liste, ["outreach_tkv", "outreach"], "sie", kontakt, opts);
       return r && "tpl" in r ? r.tpl.name : r;
     };
-    expect(pick({ pdf: "vollstaendig" })).toBe("pg_outreach_tkv_v10_sie");
+    expect(pick({ pdf: "vollstaendig" })).toBe("pg_outreach_tkv_v12_sie");
     // Formular beantwortet die feste Frage: höchstens v9
     expect(pick({ pdf: "vollstaendig", maxVersion: { outreach_tkv: 9, outreach: 9 } })).toBe("pg_outreach_tkv_v9_sie");
     // v10 des Produkts noch nicht freigegeben: nie die allgemeine Telefonatsfrage für einen Produkt-Lead, sondern v9
-    const ohneTkv10 = liste.filter((x) => x.name !== "pg_outreach_tkv_v10_sie");
+    const ohneTkv10 = liste.filter((x) => x.name !== "pg_outreach_tkv_v12_sie");
     const r = rankOutreach(ohneTkv10, ["outreach_tkv", "outreach"], "sie", kontakt, { pdf: "vollstaendig", maxVersion: { outreach: 9 } });
     expect(r && "tpl" in r ? [r.tpl.name, r.version] : r).toEqual(["pg_outreach_tkv_v9_sie", 9]);
     // Fassung b bevorzugt, wenn zugeteilt und freigegeben
-    const mitB = [...liste, t("pg_outreach_tkv_v10_b_sie", "outreach_tkv")];
+    const mitB = [...liste, t("pg_outreach_tkv_v12_b_sie", "outreach_tkv")];
     const b = rankOutreach(mitB, ["outreach_tkv", "outreach"], "sie", kontakt, { pdf: "vollstaendig", variant: "b" });
-    expect(b && "tpl" in b ? [b.tpl.name, b.variant, b.current] : b).toEqual(["pg_outreach_tkv_v10_b_sie", "b", true]);
+    expect(b && "tpl" in b ? [b.tpl.name, b.variant, b.current] : b).toEqual(["pg_outreach_tkv_v12_b_sie", "b", true]);
   });
 });
 
@@ -249,7 +249,7 @@ describe("v10/v11: Frage-Erkennung (frageplan) und Assistent", () => {
 
 describe("v10/v11: Knopf-Antworten", () => {
   const TKV_A = "[Erstinformation als PDF]\nHallo Herr Pan, schön, dass Sie Minka gut absichern möchten 🐾 *Was soll abgesichert sein?*\n\nKI-Assistent";
-  const TKV_B = "Hallo Peter, *was soll für Minka abgesichert sein?* 🐾\n\n_KI-Assistent_";
+  const TKV_B = "Hallo Peter, *was soll für Minka abgesichert sein?* 🐾\n\n_Digitaler KI-Assistent_";
   it("TKV-Knopfwerte (Vorlage und Freitext, Fassung a und b)", () => {
     for (const g of [TKV_A, TKV_B]) {
       expect(erstfrageKnopfWert(g, "Nur Operationen")).toMatchObject({ feld: "tarifwunsch", wert: "nur OP-Schutz" });

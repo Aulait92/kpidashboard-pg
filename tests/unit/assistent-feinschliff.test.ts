@@ -47,7 +47,7 @@ import {
   ERSTANSCHREIBEN_V10,
   type ErstanschreibenZweck,
 } from "@/lib/whatsapp/erstanschreiben";
-import { ERSTINFO_FOOTER_V10, fillNames, OUTREACH_PURPOSES, rankOutreach, renderTemplate, TEMPLATE_BUTTONS, templateTextFor, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12, fillNames, OUTREACH_PURPOSES, rankOutreach, renderTemplate, TEMPLATE_BUTTONS, templateTextFor, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { buildTemplateRequest, metaTemplateProblems, plannedTemplates, templateNameFor } from "@/lib/whatsapp/template-plan";
 import type { Ansprache } from "@/lib/ansprache";
 
@@ -341,7 +341,7 @@ describe("Erstanschreiben v9 (vorher v8, seit v10 Rückfall): Text und Parameter
   it("Beispiel Privatschutz, Sie, Lead ohne Anrede, Formular mit Interesse (v10; v9, wenn bestehende Verträge bekannt sind)", () => {
     const o = { an: "sie" as const, kontakt: { fullName: "Julia Schneider" }, name: "Ole", vermittler: "Herrn Kannapinn", source: "Privatschutz" };
     const t = erstanschreibenText({ ...o, formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }] });
-    expect(t).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\n_KI-Assistent_");
+    expect(t).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\n_Digitaler KI-Assistent_");
     // Formular beantwortet die feste Frage schon: v9 mit der nächsten offenen Frage
     const v9 = erstanschreibenText({ ...o, formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }, { label: "Bereits versichert", value: "nein" }] });
     expect(v9).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! *Wer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
@@ -399,7 +399,7 @@ describe("Erstanschreiben v9 (vorher v8, seit v10 Rückfall): Text und Parameter
             // Freitext wie die Vorlage (v9 ohne Produkt mit dem Produktnamen), darunter die KI-Kennzeichnung der Fußzeile
             const ohneThema = frei.replace(/ zum Thema [^!]+!/, "!");
             expect(purpose === "outreach" && !v10 ? ohneThema : frei, `${source} ${an}`).toBe(tpl);
-            expect(erstanschreibenText(o)).toBe(`${frei}\n\n_${v10 ? "KI-Assistent" : "KI-Assistent · Erstinformation folgt als PDF"}_`);
+            expect(erstanschreibenText(o)).toBe(`${frei}\n\n_${v10 ? "Digitaler KI-Assistent" : "KI-Assistent · Erstinformation folgt als PDF"}_`);
             if (an === "du") expect(tpl).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
           }
         }
@@ -434,14 +434,14 @@ describe("Erstanschreiben v10: Einreichung, Auswahl und Erstinformation (Live-Te
       expect(kopf).toBe(true);
       const req = buildTemplateRequest(purpose, names, undefined, form, { variant, documentExample: "https://x.de/erstinformation/abc/pdf", kopf });
       expect(req.name).toBe(templateNameFor(purpose, undefined, form, variant, kopf));
-      expect(req.name).toMatch(/_v10(_b)?(_sie(_ohne_name)?)?$/);
+      expect(req.name).toMatch(/_v12(_b)?(_sie(_ohne_name)?)?$/);
       expect(req.category).toBe("MARKETING");
       const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
       expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
       const body = comps.find((c) => c.type === "BODY")!;
       expect(metaTemplateProblems(body.text!, body.example?.body_text[0] ?? []), `${req.name}: ${body.text}`).toEqual([]);
       expect(body.text).not.toContain("Assistent");
-      expect(comps.find((c) => c.type === "FOOTER")!.text).toBe(ERSTINFO_FOOTER_V10);
+      expect(comps.find((c) => c.type === "FOOTER")!.text).toBe(ERSTINFO_FOOTER_V12);
     }
   });
 

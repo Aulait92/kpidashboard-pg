@@ -42,7 +42,7 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
     expect(texte[0]).toContain("Hallo Frau Becker");
     expect(texte[0]).toBe("Hallo Frau Becker, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
     expect(nachrichten(z)[0].knoepfe).toEqual(["Alles neu", "Schon versichert", "Teils, teils"]);
-    expect(nachrichten(z)[0].fusszeile).toBe("KI-Assistent");
+    expect(nachrichten(z)[0].fusszeile).toBe("Digitaler KI-Assistent");
     expect(texte[1]).toBe("Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wer soll mitversichert sein?");
     expect(texte[2]).toMatch(/^Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Sie kosten/);
     expect(texte[3]).toBe(buchungsText({ an: "sie", start: new Date("2026-11-20T15:00:00.000Z"), mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person: e.person }));
