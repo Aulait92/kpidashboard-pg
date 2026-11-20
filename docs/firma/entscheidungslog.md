@@ -3,6 +3,10 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 20.11.2026
+- **Leitfaden Setter-Call, Fassung 4** (Ole): Interessent soll das Problem bei Neukundengewinnung oder Wachstum selbst
+  aussprechen (Fragen nach Ursache, Versuchen, Dauer, Folgen, dann Bedarf bestätigen); neu Mitarbeiter und Bestand als
+  Maßstab fürs Budget; Budget erst Bereitschaft, dann Zahl, dann Verfügbarkeit; Entscheider mit Nachfrage und Einladung.
+  Rahmen „Auftrag im Termin, IBAN bereithalten“ samt Zögern-Satz gestrichen. `docs/firma/vertrieb/leitfaden-setter-call.md`.
 - **Onboarding Herr Lohmann, Nacharbeiten** (A, Ole): (1) Nach der Annahme „Passwort jetzt festlegen“ auf der
   Angebotsseite, nur im Browser der Annahme (signiertes httpOnly-Merkmal, 12 h), Link entsteht erst beim Tippen; Mail
   bleibt Rückfall. Neue Links aus Knopf und „Einladungslink kopieren“ (Admin) entwerten den Mail-Link nicht mehr; sobald
