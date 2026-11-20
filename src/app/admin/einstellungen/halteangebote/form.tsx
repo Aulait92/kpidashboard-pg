@@ -37,38 +37,38 @@ export function HalteForm({ s }: { s: HalteSettings }) {
   return (
     <form action={action} className="space-y-4">
       <div className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
-        <Block name="rabattOn" checked={s.rabattOn} title="Zu teuer: Nachlass mit Mindestlaufzeit" text="Stripe-Gutschein am Abo (nur monatliche Zahlung), Bindung im Konto, Bestätigung per E-Mail. Sonst Aufgabe „von Hand“.">
+        <Block name="rabattOn" checked={s.rabattOn} title="Zu teuer: Nachlass mit Mindestlaufzeit" text="Gutschein am Abo mit Bindung, Bestätigung per E-Mail.">
           <Num name="rabattPercent" label="Nachlass auf die Monatsgebühr" value={s.rabattPercent} suffix="%" />
           <Num name="rabattMonths" label="für Monatsrechnungen" value={s.rabattMonths} suffix="Monate" />
           <Num name="rabattCommitMonths" label="danach Mindestlaufzeit" value={s.rabattCommitMonths} suffix="Monate" />
         </Block>
-        <Block name="paketOn" checked={s.paketOn} title="Zu teuer: kleineres Paket" text="Sprung zu „Werbebudget ändern“: niedrigere Preisstufe ab dem nächsten Abrechnungsmonat (vorhandene Selbstbedienung)." />
-        <Block name="neustartOn" checked={s.neustartOn} title="Zu wenige Leads: Kampagnen-Neustart durch uns" text="Aufgabe „Kampagne neu starten“ (neue Werbemittel, Zielgruppen). Betreuung kostenlos über einen Stripe-Gutschein nur auf die Betreuungs-Position.">
+        <Block name="paketOn" checked={s.paketOn} title="Zu teuer: kleineres Paket" text="Niedrigere Preisstufe ab dem nächsten Monat, über „Werbebudget ändern“." />
+        <Block name="neustartOn" checked={s.neustartOn} title="Zu wenige Leads: Kampagnen-Neustart durch uns" text="Aufgabe für Sie: neue Werbemittel und Zielgruppen, Betreuung auf Wunsch gratis.">
           <Num name="neustartFreeMonths" label="Betreuung kostenlos (0 = ohne)" value={s.neustartFreeMonths} suffix="Monate" />
         </Block>
-        <Block name="neuausrichtungOn" checked={s.neuausrichtungOn} title="Leads passen nicht: kostenlose Neuausrichtung" text="Aufgabe mit dem Wunsch des Kunden (Sparte, Region, Formularfragen)." />
-        <Block name="gutschriftOn" checked={s.gutschriftOn} title="… dazu Gutschrift prüfen" text="Zweite Aufgabe mit allen Leads mit falschen Daten bzw. Reklamation. Keine automatische Geldbewegung, die Gutschrift setzt ihr nach Prüfung.">
+        <Block name="neuausrichtungOn" checked={s.neuausrichtungOn} title="Leads passen nicht: kostenlose Neuausrichtung" text="Aufgabe mit dem Wunsch des Kunden (Sparte, Region, Fragen)." />
+        <Block name="gutschriftOn" checked={s.gutschriftOn} title="… dazu Gutschrift prüfen" text="Aufgabe mit den reklamierten Leads, Gutschrift erst nach Ihrer Prüfung.">
           <Num name="gutschriftDays" label="Leads der letzten" value={s.gutschriftDays} suffix="Tage" />
         </Block>
-        <Block name="produktwechselOn" checked={s.produktwechselOn} title="Zu wenige Abschlüsse: kostenloser Spartenwechsel" text="Vorschlag = Sparte mit der besten Abschlussquote über alle Kunden (12 Monate), besser als die eigene. Kein Coaching. Umstellung als Aufgabe.">
+        <Block name="produktwechselOn" checked={s.produktwechselOn} title="Zu wenige Abschlüsse: kostenloser Spartenwechsel" text="Vorschlag: Sparte mit der besten Abschlussquote der letzten 12 Monate.">
           <Num name="produktwechselMinLeads" label="Mindestens Leads je Sparte" value={s.produktwechselMinLeads} suffix="Leads" />
         </Block>
-        <Block name="pauseOn" checked={s.pauseOn} title="Keine Zeit: Pause ohne Kosten" text="Vorhandene Pause, dazu ruht die ganze Abrechnung (Stripe pause_collection). Ohne Rabatt-Berechtigung: normale Pause mit Software-Gebühr.">
+        <Block name="pauseOn" checked={s.pauseOn} title="Keine Zeit: Pause ohne Kosten" text="Die ganze Abrechnung ruht (sonst normale Pause mit Software-Gebühr).">
           <Num name="pauseMaxMonths" label="höchstens" value={s.pauseMaxMonths} suffix="Monate" />
         </Block>
-        <Block name="einrichtungOn" checked={s.einrichtungOn} title="App passt nicht: Einrichtung per Bildschirmfreigabe" text="Termin im Teamkalender (Hilfetermin). Ohne freien Termin: Aufgabe „anrufen und Termin vereinbaren“.">
+        <Block name="einrichtungOn" checked={s.einrichtungOn} title="App passt nicht: Einrichtung per Bildschirmfreigabe" text="Hilfetermin im Teamkalender, sonst Aufgabe „anrufen“.">
           <Num name="einrichtungMinutes" label="Dauer" value={s.einrichtungMinutes} suffix="Minuten" step="15" />
         </Block>
-        <Block name="nurBestandOn" checked={s.nurBestandOn} title="Höre auf / wechsle: Paket „Nur Bestand“" text="Bestandskunden-Modul ohne Leads und Betreuung, mit Daten und demselben Kontingent (Standard 149 €); Empfehlungen optional + 59 €. Aufgabe „Stripe umstellen“ zum nächstmöglichen Termin, dazu Hinweis „Kollegen empfehlen“.">
+        <Block name="nurBestandOn" checked={s.nurBestandOn} title="Höre auf / wechsle: Paket „Nur Bestand“" text="Bestandskunden-Modul ohne Leads und Betreuung, Empfehlungen für 59 € dazu.">
           <Num name="nurBestandPrice" label="Preis netto im Monat" value={s.nurBestandPrice} suffix="€" step="0.01" />
         </Block>
-        <Block name="rueckkehrOn" checked={s.rueckkehrOn} title="Alle Gründe: Rückkehrangebot nach Vertragsende" text="Einmal je Kunde eine E-Mail an ruhende Konten: Konto reaktivieren ohne neue Einrichtungsgebühr.">
+        <Block name="rueckkehrOn" checked={s.rueckkehrOn} title="Alle Gründe: Rückkehrangebot nach Vertragsende" text="Eine E-Mail: Konto wieder starten ohne neue Einrichtungsgebühr.">
           <Num name="rueckkehrDays" label="Tage nach Vertragsende" value={s.rueckkehrDays} suffix="Tage" />
         </Block>
       </div>
       <div className="space-y-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-sm)]">
         <h2 className="font-medium">Regeln für Rabatte</h2>
-        <p className="text-sm text-[color:var(--muted)]">Gilt für Nachlass, kostenlosen Betreuungsmonat, Gutschrift-Prüfung und Pause ohne Kosten. Nie bei jährlicher Vorauszahlung.</p>
+        <p className="text-sm text-[color:var(--muted)]">Für alle Nachlässe, nie bei jährlicher Vorauszahlung.</p>
         <Num name="minTenureMonths" label="Erst ab Kundendauer" value={s.minTenureMonths} suffix="Monate" />
         <Num name="cooldownMonths" label="Höchstens ein Rabatt in" value={s.cooldownMonths} suffix="Monaten" />
       </div>

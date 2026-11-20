@@ -75,27 +75,32 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
             ))}
           </div>
           <p className="border-t border-[color:var(--border)] px-5 py-3 text-sm text-[color:var(--muted)]">
-            An: Vermittler rechnen im eigenen Vertriebssystem und legen das Ergebnis ab. Neuigkeit für Kunden erst beim Freischalten anlegen.
+            An: Vermittler rechnen den Beitrag selbst und legen ihn ab. Beim Freischalten eine Neuigkeit anlegen.
           </p>
         </Card>
 
-        <Card>
-          <CardHeader title="Gesellschaften" count={gesellschaften.size} />
-          <ul className={LISTE}>
+        {/* UX-Umbau 20.11.2026: Nachschlagen ist selten, darum eingeklappt; je Gesellschaft eine kurze Zeile (Sparten im Tooltip) */}
+        <details className="self-start rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
+          <summary className="flex min-h-12 cursor-pointer items-center px-5 text-[15px] font-semibold">
+            Gesellschaften <span className="ml-1.5 font-normal text-[color:var(--muted)]">{gesellschaften.size}</span>
+          </summary>
+          <ul className={`${LISTE} border-t border-[color:var(--border)]`}>
             {sortiereGesellschaften([...gesellschaften.keys()]).map((key) => {
               const g = gesellschaften.get(key)!;
               return (
                 <Zeile
                   key={key}
                   titel={gesellschaftName(key)}
-                  text={`${[...g.sparten].join(", ")} · ${g.tarife} ${g.tarife === 1 ? "Tarif" : "Tarife"}`}
+                  text={`${g.tarife} ${g.tarife === 1 ? "Tarif" : "Tarife"} · ${g.sparten.size} ${g.sparten.size === 1 ? "Sparte" : "Sparten"}`}
+                  title={[...g.sparten].join(", ")}
+                  className="min-h-11 py-2"
                   rechts={g.ungeprueft ? <span className="text-xs text-amber-700">{g.ungeprueft} ungeprüft</span> : null}
                 />
               );
             })}
             {gesellschaften.size === 0 ? <li className="px-5 py-6 text-sm text-[color:var(--muted)]">Noch keine Tarife im Katalog.</li> : null}
           </ul>
-        </Card>
+        </details>
       </div>
     </EinstellungSeite>
   );

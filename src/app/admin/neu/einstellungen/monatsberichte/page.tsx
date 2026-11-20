@@ -17,7 +17,6 @@ export default async function Page() {
         <ReportSettingsForm s={s} />
       </div>
       <p className="text-sm text-[color:var(--muted)]">
-        Mittel und schwach gehen nie automatisch raus.{" "}
         <Link href={ziel("/admin/neu/kunden/berichte")} className="text-[color:var(--brand)] hover:underline">
           Zu den Berichten
         </Link>

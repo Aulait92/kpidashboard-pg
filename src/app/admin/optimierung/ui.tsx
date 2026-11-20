@@ -32,14 +32,14 @@ export function GlobalForm({ enabled, autopilot }: { enabled: boolean; autopilot
         <input type="checkbox" name="enabled" defaultChecked={enabled} className="mt-1 h-4 w-4" />
         <span>
           <span className="block font-medium">Wöchentlicher Optimierungslauf</span>
-          <span className="block text-sm text-[color:var(--muted)]">Liest je Werbekonto höchstens alle 7 Tage die Kennzahlen und plant Maßnahmen. Ohne Freigabe wird nichts bei Meta geändert.</span>
+          <span className="block text-sm text-[color:var(--muted)]">Plant je Werbekonto einmal pro Woche Maßnahmen. Ohne Freigabe ändert sich bei Meta nichts.</span>
         </span>
       </label>
       <label className="flex items-start gap-3">
         <input type="checkbox" name="autopilot" defaultChecked={autopilot} className="mt-1 h-4 w-4" />
         <span>
           <span className="block font-medium">Autopilot für alle Konten</span>
-          <span className="block text-sm text-[color:var(--muted)]">Geplante Maßnahmen werden sofort freigegeben und ausgeführt (außer Vorschlägen an Ole). Je Konto lässt sich der Modus abweichend festlegen.</span>
+          <span className="block text-sm text-[color:var(--muted)]">Maßnahmen laufen ohne Freigabe, außer Vorschlägen an Sie. Je Konto änderbar.</span>
         </span>
       </label>
       <div className="flex items-center gap-3">

@@ -15,10 +15,10 @@ export default async function Page() {
   const [s, team] = await Promise.all([loadSetupSettings(), teamCalendarStatus()]);
   const envHint =
     s.businessIdSource === "einstellung"
-      ? "Hier eingetragen. Leer lassen, um die Env-Variable META_BUSINESS_ID zu nutzen."
+      ? "Hier eingetragen. Leer: Wert aus Railway (META_BUSINESS_ID)."
       : s.businessIdSource === "env"
-        ? `Aus der Env-Variable (META_BUSINESS_ID bzw. PG_META_BUSINESS_ID): ${s.businessId}. Ein Eintrag hier hat Vorrang.`
-        : `Standard: ${s.businessId}. Bitte prüfen (Business Manager › Einstellungen › Unternehmensinfo).`;
+        ? `Aus Railway: ${s.businessId}. Ein Eintrag hier hat Vorrang.`
+        : `Standard: ${s.businessId}. Steht im Business Manager unter Unternehmensinfo.`;
   return (
     <EinstellungSeite pfad="/admin/neu/einstellungen/einrichtung">
       <Card>
@@ -28,7 +28,7 @@ export default async function Page() {
           actions={team.connected ? <Badge tone="success" icon={CheckCircle2}>verbunden</Badge> : <Badge tone="warning">nicht verbunden</Badge>}
         />
         <div className="flex flex-wrap items-center gap-3 p-5 text-sm" data-funktion="page-team-kalender--team-kalender-fuer-hilfetermine-der-kunden">
-          <span className="min-w-0 flex-1 text-[color:var(--muted)]">{team.connected ? (team.accountEmail ?? "Team-Kalender verbunden") : "Für 15-Minuten-Hilfetermine der Kunden."}</span>
+          <span className="min-w-[12rem] flex-1 text-[color:var(--muted)]">{team.connected ? (team.accountEmail ?? "Team-Kalender verbunden") : "Für 15-Minuten-Hilfetermine der Kunden."}</span>
           <a href={`/api/google/connect?customerId=${team.teamId}`} className={buttonClass("secondary", "md")}>
             {team.connected ? "Neu verbinden" : "Google-Kalender verbinden"}
           </a>

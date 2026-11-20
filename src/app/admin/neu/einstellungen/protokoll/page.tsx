@@ -11,7 +11,7 @@ export const metadata = { title: "Änderungsprotokoll | performancegrowth Admin"
 // Änderungsprotokoll (Demo „e-protokoll“, heute /admin/einstellungen/protokoll): dieselbe Abfrage mit Filter nach
 // Kunde und Art, 100 je Seite. Statt Tabelle eine Liste (am Handy lesbar ohne waagrechtes Scrollen).
 
-const PAGE = 100;
+const PAGE = 50;
 const BASIS = "/admin/neu/einstellungen/protokoll";
 const SELECT = "h-10 min-w-0 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2.5 text-sm sm:flex-none";
 const fmt = (d: Date) =>
@@ -30,7 +30,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ k
   await requireAuth();
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.seite) || 1);
-  const where = { ...(sp.kunde ? { customerId: sp.kunde } : {}), ...(sp.art ? { action: sp.art } : {}) };
+  // UX-Umbau 20.11.2026: Standard ohne erfolgreiche Anmeldungen (die machen den Großteil aus und verdecken Änderungen);
+  // „Alles, auch Anmeldungen“ (art=alle) zeigt sie wieder, fehlgeschlagene Anmeldungen bleiben immer sichtbar.
+  const artFilter = sp.art === "alle" ? {} : sp.art ? { action: sp.art } : { action: { notIn: ["login", "login.2fa"] } };
+  const where = { ...(sp.kunde ? { customerId: sp.kunde } : {}), ...artFilter };
   const [rows, total, customers] = await Promise.all([
     prisma.auditLog.findMany({ where, orderBy: { at: "desc" }, skip: (page - 1) * PAGE, take: PAGE }),
     prisma.auditLog.count({ where }),
@@ -52,7 +55,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ k
           ))}
         </select>
         <select name="art" defaultValue={sp.art ?? ""} className={SELECT} aria-label="Art">
-          <option value="">Alle Arten</option>
+          <option value="">Alle Änderungen</option>
+          <option value="alle">Alles, auch Anmeldungen</option>
           {Object.entries(AUDIT_LABEL).map(([k, l]) => (
             <option key={k} value={k}>
               {l}
