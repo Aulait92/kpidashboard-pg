@@ -1,13 +1,20 @@
 import { notFound } from "next/navigation";
 import { shortName } from "@/lib/vertrieb/crm";
 import { AdminBack } from "@/components/admin/admin-back";
-import { AngebotErstellen, ladeAngebotKontakt } from "@/components/vertrieb/angebot-erstellen";
+import { AngebotErstellen, bearbeitenId, ladeAngebotKontakt } from "@/components/vertrieb/angebot-erstellen";
 
 export const metadata = { title: "Angebot erstellen | Vertrieb" };
 
 // Hinweise und Formular: components/vertrieb/angebot-erstellen.tsx (gemeinsam mit dem neuen Admin)
-export default async function ContactOfferPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ContactOfferPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { id } = await params;
+  const bearbeiten = bearbeitenId(await searchParams);
   const c = await ladeAngebotKontakt(id);
   if (!c) notFound();
   const back = `/admin/vertrieb/kontakte/${c.id}`;
@@ -15,12 +22,14 @@ export default async function ContactOfferPage({ params }: { params: Promise<{ i
   return (
     <div className="mx-auto w-full max-w-6xl">
       <AdminBack href={back}>{shortName(c.name)}</AdminBack>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight">Angebot erstellen</h1>
-      <p className="mt-1 text-sm text-[color:var(--muted)]">
-        Preise nach Preisliste, Sonderkonditionen jederzeit möglich. Nach der Online-Annahme rückt der Kontakt in der
-        Kunden-Pipeline auf „Vertrag“, nach eingerichteter Zahlung auf „Onboarding“.
-      </p>
-      <AngebotErstellen c={c} backHref={back} />
+      <h1 className="mt-1 text-2xl font-semibold tracking-tight">{bearbeiten ? "Angebot bearbeiten" : "Angebot erstellen"}</h1>
+      {bearbeiten ? null : (
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          Preise nach Preisliste, Sonderkonditionen jederzeit möglich. Nach der Online-Annahme rückt der Kontakt in der
+          Kunden-Pipeline auf „Vertrag“, nach eingerichteter Zahlung auf „Onboarding“.
+        </p>
+      )}
+      <AngebotErstellen c={c} backHref={back} bearbeiten={bearbeiten} />
     </div>
   );
 }

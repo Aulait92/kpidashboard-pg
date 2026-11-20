@@ -1,20 +1,17 @@
 "use client";
 
-import { UEBERWEISUNG_TAGE_STANDARD } from "@/lib/mahnwesen";
 import { InfoHinweis } from "@/components/info-hinweis";
 import { BREAKEVEN_ERKLAERT, VERTRAGSGARANTIE_ERKLAERT } from "@/lib/begriffe";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
-import { createOfferAction } from "@/app/admin/vertrieb/offer-actions";
+import { createOfferAction, updateOfferDraftAction } from "@/app/admin/vertrieb/offer-actions";
 import type { OfferTarget } from "@/lib/offer-links";
 import {
-  abschlussBonusStandardTag,
   berlinTodayIso,
   bestandPacksText,
   computeOfferPrice,
-  defaultStartDate,
   eur,
   PPL_SOFTWARE_TERMS,
   PRICE_LIST,
@@ -30,7 +27,8 @@ import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_PRODUKTE, ERSTE_WOCHE_STANDARD, ersteWocheBetrag } from "@/lib/ppl/erste-woche-shared";
-import { bezugSteuer, bruttoJeLead, nettoAusBrutto } from "@/lib/ppl/steuer";
+import { bezugSteuer, bruttoJeLead } from "@/lib/ppl/steuer";
+import { formWerteZuInput, num, produktWahlMoeglich as produktWahlMoeglichAus, standardFormWerte, vorauszahlungMoeglich, wocheNettoAus, type OfferFormWerte } from "@/lib/offer-form-werte";
 import { abrechnungsplan, ABRECHNUNGSTAG_MAX, ersterAbrechnungstag, VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG } from "@/lib/abrechnungstag";
 
 const PRODUCT_SUGGESTIONS = PRODUKT_VORSCHLAEGE;
@@ -39,17 +37,13 @@ const input =
   "h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
 const label = "text-xs font-medium text-[color:var(--muted)]";
 
-const num = (v: string): number | null => {
-  const n = Number(v.replace(",", "."));
-  return v.trim() === "" || !Number.isFinite(n) ? null : n;
-};
-
 export function OfferForm({
   target,
   backHref,
   initial,
   referralDiscount = null,
   ueberweisungVerfuegbar = false,
+  entwurf,
 }: {
   target: OfferTarget;
   backHref: string;
@@ -69,59 +63,69 @@ export function OfferForm({
   referralDiscount?: { amount: number; label: string; note: string | null } | null;
   /** Überweisung freigeschaltet (MAHNWESEN=on, zuerst nur Staging): Schalter „Überweisung erlauben“ zeigen */
   ueberweisungVerfuegbar?: boolean;
+  /** Entwurf bearbeiten (Ole, 20.11.2026): vorbefüllt mit allen Werten, „Speichern“ aktualisiert den Entwurf */
+  entwurf?: { offerId: string; werte: OfferFormWerte };
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const [contactName, setContactName] = useState(initial.contactName);
-  const [company, setCompany] = useState(initial.company);
-  const [email, setEmail] = useState(initial.email);
-  const [street, setStreet] = useState(initial.street ?? "");
-  const [zip, setZip] = useState(initial.zip ?? "");
-  const [city, setCity] = useState(initial.city ?? "");
-  const [products, setProducts] = useState([{ name: "TKV-Katze", daily: "30" }]);
-  const [pkg, setPkg] = useState<OfferPackage>("software");
-  const [term, setTerm] = useState<OfferTerm>("12m");
-  const [setupOverride, setSetupOverride] = useState(initial.setupOverride ?? "");
-  const [discount, setDiscount] = useState(referralDiscount ? String(referralDiscount.amount) : "");
-  const [monthlyOverride, setMonthlyOverride] = useState("");
-  const [introFee, setIntroFee] = useState("");
-  const [introMonths, setIntroMonths] = useState("3");
-  const [specialTerms, setSpecialTerms] = useState(initial.specialTerms ?? "");
-  const [startDate, setStartDate] = useState(defaultStartDate());
+  // Startwerte: Entwurf (Bearbeiten) oder Standard mit Vorbelegung aus dem Kontakt (lib/offer-form-werte.ts)
+  const [w0] = useState<OfferFormWerte>(() => entwurf?.werte ?? standardFormWerte(initial, referralDiscount));
+  const [contactName, setContactName] = useState(w0.contactName);
+  const [company, setCompany] = useState(w0.company);
+  const [email, setEmail] = useState(w0.email);
+  const [street, setStreet] = useState(w0.street);
+  const [zip, setZip] = useState(w0.zip);
+  const [city, setCity] = useState(w0.city);
+  const [products, setProducts] = useState(w0.products);
+  const [pkg, setPkg] = useState<OfferPackage>(w0.pkg);
+  const [term, setTerm] = useState<OfferTerm>(w0.term);
+  const [setupOverride, setSetupOverride] = useState(w0.setupOverride);
+  const [discount, setDiscount] = useState(w0.discount);
+  const [monthlyOverride, setMonthlyOverride] = useState(w0.monthlyOverride);
+  const [introFee, setIntroFee] = useState(w0.introFee);
+  const [introMonths, setIntroMonths] = useState(w0.introMonths);
+  const [specialTerms, setSpecialTerms] = useState(w0.specialTerms);
+  const [startDate, setStartDate] = useState(w0.startDate);
   // Abrechnungstag (Ole, 18.11.2026): leer = wie Start; selten genutzt, daher aufklappbar unter dem Start
-  const [billingDay, setBillingDay] = useState("");
-  const [billingFree, setBillingFree] = useState(false);
-  const [validDays, setValidDays] = useState("14");
-  const [seats, setSeats] = useState(String(PRICE_LIST.seatsIncluded));
-  const [annual, setAnnual] = useState(false);
-  const [bestand, setBestand] = useState(false);
-  const [empfehlung, setEmpfehlung] = useState(false);
-  const [vermittler, setVermittler] = useState<OfferVermittler>("vertreter");
-  const [customerChoice, setCustomerChoice] = useState(true);
+  const [billingDay, setBillingDay] = useState(w0.billingDay);
+  const [billingFree, setBillingFree] = useState(w0.billingFree);
+  const [validDays, setValidDays] = useState(w0.validDays);
+  const [seats, setSeats] = useState(w0.seats);
+  const [annual, setAnnual] = useState(w0.annual);
+  const [bestand, setBestand] = useState(w0.bestand);
+  const [empfehlung, setEmpfehlung] = useState(w0.empfehlung);
+  const [vermittler, setVermittler] = useState<OfferVermittler>(w0.vermittler);
+  const [customerChoice, setCustomerChoice] = useState(w0.customerChoice);
   // Kunde wählt Produkte und Tagesbudget (Ole, 19.11.2026): Standard an, nur zum Listenpreis
-  const [customerProducts, setCustomerProducts] = useState(true);
+  const [customerProducts, setCustomerProducts] = useState(w0.customerProducts);
   // „Ich zahle später“ auf der Angebotsseite (Ole, 16.11.2026): nur für Kunden mit spätem Start, Standard aus
-  const [allowPayLater, setAllowPayLater] = useState(false);
+  const [allowPayLater, setAllowPayLater] = useState(w0.allowPayLater);
   // Zahlung nachträglich (Ole, 19.11.2026): Sonderkondition, nur monatlich (nicht mit Vorauszahlung oder Abrechnungstag)
-  const [arrears, setArrears] = useState(false);
+  const [arrears, setArrears] = useState(w0.arrears);
   // Überweisung nur auf Anfrage des Kunden (Ole, 17.11.2026): Standard aus, Zahlungsziel Standard 14 Tage
-  const [allowBankTransfer, setAllowBankTransfer] = useState(false);
-  const [bankTransferDays, setBankTransferDays] = useState(String(UEBERWEISUNG_TAGE_STANDARD));
+  const [allowBankTransfer, setAllowBankTransfer] = useState(w0.allowBankTransfer);
+  const [bankTransferDays, setBankTransferDays] = useState(w0.bankTransferDays);
   // Abschlussbonus (Ole, 16.11.2026): Standard an, 300 € auf die Einrichtung bei Annahme und Zahlung am Versandtag
-  const [bonusAn, setBonusAn] = useState(true);
-  const [bonusBetrag, setBonusBetrag] = useState("300");
+  const [bonusAn, setBonusAn] = useState(w0.bonusAn);
+  const [bonusBetrag, setBonusBetrag] = useState(w0.bonusBetrag);
   // Frist frei wählbar (Ole, 16.11.2026): Vorschlag morgen 23:59 Uhr
-  const [bonusBis, setBonusBis] = useState(() => abschlussBonusStandardTag());
+  const [bonusBis, setBonusBis] = useState(w0.bonusBis);
   // Testangebot (Ole, 15.11.2026): 0 €, ohne Zahlung, legt einen Testkunden an
-  const [test, setTest] = useState(false);
+  const [test, setTest] = useState(w0.test);
   // Erste Woche (Ole, 20.11.2026, nur Pay-per-Lead + Software): Lead-Produkt, Preis je Lead, vorausgewählte Anzahl
-  const [wocheProdukt, setWocheProdukt] = useState("");
-  const [wocheLabel, setWocheLabel] = useState("");
-  const [wochePreis, setWochePreis] = useState("");
-  const [wocheBrutto, setWocheBrutto] = useState(false);
-  const [wocheMenge, setWocheMenge] = useState(String(ERSTE_WOCHE_STANDARD));
+  const [wocheProdukt, setWocheProdukt] = useState(w0.wocheProdukt);
+  const [wocheLabel, setWocheLabel] = useState(w0.wocheLabel);
+  const [wochePreis, setWochePreis] = useState(w0.wochePreis);
+  const [wocheBrutto, setWocheBrutto] = useState(w0.wocheBrutto);
+  const [wocheMenge, setWocheMenge] = useState(w0.wocheMenge);
+  const werte: OfferFormWerte = {
+    contactName, company, email, street, zip, city, products, pkg, term, setupOverride, discount, monthlyOverride, introFee, introMonths,
+    specialTerms, startDate, billingDay, billingFree, validDays, seats, annual, bestand, empfehlung, vermittler, customerChoice,
+    customerProducts, allowPayLater, arrears, allowBankTransfer, bankTransferDays, bonusAn, bonusBetrag, bonusBis, test,
+    wocheProdukt, wocheLabel, wochePreis, wocheBrutto, wocheMenge,
+  };
 
   const parsedProducts = products.map((p) => ({ name: p.name, dailyBudget: num(p.daily) ?? 0 }));
   // Berechnung ist billig – direkt pro Render statt useMemo.
@@ -146,19 +150,15 @@ export function OfferForm({
     if (k === "ppl_software" && !PPL_SOFTWARE_TERMS.includes(term)) setTerm("none");
   };
   // Produktwahl durch den Kunden nur zum Listenpreis (wie lib/offers.ts createOffer)
-  const produktWahlMoeglich = pkg === "software" && !test && num(setupOverride) == null && num(monthlyOverride) == null && num(introFee) == null && !price.individual;
+  const produktWahlMoeglich = produktWahlMoeglichAus(werte, price.individual);
   // Vorauszahlung (Ole, 18.11.2026): mit 12 Monaten jährlich (3 geschenkt seit 19.11.2026), mit 6 Monaten 6 Monate im Voraus (1 geschenkt)
-  const annualPossible = !ppl && prepayPossible(term) && num(introFee) == null;
+  const annualPossible = vorauszahlungMoeglich(werte);
   const voraus = VORAUSZAHLUNG[term === "6m" ? "6m" : "12m"];
   const geschenkt = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"} geschenkt`;
 
   // Erste Woche: Steuerkennzeichen des Produkts (lib/ppl/steuer.ts); Bruttoeingabe nur bei steuerpflichtigen Produkten
   const wocheSteuer = bezugSteuer({ productKey: wocheProdukt });
-  const wocheNetto = (() => {
-    const p = num(wochePreis);
-    if (p == null) return null;
-    return wocheBrutto && wocheSteuer === "steuerpflichtig" ? nettoAusBrutto(p) : p;
-  })();
+  const wocheNetto = wocheNettoAus(werte);
 
   function submit() {
     setError(null);
@@ -171,43 +171,8 @@ export function OfferForm({
       return;
     }
     start(async () => {
-      const res = await createOfferAction(target, {
-        contactName,
-        company,
-        email,
-        street,
-        zip,
-        city,
-        package: pkg,
-        term,
-        products: parsedProducts,
-        setupOverride: ppl ? null : num(setupOverride),
-        // Empfohlener Kontakt: Wert aus dem Feld (0 = bewusst kein Rabatt), sonst automatisch
-        setupDiscount: ppl ? null : referralDiscount ? (num(discount) ?? 0) : undefined,
-        monthlyOverride: num(monthlyOverride),
-        introMonthlyFee: ppl ? null : num(introFee),
-        introMonths: num(introMonths),
-        specialTerms,
-        startDate: startDate || null,
-        billingDay: num(billingDay),
-        billingFreeStart: billingFree && !!billingDay,
-        paymentInArrears: arrears && !test,
-        validDays: num(validDays) ?? 14,
-        seats: softwarePkg ? num(seats) : null,
-        annual: annual && annualPossible,
-        bestandModule: bestand && softwarePkg,
-        empfehlungModule: empfehlung && softwarePkg,
-        vermittlerTyp: vermittler,
-        customerChoice,
-        customerChoosesProducts: customerProducts && produktWahlMoeglich,
-        allowPayLater: allowPayLater && !test && !ppl,
-        allowBankTransfer: ueberweisungVerfuegbar && allowBankTransfer && !test,
-        bankTransferDays: num(bankTransferDays),
-        abschlussBonus: bonusAn && !test && !ppl ? (num(bonusBetrag) ?? 300) : 0,
-        abschlussBonusBis: bonusAn && !test && !ppl ? bonusBis : null,
-        test,
-        ersteWoche: ppl && wocheProdukt.trim() ? { productKey: wocheProdukt, label: wocheLabel || null, price: wocheNetto, quantity: num(wocheMenge) } : null,
-      });
+      const eingabe = formWerteZuInput(werte, { referral: !!referralDiscount, ueberweisungVerfuegbar });
+      const res = entwurf ? await updateOfferDraftAction(entwurf.offerId, eingabe) : await createOfferAction(target, eingabe);
       if (!res.ok) {
         setError(res.error);
         return;
@@ -708,10 +673,12 @@ export function OfferForm({
             {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-rose-700">{error}</p> : null}
             <Button type="button" variant="primary" size="md" className="w-full" disabled={pending} onClick={submit}>
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Angebot erstellen
+              {entwurf ? "Speichern" : "Angebot erstellen"}
             </Button>
             <p className="text-xs text-[color:var(--muted)]">
-              Die Konditionen werden beim Erstellen eingefroren. Ein früheres offenes Angebot an diesen Kontakt wird automatisch ersetzt.
+              {entwurf
+                ? "Nummer und Link bleiben gleich."
+                : "Die Konditionen werden beim Erstellen eingefroren. Ein früheres offenes Angebot an diesen Kontakt wird automatisch ersetzt."}
             </p>
           </div>
         </Card>
