@@ -83,9 +83,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
               icon={Workflow}
               count={sources.filter((s) => s.active).length + vertriebForms.filter((f) => f.active).length}
               actions={
-                <ButtonLink href={`${PFAD}?neu=1#zuordnen`} icon={Plus}>
-                  Zuordnung
-                </ButtonLink>
+                // Leer: nur „Erste Zuordnung“ im leeren Zustand, kein zweiter Knopf mit derselben Aufgabe (SUS-Prüfung Liefern)
+                sources.length || vertriebForms.length ? (
+                  <ButtonLink href={`${PFAD}?neu=1#zuordnen`} icon={Plus}>
+                    Zuordnung
+                  </ButtonLink>
+                ) : undefined
               }
             />
             {sources.length || vertriebForms.length ? (

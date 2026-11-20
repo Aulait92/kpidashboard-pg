@@ -70,11 +70,14 @@ export function AccountView({
   detail,
   showBackLink = true,
   ohneTitel = false,
+  einklappen = false,
 }: {
   detail: Detail;
   showBackLink?: boolean;
   /** Neuer Admin: Name steht schon im Seitenkopf */
   ohneTitel?: boolean;
+  /** Seltenes (Lauf, Maßnahme von Hand, Einstellungen, Meta-Protokoll) zugeklappt (Liefern › Werbekonto, SUS-Prüfung 20.11.2026). */
+  einklappen?: boolean;
 }) {
   const a = detail.account;
   const open = detail.measures.filter((m) => m.status === "geplant" || m.status === "freigegeben").map(toView);
@@ -110,16 +113,13 @@ export function AccountView({
           <ProtocolCard measures={detail.measures} />
         </div>
         <div className="space-y-5">
-          <Card id="lauf" className="scroll-mt-20">
-            <CardHeader title="Lauf und Trockenlauf" hint="Trockenlauf: liest bei Meta nur und zeigt, was geplant würde" />
+          <Klapp zu={einklappen} id="lauf" titel="Lauf und Trockenlauf" hint="Trockenlauf: liest bei Meta nur und zeigt, was geplant würde">
             <RunPanel accountId={a.id} customerId={a.customerId} />
-          </Card>
-          <Card>
-            <CardHeader title="Maßnahme eintragen" hint="von Hand, landet im Protokoll" />
+          </Klapp>
+          <Klapp zu={einklappen} titel="Maßnahme eintragen" hint="von Hand, landet im Protokoll">
             <ManualForm accountId={a.id} customerId={a.customerId} />
-          </Card>
-          <Card>
-            <CardHeader title="Einstellungen" />
+          </Klapp>
+          <Klapp zu={einklappen} titel="Einstellungen">
             <div className="px-5 pb-5">
               <AccountSettingsForm
                 accountId={a.id}
@@ -132,9 +132,8 @@ export function AccountView({
                 campaignKeyword={a.campaignKeyword}
               />
             </div>
-          </Card>
-          <Card>
-            <CardHeader title="Meta-Änderungsprotokoll" count={detail.activities.length} hint="letzte 30 Tage" />
+          </Klapp>
+          <Klapp zu={einklappen} titel="Meta-Änderungsprotokoll" count={detail.activities.length} hint="letzte 30 Tage">
             {detail.activities.length ? (
               <ul className="divide-y divide-[color:var(--border)] px-5 pb-4 text-sm">
                 {detail.activities.map((x) => (
@@ -148,9 +147,38 @@ export function AccountView({
             ) : (
               <p className="px-5 pb-5 text-sm text-[color:var(--muted)]">Noch nichts abgerufen (täglich automatisch).</p>
             )}
-          </Card>
+          </Klapp>
         </div>
       </div>
     </div>
+  );
+}
+
+/** Karte, wahlweise als Aufklapper (Titel als Zeile, Inhalt nach Klick), sonst wie bisher mit Kopf. */
+function Klapp({ zu, id, titel, hint, count, children }: { zu: boolean; id?: string; titel: string; hint?: string; count?: number; children: React.ReactNode }) {
+  if (!zu) {
+    return (
+      <Card id={id} className={id ? "scroll-mt-20" : undefined}>
+        <CardHeader title={titel} count={count} hint={hint} />
+        {children}
+      </Card>
+    );
+  }
+  return (
+    <Card id={id} className="scroll-mt-20">
+      <details className="group [&>summary::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-12 cursor-pointer items-center px-5 text-[15px] font-semibold group-open:border-b group-open:border-[color:var(--border)]">
+          <span className="flex-1">
+            {titel}
+            {count ? <span className="ml-1.5 font-normal text-[color:var(--muted)]">{count}</span> : null}
+          </span>
+          <span className="text-xs font-normal text-[color:var(--muted)] group-open:hidden">anzeigen</span>
+        </summary>
+        <div className="pt-3">
+          {hint ? <p className="px-5 pb-2 text-xs text-[color:var(--muted)]">{hint}</p> : null}
+          {children}
+        </div>
+      </details>
+    </Card>
   );
 }

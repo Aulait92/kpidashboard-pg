@@ -17,7 +17,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   return (
     <Seite titel={detail.account.label} zurueck={{ href: "/admin/neu/leads/werbekonten", label: "Werbekonten" }} breit>
       <div data-funktion="actions-saveaccountaction--konto-modus-ziel-leadpreis-tagesbudget-kampagnen actions-approveallaction--alle-massnahmen-freigeben actions-approveoneaction--einzelne-massnahme-freigeben actions-rejectaction--massnahme-ablehnen-mit-notiz actions-doneaction--vorschlag-als-erledigt-markieren-mit-notiz actions-dryrunaction--trockenlauf-je-konto actions-runnowaction--lauf-jetzt-starten actions-syncactivitiesaction--meta-aenderungsprotokoll-abrufen-30-tage account-view-protocolcard--protokoll-je-konto-quelle-monatsbericht">
-        <AccountView detail={detail} showBackLink={false} ohneTitel />
+        <AccountView detail={detail} showBackLink={false} ohneTitel einklappen />
       </div>
     </Seite>
   );

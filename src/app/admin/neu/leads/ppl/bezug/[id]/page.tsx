@@ -6,6 +6,12 @@ import { BezugZusatz } from "@/app/admin/ppl/bezug/[id]/bezug-zusatz";
 
 export const metadata = { title: "Bezug | performancegrowth Admin" };
 
+// Bestellungen (Decimal) und Gebiete braucht nur BezugZusatz; ans Client-Formular nur einfache Werte (sonst Laufzeitfehler „Decimal“)
+function ohneListen<T extends { orders: unknown; areas: unknown; customer: unknown }>(s: T): Omit<T, "orders" | "areas" | "customer"> {
+  const { orders: _o, areas: _a, customer: _c, ...rest } = s;
+  return rest;
+}
+
 // Pay-per-Lead → Bezug anlegen/bearbeiten. Formular, Gebiete und Bestellungen wie /admin/ppl/bezug/[id];
 // Filter sowie Storno und Lieferweg sind eingeklappt (selten geändert), Speichern führt zurück zu Pay-per-Lead.
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -32,7 +38,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <div className="mx-auto max-w-3xl space-y-4">
         <div data-funktion="actions-savesubscriptionaction--bezug-anlegen-bearbeiten-kunde-produkt-menge bezug-form--bezug-modus-woche-monat-einmalig-live-test">
           <BezugForm
-            sub={sub ? { ...sub, price: Number(sub.price), startDate: sub.startDate?.toISOString().slice(0, 10) ?? "", hasSecret: !!sub.webhookSecretEnc } : null}
+            sub={sub ? { ...ohneListen(sub), price: Number(sub.price), startDate: sub.startDate?.toISOString().slice(0, 10) ?? "", hasSecret: !!sub.webhookSecretEnc } : null}
             customers={customers}
             products={products.map((p) => p.productKey)}
             zurueck="/admin/neu/leads/ppl"
