@@ -5,6 +5,7 @@
 // Android/Chrome: Installieren-Knopf über das beforeinstallprompt-Ereignis.
 
 import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { BellRing, CheckCircle2, Share, SquarePlus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { usePush } from "@/lib/use-push";
@@ -121,14 +122,54 @@ export function InstallApp({ appUrl }: { appUrl: string }) {
     );
   }
 
+  // Computer: QR-Code zum Scannen und die Kurzanleitung für beide Handys gleich hier (Ole, 20.11.2026: „die Anleitung
+  // fehlt“; vorher stand hier nur, dass sie auf dem Handy erscheint)
   return (
     <div className="text-sm">
-      <p className="text-[color:var(--muted)]">
-        Öffnen Sie <b className="text-[color:var(--foreground)]">{appUrl}</b> auf Ihrem Handy und melden Sie sich an. Hier erscheint dann die
-        Anleitung für Ihr Gerät. Auf diesem Computer können Sie Benachrichtigungen direkt einschalten:
-      </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <HandyQr />
+        <div className="min-w-0 flex-1">
+          <p className="text-[color:var(--muted)]">
+            Mit der Handy-Kamera scannen oder <b className="text-[color:var(--foreground)]">{appUrl}</b> auf dem Handy öffnen und anmelden. Dann:
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div>
+              <p className="font-semibold">iPhone (Safari)</p>
+              <ol className="mt-1.5 space-y-1.5">
+                <li className="flex gap-2"><Num n={1} /><span>Unten auf <Share className="inline h-4 w-4 align-[-3px]" /> <b>Teilen</b> tippen (bei neuen iPhones erst auf <b>…</b>).</span></li>
+                <li className="flex gap-2"><Num n={2} /><span><SquarePlus className="inline h-4 w-4 align-[-3px]" /> <b>„Zum Home-Bildschirm“</b>, dann „Hinzufügen“.</span></li>
+                <li className="flex gap-2"><Num n={3} /><span>App über das neue Symbol öffnen, <b>Benachrichtigungen einschalten</b>.</span></li>
+              </ol>
+            </div>
+            <div>
+              <p className="font-semibold">Android (Chrome)</p>
+              <ol className="mt-1.5 space-y-1.5">
+                <li className="flex gap-2"><Num n={1} /><span>Oben rechts auf <b>⋮</b> tippen.</span></li>
+                <li className="flex gap-2"><Num n={2} /><span><b>„App installieren“</b> bzw. „Zum Startbildschirm hinzufügen“.</span></li>
+                <li className="flex gap-2"><Num n={3} /><span>App öffnen, <b>Benachrichtigungen einschalten</b>.</span></li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p className="mt-4 text-[color:var(--muted)]">Auf diesem Computer können Sie Benachrichtigungen direkt einschalten:</p>
       {pushPart}
     </div>
+  );
+}
+
+/** QR-Code zur Einrichtung auf dem Handy (gleiche Seite, nach dem Anmelden geht es dort weiter). */
+function HandyQr() {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    QRCode.toDataURL(`${window.location.origin}/buyer/einrichtung`, { margin: 1, width: 240 })
+      .then(setSrc)
+      .catch(() => setSrc(null));
+  }, []);
+  if (!src) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="QR-Code: App auf dem Handy öffnen" width={120} height={120} className="h-[120px] w-[120px] shrink-0 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white p-1" />
   );
 }
 
