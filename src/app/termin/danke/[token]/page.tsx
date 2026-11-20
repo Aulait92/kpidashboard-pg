@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { CheckCircle2 } from "lucide-react";
 import { TerminShell } from "@/components/termin/termin-shell";
 import { Vorbereitung } from "@/components/termin/vorbereitung";
-import { DEMO_URL, meetingByToken, PREPARATION_VIDEO_URL, publicSalesBookingUrl } from "@/lib/vertrieb/buchung";
+import { meetingByToken, PREPARATION_YOUTUBE_ID, publicSalesBookingUrl } from "@/lib/vertrieb/buchung";
 import { recordPreparationAction } from "../../actions";
 import { terminMetadata } from "../../booking-page";
 
@@ -10,7 +10,7 @@ export const metadata = { ...terminMetadata, title: "Vielen Dank · performanceg
 
 const TZ = "Europe/Berlin";
 
-// Danke-Seite nach dem Meta-Leads-Call (auch aus der Bestätigungsmail verlinkt): Vorbereitungsvideo und Demo.
+// Danke-Seite nach dem Meta-Leads-Call (auch aus der Bestätigungsmail verlinkt): Vorbereitungsvideo (YouTube).
 export default async function TerminDankePage({
   params,
   searchParams,
@@ -48,12 +48,7 @@ export default async function TerminDankePage({
       </div>
       {m.bookingType?.confirmText ? <p className="mt-5 text-sm leading-relaxed">{m.bookingType.confirmText}</p> : null}
       <div className="mt-4">
-        <Vorbereitung
-          videoUrl={PREPARATION_VIDEO_URL}
-          demoUrl={DEMO_URL}
-          onWatched={recordPreparationAction.bind(null, token, "video")}
-          onDemo={recordPreparationAction.bind(null, token, "demo")}
-        />
+        <Vorbereitung youtubeId={PREPARATION_YOUTUBE_ID} onWatched={recordPreparationAction.bind(null, token, "video")} />
       </div>
       <a href={`/termin/verwalten/${token}${q}`} className="mt-5 block text-center text-sm text-[color:var(--muted)] underline">
         Termin verschieben oder absagen

@@ -1,50 +1,50 @@
 "use client";
 
-import { useRef } from "react";
-import { MonitorPlay } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 /**
- * Danke-Seite: Vorbereitungsvideo und „Demo ansehen“. Ab der Hälfte des Videos bzw. beim Öffnen
- * der Demo einmal melden (nur mit Buchungs-Token, der Server vermerkt es am Kontakt).
+ * Danke-Seite: Vorbereitungsvideo von YouTube (youtube-nocookie.com, Ole 20.11.2026, ohne „Demo ansehen“). Ab der
+ * Hälfte des Videos einmal melden (nur mit Buchungs-Token, der Server vermerkt es am Kontakt). Den Fortschritt liefert
+ * der YouTube-Player per postMessage (enablejsapi=1, Ereignis „listening“).
  */
-export function Vorbereitung({
-  videoUrl,
-  demoUrl,
-  onWatched,
-  onDemo,
-}: {
-  videoUrl: string;
-  demoUrl: string;
-  onWatched: () => Promise<void>;
-  onDemo: () => Promise<void>;
-}) {
+export function Vorbereitung({ youtubeId, onWatched }: { youtubeId: string; onWatched: () => Promise<void> }) {
   const sent = useRef(false);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const dauer = useRef(0);
+
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (!/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(e.origin) || typeof e.data !== "string") return;
+      let d: { event?: string; info?: { currentTime?: number; duration?: number } } | null = null;
+      try {
+        d = JSON.parse(e.data);
+      } catch {
+        return;
+      }
+      const info = d?.info;
+      if (!info) return;
+      if (typeof info.duration === "number" && info.duration > 0) dauer.current = info.duration;
+      if (!sent.current && typeof info.currentTime === "number" && dauer.current > 0 && info.currentTime / dauer.current >= 0.5) {
+        sent.current = true;
+        void onWatched();
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [onWatched]);
+
+  const anmelden = () => frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: youtubeId }), "*");
+
   return (
-    <div className="space-y-4">
-      <video
-        src={videoUrl}
-        controls
-        playsInline
-        preload="metadata"
-        className="aspect-video w-full rounded-[var(--radius-md)] bg-black"
-        onTimeUpdate={(e) => {
-          const v = e.currentTarget;
-          if (!sent.current && v.duration > 0 && v.currentTime / v.duration >= 0.5) {
-            sent.current = true;
-            void onWatched();
-          }
-        }}
-        data-vorbereitungsvideo
-      />
-      <a
-        href={demoUrl}
-        target="_blank"
-        rel="noopener"
-        onClick={() => void onDemo()}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-base font-semibold text-white transition hover:bg-[color:var(--brand-dark)]"
-      >
-        <MonitorPlay className="h-4 w-4" /> Demo ansehen
-      </a>
-    </div>
+    <iframe
+      ref={frame}
+      src={`https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&rel=0&playsinline=1`}
+      title="Vorbereitung auf Ihren Termin"
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+      allowFullScreen
+      onLoad={anmelden}
+      className="aspect-video w-full rounded-[var(--radius-md)] bg-black"
+      data-vorbereitungsvideo
+    />
   );
 }

@@ -38,7 +38,9 @@ export const DECISION_BOOKING_TYPE = "entscheidung";
 /** Sales-Call nach dem kurzen Telefonat (Setter): nur Ole bucht ihn im Vertriebskontakt (Ole, 19.11.2026). */
 export const SALES_CALL_BOOKING_TYPE = "sales-call";
 
-/** Vorbereitungsvideo auf der Danke-Seite (zum Tauschen: Datei oder Adresse hier ändern). */
+/** Vorbereitungsvideo auf der Danke-Seite: YouTube (Ole, 20.11.2026), eingebettet über youtube-nocookie.com. */
+export const PREPARATION_YOUTUBE_ID = "YLbnlWcAALE";
+/** Frühere Datei (nicht mehr auf der Danke-Seite). */
 export const PREPARATION_VIDEO_URL = process.env.SALES_PREPARATION_VIDEO_URL?.trim() || "/praesentation/vertrieb/assistent.mp4";
 /** „Demo ansehen“ auf der Danke-Seite: jetzt die Präsentations-Demo, später die Software-Demo. */
 export const DEMO_URL = process.env.SALES_DEMO_URL?.trim() || "/demo";
