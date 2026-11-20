@@ -39,7 +39,10 @@ export async function bookPublicAction(
   const customerId = conn!.customerId;
 
   const start = String(formData.get("start") ?? "");
-  const mode = formData.get("mode") === "video" ? "video" : "phone";
+  // Video ist Standard (Ole, 20.11.2026); Telefon nur, wenn der Vermittler es freigegeben hat
+  const { loadTerminFormate } = await import("@/lib/termin-formate-server");
+  const telefonErlaubt = (await loadTerminFormate(customerId).catch(() => ({ telefon: false }))).telefon;
+  const mode: "phone" | "video" = formData.get("mode") === "phone" && telefonErlaubt ? "phone" : "video";
   const name = String(formData.get("name") ?? "").trim().slice(0, 80);
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const emailRaw = String(formData.get("email") ?? "").trim().toLowerCase();
