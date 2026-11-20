@@ -50,7 +50,7 @@ export default async function PartnerSeite({ params }: Props) {
             {partner.map((p, i) => (
               <li key={i} className="rounded-2xl border border-[var(--m-karte-rand)] bg-white p-4">
                 <p className="text-[17px] font-semibold leading-snug">{p.firma}</p>
-                {p.name && <p className="text-[var(--m-text-leise)]">{p.name}</p>}
+                {p.name && <p className="text-[var(--m-text-leise)]">Ansprechpartner: {p.name}</p>}
                 <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[14px]">
                   {p.ort && (
                     <>
