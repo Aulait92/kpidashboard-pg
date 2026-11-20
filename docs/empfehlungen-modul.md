@@ -33,8 +33,8 @@ ein Tipp, fertig. Drei Abläufe:
    Einwilligung geht keine Vorlage raus (R1, R2), alle Wege zählen gegen eine gemeinsame Obergrenze von 3
    Empfehlungsbitten in 365 Tagen (R3, `referralAskCheck`/`recordReferralAsk` über das Änderungsprotokoll). Texte an
    Kunden in Du und Sie (`defaultText`, `Customer.leadAddress`/`bestandAddress`).
-2. **„Heute fragen“** (Paket 2): Reiter Übersicht | Teilen | Einstellungen, Wert-Zeile in Euro, Liste mit Grund und
-   einem Knopf „Link senden“ (einzige Hauptaktion), „Zu erledigen“ nur wenn etwas offen ist, Trichter eingeklappt.
+2. **„Heute fragen“** (Paket 2, Kartentitel seit 20.11.2026 „Heute um Empfehlung bitten“): Reiter Übersicht | Teilen | Einstellungen, Wert-Zeile in Euro, Liste mit Grund und
+   einem Knopf „Empfehlungslink senden“ (einzige Hauptaktion), „Zu erledigen“ nur wenn etwas offen ist, Trichter eingeklappt.
 3. **Empfehlung zu Abschluss** (Paket 3):
    - Seite des Empfehlenden `/empfehlung/[token]`: ein Satz Einleitung (mit „Sie geben keine Daten weiter“), Angebot
      als Zeile, Auswahl **An wen?** (Freunde/Familie = du, Kollegen/Nachbarn = Sie, `SHARE_AUDIENCES`), Vorschau,

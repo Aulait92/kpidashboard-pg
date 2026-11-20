@@ -22,7 +22,7 @@ import { after } from "next/server";
 import { needsSubmit, templateNotice } from "@/lib/whatsapp/vorlagen-hinweis";
 
 // Modul „Empfehlungen & Bewertungen“ (Paket 2, 19.11.2026): Arbeitsliste statt Kennzahlen-Raster.
-// Übersicht: Wert-Zeile, „Heute fragen“ (einzige Hauptaktion: „Link senden“), „Zu erledigen“, eine Trichter-Zeile.
+// Übersicht: Wert-Zeile, „Heute fragen“ (einzige Hauptaktion: „Empfehlungslink senden“), „Zu erledigen“, eine Trichter-Zeile.
 // Teilen: QR-Code und allgemeiner Link, Signatur, Bewertungs-Wächter. Einstellungen: Automatik, Google-Link, Angebot,
 // Rest unter „Erweitert“. Erklärungen und Rechtliches stehen in docs/hilfe.md.
 export const dynamic = "force-dynamic";
@@ -69,7 +69,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
             <ul className="space-y-2">
               {[
                 "Zustimmung beim Abschluss mit einem Tipp, danach läuft alles automatisch.",
-                "Liste „Heute fragen“: wer gerade bereit für eine Empfehlung ist, mit einem Knopf.",
+                "Liste „Heute um Empfehlung bitten“: wer gerade bereit für eine Empfehlung ist, mit einem Knopf.",
                 "Kritik landet zuerst bei Ihnen, nicht bei Google.",
               ].map((t) => (
                 <li key={t} className="flex items-start gap-2">
@@ -248,14 +248,9 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
             </Card>
 
             <Card className="scroll-mt-20" id="heute-fragen" data-heute-card>
-              <CardHeader title="Heute fragen" icon={MessageSquareHeart} count={heuteItems.length || undefined} />
+              <CardHeader title="Heute um Empfehlung bitten" icon={MessageSquareHeart} count={heuteItems.length || undefined} />
               {heuteItems.length ? (
                 <>
-                  {stats.valuePerCustomer ? (
-                    <p className="px-4 pt-3 text-sm text-[color:var(--muted)] sm:px-5" data-heute-wert>
-                      Ein Neukunde bringt Ihnen im Schnitt ca. {eur(stats.valuePerCustomer)} Provision (geschätzt).
-                    </p>
-                  ) : null}
                   <HeuteFragenList items={heuteItems} visible={HEUTE_VISIBLE} readOnly={ctx.preview} />
                 </>
               ) : (
@@ -313,8 +308,8 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                         <p className="px-4 pb-1 text-xs text-[color:var(--muted)] sm:px-5">{FEEDBACK_CONSENT_LABEL}.</p>
                         <ul className="divide-y divide-[color:var(--border)]" data-consent-list>
                           {cands.noConsent.slice(0, 20).map((c) => (
-                            <li key={c.id} className="flex items-center gap-2 px-4 py-2.5 sm:px-5" data-consent-row={c.id}>
-                              <span className="min-w-0 flex-1">
+                            <li key={c.id} className="flex flex-wrap items-center gap-2 px-4 py-2.5 sm:flex-nowrap sm:px-5" data-consent-row={c.id}>
+                              <span className="min-w-0 basis-full sm:basis-auto sm:flex-1">
                                 <Link href={`/buyer/leads/${c.id}`} className="block truncate font-medium hover:underline">
                                   {c.name}
                                 </Link>
@@ -366,7 +361,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                       ["Kritik (geklärt)", `${stats.negative} (${stats.resolved})`],
                       ["Frage", stats.neutral],
                       ["Empfehlungsbitten", stats.referralsAsked],
-                      ["Zeit bis zum ersten Anruf (Median)", fmtHours(stats.firstCallHours)],
+                      ...(stats.firstCallHours != null ? [["Zeit bis zum ersten Anruf", fmtHours(stats.firstCallHours)]] : []),
                     ].map(([k, v]) => (
                       <div key={String(k)}>
                         <dt className="text-[color:var(--muted)]">{k}</dt>

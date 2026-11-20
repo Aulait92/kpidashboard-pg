@@ -557,7 +557,7 @@ export function funnelHint(f: Funnel): FunnelHint {
     return {
       stage: "start",
       title: "Größter Hebel: öfter fragen",
-      text: "Senden Sie heute 3 Kunden aus „Heute fragen“ ihren Empfehlungslink.",
+      text: "Senden Sie heute 3 Kunden unter „Heute um Empfehlung bitten“ ihren Link.",
     };
   }
   if (f.linksOpened / f.linksSent < 0.4) {
@@ -816,7 +816,7 @@ export function candidateReason(c: CandidateInput, now: Date): { reason: Candida
     return { reason: "lob", text: r.answeredAt ? `Hat ${relDays(r.answeredAt, now)} gelobt` : "Hat gelobt", at: at.getTime() };
   }
   if (r && r.googleClicks > 0) {
-    return { reason: "google", text: r.googleClickAt ? `Hat ${relDays(r.googleClickAt, now)} den Google-Link geöffnet` : "Hat den Google-Link geöffnet", at: (r.googleClickAt ?? now).getTime() };
+    return { reason: "google", text: r.googleClickAt ? `Wollte ${relDays(r.googleClickAt, now)} bei Google bewerten` : "Wollte bei Google bewerten", at: (r.googleClickAt ?? now).getTime() };
   }
   if (c.lastAppointmentAt && now.getTime() - c.lastAppointmentAt.getTime() <= CANDIDATE_APPOINTMENT_DAYS * DAY_MS && c.lastAppointmentAt.getTime() <= now.getTime()) {
     return { reason: "termin", text: `Termin ${relDays(c.lastAppointmentAt, now)}`, at: c.lastAppointmentAt.getTime() };

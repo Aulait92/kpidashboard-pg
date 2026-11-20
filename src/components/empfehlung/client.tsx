@@ -379,7 +379,7 @@ function ShareError({ state }: { state: ShareState }) {
 }
 
 /**
- * Kontakt-Karte (Paket 2): ein primärer Knopf „Empfehlungslink senden“ mit automatischem Anlass, daneben „Im Termin
+ * Kontakt-Karte (Paket 2): ein Knopf „Empfehlungslink senden“ (sekundär, die Kontaktseite hat schon „Anrufen“ als Hauptaktion) mit automatischem Anlass, daneben „Im Termin
  * zeigen“. Anlass und weitere Aktionen (z. B. „Nicht anfragen“) unter „Mehr“. Ohne Einwilligung statt des Versands
  * „Kunde hat zugestimmt“ (primär) und der QR-Code.
  */
@@ -422,7 +422,7 @@ export function ReferralLinkButton({
           {needsConsent && consentAbove ? null : needsConsent && leadId ? (
             <ConsentButton leadId={leadId} readOnly={readOnly} primary />
           ) : (
-            <Button type="submit" variant="primary" size="md" icon={Send} disabled={readOnly || pending} data-referral-send>
+            <Button type="submit" variant="secondary" size="md" icon={Send} disabled={readOnly || pending} data-referral-send>
               {pending ? "Wird gesendet …" : "Empfehlungslink senden"}
             </Button>
           )}
@@ -506,7 +506,7 @@ export function QrIconButton({ leadId, readOnly }: { leadId: string; readOnly: b
   );
 }
 
-/** Zeile in „Heute fragen“: Name, Grund, ein Knopf „Link senden“ (sendReferralLinkNow über die bestehende Aktion). */
+/** Zeile in „Heute fragen“: Name, Grund, ein Knopf „Empfehlungslink senden“ (am Handy kurz „Link senden“, der Kartentitel sagt wofür) (sendReferralLinkNow über die bestehende Aktion). */
 function HeuteRow({ c, primary, readOnly }: { c: HeuteItem; primary: boolean; readOnly: boolean }) {
   const [state, action, pending] = useActionState<ShareState, FormData>(sendReferralLinkAction, {});
   useEffect(() => {
@@ -532,7 +532,14 @@ function HeuteRow({ c, primary, readOnly }: { c: HeuteItem; primary: boolean; re
             <input type="hidden" name="leadId" value={c.id} />
             <input type="hidden" name="occasion" value={c.occasion ?? ""} />
             <Button type="submit" variant={primary ? "primary" : "secondary"} size="md" icon={Send} disabled={readOnly || pending} data-heute-send>
-              {pending ? "Sendet …" : "Link senden"}
+              {pending ? (
+                "Sendet …"
+              ) : (
+                <>
+                  <span className="sm:hidden">Link senden</span>
+                  <span className="hidden sm:inline">Empfehlungslink senden</span>
+                </>
+              )}
             </Button>
           </form>
         )}
@@ -785,7 +792,7 @@ export function SettingsForm({
             </label>
           </div>
           <label className="block">
-            <span className="font-medium">Nachfassen nach „Link senden“</span>
+            <span className="font-medium">Nachfassen nach einer Empfehlungsbitte</span>
             <select name="followUpHours" defaultValue={initial.followUpHours} className={selectClass}>
               {withValue(FOLLOWUP_CHOICES, initial.followUpHours).map((h) => (
                 <option key={h} value={h}>

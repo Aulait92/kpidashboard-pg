@@ -1179,13 +1179,13 @@ Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, d
 
 - **So ist die Seite aufgebaut (seit 19.11.2026):** Reiter **Übersicht | Teilen | Einstellungen**. Die Übersicht zeigt
   oben die geschätzte Provision aus Empfehlungen der letzten 90 Tage (mit Ihren Provisionssätzen, im Vergleich zu den
-  Modulkosten von 177 € je 90 Tage) und darunter Empfehlungen, Termine und Neukunden. Dann **Heute fragen**, dann
+  Modulkosten von 177 € je 90 Tage) und darunter Empfehlungen, Termine und Neukunden. Dann **Heute um Empfehlung bitten**, dann
   **Zu erledigen** (nur wenn etwas offen ist) und eine Zeile vom Link zum Neukunden mit einem Tipp. Alle Zahlen im Detail
   unter **Auswertung ansehen**. Gibt es noch keine Daten, zeigt die Übersicht drei Schritte zum Start (Google-Link,
   Angebot für Empfohlene, erster Empfehlungslink).
-- **Heute fragen:** Kunden, bei denen gerade ein guter Moment für eine Empfehlungsbitte ist, mit dem Grund: hat gelobt,
-  hat den Google-Link geöffnet, Termin vor kurzem (bis 14 Tage) oder Abschluss vor 21 Tagen oder mehr (bis ein Jahr).
-  Je Zeile ein Knopf **Link senden**, der den persönlichen Empfehlungslink per WhatsApp in Ihrem Namen schickt (nach einem
+- **Heute um Empfehlung bitten:** Kunden, bei denen gerade ein guter Moment für eine Empfehlungsbitte ist, mit dem Grund: hat gelobt,
+  wollte bei Google bewerten (Google-Link geöffnet), Termin vor kurzem (bis 14 Tage) oder Abschluss vor 21 Tagen oder mehr (bis ein Jahr).
+  Je Zeile ein Knopf **Link senden** (am Computer **Empfehlungslink senden**), der den persönlichen Empfehlungslink per WhatsApp in Ihrem Namen schickt (nach einem
   Termin mit dem Einstieg „Nach dem Jahresgespräch“). Es erscheinen nur Kunden mit Zustimmung, ohne STOPP, ohne Kritik
   oder offene Aufgabe „unzufrieden“, nicht auf „Nicht anfragen“, nicht in den letzten 90 Tagen gefragt (auch nicht per
   QR-Code) und unter der Obergrenze von 3 Empfehlungsbitten im Jahr. Höchstens 5 Zeilen sind sichtbar, der Rest unter
@@ -1244,7 +1244,7 @@ Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, d
 - **Im Termin zeigen:** Im Kontakt öffnet „Im Termin zeigen“ einen QR-Code zum persönlichen Link. Ihr Kunde scannt ihn
   und teilt die Empfehlung gleich am Tisch.
 - **Teilen:** Im Reiter **Teilen** steht der allgemeine Empfehlungslink als großer QR-Code mit „Link kopieren“, darunter
-  aufklappbar eine Zeile für Ihre **E-Mail-Signatur**. Persönliche Links senden Sie im Kontakt oder über „Heute fragen“.
+  aufklappbar eine Zeile für Ihre **E-Mail-Signatur**. Persönliche Links senden Sie im Kontakt oder über „Heute um Empfehlung bitten“.
   Dort steht auch der Bewertungs-Wächter für Ihr Google-Unternehmensprofil.
 - **Per WhatsApp schreiben:** Ist Ihr WhatsApp verbunden, kann die empfohlene Person unter dem Formular mit einem Tipp
   schreiben. Die Nachricht ist vorgeschrieben (mit kurzem Code zur Zuordnung) und landet als Lead mit Quelle „Empfehlung“

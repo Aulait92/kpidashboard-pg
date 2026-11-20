@@ -45,7 +45,7 @@ const ids = (rows: CandidateInput[]) => pickReferralCandidates(rows, NOW).ready.
 describe("Heute fragen: Gründe", () => {
   it("Lob vor Google-Klick vor Termin vor Abschluss", () => {
     expect(candidateReason(row({ review: { status: "answered", sentiment: "positive", googleClicks: 1, googleClickAt: ago(1), answeredAt: ago(2) } }), NOW)).toMatchObject({ reason: "lob", text: "Hat vor 2 Tagen gelobt" });
-    expect(candidateReason(row({ review: { status: "sent", sentiment: null, googleClicks: 1, googleClickAt: ago(1), answeredAt: null } }), NOW)).toMatchObject({ reason: "google", text: "Hat gestern den Google-Link geöffnet" });
+    expect(candidateReason(row({ review: { status: "sent", sentiment: null, googleClicks: 1, googleClickAt: ago(1), answeredAt: null } }), NOW)).toMatchObject({ reason: "google", text: "Wollte gestern bei Google bewerten" });
     expect(candidateReason(row({ closedAt: ago(200), lastAppointmentAt: ago(1) }), NOW)).toMatchObject({ reason: "termin", text: "Termin gestern" });
     expect(candidateReason(row({ closedAt: ago(24) }), NOW)).toMatchObject({ reason: "abschluss", text: "Abschluss vor 24 Tagen" });
   });
@@ -124,9 +124,9 @@ describe("Wert-Zeile und Texte", () => {
     expect(costMultiple(177)).toBeNull();
   });
 
-  it("Tipps und Hinweis ohne Gedankenstriche, Start-Tipp nennt „Heute fragen“", () => {
+  it("Tipps und Hinweis ohne Gedankenstriche, Start-Tipp nennt „Heute um Empfehlung bitten“", () => {
     const start = funnelHint({ linksSent: 0, linksOpened: 0, visitors: 0, leads: 0, closings: 0 });
-    expect(start.text).toMatch(/Heute fragen/);
+    expect(start.text).toMatch(/Heute um Empfehlung bitten/);
     const abschluss = funnelHint({ linksSent: 20, linksOpened: 12, visitors: 40, leads: 10, closings: 1 });
     expect(abschluss.text).toMatch(/hat mir erzählt/);
     for (const t of [start.text, abschluss.text, NO_CONSENT_ERROR]) expect(t).not.toMatch(/[–—]/);

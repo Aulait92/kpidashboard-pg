@@ -2,7 +2,7 @@
 // Google-Unternehmensprofil, neue Bewertungen mit KI-Antwortvorschlag, Auswertung.
 
 import Link from "next/link";
-import { AlertTriangle, ExternalLink, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ChevronDown, ExternalLink, ShieldCheck } from "lucide-react";
 import { Card, CardHeader, buttonClass } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { REPORT_HELP_URL, fallbackReply, gbpConnectEnabled, listLocations, waechterStats } from "@/lib/empfehlung/google-business";
@@ -26,9 +26,8 @@ function Pending({ text }: { text: string }) {
 
 export async function WaechterSection({ customerId, readOnly, flash }: { customerId: string; readOnly: boolean; flash: string | null }) {
   const conn = await prisma.googleBusinessConnection.findUnique({ where: { customerId } });
-  const guide = (
-    <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3 text-sm">
-      <summary className="cursor-pointer font-medium">Unberechtigte Bewertung? So melden Sie sie bei Google</summary>
+  const guideSteps = (
+    <>
       <ol className="mt-2 list-decimal space-y-1 pl-5 text-[color:var(--muted)]">
         <li>Melden Sie nur Bewertungen, die gegen Googles Richtlinien verstoßen (z. B. Spam, Beleidigung, Interessenkonflikt, nie Kunde gewesen). Kritik allein ist kein Grund.</li>
         <li>Im Google-Unternehmensprofil „Rezensionen lesen“ öffnen, bei der Bewertung „Melden“ wählen und den Grund angeben.</li>
@@ -38,9 +37,31 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
       <a href={REPORT_HELP_URL} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 font-semibold text-[color:var(--brand)] hover:underline">
         Offizielle Google-Hilfe: Unangemessene Rezensionen melden <ExternalLink className="h-3.5 w-3.5" />
       </a>
+    </>
+  );
+  const guide = (
+    <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3 text-sm">
+      <summary className="cursor-pointer font-medium">Unberechtigte Bewertung? So melden Sie sie bei Google</summary>
+      {guideSteps}
     </details>
   );
 
+  // Noch nicht verfügbar und nicht verbunden: nur die Melde-Hilfe, keine „Demnächst“-Karte (weniger ist mehr)
+  if (!conn && !gbpConnectEnabled() && flash !== "fehler" && flash !== "abgelehnt") {
+    return (
+      <Card>
+        <div id="bewertungen" className="scroll-mt-20" />
+        <details className="group text-sm" data-gbp-guide>
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3 font-semibold sm:px-5 [&::-webkit-details-marker]:hidden">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+            <span className="flex-1">Unberechtigte Google-Bewertung melden</span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
+          <div className="px-4 pb-4 sm:px-5">{guideSteps}</div>
+        </details>
+      </Card>
+    );
+  }
   let body: React.ReactNode;
   if (!conn) {
     body = (
