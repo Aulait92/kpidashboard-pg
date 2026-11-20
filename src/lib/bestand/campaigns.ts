@@ -20,10 +20,12 @@ import { BESTAND_SOURCE } from "@/lib/lead-herkunft";
 import { BLOCKED_REASON, chooseChannel, countAudience, asChannelMode, type AudienceCounts, type Channel, type ChannelMode, type ConsentSettings, type LegalBasis } from "@/lib/bestand/einwilligung";
 import { loadBestandAnsprache, loadConsentSettings, loadSuppression, optOutExisting, subjectOf, SUBJECT_SELECT, type Suppression } from "@/lib/bestand/einwilligung-server";
 import { afterSend, bounceCheck, innerGap, isBounceError, mailSlots, providerDailyLimit, type SendOutcome, type ThrottleState } from "@/lib/bestand/mail-drossel";
-import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, imprintFromWebsiteInfo, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
+import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, hasImprint, imprintFromWebsiteInfo, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
 import { classifyReply, isAutoReplyText } from "@/lib/vertrieb/sentiment";
 import { isExclusiveAgent, mayOffer, offeredLines } from "@/lib/bestand/befugnis";
 import { crossSellOffenWhere } from "@/lib/cross-sell-offen";
+import type { ProvisionOverrides } from "@/lib/provision";
+import { erwarteteProvision, nachEuro, provisionForLine, quotenFor, type EigeneZahlen, type Spanne } from "@/lib/bestand/potenzial";
 
 export type Occasion = "cross_sell" | "review" | "birthday" | "renewal" | "empfehlung";
 export type Segment = {
@@ -41,7 +43,7 @@ export type Segment = {
 };
 
 export const OCCASIONS: Record<Occasion, { label: string; hint: string; purpose: string }> = {
-  cross_sell: { label: "Lücke schließen", hint: "Kunden mit Sparte A, aber ohne Sparte B", purpose: "campaign_cross_sell" },
+  cross_sell: { label: "Weiteres Produkt anbieten", hint: "Kunden mit Sparte A, aber ohne Sparte B", purpose: "campaign_cross_sell" },
   review: { label: "Jahresgespräch", hint: "Vertragscheck: Passt noch alles?", purpose: "campaign_review" },
   birthday: { label: "Geburtstag", hint: "Gruß zum Geburtstag mit Gesprächsangebot", purpose: "campaign_birthday" },
   renewal: { label: "Ablauf / Wechsel", hint: "Verträge mit Ablauf oder Wechseltermin in Kürze", purpose: "campaign_renewal" },
@@ -238,10 +240,8 @@ export const WEITERES_PRODUKT_NAME = "Weiteres Produkt anbieten";
  * hat (Ausschließlichkeitsvertreter: nur angebotene Sparten), sonst „Absicherung“. Rein.
  */
 export function naheliegendesThema(lines: string[], offered: Set<string> | null): string {
-  for (const [has, lacks] of NEXT_BEST) {
-    if (lines.includes(has) && !lines.includes(lacks) && mayOffer(offered, lacks)) return TOPIC_LABEL[lacks] ?? lacks;
-  }
-  return "Absicherung";
+  const l = nextBestLine(lines, offered);
+  return l ? (TOPIC_LABEL[l] ?? l) : "Absicherung";
 }
 
 /** Sparte → Wort für die Nachricht („beim Thema Berufsunfähigkeit“). */
@@ -264,10 +264,47 @@ export async function offeredFor(customerId: string): Promise<Set<string> | null
   return offeredLines(c.vermittlerTyp, c.bestandSparten, lines);
 }
 
-export type Opportunity = { occasion: Occasion; segment: Segment; topic: string | null; title: string; count: number; whatsapp: number; email: number; excluded: number };
+/** Sparte für Überschriften („Kfz“ statt „KFZ“). */
+export const LINE_LABEL = (line: string) => (line === "KFZ" ? "Kfz" : line);
 
-/** „Chancen“: die größten Lücken und anstehende Anlässe mit der Zahl rechtlich erreichbarer Kunden. */
-export async function opportunities(customerId: string, now = new Date()): Promise<Opportunity[]> {
+/** Erste naheliegende Ergänzung (Sparte) zu den Sparten eines Kunden, die er anbieten darf; sonst null. Rein. */
+export function nextBestLine(lines: string[], offered: Set<string> | null): string | null {
+  for (const [has, lacks] of NEXT_BEST) {
+    if (lines.includes(has) && !lines.includes(lacks) && mayOffer(offered, lacks)) return lacks;
+  }
+  return null;
+}
+
+export type Opportunity = {
+  /** kampagne = Anlass zum Anschreiben; einwilligung = Kunden, die erst mit Einwilligung erreichbar werden */
+  kind: "kampagne" | "einwilligung";
+  occasion: Occasion;
+  segment: Segment;
+  topic: string | null;
+  /** Kurzer Titel ohne Zahl („Kfz-Kunden ohne Hausrat“) */
+  title: string;
+  /** Ein Satz für „Warum?“ */
+  why: string;
+  count: number;
+  whatsapp: number;
+  email: number;
+  excluded: number;
+  /** Erwartete Provision (Schätzung, ungerundet; nur intern für den Vermittler) */
+  euro: Spanne;
+  /** Quoten aus eigenen Kampagnen statt Standard */
+  ownQuotes: boolean;
+};
+
+/**
+ * „Chancen“ nach erwarteter Provision (lib/bestand/potenzial.ts): größte Lücken, anstehende Anlässe und die Bitte um
+ * Einwilligung als eigene Chance. Ausschließlichkeitsvertreter: nur Sparten nach mayOffer. rates = eigene Sätze aus
+ * „Meine Provisionen“, own = eigene Zahlen je Anlass (ab EIGENE_MIN angeschriebenen Kunden zählen sie).
+ */
+export async function opportunities(
+  customerId: string,
+  now = new Date(),
+  opts: { rates?: ProvisionOverrides; own?: Partial<Record<Occasion, EigeneZahlen>> } = {},
+): Promise<Opportunity[]> {
   const [cands, settings, sup, wa, c, offered] = await Promise.all([
     loadCandidates(customerId, now),
     loadConsentSettings(customerId),
@@ -277,51 +314,65 @@ export async function opportunities(customerId: string, now = new Date()): Promi
     offeredFor(customerId),
   ]);
   const mode = effectiveMode("whatsapp_first", wa?.status === "connected");
-  const plan = (o: Occasion, s: Segment) => planFromCandidates(cands, o, s, mode, settings, sup, now);
-  const opp = (o: Occasion, s: Segment, topic: string | null, title: string): Opportunity => {
-    const p = plan(o, s);
-    return { occasion: o, segment: s, topic, title, count: p.recipients.length, whatsapp: p.counts.whatsapp, email: p.counts.email, excluded: p.counts.excludedTotal };
+  const linesOf = new Map(cands.map((x) => [x.id, x.lines]));
+  const provCache = new Map<string, number>();
+  const prov = (line: string | null) => {
+    const k = line ?? "";
+    if (!provCache.has(k)) provCache.set(k, provisionForLine(line, opts.rates));
+    return provCache.get(k)!;
   };
-  const out: Opportunity[] = [];
+  // Durchschnittliche Provision der naheliegenden Ergänzung je Empfänger (Anlässe ohne feste Sparte)
+  const avgProv = (ids: string[]) => (ids.length ? ids.reduce((n, id) => n + prov(nextBestLine(linesOf.get(id) ?? [], offered)), 0) / ids.length : prov(null));
+  const opp = (o: Occasion, s: Segment, topic: string | null, title: string, why: string, line?: string): Opportunity => {
+    const p = planFromCandidates(cands, o, s, mode, settings, sup, now);
+    const ids = p.recipients.map((r) => r.id);
+    const q = quotenFor(o, opts.own?.[o]);
+    const euro = erwarteteProvision(ids.length, q, line ? prov(line) : avgProv(ids));
+    return { kind: "kampagne", occasion: o, segment: s, topic, title, why, count: ids.length, whatsapp: p.counts.whatsapp, email: p.counts.email, excluded: p.counts.excludedTotal, euro, ownQuotes: q.own };
+  };
+  const gaps: Opportunity[] = [];
   for (const [has, lacks] of NEXT_BEST) {
     // Ausschließlichkeitsvertreter: nur Sparten, die er anbietet
     if (!mayOffer(offered, lacks)) continue;
-    const o = opp("cross_sell", { has: [has], lacks: [lacks] }, TOPIC_LABEL[lacks] ?? lacks, `${has} ohne ${lacks}`);
-    if (o.count) out.push(o);
+    const topic = TOPIC_LABEL[lacks] ?? lacks;
+    const o = opp("cross_sell", { has: [has], lacks: [lacks] }, topic, `${LINE_LABEL(has)}-Kunden ohne ${topic}`, `Haben ${LINE_LABEL(has)} bei Ihnen, aber keine ${topic}.`, lacks);
+    if (o.count) gaps.push(o);
   }
-  out.sort((a, b) => b.count - a.count);
-  const top = out.slice(0, 4);
   const extra = [
-    opp("birthday", { birthdayDays: 30 }, null, "Geburtstag in den nächsten 30 Tagen"),
-    opp("renewal", { renewalDays: 60 }, null, "Ablauf/Wechsel in den nächsten 60 Tagen"),
-    opp("review", {}, null, "Jahresgespräch mit allen erreichbaren Kunden"),
-    ...(c?.empfehlungEnabled ? [opp("empfehlung", {}, null, "Jährliche Empfehlungsbitte")] : []),
-  ];
-  return [...top, ...extra.filter((o) => o.count)];
-}
-
-/**
- * Potenzial-Hinweis „312 Kunden ohne Hausrat noch nicht angeschrieben“: größte Lücke unter Kunden, die noch nie
- * angeschrieben wurden, nur ohne Abmeldung und mit Einwilligung (Cross-Selling geht ohnehin nur mit Einwilligung).
- */
-export async function potentialHint(customerId: string, now = new Date()): Promise<{ title: string; count: number; segment: Segment; topic: string } | null> {
-  const [all, settings, sup, wa, offered] = await Promise.all([
-    loadCandidates(customerId, now),
-    loadConsentSettings(customerId),
-    loadSuppression(customerId),
-    prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true } }),
-    offeredFor(customerId),
-  ]);
-  const never = all.filter((c) => !c.lastCampaignAt);
-  const mode = effectiveMode("whatsapp_first", wa?.status === "connected");
-  let best: { title: string; count: number; segment: Segment; topic: string } | null = null;
-  for (const [has, lacks] of NEXT_BEST) {
-    if (!mayOffer(offered, lacks)) continue;
-    const seg = { has: [has], lacks: [lacks] };
-    const n = planFromCandidates(never, "cross_sell", seg, mode, settings, sup, now).recipients.filter((r) => r.basis === "einwilligung").length;
-    if (n && (!best || n > best.count)) best = { title: `${n.toLocaleString("de-DE")} Kunden ohne ${TOPIC_LABEL[lacks] ?? lacks} noch nicht angeschrieben`, count: n, segment: seg, topic: TOPIC_LABEL[lacks] ?? lacks };
+    opp("renewal", { renewalDays: 60 }, null, "Vertrag läuft in 60 Tagen ab", "Guter Anlass für einen Vergleich, bevor gekündigt wird."),
+    opp("birthday", { birthdayDays: 30 }, null, "Geburtstag in den nächsten 30 Tagen", "Ein persönlicher Gruß öffnet das Gespräch."),
+    opp("review", {}, null, "Jahresgespräch", "Verträge prüfen: Passt Beitrag und Leistung noch?"),
+    ...(c?.empfehlungEnabled ? [opp("empfehlung", {}, null, "Um eine Empfehlung bitten", "Höchstens einmal im Jahr je Kunde.")] : []),
+  ].filter((o) => o.count);
+  const kampagnen = nachEuro([...nachEuro(gaps).slice(0, 4), ...extra]);
+  // Einwilligung als eigene Chance: nicht abgemeldet oder gesperrt, mit Kontaktweg, aber ohne Einwilligung für einen Kanal
+  const ohne = cands.filter((x) => {
+    const sub = subjectOf(x, sup);
+    if (sub.blockedAt || sub.optOutAt || sub.suppressed?.all) return false;
+    if (x.emailConsent === "ja" || x.whatsappConsent === "ja") return false;
+    const mailOpen = !!x.email && !x.emailOptOutAt && !sub.suppressed?.email && x.emailConsent !== "nein";
+    const waOpen = !!x.phone && x.whatsappConsent !== "nein";
+    return mailOpen || waOpen;
+  });
+  const out = [...kampagnen];
+  if (ohne.length) {
+    const avgGap = avgProv(ohne.map((x) => x.id));
+    out.push({
+      kind: "einwilligung",
+      occasion: "cross_sell",
+      segment: {},
+      topic: null,
+      title: "Erreichbar mit Einwilligung",
+      why: "Mit Einwilligung dürfen Sie diesen Kunden auch weitere Produkte anbieten.",
+      count: ohne.length,
+      whatsapp: 0,
+      email: 0,
+      excluded: 0,
+      euro: erwarteteProvision(ohne.length, quotenFor("einwilligung"), avgGap),
+      ownQuotes: false,
+    });
   }
-  return best;
+  return nachEuro(out);
 }
 
 /** Rechtlich erreichbar je Anlass (Übersicht „Wer darf wie angeschrieben werden?“). */
@@ -703,6 +754,9 @@ async function sendMailPart(
     now,
   );
   const imprint = cx.settings.imprint ?? imprintFromWebsiteInfo(cx.settings.websiteInfo);
+  // Impressum-Sperre auch beim Versand (Recht, 19.11.2026): ohne Pflichtangaben geht keine Kampagnen-Mail raus,
+  // die Empfänger bleiben in der Warteschlange, bis das Impressum hinterlegt ist (Start ist ohnehin gesperrt).
+  if (!hasImprint(imprint)) return out;
   const { advisorPerson } = await import("@/lib/lead-anrede");
   const sender = await prisma.user.findUnique({ where: { id: mb.userId }, select: { displayName: true } });
   const meinname = advisorPerson(c.customer.name, sender?.displayName ?? mb.fromName);

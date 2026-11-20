@@ -86,14 +86,27 @@ export function fillCampaignMail(tpl: { subject: string; body: string }, w: Mail
   return { subject: fill(tpl.subject).replace(/\s+:/g, ":").trim(), body: fill(tpl.body).trim() };
 }
 
-/** Fußzeile jeder Kampagnen-Mail: Absender, Abmeldelink, Pflichtangaben. */
+/**
+ * Fußzeile jeder Kampagnen-Mail: Absender, Widerspruchshinweis nach § 7 Abs. 3 Nr. 4 UWG mit Ein-Klick-Abmeldung
+ * (P0-2, 19.11.2026: Hinweis in jeder Mail, auch bei Einwilligung), Pflichtangaben. Zwei Absätze plus Impressum.
+ */
 export function campaignMailFooter(o: { firm: string; unsubscribeUrl: string; imprint: string | null; ansprache?: Ansprache }): string {
   const an = o.ansprache ?? "sie";
   return [
     a(an, `Du bekommst diese E-Mail als Kundin bzw. Kunde von ${o.firm}.`, `Sie erhalten diese E-Mail als Kundin bzw. Kunde von ${o.firm}.`),
-    a(an, `Keine E-Mails mehr? Mit einem Klick abmelden: ${o.unsubscribeUrl}`, `Keine E-Mails mehr? Mit einem Klick abmelden: ${o.unsubscribeUrl}`),
+    "",
+    a(
+      an,
+      `Du kannst der Nutzung deiner E-Mail-Adresse für Werbung jederzeit widersprechen, es entstehen dir dabei nur die üblichen Übermittlungskosten. Mit einem Klick abmelden: ${o.unsubscribeUrl}`,
+      `Sie können der Nutzung Ihrer E-Mail-Adresse für Werbung jederzeit widersprechen, es entstehen Ihnen dabei nur die üblichen Übermittlungskosten. Mit einem Klick abmelden: ${o.unsubscribeUrl}`,
+    ),
     ...(o.imprint?.trim() ? ["", o.imprint.trim()] : []),
   ].join("\n");
+}
+
+/** Liegen Pflichtangaben (Impressum) vor? Ohne sie geht keine Kampagnen-Mail raus (Start und Versand). */
+export function hasImprint(imprint: string | null | undefined): boolean {
+  return !!imprint?.trim();
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

@@ -473,6 +473,15 @@ export async function toggleCampaignAction(fd: FormData): Promise<void> {
   revalidatePath(`/buyer/bestand/kampagnen/${c.id}`);
 }
 
+/** Entwurf löschen (nur Entwürfe: nichts wurde verschickt; Empfänger fallen mit weg). */
+export async function deleteDraftCampaignAction(fd: FormData): Promise<void> {
+  const ctx = await ownerCtx();
+  const id = String(fd.get("id") ?? "");
+  const r = await prisma.customerCampaign.deleteMany({ where: { id, customerId: ctx.customerId, status: "draft" } });
+  if (r.count) await audit("bestand.entwurf_geloescht", { entity: "CustomerCampaign", entityId: id, customerId: ctx.customerId });
+  revalidatePath("/buyer/bestand");
+}
+
 export type EndState = { ok?: boolean; error?: string };
 
 /** Kampagne endgültig beenden (mit Bestätigung): keine weiteren Nachrichten, wartende Empfänger werden übersprungen. */

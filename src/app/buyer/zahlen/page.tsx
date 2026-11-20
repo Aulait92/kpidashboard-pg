@@ -119,7 +119,7 @@ export default async function BuyerPage({
           <a href="#pause" className={SPRUNG}>Pause</a>
           <a href="#monatsberichte" className={SPRUNG} data-sprung-monatsberichte>Monatsberichte</a>
           {bestandAn ? (
-            <a href="/buyer/bestand" className={SPRUNG}>Bestandskunden</a>
+            <a href="/buyer/bestand" className={SPRUNG}>Bestand</a>
           ) : null}
           {(await prisma.leadSubscription.count({ where: { customerId: session.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } })) > 0 ? (
             <a href="/buyer/bestellen" className={SPRUNG}>Leads bestellen</a>

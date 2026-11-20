@@ -156,7 +156,7 @@ export function SpartenForm({ all, selected, fromBestand, readOnly }: { all: str
   return (
     <form action={action} className="space-y-3 text-sm" data-sparten-form>
       <p className="text-[color:var(--muted)]">
-        Als Ausschließlichkeitsvertreter vermitteln Sie in der Regel nur Produkte Ihres Versicherers. Die App schlägt Kampagnen „Lücke schließen“ deshalb nur
+        Als Ausschließlichkeitsvertreter vermitteln Sie in der Regel nur Produkte Ihres Versicherers. Die App schlägt „Weiteres Produkt anbieten“ deshalb nur
         für Sparten vor, die Sie hier anhaken.{selected.length ? "" : " Noch nichts gespeichert: Vorgeschlagen werden die Sparten aus Ihrem Bestand."}
       </p>
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">

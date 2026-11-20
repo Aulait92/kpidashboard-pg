@@ -73,49 +73,51 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
         <ShieldCheck className="h-6 w-6" />
       </div>
       <h1 className="mt-4 text-2xl font-bold tracking-tight" data-consent-title>
-        {a(an, "Darf ich dich auf dem Laufenden halten?", "Darf ich Sie auf dem Laufenden halten?")}
+        {a(an, "Darf ich mich melden, wenn es bei deinen Verträgen etwas Wichtiges gibt?", "Darf ich mich melden, wenn es bei Ihren Verträgen etwas Wichtiges gibt?")}
       </h1>
       <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--muted)]">
-        {page.anrede}{" "}
-        {a(
-          an,
-          "darf ich dich über passende Angebote und Neuigkeiten zu deinen Verträgen informieren? Wähle einfach, auf welchem Weg.",
-          "darf ich Sie über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Wählen Sie einfach, auf welchem Weg.",
-        )}
+        {page.anrede} {a(an, "wähle, wie du informiert werden möchtest.", "wählen Sie, wie Sie informiert werden möchten.")}
       </p>
       {sp.err && ERRORS[sp.err] ? <p className="mt-4 rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800">{ERRORS[sp.err]}</p> : null}
-      <form action={action} className="mt-5 space-y-4">
-        <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3">
-          <label className="flex items-start gap-2 text-sm font-medium">
-            <input type="checkbox" name="email" className="mt-0.5 h-4 w-4" defaultChecked={!!page.email} data-consent-email />
+      <form action={action} className="mt-5 space-y-3">
+        {/* Rechtlich (UWG § 7, DSGVO Art. 7): nichts vorauswählen, beide Kanäle starten leer (P0-1, 19.11.2026) */}
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] has-[:checked]:border-[color:var(--brand)] has-[:checked]:bg-[color:var(--brand)]/5">
+          <label className="flex min-h-14 cursor-pointer items-center gap-3 px-4 py-3 text-base font-semibold">
+            <input type="checkbox" name="email" className="h-6 w-6 shrink-0 accent-[color:var(--brand)]" data-consent-email />
             <span>Per E-Mail</span>
           </label>
-          <input
-            name="emailAddress"
-            type="email"
-            defaultValue={page.email ?? ""}
-            autoComplete="email"
-            placeholder={a(an, "Deine E-Mail-Adresse", "Ihre E-Mail-Adresse")}
-            className="mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-base"
-          />
-          <p className="mt-1 text-xs text-[color:var(--muted)]">{a(an, "Du bekommst eine E-Mail mit einem Link zum Bestätigen.", "Sie bekommen eine E-Mail mit einem Link zum Bestätigen.")}</p>
+          <div className="px-4 pb-3">
+            <input
+              name="emailAddress"
+              type="email"
+              defaultValue={page.email ?? ""}
+              autoComplete="email"
+              aria-label={a(an, "Deine E-Mail-Adresse", "Ihre E-Mail-Adresse")}
+              placeholder={a(an, "Deine E-Mail-Adresse", "Ihre E-Mail-Adresse")}
+              className="h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-base"
+            />
+            <p className="mt-1 text-xs text-[color:var(--muted)]">{a(an, "Du bekommst einen Link zum Bestätigen.", "Sie bekommen einen Link zum Bestätigen.")}</p>
+          </div>
         </div>
-        <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3">
-          <label className="flex items-start gap-2 text-sm font-medium">
-            <input type="checkbox" name="whatsapp" className="mt-0.5 h-4 w-4" data-consent-whatsapp />
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] has-[:checked]:border-[color:var(--brand)] has-[:checked]:bg-[color:var(--brand)]/5">
+          <label className="flex min-h-14 cursor-pointer items-center gap-3 px-4 py-3 text-base font-semibold">
+            <input type="checkbox" name="whatsapp" className="h-6 w-6 shrink-0 accent-[color:var(--brand)]" data-consent-whatsapp />
             <span>Per WhatsApp</span>
           </label>
-          <input
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder={
-              page.phone
-                ? a(an, "Deine hinterlegte Nummer (oder eine andere eingeben)", "Ihre hinterlegte Nummer (oder eine andere eingeben)")
-                : a(an, "Deine Handynummer", "Ihre Handynummer")
-            }
-            className="mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-base"
-          />
+          <div className="px-4 pb-3">
+            <input
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              aria-label={a(an, "Deine Handynummer", "Ihre Handynummer")}
+              placeholder={
+                page.phone
+                  ? a(an, "Deine hinterlegte Nummer (oder eine andere eingeben)", "Ihre hinterlegte Nummer (oder eine andere eingeben)")
+                  : a(an, "Deine Handynummer", "Ihre Handynummer")
+              }
+              className="h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-base"
+            />
+          </div>
         </div>
         <input
           type="text"
@@ -128,7 +130,7 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
           className="absolute -left-[9999px] h-0 w-0 opacity-0"
         />
         <input type="hidden" name="rendered_at" value={String(nowMs())} />
-        <p className="text-xs leading-relaxed text-[color:var(--muted)]">
+        <p className="text-xs leading-relaxed text-[color:var(--muted)]" data-consent-text>
           {consentQuestion(page.advisor, ["email", "whatsapp"])} Hinweise in der{" "}
           <a href={page.privacyUrl} target="_blank" rel="noopener noreferrer" className="underline">
             Datenschutzerklärung
@@ -136,7 +138,7 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
           .
         </p>
         <SubmitButton pendingLabel="Wird gespeichert …" className={buttonClass("primary", "md", "h-12 w-full text-base")}>
-          Einverstanden
+          {a(an, "Ja, so informieren", "Ja, so informieren")}
         </SubmitButton>
         <p className="text-center text-xs text-[color:var(--muted)]">
           Ohne Auswahl passiert nichts. {a(an, "Du kannst diese Seite einfach schließen.", "Sie können diese Seite einfach schließen.")}

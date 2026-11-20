@@ -158,6 +158,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
         <div className="mb-5">
           <QuotaLowNotice
             quota={quota}
+            waiting={counts.whatsapp}
             booking={{ packs: PRICE_LIST.bestandPacks, months: PRICE_LIST.bestandPackMonths, individualFrom: PRICE_LIST.bestandPackIndividualFrom, readOnly: ctx.preview, blocker: packBlocker }}
           />
         </div>
