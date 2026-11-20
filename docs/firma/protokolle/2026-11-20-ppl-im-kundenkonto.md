@@ -44,3 +44,29 @@ Vor jedem Angebot: Umsatzsteuerfrage durch den Steuerberater klären. Nur Pilot,
 2. Bei grüner Vorprüfung Pilot mit 3 Maklern/Mehrfachvertretern, 4 Wochen, Mechanik nach CFO, Klauseln nach Recht.
 3. Allianz-Vertreter und kleine Mengen bleiben im bisherigen PPL über unser Konto, mit Vorkasse.
 4. Offen für Ole: Preis netto oder brutto, Software in den 35 € enthalten oder zusätzlich.
+
+## Nachtrag Ole (20.11.2026)
+- Sichtbare Marge ist „ein Ding“. Geprüfte Alternativen: „wir nehmen so viel wie Meta, höchstens 35 €“ (Fehlanreiz: wir
+  verdienen mehr, je teurer der Lead) und „Meta 1:1 plus feste Pauschale, höchstens 35 €“.
+- **Entscheidung Ole: Mechanik bleibt „35 € pro Lead minus Werbekosten“.** Sales-Verpackung: Rechnung zeigt Leads × Preis,
+  abzüglich bereits an Meta gezahlt, keine Margenzeile.
+- **Entscheidung Ole: 35 € sind Endpreis brutto, Software zusätzlich.** Unsere Nettogebühr je Lead = (35 € minus Meta-Kosten
+  inkl. 13b-Steuer) / 1,19, solange der Steuerberater die Gebühr als steuerpflichtig einstuft. Ist sie steuerfrei, gilt wieder brutto = netto.
+- **Entscheidung Ole: Abrechnung wöchentlich per Lastschrift** (Montag, Vorwoche; Stripe; Rücklastschrift = Kampagnen pausieren).
+- Vorprüfung: Umsatzsteuer voraussichtlich 19 % (`docs/recht/ust-ppl-im-kundenkonto-2026-11-20.md`); CPL gegen Budget mit
+  heutigen Daten offen (`docs/firma/analysen/2026-11-20-cpl-gegen-budget.md`), Nachweis per Kontotest im Pilot.
+- **Entscheidung Ole: Software ab 50 Leads im Monat inklusive**, darunter Software-Abo zusätzlich. Auf der Rechnung steht die
+  Software trotzdem als eigene Position (349 € netto), der Leadteil sinkt entsprechend (Software-Umsatz für die Bewertung,
+  in den Kennzahlen getrennt als „Software aus Paketen“ ausweisen). Nur im neuen Modell, nicht im steuerfreien PPL aus unserem Konto.
+- **Entscheidung Ole (ersetzt „ab 50 Leads“): Software inklusive ab 1.750 € Leadumsatz im Monat** (brutto, z. B. 50
+  Privatschutz-, rund 80 Hunde- oder rund 100 Katzen-Leads); so bleiben je Produkt mindestens etwa 600 € Marge.
+- Rechnung je Produkt (Endpreis brutto, CPL netto, 1 € Tool, ohne Storno; heute = steuerfrei aus unserem Konto):
+  Katze 2 €/17 €: heute 13,62 €, neu 11,29 €; Hund 10 €/22 €: heute 9,10 €, neu 7,49 €; Privatschutz 10 €/35 €: heute 22,10 €, neu 18,41 €.
+  Empfehlung (noch nicht ausdrücklich bestätigt): neues Modell vorerst nur für Privatschutz und ähnlich margenstarke Produkte;
+  Katze bleibt im bisherigen Modell (kaum Liquiditätsvorteil, sichtbare Marge 2 € gegen 17 €), Hund eher bisherig oder Preis erhöhen.
+- **Entscheidung Ole: Kindersparplan (65 € brutto je Lead) als Produkt für das neue Modell neben Privatschutz.** Leadpreis bei
+  Meta etwa 20 € netto (Ole). Kindersparplan ist schon heute steuerpflichtig (19 %, `src/lib/ppl/steuer.ts`), daher im neuen
+  Modell keine Margeneinbuße: Kunde zahlt Meta 23,80 € (inkl. § 13b), unsere Rechnung 41,20 € brutto = 34,62 € netto, nach
+  1 € Tool **33,62 € je Lead** (mit 10 % Storno 28,16 €), gleich wie heute aus unserem Konto. Null bei etwa 53 € CPL (mit
+  Storno etwa 48 €). Software inklusive ab 27 Leads im Monat (1.750 € Leadumsatz). Achtung: Abnehmer brauchen § 34f
+  (oder Haftungsdach), nicht nur § 34d; Meta-Einschränkungen für Finanzwerbung beim ersten Kunden prüfen (Recht).
