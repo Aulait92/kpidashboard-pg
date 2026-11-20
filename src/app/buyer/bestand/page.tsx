@@ -336,7 +336,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                   <p className="text-sm font-medium">
                     Für Angebote erreichbar: <b className="tabular-nums">{pct(offer.share)}</b>
                   </p>
-                  <span className="text-xs text-[color:var(--muted)]">Ziel {pct(OFFER_REACH_GOAL)}</span>
+                  <span className="text-xs text-[color:var(--muted)]">{offer.share >= OFFER_REACH_GOAL ? `Ziel ${pct(OFFER_REACH_GOAL)} erreicht` : `Ziel ${pct(OFFER_REACH_GOAL)}`}</span>
                 </div>
                 <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken)]" aria-hidden>
                   <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${Math.min(100, Math.round(offer.share * 100))}%` }} />
@@ -591,7 +591,8 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                         waWindowOpen: !!e.phone && waOpen.has(e.phone),
                         readOnly: ctx.preview,
                       }}
-                      needsConsent={!e.optOutAt && !e.blockedAt && !reachableForOffers(subjectOf(e, suppression)) && (!!e.email || !!e.phone)}
+                      // Beschrifteter Knopf nur im Filter „Ohne Einwilligung“ (sonst eine Wand gleicher Knöpfe), sonst im Menü
+                      needsConsent={filter === "ohne" && !e.optOutAt && !e.blockedAt && !reachableForOffers(subjectOf(e, suppression)) && (!!e.email || !!e.phone)}
                       hasPhone={!!e.phone}
                       referral={c.empfehlungEnabled && !e.optOutAt && !e.blockedAt}
                       blocked={!!e.blockedAt}

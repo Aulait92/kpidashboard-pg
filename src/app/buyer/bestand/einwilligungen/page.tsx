@@ -91,7 +91,7 @@ export default async function EinwilligungenPage({ searchParams }: { searchParam
               <span className="text-3xl font-semibold tabular-nums" data-consent-share>
                 {pct(share)}
               </span>
-              <span className="text-sm text-[color:var(--muted)]">Ziel {pct(goal)}</span>
+              <span className="text-sm text-[color:var(--muted)]">{share >= goal ? `Ziel ${pct(goal)} erreicht` : `Ziel ${pct(goal)}`}</span>
             </div>
             <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken)]" aria-hidden>
               <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${Math.min(100, Math.round(share * 100))}%` }} />
