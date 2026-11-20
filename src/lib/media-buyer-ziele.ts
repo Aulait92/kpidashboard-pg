@@ -269,10 +269,9 @@ export function customersBehind(
 /**
  * Schonlauf beim Wechsel der Zielquelle mitten im Monat: Hat der letzte echte
  * Lauf dieses Monats mit der anderen Quelle gesteuert und weicht das Ziel ab,
- * wird in diesem Lauf nichts verändert (kein Pausieren, keine Budgetänderung).
- * Ab dem nächsten Lauf greifen die normalen Regeln (Lernphase ±20 % je
- * Schritt). Ein Lauf ohne gespeicherte Quelle gilt als Airtable (vor der
- * Umstellung).
+ * gilt in diesem Lauf die Schrittgrenze (±20 %) und es wird nicht pausiert
+ * (limitForSourceSwitch). Ab dem nächsten Lauf greifen die normalen Regeln.
+ * Ein Lauf ohne gespeicherte Quelle gilt als Airtable (vor der Umstellung).
  */
 export function holdForSourceSwitch(p: {
   source: GoalSource;
@@ -284,4 +283,37 @@ export function holdForSourceSwitch(p: {
   const from: GoalSource = p.last.goalSource === "software" ? "software" : "airtable";
   if (from === p.source || p.last.goal === p.goal) return { hold: false, from, prevGoal: p.last.goal };
   return { hold: true, from, prevGoal: p.last.goal };
+}
+
+type StepDecision = {
+  action: "increase" | "decrease" | "pause" | "activate" | "boost" | "none";
+  reason: string;
+  targetBudget: number | null;
+  setStatus: "ACTIVE" | "PAUSED" | null;
+};
+
+/** Begrenzt eine Entscheidung im Wechsel-Lauf: kein Pausieren, höchstens ±step. */
+export function limitForSourceSwitch<T extends StepDecision>(p: {
+  decision: T;
+  currentBudget: number;
+  note: string;
+  step?: number;
+}): { decision: T; changed: boolean } {
+  const step = p.step ?? 0.2;
+  const d = p.decision;
+  if (d.setStatus === "PAUSED") {
+    return {
+      decision: { ...d, action: "none", setStatus: null, targetBudget: null, reason: `${p.note}: nicht pausiert. Geplant war: ${d.reason}` },
+      changed: true,
+    };
+  }
+  if (d.targetBudget == null || p.currentBudget <= 0) return { decision: d, changed: false };
+  const lo = p.currentBudget * (1 - step);
+  const hi = p.currentBudget * (1 + step);
+  if (d.targetBudget >= lo && d.targetBudget <= hi) return { decision: d, changed: false };
+  const target = Math.min(hi, Math.max(lo, d.targetBudget));
+  return {
+    decision: { ...d, targetBudget: target, reason: `${p.note}: Schritt auf ±${Math.round(step * 100)} % begrenzt. ${d.reason}` },
+    changed: true,
+  };
 }

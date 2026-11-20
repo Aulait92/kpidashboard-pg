@@ -100,12 +100,23 @@ import {
   customersBehind,
   goalSourceFromEnv,
   holdForSourceSwitch,
+  limitForSourceSwitch,
   subscriptionMonthGoal,
   type GoalSource,
   type GoalSubscription,
   type PoolCustomerGoal,
   type SubscriptionGoal,
 } from "@/lib/media-buyer-ziele";
+import {
+  applyRegionGuard,
+  evaluateRegionCase,
+  openPriceAndTax,
+  regionOnlyOpen,
+  usableShare,
+  type OpenSubscription,
+  type RegionCheck,
+} from "@/lib/media-buyer-regionen";
+import { effectivePlzRanges } from "@/lib/ppl/rules";
 import {
   applyMonthlyCap,
   applyPriceGuard,
@@ -158,6 +169,13 @@ export type PoolResult = {
   // Preisgrenze je Lead (EUR) und ob der 7-Tage-CPL darüber lag.
   maxCpl?: number | null;
   cplOverMax?: boolean;
+  // Zielquelle (software | airtable) dieser Entscheidung.
+  goalSource?: GoalSource;
+  // Regionen-Rechnung (nur regionale Bezüge offen) und ob über Break-even.
+  regionNote?: string | null;
+  regionOverBreakEven?: boolean;
+  // Kunden unter 95 % ihres Ziels, obwohl die Pool-Summe erreicht ist.
+  customersBehind?: string[];
   error?: string;
 };
 
@@ -416,6 +434,10 @@ export type PoolDef = {
   taxFreeShare: number;
   // Ziel und Geliefertes je Kunde (gewählte Quelle).
   customers: (PoolCustomerGoal & { name: string })[];
+  // Produkt-Schlüssel der Bezüge (PoolLead.productKey) und je Bezug die offene
+  // Menge mit PLZ-Filter (Regionen-Rechnung, media-buyer-regionen.ts).
+  productKeys: string[];
+  openSubscriptions: OpenSubscription[];
 };
 
 function isKinderwunschCampaign(name: string): boolean {
@@ -491,13 +513,17 @@ type PoolAcc = {
   displayName: string;
   airtable: Map<string, number>; // customerId → effektives Airtable-Ziel
   software: SubscriptionGoal[];
+  // Bezüge mit wirksamem PLZ-Filter (für die Regionen-Rechnung).
+  softwareRows: SoftwareGoalRow[];
 };
 
 // Lädt die Bezüge der Software samt Bestellungen und Gelieferten und rechnet
 // je Bezug das Soll des laufenden Monats (Modell: lib/media-buyer-ziele.ts).
-async function loadSoftwareGoals(now: Date): Promise<
-  { sub: { productKey: string; customerId: string; region: string | null }; goal: SubscriptionGoal }[]
-> {
+type SoftwareGoalRow = {
+  sub: { productKey: string; customerId: string; region: string | null; plzRanges: string | null };
+  goal: SubscriptionGoal;
+};
+async function loadSoftwareGoals(now: Date): Promise<SoftwareGoalRow[]> {
   const monthStart = startOfMonth(now);
   const monthEnd = new Date(endOfMonth(now).getTime() + 1);
   const subs = await prisma.leadSubscription.findMany({
@@ -513,6 +539,7 @@ async function loadSoftwareGoals(now: Date): Promise<
       startDate: true,
       price: true,
       steuer: true,
+      plzRanges: true,
       customer: {
         select: {
           region: true,
@@ -522,7 +549,7 @@ async function loadSoftwareGoals(now: Date): Promise<
           vermittlerGeprueftAt: true,
         },
       },
-      areas: { select: { quantity: true, period: true } },
+      areas: { select: { quantity: true, period: true, plzRanges: true } },
       // Bestellungen, die den Monat berühren können (inkl. der Woche über den
       // Monatsanfang); die jüngste ist für die Verlängerung maßgeblich.
       orders: {
@@ -591,7 +618,12 @@ async function loadSoftwareGoals(now: Date): Promise<
       orders: s.orders.map((o) => ({ ...o, delivered: orderCount.get(o.id) ?? 0 })),
     };
     return {
-      sub: { productKey: s.productKey, customerId: s.customerId, region: s.customer.region },
+      sub: {
+        productKey: s.productKey,
+        customerId: s.customerId,
+        region: s.customer.region,
+        plzRanges: effectivePlzRanges(s.plzRanges, s.areas),
+      },
       goal: subscriptionMonthGoal(input, window),
     };
   });
@@ -661,6 +693,7 @@ export async function derivePoolDefs(
         displayName: displayByKey.get(canonicalKey) ?? canonicalKey,
         airtable: new Map(),
         software: [],
+        softwareRows: [],
       };
       accs.set(key, acc);
     }
@@ -683,7 +716,10 @@ export async function derivePoolDefs(
   for (const { sub, goal } of await loadSoftwareGoals(now)) {
     if (goal.soll <= 0 && goal.price <= 0) continue;
     const acc = accFor(canonicalProductKey(sub.productKey), sub.region);
-    if (acc) acc.software.push(goal);
+    if (acc) {
+      acc.software.push(goal);
+      acc.softwareRows.push({ sub, goal });
+    }
   }
 
   // Jedes aktive Produkt sichtbar machen, auch ohne Lead-Ziel (Monitoring).
@@ -757,6 +793,15 @@ export async function derivePoolDefs(
         .sort((a, b) => b.goal - a.goal),
       customerIds: acc.kind === "product" ? null : regionCustomers,
       customerCount: selected.filter((c) => c.goal > 0).length,
+      productKeys: [...new Set(acc.softwareRows.map((r) => r.sub.productKey))],
+      openSubscriptions: acc.softwareRows.map((r) => ({
+        customerId: r.sub.customerId,
+        name: nameById.get(r.sub.customerId) ?? r.sub.customerId,
+        open: r.goal.fest + r.goal.erwartet,
+        plzRanges: r.sub.plzRanges,
+        price: r.goal.price,
+        taxFree: r.goal.taxFree,
+      })),
     });
   }
   return defs;
@@ -1315,6 +1360,87 @@ async function loadPoolMaxCpl(
   return { ...res, taxFreeShare: res.taxFreeShare ?? 0 };
 }
 
+// Regionen-Rechnung (media-buyer-regionen.ts): Sind im bundesweiten
+// Produkt-Pool nur noch Bezüge mit PLZ-Grenze offen, wird geprüft, ob sich die
+// bundesweiten Anzeigen noch lohnen. CPL hier je EINGEGANGENEM Lead (Pool-
+// Eingang, alle Status, Spend und Leads im selben 7-Tage-Fenster), Anteil aus
+// den letzten MEDIA_BUYER_REGION_DAYS (30, mindestens 14) Tagen.
+async function loadRegionCheck(
+  def: PoolDef,
+  p: { now: Date; recentSince: Date; recentSpend: number },
+): Promise<RegionCheck | null> {
+  if (def.kind !== "product" || def.goal <= 0 || def.goalSource !== "software") return null;
+  const open = regionOnlyOpen(def.openSubscriptions);
+  if (!open || def.productKeys.length === 0 || p.recentSpend <= 0) return null;
+  const days = Math.max(14, envNum("MEDIA_BUYER_REGION_DAYS", 30));
+  const shareSince = new Date(p.now.getTime() - days * 86_400_000);
+  const [incomingRecent, sampleRows] = await Promise.all([
+    prisma.poolLead.count({
+      where: { productKey: { in: def.productKeys }, createdAt: { gte: p.recentSince, lte: p.now } },
+    }),
+    prisma.poolLead.findMany({
+      where: {
+        productKey: { in: def.productKeys },
+        createdAt: { gte: shareSince, lte: p.now },
+      },
+      select: { plz: true, status: true },
+    }),
+  ]);
+  if (incomingRecent === 0) return null;
+  // Verwertbar = gültiger Lead (keine Dublette, nicht ungültig) mit PLZ in einer offenen Region.
+  const ranges = open.map((o) => o.plzRanges!).filter(Boolean);
+  const plzs = sampleRows.map((r) => (r.status === "duplicate" || r.status === "invalid" ? null : r.plz));
+  const share = usableShare(plzs, ranges);
+  const { price, taxFreeShare } = openPriceAndTax(open);
+  const since = new Date(p.now.getTime() - 30 * 86_400_000);
+  const leadWhere = {
+    source: def.product,
+    isTest: false,
+    createdAt: { gte: since, lte: p.now },
+    customerId: { in: open.map((o) => o.customerId) },
+  };
+  const [delivered, cancelled] = await Promise.all([
+    prisma.lead.count({ where: leadWhere }),
+    prisma.lead.count({ where: { ...leadWhere, stornoState: "approved" } }),
+  ]);
+  const breakEven = computeMaxCpl({
+    poolOverride: null,
+    envOverride: null,
+    leadPrices: price != null ? [price] : [],
+    stornoRate: stornoRate(delivered, cancelled, envNum("MEDIA_BUYER_STORNO_MIN_LEADS", 20)),
+    defaultStorno: envNum("MEDIA_BUYER_DEFAULT_STORNO", 0.1),
+    taxFreeShare,
+    rcVat: rcVat(),
+  }).value;
+  return evaluateRegionCase({
+    open,
+    cpl: p.recentSpend / incomingRecent,
+    share,
+    sample: sampleRows.length,
+    breakEven,
+    minSample: envNum("MEDIA_BUYER_REGION_MIN_LEADS", 30),
+  });
+}
+
+// Push höchstens einmal je Tag und Pool und Art (aus dem eigenen Log).
+async function alertedToday(
+  poolKey: string,
+  now: Date,
+  field: "regionOverBreakEven" | "customersBehind",
+): Promise<boolean> {
+  const since = new Date(now.getTime() - 24 * 3_600_000);
+  const row = await prisma.mediaBuyerAction.findFirst({
+    where: {
+      poolKey,
+      dryRun: false,
+      createdAt: { gte: since },
+      ...(field === "regionOverBreakEven" ? { regionOverBreakEven: true } : { customersBehind: { not: null } }),
+    },
+    select: { id: true },
+  });
+  return row != null;
+}
+
 async function processPool(
   def: PoolDef,
   settings: PoolSettings,
@@ -1348,6 +1474,7 @@ async function processPool(
     googleLeadsMtd: 0,
     googleSpendMtd: 0,
     googleCpl: null,
+    goalSource: def.goalSource,
   };
 
   try {
@@ -1360,6 +1487,24 @@ async function processPool(
         : 0;
     base.leadsMtd = leadsMtd;
     base.projected = projected;
+
+    // ── Rückstand je Kunde: Pool-Summe erreicht, aber ein Kunde unter 95 % ──
+    const behind = customersBehind({ goal: def.goal, leadsMtd, customers: def.customers });
+    if (behind.length > 0) {
+      const named = def.customers.filter((c) => behind.some((b) => b.customerId === c.customerId));
+      base.customersBehind = named.map((c) => c.name);
+      if (!ctx.dryRun && !(await alertedToday(def.key, ctx.now, "customersBehind"))) {
+        const list = named
+          .map((c) => `${c.name} ${c.delivered}/${c.goal} (${Math.round((c.delivered / c.goal) * 100)} %)`)
+          .join(", ");
+        await sendToAdmins({
+          title: `Media Buyer: ${def.label} Ziel erreicht, Kunde im Rückstand`,
+          body: `Pool-Summe ${leadsMtd}/${def.goal} erreicht, aber unter 95 %: ${list}. Filter/Gebiete prüfen, bevor gedrosselt wird.`.slice(0, 240),
+          tag: `media-buyer-rueckstand:${def.key}`,
+          url: "/admin/media-buyer",
+        }).catch(() => undefined);
+      }
+    }
 
     // Channel-Breakdown: getrennte Lead-Zähler und Spend aus den Cost-Tabellen
     // bzw. den Ad-APIs. Wird auch dann ausgewertet, wenn nur einer der drei
@@ -1632,6 +1777,36 @@ async function processPool(
       }
     }
 
+    // ── Regionen-Rechnung: nur regionale Bezüge offen ──
+    const regionCheck = await loadRegionCheck(def, {
+      now: ctx.now,
+      recentSince: ctx.recentSince,
+      recentSpend: recentTotalSpend,
+    });
+    if (regionCheck) {
+      base.regionNote = regionCheck.message;
+      base.regionOverBreakEven = regionCheck.verdict !== "weiter";
+      decision = applyRegionGuard({
+        decision,
+        currentBudget,
+        minBudget: ctx.minBudget,
+        check: regionCheck,
+        step: ctx.learningCfg.maxStep,
+      }).decision;
+      if (
+        base.regionOverBreakEven &&
+        !ctx.dryRun &&
+        !(await alertedToday(def.key, ctx.now, "regionOverBreakEven"))
+      ) {
+        await sendToAdmins({
+          title: `Media Buyer: ${def.label} nur Regionen offen`,
+          body: regionCheck.message.slice(0, 240),
+          tag: `media-buyer-region:${def.key}`,
+          url: "/admin/media-buyer",
+        }).catch(() => undefined);
+      }
+    }
+
     // ── Monats-Gesamtgrenze (optional) ──
     if (ctx.monthlyCap) {
       const capped = applyMonthlyCap({
@@ -1698,6 +1873,29 @@ async function processPool(
         base.learningStatus = "LEARNING";
         base.learningSince = ctx.now;
       }
+    }
+
+    // ── Wechsel der Zielquelle: erster Lauf mit neuer Quelle ohne Sprung ──
+    const lastRun = await prisma.mediaBuyerAction.findFirst({
+      where: { poolKey: def.key, dryRun: false },
+      orderBy: { createdAt: "desc" },
+      select: { goalSource: true, leadsGoal: true, createdAt: true },
+    });
+    const sw = holdForSourceSwitch({
+      source: def.goalSource,
+      goal: def.goal,
+      last: lastRun ? { goalSource: lastRun.goalSource, goal: lastRun.leadsGoal, at: lastRun.createdAt } : null,
+      monthStart: ctx.monthStart,
+    });
+    if (sw.hold) {
+      const limited = limitForSourceSwitch({
+        decision,
+        currentBudget,
+        note: `Zielquelle gewechselt (${sw.from} ${sw.prevGoal} → ${def.goalSource} ${def.goal})`,
+        step: ctx.learningCfg.maxStep,
+      });
+      decision = limited.decision;
+      if (limited.changed && protectStep == null) protectStep = ctx.learningCfg.maxStep;
     }
 
     base.action = decision.action;
@@ -2325,6 +2523,11 @@ async function persistAndNotify(
             : null,
         maxCpl: r.maxCpl ?? null,
         cplOverMax: r.cplOverMax ?? false,
+        goalSource: r.goalSource ?? null,
+        regionNote: r.regionNote ?? null,
+        regionOverBreakEven: r.regionOverBreakEven ?? false,
+        customersBehind:
+          r.customersBehind && r.customersBehind.length > 0 ? r.customersBehind.join(", ") : null,
       },
     });
   }
@@ -2396,6 +2599,18 @@ export type PoolAdminRow = {
   learningLabel: string | null;
   // Höchstpreis je Lead (EUR); null = „Höchstpreis fehlt" (keine Erhöhungen).
   maxCpl: number | null;
+  // Anteil steuerfreier Leads im Höchstpreis (> 0 → „inkl. nicht abziehbarer USt").
+  maxCplTaxFreeShare: number;
+  // Zielquelle und beide Ziele zum Vergleich.
+  goalSource: GoalSource;
+  softwareGoal: number;
+  airtableGoal: number;
+  // Ziel und Geliefertes je Kunde (gewählte Quelle).
+  customers: { customerId: string; name: string; goal: number; delivered: number }[];
+  // Letzte Regionen-Rechnung (nur regionale Bezüge offen) bzw. Kunden im Rückstand.
+  regionNote: string | null;
+  regionOverBreakEven: boolean;
+  customersBehind: string | null;
 };
 
 // Pools + aktuelle Ist-Leads + Pacing + letzte Entscheidung für die Admin-
@@ -2463,6 +2678,9 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       reason: true,
       learningStatus: true,
       learningSince: true,
+      regionNote: true,
+      regionOverBreakEven: true,
+      customersBehind: true,
     },
   });
   const latestByKey = new Map(latest.map((l) => [l.poolKey, l]));
@@ -2538,6 +2756,14 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
         learningDays,
       ),
       maxCpl: maxCpl.value,
+      maxCplTaxFreeShare: maxCpl.source === "break-even" ? maxCpl.taxFreeShare : 0,
+      goalSource: def.goalSource,
+      softwareGoal: def.softwareGoal,
+      airtableGoal: def.airtableGoal,
+      customers: def.customers,
+      regionNote: last?.regionNote ?? null,
+      regionOverBreakEven: last?.regionOverBreakEven ?? false,
+      customersBehind: last?.customersBehind ?? null,
     });
   }
   return rows;
