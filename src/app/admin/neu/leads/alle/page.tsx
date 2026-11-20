@@ -1,6 +1,6 @@
 import { statusLabel } from "@/lib/products";
 import Link from "next/link";
-import { Download, Inbox, Phone } from "lucide-react";
+import { Download, FlaskConical, Inbox, Phone } from "lucide-react";
 import { Badge, ButtonLink, Card, EmptyState } from "@/components/ui";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { Seite } from "@/components/admin-neu/ui/seite";
@@ -8,18 +8,22 @@ import { Ansichten } from "@/components/admin-neu/leads/ansichten";
 import { isStorno, loadAdminLeads, priceOf, type LeadFilter } from "@/lib/admin-leads";
 import { searchDeliveredLeads } from "@/lib/ppl/admin-leads";
 import { prisma } from "@/lib/prisma";
+import { nowMs } from "@/lib/now";
 import { StornoEintragen, StornoZuruecknehmen } from "@/app/admin/ppl/storno-eintragen";
 import { ErneutZustellen } from "@/app/admin/ppl/erneut-zustellen";
 import { TestLeadBadge } from "@/components/test-lead-badge";
 
 export const metadata = { title: "Alle Leads | performancegrowth Admin" };
 
-// Leads & Kampagnen → Alle Leads: alle Leads aller Kunden mit Filtern und CSV-Export (wie /admin/leads).
-// Ansicht „Pay-per-Lead geliefert“ ersetzt die frühere PPL-Ansicht „Gelieferte Leads“: Suche auch nach Lead-ID und
+// Liefern → Leads: alle Leads aller Kunden mit Filtern und CSV-Export (wie /admin/leads).
+// Ansicht „Pay-per-Lead“ ersetzt die frühere PPL-Ansicht „Gelieferte Leads“: Suche auch nach Lead-ID und
 // Bezug, Storno von Hand eintragen oder zurücknehmen (Bausteine aus /admin/ppl).
+// UX-Umbau 20.11.2026: ohne Filter die letzten 7 Tage, 25 Zeilen und „Mehr laden“ (vorher 100 je Seite, am Handy die
+// längste Seite des Admins). Suche und Filter gelten für den ganzen Zeitraum. Oben rechts „A/B-Tests“ (kein Reiter mehr).
 
 const PFAD = "/admin/neu/leads/alle";
-const PAGE = 100;
+const SCHRITT = 25;
+const STANDARD_TAGE = 7;
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 const dt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
@@ -35,17 +39,26 @@ const STORNO_STATE: Record<string, { label: string; tone: "warning" | "danger" |
   rejected: { label: "Storno abgelehnt", tone: "neutral" },
 };
 
-type Suche = LeadFilter & { seite?: string; art?: string; bezug?: string };
+type Suche = LeadFilter & { seite?: string; art?: string; bezug?: string; anzahl?: string };
 
 export default async function Page({ searchParams }: { searchParams: Promise<Suche> }) {
   const sp = await searchParams;
   const ppl = sp.art === "ppl";
   const ansichten = [
     { key: "", label: "Alle", href: PFAD },
-    { key: "ppl", label: "Pay-per-Lead geliefert", href: `${PFAD}?art=ppl`, funktion: "page-geliefert--gelieferte-leads-suchen-name-telefon-e-mail-id" },
+    { key: "ppl", label: "Pay-per-Lead", href: `${PFAD}?art=ppl`, funktion: "page-geliefert--gelieferte-leads-suchen-name-telefon-e-mail-id" },
   ];
   return (
-    <Seite titel="Liefern" reiter="liefern" breit>
+    <Seite
+      titel="Liefern"
+      reiter="liefern"
+      breit
+      aktionen={
+        <ButtonLink href="/admin/neu/leads/ab-tests" variant="secondary" size="md" icon={FlaskConical}>
+          A/B-Tests
+        </ButtonLink>
+      }
+    >
       <Ansichten items={ansichten} aktiv={ppl ? "ppl" : ""} />
       {ppl ? <Geliefert sp={sp} /> : <Alle sp={sp} />}
     </Seite>
@@ -53,11 +66,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
 }
 
 async function Alle({ sp }: { sp: Suche }) {
-  const page = Math.max(1, Number(sp.seite) || 1);
-  const filter: LeadFilter = { q: sp.q, kunde: sp.kunde, produkt: sp.produkt, status: sp.status, von: sp.von, bis: sp.bis, monat: sp.monat };
-  const { leads, total, customers, products, sums, stornos } = await loadAdminLeads(filter, page, PAGE);
+  const anzahl = Math.max(SCHRITT, Number(sp.anzahl) || SCHRITT);
+  const gewaehlt: LeadFilter = { q: sp.q, kunde: sp.kunde, produkt: sp.produkt, status: sp.status, von: sp.von, bis: sp.bis, monat: sp.monat };
+  // Ohne Suche und Filter: die letzten 7 Tage (Standard statt endloser Liste)
+  const standard = !Object.values(gewaehlt).some(Boolean);
+  const filter: LeadFilter = standard ? { von: new Date(nowMs() - STANDARD_TAGE * 86_400_000).toISOString().slice(0, 10) } : gewaehlt;
+  const { leads, total, customers, products, sums, stornos } = await loadAdminLeads(filter, 1, anzahl);
   const qs = new URLSearchParams(Object.entries(filter).filter(([, v]) => v) as [string, string][]);
-  const pages = Math.max(1, Math.ceil(total / PAGE));
+  const mehr = new URLSearchParams(Object.entries(gewaehlt).filter(([, v]) => v) as [string, string][]);
+  mehr.set("anzahl", String(anzahl + SCHRITT));
   const months = Array.from({ length: 12 }, (_, i) => {
     const d = new Date();
     d.setUTCDate(1);
@@ -69,6 +86,7 @@ async function Alle({ sp }: { sp: Suche }) {
     <div data-funktion="page--alle-leads-aller-kunden-mit-status-und-preis">
       <div data-funktion="page-morefilters--filter-kunde-produkt-status-zeitraum-monat-oder">
         <FilterChips
+          resetKeys={["seite", "anzahl"]}
           searchPlaceholder="Name, Telefon, E-Mail"
           fields={[
             { kind: "select", key: "kunde", label: "Kunde", options: customers.map((c) => ({ value: c.id, label: c.name })) },
@@ -98,6 +116,7 @@ async function Alle({ sp }: { sp: Suche }) {
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-[color:var(--muted)]">
           <b className="font-semibold text-[color:var(--foreground)]">{total.toLocaleString("de-DE")} Leads</b>
+          {standard ? ` in den letzten ${STANDARD_TAGE} Tagen` : ""}
           {" · "}Umsatz netto <b className="font-semibold text-[color:var(--foreground)]">{eur(Number(sums._sum.amount ?? 0))}</b>
           {stornos ? (
             <>
@@ -135,14 +154,11 @@ async function Alle({ sp }: { sp: Suche }) {
                       </div>
                       <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">
                         {dt(l.createdAt)} · {l.customer.name}
-                        {l.source ? ` · ${l.source}` : ""}
-                        <span className="hidden sm:inline">
-                          {l.phone ? ` · +${l.phone}` : ""}
-                          {l.email ? ` · ${l.email}` : ""}
-                        </span>
+                        <span className="hidden sm:inline">{l.source ? ` · ${l.source}` : ""}</span>
                       </div>
                     </summary>
                     <div className="mt-2 space-y-1 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-xs text-[color:var(--muted)]">
+                      {l.source ? <div className="sm:hidden">Produkt: {l.source}</div> : null}
                       {l.phone || l.email ? (
                         <div className="break-all">
                           {l.phone ? `+${l.phone}` : ""}
@@ -161,7 +177,7 @@ async function Alle({ sp }: { sp: Suche }) {
                         {l.appointments[0] ? ` · Termin ${dt(l.appointments[0].startsAt)}` : ""}
                       </div>
                       <div>
-                        Eingang: {l.externalId ? "direkt (Meta)" : l.airtableId ? "Airtable" : "App"}
+                        Eingang: {l.externalId ? "direkt (Meta)" : l.airtableId ? "Altbestand" : "App"}
                         {l.adChannel ? ` · ${l.adChannel}` : ""}
                       </div>
                     </div>
@@ -184,25 +200,26 @@ async function Alle({ sp }: { sp: Suche }) {
             })}
           </ul>
         ) : (
-          <EmptyState icon={Inbox} title="Keine Leads für diese Auswahl." text="Filter oben ändern, z. B. einen anderen Zeitraum wählen." />
+          <EmptyState
+            icon={Inbox}
+            title={standard ? `Keine Leads in den letzten ${STANDARD_TAGE} Tagen.` : "Keine Leads für diese Auswahl."}
+            text={standard ? "Über Zeitraum einen früheren Monat wählen." : undefined}
+            action={
+              standard ? undefined : (
+                <ButtonLink href={PFAD} variant="secondary">
+                  Filter zurücksetzen
+                </ButtonLink>
+              )
+            }
+          />
         )}
       </Card>
 
-      {pages > 1 ? (
-        <div className="mt-3 flex items-center justify-center gap-3 text-sm">
-          {page > 1 ? (
-            <Link href={`${PFAD}?${qs.toString()}&seite=${page - 1}`} className="inline-flex min-h-10 items-center underline">
-              zurück
-            </Link>
-          ) : null}
-          <span className="text-[color:var(--muted)]">
-            Seite {page} von {pages}
-          </span>
-          {page < pages ? (
-            <Link href={`${PFAD}?${qs.toString()}&seite=${page + 1}`} className="inline-flex min-h-10 items-center underline">
-              weiter
-            </Link>
-          ) : null}
+      {total > leads.length ? (
+        <div className="mt-3 text-center">
+          <Link href={`${PFAD}?${mehr.toString()}`} scroll={false} className="inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline">
+            Mehr laden ({leads.length} von {total.toLocaleString("de-DE")})
+          </Link>
         </div>
       ) : null}
     </div>

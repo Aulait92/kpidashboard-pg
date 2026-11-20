@@ -8,10 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { quotaFor } from "@/lib/ppl/engine";
 import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "./actions";
-import { AirtableNachholen } from "./nachholen";
 import { loadCustomerOverview, loadPplReport, type Granularity } from "@/lib/ppl/auswertung";
 import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
-import { airtableSyncOff } from "@/lib/airtable-switch";
 import { searchDeliveredLeads } from "@/lib/ppl/admin-leads";
 import { StornoEintragen, StornoZuruecknehmen } from "./storno-eintragen";
 import { ErneutZustellen } from "./erneut-zustellen";
@@ -65,17 +63,9 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">Pay-per-Lead</h1>
-          {airtableSyncOff() ? (
-            <Badge tone="warning">Airtable-Abgleich aus (AIRTABLE_SYNC_OFF)</Badge>
-          ) : (
-            <Badge tone="neutral">Airtable-Abgleich an</Badge>
-          )}
           <SlackTest configured={!!slackWebhookUrl()} />
         </div>
         <div className="flex gap-2">
-        <Link href="/admin/ppl/import" className="inline-flex h-9 items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium">
-          Aus Airtable übernehmen
-        </Link>
         <Link href="/admin/ppl/bezug/neu" className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-3 text-sm font-semibold text-white">
           <Plus className="h-4 w-4" /> Bezug anlegen
         </Link>
@@ -127,7 +117,7 @@ async function Subscriptions({ subs }: { subs: Subs }) {
   const { start } = weekRange();
   const rows = await Promise.all(subs.map(async (s) => ({ s, q: s.active ? await quotaFor(s) : null })));
   const products = [...new Set(subs.map((s) => s.productKey))];
-  if (!subs.length) return <Card><p className="p-5 text-sm text-[color:var(--muted)]">Noch keine Bezüge. Über „Bezug anlegen“ oder per Import aus Airtable.</p></Card>;
+  if (!subs.length) return <Card><p className="p-5 text-sm text-[color:var(--muted)]">Noch keine Bezüge. Über „Bezug anlegen“.</p></Card>;
   return (
     <div className="space-y-5">
       {products.map((p) => (
@@ -200,10 +190,9 @@ async function Subscriptions({ subs }: { subs: Subs }) {
 
 async function Parked({ subs }: { subs: Subs }) {
   const parked = await prisma.poolLead.findMany({ where: { status: "parked" }, orderBy: { createdAt: "desc" }, take: 100 });
-  if (!parked.length) return <Card><AirtableNachholen /><p className="p-5 text-sm text-[color:var(--muted)]">Keine geparkten Leads.</p></Card>;
+  if (!parked.length) return <Card><p className="p-5 text-sm text-[color:var(--muted)]">Keine geparkten Leads.</p></Card>;
   return (
     <Card>
-      <AirtableNachholen />
       <ul className="divide-y divide-[color:var(--border)]">
         {parked.map((p) => {
           const options = subs.filter((s) => s.active && s.productKey === p.productKey);

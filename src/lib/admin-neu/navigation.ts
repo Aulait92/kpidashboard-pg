@@ -144,11 +144,12 @@ export const BEREICHE: NeuBereich[] = [
     ort: "oben",
     handy: "leiste",
     seiten: [
-      { view: "leads-ppl", pfad: n("/leads/ppl"), titel: "Pay-per-Lead", alt: ["/admin/ppl", "/admin/ppl/import"], reiter: { gruppe: "liefern", label: "Pay-per-Lead" }, suchwoerter: "PPL Bezug Bezüge Storno Reklamation Import Käufer", fertig: true },
+      { view: "leads-ppl", pfad: n("/leads/ppl"), titel: "Pay-per-Lead", alt: ["/admin/ppl"], reiter: { gruppe: "liefern", label: "Pay-per-Lead" }, suchwoerter: "PPL Bezug Bezüge Storno Reklamation Käufer Auswertung Eingang Heinrich von Kleist HvK Gutschrift Slack", fertig: true },
       { view: "leads-alle", pfad: n("/leads/alle"), titel: "Alle Leads", alt: ["/admin/leads"], reiter: { gruppe: "liefern", label: "Leads" }, fertig: true },
-      { view: "leads", pfad: n("/leads"), titel: "Lead-Eingang", alt: ["/admin/lead-eingang"], reiter: { gruppe: "liefern", label: "Lead-Eingang" }, suchwoerter: "Formulare Zuordnung Meta", fertig: true },
-      { view: "leads-optimierung", pfad: n("/leads/werbekonten"), titel: "Werbekonten", alt: ["/admin/optimierung", "/admin/media-buyer"], reiter: { gruppe: "liefern", label: "Werbekonten" }, suchwoerter: "Optimierung Media Buyer Budget Pool", fertig: true },
-      { view: "leads-ab-tests", pfad: n("/leads/ab-tests"), titel: "A/B-Tests", alt: [], reiter: { gruppe: "liefern", label: "A/B-Tests" }, suchwoerter: "Splittest Experiment Vorlagen Fassung Antwortquote Terminquote Erstanschreiben Hypothese", fertig: true },
+      { view: "leads", pfad: n("/leads"), titel: "Formulare", alt: ["/admin/lead-eingang"], reiter: { gruppe: "liefern", label: "Formulare" }, suchwoerter: "Lead-Eingang Leadformular Zuordnung Meta", fertig: true },
+      { view: "leads-optimierung", pfad: n("/leads/werbekonten"), titel: "Werbekonten", alt: ["/admin/optimierung", "/admin/media-buyer"], reiter: { gruppe: "liefern", label: "Werbekonten" }, suchwoerter: "Optimierung Media Buyer Budget Pool Tagesbudget Maßnahmen freigeben", fertig: true },
+      // A/B-Tests: kein eigener Reiter mehr (höchstens 4 je Rolle, UX-Umbau 20.11.2026), erreichbar über Leads › „A/B-Tests“ und die Suche
+      { view: "leads-ab-tests", pfad: n("/leads/ab-tests"), titel: "A/B-Tests", alt: [], suchwoerter: "Splittest Experiment Vorlagen Fassung Antwortquote Terminquote Erstanschreiben Hypothese", fertig: true },
       { view: "leads-bezug", pfad: n("/leads/ppl/bezug/[id]"), titel: "Bezug", alt: ["/admin/ppl/bezug/[id]"], fertig: true },
       { view: "leads-konto", pfad: n("/leads/werbekonten/[id]"), titel: "Werbekonto", alt: ["/admin/optimierung/[id]"], fertig: true },
     ],

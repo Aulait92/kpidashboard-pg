@@ -199,10 +199,6 @@ export default async function LeadIntakePage({
               <span className="text-xs font-medium text-[color:var(--muted)]">Lead-Preis netto (nur Pay-per-Lead)</span>
               <input name="leadPrice" inputMode="decimal" placeholder="leer = kein Lead-Preis" className={input} />
             </label>
-            <details className="md:col-span-2">
-              <summary className="cursor-pointer text-xs font-medium text-[color:var(--muted)]">Erweitert: Airtable-Bezug für Stornogründe</summary>
-              <input name="bezugAirtableId" placeholder="rec… (leer lassen bei Retainer-Kunden)" className={`${input} mt-2`} />
-            </details>
             <div className="md:col-span-2">
               <button className="h-10 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 font-semibold text-white">Zuordnen</button>
               <span className="ml-3 text-sm text-[color:var(--muted)]">Wartende Leads des Formulars werden übernommen.</span>
@@ -215,7 +211,7 @@ export default async function LeadIntakePage({
         <summary className="cursor-pointer px-5 py-3.5 text-[15px] font-semibold group-open:border-b group-open:border-[color:var(--border)]">Übergang: Webhook für Zapier</summary>
         <div className="space-y-2 p-5 text-sm text-[color:var(--muted)]">
           <p>
-            Solange ein Formular noch über Zapier läuft: im Zap den Airtable-Schritt durch „Webhooks by Zapier → POST“ ersetzen
+            Solange ein Formular noch über Zapier läuft: im Zap als letzten Schritt „Webhooks by Zapier → POST“ an diese Adresse senden
             (Payload: JSON, alle Felder des Leads). Die Zuordnung erfolgt über die <code>form_id</code> wie oben.
           </p>
           <code className="block break-all rounded bg-[color:var(--surface-sunken,#f1f5f9)] px-2 py-1 text-xs text-[color:var(--foreground)]">

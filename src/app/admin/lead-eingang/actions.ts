@@ -29,7 +29,9 @@ export async function assignFormAction(fd: FormData) {
   const customerId = String(fd.get("customerId") ?? "");
   const productKey = String(fd.get("productKey") ?? "").trim();
   const priceRaw = String(fd.get("leadPrice") ?? "").replace(",", ".").trim();
-  const bezug = String(fd.get("bezugAirtableId") ?? "").trim() || null;
+  // Airtable-Bezug: Feld gibt es in der Oberfläche nicht mehr (UX-Umbau 20.11.2026). Nur setzen, wenn es mitkommt,
+  // sonst bleibt der gespeicherte Wert (Stornogründe nach Airtable, solange der Abgleich läuft).
+  const bezugFeld = fd.has("bezugAirtableId") ? { bezugAirtableId: String(fd.get("bezugAirtableId") ?? "").trim() || null } : {};
   const pageId = String(fd.get("pageId") ?? "").trim() || null;
   if (!/^\d{5,}$/.test(formId)) back("Bitte eine gültige Formular-ID angeben.", false, basis);
   if (customerId === VERTRIEB_ZIEL) return assignToVertrieb(formId, pageId, basis);
@@ -50,8 +52,8 @@ export async function assignFormAction(fd: FormData) {
 
   await prisma.leadSource.upsert({
     where: { formId },
-    create: { formId, pageId, formName, customerId, productKey, leadPrice, bezugAirtableId: bezug, questionLabels: questionLabels ?? undefined },
-    update: { pageId: pageId ?? undefined, formName: formName ?? undefined, customerId, productKey, leadPrice, bezugAirtableId: bezug, active: true, ...(questionLabels ? { questionLabels } : {}) },
+    create: { formId, pageId, formName, customerId, productKey, leadPrice, ...bezugFeld, questionLabels: questionLabels ?? undefined },
+    update: { pageId: pageId ?? undefined, formName: formName ?? undefined, customerId, productKey, leadPrice, ...bezugFeld, active: true, ...(questionLabels ? { questionLabels } : {}) },
   });
   await audit("leadsource.assign", { entity: "LeadSource", entityId: formId, customerId, details: { productKey, leadPrice: leadPrice ? Number(leadPrice) : null } });
   // Ein Formular hat genau ein Ziel: gehörte es bisher dem Vertrieb, jetzt nicht mehr

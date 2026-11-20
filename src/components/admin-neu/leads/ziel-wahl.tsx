@@ -18,7 +18,7 @@ export function ZielWahl({
   vertriebWert: string;
   inputClass: string;
   listId: string;
-  /** Lead-Preis und Airtable-Bezug: nur bei Kunden */
+  /** Lead-Preis (Pay-per-Lead): nur bei Kunden */
   erweitert?: React.ReactNode;
 }) {
   const [ziel, setZiel] = useState("");

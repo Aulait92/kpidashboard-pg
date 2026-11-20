@@ -164,7 +164,7 @@ export default async function Page() {
             />
             <div className="border-t border-[color:var(--border)] pt-3" data-funktion="page--uebergang-webhook-fuer-zapier">
               <p className="font-medium">Übergang: Kunden-Leads über Zapier</p>
-              <p className="text-[color:var(--muted)]">Solange ein Kundenformular noch über Zapier läuft: Airtable-Schritt durch „Webhooks by Zapier → POST“ ersetzen (JSON, alle Felder). Zuordnung über die form_id.</p>
+              <p className="text-[color:var(--muted)]">Solange ein Kundenformular noch über Zapier läuft: im Zap als letzten Schritt „Webhooks by Zapier → POST“ an diese Adresse senden (JSON, alle Felder). Zuordnung über die form_id.</p>
               {process.env.LEAD_WEBHOOK_TOKEN ? <CopyField value={`${base}/api/leads/eingang?token=${process.env.LEAD_WEBHOOK_TOKEN}`} /> : <p className="text-amber-700">LEAD_WEBHOOK_TOKEN fehlt.</p>}
             </div>
           </Quelle>

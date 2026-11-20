@@ -218,23 +218,8 @@ export async function undoStornoAction(_prev: AdminStornoState, fd: FormData): P
   return { message: r.already ? "Kein anerkannter Storno." : "Storno zurückgenommen." };
 }
 
-export type ImportState = { error?: string; message?: string };
-
-export async function runImportAction(_prev: ImportState, fd: FormData): Promise<ImportState> {
-  const s = await requireAdmin();
-  try {
-    const { importDuplicateHistory, importSubscriptions } = await import("@/lib/ppl/import-airtable");
-    const rows = await importSubscriptions({ dryRun: false });
-    const history = fd.get("history") === "on" ? await importDuplicateHistory() : 0;
-    await audit("ppl.subscription", { entity: "LeadSubscription", actor: { id: s.userId, email: s.email, role: s.role }, details: { import: rows.length, history } });
-    revalidatePath("/admin/ppl", "layout");
-    revalidatePath("/admin/neu", "layout");
-    const done = rows.filter((r) => r.action !== "übersprungen" && r.action !== "unverändert").length;
-    return { message: `${done} Bezüge übernommen${history ? `, ${history} Leads für den Dubletten-Abgleich` : ""}.` };
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : "Import fehlgeschlagen." };
-  }
-}
+// „Bezüge aus Airtable übernehmen“ (runImportAction) ist entfallen (UX-Umbau 20.11.2026, Airtable aus der Oberfläche);
+// die Logik bleibt in lib/ppl/import-airtable.ts, falls sie per Skript noch einmal gebraucht wird.
 
 // ─── Gebiete (Vorrang je PLZ-Gebiet mit eigener Menge) ──────────────────────
 const PLZ_SPEC = /^\s*\d{1,5}(\s*-\s*\d{1,5})?(\s*[|,;\s]\s*\d{1,5}(\s*-\s*\d{1,5})?)*\s*$/;
