@@ -56,6 +56,9 @@ export function ersteWocheSteuerText(steuer: Steuer): string {
   return steuer === "steuerfrei_4_11" ? "umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler (sonst zzgl. 19 % USt.)" : "inkl. 19 % USt.";
 }
 
+/** An die Summe angehängt: „, umsatzsteuerfrei nach …“ bzw. „ inkl. 19 % USt.“ */
+const steuerAnhang = (steuer: Steuer) => `${steuer === "steuerfrei_4_11" ? ", " : " "}${ersteWocheSteuerText(steuer)}`;
+
 /** Kurzer Steuerhinweis direkt am Betrag: „umsatzsteuerfrei“ bzw. „inkl. 19 % USt.“ */
 export const ersteWocheSteuerKurz = (steuer: Steuer) => (steuer === "steuerfrei_4_11" ? "umsatzsteuerfrei" : "inkl. 19 % USt.");
 
@@ -74,7 +77,7 @@ export function ersteWocheZahlen(w: Pick<ErsteWocheWahl, "productKey" | "price" 
 export function ersteWocheVertragszeile(w: ErsteWocheWahl): string {
   const z = ersteWocheZahlen(w);
   const danach = w.autoRenew ? "Danach jede Woche dieselbe Menge, in der App jederzeit änderbar." : "Einmalig, ohne automatische Wiederholung. Weitere Leads bestellen Sie in der App.";
-  return `Erste Woche: ${w.quantity} Leads ${w.name} zu je ${eurCent(z.jeLead)}, zusammen ${eurCent(z.summe)}, ${ersteWocheSteuerText(z.steuer)}, eigene Rechnung, ${ERSTE_WOCHE_ABBUCHUNG}. ${danach}`;
+  return `Erste Woche: ${w.quantity} Leads ${w.name} zu je ${eurCent(z.jeLead)}, zusammen ${eurCent(z.summe)}${steuerAnhang(z.steuer)}, eigene Rechnung, ${ERSTE_WOCHE_ABBUCHUNG}. ${danach}`;
 }
 
 /**
@@ -96,5 +99,5 @@ export function ersteWocheMailzeile(w: Omit<ErsteWocheWahl, "autoRenew">, du: bo
   const wahl = du
     ? "Die Anzahl wählst du bei der Annahme, abgebucht wird erst nach Prüfung deiner Registernummer."
     : "Die Anzahl wählen Sie bei der Annahme, abgebucht wird erst nach Prüfung Ihrer Registernummer.";
-  return `Erste Woche: ${w.quantity} Leads ${w.name} zu je ${eurCent(z.jeLead)}, zusammen ${eurCent(z.summe)}, ${ersteWocheSteuerText(z.steuer)}. ${wahl}`;
+  return `Erste Woche: ${w.quantity} Leads ${w.name} zu je ${eurCent(z.jeLead)}, zusammen ${eurCent(z.summe)}${steuerAnhang(z.steuer)}. ${wahl}`;
 }
