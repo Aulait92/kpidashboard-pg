@@ -5413,3 +5413,57 @@ model DatenschutzFallEreignis {
   @@index([contactId])
   @@index([eingangAt])
 }
+
+// ─── Eigener PKV-Funnel (Ole, 20.11.2026, lib/funnel) ───────────────────────
+/// Ein Besucher eines eigenen Funnels (z. B. beitrag.pkv-tarife.com). id = Besucher-ID aus dem Erstanbieter-Cookie
+/// (zufällig, nie Name, Nummer oder Adresse). Personendaten liegen nur am PoolLead; hier nur Herkunft (UTM, Kampagne),
+/// Verknüpfung zum Lead und Stand der Ziel-Kennzahlen (ppl_erreicht, ppl_termin, ppl_abschluss, ppl_umsatz).
+model FunnelBesuch {
+  id                   String    @id
+  funnel               String
+  // utm_source, utm_campaign, campaign_id, ad_id … (nur diese Schlüssel, keine Personendaten)
+  quelle               Json?
+  createdAt            DateTime  @default(now())
+  // Nach dem Absenden: Lead im Pay-per-Lead-Eingang
+  poolLeadId           String?   @unique
+  leadAt               DateTime?
+  // event_id für Pixel und Conversions API (Abgleich bei Meta)
+  metaEventId          String?
+  // Meta-Cookies nur mit Einwilligung (für das spätere Qualitäts-Ereignis), nach der Reifeprüfung geleert
+  metaEinwilligung     Boolean   @default(false)
+  metaFbc              String?
+  metaFbp              String?
+  // Reife (Cron, 14 Tage nach Eingang, lib/funnel/server.ts): geprüft; reif = verkauft und nicht storniert
+  // (Neben-Kennzahl ppl_umsatz) mit Umsatz in Cent
+  reifGeprueftAt       DateTime?
+  reif                 Boolean?
+  reifUmsatzCent       Int?
+  // Rückmeldung des Abnehmers (Haupt-Kennzahl ppl_erreicht, Ole 20.11.2026): Lead an einen Abnehmer in der App
+  // geliefert (sonst „unbekannt“), Rückmeldung vorhanden, erreicht, Termin, Abschluss. Termin und Abschluss werden
+  // bis 60 Tage nach Eingang nachgeprüft.
+  rueckmeldungMoeglich Boolean?
+  rueckmeldung         Boolean?
+  erreicht             Boolean?
+  termin               Boolean?
+  abschluss            Boolean?
+  qualitaetGesendetAt  DateTime?
+
+  @@index([funnel, createdAt])
+  @@index([reifGeprueftAt, leadAt])
+}
+
+/// Ereignis je Besucher und Schritt (einmal je Art): angesehen | beantwortet | abbruch | abgeschickt. Ohne Antworten
+/// (keine Personendaten); grund nur bei Abbruch (gesetzlich | unter_650), variante nur bei Schritten im A/B-Test.
+model FunnelEreignis {
+  id        String   @id @default(cuid())
+  besuchId  String
+  funnel    String
+  schritt   String
+  art       String
+  variante  String?
+  grund     String?
+  createdAt DateTime @default(now())
+
+  @@unique([besuchId, schritt, art])
+  @@index([funnel, createdAt])
+}

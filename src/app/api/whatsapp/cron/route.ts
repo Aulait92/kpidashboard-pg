@@ -259,6 +259,15 @@ async function handle(req: Request): Promise<Response> {
           return null;
         })
       : undefined;
+  // Eigener PKV-Funnel (lib/funnel/server.ts): Ergebnis der Funnel-Leads beim Abnehmer 14 Tage nach Eingang (erreicht,
+  // Termin, Abschluss, verkauft und nicht storniert) als Ziele der Funnel-Tests, einmal je Stunde vor der Entscheidung
+  const funnelReife =
+    now.getUTCMinutes() < 5
+      ? await import("@/lib/funnel/server").then((m) => m.funnelReifePruefen(now)).catch((e: unknown) => {
+          reportError(e, "cron-funnel-reife");
+          return null;
+        })
+      : undefined;
   // Splittests der Lead-Reise (lib/experimente.ts): gleiche Regel, einmal je Stunde
   const experimente =
     now.getUTCMinutes() < 5
@@ -481,7 +490,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, kalenderFrage, policenErinnerung, abTests, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
 }
 
 export const GET = handle;

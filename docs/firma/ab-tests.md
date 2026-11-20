@@ -29,6 +29,12 @@ Keiner testet aus dem Bauch. Neueste Einträge oben.
 | bis 19.11.2026 | Letzte Nachfassnachricht | Rücksichtsvolle Frage „Ich möchte Sie nicht weiter stören“ holt mehr Rückmeldungen | v5 | B-Fassung | Antwortquote | läuft | offen |
 | bis 19.11.2026 | Kampagne Cross-Sell (Bestandskunden) | Konkretes Angebot „10 Minuten prüfen“ wirkt stärker | v4 | B-Fassung | Antwortquote | läuft | offen |
 
+Eigener PKV-Funnel (beitrag.pkv-tarife.com, /f/pkv-beitrag, Bau 20.11.2026): Fassung b je Schritt möglich
+(`lib/funnel/definition.ts`, `test.b`), Einheit Besucher-ID. Haupt-Kennzahl `ppl_erreicht` (Abnehmer hat den Lead
+erreicht, je Besucher; Leads an Abnehmer ohne Rückmeldung in der App zählen nicht), Neben-Kennzahlen `funnel_lead`,
+`ppl_termin`, `ppl_abschluss`, `ppl_umsatz`; nur Besucher mit Zuteilung vor mindestens 14 Tagen. Noch kein Test aktiv
+(Beispiel `funnel_pkv_beispiel` ist aus); den ersten entwickelt das A/B-Test-Labor. Zahlen: Diagnose `q=funnel`.
+
 Ergebnisse der laufenden Tests: Diagnose `q=experimente` bzw. `q=ab-test` (für das Team in dieser Umgebung bisher
 gesperrt; nachtragen, sobald der Datenzugang steht).
 

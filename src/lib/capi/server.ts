@@ -65,12 +65,20 @@ async function graphGet<T>(path: string, params: Record<string, string>, accessT
 
 /** Ein Paket an das Dataset senden. Wirft mit geschwärzter Meta-Meldung. */
 export async function postEvents(datasetId: string, events: CapiOutgoing[], accessToken: string): Promise<{ received: number }> {
+  return postEventsData(datasetId, buildEventsData(events), accessToken, events.length);
+}
+
+/**
+ * Fertiges `data` (JSON-Liste der Ereignisse) an das Dataset senden, z. B. Website-Ereignisse der eigenen Funnels
+ * (lib/funnel/meta.ts). testEventCode = Testereignisse im Events Manager. Wirft mit geschwärzter Meta-Meldung.
+ */
+export async function postEventsData(datasetId: string, data: string, accessToken: string, count: number, testEventCode?: string | null): Promise<{ received: number }> {
   if (!/^\d{5,20}$/.test(datasetId)) throw new Error("Ungültige Dataset-ID");
-  const body = new URLSearchParams({ data: buildEventsData(events), access_token: accessToken });
+  const body = new URLSearchParams({ data, access_token: accessToken, ...(testEventCode ? { test_event_code: testEventCode } : {}) });
   const res = await fetch(`${GRAPH}/${datasetId}/events`, { method: "POST", body, cache: "no-store", signal: AbortSignal.timeout(20000) });
   const json = (await res.json().catch(() => ({}))) as { events_received?: number; error?: { message?: string; code?: number } };
   if (!res.ok || json.error) throw new Error(redactTokens(`Meta ${res.status}: ${String(json.error?.message ?? "keine Antwort").slice(0, 300)}`));
-  return { received: Number(json.events_received ?? events.length) };
+  return { received: Number(json.events_received ?? count) };
 }
 
 // ─── Dataset je Kunde ───────────────────────────────────────────────────
