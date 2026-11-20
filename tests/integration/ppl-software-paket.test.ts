@@ -125,7 +125,7 @@ describe("Pay-per-Lead + Software: Angebot bis Onboarding", () => {
     s.mails = [];
   });
 
-  it("Angebot: 349 €, keine Einrichtung, keine Produkte, nur ohne Laufzeit oder 3 Monate", async () => {
+  it("Angebot: 349 €, keine Einrichtung, keine Produkte, nur ohne Laufzeit", async () => {
     const tag = uid();
     const contact = await prisma.salesContact.create({ data: { name: `PPL ${tag}`, email: `ppl-${tag}@example.test` } });
     contacts.push(contact.id);
@@ -141,7 +141,8 @@ describe("Pay-per-Lead + Software: Angebot bis Onboarding", () => {
       abschlussBonusBis: addDaysIso(berlinTodayIso(), 1),
       seats: 4,
     } as Parameters<typeof createOffer>[1];
-    await expect(createOffer({ salesContactId: contact.id }, input, null)).rejects.toThrow(/ohne Mindestlaufzeit oder mit 3 Monaten/);
+    await expect(createOffer({ salesContactId: contact.id }, input, null)).rejects.toThrow(/nur ohne Mindestlaufzeit/);
+    await expect(createOffer({ salesContactId: contact.id }, { ...input, term: "3m" }, null)).rejects.toThrow(/nur ohne Mindestlaufzeit/);
     const offer = await createOffer({ salesContactId: contact.id }, { ...input, term: "none" }, null);
     offers.push(offer.id);
     expect(offer.package).toBe("ppl_software");
@@ -153,18 +154,18 @@ describe("Pay-per-Lead + Software: Angebot bis Onboarding", () => {
     expect(offer.customerChoosesProducts).toBe(false);
     expect([offer.seats, offer.seatsIncluded, Number(offer.seatMonthly)]).toEqual([4, 3, 49]);
 
-    // Annahme mit 3 Monaten: Setup bleibt 0; 12 Monate abgelehnt
+    // Annahme: keine Laufzeitwahl (nur monatlich kündbar), Setup bleibt 0
+    expect(offer.customerChoosesTerm).toBe(false);
     const business = { company: `Agentur Pay ${tag}`, vatId: null, confirmed: true };
-    expect((await acceptOffer(offer.token, { name: "Paula Pay", ip: null, agent: "vitest", termsAccepted: true, business, term: "12m" })).ok).toBe(false);
-    expect(await acceptOffer(offer.token, { name: "Paula Pay", ip: null, agent: "vitest", termsAccepted: true, business, term: "3m" })).toEqual({ ok: true });
+    expect(await acceptOffer(offer.token, { name: "Paula Pay", ip: null, agent: "vitest", termsAccepted: true, business })).toEqual({ ok: true });
     const acc = await prisma.offer.findUniqueOrThrow({ where: { id: offer.id } });
-    expect(acc.term).toBe("3m");
+    expect(acc.term).toBe("none");
     expect(Number(acc.setupFee)).toBe(0);
     // Auftragsbestätigung
     const mail = s.mails.find((m) => String((m as { subject?: string }).subject ?? "").includes("Auftragsbestätigung")) as unknown as { text?: string; html?: string } | undefined;
     const mailText = String(mail?.text ?? mail?.html ?? "");
     expect(mailText).toMatch(/Pay-per-Lead \+ Software/);
-    expect(mailText).toMatch(/Mindestlaufzeit 3 Monate/);
+    expect(mailText).toMatch(/Ohne Mindestlaufzeit|monatlich/);
     expect(mailText).not.toMatch(/Werbebudget|Garantie/);
     expect(hatGedankenstrich(mailText.replace(/<[^>]+>/g, " "))).toBe(false);
 

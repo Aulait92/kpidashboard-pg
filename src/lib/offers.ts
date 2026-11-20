@@ -174,7 +174,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }
   const term = normalizeTerm(input.term);
-  if (ppl && !PPL_SOFTWARE_TERMS.includes(term)) throw new Error("Pay-per-Lead + Software gibt es ohne Mindestlaufzeit oder mit 3 Monaten.");
+  if (ppl && !PPL_SOFTWARE_TERMS.includes(term)) throw new Error("Pay-per-Lead + Software gibt es nur ohne Mindestlaufzeit (monatlich kündbar).");
   if (ppl && (input.introMonthlyFee != null || input.annual)) throw new Error("Pay-per-Lead + Software hat keinen Startpreis und keine Vorauszahlung.");
   const abrechnungstag = parseAbrechnungstag(input.billingDay);
   if (!abrechnungstag.ok) throw new Error(abrechnungstag.error);
@@ -305,7 +305,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             // „Gratis“ nur mit eigenem Abrechnungstag (sonst gibt es keine Zeit davor)
             billingFreeStart: abrechnungstag.day != null && input.billingFreeStart === true,
             paymentInArrears: nachtraeglich,
-            customerChoosesTerm: choosesTerm,
+            customerChoosesTerm: choosesTerm && !ppl,
             customerChoosesStart: choosesStart,
             customerChoosesProducts: choosesProducts,
             // „Später zahlen“ betrifft die Einrichtung: ohne Einrichtung (Pay-per-Lead + Software) nicht nötig

@@ -209,8 +209,8 @@ export const normalizePackage = (p: unknown): OfferPackage => (p === "service" |
 export const mitSoftware = (p: unknown): boolean => p !== "service";
 /** Paket mit eigenen Meta-Kampagnen, Werbebudget und Betreuung: alles außer Pay-per-Lead + Software. */
 export const mitKampagnen = (p: unknown): boolean => p !== PPL_SOFTWARE;
-/** Pay-per-Lead + Software: wählbare Laufzeiten (Standard ohne Mindestlaufzeit, optional 3 Monate). */
-export const PPL_SOFTWARE_TERMS: readonly OfferTerm[] = ["none", "3m"];
+/** Pay-per-Lead + Software: nur ohne Mindestlaufzeit, monatlich kündbar (Ole, 20.11.2026: 3 Monate gestrichen, kein Vorteil für den Kunden). */
+export const PPL_SOFTWARE_TERMS: readonly OfferTerm[] = ["none"];
 
 export type OfferInput = {
   /** Standard: Betreuung + Software. */

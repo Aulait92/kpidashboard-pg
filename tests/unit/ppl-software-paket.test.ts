@@ -1,5 +1,5 @@
 // Paket „Pay-per-Lead + Software“ (Ole, 19.11.2026): Software 349 € netto im Monat, keine Einrichtung, ohne
-// Mindestlaufzeit (optional 3 Monate), Leads separat per Stück (Pay-per-Lead), keine Betreuung, keine Kampagnen, kein
+// Mindestlaufzeit (monatlich kündbar), Leads separat per Stück (Pay-per-Lead), keine Betreuung, keine Kampagnen, kein
 // Werbebudget, keine Garantien. Geprüft: Preis, Laufzeitwahl, Paketname, Nachrichten wie Betreuung + Software (nie als
 // reiner Pay-per-Lead-Kunde gesperrt), Angebotstext, Annahme, Einrichtungsschritte, Willkommens-Mail.
 import { describe, expect, it, vi } from "vitest";
@@ -47,15 +47,17 @@ describe("Preis Pay-per-Lead + Software", () => {
 });
 
 describe("Laufzeitwahl", () => {
-  it("nur ohne Laufzeit oder 3 Monate, jeweils ohne Einrichtung", () => {
-    expect(termOptionsFor(new Date(), "none", "ppl_software")).toEqual(["none", "3m"]);
-    expect(setupForChoice("3m", 1, null, "ppl_software")).toBe(0);
+  // Ole, 20.11.2026: 3 Monate gestrichen (kein Vorteil für den Kunden), nur monatlich kündbar
+  it("nur ohne Laufzeit, ohne Einrichtung", () => {
+    expect(termOptionsFor(new Date(), "none", "ppl_software")).toEqual(["none"]);
+    expect(setupForChoice("none", 1, null, "ppl_software")).toBe(0);
     expect(setupForChoice("3m", 1)).toBe(PRICE_LIST.setup3m);
   });
-  it("Server prüft: 12 Monate abgelehnt, 3 Monate ohne Setup", () => {
+  it("Server prüft: 3 und 12 Monate abgelehnt, ohne Laufzeit ohne Setup", () => {
     const snap = { term: "none", productCount: 1, setupFee: 0, startIso: null, annualPrepay: false, annualFreeMonths: null, choosesTerm: true, choosesStart: false, termOptions: termOptionsFor(new Date(), "none", "ppl_software"), package: "ppl_software" };
     expect(resolveOfferChoice(snap, { term: "12m" }, "2026-11-19").ok).toBe(false);
-    expect(resolveOfferChoice(snap, { term: "3m" }, "2026-11-19")).toMatchObject({ ok: true, term: "3m", setupFee: 0 });
+    expect(resolveOfferChoice(snap, { term: "3m" }, "2026-11-19").ok).toBe(false);
+    expect(resolveOfferChoice(snap, { term: "none" }, "2026-11-19")).toMatchObject({ ok: true, term: "none", setupFee: 0 });
   });
 });
 
@@ -107,7 +109,6 @@ describe("Auftragsbestätigung und Annahme", () => {
       initialTerm: "none",
       options: [
         { term: "none", label: "Ohne Laufzeit", setup: 0 },
-        { term: "3m", label: "3 Monate", setup: 0 },
       ],
       monthlyTotal: 349,
       annualOffered: false,

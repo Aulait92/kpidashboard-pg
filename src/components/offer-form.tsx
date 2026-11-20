@@ -307,7 +307,6 @@ export function OfferForm({
               {(ppl
                 ? ([
                     ["none", "Ohne Laufzeit", "monatlich kündbar · ohne Einrichtung"],
-                    ["3m", "3 Monate", "danach monatlich · ohne Einrichtung"],
                   ] as const)
                 : ([
                   ["12m", "12 Monate", `Setup ${eur(PRICE_LIST.setup12m)}`],
@@ -624,7 +623,7 @@ export function OfferForm({
             <Sum
               k={startDate ? `Paket monatlich ab ${ersterAbrechnungstag(startDate, num(billingDay)).split("-").reverse().join(".")}` : "Paket monatlich"}
               v={price.monthlyFee == null ? "individuell" : eur(price.monthlyFee)}
-              sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto${ppl ? (term === "none" ? " · monatlich kündbar" : " · 3 Monate, dann monatlich") : ` · Pause: ${eur(price.softwareFee)}`}`}
+              sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto${ppl ? " · monatlich kündbar" : ` · Pause: ${eur(price.softwareFee)}`}`}
             />
             {price.extraSeats > 0 ? (
               <Sum

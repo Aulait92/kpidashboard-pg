@@ -59,7 +59,7 @@
 // (Offer.paymentInArrears). Ändert nichts für bestehende Verträge. Prüfung: docs/recht/zahlung-nachtraeglich.md.
 // 19.11.2026 (Fassung 3, Ole): Paket „Pay-per-Lead + Software“ unter „Leistungen: Software“: nur Software, ohne Betreuung
 // und Kampagnen (Regeln zu Leadgenerierung, Werbebudget, Preisstaffel, Meta-Zugriff, Pause und Garantien gelten dafür
-// nicht), Leads gesondert per Stück, keine Mindestabnahme, ohne Mindestlaufzeit oder 3 Monate. Ändert nichts für
+// nicht), Leads gesondert per Stück, keine Mindestabnahme, ohne Mindestlaufzeit. Ändert nichts für
 // bestehende Verträge anderer Pakete.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
@@ -126,7 +126,7 @@ export const AGB: LegalSection[] = [
       { sub: "Zugänge", text: "Enthalten ist die im Angebot genannte Zahl aktiver Verkäufer. Aktiv ist ein Zugang, der Leads zugeteilt bekommt; Zugänge ohne Leads sind kostenlos. Jeder weitere aktive Verkäufer kostet den im Angebot genannten Preis je Monat, tagesgenau anteilig." },
       // Prüfen: Zusatzmodule, Kündigung bei jährlicher Vorauszahlung zum Ende des bezahlten Jahres (12.11.2026)
       // Prüfen: Paket Pay-per-Lead + Software (19.11.2026, Fassung 3)
-      { sub: "Paket Pay-per-Lead + Software", text: "In diesem Paket nutzt der Kunde die Software für die Leads, die er per Stück (Pay-per-Lead) beim Anbieter kauft. Der Anbieter stellt nur die Software bereit, ohne Betreuung und ohne eigene Werbekampagnen; die Regeln zu Leadgenerierung, Werbebudget, Preisstaffel, Meta-Zugriff, Pause und Garantien gelten dafür nicht. Leads bestellt und bezahlt der Kunde gesondert zu dem bei der Bestellung genannten Preis je Lead; sie sind nicht Teil der monatlichen Vergütung, eine Mindestabnahme besteht nicht. Der Vertrag läuft ohne Mindestlaufzeit oder mit der im Angebot genannten Mindestlaufzeit von 3 Monaten; im Übrigen gilt „Laufzeit und Kündigung“." },
+      { sub: "Paket Pay-per-Lead + Software", text: "In diesem Paket nutzt der Kunde die Software für die Leads, die er per Stück (Pay-per-Lead) beim Anbieter kauft. Der Anbieter stellt nur die Software bereit, ohne Betreuung und ohne eigene Werbekampagnen; die Regeln zu Leadgenerierung, Werbebudget, Preisstaffel, Meta-Zugriff, Pause und Garantien gelten dafür nicht. Leads bestellt und bezahlt der Kunde gesondert zu dem bei der Bestellung genannten Preis je Lead; sie sind nicht Teil der monatlichen Vergütung, eine Mindestabnahme besteht nicht. Der Vertrag läuft ohne Mindestlaufzeit und ist zum Ende jedes Abrechnungsmonats kündbar; im Übrigen gilt „Laufzeit und Kündigung“." },
       { sub: "Zusatzmodule", text: "Zusatzmodule gelten nur, wenn sie im Angebot vereinbart oder im Kundenbereich bzw. in Textform gebucht sind. Sie werden tagesgenau anteilig berechnet und sind zum Ende des laufenden Abrechnungszeitraums kündbar, bei Vorauszahlung (jährlich bzw. für 6 Monate) zum Ende des bezahlten Zeitraums; eine anteilige Erstattung erfolgt nicht." },
     ],
   },

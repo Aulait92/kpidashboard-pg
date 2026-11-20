@@ -157,12 +157,12 @@ describe("Rechnungen", () => {
 });
 
 describe("Pay-per-Lead + Software (Ole, 20.11.2026)", () => {
-  it("eigene Fassung mit 13 Bildfolien, ohne Bonus; Angebot mit Paket ppl_software wählt sie", async () => {
+  it("eigene Fassung mit 18 Bildfolien, ohne Bonus; Angebot mit Paket ppl_software wählt sie", async () => {
     const m = await import("@/lib/vertrieb/verkaufspraesentation");
     const l = m.folienListe("ppl");
-    expect(l).toHaveLength(13);
+    expect(l).toHaveLength(18);
     expect(l.every((f) => f.art === "bild")).toBe(true);
-    expect(m.bildUrl("ppl", 13)).toBe("/praesentation/vertrieb/ppl/13.webp");
+    expect(m.bildUrl("ppl", 18)).toBe("/praesentation/vertrieb/ppl/18.webp");
     expect(m.audienceFuer(null, { vermittlerTyp: "vertreter", package: "ppl_software" })).toBe("ppl");
     expect(m.audienceFuer(null, { vermittlerTyp: "makler", package: "software" })).toBe("makler");
   });

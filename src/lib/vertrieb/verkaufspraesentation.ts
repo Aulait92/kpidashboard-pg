@@ -10,7 +10,7 @@
 import { ABSCHLUSSBONUS_STANDARD, betreuungsSatz, eurText, monthlyBudgetOf, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, VORAUSZAHLUNG, type OfferTerm } from "@/lib/offer-pricing";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 
-// „ppl“: Pay-per-Lead + Software (Ole, 20.11.2026): eigene kurze Präsentation, 13 Bildfolien (docs/unterlagen/PPL-Software-Praesentation)
+// „ppl“: Pay-per-Lead + Software (Ole, 20.11.2026): eigene kurze Präsentation, 18 Bildfolien (docs/unterlagen/PPL-Software-Praesentation)
 export type VerkaufsAudience = "vertreter" | "makler" | "ppl";
 export const VERKAUFS_AUDIENCES: readonly VerkaufsAudience[] = ["vertreter", "makler", "ppl"];
 export const isVerkaufsAudience = (v: unknown): v is VerkaufsAudience => v === "vertreter" || v === "makler" || v === "ppl";
@@ -77,14 +77,20 @@ export const BONUS_FOLIE_TITEL = "Ihr Abschlussbonus";
 /** Pay-per-Lead + Software: nur Bildfolien, ohne Video, Demo, Rechnung, Paket und Bonus (Preise stehen auf den Folien). */
 const PPL_FOLIEN: string[] = [
   "Aus gekauften Leads werden Termine",
+  // Vorstellung (Ole, 20.11.2026: inkl. Vertrauen, 200.000 Leads für die Allianz)
+  "Wer sind wir?",
+  "Ole Kannapinn",
+  "Online-Marketer des Jahres",
+  "Leadgenerierung im großen Stil",
+  "Mirko Thurm",
   "Ihr Ziel: Termine, nicht nur Leads",
   "Warum gekaufte Leads verbrennen",
-  "Exklusive Leads, Woche für Woche",
   "Der Lead bucht selbst",
   "Sonntag, 21:47 Uhr",
   "Kein Lead geht mehr verloren",
   "Jeden Morgen wissen Sie, wen Sie anrufen",
   "Perfekt vorbereitet in jeden Termin",
+  "Exklusive Leads, Woche für Woche",
   "Rechnen Sie mit Ihren Zahlen",
   "Mehr Leads, günstigere Abschlüsse",
   "Ihr Paket: Software + Leads",
