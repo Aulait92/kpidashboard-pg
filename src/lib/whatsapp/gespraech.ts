@@ -293,12 +293,14 @@ export const KALENDER_KNOEPFE: Knopf[] = [
 /**
  * Komplettcheck nach der Buchung (Ole, 17.11.2026), zentral zum Feilen; [Person] = „Herr Kannapinn“. Knöpfe
  * „Ja, gern“ / „Nein, danke“. Bei Familie „Sie und Ihre Familie“. Fassung a (bisher) im Splittest komplettcheck_text.
+ * Der Nutzen ist fett (Ole, 20.11.2026: „und wo Sie vielleicht sparen können“ fett), in Fassung b der entsprechende Teil
+ * ebenso, damit der Splittest fair bleibt.
  */
 export const KOMPLETTCHECK_TEXT = {
-  sie: "Danke! Soll [Person] im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können? Das dauert nur ein paar Minuten länger.",
-  sieFamilie: "Danke! Soll [Person] im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können? Das dauert nur ein paar Minuten länger.",
-  du: "Danke! Soll [Person] im Termin auch kurz schauen, ob du insgesamt gut abgesichert bist und wo du vielleicht etwas sparen kannst? Das dauert nur ein paar Minuten länger.",
-  duFamilie: "Danke! Soll [Person] im Termin auch kurz schauen, ob du und deine Familie insgesamt gut abgesichert seid und wo ihr vielleicht etwas sparen könnt? Das dauert nur ein paar Minuten länger.",
+  sie: "Danke! Soll [Person] im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind *und wo Sie vielleicht etwas sparen können?* Das dauert nur ein paar Minuten länger.",
+  sieFamilie: "Danke! Soll [Person] im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind *und wo Sie vielleicht etwas sparen können?* Das dauert nur ein paar Minuten länger.",
+  du: "Danke! Soll [Person] im Termin auch kurz schauen, ob du insgesamt gut abgesichert bist *und wo du vielleicht etwas sparen kannst?* Das dauert nur ein paar Minuten länger.",
+  duFamilie: "Danke! Soll [Person] im Termin auch kurz schauen, ob du und deine Familie insgesamt gut abgesichert seid *und wo ihr vielleicht etwas sparen könnt?* Das dauert nur ein paar Minuten länger.",
 } as const;
 
 /**
@@ -306,10 +308,10 @@ export const KOMPLETTCHECK_TEXT = {
  * konkret über doppelte Verträge und Sparen, „können“ statt Versprechen, kostenlos, keine Minutenangabe.
  */
 export const KOMPLETTCHECK_TEXT_B = {
-  sie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo Sie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
-  sieFamilie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können? Kostenlos und nur ein paar Minuten länger.",
-  du: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo du vielleicht doppelt zahlst und sparen kannst? Kostenlos und nur ein paar Minuten länger.",
-  duFamilie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, wo ihr als Familie vielleicht doppelt zahlt und sparen könnt? Kostenlos und nur ein paar Minuten länger.",
+  sie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, *wo Sie vielleicht doppelt zahlen und sparen können?* Kostenlos und nur ein paar Minuten länger.",
+  sieFamilie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, *wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können?* Kostenlos und nur ein paar Minuten länger.",
+  du: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, *wo du vielleicht doppelt zahlst und sparen kannst?* Kostenlos und nur ein paar Minuten länger.",
+  duFamilie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, *wo ihr als Familie vielleicht doppelt zahlt und sparen könnt?* Kostenlos und nur ein paar Minuten länger.",
 } as const;
 
 /** Komplettcheck-Frage für Ansprache und Lebenssituation; variante a = bisher (KOMPLETTCHECK_TEXT), b = neu (Standard). */
@@ -320,7 +322,7 @@ export function komplettcheckFrage(an: Ansprache, person: VermittlerName, famili
 }
 
 /** Erkennt die Komplettcheck-Frage (beide Fassungen) in einer Nachricht von uns. */
-export const KOMPLETTCHECK_RE = /im Termin auch kurz schauen, ob .+ insgesamt gut abgesichert|im Termin kurz drüberschauen, wo .+ doppelt zahl/;
+export const KOMPLETTCHECK_RE = /im Termin auch kurz schauen, ob .+ insgesamt gut abgesichert|im Termin kurz drüberschauen, \*?wo .+ doppelt zahl/;
 
 /** Knöpfe zum Komplettcheck (Payload, damit „Nein, danke“ nicht als „kein Bedarf“ gilt). */
 export const KOMPLETTCHECK_KNOEPFE: Knopf[] = [
