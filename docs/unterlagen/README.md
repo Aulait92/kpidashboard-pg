@@ -6,6 +6,14 @@ Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unveränder
 Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 24 Folien, Makler 25 (Fassung eca12945). Die Folien sind Bilder (Text nicht
 durchsuchbar). Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Setup“ (hängt an der Preisänderung, die Ole noch bestätigt).
 
+Fassung 20.11.2026, ohne Gedankenstriche und mit Sie-Form im Chat (Ole): Gedankenstriche durch Komma, Doppelpunkt oder
+Punkt ersetzt auf Folie 3, 6, 10, 11, 12, 14, 15 und den Endfolien (Vertreter 21 bis 24, Makler 21 bis 25; Minuszeichen, Bis-Striche
+und Mittelpunkte bleiben); Chats auf Folie 11 und 14 und die Zitate auf Folie 14 siezen den Lead („Guten Tag Frau Becker“,
+Berater „Max Berger“). Überschriften per Glyphen-Übernahme aus dem Original (Komma aus „Sonntag,“), Fließtext mit Inter neu
+gesetzt, Lead-Antworten im Chat unverändert übernommen. PPTX und PDF (Seiten 3, 6, 10 bis 12, 21, 22, 28 bis 31, Makler
+zusätzlich 32), Web-Folien der geänderten Folien neu. Folie 13 (Video: Du-Form und Gedankenstriche) und 17 unverändert.
+Die PPL-Präsentation nutzt dieselben Bilder (Vorstellung, „Niemand geht ran?“, „Kein Lead …“, „Heute“) und ist noch alt.
+
 Fassung 19.11.2026, Folie 19 „Policen vorab“ (Ole): statt WhatsApp-Telefon jetzt oben das Vergleichsblatt kompakt
 (Doppelt, Kündbar, Fehlt) und darunter ein echter Screenshot der Vergleichsfolie der Beratungspräsentation mit Spalte
 „Ihr bisheriger Vertrag“ neben Basis, Smart und Komfort (erfundene Daten, mit dem App-Code gerendert); links neuer
