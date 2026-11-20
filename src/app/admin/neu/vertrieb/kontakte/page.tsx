@@ -81,8 +81,9 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
             <ConfirmButton
               form="kontakte-auswahl"
               message="Ausgewählte Kontakte wirklich löschen? Verlauf, Aufgaben und Cold-Mail-Status werden mit gelöscht."
-              className={buttonClass("danger", "sm")}
+              className={cn(buttonClass("ghost", "sm"), "text-rose-600 hover:bg-rose-50")}
             >
+              {/* Selten und unumkehrbar: leise statt rot gefüllt, Rückfrage bleibt */}
               <Trash2 className="h-3.5 w-3.5" /> Ausgewählte löschen
             </ConfirmButton>
           </form>
