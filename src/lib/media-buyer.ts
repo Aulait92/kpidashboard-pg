@@ -94,6 +94,18 @@ import {
   isLegacyProduct,
 } from "@/lib/products";
 import { sendToAdmins } from "@/lib/push";
+import { effektiveSteuer } from "@/lib/ppl/steuer";
+import {
+  aggregatePoolGoal,
+  customersBehind,
+  goalSourceFromEnv,
+  holdForSourceSwitch,
+  subscriptionMonthGoal,
+  type GoalSource,
+  type GoalSubscription,
+  type PoolCustomerGoal,
+  type SubscriptionGoal,
+} from "@/lib/media-buyer-ziele";
 import {
   applyMonthlyCap,
   applyPriceGuard,
@@ -381,7 +393,7 @@ export function decideBudget(params: {
 // ─── Pool-Ableitung ──────────────────────────────────────────────────
 
 // Definition eines Liefer-Pools, abgeleitet aus den Kundendaten.
-type PoolDef = {
+export type PoolDef = {
   key: string;
   label: string;
   kind: "product" | "region";
@@ -393,6 +405,17 @@ type PoolDef = {
   customerIds: string[] | null;
   // Anzahl Kunden mit effektivem Ziel > 0 in diesem Pool (fürs Admin-Display).
   customerCount: number;
+  // Zielquelle (MEDIA_BUYER_GOAL_SOURCE) und beide Werte zum Vergleich.
+  goalSource: GoalSource;
+  softwareGoal: number;
+  airtableGoal: number;
+  // Software-Ziel zerlegt: schon geliefert, fest offen (bezahlt), erwartet (Verlängerungen).
+  software: { geliefert: number; fest: number; erwartet: number };
+  // Lead-Preis aus den Bezügen (gewichtet mit dem Soll) und Anteil steuerfreier Leads.
+  leadPrice: number | null;
+  taxFreeShare: number;
+  // Ziel und Geliefertes je Kunde (gewählte Quelle).
+  customers: (PoolCustomerGoal & { name: string })[];
 };
 
 function isKinderwunschCampaign(name: string): boolean {
@@ -458,75 +481,136 @@ export function regionPoolKey(canonicalKey: string, region: string): string {
     : `region:${canonicalKey}:${region}`;
 }
 
-// Aggregator für die Pool-Ableitung. Sammelt Ziele/Kunden je Pool-Key aus
-// beliebigen Quellen (CustomerProduct-Pfad + Legacy-Fallback).
-type ProductAcc = {
+// Ein Pool im Aufbau: Ziele je Kunde aus beiden Quellen (Software, Airtable),
+// damit der Admin beide vergleichen kann.
+type PoolAcc = {
+  key: string;
+  kind: "product" | "region";
   canonicalKey: string;
+  region: string | null;
   displayName: string;
-  goal: number;
-  customerIds: Set<string>;
-};
-type RegionAcc = {
-  canonicalKey: string;
-  region: string;
-  goal: number;
-  customerIds: Set<string>;
+  airtable: Map<string, number>; // customerId → effektives Airtable-Ziel
+  software: SubscriptionGoal[];
 };
 
-// Leitet alle Pools aus den aktuellen Kundendaten ab.
-//
-// Primärquelle ist die produkt-agnostische CustomerProduct-Join-Tabelle
-// (Phase B): ein Pool je Produkt (poolKind="product") bzw. je Region
-// (poolKind="region"). So entstehen neue Produkte automatisch, ohne
-// Code-Änderung.
-//
-// Als Sicherheitsnetz fließen die alten Customer-Goal-Spalten weiter ein:
-// liefert der CustomerProduct-Pfad für eine der drei Legacy-Sparten (noch)
-// kein Ziel — etwa weil die Produkte-/Bezug-Tabelle in Airtable kurzzeitig
-// nicht lesbar war —, greift der Legacy-Wert. Dadurch kann der Umstieg das
-// Dashboard nicht leerräumen.
-export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]> {
-  const productAccs = new Map<string, ProductAcc>(); // key = canonicalKey
-  const regionAccs = new Map<string, RegionAcc>(); // key = regionPoolKey()
-
-  function addProduct(
-    canonicalKey: string,
-    displayName: string,
-    customerId: string,
-    goal: number,
-  ): void {
-    if (goal <= 0) return;
-    const acc = productAccs.get(canonicalKey) ?? {
-      canonicalKey,
-      displayName,
-      goal: 0,
-      customerIds: new Set<string>(),
+// Lädt die Bezüge der Software samt Bestellungen und Gelieferten und rechnet
+// je Bezug das Soll des laufenden Monats (Modell: lib/media-buyer-ziele.ts).
+async function loadSoftwareGoals(now: Date): Promise<
+  { sub: { productKey: string; customerId: string; region: string | null }; goal: SubscriptionGoal }[]
+> {
+  const monthStart = startOfMonth(now);
+  const monthEnd = new Date(endOfMonth(now).getTime() + 1);
+  const subs = await prisma.leadSubscription.findMany({
+    select: {
+      id: true,
+      customerId: true,
+      productKey: true,
+      active: true,
+      status: true,
+      period: true,
+      goal: true,
+      testQuantity: true,
+      startDate: true,
+      price: true,
+      steuer: true,
+      customer: {
+        select: {
+          region: true,
+          dormantSince: true,
+          vermittlerRegisterNr: true,
+          vermittlerRegisterStatus: true,
+          vermittlerGeprueftAt: true,
+        },
+      },
+      areas: { select: { quantity: true, period: true } },
+      // Bestellungen, die den Monat berühren können (inkl. der Woche über den
+      // Monatsanfang); die jüngste ist für die Verlängerung maßgeblich.
+      orders: {
+        where: { periodEnd: { gt: new Date(monthStart.getTime() - 7 * 86_400_000) } },
+        select: {
+          id: true,
+          periodStart: true,
+          periodEnd: true,
+          quantity: true,
+          status: true,
+          autoRenew: true,
+        },
+      },
+    },
+  });
+  if (subs.length === 0) return [];
+  const subIds = subs.map((s) => s.id);
+  const orderIds = subs.flatMap((s) => s.orders.map((o) => o.id));
+  const [byOrder, inMonth, before] = await Promise.all([
+    orderIds.length
+      ? prisma.lead.groupBy({
+          by: ["orderId"],
+          where: { orderId: { in: orderIds }, isTest: false },
+          _count: { _all: true },
+        })
+      : Promise.resolve([] as { orderId: string | null; _count: { _all: number } }[]),
+    prisma.lead.groupBy({
+      by: ["subscriptionId"],
+      where: { subscriptionId: { in: subIds }, isTest: false, deliveredAt: { gte: monthStart, lte: now } },
+      _count: { _all: true },
+    }),
+    prisma.lead.groupBy({
+      by: ["subscriptionId"],
+      where: { subscriptionId: { in: subIds }, isTest: false, deliveredAt: { lt: monthStart } },
+      _count: { _all: true },
+    }),
+  ]);
+  const orderCount = new Map(byOrder.map((r) => [r.orderId, r._count._all]));
+  const monthCount = new Map(inMonth.map((r) => [r.subscriptionId, r._count._all]));
+  const beforeCount = new Map(before.map((r) => [r.subscriptionId, r._count._all]));
+  const window = {
+    now,
+    monthStart,
+    monthEnd,
+    projectRenewals: !["0", "false", "aus", "off"].includes(
+      (process.env.MEDIA_BUYER_GOAL_RENEWALS ?? "").trim().toLowerCase(),
+    ),
+  };
+  return subs.map((s) => {
+    const input: GoalSubscription = {
+      id: s.id,
+      customerId: s.customerId,
+      productKey: s.productKey,
+      active: s.active,
+      dormant: s.customer.dormantSince != null,
+      status: s.status,
+      period: s.period,
+      goal: s.goal,
+      testQuantity: s.testQuantity,
+      startDate: s.startDate,
+      price: decToNumber(s.price) ?? 0,
+      taxFree: effektiveSteuer(s, s.customer).steuer === "steuerfrei_4_11",
+      areas: s.areas,
+      deliveredMonth: monthCount.get(s.id) ?? 0,
+      deliveredBefore: beforeCount.get(s.id) ?? 0,
+      orders: s.orders.map((o) => ({ ...o, delivered: orderCount.get(o.id) ?? 0 })),
     };
-    acc.goal += goal;
-    acc.customerIds.add(customerId);
-    productAccs.set(canonicalKey, acc);
-  }
-
-  function addRegion(
-    canonicalKey: string,
-    region: string,
-    customerId: string,
-    goal: number,
-  ): void {
-    if (goal <= 0 || !region) return;
-    const key = regionPoolKey(canonicalKey, region);
-    const acc = regionAccs.get(key) ?? {
-      canonicalKey,
-      region,
-      goal: 0,
-      customerIds: new Set<string>(),
+    return {
+      sub: { productKey: s.productKey, customerId: s.customerId, region: s.customer.region },
+      goal: subscriptionMonthGoal(input, window),
     };
-    acc.goal += goal;
-    acc.customerIds.add(customerId);
-    regionAccs.set(key, acc);
-  }
+  });
+}
 
-  // ── Primärpfad: Product × CustomerProduct ──
+// Leitet alle Pools ab. Ziele kommen aus der gewählten Quelle
+// (MEDIA_BUYER_GOAL_SOURCE, Standard „software“ = Bezüge/Bestellungen der
+// App; „airtable“ = CustomerProduct.leadGoal, der Airtable-Spiegel). Beide
+// Werte werden immer berechnet, damit der Admin sie vergleichen kann.
+//
+// Pools: ein Pool je Produkt (Product.poolKind="product") bzw. je Region
+// (poolKind="region", Region des Kunden bzw. des CustomerProduct). Jedes
+// aktive Produkt erscheint, auch ohne Ziel (nur Monitoring).
+export async function derivePoolDefs(
+  now: Date = new Date(),
+  source: GoalSource = goalSourceFromEnv(),
+): Promise<PoolDef[]> {
+  const accs = new Map<string, PoolAcc>();
+
   const products = await prisma.product.findMany({
     where: { active: true },
     select: {
@@ -546,79 +630,135 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
       },
     },
   });
-  // Pool-Label je Produkt. Ein explizit gepflegter Product.displayName (gespeist
-  // aus der Bezug-„Name"-Spalte in Airtable) hat IMMER Vorrang — auch vor dem
-  // Legacy-Label „PKV …". Ohne expliziten Namen greift das Default-Label.
+  // Pool-Label je Produkt. Ein explizit gepflegter Product.displayName hat
+  // IMMER Vorrang, auch vor dem Legacy-Label „PKV …".
   const labelByKey = new Map<string, string>();
+  const kindByKey = new Map<string, "product" | "region">();
+  const displayByKey = new Map<string, string>();
   for (const p of products) {
     const canonicalKey = canonicalProductKey(p.name);
     const explicit = p.displayName?.trim();
     if (explicit) labelByKey.set(canonicalKey, explicit);
     else if (!labelByKey.has(canonicalKey))
       labelByKey.set(canonicalKey, productPoolLabel(canonicalKey, p.name));
+    if (p.poolKind === "region") kindByKey.set(canonicalKey, "region");
+    else if (!kindByKey.has(canonicalKey)) kindByKey.set(canonicalKey, "product");
+    if (!displayByKey.has(canonicalKey)) displayByKey.set(canonicalKey, p.displayName ?? p.name);
   }
 
+  function accFor(canonicalKey: string, region: string | null): PoolAcc | null {
+    const kind = kindByKey.get(canonicalKey) ?? "product";
+    const r = region?.trim() ?? "";
+    if (kind === "region" && !r) return null;
+    const key = kind === "region" ? regionPoolKey(canonicalKey, r) : `product:${canonicalKey}`;
+    let acc = accs.get(key);
+    if (!acc) {
+      acc = {
+        key,
+        kind,
+        canonicalKey,
+        region: kind === "region" ? r : null,
+        displayName: displayByKey.get(canonicalKey) ?? canonicalKey,
+        airtable: new Map(),
+        software: [],
+      };
+      accs.set(key, acc);
+    }
+    return acc;
+  }
+
+  // ── Airtable: Product × CustomerProduct ──
   for (const p of products) {
     const canonicalKey = canonicalProductKey(p.name);
-    const displayName = p.displayName ?? p.name;
     for (const cp of p.customerProducts) {
       const goal = goalForCustomerProduct(cp, now);
       if (goal <= 0) continue;
-      if (p.poolKind === "region") {
-        const region = (cp.region ?? cp.customer.region)?.trim() ?? "";
-        addRegion(canonicalKey, region, cp.customerId, goal);
-      } else {
-        addProduct(canonicalKey, displayName, cp.customerId, goal);
-      }
+      const acc = accFor(canonicalKey, cp.region ?? cp.customer.region);
+      if (!acc) continue;
+      acc.airtable.set(cp.customerId, (acc.airtable.get(cp.customerId) ?? 0) + goal);
     }
   }
 
-  // Jedes aktive Produkt im Media Buyer sichtbar machen — auch ohne Lead-Ziel.
-  // Ziellose Pools dienen dem Monitoring (Leads/Spend/CPL) und werden NICHT
-  // gesteuert (decideBudget: goal<=0 → "none"). Region-Produkte (Kinderwunsch)
-  // brauchen eine Region und entstehen ausschließlich über CustomerProduct.
+  // ── Software: LeadSubscription × LeadOrder ──
+  for (const { sub, goal } of await loadSoftwareGoals(now)) {
+    if (goal.soll <= 0 && goal.price <= 0) continue;
+    const acc = accFor(canonicalProductKey(sub.productKey), sub.region);
+    if (acc) acc.software.push(goal);
+  }
+
+  // Jedes aktive Produkt sichtbar machen, auch ohne Lead-Ziel (Monitoring).
   for (const p of products) {
     if (p.poolKind === "region") continue;
-    const canonicalKey = canonicalProductKey(p.name);
-    if (!productAccs.has(canonicalKey)) {
-      productAccs.set(canonicalKey, {
-        canonicalKey,
-        displayName: p.displayName ?? p.name,
-        goal: 0,
-        customerIds: new Set<string>(),
-      });
-    }
+    accFor(canonicalProductKey(p.name), null);
   }
+
+  // Gelieferte Leads je Kunde × Produkt im Monat (für die Airtable-Sicht je Kunde).
+  const monthStart = startOfMonth(now);
+  const airtableCustomerIds = [...new Set([...accs.values()].flatMap((a) => [...a.airtable.keys()]))];
+  const deliveredRows = airtableCustomerIds.length
+    ? await prisma.lead.groupBy({
+        by: ["customerId", "source"],
+        where: {
+          customerId: { in: airtableCustomerIds },
+          isTest: false,
+          createdAt: { gte: monthStart, lte: endOfDay(now) },
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const deliveredBy = new Map<string, number>();
+  for (const r of deliveredRows) {
+    const k = `${r.customerId}|${canonicalProductKey(r.source ?? "")}`;
+    deliveredBy.set(k, (deliveredBy.get(k) ?? 0) + r._count._all);
+  }
+
+  const allCustomerIds = new Set<string>(airtableCustomerIds);
+  for (const a of accs.values()) for (const g of a.software) allCustomerIds.add(g.customerId);
+  const names = allCustomerIds.size
+    ? await prisma.customer.findMany({
+        where: { id: { in: [...allCustomerIds] } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const nameById = new Map(names.map((c) => [c.id, c.name]));
 
   const defs: PoolDef[] = [];
-  for (const acc of productAccs.values()) {
+  for (const acc of accs.values()) {
+    const sw = aggregatePoolGoal(acc.software);
+    const airtableGoal = [...acc.airtable.values()].reduce((s, g) => s + g, 0);
+    const airtableCustomers: PoolCustomerGoal[] = [...acc.airtable.entries()].map(([customerId, goal]) => ({
+      customerId,
+      goal,
+      delivered: deliveredBy.get(`${customerId}|${acc.canonicalKey}`) ?? 0,
+    }));
+    const selected = source === "software" ? sw.customers : airtableCustomers;
+    const label =
+      acc.kind === "region"
+        ? `${labelByKey.get(acc.canonicalKey) ?? displayProduct(acc.canonicalKey)} ${acc.region}`
+        : (labelByKey.get(acc.canonicalKey) ?? productPoolLabel(acc.canonicalKey, acc.displayName));
+    // Region-Pools zählen die Leads der Kunden der Region (beide Quellen, damit
+    // der Vergleich auf denselben Ist-Zahlen beruht).
+    const regionCustomers = [...new Set([...acc.airtable.keys(), ...sw.customers.map((c) => c.customerId)])];
     defs.push({
-      key: `product:${acc.canonicalKey}`,
-      label:
-        labelByKey.get(acc.canonicalKey) ??
-        productPoolLabel(acc.canonicalKey, acc.displayName),
-      kind: "product",
-      product: acc.canonicalKey,
-      region: null,
-      goal: acc.goal,
-      // Produkt-Pools zählen ALLE Leads dieser source (kanal-/kundenagnostisch).
-      customerIds: null,
-      customerCount: acc.customerIds.size,
-    });
-  }
-  for (const acc of regionAccs.values()) {
-    defs.push({
-      key: regionPoolKey(acc.canonicalKey, acc.region),
-      label: `${labelByKey.get(acc.canonicalKey) ?? displayProduct(acc.canonicalKey)} ${acc.region}`,
-      kind: "region",
+      key: acc.key,
+      label,
+      kind: acc.kind,
       product: acc.canonicalKey,
       region: acc.region,
-      goal: acc.goal,
-      customerIds: [...acc.customerIds],
-      customerCount: acc.customerIds.size,
+      goal: source === "software" ? sw.goal : airtableGoal,
+      goalSource: source,
+      softwareGoal: sw.goal,
+      airtableGoal,
+      software: { geliefert: sw.geliefert, fest: Math.round(sw.fest), erwartet: Math.round(sw.erwartet) },
+      leadPrice: sw.leadPrice,
+      taxFreeShare: sw.taxFreeShare,
+      customers: selected
+        .map((c) => ({ ...c, name: nameById.get(c.customerId) ?? c.customerId }))
+        .sort((a, b) => b.goal - a.goal),
+      customerIds: acc.kind === "product" ? null : regionCustomers,
+      customerCount: selected.filter((c) => c.goal > 0).length,
     });
   }
-
   return defs;
 }
 
@@ -1100,29 +1240,46 @@ function matchGooglePoolCampaigns(
   return campaigns.filter((c) => c.name.toLowerCase().includes(region));
 }
 
-// Höchstpreis je Lead für einen Pool: Feld > Env > Break-even aus Ø Lead-Preis
-// der Bezüge × (1 − Stornoquote 30 Tage). Regeln: media-buyer-preisgrenze.ts.
+// Reverse-Charge-USt-Satz auf Meta-Rechnungen (für steuerfreie Leads nicht
+// abziehbar). 0 erlaubt (Regel aus).
+function rcVat(): number {
+  const n = Number(process.env.MEDIA_BUYER_RC_VAT);
+  return process.env.MEDIA_BUYER_RC_VAT && Number.isFinite(n) && n >= 0 ? n : 0.19;
+}
+
+// Höchstpreis je Lead für einen Pool: Feld > Env > Break-even aus dem Lead-Preis
+// der Bezüge (gewichtet mit dem Soll, derivePoolDefs) × (1 − Stornoquote 30
+// Tage) / (1 + USt × Anteil steuerfreier Leads). Regeln: media-buyer-preisgrenze.ts.
 async function loadPoolMaxCpl(
   def: PoolDef,
   poolOverride: number | null,
   now: Date,
-): Promise<{ value: number | null; source: string | null }> {
+): Promise<{ value: number | null; source: string | null; taxFreeShare: number }> {
   const envRaw = Number(process.env.MEDIA_BUYER_MAX_CPL);
   const envOverride = Number.isFinite(envRaw) && envRaw > 0 ? envRaw : null;
   if ((poolOverride ?? 0) > 0 || envOverride != null) {
-    return computeMaxCpl({ poolOverride, envOverride, leadPrices: [], stornoRate: null, defaultStorno: 0.1 });
+    return {
+      ...computeMaxCpl({ poolOverride, envOverride, leadPrices: [], stornoRate: null, defaultStorno: 0.1 }),
+      taxFreeShare: 0,
+    };
   }
   const customerFilter = def.customerIds ? { customerId: { in: def.customerIds } } : {};
-  const [subs, cps] = await Promise.all([
-    prisma.leadSubscription.findMany({
-      where: { active: true, ...customerFilter },
-      select: { customerId: true, productKey: true, price: true },
-    }),
-    prisma.customerProduct.findMany({
-      where: { leadPrice: { not: null }, ...customerFilter },
-      select: { customerId: true, leadPrice: true, product: { select: { name: true } } },
-    }),
-  ]);
+  // Ohne Software-Preis: einfacher Schnitt je Kunde; CustomerProduct (Airtable)
+  // nur noch, wenn Airtable die Zielquelle ist.
+  const [subs, cps] = def.leadPrice != null
+    ? [[], []]
+    : await Promise.all([
+        prisma.leadSubscription.findMany({
+          where: { active: true, ...customerFilter },
+          select: { customerId: true, productKey: true, price: true },
+        }),
+        def.goalSource === "airtable"
+          ? prisma.customerProduct.findMany({
+              where: { leadPrice: { not: null }, ...customerFilter },
+              select: { customerId: true, leadPrice: true, product: { select: { name: true } } },
+            })
+          : Promise.resolve([] as { customerId: string; leadPrice: unknown; product: { name: string } }[]),
+      ]);
   // Je Kunde ein Preis: Pay-per-Lead-Bezug vor CustomerProduct.
   const priceByCustomer = new Map<string, number>();
   for (const sub of subs) {
@@ -1146,13 +1303,16 @@ async function loadPoolMaxCpl(
     prisma.lead.count({ where: leadWhere }),
     prisma.lead.count({ where: { ...leadWhere, stornoState: "approved" } }),
   ]);
-  return computeMaxCpl({
+  const res = computeMaxCpl({
     poolOverride: null,
     envOverride: null,
-    leadPrices: [...priceByCustomer.values()],
+    leadPrices: def.leadPrice != null ? [def.leadPrice] : [...priceByCustomer.values()],
     stornoRate: stornoRate(delivered, cancelled, envNum("MEDIA_BUYER_STORNO_MIN_LEADS", 20)),
     defaultStorno: envNum("MEDIA_BUYER_DEFAULT_STORNO", 0.1),
+    taxFreeShare: def.taxFreeShare,
+    rcVat: rcVat(),
   });
+  return { ...res, taxFreeShare: res.taxFreeShare ?? 0 };
 }
 
 async function processPool(

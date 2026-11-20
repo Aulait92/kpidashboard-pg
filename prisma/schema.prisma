@@ -709,6 +709,9 @@ model MediaBuyerAction {
   // darüber lag (Abbruchregel: mehrere Läufe in Folge → Push).
   maxCpl         Decimal? @db.Decimal(12, 2)
   cplOverMax     Boolean  @default(false)
+  // Zielquelle dieser Entscheidung: "software" (Bezüge/Bestellungen) | "airtable";
+  // null = vor der Umstellung (Airtable). Für den Schonlauf beim Quellenwechsel.
+  goalSource     String?
   createdAt    DateTime @default(now())
 
   @@index([poolKey, createdAt])

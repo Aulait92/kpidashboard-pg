@@ -25,6 +25,12 @@ describe("Höchstpreis", () => {
     expect(computeMaxCpl({ poolOverride: 40, envOverride: 45, leadPrices: [60], stornoRate: 0, defaultStorno: 0.1 }).source).toBe("pool");
     expect(computeMaxCpl({ poolOverride: null, envOverride: 45, leadPrices: [60], stornoRate: 0, defaultStorno: 0.1 }).value).toBe(45);
   });
+  it("steuerfreie Leads: nicht abziehbare Reverse-Charge-USt senkt den Höchstpreis", () => {
+    const base = { poolOverride: null, envOverride: null, leadPrices: [50], stornoRate: 0.1, defaultStorno: 0.1 };
+    expect(computeMaxCpl({ ...base, taxFreeShare: 1, rcVat: 0.19 }).value).toBe(37.82);
+    expect(computeMaxCpl({ ...base, taxFreeShare: 0, rcVat: 0.19 }).value).toBe(45);
+    expect(computeMaxCpl({ ...base, taxFreeShare: 0.5 }).value).toBe(41.1);
+  });
   it("ohne Lead-Preis kein Höchstpreis", () => {
     expect(computeMaxCpl({ poolOverride: null, envOverride: null, leadPrices: [], stornoRate: 0, defaultStorno: 0.1 }).value).toBeNull();
   });
