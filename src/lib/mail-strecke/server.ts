@@ -41,6 +41,7 @@ import {
   type Oeffnungsfrage,
 } from "@/lib/mail-strecke/texte";
 import type { LeadMailAnhang } from "@/lib/mail/lead-versand";
+import { istFestnetz, istMobil } from "@/lib/telefon-typ";
 
 const OFFEN = new Set(["", "neuer lead", "nicht erreicht", "im gespräch"]);
 const istOffen = (status: string | null | undefined) => OFFEN.has((status ?? "").trim().toLowerCase());
@@ -52,23 +53,8 @@ export function streckeAn(env: Record<string, string | undefined> = process.env)
   return !/^(0|aus|off|false|nein)$/i.test((env.MAIL_STRECKE ?? "").trim());
 }
 
-/** Ist die Nummer eine Festnetznummer (rein, libphonenumber)? Unbekannt bzw. ungültig: false. */
-export async function istFestnetz(phone: string | null | undefined): Promise<boolean> {
-  const d = (phone ?? "").replace(/\D/g, "");
-  if (d.length < 6) return false;
-  const { parsePhoneNumberFromString } = await import("libphonenumber-js/max");
-  const nr = parsePhoneNumberFromString(`+${d}`);
-  return !!nr && nr.isValid() && nr.getType() === "FIXED_LINE";
-}
-
-/** Handynummer (für SMS)? */
-export async function istMobil(phone: string | null | undefined): Promise<boolean> {
-  const d = (phone ?? "").replace(/\D/g, "");
-  if (d.length < 8) return false;
-  const { parsePhoneNumberFromString } = await import("libphonenumber-js/max");
-  const nr = parsePhoneNumberFromString(`+${d}`);
-  return !!nr && nr.isValid() && nr.getType() === "MOBILE";
-}
+// Art der Nummer (rein, lib/telefon-typ.ts); hier weiter exportiert, der Vertrieb importiert sie von hier
+export { istFestnetz, istMobil };
 
 /** Daten-Sperre nach Betroffenenrechten (lib/dsgvo): Adresse bzw. Nummer gesperrt? */
 async function gesperrt(customerId: string, email: string | null, phone: string | null): Promise<boolean> {

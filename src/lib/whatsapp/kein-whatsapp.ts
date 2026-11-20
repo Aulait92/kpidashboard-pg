@@ -25,6 +25,8 @@
 //      einen Push. Der Admin-Alarm bleibt.
 //   7. 131050 (Marketing-Nachrichten abbestellt) zählt als Abmeldung von WhatsApp: Chat gesperrt wie bei „STOPP“
 //      (ohne Bestätigung, sie käme nicht an), Lead auf die Anrufliste, kein Admin-Alarm.
+//   8. (Ole, 20.11.2026) Festnetznummern werden schon vor dem Versand erkannt (lib/whatsapp/festnetz.ts) und laufen
+//      über markLeadNoWhatsApp mit Grund „festnetz“ (eigene Texte, Mail-Strecke mit Auslöser „festnetz“).
 // Bestandskampagnen: Empfänger mit „kein WhatsApp“ bekommen künftige Kampagnen nur per E-Mail
 // (ExistingCustomer.waUnavailableAt, lib/bestand/campaigns.ts applyCampaignStatus und lib/bestand/einwilligung.ts).
 
@@ -34,6 +36,7 @@ import { asAnsprache } from "@/lib/ansprache";
 import { formatPhone } from "@/lib/format";
 import { ART_HINWEIS, ART_LABEL, isWhatsAppOptOutCode, zustellfehlerOf, type StatusError, type Zustellfehler } from "@/lib/whatsapp/zustellfehler";
 import { keinWhatsAppMail } from "@/lib/whatsapp/kein-whatsapp-mail";
+import { FESTNETZ_VERLAUF } from "@/lib/whatsapp/festnetz";
 
 /** Grund auf der Anrufliste (Heute, Leads). */
 export const KEIN_WHATSAPP_REASON = "Kein WhatsApp: bitte direkt anrufen";
@@ -150,8 +153,13 @@ export async function markLeadOutreachFailed(
  * Lead als „kein WhatsApp“ markieren (einmalig): Assistent aus, Abfolgen stoppen, E-Mail mit Terminlink, Push.
  * Rückgabe "already", wenn er schon markiert war (dann passiert nichts weiter).
  */
-export async function markLeadNoWhatsApp(leadId: string, opts: { now?: Date; code?: number | null } = {}): Promise<"flagged" | "already" | "skipped"> {
+export async function markLeadNoWhatsApp(
+  leadId: string,
+  /** grund „festnetz“: vor dem Versand erkannt (lib/whatsapp/festnetz.ts), eigene Texte und Mail-Strecke mit Auslöser „festnetz“ */
+  opts: { now?: Date; code?: number | null; grund?: "festnetz" } = {},
+): Promise<"flagged" | "already" | "skipped"> {
   const now = opts.now ?? new Date();
+  const festnetz = opts.grund === "festnetz";
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     select: { id: true, customerId: true, name: true, phone: true, source: true, status: true, outreachAt: true, outreachStatus: true, erasedAt: true },
@@ -177,7 +185,9 @@ export async function markLeadNoWhatsApp(leadId: string, opts: { now?: Date; cod
   await logLeadHistory(
     leadId,
     "status",
-    `Kein WhatsApp: Die Nummer ist nicht per WhatsApp erreichbar${opts.code ? ` (Meta ${opts.code})` : ""}. Der Assistent schreibt nicht mehr, bitte direkt anrufen.`,
+    festnetz
+      ? FESTNETZ_VERLAUF
+      : `Kein WhatsApp: Die Nummer ist nicht per WhatsApp erreichbar${opts.code ? ` (Meta ${opts.code})` : ""}. Der Assistent schreibt nicht mehr, bitte direkt anrufen.`,
     { customerId: lead.customerId, userId: null },
   );
 
@@ -188,7 +198,7 @@ export async function markLeadNoWhatsApp(leadId: string, opts: { now?: Date; cod
   // Mail-Strecke (Ole, 18.11.2026, lib/mail-strecke): Erstmail mit Öffnungsfrage und zwei Zeiten statt der bisherigen
   // Einmal-Mail; diese nur noch, wenn die Strecke aus ist (MAIL_STRECKE=aus) bzw. beim Kunden nicht läuft
   const { starteMailStrecke } = await import("@/lib/mail-strecke/server");
-  const strecke = await starteMailStrecke(leadId, "kein_whatsapp", { now });
+  const strecke = await starteMailStrecke(leadId, festnetz ? "festnetz" : "kein_whatsapp", { now });
   const mail =
     strecke.ergebnis === "gestartet" || strecke.ergebnis === "schon"
       ? { sent: strecke.ergebnis === "gestartet" ? !!strecke.gesendet : false }
@@ -201,8 +211,8 @@ export async function markLeadNoWhatsApp(leadId: string, opts: { now?: Date; cod
   const name = lead.name?.trim() || "Ein neuer Lead";
   const parts = [lead.phone ? formatPhone(lead.phone) : null, lead.source ? displayProduct(lead.source) : null].filter(Boolean).join(" · ");
   await notifyLeadPush(leadId, {
-    title: `Sofort anrufen: ${name} hat kein WhatsApp`,
-    body: `${parts ? `${parts}. ` : ""}Die Nummer ist nicht per WhatsApp erreichbar.${mail.sent ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}`,
+    title: festnetz ? `Sofort anrufen: ${name} hat keine Handynummer` : `Sofort anrufen: ${name} hat kein WhatsApp`,
+    body: `${parts ? `${parts}. ` : ""}${festnetz ? "Festnetznummer, per WhatsApp nicht erreichbar." : "Die Nummer ist nicht per WhatsApp erreichbar."}${mail.sent ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}`,
     url: `/buyer/leads/${leadId}`,
     tag: `kein-wa:${leadId}`,
   });
