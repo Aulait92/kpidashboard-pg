@@ -39,6 +39,24 @@ Leitfaden und Ergebnis: `docs/firma/protokolle/2026-11-20-generalprobe-ppl.md` u
 | Kapazität je Produkt und Woche prüfen, bevor Mengen zugesagt werden | 27.11.2026 | Head of Growth, CMO |
 | Ergebnis des Termins (Paket, nur Leads oder Auswertungstermin) mit nächstem Schritt und Datum in der Pipeline eintragen | 20.11.2026 | Ole, Sales |
 
+## Wachstum: Leads für die HvK-Ziele (Team 4, 20.11.2026)
+
+Plan und Präsentation: `docs/firma/protokolle/2026-11-20-hvk-leads.md` und `.pdf`. Lücke bis 30.11.: Frankfurt ca. 33,
+Freiburg 14 bis 15 (anteilig ca. 13 bzw. 7 bis 8). Nichts angelegt; Start nur nach Freigabe A1 bis A3.
+
+| Aufgabe | Frist | Wer |
+|---|---|---|
+| Echte Kosten je PKV-Lead aus dem Meta-Werbemanager (30 Tage, je PKV-Kampagne) | 21.11.2026 | Ole |
+| HvK klären: November voll oder anteilig ab 16.11., Reklamationsgründe, Erstprüfung für Endkunden kostenlos, Berater vor Ort, Folgen bei Zielverfehlung | 21.11.2026 | Sales mit Ole |
+| Freigaben (Stufe A): A1 zwei Geo-Kampagnen starten, A2 Rahmen M 1.360 €, A3 Aufstockung bis 3.040 € bei Kosten je angenommenem Lead unter 40 € | 21.11.2026 | Ole |
+| Werbetexte K1, K3, K4 und Funnel-Einwilligung (Weitergabe an HvK) prüfen; Meta-Sonderkategorie Finanzprodukte für DE bestätigen; Ergebnis in `docs/recht/` | 21.11.2026 | Recht |
+| K1, K3, K4 als Entwurf (pausiert), K4 ohne „Beamter“, zwei Bildvarianten Freiburg | 21.11.2026, nach A1 | Creative Director |
+| Funnel-Kopie mit Filter PLZ, Beitrag ab 450 €, kein Beamter; Lead-Ereignis nur qualifiziert; Kampagnen pausiert vorbereiten; täglich nach Abbruchregeln steuern | 21.11. bis 30.11.2026 | Performance Marketer |
+| Wechsel-Briefing `src/lib/creative-gen.ts` entschärfen („bis zu 50 %“, „keine Gesundheitsprüfung“, „jeder Anbieter“ raus) | 24.11.2026 | CTO mit Recht |
+| Diagnose-Abfrage Werbeausgaben (AdSpendDaily, Cost) und Kosten je Lead je Kampagne und Gebiet, nur lesend | 24.11.2026 | Data/BI mit CTO |
+| HvK per App-Aktion: Vermittlertyp nicht „vertreter“, Registerstatus „keiner“, Steuerkennzeichen 19 % prüfen | 21.11.2026 | CFO mit CTO |
+| Nachbetrachtung HvK-Kampagnen (Kosten je angenommenem Lead, Motiv-Lehre) in `docs/firma/ab-tests.md` | 01.12.2026 | Performance Marketer, Data/BI |
+
 ## Bei Ole
 
 - Plan „1 Mio. € ARR“ (Entwurf, 19.11.2026, `docs/firma/plan-1-mio-arr.md`): Entscheidungen 1 bis 7 bis zur Führungsrunde 23.11.
