@@ -232,6 +232,7 @@ export function MetaAccessForm({
       </div>
       {checkState.message ? <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" /> {checkState.message}</p> : null}
       {checkState.error ? <p className="text-sm font-medium text-rose-700">{checkState.error}</p> : null}
+      {checkState.hinweis ? <p className="rounded-[var(--radius-sm)] bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900" data-meta-anfrage>{checkState.hinweis}</p> : null}
       {check ? <MetaCheckResult check={check} /> : null}
     </form>
   );
