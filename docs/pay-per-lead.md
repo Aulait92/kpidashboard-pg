@@ -16,6 +16,9 @@
    48 h ab Eingang (`PPL_PARK_MAX_HOURS`, `parken.ts`). Danach verwirft der Cron den Lead endgültig (Status `expired`,
    Grund „verworfen (geparkt > 48 h)“, Name, Telefon, E-Mail, Antworten gelöscht); er wird nie wieder ausgeliefert,
    auch nicht über „Ausliefern“ im Admin (Ole, 20.11.2026). In der Auswertung eigene Spalte mit Werbekosten.
+   Löschfrist verworfener Leads (Ole, 20.11.2026): ungültige, doppelte, von Hand verworfene und verfallene Pool-Leads
+   verlieren 30 Tage nach Eingang (`PPL_DISCARD_DELETE_DAYS`, `loeschfrist.ts`, Cron `expireDiscarded`) Name, Telefon,
+   E-Mail und Antworten; Status, Grund und Auswertungsfelder bleiben. Ausgelieferte Leads sind nie betroffen.
 3. **Auslieferung** (`delivery.ts`): Kundenbereich (Push, WhatsApp-Assistent falls aktiv),
    E-Mail (optional nach Vorlage, z. B. Leadbörse Heinrich von Kleist) oder Webhook
    (Format Standard oder Convexa).

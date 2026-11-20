@@ -219,6 +219,11 @@ export async function appointmentOutcomeResult(
           : {}),
     },
   });
+  // Splittests der Lead-Reise (lib/experimente.ts, z. B. termin_zusage): Ziel „erschienen“ auch über das Termin-Ergebnis
+  // (nicht nur über „Ja, da“ zum Terminbeginn, showup-server.ts), sonst zählten Telefontermine nie als erschienen
+  if (outcome !== "no_show" && appt.attendance !== "erschienen") {
+    await import("@/lib/experimente").then((m) => m.zielErreicht([appt.leadId, appt.id], "erschienen")).catch(() => null);
+  }
   if (lead.airtableId) {
     await updateLeadEditableFields({
       airtableId: lead.airtableId,

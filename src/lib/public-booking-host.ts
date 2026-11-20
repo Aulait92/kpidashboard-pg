@@ -58,6 +58,8 @@ export const RESERVED_SEGMENTS: ReadonlySet<string> = new Set([
   "praesentation",
   // Vertriebs-Buchungsseite (eigene Marke, nur auf der App-Adresse, eingebettet auf performancegrowth.de)
   "termin",
+  // Eigene Funnels (lib/funnel, eigene Adresse beitrag.pkv-tarife.com)
+  "f",
 ]);
 
 const SLUG_RE = /^[A-Za-z0-9_-]{1,80}$/;

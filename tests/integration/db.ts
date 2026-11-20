@@ -40,3 +40,20 @@ export function nurFassungB() {
     else process.env.EXPERIMENTE_AUS = vorher;
   });
 }
+
+/**
+ * Splittest für diese Datei anhalten (Zeile in „Experiment“ mit aktiv = false), damit Tests mit zufälligen Lead-IDs
+ * immer Fassung a sehen (z. B. termin_zusage bei Buchungen im Chat). Danach wird die Zeile wieder entfernt.
+ */
+export function ohneSplittest(key: string, ziel = "erschienen") {
+  beforeAll(async () => {
+    await prisma.experiment.upsert({ where: { key }, create: { key, ziel, aktiv: false }, update: { aktiv: false, winner: null } });
+    const { experimenteCacheLeeren } = await import("@/lib/experimente");
+    experimenteCacheLeeren();
+  });
+  afterAll(async () => {
+    await prisma.experiment.deleteMany({ where: { key } });
+    const { experimenteCacheLeeren } = await import("@/lib/experimente");
+    experimenteCacheLeeren();
+  });
+}

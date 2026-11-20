@@ -487,6 +487,7 @@ export function knoepfeFuerText(text: string | null | undefined, folgefragen: re
   if (EMAIL_BESTAETIGEN_RE.test(t)) return EMAIL_KNOEPFE;
   if (KALENDER_FRAGE_RE.test(t)) return KALENDER_KNOEPFE;
   if (KOMPLETTCHECK_RE.test(t)) return KOMPLETTCHECK_KNOEPFE;
+  if (ZUSAGE_FRAGE_RE.test(t)) return ZUSAGE_KNOEPFE;
   const fr = folgefragen.find((f) => f.knoepfe?.length && (t.includes(f.sie) || t.includes(f.du)));
   if (fr?.knoepfe) return fr.knoepfe.map((k) => ({ id: `folge:${fr.key}:${k.toLowerCase()}`, title: k }));
   return null;
@@ -535,6 +536,41 @@ export function buchungsText(o: { an: Ansprache; start: Date; mode: TerminModus;
 }
 
 /**
+ * Splittest termin_zusage, Fassung b (Ole, 20.11.2026, freigegeben): unter der Buchungsbestätigung nach einer Leerzeile
+ * fett „*Kann Herr Kannapinn fest mit Ihnen rechnen?*“ (Du: „*Kann Thomas fest mit dir rechnen?*“), eine Nachricht mit
+ * Knöpfen [Ja, sicher] [Lieber andere Zeit] (ZUSAGE_KNOEPFE). Hypothese: Wer aktiv „Ja“ sagt, erscheint öfter.
+ */
+export function zusageFrage(an: Ansprache, person: { nom: string }): string {
+  return a(an, `*Kann ${person.nom} fest mit dir rechnen?*`, `*Kann ${person.nom} fest mit Ihnen rechnen?*`);
+}
+
+/** Buchungsbestätigung mit Zusage-Frage (Fassung b im Splittest termin_zusage). */
+export function buchungsTextMitZusage(o: Parameters<typeof buchungsText>[0]): string {
+  return `${buchungsText(o)}\n\n${zusageFrage(o.an, o.person)}`;
+}
+
+/** Erkennt die Zusage-Frage in einer Nachricht von uns. */
+export const ZUSAGE_FRAGE_RE = /\*Kann .+ fest mit (Ihnen|dir) rechnen\?\*/;
+
+/** Knöpfe zur Zusage-Frage (Antwort lib/whatsapp/knopf.ts → termin-strecke.ts zusageAntwort). Höchstens 20 Zeichen. */
+export const ZUSAGE_KNOEPFE: Knopf[] = [
+  { id: "zusage:ja", title: "Ja, sicher" },
+  { id: "zusage:andere", title: "Lieber andere Zeit" },
+];
+
+/**
+ * Getippte Zusage auf die offene Zusage-Frage („ja“, „passt“, „sicher“, „klar, bin dabei“, 👍): kurz, ohne Frage und ohne
+ * Verneinung bzw. Wunsch nach einer anderen Zeit. Rein.
+ */
+export function istZusageText(text: string | null | undefined): boolean {
+  const t = (text ?? "").trim();
+  if (!t || t.length > 60 || t.includes("?")) return false;
+  if (/\b(nein|nee|nicht|kein|keine|andere[nmr]?|anders|verschieb\w*|absag\w*|leider|vielleicht|eventuell|später|spaeter)\b/i.test(t)) return false;
+  if (/^(👍|👌|✅|🙂|😊)+$/u.test(t.replace(/\s+/g, ""))) return true;
+  return /^(ja|jap|jo|jep|jup|yes|klar|sicher|passt|gern|gerne|natürlich|selbstverständlich|auf jeden fall|definitiv|logo|ok|okay|okey|alles klar|bin dabei|ich bin dabei|ich komme|komme|fest zugesagt|abgemacht)\b/i.test(t);
+}
+
+/**
  * Wunschzeit (Live-Test Ole, 17.11.2026: „Mittwoch um 16h“ ist frei, trotzdem kamen zwei Zeiten zur Auswahl): Nennt der
  * Lead Tag und Uhrzeit und ist sie frei, wird direkt gebucht. Nur bei belegter Zeit oder nur Tag/Tageszeit: zwei Zeiten.
  */
@@ -575,6 +611,11 @@ export function nachBuchungRegel(o: {
   komplettcheckGestellt?: boolean;
   /** Komplettcheck-Frage schon gestellt, aber noch nicht beantwortet */
   komplettcheckOffen?: boolean;
+  /**
+   * Zusage-Frage (Splittest termin_zusage, Fassung b): „offen“ = „Kann … fest mit Ihnen rechnen?“ unbeantwortet,
+   * „andere“ = Lead möchte eine andere Zeit (Knopf), der Termin ist noch nicht verlegt
+   */
+  zusage?: "offen" | "andere" | null;
   abschlussGesendet: boolean;
   /** Adresse bestätigt bzw. Termin zugesagt */
   zugesagt: boolean;
@@ -588,6 +629,14 @@ export function nachBuchungRegel(o: {
   } else if (o.adresseBestaetigenOffen) {
     lines.push(
       "- Offen ist die Schlussfrage, ob die E-Mail-Adresse für die Einladung stimmt. Bestätigt der Lead (auch frei formuliert, z. B. „ja“, „passt“), nutze termin_zugesagt. Nennt er eine andere Adresse, nutze update_email. Schreib nichts dazu, die App antwortet selbst.",
+    );
+  } else if (o.zusage === "andere") {
+    lines.push(
+      "- Der Lead möchte eine andere Zeit für den Termin: Hole mit get_available_slots freie Zeiten, biete zwei konkrete an und verschiebe nach seiner Wahl mit reschedule_appointment. Frag nicht nach dem Grund. Danach schickt die App die nächste Frage selbst.",
+    );
+  } else if (o.zusage === "offen") {
+    lines.push(
+      `- Offen ist die Frage „${o.an === "du" ? `Kann ${o.person.nom} fest mit dir rechnen?` : `Kann ${o.person.nom} fest mit Ihnen rechnen?`}“. Sagt der Lead zu (auch frei formuliert, z. B. „ja“, „passt“, „sicher“, „bin dabei“), nutze termin_zugesagt und schreib nichts dazu: Die App antwortet selbst. Möchte er eine andere Zeit, hole mit get_available_slots freie Zeiten, biete zwei konkrete an und verschiebe nach seiner Wahl mit reschedule_appointment. Sonst beantworte nur kurz, was er geschrieben hat, und stell keine eigene Frage.`,
     );
   } else if (!gestellt) {
     lines.push("- Die App schickt gleich selbst die nächste Frage. Beantworte nur kurz, was der Lead geschrieben hat, und stell keine eigene Frage.");

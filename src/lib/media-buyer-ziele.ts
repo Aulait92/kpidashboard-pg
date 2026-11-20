@@ -264,6 +264,179 @@ export function customersBehind(
   return pool.customers.filter((c) => c.goal > 0 && c.delivered / c.goal < threshold);
 }
 
+// ─── Lieferungs-Pacing (Zielquelle software) ─────────────────────────
+//
+// Fehler vom 20.11.2026 (PKV Tarifoptimierung): Das Ist zählte alle Leads des
+// Produkts im Monat (countPoolLeads, brutto: auch geparkte, verworfene,
+// ungültige, Altbestand, andere Abnehmer), das Software-Ziel aber nur die
+// Bezüge. Ergebnis: Ist 134 ≥ Ziel 129 → „Ziel erreicht“, obwohl die Kunden
+// zusammen erst 34 von 129 bekommen hatten.
+//
+// Regel seitdem:
+//   Ist        = an die Bezüge des Pools im Monat gelieferte Leads (wie „Ziel
+//                je Kunde“).
+//   offen      = Summe je Kunde von (Ziel − geliefert); ein Kunde gilt mit
+//                Toleranz (MEDIA_BUYER_GOAL_TOLERANCE, 2 % des Ziels) als
+//                erreicht und hat dann nichts mehr offen. Überlieferung eines
+//                Kunden gleicht den Rückstand eines anderen NICHT aus.
+//   Ziel erreicht / Pausieren nur bei offen = 0 (alle Kunden erreicht).
+//   Verwertungsquote = geliefert / eingegangen der letzten 14–30 Tage
+//                (eingegangen = countPoolLeads, dieselbe Basis wie der CPL).
+//   benötigte eingehende Leads = offen / Verwertungsquote.
+//   Für decideBudget/guardLearning (rechnen in eingehenden Leads, CPL je
+//   eingehendem Lead) wird das Ziel in eingehende Leads übersetzt:
+//     steerLeads = eingegangen MTD, steerGoal = eingegangen MTD + benötigte.
+//   Prognose (geliefert) = geliefert + Eingangs-Tempo × Quote × Resttage.
+//   Plausibilität: Quote außerhalb [min, max] oder unabhängig gezählte
+//   Pool-Lieferung weicht stark von der Summe der Kunden ab → nicht steuern,
+//   halten und Push. Eine große Lücke zwischen eingegangen und geliefert ist
+//   dagegen normal (Dubletten, Parken, Altbestand) und kein Haltegrund.
+
+export type DeliveryPacingInput = {
+  goal: number;
+  customers: PoolCustomerGoal[];
+  /** Eingegangene Leads im Monat (countPoolLeads). */
+  incomingMtd: number;
+  /** Eingegangen / geliefert im Quoten-Fenster (14–30 Tage). */
+  recentIncoming: number;
+  recentDelivered: number;
+  /** Länge des Quoten-Fensters in Tagen (für das aktuelle Tempo); fehlt = Monatsschnitt. */
+  recentDays?: number;
+  /** Unabhängig gezählte Pool-Lieferung im Monat (Plausibilität); null = nicht geprüft. */
+  poolDeliveredCheck?: number | null;
+  daysElapsed: number;
+  daysTotal: number;
+  tolerance?: number;
+  minYield?: number;
+  maxYield?: number;
+  /** Mindestmenge eingegangener Leads für eine gemessene Quote. */
+  minSample?: number;
+  mismatchShare?: number;
+  mismatchMin?: number;
+};
+
+export type DeliveryPacing = {
+  delivered: number;
+  goal: number;
+  open: number;
+  incomingMtd: number;
+  allReached: boolean;
+  behind: PoolCustomerGoal[];
+  yieldRate: number;
+  yieldSource: "recent" | "mtd" | "default";
+  neededIncoming: number;
+  steerLeads: number;
+  steerGoal: number;
+  projectedDelivered: number;
+  plausible: boolean;
+  problem: string | null;
+};
+
+export function deliveryPacing(p: DeliveryPacingInput): DeliveryPacing {
+  const tol = p.tolerance ?? 0.02;
+  const minYield = p.minYield ?? 0.1;
+  const maxYield = p.maxYield ?? 1.2;
+  const minSample = p.minSample ?? 20;
+  const mismatchShare = p.mismatchShare ?? 0.25;
+  const mismatchMin = p.mismatchMin ?? 10;
+
+  const delivered = p.customers.reduce((s, c) => s + Math.max(0, c.delivered), 0);
+  const behind: PoolCustomerGoal[] = [];
+  let open = 0;
+  const withGoal = p.customers.filter((c) => c.goal > 0);
+  if (withGoal.length > 0) {
+    for (const c of withGoal) {
+      const short = c.goal - c.delivered;
+      // Erreicht mit Toleranz: höchstens 2 % des Ziels fehlen.
+      if (short <= c.goal * tol) continue;
+      behind.push(c);
+      open += short;
+    }
+  } else if (p.goal > 0) {
+    // Ohne Kundenaufteilung (sollte bei software nicht vorkommen): Pool-Summe.
+    const short = p.goal - delivered;
+    open = short > p.goal * tol ? short : 0;
+  }
+  open = Math.round(open);
+
+  let yieldRate = 1;
+  let yieldSource: DeliveryPacing["yieldSource"] = "default";
+  if (p.recentIncoming >= minSample) {
+    yieldRate = p.recentDelivered / p.recentIncoming;
+    yieldSource = "recent";
+  } else if (p.incomingMtd >= minSample) {
+    yieldRate = delivered / p.incomingMtd;
+    yieldSource = "mtd";
+  }
+
+  const problems: string[] = [];
+  if (yieldSource !== "default" && (yieldRate < minYield || yieldRate > maxYield)) {
+    problems.push(
+      `Verwertungsquote ${Math.round(yieldRate * 100)} % unplausibel (erwartet ${Math.round(minYield * 100)}–${Math.round(maxYield * 100)} %)`,
+    );
+  }
+  if (p.poolDeliveredCheck != null) {
+    const diff = Math.abs(p.poolDeliveredCheck - delivered);
+    if (diff > Math.max(mismatchMin, mismatchShare * Math.max(p.poolDeliveredCheck, delivered))) {
+      problems.push(`Pool-Lieferung ${p.poolDeliveredCheck} weicht von der Summe der Kunden ${delivered} ab`);
+    }
+  }
+
+  const rate = Math.min(maxYield, Math.max(minYield, yieldRate));
+  const neededIncoming = open > 0 ? Math.ceil(open / rate) : 0;
+  // Bei offen = 0 steerLeads = steerGoal ≥ 1, damit decideBudget pausiert
+  // (Ziel 0 hieße dort „kein Ziel, nur Monitoring“).
+  const steerGoal = open > 0 ? p.incomingMtd + neededIncoming : Math.max(1, p.incomingMtd);
+  const steerLeads = open > 0 ? p.incomingMtd : steerGoal;
+  const daysLeft = Math.max(0, p.daysTotal - p.daysElapsed);
+  // Tempo aus dem jüngsten Fenster (PoolLead-Eingang), sonst Monatsschnitt. Der Monatsschnitt enthält
+  // Airtable-Altbestand und reagiert träge auf Budgetänderungen (Ole, 20.11.2026).
+  const pace =
+    p.recentDays && p.recentDays > 0 && p.recentIncoming >= minSample
+      ? p.recentIncoming / p.recentDays
+      : p.daysElapsed > 0
+        ? p.incomingMtd / p.daysElapsed
+        : 0;
+  const projectedDelivered = Math.round(delivered + pace * rate * daysLeft);
+
+  return {
+    delivered,
+    goal: p.goal,
+    open,
+    incomingMtd: p.incomingMtd,
+    allReached: p.goal > 0 && open === 0,
+    behind,
+    yieldRate,
+    yieldSource,
+    neededIncoming,
+    steerLeads,
+    steerGoal,
+    projectedDelivered,
+    plausible: problems.length === 0,
+    problem: problems.length ? problems.join("; ") : null,
+  };
+}
+
+/** Kurztext für Begründungen. */
+export function describePacing(pc: DeliveryPacing): string {
+  if (pc.open === 0) return `Geliefert ${pc.delivered}/${pc.goal}, alle Kunden erreicht.`;
+  const quote = `${Math.round(pc.yieldRate * 100)} %${pc.yieldSource === "default" ? " (angenommen, zu wenig Daten)" : ""}`;
+  return `Geliefert ${pc.delivered}/${pc.goal}, offen ${pc.open} (${pc.behind.length} Kunden), eingegangen ${pc.incomingMtd}, Verwertung ${quote}: ~${pc.neededIncoming} eingehende Leads nötig.`;
+}
+
+/**
+ * Plausibilitätsschutz: Entscheidung halten (nichts schreiben, nicht pausieren).
+ */
+export function holdForImplausible<T extends StepDecision>(decision: T, problem: string): T {
+  return {
+    ...decision,
+    action: "none",
+    setStatus: null,
+    targetBudget: null,
+    reason: `Zahlen unplausibel (${problem}): Budget gehalten, nicht pausiert. Geplant war: ${decision.reason}`,
+  };
+}
+
 // ─── Quellenwechsel ──────────────────────────────────────────────────
 
 /**

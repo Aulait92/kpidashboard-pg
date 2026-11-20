@@ -63,6 +63,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "ppl.slack_test": "Slack-Benachrichtigung getestet",
   "ppl.kontingent_voll": "Pay-per-Lead: Kontingent erreicht (Meldung an Admins und Slack)",
   "ppl.parked_expired": "Pay-per-Lead: geparkte Leads nach Frist verworfen (Kontaktdaten entfernt)",
+  "ppl.discarded_erased": "Pay-per-Lead: Kontaktdaten verworfener Leads nach Löschfrist entfernt",
   "bestand.import": "Bestandskunden importiert",
   "bestand.campaign": "Bestandskunden-Kampagne gestartet",
   "bestand.module": "Modul Bestandskunden an/aus",

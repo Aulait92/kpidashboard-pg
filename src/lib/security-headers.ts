@@ -6,8 +6,10 @@
 // erzwingend (CSP_ENFORCE=on), sobald ~2 Wochen lang keine echten Verstöße
 // mehr gemeldet werden (Anleitung: docs/sicherheit-cron.md, Abschnitt CSP).
 
+import { parseFunnelHosts } from "./funnel/host";
+
 type Header = { key: string; value: string };
-type HeaderRule = { source: string; headers: Header[] };
+type HeaderRule = { source: string; headers: Header[]; has?: { type: "host"; value: string }[] };
 
 /** Öffentliche Seiten, die (z. B. auf Vermittler-Websites) eingebettet werden dürfen. */
 /** /demo: Live-Demo der Beratungspräsentation, eingebettet in die Vertriebspräsentation und ggf. auf der Webseite. */
@@ -32,19 +34,23 @@ export const NOT_EMBEDDABLE_SOURCE = "/:path((?!book/|rechner(?:/|$)|demo(?:/|$)
 
 export const CSP_REPORT_PATH = "/api/csp-report";
 
-export function contentSecurityPolicy(opts: { dev?: boolean; frameAncestors?: string } = {}): string {
+/** Eigene Funnels (lib/funnel): Meta-Pixel erlaubt (Skript und Messung bei Meta), nur dort. */
+export const FUNNEL_PATHS = ["/f/:path*"] as const;
+const META_PIXEL = { script: ["https://connect.facebook.net"], connect: ["https://connect.facebook.net", "https://www.facebook.com"] };
+
+export function contentSecurityPolicy(opts: { dev?: boolean; frameAncestors?: string; metaPixel?: boolean } = {}): string {
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     // Next.js setzt Inline-Skripte (Hydration, Flight-Daten). Eine Nonce würde
     // jede Seite dynamisch machen – daher vorerst 'unsafe-inline' ohne Fremd-Hosts.
-    "script-src": ["'self'", "'unsafe-inline'", ...(opts.dev ? ["'unsafe-eval'"] : [])],
+    "script-src": ["'self'", "'unsafe-inline'", ...(opts.dev ? ["'unsafe-eval'"] : []), ...(opts.metaPixel ? META_PIXEL.script : [])],
     "style-src": ["'self'", "'unsafe-inline'"],
     // Bilder: eigene, R2, Meta-/Werbe-Vorschauen (verschiedene CDNs) → nur https
     "img-src": ["'self'", "data:", "blob:", "https:"],
     "font-src": ["'self'", "data:"],
     "media-src": ["'self'", "blob:", "https:"],
     // Sentry läuft über den Tunnel /monitoring (= 'self'); Ingest als Rückfall
-    "connect-src": ["'self'", "https://*.ingest.sentry.io", "https://*.ingest.de.sentry.io", ...(opts.dev ? ["ws:"] : [])],
+    "connect-src": ["'self'", "https://*.ingest.sentry.io", "https://*.ingest.de.sentry.io", ...(opts.dev ? ["ws:"] : []), ...(opts.metaPixel ? META_PIXEL.connect : [])],
     // Sentry Session Replay nutzt einen Worker aus blob:
     "worker-src": ["'self'", "blob:"],
     // Erklärvideos in der Einrichtung (Loom/YouTube ohne Cookies)
@@ -79,7 +85,7 @@ export const PERMISSIONS_POLICY = [
   "browsing-topics=()",
 ].join(", ");
 
-export function securityHeaderRules(env: { dev?: boolean; enforceCsp?: boolean } = {}): HeaderRule[] {
+export function securityHeaderRules(env: { dev?: boolean; enforceCsp?: boolean; funnelHosts?: string | null } = {}): HeaderRule[] {
   const cspKey = env.enforceCsp ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only";
   const base: Header[] = [
     { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
@@ -113,6 +119,13 @@ export function securityHeaderRules(env: { dev?: boolean; enforceCsp?: boolean }
         ...(cspKey === "Content-Security-Policy" ? [] : [{ key: "Content-Security-Policy", value: `frame-ancestors ${DEMO_FRAME_ANCESTORS}` }]),
       ],
     });
+  }
+  // Eigene Funnels: Meta-Pixel (lädt erst nach Einwilligung). Auf der App-Adresse unter /f/…, auf der Funnel-Adresse
+  // (beitrag.pkv-tarife.com, FUNNEL_HOSTS) für alle Pfade. Später gesetzte Regeln überschreiben die CSP von oben.
+  const pixelCsp: Header = { key: cspKey, value: contentSecurityPolicy({ dev: env.dev, metaPixel: true }) };
+  for (const source of FUNNEL_PATHS) rules.push({ source, headers: [pixelCsp] });
+  for (const host of parseFunnelHosts(env.funnelHosts).keys()) {
+    rules.push({ source: "/:path*", has: [{ type: "host", value: host.replace(/\./g, "\\.") }], headers: [pixelCsp] });
   }
   return rules;
 }

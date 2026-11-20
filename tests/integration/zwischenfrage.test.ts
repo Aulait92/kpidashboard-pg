@@ -57,7 +57,10 @@ import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";
 import { handleInboundPayload } from "@/lib/whatsapp/gateway";
 import { STRECKE } from "@/lib/whatsapp/termin-strecke";
-import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { cleanupCustomer, makeBuyer, makeCustomer, ohneSplittest, requireTestDb } from "./db";
+
+// Buchungen im Chat immer mit Fassung a der Bestätigung (Splittest termin_zusage; Fassung b: eigener Test)
+ohneSplittest("termin_zusage");
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 let seq = 0;

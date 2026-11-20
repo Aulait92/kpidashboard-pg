@@ -10,7 +10,7 @@ import { berlinMonth, chargeWhatsAppFees, feeChargeDue } from "@/lib/whatsapp/fe
 import { expireBestandCancellations, reconcileSeatBilling } from "@/lib/billing";
 import { processDueBudgetFees } from "@/lib/budget";
 import { renewOrders } from "@/lib/ppl/orders";
-import { expireParked, redistributeParked } from "@/lib/ppl/engine";
+import { expireDiscarded, expireParked, redistributeParked } from "@/lib/ppl/engine";
 import { hvkCronDue } from "@/lib/ppl/hvk-abrechnung";
 import { runCampaigns } from "@/lib/bestand/campaigns";
 import { runEmpfehlungen } from "@/lib/empfehlung/requests";
@@ -191,6 +191,12 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-ppl-expire");
       return null;
     }),
+    // verworfene Leads (ungültig, Dublette, von Hand verworfen): Kontaktdaten 30 Tage nach Eingang löschen
+    // (PPL_DISCARD_DELETE_DAYS, Ole, 20.11.2026)
+    discardedErased: await expireDiscarded(now).catch((e: unknown) => {
+      reportError(e, "cron-ppl-discard-erase");
+      return null;
+    }),
   };
   // HvK-Abrechnung: Mail „Neue Gutschrift“ (PDF) Mo–Mi stündlich 7–20 Uhr abrufen, nur lesen, je Rechnung einmal
   // (nach der Antwort, lib/ppl/hvk-abrechnung-server.ts)
@@ -261,6 +267,15 @@ async function handle(req: Request): Promise<Response> {
     now.getUTCMinutes() < 5
       ? await import("@/lib/whatsapp/ab-test").then((m) => m.promoteAbWinners(now)).catch((e: unknown) => {
           reportError(e, "cron-ab-test");
+          return null;
+        })
+      : undefined;
+  // Eigener PKV-Funnel (lib/funnel/server.ts): Ergebnis der Funnel-Leads beim Abnehmer 14 Tage nach Eingang (erreicht,
+  // Termin, Abschluss, verkauft und nicht storniert) als Ziele der Funnel-Tests, einmal je Stunde vor der Entscheidung
+  const funnelReife =
+    now.getUTCMinutes() < 5
+      ? await import("@/lib/funnel/server").then((m) => m.funnelReifePruefen(now)).catch((e: unknown) => {
+          reportError(e, "cron-funnel-reife");
           return null;
         })
       : undefined;
@@ -486,7 +501,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, kalenderFrage, policenErinnerung, abTests, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
 }
 
 export const GET = handle;

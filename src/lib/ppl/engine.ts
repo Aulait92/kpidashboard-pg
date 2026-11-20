@@ -12,6 +12,7 @@ import { pruefeTelefon } from "@/lib/ppl/telefon-pruefung";
 import type { DeliveryReport } from "@/lib/ppl/delivery";
 import { adData, cleanAd, hasAd, type LeadAd } from "@/lib/anzeige";
 import { EXPIRED_STATUS, expiredReason, parkCutoff, parkDeadlineHint, parkExpired } from "@/lib/ppl/parken";
+import { DISCARD_STATUSES, discardCutoff, discardDeleteDays } from "@/lib/ppl/loeschfrist";
 
 const DAY = 86_400_000;
 export const DUPLICATE_DAYS = 30;
@@ -324,6 +325,9 @@ export async function redistributeParked(productKey?: string, now = new Date()):
  * „verworfen (geparkt > 48 h)“). Ein geparkter Lead hat keinen Lead-Datensatz beim Käufer; hängt doch einer daran
  * (Altfall), wird er nicht angefasst und der Pool-Lead nicht verworfen, sondern gemeldet.
  */
+/** Kontaktdaten eines Pool-Leads entfernen (Verfall, Löschfrist); Produkt, PLZ, Anzeige, Zeitpunkte, Grund bleiben. */
+const ERASE_CONTACT = { name: null, phone: null, email: null, answers: Prisma.DbNull } satisfies Prisma.PoolLeadUpdateManyMutationInput;
+
 export async function expireParked(now = new Date()): Promise<number> {
   const due = await prisma.poolLead.findMany({ where: { status: "parked", createdAt: { lte: parkCutoff(now) } }, select: { id: true, leadId: true, productKey: true, createdAt: true }, take: 500 });
   const withLead = due.filter((p) => p.leadId);
@@ -332,11 +336,35 @@ export async function expireParked(now = new Date()): Promise<number> {
   if (!ids.length) return 0;
   const res = await prisma.poolLead.updateMany({
     where: { id: { in: ids }, status: "parked", leadId: null },
-    data: { status: EXPIRED_STATUS, reason: expiredReason(), name: null, phone: null, email: null, answers: Prisma.DbNull },
+    data: { status: EXPIRED_STATUS, reason: expiredReason(), ...ERASE_CONTACT },
   });
   if (res.count) {
     const { audit } = await import("@/lib/audit");
     await audit("ppl.parked_expired", { entity: "PoolLead", actor: { role: "system" }, details: { count: res.count, ids, grund: expiredReason() } });
+  }
+  return res.count;
+}
+
+/**
+ * Löschfrist (WhatsApp-Cron, Ole 20.11.2026): verworfene Pool-Leads (ungültig, Dublette, von Hand verworfen, verfallen;
+ * lib/ppl/loeschfrist.ts) verlieren PPL_DISCARD_DELETE_DAYS (30) Tage nach Eingang Name, Telefon, E-Mail und Antworten,
+ * gleiche Löschlogik wie expireParked. Status und Grund bleiben. Ausgelieferte Leads und solche mit Lead-Datensatz
+ * werden nie angefasst. Nur Zeilen, die noch Kontaktdaten haben, damit schon gelöschte den Stapel nicht blockieren.
+ */
+export async function expireDiscarded(now = new Date()): Promise<number> {
+  const base = { status: { in: [...DISCARD_STATUSES] }, leadId: null, createdAt: { lte: discardCutoff(now) } } satisfies Prisma.PoolLeadWhereInput;
+  const due = await prisma.poolLead.findMany({
+    where: { ...base, OR: [{ name: { not: null } }, { phone: { not: null } }, { email: { not: null } }, { answers: { not: Prisma.DbNull } }] },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+    take: 500,
+  });
+  const ids = due.map((p) => p.id);
+  if (!ids.length) return 0;
+  const res = await prisma.poolLead.updateMany({ where: { ...base, id: { in: ids } }, data: ERASE_CONTACT });
+  if (res.count) {
+    const { audit } = await import("@/lib/audit");
+    await audit("ppl.discarded_erased", { entity: "PoolLead", actor: { role: "system" }, details: { count: res.count, ids, tage: discardDeleteDays() } });
   }
   return res.count;
 }
