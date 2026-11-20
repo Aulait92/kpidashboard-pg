@@ -30,6 +30,8 @@ import {
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
 import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
+import { ersteWocheAus, ersteWocheBetrag, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
+import { bruttoJeLead } from "@/lib/ppl/steuer";
 import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
@@ -90,6 +92,11 @@ export type OfferDoc = {
   prepayAtAcceptance?: boolean;
   /** Zahlung nachträglich für den abgelaufenen Leistungsmonat (Ole, 19.11.2026; nur monatlich). */
   paymentInArrears?: boolean;
+  /** „Ihre erste Woche“ (Pay-per-Lead + Software, Ole 20.11.2026; lib/ppl/erste-woche-shared.ts). */
+  pplProductKey?: string | null;
+  pplLabel?: string | null;
+  pplPrice?: unknown;
+  pplQuantity?: number | null;
 };
 
 type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "empfehlungMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp" | "setupListFee" | "setupDiscount"> & {
@@ -873,6 +880,24 @@ export function OfferDocument({
   );
 }
 
+/** Erste Woche im Angebot (Pay-per-Lead + Software): Produkt, Anzahl, Preis je Lead mit Steuerhinweis, eigene Rechnung. */
+function ErsteWocheNote({ offer }: { offer: OfferDoc }) {
+  const w = ersteWocheAus(offer);
+  if (!w) return null;
+  const b = ersteWocheBetrag(w, w.quantity);
+  const frei = b.steuer === "steuerfrei_4_11";
+  const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+  return (
+    <Note>
+      <span data-offer-erste-woche>
+        Ihre erste Woche: {w.quantity} Leads {ersteWocheName(w)} à {eur(bruttoJeLead(w.price, b.steuer))}, zusammen {eur(b.brutto)}
+        {frei ? ", umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler" : " inkl. 19 % USt."}.
+        {offer.acceptedAt ? "" : " Die Anzahl wählen Sie bei der Annahme."} Leads stehen auf einer eigenen Rechnung.
+      </span>
+    </Note>
+  );
+}
+
 /**
  * Inhalt „Pay-per-Lead + Software“ (Ole, 19.11.2026): Software ohne Betreuung und ohne eigene Kampagnen, keine Einrichtung,
  * kein Werbebudget, keine Garantien; Leads separat per Stück nach den Pay-per-Lead-Bedingungen. Keine Gedankenstriche.
@@ -917,6 +942,7 @@ function PplSoftwareBody({
         </Tr>
         <Tr k="Leads">
           <span data-offer-ppl-leads>{PPL_LEADS_SEPARAT}</span>
+          <ErsteWocheNote offer={offer} />
           <Note>Bestellt wird im Kundenbereich unter „Leads bestellen“. Ihr Assistent übernimmt jeden gelieferten Lead automatisch.</Note>
         </Tr>
         {add.hasSeats ? (

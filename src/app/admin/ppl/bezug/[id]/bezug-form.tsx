@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button, Card } from "@/components/ui";
 import { saveSubscriptionAction, type BezugState } from "../../actions";
+import { isKindersparplan, standardSteuer } from "@/lib/ppl/steuer";
 
 type Sub = {
   id: string; customerId: string; productKey: string; label: string | null; active: boolean; status: string;
@@ -11,6 +12,7 @@ type Sub = {
   acceptCivilServants: boolean; onlyWeak: boolean; scoreFloor: number | null; insurerInclude: string[]; insurerExclude: string[];
   excludeRules: string | null; stornoDays: number | null; stornoReasons: string[]; stornoAutoApprove: boolean; delivery: string; deliveryEmail: string | null;
   webhookUrl: string | null; webhookFormat: string; hasSecret: boolean; emailFormat: string; consentText: string | null; slackNotify: boolean;
+  steuer?: string | null;
 };
 
 const input = "mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm text-[color:var(--foreground)] outline-none focus:border-[color:var(--brand)]";
@@ -69,6 +71,7 @@ export function BezugForm({
   const [delivery, setDelivery] = useState(sub?.delivery ?? "app");
   const [period, setPeriod] = useState(sub?.period ?? "week");
   const [status, setStatus] = useState(sub?.status ?? "live");
+  const [produkt, setProdukt] = useState(sub?.productKey ?? "");
   const [mailKind, setMailKind] = useState(sub?.emailFormat === "maschinenlesbar" ? "maschinenlesbar" : sub?.emailTemplate ? "vorlage" : "standard");
   return (
     <form action={action} className="space-y-5">
@@ -87,7 +90,7 @@ export function BezugForm({
             </select>
           </F>
           <F label="Produkt (Pool)" hint="Wie im Eingang: ?produkt=…">
-            <input name="productKey" list="ppl-products" defaultValue={sub?.productKey ?? ""} required className={input} />
+            <input name="productKey" list="ppl-products" value={produkt} onChange={(e) => setProdukt(e.target.value)} required className={input} />
             <datalist id="ppl-products">
               {products.map((p) => (
                 <option key={p} value={p} />
@@ -101,8 +104,28 @@ export function BezugForm({
             <Check name="active" label="Aktiv (bekommt Leads)" defaultChecked={sub?.active ?? true} />
             <Check name="slackNotify" label="Slack-Nachricht je Lead" defaultChecked={sub?.slackNotify ?? true} />
           </div>
-          <F label="Preis je Lead (netto €)">
-            <input name="price" inputMode="decimal" defaultValue={sub?.price ?? ""} required className={input} />
+          <F label="Preis je Lead (€)" hint="Gespeichert wird netto. Brutto kalkuliert (z. B. 65 € inkl. USt.): wird in netto umgerechnet (54,62 €).">
+            <div className="flex gap-2">
+              <input name="price" inputMode="decimal" defaultValue={sub?.price ?? ""} required className={input} />
+              <select name="priceMode" defaultValue="netto" className={`${input} w-40 shrink-0`} aria-label="Preisangabe">
+                <option value="netto">netto</option>
+                <option value="brutto">brutto inkl. 19 %</option>
+              </select>
+            </div>
+          </F>
+          <F
+            label="Umsatzsteuer"
+            hint={
+              isKindersparplan(produkt)
+                ? "Kindersparplan ist immer steuerpflichtig (19 %)."
+                : "Steuerfrei nur, wenn der Käufer im Vermittlerregister als Vertreter oder Makler geprüft ist (Karte unten)."
+            }
+          >
+            <select name="steuer" defaultValue={sub?.steuer ?? ""} className={input} disabled={isKindersparplan(produkt)}>
+              <option value="">Standard je Produkt ({standardSteuer(produkt) === "steuerfrei_4_11" ? "steuerfrei § 4 Nr. 11" : "19 %"})</option>
+              <option value="steuerfrei_4_11">Steuerfrei nach § 4 Nr. 11 UStG</option>
+              <option value="steuerpflichtig">Steuerpflichtig 19 %</option>
+            </select>
           </F>
         </div>
       </Card>

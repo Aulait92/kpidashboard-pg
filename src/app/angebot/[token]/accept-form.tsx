@@ -20,6 +20,7 @@ import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
 import { ZAHLART_HINWEIS, ZAHLART_HINWEIS_HALBJAHR, ZAHLART_HINWEIS_JAHR } from "@/lib/zahlart";
 import { addMonthsIso, contractSummaryLines, hasPriceStep, priceStepAckText, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 import { BUSINESS_CONFIRM_TEXT } from "@/lib/unternehmer";
+import { ErsteWocheFelder, type ErsteWocheProps } from "./erste-woche-felder";
 
 /** Wahl von Laufzeit/Startdatum (vom Server vorberechnet; verbindlich rechnet der Server bei Annahme neu). */
 export type OfferChoiceProps = {
@@ -73,6 +74,7 @@ export function AcceptForm({
   payment = false,
   payLater = false,
   ueberweisungTage = null,
+  ersteWoche = null,
 }: {
   token: string;
   termsUrl: string;
@@ -88,6 +90,8 @@ export function AcceptForm({
   payLater?: boolean;
   /** Überweisung am Angebot freigegeben (nur auf Anfrage): Zahlungsziel in Tagen */
   ueberweisungTage?: number | null;
+  /** „Ihre erste Woche“ (Pay-per-Lead + Software mit Lead-Produkt): Anzahl, Wiederholung, Registernummer */
+  ersteWoche?: ErsteWocheProps | null;
 }) {
   const [state, action, pending] = useActionState<AcceptState, FormData>(
     acceptOfferAction.bind(null, token),
@@ -149,6 +153,7 @@ export function AcceptForm({
 
   return (
     <form action={action} className="space-y-4">
+      {ersteWoche ? <ErsteWocheFelder {...ersteWoche} /> : null}
       {choice && hasChoice ? (
         <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} />
       ) : null}

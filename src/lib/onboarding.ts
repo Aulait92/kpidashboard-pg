@@ -190,15 +190,32 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
     }
   }
 
+  // Erste Woche aus dem Angebot (Pay-per-Lead + Software, Ole 20.11.2026): Bezug und wartende Bestellung anlegen
+  const ersteWoche = !mitKampagnen(pkg)
+    ? await import("@/lib/ppl/erste-woche")
+        .then((m) => m.ersteWocheAnlegen(offer.id, customer.id))
+        .catch((err) => {
+          reportError(err, "onboarding-erste-woche", { offer: offer.number });
+          return null;
+        })
+    : null;
+
   // 3) Aufgaben für den Vertrieb (am Kontakt, erscheinen unter Heute → Aufgaben).
   if (contact && !mitKampagnen(pkg)) {
-    // Pay-per-Lead + Software: keine Kampagne, kein Leadformular, kein Werbekonto. Unser Teil: Pay-per-Lead-Bezug
-    // (Produkt, Preis, Gebiet) einrichten, damit der Kunde unter „Leads bestellen“ bestellen kann, und Go-live.
+    // Pay-per-Lead + Software: keine Kampagne, kein Leadformular, kein Werbekonto. Mit erster Woche ist der Bezug
+    // schon angelegt; unser Teil ist die Registerprüfung (danach Abbuchung und Lieferung). Ohne erste Woche wie bisher.
     const start = offer.startDate;
+    const { bezugAdminPfad } = await import("@/lib/ppl/erste-woche");
     await prisma.salesTask
       .createMany({
         data: [
-          { title: "Onboarding: Pay-per-Lead-Bezug einrichten (Produkt, Preis, Gebiet, Lieferung in den Kundenbereich)", dueAt: dueBefore(start, 5, 1) },
+          ersteWoche
+            ? {
+                title: `Onboarding: Registernummer prüfen (Vermittlerregister), dann startet die erste Woche`,
+                note: `${getAppUrl()}${bezugAdminPfad(ersteWoche.subscriptionId)}`,
+                dueAt: dueBefore(null, 0, 1),
+              }
+            : { title: "Onboarding: Pay-per-Lead-Bezug einrichten (Produkt, Preis, Gebiet, Lieferung in den Kundenbereich)", dueAt: dueBefore(start, 5, 1) },
           { title: "Onboarding: Go-live: WhatsApp und Vorlage prüfen, live schalten", dueAt: dueBefore(start, 0, 2) },
         ].map((t) => ({ ...t, contactId: contact.id, type: "SONSTIGES" as const })),
       })
@@ -301,6 +318,12 @@ async function upgradeExistingCustomer(
     },
   });
   await prisma.onboarding.update({ where: { id: onboardingId }, data: { offerId: offer.id, package: pkg, ...(offer.startDate ? { startDate: offer.startDate } : {}) } });
+  // Erste Woche aus dem Angebot (Pay-per-Lead + Software): Bezug und wartende Bestellung anlegen
+  if (pkg === "ppl_software") {
+    await import("@/lib/ppl/erste-woche")
+      .then((m) => m.ersteWocheAnlegen(offer.id, customerId))
+      .catch((err) => reportError(err, "upgrade-erste-woche", { offer: offer.number }));
+  }
   if (contactId) {
     await prisma.salesTask
       .create({

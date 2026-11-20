@@ -30,6 +30,8 @@ import { entscheidungsCallText, type EntscheidungsCallText } from "@/lib/vertrie
 import { ueberweisungMoeglich } from "@/lib/ueberweisung";
 import { nowMs } from "@/lib/now";
 import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
+import { ersteWocheAus, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
+import { registerVorschlag } from "@/lib/ppl/erste-woche";
 
 // Öffentliches Angebot per geheimem Link. ?print=1 liefert die reine
 // Druckansicht (für das PDF).
@@ -89,6 +91,18 @@ export default async function OfferPage({
   // sonst Buchungslink. Nach der Annahme nur noch ein gebuchter Termin, kein Buchungslink mehr.
   const call = offer.salesContactId && offer.status !== "superseded" && !abgelehnt && !offer.ohneEntscheidungsCall ? await entscheidungsCallStand(offer.salesContactId, new Date(nowMs())).catch(() => null) : null;
   const callText = call && (offer.status !== "accepted" || call.art === "gebucht") ? entscheidungsCallText(call) : null;
+  // „Ihre erste Woche“ (Pay-per-Lead + Software, Ole 20.11.2026): nur zur Annahme, Registernummer als Vorschlag
+  const woche = canAccept ? ersteWocheAus(offer) : null;
+  const ersteWoche = woche
+    ? {
+        name: ersteWocheName(woche),
+        productKey: woche.productKey,
+        price: woche.price,
+        quantity: woche.quantity,
+        softwareMonatlich: offerAddOns(offerAddOnsOf(offer)).monthlyTotal,
+        registerVorschlag: await registerVorschlag(offer.salesContactId).catch(() => null),
+      }
+    : null;
 
   return (
     <main className="min-h-screen bg-[#eef2f8] px-3 py-6 sm:px-4 sm:py-12">
@@ -154,6 +168,7 @@ export default async function OfferPage({
                     payment={billingEnabled() && !offer.isTest && !offer.allowPayLater}
                     payLater={billingEnabled() && !!payLaterProps(offer)}
                     ueberweisungTage={ueberweisungMoeglich(offer) ? offer.bankTransferDays : null}
+                    ersteWoche={ersteWoche}
                   />
                 </div>
               ) : (

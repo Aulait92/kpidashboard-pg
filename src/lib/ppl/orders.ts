@@ -9,6 +9,7 @@ import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { openCredits } from "@/lib/ppl/storno";
+import { bestellBetrag, effektiveSteuer } from "@/lib/ppl/steuer";
 
 export const MIN_ORDER = 5;
 export const MAX_ORDER = 2000;
@@ -25,6 +26,11 @@ export async function placeOrder(opts: {
   actor?: AuditActor;
   /** Admin: Bestellung ohne Stripe als bezahlt markieren (Rechnung von Hand). */
   markPaid?: boolean;
+  /**
+   * Erste Woche aus dem Angebot (lib/ppl/erste-woche.ts): Bestellungen im Stand „wartet“ (Registerprüfung bzw.
+   * Zahlungsart fehlt) werden nur mit freigabe abgebucht; sonst ändert placeOrder nur Menge und Wiederholung.
+   */
+  freigabe?: boolean;
   now?: Date;
 }): Promise<OrderResult> {
   const now = opts.now ?? new Date();
@@ -32,7 +38,7 @@ export async function placeOrder(opts: {
   if (!Number.isFinite(qty) || qty < MIN_ORDER || qty > MAX_ORDER) return { ok: false, error: `Bitte zwischen ${MIN_ORDER} und ${MAX_ORDER} Leads bestellen.` };
   const sub = await prisma.leadSubscription.findUnique({
     where: { id: opts.subscriptionId },
-    include: { customer: { select: { id: true, name: true, stripeCustomerId: true } } },
+    include: { customer: { select: { id: true, name: true, stripeCustomerId: true, vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true } } },
   });
   if (!sub || !sub.active) return { ok: false, error: "Bezug nicht gefunden oder pausiert." };
   if (sub.period !== "week") return { ok: false, error: "Für diesen Bezug gibt es keine Wochenbestellung." };
@@ -43,17 +49,33 @@ export async function placeOrder(opts: {
     if (existing.autoRenew !== opts.autoRenew) await prisma.leadOrder.update({ where: { id: existing.id }, data: { autoRenew: opts.autoRenew } });
     return { ok: false, error: `Für ${fmtWeek(start)} ist schon bestellt und bezahlt (${existing.quantity} Leads). Mehr? Bitte kurz bei uns melden.` };
   }
+  if (existing?.status === "wartet" && !opts.freigabe && !opts.markPaid) {
+    await prisma.leadOrder.update({ where: { id: existing.id }, data: { quantity: qty, autoRenew: opts.autoRenew } });
+    return { ok: true, orderId: existing.id, status: "wartet", message: `Vorgemerkt: ${qty} Leads. Wir buchen ab und liefern, sobald Ihre Registernummer geprüft ist.` };
+  }
 
   const price = Number(sub.price);
-  const gross = qty * price;
   const credits = await openCredits(sub.id);
-  const credit = Math.min(credits.amount, gross);
-  const amount = Math.round((gross - credit) * 100) / 100;
+  // Umsatzsteuer (Ole, 20.11.2026): steuerfrei nach § 4 Nr. 11 UStG nur mit geprüftem Vermittlerstatus, sonst 19 %
+  const { steuer } = effektiveSteuer(sub, sub.customer);
+  const label = `${qty} Leads ${sub.label ?? sub.productKey}, Woche ${fmtWeek(start)}`;
+  // Einzige Rechenstelle für Anzeige und Abbuchung (lib/ppl/steuer.ts)
+  const betrag = bestellBetrag({
+    price,
+    quantity: qty,
+    credit: credits.amount,
+    steuer,
+    label: `${label} à ${eur(price)}`,
+    creditLabel: `Gutschrift aus ${credits.leadIds.length} Storno(s)`,
+  });
+  const credit = betrag.gutschrift;
+  // amount bleibt netto (wie bisher); brutto ergibt sich aus steuer
+  const amount = betrag.netto;
 
   const order = existing
-    ? await prisma.leadOrder.update({ where: { id: existing.id }, data: { quantity: qty, amount, autoRenew: opts.autoRenew, status: "open", stripeInvoiceId: null } })
+    ? await prisma.leadOrder.update({ where: { id: existing.id }, data: { quantity: qty, amount, steuer, autoRenew: opts.autoRenew, status: "open", stripeInvoiceId: null } })
     : await prisma.leadOrder.create({
-        data: { subscriptionId: sub.id, periodStart: start, periodEnd: end, quantity: qty, amount, autoRenew: opts.autoRenew, createdById: opts.actor?.id ?? null },
+        data: { subscriptionId: sub.id, periodStart: start, periodEnd: end, quantity: qty, amount, steuer, autoRenew: opts.autoRenew, createdById: opts.actor?.id ?? null },
       });
 
   let status = "open";
@@ -64,19 +86,20 @@ export async function placeOrder(opts: {
     if (!billingEnabled() || !(await hasPaymentMethod(sub.customer.stripeCustomerId))) {
       return { ok: false, error: "Bitte zuerst eine Zahlungsart hinterlegen." };
     }
-    const label = `${qty} Leads ${sub.label ?? sub.productKey}, Woche ${fmtWeek(start)}`;
     try {
       const res = await chargeNow({
         stripeCustomerId: sub.customer.stripeCustomerId!,
-        lines: [
-          { description: `${label} à ${eur(price)}`, amountEur: gross },
-          ...(credit > 0 ? [{ description: `Gutschrift aus ${credits.leadIds.length} Storno(s)`, amountEur: -credit }] : []),
-        ],
+        lines: betrag.lines,
         description: label,
         idempotencyKey: `ppl-order-${order.id}-${order.updatedAt.getTime()}`,
         metadata: { kind: "ppl_order", order_id: order.id, customer_id: sub.customerId },
+        steuer,
       });
       status = res.status;
+      // Abbuchung muss der Anzeige entsprechen; Abweichung (z. B. andere Rundung in Stripe) melden, nicht blockieren
+      if (Number.isFinite(res.totalEur) && Math.abs(res.totalEur - betrag.brutto) > 0.004) {
+        reportError(new Error(`Lead-Bestellung: Stripe ${res.totalEur} € statt angezeigt ${betrag.brutto} €`), "ppl-order-betrag", { order: order.id });
+      }
       await prisma.leadOrder.update({ where: { id: order.id }, data: { stripeInvoiceId: res.invoiceId } });
     } catch (err) {
       reportError(err, "ppl-order-charge", { order: order.id });
@@ -87,7 +110,7 @@ export async function placeOrder(opts: {
   if (credit > 0 && status !== "failed") {
     await prisma.lead.updateMany({ where: { id: { in: credits.leadIds } }, data: { creditedAt: now } });
   }
-  await audit("ppl.order", { entity: "LeadOrder", entityId: order.id, customerId: sub.customerId, actor: opts.actor, details: { qty, amount, week: start.toISOString().slice(0, 10), status } });
+  await audit("ppl.order", { entity: "LeadOrder", entityId: order.id, customerId: sub.customerId, actor: opts.actor, details: { qty, amount, steuer, brutto: betrag.brutto, week: start.toISOString().slice(0, 10), status } });
   if (["paid", "processing"].includes(status) && start <= now) {
     const { redistributeParked } = await import("@/lib/ppl/engine");
     await redistributeParked(sub.productKey, now).catch((err) => reportError(err, "ppl-redistribute"));

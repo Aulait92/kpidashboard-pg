@@ -29,6 +29,8 @@ import {
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
+import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_PRODUKTE, ERSTE_WOCHE_STANDARD, ersteWocheBetrag } from "@/lib/ppl/erste-woche-shared";
+import { bezugSteuer, bruttoJeLead, nettoAusBrutto } from "@/lib/ppl/steuer";
 import { abrechnungsplan, ABRECHNUNGSTAG_MAX, ersterAbrechnungstag, VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG } from "@/lib/abrechnungstag";
 
 const PRODUCT_SUGGESTIONS = PRODUKT_VORSCHLAEGE;
@@ -114,6 +116,12 @@ export function OfferForm({
   const [bonusBis, setBonusBis] = useState(() => abschlussBonusStandardTag());
   // Testangebot (Ole, 15.11.2026): 0 €, ohne Zahlung, legt einen Testkunden an
   const [test, setTest] = useState(false);
+  // Erste Woche (Ole, 20.11.2026, nur Pay-per-Lead + Software): Lead-Produkt, Preis je Lead, vorausgewählte Anzahl
+  const [wocheProdukt, setWocheProdukt] = useState("");
+  const [wocheLabel, setWocheLabel] = useState("");
+  const [wochePreis, setWochePreis] = useState("");
+  const [wocheBrutto, setWocheBrutto] = useState(false);
+  const [wocheMenge, setWocheMenge] = useState(String(ERSTE_WOCHE_STANDARD));
 
   const parsedProducts = products.map((p) => ({ name: p.name, dailyBudget: num(p.daily) ?? 0 }));
   // Berechnung ist billig – direkt pro Render statt useMemo.
@@ -144,8 +152,20 @@ export function OfferForm({
   const voraus = VORAUSZAHLUNG[term === "6m" ? "6m" : "12m"];
   const geschenkt = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"} geschenkt`;
 
+  // Erste Woche: Steuerkennzeichen des Produkts (lib/ppl/steuer.ts); Bruttoeingabe nur bei steuerpflichtigen Produkten
+  const wocheSteuer = bezugSteuer({ productKey: wocheProdukt });
+  const wocheNetto = (() => {
+    const p = num(wochePreis);
+    if (p == null) return null;
+    return wocheBrutto && wocheSteuer === "steuerpflichtig" ? nettoAusBrutto(p) : p;
+  })();
+
   function submit() {
     setError(null);
+    if (ppl && wocheProdukt.trim() && (wocheNetto == null || wocheNetto <= 0)) {
+      setError("Bitte einen Preis je Lead für die erste Woche angeben.");
+      return;
+    }
     if (!EMAIL_RE.test(email.trim())) {
       setError("Bitte eine gültige E-Mail-Adresse des Empfängers angeben. Daraus entsteht nach der Zahlung der Login.");
       return;
@@ -186,6 +206,7 @@ export function OfferForm({
         abschlussBonus: bonusAn && !test && !ppl ? (num(bonusBetrag) ?? 300) : 0,
         abschlussBonusBis: bonusAn && !test && !ppl ? bonusBis : null,
         test,
+        ersteWoche: ppl && wocheProdukt.trim() ? { productKey: wocheProdukt, label: wocheLabel || null, price: wocheNetto, quantity: num(wocheMenge) } : null,
       });
       if (!res.ok) {
         setError(res.error);
@@ -267,7 +288,47 @@ export function OfferForm({
           </div>
         </Card>
 
-        {ppl ? null : (
+        {ppl ? (
+          <Card>
+            <CardHeader title="Erste Woche" hint="Anzahl wählt der Kunde bei der Annahme. Leer = ohne." />
+            <div className="grid gap-3 p-5 sm:grid-cols-2" data-erste-woche-admin>
+              <datalist id="ppl-lead-produkte">
+                {ERSTE_WOCHE_PRODUKTE.map((p) => <option key={p} value={p} />)}
+              </datalist>
+              <Field l="Lead-Produkt (wie im Bezug)">
+                <input className={input} list="ppl-lead-produkte" value={wocheProdukt} onChange={(e) => setWocheProdukt(e.target.value)} placeholder="z. B. PKV-Tarifoptimierung" />
+              </Field>
+              <Field l="Bezeichnung (optional)">
+                <input className={input} value={wocheLabel} onChange={(e) => setWocheLabel(e.target.value)} placeholder="z. B. PKV Bayern" />
+              </Field>
+              <Field l={wocheBrutto && wocheSteuer === "steuerpflichtig" ? "Preis je Lead (brutto inkl. 19 %)" : "Preis je Lead (netto)"}>
+                <input className={input} inputMode="decimal" value={wochePreis} onChange={(e) => setWochePreis(e.target.value)} placeholder="z. B. 17" />
+              </Field>
+              <Field l={`Anzahl vorausgewählt (ab ${ERSTE_WOCHE_MIN})`}>
+                <input className={input} inputMode="numeric" value={wocheMenge} onChange={(e) => setWocheMenge(e.target.value)} />
+              </Field>
+              {wocheProdukt.trim() ? (
+                <div className="space-y-2 text-xs text-[color:var(--muted)] sm:col-span-2" data-erste-woche-steuer={wocheSteuer}>
+                  <p>
+                    {wocheSteuer === "steuerfrei_4_11"
+                      ? "Umsatzsteuerfrei nach § 4 Nr. 11 UStG, sobald der Registereintrag geprüft ist (sonst 19 %)."
+                      : "Steuerpflichtig: 19 % USt. kommen dazu."}
+                    {wocheNetto != null && wocheNetto > 0
+                      ? ` Kunde zahlt ${eur(bruttoJeLead(wocheNetto, wocheSteuer))} je Lead, ${num(wocheMenge) ?? ERSTE_WOCHE_STANDARD} Leads = ${eur(ersteWocheBetrag({ productKey: wocheProdukt, price: wocheNetto }, num(wocheMenge) ?? ERSTE_WOCHE_STANDARD).brutto)}.`
+                      : ""}
+                    {wocheBrutto && wocheSteuer === "steuerpflichtig" && wocheNetto != null ? ` Gespeichert wird netto ${eur(wocheNetto)}.` : ""}
+                  </p>
+                  {wocheSteuer === "steuerpflichtig" ? (
+                    <label className="flex items-center gap-2 text-sm text-[color:var(--foreground)]">
+                      <input type="checkbox" className="h-4 w-4" checked={wocheBrutto} onChange={(e) => setWocheBrutto(e.target.checked)} />
+                      Preis ist brutto kalkuliert (inkl. 19 % USt.)
+                    </label>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </Card>
+        ) : (
         <Card>
           <CardHeader title="Produkte und Werbebudget" hint="1. Produkt im Grundpaket, jedes weitere +350 € pro Monat (ohne Setup)" />
           <div className="space-y-3 p-5">
