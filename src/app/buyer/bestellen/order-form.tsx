@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { orderAction, type OrderFormState } from "./actions";
-import { bestellBetrag, bruttoJeLead, STEUERFREI_PREISHINWEIS, type Steuer } from "@/lib/ppl/steuer";
+import { bestellBetrag, bruttoJeLead, STEUERFREI_NACHBERECHNUNG, STEUERFREI_PREISHINWEIS, type Steuer } from "@/lib/ppl/steuer";
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 
@@ -72,6 +72,7 @@ export function OrderForm(p: {
             {frei ? `${qty} × ${eur(p.price)}` : `${qty} × ${eur(bruttoJeLead(p.price, p.steuer))}`}
             {betrag.gutschrift > 0 ? ` − ${eur(gutschriftBrutto)} Gutschrift` : ""} · {frei ? STEUERFREI_PREISHINWEIS : `inkl. ${eur(betrag.steuerBetrag)} USt. (19 %)`}
           </div>
+          {frei ? <div className="text-xs text-[color:var(--muted)]">{STEUERFREI_NACHBERECHNUNG}</div> : null}
         </div>
       </div>
       <label className="flex min-h-10 items-center gap-2 text-sm">

@@ -61,10 +61,13 @@
 // und Kampagnen (Regeln zu Leadgenerierung, Werbebudget, Preisstaffel, Meta-Zugriff, Pause und Garantien gelten dafür
 // nicht), Leads gesondert per Stück, keine Mindestabnahme, ohne Mindestlaufzeit. Ändert nichts für
 // bestehende Verträge anderer Pakete.
+// 20.11.2026 (Ole): „Vergütung und Zahlung“: Absatz „Umsatzsteuer auf Leads“ (§ 4 Nr. 11 UStG nur an Vertreter/Makler
+// mit geprüftem Registereintrag, Nachberechnung bei abweichender Entscheidung der Finanzverwaltung, übrige Preise zzgl.
+// USt.); Satz „Alle Preise sind netto …“ verweist darauf. Prüfung: docs/recht/ust-leadverkauf-2026-11-19.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "19.11.2026 (Fassung 3)";
+export const LEGAL_VERSION = "20.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -144,7 +147,9 @@ export const AGB: LegalSection[] = [
     title: "Vergütung und Zahlung",
     items: [
       // Prüfen: Sonderregel Zahlung nachträglich (19.11.2026, Fassung 2; docs/recht/zahlung-nachtraeglich.md)
-      "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus. Ist im Angebot nachträgliche Zahlung vereinbart, wird die monatliche Vergütung abweichend davon jeweils nachträglich für den abgelaufenen Leistungsmonat fällig, erstmals einen Monat nach dem Startdatum; das gilt bis zum Vertragsende, die Vergütung für den letzten Leistungsmonat wird danach fällig. Alle Preise sind netto zuzüglich Umsatzsteuer.",
+      "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus. Ist im Angebot nachträgliche Zahlung vereinbart, wird die monatliche Vergütung abweichend davon jeweils nachträglich für den abgelaufenen Leistungsmonat fällig, erstmals einen Monat nach dem Startdatum; das gilt bis zum Vertragsende, die Vergütung für den letzten Leistungsmonat wird danach fällig. Alle Preise sind netto zuzüglich Umsatzsteuer, soweit nicht unter „Umsatzsteuer auf Leads“ anders geregelt.",
+      // Prüfen: Steuerklausel Leads (20.11.2026, docs/recht/ust-leadverkauf-2026-11-19.md)
+      { sub: "Umsatzsteuer auf Leads", text: "Leads an Versicherungsvertreter und Versicherungsmakler mit geprüftem Registereintrag berechnet der Anbieter umsatzsteuerfrei nach § 4 Nr. 11 UStG. Beurteilt die Finanzverwaltung diese Leistungen als umsatzsteuerpflichtig, darf der Anbieter die gesetzliche Umsatzsteuer für diese Leads nachberechnen, auch rückwirkend für bereits gelieferte Leads. Alle übrigen Preise verstehen sich zuzüglich der gesetzlichen Umsatzsteuer. Das gilt insbesondere für Software, Betreuung und Einrichtung, für Leads an Kunden ohne geprüften Registereintrag als Versicherungsvertreter oder Versicherungsmakler und für Leads ohne Versicherungsbezug (z. B. Kindersparpläne)." },
       "Die monatliche Vergütung richtet sich nach dem vereinbarten Werbebudget und der im Angebot vollständig genannten Preisstaffel. Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat; der Kundenbereich zeigt die neue Vergütung vor der Änderung an.",
       // Prüfen: Vorauszahlung für 6 Monate (Laufzeit 6 Monate, 18.11.2026); Fälligkeit mit Vertragsschluss (19.11.2026)
       { sub: "Vorauszahlung", text: "Ist sie vereinbart, wird die Vergütung für 12 Monate (jährlich, mit 12 Monaten Laufzeit) bzw. für 6 Monate (mit 6 Monaten Laufzeit) im Voraus gezahlt (Nachlass laut Angebot). Die Vorauszahlung für den ersten Zahlungszeitraum ist mit Vertragsschluss fällig, die für jeden weiteren Zahlungszeitraum zu dessen Beginn. Zahlungszeiträume und Laufzeit beginnen mit dem Startdatum. Für Verträge, die vor dem 19.11.2026 angenommen wurden, ist die erste Vorauszahlung zum Start fällig. Im Zahlungszeitraum hinzukommende Verkäufer oder Module werden anteilig berechnet. Eine Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung des Kunden aus wichtigem Grund." },

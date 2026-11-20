@@ -19,6 +19,7 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 | Policen-Bitte nennt die genannten Sparten | Branch `policen-bitte-sparten` | CTO |
 | Terminvorbereitung „Was hat … schon?“: Zweck „Cross-Selling-Folie“ und Zähler im Kopf, Hinweis am Hauptknopf (ungecommittet im Arbeitsverzeichnis, 19.11.2026); nach Freigabe committen. Danach messen: Anteil Präsentationen mit Folie `ueberblick` und „Mit anschauen“ (Ereignis fehlt noch) | wartet auf Ole | UX / CPO |
 | Policen-Formular: nach Oles Test `POLICEN_FLOW_KUNDEN` leeren (für alle); optional Dateiname vor Einwilligung neutral | wartet auf Test | CTO |
+| Admin-Umbau Nacht 19./20.11.: Umbauliste je Bereich (SUS-Ist 65 bis 74, Ziel 90) in `docs/ux/admin-neu/umbau-2026-11-19.md`; Airtable nur aus der Oberfläche, Abgleich bleibt; Abschalten des alten Admins ist Stufe A | läuft (Team der Nacht) | UX/UI / CTO |
 | Erklärvideos „Kurz“, „Ausführlich“, „WhatsApp verbinden“ neu aufnehmen; nur außerhalb 8 bis 20 Uhr deployen | läuft in eigener Sitzung | CPO |
 
 Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der Sitzung, die sie angelegt hat.
