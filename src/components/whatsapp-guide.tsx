@@ -56,7 +56,10 @@ export function WhatsAppGuide({
   connectHref = "/buyer/whatsapp-verbinden",
   showMoreLink = true,
   showVideo = true,
+  inviteEmail,
 }: {
+  /** Adresse für die Einladung von 360dialog (Login); vor dem Start änderbar (Ole, 20.11.2026). */
+  inviteEmail?: string;
   initialPath: ConnectPath | null;
   readOnly: boolean;
   helpHref: string;
@@ -66,6 +69,16 @@ export function WhatsAppGuide({
   showVideo?: boolean;
 }) {
   const [path, setPath] = useState<ConnectPath | null>(initialPath);
+  const [email, setEmail] = useState(inviteEmail ?? "");
+  const [emailAendern, setEmailAendern] = useState(false);
+  const andereEmail = !!inviteEmail && email.trim().toLowerCase() !== inviteEmail.toLowerCase() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const startHref = (() => {
+    const q = new URLSearchParams();
+    if (path) q.set("weg", path);
+    if (andereEmail) q.set("email", email.trim());
+    const qs = q.toString();
+    return qs ? `${connectHref}?${qs}` : connectHref;
+  })();
   const [provider, setProvider] = useState<ProviderAnswer | null>(null);
   const [coex, setCoex] = useState<CoexAnswer | null>(null);
   const guide = path ? GUIDES[path] : null;
@@ -212,10 +225,35 @@ export function WhatsAppGuide({
             )
           ) : null}
 
+          {canStart && inviteEmail ? (
+            <div className="text-sm" data-wa-einladung-email>
+              {emailAendern ? (
+                <label className="block">
+                  <span className="font-medium">Einladung von 360dialog an</span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    className="mt-1 block w-full rounded-[var(--radius-md)] border border-[color:var(--border)] px-3 py-2 text-[15px]"
+                    data-wa-einladung-email-feld
+                  />
+                </label>
+              ) : (
+                <p>
+                  Einladung von 360dialog an <b className="break-all">{email}</b>{" "}
+                  <button type="button" onClick={() => setEmailAendern(true)} className="font-medium text-[color:var(--brand)] underline" disabled={readOnly}>
+                    Ändern
+                  </button>
+                </p>
+              )}
+              <p className="mt-1 text-[color:var(--muted)]">Firmen-Postfächer filtern diese E-Mail manchmal, dann besser eine private Adresse nehmen.</p>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             {canStart ? (
               <a
-                href={path ? `${connectHref}?weg=${path}` : connectHref}
+                href={startHref}
                 className={buttonClass("primary", "md", cn("justify-center", readOnly && "pointer-events-none opacity-60"))}
                 aria-disabled={readOnly || undefined}
               >

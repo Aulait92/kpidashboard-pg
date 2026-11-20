@@ -46,11 +46,24 @@ export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
   // Schon eingeladen bzw. Konto vorhanden: angemeldet weiter zum Verbinden
   if (url.searchParams.get("weiter") === "1" || acc?.dialog360ClientId) return go("login");
-  if (!ctx.email) return go("signup");
+  // Andere Adresse für die Einladung, vor dem Start gewählt (Ole, 20.11.2026: Firmen-Postfach filtert die Mail)
+  const wunsch = (url.searchParams.get("email") ?? "").trim().toLowerCase().slice(0, 200);
+  const inviteEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(wunsch) ? wunsch : ctx.email;
+  if (!inviteEmail) return go("signup");
+  const andere = inviteEmail !== ctx.email ? inviteEmail : null;
 
-  const created = await createPartnerClient(cfg, { email: ctx.email, name: customer?.name ?? ctx.email, customerId: ctx.customerId });
-  await audit("whatsapp.d360_invite", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { result: created.kind, ...(created.kind === "error" ? { status: created.status, message: created.message } : {}) }, actor: { id: ctx.userId ?? undefined, email: ctx.email, role: "kunde" } });
-  if (created.kind === "exists") return go("login");
+  const created = await createPartnerClient(cfg, { email: inviteEmail, name: customer?.name ?? inviteEmail, customerId: ctx.customerId });
+  await audit("whatsapp.d360_invite", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { result: created.kind, ...(andere ? { andereEmail: true } : {}), ...(created.kind === "error" ? { status: created.status, message: created.message } : {}) }, actor: { id: ctx.userId ?? undefined, email: ctx.email, role: "kunde" } });
+  if (created.kind === "exists") {
+    if (andere) {
+      await prisma.whatsAppAccount.upsert({
+        where: { customerId: ctx.customerId },
+        create: { customerId: ctx.customerId, provider: "360dialog", status: "invited", dialog360InviteEmail: andere },
+        update: { dialog360InviteEmail: andere },
+      });
+    }
+    return NextResponse.redirect(onboardingLink(cfg, { redirectUrl: `${base}/api/whatsapp/360dialog/callback`, state: signState(ctx.customerId, ctx.userId), email: inviteEmail, name: customer?.name ?? null, customerId: ctx.customerId, next: "login" }));
+  }
   if (created.kind === "error") {
     reportError(new Error(`360dialog Kunde anlegen: ${created.status} ${created.message}`), "d360-create-client", { customer: ctx.customerId });
     // Rückfall: bisheriger Weg (Registrierung bei 360dialog), „Verbindung prüfen“ hilft danach
@@ -58,8 +71,8 @@ export async function GET(req: Request): Promise<Response> {
   }
   await prisma.whatsAppAccount.upsert({
     where: { customerId: ctx.customerId },
-    create: { customerId: ctx.customerId, provider: "360dialog", status: "invited", dialog360ClientId: created.clientId },
-    update: { status: "invited", dialog360ClientId: created.clientId },
+    create: { customerId: ctx.customerId, provider: "360dialog", status: "invited", dialog360ClientId: created.clientId, dialog360InviteEmail: andere },
+    update: { status: "invited", dialog360ClientId: created.clientId, dialog360InviteEmail: andere },
   });
   // Gewählten Weg mitgeben, damit die Einladungsansicht die passenden nächsten Schritte zeigt
   const weg = parseConnectPath(url.searchParams.get("weg"));
