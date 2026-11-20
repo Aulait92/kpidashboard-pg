@@ -98,6 +98,12 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const waAccount = waEnabled
     ? await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true, phoneNumber: true, dialog360ChannelId: true, dialog360InviteEmail: true } })
     : null;
+  // Adresse der Einladung: die des Inhabers (in der Vorschau eines Admins nicht dessen eigene, Ole 20.11.2026)
+  const waInhaberEmail = !waEnabled
+    ? ctx.email
+    : ctx.preview
+      ? ((await prisma.user.findFirst({ where: { customerId: ctx.customerId, teamRole: "owner" }, orderBy: { createdAt: "asc" }, select: { email: true } }))?.email ?? ctx.email)
+      : ctx.email;
   const has = (k: string) => items.some((i) => i.key === k);
   // Gleiche Reihenfolge wie die Liste oben, die Startseite und die Erinnerungen (SETUP_STEPS)
   const order = [
@@ -596,7 +602,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         {waEnabled ? (
           <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp" current={current === "whatsapp"}>
             <VideoHint url={video("whatsapp")} />
-            <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} email={waAccount?.dialog360InviteEmail ?? ctx.email} hilfeSchritt={kampagnen ? "metaAccess" : "whatsapp"} />
+            <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} email={waAccount?.dialog360InviteEmail ?? waInhaberEmail} hilfeSchritt={kampagnen ? "metaAccess" : "whatsapp"} />
             {kampagnen ? null : hilfeBox}
             {!done("whatsapp") ? (
               <StepExits
