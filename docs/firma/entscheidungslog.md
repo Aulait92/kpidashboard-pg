@@ -18,7 +18,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   (Meta inkl. 13b-Steuer und unsere Rechnung inkl. USt), Software kommt dazu (Ole: „brutto zzgl. Software“). Abrechnung
   **wöchentlich per Lastschrift** (Ole): jeden Montag Leads der Vorwoche × 35 € minus deren Meta-Kosten, automatisch über
   Stripe; platzt die Lastschrift, pausieren die Kampagnen. Steuer: mit 19 % kalkulieren (`docs/recht/ust-ppl-im-kundenkonto-2026-11-20.md`),
-  streng getrennt vom steuerfreien PPL aus unserem Konto. Software inklusive ab 1.750 € Leadumsatz im Monat (Ole, statt „ab 50 Leads“), auf der Rechnung
+  streng getrennt vom steuerfreien PPL aus unserem Konto. Nur mit Startpaket ab 1.500 € Leadumsatz; Software inklusive, solange mindestens 1.500 € Leadumsatz im Monat, sonst Listenpreis (Ole, ersetzt „ab 1.750 €“ und „ab 50 Leads“), auf der Rechnung
   als eigene Position 349 € netto. Produkte im neuen Modell: Privatschutz (35 €) und Kindersparplan (65 €, ohnehin 19 %,
   daher ohne Margeneinbuße; Abnehmer mit § 34f) (Ole). Offen: Fragen an den Steuerberater, Pilotkunde. Siehe `protokolle/2026-11-20-ppl-im-kundenkonto.md`.
 - **Garantien: „Termine wahrgenommen“ für alle in den AGB klargestellt** (A, Ole: „ja, für alle in den AGB klarstellen“):

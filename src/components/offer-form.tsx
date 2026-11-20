@@ -28,6 +28,7 @@ import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_PRODUKTE, ERSTE_WOCHE_STANDARD, ersteWocheBetrag } from "@/lib/ppl/erste-woche-shared";
 import { bezugSteuer, bruttoJeLead } from "@/lib/ppl/steuer";
+import { KUNDENKONTO_NAME, KUNDENKONTO_VORSCHLAEGE, MINDESTBESTELLUNG_KUNDENKONTO, pruefeKundenkontoProdukte, startUmsatz, type PplModell } from "@/lib/ppl/kundenkonto";
 import { formWerteZuInput, num, produktWahlMoeglich as produktWahlMoeglichAus, standardFormWerte, vorauszahlungMoeglich, wocheNettoAus, type OfferFormWerte } from "@/lib/offer-form-werte";
 import { abrechnungsplan, ABRECHNUNGSTAG_MAX, ersterAbrechnungstag, VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG } from "@/lib/abrechnungstag";
 
@@ -121,11 +122,14 @@ export function OfferForm({
   const [wochePreis, setWochePreis] = useState(w0.wochePreis);
   const [wocheBrutto, setWocheBrutto] = useState(w0.wocheBrutto);
   const [wocheMenge, setWocheMenge] = useState(w0.wocheMenge);
+  // Variante (Ole, 20.11.2026): Leads aus unserem Pool (Standard, bisher) oder Kampagnen im eigenen Werbekonto
+  const [pplModell, setPplModell] = useState<PplModell>(w0.pplModell);
+  const [kkProdukte, setKkProdukte] = useState(w0.kkProdukte);
   const werte: OfferFormWerte = {
     contactName, company, email, street, zip, city, products, pkg, term, setupOverride, discount, monthlyOverride, introFee, introMonths,
     specialTerms, startDate, billingDay, billingFree, validDays, seats, annual, bestand, empfehlung, vermittler, customerChoice,
     customerProducts, allowPayLater, arrears, allowBankTransfer, bankTransferDays, bonusAn, bonusBetrag, bonusBis, test,
-    wocheProdukt, wocheLabel, wochePreis, wocheBrutto, wocheMenge,
+    wocheProdukt, wocheLabel, wochePreis, wocheBrutto, wocheMenge, pplModell, kkProdukte,
   };
 
   const parsedProducts = products.map((p) => ({ name: p.name, dailyBudget: num(p.daily) ?? 0 }));
@@ -160,10 +164,23 @@ export function OfferForm({
   // Erste Woche: Steuerkennzeichen des Produkts (lib/ppl/steuer.ts); Bruttoeingabe nur bei steuerpflichtigen Produkten
   const wocheSteuer = bezugSteuer({ productKey: wocheProdukt });
   const wocheNetto = wocheNettoAus(werte);
+  // Kampagnen im eigenen Werbekonto: Startpaket (Menge × Preis je Lead, brutto) ab 1.500 €
+  const kk = ppl && pplModell === "kundenkonto";
+  const kkSumme = startUmsatz(kkProdukte.map((p) => ({ preis: num(p.preis) ?? 0, menge: Math.max(0, Math.round(num(p.menge) ?? 0)) })));
+  const kkFehlt = Math.max(0, Math.round((MINDESTBESTELLUNG_KUNDENKONTO - kkSumme) * 100) / 100);
+  const kkVorschlaege = KUNDENKONTO_VORSCHLAEGE.filter((v) => !kkProdukte.some((p) => p.name.trim().toLowerCase() === v.name.toLowerCase()));
+  const setKk = (i: number, k: "name" | "preis" | "menge", v: string) => setKkProdukte((ps) => ps.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
 
   function submit() {
     setError(null);
-    if (ppl && wocheProdukt.trim() && (wocheNetto == null || wocheNetto <= 0)) {
+    if (kk) {
+      const pruef = pruefeKundenkontoProdukte(kkProdukte);
+      if (!pruef.ok) {
+        setError(pruef.error);
+        return;
+      }
+    }
+    if (ppl && !kk && wocheProdukt.trim() && (wocheNetto == null || wocheNetto <= 0)) {
       setError("Bitte einen Preis je Lead für die erste Woche angeben.");
       return;
     }
@@ -255,6 +272,85 @@ export function OfferForm({
         </Card>
 
         {ppl ? (
+          <Card>
+            <CardHeader title="Woher kommen die Leads?" />
+            <div className="grid gap-2 p-5 sm:grid-cols-2" role="radiogroup" aria-label="Variante Pay-per-Lead" data-ppl-modell-wahl>
+              {(
+                [
+                  ["pool", "Aus unserem Pool", "Wie bisher: Leads per Stück, optional erste Woche"],
+                  ["kundenkonto", KUNDENKONTO_NAME, `Kunde zahlt Meta, wir rechnen Preis je Lead abzüglich Meta ab · Startpaket ab ${eur(MINDESTBESTELLUNG_KUNDENKONTO)}`],
+                ] as const
+              ).map(([k, t, sub]) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="radio"
+                  aria-checked={pplModell === k}
+                  data-ppl-modell={k}
+                  onClick={() => setPplModell(k)}
+                  className={`min-w-0 rounded-[var(--radius-md)] border px-4 py-3 text-left text-sm transition ${pplModell === k ? "border-[color:var(--brand)] bg-[color:var(--brand-soft,#EFF6FF)] ring-2 ring-[color:var(--brand)]/20" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"}`}
+                >
+                  <div className="font-semibold">{t}</div>
+                  <div className="text-xs text-[color:var(--muted)]">{sub}</div>
+                </button>
+              ))}
+            </div>
+          </Card>
+        ) : null}
+
+        {kk ? (
+          <Card>
+            <CardHeader title="Produkte und Preis je Lead" hint={`Endpreis brutto inkl. USt. (Obergrenze). Startmenge zusammen mindestens ${eur(MINDESTBESTELLUNG_KUNDENKONTO)}.`} />
+            <div className="space-y-3 p-5" data-kundenkonto-admin>
+              {kkProdukte.map((p, i) => (
+                <div key={i} className="grid grid-cols-[1fr_88px_80px_auto] items-end gap-2">
+                  <Field l={i === 0 ? "Produkt" : `Produkt ${i + 1}`}>
+                    <input className={input} value={p.name} onChange={(e) => setKk(i, "name", e.target.value)} placeholder="z. B. Privatschutz" />
+                  </Field>
+                  <Field l="€ je Lead">
+                    <input className={input} inputMode="decimal" value={p.preis} onChange={(e) => setKk(i, "preis", e.target.value)} />
+                  </Field>
+                  <Field l="Startmenge">
+                    <input className={input} inputMode="numeric" value={p.menge} onChange={(e) => setKk(i, "menge", e.target.value)} />
+                  </Field>
+                  <button
+                    type="button"
+                    aria-label="Produkt entfernen"
+                    disabled={kkProdukte.length === 1}
+                    onClick={() => setKkProdukte((ps) => ps.filter((_, j) => j !== i))}
+                    className="mb-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] disabled:opacity-30"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              <div className="flex flex-wrap items-center gap-2">
+                {kkVorschlaege.map((v) => (
+                  <button
+                    key={v.name}
+                    type="button"
+                    data-kk-vorschlag={v.name}
+                    onClick={() => setKkProdukte((ps) => [...ps, { name: v.name, preis: String(v.preis), menge: String(kkFehlt > 0 ? Math.ceil(kkFehlt / v.preis) : 1) }])}
+                    className="inline-flex h-9 items-center gap-1 rounded-full border border-[color:var(--border)] bg-white px-3 text-xs font-semibold hover:bg-[color:var(--surface-sunken)]"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> {v.name} {eur(v.preis)}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setKkProdukte((ps) => [...ps, { name: "", preis: "", menge: "" }])}
+                  className="inline-flex h-9 items-center gap-1 rounded-full border border-dashed border-[color:var(--border)] px-3 text-xs font-semibold text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Anderes Produkt
+                </button>
+              </div>
+              <p className={`text-xs ${kkFehlt > 0 ? "text-rose-700" : "text-[color:var(--muted)]"}`} data-kk-summe>
+                Startpaket {eur(kkSumme)}
+                {kkFehlt > 0 ? `, es fehlen ${eur(kkFehlt)} bis ${eur(MINDESTBESTELLUNG_KUNDENKONTO)}.` : `. Software inklusive, solange der Kunde mindestens ${eur(MINDESTBESTELLUNG_KUNDENKONTO)} im Monat bezieht.`}
+              </p>
+            </div>
+          </Card>
+        ) : ppl ? (
           <Card>
             <CardHeader title="Erste Woche" hint="Anzahl wählt der Kunde bei der Annahme. Leer = ohne." />
             <div className="grid gap-3 p-5 sm:grid-cols-2" data-erste-woche-admin>
@@ -634,7 +730,9 @@ export function OfferForm({
         <Card>
           <CardHeader title="Zusammenfassung" />
           <div className="space-y-3 p-5 text-sm">
-            {ppl ? (
+            {kk ? (
+              <Sum k="Paket" v="Pay-per-Lead + Software" sub={`${KUNDENKONTO_NAME} · Startpaket ${eur(kkSumme)} · Software inklusive ab ${eur(MINDESTBESTELLUNG_KUNDENKONTO)} im Monat`} />
+            ) : ppl ? (
               <Sum k="Paket" v="Pay-per-Lead + Software" sub="Leads separat pro Stück, kein Werbebudget" />
             ) : (
               <Sum k="Werbebudget / Monat" v={`≈ ${eur(price.monthlyBudget)}`} sub={price.tierLabel} />

@@ -34,6 +34,7 @@ import { nowMs } from "@/lib/now";
 import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
 import { ersteWocheAus, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
 import { registerVorschlag } from "@/lib/ppl/erste-woche";
+import { kundenkontoAus, kundenkontoFaellig } from "@/lib/ppl/kundenkonto";
 
 // Öffentliches Angebot per geheimem Link. ?print=1 liefert die reine
 // Druckansicht (für das PDF).
@@ -177,6 +178,10 @@ export default async function OfferPage({
                     payLater={billingEnabled() && !!payLaterProps(offer)}
                     ueberweisungTage={ueberweisungMoeglich(offer) ? offer.bankTransferDays : null}
                     ersteWoche={ersteWoche}
+                    kundenkontoFaellig={(() => {
+                      const kk = kundenkontoAus(offer);
+                      return kk ? kundenkontoFaellig(kk) : null;
+                    })()}
                   />
                 </div>
               ) : (
@@ -253,6 +258,7 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
     })),
     // Pay-per-Lead + Software: keine Einrichtung, Start ohne Einrichtungszeit von unserer Seite
     ohneEinrichtung: offer.package === "ppl_software" && Number(offer.setupFee) === 0,
+    softwareMonatlich: !!kundenkontoAus(offer),
     monthlyTotal: add.monthlyTotal,
     // Produkte und Tagesbudget (Ole, 19.11.2026): Monatsgebühr nach Staffel, Zusätze (Verkäufer, Module) bleiben
     choosesProducts: offer.customerChoosesProducts,

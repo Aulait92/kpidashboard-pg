@@ -68,7 +68,7 @@ function groupByDay(slots: Slot[]): { label: string; slots: Slot[] }[] {
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string; t?: string; kc?: string }>;
+  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string; t?: string; c?: string; kc?: string }>;
 };
 
 export default async function BookingPage({ params, searchParams }: Props) {
@@ -132,6 +132,21 @@ export default async function BookingPage({ params, searchParams }: Props) {
     if (s && s.customerId === conn.customerId && !s.lead.erasedAt) {
       streckeT = sp.t;
       prefill = { name: s.lead.name ?? "", email: s.lead.email ?? "", phone: s.lead.phone ?? "" };
+    }
+  }
+
+  // Lead-Kontext aus dem WhatsApp-Chat (Buchungslink nach dem 2. „Andere Zeit“, lib/whatsapp/buchungslink.ts): Name und
+  // E-Mail vorbelegt, die Nummer ist die des Chats (kein Feld, die Buchung landet im selben Chat)
+  let chatT: string | null = null;
+  if (sp.c && conn && !streckeT) {
+    const { pruefeChatBuchungToken } = await import("@/lib/whatsapp/buchungslink");
+    const cid = pruefeChatBuchungToken(sp.c);
+    const c = cid
+      ? await prisma.conversation.findUnique({ where: { id: cid }, select: { customerId: true, contactName: true, contactEmail: true, contactPhone: true, lead: { select: { name: true, email: true, erasedAt: true } } } })
+      : null;
+    if (c && c.customerId === conn.customerId && !c.lead?.erasedAt) {
+      chatT = sp.c;
+      prefill = { name: c.lead?.name ?? c.contactName ?? "", email: c.lead?.email ?? c.contactEmail ?? "", phone: c.contactPhone };
     }
   }
 
@@ -277,7 +292,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const action = bookPublicAction.bind(null, slug);
   // Splittest buchungsseite_kompakt (lib/experimente.ts): je Aufruf eine zufällige ID, kein Cookie und kein Bezug zur
   // Person; gezählt wird erst, wenn die Seite im Browser angezeigt wurde (Gezeigt). Nicht bei Buchung durch den Vermittler.
-  const aufruf = prefill && !streckeT ? null : randomUUID();
+  const aufruf = prefill && !streckeT && !chatT ? null : randomUUID();
   const v: Variante = aufruf ? await variante("buchungsseite_kompakt", aufruf, { merken: false }) : "a";
   const kompakt = v === "b";
   const nah = kompakt ? days.slice(0, NAH_TAGE) : days;
@@ -286,7 +301,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
   // Buchung durch den Vermittler (dessen Haken wäre keine Einwilligung des Leads) und nicht aus der Mail-Strecke (Telefon
   // dort nur für einen Anruf). Splittest buchung_erinnerung (lib/experimente.ts): eigene zufällige ID je Aufruf,
   // Zuteilung erst bei der Buchung (actions.ts).
-  const erinnerungAufruf = prefill ? null : randomUUID();
+  // Aus dem WhatsApp-Chat (chatT) bucht der Lead selbst mit seiner WhatsApp-Nummer: Häkchen wie ohne Vorbelegung.
+  const erinnerungAufruf = prefill && !chatT ? null : randomUUID();
   const erinnerungFassung: Variante = erinnerungAufruf ? await variante("buchung_erinnerung", erinnerungAufruf, { merken: false }) : "a";
   // Zeitstempel für die Bot-Falle (echte Menschen brauchen > 3 s).
   const renderedAt = nowMs();
@@ -401,12 +417,16 @@ export default async function BookingPage({ params, searchParams }: Props) {
               autoComplete="email"
               defaultValue={prefill?.email}
             />
-            <PhoneField
-              name="phone"
-              label={streckeT ? "Telefonnummer (freiwillig, nur für einen Anruf)" : "Handynummer (für WhatsApp/Anruf)"}
-              required={!streckeT}
-              defaultInternational={prefill?.phone}
-            />
+            {chatT ? (
+              <input type="hidden" name="c" value={chatT} />
+            ) : (
+              <PhoneField
+                name="phone"
+                label={streckeT ? "Telefonnummer (freiwillig, nur für einen Anruf)" : "Handynummer (für WhatsApp/Anruf)"}
+                required={!streckeT}
+                defaultInternational={prefill?.phone}
+              />
+            )}
             {streckeT ? <input type="hidden" name="t" value={streckeT} /> : null}
             {/* Bot-Falle: für Menschen unsichtbar. Bewusst ein Name, den
                 Autofill/Passwortmanager nicht zuordnen (früher „website" →

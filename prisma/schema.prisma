@@ -1721,6 +1721,11 @@ model Offer {
   pplQuantity             Int?
   pplAutoRenew            Boolean       @default(true)
   pplRegisterNr           String?
+  // Variante (Ole, 20.11.2026, nur Paket ppl_software; lib/ppl/kundenkonto.ts): null/"pool" = Leads aus unserem Pool
+  // (bisher), "kundenkonto" = Kampagnen im eigenen Meta-Werbekonto des Kunden, Abrechnung wöchentlich je Lead
+  // abzüglich seiner Meta-Kosten. pplProdukte: [{ name, preis (Endpreis brutto je Lead, Obergrenze), menge (Startmenge) }].
+  pplModell               String?
+  pplProdukte             Json?
   validUntil              DateTime
   // Annahme (Protokoll)
   sentAt                  DateTime?

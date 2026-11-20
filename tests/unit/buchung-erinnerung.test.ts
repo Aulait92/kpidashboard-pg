@@ -37,11 +37,12 @@ describe("buchung_erinnerung", () => {
     expect(v.size).toBe(4);
   });
 
-  it("Häkchen ist nie vorausgewählt und nur bei Lead-Buchung ohne Vorbelegung sichtbar", () => {
+  it("Häkchen ist nie vorausgewählt und nur bei Lead-Buchung sichtbar (ohne Vorbelegung bzw. Buchungslink aus dem Chat)", () => {
     const page = readFileSync("src/app/book/[slug]/page.tsx", "utf8");
     const box = page.match(/<input type="checkbox" name="erinnerung"[^>]*>/)?.[0] ?? "";
     expect(box).not.toMatch(/defaultChecked|checked/);
-    expect(page).toContain("const erinnerungAufruf = prefill ? null : randomUUID();");
+    // Buchungslink aus dem WhatsApp-Chat (chatT, lib/whatsapp/buchungslink.ts): der Lead bucht selbst, Häkchen wie ohne Vorbelegung
+    expect(page).toContain("const erinnerungAufruf = prefill && !chatT ? null : randomUUID();");
     const actions = readFileSync("src/app/book/[slug]/actions.ts", "utf8");
     expect(actions).toContain('const erinnerung = !!erinnerungAufruf && formData.get("erinnerung") === "on";');
   });

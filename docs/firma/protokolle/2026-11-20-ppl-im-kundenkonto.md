@@ -70,3 +70,10 @@ Vor jedem Angebot: Umsatzsteuerfrage durch den Steuerberater klären. Nur Pilot,
   1 € Tool **33,62 € je Lead** (mit 10 % Storno 28,16 €), gleich wie heute aus unserem Konto. Null bei etwa 53 € CPL (mit
   Storno etwa 48 €). Software inklusive ab 27 Leads im Monat (1.750 € Leadumsatz). Achtung: Abnehmer brauchen § 34f
   (oder Haftungsdach), nicht nur § 34d; Meta-Einschränkungen für Finanzwerbung beim ersten Kunden prüfen (Recht).
+- **Entscheidung Ole (ersetzt 1.750 €): Variante nur mit Startpaket ab 1.500 € Leadumsatz; Software inklusive, solange
+  mindestens 1.500 € Leadumsatz im Kalendermonat, sonst Listenpreis.** Gebaut als Angebotsvariante „Kampagnen im eigenen
+  Werbekonto“ (`src/lib/ppl/kundenkonto.ts`, `Offer.pplModell`), wöchentliche Abrechnung noch offen.
+- Modellvergleich A (diese Variante) gegen B (Betreuung + Software, Jahresplan), Team 20.11.: Sales A als Hauptangebot, CFO B
+  als Standard (A schlägt B erst ab langer Kundendauer bzw. ab 3.000 € Leadumsatz), Investor und Red Team Kombination:
+  A als Einstieg, fester Übergang in einen Software-Vertrag mit Laufzeit nach 60 bis 90 Tagen; „Software aus Paketen“ nicht
+  als Software-ARR zählen. Entscheidung Ole offen.
