@@ -6,6 +6,8 @@ import { checkLimit, requestIp } from "@/lib/rate-limit";
 export type ResetPasswordState = {
   ok?: boolean;
   error?: string;
+  /** Link ungültig, benutzt, ersetzt oder abgelaufen: „Neuen Link anfordern“ anbieten */
+  linkUngueltig?: boolean;
 };
 
 export async function resetPasswordAction(
@@ -28,7 +30,7 @@ export async function resetPasswordAction(
 
   const result = await consumePasswordResetToken(token, password);
   if (!result.ok) {
-    return { error: result.error };
+    return { error: result.error, linkUngueltig: result.linkUngueltig };
   }
   return { ok: true };
 }

@@ -66,6 +66,11 @@ export function ResetPasswordForm({ token }: { token: string }) {
       {state.error ? (
         <div className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
           {state.error}
+          {state.linkUngueltig ? (
+            <Link href="/forgot-password" className="mt-2 block font-semibold text-[color:var(--brand)] underline">
+              Neuen Link anfordern
+            </Link>
+          ) : null}
         </div>
       ) : null}
 

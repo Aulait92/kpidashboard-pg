@@ -396,7 +396,7 @@ export async function issuePasswordResetToken(
 
 export type ResetResult =
   | { ok: true }
-  | { ok: false; error: string };
+  | { ok: false; error: string; linkUngueltig?: boolean };
 
 export async function consumePasswordResetToken(
   rawToken: string,
@@ -414,14 +414,16 @@ export async function consumePasswordResetToken(
     where: { tokenHash: hashToken(rawToken) },
     select: { id: true, userId: true, expiresAt: true, usedAt: true },
   });
+  // Ole, 20.11.2026: Kunde nutzte den Link aus der ersten Mail, nachdem eine neue verschickt war (neuer Link entwertet
+  // die alten). Meldung sagt deshalb, was zu tun ist; das Formular bietet „Neuen Link anfordern“ an (linkUngueltig).
   if (!record) {
-    return { ok: false, error: "Reset-Link ist ungültig." };
+    return { ok: false, error: "Dieser Link ist ungültig. Bitte fordern Sie einen neuen an.", linkUngueltig: true };
   }
   if (record.usedAt) {
-    return { ok: false, error: "Reset-Link wurde bereits verwendet." };
+    return { ok: false, error: "Dieser Link gilt nicht mehr, weil er schon benutzt oder durch eine neuere E-Mail ersetzt wurde. Nutzen Sie den Link aus der neuesten E-Mail oder fordern Sie einen neuen an.", linkUngueltig: true };
   }
   if (record.expiresAt.getTime() < Date.now()) {
-    return { ok: false, error: "Reset-Link ist abgelaufen." };
+    return { ok: false, error: "Dieser Link ist abgelaufen. Bitte fordern Sie einen neuen an.", linkUngueltig: true };
   }
 
   await prisma.$transaction([
