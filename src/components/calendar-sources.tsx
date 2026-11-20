@@ -497,7 +497,7 @@ export function BlockTimes({
 export type SourceStatus = {
   native: { connected: boolean; label: string | null; account?: string | null; app?: boolean };
   hasIcs: boolean;
-  allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null } | null;
+  allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null; abFruehestemTag?: boolean } | null;
 };
 
 export function AllianzForm({ action, readOnly, hidden, onUseIcs }: { action: FormAction; readOnly: boolean; hidden?: Record<string, string>; onUseIcs?: () => void }) {
@@ -717,6 +717,7 @@ export function SourcePicker({
                     Verbunden{status.allianz.orgName ? `: ${status.allianz.orgName}` : ""}. Termin-Art „{status.allianz.templateName}“ ({status.allianz.durationMin} Min.).
                   </span>
                 </p>
+                {status.allianz.abFruehestemTag ? <p className="text-[color:var(--muted)]">Termine bietet die App ab dem frühesten Buchungstag Ihres Allianz-Kalenders an.</p> : null}
                 {status.allianz.lastError ? <p className="text-rose-700">Letzter Abruf fehlgeschlagen: {status.allianz.lastError} Wir kümmern uns darum.</p> : null}
                 <form action={disconnectAllianzAction}>
                   {hiddenInputs}

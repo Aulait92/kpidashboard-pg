@@ -124,6 +124,13 @@ export function scheduleFromTimes(lt: LeadTimes): WeekSchedule {
 export const APPOINTMENT_DURATIONS = [15, 30, 45, 60] as const;
 export const DEFAULT_DURATION_MIN = 30;
 
+/** Nächste wählbare Termindauer (z. B. 90 → 60, 20 → 15; bei Gleichstand die kürzere). */
+export function nearestDuration(raw: unknown): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return DEFAULT_DURATION_MIN;
+  return [...APPOINTMENT_DURATIONS].reduce((best, d) => (Math.abs(d - n) < Math.abs(best - n) ? d : best));
+}
+
 /** Ungültige Dauer → Standard 30 Minuten. */
 export function normalizeDuration(raw: unknown): number {
   const n = Number(raw);

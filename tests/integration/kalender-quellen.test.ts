@@ -36,9 +36,9 @@ vi.mock("@/lib/push", () => ({
 import { prisma } from "@/lib/prisma";
 import { bookAppointment, suggestSlots } from "@/lib/calendar";
 import { __resetAllianzCache, decodeAllianzCalendar } from "@/lib/calendar/allianz-online";
-import { addBlock, connectAllianz, loadSources, updateLeadTimes } from "@/lib/calendar/sources";
+import { addBlock, changeAllianz, connectAllianz, loadSources, updateLeadTimes } from "@/lib/calendar/sources";
 import { addDaysYmd, berlinYmd, weekdayOfYmd } from "@/lib/absence";
-import { berlinAt } from "@/lib/calendar/lead-times";
+import { berlinAt, loadLeadTimes } from "@/lib/calendar/lead-times";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
 const today = berlinYmd(new Date());
@@ -57,6 +57,7 @@ const JS = `a={clientId:"${"c".repeat(64)}",domain:"https://auth.bookingtime.com
 const TEMPLATES = [
   { id: "tpl-agentur", name: "Beratung in Agentur", duration: 60, leadTime: 0, followupTime: 0, bookingDayEarliest: 2, bookingStepList: [{ bookingResourceList: [{ id: "res-1", name: "Test Vertreter" }] }] },
   { id: "tpl-online", name: "Online-Beratung", duration: 60, leadTime: 10, followupTime: 0, bookingDayEarliest: 2, bookingStepList: [{ bookingResourceList: [{ id: "res-1", name: "Test Vertreter" }] }] },
+  { id: "tpl-tel", name: "Telefon-Rückruf", duration: 20, leadTime: 0, followupTime: 0, bookingDayEarliest: 2, bookingStepList: [{ bookingResourceList: [{ id: "res-1", name: "Test Vertreter" }] }] },
 ];
 async function fakeFetch(input: string | URL | Request): Promise<Response> {
   const url = String(input instanceof Request ? input.url : input);
@@ -71,7 +72,7 @@ async function fakeFetch(input: string | URL | Request): Promise<Response> {
   if (url.startsWith("https://auth.bookingtime.com/oauth/token")) return Response.json({ refresh_token: "rt", access_token: "at", expires_in: 300 });
   if (url.endsWith(`/organization/${ROOT}/organization/101511203/identify`)) return Response.json({ content: { id: ORG, customId: "101511203", name: "Agentur Test" } });
   if (url.endsWith(`/organization/${ORG}/bookingTemplate/list`)) return Response.json({ content: { recordList: TEMPLATES } });
-  if (url.includes(`/organization/${ORG}/bookingTemplate/tpl-online/bookingSlot/`) && url.endsWith("/listMonth")) {
+  if (url.includes(`/organization/${ORG}/bookingTemplate/tpl-`) && url.includes("/bookingSlot/") && url.endsWith("/listMonth")) {
     bt.monthCalls++;
     if (bt.fail) return new Response("Fehler", { status: 503 });
     return Response.json({ content: { timeZone: "Europe/Berlin", list: bt.slots.map((timestamp) => ({ timestamp, bookingResourceIdList: ["res-1"] })) } });
@@ -139,6 +140,72 @@ describe("Allianz-Online-Kalender verbinden", () => {
     expect(cal).toMatchObject({ vtnr: "101511203", orgId: ORG, templateId: "tpl-online", durationMin: 60, leadTimeMin: 10, bookingDayEarliest: 2, resourceId: "res-1" });
     const view = await loadSources(id);
     expect(view.allianz?.templateName).toBe("Online-Beratung");
+    // Termindauer der Termin-Art übernommen (Ole, 20.11.2026), Standard-Zeiten bleiben
+    expect(res.info).toContain("Termindauer auf 60 Min. gesetzt, wie im Allianz-Kalender.");
+    const lt = await loadLeadTimes(id);
+    expect(lt.durationMin).toBe(60);
+    expect(lt.weekdays).toEqual([1, 2, 3, 4, 5]);
+    expect(lt.schedule?.days[1]).toEqual([["10:00", "17:00"]]);
+  });
+
+  it("Termindauer übernehmen: eigene Tage und Uhrzeiten bleiben, Wechsel der Termin-Art nimmt die nächste Dauer", async () => {
+    const id = await setup();
+    const fd = new FormData();
+    fd.set("day_2", "on");
+    fd.set("time_09:00", "on");
+    fd.set("extraTime", "11:30");
+    expect((await updateLeadTimes(id, id, fd)).ok).toBe(true);
+    bt.slots = [slotTs(workday(3), "09:10")];
+    expect((await connectAllianz(id, "101511203", true)).ok).toBe(true);
+    const lt = await loadLeadTimes(id);
+    expect(lt).toMatchObject({ weekdays: [2], times: ["09:00", "11:30"], durationMin: 60 });
+
+    const res = await changeAllianz(id, "tpl-tel", null);
+    expect(res.ok).toBe(true);
+    expect(res.info).toContain("Termindauer auf 15 Min. gesetzt (Allianz-Kalender: 20 Min.).");
+    expect(await loadLeadTimes(id)).toMatchObject({ weekdays: [2], times: ["09:00", "11:30"], durationMin: 15 });
+  });
+});
+
+describe("Vor dem frühesten Allianz-Buchungstag (Ole, 20.11.2026)", () => {
+  /** Lead-Zeiten an allen sieben Tagen 10 bis 17 Uhr, damit morgen sicher Zeiten hat. */
+  async function jedenTag(id: string) {
+    const fd = new FormData();
+    const range = [["10:00", "17:00"]];
+    fd.set("schedule", JSON.stringify({ step: 60, days: { 0: range, 1: range, 2: range, 3: range, 4: range, 5: range, 6: range } }));
+    fd.set("duration", "60");
+    expect((await updateLeadTimes(id, id, fd)).ok).toBe(true);
+  }
+  const fruehester = () => berlinAt(addDaysYmd(today, 2), "00:00").getTime();
+
+  it("mit Google-Kalender: Lead-Zeiten davor gelten als frei", async () => {
+    const id = await setup();
+    expect((await connectAllianz(id, "101511203", true)).ok).toBe(true);
+    await jedenTag(id);
+    const slots = await suggestSlots(id, 30, 20, "lead", 2);
+    const morgen = berlinAt(addDaysYmd(today, 1), "10:00").toISOString();
+    expect(slots.map((s) => s.start)).toContain(morgen);
+  });
+
+  it("nur App-Kalender: keine Termine vor dem frühesten Buchungstag, Hinweis für den Kunden", async () => {
+    const c = await makeCustomer();
+    customers.push(c.id);
+    await prisma.agentConfig.create({ data: { customerId: c.id, advisorEmail: "test.vertreter@allianz.de" } });
+    const d1 = workday(4);
+    bt.slots = [slotTs(d1, "10:10")];
+    expect((await connectAllianz(c.id, "101511203", true)).ok).toBe(true);
+    expect((await prisma.calendarConnection.findUnique({ where: { customerId: c.id } }))?.provider).toBe("app");
+    await jedenTag(c.id);
+    const slots = await suggestSlots(c.id, 30, 20, "lead", 2);
+    expect(slots.filter((s) => Date.parse(s.start) < fruehester())).toEqual([]);
+    // Ab dem frühesten Buchungstag zählen die Allianz-Slots
+    const spaeter = (await suggestSlots(c.id, 30, 20, "lead", 8)).map((s) => s.start);
+    expect(spaeter).toContain(berlinAt(d1, "10:00").toISOString());
+    const { loadCalendarSetup } = await import("@/lib/calendar/setup-view");
+    expect((await loadCalendarSetup(c.id, c.id)).status.allianz?.abFruehestemTag).toBe(true);
+    const mitGoogle = await setup();
+    expect((await connectAllianz(mitGoogle, "101511203", true)).ok).toBe(true);
+    expect((await loadCalendarSetup(mitGoogle, mitGoogle)).status.allianz?.abFruehestemTag).toBe(false);
   });
 });
 
