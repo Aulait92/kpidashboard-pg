@@ -128,8 +128,8 @@ export async function bookHelpCallAction(_prev: SetupState, fd: FormData): Promi
  * „oder unsere Anfrage bestätigen“ lief bisher ins Leere). Der Kunde bestätigt nur noch im Business Manager.
  */
 async function metaAnfrageSchicken(customerId: string, check: MetaCheck): Promise<string | undefined> {
-  const adFehlt = !!check.adAccount.id && !check.adAccount.ok;
-  const seiteFehlt = !!check.page.id && !check.page.ok;
+  const adFehlt = !!check.adAccount.id && !check.adAccount.ok && !check.adAccount.geteilt;
+  const seiteFehlt = !!check.page.id && !check.page.ok && !check.page.geteilt;
   if (!adFehlt && !seiteFehlt) return undefined;
   const ob = await prisma.onboarding.findUnique({ where: { customerId }, select: { metaRequestedAt: true } });
   const kuerzlich = ob?.metaRequestedAt && Date.now() - ob.metaRequestedAt.getTime() < META_ANFRAGE_PAUSE_MS;
@@ -305,6 +305,38 @@ export async function resetWhatsAppAction(): Promise<WaCheckState> {
   revalidatePath("/buyer/einrichtung");
   revalidatePath("/buyer", "layout");
   return { ok: true, message: "Zurückgesetzt. Sie können jetzt neu beginnen." };
+}
+
+export type WaInviteState = { ok?: boolean; error?: string; email?: string; vorhanden?: boolean };
+
+/**
+ * „An andere E-Mail schicken“ (Ole, 20.11.2026): Die Einladung von 360dialog kommt im Firmen-Postfach nicht an. Wir legen
+ * das 360dialog-Konto mit einer anderen Adresse neu an (360dialog schickt die Einladung dorthin) und merken uns die
+ * Adresse für die Anmeldung. Das alte, nie benutzte Konto bleibt bei 360dialog ungenutzt liegen.
+ */
+export async function inviteOtherEmailAction(_prev: WaInviteState, fd: FormData): Promise<WaInviteState> {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview) return { error: "In der Vorschau nicht möglich." };
+  if (ctx.teamRole !== "owner") return { error: "Nur der Inhaber kann das ändern." };
+  const email = str(fd, "email", 200).toLowerCase();
+  if (!isEmail(email)) return { error: "Bitte eine gültige E-Mail-Adresse eintragen." };
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true } });
+  if (acc?.status === "connected") return { error: "WhatsApp ist schon verbunden." };
+  const { createPartnerClient, partnerConfig } = await import("@/lib/whatsapp/dialog360-partner");
+  const cfg = partnerConfig();
+  if (!cfg) return { error: "Das Verbinden ist gerade nicht möglich. Bitte schreiben Sie uns." };
+  const customer = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } });
+  const created = await createPartnerClient(cfg, { email, name: customer?.name ?? email, customerId: ctx.customerId });
+  const { audit } = await import("@/lib/audit");
+  await audit("whatsapp.d360_invite", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { result: created.kind, andereEmail: true, ...(created.kind === "error" ? { status: created.status, message: created.message } : {}) }, actor: { id: ctx.userId ?? undefined, email: ctx.email, role: "kunde" } });
+  if (created.kind === "error") return { error: "360dialog hat die Adresse nicht angenommen. Bitte eine andere versuchen oder uns schreiben." };
+  await prisma.whatsAppAccount.upsert({
+    where: { customerId: ctx.customerId },
+    create: { customerId: ctx.customerId, provider: "360dialog", status: "invited", dialog360InviteEmail: email, ...(created.kind === "ok" ? { dialog360ClientId: created.clientId } : {}) },
+    update: { status: "invited", dialog360InviteEmail: email, ...(created.kind === "ok" ? { dialog360ClientId: created.clientId } : {}) },
+  });
+  revalidatePath("/buyer/einrichtung");
+  return { ok: true, email, vorhanden: created.kind === "exists" };
 }
 
 // ─── Einrichtung ohne Ole (Ole, 18.11.2026) ─────────────────────────────────

@@ -29,14 +29,15 @@ export async function GET(req: Request): Promise<Response> {
   } catch {
     return back("error");
   }
-  const customer = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, whatsAppAccount: { select: { status: true, dialog360ClientId: true } } } });
+  const customer = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, whatsAppAccount: { select: { status: true, dialog360ClientId: true, dialog360InviteEmail: true } } } });
   const acc = customer?.whatsAppAccount;
   const go = (next: "signup" | "login") =>
     NextResponse.redirect(
       onboardingLink(cfg, {
         redirectUrl: `${base}/api/whatsapp/360dialog/callback`,
         state: signState(ctx.customerId, ctx.userId),
-        email: ctx.email,
+        // Andere Einladungs-Adresse (Firmen-Postfach filtert): Anmeldung mit dieser Adresse
+        email: acc?.dialog360InviteEmail ?? ctx.email,
         name: customer?.name ?? null,
         customerId: ctx.customerId,
         next,

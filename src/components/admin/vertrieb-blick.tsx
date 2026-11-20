@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { Suspense } from "react";
+import { ChevronDown, Mail, MessageCircle } from "lucide-react";
+import { GEPLANTE_NACHRICHTEN_PFAD } from "@/components/admin-neu/vertrieb/geplante-nachrichten";
+import { kanaeleText, zeitLabel } from "@/lib/vertrieb/geplante-nachrichten";
+import { ladeGeplanteNachrichten } from "@/lib/vertrieb/geplante-nachrichten-server";
 import { prisma } from "@/lib/prisma";
 import { SOURCE_LABEL, STAGES, shortName } from "@/lib/vertrieb/crm";
 import { addDays, fmtDateTime } from "@/lib/vertrieb/dates";
@@ -10,6 +14,7 @@ import { cn } from "@/lib/utils";
  * Vertrieb auf einen Blick (früher Vertrieb → Übersicht, seit 16.11.2026 auf Heute):
  * Kennzahlen, nächste Termine, neue Anfragen und Pipeline. Die fälligen Aufgaben stehen in „Braucht Sie“
  * bzw. im Reiter „Aufgaben“. Pipeline und Anfragen zugeklappt (seltener gebraucht).
+ * Geplante Nachrichten (Ole, 20.11.2026): die nächsten drei automatischen Nachrichten, alle unter Verkaufen → Geplante Nachrichten.
  */
 export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
   const { start, tomorrow } = dayBounds();
@@ -88,6 +93,9 @@ export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
             </p>
           )}
         </div>
+        <Suspense fallback={null}>
+          <GeplanteNachrichtenKurz />
+        </Suspense>
         {leads.length ? (
           <details className="group border-t border-[color:var(--border)]">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
@@ -128,5 +136,43 @@ export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
         </details>
       </div>
     </section>
+  );
+}
+
+/** Die nächsten automatischen Nachrichten (7 Tage), gleiche Zeilen wie „Nächste Termine“, Rest auf der eigenen Seite. */
+async function GeplanteNachrichtenKurz() {
+  const now = new Date();
+  const items = await ladeGeplanteNachrichten({ now, tage: 7 }).catch(() => null);
+  if (!items) return null;
+  return (
+    <div className="border-t border-[color:var(--border)] px-4 py-3" data-geplante-nachrichten-kurz>
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-medium">Geplante Nachrichten</h3>
+        <Link href={GEPLANTE_NACHRICHTEN_PFAD} className="-my-2 inline-flex min-h-10 items-center text-sm text-[color:var(--brand)] hover:underline">
+          {items.length > 3 ? `Alle ${items.length} →` : "Ansehen →"}
+        </Link>
+      </div>
+      {items.length ? (
+        <ul className="-mx-2 text-sm">
+          {items.slice(0, 3).map((n) => (
+            <li key={n.key}>
+              <Link href={n.href} className="block rounded-lg px-2 py-2 hover:bg-[color:var(--surface-sunken)]">
+                <span className="font-medium">{zeitLabel(n, now)}</span> · {n.empfaenger}
+                <span className="flex items-center gap-1.5 text-xs text-[color:var(--muted)]">
+                  <span className="min-w-0 truncate">
+                    {n.art}
+                    <span className="sr-only"> · {kanaeleText(n.kanaele)}</span>
+                  </span>
+                  {n.kanaele.includes("email") ? <Mail className="h-3 w-3 shrink-0" aria-hidden /> : null}
+                  {n.kanaele.includes("whatsapp") ? <MessageCircle className="h-3 w-3 shrink-0" aria-hidden /> : null}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-[color:var(--muted)]">In den nächsten 7 Tagen geht keine automatische Nachricht raus.</p>
+      )}
+    </div>
   );
 }

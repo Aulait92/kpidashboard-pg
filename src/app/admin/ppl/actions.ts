@@ -138,8 +138,8 @@ export async function saveRegisterpruefungAction(_prev: RegisterState, fd: FormD
   if (!isRegisterStatus(status)) return { error: "Status wählen." };
   const rawNr = String(fd.get("registerNr") ?? "").trim();
   const nr = normalizeRegisterNummer(rawNr);
-  if (status !== "keiner" && !nr) return { error: "Registernummer im Format D-XXXX-XXXXX-XX angeben." };
-  if (rawNr && !nr) return { error: "Registernummer im Format D-XXXX-XXXXX-XX angeben." };
+  if (status !== "keiner" && !nr) return { error: "Registernummer wie im Vermittlerregister angeben (D-XXXX-XXXXX-XX oder D-X-XXX-XXXX-XX)." };
+  if (rawNr && !nr) return { error: "Registernummer wie im Vermittlerregister angeben (D-XXXX-XXXXX-XX oder D-X-XXX-XXXX-XX)." };
   const datum = String(fd.get("geprueftAm") ?? "");
   const geprueftAt = /^\d{4}-\d{2}-\d{2}$/.test(datum) ? new Date(`${datum}T12:00:00`) : new Date();
   if (geprueftAt.getTime() > Date.now() + 86_400_000) return { error: "Prüfdatum liegt in der Zukunft." };
@@ -165,7 +165,7 @@ export async function savePartnerAngabenAction(_prev: PartnerAngabenState, fd: F
   const t = (k: string) => String(fd.get(k) ?? "").replace(/\s+/g, " ").trim().slice(0, 200) || null;
   const rawNr = t("partnerRegisterNr");
   const nr = rawNr ? normalizeRegisterNummer(rawNr) : null;
-  if (rawNr && !nr) return { error: "Registernummer im Format D-XXXX-XXXXX-XX angeben." };
+  if (rawNr && !nr) return { error: "Registernummer wie im Vermittlerregister angeben (D-XXXX-XXXXX-XX oder D-X-XXX-XXXX-XX)." };
   const anschrift = t("partnerAnschrift");
   if (anschrift && !/\b\d{5}\s+\S/.test(anschrift)) return { error: "Anschrift mit Postleitzahl und Ort angeben, z. B. „Straße 1, 12345 Ort“." };
   const data = { partnerFirma: t("partnerFirma"), partnerAnschrift: anschrift, partnerRegisterNr: nr };

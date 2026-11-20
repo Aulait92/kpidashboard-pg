@@ -16,9 +16,10 @@ import { parseDue } from "@/lib/vertrieb/legacy";
 import { inSendWindow, isLaterInterest, laterTiming, monthPhrase, nextWorkdayKey, workdayMorning, workdaysLater } from "@/lib/vertrieb/spaeter";
 import { accountSignature, latestReceivedFrom, replyInThread, stripQuoted, threadEmails } from "@/lib/vertrieb/instantly";
 import { anredeZeile } from "@/lib/ansprache";
+import { STOP_STAGES, followupStoppGrund } from "@/lib/vertrieb/followup-regeln";
 
 export const FOLLOWUP_CAMPAIGN = "Später-Follow-up";
-export const STOP_STAGES: Stage[] = ["TERMIN", "GEWONNEN", "VERLOREN", "UNGUELTIG"];
+export { STOP_STAGES };
 /** Aufgabe nach dem Follow-up (gleicher Titel wie beim Ausgang „Später wieder“) */
 export const AGAIN_TASK = "Wieder melden";
 const MAIL2_WORKDAYS = 5;
@@ -196,19 +197,26 @@ async function anchorOf(f: { replyEmailId: string | null; mail1SentAt: Date | nu
   return e?.sentAt ?? f.createdAt;
 }
 
-/** Grund, das Follow-up jetzt nicht (mehr) zu senden, oder null */
-async function stopReasonFor(f: { id: string; contactId: string; replyEmailId: string | null; mail1SentAt: Date | null; createdAt: Date }): Promise<string | null> {
-  const c = await prisma.salesContact.findUnique({ where: { id: f.contactId }, select: { stage: true } });
-  if (!c) return "Kontakt gelöscht";
-  if (STOP_STAGES.includes(c.stage)) return `Stufe „${STAGE_LABEL[c.stage]}“`;
-  if (await prisma.salesCampaignLead.findFirst({ where: { contactId: f.contactId, unsubscribed: true }, select: { id: true } })) return "Abgemeldet";
-  if (await kontaktGesperrt(f.contactId)) return "Sperrliste";
+/** Antwort des Kontakts seit dem Anker (Mail 1 bzw. seine Später-Antwort), die das Follow-up stoppt. */
+async function hatSeitAnkerGeantwortet(f: { contactId: string; replyEmailId: string | null; mail1SentAt: Date | null; createdAt: Date }): Promise<boolean> {
   const anchor = await anchorOf(f);
   const answered = await prisma.salesEmail.findFirst({
     where: { contactId: f.contactId, direction: "IN", isAutoReply: false, sentAt: { gt: anchor }, ...(f.replyEmailId ? { id: { not: f.replyEmailId } } : {}) },
     select: { id: true },
   });
-  return answered ? "Antwort erhalten" : null;
+  return !!answered;
+}
+
+/** Grund, das Follow-up jetzt nicht (mehr) zu senden, oder null (Regeln: lib/vertrieb/followup-regeln.ts) */
+async function stopReasonFor(f: { id: string; contactId: string; replyEmailId: string | null; mail1SentAt: Date | null; createdAt: Date }): Promise<string | null> {
+  const c = await prisma.salesContact.findUnique({ where: { id: f.contactId }, select: { stage: true } });
+  const stage = c?.stage ?? null;
+  const vorab = followupStoppGrund({ stage, abgemeldet: false, gesperrt: false, beantwortet: false });
+  if (vorab) return vorab;
+  const abgemeldet = !!(await prisma.salesCampaignLead.findFirst({ where: { contactId: f.contactId, unsubscribed: true }, select: { id: true } }));
+  const gesperrt = !abgemeldet && (await kontaktGesperrt(f.contactId));
+  const beantwortet = !abgemeldet && !gesperrt && (await hatSeitAnkerGeantwortet(f));
+  return followupStoppGrund({ stage, abgemeldet, gesperrt, beantwortet });
 }
 
 // ─── Texte ──────────────────────────────────────────────────────────────

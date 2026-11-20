@@ -506,9 +506,9 @@ export function AllianzForm({ action, readOnly, hidden, onUseIcs }: { action: Fo
     <form action={formAction} className="space-y-3">
       {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
       <label className="block text-sm font-medium" htmlFor="vertretung">
-        Link Ihrer Vertreter-Seite oder Ihre Vertreternummer
+        Ihre Allianz-Vertreternummer
       </label>
-      <input id="vertretung" name="vertretung" className={input} placeholder="vertretung.allianz.de/vorname.nachname" autoComplete="off" />
+      <input id="vertretung" name="vertretung" className={input} placeholder="z. B. 30/410/2222" autoComplete="off" />
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="consent" className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--brand)]" />
         <span>Ich stimme zu, dass performancegrowth meine freien Termine aus meinem Allianz-Online-Kalender abruft.</span>
@@ -545,6 +545,10 @@ export function IcsForm({ action, readOnly, hidden }: { action: FormAction; read
           Den <b>ICS-Link</b> kopieren und hier einfügen.
         </li>
       </ol>
+      {/* Ole, 20.11.2026: bei Allianz fehlt „Freigegebene Kalender“ (Veröffentlichen von der IT gesperrt) */}
+      <p className="text-sm text-[color:var(--muted)]">
+        Fehlt „Freigegebene Kalender“ (bei Allianz oft gesperrt)? Dann den <b>Allianz-Online-Kalender</b> verbinden oder feste Beratungszeiten eintragen.
+      </p>
       <input name="icsUrl" className={input} placeholder="https://outlook.office365.com/owa/calendar/…/calendar.ics" autoComplete="off" />
       <p className="text-sm text-[color:var(--muted)]">Wir sehen damit nur, wann Sie belegt sind, keine Inhalte.</p>
       <div className="flex flex-wrap items-center gap-3">

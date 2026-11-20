@@ -148,10 +148,16 @@ export function ImpressumUrlForm({ readOnly }: { readOnly: boolean }) {
 }
 
 /** Ampel-Zeile der Meta-Prüfung. */
-function CheckRow({ label, ok, detail }: { label: string; ok: boolean; detail?: string }) {
+function CheckRow({ label, ok, detail, wartet }: { label: string; ok: boolean; detail?: string; wartet?: boolean }) {
   return (
     <li className="flex items-start gap-2 text-[15px]">
-      {ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />}
+      {ok ? (
+        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+      ) : wartet ? (
+        <Loader2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+      ) : (
+        <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+      )}
       <span>
         <b>{label}</b>
         {detail ? <span className="block text-sm text-[color:var(--muted)]">{detail}</span> : null}
@@ -163,8 +169,8 @@ function CheckRow({ label, ok, detail }: { label: string; ok: boolean; detail?: 
 export function MetaCheckResult({ check }: { check: MetaCheck }) {
   return (
     <ul className="space-y-2 rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-meta-check>
-      <CheckRow label="Werbekonto" ok={check.adAccount.ok} detail={check.adAccount.ok ? check.adAccount.name : check.adAccount.error} />
-      <CheckRow label="Facebook-Seite" ok={check.page.ok} detail={check.page.ok ? check.page.name : check.page.error} />
+      <CheckRow label="Werbekonto" ok={check.adAccount.ok} wartet={check.adAccount.geteilt} detail={check.adAccount.ok ? check.adAccount.name : check.adAccount.error} />
+      <CheckRow label="Facebook-Seite" ok={check.page.ok} wartet={check.page.geteilt} detail={check.page.ok ? check.page.name : check.page.error} />
       <CheckRow label="Zugriff auf Leads" ok={check.leads.ok} detail={check.leads.ok ? "Leads kommen direkt bei Ihnen an." : check.leads.error} />
       {/* Datensatz: nicht nötig für den Schritt, daher Hinweis statt Fehler. Ältere Prüfungen haben das Feld nicht. */}
       {check.dataset ? <DatasetRow ds={check.dataset} /> : null}

@@ -7,7 +7,7 @@ import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
+import { customerSetupProgress, loadOnboarding, onboardingChecklist, vonUnsAbgehakt } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
 import { HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits, WeiterButton } from "./forms";
 import { SoArbeitet } from "@/components/so-arbeitet";
@@ -83,7 +83,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const video = (k: SetupStepKey) => settings.videos[k] ?? null;
   const readOnly = ctx.preview;
   const newUi = await isNewUi(ctx.customerId);
-  const provision = await loadCustomerProvision(ctx.customerId);
+  const provisionGeladen = await loadCustomerProvision(ctx.customerId);
+  // Von uns abgehakt (Kundenakte) zählt wie hinterlegt
+  const provision = { ...provisionGeladen, confirmed: provisionGeladen.confirmed || vonUnsAbgehakt(ob.stepSkips, "provision") };
   const appDone = await appInstalled(ctx.customerId);
   // Eine Zählung wie auf der Startseite und im Menü: nur Schritte, die der Kunde selbst erledigt
   const progress = customerSetupProgress(items, { appDone, provisionDone: provision.confirmed });
@@ -93,7 +95,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   // WhatsApp selbst verbinden (360dialog), nur mit Software und wenn der Partner-Zugang eingerichtet ist.
   const waEnabled = software && selfConnectEnabled();
   const waAccount = waEnabled
-    ? await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true, phoneNumber: true, dialog360ChannelId: true } })
+    ? await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true, phoneNumber: true, dialog360ChannelId: true, dialog360InviteEmail: true } })
     : null;
   const has = (k: string) => items.some((i) => i.key === k);
   // Gleiche Reihenfolge wie die Liste oben, die Startseite und die Erinnerungen (SETUP_STEPS)
@@ -587,7 +589,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         {waEnabled ? (
           <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp" current={current === "whatsapp"}>
             <VideoHint url={video("whatsapp")} />
-            <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} email={ctx.email} hilfeSchritt={kampagnen ? "metaAccess" : "whatsapp"} />
+            <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} email={waAccount?.dialog360InviteEmail ?? ctx.email} hilfeSchritt={kampagnen ? "metaAccess" : "whatsapp"} />
             {kampagnen ? null : hilfeBox}
             {!done("whatsapp") ? (
               <StepExits

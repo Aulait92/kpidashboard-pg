@@ -35,9 +35,9 @@ Der Kunde trägt **Werbekonto-ID** (act_…) und **Facebook-Seite** ein und hat 
 
 **„Zugriff prüfen“** liest mit unserem Systemnutzer-Token (`META_ACCESS_TOKEN`) das Werbekonto, holt das Seiten-Token der Seite und
 liest ihre Leadformulare. **Zuweisung an den Systemnutzer (Ole, 20.11.2026):** Eine Freigabe an unser Business sieht der Token erst,
-wenn Werbekonto bzw. Seite dem Systemnutzer zugewiesen sind (bisher von Hand). Schlägt das Lesen fehl, weist die Prüfung selbst zu
-(`POST /{objekt}/assigned_users` mit `user` aus `/me`, `tasks`, `business`) und liest danach erneut; unerwartete Fehler in Sentry
-unter `setup-meta-assign`. Das gilt auch für die tägliche Nachprüfung. Jedes der drei Ergebnisse steht einzeln mit verständlicher Erklärung da. Ist alles grün:
+wenn Werbekonto bzw. Seite dem Systemnutzer zugewiesen sind (bisher von Hand). Ist die Freigabe angekommen, weist die Prüfung selbst
+zu und liest erneut (`freigabeNachziehen` in lib/selbst-einrichtung.ts, Fehler in Sentry unter `setup-meta-zuweisung`); klappt das
+nicht, sieht der Kunde „Freigabe angekommen“ und die Admins bekommen einen Hinweis. Das gilt auch für die tägliche Nachprüfung. Jedes der drei Ergebnisse steht einzeln mit verständlicher Erklärung da. Ist alles grün:
 
 - Schritt erledigt, Werbekonto-ID und Seiten-ID stehen in der Kundenakte (`Customer.metaAdAccountId`, `metaPageId`, für die
   Kampagnen-Agenten und Leads),

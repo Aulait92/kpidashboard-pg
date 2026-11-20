@@ -40,3 +40,12 @@ describe("Bot-Prompt", () => {
     expect(p).toContain("„Susanne Meier“");
   });
 });
+
+describe("Firmenname mit Person in der Mitte (Ole, 20.11.2026)", () => {
+  it("Allianz Versicherung Henrik Lohmann Generalvertretung → Henrik Lohmann", async () => {
+    const { advisorDisplayName, personFromCustomerName } = await import("@/lib/advisor-name");
+    expect(advisorDisplayName("Allianz Versicherung Henrik Lohmann Generalvertretung")).toBe("Henrik Lohmann");
+    expect(personFromCustomerName("Allianz Versicherung Henrik Lohmann Generalvertretung")).toBe("Henrik Lohmann");
+    expect(advisorDisplayName("Meier Versicherungen")).toBe("Meier Versicherungen");
+  });
+});

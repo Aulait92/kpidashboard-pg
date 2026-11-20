@@ -42,6 +42,7 @@ import { contractSummaryLines, hasPriceStep, NACHTRAEGLICH_MAX_STARTTAG, nachtra
 import { parseAbrechnungstag } from "@/lib/abrechnungstag";
 import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_STANDARD, ersteWocheAus, ersteWocheMenge, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
 import { normalizeRegisterNummer } from "@/lib/erstinformation-shared";
+import { TEST_SONDERVEREINBARUNG } from "@/lib/offer-form-werte";
 
 
 export type OfferFormInput = {
@@ -162,8 +163,18 @@ async function nextOfferNumber(): Promise<string> {
   return nextNumberAfter(last?.number ?? null, prefix, offerNumberStart());
 }
 
-export async function createOffer(target: OfferTarget, input: OfferFormInput, createdById: string | null) {
-  const owner = "dealId" in target ? { dealId: target.dealId } : { salesContactId: target.salesContactId };
+type OfferOwner = { dealId: string } | { salesContactId: string };
+
+/** Fehlermeldung, wenn ein Angebot nicht (mehr) im Entwurf ist und deshalb nicht bearbeitet werden kann. */
+export const NUR_ENTWURF_BEARBEITEN =
+  "Nur Entwürfe lassen sich bearbeiten. Das Angebot ist schon verschickt oder abgeschlossen, bitte eine neue Version erstellen.";
+
+/**
+ * Prüfung und Preisberechnung eines Angebots aus der Formulareingabe, gemeinsam für Anlegen ({@link createOffer}) und
+ * Bearbeiten eines Entwurfs ({@link updateDraftOffer}). Liefert die eingefrorenen Konditionen (ohne Nummer, Version,
+ * Token, Besitzer) und die Adresse für die Stammdaten des Vertriebskontakts.
+ */
+async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
   const products = input.products
     .map((p) => ({ name: p.name.trim(), dailyBudget: Math.max(0, Number(p.dailyBudget) || 0) }))
     .filter((p) => p.name);
@@ -262,6 +273,91 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   const { termsUrl, dpaUrl } = legalUrls();
   const validUntil = new Date(Date.now() + (input.validDays ?? 14) * 24 * 60 * 60 * 1000);
 
+  const data = {
+    contactName: input.contactName.trim(),
+    company: input.company?.trim() || null,
+    email,
+    street: input.street?.trim() || null,
+    zip: input.zip?.trim() || null,
+    city: input.city?.trim() || null,
+    package: pkg,
+    vermittlerTyp,
+    term,
+    products,
+    setupFee: price.setupFee,
+    setupListFee: discountApplied ? price.listSetup : null,
+    setupDiscount: discountApplied ? discount!.amount : null,
+    setupDiscountLabel: discountApplied ? discount!.label : null,
+    referralId: discountApplied ? discount!.referralId : null,
+    monthlyFee: price.monthlyFee!,
+    softwareFee: price.softwareFee,
+    // Zusätze (nur Paket mit Software): Logins, Modul, Zahlweise
+    seats: mitSoftware(pkg) ? price.seats : null,
+    seatsIncluded: mitSoftware(pkg) ? price.seatsIncluded : null,
+    // Ab seatIndividualFrom sind alle Logins im individuellen Preis enthalten (0 €)
+    seatMonthly: mitSoftware(pkg) ? (price.seatsIndividual || test ? 0 : PRICE_LIST.seatMonthly) : null,
+    // Modul gebucht: Monatspreis; null = nicht gebucht
+    bestandMonthly: price.bestandActive ? price.bestandFee : null,
+    empfehlungMonthly: price.empfehlungActive ? price.empfehlungFee : null,
+    // Vorauszahlung angeboten (6 oder 12 Monate): Kunde wählt bei der Annahme, monatlich vorausgewählt
+    annualPrepay: false,
+    annualChoice: price.annual,
+    annualFreeMonths: price.annual ? prepayFreeMonthsFor(term) : null,
+    introMonthlyFee: input.introMonthlyFee ?? null,
+    introMonths: input.introMonthlyFee != null ? (input.introMonths ?? null) : null,
+    specialTerms: test ? TEST_SONDERVEREINBARUNG : input.specialTerms?.trim() || null,
+    isTest: test,
+    startDate: input.startDate ? new Date(`${input.startDate}T12:00:00Z`) : null,
+    billingDay: abrechnungstag.day,
+    // „Gratis“ nur mit eigenem Abrechnungstag (sonst gibt es keine Zeit davor)
+    billingFreeStart: abrechnungstag.day != null && input.billingFreeStart === true,
+    paymentInArrears: nachtraeglich,
+    customerChoosesTerm: choosesTerm && !ppl,
+    customerChoosesStart: choosesStart,
+    customerChoosesProducts: choosesProducts,
+    // „Später zahlen“ betrifft die Einrichtung: ohne Einrichtung (Pay-per-Lead + Software) nicht nötig
+    allowPayLater: input.allowPayLater === true && !test && !ppl,
+    allowBankTransfer: input.allowBankTransfer === true && !test,
+    bankTransferDays: parseZahlungsziel(input.bankTransferDays),
+    abschlussBonus:
+      test || !(price.setupFee > 0)
+        ? null
+        : (() => {
+            const b = Number(input.abschlussBonus ?? 0);
+            return Number.isFinite(b) && b > 0 ? Math.min(b, price.setupFee) : null;
+          })(),
+    abschlussBonusBis:
+      !test && price.setupFee > 0 && input.abschlussBonus !== 0 && isIsoDate(input.abschlussBonusBis) && input.abschlussBonusBis >= berlinTodayIso()
+        ? berlinTagesendeIso(input.abschlussBonusBis)
+        : null,
+    // Immer gesetzt (auch leer), damit Bearbeiten die erste Woche auch entfernen kann
+    pplProductKey: ersteWoche?.productKey ?? null,
+    pplLabel: ersteWoche?.label ?? null,
+    pplPrice: ersteWoche?.price ?? null,
+    pplQuantity: ersteWoche?.quantity ?? null,
+    pplAutoRenew: true,
+    validUntil,
+    termsUrl,
+    dpaUrl,
+  };
+  // Adresse aus dem Angebot in die Stammdaten des Vertriebskontakts übernehmen
+  const addr = {
+    ...(input.street?.trim() ? { street: input.street.trim() } : {}),
+    ...(input.zip?.trim() ? { zip: input.zip.trim() } : {}),
+    ...(input.city?.trim() ? { city: input.city.trim() } : {}),
+  };
+  return { data, addr };
+}
+
+async function adresseUebernehmen(tx: Prisma.TransactionClient, owner: OfferOwner, addr: { street?: string; zip?: string; city?: string }) {
+  if ("salesContactId" in owner && owner.salesContactId && Object.keys(addr).length) {
+    await tx.salesContact.update({ where: { id: owner.salesContactId }, data: addr });
+  }
+}
+
+export async function createOffer(target: OfferTarget, input: OfferFormInput, createdById: string | null) {
+  const owner: OfferOwner = "dealId" in target ? { dealId: target.dealId } : { salesContactId: target.salesContactId };
+  const { data, addr } = await angebotsDaten(owner, input);
   // Nummer kann bei gleichzeitigem Anlegen kollidieren → wenige Versuche.
   for (let attempt = 0; attempt < 3; attempt++) {
     const number = await nextOfferNumber();
@@ -284,80 +380,11 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             number,
             version: (maxVersion._max.version ?? 0) + 1,
             token: crypto.randomBytes(24).toString("base64url"),
-            contactName: input.contactName.trim(),
-            company: input.company?.trim() || null,
-            email,
-            street: input.street?.trim() || null,
-            zip: input.zip?.trim() || null,
-            city: input.city?.trim() || null,
-            package: pkg,
-            vermittlerTyp,
-            term,
-            products,
-            setupFee: price.setupFee,
-            setupListFee: discountApplied ? price.listSetup : null,
-            setupDiscount: discountApplied ? discount!.amount : null,
-            setupDiscountLabel: discountApplied ? discount!.label : null,
-            referralId: discountApplied ? discount!.referralId : null,
-            monthlyFee: price.monthlyFee!,
-            softwareFee: price.softwareFee,
-            // Zusätze (nur Paket mit Software): Logins, Modul, Zahlweise
-            seats: mitSoftware(pkg) ? price.seats : null,
-            seatsIncluded: mitSoftware(pkg) ? price.seatsIncluded : null,
-            // Ab seatIndividualFrom sind alle Logins im individuellen Preis enthalten (0 €)
-            seatMonthly: mitSoftware(pkg) ? (price.seatsIndividual || test ? 0 : PRICE_LIST.seatMonthly) : null,
-            // Modul gebucht: Monatspreis; null = nicht gebucht
-            bestandMonthly: price.bestandActive ? price.bestandFee : null,
-            empfehlungMonthly: price.empfehlungActive ? price.empfehlungFee : null,
-            // Vorauszahlung angeboten (6 oder 12 Monate): Kunde wählt bei der Annahme, monatlich vorausgewählt
-            annualPrepay: false,
-            annualChoice: price.annual,
-            annualFreeMonths: price.annual ? prepayFreeMonthsFor(term) : null,
-            introMonthlyFee: input.introMonthlyFee ?? null,
-            introMonths: input.introMonthlyFee != null ? (input.introMonths ?? null) : null,
-            specialTerms: test ? "Testangebot: kostenlos, ohne Zahlung. Dient nur zum Ausprobieren und wird danach gelöscht." : input.specialTerms?.trim() || null,
-            isTest: test,
-            startDate: input.startDate ? new Date(`${input.startDate}T12:00:00Z`) : null,
-            billingDay: abrechnungstag.day,
-            // „Gratis“ nur mit eigenem Abrechnungstag (sonst gibt es keine Zeit davor)
-            billingFreeStart: abrechnungstag.day != null && input.billingFreeStart === true,
-            paymentInArrears: nachtraeglich,
-            customerChoosesTerm: choosesTerm && !ppl,
-            customerChoosesStart: choosesStart,
-            customerChoosesProducts: choosesProducts,
-            // „Später zahlen“ betrifft die Einrichtung: ohne Einrichtung (Pay-per-Lead + Software) nicht nötig
-            allowPayLater: input.allowPayLater === true && !test && !ppl,
-            allowBankTransfer: input.allowBankTransfer === true && !test,
-            bankTransferDays: parseZahlungsziel(input.bankTransferDays),
-            abschlussBonus:
-              test || !(price.setupFee > 0)
-                ? null
-                : (() => {
-                    const b = Number(input.abschlussBonus ?? 0);
-                    return Number.isFinite(b) && b > 0 ? Math.min(b, price.setupFee) : null;
-                  })(),
-            abschlussBonusBis:
-              !test && price.setupFee > 0 && input.abschlussBonus !== 0 && isIsoDate(input.abschlussBonusBis) && input.abschlussBonusBis >= berlinTodayIso()
-                ? berlinTagesendeIso(input.abschlussBonusBis)
-                : null,
-            ...(ersteWoche
-              ? { pplProductKey: ersteWoche.productKey, pplLabel: ersteWoche.label, pplPrice: ersteWoche.price, pplQuantity: ersteWoche.quantity, pplAutoRenew: true }
-              : {}),
-            validUntil,
-            termsUrl,
-            dpaUrl,
+            ...data,
             createdById,
           },
         });
-        // Adresse aus dem Angebot in die Stammdaten des Vertriebskontakts übernehmen
-        const addr = {
-          ...(input.street?.trim() ? { street: input.street.trim() } : {}),
-          ...(input.zip?.trim() ? { zip: input.zip.trim() } : {}),
-          ...(input.city?.trim() ? { city: input.city.trim() } : {}),
-        };
-        if ("salesContactId" in owner && owner.salesContactId && Object.keys(addr).length) {
-          await tx.salesContact.update({ where: { id: owner.salesContactId }, data: addr });
-        }
+        await adresseUebernehmen(tx, owner, addr);
         return created;
       });
     } catch (err) {
@@ -366,6 +393,30 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     }
   }
   throw new Error("Angebotsnummer konnte nicht vergeben werden.");
+}
+
+/**
+ * Entwurf bearbeiten (Ole, 20.11.2026): gleiche Nummer, gleicher Link (Token), gleiche Version; Prüfung und
+ * Preisberechnung wie beim Anlegen. Nur solange das Angebot beim Speichern noch ein Entwurf ist (atomar), verschickte
+ * Angebote bekommen eine neue Version.
+ */
+export async function updateDraftOffer(offerId: string, input: OfferFormInput) {
+  const existing = await prisma.offer.findUnique({ where: { id: offerId }, select: { id: true, status: true, dealId: true, salesContactId: true } });
+  if (!existing) throw new Error("Angebot nicht gefunden.");
+  if (existing.status !== "draft") throw new Error(NUR_ENTWURF_BEARBEITEN);
+  const owner: OfferOwner | null = existing.salesContactId
+    ? { salesContactId: existing.salesContactId }
+    : existing.dealId
+      ? { dealId: existing.dealId }
+      : null;
+  if (!owner) throw new Error("Angebot nicht gefunden.");
+  const { data, addr } = await angebotsDaten(owner, input);
+  return prisma.$transaction(async (tx) => {
+    const res = await tx.offer.updateMany({ where: { id: offerId, status: "draft" }, data });
+    if (res.count === 0) throw new Error(NUR_ENTWURF_BEARBEITEN);
+    await adresseUebernehmen(tx, owner, addr);
+    return tx.offer.findUniqueOrThrow({ where: { id: offerId } });
+  });
 }
 
 /** Produkte aus Offer.products (Json) als Liste; Unbrauchbares fällt weg. */
@@ -425,7 +476,7 @@ export async function acceptOffer(
     const quantity = opts.ersteWoche?.quantity == null ? ersteWoche.quantity : ersteWocheMenge(opts.ersteWoche.quantity);
     if (quantity == null) return { ok: false, error: `Bitte mindestens ${ERSTE_WOCHE_MIN} Leads für die erste Woche wählen.` };
     const registerNr = normalizeRegisterNummer(opts.ersteWoche?.registerNr);
-    if (!registerNr) return { ok: false, error: "Bitte Ihre Registernummer im Format D-XXXX-XXXXX-XX angeben." };
+    if (!registerNr) return { ok: false, error: "Bitte Ihre Registernummer so angeben, wie sie im Vermittlerregister steht, z. B. D-XXXX-XXXXX-XX." };
     ersteWocheWahl = { quantity, autoRenew: opts.ersteWoche?.autoRenew !== false, registerNr };
   }
 
