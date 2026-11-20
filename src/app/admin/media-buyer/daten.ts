@@ -53,6 +53,11 @@ export async function loadMediaBuyer() {
     region: p.region,
     goal: p.goal,
     leadsMtd: p.leadsMtd,
+    incomingMtd: p.incomingMtd,
+    deliveredBased: p.deliveredBased,
+    goalReached: p.goalReached,
+    openDelivery: p.openDelivery,
+    yieldRate: p.yieldRate,
     projected: p.projected,
     daysElapsed: p.daysElapsed,
     daysTotal: p.daysTotal,
@@ -110,8 +115,10 @@ export async function loadMediaBuyer() {
 
   // Aggregate Top-Stats über alle Pools.
   const sumGoal = poolRows.reduce((s, p) => s + p.goal, 0);
-  const sumLeads = poolRows.reduce((s, p) => s + p.leadsMtd, 0);
-  const sumProjected = poolRows.reduce((s, p) => s + p.projected, 0);
+  // Ist und Prognose nur über Pools mit Ziel (sonst mischt sich Eingang ohne Ziel ins Ist/Ziel).
+  const withGoal = poolRows.filter((p) => p.goal > 0);
+  const sumLeads = withGoal.reduce((s, p) => s + p.leadsMtd, 0);
+  const sumProjected = withGoal.reduce((s, p) => s + p.projected, 0);
   const autopilotOn = poolRows.filter((p) => p.autopilot).length;
   const daysElapsed = poolRows[0]?.daysElapsed ?? 1;
   const daysTotal = poolRows[0]?.daysTotal ?? 30;
@@ -119,6 +126,7 @@ export async function loadMediaBuyer() {
   const top: TopStats = {
     goal: sumGoal,
     leadsMtd: sumLeads,
+    deliveredBased: poolRows.some((p) => p.goal > 0) && poolRows.every((p) => p.goal <= 0 || p.deliveredBased),
     projected: sumProjected,
     autopilotOn,
     autopilotTotal: poolRows.length,

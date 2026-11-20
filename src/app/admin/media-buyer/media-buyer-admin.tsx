@@ -21,7 +21,15 @@ export type PoolDetailRow = {
   product: string;
   region: string | null;
   goal: number;
+  // Ist: geliefert (Zielquelle software) bzw. eingegangen (Airtable).
   leadsMtd: number;
+  // Eingegangene Leads im Monat (brutto).
+  incomingMtd: number;
+  deliveredBased: boolean;
+  // Alle Kunden am Ziel (mit Toleranz) bzw. nichts mehr offen.
+  goalReached: boolean;
+  openDelivery: number | null;
+  yieldRate: number | null;
   projected: number;
   daysElapsed: number;
   daysTotal: number;
@@ -86,6 +94,8 @@ export type ActionLogRow = {
 export type TopStats = {
   goal: number;
   leadsMtd: number;
+  // Ist aller Pools ist „geliefert“ (alle mit Zielquelle software).
+  deliveredBased: boolean;
   projected: number;
   autopilotOn: number;
   autopilotTotal: number;
@@ -114,7 +124,7 @@ function statusFor(p: PoolDetailRow): {
       hex: "#d4d4d8",
     };
   const projRatio = p.projected / p.goal;
-  if (p.leadsMtd >= p.goal)
+  if (p.goalReached)
     return {
       label: "Ziel erreicht",
       cls: "text-emerald-600",
@@ -460,7 +470,7 @@ function HeroCard({ top }: { top: TopStats }) {
         <div>
           <div className="grid grid-cols-3 gap-3 sm:gap-6">
             <HeroStat
-              label="Ist (MTD)"
+              label={top.deliveredBased ? "geliefert (MTD)" : "Ist (MTD)"}
               value={String(top.leadsMtd)}
               sub={`/ ${top.goal}`}
             />
@@ -681,7 +691,9 @@ function PoolDetail({
 }) {
   const status = statusFor(pool);
   const pct = pool.goal > 0 ? (pool.leadsMtd / pool.goal) * 100 : 0;
-  const remaining = Math.max(0, pool.goal - pool.leadsMtd);
+  // Offen = Summe der Rückstände je Kunde (Überlieferung eines Kunden gleicht
+  // den Rückstand eines anderen nicht aus).
+  const remaining = pool.openDelivery ?? Math.max(0, pool.goal - pool.leadsMtd);
   const daysLeft = Math.max(0, pool.daysTotal - pool.daysElapsed);
   const needPerDay = daysLeft > 0 ? remaining / Math.max(1, daysLeft) : 0;
   const projectedPctOfGoal =
@@ -772,12 +784,16 @@ function PoolDetail({
               {pool.goalSource === "software" ? "Software" : "Airtable"}
             </span>
 
-            <span className="text-[color:var(--muted)]">Ist (MTD)</span>
+            <span className="text-[color:var(--muted)]">
+              {pool.deliveredBased ? "geliefert (MTD)" : "Ist (MTD)"}
+            </span>
             <span className="text-2xl font-bold tabular-nums text-blue-600">
               {formatNumber(pool.leadsMtd)}
             </span>
             <span className="text-xs text-[color:var(--muted)]">
-              {pool.daysElapsed} {pool.daysElapsed === 1 ? "Tag" : "Tage"}
+              {pool.deliveredBased
+                ? `eingegangen ${formatNumber(pool.incomingMtd)}${pool.yieldRate != null ? ` · ${Math.round(pool.yieldRate * 100)} % verwertet` : ""}`
+                : `${pool.daysElapsed} ${pool.daysElapsed === 1 ? "Tag" : "Tage"}`}
             </span>
 
             <span className="text-[color:var(--muted)]">Prognose</span>
@@ -978,7 +994,7 @@ function CustomerGoals({ pool }: { pool: PoolDetailRow }) {
           return (
             <li key={c.customerId} className="flex items-baseline justify-between gap-3">
               <span className="truncate">{c.name}</span>
-              <span className={cn("shrink-0 tabular-nums", pct < 95 && pool.leadsMtd >= pool.goal ? "text-amber-700" : "text-zinc-700")}>
+              <span className={cn("shrink-0 tabular-nums", pct < 95 && pool.deliveredBased ? "text-amber-700" : "text-zinc-700")}>
                 {formatNumber(c.delivered)} / {formatNumber(c.goal)} · {pct} %
               </span>
             </li>
