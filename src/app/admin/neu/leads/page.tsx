@@ -1,19 +1,22 @@
 import Link from "next/link";
-import { CheckCircle2, Inbox, Plus, Workflow, XCircle } from "lucide-react";
+import { CheckCircle2, Inbox, Plus, Workflow } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { Meldung } from "@/components/admin-neu/leads/ansichten";
 import { ZielWahl } from "@/components/admin-neu/leads/ziel-wahl";
+import { ladeProduktNamen } from "@/components/admin-neu/leads/produkt-namen";
 import { assignFormAction, dismissUnassignedAction, toggleSourceAction, toggleVertriebFormAction } from "@/app/admin/lead-eingang/actions";
 import { VERTRIEB_ZIEL, loadLeadEingang } from "@/app/admin/lead-eingang/daten";
 
-export const metadata = { title: "Lead-Eingang | performancegrowth Admin" };
+export const metadata = { title: "Formulare | performancegrowth Admin" };
 
-// Leads & Kampagnen → Lead-Eingang: Hauptzweck „jedes Formular landet bei einem Kunden“.
+// Liefern → Formulare (früher Lead-Eingang): Hauptzweck „jedes Leadformular landet bei einem Kunden oder dem Vertrieb“.
 // Links Leads ohne Zuordnung (zu tun), rechts die Zuordnungen; das Formular zum Zuordnen klappt erst auf, wenn man
-// „Kunde wählen“ bzw. „+ Zuordnung“ tippt. Meta-Verbindung und Zapier-Übergang sind selten und liegen eingeklappt unten.
-// Daten und Aktionen wie /admin/lead-eingang (lead-eingang/daten.ts, actions.ts).
+// „Zuordnen“ bzw. „+ Zuordnung“ tippt. UX-Umbau 20.11.2026: Technik (Meta-Prüfliste mit Variablennamen, Webhook-Adresse,
+// Zapier-Übergang) steht nur noch unter Einstellungen › Anbindungen; hier bei Bedarf eine Zeile „Prüfen“ dorthin.
+// Das Feld „Airtable-Bezug“ ist entfallen (der gespeicherte Wert bleibt, actions.ts überschreibt ihn nur, wenn das Feld
+// mitkommt). Daten und Aktionen wie /admin/lead-eingang (lead-eingang/daten.ts, actions.ts).
 
 const PFAD = "/admin/neu/leads";
 const input =
@@ -23,16 +26,20 @@ const eur = (n: number) => `${n.toLocaleString("de-DE")} €`;
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string; ok?: string; err?: string; form?: string; neu?: string }> }) {
   const sp = await searchParams;
-  const { diag, sources, customers, productOptions, unassigned, forms, formsError, base, metaReady, vertriebForms } = await loadLeadEingang(sp.page);
+  const { diag, sources, customers, productOptions, unassigned, forms, formsError, metaReady, vertriebForms } = await loadLeadEingang(sp.page);
   const offen = unassigned.reduce((a, u) => a + u._count._all, 0);
   const zuordnenOffen = !!(sp.form || sp.page || sp.neu || sp.err);
+  const name = await ladeProduktNamen(sources.map((s) => s.productKey));
 
   return (
-    <Seite titel="Liefern" reiter="liefern" untertitel="Jedes Leadformular einem Kunden oder dem Vertrieb zuordnen, dann kommen Leads direkt in die App.">
+    <Seite titel="Liefern" reiter="liefern">
       <Meldung ok={sp.ok} err={sp.err} />
       {!metaReady ? (
         <p className="mb-4 rounded-[var(--radius-md)] bg-amber-50 px-4 py-2.5 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">
-          Meta-Verbindung unvollständig: neue Leads kommen nicht an. <a href="#meta" className="font-semibold underline">Prüfen</a>
+          Meta-Verbindung unvollständig: neue Leads kommen nicht an.{" "}
+          <Link href="/admin/neu/einstellungen/anbindungen" className="font-semibold underline">
+            Prüfen
+          </Link>
         </p>
       ) : null}
 
@@ -111,7 +118,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
                         {s.formName ?? `Formular ${s.formId}`} → {s.customer.name}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[color:var(--muted)]">
-                        <span>{s.productKey}</span>
+                        <span>{name(s.productKey)}</span>
                         {s.leadPrice ? <span>· {eur(Number(s.leadPrice))} je Lead</span> : null}
                         <span>· {s.lastLeadAt ? `zuletzt ${fmt(s.lastLeadAt)}` : "noch kein Lead"}</span>
                         {!s.active ? <Badge>pausiert</Badge> : null}
@@ -196,17 +203,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
                   listId="neu-lead-products"
                   erweitert={
                     <details className="md:col-span-2" data-funktion="actions-assignformaction--beim-zuordnen-lead-preis-ppl-und-airtable-bezug">
-                      <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-medium text-[color:var(--muted)]">Erweitert: Lead-Preis (Pay-per-Lead) und Airtable-Bezug</summary>
-                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                        <label className="block space-y-1">
-                          <span className="text-xs font-medium text-[color:var(--muted)]">Lead-Preis netto</span>
-                          <input name="leadPrice" inputMode="decimal" placeholder="leer = kein Lead-Preis" className={input} />
-                        </label>
-                        <label className="block space-y-1">
-                          <span className="text-xs font-medium text-[color:var(--muted)]">Airtable-Bezug für Stornogründe</span>
-                          <input name="bezugAirtableId" placeholder="rec… (leer bei Retainer-Kunden)" className={input} />
-                        </label>
-                      </div>
+                      <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-medium text-[color:var(--muted)]">Lead-Preis (nur Pay-per-Lead)</summary>
+                      <label className="block max-w-xs space-y-1">
+                        <span className="text-xs font-medium text-[color:var(--muted)]">Lead-Preis netto</span>
+                        <input name="leadPrice" inputMode="decimal" placeholder="leer = kein Lead-Preis" className={input} />
+                      </label>
                     </details>
                   }
                 />
@@ -222,54 +223,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
         </details>
       </Card>
 
-      <div className="mt-4 space-y-3">
-        <details id="meta" open={!metaReady} className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] [&>summary::-webkit-details-marker]:hidden">
-          <summary className="flex min-h-12 cursor-pointer items-center gap-2 px-5 text-sm font-semibold">
-            <span className="flex-1">Meta-Verbindung</span>
-            {metaReady ? <Badge tone="success">bereit</Badge> : <Badge tone="warning">unvollständig</Badge>}
-          </summary>
-          <div className="grid grid-cols-1 gap-4 border-t border-[color:var(--border)] p-5 text-sm md:grid-cols-2">
-            <ul className="space-y-1.5">
-              <Check ok={diag.tokenSet} label="System-User-Token (META_ACCESS_TOKEN)" />
-              <Check ok={diag.appSecretSet} label="App-Geheimschlüssel (META_APP_SECRET)" />
-              <Check ok={diag.verifyTokenSet} label="Webhook-Bestätigungstoken (META_WEBHOOK_VERIFY_TOKEN)" />
-              <Check ok={!diag.missing.includes("leads_retrieval")} label="Berechtigung leads_retrieval" />
-              <Check ok={!diag.missing.includes("pages_manage_metadata")} label="Berechtigung pages_manage_metadata" />
-              <Check ok={!diag.missing.includes("ads_management")} label="Berechtigung ads_management" />
-            </ul>
-            <div className="min-w-0 space-y-1.5 text-[color:var(--muted)]">
-              <div>
-                App: <b className="text-[color:var(--foreground)]">{diag.appName ?? "unbekannt"}</b>
-                {diag.appId ? ` (${diag.appId})` : ""} · Seiten mit Zugriff: {diag.pages.length}
-              </div>
-              {diag.error ? <div className="text-rose-700">{diag.error}</div> : null}
-              <div className="pt-1">Webhook-Adresse in der Meta-App (Feld leadgen):</div>
-              <code className="block break-all rounded bg-[color:var(--surface-sunken)] px-2 py-1 text-xs text-[color:var(--foreground)]">{base}/api/meta/leadgen</code>
-            </div>
-          </div>
-        </details>
-        <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] [&>summary::-webkit-details-marker]:hidden">
-          <summary className="flex min-h-12 cursor-pointer items-center px-5 text-sm font-semibold">Übergang: Webhook für Zapier</summary>
-          <div className="space-y-2 border-t border-[color:var(--border)] p-5 text-sm text-[color:var(--muted)]">
-            <p>Im Zap den Airtable-Schritt durch „Webhooks by Zapier → POST“ (JSON, alle Felder) ersetzen. Zugeordnet wird über die form_id wie oben.</p>
-            <code className="block break-all rounded bg-[color:var(--surface-sunken)] px-2 py-1 text-xs text-[color:var(--foreground)]">
-              {base}/api/leads/eingang?token={process.env.LEAD_WEBHOOK_TOKEN ? process.env.LEAD_WEBHOOK_TOKEN : "(LEAD_WEBHOOK_TOKEN setzen)"}
-            </code>
-          </div>
-        </details>
-        <p className="text-xs text-[color:var(--muted)]">
-          Neue Kampagne für einen Kunden: in der Kundenakte unter <Link href="/admin/neu/kunden" className="underline">Kampagne & Leads</Link>.
-        </p>
-      </div>
+      <p className="mt-4 text-xs text-[color:var(--muted)]">
+        Neue Kampagne für einen Kunden: in der Kundenakte unter <Link href="/admin/neu/kunden" className="underline">Kampagne & Leads</Link>.
+      </p>
     </Seite>
   );
 }
 
-function Check({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <li className="flex items-center gap-2">
-      {ok ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" /> : <XCircle className="h-4 w-4 shrink-0 text-rose-500" />}
-      {label}
-    </li>
-  );
-}
