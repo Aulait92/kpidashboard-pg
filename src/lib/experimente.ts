@@ -91,6 +91,17 @@ export const EXPERIMENTE = {
     a: "Bisher: alle Zeiten, Pflicht-Haken Datenschutz, „Termin verbindlich buchen“",
     b: "Neu: nächste Tage zuerst, Nutzen in einer Zeile, Datenschutz als Hinweis, „Kostenlos Termin buchen“",
   },
+  // Häkchen „Erinnerung zur Terminvorbereitung“ auf /book (A/B-Test-Labor 20.11.2026, Lernbuch docs/firma/ab-tests.md,
+  // Hypothese lib/ab-hypothesen.ts). Unabhängig von buchungsseite_kompakt (eigener Schlüssel, eigene Einheit: zufällige
+  // ID je Seitenaufruf, nur Lead-Buchungen ohne Vorbelegung). Zuteilung erst bei der Buchung, damit die Quote = Anteil
+  // der Buchungen mit Häkchen ist. Nie vorausgewählt; Wortlaut je Fassung in lib/policen/regeln.ts (erinnerungOptin).
+  buchung_erinnerung: {
+    titel: "Buchungsseite /book: Häkchen Erinnerung zur Terminvorbereitung",
+    ziel: "erinnerung_optin",
+    a: "Standard (Ole 20.11.2026): fett „Damit in Ihrem Termin nichts fehlt:“ Ja, bitte per WhatsApp an meine Unterlagen erinnern (empfohlen). Abmelden jederzeit mit STOP. Als grauer Kleindruck",
+    b: "Gleicher Wortlaut als hervorgehobene Karte (Rahmen, Hintergrund, größere Schrift und Häkchen)",
+    min: 150,
+  },
   // Beratungspräsentation (19.11.2026): Herausforderer C gegen Standard B, Einheit Lead-ID (lib/praesentation-variante-server.ts).
   // Ole hat C am 19.11.2026 freigegeben: läuft ab dem Deploy (kein Eintrag in „Experiment“ nötig; anhalten per aktiv = false).
   praesentation: {

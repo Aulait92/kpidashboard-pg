@@ -18,7 +18,7 @@ import { Gezeigt } from "./gezeigt";
 import { randomUUID } from "node:crypto";
 import { variante, type Variante } from "@/lib/experimente";
 import { nowMs } from "@/lib/now";
-import { ERINNERUNG_OPTIN_TEXT } from "@/lib/policen/regeln";
+import { erinnerungOptin } from "@/lib/policen/regeln";
 
 // Öffentliche Buchungsseite je Kunde — z. B. als „Custom"-Scheduling-Link im
 // Meta-Leadformular. Zeigt echte freie Zeiten aus dem Google-Kalender.
@@ -282,6 +282,12 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const kompakt = v === "b";
   const nah = kompakt ? days.slice(0, NAH_TAGE) : days;
   const spaeter = kompakt ? days.slice(NAH_TAGE) : [];
+  // Häkchen Erinnerung zur Terminvorbereitung (Policen, Rechtsprüfung A8): nur wenn der Lead selbst bucht. Nicht bei
+  // Buchung durch den Vermittler (dessen Haken wäre keine Einwilligung des Leads) und nicht aus der Mail-Strecke (Telefon
+  // dort nur für einen Anruf). Splittest buchung_erinnerung (lib/experimente.ts): eigene zufällige ID je Aufruf,
+  // Zuteilung erst bei der Buchung (actions.ts).
+  const erinnerungAufruf = prefill ? null : randomUUID();
+  const erinnerungFassung: Variante = erinnerungAufruf ? await variante("buchung_erinnerung", erinnerungAufruf, { merken: false }) : "a";
   // Zeitstempel für die Bot-Falle (echte Menschen brauchen > 3 s).
   const renderedAt = nowMs();
   const ERRORS = errorsFor(an);
@@ -436,10 +442,22 @@ export default async function BookingPage({ params, searchParams }: Props) {
             </label>
             )}
             {/* Opt-in für Erinnerungen zur Terminvorbereitung (lib/policen, Rechtsprüfung A8), nicht vorausgewählt */}
-            <label className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
-              <input type="checkbox" name="erinnerung" className="mt-0.5" data-erinnerung-optin />
-              <span>{ERINNERUNG_OPTIN_TEXT}</span>
-            </label>
+            {erinnerungAufruf ? (
+              <label
+                className={
+                  erinnerungFassung === "b"
+                    ? "mt-3 flex cursor-pointer items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--brand)] bg-[color:var(--brand-soft)] p-3 text-sm leading-relaxed"
+                    : "mt-2 flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]"
+                }
+              >
+                <input type="hidden" name="xe" value={erinnerungAufruf} />
+                <input type="hidden" name="erinnerung_fassung" value={erinnerungFassung} />
+                <input type="checkbox" name="erinnerung" className={erinnerungFassung === "b" ? "mt-0.5 h-5 w-5 shrink-0" : "mt-0.5"} data-erinnerung-optin data-fassung={erinnerungFassung} />
+                <span>
+                  <b className="text-[color:var(--foreground)]">{erinnerungOptin(erinnerungFassung, an).fett}</b> {erinnerungOptin(erinnerungFassung, an).rest}
+                </span>
+              </label>
+            ) : null}
           </section>
 
           <SubmitButton

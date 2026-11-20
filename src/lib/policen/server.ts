@@ -69,8 +69,7 @@ import {
   virenText,
   typAusMime,
   WARTEN_STUNDEN,
-  ERINNERUNG_OPTIN_TEXT,
-  ERINNERUNG_OPTIN_VERSION,
+  erinnerungOptin,
   widerrufText,
   zuGrossText,
   gesundheitInText,
@@ -298,9 +297,14 @@ export async function darfPolicenVortagSatz(leadId: string, now = new Date()): P
 }
 
 
-/** Opt-in aus der Buchung protokollieren (nicht vorausgewählt, nur wenn angehakt). */
-export async function erinnerungOptIn(o: { customerId: string; leadId: string | null; phone: string; at?: Date }) {
-  return nachweis({ ...o, art: "erinnerung_optin", quelle: "buchung", wortlaut: ERINNERUNG_OPTIN_TEXT, textVersion: ERINNERUNG_OPTIN_VERSION });
+/**
+ * Opt-in aus der Buchung protokollieren (nicht vorausgewählt, nur wenn angehakt), mit dem gezeigten Wortlaut der Fassung
+ * (Splittest buchung_erinnerung; ohne Angabe Fassung A).
+ */
+export async function erinnerungOptIn(o: { customerId: string; leadId: string | null; phone: string; at?: Date; fassung?: "a" | "b"; an?: Ansprache }) {
+  const { fassung, an, ...rest } = o;
+  const t = erinnerungOptin(fassung ?? "a", an ?? "sie");
+  return nachweis({ ...rest, art: "erinnerung_optin", quelle: "buchung", wortlaut: t.text, textVersion: t.version });
 }
 
 async function setzeBody(messageId: string | null, body: string) {
