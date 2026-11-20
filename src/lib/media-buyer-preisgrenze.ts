@@ -7,6 +7,11 @@
 //   2. Env MEDIA_BUYER_MAX_CPL (gilt für alle Pools)
 //   3. Break-even = Ø Lead-Preis der Bezüge des Pools × (1 − Stornoquote der
 //      letzten 30 Tage; nicht ermittelbar → MEDIA_BUYER_DEFAULT_STORNO, Standard 0,1)
+//      Steuerfreie Leads (§ 4 Nr. 11 UStG, CFO 20.11.2026): Für sie ist die
+//      Vorsteuer aus der Meta-Werbung nicht abziehbar, die Reverse-Charge-USt wird
+//      zu echten Kosten. Daher Break-even = P × (1 − s) / (1 + USt × q), q = Anteil
+//      steuerfreier Leads im Pool (nach Menge gewichtet aus den Software-Bezügen),
+//      USt = MEDIA_BUYER_RC_VAT (Standard 0,19). Der CPL bleibt netto wie von Meta.
 //   Kein Lead-Preis ermittelbar → kein Höchstpreis: Pool wird nicht erhöht
 //   (nur halten/senken), Admin zeigt „Höchstpreis fehlt".
 //
@@ -22,7 +27,7 @@
 //
 // Env: MEDIA_BUYER_MAX_CPL, MEDIA_BUYER_DEFAULT_STORNO (0.1),
 //      MEDIA_BUYER_STORNO_MIN_LEADS (20, darunter gilt die Quote als nicht
-//      ermittelbar), MEDIA_BUYER_CPL_ALERT_RUNS (3), MEDIA_BUYER_MONTHLY_CAP (aus).
+//      ermittelbar), MEDIA_BUYER_RC_VAT (0.19), MEDIA_BUYER_CPL_ALERT_RUNS (3), MEDIA_BUYER_MONTHLY_CAP (aus).
 
 import type { GuardableDecision } from "@/lib/media-buyer-lernphase";
 
@@ -40,6 +45,8 @@ const eur0 = new Intl.NumberFormat("de-DE", {
 export type MaxCpl = {
   value: number | null;
   source: "pool" | "env" | "break-even" | null;
+  // Anteil steuerfreier Leads (q), der in den Break-even eingerechnet wurde (0 = keiner).
+  taxFreeShare?: number;
 };
 
 export function computeMaxCpl(p: {
@@ -48,6 +55,9 @@ export function computeMaxCpl(p: {
   leadPrices: number[];
   stornoRate: number | null;
   defaultStorno: number;
+  // Anteil steuerfreier Leads (0..1) und Reverse-Charge-Satz (Standard 0,19).
+  taxFreeShare?: number | null;
+  rcVat?: number;
 }): MaxCpl {
   if (p.poolOverride != null && p.poolOverride > 0)
     return { value: p.poolOverride, source: "pool" };
@@ -57,7 +67,13 @@ export function computeMaxCpl(p: {
   if (prices.length === 0) return { value: null, source: null };
   const avg = prices.reduce((s, x) => s + x, 0) / prices.length;
   const storno = Math.min(0.9, Math.max(0, p.stornoRate ?? p.defaultStorno));
-  return { value: Math.round(avg * (1 - storno) * 100) / 100, source: "break-even" };
+  const q = Math.min(1, Math.max(0, p.taxFreeShare ?? 0));
+  const vat = Math.max(0, p.rcVat ?? 0.19);
+  return {
+    value: Math.round(((avg * (1 - storno)) / (1 + vat * q)) * 100) / 100,
+    source: "break-even",
+    taxFreeShare: q,
+  };
 }
 
 // Stornoquote aus (genehmigte Stornos / zugestellte Leads); unter minLeads

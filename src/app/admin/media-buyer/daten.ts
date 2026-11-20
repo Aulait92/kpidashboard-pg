@@ -83,6 +83,14 @@ export async function loadMediaBuyer() {
     latestReason: p.latestReason,
     learningLabel: p.learningLabel,
     maxCpl: p.maxCpl,
+    maxCplTaxFreeShare: p.maxCplTaxFreeShare,
+    goalSource: p.goalSource,
+    softwareGoal: p.softwareGoal,
+    airtableGoal: p.airtableGoal,
+    customers: p.customers,
+    regionNote: p.regionNote,
+    regionOverBreakEven: p.regionOverBreakEven,
+    customersBehind: p.customersBehind,
   }));
 
   const log: ActionLogRow[] = actions.map((a) => ({

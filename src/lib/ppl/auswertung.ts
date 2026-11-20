@@ -35,6 +35,7 @@ export const REJECT_LABELS = {
   ungueltig: "ungültig",
   weitergabe: "Weitergabe abgelehnt",
   kein_abnehmer: "kein Abnehmer (geparkt)",
+  verfallen: "verworfen (geparkt > 48 h)",
 } as const;
 export type RejectKey = keyof typeof REJECT_LABELS;
 
@@ -43,6 +44,8 @@ export function rejectCategory(status: string, reason: string | null): RejectKey
   if (status === "delivered") return null;
   if (status === "duplicate") return "dublette";
   if (status === "invalid") return "ungueltig";
+  // Endstatus nach Ablauf der Parkfrist (lib/ppl/parken.ts): Kosten bleiben als „verworfen (geparkt > 48 h)“ sichtbar
+  if (status === "expired") return "verfallen";
   const r = (reason ?? "").toLowerCase();
   if (/plz/.test(r)) return "gebiet";
   if (/beamt/.test(r)) return "beamter";
@@ -121,13 +124,15 @@ export type ReportRow = {
   cplBefore: number | null;
   cplAfterReject: number | null;
   cplAfterComplaints: number | null;
+  /** Werbekosten der nach Ablauf der Parkfrist verworfenen Leads (Anzahl × Leadpreis vor Ablehnung) */
+  expiredCost: number | null;
   revenue: number;
   spend: number;
   profit: number;
   margin: number | null;
 };
 
-const emptyRejects = (): Record<RejectKey, number> => ({ dublette: 0, schwach: 0, beamter: 0, gebiet: 0, ungueltig: 0, weitergabe: 0, kein_abnehmer: 0 });
+const emptyRejects = (): Record<RejectKey, number> => ({ dublette: 0, schwach: 0, beamter: 0, gebiet: 0, ungueltig: 0, weitergabe: 0, kein_abnehmer: 0, verfallen: 0 });
 
 export function aggregateReport(input: {
   buckets: Bucket[];
@@ -174,6 +179,7 @@ export function aggregateReport(input: {
     const spend = r2(metaCost + otherCost);
     const profit = r2(revenue - spend);
     const div = (a: number, n: number | null) => (n && n > 0 ? r2(a / n) : null);
+    const cplBefore = div(metaCost, received ?? (rejectedTotal ? delivered + rejectedTotal : null));
     return {
       key: b.key,
       label: b.label,
@@ -186,9 +192,10 @@ export function aggregateReport(input: {
       complaints,
       metaCost,
       otherCost,
-      cplBefore: div(metaCost, received ?? (rejectedTotal ? delivered + rejectedTotal : null)),
+      cplBefore,
       cplAfterReject: div(metaCost, delivered),
       cplAfterComplaints: div(metaCost, delivered - complaints),
+      expiredCost: cplBefore != null && rejected.verfallen ? r2(cplBefore * rejected.verfallen) : null,
       revenue,
       spend,
       profit,

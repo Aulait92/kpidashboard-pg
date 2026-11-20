@@ -6,7 +6,8 @@ import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { encryptSecret } from "@/lib/encryption";
-import { deliver } from "@/lib/ppl/engine";
+import { deliver, NotDeliverableError } from "@/lib/ppl/engine";
+import { parkExpired } from "@/lib/ppl/parken";
 import { adminRecordStorno, decideStorno, undoStorno } from "@/lib/ppl/storno";
 import { placeOrder } from "@/lib/ppl/orders";
 import { weekRange } from "@/lib/ppl/periods";
@@ -172,12 +173,15 @@ export async function assignParkedAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const pool = await prisma.poolLead.findUnique({ where: { id: String(fd.get("poolLeadId") ?? "") } });
   const sub = await prisma.leadSubscription.findUnique({ where: { id: String(fd.get("subscriptionId") ?? "") } });
-  if (!pool || pool.status !== "parked" || !sub) return;
+  // Verfallene bzw. über die Frist geparkte Leads nie wieder ausliefern (lib/ppl/parken.ts, Ole 20.11.2026)
+  if (!pool || pool.status !== "parked" || parkExpired(pool.createdAt) || !sub) return;
   const order =
     sub.period === "week"
       ? await prisma.leadOrder.findUnique({ where: { subscriptionId_periodStart: { subscriptionId: sub.id, periodStart: weekRange().start } } })
       : null;
-  await deliver(pool.id, sub, order?.id ?? null);
+  await deliver(pool.id, sub, order?.id ?? null).catch((err: unknown) => {
+    if (!(err instanceof NotDeliverableError)) throw err;
+  });
   revalidatePath("/admin/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
 }

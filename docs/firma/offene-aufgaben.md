@@ -5,7 +5,10 @@ Ziel, Frist, Verantwortlichem eintragen. Branches: `claude/whatsapp-crm` = Stagi
 Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen pushen parallel.
 
 ## Heute / nächste Tage (Technik)
-- **Media Buyer: Höchstpreis mit Steuerfaktor** P × (1 − s) / (1 + 0,19 × q) (CTO, in Arbeit 20.11.2026); Cash-Diagnose USt bei steuerfreien Leads prüfen (src/lib/ops/cash-rechnung.ts).
+- ~~Media Buyer: Höchstpreis mit Steuerfaktor~~ P × (1 − s) / (1 + 0,19 × q), Lead-Ziele aus den Software-Bezügen
+  (MEDIA_BUYER_GOAL_SOURCE, Standard software) und Regionen-Rechnung (erledigt 20.11.2026, Branch facebook-ad-media-buyer).
+  Offen: nach dem Deploy eine Woche Software- vs. Airtable-Ziel im Admin vergleichen; Cash-Diagnose USt bei steuerfreien
+  Leads prüfen (src/lib/ops/cash-rechnung.ts).
 
 | Aufgabe | Stand | Wer |
 |---|---|---|

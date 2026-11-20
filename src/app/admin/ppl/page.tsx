@@ -7,6 +7,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { quotaFor } from "@/lib/ppl/engine";
 import { fmtWeek, weekRange } from "@/lib/ppl/periods";
+import { parkDeadline } from "@/lib/ppl/parken";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "./actions";
 import { AirtableNachholen } from "./nachholen";
 import { loadCustomerOverview, loadPplReport, type Granularity } from "@/lib/ppl/auswertung";
@@ -34,6 +35,7 @@ const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" |
   parked: { label: "geparkt", tone: "warning" },
   duplicate: { label: "Dublette", tone: "neutral" },
   invalid: { label: "ungültig", tone: "danger" },
+  expired: { label: "verworfen (> 48 h geparkt)", tone: "neutral" },
 };
 
 export default async function PplPage({ searchParams }: { searchParams: Promise<{ ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; postfach?: string; versand?: string }> }) {
@@ -216,6 +218,7 @@ async function Parked({ subs }: { subs: Subs }) {
                 <div className="text-xs text-[color:var(--muted)]">
                   {[p.plz ? `PLZ ${p.plz}` : null, p.contribution ? `${p.contribution} €` : null, p.weak ? "schwach" : null, p.insurer].filter(Boolean).join(" · ")}
                   {p.reason ? <span className="ml-1 text-amber-700">· {p.reason}</span> : null}
+                  <span className="text-[color:var(--muted)]"> · verfällt {dt(parkDeadline(p.createdAt))}</span>
                 </div>
               </div>
               <form action={assignParkedAction} className="flex items-center gap-2">
