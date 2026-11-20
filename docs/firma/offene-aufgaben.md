@@ -34,5 +34,10 @@ Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der 
 - LinkedIn-App anlegen; Gmail API (falls weiter gewünscht).
 - Später: Calendly im Vertrieb durch eigenes Buchungstool ersetzen.
 
+- Bestandskunden-Modul einschalten (Stufe A): bleibt aus (`BESTAND_MODULE_AVAILABLE = false`). UX-Prüfung 20.11.2026
+  (Branch `bestand-champions`): SUS 91. Vor dem Einschalten: AVV-Ergänzung, `docs/datenschutz.md` Abschnitt Bestand,
+  Muster-Datenschutztext für Vermittler, ProductUpdate (audience software), Eintrag in `docs/webseite-offen.md`,
+  Erklärvideos prüfen, `docs/recht/bestand-champions.md` anlegen.
+
 ## Fehlende Zugänge für das Team
 Lesekopie der Datenbank ohne Klardaten (Data-Agent), Anbindung der Sitzungsaufnahmen, Meta Ads nur lesend.

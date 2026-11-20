@@ -13,7 +13,7 @@ import { FunnelBars } from "@/components/bestand/funnel-table";
 import { ReplySheetButton } from "@/components/bestand/reply-form";
 import { bestandQuota, QUOTA_PAUSE } from "@/lib/bestand/quota";
 import { CampaignEndButton } from "@/components/bestand/campaign-end";
-import { setCampaignFollowUpAction, toggleCampaignAction } from "../../actions";
+import { deleteDraftCampaignAction, setCampaignFollowUpAction, toggleCampaignAction } from "../../actions";
 import { FOLLOW_UP_WORKDAYS } from "@/lib/bestand/nachfassen";
 import { nowMs } from "@/lib/now";
 
@@ -85,6 +85,26 @@ export default async function CampaignDetail({ params, searchParams }: { params:
           Gestartet. Die Nachrichten gehen schrittweise raus, Antworten landen als Lead in Ihrer Pipeline.
         </div>
       ) : null}
+      {s.status === "draft" ? (
+        <div className="mb-5 flex flex-col gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-4 text-sm sm:flex-row sm:items-center" data-campaign-draft>
+          <span className="min-w-0 sm:flex-1">
+            Noch nicht gestartet.{f.gesamt.wartend ? ` ${f.gesamt.wartend.toLocaleString("de-DE")} Kunden warten.` : ""}
+          </span>
+          <form action={deleteDraftCampaignAction} className="order-last sm:order-none">
+            <input type="hidden" name="id" value={s.id} />
+            <input type="hidden" name="zurueck" value="1" />
+            <button className="min-h-10 px-2 text-sm font-medium text-rose-700 hover:underline disabled:opacity-50" disabled={ctx.preview}>
+              Entwurf löschen
+            </button>
+          </form>
+          <form action={toggleCampaignAction}>
+            <input type="hidden" name="id" value={s.id} />
+            <Button type="submit" variant="primary" size="md" className="w-full sm:w-auto" disabled={ctx.preview} data-campaign-draft-start>
+              Kampagne starten
+            </Button>
+          </form>
+        </div>
+      ) : null}
       {s.status === "paused" ? (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-campaign-paused>
           <span className="min-w-0 flex-1">
@@ -121,6 +141,7 @@ export default async function CampaignDetail({ params, searchParams }: { params:
         </div>
       ) : null}
       <div className="space-y-5">
+        {s.status !== "draft" ? (
         <Card>
           <CardHeader
             title="Ergebnis"
@@ -213,6 +234,7 @@ export default async function CampaignDetail({ params, searchParams }: { params:
             </div>
           </details>
         </Card>
+        ) : null}
         {recipients && recipients.total ? (
           <Card>
             <details className="group" data-campaign-recipients>

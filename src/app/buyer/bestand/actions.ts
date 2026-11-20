@@ -544,6 +544,8 @@ export async function deleteDraftCampaignAction(fd: FormData): Promise<void> {
   const r = await prisma.customerCampaign.deleteMany({ where: { id, customerId: ctx.customerId, status: "draft" } });
   if (r.count) await audit("bestand.entwurf_geloescht", { entity: "CustomerCampaign", entityId: id, customerId: ctx.customerId });
   revalidatePath("/buyer/bestand");
+  // Aus dem Kampagnen-Detail: zurück zum Bestand (die Detailseite gibt es danach nicht mehr)
+  if (fd.get("zurueck")) redirect("/buyer/bestand");
 }
 
 export type EndState = { ok?: boolean; error?: string };

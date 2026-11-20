@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarChart3, ChevronDown, Lightbulb, Megaphone, MoreHorizontal, PackagePlus, ShieldCheck, Upload, Users } from "lucide-react";
+import { BarChart3, ChevronDown, ChevronRight, Lightbulb, Megaphone, MoreHorizontal, PackagePlus, ShieldCheck, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, ButtonLink, Card, CardHeader, EmptyState, buttonClass } from "@/components/ui";
 import type { Prisma } from "@/generated/prisma/client";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { OCCASIONS, opportunities, type Occasion, type Opportunity } from "@/lib/bestand/campaigns";
+import { channelAvailability, OCCASIONS, opportunities, type Occasion, type Opportunity } from "@/lib/bestand/campaigns";
+import { hasImprint, imprintFromWebsiteInfo } from "@/lib/bestand/kampagnen-mail";
 import { deleteDraftCampaignAction, toggleCampaignAction } from "./actions";
-import { bestandQuota, QUOTA_PAUSE } from "@/lib/bestand/quota";
+import { bestandMailQuota, bestandQuota, QUOTA_PAUSE } from "@/lib/bestand/quota";
 import { PRICE_LIST, bestandPacksText, eur, isPrepaid, normalizeRhythmus, RHYTHMUS_MONATE } from "@/lib/offer-pricing";
 import { displayName } from "@/lib/bestand/rows";
 import { lastUndoableImport } from "@/lib/bestand/import";
@@ -61,8 +62,8 @@ const FILTERS = [
   { key: "angeschrieben", label: "Angeschrieben" },
 ] as const;
 type FilterKey = (typeof FILTERS)[number]["key"];
-/** „Mehr laden“ in Schritten von 50 */
-const LIST_STEP = 50;
+/** „Mehr laden“ in Schritten von 25 (Handy: kurze Seite) */
+const LIST_STEP = 25;
 const pct = (x: number) => `${Math.round(x * 100).toLocaleString("de-DE")} %`;
 
 /** Kontingent oben nur bei unter 20 % frei (oder bei einer Pause wegen Kontingent). */
@@ -162,7 +163,13 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
     ? await Promise.all([loadCampaignStats(customerId, { contracts, rates: provision.rates }), loadPeriodTiles(customerId, { from: new Date(now.getTime() - days * 86_400_000), to: now })])
     : [[], null];
   // Chancen nach erwarteter Provision: eigene Sätze und, ab 30 eigenen Empfängern je Anlass, eigene Quoten
-  const opps = total ? await opportunities(customerId, now, { rates: provision.rates, own: eigeneZahlen(stats) }) : [];
+  // E-Mail gerade nicht möglich (kein Postfach, kein Impressum, Monatsgrenze): Chancen zählen wie die Kampagne nur WhatsApp
+  const mailBlocked = total
+    ? await Promise.all([channelAvailability(customerId, "review", ctx.userId), bestandMailQuota(customerId)]).then(
+        ([av, mq]) => !av.mailbox || !hasImprint(consentSettings.imprint ?? imprintFromWebsiteInfo(consentSettings.websiteInfo)) || mq.remaining <= 0,
+      )
+    : false;
+  const opps = total ? await opportunities(customerId, now, { rates: provision.rates, own: eigeneZahlen(stats), mailBlocked }) : [];
   const top = opps[0] ?? null;
   // Einwilligung steht als Kennzahl mit eigenem Knopf da (Paket 3), nicht noch einmal in „Weitere Chancen“
   const rest = opps.slice(1).filter((o) => o.kind !== "einwilligung");
@@ -360,20 +367,19 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
             <Card>
               <CardHeader title="Weitere Chancen" icon={Lightbulb} hint="nach möglicher Provision" />
               <ul className="divide-y divide-[color:var(--border)]" data-bestand-chancen>
+                {/* Ganze Zeile tippbar, Titel bricht um statt abgeschnitten zu werden (Handy) */}
                 {rest.map((o) => (
-                  <li key={`${o.kind}-${o.occasion}-${o.title}`} className="flex items-center gap-3 px-5 py-3" data-bestand-chance={o.kind}>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium" title={o.title}>
-                        {o.title}
+                  <li key={`${o.kind}-${o.occasion}-${o.title}`} data-bestand-chance={o.kind}>
+                    <Link href={oppHref(o)} className="flex min-h-14 items-center gap-3 px-5 py-3 hover:bg-[color:var(--surface-sunken)]">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium leading-snug">{o.title}</div>
+                        <div className="text-xs text-[color:var(--muted)] tabular-nums">
+                          {o.kind === "einwilligung" ? "+" : ""}
+                          {de(o.count)} Kunden{spanneText(o.euro) ? ` · ${spanneText(o.euro)}` : ""}
+                        </div>
                       </div>
-                      <div className="text-xs text-[color:var(--muted)] tabular-nums">
-                        {o.kind === "einwilligung" ? "+" : ""}
-                        {de(o.count)} Kunden{spanneText(o.euro) ? ` · ${spanneText(o.euro)}` : ""}
-                      </div>
-                    </div>
-                    <ButtonLink href={oppHref(o)} variant="secondary">
-                      Ansehen
-                    </ButtonLink>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" aria-hidden />
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -413,7 +419,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                     <div key={t.label} className="min-w-0 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5">
                       <dt className="text-xs text-[color:var(--muted)]">{t.label}</dt>
                       <dd className="truncate text-lg font-semibold tabular-nums sm:text-xl">{t.value}</dd>
-                      <dd className="truncate text-[11px] text-[color:var(--muted)]">{t.sub}</dd>
+                      <dd className="text-[11px] leading-tight text-[color:var(--muted)]">{t.sub}</dd>
                     </div>
                   ))}
                 </dl>
@@ -438,15 +444,18 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                 {stats.map((k) => {
                   const g = k.funnel.gesamt;
                   const anlass = OCCASIONS[k.occasion as Occasion]?.label ?? k.occasion;
+                  const name = k.name.replace(/\bKFZ\b/g, "Kfz");
+                  // Anlass-Chip nur, wenn er etwas Neues sagt („Ablauf/Wechsel“ und „Ablauf / Wechsel“ sind dasselbe)
+                  const sameAsName = name.replace(/\s+/g, "").toLowerCase() === anlass.replace(/\s+/g, "").toLowerCase();
                   const quotaStop = k.status === "paused" && k.pausedReason === QUOTA_PAUSE && quota.remaining <= 0;
                   return (
                     <li key={k.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3 text-sm" data-bestand-campaign={k.status}>
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                           <Link href={`/buyer/bestand/kampagnen/${k.id}`} className="truncate font-medium hover:underline">
-                            {k.name}
+                            {name}
                           </Link>
-                          {k.name !== anlass ? <span className="rounded-full bg-[color:var(--surface-sunken)] px-2 py-0.5 text-[11px] text-[color:var(--muted)]">{anlass}</span> : null}
+                          {!sameAsName ? <span className="rounded-full bg-[color:var(--surface-sunken)] px-2 py-0.5 text-[11px] text-[color:var(--muted)]">{anlass}</span> : null}
                           <Badge tone={STATUS[k.status]?.tone ?? "neutral"}>{quotaStop ? "pausiert: Kontingent" : (STATUS[k.status]?.label ?? k.status)}</Badge>
                         </div>
                         <div className="text-xs text-[color:var(--muted)] tabular-nums">
@@ -533,6 +542,8 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                 const title = displayName(e);
                 // Zweite Zeile: Firma (bzw. E-Mail, wenn die Firma schon als Name steht)
                 const second = person ? e.company : e.company ? e.email : null;
+                // Sparten wie überall in der App schreiben („Kfz“ statt „KFZ“)
+                const lines = e.lines.map((l) => (l === "KFZ" ? "Kfz" : l));
                 return (
                   <li key={e.id} className="flex items-center gap-3 px-5 py-2.5 text-sm" data-bestand-row>
                     <div className="min-w-0 flex-1">
@@ -558,20 +569,20 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                           </span>
                         ) : null}
                       </div>
-                      {second || e.lines.length ? (
-                        <div className="truncate text-xs text-[color:var(--muted)]" title={[second, e.lines.join(", ")].filter(Boolean).join(" · ")}>
+                      {second || lines.length ? (
+                        <div className="truncate text-xs text-[color:var(--muted)]" title={[second, lines.join(", ")].filter(Boolean).join(" · ")}>
                           {second}
-                          {e.lines.length ? (
+                          {lines.length ? (
                             <span className="md:hidden">
                               {second ? " · " : ""}
-                              {e.lines.join(", ")}
+                              {lines.join(", ")}
                             </span>
                           ) : null}
                         </div>
                       ) : null}
                     </div>
                     <span className="hidden max-w-[14rem] shrink-0 flex-wrap justify-end gap-1 md:flex">
-                      {e.lines.map((l) => (
+                      {lines.map((l) => (
                         <span key={l} className="rounded-full bg-[color:var(--surface-sunken,#f1f5f9)] px-2 py-0.5 text-xs">
                           {l}
                         </span>
@@ -808,10 +819,10 @@ function LockedBestand({
       <Card>
         <CardHeader title="Bestandskunden-Modul" icon={Users} />
         <div className="space-y-4 px-5 pb-5 pt-4 text-[15px]">
-          <p>
-            Laden Sie Ihre Kundenliste hoch, und die App zeigt Ihnen, wo Geschäft liegt: Lücken (z. B. Kfz ohne Hausrat), Jahresgespräche,
-            Geburtstage und auslaufende Verträge. Mit einem Klick schreiben Sie die passenden Kunden per WhatsApp oder E-Mail an, Antworten landen als
-            Lead in Ihrer Pipeline.
+          <h2 className="text-xl font-semibold leading-snug tracking-tight">Geschäft im eigenen Bestand finden</h2>
+          <p className="-mt-2">
+            Die App zeigt, wem ein Angebot fehlt (z. B. Kfz ohne Hausrat), und schreibt die passenden Kunden mit einem Klick an. Antworten landen als Lead in
+            Ihrer Pipeline.
           </p>
           <ul className="list-disc space-y-1 pl-5 text-sm text-[color:var(--muted)]">
             <li>

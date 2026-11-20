@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { redirect } from "next/navigation";
-import { ChevronDown, Download, ShieldCheck, Users } from "lucide-react";
+import { ChevronDown, Download, ShieldCheck, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
-import { Badge, ButtonLink, Card } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { OCCASIONS, reachByOccasion } from "@/lib/bestand/campaigns";
@@ -84,6 +84,21 @@ export default async function EinwilligungenPage({ searchParams }: { searchParam
       <PageHeader title="Einwilligungen" subtitle="Mehr Kunden für Angebote erreichen" />
       <div className="space-y-4">
         {/* Status und die eine Hauptaktion */}
+        {offer.total === 0 ? (
+          // Leerer Zustand: noch keine Kunden, also nichts zu fragen (statt „0 %“ und „alle haben eingewilligt“)
+          <Card>
+            <EmptyState
+              icon={Users}
+              title="Noch keine Bestandskunden"
+              text="Nach dem Import sehen Sie hier, wen Sie um Einwilligung bitten können."
+              action={
+                <ButtonLink href="/buyer/bestand/import" variant="primary" size="md" icon={Upload}>
+                  Kunden importieren
+                </ButtonLink>
+              }
+            />
+          </Card>
+        ) : (
         <Card className="border-[color:var(--brand)]/40">
           <div className="px-5 py-5" data-consent-hero>
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--brand)]">Für Angebote erreichbar</p>
@@ -132,6 +147,7 @@ export default async function EinwilligungenPage({ searchParams }: { searchParam
             </div>
           </div>
         </Card>
+        )}
 
         {/* Alles Weitere hinter je einem Klick */}
         <Card menus>

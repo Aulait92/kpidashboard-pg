@@ -109,6 +109,7 @@ export function ConsentRowAction({ existingCustomerId, name, email, whatsapp, hi
               </Button>
             ) : null}
           </div>
+          {!waWindowOpen && !mailAllowed && !done ? <p className="text-[color:var(--muted)]">Den Link geben Sie im Termin oder in Ihrem Chat weiter.</p> : null}
           {error ? <p className="text-rose-700">{error}</p> : null}
           {done?.kind === "mailed" ? <p className="text-emerald-700">Die Anfrage ist per E-Mail unterwegs.</p> : null}
           {done?.kind === "whatsapp" ? <p className="text-emerald-700">Per WhatsApp gesendet.</p> : null}

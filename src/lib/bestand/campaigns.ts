@@ -307,7 +307,7 @@ export type Opportunity = {
 export async function opportunities(
   customerId: string,
   now = new Date(),
-  opts: { rates?: ProvisionOverrides; own?: Partial<Record<Occasion, EigeneZahlen>> } = {},
+  opts: { rates?: ProvisionOverrides; own?: Partial<Record<Occasion, EigeneZahlen>>; mailBlocked?: boolean } = {},
 ): Promise<Opportunity[]> {
   const [cands, settings, sup, wa, c, offered] = await Promise.all([
     loadCandidates(customerId, now),
@@ -328,7 +328,9 @@ export async function opportunities(
   // Durchschnittliche Provision der naheliegenden Ergänzung je Empfänger (Anlässe ohne feste Sparte)
   const avgProv = (ids: string[]) => (ids.length ? ids.reduce((n, id) => n + prov(nextBestLine(linesOf.get(id) ?? [], offered)), 0) / ids.length : prov(null));
   const opp = (o: Occasion, s: Segment, topic: string | null, title: string, why: string, line?: string): Opportunity => {
-    const p = planFromCandidates(cands, o, s, mode, settings, sup, now);
+    let p = planFromCandidates(cands, o, s, mode, settings, sup, now);
+    // Wie im Kampagnen-Bildschirm: E-Mail gerade nicht möglich, WhatsApp schon → nur WhatsApp zählen (gleiche Zahl, gleicher Euro-Wert)
+    if (opts.mailBlocked && mode === "whatsapp_first" && p.counts.whatsapp > 0 && p.counts.email > 0) p = planFromCandidates(cands, o, s, "whatsapp", settings, sup, now);
     const ids = p.recipients.map((r) => r.id);
     const q = quotenFor(o, opts.own?.[o]);
     const euro = erwarteteProvision(ids.length, q, line ? prov(line) : avgProv(ids));

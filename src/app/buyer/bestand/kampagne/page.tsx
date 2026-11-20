@@ -33,14 +33,15 @@ import { PRICE_LIST } from "@/lib/offer-pricing";
 import { QuotaLowNotice } from "@/components/bestand/quota-bar";
 import { asChannelMode, CHANNEL_MODES, isSameNeedOccasion, NEEDS_CONSENT_REASON } from "@/lib/bestand/einwilligung";
 import { loadConsentSettings } from "@/lib/bestand/einwilligung-server";
-import { defaultCampaignMail, imprintFromWebsiteInfo, PLATZHALTER_LABEL, platzhalterFuer, platzhalterZuAnzeige } from "@/lib/bestand/kampagnen-mail";
+import { defaultCampaignMail, hasImprint, imprintFromWebsiteInfo, PLATZHALTER_LABEL, platzhalterFuer, platzhalterZuAnzeige } from "@/lib/bestand/kampagnen-mail";
 import { CONNECT_HREF, needsSubmit, templateNotice } from "@/lib/whatsapp/vorlagen-hinweis";
 import { advisorPerson } from "@/lib/lead-anrede";
 import { publicUrlOr } from "@/lib/public-url";
 import { agentConfirmText, isAgencyBound, mayOffer, needsAgentConfirm } from "@/lib/bestand/befugnis";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { loadCustomerProvision } from "@/lib/provision-server";
-import { erwarteteProvision, provisionForLine, quotenFor, spanneText } from "@/lib/bestand/potenzial";
+import { eigeneZahlen, erwarteteProvision, provisionForLine, quotenFor, spanneText } from "@/lib/bestand/potenzial";
+import { loadCampaignStats } from "@/lib/bestand/statistik";
 import { terminlinkFuer } from "@/lib/bestand/terminlink";
 import { KampagneStart, type StartBlocker } from "@/components/bestand/kampagne-start";
 import { MailEditor } from "@/components/bestand/mail-editor";
@@ -71,7 +72,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const occasion = (sp.anlass && sp.anlass in OCCASIONS ? sp.anlass : "review") as Occasion;
   // E-Mail-Funktionen aus („Meine Gesellschaft erlaubt das nicht“): Kampagnen nur per WhatsApp
-  const mode = c.mailFeaturesOff ? "whatsapp" : asChannelMode(sp.kanal);
+  let mode = c.mailFeaturesOff ? "whatsapp" : asChannelMode(sp.kanal);
   // Empfehlungsbitte nur mit Modul „Empfehlungen & Bewertungen“
   const locked = NEEDS_EMPFEHLUNG.includes(occasion) && !c.empfehlungEnabled;
   let segment: Segment = {};
@@ -99,8 +100,25 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   ]);
   // Ausschließlichkeitsvertreter: Cross-Selling in eine Sparte, die er nicht anbietet → deutlicher Hinweis
   const foreignLines = occasion === "cross_sell" ? (segment.lacks ?? []).filter((l) => !mayOffer(offered, l)) : [];
+  // E-Mail gerade nicht möglich (kein Postfach, kein Impressum, Monatsgrenze), WhatsApp schon: Standard „Nur WhatsApp“,
+  // damit die Mehrheit sofort angeschrieben werden kann. Die übrigen nennt eine Zeile mit dem einen Schritt, der fehlt.
+  const imprintEarly = settings.imprint ?? imprintFromWebsiteInfo(settings.websiteInfo);
+  const mailFix: StartBlocker | null = !avail.mailbox
+    ? { label: "Postfach verbinden", href: "/buyer/postfach" }
+    : !hasImprint(imprintEarly)
+      ? { label: "Impressum eintragen", href: "/buyer/bestand/einwilligungen?offen=recht#recht" }
+      : mailQuota.remaining <= 0
+        ? { label: "E-Mails ab dem 1. wieder frei", href: "/buyer/bestand" }
+        : null;
+  let plan = await planAudience(ctx.customerId, occasion, segment, { mode, waAvailable: avail.waAvailable });
+  let mailMissed = 0;
+  if (!sp.kanal && mode === "whatsapp_first" && avail.waAvailable && mailFix && plan.counts.whatsapp > 0 && plan.counts.email > 0) {
+    const waOnly = await planAudience(ctx.customerId, occasion, segment, { mode: "whatsapp", waAvailable: true });
+    mailMissed = Math.max(0, plan.recipients.length - waOnly.recipients.length);
+    mode = "whatsapp";
+    plan = waOnly;
+  }
   const used = effectiveMode(mode, avail.waAvailable);
-  const plan = await planAudience(ctx.customerId, occasion, segment, { mode, waAvailable: avail.waAvailable });
   const ids = plan.recipients.map((r) => r.id);
   const counts = plan.counts;
 
@@ -116,7 +134,9 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
 
   // Euro-Spanne (Schätzung, nur intern): wie im Cockpit, Provision der angebotenen Sparte aus „Meine Provisionen“
   const line = occasion === "cross_sell" ? (segment.lacks?.[0] ?? null) : null;
-  const euro = spanneText(erwarteteProvision(ids.length, quotenFor(occasion), provisionForLine(line, provision.rates)));
+  // Gleiche Rechnung wie „Heute zuerst“ im Cockpit (eigene Quoten ab 30 Empfängern), sonst widersprechen sich die Zahlen
+  const own = eigeneZahlen(await loadCampaignStats(ctx.customerId, { rates: provision.rates }));
+  const euro = spanneText(erwarteteProvision(ids.length, quotenFor(occasion, own[occasion]), provisionForLine(line, provision.rates)));
 
   // Kontakte ohne Eintrag im Bestand (Abschluss ohne eingetragenen Vertrag) können nicht dabei sein: ehrlich mitzählen
   const nichtImBestand = weiteres
@@ -218,7 +238,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   } else if (needMail && !avail.mailbox) {
     blocker = { label: "Erst Postfach verbinden", href: "/buyer/postfach" };
     blockKind = "mail";
-  } else if (needMail && !imprint) {
+  } else if (needMail && !hasImprint(imprint)) {
     blocker = { label: "Erst Impressum eintragen", href: "/buyer/bestand/einwilligungen" };
     blockKind = "mail";
   } else if (needMail && mailQuota.remaining <= 0) {
@@ -318,6 +338,14 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
                 </span>
               ) : null}
             </p>
+            {mailMissed > 0 && mailFix ? (
+              <p className="mt-1 text-sm" data-campaign-mail-missed>
+                <span className="text-[color:var(--muted)]">+{de(mailMissed)} per E-Mail: </span>
+                <Link href={mailFix.href} className="font-medium text-[color:var(--brand)] hover:underline">
+                  {mailFix.label}
+                </Link>
+              </p>
+            ) : null}
             {counts.whatsapp > quota.remaining && !quota.low ? (
               <p className="mt-1 text-xs text-[color:var(--muted)]" data-campaign-quota-hint>
                 {de(quota.remaining)} WhatsApp-Nachrichten frei, danach pausiert die Kampagne bis zum Nachbuchen oder nächsten Monat.
