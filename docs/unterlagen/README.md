@@ -6,6 +6,36 @@ Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unveränder
 Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 24 Folien, Makler 25 (Fassung eca12945). Die Folien sind Bilder (Text nicht
 durchsuchbar). Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Setup“ (hängt an der Preisänderung, die Ole noch bestätigt).
 
+Fassung 20.11.2026, ohne Gedankenstriche und mit Sie-Form im Chat (Ole): Gedankenstriche durch Komma, Doppelpunkt oder
+Punkt ersetzt auf Folie 3, 6, 10, 11, 12, 14, 15 und den Endfolien (Vertreter 21 bis 24, Makler 21 bis 25; Minuszeichen, Bis-Striche
+und Mittelpunkte bleiben); Chats auf Folie 11 und 14 und die Zitate auf Folie 14 siezen den Lead („Guten Tag Frau Becker“,
+Berater „Max Berger“). Überschriften per Glyphen-Übernahme aus dem Original (Komma aus „Sonntag,“), Fließtext mit Inter neu
+gesetzt, Lead-Antworten im Chat unverändert übernommen. PPTX und PDF (Seiten 3, 6, 10 bis 12, 21, 22, 28 bis 31, Makler
+zusätzlich 32), Web-Folien der geänderten Folien neu. Folie 13 (Video: Du-Form und Gedankenstriche) und 17 unverändert.
+Die PPL-Präsentation nutzt dieselben Bilder (Vorstellung, „Niemand geht ran?“, „Kein Lead …“, „Heute“) und ist noch alt.
+
+Fassung 19.11.2026, Folie 19 „Policen vorab“ (Ole): statt WhatsApp-Telefon jetzt oben das Vergleichsblatt kompakt
+(Doppelt, Kündbar, Fehlt) und darunter ein echter Screenshot der Vergleichsfolie der Beratungspräsentation mit Spalte
+„Ihr bisheriger Vertrag“ neben Basis, Smart und Komfort (erfundene Daten, mit dem App-Code gerendert); links neuer
+Punkt „Alter Vertrag direkt neben den neuen Tarifen“. PPTX (Vertreter image23.jpg, Makler image24.jpg), PDF Seite 26,
+Web-Folien vertreter/19 und makler/19 neu.
+
+Fassung 19.11.2026, Folientausch (Ole): „Niemand geht ran? Egal, der Lead bucht selbst.“ ist jetzt Folie 11, „Sonntag,
+21:47 Uhr“ Folie 12 (Vertreter und Makler). PPTX: Reihenfolge in `ppt/presentation.xml` getauscht, Seitenzahl auf beiden
+Bildern korrigiert (zweite Ziffer aus derselben Folie übernommen); PDF: Seiten 11 und 12 mit den neuen Bildern (Folie 13
+mit dem Assistenten steht danach weiter als 8 Einzelbilder); Web-Folien vertreter/11, 12 und makler/11, 12 neu,
+Titelliste in `verkaufspraesentation.ts` und Sprechzettel angepasst. Video (13) und Live-Demo (17) bleiben, wo sie sind.
+Kennzeichen angeglichen (Ole: „ja, kennzeichen angleichen“): Folie 10 jetzt 01 „Nicht erreicht“, 02 „Zu spät angerufen“
+(Texte der oberen Kästen getauscht, Nummern stehen fest), Folie 11 „Problem 01 gelöst“, Folie 12 „Problem 02 + 03 gelöst“,
+Folie 14 bleibt „Problem 04 gelöst“. Ziffern aus der Nachbarfolie übernommen; PPTX, PDF (Seiten 10 bis 12), Web-Folien 10 bis 12.
+
+Fassung 19.11.2026 (Branch `claude/vertreter-folien-screenshots`, nur Vertreter): App-Screenshots auf Folie 15 („Heute“ mit
+neuen Leads oben, Termin mit Zusammenfassung, „Wie lief es?“; Satz jetzt „Nach dem Gespräch: 2 Klicks“), 16 (neue
+Terminvorbereitung) und 20 („Wachstum“ mit „Rechnet sich das?“) neu, sonst unverändert; in PPTX und PDF (Seiten 22, 23, 27)
+ersetzt, Web-Folien vertreter/15, 16, 20 neu. Zum Hochladen Bonusfolie wie unten einfügen.
+Makler (19.11.2026, Ole: „makler auch nachziehen“): dieselben drei Folien (15, 16, 20, Seitenzahl „n / 25“), PDF Seiten 22, 23, 27,
+Web-Folien makler/15, 16, 20 neu.
+
 Fassung eca12945 (17.11.2026, Branch `claude/loving-mendel-j965x3`, nur die vier Präsentationen und
 `sprechzettel-vertrieb.md` übernommen; `docs/webseite/policen-abschnitt.md` nicht, siehe docs/webseite-offen.md):
 - Neue Folie 19 „Ihr Kunde schickt seine Policen. Sie sehen vorher, wo er doppelt zahlt.“ (Rubrik „Ihre Software“),
@@ -61,6 +91,22 @@ done; done
 
 Der Header-Wert `dummy` wird vom Netzwerk-Geheimnis der Claude-Umgebung durch den echten Schlüssel ersetzt
 (Railway-Variable `OPS_UPLOAD_TOKEN` am Service „live-app“). Danach mit `GET /api/ops/unterlagen` prüfen.
+
+## Pay-per-Lead + Software (19.11.2026, Ole)
+
+Eigene kurze Präsentation für Vermittler, die Leads pro Stück kaufen wollen und dazu die Software bekommen sollen:
+`PPL-Software-Praesentation.pptx` und `.pdf` (19 Folien, Bild-Folien im selben Design, Seitenzahl „n / 19“, Sprechzettel
+als Notizen in der PPTX) und `sprechzettel-ppl-software.md` (je Folie, dazu 3 Einwände). Nicht für den Upload unter
+Marketing → Unterlagen gedacht (dort gibt es nur Vertreter/Makler), sondern zum Zeigen im Gespräch oder Versand per Mail.
+
+- Neu gebaut (HTML im Design der Vertreter-Folien, mit Chrome als Bild gerendert): 1 Titel, 2 Ihr Ziel, 3 Warum gekaufte
+  Leads verbrennen (Probleme 01 bis 04 wie Vertreter-Folie 10, damit „Problem … gelöst“ auf den übernommenen Folien passt),
+  Reihenfolge (20.11.2026): 1 Titel, 2 bis 6 Vorstellung, 7 Ziel, 8 Problem, 9 bis 14 Software (14 „Beraten mit echten Preisen“, in der Web-Fassung die Live-Demo), 15 Leads und Preise, 16 und 17 Beispielrechnung (20 und 100 Leads), 18 Paket, 19 Start.
+- Übernommen aus `Vertreter-Praesentation.pptx` (Seitenzahl ersetzt): 2 bis 6 Vorstellung (Wer sind wir?, Ole, Online-Marketer des Jahres, 200.000 Leads für die Allianz, Mirko; Vertreter 2 bis 6), danach 5 „Niemand geht ran?“ (Vertreter 11),
+  6 „Sonntag, 21:47 Uhr“ (12), 7 „Kein Lead geht mehr verloren“ (14), 8 „Heute“ (15), 9 Terminvorbereitung (16).
+- Preise: Leads 17/22/35/65 € je Lead ohne Zusatz „brutto/netto“ (Umsatzsteuer auf Leads wird geprüft), Software
+  349 € netto im Monat, keine Einrichtung, ohne Mindestlaufzeit, monatlich kündbar, 3 aktive Verkäufer inklusive (weitere 49 €).
+  Ändern sich Preise, Folien 4, 10, 11 und den Sprechzettel anpassen.
 
 ## Web-Präsentation (Ole, 15.11.2026)
 

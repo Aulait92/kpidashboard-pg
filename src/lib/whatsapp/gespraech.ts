@@ -92,7 +92,10 @@ export function terminNutzenSatz(o: { source: string | null | undefined; formula
   if (purpose === "outreach_tkv") {
     const name = wert(o.formular, /tiername|name des tieres/i);
     const tier = name ?? TIER_AKK[p?.tier ?? "tier"][an === "du" ? 0 : 1];
-    const was = /\bop\b|op-|operation/i.test(o.source ?? "") ? "eine OP-Versicherung" : "eine Krankenversicherung";
+    // Gewünschter Umfang aus Formular bzw. Chat geht vor der Kampagne (Ole, 19.11.2026: Lead „nur OP“, Satz sagte „Krankenversicherung“)
+    const wunsch = angabe(o.formular, o.angaben, /tarifwunsch|umfang|gewünschter schutz|op oder voll/i, ["tarifwunsch"]) ?? "";
+    const op = /voll|behandlung|krankenversicherung/i.test(wunsch) ? false : /\bop\b|op-|operation/i.test(wunsch) || /\bop\b|op-|operation/i.test(o.source ?? "");
+    const was = op ? "eine OP-Versicherung" : "eine Krankenversicherung";
     return `${zeigt} was ${was} für ${tier} kostet ${achten}.`;
   }
   if (purpose === "outreach_pkv") {
@@ -534,7 +537,7 @@ export function buchungsText(o: { an: Ansprache; start: Date; mode: TerminModus;
  * Lead Tag und Uhrzeit und ist sie frei, wird direkt gebucht. Nur bei belegter Zeit oder nur Tag/Tageszeit: zwei Zeiten.
  */
 export const WUNSCHZEIT_REGEL =
-  "Nennt der Lead eine konkrete Zeit (Tag und Uhrzeit, z. B. „Mittwoch um 16 Uhr“) und ist genau diese Zeit unter den freien Zeiten von get_available_slots: frag nicht noch einmal nach und biete keine zweite Zeit an, sondern buche sie direkt mit book_appointment (gleiche Regeln zur E-Mail-Adresse wie unten). Nur wenn sie belegt ist oder er nur einen Tag bzw. eine Tageszeit nennt: termin_vorschlagen mit erneut=true und den zwei nächstgelegenen freien start-Werten (bei belegter Zeit als einleitung kurz: „Um 16 Uhr ist leider schon belegt.“).";
+  "Nennt der Lead eine konkrete Zeit (Tag und Uhrzeit, z. B. „Mittwoch um 16 Uhr“) und ist genau diese Zeit unter den freien Zeiten von get_available_slots: frag nicht noch einmal nach und biete keine zweite Zeit an, sondern buche sie direkt mit book_appointment (gleiche Regeln zur E-Mail-Adresse wie unten). Nur wenn sie belegt ist oder er nur einen Tag bzw. eine Tageszeit nennt: termin_vorschlagen mit erneut=true und den zwei nächstgelegenen freien start-Werten (bei belegter Zeit als einleitung kurz: „Um 16 Uhr ist leider schon belegt.“). Nennt der Lead einen Tag oder Zeitraum, der nicht unter den freien Zeiten ist (z. B. „Dienstag“, „erst nächste Woche“): hol mit get_available_slots und ab = diesem Tag die freien Zeiten dort und schlag zwei davon vor; kann er nur später, bekommt er den späteren Termin. Zeiten, die der Lead schon abgelehnt hat (z. B. mit „Andere Zeit“), nie noch einmal anbieten.";
 
 /** Prompt-Block Terminvorschlag und Buchung (vor dem Termin). beispiel = terminVorschlagText mit Platzhaltern. */
 export function terminRegeln(o: { an: Ansprache; person: VermittlerName; formate: TerminFormate; beispiel: string; emailBekannt: boolean }): string {

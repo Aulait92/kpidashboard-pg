@@ -155,6 +155,7 @@ export async function loadAgencyCostConfig(customerId: string): Promise<AgencyCo
       where: { id: customerId },
       select: {
         createdAt: true,
+        plan: true,
         retainerMonthly: true,
         retainerStart: true,
         retainerEnd: true,
@@ -209,7 +210,8 @@ export async function loadAgencyCostConfig(customerId: string): Promise<AgencyCo
       : accepted && Number(accepted.monthlyFee) > 0
         ? [{ from: start, until: c.retainerEnd, monthly: Number(accepted.monthlyFee) }]
         : [],
-    baseInLeadCosts: retainer > 0,
+    // Pay-per-Lead + Software: Leads kosten den Lead-Preis, die Software-Gebühr steckt nicht in den Lead-Kosten
+    baseInLeadCosts: retainer > 0 && c.plan !== "ppl_software",
     logins: seatSegments(c.seatsBilled, c.seatMonthly != null ? Number(c.seatMonthly) : 0, audits.filter((a) => a.action === "billing.seats"), start ?? c.createdAt),
     modules,
     // Tatsächlich vereinbarter Setup-Betrag aus dem angenommenen Angebot (inkl. Rabatten), nicht der Listenpreis

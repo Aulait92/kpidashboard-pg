@@ -28,6 +28,16 @@
 // v9 (Ole, 18.11.2026): noch kürzer, eine Zeile, ohne Vermittler: „Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz!
 // *{{2}}?*“; Tierkrankenversicherung emotional mit dem Tiernamen: „Hallo {{1}}, schön, dass Sie {{2}} gut absichern
 // möchten 🐾 *{{3}}?*“. KI-Kennzeichnung in der Fußzeile (ERSTINFO_FOOTER_V9). v8 bleibt Rückfall (PLATZHALTER_AB).
+//
+// v10 (Ole, 19.11.2026, sofort Standard, kein A/B-Test für v10): Antwort per Tipp statt Tippen. Je Zweck eine FESTE,
+// fette Frage mit bis zu drei Antwortknöpfen in der Vorlage, höchstens ca. 90 Zeichen nach „Hallo {{1}}, “, keine
+// Leerzeile, kein „Mehr lesen“. PDF der Erstinformation bleibt im Kopf (Pflicht), Fußzeile nur „KI-Assistent“ (Recht
+// 19.11.2026: der Hinweis auf die Erstinformation in der Fußzeile entfällt, die KI-Kennzeichnung bleibt). Platzhalter:
+// nur {{1}} Anrede, TKV zusätzlich {{2}} Tier (tierFuerErstanschreiben). Ist genau diese Frage laut Formular schon
+// beantwortet (v10Moeglich), bekommt der Lead weiter v9 mit der Platzhalter-Frage. Bis v10 beim Kunden von Meta
+// freigegeben ist, sendet die App die neueste freigegebene Fassung (v9, v8 …) mit deren Platzhaltern (outreach.ts).
+// v11 = Fassung b für den A/B-Test gegen v10 (TEMPLATE_BODY_B, Name pg_<zweck>_v10_b_…): „Frage zuerst“, die Frage
+// steht direkt hinter der Anrede, damit sie in Benachrichtigung und Chatliste sichtbar ist; gleiche Platzhalter und Knöpfe.
 
 import { displayProduct } from "@/lib/products";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
@@ -101,6 +111,138 @@ export function erstanschreibenV9(purpose: ErstanschreibenZweck): { sie: string;
     sie: `danke für Ihre Anfrage${v8Thema(purpose, "sie")}! *{{2}}?*`,
     du: `danke für deine Anfrage${v8Thema(purpose, "du")}! *{{2}}?*`,
   };
+}
+
+/** Feste erste Frage des Erstanschreibens ab v10 je Zweck (Ole, 19.11.2026). */
+export type V10Frage = {
+  /** Text nach „Hallo {{1}}, “: Fassung a (v10) und b (v11, „Frage zuerst“), je Sie und Du; {{2}} = Tier (nur TKV) */
+  a: { sie: string; du: string };
+  b: { sie: string; du: string };
+  /** Antwortknöpfe (höchstens 3, je höchstens 20 Zeichen), in Vorlage und Freitext gleich */
+  knoepfe: string[];
+  /** Feld in record_qualification für die Antwort */
+  feld: string;
+  /** Frage im Frageplan, die diese Frage ersetzt (null = allgemeine Fassung, Telefonat) */
+  planKey: "frage1" | "frage2" | "vorhanden" | null;
+  /** Gespeicherter Wert je Knopf (Standard: der Knopftext) */
+  werte?: Record<string, string>;
+};
+
+/**
+ * Erstanschreiben v10 und v11 (Ole, 19.11.2026). TKV: „Was soll abgesichert sein?“ ersetzt die bisherige Frage 2
+ * (Tarifwunsch), danach fragt der Assistent noch das Alter (Frage 1), falls nicht im Formular. Zahn neutral nach dem
+ * Tarifbaustein (Art. 9 DSGVO, neutralZahnAngaben). Allgemein: Telefonat wie OUTREACH_ALLGEMEIN (angaben.wunsch).
+ */
+export const ERSTANSCHREIBEN_V10: Record<ErstanschreibenZweck, V10Frage> = {
+  outreach_tkv: {
+    a: { sie: "schön, dass Sie {{2}} gut absichern möchten 🐾 *Was soll abgesichert sein?*", du: "schön, dass du {{2}} gut absichern möchtest 🐾 *Was soll abgesichert sein?*" },
+    b: { sie: "*was soll für {{2}} abgesichert sein?* 🐾", du: "*was soll für {{2}} abgesichert sein?* 🐾" },
+    knoepfe: ["Nur Operationen", "Auch Behandlungen", "Noch unsicher"],
+    feld: "tarifwunsch",
+    planKey: "frage2",
+    // gleiche Werte wie die Tierfrage nach der Buchung (tier-fragen.ts tierAntwortAuswerten)
+    werte: { "Nur Operationen": "nur OP-Schutz", "Auch Behandlungen": "volle Krankenversicherung (auch Tierarztbehandlung)", "Noch unsicher": "offen" },
+  },
+  outreach_privatschutz: {
+    a: { sie: "danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*", du: "danke für deine Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*" },
+    b: { sie: "*ist beim Privatschutz schon etwas versichert?* Danke für Ihre Anfrage!", du: "*ist beim Privatschutz schon etwas versichert?* Danke für deine Anfrage!" },
+    knoepfe: ["Alles neu", "Schon versichert", "Teils, teils"],
+    feld: "vorhanden",
+    planKey: "vorhanden",
+    werte: { "Alles neu": "noch nichts versichert, alles neu", "Schon versichert": "schon versichert", "Teils, teils": "teilweise schon versichert" },
+  },
+  outreach_hausrat: {
+    a: { sie: "danke für Ihre Anfrage zu Ihrer Hausratversicherung! *Haben Sie schon eine Hausrat?*", du: "danke für deine Anfrage zu deiner Hausratversicherung! *Hast du schon eine Hausrat?*" },
+    b: { sie: "*haben Sie schon eine Hausratversicherung?* Danke für Ihre Anfrage!", du: "*hast du schon eine Hausratversicherung?* Danke für deine Anfrage!" },
+    knoepfe: ["Nein, wäre neu", "Ja, habe ich"],
+    feld: "vorhanden",
+    planKey: "vorhanden",
+    werte: { "Nein, wäre neu": "keine Hausratversicherung, wäre neu", "Ja, habe ich": "Hausratversicherung vorhanden" },
+  },
+  outreach_zahn: {
+    a: { sie: "danke für Ihre Anfrage zur Zahnzusatzversicherung! *Was ist Ihnen am wichtigsten?*", du: "danke für deine Anfrage zur Zahnzusatzversicherung! *Was ist dir am wichtigsten?*" },
+    b: {
+      sie: "*was ist Ihnen bei der Zahnzusatzversicherung am wichtigsten?* Danke für Ihre Anfrage!",
+      du: "*was ist dir bei der Zahnzusatzversicherung am wichtigsten?* Danke für deine Anfrage!",
+    },
+    knoepfe: ["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"],
+    feld: "tarifwunsch",
+    planKey: "frage1",
+    // neutral als Produktinteresse (Art. 9 DSGVO), wie neutralZahnAngaben
+    werte: { "Starker Zahnersatz": "Tarif mit starkem Zahnersatz-Baustein", "Mit Zahnreinigung": "Tarif mit Zahnreinigung", "Beides vergleichen": "Beides vergleichen" },
+  },
+  outreach_pkv: {
+    a: {
+      sie: "danke für Ihre Anfrage zur privaten Krankenversicherung! *Wie sind Sie beruflich aufgestellt?*",
+      du: "danke für deine Anfrage zur privaten Krankenversicherung! *Wie bist du beruflich aufgestellt?*",
+    },
+    b: { sie: "*wie sind Sie beruflich aufgestellt?* Danke für Ihre Anfrage zur PKV!", du: "*wie bist du beruflich aufgestellt?* Danke für deine Anfrage zur PKV!" },
+    knoepfe: ["Angestellt", "Selbstständig", "Beamter"],
+    feld: "beruf",
+    planKey: "frage1",
+  },
+  outreach: {
+    a: { sie: "danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*", du: "danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*" },
+    b: { sie: "*wann passt Ihnen ein kurzes Telefonat?* Danke für Ihre Anfrage!", du: "*wann passt dir ein kurzes Telefonat?* Danke für deine Anfrage!" },
+    knoepfe: ["Heute", "Morgen", "Lieber schriftlich"],
+    feld: "wunsch",
+    planKey: null,
+    werte: { Heute: "Telefonat heute", Morgen: "Telefonat morgen", "Lieber schriftlich": "lieber schriftlich im Chat" },
+  },
+};
+
+/** Vorlagentext v10 (Fassung a) nach „Hallo {{1}}, “ je Ansprache. */
+export function erstanschreibenV10(purpose: ErstanschreibenZweck): { sie: string; du: string } {
+  return { ...ERSTANSCHREIBEN_V10[purpose].a };
+}
+
+/** Vorlagentext v11 (Fassung b des A/B-Tests gegen v10, „Frage zuerst“) nach „Hallo {{1}}, “ je Ansprache. */
+export function erstanschreibenV11(purpose: ErstanschreibenZweck): { sie: string; du: string } {
+  return { ...ERSTANSCHREIBEN_V10[purpose].b };
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Erkennungsmuster der festen Frage (fetter Teil, Platzhalter beliebig) je Zweck, Fassung und Ansprache. */
+const V10_MUSTER: { zweck: ErstanschreibenZweck; variant: "a" | "b"; re: RegExp }[] = (Object.keys(ERSTANSCHREIBEN_V10) as ErstanschreibenZweck[]).flatMap((zweck) =>
+  (["a", "b"] as const).flatMap((variant) =>
+    (["sie", "du"] as const).map((an) => {
+      const fett = /\*([^*]+)\*/.exec(ERSTANSCHREIBEN_V10[zweck][variant][an])?.[1] ?? "";
+      return { zweck, variant, re: new RegExp(escapeRe(fett).replace(/\\\{\\\{\d+\\\}\\\}/g, ".{1,80}?"), "i") };
+    }),
+  ),
+);
+
+/**
+ * Steht die feste Frage von v10 bzw. v11 in diesem gesendeten Text (Vorlage oder Freitext)? Liefert Zweck, Fassung und
+ * die Frage so, wie sie gesendet wurde (erster Buchstabe groß, ohne Sternchen). null = keine v10/v11.
+ *   bevorzugt: Zweck des Leads zuerst prüfen (Privatschutz und Hausrat ähneln sich nicht, aber sicher ist sicher)
+ */
+export function v10FrageIn(gesendet: string | null | undefined, bevorzugt?: string | null): { zweck: ErstanschreibenZweck; variant: "a" | "b"; frage: string; def: V10Frage } | null {
+  const t = gesendet ?? "";
+  if (!t) return null;
+  const reihe = [...V10_MUSTER].sort((x, y) => Number(y.zweck === bevorzugt) - Number(x.zweck === bevorzugt));
+  for (const m of reihe) {
+    const hit = m.re.exec(t);
+    if (hit) {
+      const frage = hit[0].charAt(0).toUpperCase() + hit[0].slice(1);
+      return { zweck: m.zweck, variant: m.variant, frage, def: ERSTANSCHREIBEN_V10[m.zweck] };
+    }
+  }
+  return null;
+}
+
+/**
+ * Antwort per Knopf auf die feste Frage von v10/v11 (rein, testbar): Feld und zu speichernder Wert, z. B. TKV
+ * „Nur Operationen“ → tarifwunsch „nur OP-Schutz“. null = kein Knopf dieser Frage bzw. keine v10/v11 gesendet.
+ */
+export function erstfrageKnopfWert(gesendet: string | null | undefined, knopf: string | null | undefined, bevorzugt?: string | null): { feld: string; wert: string; frage: string; knopf: string } | null {
+  const v = v10FrageIn(gesendet, bevorzugt);
+  const k = (knopf ?? "").trim().toLowerCase().replace(/[.!]+$/, "");
+  if (!v || !k) return null;
+  const titel = v.def.knoepfe.find((x) => x.toLowerCase() === k);
+  if (!titel) return null;
+  return { feld: v.def.feld, wert: v.def.werte?.[titel] ?? titel, frage: v.frage, knopf: titel };
 }
 
 /** Tier im Akkusativ, wenn der Name fehlt („Ihre Katze“, „Ihren Hund“, Du „deinen Hund“). */
@@ -265,7 +407,8 @@ export type FormAntwort = { label: string; value: string };
 
 /** Welche Formularfelder beantworten Frage 1 bzw. 2 schon (Feldnamen wie lib/ppl/perspective.ts und Meta-Formulare)? */
 const BEKANNT: Partial<Record<NoticePurpose, { frage1?: RegExp; frage2?: RegExp }>> = {
-  outreach_tkv: { frage1: /geburtsjahr|^alter\b|alter \(tier\)|alter des tieres/i },
+  // Gewünschter Schutz (Ole, 19.11.2026: feste Frage in v10) aus Formularfeldern wie „Gewünschter Schutz: OP-Schutz“
+  outreach_tkv: { frage1: /geburtsjahr|^alter\b|alter \(tier\)|alter des tieres/i, frage2: /tarifwunsch|gewünschter schutz|^schutz\b|op-schutz|absicherungswunsch|^tarifart\b/i },
   outreach_pkv: { frage1: /^situation\b|berufliche situation|^beruf\b/i, frage2: /gesetzlich oder privat|wie lange in pkv|aktuelle versicherung/i },
   outreach_privatschutz: { frage1: /versicherungsinteresse/i, frage2: /lebenssituation|familienstand|zu versichernde/i },
 };
@@ -324,15 +467,21 @@ export type PlanFrage = {
   bekannt: string | null;
 };
 
-/** Frage im Erstanschreiben, die nicht im Plan steht: ältere TKV-Frage bzw. Frage nach dem Videotermin. */
-type SonstigeFrage = { key: "tier_v4" | "termin"; sie: string; du: string; feld: string; bekannt: null };
+/**
+ * Frage im Erstanschreiben, die nicht im Plan steht: ältere TKV-Frage, Frage nach dem Videotermin bzw. (v10 allgemein,
+ * Ole 19.11.2026) die feste Frage nach dem Telefonat.
+ */
+type SonstigeFrage = { key: "tier_v4" | "termin" | "telefonat"; sie: string; du: string; feld: string; bekannt: null; knoepfe?: readonly string[] };
 
 export type Frageplan = {
   produkt: OutreachProdukt | null;
   /** Alle Fragen des Produkts vor dem Termin, mit bekannter Antwort aus dem Formular */
   fragen: PlanFrage[];
-  /** Die Frage, die unser Erstanschreiben gestellt hat (auch wenn das Formular sie schon beantwortet), sonst null */
-  gestellt: PlanFrage | SonstigeFrage | null;
+  /**
+   * Die Frage, die unser Erstanschreiben gestellt hat (auch wenn das Formular sie schon beantwortet), sonst null. Ab v10
+   * (Ole, 19.11.2026) mit dem Wortlaut der festen Frage, wie gesendet, und ihren Knöpfen.
+   */
+  gestellt: (PlanFrage & { knoepfe?: readonly string[] }) | SonstigeFrage | null;
   /** Noch zu stellen, in dieser Reihenfolge (höchstens MAX_FRAGEN_VOR_TERMIN, die gestellte mitgezählt) */
   offen: PlanFrage[];
 };
@@ -394,7 +543,11 @@ export function frageplan(source: string | null | undefined, formular: FormAntwo
   const p = outreachProdukt(source);
   const gesendet = opts.gesendet ?? "";
   const termin: SonstigeFrage | null = TERMIN_RE.test(gesendet) ? { key: "termin", sie: "", du: "", feld: "wunsch", bekannt: null } : null;
-  if (!p) return { produkt: null, fragen: [], gestellt: termin, offen: [] };
+  // Feste Frage aus v10/v11 (Ole, 19.11.2026), Vorlage oder Freitext, Fassung a oder b
+  const v10 = v10FrageIn(gesendet, erstanschreibenZweck(source, formular));
+  const telefonat: SonstigeFrage | null =
+    v10 && !v10.def.planKey ? { key: "telefonat", sie: v10.frage, du: v10.frage, feld: v10.def.feld, bekannt: null, knoepfe: v10.def.knoepfe } : null;
+  if (!p) return { produkt: null, fragen: [], gestellt: telefonat ?? termin, offen: [] };
   const bekannt = bekannteAntworten(p, formular);
   const find = (re: RegExp) => {
     const hit = (formular ?? []).find((x) => re.test(x.label.trim()) && x.value?.trim());
@@ -417,12 +570,18 @@ export function frageplan(source: string | null | undefined, formular: FormAntwo
   // Ältere Fassung der Frage nach bestehenden Verträgen („schon irgendwo versichert“) gilt als dieselbe
   const istIn = (f: PlanFrage) =>
     !!gesendet && (gesendet.includes(f.sie) || gesendet.includes(f.du) || (f.key === "vorhanden" && /schon (irgendwo )?versichert, oder wäre/.test(gesendet)));
-  const gestellt: PlanFrage | SonstigeFrage | null =
-    p.purpose === "outreach_tkv" && gesendet.includes(TKV_V4.frage1)
-      ? { key: "tier_v4", sie: TKV_V4.frage1, du: TKV_V4.frage1, feld: "tier", bekannt: null }
-      : (fragen.find(istIn) ?? termin);
+  // v10/v11: die feste Frage ersetzt die Frage des Plans mit demselben Feld (TKV Tarifwunsch, Privatschutz und Hausrat
+  // bestehende Verträge, Zahn Tarifbaustein, PKV Beruf); Wortlaut und Knöpfe wie gesendet
+  const v10Plan = v10?.def.planKey ? fragen.find((f) => f.key === v10.def.planKey) : undefined;
+  const gestellt: Frageplan["gestellt"] = v10Plan
+    ? { ...v10Plan, feld: v10!.def.feld, sie: v10!.frage, du: v10!.frage, knoepfe: v10!.def.knoepfe }
+    : telefonat
+      ? telefonat
+      : p.purpose === "outreach_tkv" && gesendet.includes(TKV_V4.frage1)
+        ? { key: "tier_v4", sie: TKV_V4.frage1, du: TKV_V4.frage1, feld: "tier", bekannt: null }
+        : (fragen.find(istIn) ?? termin);
   const rest = Math.max(0, MAX_FRAGEN_VOR_TERMIN - (gestellt ? 1 : 0));
-  const offen = gestellt?.key === "termin" ? [] : fragen.filter((f) => !f.bekannt && f !== gestellt).slice(0, rest);
+  const offen = gestellt?.key === "termin" || gestellt?.key === "telefonat" ? [] : fragen.filter((f) => !f.bekannt && f.key !== gestellt?.key).slice(0, rest);
   return { produkt: p, fragen, gestellt, offen };
 }
 
@@ -462,8 +621,10 @@ export function ersteFrageRegel(
   if (!p) {
     if (opts.jetzt) return "";
     if (plan.gestellt?.key === "termin") return `Erste Frage (stand schon in unserer ersten WhatsApp): „${terminFrage(an, advisorName)}“.\n- Sagt der Lead ja oder nennt er einen Tag: ${termine}`;
+    // v10/v11 (Ole, 19.11.2026): feste Frage „Wann passt Ihnen ein kurzes Telefonat?“, Wortlaut wie gesendet
+    const frage = plan.gestellt?.key === "telefonat" ? plan.gestellt.sie : `Wann erreicht ${opts.personNom || advisorName} ${a(an, "dich", "Sie")} am besten für ein kurzes Telefonat?`;
     return [
-      `Erste Frage (stand schon in unserer ersten WhatsApp): „Wann erreicht ${opts.personNom || advisorName} ${a(an, "dich", "Sie")} am besten für ein kurzes Telefonat?“ mit den Knöpfen ${OUTREACH_ALLGEMEIN.knoepfe.map((k) => `„${k}“`).join(", ")}.`,
+      `Erste Frage (stand schon in unserer ersten WhatsApp): „${frage}“ mit den Knöpfen ${OUTREACH_ALLGEMEIN.knoepfe.map((k) => `„${k}“`).join(", ")}.`,
       "- Antwortet der Lead „Heute“ oder „Morgen“ (Knopf oder frei): halte das als Wunsch fest (angaben.wunsch) und mach den Terminvorschlag mit zwei freien Zeiten an diesem Tag (gibt es keine, die nächsten).",
       "- „Lieber schriftlich“: kein Problem, mach im Chat weiter: frag in einem Satz, worum es genau geht, dann der Terminvorschlag.",
     ].join("\n");
@@ -480,11 +641,14 @@ export function ersteFrageRegel(
   const lines: string[] = ["Fragen vor dem Termin (Frageplan, hat Vorrang vor anderen Fragelisten):"];
   const g = opts.jetzt ? null : plan.gestellt;
   if (g) {
-    const knoepfe: readonly string[] = g.key === "tier_v4" ? TKV_V4.knoepfe : g.key === "frage1" ? p.knoepfe : [];
+    const knoepfe: readonly string[] = g.knoepfe ?? (g.key === "tier_v4" ? TKV_V4.knoepfe : g.key === "frage1" ? p.knoepfe : []);
     const frage = g.key === "termin" ? terminFrage(an, advisorName) : text(g);
     lines.push(
       `- Unsere erste WhatsApp hat gefragt: „${frage}“${knoepfe.length ? ` (Knöpfe ${knoepfe.map((k) => `„${k}“`).join(", ")})` : ""}. Die nächste Nachricht des Leads (per Knopf oder frei) ist die Antwort darauf: mit record_qualification festhalten (angaben.${g.feld}), kurz bestätigen, nicht erneut fragen.`,
     );
+    // v10/v11 (Ole, 19.11.2026): Knopfwerte einheitlich festhalten (TKV „Nur Operationen“ = „nur OP-Schutz“ …)
+    const werte = v10FrageIn(opts.gesendet, erstanschreibenZweck(source, opts.formular))?.def.werte;
+    if (g.knoepfe && werte) lines.push(`- Werte für angaben.${g.feld}: ${Object.entries(werte).map(([k, w]) => `„${k}“ = „${w}“`).join(", ")}.`);
     if (g.bekannt) lines.push(`- Diese Frage stand fest in der Vorlage, das Formular beantwortet sie aber schon (${g.bekannt}): sie gilt als beantwortet. Was der Lead darauf antwortet (Knopf, „ja“ oder Text), nimm es auf und verfolge die Frage nicht weiter, keine Rückfrage dazu.`);
   } else if (!opts.jetzt && opts.gesendet) {
     lines.push("- Unsere erste WhatsApp war eine ältere Fassung ohne diese Fragen. Antwortet der Lead nur „Ja“ o. Ä., ist das die Zustimmung: weiter mit dem Plan unten.");
@@ -519,7 +683,13 @@ const ZWISCHEN_APP_REGEL =
 export function enthaeltErsteFrage(text: string | null | undefined, source: string | null | undefined): boolean {
   const p = outreachProdukt(source);
   if (!p || !text) return false;
-  return [p.frage1, p.frage1Du, p.frage2Sie, p.frage2Du].some((f) => text.includes(f)) || /schon (irgendwo )?versichert, oder wäre/.test(text) || /Videotermin mit .+ in den nächsten Tagen\?/.test(text);
+  return (
+    [p.frage1, p.frage1Du, p.frage2Sie, p.frage2Du].some((f) => text.includes(f)) ||
+    /schon (irgendwo )?versichert, oder wäre/.test(text) ||
+    /Videotermin mit .+ in den nächsten Tagen\?/.test(text) ||
+    // feste Frage aus v10/v11 (Ole, 19.11.2026)
+    !!v10FrageIn(text, p.purpose)
+  );
 }
 
 /** Woher kommt der Kontakt? „anfrage“ = Leadformular (Meta, Funnel), „nachricht“ = hat uns zuerst per WhatsApp geschrieben. */
@@ -544,6 +714,8 @@ export type ErstanschreibenOpts = {
   formular?: FormAntwort[] | null;
   /** Termin schon gebucht (z. B. Dankeseite des Meta-Formulars): nie nach einem Termin fragen */
   gebucht?: boolean;
+  /** A/B-Fassung (ab v10: b = v11 „Frage zuerst“, lib/whatsapp/ab-test.ts) */
+  variant?: "a" | "b";
 };
 
 /**
@@ -618,9 +790,18 @@ export function erstanschreibenV6Params(o: { source: string | null | undefined; 
  * Parameter der v9-Vorlage nach dem Namen (rein, testbar): [erste offene Frage ohne „?“]; Tierkrankenversicherung
  * [Tier (Name bzw. „Ihre Katze“), erste offene Frage ohne „?“].
  */
-export function erstanschreibenV9Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string; gebucht?: boolean }): string[] {
+export function erstanschreibenV9Params(o: {
+  source: string | null | undefined;
+  an: Ansprache;
+  formular?: FormAntwort[] | null;
+  person: { nom: string; dat: string };
+  kurz: string;
+  gebucht?: boolean;
+  /** Zweck der gesendeten Vorlage (Rückfall auf die allgemeine Fassung hat kein Tier-Platzhalter); ohne: der des Leads */
+  purpose?: NoticePurpose;
+}): string[] {
   const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person, { gebucht: o.gebucht }));
-  return erstanschreibenZweck(o.source, o.formular) === "outreach_tkv" ? [tierFuerErstanschreiben(o.source, o.an, o.formular), frage] : [frage];
+  return (o.purpose ?? erstanschreibenZweck(o.source, o.formular)) === "outreach_tkv" ? [tierFuerErstanschreiben(o.source, o.an, o.formular), frage] : [frage];
 }
 
 /** Parameter der v8-Vorlage nach dem Namen: [Vermittler im Dativ, erste offene Frage ohne „?“] (rein, testbar). */
@@ -628,10 +809,34 @@ export function erstanschreibenV8Params(o: { source: string | null | undefined; 
   return [o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person, { gebucht: o.gebucht }))];
 }
 
-/** Knöpfe zur ersten Frage im Freitext: nur bei Frage 1 des Produkts bzw. der Telefonatsfrage, sonst keine. */
-export function ersteFrageKnoepfe(source: string | null | undefined, formular?: FormAntwort[] | null): string[] {
+/**
+ * Darf dieser Lead die feste Frage von v10/v11 bekommen (Ole, 19.11.2026, rein)? Nein, wenn das Formular genau diese
+ * Frage schon beantwortet (dann v9 mit der ersten offenen Frage als Platzhalter), bei der allgemeinen Fassung auch nicht,
+ * wenn schon ein Termin gebucht ist (v9 fragt dann, ob der Vermittler vorab etwas wissen sollte).
+ */
+export function v10Moeglich(source: string | null | undefined, formular?: FormAntwort[] | null, opts: { gebucht?: boolean } = {}): boolean {
+  const zweck = erstanschreibenZweck(source, formular) as ErstanschreibenZweck;
+  const def = ERSTANSCHREIBEN_V10[zweck];
+  if (!def) return false;
+  if (!def.planKey) return !opts.gebucht;
+  const f = frageplan(source, formular).fragen.find((x) => x.key === def.planKey);
+  return !!f && !f.bekannt;
+}
+
+/** Parameter der v10/v11-Vorlage nach dem Namen (rein, testbar): TKV [Tier], sonst keine. */
+export function erstanschreibenV10Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; purpose: NoticePurpose }): string[] {
+  return o.purpose === "outreach_tkv" ? [tierFuerErstanschreiben(o.source, o.an, o.formular)] : [];
+}
+
+/**
+ * Knöpfe zur ersten Frage im Freitext: ab v10 die Knöpfe der festen Frage (Ole, 19.11.2026), sonst nur bei Frage 1 des
+ * Produkts bzw. der Telefonatsfrage, sonst keine.
+ */
+export function ersteFrageKnoepfe(source: string | null | undefined, formular?: FormAntwort[] | null, opts: { gebucht?: boolean; herkunft?: Herkunft } = {}): string[] {
+  // Lead hat zuerst geschrieben: Kopf mit der Frage des Plans wie bisher (erstanschreibenText), dazu die bisherigen Knöpfe
+  if (opts.herkunft !== "nachricht" && v10Moeglich(source, formular, opts)) return [...ERSTANSCHREIBEN_V10[erstanschreibenZweck(source, formular) as ErstanschreibenZweck].knoepfe];
   const p = outreachProdukt(source);
-  if (!p) return [...OUTREACH_ALLGEMEIN.knoepfe];
+  if (!p) return opts.gebucht ? [] : [...OUTREACH_ALLGEMEIN.knoepfe];
   return frageplan(source, formular).offen[0]?.key === "frage1" ? [...p.knoepfe] : [];
 }
 
@@ -648,12 +853,19 @@ export function erstanschreibenText(o: ErstanschreibenOpts, opts: { ohneFuss?: b
   const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.name, o.formular, person, { gebucht: o.gebucht }));
   // Lead hat zuerst geschrieben bzw. kein Lead: wie bisher mit Kopf und Frage darunter (v8)
   if (o.ohneLead || o.herkunft === "nachricht") return `${erstanschreibenKopf(o)}\n\n*${frage}?*`;
+  const an = o.an;
+  const zweck = erstanschreibenZweck(o.source, o.formular);
+  // v10/v11 (Ole, 19.11.2026): derselbe Text wie die Vorlage der zugeteilten Fassung, mit denselben Knöpfen
+  // (ersteFrageKnoepfe); darunter kursiv nur „KI-Assistent“, das PDF folgt als eigene Nachricht
+  if (v10Moeglich(o.source, o.formular, { gebucht: o.gebucht })) {
+    const body = ERSTANSCHREIBEN_V10[zweck as ErstanschreibenZweck][o.variant === "b" ? "b" : "a"][an];
+    const text = `${erstGruss(an, o.kontakt)} ${body.replace("{{2}}", erstanschreibenV10Params({ source: o.source, an, formular: o.formular, purpose: zweck })[0] ?? "")}`;
+    return opts.ohneFuss ? text : `${text}\n\n_${ERSTANSCHREIBEN_V10_FREITEXT_FUSS}_`;
+  }
   // v9 (Ole, 18.11.2026): wie die Vorlage, eine Zeile ohne Vermittler; die KI-Kennzeichnung der Fußzeile steht im
   // Freitext kursiv darunter. Tierkrankenversicherung: „schön, dass Sie Minka gut absichern möchten 🐾“
-  const an = o.an;
   const p = outreachProdukt(o.source);
   const s = (o.source ?? "").trim();
-  const zweck = erstanschreibenZweck(o.source, o.formular);
   const thema = p ? v8Thema(zweck as ErstanschreibenZweck, an) : s ? ` zum Thema ${erstanschreibenThema(o.source)}` : "";
   const text =
     zweck === "outreach_tkv"
@@ -667,6 +879,27 @@ export const ERSTINFO_FOOTER_V9 = "KI-Assistent · Erstinformation im PDF oben";
 
 /** KI-Kennzeichnung unter dem Erstanschreiben im Freitext (ohne Vorlagen-Fußzeile; das PDF folgt als eigene Nachricht). */
 export const ERSTANSCHREIBEN_FREITEXT_FUSS = "KI-Assistent · Erstinformation folgt als PDF";
+
+/**
+ * Fußzeile der Vorlage ab Erstanschreiben v10 (Ole, 19.11.2026; Recht: der Hinweis auf die Erstinformation entfällt,
+ * die KI-Kennzeichnung bleibt). Das PDF steht weiter im Kopf.
+ */
+export const ERSTINFO_FOOTER_V10 = "KI-Assistent";
+
+/**
+ * Fußzeile ab Erstanschreiben v12 (Ole, 19.11.2026: „digitaler Assistent statt KI-Assistent“; Recht: das Wort KI muss
+ * bleiben, KI-VO Art. 50, daher „Digitaler KI-Assistent“). Gleicher Text wie v10/v11; die neue Versionsnummer ist nur
+ * nötig, weil Meta die Fußzeile einer eingereichten Vorlage nicht ändern lässt (v10 war beim Testkunden schon eingereicht).
+ */
+export const ERSTINFO_FOOTER_V12 = "Digitaler KI-Assistent";
+
+/** KI-Kennzeichnung unter dem Erstanschreiben v10/v11 im Freitext (wie die Fußzeile der Vorlage). */
+export const ERSTANSCHREIBEN_V10_FREITEXT_FUSS = ERSTINFO_FOOTER_V12;
+
+/** Fußzeile, die zum Erstanschreiben dieses Leads gehört (Vorschau): v10 „KI-Assistent“, sonst die der v9. */
+export function erstanschreibenFusszeile(source: string | null | undefined, formular?: FormAntwort[] | null, opts: { gebucht?: boolean } = {}): string {
+  return v10Moeglich(source, formular, opts) ? ERSTINFO_FOOTER_V12 : ERSTINFO_FOOTER_V9;
+}
 
 /** Knöpfe der bei Meta noch freigegebenen v4 (Zahnzusatz), Antworten darauf gelten als dieselbe Frage 1. */
 export const ZAHN_KNOEPFE_V4 = ["Zahnersatz", "Prophylaxe", "Beides"] as const;

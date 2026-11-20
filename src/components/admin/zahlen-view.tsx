@@ -1614,7 +1614,7 @@ function MissingRetainer({ data }: { data: ZahlenData }) {
           <li key={c.customerId} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5">
             <span className="font-medium">{c.name}</span>
             <span className="text-amber-900">
-              {c.plan === "service" ? "Nur Betreuung" : "Betreuung + Software"}
+              {c.plan === "service" ? "Nur Betreuung" : c.plan === "ppl_software" ? "Pay-per-Lead + Software" : "Betreuung + Software"}
               {c.liveSince ? ` · live seit ${new Date(c.liveSince).toLocaleDateString("de-DE")}` : ""}
             </span>
             <Link href={`/admin/kunden/${c.customerId}/abrechnung#betreuungsgebuehr`} className="ml-auto font-semibold text-[color:var(--brand)] hover:underline">

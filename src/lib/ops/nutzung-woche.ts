@@ -543,7 +543,7 @@ export async function ladeRohdaten(tage: number, opts: { now?: Date; kunden?: st
   return {
     tage,
     now,
-    kunden: { gesamt: kunden.length, software: kunden.filter((k) => k.plan === "software").length },
+    kunden: { gesamt: kunden.length, software: kunden.filter((k) => k.plan === "software" || k.plan === "ppl_software").length },
     aktiv,
     ereignisse,
     audit,

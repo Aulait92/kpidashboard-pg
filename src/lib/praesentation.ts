@@ -9,7 +9,7 @@ import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { spartenVon, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import { beitragAus, beitragEffektiv, paketWaehlen, type AngebotItem, type AngeboteDaten, type BeitragsUebersicht } from "@/lib/angebote-daten";
 import { anzahlFuer, bedingungText, naechsteText, prozentFuer, staffelLeiste, type KombiErgebnis } from "@/lib/kombi-rabatt";
-import { SCHUTZ_STATUS, type SchutzZeile } from "@/lib/schutz-ueberblick";
+import { SCHUTZ_OFFEN, SCHUTZ_STATUS, type SchutzZeile } from "@/lib/schutz-ueberblick";
 import { a, type Ansprache } from "@/lib/ansprache";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 import type { PraesentationVariante } from "@/lib/praesentation-variante";
@@ -1057,7 +1057,10 @@ function ueberblickFolie(
         : ""
       : "";
     const status = imAngebot ? "bei-uns" : z.status;
-    const label = imAngebot ? "Im Angebot" : SCHUTZ_STATUS[z.status].label;
+    // In der Vorbereitung nicht beantwortet: neutral „Gleich besprechen“ statt orange „Prüfen“
+    const offen = !imAngebot && z.offen && z.status === "pruefen";
+    const label = imAngebot ? "Im Angebot" : offen ? SCHUTZ_OFFEN.label : SCHUTZ_STATUS[z.status].label;
+    const farbe = offen ? SCHUTZ_OFFEN.farbe : SCHUTZ_STATUS[status].farbe;
     const zusatz: string[] = [];
     if (!imAngebot && z.info) zusatz.push(z.info);
     if (imAngebot && z.status === "woanders") zusatz.push(a(an, "ersetzt deinen bisherigen Vertrag, Wechsel-Service inklusive", "ersetzt Ihren bisherigen Vertrag, Wechsel-Service inklusive"));
@@ -1066,7 +1069,7 @@ function ueberblickFolie(
       if (p) zusatz.push(a(an, `Mit ${z.label} dazu sparst du ${p} % auf alles`, `Mit ${z.label} dazu sparen Sie ${p} % auf alles`));
       if (z.status === "woanders") zusatz.push(a(an, "Wechsel-Service: Wir kümmern uns um die Kündigung", "Wechsel-Service: Wir kümmern uns um die Kündigung"));
     }
-    return `<div class="sz" data-schutz="${e(z.key)}" data-status="${status}"><span class="ampel" style="background:${SCHUTZ_STATUS[status].farbe}"></span><b>${e(z.label)}</b><span><span class="stl" style="color:${SCHUTZ_STATUS[status].farbe}">${e(label)}</span>${zusatz.length ? `<span class="info">${e(zusatz.join(". "))}</span>` : ""}</span>${knopf || "<span></span>"}</div>`;
+    return `<div class="sz" data-schutz="${e(z.key)}" data-status="${offen ? "offen" : status}"><span class="ampel" style="background:${farbe}"></span><b>${e(z.label)}</b><span><span class="stl" style="color:${farbe}">${e(label)}</span>${zusatz.length ? `<span class="info">${e(zusatz.join(". "))}</span>` : ""}</span>${knopf || "<span></span>"}</div>`;
   });
   // Stand des Kombi-Rabatts nur, wenn er schon greift (vorher steht der Vorteil an den Zeilen)
   const kombiZeile = k?.prozent ? `<div class="kombi-zeile">Kombi-Rabatt jetzt: <b>${prozent(k.prozent)} auf alles</b>${naechsteText(k) ? `. ${e(naechsteText(k)!)}.` : "."}</div>` : "";

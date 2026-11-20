@@ -51,9 +51,9 @@ describe("Bekannte Antworten aus dem Formular", () => {
     // ohne Formular wie bisher
     expect(ersteFrage("TKV-Katze", "sie", "Ole")).toBe("Wie alt ist Ihre Katze?");
     const t = erstanschreibenText({ an: "du", name: "Ole", source: "Privatschutz", formular: testLeadAnswers("Privatschutz") });
-    // v9: Frage fett am Ende der ersten Zeile, darunter die KI-Kennzeichnung des Freitexts
-    expect(t.split("\n")[0].endsWith(" *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*")).toBe(true);
-    expect(t.split("\n").at(-1)).toBe("_KI-Assistent · Erstinformation folgt als PDF_");
+    // v10 (Ole, 19.11.2026): feste Frage fett am Ende der ersten Zeile, darunter nur „KI-Assistent“
+    expect(t.split("\n")[0].endsWith(" *Ist davon schon etwas versichert?*")).toBe(true);
+    expect(t.split("\n").at(-1)).toBe("_Digitaler KI-Assistent_");
     expect(t).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
   });
 

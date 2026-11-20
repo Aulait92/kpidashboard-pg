@@ -13,15 +13,18 @@
 // (optionale Folien außerhalb der Reihenfolge) über „Einwände“ bzw. die Tasten 1 bis 4, zurück mit Esc oder Pfeil.
 // Sprechhinweise nur für den Vermittler: zum Aufklappen unter dem Deck (Standard aus, nie in der Folie, nicht im
 // Vollbild). onFolie meldet jede erreichte Folie einmal (Messung „Folie erreicht“).
+// Rechen-Folien (data-rechner, Ole 20.11.2026): Eingaben rechnen sofort neu (folien-rechner.ts), bleiben beim Blättern
+// erhalten; beim Tippen blättern weder Pfeiltasten noch Wischen, und die Tastatur am Handy verstellt die Folie nicht.
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { Check, ChevronLeft, ChevronRight, Expand, Lightbulb, MessageCircleQuestion, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { folienEinpassen } from "@/lib/folien-einpassen";
+import { rechnerAnwenden, zahlFeld, zahlLesen } from "@/lib/vertrieb/folien-rechner";
 
 export type DeckFolie = { id: string; titel: string; html: string; produkt?: string; hinweis?: string };
-export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean; paket?: number[] };
+export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean; paket?: number[]; /** Folie, auf der geklickt wurde (Messung „Mit anschauen“) */ folie?: string };
 
 /** „2,4“ aus data-paket; null, wenn es kein gültiges Paket ist. */
 export function paketAusAttribut(v: string | undefined): number[] | null {
@@ -44,6 +47,9 @@ export function folieNachKlick(alt: { id: string }[], aktuelleId: string | undef
   const j = neu.findIndex((x) => x.id === aktuelleId);
   return { i: j >= 0 ? j : Math.max(0, Math.min(i, neu.length - 1)), hinweis: null };
 }
+
+/** Eingabefeld (Tippen hat Vorrang vor Blättern). */
+const istEingabe = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
 
 const WEITER = new Set(["ArrowRight", " ", "PageDown"]);
 const ZURUECK = new Set(["ArrowLeft", "PageUp"]);
@@ -95,6 +101,27 @@ export function FolienDeck({
   const [sprech, setSprech] = useState(false);
   const gemeldet = useRef(new Set<string>());
   const sprechUmschalten = () => setSprech((x) => !x);
+  // Eingaben auf Rechen-Folien je Folie und Feld („folie-16:leads“ → „20“), damit sie beim Zurückblättern bleiben
+  const eingaben = useRef(new Map<string, string>());
+
+  const onRechnerEingabe = (ev: React.FormEvent) => {
+    const t = ev.target as HTMLElement;
+    const r = t.closest<HTMLElement>("[data-rechner]");
+    if (!r || !(t instanceof HTMLInputElement) || !t.dataset.feld) return;
+    eingaben.current.set(`${f.id}:${t.dataset.feld}`, t.value);
+    rechnerAnwenden(r);
+  };
+  // Beim Verlassen des Felds deutsch formatieren („1200“ → „1.200“)
+  const onRechnerFertig = (ev: React.FocusEvent) => {
+    const t = ev.target;
+    if (!(t instanceof HTMLInputElement) || !t.dataset.feld || !t.closest("[data-rechner]")) return;
+    const n = zahlLesen(t.value);
+    const text = zahlFeld(n, t.dataset.euro != null);
+    if (n != null && text !== t.value) {
+      t.value = text;
+      eingaben.current.set(`${f.id}:${t.dataset.feld}`, t.value);
+    }
+  };
 
   const onSlideClick = (ev: React.MouseEvent) => {
     const z = (ev.target as HTMLElement).closest<HTMLElement>("[data-zusage]");
@@ -115,7 +142,7 @@ export function FolienDeck({
       });
       return;
     }
-    if (!onKlick || pending) return;
+    if (istEingabe(ev.target) || !onKlick || pending) return;
     // Paket (Fassung C): das angetippte wird gewählt, das andere nicht mehr; ein gewähltes erneut antippen ändert nichts
     const pk = (ev.target as HTMLElement).closest<HTMLElement>("[data-paket]");
     if (pk) {
@@ -141,7 +168,7 @@ export function FolienDeck({
     el.classList.toggle("an", aktiv);
     const aktuelleId = folien[i]?.id;
     startT(async () => {
-      const r = await onKlick({ tarif: t != null ? Number(t) : null, sparte: el.dataset.sparte != null, item, baustein: b, aktiv });
+      const r = await onKlick({ tarif: t != null ? Number(t) : null, sparte: el.dataset.sparte != null, item, baustein: b, aktiv, folie: aktuelleId });
       if (r.ok) {
         // Neue Produktfolie (z. B. „Mit anschauen“ nimmt eine Sparte in den Vergleich): direkt dorthin, mit Hinweis
         const z = folieNachKlick(folien, aktuelleId, r.folien, aktiv, i);
@@ -182,8 +209,7 @@ export function FolienDeck({
   }, [hinweis]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (istEingabe(e.target)) return;
       const richtung = WEITER.has(e.key) ? "weiter" : ZURUECK.has(e.key) ? "zurueck" : null;
       // Tasten 1 bis 4: Einwand-Folie (auch im Vollbild, ohne sichtbares Menü)
       const nr = /^[1-9]$/.test(e.key) ? Number(e.key) - 1 : -1;
@@ -223,6 +249,8 @@ export function FolienDeck({
     const fit = () => {
       const el = box.current;
       if (!el) return;
+      // Handy-Tastatur beim Tippen in ein Feld der Folie: Größe nicht neu berechnen (sonst springt bzw. dreht die Folie)
+      if (istEingabe(document.activeElement) && el.contains(document.activeElement)) return;
       const voll = !!document.fullscreenElement || pseudo;
       const w = voll ? window.innerWidth : el.clientWidth;
       const h = voll ? window.innerHeight : el.clientWidth * 0.5625;
@@ -268,6 +296,16 @@ export function FolienDeck({
       aktiv = false;
     };
   }, [f.html, gedreht]);
+  // Rechen-Folie: gemerkte Eingaben wieder einsetzen und rechnen
+  useLayoutEffect(() => {
+    folie.current?.querySelectorAll<HTMLElement>("[data-rechner]").forEach((r) => {
+      r.querySelectorAll<HTMLInputElement>("input[data-feld]").forEach((i) => {
+        const v = eingaben.current.get(`${f.id}:${i.dataset.feld}`);
+        if (v != null) i.value = v;
+      });
+      rechnerAnwenden(r);
+    });
+  }, [f.html, f.id]);
   const leiste = (
           <div className="absolute bottom-3 right-3 flex items-center gap-2" data-vollbild-leiste>
             <RundKnopf label="Zurück" onClick={() => go(i - 1)} disabled={i === 0}>
@@ -295,7 +333,7 @@ export function FolienDeck({
         style={pseudo ? undefined : { aspectRatio: "16 / 9" }}
         data-deck
         data-folie={f.id}
-        onTouchStart={(e) => (touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY })}
+        onTouchStart={(e) => (touch.current = istEingabe(e.target) || istEingabe(document.activeElement) ? null : { x: e.touches[0].clientX, y: e.touches[0].clientY })}
         onTouchEnd={(e) => {
           const s = touch.current;
           touch.current = null;
@@ -312,6 +350,12 @@ export function FolienDeck({
           <div
             ref={folie}
             onClick={onSlideClick}
+            onInput={onRechnerEingabe}
+            onBlur={onRechnerFertig}
+            onKeyDown={(ev) => {
+              // Enter im Feld: fertig (Tastatur zu), Ergebnis steht schon
+              if (ev.key === "Enter" && ev.target instanceof HTMLInputElement) ev.target.blur();
+            }}
             className="absolute left-0 top-0"
             style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: "top left" }}
             dangerouslySetInnerHTML={{ __html: f.html }}

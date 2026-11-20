@@ -40,14 +40,17 @@ describe("Erstanschreiben je Produkt", () => {
     expect(outreachProdukt("Hundehalter-Haftpflicht")?.purpose).not.toBe("outreach_tkv");
     expect(outreachProdukt("Sterbegeldversicherung")).toBeNull();
     expect(outreachProdukt(null)).toBeNull();
-    // Knöpfe im Freitext = Knöpfe im Prompt, solange Frage 1 gestellt wird (Zahnzusatz neutral, Art. 9 DSGVO; Tier ohne)
-    for (const s of ["TKV Katze", "Zahnzusatz", "PKV"]) {
+    // v10 (Ole, 19.11.2026): Knöpfe im Freitext = Knöpfe der Vorlage = Knöpfe der festen Frage (Zahnzusatz neutral, Art. 9 DSGVO)
+    for (const s of ["TKV Katze", "Zahnzusatz", "PKV", "Privatschutz"]) {
       const p = outreachProdukt(s)!;
-      expect(freitextButtonsOf(p.purpose)).toBeUndefined();
-      expect(ersteFrageKnoepfe(s, [])).toEqual(p.knoepfe);
+      expect(freitextButtonsOf(p.purpose)).toEqual(ersteFrageKnoepfe(s, []));
     }
-    // Privatschutz öffnet ab v8 mit „schon versichert?“ (ohne Knöpfe; die Zwischenfrage danach hat Knöpfe)
-    expect(ersteFrageKnoepfe("Privatschutz", [])).toEqual([]);
+    expect(ersteFrageKnoepfe("TKV Katze", [])).toEqual(["Nur Operationen", "Auch Behandlungen", "Noch unsicher"]);
+    expect(ersteFrageKnoepfe("Zahnzusatz", [])).toEqual(outreachProdukt("Zahnzusatz")!.knoepfe);
+    expect(ersteFrageKnoepfe("PKV", [])).toEqual(outreachProdukt("PKV")!.knoepfe);
+    expect(ersteFrageKnoepfe("Privatschutz", [])).toEqual(["Alles neu", "Schon versichert", "Teils, teils"]);
+    // v9-Rückfall: Tier ohne Knöpfe (Alter frei), wenn der gewünschte Schutz schon im Formular steht
+    expect(ersteFrageKnoepfe("TKV Katze", [{ label: "Gewünschter Schutz", value: "OP" }])).toEqual([]);
   });
 
   it("Assistent: Knopf-Antwort = Antwort auf Frage 1, dann Frage 2, dann Termine", () => {
@@ -87,21 +90,21 @@ describe("Dokument-Kopf (Erstinformation als PDF) und Antrag", () => {
   it("Erstanschreiben mit Kopf DOCUMENT, Beispiel-Link und Fußzeile; ohne Beispiel ohne Kopf", () => {
     const req = buildTemplateRequest("outreach_tkv", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
     const comps = req.components as { type: string; format?: string; example?: { header_handle: string[] }; text?: string }[];
-    expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
+    expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
     expect(comps[0]).toEqual({ type: "HEADER", format: "DOCUMENT", example: { header_handle: [pdf] } });
-    expect(comps[2].text).toBe(ERSTINFO_FOOTER_V9);
+    expect(comps[2].text).toBe("Digitaler KI-Assistent");
     expect(ERSTINFO_FOOTER.length).toBeLessThanOrEqual(60);
     expect(ERSTINFO_FOOTER_V8.length).toBeLessThanOrEqual(60);
     expect(ERSTINFO_FOOTER_V9.length).toBeLessThanOrEqual(60);
-    expect(requestShape(req)).toEqual({ headerFormat: "DOCUMENT", buttons: [] });
+    expect(requestShape(req)).toEqual({ headerFormat: "DOCUMENT", buttons: ["Nur Operationen", "Auch Behandlungen", "Noch unsicher"] });
     const plain = withoutHeader(req);
-    expect((plain.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY"]);
+    expect((plain.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY", "BUTTONS"]);
     const zahn = buildTemplateRequest("outreach_zahn", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
-    // ab v6 ohne Knöpfe in der Vorlage (erste Frage als Platzhalter)
-    expect((zahn.components as { type: string }[]).map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
+    // v6 bis v9 ohne Knöpfe in der Vorlage (erste Frage als Platzhalter), ab v10 mit den Knöpfen der festen Frage
+    expect((zahn.components as { type: string }[]).map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
     const ohneKopf = buildTemplateRequest("outreach_zahn", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf, kopf: false });
-    expect((ohneKopf.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY"]);
-    expect(ohneKopf.name).toBe("pg_outreach_zahn_v9_ohnepdf_sie");
+    expect((ohneKopf.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY", "BUTTONS"]);
+    expect(ohneKopf.name).toBe("pg_outreach_zahn_v12_ohnepdf_sie");
     expect(requestShape(plain).headerFormat).toBeNull();
     // Andere Zwecke bekommen nie einen Kopf
     const rem = buildTemplateRequest("reminder", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
@@ -145,11 +148,13 @@ describe("Versionen und A/B-Fassungen bei der Auswahl", () => {
   const lA = { name: "pg_followup_last_v5_sie", body: "Guten Tag {{1}}, A ok?", headerFormat: null };
   const lB = { name: "pg_followup_last_v5_b_sie", body: "Guten Tag {{1}}, B ok?", headerFormat: null };
 
-  it("Erstanschreiben v9, übrige v4, unveränderte Zwecke behalten v3", () => {
+  it("Erstanschreiben v10, übrige v4, unveränderte Zwecke behalten v3", () => {
     expect(TEMPLATE_VERSION).toBe("v4");
     expect(templateVersionFor("review_request")).toBe("v3");
-    expect(templateVersionFor("outreach_tkv")).toBe("v9");
-    expect(isCurrentTemplateName("pg_outreach_v9_sie", "outreach")).toBe(true);
+    expect(templateVersionFor("outreach_tkv")).toBe("v12");
+    expect(isCurrentTemplateName("pg_outreach_v12_sie", "outreach")).toBe(true);
+    expect(isCurrentTemplateName("pg_outreach_v12_b_sie", "outreach")).toBe(true);
+    expect(isCurrentTemplateName("pg_outreach_v9_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v8_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v7_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v6_sie", "outreach")).toBe(false);
@@ -287,9 +292,13 @@ describe("A/B-Test: Statistik und Entscheidung", () => {
   it("Gewinner erst ab 50 je Fassung und p < 0,05", () => {
     expect(decideAbWinner({ a: { sent: 49, replied: 5 }, b: { sent: 200, replied: 150 } })).toMatchObject({ winner: null, reason: "zu_wenig" });
     expect(decideAbWinner({ a: { sent: 100, replied: 30 }, b: { sent: 100, replied: 33 } })).toMatchObject({ winner: null, reason: "kein_unterschied" });
-    expect(decideAbWinner({ a: { sent: 100, replied: 30 }, b: { sent: 100, replied: 45 } })).toMatchObject({ winner: "b", reason: "entschieden" });
+    // Signifikant genug (Ole, 19.11.2026): p unter 0,01; 30 % gegen 45 % bei je 100 (p ≈ 0,03) reicht nicht mehr
+    expect(decideAbWinner({ a: { sent: 100, replied: 30 }, b: { sent: 100, replied: 45 } })).toMatchObject({ winner: null, reason: "kein_unterschied" });
+    expect(decideAbWinner({ a: { sent: 200, replied: 60 }, b: { sent: 200, replied: 95 } })).toMatchObject({ winner: "b", reason: "entschieden" });
     expect(decideAbWinner({ a: { sent: 60, replied: 40 }, b: { sent: 60, replied: 20 } })).toMatchObject({ winner: "a" });
-    expect(decideAbWinner({ a: { sent: 30, replied: 0 }, b: { sent: 30, replied: 30 } }, { min: 20 })).toMatchObject({ winner: "b" });
+    // Zu wenige Treffer bzw. Nicht-Treffer je Fassung: keine Entscheidung, auch wenn der Unterschied riesig aussieht
+    expect(decideAbWinner({ a: { sent: 30, replied: 0 }, b: { sent: 30, replied: 30 } }, { min: 20 })).toMatchObject({ winner: null, reason: "zu_wenig" });
+    expect(decideAbWinner({ a: { sent: 100, replied: 0 }, b: { sent: 100, replied: 8 } })).toMatchObject({ winner: null, reason: "zu_wenig" });
   });
 
   it("Zuteilung fest je Lead und etwa hälftig", () => {

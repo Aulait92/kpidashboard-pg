@@ -125,7 +125,8 @@ export type VortagEingabe = {
 
 /** Platzhalter der Vortags-Vorlage v5 (reminder) nach dem Namen: Wann, Nutzen (+ Verträge), Zugang. */
 export function vortagParams(o: VortagEingabe): [string, string, string] {
-  const nutzen = [o.nutzen, o.komplettcheck ? vertraegeBereitSatz(o.an) : "", o.policen ?? ""].filter(Boolean).join(" ");
+  // Mit Policen-Satz entfällt „Legen Sie gern Ihre bestehenden Verträge bereit“ (sonst doppelt, Rechtsprüfung 19.11.2026)
+  const nutzen = [o.nutzen, o.komplettcheck && !o.policen ? vertraegeBereitSatz(o.an) : "", o.policen ?? ""].filter(Boolean).join(" ");
   return [o.wann, nutzen, zugangText(o.an, o.person, o.mode, o.meetUrl, o.ort)];
 }
 

@@ -35,12 +35,14 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
     const e = eingabe("sie");
     const z = beispielVerlauf(e);
     const texte = vomAssistenten(z);
-    // Erstanschreiben v9 (ohne die Lebenssituation, damit die Zwischenfrage kommt); KI-Kennzeichnung als Fußzeile der Vorlage
+    // Erstanschreiben v10 (ohne die Lebenssituation, damit die Zwischenfrage kommt); KI-Kennzeichnung als Fußzeile der Vorlage
     expect(texte[0]).toBe(
       erstanschreibenText({ an: "sie", kontakt: BEISPIEL_KONTAKT, name: e.person.nom, vermittler: e.person.dat, vermittlerNom: e.person.nom, source: "Privatschutz", formular: PRIVATSCHUTZ.slice(1) }, { ohneFuss: true }),
     );
     expect(texte[0]).toContain("Hallo Frau Becker");
-    expect(texte[0]).toBe("Hallo Frau Becker, danke für Ihre Anfrage zum Privatschutz! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*");
+    expect(texte[0]).toBe("Hallo Frau Becker, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
+    expect(nachrichten(z)[0].knoepfe).toEqual(["Alles neu", "Schon versichert", "Teils, teils"]);
+    expect(nachrichten(z)[0].fusszeile).toBe("Digitaler KI-Assistent");
     expect(texte[1]).toBe("Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wer soll mitversichert sein?");
     expect(texte[2]).toMatch(/^Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Sie kosten/);
     expect(texte[3]).toBe(buchungsText({ an: "sie", start: new Date("2026-11-20T15:00:00.000Z"), mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person: e.person }));

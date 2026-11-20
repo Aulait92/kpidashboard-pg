@@ -315,7 +315,8 @@ function Bearbeiten({
 const GRUND: Record<string, string> = {
   sparte_offen: "Welche Sparte ist das?",
   sparte_abweichend: "Die Unterlage passt nicht zur Sparte. Welche ist es?",
-  gesperrt: "Diese Sparte wird nicht automatisch ausgelesen.",
+  andere: "Andere Sparte, wird nicht automatisch ausgelesen. Bitte im Original ansehen.",
+  gesperrt: "Diese Sparte wird noch nicht automatisch ausgelesen. Bitte im Original ansehen.",
   limit: "Nicht automatisch ausgelesen.",
   fehler: "Konnte nicht ausgelesen werden.",
   laeuft: "Wird ausgelesen …",
@@ -328,6 +329,9 @@ const SPERRE: Record<string, string> = {
   pause: "Automatisches Auslesen ist gerade nicht verfügbar.",
   kunde: "Automatisches Auslesen ist für Ihr Konto noch nicht freigeschaltet.",
 };
+
+/** Sparten, die beim Wählen direkt sichtbar sind; alle anderen hinter „Weitere“. */
+const HAEUFIG: readonly AuslesenSparte[] = ["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz", "unfall"];
 
 function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich; href: (docId: string) => string; readOnly: boolean }) {
   const toast = useToast();
@@ -343,12 +347,22 @@ function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich
     void auslesenAction(terminId).finally(() => setLaeuft(false));
   }, [readOnly, v.sperre, neue, terminId]);
 
-  const waehle = (o: OffeneUnterlage, s: AuslesenSparte) =>
+  // Gewählte Sparte je Unterlage: Auslesen dauert einige Sekunden, solange Hinweis und Spinner statt nur grauer Knöpfe
+  // (Ole, 19.11.2026: „wenn ich hier draufklicke, passiert nichts und die Buttons werden grau“)
+  const [gewaehlt, setGewaehlt] = useState<{ doc: string; sparte: AuslesenSparte | "andere" } | null>(null);
+  const label = (s: AuslesenSparte | "andere") => (s === "andere" ? "Andere" : SPARTE_LABEL[s]);
+  // Häufige Sparten direkt, der Rest hinter „Weitere“ (je Unterlage)
+  const [mehr, setMehr] = useState<string | null>(null);
+  const waehle = (o: OffeneUnterlage, s: AuslesenSparte | "andere") => {
+    setGewaehlt({ doc: o.documentId, sparte: s });
     start(async () => {
       const r = await sparteAction(terminId, o.documentId, s);
       if (!r.ok) toast.show({ message: r.error ?? "Fehler", tone: "error" });
-      else if (r.status !== "ausgelesen") toast.show({ message: r.status === "sparte_abweichend" ? "Passt nicht zur gewählten Sparte. Bitte im Original nachsehen." : "Nicht ausgelesen. Bitte im Original nachsehen.", tone: "error" });
+      else if (r.status === "ausgelesen") toast.show({ message: `${SPARTE_LABEL[s as AuslesenSparte]} ausgelesen` });
+      else if (r.status === "andere") toast.show({ message: "Als andere Sparte vermerkt" });
+      else toast.show({ message: r.status === "sparte_abweichend" ? `Passt nicht zu ${label(s)}. Bitte andere Sparte wählen oder im Original nachsehen.` : "Nicht ausgelesen. Bitte im Original nachsehen.", tone: "error" });
     });
+  };
 
   return (
     <Card data-nicht-ausgelesen>
@@ -359,26 +373,34 @@ function Offen({ terminId, v, href, readOnly }: { terminId: string; v: Vergleich
         {v.offen.map((o) => {
           const text = v.sperre ? SPERRE[v.sperre] : (GRUND[o.status] ?? GRUND.limit);
           const waehlen = !v.sperre && !readOnly && (o.status === "sparte_offen" || o.status === "sparte_abweichend");
-          const laedt = !v.sperre && (o.status === "neu" || o.status === "laeuft") && (laeuft || pending);
+          const diese = pending && gewaehlt?.doc === o.documentId ? gewaehlt : null;
+          const laedt = (!v.sperre && (o.status === "neu" || o.status === "laeuft") && (laeuft || pending)) || !!diese;
           return (
             <li key={o.documentId} className="px-5 py-3 text-sm" data-offen={o.status}>
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
                 <a href={href(o.documentId)} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] hover:underline">
-                  {o.titel} vom {tag(o.datum)}
+                  {o.status === "sparte_abweichend" || o.status === "andere" ? "Unterlage" : o.titel} vom {tag(o.datum)}
                 </a>
               </div>
               <p className={`mt-1 flex items-center gap-1.5 pl-6 ${DT}`}>
                 {laedt ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                {text}
+                {diese ? (diese.sparte === "andere" ? "Wird gespeichert …" : `${label(diese.sparte)} wird ausgelesen, das dauert einige Sekunden …`) : text}
               </p>
               {waehlen ? (
                 <div className="mt-2 flex flex-wrap gap-1.5 pl-6" data-sparte-waehlen>
-                  {v.sparten.map((s) => (
-                    <Button key={s} onClick={() => waehle(o, s)} disabled={pending}>
-                      {SPARTE_LABEL[s]}
+                  {v.sparten
+                    .filter((s) => mehr === o.documentId || HAEUFIG.includes(s) || diese?.sparte === s)
+                    .map((s) => (
+                      <Button key={s} variant={diese?.sparte === s ? "primary" : undefined} onClick={() => waehle(o, s)} disabled={pending} data-sparte={s}>
+                        {label(s)}
+                      </Button>
+                    ))}
+                  {mehr !== o.documentId && v.sparten.some((s) => !HAEUFIG.includes(s)) ? (
+                    <Button variant="ghost" onClick={() => setMehr(o.documentId)} disabled={pending} data-weitere-sparten>
+                      Weitere …
                     </Button>
-                  ))}
+                  ) : null}
                 </div>
               ) : null}
               {!v.sperre && !readOnly && o.status === "fehler" ? (

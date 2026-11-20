@@ -111,26 +111,34 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     expect(res.status).toBe("connected");
     expect(created.map((c) => c.name).sort()).toEqual(plannedNames(false).sort());
     // 21 Zwecke × 3 Fassungen (inkl. Show-up: 15 Min., Wartet; Angebot senden und Nachfassen selbst gesendet; Glückwunsch; Bedenkzeit;
-    // Erstanschreiben Hausrat) + A/B followup_last (3); Erstanschreiben ab v7 nur mit PDF-Kopf (keine _ohnepdf mehr)
-    expect(created).toHaveLength(66);
-    const outreach = created.find((c) => c.name === "pg_outreach_v9")!;
+    // Erstanschreiben Hausrat) + A/B followup_last (3) + A/B der 6 Erstanschreiben (v11, 18); Erstanschreiben ab v7 nur mit
+    // PDF-Kopf (keine _ohnepdf mehr)
+    expect(created).toHaveLength(84);
+    const outreach = created.find((c) => c.name === "pg_outreach_v12")!;
     expect(outreach.category).toBe("MARKETING");
-    // Erstanschreiben v9: eine Zeile ohne Vermittler, erste Frage fett, KI in der Fußzeile
-    expect(bodyText(outreach)).toBe("Hallo {{1}}, danke für deine Anfrage! *{{2}}?*");
-    expect(outreach.components.find((c) => c.type === "FOOTER")).toMatchObject({ text: "KI-Assistent · Erstinformation im PDF oben" });
+    // Erstanschreiben v10: eine Zeile ohne Vermittler, feste Frage fett mit Knöpfen, nur „KI-Assistent“ in der Fußzeile
+    expect(bodyText(outreach)).toBe("Hallo {{1}}, danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*");
+    expect(outreach.components.find((c) => c.type === "FOOTER")).toMatchObject({ text: "Digitaler KI-Assistent" });
     expect(bodyText(outreach)).not.toMatch(/Mensch|\[Kurzname\]/);
     expect(bodyText(outreach)).not.toContain("[Berater]");
     expect(bodyText(outreach)).not.toContain("[Firma]");
     // Erstinformation als PDF im Kopf: Beispiel ist das öffentliche PDF dieses Kunden
     expect(outreach.components[0]).toMatchObject({ type: "HEADER", format: "DOCUMENT" });
     expect(outreach.components[0].example?.header_handle?.[0]).toMatch(/^https:\/\/app\.example\.de\/erstinformation\/[A-Za-z0-9_-]+\/pdf$/);
-    expect(outreach.components.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
+    expect(outreach.components.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
+    expect(outreach.components.find((c) => c.type === "BUTTONS")).toEqual({
+      type: "BUTTONS",
+      buttons: [{ type: "QUICK_REPLY", text: "Heute" }, { type: "QUICK_REPLY", text: "Morgen" }, { type: "QUICK_REPLY", text: "Lieber schriftlich" }],
+    });
     expect(created.some((c) => c.name.includes("ohnepdf"))).toBe(false);
-    // v9: eine Zeile, Thema fest, erste Frage fett; Tierkrankenversicherung mit dem Tiernamen
-    expect(bodyText(created.find((c) => c.name === "pg_outreach_v9_sie")!)).toBe("Hallo {{1}}, danke für Ihre Anfrage! *{{2}}?*");
-    expect(bodyText(created.find((c) => c.name === "pg_outreach_v9_sie_ohne_name")!)).toBe("Hallo, danke für Ihre Anfrage! *{{1}}?*");
-    expect(bodyText(created.find((c) => c.name === "pg_outreach_tkv_v9")!)).toBe("Hallo {{1}}, schön, dass du {{2}} gut absichern möchtest 🐾 *{{3}}?*");
-    expect(created.find((c) => c.name === "pg_outreach_tkv_v9_sie")!.components.find((c) => c.type === "BODY")?.example).toEqual({ body_text: [["Frau Schneider", "Minka", "Wie alt ist Ihre Katze"]] });
+    // v10: eine Zeile, Thema fest, feste Frage fett; Tierkrankenversicherung mit dem Tiernamen; Fassung b „Frage zuerst“
+    expect(bodyText(created.find((c) => c.name === "pg_outreach_v12_sie")!)).toBe("Hallo {{1}}, danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*");
+    expect(bodyText(created.find((c) => c.name === "pg_outreach_v12_sie_ohne_name")!)).toBe("Hallo, danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*");
+    expect(bodyText(created.find((c) => c.name === "pg_outreach_tkv_v12")!)).toBe("Hallo {{1}}, schön, dass du {{2}} gut absichern möchtest 🐾 *Was soll abgesichert sein?*");
+    expect(bodyText(created.find((c) => c.name === "pg_outreach_tkv_v12_b_sie")!)).toBe("Hallo {{1}}, *was soll für {{2}} abgesichert sein?* 🐾");
+    expect(created.find((c) => c.name === "pg_outreach_tkv_v12_sie")!.components.find((c) => c.type === "BODY")?.example).toEqual({ body_text: [["Frau Schneider", "Minka"]] });
+    // ohne Namen und ohne Tier: kein Platzhalter, also kein Beispiel
+    expect(created.find((c) => c.name === "pg_outreach_pkv_v12_sie_ohne_name")!.components.find((c) => c.type === "BODY")?.example).toBeUndefined();
     expect(created.find((c) => c.name === "pg_reminder_v5")!.category).toBe("UTILITY");
     expect(created.find((c) => c.name === "pg_reschedule_v4_sie")!.category).toBe("UTILITY");
     expect(created.find((c) => c.name === "pg_reminder_soon_v5")!.category).toBe("UTILITY");
@@ -145,10 +153,10 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     });
 
     const local = await prisma.messageTemplate.findMany({ where: { customerId } });
-    expect(local).toHaveLength(66);
+    expect(local).toHaveLength(84);
     // Kopf und Knöpfe gespeichert (beim Senden: PDF-Link bzw. Knopf-Payloads)
-    expect(local.find((t) => t.name === "pg_outreach_tkv_v9")).toMatchObject({ headerFormat: "DOCUMENT", buttons: [] });
-    expect(local.find((t) => t.name === "pg_outreach_zahn_v9_sie")).toMatchObject({ headerFormat: "DOCUMENT", buttons: [] });
+    expect(local.find((t) => t.name === "pg_outreach_tkv_v12")).toMatchObject({ headerFormat: "DOCUMENT", buttons: ["Nur Operationen", "Auch Behandlungen", "Noch unsicher"] });
+    expect(local.find((t) => t.name === "pg_outreach_zahn_v12_b_sie")).toMatchObject({ headerFormat: "DOCUMENT", buttons: ["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"] });
     expect(local.find((t) => t.name === "pg_reminder_v5")?.headerFormat).toBeNull();
     expect(local.every((t) => t.auto && t.status === "pending" && t.submittedAt && t.language === "de")).toBe(true);
     const acc = await prisma.whatsAppAccount.findUniqueOrThrow({ where: { customerId } });
@@ -161,8 +169,8 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await prisma.customer.update({ where: { id: customerId }, data: { existingCustomersEnabled: true } });
     await connect();
     const s = await submitTemplatesForCustomer(customerId);
-    // 21 Zwecke × 3 Fassungen + A/B followup_last (3) + 4 Kampagnen × 2 (nur gesiezt) + A/B Cross-Selling (2)
-    expect(s.submitted).toHaveLength(76);
+    // 21 Zwecke × 3 Fassungen + A/B followup_last (3) + A/B Erstanschreiben (18) + 4 Kampagnen × 2 (nur gesiezt) + A/B Cross-Selling (2)
+    expect(s.submitted).toHaveLength(94);
     expect(created.map((c) => c.name).sort()).toEqual(plannedNames(true).sort());
     const camp = created.find((c) => c.name === "pg_campaign_review_v4_sie")!;
     // Selbstbezeichnung nach Status laut Erstinformation, nie „Versicherungsberater“
@@ -183,16 +191,16 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
   it("zweiter Lauf reicht nichts doppelt ein; Freigabe → approved, Ablehnung → Aufgabe + Push", async () => {
     await connect();
     await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(66);
+    expect(created).toHaveLength(84);
 
-    remote.find((t) => t.name === "pg_outreach_v9")!.status = "APPROVED";
+    remote.find((t) => t.name === "pg_outreach_v12")!.status = "APPROVED";
     Object.assign(remote.find((t) => t.name === "pg_reminder_v5")!, { status: "REJECTED", rejected_reason: "INVALID_FORMAT" });
     const s = await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(66);
-    expect(s.approved).toEqual(["pg_outreach_v9"]);
+    expect(created).toHaveLength(84);
+    expect(s.approved).toEqual(["pg_outreach_v12"]);
     expect(s.rejected).toEqual(["pg_reminder_v5"]);
 
-    const outreach = await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_v9" } });
+    const outreach = await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_v12" } });
     expect(outreach.status).toBe("approved");
     const reminder = await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_reminder_v5" } });
     expect(reminder.status).toBe("rejected");
@@ -215,12 +223,12 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     expect(await resubmitTemplate(customerId, "reminder", new Date(), "sie")).toMatchObject({ ok: true, name: "pg_reminder_v5_sie_r2" });
 
     // Erstanschreiben mit PDF im Kopf abgelehnt → Revision wieder MIT Kopf (nie ohne Erstinformation, Live-Test 17.11.2026)
-    Object.assign(remote.find((t) => t.name === "pg_outreach_zahn_v9")!, { status: "REJECTED", rejected_reason: "INVALID_FORMAT" });
+    Object.assign(remote.find((t) => t.name === "pg_outreach_zahn_v12")!, { status: "REJECTED", rejected_reason: "INVALID_FORMAT" });
     await submitTemplatesForCustomer(customerId);
-    expect(await resubmitTemplate(customerId, "outreach_zahn")).toMatchObject({ ok: true, name: "pg_outreach_zahn_v9_r2" });
-    const rev = created.find((c) => c.name === "pg_outreach_zahn_v9_r2")!;
-    expect(rev.components.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
-    expect((await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_zahn_v9_r2" } })).headerFormat).toBe("DOCUMENT");
+    expect(await resubmitTemplate(customerId, "outreach_zahn")).toMatchObject({ ok: true, name: "pg_outreach_zahn_v12_r2" });
+    const rev = created.find((c) => c.name === "pg_outreach_zahn_v12_r2")!;
+    expect(rev.components.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
+    expect((await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_zahn_v12_r2" } })).headerFormat).toBe("DOCUMENT");
   });
 
   it("vom Admin von Hand angelegte Vorlage bleibt unberührt", async () => {
@@ -231,7 +239,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const s = await submitTemplatesForCustomer(customerId);
     expect(s.skipped).toEqual(["outreach"]);
     expect(created.map((c) => c.name).filter((n) => /^pg_outreach_v\d/.test(n))).toEqual([]);
-    expect(created).toHaveLength(63);
+    expect(created).toHaveLength(78);
   });
 
   it("Cron: gedrosselt, Liste nicht abrufbar → Fehler nur gemeldet", async () => {
@@ -259,7 +267,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const item = async () => onboardingChecklist((await loadOnboarding({ customerId }))!, null).find((i) => i.key === "templates");
     expect((await item())?.done).toBe(false);
     expect((await item())?.label).toContain("noch nicht freigegeben");
-    remote.find((t) => t.name === "pg_outreach_v9")!.status = "APPROVED";
+    remote.find((t) => t.name === "pg_outreach_v12")!.status = "APPROVED";
     await submitTemplatesForCustomer(customerId);
     expect((await item())?.done).toBe(true);
   });
@@ -270,11 +278,12 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await submitTemplatesForCustomer(customerId);
     const names = created.map((c) => c.name);
     // Beide Fassungen für jeden Kunden, damit ein Wechsel Sie/Du sofort greift
-    expect(names).toContain("pg_outreach_v9");
-    expect(names).toContain("pg_outreach_v9_sie");
-    expect(names).toContain("pg_outreach_v9_sie_ohne_name");
+    expect(names).toContain("pg_outreach_v12");
+    expect(names).toContain("pg_outreach_v12_sie");
+    expect(names).toContain("pg_outreach_v12_sie_ohne_name");
+    expect(names).toContain("pg_outreach_v12_b_sie_ohne_name");
     expect(names.some((n) => n.includes("ohnepdf"))).toBe(false);
-    const sie = created.find((c) => c.name === "pg_outreach_v9_sie")!;
+    const sie = created.find((c) => c.name === "pg_outreach_v12_sie")!;
     expect(JSON.stringify(sie.components)).toContain("Hallo {{1}}, danke für Ihre Anfrage");
     expect(JSON.stringify(sie.components)).toContain("Frau Schneider");
 
@@ -285,43 +294,46 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await prisma.messageTemplate.create({ data: { customerId, name: "pg_outreach_v1", language: "de", purpose: "outreach", category: "marketing", status: "approved", body: "Hallo {{1}}, du", auto: true } });
     expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v1");
     // Sie-Fassung mit Namen freigegeben → mit Nachnamen diese, ohne Nachnamen weiter die bisherige
-    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v9_sie" }, data: { status: "approved" } });
-    expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v9_sie");
+    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v12_sie" }, data: { status: "approved" } });
+    expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v12_sie");
     expect((await pickApprovedTemplate(customerId, "outreach", NUR_VORNAME))?.name).toBe("pg_outreach_v1");
-    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v9_sie_ohne_name" }, data: { status: "approved" } });
-    expect((await pickApprovedTemplate(customerId, "outreach", NUR_VORNAME))?.name).toBe("pg_outreach_v9_sie_ohne_name");
+    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v12_sie_ohne_name" }, data: { status: "approved" } });
+    expect((await pickApprovedTemplate(customerId, "outreach", NUR_VORNAME))?.name).toBe("pg_outreach_v12_sie_ohne_name");
 
     // Senden außerhalb des 24-h-Fensters: Vorlage mit „Frau Schneider“ bzw. ohne Namensparameter, PDF im Kopf
     const document = { link: "https://app.example.de/erstinformation/abc123/pdf", filename: "Erstinformation.pdf" };
     // Automatische Vorlagen nur an Leads (lib/whatsapp/nur-leads.ts)
     const leadOf = async (phone: string) => (await prisma.lead.create({ data: { customerId, name: "Julia Schneider", phone } })).id;
-    await sendWhatsAppNotice({ customerId, to: "4917600000011", purpose: "outreach", leadId: await leadOf("4917600000011"), params: ["Julia", "Wann erreicht Anid Brand Sie am besten für ein kurzes Telefonat"], text: "x", contactName: "Julia Schneider", anrede: FRAU, document });
-    await sendWhatsAppNotice({ customerId, to: "4917600000012", purpose: "outreach", leadId: await leadOf("4917600000012"), params: ["Julia", "Wann erreicht Anid Brand Sie am besten für ein kurzes Telefonat"], text: "x", contactName: "Julia", document });
+    await sendWhatsAppNotice({ customerId, to: "4917600000011", purpose: "outreach", leadId: await leadOf("4917600000011"), params: ["Julia"], text: "x", contactName: "Julia Schneider", anrede: FRAU, document, variant: "a" });
+    await sendWhatsAppNotice({ customerId, to: "4917600000012", purpose: "outreach", leadId: await leadOf("4917600000012"), params: ["Julia"], text: "x", contactName: "Julia", document, variant: "a" });
     // Ohne PDF (Erstinformation unvollständig) keine Vorlage mit Kopf: die bisherige
     await sendWhatsAppNotice({ customerId, to: "4917600000013", purpose: "outreach", leadId: await leadOf("4917600000013"), params: ["Julia"], legacyParams: ["Julia", "https://x.de/erstinformation/abc"], text: "x", contactName: "Julia Schneider", anrede: FRAU });
     type Comp = { type: string; parameters: { type: string; text?: string; document?: { link: string } }[] };
     const tpl = (i: number) => (sent[i] as { template: { name: string; components?: Comp[] } }).template;
-    expect(tpl(0).name).toBe("pg_outreach_v9_sie");
-    expect(tpl(0).components?.find((c) => c.type === "body")?.parameters.map((p) => p.text)).toEqual(["Frau Schneider", "Wann erreicht Anid Brand Sie am besten für ein kurzes Telefonat"]);
+    expect(tpl(0).name).toBe("pg_outreach_v12_sie");
+    expect(tpl(0).components?.find((c) => c.type === "body")?.parameters.map((p) => p.text)).toEqual(["Frau Schneider"]);
     expect(tpl(0).components?.find((c) => c.type === "header")?.parameters[0].document?.link).toBe(document.link);
-    expect(tpl(1).name).toBe("pg_outreach_v9_sie_ohne_name");
-    expect(tpl(1).components?.map((c) => c.type)).toEqual(["header", "body"]);
+    expect(tpl(1).name).toBe("pg_outreach_v12_sie_ohne_name");
+    // v10 ohne Namen hat keinen Platzhalter: nur der Kopf mit dem PDF
+    expect(tpl(1).components?.map((c) => c.type)).toEqual(["header"]);
     expect(tpl(2).name).toBe("pg_outreach_v1");
     const bodies = await prisma.message.findMany({ where: { conversation: { customerId } }, orderBy: { createdAt: "asc" }, select: { body: true, purpose: true, variant: true } });
-    // ab v8 mit der Fußzeile (KI-Kennzeichnung) im gespeicherten Text, v9 mit eigener Fußzeile
-    expect(bodies[0].body).toBe("[Erstinformation als PDF]\nHallo Frau Schneider, danke für Ihre Anfrage! *Wann erreicht Anid Brand Sie am besten für ein kurzes Telefonat?*\n\nKI-Assistent · Erstinformation im PDF oben");
-    expect(bodies[1].body?.startsWith("[Erstinformation als PDF]\nHallo, danke für Ihre Anfrage! *Wann erreicht")).toBe(true);
+    // ab v8 mit der Fußzeile (KI-Kennzeichnung) im gespeicherten Text, v10 nur „KI-Assistent“
+    expect(bodies[0].body).toBe("[Erstinformation als PDF]\nHallo Frau Schneider, danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*\n\nDigitaler KI-Assistent");
+    expect(bodies[1].body).toBe("[Erstinformation als PDF]\nHallo, danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*\n\nDigitaler KI-Assistent");
     expect(bodies[2].body?.startsWith("[Erstinformation")).toBe(false);
     expect(bodies[0]).toMatchObject({ purpose: "outreach", variant: "a" });
+    // ältere Fassung (v1): keine A/B-Fassung gespeichert, zählt nicht im Test der aktuellen Fassungen (Ole, 19.11.2026)
+    expect(bodies[2].variant).toBeNull();
 
     // Wieder „Du“ → Du-Fassung (bisherige, bis v3 freigegeben ist)
     await prisma.customer.update({ where: { id: customerId }, data: { leadAddress: "du" } });
     expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v1");
-    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v9" }, data: { status: "approved" } });
-    expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v9");
+    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v12" }, data: { status: "approved" } });
+    expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v12");
   });
 
-  it("Erstanschreiben Katze: bis zur Freigabe die freigegebene v4 bzw. v5 mit deren Parametern, dann v7/v8/v9 mit der ersten offenen Frage, immer mit PDF; im offenen Fenster Freitext und PDF", async () => {
+  it("Erstanschreiben Katze: bis zur Freigabe die freigegebene v4 bzw. v5 mit deren Parametern, dann v7/v8/v9 mit der ersten offenen Frage, v10/v11 mit fester Frage, immer mit PDF; im offenen Fenster Freitext und PDF", async () => {
     await prisma.customer.update({ where: { id: customerId }, data: { leadAddress: "sie" } });
     await connect();
     const { sendOutreach } = await import("@/lib/whatsapp/outreach");
@@ -379,13 +391,67 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     expect(m8.body).toBe(`[Erstinformation als PDF]\nHallo Herr Weber, danke für Ihre Anfrage zur Tierkrankenversicherung! Hier schreibt der digitale Assistent von ${p8[1]}.\n\n*Wie alt ist Ihre Katze?*\n\nKI-Assistent · Oben: Erstinformation (gesetzlich)`);
 
     // v9 freigegeben (Ole, 18.11.2026): emotional mit dem Tier („Ihre Katze“ ohne Namen im Formular), ohne Vermittler
-    await prisma.messageTemplate.create({ data: { customerId, name: "pg_outreach_tkv_v9_sie", language: "de", purpose: "outreach_tkv", category: "marketing", status: "approved", auto: true, headerFormat: "DOCUMENT", body } });
+    const { erstanschreibenV9 } = await import("@/lib/whatsapp/erstanschreiben");
+    await prisma.messageTemplate.create({ data: { customerId, name: "pg_outreach_tkv_v9_sie", language: "de", purpose: "outreach_tkv", category: "marketing", status: "approved", auto: true, headerFormat: "DOCUMENT", body: `Hallo {{1}}, ${erstanschreibenV9("outreach_tkv").sie}` } });
     const l9 = await lead("Max Weber", "4917600000027");
     await sendOutreach({ customerId, leadId: l9.id, phone: l9.phone!, name: l9.name, an: "sie", source: l9.source });
     expect(tplOf("4917600000027").name).toBe("pg_outreach_tkv_v9_sie");
     expect(params("4917600000027")).toEqual(["Herr Weber", "Ihre Katze", "Wie alt ist Ihre Katze"]);
     const m9 = await prisma.message.findFirstOrThrow({ where: { conversation: { customerId, contactPhone: "4917600000027" } } });
     expect(m9.body).toBe("[Erstinformation als PDF]\nHallo Herr Weber, schön, dass Sie Ihre Katze gut absichern möchten 🐾 *Wie alt ist Ihre Katze?*\n\nKI-Assistent · Erstinformation im PDF oben");
+    // ältere Fassung: keine A/B-Fassung gespeichert
+    expect(m9.variant).toBeNull();
+
+    // v10 freigegeben (Ole, 19.11.2026): feste Frage, nur das Tier als Platzhalter, Fußzeile „KI-Assistent“, Knöpfe in der Vorlage
+    const { variantForKey } = await import("@/lib/whatsapp/ab-test");
+    await prisma.messageTemplate.create({ data: { customerId, name: "pg_outreach_tkv_v12_sie", language: "de", purpose: "outreach_tkv", category: "marketing", status: "approved", auto: true, headerFormat: "DOCUMENT", body, buttons: ["Nur Operationen", "Auch Behandlungen", "Noch unsicher"] } });
+    const l10 = await lead("Max Weber", "4917600000028");
+    await sendOutreach({ customerId, leadId: l10.id, phone: l10.phone!, name: l10.name, an: "sie", source: l10.source });
+    expect(tplOf("4917600000028").name).toBe("pg_outreach_tkv_v12_sie");
+    expect(params("4917600000028")).toEqual(["Herr Weber", "Ihre Katze"]);
+    const m10 = await prisma.message.findFirstOrThrow({ where: { conversation: { customerId, contactPhone: "4917600000028" } } });
+    expect(m10.body).toBe("[Erstinformation als PDF]\nHallo Herr Weber, schön, dass Sie Ihre Katze gut absichern möchten 🐾 *Was soll abgesichert sein?*\n\nDigitaler KI-Assistent");
+    // nur Fassung a freigegeben: auch bei Zuteilung b geht a raus und zählt als a
+    expect(m10.variant).toBe("a");
+
+    // Formular beantwortet die feste Frage schon (gewünschter Schutz): weiter v9 mit der nächsten offenen Frage
+    const l11 = await prisma.lead.create({ data: { customerId, name: "Max Weber", phone: "4917600000029", source: "Katzenversicherung (TKV)", status: "Neuer Lead", formData: [{ label: "Gewünschter Schutz", value: "OP-Schutz" }] } });
+    await sendOutreach({ customerId, leadId: l11.id, phone: l11.phone!, name: l11.name, an: "sie", source: l11.source });
+    expect(tplOf("4917600000029").name).toBe("pg_outreach_tkv_v9_sie");
+    expect(params("4917600000029")).toEqual(["Herr Weber", "Ihre Katze", "Wie alt ist Ihre Katze"]);
+
+    // Fassung b (v11) freigegeben: Leads mit Zuteilung b bekommen „Frage zuerst“, gespeichert als b
+    const bodyB = templateBodyFor("outreach_tkv", templateNamesOf("Allianz Anid Brand", undefined, "Anid Brand"), "sie", "b");
+    await prisma.messageTemplate.create({ data: { customerId, name: "pg_outreach_tkv_v12_b_sie", language: "de", purpose: "outreach_tkv", category: "marketing", status: "approved", auto: true, headerFormat: "DOCUMENT", body: bodyB, buttons: ["Nur Operationen", "Auch Behandlungen", "Noch unsicher"] } });
+    let lb = await lead("Max Weber", "4917600000030");
+    for (let i = 0; variantForKey("outreach_tkv", lb.id) !== "b" && i < 40; i++) {
+      await prisma.lead.delete({ where: { id: lb.id } });
+      lb = await lead("Max Weber", "4917600000030");
+    }
+    expect(variantForKey("outreach_tkv", lb.id)).toBe("b");
+    await sendOutreach({ customerId, leadId: lb.id, phone: lb.phone!, name: lb.name, an: "sie", source: lb.source });
+    expect(tplOf("4917600000030").name).toBe("pg_outreach_tkv_v12_b_sie");
+    expect(params("4917600000030")).toEqual(["Herr Weber", "Ihre Katze"]);
+    const mb = await prisma.message.findFirstOrThrow({ where: { conversation: { customerId, contactPhone: "4917600000030" } } });
+    expect(mb.body).toBe("[Erstinformation als PDF]\nHallo Herr Weber, *was soll für Ihre Katze abgesichert sein?* 🐾\n\nDigitaler KI-Assistent");
+    expect(mb.variant).toBe("b");
+
+    // Fenster offen, Lead hat noch nicht geschrieben (Anfrage): Freitext v10 mit denselben Knöpfen interaktiv, dann das PDF
+    const lf = await lead("Max Weber", "4917600000031");
+    await prisma.conversation.create({ data: { customerId, contactPhone: lf.phone!, leadId: lf.id, windowExpiresAt: new Date(Date.now() + 3_600_000) } });
+    const vorF = sent.length;
+    const rf = await sendOutreach({ customerId, leadId: lf.id, phone: lf.phone!, name: lf.name, an: "sie", source: lf.source });
+    expect(rf.mode).toBe("text");
+    const outF = sent.slice(vorF) as Array<{ type: string; interactive?: { body: { text: string }; action: { buttons: { reply: { title: string } }[] } } }>;
+    expect(outF[0].type).toBe("interactive");
+    const fassungF = variantForKey("outreach_tkv", lf.id);
+    expect(outF[0].interactive?.body.text).toBe(
+      fassungF === "b"
+        ? "Hallo Herr Weber, *was soll für Ihre Katze abgesichert sein?* 🐾\n\n_Digitaler KI-Assistent_"
+        : "Hallo Herr Weber, schön, dass Sie Ihre Katze gut absichern möchten 🐾 *Was soll abgesichert sein?*\n\n_Digitaler KI-Assistent_",
+    );
+    expect(outF[0].interactive?.action.buttons.map((b) => b.reply.title)).toEqual(["Nur Operationen", "Auch Behandlungen", "Noch unsicher"]);
+    expect(outF[1]).toMatchObject({ type: "document" });
 
     // Lead hat schon geschrieben (Fenster offen): Freitext „danke für Ihre Nachricht“, danach die Erstinformation
     const l3 = await lead("Julia Schneider", "4917600000023");
@@ -405,30 +471,30 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
   it("Live-Test 17.11.2026: Liste seitenweise; bei Meta vorhandene Vorlagen nie erneut einreichen, Status übernehmen", async () => {
     await connect();
     await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(66);
+    expect(created).toHaveLength(84);
     // Server liefert je Abruf höchstens 20: früher fehlten die neuesten Vorlagen, sie wurden bei jedem Lauf neu eingereicht
     listCap = 20;
-    remote.find((t) => t.name === "pg_outreach_privatschutz_v9_sie")!.status = "APPROVED";
+    remote.find((t) => t.name === "pg_outreach_privatschutz_v12_sie")!.status = "APPROVED";
     posts = [];
     const s = await submitTemplatesForCustomer(customerId);
     expect(posts).toEqual([]);
     expect(s.ok).toBe(true);
-    expect(s.approved).toContain("pg_outreach_privatschutz_v9_sie");
-    expect((await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_privatschutz_v9_sie" } })).status).toBe("approved");
+    expect(s.approved).toContain("pg_outreach_privatschutz_v12_sie");
+    expect((await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_privatschutz_v12_sie" } })).status).toBe("approved");
 
     // Vorlage gibt es bei Meta, die Liste zeigt sie nicht: kein erneutes Einreichen (lokal bekannt)
-    hidden = ["pg_outreach_privatschutz_v9"];
+    hidden = ["pg_outreach_privatschutz_v12"];
     posts = [];
     const s2 = await submitTemplatesForCustomer(customerId);
     expect(posts).toEqual([]);
     expect(s2.ok).toBe(true);
     // Lokal fehlt der Datensatz auch: einmal eingereicht, „already in use“ → übernommen statt Fehler, nächster Lauf ruhig
-    await prisma.messageTemplate.deleteMany({ where: { customerId, name: "pg_outreach_privatschutz_v9" } });
+    await prisma.messageTemplate.deleteMany({ where: { customerId, name: "pg_outreach_privatschutz_v12" } });
     posts = [];
     const s3 = await submitTemplatesForCustomer(customerId);
-    expect(posts).toEqual(["pg_outreach_privatschutz_v9"]);
+    expect(posts).toEqual(["pg_outreach_privatschutz_v12"]);
     expect(s3.ok).toBe(true);
-    expect(await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_privatschutz_v9" } })).toMatchObject({ status: "pending", headerFormat: "DOCUMENT" });
+    expect(await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_privatschutz_v12" } })).toMatchObject({ status: "pending", headerFormat: "DOCUMENT" });
     posts = [];
     await submitTemplatesForCustomer(customerId);
     expect(posts).toEqual([]);
@@ -438,8 +504,8 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await connect();
     const [a, b] = await Promise.all([submitTemplatesForCustomer(customerId), submitTemplatesForCustomer(customerId)]);
     expect(a).toBe(b);
-    expect(posts).toHaveLength(66);
-    expect(new Set(posts).size).toBe(66);
+    expect(posts).toHaveLength(84);
+    expect(new Set(posts).size).toBe(84);
   });
 
   it("nicht verbunden → nichts eingereicht", async () => {

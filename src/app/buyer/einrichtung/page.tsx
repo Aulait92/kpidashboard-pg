@@ -25,6 +25,7 @@ import { loadErstinfo } from "@/lib/erstinformation";
 import { vermittlerStatusLabel } from "@/lib/erstinformation-shared";
 import { SmtpForm } from "@/app/buyer/postfach/forms";
 import { googleMailAvailable, microsoftMailAvailable } from "@/lib/mail/postfach";
+import { mitKampagnen } from "@/lib/offer-pricing";
 import { appInstalled, loadSetupSettings, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
 import { helpCallSlots } from "@/lib/help-call";
 import { InstallApp } from "@/components/install-app";
@@ -74,6 +75,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const items = onboardingChecklist(ob, offer);
   const done = (k: string) => items.find((i) => i.key === k)?.done ?? false;
   const software = ob.package !== "service";
+  // Pay-per-Lead + Software (Ole, 19.11.2026): keine eigenen Kampagnen, also kein Schritt „Meta freigeben“ und kein Werbebudget
+  const kampagnen = mitKampagnen(ob.package);
   // Fortschritt nur aus den Schritten, die der Kunde selbst erledigt (nicht Zahlung, Login, unsere Arbeit).
   const settings = await loadSetupSettings();
   const businessId = settings.businessId;
@@ -100,7 +103,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     ...(software ? ["calendar", "mailbox"] : []),
     "provision",
     ...(software ? ["erstinfo", "assistent", "serviceMails"] : []),
-    "metaAccess",
+    ...(kampagnen ? ["metaAccess"] : []),
     ...(waEnabled ? ["whatsapp"] : []),
     ...["bestandImport", "reviewLink", "team"].filter(has),
   ];
@@ -152,6 +155,35 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   };
   const timeFmt = (d: Date) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
+  // Hilfetermin: bei Paketen mit Kampagne im Schritt „Meta freigeben“, bei Pay-per-Lead + Software im Schritt „WhatsApp verbinden“
+  const hilfeBox = (
+      <div id="hilfetermin" className="mt-5 scroll-mt-20 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
+        <p className="text-[15px] font-medium">Klappt etwas nicht? Wir machen es gemeinsam.</p>
+        {helpUpcoming ? (
+          <p className="mt-2 text-[15px]">
+            Ihr Hilfetermin: <b>{timeFmt(ob.helpCallAt!)} Uhr</b> (15 Minuten, Video).
+            {ob.helpCallUrl ? (
+              <>
+                {" "}
+                <a href={ob.helpCallUrl} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                  Zum Video-Call
+                </a>
+              </>
+            ) : null}
+          </p>
+        ) : slots.length ? (
+          <>
+            <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">15 Minuten per Video, wir machen es gemeinsam.</p>
+            <HelpCallPicker slots={slots} readOnly={readOnly} />
+          </>
+        ) : null}
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
+          <span>Schnelle Frage zwischendurch?</span>
+          <HilfeChatButton className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--brand)]" />
+          <span>Sie antwortet sofort, auch abends.</span>
+        </div>
+      </div>
+  );
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -465,6 +497,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           )
         ) : null}
 
+        {kampagnen ? (
         <Step n={nextNo()} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess" current={current === "metaAccess"}>
           <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto und Leads kommen direkt bei Ihnen an. Das Budget bleibt bei Ihnen.</p>
           <VideoHint url={video("metaAccess")} />
@@ -547,38 +580,15 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               readOnly={readOnly}
             />
           </div>
-          <div id="hilfetermin" className="mt-5 scroll-mt-20 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
-            <p className="text-[15px] font-medium">Klappt etwas nicht? Wir machen es gemeinsam.</p>
-            {helpUpcoming ? (
-              <p className="mt-2 text-[15px]">
-                Ihr Hilfetermin: <b>{timeFmt(ob.helpCallAt!)} Uhr</b> (15 Minuten, Video).
-                {ob.helpCallUrl ? (
-                  <>
-                    {" "}
-                    <a href={ob.helpCallUrl} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
-                      Zum Video-Call
-                    </a>
-                  </>
-                ) : null}
-              </p>
-            ) : slots.length ? (
-              <>
-                <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">15 Minuten per Video, wir machen es gemeinsam.</p>
-                <HelpCallPicker slots={slots} readOnly={readOnly} />
-              </>
-            ) : null}
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
-              <span>Schnelle Frage zwischendurch?</span>
-              <HilfeChatButton className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--brand)]" />
-              <span>Sie antwortet sofort, auch abends.</span>
-            </div>
-          </div>
+          {hilfeBox}
         </Step>
+        ) : null}
 
         {waEnabled ? (
           <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp" current={current === "whatsapp"}>
             <VideoHint url={video("whatsapp")} />
-            <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} email={ctx.email} />
+            <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} email={ctx.email} hilfeSchritt={kampagnen ? "metaAccess" : "whatsapp"} />
+            {kampagnen ? null : hilfeBox}
             {!done("whatsapp") ? (
               <StepExits
                 laterHref={laterHref("whatsapp")}
@@ -640,19 +650,29 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <TestleadSelbst phone={eiTel} readOnly={readOnly} schonGetestet={!!ob.testLeadAt} />
             </div>
           ) : null}
-          <p className="text-sm text-[color:var(--muted)]">
-            {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
-            gehen die Anzeigen live.{" "}
-            {software
-              ? "Neue Leads bekommen innerhalb weniger Minuten eine WhatsApp-Nachricht und können direkt einen Termin buchen."
-              : "Jeder neue Lead kommt sofort per E-Mail und steht hier im Kundenbereich unter „Leads“."}
-          </p>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">
-            Ihr Werbebudget können Sie jederzeit selbst anpassen:{" "}
-            <Link href="/buyer/wachstum#budget" className="font-medium text-[color:var(--brand)] underline">
-              Budget ändern
-            </Link>
-          </p>
+          {kampagnen ? (
+            <>
+              <p className="text-sm text-[color:var(--muted)]">
+                {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
+                gehen die Anzeigen live.{" "}
+                {software
+                  ? "Neue Leads bekommen innerhalb weniger Minuten eine WhatsApp-Nachricht und können direkt einen Termin buchen."
+                  : "Jeder neue Lead kommt sofort per E-Mail und steht hier im Kundenbereich unter „Leads“."}
+              </p>
+              <p className="mt-2 text-sm text-[color:var(--muted)]">
+                Ihr Werbebudget können Sie jederzeit selbst anpassen:{" "}
+                <Link href="/buyer/wachstum#budget" className="font-medium text-[color:var(--brand)] underline">
+                  Budget ändern
+                </Link>
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-[color:var(--muted)]" data-start-ppl>
+              {ob.startDate ? `Ab ${dateFmt(ob.startDate)} ` : "Ab dem Start "}
+              bekommt jeder Lead, den Sie per Pay-per-Lead bestellen, innerhalb weniger Minuten eine WhatsApp-Nachricht und kann direkt einen Termin buchen. Leads bestellen Sie
+              unter <b>Wachstum → Leads bestellen</b>.
+            </p>
+          )}
           <p className="mt-2 text-sm text-[color:var(--muted)]" data-start-monatsbericht>
             Anfang jedes Monats bekommen Sie Ihren Monatsbericht per E-Mail: Leads, Termine, Abschlüsse und Gewinn im Vergleich zum Vormonat. Alle Berichte finden
             Sie unter{" "}
@@ -780,8 +800,11 @@ function WhatsAppStep({
   done,
   readOnly,
   email,
+  hilfeSchritt = "metaAccess",
 }: {
   email: string;
+  /** Schritt mit dem Hilfetermin (Pay-per-Lead + Software: ohne Schritt „Meta freigeben“) */
+  hilfeSchritt?: string;
   wa?: string;
   weg?: string;
   account: { status: string; phoneNumber: string | null; dialog360ChannelId: string | null } | null;
@@ -838,7 +861,7 @@ function WhatsAppStep({
               <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Sie sind bei Facebook angemeldet und Admin Ihres Business Managers.</li>
             </ul>
           </div>
-          <WhatsAppGuide initialPath={parseConnectPath(weg)} readOnly={readOnly} helpHref="/buyer/einrichtung?schritt=metaAccess#hilfetermin" />
+          <WhatsAppGuide initialPath={parseConnectPath(weg)} readOnly={readOnly} helpHref={`/buyer/einrichtung?schritt=${hilfeSchritt}#hilfetermin`} />
           <WaCheckButton readOnly={readOnly} />
         </>
       )}

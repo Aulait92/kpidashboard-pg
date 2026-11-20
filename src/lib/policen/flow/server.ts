@@ -420,29 +420,79 @@ export async function flowMerker(leadId: string, token: string): Promise<FlowMer
 
 // ─── Antwort des Formulars lesen und Dateien laden ──────────────────────────
 
-export type FlowDatei = { id: string | null; name: string | null; mime: string | null; sha256: string | null; cdnUrl: string | null; encryption: EncryptionMetadata | null };
+export type FlowDatei = {
+  id: string | null;
+  name: string | null;
+  mime: string | null;
+  sha256: string | null;
+  cdnUrl: string | null;
+  encryption: EncryptionMetadata | null;
+  /** Aufbau des Eintrags ohne Werte (nur Feldnamen) fürs Protokoll, wenn die Datei nicht geladen werden kann */
+  felder: string;
+};
 export type FlowAntwort = { token: string; ohneKi: boolean; dateien: FlowDatei[] };
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
 /** response_json aus nfm_reply (JSON-Text oder Objekt). null = unlesbar bzw. ohne Token. */
+/** JSON-Text oder Objekt; Meta liefert verschachtelte Werte teils als Text (z. B. `${form.fotos}` im complete-Payload). */
+const alsJson = (v: unknown): unknown => {
+  if (typeof v !== "string") return v;
+  const t = v.trim();
+  if (!t.startsWith("{") && !t.startsWith("[")) return v;
+  try {
+    return JSON.parse(t);
+  } catch {
+    return v;
+  }
+};
+/** Media-ID als Text (Meta schickt sie als Text, sicherheitshalber auch Zahlen annehmen). */
+const idText = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? String(v) : str(v));
+/** Feldnamen eines Eintrags ohne Werte, z. B. „file_name,cdn_url,encryption_metadata[iv,…]“. */
+const feldnamen = (d: unknown): string => {
+  if (typeof d === "string") return "text";
+  if (!d || typeof d !== "object") return typeof d;
+  return Object.entries(d as Record<string, unknown>)
+    .map(([k, v]) => {
+      const o = alsJson(v);
+      return o && typeof o === "object" && !Array.isArray(o) ? `${k}[${Object.keys(o).join(",")}]` : k;
+    })
+    .join(",");
+};
+
+/**
+ * Antwort des Formulars lesen. Je Datei: Media-ID (`id` bzw. `media_id`) zum Laden wie normale WhatsApp-Bilder, oder
+ * `cdn_url` mit `encryption_metadata` (verschlüsselt, krypto.ts). Tolerant gegenüber Text statt JSON und Zahlen-IDs
+ * (Ole, 19.11.2026: Foto aus dem Formular kam ohne Quelle an, direkt im Chat gesendet klappte es).
+ */
 export function leseFlowAntwort(raw: unknown): FlowAntwort | null {
-  let j: Record<string, unknown> | null = null;
-  if (typeof raw === "string") {
-    try {
-      j = JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  } else if (raw && typeof raw === "object") j = raw as Record<string, unknown>;
+  const j0 = alsJson(raw);
+  const j = j0 && typeof j0 === "object" && !Array.isArray(j0) ? (j0 as Record<string, unknown>) : null;
   const token = str(j?.flow_token);
   if (!j || !token) return null;
-  const liste = (v: unknown) => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
-  const dateien = [...liste(j.fotos), ...liste(j.pdfs)].slice(0, MAX_DATEIEN_JE_SENDEN).map((d) => {
-    const em = d.encryption_metadata as Record<string, unknown> | undefined;
+  const liste = (v: unknown): unknown[] => {
+    const x = alsJson(v);
+    return Array.isArray(x) ? x : x && typeof x === "object" ? [x] : typeof x === "string" && x.trim() ? [x] : [];
+  };
+  const dateien = [...liste(j.fotos), ...liste(j.pdfs)].slice(0, MAX_DATEIEN_JE_SENDEN).map((roh): FlowDatei => {
+    const d0 = alsJson(roh);
+    // Nur die Media-ID als Text
+    if (typeof d0 === "string") return { id: str(d0), name: null, mime: null, sha256: null, cdnUrl: null, encryption: null, felder: "text" };
+    const d = (d0 && typeof d0 === "object" ? d0 : {}) as Record<string, unknown>;
+    const em = alsJson(d.encryption_metadata) as Record<string, unknown> | undefined;
     const encryption =
-      em && ["encrypted_hash", "iv", "encryption_key", "hmac_key", "plaintext_hash"].every((k) => typeof em[k] === "string") ? (em as unknown as EncryptionMetadata) : null;
-    return { id: str(d.id) ?? str(d.media_id), name: str(d.file_name), mime: str(d.mime_type), sha256: str(d.sha256), cdnUrl: str(d.cdn_url), encryption };
+      em && typeof em === "object" && ["encrypted_hash", "iv", "encryption_key", "hmac_key", "plaintext_hash"].every((k) => typeof em[k] === "string")
+        ? (em as unknown as EncryptionMetadata)
+        : null;
+    return {
+      id: idText(d.id) ?? idText(d.media_id),
+      name: str(d.file_name) ?? str(d.filename),
+      mime: str(d.mime_type),
+      sha256: str(d.sha256),
+      cdnUrl: str(d.cdn_url),
+      encryption,
+      felder: feldnamen(d0),
+    };
   });
   const ohne = j.ohne_ki;
   return { token, ohneKi: ohne === true || ohne === "true", dateien };
@@ -537,7 +587,8 @@ export async function runPolicenFlowErinnerungen(now = new Date()): Promise<{ ge
       const arten = await prisma.message.findMany({ where: { conversationId: b.conversationId, direction: "internal", kind: strecke.STRECKE.policenErinnerung, body: { contains: appointmentId } }, select: { body: true } });
       const schon = arten.map((x) => (JSON.parse(x.body ?? "{}") as { art?: string }).art).filter((x): x is "tag" | "vortag" => x === "tag" || x === "vortag");
       const welche = faelligeErinnerung({ bitteAt: stand.policenBitteAt, terminAt: t.startsAt, gesendet: schon, now });
-      if (!welche) continue;
+      // Erinnerung 2 (Vortag 18 Uhr) entfällt: dafür steht ein Satz in der Vortags-Terminerinnerung (A8 a, 19.11.2026)
+      if (!welche || welche === "erinnerung2") continue;
       if (!(await strecke.policenErinnernErlaubt(b.conversationId, t.leadId, stand))) continue;
       const conv = await prisma.conversation.findUnique({ where: { id: b.conversationId }, select: { botActive: true, optedOutAt: true } });
       if (!conv?.botActive || conv.optedOutAt) continue;

@@ -94,6 +94,20 @@ describe("Fassung A bleibt, Fassung B mit Abschluss", () => {
     expect(praesentationHtml(z, m, "T")).toContain(".zusage{display:none}");
   });
 
+  it("Überblick: unbeantwortete Sparte neutral „Gleich besprechen“, beantwortetes „Weiß nicht“ bleibt „Prüfen“", () => {
+    const x = folien(d, {
+      ...ang,
+      schutz: [
+        { key: "rechtsschutz", label: "Rechtsschutz", status: "pruefen", info: null, versicherer: null, offen: true },
+        { key: "unfall", label: "Unfall", status: "pruefen", info: null, versicherer: null },
+      ],
+    }, m, "sie", { variante: "B" });
+    const u = folie(x, "ueberblick");
+    expect(u).toContain('data-schutz="rechtsschutz" data-status="offen"');
+    expect(u).toContain("Gleich besprechen");
+    expect(u).toContain('data-schutz="unfall" data-status="pruefen"');
+  });
+
   it("B in der Du-Fassung", () => {
     const du = folien(d, ang, m, "du", { variante: "B" });
     expect(folie(du, "entscheidung")).toContain("Deine Entscheidung");
@@ -169,8 +183,10 @@ describe("Messung: Abschlussquote je Präsentation", () => {
         ev("t2", "termin", "folie", "beitrag"),
         ev("t2", "kundenlink", "folie", "entscheidung"),
         ev("t2", "kundenlink", "zusage", ""),
-        // t3: B, gezeigt, kein Abschluss
+        // t3: B, gezeigt, kein Abschluss, zwei Sparten „Mit anschauen“ (zählt als ein Termin)
         ev("t3", "termin", "folie", "empfehlung"),
+        ev("t3", "termin", "mitanschauen", "sparte-2"),
+        ev("t3", "termin", "mitanschauen", "sparte-3"),
         // t4: B, nur Titel (zählt nicht)
         ev("t4", "termin", "folie", "titel"),
         // t5: A, gezeigt, Kontakt abgeschlossen
@@ -180,7 +196,7 @@ describe("Messung: Abschlussquote je Präsentation", () => {
       ],
       new Set(["t5"]),
     );
-    expect(r.k1.B).toMatchObject({ praesentationen: 3, abschluesse: 2, zusagenTermin: 1, zusagenKundenlink: 1, kundenlinkGeoeffnet: 1, kundenlinkEntscheidung: 1 });
+    expect(r.k1.B).toMatchObject({ praesentationen: 3, abschluesse: 2, zusagenTermin: 1, zusagenKundenlink: 1, kundenlinkGeoeffnet: 1, kundenlinkEntscheidung: 1, mitAnschauen: 1 });
     expect(r.k1.B.abschlussquote).toBeCloseTo(0.667, 3);
     expect(r.k1.A).toMatchObject({ praesentationen: 1, abschluesse: 1, abschlussquote: 1 });
     expect(r.k2.A).toMatchObject({ praesentationen: 1, abschluesse: 0, abschlussquote: 0 });

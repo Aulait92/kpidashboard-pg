@@ -11,6 +11,8 @@ import { adminRecordStorno, decideStorno, undoStorno } from "@/lib/ppl/storno";
 import { placeOrder } from "@/lib/ppl/orders";
 import { weekRange } from "@/lib/ppl/periods";
 import { invalidAddresses, parseAddresses } from "@/lib/ppl/lead-mail";
+import { effektiveSteuer, isRegisterStatus, isSteuer, nettoAusBrutto } from "@/lib/ppl/steuer";
+import { normalizeRegisterNummer } from "@/lib/erstinformation-shared";
 
 async function requireAdmin() {
   const s = await getCurrentSession();
@@ -39,9 +41,22 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
   const id = String(fd.get("id") ?? "");
   const customerId = String(fd.get("customerId") ?? "");
   const productKey = String(fd.get("productKey") ?? "").trim();
-  const price = num(fd.get("price"));
+  const priceInput = num(fd.get("price"));
   if (!customerId || !productKey) return { error: "Kunde und Produkt angeben." };
-  if (price == null || !Number.isFinite(price) || price < 0) return { error: "Preis je Lead angeben." };
+  if (priceInput == null || !Number.isFinite(priceInput) || priceInput < 0) return { error: "Preis je Lead angeben." };
+  // Umsatzsteuer (Ole, 20.11.2026): leer = Standard je Produkt (lib/ppl/steuer.ts)
+  const steuerRaw = String(fd.get("steuer") ?? "");
+  const steuer = isSteuer(steuerRaw) ? steuerRaw : null;
+  // Preis brutto kalkuliert (z. B. Kindersparplan 65 € inkl. USt.): netto speichern (65 € → 54,62 €). Nur wenn die
+  // Bestellung für diesen Käufer tatsächlich mit 19 % abgerechnet wird, sonst wäre brutto = netto.
+  let price = priceInput;
+  if (fd.get("priceMode") === "brutto") {
+    const kunde = await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true } });
+    if (effektiveSteuer({ productKey, steuer }, kunde).steuer !== "steuerpflichtig") {
+      return { error: "Bruttopreis nur bei steuerpflichtigen Leads. Für steuerfreie Leads ist der Preis netto gleich brutto." };
+    }
+    price = nettoAusBrutto(priceInput);
+  }
   const delivery = String(fd.get("delivery") ?? "app");
   const secret = String(fd.get("webhookSecret") ?? "").trim();
   // Lead-Mail: standard | vorlage | maschinenlesbar (nur gesendet, wenn Lieferung E-Mail gewählt ist)
@@ -70,6 +85,7 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
     goal: int(fd.get("goal")),
     startDate: fd.get("startDate") ? new Date(`${fd.get("startDate")}T00:00:00`) : null,
     price,
+    steuer,
     plzRanges: String(fd.get("plzRanges") ?? "").trim() || null,
     acceptWeak: fd.get("acceptWeak") === "on",
     weakThreshold: int(fd.get("weakThreshold")),
@@ -98,12 +114,44 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
   if (mailKind === "vorlage" && !("emailTemplate" in mailData && mailData.emailTemplate)) return { error: "Für „Eigene Vorlage“ eine Vorlage angeben." };
   if (data.delivery === "webhook" && !/^https:\/\//.test(data.webhookUrl ?? "")) return { error: "Für Webhook eine https-Adresse angeben." };
   const saved = id ? await prisma.leadSubscription.update({ where: { id }, data }) : await prisma.leadSubscription.create({ data });
-  await audit("ppl.subscription", { entity: "LeadSubscription", entityId: saved.id, customerId, details: { productKey, active: data.active, price } });
+  await audit("ppl.subscription", { entity: "LeadSubscription", entityId: saved.id, customerId, details: { productKey, active: data.active, price, steuer, ...(price !== priceInput ? { bruttoEingabe: priceInput } : {}) } });
   revalidatePath("/admin/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   // Rückweg: alte Übersicht oder (Feld „zurueck“) die Pay-per-Lead-Seite im neuen Admin
   const zurueck = String(fd.get("zurueck") ?? "");
   redirect(`${zurueck.startsWith("/admin/neu/") && !zurueck.includes("?") ? zurueck : "/admin/ppl"}?gespeichert=${saved.id}`);
+}
+
+export type RegisterState = { error?: string; ok?: boolean };
+
+/**
+ * Registerprüfung (Ole, 20.11.2026): Ole hat den Käufer im Vermittlerregister nachgeschlagen und trägt Nummer, Status und
+ * Prüfdatum ein. Steuerfrei nach § 4 Nr. 11 UStG nur bei Status vertreter/makler mit gültiger Nummer (lib/ppl/steuer.ts).
+ * Gibt danach wartende Bestellungen frei (lib/ppl/erste-woche.ts).
+ */
+export async function saveRegisterpruefungAction(_prev: RegisterState, fd: FormData): Promise<RegisterState> {
+  const s = await requireAdmin();
+  const customerId = String(fd.get("customerId") ?? "");
+  const status = String(fd.get("registerStatus") ?? "");
+  if (!customerId) return { error: "Kunde fehlt." };
+  if (!isRegisterStatus(status)) return { error: "Status wählen." };
+  const rawNr = String(fd.get("registerNr") ?? "").trim();
+  const nr = normalizeRegisterNummer(rawNr);
+  if (status !== "keiner" && !nr) return { error: "Registernummer im Format D-XXXX-XXXXX-XX angeben." };
+  if (rawNr && !nr) return { error: "Registernummer im Format D-XXXX-XXXXX-XX angeben." };
+  const datum = String(fd.get("geprueftAm") ?? "");
+  const geprueftAt = /^\d{4}-\d{2}-\d{2}$/.test(datum) ? new Date(`${datum}T12:00:00`) : new Date();
+  if (geprueftAt.getTime() > Date.now() + 86_400_000) return { error: "Prüfdatum liegt in der Zukunft." };
+  await prisma.customer.update({
+    where: { id: customerId },
+    data: { vermittlerRegisterNr: nr, vermittlerRegisterStatus: status, vermittlerGeprueftAt: geprueftAt, vermittlerGeprueftVon: s.email ?? s.userId },
+  });
+  await audit("ppl.registerpruefung", { entity: "Customer", entityId: customerId, customerId, actor: { id: s.userId, email: s.email, role: s.role }, details: { status, nr } });
+  const { registerGeprueft } = await import("@/lib/ppl/erste-woche");
+  await registerGeprueft(customerId, { id: s.userId, email: s.email, role: s.role });
+  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
+  return { ok: true };
 }
 
 export async function manualOrderAction(fd: FormData): Promise<void> {

@@ -27,12 +27,15 @@ import { fmtDateTime } from "@/lib/vertrieb/dates";
 import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
 import { anredeZeile } from "@/lib/ansprache";
 import { PROVIDER } from "@/lib/legal-texts";
+import { legalUrls } from "@/lib/offers";
 import type { SalesBookingType } from "@/generated/prisma/client";
 
 /** Interner Mandant, an dem der Vertriebskalender hängt (Migration 20261118705300). */
 export const VERTRIEB_CUSTOMER_ID = "cust_pg_vertrieb";
 export const DEFAULT_BOOKING_TYPE = "meta-leads-call";
 export const DECISION_BOOKING_TYPE = "entscheidung";
+/** Sales-Call nach dem kurzen Telefonat (Setter): nur Ole bucht ihn im Vertriebskontakt (Ole, 19.11.2026). */
+export const SALES_CALL_BOOKING_TYPE = "sales-call";
 
 /** Vorbereitungsvideo auf der Danke-Seite (zum Tauschen: Datei oder Adresse hier ändern). */
 export const PREPARATION_VIDEO_URL = process.env.SALES_PREPARATION_VIDEO_URL?.trim() || "/praesentation/vertrieb/assistent.mp4";
@@ -57,6 +60,13 @@ export function salesAppUrl(path: string): string {
 
 export const manageLink = (token: string) => salesAppUrl(`/termin/verwalten/${token}`);
 export const thanksLink = (token: string) => salesAppUrl(`/termin/danke/${token}`);
+
+/** Kurzbeschreibung eines Termintyps im Admin (Buchungsseite). Nicht online buchbar = nur im Vertriebskontakt. */
+export function bookingTypeHint(t: { slug: string; active: boolean }): string {
+  if (!t.active) return "Nicht online buchbar, Sie buchen ihn im Vertriebskontakt";
+  if (t.slug === DEFAULT_BOOKING_TYPE) return "Erster Kontakt, auf der Webseite buchbar";
+  return "Folgetermin nach dem Angebot, persönlicher Link im Vertriebskontakt";
+}
 
 /** Pfad der Buchungsseite eines Termintyps in der App (Standardtyp: /termin). */
 export const bookingPath = (slug: string) => (slug === DEFAULT_BOOKING_TYPE ? "/termin" : `/termin/${slug}`);
@@ -173,7 +183,7 @@ export const VERTRIEB_INTERESSEN = [
 
 export const BUFFER_CHOICES = [0, 10, 15, 30] as const;
 export const NOTICE_CHOICES = [60, 120, 240, 720, 1440, 2880] as const;
-export const DURATION_CHOICES = [30, 45, 60] as const;
+export const DURATION_CHOICES = [15, 30, 45, 60] as const;
 /** Buchungsfenster: öffentlich buchbar in den nächsten N Tagen ab heute (heute zählt mit). */
 export const WINDOW_CHOICES = [3, 5, 7, 10, 14, 21, 30] as const;
 
@@ -428,6 +438,59 @@ async function pushOle(title: string, body: string, contactId: string, tag: stri
   await sendToAdmins({ title, body, url: `/admin/vertrieb/kontakte/${contactId}`, tag }).catch((e) => reportError(e, "vertrieb-buchung-push"));
 }
 
+// ─── E-Mail an uns (Ole, 19.11.2026): jede Buchung, Verschiebung und Absage über /termin auch per Mail ──
+
+export type TeamMailKind = "booked" | "rescheduled" | "cancelled";
+
+/** Inhalt der Mail an uns (rein, für Tests). */
+export function teamMailContent(
+  kind: TeamMailKind,
+  m: { title: string; startAt: Date; previousStartAt?: Date | null; name: string; email?: string | null; joinUrl?: string | null; answers?: string | null; reason?: string | null },
+) {
+  const w = when(m.startAt);
+  const head =
+    kind === "booked"
+      ? { subject: `Neuer Termin: ${m.name}, ${whenShort(m.startAt)} Uhr`, line: `${m.name} hat einen ${m.title} gebucht: ${w}.` }
+      : kind === "rescheduled"
+        ? {
+            subject: `Termin verschoben: ${m.name}, neu ${whenShort(m.startAt)} Uhr`,
+            line: `${m.name} hat den ${m.title} verschoben. Neu: ${w}${m.previousStartAt ? ` (war ${when(m.previousStartAt)})` : ""}.`,
+          }
+        : { subject: `Termin abgesagt: ${m.name}, ${whenShort(m.startAt)} Uhr`, line: `${m.name} hat den ${m.title} am ${w} abgesagt.` };
+  const list = [
+    m.email ? `E-Mail: ${m.email}` : null,
+    ...(m.answers ?? "").split("\n").map((l) => l.trim()),
+    kind !== "cancelled" && m.joinUrl ? `Videocall: ${m.joinUrl}` : null,
+    kind === "cancelled" ? `Grund: ${m.reason?.trim() || "keiner angegeben"}` : null,
+  ].filter((l): l is string => !!l);
+  return { subject: head.subject, paragraphs: [head.line], list };
+}
+
+async function mailOle(kind: TeamMailKind, contactId: string, m: Parameters<typeof teamMailContent>[1]) {
+  try {
+    const c = teamMailContent(kind, m);
+    let button: { label: string; url: string } | undefined;
+    try {
+      button = { label: "Kontakt öffnen", url: `${getAppUrl()}/admin/vertrieb/kontakte/${contactId}` };
+    } catch {
+      button = undefined; // ohne APP_URL (z. B. Tests) Mail ohne Knopf
+    }
+    const res = await sendCustomerMail({
+      to: process.env.ADMIN_EMAIL?.trim() || PROVIDER.email,
+      subject: c.subject,
+      greeting: "Hallo,",
+      paragraphs: c.paragraphs,
+      list: c.list,
+      button,
+      signature: PROVIDER.brand,
+      replyTo: m.email ?? null,
+    });
+    if (!res.ok) console.warn(`[vertrieb-buchung team-mail] ${kind} ${contactId}: ${res.error}`);
+  } catch (err) {
+    reportError(err, "vertrieb-buchung-team-mail", { contact: contactId, kind });
+  }
+}
+
 /** Öffentliche Buchung: Kontakt zuordnen bzw. anlegen, Termin anlegen, CRM, Push, E-Mail, WhatsApp. */
 export async function bookSalesMeeting(opts: {
   type: SalesBookingType;
@@ -496,6 +559,7 @@ export async function bookSalesMeeting(opts: {
   );
   await pushOle(`📅 Neue ${t.title}: ${input.name}`, `${whenShort(opts.start)} Uhr · ${input.company}`, contactId, `sales-booking:${res.meetingId}`);
   await sendInviteeMail(res.meetingId, "booked");
+  await mailOle("booked", contactId, { title: t.title, startAt: opts.start, name: input.name, email: input.email, joinUrl: res.joinUrl, answers: answersOf(input) });
   const { sendTerminConfirmation } = await import("@/lib/vertrieb/termin-whatsapp");
   await sendTerminConfirmation(
     res.meetingId,
@@ -549,6 +613,8 @@ export async function cancelSalesMeeting(token: string, opts: { reason?: string 
   });
   await pushOle(`❌ ${m.title} abgesagt: ${m.inviteeName ?? m.contact.name}`, `${whenShort(m.startAt)} Uhr${reason ? ` · ${reason.slice(0, 80)}` : ""}`, m.contactId, `sales-booking-cancel:${m.id}`);
   await sendInviteeMail(m.id, "cancelled");
+  if (opts.by !== "team")
+    await mailOle("cancelled", m.contactId, { title: m.title, startAt: m.startAt, name: m.inviteeName ?? m.contact.name, email: m.inviteeEmail, answers: m.answers, reason });
   return { ok: true, token };
 }
 
@@ -584,6 +650,7 @@ async function moveMeeting(m: MovableMeeting, t: SalesBookingType, start: Date, 
   );
   if (!admin) await pushOle(`🔁 ${t.title} verschoben: ${input.name}`, `Neu: ${whenShort(start)} Uhr (war ${whenShort(m.startAt)})`, m.contactId, `sales-booking:${res.meetingId}`);
   await sendInviteeMail(res.meetingId, "rescheduled");
+  if (!admin) await mailOle("rescheduled", m.contactId, { title: t.title, startAt: start, previousStartAt: m.startAt, name: input.name, email: m.inviteeEmail, joinUrl: res.joinUrl, answers: m.answers });
   // WhatsApp-Bestätigung zur neuen Zeit (Ole, 17.11.2026). Erinnerungen: der neue Termin startet ohne Markierungen,
   // das Fenster wird an der ursprünglichen Buchung gemessen (urspruenglichGebucht in termin-whatsapp.ts).
   const { sendTerminConfirmation } = await import("@/lib/vertrieb/termin-whatsapp");
@@ -758,6 +825,8 @@ type MailMeeting = {
   thanksPage?: boolean;
   /** Vom Team eingetragen (nicht selbst gebucht) */
   byTeam?: boolean;
+  /** Vertragsbedingungen vorab (Sales-Call, Ole 19.11.2026): Links auf AGB und AVV in der Bestätigung */
+  vertrag?: { agb: string | null; avv: string | null } | null;
 };
 
 /** Inhalt der Mail (rein, für Tests). Sie-Form, keine Gedankenstriche. */
@@ -774,6 +843,10 @@ export function inviteeMailContent(kind: InviteeMailKind, m: MailMeeting) {
         paragraphs: [m.byTeam ? `Ihr ${m.title} ist bestätigt: ${w}.` : `vielen Dank für Ihre Buchung. Ihr ${m.title} ist bestätigt: ${w}.`, how, m.confirmText ?? "Wir freuen uns auf das Gespräch."],
         button: m.thanksPage ? { label: "Vorbereitungsvideo ansehen", url: thanksLink(m.manageToken) } : manage,
         extra: m.thanksPage ? manage : null,
+        vertrag: [
+          m.vertrag?.agb ? { label: "Unsere Vertragsbedingungen (AGB)", url: m.vertrag.agb } : null,
+          m.vertrag?.avv ? { label: "Vertrag zur Auftragsverarbeitung (AVV)", url: m.vertrag.avv } : null,
+        ].filter((l): l is { label: string; url: string } => !!l),
       };
     case "rescheduled":
       return { subject: `Neuer Termin mit performancegrowth: ${w}`, greeting, paragraphs: [`Ihr Termin wurde verschoben. Neue Zeit: ${w}.`, how], button: manage, extra: null };
@@ -813,27 +886,31 @@ export async function sendInviteeMail(meetingId: string, kind: InviteeMailKind):
         inviteeEmail: true,
         manageToken: true,
         utmSource: true,
-        bookingType: { select: { confirmText: true, thanksPage: true } },
+        bookingType: { select: { confirmText: true, thanksPage: true, slug: true } },
       },
     });
     if (!m?.inviteeEmail || !m.manageToken) return false;
+    // Beratungsgespräch: Vertragsbedingungen vorab mitschicken, damit im Termin direkt beauftragt werden kann
+    const vertragUrls = m.bookingType?.slug === SALES_CALL_BOOKING_TYPE ? legalUrls() : null;
     const c = inviteeMailContent(kind, {
       ...m,
       manageToken: m.manageToken,
       confirmText: m.bookingType?.confirmText,
       thanksPage: m.bookingType?.thanksPage,
       byTeam: m.utmSource === "admin",
+      vertrag: vertragUrls ? { agb: vertragUrls.termsUrl, avv: vertragUrls.dpaUrl } : null,
     });
+    const links = [...(c.extra ? [c.extra] : []), ...(("vertrag" in c && c.vertrag) || [])];
     const res = await sendCustomerMail({
       to: m.inviteeEmail,
       subject: c.subject,
       greeting: c.greeting,
       paragraphs: c.paragraphs,
       button: c.button,
-      ...(c.extra
+      ...(links.length
         ? {
-            html: `<p style="margin:0 0 16px;font-size:15px;line-height:1.6"><a href="${c.extra.url}" style="color:#2563eb">${escapeHtml(c.extra.label)}</a></p>`,
-            textBlocks: [`${c.extra.label}: ${c.extra.url}`],
+            html: links.map((l) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6"><a href="${l.url}" style="color:#2563eb">${escapeHtml(l.label)}</a></p>`).join(""),
+            textBlocks: links.map((l) => `${l.label}: ${l.url}`),
           }
         : {}),
       signature: "Ole Kannapinn\nperformancegrowth",

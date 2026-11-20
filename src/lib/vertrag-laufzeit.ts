@@ -153,7 +153,13 @@ export type ContractSummaryInput = {
   prepayAtAcceptance?: boolean;
   /** Zahlung nachträglich für den abgelaufenen Leistungsmonat (Offer.paymentInArrears, nur monatlich). */
   paymentInArrears?: boolean;
+  /** Paket des Angebots (Offer.package); „ppl_software“ = Pay-per-Lead + Software: Paketzeile und Hinweis zu den Leads. */
+  paket?: string | null;
 };
+
+/** Hinweis im Angebot, in der Annahme und in der Auftragsbestätigung: Leads gehören nicht zur Monatsgebühr. */
+export const PPL_LEADS_SEPARAT =
+  "Leads bestellen Sie wie gewohnt per Stück (Pay-per-Lead), ohne Mindestabnahme. Sie werden separat zum Preis je Lead laut Bestellung abgerechnet und sind nicht Teil der Monatsgebühr.";
 
 /**
  * Erster Abrechnungstag: ab hier zählen Startpreis-Monate, Mindestlaufzeit und Abrechnungsmonate
@@ -301,8 +307,12 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   // Zahlung nachträglich (Ole, 19.11.2026): nur monatlich, ohne eigenen Abrechnungstag
   const arrears = !!i.paymentInArrears && !annual;
   const ersteNachtraeglich = arrears && i.startIso ? `am ${fmtIso(nachtraeglichErsteIso(i.startIso))}` : "einen Monat nach dem Start";
+  const ppl = i.paket === "ppl_software";
+  if (ppl) lines.push("Paket: Pay-per-Lead + Software (Software ohne Betreuung und ohne eigene Kampagnen), ohne Einrichtungsgebühr.");
   if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, fällig mit der Annahme.`);
-  else if (arrears) lines.push(`Bei Annahme fällig: ${eur(0)}, ohne Einrichtungsgebühr.`);
+  else if (ppl) {
+    // Paketzeile nennt schon „ohne Einrichtungsgebühr“
+  } else if (arrears) lines.push(`Bei Annahme fällig: ${eur(0)}, ohne Einrichtungsgebühr.`);
   if (arrears) {
     if (hasPriceStep(i)) {
       const d = priceStepDates(i.startIso, i.intro!.months);
@@ -359,6 +369,7 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     const end = billIso ? periodEndIso(billIso, months) : null;
     lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach kündbar zum Ende des jeweiligen Abrechnungsmonats.`);
   }
+  if (ppl) lines.push(PPL_LEADS_SEPARAT);
   lines.push("Kündigen können Sie jederzeit im Kundenbereich unter Konto & Rechnungen oder in Textform. Alle Preise zzgl. 19 % USt.");
   return lines;
 }

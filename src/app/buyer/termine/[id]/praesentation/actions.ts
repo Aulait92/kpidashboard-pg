@@ -18,12 +18,17 @@ export async function bausteinAction(appointmentId: string, item: number, bauste
   return p ? { ok: true, folien: p.folien } : { ok: false, error: "Baustein nicht gefunden. Sind die Angebote bestätigt?" };
 }
 
-export async function tarifAction(appointmentId: string, item: number, ganzeSparte = false): Promise<{ ok: true; folien: Folie[] } | { ok: false; error: string }> {
+/** mitAnschauen: „Mit anschauen“ auf „Ihr Schutz im Überblick“ angeschaltet (Messung Cross-Selling, Ole 19.11.2026). */
+export async function tarifAction(appointmentId: string, item: number, ganzeSparte = false, mitAnschauen = false): Promise<{ ok: true; folien: Folie[] } | { ok: false; error: string }> {
   const ctx = await getBuyerContext();
   if (!ctx) return { ok: false, error: "Bitte neu anmelden." };
   if (ctx.preview) return { ok: false, error: "In der Vorschau nicht möglich." };
   if (!Number.isInteger(item) || item < 0 || item >= 20) return { ok: false, error: "Ungültig." };
   const p = ganzeSparte ? await sparteUmschalten(appointmentId, ctx, item) : await tarifUmschalten(appointmentId, ctx, item);
+  if (p && ganzeSparte && mitAnschauen && !ctx.demo) {
+    const t = await terminFuerMessung(appointmentId, ctx).catch(() => null);
+    if (t) await ereignisSpeichern({ ...t, quelle: "termin", art: "mitanschauen", folie: `sparte-${item}` }).catch(() => false);
+  }
   return p ? { ok: true, folien: p.folien } : { ok: false, error: "Tarif nicht gefunden. Sind die Angebote bestätigt?" };
 }
 

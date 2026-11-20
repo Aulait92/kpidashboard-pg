@@ -110,6 +110,16 @@ model Customer {
   // Status nach § 34d GewO: "vertreter" (Ausschließlichkeit), "mehrfachvertreter" oder "makler"; bestimmt die
   // Standard-Provisionssätze (Mehrfachvertreter rechnen wie Vertreter) und die Erstinformation (lib/erstinformation.ts)
   vermittlerTyp        String    @default("vertreter")
+  // Registerprüfung für Pay-per-Lead (Ole, 20.11.2026; docs/recht/ust-leadverkauf-2026-11-19.md): vor der ersten Lieferung
+  // im Vermittlerregister geprüft. Nur mit Status vertreter/makler, gültiger Registernummer und Prüfdatum sind Leads
+  // steuerfrei nach § 4 Nr. 11 UStG (lib/ppl/steuer.ts); sonst 19 %. Unabhängig von vermittlerTyp (Selbstauskunft).
+  // Registernummer (D-XXXX-XXXXX-XX) laut Vermittlerregister
+  vermittlerRegisterNr     String?
+  // vertreter (§ 34d Abs. 1 oder gebunden Abs. 7) | makler | keiner (auch Versicherungsberater, Händler); null = nicht geprüft
+  vermittlerRegisterStatus String?
+  vermittlerGeprueftAt     DateTime?
+  // E-Mail des Admins, der geprüft hat
+  vermittlerGeprueftVon    String?
   // Maklervollmacht (Ole, 18.11.2026, nur Makler): wer schickt sie den Kunden? app | eigene; null = noch nicht entschieden
   // (Frage in der Einrichtung und als Hinweis auf „Heute“, änderbar unter Einstellungen → Assistent)
   vollmachtVersand     String?
@@ -1662,6 +1672,19 @@ model Offer {
   // Sonderpreis) und Startdatum. Bei Annahme werden term/setupFee/startDate überschrieben.
   customerChoosesTerm     Boolean       @default(false)
   customerChoosesStart    Boolean       @default(false)
+  // Kunde wählt Produkte und Tagesbudget je Produkt (Ole, 19.11.2026; nur Listenpreis, Paket mit Software, ohne Startpreis).
+  // Bei Annahme werden products/monthlyFee mit der Wahl überschrieben (Staffel, lib/offer-pricing.ts resolveProduktWahl).
+  customerChoosesProducts Boolean       @default(false)
+  // „Ihre erste Woche“ (Ole, 20.11.2026, nur Paket ppl_software; lib/ppl/erste-woche.ts): Lead-Produkt wie
+  // LeadSubscription.productKey, Bezeichnung, Preis je Lead netto und Anzahl (vorausgewählt, bei Annahme gewählt, ab 5).
+  // null = ohne erste Woche. Bei der Annahme: Registernummer des Kunden und „Jede Woche wiederholen“; danach legt das
+  // Onboarding Bezug und erste Wochenbestellung an (abgebucht erst nach Registerprüfung und mit Zahlungsart).
+  pplProductKey           String?
+  pplLabel                String?
+  pplPrice                Decimal?      @db.Decimal(10, 2)
+  pplQuantity             Int?
+  pplAutoRenew            Boolean       @default(true)
+  pplRegisterNr           String?
   validUntil              DateTime
   // Annahme (Protokoll)
   sentAt                  DateTime?
@@ -2632,7 +2655,11 @@ model LeadSubscription {
   period              String    @default("week")
   goal                Int?
   startDate           DateTime?
+  // Preis je Lead immer netto (bei steuerpflichtigen Bruttopreisen netto = brutto / 1,19, z. B. 65 € → 54,62 €)
   price               Decimal   @db.Decimal(10, 2)
+  // Umsatzsteuer (Ole, 20.11.2026): steuerfrei_4_11 | steuerpflichtig; null = Standard je Produkt (lib/ppl/steuer.ts).
+  // Steuerfrei wird nur abgerechnet, wenn der Käufer als Vertreter/Makler geprüft ist; Kindersparplan immer 19 %.
+  steuer              String?
   // Filter
   plzRanges           String? // "80000-85999|67300-67499|12345"
   acceptWeak          Boolean   @default(true)
@@ -2713,6 +2740,8 @@ model LeadOrder {
   // Folgewoche automatisch gleich bestellen
   autoRenew       Boolean          @default(true)
   stripeInvoiceId String?          @unique
+  // Angewandte Umsatzsteuer bei der Bestellung: steuerfrei_4_11 | steuerpflichtig (null = vor 20.11.2026, 19 %)
+  steuer          String?
   createdById     String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt

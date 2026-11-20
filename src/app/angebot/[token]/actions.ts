@@ -9,11 +9,23 @@ import { checkLimit, clientIp, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { parseZahlart } from "@/lib/zahlart";
 import { setzeErinnerungPerToken } from "@/lib/angebot-zahlungserinnerung-server";
 import { richteUeberweisungEin, ueberweisungMoeglich } from "@/lib/ueberweisung";
+import { reportError } from "@/lib/monitoring";
+import { sendToAdmins } from "@/lib/push";
 
 export type AcceptState = { ok?: boolean; error?: string; checkoutUrl?: string };
 
 /** Formularwert „rhythmus“: jahr bzw. voraus → im Voraus (jährlich bzw. 6 Monate), monat → monatlich, sonst keine Angabe. */
 const parseRhythmus = (v: FormDataEntryValue | null): boolean | null => (v === "jahr" || v === "voraus" ? true : v === "monat" ? false : null);
+
+/** Formularwert „produkte“ (JSON, nur mit Produktwahl): fehlt = wie im Angebot; Prüfung in lib/offer-pricing.ts resolveProduktWahl. */
+function parseProdukte(v: FormDataEntryValue | null): unknown {
+  if (typeof v !== "string" || !v.trim() || v.length > 4000) return null;
+  try {
+    return JSON.parse(v);
+  } catch {
+    return "ungueltig";
+  }
+}
 
 export async function acceptOfferAction(token: string, _prev: AcceptState, formData: FormData): Promise<AcceptState> {
   const h = await headers();
@@ -33,6 +45,13 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
     startDate: typeof formData.get("startDate") === "string" ? String(formData.get("startDate")) : null,
     // Zahlweise (nur mit „Jahreszahlung anbieten“ und 12 Monaten; fehlt = Vorauswahl bzw. vereinbart)
     annual: parseRhythmus(formData.get("rhythmus")),
+    // Produkte und Tagesbudget (nur mit Freigabe am Angebot; Preis rechnet der Server neu)
+    products: parseProdukte(formData.get("produkte")),
+    // Erste Woche (nur Pay-per-Lead + Software mit Lead-Produkt): Anzahl, Wiederholung, Registernummer
+    ersteWoche:
+      formData.get("ersteWocheMenge") != null
+        ? { quantity: formData.get("ersteWocheMenge"), autoRenew: formData.get("ersteWocheWiederholen") === "on", registerNr: String(formData.get("registerNr") ?? "") }
+        : null,
     ip: ip === "unknown" ? null : ip,
     agent: h.get("user-agent"),
   });
@@ -55,6 +74,11 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
       }
       const checkout = await createCheckoutForOffer(offer.id, zahlart);
       if ("url" in checkout) redirect(checkout.url);
+      // Zahlungsseite nicht erstellt (Ole, 19.11.2026): nie „Auftrag bestätigt, Zugang kommt per Mail“ zeigen, obwohl
+      // nichts bezahlt ist. Fehler melden und auf die Zahlungsansicht mit „Zahlung erneut starten“ leiten.
+      reportError(new Error(`Checkout nach Annahme fehlgeschlagen: ${checkout.error}`), "angebot-checkout", { offer: offer.id });
+      await sendToAdmins({ title: "Zahlung nach Annahme hängt", body: `${offer.number}: Zahlungsseite konnte nicht erstellt werden (${checkout.error})`, url: offer.salesContactId ? `/admin/vertrieb/kontakte/${offer.salesContactId}` : "/admin" }).catch(() => {});
+      redirect(`/angebot/${token}?zahlung=fehler#zahlung`);
     }
   }
   return { ok: true };

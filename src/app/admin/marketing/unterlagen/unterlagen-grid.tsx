@@ -8,11 +8,11 @@ import { FileDrop } from "@/components/ui/file-drop";
 import { formatBytes, MB } from "@/lib/file-upload";
 import { folienListe } from "@/lib/vertrieb/verkaufspraesentation";
 
-type Audience = "vertreter" | "makler";
+type Audience = "vertreter" | "makler" | "ppl";
 type Format = "pdf" | "pptx";
 export type UnterlagenSlot = { audience: Audience; format: Format; file: { fileName: string; size: number; uploadedAt: string } | null };
 
-const AUDIENCE_LABEL: Record<Audience, string> = { vertreter: "Vertreter-Präsentation", makler: "Makler-Präsentation" };
+const AUDIENCE_LABEL: Record<Audience, string> = { vertreter: "Vertreter-Präsentation", makler: "Makler-Präsentation", ppl: "Pay-per-Lead + Software" };
 const FORMAT_LABEL: Record<Format, string> = { pdf: "PDF", pptx: "PowerPoint (PPTX)" };
 const ACCEPT: Record<Format, string> = {
   pdf: ".pdf,application/pdf",
@@ -39,7 +39,7 @@ export function UnterlagenGrid({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {(["vertreter", "makler"] as const).map((a) => (
+        {(["vertreter", "makler", "ppl"] as const).map((a) => (
           <Card key={a} className="p-4 sm:p-5">
             <h2 className="mb-3 text-base font-semibold">{AUDIENCE_LABEL[a]}</h2>
             <div className="space-y-3">
@@ -60,7 +60,23 @@ export function UnterlagenGrid({
           <DemoLink demo={demo} />
         </div>
       ) : null}
+      <Leitfaeden />
     </div>
+  );
+}
+
+/** Gesprächsleitfäden (intern, nur Admins): PDF aus assets/unterlagen, Quelle docs/firma/vertrieb/. */
+function Leitfaeden() {
+  return (
+    <Card className="p-4 sm:p-5" data-leitfaeden>
+      <h2 className="text-base font-semibold">Leitfaden Setter-Call</h2>
+      <p className="mt-1 text-sm text-[color:var(--muted)]">15-Minuten-Telefonat vor dem Beratungsgespräch. Nur für Sie, nicht zum Weitergeben.</p>
+      <div className="mt-3">
+        <ButtonLink href="/api/admin/unterlagen/leitfaden-setter-call" external icon={FileText}>
+          PDF öffnen
+        </ButtonLink>
+      </div>
+    </Card>
   );
 }
 

@@ -21,7 +21,9 @@ import {
   vermittlerName,
   vertragsFrage,
   VERTRAGSFRAGE_RE,
+  WUNSCHZEIT_REGEL,
 } from "@/lib/whatsapp/gespraech";
+import { wunschTagAb } from "@/lib/whatsapp/bot";
 import { knopfAktion, knopfHinweis } from "@/lib/whatsapp/knopf";
 import { folgefragen, spartenDesLeads, type RechnerSparte } from "@/lib/preise/rechner-angaben";
 import { testLeadAnswers } from "@/lib/testlead";
@@ -36,11 +38,16 @@ import {
   erstanschreibenV8Params,
   erstanschreibenV9Params,
   erstanschreibenZweck,
+  erstanschreibenV9,
+  erstanschreibenV10Params,
   ersteFrage,
   ersteFrageKnoepfe,
   frageOhneFragezeichen,
+  v10Moeglich,
+  ERSTANSCHREIBEN_V10,
+  type ErstanschreibenZweck,
 } from "@/lib/whatsapp/erstanschreiben";
-import { ERSTINFO_FOOTER_V9, fillNames, OUTREACH_PURPOSES, rankOutreach, renderTemplate, TEMPLATE_BUTTONS, templateTextFor, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12, fillNames, OUTREACH_PURPOSES, rankOutreach, renderTemplate, TEMPLATE_BUTTONS, templateTextFor, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { buildTemplateRequest, metaTemplateProblems, plannedTemplates, templateNameFor } from "@/lib/whatsapp/template-plan";
 import type { Ansprache } from "@/lib/ansprache";
 
@@ -314,28 +321,30 @@ const LAGEN: Record<string, (p: string | null) => { label: string; value: string
   vollstaendig: (p) => testLeadAnswers(p ?? "Sterbegeld"),
 };
 
-describe("Erstanschreiben v9 (vorher v8): Text und Parameter", () => {
+describe("Erstanschreiben v9 (vorher v8, seit v10 Rückfall): Text und Parameter", () => {
   it("v6/v7 bleiben als Konstanten (Rückfall bis zur Freigabe), v9 eine Zeile mit festem Thema und fetter Frage", () => {
     // v6 und v7 bleiben unverändert (bei Meta freigegeben, werden bis zur Freigabe neuerer Fassungen gesendet)
     expect(ERSTANSCHREIBEN_V6.sie).toBe("danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*");
     expect(ERSTANSCHREIBEN_V7.sie).toBe("danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?");
     expect(ERSTANSCHREIBEN_V7.du).toBe("danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?");
-    expect(templateTextFor("outreach_privatschutz", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz! *{{2}}?*");
-    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *{{1}}?*");
-    expect(templateTextFor("outreach", "du")).toBe("Hallo {{1}}, danke für deine Anfrage! *{{2}}?*");
-    expect(templateTextFor("outreach_tkv", "sie")).toBe("Hallo {{1}}, schön, dass Sie {{2}} gut absichern möchten 🐾 *{{3}}?*");
+    // v9 bleibt Rückfall (bis v10 freigegeben ist bzw. wenn das Formular die feste Frage beantwortet)
+    expect(erstanschreibenV9("outreach_privatschutz").sie).toBe("danke für Ihre Anfrage zum Privatschutz! *{{2}}?*");
+    expect(erstanschreibenV9("outreach").du).toBe("danke für deine Anfrage! *{{2}}?*");
+    expect(erstanschreibenV9("outreach_tkv").sie).toBe("schön, dass Sie {{2}} gut absichern möchten 🐾 *{{3}}?*");
+    // v10 (Ole, 19.11.2026): feste Frage
+    expect(templateTextFor("outreach_privatschutz", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
+    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
+    expect(templateTextFor("outreach", "du")).toBe("Hallo {{1}}, danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*");
+    expect(templateTextFor("outreach_tkv", "sie")).toBe("Hallo {{1}}, schön, dass Sie {{2}} gut absichern möchten 🐾 *Was soll abgesichert sein?*");
   });
 
-  it("Beispiel Privatschutz, Sie, Lead ohne Anrede, Formular mit Interesse", () => {
-    const t = erstanschreibenText({
-      an: "sie",
-      kontakt: { fullName: "Julia Schneider" },
-      name: "Ole",
-      vermittler: "Herrn Kannapinn",
-      source: "Privatschutz",
-      formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }],
-    });
-    expect(t).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
+  it("Beispiel Privatschutz, Sie, Lead ohne Anrede, Formular mit Interesse (v10; v9, wenn bestehende Verträge bekannt sind)", () => {
+    const o = { an: "sie" as const, kontakt: { fullName: "Julia Schneider" }, name: "Ole", vermittler: "Herrn Kannapinn", source: "Privatschutz" };
+    const t = erstanschreibenText({ ...o, formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }] });
+    expect(t).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\n_Digitaler KI-Assistent_");
+    // Formular beantwortet die feste Frage schon: v9 mit der nächsten offenen Frage
+    const v9 = erstanschreibenText({ ...o, formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }, { label: "Bereits versichert", value: "nein" }] });
+    expect(v9).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! *Wer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
   });
 
   it("Parameter je Lage: Formular leer, teilweise, vollständig (Privatschutz, Sie)", () => {
@@ -354,7 +363,7 @@ describe("Erstanschreiben v9 (vorher v8): Text und Parameter", () => {
 
   for (const source of PRODUKTE) {
     for (const [lage, formular] of Object.entries(LAGEN)) {
-      it(`${source ?? "ohne Produkt"}, Formular ${lage}: jede erste Frage endet auf „?“, Vorlage ohne „??“; Freitext gleich der Vorlage v9 (plus KI-Zeile)`, () => {
+      it(`${source ?? "ohne Produkt"}, Formular ${lage}: jede erste Frage endet auf „?“, Vorlage ohne „??“; Freitext gleich der Vorlage v10 bzw. v9 (plus KI-Zeile)`, () => {
         for (const an of ["sie", "du"] as const) {
           for (const kontakt of [{ fullName: "Julia Schneider", salutation: "Frau" as const }, { fullName: "Julia" }]) {
             const person = an === "du" ? PERSON_DU : PERSON;
@@ -371,17 +380,26 @@ describe("Erstanschreiben v9 (vorher v8): Text und Parameter", () => {
             expect(erstanschreibenV6Params({ source, an, formular: f, person, kurz: "Ole" })[2]).toBe(params.at(-1));
             const mitName = an === "du" || kontakt.salutation;
             const name = an === "du" ? "Julia" : "Frau Schneider";
-            const tpl = renderTemplate(fillNames(templateTextFor(purpose, mitName ? an : "sie_ohne_name"), "X"), mitName ? [name, ...params] : params);
-            expect(tpl).not.toContain("??");
-            expect(tpl).not.toMatch(/[–—]/);
-            expect(tpl.endsWith(` *${frage}*`)).toBe(true);
-            expect(tpl).not.toContain("\n");
+            const v9Text = an === "du" ? erstanschreibenV9(purpose as ErstanschreibenZweck).du : erstanschreibenV9(purpose as ErstanschreibenZweck).sie;
+            const v9Vorlage = mitName ? `Hallo {{1}}, ${v9Text}` : `Hallo, ${v9Text.replace(/\{\{(\d+)\}\}/g, (_, n: string) => `{{${Number(n) - 1}}}`)}`;
+            const tpl9 = renderTemplate(v9Vorlage, mitName ? [name, ...params] : params);
+            expect(tpl9).not.toContain("??");
+            expect(tpl9).not.toMatch(/[–—]/);
+            expect(tpl9.endsWith(` *${frage}*`)).toBe(true);
+            expect(tpl9).not.toContain("\n");
+            // v10 (Ole, 19.11.2026): feste Frage, solange das Formular sie nicht beantwortet; sonst v9
+            const v10 = v10Moeglich(source, f);
+            const p10 = erstanschreibenV10Params({ source, an, formular: f, purpose });
+            const tpl10 = renderTemplate(fillNames(templateTextFor(purpose, mitName ? an : "sie_ohne_name"), "X"), mitName ? [name, ...p10] : p10);
+            expect(tpl10).not.toMatch(/[–—]/);
+            expect(tpl10).not.toContain("\n");
+            const tpl = v10 ? tpl10 : tpl9;
             const o = { an, kontakt, name: "Ole", vermittler: person.dat, vermittlerNom: person.nom, source, formular: f };
             const frei = erstanschreibenText(o, { ohneFuss: true });
-            // Freitext wie die Vorlage (ohne Produkt mit dem Produktnamen), darunter die KI-Kennzeichnung der Fußzeile
+            // Freitext wie die Vorlage (v9 ohne Produkt mit dem Produktnamen), darunter die KI-Kennzeichnung der Fußzeile
             const ohneThema = frei.replace(/ zum Thema [^!]+!/, "!");
-            expect(purpose === "outreach" ? ohneThema : frei, `${source} ${an}`).toBe(tpl);
-            expect(erstanschreibenText(o)).toBe(`${frei}\n\n_KI-Assistent · Erstinformation folgt als PDF_`);
+            expect(purpose === "outreach" && !v10 ? ohneThema : frei, `${source} ${an}`).toBe(tpl);
+            expect(erstanschreibenText(o)).toBe(`${frei}\n\n_${v10 ? "Digitaler KI-Assistent" : "KI-Assistent · Erstinformation folgt als PDF"}_`);
             if (an === "du") expect(tpl).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
           }
         }
@@ -395,34 +413,35 @@ describe("Erstanschreiben v9 (vorher v8): Text und Parameter", () => {
     expect(frageOhneFragezeichen("Wann passt es Ihnen")).toBe("Wann passt es Ihnen");
   });
 
-  it("Knöpfe im Freitext nur zur passenden Frage; v6-Vorlage ohne Knöpfe", () => {
-    // v8: Privatschutz öffnet mit der Frage nach bestehenden Verträgen (ohne Knöpfe)
-    expect(ersteFrageKnoepfe("Privatschutz", [])).toEqual([]);
+  it("Knöpfe im Freitext nur zur passenden Frage; ab v10 die Knöpfe der festen Frage, auch in der Vorlage", () => {
+    // v10: Privatschutz öffnet mit der festen Frage nach bestehenden Verträgen, mit Knöpfen
+    expect(ersteFrageKnoepfe("Privatschutz", [])).toEqual(["Alles neu", "Schon versichert", "Teils, teils"]);
     expect(ersteFrageKnoepfe("PKV Wechsel", [])).toEqual(["Angestellt", "Selbstständig", "Beamter"]);
     expect(ersteFrageKnoepfe(null, [])).toEqual(["Heute", "Morgen", "Lieber schriftlich"]);
-    for (const p of OUTREACH_PURPOSES) expect(TEMPLATE_BUTTONS[p]).toBeUndefined();
+    // v9-Rückfall (bestehende Verträge im Formular): wie bisher keine Knöpfe zur Zwischenfrage
+    expect(ersteFrageKnoepfe("Privatschutz", [{ label: "Bereits versichert", value: "nein" }])).toEqual([]);
+    for (const p of OUTREACH_PURPOSES) expect(TEMPLATE_BUTTONS[p]).toEqual(ERSTANSCHREIBEN_V10[p as ErstanschreibenZweck].knoepfe);
   });
 });
 
-describe("Erstanschreiben v9: Einreichung, Auswahl und Erstinformation (Live-Test 17.11.2026)", () => {
+describe("Erstanschreiben v10: Einreichung, Auswahl und Erstinformation (Live-Test 17.11.2026)", () => {
   const names = { firm: "Agentur Ole Kannapinn", advisor: "Ole Kannapinn", kurz: "Ole" };
 
-  it("v9 je Fassung nur mit PDF-Kopf (keine _ohnepdf mehr), Meta-Regeln erfüllt, Kategorie Marketing", () => {
+  it("v10 je Fassung (a und b) nur mit PDF-Kopf (keine _ohnepdf mehr), Meta-Regeln erfüllt, Kategorie Marketing", () => {
     const geplant = plannedTemplates([...OUTREACH_PURPOSES]);
-    expect(geplant).toHaveLength(OUTREACH_PURPOSES.length * 3);
+    expect(geplant).toHaveLength(OUTREACH_PURPOSES.length * 3 * 2);
     for (const { purpose, form, variant, kopf } of geplant) {
       expect(kopf).toBe(true);
       const req = buildTemplateRequest(purpose, names, undefined, form, { variant, documentExample: "https://x.de/erstinformation/abc/pdf", kopf });
       expect(req.name).toBe(templateNameFor(purpose, undefined, form, variant, kopf));
-      expect(req.name).toMatch(/_v9(_sie(_ohne_name)?)?$/);
+      expect(req.name).toMatch(/_v12(_b)?(_sie(_ohne_name)?)?$/);
       expect(req.category).toBe("MARKETING");
       const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
-      expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
+      expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
       const body = comps.find((c) => c.type === "BODY")!;
       expect(metaTemplateProblems(body.text!, body.example?.body_text[0] ?? []), `${req.name}: ${body.text}`).toEqual([]);
       expect(body.text).not.toContain("Assistent");
-      expect(comps.find((c) => c.type === "FOOTER")!.text).toBe(ERSTINFO_FOOTER_V9);
-      expect(body.example!.body_text[0].at(-1)!.endsWith("?")).toBe(false);
+      expect(comps.find((c) => c.type === "FOOTER")!.text).toBe(ERSTINFO_FOOTER_V12);
     }
   });
 
@@ -497,3 +516,37 @@ describe("Erstanschreiben v9: Einreichung, Auswahl und Erstinformation (Live-Tes
   });
 });
 
+
+// Tier: gewünschter Umfang aus dem Chat geht vor der Kampagne (Ole, 19.11.2026: „nur OP“, Satz sagte „Krankenversicherung“)
+describe("Terminnutzen Tier: OP oder Krankenversicherung nach Wunsch des Leads", () => {
+  const satz = (angaben?: unknown, source = "Tierkrankenversicherung Katze") =>
+    terminNutzenSatz({ source, formular: [{ label: "Name des Tieres", value: "Minka" }], angaben, an: "sie", person: PERSON });
+  it("nur OP im Chat: OP-Versicherung, auch bei Kampagne Krankenversicherung", () => {
+    expect(satz({ tarifwunsch: "nur OP-Schutz" })).toContain("was eine OP-Versicherung für Minka kostet");
+  });
+  it("auch Behandlungen: Krankenversicherung, auch bei OP-Kampagne", () => {
+    expect(satz({ tarifwunsch: "volle Krankenversicherung (auch Tierarztbehandlung)" }, "Katzen-OP-Versicherung")).toContain("eine Krankenversicherung für Minka");
+  });
+  it("ohne Angabe oder offen: wie die Kampagne", () => {
+    expect(satz(undefined, "Katzen-OP-Versicherung")).toContain("eine OP-Versicherung");
+    expect(satz({ tarifwunsch: "offen" })).toContain("eine Krankenversicherung");
+  });
+});
+
+// Wunschtag: Suche ab diesem Tag statt immer der nächsten Zeiten (Ole, 19.11.2026: „Dienstag ist leider noch nicht frei“)
+describe("Terminsuche ab Wunschtag", () => {
+  const now = new Date("2026-11-19T22:00:00Z");
+  it("liest JJJJ-MM-TT als 0 Uhr deutscher Zeit", () => {
+    expect(wunschTagAb("2026-11-24", now)?.toISOString()).toBe("2026-11-23T23:00:00.000Z");
+  });
+  it("ignoriert Vergangenheit, mehr als 90 Tage und Unsinn", () => {
+    expect(wunschTagAb("2026-11-18", now)).toBeNull();
+    expect(wunschTagAb("2027-03-30", now)).toBeNull();
+    expect(wunschTagAb("Dienstag", now)).toBeNull();
+    expect(wunschTagAb(undefined, now)).toBeNull();
+  });
+  it("Regel nennt die Suche ab Wunschtag und keine abgelehnten Zeiten", () => {
+    expect(WUNSCHZEIT_REGEL).toContain("ab = diesem Tag");
+    expect(WUNSCHZEIT_REGEL).toContain("nie noch einmal anbieten");
+  });
+});

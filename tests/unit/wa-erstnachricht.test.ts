@@ -1,11 +1,13 @@
 // Ole, 17.11.2026 (Testchat): A) Erstnachricht kürzer (v8, seit 18.11.2026 v9), B) genau eine Zwischenfrage vor dem Terminvorschlag,
 // C) Vermittler-Nennung „Herr/Frau Nachname“ beim Siezen.
 import { describe, expect, it } from "vitest";
-import { erstanschreibenText, erstanschreibenV8Params, erstanschreibenV9Params, frageplan, tierFuerErstanschreiben } from "@/lib/whatsapp/erstanschreiben";
+import { erstanschreibenText, erstanschreibenV8Params, erstanschreibenV9, erstanschreibenV9Params, frageplan, tierFuerErstanschreiben } from "@/lib/whatsapp/erstanschreiben";
 import { buildTemplateRequest, exampleRestFor, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateBodyFor, templateNamesOf } from "@/lib/whatsapp/template-plan";
 import {
   ERSTINFO_FOOTER_V8,
   ERSTINFO_FOOTER_V9,
+  ERSTINFO_FOOTER_V10,
+  ERSTINFO_FOOTER_V12,
   erstinfoFooterFor,
   neuePlatzhalter,
   noticeText,
@@ -40,9 +42,15 @@ const FRAU = vermittlerName("sie", { name: "Susanne Meier", anrede: "Frau", fall
 const DU = vermittlerName("du", { name: "Ole Kannapinn", anrede: "Herr", fallback: "Agentur" });
 const PS_FORM = [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }];
 
-describe("A) Erstnachricht v9", () => {
+// v9 bleibt seit v10 (Ole, 19.11.2026) der Rückfall: bis v10 freigegeben ist bzw. wenn das Formular die feste Frage beantwortet
+const V9 = (p: NoticePurpose, form: "sie" | "du" | "sie_ohne_name") => {
+  const b = erstanschreibenV9(p as Parameters<typeof erstanschreibenV9>[0]);
+  return form === "sie_ohne_name" ? `Hallo, ${b.sie.replace(/\{\{(\d+)\}\}/g, (_, n: string) => `{{${Number(n) - 1}}}`)}` : `Hallo {{1}}, ${b[form]}`;
+};
+
+describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
   it("Privatschutz genau wie von Ole vorgegeben (Sie, mit Anrede)", () => {
-    const tpl = templateTextFor("outreach_privatschutz", "sie");
+    const tpl = V9("outreach_privatschutz", "sie");
     expect(tpl).toBe("Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz! *{{2}}?*");
     const params = erstanschreibenV9Params({ source: "Privatschutz", an: "sie", formular: PS_FORM, person: HERR, kurz: "Ole" });
     expect(params).toEqual(["Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu"]);
@@ -52,13 +60,15 @@ describe("A) Erstnachricht v9", () => {
   });
 
   it("Tierkrankenversicherung emotional mit dem Tiernamen (Ole, 18.11.2026)", () => {
-    expect(templateTextFor("outreach_tkv", "sie")).toBe("Hallo {{1}}, schön, dass Sie {{2}} gut absichern möchten 🐾 *{{3}}?*");
-    expect(templateTextFor("outreach_tkv", "du")).toBe("Hallo {{1}}, schön, dass du {{2}} gut absichern möchtest 🐾 *{{3}}?*");
-    expect(templateTextFor("outreach_tkv", "sie_ohne_name")).toBe("Hallo, schön, dass Sie {{1}} gut absichern möchten 🐾 *{{2}}?*");
+    expect(V9("outreach_tkv", "sie")).toBe("Hallo {{1}}, schön, dass Sie {{2}} gut absichern möchten 🐾 *{{3}}?*");
+    expect(V9("outreach_tkv", "du")).toBe("Hallo {{1}}, schön, dass du {{2}} gut absichern möchtest 🐾 *{{3}}?*");
+    expect(V9("outreach_tkv", "sie_ohne_name")).toBe("Hallo, schön, dass Sie {{1}} gut absichern möchten 🐾 *{{2}}?*");
     const minka = [{ label: "Tiername", value: "Minka" }];
     const params = erstanschreibenV9Params({ source: "TKV-Katze", an: "sie", formular: minka, person: HERR, kurz: "Ole" });
     expect(params).toEqual(["Minka", "Wie alt ist Ihre Katze"]);
-    expect(renderTemplate(templateTextFor("outreach_tkv", "sie"), ["Herr Pan", ...params])).toBe("Hallo Herr Pan, schön, dass Sie Minka gut absichern möchten 🐾 *Wie alt ist Ihre Katze?*");
+    expect(renderTemplate(V9("outreach_tkv", "sie"), ["Herr Pan", ...params])).toBe("Hallo Herr Pan, schön, dass Sie Minka gut absichern möchten 🐾 *Wie alt ist Ihre Katze?*");
+    // v10 (Ole, 19.11.2026): feste Frage, nur der Tiername als Platzhalter
+    expect(renderTemplate(templateTextFor("outreach_tkv", "sie"), ["Herr Pan", "Minka"])).toBe("Hallo Herr Pan, schön, dass Sie Minka gut absichern möchten 🐾 *Was soll abgesichert sein?*");
     // mehrere Namen, ohne Namen der Akkusativ je Tier
     expect(tierFuerErstanschreiben("TKV-Katze", "sie", [{ label: "Name des Tieres", value: "Minka, Felix" }])).toBe("Minka und Felix");
     expect(tierFuerErstanschreiben("TKV-Katze", "sie", [{ label: "Tiername", value: "Minka und Felix" }])).toBe("Minka und Felix");
@@ -71,9 +81,12 @@ describe("A) Erstnachricht v9", () => {
     expect(tierFuerErstanschreiben("Pferdeversicherung", "sie", [])).toBe("Ihr Pferd");
     expect(tierFuerErstanschreiben("Tierkrankenversicherung", "sie", [{ label: "Tiername", value: " " }])).toBe("Ihr Tier");
     expect(tierFuerErstanschreiben("Tierkrankenversicherung", "du", [])).toBe("dein Tier");
-    // Freitext gleich der Vorlage plus KI-Zeile
+    // Freitext gleich der Vorlage (v10) plus KI-Zeile
     const frei = erstanschreibenText({ an: "du", kontakt: { fullName: "Erika Mustermann" }, name: "Ole", vermittler: DU.dat, source: "Hundekrankenversicherung", formular: [] });
-    expect(frei).toBe("Hallo Erika, schön, dass du deinen Hund gut absichern möchtest 🐾 *Wie alt ist dein Hund?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
+    expect(frei).toBe("Hallo Erika, schön, dass du deinen Hund gut absichern möchtest 🐾 *Was soll abgesichert sein?*\n\n_Digitaler KI-Assistent_");
+    // Formular kennt den gewünschten Schutz schon: v9 mit dem Alter
+    const v9 = erstanschreibenText({ an: "du", kontakt: { fullName: "Erika Mustermann" }, name: "Ole", vermittler: DU.dat, source: "Hundekrankenversicherung", formular: [{ label: "Gewünschter Schutz", value: "OP-Schutz" }] });
+    expect(v9).toBe("Hallo Erika, schön, dass du deinen Hund gut absichern möchtest 🐾 *Wie alt ist dein Hund?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
   });
 
   it("Anrede: Frau/Herr Nachname, unsicher Vor- und Nachname, ohne Nachnamen eigene Fassung", () => {
@@ -81,7 +94,8 @@ describe("A) Erstnachricht v9", () => {
     expect(anredeName("sie", { fullName: "Max Mustermann", salutation: "m" })).toBe("Herr Mustermann");
     expect(anredeName("sie", { fullName: "Kim Mustermann", salutation: "divers" })).toBe("Kim Mustermann");
     expect(anredeName("sie", { fullName: "Kim Mustermann" })).toBe("Kim Mustermann");
-    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *{{1}}?*");
+    expect(V9("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *{{1}}?*");
+    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
   });
 
   it("alle Produkte: gleicher kurzer Aufbau, bestehende Öffnungsfrage, kurz genug für WhatsApp Desktop", () => {
@@ -96,15 +110,15 @@ describe("A) Erstnachricht v9", () => {
       expect(f).toBe(frage);
     }
     for (const p of OUTREACH_PURPOSES) {
-      expect(PURPOSE_VERSION[p]).toBe("v9");
+      expect(PURPOSE_VERSION[p]).toBe("v12");
       for (const form of ["du", "sie", "sie_ohne_name"] as const) {
         const req = buildTemplateRequest(p, templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", "Herr"), undefined, form, { documentExample: "https://x.de/e.pdf" });
         const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
         const body = comps.find((c) => c.type === "BODY")!;
         expect(metaTemplateProblems(body.text!, body.example?.body_text[0] ?? [])).toEqual([]);
-        expect(comps.find((c) => c.type === "FOOTER")?.text).toBe(ERSTINFO_FOOTER_V9);
+        expect(comps.find((c) => c.type === "FOOTER")?.text).toBe(ERSTINFO_FOOTER_V12);
         expect(comps.find((c) => c.type === "HEADER")).toBeTruthy();
-        expect(req.name).toMatch(/_v9(_|$)/);
+        expect(req.name).toMatch(/_v12(_|$)/);
         // gerendert mit Beispielwerten kurz (v7 lag bei rund 230 Zeichen und klappte ein)
         expect(renderTemplate(body.text!, body.example?.body_text[0] ?? []).length).toBeLessThanOrEqual(190);
       }
@@ -120,9 +134,15 @@ describe("A) Erstnachricht v9", () => {
     expect(ERSTINFO_FOOTER_V9.length).toBeLessThanOrEqual(60);
     expect(erstinfoFooterFor("v9")).toBe(ERSTINFO_FOOTER_V9);
     expect(erstinfoFooterFor(9)).toBe(ERSTINFO_FOOTER_V9);
+    // v10 (Ole, 19.11.2026, Recht): nur die KI-Kennzeichnung
+    expect(erstinfoFooterFor("v10")).toBe(ERSTINFO_FOOTER_V10);
+    expect(erstinfoFooterFor(10)).toBe("KI-Assistent");
+    // v12 (Ole, 19.11.2026): „Digitaler KI-Assistent“ (Recht: das Wort KI bleibt)
+    expect(erstinfoFooterFor("v12")).toBe(ERSTINFO_FOOTER_V12);
+    expect(ERSTINFO_FOOTER_V12).toBe("Digitaler KI-Assistent");
   });
 
-  it("v7 bzw. v8 bleiben Rückfall mit alter Platzhalter-Belegung, bis v9 freigegeben ist", () => {
+  it("v7 bzw. v8 bzw. v9 bleiben Rückfall mit alter Platzhalter-Belegung, bis v10 freigegeben ist", () => {
     expect(neuePlatzhalter("outreach_privatschutz", 7)).toBe(false);
     expect(neuePlatzhalter("outreach_privatschutz", 8)).toBe(false);
     // Vorschau der noch gesendeten Fassungen mit deren Platzhaltern
@@ -135,23 +155,27 @@ describe("A) Erstnachricht v9", () => {
     expect(nurV7 && "version" in nurV7 ? nurV7.version : null).toBe(7);
     const beide = rankOutreach([t("pg_outreach_privatschutz_v7_sie"), t("pg_outreach_privatschutz_v8_sie")], ["outreach_privatschutz", "outreach"], "sie", { fullName: "Max Muster", salutation: "Herr" }, { pdf: "vollstaendig" });
     expect(beide && "version" in beide ? beide.version : null).toBe(8);
-    expect(neuePlatzhalter("outreach_privatschutz", 9)).toBe(true);
+    expect(neuePlatzhalter("outreach_privatschutz", 9)).toBe(false);
+    expect(neuePlatzhalter("outreach_privatschutz", 10)).toBe(true);
     const mitV9 = rankOutreach([t("pg_outreach_privatschutz_v8_sie"), t("pg_outreach_privatschutz_v9_sie")], ["outreach_privatschutz", "outreach"], "sie", { fullName: "Max Muster", salutation: "Herr" }, { pdf: "vollstaendig" });
     expect(mitV9 && "version" in mitV9 ? mitV9.version : null).toBe(9);
+    // v10: nur noch der Name bzw. bei TKV der Tiername
+    expect(exampleRestFor("outreach_privatschutz", "sie", 10)).toEqual([]);
+    expect(exampleRestFor("outreach_tkv", "du", 10)).toEqual(["Minka"]);
   });
 
-  it("die neuen Vorlagen werden je Kunde eingereicht (CORE_PURPOSES)", () => {
+  it("die neuen Vorlagen werden je Kunde eingereicht (CORE_PURPOSES), je Fassung a und b", () => {
     const geplant = plannedTemplates(purposesFor({ bestand: false }));
-    for (const p of OUTREACH_PURPOSES) expect(geplant.filter((x) => x.purpose === p).length).toBe(3);
+    for (const p of OUTREACH_PURPOSES) expect(geplant.filter((x) => x.purpose === p).length).toBe(6);
   });
 
   it("Freitext im offenen Fenster: gleicher Aufbau, Frage fett, KI-Kennzeichnung als Zeile darunter (keine Fußzeile)", () => {
     const t = erstanschreibenText({ an: "sie", kontakt: { fullName: "Erika Mustermann", salutation: "Frau" }, name: "Ole", vermittler: HERR.dat, vermittlerNom: HERR.nom, source: "Privatschutz", formular: PS_FORM });
-    expect(t).toBe("Hallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
+    expect(t).toBe("Hallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\n_Digitaler KI-Assistent_");
     expect(t).not.toMatch(/[–—]/);
     const du = erstanschreibenText({ an: "du", kontakt: { fullName: "Erika Mustermann" }, name: "Ole", vermittler: DU.dat, source: "Privatschutz", formular: PS_FORM });
     expect(du).toContain("danke für deine Anfrage zum Privatschutz! *");
-    expect(du).toMatch(/\n\n_KI-Assistent/);
+    expect(du).toMatch(/\n\n_Digitaler KI-Assistent/);
   });
 
   it("Formular kennt bestehende Verträge: dann die Mitversichert-Frage als Öffnung, nie Bekanntes", () => {

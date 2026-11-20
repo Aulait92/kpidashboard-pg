@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { OfferDocument, offerProducts, toOfferDoc } from "@/components/offer-document";
 import { getCurrentSession } from "@/lib/auth";
-import { getOfferByToken, markOfferViewed, offerAddOnsOf, offerSummaryInput } from "@/lib/offers";
+import { getOfferByToken, markOfferViewed, offerAddOnsOf, offerProductList, offerSummaryInput } from "@/lib/offers";
 import { zaehltAlsGeoeffnet } from "@/lib/offer-view";
 import {
   abschlussBonusJetzt,
@@ -13,6 +13,7 @@ import {
   normalizeTerm,
   offerAddOns,
   prepayFreeMonthsFor,
+  produktWahlOptionen,
   setupForChoice,
   startDateBounds,
   termOptionsFor,
@@ -29,6 +30,8 @@ import { entscheidungsCallText, type EntscheidungsCallText } from "@/lib/vertrie
 import { ueberweisungMoeglich } from "@/lib/ueberweisung";
 import { nowMs } from "@/lib/now";
 import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
+import { ersteWocheAus, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
+import { registerVorschlag } from "@/lib/ppl/erste-woche";
 
 // Öffentliches Angebot per geheimem Link. ?print=1 liefert die reine
 // Druckansicht (für das PDF).
@@ -88,6 +91,18 @@ export default async function OfferPage({
   // sonst Buchungslink. Nach der Annahme nur noch ein gebuchter Termin, kein Buchungslink mehr.
   const call = offer.salesContactId && offer.status !== "superseded" && !abgelehnt && !offer.ohneEntscheidungsCall ? await entscheidungsCallStand(offer.salesContactId, new Date(nowMs())).catch(() => null) : null;
   const callText = call && (offer.status !== "accepted" || call.art === "gebucht") ? entscheidungsCallText(call) : null;
+  // „Ihre erste Woche“ (Pay-per-Lead + Software, Ole 20.11.2026): nur zur Annahme, Registernummer als Vorschlag
+  const woche = canAccept ? ersteWocheAus(offer) : null;
+  const ersteWoche = woche
+    ? {
+        name: ersteWocheName(woche),
+        productKey: woche.productKey,
+        price: woche.price,
+        quantity: woche.quantity,
+        softwareMonatlich: offerAddOns(offerAddOnsOf(offer)).monthlyTotal,
+        registerVorschlag: await registerVorschlag(offer.salesContactId).catch(() => null),
+      }
+    : null;
 
   return (
     <main className="min-h-screen bg-[#eef2f8] px-3 py-6 sm:px-4 sm:py-12">
@@ -153,6 +168,7 @@ export default async function OfferPage({
                     payment={billingEnabled() && !offer.isTest && !offer.allowPayLater}
                     payLater={billingEnabled() && !!payLaterProps(offer)}
                     ueberweisungTage={ueberweisungMoeglich(offer) ? offer.bankTransferDays : null}
+                    ersteWoche={ersteWoche}
                   />
                 </div>
               ) : (
@@ -209,7 +225,7 @@ const TERM_CHOICE_LABEL: Record<OfferTerm, string> = { "12m": "12 Monate", "6m":
 
 /** Vorberechnete Wahl für die Angebotsseite (null = feste Konditionen wie bisher). */
 function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>): OfferChoiceProps | null {
-  if (!offer.customerChoosesTerm && !offer.customerChoosesStart && !offer.annualChoice) return null;
+  if (!offer.customerChoosesTerm && !offer.customerChoosesStart && !offer.annualChoice && !offer.customerChoosesProducts) return null;
   const count = offerProducts(offer.products).length || 1;
   const fixedTerm = normalizeTerm(offer.term);
   const add = offerAddOns(offerAddOnsOf(offer));
@@ -221,13 +237,20 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
     choosesStart: offer.customerChoosesStart,
     initialTerm: fixedTerm,
     // 6 Monate zur Wahl erst für Angebote ab dem Livegang (lib/offer-pricing.ts termOptionsFor)
-    options: (offer.customerChoosesTerm ? termOptionsFor(offer.createdAt, offer.term) : [fixedTerm]).map((t) => ({
+    options: (offer.customerChoosesTerm ? termOptionsFor(offer.createdAt, offer.term, offer.package) : [fixedTerm]).map((t) => ({
       term: t,
       label: TERM_CHOICE_LABEL[t],
-      setup: offer.customerChoosesTerm ? setupForChoice(t, count, discount) : Number(offer.setupFee),
-      list: discount ? (offer.customerChoosesTerm ? setupForChoice(t, count) : fixedList) : null,
+      setup: offer.customerChoosesTerm ? setupForChoice(t, count, discount, offer.package) : Number(offer.setupFee),
+      list: discount ? (offer.customerChoosesTerm ? setupForChoice(t, count, null, offer.package) : fixedList) : null,
     })),
+    // Pay-per-Lead + Software: keine Einrichtung, Start ohne Einrichtungszeit von unserer Seite
+    ohneEinrichtung: offer.package === "ppl_software" && Number(offer.setupFee) === 0,
     monthlyTotal: add.monthlyTotal,
+    // Produkte und Tagesbudget (Ole, 19.11.2026): Monatsgebühr nach Staffel, Zusätze (Verkäufer, Module) bleiben
+    choosesProducts: offer.customerChoosesProducts,
+    products: offerProductList(offer.products),
+    productOptions: offer.customerChoosesProducts ? produktWahlOptionen(offerProductList(offer.products)) : undefined,
+    monthlyExtras: Math.round((add.monthlyTotal - Number(offer.monthlyFee)) * 100) / 100,
     annualOffered: offer.annualPrepay || offer.annualChoice,
     // „Vorauszahlung anbieten“: Kunde wählt monatlich oder im Voraus (6 bzw. 12 Monate; Vorauswahl monatlich, Ole 18.11.2026)
     choosesAnnual: offer.annualChoice,
@@ -387,13 +410,19 @@ function PaymentBox({
   return (
     <div id="zahlung" className={`${box} scroll-mt-4 border-[#e5e7eb] bg-white`}>
       <div className="font-semibold">
-        {returned === "abgebrochen" ? "Die Zahlung wurde nicht abgeschlossen." : "Angebot angenommen. Es fehlt nur noch die Zahlung."}
+        {returned === "abgebrochen"
+          ? "Die Zahlung wurde nicht abgeschlossen."
+          : returned === "fehler"
+            ? "Angebot angenommen. Die Zahlungsseite ließ sich gerade nicht öffnen, bitte noch einmal versuchen."
+            : "Angebot angenommen. Es fehlt nur noch die Zahlung."}
       </div>
       <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">
         {vorausJetzt
           ? "Richten Sie jetzt die Zahlung ein: Fällig sind Setup und Vorauszahlung, die Laufzeit beginnt mit dem Start der Kampagne. Die Zahlung läuft sicher über Stripe."
           : ersteNachtraeglich
             ? `Hinterlegen Sie jetzt Ihre Zahlungsart.${rechnung ? " Fällig ist jetzt nur das Setup." : " Jetzt wird nichts abgebucht."} Die monatliche Vergütung zahlen Sie jeweils nachträglich für den abgelaufenen Monat, erstmals am ${ersteNachtraeglich}. Die Zahlung läuft sicher über Stripe.`
+            : !rechnung
+              ? "Hinterlegen Sie jetzt Ihre Zahlungsart. Jetzt wird nichts abgebucht, die monatliche Vergütung wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe."
             : "Richten Sie jetzt die Zahlung ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe."}
       </p>
       {bonus ? <BonusHinweis bonus={bonus} zahlung /> : null}

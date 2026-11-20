@@ -80,7 +80,17 @@ export type SchutzEintrag = {
 export const schutzOffen = (s: Pick<SchutzEintrag, "status" | "quelle" | "beantwortet">) => s.status === "pruefen" && !s.quelle && !s.beantwortet;
 
 /** Zeile der Folie „Ihr Schutz im Überblick“ (liegt mit den Angeboten in offersJson). */
-export type SchutzZeile = { key: string; label: string; status: SchutzStatus; info: string | null; versicherer: string | null };
+export type SchutzZeile = {
+  key: string;
+  label: string;
+  status: SchutzStatus;
+  info: string | null;
+  versicherer: string | null;
+  /** In der Vorbereitung noch nicht beantwortet: auf der Folie neutral „Gleich besprechen“ statt „Prüfen“ (Ole, 19.11.2026) */
+  offen?: true;
+};
+/** Anzeige einer unbeantworteten Zeile auf der Folie (neutral grau, kein Warnsignal für den Kunden) */
+export const SCHUTZ_OFFEN = { label: "Gleich besprechen", farbe: "#64748b" };
 
 /** Höchstens so viele Zeilen auf der Folie (gemessen: 6 Zeilen plus Kombi-Zeile passen über die Fußzeile). */
 export const SCHUTZ_MAX = 6;
@@ -438,7 +448,28 @@ export function schutzZeilen(schutz: SchutzEintrag[], angebot: string[]): Schutz
     status: s.status,
     info: s.status === "bei-uns" ? (s.seit ?? null) : s.status === "woanders" ? woandersInfo(s) : null,
     versicherer: s.status === "woanders" ? (s.versicherer ?? null) : null,
+    ...(schutzOffen(s) ? { offen: true as const } : {}),
   }));
+}
+
+/**
+ * Stand für „Was hat Frau Becker schon?“ (Ole, 19.11.2026: der Vermittler soll sehen, dass das die Cross-Selling-Folie
+ * füllt): Fragen = Zeilen, die auf der Folie „Ihr Schutz im Überblick“ stehen (schutzZeilen, höchstens SCHUTZ_MAX) und
+ * nicht fest im Angebot sind (die zeigt die Folie ohnehin als „Im Angebot“); beantwortet = nicht mehr schutzOffen.
+ */
+export function schutzFragenStand(
+  gespeichert: SchutzEintrag[],
+  sparten: { key: string; zusatz?: boolean }[],
+  vorsorge?: VorsorgeThema | null,
+): { beantwortet: number; von: number } {
+  // Das Vorsorge-Thema steht als offene Zeile im Bereich, gespeichert wird es erst mit der Antwort
+  const vk = vorsorge ? VORSORGE_SPARTE[vorsorge.key] : null;
+  const schutz: SchutzEintrag[] =
+    vk && !gespeichert.some((s) => s.key === vk) ? [...gespeichert, { key: vk, label: SCHUTZ_SPARTEN[vk] ?? vorsorge!.label, status: "pruefen" }] : gespeichert;
+  const fest = new Set(sparten.filter((s) => !s.zusatz).map((s) => s.key));
+  const aufFolie = schutzZeilen(schutz, sparten.map((s) => s.key)).filter((z) => !fest.has(z.key));
+  const offen = aufFolie.filter((z) => schutz.some((s) => s.key === z.key && schutzOffen(s))).length;
+  return { beantwortet: aufFolie.length - offen, von: aufFolie.length };
 }
 
 // ─── Bereich „Was hat Frau Becker schon?“ (Terminvorbereitung, Ole 18.11.2026) ──────────────
@@ -665,7 +696,7 @@ export function cleanSchutzZeilen(raw: unknown): SchutzZeile[] {
     const label = txt(r.label, 60);
     const status = typeof r.status === "string" && STATUS.has(r.status) ? (r.status as SchutzStatus) : null;
     if (!key || !label || !status || out.some((o) => o.key === key)) continue;
-    out.push({ key, label, status, info: txt(r.info, 120), versicherer: txt(r.versicherer, 60) });
+    out.push({ key, label, status, info: txt(r.info, 120), versicherer: txt(r.versicherer, 60), ...(r.offen === true && status === "pruefen" ? { offen: true as const } : {}) });
   }
   return out;
 }

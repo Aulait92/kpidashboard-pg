@@ -1,4 +1,4 @@
-# Sprechzettel Vertriebspräsentation (Stand 17.11.2026)
+# Sprechzettel Vertriebspräsentation (Stand 20.11.2026: Folien ohne Gedankenstriche, Chats in Sie-Form)
 
 Gilt für die Vertreter-Fassung (24 Folien). Makler-Fassung (25 Folien): nach Folie 21 kommt „Mit Tarifvergleich: alles zurück nach 7 Monaten“ (Notiz unten), danach verschiebt sich alles um eins.
 Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeanteil unter der Hälfte.
@@ -40,17 +40,18 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - Frage: „Welche Sparte ist für Sie am wichtigsten?“
 
 ## 10. Warum gute Leads verloren gehen
-- Zu spät angerufen, nicht erreicht, Abends und am Wochenende, Nachfassen geht unter.
+- Nicht erreicht, zu spät angerufen, abends und am Wochenende, Nachfassen geht unter (Reihenfolge wie auf der Folie; Folie 11 löst Problem 01, Folie 12 die Probleme 02 und 03, Folie 14 Problem 04).
 - Auf die Antwort von Folie 6 zurückkommen: „Kennen Sie das?“
-- „Die Software löst genau das, automatisch.“
+- „Die Software löst genau das: automatisch.“
 
-## 11. Sonntag, 21:47 Uhr
+## 11. Niemand geht ran? Egal, der Lead bucht selbst.
+- WhatsApp statt Anruf, der Assistent stellt die richtigen Fragen, der Lead bucht direkt einen Termin.
+- Der Chat auf der Folie siezt den Lead („Guten Tag Frau Becker …“); der Assistent siezt Leads standardmäßig.
+- „Sie führen nur noch das Beratungsgespräch.“
+
+## 12. Sonntag, 21:47 Uhr
 - Die Geschichte erzählen: Formular am Sonntagabend, 9 Minuten später steht der Termin.
 - „Sie haben dabei nichts getan.“
-
-## 12. Niemand geht ran? Egal, der Lead bucht selbst.
-- WhatsApp statt Anruf, der Assistent stellt die richtigen Fragen, der Lead bucht direkt einen Termin.
-- „Sie führen nur noch das Beratungsgespräch.“
 
 ## 13. So arbeitet Ihr digitaler Assistent (Video)
 - Video laufen lassen, nicht dazwischenreden.
@@ -60,9 +61,9 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - Nachfassen automatisch: nicht erreicht, Angebot verschickt, „Ruf mich in 2 Wochen an“.
 - „Der Assistent fasst nach, nicht Sie.“
 
-## 15. Jeden Morgen wissen Sie, wen Sie anrufen
-- Startseite „Heute“ zeigen: Termine mit Zusammenfassung, Ergebnis mit einem Klick.
-- Keine Dokumentation am Abend.
+## 15. Jeden Morgen wissen Sie, wen Sie anrufen und was er will
+- Startseite „Heute“ zeigen: neue Leads ganz oben, Termine mit Zusammenfassung des Assistenten, nach dem Gespräch „Ergebnis“ antippen.
+- Keine Dokumentation am Abend, Notizen einfach am Handy diktieren.
 
 ## 16. Perfekt vorbereitet in jeden Termin
 - Am Vortag erscheint „Termin vorbereiten“ auf der Liste.
@@ -81,11 +82,13 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 ## 19. Ihr Kunde schickt seine Policen. Sie sehen vorher, wo er doppelt zahlt. (neu ab 18.11.)
 - Nach der Terminbuchung bittet der Assistent den Kunden per WhatsApp, Fotos oder PDFs seiner aktuellen Policen zu schicken, aller Sparten und nur mit seiner Einwilligung; kommt nichts, erinnert er freundlich daran.
 - Die Vertragsdaten werden automatisch ausgelesen, und Sie bekommen in der Terminvorbereitung ein Vergleichsblatt: Beiträge im Monat, Verträge mit Kündigungstermin in den nächsten 3 Monaten, Doppelversicherungen und fehlende Bausteine.
+- Im Termin steht sein alter Vertrag direkt neben den neuen Tarifen (Spalte „Ihr bisheriger Vertrag“ auf der Vergleichsfolie): Beitrag, Leistungen und darunter der Unterschied im Jahr und bis wann er kündigen kann. Was in der Police nicht eindeutig steht, zeigt die Folie als „laut Police prüfen“.
 - Kernsatz: „Ihr Kunde schickt seine Policen, Sie sehen vor dem Termin, wo er doppelt zahlt.“ Das macht Termine kürzer und besser und öffnet den Weg zum Komplettcheck und zu weiteren Verträgen.
 - Keine Zahlen versprechen; bei Datenschutzfragen: Einwilligung des Kunden, Speicherung in der EU, nur Sie sehen die Unterlagen, automatische Löschung. Nebenbei erwähnen: Der Assistent stellt Zwischenfragen vor dem Termin und schickt die Einladung erst, wenn alles feststeht.
 
 ## 20. Sie wissen jederzeit, ob es sich rechnet
 - Kosten je Lead, je Termin, je Abschluss und Ertrag, automatisch aus dem Werbekonto.
+- In der App unter „Wachstum“: „Rechnet sich das?“ mit Gewinn im Zeitraum, Wert pro Kunde und „Aus 1 € werden …“.
 - „Ihre Kampagnen werden laufend nach Umsatz je Werbe-Euro optimiert.“ Nicht sagen, dass Daten anderer Kunden genutzt werden.
 - „Sie sehen jeden Monat schwarz auf weiß, was es Ihnen bringt.“
 

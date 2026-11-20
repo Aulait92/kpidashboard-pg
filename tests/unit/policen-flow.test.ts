@@ -376,6 +376,18 @@ describe("Antwort des Formulars (nfm_reply)", () => {
     // höchstens 10 Dateien
     expect(leseFlowAntwort({ flow_token: "t", fotos: Array.from({ length: 14 }, (_, i) => ({ id: String(i) })) })?.dateien).toHaveLength(MAX_DATEIEN_JE_SENDEN);
   });
+  it("verträgt Text statt JSON, Zahlen-IDs und media_id; Feldnamen ohne Werte fürs Protokoll", () => {
+    const em = { encrypted_hash: "a", iv: "b", encryption_key: "c", hmac_key: "d", plaintext_hash: "e" };
+    const a = leseFlowAntwort({
+      flow_token: "t",
+      fotos: JSON.stringify([{ media_id: 42, file_name: "x.jpg" }, { cdn_url: "https://cdn/x", encryption_metadata: JSON.stringify(em) }]),
+      pdfs: "987",
+    });
+    expect(a?.dateien.map((d) => d.id)).toEqual(["42", null, "987"]);
+    expect(a?.dateien[1].encryption?.iv).toBe("b");
+    expect(a?.dateien[1].felder).toBe("cdn_url,encryption_metadata[encrypted_hash,iv,encryption_key,hmac_key,plaintext_hash]");
+    expect(a?.dateien[0].felder).not.toContain("x.jpg");
+  });
 });
 
 describe("Erinnerungen: Fälligkeit", () => {

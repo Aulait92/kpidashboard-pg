@@ -82,6 +82,7 @@ const input = (n: string, extra: Partial<BookingInput> = {}): BookingInput => ({
 });
 
 let type: SalesBookingType;
+let original: SalesBookingType | null = null;
 const day = addDaysYmd(berlinYmd(new Date()), 3);
 const at = (hhmm: string, plusDays = 0) => berlinAt(addDaysYmd(day, plusDays), hhmm);
 
@@ -105,6 +106,10 @@ describe("Vertrieb: eigene Buchungsseite", () => {
       create: { calendarKey: VERTRIEB_CUSTOMER_ID, customerId: VERTRIEB_CUSTOMER_ID, weekdays: [0, 1, 2, 3, 4, 5, 6], times: ["08:00"], durationMin: 45, schedule: { step: 60, days } },
       update: { weekdays: [0, 1, 2, 3, 4, 5, 6], durationMin: 45, schedule: { step: 60, days } },
     });
+    // Seit 19.11.2026 ist meta-leads-call ein 15-Minuten-Telefonat (Setter-Call). Die Tests prüfen den Ablauf mit Video
+    // (Meet-Link, 45 Minuten); dafür den Termintyp hier wie früher einstellen und danach zurücksetzen.
+    original = await prisma.salesBookingType.findUniqueOrThrow({ where: { slug: "meta-leads-call" } });
+    await prisma.salesBookingType.update({ where: { slug: "meta-leads-call" }, data: { title: "Meta-Leads-Call mit Ole Kannapinn", durationMin: 45, mode: "video" } });
     type = (await loadBookingType(null))!;
     expect(type).toMatchObject({ slug: "meta-leads-call", title: "Meta-Leads-Call mit Ole Kannapinn", durationMin: 45, mode: "video", thanksPage: true });
   });
@@ -119,6 +124,7 @@ describe("Vertrieb: eigene Buchungsseite", () => {
   });
 
   afterAll(async () => {
+    if (original) await prisma.salesBookingType.update({ where: { slug: "meta-leads-call" }, data: { title: original.title, durationMin: original.durationMin, mode: original.mode } });
     await cleanup();
     await prisma.calendarLeadTimes.deleteMany({ where: { calendarKey: VERTRIEB_CUSTOMER_ID } });
     await prisma.calendarConnection.deleteMany({ where: { customerId: VERTRIEB_CUSTOMER_ID } });
@@ -142,6 +148,9 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     expect(calls.pushes[0]).toContain("Neue Meta-Leads-Call");
     expect(calls.mails[0]).toMatchObject({ to: `petra.neu@${DOMAIN}` });
     expect(calls.mails[0].subject).toContain("Ihr Termin mit performancegrowth");
+    // Mail an uns (Ole, 19.11.2026)
+    expect(calls.mails[1]).toMatchObject({ to: process.env.ADMIN_EMAIL?.trim() || "ole.kannapinn@performancegrowth.de" });
+    expect(calls.mails[1].subject).toMatch(/^Neuer Termin: Petra neu, /);
     expect(calls.whatsapp).toEqual([res.meetingId]);
   });
 
@@ -213,6 +222,7 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     expect(neu).toMatchObject({ status: "GEPLANT", contactId: old.contactId, rescheduledFromId: old.id });
     expect(neu.startAt.toISOString()).toBe(at("16:00", 2).toISOString());
     expect(calls.mails[0].subject).toContain("Neuer Termin");
+    expect(calls.mails[1].subject).toMatch(/^Termin verschoben: Petra schieben, neu /);
     // WhatsApp-Bestätigung zur neuen Zeit; der neue Termin startet ohne Erinnerungs-Markierungen
     expect(calls.whatsapp.at(-1)).toBe(neu.id);
     expect(neu).toMatchObject({ waReminderAt: null, waSoonAt: null, reminderSentAt: null, soonReminderSentAt: null, waConfirmStatus: null });
@@ -231,6 +241,7 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     const follow = await prisma.salesTask.findFirst({ where: { contactId: m.contactId, type: "ANRUF" } });
     expect(follow?.title).toContain("Neuen Termin vereinbaren");
     expect(calls.mails[0].subject).toContain("Abgesagt");
+    expect(calls.mails[1].subject).toMatch(/^Termin abgesagt: Petra absage, /);
     expect(calls.pushes.at(-1)).toContain("abgesagt");
     expect(await cancelSalesMeeting(res.manageToken)).toEqual({ ok: false, error: "closed" });
     expect(await cancelSalesMeeting("gibt-es-nicht-1234567890")).toEqual({ ok: false, error: "not_found" });

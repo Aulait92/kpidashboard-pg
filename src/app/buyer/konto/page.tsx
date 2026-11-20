@@ -111,6 +111,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const halte = await loadHalteKonto(ctx.customerId).catch(() => null);
   const today = todayBerlin();
   const service = customer.plan === "service";
+  // Pay-per-Lead + Software: kein Werbebudget, keine Produkte, keine Pause (monatlich kündbar)
+  const ppl = customer.plan === "ppl_software";
   // Zusätze (weitere aktive Verkäufer, Bestandskunden-Modul) und Zahlweise
   // Testkunden (Testangebot 0 €) sehen den regulären Platzpreis wie echte Kunden, berechnet wird nichts
   const seatMonthly = customer.isTest ? PRICE_LIST.seatMonthly : customer.seatMonthly != null ? Number(customer.seatMonthly) : null;
@@ -189,7 +191,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           ) : null}
           <dl className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-2 p-5 text-[15px] sm:grid-cols-[150px_1fr]">
             <dt className="text-[color:var(--muted)]">Paket</dt>
-            <dd>{service ? "Leadgenerierung (Betreuung)" : "Leadgenerierung + Software"}</dd>
+            <dd>{service ? "Leadgenerierung (Betreuung)" : ppl ? "Pay-per-Lead + Software (Leads separat pro Stück)" : "Leadgenerierung + Software"}</dd>
             {monthly != null && (seatsFee || bestandFee || empfehlungFee) ? (
               <>
                 <dt className="text-[color:var(--muted)]">Paket monatlich</dt>
@@ -268,13 +270,17 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                       ? `${TERM_MONTHS[normalizeTerm(offer.term)]} Monate, danach monatlich kündbar`
                       : "Monatlich kündbar"}
                 </dd>
-                <dt className="text-[color:var(--muted)]">Pause / Urlaub</dt>
-                <dd>
-                  Jederzeit selbst unter{" "}
-                  <Link href="/buyer/wachstum#pause" className="font-medium text-[color:var(--brand)] underline">
-                    Wachstum → Pause
-                  </Link>
-                </dd>
+                {ppl ? null : (
+                  <>
+                    <dt className="text-[color:var(--muted)]">Pause / Urlaub</dt>
+                    <dd>
+                      Jederzeit selbst unter{" "}
+                      <Link href="/buyer/wachstum#pause" className="font-medium text-[color:var(--brand)] underline">
+                        Wachstum → Pause
+                      </Link>
+                    </dd>
+                  </>
+                )}
                 <dt className="text-[color:var(--muted)]">Vertrag</dt>
                 <dd>
                   <a href={`/angebot/${offer.token}`} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
@@ -294,7 +300,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 readOnly={ctx.preview}
                 slots={churnSlots}
                 hasModules={!!(customer.existingCustomersEnabled || customer.empfehlungEnabled)}
-                canPause={!pause}
+                canPause={!pause && !ppl}
               />
               {retention?.endIso && retention.choice ? (
                 <div className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-konto-aufbewahrung>
@@ -307,10 +313,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </Card>
 
         {/* Werbebudget, Produkte und Pause stehen unter „Wachstum“ (UX, Ole 15.11.2026): ein Ort je Thema */}
+        {ppl ? null : (
         <Link href="/buyer/wachstum#budget" className="flex items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-[15px] hover:border-[color:var(--brand)]" data-konto-wachstum>
           <span>Werbebudget, Produkte und Pause</span>
           <span className="text-sm font-medium text-[color:var(--brand)]">Unter Wachstum</span>
         </Link>
+        )}
 
         {customer.whatsAppAccount && !PRICE_LIST.whatsappIncluded ? <WhatsAppFeesCard customerId={ctx.customerId} /> : null}
 

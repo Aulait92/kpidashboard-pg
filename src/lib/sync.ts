@@ -147,6 +147,10 @@ async function doFullSync(): Promise<FullSyncResult> {
       () => syncMeta({ full: metaFull }),
     );
     if (metaFull) state.lastMetaFullSyncAt = Date.now();
+    // Übersprungene Kundenkonten und Kontofehler sichtbar machen (sonst nur in der Antwort an den Cron-Dienst)
+    if (metaResult.skippedCustomerOwned?.length)
+      console.log(`[sync] Meta: Kundenkonten übersprungen (zählen nicht als Agentur-Kosten): ${metaResult.skippedCustomerOwned.map((a) => `act_${a}`).join(", ")}`);
+    if (metaResult.errors.length) console.warn(`[sync] Meta-Fehler: ${metaResult.errors.join(" | ").slice(0, 1000)}`);
     meta = { ok: true, result: metaResult };
   } catch (err) {
     meta = {

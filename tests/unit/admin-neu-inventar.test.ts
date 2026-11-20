@@ -116,7 +116,7 @@ describe("Navigation neuer Admin", () => {
     expect(labels("verkaufen")).toEqual(["Pipeline", "Kontakte", "Termine", "Angebote", "Marketing"]);
     expect(labels("marketing")).toEqual(["LinkedIn", "Empfehlungen", "Unterlagen", "Webseite & Rechner"]);
     expect(labels("betreuen")).toEqual(["Kunden", "Chats", "Monatsberichte", "Qualität & Nutzung"]);
-    expect(labels("liefern")).toEqual(["Pay-per-Lead", "Leads", "Lead-Eingang", "Werbekonten"]);
+    expect(labels("liefern")).toEqual(["Pay-per-Lead", "Leads", "Lead-Eingang", "Werbekonten", "A/B-Tests"]);
     expect(labels("geld")).toEqual(["Übersicht", "Umsatz & Buchungen", "Offene Posten", "Kosten & Bank", "Kunden-Lebenszyklus", "Auswertung"]);
     const ex = (g: Parameters<typeof reiterFuer>[0], label: string) => reiterFuer(g).find((r) => r.label === label)?.exact;
     expect(ex("verkaufen", "Pipeline")).toBe(true);

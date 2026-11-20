@@ -9,14 +9,14 @@ import { VerkaufsLinkKarte } from "@/app/admin/vertrieb/kontakte/[id]/praesentat
 import { getAppUrl } from "@/lib/email";
 import { shortName } from "@/lib/vertrieb/crm";
 import { listPresentations } from "@/lib/vertrieb/praesentationen";
-import { folienListe, isVerkaufsAudience, VERKAUFS_AUDIENCES } from "@/lib/vertrieb/verkaufspraesentation";
+import { folienListe, isVerkaufsAudience, VERKAUFS_AUDIENCES, VERKAUFS_LABEL } from "@/lib/vertrieb/verkaufspraesentation";
 import { aktiverVerkaufsLink, ladeVerkaufsPraesentation, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspraesentation-server";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Präsentation | performancegrowth Admin" };
 
-const LABEL = { vertreter: "Vertreter", makler: "Makler" } as const;
+const LABEL = VERKAUFS_LABEL;
 const tag = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" }).format(d);
 const zeit = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
 
