@@ -45,8 +45,8 @@ export async function leadpreisPunkte(): Promise<HeuteItem[]> {
       area: "Leads" as const,
       tone: "warn" as const,
       icon: "alert" as const,
-      title: `${k.label}: Leadpreis ${eur(k.leadpreis.cpl!)}`,
-      detail: `${LEADPREIS_TAGE} Tage, ${eur(k.leadpreis.ueberZiel!)} über Ziel (${eur(k.leadpreis.ziel!)}) · ${k.leadpreis.leads} Leads`,
+      title: `Leadpreis ${eur(k.leadpreis.cpl!)}: ${k.label}`,
+      detail: `${eur(k.leadpreis.ueberZiel!)} über Ziel (${eur(k.leadpreis.ziel!)}) · ${LEADPREIS_TAGE} Tage, ${k.leadpreis.leads} Leads`,
       action: { label: "Ansehen", href: `/admin/neu/leads/werbekonten/${k.id}` },
       later: { label: "Morgen", days: 1 },
     }));

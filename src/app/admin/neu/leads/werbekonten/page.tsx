@@ -132,16 +132,17 @@ function KontoZeile({ r, k }: { r: Zeile; k: Preise["konten"][number] | undefine
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium">{r.label}</div>
           <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-            {r.autopilot ? "Autopilot" : "Vorschlag"} · letzte Maßnahme{" "}
+            {r.autopilot ? "Autopilot" : "Vorschlag"} ·{" "}
             <span className={r.stale ? "font-semibold text-rose-700" : ""} data-stale={r.stale ? "1" : undefined} title={r.stale ? `älter als ${STALE_DAYS} Tage` : undefined}>
-              {r.lastMeasureAt ? fmt(r.lastMeasureAt) : "noch keine"}
+              {r.lastMeasureAt ? `Maßnahme ${fmt(r.lastMeasureAt)}` : "keine Maßnahme"}
             </span>
           </div>
         </div>
         <LeadpreisZelle k={k} />
         {r.planned ? (
-          <span className="inline-flex h-8 shrink-0 items-center rounded-full bg-[color:var(--brand)] px-3 text-xs font-semibold text-white">
-            Freigeben {r.planned}
+          <span className="inline-flex h-7 shrink-0 items-center rounded-full bg-amber-100 px-2.5 text-xs font-semibold text-amber-800" aria-label={`${r.planned} Maßnahmen freigeben`}>
+            <span className="hidden sm:inline">Freigeben&nbsp;</span>
+            {r.planned}
           </span>
         ) : (
           <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
@@ -156,7 +157,7 @@ function LeadpreisZelle({ k }: { k: Awaited<ReturnType<typeof ladeLeadpreise>>["
   const lp = k?.leadpreis;
   return (
     <span className="w-24 shrink-0 text-right sm:w-32" data-leadpreis={lp?.cpl ?? ""} title={k ? `Ziel: ${k.zielLabel}` : undefined}>
-      <span className={cn("block font-semibold tabular-nums", lp?.zuTeuer ? "text-rose-700" : "")}>{lp?.cpl != null ? eur(lp.cpl) : NOCH_KEINE_DATEN}</span>
+      <span className={cn("block tabular-nums", lp?.cpl != null ? "font-semibold" : "whitespace-nowrap text-xs text-[color:var(--muted)]", lp?.zuTeuer ? "text-rose-700" : "")}>{lp?.cpl != null ? eur(lp.cpl) : NOCH_KEINE_DATEN}</span>
       <span className="block text-xs text-[color:var(--muted)]">
         {lp?.ziel != null ? `Ziel ${eur(lp.ziel)}` : `${LEADPREIS_TAGE} Tage`}
         {lp?.zuTeuer && lp.ueberZiel != null ? <span className="sr-only"> (mehr als {UEBER_ZIEL_EUR} € über Ziel)</span> : null}
