@@ -339,7 +339,8 @@ function unterlagenSparten(docs: { sparte: string | null; auszug: { sparte: stri
 /** Daten für das Vergleichsblatt. Zugriff prüft der Aufrufer (leadScope); in der Admin-Vorschau nie aufrufen. */
 export async function ladeVergleich(leadId: string, customerId: string, now = new Date()): Promise<Vergleich> {
   const { loadBestandVisible } = await import("@/lib/bestand/sichtbar-server");
-  const [docs, sperre, zdr, bestand] = await Promise.all([
+  const { vertriebFuer } = await import("@/lib/tarifauswahl-server");
+  const [docs, sperre, zdr, bestand, eigene] = await Promise.all([
     prisma.leadDocument.findMany({
       where: { leadId, customerId, status: "gespeichert" },
       orderBy: { createdAt: "asc" },
@@ -348,6 +349,10 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
     sperreFuer(customerId, leadId),
     zdrHinterlegt(),
     loadBestandVisible(customerId).catch(() => false),
+    // Eigene Gesellschaft des Vertreters: dort kein Kündigungshinweis (beim Makler keine)
+    vertriebFuer(customerId)
+      .then(({ vertrieb }) => (vertrieb.rolle === "vertreter" ? vertrieb.gesellschaften : []))
+      .catch(() => [] as string[]),
   ]);
   const vertraege: VertragKarte[] = [];
   const offen: OffeneUnterlage[] = [];
@@ -389,7 +394,7 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
     zusammenfassung: zusammenfassung(
       vertraege.map((v) => ({ id: v.id, sparte: v.sparte, felder: v.felder, geprueft: v.geprueft })),
       now,
-      { ...unterlagenSparten(docs), ohneKi },
+      { ...unterlagenSparten(docs), ohneKi, eigeneGesellschaften: eigene },
     ),
     sparten: freigegebeneSparten({ zdr }),
     bestand,

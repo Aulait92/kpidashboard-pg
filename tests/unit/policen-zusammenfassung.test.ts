@@ -2,7 +2,7 @@
 // Kündigungen und Fragen nur Sach, „doppelt“ nur Haftpflicht/Hausrat/Rechtsschutz (K8), feste Vorlagen ohne Wertung.
 import { describe, expect, it } from "vitest";
 import type { AuslesenSparte, Felder } from "@/lib/policen/auslesen/felder";
-import { fristBis, heuteBerlin, kuendigungsfenster, VORLAGEN, zusammenfassung, type VertragKurz } from "@/lib/policen/auslesen/zusammenfassung";
+import { beiEigenerGesellschaft, fristBis, heuteBerlin, kuendigungsfenster, VORLAGEN, zusammenfassung, type VertragKurz } from "@/lib/policen/auslesen/zusammenfassung";
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 
 const f = (x: Record<string, unknown>): Felder => Object.fromEntries(Object.entries(x).map(([k, w]) => [k, { w: w as never, s: "ok" as const }]));
@@ -194,5 +194,33 @@ describe("Vorlagen ohne Wertung", () => {
       expect(t, t).not.toMatch(VERBOTEN);
       expect(ohneGedankenstriche(t)).toBe(t);
     }
+  });
+});
+
+describe("Eigene Gesellschaft des Vertreters (Persona-Test 20.11.2026)", () => {
+  const kfz = (versicherer: string) => v("a", "kfz", { versicherer, ablauf: "2027-01-01", kuendigungsfrist_monate: 1 });
+
+  it("Vertrag bei der eigenen Gesellschaft: kein Kündigungshinweis", () => {
+    const z = zusammenfassung([kfz("Allianz Versicherungs-AG"), v("b", "hausrat", { versicherer: "DEVK", ablauf: "2027-01-01", kuendigungsfrist_monate: 1 })], now, { eigeneGesellschaften: ["allianz"] });
+    expect(z.kuendigungen.map((k) => k.id)).toEqual(["b"]);
+    expect(z.fragen.filter((q) => q.typ === "kuendigung").map((q) => q.ids)).toEqual([["b"]]);
+  });
+
+  it("auch kein Hinweis „Hauptfälligkeit prüfen“ und Vertrag zählt weiter in Summe und Doppelt", () => {
+    const z = zusammenfassung(
+      [v("a", "kfz", { versicherer: "Allianz", beitrag: 600, zahlweise: "jaehrlich" }), v("h1", "haftpflicht", { versicherer: "Allianz" }), v("h2", "haftpflicht", { versicherer: "HUK" })],
+      now,
+      { eigeneGesellschaften: ["allianz"] },
+    );
+    expect(z.fragen.some((q) => q.typ === "kuendigung")).toBe(false);
+    expect(z.jahrSumme).toBe(600);
+    expect(z.doppelt).toHaveLength(1);
+  });
+
+  it("ohne eigene Gesellschaft (Makler) bleibt alles wie bisher", () => {
+    expect(zusammenfassung([kfz("Allianz")], now).kuendigungen).toHaveLength(1);
+    expect(beiEigenerGesellschaft("Barmenia Allgemeine", ["gothaer"])).toBe(true);
+    expect(beiEigenerGesellschaft(null, ["allianz"])).toBe(false);
+    expect(beiEigenerGesellschaft("HUK-Coburg", ["allianz"])).toBe(false);
   });
 });

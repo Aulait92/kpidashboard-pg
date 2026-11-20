@@ -9,6 +9,7 @@
 //   Tagesgrenze Europe/Berlin. Ohne Frist keine angenommene Standardfrist.
 
 import { jahresbetrag, monatsbetrag, SPARTE_LABEL, type AuslesenSparte, type Felder } from "@/lib/policen/auslesen/felder";
+import { gesellschaftAusText, gesellschaftSchluessel } from "@/lib/tarifkatalog";
 
 export type VertragKurz = { id: string; sparte: AuslesenSparte; felder: Felder; geprueft: boolean };
 
@@ -78,7 +79,19 @@ export type ZusammenfassungOptionen = {
   unterlagenOhneSparte?: number;
   /** Kunde hat das Auslesen abgelehnt (A9): kein „nicht geschickt“ */
   ohneKi?: boolean;
+  /**
+   * Gesellschaft(en) des Vertreters (Schlüssel wie „allianz“, aus vertriebFuer). Verträge dort sind sein eigener
+   * Bestand: kein Kündigungshinweis (Persona-Test 20.11.2026). Beim Makler leer lassen.
+   */
+  eigeneGesellschaften?: readonly string[];
 };
+
+/** Vertrag bei einer der eigenen Gesellschaften (Versicherer laut Unterlage). */
+export function beiEigenerGesellschaft(versicherer: string | null, eigene: readonly string[] | undefined): boolean {
+  if (!versicherer || !eigene?.length) return false;
+  const g = gesellschaftAusText(versicherer);
+  return !!g && eigene.map(gesellschaftSchluessel).includes(gesellschaftSchluessel(g));
+}
 
 export const KUENDIGUNG_SPARTEN: readonly AuslesenSparte[] = ["haftpflicht", "hausrat", "wohngebaeude", "rechtsschutz", "kfz"];
 export const DOPPELT_SPARTEN: readonly AuslesenSparte[] = ["haftpflicht", "hausrat", "rechtsschutz"];
@@ -225,6 +238,7 @@ export function zusammenfassung(vertraege: VertragKurz[], now: Date, o: Zusammen
     if (!KUENDIGUNG_SPARTEN.includes(v.sparte)) continue;
     const fe = kuendigungsfenster(v.felder, heute);
     const versicherer = versichererVon(v);
+    if (beiEigenerGesellschaft(versicherer, o.eigeneGesellschaften)) continue;
     if (!fe) {
       if (v.sparte === "kfz") fragen.push({ typ: "kuendigung", text: VORLAGEN.kfzOhneAblauf(versicherer), ids: [v.id], tage: null, jahresbetrag: jahresbetrag(v.felder), rang: 3 });
       continue;
