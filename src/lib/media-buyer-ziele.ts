@@ -276,7 +276,7 @@ export function customersBehind(
 //   Ist        = an die Bezüge des Pools im Monat gelieferte Leads (wie „Ziel
 //                je Kunde“).
 //   offen      = Summe je Kunde von (Ziel − geliefert); ein Kunde gilt mit
-//                Toleranz (MEDIA_BUYER_GOAL_TOLERANCE, 2 %, mind. 1 Lead) als
+//                Toleranz (MEDIA_BUYER_GOAL_TOLERANCE, 2 % des Ziels) als
 //                erreicht und hat dann nichts mehr offen. Überlieferung eines
 //                Kunden gleicht den Rückstand eines anderen NICHT aus.
 //   Ziel erreicht / Pausieren nur bei offen = 0 (alle Kunden erreicht).
@@ -345,15 +345,15 @@ export function deliveryPacing(p: DeliveryPacingInput): DeliveryPacing {
   if (withGoal.length > 0) {
     for (const c of withGoal) {
       const short = c.goal - c.delivered;
-      // Erreicht mit Toleranz: höchstens max(1, 2 % des Ziels) fehlen.
-      if (short <= 0 || short < Math.max(1, c.goal * tol)) continue;
+      // Erreicht mit Toleranz: höchstens 2 % des Ziels fehlen.
+      if (short <= c.goal * tol) continue;
       behind.push(c);
       open += short;
     }
   } else if (p.goal > 0) {
     // Ohne Kundenaufteilung (sollte bei software nicht vorkommen): Pool-Summe.
     const short = p.goal - delivered;
-    open = short > 0 && short >= Math.max(1, p.goal * tol) ? short : 0;
+    open = short > p.goal * tol ? short : 0;
   }
   open = Math.round(open);
 
