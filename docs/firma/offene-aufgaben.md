@@ -24,6 +24,21 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 
 Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der Sitzung, die sie angelegt hat.
 
+## Vertrieb: Generalprobe Pay-per-Lead + Software (20.11.2026)
+
+Leitfaden und Ergebnis: `docs/firma/protokolle/2026-11-20-generalprobe-ppl.md` und `.pdf`.
+
+| Aufgabe | Frist | Wer |
+|---|---|---|
+| Belege Folie 3 (250.000/60.000, „eines der größten“, Vorschaubilder 32.000 vs. 60.000), Folie 4 (2017, „nominiert“ oder „ausgezeichnet“), Folie 5 (Allianz: für wen, wann, ohne Partnerschaft anzudeuten) | 27.11.2026 | CMO |
+| Einwilligungstext der PPL-Funnels: deckt er WhatsApp-Ansprache durch den kaufenden Vermittler (§ 7 UWG)? Ergebnis schriftlich an Käufer vor Start | vor erstem PPL+Software-Start | Recht, Datenschutz |
+| Marge je Lead (max. Meta-Kosten bei 10 % Storno: Katze 12,86 €, Hund 16,64 €, Privatschutz 26,47 €, Kindersparplan 49,16 €) und Regel „Sonstiges = 50 % automatisch“ prüfen | 23.11.2026 | CFO |
+| Deck dauerhaft umstellen: Folie 15 hinter 8; 3, 4, 6 zu „Wer wir sind“; Folie 17 in den Anhang; Folie 16 mit leeren Quoten; Folie 18 mit Storno-Frist und „Wir verkaufen jeden Lead nur einmal“; Garantie-nahe Sätze (8 bis 11) entschärfen | 25.11.2026 | CMO mit UX/UI, Sales |
+| Sprechzettel: Zeile 5 Umsatzsteuer (Steuerantwort aus Leitfaden d8), „Online-“ vs. „Abnehm-Coaching“, „Sonstiges halbe Gutschrift“ vs. Bestellseite „ersatzlos“ | 24.11.2026 | Sales |
+| Gestaffelte Software oder Startpreis für kleine Lead-Mengen (Stufe A) | Führungsrunde 23.11.2026 | CEO/CFO, Entscheidung Ole |
+| Kapazität je Produkt und Woche prüfen, bevor Mengen zugesagt werden | 27.11.2026 | Head of Growth, CMO |
+| Ergebnis des Termins (Paket, nur Leads oder Auswertungstermin) mit nächstem Schritt und Datum in der Pipeline eintragen | 20.11.2026 | Ole, Sales |
+
 ## Bei Ole
 
 - Plan „1 Mio. € ARR“ (Entwurf, 19.11.2026, `docs/firma/plan-1-mio-arr.md`): Entscheidungen 1 bis 7 bis zur Führungsrunde 23.11.
