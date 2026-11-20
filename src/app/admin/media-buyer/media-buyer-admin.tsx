@@ -51,6 +51,10 @@ export type PoolDetailRow = {
   googleCpl: number | null;
   latestAction: string | null;
   latestReason: string | null;
+  // Meta-Lernphase knapp, null = kein Meta bzw. noch kein Lauf.
+  learningLabel: string | null;
+  // Höchstpreis je Lead; null = fehlt (Buyer erhöht dann nicht).
+  maxCpl: number | null;
 };
 
 export type ActionLogRow = {
@@ -714,6 +718,34 @@ function PoolDetail({
           <span aria-hidden>◆</span>
           {pool.kind === "product" ? "Produkt-Pool" : "Region-Pool"}
         </span>
+        {pool.learningLabel ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium",
+              pool.learningLabel === "abgeschlossen"
+                ? "bg-emerald-50 text-emerald-700"
+                : pool.learningLabel === "eingeschränkt"
+                  ? "bg-amber-50 text-amber-700"
+                  : "border border-[color:var(--border)] bg-white text-zinc-700",
+            )}
+          >
+            Lernphase: {pool.learningLabel}
+          </span>
+        ) : null}
+        {pool.goal > 0 ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium",
+              pool.maxCpl == null
+                ? "bg-amber-50 text-amber-700"
+                : "border border-[color:var(--border)] bg-white text-zinc-700",
+            )}
+          >
+            {pool.maxCpl == null
+              ? "Höchstpreis fehlt"
+              : `Höchstpreis ${pool.maxCpl.toFixed(2).replace(".", ",")} €/Lead`}
+          </span>
+        ) : null}
       </div>
 
       {/* Stats-Karte */}

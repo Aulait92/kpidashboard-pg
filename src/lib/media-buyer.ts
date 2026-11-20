@@ -28,6 +28,11 @@
 //                                     Intervall automatisch aus den letzten
 //                                     echten Läufen abgeleitet (passt sich an
 //                                     Cron-Frequenz-Änderungen selbst an).
+//
+// Meta-Lernphase: Budgetänderungen werden durch guardLearning() aus
+// media-buyer-lernphase.ts geschont (Standard ±20 % je Schritt, höchstens eine
+// Änderung je 72 h; Reset nur, wenn er sich lohnt). Regeln und Env-Schwellen
+// (MEDIA_BUYER_LEARNING_*) stehen im Kopf jener Datei.
 
 import {
   differenceInCalendarDays,
@@ -76,11 +81,26 @@ import {
 } from "@/lib/google-ads";
 import { prisma } from "@/lib/prisma";
 import {
+  guardLearning,
+  learningLabel,
+  loadLearningConfig,
+  summarizeLearning,
+  type LearningConfig,
+  type LearningStatus,
+} from "@/lib/media-buyer-lernphase";
+import {
   canonicalProductKey,
   displayProduct,
   isLegacyProduct,
 } from "@/lib/products";
 import { sendToAdmins } from "@/lib/push";
+import {
+  applyMonthlyCap,
+  applyPriceGuard,
+  computeMaxCpl,
+  shouldAlertCpl,
+  stornoRate,
+} from "@/lib/media-buyer-preisgrenze";
 
 export type BuyerAction =
   | "increase"
@@ -118,6 +138,14 @@ export type PoolResult = {
   googleLeadsMtd: number;
   googleSpendMtd: number;
   googleCpl: number | null;
+  // Meta-Lernphase (null = kein steuerbares Meta im Pool).
+  learningStatus?: LearningStatus | null;
+  learningSince?: Date | null;
+  // Vom Buyer in diesem Lauf pausierte Kampagnen ("meta:<id>", "outbrain:<id>" …).
+  pausedCampaignIds?: string[];
+  // Preisgrenze je Lead (EUR) und ob der 7-Tage-CPL darüber lag.
+  maxCpl?: number | null;
+  cplOverMax?: boolean;
   error?: string;
 };
 
@@ -125,6 +153,8 @@ export type MediaBuyerRunResult = {
   ranAt: Date;
   dryRun: boolean;
   pools: PoolResult[];
+  // Gesetzt, wenn der Lauf gar nicht gesteuert hat (Not-Aus, Laufsperre).
+  skipped?: string;
 };
 
 function envNum(key: string, fallback: number): number {
@@ -655,6 +685,8 @@ export async function listProductGoalBreakdown(
 
 type PoolSettings = {
   autopilot: boolean;
+  // Höchstpreis je Lead (EUR) für diesen Pool; null = Env bzw. Break-even.
+  maxCpl: number | null;
   // maxDailyBudget = Meta-Cap (Historie); je Channel separat.
   maxDailyBudget: number | null;
   outbrainMaxDailyBudget: number | null;
@@ -681,6 +713,7 @@ async function ensurePool(def: PoolDef): Promise<PoolSettings> {
     update: { label: def.label, product: def.product, region: def.region },
     select: {
       autopilot: true,
+      maxCpl: true,
       maxDailyBudget: true,
       outbrainMaxDailyBudget: true,
       tiktokMaxDailyBudget: true,
@@ -693,6 +726,7 @@ async function ensurePool(def: PoolDef): Promise<PoolSettings> {
   });
   return {
     autopilot: pool.autopilot,
+    maxCpl: decToNumber(pool.maxCpl),
     maxDailyBudget: decToNumber(pool.maxDailyBudget),
     outbrainMaxDailyBudget: decToNumber(pool.outbrainMaxDailyBudget),
     tiktokMaxDailyBudget: decToNumber(pool.tiktokMaxDailyBudget),
@@ -793,8 +827,74 @@ type RunCtx = {
   precisionDays: number;
   precisionMinBudget: number;
   lookAheadHours: number;
+  learningCfg: LearningConfig;
+  now: Date;
+  // Datenfrische: gesetzt = Lead-Eingang auffällig alt → nur halten.
+  staleReason: string | null;
+  // Nicht lesbare Zusatzkanäle (Fehlermeldung je Kanal).
+  channelErrors: { outbrain?: string; tiktok?: string; google?: string };
+  // Monats-Gesamtgrenze über alle Pools/Kanäle; null = keine Grenze.
+  // dailyRate wird nach jeder Erhöhung fortgeschrieben.
+  monthlyCap: { cap: number; spentMtd: number; dailyRate: number } | null;
+  cplAlertRuns: number;
   dryRun: boolean;
 };
+
+// Aus dem eigenen Log: wann zuletzt das Budget wirklich geändert wurde und seit
+// wann der Pool (durch uns) pausiert ist.
+async function loadPoolHistory(poolKey: string): Promise<{
+  lastChangeAt: Date | null;
+  pausedSince: Date | null;
+  buyerPausedIds: Set<string>;
+  // Wie viele Läufe in Folge lag der CPL über dem Höchstpreis (inkl. Flag)?
+  overMaxCplStreak: number;
+}> {
+  const rows = await prisma.mediaBuyerAction.findMany({
+    where: { poolKey, dryRun: false },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: {
+      action: true,
+      prevBudget: true,
+      newBudget: true,
+      createdAt: true,
+      errorMessage: true,
+      pausedCampaignIds: true,
+      cplOverMax: true,
+    },
+  });
+  let overMaxCplStreak = 0;
+  for (const r of rows) {
+    if (!r.cplOverMax) break;
+    overMaxCplStreak++;
+  }
+  let lastChangeAt: Date | null = null;
+  for (const r of rows) {
+    if (r.errorMessage) continue;
+    if (!["increase", "decrease", "boost", "activate"].includes(r.action)) continue;
+    const next = decToNumber(r.newBudget);
+    if (next == null) continue;
+    const prev = decToNumber(r.prevBudget);
+    if (prev == null || Math.abs(next - prev) > Math.max(0.5, prev * 0.005)) {
+      lastChangeAt = r.createdAt;
+      break;
+    }
+  }
+  // Seit der letzten Reaktivierung/Budgetänderung: wann pausiert und welche
+  // Kampagnen hat der Buyer SELBST pausiert (nur die darf er reaktivieren).
+  let pausedSince: Date | null = null;
+  const buyerPausedIds = new Set<string>();
+  for (const r of rows) {
+    if (["increase", "decrease", "boost", "activate"].includes(r.action)) break;
+    if (r.action === "pause") {
+      pausedSince = r.createdAt;
+      for (const id of (r.pausedCampaignIds ?? "").split(",")) {
+        if (id.trim()) buyerPausedIds.add(id.trim());
+      }
+    }
+  }
+  return { lastChangeAt, pausedSince, buyerPausedIds, overMaxCplStreak };
+}
 
 // Verteilt das Gesamt-Tagesbudget des Pools auf N Channels (Meta, Outbrain,
 // TikTok). Strategie: inverse-CPL-Gewichtung — der günstigere Channel bekommt
@@ -998,6 +1098,61 @@ function matchGooglePoolCampaigns(
   }
   const region = def.region!.toLowerCase();
   return campaigns.filter((c) => c.name.toLowerCase().includes(region));
+}
+
+// Höchstpreis je Lead für einen Pool: Feld > Env > Break-even aus Ø Lead-Preis
+// der Bezüge × (1 − Stornoquote 30 Tage). Regeln: media-buyer-preisgrenze.ts.
+async function loadPoolMaxCpl(
+  def: PoolDef,
+  poolOverride: number | null,
+  now: Date,
+): Promise<{ value: number | null; source: string | null }> {
+  const envRaw = Number(process.env.MEDIA_BUYER_MAX_CPL);
+  const envOverride = Number.isFinite(envRaw) && envRaw > 0 ? envRaw : null;
+  if ((poolOverride ?? 0) > 0 || envOverride != null) {
+    return computeMaxCpl({ poolOverride, envOverride, leadPrices: [], stornoRate: null, defaultStorno: 0.1 });
+  }
+  const customerFilter = def.customerIds ? { customerId: { in: def.customerIds } } : {};
+  const [subs, cps] = await Promise.all([
+    prisma.leadSubscription.findMany({
+      where: { active: true, ...customerFilter },
+      select: { customerId: true, productKey: true, price: true },
+    }),
+    prisma.customerProduct.findMany({
+      where: { leadPrice: { not: null }, ...customerFilter },
+      select: { customerId: true, leadPrice: true, product: { select: { name: true } } },
+    }),
+  ]);
+  // Je Kunde ein Preis: Pay-per-Lead-Bezug vor CustomerProduct.
+  const priceByCustomer = new Map<string, number>();
+  for (const sub of subs) {
+    if (canonicalProductKey(sub.productKey) !== def.product) continue;
+    const v = decToNumber(sub.price);
+    if (v && v > 0 && !priceByCustomer.has(sub.customerId)) priceByCustomer.set(sub.customerId, v);
+  }
+  for (const cp of cps) {
+    if (canonicalProductKey(cp.product.name) !== def.product) continue;
+    const v = decToNumber(cp.leadPrice);
+    if (v && v > 0 && !priceByCustomer.has(cp.customerId)) priceByCustomer.set(cp.customerId, v);
+  }
+  const since = new Date(now.getTime() - 30 * 86_400_000);
+  const leadWhere = {
+    source: def.product,
+    isTest: false,
+    createdAt: { gte: since, lte: now },
+    ...(def.customerIds ? { customerId: { in: def.customerIds } } : {}),
+  };
+  const [delivered, cancelled] = await Promise.all([
+    prisma.lead.count({ where: leadWhere }),
+    prisma.lead.count({ where: { ...leadWhere, stornoState: "approved" } }),
+  ]);
+  return computeMaxCpl({
+    poolOverride: null,
+    envOverride: null,
+    leadPrices: [...priceByCustomer.values()],
+    stornoRate: stornoRate(delivered, cancelled, envNum("MEDIA_BUYER_STORNO_MIN_LEADS", 20)),
+    defaultStorno: envNum("MEDIA_BUYER_DEFAULT_STORNO", 0.1),
+  });
 }
 
 async function processPool(
@@ -1244,13 +1399,26 @@ async function processPool(
       costPerLead = metaSpendRecent / metaLeadsRecent;
     }
 
+    // Pausiert zählt nur, was der Buyer selbst pausiert hat (laut Log). Von
+    // Hand pausierte Kampagnen bleiben aus, der Buyer reaktiviert sie nie.
+    const history = await loadPoolHistory(def.key);
+    const metaPausedByBuyer = states.filter(
+      (s) => s.status !== "ACTIVE" && history.buyerPausedIds.has(`meta:${s.campaignId}`),
+    );
+    const outbrainPausedByBuyer = matchedOutbrain.filter(
+      (c) => c.budgetId && !c.enabled && history.buyerPausedIds.has(`outbrain:${c.id}`),
+    );
+    const tiktokPausedByBuyer = matchedTikTok.filter(
+      (c) => c.hasDailyBudget && !c.enabled && history.buyerPausedIds.has(`tiktok:${c.id}`),
+    );
+    const googlePausedByBuyer = matchedGoogle.filter(
+      (c) => c.hasDailyBudget && !c.enabled && history.buyerPausedIds.has(`google:${c.id}`),
+    );
     const anyPaused =
-      states.some(
-        (s) => s.effective_status !== "ACTIVE" && s.status !== "ACTIVE",
-      ) ||
-      matchedOutbrain.filter((c) => c.budgetId).some((c) => !c.enabled) ||
-      matchedTikTok.filter((c) => c.hasDailyBudget).some((c) => !c.enabled) ||
-      matchedGoogle.filter((c) => c.hasDailyBudget).some((c) => !c.enabled);
+      metaPausedByBuyer.length > 0 ||
+      outbrainPausedByBuyer.length > 0 ||
+      tiktokPausedByBuyer.length > 0 ||
+      googlePausedByBuyer.length > 0;
 
     base.prevBudget = currentBudget;
 
@@ -1262,7 +1430,7 @@ async function processPool(
     const googleMax =
       settings.googleMaxDailyBudget ?? ctx.googleDefaultMaxBudget;
     const poolMax = maxBudget + outbrainMax + tiktokMax + googleMax;
-    const decision = decideBudget({
+    let decision = decideBudget({
       leadsMtd,
       goal: def.goal,
       daysElapsed: ctx.daysElapsed,
@@ -1271,7 +1439,9 @@ async function processPool(
       costPerLead,
       minBudget: ctx.minBudget,
       maxBudget: poolMax,
-      maxStep: ctx.maxStep,
+      // Mit Meta gilt EINE Schrittgrenze: die der Lernphasen-Regel (auch für
+      // den Endspurt-Boost). Ohne Meta die klassische MAX_STEP-Grenze.
+      maxStep: metaSteerable && ctx.learningCfg.enabled ? 10 : ctx.maxStep,
       boostDays: ctx.boostDays,
       anyPaused,
       precisionDays: ctx.precisionDays,
@@ -1279,7 +1449,102 @@ async function processPool(
       lookAheadHours: ctx.lookAheadHours,
     });
 
+    // ── Preisgrenze je Lead ──
+    const maxCpl = await loadPoolMaxCpl(def, settings.maxCpl, ctx.now);
+    base.maxCpl = maxCpl.value;
+    const price = applyPriceGuard({
+      decision,
+      currentBudget,
+      costPerLead,
+      maxCpl: maxCpl.value,
+    });
+    decision = price.decision;
+    base.cplOverMax = price.overMax;
+    if (price.overMax) {
+      const streak = history.overMaxCplStreak + 1;
+      if (!ctx.dryRun && shouldAlertCpl(streak, ctx.cplAlertRuns)) {
+        await sendToAdmins({
+          title: `⚠️ Media Buyer: ${def.label} zu teuer`,
+          body: `CPL ${cplFmt.format(costPerLead ?? 0)} liegt seit ${streak} Läufen über dem Höchstpreis ${cplFmt.format(maxCpl.value ?? 0)}. Budget wird nicht erhöht.`,
+          tag: `media-buyer-cpl:${def.key}`,
+          url: "/admin/media-buyer",
+        }).catch(() => undefined);
+      }
+    }
+
+    // ── Monats-Gesamtgrenze (optional) ──
+    if (ctx.monthlyCap) {
+      const capped = applyMonthlyCap({
+        decision,
+        currentBudget,
+        cap: ctx.monthlyCap.cap,
+        spentMtd: ctx.monthlyCap.spentMtd,
+        dailyRate: ctx.monthlyCap.dailyRate,
+        daysLeft: Math.max(1, ctx.daysTotal - ctx.daysElapsed + 1),
+      });
+      decision = capped.decision;
+    }
+
+    // ── Meta-Lernphase schonen ──
+    // Nur wenn Meta im Pool steuerbar ist (Outbrain/TikTok/Google kennen keine
+    // Meta-Lernphase). Fehlt der Lernstatus, gilt „unbekannt" = schonen.
+    let protectStep: number | null = null;
+    if (metaSteerable) {
+      const learning = summarizeLearning(states.flatMap((s) => s.adSets ?? []));
+      const lastChangeMs = Math.max(
+        history.lastChangeAt?.getTime() ?? 0,
+        learning.lastSigEditAt?.getTime() ?? 0,
+      );
+      const hoursSinceLastChange =
+        lastChangeMs > 0 ? (ctx.now.getTime() - lastChangeMs) / 3_600_000 : null;
+      const pausedDays =
+        anyPaused && history.pausedSince
+          ? (ctx.now.getTime() - history.pausedSince.getTime()) / 86_400_000
+          : null;
+      const spendMtd = metaSpend + outbrainSpend + tiktokSpend + googleSpend;
+      const daysLeft = Math.max(1, ctx.daysTotal - ctx.daysElapsed + 1);
+      const guard = guardLearning({
+        decision,
+        currentBudget,
+        learning: learning.status,
+        hoursSinceLastChange,
+        pausedDays,
+        leadsMtd,
+        goal: def.goal,
+        projected,
+        daysLeft,
+        inBoostWindow: daysLeft <= ctx.boostDays,
+        costPerLead,
+        cplMtd: leadsMtd > 0 && spendMtd > 0 ? spendMtd / leadsMtd : null,
+        maxBudget: poolMax,
+        cfg: ctx.learningCfg,
+      });
+      decision = guard.decision;
+      protectStep = guard.protectStep;
+      base.learningStatus = learning.status;
+      base.learningSince =
+        learning.status === "LEARNING"
+          ? (learning.lastSigEditAt ?? (lastChangeMs > 0 ? new Date(lastChangeMs) : null))
+          : lastChangeMs > 0
+            ? new Date(lastChangeMs)
+            : null;
+      // Größerer Sprung (Reset bzw. freie Änderung) → ab jetzt neue Lernphase.
+      if (
+        decision.targetBudget != null &&
+        protectStep == null &&
+        currentBudget > 0 &&
+        Math.abs(decision.targetBudget / currentBudget - 1) > ctx.learningCfg.maxStep
+      ) {
+        base.learningStatus = "LEARNING";
+        base.learningSince = ctx.now;
+      }
+    }
+
     base.action = decision.action;
+    // Monatsgrenze: Erhöhungen dieses Pools für die folgenden Pools mitzählen.
+    if (ctx.monthlyCap && decision.targetBudget != null && decision.targetBudget > currentBudget) {
+      ctx.monthlyCap.dailyRate += decision.targetBudget - currentBudget;
+    }
 
     // Channel-Allokation nur, wenn ein neues Ziel gesetzt wurde. Sonst
     // bleiben die Budgets unverändert.
@@ -1313,6 +1578,15 @@ async function processPool(
         googleAvailable: googleSteerable,
       });
       metaTarget = metaSteerable ? alloc.metaBudget : null;
+      // Die Channel-Aufteilung kann Metas Anteil stärker verschieben als die
+      // Gesamtänderung. Bei Schonung Meta selbst nochmals auf ±Schritt deckeln.
+      if (metaTarget != null && protectStep != null && metaCurrent > 0) {
+        metaTarget = clamp(
+          metaTarget,
+          metaCurrent * (1 - protectStep),
+          metaCurrent * (1 + protectStep),
+        );
+      }
       outbrainTarget = outbrainSteerable ? alloc.outbrainBudget : null;
       tiktokTarget = tiktokSteerable ? alloc.tiktokBudget : null;
       googleTarget = googleSteerable ? alloc.googleBudget : null;
@@ -1363,115 +1637,155 @@ async function processPool(
       }
     }
 
+    // ── Datenfrische: bei alten Daten oder unlesbarem Kanal nur halten ──
+    const wantsWrite = decision.targetBudget != null || decision.setStatus != null;
+    const unreadable: string[] = [];
+    if (ctx.channelErrors.outbrain && (settings.outbrainCampaignKeyword || outbrainLeadsMtd > 0))
+      unreadable.push("Outbrain");
+    if (ctx.channelErrors.tiktok && (settings.tiktokCampaignKeyword || tiktokLeadsMtd > 0))
+      unreadable.push("TikTok");
+    if (ctx.channelErrors.google && (settings.googleCampaignKeyword || googleLeadsMtd > 0))
+      unreadable.push("Google");
+    const holdWhy = [
+      ctx.staleReason,
+      unreadable.length > 0 ? `${unreadable.join(", ")} nicht lesbar` : null,
+    ].filter(Boolean);
+    if (wantsWrite && holdWhy.length > 0) {
+      const msg = `Daten nicht verlässlich (${holdWhy.join("; ")}): nichts geändert, Budget gehalten. Geplant war: ${decision.reason}`;
+      base.action = "none";
+      base.reason = msg;
+      base.newBudget = null;
+      base.error = msg;
+      return base;
+    }
+
     if (ctx.dryRun) return base;
 
+    // Jeder Schreibvorgang einzeln abgesichert; Teilfehler werden ehrlich
+    // gemeldet (Log + Push), statt „Budget gesetzt" zu behaupten.
+    const failures: string[] = [];
+    let writes = 0;
+    const tryWrite = async (label: string, fn: () => Promise<void>) => {
+      writes++;
+      try {
+        await fn();
+      } catch (err) {
+        failures.push(
+          `${label}: ${err instanceof Error ? err.message : String(err)}`.slice(0, 200),
+        );
+      }
+    };
+    const pausedIds: string[] = [];
+
     // ── Schreiben: Meta ──
-    if (decision.setStatus && metaSteerable) {
-      for (const s of states) {
-        await setCampaignStatus(s.campaignId, decision.setStatus);
+    if (decision.setStatus === "PAUSED" && metaSteerable) {
+      // Nur pausieren, was gerade läuft, und genau das merken.
+      for (const st of states.filter((x) => x.status === "ACTIVE")) {
+        await tryWrite(`Meta ${st.campaignName}`, async () => {
+          await setCampaignStatus(st.campaignId, "PAUSED");
+          pausedIds.push(`meta:${st.campaignId}`);
+        });
+      }
+    } else if (decision.setStatus === "ACTIVE") {
+      for (const st of metaPausedByBuyer) {
+        await tryWrite(`Meta ${st.campaignName}`, () =>
+          setCampaignStatus(st.campaignId, "ACTIVE"),
+        );
       }
     }
     if (metaTarget != null && controllable.length > 0) {
-      const per = metaTarget / controllable.length;
-      for (const s of controllable) await setCampaignDailyBudget(s, per);
+      // Proportional zum bisherigen Budget je Kampagne: jede Kampagne ändert
+      // sich um denselben Prozentsatz (gleichmäßiges Aufteilen könnte einzelne
+      // Kampagnen weit über ±20 % verschieben und die Lernphase zurücksetzen).
+      const total = metaTarget;
+      const proportional =
+        metaCurrent > 0 && controllable.every((x) => x.dailyBudgetEur > 0);
+      for (const st of controllable) {
+        const per = proportional
+          ? (st.dailyBudgetEur / metaCurrent) * total
+          : total / controllable.length;
+        await tryWrite(`Meta-Budget ${st.campaignName}`, () =>
+          setCampaignDailyBudget(st, per),
+        );
+      }
     }
 
     // ── Schreiben: Outbrain ──
-    if (decision.setStatus && outbrainSteerable) {
-      const enabled = decision.setStatus === "ACTIVE";
-      for (const c of matchedOutbrain) {
-        if (!c.budgetId) continue;
-        try {
-          await setOutbrainCampaignStatus(c, enabled);
-        } catch (err) {
-          console.warn(
-            `[media-buyer] Outbrain-Status für ${c.name} failte:`,
-            err instanceof Error ? err.message : err,
-          );
-        }
+    if (decision.setStatus === "PAUSED" && outbrainSteerable) {
+      for (const c of matchedOutbrain.filter((x) => x.budgetId && x.enabled)) {
+        await tryWrite(`Outbrain ${c.name}`, async () => {
+          await setOutbrainCampaignStatus(c, false);
+          pausedIds.push(`outbrain:${c.id}`);
+        });
+      }
+    } else if (decision.setStatus === "ACTIVE") {
+      for (const c of outbrainPausedByBuyer) {
+        await tryWrite(`Outbrain ${c.name}`, () => setOutbrainCampaignStatus(c, true));
       }
     }
     if (outbrainTarget != null) {
+      const total = outbrainTarget;
       const steerable = matchedOutbrain.filter((c) => c.budgetId);
-      if (steerable.length > 0) {
-        const per = outbrainTarget / steerable.length;
-        for (const c of steerable) {
-          try {
-            await setOutbrainCampaignDailyBudget(c, per);
-          } catch (err) {
-            console.warn(
-              `[media-buyer] Outbrain-Budget für ${c.name} failte:`,
-              err instanceof Error ? err.message : err,
-            );
-          }
-        }
+      for (const c of steerable) {
+        await tryWrite(`Outbrain-Budget ${c.name}`, () =>
+          setOutbrainCampaignDailyBudget(c, total / steerable.length),
+        );
       }
     }
 
     // ── Schreiben: TikTok ──
-    if (decision.setStatus && tiktokSteerable) {
-      const enabled = decision.setStatus === "ACTIVE";
-      for (const c of matchedTikTok) {
-        if (!c.hasDailyBudget) continue;
-        try {
-          await setTikTokCampaignStatus(c, enabled);
-        } catch (err) {
-          console.warn(
-            `[media-buyer] TikTok-Status für ${c.name} failte:`,
-            err instanceof Error ? err.message : err,
-          );
-        }
+    if (decision.setStatus === "PAUSED" && tiktokSteerable) {
+      for (const c of matchedTikTok.filter((x) => x.hasDailyBudget && x.enabled)) {
+        await tryWrite(`TikTok ${c.name}`, async () => {
+          await setTikTokCampaignStatus(c, false);
+          pausedIds.push(`tiktok:${c.id}`);
+        });
+      }
+    } else if (decision.setStatus === "ACTIVE") {
+      for (const c of tiktokPausedByBuyer) {
+        await tryWrite(`TikTok ${c.name}`, () => setTikTokCampaignStatus(c, true));
       }
     }
     if (tiktokTarget != null) {
+      const total = tiktokTarget;
       const steerable = matchedTikTok.filter((c) => c.hasDailyBudget);
-      if (steerable.length > 0) {
-        const per = tiktokTarget / steerable.length;
-        for (const c of steerable) {
-          try {
-            await setTikTokCampaignDailyBudget(c, per);
-          } catch (err) {
-            console.warn(
-              `[media-buyer] TikTok-Budget für ${c.name} failte:`,
-              err instanceof Error ? err.message : err,
-            );
-          }
-        }
+      for (const c of steerable) {
+        await tryWrite(`TikTok-Budget ${c.name}`, () =>
+          setTikTokCampaignDailyBudget(c, total / steerable.length),
+        );
       }
     }
 
     // ── Schreiben: Google Ads ──
-    if (decision.setStatus && googleSteerable) {
-      const enabled = decision.setStatus === "ACTIVE";
-      for (const c of matchedGoogle) {
-        if (!c.hasDailyBudget) continue;
-        try {
-          await setGoogleCampaignStatus(c, enabled);
-        } catch (err) {
-          console.warn(
-            `[media-buyer] Google-Status für ${c.name} failte:`,
-            err instanceof Error ? err.message : err,
-          );
-        }
+    if (decision.setStatus === "PAUSED" && googleSteerable) {
+      for (const c of matchedGoogle.filter((x) => x.hasDailyBudget && x.enabled)) {
+        await tryWrite(`Google ${c.name}`, async () => {
+          await setGoogleCampaignStatus(c, false);
+          pausedIds.push(`google:${c.id}`);
+        });
+      }
+    } else if (decision.setStatus === "ACTIVE") {
+      for (const c of googlePausedByBuyer) {
+        await tryWrite(`Google ${c.name}`, () => setGoogleCampaignStatus(c, true));
       }
     }
     if (googleTarget != null) {
+      const total = googleTarget;
       const steerable = matchedGoogle.filter(
         (c) => c.hasDailyBudget && c.budgetResourceName,
       );
-      if (steerable.length > 0) {
-        const per = googleTarget / steerable.length;
-        for (const c of steerable) {
-          try {
-            await setGoogleCampaignDailyBudget(c, per);
-          } catch (err) {
-            console.warn(
-              `[media-buyer] Google-Budget für ${c.name} failte:`,
-              err instanceof Error ? err.message : err,
-            );
-          }
-        }
+      for (const c of steerable) {
+        await tryWrite(`Google-Budget ${c.name}`, () =>
+          setGoogleCampaignDailyBudget(c, total / steerable.length),
+        );
       }
+    }
+
+    base.pausedCampaignIds = pausedIds;
+    if (failures.length > 0) {
+      const summary = `Teilfehler: ${failures.length} von ${writes} Änderungen fehlgeschlagen (${failures.join(" | ")})`;
+      base.error = summary;
+      base.reason = `${base.reason} · ${summary}`;
     }
 
     return base;
@@ -1506,13 +1820,62 @@ async function deriveLookAheadHours(now: Date): Promise<number> {
   return 12;
 }
 
-export async function runMediaBuyer(params: {
+type RunParams = {
   now?: Date;
   dryRun?: boolean;
   // force = Drosselung im Normalbetrieb überspringen (für „Jetzt anwenden",
   // z. B. direkt nach dem Aktivieren des Autopiloten).
   force?: boolean;
-} = {}): Promise<MediaBuyerRunResult> {
+};
+
+// Not-Aus: Live-Läufe (auch „Jetzt anwenden") nur mit MEDIA_BUYER_ENABLED=1.
+// Trockenläufe schreiben nichts an die Werbekonten und bleiben erlaubt.
+export function mediaBuyerEnabled(): boolean {
+  return process.env.MEDIA_BUYER_ENABLED === "1";
+}
+
+export async function runMediaBuyer(
+  params: RunParams = {},
+): Promise<MediaBuyerRunResult> {
+  const now = params.now ?? new Date();
+  const dryRun = params.dryRun ?? false;
+  if (dryRun) return runMediaBuyerUnlocked(params);
+  if (!mediaBuyerEnabled()) {
+    return {
+      ranAt: now,
+      dryRun,
+      pools: [],
+      skipped: "Media Buyer ist abgeschaltet (MEDIA_BUYER_ENABLED=1 zum Einschalten).",
+    };
+  }
+  // Laufsperre gegen Doppelläufe (Cron + „Jetzt anwenden" gleichzeitig):
+  // Postgres-Advisory-Lock, gehalten von einer Transaktion für die Dauer des
+  // Laufs. Ist er belegt, steuert dieser Aufruf nichts.
+  let locked = false;
+  let result: MediaBuyerRunResult | null = null;
+  await prisma.$transaction(
+    async (tx) => {
+      const rows = await tx.$queryRaw<{ ok: boolean }[]>`SELECT pg_try_advisory_xact_lock(hashtext('media-buyer-run')) AS ok`;
+      locked = rows[0]?.ok === true;
+      if (!locked) return;
+      result = await runMediaBuyerUnlocked(params);
+    },
+    { maxWait: 10_000, timeout: 30 * 60_000 },
+  );
+  if (!locked || !result) {
+    return {
+      ranAt: now,
+      dryRun,
+      pools: [],
+      skipped: "Ein anderer Media-Buyer-Lauf läuft gerade, dieser Aufruf hat nichts geändert.",
+    };
+  }
+  return result;
+}
+
+async function runMediaBuyerUnlocked(
+  params: RunParams,
+): Promise<MediaBuyerRunResult> {
   const now = params.now ?? new Date();
   const dryRun = params.dryRun ?? false;
   const force = params.force ?? false;
@@ -1618,6 +1981,7 @@ export async function runMediaBuyer(params: {
   // Outbrain + TikTok sind optional: wenn nicht konfiguriert oder API gerade
   // zickt, läuft der Buyer mit leeren Listen weiter (Channel-Splits sind
   // dann 0, Meta-Steuerung bleibt unbeeinträchtigt).
+  const channelErrors: RunCtx["channelErrors"] = {};
   let outbrainCampaigns: OutbrainCampaign[] = [];
   let outbrainSpendByCampaign = new Map<string, number>();
   let recentOutbrainSpendByCampaign = new Map<string, number>();
@@ -1632,9 +1996,10 @@ export async function runMediaBuyer(params: {
       getOutbrainSpendByCampaign({ since: recentSince, until: now }),
     ]);
   } catch (err) {
+    channelErrors.outbrain = err instanceof Error ? err.message : String(err);
     console.warn(
       "[media-buyer] Outbrain nicht erreichbar, Channel-Sicht fällt aus:",
-      err instanceof Error ? err.message : err,
+      channelErrors.outbrain,
     );
   }
 
@@ -1652,9 +2017,10 @@ export async function runMediaBuyer(params: {
       getTikTokSpendByCampaign({ since: recentSince, until: now }),
     ]);
   } catch (err) {
+    channelErrors.tiktok = err instanceof Error ? err.message : String(err);
     console.warn(
       "[media-buyer] TikTok nicht erreichbar, Channel-Sicht fällt aus:",
-      err instanceof Error ? err.message : err,
+      channelErrors.tiktok,
     );
   }
 
@@ -1672,11 +2038,55 @@ export async function runMediaBuyer(params: {
       getGoogleSpendByCampaign({ since: recentSince, until: now }),
     ]);
   } catch (err) {
+    channelErrors.google = err instanceof Error ? err.message : String(err);
     console.warn(
       "[media-buyer] Google Ads nicht erreichbar, Channel-Sicht fällt aus:",
-      err instanceof Error ? err.message : err,
+      channelErrors.google,
     );
   }
+
+  // ── Datenfrische: gibt Meta Geld aus, aber seit Stunden kommt kein Lead
+  // an, ist vermutlich der Lead-Eingang gestört → nur halten.
+  let staleReason: string | null = null;
+  const maxLeadAgeH = envNum("MEDIA_BUYER_MAX_LEAD_AGE_HOURS", 24);
+  try {
+    const [newest, spendRecentDay] = await Promise.all([
+      prisma.lead.findFirst({
+        where: { isTest: false },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      getSpendByCampaign({ since: new Date(now.getTime() - 86_400_000), until: now }),
+    ]);
+    const spentDay = [...spendRecentDay.values()].reduce((a, b) => a + b, 0);
+    const ageH = newest ? (now.getTime() - newest.createdAt.getTime()) / 3_600_000 : Infinity;
+    if (spentDay > envNum("MEDIA_BUYER_STALE_MIN_SPEND", 20) && ageH > maxLeadAgeH) {
+      staleReason = `letzter Lead vor ${Number.isFinite(ageH) ? Math.round(ageH) : "?"} h trotz ${eur.format(spentDay)} Meta-Ausgaben`;
+    }
+  } catch (err) {
+    staleReason = `Datenfrische nicht prüfbar (${err instanceof Error ? err.message.slice(0, 80) : "Fehler"})`;
+  }
+
+  // ── Optionale Monats-Gesamtgrenze über alle Pools und Kanäle ──
+  const capRaw = Number(process.env.MEDIA_BUYER_MONTHLY_CAP);
+  const sumMap = (m: Map<string, number>) => [...m.values()].reduce((a, b) => a + b, 0);
+  const monthlyCap =
+    Number.isFinite(capRaw) && capRaw > 0
+      ? {
+          cap: capRaw,
+          spentMtd:
+            sumMap(spendByCampaign) +
+            sumMap(outbrainSpendByCampaign) +
+            sumMap(tiktokSpendByCampaign) +
+            sumMap(googleSpendByCampaign),
+          dailyRate:
+            (sumMap(recentSpendByCampaign) +
+              sumMap(recentOutbrainSpendByCampaign) +
+              sumMap(recentTiktokSpendByCampaign) +
+              sumMap(recentGoogleSpendByCampaign)) /
+            cplLookbackDays,
+        }
+      : null;
 
   const ctx: RunCtx = {
     campaigns,
@@ -1709,6 +2119,12 @@ export async function runMediaBuyer(params: {
     precisionDays,
     precisionMinBudget: envNum("MEDIA_BUYER_PRECISION_MIN_BUDGET", 1),
     lookAheadHours: await deriveLookAheadHours(now),
+    learningCfg: loadLearningConfig(),
+    now,
+    staleReason,
+    channelErrors,
+    monthlyCap,
+    cplAlertRuns: envNum("MEDIA_BUYER_CPL_ALERT_RUNS", 3),
     dryRun,
   };
 
@@ -1741,6 +2157,14 @@ async function persistAndNotify(
         campaigns: r.campaigns.length > 0 ? r.campaigns.join(", ") : null,
         dryRun,
         errorMessage: r.error ?? null,
+        learningStatus: r.learningStatus ?? null,
+        learningSince: r.learningSince ?? null,
+        pausedCampaignIds:
+          r.pausedCampaignIds && r.pausedCampaignIds.length > 0
+            ? r.pausedCampaignIds.join(",")
+            : null,
+        maxCpl: r.maxCpl ?? null,
+        cplOverMax: r.cplOverMax ?? false,
       },
     });
   }
@@ -1808,6 +2232,10 @@ export type PoolAdminRow = {
   // Letzte Entscheidung des Buyers für diesen Pool (für die Empfehlungs-Karte).
   latestAction: string | null;
   latestReason: string | null;
+  // Meta-Lernphase knapp („abgeschlossen", „läuft (Tag 3/7)", „eingeschränkt").
+  learningLabel: string | null;
+  // Höchstpreis je Lead (EUR); null = „Höchstpreis fehlt" (keine Erhöhungen).
+  maxCpl: number | null;
 };
 
 // Pools + aktuelle Ist-Leads + Pacing + letzte Entscheidung für die Admin-
@@ -1869,13 +2297,21 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
     where: { dryRun: false, poolKey: { in: defs.map((d) => d.key) } },
     orderBy: { createdAt: "desc" },
     distinct: ["poolKey"],
-    select: { poolKey: true, action: true, reason: true },
+    select: {
+      poolKey: true,
+      action: true,
+      reason: true,
+      learningStatus: true,
+      learningSince: true,
+    },
   });
   const latestByKey = new Map(latest.map((l) => [l.poolKey, l]));
+  const learningDays = loadLearningConfig().learningDays;
 
   const rows: PoolAdminRow[] = [];
   for (const def of defs) {
     const settings = await ensurePool(def);
+    const maxCpl = await loadPoolMaxCpl(def, settings.maxCpl, now);
     const [
       leadsMtd,
       metaLeadsMtd,
@@ -1935,6 +2371,13 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       googleCpl: googleLeadsMtd > 0 ? googleSpend / googleLeadsMtd : null,
       latestAction: last?.action ?? null,
       latestReason: last?.reason ?? null,
+      learningLabel: learningLabel(
+        last?.learningStatus,
+        last?.learningSince,
+        now,
+        learningDays,
+      ),
+      maxCpl: maxCpl.value,
     });
   }
   return rows;

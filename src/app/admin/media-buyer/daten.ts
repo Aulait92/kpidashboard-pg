@@ -81,6 +81,8 @@ export async function loadMediaBuyer() {
     googleCpl: p.googleCpl,
     latestAction: p.latestAction,
     latestReason: p.latestReason,
+    learningLabel: p.learningLabel,
+    maxCpl: p.maxCpl,
   }));
 
   const log: ActionLogRow[] = actions.map((a) => ({
