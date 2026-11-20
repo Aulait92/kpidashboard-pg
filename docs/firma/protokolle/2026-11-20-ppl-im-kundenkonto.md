@@ -64,3 +64,9 @@ Vor jedem Angebot: Umsatzsteuerfrage durch den Steuerberater klären. Nur Pilot,
   Katze 2 €/17 €: heute 13,62 €, neu 11,29 €; Hund 10 €/22 €: heute 9,10 €, neu 7,49 €; Privatschutz 10 €/35 €: heute 22,10 €, neu 18,41 €.
   Empfehlung (noch nicht ausdrücklich bestätigt): neues Modell vorerst nur für Privatschutz und ähnlich margenstarke Produkte;
   Katze bleibt im bisherigen Modell (kaum Liquiditätsvorteil, sichtbare Marge 2 € gegen 17 €), Hund eher bisherig oder Preis erhöhen.
+- **Entscheidung Ole: Kindersparplan (65 € brutto je Lead) als Produkt für das neue Modell neben Privatschutz.** Leadpreis bei
+  Meta etwa 20 € netto (Ole). Kindersparplan ist schon heute steuerpflichtig (19 %, `src/lib/ppl/steuer.ts`), daher im neuen
+  Modell keine Margeneinbuße: Kunde zahlt Meta 23,80 € (inkl. § 13b), unsere Rechnung 41,20 € brutto = 34,62 € netto, nach
+  1 € Tool **33,62 € je Lead** (mit 10 % Storno 28,16 €), gleich wie heute aus unserem Konto. Null bei etwa 53 € CPL (mit
+  Storno etwa 48 €). Software inklusive ab 27 Leads im Monat (1.750 € Leadumsatz). Achtung: Abnehmer brauchen § 34f
+  (oder Haftungsdach), nicht nur § 34d; Meta-Einschränkungen für Finanzwerbung beim ersten Kunden prüfen (Recht).
