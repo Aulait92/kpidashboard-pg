@@ -48,8 +48,9 @@ export function GeldOffenePostenListe({ d }: { d: OffenePosten }) {
           <>
             <div className="min-w-0 flex-1">
               <div className="truncate font-semibold">{p.kunde}</div>
-              <div className="truncate text-xs text-[color:var(--muted)]">
-                {p.nummer} · {ART_LABEL[p.art as MahnArt] ?? p.art} · fällig {fmt(p.faellig)}
+              <div className="text-xs text-[color:var(--muted)]">
+                {p.nummer}
+                {ART_LABEL[p.art as MahnArt] ? ` · ${ART_LABEL[p.art as MahnArt]}` : ""} · fällig {fmt(p.faellig)}
                 {p.tage > 0 ? <span className="font-medium text-rose-700"> · {p.tage} Tage drüber</span> : p.tage === 0 ? " · heute" : ""}
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">

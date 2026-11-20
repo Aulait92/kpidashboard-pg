@@ -1389,8 +1389,8 @@ function StreamTable({ m, factor = 1 }: { m: DrillMonth; factor?: number }) {
           <tr>
             <th className={th}>Kunde</th>
             <th className="px-2 font-medium">Strom</th>
-            <th className={thR}>{factor === 12 ? "Betrag × 12" : "Betrag im Monat"}</th>
-            <th className="pl-2 font-medium">Quelle</th>
+            <th className={thR}>{factor === 12 ? "Betrag × 12" : "Betrag"}</th>
+            <th className="hidden pl-2 font-medium sm:table-cell">Quelle</th>
           </tr>
         </thead>
         <tbody>
@@ -1410,16 +1410,16 @@ function StreamTable({ m, factor = 1 }: { m: DrillMonth; factor?: number }) {
                     {STREAM_LABEL[s.stream]}
                   </span>
                 </td>
-                <td className="px-2 text-right">{eur(s.amount * factor, 2)}</td>
-                <td className="pl-2 text-[color:var(--muted)]">{s.source}</td>
+                <td className="whitespace-nowrap px-2 text-right" title={s.source}>{eur(s.amount * factor, 2)}</td>
+                <td className="hidden pl-2 text-[color:var(--muted)] sm:table-cell">{s.source}</td>
               </tr>
             )),
           )}
           <tr className="border-t border-[color:var(--border)] font-semibold">
             <td className="py-1.5 pr-2">Summe ({m.customers.length} Kunden)</td>
             <td />
-            <td className="px-2 text-right">{eur(m.total * factor, 2)}</td>
-            <td />
+            <td className="whitespace-nowrap px-2 text-right">{eur(m.total * factor, 2)}</td>
+            <td className="hidden sm:table-cell" />
           </tr>
         </tbody>
       </table>
@@ -1499,8 +1499,8 @@ function DrillSheet({ kind, data, onClose }: { kind: DrillKind; data: ZahlenData
   };
   const directSum = d.directCosts.reduce((s, c) => s + c.amount, 0);
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-950/55 px-4 py-8" role="dialog" aria-modal="true" aria-label="Woraus besteht das?" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-[920px] rounded-xl bg-white p-5 shadow-2xl sm:p-7">
+    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-950/55 px-2 py-6 sm:px-4 sm:py-8" role="dialog" aria-modal="true" aria-label="Woraus besteht das?" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-[920px] rounded-xl bg-white p-4 shadow-2xl sm:p-7">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <p className="text-[12.5px] text-[color:var(--muted)]">Woraus besteht das?{data.sicht === "kern" ? " · Kerngeschäft, ohne Pay-per-Lead" : ""}</p>
@@ -1607,8 +1607,8 @@ function MissingRetainer({ data }: { data: ZahlenData }) {
   const list = data.missingRetainer;
   return (
     <section className="mb-4 rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-950" data-missing-retainer>
-      <h2 className="text-[14px] font-semibold">Kunden ohne hinterlegte Betreuungsgebühr ({list.length})</h2>
-      <p className="mt-0.5 text-amber-900">Live mit Paket Betreuung oder Software, aber ohne Angebot und ohne Monatsbetrag. Ihr Umsatz fehlt im MRR.</p>
+      <h2 className="text-[14px] font-semibold">{list.length === 1 ? "1 Kunde" : `${list.length} Kunden`} ohne Monatsbetrag</h2>
+      <p className="mt-0.5 text-amber-900">Live, aber ohne Betreuungsgebühr: Ihr Umsatz fehlt im MRR.</p>
       <ul className="mt-2 divide-y divide-amber-200">
         {list.map((c) => (
           <li key={c.customerId} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5">
@@ -1618,7 +1618,7 @@ function MissingRetainer({ data }: { data: ZahlenData }) {
               {c.liveSince ? ` · live seit ${new Date(c.liveSince).toLocaleDateString("de-DE")}` : ""}
             </span>
             <Link href={`/admin/neu/kunden/${c.customerId}/abrechnung#betreuungsgebuehr`} className="ml-auto font-semibold text-[color:var(--brand)] hover:underline">
-              In der Kundenakte eintragen →
+              Betrag eintragen →
             </Link>
           </li>
         ))}

@@ -12,7 +12,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
   await requireAuth();
   const ansicht = (await searchParams).ansicht === "alle" ? "alle" : "offen";
   return (
-    <Seite titel="Ausgaben zuordnen" untertitel="Zweck wählen oder ignorieren; „immer so“ merkt sich das für künftige Buchungen." zurueck={{ href: "/admin/neu/zahlen/kosten", label: "Kosten" }}>
+    <Seite titel="Ausgaben zuordnen" untertitel="Zweck wählen oder ignorieren; „künftig automatisch“ legt eine Regel an." zurueck={{ href: "/admin/neu/zahlen/kosten", label: "Kosten" }}>
       <div data-funktion="actions-assignaction--ausgabe-zuordnen-zweck-inkl-ust-immer-so-bei page--zugeordnete-ausgaben-ansehen">
         <ZuordnenAnsicht ansicht={ansicht} basis="/admin/neu/zahlen/kosten/zuordnen" />
       </div>

@@ -81,11 +81,11 @@ export async function BuchungenAnsicht({
             {sums.monthly >= 0 ? "+" : "−"}
             {eur(Math.abs(sums.monthly))}
           </div>
-          <div className="text-xs text-[color:var(--muted)] sm:text-sm">monatlich</div>
+          <div className="text-xs text-[color:var(--muted)] sm:text-sm">MRR-Änderung</div>
         </Card>
         <Card className="px-3 py-3 sm:px-5 sm:py-4">
           <div className="text-lg font-semibold tabular-nums sm:text-2xl">{sums.oneOff < 0 ? `−${eur(-sums.oneOff)}` : eur(sums.oneOff)}</div>
-          <div className="text-xs text-[color:var(--muted)] sm:text-sm">einmalig</div>
+          <div className="text-xs text-[color:var(--muted)] sm:text-sm">Einmal-Umsatz</div>
         </Card>
         <Link href={`${basis}?${openQs.toString()}`} className="block">
           <Card className="h-full px-3 py-3 transition sm:px-5 sm:py-4 hover:border-[color:var(--border-strong)]">

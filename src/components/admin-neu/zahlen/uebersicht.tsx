@@ -227,7 +227,7 @@ export function GeldUebersicht({
         </p>
         <div className="inline-flex items-center gap-1.5">
           <div role="radiogroup" aria-label="Sicht" className={cn("inline-flex rounded-full border border-[color:var(--border)] bg-white p-0.5 text-sm", pending && "opacity-60")} data-sicht={data.sicht} data-funktion="zahlen-view-sicht--sicht-kerngeschaeft-oder-gesamt-mit-pay-per-lead">
-            {(["gesamt", "kern"] as const).map((s) => (
+            {(["kern", "gesamt"] as const).map((s) => (
               <button
                 key={s}
                 type="button"
@@ -262,9 +262,11 @@ export function GeldUebersicht({
         <Kachel
           label={`Ergebnis ${ergebnis ? monat(ergebnis.monat) : "Vormonat"}`}
           wert={ergebnis ? kEur(ergebnis.wert) : "fehlt"}
-          hinweis={ergebnis ? (ergebnis.wert >= 0 ? "Gewinn nach allen Kosten" : "Verlust nach allen Kosten") : "Kosten unvollständig"}
+          hinweis={ergebnis ? (ergebnis.wert >= 0 ? "Gewinn nach allen Kosten" : "Verlust nach allen Kosten") : "Kosten vervollständigen"}
           ton={ergebnis ? (ergebnis.wert >= 0 ? "gut" : "schlecht") : undefined}
-          onClick={() => oeffnen("wirtschaft")}
+          // Ohne vollständige Kosten führt die Kachel dorthin, wo man sie ergänzt (SUS-Prüfung 20.11.2026)
+          onClick={ergebnis ? () => oeffnen("wirtschaft") : undefined}
+          href={ergebnis ? undefined : "/admin/neu/zahlen/kosten"}
         />
         <Kachel
           label="Aktive Kunden"

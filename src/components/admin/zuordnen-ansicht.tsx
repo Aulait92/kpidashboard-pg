@@ -73,7 +73,7 @@ export async function ZuordnenAnsicht({ ansicht, basis }: { ansicht: "offen" | "
                   <input type="checkbox" name="vat" defaultChecked={vatGuess} /> inkl. USt
                 </label>
                 <label className="flex items-center gap-1 text-xs">
-                  <input type="checkbox" name="always" defaultChecked={t.status === "neu"} /> immer so bei
+                  <input type="checkbox" name="always" defaultChecked={t.status === "neu"} /> künftig automatisch bei
                 </label>
                 <input name="pattern" defaultValue={pattern} className="h-9 w-40 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-2 text-xs" aria-label="Muster" />
                 <button className="btn-primary h-9 text-sm">{t.status === "neu" ? "Zuordnen" : "Ändern"}</button>
@@ -83,9 +83,12 @@ export async function ZuordnenAnsicht({ ansicht, basis }: { ansicht: "offen" | "
         })}
       </ul>
     ) : (
-      <p className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-8 text-center text-sm text-[color:var(--muted)]">
-        {ansicht === "offen" ? "Alles zugeordnet." : "Noch keine Buchungen."}
-      </p>
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-8 text-center text-sm text-[color:var(--muted)]">
+        <p>{ansicht === "offen" ? "Alles zugeordnet." : "Noch keine Buchungen von Konto oder Karte."}</p>
+        <Link href={ansicht === "offen" ? `${basis}?ansicht=alle` : basis.replace(/\/zuordnen$/, "/konten")} className="mt-2 inline-flex min-h-10 items-center font-semibold text-[color:var(--brand)] hover:underline">
+          {ansicht === "offen" ? "Alle Ausgaben ansehen" : "Konten verbinden"}
+        </Link>
+      </div>
     )}
     </div>
   );
