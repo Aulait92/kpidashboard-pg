@@ -4,6 +4,12 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 
 ## 19.11.2026
 
+- **Policen auslesen überarbeitet** (B, Umsetzung; Livegang für alle A, Ole): Spickzettel oben in der
+  Terminvorbereitung, Vertragsseite mit einer Hauptaktion, Fristen konservativ mit Resttagen, „doppelt“ nur Haftpflicht,
+  Hausrat, Rechtsschutz, Lead-Texte ohne Ersparnisversprechen. SUS 68 → 90 (Personas 84 bis 88), Recht GRÜN mit zwei
+  gelben Auflagen (Sammelprüfung nicht für unplausible Felder; neue Meta-Vorlagen). **Einwilligungstexte werden nur
+  geändert, wenn Versionierung (`FLOW_TEXT_VERSION`, `textHash`) und Nachweis stimmen**; diesmal unverändert.
+  Quelle: `docs/ux/2026-11-19-policen-champions.md`, Abschnitt Ergebnis.
 - **Führungsteam Phase 1 mit 19 Agenten** (A, Ole). Content & Brand, Partnerships, Investor Relations später.
   Alle Meetings laufen von Anfang an; an Agentenkosten wird nicht gespart.
 - **Fokus zwei Wochen:** Abschlüsse mit Vorauszahlung, Umsatzsteuer klären, neue Kunden sauber live bringen.

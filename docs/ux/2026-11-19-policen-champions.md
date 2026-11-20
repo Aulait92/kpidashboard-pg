@@ -304,3 +304,59 @@ Abnahme:
 - Branch `policen-bitte-sparten` (bitte.ts, Sparte vom Lead) und `tkv-umfang` (Strecke): nicht anfassen.
 - Termine-Team: Kennzeichen „Unterlagen da“ in der Terminliste (nächste Runde).
 - CTO: Reihenfolge `termin-strecke.ts` (Hebel 3) als A/B je Kunde.
+
+## Ergebnis (Abnahme 20.11.2026)
+
+Umgesetzt in Paket 1 bis 4 und der SUS-Prüfung (Commits df497c6 bis 74aa2d6), Abnahme ohne Code-Fund:
+`npx tsc --noEmit`, `npx eslint src tests --quiet` und `npx vitest run tests/unit` grün.
+
+**SUS:** 68 (Ist) → 80 (nach Paket 2) → 85 (nach Paket 3) → 90 (nach der SUS-Prüfung „Frist zuerst“). Die Personas
+schätzen aus ihrer Sicht 84 bis 88; ehrlicher Stand also knapp unter 90, bis die Hindernisse 1 bis 4 unten behoben sind.
+Alle Werte beruhen auf statischen Renderings (runde-3), nicht auf einem Durchklick am echten Handy.
+
+**Personas (Stufe C, Stand 74aa2d6):** täglich nutzen ja (Vertreter und Makler), sofern Unterlagen kommen; separat
+zahlen nein, als Teil des Pakets ein Grund zu bleiben. Umsatz 6,5 von 10, einfach 8 von 10 (Spanne 7 bis 8,5).
+
+| Persona | Umsatz | Einfach | Kernaussage |
+|---|---|---|---|
+| Allianz-Vertreter, Handy | 7 | 8 | Beitrag und Kfz-Frist ohne Scrollen; stört: Kündigungsaufhänger für eigene Gesellschaft, kein Push |
+| Makler | 6 | 8 | Fristen sauber; Doppelt-Haftpflicht rutscht unter „Mehr“; Vollmacht und MVP-Export fehlen |
+| Großagentur | 6 | 7 | Für Berater gut; ohne Zahlen je Berater keine Kaufentscheidung |
+| Lead A (will Preis) | 4 | 8 | „Foto der ersten Seite“ gut, aber kein Grund, der zum Ziel Preis passt |
+| Lead B (skeptisch) | 5 | 7 | Text fair; bis zu vier Policen-Nachrichten sind zu viele |
+
+Eindeutig besser als vorher: Spickzettel oben statt Zeile unten, eine Hauptaktion je Zustand, kein „Vergleichsblatt“
+mehr, jeder leere Zustand mit nächstem Schritt, „ohne KI“ ohne leere Seite, Zwei-Faktor am Link erklärt.
+
+**Offene Hindernisse (nächste Runde, nach Wirkung):**
+1. Hoch: Doppelt-Frage fällt aus den Top 3, weil alle Fristen davor stehen. Top 3 höchstens 2 Fristen, dann die beste
+   Doppelt-Frage.
+2. Hoch (vor Pilot mit Allianz-Vertretern): Kündigungsaufhänger auch für Verträge der eigenen Gesellschaft; mindestens
+   eigene Gesellschaft aus den Top 3 nehmen (Option „eigene Gesellschaft“).
+3. Mittel: Sparten-Chips ohne Vorschau; Dateiname und Link „Original“ neben die Chips.
+4. Mittel: Gesperrter Zustand im Spickzettel ohne Handlung; Link „Im Original ansehen“ wie in der Zustandstabelle.
+5. Recht GELB (UX-Team, Stufe B): „Alle als geprüft markieren (n)“ höhlt K6 aus. Auflage: Karten mit unplausiblen
+   Feldern von der Sammelaktion ausnehmen oder einzeln bestätigen; Knopf als Handlung benennen, z. B.
+   „Mit Original verglichen (n)“. Einzelbestätigung bleibt.
+6. Push „Unterlagen eingegangen“ und Kennzeichen in der Terminliste (Hebel 5, Team Termine).
+7. Zahlen je Berater (Policen-Quote, Öffnungen, Übernahmen) für Agenturen, erst nach Datenschutz.
+8. Vollmachtsanfrage, MVP-Export; ohne Bestandsmodul fehlt nach dem Termin ein nächster Schritt.
+9. Lead-Nachrichten: Erinnerung 2 nur, wenn auf Erinnerung 1 keine Reaktion kam und der Lead einen Knopf gedrückt hat;
+   A/B mit „Dann kann sich {Name} vorab Ihre Beiträge ansehen“ (ohne Ersparnis, Recht prüfen).
+10. Klein: „n bitte prüfen“ ruhiger darstellen; Fristen unter 30 Tagen hervorheben, die übrigen ruhig.
+
+**Recht: GRÜN mit zwei gelben Auflagen.** Einwilligungs-Pflichtangaben, Formularwortlaut, `textHash`, Fußzeilen und
+`FLOW_TEXT_VERSION` unverändert (keine neue Version nötig). Lead-Texte ohne Ersparnisversprechen (§ 5 UWG, K8), Test
+sperrt „sparen“, „günstiger“, „zu teuer“, „Garantie“; Vorlagenname mit Text-Hash. K1 bis K5, K7 unverändert, K2 durch
+strengere Sparten-Erkennung gestärkt, K6 sichtbar, K8 ausgedehnt. Keine neue Fassung Datenschutzhinweise oder AVV.
+Auflage 1: Sammelprüfung (Punkt 5 oben). Auflage 2: neue Meta-Vorlagen (Bitte, Bestätigung, Erinnerung 1 und 2,
+UTILITY) vor dem Livegang einreichen (Stufe B, nach Freigabe durch Ole). Hinweis: `src/lib/whatsapp/gespraech.ts`
+(Chat-Strecke, anderes Team) enthält weiter „sparen können“, bei Gelegenheit angleichen.
+
+**Abnahme erledigt:** Neuigkeit `prisma/migrations/20261120014200_neuigkeit_policen_vergleichsblatt` (verbessert,
+software, kein Push), Eintrag in `docs/webseite-offen.md` (als „demnächst“, bis die Funktion für alle an ist),
+Entscheidungslog. Erklärvideos laut `betroffen.py 9fc6c30^..74aa2d6`: „Ausführlich“ prüfen (Terminvorbereitung,
+Vertragsseite); Neuaufnahme vor dem Livegang, außerhalb 8 bis 20 Uhr.
+
+**Vor dem Livegang (Stufe A, Ole):** einmal echt mit Testnummer durchklicken (WhatsApp-Bitte, Foto, Spickzettel,
+Sparten-Wahl, Sammelprüfung); Pilotkennzahlen Policen-Quote, Fertigquote, Opt-out.
