@@ -3,6 +3,8 @@ import Link from "next/link";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { CheckCircle2, Clock, Mail, Phone, Video } from "lucide-react";
+import { loadTerminFormate } from "@/lib/termin-formate-server";
+import { TERMIN_FORMATE_STANDARD } from "@/lib/termin-formate";
 import { kontaktWege, vermittlerKontakt, type VermittlerKontakt } from "@/lib/buchung-ohne-kalender";
 import { buttonClass } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
@@ -240,6 +242,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
   let slots: Slot[] = [];
   // Termindauer aus „Mein Kalender“ (15/30/45/60 Min.)
   const durationMin = await bookingDurationMin(conn.customerId).catch(() => 30);
+  // Video immer zuerst, empfohlen und vorgewählt (Ole, 20.11.2026); Telefon nur, wenn der Vermittler es freigegeben hat
+  const telefonErlaubt = (await loadTerminFormate(conn.customerId).catch(() => TERMIN_FORMATE_STANDARD)).telefon;
   try {
     slots = await suggestSlots(
       conn.customerId,
@@ -289,7 +293,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
           <Clock className="h-3.5 w-3.5" /> {durationMin} Minuten
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--surface-sunken)] px-2.5 py-1">
-          <Video className="h-3.5 w-3.5" /> Video oder <Phone className="h-3.5 w-3.5" /> Telefon
+          <Video className="h-3.5 w-3.5" /> {telefonErlaubt ? <>Video oder <Phone className="h-3.5 w-3.5" /> Telefon</> : "Per Video, ohne App"}
         </span>
         {kompakt ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800" data-kostenlos>
@@ -330,36 +334,39 @@ export default async function BookingPage({ params, searchParams }: Props) {
             ) : null}
           </section>
 
-          <section>
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <StepNo n={2} /> {a(an, "Wie möchtest du sprechen?", "Wie möchten Sie sprechen?")}
-            </h2>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { v: "phone", label: "Telefon", Icon: Phone },
-                { v: "video", label: "Videocall", Icon: Video },
-              ].map((o, i) => (
-                <label
-                  key={o.v}
-                  className="flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-3 text-sm font-semibold transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand-soft)] has-checked:text-[color:var(--brand-dark)]"
-                >
-                  <o.Icon className="h-4 w-4" />
-                  <input
-                    type="radio"
-                    name="mode"
-                    value={o.v}
-                    defaultChecked={i === 0}
-                    className="sr-only"
-                  />
-                  {o.label}
-                </label>
-              ))}
-            </div>
-          </section>
+          {telefonErlaubt ? (
+            <section>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                <StepNo n={2} /> {a(an, "Wie möchtest du sprechen?", "Wie möchten Sie sprechen?")}
+              </h2>
+              <div className="grid grid-cols-2 gap-2" data-gespraechsart>
+                {[
+                  { v: "video", label: "Videocall", Icon: Video, empfohlen: true },
+                  { v: "phone", label: "Telefon", Icon: Phone, empfohlen: false },
+                ].map((o) => (
+                  <label
+                    key={o.v}
+                    className="relative flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-3 text-sm font-semibold transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand-soft)] has-checked:text-[color:var(--brand-dark)]"
+                  >
+                    {o.empfohlen ? (
+                      <span className="absolute -top-2 right-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white" data-empfohlen>
+                        Empfohlen
+                      </span>
+                    ) : null}
+                    <o.Icon className="h-4 w-4" />
+                    <input type="radio" name="mode" value={o.v} defaultChecked={o.empfohlen} className="sr-only" />
+                    {o.label}
+                  </label>
+                ))}
+              </div>
+            </section>
+          ) : (
+            <input type="hidden" name="mode" value="video" />
+          )}
 
           <section className="space-y-3">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <StepNo n={3} /> {a(an, "Deine Kontaktdaten", "Ihre Kontaktdaten")}
+              <StepNo n={telefonErlaubt ? 3 : 2} /> {a(an, "Deine Kontaktdaten", "Ihre Kontaktdaten")}
             </h2>
             <Field name="name" label="Vor- und Nachname" autoComplete="name" defaultValue={prefill?.name} />
             <Field

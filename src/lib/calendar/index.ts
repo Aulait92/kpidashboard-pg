@@ -15,6 +15,7 @@ import {
   googleHasRequiredScopes,
 } from "@/lib/calendar/google";
 import { fetchIcsBusy } from "@/lib/calendar/ics";
+import { APP_PROVIDER, appBusy, appCreateEvent, appDeleteEvent, appUpdateEventEnd, appUpdateEventTime } from "@/lib/calendar/app-kalender";
 import { allianzBusy, decodeAllianzCalendar } from "@/lib/calendar/allianz-online";
 import { berlinAt, calendarBlocksBusy, DEFAULT_DURATION_MIN, durationForKey, loadLeadTimes, timesForDay, type LeadTimes } from "@/lib/calendar/lead-times";
 import {
@@ -48,10 +49,12 @@ const TZ = "Europe/Berlin";
 export const PROVIDER_LABELS: Record<string, string> = {
   google: "Google-Kalender",
   microsoft: "Outlook-Kalender",
+  [APP_PROVIDER]: "App-Kalender",
 };
 
 /** Hat die Verbindung alle aktuell nötigen Berechtigungen? */
 export function hasRequiredScopes(conn: { provider: string; scope: string | null }): boolean {
+  if (conn.provider === APP_PROVIDER) return true;
   if (conn.provider === "microsoft") return /calendars\.readwrite/i.test(conn.scope ?? "");
   return googleHasRequiredScopes(conn.scope);
 }
@@ -71,7 +74,16 @@ export async function adapterFor(customerId: string) {
   const allianz = agent?.allianzConsentAt ? decodeAllianzCalendar(agent.allianzCalendarEnc) : null;
 
   const native =
-    conn.provider === "microsoft"
+    conn.provider === APP_PROVIDER
+      ? {
+          // App-Kalender (lib/calendar/app-kalender.ts): Termine der App belegt, Einladung per Mail
+          getBusy: (min: Date, max: Date) => appBusy(customerId, min, max),
+          createEvent: (ev: NewEvent) => appCreateEvent(customerId, ev),
+          deleteEvent: (id: string) => appDeleteEvent(customerId, id),
+          updateEventEnd: (id: string, end: Date) => appUpdateEventEnd(customerId, id, end),
+          updateEventTime: (id: string, start: Date, end: Date) => appUpdateEventTime(customerId, id, start, end),
+        }
+      : conn.provider === "microsoft"
       ? {
           getBusy: (min: Date, max: Date) => microsoftGetBusy(customerId, min, max),
           createEvent: (ev: NewEvent) => microsoftCreateEvent(customerId, ev),
@@ -523,7 +535,8 @@ export async function cancelAppointment(
     try {
       const conn = await loadConnection(key);
       for (const id of eventIds) {
-        if (conn.provider === "microsoft") await microsoftDeleteEvent(key, id);
+        if (conn.provider === APP_PROVIDER) await appDeleteEvent(key, id);
+        else if (conn.provider === "microsoft") await microsoftDeleteEvent(key, id);
         else await googleDeleteEvent(key, id);
       }
       calendarDeleted = true;
@@ -661,7 +674,8 @@ export async function checkAppointmentResponses(): Promise<ResponseCheckResult> 
     try {
       const key = a.calendarKey ?? a.customerId;
       const conn = await loadConnection(key).catch(() => null);
-      if (!conn) continue;
+      // App-Kalender: keine Antworten abrufbar (Einladung per Mail)
+      if (!conn || conn.provider === APP_PROVIDER) continue;
       const fetchResponses = (eventId: string) =>
         conn.provider === "microsoft"
           ? microsoftGetResponses(key, eventId)

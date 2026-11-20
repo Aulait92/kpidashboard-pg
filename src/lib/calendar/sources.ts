@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";
 import { fetchIcsBusy } from "@/lib/calendar/ics";
+import { appKalenderEinschalten, appKalenderPruefen } from "@/lib/calendar/app-kalender";
 import {
   AllianzCalendarError,
   changeAllianzTemplate,
@@ -98,11 +99,14 @@ export async function connectAllianz(customerId: string, input: string, consent:
     update: { allianzCalendarEnc: encodeAllianzCalendar(cal), allianzConsentAt: new Date(), allianzLastOkAt: new Date(), allianzLastError: null, allianzAlertAt: null },
   });
   const who = cal.orgName ? `${cal.orgName}, ` : "";
+  // Ohne Google/Outlook: Termine über den App-Kalender mit Einladung per Mail (Ole, 20.11.2026)
+  const app = await appKalenderEinschalten(customerId);
+  const mail = app ? " Termine bekommen Sie als Einladung per Mail." : "";
   return {
     ok: true,
     info: check.first
-      ? `Verbunden: ${who}Termin-Art „${cal.templateName}“. Nächster freier Termin: ${fmtDay(check.first)} Uhr.`
-      : `Verbunden: ${who}Termin-Art „${cal.templateName}“. In den nächsten 30 Tagen sind dort gerade keine Termine frei.`,
+      ? `Verbunden: ${who}Termin-Art „${cal.templateName}“. Nächster freier Termin: ${fmtDay(check.first)} Uhr.${mail}`
+      : `Verbunden: ${who}Termin-Art „${cal.templateName}“. In den nächsten 30 Tagen sind dort gerade keine Termine frei.${mail}`,
   };
 }
 
@@ -126,6 +130,7 @@ export async function disconnectAllianz(customerId: string): Promise<void> {
     where: { customerId },
     data: { allianzCalendarEnc: null, allianzConsentAt: null, allianzLastOkAt: null, allianzLastError: null, allianzAlertAt: null },
   });
+  await appKalenderPruefen(customerId);
 }
 
 /** A) ICS-Link speichern (vorher einmal abrufen). */
@@ -143,11 +148,14 @@ export async function saveIcsLink(customerId: string, raw: string): Promise<Sour
     create: { customerId, availabilityIcsUrlEnc: encryptSecret(url) },
     update: { availabilityIcsUrlEnc: encryptSecret(url) },
   });
-  return { ok: true, info: "Kalender-Link gespeichert. Belegte Zeiten daraus berücksichtigen wir ab sofort." };
+  // Ohne Google/Outlook: Termine über den App-Kalender mit Einladung per Mail (lib/calendar/app-kalender.ts)
+  const app = await appKalenderEinschalten(customerId);
+  return { ok: true, info: `Kalender-Link gespeichert. Belegte Zeiten daraus berücksichtigen wir ab sofort.${app ? " Termine bekommen Sie als Einladung per Mail." : ""}` };
 }
 
 export async function removeIcsLink(customerId: string): Promise<void> {
   await prisma.agentConfig.updateMany({ where: { customerId }, data: { availabilityIcsUrlEnc: null } });
+  await appKalenderPruefen(customerId);
 }
 
 /** C) Lead-Zeiten aus Formularfeldern day_<0-6>, time_<HH:MM>, extraTime. */

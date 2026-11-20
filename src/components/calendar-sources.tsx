@@ -495,7 +495,7 @@ export function BlockTimes({
 // ─── Quellen ────────────────────────────────────────────────────────────
 
 export type SourceStatus = {
-  native: { connected: boolean; label: string | null; account?: string | null };
+  native: { connected: boolean; label: string | null; account?: string | null; app?: boolean };
   hasIcs: boolean;
   allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null } | null;
 };
@@ -603,7 +603,25 @@ export function SourcePicker({
   return (
     <div className="space-y-4">
       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-ihr-kalender>
-        {status.native.connected ? (
+        {status.native.app ? (
+          <div className="space-y-2">
+            <span className="flex items-center gap-1.5 text-[15px] font-medium text-emerald-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              Termine bekommen Sie als Einladung per Mail
+            </span>
+            <p className="text-sm text-[color:var(--muted)]">
+              Lieber direkt im Kalender?{" "}
+              <a href={connectLinks.google} className={`font-medium text-[color:var(--brand)] hover:underline ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
+                Google
+              </a>{" "}
+              oder{" "}
+              <a href={connectLinks.microsoft} className={`font-medium text-[color:var(--brand)] hover:underline ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
+                Outlook
+              </a>{" "}
+              verbinden.
+            </p>
+          </div>
+        ) : status.native.connected ? (
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1.5 text-[15px] font-medium text-emerald-700">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -784,6 +802,35 @@ export function AllianzTemplateForm({
         </Submit>
         <Result state={state} />
       </div>
+    </form>
+  );
+}
+
+/**
+ * Fester Video-Link für Videotermine (Ole, 20.11.2026: Webex-Link gehört unbedingt ins Onboarding). Ohne Google/Outlook
+ * (App-Kalender) gibt es sonst keinen Link; mit Google/Outlook ersetzt er Meet bzw. Teams.
+ */
+export function VideoRaumForm({ action, readOnly, initial, noetig }: { action: FormAction; readOnly: boolean; initial: string | null; noetig: boolean }) {
+  const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
+  return (
+    <form action={formAction} className="space-y-2" data-video-raum>
+      <label className="block text-[15px] font-medium" htmlFor="videoRoomUrl">
+        Ihr Link für Videotermine (z. B. Webex)
+      </label>
+      {noetig && !initial ? (
+        <p className="text-sm font-medium text-amber-700">Bitte eintragen: Ohne Link haben Videotermine keinen Raum.</p>
+      ) : (
+        <p className="text-sm text-[color:var(--muted)]">
+          {noetig ? "Diesen Link bekommen Ihre Kunden für jeden Videotermin." : "Leer lassen, dann erstellen wir für jeden Termin einen Meet- bzw. Teams-Link."}
+        </p>
+      )}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input id="videoRoomUrl" name="videoRoomUrl" type="url" defaultValue={initial ?? ""} className={input} placeholder="https://allianz.webex.com/meet/vorname.nachname" autoComplete="off" />
+        <Submit pending={pending} disabled={readOnly}>
+          Speichern
+        </Submit>
+      </div>
+      <Result state={state} />
     </form>
   );
 }
