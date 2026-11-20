@@ -21,7 +21,7 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
 - **Vertragsseite** (bis 19.11.2026 „Vergleichsblatt“; Route und Dateinamen bleiben; Paket 2 „Champions League“,
   Logik rein in `auslesen/vertragsseite.ts`): Titel „Verträge: {Name}“ ohne Untertitel. Kopf: Beiträge im Monat groß,
   darunter Jahr, Anzahl, „n bitte prüfen“, ein K6-Satz „Maschinell ausgelesen: bitte vor dem Termin mit dem Original
-  prüfen.“ (ohne Zwei-Faktor-Login dahinter der Link zur Einrichtung). Darunter „Fragen für den Termin“ (3 sichtbar, Rest
+  prüfen.“ (ohne Zwei-Faktor-Login dahinter der Link zur Einrichtung). Darunter „Zum Ansprechen im Termin“ (bis 20.11.2026 „Fragen für den Termin“; 3 sichtbar, Rest
   unter „Mehr (n)“), jede mit Nummer und Sprung zur Karte, die dieselbe Nummer trägt. Karten sortiert: mit Frage, dann
   mit unsicheren Feldern, dann ungeprüft, dann Rest. Sichtbar: Beitrag im Monat, „Kündigung bis“ (nur Sach, vorsichtig)
   bzw. Laufzeit, Deckungs- bzw. Versicherungssumme, Wer ist versichert, SF-Klassen, Kasko, Rechtsschutz-Bausteine,
@@ -37,7 +37,7 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
   passiert beides nicht. Ohne ausgelesene Verträge: Hauptaktion „Zur Terminvorbereitung“, der Grund (z. B. „Nicht
   ausgelesen auf Wunsch des Kunden.“) steht einmal oben, die Unterlagen bleiben zu öffnen. Unten Unterlagen, die nicht
   ausgelesen wurden (Sparte wählen, erneut versuchen, Original).
-- **Fragen für den Termin** (19.11.2026, `auslesen/zusammenfassung.ts`, rein; Anzeige auf der Vertragsseite, Spickzettel
+- **Zum Ansprechen im Termin** (intern weiter „Fragen“; 19.11.2026, `auslesen/zusammenfassung.ts`, rein; SUS-Runde 20.11.2026: Kündigung mit Frist zuerst, Beitrag laut Unterlage als leise zweite Zeile `zusatz`; im Spickzettel steht „n bitte prüfen“ im Badge statt zusätzlich in der Zeile; nicht ausgelesene Unterlagen ohne Sparte heißen nach dem Dateinamen; Anzeige auf der Vertragsseite, Spickzettel
   in der Terminvorbereitung): feste Vorlagen, Sie-Form, Euro nur als Beitrag „laut Unterlage“. Reihenfolge: Kündigungsfristen
   (nach Tagen, dann Beitrag), doppelt, Bausteine „nein“, nicht geschickt. Regeln (K8): Kündigungen nur Sach (Haftpflicht,
   Hausrat, Wohngebäude, Rechtsschutz, Kfz); „doppelt“ nur Haftpflicht, Hausrat, Rechtsschutz (mit beiden Versicherern,

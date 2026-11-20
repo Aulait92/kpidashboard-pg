@@ -343,7 +343,7 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
     prisma.leadDocument.findMany({
       where: { leadId, customerId, status: "gespeichert" },
       orderBy: { createdAt: "asc" },
-      select: { id: true, sparte: true, createdAt: true, auszug: true },
+      select: { id: true, sparte: true, fileName: true, createdAt: true, auszug: true },
     }),
     sperreFuer(customerId, leadId),
     zdrHinterlegt(),
@@ -374,7 +374,8 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
     offen.push({
       documentId: d.id,
       auszugId: a?.id ?? null,
-      titel: sp ? SPARTE_LABEL[sp] : "Unterlage",
+      // Ohne Sparte der Dateiname statt zweimal „Unterlage vom …“ (wie in der Terminvorbereitung)
+      titel: sp ? SPARTE_LABEL[sp] : d.fileName?.trim() || "Unterlage",
       status: a?.status ?? (sperre ? "nicht_ausgelesen" : "neu"),
       sparte: sp,
       datum: d.createdAt.toISOString(),

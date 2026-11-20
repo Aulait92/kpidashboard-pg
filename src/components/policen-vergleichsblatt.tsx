@@ -161,7 +161,10 @@ function FrageZeile({ f, n }: { f: Frage; n: number }) {
   const inhalt = (
     <>
       <Nummer n={n} />
-      <span className="min-w-0 flex-1">{f.text}</span>
+      <span className="min-w-0 flex-1">
+        {f.text}
+        {f.zusatz ? <span className={`block text-[13px] ${DT}`}>{f.zusatz}</span> : null}
+      </span>
     </>
   );
   return (
@@ -182,7 +185,7 @@ function Fragen({ fragen }: { fragen: Frage[] }) {
   const rest = fragen.slice(SICHTBARE_FRAGEN);
   return (
     <div className="border-t border-[color:var(--border)] px-5 py-3 text-sm" data-fragen>
-      <h2 className="text-[13px] font-semibold">Fragen für den Termin</h2>
+      <h2 className="text-[13px] font-semibold">Zum Ansprechen im Termin</h2>
       <ol className="mt-1">
         {sichtbar.map((f, i) => (
           <FrageZeile key={f.text} f={f} n={i + 1} />

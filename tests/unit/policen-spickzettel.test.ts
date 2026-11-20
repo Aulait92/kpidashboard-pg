@@ -91,9 +91,12 @@ describe("fertig", () => {
   it("Kopf und Fragen sind wortgleich mit der Vertragsseite, höchstens 3, Rest als Anzahl", () => {
     const s = spickzettel(v, AUS)!;
     expect(s.zustand).toBe("fertig");
-    expect(s.kopf).toEqual(kopfZeile(z));
+    // Betrag und Anzahl wortgleich; „4 bitte prüfen“ steht im Badge (ungeprueft), nicht noch einmal in der Zeile
+    expect(s.kopf).toEqual(kopfZeile(z, { pruefenImBadge: true }));
+    expect(s.kopf?.monat).toBe(kopfZeile(z).monat);
     expect(s.kopf?.zeile).toContain("5 Verträge");
-    expect(s.kopf?.zeile).toContain("4 bitte prüfen");
+    expect(s.kopf?.zeile).not.toContain("bitte prüfen");
+    expect(kopfZeile(z).zeile).toContain("4 bitte prüfen");
     expect(z.fragen.length).toBeGreaterThan(3);
     expect(s.fragen).toEqual(z.fragen.slice(0, 3));
     expect(s.mehr).toBe(z.fragen.length - 3);

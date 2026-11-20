@@ -74,7 +74,6 @@ export function PolicenSpickzettel({
   // Sparten-Wahl mit einem Tipp (K2: Sparte vom Vermittler); die Unterlage ist zum Nachsehen verlinkt
   const sparteWahl = s.sparteWahl ? (
     <div className={fertig ? "border-t border-[color:var(--border)] px-3 py-2.5" : "mt-1"} data-spickzettel-sparte>
-      {fertig ? <p className="font-medium">{s.sparteWahl.text}</p> : null}
       <p className={LEISE}>
         {s.sparteWahl.frage}{" "}
         {/* Ohne Zwei-Faktor nur das Datum: die Einrichtung erklärt die Unterlagen-Liste (eine Stelle statt zwei) */}
@@ -125,7 +124,7 @@ export function PolicenSpickzettel({
       <Link href={vertraege} className="block rounded-t-[var(--radius-md)] px-3 pb-2 pt-2.5 hover:bg-[color:var(--surface-sunken)]" data-spickzettel-kopf>
         <span className="flex items-center gap-2">
           <span className={`${TITEL} min-w-0 flex-1`}>Verträge des Kunden</span>
-          {s.ungeprueft ? <Badge tone="warning">Bitte prüfen</Badge> : null}
+          {s.ungeprueft ? <Badge tone="warning">{`${s.ungeprueft} bitte prüfen`}</Badge> : null}
           <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
         </span>
         <span className="mt-0.5 block text-xl font-semibold tracking-tight" data-monat-summe>
@@ -151,7 +150,10 @@ export function PolicenSpickzettel({
                   className="-mx-1.5 flex min-h-11 items-start gap-2.5 rounded-[var(--radius-sm)] px-1.5 py-1.5 hover:bg-[color:var(--surface-sunken)]"
                 >
                   <FrageNummer n={i + 1} />
-                  <span className="min-w-0 flex-1">{f.text}</span>
+                  <span className="min-w-0 flex-1">
+                    {f.text}
+                    {f.zusatz ? <span className={`block ${LEISE}`}>{f.zusatz}</span> : null}
+                  </span>
                 </Link>
               </li>
             ))}

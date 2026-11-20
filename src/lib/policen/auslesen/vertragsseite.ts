@@ -166,10 +166,15 @@ export const SPERRE_TEXT: Record<string, string> = {
 const euroKopf = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
 /** Kopf über allen Verträgen: groß die Beiträge im Monat, darunter Jahr, Anzahl und wie viele noch zu prüfen sind. */
-export function kopfZeile(z: { monatSumme: number | null; jahrSumme: number | null; vertraege: number; ungeprueft: number }): { monat: string | null; zeile: string } {
+export function kopfZeile(
+  z: { monatSumme: number | null; jahrSumme: number | null; vertraege: number; ungeprueft: number },
+  o: { pruefenImBadge?: boolean } = {},
+): { monat: string | null; zeile: string } {
+  // pruefenImBadge (Spickzettel): „n bitte prüfen“ steht im Badge daneben, nicht noch einmal in der Zeile
+  const pruefen = o.pruefenImBadge && z.ungeprueft ? null : z.ungeprueft ? `${z.ungeprueft} bitte prüfen` : "alle geprüft";
   return {
     monat: z.monatSumme != null ? euroKopf(z.monatSumme) : null,
-    zeile: [z.jahrSumme != null ? `${euroKopf(z.jahrSumme)} im Jahr` : null, vertraegeText(z.vertraege), z.ungeprueft ? `${z.ungeprueft} bitte prüfen` : "alle geprüft"]
+    zeile: [z.jahrSumme != null ? `${euroKopf(z.jahrSumme)} im Jahr` : null, vertraegeText(z.vertraege), pruefen]
       .filter(Boolean)
       .join(" · "),
   };

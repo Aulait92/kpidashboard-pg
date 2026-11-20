@@ -103,7 +103,7 @@ export function spickzettel(v: SpickzettelEingabe | null, o: { gebetenAm: string
     return {
       ...leer("fertig", ""),
       text: null,
-      kopf: kopfZeile(z),
+      kopf: kopfZeile(z, { pruefenImBadge: true }),
       ungeprueft: z.ungeprueft,
       fragen: z.fragen.slice(0, SICHTBARE_FRAGEN),
       mehr: Math.max(0, z.fragen.length - SICHTBARE_FRAGEN),

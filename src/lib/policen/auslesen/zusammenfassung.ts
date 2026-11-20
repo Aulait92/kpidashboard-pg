@@ -43,6 +43,8 @@ export type FrageTyp = "kuendigung" | "doppelt" | "baustein" | "nicht_geschickt"
 export type Frage = {
   typ: FrageTyp;
   text: string;
+  /** Leise zweite Zeile (nur Kündigung: Beitrag laut Unterlage) */
+  zusatz?: string;
   /** Verträge, zu denen die Frage gehört (Sprung zur Karte); leer bei „Nicht geschickt“ */
   ids: string[];
   /** Tage bis zur Frist bzw. zum Kündigungstermin (nur Kündigung) */
@@ -172,7 +174,7 @@ const undListe = (l: string[]) => (l.length <= 1 ? l.join("") : `${l.slice(0, -1
 
 export const VORLAGEN = {
   kuendigungBis: (k: Kuendigung, heute: string) =>
-    `${wer(k.sparte, k.versicherer)}${k.jahresbetrag != null ? `, ${euroText(k.jahresbetrag)} im Jahr laut Unterlage` : ""}: Kündigung bis ${datumKurz(k.bis as string, heute)}, ${noch(k.tageBis ?? 0)}.`,
+    `${wer(k.sparte, k.versicherer)}: Kündigung bis ${datumKurz(k.bis as string, heute)}, ${noch(k.tageBis ?? 0)}.`,
   kuendigungVerpasst: (k: Kuendigung, heute: string) =>
     `${wer(k.sparte, k.versicherer)}: Frist ${datumKurz(k.verpasst as string, heute)} verpasst, nächste Kündigung bis ${datumLang(k.bis as string)}.`,
   kuendigungOhneFrist: (k: Kuendigung) =>
@@ -184,6 +186,8 @@ export const VORLAGEN = {
     return `${SPARTE_LABEL[d.sparte]} ${MAL[n] ?? `${n}-mal`}${teile.length ? ` (${teile.join(", ")})` : ""}: Werden ${n === 2 ? "beide" : "alle"} noch gebraucht?`;
   },
   baustein: (text: string, bewusst: boolean) => `${text} laut Unterlage: ${bewusst ? "Ist das bewusst so gewählt?" : "Ist das so gewollt?"}`,
+  /** Zweite, leise Zeile einer Kündigungsfrage (SUS-Runde 20.11.2026: Frist zuerst, Beitrag laut Unterlage darunter) */
+  beitragZusatz: (jahresbetrag: number) => `${euroText(jahresbetrag)} im Jahr laut Unterlage`,
   nichtGeschickt: (sparten: AuslesenSparte[]) => `Nicht geschickt: ${sparten.map((s) => SPARTE_LABEL[s]).join(", ")}. Fragen Sie: Wo sind Sie dafür versichert?`,
 } as const;
 
@@ -243,7 +247,7 @@ export function zusammenfassung(vertraege: VertragKurz[], now: Date, o: Zusammen
     const text = k.verpasst ? VORLAGEN.kuendigungVerpasst(k, heute) : k.bis ? VORLAGEN.kuendigungBis(k, heute) : VORLAGEN.kuendigungOhneFrist(k);
     // Reihenfolge: offene Fristen nach Tagen, dann ohne Frist (nach Tagen bis zum Termin), dann verpasste
     const rang = k.verpasst ? 2 : k.bis ? 0 : 1;
-    fragen.push({ typ: "kuendigung", text, ids: [k.id], tage: k.tageBis ?? tageZwischen(heute, k.zum), jahresbetrag: k.jahresbetrag, rang });
+    fragen.push({ typ: "kuendigung", text, zusatz: k.jahresbetrag != null ? VORLAGEN.beitragZusatz(k.jahresbetrag) : undefined, ids: [k.id], tage: k.tageBis ?? tageZwischen(heute, k.zum), jahresbetrag: k.jahresbetrag, rang });
   }
   kuendigungen.sort((a, b) => (a.verpasst ? 1 : 0) - (b.verpasst ? 1 : 0) || (a.bis ?? a.zum).localeCompare(b.bis ?? b.zum));
 

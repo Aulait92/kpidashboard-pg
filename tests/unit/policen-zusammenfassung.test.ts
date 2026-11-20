@@ -22,7 +22,8 @@ describe("Frist vorsichtig berechnet", () => {
     const z = zusammenfassung([v("a", "kfz", { versicherer: "HUK", ablauf: "2027-01-01", kuendigungsfrist_monate: 1, beitrag: 612, zahlweise: "jaehrlich" })], now);
     expect(z.kuendigungen).toEqual([{ id: "a", sparte: "kfz", versicherer: "HUK", zum: "2027-01-01", bis: "2026-11-30", jahresbetrag: 612, tageBis: 11, verpasst: null, genannt: false }]);
     expect(z.fragen[0]).toMatchObject({ typ: "kuendigung", ids: ["a"], tage: 11 });
-    expect(z.fragen[0].text).toBe("Kfz (HUK), 612 € im Jahr laut Unterlage: Kündigung bis 30.11., noch 11\u00a0Tage.");
+    expect(z.fragen[0].text).toBe("Kfz (HUK): Kündigung bis 30.11., noch 11\u00a0Tage.");
+    expect(z.fragen[0].zusatz).toBe("612 € im Jahr laut Unterlage");
   });
 
   it("Ablauf 01.03.2027 mit 1 Monat: bis 31.01.2027 (Jahr ausgeschrieben)", () => {
