@@ -12,6 +12,7 @@ const FUNKTIONEN = [
   "lebenszyklus-card--kuendigung-rueckkehr-ruht-seit-reaktiviert",
   "retainer-actions-saveretaineraction--betreuungsgebuehr-eintragen-aendern-entfernen",
   "retainer-card--kuendigungsabsichten-und-angebotene",
+  "pilot-actions-savepilotaction--pilot-kostenlos-bis-setzen-oder-entfernen",
   "budget-actions-decidebudgetaction--budgetaenderung-des-kunden-uebernehmen",
   "budget-actions-decidebudgetaction--budgetaenderung-ablehnen",
   "produkt-actions-decideproductaction--produktbuchung-des-kunden-annehmen-oder-ablehnen",
@@ -38,7 +39,7 @@ export default async function KundeAbrechnung({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; zahlweise?: string; fehler?: string }>;
+  searchParams: Promise<{ pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; zahlweise?: string; pilot?: string; fehler?: string }>;
 }) {
   const { id } = await params;
   return (
