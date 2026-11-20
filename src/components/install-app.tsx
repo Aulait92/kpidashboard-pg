@@ -87,7 +87,7 @@ export function InstallApp({ appUrl }: { appUrl: string }) {
         </p>
         <ol className="mt-3 space-y-2.5">
           {!env.inSafari ? (
-            <li className="flex gap-2.5"><Num n={1} /><span>Diese Seite in <b>Safari</b> öffnen (nicht in WhatsApp oder Chrome): {appUrl}</span></li>
+            <li className="flex gap-2.5"><Num n={1} /><span>Diese Seite in <b>Safari</b> öffnen (nicht in WhatsApp oder Chrome): https://{appUrl}</span></li>
           ) : null}
           <li className="flex gap-2.5"><Num n={env.inSafari ? 1 : 2} /><span>Unten auf die <b>drei Punkte (…)</b> und dann auf <Share className="inline h-4 w-4 align-[-3px]" /> <b>Teilen</b> tippen. Bei älteren iPhones ist <b>Teilen</b> direkt unten zu sehen.</span></li>
           <li className="flex gap-2.5"><Num n={env.inSafari ? 2 : 3} /><span><SquarePlus className="inline h-4 w-4 align-[-3px]" /> <b>„Zum Home-Bildschirm“</b> wählen, dann „Hinzufügen“.</span></li>
@@ -130,7 +130,7 @@ export function InstallApp({ appUrl }: { appUrl: string }) {
         <HandyQr />
         <div className="min-w-0 flex-1">
           <p className="text-[color:var(--muted)]">
-            Mit der Handy-Kamera scannen oder <b className="text-[color:var(--foreground)]">{appUrl}</b> auf dem Handy öffnen und anmelden. Dann:
+            Mit der Handy-Kamera scannen oder <b className="text-[color:var(--foreground)]">https://{appUrl}</b> (ohne „www“) auf dem Handy öffnen und anmelden. Dann:
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div>
