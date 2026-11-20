@@ -5,7 +5,7 @@ import { entscheidungsCallHinweis, type EntscheidungsCall } from "@/lib/vertrieb
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { baueAngebotsMail, getAppUrl, sendOfferEmail, type AngebotsMailInhalt } from "@/lib/email";
-import { createOffer, type OfferFormInput } from "@/lib/offers";
+import { createOffer, updateDraftOffer, type OfferFormInput } from "@/lib/offers";
 import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount, prepayPossible } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
 import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
@@ -29,6 +29,13 @@ export type OfferActionResult =
   | { ok: true; offerId?: string; /** Angebotsmail: welche Variante zum Entscheidungs-Call rausging */ hinweis?: string }
   | { ok: false; error: string };
 
+/** Konditionen eines Angebots als Zeile im Verlauf (Erstellen, Bearbeiten). */
+function konditionenZeile(offer: { setupFee: unknown; setupDiscount: unknown; setupDiscountLabel: string | null; monthlyFee: unknown; abschlussBonus: unknown }) {
+  return `${Number(offer.setupFee).toLocaleString("de-DE")} € Setup${offer.setupDiscount != null ? ` (nach ${offer.setupDiscountLabel ?? "Empfehlungsrabatt"})` : ""} · ${Number(offer.monthlyFee).toLocaleString("de-DE")} € / Monat (netto)${
+    offer.abschlussBonus != null ? ` · Abschlussbonus ${Number(offer.abschlussBonus).toLocaleString("de-DE")} €` : ""
+  }`;
+}
+
 export async function createOfferAction(
   target: OfferTarget,
   input: OfferFormInput,
@@ -39,9 +46,7 @@ export async function createOfferAction(
     await logOfferActivity(
       offer,
       `Angebot ${offer.number} erstellt`,
-      `${Number(offer.setupFee).toLocaleString("de-DE")} € Setup${offer.setupDiscount != null ? ` (nach ${offer.setupDiscountLabel ?? "Empfehlungsrabatt"})` : ""} · ${Number(offer.monthlyFee).toLocaleString("de-DE")} € / Monat (netto)${
-        offer.abschlussBonus != null ? ` · Abschlussbonus ${Number(offer.abschlussBonus).toLocaleString("de-DE")} €` : ""
-      }`,
+      konditionenZeile(offer),
       session.userId,
     );
     revalidatePath(offerAdminHref(offer));
@@ -56,6 +61,30 @@ export async function createOfferAction(
           ? err.message
           : "Angebot konnte nicht erstellt werden.",
     };
+  }
+}
+
+/**
+ * Entwurf bearbeiten (Ole, 20.11.2026): gleiche Nummer, gleicher Link, gleiche Version. Nur solange das Angebot noch ein
+ * Entwurf ist (lib/offers.ts updateDraftOffer prüft das atomar beim Speichern).
+ */
+export async function updateOfferDraftAction(offerId: string, input: OfferFormInput): Promise<OfferActionResult> {
+  const session = await requireAdmin();
+  try {
+    const offer = await updateDraftOffer(offerId, input);
+    await logOfferActivity(
+      offer,
+      `Angebot ${offer.number} bearbeitet`,
+      konditionenZeile(offer),
+      session.userId,
+    );
+    revalidatePath(offerAdminHref(offer));
+    revalidatePath(`/angebot/${offer.token}`);
+    revalidatePath("/admin/kunden", "layout");
+    revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
+    return { ok: true, offerId: offer.id };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Angebot konnte nicht gespeichert werden." };
   }
 }
 

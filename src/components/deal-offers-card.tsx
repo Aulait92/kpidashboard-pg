@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send } from "lucide-react";
+import { Copy, ExternalLink, FileDown, FileText, Mail, Pencil, Plus, Send } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschlussBonusAction, setBankTransferAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
 import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
@@ -241,6 +241,12 @@ export function DealOffersCard({
               </Button>
               <ButtonLink href={`/angebot/${current.token}`} external icon={ExternalLink}>Ansehen</ButtonLink>
               <ButtonLink href={`/angebot/${current.token}/pdf`} external icon={FileDown}>PDF</ButtonLink>
+              {/* Entwurf bearbeiten (Ole, 20.11.2026): gleiches Formular, vorbefüllt; verschickte Angebote nur als neue Version */}
+              {current.status === "draft" ? (
+                <ButtonLink href={`${newOfferHref}?bearbeiten=${current.id}`} icon={Pencil}>
+                  Bearbeiten
+                </ButtonLink>
+              ) : null}
               {current.status === "draft" || current.status === "sent" ? (
                 <>
                   <Button
