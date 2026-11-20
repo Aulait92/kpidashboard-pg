@@ -1089,6 +1089,69 @@ async function versichererAntwort(k: StreckenKontext, sparten: VertragSparte[], 
   return true;
 }
 
+/**
+ * Buchung über die Buchungsseite (z. B. Buchungslink im Chat, Ole 20.11.2026: „Chat nach Buchung über die Seite
+ * automatisch weiter“): Die Strecke im WhatsApp-Chat läuft von selbst weiter, ohne dass der Lead erst schreiben muss.
+ *   - Komplettcheck auf der Bestätigungsseite beantwortet: direkt der nächste Schritt (Angebotsfragen, Vertragsfrage,
+ *     Policen bzw. Schluss), wie nach dem Knopf im Chat.
+ *   - Noch nicht beantwortet (Aufruf aus dem Cron, 15 Min. nach der Buchung): die erste Frage der Strecke im Chat
+ *     (Tierfrage bzw. Komplettcheck).
+ * Nur mit aktivem Assistenten, ohne Abmeldung und im offenen 24-Std.-Fenster; nie doppelt (Merker der Strecke).
+ */
+export async function weiterNachBuchungsseite(conversationId: string, appointmentId: string, now = new Date()): Promise<boolean> {
+  const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { botActive: true, optedOutAt: true, windowExpiresAt: true } });
+  if (!conv?.botActive || conv.optedOutAt || !conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) return false;
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin || k.termin.id !== appointmentId) return false;
+  const stand = await streckenStand(conversationId, appointmentId);
+  if (stand.abschlussAt || stand.zusageFrageAt) return false;
+  if (stand.komplettBeantwortet) {
+    if (stand.angebotsfragenAt || stand.vertragsfrageAt || stand.policenBitteAt || stand.langAngebotAt) return false;
+    const ja = k.termin.komplettcheck === true;
+    await weiterNachKomplettcheck(k, ja ? "Super!" : "Alles klar.", ja ? null : abschlussEinleitung(k.an, k.person, "komplett_nein"));
+    return true;
+  }
+  if (stand.komplettFrageAt || stand.tierFrageLetzte) return false;
+  const m = await ersteNachBuchung(k);
+  await merke(conversationId, m.merker, { appointmentId, ...(m.daten ?? {}), via: "buchungsseite" });
+  await sende(k, m.text, m.buttons);
+  return true;
+}
+
+/**
+ * Cron: Termine aus der Buchungsseite mit Chat, 15 Min. bis 24 Std. alt, deren Strecke im Chat nie begonnen hat
+ * (Komplettcheck auf der Seite nicht beantwortet): erste Frage im Chat (weiterNachBuchungsseite).
+ */
+export async function runBuchungsseiteNachholen(now = new Date()): Promise<{ gesendet: number }> {
+  if (!inStreckenFenster(now)) return { gesendet: 0 };
+  const termine = await prisma.appointment.findMany({
+    where: {
+      status: "booked",
+      conversationId: { not: null },
+      startsAt: { gt: now },
+      createdAt: { lte: new Date(now.getTime() - 15 * 60_000), gte: new Date(now.getTime() - 24 * HOUR) },
+    },
+    orderBy: { createdAt: "asc" },
+    take: 30,
+    select: { id: true, conversationId: true },
+  });
+  let gesendet = 0;
+  for (const t of termine) {
+    try {
+      // Strecke schon begonnen (irgendein Merker zu diesem Termin): nichts tun
+      const begonnen = await prisma.message.findFirst({
+        where: { conversationId: t.conversationId!, direction: "internal", body: { contains: t.id }, kind: { in: Object.values(STRECKE) } },
+        select: { id: true },
+      });
+      if (begonnen) continue;
+      if (await weiterNachBuchungsseite(t.conversationId!, t.id, now)) gesendet++;
+    } catch (err) {
+      console.error("[strecke buchungsseite]", err instanceof Error ? err.message.slice(0, 160) : err);
+    }
+  }
+  return { gesendet };
+}
+
 /** Frühere Kalenderfrage per Knopf (Nachrichten bis 17.11.2026): „Ja“ bzw. „Mache ich gleich“ → zugesagt. */
 export async function kalenderAntwort(conversationId: string, art: "ja" | "gleich", now = new Date()): Promise<boolean> {
   const k = await streckenKontext(conversationId, now);

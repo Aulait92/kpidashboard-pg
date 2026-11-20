@@ -327,5 +327,11 @@ export async function komplettcheckBuchungAction(slug: string, formData: FormDat
       await import("@/lib/experimente").then((m) => m.zielErreicht([t!.leadId, t!.conversationId, t!.id], "komplettcheck_ja")).catch(() => null);
     }
   }
+  // Chat läuft danach von selbst weiter (Angebotsfragen, Vertragsfrage, Policen), Ole 20.11.2026
+  if (r.count && t!.conversationId) {
+    await import("@/lib/whatsapp/termin-strecke")
+      .then((m) => m.weiterNachBuchungsseite(t!.conversationId!, t!.id, now))
+      .catch((e) => console.error("[booking page strecke]", e instanceof Error ? e.message.slice(0, 160) : e));
+  }
   redirect(`/book/${slug}?ok=1&a=${t!.id}&kc=${ja ? "1" : "0"}`);
 }
