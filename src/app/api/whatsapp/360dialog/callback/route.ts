@@ -29,7 +29,7 @@ export async function GET(req: Request): Promise<Response> {
     const wa = res.status === "connected" ? "ok" : res.status === "pending" ? "pending" : "error";
     if (isSupportCustomer(state.customerId)) {
       // Support-Nummer (nur Admins): Start aus dem neuen Admin → zurück nach Einstellungen → WhatsApp
-      const res = appRedirect(ruecksprungZiel(`/admin/whatsapp/settings?support=${wa}#support`, req.headers.get("cookie")), req);
+      const res = appRedirect(ruecksprungZiel(`/admin/neu/einstellungen/whatsapp?support=${wa}#support`, req.headers.get("cookie")), req);
       res.headers.append("Set-Cookie", neuRuecksprungCookie(null));
       return res;
     }

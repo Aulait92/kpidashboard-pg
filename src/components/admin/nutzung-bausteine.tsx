@@ -46,7 +46,7 @@ export function HilfeAnfragenKarte({ support }: { support: Awaited<ReturnType<ty
                     {r.reason}: {r.summary}
                   </div>
                   <div className="text-xs text-[color:var(--muted)]">
-                    <a href={`/admin/kunden/${r.customerId}`} className="hover:underline">{r.customer}</a> · {r.channel === "whatsapp" ? "per WhatsApp" : r.channel === "email" ? "per E-Mail" : "bittet um Rückmeldung"} · {r.ref}
+                    <a href={`/admin/neu/kunden/${r.customerId}`} className="hover:underline">{r.customer}</a> · {r.channel === "whatsapp" ? "per WhatsApp" : r.channel === "email" ? "per E-Mail" : "bittet um Rückmeldung"} · {r.ref}
                   </div>
                 </div>
                 <span className="shrink-0 text-xs text-[color:var(--muted)]">{formatDateTime(r.at)}</span>

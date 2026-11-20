@@ -136,7 +136,7 @@ export async function meldeUngeprueft(quelle: "policen" | "upload" | "mail", gru
         grund === "nicht_eingerichtet"
           ? "Dateien werden ungeprüft angenommen und erst nach der Prüfung angeboten. Bitte den ClamAV-Dienst einrichten (docs/virenpruefung.md)."
           : "Der ClamAV-Dienst antwortet nicht. Dateien werden ungeprüft angenommen und erst nach der Prüfung angeboten.",
-      url: "/admin",
+      url: "/admin/neu",
       tag: "virenpruefung-fehlt",
     });
   } catch {

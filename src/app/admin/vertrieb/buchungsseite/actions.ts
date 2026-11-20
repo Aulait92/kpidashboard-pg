@@ -21,7 +21,7 @@ import {
   type AdminResult,
 } from "@/lib/vertrieb/buchung";
 
-const PATH = "/admin/vertrieb/buchungsseite";
+const PATH = "/admin/neu/vertrieb/termine";
 const pick = <T extends number>(choices: readonly T[], raw: unknown, fallback: T): T => {
   const n = Number(raw);
   return (choices as readonly number[]).includes(n) ? (n as T) : fallback;
@@ -124,7 +124,7 @@ export async function adminBookTerminAction(_prev: AdminTerminState, fd: FormDat
   const res = await adminBookSalesMeeting({ type, contactId, start, email: String(fd.get("email") ?? ""), force: fd.get("force") === "1" });
   if (res.ok) {
     await audit("vertrieb.termin.gebucht", { entity: "SalesMeeting", entityId: res.meetingId, details: { contactId, art: type.slug } });
-    revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+    revalidatePath(`/admin/neu/vertrieb/kontakte/${contactId}`);
     revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Vertrieb → Termine)
   }
   return stateOf(res);
@@ -140,7 +140,7 @@ export async function adminRescheduleTerminAction(_prev: AdminTerminState, fd: F
   if (res.ok) {
     await audit("vertrieb.termin.verschoben", { entity: "SalesMeeting", entityId: res.meetingId, details: { from: meetingId } });
     const m = await prisma.salesMeeting.findUnique({ where: { id: res.meetingId }, select: { contactId: true } });
-    if (m) revalidatePath(`/admin/vertrieb/kontakte/${m.contactId}`);
+    if (m) revalidatePath(`/admin/neu/vertrieb/kontakte/${m.contactId}`);
   }
   return stateOf(res);
 }

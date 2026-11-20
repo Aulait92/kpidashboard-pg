@@ -45,17 +45,17 @@ export async function ladeVertriebBlick() {
 export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
   const { due, overdue, answers, mailNoCall, total, sent, liConnected, meetings, leads, count } = await ladeVertriebBlick();
   const stats: { label: string; value: number; href: string; tone?: string }[] = [
-    { label: "Heute fällig", value: due, href: "/admin/heute/aufgaben", tone: due ? "text-amber-700" : undefined },
-    { label: "Überfällig", value: overdue, href: "/admin/heute/aufgaben", tone: overdue ? "text-rose-600" : undefined },
-    { label: "Antworten", value: answers, href: "/admin/vertrieb/kontakte?mail=replied", tone: answers ? "text-emerald-700" : undefined },
-    { label: "Mail, nie angerufen", value: mailNoCall, href: "/admin/vertrieb/kontakte?mail=sent&stage=NEU" },
+    { label: "Heute fällig", value: due, href: "/admin/neu/vertrieb/aufgaben", tone: due ? "text-amber-700" : undefined },
+    { label: "Überfällig", value: overdue, href: "/admin/neu/vertrieb/aufgaben", tone: overdue ? "text-rose-600" : undefined },
+    { label: "Antworten", value: answers, href: "/admin/neu/vertrieb/kontakte?mail=replied", tone: answers ? "text-emerald-700" : undefined },
+    { label: "Mail, nie angerufen", value: mailNoCall, href: "/admin/neu/vertrieb/kontakte?mail=sent&stage=NEU" },
   ];
 
   return (
     <section aria-label="Vertrieb" data-vertrieb-blick className={cn("rounded-[var(--radius-lg)]", highlight && "ring-2 ring-[color:var(--brand)] ring-offset-4 ring-offset-[color:var(--background)]")}>
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <h2 className="text-base font-semibold">Vertrieb</h2>
-        <Link href="/admin/vertrieb/kontakte" className="-my-2 inline-flex min-h-10 items-center text-sm text-[color:var(--brand)] hover:underline">
+        <Link href="/admin/neu/vertrieb/kontakte" className="-my-2 inline-flex min-h-10 items-center text-sm text-[color:var(--brand)] hover:underline">
           Kontakte →
         </Link>
       </div>
@@ -74,7 +74,7 @@ export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
             <ul className="-mx-2 text-sm">
               {meetings.map((m) => (
                 <li key={m.id}>
-                  <Link href={`/admin/vertrieb/kontakte/${m.contact.id}`} className="block rounded-lg px-2 py-2 hover:bg-[color:var(--surface-sunken)]">
+                  <Link href={`/admin/neu/vertrieb/kontakte/${m.contact.id}`} className="block rounded-lg px-2 py-2 hover:bg-[color:var(--surface-sunken)]">
                     <span className="font-medium">{fmtDateTime(m.startAt)}</span> · {shortName(m.contact.name)}
                     <span className="block text-xs text-[color:var(--muted)]">
                       {m.title}
@@ -102,7 +102,7 @@ export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
             <ul className="px-2 pb-2 text-sm">
               {leads.map((l) => (
                 <li key={l.id}>
-                  <Link href={l.contact ? `/admin/vertrieb/kontakte/${l.contact.id}` : "/admin/vertrieb/import"} className="block rounded-lg px-2 py-2 hover:bg-[color:var(--surface-sunken)]">
+                  <Link href={l.contact ? `/admin/neu/vertrieb/kontakte/${l.contact.id}` : "/admin/neu/einstellungen/anbindungen"} className="block rounded-lg px-2 py-2 hover:bg-[color:var(--surface-sunken)]">
                     <span className="font-medium">{l.contact ? shortName(l.contact.name) : (l.name ?? l.email)}</span>
                     <span className="block text-xs text-[color:var(--muted)]">
                       {fmtDateTime(l.createdAt)} · {SOURCE_LABEL[l.source] ?? l.source}
@@ -121,7 +121,7 @@ export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
           <ul className="px-2 pb-2">
             {STAGES.map((s) => (
               <li key={s.id}>
-                <Link href={`/admin/vertrieb/kontakte?stage=${s.id}`} className="flex min-h-10 items-center justify-between rounded-lg px-2 hover:bg-[color:var(--surface-sunken)]">
+                <Link href={`/admin/neu/vertrieb/kontakte?stage=${s.id}`} className="flex min-h-10 items-center justify-between rounded-lg px-2 hover:bg-[color:var(--surface-sunken)]">
                   <span className={`badge ${s.color}`}>{s.label}</span>
                   <span className="text-sm tabular-nums">{count(s.id).toLocaleString("de-DE")}</span>
                 </Link>

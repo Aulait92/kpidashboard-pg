@@ -174,7 +174,7 @@ export async function searchPhonesAdmin(q: PhoneQuery): Promise<AdminSearchHit[]
       id: c.id,
       title: short(c.name),
       subtitle: `Vertriebskontakt${c.city ? ` · ${c.city}` : ""}`,
-      href: `/admin/vertrieb/kontakte/${c.id}`,
+      href: `/admin/neu/vertrieb/kontakte/${c.id}`,
       match: m.match,
       ...(m.action ? { action: m.action } : {}),
     });
@@ -198,7 +198,7 @@ export async function searchPhonesAdmin(q: PhoneQuery): Promise<AdminSearchHit[]
         id: c.id,
         title: short(c.name),
         subtitle: `Kunde${c.archived ? " (archiviert)" : ""}`,
-        href: `/admin/kunden/${c.id}`,
+        href: `/admin/neu/kunden/${c.id}`,
         match: customerMatch.get(c.id),
         // Interne Konten und Testkunden werden mitgefunden, aber gekennzeichnet (Ole, 17.11.2026)
         ...(testKennung(c) ? { badge: testKennung(c)! } : {}),
@@ -213,7 +213,7 @@ export async function searchPhonesAdmin(q: PhoneQuery): Promise<AdminSearchHit[]
       id: l.id,
       title: l.name ?? "Lead ohne Name",
       subtitle: `Lead · ${short(l.customer.name)}${l.source ? ` · ${l.source}` : ""}`,
-      href: `/admin/leads?kunde=${l.customer.id}&q=${encodeURIComponent(l.name ?? l.phone ?? "")}`,
+      href: `/admin/neu/leads/alle?kunde=${l.customer.id}&q=${encodeURIComponent(l.name ?? l.phone ?? "")}`,
       match: `${showPhone(l.phone)} · Lead-Telefon`,
     });
   }
@@ -224,7 +224,7 @@ export async function searchPhonesAdmin(q: PhoneQuery): Promise<AdminSearchHit[]
       id: c.id,
       title: c.contactName?.trim() || showPhone(c.contactPhone),
       subtitle: `WhatsApp-Chat · ${short(c.customer.name)}`,
-      href: `/admin/whatsapp?c=${c.id}&tab=${encodeURIComponent(c.status)}`,
+      href: `/admin/neu/leads/chats?c=${c.id}&tab=${encodeURIComponent(c.status)}`,
       match: `${showPhone(c.contactPhone)} · WhatsApp`,
     });
   }

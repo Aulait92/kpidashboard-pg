@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ADMIN_START, immerNeuStart, istAn, neuStartFuer } from "@/lib/admin-neu/schalter";
+import { ADMIN_START } from "@/lib/admin-neu/schalter";
 import { ADVISOR_BLOCKED_TARGET, cardClickHref, loginTarget, nextCardCounter, parseCardCounter, pickCard, safeInternalPath } from "@/lib/login-karten";
 
 describe("Login-Karten: Rotation", () => {
@@ -51,7 +51,7 @@ describe("Login-Karten: Ziel nach der Anmeldung", () => {
     expect(loginTarget({ role: "BUYER", teamRole: "owner" }, "/buyerx")).toBe("/buyer");
     expect(loginTarget({ role: "ADMIN" }, "/buyer/bestand")).toBe("/admin/neu");
     expect(loginTarget({ role: "ADMIN", preview: true }, "/buyer/bestand")).toBe("/buyer/bestand");
-    expect(loginTarget({ role: "ADMIN" }, "/admin/kunden")).toBe("/admin/kunden");
+    expect(loginTarget({ role: "ADMIN" }, "/admin/kunden")).toBe("/admin/neu/kunden");
   });
 
   it("ohne Ziel bzw. bei ungültigem Ziel: Startseite der Rolle", () => {
@@ -61,29 +61,18 @@ describe("Login-Karten: Ziel nach der Anmeldung", () => {
     expect(loginTarget({ role: "ADMIN" }, "/api/auth/logout")).toBe("/admin/neu");
   });
 
-  it("Admins: alte Startadressen (/admin, /admin/heute) führen nach der Anmeldung immer auf den neuen Admin", () => {
+  it("Admins: alte Adressen führen nach der Anmeldung auf ihr Gegenstück im Admin (Umbau 20.11.2026)", () => {
     expect(loginTarget({ role: "ADMIN" }, "/admin")).toBe("/admin/neu");
     expect(loginTarget({ role: "ADMIN" }, "/admin/")).toBe("/admin/neu");
     expect(loginTarget({ role: "ADMIN" }, "/admin/heute")).toBe("/admin/neu");
-    expect(loginTarget({ role: "ADMIN" }, "/admin/heute/aufgaben")).toBe("/admin/heute/aufgaben");
+    expect(loginTarget({ role: "ADMIN" }, "/admin/heute/aufgaben")).toBe("/admin/neu/vertrieb/aufgaben");
+    expect(loginTarget({ role: "ADMIN" }, "/admin/vertrieb/kontakte/k1?tab=mails")).toBe("/admin/neu/vertrieb/kontakte/k1?tab=mails");
     expect(loginTarget({ role: "ADMIN" }, "/admin/neu/kunden")).toBe("/admin/neu/kunden");
   });
 });
 
-describe("Admin-Start ohne Schalter", () => {
-  it("/admin führt immer auf den neuen Admin, /admin/heute nur mit Schalter", () => {
-    expect(immerNeuStart("/admin")).toBe(true);
-    expect(immerNeuStart("/admin/")).toBe(true);
-    expect(immerNeuStart("/admin/heute")).toBe(false);
-    expect(immerNeuStart("/admin/neu")).toBe(false);
-    expect(neuStartFuer("/admin/heute")).toBe(true);
+describe("Admin-Start", () => {
+  it("einziger Admin unter /admin/neu (Schalter „Neue Oberfläche“ entfernt)", () => {
     expect(ADMIN_START).toBe("/admin/neu");
-  });
-
-  it("neuer Admin ist Standard: aus nur, wenn „Alte Oberfläche“ gewählt wurde (Cookie 0)", () => {
-    expect(istAn(undefined)).toBe(true);
-    expect(istAn(null)).toBe(true);
-    expect(istAn("1")).toBe(true);
-    expect(istAn("0")).toBe(false);
   });
 });

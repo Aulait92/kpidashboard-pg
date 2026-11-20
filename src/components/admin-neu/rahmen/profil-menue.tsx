@@ -2,27 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Bell, BellOff, BellRing, Compass, History, LogOut, Settings, Wrench } from "lucide-react";
-import { neueOberflaecheAction } from "@/app/admin/neu/schalter-actions";
+import { Bell, BellOff, BellRing, Compass, LogOut, Settings, Wrench } from "lucide-react";
 import { usePush } from "@/lib/use-push";
 import { cn } from "@/lib/utils";
 
 const zeile = "flex min-h-11 w-full items-center gap-2 px-3 text-left hover:bg-[color:var(--surface-sunken)]";
-
-/** Schalter „Neue Oberfläche“ (in beiden Profilmenüs). `an` = aktueller Zustand. */
-export function NeueOberflaecheSchalter({ an, label = "Neue Oberfläche" }: { an: boolean; label?: string }) {
-  return (
-    <form action={neueOberflaecheAction} className="border-b border-[color:var(--border)]">
-      <input type="hidden" name="an" value={an ? "0" : "1"} />
-      <button type="submit" role="switch" aria-checked={an} className={cn(zeile, "justify-between")}>
-        <span>{label}</span>
-        <span className={cn("relative h-[22px] w-[38px] shrink-0 rounded-full transition", an ? "bg-[color:var(--brand)]" : "bg-[color:var(--border-strong)]")}>
-          <span className={cn("absolute top-[3px] h-4 w-4 rounded-full bg-white transition-all", an ? "left-[19px]" : "left-[3px]")} />
-        </span>
-      </button>
-    </form>
-  );
-}
 
 /** Push-Mitteilungen an/aus und Test (früher eigener Knopf in der Seitenleiste). */
 function PushZeile() {
@@ -51,21 +35,9 @@ function PushZeile() {
   );
 }
 
-/** „Zur alten Oberfläche“: der neue Admin ist Standard (Cookie pg_admin_neu, lib/admin-neu/schalter.ts), zurück nur auf Wunsch. */
-function AlteOberflaeche() {
-  return (
-    <form action={neueOberflaecheAction}>
-      <input type="hidden" name="an" value="0" />
-      <button type="submit" className={cn(zeile, "text-[color:var(--muted)]")}>
-        <History className="h-4 w-4" /> Alte Oberfläche
-      </button>
-    </form>
-  );
-}
-
 /**
- * Profilmenü des neuen Admins (wie /buyer: Profil › Einstellungen): Einstellungen, Werkzeuge (Technik), Push, dann
- * die Umzugshilfen „Was wo ist“ und „Alte Oberfläche“ (bis Ole den alten Admin abschaltet, Stufe A), Abmelden.
+ * Profilmenü des Admins (wie /buyer: Profil › Einstellungen): Einstellungen, Technik, Push, „Was wo ist“ (wo jede
+ * Funktion der früheren Oberfläche jetzt liegt), Abmelden. Die alte Oberfläche gibt es seit dem Umbau 20.11.2026 nicht mehr.
  * Zwei-Faktor liegt in Einstellungen › Konto & Sicherheit (Hinweis dort, solange er fehlt).
  * variant „sidebar“ unten in der Seitenleiste, sonst rund in der Kopfzeile (Handy).
  */
@@ -135,7 +107,6 @@ export function ProfilMenue({ email, variant = "kopf" }: { email: string; varian
           <Link href="/admin/neu/was-wo-ist" onClick={() => setOpen(false)} className={cn(zeile, "text-[color:var(--muted)]")} data-profil="was-wo-ist">
             <Compass className="h-4 w-4" /> Was wo ist
           </Link>
-          <AlteOberflaeche />
           <form action="/api/auth/logout" method="post" className="border-t border-[color:var(--border)]">
             <button type="submit" className={zeile}>
               <LogOut className="h-4 w-4" /> Abmelden

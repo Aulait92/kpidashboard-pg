@@ -302,7 +302,7 @@ export async function planAccount(accountId: string, opts: { dryRun?: boolean; n
   const autopilot = isAutopilot(a, settings);
   const emptyStats: AccountPlan["stats"] = { campaigns: 0, adSets: 0, ads: 0, spend14d: 0, leads14d: 0, refCpl: null, refCplLabel: "", agreedDailyBudget: null, currentDailyBudget: null, quality: null };
   const result: AccountPlan = { accountId, label: a.label, dryRun, autopilot, measures: [], warnings: [], problem: null, saved: 0, stats: emptyStats };
-  const link = `/admin/optimierung/${a.id}`;
+  const link = `/admin/neu/leads/werbekonten/${a.id}`;
 
   const fail = async (problem: string, taskTitle: string | null, taskNote: string | null) => {
     result.problem = problem;
@@ -476,7 +476,7 @@ export async function approveMeasures(input: { accountId: string; ids?: string[]
     n++;
     if (isSuggestion(m.kind)) {
       const contactId = m.account?.customer?.salesContact?.id ?? m.account?.customer?.onboarding?.salesContactId ?? null;
-      await deps.task(contactId, `Optimierung ${m.account?.label ?? ""}: ${m.title}`, `${m.reason}\nNach dem Umsetzen im Protokoll „erledigt“ klicken: /admin/optimierung/${m.accountId}`);
+      await deps.task(contactId, `Optimierung ${m.account?.label ?? ""}: ${m.title}`, `${m.reason}\nNach dem Umsetzen im Protokoll „erledigt“ klicken: /admin/neu/leads/werbekonten/${m.accountId}`);
       await prisma.optimizationMeasure.update({ where: { id: m.id }, data: { result: "Aufgabe für Ole angelegt (Vorschlag, wird von Hand umgesetzt)" } });
     }
   }
@@ -574,7 +574,7 @@ export async function executeMeasure(id: string, deps = defaultOptimizationDeps(
   } catch (err) {
     const text = msg(err);
     if (isAccessError(text) && m.account) {
-      await taskOnce(deps, null, `Werbekonto ${m.account.label}: kein Zugriff für die Optimierung`, `Maßnahme „${m.title}“ konnte nicht umgesetzt werden: ${text.slice(0, 300)}\nOptimierung: /admin/optimierung/${m.account.id}`);
+      await taskOnce(deps, null, `Werbekonto ${m.account.label}: kein Zugriff für die Optimierung`, `Maßnahme „${m.title}“ konnte nicht umgesetzt werden: ${text.slice(0, 300)}\nOptimierung: /admin/neu/leads/werbekonten/${m.account.id}`);
     } else reportError(err, "optimierung-ausfuehren", { measure: id });
     return await finish("fehlgeschlagen", text);
   }
@@ -758,7 +758,7 @@ export async function syncMetaActivities(now = new Date(), deps = defaultOptimiz
       const text = msg(err);
       out.errors.push(`${a.label}: ${text.slice(0, 200)}`);
       await prisma.optimizationAccount.update({ where: { id: a.id }, data: { activitiesSyncedAt: now } }).catch(() => undefined);
-      if (isAccessError(text)) await taskOnce(deps, null, `Werbekonto ${a.label}: Meta-Änderungsprotokoll nicht lesbar`, `GET act_…/activities verweigert (Berechtigung ads_read bzw. ads_management auf dem Konto nötig): ${text.slice(0, 300)}\nOptimierung: /admin/optimierung/${a.id}`);
+      if (isAccessError(text)) await taskOnce(deps, null, `Werbekonto ${a.label}: Meta-Änderungsprotokoll nicht lesbar`, `GET act_…/activities verweigert (Berechtigung ads_read bzw. ads_management auf dem Konto nötig): ${text.slice(0, 300)}\nOptimierung: /admin/neu/leads/werbekonten/${a.id}`);
       else reportError(err, "optimierung-activities", { account: a.id });
     }
   }
@@ -852,7 +852,7 @@ export async function runEarlyWarning(now = new Date(), deps = defaultOptimizati
     await deps.task(
       contactId,
       title,
-      `${planned ? `${planned} geplante Maßnahme(n) warten auf Freigabe bzw. Ausführung.` : "Keine geplante Maßnahme."} Freigeben oder von Hand eintragen: /admin/optimierung/${a.id}`,
+      `${planned ? `${planned} geplante Maßnahme(n) warten auf Freigabe bzw. Ausführung.` : "Keine geplante Maßnahme."} Freigeben oder von Hand eintragen: /admin/neu/leads/werbekonten/${a.id}`,
     );
     n++;
   }

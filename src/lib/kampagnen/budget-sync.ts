@@ -145,7 +145,7 @@ export async function syncBudgetChangeToMeta(changeId: string, deps: BudgetSyncD
     await audit("budget.meta", { entity: "BudgetChange", entityId: changeId, customerId: ch.customerId, details: { done, problems }, actor: { role: "system" } }).catch(() => undefined);
   }
   if (ok) {
-    await deps.notify(`Budget bei Meta umgestellt: ${ch.customer.name}`, done.join(" · ").slice(0, 180), `/admin/kunden/${ch.customerId}/abrechnung`);
+    await deps.notify(`Budget bei Meta umgestellt: ${ch.customer.name}`, done.join(" · ").slice(0, 180), `/admin/neu/kunden/${ch.customerId}/abrechnung`);
     return { status: "done", done, problems };
   }
   const open = changes.filter((c) => !done.some((d) => d.startsWith(`${c.product}:`)));

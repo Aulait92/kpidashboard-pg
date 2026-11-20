@@ -683,7 +683,7 @@ export async function syncSupportTemplates(now = new Date(), opts: { force?: boo
         await sendToAdmins({
           title: `WhatsApp-Vorlage ${LABEL[t.purpose] ?? t.name} abgelehnt`,
           body: `${t.name}: ${(remote.rejectedReason ?? "Grund unbekannt").slice(0, 100)}`,
-          url: "/admin/whatsapp/settings",
+          url: "/admin/neu/einstellungen/whatsapp",
           tag: `tpl:support-${t.name}`,
         }).catch(() => {});
       }

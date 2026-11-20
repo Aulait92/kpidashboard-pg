@@ -31,7 +31,7 @@ export async function ModuleCandidatesCard({ message, zurueck }: { message: stri
             <ul className="mt-2 divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]" data-admin-module-candidates>
               {o.candidates.map((c) => (
                 <li key={c.id} className="flex items-center gap-3 px-3 py-2">
-                  <Link href={`/admin/kunden/${c.id}/abrechnung`} className="min-w-0 flex-1 font-medium hover:underline">
+                  <Link href={`/admin/neu/kunden/${c.id}/abrechnung`} className="min-w-0 flex-1 font-medium hover:underline">
                     {c.name}
                   </Link>
                   <span className="tabular-nums text-[color:var(--muted)]">{c.closings} Abschlüsse</span>

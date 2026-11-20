@@ -59,7 +59,7 @@ async function erstmals(key: string, sub: { id: string; customerId: string }, de
 }
 
 async function melden(text: string, product: string, slackNotify: boolean) {
-  await sendToAdmins({ title: `Kontingent erreicht: ${product}`, body: text, url: "/admin/ppl", tag: `ppl-kontingent:${product}` }).catch((err: unknown) =>
+  await sendToAdmins({ title: `Kontingent erreicht: ${product}`, body: text, url: "/admin/neu/leads/ppl", tag: `ppl-kontingent:${product}` }).catch((err: unknown) =>
     reportError(err, "ppl-kontingent-voll", { step: "push" }),
   );
   if (slackNotify) await postSlack(`🎯 ${text}`);

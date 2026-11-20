@@ -15,9 +15,9 @@ async function admin() {
 }
 
 async function back(id: string, msg: string, failed = false): Promise<never> {
-  revalidatePath(`/admin/kunden/${id}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${id}`, "layout");
   revalidatePath("/admin/neu", "layout");
-  redirect(await adminZiel(`/admin/kunden/${id}/abrechnung?zahlweise=${encodeURIComponent(msg)}${failed ? "&fehler=1" : ""}`));
+  redirect(await adminZiel(`/admin/neu/kunden/${id}/abrechnung?zahlweise=${encodeURIComponent(msg)}${failed ? "&fehler=1" : ""}`));
 }
 
 export async function saveUeberweisungAction(fd: FormData): Promise<void> {

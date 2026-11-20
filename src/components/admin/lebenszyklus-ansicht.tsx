@@ -218,7 +218,7 @@ export function LebenszyklusAnsicht({
         <p className="mt-3 text-xs text-[color:var(--muted)]">
           MRR gerettet = Monatsbetrag, der nach dem Angebot weiterläuft (bei „Nur Bestand“ dessen Preis), zum Zeitpunkt der Annahme. Später gekündigt =
           nach der Annahme trotzdem über „Vertrag hier kündigen“ gekündigt. Einstellungen unter{" "}
-          <Link href="/admin/einstellungen/halteangebote" className="underline">
+          <Link href="/admin/neu/einstellungen/halteangebote" className="underline">
             Einstellungen → Halteangebote
           </Link>
           .
@@ -245,7 +245,7 @@ export function LebenszyklusAnsicht({
               {d.dormant.map((r) => (
                 <tr key={r.customerId} className="border-t border-[color:var(--border)]">
                   <td className="py-1.5 pr-2">
-                    <Link href={`/admin/kunden/${r.customerId}/abrechnung`} className="font-medium text-[color:var(--brand)] hover:underline">
+                    <Link href={`/admin/neu/kunden/${r.customerId}/abrechnung`} className="font-medium text-[color:var(--brand)] hover:underline">
                       {r.name}
                     </Link>
                   </td>
@@ -282,7 +282,7 @@ export function LebenszyklusAnsicht({
               {d.reactivations.map((r) => (
                 <tr key={`${r.customerId}:${r.at}`} className="border-t border-[color:var(--border)]">
                   <td className="py-1.5 pr-2">
-                    <Link href={`/admin/kunden/${r.customerId}/abrechnung`} className="font-medium text-[color:var(--brand)] hover:underline">
+                    <Link href={`/admin/neu/kunden/${r.customerId}/abrechnung`} className="font-medium text-[color:var(--brand)] hover:underline">
                       {r.name}
                     </Link>
                   </td>

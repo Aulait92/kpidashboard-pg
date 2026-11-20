@@ -115,11 +115,11 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
   if (data.delivery === "webhook" && !/^https:\/\//.test(data.webhookUrl ?? "")) return { error: "Für Webhook eine https-Adresse angeben." };
   const saved = id ? await prisma.leadSubscription.update({ where: { id }, data }) : await prisma.leadSubscription.create({ data });
   await audit("ppl.subscription", { entity: "LeadSubscription", entityId: saved.id, customerId, details: { productKey, active: data.active, price, steuer, ...(price !== priceInput ? { bruttoEingabe: priceInput } : {}) } });
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   // Rückweg: alte Übersicht oder (Feld „zurueck“) die Pay-per-Lead-Seite im neuen Admin
   const zurueck = String(fd.get("zurueck") ?? "");
-  redirect(`${zurueck.startsWith("/admin/neu/") && !zurueck.includes("?") ? zurueck : "/admin/ppl"}?gespeichert=${saved.id}`);
+  redirect(`${zurueck.startsWith("/admin/neu/") && !zurueck.includes("?") ? zurueck : "/admin/neu/leads/ppl"}?gespeichert=${saved.id}`);
 }
 
 export type RegisterState = { error?: string; ok?: boolean };
@@ -149,7 +149,7 @@ export async function saveRegisterpruefungAction(_prev: RegisterState, fd: FormD
   await audit("ppl.registerpruefung", { entity: "Customer", entityId: customerId, customerId, actor: { id: s.userId, email: s.email, role: s.role }, details: { status, nr } });
   const { registerGeprueft } = await import("@/lib/ppl/erste-woche");
   await registerGeprueft(customerId, { id: s.userId, email: s.email, role: s.role });
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
@@ -164,7 +164,7 @@ export async function manualOrderAction(fd: FormData): Promise<void> {
     markPaid: true,
     actor: { id: s.userId, email: s.email, role: s.role },
   });
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
 }
 
@@ -178,14 +178,14 @@ export async function assignParkedAction(fd: FormData): Promise<void> {
       ? await prisma.leadOrder.findUnique({ where: { subscriptionId_periodStart: { subscriptionId: sub.id, periodStart: weekRange().start } } })
       : null;
   await deliver(pool.id, sub, order?.id ?? null);
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
 }
 
 export async function discardParkedAction(fd: FormData): Promise<void> {
   await requireAdmin();
   await prisma.poolLead.updateMany({ where: { id: String(fd.get("poolLeadId") ?? ""), status: "parked" }, data: { status: "invalid", reason: "verworfen (Admin)" } });
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
 }
 
@@ -193,7 +193,7 @@ export async function decideStornoAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const d = fd.get("decision");
   await decideStorno(String(fd.get("leadId") ?? ""), d === "half" ? "half" : d === "approve");
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
 }
 
@@ -204,7 +204,7 @@ export async function adminStornoAction(_prev: AdminStornoState, fd: FormData): 
   const s = await requireAdmin();
   const r = await adminRecordStorno(String(fd.get("leadId") ?? ""), String(fd.get("reason") ?? ""), String(fd.get("note") ?? ""), { id: s.userId, email: s.email, role: s.role });
   if (!r.ok) return { error: r.error };
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   return { message: r.already ? "War schon storniert." : `Storno eingetragen${r.outsideWindow ? " (außerhalb des Storno-Fensters)" : ""}.` };
 }
@@ -213,7 +213,7 @@ export async function undoStornoAction(_prev: AdminStornoState, fd: FormData): P
   const s = await requireAdmin();
   const r = await undoStorno(String(fd.get("leadId") ?? ""), { id: s.userId, email: s.email, role: s.role });
   if (!r.ok) return { error: r.error };
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   return { message: r.already ? "Kein anerkannter Storno." : "Storno zurückgenommen." };
 }
@@ -237,8 +237,8 @@ export async function saveAreaAction(fd: FormData): Promise<void> {
   if (id) await prisma.subscriptionArea.update({ where: { id }, data });
   else await prisma.subscriptionArea.create({ data: { ...data, subscriptionId } });
   await audit("ppl.area", { entity: "LeadSubscription", entityId: subscriptionId, details: { plzRanges, quantity, period } });
-  revalidatePath(`/admin/ppl/bezug/${subscriptionId}`);
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath(`/admin/neu/leads/ppl/bezug/${subscriptionId}`);
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
 }
 
@@ -247,7 +247,7 @@ export async function deleteAreaAction(fd: FormData): Promise<void> {
   const id = String(fd.get("id") ?? "");
   const a = await prisma.subscriptionArea.delete({ where: { id } });
   await audit("ppl.area_delete", { entity: "LeadSubscription", entityId: a.subscriptionId, details: { plzRanges: a.plzRanges } });
-  revalidatePath(`/admin/ppl/bezug/${a.subscriptionId}`);
+  revalidatePath(`/admin/neu/leads/ppl/bezug/${a.subscriptionId}`);
   revalidatePath("/admin/neu", "layout");
 }
 
@@ -258,7 +258,7 @@ export async function sendTestLeadAction(_prev: TestLeadState, fd: FormData): Pr
   const s = await requireAdmin();
   const { sendTestLead } = await import("@/lib/ppl/test-lead");
   const r = await sendTestLead(String(fd.get("subscriptionId") ?? ""), { id: s.userId, email: s.email, role: s.role });
-  revalidatePath(`/admin/ppl/bezug/${String(fd.get("subscriptionId") ?? "")}`);
+  revalidatePath(`/admin/neu/leads/ppl/bezug/${String(fd.get("subscriptionId") ?? "")}`);
   if (!r.targets.length) return { error: r.error ?? "Nicht gesendet." };
   const okCount = r.targets.filter((t) => t.ok).length;
   return {

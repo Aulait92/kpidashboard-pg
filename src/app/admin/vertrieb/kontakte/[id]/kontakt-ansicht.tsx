@@ -46,7 +46,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   const offen = offenesAngebot(c.offers);
   const angebotOffen = offen ? { id: offen.id, number: offen.number } : null;
   // Kunden haben eine eigene Akte mit allen Reitern.
-  if (c.customerId && !embedded) redirect(`/admin/kunden/${c.customerId}`);
+  if (c.customerId && !embedded) redirect(`/admin/neu/kunden/${c.customerId}`);
   const {
     emailSources, extraPhones, extrasSummary, open, done, activeFollowup, threadMail, followupMail, suggested,
     onboarding, obOffer, acceptedOffer, freeCustomers, linkable, duplicates, decisionLink, entscheidungsHinweis, bookingTypes, defaultTermin,
@@ -63,7 +63,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
         <div>
           {embedded ? null : (
             <>
-              <BackToList id="vertrieb" fallback="/admin/vertrieb/kontakte" allowed={VERTRIEB_LISTS} className={ADMIN_BACK_CLASS}>
+              <BackToList id="vertrieb" fallback="/admin/neu/vertrieb/kontakte" allowed={VERTRIEB_LISTS} className={ADMIN_BACK_CLASS}>
                 <ArrowLeft className="h-4 w-4 shrink-0" />
                 Zurück
               </BackToList>
@@ -112,7 +112,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
           <a href={`mailto:${c.email}`} className="btn-ghost">
             <Mail className="h-4 w-4" /> E-Mail
           </a>
-          <Link href={`/admin/vertrieb/kontakte/${c.id}/praesentation`} className="btn-ghost" data-praesentation-knopf>
+          <Link href={`/admin/neu/vertrieb/kontakte/${c.id}/praesentation`} className="btn-ghost" data-praesentation-knopf>
             <Presentation className="h-4 w-4" /> Präsentation
           </Link>
           <AdminTerminButton
@@ -142,7 +142,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
           ) : null}
           <br />
           <span className="font-medium">Empfohlen von </span>
-          <Link href={`/admin/kunden/${referral.referrer.id}`} className="font-medium underline">
+          <Link href={`/admin/neu/kunden/${referral.referrer.id}`} className="font-medium underline">
             {referral.referrer.name}
           </Link>{" "}
           am {fmtDate(referral.createdAt)}. Wird der Kontakt Kunde und zahlt die erste Rechnung, bekommt der Empfehler seine Prämie automatisch.
@@ -295,7 +295,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
 
           <div id="angebot">
             <DealOffersCard
-              newOfferHref={`/admin/vertrieb/kontakte/${c.id}/angebot`}
+              newOfferHref={`/admin/neu/vertrieb/kontakte/${c.id}/angebot`}
               appUrl={appUrl}
               offers={c.offers.map(toOfferRow)}
                 kontakt

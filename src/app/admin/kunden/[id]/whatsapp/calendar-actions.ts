@@ -23,7 +23,7 @@ async function adminCustomer(fd: FormData): Promise<string | null> {
 }
 
 const done = (customerId: string) => {
-  revalidatePath(`/admin/kunden/${customerId}/whatsapp`);
+  revalidatePath(`/admin/neu/kunden/${customerId}/whatsapp`);
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 };
 

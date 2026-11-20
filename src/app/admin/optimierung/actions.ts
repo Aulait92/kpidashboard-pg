@@ -32,10 +32,10 @@ const eurOrNull = (v: FormDataEntryValue | null): number | null => {
 };
 
 const refresh = (accountId?: string | null, customerId?: string | null) => {
-  revalidatePath("/admin/optimierung");
+  revalidatePath("/admin/neu/leads/werbekonten");
   revalidatePath("/admin/neu", "layout");
-  if (accountId) revalidatePath(`/admin/optimierung/${accountId}`);
-  if (customerId) revalidatePath(`/admin/kunden/${customerId}/optimierung`);
+  if (accountId) revalidatePath(`/admin/neu/leads/werbekonten/${accountId}`);
+  if (customerId) revalidatePath(`/admin/neu/kunden/${customerId}/optimierung`);
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 };
 

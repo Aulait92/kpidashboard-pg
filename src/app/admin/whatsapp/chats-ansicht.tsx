@@ -132,7 +132,7 @@ function DeliveryStatus({ status }: { status: string | null }) {
 
 export async function ChatsAnsicht({
   sp,
-  basis = "/admin/whatsapp",
+  basis = "/admin/neu/leads/chats",
   chatId,
   neu = false,
 }: {
@@ -205,7 +205,7 @@ export async function ChatsAnsicht({
       {/* Chats sind seit 16.11.2026 ein eigener Bereich in der Leiste (vorher Leads → WhatsApp-Chats) */}
       {neu ? null : <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">Chats</h1>
-        <Link href="/admin/whatsapp/settings" className="inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline">
+        <Link href="/admin/neu/einstellungen/whatsapp" className="inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline">
           Einstellungen →
         </Link>
       </div>}
@@ -527,8 +527,8 @@ async function LeadPanel({ active, now }: { active: Active; now: number }) {
   const points = qualificationPoints(active.qualificationData);
   // Admin-Link ins CRM: Lead in der Admin-Leadliste (gefiltert), sonst die Kundenakte.
   const crmHref = active.lead
-    ? `/admin/leads?kunde=${active.customerId}&q=${encodeURIComponent(active.contactPhone)}`
-    : `/admin/kunden/${active.customerId}`;
+    ? `/admin/neu/leads/alle?kunde=${active.customerId}&q=${encodeURIComponent(active.contactPhone)}`
+    : `/admin/neu/kunden/${active.customerId}`;
   const statusConflict = !!status && CLOSED_STATUSES.has(status.trim().toLowerCase()) && upcoming.length > 0;
 
   return (
@@ -580,7 +580,7 @@ async function LeadPanel({ active, now }: { active: Active; now: number }) {
       {!team.anyConnected && !isSupportCustomer(active.customerId) ? (
         <div className="px-5 pb-4">
           <Link
-            href={`/admin/kunden/${active.customerId}/whatsapp#kalender`}
+            href={`/admin/neu/kunden/${active.customerId}/whatsapp#kalender`}
             className="flex items-start gap-2 rounded-[var(--radius-md)] bg-amber-50 px-3 py-2.5 text-sm text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100"
             data-calendar-warning
           >
@@ -597,7 +597,7 @@ async function LeadPanel({ active, now }: { active: Active; now: number }) {
         <h3 className={SECTION_TITLE}>Lead</h3>
         <dl className="space-y-2">
           <Row label="Kunde">
-            <Link href={`/admin/kunden/${active.customerId}`} className="hover:underline">
+            <Link href={`/admin/neu/kunden/${active.customerId}`} className="hover:underline">
               {active.customer?.name ?? "Ohne Kunde"}
             </Link>
           </Row>

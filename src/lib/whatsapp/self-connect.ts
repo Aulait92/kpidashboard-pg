@@ -38,7 +38,7 @@ async function adminFollowUp(customerId: string, problem: string): Promise<void>
       },
     })
     .catch((err) => reportError(err, "d360-admin-task"));
-  await sendToAdmins({ title: `WhatsApp-Verbindung prüfen: ${name}`, body: problem.slice(0, 120), url: "/admin/whatsapp/settings", tag: `d360:${customerId}` }).catch(() => {});
+  await sendToAdmins({ title: `WhatsApp-Verbindung prüfen: ${name}`, body: problem.slice(0, 120), url: "/admin/neu/einstellungen/whatsapp", tag: `d360:${customerId}` }).catch(() => {});
 }
 
 /** Key für den Channel holen und speichern. Gemeinsam für Redirect und Cron. */
@@ -63,7 +63,7 @@ export async function onConnected(customerId: string, phone: string | null | und
   const name = await customerName(customerId);
   // Vorlagen sofort bei Meta einreichen (Freigabe dauert Minuten bis Stunden).
   if (isSupportCustomer(customerId)) {
-    await sendToAdmins({ title: "Support-WhatsApp verbunden", body: phone ? `Nummer +${phone.replace(/^\+/, "")} läuft jetzt unter Admin → WhatsApp.` : "Läuft jetzt unter Admin → WhatsApp.", url: "/admin/whatsapp", tag: "d360:support" }).catch(() => {});
+    await sendToAdmins({ title: "Support-WhatsApp verbunden", body: phone ? `Nummer +${phone.replace(/^\+/, "")} läuft jetzt unter Admin → WhatsApp.` : "Läuft jetzt unter Admin → WhatsApp.", url: "/admin/neu/leads/chats", tag: "d360:support" }).catch(() => {});
     return;
   }
   await submitTemplatesForCustomer(customerId).catch((err) => reportError(err, "templates-after-connect"));
@@ -72,7 +72,7 @@ export async function onConnected(customerId: string, phone: string | null | und
     body: phone
       ? `Nummer +${phone.replace(/^\+/, "")} – Vorlagen sind eingereicht, danach Assistent einschalten.`
       : "Vorlagen sind eingereicht, danach Assistent einschalten.",
-    url: "/admin/whatsapp/settings",
+    url: "/admin/neu/einstellungen/whatsapp",
     tag: `d360:${customerId}`,
   }).catch(() => {});
 }

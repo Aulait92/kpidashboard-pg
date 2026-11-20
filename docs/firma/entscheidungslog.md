@@ -44,3 +44,8 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   ausgelesen erst mit Nachweis „keine Speicherung“ beim KI-Anbieter (K2, Admin → Anbindungen) und Einwilligung mit
   Gesundheitsangaben. Unbeantwortete Sparten auf „Ihr Schutz im Überblick“ grau „Gleich besprechen“ (Entscheidung
   an Claude delegiert).
+- **Ein Admin** (20.11.2026, Auftrag Ole 19.11.: „alte dinge, wie airtable können rausgenommen werden“): Der neue Admin
+  unter /admin/neu ist der einzige. Die 60 alten Seiten unter /admin sind gelöscht, jede alte Adresse (auch Pushes,
+  Mails, Lesezeichen) leitet dauerhaft weiter (`src/lib/admin-neu/umzug.ts`, `src/middleware.ts`). Werkzeuge ist die
+  Gruppe Technik der Einstellungen. Airtable verschwindet aus der Oberfläche, der Abgleich im Hintergrund bleibt, bis
+  AIRTABLE_SYNC_OFF gesetzt ist.

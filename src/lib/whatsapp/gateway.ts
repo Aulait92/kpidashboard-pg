@@ -302,7 +302,7 @@ async function persistInbound(
       await sendToAdmins({
         title: `🛟 Support-WhatsApp abgemeldet: ${contactName ?? "Kontakt"}`,
         body: "Hat STOPP geschrieben: keine Termin- und Zahlungserinnerungen mehr per WhatsApp.",
-        url: `/admin/whatsapp?c=${conversation.id}`,
+        url: `/admin/neu/leads/chats?c=${conversation.id}`,
         tag: `support-wa:${conversation.id}`,
       }).catch((e) => console.error("[whatsapp support push]", e));
       return;
@@ -315,7 +315,7 @@ async function persistInbound(
     await sendToAdmins({
       title: `🛟 Support-WhatsApp: ${contactName ?? `+${from}`}`,
       body: (waOhneMarker(body) ?? "Neue Nachricht").slice(0, 140),
-      url: `/admin/whatsapp?c=${conversation.id}`,
+      url: `/admin/neu/leads/chats?c=${conversation.id}`,
       tag: `support-wa:${conversation.id}`,
     }).catch((e) => console.error("[whatsapp support push]", e));
     return;

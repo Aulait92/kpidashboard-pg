@@ -359,7 +359,7 @@ export async function checkMetaAccess(
     await sendToAdmins({
       title: `✅ Meta-Zugriff bei ${ob.customer.name} ist da`,
       body: [check.adAccount.name, check.page.name].filter(Boolean).join(" · ") || "Werbekonto, Seite und Leads freigegeben",
-      url: `/admin/kunden/${customerId}`,
+      url: `/admin/neu/kunden/${customerId}`,
       tag: `meta-access:${customerId}`,
     }).catch((err) => reportError(err, "setup-meta-push"));
   }
@@ -634,7 +634,7 @@ export async function runSetupReminders(now = new Date()): Promise<{ reminded: n
       await sendToAdmins({
         title: `⏳ Einrichtung hängt: ${ob.customer.name}`,
         body: `Seit 7 Tagen offen: ${open.map((i) => i.label).join(", ")}`,
-        url: `/admin/kunden/${customerId}`,
+        url: `/admin/neu/kunden/${customerId}`,
         tag: `onboarding-stale:${ob.id}`,
       }).catch((err) => reportError(err, "setup-stale-push"));
       await prisma.onboarding.update({ where: { id: ob.id }, data: { staleNotifiedAt: now } });

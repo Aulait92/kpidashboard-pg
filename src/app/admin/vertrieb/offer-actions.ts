@@ -44,7 +44,7 @@ export async function createOfferAction(
       session.userId,
     );
     revalidatePath(offerAdminHref(offer));
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
     return { ok: true, offerId: offer.id };
   } catch (err) {
@@ -75,7 +75,7 @@ export async function markOfferSentAction(
   }
   if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} als verschickt markiert`);
   revalidatePath(offerAdminHref(offer));
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
   return { ok: true };
 }
@@ -251,7 +251,7 @@ export async function sendOfferEmailAction(
     "EMAIL",
   );
   revalidatePath(offerAdminHref(offer));
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
   return { ok: true, ...(entscheidungsCall ? { hinweis: entscheidungsCallHinweis(entscheidungsCall) } : {}) };
 }
@@ -282,7 +282,7 @@ export async function deleteOfferAction(offerId: string): Promise<OfferActionRes
   });
   if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} gelöscht`);
   revalidatePath(offerAdminHref(offer));
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
   return { ok: true };
 }
@@ -328,7 +328,7 @@ export async function setPaymentReminderAction(
     revalidatePath(offerAdminHref(offer));
     revalidatePath(`/angebot/${offer.token}`);
   }
-  revalidatePath("/admin/vertrieb/angebote");
+  revalidatePath("/admin/neu/vertrieb/angebote");
   return { ok: true };
 }
 
@@ -365,9 +365,9 @@ async function revalidateOffer(offerId: string) {
     revalidatePath(offerAdminHref(offer));
     revalidatePath(`/angebot/${offer.token}`);
   }
-  revalidatePath("/admin/vertrieb", "layout");
-  revalidatePath("/admin/kunden", "layout");
-  revalidatePath("/admin/heute", "layout");
+  revalidatePath("/admin/neu/vertrieb", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
+  revalidatePath("/admin/neu", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote, Termine)
 }
 
@@ -393,6 +393,6 @@ export async function setBankTransferAction(offerId: string, input: { allow: boo
   );
   revalidatePath(offerAdminHref(offer));
   revalidatePath(`/angebot/${offer.token}`);
-  revalidatePath("/admin/vertrieb/angebote");
+  revalidatePath("/admin/neu/vertrieb/angebote");
   return { ok: true };
 }

@@ -1,5 +1,5 @@
 import { KundenakteSeite } from "@/components/admin-neu/kunden/akte";
-import KundenWhatsApp from "@/app/admin/kunden/[id]/whatsapp/page";
+import KundenWhatsApp from "@/app/admin/kunden/[id]/whatsapp/whatsapp-ansicht";
 
 export const metadata = { title: "WhatsApp | performancegrowth Admin" };
 

@@ -586,7 +586,7 @@ export async function requestBestandModuleAction(_prev?: RequestState, fd?: Form
     await sendToAdmins({
       title: `Modul-Anfrage: ${c.name}`,
       body: `Bestandskunden-Modul (${PRICE_LIST.bestandModuleMonthly} €/Monat) angefragt${volume ? `, geplant: ${volume}` : ""}`,
-      url: `/admin/kunden/${ctx.customerId}/abrechnung`,
+      url: `/admin/neu/kunden/${ctx.customerId}/abrechnung`,
       tag: `bestand-request:${ctx.customerId}`,
     }).catch(() => {});
     await sendCustomerMail({

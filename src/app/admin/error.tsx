@@ -28,7 +28,7 @@ export default function AdminError({ error, retry }: { error: unknown; retry: ()
         <button type="button" onClick={() => retry()} className={buttonClass("primary", "md")}>
           Nochmal versuchen
         </button>
-        <Link href="/admin/heute" className={buttonClass("secondary", "md")}>
+        <Link href="/admin/neu" className={buttonClass("secondary", "md")}>
           Zu Heute
         </Link>
       </div>

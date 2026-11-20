@@ -55,7 +55,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   const offen = offenesAngebot(c.offers);
   const angebotOffen = offen ? { id: offen.id, number: offen.number } : null;
   // Kunden haben eine eigene Akte (Kunden → Kundenakte)
-  if (c.customerId) redirect(neuerPfad(`/admin/kunden/${c.customerId}`, { nurFertige: false }) ?? `/admin/kunden/${c.customerId}`);
+  if (c.customerId) redirect(neuerPfad(`/admin/neu/kunden/${c.customerId}`, { nurFertige: false }) ?? `/admin/neu/kunden/${c.customerId}`);
   const a = await ladeKontaktakte(c);
   const name = shortName(c.name);
   const pfad = kontaktPfad(c.id);
@@ -158,7 +158,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
           <div className="rounded-[var(--radius-lg)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-kontakt-empfehlung data-funktion="page-referral--hinweis-empfehlung-von-kunde-mit-setup-rabatt">
             <span className="font-semibold">
               Empfehlung von{" "}
-              <Link href={`/admin/kunden/${a.referral.referrer.id}`} className="underline">
+              <Link href={`/admin/neu/kunden/${a.referral.referrer.id}`} className="underline">
                 {a.referral.referrer.name}
               </Link>
             </span>{" "}

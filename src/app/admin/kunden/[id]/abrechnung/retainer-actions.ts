@@ -17,10 +17,10 @@ const toDate = (s: string) => new Date(`${s}T12:00:00.000Z`);
 const ymd = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 
 async function back(id: string, msg: string, failed = false): Promise<never> {
-  revalidatePath(`/admin/kunden/${id}`, "layout");
-  revalidatePath("/admin/zahlen");
+  revalidatePath(`/admin/neu/kunden/${id}`, "layout");
+  revalidatePath("/admin/neu/zahlen");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
-  redirect(await adminZiel(`/admin/kunden/${id}/abrechnung?retainer=${encodeURIComponent(msg)}${failed ? "&fehler=1" : ""}`));
+  redirect(await adminZiel(`/admin/neu/kunden/${id}/abrechnung?retainer=${encodeURIComponent(msg)}${failed ? "&fehler=1" : ""}`));
 }
 
 export async function saveRetainerAction(fd: FormData): Promise<void> {

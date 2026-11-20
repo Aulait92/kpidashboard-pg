@@ -69,7 +69,7 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
   await prisma.onboarding.update({ where: { id: ob.id }, data: { questionnaire: data as object, questionnaireAt: new Date() } });
   if (first) {
     await logOfferActivity({ dealId: null, salesContactId: ob.salesContactId }, "Onboarding: Fragebogen ausgefüllt");
-    await sendToAdmins({ title: `📝 Fragebogen ausgefüllt: ${ob.customer.name}`, body: "Onboarding", url: ob.salesContactId ? `/admin/vertrieb/kontakte/${ob.salesContactId}` : "/admin/vertrieb/kunden" }).catch(() => {});
+    await sendToAdmins({ title: `📝 Fragebogen ausgefüllt: ${ob.customer.name}`, body: "Onboarding", url: ob.salesContactId ? `/admin/neu/vertrieb/kontakte/${ob.salesContactId}` : "/admin/neu/kunden" }).catch(() => {});
   }
   revalidatePath("/buyer", "layout");
   return { ok: true };
@@ -85,7 +85,7 @@ export async function confirmMetaAccessAction(_prev: SetupState, _fd: FormData):
   if (!ob.metaAccessAt) {
     await prisma.onboarding.update({ where: { id: ob.id }, data: { metaAccessAt: new Date() } });
     await logOfferActivity({ dealId: null, salesContactId: ob.salesContactId }, "Onboarding: Kunde hat Meta-Zugriff erteilt (bitte prüfen)");
-    await sendToAdmins({ title: `🔑 Meta-Zugriff erteilt: ${ob.customer.name}`, body: "Bitte im Business Manager prüfen.", url: ob.salesContactId ? `/admin/vertrieb/kontakte/${ob.salesContactId}` : "/admin/vertrieb/kunden" }).catch(() => {});
+    await sendToAdmins({ title: `🔑 Meta-Zugriff erteilt: ${ob.customer.name}`, body: "Bitte im Business Manager prüfen.", url: ob.salesContactId ? `/admin/neu/vertrieb/kontakte/${ob.salesContactId}` : "/admin/neu/kunden" }).catch(() => {});
   }
   revalidatePath("/buyer", "layout");
   return { ok: true };

@@ -62,8 +62,8 @@ export async function createBuyerAccount(
   });
   await audit("user.create", { entity: "User", entityId: created.id, customerId, details: { email } });
 
-  revalidatePath("/admin/buyers");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, createdEmail: email };
 }
@@ -93,8 +93,8 @@ export async function resetBuyerPassword(
   // Neues Passwort → alle bestehenden Sitzungen dieses Logins beenden
   await invalidateUserSessions(userId);
   await audit("user.password_reset", { entity: "User", entityId: userId });
-  revalidatePath("/admin/buyers");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, createdEmail: user.email };
 }
@@ -134,8 +134,8 @@ export async function reassignBuyerCustomer(
   // Kundenzuordnung steht im Sitzungs-Cookie → neu anmelden lassen
   await invalidateUserSessions(userId);
   await audit("user.reassign", { entity: "User", entityId: userId, customerId });
-  revalidatePath("/admin/buyers");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   // createdEmail trägt hier den Kundennamen für die Bestätigung im UI.
   return { ok: true, createdEmail: customer.name };
@@ -173,8 +173,8 @@ export async function sendBuyerAccessLink(
     details: { email: user.email, sent: sent.ok },
   });
   if (!sent.ok) return { ok: false, error: `E-Mail an ${user.email} ging nicht raus: ${sent.error}` };
-  revalidatePath("/admin/buyers");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, message: invite ? `Einladung an ${user.email} gesendet` : `Link zum Passwort ändern an ${user.email} gesendet` };
 }
@@ -190,8 +190,8 @@ export async function deleteBuyerAccount(formData: FormData) {
   if (!user || user.role !== "BUYER") return;
   const gone = await prisma.user.delete({ where: { id: userId } });
   await audit("user.delete", { entity: "User", entityId: userId, customerId: gone.customerId, details: { email: gone.email } });
-  revalidatePath("/admin/buyers");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
@@ -210,8 +210,8 @@ export async function changeBuyerEmail(_prev: CreateBuyerState, formData: FormDa
   // E-Mail steht im Sitzungs-Cookie → neu anmelden lassen
   await invalidateUserSessions(userId);
   await audit("user.email_change", { entity: "User", entityId: userId, customerId: user.customerId, details: { from: user.email, to: email } });
-  revalidatePath("/admin/buyers");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, createdEmail: email };
 }

@@ -11,9 +11,9 @@ import { istVorlagenArt, type VorlagenArt } from "@/lib/vertrieb/datenschutz-rec
 import type { Entwurf } from "@/lib/vertrieb/datenschutz-recht-server";
 
 function refresh(contactId: string) {
-  revalidatePath("/admin/vertrieb", "layout");
+  revalidatePath("/admin/neu/vertrieb", "layout");
   revalidatePath("/admin/neu", "layout");
-  revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+  revalidatePath(`/admin/neu/vertrieb/kontakte/${contactId}`);
 }
 
 /** Entwurf einer Vorlage (Widerspruch, Löschung, Auskunft) aus der Akte. */

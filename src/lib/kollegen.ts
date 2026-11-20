@@ -254,7 +254,7 @@ export async function submitReferral(input: SubmitInput, now = new Date()): Prom
     await sendToAdmins({
       title: `🤝 Empfehlung von ${ref.person}`,
       body: `${name}${company ? ` · ${company}` : ""}, bitte heute anrufen`,
-      url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/marketing/empfehlungen",
+      url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}` : "/admin/neu/marketing/empfehlungen",
       tag: `referral:${referral.id}`,
     });
   } catch (err) {
@@ -589,7 +589,7 @@ export async function rewardReferralForOffer(offerId: string, now = new Date()):
   const { sendToAdmins } = await import("@/lib/push");
   if (outcome === "credited") {
     await thankReferrer(referrer.id, referredLabel, amount, res.gift, res.giftTerms ?? null);
-    await sendToAdmins({ title: `🎁 Empfehlungsprämie gutgeschrieben: ${referrer.name}`, body: `${referredLabel} ist Kunde · ${res.gift ? rewardShort(settings) : eur(amount!) + " netto"}`, url: "/admin/marketing/empfehlungen" }).catch(() => {});
+    await sendToAdmins({ title: `🎁 Empfehlungsprämie gutgeschrieben: ${referrer.name}`, body: `${referredLabel} ist Kunde · ${res.gift ? rewardShort(settings) : eur(amount!) + " netto"}`, url: "/admin/neu/marketing/empfehlungen" }).catch(() => {});
   } else {
     await prisma.salesTask
       .create({
@@ -602,7 +602,7 @@ export async function rewardReferralForOffer(offerId: string, now = new Date()):
         },
       })
       .catch((err) => reportError(err, "referral-task"));
-    await sendToAdmins({ title: `🎁 Empfehlungsprämie von Hand: ${referrer.name}`, body: `${referredLabel} ist Kunde. ${note ?? "Bitte gutschreiben."}`, url: "/admin/marketing/empfehlungen" }).catch(() => {});
+    await sendToAdmins({ title: `🎁 Empfehlungsprämie von Hand: ${referrer.name}`, body: `${referredLabel} ist Kunde. ${note ?? "Bitte gutschreiben."}`, url: "/admin/neu/marketing/empfehlungen" }).catch(() => {});
   }
   return outcome;
 }

@@ -45,11 +45,11 @@ export function supportBadge(conv: { salesContact: ContactInfo | null; linkedCus
       kind: "kunde",
       label: gekuendigt ? "Kunde (gekündigt)" : "Kunde",
       detail: cust?.name ?? sc?.name ?? null,
-      href: cust ? `/admin/kunden/${cust.id}` : sc?.customerId ? `/admin/kunden/${sc.customerId}` : sc ? `/admin/vertrieb/kontakte/${sc.id}` : null,
+      href: cust ? `/admin/neu/kunden/${cust.id}` : sc?.customerId ? `/admin/neu/kunden/${sc.customerId}` : sc ? `/admin/neu/vertrieb/kontakte/${sc.id}` : null,
     };
   }
   if (sc) {
-    return { kind: "interessent", label: "Interessent", detail: [sc.name, STAGE_LABEL[sc.stage]].filter(Boolean).join(" · "), href: `/admin/vertrieb/kontakte/${sc.id}` };
+    return { kind: "interessent", label: "Interessent", detail: [sc.name, STAGE_LABEL[sc.stage]].filter(Boolean).join(" · "), href: `/admin/neu/vertrieb/kontakte/${sc.id}` };
   }
   return { kind: "unbekannt", label: "Unbekannt", detail: null, href: null };
 }

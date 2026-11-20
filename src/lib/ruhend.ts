@@ -247,7 +247,7 @@ export async function enterDormancy(now = new Date(), errors: string[] = [], sco
         await sendToAdmins({
           title: `Konto ruht: ${c.name}`,
           body: `Vertragsende ${fmtIso(endIso)} · Löschung am ${fmtIso(berlinIso(deleteAfter))}${manual ? " · Kampagnen von Hand stoppen" : ""}`,
-          url: `/admin/kunden/${c.id}/abrechnung`,
+          url: `/admin/neu/kunden/${c.id}/abrechnung`,
           tag: `ruhend:${c.id}`,
         }).catch(() => {});
       }
@@ -605,7 +605,7 @@ export async function reactivateCustomer(customerId: string, opts: { actor: Audi
       })
       .catch((err) => reportError(err, "reactivate-task", { customer: customerId }));
     const { sendToAdmins } = await import("@/lib/push");
-    await sendToAdmins({ title: `Reaktivierung: ${c.name}`, body: `${pkg}${mrr ? ` · ${eur(mrr)}/Monat` : ""} · ruhte ${dormantDays} Tage`, url: `/admin/kunden/${customerId}/abrechnung`, tag: `reaktivierung:${customerId}` }).catch(() => {});
+    await sendToAdmins({ title: `Reaktivierung: ${c.name}`, body: `${pkg}${mrr ? ` · ${eur(mrr)}/Monat` : ""} · ruhte ${dormantDays} Tage`, url: `/admin/neu/kunden/${customerId}/abrechnung`, tag: `reaktivierung:${customerId}` }).catch(() => {});
   }
   const to = await ownerEmails(customerId);
   if (to.length) {

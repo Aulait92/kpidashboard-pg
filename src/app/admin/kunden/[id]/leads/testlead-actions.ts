@@ -30,7 +30,7 @@ export async function sendTestLeadAction(input: {
     { id: session.userId, email: session.email, role: session.role },
   );
   if (r.ok) {
-    revalidatePath(`/admin/kunden/${input.customerId}`, "layout");
+    revalidatePath(`/admin/neu/kunden/${input.customerId}`, "layout");
     revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte, Alle Leads)
   }
   return r;
@@ -42,7 +42,7 @@ export async function deleteTestLeadAdminAction(customerId: string, leadId: stri
   if (!session || session.role !== "ADMIN") return { ok: false, error: "Nur Admins." };
   const r = await deleteTestLead(leadId, { customerId, actor: { id: session.userId, email: session.email, role: session.role } });
   if (!r.ok) return r;
-  revalidatePath(`/admin/kunden/${customerId}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${customerId}`, "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte, Alle Leads)
   return { ok: true };
 }

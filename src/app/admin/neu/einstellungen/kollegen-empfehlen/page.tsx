@@ -21,7 +21,7 @@ export default async function Page() {
       </Card>
       <p className="text-sm text-[color:var(--muted)]">
         Empfehlungen und offene Prämien:{" "}
-        <Link href={ziel("/admin/marketing/empfehlungen")} className="text-[color:var(--brand)] hover:underline">
+        <Link href={ziel("/admin/neu/marketing/empfehlungen")} className="text-[color:var(--brand)] hover:underline">
           Verkaufen › Empfehlungen
         </Link>
       </p>

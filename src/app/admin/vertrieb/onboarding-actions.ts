@@ -10,10 +10,10 @@ import { MANUAL_FIELDS, openSetupForExisting, restartSetup, sendGoLiveMail, send
 import { logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
 
 function refresh(contactId?: string | null) {
-  revalidatePath("/admin/vertrieb", "layout");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/vertrieb", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte)
-  if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+  if (contactId) revalidatePath(`/admin/neu/vertrieb/kontakte/${contactId}`);
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
@@ -33,7 +33,7 @@ export async function openSetupAction(fd: FormData) {
   const customerId = String(fd.get("customerId") ?? "");
   if (!customerId) return;
   await openSetupForExisting(customerId);
-  revalidatePath(`/admin/kunden/${customerId}`);
+  revalidatePath(`/admin/neu/kunden/${customerId}`);
   revalidatePath("/buyer", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
@@ -44,7 +44,7 @@ export async function restartSetupAction(fd: FormData) {
   const customerId = String(fd.get("customerId") ?? "");
   if (!customerId || fd.get("confirm") !== "on") return;
   await restartSetup(customerId);
-  revalidatePath(`/admin/kunden/${customerId}`);
+  revalidatePath(`/admin/neu/kunden/${customerId}`);
   revalidatePath("/buyer", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
@@ -88,7 +88,7 @@ export async function sendSetupReminderAction(fd: FormData) {
   const { sendSetupReminderNow } = await import("@/lib/selbst-einrichtung");
   const res = await sendSetupReminderNow(customerId);
   refresh();
-  redirect(await adminZiel(`/admin/kunden/${customerId}?einrichtung=${res.ok ? "erinnert" : encodeURIComponent(res.error)}`));
+  redirect(await adminZiel(`/admin/neu/kunden/${customerId}?einrichtung=${res.ok ? "erinnert" : encodeURIComponent(res.error)}`));
 }
 
 /** Selbst-Einrichtung: Meta-Zugriff jetzt prüfen (mit den beim Kunden hinterlegten IDs). */
@@ -98,7 +98,7 @@ export async function adminCheckMetaAction(fd: FormData) {
   const { checkMetaAccess } = await import("@/lib/selbst-einrichtung");
   const res = await checkMetaAccess(customerId, {}, { source: "admin" });
   refresh();
-  redirect(await adminZiel(`/admin/kunden/${customerId}?einrichtung=${res.ok ? (res.check.ok ? "meta-ok" : "meta-fehlt") : encodeURIComponent(res.error)}`));
+  redirect(await adminZiel(`/admin/neu/kunden/${customerId}?einrichtung=${res.ok ? (res.check.ok ? "meta-ok" : "meta-fehlt") : encodeURIComponent(res.error)}`));
 }
 
 export async function resendWelcomeAction(fd: FormData) {
@@ -118,7 +118,7 @@ export async function adminPlanPauseAction(fd: FormData) {
   const until = String(fd.get("until") ?? "").trim();
   const res = await planPause(customerId, { from: String(fd.get("from") ?? ""), until: until || null, reason: String(fd.get("reason") ?? "") }, "admin");
   refresh(contactId);
-  if (!res.ok) redirect(await adminZiel(`/admin/kunden/${customerId}/abrechnung?pause=${encodeURIComponent(res.error)}`));
+  if (!res.ok) redirect(await adminZiel(`/admin/neu/kunden/${customerId}/abrechnung?pause=${encodeURIComponent(res.error)}`));
 }
 
 export async function adminEndPauseAction(fd: FormData) {

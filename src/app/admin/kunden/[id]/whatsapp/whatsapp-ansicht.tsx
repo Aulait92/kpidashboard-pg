@@ -1,4 +1,4 @@
-import WhatsAppSettingsPage from "@/app/admin/whatsapp/settings/page";
+import WhatsAppSettingsPage from "@/app/admin/whatsapp/settings/einstellungen-ansicht";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
@@ -45,7 +45,7 @@ async function BestandModuleCard({ customerId }: { customerId: string }) {
         <p>
           {status} · {count.toLocaleString("de-DE")} Bestandskunden · {campaigns} Kampagnen
         </p>
-        <Link href={`/admin/kunden/${customerId}/abrechnung`} className="text-sm font-medium text-[color:var(--brand)] hover:underline">
+        <Link href={`/admin/neu/kunden/${customerId}/abrechnung`} className="text-sm font-medium text-[color:var(--brand)] hover:underline">
           Buchen, freischalten und Kontingent unter „Abrechnung“ →
         </Link>
       </div>

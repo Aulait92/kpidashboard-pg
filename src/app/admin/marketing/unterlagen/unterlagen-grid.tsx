@@ -26,7 +26,7 @@ const when = (iso: string) =>
 export function UnterlagenGrid({
   slots,
   demo,
-  praesentationBasis = "/admin/marketing/unterlagen/praesentation",
+  praesentationBasis = "/admin/neu/marketing/unterlagen/praesentation",
   funktionen = {},
 }: {
   slots: UnterlagenSlot[];

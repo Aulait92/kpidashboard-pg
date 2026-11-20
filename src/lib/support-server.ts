@@ -128,7 +128,7 @@ export async function contactEscalation(ctx: BuyerContext, id: string, channel: 
   await sendToAdmins({
     title: `Hilfe-Anfrage ${meta.ref}: ${REASON_LABEL[meta.reason] ?? "Support"}`,
     body: `${customer?.name ?? "Kunde"} ${via}: ${meta.summary}`.slice(0, 240),
-    url: "/admin/nutzung#hilfe-team",
+    url: "/admin/neu/zahlen/qualitaet#hilfe-team",
     tag: `support-${meta.ref}`,
   }).catch(() => null);
   await audit("help.escalate", { entity: "UsageEvent", entityId: ev.id, customerId: ctx.customerId, details: { ref: meta.ref, reason: meta.reason, channel } });

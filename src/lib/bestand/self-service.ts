@@ -114,7 +114,7 @@ async function notify(o: {
   customerSubject: string;
   customerParagraphs: string[];
 }) {
-  await sendToAdmins({ title: o.adminTitle, body: o.adminBody, url: `/admin/kunden/${o.customerId}/abrechnung`, tag: `bestand-self:${o.customerId}` }).catch((err) =>
+  await sendToAdmins({ title: o.adminTitle, body: o.adminBody, url: `/admin/neu/kunden/${o.customerId}/abrechnung`, tag: `bestand-self:${o.customerId}` }).catch((err) =>
     reportError(err, "bestand-self-push"),
   );
   const adminMail = process.env.ADMIN_EMAIL?.trim() || PROVIDER.email;

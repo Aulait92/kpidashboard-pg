@@ -9,7 +9,7 @@ export default function AdminNotFound() {
       <p className="text-sm font-semibold text-[color:var(--brand)]">404</p>
       <h1 className="mt-2 text-xl font-semibold tracking-tight">Das gibt es nicht mehr</h1>
       <p className="mt-2 text-sm text-[color:var(--muted)]">Vielleicht gelöscht oder zusammengeführt. Über die Suche oben finden Sie Kunden und Kontakte.</p>
-      <Link href="/admin/heute" className={buttonClass("primary", "md", "mt-6")}>
+      <Link href="/admin/neu" className={buttonClass("primary", "md", "mt-6")}>
         Zu Heute
       </Link>
     </main>

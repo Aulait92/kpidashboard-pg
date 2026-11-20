@@ -33,8 +33,8 @@ export async function ImBlick({ forecast, neueBuchungen, auto }: { forecast: For
   const zahlen = [
     { label: "Heute fällig", wert: v.due, href: `${NEU}/vertrieb/aufgaben`, ton: v.due ? "text-amber-700" : "" },
     { label: "Überfällig", wert: v.overdue, href: `${NEU}/vertrieb/aufgaben`, ton: v.overdue ? "text-rose-600" : "" },
-    { label: "Antworten", wert: v.answers, href: neu("/admin/vertrieb/kontakte?mail=replied"), ton: v.answers ? "text-emerald-700" : "" },
-    { label: "Mail, nie angerufen", wert: v.mailNoCall, href: neu("/admin/vertrieb/kontakte?mail=sent&stage=NEU"), ton: "" },
+    { label: "Antworten", wert: v.answers, href: neu("/admin/neu/vertrieb/kontakte?mail=replied"), ton: v.answers ? "text-emerald-700" : "" },
+    { label: "Mail, nie angerufen", wert: v.mailNoCall, href: neu("/admin/neu/vertrieb/kontakte?mail=sent&stage=NEU"), ton: "" },
   ];
   const mehrText = [neueBuchungen > 0 ? (neueBuchungen === 1 ? "1 neue Buchung" : `${neueBuchungen} neue Buchungen`) : null, auto.length ? `${auto.length} automatisch` : null]
     .filter(Boolean)
@@ -107,7 +107,7 @@ export async function ImBlick({ forecast, neueBuchungen, auto }: { forecast: For
 
         {neueBuchungen > 0 ? (
           <Link
-            href={neu("/admin/zahlen/buchungen")}
+            href={neu("/admin/neu/zahlen/umsatz")}
             className={cn(zeile, "border-t border-[color:var(--border)]")}
             data-funktion="admin-buchungen-neu-countneuebuchungen--hinweis-neue-buchungen-seit-letztem-besuch"
             data-neue-buchungen={neueBuchungen}
@@ -130,7 +130,7 @@ export async function ImBlick({ forecast, neueBuchungen, auto }: { forecast: For
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5" data-funktion="vertrieb-blick--vertrieb-auf-einen-blick-kontakte-je-stufe">
             {STAGES.filter((s) => v.count(s.id) > 0).map((s) => (
-              <Link key={s.id} href={neu(`/admin/vertrieb/kontakte?stage=${s.id}`)} className={`badge ${s.color} min-h-8`}>
+              <Link key={s.id} href={neu(`/admin/neu/vertrieb/kontakte?stage=${s.id}`)} className={`badge ${s.color} min-h-8`}>
                 {s.label} {v.count(s.id).toLocaleString("de-DE")}
               </Link>
             ))}

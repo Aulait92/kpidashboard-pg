@@ -28,7 +28,7 @@ export async function alleGutenFreigebenAction(_prev: ReportActionState, fd: For
     if (r.ok) ok++;
     else fehler.push(r.error);
   }
-  revalidatePath("/admin/monatsberichte");
+  revalidatePath("/admin/neu/kunden/berichte");
   revalidatePath("/admin/neu", "layout");
   if (fehler.length) return { ok: ok > 0, error: `${ok} gesendet, ${fehler.length} nicht: ${fehler[0]}` };
   return { ok: true, message: `${ok} ${ok === 1 ? "Bericht" : "Berichte"} gesendet.` };

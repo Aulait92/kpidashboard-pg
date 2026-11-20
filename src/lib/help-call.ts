@@ -93,7 +93,7 @@ export async function bookHelpCall(
     await sendToAdmins({
       title: `🛟 Hilfetermin: ${customer.name}`,
       body: `${when} Uhr${topic ? ` · ${topic}` : ""}`,
-      url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/heute",
+      url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}` : "/admin/neu",
     }).catch(() => {});
     return { ok: true, start, url: event.videoUrl ?? null };
   } catch (err) {

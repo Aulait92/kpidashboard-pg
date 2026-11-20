@@ -43,7 +43,7 @@ async function nudgeBookingCalendar(customerId: string, what: string) {
     prisma.customer.findUnique({ where: { id: customerId }, select: { name: true } }),
   ]);
   if (conn?.status === "connected") return;
-  await sendToAdmins({ title: `📅 ${what}: ${customer?.name ?? "Kunde"}`, body: "Bitte Buchungskalender verbinden (Kundenakte → WhatsApp-Assistent).", url: `/admin/kunden/${customerId}/whatsapp` }).catch(() => {});
+  await sendToAdmins({ title: `📅 ${what}: ${customer?.name ?? "Kunde"}`, body: "Bitte Buchungskalender verbinden (Kundenakte → WhatsApp-Assistent).", url: `/admin/neu/kunden/${customerId}/whatsapp` }).catch(() => {});
 }
 
 export async function connectAllianzAction(_prev: SourceResult, fd: FormData): Promise<SourceResult> {

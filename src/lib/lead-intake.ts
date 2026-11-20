@@ -202,7 +202,7 @@ export async function ingestLead(
     await sendToAdmins({
       title: "📥 Lead ohne Zuordnung",
       body: `Formular ${inc.formId ?? "unbekannt"}${inc.campaignName ? ` · ${inc.campaignName}` : ""}${dormant ? " · Kunde ruht (Vertrag beendet)" : ""}. Bitte unter Lead-Eingang zuordnen.`,
-      url: "/admin/lead-eingang",
+      url: "/admin/neu/leads",
       tag: `unassigned:${inc.formId ?? "x"}`,
     }).catch(() => {});
     return { status: "unassigned" };

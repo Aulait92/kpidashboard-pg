@@ -63,7 +63,7 @@ export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Pa
               <tr key={r.offerId}>
                 <td className="px-4 py-2 tabular-nums">{r.number}</td>
                 <td className="px-4 py-2">
-                  <Link href={`/admin/vertrieb/kontakte/${r.contactId}`} className="hover:underline">
+                  <Link href={`/admin/neu/vertrieb/kontakte/${r.contactId}`} className="hover:underline">
                     {r.company}
                   </Link>
                 </td>
@@ -96,7 +96,7 @@ export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Pa
             {top.map((t) => (
               <tr key={t.id}>
                 <td className="px-4 py-2">
-                  <Link href={`/admin/kunden/${t.id}`} className="font-medium hover:underline">
+                  <Link href={`/admin/neu/kunden/${t.id}`} className="font-medium hover:underline">
                     {t.name}
                   </Link>
                 </td>
@@ -132,7 +132,7 @@ export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Pa
                 <td className="whitespace-nowrap px-4 py-2 text-[color:var(--muted)]">{date(r.createdAt)}</td>
                 <td className="px-4 py-2">
                   {r.contactId ? (
-                    <Link href={`/admin/vertrieb/kontakte/${r.contactId}`} className="font-medium hover:underline">
+                    <Link href={`/admin/neu/vertrieb/kontakte/${r.contactId}`} className="font-medium hover:underline">
                       {r.name ?? "(gelöscht)"}
                     </Link>
                   ) : (
@@ -143,7 +143,7 @@ export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Pa
                   {r.status === "blocked" ? <span className="block text-sm text-[color:var(--muted)]">{r.blockedReason}</span> : null}
                 </td>
                 <td className="px-4 py-2">
-                  <Link href={`/admin/kunden/${r.referrer.id}`} className="hover:underline">
+                  <Link href={`/admin/neu/kunden/${r.referrer.id}`} className="hover:underline">
                     {r.referrer.name}
                   </Link>
                 </td>

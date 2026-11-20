@@ -18,9 +18,9 @@ async function requireAdmin() {
 // Rückweg: alte Seite oder (Feld „zurueck“) der neue Admin unter /admin/neu/leads
 const ziel = (fd: FormData) => {
   const z = String(fd.get("zurueck") ?? "");
-  return z.startsWith("/admin/neu/") && !z.includes("?") ? z : "/admin/lead-eingang";
+  return z.startsWith("/admin/neu/") && !z.includes("?") ? z : "/admin/neu/leads";
 };
-const back = (msg: string, ok = true, basis = "/admin/lead-eingang") => redirect(`${basis}?${ok ? "ok" : "err"}=${encodeURIComponent(msg)}`);
+const back = (msg: string, ok = true, basis = "/admin/neu/leads") => redirect(`${basis}?${ok ? "ok" : "err"}=${encodeURIComponent(msg)}`);
 
 export async function assignFormAction(fd: FormData) {
   await requireAdmin();
@@ -66,10 +66,10 @@ export async function assignFormAction(fd: FormData) {
 }
 
 function aktualisieren() {
-  revalidatePath("/admin/lead-eingang");
+  revalidatePath("/admin/neu/leads");
   revalidatePath("/admin/neu", "layout");
-  revalidatePath("/admin/kunden", "layout");
-  revalidatePath("/admin/vertrieb", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
+  revalidatePath("/admin/neu/vertrieb", "layout");
 }
 
 /** Seite am Meta-Webhook abonnieren (leadgen). Gibt den Hinweis für die Meldung zurück. */
@@ -128,16 +128,16 @@ export async function toggleSourceAction(fd: FormData) {
     const u = await prisma.leadSource.update({ where: { id }, data: { active: !s.active } });
     await audit("leadsource.toggle", { entity: "LeadSource", entityId: u.formId, customerId: u.customerId, details: { active: u.active } });
   }
-  revalidatePath("/admin/lead-eingang");
+  revalidatePath("/admin/neu/leads");
   revalidatePath("/admin/neu", "layout");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
 }
 
 export async function dismissUnassignedAction(fd: FormData) {
   await requireAdmin();
   const formId = String(fd.get("formId") ?? "");
   await prisma.unassignedLead.updateMany({ where: { formId: formId || null, resolvedAt: null }, data: { resolvedAt: new Date() } });
-  revalidatePath("/admin/lead-eingang");
+  revalidatePath("/admin/neu/leads");
   revalidatePath("/admin/neu", "layout");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
 }

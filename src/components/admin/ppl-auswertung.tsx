@@ -63,7 +63,7 @@ export function PplOverview({ rows }: { rows: CustomerOverviewRow[] }) {
                 {rows.map((r) => (
                   <tr key={`${r.customerId}-${r.product}`}>
                     <td className="whitespace-nowrap px-3 py-2">
-                      <Link href={`/admin/kunden/${r.customerId}`} className="font-medium text-[color:var(--brand)] hover:underline">{r.customer}</Link>
+                      <Link href={`/admin/neu/kunden/${r.customerId}`} className="font-medium text-[color:var(--brand)] hover:underline">{r.customer}</Link>
                     </td>
                     <td className="whitespace-nowrap px-3 py-2">{r.product}</td>
                     <Period p={r.week} />
@@ -107,7 +107,7 @@ function Bars({ rows }: { rows: PplReport["rows"] }) {
 }
 
 export function PplReportView({ report }: { report: PplReport }) {
-  const q = (g: string, p: string | null) => `/admin/ppl?ansicht=auswertung&zeitraum=${g}${p ? `&produkt=${encodeURIComponent(p)}` : ""}`;
+  const q = (g: string, p: string | null) => `/admin/neu/leads/ppl?ansicht=auswertung&zeitraum=${g}${p ? `&produkt=${encodeURIComponent(p)}` : ""}`;
   const rows = [...report.rows].reverse();
   const keys = Object.keys(REJECT_LABELS) as RejectKey[];
   const tot = report.rows.reduce(

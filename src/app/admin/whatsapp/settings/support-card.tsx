@@ -53,7 +53,7 @@ export async function SupportInboxCard({ status }: { status: string | null }) {
           <span className="text-amber-700">360dialog-Partnerzugang fehlt (DIALOG360_PARTNER_ID / DIALOG360_PARTNER_API_KEY).</span>
         )}
         {acc ? (
-          <Link href="/admin/whatsapp" className="rounded-lg border border-[color:var(--border)] px-4 py-2 font-medium">
+          <Link href="/admin/neu/leads/chats" className="rounded-lg border border-[color:var(--border)] px-4 py-2 font-medium">
             Zu den Chats
           </Link>
         ) : null}

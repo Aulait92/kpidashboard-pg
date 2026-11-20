@@ -17,7 +17,7 @@ export async function setCapiDatasetAction(_prev: CapiDatasetState, fd: FormData
   const res = await setDatasetManually(customerId, raw || null);
   if (!res.ok) return { error: res.error };
   await audit("customer.capi_dataset", { entity: "Customer", entityId: customerId, customerId, details: { dataset: res.datasetId } });
-  revalidatePath(`/admin/kunden/${customerId}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${customerId}`, "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   if (res.datasetId) return { ok: true, message: "Dataset gespeichert." };
   // Leer: gleich automatisch suchen (Werbekonto → erstes Dataset)

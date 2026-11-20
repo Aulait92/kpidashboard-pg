@@ -63,7 +63,7 @@ export async function GET(req: Request): Promise<Response> {
       id: c.id,
       title: short(c.name),
       subtitle: `Kunde${c.archived ? " (archiviert)" : ""}${c.plan === "internal" ? "" : ` · ${packageLabel(c)}`}`,
-      href: `/admin/kunden/${c.id}`,
+      href: `/admin/neu/kunden/${c.id}`,
       ...(testKennung(c) ? { badge: testKennung(c)! } : {}),
     })),
     ...contacts.map((c) => ({
@@ -71,14 +71,14 @@ export async function GET(req: Request): Promise<Response> {
       id: c.id,
       title: short(c.name),
       subtitle: `Vertriebskontakt${c.city ? ` · ${c.city}` : ""}`,
-      href: `/admin/vertrieb/kontakte/${c.id}`,
+      href: `/admin/neu/vertrieb/kontakte/${c.id}`,
     })),
     ...leads.map((l) => ({
       kind: "lead" as const,
       id: l.id,
       title: l.name ?? "Lead ohne Name",
       subtitle: `Lead · ${short(l.customer.name)}${l.source ? ` · ${l.source}` : ""}`,
-      href: `/admin/leads?kunde=${l.customer.id}&q=${encodeURIComponent(l.name ?? "")}`,
+      href: `/admin/neu/leads/alle?kunde=${l.customer.id}&q=${encodeURIComponent(l.name ?? "")}`,
     })),
     ...logins.flatMap((u) =>
       u.customer
@@ -88,7 +88,7 @@ export async function GET(req: Request): Promise<Response> {
               id: u.id,
               title: u.email,
               subtitle: `Login · ${short(u.customer.name)}${u.displayName ? ` · ${u.displayName}` : ""}${u.teamRole === "advisor" ? " · Berater" : ""}`,
-              href: `/admin/kunden/${u.customer.id}/logins`,
+              href: `/admin/neu/kunden/${u.customer.id}/team`,
             },
           ]
         : [],

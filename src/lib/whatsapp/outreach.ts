@@ -381,7 +381,7 @@ export async function meldeErstinfoFehlt(customerId: string): Promise<void> {
   await sendToAdmins({
     title: `Erstinformation fehlt: ${customer?.name ?? customerId}`,
     body: "Erstanschreiben wartet, weil kein PDF der Erstinformation erzeugbar ist.",
-    url: `/admin/kunden/${customerId}`,
+    url: `/admin/neu/kunden/${customerId}`,
     tag,
   }).catch(() => {});
 }

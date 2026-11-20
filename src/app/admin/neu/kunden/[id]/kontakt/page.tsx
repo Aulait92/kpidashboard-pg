@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
-import ContactPage from "@/app/admin/vertrieb/kontakte/[id]/page";
+import ContactPage from "@/app/admin/vertrieb/kontakte/[id]/kontakt-ansicht";
 import { KundenakteSeite } from "@/components/admin-neu/kunden/akte";
 import { prisma } from "@/lib/prisma";
 

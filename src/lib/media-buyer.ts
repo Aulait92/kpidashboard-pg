@@ -1762,7 +1762,7 @@ async function persistAndNotify(
       title: `${icon} Media Buyer: ${r.poolLabel}`,
       body: r.reason.slice(0, 160),
       tag: `media-buyer:${r.poolKey}`,
-      url: "/admin/media-buyer",
+      url: "/admin/neu/leads/werbekonten",
     });
   }
 }

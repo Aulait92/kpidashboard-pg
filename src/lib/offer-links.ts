@@ -17,8 +17,8 @@ type OfferRef = { dealId: string | null; salesContactId: string | null };
 export type OfferTarget = { dealId: string } | { salesContactId: string };
 
 export function offerAdminHref(o: OfferRef): string {
-  if (o.salesContactId) return `/admin/vertrieb/kontakte/${o.salesContactId}`;
-  return "/admin/vertrieb/angebote";
+  if (o.salesContactId) return `/admin/neu/vertrieb/kontakte/${o.salesContactId}`;
+  return "/admin/neu/vertrieb/angebote";
 }
 
 /** Eintrag in der Historie des Deals bzw. Kontakts. */

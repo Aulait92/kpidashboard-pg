@@ -81,7 +81,7 @@ export function AccountView({
   return (
     <div className="space-y-5">
       {showBackLink ? (
-        <AdminBack href="/admin/optimierung">Optimierung</AdminBack>
+        <AdminBack href="/admin/neu/leads/werbekonten">Optimierung</AdminBack>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
         {ohneTitel ? null : <h1 className="text-2xl font-semibold tracking-tight">{a.label}</h1>}
@@ -94,7 +94,7 @@ export function AccountView({
         {a.customer ? (
           <>
             {" · "}
-            <Link className="underline" href={`/admin/kunden/${a.customer.id}`}>
+            <Link className="underline" href={`/admin/neu/kunden/${a.customer.id}`}>
               Kundenakte
             </Link>
           </>

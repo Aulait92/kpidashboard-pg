@@ -202,7 +202,7 @@ describe("Warnung ohne Steuernummer", () => {
     expect(taxNumberWarning("DE123456789")).toBeNull();
     const item = rechnungItem(null);
     expect(item).toMatchObject({ key: "rechnung:steuernummer", tone: "warn", title: "Rechnungen ohne Steuernummer" });
-    expect(item?.action.href).toBe("/admin/einstellungen/rechnungsangaben");
+    expect(item?.action.href).toBe("/admin/neu/einstellungen/rechnungsangaben");
     expect(rechnungItem("DE123456789")).toBeNull();
   });
 });

@@ -86,7 +86,7 @@ export async function savePoolSettings(
     },
   });
 
-  revalidatePath("/admin/media-buyer");
+  revalidatePath("/admin/neu/leads/werbekonten");
 
   revalidatePath("/admin/neu", "layout");
   return { ok: true, savedLabel: pool.label };
@@ -104,7 +104,7 @@ export async function runDryRun(): Promise<DryRunState> {
   await requireAdmin();
   try {
     const result = await runMediaBuyer({ dryRun: true });
-    revalidatePath("/admin/media-buyer");
+    revalidatePath("/admin/neu/leads/werbekonten");
     revalidatePath("/admin/neu", "layout");
     return { ok: true, results: result.pools };
   } catch (err) {
@@ -119,7 +119,7 @@ export async function runApplyNow(): Promise<DryRunState> {
   await requireAdmin();
   try {
     const result = await runMediaBuyer({ force: true });
-    revalidatePath("/admin/media-buyer");
+    revalidatePath("/admin/neu/leads/werbekonten");
     revalidatePath("/admin/neu", "layout");
     return { ok: true, results: result.pools };
   } catch (err) {

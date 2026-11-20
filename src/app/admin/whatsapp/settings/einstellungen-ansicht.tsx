@@ -123,7 +123,7 @@ export default async function WhatsAppSettingsPage({
         <h1 className="text-2xl font-semibold tracking-tight">
           WhatsApp-Einstellungen
         </h1>
-        <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
+        <AdminBack href="/admin/neu/einstellungen">Einstellungen</AdminBack>
       </div>
 
 
@@ -182,7 +182,7 @@ export default async function WhatsAppSettingsPage({
             >
               {only ? null : (
                 <h2 className="text-lg font-semibold">
-                  <Link href={`/admin/kunden/${c.id}/whatsapp`} className="hover:underline">
+                  <Link href={`/admin/neu/kunden/${c.id}/whatsapp`} className="hover:underline">
                     {c.name}
                   </Link>
                 </h2>

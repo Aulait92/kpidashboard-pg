@@ -16,7 +16,7 @@ export async function GET(req: Request): Promise<Response> {
   if (!session || session.role !== "ADMIN") return appRedirect("/login", req);
   // Aus dem neuen Admin (Einstellungen → WhatsApp): Rücksprung dorthin (lib/admin-neu/ruecksprung.ts)
   const neu = neuPfadAusReferer(req.headers.get("referer"));
-  const back = (s: string) => appRedirect(`${neu ?? "/admin/whatsapp/settings"}?support=${s}#support`, req);
+  const back = (s: string) => appRedirect(`${neu ?? "/admin/neu/einstellungen/whatsapp"}?support=${s}#support`, req);
   const cfg = partnerConfig();
   if (!cfg) return back("error");
   let base: string;

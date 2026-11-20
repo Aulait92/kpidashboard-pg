@@ -6,7 +6,7 @@ import { Aufklapp } from "@/components/admin-neu/kunden/aufklapp";
 import { LetzteLeads, WerbekontoFormulare, werbekontoStand } from "@/components/admin-neu/kunden/leads";
 import { LeadQualitaetCard } from "@/components/admin/lead-qualitaet-card";
 import { VerlustgruendeCard } from "@/components/admin/verlustgruende-card";
-import KundenOptimierung from "@/app/admin/kunden/[id]/optimierung/page";
+import KundenOptimierung from "@/app/admin/kunden/[id]/optimierung/optimierung-ansicht";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = { title: "Leads | performancegrowth Admin" };

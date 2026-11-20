@@ -435,7 +435,7 @@ const whenShort = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
 
 async function pushOle(title: string, body: string, contactId: string, tag: string) {
-  await sendToAdmins({ title, body, url: `/admin/vertrieb/kontakte/${contactId}`, tag }).catch((e) => reportError(e, "vertrieb-buchung-push"));
+  await sendToAdmins({ title, body, url: `/admin/neu/vertrieb/kontakte/${contactId}`, tag }).catch((e) => reportError(e, "vertrieb-buchung-push"));
 }
 
 // ─── E-Mail an uns (Ole, 19.11.2026): jede Buchung, Verschiebung und Absage über /termin auch per Mail ──
@@ -471,7 +471,7 @@ async function mailOle(kind: TeamMailKind, contactId: string, m: Parameters<type
     const c = teamMailContent(kind, m);
     let button: { label: string; url: string } | undefined;
     try {
-      button = { label: "Kontakt öffnen", url: `${getAppUrl()}/admin/vertrieb/kontakte/${contactId}` };
+      button = { label: "Kontakt öffnen", url: `${getAppUrl()}/admin/neu/vertrieb/kontakte/${contactId}` };
     } catch {
       button = undefined; // ohne APP_URL (z. B. Tests) Mail ohne Knopf
     }

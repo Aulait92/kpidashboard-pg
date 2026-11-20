@@ -31,7 +31,7 @@ export async function POST(req: Request): Promise<Response> {
       await sendToAdmins({
         title: `💬 Feedback von ${c?.name ?? "Kunde"}`,
         body: text.slice(0, 140),
-        url: "/admin/nutzung",
+        url: "/admin/neu/zahlen/qualitaet",
         tag: `feedback:${Date.now()}`,
       }).catch(() => {});
     }

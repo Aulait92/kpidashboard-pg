@@ -424,10 +424,10 @@ export function ZahlenView({
         ))}
         {!investor ? (
           <>
-            <Link href="/admin/einstellungen/kosten" className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 text-sm text-[color:var(--muted)]">
+            <Link href="/admin/neu/zahlen/kosten" className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 text-sm text-[color:var(--muted)]">
               Laufende Kosten →
             </Link>
-            <Link href="/admin/nutzung" className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 py-1.5 text-sm text-[color:var(--muted)]">
+            <Link href="/admin/neu/zahlen/qualitaet" className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 py-1.5 text-sm text-[color:var(--muted)]">
               Nutzung →
             </Link>
           </>
@@ -820,7 +820,7 @@ function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean })
         ) : (
           <Empty>
             Noch keine Kosten im {longMonth(data.lastComplete)}. Tools wie Instantly, Zapier und Claude unter{" "}
-            <Link href="/admin/einstellungen/kosten" className="text-[color:var(--brand)]">Laufende Kosten</Link> eintragen.
+            <Link href="/admin/neu/zahlen/kosten" className="text-[color:var(--brand)]">Laufende Kosten</Link> eintragen.
           </Empty>
         )}
       </Card>
@@ -897,7 +897,7 @@ function RangeChips({ param, current, from, to }: { param: string; current: stri
       {PRODUKT_RANGES.map((r) => (
         <Link
           key={r.key}
-          href={`/admin/zahlen?${param}=${r.key}`}
+          href={`/admin/neu/zahlen?${param}=${r.key}`}
           scroll={false}
           className={cn(
             "rounded-full border px-3 py-1 text-[13px]",
@@ -1073,7 +1073,7 @@ function BwaTab({ d }: { d: BwaData }) {
         {d.ranges.map((r) => (
           <Link
             key={r.key}
-            href={`/admin/zahlen?bwa=${r.key}`}
+            href={`/admin/neu/zahlen?bwa=${r.key}`}
             scroll={false}
             className={cn(
               "rounded-full border px-3 py-1 text-[13px]",
@@ -1089,7 +1089,7 @@ function BwaTab({ d }: { d: BwaData }) {
       </div>
       <div className="flex flex-wrap gap-2 text-[12.5px]">
         {hints.openExpenses ? (
-          <Link href="/admin/einstellungen/bank/zuordnen" className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-900 hover:underline">
+          <Link href="/admin/neu/zahlen/kosten/zuordnen" className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-900 hover:underline">
             Offene, nicht zugeordnete Ausgaben: {hints.openExpenses} →
           </Link>
         ) : null}
@@ -1364,7 +1364,7 @@ const STREAM_COLOR: Record<string, string> = { ppl: "var(--z-s1)", service: "var
 
 function CustomerName({ id, name, link }: { id: string; name: string; link: boolean }) {
   return link ? (
-    <Link href={`/admin/kunden/${id}`} className="font-medium text-[color:var(--brand)] hover:underline">
+    <Link href={`/admin/neu/kunden/${id}`} className="font-medium text-[color:var(--brand)] hover:underline">
       {name}
     </Link>
   ) : (
@@ -1617,7 +1617,7 @@ function MissingRetainer({ data }: { data: ZahlenData }) {
               {c.plan === "service" ? "Nur Betreuung" : c.plan === "ppl_software" ? "Pay-per-Lead + Software" : "Betreuung + Software"}
               {c.liveSince ? ` · live seit ${new Date(c.liveSince).toLocaleDateString("de-DE")}` : ""}
             </span>
-            <Link href={`/admin/kunden/${c.customerId}/abrechnung#betreuungsgebuehr`} className="ml-auto font-semibold text-[color:var(--brand)] hover:underline">
+            <Link href={`/admin/neu/kunden/${c.customerId}/abrechnung#betreuungsgebuehr`} className="ml-auto font-semibold text-[color:var(--brand)] hover:underline">
               In der Kundenakte eintragen →
             </Link>
           </li>
@@ -1795,7 +1795,7 @@ function Produkte({ p }: { p: ProdukteData }) {
         {PRODUKT_RANGES.map((r) => (
           <Link
             key={r.key}
-            href={`/admin/zahlen?zeitraum=${r.key}`}
+            href={`/admin/neu/zahlen?zeitraum=${r.key}`}
             scroll={false}
             className={cn(
               "rounded-full border px-3 py-1 text-[13px]",
@@ -1881,7 +1881,7 @@ function Produkte({ p }: { p: ProdukteData }) {
                 {p.matrix.map((r) => (
                   <tr key={r.customerId} className="border-t border-[color:var(--border)] align-top">
                     <td className="sticky left-0 bg-white py-1.5 pr-2">
-                      <Link href={`/admin/kunden/${r.customerId}`} className="font-medium text-[color:var(--brand)] hover:underline">
+                      <Link href={`/admin/neu/kunden/${r.customerId}`} className="font-medium text-[color:var(--brand)] hover:underline">
                         {r.name}
                       </Link>
                     </td>

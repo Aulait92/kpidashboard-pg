@@ -319,7 +319,7 @@ export async function adminWhatsAppAlarm(customerId: string, error: Zustellfehle
     opts.purpose ? `Nachricht: ${opts.purpose}` : null,
     ART_HINWEIS[error.art],
     `Weitere Fehler mit diesem Code heute zählen unter Admin → Zahlen → WhatsApp-Zustellung.`,
-    `Kunden-ID ${customerId} · Kundenakte: /admin/kunden/${customerId}`,
+    `Kunden-ID ${customerId} · Kundenakte: /admin/neu/kunden/${customerId}`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -330,7 +330,7 @@ export async function adminWhatsAppAlarm(customerId: string, error: Zustellfehle
   await sendToAdmins({
     title: `⚠️ ${title}`,
     body: `${ART_LABEL[error.art]}${error.title ? `: ${error.title}` : ""}`.slice(0, 140),
-    url: `/admin/kunden/${customerId}`,
+    url: `/admin/neu/kunden/${customerId}`,
     tag: `wa-fehler:${customerId}:${code}:${day}`,
   }).catch(() => {});
   return "created";

@@ -1,7 +1,8 @@
 // Infokarten auf der Login-Seite: Rotation und Ziel nach der Anmeldung.
 // Ohne Datenbank (nur reine Daten-Imports): läuft auch in der Middleware und ist testbar.
 
-import { ADMIN_START, neuStartFuer } from "@/lib/admin-neu/schalter";
+import { ADMIN_START } from "@/lib/admin-neu/schalter";
+import { neuerPfad } from "@/lib/admin-neu/umzug";
 
 /** Zähler der Rotation (je Browser): bei jedem Aufruf der Login-Seite +1. */
 export const LOGIN_CARD_COOKIE = "pg_login_karte";
@@ -87,8 +88,7 @@ export function loginTarget(who: LoginWho, next: unknown): string {
     if (who.teamRole === "advisor" && (OWNER_ONLY_SECTIONS as readonly string[]).includes(section)) return ADVISOR_BLOCKED_TARGET;
     return path;
   }
-  // Admin: Kundenbereich nur mit offener Vorschau, sonst Admin-Startseite; alte Startadressen führen auf den neuen Admin
+  // Admin: Kundenbereich nur mit offener Vorschau, sonst Admin-Startseite; alte Admin-Adressen führen auf ihr Gegenstück
   if (buyerArea && !who.preview) return home;
-  if (neuStartFuer(path.split(/[?#]/)[0])) return home;
-  return path;
+  return neuerPfad(path) ?? path;
 }

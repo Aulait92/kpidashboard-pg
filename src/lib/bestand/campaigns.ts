@@ -584,7 +584,7 @@ async function sendWhatsAppPart(
         await sendToAdmins({
           title: `WhatsApp-Kampagne wartet: ${c.customer.name}`,
           body: `Keine passende freigegebene WhatsApp-Vorlage für „${OCCASIONS[c.occasion as Occasion].label}“.`,
-          url: "/admin/whatsapp/settings",
+          url: "/admin/neu/einstellungen/whatsapp",
           tag: `kampagne-vorlage:${c.id}`,
         }).catch(() => {});
         break;
@@ -633,7 +633,7 @@ async function warnMailbox(mb: MailboxRun, text: string) {
     await sendToUser(o, { title: "E-Mail-Kampagne gedrosselt", body: text, url: "/buyer/bestand", tag: `bestand-mail-drossel:${mb.id}` }).catch(() => {});
   }
   const c = await prisma.customer.findUnique({ where: { id: mb.customerId }, select: { name: true } });
-  await sendToAdmins({ title: `E-Mail-Kampagne gedrosselt: ${c?.name ?? ""}`, body: `${mb.email}: ${text}`, url: `/admin/kunden/${mb.customerId}`, tag: `bestand-mail-drossel:${mb.id}` }).catch(() => {});
+  await sendToAdmins({ title: `E-Mail-Kampagne gedrosselt: ${c?.name ?? ""}`, body: `${mb.email}: ${text}`, url: `/admin/neu/kunden/${mb.customerId}`, tag: `bestand-mail-drossel:${mb.id}` }).catch(() => {});
 }
 
 async function checkBounces(mb: MailboxRun, now: Date) {

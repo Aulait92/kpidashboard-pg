@@ -191,7 +191,7 @@ export async function adminTask(contactId: string | null, title: string, note: s
 
 export async function notifyAdmins(title: string, body: string, contactId: string | null, customerId: string) {
   const { sendToAdmins } = await import("@/lib/push");
-  await sendToAdmins({ title, body, url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : `/admin/kunden/${customerId}/abrechnung` }).catch(() => {});
+  await sendToAdmins({ title, body, url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}` : `/admin/neu/kunden/${customerId}/abrechnung` }).catch(() => {});
 }
 
 /** Budget ändern (Kunde). Speichert sofort bzw. zum Datum; über individualFrom nur als Anfrage. */

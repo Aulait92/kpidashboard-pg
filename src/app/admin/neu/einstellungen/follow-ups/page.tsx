@@ -33,7 +33,7 @@ export default async function Page() {
   const planned = active.filter((f) => f.status === "GEPLANT" && f.step === 0);
   const running = active.filter((f) => f.status === "GEPLANT" && f.step > 0);
   const autoSync = process.env.INSTANTLY_AUTO_SYNC === "1" && !!process.env.INSTANTLY_API_KEY;
-  const kontakt = (id: string) => ziel(`/admin/vertrieb/kontakte/${id}`) + "#follow-up";
+  const kontakt = (id: string) => ziel(`/admin/neu/vertrieb/kontakte/${id}`) + "#follow-up";
 
   const zeile = (f: Item, aktion?: React.ReactNode) => (
     <li key={f.id} className="px-5 py-3 text-sm">

@@ -158,7 +158,7 @@ async function bonusPush(o: OfferRow, now: Date, antwort: boolean): Promise<bool
       .filter(Boolean)
       .join(" · "),
     // Kontaktakte mit „Anrufen“ oben (die Middleware führt auf die neue Oberfläche)
-    url: o.salesContactId ? `/admin/vertrieb/kontakte/${o.salesContactId}` : "/admin/vertrieb/angebote",
+    url: o.salesContactId ? `/admin/neu/vertrieb/kontakte/${o.salesContactId}` : "/admin/neu/vertrieb/angebote",
     tag: `bonus-heute:${o.id}`,
   }).catch((err) => reportError(err, "bonus-erinnerung-push"));
   return true;

@@ -40,7 +40,7 @@ export async function impressumFehltAufgabe(customerId: string, now = new Date()
           note: [
             "Auf den Seiten für Endkunden (Buchung, Termin verwalten, Empfehlung) fehlt das Impressum des Vermittlers; dort steht deshalb „Anbieterangaben (Erstinformation)“.",
             "Impressum-Adresse im Onboarding (Website auslesen) nachtragen oder den Kunden bitten, sie in der Einrichtung einzutragen.",
-            `${marker(customerId)} · Kundenakte: /admin/kunden/${customerId}`,
+            `${marker(customerId)} · Kundenakte: /admin/neu/kunden/${customerId}`,
           ].join("\n"),
           dueAt: now,
         },

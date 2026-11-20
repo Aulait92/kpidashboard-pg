@@ -224,7 +224,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
       </Card>
 
       <p className="mt-4 text-xs text-[color:var(--muted)]">
-        Neue Kampagne für einen Kunden: in der Kundenakte unter <Link href="/admin/neu/kunden" className="underline">Kampagne & Leads</Link>.
+        Neue Kampagne für einen Kunden: in der Kundenakte unter <Link href="/admin/neu/kunden" className="underline">Leads</Link>.
       </p>
     </Seite>
   );

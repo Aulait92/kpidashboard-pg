@@ -10,7 +10,7 @@ export function TestkundeLoeschen({
   customerId,
   name,
   whatsapp,
-  zurueck = "/admin/kunden",
+  zurueck = "/admin/neu/kunden",
 }: {
   customerId: string;
   name: string;
