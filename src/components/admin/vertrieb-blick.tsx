@@ -6,12 +6,8 @@ import { addDays, fmtDateTime } from "@/lib/vertrieb/dates";
 import { dayBounds } from "@/lib/vertrieb/queries";
 import { cn } from "@/lib/utils";
 
-/**
- * Vertrieb auf einen Blick (früher Vertrieb → Übersicht, seit 16.11.2026 auf Heute):
- * Kennzahlen, nächste Termine, neue Anfragen und Pipeline. Die fälligen Aufgaben stehen in „Braucht Sie“
- * bzw. im Reiter „Aufgaben“. Pipeline und Anfragen zugeklappt (seltener gebraucht).
- */
-export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
+/** Daten von „Vertrieb auf einen Blick“ (auch für Mein Tag im neuen Admin, app/admin/neu/im-blick.tsx). */
+export async function ladeVertriebBlick() {
   const { start, tomorrow } = dayBounds();
   const [due, overdue, stageCounts, sent, replies, mailNoCall, total, liConnected, liReplies, meetings, leads] = await Promise.all([
     prisma.salesTask.count({ where: { doneAt: null, dueAt: { gte: start, lt: tomorrow } } }),
@@ -38,6 +34,16 @@ export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
   ]);
   const count = (id: string) => stageCounts.find((s) => s.stage === id)?._count ?? 0;
   const answers = replies + liReplies;
+  return { due, overdue, answers, mailNoCall, total, sent, liConnected, meetings, leads, count };
+}
+
+/**
+ * Vertrieb auf einen Blick (früher Vertrieb → Übersicht, seit 16.11.2026 auf Heute):
+ * Kennzahlen, nächste Termine, neue Anfragen und Pipeline. Die fälligen Aufgaben stehen in „Braucht Sie“
+ * bzw. im Reiter „Aufgaben“. Pipeline und Anfragen zugeklappt (seltener gebraucht).
+ */
+export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
+  const { due, overdue, answers, mailNoCall, total, sent, liConnected, meetings, leads, count } = await ladeVertriebBlick();
   const stats: { label: string; value: number; href: string; tone?: string }[] = [
     { label: "Heute fällig", value: due, href: "/admin/heute/aufgaben", tone: due ? "text-amber-700" : undefined },
     { label: "Überfällig", value: overdue, href: "/admin/heute/aufgaben", tone: overdue ? "text-rose-600" : undefined },

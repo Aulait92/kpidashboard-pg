@@ -453,7 +453,7 @@
   "id": "admin-heute-autorow--laeuft-von-allein-was-die-app-in-7-tagen",
   "bereich": "mein-tag",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -465,7 +465,7 @@
   "id": "admin-buchungen-neu-countneuebuchungen--hinweis-neue-buchungen-seit-letztem-besuch",
   "bereich": "mein-tag",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -477,7 +477,7 @@
   "id": "forecast-computemonthlyforecast--umsatz-bzw-gewinn-bis-heute-mit-monats",
   "bereich": "mein-tag",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -489,7 +489,7 @@
   "id": "vertrieb-blick--vertrieb-auf-einen-blick-heute-faellig",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -501,7 +501,7 @@
   "id": "vertrieb-blick--vertrieb-auf-einen-blick-naechste-termine",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -513,7 +513,7 @@
   "id": "vertrieb-blick--vertrieb-auf-einen-blick-neue-anfragen-der",
   "bereich": "mein-tag",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -525,7 +525,7 @@
   "id": "vertrieb-blick--vertrieb-auf-einen-blick-kontakte-je-stufe",
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/page.tsx"
+  "ort_neu": "src/app/admin/neu/im-blick.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",

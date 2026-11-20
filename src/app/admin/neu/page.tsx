@@ -1,23 +1,23 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { ChevronRight } from "lucide-react";
-import { HeuteAllesErledigt, HochrechnungKarte, LaeuftVonAllein, NeueBuchungenHinweis } from "@/components/admin/heute-bausteine";
-import { VertriebBlick } from "@/components/admin/vertrieb-blick";
+import { CheckCircle2, ChevronRight, ListChecks } from "lucide-react";
 import { BEREICH_SYMBOL } from "@/components/admin-neu/rahmen/symbole";
 import { PunkteGekuerzt } from "@/components/admin-neu/ui/punkte-gekuerzt";
 import { Seite } from "@/components/admin-neu/ui/seite";
+import { ButtonLink, Card, EmptyState } from "@/components/ui";
 import { berlinHour, greeting, summary } from "@/lib/admin-heute";
 import { ladeHeuteSeite } from "@/lib/admin-heute-laden";
 import { BEREICHE } from "@/lib/admin-neu/navigation";
 import { punkteJeRolle } from "@/lib/admin-neu/rollen";
 import { heuteGemerkt } from "@/lib/admin-neu/rollen-server";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import { ImBlick } from "./im-blick";
 
 export const metadata = { title: "Mein Tag | performancegrowth Admin" };
 
 // Mein Tag (früher Heute) im neuen Admin: alle Aufgaben und Freigaben mit Schnellknöpfen, seit Admin v2 (Paket A2) in
-// Karten je Rolle (Verkaufen, Betreuen, Liefern, Geld, Werkzeuge) statt Filter-Chips; daneben Vertrieb (Termine,
-// Anfragen, Pipeline), neue Buchungen, Hochrechnung und „Läuft von allein“.
+// Karten je Rolle (Verkaufen, Betreuen, Liefern, Geld, Werkzeuge) statt Filter-Chips. Umbau 20.11.2026 (SUS 90+): daneben
+// nur noch EINE Karte „Im Blick“ (nächste Termine, Hochrechnung als eine Zeile, Rest zugeklappt unter „Mehr“), ./im-blick.tsx.
 // Dieselben Bausteine, Daten und Server Actions wie /admin/heute (components/admin/heute-*, app/admin/heute/actions.ts).
 // Die Aufgabenliste (früher Reiter „Aufgaben“) liegt unter Mein Tag → Aufgaben (/admin/neu/vertrieb/aufgaben).
 const LISTE = [
@@ -45,13 +45,6 @@ const LISTE = [
   "admin-heute-meet--termine-heute-und-aufgaben-heute-als-zeilen",
 ].join(" ");
 
-const VERTRIEB = [
-  "vertrieb-blick--vertrieb-auf-einen-blick-heute-faellig",
-  "vertrieb-blick--vertrieb-auf-einen-blick-naechste-termine",
-  "vertrieb-blick--vertrieb-auf-einen-blick-neue-anfragen-der",
-  "vertrieb-blick--vertrieb-auf-einen-blick-kontakte-je-stufe",
-].join(" ");
-
 export default async function HeutePage() {
   await connection();
   const session = await requireAuth();
@@ -59,7 +52,15 @@ export default async function HeutePage() {
   const gruppen = punkteJeRolle(items);
 
   return (
-    <Seite titel={greeting(berlinHour(new Date()))}>
+    <Seite
+      titel={greeting(berlinHour(new Date()))}
+      // Alle Aufgaben (auch künftige und erledigte) eine Ebene tiefer, bewusst kein primärer Knopf: die Hauptaktion steht je Punkt
+      aktionen={
+        <ButtonLink href="/admin/neu/vertrieb/aufgaben" icon={ListChecks}>
+          Aufgaben
+        </ButtonLink>
+      }
+    >
       <p className="-mt-3 mb-4 text-sm text-[color:var(--muted)]" data-funktion="layout--begruessung-und-zusammenfassung-der-offenen">
         {summary(items)}
       </p>
@@ -86,31 +87,29 @@ export default async function HeutePage() {
                           <ChevronRight className="h-4 w-4" />
                         </Link>
                       </div>
-                      <PunkteGekuerzt punkte={punkte} />
+                      {/* Die zwei dringendsten je Rolle (Umbau 20.11.2026: am Handy alle Rollen ohne langes Scrollen), Rest „Alle anzeigen“ */}
+                      <PunkteGekuerzt punkte={punkte} max={2} />
                     </div>
                   );
                 })
               ) : (
-                <HeuteAllesErledigt gefiltert={false} />
+                // Leerer Zustand mit nächster Handlung (UX-Regel): Zeit für neue Gespräche
+                <Card>
+                  <EmptyState
+                    icon={CheckCircle2}
+                    title="Alles erledigt"
+                    text="Neue Punkte erscheinen hier automatisch."
+                    action={<ButtonLink href="/admin/neu/vertrieb">Pipeline öffnen</ButtonLink>}
+                  />
+                </Card>
               )}
             </div>
           </div>
         </section>
 
-        <div className="flex min-w-0 flex-col gap-6">
-          <div data-funktion={VERTRIEB}>
-            <VertriebBlick highlight={false} />
-          </div>
-          <div className="contents" data-funktion="admin-buchungen-neu-countneuebuchungen--hinweis-neue-buchungen-seit-letztem-besuch">
-            <NeueBuchungenHinweis anzahl={neueBuchungen} />
-          </div>
-          <div className="contents" data-funktion="forecast-computemonthlyforecast--umsatz-bzw-gewinn-bis-heute-mit-monats">
-            <HochrechnungKarte rows={forecast?.rows} titel={null} />
-          </div>
-          <div data-funktion="admin-heute-autorow--laeuft-von-allein-was-die-app-in-7-tagen">
-            <LaeuftVonAllein auto={auto} zugeklappt />
-          </div>
-        </div>
+        <aside aria-label="Im Blick" className="min-w-0">
+          <ImBlick forecast={forecast?.rows} neueBuchungen={neueBuchungen} auto={auto} />
+        </aside>
       </div>
     </Seite>
   );
