@@ -574,6 +574,8 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
     );
   }
   items.push({ key: "live", label: "Live", owner: "du", done: !!ob.liveAt, at: ob.liveAt });
+  // Von uns für den Kunden abgehakt (Kundenakte, Ole 20.11.2026): zählt überall als erledigt
+  for (const it of items) if (!it.done && vonUnsAbgehakt(ob.stepSkips, it.key)) it.done = true;
   return items;
 }
 
@@ -594,6 +596,14 @@ export function stepSkipOf(raw: unknown, key: string): StepSkip | null {
   const v = (raw as Record<string, unknown>)[key];
   return v && typeof v === "object" && typeof (v as StepSkip).reason === "string" ? (v as StepSkip) : null;
 }
+/**
+ * Von uns in der Kundenakte für den Kunden abgehakt (Ole, 20.11.2026: z. B. im Kickoff gemeinsam erledigt).
+ * Gespeichert in stepSkips mit Grund „admin“. Gilt für alle Schritte ohne eigenes Datumsfeld (MANUAL_FIELDS).
+ */
+export const ADMIN_ABGEHAKT = "admin";
+export const vonUnsAbgehakt = (raw: unknown, key: string) => stepSkipOf(raw, key)?.reason === ADMIN_ABGEHAKT;
+/** Schritte, die wir nicht abhaken (ergeben sich nur aus echten Daten bzw. haben eigene Knöpfe). */
+export const NICHT_ABHAKBAR = ["welcome", "payment", "templates", "live"] as const;
 /** App installiert / Provisionen hinterlegt: keine Checklisten-Punkte, kommen von außen dazu. */
 export type CustomerExtras = { appDone: boolean; provisionDone: boolean };
 /** Unser Teil, dem Kunden nur zur Information gezeigt (nicht im Fortschrittsbalken). */
@@ -681,9 +691,9 @@ export async function customerExtras(customerId: string): Promise<CustomerExtras
   const [push, provision, ob] = await Promise.all([
     users.length ? prisma.pushSubscription.count({ where: { userId: { in: users.map((u) => u.id) } } }) : 0,
     loadCustomerProvision(customerId),
-    prisma.onboarding.findUnique({ where: { customerId }, select: { appSkippedAt: true } }),
+    prisma.onboarding.findUnique({ where: { customerId }, select: { appSkippedAt: true, stepSkips: true } }),
   ]);
-  return { appDone: push > 0 || !!ob?.appSkippedAt, provisionDone: provision.confirmed };
+  return { appDone: push > 0 || !!ob?.appSkippedAt, provisionDone: provision.confirmed || vonUnsAbgehakt(ob?.stepSkips, "provision") };
 }
 
 /**
