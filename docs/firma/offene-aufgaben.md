@@ -43,6 +43,9 @@ Leitfaden und Ergebnis: `docs/firma/protokolle/2026-11-20-generalprobe-ppl.md` u
 ## Bei Ole
 - **Preise für steuerfreie Leads auf Endpreis-Basis neu rechnen** (CFO an Ole, Stufe A; docs/recht/ust-leads-vorsteuer-recherche.md, 20.11.2026).
 - **Steuerberater-Termin** zu den 4 offenen Punkten der USt-Recherche (Befreiung bei abschlussunabhängigem Leadpreis, § 15 Abs. 4 Zuordnung, Beginn Vorsteuer-Kürzung, alte 19-%-Rechnungen).
+  Eigene Recherche dazu (20.11.2026, CFO) im selben Dokument: Vorsteuerkürzung gilt rückwirkend für alle Vermittler-Pools,
+  nicht erst ab 20.11.; Stripe-19-%-Rechnungen vorerst stehen lassen. Mitbringen: Lead-Rechnungsübersicht und Meta-Kosten je Kampagne und Monat.
+- **USt-Rücklage erhöhen** um 19 % der bisherigen Meta-Kosten der Vermittler-Pools (vorsichtiger Fall), Betrag aus Meta-Export je Kampagne (CFO-Vorschlag an Ole, Stufe B, 20.11.2026).
 
 - Plan „1 Mio. € ARR“ (Entwurf, 19.11.2026, `docs/firma/plan-1-mio-arr.md`): Entscheidungen 1 bis 7 bis zur Führungsrunde 23.11.
 - Steuerberater: Umsatzsteuer (Betrag, Frist), Gehalt erst danach; Hinweis USt auf Vorauszahlungen.
