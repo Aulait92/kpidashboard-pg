@@ -99,9 +99,14 @@ Das gilt für jede Art von Pause, auch für Pausen wegen Zahlungsverzug.
   günstiger – bitte bei der AGB-Prüfung bestätigen.
 - Bedingungen:
   - Ø ≥ 20 € Meta-Kosten pro aktivem Tag seit Start
-  - **≥ 80 % der Termine wahrgenommen**: vergangene, über die Software gebuchte Termine
-    (ohne abgesagte); wahrgenommen = „completed“. „no_show“ und vergangene, nie
-    abgeschlossene „booked“ zählen dagegen. Ohne Termine gilt die Bedingung als erfüllt.
+  - **≥ 80 % der Termine vom Kunden wahrgenommen** (AGB „Wahrgenommene Termine“, Klarstellung
+    20.11.2026, `docs/recht/garantie-termine-wahrgenommen-2026-11-20.md`): vergangene, über die
+    Software gebuchte Termine. Dagegen zählen nur vom Kunden abgesagte (`cancelledBy` „advisor“),
+    außer der Lead bekam danach einen neuen Termin (Verschiebung). „completed“, „no_show“
+    (Interessent nicht erschienen) und vergangene „booked“ ohne Eintrag zählen als wahrgenommen
+    (im Zweifel für den Kunden; ein Versäumnis des Kunden ist in den Daten nicht erkennbar).
+    Absagen durch den Lead, durch uns („team“) oder ohne Herkunft zählen gar nicht. Ohne Termine
+    gilt die Bedingung als erfüllt.
   - **≥ 80 % der Leads mit Ergebnis**: Leads seit Start ohne anerkannte Reklamation,
     älter als 3 Tage; Ergebnis = Status gesetzt und nicht „Neuer Lead“. Ohne Leads erfüllt.
   - **Provisionssätze hinterlegt**: Es gibt kein Feld „bestätigt“. Gezählt werden nur

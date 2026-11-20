@@ -64,6 +64,11 @@
 // 20.11.2026 (Ole): „Vergütung und Zahlung“: Absatz „Umsatzsteuer auf Leads“ (§ 4 Nr. 11 UStG nur an Vertreter/Makler
 // mit geprüftem Registereintrag, Nachberechnung bei abweichender Entscheidung der Finanzverwaltung, übrige Preise zzgl.
 // USt.); Satz „Alle Preise sind netto …“ verweist darauf. Prüfung: docs/recht/ust-leadverkauf-2026-11-19.md.
+// 20.11.2026 (Fassung 2, Ole: „für alle in den AGB klarstellen“): „Garantien“: neuer Absatz „Wahrgenommene Termine“.
+// Wahrgenommen heißt vom Kunden wahrgenommen; Absage, Verschiebung oder Nichterscheinen des Interessenten zählen als
+// wahrgenommen, im Zweifel zugunsten des Kunden; Berechnung mit Terminliste auf Anfrage in Textform. Nur zugunsten der
+// Kunden, gilt als Klarstellung auch für bestehende Verträge (keine Mitteilung mit Widerspruchsfrist nötig). Berechnung
+// in lib/garantien.ts terminQuote angeglichen. Prüfung: docs/recht/garantie-termine-wahrgenommen-2026-11-20.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
@@ -195,7 +200,8 @@ export const AGB: LegalSection[] = [
     title: "Garantien",
     items: [
       "Die Garantien gelten für die Katzenversicherung (TKV) und für weitere im Angebot genannte Produkte, ab dem Tag der ersten Auslieferung der Anzeigen.",
-      { sub: "Gemeinsame Voraussetzungen", text: "Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt. Für Break-even- und Vertrags-Garantie außerdem: mindestens 80 % der über die Software gebuchten Termine wahrgenommen und für mindestens 80 % der Leads das Ergebnis in der Software eingetragen. Pausen verlängern den Prüfzeitraum um ihre Dauer; bei Zahlungsverzug ruht der Anspruch bis zum Ausgleich." },
+      { sub: "Gemeinsame Voraussetzungen", text: "Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt. Für Break-even- und Vertrags-Garantie außerdem: mindestens 80 % der über die Software gebuchten Termine vom Kunden wahrgenommen und für mindestens 80 % der Leads das Ergebnis in der Software eingetragen. Pausen verlängern den Prüfzeitraum um ihre Dauer; bei Zahlungsverzug ruht der Anspruch bis zum Ausgleich." },
+      { sub: "Wahrgenommene Termine", text: "Nicht wahrgenommen sind nur Termine, die der Kunde selbst absagt oder versäumt. Sagt der Interessent ab, verschiebt er oder erscheint er nicht, gilt der Termin als wahrgenommen. Verschiebt der Kunde einen Termin, zählt nur der neue. Im Zweifel, etwa wenn nicht feststeht, wer abgesagt hat, gilt der Termin als wahrgenommen. Auf Anfrage legt der Anbieter dem Kunden die Berechnung beider Quoten in Textform vor, mit der Liste der zugrunde liegenden Termine und Leads und dem jeweils eingetragenen Ergebnis." },
       { sub: "Lead-Garantie", text: "Erhält der Kunde in den ersten 30 aktiven Tagen weniger als 100 Leads für das Produkt, entfällt die Vergütung für Betreuung und Software im folgenden Abrechnungsmonat. Das Werbebudget zahlt er weiter an Meta." },
       { sub: "Break-even-Garantie (Vertreter mit Abschlussprovision)", text: "Liegt die Provision aus den über den Anbieter gewonnenen Verträgen nach 120 aktiven Tagen unter Werbebudget plus Vergütung für Betreuung und Software in diesem Zeitraum, betreut der Anbieter ohne diese Vergütung weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis die Provision seit Start die Kosten erreicht, längstens 6 Monate. Grundlage ist die Berechnung in der Software mit den unter „Meine Provisionen“ hinterlegten Sätzen; der Anbieter kann Nachweise zu Abschlüssen verlangen." },
       { sub: "Vertrags-Garantie (Makler, statt Break-even)", text: "Hat der Kunde nach 120 aktiven Tagen weniger als 15 Verträge aus den Leads abgeschlossen (in der Software als Abschluss eingetragen), betreut der Anbieter ohne Vergütung für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis 15 Verträge erreicht sind, längstens 6 Monate. Der Anbieter kann eine Courtage- bzw. Provisionsabrechnung des Versicherers anfordern; verschweigt der Kunde Abschlüsse, entfällt der Anspruch." },

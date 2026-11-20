@@ -91,8 +91,9 @@ export type GarantieInput = {
   leads: { createdAt: Date; source: string | null; status: string | null }[];
   /** Abschlüsse seit Start mit geschätzter Provision (Sätze des Kunden) */
   abschluesse: { at: Date; provision: number }[];
-  /** Über die Software gebuchte Termine seit Start (ohne abgesagte) */
-  termine: { startsAt: Date; status: string }[];
+  /** Über die Software gebuchte Termine seit Start: nicht abgesagte und vom Kunden abgesagte (`cancelledBy` „advisor“);
+   *  `verschoben` = danach neuer Termin mit demselben Lead (zählt nicht, AGB „Wahrgenommene Termine“) */
+  termine: { startsAt: Date; status: string; cancelledBy?: string | null; verschoben?: boolean }[];
   /** Eigene Provisionssätze unter „Meine Provisionen“ hinterlegt */
   provisionssaetze: boolean;
   /** Vertreter: Break-even-Garantie; Makler (nur Bestandsprovision): Vertrags-Garantie */
@@ -232,10 +233,18 @@ const rechnungBedingung = (offen: boolean): Bedingung =>
   offen ? { key: "rechnung", ok: false, text: "Offene Rechnung (Zahlungsverzug)" } : { key: "rechnung", ok: true, text: "Keine offene Rechnung" };
 
 /** Wahrgenommen = erledigt; nicht erschienen und vergangene, nie abgeschlossene Termine zählen dagegen. */
+/**
+ * Termine wahrgenommen (AGB „Wahrgenommene Termine“, Klarstellung 20.11.2026): Nicht wahrgenommen sind nur Termine, die
+ * der Kunde selbst absagt (ohne neuen Termin) oder versäumt. Absage, Verschiebung oder Nichterscheinen des Interessenten
+ * („no_show“) zählen als wahrgenommen. Im Zweifel zugunsten des Kunden: Absagen ohne bekannte Herkunft oder durch uns
+ * („team“) zählen gar nicht, vergangene Termine ohne Eintrag zählen als wahrgenommen (ein Versäumnis des Kunden lässt
+ * sich aus den Daten nicht feststellen).
+ */
 export function terminQuote(termine: GarantieInput["termine"], now: Date): { n: number; quote: number | null } {
-  const past = termine.filter((t) => t.status !== "cancelled" && t.startsAt < now);
+  const kundeAbgesagt = (t: GarantieInput["termine"][number]) => t.status === "cancelled" && t.cancelledBy === "advisor" && !t.verschoben;
+  const past = termine.filter((t) => t.startsAt < now && (t.status !== "cancelled" || kundeAbgesagt(t)));
   if (!past.length) return { n: 0, quote: null };
-  return { n: past.length, quote: past.filter((t) => t.status === "completed").length / past.length };
+  return { n: past.length, quote: past.filter((t) => t.status !== "cancelled").length / past.length };
 }
 
 /** Ergebnis eingetragen = Status gesetzt und nicht mehr „Neuer Lead“. Junge Leads (Karenz) zählen nicht mit. */
