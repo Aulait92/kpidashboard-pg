@@ -98,7 +98,7 @@ export function ConsentRowAction({ existingCustomerId, name, email, whatsapp, hi
             <Button size="md" variant="primary" icon={done?.kind === "copied" ? Check : Copy} onClick={copyLink} disabled={pending || readOnly} data-consent-copy>
               {done?.kind === "copied" ? "Kopiert" : "Link kopieren"}
             </Button>
-            {waWindowOpen ? (
+            {waWindowOpen && mailAllowed ? (
               <Button size="md" icon={MessageCircle} onClick={byWhatsApp} disabled={pending || readOnly || done?.kind === "whatsapp"} data-consent-whatsapp>
                 Per WhatsApp schicken
               </Button>
@@ -109,7 +109,7 @@ export function ConsentRowAction({ existingCustomerId, name, email, whatsapp, hi
               </Button>
             ) : null}
           </div>
-          {!waWindowOpen && !mailAllowed && !done ? <p className="text-[color:var(--muted)]">Den Link geben Sie im Termin oder in Ihrem Chat weiter.</p> : null}
+          {!mailAllowed && !done ? <p className="text-[color:var(--muted)]">Den Link geben Sie im Termin oder in Ihrem Chat weiter.</p> : null}
           {error ? <p className="text-rose-700">{error}</p> : null}
           {done?.kind === "mailed" ? <p className="text-emerald-700">Die Anfrage ist per E-Mail unterwegs.</p> : null}
           {done?.kind === "whatsapp" ? <p className="text-emerald-700">Per WhatsApp gesendet.</p> : null}

@@ -5,7 +5,7 @@
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { optOutHash, doiToken, doiConfirmUrl, hashToken, consentUrl, existingAbmeldeUrl } from "@/lib/bestand/links";
-import { campaignMailFooter } from "@/lib/bestand/kampagnen-mail";
+import { campaignMailFooter, imprintFromWebsiteInfo } from "@/lib/bestand/kampagnen-mail";
 import { consentAskEligible, consentQuestion, consentRequestByMailAllowed, offerReach, type Channel, type ConsentSettings, type ConsentSubject, type ConsentValue } from "@/lib/bestand/einwilligung";
 import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { kontaktFromExisting, advisorPerson, firmDisplayName } from "@/lib/lead-anrede";
@@ -402,9 +402,12 @@ export function consentRequestText(an: Ansprache): string {
 
 export type ConsentRequestResult = { ok: true; url: string; text: string; mailed: boolean } | { ok: false; error: string };
 
-/** Fuß der Bitte um Einwilligung per E-Mail: Sie ist selbst Werbung, also Absender und Widerspruchshinweis mit Abmeldelink. */
-export function consentRequestFooter(an: Ansprache, firm: string, unsubscribeUrl: string): string {
-  return campaignMailFooter({ firm, unsubscribeUrl, imprint: null, ansprache: an });
+/**
+ * Fuß der Bitte um Einwilligung per E-Mail: Sie ist selbst Werbung, also Absender, Widerspruchshinweis mit Abmeldelink
+ * und Pflichtangaben (Impressum) wie in jeder Kampagnen-Mail (Recht, 20.11.2026).
+ */
+export function consentRequestFooter(an: Ansprache, firm: string, unsubscribeUrl: string, imprint: string | null = null): string {
+  return campaignMailFooter({ firm, unsubscribeUrl, imprint, ansprache: an });
 }
 
 /**
@@ -435,7 +438,10 @@ export async function requestConsent(
   if (!consentRequestByMailAllowed(subjectOf(ec, sup), settings as ConsentSettings)) {
     return { ok: false, error: "Per E-Mail nur, wenn dieser Kunde per E-Mail angeschrieben werden darf. Geben Sie den Link im persönlichen Kontakt weiter." };
   }
-  const footer = consentRequestFooter(an, firmDisplayName(settings.name), existingAbmeldeUrl(ec.id));
+  const imprint = settings.imprint ?? imprintFromWebsiteInfo(settings.websiteInfo);
+  // Ohne Pflichtangaben keine Bitte per E-Mail (wie beim Kampagnenversand)
+  if (!imprint?.trim()) return { ok: false, error: "Per E-Mail erst, wenn Ihre Pflichtangaben (Impressum) hinterlegt sind. Den Link können Sie trotzdem kopieren." };
+  const footer = consentRequestFooter(an, firmDisplayName(settings.name), existingAbmeldeUrl(ec.id), imprint);
   const r = await sendTransactionalMail(customerId, {
     to: ec.email!,
     subject: a(an, "Darf ich dich auf dem Laufenden halten?", "Darf ich Sie auf dem Laufenden halten?"),
@@ -492,6 +498,8 @@ export async function planConsentRequests(customerId: string, opts: { actorUserI
     loadSuppression(customerId),
     lastAskedMap(customerId),
   ]);
+  // Ohne Pflichtangaben (Impressum) geht keine Bitte per E-Mail raus, also auch nichts einplanen
+  if (!(settings.imprint ?? imprintFromWebsiteInfo(settings.websiteInfo))?.trim()) return 0;
   const ids = rows.filter((r) => consentAskEligible(subjectOf(r, sup), settings, asked.get(r.id) ?? null, now)).map((r) => r.id);
   if (!ids.length) return 0;
   await prisma.bestandConsentLog.createMany({
@@ -543,6 +551,8 @@ export async function sendConsentWhatsApp(existingCustomerId: string, customerId
   const [settings, sup] = await Promise.all([loadConsentSettings(customerId), loadSuppression(customerId)]);
   const s = subjectOf(ec, sup);
   if (s.blockedAt || s.optOutAt || s.suppressed?.all || ec.whatsappConsent === "nein") return { ok: false, error: "Dieser Kunde möchte keine Nachrichten per WhatsApp." };
+  // Die Bitte ist selbst Werbung: dasselbe Tor wie per E-Mail (Recht, Auflage „jeder neue WhatsApp-Knopf“)
+  if (!consentRequestByMailAllowed(s, settings as ConsentSettings)) return { ok: false, error: "Per WhatsApp nur, wenn dieser Kunde Werbung von Ihnen bekommen darf. Geben Sie den Link im persönlichen Kontakt weiter." };
   if (!(await waWindowOpenFor(customerId, [ec.phone], now)).has(ec.phone)) return { ok: false, error: "Per WhatsApp nur, wenn der Kunde Ihnen in den letzten 24 Stunden geschrieben hat." };
   const an = settings.ansprache;
   const body = `${anredeZeile(an, kontaktFromExisting(ec))} ${consentRequestText(an)} ${consentUrl(ec.id)}`;
