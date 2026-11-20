@@ -6,12 +6,16 @@ import { REFERRAL_DRAFT_COOKIE, REFERRAL_DRAFT_MAX_AGE, encodeReferralDraft } fr
 import { claimPersonalLink, submitReferral } from "@/lib/empfehlung/requests";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { checkLimit, requestIp } from "@/lib/rate-limit";
+import { anFromParam } from "@/lib/empfehlung/shared";
 
 // Empfohlene Person trägt sich selbst ein (öffentlich, ohne Login): alles
 // serverseitig prüfen, Bot-Falle wie auf der Buchungsseite, Missbrauchsbremse je Link.
 export async function submitReferralAction(token: string, fd: FormData): Promise<void> {
   if (!/^[\w-]{10,64}$/.test(token)) redirect("/");
   const base = `/empfehlung/${token}/kontakt`;
+  // Ansprache der Seite (vom Empfehlenden gewählt) bleibt bei Fehlern und auf der Erfolgsseite erhalten
+  const an = anFromParam(fd.get("an"));
+  const suffix = an === "du" ? "&an=du" : "";
   const jar = await cookies();
   // Bei einem Fehler die Eingaben kurz merken, damit niemand alles neu tippen muss (lib/empfehlung/entwurf.ts)
   const fail = (code: string, keep = true): never => {
@@ -22,12 +26,12 @@ export async function submitReferralAction(token: string, fd: FormData): Promise
         email: String(fd.get("email") ?? ""),
         topic: String(fd.get("topic") ?? ""),
         message: String(fd.get("message") ?? ""),
-        consent: fd.get("consent") === "on",
+        consent: true,
         statusConsent: fd.get("statusConsent") === "on",
       });
       jar.set(REFERRAL_DRAFT_COOKIE, draft, { path: base, maxAge: REFERRAL_DRAFT_MAX_AGE, httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
     }
-    redirect(`${base}?err=${code}`);
+    redirect(`${base}?err=${code}${suffix}`);
   };
   // Drosselung je IP (wie die öffentliche Buchungsseite)
   if (!checkLimit("publicBooking", `empfehlung:${await requestIp()}`).ok) fail("busy");
@@ -43,10 +47,12 @@ export async function submitReferralAction(token: string, fd: FormData): Promise
   if (!name) fail("name");
   if (!phone) fail("phone");
   if (emailRaw && !EMAIL_RE.test(emailRaw)) fail("email");
-  const r = await submitReferral(token, { name, phone: phone!, email: emailRaw || null, topic, message, consent: fd.get("consent") === "on", statusConsent: fd.get("statusConsent") === "on" });
+  // Absenden = Einwilligung: Der Satz steht direkt über dem Knopf „Rückruf anfordern“ (contactConsentText).
+  // submitReferral speichert genau diesen Wortlaut (in der Ansprache der Seite) mit Zeitstempel am Lead.
+  const r = await submitReferral(token, { name, phone: phone!, email: emailRaw || null, topic, message, consent: true, statusConsent: fd.get("statusConsent") === "on", an });
   if (!r.ok) fail(r.error, r.error !== "unavailable");
   jar.delete({ name: REFERRAL_DRAFT_COOKIE, path: base });
-  redirect(`${base}?ok=1`);
+  redirect(`${base}?ok=1${suffix}`);
 }
 
 /**

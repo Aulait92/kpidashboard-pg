@@ -100,6 +100,8 @@ type CallItem = {
   erledigtOk?: boolean;
   /** Neuer Lead (urgent): Zeile in „Neue Leads“ mit Produkt und Wartezeit */
   neu?: { grund: string; seit: string };
+  /** Empfohlene Person: Gesprächseinstieg unter der Zeile (Modul Empfehlungen & Bewertungen) */
+  einstieg?: string | null;
 };
 
 type SheetState =
@@ -226,7 +228,8 @@ export function TodayInbox({
     conversationId: c.conversationId,
     urgent: c.urgent,
     known: c.known ?? null,
-    ...(c.urgent ? { neu: { grund: neuerLeadGrund(c.reason), seit: ago(c.createdAt) } } : {}),
+    ...(c.urgent ? { neu: { grund: c.empfehlung ? c.reason : neuerLeadGrund(c.reason), seit: ago(c.createdAt) } } : {}),
+    einstieg: c.empfehlung?.einstieg ?? null,
   });
   const urgentIds = new Set(data.callbacks.filter((c) => c.urgent).map((c) => c.leadId));
   const calls: CallItem[] = [
@@ -386,7 +389,7 @@ export function TodayInbox({
               <span className="font-semibold text-rose-600" data-call-urgent>
                 {c.neu.seit}
               </span>
-              {` · ${[c.neu.grund, c.source].filter(Boolean).join(" · ")}`}
+              {` · ${[c.neu.grund, c.einstieg ? null : c.source].filter(Boolean).join(" · ")}`}
             </>
           ) : (
             <>
@@ -395,6 +398,11 @@ export function TodayInbox({
             </>
           )}
         </p>
+        {c.einstieg ? (
+          <p className="truncate text-xs text-emerald-700" data-call-einstieg>
+            Einstieg: {c.einstieg}
+          </p>
+        ) : null}
         {weiteresProdukt && c.kind === "followup" && istCrossSellAufgabe(c.reason) ? <CrossSellZusatzKnopf verkauf={weiteresProdukt} /> : null}
       </div>
       {c.phone ? (
@@ -1012,6 +1020,11 @@ function CallModePanel({
                   Ziel: <span className="text-[color:var(--foreground)]">{z.ziel}</span>
                 </div>
                 {/* Was der Assistent im Chat schon erfahren hat, damit der Vermittler nicht doppelt fragt (Ole, 16.11.2026) */}
+                {item.einstieg ? (
+                  <p className="mt-1.5 text-sm text-[color:var(--muted)]" data-anruf-einstieg>
+                    <span className="font-medium text-[color:var(--foreground)]">Einstieg:</span> {item.einstieg}
+                  </p>
+                ) : null}
                 {item.known ? (
                   <p className="mt-1.5 text-sm text-[color:var(--muted)]" data-anruf-bekannt>
                     <span className="font-medium text-[color:var(--foreground)]">Aus dem Chat:</span> {item.known}

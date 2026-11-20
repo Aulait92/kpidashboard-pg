@@ -14,7 +14,7 @@ import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { personFromCustomerName } from "@/lib/advisor-name";
 import { ansprechpartner, kontaktFromExisting } from "@/lib/lead-anrede";
 import { redactHealthText } from "@/lib/gesundheitsdaten";
-import type { AnredeKontakt } from "@/lib/ansprache";
+import { asAnsprache, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import {
   DAY_MS,
   DEFAULT_DELAYS,
@@ -25,8 +25,17 @@ import {
   whatsappLink,
   whatsappRequestText,
   DEFAULT_TEXTS,
+  defaultText,
   empfehlungsThema,
-  OCCASIONS,
+  occasionText,
+  THANKS_NO_LINK,
+  REFERRAL_ASK_WINDOW_DAYS,
+  referralAskAllowed,
+  pickReferralCandidates,
+  NO_CONSENT_ERROR,
+  CANDIDATE_MAX_AGE_DAYS,
+  CANDIDATE_APPOINTMENT_DAYS,
+  type CandidateInput,
   UNHAPPY_TASK,
   classifyHeuristic,
   firstName,
@@ -50,6 +59,7 @@ import {
   sendingWindow,
   statusUpdateLine,
   statusUpdateText,
+  statusConsentText,
   type Occasion,
   type OfferKind,
   type ResolvedOffer,
@@ -57,6 +67,10 @@ import {
   type Sentiment,
   type TextKey,
   type UpdateStage,
+  contactConsentText,
+  displayAdvisorPhone,
+  thanksFollowUpNote,
+  medianHours,
 } from "@/lib/empfehlung/shared";
 
 const CLOSED = "Abschluss";
@@ -93,19 +107,31 @@ export type Settings = {
   referralAfterAppointment: boolean;
   /** Dankeschön für Empfehlende (null = aus) */
   reward: ResolvedReward | null;
+  /** Ansprache in Texten an Kontakte (Customer.leadAddress) bzw. an Bestandskunden (Customer.bestandAddress) */
+  leadAn: Ansprache;
+  bestandAn: Ansprache;
   rewardRaw: { kind: string; amount: number | null; note: string | null; trigger: string; confirmedAt: Date | null };
 };
 
 export async function loadSettings(customerId: string): Promise<Settings> {
-  const s = await prisma.reviewSettings.findUnique({ where: { customerId } });
+  const [s, c] = await Promise.all([
+    prisma.reviewSettings.findUnique({ where: { customerId } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true, bestandAddress: true } }).catch(() => null),
+  ]);
+  const reward = s?.rewardConfirmedAt ? resolveReward(s) : null;
   const custom: Partial<Record<TextKey, string>> = {};
-  // Älterer eigener Text, der heute nicht mehr gilt (z. B. ohne STOPP oder „wenn Sie zufrieden waren“): Standardtext
-  if (s?.reviewText && !validateText("review", s.reviewText)) custom.review = s.reviewText;
-  if (s?.thanksText) custom.thanks = s.thanksText;
-  if (s?.unhappyText) custom.unhappy = s.unhappyText;
-  if (s?.referralText) custom.referral = s.referralText;
-  if (s?.referralThanksText) custom.referralThanks = s.referralThanksText;
-  if (s?.praiseReferralText) custom.praiseReferral = s.praiseReferralText;
+  const raw: Partial<Record<TextKey, string | null | undefined>> = {
+    review: s?.reviewText,
+    thanks: s?.thanksText,
+    unhappy: s?.unhappyText,
+    referral: s?.referralText,
+    referralThanks: s?.referralThanksText,
+    praiseReferral: s?.praiseReferralText,
+  };
+  // Älterer eigener Text, der heute nicht mehr gilt (z. B. ohne STOPP, ohne Link oder „wenn Sie zufrieden waren“): Standardtext
+  for (const [k, v] of Object.entries(raw) as [TextKey, string | null | undefined][]) {
+    if (v?.trim() && !validateText(k, v, { rewardActive: !!reward })) custom[k] = v;
+  }
   return {
     active: s?.active ?? true,
     googleReviewUrl: s?.googleReviewUrl ?? null,
@@ -120,9 +146,16 @@ export async function loadSettings(customerId: string): Promise<Settings> {
     statusUpdates: s?.statusUpdates ?? true,
     followUpHours: s?.followUpHours ?? DEFAULT_FOLLOWUP_HOURS,
     referralAfterAppointment: s?.referralAfterAppointment ?? false,
-    reward: s?.rewardConfirmedAt ? resolveReward(s) : null,
+    reward,
+    leadAn: asAnsprache(c?.leadAddress),
+    bestandAn: asAnsprache(c?.bestandAddress),
     rewardRaw: { kind: s?.rewardKind ?? "none", amount: s?.rewardAmount ?? null, note: s?.rewardNote ?? null, trigger: s?.rewardTrigger ?? "termin", confirmedAt: s?.rewardConfirmedAt ?? null },
   };
+}
+
+/** Text je Ansprache: eigener Text des Vermittlers, sonst der Standard in Du oder Sie. */
+export function textFor(s: Pick<Settings, "custom">, key: TextKey, an: Ansprache): string {
+  return s.custom[key] ?? defaultText(key, an);
 }
 
 /** Person für „hier ist …“, „Herzliche Grüße, …“ (Ole, 14.11.2026: Beratername = Person). */
@@ -165,15 +198,57 @@ export async function generalLinkOf(customerId: string) {
  * Aufgabe „Empfehlung nachfassen“ in „Heute“ (Wiedervorlage am Lead), nur nach einem Versand
  * durch den Vertreter selbst und nur, wenn am Kontakt keine andere Wiedervorlage steht.
  */
-export async function planReferralFollowUp(customerId: string, leadId: string | null | undefined, hours: number, now = new Date()): Promise<boolean> {
+export async function planReferralFollowUp(
+  customerId: string,
+  leadId: string | null | undefined,
+  hours: number,
+  now = new Date(),
+  an: Ansprache = "sie",
+  note: (vorname: string, an: Ansprache) => string = followUpNote,
+): Promise<boolean> {
   if (!leadId || hours <= 0) return false;
   const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId, erasedAt: null }, select: { name: true, followUpAt: true } });
   if (!lead || lead.followUpAt) return false;
   const r = await prisma.lead.updateMany({
     where: { id: leadId, followUpAt: null },
-    data: { followUpAt: new Date(now.getTime() + hours * 3600_000), followUpNote: followUpNote(firstName(lead.name)) },
+    data: { followUpAt: new Date(now.getTime() + hours * 3600_000), followUpNote: note(firstName(lead.name), an) },
   });
   return r.count > 0;
+}
+
+// ─── Obergrenze der Empfehlungsbitten (R3) ─────────────────────────────────
+// Jede Empfehlungsbitte (alle Wege) steht im Änderungsprotokoll: „empfehlung.link_sent“ (Vermittler) bzw.
+// „empfehlung.bitte“ (automatisch, bei Lob, nach Termin, Dank mit Link). Das Protokoll hält 1 Jahr (pruneAudit).
+
+const ASK_ACTIONS = ["empfehlung.link_sent", "empfehlung.bitte"];
+type AskLink = { id: string; customerId: string; leadId: string | null; existingCustomerId: string | null };
+
+/** Zeitpunkte der Empfehlungsbitten an diese Person (alle ihre Links) in den letzten 365 Tagen. */
+export async function referralAskDates(link: AskLink, now = new Date()): Promise<Date[]> {
+  const ids = await referrerLinkIds(link);
+  const rows = await prisma.auditLog.findMany({
+    where: { action: { in: ASK_ACTIONS }, entity: "ReferralLink", entityId: { in: ids }, at: { gte: new Date(now.getTime() - REFERRAL_ASK_WINDOW_DAYS * DAY_MS) } },
+    select: { at: true },
+  });
+  return rows.map((r) => r.at);
+}
+
+/** Darf noch eine Empfehlungsbitte an diese Person raus? consent = Einwilligung des Leads, null bei Bestandskunden. */
+export async function referralAskCheck(link: AskLink, consent: { at: Date | null; text: string | null } | null, now = new Date()) {
+  return referralAskAllowed(await referralAskDates(link, now), now, consent);
+}
+
+/** Empfehlungsbitte festhalten (zählt für die Obergrenze). Auch für Kampagnen des Bestandsmoduls gedacht. */
+export async function recordReferralAsk(link: { id: string; customerId: string }, weg: string, actor?: AuditActor): Promise<void> {
+  await audit("empfehlung.bitte", { entity: "ReferralLink", entityId: link.id, customerId: link.customerId, details: { weg }, actor: actor ?? { role: "system" } });
+}
+
+export { NO_CONSENT_ERROR };
+
+/** Ist das 24-h-Fenster offen (der Kunde hat in den letzten 24 Stunden geschrieben)? */
+async function windowOpen(customerId: string, phone: string, now = new Date()): Promise<boolean> {
+  const c = await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId, contactPhone: phone } }, select: { windowExpiresAt: true } });
+  return !!c?.windowExpiresAt && c.windowExpiresAt.getTime() > now.getTime();
 }
 
 /** Ist der Kontakt Empfehlender? (Abschluss oder Bestandskunde) */
@@ -194,18 +269,34 @@ export async function sendReferralLinkNow(
 ): Promise<{ ok: true; mode: "text" | "template"; followUp: boolean } | { ok: false; error: string; link?: string; text?: string }> {
   const settings = await loadSettings(customerId);
   const vertreter = await advisorOf(customerId);
+  const now = new Date();
   let phone: string | null = null;
   let name: string | null = null;
   let leadId: string | null = null;
   let kontakt: AnredeKontakt | null = null;
   let thema = empfehlungsThema(null);
+  let an: Ansprache = settings.leadAn;
+  // Einwilligung des Leads (null = Bestandskunde, dessen Einwilligung das Bestandsmodul prüft)
+  let consent: { at: Date | null; text: string | null } | null = null;
+  // Ohne Einwilligung nur als freie Antwort im offenen 24-h-Fenster (R2)
+  let nurFenster = false;
   if (target.leadId) {
-    const l = await prisma.lead.findFirst({ where: { id: target.leadId, customerId, erasedAt: null }, select: { id: true, name: true, phone: true, status: true, source: true } });
+    const l = await prisma.lead.findFirst({
+      where: { id: target.leadId, customerId, erasedAt: null },
+      select: { id: true, name: true, phone: true, status: true, source: true, feedbackConsentAt: true, feedbackOptOutAt: true, feedbackConsentText: true, bestandKunde: { select: { optOutAt: true, blockedAt: true } } },
+    });
     if (!l || !(l.status === CLOSED || l.source === "Bestandskunde")) return { ok: false, error: "Empfehlungslinks gibt es für Kontakte mit Abschluss und Bestandskunden." };
+    // STOPP blockt immer, auch von Hand
+    if (l.feedbackOptOutAt || l.bestandKunde?.optOutAt || l.bestandKunde?.blockedAt) return { ok: false, error: "Dieser Kunde möchte keine Nachrichten mehr (STOPP)." };
     phone = l.phone;
     name = l.name;
     leadId = l.id;
     thema = empfehlungsThema(l.source);
+    consent = { at: l.feedbackConsentAt, text: l.feedbackConsentText };
+    if (!feedbackAllowed(l)) {
+      if (!phone || !(await windowOpen(customerId, phone, now))) return { ok: false, error: NO_CONSENT_ERROR };
+      nurFenster = true;
+    }
   } else if (target.existingCustomerId) {
     const e = await prisma.existingCustomer.findFirst({ where: { id: target.existingCustomerId, customerId }, select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true, blockedAt: true, lines: true } });
     if (!e) return { ok: false, error: "Kontakt nicht gefunden." };
@@ -214,24 +305,40 @@ export async function sendReferralLinkNow(
     phone = e.phone;
     name = [e.firstName, e.lastName].filter(Boolean).join(" ") || null;
     kontakt = kontaktFromExisting(e);
+    an = settings.bestandAn;
   }
   const link = await referralLinkOf({ customerId, ...target });
+  // Gemeinsame Obergrenze über alle Wege (R3); alte Einwilligung deckt nur eine Bitte
+  const limit = await referralAskCheck(link, consent, now);
+  if (!limit.ok) return { ok: false, error: limit.error };
   const url = referralLinkFor(link.token);
   // Mit Anlass (Schaden geregelt, gespart, Jahresgespräch) passt der Einstieg zum Moment
-  // Anrede „Guten Tag Frau Schneider“ (Formular, Bestandskunde oder eindeutiger Vorname)
+  // Anrede „Guten Tag Frau Schneider“ bzw. „Hallo Julia“ (Formular, Bestandskunde oder eindeutiger Vorname)
   const anrede = kontakt ?? (await anredeOf(customerId, leadId, phone, name));
-  const text = renderText(occasion ? OCCASIONS[occasion].text : settings.texts.referral, { vorname: firstName(name), link: url, vertreter, anrede });
+  const text = renderText(occasion ? occasionText(occasion, an) : textFor(settings, "referral", an), { vorname: firstName(name), link: url, vertreter, anrede, an, thema });
   if (!phone) return { ok: false, error: "Keine Handynummer hinterlegt. Text zum Teilen:", link: url, text };
   try {
-    const { sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
-    // v4 mit Thema ({{2}}) vor dem Link; ältere Fassung nur mit Link
-    const r = await sendWhatsAppNotice({ customerId, to: phone, purpose: "referral_request", params: [firstName(name) || "Hallo", thema, url], legacyParams: [firstName(name) || "Hallo", url], text, leadId, contactName: name, anrede });
-    await prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: new Date(), lastOccasion: occasion ?? null } });
-    await audit("empfehlung.link_sent", { entity: "ReferralLink", entityId: link.id, customerId, details: { mode: r.mode, occasion: occasion ?? null }, ...(actor ? { actor } : {}) });
-    const followUp = await planReferralFollowUp(customerId, leadId, settings.followUpHours).catch(() => false);
-    return { ok: true, mode: r.mode, followUp };
+    let mode: "text" | "template";
+    if (nurFenster) {
+      // Ohne Einwilligung nie als Vorlage: freie Nachricht, die WhatsApp nur im offenen Fenster zustellt
+      const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+      await sendWhatsAppMessage({ customerId, to: phone, body: text, sentBy: "agent", sentByUserId: actor?.id ?? null });
+      mode = "text";
+    } else {
+      const { sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
+      // v4 mit Thema ({{2}}) vor dem Link; ältere Fassung nur mit Link. Vorlagen gibt es bis zur Neueinreichung nur in Sie.
+      const r = await sendWhatsAppNotice({ customerId, to: phone, purpose: "referral_request", params: [firstName(name) || "Hallo", thema, url], legacyParams: [firstName(name) || "Hallo", url], text, leadId, contactName: name, anrede });
+      mode = r.mode;
+    }
+    await prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: now, lastOccasion: occasion ?? null } });
+    // Ersetzt die geplante automatische Empfehlungsbitte, sonst bekäme der Kunde kurz darauf eine zweite (Paket 2)
+    if (leadId) await prisma.reviewRequest.updateMany({ where: { leadId, referralStatus: "waiting" }, data: { referralStatus: "sent", referralSentAt: now } });
+    await audit("empfehlung.link_sent", { entity: "ReferralLink", entityId: link.id, customerId, details: { mode, occasion: occasion ?? null, ohneEinwilligung: nurFenster }, ...(actor ? { actor } : {}) });
+    const followUp = await planReferralFollowUp(customerId, leadId, settings.followUpHours, now, an).catch(() => false);
+    return { ok: true, mode, followUp };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    if (nurFenster) return { ok: false, error: NO_CONSENT_ERROR };
     return { ok: false, error: /Vorlage/.test(msg) ? "Die WhatsApp-Vorlage ist noch nicht freigegeben. Text zum Teilen:" : "WhatsApp ist nicht verbunden. Text zum Teilen:", link: url, text };
   }
 }
@@ -335,7 +442,7 @@ export async function sendDueReviews(now = new Date()): Promise<{ sent: number; 
         to: lead.phone,
         purpose: "review_request",
         params: [vorname || "Hallo", link],
-        text: renderText(settings.texts.review, { vorname, link, vertreter, anrede }),
+        text: renderText(textFor(settings, "review", settings.leadAn), { vorname, link, vertreter, anrede, an: settings.leadAn }),
         leadId: lead.id,
         contactName: lead.name,
         anrede,
@@ -364,7 +471,7 @@ export async function sendDueReferrals(now = new Date()): Promise<{ sent: number
   if (!sendingWindow(now)) return out;
   const due = await prisma.reviewRequest.findMany({
     where: { referralStatus: "waiting", referralDueAt: { lte: now }, status: { in: ["sent", "answered", "off", "skipped"] }, customer: { empfehlungEnabled: true } },
-    include: { lead: { select: { id: true, name: true, phone: true, status: true, source: true, followUpNote: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true } } },
+    include: { lead: { select: { id: true, name: true, phone: true, status: true, source: true, followUpNote: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true, feedbackConsentText: true } } },
     orderBy: { referralDueAt: "asc" },
     take: PER_RUN,
   });
@@ -387,21 +494,29 @@ export async function sendDueReferrals(now = new Date()): Promise<{ sent: number
       await prisma.reviewRequest.update({ where: { id: r.id }, data: { referralDueAt: new Date(now.getTime() + DAY_MS) } });
       continue;
     }
+    const link = await referralLinkOf({ customerId: r.customerId, leadId: r.leadId });
+    // Gemeinsame Obergrenze über alle Wege (R3), alte Einwilligung deckt nur eine Bitte
+    const limit = await referralAskCheck(link, { at: r.lead.feedbackConsentAt, text: r.lead.feedbackConsentText }, now);
+    if (!limit.ok) {
+      await prisma.reviewRequest.update({ where: { id: r.id }, data: { referralStatus: "skipped", note: limit.error } });
+      out.skipped++;
+      continue;
+    }
     const claimed = await prisma.reviewRequest.updateMany({ where: { id: r.id, referralStatus: "waiting" }, data: { referralStatus: "sending" } });
     if (claimed.count === 0) continue;
-    const link = await referralLinkOf({ customerId: r.customerId, leadId: r.leadId });
     const url = referralLinkFor(link.token);
     const vertreter = await advisorOf(r.customerId);
     const vorname = firstName(r.lead.name);
     const anrede = await anredeOf(r.customerId, r.leadId, r.lead.phone, r.lead.name);
+    const thema = empfehlungsThema(r.lead.source);
     try {
       await sendWhatsAppNotice({
         customerId: r.customerId,
         to: r.lead.phone!,
         purpose: "referral_request",
-        params: [vorname || "Hallo", empfehlungsThema(r.lead.source), url],
+        params: [vorname || "Hallo", thema, url],
         legacyParams: [vorname || "Hallo", url],
-        text: renderText(settings.texts.referral, { vorname, link: url, vertreter, anrede }),
+        text: renderText(textFor(settings, "referral", settings.leadAn), { vorname, link: url, vertreter, anrede, an: settings.leadAn, thema }),
         leadId: r.leadId,
         contactName: r.lead.name,
         anrede,
@@ -410,6 +525,7 @@ export async function sendDueReferrals(now = new Date()): Promise<{ sent: number
         prisma.reviewRequest.update({ where: { id: r.id }, data: { referralStatus: "sent", referralSentAt: now } }),
         prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: now } }),
       ]);
+      await recordReferralAsk(link, "automatik");
       out.sent++;
     } catch (err) {
       if (!(err instanceof NoTemplateError)) reportError(err, "empfehlung-referral-send", { request: r.id });
@@ -419,7 +535,12 @@ export async function sendDueReferrals(now = new Date()): Promise<{ sent: number
   return out;
 }
 
-/** Dank an Empfehlende, sobald aus ihrer Empfehlung ein Abschluss wird (genau einmal, ohne Prämie). */
+/**
+ * Dank an Empfehlende, sobald aus ihrer Empfehlung ein Abschluss wird (genau einmal, ohne Prämie). Nur wenn die
+ * empfohlene Person der Rückmeldung zugestimmt hat (statusConsent, „und Kunde wurde“): Ohne sie verrät schon der
+ * Zeitpunkt des Danks den Abschluss. Nur mit Einwilligung des Empfehlenden (bzw. ohne STOPP und Sperre beim
+ * Bestandskunden). Der Link für weitere Empfehlungen nur unter der Obergrenze (R3), sonst Dank ohne Link.
+ */
 export async function sendReferralThanks(now = new Date()): Promise<number> {
   if (!sendingWindow(now)) return 0;
   const leads = await prisma.lead.findMany({
@@ -427,6 +548,7 @@ export async function sendReferralThanks(now = new Date()): Promise<number> {
       referralLinkId: { not: null },
       status: CLOSED,
       referralThankedAt: null,
+      referralStatusConsent: true,
       closedAt: { gte: new Date(now.getTime() - 30 * DAY_MS) },
       customer: { empfehlungEnabled: true },
     },
@@ -435,8 +557,14 @@ export async function sendReferralThanks(now = new Date()): Promise<number> {
       customerId: true,
       referralLink: {
         select: {
-          lead: { select: { id: true, name: true, phone: true, erasedAt: true } },
-          existingCustomer: { select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true } },
+          id: true,
+          customerId: true,
+          leadId: true,
+          existingCustomerId: true,
+          kind: true,
+          token: true,
+          lead: { select: { id: true, name: true, phone: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true, feedbackConsentText: true, bestandKunde: { select: { optOutAt: true, blockedAt: true } } } },
+          existingCustomer: { select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true, blockedAt: true } },
         },
       },
     },
@@ -448,27 +576,41 @@ export async function sendReferralThanks(now = new Date()): Promise<number> {
     const claimed = await prisma.lead.updateMany({ where: { id: l.id, referralThankedAt: null }, data: { referralThankedAt: now } });
     if (claimed.count === 0) continue;
     const ref = l.referralLink;
-    const target = ref?.lead && !ref.lead.erasedAt
-      ? { name: ref.lead.name, phone: ref.lead.phone, leadId: ref.lead.id, kontakt: null }
-      : ref?.existingCustomer && !ref.existingCustomer.optOutAt
-        ? { name: [ref.existingCustomer.firstName, ref.existingCustomer.lastName].filter(Boolean).join(" "), phone: ref.existingCustomer.phone, leadId: null, kontakt: kontaktFromExisting(ref.existingCustomer) }
-        : null;
+    if (!ref || ref.kind === "general") continue;
+    const target =
+      ref.lead && !ref.lead.erasedAt && feedbackAllowed(ref.lead) && !ref.lead.bestandKunde?.optOutAt && !ref.lead.bestandKunde?.blockedAt
+        ? { name: ref.lead.name, phone: ref.lead.phone, leadId: ref.lead.id, kontakt: null, consent: { at: ref.lead.feedbackConsentAt, text: ref.lead.feedbackConsentText } as { at: Date | null; text: string | null } | null, bestand: false }
+        : !ref.lead && ref.existingCustomer && !ref.existingCustomer.optOutAt && !ref.existingCustomer.blockedAt
+          ? { name: [ref.existingCustomer.firstName, ref.existingCustomer.lastName].filter(Boolean).join(" "), phone: ref.existingCustomer.phone, leadId: null, kontakt: kontaktFromExisting(ref.existingCustomer), consent: null, bestand: true }
+          : null;
     if (!target?.phone) continue;
     const settings = await loadSettings(l.customerId);
+    const an = target.bestand ? settings.bestandAn : settings.leadAn;
     const vertreter = await advisorOf(l.customerId);
     const vorname = firstName(target.name);
     const anrede = target.kontakt ?? (await anredeOf(l.customerId, target.leadId, target.phone, target.name));
+    const withLink = (await referralAskCheck(ref, target.consent, now)).ok;
+    const url = referralLinkFor(ref.token);
+    const text = withLink
+      ? renderText(textFor(settings, "referralThanks", an), { vorname, vertreter, anrede, an, link: url })
+      : renderText(THANKS_NO_LINK[an], { vorname, vertreter, anrede, an });
     try {
-      await sendWhatsAppNotice({
+      const r = await sendWhatsAppNotice({
         customerId: l.customerId,
         to: target.phone,
         purpose: "referral_thanks",
         params: [vorname || "Hallo"],
-        text: renderText(settings.texts.referralThanks, { vorname, vertreter, anrede }),
+        text,
         leadId: target.leadId,
         contactName: target.name,
         anrede,
       });
+      // Nur der freie Text trägt den Link (die Vorlage referral_thanks hat bis zur Neueinreichung keinen)
+      if (withLink && r.mode === "text") {
+        await recordReferralAsk(ref, "dank");
+        // Dank-Schleife: nach 48 h (Einstellung „Nachfassen“) eine Anruf-Aufgabe mit Gesprächssatz, keine zweite Nachricht
+        await planReferralFollowUp(l.customerId, target.leadId, settings.followUpHours, now, an, thanksFollowUpNote).catch(() => false);
+      }
       sent++;
     } catch (err) {
       if (err instanceof NoTemplateError || /verbundenes WhatsApp/.test(String(err))) {
@@ -504,8 +646,8 @@ export async function sendReferralUpdates(now = new Date()): Promise<number> {
       _count: { select: { appointments: { where: { status: { in: ["booked", "completed"] } } } } },
       referralLink: {
         select: {
-          lead: { select: { id: true, name: true, phone: true, erasedAt: true, reviewRequest: { select: { note: true } } } },
-          existingCustomer: { select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true } },
+          lead: { select: { id: true, name: true, phone: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true, bestandKunde: { select: { optOutAt: true, blockedAt: true } }, reviewRequest: { select: { note: true } } } },
+          existingCustomer: { select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true, blockedAt: true } },
         },
       },
     },
@@ -521,10 +663,11 @@ export async function sendReferralUpdates(now = new Date()): Promise<number> {
     if (!settings.statusUpdates) continue;
     const ref = l.referralLink;
     const optedOut = /keine Nachrichten/i.test(ref?.lead?.reviewRequest?.note ?? "");
-    const target = ref?.lead && !ref.lead.erasedAt && !optedOut
-      ? { name: ref.lead.name, phone: ref.lead.phone, leadId: ref.lead.id, kontakt: null }
-      : ref?.existingCustomer && !ref.existingCustomer.optOutAt
-        ? { name: [ref.existingCustomer.firstName, ref.existingCustomer.lastName].filter(Boolean).join(" "), phone: ref.existingCustomer.phone, leadId: null, kontakt: kontaktFromExisting(ref.existingCustomer) }
+    // Nur mit Einwilligung des Empfehlenden (Lead) bzw. ohne STOPP und Sperre (Bestandskunde)
+    const target = ref?.lead && !ref.lead.erasedAt && !optedOut && feedbackAllowed(ref.lead) && !ref.lead.bestandKunde?.optOutAt && !ref.lead.bestandKunde?.blockedAt
+      ? { name: ref.lead.name, phone: ref.lead.phone, leadId: ref.lead.id, kontakt: null, an: settings.leadAn }
+      : !ref?.lead && ref?.existingCustomer && !ref.existingCustomer.optOutAt && !ref.existingCustomer.blockedAt
+        ? { name: [ref.existingCustomer.firstName, ref.existingCustomer.lastName].filter(Boolean).join(" "), phone: ref.existingCustomer.phone, leadId: null, kontakt: kontaktFromExisting(ref.existingCustomer), an: settings.bestandAn }
         : null;
     if (!target?.phone) continue;
     const vertreter = await advisorOf(l.customerId);
@@ -537,7 +680,7 @@ export async function sendReferralUpdates(now = new Date()): Promise<number> {
         to: target.phone,
         purpose: "referral_update",
         params: [vorname || "Hallo", statusUpdateLine(stage, referred)],
-        text: statusUpdateText(stage, { vorname, referred, vertreter, anrede }),
+        text: statusUpdateText(stage, { vorname, referred, vertreter, anrede, an: target.an }),
         leadId: target.leadId,
         contactName: target.name,
         anrede,
@@ -773,7 +916,23 @@ export async function sendAfterAppointmentReferrals(now = new Date()): Promise<{
     select: {
       id: true,
       customerId: true,
-      lead: { select: { id: true, name: true, phone: true, status: true, source: true, followUpNote: true, erasedAt: true, reviewRequest: { select: { status: true, sentiment: true, referralStatus: true, note: true } }, ownReferralLink: { select: { lastSentAt: true } } } },
+      lead: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          status: true,
+          source: true,
+          followUpNote: true,
+          erasedAt: true,
+          feedbackConsentAt: true,
+          feedbackOptOutAt: true,
+          feedbackConsentText: true,
+          bestandKunde: { select: { optOutAt: true, blockedAt: true } },
+          reviewRequest: { select: { status: true, sentiment: true, referralStatus: true, note: true } },
+          ownReferralLink: { select: { lastSentAt: true } },
+        },
+      },
     },
     orderBy: { updatedAt: "asc" },
     take: PER_RUN,
@@ -787,6 +946,8 @@ export async function sendAfterAppointmentReferrals(now = new Date()): Promise<{
     const recent = l?.ownReferralLink?.lastSentAt && now.getTime() - l.ownReferralLink.lastSentAt.getTime() < APPOINTMENT_REFERRAL_GAP_DAYS * DAY_MS;
     const blocked =
       !l || l.erasedAt || !l.phone || !(l.status === CLOSED || l.source === "Bestandskunde") || recent || isUnhappyTask(l.followUpNote) ||
+      // R1: nur mit Einwilligung, nie nach STOPP oder Sperre (auch als Bestandskunde)
+      !feedbackAllowed(l) || !!l.bestandKunde?.optOutAt || !!l.bestandKunde?.blockedAt ||
       rr?.sentiment === "negative" || rr?.status === "off" || /keine Nachrichten/i.test(rr?.note ?? "") ||
       // Die Nachfrage nach dem Abschluss läuft noch: Die Bitte kommt über diesen Ablauf
       (rr && rr.referralStatus === "waiting" && (rr.status === "scheduled" || rr.status === "sending" || rr.status === "sent"));
@@ -795,10 +956,15 @@ export async function sendAfterAppointmentReferrals(now = new Date()): Promise<{
       continue;
     }
     const link = await referralLinkOf({ customerId: a.customerId, leadId: l.id });
+    if (!(await referralAskCheck(link, { at: l.feedbackConsentAt, text: l.feedbackConsentText }, now)).ok) {
+      out.skipped++;
+      continue;
+    }
     const url = referralLinkFor(link.token);
     const vertreter = await advisorOf(a.customerId);
     const vorname = firstName(l.name);
     const anrede = await anredeOf(a.customerId, l.id, l.phone, l.name);
+    const settings = await loadSettings(a.customerId);
     try {
       await sendWhatsAppNotice({
         customerId: a.customerId,
@@ -806,12 +972,13 @@ export async function sendAfterAppointmentReferrals(now = new Date()): Promise<{
         purpose: "referral_request",
         params: [vorname || "Hallo", empfehlungsThema(l.source), url],
         legacyParams: [vorname || "Hallo", url],
-        text: renderText(OCCASIONS.jahresgespraech.text, { vorname, link: url, vertreter, anrede }),
+        text: renderText(occasionText("jahresgespraech", settings.leadAn), { vorname, link: url, vertreter, anrede, an: settings.leadAn }),
         leadId: l.id,
         contactName: l.name,
         anrede,
       });
       await prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: now, lastOccasion: "termin_auto" } });
+      await recordReferralAsk(link, "termin");
       out.sent++;
     } catch (err) {
       if (err instanceof NoTemplateError || /verbundenes WhatsApp/.test(String(err))) {
@@ -923,7 +1090,7 @@ export async function handleReviewReply(conversationId: string, from: string, bo
       OR: [{ conversationId }, { lead: { phone: from } }],
     },
     orderBy: { reviewSentAt: "desc" },
-    include: { lead: { select: { id: true, name: true } } },
+    include: { lead: { select: { id: true, name: true, feedbackConsentAt: true, feedbackOptOutAt: true, feedbackConsentText: true } } },
   });
   if (!r || !text) return { handled: false };
 
@@ -940,6 +1107,7 @@ export async function handleReviewReply(conversationId: string, from: string, bo
   const vertreter = await advisorOf(r.customerId);
   const vorname = firstName(r.lead.name);
   const anrede = await anredeOf(r.customerId, r.leadId, from, r.lead.name);
+  const an = settings.leadAn;
   const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
   const quote = text.length > 160 ? `${text.slice(0, 157)}…` : text;
 
@@ -950,28 +1118,31 @@ export async function handleReviewReply(conversationId: string, from: string, bo
     await notifyLeadPush(r.leadId, { title: `⚠️ Kunde unzufrieden: ${r.lead.name ?? "Kunde"}`, body: `„${quote}“, bitte heute anrufen.`, tag: `empfehlung-unhappy:${r.leadId}`, url: `/buyer/leads/${r.leadId}` }).catch(() => {});
     const { flagAttention } = await import("@/lib/whatsapp/attention");
     await flagAttention(conversationId, `Kritik nach dem Abschluss: „${quote}“`).catch(() => {});
-    await sendWhatsAppMessage({ customerId: r.customerId, to: from, body: renderText(settings.texts.unhappy, { vorname, vertreter, anrede }), sentBy: "system" }).catch((err) => reportError(err, "empfehlung-unhappy-reply"));
+    await sendWhatsAppMessage({ customerId: r.customerId, to: from, body: renderText(textFor(settings, "unhappy", an), { vorname, vertreter, anrede, an }), sentBy: "system" }).catch((err) => reportError(err, "empfehlung-unhappy-reply"));
   } else if (sentiment === "positive") {
     // Bester Moment für die Empfehlung ist das Lob selbst: Dank mit persönlichem Link (Chat ist offen).
     // Bewusst ohne zweiten Google-Link. Die spätere Bitte um Empfehlung entfällt dann.
-    const claimedReferral = settings.referralOnPraise
+    // Nur mit Einwilligung und unter der gemeinsamen Obergrenze (R3)
+    const link = settings.referralOnPraise && feedbackAllowed(r.lead) ? await referralLinkOf({ customerId: r.customerId, leadId: r.leadId }) : null;
+    const mayAsk = !!link && (await referralAskCheck(link, { at: r.lead.feedbackConsentAt, text: r.lead.feedbackConsentText }, now)).ok;
+    const claimedReferral = mayAsk
       ? (await prisma.reviewRequest.updateMany({ where: { id: r.id, referralStatus: "waiting" }, data: { referralStatus: "sending" } })).count > 0
       : false;
-    if (claimedReferral) {
-      const link = await referralLinkOf({ customerId: r.customerId, leadId: r.leadId });
+    if (claimedReferral && link) {
       try {
-        await sendWhatsAppMessage({ customerId: r.customerId, to: from, body: renderText(settings.texts.praiseReferral, { vorname, link: referralLinkFor(link.token), vertreter, anrede }), sentBy: "system" });
+        await sendWhatsAppMessage({ customerId: r.customerId, to: from, body: renderText(textFor(settings, "praiseReferral", an), { vorname, link: referralLinkFor(link.token), vertreter, anrede, an }), sentBy: "system" });
         await prisma.$transaction([
           prisma.reviewRequest.update({ where: { id: r.id }, data: { referralStatus: "sent", referralSentAt: now } }),
           prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: now, lastOccasion: "lob" } }),
         ]);
+        await recordReferralAsk(link, "lob");
       } catch (err) {
         reportError(err, "empfehlung-praise-referral");
         // Nicht verschickt → die Bitte um Empfehlung kommt wie geplant später
         await prisma.reviewRequest.update({ where: { id: r.id }, data: { referralStatus: "waiting" } }).catch(() => {});
       }
     } else {
-      await sendWhatsAppMessage({ customerId: r.customerId, to: from, body: renderText(settings.texts.thanks, { vorname, vertreter, anrede }), sentBy: "system" }).catch((err) => reportError(err, "empfehlung-thanks-reply"));
+      await sendWhatsAppMessage({ customerId: r.customerId, to: from, body: renderText(textFor(settings, "thanks", an), { vorname, vertreter, anrede, an }), sentBy: "system" }).catch((err) => reportError(err, "empfehlung-thanks-reply"));
     }
   } else {
     const { flagAttention } = await import("@/lib/whatsapp/attention");
@@ -1072,13 +1243,24 @@ export async function loadReferralPage(token: string, opts: { countView?: boolea
       lead: { select: { name: true, erasedAt: true } },
       existingCustomer: { select: { firstName: true } },
       token: true,
-      customer: { select: { name: true, empfehlungEnabled: true, onboarding: { select: { websiteInfo: true } }, whatsAppAccount: { select: { status: true, phoneNumber: true } } } },
+      customer: {
+        select: {
+          name: true,
+          empfehlungEnabled: true,
+          leadAddress: true,
+          bestandAddress: true,
+          onboarding: { select: { websiteInfo: true } },
+          whatsAppAccount: { select: { status: true, phoneNumber: true } },
+          erstinformation: { select: { telefon: true } },
+        },
+      },
     },
   });
   if (!link || !link.customer.empfehlungEnabled || link.lead?.erasedAt) return null;
   if (opts.countView) await prisma.referralLink.update({ where: { id: link.id }, data: { views: { increment: 1 } } }).catch(() => {});
   const products = await prisma.leadSource.findMany({ where: { customerId: link.customerId, active: true }, select: { productKey: true }, distinct: ["productKey"] }).catch(() => []);
-  const privacy = (link.customer.onboarding?.websiteInfo as { privacyUrl?: string | null } | null)?.privacyUrl;
+  const web = link.customer.onboarding?.websiteInfo as { privacyUrl?: string | null; phone?: string | null } | null;
+  const privacy = web?.privacyUrl;
   const vertreter = advisorDisplayName(link.customer.name);
   const rs = await prisma.reviewSettings.findUnique({
     where: { customerId: link.customerId },
@@ -1087,24 +1269,52 @@ export async function loadReferralPage(token: string, opts: { countView?: boolea
   const reward = rs?.rewardConfirmedAt && link.kind !== "general" ? resolveReward(rs) : null;
   const wa = link.customer.whatsAppAccount;
   const recommenderName = firstName(link.lead?.name ?? link.existingCustomer?.firstName ?? null) || null;
+  // Nummer für „Nummer speichern“ auf der Erfolgsseite: Erstinformation, sonst Impressum, sonst WhatsApp-Nummer
+  const advisorPhone =
+    displayAdvisorPhone(link.customer.erstinformation?.telefon) ?? displayAdvisorPhone(web?.phone) ?? (wa?.status === "connected" ? displayAdvisorPhone(wa.phoneNumber) : null);
   return {
     customerId: link.customerId,
     linkId: link.id,
     general: link.kind === "general",
+    // Ansprache der Seite des Empfehlenden: wie in den Nachrichten an ihn (Kontakt bzw. Bestandskunde)
+    recommenderAn: asAnsprache(link.existingCustomer && !link.lead ? link.customer.bestandAddress : link.customer.leadAddress),
     // Nur auf der Seite des Empfehlenden zeigen, nie der empfohlenen Person
     rewardText: reward ? rewardSentence(reward, vertreter) : null,
+    rewardTextDu: reward ? rewardSentence(reward, vertreter, "du") : null,
+    advisorPhone,
     // Ein Tipp statt Formular: vorgeschriebene Anfrage an die WhatsApp-Nummer des Vertreters
     whatsappUrl:
       wa?.status === "connected" && wa.phoneNumber
         ? whatsappLink(wa.phoneNumber, whatsappRequestText({ vertreter, recommender: recommenderName, offer: resolveOffer(rs ?? { offerKind: null }, vertreter), token: link.token }))
         : null,
     offer: resolveOffer(rs ?? { offerKind: null }, vertreter) as ResolvedOffer | null,
+    offerDu: resolveOffer(rs ?? { offerKind: null }, vertreter, "du") as ResolvedOffer | null,
     // Rückmeldung an den Empfehlenden nur bei Links eines Kontakts
     statusUpdates: (rs?.statusUpdates ?? true) && link.kind !== "general",
     vertreter,
     recommender: recommenderName,
     topics: [...new Set(products.map((p) => p.productKey).filter(Boolean))].slice(0, 6) as string[],
     privacyUrl: privacy && /^https?:\/\//.test(privacy) ? privacy : process.env.BOOKING_PRIVACY_URL ?? "https://performancegrowth.de/datenschutz",
+  };
+}
+
+/**
+ * Inaktiver Link (Modul aus, Kontakt gelöscht): trotzdem eine nächste Handlung für die empfohlene Person (Persona-Test
+ * 20.11.2026). Nur öffentliche Angaben des Vermittlers (Name, Telefon aus Erstinformation bzw. Impressum), nichts zum
+ * Empfehlenden. null, wenn es den Link nicht gibt.
+ */
+export async function loadInactiveReferralContact(token: string): Promise<{ customerId: string; vertreter: string; advisorPhone: string | null; an: Ansprache } | null> {
+  const link = await prisma.referralLink.findUnique({
+    where: { token },
+    select: { customerId: true, customer: { select: { name: true, leadAddress: true, dormantSince: true, onboarding: { select: { websiteInfo: true } }, erstinformation: { select: { telefon: true } } } } },
+  });
+  if (!link || link.customer.dormantSince) return null;
+  const web = link.customer.onboarding?.websiteInfo as { phone?: string | null } | null;
+  return {
+    customerId: link.customerId,
+    vertreter: advisorDisplayName(link.customer.name),
+    advisorPhone: displayAdvisorPhone(link.customer.erstinformation?.telefon) ?? displayAdvisorPhone(web?.phone),
+    an: asAnsprache(link.customer.leadAddress),
   };
 }
 
@@ -1124,7 +1334,18 @@ export async function countReferralVisit(page: { linkId: string; customerId: str
   });
 }
 
-export type ReferralSubmit = { name: string; phone: string; email: string | null; topic: string | null; message: string | null; consent: boolean; statusConsent?: boolean };
+export type ReferralSubmit = {
+  name: string;
+  phone: string;
+  email: string | null;
+  topic: string | null;
+  message: string | null;
+  /** Absenden = Einwilligung (Satz direkt über dem Knopf, contactConsentText) */
+  consent: boolean;
+  statusConsent?: boolean;
+  /** Ansprache der Kontaktseite (für den gespeicherten Wortlaut) */
+  an?: Ansprache;
+};
 
 /** Empfohlene Person trägt sich selbst ein → normaler Lead mit Quelle „Empfehlung“ und Erstkontakt-Automatik. */
 export async function submitReferral(token: string, input: ReferralSubmit, now = new Date()): Promise<{ ok: true; leadId: string | null } | { ok: false; error: "invalid" | "consent" | "busy" | "unavailable" }> {
@@ -1159,13 +1380,17 @@ export async function submitReferral(token: string, input: ReferralSubmit, now =
       referralLinkId: page.linkId,
       referralStatusConsent: statusConsent && !self,
       referralRewardStatus: self ? "entfaellt" : null,
+      // Die Person hat einen Rückruf angefordert: Der Vermittler ruft an (Push „jetzt anrufen“), keine automatische
+      // Erstnachricht an Empfohlene (Plan 19.11.2026, eigene Meta-Vorlage erst später)
+      outreachAt: now,
+      outreachStatus: "skipped_contact",
       formData: [
         { label: "Quelle", value: recName ? `Empfehlung von ${recName}` : "Empfehlung (allgemeiner Link aus der E-Mail-Signatur)" },
         ...(page.offer ? [{ label: "Angebot", value: page.offer.headline }] : []),
         ...(input.topic ? [{ label: "Thema", value: input.topic }] : []),
         ...(input.message ? [{ label: "Nachricht", value: input.message }] : []),
-        { label: "Einwilligung", value: `Kontaktaufnahme per Telefon, WhatsApp und E-Mail erlaubt (Empfehlungsseite, ${stamp})` },
-        ...(statusConsent ? [{ label: "Rückmeldung an Empfehlende/n", value: `erlaubt: dass ich mich gemeldet habe und ob ein Termin zustande kam (${stamp})` }] : []),
+        { label: "Einwilligung", value: `Kontaktaufnahme per Telefon, WhatsApp und E-Mail erlaubt (Empfehlungsseite, ${stamp}): „${contactConsentText(page.vertreter, input.an ?? "sie")}“` },
+        ...(statusConsent ? [{ label: "Rückmeldung an Empfehlende/n", value: `erlaubt (${stamp}): „${statusConsentText(recName, page.vertreter)}“` }] : []),
       ],
     },
     select: { id: true },
@@ -1186,13 +1411,32 @@ export async function loadEmpfehlungStats(customerId: string, days = 90, now = n
   const sent = requests.filter((r) => r.reviewSentAt && r.reviewSentAt >= since);
   const referred = await prisma.lead.findMany({
     where: { customerId, referralLinkId: { not: null }, createdAt: { gte: since } },
-    select: { id: true, status: true, source: true, closeValue: true, _count: { select: { appointments: true } } },
+    select: {
+      id: true,
+      status: true,
+      source: true,
+      closeValue: true,
+      createdAt: true,
+      firstContactAt: true,
+      callStartedAt: true,
+      lastCallAttemptAt: true,
+      _count: { select: { appointments: true } },
+    },
   });
   const closed = referred.filter((l) => l.status === CLOSED);
+  // Zeit bis zum ersten Anruf (Median): erster Kontaktversuch, sonst „Anrufen“ getippt bzw. dokumentierter Versuch
+  const firstCallHours = medianHours(
+    referred
+      .map((l) => l.firstContactAt ?? l.callStartedAt ?? l.lastCallAttemptAt)
+      .map((at, i) => (at ? (at.getTime() - referred[i].createdAt.getTime()) / 3600_000 : NaN)),
+  );
   // Gleiche Zahl wie „davon aus Empfehlungen“ auf /buyer/zahlen: Verträge der Empfehlungs-Leads mit der Rate ihrer Sparte
   const { loadErtragData, summarizeProvision } = await import("@/lib/ertrag");
   const ertrag = await loadErtragData(customerId).catch(() => null);
   const provision = ertrag ? summarizeProvision(ertrag.contracts.filter((c) => c.origin === "empfehlung"), ertrag.rates, { from: since, to: now }).firstYear : 0;
+  // Euro-Wert eines Neukunden (Paket 2): Provision im ersten Jahr je Kunde mit Abschluss, letzte 365 Tage, ab 3 Kunden
+  const year = ertrag ? summarizeProvision(ertrag.contracts, ertrag.rates, { from: new Date(now.getTime() - 365 * DAY_MS), to: now }) : null;
+  const valuePerCustomer = year && year.leads >= 3 && year.firstYear > 0 ? Math.round(year.firstYear / year.leads) : null;
   const links = await prisma.referralLink.aggregate({ where: { customerId }, _sum: { views: true } });
   // Trichter: Links ausgegeben → vom Kunden geöffnet → einzelne Besucher → Empfehlungen → Neukunden
   const [linksSent, linksOpened, visitors] = await Promise.all([
@@ -1218,9 +1462,95 @@ export async function loadEmpfehlungStats(customerId: string, days = 90, now = n
     referralMeetings: referred.filter((l) => l._count.appointments > 0).length,
     referralClosings: closed.length,
     referralProvision: Math.round(provision),
+    valuePerCustomer,
+    firstCallHours,
   };
 }
 export type EmpfehlungStats = Awaited<ReturnType<typeof loadEmpfehlungStats>>;
+
+// ─── Heute fragen (Paket 2) ─────────────────────────────────────────────────
+
+/**
+ * Arbeitsliste „Heute fragen“ und „Einwilligung fehlt“ (Regeln: pickReferralCandidates in shared.ts). Gezählt wird
+ * wie bei der Obergrenze: Protokoll der Empfehlungsbitten plus automatisch gesendete Bitten (referralSentAt).
+ */
+export async function loadReferralCandidates(customerId: string, now = new Date()) {
+  const since = new Date(now.getTime() - CANDIDATE_MAX_AGE_DAYS * DAY_MS);
+  const recent = new Date(now.getTime() - CANDIDATE_APPOINTMENT_DAYS * DAY_MS);
+  const leads = await prisma.lead.findMany({
+    where: {
+      customerId,
+      erasedAt: null,
+      OR: [
+        { status: CLOSED, OR: [{ closedAt: { gte: since } }, { closedAt: null, createdAt: { gte: since } }] },
+        { source: "Bestandskunde", appointments: { some: { status: "completed", startsAt: { gte: recent, lte: now } } } },
+      ],
+    },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      source: true,
+      status: true,
+      closedAt: true,
+      followUpNote: true,
+      feedbackConsentAt: true,
+      feedbackConsentText: true,
+      feedbackOptOutAt: true,
+      bestandKunde: { select: { optOutAt: true, blockedAt: true } },
+      reviewRequest: { select: { status: true, sentiment: true, googleClicks: true, googleClickAt: true, answeredAt: true, referralSentAt: true } },
+      ownReferralLink: { select: { id: true, lastSentAt: true } },
+      appointments: { where: { status: "completed", startsAt: { gte: recent, lte: now } }, orderBy: { startsAt: "desc" }, take: 1, select: { startsAt: true } },
+    },
+    take: 500,
+  });
+  const linkIds = leads.map((l) => l.ownReferralLink?.id).filter((x): x is string => !!x);
+  const logs = linkIds.length
+    ? await prisma.auditLog.findMany({
+        where: { action: { in: ASK_ACTIONS }, entity: "ReferralLink", entityId: { in: linkIds }, at: { gte: new Date(now.getTime() - REFERRAL_ASK_WINDOW_DAYS * DAY_MS) } },
+        select: { entityId: true, at: true },
+      })
+    : [];
+  const byLink = new Map<string, Date[]>();
+  for (const r of logs) if (r.entityId) byLink.set(r.entityId, [...(byLink.get(r.entityId) ?? []), r.at]);
+  const rows: CandidateInput[] = leads.map((l) => {
+    const asks = [...(l.ownReferralLink ? (byLink.get(l.ownReferralLink.id) ?? []) : [])];
+    // Automatische Bitte ohne Protokolleintrag (vor Paket 1): zählt als Bitte, wenn nicht schon im Protokoll
+    const auto = l.reviewRequest?.referralSentAt;
+    if (auto && !asks.some((d) => Math.abs(d.getTime() - auto.getTime()) < 3600_000)) asks.push(auto);
+    return {
+      id: l.id,
+      name: l.name,
+      phone: l.phone,
+      source: l.source,
+      status: l.status,
+      closedAt: l.closedAt,
+      followUpNote: l.followUpNote,
+      feedbackConsentAt: l.feedbackConsentAt,
+      feedbackConsentText: l.feedbackConsentText,
+      feedbackOptOutAt: l.feedbackOptOutAt,
+      bestandBlocked: !!(l.bestandKunde?.optOutAt || l.bestandKunde?.blockedAt),
+      review: l.reviewRequest,
+      lastAppointmentAt: l.appointments[0]?.startsAt ?? null,
+      asks,
+      lastLinkAt: l.ownReferralLink?.lastSentAt ?? null,
+    };
+  });
+  const picked = pickReferralCandidates(rows, now);
+  const closings = leads.filter((l) => l.status === CLOSED && l.phone && !l.feedbackOptOutAt);
+  return { ...picked, closings: closings.length, withConsent: closings.filter((l) => l.feedbackConsentAt).length };
+}
+export type ReferralCandidates = Awaited<ReturnType<typeof loadReferralCandidates>>;
+
+/** Offene Kritik (Zu erledigen): Antwort „Kritik“, noch nicht geklärt. */
+export async function openCritiques(customerId: string) {
+  return prisma.reviewRequest.findMany({
+    where: { customerId, sentiment: "negative", resolvedAt: null, lead: { erasedAt: null } },
+    orderBy: { answeredAt: "desc" },
+    take: 10,
+    select: { id: true, comment: true, answeredAt: true, lead: { select: { id: true, name: true, phone: true } } },
+  });
+}
 
 /** Letzte Anfragen für die Liste im Modul. */
 export async function recentRequests(customerId: string, take = 30) {
@@ -1257,7 +1587,7 @@ export async function sendTestMessage(customerId: string, phone: string): Promis
       to: phone,
       purpose: "review_request",
       params: ["Test", settings.googleReviewUrl],
-      text: renderText(settings.texts.review, { vorname: "Test", link: settings.googleReviewUrl, vertreter, anrede: { firstName: "Test" } }),
+      text: renderText(textFor(settings, "review", settings.leadAn), { vorname: "Test", link: settings.googleReviewUrl, vertreter, anrede: { firstName: "Test" }, an: settings.leadAn }),
       contactName: "Test (Empfehlungen & Bewertungen)",
       anrede: { firstName: "Test" },
       // „Test an mich“: der Vermittler sendet selbst an die eigene Nummer
