@@ -48,7 +48,7 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
           }
         />
         {sources.length === 0 ? (
-          <p className="p-5 text-sm text-[color:var(--muted)]">Kein Formular zugeordnet. Leads kommen dann nur über Airtable.</p>
+          <p className="p-5 text-sm text-[color:var(--muted)]">Kein Formular zugeordnet.</p>
         ) : (
           <ul className="divide-y divide-[color:var(--border)]">
             {sources.map((s) => (

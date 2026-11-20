@@ -163,7 +163,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
                             {l.appointments[0] ? ` · Termin ${dt(l.appointments[0].startsAt)}` : ""}
                           </div>
                           <div>
-                            Eingang: {l.externalId ? "direkt (Meta)" : l.airtableId ? "Airtable" : "App"}
+                            Eingang: {l.externalId ? "direkt (Meta)" : l.airtableId ? "Altbestand" : "App"}
                             {l.adChannel ? ` · ${l.adChannel}` : ""}
                           </div>
                         </div>

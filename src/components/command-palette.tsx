@@ -44,7 +44,6 @@ const PAGES: Hit[] = [
   ["Stornoquote", "/admin/zahlen/stornoquote", "Zahlen"],
   ["Kündigung & Rückkehr", "/admin/zahlen/lebenszyklus", "Zahlen"],
   ["WhatsApp-Zustellung", "/admin/zahlen/whatsapp", "Zahlen"],
-  ["Pay-per-Lead-Import", "/admin/ppl/import", "Kunden · Pay-per-Lead"],
   ["Media Buyer", "/admin/media-buyer", "Kunden · Pay-per-Lead · Budgets der Pools"],
   ["Neuigkeiten", "/admin/einstellungen/neuigkeiten", "Einstellungen"],
   ["Einrichtung neuer Kunden", "/admin/einstellungen/einrichtung", "Einstellungen"],

@@ -43,12 +43,17 @@ export const ENTFERNT: string[] = [
   "actions-settemplateapprovedaction--vorlage-von-hand-als-freigegeben-markieren", // F199 (im neuen Admin per CSS ausgeblendet)
   "actions-customerfootersaction--fusszeile-bei-bestehenden-kunden-setzen", // F391
   "actions-countinvoicesaction--finalisierte-rechnungen-zaehlen", // F392
+  // Airtable aus der Oberfläche (Ole, 19.11.2026: „alte dinge, wie airtable können rausgenommen werden“). Der Abgleich im
+  // Hintergrund (lib/sync.ts, /api/sync) und das Schreiben nach Airtable bleiben, bis AIRTABLE_SYNC_OFF gesetzt ist.
+  "page-airtable-sync-off--anzeige-airtable-abgleich-an-aus", // Kennzeichen ohne Handlung; Zustand gehört in den Systemzustand
+  "actions-runimportaction--bezuege-aus-airtable-uebernehmen", // Bezüge werden in der App gepflegt; Logik bleibt in lib/ppl/import-airtable.ts
+  "nachholen-airtablenachholen--lead-aus-airtable-nachholen-lead-nr-laeuft-durch", // Leads kommen direkt (Meta, Webhook); Logik bleibt in lib/ppl/airtable-nachholen.ts
+  "route-get--diagnose-airtable-felder-nur-technik-keine", // Diagnose-Route /api/admin/airtable-fields gelöscht, ohne Oberfläche und ohne Nutzer
 ];
 
 /** Funktionen ohne Oberfläche, vom Neudesign nicht betroffen (bleiben, wie sie sind). */
 export const BLEIBT: string[] = [
   "route-get--diagnose-openai-erreichbarkeit-nur-technik-keine",
-  "route-get--diagnose-airtable-felder-nur-technik-keine",
   // Funktion des Kundenbereichs (Chats der Vermittler), im Admin nur der Schalter je Kunde (Kundenakte › WhatsApp)
   "chat-actions-takeasleadbuyeraction--neuer-kontakt-im-chat-als-lead-uebernehmen",
 ];

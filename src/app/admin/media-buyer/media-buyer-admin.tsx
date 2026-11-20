@@ -187,8 +187,8 @@ export function MediaBuyerLayout({
     return (
       <div className="flex flex-col gap-4">
         <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-8 text-center text-sm text-[color:var(--muted)]">
-          Noch keine Pools. Sobald in Airtable Lead-Ziele (und für Kinderwunsch
-          Regionen) gepflegt und synchronisiert sind, erscheinen sie hier.
+          Noch keine Pools. Sobald Kunden Lead-Ziele je Produkt (und für
+          Kinderwunsch Regionen) haben, erscheinen sie hier.
         </div>
         <AttributionCard attribution={attribution} />
       </div>
@@ -397,9 +397,9 @@ function AttributionCard({
             ) : (
               <>
                 <p className="mb-1.5 text-[11px] text-[color:var(--muted)]">
-                  Spend aus dem letzten Sync-Zeitraum. Fehlt hier ein Produkt,
-                  ein Keyword/Slug/Alias in der Airtable-Produkte-Tabelle
-                  ergänzen, dann matcht der nächste Sync.
+                  Werbekosten aus dem letzten Abgleich. Fehlt hier ein Produkt,
+                  passt der Kampagnenname noch zu keinem Produkt (Name, Kurzname
+                  oder Stichwort des Produkts).
                 </p>
                 <ul className="flex flex-col gap-1">
                   {unmatched.map((c) => (
@@ -725,9 +725,7 @@ function PoolDetail({
             <span className="text-2xl font-bold tabular-nums">
               {formatNumber(pool.goal)}
             </span>
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600">
-              Airtable
-            </span>
+            <span />
 
             <span className="text-[color:var(--muted)]">Ist (MTD)</span>
             <span className="text-2xl font-bold tabular-nums text-blue-600">

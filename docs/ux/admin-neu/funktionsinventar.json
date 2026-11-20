@@ -3140,8 +3140,8 @@
   "demo_view": "leads-ppl",
   "id": "page-airtable-sync-off--anzeige-airtable-abgleich-an-aus",
   "bereich": "liefern",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -3212,8 +3212,8 @@
   "demo_view": "leads-ppl",
   "id": "actions-runimportaction--bezuege-aus-airtable-uebernehmen",
   "bereich": "liefern",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/media-buyer",
@@ -4952,7 +4952,7 @@
   "demo_view": "landkarte",
   "id": "route-get--diagnose-airtable-felder-nur-technik-keine",
   "bereich": "was-wo-ist",
-  "status_neu": "bleibt",
+  "status_neu": "entfernt",
   "ort_neu": ""
  },
  {
@@ -5120,8 +5120,8 @@
   "demo_view": "leads-ppl",
   "id": "nachholen-airtablenachholen--lead-aus-airtable-nachholen-lead-nr-laeuft-durch",
   "bereich": "liefern",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl (Geliefert)",
