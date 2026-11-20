@@ -984,13 +984,21 @@ async function loadDeliveryPacing(
       },
     }),
   ]);
+  // Verwertungsquote bevorzugt aus dem Pay-per-Lead-Eingang (PoolLead: geliefert ÷ alle eingegangenen,
+  // inkl. geparkt, verfallen, ungültig, Dublette). Die Lead-Tabelle enthält am Monatsanfang noch über
+  // Airtable gelieferte Leads ohne Bezug; damit kam fälschlich ~26 % statt ~88 % heraus (Ole, 20.11.2026).
+  const [poolIn, poolOut] = await Promise.all([
+    prisma.poolLead.count({ where: { productKey: { in: sources }, createdAt: { gte: since, lte: p.now } } }),
+    prisma.poolLead.count({ where: { productKey: { in: sources }, status: "delivered", createdAt: { gte: since, lte: p.now } } }),
+  ]);
+  const usePool = poolIn >= 20;
   const tolRaw = Number(process.env.MEDIA_BUYER_GOAL_TOLERANCE);
   return deliveryPacing({
     goal: def.goal,
     customers: def.customers,
     incomingMtd: p.incomingMtd,
-    recentIncoming,
-    recentDelivered,
+    recentIncoming: usePool ? poolIn : recentIncoming,
+    recentDelivered: usePool ? poolOut : recentDelivered,
     poolDeliveredCheck,
     daysElapsed: p.daysElapsed,
     daysTotal: p.daysTotal,
