@@ -46,8 +46,12 @@ function adresse(pfad) {
   return pfad.replace(/\[[a-z]+\]/gi, encodeURIComponent(PARAMS[key]));
 }
 
-// Seiten, die bewusst weiterleiten (alte Links): /kunden/berichte/[id] öffnet den Bericht in der Kundenakte.
-const WEITERLEITUNG_ERWARTET = { "/admin/neu/kunden/berichte/[id]": /^\/admin\/neu\/kunden\/[^/]+\/berichte$/ };
+// Seiten, die bewusst weiterleiten (alte Links): /kunden/berichte/[id] öffnet den Bericht in der Kundenakte,
+// /kunden/[id]/optimierung ist seit dem Umbau 20.11.2026 ein Abschnitt unter Kundenakte › Leads.
+const WEITERLEITUNG_ERWARTET = {
+  "/admin/neu/kunden/berichte/[id]": /^\/admin\/neu\/kunden\/[^/]+\/berichte$/,
+  "/admin/neu/kunden/[id]/optimierung": /^\/admin\/neu\/kunden\/[^/]+\/leads$/,
+};
 
 /** Lädt eine Seite und prüft HTTP-Status, Umleitung und Breite. Wirft, wenn die Seite nicht (vollständig) lädt. */
 async function pruefen(page, pfad, b, muster) {

@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { Eye } from "lucide-react";
 import { Badge, buttonClass } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
-import { TestkundeLoeschen } from "@/components/admin/testkunde-loeschen";
+import { SubTabs } from "@/components/admin/sub-tabs";
+import { reiterFuer } from "@/lib/admin-neu/navigation";
 import { startPreviewAction } from "@/app/buyer/preview-actions";
 import { packageLabel } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
@@ -13,11 +14,15 @@ import { memberName } from "@/lib/team";
 import { wonReferralCount } from "@/lib/kollegen";
 import { StatusWahl } from "./status-wahl";
 
+// Unterseiten ohne eigenen Reiter: auf welchem Reiter sie liegen (Pfadteil unter /kunden/<id>/)
+const AUCH: Record<string, string[]> = { Übersicht: ["berichte", "kontakt"], Leads: ["optimierung", "kampagne"] };
+
 export const kurzName = (name: string) => name.replace(/^Allianz\s+/i, "");
 
-// Kopf der Kundenakte im neuen Admin (alle 7 Reiter): Name, Status zum Ändern, Abzeichen (Paket, Onboarding,
+// Kopf der Kundenakte im neuen Admin (5 Reiter, Umbau 20.11.2026): Name, Status zum Ändern, Abzeichen (Paket, Onboarding,
 // WhatsApp, Zahlung offen, ruht/gekündigt/gelöscht, pausiert, geworben), Abwesenheiten im Team, „Als Kunde ansehen“
-// und die Reiter aus navigation.ts. Gleiche Daten wie der Kopf der alten Akte (app/admin/kunden/[id]/layout.tsx).
+// und die Reiter aus navigation.ts. Unterseiten ohne eigenen Reiter markieren ihren Reiter mit (AUCH). „Testkunde
+// löschen“ liegt unter Abrechnung › Daten löschen (seltene, endgültige Aktion nicht im Kopf). Gleiche Daten wie der Kopf der alten Akte (app/admin/kunden/[id]/layout.tsx).
 // Keine eigene layout.tsx: „Kampagne mit KI“ liegt unter derselben Adresse, gehört aber nicht zu den Reitern.
 export async function KundenakteSeite({ id, children }: { id: string; children: React.ReactNode }) {
   await requireAuth();
@@ -57,11 +62,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
           </span>
         ) : null}
         <Badge>{packageLabel(c)}</Badge>
-        {c.isTest ? (
-          <span data-funktion="test-actions-deletetestcustomeraction--testkunde-komplett-loeschen">
-            <TestkundeLoeschen customerId={c.id} name={c.name} whatsapp={c.whatsAppAccount?.phoneNumber ?? null} zurueck="/admin/neu/kunden" />
-          </span>
-        ) : null}
+        {c.isTest ? <Badge>Test</Badge> : null}
         {c.onboarding && !c.onboarding.liveAt ? <Badge tone="brand">Onboarding</Badge> : null}
         {c.plan !== "service" ? (
           c.agentConfig?.active && c.whatsAppAccount?.status === "connected" ? <Badge tone="success">WhatsApp aktiv</Badge> : <Badge>WhatsApp aus</Badge>
@@ -70,7 +71,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
         {c.dataDeletedAt ? <Badge tone="danger">Daten gelöscht</Badge> : c.dormantSince ? <Badge tone="warning">ruht</Badge> : c.cancelEffectiveAt ? <Badge tone="warning">gekündigt</Badge> : null}
         {c.pauses.length ? <Badge tone="warning">pausiert</Badge> : null}
         {referred ? (
-          <Link href="/admin/marketing/empfehlungen" title="Über „Kollegen empfehlen“" data-funktion="layout-referred--hinweis-hat-x-kunden-geworben-link-empfehlungen">
+          <Link href="/admin/neu/marketing/empfehlungen" title="Über „Kollegen empfehlen“" data-funktion="layout-referred--hinweis-hat-x-kunden-geworben-link-empfehlungen">
             <Badge tone="success">hat {referred} Kunden geworben</Badge>
           </Link>
         ) : null}
@@ -96,8 +97,6 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
     <Seite
       titel={kurzName(c.name)}
       zurueck={{ href: "/admin/neu/kunden", label: "Kunden" }}
-      reiter="kundenakte"
-      params={{ id: c.id }}
       zeile={zeile}
       aktionen={
         <form action={startPreviewAction} data-funktion="preview-actions-startpreviewaction--als-kunde-ansehen-nur-lesend">
@@ -109,6 +108,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
         </form>
       }
     >
+      <SubTabs tabs={reiterFuer("kundenakte", { id: c.id }).map((t) => ({ ...t, also: (AUCH[t.label] ?? []).map((u) => `/admin/neu/kunden/${c.id}/${u}`) }))} />
       {children}
     </Seite>
     </div>
