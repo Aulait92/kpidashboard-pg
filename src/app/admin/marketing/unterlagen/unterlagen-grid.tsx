@@ -69,11 +69,14 @@ export function UnterlagenGrid({
 function Leitfaeden() {
   return (
     <Card className="p-4 sm:p-5" data-leitfaeden>
-      <h2 className="text-base font-semibold">Leitfaden Setter-Call</h2>
-      <p className="mt-1 text-sm text-[color:var(--muted)]">15-Minuten-Telefonat vor dem Beratungsgespräch. Nur für Sie, nicht zum Weitergeben.</p>
-      <div className="mt-3">
+      <h2 className="text-base font-semibold">Gesprächsleitfäden</h2>
+      <p className="mt-1 text-sm text-[color:var(--muted)]">Nur für Sie, nicht zum Weitergeben.</p>
+      <div className="mt-3 flex flex-wrap gap-2">
         <ButtonLink href="/api/admin/unterlagen/leitfaden-setter-call" external icon={FileText}>
-          PDF öffnen
+          Setter-Call
+        </ButtonLink>
+        <ButtonLink href="/api/admin/unterlagen/einwandbehandlung" external icon={FileText}>
+          Einwandbehandlung
         </ButtonLink>
       </div>
     </Card>
