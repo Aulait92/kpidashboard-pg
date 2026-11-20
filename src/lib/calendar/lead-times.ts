@@ -124,13 +124,27 @@ export function scheduleFromTimes(lt: LeadTimes): WeekSchedule {
 export const APPOINTMENT_DURATIONS = [15, 30, 45, 60] as const;
 export const DEFAULT_DURATION_MIN = 30;
 
+/** Nächste wählbare Termindauer (z. B. 90 → 60, 20 → 15; bei Gleichstand die kürzere). */
+export function nearestDuration(raw: unknown): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return DEFAULT_DURATION_MIN;
+  return [...APPOINTMENT_DURATIONS].reduce((best, d) => (Math.abs(d - n) < Math.abs(best - n) ? d : best));
+}
+
 /** Ungültige Dauer → Standard 30 Minuten. */
 export function normalizeDuration(raw: unknown): number {
   const n = Number(raw);
   return (APPOINTMENT_DURATIONS as readonly number[]).includes(n) ? n : DEFAULT_DURATION_MIN;
 }
 
-export const DEFAULT_LEAD_TIMES: LeadTimes = { weekdays: [1, 2, 3, 4, 5], times: ["10:00", "14:00", "16:00"], durationMin: DEFAULT_DURATION_MIN };
+// Standard (Ole, 20.11.2026: „hier 10 - 17h voreinstellen“): Mo–Fr 10 bis 17 Uhr, Start jede volle Stunde.
+const DEFAULT_RANGE: DayRange[] = [["10:00", "17:00"]];
+export const DEFAULT_LEAD_TIMES: LeadTimes = {
+  weekdays: [1, 2, 3, 4, 5],
+  times: rangeStarts("10:00", "17:00", DEFAULT_STEP, DEFAULT_DURATION_MIN),
+  durationMin: DEFAULT_DURATION_MIN,
+  schedule: { step: DEFAULT_STEP, days: { 1: DEFAULT_RANGE, 2: DEFAULT_RANGE, 3: DEFAULT_RANGE, 4: DEFAULT_RANGE, 5: DEFAULT_RANGE } },
+};
 
 /**
  * Startzeiten im festen Raster („alle 30 Min. von 9 bis 17 Uhr“): erste Zeit = von,

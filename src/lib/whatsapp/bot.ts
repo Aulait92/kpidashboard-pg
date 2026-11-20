@@ -1462,14 +1462,9 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     // Vermittler-Nennung (Ole, 17.11.2026): gesiezt nie „Vorname Nachname“, sondern „Herr/Herrn Nachname“
     finalText = vermittlerNennungKorrigieren(finalText, { voll: who.vermittler.name || advisorName, person, an: ansprache });
     await erstinfoNachholen();
-    // Policen vor dem Termin (lib/policen/assistent.ts): ohne Termin wie bisher nach der Vertragsfrage einmal einladen
-    // (Bitte, dann die Einwilligung als eigene Nachricht mit Knöpfen, Rechtsprüfung A1); mit Termin bittet die Strecke
-    // selbst (genau einmal, P2)
-    const policen = upcoming || gebucht ? null : await import("@/lib/policen/assistent").then((m) => m.einladungJetzt({ conversationId: conversation.id, an: ansprache, person })).catch(() => null);
-    if (policen) {
-      await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.text, sentBy: "bot", buttons: policen.buttons });
-      await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.folge.text, sentBy: "bot", buttons: policen.folge.buttons, footer: policen.folge.footer });
-    }
+    // Policen erst nach der Buchung (Ole, 20.11.2026: „Das Bitten um die Police sollte eigentlich später kommen“): vor
+    // dem Termin keine Einladung mehr; die Termin-Strecke bittet nach der Buchung genau einmal (P2), mit dem
+    // Upload-Formular (POLICEN_FLOW) bzw. Bitte und Einwilligung. lib/policen/assistent.ts einladungJetzt bleibt für Tests.
     // Policen-Strecke v2 (POLICEN_FLOW): statt der Einleitung die Chat-Nachricht mit Formular (lib/policen/flow). Scheitert
     // das Senden (Produktionsfehler 19.11.2026), nie ohne Antwort: Fehler an Sentry, Flow für den Kunden gestört und
     // sofort die bisherige Bitte mit Einwilligung (bzw. der nächste Schritt) als normale Antwort unten.

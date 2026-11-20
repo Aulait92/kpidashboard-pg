@@ -62,6 +62,14 @@ function Erklaerschritt(p: Parameters<typeof ServiceMails>[0]) {
   const [stufen, setStufen] = useState(p.stufen);
   const [liste, setListe] = useState(false);
   const [anrede, setAnrede] = useState<string>(p.vorschlaege?.anrede ?? "");
+  // Angaben, die weiter oben (Erstinformation) erst später gespeichert werden, in leere Felder übernehmen (Ole, 20.11.2026)
+  useEffect(() => {
+    setAngaben((cur) => {
+      const next = { ...cur };
+      for (const k of Object.keys(p.angaben) as (keyof SignaturAngaben)[]) if (!cur[k]?.trim() && p.angaben[k]?.trim()) next[k] = p.angaben[k];
+      return next;
+    });
+  }, [p.angaben]);
   const vorschau = useLiveVorschau(p.vorschau, angaben, p.fehlend.length > 0);
   const anredeOffen = p.anredeFehlt && p.canEdit && !anrede;
 

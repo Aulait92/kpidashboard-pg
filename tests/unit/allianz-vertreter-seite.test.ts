@@ -50,6 +50,9 @@ afterEach(() => {
 describe("Allianz-Vertreter-Seite lesen", () => {
   it("Link in jeder Schreibweise wird zur selben Seite", () => {
     const want = { pageUrl: "https://vertretung.allianz.de/anid.schwarzkopf/" };
+    expect(parseVertretungInput("30/410/2222")).toEqual({ vtnr: "304102222" });
+    // Ganze Adresse aus „Termin vereinbaren“ (Einrichtung 20.11.2026)
+    expect(parseVertretungInput("https://booking.allianz-abv.eps.bookingtime.com/?vtnr=101511203&x=1")).toEqual({ vtnr: "101511203" });
     expect(parseVertretungInput("https://vertretung.allianz.de/anid.schwarzkopf/")).toEqual(want);
     expect(parseVertretungInput("https://vertretung.allianz.de/anid.schwarzkopf")).toEqual(want);
     expect(parseVertretungInput("vertretung.allianz.de/anid.schwarzkopf/")).toEqual(want);
@@ -78,7 +81,8 @@ describe("Allianz-Vertreter-Seite lesen", () => {
     expect(err).toBeInstanceOf(AllianzCalendarError);
     expect(err.code).toBe("blocked");
     expect(err.message).toBe(ALLIANZ_BLOCKED_MESSAGE);
-    expect(err.message).toContain("Die Allianz lässt den automatischen Abruf gerade nicht zu.");
+    expect(err.message).toContain("Die Allianz lässt den Abruf Ihrer Vertreter-Seite nicht zu.");
+    expect(err.message).toContain("Vertreternummer");
     expect(err.message).not.toMatch(/[–—]/);
   });
 

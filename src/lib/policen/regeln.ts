@@ -265,6 +265,18 @@ export const ERINNERUNG_OPTIN_TEXT =
   "Ich möchte per WhatsApp an die Vorbereitung meines Termins erinnert werden (z. B. an meine Unterlagen). Abmelden jederzeit mit STOP.";
 export const ERINNERUNG_OPTIN_VERSION = "2026-11-18.1";
 
+/**
+ * Häkchen „Erinnerung an die Unterlagen“ auf /book. Standard seit 20.11.2026 (Ole direkt freigegeben): Nutzen fett vorn,
+ * „(empfohlen)“, nie vorausgewählt (EuGH Planet49). Pflichtangaben: Zweck (Erinnerung an die Unterlagen für den Termin),
+ * Kanal WhatsApp, Abmeldung STOP. Splittest buchung_erinnerung (lib/experimente.ts): B zeigt denselben Wortlaut als
+ * hervorgehobene Karte statt als grauen Kleindruck.
+ */
+export function erinnerungOptin(fassung: "a" | "b", an: Ansprache): { fett: string; rest: string; text: string; version: string } {
+  const fett = a(an, "Damit in deinem Termin nichts fehlt:", "Damit in Ihrem Termin nichts fehlt:");
+  const rest = "Ja, bitte per WhatsApp an meine Unterlagen erinnern (empfohlen). Abmelden jederzeit mit STOP.";
+  return { fett, rest, text: `${fett} ${rest}`, version: `2026-11-20.${fassung === "b" ? "karte." : ""}${an}` };
+}
+
 /** Hinweis im Chatverlauf statt Dateiname oder Vorschau (auch im Admin-Chat). */
 export const CHAT_HINWEIS = "Dokument für den Vermittler";
 

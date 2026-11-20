@@ -419,9 +419,21 @@ describe("Partnerliste (L2)", () => {
     expect(partner.map((p) => p.firma)).toEqual(["Beta Versicherungsmakler", "Muster Finanz GmbH"]);
     expect(partner[1]).toEqual({ firma: "Muster Finanz GmbH", name: "Max Muster", ort: "Berlin", registerNummer: "D-1234-ABCDE-12", fehlt: [] });
     expect(partner[0]).toMatchObject({ name: null, ort: null, registerNummer: "D-9999-ZZZZZ-99" });
-    expect(partner[0].fehlt).toEqual(["Firma (Erstinformation)", "Name", "Sitz (Ort)"]);
+    expect(partner[0].fehlt).toEqual(["Firma (Erstinformation oder Partner-Angaben)", "Name", "Sitz (Ort)"]);
     expect(stand?.toISOString()).toBe("2026-11-19T10:00:00.000Z");
     expect(partnerAus([]).stand).toBeNull();
+  });
+
+  it("Partner-Angaben gehen vor: Empfänger als Firma, Kontoname als Ansprechpartner", () => {
+    const { partner } = partnerAus([
+      roh({
+        customerId: "d",
+        kundeName: "Dennis Müller",
+        erstinfo: { name: "Dennis Müller", firma: null, anschrift: null, registerNummer: null },
+        partnerAngaben: { firma: "Nico Yagci", anschrift: "John-F.-Kennedy-Str. 27, 34128 Kassel", registerNr: "d-c9fq-v848d-75" },
+      }),
+    ]);
+    expect(partner[0]).toEqual({ firma: "Nico Yagci", name: "Dennis Müller", ort: "Kassel", registerNummer: "D-C9FQ-V848D-75", fehlt: [] });
   });
 });
 

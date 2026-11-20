@@ -19,7 +19,7 @@ import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { customerGreeting, logOfferActivity } from "@/lib/offer-links";
-import { loadOnboarding, onboardingChecklist, sendWelcome, type ChecklistItem, type OnboardingFull } from "@/lib/onboarding";
+import { loadOnboarding, onboardingChecklist, sendWelcome, vonUnsAbgehakt, type ChecklistItem, type OnboardingFull } from "@/lib/onboarding";
 import { loadCustomerProvision } from "@/lib/provision-server";
 
 const GRAPH = "https://graph.facebook.com/v22.0";
@@ -36,7 +36,7 @@ export const STUCK_AFTER_DAYS = 7;
 /** Schritte der Einrichtung (Reihenfolge = Anzeige im Kundenbereich). */
 export const SETUP_STEPS = [
   { key: "login", label: "Login" },
-  { key: "questionnaire", label: "Fragebogen" },
+  { key: "questionnaire", label: "Ihre Angaben" },
   { key: "app", label: "App aufs Handy und Mitteilungen" },
   { key: "calendar", label: "Kalender" },
   { key: "mailbox", label: "E-Mail-Postfach" },
@@ -175,8 +175,9 @@ export type MetaDatasetCheck = { state: MetaDatasetState; id?: string; name?: st
 
 export type MetaCheck = {
   at: string;
-  adAccount: { id: string | null; ok: boolean; name?: string; error?: string };
-  page: { id: string | null; ok: boolean; name?: string; error?: string };
+  /** geteilt = Kunde hat unserem Business freigegeben, uns fehlt nur noch die Zuweisung an den Systemnutzer (20.11.2026). */
+  adAccount: { id: string | null; ok: boolean; name?: string; error?: string; geteilt?: boolean };
+  page: { id: string | null; ok: boolean; name?: string; error?: string; geteilt?: boolean };
   leads: { ok: boolean; error?: string };
   /** Seit 15.11.2026; ältere gespeicherte Prüfungen haben das Feld nicht. */
   dataset?: MetaDatasetCheck;
@@ -245,6 +246,70 @@ async function graph<T>(path: string, params: Record<string, string>, accessToke
   }
 }
 
+// ─── Freigabe angekommen, Systemnutzer fehlt (Ole, 20.11.2026) ──────────
+// Gibt der Kunde Werbekonto bzw. Seite unserem Business als Partner frei, sieht unser Token (Systemnutzer) das Asset
+// erst, wenn es ihm in unserem Business Manager zugewiesen ist (Business-Einstellungen → Systemnutzer → Assets).
+// Bis dahin meldet Meta „keine Berechtigung“, obwohl der Kunde alles richtig gemacht hat. Wir prüfen deshalb, ob das
+// Asset bei uns angekommen ist, weisen es selbst zu und prüfen erneut. Klappt die Zuweisung nicht, sieht der Kunde
+// „Freigabe angekommen“ und die Admins bekommen einen Hinweis.
+
+export const FREIGABE_ANGEKOMMEN = {
+  adAccount: "Ihre Freigabe ist bei uns angekommen. Wir schalten das Werbekonto noch intern frei, Sie müssen nichts mehr tun.",
+  page: "Ihre Freigabe ist bei uns angekommen. Wir schalten die Seite noch intern frei, Sie müssen nichts mehr tun.",
+} as const;
+export const SYSTEMNUTZER_AUFGABEN = {
+  adAccount: ["MANAGE", "ADVERTISE", "ANALYZE"],
+  page: ["MANAGE", "CREATE_CONTENT", "MODERATE", "ADVERTISE", "ANALYZE"],
+} as const;
+
+type Asset = "adAccount" | "page";
+const ID_PERMISSION = /does not exist|unsupported get request|cannot be loaded due to missing permissions|not grant|permission|ads_management|ads_read|access token/;
+/** Ist der Fehler ein Berechtigungsfehler (dann lohnt sich das Nachziehen)? */
+export const istBerechtigungsfehler = (raw: string) => ID_PERMISSION.test(raw.toLowerCase());
+
+/** Kommt das Asset in der Liste der Kunden-Assets unseres Business vor (client_ad_accounts / client_pages)? */
+export function assetInListe(kind: Asset, id: string, items: { id?: unknown; account_id?: unknown }[]): boolean {
+  return items.some((i) => (kind === "adAccount" ? String(i.id ?? "") === `act_${id}` || String(i.account_id ?? "") === id : String(i.id ?? "") === id));
+}
+
+async function beiUnsFreigegeben(kind: Asset, id: string, businessId: string, t: string): Promise<boolean | null> {
+  let after: string | undefined;
+  for (let seite = 0; seite < 10; seite++) {
+    const r = await graph<{ data?: { id?: unknown; account_id?: unknown }[]; paging?: { cursors?: { after?: string }; next?: string } }>(
+      `${businessId}/${kind === "adAccount" ? "client_ad_accounts" : "client_pages"}`,
+      { fields: kind === "adAccount" ? "id,account_id" : "id", limit: "100", ...(after ? { after } : {}) },
+      t,
+    );
+    if (!r.ok) return null;
+    if (assetInListe(kind, id, r.data.data ?? [])) return true;
+    after = r.data.paging?.next ? r.data.paging.cursors?.after : undefined;
+    if (!after) return false;
+  }
+  return false;
+}
+
+/** Freigegebenes Asset unserem Systemnutzer (Inhaber des Tokens) zuweisen. */
+async function demSystemnutzerZuweisen(kind: Asset, id: string, businessId: string, t: string): Promise<boolean> {
+  const me = await graph<{ id?: string }>("me", { fields: "id" }, t);
+  if (!me.ok || !me.data.id) return false;
+  const r = await graph(
+    kind === "adAccount" ? `act_${id}/assigned_users` : `${id}/assigned_users`,
+    { user: me.data.id, tasks: JSON.stringify(SYSTEMNUTZER_AUFGABEN[kind]), business: businessId },
+    t,
+    "POST",
+  );
+  if (!r.ok) reportError(new Error(`Meta-Zuweisung ${kind} ${id}: ${r.error}`), "setup-meta-zuweisung");
+  return r.ok;
+}
+
+/** Nach einem Berechtigungsfehler: angekommen? Dann zuweisen. geteilt = Freigabe liegt bei uns, zugewiesen = Zuweisung geklappt. */
+async function freigabeNachziehen(kind: Asset, id: string, t: string): Promise<{ geteilt: boolean; zugewiesen: boolean }> {
+  const { businessId } = await loadSetupSettings();
+  const geteilt = await beiUnsFreigegeben(kind, id, businessId, t);
+  if (!geteilt) return { geteilt: false, zugewiesen: false };
+  return { geteilt: true, zugewiesen: await demSystemnutzerZuweisen(kind, id, businessId, t) };
+}
+
 /** Diagnose (nur ja/nein und Fehlertexte): liefert Meta für die Seite Name, Seiten-Token und Leadformulare? */
 export async function checkPageForDiagnose(pageId: string): Promise<{ gefunden: boolean; name: string | null; seitenToken: boolean; fehler: string | null; leadformulare: boolean | null; leadFehler: string | null }> {
   const t = token();
@@ -309,8 +374,15 @@ export async function checkMetaAccess(
   };
 
   if (accountId) {
-    const r = await checkAdAccountAccess(accountId);
+    let r = await checkAdAccountAccess(accountId);
+    let geteilt = false;
+    if (!r.ok && istBerechtigungsfehler(r.error)) {
+      const n = await freigabeNachziehen("adAccount", accountId, t);
+      geteilt = n.geteilt;
+      if (n.zugewiesen) r = await checkAdAccountAccess(accountId);
+    }
     if (r.ok) check.adAccount = { id: accountId, ok: true, name: r.name };
+    else if (geteilt) check.adAccount = { id: accountId, ok: false, geteilt: true, error: FREIGABE_ANGEKOMMEN.adAccount };
     else check.adAccount = { id: accountId, ok: false, error: explainMetaError("adAccount", r.error) };
   } else {
     check.adAccount = { id: null, ok: false, error: "Werbekonto-ID fehlt." };
@@ -323,8 +395,18 @@ export async function checkMetaAccess(
     else check.page = { id: null, ok: false, error: "Die Facebook-Seite wurde nicht gefunden. Bitte die Seiten-ID eintragen (Seite → Info → Seitentransparenz)." };
   }
   if (pageId) {
-    const r = await graph<{ id?: string; name?: string; access_token?: string }>(pageId, { fields: "id,name,access_token" }, t);
-    if (r.ok && r.data.access_token) {
+    const seite = () => graph<{ id?: string; name?: string; access_token?: string }>(pageId!, { fields: "id,name,access_token" }, t);
+    let r = await seite();
+    let seiteGeteilt = false;
+    if (!(r.ok && r.data.access_token) && (r.ok || istBerechtigungsfehler(r.error))) {
+      const n = await freigabeNachziehen("page", pageId, t);
+      seiteGeteilt = n.geteilt;
+      if (n.zugewiesen) r = await seite();
+    }
+    if (!(r.ok && r.data.access_token) && seiteGeteilt) {
+      check.page = { id: pageId, ok: false, geteilt: true, name: r.ok ? r.data.name : undefined, error: FREIGABE_ANGEKOMMEN.page };
+      check.leads = { ok: false, error: "Wird geprüft, sobald die Seite freigeschaltet ist." };
+    } else if (r.ok && r.data.access_token) {
       check.page = { id: pageId, ok: true, name: r.data.name };
       const forms = await graph<{ data?: unknown[] }>(`${pageId}/leadgen_forms`, { fields: "id", limit: "1" }, r.data.access_token);
       check.leads = forms.ok ? { ok: true } : { ok: false, error: explainMetaError("leads", forms.error) };
@@ -348,6 +430,19 @@ export async function checkMetaAccess(
     Object.assign(customerData, { metaDatasetId: ds.id, metaDatasetSource: "auto", metaDatasetCheckedAt: new Date(), metaDatasetError: null });
   }
   if (Object.keys(customerData).length) await prisma.customer.update({ where: { id: customerId }, data: customerData });
+
+  // Freigabe angekommen, aber Zuweisung an den Systemnutzer klappt nicht: einmal je Stand die Admins informieren
+  const vorher = (ob.metaCheck ?? null) as MetaCheck | null;
+  const offen = [check.adAccount.geteilt && "Werbekonto", check.page.geteilt && "Seite"].filter(Boolean) as string[];
+  const vorherOffen = [vorher?.adAccount?.geteilt && "Werbekonto", vorher?.page?.geteilt && "Seite"].filter(Boolean).join();
+  if (offen.length && offen.join() !== vorherOffen) {
+    await sendToAdmins({
+      title: `Meta-Freigabe von ${ob.customer.name} ist angekommen`,
+      body: `${offen.join(" und ")} im Business Manager unserem Systemnutzer zuweisen (Business-Einstellungen → Systemnutzer → Assets hinzufügen).`,
+      url: `/admin/neu/kunden/${customerId}`,
+      tag: `meta-zuweisen:${customerId}`,
+    }).catch((err) => reportError(err, "setup-meta-push"));
+  }
 
   const becameOk = check.ok && !ob.metaAccessAt;
   await prisma.onboarding.update({
@@ -529,7 +624,10 @@ export async function loadSetupOverview(customerId: string) {
   if (!ob) return null;
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } }) : null;
   const items = onboardingChecklist(ob, offer);
-  const [appDone, provisionDone] = await Promise.all([appInstalled(customerId), loadCustomerProvision(customerId).then((p) => p.confirmed)]);
+  const [appDone, provisionDone] = await Promise.all([
+    appInstalled(customerId),
+    loadCustomerProvision(customerId).then((p) => p.confirmed || vonUnsAbgehakt(ob.stepSkips, "provision")),
+  ]);
   const steps = setupSteps(ob, items, { appDone, provisionDone });
   const days = Math.floor((Date.now() - setupBase(ob).getTime()) / DAY);
   return { ob, items, steps, progress: setupProgress(steps), days };
@@ -559,7 +657,7 @@ export function openCustomerSteps(items: ChecklistItem[]): ChecklistItem[] {
 
 const STEP_HINT: Record<string, string> = {
   login: "Passwort festlegen und einloggen",
-  questionnaire: "Kurzen Fragebogen ausfüllen",
+  questionnaire: "Ihre Angaben eintragen",
   metaAccess: "Meta-Werbekonto und Facebook-Seite für uns freigeben",
   calendar: "Kalender verbinden",
   whatsapp: "WhatsApp-Nummer verbinden",

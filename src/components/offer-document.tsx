@@ -2,7 +2,19 @@ import { CheckCircle2 } from "lucide-react";
 import { InfoHinweis } from "@/components/info-hinweis";
 import { PREISSTUFE_ERKLAERT } from "@/lib/begriffe";
 import { LegalSections } from "@/components/legal-sections";
-import { AGB, PROVIDER } from "@/lib/legal-texts";
+import { AGB, PPL_KUNDENKONTO_BEDINGUNGEN, PROVIDER } from "@/lib/legal-texts";
+import {
+  beispielRechnung,
+  KUNDENKONTO_ABRECHNUNG,
+  KUNDENKONTO_BUDGET,
+  KUNDENKONTO_NAME,
+  KUNDENKONTO_OBERGRENZE,
+  KUNDENKONTO_VORAUSSETZUNG,
+  kundenkontoAus,
+  MINDESTBESTELLUNG_KUNDENKONTO,
+  startMengeText,
+  type KundenkontoAngebot,
+} from "@/lib/ppl/kundenkonto";
 import {
   betreuungsSatz,
   computeOfferPrice,
@@ -97,6 +109,9 @@ export type OfferDoc = {
   pplLabel?: string | null;
   pplPrice?: unknown;
   pplQuantity?: number | null;
+  /** Variante „Kampagnen im eigenen Werbekonto“ (Ole, 20.11.2026; lib/ppl/kundenkonto.ts). */
+  pplModell?: string | null;
+  pplProdukte?: unknown;
 };
 
 type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "empfehlungMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp" | "setupListFee" | "setupDiscount"> & {
@@ -253,6 +268,8 @@ export function OfferDocument({
   const open = offer.status === "draft" || offer.status === "sent";
   // Erste Woche (Pay-per-Lead + Software mit Lead-Produkt): Menge, Preis je Lead, Summe, Steuer
   const ersteW = ppl ? ersteWocheAus(offer) : null;
+  // Kampagnen im eigenen Werbekonto (Ole, 20.11.2026): Startpaket und Software inklusive statt erster Woche
+  const kk = kundenkontoAus(offer);
   const woche = ersteW ? ersteWocheZahlen(ersteW) : null;
   const wocheSub =
     ersteW && woche
@@ -329,7 +346,9 @@ export function OfferDocument({
               ) : null}
             </h1>
             <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-[#c9d2e3]">
-              {ppl
+              {kk
+                ? "Kampagnen in Ihrem eigenen Meta-Werbekonto, abgerechnet je Lead. Ihr digitaler Assistent schreibt jeden Lead per WhatsApp an und bucht Termine direkt in Ihren Kalender."
+                : ppl
                 ? "Ihr digitaler Assistent schreibt Ihre Pay-per-Lead-Leads per WhatsApp an, fragt den Bedarf ab und bucht Termine direkt in Ihren Kalender."
                 : serviceOnly
                 ? "Exklusive Versicherungs-Leads über Facebook & Instagram, in Echtzeit per E-Mail und im Kundenbereich."
@@ -338,7 +357,9 @@ export function OfferDocument({
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-6 border-y border-white/15 py-6 sm:grid-cols-3 print:grid-cols-3">
-            {ppl && offer.setupFee === 0 && woche ? (
+            {kk ? (
+              <Stat k="Startpaket" v={eurCent(kk.startUmsatz)} sub={`${startMengeText(kk.produkte)}, inkl. USt. · abgerechnet nach Lieferung`} />
+            ) : ppl && offer.setupFee === 0 && woche ? (
               // Faire Anzeige (Ole, 20.11.2026): Leadkosten der ersten Woche statt „0 € Einrichtung“
               <Stat k="Erste Woche" v={eurCent(woche.summe)} sub={wocheSub} />
             ) : ppl && offer.setupFee === 0 ? (
@@ -350,7 +371,9 @@ export function OfferDocument({
                 sub={disc ? `einmalig, netto zzgl. 19 % USt. · statt ${eur(disc.list)} (${discLabel})` : "einmalig, netto zzgl. 19 % USt."}
               />
             )}
-            {add.annualTotal != null ? (
+            {kk ? (
+              <Stat k="Software" v="inklusive" sub={`solange Sie mindestens ${eur(MINDESTBESTELLUNG_KUNDENKONTO)} Leads im Monat beziehen, sonst ${eur(add.monthlyTotal)} netto im Monat`} accent />
+            ) : add.annualTotal != null ? (
               <Stat
                 k={halb ? "6 Monate im Voraus" : "Jährlich im Voraus"}
                 v={eur(add.annualTotal)}
@@ -413,7 +436,7 @@ export function OfferDocument({
       {part !== "cover" ? (
       <div className="offer-body mt-6 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-10 text-[15px] leading-relaxed sm:px-12 print:mt-0 print:rounded-none print:border-0 print:p-0">
         {ppl ? (
-          <PplSoftwareBody offer={offer} term={term} add={add} firstMonth={firstMonth} termOpen={termOpen} startOpen={startOpen} arrears={arrears} ersteText={ersteText} billingDiffers={billingDiffers} plan={plan} />
+          <PplSoftwareBody offer={offer} term={term} add={add} firstMonth={firstMonth} termOpen={termOpen} startOpen={startOpen} arrears={arrears} ersteText={ersteText} billingDiffers={billingDiffers} plan={plan} kk={kk} collapse={collapseAgb} />
         ) : (
         <>
         <H2>1. Angebotsgegenstand und Umfang</H2>
@@ -778,8 +801,8 @@ export function OfferDocument({
               {/* Frist je Angebotsdatum: neue Angebote 120 aktive Tage, ältere behalten 90 (lib/rechner vertragTageFuer) */}
               <strong>Vertrags-Garantie (für Makler):</strong> Haben Sie nach {vertragTageFuer(offer.createdAt)} aktiven Tagen weniger als{" "}
               {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, betreuen wir Sie ohne Gebühr für Betreuung und Software weiter, auf Wunsch
-              mit einem anderen Produkt ohne Setupgebühr, bis Sie sie haben (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine
-              wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
+              mit einem anderen Produkt ohne Setupgebühr, bis Sie sie haben (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine von Ihnen
+              wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht gegen Sie) und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
             </p>
             ) : (
             <p className="mt-2 text-[#374151]">
@@ -796,7 +819,7 @@ export function OfferDocument({
                   rechnet (längstens 6 Monate).
                 </>
               )} Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten
-              Termine wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
+              Termine von Ihnen wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht gegen Sie) und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
             </p>
             )}
           </>
@@ -935,7 +958,11 @@ function PplSoftwareBody({
   ersteText,
   billingDiffers,
   plan,
+  kk = null,
+  collapse = false,
 }: {
+  kk?: KundenkontoAngebot | null;
+  collapse?: boolean;
   offer: OfferDoc;
   term: OfferTerm;
   add: ReturnType<typeof offerAddOns>;
@@ -954,19 +981,35 @@ function PplSoftwareBody({
     <>
       <H2>1. Angebotsgegenstand und Umfang</H2>
       <p className="mt-3 text-[#374151]">
-        Gegenstand dieses Angebots ist die Bereitstellung unserer Software zur Bearbeitung Ihrer Leads, ohne Betreuung und ohne
-        eigene Werbekampagnen.
+        {kk
+          ? "Gegenstand dieses Angebots sind Werbekampagnen in Ihrem eigenen Meta-Werbekonto, abgerechnet je Lead, und unsere Software zur Bearbeitung Ihrer Leads."
+          : "Gegenstand dieses Angebots ist die Bereitstellung unserer Software zur Bearbeitung Ihrer Leads, ohne Betreuung und ohne eigene Werbekampagnen."}
       </p>
       <Table>
+        {kk ? (
+          <Tr k={KUNDENKONTO_NAME}>
+            <span data-offer-kundenkonto>
+              Wir erstellen und steuern Ihre Kampagnen auf Facebook und Instagram in Ihrem eigenen Meta-Werbekonto, mit Partnerzugriff für uns. {KUNDENKONTO_BUDGET}
+            </span>
+            <Note>Konto, Pixel, Zielgruppen und Leads gehören Ihnen. Sie geben die Anzeigen vor dem Start frei.</Note>
+          </Tr>
+        ) : null}
         <Tr k="Software">
           Digitaler Assistent auf WhatsApp (Erstkontakt, Bedarfsfragen, Terminbuchung), Terminbuchung im eigenen Kalender mit
           Erinnerungen, „Heute“-Liste, Pipeline, Wiedervorlagen und Auswertungen bis zu den Kosten pro Abschluss.
         </Tr>
+        {kk ? (
+          <Tr k="Leads">
+            Jeder Lead aus Ihren Kampagnen landet direkt in der App, Ihr Assistent übernimmt ihn automatisch.
+            <Note>{KUNDENKONTO_VORAUSSETZUNG}</Note>
+          </Tr>
+        ) : (
         <Tr k="Leads">
           <span data-offer-ppl-leads>{PPL_LEADS_SEPARAT}</span>
           <ErsteWocheNote offer={offer} />
           <Note>Bestellt wird im Kundenbereich unter „Leads bestellen“. Ihr Assistent übernimmt jeden gelieferten Lead automatisch.</Note>
         </Tr>
+        )}
         {add.hasSeats ? (
           <Tr k="Verkäufer">
             {add.seats} {add.seats === 1 ? "aktiver Verkäufer" : "aktive Verkäufer"}, davon {add.seatsIncluded} inklusive. Aktiv ist, wer Leads bekommt.
@@ -1005,9 +1048,23 @@ function PplSoftwareBody({
             </>
           )}
         </Tr>
-        <Tr k="Monatliche Vergütung">
-          <b className="text-[#111827]">{eur(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. (Software)
-          <Note>{monthlyIsList ? "Paket Pay-per-Lead + Software" : "Sonderkondition"}</Note>
+        {kk ? <KundenkontoPreise kk={kk} /> : null}
+        <Tr k={kk ? "Software" : "Monatliche Vergütung"}>
+          {kk ? (
+            <>
+              <b className="text-[#111827]">Inklusive</b>, solange Sie mindestens {eur(MINDESTBESTELLUNG_KUNDENKONTO)} Leads im Monat beziehen, sonst{" "}
+              <b className="text-[#111827]">{eur(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt.
+              <Note>
+                Abgebucht wird die Software monatlich im Voraus; in Monaten mit Software inklusive verrechnen wir sie mit Ihrer Leadabrechnung. Auf der
+                Rechnung steht sie als eigene Position.
+              </Note>
+            </>
+          ) : (
+            <>
+              <b className="text-[#111827]">{eur(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. (Software)
+              <Note>{monthlyIsList ? "Paket Pay-per-Lead + Software" : "Sonderkondition"}</Note>
+            </>
+          )}
         </Tr>
         {add.extraSeats > 0 ? (
           <Tr k={`Weitere Verkäufer (${add.extraSeats})`}>
@@ -1053,9 +1110,11 @@ function PplSoftwareBody({
             <b className="text-[#111827]">{eur(add.monthlyTotal)}</b> netto pro Monat zzgl. 19 % USt.
           </Tr>
         ) : null}
+        {kk ? null : (
         <Tr k="Leads">
           Separat per Stück zum Preis je Lead laut Bestellung, nicht Teil der Monatsgebühr. Keine Mindestabnahme.
         </Tr>
+        )}
         {arrears ? (
           <Tr k="Zahlweise">
             Monatlich nachträglich: <b className="text-[#111827]">{eur(firstMonth)}</b> netto jeweils für den abgelaufenen Leistungsmonat, erstmals {ersteText}.
@@ -1077,7 +1136,7 @@ function PplSoftwareBody({
             </>
           ) : (
             <>
-              <b className="text-[#111827]">{eur(0)}</b>, Sie hinterlegen nur Ihre Zahlungsart
+              <b className="text-[#111827]">{eur(0)}</b>, Sie hinterlegen nur Ihre Zahlungsart{kk ? " (auch für die wöchentliche Lastschrift)" : ""}
             </>
           )}
           <Note>
@@ -1095,9 +1154,62 @@ function PplSoftwareBody({
         {arrears
           ? "Die monatliche Vergütung wird jeweils nachträglich für den abgelaufenen Leistungsmonat fällig, erstmals einen Monat nach dem Startdatum, und per SEPA-Lastschrift oder Karte automatisch eingezogen."
           : "Die monatliche Vergütung wird ab dem Startdatum monatlich im Voraus per SEPA-Lastschrift oder Karte automatisch eingezogen."}{" "}
-        Bestellte Leads werden je Bestellung separat berechnet.
+        {kk ? "Leads werden wöchentlich per Lastschrift abgerechnet, wie oben beschrieben." : "Bestellte Leads werden je Bestellung separat berechnet."}
       </p>
+      {kk ? <KundenkontoBedingungen collapse={collapse} /> : null}
     </>
+  );
+}
+
+/** Preise der Variante „Kampagnen im eigenen Werbekonto“: Preis je Lead, Werbebudget, Abrechnung, Startpaket, Beispiel. */
+function KundenkontoPreise({ kk }: { kk: KundenkontoAngebot }) {
+  const beispiel = beispielRechnung(kk.produkte[0]);
+  return (
+    <>
+      <Tr k="Preis je Lead">
+        <ul className="space-y-0.5" data-offer-kk-preise>
+          {kk.produkte.map((p) => (
+            <li key={p.name}>
+              {p.name}: höchstens <b className="text-[#111827]">{eurCent(p.preis)}</b> inkl. USt.
+            </li>
+          ))}
+        </ul>
+        <Note>{KUNDENKONTO_OBERGRENZE}</Note>
+      </Tr>
+      <Tr k="Werbebudget">{KUNDENKONTO_BUDGET}</Tr>
+      <Tr k="Abrechnung">
+        {KUNDENKONTO_ABRECHNUNG}
+        {beispiel ? <Note>{beispiel.text}</Note> : null}
+      </Tr>
+      <Tr k="Startpaket">
+        <b className="text-[#111827]">{eurCent(kk.startUmsatz)}</b> Leadumsatz inkl. USt.: {startMengeText(kk.produkte)}
+        <Note>Abgerechnet wird nach Lieferung, keine Vorauszahlung. Mindestens {eur(MINDESTBESTELLUNG_KUNDENKONTO)} zum Start.</Note>
+      </Tr>
+    </>
+  );
+}
+
+/** Besondere Bedingungen der Variante (Bestandteil des Angebots, lib/legal-texts.ts PPL_KUNDENKONTO_BEDINGUNGEN). */
+function KundenkontoBedingungen({ collapse }: { collapse: boolean }) {
+  const titel = `Besondere Bedingungen: ${KUNDENKONTO_NAME}`;
+  const inhalt = <LegalSections sections={PPL_KUNDENKONTO_BEDINGUNGEN} compact />;
+  return collapse ? (
+    <details className="group mt-10 rounded-xl border border-[#e5e7eb] [&>summary::-webkit-details-marker]:hidden" data-offer-kk-bedingungen>
+      <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">
+        <span>
+          <span className="block text-lg font-bold">{titel}</span>
+          <span className="text-sm text-[#6b7280]">Bestandteil dieses Angebots, gehen den AGB vor. Zum Lesen antippen.</span>
+        </span>
+        <span className="text-xl text-[#6b7280] transition group-open:rotate-45">+</span>
+      </summary>
+      <div className="border-t border-[#e5e7eb] px-5 pb-5 pt-4">{inhalt}</div>
+    </details>
+  ) : (
+    <div className="mt-10" data-offer-kk-bedingungen>
+      <H2>{titel}</H2>
+      <p className="mb-4 mt-1 text-sm text-[#6b7280]">Bestandteil dieses Angebots, gehen den AGB vor.</p>
+      {inhalt}
+    </div>
   );
 }
 

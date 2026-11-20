@@ -74,3 +74,15 @@ describe("Middleware: Buchungsadresse", () => {
     expect(isRewrite(res)).toBe(false);
   });
 });
+
+describe("Middleware: www vor der App-Adresse", () => {
+  it("www.app.… leitet per 308 auf app.… um, Pfad und Abfrage bleiben; Buchungsadresse unverändert", async () => {
+    const res = await middleware(req("https://www.app.performancegrowth.de/buyer/einrichtung?schritt=2"));
+    expect(res.status).toBe(308);
+    expect(getRedirectUrl(res)).toBe("https://app.performancegrowth.de/buyer/einrichtung?schritt=2");
+    const post = await middleware(req("https://www.app.performancegrowth.de/login", { method: "POST" }));
+    expect(post.status).toBe(308);
+    const booking = await middleware(req(`${PUB}/meier-versicherungen`));
+    expect(isRewrite(booking)).toBe(true);
+  });
+});

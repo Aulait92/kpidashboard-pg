@@ -364,9 +364,13 @@ function hashToken(rawToken: string): string {
 // SHA-256-Hash in die DB; gibt den Klartext-Token nur einmal zurück, der
 // dann in die Email kommt. Existiert der User nicht, gibt es kein Token —
 // die UI muss trotzdem generisch antworten (Existenz nicht verraten).
+// opts.keepOthers (Ole, 20.11.2026): ältere Links bleiben gültig, z. B. „Passwort jetzt festlegen“ direkt nach der
+// Annahme oder „Einladungslink kopieren“ im Admin; sonst wäre der Link aus der Willkommens-Mail plötzlich ungültig
+// (Fall Herr Lohmann). Sobald ein Passwort gesetzt ist, entwertet consumePasswordResetToken alle übrigen Links.
 export async function issuePasswordResetToken(
   emailRaw: string,
   ttlMs: number = RESET_TOKEN_TTL_MS,
+  opts: { keepOthers?: boolean } = {},
 ): Promise<{ rawToken: string; userId: string } | null> {
   const email = normalizeLoginEmail(emailRaw);
   if (!email) return null;
@@ -378,10 +382,12 @@ export async function issuePasswordResetToken(
 
   // Alte, ungenutzte Tokens dieses Users entwerten, um Token-Sammelei
   // zu verhindern.
-  await prisma.passwordResetToken.updateMany({
-    where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
-    data: { usedAt: new Date() },
-  });
+  if (!opts.keepOthers) {
+    await prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
+      data: { usedAt: new Date() },
+    });
+  }
 
   const rawToken = crypto.randomBytes(32).toString("base64url");
   await prisma.passwordResetToken.create({
@@ -396,7 +402,7 @@ export async function issuePasswordResetToken(
 
 export type ResetResult =
   | { ok: true }
-  | { ok: false; error: string };
+  | { ok: false; error: string; linkUngueltig?: boolean };
 
 export async function consumePasswordResetToken(
   rawToken: string,
@@ -414,14 +420,16 @@ export async function consumePasswordResetToken(
     where: { tokenHash: hashToken(rawToken) },
     select: { id: true, userId: true, expiresAt: true, usedAt: true },
   });
+  // Ole, 20.11.2026: Kunde nutzte den Link aus der ersten Mail, nachdem eine neue verschickt war (neuer Link entwertet
+  // die alten). Meldung sagt deshalb, was zu tun ist; das Formular bietet „Neuen Link anfordern“ an (linkUngueltig).
   if (!record) {
-    return { ok: false, error: "Reset-Link ist ungültig." };
+    return { ok: false, error: "Dieser Link ist ungültig. Bitte fordern Sie einen neuen an.", linkUngueltig: true };
   }
   if (record.usedAt) {
-    return { ok: false, error: "Reset-Link wurde bereits verwendet." };
+    return { ok: false, error: "Dieser Link gilt nicht mehr, weil er schon benutzt oder durch eine neuere E-Mail ersetzt wurde. Nutzen Sie den Link aus der neuesten E-Mail oder fordern Sie einen neuen an.", linkUngueltig: true };
   }
   if (record.expiresAt.getTime() < Date.now()) {
-    return { ok: false, error: "Reset-Link ist abgelaufen." };
+    return { ok: false, error: "Dieser Link ist abgelaufen. Bitte fordern Sie einen neuen an.", linkUngueltig: true };
   }
 
   await prisma.$transaction([
@@ -432,6 +440,11 @@ export async function consumePasswordResetToken(
     }),
     prisma.passwordResetToken.update({
       where: { id: record.id },
+      data: { usedAt: new Date() },
+    }),
+    // Passwort steht: alle übrigen offenen Links dieses Logins entwerten (auch parallel gültige, s. keepOthers)
+    prisma.passwordResetToken.updateMany({
+      where: { userId: record.userId, usedAt: null, id: { not: record.id } },
       data: { usedAt: new Date() },
     }),
   ]);

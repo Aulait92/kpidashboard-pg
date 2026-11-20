@@ -20,7 +20,9 @@ export async function bookPublicAction(
   slug: string,
   formData: FormData,
 ): Promise<void> {
-  const fail = (code: string): never => redirect(`/book/${slug}?err=${code}`);
+  // Buchungslink aus dem WhatsApp-Chat (lib/whatsapp/buchungslink.ts): Token bleibt bei Fehlern erhalten
+  const chatToken = String(formData.get("c") ?? "");
+  const fail = (code: string): never => redirect(`/book/${slug}?${chatToken ? `c=${encodeURIComponent(chatToken)}&` : ""}err=${code}`);
   if (!checkLimit("publicBooking", await requestIp()).ok) fail("busy");
 
   // Bot-Falle: unsichtbares Feld ausgefüllt UND blitzschnell abgeschickt.
@@ -33,20 +35,37 @@ export async function bookPublicAction(
 
   const conn = await prisma.calendarConnection.findUnique({
     where: { bookingSlug: slug },
-    select: { customerId: true, status: true },
+    select: { customerId: true, status: true, customer: { select: { leadAddress: true } } },
   });
   if (!conn || conn.status !== "connected") fail("unavailable");
   const customerId = conn!.customerId;
 
   const start = String(formData.get("start") ?? "");
-  const mode = formData.get("mode") === "video" ? "video" : "phone";
+  // Video ist Standard (Ole, 20.11.2026); Telefon nur, wenn der Vermittler es freigegeben hat
+  const { agenturOrt, loadTerminFormate } = await import("@/lib/termin-formate-server");
+  const formate = await loadTerminFormate(customerId).catch(() => ({ telefon: false, vorOrt: false }));
+  const wunsch = formData.get("mode");
+  // „In der Agentur“ nur freigegeben und mit Anschrift (Ole, 20.11.2026)
+  const ort = wunsch === "onsite" && formate.vorOrt ? await agenturOrt(customerId).catch(() => null) : null;
+  const mode: "phone" | "video" | "onsite" = wunsch === "phone" && formate.telefon ? "phone" : ort ? "onsite" : "video";
   const name = String(formData.get("name") ?? "").trim().slice(0, 80);
-  const phone = normalizePhone(String(formData.get("phone") ?? ""));
+  let phone = normalizePhone(String(formData.get("phone") ?? ""));
+  // Chat-Kontext: gebucht wird über die WhatsApp-Nummer des Chats, damit Termin, Lead und Strecke im selben Chat landen
+  if (chatToken) {
+    const { pruefeChatBuchungToken } = await import("@/lib/whatsapp/buchungslink");
+    const cid = pruefeChatBuchungToken(chatToken);
+    const c = cid ? await prisma.conversation.findUnique({ where: { id: cid }, select: { customerId: true, contactPhone: true } }) : null;
+    if (!c || c.customerId !== customerId) fail("invalid");
+    phone = c!.contactPhone;
+  }
   const emailRaw = String(formData.get("email") ?? "").trim().toLowerCase();
   // Splittest buchungsseite_kompakt (lib/experimente.ts): Fassung b ohne Pflicht-Haken, Datenschutz als Hinweis am
   // Knopf (Verarbeitung zur Terminvereinbarung nach Art. 6 Abs. 1 lit. b DSGVO, keine Einwilligung nötig)
   const consent = formData.get("consent") === "on" || formData.get("datenschutz") === "hinweis";
-  const erinnerung = formData.get("erinnerung") === "on";
+  // Häkchen nur, wenn die Seite es gezeigt hat (Lead bucht selbst, Feld „xe“ = Aufruf-ID des Splittests buchung_erinnerung)
+  const erinnerungAufruf = seitenAufruf(formData.get("xe"));
+  const erinnerungFassung: "a" | "b" = formData.get("erinnerung_fassung") === "b" ? "b" : "a";
+  const erinnerung = !!erinnerungAufruf && formData.get("erinnerung") === "on";
   const aufruf = seitenAufruf(formData.get("xv"));
 
   if (!start || Number.isNaN(new Date(start).getTime())) fail("slot");
@@ -57,7 +76,7 @@ export async function bookPublicAction(
     const { pruefeStreckenToken } = await import("@/lib/mail-strecke/token");
     const streckeId = pruefeStreckenToken(streckeToken);
     if (!streckeId) fail("invalid");
-    await bookViaStrecke(slug, customerId, streckeId!, streckeToken, { start, mode, name, phone, email: emailRaw, consent, aufruf });
+    await bookViaStrecke(slug, customerId, streckeId!, streckeToken, { start, mode, ort, name, phone, email: emailRaw, consent, aufruf });
   }
   if (!phone) fail("phone");
   if (!EMAIL_RE.test(emailRaw)) fail("email");
@@ -126,6 +145,7 @@ export async function bookPublicAction(
       conversationId: conversation.id,
       start,
       mode,
+      ort,
       summary: eventSummary(mode, name, product),
       description: buildEventDescription({
         name,
@@ -153,10 +173,21 @@ export async function bookPublicAction(
       },
     });
     // Opt-in für Erinnerungen zur Terminvorbereitung (Policen, Rechtsprüfung A8): nur wenn angehakt, als Nachweis
+    // Gespeichert wird genau der gezeigte Wortlaut (Fassung aus dem Formular).
     if (erinnerung) {
+      const { asAnsprache } = await import("@/lib/ansprache");
       await import("@/lib/policen/server")
-        .then((m) => m.erinnerungOptIn({ customerId, leadId, phone: phone! }))
+        .then((m) => m.erinnerungOptIn({ customerId, leadId, phone: phone!, fassung: erinnerungFassung, an: asAnsprache(conn!.customer.leadAddress) }))
         .catch((e) => console.error("[booking page erinnerung]", e instanceof Error ? e.name : "Fehler"));
+    }
+    // Splittest buchung_erinnerung: Zuteilung je Buchung, Ziel „erinnerung_optin“ nur, wenn die gezeigte Fassung passt
+    if (erinnerungAufruf) {
+      await import("@/lib/experimente")
+        .then(async (m) => {
+          const v = await m.variante("buchung_erinnerung", erinnerungAufruf);
+          if (erinnerung && v === erinnerungFassung) await m.ereignis("buchung_erinnerung", erinnerungAufruf, "erinnerung_optin");
+        })
+        .catch(() => null);
     }
     // WhatsApp-Bestätigung (Freitext im 24h-Fenster, sonst freigegebene
     // Vorlage). Fehler dürfen die Buchung nicht scheitern lassen — die
@@ -168,6 +199,7 @@ export async function bookPublicAction(
       leadId,
       startsAt: new Date(res.start),
       mode,
+      ort,
       meetUrl: res.meetUrl,
       manageUrl: res.manageUrl,
     }).catch((e) => console.error("[booking page confirmation]", e));
@@ -192,7 +224,7 @@ async function bookViaStrecke(
   customerId: string,
   streckeId: string,
   token: string,
-  f: { start: string; mode: "phone" | "video"; name: string; phone: string | null; email: string; consent: boolean; aufruf: string | null },
+  f: { start: string; mode: "phone" | "video" | "onsite"; ort: string | null; name: string; phone: string | null; email: string; consent: boolean; aufruf: string | null },
 ): Promise<never> {
   const fail = (code: string): never => redirect(`/book/${slug}?t=${encodeURIComponent(token)}&err=${code}`);
   if (!EMAIL_RE.test(f.email)) fail("email");
@@ -222,6 +254,7 @@ async function bookViaStrecke(
       conversationId: conv?.id ?? null,
       start: f.start,
       mode: f.mode,
+      ort: f.ort,
       summary: eventSummary(f.mode, f.name, lead!.source),
       description: buildEventDescription({ name: f.name, phone: phone ?? "", email: f.email, product: lead!.source, mode: f.mode, summary: null, conversationId: conv?.id ?? null, bookedVia: "mail_strecke" }),
       leadName: f.name,
@@ -293,6 +326,12 @@ export async function komplettcheckBuchungAction(slug: string, formData: FormDat
       await import("@/lib/komplettcheck-dauer").then((m) => m.komplettcheckVerlaengern(t!.id, { now })).catch(() => null);
       await import("@/lib/experimente").then((m) => m.zielErreicht([t!.leadId, t!.conversationId, t!.id], "komplettcheck_ja")).catch(() => null);
     }
+  }
+  // Chat läuft danach von selbst weiter (Angebotsfragen, Vertragsfrage, Policen), Ole 20.11.2026
+  if (r.count && t!.conversationId) {
+    await import("@/lib/whatsapp/termin-strecke")
+      .then((m) => m.weiterNachBuchungsseite(t!.conversationId!, t!.id, now))
+      .catch((e) => console.error("[booking page strecke]", e instanceof Error ? e.message.slice(0, 160) : e));
   }
   redirect(`/book/${slug}?ok=1&a=${t!.id}&kc=${ja ? "1" : "0"}`);
 }

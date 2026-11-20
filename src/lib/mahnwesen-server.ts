@@ -299,7 +299,7 @@ async function fuehreStufeAus(f: FallMitKunde, stufe: Stufe, now: Date): Promise
 }
 
 /** WhatsApp-Vorlage der Support-Nummer freigegeben? (Mahn-Vorlagen sind nur vorbereitet, siehe lib/mahnwesen.ts) */
-async function vorlageFreigegeben(name: string): Promise<boolean> {
+export async function vorlageFreigegeben(name: string): Promise<boolean> {
   const { SUPPORT_CUSTOMER_ID } = await import("@/lib/whatsapp/support-inbox");
   const t = await prisma.messageTemplate.findUnique({ where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name, language: "de" } }, select: { status: true } });
   return t?.status === "approved";

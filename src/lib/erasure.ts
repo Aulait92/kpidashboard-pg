@@ -27,7 +27,7 @@ export const aufbewahrtFilter = (now: Date) => ({ kind: "beratungsdoku", aufbewa
  * Einen Lead anonymisieren. Gibt null zurück, wenn es ihn nicht gibt. Steht danach im Löschprotokoll
  * (lib/loeschprotokoll.ts), damit die Löschung nach einer Wiederherstellung der Datenbank erneut greift.
  */
-export async function eraseLead(leadId: string, actor?: AuditActor, opts: { ausLoeschprotokoll?: boolean } = {}): Promise<EraseResult | null> {
+export async function eraseLead(leadId: string, actor?: AuditActor, opts: { ausLoeschprotokoll?: boolean; grund?: string } = {}): Promise<EraseResult | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     select: { id: true, customerId: true, phone: true, externalId: true, airtableId: true, erasedAt: true },
@@ -42,7 +42,7 @@ export async function eraseLead(leadId: string, actor?: AuditActor, opts: { ausL
     details: { ...result, airtable: !!lead.airtableId, ...(opts.ausLoeschprotokoll ? { loeschprotokoll: true } : {}) },
     actor,
   });
-  if (!opts.ausLoeschprotokoll) await protokolliereLoeschung([{ art: "lead", entityId: lead.id, customerId: lead.customerId, grund: "art17" }]);
+  if (!opts.ausLoeschprotokoll) await protokolliereLoeschung([{ art: "lead", entityId: lead.id, customerId: lead.customerId, grund: opts.grund ?? "art17" }]);
   return result;
 }
 

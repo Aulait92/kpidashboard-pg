@@ -126,6 +126,7 @@ export function LeadTimesForm({
   source = "none",
   fixedDuration,
   nurBeiAenderung = false,
+  zweitrangig = false,
 }: {
   /**
    * „Zeiten speichern“ erst bei einer Änderung zeigen, am Handy als feste Leiste über der Navigation (Mein Kalender,
@@ -144,6 +145,8 @@ export function LeadTimesForm({
    * sähen wir über ICS bzw. den Online-Kalender sonst als belegt).
    */
   source?: "none" | "ics" | "allianz";
+  /** Speichern als Nebenaktion (Einrichtung Allianz: Hauptaktion ist dort „Verbinden“) */
+  zweitrangig?: boolean;
 }) {
   const init = initialSchedule(initial);
   // Gespeicherter Stand (für nurBeiAenderung): Dauer, Takt und Zeiten je Tag in fester Reihenfolge
@@ -390,7 +393,7 @@ export function LeadTimesForm({
       </p>
       {!nurBeiAenderung ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Submit pending={pending} disabled={readOnly}>
+          <Submit pending={pending} disabled={readOnly} variant={zweitrangig ? "secondary" : "primary"}>
             Zeiten speichern
           </Submit>
           <Result state={state} />
@@ -495,20 +498,62 @@ export function BlockTimes({
 // ─── Quellen ────────────────────────────────────────────────────────────
 
 export type SourceStatus = {
-  native: { connected: boolean; label: string | null; account?: string | null };
+  native: { connected: boolean; label: string | null; account?: string | null; app?: boolean };
   hasIcs: boolean;
-  allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null } | null;
+  allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null; abFruehestemTag?: boolean } | null;
 };
+
+/** Allianz-Online-Kalender verbunden: Vertretung, Termin-Art, ggf. letzter Fehler, trennen. */
+export function AllianzVerbunden({
+  allianz,
+  disconnectAction,
+  readOnly,
+  hidden,
+  appKalender = false,
+}: {
+  allianz: NonNullable<SourceStatus["allianz"]>;
+  disconnectAction: PlainAction;
+  readOnly: boolean;
+  hidden?: Record<string, string>;
+  /** Buchungen über den App-Kalender (Einladung per Mail) */
+  appKalender?: boolean;
+}) {
+  return (
+    <div className="space-y-2 text-sm" data-allianz-verbunden>
+      <p className="flex items-start gap-1.5 font-medium text-emerald-700">
+        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>
+          Verbunden{allianz.orgName ? `: ${allianz.orgName}` : ""}. Termin-Art „{allianz.templateName}“ ({allianz.durationMin} Min.).
+          {appKalender ? " Neue Termine bekommen Sie als Einladung per Mail." : ""}
+        </span>
+      </p>
+      {allianz.abFruehestemTag ? <p className="text-[color:var(--muted)]">Termine bietet die App ab dem frühesten Buchungstag Ihres Allianz-Kalenders an.</p> : null}
+      {allianz.lastError ? <p className="text-rose-700">Letzter Abruf fehlgeschlagen: {allianz.lastError} Wir kümmern uns darum.</p> : null}
+      <form action={disconnectAction}>
+        {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
+        <button type="submit" disabled={readOnly} className={buttonClass("ghost", "sm")}>
+          Verbindung trennen
+        </button>
+      </form>
+    </div>
+  );
+}
 
 export function AllianzForm({ action, readOnly, hidden, onUseIcs }: { action: FormAction; readOnly: boolean; hidden?: Record<string, string>; onUseIcs?: () => void }) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
   return (
-    <form action={formAction} className="space-y-3">
+    <form action={formAction} className="space-y-3" data-allianz-form>
       {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
-      <label className="block text-sm font-medium" htmlFor="vertretung">
-        Link Ihrer Vertreter-Seite oder Ihre Vertreternummer
-      </label>
-      <input id="vertretung" name="vertretung" className={input} placeholder="vertretung.allianz.de/vorname.nachname" autoComplete="off" />
+      <div>
+        <label className="block text-[15px] font-medium" htmlFor="vertretung">
+          Ihre Allianz-Vertreternummer
+        </label>
+        {/* Einrichtung Herr Lohmann (20.11.2026): nur die Vertreternummer funktioniert bei der Allianz */}
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          Auf Ihrer Vertreter-Seite auf „Termin vereinbaren“ tippen: Die Nummer steht in der Adresse nach <b>vtnr=</b>.
+        </p>
+      </div>
+      <input id="vertretung" name="vertretung" className={input} placeholder="z. B. 101511203" autoComplete="off" />
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="consent" className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--brand)]" />
         <span>Ich stimme zu, dass performancegrowth meine freien Termine aus meinem Allianz-Online-Kalender abruft.</span>
@@ -545,6 +590,10 @@ export function IcsForm({ action, readOnly, hidden }: { action: FormAction; read
           Den <b>ICS-Link</b> kopieren und hier einfügen.
         </li>
       </ol>
+      {/* Ole, 20.11.2026: bei Allianz fehlt „Freigegebene Kalender“ (Veröffentlichen von der IT gesperrt) */}
+      <p className="text-sm text-[color:var(--muted)]">
+        Fehlt „Freigegebene Kalender“ (bei Allianz oft gesperrt)? Dann den <b>Allianz-Online-Kalender</b> verbinden oder feste Beratungszeiten eintragen.
+      </p>
       <input name="icsUrl" className={input} placeholder="https://outlook.office365.com/owa/calendar/…/calendar.ics" autoComplete="off" />
       <p className="text-sm text-[color:var(--muted)]">Wir sehen damit nur, wann Sie belegt sind, keine Inhalte.</p>
       <div className="flex flex-wrap items-center gap-3">
@@ -574,6 +623,7 @@ export function SourcePicker({
   disconnectNativeAction,
   hidden,
   allianzOption = true,
+  ohneAllianz = false,
 }: {
   status: SourceStatus;
   readOnly: boolean;
@@ -587,8 +637,10 @@ export function SourcePicker({
   hidden?: Record<string, string>;
   /** Allianz-Online-Kalender anbieten (nicht für Makler, außer schon verbunden). */
   allianzOption?: boolean;
+  /** Allianz-Kalender steht schon darüber (Einrichtung für Allianz-Vertreter): hier nur Google, Outlook und Kalender-Link */
+  ohneAllianz?: boolean;
 }) {
-  const showAllianz = allianzOption || !!status.allianz;
+  const showAllianz = !ohneAllianz && (allianzOption || !!status.allianz);
   const [way, setWay] = useState<"ics" | "allianz">(status.allianz ? "allianz" : status.hasIcs || !showAllianz ? "ics" : "allianz");
   const hiddenInputs = hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null;
   const otherActive = status.hasIcs || !!status.allianz;
@@ -599,7 +651,25 @@ export function SourcePicker({
   return (
     <div className="space-y-4">
       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-ihr-kalender>
-        {status.native.connected ? (
+        {status.native.app ? (
+          <div className="space-y-2">
+            <span className="flex items-center gap-1.5 text-[15px] font-medium text-emerald-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              Termine bekommen Sie als Einladung per Mail
+            </span>
+            <p className="text-sm text-[color:var(--muted)]">
+              Lieber direkt im Kalender?{" "}
+              <a href={connectLinks.google} className={`font-medium text-[color:var(--brand)] hover:underline ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
+                Google
+              </a>{" "}
+              oder{" "}
+              <a href={connectLinks.microsoft} className={`font-medium text-[color:var(--brand)] hover:underline ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
+                Outlook
+              </a>{" "}
+              verbinden.
+            </p>
+          </div>
+        ) : status.native.connected ? (
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1.5 text-[15px] font-medium text-emerald-700">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -622,7 +692,7 @@ export function SourcePicker({
           <div className="space-y-3">
             <p className="text-sm text-[color:var(--muted)]">Verbinden Sie Ihren Kalender. Termine landen dann nur in Ihren freien Zeiten direkt dort.</p>
             <div className="flex flex-wrap gap-2">
-              <a href={connectLinks.google} className={buttonClass("primary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
+              <a href={connectLinks.google} className={buttonClass(ohneAllianz ? "secondary" : "primary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
                 Google-Kalender verbinden
               </a>
               <a href={connectLinks.microsoft} className={buttonClass("secondary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
@@ -633,6 +703,27 @@ export function SourcePicker({
         )}
       </div>
 
+      {ohneAllianz ? (
+        // Allianz-Vertreter: Kalender-Link flach statt in einem zweiten Aufklapper (alles liegt schon unter „Anderen Kalender verbinden“)
+        <div className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-kalender-link>
+          <p className="text-[15px] font-medium">Kalender-Link (ICS)</p>
+          {status.hasIcs ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                <CheckCircle2 className="h-4 w-4" /> Kalender-Link hinterlegt
+              </span>
+              <form action={removeIcsAction}>
+                {hiddenInputs}
+                <button type="submit" disabled={readOnly} className={buttonClass("ghost", "sm")}>
+                  Entfernen
+                </button>
+              </form>
+            </div>
+          ) : (
+            <IcsForm action={icsAction} readOnly={readOnly} hidden={hidden} />
+          )}
+        </div>
+      ) : (
       <details open={otherActive} className="group rounded-[var(--radius-md)] border border-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden">
         <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
           <span className="flex items-center gap-1.5 text-[15px] font-medium">
@@ -688,27 +779,14 @@ export function SourcePicker({
 
           {way === "allianz" ? (
             status.allianz ? (
-              <div className="space-y-2 text-sm">
-                <p className="flex items-start gap-1.5 font-medium text-emerald-700">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>
-                    Verbunden{status.allianz.orgName ? `: ${status.allianz.orgName}` : ""}. Termin-Art „{status.allianz.templateName}“ ({status.allianz.durationMin} Min.).
-                  </span>
-                </p>
-                {status.allianz.lastError ? <p className="text-rose-700">Letzter Abruf fehlgeschlagen: {status.allianz.lastError} Wir kümmern uns darum.</p> : null}
-                <form action={disconnectAllianzAction}>
-                  {hiddenInputs}
-                  <button type="submit" disabled={readOnly} className={buttonClass("ghost", "sm")}>
-                    Verbindung trennen
-                  </button>
-                </form>
-              </div>
+              <AllianzVerbunden allianz={status.allianz} disconnectAction={disconnectAllianzAction} readOnly={readOnly} hidden={hidden} />
             ) : (
               <AllianzForm action={allianzAction} readOnly={readOnly} hidden={hidden} onUseIcs={() => setWay("ics")} />
             )
           ) : null}
         </div>
       </details>
+      )}
     </div>
   );
 }
@@ -780,6 +858,35 @@ export function AllianzTemplateForm({
         </Submit>
         <Result state={state} />
       </div>
+    </form>
+  );
+}
+
+/**
+ * Fester Video-Link für Videotermine (Ole, 20.11.2026: Webex-Link gehört unbedingt ins Onboarding). Ohne Google/Outlook
+ * (App-Kalender) gibt es sonst keinen Link; mit Google/Outlook ersetzt er Meet bzw. Teams.
+ */
+export function VideoRaumForm({ action, readOnly, initial, noetig }: { action: FormAction; readOnly: boolean; initial: string | null; noetig: boolean }) {
+  const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
+  return (
+    <form action={formAction} className="space-y-2" data-video-raum>
+      <label className="block text-[15px] font-medium" htmlFor="videoRoomUrl">
+        Ihr Link für Videotermine (z. B. Webex)
+      </label>
+      {noetig && !initial ? (
+        <p className="text-sm font-medium text-amber-700">Bitte eintragen: Ohne Link haben Videotermine keinen Raum.</p>
+      ) : (
+        <p className="text-sm text-[color:var(--muted)]">
+          {noetig ? "Diesen Link bekommen Ihre Kunden für jeden Videotermin." : "Leer lassen, dann erstellen wir für jeden Termin einen Meet- bzw. Teams-Link."}
+        </p>
+      )}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input id="videoRoomUrl" name="videoRoomUrl" inputMode="url" defaultValue={initial ?? ""} className={input} placeholder="https://allianz.webex.com/meet/vorname.nachname" autoComplete="off" />
+        <Submit pending={pending} disabled={readOnly}>
+          Speichern
+        </Submit>
+      </div>
+      <Result state={state} />
     </form>
   );
 }

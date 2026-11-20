@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { logOfferActivity } from "@/lib/offer-links";
 import { bookHelpCall } from "@/lib/help-call";
-import { checkMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
+import { checkMetaAccess, requestMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
 import { asAnsprache } from "@/lib/ansprache";
 import { STEP_SKIP_KEYS } from "@/lib/onboarding";
 
@@ -41,6 +41,25 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
   // Frühere Antworten („Wer ruft zurück“, E-Mail für Termineinladungen) bleiben erhalten, werden aber nicht mehr abgefragt
   const prev = (ob.questionnaire && typeof ob.questionnaire === "object" ? ob.questionnaire : {}) as Record<string, unknown>;
   const data: Record<string, unknown> = { ...prev, special };
+
+  if (software && fd.has("name")) {
+    // „Ihre Angaben“ (Ole, 20.11.2026): einmal früh fragen, spätere Schritte (Erstinformation, Service-Mails,
+    // Nennung gegenüber Leads) sind dann vorausgefüllt. Erst prüfen, dann alles speichern.
+    const { pruefeAngaben } = await import("@/lib/erstinformation-shared");
+    const p = pruefeAngaben({ anrede: str(fd, "anrede", 10), name: str(fd, "name", 160), telefon: str(fd, "telefon", 60), anschrift: str(fd, "anschrift", 400), registerNummer: str(fd, "registerNummer", 40) });
+    if (!p.ok) return { error: p.error };
+    let video: string | null | undefined;
+    if (fd.has("videoRoomUrl")) {
+      const raw = str(fd, "videoRoomUrl", 300);
+      video = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw || null;
+      if (video && !/^https:\/\/[^\s/]+\.[^\s]+$/i.test(video)) return { error: "Bitte den ganzen Webex-Link einfügen, z. B. https://allianz.webex.com/meet/vorname.nachname." };
+    }
+    const { saveVermittlerAngaben } = await import("@/lib/erstinformation");
+    await saveVermittlerAngaben(ob.customerId, p.angaben);
+    if (video !== undefined) {
+      await prisma.agentConfig.upsert({ where: { customerId: ob.customerId }, create: { customerId: ob.customerId, videoRoomUrl: video }, update: { videoRoomUrl: video } });
+    }
+  }
 
   if (software) {
     // Terminarten (Ole, 18.11.2026): Video immer; Telefon bzw. vor Ort nur als Ausnahme auf ausdrücklichen Wunsch des
@@ -109,6 +128,21 @@ export async function saveImpressumUrlAction(_prev: SetupState, fd: FormData): P
   return { ok: true };
 }
 
+/** Eigene Datenschutzseite (optional, leer = Datenschutzhinweise in Ihrem Namen), Ole 20.11.2026. */
+export async function saveDatenschutzUrlAction(_prev: SetupState, fd: FormData): Promise<SetupState> {
+  let ob;
+  try {
+    ({ ob } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const { datenschutzUrlSpeichern } = await import("@/lib/impressum-fehlt");
+  const r = await datenschutzUrlSpeichern(ob.customerId, str(fd, "privacyUrl", 300));
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/buyer", "layout");
+  return { ok: true };
+}
+
 export async function bookHelpCallAction(_prev: SetupState, fd: FormData): Promise<SetupState> {
   try {
     const { ctx } = await requireCustomer();
@@ -123,7 +157,30 @@ export async function bookHelpCallAction(_prev: SetupState, fd: FormData): Promi
 
 // ─── Selbst-Einrichtung: Meta-Zugriff prüfen bzw. anfragen, Einwilligung ───
 
-export type MetaSetupState = { ok?: boolean; error?: string; message?: string; check?: MetaCheck };
+/**
+ * Fehlt der Zugriff auf Werbekonto oder Seite, schicken wir die Partneranfrage selbst (Ole, 20.11.2026: der Hinweis
+ * „oder unsere Anfrage bestätigen“ lief bisher ins Leere). Der Kunde bestätigt nur noch im Business Manager.
+ */
+async function metaAnfrageSchicken(customerId: string, check: MetaCheck): Promise<string | undefined> {
+  const adFehlt = !!check.adAccount.id && !check.adAccount.ok && !check.adAccount.geteilt;
+  const seiteFehlt = !!check.page.id && !check.page.ok && !check.page.geteilt;
+  if (!adFehlt && !seiteFehlt) return undefined;
+  const ob = await prisma.onboarding.findUnique({ where: { customerId }, select: { metaRequestedAt: true } });
+  const kuerzlich = ob?.metaRequestedAt && Date.now() - ob.metaRequestedAt.getTime() < META_ANFRAGE_PAUSE_MS;
+  let gesendet: string[] = [];
+  if (!kuerzlich) {
+    const r = await requestMetaAccess(customerId, { adAccount: adFehlt ? check.adAccount.id : null, page: seiteFehlt ? check.page.id : null }).catch(() => null);
+    gesendet = r?.ok ? r.sent : [];
+    if (!gesendet.length) return undefined;
+  }
+  const was = gesendet.length ? gesendet : [...(adFehlt ? ["Werbekonto"] : []), ...(seiteFehlt ? ["Facebook-Seite"] : [])];
+  return `Wir haben Ihnen eine Partneranfrage für ${was.join(" und ")} geschickt. Bitte bestätigen Sie sie im Business Manager unter Einstellungen → Anfragen und tippen Sie danach noch einmal auf „Zugriff prüfen“.`;
+}
+
+export type MetaSetupState = { ok?: boolean; error?: string; message?: string; hinweis?: string; check?: MetaCheck };
+
+/** Partneranfrage höchstens so oft neu schicken (Meta lehnt doppelte offene Anfragen ab). */
+const META_ANFRAGE_PAUSE_MS = 60 * 60 * 1000;
 
 export async function checkMetaAccessAction(_prev: MetaSetupState, fd: FormData): Promise<MetaSetupState> {
   try {
@@ -140,7 +197,7 @@ export async function checkMetaAccessAction(_prev: MetaSetupState, fd: FormData)
               ? "Alles freigegeben, danke! Wir kümmern uns jetzt um die Kampagne."
               : "Werbekonto, Seite und Leads sind freigegeben, danke! Wir kümmern uns jetzt um die Kampagne. Den Datensatz können Sie nachreichen.",
         }
-      : { ok: false, check: r.check };
+      : { ok: false, check: r.check, hinweis: await metaAnfrageSchicken(ctx.customerId, r.check) };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Nicht möglich." };
   }
@@ -282,6 +339,38 @@ export async function resetWhatsAppAction(): Promise<WaCheckState> {
   revalidatePath("/buyer/einrichtung");
   revalidatePath("/buyer", "layout");
   return { ok: true, message: "Zurückgesetzt. Sie können jetzt neu beginnen." };
+}
+
+export type WaInviteState = { ok?: boolean; error?: string; email?: string; vorhanden?: boolean };
+
+/**
+ * „An andere E-Mail schicken“ (Ole, 20.11.2026): Die Einladung von 360dialog kommt im Firmen-Postfach nicht an. Wir legen
+ * das 360dialog-Konto mit einer anderen Adresse neu an (360dialog schickt die Einladung dorthin) und merken uns die
+ * Adresse für die Anmeldung. Das alte, nie benutzte Konto bleibt bei 360dialog ungenutzt liegen.
+ */
+export async function inviteOtherEmailAction(_prev: WaInviteState, fd: FormData): Promise<WaInviteState> {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview) return { error: "In der Vorschau nicht möglich." };
+  if (ctx.teamRole !== "owner") return { error: "Nur der Inhaber kann das ändern." };
+  const email = str(fd, "email", 200).toLowerCase();
+  if (!isEmail(email)) return { error: "Bitte eine gültige E-Mail-Adresse eintragen." };
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true } });
+  if (acc?.status === "connected") return { error: "WhatsApp ist schon verbunden." };
+  const { createPartnerClient, partnerConfig } = await import("@/lib/whatsapp/dialog360-partner");
+  const cfg = partnerConfig();
+  if (!cfg) return { error: "Das Verbinden ist gerade nicht möglich. Bitte schreiben Sie uns." };
+  const customer = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } });
+  const created = await createPartnerClient(cfg, { email, name: customer?.name ?? email, customerId: ctx.customerId });
+  const { audit } = await import("@/lib/audit");
+  await audit("whatsapp.d360_invite", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { result: created.kind, andereEmail: true, ...(created.kind === "error" ? { status: created.status, message: created.message } : {}) }, actor: { id: ctx.userId ?? undefined, email: ctx.email, role: "kunde" } });
+  if (created.kind === "error") return { error: "360dialog hat die Adresse nicht angenommen. Bitte eine andere versuchen oder uns schreiben." };
+  await prisma.whatsAppAccount.upsert({
+    where: { customerId: ctx.customerId },
+    create: { customerId: ctx.customerId, provider: "360dialog", status: "invited", dialog360InviteEmail: email, ...(created.kind === "ok" ? { dialog360ClientId: created.clientId } : {}) },
+    update: { status: "invited", dialog360InviteEmail: email, ...(created.kind === "ok" ? { dialog360ClientId: created.clientId } : {}) },
+  });
+  revalidatePath("/buyer/einrichtung");
+  return { ok: true, email, vorhanden: created.kind === "exists" };
 }
 
 // ─── Einrichtung ohne Ole (Ole, 18.11.2026) ─────────────────────────────────

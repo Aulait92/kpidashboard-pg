@@ -165,7 +165,7 @@ export async function syncAnzeigeKosten(opts: { now?: Date; voll?: boolean; fetc
   const agentur = (process.env.META_AD_ACCOUNT_IDS ?? "")
     .split(",")
     .map((s) => s.trim().replace(/^act_/, ""))
-    .filter((s) => /^\d+$/.test(s) && !allOwned.has(s));
+    .filter((s) => /^\d+$/.test(s) && !allOwned.has(s) && !owners.has(s));
 
   const today = berlinYmd(now);
   const fensterStart = addDaysYmd(today, -(KOSTEN_FENSTER_TAGE - 1));

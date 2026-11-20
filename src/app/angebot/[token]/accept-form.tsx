@@ -53,6 +53,8 @@ export type OfferChoiceProps = {
   start: { min: string; max: string; preset: string };
   /** Ohne Einrichtungsgebühr (Pay-per-Lead + Software): Laufzeiten ohne Setup-Zeile, „Jetzt fällig: 0 €“. */
   ohneEinrichtung?: boolean;
+  /** Kampagnen im eigenen Werbekonto (Ole, 20.11.2026): Monatsbetrag ist die Software („Software monatlich“). */
+  softwareMonatlich?: boolean;
 };
 
 const fmtDate = (iso: string) => iso.split("-").reverse().join(".");
@@ -76,6 +78,7 @@ export function AcceptForm({
   payLater = false,
   ueberweisungTage = null,
   ersteWoche = null,
+  kundenkontoFaellig = null,
 }: {
   token: string;
   termsUrl: string;
@@ -93,6 +96,8 @@ export function AcceptForm({
   ueberweisungTage?: number | null;
   /** „Ihre erste Woche“ (Pay-per-Lead + Software mit Lead-Produkt): Anzahl, Wiederholung, Registernummer */
   ersteWoche?: ErsteWocheProps | null;
+  /** Kampagnen im eigenen Werbekonto: Startpaket statt „Jetzt fällig: 0 €“ (lib/ppl/kundenkonto.ts kundenkontoFaellig) */
+  kundenkontoFaellig?: { label: string; betrag: string; zusatz: string } | null;
 }) {
   const [state, action, pending] = useActionState<AcceptState, FormData>(
     acceptOfferAction.bind(null, token),
@@ -163,7 +168,7 @@ export function AcceptForm({
     <form action={action} className="space-y-4">
       {ersteWoche ? <ErsteWocheFelder {...ersteWoche} qty={wocheQty} setQty={setWocheQty} autoRenew={wocheRenew} setAutoRenew={setWocheRenew} /> : null}
       {choice && hasChoice ? (
-        <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} faellig={wocheWahl ? ersteWocheFaellig(wocheWahl) : null} />
+        <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} faellig={wocheWahl ? ersteWocheFaellig(wocheWahl) : kundenkontoFaellig} />
       ) : null}
       <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm sm:p-5" data-accept-summary aria-live="polite">
         <div className="font-semibold">Das vereinbaren Sie mit dem Klick</div>
@@ -426,7 +431,7 @@ function ChoiceFields({
               <span className="text-[color:var(--muted)]">
                 {arrears
                   ? `Monatlich nachträglich, erstmals ${startDate ? `am ${fmtDate(addMonthsIso(startDate, 1))}` : "einen Monat nach dem Start"}: `
-                  : `Monatlich${startDate ? ` ab ${fmtDate(startDate)}` : ""}: `}
+                  : `${choice.softwareMonatlich ? "Software monatlich" : "Monatlich"}${startDate ? ` ab ${fmtDate(startDate)}` : ""}: `}
               </span>
               <b data-testid="choice-recurring">{eur(choice.monthlyTotal)} netto</b>
               <span className="text-[color:var(--muted)]"> · {eur(withVat(choice.monthlyTotal))} brutto</span>

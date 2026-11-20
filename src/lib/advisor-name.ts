@@ -5,6 +5,10 @@
 const INSURER =
   /^(?:allianz|ergo|axa|signal iduna|hdi|generali|zurich|r\+v|lvm|provinzial|devk|huk|gothaer|barmenia|continentale|debeka|wwk|nürnberger|vgh|arag|helvetia|vhv)\s+/i;
 const AGENCY = /^(?:general|haupt|versicherungs|finanz)?(?:agentur|vertretung|büro|buero)(?:\s+(?:für|fuer)\s+\S+)?\s+/i;
+// Vorangestellt ohne Zusatz („Allianz Versicherung Henrik Lohmann …“, Ole 20.11.2026)
+const VERSICHERUNG = /^versicherung(?:en)?\s+/i;
+// Nachgestellt („Henrik Lohmann Generalvertretung“, „Meier Versicherungen“)
+const AGENCY_END = /\s+(?:(?:general|haupt|versicherungs|finanz)?(?:agentur|vertretung|büro|buero)|versicherung(?:en)?)$/i;
 
 /** Personen- bzw. Agenturname ohne vorangestelltes „Agentur“, „Allianz“ usw.; null, wenn nichts übrig bleibt. */
 export function advisorDisplayName(name: string | null | undefined): string | null {
@@ -12,7 +16,12 @@ export function advisorDisplayName(name: string | null | undefined): string | nu
   if (!s) return null;
   // Mehrfach anwenden: „Allianz Generalvertretung Agentur Meier“
   for (let i = 0; i < 4; i++) {
-    const next = s.replace(INSURER, "").replace(AGENCY, "").trim();
+    const next = s.replace(INSURER, "").replace(AGENCY, "").replace(VERSICHERUNG, "").trim();
+    // Nachgestellt nur entfernen, wenn Vor- und Nachname übrig bleiben („Meier Versicherungen“ bleibt)
+    const ohneEnde = next.replace(AGENCY_END, "").trim();
+    if (ohneEnde.includes(" ")) {
+      if (ohneEnde !== s) { s = ohneEnde; continue; }
+    }
     if (next === s) break;
     s = next;
   }

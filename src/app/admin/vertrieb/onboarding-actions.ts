@@ -6,8 +6,12 @@ import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 import { endPauseNow, planPause } from "@/lib/pause";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { MANUAL_FIELDS, openSetupForExisting, restartSetup, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
+import { ADMIN_ABGEHAKT, MANUAL_FIELDS, NICHT_ABHAKBAR, openSetupForExisting, vonUnsAbgehakt, restartSetup, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
 import { logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
+import { audit } from "@/lib/audit";
+import { issuePasswordResetToken } from "@/lib/auth";
+import { buildResetUrl } from "@/lib/email";
+import type { Prisma } from "@/generated/prisma/client";
 
 function refresh(contactId?: string | null) {
   revalidatePath("/admin/vertrieb", "layout");
@@ -62,6 +66,40 @@ export async function toggleOnboardingStepAction(fd: FormData) {
   refresh(ob.salesContactId);
 }
 
+/**
+ * Kundenakte (Ole, 20.11.2026): jeden Einrichtungsschritt für den Kunden abhaken bzw. zurücksetzen. Schritte mit
+ * eigenem Datumsfeld (Meta, Einwilligung, Testlead …) setzen das Feld, die App den Überspringen-Zeitpunkt, alle
+ * anderen einen Eintrag „admin“ in stepSkips. Zurücksetzen nimmt nur unseren Haken weg, nie echte Daten.
+ */
+export async function abhakenFuerKundeAction(fd: FormData) {
+  await requireAuth();
+  const customerId = String(fd.get("customerId") ?? "");
+  const step = String(fd.get("step") ?? "");
+  if (!customerId || !step || (NICHT_ABHAKBAR as readonly string[]).includes(step)) return;
+  const ob = await prisma.onboarding.findUnique({ where: { customerId }, select: { id: true, salesContactId: true, appSkippedAt: true, stepSkips: true } });
+  if (!ob) return;
+  const field = MANUAL_FIELDS[step as keyof typeof MANUAL_FIELDS];
+  let erledigt: boolean;
+  if (field) {
+    const row = await prisma.onboarding.findUnique({ where: { id: ob.id }, select: { [field]: true } as Record<string, true> });
+    erledigt = !(row as Record<string, unknown> | null)?.[field];
+    await prisma.onboarding.update({ where: { id: ob.id }, data: { [field]: erledigt ? new Date() : null } });
+  } else if (step === "app") {
+    erledigt = !ob.appSkippedAt;
+    await prisma.onboarding.update({ where: { id: ob.id }, data: { appSkippedAt: erledigt ? new Date() : null } });
+  } else {
+    const skips = { ...((ob.stepSkips && typeof ob.stepSkips === "object" ? ob.stepSkips : {}) as Record<string, unknown>) };
+    erledigt = !vonUnsAbgehakt(skips, step);
+    if (erledigt) skips[step] = { at: new Date().toISOString(), reason: ADMIN_ABGEHAKT };
+    else delete skips[step];
+    await prisma.onboarding.update({ where: { id: ob.id }, data: { stepSkips: skips as Prisma.InputJsonValue } });
+  }
+  await audit(erledigt ? "einrichtung.abgehakt" : "einrichtung.zurueckgesetzt", { entity: "Customer", entityId: customerId, customerId, details: { step } });
+  revalidatePath(`/admin/neu/kunden/${customerId}`);
+  revalidatePath("/buyer", "layout");
+  refresh(ob.salesContactId);
+}
+
 export async function goLiveAction(fd: FormData) {
   await requireAuth();
   const id = String(fd.get("id") ?? "");
@@ -107,6 +145,28 @@ export async function resendWelcomeAction(fd: FormData) {
   await sendWelcome(id);
   const ob = await prisma.onboarding.findUnique({ where: { id }, select: { salesContactId: true } });
   refresh(ob?.salesContactId);
+}
+
+/**
+ * „Einladungslink kopieren“ (Ole, 20.11.2026): frischer Link zum Passwort festlegen, den Ole per WhatsApp schickt, wenn
+ * die Mail im Firmenpostfach hängt. Ältere Links (z. B. aus der Willkommens-Mail) bleiben gültig, bis ein Passwort
+ * gesetzt ist. Noch nie angemeldet: 7 Tage gültig, sonst 24 Stunden (Passwort ändern). Nur Admins.
+ */
+export async function einladungslinkAction(onboardingId: string): Promise<{ url?: string; email?: string; error?: string }> {
+  await requireAuth();
+  const ob = await prisma.onboarding.findUnique({
+    where: { id: onboardingId },
+    select: { offerId: true, customerId: true, customer: { select: { users: { where: { role: "BUYER" }, select: { id: true, email: true, lastLoginAt: true }, orderBy: { createdAt: "asc" } } } } },
+  });
+  if (!ob) return { error: "Onboarding nicht gefunden." };
+  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { email: true } }) : null;
+  const mail = (offer?.email ?? "").trim().toLowerCase();
+  const user = ob.customer.users.find((u) => u.email.toLowerCase() === mail) ?? ob.customer.users[0];
+  if (!user) return { error: "Für diesen Kunden gibt es noch keinen Login." };
+  const token = await issuePasswordResetToken(user.email, user.lastLoginAt ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000, { keepOthers: true });
+  if (!token) return { error: "Link konnte nicht erzeugt werden." };
+  await audit("user.invite_link", { entity: "User", entityId: user.id, customerId: ob.customerId, details: { email: user.email, kopiert: true } });
+  return { url: buildResetUrl(token.rawToken), email: user.email };
 }
 
 // ─── Pause / Urlaub (Admin) ────────────────────────────────────────────

@@ -14,6 +14,7 @@ import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
 import { fmtDayShort, teamAbsences } from "@/lib/absence";
 import { memberName } from "@/lib/team";
 import { wonReferralCount } from "@/lib/kollegen";
+import { pilotAbzeichen } from "@/lib/pilot";
 
 // Kundenakte: alles zu einem Kunden an einem Ort, als Reiter.
 export default async function KundenakteLayout({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
@@ -25,6 +26,7 @@ export default async function KundenakteLayout({ children, params }: { children:
       id: true,
       name: true,
       isTest: true,
+      pilotBis: true,
       plan: true,
       retainerMonthly: true,
       paymentOverdueSince: true,
@@ -59,6 +61,7 @@ export default async function KundenakteLayout({ children, params }: { children:
         <h1 className="text-2xl font-semibold tracking-tight">{c.name.replace(/^Allianz\s+/i, "")}</h1>
         {stage ? <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span> : null}
         <Badge>{packageLabel(c)}</Badge>
+        {pilotAbzeichen(c.pilotBis) ? <Badge tone={pilotAbzeichen(c.pilotBis)!.laeuft ? "brand" : "warning"}>{pilotAbzeichen(c.pilotBis)!.text}</Badge> : null}
         {c.isTest ? <TestkundeLoeschen customerId={c.id} name={c.name} whatsapp={c.whatsAppAccount?.phoneNumber ?? null} /> : null}
         {c.onboarding && !c.onboarding.liveAt ? <Badge tone="brand">Onboarding</Badge> : null}
         {c.plan !== "service" ? (

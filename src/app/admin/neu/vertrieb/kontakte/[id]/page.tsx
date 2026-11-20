@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { FilePlus2, Mail, Phone, Presentation } from "lucide-react";
+import { FilePlus2, Mail, Phone, Presentation, Send } from "lucide-react";
 import { Badge, ButtonLink, Card, CardHeader, buttonClass } from "@/components/ui";
 import { DealOffersCard } from "@/components/deal-offers-card";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
@@ -13,6 +13,7 @@ import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboa
 import { TaskForm } from "@/components/vertrieb/task-form";
 import { TaskRow } from "@/components/vertrieb/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
+import { GEPLANTE_NACHRICHTEN_PFAD } from "@/components/admin-neu/vertrieb/geplante-nachrichten";
 import { Agentur, ColdMails, Kundendaten, NaechsterSchritt, Stammdaten, Verlauf, offeneNachfrage } from "@/components/admin-neu/vertrieb/kontakt-karten";
 import { KONTAKTE, VERTRIEB_NEU_LISTE, VERTRIEB_NEU_LISTEN, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { neuerPfad } from "@/lib/admin-neu/umzug";
@@ -26,6 +27,8 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { CUSTOMER_LABEL, LOSS_LABEL, SOURCE_LABEL, shortName } from "@/lib/vertrieb/crm";
 import { fmtDate } from "@/lib/vertrieb/dates";
 import { ladeKontakt, ladeKontaktakte } from "@/lib/vertrieb/kontaktakte";
+import { kanaeleText, zeitLabel } from "@/lib/vertrieb/geplante-nachrichten";
+import { ladeGeplanteNachrichten } from "@/lib/vertrieb/geplante-nachrichten-server";
 import { audienceForContact } from "@/lib/vertrieb/praesentationen";
 
 export const metadata = { title: "Kontakt | performancegrowth Admin" };
@@ -35,6 +38,7 @@ export const metadata = { title: "Kontakt | performancegrowth Admin" };
 // Links: Nächster Schritt (Termin buchen), Aktivität erfassen, Verlauf, Cold Mails.
 // Rechts: Onboarding, Angebot (Zahlungserinnerung, Abschlussbonus), Später-Follow-up, Aufgaben, Stammdaten, Agentur,
 // Kundendaten (eingeklappt). Seltenes (Website, LinkedIn, Zusammenführen, Löschen) unter „Mehr“.
+// In der Kopfzeile die nächste automatische Nachricht an den Kontakt (Link auf Verkaufen → Geplante Nachrichten).
 // ?termin=<beliebig> öffnet „Termin buchen“ sofort („+ Neu → Termin“, Vertrieb → Termine).
 
 const AKTE = [
@@ -66,6 +70,9 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   const feedback = a.onboarding ? await prisma.customerFeedback.findMany({ where: { customerId: a.onboarding.customerId }, orderBy: { sentAt: "asc" } }) : [];
   // Datenschutz und Recht (Ole, 19.11.2026): Fälle mit Frist und Antwortvorlagen
   const rechtsFaelle = fallZeilen(await rechtsFaelleVon(c.id));
+  // Nächste automatische Nachricht an diesen Kontakt (lib/vertrieb/geplante-nachrichten.ts), Liste unter Verkaufen → Geplante Nachrichten
+  const jetzt = new Date();
+  const naechsteNachricht = (await ladeGeplanteNachrichten({ now: jetzt, contactId: c.id }).catch(() => []))[0] ?? null;
 
   return (
     <Seite
@@ -104,6 +111,12 @@ export default async function KontaktaktePage({ params, searchParams }: { params
             <span>
               {c.callAttempts} Anrufversuch{c.callAttempts === 1 ? "" : "e"}
             </span>
+            {naechsteNachricht ? (
+              <Link href={GEPLANTE_NACHRICHTEN_PFAD} className="inline-flex min-h-8 items-center gap-1 hover:text-[color:var(--foreground)] hover:underline" data-naechste-nachricht={naechsteNachricht.quelle}>
+                <Send className="h-3.5 w-3.5 shrink-0" />
+                Nächste automatische Nachricht: {naechsteNachricht.art}, {zeitLabel(naechsteNachricht, jetzt)} ({kanaeleText(naechsteNachricht.kanaele)})
+              </Link>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <span className="contents" data-funktion="page-tel--anrufen-und-e-mail-schreiben-aus-dem-kopf">
@@ -205,7 +218,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                 appUrl={a.appUrl}
                 offers={c.offers.map(toOfferRow)}
                 kontakt
-                mail={{ audience: audienceForContact(c), pdf: { vertreter: a.pdfs.has("vertreter"), makler: a.pdfs.has("makler") }, link: true, entscheidung: a.entscheidungsHinweis }}
+                mail={{ audience: audienceForContact(c), pdf: { vertreter: a.pdfs.has("vertreter"), makler: a.pdfs.has("makler"), ppl: a.pdfs.has("ppl") }, link: true, entscheidung: a.entscheidungsHinweis }}
                 knopf={false}
               />
             </div>

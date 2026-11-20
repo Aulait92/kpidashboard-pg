@@ -7,6 +7,7 @@
 // per Knopf am Vertriebskontakt (z. B. für Bestandskunden).
 
 import { erstinfoVollstaendig, type ErstinfoWeb } from "@/lib/erstinformation-shared";
+import { ERSTINFO_STATT_WEBSITE, erstinfoStattWebsite } from "@/lib/impressum-ersatz";
 import { leseMailAblauf } from "@/lib/mail/ablauf";
 import crypto from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
@@ -401,6 +402,8 @@ export type ChecklistItem = {
   at: Date | null;
   /** Kann im Admin von Hand abgehakt werden. */
   manual?: keyof typeof MANUAL_FIELDS;
+  /** Kurzer Zusatz im Admin, z. B. „Erstinformation statt Website“ */
+  note?: string;
 };
 
 export const MANUAL_FIELDS = {
@@ -412,7 +415,7 @@ export const MANUAL_FIELDS = {
 } as const;
 
 /** Kundendaten für Checkliste und Fortschritt (eine Quelle für Einrichtung, Startseite und Admin). */
-const ONBOARDING_CUSTOMER_INCLUDE = {
+export const ONBOARDING_CUSTOMER_INCLUDE = {
   users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true, mailConnection: { select: { id: true } } } },
   calendarConnection: { select: { status: true } },
   agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } },
@@ -460,6 +463,9 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
   const kampagnen = mitKampagnen(ob.package);
   const skip = (k: string) => stepSkipOf(ob.stepSkips, k);
   const firstLogin = ob.customer.users.map((u) => u.lastLoginAt).filter(Boolean).sort()[0] ?? null;
+  const erstinfoOk = erstinfoVollstaendig(ob.customer.erstinformation, (ob.websiteInfo ?? null) as ErstinfoWeb, ob.customer);
+  // Ohne Website (z. B. Allianz-Vertreter): vollständige Erstinformation ersetzt das Impressum (lib/impressum-ersatz.ts)
+  const ohneWebsite = !ob.websiteCheckedAt && erstinfoStattWebsite(ob.websiteInfo as { error?: string } | null, erstinfoOk);
   const items: ChecklistItem[] = [];
   // Nur mit Online-Zahlung (Stripe) – sonst läuft die Zahlung außerhalb der App.
   if (offer && billingEnabled() && !offer.isTest) {
@@ -513,7 +519,7 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         key: "erstinfo",
         label: "Erstinformation vollständig (Pflichtangaben nach § 15 VersVermV bestätigt oder eigenes PDF)",
         owner: "kunde",
-        done: erstinfoVollstaendig(ob.customer.erstinformation, (ob.websiteInfo ?? null) as ErstinfoWeb, ob.customer),
+        done: erstinfoOk,
         at: ob.customer.erstinformation?.bestaetigtAt ?? null,
       },
       // P8/M9 (Ole, 17.11.2026): „So arbeitet Ihr Assistent“ (mit „Weiter“ gesehen) und „Service-Mails in Ihrem Namen“
@@ -568,12 +574,22 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
   }
   if (kampagnen) {
     items.push(
-      { key: "website", label: "Pflichtangaben (Impressum) geprüft", owner: "du", done: !!ob.websiteCheckedAt, at: ob.websiteCheckedAt, manual: "website" },
+      {
+        key: "website",
+        label: "Pflichtangaben (Impressum) geprüft",
+        owner: "du",
+        done: !!ob.websiteCheckedAt || ohneWebsite,
+        at: ob.websiteCheckedAt,
+        manual: "website",
+        ...(ohneWebsite ? { note: ERSTINFO_STATT_WEBSITE } : {}),
+      },
       { key: "campaign", label: "Kampagne und Leadformular angelegt", owner: "du", done: !!ob.campaignReadyAt, at: ob.campaignReadyAt, manual: "campaign" },
       { key: "testLead", label: "Testlead durchgespielt", owner: "du", done: !!ob.testLeadAt, at: ob.testLeadAt, manual: "testLead" },
     );
   }
   items.push({ key: "live", label: "Live", owner: "du", done: !!ob.liveAt, at: ob.liveAt });
+  // Von uns für den Kunden abgehakt (Kundenakte, Ole 20.11.2026): zählt überall als erledigt
+  for (const it of items) if (!it.done && vonUnsAbgehakt(ob.stepSkips, it.key)) it.done = true;
   return items;
 }
 
@@ -594,6 +610,14 @@ export function stepSkipOf(raw: unknown, key: string): StepSkip | null {
   const v = (raw as Record<string, unknown>)[key];
   return v && typeof v === "object" && typeof (v as StepSkip).reason === "string" ? (v as StepSkip) : null;
 }
+/**
+ * Von uns in der Kundenakte für den Kunden abgehakt (Ole, 20.11.2026: z. B. im Kickoff gemeinsam erledigt).
+ * Gespeichert in stepSkips mit Grund „admin“. Gilt für alle Schritte ohne eigenes Datumsfeld (MANUAL_FIELDS).
+ */
+export const ADMIN_ABGEHAKT = "admin";
+export const vonUnsAbgehakt = (raw: unknown, key: string) => stepSkipOf(raw, key)?.reason === ADMIN_ABGEHAKT;
+/** Schritte, die wir nicht abhaken (ergeben sich nur aus echten Daten bzw. haben eigene Knöpfe). */
+export const NICHT_ABHAKBAR = ["welcome", "payment", "templates", "live"] as const;
 /** App installiert / Provisionen hinterlegt: keine Checklisten-Punkte, kommen von außen dazu. */
 export type CustomerExtras = { appDone: boolean; provisionDone: boolean };
 /** Unser Teil, dem Kunden nur zur Information gezeigt (nicht im Fortschrittsbalken). */
@@ -681,9 +705,9 @@ export async function customerExtras(customerId: string): Promise<CustomerExtras
   const [push, provision, ob] = await Promise.all([
     users.length ? prisma.pushSubscription.count({ where: { userId: { in: users.map((u) => u.id) } } }) : 0,
     loadCustomerProvision(customerId),
-    prisma.onboarding.findUnique({ where: { customerId }, select: { appSkippedAt: true } }),
+    prisma.onboarding.findUnique({ where: { customerId }, select: { appSkippedAt: true, stepSkips: true } }),
   ]);
-  return { appDone: push > 0 || !!ob?.appSkippedAt, provisionDone: provision.confirmed };
+  return { appDone: push > 0 || !!ob?.appSkippedAt, provisionDone: provision.confirmed || vonUnsAbgehakt(ob?.stepSkips, "provision") };
 }
 
 /**

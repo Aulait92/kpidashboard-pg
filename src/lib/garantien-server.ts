@@ -86,6 +86,23 @@ export async function garantieKunden(customerIds?: string[]): Promise<{ customer
   return onboardings.filter((o) => ok.has(o.offerId!)).map((o) => ({ customerId: o.customerId, offerId: o.offerId! }));
 }
 
+type TerminRoh = { id: string; startsAt: Date; status: string; cancelledBy: string | null; cancelledAt: Date | null; leadId: string | null };
+
+/** Vom Kunden abgesagte Termine, nach denen derselbe Lead einen neuen Termin bekam (Verschiebung), zählen nicht. */
+async function mitVerschiebung(termine: TerminRoh[]): Promise<GarantieInput["termine"]> {
+  const abgesagt = termine.filter((t) => t.status === "cancelled" && t.leadId);
+  const neue = abgesagt.length
+    ? await prisma.appointment.findMany({
+        where: { leadId: { in: [...new Set(abgesagt.map((t) => t.leadId!))] } },
+        select: { id: true, leadId: true, createdAt: true },
+      })
+    : [];
+  // Beim Verschieben wird der neue Termin kurz vor der Absage des alten angelegt (lib/calendar rescheduleAppointment)
+  const verschoben = (t: TerminRoh) =>
+    !!t.cancelledAt && neue.some((n) => n.id !== t.id && n.leadId === t.leadId && n.createdAt.getTime() >= t.cancelledAt!.getTime() - 10 * 60_000);
+  return termine.map((t) => ({ startsAt: t.startsAt, status: t.status, cancelledBy: t.cancelledBy, verschoben: t.status === "cancelled" ? verschoben(t) : false }));
+}
+
 /** Alle Eingaben der Bewertung für einen Kunden. */
 export async function ladeGarantieInput(customerId: string, offerId: string, now = new Date()): Promise<GarantieInput> {
   const [customer, offer, onboarding, spend, pausen, faelle, provision] = await Promise.all([
@@ -105,7 +122,7 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
   ]);
   const spendRows = spend.map((s) => ({ date: s.date, amount: Number(s.amount) }));
   const { start, quelle } = startDatum(spendRows, offer.acceptedAt, onboarding?.liveAt ?? null);
-  const [leads, termine] = start
+  const [leads, termineRoh] = start
     ? await Promise.all([
         prisma.lead.findMany({
           // Garantien nur aus bezahlten Leads (Ole, 14.11.2026): Empfehlungen und Bestandskunden zählen nicht
@@ -113,12 +130,19 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
           select: { id: true, createdAt: true, source: true, status: true, closeValue: true, closedAt: true, statusChangedAt: true },
         }),
         prisma.appointment.findMany({
-          // Termine von Testleads zählen nicht (lib/testlead.ts)
-          where: { customerId, startsAt: { gte: new Date(start.getTime() - DAY), lte: now }, status: { not: "cancelled" }, NOT: { lead: { is: { isTest: true } } } },
-          select: { startsAt: true, status: true },
+          // Termine von Testleads zählen nicht (lib/testlead.ts). Abgesagte nur, wenn der Kunde selbst abgesagt hat
+          // (AGB „Wahrgenommene Termine“, 20.11.2026); Absagen des Interessenten, durch uns oder ohne Herkunft zählen nicht.
+          where: {
+            customerId,
+            startsAt: { gte: new Date(start.getTime() - DAY), lte: now },
+            OR: [{ status: { not: "cancelled" } }, { status: "cancelled", cancelledBy: "advisor" }],
+            NOT: { lead: { is: { isTest: true } } },
+          },
+          select: { id: true, startsAt: true, status: true, cancelledBy: true, cancelledAt: true, leadId: true },
         }),
       ])
     : [[], []];
+  const termine = await mitVerschiebung(termineRoh);
   const end = offer.subscriptionStatus === "canceled" ? offer.updatedAt : null;
   const paidClosed = new Set(leads.filter((l) => l.status === CLOSED_STATUS).map((l) => l.id));
   const contractsOfPaid = paidClosed.size

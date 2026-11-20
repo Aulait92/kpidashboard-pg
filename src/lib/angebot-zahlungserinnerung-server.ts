@@ -18,6 +18,7 @@ import { renderTemplate } from "@/lib/whatsapp/templates";
 import {
   erinnerungsMail,
   fmtTag,
+  istErsetzt,
   jetztSenden,
   naechsteErinnerung,
   pruefeErinnerungsDatum,
@@ -123,7 +124,7 @@ export async function setzeErinnerungAdmin(
 
 // ─── Cron ──────────────────────────────────────────────────────────────
 
-const OFFEN_WHERE = {
+export const OFFEN_WHERE = {
   status: "accepted",
   isTest: false,
   acceptedAt: { not: null },
@@ -143,10 +144,13 @@ async function gesperrt(contactId: string | null): Promise<boolean> {
 export async function ersetzt(o: { id: string; createdAt: Date; salesContactId: string | null; dealId: string | null }): Promise<boolean> {
   const owner = o.salesContactId ? { salesContactId: o.salesContactId } : o.dealId ? { dealId: o.dealId } : null;
   if (!owner) return false;
-  return !!(await prisma.offer.findFirst({
+  // Regel: istErsetzt (lib/angebot-zahlungserinnerung.ts), hier schon in der Abfrage vorgefiltert
+  const kandidaten = await prisma.offer.findMany({
     where: { ...owner, id: { not: o.id }, createdAt: { gt: o.createdAt }, status: { not: "superseded" } },
-    select: { id: true },
-  }));
+    select: { id: true, createdAt: true, status: true, salesContactId: true, dealId: true },
+    take: 1,
+  });
+  return istErsetzt(o, kandidaten);
 }
 
 export type CronErgebnis = { geprueft: number; gesendet: number; whatsapp: number; aufgaben: number; pushes: number };
@@ -157,8 +161,8 @@ export async function runZahlungserinnerungen(now = new Date(), opts: { limit?: 
   for (const o of offers) {
     out.geprueft++;
     try {
-      const istErsetzt = await ersetzt(o);
-      const e = naechsteErinnerung(o, now, { ersetzt: istErsetzt });
+      const neuere = await ersetzt(o);
+      const e = naechsteErinnerung(o, now, { ersetzt: neuere });
       if (jetztSenden(e, now) && e) {
         // Stufe beanspruchen (zwei Läufe gleichzeitig senden nicht doppelt)
         const claimed = await prisma.offer.updateMany({
@@ -173,7 +177,7 @@ export async function runZahlungserinnerungen(now = new Date(), opts: { limit?: 
         }
       }
       const fresh = await prisma.offer.findUnique({ where: { id: o.id } });
-      if (fresh && pushFaellig(fresh, now, { ersetzt: istErsetzt })) {
+      if (fresh && pushFaellig(fresh, now, { ersetzt: neuere })) {
         const claimed = await prisma.offer.updateMany({ where: { id: o.id, paymentReminderPushAt: null }, data: { paymentReminderPushAt: now } });
         if (claimed.count === 1) {
           await sendToAdmins({

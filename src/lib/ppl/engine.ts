@@ -192,6 +192,13 @@ async function slack(poolLeadId: string, extra: { delivery?: DeliveryReport | nu
   } catch (err) {
     console.warn("[ppl-slack]", err instanceof Error ? err.message : err);
   }
+  // Lead-Mail an Ole für die eigenen Funnels (lib/ppl/admin-lead-mail.ts), unabhängig von Slack
+  try {
+    const { notifyAdminLeadMail } = await import("@/lib/ppl/admin-lead-mail");
+    await notifyAdminLeadMail(poolLeadId, extra);
+  } catch (err) {
+    console.warn("[ppl-admin-mail]", err instanceof Error ? err.message : err);
+  }
 }
 
 /** Freien Bezug suchen und ausliefern; sonst geparkt lassen (Admin-Hinweis). */
