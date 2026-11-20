@@ -77,9 +77,9 @@ describe("Rechnungsangaben", () => {
 
   it("Steuernummer speichern: Prüfung, Änderung erkannt, leer = Standard aus PROVIDER", async () => {
     expect(await loadTaxNumberOverride()).toBeNull();
-    expect(await loadTaxNumber()).toBe("DE347780443");
+    expect(await loadTaxNumber()).toBe("DE305778241");
     expect(await saveTaxNumber("DE12")).toMatchObject({ ok: false });
-    expect(await loadTaxNumber()).toBe("DE347780443");
+    expect(await loadTaxNumber()).toBe("DE305778241");
     expect(await saveTaxNumber("de 123 456 789")).toEqual({ ok: true, value: "DE123456789", changed: true });
     expect(await saveTaxNumber("DE123456789")).toEqual({ ok: true, value: "DE123456789", changed: false });
     expect(await loadTaxNumber()).toBe("DE123456789");

@@ -227,7 +227,7 @@ describe("Steuer-ID auf Rechnungen (account_tax_ids)", () => {
   it("ohne Standard im Stripe-Konto: ID der passenden Steuer-ID aus der API, kurz zwischengespeichert", async () => {
     s.taxIds = [
       { id: "txi_andere", value: "DE111111111", type: "eu_vat" },
-      { id: "txi_pg", value: "DE 347 780 443", type: "eu_vat" },
+      { id: "txi_pg", value: "DE 305 778 241", type: "eu_vat" },
     ];
     await charge();
     expect(s.invoices[0].account_tax_ids).toEqual(["txi_pg"]);
@@ -239,7 +239,7 @@ describe("Steuer-ID auf Rechnungen (account_tax_ids)", () => {
 
   it("mit Standard im Stripe-Konto: nichts mitgeben (Stripe setzt sie selbst)", async () => {
     s.defaultTaxIds = ["txi_pg"];
-    s.taxIds = [{ id: "txi_pg", value: "DE347780443", type: "eu_vat" }];
+    s.taxIds = [{ id: "txi_pg", value: "DE305778241", type: "eu_vat" }];
     await charge();
     expect(s.invoices[0]).not.toHaveProperty("account_tax_ids");
     expect(s.taxIdCalls).toBe(0);
@@ -255,16 +255,16 @@ describe("Steuer-ID auf Rechnungen (account_tax_ids)", () => {
 
 describe("Rechnungsfuß mit USt-IdNr.", () => {
   it("ohne abweichenden Wert steht die USt-IdNr. aus den Stammdaten im Footer und als Zusatzfeld", async () => {
-    s.taxIds = [{ id: "txi_pg", value: "DE347780443", type: "eu_vat" }];
+    s.taxIds = [{ id: "txi_pg", value: "DE305778241", type: "eu_vat" }];
     await charge0();
-    expect(s.invoices[0].footer).toMatch(/ · USt-IdNr\.: DE347780443$/);
-    expect(s.invoices[0].custom_fields).toEqual([{ name: "USt-IdNr.", value: "DE347780443" }]);
+    expect(s.invoices[0].footer).toMatch(/ · USt-IdNr\.: DE305778241$/);
+    expect(s.invoices[0].custom_fields).toEqual([{ name: "USt-IdNr.", value: "DE305778241" }]);
   });
 
   it("neuer Stripe-Kunde bekommt den Footer mit USt-IdNr. als Standard", async () => {
     s.stripeCustomerId = null;
     await ensureStripeCustomerFor("c-neu");
-    expect((s.created[0].invoice_settings as { footer: string }).footer).toMatch(/USt-IdNr\.: DE347780443$/);
+    expect((s.created[0].invoice_settings as { footer: string }).footer).toMatch(/USt-IdNr\.: DE305778241$/);
   });
 });
 
