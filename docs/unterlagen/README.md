@@ -11,8 +11,16 @@ Punkt ersetzt auf Folie 3, 6, 10, 11, 12, 14, 15 und den Endfolien (Vertreter 21
 und Mittelpunkte bleiben); Chats auf Folie 11 und 14 und die Zitate auf Folie 14 siezen den Lead („Guten Tag Frau Becker“,
 Berater „Max Berger“). Überschriften per Glyphen-Übernahme aus dem Original (Komma aus „Sonntag,“), Fließtext mit Inter neu
 gesetzt, Lead-Antworten im Chat unverändert übernommen. PPTX und PDF (Seiten 3, 6, 10 bis 12, 21, 22, 28 bis 31, Makler
-zusätzlich 32), Web-Folien der geänderten Folien neu. Folie 13 (Video: Du-Form und Gedankenstriche) und 17 unverändert.
+zusätzlich 32), Web-Folien der geänderten Folien neu. Folie 17 unverändert, Folie 13 (Video) siehe unten.
 Die PPL-Präsentation nutzt dieselben Bilder (Vorstellung, „Niemand geht ran?“, „Kein Lead …“, „Heute“) und ist noch alt.
+
+Fassung 20.11.2026, Video Folie 13 „So arbeitet Ihr digitaler Assistent“ neu (Ole): keine Quelle im Repo, deshalb Bild für
+Bild als HTML-Animation nachgebaut (gleiche Szenen, Layout, Timing, 47 s, 1920x1080, 30 fps) und mit Playwright aufgenommen:
+`scripts/assistent-video/` (Texte in `cfg.js`, Ablauf in `render.mjs`, Einsetzen mit `einsetzen.py`). Formular und Chat siezen
+den Lead (Julia Becker, „Guten Tag Frau Becker“, Berater Max Berger/„Herr Berger“, „Guten Abend, Herr Berger“ in der App),
+ohne Gedankenstriche (Startbild, Schritt 5, „Rund um die Uhr, auch am Sonntagabend“, „Privatschutz: bis zu 20 % sparen“,
+Endbild). Ersetzt: Video und Standbild in beiden PPTX (Folie 13), die 8 Einzelbilder im PDF (Seiten 13 bis 20),
+`public/praesentation/vertrieb/assistent.mp4` und `{vertreter,makler}/13.webp`. Die PPL-Präsentation enthält das Video nicht.
 
 Fassung 19.11.2026, Folie 19 „Policen vorab“ (Ole): statt WhatsApp-Telefon jetzt oben das Vergleichsblatt kompakt
 (Doppelt, Kündbar, Fehlt) und darunter ein echter Screenshot der Vergleichsfolie der Beratungspräsentation mit Spalte
