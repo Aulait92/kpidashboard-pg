@@ -87,13 +87,13 @@ Der Header-Wert `dummy` wird vom Netzwerk-Geheimnis der Claude-Umgebung durch de
 ## Pay-per-Lead + Software (19.11.2026, Ole)
 
 Eigene kurze Präsentation für Vermittler, die Leads pro Stück kaufen wollen und dazu die Software bekommen sollen:
-`PPL-Software-Praesentation.pptx` und `.pdf` (18 Folien, Bild-Folien im selben Design, Seitenzahl „n / 18“, Sprechzettel
+`PPL-Software-Praesentation.pptx` und `.pdf` (19 Folien, Bild-Folien im selben Design, Seitenzahl „n / 19“, Sprechzettel
 als Notizen in der PPTX) und `sprechzettel-ppl-software.md` (je Folie, dazu 3 Einwände). Nicht für den Upload unter
 Marketing → Unterlagen gedacht (dort gibt es nur Vertreter/Makler), sondern zum Zeigen im Gespräch oder Versand per Mail.
 
 - Neu gebaut (HTML im Design der Vertreter-Folien, mit Chrome als Bild gerendert): 1 Titel, 2 Ihr Ziel, 3 Warum gekaufte
   Leads verbrennen (Probleme 01 bis 04 wie Vertreter-Folie 10, damit „Problem … gelöst“ auf den übernommenen Folien passt),
-  Reihenfolge (20.11.2026): 1 Titel, 2 bis 6 Vorstellung, 7 Ziel, 8 Problem, 9 bis 13 Software, 14 Leads und Preise, 15 und 16 Beispielrechnung (20 und 100 Leads), 17 Paket, 18 Start.
+  Reihenfolge (20.11.2026): 1 Titel, 2 bis 6 Vorstellung, 7 Ziel, 8 Problem, 9 bis 14 Software (14 „Beraten mit echten Preisen“, in der Web-Fassung die Live-Demo), 15 Leads und Preise, 16 und 17 Beispielrechnung (20 und 100 Leads), 18 Paket, 19 Start.
 - Übernommen aus `Vertreter-Praesentation.pptx` (Seitenzahl ersetzt): 2 bis 6 Vorstellung (Wer sind wir?, Ole, Online-Marketer des Jahres, 200.000 Leads für die Allianz, Mirko; Vertreter 2 bis 6), danach 5 „Niemand geht ran?“ (Vertreter 11),
   6 „Sonntag, 21:47 Uhr“ (12), 7 „Kein Lead geht mehr verloren“ (14), 8 „Heute“ (15), 9 Terminvorbereitung (16).
 - Preise: Leads 17/22/35/65 € je Lead ohne Zusatz „brutto/netto“ (Umsatzsteuer auf Leads wird geprüft), Software

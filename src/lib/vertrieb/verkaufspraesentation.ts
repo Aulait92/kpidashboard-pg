@@ -10,7 +10,7 @@
 import { ABSCHLUSSBONUS_STANDARD, betreuungsSatz, eurText, monthlyBudgetOf, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, VORAUSZAHLUNG, type OfferTerm } from "@/lib/offer-pricing";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 
-// „ppl“: Pay-per-Lead + Software (Ole, 20.11.2026): eigene kurze Präsentation, 18 Bildfolien (docs/unterlagen/PPL-Software-Praesentation)
+// „ppl“: Pay-per-Lead + Software (Ole, 20.11.2026): eigene kurze Präsentation, 19 Folien (Bilder, eine Live-Demo) (docs/unterlagen/PPL-Software-Praesentation)
 export type VerkaufsAudience = "vertreter" | "makler" | "ppl";
 export const VERKAUFS_AUDIENCES: readonly VerkaufsAudience[] = ["vertreter", "makler", "ppl"];
 export const isVerkaufsAudience = (v: unknown): v is VerkaufsAudience => v === "vertreter" || v === "makler" || v === "ppl";
@@ -74,7 +74,7 @@ export const BONUS_FOLIE_TITEL = "Ihr Abschlussbonus";
  * Folienliste je Zielgruppe (Vertreter 24, Makler 25 Folien aus den PPTX, Bildnummern wie dort), dazu vor
  * „Ihr Start in 3 Schritten“ die Folie zum Abschlussbonus (mitBonus, Standard an).
  */
-/** Pay-per-Lead + Software: nur Bildfolien, ohne Video, Demo, Rechnung, Paket und Bonus (Preise stehen auf den Folien). */
+/** Pay-per-Lead + Software: Bildfolien und die Live-Demo, ohne Video, Rechnung, Paket und Bonus (Preise stehen auf den Folien). */
 const PPL_FOLIEN: string[] = [
   "Aus gekauften Leads werden Termine",
   // Vorstellung (Ole, 20.11.2026: inkl. Vertrauen, 200.000 Leads für die Allianz)
@@ -90,6 +90,7 @@ const PPL_FOLIEN: string[] = [
   "Kein Lead geht mehr verloren",
   "Jeden Morgen wissen Sie, wen Sie anrufen",
   "Perfekt vorbereitet in jeden Termin",
+  "Beraten mit echten Preisen",
   "Exklusive Leads, Woche für Woche",
   "Rechnen Sie mit Ihren Zahlen",
   "Mehr Leads, günstigere Abschlüsse",
@@ -98,7 +99,8 @@ const PPL_FOLIEN: string[] = [
 ];
 
 export function folienListe(audience: VerkaufsAudience, mitBonus = true): VerkaufsFolieDef[] {
-  if (audience === "ppl") return PPL_FOLIEN.map((titel, i) => ({ titel, art: "bild" as const, bild: i + 1, nr: i + 1 }));
+  // „Beraten mit echten Preisen“ wie bei Vertreter/Makler als Live-Demo (Ole, 20.11.2026: 1-Klick-Beratungspräsentation)
+  if (audience === "ppl") return PPL_FOLIEN.map((titel, i) => ({ titel, art: titel === "Beraten mit echten Preisen" ? ("demo" as const) : ("bild" as const), bild: i + 1, nr: i + 1 }));
   const basis = [...GEMEINSAM, ...ENDE[audience]].map((f, i) => ({ ...f, bild: i + 1 }));
   const liste = mitBonus ? [...basis.slice(0, -1), { titel: BONUS_FOLIE_TITEL, art: "bonus" as const, bild: 0 }, ...basis.slice(-1)] : basis;
   return liste.map((f, i) => ({ ...f, nr: i + 1 }));
