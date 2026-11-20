@@ -30,6 +30,7 @@ import { a, asAnsprache } from "@/lib/ansprache";
 import { prisma } from "@/lib/prisma";
 import { KNOPF, OUTREACH_PURPOSES } from "@/lib/whatsapp/templates";
 import { erstfrageKnopfWert } from "@/lib/whatsapp/erstanschreiben";
+export { ERSTFRAGE_HINWEIS_RE } from "@/lib/whatsapp/erstanschreiben";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
 import { WUNSCHZEIT_REGEL } from "@/lib/whatsapp/gespraech";
 

@@ -36,7 +36,7 @@ import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { humanHandoverReply, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
-import { enthaeltErsteFrage, erstanschreibenKopf, ersteFrageRegel, formularRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { enthaeltErsteFrage, ERSTFRAGE_HINWEIS_RE, erstanschreibenKopf, ersteFrageRegel, formularRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import {
   buchungsText,
   istFamilie,
@@ -817,7 +817,8 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   // auf die Öffnungsfrage fragt die App selbst (mit Knöpfen); nach der Antwort darauf schickt sie den Terminvorschlag.
   // Terminwunsch, Rückfrage, Absage oder Freitext: der Assistent übernimmt ohne weitere Frage (zwischenHinweis).
   const zw =
-    !upcoming && !conversation.qualified && !opts.anstoss && !opts.knopfZeit && !opts.hint && latest?.direction === "inbound"
+    // Ein Knopf auf die feste erste Frage (v10/v11) bringt einen Hinweis mit; die Zwischenfrage kommt trotzdem
+    !upcoming && !conversation.qualified && !opts.anstoss && !opts.knopfZeit && (!opts.hint || ERSTFRAGE_HINWEIS_RE.test(opts.hint)) && latest?.direction === "inbound"
       ? await (await import("@/lib/whatsapp/zwischenfrage-server"))
           .zwischenStand({ conversationId: conversation.id, source: lead?.source ?? null, formular: form.normal, angaben: conversation.qualificationData })
           .catch((e) => (console.error("[whatsapp bot] Zwischenfrage", e instanceof Error ? e.message : e), null))
