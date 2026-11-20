@@ -17,14 +17,14 @@ const fmt = (d: Date) =>
 // Teilen, damit die letzten Leads oben stehen und Werbekonto, CAPI und Formulare (Einrichtung, selten) zugeklappt sind.
 // Links führen in den neuen Admin (Liefern › Leads bzw. Lead-Eingang) statt in den alten.
 
-/** Letzte 25 Leads mit Status, „Testlead schicken“ und Sprung in alle Leads dieses Kunden. */
+/** Letzte 10 Leads mit Status, „Testlead schicken“ und Sprung in alle Leads dieses Kunden. */
 export async function LetzteLeads({ customerId }: { customerId: string }) {
   const [customer, leads, total, products] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, isTest: true, plan: true, leadAddress: true } }),
     prisma.lead.findMany({
       where: { customerId },
       orderBy: { createdAt: "desc" },
-      take: 25,
+      take: 10,
       select: { id: true, name: true, source: true, status: true, createdAt: true, closedAt: true, isTest: true },
     }),
     prisma.lead.count({ where: { customerId } }),

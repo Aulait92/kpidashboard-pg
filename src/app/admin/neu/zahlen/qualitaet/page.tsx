@@ -144,7 +144,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
         tone: "warn",
         icon: "task",
         title: `${c.customerName.replace(/^Allianz\s+/i, "")}: ${offen} Aufgaben liegen`,
-        detail: "Ergebnisse, Nachfassen oder Chats seit über 24 Stunden offen",
+        detail: "Seit über 24 Stunden offen",
         action: { label: "Ansehen", href: `/admin/neu/kunden/${c.customerId}` },
       })),
   ];

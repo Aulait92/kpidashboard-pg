@@ -1,6 +1,7 @@
 // Kundenakte: Lead-Qualität der letzten 90 Tage (Ole, 13.11.2026) – wie viele Leads disqualifiziert
 // wurden und warum, je Produkt. Grundlage, um Formular oder Zielgruppe nachzuschärfen.
 
+import { AUFKLAPP_KARTE, AufklappKopf } from "@/components/admin-neu/kunden/aufklapp";
 import { prisma } from "@/lib/prisma";
 import { DISQUALIFY_REASONS } from "@/lib/lead-quality";
 import { LOST_REASONS } from "@/lib/lead-lost";
@@ -31,10 +32,9 @@ export async function LeadQualitaetCard({ customerId }: { customerId: string }) 
     { label: "ohne Grund (vor dem 13.11. oder per Ziehen ohne Auswahl)", n: byReason.get("ohne") ?? 0 },
   ].filter((r) => r.n > 0);
   return (
-    <details className="card px-4 py-3 text-sm" data-lead-qualitaet open={disq.length > 0}>
-      <summary className="cursor-pointer font-medium">
-        Lead-Qualität (90 Tage): {disq.length} von {total} disqualifiziert ({pct(disq.length)})
-      </summary>
+    <details className={`${AUFKLAPP_KARTE} text-sm`} data-lead-qualitaet open={disq.length > 0}>
+      <AufklappKopf titel="Lead-Qualität" zusammenfassung={`${disq.length} von ${total} disqualifiziert (${pct(disq.length)}), 90 Tage`} />
+      <div className="border-t border-[color:var(--border)] px-5 pb-4 pt-1">
       {disq.length === 0 ? (
         <p className="mt-2 text-slate-500">Keine disqualifizierten Leads.</p>
       ) : (
@@ -65,6 +65,7 @@ export async function LeadQualitaetCard({ customerId }: { customerId: string }) 
           </div>
         </div>
       )}
+      </div>
     </details>
   );
 }

@@ -195,18 +195,16 @@ export function AgentSettings(p: {
       <div className="flex min-h-[60px] flex-wrap items-center gap-x-2 gap-y-1 px-4 py-3">
         <div className="min-w-0 flex-1">
           <div className="font-medium">Automatisch nachfassen (Abfolgen)</div>
-          <div className="text-sm text-[color:var(--muted)]">
-            Nicht erreicht: WhatsApp sofort, Anruf-Aufgabe an Tag 2, letzte WhatsApp an Tag 6. Angebot: WhatsApp an Tag 3, Anruf an
-            Tag 7. Nicht erschienen: WhatsApp sofort (neuer Termin per Chat, kein Link), Anruf an Tag 2. Chat ruht (Lead antwortet dem Assistenten nicht):
-            WhatsApp nach 2 und 8 Stunden, nach ca. 20 Stunden (nur im offenen Fenster), letzte an Tag 3. Stoppt bei Antwort, Termin, Abschluss,
-            Kein Interesse, Reklamation oder „Stopp“. WhatsApp nur Mo bis Sa, 9 bis 19 Uhr.
+          {/* SUS-Prüfung 20.11.2026: Zeitplan der Abfolgen hinter dem Info-Zeichen statt fünf Zeilen Fließtext */}
+          <div className="flex items-center gap-1.5 text-sm text-[color:var(--muted)]">
+            Bei nicht erreicht, Angebot, nicht erschienen und ruhendem Chat.
+            <Hint text="Nicht erreicht: WhatsApp sofort, Anruf-Aufgabe an Tag 2, letzte WhatsApp an Tag 6. Angebot: WhatsApp an Tag 3, Anruf an Tag 7. Nicht erschienen: WhatsApp sofort (neuer Termin per Chat, kein Link), Anruf an Tag 2. Chat ruht (Lead antwortet dem Assistenten nicht): WhatsApp nach 2 und 8 Stunden, nach ca. 20 Stunden (nur im offenen Fenster), letzte an Tag 3. Stoppt bei Antwort, Termin, Abschluss, Kein Interesse, Reklamation oder „Stopp“. WhatsApp nur Mo bis Sa, 9 bis 19 Uhr." />
           </div>
         </div>
         <Switch label="Automatisch nachfassen" checked={p.sequencesEnabled} onChange={(next) => setFollowUpSequencesAction(p.customerId, next)} />
         {p.sequencesEnabled && p.sequenceTemplatesMissing.length ? (
-          <p className="w-full text-xs font-medium text-amber-700">
-            Ohne freigegebene Vorlage geht außerhalb des 24-h-Fensters keine WhatsApp raus. Stattdessen entsteht eine Anruf-Aufgabe. Es
-            fehlen: {p.sequenceTemplatesMissing.join(", ")}.
+          <p className="w-full text-xs font-medium text-amber-700" title="Ohne freigegebene Vorlage geht außerhalb des 24-h-Fensters keine WhatsApp raus. Stattdessen entsteht eine Anruf-Aufgabe.">
+            Vorlagen fehlen (sonst Anruf-Aufgabe statt WhatsApp): {p.sequenceTemplatesMissing.join(", ")}.
           </p>
         ) : null}
       </div>

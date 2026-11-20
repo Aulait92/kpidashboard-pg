@@ -7,8 +7,8 @@ const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", curren
 
 function Kachel({ label, wert, hinweis }: { label: string; wert: string; hinweis?: string }) {
   return (
-    <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 shadow-[var(--shadow-sm)]">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">{label}</div>
+    <div className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-3 shadow-[var(--shadow-sm)] sm:px-4">
+      <div className="truncate text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">{label}</div>
       <div className="mt-1 text-2xl font-semibold tabular-nums">{wert}</div>
       {hinweis ? <div className="truncate text-xs text-[color:var(--muted)]">{hinweis}</div> : null}
     </div>
@@ -27,10 +27,11 @@ export async function Kennzahlen({ customerId }: { customerId: string }) {
   const summe = Number(kosten._sum.acquisitionCost ?? 0);
   // Ohne Leadkosten keine Kachel „noch keine Daten“ (Umbau 20.11.2026); die dritte Kachel füllt dann die Zeile
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 [&>*:last-child:nth-child(odd)]:col-span-2 lg:[&>*:last-child:nth-child(odd)]:col-span-1">
-      <Kachel label="Leads" wert={leads.toLocaleString("de-DE")} hinweis="letzte 30 Tage" />
-      <Kachel label="Termine" wert={termine.toLocaleString("de-DE")} hinweis={leads ? `${Math.round((termine / leads) * 100)} % der Leads` : "letzte 30 Tage"} />
-      <Kachel label="Abschlüsse" wert={abschluesse.toLocaleString("de-DE")} hinweis="letzte 30 Tage" />
+    // Drei Kacheln am Handy in einer Reihe (statt 2 + 1), mit vierter Kachel 2 × 2; Zeitraum steht einmal im Hinweis
+    <div className={`grid gap-2 sm:gap-3 lg:grid-cols-4 ${termine && summe ? "grid-cols-2" : "grid-cols-3"}`}>
+      <Kachel label="Leads" wert={leads.toLocaleString("de-DE")} hinweis="30 Tage" />
+      <Kachel label="Termine" wert={termine.toLocaleString("de-DE")} hinweis={leads ? `${Math.round((termine / leads) * 100)} % der Leads` : "30 Tage"} />
+      <Kachel label="Abschlüsse" wert={abschluesse.toLocaleString("de-DE")} hinweis="30 Tage" />
       {termine && summe ? <Kachel label="Kosten je Termin" wert={eur(summe / termine)} hinweis={`${eur(summe)} Leadkosten`} /> : null}
     </div>
   );

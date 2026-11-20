@@ -3,6 +3,7 @@ import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { Aufklapp } from "@/components/admin-neu/kunden/aufklapp";
 import { AvailabilityCard } from "./availability-card";
 import { D360Assign } from "./d360-assign";
 import { freePartnerChannels } from "@/lib/whatsapp/dialog360-match";
@@ -13,17 +14,34 @@ import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 export default async function KundenWhatsApp({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ wa?: string }> }) {
   const { id } = await params;
   const { wa } = await searchParams;
+  // SUS-Prüfung 20.11.2026: Oben das Tägliche (Nummer, Assistent, Kalender, Vorlagen). Verbindung, Verfügbarkeit,
+  // Gebühren und Bestandskunden sind seltener und stehen zugeklappt darunter (vorher rund 4.000 px am Handy).
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: id }, select: { status: true, apiKeyEnc: true } });
   return (
     <div className="space-y-5">
       <WhatsAppSettingsPage searchParams={Promise.resolve({ kunde: id, wa })} />
-      <D360Card customerId={id} />
-      <AvailabilityCard customerId={id} />
-      <div className="grid grid-cols-1 max-w-5xl gap-5 lg:grid-cols-2">
-        <WhatsAppFeesCard customerId={id} admin />
-        <BestandModuleCard customerId={id} />
+      <div className="max-w-5xl space-y-3">
+        <Aufklapp titel="Verfügbarkeit für Termine" zusammenfassung="Termindauer, buchbare Zeiten, blockierte Zeiten">
+          <AvailabilityCard customerId={id} />
+        </Aufklapp>
+        <Aufklapp titel="Verbindung zu 360dialog" zusammenfassung={verbindungStand(acc)} offen={!!acc && acc.status !== "connected" && acc.status !== "invited" && acc.status !== "pending"}>
+          <D360Card customerId={id} />
+        </Aufklapp>
+        <Aufklapp titel="Meta-Gebühren und Bestandskunden" zusammenfassung="Kosten der Vorlagen-Nachrichten, Zusatzmodul Bestandskunden">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <WhatsAppFeesCard customerId={id} admin />
+            <BestandModuleCard customerId={id} />
+          </div>
+        </Aufklapp>
       </div>
     </div>
   );
+}
+
+function verbindungStand(acc: { status: string; apiKeyEnc: string | null } | null): string {
+  if (!acc) return "Nicht verbunden";
+  if (acc.status === "connected") return acc.apiKeyEnc ? "Verbunden" : "Verbunden, API-Key fehlt";
+  return acc.status === "invited" ? "Einladung von 360dialog verschickt" : acc.status === "pending" ? "Nummer wird eingerichtet" : acc.status === "error" ? "Fehler beim Verbinden" : "Nicht verbunden";
 }
 
 async function BestandModuleCard({ customerId }: { customerId: string }) {
@@ -71,7 +89,9 @@ async function D360Card({ customerId }: { customerId: string }) {
         ? "Nummer wird eingerichtet"
         : acc?.status === "error"
           ? "Fehler beim Verbinden"
-          : "Nicht verbunden";
+          : acc?.status === "connected"
+            ? "Verbunden, API-Key fehlt"
+            : "Nicht verbunden";
   return (
     <Card className="max-w-5xl">
       <CardHeader title="WhatsApp-Verbindung" />

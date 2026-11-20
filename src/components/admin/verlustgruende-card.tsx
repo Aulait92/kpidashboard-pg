@@ -3,6 +3,7 @@
 // „Anzeigen prüfen“: viele Leads ohne Interesse, mit falschen Daten oder ohne Anfrage liegen eher an der Kampagne
 // als am Vermittler (Hinweis für die wöchentliche Optimierung je Werbekonto).
 
+import { AUFKLAPP_KARTE, AufklappKopf } from "@/components/admin-neu/kunden/aufklapp";
 import { nowMs } from "@/lib/now";
 import { CALL_ATTEMPTS_TARGET } from "@/lib/lead-lost";
 import { schnittVerluste, verlustAdmin } from "@/lib/verlustgruende-server";
@@ -20,11 +21,13 @@ export async function VerlustgruendeCard({ customerId }: { customerId?: string }
     if (!v?.total) return null;
     const hinweis = kampagnenHinweis(v);
     return (
-      <details className="card px-4 py-3 text-sm" data-verlustgruende-admin open={!!hinweis}>
-        <summary className="cursor-pointer font-medium">
-          Verlustgründe (90 Tage): {v.total} verloren
-          {hinweis ? <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">Anzeigen prüfen</span> : null}
-        </summary>
+      <details className={`${AUFKLAPP_KARTE} text-sm`} data-verlustgruende-admin open={!!hinweis}>
+        <AufklappKopf
+          titel="Verlustgründe"
+          zusammenfassung={`${v.total} verloren, 90 Tage`}
+          abzeichen={hinweis ? <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">Anzeigen prüfen</span> : null}
+        />
+        <div className="overflow-x-auto border-t border-[color:var(--border)] px-5 pb-4 pt-1">
         <table className="mt-3 w-full text-sm">
           <thead className="text-left text-xs text-slate-500">
             <tr>
@@ -49,6 +52,7 @@ export async function VerlustgruendeCard({ customerId }: { customerId?: string }
           Nie erreicht und unter {CALL_ATTEMPTS_TARGET} Anrufversuchen aufgegeben: {v.unterVersuchen}.
           {hinweis ? ` ${prozent(hinweis.anteil)} ohne Interesse, mit falschen Daten oder ohne Anfrage: Zielgruppe, Anzeigentext und Formular prüfen.` : ""}
         </p>
+        </div>
       </details>
     );
   }

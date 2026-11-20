@@ -103,6 +103,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
           <input type="hidden" name="customerId" value={c.id} />
           <button type="submit" className={buttonClass("secondary", "md")} title="Kundenbereich nur lesend ansehen">
             <Eye className="h-4 w-4" />
+            <span className="sm:hidden">Als Kunde</span>
             <span className="hidden sm:inline">Als Kunde ansehen</span>
           </button>
         </form>

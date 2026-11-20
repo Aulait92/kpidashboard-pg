@@ -246,7 +246,9 @@ export async function ChatsAnsicht({
             ))}
           </div>
           <div className="flex gap-1 overflow-x-auto px-3 pb-2 [scrollbar-width:none]" data-art-filter>
-            {ART_FILTERS.map((f) => (
+            {/* SUS-Prüfung 20.11.2026: Unterarten der Support-Nummer (Kunde, Interessent, Unbekannt) erst, wenn „Support-Nummer“
+                gewählt ist; so passt die Zeile am Handy ohne Wischen */}
+            {ART_FILTERS.filter((f) => f.key === "" || f.key === "leads" || f.key === "support" || (!!art && art !== "leads")).map((f) => (
               <Link
                 key={f.key || "alle"}
                 href={`${basis}?tab=${tab}${f.key ? `&art=${f.key}` : ""}${qQs}`}
