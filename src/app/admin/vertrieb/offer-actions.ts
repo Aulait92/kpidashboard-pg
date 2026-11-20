@@ -1,17 +1,17 @@
 "use server";
 
 import { entscheidungsCallStand } from "@/lib/vertrieb/entscheidungs-call-server";
-import { entscheidungsCallHinweis } from "@/lib/vertrieb/entscheidungs-call";
+import { entscheidungsCallHinweis, type EntscheidungsCall } from "@/lib/vertrieb/entscheidungs-call";
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
-import { getAppUrl, sendOfferEmail } from "@/lib/email";
+import { baueAngebotsMail, getAppUrl, sendOfferEmail, type AngebotsMailInhalt } from "@/lib/email";
 import { createOffer, type OfferFormInput } from "@/lib/offers";
 import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount, prepayPossible } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
 import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
-import { verkaufsLinkErstellen } from "@/lib/vertrieb/verkaufspraesentation-server";
+import { aktiverVerkaufsLink, verkaufsLinkErstellen } from "@/lib/vertrieb/verkaufspraesentation-server";
 
 /** Extras der Angebotsmail: Rechner-Link und/oder Präsentation (PDF) der gewählten Zielgruppe. */
 /** praesentationLink: Link zur Web-Präsentation (/praesentation/<token>, 14 Tage), nur bei Vertriebskontakten. */
@@ -80,11 +80,29 @@ export async function markOfferSentAction(
   return { ok: true };
 }
 
-export async function sendOfferEmailAction(
+type AngebotsMailVorbereitet = {
+  offer: NonNullable<Awaited<ReturnType<typeof prisma.offer.findUnique>>> & { email: string };
+  audience: Audience;
+  rechner: string | null;
+  praesentationUrl: string | null;
+  attachment: { filename: string; content?: Buffer } | null;
+  ohneCall: boolean;
+  entscheidungsCall: EntscheidungsCall | null;
+  inhalt: Omit<AngebotsMailInhalt, "attachment">;
+  hinweise: string[];
+};
+
+/**
+ * Prüfungen und Inhalt der Angebotsmail, gemeinsam für Versand und Vorschau (Ole, 20.11.2026).
+ * „vorschau“: ohne Seiteneffekte. Kein Präsentations-Link wird erstellt oder verlängert (bestehender aktiver Link
+ * bzw. Platzhalter), die PDF wird nicht geladen (nur der Dateiname), nichts wird gespeichert.
+ */
+async function angebotsMailVorbereiten(
   offerId: string,
-  extras: OfferMailExtras = {},
-): Promise<OfferActionResult> {
-  const session = await requireAdmin();
+  extras: OfferMailExtras,
+  userId: string,
+  modus: "senden" | "vorschau",
+): Promise<{ ok: true; m: AngebotsMailVorbereitet } | { ok: false; error: string }> {
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
   if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
   if (!offer.email)
@@ -99,22 +117,39 @@ export async function sendOfferEmailAction(
   if (offer.salesContactId && (await import("@/lib/vertrieb/sperrliste").then((m) => m.kontaktGesperrt(offer.salesContactId)))) {
     return { ok: false, error: "Dieser Kontakt möchte nicht mehr angeschrieben werden (Kontaktakte → Nie kontaktieren)." };
   }
+  const hinweise: string[] = [];
   // Pay-per-Lead + Software: immer die eigene Präsentation (Ole, 20.11.2026)
   const audience: Audience = offer.package === "ppl_software" ? "ppl" : isAudience(extras.audience) ? extras.audience : "vertreter";
-  let attachment: { filename: string; content: Buffer } | null = null;
+  let attachment: { filename: string; content?: Buffer } | null = null;
   if (extras.praesentation) {
-    const file = await getPresentation(audience, "pdf");
-    if (!file) return { ok: false, error: `Für ${AUDIENCE_LABEL[audience]} ist noch keine PDF-Präsentation hinterlegt (Vertrieb → Unterlagen).` };
-    attachment = { filename: file.fileName.toLowerCase().endsWith(".pdf") ? file.fileName : `${file.fileName}.pdf`, content: Buffer.from(file.data) };
+    const nichtDa = `Für ${AUDIENCE_LABEL[audience]} ist noch keine PDF-Präsentation hinterlegt (Vertrieb → Unterlagen).`;
+    const mitPdf = (name: string) => (name.toLowerCase().endsWith(".pdf") ? name : `${name}.pdf`);
+    if (modus === "senden") {
+      const file = await getPresentation(audience, "pdf");
+      if (!file) return { ok: false, error: nichtDa };
+      attachment = { filename: mitPdf(file.fileName), content: Buffer.from(file.data) };
+    } else {
+      // Vorschau: nur den Dateinamen lesen, nicht die PDF
+      const file = await prisma.salesPresentation.findUnique({ where: { audience_format: { audience, format: "pdf" } }, select: { fileName: true } });
+      if (!file) return { ok: false, error: nichtDa };
+      attachment = { filename: mitPdf(file.fileName) };
+    }
   }
   const rechner = extras.rechner && audience !== "ppl" ? rechnerUrl(getAppUrl(), audience, offer.products) : null;
   // Link zur Präsentation: aktiven Link verlängern bzw. neu erstellen (Fassung wie gewählt)
   let praesentationUrl: string | null = null;
   if (extras.praesentationLink) {
     if (!offer.salesContactId) return { ok: false, error: "Den Präsentations-Link gibt es nur bei Vertriebskontakten." };
-    const link = await verkaufsLinkErstellen(offer.salesContactId, audience, session.userId);
-    if (!link) return { ok: false, error: "Kontakt nicht gefunden." };
-    praesentationUrl = `${getAppUrl()}/praesentation/${link.token}`;
+    if (modus === "senden") {
+      const link = await verkaufsLinkErstellen(offer.salesContactId, audience, userId);
+      if (!link) return { ok: false, error: "Kontakt nicht gefunden." };
+      praesentationUrl = `${getAppUrl()}/praesentation/${link.token}`;
+    } else {
+      // Vorschau: nichts anlegen; bestehenden aktiven Link zeigen, sonst Platzhalter (wird beim Senden erstellt)
+      const aktiv = await aktiverVerkaufsLink(offer.salesContactId);
+      praesentationUrl = `${getAppUrl()}/praesentation/${aktiv ? aktiv.token : "neuer-link"}`;
+      if (!aktiv) hinweise.push("Der Präsentations-Link wird beim Senden erstellt.");
+    }
   }
   // Entscheidungs-Call (Ole, 17.11.2026), geprüft beim Versand: schon gebucht → Termin mit Link zum Verschieben,
   // sonst persönlicher Buchungslink (signiert, hängt direkt am Kontakt), solange online buchbar
@@ -122,7 +157,7 @@ export async function sendOfferEmailAction(
   const ohneCall = !!extras.ohneEntscheidungsCall;
   const entscheidungsCall = offer.salesContactId && !ohneCall ? await entscheidungsCallStand(offer.salesContactId) : null;
   const disc = offerSetupDiscount(offer);
-  const res = await sendOfferEmail({
+  const inhalt: Omit<AngebotsMailInhalt, "attachment"> = {
     entscheidungsCall,
     discount: disc
       ? { label: offer.setupDiscountLabel || "Empfehlungsrabatt", discount: disc.discount, list: disc.list, fee: Number(offer.setupFee), anyTerm: offer.customerChoosesTerm }
@@ -137,13 +172,53 @@ export async function sendOfferEmailAction(
       : null,
     rechnerUrl: rechner,
     praesentationUrl,
-    attachment,
-    to: offer.email,
     du: !!extras.du,
     greeting: await customerGreeting(offer, !!extras.du),
     number: offer.number,
     offerUrl: `${getAppUrl()}/angebot/${offer.token}`,
     validUntil: offer.validUntil,
+  };
+  return { ok: true, m: { offer: { ...offer, email: offer.email }, audience, rechner, praesentationUrl, attachment, ohneCall, entscheidungsCall, inhalt, hinweise } };
+}
+
+export type OfferMailPreview =
+  | { ok: true; an: string; betreff: string; html: string; anhang?: string; hinweise?: string[] }
+  | { ok: false; error: string };
+
+/** Vorschau der Angebotsmail: genau die Mail, die „Jetzt senden“ verschickt, ohne Seiteneffekte (Ole, 20.11.2026). */
+export async function previewOfferEmailAction(offerId: string, extras: OfferMailExtras = {}): Promise<OfferMailPreview> {
+  const session = await requireAdmin();
+  try {
+    const r = await angebotsMailVorbereiten(offerId, extras, session.userId, "vorschau");
+    if (!r.ok) return r;
+    const { m } = r;
+    const mail = baueAngebotsMail({ ...m.inhalt, attachment: m.attachment });
+    return {
+      ok: true,
+      an: m.offer.email,
+      betreff: mail.subject,
+      html: mail.html,
+      ...(m.attachment ? { anhang: m.attachment.filename } : {}),
+      ...(m.hinweise.length ? { hinweise: m.hinweise } : {}),
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Vorschau konnte nicht geladen werden." };
+  }
+}
+
+export async function sendOfferEmailAction(
+  offerId: string,
+  extras: OfferMailExtras = {},
+): Promise<OfferActionResult> {
+  const session = await requireAdmin();
+  const r = await angebotsMailVorbereiten(offerId, extras, session.userId, "senden");
+  if (!r.ok) return r;
+  const { offer, audience, rechner, praesentationUrl, ohneCall, entscheidungsCall, inhalt } = r.m;
+  const attachment = r.m.attachment?.content ? { filename: r.m.attachment.filename, content: r.m.attachment.content } : null;
+  const res = await sendOfferEmail({
+    ...inhalt,
+    attachment,
+    to: offer.email,
     replyTo: process.env.OFFER_REPLY_TO ?? session.email ?? null,
   });
   if (!res.ok) return { ok: false, error: res.error };
