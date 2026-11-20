@@ -10,7 +10,7 @@ export async function pplKostenDiagnose(p: URLSearchParams) {
   const [costs, unmatched, owned, settings] = await Promise.all([
     prisma.cost.findMany({ where: { kind: "LEAD", occurredAt: { gte: since } }, select: { occurredAt: true, product: true, amount: true, note: true }, orderBy: { occurredAt: "asc" } }),
     prisma.unmatchedCampaign.findMany({ where: { channel: "Meta" }, select: { campaign: true, spend: true, syncedAt: true } }),
-    prisma.customer.findMany({ where: { metaAdAccountId: { not: null } }, select: { name: true, metaAdAccountId: true } }),
+    prisma.customer.findMany({ where: { metaAdAccountId: { not: null }, plan: { not: "internal" } }, select: { name: true, metaAdAccountId: true } }),
     loadKpiSettings(),
   ]);
   const acq = settings.acquisitionCampaigns.map((c) => c.toLowerCase());
