@@ -42,6 +42,25 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
   const prev = (ob.questionnaire && typeof ob.questionnaire === "object" ? ob.questionnaire : {}) as Record<string, unknown>;
   const data: Record<string, unknown> = { ...prev, special };
 
+  if (software && fd.has("name")) {
+    // „Ihre Angaben“ (Ole, 20.11.2026): einmal früh fragen, spätere Schritte (Erstinformation, Service-Mails,
+    // Nennung gegenüber Leads) sind dann vorausgefüllt. Erst prüfen, dann alles speichern.
+    const { pruefeAngaben } = await import("@/lib/erstinformation-shared");
+    const p = pruefeAngaben({ anrede: str(fd, "anrede", 10), name: str(fd, "name", 160), telefon: str(fd, "telefon", 60), anschrift: str(fd, "anschrift", 400), registerNummer: str(fd, "registerNummer", 40) });
+    if (!p.ok) return { error: p.error };
+    let video: string | null | undefined;
+    if (fd.has("videoRoomUrl")) {
+      const raw = str(fd, "videoRoomUrl", 300);
+      video = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw || null;
+      if (video && !/^https:\/\/[^\s/]+\.[^\s]+$/i.test(video)) return { error: "Bitte den ganzen Webex-Link einfügen, z. B. https://allianz.webex.com/meet/vorname.nachname." };
+    }
+    const { saveVermittlerAngaben } = await import("@/lib/erstinformation");
+    await saveVermittlerAngaben(ob.customerId, p.angaben);
+    if (video !== undefined) {
+      await prisma.agentConfig.upsert({ where: { customerId: ob.customerId }, create: { customerId: ob.customerId, videoRoomUrl: video }, update: { videoRoomUrl: video } });
+    }
+  }
+
   if (software) {
     // Terminarten (Ole, 18.11.2026): Video immer; Telefon bzw. vor Ort nur als Ausnahme auf ausdrücklichen Wunsch des
     // Kunden. Gilt sofort für den Assistenten (AgentConfig), keine Pflichtauswahl. Alte Antwort „formats“ fällt weg.

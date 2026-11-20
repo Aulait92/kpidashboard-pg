@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { EraseCustomerCard } from "./erase-card";
 import { AddOnsCard } from "./addons-card";
 import { RetainerCard } from "./retainer-card";
+import { PilotCard } from "./pilot-card";
 import { BudgetHistoryCard } from "./budget-card";
 import { ProductBookingsCard } from "./produkt-card";
 import { LebenszyklusCard } from "./lebenszyklus-card";
@@ -26,10 +27,10 @@ const STATUS: Record<string, { label: string; tone: "success" | "warning" | "dan
 };
 
 // Reiter „Abrechnung & Pause“.
-export default async function KundenAbrechnung({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; zahlweise?: string; fehler?: string }> }) {
+export default async function KundenAbrechnung({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; zahlweise?: string; pilot?: string; fehler?: string }> }) {
   await connection();
   const { id } = await params;
-  const { pause: pauseError, zusatz, retainer, budget, produkt, zahlweise, fehler } = await searchParams;
+  const { pause: pauseError, zusatz, retainer, budget, produkt, zahlweise, pilot, fehler } = await searchParams;
   const c = await prisma.customer.findUnique({
     where: { id },
     select: { id: true, name: true, archived: true, stripeCustomerId: true, paymentOverdueSince: true, paymentWarnedAt: true, salesContact: { select: { id: true } } },
@@ -62,6 +63,7 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
         <ZahlweiseCard customerId={id} message={zahlweise ?? null} failed={!!fehler && !!zahlweise} />
         <LebenszyklusCard customerId={id} />
         <RetainerCard customerId={id} message={retainer ?? null} failed={!!fehler && !!retainer} />
+        <PilotCard customerId={id} message={pilot ?? null} failed={!!fehler && !!pilot} />
         <BudgetHistoryCard customerId={id} message={budget ?? null} failed={!!fehler && !!budget} />
         <ProductBookingsCard customerId={id} message={produkt ?? null} failed={!!fehler && !!produkt} />
         <AddOnsCard customerId={id} message={zusatz ?? null} failed={!!fehler && !!zusatz} />

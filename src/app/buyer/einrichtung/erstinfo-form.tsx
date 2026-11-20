@@ -10,6 +10,7 @@ import { FileDrop } from "@/components/ui/file-drop";
 import {
   ERSTINFO_MAX_BYTES,
   TIPPGEBER_HINWEIS,
+  angabenBekannt,
   VERGUETUNG_LABEL,
   VERMITTLER_STATUS,
   verguetungStandard,
@@ -54,6 +55,9 @@ export function ErstinfoForm({
   readOnly: boolean;
 }) {
   const d = initial.daten;
+  // Name, Anrede, Anschrift, Telefon und Registernummer schon aus „Ihre Angaben“ bekannt: nur anzeigen, „ändern“ öffnet die Felder
+  const [aendern, setAendern] = useState(false);
+  const bekanntZeigen = !aendern && angabenBekannt({ anrede: initial.anrede, name: d.name, telefon: d.telefon, anschrift: d.anschrift, registerNummer: initial.registerNummer ?? d.registerNummer });
   const [state, action, pending] = useActionState<ErstinfoState, FormData>(saveErstinfoAction, {});
   const [status, setStatus] = useState(initial.status ?? impressum?.status ?? "");
   const [verguetung, setVerguetung] = useState<Verguetung[]>(d.verguetung);
@@ -68,7 +72,7 @@ export function ErstinfoForm({
   const toggleVerguetung = (v: Verguetung) => setVerguetung((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]));
   return (
     <form action={action} className="min-w-0 space-y-4" data-erstinfo-form>
-      {impressum && (impressum.companyName || impressum.address || impressum.registerType) && fromImpressum ? (
+      {impressum && (impressum.companyName || impressum.address || impressum.registerType) && fromImpressum && !bekanntZeigen ? (
         <p className="text-sm text-[color:var(--muted)]" data-erstinfo-impressum>
           Wir haben die Angaben aus Ihrem Impressum und Ihrem Angebot vorausgefüllt. Bitte kurz prüfen und bestätigen.
         </p>
@@ -140,6 +144,33 @@ export function ErstinfoForm({
           <fieldset className={`min-w-0 ${box}`} disabled={readOnly}>
             <legend className="px-1 text-sm font-medium">Angaben in der Erstinformation</legend>
             <div className="grid gap-3 sm:grid-cols-2">
+              {bekanntZeigen ? (
+                <div className="min-w-0 sm:col-span-2" data-erstinfo-bekannt>
+                  {/* Aus „Ihre Angaben“ (Schritt 1): nur anzeigen, Werte gehen unverändert mit (Ole, 20.11.2026: einmal fragen) */}
+                  <input type="hidden" name="anrede" value={initial.anrede ?? ""} />
+                  <input type="hidden" name="name" value={d.name} />
+                  <input type="hidden" name="anschrift" value={d.anschrift} />
+                  <input type="hidden" name="telefon" value={d.telefon} />
+                  <input type="hidden" name="registerNummer" value={initial.registerNummer ?? d.registerNummer} />
+                  <div className="flex items-start justify-between gap-3 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken,#f8fafc)] px-3 py-2.5 text-sm">
+                    <p className="min-w-0 [overflow-wrap:anywhere]">
+                      <span className="font-medium">
+                        {initial.anrede === "Herr" || initial.anrede === "Frau" ? `${initial.anrede} ` : ""}
+                        {d.name}
+                      </span>
+                      <span className="block text-[color:var(--muted)]">
+                        {d.anschrift.replace(/\n+/g, ", ")} · {d.telefon} · Registernummer {initial.registerNummer ?? d.registerNummer}
+                      </span>
+                    </p>
+                    {!readOnly ? (
+                      <button type="button" onClick={() => setAendern(true)} className="shrink-0 font-medium text-[color:var(--brand)] underline" data-erstinfo-aendern>
+                        ändern
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+              {bekanntZeigen ? null : (
               <Field id="name" label="Vor- und Nachname">
                 <div className="flex gap-2">
                   {/* Anrede Pflicht für den Assistenten („Herr Kannapinn zeigt Ihnen …“), Ole 17.11.2026; „keine“ = Vor- und Nachname */}
@@ -154,17 +185,22 @@ export function ErstinfoForm({
                   <input id="name" name="name" required placeholder="Vor- und Nachname" className={`${input} min-w-0 flex-1`} defaultValue={d.name} autoComplete="name" />
                 </div>
               </Field>
+              )}
               <Field id="firma" label="Firma (falls vorhanden)">
                 <input id="firma" name="firma" className={input} defaultValue={d.firma} autoComplete="organization" />
               </Field>
-              <div className="sm:col-span-2">
-                <Field id="anschrift" label="Betriebliche Anschrift">
-                  <textarea id="anschrift" name="anschrift" rows={2} className={area} defaultValue={d.anschrift} />
-                </Field>
-              </div>
-              <Field id="telefon" label="Telefon (freiwillig)">
-                <input id="telefon" name="telefon" className={input} defaultValue={d.telefon} autoComplete="tel" />
-              </Field>
+              {bekanntZeigen ? null : (
+                <>
+                  <div className="sm:col-span-2">
+                    <Field id="anschrift" label="Betriebliche Anschrift">
+                      <textarea id="anschrift" name="anschrift" rows={2} className={area} defaultValue={d.anschrift} />
+                    </Field>
+                  </div>
+                  <Field id="telefon" label="Telefon (freiwillig)">
+                    <input id="telefon" name="telefon" className={input} defaultValue={d.telefon} autoComplete="tel" />
+                  </Field>
+                </>
+              )}
               <Field id="email" label="E-Mail (freiwillig)">
                 <input id="email" name="email" type="email" className={input} defaultValue={d.email} autoComplete="email" />
               </Field>
@@ -195,9 +231,11 @@ export function ErstinfoForm({
                 </div>
               ) : null}
 
-              <Field id="registerNummer" label="Registernummer (IHK-Vermittlerregister)">
-                <input id="registerNummer" name="registerNummer" className={input} placeholder="D-XXXX-XXXXX-XX" defaultValue={initial.registerNummer ?? d.registerNummer} />
-              </Field>
+              {bekanntZeigen ? null : (
+                <Field id="registerNummer" label="Registernummer (IHK-Vermittlerregister)">
+                  <input id="registerNummer" name="registerNummer" className={input} placeholder="D-XXXX-XXXXX-XX" defaultValue={initial.registerNummer ?? d.registerNummer} />
+                </Field>
+              )}
               <Field id="ihk" label="Zuständige IHK" hint="Bei der Sie registriert sind, steht auf Ihrer Urkunde bzw. im Vermittlerregister.">
                 <input id="ihk" name="ihk" className={input} placeholder="z. B. IHK München und Oberbayern" defaultValue={d.ihk} />
               </Field>

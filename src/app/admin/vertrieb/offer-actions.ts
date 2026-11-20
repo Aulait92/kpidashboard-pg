@@ -6,10 +6,11 @@ import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { baueAngebotsMail, getAppUrl, sendOfferEmail, type AngebotsMailInhalt } from "@/lib/email";
 import { createOffer, updateDraftOffer, type OfferFormInput } from "@/lib/offers";
-import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount, prepayPossible } from "@/lib/offer-pricing";
+import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount, prepayPossible, PRICE_LIST } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
 import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
 import { ersteWocheAus, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
+import { kundenkontoAus } from "@/lib/ppl/kundenkonto";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
 import { aktiverVerkaufsLink, verkaufsLinkErstellen } from "@/lib/vertrieb/verkaufspraesentation-server";
@@ -204,6 +205,11 @@ async function angebotsMailVorbereiten(
     ersteWoche: (() => {
       const w = ersteWocheAus(offer);
       return w ? { productKey: w.productKey, name: ersteWocheName(w), price: w.price, quantity: w.quantity } : null;
+    })(),
+    // Kampagnen im eigenen Werbekonto (Ole, 20.11.2026): Absatz zur Variante, Software zum Listenpreis
+    kundenkonto: (() => {
+      const kk = kundenkontoAus(offer);
+      return kk ? { angebot: kk, softwareNetto: PRICE_LIST.softwareFee } : null;
     })(),
     rechnerUrl: rechner,
     praesentationUrl,

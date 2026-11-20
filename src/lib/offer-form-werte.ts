@@ -20,6 +20,7 @@ import {
 import { ERSTE_WOCHE_STANDARD } from "@/lib/ppl/erste-woche-shared";
 import { bezugSteuer, nettoAusBrutto } from "@/lib/ppl/steuer";
 import type { OfferFormInput } from "@/lib/offers";
+import { KUNDENKONTO_VORSCHLAEGE, kundenkontoProdukteAus, normalizePplModell, startMengeFuer, type PplModell } from "@/lib/ppl/kundenkonto";
 
 /** Feste Sondervereinbarung eines Testangebots (createOffer setzt sie, beim Bearbeiten nicht ins Feld übernehmen). */
 export const TEST_SONDERVEREINBARUNG = "Testangebot: kostenlos, ohne Zahlung. Dient nur zum Ausprobieren und wird danach gelöscht.";
@@ -67,7 +68,14 @@ export type OfferFormWerte = {
   wochePreis: string;
   wocheBrutto: boolean;
   wocheMenge: string;
+  /** Variante von Pay-per-Lead + Software (Ole, 20.11.2026): „pool“ (Standard, bisher) oder „kundenkonto“. */
+  pplModell: PplModell;
+  /** Nur „kundenkonto“: Produkte mit Preis je Lead (brutto) und Startmenge, wie getippt. */
+  kkProdukte: { name: string; preis: string; menge: string }[];
 };
+
+/** Erste Zeile der Variante „kundenkonto“: Privatschutz 35 € mit Startmenge bis zur Mindestbestellung (43 Leads). */
+export const kkStandardZeile = (v: { name: string; preis: number } = KUNDENKONTO_VORSCHLAEGE[0]) => ({ name: v.name, preis: String(v.preis), menge: String(startMengeFuer(v.preis)) });
 
 export const num = (v: string): number | null => {
   const n = Number(v.replace(",", "."));
@@ -130,6 +138,8 @@ export function standardFormWerte(initial: OfferFormInitial, referralDiscount: {
     wochePreis: "",
     wocheBrutto: false,
     wocheMenge: String(ERSTE_WOCHE_STANDARD),
+    pplModell: "pool",
+    kkProdukte: [kkStandardZeile()],
   };
 }
 
@@ -173,6 +183,8 @@ export type OfferEntwurf = {
   pplLabel: string | null;
   pplPrice: unknown;
   pplQuantity: number | null;
+  pplModell?: string | null;
+  pplProdukte?: unknown;
   validUntil: Date;
 };
 
@@ -263,6 +275,11 @@ export function entwurfZuFormWerte(o: OfferEntwurf, referralDiscount: { amount: 
     wochePreis: o.pplPrice == null ? "" : text(Number(o.pplPrice)),
     wocheBrutto: false,
     wocheMenge: String(o.pplQuantity ?? ERSTE_WOCHE_STANDARD),
+    pplModell: ppl ? normalizePplModell(o.pplModell) : "pool",
+    kkProdukte: (() => {
+      const kk = kundenkontoProdukteAus(o.pplProdukte);
+      return kk.length ? kk.map((p) => ({ name: p.name, preis: text(p.preis), menge: String(p.menge) })) : [kkStandardZeile()];
+    })(),
   };
 }
 
@@ -337,6 +354,8 @@ export function formWerteZuInput(w: OfferFormWerte, opts: { referral: boolean; u
     abschlussBonus: bonus ? (num(w.bonusBetrag) ?? ABSCHLUSSBONUS_FORMULAR) : 0,
     abschlussBonusBis: bonus ? w.bonusBis : null,
     test: w.test,
-    ersteWoche: ppl && w.wocheProdukt.trim() ? { productKey: w.wocheProdukt, label: w.wocheLabel || null, price: wocheNettoAus(w), quantity: num(w.wocheMenge) } : null,
+    pplModell: ppl ? w.pplModell : null,
+    kundenkontoProdukte: ppl && w.pplModell === "kundenkonto" ? w.kkProdukte : null,
+    ersteWoche: ppl && w.pplModell !== "kundenkonto" && w.wocheProdukt.trim() ? { productKey: w.wocheProdukt, label: w.wocheLabel || null, price: wocheNettoAus(w), quantity: num(w.wocheMenge) } : null,
   };
 }

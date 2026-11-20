@@ -9,6 +9,8 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { ADMIN_ABGEHAKT, MANUAL_FIELDS, NICHT_ABHAKBAR, openSetupForExisting, vonUnsAbgehakt, restartSetup, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
 import { logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
 import { audit } from "@/lib/audit";
+import { issuePasswordResetToken } from "@/lib/auth";
+import { buildResetUrl } from "@/lib/email";
 import type { Prisma } from "@/generated/prisma/client";
 
 function refresh(contactId?: string | null) {
@@ -143,6 +145,28 @@ export async function resendWelcomeAction(fd: FormData) {
   await sendWelcome(id);
   const ob = await prisma.onboarding.findUnique({ where: { id }, select: { salesContactId: true } });
   refresh(ob?.salesContactId);
+}
+
+/**
+ * „Einladungslink kopieren“ (Ole, 20.11.2026): frischer Link zum Passwort festlegen, den Ole per WhatsApp schickt, wenn
+ * die Mail im Firmenpostfach hängt. Ältere Links (z. B. aus der Willkommens-Mail) bleiben gültig, bis ein Passwort
+ * gesetzt ist. Noch nie angemeldet: 7 Tage gültig, sonst 24 Stunden (Passwort ändern). Nur Admins.
+ */
+export async function einladungslinkAction(onboardingId: string): Promise<{ url?: string; email?: string; error?: string }> {
+  await requireAuth();
+  const ob = await prisma.onboarding.findUnique({
+    where: { id: onboardingId },
+    select: { offerId: true, customerId: true, customer: { select: { users: { where: { role: "BUYER" }, select: { id: true, email: true, lastLoginAt: true }, orderBy: { createdAt: "asc" } } } } },
+  });
+  if (!ob) return { error: "Onboarding nicht gefunden." };
+  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { email: true } }) : null;
+  const mail = (offer?.email ?? "").trim().toLowerCase();
+  const user = ob.customer.users.find((u) => u.email.toLowerCase() === mail) ?? ob.customer.users[0];
+  if (!user) return { error: "Für diesen Kunden gibt es noch keinen Login." };
+  const token = await issuePasswordResetToken(user.email, user.lastLoginAt ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000, { keepOthers: true });
+  if (!token) return { error: "Link konnte nicht erzeugt werden." };
+  await audit("user.invite_link", { entity: "User", entityId: user.id, customerId: ob.customerId, details: { email: user.email, kopiert: true } });
+  return { url: buildResetUrl(token.rawToken), email: user.email };
 }
 
 // ─── Pause / Urlaub (Admin) ────────────────────────────────────────────

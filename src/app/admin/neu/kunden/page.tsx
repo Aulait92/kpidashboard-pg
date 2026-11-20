@@ -14,6 +14,7 @@ import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
 import { ensureSource } from "@/lib/vertrieb/source";
 import { nextStepRatesByCustomer, type NextStepRate } from "@/lib/lead-next-step-server";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import { pilotAbzeichen } from "@/lib/pilot";
 import type { Prisma } from "@/generated/prisma/client";
 import type { SalesCustomerStage as Stufe } from "@/generated/prisma/enums";
 
@@ -46,6 +47,8 @@ type Zeile = {
   name: string;
   /** „Intern“ oder „Test“ (lib/customer-package.ts: testKennung) */
   kennung: string | null;
+  /** Pilot bis … (lib/pilot.ts) */
+  pilot?: { text: string; laeuft: boolean } | null;
   stufe: Stufe | null;
   status: { label: string; tone: "success" | "warning" | "danger" | "brand" | "neutral" } | null;
   unter: string;
@@ -75,6 +78,7 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
     id: true,
     name: true,
     isTest: true,
+    pilotBis: true,
     plan: true,
     retainerMonthly: true,
     paymentOverdueSince: true,
@@ -126,6 +130,7 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
       href: `/admin/neu/kunden/${c.id}`,
       name: c.name.replace(/^Allianz\s+/i, ""),
       kennung: testKennung(c),
+      pilot: pilotAbzeichen(c.pilotBis),
       stufe,
       status: c.paymentOverdueSince
         ? { label: "Zahlung offen", tone: "danger" }
@@ -227,6 +232,7 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
                       {z.status ? <Badge tone={z.status.tone}>{z.status.label}</Badge> : null}
                       {!z.status && z.stufe ? <span className={`badge ${CUSTOMER_COLOR[z.stufe]}`}>{CUSTOMER_LABEL[z.stufe]}</span> : null}
                       {z.kennung ? <span className="badge bg-amber-100 text-amber-900">{z.kennung}</span> : null}
+                      {z.pilot ? <Badge tone={z.pilot.laeuft ? "brand" : "warning"}>{z.pilot.text}</Badge> : null}
                       {z.warnung ? <Badge tone="danger">{z.warnung}</Badge> : null}
                     </div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">{z.unter}</div>

@@ -69,6 +69,8 @@
 // wahrgenommen, im Zweifel zugunsten des Kunden; Berechnung mit Terminliste auf Anfrage in Textform. Nur zugunsten der
 // Kunden, gilt als Klarstellung auch für bestehende Verträge (keine Mitteilung mit Widerspruchsfrist nötig). Berechnung
 // in lib/garantien.ts terminQuote angeglichen. Prüfung: docs/recht/garantie-termine-wahrgenommen-2026-11-20.md.
+// 20.11.2026 (Ole): Neue Besondere Bedingungen „Kampagnen im eigenen Werbekonto“ (PPL_KUNDENKONTO_BEDINGUNGEN), nur
+// Bestandteil von Angeboten dieser Variante; AGB und AVV unverändert.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
@@ -258,6 +260,56 @@ export const AGB: LegalSection[] = [
       "Änderungen und Ergänzungen des Vertrags bedürfen der Textform.",
       "Sollte eine Bestimmung unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.",
       "Es gilt das Recht der Bundesrepublik Deutschland. Ist der Kunde Kaufmann, ist Gerichtsstand der Sitz des Anbieters in Berlin.",
+    ],
+  },
+];
+
+/**
+ * Besondere Bedingungen „Kampagnen im eigenen Werbekonto“ (Ole, 20.11.2026): nur für Angebote Pay-per-Lead + Software
+ * in dieser Variante (Offer.pplModell = „kundenkonto“, lib/ppl/kundenkonto.ts). Bestandteil des Angebots (Rangfolge:
+ * Angebot vor AGB), daher ändern sie die AGB nicht und gelten nicht für andere Verträge. Klauseln nach der internen
+ * Rechtsprüfung im Protokoll docs/firma/protokolle/2026-11-20-ppl-im-kundenkonto.md, Umsatzsteuer nach
+ * docs/recht/ust-ppl-im-kundenkonto-2026-11-20.md (19 %, nicht § 4 Nr. 11). Prüfen: vor dem ersten Pilotvertrag
+ * mit dem Steuerberater-Ergebnis abgleichen. Mindestbestellung und Software-Schwelle: MINDESTBESTELLUNG_KUNDENKONTO.
+ */
+export const PPL_KUNDENKONTO_BEDINGUNGEN: LegalSection[] = [
+  {
+    title: "Leistung und Werbekonto",
+    items: [
+      "Abweichend vom Absatz „Paket Pay-per-Lead + Software“ der AGB erstellt und steuert der Anbieter Werbekampagnen auf Facebook und Instagram (Meta) im eigenen Werbekonto des Kunden. Der Kunde räumt dem Anbieter dafür einen Partnerzugriff ein und hinterlegt bei Meta eine eigene Zahlungsmethode. Das Werbebudget zahlt der Kunde direkt an Meta. Die Software ist wie im Angebot beschrieben enthalten.",
+      "Werbekonto, Pixel, Zielgruppen und Leads gehören dem Kunden. An den vom Anbieter erstellten Werbemitteln und Texten erhält der Kunde ein einfaches Nutzungsrecht für die Vertragslaufzeit. Bei Vertragsende beendet der Anbieter seinen Partnerzugriff.",
+      "Der Kunde gibt die Anzeigen vor dem Start frei. Er haftet für die Pflichtangaben in der Werbung und für die Einhaltung der Vorgaben seines Versicherers.",
+    ],
+  },
+  {
+    title: "Voraussetzungen",
+    items: [
+      "Der Kunde hat eine Erlaubnis nach § 34d GewO für Versicherungsprodukte, für Kindersparpläne eine Erlaubnis nach § 34f GewO oder ein Haftungsdach. Ist der Kunde Ausschließlichkeitsvertreter, bestätigt er mit der Annahme, dass sein Versicherer dieser Werbung zugestimmt hat.",
+    ],
+  },
+  {
+    title: "Abrechenbare Leads",
+    items: [
+      "Abrechenbar ist ein Lead mit vollständig ausgefülltem Formular und gültiger Telefonnummer, der keine Dublette innerhalb von 30 Tagen und kein erkennbarer Fake ist. Der Kunde kann einen Lead innerhalb von 7 Tagen nach Zustellung in der App reklamieren.",
+      "Gezählt werden die Leads in der Software des Anbieters; die Angaben von Meta dienen als zweite Quelle.",
+    ],
+  },
+  {
+    title: "Preis je Lead, Abrechnung und Umsatzsteuer",
+    items: [
+      "Der im Angebot genannte Preis je Lead ist ein Endpreis einschließlich Umsatzsteuer und zugleich eine Preisobergrenze: Die Werbekosten des Kunden bei Meta werden darauf voll angerechnet. Eine bestimmte Zahl an Leads oder ein bestimmtes Ergebnis schuldet der Anbieter nicht.",
+      "Der Anbieter rechnet wöchentlich ab und zieht den Betrag per SEPA-Lastschrift ein: Leads der Vorwoche multipliziert mit dem Preis je Lead, abzüglich der Kosten, die Meta dem Kunden für dieselbe Woche berechnet hat, einschließlich der Umsatzsteuer nach § 13b UStG. Die Vergütung des Anbieters enthält 19 % Umsatzsteuer; eine Befreiung nach § 4 Nr. 11 UStG gilt für diese Leistung nicht.",
+      "Liegt der rechnerische Preis je Lead über der Obergrenze, entsteht eine Gutschrift. Sie wird nur mit der Vergütung desselben Abrechnungsmonats verrechnet und nicht ausgezahlt.",
+      "Die Obergrenze gilt nur, solange Budget, Ziele und Regionen der Kampagnen vom Anbieter gesteuert werden. Greift der Kunde selbst ein (etwa Budget ändern, Kampagnen pausieren oder Anzeigen ändern), entfällt sie für den betreffenden Kalendermonat.",
+      "Zum Start sagt der Kunde die Abnahme der im Angebot genannten Startmenge zu (Startpaket); sie wird nach Lieferung wöchentlich abgerechnet, eine Vorauszahlung erfolgt nicht. Die Software ist inklusive, solange der Kunde im Kalendermonat Leads für mindestens 1.500 € (Preis je Lead mal Anzahl) bezieht, sonst wird sie in diesem Monat zum Listenpreis berechnet. Auf der Rechnung steht die Software stets als eigene Position; ist sie inklusive, mindert sich der Betrag für die Leads entsprechend.",
+    ],
+  },
+  {
+    title: "Ausfälle, Pausen und Lastschrift",
+    items: [
+      "Akzeptiert Meta die Zahlung des Kunden nicht oder sperrt Meta das Werbekonto, schuldet für die Ausfallzeit keine Seite der anderen etwas.",
+      "Der Anbieter darf Kampagnen pausieren, wenn sie unwirtschaftlich werden; er informiert den Kunden darüber.",
+      "Wird eine Lastschrift zurückgegeben, darf der Anbieter die Kampagnen pausieren, bis der offene Betrag gezahlt ist.",
     ],
   },
 ];

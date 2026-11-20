@@ -428,3 +428,34 @@ export function erstinfoDateiname(name: string): string {
   const n = name.replace(/[^\p{L}\p{N} ]+/gu, " ").trim().replace(/\s+/g, "_").slice(0, 60);
   return n ? `Erstinformation_${n}.pdf` : "Erstinformation.pdf";
 }
+
+// ─── Ihre Angaben (Einrichtung Schritt 1, Ole 20.11.2026: einmal fragen, früh) ─────────────────────────────
+
+/** Angaben zur Person, einmal am Anfang der Einrichtung (Erstinformation, Signatur, Nennung gegenüber Leads). */
+export type VermittlerAngaben = { anrede: string; name: string; telefon: string; anschrift: string; registerNummer: string };
+
+const einzeilig = (v: string | null | undefined) => (v ?? "").replace(/\s+/g, " ").trim();
+
+/** Bekannt = alle Angaben da (dann zeigen spätere Schritte sie nur noch an, mit „ändern“). */
+export function angabenBekannt(a: { anrede?: string | null; name?: string | null; telefon?: string | null; anschrift?: string | null; registerNummer?: string | null }): boolean {
+  return !!a.anrede && !!einzeilig(a.name) && !!einzeilig(a.telefon) && !!einzeilig(a.anschrift) && !!normalizeRegisterNummer(a.registerNummer);
+}
+
+/** Prüfen und bereinigen (rein). Fehlertexte in Sie-Form, ohne Gedankenstriche. */
+export function pruefeAngaben(
+  raw: Partial<Record<keyof VermittlerAngaben, string | null>>,
+): { ok: true; angaben: VermittlerAngaben } | { ok: false; error: string } {
+  const anrede = (raw.anrede ?? "").trim();
+  if (!["Herr", "Frau", "keine"].includes(anrede)) return { ok: false, error: "Bitte Ihre Anrede wählen. Ihre Kunden lesen z. B. „Herr Kannapinn“." };
+  const name = einzeilig(raw.name).slice(0, 160);
+  if (name.split(" ").length < 2) return { ok: false, error: "Bitte Vor- und Nachnamen eintragen." };
+  const telefon = einzeilig(raw.telefon).slice(0, 60);
+  if (telefon.replace(/\D/g, "").length < 6) return { ok: false, error: "Bitte Ihre Telefonnummer eintragen." };
+  const anschrift = (raw.anschrift ?? "").replace(/\r\n?/g, "\n").trim().slice(0, 400);
+  if (!anschrift) return { ok: false, error: "Bitte Ihre Geschäftsanschrift eintragen." };
+  const registerNummer = normalizeRegisterNummer(raw.registerNummer);
+  if (!registerNummer) {
+    return { ok: false, error: "Die Registernummer passt nicht. Bitte so eingeben, wie sie auf Ihrer IHK-Urkunde steht, z. B. D-XXXX-XXXXX-XX oder D-X-XXX-XXXX-XX." };
+  }
+  return { ok: true, angaben: { anrede, name, telefon, anschrift, registerNummer } };
+}

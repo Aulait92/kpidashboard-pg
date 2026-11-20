@@ -3,6 +3,24 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 20.11.2026
+- **Onboarding Herr Lohmann, Nacharbeiten** (A, Ole): (1) Nach der Annahme „Passwort jetzt festlegen“ auf der
+  Angebotsseite, nur im Browser der Annahme (signiertes httpOnly-Merkmal, 12 h), Link entsteht erst beim Tippen; Mail
+  bleibt Rückfall. Neue Links aus Knopf und „Einladungslink kopieren“ (Admin) entwerten den Mail-Link nicht mehr; sobald
+  ein Passwort gesetzt ist, sind alle übrigen Links ungültig. (2) Nach einem Deploy: automatischer Reload höchstens alle
+  30 s, danach Hinweis „Die App wurde aktualisiert. Bitte noch einmal tippen.“ (3) www.app.… → app.… per 308.
+  (4) Ohne Website ersetzt die vollständige Erstinformation das Impressum in der Admin-Checkliste. (5) Status „Pilot bis …“
+  (`Customer.pilotBis`): echter Kunde, keine Platz-Abrechnung bis zum Ende, Erinnerungen 7 Tage vorher und am Ende;
+  bestehende Stripe-Abos bleiben unberührt. Umsetzung `src/lib/annahme-direktzugang*.ts`, `src/lib/neue-version.ts`,
+  `src/lib/www-app-host.ts`, `src/lib/impressum-ersatz.ts`, `src/lib/pilot*.ts`.
+- **Pay-per-Lead im Werbekonto des Vermittlers: Preismechanik „Festpreis je Lead minus Werbekosten“** (A, Ole: „finde
+  besser 35 € pro Lead minus Werbekosten“): Kunde zahlt Meta direkt, wir rechnen Leads × Festpreis (z. B. Privatschutz 35 €)
+  minus sein Meta-Budget ab; feste Pauschale je Lead bzw. „so viel wie Meta“ verworfen. 35 € sind der Endpreis brutto
+  (Meta inkl. 13b-Steuer und unsere Rechnung inkl. USt), Software kommt dazu (Ole: „brutto zzgl. Software“). Abrechnung
+  **wöchentlich per Lastschrift** (Ole): jeden Montag Leads der Vorwoche × 35 € minus deren Meta-Kosten, automatisch über
+  Stripe; platzt die Lastschrift, pausieren die Kampagnen. Steuer: mit 19 % kalkulieren (`docs/recht/ust-ppl-im-kundenkonto-2026-11-20.md`),
+  streng getrennt vom steuerfreien PPL aus unserem Konto. Nur mit Startpaket ab 1.500 € Leadumsatz; Software inklusive, solange mindestens 1.500 € Leadumsatz im Monat, sonst Listenpreis (Ole, ersetzt „ab 1.750 €“ und „ab 50 Leads“), auf der Rechnung
+  als eigene Position 349 € netto. Produkte im neuen Modell: Privatschutz (35 €) und Kindersparplan (65 €, ohnehin 19 %,
+  daher ohne Margeneinbuße; Abnehmer mit § 34f) (Ole). Offen: Fragen an den Steuerberater, Pilotkunde. Siehe `protokolle/2026-11-20-ppl-im-kundenkonto.md`.
 - **Garantien: „Termine wahrgenommen“ für alle in den AGB klargestellt** (A, Ole: „ja, für alle in den AGB klarstellen“):
   Nur Absagen oder Versäumnisse des Vermittlers zählen gegen ihn; Absage, Verschiebung oder Nichterscheinen des
   Interessenten zählen als wahrgenommen, im Zweifel für den Kunden; Berechnung mit Liste auf Anfrage in Textform.
@@ -73,6 +91,10 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 
 ## 20.11.2026
 
+- **Einrichtung für Allianz-Vertreter** (Ole, Punkte 3, 4, 10 nach der Einrichtung von Herrn Lohmann): Schritt 1 heißt
+  „Ihre Angaben“ (Name, Telefon, Anschrift, Registernummer, bei Allianz Webex) und füllt Erstinformation und Signatur vor;
+  Allianz-Vertreter verbinden den Kalender zuerst mit der Vertreternummer, Google/Outlook/Link eingeklappt; Meta-Schritt
+  mit Vorprüfung (zweistufige Authentifizierung, zweiter Admin). Umsetzung UX/UI, Stufe B. Notiz: `docs/ux/onboarding-allianz-2026-11-20.md`.
 - **HvK-Leads Frankfurt/Freiburg** (Ole): HvK kann voll beliefert werden, aber **auf keinen Fall Verlust**, Belieferungsquote
   zweitrangig. Kosten je Lead laut Ole aktuell 10 bis 15 €. Regeln: Start 60 €/Tag (Frankfurt 40, Freiburg 20), Deckel 500 €
   bis zur ersten HvK-Gutschrift, Pause bei über 30 € je angenommenem Lead nach 2 Tagen, Erhöhung nur unter 25 € und nach
