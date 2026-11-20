@@ -217,13 +217,13 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
     );
     // Fassung b (Standard, Ole 19.11.2026): Leitmotiv doppelt zahlen und sparen, „können“ statt Versprechen, kostenlos
     expect(komplettcheckFrage("sie", PERSON, false)).toBe(
-      "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll Herr Kannapinn im Termin kurz drüberschauen, *wo Sie vielleicht doppelt zahlen und sparen können?* Kostenlos und nur ein paar Minuten länger.",
+      "Danke! Soll Herr Kannapinn im Termin auch kurz *über Ihre anderen Versicherungen schauen*, etwa Haftpflicht, Hausrat oder Kfz? Oft zahlt man für dieselbe Absicherung doppelt, so sehen Sie, wo Sie sparen können. Kostenlos und nur ein paar Minuten länger.",
     );
-    expect(komplettcheckFrage("sie", PERSON, true)).toContain("wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können?");
+    expect(komplettcheckFrage("sie", PERSON, true)).toContain("über die anderen Versicherungen von Ihnen und Ihrer Familie schauen");
     expect(komplettcheckFrage("du", PERSON_DU, false)).toBe(
-      "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll Ole im Termin kurz drüberschauen, *wo du vielleicht doppelt zahlst und sparen kannst?* Kostenlos und nur ein paar Minuten länger.",
+      "Danke! Soll Ole im Termin auch kurz *über deine anderen Versicherungen schauen*, etwa Haftpflicht, Hausrat oder Kfz? Oft zahlt man für dieselbe Absicherung doppelt, so siehst du, wo du sparen kannst. Kostenlos und nur ein paar Minuten länger.",
     );
-    expect(komplettcheckFrage("du", PERSON_DU, true)).toContain("wo ihr als Familie vielleicht doppelt zahlt und sparen könnt?");
+    expect(komplettcheckFrage("du", PERSON_DU, true)).toContain("über eure anderen Versicherungen schauen");
     for (const v of ["a", "b"] as const)
       for (const an of ["sie", "du"] as const)
         for (const fam of [true, false]) {

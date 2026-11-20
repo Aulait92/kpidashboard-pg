@@ -307,11 +307,14 @@ export const KOMPLETTCHECK_TEXT = {
  * Fassung b (Ole, 19.11.2026: Kernbotschaft „doppelt zahlen und sparen“), Standard außerhalb des Splittests: Nutzen
  * konkret über doppelte Verträge und Sparen, „können“ statt Versprechen, kostenlos, keine Minutenangabe.
  */
+// Fassung b2 (Ole, 20.11.2026: „Bei der Nachricht versteht man nicht, dass es um weitere Versicherungen geht“): erst
+// sagen, worum es geht (die anderen Versicherungen, mit Beispielen), dann das Leitmotiv „doppelt zahlen“ als Grund.
+// Ersetzt b1 („Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll … drüberschauen, wo Sie … doppelt zahlen …“).
 export const KOMPLETTCHECK_TEXT_B = {
-  sie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, *wo Sie vielleicht doppelt zahlen und sparen können?* Kostenlos und nur ein paar Minuten länger.",
-  sieFamilie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, *wo Sie und Ihre Familie vielleicht doppelt zahlen und sparen können?* Kostenlos und nur ein paar Minuten länger.",
-  du: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, *wo du vielleicht doppelt zahlst und sparen kannst?* Kostenlos und nur ein paar Minuten länger.",
-  duFamilie: "Danke! Oft zahlen Menschen für dieselbe Absicherung doppelt. Soll [Person] im Termin kurz drüberschauen, *wo ihr als Familie vielleicht doppelt zahlt und sparen könnt?* Kostenlos und nur ein paar Minuten länger.",
+  sie: "Danke! Soll [Person] im Termin auch kurz *über Ihre anderen Versicherungen schauen*, etwa Haftpflicht, Hausrat oder Kfz? Oft zahlt man für dieselbe Absicherung doppelt, so sehen Sie, wo Sie sparen können. Kostenlos und nur ein paar Minuten länger.",
+  sieFamilie: "Danke! Soll [Person] im Termin auch kurz *über die anderen Versicherungen von Ihnen und Ihrer Familie schauen*, etwa Haftpflicht, Hausrat oder Kfz? Oft zahlt man für dieselbe Absicherung doppelt, so sehen Sie, wo Sie sparen können. Kostenlos und nur ein paar Minuten länger.",
+  du: "Danke! Soll [Person] im Termin auch kurz *über deine anderen Versicherungen schauen*, etwa Haftpflicht, Hausrat oder Kfz? Oft zahlt man für dieselbe Absicherung doppelt, so siehst du, wo du sparen kannst. Kostenlos und nur ein paar Minuten länger.",
+  duFamilie: "Danke! Soll [Person] im Termin auch kurz *über eure anderen Versicherungen schauen*, etwa Haftpflicht, Hausrat oder Kfz? Oft zahlt man für dieselbe Absicherung doppelt, so seht ihr, wo ihr sparen könnt. Kostenlos und nur ein paar Minuten länger.",
 } as const;
 
 /** Komplettcheck-Frage für Ansprache und Lebenssituation; variante a = bisher (KOMPLETTCHECK_TEXT), b = neu (Standard). */
@@ -322,7 +325,7 @@ export function komplettcheckFrage(an: Ansprache, person: VermittlerName, famili
 }
 
 /** Erkennt die Komplettcheck-Frage (beide Fassungen) in einer Nachricht von uns. */
-export const KOMPLETTCHECK_RE = /im Termin auch kurz schauen, ob .+ insgesamt gut abgesichert|im Termin kurz drüberschauen, \*?wo .+ doppelt zahl/;
+export const KOMPLETTCHECK_RE = /im Termin auch kurz schauen, ob .+ insgesamt gut abgesichert|im Termin kurz drüberschauen, \*?wo .+ doppelt zahl|im Termin auch kurz \*?über .*anderen Versicherungen/;
 
 /** Knöpfe zum Komplettcheck (Payload, damit „Nein, danke“ nicht als „kein Bedarf“ gilt). */
 export const KOMPLETTCHECK_KNOEPFE: Knopf[] = [

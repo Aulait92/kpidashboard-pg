@@ -77,7 +77,7 @@ export const EXPERIMENTE = {
     titel: "Komplettcheck-Frage nach der Buchung",
     ziel: "komplettcheck_ja",
     a: "Bisher: „ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können“",
-    b: "Neu (Ole): „Oft zahlen Menschen für dieselbe Absicherung doppelt …“, kostenlos, nur ein paar Minuten länger",
+    b: "Neu (b2, 20.11.2026): „Soll … auch kurz über Ihre anderen Versicherungen schauen, etwa Haftpflicht, Hausrat oder Kfz? Oft zahlt man … doppelt …“, kostenlos",
   },
   terminvorschlag_kostenlos: {
     titel: "Terminvorschlag im Chat",
