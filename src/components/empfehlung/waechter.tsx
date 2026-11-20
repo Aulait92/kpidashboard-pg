@@ -45,14 +45,11 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
   if (!conn) {
     body = (
       <div className="space-y-3 text-sm">
-        <p>
-          Verbinden Sie Ihr Google-Unternehmensprofil: Bei jeder neuen Bewertung bekommen Sie eine Push-Nachricht, bei 1–3 Sternen sofort eine Aufgabe.
-          Die KI schlägt eine sachliche Antwort vor, die Sie bearbeiten und mit einem Klick veröffentlichen. Nichts geht automatisch raus.
-        </p>
+        <p>Bei jeder neuen Google-Bewertung eine Push-Nachricht und ein Antwortvorschlag, den Sie selbst veröffentlichen.</p>
         {flash === "fehler" || flash === "abgelehnt" ? <p className="font-medium text-rose-700">Die Verbindung hat nicht geklappt. Bitte noch einmal versuchen und den Zugriff erlauben.</p> : null}
         {!gbpConnectEnabled() ? (
           <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-[color:var(--muted)]" data-gbp-soon>
-            Demnächst: Die Verbindung zum Google-Unternehmensprofil schalten wir frei, sobald Google die Schnittstelle für uns freigegeben hat.
+            Demnächst verfügbar, sobald Google die Schnittstelle für uns freigibt.
           </p>
         ) : readOnly ? null : (
           <a href="/api/google/business/connect" className={buttonClass("primary", "md")} data-gbp-connect>

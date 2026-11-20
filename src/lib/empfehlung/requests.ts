@@ -31,6 +31,11 @@ import {
   THANKS_NO_LINK,
   REFERRAL_ASK_WINDOW_DAYS,
   referralAskAllowed,
+  pickReferralCandidates,
+  NO_CONSENT_ERROR,
+  CANDIDATE_MAX_AGE_DAYS,
+  CANDIDATE_APPOINTMENT_DAYS,
+  type CandidateInput,
   UNHAPPY_TASK,
   classifyHeuristic,
   firstName,
@@ -227,8 +232,7 @@ export async function recordReferralAsk(link: { id: string; customerId: string }
   await audit("empfehlung.bitte", { entity: "ReferralLink", entityId: link.id, customerId: link.customerId, details: { weg }, actor: actor ?? { role: "system" } });
 }
 
-/** Hinweis, wenn ohne Einwilligung nichts verschickt werden darf (Rückgabe von „Link senden“). */
-export const NO_CONSENT_ERROR = "Einwilligung fehlt. Bestätigen Sie beim Abschluss „Kunde hat zugestimmt“ oder zeigen Sie den QR-Code im Termin.";
+export { NO_CONSENT_ERROR };
 
 /** Ist das 24-h-Fenster offen (der Kunde hat in den letzten 24 Stunden geschrieben)? */
 async function windowOpen(customerId: string, phone: string, now = new Date()): Promise<boolean> {
@@ -316,6 +320,8 @@ export async function sendReferralLinkNow(
       mode = r.mode;
     }
     await prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: now, lastOccasion: occasion ?? null } });
+    // Ersetzt die geplante automatische Empfehlungsbitte, sonst bekäme der Kunde kurz darauf eine zweite (Paket 2)
+    if (leadId) await prisma.reviewRequest.updateMany({ where: { leadId, referralStatus: "waiting" }, data: { referralStatus: "sent", referralSentAt: now } });
     await audit("empfehlung.link_sent", { entity: "ReferralLink", entityId: link.id, customerId, details: { mode, occasion: occasion ?? null, ohneEinwilligung: nurFenster }, ...(actor ? { actor } : {}) });
     const followUp = await planReferralFollowUp(customerId, leadId, settings.followUpHours, now, an).catch(() => false);
     return { ok: true, mode, followUp };
@@ -1343,6 +1349,9 @@ export async function loadEmpfehlungStats(customerId: string, days = 90, now = n
   const { loadErtragData, summarizeProvision } = await import("@/lib/ertrag");
   const ertrag = await loadErtragData(customerId).catch(() => null);
   const provision = ertrag ? summarizeProvision(ertrag.contracts.filter((c) => c.origin === "empfehlung"), ertrag.rates, { from: since, to: now }).firstYear : 0;
+  // Euro-Wert eines Neukunden (Paket 2): Provision im ersten Jahr je Kunde mit Abschluss, letzte 365 Tage, ab 3 Kunden
+  const year = ertrag ? summarizeProvision(ertrag.contracts, ertrag.rates, { from: new Date(now.getTime() - 365 * DAY_MS), to: now }) : null;
+  const valuePerCustomer = year && year.leads >= 3 && year.firstYear > 0 ? Math.round(year.firstYear / year.leads) : null;
   const links = await prisma.referralLink.aggregate({ where: { customerId }, _sum: { views: true } });
   // Trichter: Links ausgegeben → vom Kunden geöffnet → einzelne Besucher → Empfehlungen → Neukunden
   const [linksSent, linksOpened, visitors] = await Promise.all([
@@ -1368,9 +1377,94 @@ export async function loadEmpfehlungStats(customerId: string, days = 90, now = n
     referralMeetings: referred.filter((l) => l._count.appointments > 0).length,
     referralClosings: closed.length,
     referralProvision: Math.round(provision),
+    valuePerCustomer,
   };
 }
 export type EmpfehlungStats = Awaited<ReturnType<typeof loadEmpfehlungStats>>;
+
+// ─── Heute fragen (Paket 2) ─────────────────────────────────────────────────
+
+/**
+ * Arbeitsliste „Heute fragen“ und „Einwilligung fehlt“ (Regeln: pickReferralCandidates in shared.ts). Gezählt wird
+ * wie bei der Obergrenze: Protokoll der Empfehlungsbitten plus automatisch gesendete Bitten (referralSentAt).
+ */
+export async function loadReferralCandidates(customerId: string, now = new Date()) {
+  const since = new Date(now.getTime() - CANDIDATE_MAX_AGE_DAYS * DAY_MS);
+  const recent = new Date(now.getTime() - CANDIDATE_APPOINTMENT_DAYS * DAY_MS);
+  const leads = await prisma.lead.findMany({
+    where: {
+      customerId,
+      erasedAt: null,
+      OR: [
+        { status: CLOSED, OR: [{ closedAt: { gte: since } }, { closedAt: null, createdAt: { gte: since } }] },
+        { source: "Bestandskunde", appointments: { some: { status: "completed", startsAt: { gte: recent, lte: now } } } },
+      ],
+    },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      source: true,
+      status: true,
+      closedAt: true,
+      followUpNote: true,
+      feedbackConsentAt: true,
+      feedbackConsentText: true,
+      feedbackOptOutAt: true,
+      bestandKunde: { select: { optOutAt: true, blockedAt: true } },
+      reviewRequest: { select: { status: true, sentiment: true, googleClicks: true, googleClickAt: true, answeredAt: true, referralSentAt: true } },
+      ownReferralLink: { select: { id: true, lastSentAt: true } },
+      appointments: { where: { status: "completed", startsAt: { gte: recent, lte: now } }, orderBy: { startsAt: "desc" }, take: 1, select: { startsAt: true } },
+    },
+    take: 500,
+  });
+  const linkIds = leads.map((l) => l.ownReferralLink?.id).filter((x): x is string => !!x);
+  const logs = linkIds.length
+    ? await prisma.auditLog.findMany({
+        where: { action: { in: ASK_ACTIONS }, entity: "ReferralLink", entityId: { in: linkIds }, at: { gte: new Date(now.getTime() - REFERRAL_ASK_WINDOW_DAYS * DAY_MS) } },
+        select: { entityId: true, at: true },
+      })
+    : [];
+  const byLink = new Map<string, Date[]>();
+  for (const r of logs) if (r.entityId) byLink.set(r.entityId, [...(byLink.get(r.entityId) ?? []), r.at]);
+  const rows: CandidateInput[] = leads.map((l) => {
+    const asks = [...(l.ownReferralLink ? (byLink.get(l.ownReferralLink.id) ?? []) : [])];
+    // Automatische Bitte ohne Protokolleintrag (vor Paket 1): zählt als Bitte, wenn nicht schon im Protokoll
+    const auto = l.reviewRequest?.referralSentAt;
+    if (auto && !asks.some((d) => Math.abs(d.getTime() - auto.getTime()) < 3600_000)) asks.push(auto);
+    return {
+      id: l.id,
+      name: l.name,
+      phone: l.phone,
+      source: l.source,
+      status: l.status,
+      closedAt: l.closedAt,
+      followUpNote: l.followUpNote,
+      feedbackConsentAt: l.feedbackConsentAt,
+      feedbackConsentText: l.feedbackConsentText,
+      feedbackOptOutAt: l.feedbackOptOutAt,
+      bestandBlocked: !!(l.bestandKunde?.optOutAt || l.bestandKunde?.blockedAt),
+      review: l.reviewRequest,
+      lastAppointmentAt: l.appointments[0]?.startsAt ?? null,
+      asks,
+      lastLinkAt: l.ownReferralLink?.lastSentAt ?? null,
+    };
+  });
+  const picked = pickReferralCandidates(rows, now);
+  const closings = leads.filter((l) => l.status === CLOSED && l.phone && !l.feedbackOptOutAt);
+  return { ...picked, closings: closings.length, withConsent: closings.filter((l) => l.feedbackConsentAt).length };
+}
+export type ReferralCandidates = Awaited<ReturnType<typeof loadReferralCandidates>>;
+
+/** Offene Kritik (Zu erledigen): Antwort „Kritik“, noch nicht geklärt. */
+export async function openCritiques(customerId: string) {
+  return prisma.reviewRequest.findMany({
+    where: { customerId, sentiment: "negative", resolvedAt: null, lead: { erasedAt: null } },
+    orderBy: { answeredAt: "desc" },
+    take: 10,
+    select: { id: true, comment: true, answeredAt: true, lead: { select: { id: true, name: true, phone: true } } },
+  });
+}
 
 /** Letzte Anfragen für die Liste im Modul. */
 export async function recentRequests(customerId: string, take = 30) {

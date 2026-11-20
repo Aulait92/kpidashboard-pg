@@ -146,6 +146,12 @@ describe("R2: Empfehlungslink jetzt senden (Lead)", () => {
     expect(call.params).toEqual(["Julia", "Kfz", expect.stringContaining("/empfehlung/tok1234567890")]);
   });
 
+  it("ersetzt die geplante automatische Empfehlungsbitte (keine zweite Bitte kurz danach)", async () => {
+    m.prisma.lead.findFirst.mockResolvedValue(lead(CONSENT));
+    expect(await sendReferralLinkNow("c1", { leadId: "l1" })).toMatchObject({ ok: true });
+    expect(m.prisma.reviewRequest.updateMany).toHaveBeenCalledWith({ where: { leadId: "l1", referralStatus: "waiting" }, data: { referralStatus: "sent", referralSentAt: NOW } });
+  });
+
   it("Obergrenze erreicht bzw. alte Einwilligung schon genutzt: nichts geht raus", async () => {
     m.prisma.lead.findFirst.mockResolvedValue(lead(CONSENT));
     asks(3);

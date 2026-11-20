@@ -2,15 +2,15 @@
 // Hinweise auf das Modul: nur für Inhaber, nur ohne aktives Modul, je Stelle einmal wegklickbar.
 
 import Link from "next/link";
-import { Lightbulb, Lock, MessageSquareHeart, Star } from "lucide-react";
-import { Card, CardHeader } from "@/components/ui";
+import { ChevronRight, Lightbulb, Lock, MessageSquareHeart, Star } from "lucide-react";
+import { Badge, Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
 import type { TeamCtx } from "@/lib/team";
 import { moduleInfo, recentClosings } from "@/lib/empfehlung/module";
-import { loadEmpfehlungStats, type EmpfehlungStats } from "@/lib/empfehlung/requests";
+import { loadEmpfehlungStats, loadReferralCandidates, type EmpfehlungStats } from "@/lib/empfehlung/requests";
 import { BAD_REVIEW_TASK } from "@/lib/empfehlung/google-business";
-import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, EMPFEHLUNG_MODULE_AVAILABLE, HINTS, WAECHTER_HREF, feedbackConsentQuestion, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
+import { ANNOUNCEMENT_KEY, CANDIDATE_APPOINTMENT_DAYS, CANDIDATE_MIN_CLOSINGS, DAY_MS, EMPFEHLUNG_MODULE_AVAILABLE, HEUTE_FRAGEN_HREF, HINTS, MODULE_COST_90, WAECHTER_HREF, costMultiple, feedbackConsentQuestion, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
 import { asAnsprache } from "@/lib/ansprache";
 import { FeedbackConsentToggle, ModuleHint, OptOutToggle, ReferralLinkButton } from "@/components/empfehlung/client";
 
@@ -33,7 +33,11 @@ export async function EmpfehlungConsentRow({ leadId, customerId, readOnly }: { l
   );
 }
 
-/** Kontaktakte: Stand der Nachfrage, „Nicht anfragen“, Empfehlungslink – bzw. dezenter Hinweis nach einem frischen Abschluss. */
+/**
+ * Kontakt-Karte (Paket 2): Verlauf als Badges in einer Zeile, ein primärer Knopf „Empfehlungslink senden“ mit
+ * automatischem Anlass, Zweitknopf „Im Termin zeigen“, Anlass und „Nicht anfragen“ unter „Mehr“. Ohne Einwilligung
+ * ein Satz und der Knopf „Kunde hat zugestimmt“. Ohne aktives Modul: dezenter Hinweis nach einem frischen Abschluss.
+ */
 export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: string; team: TeamCtx & { preview?: boolean }; readOnly: boolean }) {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
@@ -46,7 +50,9 @@ export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: s
       feedbackConsentAt: true,
       feedbackOptOutAt: true,
       reviewRequest: true,
+      bestandKunde: { select: { optOutAt: true, blockedAt: true } },
       ownReferralLink: { select: { lastSentAt: true, _count: { select: { referredLeads: true } } } },
+      appointments: { where: { status: "completed", startsAt: { gte: new Date(nowMs() - CANDIDATE_APPOINTMENT_DAYS * DAY_MS) } }, take: 1, select: { id: true } },
     },
   });
   if (!lead) return null;
@@ -65,66 +71,62 @@ export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: s
         hintKey={HINTS.abschluss}
         tone="success"
         title="Glückwunsch zum Abschluss!"
-        text="Automatisch um eine Google-Bewertung und später um eine Empfehlung bitten? Kritik landet zuerst bei Ihnen."
+        text="Automatisch um eine ehrliche Google-Bewertung und später um eine Empfehlung bitten, Kritik landet zuerst bei Ihnen."
         cta={info.trialAvailable ? "30 Tage kostenlos testen" : "Modul ansehen"}
       />
     );
   }
 
   const r = lead.reviewRequest;
-  const status = !isClosed
-    ? null
-    : !r
-      ? lead.phone
-        ? "Nachfrage wird automatisch eingeplant."
-        : "Keine Handynummer, keine automatische Nachfrage."
-      : r.status === "off"
-        ? "Nicht anfragen (von Ihnen gewählt)."
-        : r.status === "scheduled" || r.status === "sending"
-          ? `Nachfrage geplant für ${fmtDate(r.reviewDueAt)}${r.note ? ` · ${r.note}` : ""}.`
-          : r.status === "sent"
-            ? `Nachfrage gesendet am ${fmtDate(r.reviewSentAt!)}${r.googleClicks ? ` · Google-Link geöffnet` : ""}.`
-            : r.status === "answered"
-              ? `Antwort: ${r.sentiment === "negative" ? "Kritik" : r.sentiment === "positive" ? "positiv" : "neutral"}${r.resolvedAt ? " (geklärt)" : ""}${r.googleClicks ? " · Google-Link geöffnet" : ""}.`
-              : r.note
-                ? `Keine Nachfrage: ${r.note}.`
-                : "Keine Nachfrage.";
-  const referral =
-    r?.referralStatus === "sent"
-      ? `Bitte um Empfehlung gesendet am ${fmtDate(r.referralSentAt!)}.`
-      : r?.referralStatus === "skipped"
-        ? "Keine Bitte um Empfehlung."
-        : isUnhappyTask(lead.followUpNote)
-          ? "Bitte um Empfehlung wartet, bis die Aufgabe „unzufrieden“ erledigt ist."
-          : r?.referralDueAt
-            ? `Bitte um Empfehlung geplant für ${fmtDate(r.referralDueAt)}.`
-            : null;
+  const stopp = !!(lead.feedbackOptOutAt || lead.bestandKunde?.optOutAt || lead.bestandKunde?.blockedAt);
+  const noConsent = !stopp && !!lead.phone && !lead.feedbackConsentAt;
   const referred = lead.ownReferralLink?._count.referredLeads ?? 0;
+  const askedAt = r?.referralSentAt ?? lead.ownReferralLink?.lastSentAt ?? null;
   const canOptOut = isClosed && (!r || r.status === "scheduled" || r.status === "off");
+  const badges: { k: string; tone: "neutral" | "success" | "warning" | "danger" | "info"; text: string }[] = [];
+  if (stopp) badges.push({ k: "stopp", tone: "danger", text: "STOPP" });
+  else if (noConsent) badges.push({ k: "consent", tone: "warning", text: "Zustimmung fehlt" });
+  if (r?.status === "off") badges.push({ k: "off", tone: "neutral", text: "Nicht anfragen" });
+  else if (r?.reviewSentAt) badges.push({ k: "review", tone: "neutral", text: `Bewertungsbitte ${fmtDate(r.reviewSentAt)}` });
+  else if (r && (r.status === "scheduled" || r.status === "sending") && !stopp && !noConsent) badges.push({ k: "review", tone: "neutral", text: `Bewertungsbitte ab ${fmtDate(r.reviewDueAt)}` });
+  if (r?.sentiment === "positive") badges.push({ k: "lob", tone: "success", text: "Lob" });
+  if (r?.sentiment === "negative") badges.push({ k: "kritik", tone: r.resolvedAt ? "neutral" : "danger", text: r.resolvedAt ? "Kritik geklärt" : "Kritik" });
+  if (r?.sentiment === "neutral") badges.push({ k: "frage", tone: "info", text: "Frage" });
+  if (r?.googleClicks) badges.push({ k: "google", tone: "success", text: "Google geöffnet" });
+  if (askedAt) badges.push({ k: "bitte", tone: "neutral", text: `Empfehlungsbitte ${fmtDate(askedAt)}` });
+  if (referred) badges.push({ k: "empf", tone: "success", text: referred === 1 ? "1 Empfehlung" : `${referred} Empfehlungen` });
+  if (isUnhappyTask(lead.followUpNote)) badges.push({ k: "wartet", tone: "warning", text: "Wartet auf Klärung" });
 
   return (
     <Card className="mb-5" data-empfehlung-lead>
       <CardHeader title="Empfehlungen & Bewertungen" icon={MessageSquareHeart} />
-      <div className="space-y-3 px-5 pb-5 pt-4 text-sm">
-        {status ? <p>{status}</p> : null}
-        {lead.feedbackOptOutAt ? (
-          <p className="text-[color:var(--muted)]">Der Kunde hat mit STOPP widersprochen: keine Nachfrage, Bewertungs- oder Empfehlungsbitte mehr.</p>
-        ) : isClosed && lead.phone && !lead.feedbackConsentAt ? (
-          <p className="rounded-[var(--radius-md)] bg-amber-50 px-3 py-2 text-amber-900" data-feedback-consent-missing>
-            Ohne Zustimmung des Kunden geht keine Nachricht raus: Häkchen „Kunde hat zugestimmt“ in der Abschluss-Karte.
-          </p>
+      <div className="space-y-3 px-5 pb-4 pt-3 text-sm">
+        {badges.length ? (
+          <div className="flex flex-wrap gap-1.5" data-empfehlung-verlauf>
+            {badges.map((b) => (
+              <Badge key={b.k} tone={b.tone}>
+                {b.text}
+              </Badge>
+            ))}
+          </div>
         ) : null}
-        {referral ? <p className="text-[color:var(--muted)]">{referral}</p> : null}
-        {referred ? <p className="font-medium text-emerald-700">{referred === 1 ? "1 Empfehlung" : `${referred} Empfehlungen`} über den Link dieses Kunden.</p> : null}
-        <div className="flex flex-wrap items-start gap-3">
-          {canOptOut ? <OptOutToggle leadId={leadId} off={r?.status === "off"} readOnly={readOnly} /> : null}
-          <ReferralLinkButton leadId={leadId} readOnly={readOnly} />
-        </div>
-        {canOptOut ? (
-          <p className="text-sm text-[color:var(--muted)]">
-            „Nicht anfragen“ z. B. bei Kunden, die keine Nachrichten möchten. Alle mit Einwilligung bekommen dieselbe neutrale Nachricht mit Google-Link, einmal je Person.
-          </p>
-        ) : null}
+        {stopp ? (
+          <p className="text-[color:var(--muted)]">Der Kunde hat mit STOPP widersprochen, es geht nichts mehr raus.</p>
+        ) : (
+          <>
+            {noConsent ? (
+              <p data-feedback-consent-missing>{isClosed ? "Ohne Zustimmung geht keine Nachricht raus: Häkchen oben in der Abschluss-Karte setzen oder den QR-Code zeigen." : "Ohne Zustimmung des Kunden geht keine Nachricht raus."}</p>
+            ) : null}
+            <ReferralLinkButton
+              leadId={leadId}
+              readOnly={readOnly}
+              needsConsent={noConsent}
+              consentAbove={noConsent && isClosed}
+              defaultOccasion={lead.appointments.length ? "jahresgespraech" : null}
+              more={canOptOut ? <OptOutToggle leadId={leadId} off={r?.status === "off"} readOnly={readOnly} /> : undefined}
+            />
+          </>
+        )}
       </div>
     </Card>
   );
@@ -135,21 +137,36 @@ export async function EmpfehlungHeuteHint({ ctx }: { ctx: { customerId: string; 
   if (ctx.teamRole !== "owner") return null;
   const info = await moduleInfo(ctx.customerId);
   if (info?.active) {
-    // Bewertungs-Wächter: schlechte Google-Bewertung ohne Antwort → Aufgabe in „Heute“
-    const bad = await prisma.googleReview.count({ where: { customerId: ctx.customerId, stars: { lte: 3 }, repliedAt: null, notifiedAt: { not: null } } });
-    if (!bad) return null;
+    // Bewertungs-Wächter: schlechte Google-Bewertung ohne Antwort → Aufgabe in „Heute“; dazu „n Kunden bereit“
+    const [bad, cand] = await Promise.all([
+      prisma.googleReview.count({ where: { customerId: ctx.customerId, stars: { lte: 3 }, repliedAt: null, notifiedAt: { not: null } } }),
+      loadReferralCandidates(ctx.customerId).catch(() => null),
+    ]);
+    const ready = cand?.ready.length ?? 0;
+    if (!bad && !ready) return null;
     return (
-      <Link
-        href={WAECHTER_HREF}
-        className="mb-5 flex items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
-        data-gbp-heute
-      >
-        <Star className="h-4 w-4 shrink-0" />
-        <span className="min-w-0 flex-1">
-          <b>{BAD_REVIEW_TASK}</b> {bad > 1 ? `(${bad})` : ""}
-        </span>
-        <span className="font-semibold">Antworten</span>
-      </Link>
+      <div className="mb-5 space-y-2">
+        {bad ? (
+          <Link href={WAECHTER_HREF} className="flex min-h-12 items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900" data-gbp-heute>
+            <Star className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 flex-1">
+              <b>{BAD_REVIEW_TASK}</b> {bad > 1 ? `(${bad})` : ""}
+            </span>
+            <span className="font-semibold">Antworten</span>
+          </Link>
+        ) : null}
+        {ready ? (
+          <Link href={HEUTE_FRAGEN_HREF} className="flex min-h-12 items-center gap-3 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950" data-empfehlung-heute>
+            <MessageSquareHeart className="h-4 w-4 shrink-0 text-emerald-700" />
+            <span className="min-w-0 flex-1">
+              <b>{ready === 1 ? "1 Kunde bereit für eine Empfehlung" : `${ready} Kunden bereit für eine Empfehlung`}</b>
+            </span>
+            <span className="inline-flex items-center gap-0.5 font-semibold">
+              Ansehen <ChevronRight className="h-4 w-4" />
+            </span>
+          </Link>
+        ) : null}
+      </div>
     );
   }
   if (!info || info.service) return null;
@@ -177,66 +194,79 @@ export async function EmpfehlungHeuteHint({ ctx }: { ctx: { customerId: string; 
   );
 }
 
-/** Kennzahlen des Moduls. */
-export function EmpfehlungStatsGrid({ s }: { s: EmpfehlungStats }) {
-  const tiles: { k: string; v: string; sub?: string; strong?: boolean }[] = [
-    { k: "Empfehlungs-Leads", v: String(s.referralLeads), sub: `${s.referralViews} Aufrufe der Empfehlungsseiten`, strong: true },
-    { k: "daraus Termine", v: String(s.referralMeetings), strong: true },
-    { k: "daraus Abschlüsse", v: String(s.referralClosings), strong: true },
-    { k: "geschätzte Provision", v: eur(s.referralProvision), sub: "aus Empfehlungen (Ihre Provisionssätze)", strong: true },
-    { k: "Nachfragen gesendet", v: String(s.asked) },
-    { k: "Klicks auf Google-Link", v: String(s.googleClicks), sub: `${s.googleClickers} Kunden` },
-    { k: "Rückmeldungen positiv", v: String(s.positive) },
-    { k: "Rückmeldungen kritisch", v: String(s.negative), sub: `${s.resolved} davon geklärt` },
+/**
+ * Wert-Zeile (Paket 2): Provision aus Empfehlungen (90 Tage, geschätzt, mit Grundlage) im Vergleich zu den
+ * Modulkosten, darunter drei kleine Werte. Ersetzt das 8-Kachel-Raster.
+ */
+export function EmpfehlungWert({ s }: { s: EmpfehlungStats }) {
+  const multiple = costMultiple(s.referralProvision);
+  const small: { k: string; v: number }[] = [
+    { k: "Empfehlungen", v: s.referralLeads },
+    { k: "Termine", v: s.referralMeetings },
+    { k: "Neukunden", v: s.referralClosings },
   ];
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" data-empfehlung-stats>
-      {tiles.map((t) => (
-        <div key={t.k} className={`rounded-[var(--radius-md)] border p-3 ${t.strong ? "border-emerald-200 bg-emerald-50/50" : "border-[color:var(--border)] bg-white"}`}>
-          <div className="text-2xl font-semibold tabular-nums">{t.v}</div>
-          <div className="text-xs font-medium">{t.k}</div>
-          {t.sub ? <div className="text-xs text-[color:var(--muted)]">{t.sub}</div> : null}
-        </div>
-      ))}
+    <div data-empfehlung-wert>
+      <div className="text-sm font-medium text-[color:var(--muted)]">Provision aus Empfehlungen, 90 Tage</div>
+      <div className="mt-0.5 text-3xl font-semibold tabular-nums tracking-tight" data-empfehlung-provision>
+        ca. {eur(s.referralProvision)}
+      </div>
+      <p className="mt-1 text-sm text-[color:var(--muted)]">
+        {multiple ? <b className="font-semibold text-emerald-700">Das {multiple} der Modulkosten. </b> : null}
+        Geschätzt mit Ihren Provisionssätzen, Modul {eur(MODULE_COST_90)} je 90 Tage.
+      </p>
+      <dl className="mt-3 grid grid-cols-3 gap-2" data-empfehlung-stats>
+        {small.map((x) => (
+          <div key={x.k} className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2">
+            <dd className="text-xl font-semibold tabular-nums">{x.v}</dd>
+            <dt className="text-xs text-[color:var(--muted)]">{x.k}</dt>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
 
-/** Trichter: Vom Empfehlungslink zum Neukunden. Mit einem Hinweis für den auffälligsten Übergang. */
+/** Eine Trichter-Zeile mit dem einen Tipp (funnelHint). Details stehen in „Auswertung ansehen“. */
+export function EmpfehlungFunnelLine({ s }: { s: EmpfehlungStats }) {
+  const f = s.funnel;
+  return (
+    <div className="space-y-2" data-empfehlung-funnel-line>
+      <p className="text-sm tabular-nums">
+        <b>{f.linksSent}</b> Links <span className="text-[color:var(--muted)]">→</span> <b>{f.linksOpened}</b> geöffnet <span className="text-[color:var(--muted)]">→</span> <b>{f.leads}</b> Empfehlungen{" "}
+        <span className="text-[color:var(--muted)]">→</span> <b>{f.closings}</b> Neukunden
+      </p>
+      <p className="flex items-start gap-2 text-sm" data-empfehlung-funnel-hint={s.hint.stage}>
+        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+        <span>{s.hint.text}</span>
+      </p>
+    </div>
+  );
+}
+
+/** Trichter im Detail (in „Auswertung ansehen“). */
 export function EmpfehlungFunnel({ s }: { s: EmpfehlungStats }) {
   const f = s.funnel;
-  const steps: { k: string; v: number; sub: string }[] = [
-    { k: "Links ausgegeben", v: f.linksSent, sub: "gesendet oder im Termin gezeigt" },
-    { k: "Kunde hat geöffnet", v: f.linksOpened, sub: "Ihre Kunden, die ihren Empfehlungslink geöffnet haben" },
-    { k: "Bekannte haben geöffnet", v: f.visitors, sub: "Personen, die den weitergeleiteten Link geöffnet haben" },
-    { k: "Empfehlungen", v: f.leads, sub: "haben sich eingetragen" },
-    { k: "Neukunden", v: f.closings, sub: "Abschlüsse aus Empfehlungen" },
+  const steps: { k: string; v: number }[] = [
+    { k: "Empfehlungslinks gesendet oder gezeigt", v: f.linksSent },
+    { k: "Kunde hat geöffnet", v: f.linksOpened },
+    { k: "Bekannte haben geöffnet", v: f.visitors },
+    { k: "Empfehlungen", v: f.leads },
+    { k: "Neukunden aus Empfehlungen", v: f.closings },
   ];
   const max = Math.max(1, ...steps.map((x) => x.v));
   return (
-    <div className="space-y-3" data-empfehlung-funnel>
-      <ol className="space-y-1.5">
-        {steps.map((x) => (
-          <li key={x.k} className="grid grid-cols-[2.5rem_1fr] items-center gap-3 text-sm sm:grid-cols-[2.5rem_11rem_1fr]">
-            <span className="text-right text-lg font-semibold tabular-nums">{x.v}</span>
-            <span>
-              <span className="font-medium">{x.k}</span>
-              <span className="block text-xs text-[color:var(--muted)]">{x.sub}</span>
-            </span>
-            <span className="col-span-2 h-2 rounded-full bg-[color:var(--surface-sunken)] sm:col-span-1" aria-hidden="true">
-              <span className="block h-2 rounded-full bg-emerald-500" style={{ width: `${Math.round((x.v / max) * 100)}%` }} />
-            </span>
-          </li>
-        ))}
-      </ol>
-      <div className={`flex items-start gap-2 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${s.hint.stage === "ok" ? "border-emerald-200 bg-emerald-50/60" : "border-amber-200 bg-amber-50"}`} data-empfehlung-funnel-hint={s.hint.stage}>
-        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>
-          <b>{s.hint.title}.</b> {s.hint.text}
-        </span>
-      </div>
-      <p className="text-xs text-[color:var(--muted)]">Bekannte werden je Person einmal gezählt, Link-Vorschauen zählen nicht. Empfehlungen über den Link in der E-Mail-Signatur zählen bei Bekannten, Empfehlungen und Neukunden mit.</p>
-    </div>
+    <ol className="space-y-2" data-empfehlung-funnel>
+      {steps.map((x) => (
+        <li key={x.k} className="grid grid-cols-[2.5rem_1fr] items-center gap-x-3 gap-y-1 text-sm">
+          <span className="text-right text-base font-semibold tabular-nums">{x.v}</span>
+          <span>{x.k}</span>
+          <span className="col-start-2 h-1.5 rounded-full bg-[color:var(--surface-sunken)]" aria-hidden="true">
+            <span className="block h-1.5 rounded-full bg-emerald-500" style={{ width: `${Math.round((x.v / max) * 100)}%` }} />
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -250,7 +280,7 @@ export async function EmpfehlungGrowthRow({ ctx }: { ctx: { customerId: string; 
       <Card className="mb-5">
         <CardHeader title="Empfehlungen & Bewertungen (90 Tage)" icon={Star} />
         <div className="space-y-3 px-5 pb-5 pt-4">
-          <EmpfehlungStatsGrid s={s} />
+          <EmpfehlungWert s={s} />
           <Link href="/buyer/empfehlungen" className="text-sm font-semibold text-[color:var(--brand)] hover:underline">
             Zum Modul
           </Link>

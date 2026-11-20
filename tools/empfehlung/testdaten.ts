@@ -7,6 +7,7 @@
 //   40 Abschlüsse in allen Stufen: Nachfrage geplant, ohne Einwilligung, gesendet, Lob (mit Empfehlungslink), Kritik mit
 //   offener Aufgabe, Kritik geklärt, Rückfrage, Bitte um Empfehlung an Tag 21, Empfehlung eingegangen, Abschluss mit Dank,
 //   „Nicht anfragen“, STOPP. Dazu 8 empfohlene Personen als Leads (neu, Termin, Abschluss), Besucher, allgemeiner Link.
+//   Dazu 8 ältere Abschlüsse (emp_lead_41 bis 48) für die Liste „Heute fragen“ (Paket 2).
 // - Leerer Zustand „Testagentur Empfehlung leer“ (empfehlung-leer@test.local): Modul aktiv, ohne Google-Link, keine Daten.
 // Alle Telefonnummern sind erfunden (49155 5…), es wird nichts verschickt.
 
@@ -267,6 +268,50 @@ async function main() {
         await prisma.leadContract.create({ data: { id: `${refId}_v`, leadId: refId, customerId: ID.main, primaryLeadId: refId, sparte: "privatschutz", premium: 320, signedAt: new Date(created.getTime() + 6 * DAY), insurer: "Allianz", premiumSource: "vermittler" } });
       }
       empfIdx++;
+    }
+  }
+
+  // ── Ältere Abschlüsse vor dem Modul (Paket 2, Liste „Heute fragen“) ──
+  // 41 bis 44 erscheinen in „Heute fragen“ (44 mit Termin gestern), 45 wurde vor 30 Tagen gefragt, 46 ohne Einwilligung
+  // („Zustimmung fehlt“), 47 STOPP, 48 offene Aufgabe „unzufrieden“: diese drei nie in „Heute fragen“.
+  const ALT: { n: number; tage: number; produkt: string; sparte: string; consent: boolean; extra?: Record<string, unknown> }[] = [
+    { n: 41, tage: 45, produkt: "Kfz", sparte: "kfz", consent: true },
+    { n: 42, tage: 90, produkt: "Hausrat", sparte: "hausrat", consent: true },
+    { n: 43, tage: 160, produkt: "Rechtsschutz", sparte: "rechtsschutz", consent: true },
+    { n: 44, tage: 200, produkt: "Privatschutz", sparte: "privatschutz", consent: true },
+    { n: 45, tage: 60, produkt: "Unfall", sparte: "unfall", consent: true },
+    { n: 46, tage: 50, produkt: "Kfz", sparte: "kfz", consent: false },
+    { n: 47, tage: 70, produkt: "Hausrat", sparte: "hausrat", consent: true, extra: { feedbackOptOutAt: ago(20) } },
+    { n: 48, tage: 120, produkt: "Kfz", sparte: "kfz", consent: true, extra: { followUpAt: ago(1), followUpNote: `${UNHAPPY_TASK}: „Rückruf fehlt“` } },
+  ];
+  const ALT_NAMEN = ["Gerd Brandt", "Simone Arnold", "Wolfgang Franke", "Martina Berger", "Helmut Roth", "Kerstin Fuchs", "Norbert Vogt", "Elke Simon"];
+  for (const [k, a] of ALT.entries()) {
+    const leadId = `emp_lead_${a.n}`;
+    const closedAt = ago(a.tage);
+    await prisma.lead.create({
+      data: {
+        id: leadId,
+        customerId: ID.main,
+        source: a.produkt,
+        name: ALT_NAMEN[k],
+        phone: `4915551${String(10000 + a.n)}`,
+        status: "Abschluss",
+        closedAt,
+        closeValue: 300,
+        createdAt: new Date(closedAt.getTime() - 10 * DAY),
+        feedbackConsentAt: a.consent ? new Date(closedAt.getTime() + 600_000) : null,
+        feedbackConsentSource: a.consent ? "vermittler" : null,
+        feedbackConsentText: a.consent ? FEEDBACK_CONSENT_TEXT : null,
+        ...(a.extra ?? {}),
+      },
+    });
+    await prisma.leadContract.create({ data: { id: `${leadId}_v`, leadId, customerId: ID.main, primaryLeadId: leadId, sparte: a.sparte, premium: 300, signedAt: closedAt, insurer: "Allianz", premiumSource: "vermittler" } });
+    if (a.n === 44) {
+      const startsAt = ago(1);
+      await prisma.appointment.create({ data: { id: `${leadId}_t`, customerId: ID.main, leadId, mode: "phone", startsAt, endsAt: new Date(startsAt.getTime() + 1_800_000), status: "completed", createdAt: ago(5) } });
+    }
+    if (a.n === 45) {
+      await prisma.referralLink.create({ data: { id: `emp_link_${a.n}`, customerId: ID.main, leadId, token: `emplink${a.n}000000000000000`, lastSentAt: ago(30), createdAt: ago(30) } });
     }
   }
 

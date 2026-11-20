@@ -47,8 +47,10 @@ export const HINTS = {
 export type HintKey = (typeof HINTS)[keyof typeof HINTS];
 export const HINT_KEYS: readonly string[] = Object.values(HINTS);
 
-/** Bewertungs-Wächter auf der Modulseite: steht im Reiter „Teilen & Google“ (Push, Heute-Karte). */
+/** Bewertungs-Wächter auf der Modulseite: steht im Reiter „Teilen“ (Push, Heute-Karte). */
 export const WAECHTER_HREF = "/buyer/empfehlungen?tab=teilen#bewertungen";
+/** Liste „Heute fragen“ auf der Modulseite (Heute-Hinweis, Menü). */
+export const HEUTE_FRAGEN_HREF = "/buyer/empfehlungen#heute-fragen";
 
 /** Ab so vielen Abschlüssen in 60 Tagen lohnt sich das Modul (Heute-Hinweis, Admin-Kandidaten). */
 export const CANDIDATE_MIN_CLOSINGS = 3;
@@ -117,27 +119,29 @@ export const THANKS_NO_LINK: Record<Ansprache, string> = {
   du: "{Anrede}, danke, dass du mich weiterempfohlen hast. Das ist das schönste Lob für meine Arbeit. Viele Grüße, {Vertreter}",
 };
 
+// Einheitliche Begriffe (Paket 2, 19.11.2026): Bewertungsbitte, Empfehlungsbitte, Empfehlungslink, Lob/Kritik/Frage.
+// Hinweise je ein Satz; Ausführliches steht in docs/hilfe.md.
 export const TEXT_LABELS: Record<TextKey, { title: string; hint: string; needsLink: boolean }> = {
   review: {
-    title: "Nachfrage nach dem Abschluss",
-    hint: "Erst der direkte Draht zu Ihnen, dann die neutrale Bitte um eine ehrliche Bewertung mit Google-Link, für alle gleich. Nie um fünf Sterne oder nur um gute Bewertungen bitten, der Hinweis auf „STOPP“ bleibt im Text.",
+    title: "Bewertungsbitte",
+    hint: "Neutral um eine ehrliche Bewertung bitten, für alle gleich, nie um fünf Sterne; der Hinweis auf STOPP bleibt.",
     needsLink: true,
   },
-  thanks: { title: "Dank bei positiver Antwort", hint: "Ohne Link, der Google-Link stand schon in der ersten Nachricht.", needsLink: false },
+  thanks: { title: "Dank bei Lob", hint: "Ohne Link, der Google-Link stand schon in der Bewertungsbitte.", needsLink: false },
   praiseReferral: {
     title: "Dank bei Lob mit Empfehlungslink",
-    hint: "Geht statt des einfachen Danks raus, wenn „bei Lob direkt um Empfehlung bitten“ an ist. Die spätere Bitte um Empfehlung entfällt dann. Der Hinweis auf „STOPP“ bleibt im Text.",
+    hint: "Ersetzt bei Lob den einfachen Dank und die spätere Empfehlungsbitte; der Hinweis auf STOPP bleibt.",
     needsLink: true,
   },
-  unhappy: { title: "Antwort bei Kritik", hint: "Kurz, ehrlich, mit Zusage, dass Sie sich melden. Sie bekommen zugleich eine Aufgabe in „Heute“.", needsLink: false },
+  unhappy: { title: "Antwort bei Kritik", hint: "Kurz und ehrlich, Sie bekommen zugleich die Aufgabe „Kunde anrufen“.", needsLink: false },
   referral: {
-    title: "Bitte um Empfehlung",
-    hint: "Der Link führt zu einer Seite, auf der Ihr Kunde die Empfehlung teilen kann. {Thema} setzt das Thema des Abschlusses ein. Keine Prämien versprechen, der Hinweis auf „STOPP“ bleibt im Text.",
+    title: "Empfehlungsbitte",
+    hint: "{Thema} setzt das Thema des Abschlusses ein, keine Prämien versprechen; der Hinweis auf STOPP bleibt.",
     needsLink: true,
   },
   referralThanks: {
-    title: "Dank an den Empfehlenden",
-    hint: "Nur wenn die empfohlene Person der Rückmeldung zugestimmt hat. Ohne Namen oder Details der empfohlenen Person und ohne Prämie, mit dem Link für weitere Empfehlungen und dem Hinweis auf „STOPP“.",
+    title: "Dank an Empfehlende",
+    hint: "Ohne Namen oder Details der empfohlenen Person, mit Link für weitere Empfehlungen und STOPP.",
     needsLink: true,
   },
 };
@@ -553,38 +557,38 @@ export function funnelHint(f: Funnel): FunnelHint {
     return {
       stage: "start",
       title: "Größter Hebel: öfter fragen",
-      text: "Unter 5 Empfehlungslinks in diesem Zeitraum. Der größte Hebel ist, überhaupt zu fragen: nach jedem guten Gespräch den Link senden oder den QR-Code zeigen.",
+      text: "Senden Sie heute 3 Kunden aus „Heute fragen“ ihren Empfehlungslink.",
     };
   }
   if (f.linksOpened / f.linksSent < 0.4) {
     return {
       stage: "oeffnen",
       title: "Tipp: die Seite direkt im Termin zeigen",
-      text: "Zeigen Sie die Seite direkt im Termin (QR-Code im Kontakt) und lassen Sie den Kunden gleich dort teilen. Was nicht sofort passiert, passiert meist gar nicht.",
+      text: "Zeigen Sie den QR-Code im Termin und lassen Sie den Kunden gleich dort teilen.",
     };
   }
   if (f.linksOpened >= 5 && f.visitors / f.linksOpened < 0.5) {
     return {
       stage: "teilen",
       title: "Tipp: einen konkreten Anlass zum Weiterleiten nennen",
-      text: "Nennen Sie im Gespräch einen konkreten Anlass („Wer aus Ihrem Umfeld hat seine Verträge lange nicht angeschaut?“) und fassen Sie nach zwei Tagen nach.",
+      text: "Nennen Sie einen konkreten Anlass („Wer hat gerade ein neues Auto?“) und fassen Sie nach zwei Tagen nach.",
     };
   }
   if (f.visitors >= 10 && f.leads / f.visitors < 0.1) {
     return {
       stage: "eintragen",
       title: "Tipp: ein klares Angebot für Empfohlene",
-      text: "Mit einem konkreten Angebot melden sich mehr Bekannte. Wählen Sie in den Einstellungen ein konkretes Empfehlungsangebot, z. B. den Kfz-Check oder den Versicherungs-Check.",
+      text: "Wählen Sie in den Einstellungen ein konkretes Angebot für Empfohlene, z. B. den Versicherungs-Check.",
     };
   }
   if (f.leads >= 5 && f.closings / f.leads < 0.3) {
     return {
       stage: "abschluss",
       title: "Tipp: Empfohlene am selben Tag anrufen",
-      text: "Rufen Sie zügig an und nennen Sie den Namen des Empfehlenden. Prüfen Sie auch, ob das Angebot zu Ihren Sparten passt.",
+      text: "Rufen Sie Empfohlene am selben Tag an und beginnen Sie mit dem Namen: „Herr Müller hat mir erzählt, dass …“",
     };
   }
-  return { stage: "ok", title: "Läuft gut", text: "Alle Schritte sehen gut aus. Mehr Links ausgeben bringt jetzt am meisten." };
+  return { stage: "ok", title: "Läuft gut", text: "Mehr Empfehlungslinks senden bringt jetzt am meisten." };
 }
 
 // ─── Einwilligung in Nachfrage, Bewertungs- und Empfehlungsbitte (15.11.2026) ───
@@ -635,6 +639,9 @@ export function referralAskAllowed(
   }
   return { ok: true };
 }
+
+/** Hinweis, wenn ohne Einwilligung nichts verschickt werden darf (Rückgabe von „Link senden“). */
+export const NO_CONSENT_ERROR = "Ohne Zustimmung des Kunden geht keine Nachricht raus. Tippen Sie „Kunde hat zugestimmt“ oder zeigen Sie den QR-Code im Termin.";
 
 /** Darf die automatische Nachfrage bzw. Bitte raus? */
 export function feedbackAllowed(l: { feedbackConsentAt: Date | null; feedbackOptOutAt: Date | null }): boolean {
@@ -734,4 +741,128 @@ export function isSelfReferral(recommenderPhone: string | null | undefined, refe
   const d = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").replace(/^(00)?49/, "").replace(/^0/, "");
   const a = d(recommenderPhone);
   return a.length >= 6 && a === d(referredPhone);
+}
+
+// ─── Heute fragen (Paket 2, 19.11.2026) ─────────────────────────────────────
+// Arbeitsliste auf der Modulseite: Kunden, die gerade bereit für eine Empfehlung sind, mit Grund. Nur mit Einwilligung,
+// ohne STOPP, ohne Kritik oder offene Aufgabe „unzufrieden“, nicht „Nicht anfragen“, nicht kürzlich gefragt und unter
+// der Obergrenze (R3). Kontakte ohne Einwilligung kommen in eine eigene Liste („Einwilligung fehlt“): dort nur
+// „Kunde hat zugestimmt“ oder der QR-Code im Termin, nie ein Versand.
+
+/** Abschluss so lange her: guter Moment für die Empfehlungsbitte. */
+export const CANDIDATE_MIN_CLOSED_DAYS = 21;
+/** Ältere Abschlüsse zählen nicht mehr als Grund. */
+export const CANDIDATE_MAX_AGE_DAYS = 365;
+/** Termin so kürzlich stattgefunden: Grund „Termin gestern“. */
+export const CANDIDATE_APPOINTMENT_DAYS = 14;
+/** So lange nach der letzten Empfehlungsbitte (oder dem QR-Code) taucht der Kunde nicht wieder auf. */
+export const CANDIDATE_ASK_GAP_DAYS = 90;
+/** Sichtbare Zeilen, Rest hinter „Alle anzeigen“. */
+export const HEUTE_VISIBLE = 5;
+/** Modulkosten für 90 Tage (Vergleich in der Wert-Zeile). */
+export const MODULE_COST_90 = PRICE_LIST.empfehlungModuleMonthly * 3;
+
+export type CandidateReason = "lob" | "google" | "termin" | "abschluss";
+const REASON_ORDER: CandidateReason[] = ["lob", "google", "termin", "abschluss"];
+
+export type CandidateInput = {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  source: string | null;
+  status: string | null;
+  closedAt: Date | null;
+  followUpNote: string | null;
+  feedbackConsentAt: Date | null;
+  feedbackConsentText: string | null;
+  feedbackOptOutAt: Date | null;
+  /** Verknüpfter Bestandskunde mit STOPP oder Sperre */
+  bestandBlocked: boolean;
+  review: { status: string; sentiment: string | null; googleClicks: number; googleClickAt: Date | null; answeredAt: Date | null } | null;
+  lastAppointmentAt: Date | null;
+  /** Empfehlungsbitten an diese Person (Protokoll, automatische Bitte) */
+  asks: Date[];
+  /** Zuletzt Link gesendet oder QR-Code gezeigt */
+  lastLinkAt: Date | null;
+};
+
+export type Candidate = {
+  id: string;
+  name: string;
+  reason: CandidateReason | null;
+  /** „Hat gestern gelobt“, „Abschluss vor 24 Tagen“ */
+  reasonText: string;
+  thema: string;
+  consent: boolean;
+  /** Anlass für den Text: nach einem Termin „Nach dem Jahresgespräch“, sonst die normale Empfehlungsbitte */
+  occasion: Occasion | null;
+  at: number;
+};
+
+/** „heute“, „gestern“, „vor 5 Tagen“ (Kalendertage in Berlin). */
+export function relDays(at: Date, now: Date): string {
+  const d = Math.round((Date.parse(berlinYmdOf(now)) - Date.parse(berlinYmdOf(at))) / DAY_MS);
+  return d <= 0 ? "heute" : d === 1 ? "gestern" : `vor ${d} Tagen`;
+}
+function berlinYmdOf(d: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(d) + "T00:00:00Z";
+}
+
+/** Bester Grund für eine Empfehlungsbitte, null = gerade kein guter Moment. */
+export function candidateReason(c: CandidateInput, now: Date): { reason: CandidateReason; text: string; at: number } | null {
+  const r = c.review;
+  if (r?.sentiment === "positive") {
+    const at = r.answeredAt ?? now;
+    return { reason: "lob", text: r.answeredAt ? `Hat ${relDays(r.answeredAt, now)} gelobt` : "Hat gelobt", at: at.getTime() };
+  }
+  if (r && r.googleClicks > 0) {
+    return { reason: "google", text: r.googleClickAt ? `Hat ${relDays(r.googleClickAt, now)} den Google-Link geöffnet` : "Hat den Google-Link geöffnet", at: (r.googleClickAt ?? now).getTime() };
+  }
+  if (c.lastAppointmentAt && now.getTime() - c.lastAppointmentAt.getTime() <= CANDIDATE_APPOINTMENT_DAYS * DAY_MS && c.lastAppointmentAt.getTime() <= now.getTime()) {
+    return { reason: "termin", text: `Termin ${relDays(c.lastAppointmentAt, now)}`, at: c.lastAppointmentAt.getTime() };
+  }
+  if (c.status === "Abschluss" && c.closedAt) {
+    const age = now.getTime() - c.closedAt.getTime();
+    if (age >= CANDIDATE_MIN_CLOSED_DAYS * DAY_MS && age <= CANDIDATE_MAX_AGE_DAYS * DAY_MS) return { reason: "abschluss", text: `Abschluss ${relDays(c.closedAt, now)}`, at: c.closedAt.getTime() };
+  }
+  return null;
+}
+
+/** Nie fragen: STOPP, Sperre, „Nicht anfragen“, Kritik, offene Aufgabe „unzufrieden“, keine Handynummer. */
+export function candidateExcluded(c: CandidateInput): boolean {
+  return !c.phone || !!c.feedbackOptOutAt || c.bestandBlocked || c.review?.status === "off" || c.review?.sentiment === "negative" || isUnhappyTask(c.followUpNote);
+}
+
+/**
+ * Liste „Heute fragen“ (ready) und „Einwilligung fehlt“ (noConsent). ready: nur mit Einwilligung, mit Grund, nicht in
+ * den letzten 90 Tagen gefragt und unter der Obergrenze. noConsent: Abschlüsse ohne Einwilligung (Grund optional).
+ */
+export function pickReferralCandidates(rows: CandidateInput[], now: Date): { ready: Candidate[]; noConsent: Candidate[] } {
+  const ready: Candidate[] = [];
+  const noConsent: Candidate[] = [];
+  for (const c of rows) {
+    if (candidateExcluded(c)) continue;
+    const reason = candidateReason(c, now);
+    const base = { id: c.id, name: c.name?.trim() || "Kontakt", thema: empfehlungsThema(c.source) };
+    if (!feedbackAllowed(c)) {
+      if (c.status !== "Abschluss") continue;
+      const closed = c.closedAt ? `Abschluss ${relDays(c.closedAt, now)}` : "Abschluss";
+      noConsent.push({ ...base, reason: reason?.reason ?? null, reasonText: reason?.text ?? closed, consent: false, occasion: null, at: c.closedAt?.getTime() ?? 0 });
+      continue;
+    }
+    if (!reason) continue;
+    const last = Math.max(c.lastLinkAt?.getTime() ?? 0, ...c.asks.map((d) => d.getTime()));
+    if (last && now.getTime() - last < CANDIDATE_ASK_GAP_DAYS * DAY_MS) continue;
+    if (!referralAskAllowed(c.asks, now, { at: c.feedbackConsentAt, text: c.feedbackConsentText }).ok) continue;
+    ready.push({ ...base, reason: reason.reason, reasonText: reason.text, consent: true, occasion: reason.reason === "termin" ? "jahresgespraech" : null, at: reason.at });
+  }
+  ready.sort((a, b) => REASON_ORDER.indexOf(a.reason!) - REASON_ORDER.indexOf(b.reason!) || b.at - a.at);
+  noConsent.sort((a, b) => b.at - a.at);
+  return { ready, noConsent };
+}
+
+/** Wert-Zeile: Vielfaches der Modulkosten (nur wenn größer 1, eine Nachkommastelle). */
+export function costMultiple(provision: number, cost: number = MODULE_COST_90): string | null {
+  if (cost <= 0 || provision <= cost) return null;
+  return `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(Math.floor((provision / cost) * 10) / 10)}-Fache`;
 }
