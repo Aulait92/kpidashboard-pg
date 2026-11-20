@@ -1,6 +1,6 @@
 import { limitResponse } from "@/lib/rate-limit";
 import { ingestPoolLead } from "@/lib/ppl/engine";
-import { prisma } from "@/lib/prisma";
+import { resolvePplProduct } from "@/lib/ppl/produkt-key";
 import { isPerspectivePayload, translatePerspective } from "@/lib/ppl/perspective";
 import { reportError } from "@/lib/monitoring";
 import { adFromTracking } from "@/lib/anzeige";
@@ -36,12 +36,7 @@ export async function POST(req: Request) {
     const rawProduct = String(url.searchParams.get("produkt") ?? item.produkt ?? item.product ?? "").trim();
     if (!rawProduct) return Response.json({ error: "produkt fehlt" }, { status: 400 });
     // Produkt per Name oder Slug (z. B. „pkv-tarifoptimierung“ wie im bisherigen Funnel)
-    const known = await prisma.product.findFirst({
-      where: { OR: [{ name: { equals: rawProduct, mode: "insensitive" } }, { slug: { equals: rawProduct, mode: "insensitive" } }] },
-      select: { name: true },
-    });
-    const productKey = known?.name ?? rawProduct;
-    const slug = (await prisma.product.findFirst({ where: { name: productKey }, select: { slug: true } }))?.slug ?? rawProduct;
+    const { productKey, slug } = await resolvePplProduct(rawProduct);
     let fields: Record<string, string> = {};
     let externalId: string | null = null;
     if (isPerspectivePayload(item)) {

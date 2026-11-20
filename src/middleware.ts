@@ -8,6 +8,7 @@ import { APP_DEMO_HEADER, signiereDemoMarke } from "@/lib/app-demo/marke";
 import { DEMO_LIMIT, buyerZuDemo, demoActionAntwort, demoWeiche, istDemoPfad, vonDemoSeite } from "@/lib/app-demo/weiche";
 import { demoDatenbankUrl } from "@/lib/app-demo/konfig";
 import { clientIp, hit } from "@/lib/rate-limit";
+import { BESUCH_COOKIE, BESUCH_COOKIE_TAGE, BESUCH_HEADER, decideFunnelHost, gueltigeBesuchId, neueBesuchId } from "@/lib/funnel/host";
 
 const SESSION_COOKIE = "kpi_session";
 
@@ -57,6 +58,8 @@ const PUBLIC_PREFIXES = [
   "/api/meta/leadgen", // Meta-Webhook Lead Ads (Signatur mit META_APP_SECRET)
   "/api/leads/eingang", // Lead-Webhook (Zapier o. ä., per LEAD_WEBHOOK_TOKEN)
   "/api/leads/pool", // Pay-per-Lead-Eingang (Perspective/Funnels, per LEAD_WEBHOOK_TOKEN)
+  "/f", // Eigene Funnels (PKV-Tarifoptimierung, lib/funnel), auch unter beitrag.pkv-tarife.com
+  "/api/funnel", // Messung je Schritt und Absenden der eigenen Funnels (Rate-Limit, Bot-Schutz)
   "/feedback", // Kunden-Feedback per Mail-Link (geheimer Token, ohne Login)
   "/api/vertrieb", // Vertriebs-Webhooks (Instantly, Calendly, Leads, LinkedIn) – per Token gesichert
   "/manifest.webmanifest",
@@ -148,6 +151,59 @@ function bookingHost(req: NextRequest): NextResponse | null {
   }
 }
 
+/**
+ * Eigene Funnels (lib/funnel, Ole 20.11.2026): ohne App-Kopfzeile und Fußzeile, nicht indexieren, Besucher-ID im
+ * Erstanbieter-Cookie (neu vergeben, wenn keins da ist; die Seite liest sie aus BESUCH_HEADER). `rewrite` = Funnel-Adresse
+ * (beitrag.pkv-tarife.com/ → /f/pkv-beitrag).
+ */
+function funnelPage(req: NextRequest, rewrite?: string): NextResponse {
+  const vorhanden = gueltigeBesuchId(req.cookies.get(BESUCH_COOKIE)?.value);
+  const id = vorhanden ?? neueBesuchId();
+  const headers = leadHeaders(req);
+  headers.set(BESUCH_HEADER, id);
+  let res: NextResponse;
+  if (rewrite) {
+    const url = req.nextUrl.clone();
+    url.pathname = rewrite;
+    res = NextResponse.rewrite(url, { request: { headers } });
+  } else {
+    res = NextResponse.next({ request: { headers } });
+  }
+  res.headers.set("X-Robots-Tag", NO_INDEX);
+  if (!vorhanden) {
+    res.cookies.set(BESUCH_COOKIE, id, {
+      path: "/",
+      ...(BESUCH_COOKIE_TAGE > 0 ? { maxAge: BESUCH_COOKIE_TAGE * 86_400 } : {}),
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
+  return res;
+}
+
+/** Funnel-Adresse (FUNNEL_HOSTS, Standard beitrag.pkv-tarife.com): nur der Funnel, alles andere zurück auf /. */
+function funnelHost(req: NextRequest): NextResponse | null {
+  const d = decideFunnelHost({ host: requestHost(req.headers), pathname: req.nextUrl.pathname, search: req.nextUrl.search, hosts: process.env.FUNNEL_HOSTS });
+  switch (d.kind) {
+    case "pass":
+      return null;
+    case "robots":
+      return new NextResponse(PUBLIC_ROBOTS_TXT, { headers: { "content-type": "text/plain; charset=utf-8", "X-Robots-Tag": NO_INDEX } });
+    case "redirect": {
+      const url = req.nextUrl.clone();
+      const [p, q] = d.location.split("?");
+      url.pathname = p;
+      url.search = q ? `?${q}` : "";
+      return NextResponse.redirect(url, 307);
+    }
+    case "rewrite":
+      return funnelPage(req, d.pathname);
+    case "serve":
+      return req.nextUrl.pathname.startsWith("/f/") ? funnelPage(req) : NextResponse.next();
+  }
+}
+
 const DEMO_NICHT_VERFUEGBAR_HTML = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Demo gerade nicht verfügbar</title></head><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 16px;color:#0f172a"><h1 style="font-size:1.4rem">Die Demo ist gerade nicht verfügbar.</h1><p>Bitte versuchen Sie es in ein paar Minuten noch einmal.</p><p><a href="/demo/beratung" style="color:#2563eb">Zur Live-Demo der Beratungspräsentation</a></p></body></html>`;
 
 /**
@@ -196,6 +252,8 @@ export async function middleware(req: NextRequest) {
   if (req.headers.has(APP_DEMO_HEADER)) return new NextResponse("Bad Request", { status: 400, headers: { "X-Robots-Tag": NO_INDEX } });
   const moved = legacyRedirect(req);
   if (moved) return moved;
+  const funnel = funnelHost(req);
+  if (funnel) return funnel;
   const booking = bookingHost(req);
   if (booking) return booking;
   const { pathname } = req.nextUrl;
@@ -211,6 +269,8 @@ export async function middleware(req: NextRequest) {
     url.pathname = demoZiel;
     return NextResponse.redirect(url, 307);
   }
+  // Eigene Funnels auf der App-Adresse (/f/pkv-beitrag, z. B. für Tests): wie auf der Funnel-Adresse
+  if (pathname.startsWith("/f/")) return funnelPage(req);
   // Seiten für Endkunden der Vermittler (Terminbuchung, Empfehlung): ohne performancegrowth-Kopfzeile
   // und mit neutralem Footer – die Seite gehört dem Vermittler (Ole, 14.11.2026).
   if (

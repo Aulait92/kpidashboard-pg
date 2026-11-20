@@ -4,7 +4,7 @@ import { experimenteUebersicht, type ExperimentUebersicht } from "@/lib/experime
 import { ALPHA, MIN_TREFFER } from "@/lib/whatsapp/ab-test";
 import { SPLITTEST_HYPOTHESE } from "@/lib/ab-hypothesen";
 
-const ZIEL: Record<string, string> = { termin_gebucht: "Termin gebucht", komplettcheck_ja: "Komplettcheck ja", erschienen: "Erschienen", zusage: "Zusage" };
+const ZIEL: Record<string, string> = { termin_gebucht: "Termin gebucht", komplettcheck_ja: "Komplettcheck ja", erschienen: "Erschienen", zusage: "Zusage", ppl_erreicht: "Erreicht (Abnehmer)" };
 // Ohne Einheiten nur die Zahl (kein „noch keine Daten“, bricht auf dem Handy um)
 const mitQuote = (z: number, n: number) => (n ? `${z} (${Math.round((z / n) * 1000) / 10} %)` : String(z));
 

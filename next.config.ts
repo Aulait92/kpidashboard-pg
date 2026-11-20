@@ -38,6 +38,7 @@ const nextConfig: NextConfig = {
     return securityHeaderRules({
       dev: process.env.NODE_ENV === "development",
       enforceCsp: process.env.CSP_ENFORCE === "on",
+      funnelHosts: process.env.FUNNEL_HOSTS,
     });
   },
 };
