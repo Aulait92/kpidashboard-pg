@@ -9,6 +9,7 @@
 
 import { ABSCHLUSSBONUS_STANDARD, betreuungsSatz, eurText, monthlyBudgetOf, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, VORAUSZAHLUNG, type OfferTerm } from "@/lib/offer-pricing";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
+import { PPL_BEISPIEL, rechnerAusgabe, VERTRETER_BEISPIEL, vertreterRechnung, zahlFeld, type RechnerArt, type RechnerFest, type RechnerWerte } from "@/lib/vertrieb/folien-rechner";
 
 // „ppl“: Pay-per-Lead + Software (Ole, 20.11.2026): eigene kurze Präsentation, 19 Folien (Bilder, eine Live-Demo) (docs/unterlagen/PPL-Software-Praesentation)
 export type VerkaufsAudience = "vertreter" | "makler" | "ppl";
@@ -20,7 +21,7 @@ export const BILD_BASIS = "/praesentation/vertrieb";
 // Startet mit Folie 1 (Ole, 15.11.2026), nicht mehr auf dem Vergleich
 export const DEMO_EINGEBETTET = "/demo/beratung?eingebettet=1";
 
-type Art = "bild" | "video" | "demo" | "rechnung" | "paket" | "bonus";
+type Art = "bild" | "video" | "demo" | "rechnung" | "paket" | "bonus" | "rechner";
 /** nr: Position in der Präsentation; bild: Nummer des Folienbilds aus der PPTX (Bild-, Video- und Demofolien). */
 export type VerkaufsFolieDef = { nr: number; titel: string; art: Art; bild: number };
 
@@ -74,6 +75,7 @@ export const BONUS_FOLIE_TITEL = "Ihr Abschlussbonus";
  * Folienliste je Zielgruppe (Vertreter 24, Makler 25 Folien aus den PPTX, Bildnummern wie dort), dazu vor
  * „Ihr Start in 3 Schritten“ die Folie zum Abschlussbonus (mitBonus, Standard an).
  */
+const PPL_RECHNER_TITEL = "Rechnen Sie mit Ihren Zahlen";
 /** Pay-per-Lead + Software: Bildfolien und die Live-Demo, ohne Video, Rechnung, Paket und Bonus (Preise stehen auf den Folien). */
 const PPL_FOLIEN: string[] = [
   "Aus gekauften Leads werden Termine",
@@ -92,7 +94,7 @@ const PPL_FOLIEN: string[] = [
   "Perfekt vorbereitet in jeden Termin",
   "Beraten mit echten Preisen",
   "Exklusive Leads, Woche für Woche",
-  "Rechnen Sie mit Ihren Zahlen",
+  PPL_RECHNER_TITEL,
   "Mehr Leads, günstigere Abschlüsse",
   "Ihr Paket: Software + Leads",
   "Ihr Start in 3 Schritten",
@@ -100,7 +102,9 @@ const PPL_FOLIEN: string[] = [
 
 export function folienListe(audience: VerkaufsAudience, mitBonus = true): VerkaufsFolieDef[] {
   // „Beraten mit echten Preisen“ wie bei Vertreter/Makler als Live-Demo (Ole, 20.11.2026: 1-Klick-Beratungspräsentation)
-  if (audience === "ppl") return PPL_FOLIEN.map((titel, i) => ({ titel, art: titel === "Beraten mit echten Preisen" ? ("demo" as const) : ("bild" as const), bild: i + 1, nr: i + 1 }));
+  // „Rechnen Sie mit Ihren Zahlen“ im Web als HTML mit Eingabefeldern zum Mitrechnen (Ole, 20.11.2026); PDF/PPTX bleiben Bild
+  const pplArt = (titel: string): Art => (titel === "Beraten mit echten Preisen" ? "demo" : titel === PPL_RECHNER_TITEL ? "rechner" : "bild");
+  if (audience === "ppl") return PPL_FOLIEN.map((titel, i) => ({ titel, art: pplArt(titel), bild: i + 1, nr: i + 1 }));
   const basis = [...GEMEINSAM, ...ENDE[audience]].map((f, i) => ({ ...f, bild: i + 1 }));
   const liste = mitBonus ? [...basis.slice(0, -1), { titel: BONUS_FOLIE_TITEL, art: "bonus" as const, bild: 0 }, ...basis.slice(-1)] : basis;
   return liste.map((f, i) => ({ ...f, nr: i + 1 }));
@@ -312,18 +316,8 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
 const MWST = 1 + PRICE_LIST.vatRate;
 const r0 = (n: number) => Math.round(n);
 
-/** Vertreter: 200 Leads, ≈ 800 € Werbebudget, 5.000 € Provision im Monat (echtes Ergebnis, Katzenversicherung). */
-export function vertreterRechnung(monatNetto: number, setupNetto: number) {
-  const provision = 5000;
-  const werbe = r0(800 * MWST);
-  const betreuung = r0(monatNetto * MWST);
-  const ueberschuss = provision - werbe - betreuung;
-  const setupBrutto = r0(setupNetto * MWST);
-  // Setup wieder drin nach … Monaten (auf halbe Monate aufgerundet); 0 = kein Setup
-  const setupMonate = setupBrutto <= 0 ? 0 : ueberschuss > 0 ? Math.ceil((setupBrutto / ueberschuss) * 2) / 2 : null;
-  const jahr = ueberschuss * 12 - setupBrutto;
-  return { leads: 200, werbeNetto: 800, beitragsvolumen: 8600, provision, werbe, betreuung, ueberschuss, setupBrutto, setupMonate, jahr, jahrRund: Math.floor(jahr / 1000) * 1000 };
-}
+// Vertreter: Rechnung in folien-rechner.ts (auch im Browser beim Mitrechnen im Call)
+export { vertreterRechnung };
 
 /**
  * Makler: 300 Leads (40 € pro Tag, ≈ 1.200 € netto), 12 % Verträge (36 Katzen + 36 Zusatzverträge im Monat),
@@ -383,7 +377,6 @@ export type VerkaufsFolie = { id: string; titel: string; html: string };
 const e = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const zahl = (n: number) => new Intl.NumberFormat("de-DE", { maximumFractionDigits: 0 }).format(n);
 const euro = eurText;
-const monate = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(n)} ${n === 1 ? "Monat" : "Monaten"}`;
 const MINUS = "−";
 
 export function verkaufsCss(): string {
@@ -431,6 +424,21 @@ export function verkaufsCss(): string {
 .vk-demo-kopf{display:flex;align-items:center;gap:10px;font-size:14px;color:#334155}
 .vk-live{display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:99px;padding:3px 10px}
 .vk-live::before{content:"";width:6px;height:6px;border-radius:99px;background:#86efac}
+.vk-rz{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid #eef2f7;font-size:19px}
+.vk-rz:last-child{border-bottom:0}.vk-rz small{display:block;font-size:13px;color:#64748b;margin-top:1px}
+.vk-eingabe{display:inline-flex;align-items:center;justify-content:center;gap:4px;flex:0 0 150px;width:150px;height:50px;padding:0 12px;border:1.5px dashed #93b4f5;border-radius:10px;background:#f8fbff;color:#2563eb;font-size:24px;font-weight:700;cursor:text}
+.vk-eingabe:focus-within{border-style:solid;border-color:#2563eb;background:#fff;box-shadow:0 0 0 4px rgba(37,99,235,.15)}
+.vk-eingabe input{all:unset;box-sizing:border-box;flex:1 1 auto;width:0;min-width:0;text-align:center;font:inherit;color:inherit;caret-color:currentColor}
+.vk-eingabe.einheit input{flex:0 1 84px;text-align:right}
+.vk-eingabe input::placeholder{color:#94a3b8;font-weight:500;font-size:17px;opacity:1}
+.vk-wert .vk-eingabe{display:flex;width:100%;height:50px;margin-top:6px;font-size:30px;justify-content:flex-start;padding:0 10px}
+.vk-wert .vk-eingabe input,.vk-wert .vk-eingabe.einheit input{flex:1 1 auto;text-align:right}
+.vk-wert .vk-eingabe span{display:inline;font-size:inherit;color:inherit;margin:0}
+.vk-wert.blau .vk-eingabe{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.7);color:#fff}
+.vk-wert.blau .vk-eingabe:focus-within{background:rgba(255,255,255,.2);border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.25)}
+.vk [data-ton=plus]{color:#16a34a}.vk [data-ton=leer]{color:#94a3b8;font-weight:500;font-size:15px}
+.vk-fazit{margin-top:12px;border-radius:10px;padding:12px 16px;font-size:16.5px;line-height:1.4;font-weight:500;background:#eff6ff;color:#1d4ed8}
+.vk .vk-fazit[data-ton=plus]{background:#ecfdf3;color:#15803d}.vk .vk-fazit[data-ton=minus]{background:#fff7ed;color:#9a3412}
 .vk-demo iframe{flex:1;width:100%;border:0;border-radius:12px;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.12)}
 `;
 }
@@ -445,8 +453,8 @@ const ICON = {
 
 const LOGO = `<span class="vk-logo"><i><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></i><span>performance<b>growth</b></span></span>`;
 
-function rahmen(rubrik: string, inhalt: string, nr: number, gesamt: number, fuss = ""): string {
-  return `<section class="vk"><div class="vk-kopf">${LOGO}<span class="vk-rubrik">${e(rubrik)}</span></div>${inhalt}${fuss ? `<div class="vk-fuss">${fuss}</div>` : ""}${nr > 0 ? `<div class="vk-nr">${nr} / ${gesamt}</div>` : ""}</section>`;
+function rahmen(rubrik: string, inhalt: string, nr: number, gesamt: number, fuss = "", attrs = ""): string {
+  return `<section class="vk"${attrs}><div class="vk-kopf">${LOGO}<span class="vk-rubrik">${e(rubrik)}</span></div>${inhalt}${fuss ? `<div class="vk-fuss">${fuss}</div>` : ""}${nr > 0 ? `<div class="vk-nr">${nr} / ${gesamt}</div>` : ""}</section>`;
 }
 
 const angebotChip = (p: PaketDaten) =>
@@ -523,42 +531,75 @@ export function rechnungFolie(p: PaketDaten, audience: VerkaufsAudience, nr: num
   return audience === "makler" ? maklerFolie(p, nr, gesamt) : vertreterFolie(p, nr, gesamt);
 }
 
+/** Rechen-Folie: Attribute für den Container und Ausgaben (data-r), gerechnet wie später im Browser (folien-rechner.ts). */
+function rechner(art: RechnerArt, werte: RechnerWerte, fest: RechnerFest) {
+  const aus = rechnerAusgabe(art, werte, fest)!;
+  const attrs = ` data-rechner="${art}" data-fest="${e(JSON.stringify(fest))}"`;
+  const r = (k: string, tag = "span", cls = "", style = "") =>
+    `<${tag} data-r="${k}"${aus.ton[k] ? ` data-ton="${aus.ton[k]}"` : ""}${cls ? ` class="${cls}"` : ""}${style ? ` style="${style}"` : ""}>${e(aus.text[k] ?? "")}</${tag}>`;
+  return { attrs, r };
+}
+
+/** Eingabefeld zum Mitrechnen (nur Web; Zahlen im deutschen Format). */
+const feld = (name: string, label: string, wert: number | null, einheit = "", platzhalter = "") =>
+  `<label class="vk-eingabe${einheit ? " einheit" : ""}"><input type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" spellcheck="false" data-feld="${name}"${einheit === "€" ? " data-euro" : ""} aria-label="${e(label)}" value="${e(zahlFeld(wert))}"${platzhalter ? ` placeholder="${e(platzhalter)}"` : ""}>${einheit ? `<span>${e(einheit)}</span>` : ""}</label>`;
+
 function vertreterFolie(p: PaketDaten, nr: number, gesamt: number): string {
-  const r = vertreterRechnung(p.monatlichNetto, p.setupRechnung.betrag);
-  const setupTitel =
-    r.setupMonate === 0
-      ? "Ohne Setup: ab dem ersten Monat im Plus"
-      : r.setupMonate != null && r.setupMonate <= 1
-        ? "Setup schon im ersten Monat wieder drin"
-        : r.setupMonate != null
-          ? `Setup nach ${monate(r.setupMonate)} wieder drin`
-          : "Setup: im Beispiel noch nicht wieder drin";
-  const setupText =
-    r.setupMonate === 0
-      ? "Für die Einrichtung zahlen Sie nichts extra."
-      : `${p.quelle === "angebot" ? `Mit Ihrem Angebot, ${p.setupRechnung.satz}` : `Selbst ${p.setupRechnung.satz}`} (Setup ${euro(p.setupRechnung.betrag)} + USt. = ${euro(r.setupBrutto)}) haben Sie die Einrichtung ${r.setupMonate == null ? "mit diesem Beispiel noch nicht verdient" : r.setupMonate <= 1 ? "schon im ersten Monat verdient" : `nach spätestens ${monate(r.setupMonate)} verdient`}.`;
-  const inhalt = `<div class="vk-chips"><span class="vk-chip">Echtes Ergebnis · Allianz-Vertreter mit Katzenversicherung</span>${angebotChip(p)}</div>
+  const b = VERTRETER_BEISPIEL;
+  const { attrs, r } = rechner("vertreter", { ...b }, { monat: p.monatlichNetto, setup: p.setupRechnung.betrag, satz: p.setupRechnung.satz, angebot: p.quelle === "angebot" ? 1 : 0 });
+  const inhalt = `<div class="vk-chips">${r("chip", "span", "vk-chip")}${angebotChip(p)}</div>
 <h2>Rechnet sich das?</h2>
 <div class="vk-werte">
-<div class="vk-karte vk-wert"><span>Leads pro Monat</span><b>${zahl(r.leads)}</b></div>
-<div class="vk-karte vk-wert"><span>Werbekosten (netto)</span><b>≈ ${euro(r.werbeNetto)}</b></div>
-<div class="vk-karte vk-wert"><span>Beitragsvolumen</span><b>${euro(r.beitragsvolumen)}</b></div>
-<div class="vk-karte vk-wert blau"><span>Provision</span><b>${euro(r.provision)}</b></div>
+<div class="vk-karte vk-wert"><span>Leads pro Monat</span>${feld("leads", "Leads pro Monat", b.leads)}</div>
+<div class="vk-karte vk-wert"><span>Werbekosten (netto)</span>${feld("werbe", "Werbekosten netto", b.werbe, "€")}</div>
+<div class="vk-karte vk-wert"><span>Beitragsvolumen</span>${feld("volumen", "Beitragsvolumen", b.volumen, "€")}</div>
+<div class="vk-karte vk-wert blau"><span>Provision</span>${feld("provision", "Provision", b.provision, "€")}</div>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px">
 <div class="vk-karte" style="padding:22px 26px"><div class="vk-label">Ihre Rechnung pro Monat, inkl. 19 % USt.</div><div style="margin-top:8px">
-<div class="vk-zeile"><span>Provision</span><b>${euro(r.provision)}</b></div>
-<div class="vk-zeile"><span>${MINUS} Werbebudget an Meta <small style="display:inline">(${euro(r.werbeNetto)} + USt.)</small></span><b>${MINUS} ${euro(r.werbe)}</b></div>
-<div class="vk-zeile"><span>${MINUS} ${p.software ? "Betreuung + Software" : "Betreuung"} <small style="display:inline">(${euro(p.monatlichNetto)} + USt.)</small></span><b>${MINUS} ${euro(r.betreuung)}</b></div>
-<div class="vk-zeile summe" style="font-size:19px;padding-top:12px"><span>Überschuss pro Monat</span><b class="${r.ueberschuss > 0 ? "vk-plus" : ""}" style="font-size:28px">${r.ueberschuss > 0 ? "+ " : ""}${euro(r.ueberschuss)}</b></div>
+<div class="vk-zeile"><span>Provision</span><b>${r("provision")}</b></div>
+<div class="vk-zeile"><span>${MINUS} Werbebudget an Meta <small style="display:inline">(${r("werbeNetto")} + USt.)</small></span><b>${r("werbe")}</b></div>
+<div class="vk-zeile"><span>${MINUS} ${p.software ? "Betreuung + Software" : "Betreuung"} <small style="display:inline">(${euro(p.monatlichNetto)} + USt.)</small></span><b>${MINUS} ${euro(r0(p.monatlichNetto * MWST))}</b></div>
+<div class="vk-zeile summe" style="font-size:19px;padding-top:12px"><span>Überschuss pro Monat</span><b style="font-size:28px">${r("ueberschuss")}</b></div>
 </div></div>
 <div style="display:grid;gap:16px">
-<div class="vk-karte vk-box" style="padding:22px 26px"><i>${ICON.uhr}</i><div><b>${e(setupTitel)}</b><span>${e(setupText)}</span></div></div>
-<div class="vk-karte vk-box" style="padding:22px 26px"><i>${ICON.trend}</i><div><b>Im ersten Jahr: ≈ ${euro(Math.max(0, r.jahrRund))} Überschuss*</b><span>Noch nicht eingerechnet: Bestandsprovision, Cross-Selling und Weiterempfehlungen.</span></div></div>
+<div class="vk-karte vk-box" style="padding:22px 26px"><i>${ICON.uhr}</i><div>${r("setupTitel", "b")}${r("setupText")}</div></div>
+<div class="vk-karte vk-box" style="padding:22px 26px"><i>${ICON.trend}</i><div>${r("jahr", "b")}<span>Noch nicht eingerechnet: Bestandsprovision, Cross-Selling und Weiterempfehlungen.</span></div></div>
 </div>
 </div>`;
-  const fuss = `* bei gleichbleibend 200 Leads pro Monat, nach Abzug von Werbebudget, ${p.software ? "Betreuung + Software" : "Betreuung"} und Setup ${e(p.setupRechnung.satz)}, jeweils inkl. 19 % USt., da Versicherungsvertreter die Vorsteuer in der Regel nicht abziehen können. Beispielrechnung auf Basis eines realen Ergebnisses. Ergebnisse können je nach Produkt, Region und Nachbearbeitung abweichen.`;
-  return rahmen("Ihre Zahlen", inhalt, nr, gesamt, fuss);
+  const fuss = `* bei gleichbleibend ${r("fussLeads")} Leads pro Monat, nach Abzug von Werbebudget, ${p.software ? "Betreuung + Software" : "Betreuung"} und Setup ${e(p.setupRechnung.satz)}, jeweils inkl. 19 % USt., da Versicherungsvertreter die Vorsteuer in der Regel nicht abziehen können. Beispielrechnung auf Basis eines realen Ergebnisses. Ergebnisse können je nach Produkt, Region und Nachbearbeitung abweichen.`;
+  return rahmen("Ihre Zahlen", inhalt, nr, gesamt, fuss, attrs);
+}
+
+/**
+ * Pay-per-Lead „Rechnen Sie mit Ihren Zahlen“ (Ole, 20.11.2026): wie das Folienbild 16, aber mit Eingabefeldern zum
+ * Mitrechnen im Call. Software aus dem Angebot (monatlich netto), sonst Listenpreis; Provision leer.
+ */
+export function pplRechnerFolie(p: PaketDaten, nr: number, gesamt: number): string {
+  const software = p.quelle === "angebot" ? p.monatlichNetto : PRICE_LIST.softwareFee;
+  const { attrs, r } = rechner("ppl", { ...PPL_BEISPIEL }, { software });
+  const zeile = (label: string, unter: string, f: string) => `<div class="vk-rz"><span>${e(label)}${unter ? `<small>${e(unter)}</small>` : ""}</span>${f}</div>`;
+  const klein = (k: string) => `<small style="display:inline;font-size:13px">${r(k)}</small>`;
+  const inhalt = `<div class="vk-chips"><span class="vk-chip">Beispielrechnung</span>${angebotChip(p)}</div>
+<h2>Rechnen Sie mit Ihren Zahlen</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px">
+<div class="vk-karte" style="padding:20px 28px"><div class="vk-label">Ihre Annahmen, Beispielwerte</div><div style="margin-top:4px">
+${zeile("Leads im Monat", "z. B. Privatschutz", feld("leads", "Leads im Monat", PPL_BEISPIEL.leads))}
+${zeile("Preis je Lead", "", feld("preis", "Preis je Lead", PPL_BEISPIEL.preis, "€"))}
+${zeile("Daraus werden Termine", "Ihre Annahme", feld("termine", "Termine", PPL_BEISPIEL.termine))}
+${zeile("Daraus werden Abschlüsse", "Ihre Annahme", feld("abschluesse", "Abschlüsse", PPL_BEISPIEL.abschluesse))}
+${zeile("Ihre Provision je Abschluss", "setzen Sie Ihren Wert ein", feld("provision", "Ihre Provision je Abschluss", PPL_BEISPIEL.provision, "€", "Ihr Wert"))}
+</div></div>
+<div class="vk-karte" style="padding:20px 28px"><div class="vk-label">Ergebnis im Beispiel</div><div style="margin-top:4px">
+<div class="vk-zeile"><span>Leads</span><b>${r("leads")}</b></div>
+<div class="vk-zeile"><span>Software <small style="display:inline;font-size:13px">netto</small></span><b>${r("software")}</b></div>
+<div class="vk-zeile"><span>Kosten im Monat</span><b>${r("monat")}</b></div>
+<div class="vk-zeile"><span>Kosten pro Termin ${klein("terminRechnung")}</span><b>${r("termin")}</b></div>
+<div class="vk-zeile" style="font-weight:700;padding-top:14px"><span>Kosten pro Abschluss ${klein("abschlussRechnung")}</span><b style="font-size:34px;color:#2563eb;line-height:1">${r("abschluss")}</b></div>
+</div>${r("fazit", "div", "vk-fazit")}</div>
+</div>`;
+  const fuss = "Reines Rechenbeispiel, keine Zusage zu Termin- oder Abschlussquoten. Software zzgl. USt. Ihre echten Werte zeigt Ihnen die App.";
+  return rahmen("Beispielrechnung", inhalt, nr, gesamt, fuss, attrs);
 }
 
 function maklerFolie(p: PaketDaten, nr: number, gesamt: number): string {
@@ -612,6 +653,8 @@ export function verkaufsFolien(audience: VerkaufsAudience, p: PaketDaten, demoSr
         };
       case "rechnung":
         return { id, titel: f.titel, html: rechnungFolie(p, audience, f.nr, gesamt) };
+      case "rechner":
+        return { id, titel: f.titel, html: pplRechnerFolie(p, f.nr, gesamt) };
       case "paket":
         return { id, titel: f.titel, html: paketFolie(p, audience, f.nr, gesamt) };
       case "bonus":

@@ -157,11 +157,11 @@ describe("Rechnungen", () => {
 });
 
 describe("Pay-per-Lead + Software (Ole, 20.11.2026)", () => {
-  it("eigene Fassung mit 19 Folien (eine Live-Demo), ohne Bonus; Angebot mit Paket ppl_software wählt sie", async () => {
+  it("eigene Fassung mit 19 Folien (eine Live-Demo, eine Rechen-Folie), ohne Bonus; Angebot mit Paket ppl_software wählt sie", async () => {
     const m = await import("@/lib/vertrieb/verkaufspraesentation");
     const l = m.folienListe("ppl");
     expect(l).toHaveLength(19);
-    expect(l.filter((f) => f.art !== "bild").map((f) => [f.nr, f.art])).toEqual([[14, "demo"]]);
+    expect(l.filter((f) => f.art !== "bild").map((f) => [f.nr, f.art])).toEqual([[14, "demo"], [16, "rechner"]]);
     expect(m.bildUrl("ppl", 19)).toBe("/praesentation/vertrieb/ppl/19.webp");
     expect(m.audienceFuer(null, { vermittlerTyp: "vertreter", package: "ppl_software" })).toBe("ppl");
     expect(m.audienceFuer(null, { vermittlerTyp: "makler", package: "software" })).toBe("makler");
