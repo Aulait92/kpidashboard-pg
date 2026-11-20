@@ -155,6 +155,27 @@ export async function saveRegisterpruefungAction(_prev: RegisterState, fd: FormD
   return { ok: true };
 }
 
+export type PartnerAngabenState = { error?: string; ok?: boolean };
+
+/** Angaben für die Partnerliste der Funnels speichern (Ole, 20.11.2026). Leere Felder = aus der Erstinformation. */
+export async function savePartnerAngabenAction(_prev: PartnerAngabenState, fd: FormData): Promise<PartnerAngabenState> {
+  const s = await requireAdmin();
+  const customerId = String(fd.get("customerId") ?? "");
+  if (!customerId) return { error: "Kunde fehlt." };
+  const t = (k: string) => String(fd.get(k) ?? "").replace(/\s+/g, " ").trim().slice(0, 200) || null;
+  const rawNr = t("partnerRegisterNr");
+  const nr = rawNr ? normalizeRegisterNummer(rawNr) : null;
+  if (rawNr && !nr) return { error: "Registernummer im Format D-XXXX-XXXXX-XX angeben." };
+  const anschrift = t("partnerAnschrift");
+  if (anschrift && !/\b\d{5}\s+\S/.test(anschrift)) return { error: "Anschrift mit Postleitzahl und Ort angeben, z. B. „Straße 1, 12345 Ort“." };
+  const data = { partnerFirma: t("partnerFirma"), partnerAnschrift: anschrift, partnerRegisterNr: nr };
+  await prisma.customer.update({ where: { id: customerId }, data });
+  await audit("ppl.partnerangaben", { entity: "Customer", entityId: customerId, customerId, actor: { id: s.userId, email: s.email, role: s.role }, details: data });
+  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
+  return { ok: true };
+}
+
 export async function manualOrderAction(fd: FormData): Promise<void> {
   const s = await requireAdmin();
   await placeOrder({
