@@ -230,7 +230,7 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     const [f] = calls("flow");
     expect(f).toBeTruthy();
     const o = f[3] as { body: string; footer: string; flowId: string; token: string; cta: string; screen: string; data: Record<string, string> };
-    expect(o.body).toMatch(/^Kleiner Tipp für \S+ 💡\n\nWenn Herr Kannapinn Ihre Policen vorab sieht, prüft er schon vor dem Termin, \*ob Sie Geld sparen können\*/);
+    expect(o.body).toMatch(/^Kleiner Tipp für \S+ 💡\n\nWenn Herr Kannapinn Ihre Policen vorab hat, sieht er schon vor dem Termin, \*ob Sie etwas doppelt zahlen/);
     // Satz als letzter Absatz statt Fußzeile (Ole, 20.11.2026)
     expect(o.body.endsWith("\n\nIhr Termin findet auch ohne Policen statt.")).toBe(true);
     expect(o.footer ?? null).toBeNull();
@@ -294,7 +294,7 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     // Bestätigung als Flow-Nachricht „Weitere senden“ mit Fußzeile
     const [b] = calls("flow");
     const bo = b[3] as { body: string; footer: string; cta: string };
-    expect(bo.body).toMatch(/^✅ Danke, \*2 Dateien sind angekommen\.\*\n\nHerr Kannapinn sieht sie sich vor \S+ an und prüft, wo Sie sparen können\./);
+    expect(bo.body).toMatch(/^✅ Danke, \*2 Dateien sind angekommen\.\*\n\nHerr Kannapinn sieht sie sich vor \S+ an\. Bis dahin müssen Sie nichts weiter tun\./);
     expect(bo.body).not.toContain("nichts automatisch");
     expect(bo.footer).toBe("Widerruf jederzeit: einfach „Widerruf“ schreiben.");
     expect(bo.cta).toBe("Weitere senden");
@@ -317,7 +317,7 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     expect(n2.wortlaut).toContain("Häkchen „Lieber ohne KI: nur speichern“: gesetzt");
     expect(await kiAbgelehnt(lead.id)).toBe(true);
     expect(await sperreFuer(customerId, lead.id)).toBe("ohne_ki");
-    expect((calls("flow")[0][3] as { body: string }).body).toContain("*1 Datei ist angekommen.*\n\nHerr Kannapinn");
+    expect((calls("flow")[0][3] as { body: string }).body).toContain("*1 Datei ist angekommen.*\n\nAlles klar, wir lesen nichts automatisch aus.\n\nHerr Kannapinn");
     expect((calls("flow")[0][3] as { body: string }).body).toContain("Alles klar, wir lesen nichts automatisch aus.");
     expect(await prisma.leadDocument.count({ where: { leadId: lead.id, status: "gespeichert" } })).toBe(3);
   });

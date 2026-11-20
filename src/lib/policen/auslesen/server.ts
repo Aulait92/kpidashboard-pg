@@ -44,9 +44,10 @@ import {
   type AuslesenSparte,
   type Felder,
 } from "@/lib/policen/auslesen/felder";
-import { ersteSeiteText, sparteVorab } from "@/lib/policen/auslesen/sparte";
+import { ausUnterlagenSparte, ersteSeiteText, sparteVorab } from "@/lib/policen/auslesen/sparte";
+import { plausibel } from "@/lib/policen/auslesen/plausibel";
 import { kiAbgelehnt } from "@/lib/policen/ohne-ki";
-import { zusammenfassung, type Zusammenfassung } from "@/lib/policen/auslesen/zusammenfassung";
+import { heuteBerlin, KUENDIGUNG_SPARTEN, kuendigungsfenster, zusammenfassung, type Zusammenfassung } from "@/lib/policen/auslesen/zusammenfassung";
 import type { DokumentTyp } from "@/lib/policen/auslesen/anbieter/typ";
 
 const TYPEN: readonly DokumentTyp[] = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
@@ -253,6 +254,7 @@ export async function liesUnterlageAus(documentId: string, o: { sparte?: Auslese
     return { status: "fehler" };
   }
   const b = bereinige(r.roh, vorab.sparte);
+  b.felder = plausibel(b.felder, vorab.sparte);
   // Andere Sparte laut Dokument: nichts übernehmen (im Zweifel nicht auslesen); der Vermittler kann die Sparte wählen.
   // „Sonstige“: passt, solange die KI keine der genauen Sparten erkennt
   const passt = b.sparte === vorab.sparte || (vorab.sparte === "sonstige" && (b.sparte === "andere" || b.sparte === null));
@@ -305,6 +307,8 @@ export type VertragKarte = {
   sparte: AuslesenSparte;
   felder: Felder;
   monat: number | null;
+  /** ausgelesen = mit Werten; leer = nichts gefunden */
+  status: "ausgelesen" | "leer";
   geprueft: boolean;
   uebernommen: boolean;
   ausgelesenAt: string | null;
@@ -319,7 +323,22 @@ export type Vergleich = {
   sparten: AuslesenSparte[];
   /** Bestandskunden-Modul sichtbar? Nur dann „In Bestand übernehmen“. */
   bestand: boolean;
+  /** Heute in Europe/Berlin (JJJJ-MM-TT), für Kündigungsangaben auf den Karten */
+  heute: string;
 };
+
+/** Sparten aller Unterlagen (Auszug, sonst Einordnung der Unterlage) für „Nicht geschickt“; ohne Sparte gezählt. */
+function unterlagenSparten(docs: { sparte: string | null; auszug: { sparte: string | null } | null }[]) {
+  const sparten: AuslesenSparte[] = [];
+  let ohne = 0;
+  for (const d of docs) {
+    const ausgelesen = d.auszug?.sparte;
+    const sp = isAuslesenSparte(ausgelesen) ? ausgelesen : ausUnterlagenSparte(d.sparte);
+    if (sp) sparten.push(sp);
+    else if (!d.sparte || d.sparte === "sonstig") ohne++;
+  }
+  return { unterlagenSparten: sparten, unterlagenOhneSparte: ohne };
+}
 
 /** Daten für das Vergleichsblatt. Zugriff prüft der Aufrufer (leadScope); in der Admin-Vorschau nie aufrufen. */
 /** Sparten zur Wahl im Vergleichsblatt: alle, eingeschränkt nur durch POLICEN_AUSLESEN_SPARTEN (nicht durch K2). */
@@ -327,14 +346,19 @@ const alleSparten = () => freigegebeneSparten({ zdr: true });
 
 export async function ladeVergleich(leadId: string, customerId: string, now = new Date()): Promise<Vergleich> {
   const { loadBestandVisible } = await import("@/lib/bestand/sichtbar-server");
-  const [docs, sperre, bestand] = await Promise.all([
+  const { vertriebFuer } = await import("@/lib/tarifauswahl-server");
+  const [docs, sperre, bestand, eigene] = await Promise.all([
     prisma.leadDocument.findMany({
       where: { leadId, customerId, status: "gespeichert" },
       orderBy: { createdAt: "asc" },
-      select: { id: true, sparte: true, createdAt: true, auszug: true },
+      select: { id: true, sparte: true, fileName: true, createdAt: true, auszug: true },
     }),
     sperreFuer(customerId, leadId),
     loadBestandVisible(customerId).catch(() => false),
+    // Eigene Gesellschaft des Vertreters: dort kein Kündigungshinweis (beim Makler keine)
+    vertriebFuer(customerId)
+      .then(({ vertrieb }) => (vertrieb.rolle === "vertreter" ? vertrieb.gesellschaften : []))
+      .catch(() => [] as string[]),
   ]);
   const vertraege: VertragKarte[] = [];
   const offen: OffeneUnterlage[] = [];
@@ -350,6 +374,7 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
         sparte: a.sparte,
         felder,
         monat: monatsbetrag(felder),
+        status: a.status === "leer" ? "leer" : "ausgelesen",
         geprueft: !!a.geprueftAt,
         uebernommen: !!a.uebernommenAt,
         ausgelesenAt: a.ausgelesenAt?.toISOString() ?? null,
@@ -360,7 +385,8 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
     offen.push({
       documentId: d.id,
       auszugId: a?.id ?? null,
-      titel: sp ? SPARTE_LABEL[sp] : "Unterlage",
+      // Ohne Sparte der Dateiname statt zweimal „Unterlage vom …“ (wie in der Terminvorbereitung)
+      titel: sp ? SPARTE_LABEL[sp] : d.fileName?.trim() || "Unterlage",
       status: a?.status ?? (sperre ? "nicht_ausgelesen" : "neu"),
       sparte: sp,
       datum: d.createdAt.toISOString(),
@@ -374,11 +400,13 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
     zusammenfassung: zusammenfassung(
       vertraege.map((v) => ({ id: v.id, sparte: v.sparte, felder: v.felder, geprueft: v.geprueft })),
       now,
+      { ...unterlagenSparten(docs), ohneKi, eigeneGesellschaften: eigene },
     ),
     // Alle Sparten zur Wahl (Ole, 19.11.2026); noch nicht freigegebene (Gesundheitssparten ohne Nachweis) enden als
     // „gesperrt“ mit Hinweis, statt dass der Vermittler die passende Sparte gar nicht findet
     sparten: alleSparten(),
     bestand,
+    heute: heuteBerlin(now),
   };
 }
 
@@ -394,10 +422,37 @@ export async function vergleichKurz(leadId: string, customerId: string, now = ne
   return {
     vertraege: v.zusammenfassung.vertraege,
     monat: v.zusammenfassung.monatSumme,
-    kuendigungen: v.zusammenfassung.kuendigungen.length,
+    // Verpasste Fristen sind keine Hinweise für diesen Termin (Paket 3)
+    kuendigungen: v.zusammenfassung.kuendigungen.filter((k) => !k.verpasst).length,
     hinweise: v.zusammenfassung.doppelt.length + v.zusammenfassung.bausteine.length,
     offen: v.offen.length,
     ohneKi,
+  };
+}
+
+/** Strecken-Eintrag der Policen-Bitte im Chat (= STRECKE.policenBitte in lib/whatsapp/termin-strecke.ts; hier als Text,
+ *  weil die Dokument-KI nichts aus dem Chat einbindet; Test tests/unit/policen-spickzettel.test.ts hält beide gleich). */
+export const POLICEN_BITTE_KIND = "policen_bitte";
+
+/**
+ * Daten für den Spickzettel in der Terminvorbereitung (components/policen-vergleich-kurz.tsx, Logik in spickzettel.ts):
+ * Vergleich (nur mit Unterlagen), erste Policen-Bitte im Chat (vorhandene Strecken-Einträge, keine neue Spalte) und ob
+ * Policen per WhatsApp eingerichtet ist. Zugriff prüft der Aufrufer; in der Admin-Vorschau nie aufrufen.
+ */
+export async function ladeSpickzettel(leadId: string, customerId: string, now = new Date()) {
+  const { policenAn } = await import("@/lib/policen/server");
+  const [docs, bitte] = await Promise.all([
+    prisma.leadDocument.count({ where: { leadId, customerId, status: "gespeichert" } }),
+    prisma.message.findFirst({
+      where: { direction: "internal", kind: POLICEN_BITTE_KIND, conversation: { leadId, customerId } },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    }),
+  ]);
+  return {
+    v: docs ? await ladeVergleich(leadId, customerId, now) : null,
+    gebetenAm: bitte?.createdAt.toISOString() ?? null,
+    policenAn: policenAn(),
   };
 }
 
@@ -422,6 +477,8 @@ export async function bestaetigeAuszug(w: Wer, id: string, ja: boolean): Promise
   const a = await auszugVon(w, id);
   if (!a) return false;
   await prisma.policenAuszug.update({ where: { id }, data: ja ? { geprueftAt: new Date(), geprueftVonId: w.userId } : { geprueftAt: null, geprueftVonId: null } });
+  // Für „Policen je Berater“ (lib/policen/team-zahlen.ts): geprüft vor dem Termin, bleibt nach dem Löschen der Unterlage
+  if (ja) await audit("policen.auslesen_geprueft", { entity: "Lead", entityId: w.leadId, customerId: w.customerId, details: { auszug: id }, actor: { id: w.userId, role: "BUYER" } });
   return true;
 }
 
@@ -497,8 +554,56 @@ export async function uebernimmInBestand(w: Wer, id: string): Promise<{ existing
   await refreshBestandSummary(ec.id);
   await prisma.policenAuszug.update({ where: { id }, data: { uebernommenAt: new Date(), uebernommenVonId: w.userId, existingContractId: vertrag.id, geprueftAt: a.geprueftAt ?? new Date(), geprueftVonId: a.geprueftVonId ?? w.userId } });
   await audit("policen.auslesen_bestand", { entity: "PolicenAuszug", entityId: id, customerId: w.customerId, details: { leadId: w.leadId, existingContractId: vertrag.id }, actor: { id: w.userId, role: "BUYER" } });
-  await logLeadHistory(w.leadId, "dokument", `${SPARTE_LABEL[a.sparte]} in den Bestand übernommen`, { customerId: w.customerId, userId: w.userId });
+  // Kündigungsfrist (vorsichtig, nur Sach) als Notiz im Verlauf; renewalDate bleibt der Kündigungstermin
+  const fe = KUENDIGUNG_SPARTEN.includes(a.sparte) ? kuendigungsfenster(f, heuteBerlin(new Date())) : null;
+  const frist = fe?.bis ? `, Kündigung bis ${fe.bis.slice(8, 10)}.${fe.bis.slice(5, 7)}.${fe.bis.slice(0, 4)} laut Unterlage` : "";
+  await logLeadHistory(w.leadId, "dokument", `${SPARTE_LABEL[a.sparte]} in den Bestand übernommen${frist}`, { customerId: w.customerId, userId: w.userId });
   return { existingContractId: vertrag.id };
+}
+
+/** Höchstens so viele Verträge je Sammelaktion (Schutz gegen übergroße Listen). */
+const SAMMEL_MAX = 50;
+const sammelIds = (ids: unknown): string[] => (Array.isArray(ids) ? [...new Set(ids.filter((x): x is string => typeof x === "string"))].slice(0, SAMMEL_MAX) : []);
+
+/**
+ * „Alle als geprüft markieren“ (Paket 2): setzt geprueftAt nur für die angezeigten, ausgelesenen, noch ungeprüften
+ * Auszüge dieses Leads (der Vermittler hat sie auf der Seite gesehen). Bei „ohne KI“ werden keine Werte gezeigt, also
+ * auch nichts markiert. Ein Audit-Eintrag für die Sammelaktion.
+ */
+export async function bestaetigeAlle(w: Wer, ids: unknown): Promise<number> {
+  const liste = sammelIds(ids);
+  if (!liste.length || (await kiAbgelehnt(w.leadId).catch(() => true))) return 0;
+  const l = await prisma.policenAuszug.findMany({
+    where: { id: { in: liste }, leadId: w.leadId, customerId: w.customerId, status: "ausgelesen", geprueftAt: null, uebernommenAt: null },
+    select: { id: true },
+  });
+  if (!l.length) return 0;
+  const treffer = l.map((a) => a.id);
+  await prisma.policenAuszug.updateMany({ where: { id: { in: treffer } }, data: { geprueftAt: new Date(), geprueftVonId: w.userId } });
+  await audit("policen.auslesen_geprueft_alle", { entity: "Lead", entityId: w.leadId, customerId: w.customerId, details: { anzahl: treffer.length, auszuege: treffer }, actor: { id: w.userId, role: "BUYER" } });
+  return treffer.length;
+}
+
+/**
+ * „n Verträge in Bestand übernehmen“ (Paket 2, K7): nur mit sichtbarem Bestandsmodul und nur Auszüge, die der Vermittler
+ * schon geprüft hat (geprueftAt gesetzt). Ungeprüfte werden nie übernommen; uebernimmInBestand würde sie sonst still als
+ * geprüft markieren. null: Bestandsmodul nicht sichtbar bzw. „ohne KI“.
+ */
+export async function uebernimmAlle(w: Wer, ids: unknown): Promise<{ uebernommen: number; fehler: number } | null> {
+  const { loadBestandVisible } = await import("@/lib/bestand/sichtbar-server");
+  if (!(await loadBestandVisible(w.customerId))) return null;
+  if (await kiAbgelehnt(w.leadId).catch(() => true)) return null;
+  const liste = sammelIds(ids);
+  if (!liste.length) return { uebernommen: 0, fehler: 0 };
+  const l = await prisma.policenAuszug.findMany({
+    where: { id: { in: liste }, leadId: w.leadId, customerId: w.customerId, status: "ausgelesen", geprueftAt: { not: null }, uebernommenAt: null },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  let uebernommen = 0;
+  for (const a of l) if (await uebernimmInBestand(w, a.id)) uebernommen++;
+  if (uebernommen) await audit("policen.auslesen_bestand_alle", { entity: "Lead", entityId: w.leadId, customerId: w.customerId, details: { anzahl: uebernommen }, actor: { id: w.userId, role: "BUYER" } });
+  return { uebernommen, fehler: l.length - uebernommen };
 }
 
 // ─── Täglich (Cron 03:00 UTC) und Diagnose ──────────────────────────────────

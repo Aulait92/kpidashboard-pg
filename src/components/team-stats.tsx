@@ -8,6 +8,7 @@ import { leadOrigin, LEAD_ORIGIN_SELECT } from "@/lib/lead-herkunft";
 import { memberName, teamMembers } from "@/lib/team";
 import { nextStepRatesByAdvisor } from "@/lib/lead-next-step-server";
 import { NEXT_STEP_WARN_BELOW } from "@/lib/lead-next-step";
+import { policenJeLead, policenZeile } from "@/lib/policen/team-zahlen";
 
 // Auswertung je Team-Mitglied (nur Inhaber, nur wenn es ein Team gibt). Gleiche Logik wie die Karten
 // (Ole, 14.11.2026): Leads und Quoten nur aus bezahlten Leads, Provision über alle Verträge
@@ -21,25 +22,34 @@ export async function TeamStats({ customerId, range, mitBestand = false }: { cus
     prisma.lead.findMany({
       where: { customerId, createdAt: { gte: range.from, lte: range.to } },
       select: {
+        id: true,
         assignedUserId: true,
         status: true,
         reached: true,
         ...LEAD_ORIGIN_SELECT,
         _count: { select: { appointments: true } },
+        // Erster Termin: „Policen vor dem Termin geprüft“ (lib/policen/team-zahlen.ts)
+        appointments: { select: { startsAt: true }, orderBy: { startsAt: "asc" }, take: 1 },
       },
     }),
     // Nächster Schritt je Berater (Stand jetzt, Ziel 100 %)
     nextStepRatesByAdvisor(customerId),
   ]);
-  type Row = { leads: number; reached: number; termine: number; closed: number; umsatz: number; bestand: number; future: number };
-  const empty = (): Row => ({ leads: 0, reached: 0, termine: 0, closed: 0, umsatz: 0, bestand: 0, future: 0 });
+  type Row = { leads: number; reached: number; termine: number; closed: number; umsatz: number; bestand: number; future: number; policen: number; geprueft: number };
+  const empty = (): Row => ({ leads: 0, reached: 0, termine: 0, closed: 0, umsatz: 0, bestand: 0, future: 0, policen: 0, geprueft: 0 });
+  const bezahlt = leads.filter((l) => !l.status?.toLowerCase().startsWith("storno") && leadOrigin(l) === "paid");
+  // Policen je Berater (Großagentur, 20.11.2026): von den Leads mit Termin, wie viele Policen geschickt haben
+  const policen = await policenJeLead(customerId, bezahlt.map((l) => ({ id: l.id, ersterTermin: l.appointments[0]?.startsAt ?? null })), range.from).catch(() => new Map());
   const now = new Date();
   const storno = data.storno ?? STORNO_PRO_JAHR;
   const rows = new Map<string | null, Row>();
-  for (const l of leads) {
-    if (l.status?.toLowerCase().startsWith("storno")) continue;
-    if (leadOrigin(l) !== "paid") continue;
+  for (const l of bezahlt) {
     const r = rows.get(l.assignedUserId) ?? empty();
+    const p = policen.get(l.id);
+    if (p && l._count.appointments > 0) {
+      r.policen++;
+      if (p.geprueftVorTermin) r.geprueft++;
+    }
     r.leads++;
     if (l.reached) r.reached++;
     if (l._count.appointments > 0) r.termine++;
@@ -66,6 +76,8 @@ export async function TeamStats({ customerId, range, mitBestand = false }: { cus
     ...members.map((m) => ({ key: m.id, name: memberName(m), row: rows.get(m.id) })),
     ...(rows.get(null) || steps.get(null) ? [{ key: "none", name: "Nicht zugeteilt", row: rows.get(null) }] : []),
   ];
+  // Spalte bzw. Zeile nur, wenn im Team überhaupt Policen kamen (sonst bleibt die Karte wie sie ist)
+  const mitPolicen = policen.size > 0;
   const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)} %` : "keine Angabe");
   const makler = data.typ === "makler";
 
@@ -92,6 +104,9 @@ export async function TeamStats({ customerId, range, mitBestand = false }: { cus
                 {r.closed === 1 ? "Abschluss" : "Abschlüsse"}
                 {r.leads > 0 ? ` (${pct(r.closed, r.leads)})` : ""}
               </div>
+              {mitPolicen && r.termine > 0 ? (
+                <div className="mt-0.5 text-sm tabular-nums text-[color:var(--muted)]" title="Leads mit Termin, die Policen geschickt haben; geprüft = vor dem Termin">Policen: {policenZeile({ geschickt: r.policen, termine: r.termine, geprueft: r.geprueft })}</div>
+              ) : null}
               {warn ? (
                 <div className="mt-0.5 text-sm font-semibold text-rose-600">
                   {st!.withoutNextStep} {st!.withoutNextStep === 1 ? "offener Lead" : "offene Leads"} ohne nächsten Schritt
@@ -115,6 +130,11 @@ export async function TeamStats({ customerId, range, mitBestand = false }: { cus
               <th className="px-3 py-2.5 text-right">Termine</th>
               <th className="px-3 py-2.5 text-right">Abschlüsse</th>
               <th className="px-3 py-2.5 text-right">Quote</th>
+              {mitPolicen ? (
+                <th className="px-3 py-2.5 text-right" title="Leads mit Termin, die Policen geschickt haben; darunter: davon vor dem Termin geprüft">
+                  Policen
+                </th>
+              ) : null}
               <th className="px-3 py-2.5 text-right" title="Offene Leads mit Termin, Wiedervorlage oder laufendem Gespräch, Stand jetzt. Ziel 100 %">
                 Nächster Schritt
               </th>
@@ -139,12 +159,18 @@ export async function TeamStats({ customerId, range, mitBestand = false }: { cus
                 <tr key={key}>
                   <td className="px-5 py-2.5 font-medium">{name}</td>
                   <td className="px-3 py-2.5 text-right">{formatNumber(r.leads)}</td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="whitespace-nowrap px-3 py-2.5 text-right">
                     {formatNumber(r.reached)} <span className="text-[color:var(--muted)]">({pct(r.reached, r.leads)})</span>
                   </td>
                   <td className="px-3 py-2.5 text-right">{formatNumber(r.termine)}</td>
                   <td className="px-3 py-2.5 text-right">{formatNumber(r.closed)}</td>
                   <td className="px-3 py-2.5 text-right">{pct(r.closed, r.leads)}</td>
+                  {mitPolicen ? (
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                      {r.policen} von {r.termine}
+                      {r.policen > 0 ? <span className="block text-xs text-[color:var(--muted)]">{r.geprueft} geprüft</span> : null}
+                    </td>
+                  ) : null}
                   <td className={`px-3 py-2.5 text-right ${st?.rate != null && st.rate < NEXT_STEP_WARN_BELOW ? "font-semibold text-rose-600" : ""}`}>
                     {st?.rate != null ? `${Math.round(st.rate * 100)} %` : "keine Angabe"}
                     {st && st.withoutNextStep > 0 ? <span className="block text-xs font-normal text-[color:var(--muted)]">{st.withoutNextStep} ohne</span> : null}
