@@ -30,7 +30,7 @@ import {
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
 import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
-import { ersteWocheAus, ersteWocheBetrag, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
+import { ersteWocheAus, ersteWocheBetrag, ersteWocheName, ersteWocheSteuerKurz, ersteWocheZahlen, eurCent, ERSTE_WOCHE_ABBUCHUNG } from "@/lib/ppl/erste-woche-shared";
 import { bruttoJeLead } from "@/lib/ppl/steuer";
 import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 
@@ -251,6 +251,13 @@ export function OfferDocument({
   const add = offerAddOns(offer);
   // Vor der Annahme: Laufzeit/Start wählt der Kunde unten selbst (Werte hier = Vorschlag).
   const open = offer.status === "draft" || offer.status === "sent";
+  // Erste Woche (Pay-per-Lead + Software mit Lead-Produkt): Menge, Preis je Lead, Summe, Steuer
+  const ersteW = ppl ? ersteWocheAus(offer) : null;
+  const woche = ersteW ? ersteWocheZahlen(ersteW) : null;
+  const wocheSub =
+    ersteW && woche
+      ? `${ersteW.quantity} Leads ${ersteWocheName(ersteW)} à ${eurCent(woche.jeLead)}, ${woche.steuer === "steuerfrei_4_11" ? "umsatzsteuerfrei für geprüfte Vermittler" : ersteWocheSteuerKurz(woche.steuer)} · ${open ? "Anzahl wählen Sie bei der Annahme" : "keine Einrichtungsgebühr"}`
+      : "";
   const termOpen = open && !!offer.customerChoosesTerm;
   const startOpen = open && !!offer.customerChoosesStart;
   const produkteOpen = open && !!offer.customerChoosesProducts;
@@ -331,7 +338,10 @@ export function OfferDocument({
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-6 border-y border-white/15 py-6 sm:grid-cols-3 print:grid-cols-3">
-            {ppl && offer.setupFee === 0 ? (
+            {ppl && offer.setupFee === 0 && woche ? (
+              // Faire Anzeige (Ole, 20.11.2026): Leadkosten der ersten Woche statt „0 € Einrichtung“
+              <Stat k="Erste Woche" v={eurCent(woche.summe)} sub={wocheSub} />
+            ) : ppl && offer.setupFee === 0 ? (
               <Stat k="Einrichtung" v={eur(0)} sub="keine Einrichtungsgebühr" />
             ) : (
               <Stat
@@ -898,6 +908,18 @@ function ErsteWocheNote({ offer }: { offer: OfferDoc }) {
   );
 }
 
+/** Satz unter „Bei Annahme fällig“: Leads der ersten Woche (eigene Rechnung, Abbuchung nach der Registerprüfung). */
+function ErsteWocheFaelligSatz({ offer }: { offer: OfferDoc }) {
+  const w = ersteWocheAus(offer);
+  if (!w) return null;
+  const z = ersteWocheZahlen(w);
+  return (
+    <span data-offer-erste-woche-faellig>
+      {` Leads der ersten Woche: ${eurCent(z.summe)} (${w.quantity} Leads, ${ersteWocheSteuerKurz(z.steuer)}), eigene Rechnung, ${ERSTE_WOCHE_ABBUCHUNG}.`}
+    </span>
+  );
+}
+
 /**
  * Inhalt „Pay-per-Lead + Software“ (Ole, 19.11.2026): Software ohne Betreuung und ohne eigene Kampagnen, keine Einrichtung,
  * kein Werbebudget, keine Garantien; Leads separat per Stück nach den Pay-per-Lead-Bedingungen. Keine Gedankenstriche.
@@ -1063,6 +1085,7 @@ function PplSoftwareBody({
               ? `Die erste Monatsgebühr (${eur(firstMonth)} netto, ${eur(withVat(firstMonth))} brutto) wird nachträglich ${ersteText} fällig.`
               : `Erste Monatsgebühr (${eur(firstMonth)} netto, ${eur(withVat(firstMonth))} brutto)${plan && billingDiffers ? ` am ${plan.firstIso.split("-").reverse().join(".")}` : offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}.`}
             {startOpen ? " Der Start richtet sich nach Ihrer Wahl bei der Annahme." : ""}
+            <ErsteWocheFaelligSatz offer={offer} />
           </Note>
         </Tr>
       </Table>

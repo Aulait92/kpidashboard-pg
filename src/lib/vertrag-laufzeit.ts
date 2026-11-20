@@ -9,6 +9,7 @@
 
 import { eur, prepayMonthsFor, prepayPossible, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
+import { ersteWocheVertragszeile, type ErsteWocheWahl } from "@/lib/ppl/erste-woche-shared";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const iso = (y: number, m: number, d: number) => {
@@ -155,7 +156,12 @@ export type ContractSummaryInput = {
   paymentInArrears?: boolean;
   /** Paket des Angebots (Offer.package); „ppl_software“ = Pay-per-Lead + Software: Paketzeile und Hinweis zu den Leads. */
   paket?: string | null;
+  /** Erste Woche (nur Pay-per-Lead + Software mit Lead-Produkt): Produkt, Preis netto, Anzahl, jede Woche wiederholen. */
+  ersteWoche?: ErsteWocheWahl | null;
 };
+
+/** Schlusssatz der Zusammenfassung; Pay-per-Lead + Software: Steuer der Software, Leads stehen mit eigener Steuer davor. */
+export const KUENDIGUNG_SATZ = "Kündigen können Sie jederzeit im Kundenbereich unter Konto & Rechnungen oder in Textform.";
 
 /** Hinweis im Angebot, in der Annahme und in der Auftragsbestätigung: Leads gehören nicht zur Monatsgebühr. */
 export const PPL_LEADS_SEPARAT =
@@ -369,7 +375,9 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     const end = billIso ? periodEndIso(billIso, months) : null;
     lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach kündbar zum Ende des jeweiligen Abrechnungsmonats.`);
   }
+  if (ppl && i.ersteWoche) lines.push(ersteWocheVertragszeile(i.ersteWoche));
   if (ppl) lines.push(PPL_LEADS_SEPARAT);
-  lines.push("Kündigen können Sie jederzeit im Kundenbereich unter Konto & Rechnungen oder in Textform. Alle Preise zzgl. 19 % USt.");
+  // Pay-per-Lead + Software: 19 % gelten für die Software; die Steuer der Leads steht an der ersten Woche bzw. an der Bestellung
+  lines.push(`${KUENDIGUNG_SATZ} ${ppl ? "Preise der Software zzgl. 19 % USt." : "Alle Preise zzgl. 19 % USt."}`);
   return lines;
 }
