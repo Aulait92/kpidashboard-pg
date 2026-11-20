@@ -545,6 +545,10 @@ export function IcsForm({ action, readOnly, hidden }: { action: FormAction; read
           Den <b>ICS-Link</b> kopieren und hier einfügen.
         </li>
       </ol>
+      {/* Ole, 20.11.2026: bei Allianz fehlt „Freigegebene Kalender“ (Veröffentlichen von der IT gesperrt) */}
+      <p className="text-sm text-[color:var(--muted)]">
+        Fehlt „Freigegebene Kalender“ (bei Allianz oft gesperrt)? Dann den <b>Allianz-Online-Kalender</b> verbinden oder feste Beratungszeiten eintragen.
+      </p>
       <input name="icsUrl" className={input} placeholder="https://outlook.office365.com/owa/calendar/…/calendar.ics" autoComplete="off" />
       <p className="text-sm text-[color:var(--muted)]">Wir sehen damit nur, wann Sie belegt sind, keine Inhalte.</p>
       <div className="flex flex-wrap items-center gap-3">
