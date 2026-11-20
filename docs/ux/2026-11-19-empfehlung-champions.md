@@ -235,3 +235,64 @@ unten zusammengefasst.
 - **Kosten:** 2 bis 3 Arbeitstage Agentenzeit, keine externen Kosten.
 - **Stufe:** Umbau C (Branch, Modul aus). Einwilligungstext und Ansprache B (Recht intern, erledigt in diesem Plan).
   Einschalten, Preis für Agenturen, Dankeschön: A (Ole).
+
+## 11. Ergebnis (Abnahme 20.11.2026)
+
+Branch `empfehlung-champions`, Modul bleibt ausgeblendet (`EMPFEHLUNG_MODULE_AVAILABLE = false`), bis Ole einschaltet (Stufe A).
+Alle Zahlen beruhen auf Demo-Daten, nicht auf Live-Zahlen.
+
+**SUS-Verlauf (UX-Messung):** 58 (vorher) → 82 (nach Paket 2) → 88 (nach Paket 3) → 91 (nach UX-Prüfung, Commit 46b9215).
+
+**Persona-Abnahme (unabhängig, Screenshots runde-2/runde-3):** geschätzt SUS 84 (Spanne 78 bis 88), also noch unter 90.
+Empfehlung: noch nicht als „Champions League“ abnehmen, ausgeschaltet lassen ist richtig.
+
+| Persona | Umsatz bzw. Absenden | Einfach | Kernaussage |
+|---|---|---|---|
+| Allianz-Vertreter (Handy) | 6/10 | 8/10 | Heute-Liste täglich nutzbar; bremst: nur mit WhatsApp, nachträgliches „Kunde hat zugestimmt“ fühlt sich falsch an |
+| Makler | 7/10 | 7/10 | Einzelversand gut; fehlt: Textvorschau vor „Link senden“, Google-Sterne auf der Kontaktseite |
+| Großagentur | 5/10 | 7/10 | Übersichtlich; fehlt: Zahlen je Berater, Zuordnung, Paketpreis |
+| Lead A (will schnell Preis) | 7/10 | 8/10 | Zwei Felder schnell; fehlt: „Wann passt es?“ (optional) |
+| Lead B (skeptisch) | 5/10 | 7/10 | Häkchen „ob ich Kunde wurde“ wirkt wie Überwachung; Teilen-Text wirkt wie Werbung |
+
+**Gelungen, so lassen:** drei Reiter, Wert-Zeile mit „geschätzt“ und Grundlage, ein Hauptknopf in „Heute fragen“,
+Auswertung eingeklappt, Startliste statt Nullkacheln, Teilen-Reiter mit QR und Signatur eingeklappt, Du/Sie stimmig,
+keine Gedankenstriche in den geprüften Texten.
+
+**Offene Hindernisse vor dem Einschalten (aus der Persona-Abnahme):**
+1. Kontakt-Karte und Häkchen beim Abschluss im Lead-Detail nicht per Screenshot belegt (Dev-Server war weg): neu aufnehmen.
+2. „Zustimmung fehlt“: nachträgliches Abhaken für ältere Abschlüsse nicht anbieten, stattdessen „Im Termin zeigen (QR)“
+   bzw. Aufgabe „Beim nächsten Gespräch fragen“; Häkchen nur mit Datum und Wortlaut; Liste eingeklappt.
+3. „Dieser Link ist nicht mehr aktiv“ ohne nächste Handlung (Rückruf anfordern bzw. WhatsApp ergänzen); Fuß dort
+   „Impressum“ statt „Anbieterangaben (Erstinformation)“.
+4. Fehler „Bitte prüf deine Handynummer“ direkt am Feld mit roter Umrandung; Beschriftungen einheitlich.
+5. statusConsent-Häkchen auf die Erfolgsseite verschieben, im Satz am Knopf nur den gewählten Kanal nennen, doppelten
+   Datenschutz-Link entfernen.
+6. Teilen-Text kürzer und persönlicher (Vorname des Vermittlers, Link ohne sichtbares `?an=du`); allgemeine QR-Seite
+   nicht mit „Vielen Dank!“ titeln.
+7. `p-teilen-390.png` ohne CSS neu aufnehmen (vermutlich Dev-Server-Fehler).
+8. Heute-Liste: konkretere Gründe, Euro-Wert je Zeile, Textvorschau vor „Link senden“.
+9. Begriffe in der Auswertung nach Abschnitt 4 vereinheitlichen.
+10. Großagentur: Berater-Sicht und Agenturpreis (später, Abschnitt 6).
+11. Allianz-Vertreter: Nutzung von WhatsApp Business durch Ausschließlichkeitsvertreter von Recht/Datenschutz prüfen;
+    „Im Termin zeigen (QR)“ und „Link kopieren“ als gleichwertige Wege mit eigener Zählung.
+12. Handy: Speichern-Knopf in den Einstellungen verdeckt Inhalt, Schritt 3 der Startliste hinter der unteren Leiste.
+
+**Rechtsprüfung (intern, Commit 32bf9f3): Ampel GRÜN**, keine roten Risiken, alle 13 Pflichtangaben erhalten.
+Behoben: Einwilligungssatz steht über „Rückruf anfordern“; Gating-Erkennung auch in Du-Form; Dank und Rückmeldung
+beachten STOPP und Sperre des verknüpften Bestandskunden. Details in `docs/recht/empfehlungsmodul-2026-11-19.md`.
+Gelb (Entscheidung beim Einschalten): Zweig `nurFenster` in `sendReferralLinkNow` (Link ohne Einwilligung im
+24-h-Fenster) durch „Kunde hat zugestimmt, jetzt senden“ ersetzen; Beweislast bei der Ein-Tipp-Bestätigung in AGB/Hilfe
+aufnehmen; STOPP auch in Dank ohne Link und Rückmeldung bei der Neueinreichung der Vorlagen.
+
+**Beim Einschalten vormerken (Stufe A, Ole):** ProductUpdate-Migration (neu, software) und Eintrag in
+`docs/webseite-offen.md`; Meta-Vorlagen review_request, referral_request, referral_thanks, referral_update neu
+einreichen (mit STOPP, Du-Fassungen); AGB-Testphase, AVV, Löschfrist 12 Monate; `docs/hilfe.md` und
+`docs/empfehlungen-modul.md` anpassen; Erklärvideos mit `tools/erklaervideos/betroffen.py` prüfen; Paketpreis für
+Agenturen. Bestand-Team: Kampagne „Jährliche Empfehlungsbitte“ an dieselbe Einwilligung und Obergrenze
+(3 Bitten je 365 Tage, `referralAskCheck`/`recordReferralAsk`) binden.
+
+**Prüfungen:** `npx tsc --noEmit` ohne Fehler, `npx eslint src tests --quiet` ohne Fehler, `npx vitest run tests/unit`
+grün (der vorher fehlschlagende Test `reschedule-notice.test.ts` lief ohne Datenbank; er hat jetzt eine Prisma-Attrappe).
+
+**Vorschlag für `docs/firma/offene-aufgaben.md`:** „Empfehlungsmodul: Kontakt-Karte und Einwilligung beim Abschluss
+erneut mit Screenshots abnehmen, Hindernisse 1 bis 4 beheben, SUS neu messen.“

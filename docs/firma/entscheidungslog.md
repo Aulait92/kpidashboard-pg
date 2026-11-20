@@ -4,6 +4,11 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 
 ## 19.11.2026
 
+- **Empfehlungsmodul überarbeitet, bleibt ausgeblendet bis Ole einschaltet** (C, Führungsteam/CPO; Einschalten A, Ole).
+  Umbau auf Branch `empfehlung-champions`: Einwilligung beim Abschluss, Obergrenze 3 Bitten je 365 Tage, Arbeitsliste
+  „Heute fragen“, öffentliche Seiten in Du und Sie. SUS 58 → 91 (UX-Messung), Persona-Abnahme 84; Rechtsprüfung grün mit
+  gelben Punkten. Vor dem Einschalten Hindernisse 1 bis 4 beheben und Screenshots nachholen.
+  Quelle: `docs/ux/2026-11-19-empfehlung-champions.md` (Abschnitt 11), `docs/recht/empfehlungsmodul-2026-11-19.md`.
 - **Führungsteam Phase 1 mit 19 Agenten** (A, Ole). Content & Brand, Partnerships, Investor Relations später.
   Alle Meetings laufen von Anfang an; an Agentenkosten wird nicht gespart.
 - **Fokus zwei Wochen:** Abschlüsse mit Vorauszahlung, Umsatzsteuer klären, neue Kunden sauber live bringen.
