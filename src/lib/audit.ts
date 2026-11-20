@@ -197,6 +197,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "viren.befund": "Virenprüfung: Datei abgelehnt und verworfen",
   "viren.ungeprueft_hinweis": "Virenprüfung nicht möglich: Dateien ungeprüft angenommen (Hinweis an die Admins)",
   "loeschprotokoll.angewendet": "Löschprotokoll nach einer Wiederherstellung erneut angewendet",
+  "einrichtung.abgehakt": "Einrichtungsschritt für den Kunden abgehakt",
+  "einrichtung.zurueckgesetzt": "Einrichtungsschritt für den Kunden zurückgesetzt",
 };
 
 export async function audit(

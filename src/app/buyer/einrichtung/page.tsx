@@ -7,7 +7,7 @@ import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
+import { customerSetupProgress, loadOnboarding, onboardingChecklist, vonUnsAbgehakt } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
 import { HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits, WeiterButton } from "./forms";
 import { SoArbeitet } from "@/components/so-arbeitet";
@@ -83,7 +83,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const video = (k: SetupStepKey) => settings.videos[k] ?? null;
   const readOnly = ctx.preview;
   const newUi = await isNewUi(ctx.customerId);
-  const provision = await loadCustomerProvision(ctx.customerId);
+  const provisionGeladen = await loadCustomerProvision(ctx.customerId);
+  // Von uns abgehakt (Kundenakte) zählt wie hinterlegt
+  const provision = { ...provisionGeladen, confirmed: provisionGeladen.confirmed || vonUnsAbgehakt(ob.stepSkips, "provision") };
   const appDone = await appInstalled(ctx.customerId);
   // Eine Zählung wie auf der Startseite und im Menü: nur Schritte, die der Kunde selbst erledigt
   const progress = customerSetupProgress(items, { appDone, provisionDone: provision.confirmed });

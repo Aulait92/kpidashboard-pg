@@ -6,8 +6,10 @@ import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 import { endPauseNow, planPause } from "@/lib/pause";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { MANUAL_FIELDS, openSetupForExisting, restartSetup, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
+import { ADMIN_ABGEHAKT, MANUAL_FIELDS, NICHT_ABHAKBAR, openSetupForExisting, vonUnsAbgehakt, restartSetup, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
 import { logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
+import { audit } from "@/lib/audit";
+import type { Prisma } from "@/generated/prisma/client";
 
 function refresh(contactId?: string | null) {
   revalidatePath("/admin/neu/vertrieb", "layout");
@@ -59,6 +61,40 @@ export async function toggleOnboardingStepAction(fd: FormData) {
   if (!ob) return;
   const value = ob[field] ? null : new Date();
   await prisma.onboarding.update({ where: { id }, data: { [field]: value } });
+  refresh(ob.salesContactId);
+}
+
+/**
+ * Kundenakte (Ole, 20.11.2026): jeden Einrichtungsschritt für den Kunden abhaken bzw. zurücksetzen. Schritte mit
+ * eigenem Datumsfeld (Meta, Einwilligung, Testlead …) setzen das Feld, die App den Überspringen-Zeitpunkt, alle
+ * anderen einen Eintrag „admin“ in stepSkips. Zurücksetzen nimmt nur unseren Haken weg, nie echte Daten.
+ */
+export async function abhakenFuerKundeAction(fd: FormData) {
+  await requireAuth();
+  const customerId = String(fd.get("customerId") ?? "");
+  const step = String(fd.get("step") ?? "");
+  if (!customerId || !step || (NICHT_ABHAKBAR as readonly string[]).includes(step)) return;
+  const ob = await prisma.onboarding.findUnique({ where: { customerId }, select: { id: true, salesContactId: true, appSkippedAt: true, stepSkips: true } });
+  if (!ob) return;
+  const field = MANUAL_FIELDS[step as keyof typeof MANUAL_FIELDS];
+  let erledigt: boolean;
+  if (field) {
+    const row = await prisma.onboarding.findUnique({ where: { id: ob.id }, select: { [field]: true } as Record<string, true> });
+    erledigt = !(row as Record<string, unknown> | null)?.[field];
+    await prisma.onboarding.update({ where: { id: ob.id }, data: { [field]: erledigt ? new Date() : null } });
+  } else if (step === "app") {
+    erledigt = !ob.appSkippedAt;
+    await prisma.onboarding.update({ where: { id: ob.id }, data: { appSkippedAt: erledigt ? new Date() : null } });
+  } else {
+    const skips = { ...((ob.stepSkips && typeof ob.stepSkips === "object" ? ob.stepSkips : {}) as Record<string, unknown>) };
+    erledigt = !vonUnsAbgehakt(skips, step);
+    if (erledigt) skips[step] = { at: new Date().toISOString(), reason: ADMIN_ABGEHAKT };
+    else delete skips[step];
+    await prisma.onboarding.update({ where: { id: ob.id }, data: { stepSkips: skips as Prisma.InputJsonValue } });
+  }
+  await audit(erledigt ? "einrichtung.abgehakt" : "einrichtung.zurueckgesetzt", { entity: "Customer", entityId: customerId, customerId, details: { step } });
+  revalidatePath(`/admin/neu/kunden/${customerId}`);
+  revalidatePath("/buyer", "layout");
   refresh(ob.salesContactId);
 }
 

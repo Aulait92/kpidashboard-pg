@@ -19,7 +19,7 @@ import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { customerGreeting, logOfferActivity } from "@/lib/offer-links";
-import { loadOnboarding, onboardingChecklist, sendWelcome, type ChecklistItem, type OnboardingFull } from "@/lib/onboarding";
+import { loadOnboarding, onboardingChecklist, sendWelcome, vonUnsAbgehakt, type ChecklistItem, type OnboardingFull } from "@/lib/onboarding";
 import { loadCustomerProvision } from "@/lib/provision-server";
 
 const GRAPH = "https://graph.facebook.com/v22.0";
@@ -529,7 +529,10 @@ export async function loadSetupOverview(customerId: string) {
   if (!ob) return null;
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } }) : null;
   const items = onboardingChecklist(ob, offer);
-  const [appDone, provisionDone] = await Promise.all([appInstalled(customerId), loadCustomerProvision(customerId).then((p) => p.confirmed)]);
+  const [appDone, provisionDone] = await Promise.all([
+    appInstalled(customerId),
+    loadCustomerProvision(customerId).then((p) => p.confirmed || vonUnsAbgehakt(ob.stepSkips, "provision")),
+  ]);
   const steps = setupSteps(ob, items, { appDone, provisionDone });
   const days = Math.floor((Date.now() - setupBase(ob).getTime()) / DAY);
   return { ob, items, steps, progress: setupProgress(steps), days };

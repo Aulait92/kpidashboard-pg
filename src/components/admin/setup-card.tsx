@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, Circle, XCircle } from "lucide-react";
-import { adminCheckMetaAction, openSetupAction, restartSetupAction, sendSetupReminderAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
+import { abhakenFuerKundeAction, adminCheckMetaAction, openSetupAction, restartSetupAction, sendSetupReminderAction } from "@/app/admin/vertrieb/onboarding-actions";
+import { MANUAL_FIELDS, vonUnsAbgehakt } from "@/lib/onboarding";
 import { REMINDER_DAYS, loadSetupOverview, type MetaCheck } from "@/lib/selbst-einrichtung";
 import { consentTextFor } from "@/lib/einwilligung-leadformular-server";
 import { loadErstinfo } from "@/lib/erstinformation";
@@ -40,7 +41,6 @@ export async function SetupCard({ customerId, notice }: { customerId: string; no
   const { ob, steps, progress, days } = o;
   const meta = (ob.metaCheck ?? null) as MetaCheck | null;
   const sent = (ob.setupReminders && typeof ob.setupReminders === "object" ? ob.setupReminders : {}) as Record<string, string>;
-  const manual: Record<string, string> = { metaAccess: "metaAccess", consent: "consent", testLead: "testLead" };
   const [consent, erstinfo] = await Promise.all([consentTextFor(customerId).catch(() => null), loadErstinfo(customerId).catch(() => null)]);
   return (
     <section className="card" data-setup-card>
@@ -48,34 +48,55 @@ export async function SetupCard({ customerId, notice }: { customerId: string; no
         <div>
           <h2 className="font-medium">Selbst-Einrichtung</h2>
           <p className="text-xs text-slate-500">
-            {ob.liveAt ? "Live" : `Tag ${days} seit Start der Einrichtung`} · {progress.done} von {progress.total} erledigt
+            {ob.liveAt ? "Live" : `Tag ${days} seit Start der Einrichtung`} · {progress.done} von {progress.total} erledigt · Schritt antippen zum Abhaken
           </p>
         </div>
         <span className={`badge ${progress.open.length ? "bg-sky-50 text-sky-700" : "bg-emerald-100 text-emerald-800"}`}>{progress.percent} %</span>
       </div>
       {notice ? <p className="border-b border-slate-100 bg-slate-50 px-4 py-2 text-sm">{NOTICE[notice] ?? notice}</p> : null}
-      <ul className="divide-y divide-slate-100 px-4 py-2 text-sm">
-        {steps.map((s) => (
-          <li key={s.key} className="flex items-center gap-2 py-2">
-            {manual[s.key] ? (
-              <form action={toggleOnboardingStepAction}>
-                <input type="hidden" name="id" value={ob.id} />
-                <input type="hidden" name="step" value={manual[s.key]} />
-                <button title={s.done ? "Zurücksetzen" : "Als erledigt markieren"} className="flex">
-                  {s.done ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <Circle className="h-5 w-5 text-slate-300 hover:text-emerald-600" />}
-                </button>
-              </form>
-            ) : s.done ? (
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
-            ) : (
-              <Circle className="h-5 w-5 shrink-0 text-slate-300" />
-            )}
-            <span className={s.done ? "text-slate-500" : "text-slate-900"}>{s.label}</span>
-            {!s.done ? (
-              <span className={`badge ml-auto ${s.owner === "kunde" ? "bg-sky-50 text-sky-700" : "bg-amber-50 text-amber-800"}`}>{s.owner === "kunde" ? "Kunde" : "Du"}</span>
-            ) : null}
-          </li>
-        ))}
+      <ul className="divide-y divide-slate-100 px-2 py-1 text-sm">
+        {steps.map((s) => {
+          // Abhaken für den Kunden (Ole, 20.11.2026): jeder offene Schritt; erledigte nur, wenn wir sie abgehakt haben
+          const vonUns = s.key in MANUAL_FIELDS || (s.key === "app" && !!ob.appSkippedAt) || vonUnsAbgehakt(ob.stepSkips, s.key);
+          const klickbar = !s.done || vonUns;
+          const inhalt = (
+            <>
+              {s.done ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" /> : <Circle className="h-5 w-5 shrink-0 text-slate-300 group-hover:text-emerald-600" />}
+              <span className={s.done ? "text-slate-500" : "text-slate-900"}>{s.label}</span>
+              <span className="ml-auto flex items-center gap-2">
+                {klickbar ? (
+                  <span className="hidden text-xs text-slate-500 group-hover:inline group-focus-visible:inline">{s.done ? "Zurücksetzen" : "Abhaken"}</span>
+                ) : null}
+                {s.done && (vonUnsAbgehakt(ob.stepSkips, s.key) || (s.key === "app" && !!ob.appSkippedAt)) ? (
+                  <span className="text-xs text-slate-400 group-hover:hidden">von uns</span>
+                ) : null}
+                {!s.done ? (
+                  <span className={`badge ${s.owner === "kunde" ? "bg-sky-50 text-sky-700" : "bg-amber-50 text-amber-800"}`}>{s.owner === "kunde" ? "Kunde" : "Du"}</span>
+                ) : null}
+              </span>
+            </>
+          );
+          return (
+            <li key={s.key} data-setup-step={s.key}>
+              {klickbar ? (
+                <form action={abhakenFuerKundeAction}>
+                  <input type="hidden" name="customerId" value={customerId} />
+                  <input type="hidden" name="step" value={s.key} />
+                  <button
+                    title={s.done ? "Haken zurücksetzen" : "Für den Kunden als erledigt markieren"}
+                    className="group flex min-h-11 w-full items-center gap-2 rounded px-2 py-2 text-left hover:bg-slate-50"
+                  >
+                    {inhalt}
+                  </button>
+                </form>
+              ) : (
+                <div className="flex min-h-11 items-center gap-2 px-2 py-2" title="Vom Kunden erledigt">
+                  {inhalt}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
       {consent ? (
         <div className="border-t border-slate-100 px-4 py-3 text-sm" data-admin-einwilligung>
