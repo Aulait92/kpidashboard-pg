@@ -18,7 +18,9 @@ import { checkMetaAccess, recheckOpenMetaAccess, runSetupReminders, stuckSetups 
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const DAY = 86400000;
-let graphMode: "ok" | "noAds" = "ok";
+let graphMode: "ok" | "noAds" | "zuweisen" = "ok";
+/** Modus „zuweisen“: Werbekonto freigegeben, aber erst nach der Zuweisung an den System-User lesbar */
+let zugewiesen: string[] = [];
 const PIXEL = "998877665544";
 /** Datensatz: freigegeben, im Werbekonto aber nicht freigegeben, keiner vorhanden */
 let datasetMode: "ok" | "notShared" | "none" = "ok";
@@ -32,8 +34,14 @@ function fakeGraph(url: string): Response {
       ? json({ id: PIXEL, name: "Pixel Muster" })
       : json({ error: { message: `Unsupported get request. Object with ID '${PIXEL}' does not exist, cannot be loaded due to missing permissions, or does not support this operation.`, code: 100 } }, 400);
   }
+  if (u.pathname.endsWith("/me")) return json({ id: "111222333" });
+  if (u.pathname.endsWith("/assigned_users")) {
+    if (graphMode !== "zuweisen") return json({ error: { message: "(#200) Permissions error" } }, 400);
+    zugewiesen.push(u.pathname.split("/").slice(-2)[0]);
+    return json({ success: true });
+  }
   if (u.pathname.includes("/act_")) {
-    return graphMode === "ok"
+    return graphMode === "ok" || (graphMode === "zuweisen" && zugewiesen.some((z) => z.startsWith("act_")))
       ? json({ name: "Werbekonto Muster", currency: "EUR", account_status: 1 })
       : json({ error: { message: "(#200) Ad account owner has NOT grant ads_management or ads_read permission" } }, 400);
   }
@@ -73,6 +81,7 @@ describe("Selbst-Einrichtung", () => {
     sent.buyer = [];
     graphMode = "ok";
     datasetMode = "ok";
+    zugewiesen = [];
   });
 
   it("Zugriff da: grün, Schritt erledigt, IDs in der Kundenakte, Push an Admins", async () => {
@@ -102,6 +111,15 @@ describe("Selbst-Einrichtung", () => {
     expect(ob.metaAccessAt).toBeNull();
     expect(ob.metaCheck).not.toBeNull();
     expect((await prisma.customer.findUniqueOrThrow({ where: { id: customerId } })).metaAdAccountId).toBe("123456789012");
+  });
+
+  it("Freigabe da, aber nicht dem System-User zugewiesen: wir weisen selbst zu, Prüfung grün", async () => {
+    graphMode = "zuweisen";
+    const { customerId } = await setup(0);
+    const r = await checkMetaAccess(customerId, { adAccount: "act_123456789012", page: "556677889900" });
+    expect(zugewiesen).toEqual(["act_123456789012"]);
+    expect(r.ok && r.check.adAccount.ok).toBe(true);
+    expect(r.ok && r.check.ok).toBe(true);
   });
 
   it("Datensatz freigegeben: in der Prüfung grün und als Dataset (automatisch) gemerkt", async () => {

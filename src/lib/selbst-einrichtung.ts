@@ -277,6 +277,35 @@ export function explainMetaError(kind: "adAccount" | "page" | "leads" | "dataset
   return "Zugriff auf die Leads der Seite fehlt noch. Bitte bei der Seite auch „Leads“ bzw. volle Kontrolle für unser Business freigeben (Business Manager → Integrationen → Leadzugriff).";
 }
 
+/** Aufgaben je Objekt, mit denen wir unserem System-User Werbekonto bzw. Seite zuweisen (erst voll, dann das Nötigste). */
+const ZUWEISUNG_AUFGABEN = {
+  ad: [["MANAGE", "ADVERTISE", "ANALYZE"], ["ADVERTISE", "ANALYZE"]],
+  page: [["MANAGE", "CREATE_CONTENT", "MODERATE", "ADVERTISE", "ANALYZE"], ["CREATE_CONTENT", "MODERATE", "ADVERTISE", "ANALYZE"]],
+} as const;
+
+/**
+ * Vom Kunden für unser Business freigegebenes Werbekonto bzw. Seite unserem System-User zuweisen (Ole, 20.11.2026:
+ * bisher von Hand im Business Manager, ohne das sieht der Token die Freigabe nicht).
+ * POST /{objekt}/assigned_users { user: <System-User aus /me>, tasks, business }. Fehler sind still (Freigabe fehlt
+ * dann meist noch), echte Fehler landen im Monitoring.
+ */
+async function systemUserZuweisen(objekt: string, art: "ad" | "page", t: string): Promise<boolean> {
+  const me = await graph<{ id?: string }>("me", { fields: "id" }, t);
+  if (!me.ok || !me.data.id) return false;
+  const { businessId } = await loadSetupSettings();
+  let letzterFehler = "";
+  for (const tasks of ZUWEISUNG_AUFGABEN[art]) {
+    const r = await graph(`${objekt}/assigned_users`, { user: me.data.id, tasks: JSON.stringify(tasks), business: businessId }, t, "POST");
+    if (r.ok) return true;
+    letzterFehler = r.error;
+  }
+  // „nicht freigegeben“ ist der Normalfall vor der Freigabe; alles andere wollen wir sehen
+  if (letzterFehler && !/permission|does not exist|not authorized|unsupported|\(#(10|100|200)\)/i.test(letzterFehler)) {
+    reportError(new Error(`Meta System-User zuweisen (${art}): ${letzterFehler.slice(0, 200)}`), "setup-meta-assign");
+  }
+  return false;
+}
+
 /**
  * Zugriff prüfen und speichern: Werbekonto lesbar, Seite mit Seiten-Token, Leadformulare lesbar.
  * Grün → Schritt „Meta freigeben“ erledigt, Werte in die Kundenakte, Push an Admins.
@@ -309,7 +338,9 @@ export async function checkMetaAccess(
   };
 
   if (accountId) {
-    const r = await checkAdAccountAccess(accountId);
+    let r = await checkAdAccountAccess(accountId);
+    // Freigabe da, aber noch nicht unserem System-User zugewiesen: selbst zuweisen und nochmal prüfen
+    if (!r.ok && (await systemUserZuweisen(`act_${accountId}`, "ad", t))) r = await checkAdAccountAccess(accountId);
     if (r.ok) check.adAccount = { id: accountId, ok: true, name: r.name };
     else check.adAccount = { id: accountId, ok: false, error: explainMetaError("adAccount", r.error) };
   } else {
@@ -323,7 +354,9 @@ export async function checkMetaAccess(
     else check.page = { id: null, ok: false, error: "Die Facebook-Seite wurde nicht gefunden. Bitte die Seiten-ID eintragen (Seite → Info → Seitentransparenz)." };
   }
   if (pageId) {
-    const r = await graph<{ id?: string; name?: string; access_token?: string }>(pageId, { fields: "id,name,access_token" }, t);
+    const seite = () => graph<{ id?: string; name?: string; access_token?: string }>(pageId!, { fields: "id,name,access_token" }, t);
+    let r = await seite();
+    if (!(r.ok && r.data.access_token) && (await systemUserZuweisen(pageId, "page", t))) r = await seite();
     if (r.ok && r.data.access_token) {
       check.page = { id: pageId, ok: true, name: r.data.name };
       const forms = await graph<{ data?: unknown[] }>(`${pageId}/leadgen_forms`, { fields: "id", limit: "1" }, r.data.access_token);
