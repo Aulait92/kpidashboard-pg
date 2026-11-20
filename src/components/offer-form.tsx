@@ -5,7 +5,7 @@ import { InfoHinweis } from "@/components/info-hinweis";
 import { BREAKEVEN_ERKLAERT, VERTRAGSGARANTIE_ERKLAERT } from "@/lib/begriffe";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { createOfferAction } from "@/app/admin/vertrieb/offer-actions";
 import type { OfferTarget } from "@/lib/offer-links";
@@ -141,6 +141,26 @@ export function OfferForm({
   const softwarePkg = pkg !== "service";
   // Pay-per-Lead + Software (Ole, 19.11.2026): keine Produkte, kein Werbebudget, keine Einrichtung, Laufzeit ohne oder 3 Monate
   const ppl = pkg === "ppl_software";
+  // Kurzfassung der zugeklappten „Preise und Sonderkonditionen“: was gerade vom Standard abweicht oder gilt
+  const sonderText = test
+    ? "Testangebot: alle Beträge 0 €"
+    : [
+        num(setupOverride) != null && !ppl ? `Setup ${eur(num(setupOverride)!)}` : null,
+        num(monthlyOverride) != null ? `monatlich ${eur(num(monthlyOverride)!)}` : null,
+        num(introFee) != null && !ppl ? `Startpreis ${eur(num(introFee)!)}` : null,
+        bonusAn && !ppl ? `Abschlussbonus ${eur(num(bonusBetrag) ?? 0)}` : null,
+        customerChoice ? "Kunde wählt Start" : null,
+        allowPayLater && !ppl ? "später zahlen" : null,
+        arrears ? "nachträglich" : null,
+        allowBankTransfer && ueberweisungVerfuegbar ? "Überweisung" : null,
+        specialTerms.trim() ? "Sondervereinbarung" : null,
+        (num(seats) ?? PRICE_LIST.seatsIncluded) > PRICE_LIST.seatsIncluded ? `${num(seats)} Verkäufer` : null,
+        annual && !ppl && prepayPossible(term) ? "Vorauszahlung" : null,
+        bestand || empfehlung ? "Module" : null,
+        `gültig ${num(validDays) ?? 14} Tage`,
+      ]
+        .filter(Boolean)
+        .join(" · ");
   const waehlePaket = (k: OfferPackage) => {
     setPkg(k);
     if (k === "ppl_software" && !PPL_SOFTWARE_TERMS.includes(term)) setTerm("none");
@@ -226,14 +246,24 @@ export function OfferForm({
             <Field l="Ansprechpartner *"><input className={input} value={contactName} onChange={(e) => setContactName(e.target.value)} /></Field>
             <Field l="Firma / Agentur"><input className={input} value={company} onChange={(e) => setCompany(e.target.value)} /></Field>
             <Field l="E-Mail *"><input className={input} type="email" required autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-            <Field l="Straße und Hausnummer"><input className={input} value={street} onChange={(e) => setStreet(e.target.value)} /></Field>
-            <Field l="PLZ"><input className={input} value={zip} onChange={(e) => setZip(e.target.value)} /></Field>
-            <Field l="Ort"><input className={input} value={city} onChange={(e) => setCity(e.target.value)} /></Field>
+            {/* Adresse ist optional und meist aus dem Kontakt vorbelegt: zugeklappt, die Zeile zeigt den Stand */}
+            <details className="group sm:col-span-2" data-empfaenger-adresse>
+              <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 text-sm [&::-webkit-details-marker]:hidden">
+                <span className="font-medium text-[color:var(--brand)]">Adresse</span>
+                <span className="min-w-0 flex-1 truncate text-[color:var(--muted)]">{[street, [zip, city].filter(Boolean).join(" ")].filter(Boolean).join(", ") || "optional"}</span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+              </summary>
+              <div className="grid gap-3 pt-2 sm:grid-cols-[2fr_1fr_2fr]">
+                <Field l="Straße und Hausnummer"><input className={input} value={street} onChange={(e) => setStreet(e.target.value)} /></Field>
+                <Field l="PLZ"><input className={input} value={zip} onChange={(e) => setZip(e.target.value)} /></Field>
+                <Field l="Ort"><input className={input} value={city} onChange={(e) => setCity(e.target.value)} /></Field>
+              </div>
+            </details>
           </div>
         </Card>
 
         <Card>
-          <CardHeader title="Kunde ist …" hint={ppl ? "Der Status geht in die Erstinformation." : "Makler: Vertrags-Garantie statt Break-even-Garantie. Der Status geht auch in die Erstinformation."} />
+          <CardHeader title="Kunde ist …" hint="geht in die Erstinformation" />
           {ppl ? null : (
           <p className="flex flex-wrap items-center gap-x-1.5 px-5 pt-3 text-xs text-[color:var(--muted)]" data-garantie-erklaert>
             Break-even-Garantie <InfoHinweis begriff="Break-even-Garantie" text={BREAKEVEN_ERKLAERT} /> · Vertrags-Garantie{" "}
@@ -330,7 +360,7 @@ export function OfferForm({
           </Card>
         ) : (
         <Card>
-          <CardHeader title="Produkte und Werbebudget" hint="1. Produkt im Grundpaket, jedes weitere +350 € pro Monat (ohne Setup)" />
+          <CardHeader title="Produkte und Werbebudget" hint="jedes weitere +350 € / Monat" />
           <div className="space-y-3 p-5">
             <datalist id="offer-products">
               {PRODUCT_SUGGESTIONS.map((p) => <option key={p} value={p} />)}
@@ -388,11 +418,6 @@ export function OfferForm({
               ))}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {ppl ? null : (
-              <Field l={`Setup abweichend (Liste: ${eur(price.listSetup)})`}>
-                <input className={input} inputMode="decimal" placeholder="leer = Listenpreis" value={setupOverride} onChange={(e) => setSetupOverride(e.target.value)} />
-              </Field>
-              )}
               {referralDiscount && !ppl ? (
                 <Field l={`${referralDiscount.label}: Rabatt auf die Einrichtung (netto)`}>
                   <input
@@ -410,6 +435,30 @@ export function OfferForm({
                   ) : null}
                 </Field>
               ) : null}
+              <div className="space-y-2">
+                <Field l="Start * (ab dann läuft die Monatsgebühr)">
+                  <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </Field>
+                <AbrechnungstagFeld startDate={startDate} day={billingDay} setDay={setBillingDay} free={billingFree} setFree={setBillingFree} voraus={annual && annualPossible} />
+              </div>
+            </div>
+            {/* Selten Geändertes (SUS-Prüfung 20.11.2026): Preise, Bonus, Zahlungsoptionen, Test und Sondervereinbarung
+                zugeklappt; die Zeile darunter zeigt, was gerade gilt. Offen, wenn ein Preis eingetragen werden muss. */}
+            <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white" open={price.listMonthly == null || price.seatsIndividual || undefined} data-sonderkonditionen>
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-sm [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">Preise und Sonderkonditionen</span>
+                  <span className={`block text-xs ${test ? "font-medium text-amber-700" : "text-[color:var(--muted)]"}`}>{sonderText}</span>
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+              </summary>
+              <div className="space-y-4 border-t border-[color:var(--border)] p-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+              {ppl ? null : (
+              <Field l={`Setup abweichend (Liste: ${eur(price.listSetup)})`}>
+                <input className={input} inputMode="decimal" placeholder="leer = Listenpreis" value={setupOverride} onChange={(e) => setSetupOverride(e.target.value)} />
+              </Field>
+              )}
               <Field l={`Monatlich abweichend (Liste: ${price.listMonthly == null ? "individuell" : eur(price.listMonthly)})`}>
                 <input className={input} inputMode="decimal" placeholder={price.listMonthly == null ? "bitte eintragen" : "leer = Listenpreis"} value={monthlyOverride} onChange={(e) => setMonthlyOverride(e.target.value)} />
               </Field>
@@ -429,16 +478,10 @@ export function OfferForm({
               </Field>
               </>
               )}
-              <div className="space-y-2">
-                <Field l="Start * (ab dann läuft die Monatsgebühr)">
-                  <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                </Field>
-                <AbrechnungstagFeld startDate={startDate} day={billingDay} setDay={setBillingDay} free={billingFree} setFree={setBillingFree} voraus={annual && annualPossible} />
-              </div>
               <Field l="Angebot gültig (Tage)">
                 <input className={input} inputMode="numeric" value={validDays} onChange={(e) => setValidDays(e.target.value)} />
               </Field>
-            </div>
+                </div>
             <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm">
               <input
                 type="checkbox"
@@ -583,14 +626,9 @@ export function OfferForm({
               </span>
             </label>
             <Field l="Sondervereinbarung (erscheint wörtlich im Angebot; Absätze bleiben erhalten, **Text** wird fett)">
-              <textarea className={`${input} h-40 py-2`} value={specialTerms} onChange={(e) => setSpecialTerms(e.target.value)} />
+              <textarea className={`${input} h-24 py-2`} value={specialTerms} onChange={(e) => setSpecialTerms(e.target.value)} />
             </Field>
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader title="Verkäufer, Zahlweise und Module" />
-          <div className="space-y-4 p-5">
+            <h3 className="border-t border-[color:var(--border)] pt-4 text-sm font-semibold">Verkäufer, Vorauszahlung und Module</h3>
             {softwarePkg ? (
               <Field l={`Aktive Verkäufer (bekommen Leads) · ${PRICE_LIST.seatsIncluded} inklusive, jeder weitere ${eur(PRICE_LIST.seatMonthly)} / Monat, Mitglieder ohne Leads kostenlos`}>
                 <input className={input} inputMode="numeric" name="seats" value={seats} onChange={(e) => setSeats(e.target.value)} />
@@ -660,8 +698,11 @@ export function OfferForm({
               </span>
             </label>
             ) : null}
+              </div>
+            </details>
           </div>
         </Card>
+
       </div>
 
       <div className="lg:sticky lg:top-6 lg:self-start">

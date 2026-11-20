@@ -11,11 +11,19 @@ const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", c
 const date = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d);
 const TONE: Record<ReferralStage, "neutral" | "brand" | "success" | "info"> = { eingegangen: "neutral", termin: "info", kunde: "brand", praemie: "success", abgelehnt: "neutral" };
 
-export async function EmpfehlungenAnsicht({ funktionen = {} }: { funktionen?: Partial<Record<"kennzahlen" | "rabatt" | "top" | "liste" | "praemie", string>> }) {
+export async function EmpfehlungenAnsicht({
+  funktionen = {},
+  leer,
+}: {
+  funktionen?: Partial<Record<"kennzahlen" | "rabatt" | "top" | "liste" | "praemie", string>>;
+  /** Statt Nullkacheln und leerer Tabellen, solange es keine Empfehlung gibt (leerer Zustand mit nächster Handlung) */
+  leer?: React.ReactNode;
+}) {
   const { list, top, totals } = await adminReferralOverview();
   // Trockenlauf: offene Angebote an Empfohlene ohne Empfehlungsrabatt (Knopf übernimmt)
   const backfill = await backfillReferralDiscounts({ apply: false });
   const toApply = backfill.filter((r) => r.skip == null);
+  if (leer && list.length === 0 && backfill.length === 0) return <>{leer}</>;
   return (
     <div className="space-y-6">
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-5" data-funktion={funktionen.kennzahlen}>

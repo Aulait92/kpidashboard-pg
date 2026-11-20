@@ -18,6 +18,7 @@ import {
   linkedInRhythmus,
 } from "@/components/admin/linkedin-bausteine";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import { AnkerOeffnen } from "@/components/admin-neu/ui/anker-oeffnen";
 
 export const metadata = { title: "Marketing | performancegrowth Admin" };
 
@@ -42,6 +43,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
       <div className="space-y-4" data-funktion="cron--push-an-admins-linkedin-bank-neu-verbinden">
         <LinkedInHinweise d={d} li={li} />
         <LinkedInEinrichten d={d} />
+        {/* Einrichten-Schritte springen zu ihrem Abschnitt und klappen ihn auf */}
+        <AnkerOeffnen />
 
         <div className={d.results.length ? "grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]" : "max-w-3xl"}>
           <section className="min-w-0 space-y-3" aria-label="Entwürfe zur Freigabe">
@@ -83,12 +86,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
           <LinkedInErgebnisse d={d} />
         </Aufklapp>
         ) : null}
-        <Aufklapp titel="Statistik hochladen" hinweis="LinkedIn-Export" funktion="actions-importaction--linkedin-statistik-excel-hochladen">
+        <Aufklapp titel="Statistik hochladen" hinweis="LinkedIn-Export" id="statistik" funktion="actions-importaction--linkedin-statistik-excel-hochladen">
           <Card className="space-y-3 p-4 sm:p-5">
             <LinkedInStatistik d={d} />
           </Card>
         </Aufklapp>
-        <Aufklapp titel="Fotos" hinweis={String(d.photos.length)} funktion="actions-uploadphotosaction--fotos-hochladen-beschreiben-loeschen">
+        <Aufklapp titel="Fotos" hinweis={String(d.photos.length)} id="fotos" funktion="actions-uploadphotosaction--fotos-hochladen-beschreiben-loeschen">
           <Card className="space-y-3 p-4 sm:p-5">
             <LinkedInFotos d={d} />
           </Card>
@@ -98,7 +101,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
             <LinkedInEinstellungen d={d} />
           </Card>
         </Aufklapp>
-        <Aufklapp titel="Verbindung" hinweis={d.connected ? "verbunden" : "nicht verbunden"}>
+        <Aufklapp titel="Verbindung" hinweis={d.connected ? "verbunden" : "nicht verbunden"} id="verbindung">
           <LinkedInVerbindung d={d} titel={false} />
         </Aufklapp>
       </div>
