@@ -233,8 +233,8 @@ describe("Bestandskunden verwalten, Kampagnen beenden, Ansprache", () => {
     await runCampaigns(NOW, { sleep: noSleep });
     const mail = st.mails[0];
     expect(mail.text).toMatch(/^Hallo Erika,/);
-    expect(mail.subject).toBe("Dein Vertragscheck: Passt noch alles?");
-    expect(mail.text).toContain("deiner Verträge");
+    expect(mail.subject).toBe("Dein Jahrescheck: 15 Minuten"); // neue Kampagnentexte mit Terminlink (Bestand Paket 2)
+    expect(mail.text).toContain("deiner Situation");
     expect(mail.text).toContain("Du bekommst diese E-Mail");
     expect(mail.text).not.toMatch(/\b(Sie|Ihr|Ihre|Ihnen)\b/);
     expect(mail.text).not.toMatch(DASH);
@@ -261,7 +261,7 @@ describe("Bestandskunden verwalten, Kampagnen beenden, Ansprache", () => {
     const page = await loadConsentPage(e.id);
     expect(page).toMatchObject({ ansprache: "du", anrede: "Hallo Erika," });
     const link = await requestConsent(e.id, c.id, { byMail: false, actorUserId: owner.id });
-    expect(link.ok && link.text).toMatch(/^Hallo Erika, darf ich dich künftig/);
+    expect(link.ok && link.text).toMatch(/^Hallo Erika, darf ich mich per E-Mail oder WhatsApp melden/);
     st.mails = [];
     const sub = await submitConsentForm(e.id, { email: true, whatsapp: false, emailAddress: null, phone: null, ip: null, userAgent: null }, NOW);
     expect(sub).toMatchObject({ ok: true, doiSent: true });
@@ -280,7 +280,7 @@ describe("Bestandskunden verwalten, Kampagnen beenden, Ansprache", () => {
     const p = await ec(w.c.id, { phone: "4915100000202", whatsappConsent: "ja" });
     const wc = await createCampaign({ customerId: w.c.id, occasion: "review", segment: {}, topic: null, dailyLimit: 50, createdById: w.owner.id, now: NOW });
     await runCampaigns(NOW, { sleep: noSleep });
-    expect(st.notices.at(-1)?.text).toMatch(/^Hallo Erika, es ist Zeit für deinen kurzen Jahres-Check/);
+    expect(st.notices.at(-1)?.text).toMatch(/^Hallo Erika, einmal im Jahr lohnt/);
     const acc = await prisma.whatsAppAccount.findUniqueOrThrow({ where: { customerId: w.c.id } });
     const conv = await prisma.conversation.create({ data: { customerId: w.c.id, whatsAppAccountId: acc.id, contactPhone: p.phone!, status: "open", lastMessageAt: NOW } });
     await prisma.campaignRecipient.updateMany({ where: { campaignId: wc.id }, data: { conversationId: conv.id } });
