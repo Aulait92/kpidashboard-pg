@@ -50,14 +50,20 @@ describe("decidePublicHost: Buchungsadresse", () => {
       "/erstinformation/tok123",
       "/erstinformation/tok123/pdf",
       "/_next/static/chunks/a.js",
-      "/icon/192",
-      "/apple-icon",
-      "/favicon.ico",
       "/monitoring",
       "/api/csp-report",
     ]) {
       expect(decide("www.dein-beratungstermin.de", p), p).toEqual({ kind: "serve" });
     }
+  });
+
+  it("eigenes neutrales Favicon statt des App-Logos (20.11.2026)", () => {
+    expect(decide("www.dein-beratungstermin.de", "/icon/192")).toEqual({ kind: "rewrite", pathname: "/termin-icon/192" });
+    expect(decide("www.dein-beratungstermin.de", "/icon/512")).toEqual({ kind: "rewrite", pathname: "/termin-icon/512" });
+    expect(decide("www.dein-beratungstermin.de", "/apple-icon")).toEqual({ kind: "rewrite", pathname: "/termin-icon/180" });
+    expect(decide("www.dein-beratungstermin.de", "/favicon.ico")).toEqual({ kind: "rewrite", pathname: "/termin-icon/192" });
+    // App-Adresse behält ihr Logo
+    expect(decide("app.performancegrowth.de", "/icon/192")).toEqual({ kind: "pass" });
   });
 
   it("alles andere: 404, keine Weiterleitung in die App", () => {

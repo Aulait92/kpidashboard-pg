@@ -50,7 +50,7 @@ const SUPPORT_PREFIXES = ["/api/abmelden", "/_next", "/icon", "/apple-icon", "/f
  */
 export const RESERVED_SEGMENTS: ReadonlySet<string> = new Set([
   // Buchungsadresse
-  "book", "empfehlung", "einwilligung", "vollmacht", "abmelden", "erstinformation", "beratung", "datenschutz", "ihr-angebot", "rueckruf", "t", "dokumentation", "demo", "api", "_next", "icon", "apple-icon", "monitoring",
+  "book", "empfehlung", "einwilligung", "vollmacht", "abmelden", "erstinformation", "beratung", "datenschutz", "ihr-angebot", "rueckruf", "t", "dokumentation", "demo", "api", "_next", "icon", "apple-icon", "termin-icon", "monitoring",
   // App (nur auf der App-Adresse)
   "admin", "angebot", "buyer", "email-bestaetigen", "empfehlen", "feedback", "forgot-password", "login", "logout", "login-karten",
   "microsoft-freigabe", "rechner", "rechtliches", "reset-password", "sicherheit", "status", "videos", "fonts", "sw", "manifest",
@@ -125,6 +125,9 @@ export function decidePublicHost(input: {
 
   if (sameHost(input.host, cfg.host)) {
     if (path === "/robots.txt") return { kind: "robots" };
+    // Eigenes, neutrales Favicon (Ole, 20.11.2026): kein performancegrowth-Logo vor Leads
+    const icon = terminIconFuer(path);
+    if (icon) return { kind: "rewrite", pathname: `/termin-icon/${icon}` };
     if (path === "/") return { kind: "rewrite", pathname: "/book" };
     if (END_CUSTOMER_PREFIXES.some((p) => underPrefix(path, p))) return { kind: "serve" };
     if (path === "/demo" || path === "/demo/") return { kind: "rewrite", pathname: DEMO_PATH };
@@ -142,6 +145,14 @@ export function decidePublicHost(input: {
   // Berater bucht aus der App für einen Lead (?lead=…, Vorbelegung nur mit Login): auf der App bleiben
   if (input.hasSession && /^\/book\/[^/]+$/.test(path) && /[?&]lead=/.test(search)) return { kind: "pass" };
   return { kind: "redirect", location: `${cfg.origin}${publicPathFor(path)}${search}` };
+}
+
+/** Icon-Pfade der App (icon.tsx, apple-icon.tsx, favicon.ico) auf das neutrale Termin-Icon abbilden; sonst null. */
+export function terminIconFuer(path: string): "192" | "512" | "180" | null {
+  if (path === "/favicon.ico") return "192";
+  if (path === "/apple-icon" || path.startsWith("/apple-icon")) return "180";
+  if (path === "/icon" || path.startsWith("/icon/") || path.startsWith("/icon?") || /^\/icon[\w.-]*$/.test(path)) return /512/.test(path) ? "512" : "192";
+  return null;
 }
 
 export const PUBLIC_ROBOTS_TXT = "User-agent: *\nDisallow: /\n";
