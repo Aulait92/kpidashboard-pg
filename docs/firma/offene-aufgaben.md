@@ -14,6 +14,7 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 |---|---|---|
 | Tierversicherung Katze: Text je Umfang (OP, voll, offen) statt immer „OP-Versicherung“ | Teilarbeit Branch `tkv-umfang` | CTO |
 | Keine neuen Terminvorschläge, wenn der Lead schon einen künftigen Termin hat | offen | CTO |
+| Einrichtung Allianz (Punkte 3, 4, 10 von Ole): Ihre Angaben einmal, Kalender mit Vertreternummer, Meta-Vorprüfung; Branch `worktree-agent-ab123bfa8feb0009d`, nicht gepusht. Offen: Persona-Test auf Staging, nach Livegang messen (Abbruch im Schritt Kalender, Zeit bis Schritt 4) | wartet auf Merge | UX/UI / CTO |
 | Einrichtung: Allianz-Online-Kalender nur bei Versicherer Allianz zeigen (W2) | Teilarbeit Branch `golive-auflagen` | CTO / UX |
 | Einrichtung: „Mein Versicherer erlaubt das nicht“ bei Maklern ausblenden (W3) | Teilarbeit Branch `golive-auflagen` | CTO / UX |
 | Go-live-Auflagen W1, W4 bis W7 und Kleinpunkte | Branch `golive-auflagen` | CTO |

@@ -21,6 +21,7 @@ import {
   statusFromImpressum,
   type ErstinfoDaten,
   type ErstinfoWeb,
+  type VermittlerAngaben,
   type VermittlerStatus,
 } from "@/lib/erstinformation-shared";
 
@@ -270,6 +271,20 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
     },
   });
   return { ok: true };
+}
+
+/**
+ * „Ihre Angaben“ (Einrichtung Schritt 1, Ole 20.11.2026): Anrede, Name, Telefon, Anschrift und Registernummer einmal
+ * früh speichern, in denselben Datensatz wie die Erstinformation. Die Signatur der Service-Mails (signaturAngaben)
+ * und die Nennung gegenüber Leads (vermittlerName) lesen ihn. Bestätigt wird die Erstinformation weiter in ihrem
+ * eigenen Schritt (bestaetigtAt bleibt unberührt).
+ */
+export async function saveVermittlerAngaben(customerId: string, a: VermittlerAngaben, userId?: string | null): Promise<void> {
+  const { id } = await getOrCreateErstinfo(customerId);
+  await prisma.erstinformation.update({
+    where: { id },
+    data: { anrede: a.anrede, name: a.name, telefon: a.telefon, anschrift: a.anschrift, registerNummer: a.registerNummer, updatedById: userId ?? null },
+  });
 }
 
 /** Erstinformation-Daten über den öffentlichen Token (Seite und PDF). */
