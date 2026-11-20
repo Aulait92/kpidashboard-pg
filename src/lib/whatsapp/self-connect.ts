@@ -67,11 +67,16 @@ export async function onConnected(customerId: string, phone: string | null | und
     return;
   }
   await submitTemplatesForCustomer(customerId).catch((err) => reportError(err, "templates-after-connect"));
+  // Assistent und Erstanschreiben standardmäßig an (Ole, 20.11.2026: nicht mehr von Hand einschalten). Ohne
+  // freigegebene Vorlage wartet das Erstanschreiben (no_template) und läuft los, sobald Meta freigibt.
+  await prisma.agentConfig
+    .upsert({ where: { customerId }, create: { customerId, active: true, outreachEnabled: true }, update: { active: true, outreachEnabled: true } })
+    .catch((err) => reportError(err, "agent-after-connect"));
   await sendToAdmins({
     title: `WhatsApp verbunden: ${name}`,
     body: phone
-      ? `Nummer +${phone.replace(/^\+/, "")} – Vorlagen sind eingereicht, danach Assistent einschalten.`
-      : "Vorlagen sind eingereicht, danach Assistent einschalten.",
+      ? `Nummer +${phone.replace(/^\+/, "")}: Vorlagen sind eingereicht, der Assistent ist an.`
+      : "Vorlagen sind eingereicht, der Assistent ist an.",
     url: "/admin/neu/einstellungen/whatsapp",
     tag: `d360:${customerId}`,
   }).catch(() => {});

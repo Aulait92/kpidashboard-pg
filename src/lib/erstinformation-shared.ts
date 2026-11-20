@@ -80,14 +80,17 @@ export function statusRegisterText(v: unknown, erlaubnis: Erlaubnis = "abs1"): s
 }
 
 /**
- * Registernummer im Format D-XXXX-XXXXX-XX (IHK-Vermittlerregister; Großbuchstaben und Ziffern). Leerzeichen,
- * Kleinbuchstaben und fehlende Bindestriche werden toleriert. null = ungültig.
+ * Registernummer aus dem IHK-Vermittlerregister (Großbuchstaben und Ziffern): heutiges Format D-XXXX-XXXXX-XX
+ * oder das ältere Format D-X-XXX-XXXX-XX (z. B. D-W-151-ALAP-38, viele Allianz-Vertreter; Ole, 20.11.2026).
+ * Leerzeichen, Kleinbuchstaben und fehlende Bindestriche werden toleriert. null = ungültig.
  */
 export function normalizeRegisterNummer(raw: string | null | undefined): string | null {
   const s = (raw ?? "").toUpperCase().replace(/[\s‐-―_.]+/g, "-").replace(/-+/g, "-").trim();
   const compact = s.replace(/-/g, "");
   const m = /^D([A-Z0-9]{4})([A-Z0-9]{5})([A-Z0-9]{2})$/.exec(compact);
-  return m ? `D-${m[1]}-${m[2]}-${m[3]}` : null;
+  if (m) return `D-${m[1]}-${m[2]}-${m[3]}`;
+  const alt = /^D([A-Z])(\d{3})([A-Z0-9]{4})(\d{2})$/.exec(compact);
+  return alt ? `D-${alt[1]}-${alt[2]}-${alt[3]}-${alt[4]}` : null;
 }
 
 /** Eigene Seite des Vermittlers mit der Erstinformation (nur https bzw. http, keine internen Ziele). */
@@ -424,4 +427,35 @@ export function erstinfoAbschnitte(d: ErstinfoDaten): ErstinfoAbschnitt[] {
 export function erstinfoDateiname(name: string): string {
   const n = name.replace(/[^\p{L}\p{N} ]+/gu, " ").trim().replace(/\s+/g, "_").slice(0, 60);
   return n ? `Erstinformation_${n}.pdf` : "Erstinformation.pdf";
+}
+
+// ─── Ihre Angaben (Einrichtung Schritt 1, Ole 20.11.2026: einmal fragen, früh) ─────────────────────────────
+
+/** Angaben zur Person, einmal am Anfang der Einrichtung (Erstinformation, Signatur, Nennung gegenüber Leads). */
+export type VermittlerAngaben = { anrede: string; name: string; telefon: string; anschrift: string; registerNummer: string };
+
+const einzeilig = (v: string | null | undefined) => (v ?? "").replace(/\s+/g, " ").trim();
+
+/** Bekannt = alle Angaben da (dann zeigen spätere Schritte sie nur noch an, mit „ändern“). */
+export function angabenBekannt(a: { anrede?: string | null; name?: string | null; telefon?: string | null; anschrift?: string | null; registerNummer?: string | null }): boolean {
+  return !!a.anrede && !!einzeilig(a.name) && !!einzeilig(a.telefon) && !!einzeilig(a.anschrift) && !!normalizeRegisterNummer(a.registerNummer);
+}
+
+/** Prüfen und bereinigen (rein). Fehlertexte in Sie-Form, ohne Gedankenstriche. */
+export function pruefeAngaben(
+  raw: Partial<Record<keyof VermittlerAngaben, string | null>>,
+): { ok: true; angaben: VermittlerAngaben } | { ok: false; error: string } {
+  const anrede = (raw.anrede ?? "").trim();
+  if (!["Herr", "Frau", "keine"].includes(anrede)) return { ok: false, error: "Bitte Ihre Anrede wählen. Ihre Kunden lesen z. B. „Herr Kannapinn“." };
+  const name = einzeilig(raw.name).slice(0, 160);
+  if (name.split(" ").length < 2) return { ok: false, error: "Bitte Vor- und Nachnamen eintragen." };
+  const telefon = einzeilig(raw.telefon).slice(0, 60);
+  if (telefon.replace(/\D/g, "").length < 6) return { ok: false, error: "Bitte Ihre Telefonnummer eintragen." };
+  const anschrift = (raw.anschrift ?? "").replace(/\r\n?/g, "\n").trim().slice(0, 400);
+  if (!anschrift) return { ok: false, error: "Bitte Ihre Geschäftsanschrift eintragen." };
+  const registerNummer = normalizeRegisterNummer(raw.registerNummer);
+  if (!registerNummer) {
+    return { ok: false, error: "Die Registernummer passt nicht. Bitte so eingeben, wie sie auf Ihrer IHK-Urkunde steht, z. B. D-XXXX-XXXXX-XX oder D-X-XXX-XXXX-XX." };
+  }
+  return { ok: true, angaben: { anrede, name, telefon, anschrift, registerNummer } };
 }

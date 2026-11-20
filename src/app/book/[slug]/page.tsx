@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
-import { CheckCircle2, Clock, Mail, Phone, Video } from "lucide-react";
+import { CheckCircle2, Clock, Mail, MapPin, Phone, Video } from "lucide-react";
+import { agenturOrt, loadTerminFormate } from "@/lib/termin-formate-server";
+import { TERMIN_FORMATE_STANDARD } from "@/lib/termin-formate";
 import { kontaktWege, vermittlerKontakt, type VermittlerKontakt } from "@/lib/buchung-ohne-kalender";
 import { buttonClass } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
@@ -16,7 +18,7 @@ import { Gezeigt } from "./gezeigt";
 import { randomUUID } from "node:crypto";
 import { variante, type Variante } from "@/lib/experimente";
 import { nowMs } from "@/lib/now";
-import { ERINNERUNG_OPTIN_TEXT } from "@/lib/policen/regeln";
+import { erinnerungOptin } from "@/lib/policen/regeln";
 
 // Öffentliche Buchungsseite je Kunde — z. B. als „Custom"-Scheduling-Link im
 // Meta-Leadformular. Zeigt echte freie Zeiten aus dem Google-Kalender.
@@ -95,7 +97,13 @@ export default async function BookingPage({ params, searchParams }: Props) {
   // Datenschutzhinweis des Beraters (verantwortlich für die Termindaten),
   // sonst der allgemeine Link.
   const customerPrivacy = (conn?.customer.onboarding?.websiteInfo as { privacyUrl?: string | null } | null)?.privacyUrl;
-  const privacyUrl = customerPrivacy && /^https?:\/\//.test(customerPrivacy) ? customerPrivacy : PRIVACY_URL;
+  // Ohne eigene URL: Datenschutzhinweise im Namen des Vermittlers (Ole, 20.11.2026), nicht unsere Erklärung
+  const privacyUrl =
+    customerPrivacy && /^https?:\/\//.test(customerPrivacy)
+      ? customerPrivacy
+      : conn?.customerId
+        ? await import("@/lib/erstinformation").then((m) => m.datenschutzUrlFor(conn.customerId)).then((u) => u ?? PRIVACY_URL).catch(() => PRIVACY_URL)
+        : PRIVACY_URL;
 
   // Berater bucht für einen Lead (Rückrufliste): Kontaktdaten vorbelegen —
   // nur für den eingeloggten Kunden selbst, keine Daten in der URL.
@@ -155,7 +163,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
   if (sp.ok && sp.a) {
     const appt = await prisma.appointment.findFirst({
       where: { id: sp.a, customerId: conn.customerId },
-      select: { id: true, leadId: true, conversationId: true, status: true, startsAt: true, mode: true, meetUrl: true, manageToken: true, komplettcheck: true },
+      select: { id: true, leadId: true, conversationId: true, status: true, startsAt: true, mode: true, ort: true, meetUrl: true, manageToken: true, komplettcheck: true },
     });
     if (appt) {
       // Komplettcheck direkt nach der Buchung (Ole, 19.11.2026): wer über die Seite bucht, wurde bisher nicht gefragt.
@@ -181,7 +189,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
           </h1>
           <div className="mt-4 rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-4">
             <div className="text-sm text-[color:var(--muted)]">
-              {appt.mode === "video" ? "Videocall" : "Telefonat"} mit {advisor}
+              {appt.mode === "video" ? "Videocall" : appt.mode === "onsite" ? "Termin in der Agentur" : "Telefonat"} mit {advisor}
             </div>
             <div className="mt-1 text-lg font-semibold">
               {fmt(appt.startsAt, {
@@ -197,7 +205,9 @@ export default async function BookingPage({ params, searchParams }: Props) {
           <p className="mt-4 text-sm leading-relaxed text-[color:var(--muted)]">
             {appt.mode === "video"
               ? a(an, "Die Bestätigung mit dem Link zum Videocall bekommst du per WhatsApp und E-Mail.", "Die Bestätigung mit dem Link zum Videocall bekommen Sie per WhatsApp und E-Mail.")
-              : a(an, "Wir rufen dich zur vereinbarten Zeit an. Die Bestätigung bekommst du per WhatsApp und E-Mail.", "Wir rufen Sie zur vereinbarten Zeit an. Die Bestätigung bekommen Sie per WhatsApp und E-Mail.")}
+              : appt.mode === "onsite"
+                ? `${appt.ort ? `Adresse: ${appt.ort}. ` : ""}${a(an, "Die Bestätigung bekommst du per WhatsApp und E-Mail.", "Die Bestätigung bekommen Sie per WhatsApp und E-Mail.")}`
+                : a(an, "Wir rufen dich zur vereinbarten Zeit an. Die Bestätigung bekommst du per WhatsApp und E-Mail.", "Wir rufen Sie zur vereinbarten Zeit an. Die Bestätigung bekommen Sie per WhatsApp und E-Mail.")}
           </p>
           {kcFrage ? (
             <form action={komplettcheckBuchungAction.bind(null, slug)} className="mt-5 rounded-xl bg-[color:var(--brand-soft)] p-4" data-komplettcheck>
@@ -240,6 +250,17 @@ export default async function BookingPage({ params, searchParams }: Props) {
   let slots: Slot[] = [];
   // Termindauer aus „Mein Kalender“ (15/30/45/60 Min.)
   const durationMin = await bookingDurationMin(conn.customerId).catch(() => 30);
+  // Video immer zuerst, empfohlen und vorgewählt (Ole, 20.11.2026); Telefon nur, wenn der Vermittler es freigegeben hat
+  const formate = await loadTerminFormate(conn.customerId).catch(() => TERMIN_FORMATE_STANDARD);
+  const telefonErlaubt = formate.telefon;
+  // „In der Agentur“ (Ole, 20.11.2026): nur freigegeben und mit Anschrift aus den Anbieterangaben
+  const agenturAdresse = formate.vorOrt ? await agenturOrt(conn.customerId).catch(() => null) : null;
+  const optionen = [
+    { v: "video", label: "Videocall", Icon: Video, empfohlen: true },
+    ...(telefonErlaubt ? [{ v: "phone", label: "Telefon", Icon: Phone, empfohlen: false }] : []),
+    ...(agenturAdresse ? [{ v: "onsite", label: "In der Agentur", Icon: MapPin, empfohlen: false }] : []),
+  ];
+  const mitAuswahl = optionen.length > 1;
   try {
     slots = await suggestSlots(
       conn.customerId,
@@ -261,6 +282,12 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const kompakt = v === "b";
   const nah = kompakt ? days.slice(0, NAH_TAGE) : days;
   const spaeter = kompakt ? days.slice(NAH_TAGE) : [];
+  // Häkchen Erinnerung zur Terminvorbereitung (Policen, Rechtsprüfung A8): nur wenn der Lead selbst bucht. Nicht bei
+  // Buchung durch den Vermittler (dessen Haken wäre keine Einwilligung des Leads) und nicht aus der Mail-Strecke (Telefon
+  // dort nur für einen Anruf). Splittest buchung_erinnerung (lib/experimente.ts): eigene zufällige ID je Aufruf,
+  // Zuteilung erst bei der Buchung (actions.ts).
+  const erinnerungAufruf = prefill ? null : randomUUID();
+  const erinnerungFassung: Variante = erinnerungAufruf ? await variante("buchung_erinnerung", erinnerungAufruf, { merken: false }) : "a";
   // Zeitstempel für die Bot-Falle (echte Menschen brauchen > 3 s).
   const renderedAt = nowMs();
   const ERRORS = errorsFor(an);
@@ -289,7 +316,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
           <Clock className="h-3.5 w-3.5" /> {durationMin} Minuten
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--surface-sunken)] px-2.5 py-1">
-          <Video className="h-3.5 w-3.5" /> Video oder <Phone className="h-3.5 w-3.5" /> Telefon
+          <Video className="h-3.5 w-3.5" /> {mitAuswahl ? ["Video", telefonErlaubt && "Telefon", agenturAdresse && "in der Agentur"].filter(Boolean).join(", ").replace(/, ([^,]*)$/, " oder $1") : "Per Video, ohne App"}
         </span>
         {kompakt ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800" data-kostenlos>
@@ -330,36 +357,41 @@ export default async function BookingPage({ params, searchParams }: Props) {
             ) : null}
           </section>
 
-          <section>
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <StepNo n={2} /> {a(an, "Wie möchtest du sprechen?", "Wie möchten Sie sprechen?")}
-            </h2>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { v: "phone", label: "Telefon", Icon: Phone },
-                { v: "video", label: "Videocall", Icon: Video },
-              ].map((o, i) => (
-                <label
-                  key={o.v}
-                  className="flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-3 text-sm font-semibold transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand-soft)] has-checked:text-[color:var(--brand-dark)]"
-                >
-                  <o.Icon className="h-4 w-4" />
-                  <input
-                    type="radio"
-                    name="mode"
-                    value={o.v}
-                    defaultChecked={i === 0}
-                    className="sr-only"
-                  />
-                  {o.label}
-                </label>
-              ))}
-            </div>
-          </section>
+          {mitAuswahl ? (
+            <section>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                <StepNo n={2} /> {a(an, "Wie möchtest du sprechen?", "Wie möchten Sie sprechen?")}
+              </h2>
+              <div className={`grid gap-2 ${optionen.length === 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2"}`} data-gespraechsart>
+                {optionen.map((o) => (
+                  <label
+                    key={o.v}
+                    className="relative flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-3 text-sm font-semibold transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand-soft)] has-checked:text-[color:var(--brand-dark)]"
+                  >
+                    {o.empfohlen ? (
+                      <span className="absolute -top-2 right-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white" data-empfohlen>
+                        Empfohlen
+                      </span>
+                    ) : null}
+                    <o.Icon className="h-4 w-4" />
+                    <input type="radio" name="mode" value={o.v} defaultChecked={o.empfohlen} className="sr-only" />
+                    {o.label}
+                  </label>
+                ))}
+              </div>
+              {agenturAdresse ? (
+                <p className="mt-2 flex items-start gap-1.5 text-xs text-[color:var(--muted)]" data-agentur-adresse>
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Agentur: {agenturAdresse}
+                </p>
+              ) : null}
+            </section>
+          ) : (
+            <input type="hidden" name="mode" value="video" />
+          )}
 
           <section className="space-y-3">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <StepNo n={3} /> {a(an, "Deine Kontaktdaten", "Ihre Kontaktdaten")}
+              <StepNo n={mitAuswahl ? 3 : 2} /> {a(an, "Deine Kontaktdaten", "Ihre Kontaktdaten")}
             </h2>
             <Field name="name" label="Vor- und Nachname" autoComplete="name" defaultValue={prefill?.name} />
             <Field
@@ -403,17 +435,29 @@ export default async function BookingPage({ params, searchParams }: Props) {
                   rel="noopener noreferrer"
                   className="underline"
                 >
-                  Datenschutzerklärung
+                  Datenschutzhinweisen
                 </a>
                 .
               </span>
             </label>
             )}
             {/* Opt-in für Erinnerungen zur Terminvorbereitung (lib/policen, Rechtsprüfung A8), nicht vorausgewählt */}
-            <label className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
-              <input type="checkbox" name="erinnerung" className="mt-0.5" data-erinnerung-optin />
-              <span>{ERINNERUNG_OPTIN_TEXT}</span>
-            </label>
+            {erinnerungAufruf ? (
+              <label
+                className={
+                  erinnerungFassung === "b"
+                    ? "mt-3 flex cursor-pointer items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--brand)] bg-[color:var(--brand-soft)] p-3 text-sm leading-relaxed"
+                    : "mt-2 flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]"
+                }
+              >
+                <input type="hidden" name="xe" value={erinnerungAufruf} />
+                <input type="hidden" name="erinnerung_fassung" value={erinnerungFassung} />
+                <input type="checkbox" name="erinnerung" className={erinnerungFassung === "b" ? "mt-0.5 h-5 w-5 shrink-0" : "mt-0.5"} data-erinnerung-optin data-fassung={erinnerungFassung} />
+                <span>
+                  <b className="text-[color:var(--foreground)]">{erinnerungOptin(erinnerungFassung, an).fett}</b> {erinnerungOptin(erinnerungFassung, an).rest}
+                </span>
+              </label>
+            ) : null}
           </section>
 
           <SubmitButton

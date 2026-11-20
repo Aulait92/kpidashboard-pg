@@ -17,7 +17,7 @@ import {
   vtnrFromPageHtml,
   type AllianzCalendar,
 } from "@/lib/calendar/allianz-online";
-import { berlinAt, blockRange, leadTimeWindows, leadTimesError, normalizeLeadTimes, normalizeTime, DEFAULT_LEAD_TIMES } from "@/lib/calendar/lead-times";
+import { berlinAt, blockRange, leadTimeWindows, leadTimesError, nearestDuration, normalizeLeadTimes, normalizeTime, DEFAULT_LEAD_TIMES } from "@/lib/calendar/lead-times";
 import { candidateTimes } from "@/lib/calendar";
 
 const iso = (d: Date) => d.toISOString();
@@ -99,23 +99,41 @@ describe("Allianz-Online-Kalender: freie Slots → belegt", () => {
     expect(berlinAt("2026-07-01", "16:30").toISOString()).toBe("2026-07-01T14:30:00.000Z");
   });
 
-  it("Tage vor dem frühesten Buchungstag: Lead-Zeiten gelten als frei", () => {
+  it("Tage vor dem frühesten Buchungstag mit Google/Outlook: Lead-Zeiten gelten als frei", () => {
     // Heute Mi 11.11., frühester Buchungstag Fr 13.11.
     const from = new Date("2026-11-11T23:00:00Z"); // Do 00:00 Berlin
     const kf = new Date("2026-11-12T23:00:00Z"); // Fr 00:00 Berlin
     const to = new Date("2026-11-13T23:00:00Z");
     const fallback = leadTimeWindows(DEFAULT_LEAD_TIMES, from, kf, 60);
-    expect(fallback.map(span)).toEqual([
-      ["2026-11-12T09:00:00.000Z", "2026-11-12T10:00:00.000Z"],
-      ["2026-11-12T13:00:00.000Z", "2026-11-12T14:00:00.000Z"],
-      ["2026-11-12T15:00:00.000Z", "2026-11-12T16:00:00.000Z"],
-    ]);
+    // Standard 10 bis 17 Uhr (Ole, 20.11.2026): jede volle Stunde 10 bis 16 Uhr
+    expect(fallback.map(span)).toEqual([9, 10, 11, 12, 13, 14, 15].map((h) => [`2026-11-12T${String(h).padStart(2, "0")}:00:00.000Z`, `2026-11-12T${String(h + 1).padStart(2, "0")}:00:00.000Z`]));
     const busy = busyFromSlots({ ...base, slots: ["2026-11-13T14:10:00+01:00"], min: from, max: to, knownFrom: kf, fallbackFree: fallback });
     const isFree = (s: string, e: string) => !busy.some((b) => b.start < new Date(e) && b.end > new Date(s));
     expect(isFree("2026-11-12T09:00:00Z", "2026-11-12T09:30:00Z")).toBe(true); // Do 10:00 (Lead-Zeit)
-    expect(isFree("2026-11-12T10:00:00Z", "2026-11-12T10:30:00Z")).toBe(false); // Do 11:00
+    expect(isFree("2026-11-12T16:00:00Z", "2026-11-12T16:30:00Z")).toBe(false); // Do 17:00 (nach den Lead-Zeiten)
     expect(isFree("2026-11-13T13:00:00Z", "2026-11-13T13:30:00Z")).toBe(true); // Fr 14:00 (Slot 14:10)
     expect(isFree("2026-11-13T09:00:00Z", "2026-11-13T09:30:00Z")).toBe(false); // Fr 10:00: kein Slot → belegt
+  });
+
+  it("Tage vor dem frühesten Buchungstag ohne eigenen Kalender (App-Kalender): belegt", () => {
+    // Ole, 20.11.2026: ohne Google/Outlook keine Termine vor dem frühesten Allianz-Buchungstag
+    const from = new Date("2026-11-11T23:00:00Z");
+    const kf = new Date("2026-11-12T23:00:00Z");
+    const to = new Date("2026-11-13T23:00:00Z");
+    const busy = busyFromSlots({ ...base, slots: ["2026-11-13T14:10:00+01:00"], min: from, max: to, knownFrom: kf, fallbackFree: [] });
+    const isFree = (s: string, e: string) => !busy.some((b) => b.start < new Date(e) && b.end > new Date(s));
+    expect(isFree("2026-11-12T09:00:00Z", "2026-11-12T09:30:00Z")).toBe(false); // Do 10:00: vor dem frühesten Buchungstag
+    expect(isFree("2026-11-13T13:00:00Z", "2026-11-13T13:30:00Z")).toBe(true); // Fr 14:00 (Slot 14:10)
+  });
+
+  it("Termindauer der Allianz-Termin-Art: nächste wählbare Dauer", () => {
+    expect(nearestDuration(60)).toBe(60);
+    expect(nearestDuration(45)).toBe(45);
+    expect(nearestDuration(90)).toBe(60);
+    expect(nearestDuration(20)).toBe(15);
+    expect(nearestDuration(40)).toBe(45);
+    expect(nearestDuration(0)).toBe(30);
+    expect(nearestDuration("x")).toBe(30);
   });
 
   it("Monate über den Jahreswechsel und Ergänzung", () => {
@@ -213,11 +231,13 @@ describe("Lead-Zeiten und Blockierungen", () => {
     expect(leadTimesError(DEFAULT_LEAD_TIMES)).toBeNull();
   });
 
-  it("Standard bleibt Mo–Fr 10/14/16 Uhr", () => {
-    expect(DEFAULT_LEAD_TIMES).toEqual({ weekdays: [1, 2, 3, 4, 5], times: ["10:00", "14:00", "16:00"], durationMin: 30 });
+  it("Standard Mo–Fr 10 bis 17 Uhr (Ole, 20.11.2026)", () => {
+    expect(DEFAULT_LEAD_TIMES.weekdays).toEqual([1, 2, 3, 4, 5]);
+    expect(DEFAULT_LEAD_TIMES.times).toEqual(["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"]);
+    expect(DEFAULT_LEAD_TIMES.schedule?.days[1]).toEqual([["10:00", "17:00"]]);
     expect(candidateTimes("lead", DEFAULT_LEAD_TIMES, 6)).toEqual([]);
-    expect(candidateTimes("lead", DEFAULT_LEAD_TIMES, 2)).toEqual(["10:00", "14:00", "16:00"]);
-    expect(candidateTimes({ lead: true, prefer: ["09:00"] }, DEFAULT_LEAD_TIMES, 2)).toEqual(["09:00", "10:00", "14:00", "16:00"]);
+    expect(candidateTimes("lead", DEFAULT_LEAD_TIMES, 2)).toEqual(DEFAULT_LEAD_TIMES.times);
+    expect(candidateTimes({ lead: true, prefer: ["09:00"] }, DEFAULT_LEAD_TIMES, 2)).toEqual(["09:00", ...DEFAULT_LEAD_TIMES.times]);
     // Feste Stunden (Buchungsseite, Hilfetermin): wie bisher nur Mo–Fr.
     expect(candidateTimes([9, 17], DEFAULT_LEAD_TIMES, 0)).toEqual([]);
     expect(candidateTimes([9, 17], { weekdays: [], times: [] }, 3)).toEqual(["09:00", "17:00"]);

@@ -14,6 +14,7 @@
 // Abmeldung (Sperrliste, STOPP per WhatsApp).
 
 import { abschlussBonusJetzt, addDaysIso, berlinTodayIso, eur, type AbschlussBonusQuelle } from "@/lib/offer-pricing";
+import { fromDayKey } from "@/lib/vertrieb/dates";
 
 export const MAIL_AB_STUNDE = 9;
 export const WHATSAPP_AB_STUNDE = 13;
@@ -48,26 +49,45 @@ export function bonusErinnerungStopp(o: BonusAngebot, now: Date, opts: { ersetzt
   return null;
 }
 
-const berlinStunde = (d: Date) => Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "numeric", hourCycle: "h23" }).format(d));
 const tageZwischen = (von: string, bis: string) => Math.round((Date.parse(`${bis}T12:00:00Z`) - Date.parse(`${von}T12:00:00Z`)) / 86_400_000);
 
-/** Jetzt fällige Schritte (ohne Stopp-Prüfung, siehe {@link bonusErinnerungStopp}). */
-export function faelligeBonusSchritte(o: BonusAngebot, now: Date): BonusSchritt[] {
+export type BonusPlanSchritt = {
+  schritt: BonusSchritt;
+  /** Berliner Kalendertag */
+  tag: string;
+  /** Ab diesem Zeitpunkt sendet der Cron (9 bzw. 13 Uhr Berlin) */
+  ab: Date;
+  /** Bis hier wird nachgeholt (19 Uhr Berlin am selben Tag), danach entfällt der Schritt */
+  bis: Date;
+};
+
+const uhr = (h: number) => `${String(h).padStart(2, "0")}:00`;
+
+/**
+ * Noch offene Schritte mit Zeitfenster (ohne Stopp-Prüfung, siehe {@link bonusErinnerungStopp}). Grundlage für den
+ * Versand ({@link faelligeBonusSchritte}) und für die Übersicht „Geplante Nachrichten“ (lib/vertrieb/geplante-nachrichten.ts).
+ */
+export function bonusPlan(o: BonusAngebot, now: Date): BonusPlanSchritt[] {
   const bonus = abschlussBonusJetzt(o, now);
   if (!bonus) return [];
   const fristTag = berlinTodayIso(bonus.bis);
   const sendTag = berlinTodayIso(o.sentAt ?? o.createdAt);
-  const heute = berlinTodayIso(now);
-  const h = berlinStunde(now);
-  if (sendTag >= fristTag || h >= BIS_STUNDE) return [];
-  const out: BonusSchritt[] = [];
-  if (heute === addDaysIso(fristTag, -1) && h >= MAIL_AB_STUNDE && !o.bonusMailVorabAt && tageZwischen(sendTag, fristTag) >= VORAB_MIN_TAGE) out.push("vorab");
-  if (heute === fristTag && h >= MAIL_AB_STUNDE) {
-    if (!o.bonusMailLetzterAt) out.push("letzter");
-    if (!o.bonusPushAt) out.push("push");
-  }
-  if (heute === fristTag && h >= WHATSAPP_AB_STUNDE && !o.bonusWhatsAppAt) out.push("whatsapp");
+  if (sendTag >= fristTag) return [];
+  const schritt = (s: BonusSchritt, tag: string, abStunde: number): BonusPlanSchritt => ({ schritt: s, tag, ab: fromDayKey(tag, uhr(abStunde)), bis: fromDayKey(tag, uhr(BIS_STUNDE)) });
+  const out: BonusPlanSchritt[] = [];
+  if (!o.bonusMailVorabAt && tageZwischen(sendTag, fristTag) >= VORAB_MIN_TAGE) out.push(schritt("vorab", addDaysIso(fristTag, -1), MAIL_AB_STUNDE));
+  if (!o.bonusMailLetzterAt) out.push(schritt("letzter", fristTag, MAIL_AB_STUNDE));
+  if (!o.bonusPushAt) out.push(schritt("push", fristTag, MAIL_AB_STUNDE));
+  if (!o.bonusWhatsAppAt) out.push(schritt("whatsapp", fristTag, WHATSAPP_AB_STUNDE));
   return out;
+}
+
+/** Jetzt fällige Schritte (ohne Stopp-Prüfung, siehe {@link bonusErinnerungStopp}). */
+export function faelligeBonusSchritte(o: BonusAngebot, now: Date): BonusSchritt[] {
+  const t = now.getTime();
+  return bonusPlan(o, now)
+    .filter((s) => s.ab.getTime() <= t && t < s.bis.getTime())
+    .map((s) => s.schritt);
 }
 
 /** „Donnerstag, 19. November“ */

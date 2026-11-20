@@ -1,7 +1,7 @@
 // „Ihre erste Woche“ im Angebot Pay-per-Lead + Software (Ole, 20.11.2026): Anzeige- und Prüfregeln ohne Datenbank,
 // gemeinsam für Admin-Formular, Angebotsseite, Annahme (lib/offers.ts) und Tests. Ablauf: lib/ppl/erste-woche.ts.
 
-import { bestellBetrag, bezugSteuer, type BestellBetrag, type Steuer } from "@/lib/ppl/steuer";
+import { bestellBetrag, bezugSteuer, bruttoJeLead, type BestellBetrag, type Steuer } from "@/lib/ppl/steuer";
 
 /** Mindestmenge wie bei Wochenbestellungen (lib/ppl/orders.ts MIN_ORDER; hier ohne Server-Import). */
 export const ERSTE_WOCHE_MIN = 5;
@@ -35,4 +35,69 @@ export function ersteWocheBetrag(w: Pick<ErsteWoche, "productKey" | "price">, qu
 export function ersteWocheMenge(raw: unknown): number | null {
   const n = Math.round(Number(raw));
   return Number.isFinite(n) && n >= ERSTE_WOCHE_MIN && n <= ERSTE_WOCHE_MAX ? n : null;
+}
+
+// ─── Texte zur ersten Woche (Ole, 20.11.2026): Annahme, Angebot, Auftragsbestätigung, Angebotsmail ─────────────
+// Steuer nach lib/ppl/steuer.ts: Versicherungssparten sind nur für geprüfte Vertreter/Makler steuerfrei, sonst 19 %
+// (Kindersparplan und andere Nicht-Versicherungen immer 19 %). Abgebucht wird erst nach der Registerprüfung
+// (lib/ppl/erste-woche.ts wartendeFreigeben). Keine Gedankenstriche.
+
+/** Erste Woche mit der Wahl des Kunden (Anzahl, jede Woche wiederholen). */
+export type ErsteWocheWahl = Pick<ErsteWoche, "productKey" | "price" | "quantity"> & { name: string; autoRenew: boolean };
+
+/** „510,00 €“ (immer mit Cent, wie im Kundenbereich). */
+export const eurCent = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Abbuchungszeitpunkt der ersten Woche. */
+export const ERSTE_WOCHE_ABBUCHUNG = "Abbuchung nach Prüfung Ihrer Registernummer";
+
+/** Steuerhinweis zum Betrag der ersten Woche (ausführlich, mit Bedingung). */
+export function ersteWocheSteuerText(steuer: Steuer): string {
+  return steuer === "steuerfrei_4_11" ? "umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler (sonst zzgl. 19 % USt.)" : "inkl. 19 % USt.";
+}
+
+/** An die Summe angehängt: „, umsatzsteuerfrei nach …“ bzw. „ inkl. 19 % USt.“ */
+const steuerAnhang = (steuer: Steuer) => `${steuer === "steuerfrei_4_11" ? ", " : " "}${ersteWocheSteuerText(steuer)}`;
+
+/** Kurzer Steuerhinweis direkt am Betrag: „umsatzsteuerfrei“ bzw. „inkl. 19 % USt.“ */
+export const ersteWocheSteuerKurz = (steuer: Steuer) => (steuer === "steuerfrei_4_11" ? "umsatzsteuerfrei" : "inkl. 19 % USt.");
+
+/** Preis je Lead und Summe der ersten Woche, wie abgebucht (steuerfrei: netto = Betrag; steuerpflichtig: brutto). */
+export function ersteWocheZahlen(w: Pick<ErsteWocheWahl, "productKey" | "price" | "quantity">) {
+  const b = ersteWocheBetrag(w, w.quantity);
+  return { steuer: b.steuer, jeLead: bruttoJeLead(w.price, b.steuer), summe: b.brutto };
+}
+
+/**
+ * Punkt in „Das vereinbaren Sie mit dem Klick“ und in der Auftragsbestätigung:
+ * „Erste Woche: 30 Leads TKV-Katze zu je 17,00 €, zusammen 510,00 €, umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte
+ * Versicherungsvermittler (sonst zzgl. 19 % USt.), eigene Rechnung, Abbuchung nach Prüfung Ihrer Registernummer.
+ * Danach jede Woche dieselbe Menge, in der App jederzeit änderbar.“
+ */
+export function ersteWocheVertragszeile(w: ErsteWocheWahl): string {
+  const z = ersteWocheZahlen(w);
+  const danach = w.autoRenew ? "Danach jede Woche dieselbe Menge, in der App jederzeit änderbar." : "Einmalig, ohne automatische Wiederholung. Weitere Leads bestellen Sie in der App.";
+  return `Erste Woche: ${w.quantity} Leads ${w.name} zu je ${eurCent(z.jeLead)}, zusammen ${eurCent(z.summe)}${steuerAnhang(z.steuer)}, eigene Rechnung, ${ERSTE_WOCHE_ABBUCHUNG}. ${danach}`;
+}
+
+/**
+ * Zeile über dem Annahmeknopf statt „Jetzt fällig: 0 €“: Betrag fett, Rest als Zusatz.
+ * „Erste Woche: 510,00 € (30 Leads, umsatzsteuerfrei), Abbuchung nach Prüfung Ihrer Registernummer“
+ */
+export function ersteWocheFaellig(w: Pick<ErsteWocheWahl, "productKey" | "price" | "quantity">): { label: string; betrag: string; zusatz: string } {
+  const z = ersteWocheZahlen(w);
+  return { label: "Erste Woche: ", betrag: eurCent(z.summe), zusatz: ` (${w.quantity} Leads, ${ersteWocheSteuerKurz(z.steuer)}), ${ERSTE_WOCHE_ABBUCHUNG}` };
+}
+
+/**
+ * Zeile in der Angebotsmail (Sie oder Du, ohne Gedankenstriche): „Erste Woche: 20 Leads TKV-Katze zu je 17,00 €,
+ * zusammen 340,00 €, umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler (sonst zzgl. 19 % USt.).
+ * Die Anzahl wählen Sie bei der Annahme, abgebucht wird erst nach Prüfung Ihrer Registernummer.“
+ */
+export function ersteWocheMailzeile(w: Omit<ErsteWocheWahl, "autoRenew">, du: boolean): string {
+  const z = ersteWocheZahlen(w);
+  const wahl = du
+    ? "Die Anzahl wählst du bei der Annahme, abgebucht wird erst nach Prüfung deiner Registernummer."
+    : "Die Anzahl wählen Sie bei der Annahme, abgebucht wird erst nach Prüfung Ihrer Registernummer.";
+  return `Erste Woche: ${w.quantity} Leads ${w.name} zu je ${eurCent(z.jeLead)}, zusammen ${eurCent(z.summe)}${steuerAnhang(z.steuer)}. ${wahl}`;
 }

@@ -13,6 +13,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
 import { prisma } from "@/lib/prisma";
 import { quotaFor } from "@/lib/ppl/engine";
+import { parkDeadline } from "@/lib/ppl/parken";
 import { loadCustomerOverview, loadPplReport, type Granularity } from "@/lib/ppl/auswertung";
 import { nowMs } from "@/lib/now";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "@/app/admin/ppl/actions";
@@ -44,6 +45,7 @@ const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" |
   parked: { label: "geparkt", tone: "warning" },
   duplicate: { label: "Dublette", tone: "neutral" },
   invalid: { label: "ungültig", tone: "danger" },
+  expired: { label: "verworfen (> 48 h geparkt)", tone: "neutral" },
 };
 
 type Suche = { ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; gespeichert?: string; postfach?: string; versand?: string; anzahl?: string };
@@ -312,6 +314,7 @@ function Geparkt({ parked, subs, name }: { parked: Awaited<ReturnType<typeof pri
                 <div className="text-xs text-[color:var(--muted)]">
                   {[p.plz ? `PLZ ${p.plz}` : null, p.insurer].filter(Boolean).join(" · ")}
                   {p.reason ? <span className="text-amber-700"> · {p.reason}</span> : null}
+                  <span className="text-[color:var(--muted)]"> · verfällt {dt(parkDeadline(p.createdAt))}</span>
                 </div>
               </div>
               {options.length ? (

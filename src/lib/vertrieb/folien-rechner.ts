@@ -51,7 +51,8 @@ export function pplRechnung(w: RechnerWerte, software: number) {
   const proAbschluss = monat != null && w.abschluesse ? monat / w.abschluesse : null;
   const provision = w.provision ?? null;
   const abstand = proAbschluss != null && provision != null ? provision - proAbschluss : null;
-  return { leadKosten, monat, proTermin, proAbschluss, provision, abstand };
+  const gewinn = monat != null && provision != null && w.abschluesse != null ? w.abschluesse * provision - monat : null;
+  return { leadKosten, monat, proTermin, proAbschluss, provision, abstand, gewinn };
 }
 
 function pplAusgabe(w: RechnerWerte, f: RechnerFest): RechnerAusgabe {
@@ -67,6 +68,12 @@ function pplAusgabe(w: RechnerWerte, f: RechnerFest): RechnerAusgabe {
     if (d > 0) [fazit, ton] = [`Ihre Provision ${p} liegt ${euro(d)} über den Kosten pro Abschluss.`, "plus"];
     else if (d < 0) [fazit, ton] = [`Ihre Provision ${p} liegt ${euro(-d)} unter den Kosten pro Abschluss.`, "minus"];
     else fazit = `Ihre Provision ${p} entspricht etwa den Kosten pro Abschluss.`;
+    // Gewinn im Monat (Ole, 20.11.2026): Abschlüsse × Provision − Kosten im Monat
+    if (r.gewinn != null) {
+      const g = Math.round(r.gewinn);
+      const satz = `${g >= 0 ? "Gewinn" : "Verlust"} im Monat: ${euro(Math.abs(g))} (${zahl(w.abschluesse!)} × ${p} − ${euro(r.monat!)}).`;
+      fazit = `${satz} ${fazit}`;
+    }
   }
   return {
     text: {
@@ -173,4 +180,69 @@ export function rechnerAnwenden(root: HTMLElement): void {
     if (k in aus.text && el.textContent !== aus.text[k]) el.textContent = aus.text[k];
     if (k in aus.ton) el.dataset.ton = aus.ton[k];
   });
+}
+
+// ─── Quoten mitziehen (Ole, 20.11.2026) ──────────────────────────────────────────────────────────
+// Ändert man auf der Pay-per-Lead-Folie die Leads, ziehen Termine und Abschlüsse mit, solange die Quoten gleich
+// bleiben (Termine ÷ Leads, Abschlüsse ÷ Termine). Ändert man Termine oder Abschlüsse selbst, gilt ab dann diese
+// neue Quote. Die Quoten liegen ungerundet am Folien-Element (data-q-termin, data-q-abschluss), damit wiederholtes
+// Runden sie nicht verschiebt.
+
+export type Quoten = { termin: number | null; abschluss: number | null };
+
+/** Quoten aus den aktuellen Werten (null, wo nicht berechenbar). */
+export function quotenAus(w: RechnerWerte): Quoten {
+  const l = w.leads ?? null;
+  const t = w.termine ?? null;
+  const a = w.abschluesse ?? null;
+  return {
+    termin: l != null && l > 0 && t != null ? t / l : null,
+    abschluss: t != null && t > 0 && a != null ? a / t : null,
+  };
+}
+
+/**
+ * Rein: neue Werte nach Änderung eines Felds. leads → Termine und Abschlüsse mit den Quoten; termine → neue
+ * Terminquote, Abschlüsse mit der Abschlussquote; abschluesse → neue Abschlussquote. Ergebnisse ganzzahlig.
+ */
+export function quotenNachziehen(feld: string, w: RechnerWerte, q: Quoten): { werte: RechnerWerte; quoten: Quoten } {
+  const werte = { ...w };
+  const quoten = { ...q };
+  const rund = (n: number) => Math.round(n);
+  if (feld === "leads" && werte.leads != null && quoten.termin != null) {
+    const t = werte.leads * quoten.termin;
+    werte.termine = rund(t);
+    if (quoten.abschluss != null) werte.abschluesse = rund(t * quoten.abschluss);
+  } else if (feld === "termine") {
+    if (werte.leads != null && werte.leads > 0 && werte.termine != null) quoten.termin = werte.termine / werte.leads;
+    if (werte.termine != null && quoten.abschluss != null) werte.abschluesse = rund(werte.termine * quoten.abschluss);
+  } else if (feld === "abschluesse") {
+    if (werte.termine != null && werte.termine > 0 && werte.abschluesse != null) quoten.abschluss = werte.abschluesse / werte.termine;
+  }
+  return { werte, quoten };
+}
+
+/** Im Browser: nach einer Eingabe Termine/Abschlüsse mitziehen. Gibt die geänderten Felder zurück. */
+export function rechnerQuoten(root: HTMLElement, feld: string): string[] {
+  if (root.dataset.rechner !== "ppl" || !["leads", "termine", "abschluesse"].includes(feld)) return [];
+  const inputs = new Map<string, HTMLInputElement>();
+  root.querySelectorAll<HTMLInputElement>("input[data-feld]").forEach((i) => inputs.set(i.dataset.feld!, i));
+  const werte: RechnerWerte = {};
+  inputs.forEach((i, k) => (werte[k] = zahlLesen(i.value)));
+  const num = (s: string | undefined) => (s != null && s !== "" && Number.isFinite(Number(s)) ? Number(s) : null);
+  let q: Quoten = { termin: num(root.dataset.qTermin), abschluss: num(root.dataset.qAbschluss) };
+  if (q.termin == null && q.abschluss == null) q = quotenAus(PPL_BEISPIEL);
+  const { werte: neu, quoten } = quotenNachziehen(feld, werte, q);
+  if (quoten.termin != null) root.dataset.qTermin = String(quoten.termin);
+  if (quoten.abschluss != null) root.dataset.qAbschluss = String(quoten.abschluss);
+  const geaendert: string[] = [];
+  for (const k of ["termine", "abschluesse"]) {
+    if (k === feld) continue;
+    const i = inputs.get(k);
+    if (i && neu[k] != null && neu[k] !== werte[k]) {
+      i.value = zahlFeld(neu[k]);
+      geaendert.push(k);
+    }
+  }
+  return geaendert;
 }

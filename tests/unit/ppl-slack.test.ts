@@ -39,6 +39,11 @@ describe("Slack je PPL-Lead", () => {
     expect(pplSlackText({ ...base, status: "delivered", wasParked: true })).toContain("geliefert (war geparkt)");
   });
 
+  it("geparkt: nennt die Verfallsfrist (48 h ab Eingang)", () => {
+    const text = pplSlackText({ ...base, status: "parked", reason: "alle Kontingente voll", createdAt: new Date("2026-11-20T13:05:00Z") });
+    expect(text).toContain("Frist: wird am 22.11. um 14:05 Uhr verworfen, wenn kein Bezug frei wird");
+    expect(pplSlackText({ ...base, status: "duplicate", createdAt: new Date("2026-11-20T13:05:00Z") })).not.toContain("Frist");
+  });
   it("Auslieferungsfehler: eigene Warnung, Adressen nur als Domain", () => {
     const failed = {
       label: "E-Mail (maschinenlesbar)",

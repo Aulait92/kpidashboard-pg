@@ -19,4 +19,12 @@ export const SPLITTEST_HYPOTHESE: Record<string, string> = {
   terminvorschlag_kostenlos: "Das Wort „kostenlos“ senkt die Hürde zum Termin.",
   buchungsseite_kompakt: "Weniger Hürden (nächste Tage zuerst, Datenschutz als Hinweis) bringen mehr Buchungen.",
   praesentation: "Einstieg mit dem Anliegen und Wahl zwischen zwei Paketen erhöhen die Zusage im Termin.",
+  // Freigabe Ole 20.11.2026, gebaut (lib/experimente.ts termin_zusage, bot.ts, termin-strecke.ts)
+  // Erster Test im eigenen PKV-Funnel (A/B-Test-Labor, Freigabe Ole 20.11.2026; lib/experimente.ts funnel_pkv_anlass)
+  funnel_pkv_anlass:
+    "Eine Überschrift mit dem konkreten Anlass (Beitragserhöhung zum 1. Januar) spricht Betroffene direkt an: Es fragen eher Leute mit echtem Anliegen an, die der Experte auch erreicht.",
+  // A/B-Test-Labor 20.11.2026 (lib/experimente.ts buchung_erinnerung, Wortlaut lib/policen/regeln.ts)
+  buchung_erinnerung:
+    "Steht das freiwillige Häkchen als hervorgehobene Karte statt als grauer Kleindruck da, wird es wahrgenommen und öfter angehakt (gleicher Wortlaut, nie vorausgewählt).",
+  termin_zusage: "Endet die Buchungsbestätigung mit der Zusage-Frage „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], erscheinen mehr Leads zum Termin.",
 };

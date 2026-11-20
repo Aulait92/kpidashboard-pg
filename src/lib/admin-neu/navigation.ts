@@ -101,6 +101,8 @@ export const BEREICHE: NeuBereich[] = [
       { view: "marketing-webseite", pfad: n("/marketing/webseite"), titel: "Webseite & Rechner", alt: ["/admin/einstellungen/rechner"], suchwoerter: "Marketing Preise Rechner Einstellungen", fertig: true },
       // Datenschutz und Recht (Ole, 19.11.2026): Liste der Fälle aus der Kaltakquise, erreichbar über Kontakte (Umschalter)
       { view: "vertrieb-datenschutz", pfad: n("/vertrieb/datenschutz"), titel: "Datenschutz und Recht", alt: ["/admin/vertrieb/datenschutz"], suchwoerter: "DSGVO Auskunft Löschung Widerspruch Abmahnung Art. 15 Art. 17", fertig: true },
+      // Geplante Nachrichten (Ole, 20.11.2026): automatische E-Mails und WhatsApps der nächsten 14 Tage, erreichbar über Mein Tag → Vertrieb
+      { view: "vertrieb-nachrichten", pfad: n("/vertrieb/nachrichten"), titel: "Geplante Nachrichten", alt: [], suchwoerter: "Erinnerung automatisch WhatsApp E-Mail Zahlungserinnerung Terminerinnerung Bonus Follow-up Mahnung", fertig: true },
       { view: "kontakt-neu", pfad: n("/vertrieb/kontakte/neu"), titel: "Neuer Kontakt", alt: ["/admin/vertrieb/kontakte/neu"], fertig: true },
       { view: "kontakt", pfad: n("/vertrieb/kontakte/[id]"), titel: "Kontakt", alt: ["/admin/vertrieb/kontakte/[id]"], fertig: true },
       { view: "angebot-neu", pfad: n("/vertrieb/kontakte/[id]/angebot"), titel: "Angebot erstellen", alt: ["/admin/vertrieb/kontakte/[id]/angebot"], fertig: true },

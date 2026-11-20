@@ -119,6 +119,7 @@ export async function runApplyNow(): Promise<DryRunState> {
   await requireAdmin();
   try {
     const result = await runMediaBuyer({ force: true });
+    if (result.skipped) return { error: result.skipped };
     revalidatePath("/admin/neu/leads/werbekonten");
     revalidatePath("/admin/neu", "layout");
     return { ok: true, results: result.pools };

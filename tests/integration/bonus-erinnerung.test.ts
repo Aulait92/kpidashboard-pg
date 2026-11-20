@@ -143,7 +143,7 @@ describe("Bonus-Erinnerung", () => {
     expect(mails[1].button).toEqual({ label: "Angebot annehmen", url: `https://app.test/angebot/${offer.token}` });
     for (const m of mails) expect([m.subject, ...m.paragraphs].join(" ")).not.toMatch(/[–—]/);
     expect(pushesFor(offer.id)).toHaveLength(1);
-    expect(pushesFor(offer.id)[0]).toMatchObject({ title: `⏰ Bonus läuft heute ab: ${offer.contactName}`, url: `/admin/vertrieb/kontakte/${contact.id}` });
+    expect(pushesFor(offer.id)[0]).toMatchObject({ title: `⏰ Bonus läuft heute ab: ${offer.contactName}`, url: `/admin/neu/vertrieb/kontakte/${contact.id}` });
     const wa = waTo(contact.phone);
     expect(wa.map((w) => w.name)).toEqual([BONUS_TEMPLATE_SIE]);
     expect(wa[0].components[0].parameters.map((p) => p.text)).toEqual([`Herr ${contact.lastName}`, B, `https://app.test/angebot/${offer.token}`]);

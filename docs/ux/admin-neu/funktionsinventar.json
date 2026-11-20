@@ -5410,5 +5410,17 @@
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Pilot (kostenlos bis …) setzen oder entfernen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/pilot-card.tsx",
+  "neu": "Kundenakte › Abrechnung & Pause › Karte Pilot",
+  "status": "ergänzen",
+  "demo_view": "kunde-abrechnung",
+  "id": "pilot-actions-savepilotaction--pilot-kostenlos-bis-setzen-oder-entfernen",
+  "bereich": "betreuen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  }
 ]

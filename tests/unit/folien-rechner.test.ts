@@ -35,11 +35,11 @@ describe("Pay-per-Lead: Rechnen Sie mit Ihren Zahlen", () => {
   });
 
   it("Provision darüber, darunter, gleich", () => {
-    expect(ppl({ provision: 600 }).text.fazit).toBe("Ihre Provision 600 € liegt 338 € über den Kosten pro Abschluss.");
+    expect(ppl({ provision: 600 }).text.fazit).toContain("Ihre Provision 600 € liegt 338 € über den Kosten pro Abschluss.");
     expect(ppl({ provision: 600 }).ton.fazit).toBe("plus");
-    expect(ppl({ provision: 200 }).text.fazit).toBe("Ihre Provision 200 € liegt 62 € unter den Kosten pro Abschluss.");
+    expect(ppl({ provision: 200 }).text.fazit).toContain("Ihre Provision 200 € liegt 62 € unter den Kosten pro Abschluss.");
     expect(ppl({ provision: 200 }).ton.fazit).toBe("minus");
-    expect(ppl({ provision: 262 }).text.fazit).toBe("Ihre Provision 262 € entspricht etwa den Kosten pro Abschluss.");
+    expect(ppl({ provision: 262 }).text.fazit).toContain("Ihre Provision 262 € entspricht etwa den Kosten pro Abschluss.");
   });
 
   it("nie durch 0 teilen, fehlende Werte ohne Strich", () => {
@@ -119,5 +119,36 @@ describe("Folien-HTML", () => {
     expect(v.html).toContain('data-feld="provision" data-euro aria-label="Provision" value="5.000"');
     const m = verkaufsFolien("makler", paketDaten(null, "makler")).find((x) => x.titel.startsWith("Rechnet sich das"))!;
     expect(m.html).not.toContain("data-rechner");
+  });
+});
+
+describe("Quoten mitziehen (Ole, 20.11.2026)", () => {
+  it("Leads ändern: Termine und Abschlüsse folgen mit gleicher Quote", async () => {
+    const { quotenAus, quotenNachziehen } = await import("@/lib/vertrieb/folien-rechner");
+    const q = quotenAus({ leads: 20, termine: 8, abschluesse: 4 });
+    const r = quotenNachziehen("leads", { leads: 50, termine: 8, abschluesse: 4 }, q);
+    expect(r.werte).toMatchObject({ termine: 20, abschluesse: 10 });
+  });
+  it("Termine ändern: neue Terminquote gilt danach, Abschlüsse folgen", async () => {
+    const { quotenAus, quotenNachziehen } = await import("@/lib/vertrieb/folien-rechner");
+    let s = quotenNachziehen("termine", { leads: 20, termine: 10, abschluesse: 4 }, quotenAus({ leads: 20, termine: 8, abschluesse: 4 }));
+    expect(s.werte.abschluesse).toBe(5);
+    s = quotenNachziehen("leads", { ...s.werte, leads: 40 }, s.quoten);
+    expect(s.werte).toMatchObject({ termine: 20, abschluesse: 10 });
+  });
+  it("Abschlüsse ändern: nur die Abschlussquote ändert sich; leere Leads ändern nichts", async () => {
+    const { quotenAus, quotenNachziehen } = await import("@/lib/vertrieb/folien-rechner");
+    const s = quotenNachziehen("abschluesse", { leads: 20, termine: 8, abschluesse: 2 }, quotenAus({ leads: 20, termine: 8, abschluesse: 4 }));
+    expect(s.quoten.abschluss).toBe(0.25);
+    expect(quotenNachziehen("leads", { leads: null, termine: 8, abschluesse: 4 }, s.quoten).werte.termine).toBe(8);
+  });
+});
+
+describe("Gewinn im Monat (Ole, 20.11.2026)", () => {
+  it("zeigt Gewinn bzw. Verlust aus Abschlüssen × Provision − Kosten", () => {
+    const plus = rechnerAusgabe("ppl", { leads: 20, preis: 35, termine: 8, abschluesse: 4, provision: 300 }, { software: 349 })!;
+    expect(plus.text.fazit).toContain("Gewinn im Monat: 151 € (4 × 300 € − 1.049 €).");
+    const minus = rechnerAusgabe("ppl", { leads: 20, preis: 35, termine: 8, abschluesse: 4, provision: 200 }, { software: 349 })!;
+    expect(minus.text.fazit).toContain("Verlust im Monat: 249 €");
   });
 });

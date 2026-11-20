@@ -16,6 +16,7 @@ import { sendCustomerMail, sendPlainMail, sendPlainMailLatin1 } from "@/lib/emai
 import { sendToAdmins } from "@/lib/push";
 import { decryptSecret } from "@/lib/encryption";
 import { isContactLabel, machineMail, parseAddresses } from "@/lib/ppl/lead-mail";
+import { poolEinwilligung, type PoolEinwilligung } from "@/lib/ppl/einwilligung-nachweis";
 
 type Sub = Prisma.LeadSubscriptionGetPayload<object>;
 type Answer = { label: string; value: string };
@@ -31,6 +32,11 @@ export type DeliveryLead = {
   date: Date;
   /** Eingang des Funnel-Formulars (Zeitpunkt der Einwilligung) */
   consentAt: Date | null;
+  /**
+   * Einwilligungsnachweis aus dem eigenen Funnel (PoolLead.consentData, L3): geht statt LeadSubscription.consentText
+   * an den Abnehmer (Wortlaut, Fassung, Zeitpunkt, Kanäle, Knopf)
+   */
+  consent?: PoolEinwilligung | null;
   /** SMS-Bestätigung im Funnel (PoolLead.smsVerified), Abzeichen im PDF */
   smsVerified?: boolean;
   test?: boolean;
@@ -113,7 +119,8 @@ async function sendPdfMails(sub: Sub, lead: DeliveryLead, answers: Answer[]): Pr
   const to = parseAddresses(sub.deliveryEmail);
   if (!to.length) return "Keine Liefer-E-Mail für das PDF am Bezug hinterlegt.";
   const { leadPdf, leadPdfMail, leadPdfName } = await import("@/lib/ppl/lead-pdf");
-  const pdf = Buffer.from(await leadPdf({ ...lead, answers, consentText: sub.consentText }));
+  const c = einwilligungFuer(sub, lead);
+  const pdf = Buffer.from(await leadPdf({ ...lead, answers, consentText: c.text, consentAt: c.at, consentDetail: c.detail }));
   const filename = `${lead.test ? "TEST_" : ""}${leadPdfName(lead)}`;
   const mail = leadPdfMail(lead);
   return sendEach(to, (address) =>
@@ -127,11 +134,23 @@ async function sendPdfMails(sub: Sub, lead: DeliveryLead, answers: Answer[]): Pr
   );
 }
 
+/**
+ * Einwilligung, die an den Abnehmer geht: Nachweis am Lead (eigener Funnel, L3) vor dem Text am Bezug.
+ * detail = Fassung und Kanäle (nur mit Nachweis).
+ */
+export function einwilligungFuer(sub: Pick<Sub, "consentText">, lead: Pick<DeliveryLead, "consent" | "consentAt">): { text: string | null; at: Date | null; detail: string | null; nachweis: PoolEinwilligung | null } {
+  const n = lead.consent ?? null;
+  if (!n) return { text: sub.consentText, at: lead.consentAt, detail: null, nachweis: null };
+  const detail = [n.version && `Fassung ${n.version}`, n.kanaele.length && `Kanäle: ${n.kanaele.join(", ")}`].filter(Boolean).join(" · ") || null;
+  return { text: n.text, at: new Date(n.at), detail, nachweis: n };
+}
+
 /** Lead über den Lieferweg des Bezugs zustellen (ohne Datenbank). Wirft nicht. */
 export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryReport> {
   const answers = lead.answers.filter((a) => a?.label && a?.value);
   const phone = lead.phone ? `+${lead.phone.replace(/^\+/, "")}` : null;
   const tag = lead.test ? "[TEST] " : "";
+  const einw = einwilligungFuer(sub, lead);
 
   if (sub.delivery === "app") {
     if (lead.test) return { channel: "app", label: "Kundenbereich", targets: [], ok: false, error: "Kein Testversand in den Kundenbereich (der Lead würde beim Kunden erscheinen)." };
@@ -155,12 +174,28 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
     const kind = mailKind(sub);
     const to = parseAddresses(sub.deliveryEmail);
     if (!to.length) return { channel: "email", label: MAIL_LABEL[kind], targets: [], ok: false, error: "Keine Liefer-E-Mail am Bezug hinterlegt." };
-    const tl = { id: lead.id, name: lead.name, phone: lead.phone, email: lead.email, answers };
+    const tl = {
+      id: lead.id,
+      name: lead.name,
+      phone: lead.phone,
+      email: lead.email,
+      answers,
+      consent: einw.nachweis ? { text: einw.nachweis.text, at: einw.nachweis.at, version: einw.nachweis.version, kanaele: einw.nachweis.kanaele } : null,
+    };
     // Inhalt einmal bauen, dann je Adresse eine eigene Mail (Empfänger sehen sich nicht gegenseitig,
     // ein Fehler an einer Adresse hält die anderen nicht auf)
     let send: SendFn;
     if (kind === "maschinenlesbar") {
-      const m = machineMail({ ...tl, date: lead.date, product: lead.product, consentText: sub.consentText, consentAt: lead.consentAt, test: lead.test });
+      const n = einw.nachweis;
+      const m = machineMail({
+        ...tl,
+        date: lead.date,
+        product: lead.product,
+        consentText: einw.text,
+        consentAt: einw.at,
+        ...(n ? { consentVersion: n.version, consentChannels: n.kanaele, consentButton: n.knopf, consentFunnel: n.funnel } : {}),
+        test: lead.test,
+      });
       send = (address) => sendPlainMail({ to: address, subject: m.subject, text: m.text, attachments: [{ filename: m.attachment.filename, content: m.attachment.content, contentType: "application/json" }] });
     } else if (kind === "vorlage") {
       const { renderTemplate } = await import("@/lib/ppl/template");
@@ -182,6 +217,7 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
             `Telefon: ${phone ?? "nicht angegeben"}`,
             `E-Mail: ${lead.email ?? "nicht angegeben"}`,
             ...answers.filter((a) => !isContactLabel(a.label)).map((a) => `${a.label}: ${a.value}`),
+            ...(einw.nachweis ? [`Einwilligung (${einw.detail ?? ""}, ${einw.nachweis.at}): „${einw.nachweis.text}“`] : []),
             `Lead-ID: ${lead.id}`,
           ],
           replyTo: null,
@@ -209,7 +245,12 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
     Birthday: tv.geburtsdatum || null,
     Interest: sub.productKey.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
     ExternalId: lead.id,
-    Message: [...(lead.test ? ["TEST: Testdatensatz, bitte nicht bearbeiten"] : []), ...answers.map((a) => `${a.label}: ${a.value}`)].join("\n") || null,
+    Message:
+      [
+        ...(lead.test ? ["TEST: Testdatensatz, bitte nicht bearbeiten"] : []),
+        ...answers.map((a) => `${a.label}: ${a.value}`),
+        ...(einw.nachweis ? [`Einwilligung (${einw.detail ?? ""}, ${einw.nachweis.at}): ${einw.nachweis.text}`] : []),
+      ].join("\n") || null,
   };
   const standard = {
     id: lead.id,
@@ -221,6 +262,9 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
     phone,
     email: lead.email,
     answers: Object.fromEntries(answers.map((a) => [a.label, a.value])),
+    ...(einw.nachweis
+      ? { consent: { text: einw.nachweis.text, version: einw.nachweis.version, at: einw.nachweis.at, channels: einw.nachweis.kanaele, button: einw.nachweis.knopf, funnel: einw.nachweis.funnel } }
+      : {}),
     ...(lead.test ? { test: true } : {}),
   };
   const isConvexa = sub.webhookFormat === "convexa";
@@ -256,7 +300,7 @@ export async function sendDelivery(leadId: string, sub: Sub): Promise<DeliveryRe
     where: { id: leadId },
     select: { id: true, name: true, phone: true, email: true, source: true, formData: true, deliveredAt: true },
   });
-  const pool = await prisma.poolLead.findUnique({ where: { leadId }, select: { createdAt: true, smsVerified: true } });
+  const pool = await prisma.poolLead.findUnique({ where: { leadId }, select: { createdAt: true, smsVerified: true, consentData: true } });
   const answers = (Array.isArray(lead.formData) ? (lead.formData as Answer[]) : []).filter((a) => a?.label && a?.value);
   const report = await deliverTo(sub, {
     id: lead.id,
@@ -267,6 +311,7 @@ export async function sendDelivery(leadId: string, sub: Sub): Promise<DeliveryRe
     answers,
     date: lead.deliveredAt ?? new Date(),
     consentAt: pool?.createdAt ?? null,
+    consent: poolEinwilligung(pool?.consentData),
     smsVerified: pool?.smsVerified ?? false,
   });
   // emailedAt: Lead ging per Mail/Webhook raus (bei app_pdf zählt nur die PDF-Mail, nicht der Kundenbereich)

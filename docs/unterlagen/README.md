@@ -12,7 +12,22 @@ und Mittelpunkte bleiben); Chats auf Folie 11 und 14 und die Zitate auf Folie 14
 Berater „Max Berger“). Überschriften per Glyphen-Übernahme aus dem Original (Komma aus „Sonntag,“), Fließtext mit Inter neu
 gesetzt, Lead-Antworten im Chat unverändert übernommen. PPTX und PDF (Seiten 3, 6, 10 bis 12, 21, 22, 28 bis 31, Makler
 zusätzlich 32), Web-Folien der geänderten Folien neu. Folie 13 (Video: Du-Form und Gedankenstriche) und 17 unverändert.
+Die PPL-Präsentation ist seit 20.11.2026 ebenso bereinigt (Abschnitt „Pay-per-Lead + Software“).
+zusätzlich 32), Web-Folien der geänderten Folien neu. Folie 17 unverändert, Folie 13 (Video) siehe unten.
 Die PPL-Präsentation nutzt dieselben Bilder (Vorstellung, „Niemand geht ran?“, „Kein Lead …“, „Heute“) und ist noch alt.
+
+Fassung 20.11.2026, Video Folie 13 „So arbeitet Ihr digitaler Assistent“ neu (Ole): keine Quelle im Repo, deshalb Bild für
+Bild als HTML-Animation nachgebaut (gleiche Szenen, Layout, Timing, 47 s, 1920x1080, 30 fps) und mit Playwright aufgenommen:
+`scripts/assistent-video/` (Texte in `cfg.js`, Ablauf in `render.mjs`, Einsetzen mit `einsetzen.py`). Formular und Chat siezen
+den Lead (Julia Becker, „Guten Tag Frau Becker“, Berater Max Berger/„Herr Berger“, „Guten Abend, Herr Berger“ in der App),
+ohne Gedankenstriche (Startbild, Schritt 5, „Rund um die Uhr, auch am Sonntagabend“, „Privatschutz: bis zu 20 % sparen“,
+Endbild). Ersetzt: Video und Standbild in beiden PPTX (Folie 13), die 8 Einzelbilder im PDF (Seiten 13 bis 20),
+`public/praesentation/vertrieb/assistent.mp4` und `{vertreter,makler}/13.webp`. Die PPL-Präsentation enthält das Video nicht.
+
+Fassung 20.11.2026, Folie „Sonntag, 21:47 Uhr“ ans Video angeglichen (Ole): „Julia Becker interessiert sich für Privatschutz.“,
+Termin „Montag, 15:00 Uhr“ (vorher Julia, 10:00 Uhr), im Kasten „Montag früh steht Julia Becker auf Ihrer Liste,“ (drei
+Zeilen neu umbrochen). Text in Geist neu gesetzt, Seitenzahl und Kennzeichen unverändert. Vertreter und Makler Folie 12
+(PPTX image11.jpg, PDF Seite 12, Web-Folie 12), PPL Folie 10 (PPTX image10.jpg, PDF Seite 10, `ppl/10.webp`).
 
 Fassung 19.11.2026, Folie 19 „Policen vorab“ (Ole): statt WhatsApp-Telefon jetzt oben das Vergleichsblatt kompakt
 (Doppelt, Kündbar, Fehlt) und darunter ein echter Screenshot der Vergleichsfolie der Beratungspräsentation mit Spalte
@@ -107,6 +122,21 @@ Marketing → Unterlagen gedacht (dort gibt es nur Vertreter/Makler), sondern zu
 - Preise: Leads 17/22/35/65 € je Lead ohne Zusatz „brutto/netto“ (Umsatzsteuer auf Leads wird geprüft), Software
   349 € netto im Monat, keine Einrichtung, ohne Mindestlaufzeit, monatlich kündbar, 3 aktive Verkäufer inklusive (weitere 49 €).
   Ändern sich Preise, Folien 4, 10, 11 und den Sprechzettel anpassen.
+
+Fassung 20.11.2026, ohne Gedankenstriche und mit Sie-Form im Chat (wie Vertreter/Makler): Folie 3, 6, 9, 10, 11 und 12
+aus den bereinigten Vertreter-Bildern (Vertreter 3, 6, 11, 12, 14, 15) übernommen; Seitenzahl „n / 19“ und die
+PPL-Kennzeichen („Problem 02 gelöst“ auf 9, „Problem 01 + 03 gelöst“ auf 10, passend zu Folie 8) aus der alten PPL-Folie.
+Die eigenen PPL-Folien (1, 7, 8, 13, 15 bis 19) hatten keine Gedankenstriche, Folie 14 (Live-Demo) unverändert.
+PPTX, PDF (Seiten 3, 6, 9 bis 12) und Web-Folien `public/praesentation/vertrieb/ppl/03, 06, 09 bis 12.webp` neu.
+Keine Bonusfolie. Upload nach Oles OK (Zielgruppe `ppl`):
+
+```bash
+for f in pptx pdf; do
+  curl -sS -X POST "https://kpidashboard-pg-production.up.railway.app/api/ops/unterlagen?audience=ppl&format=$f" \
+    -H "X-Ops-Upload-Token: dummy" -H "X-File-Name: PPL-Software-Praesentation.$f" \
+    --data-binary @docs/unterlagen/PPL-Software-Praesentation.$f
+done
+```
 
 ## Web-Präsentation (Ole, 15.11.2026)
 

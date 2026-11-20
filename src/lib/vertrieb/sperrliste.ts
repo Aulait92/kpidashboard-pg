@@ -99,10 +99,29 @@ export async function geloeschterKontaktId(email: string | null | undefined): Pr
  */
 export async function kontaktGesperrt(contactId: string | null | undefined): Promise<boolean> {
   if (!contactId) return false;
-  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true, altEmails: true, nieKontaktierenAt: true } });
-  if (c?.nieKontaktierenAt) return true;
-  if (c && [c.email, ...c.altEmails].some(emailGesperrt)) return true;
-  if (await prisma.datenschutzFallEreignis.findFirst({ where: { contactId }, select: { id: true } })) return true;
-  if (c && (await geloeschteAdressen([c.email, ...c.altEmails])).size) return true;
-  return !!(await prisma.salesCampaignLead.findFirst({ where: { contactId, unsubscribed: true }, select: { id: true } }));
+  return (await gesperrteKontakte([contactId])).has(contactId);
+}
+
+/**
+ * Wie {@link kontaktGesperrt} für viele Kontakte auf einmal (feste Zahl von Abfragen, z. B. Übersicht „Geplante
+ * Nachrichten“, lib/vertrieb/geplante-nachrichten-server.ts). Liefert die gesperrten Kontakt-IDs.
+ */
+export async function gesperrteKontakte(contactIds: readonly string[]): Promise<Set<string>> {
+  const ids = [...new Set(contactIds.filter(Boolean))];
+  const out = new Set<string>();
+  if (!ids.length) return out;
+  const [contacts, faelle, abgemeldet] = await Promise.all([
+    prisma.salesContact.findMany({ where: { id: { in: ids } }, select: { id: true, email: true, altEmails: true, nieKontaktierenAt: true } }),
+    prisma.datenschutzFallEreignis.findMany({ where: { contactId: { in: ids } }, select: { contactId: true }, distinct: ["contactId"] }),
+    prisma.salesCampaignLead.findMany({ where: { contactId: { in: ids }, unsubscribed: true }, select: { contactId: true }, distinct: ["contactId"] }),
+  ]);
+  for (const f of faelle) if (f.contactId) out.add(f.contactId);
+  for (const l of abgemeldet) if (l.contactId) out.add(l.contactId);
+  for (const c of contacts) if (c.nieKontaktierenAt || [c.email, ...c.altEmails].some(emailGesperrt)) out.add(c.id);
+  const offen = contacts.filter((c) => !out.has(c.id));
+  if (offen.length) {
+    const geloescht = await geloeschteAdressen(offen.flatMap((c) => [c.email, ...c.altEmails]));
+    if (geloescht.size) for (const c of offen) if ([c.email, ...c.altEmails].some((e) => !!e && geloescht.has(norm(e)))) out.add(c.id);
+  }
+  return out;
 }

@@ -93,7 +93,7 @@ const ADMIN_ERRORS: Record<Exclude<AdminResult, { ok: true }>["error"], string> 
   closed: "Dieser Termin ist schon vorbei oder abgesagt.",
   unavailable: "Der Kalender ist nicht verbunden (Meine Buchungsseite).",
   past: "Bitte einen Zeitpunkt in der Zukunft wählen.",
-  email: "Bitte eine gültige E-Mail-Adresse für die Einladung angeben.",
+  email: "Bitte gültige E-Mail-Adressen für die Einladung angeben, mehrere durch Komma getrennt.",
   error: "Der Kalendertermin konnte nicht angelegt werden. Bitte erneut versuchen.",
   conflict: "Überschneidung mit einem anderen Termin.",
 };

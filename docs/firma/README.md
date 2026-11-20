@@ -71,6 +71,11 @@ Was Ole nicht binnen 48 Stunden freigibt, bleibt liegen. Es gilt nie als genehmi
 | Monats-Board | 1. Montag, 30 Min. | Ole, CEO, CFO, Chief of Staff, Strategischer Investor | Zahlen gegen Plan, große Entscheidungen, Budget |
 | Quartals-Planung | letzte Quartalswoche | Ole und alle | OKRs, Prioritäten, Stopp-Liste |
 
+**Ergebnis-Präsentation (Ole, 20.11.2026):** Jedes Meeting und jeder Team-Einsatz endet mit einer kurzen Präsentation
+für Ole (5 bis 10 Folien, Oles Design wie `docs/unterlagen/`): Anlass, Befund, Entscheidungsvorlage mit Empfehlung,
+Zahlen, nächste Schritte mit Verantwortlichem. Ablage als PDF neben dem Protokoll (`protokolle/JJJJ-MM-TT-<meeting>.pdf`)
+und an Ole senden. Keine Gedankenstriche, nur echte Zahlen (Herkunft nennen).
+
 ## Zusammenarbeit
 
 - Übergaben statt Zurufe: Aufgabe mit Ziel, Frist und Daten in `offene-aufgaben.md`.

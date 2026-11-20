@@ -44,7 +44,6 @@ function alleTexte(k: FlowTextKontext): string[] {
   const d = formularDaten(k, "https://app.example.de/datenschutz/policen?k=abc");
   return [
     chatNachricht(k).text,
-    chatNachricht(k).fusszeile!,
     ...Object.values(d),
     formularWortlaut(d),
     bestaetigung(k, 3, true).text,
@@ -63,11 +62,12 @@ function alleTexte(k: FlowTextKontext): string[] {
 describe("Texte wörtlich nach texte-v2.md", () => {
   it("Chat-Nachricht Sie und Du", () => {
     expect(chatNachricht(SIE)).toEqual({
-      text: "Kleiner Tipp für Donnerstag 💡\n\nWenn Herr Kannapinn Ihre Policen vorab sieht, prüft er schon vor dem Termin, *ob Sie Geld sparen können*: doppelte Verträge, zu teure Tarife, fehlender Schutz. So wird der Termin kürzer und konkreter.\n\n*Meist reicht ein Foto der ersten Seite.* Dauert etwa eine Minute.",
-      fusszeile: "Ihr Termin findet auch ohne Policen statt.",
+      text: "Kleiner Tipp für Donnerstag 💡\n\nWenn Herr Kannapinn Ihre Policen vorab sieht, prüft er schon vor dem Termin, *ob Sie Geld sparen können*: doppelte Verträge, zu teure Tarife, fehlender Schutz. So wird der Termin kürzer und konkreter.\n\n*Meist reicht ein Foto der ersten Seite.* Dauert etwa eine Minute.\n\nIhr Termin findet auch ohne Policen statt.",
+      fusszeile: null,
     });
     expect(chatNachricht(DU).text).toContain("Wenn Ole deine Policen vorab sieht, prüft er schon vor dem Termin, *ob du Geld sparen kannst*:");
-    expect(chatNachricht(DU).fusszeile).toBe("Dein Termin findet auch ohne Policen statt.");
+    // Als letzter Absatz statt Fußzeile (Ole, 20.11.2026: zu wenig Abstand zur Fußzeile)
+    expect(chatNachricht(DU).text.endsWith("\n\nDein Termin findet auch ohne Policen statt.")).toBe(true);
     // Ohne Pronomen kein „er/sie“
     expect(chatNachricht({ ...SIE, pronomen: null }).text).not.toMatch(/\ber\b|\bsie\b|er\/sie/);
   });
@@ -203,10 +203,12 @@ describe("Zeichengrenzen (Meta)", () => {
         expect(buttons.every((b) => b.text.length <= 25)).toBe(true);
       }
     }
-    // Gerendert entspricht die Vorlage der Chat-Nachricht
+    // Gerendert entspricht die Vorlage der Chat-Nachricht; der Satz „… auch ohne Policen statt“ steht in der Vorlage
+    // als Fußzeile, in der freien Nachricht als letzter Absatz (Ole, 20.11.2026)
     const p = vorlagenParameter("bitte", SIE);
-    const gerendert = vorlagenText("bitte", "sie").text.replace(/\{\{(\d+)\}\}/g, (_, i) => p[Number(i) - 1]);
-    expect(gerendert).toBe(chatNachricht(SIE).text);
+    const v = vorlagenText("bitte", "sie");
+    const gerendert = v.text.replace(/\{\{(\d+)\}\}/g, (_, i) => p[Number(i) - 1]);
+    expect(`${gerendert}\n\n${v.fusszeile}`).toBe(chatNachricht(SIE).text);
   });
 });
 

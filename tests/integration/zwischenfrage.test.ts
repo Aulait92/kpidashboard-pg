@@ -57,7 +57,10 @@ import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";
 import { handleInboundPayload } from "@/lib/whatsapp/gateway";
 import { STRECKE } from "@/lib/whatsapp/termin-strecke";
-import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { cleanupCustomer, makeBuyer, makeCustomer, ohneSplittest, requireTestDb } from "./db";
+
+// Buchungen im Chat immer mit Fassung a der Bestätigung (Splittest termin_zusage; Fassung b: eigener Test)
+ohneSplittest("termin_zusage");
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 let seq = 0;
@@ -78,7 +81,10 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
   const knopf = (from: string, id: string, title: string) => inbound(from, { type: "interactive", interactive: { type: "button_reply", button_reply: { id, title } } });
 
   // Lead nach dem Erstanschreiben v8 (Vorlage mit PDF und Fußzeile), Formular nur mit Versicherungsinteresse
-  async function leadNachErstanschreiben(formData: { label: string; value: string }[] = [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }]) {
+  async function leadNachErstanschreiben(
+    formData: { label: string; value: string }[] = [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }],
+    body = "[Erstinformation als PDF]\nHallo Julia Schneider, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*\n\nKI-Assistent · Oben: Erstinformation (gesetzlich)",
+  ) {
     const now = new Date();
     const phone = newPhone();
     const lead = await prisma.lead.create({
@@ -100,7 +106,7 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
               kind: "template",
               purpose: "outreach_privatschutz",
               sentBy: "system",
-              body: "[Erstinformation als PDF]\nHallo Julia Schneider, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*\n\nKI-Assistent · Oben: Erstinformation (gesetzlich)",
+              body,
               createdAt: new Date(now.getTime() - 10 * 60_000),
             },
           ],
@@ -157,6 +163,17 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
     expect(await prisma.message.count({ where: { conversationId: conv.id, kind: STRECKE.vorschlag } })).toBe(1);
     // genau einmal: insgesamt nur eine Zwischenfrage im Chat
     expect(await prisma.message.count({ where: { conversationId: conv.id, direction: "outbound", body: { contains: "Wer soll mitversichert sein?" } } })).toBe(1);
+  });
+
+  it("v12: Knopf „Alles neu“ auf die feste erste Frage → trotzdem genau eine Zwischenfrage (Ole, 20.11.2026, Testchat)", async () => {
+    const { conv, phone } = await leadNachErstanschreiben(undefined, "[Erstinformation als PDF]\nHallo Julia Schneider, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\nDigitaler KI-Assistent");
+    await inbound(phone, { type: "button", button: { text: "Alles neu", payload: "Alles neu" } });
+    expect(st.ai).toBe(0);
+    const frage = gesendet().at(-1)!;
+    expect(frage.art).toBe("buttons");
+    expect(frage.body).toBe("Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wer soll mitversichert sein?");
+    const c = await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } });
+    expect(c.qualificationData).toMatchObject({ vorhanden: "noch nichts versichert, alles neu" });
   });
 
   it("Terminwunsch auf die Öffnungsfrage: keine Zwischenfrage, der Assistent bietet direkt den Termin an", async () => {

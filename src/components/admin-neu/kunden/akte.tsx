@@ -13,6 +13,7 @@ import { fmtDayShort, teamAbsences } from "@/lib/absence";
 import { memberName } from "@/lib/team";
 import { wonReferralCount } from "@/lib/kollegen";
 import { StatusWahl } from "./status-wahl";
+import { pilotAbzeichen } from "@/lib/pilot";
 
 // Unterseiten ohne eigenen Reiter: auf welchem Reiter sie liegen (Pfadteil unter /kunden/<id>/)
 const AUCH: Record<string, string[]> = { Übersicht: ["berichte", "kontakt"], Leads: ["optimierung", "kampagne"] };
@@ -32,6 +33,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
       id: true,
       name: true,
       isTest: true,
+      pilotBis: true,
       plan: true,
       retainerMonthly: true,
       paymentOverdueSince: true,
@@ -52,6 +54,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
     ? await prisma.user.findMany({ where: { id: { in: [...absences.keys()] } }, select: { id: true, email: true, displayName: true } })
     : [];
   const stage = c.salesContact?.customerStage ?? null;
+  const pilot = pilotAbzeichen(c.pilotBis);
 
   const zeile = (
     <div className="space-y-1.5">
@@ -62,6 +65,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
           </span>
         ) : null}
         <Badge>{packageLabel(c)}</Badge>
+        {pilot ? <Badge tone={pilot.laeuft ? "brand" : "warning"}>{pilot.text}</Badge> : null}
         {c.isTest ? <Badge>Test</Badge> : null}
         {/* Kein zweites „Onboarding“, wenn die Status-Wahl es schon zeigt (SUS-Prüfung 20.11.2026) */}
         {c.onboarding && !c.onboarding.liveAt && !(c.salesContact && stage === "ONBOARDING") ? <Badge tone="brand">Onboarding</Badge> : null}

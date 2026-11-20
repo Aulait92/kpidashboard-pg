@@ -9,6 +9,7 @@ import { reportError } from "@/lib/monitoring";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 import { fetchPage } from "@/lib/web-fetch";
+import { KEINE_WEBSITE } from "@/lib/impressum-ersatz";
 
 export type ImpressumInfo = {
   sourceUrl: string | null;
@@ -132,7 +133,7 @@ export async function fetchImpressumText(
   | { error: string; privacyUrl?: string | null; homeText?: string; homeHtml?: string; links?: { href: string; text: string }[] }
 > {
   const base = normalizeUrl(website);
-  if (!base) return { error: "Keine (gültige) Website hinterlegt." };
+  if (!base) return { error: KEINE_WEBSITE };
   const home = await fetchHtml(base.toString(), opts.timeoutMs);
   if (!home) return { error: "Website nicht erreichbar." };
   const all = links(home, base.toString());
@@ -173,7 +174,7 @@ export async function readImpressum(website: string | null | undefined): Promise
     missing: [],
     checkedAt: new Date().toISOString(),
   };
-  if (!website) return { ...empty, error: "Keine (gültige) Website hinterlegt." };
+  if (!website) return { ...empty, error: KEINE_WEBSITE };
   const page = await fetchImpressumText(website);
   if ("error" in page) return { ...empty, privacyUrl: page.privacyUrl ?? null, error: page.error };
   const { impressumUrl, privacyUrl, text } = page;

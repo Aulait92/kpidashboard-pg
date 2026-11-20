@@ -386,6 +386,8 @@ export type ZahlenData = {
     leadMargin: number | null;
     stornoQuote: number | null;
     parked: number;
+    /** im letzten vollen Monat nach Ablauf der Parkfrist verworfen (lib/ppl/parken.ts) */
+    expired: number;
   };
   settings: KpiSettingsData;
   /** „Woraus besteht das?“ für die Kopfzahlen (nur Admin). */
@@ -602,6 +604,8 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
   const lastP = pplMonths.find((p) => p.month === lastComplete);
   const cancelledLast = cancelled.find((c) => c.month === lastComplete)?.n ?? 0;
   const parked = await prisma.poolLead.count({ where: { status: "parked" } });
+  const [ly, lm] = lastComplete.split("-").map(Number);
+  const expired = await prisma.poolLead.count({ where: { status: "expired", createdAt: { gte: monthStart(lastComplete), lt: new Date(Date.UTC(ly, lm, 1)) } } });
 
   // ── Nachvollziehbarkeit: Woraus bestehen die Kopfzahlen? ──
   const drillMonths = [current, lastComplete];
@@ -799,6 +803,7 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
       leadMargin: lastP && lastP.revenue > 0 && costAll(lastComplete) ? (lastP.revenue - costAll(lastComplete)!.ppl) / lastP.revenue : null,
       stornoQuote: lastP && lastP.leads + cancelledLast > 0 ? cancelledLast / (lastP.leads + cancelledLast) : null,
       parked,
+      expired,
     },
     settings,
     drill: {

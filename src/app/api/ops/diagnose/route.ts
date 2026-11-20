@@ -312,6 +312,53 @@ async function d360() {
  * Webhook-Probe (nur lesend): GET /v1/configs/webhook mit dem gespeicherten Key jedes 360dialog-Kontos.
  * Zeigt Basis-Adresse (ohne Pfad-Geheimnisse), Status-Code und Antwort gekürzt, nie den Key.
  */
+/**
+ * Einladung von 360dialog für einen Kunden (Ole, 20.11.2026, nur lesend): unser Stand (Status, Kunden-ID, Adresse
+ * gekürzt), die letzten Einladungsversuche aus dem Audit und der Kunde bei 360dialog (GET partners/<id>/clients/<id>).
+ * ?kunde=<customerId>
+ */
+async function d360kunde(params: URLSearchParams) {
+  const customerId = (params.get("kunde") ?? "").trim();
+  if (!customerId) return { fehler: "kunde fehlt" };
+  const mask = (e: string | null | undefined) => (e ? e.replace(/^(.{2}).*(@.*)$/, "$1…$2") : null);
+  const acc = await prisma.whatsAppAccount.findUnique({
+    where: { customerId },
+    select: { status: true, provider: true, dialog360ClientId: true, dialog360InviteEmail: true, updatedAt: true },
+  });
+  const owner = await prisma.user.findFirst({ where: { customerId, teamRole: "owner" }, select: { email: true, lastLoginAt: true } }).catch(() => null);
+  const versuche = await prisma.auditLog.findMany({
+    where: { customerId, action: { startsWith: "whatsapp.d360" } },
+    orderBy: { at: "desc" },
+    take: 10,
+    select: { action: true, at: true, details: true },
+  });
+  let bei360: unknown = null;
+  const { partnerConfig } = await import("@/lib/whatsapp/dialog360-partner");
+  const cfg = partnerConfig();
+  if (cfg && acc?.dialog360ClientId) {
+    // Einzelabruf ist bei 360dialog nicht erlaubt (405): Liste, neueste zuerst, und nach ID suchen
+    const res = await fetch(`${cfg.hubUrl}/api/v2/partners/${encodeURIComponent(cfg.partnerId)}/clients?limit=100&sort=-created_at`, {
+      headers: { "X-API-Key": cfg.apiKey, Accept: "application/json" },
+      signal: AbortSignal.timeout(15_000),
+    }).catch(() => null);
+    if (!res) bei360 = { fehler: "keine Antwort" };
+    else if (!res.ok) bei360 = { fehler: `360dialog ${res.status}`, text: (await res.text()).slice(0, 300) };
+    else {
+      const j = (await res.json()) as Record<string, unknown>;
+      const liste = (Object.values(j).find(Array.isArray) ?? []) as Record<string, unknown>[];
+      const c = liste.find((x) => x.id === acc.dialog360ClientId) ?? { gefunden: false, anzahl: liste.length, schluessel: Object.keys(j) };
+      const info = (c.contact_info ?? {}) as Record<string, unknown>;
+      bei360 = { id: c.id, name: c.name, status: c.status, created_at: c.created_at, partner_payload: c.partner_payload, email: mask(typeof info.email === "string" ? info.email : null), felder: Object.keys(c) };
+    }
+  }
+  return {
+    konto: acc ? { ...acc, dialog360InviteEmail: mask(acc.dialog360InviteEmail) } : null,
+    inhaber: owner ? { email: mask(owner.email), lastLoginAt: owner.lastLoginAt } : null,
+    versuche: versuche.map((v) => ({ ...v, details: JSON.parse(JSON.stringify(v.details ?? {}).replace(/"([^"@]{2})[^"@]*(@[^"]*)"/g, '"$1…$2"')) })),
+    bei360,
+  };
+}
+
 async function d360webhook() {
   const { decryptSecret } = await import("@/lib/encryption");
   const raw = process.env.DIALOG360_BASE_URL;
@@ -715,7 +762,7 @@ async function sicherheitStatus() {
   };
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), sicherheit: sicherheitStatus };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, "d360-kunde": d360kunde, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), sicherheit: sicherheitStatus };
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
@@ -730,6 +777,8 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=nutzung-woche[&tage=7][&gruppe=software|ppl]  Usability-Woche im Vermittlerbereich: aktive Kunden/Nutzer, Top- und ungenutzte Seiten/Aktionen, Abbrüche, Fehler-Toasts, Feedback/NPS, Support, Hilfe-Themen, Aufgaben, nächster Schritt, erste Reaktion, Admin-Nutzung; letzte N Tage gegen die N davor, nur Zahlen (lib/ops/nutzung-woche.ts)
 //   q=journey[&tage=30]                    Lead-Reise je Vermittler: Lead → erste Antwort → Vorschlag → Termin → Komplettcheck → erschienen, nur Zahlen (lib/ops/journey.ts)
 //   q=experimente                          Splittests der Lead-Reise: laufende Tests, Quoten je Fassung, Gewinner, nur Zahlen (lib/experimente.ts)
+//   q=funnel[&tage=30]                     Eigener PKV-Funnel: Besucher, Abbruch je Schritt, Leads, geliefert, mit Rückmeldung, erreicht, Termin,
+//                                          Abschluss, Umsatz je Besucher, Funnel-Tests je Fassung, nur Zahlen (lib/funnel/auswertung.ts)
 //   q=vertrieb-auskunft&email=…|&id=…|&suche=…  Auskunft nach Art. 15 für einen Vertriebskontakt (Felder, Herkunft, Empfänger, Mails, Sperre); Suche nur ID, Name, Firma, Status (lib/ops/vertrieb-auskunft.ts)
 //   q=vertrieb-dsgvo[&tage=60]             Antworten mit Datenschutz- bzw. Widerspruchsbezug und Löschverlangen, nur Anzahlen (lib/ops/vertrieb-auskunft.ts)
 //   q=bot-stumm[&tage=7][&aufgaben=1]     Lead-Nachrichten ohne Antwort des Assistenten binnen 2 Min. (Ausnahmen wie im Sicherheitsnetz
@@ -758,9 +807,11 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "nutzung-woche": async (p) => (await import("@/lib/ops/nutzung-woche")).nutzungWocheGetrennt(p),
   journey: async (p) => (await import("@/lib/ops/journey")).journeyDiagnose(p),
   experimente: async () => (await import("@/lib/experimente")).experimenteDiagnose(),
+  funnel: async (p) => (await import("@/lib/funnel/auswertung")).funnelDiagnose(p),
   "praesentation-quote": async (p) => (await import("@/lib/praesentation-messung")).praesentationQuoteDiagnose(p),
   "vertrieb-auskunft": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebAuskunftDiagnose(p),
   "vertrieb-dsgvo": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebDsgvoDiagnose(p),
+  "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
 };
 
 export async function GET(req: Request): Promise<Response> {

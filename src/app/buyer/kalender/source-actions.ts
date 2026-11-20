@@ -94,6 +94,23 @@ export async function saveIcsAction(_prev: SourceResult, fd: FormData): Promise<
   return res;
 }
 
+/** Fester Video-Link (z. B. Webex-Raum) für Videotermine, Einrichtung „Kalender und freie Zeiten“ (Ole, 20.11.2026). */
+export async function saveVideoRaumAction(_prev: SourceResult, fd: FormData): Promise<SourceResult> {
+  const c = await ctxOrError(true);
+  if ("error" in c) return { error: c.error };
+  const raw = String(fd.get("videoRoomUrl") ?? "").trim();
+  const url = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw;
+  if (url && !/^https:\/\/[^\s/]+\.[^\s]+$/i.test(url)) return { error: "Bitte den ganzen Link einfügen, z. B. https://allianz.webex.com/meet/vorname.nachname." };
+  await prisma.agentConfig.upsert({
+    where: { customerId: c.ctx.customerId },
+    create: { customerId: c.ctx.customerId, videoRoomUrl: url || null },
+    update: { videoRoomUrl: url || null },
+  });
+  await audit("calendar.video_room", { customerId: c.ctx.customerId, entity: "AgentConfig" });
+  refresh();
+  return { ok: true, info: url ? "Gespeichert. Videotermine bekommen diesen Link." : "Entfernt." };
+}
+
 export async function removeIcsAction(): Promise<void> {
   const c = await ctxOrError(true);
   if ("error" in c) return;

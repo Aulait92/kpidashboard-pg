@@ -6,7 +6,8 @@ import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { encryptSecret } from "@/lib/encryption";
-import { deliver } from "@/lib/ppl/engine";
+import { deliver, NotDeliverableError } from "@/lib/ppl/engine";
+import { parkExpired } from "@/lib/ppl/parken";
 import { adminRecordStorno, decideStorno, undoStorno } from "@/lib/ppl/storno";
 import { placeOrder } from "@/lib/ppl/orders";
 import { weekRange } from "@/lib/ppl/periods";
@@ -137,8 +138,8 @@ export async function saveRegisterpruefungAction(_prev: RegisterState, fd: FormD
   if (!isRegisterStatus(status)) return { error: "Status wählen." };
   const rawNr = String(fd.get("registerNr") ?? "").trim();
   const nr = normalizeRegisterNummer(rawNr);
-  if (status !== "keiner" && !nr) return { error: "Registernummer im Format D-XXXX-XXXXX-XX angeben." };
-  if (rawNr && !nr) return { error: "Registernummer im Format D-XXXX-XXXXX-XX angeben." };
+  if (status !== "keiner" && !nr) return { error: "Registernummer wie im Vermittlerregister angeben (D-XXXX-XXXXX-XX oder D-X-XXX-XXXX-XX)." };
+  if (rawNr && !nr) return { error: "Registernummer wie im Vermittlerregister angeben (D-XXXX-XXXXX-XX oder D-X-XXX-XXXX-XX)." };
   const datum = String(fd.get("geprueftAm") ?? "");
   const geprueftAt = /^\d{4}-\d{2}-\d{2}$/.test(datum) ? new Date(`${datum}T12:00:00`) : new Date();
   if (geprueftAt.getTime() > Date.now() + 86_400_000) return { error: "Prüfdatum liegt in der Zukunft." };
@@ -149,6 +150,27 @@ export async function saveRegisterpruefungAction(_prev: RegisterState, fd: FormD
   await audit("ppl.registerpruefung", { entity: "Customer", entityId: customerId, customerId, actor: { id: s.userId, email: s.email, role: s.role }, details: { status, nr } });
   const { registerGeprueft } = await import("@/lib/ppl/erste-woche");
   await registerGeprueft(customerId, { id: s.userId, email: s.email, role: s.role });
+  revalidatePath("/admin/neu/leads/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
+  return { ok: true };
+}
+
+export type PartnerAngabenState = { error?: string; ok?: boolean };
+
+/** Angaben für die Partnerliste der Funnels speichern (Ole, 20.11.2026). Leere Felder = aus der Erstinformation. */
+export async function savePartnerAngabenAction(_prev: PartnerAngabenState, fd: FormData): Promise<PartnerAngabenState> {
+  const s = await requireAdmin();
+  const customerId = String(fd.get("customerId") ?? "");
+  if (!customerId) return { error: "Kunde fehlt." };
+  const t = (k: string) => String(fd.get(k) ?? "").replace(/\s+/g, " ").trim().slice(0, 200) || null;
+  const rawNr = t("partnerRegisterNr");
+  const nr = rawNr ? normalizeRegisterNummer(rawNr) : null;
+  if (rawNr && !nr) return { error: "Registernummer wie im Vermittlerregister angeben (D-XXXX-XXXXX-XX oder D-X-XXX-XXXX-XX)." };
+  const anschrift = t("partnerAnschrift");
+  if (anschrift && !/\b\d{5}\s+\S/.test(anschrift)) return { error: "Anschrift mit Postleitzahl und Ort angeben, z. B. „Straße 1, 12345 Ort“." };
+  const data = { partnerFirma: t("partnerFirma"), partnerAnschrift: anschrift, partnerRegisterNr: nr };
+  await prisma.customer.update({ where: { id: customerId }, data });
+  await audit("ppl.partnerangaben", { entity: "Customer", entityId: customerId, customerId, actor: { id: s.userId, email: s.email, role: s.role }, details: data });
   revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
@@ -172,12 +194,15 @@ export async function assignParkedAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const pool = await prisma.poolLead.findUnique({ where: { id: String(fd.get("poolLeadId") ?? "") } });
   const sub = await prisma.leadSubscription.findUnique({ where: { id: String(fd.get("subscriptionId") ?? "") } });
-  if (!pool || pool.status !== "parked" || !sub) return;
+  // Verfallene bzw. über die Frist geparkte Leads nie wieder ausliefern (lib/ppl/parken.ts, Ole 20.11.2026)
+  if (!pool || pool.status !== "parked" || parkExpired(pool.createdAt) || !sub) return;
   const order =
     sub.period === "week"
       ? await prisma.leadOrder.findUnique({ where: { subscriptionId_periodStart: { subscriptionId: sub.id, periodStart: weekRange().start } } })
       : null;
-  await deliver(pool.id, sub, order?.id ?? null);
+  await deliver(pool.id, sub, order?.id ?? null).catch((err: unknown) => {
+    if (!(err instanceof NotDeliverableError)) throw err;
+  });
   revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
 }

@@ -109,6 +109,10 @@ export const STRECKE = {
   tierFrage: "tier_frage",
   /** Tierfrage beantwortet (body.keys: beantwortete Fragen) */
   tierAntwort: "tier_antwort",
+  /** Zusage-Frage unter der Buchungsbestätigung (Splittest termin_zusage, Fassung b) */
+  zusageFrage: "zusage_frage",
+  /** Antwort auf die Zusage-Frage (body.art: ja, andere, ohne_antwort) */
+  zusageAntwort: "zusage_antwort",
 } as const;
 
 const HOUR = 60 * 60 * 1000;
@@ -284,6 +288,9 @@ export type StreckenStand = {
   /** Letzte Tierfrage (TKV) und beantwortete Tierfragen */
   tierFrageLetzte: { at: Date; key: string } | null;
   tierBeantwortet: string[];
+  /** Zusage-Frage (Splittest termin_zusage, Fassung b) gestellt bzw. beantwortet (art: ja, andere, ohne_antwort) */
+  zusageFrageAt: Date | null;
+  zusageAntwort: { at: Date; art: string } | null;
 };
 
 const STAND_KINDS: string[] = [
@@ -303,6 +310,8 @@ const STAND_KINDS: string[] = [
   STRECKE.abschluss,
   STRECKE.tierFrage,
   STRECKE.tierAntwort,
+  STRECKE.zusageFrage,
+  STRECKE.zusageAntwort,
 ];
 
 const daten = (body: string | null): Record<string, unknown> => {
@@ -363,7 +372,20 @@ export async function streckenStand(conversationId: string, appointmentId: strin
         const k = daten(r.body).keys;
         return Array.isArray(k) ? k.filter((x): x is string => typeof x === "string") : [];
       }),
+    zusageFrageAt: at(STRECKE.zusageFrage),
+    zusageAntwort: (() => {
+      const z = erste(STRECKE.zusageAntwort);
+      return z ? { at: z.createdAt, art: String(daten(z.body).art ?? "") } : null;
+    })(),
   };
+}
+
+/**
+ * Wartet die Strecke auf die Antwort auf die Zusage-Frage (Splittest termin_zusage, Fassung b)? Solange kommt weder
+ * Komplettcheck noch Tierfrage; ohne Antwort nach 1 Std. (runStreckeAbschliessen) bzw. nach dem Knopf.
+ */
+export function zusageOffen(s: StreckenStand): boolean {
+  return !!s.zusageFrageAt && !s.zusageAntwort && !s.komplettFrageAt && !s.tierFrageLetzte && !s.abschlussAt;
 }
 
 /** Wartet die Strecke auf die Antwort auf eine Tierfrage (TKV, vor dem Komplettcheck)? */
@@ -482,14 +504,63 @@ export function naechsteTierFrage(k: Pick<StreckenKontext, "source" | "formular"
  */
 export async function ersteNachBuchung(
   k: StreckenKontext,
+  einleitung?: string | null,
 ): Promise<{ text: string; buttons: Knopf[] | null; merker: string; daten?: Record<string, unknown> }> {
   if (k.termin && istTierStrecke(k.source)) {
     const s = await streckenStand(k.conversationId, k.termin.id);
     const f = naechsteTierFrage(k, s.tierBeantwortet);
-    if (f && !s.komplettFrageAt && !s.abschlussAt) return { text: f.text, buttons: f.buttons, merker: STRECKE.tierFrage, daten: { key: f.key } };
+    if (f && !s.komplettFrageAt && !s.abschlussAt) return { text: mitEinleitung(f.text, einleitung), buttons: f.buttons, merker: STRECKE.tierFrage, daten: { key: f.key } };
   }
-  const m = komplettcheckNachricht({ ...k, variante: await komplettcheckVariante(k.leadId ?? k.conversationId) });
+  const m = komplettcheckNachricht({ ...k, variante: await komplettcheckVariante(k.leadId ?? k.conversationId) }, einleitung);
   return { text: m.text, buttons: m.buttons, merker: STRECKE.komplettFrage };
+}
+
+/** „Danke!“ am Anfang durch die Einleitung ersetzen („Super, danke!“, „Noch eine kurze Frage:“), sonst davorsetzen. */
+export function mitEinleitung(text: string, einleitung?: string | null): string {
+  if (!einleitung) return text;
+  return `${einleitung} ${text.replace(/^Danke!\s*/, "")}`;
+}
+
+/** Einleitungen nach der Zusage-Frage (Splittest termin_zusage, Fassung b, Ole 20.11.2026). */
+export const ZUSAGE_EINLEITUNG = { ja: "Super, danke!", ohneAntwort: "Noch eine kurze Frage:" } as const;
+
+/**
+ * Erste Frage der Strecke nach der Zusage-Frage senden (Komplettcheck bzw. bei Tierkranken die erste offene Tierfrage),
+ * mit Merker; die Zusage-Frage kommt nicht noch einmal. false = nichts gesendet (schon gefragt bzw. kein Termin).
+ */
+async function sendeErsteNachZusage(k: StreckenKontext, einleitung: string): Promise<boolean> {
+  if (!k.termin) return false;
+  const s = await streckenStand(k.conversationId, k.termin.id);
+  if (s.komplettFrageAt || s.tierFrageLetzte || s.abschlussAt) return false;
+  const m = await ersteNachBuchung(k, einleitung);
+  await merke(k.conversationId, m.merker, { appointmentId: k.termin.id, ...(m.daten ?? {}) });
+  await sende(k, m.text, m.buttons);
+  return true;
+}
+
+/**
+ * Antwort auf die Zusage-Frage (Splittest termin_zusage, Fassung b; Knopf bzw. getippt):
+ *   ja      → Termin zugesagt (Merker „zusage_knopf“), dann Komplettcheck bzw. Tierfrage mit „Super, danke!“ (eine Nachricht)
+ *   andere  → wie „Bitte verschieben“: keine Erinnerungen zur alten Zeit, der Assistent bietet zwei freie Zeiten an und
+ *             verlegt (der Aufrufer gibt ihm den Hinweis); danach der Komplettcheck wie bisher, die Zusage-Frage nicht erneut
+ * Ereignisse für die Gegenproben: zusage_ja bzw. zusage_andere. true = erledigt (bei „andere“: vermerkt).
+ */
+export async function zusageAntwort(conversationId: string, art: "ja" | "andere", now = new Date()): Promise<boolean> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  const stand = await streckenStand(conversationId, k.termin.id);
+  if (!zusageOffen(stand)) return art === "ja" ? !!stand.zusageFrageAt : false; // doppelter bzw. alter Klick
+  await merke(conversationId, STRECKE.zusageAntwort, { appointmentId: k.termin.id, art });
+  await import("@/lib/experimente").then((m) => m.ereignis("termin_zusage", k.leadId, art === "ja" ? "zusage_ja" : "zusage_andere")).catch(() => null);
+  // „andere“: Erinnerungen zur alten Zeit stoppt knopf.ts (wie „Bitte verschieben“), verlegt wird vom Assistenten
+  if (art === "andere") return true;
+  await zusagen(k, now, "zusage_knopf");
+  if (k.leadId) {
+    const { logLeadHistory } = await import("@/lib/lead-history");
+    await logLeadHistory(k.leadId, "notiz", "Termin fest zugesagt (per WhatsApp)", { customerId: k.customerId, userId: null }).catch(() => null);
+  }
+  await sendeErsteNachZusage(k, ZUSAGE_EINLEITUNG.ja);
+  return true;
 }
 
 /**
@@ -1010,7 +1081,7 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
   const offen = await prisma.message.findMany({
     where: {
       direction: "internal",
-      kind: { in: [STRECKE.tierFrage, STRECKE.komplettFrage, STRECKE.langAngebot, STRECKE.vertragsfrage, STRECKE.versichererFrage, STRECKE.policenBitte] },
+      kind: { in: [STRECKE.zusageFrage, STRECKE.tierFrage, STRECKE.komplettFrage, STRECKE.langAngebot, STRECKE.vertragsfrage, STRECKE.versichererFrage, STRECKE.policenBitte] },
       createdAt: { lte: new Date(now.getTime() - HOUR), gte: new Date(now.getTime() - 48 * HOUR) },
     },
     orderBy: { createdAt: "asc" },
@@ -1028,6 +1099,18 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
       if (!conv?.botActive || conv.optedOutAt || !conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) continue;
       const stand = await streckenStand(m.conversationId, appointmentId);
       if (stand.abschlussAt) continue;
+      // Zusage-Frage (Splittest termin_zusage, Fassung b) ohne Tipp: 1 Std. nach der Frage bzw. nach der letzten Nachricht
+      // des Leads (eine Rückfrage hat der Assistent beantwortet) die erste Frage der Strecke mit „Noch eine kurze Frage:“
+      if (zusageOffen(stand)) {
+        const letzte = await prisma.message.findFirst({ where: { conversationId: m.conversationId, direction: "inbound", createdAt: { gt: stand.zusageFrageAt! } }, orderBy: { createdAt: "desc" }, select: { createdAt: true } });
+        const seit = letzte?.createdAt ?? stand.zusageFrageAt!;
+        if (seit.getTime() > now.getTime() - HOUR) continue;
+        const k = await streckenKontext(m.conversationId, now);
+        if (!k?.termin || k.termin.id !== appointmentId) continue;
+        await merke(m.conversationId, STRECKE.zusageAntwort, { appointmentId, art: "ohne_antwort" });
+        if (await sendeErsteNachZusage(k, ZUSAGE_EINLEITUNG.ohneAntwort)) gesendet++;
+        continue;
+      }
       // offen ist der jüngste Schritt
       const schritt: { art: "policen" | "vertraege" | "lang" | "komplett" | "tier"; seit: Date } | null = tierFrageOffen(stand)
         ? { art: "tier", seit: stand.tierFrageLetzte!.at }

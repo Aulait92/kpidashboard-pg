@@ -89,7 +89,7 @@ export type Nachricht = { text: string; fusszeile: string | null };
 
 // ─── 1. Chat-Nachricht ──────────────────────────────────────────────────────
 
-/** „Ihr Termin findet auch ohne Policen statt.“ (Fußzeile der Chat-Nachricht, Zeile im Formular). */
+/** „Ihr Termin findet auch ohne Policen statt.“ (letzter Absatz der Chat-Nachricht, Zeile im Formular). */
 export const ohnePolicenSatz = (an: Ansprache) => a(an, "Dein Termin findet auch ohne Policen statt.", "Ihr Termin findet auch ohne Policen statt.");
 
 /** Text der Chat-Nachricht. Ohne Pronomen ein Satz ohne er/sie; ohne Termin „vor Ihrem Termin“. */
@@ -101,7 +101,9 @@ export function chatNachricht(k: FlowTextKontext): Nachricht {
     `Wenn ${k.name} deine Policen vorab sieht, ${pruefung}, *ob du Geld sparen kannst*: doppelte Verträge, zu teure Tarife, fehlender Schutz. So wird der Termin kürzer und konkreter.`,
     `Wenn ${k.name} Ihre Policen vorab sieht, ${pruefung}, *ob Sie Geld sparen können*: doppelte Verträge, zu teure Tarife, fehlender Schutz. So wird der Termin kürzer und konkreter.`,
   );
-  return { text: `${tag}\n\n${kern}\n\n*Meist reicht ein Foto der ersten Seite.* Dauert etwa eine Minute.`, fusszeile: ohnePolicenSatz(k.an) };
+  // „Termin findet auch ohne Policen statt“ als eigener letzter Absatz statt Fußzeile (Ole, 20.11.2026: zwischen Text und
+  // Fußzeile kaum Platz; den Abstand setzt WhatsApp, Leerzeilen am Ende werden abgeschnitten)
+  return { text: `${tag}\n\n${kern}\n\n*Meist reicht ein Foto der ersten Seite.* Dauert etwa eine Minute.\n\n${ohnePolicenSatz(k.an)}`, fusszeile: null };
 }
 
 // ─── 2. Formular (Daten für den Bildschirm, Wortlaut für den Nachweis) ───────
@@ -266,7 +268,9 @@ export type VorlagenArt = "bitte" | "erinnerung1" | "erinnerung2";
 export function vorlagenText(art: VorlagenArt, an: Ansprache): Nachricht & { knopf2: string; beispiele: string[] } {
   if (art === "bitte") {
     const t = chatNachricht({ an, name: "{{2}}", pronomen: "{{3}}" as Pronomen, tag: "{{1}}", kiFertig: false, gesundheit: false });
-    return { ...t, knopf2: KNOPF_SPAETER, beispiele: ["Donnerstag", an === "du" ? "Ole" : "Herr Kannapinn", "er"] };
+    // Vorlage bei Meta unverändert: Satz „… auch ohne Policen statt“ weiter als Fußzeile (nur die freie Nachricht hat ihn im Text)
+    const ohne = ohnePolicenSatz(an);
+    return { text: t.text.replace(`\n\n${ohne}`, ""), fusszeile: ohne, knopf2: KNOPF_SPAETER, beispiele: ["Donnerstag", an === "du" ? "Ole" : "Herr Kannapinn", "er"] };
   }
   if (art === "erinnerung1") {
     const t = erinnerung1({ an, name: "{{2}}", pronomen: null, tag: "{{1}}", kiFertig: false, gesundheit: false });

@@ -21,7 +21,15 @@ export type PoolDetailRow = {
   product: string;
   region: string | null;
   goal: number;
+  // Ist: geliefert (Zielquelle software) bzw. eingegangen (Airtable).
   leadsMtd: number;
+  // Eingegangene Leads im Monat (brutto).
+  incomingMtd: number;
+  deliveredBased: boolean;
+  // Alle Kunden am Ziel (mit Toleranz) bzw. nichts mehr offen.
+  goalReached: boolean;
+  openDelivery: number | null;
+  yieldRate: number | null;
   projected: number;
   daysElapsed: number;
   daysTotal: number;
@@ -51,6 +59,21 @@ export type PoolDetailRow = {
   googleCpl: number | null;
   latestAction: string | null;
   latestReason: string | null;
+  // Meta-Lernphase knapp, null = kein Meta bzw. noch kein Lauf.
+  learningLabel: string | null;
+  // Höchstpreis je Lead; null = fehlt (Buyer erhöht dann nicht).
+  maxCpl: number | null;
+  // Anteil steuerfreier Leads im Höchstpreis (> 0 = nicht abziehbare USt eingerechnet).
+  maxCplTaxFreeShare: number;
+  // Zielquelle (software | airtable) und beide Ziele zum Vergleich.
+  goalSource: "software" | "airtable";
+  softwareGoal: number;
+  airtableGoal: number;
+  customers: { customerId: string; name: string; goal: number; delivered: number }[];
+  // Letzte Regionen-Rechnung und Kunden im Rückstand (aus dem letzten Lauf).
+  regionNote: string | null;
+  regionOverBreakEven: boolean;
+  customersBehind: string | null;
 };
 
 export type ActionLogRow = {
@@ -71,6 +94,8 @@ export type ActionLogRow = {
 export type TopStats = {
   goal: number;
   leadsMtd: number;
+  // Ist aller Pools ist „geliefert“ (alle mit Zielquelle software).
+  deliveredBased: boolean;
   projected: number;
   autopilotOn: number;
   autopilotTotal: number;
@@ -99,7 +124,7 @@ function statusFor(p: PoolDetailRow): {
       hex: "#d4d4d8",
     };
   const projRatio = p.projected / p.goal;
-  if (p.leadsMtd >= p.goal)
+  if (p.goalReached)
     return {
       label: "Ziel erreicht",
       cls: "text-emerald-600",
@@ -445,7 +470,7 @@ function HeroCard({ top }: { top: TopStats }) {
         <div>
           <div className="grid grid-cols-3 gap-3 sm:gap-6">
             <HeroStat
-              label="Ist (MTD)"
+              label={top.deliveredBased ? "geliefert (MTD)" : "Ist (MTD)"}
               value={String(top.leadsMtd)}
               sub={`/ ${top.goal}`}
             />
@@ -666,7 +691,9 @@ function PoolDetail({
 }) {
   const status = statusFor(pool);
   const pct = pool.goal > 0 ? (pool.leadsMtd / pool.goal) * 100 : 0;
-  const remaining = Math.max(0, pool.goal - pool.leadsMtd);
+  // Offen = Summe der Rückstände je Kunde (Überlieferung eines Kunden gleicht
+  // den Rückstand eines anderen nicht aus).
+  const remaining = pool.openDelivery ?? Math.max(0, pool.goal - pool.leadsMtd);
   const daysLeft = Math.max(0, pool.daysTotal - pool.daysElapsed);
   const needPerDay = daysLeft > 0 ? remaining / Math.max(1, daysLeft) : 0;
   const projectedPctOfGoal =
@@ -714,6 +741,34 @@ function PoolDetail({
           <span aria-hidden>◆</span>
           {pool.kind === "product" ? "Produkt-Pool" : "Region-Pool"}
         </span>
+        {pool.learningLabel ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium",
+              pool.learningLabel === "abgeschlossen"
+                ? "bg-emerald-50 text-emerald-700"
+                : pool.learningLabel === "eingeschränkt"
+                  ? "bg-amber-50 text-amber-700"
+                  : "border border-[color:var(--border)] bg-white text-zinc-700",
+            )}
+          >
+            Lernphase: {pool.learningLabel}
+          </span>
+        ) : null}
+        {pool.goal > 0 ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium",
+              pool.maxCpl == null
+                ? "bg-amber-50 text-amber-700"
+                : "border border-[color:var(--border)] bg-white text-zinc-700",
+            )}
+          >
+            {pool.maxCpl == null
+              ? "Höchstpreis fehlt"
+              : `Höchstpreis ${pool.maxCpl.toFixed(2).replace(".", ",")} €/Lead${pool.maxCplTaxFreeShare > 0 ? " inkl. nicht abziehbarer USt" : ""}`}
+          </span>
+        ) : null}
       </div>
 
       {/* Stats-Karte */}
@@ -725,14 +780,20 @@ function PoolDetail({
             <span className="text-2xl font-bold tabular-nums">
               {formatNumber(pool.goal)}
             </span>
-            <span />
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600">
+              Ziel: {pool.goalSource === "software" ? "Software" : "Airtable"}
+            </span>
 
-            <span className="text-[color:var(--muted)]">Ist (MTD)</span>
+            <span className="text-[color:var(--muted)]">
+              {pool.deliveredBased ? "geliefert (MTD)" : "Ist (MTD)"}
+            </span>
             <span className="text-2xl font-bold tabular-nums text-blue-600">
               {formatNumber(pool.leadsMtd)}
             </span>
             <span className="text-xs text-[color:var(--muted)]">
-              {pool.daysElapsed} {pool.daysElapsed === 1 ? "Tag" : "Tage"}
+              {pool.deliveredBased
+                ? `eingegangen ${formatNumber(pool.incomingMtd)}${pool.yieldRate != null ? ` · ${Math.round(pool.yieldRate * 100)} % verwertet` : ""}`
+                : `${pool.daysElapsed} ${pool.daysElapsed === 1 ? "Tag" : "Tage"}`}
             </span>
 
             <span className="text-[color:var(--muted)]">Prognose</span>
@@ -803,6 +864,23 @@ function PoolDetail({
         </div>
       </div>
 
+      <GoalSourceCompare pool={pool} />
+
+      {pool.regionNote ? (
+        <p
+          className={cn(
+            "rounded-[var(--radius-lg)] border p-3 text-sm",
+            pool.regionOverBreakEven
+              ? "border-amber-200 bg-amber-50 text-amber-800"
+              : "border-[color:var(--border)] bg-white text-zinc-700",
+          )}
+        >
+          {pool.regionNote}
+        </p>
+      ) : null}
+
+      <CustomerGoals pool={pool} />
+
       {/* Channel-Split */}
       <ChannelSplitCard pool={pool} />
 
@@ -871,6 +949,59 @@ function PoolDetail({
         )}
       </div>
     </section>
+  );
+}
+
+// ─── Zielquelle: Software vs. Airtable ───────────────────────────────
+
+function GoalSourceCompare({ pool }: { pool: PoolDetailRow }) {
+  if (pool.softwareGoal <= 0 && pool.airtableGoal <= 0) return null;
+  const diff = pool.softwareGoal - pool.airtableGoal;
+  const diffPct = pool.airtableGoal > 0 ? Math.round((diff / pool.airtableGoal) * 100) : null;
+  const big = diffPct == null ? diff !== 0 : Math.abs(diffPct) >= 10;
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-1 text-xs text-[color:var(--muted)]">
+      <span>
+        Software <span className="font-semibold text-[color:var(--foreground)] tabular-nums">{formatNumber(pool.softwareGoal)}</span>
+      </span>
+      <span>
+        Airtable <span className="font-semibold text-[color:var(--foreground)] tabular-nums">{formatNumber(pool.airtableGoal)}</span>
+      </span>
+      <span className={cn("font-semibold tabular-nums", big ? "text-amber-700" : "text-[color:var(--muted)]")}>
+        Abweichung {diff > 0 ? "+" : ""}
+        {formatNumber(diff)}
+        {diffPct != null ? ` (${diffPct > 0 ? "+" : ""}${diffPct} %)` : ""}
+      </span>
+    </div>
+  );
+}
+
+// ─── Ziel je Kunde ───────────────────────────────────────────────────
+
+function CustomerGoals({ pool }: { pool: PoolDetailRow }) {
+  const rows = pool.customers.filter((c) => c.goal > 0);
+  if (rows.length === 0) return null;
+  const behind = pool.customersBehind;
+  return (
+    <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <summary className="cursor-pointer text-sm font-semibold">
+        Ziel je Kunde ({rows.length})
+        {behind ? <span className="ml-2 font-medium text-amber-700">Rückstand: {behind}</span> : null}
+      </summary>
+      <ul className="mt-3 space-y-1.5 text-sm">
+        {rows.map((c) => {
+          const pct = c.goal > 0 ? Math.round((c.delivered / c.goal) * 100) : 0;
+          return (
+            <li key={c.customerId} className="flex items-baseline justify-between gap-3">
+              <span className="truncate">{c.name}</span>
+              <span className={cn("shrink-0 tabular-nums", pct < 95 && pool.deliveredBased ? "text-amber-700" : "text-zinc-700")}>
+                {formatNumber(c.delivered)} / {formatNumber(c.goal)} · {pct} %
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </details>
   );
 }
 

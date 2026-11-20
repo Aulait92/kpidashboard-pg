@@ -98,6 +98,10 @@ model Customer {
   // Testkunde (Ole, 15.11.2026): aus einem Testangebot ohne Zahlung; zählt nicht in Admin-Zahlen,
   // Buchungen, Stornoquote, Monatsbericht und Platz-Abrechnung, im Admin mit Abzeichen „Test“, löschbar.
   isTest               Boolean   @default(false)
+  // Pilot (Ole, 20.11.2026): echter Kunde, kostenlos bis zu diesem Tag (einschließlich). Kein Testkunde, zählt in
+  // allen Kennzahlen. Solange er läuft: keine automatische Abrechnung der Verkäufer-Plätze; Aufgaben 7 Tage vorher
+  // und am Ende (lib/pilot-server.ts). Ein schon laufendes Stripe-Abo bleibt unberührt (Hinweis im Admin).
+  pilotBis             DateTime?
   // E-Mail-Funktionen aus (Ole, 15.11.2026): „Meine Gesellschaft erlaubt das nicht“ in der Einrichtung.
   // Blendet E-Mail-Knopf, E-Mail-Fenster, Vorlagen-Hinweise und den E-Mail-Kanal bei Bestandskampagnen aus;
   // wieder einschaltbar unter Einstellungen → E-Mail-Postfach.
@@ -120,6 +124,12 @@ model Customer {
   vermittlerGeprueftAt     DateTime?
   // E-Mail des Admins, der geprüft hat
   vermittlerGeprueftVon    String?
+  // Angaben für die öffentliche Partnerliste der Funnels (Ole, 20.11.2026, docs/recht/pkv-funnel.md L2): rechtlicher
+  // Empfänger der Leads, wenn er vom Kontonamen abweicht (z. B. Vertriebspartner eines Maklers). Unabhängig von der
+  // Registerprüfung oben (Umsatzsteuer).
+  partnerFirma             String?
+  partnerAnschrift         String?
+  partnerRegisterNr        String?
   // Maklervollmacht (Ole, 18.11.2026, nur Makler): wer schickt sie den Kunden? app | eigene; null = noch nicht entschieden
   // (Frage in der Einrichtung und als Hinweis auf „Heute“, änderbar unter Einstellungen → Assistent)
   vollmachtVersand     String?
@@ -664,6 +674,9 @@ model DeliveryPool {
   outbrainMaxDailyBudget  Decimal? @db.Decimal(12, 2)
   tiktokMaxDailyBudget    Decimal? @db.Decimal(12, 2)
   googleMaxDailyBudget    Decimal? @db.Decimal(12, 2)
+  // Höchstpreis je Lead (EUR). null = Env MEDIA_BUYER_MAX_CPL bzw. Break-even
+  // aus Lead-Preis × (1 − Stornoquote), siehe lib/media-buyer-preisgrenze.ts.
+  maxCpl                  Decimal? @db.Decimal(12, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -694,6 +707,27 @@ model MediaBuyerAction {
   // true wenn der Lauf nur simuliert wurde (dryRun) und nichts an Meta ging.
   dryRun       Boolean  @default(false)
   errorMessage String?
+  // Meta-Lernphase zum Zeitpunkt der Entscheidung: "LEARNING" | "SUCCESS" |
+  // "FAIL" („Learning limited") | "UNKNOWN"; null = kein Meta im Pool.
+  learningStatus String?
+  // Letzte wesentliche Änderung (Meta last_sig_edit_ts bzw. eigene Budgetänderung).
+  learningSince  DateTime?
+  // Vom Buyer pausierte Kampagnen ("meta:<id>,outbrain:<id>"): nur diese
+  // werden später wieder reaktiviert, von Hand pausierte nie.
+  pausedCampaignIds String?
+  // Höchstpreis je Lead zum Zeitpunkt der Entscheidung und ob der 7-Tage-CPL
+  // darüber lag (Abbruchregel: mehrere Läufe in Folge → Push).
+  maxCpl         Decimal? @db.Decimal(12, 2)
+  cplOverMax     Boolean  @default(false)
+  // Zielquelle dieser Entscheidung: "software" (Bezüge/Bestellungen) | "airtable";
+  // null = vor der Umstellung (Airtable). Für den Schonlauf beim Quellenwechsel.
+  goalSource     String?
+  // Regionen-Rechnung (nur regionale Bezüge offen): Empfehlungstext und ob die
+  // Kosten je verwertbarem Lead über dem Break-even lagen (Push höchstens 1x/Tag).
+  regionNote          String?
+  regionOverBreakEven Boolean  @default(false)
+  // Kunden unter 95 % ihres Ziels bei erreichter Pool-Summe (Namen, kommagetrennt).
+  customersBehind     String?
   createdAt    DateTime @default(now())
 
   @@index([poolKey, createdAt])
@@ -1212,6 +1246,8 @@ model WhatsAppAccount {
   // Client und Channel aus dem Redirect; der API-Key wird daraus erzeugt.
   dialog360ClientId  String?
   dialog360ChannelId String?
+  /// Einladung an eine andere E-Mail als den Login (Ole, 20.11.2026: Firmen-Postfach filtert die Mail von 360dialog)
+  dialog360InviteEmail String?
   // Vorlagen automatisch einreichen/nachziehen (lib/whatsapp/template-submit.ts):
   // letzter Abgleich mit 360dialog (gedrosselt im WhatsApp-Cron).
   templatesCheckedAt DateTime?
@@ -1685,6 +1721,11 @@ model Offer {
   pplQuantity             Int?
   pplAutoRenew            Boolean       @default(true)
   pplRegisterNr           String?
+  // Variante (Ole, 20.11.2026, nur Paket ppl_software; lib/ppl/kundenkonto.ts): null/"pool" = Leads aus unserem Pool
+  // (bisher), "kundenkonto" = Kampagnen im eigenen Meta-Werbekonto des Kunden, Abrechnung wöchentlich je Lead
+  // abzüglich seiner Meta-Kosten. pplProdukte: [{ name, preis (Endpreis brutto je Lead, Obergrenze), menge (Startmenge) }].
+  pplModell               String?
+  pplProdukte             Json?
   validUntil              DateTime
   // Annahme (Protokoll)
   sentAt                  DateTime?
@@ -2773,6 +2814,9 @@ model PoolLead {
   // Anzeige/UTM aus dem Funnel ohne Personendaten ({ adPlatform, adCampaignName, … }, lib/anzeige.ts); geht bei der
   // Lieferung an den Lead
   adInfo       Json?
+  // Einwilligungsnachweis aus dem eigenen Funnel (L3, § 7a UWG): { at, funnel, version, text, kanaele, knopf }
+  // (lib/ppl/einwilligung-nachweis.ts); geht bei der Lieferung an Lead.consentData und an den Abnehmer
+  consentData  Json?
   // delivered | duplicate | invalid | parked
   status       String
   reason       String?
@@ -5397,4 +5441,58 @@ model DatenschutzFallEreignis {
   @@index([fallId])
   @@index([contactId])
   @@index([eingangAt])
+}
+
+// ─── Eigener PKV-Funnel (Ole, 20.11.2026, lib/funnel) ───────────────────────
+/// Ein Besucher eines eigenen Funnels (z. B. beitrag.pkv-tarife.com). id = Besucher-ID aus dem Erstanbieter-Cookie
+/// (zufällig, nie Name, Nummer oder Adresse). Personendaten liegen nur am PoolLead; hier nur Herkunft (UTM, Kampagne),
+/// Verknüpfung zum Lead und Stand der Ziel-Kennzahlen (ppl_erreicht, ppl_termin, ppl_abschluss, ppl_umsatz).
+model FunnelBesuch {
+  id                   String    @id
+  funnel               String
+  // utm_source, utm_campaign, campaign_id, ad_id … (nur diese Schlüssel, keine Personendaten)
+  quelle               Json?
+  createdAt            DateTime  @default(now())
+  // Nach dem Absenden: Lead im Pay-per-Lead-Eingang
+  poolLeadId           String?   @unique
+  leadAt               DateTime?
+  // event_id für Pixel und Conversions API (Abgleich bei Meta)
+  metaEventId          String?
+  // Meta-Cookies nur mit Einwilligung (für das spätere Qualitäts-Ereignis), nach der Reifeprüfung geleert
+  metaEinwilligung     Boolean   @default(false)
+  metaFbc              String?
+  metaFbp              String?
+  // Reife (Cron, 14 Tage nach Eingang, lib/funnel/server.ts): geprüft; reif = verkauft und nicht storniert
+  // (Neben-Kennzahl ppl_umsatz) mit Umsatz in Cent
+  reifGeprueftAt       DateTime?
+  reif                 Boolean?
+  reifUmsatzCent       Int?
+  // Rückmeldung des Abnehmers (Haupt-Kennzahl ppl_erreicht, Ole 20.11.2026): Lead an einen Abnehmer in der App
+  // geliefert (sonst „unbekannt“), Rückmeldung vorhanden, erreicht, Termin, Abschluss. Termin und Abschluss werden
+  // bis 60 Tage nach Eingang nachgeprüft.
+  rueckmeldungMoeglich Boolean?
+  rueckmeldung         Boolean?
+  erreicht             Boolean?
+  termin               Boolean?
+  abschluss            Boolean?
+  qualitaetGesendetAt  DateTime?
+
+  @@index([funnel, createdAt])
+  @@index([reifGeprueftAt, leadAt])
+}
+
+/// Ereignis je Besucher und Schritt (einmal je Art): angesehen | beantwortet | abbruch | abgeschickt. Ohne Antworten
+/// (keine Personendaten); grund nur bei Abbruch (gesetzlich | unter_650), variante nur bei Schritten im A/B-Test.
+model FunnelEreignis {
+  id        String   @id @default(cuid())
+  besuchId  String
+  funnel    String
+  schritt   String
+  art       String
+  variante  String?
+  grund     String?
+  createdAt DateTime @default(now())
+
+  @@unique([besuchId, schritt, art])
+  @@index([funnel, createdAt])
 }

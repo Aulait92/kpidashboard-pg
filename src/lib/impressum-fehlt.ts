@@ -93,3 +93,22 @@ export async function impressumUrlSpeichern(customerId: string, raw: string): Pr
   geprueft.delete(customerId);
   return p;
 }
+
+/**
+ * Eigene Datenschutzseite des Vermittlers (Ole, 20.11.2026, optional): Onboarding.websiteInfo.privacyUrl. Leer = entfernen,
+ * dann gelten die Datenschutzhinweise in seinem Namen (app/erstinformation/[token]/datenschutz).
+ */
+export async function datenschutzUrlSpeichern(customerId: string, raw: string): Promise<{ ok: true; url: string | null } | { ok: false; error: string }> {
+  const t = raw.trim();
+  let url: string | null = null;
+  if (t) {
+    const p = impressumUrlPruefen(t);
+    if (!p.ok) return { ok: false, error: "Das sieht nicht nach einer Webadresse aus, z. B. agentur-muster.de/datenschutz." };
+    url = p.url;
+  }
+  const ob = await prisma.onboarding.findUnique({ where: { customerId }, select: { id: true, websiteInfo: true } });
+  if (!ob) return { ok: false, error: "Kein Onboarding gefunden." };
+  const web = ob.websiteInfo && typeof ob.websiteInfo === "object" && !Array.isArray(ob.websiteInfo) ? (ob.websiteInfo as Record<string, unknown>) : {};
+  await prisma.onboarding.update({ where: { id: ob.id }, data: { websiteInfo: { ...web, privacyUrl: url } } });
+  return { ok: true, url };
+}

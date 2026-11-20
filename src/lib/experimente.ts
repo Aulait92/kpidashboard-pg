@@ -21,7 +21,18 @@ import { ALPHA, decideAbWinner, MIN_JE_FASSUNG, zTest, type AbDecision } from "@
 export type Variante = "a" | "b";
 
 /** Ziel-Kennzahlen (frei erweiterbar; dieselbe Zeichenkette bei ereignis bzw. zielErreicht verwenden). */
-export type Ziel = "termin_gebucht" | "komplettcheck_ja" | "erschienen" | (string & {});
+export type Ziel =
+  | "termin_gebucht"
+  | "komplettcheck_ja"
+  | "erschienen"
+  // Eigener Funnel (lib/funnel/server.ts), Einheit Besucher-ID
+  | "funnel_lead"
+  | "ppl_erreicht"
+  | "ppl_termin"
+  | "ppl_abschluss"
+  | "ppl_umsatz"
+  | "ppl_unbekannt"
+  | (string & {});
 
 export type ExperimentDef = {
   titel: string;
@@ -36,6 +47,26 @@ export type ExperimentDef = {
    * aktiv = true oder diesen Eintrag entfernen. Ohne Angabe läuft er (eine Zeile mit aktiv = false hält ihn an).
    */
   aktiv?: false;
+  /**
+   * Reife-Filter für Ziele, die erst nach einem Termin feststehen (z. B. „erschienen“): gezählt werden nur Einheiten
+   * (Lead-IDs), deren Termin seit der Zuteilung mindestens 1 Tag vorbei ist oder abgesagt bzw. abgeschlossen wurde und
+   * die keinen kommenden bzw. noch nicht 1 Tag alten gebuchten Termin haben. Sonst würde der stündliche Cron künftige
+   * Termine als „nicht erschienen“ werten (termin_zusage, Ole 20.11.2026).
+   */
+  nurReif?: "termin_vorbei";
+  /**
+   * Reife-Filter (eigener Funnel, lib/funnel): Es zählen nur Einheiten, deren Zuteilung mindestens so viele Tage alt
+   * ist (z. B. 14 bei „ppl_umsatz“: Lead verkauft und 14 Tage nach Eingang nicht storniert). Jüngere Einheiten können
+   * das Ziel noch gar nicht erreicht haben und würden die Quote verfälschen.
+   */
+  reifTage?: number;
+  /**
+   * Einheiten mit diesem Ereignis zählen gar nicht (weder Nenner noch Zähler), z. B. „ppl_unbekannt“: Lead ging an
+   * einen Abnehmer ohne Rückmeldung in der App, Ergebnis unbekannt statt Misserfolg.
+   */
+  ohneEreignis?: Ziel;
+  /** Weitere Ziele nur zur Anzeige (z. B. „funnel_lead“ = abgeschickt); entschieden wird immer über `ziel`. */
+  anzeigeZiele?: readonly Ziel[];
 };
 
 /**
@@ -60,6 +91,17 @@ export const EXPERIMENTE = {
     a: "Bisher: alle Zeiten, Pflicht-Haken Datenschutz, „Termin verbindlich buchen“",
     b: "Neu: nächste Tage zuerst, Nutzen in einer Zeile, Datenschutz als Hinweis, „Kostenlos Termin buchen“",
   },
+  // Häkchen „Erinnerung zur Terminvorbereitung“ auf /book (A/B-Test-Labor 20.11.2026, Lernbuch docs/firma/ab-tests.md,
+  // Hypothese lib/ab-hypothesen.ts). Unabhängig von buchungsseite_kompakt (eigener Schlüssel, eigene Einheit: zufällige
+  // ID je Seitenaufruf, nur Lead-Buchungen ohne Vorbelegung). Zuteilung erst bei der Buchung, damit die Quote = Anteil
+  // der Buchungen mit Häkchen ist. Nie vorausgewählt; Wortlaut je Fassung in lib/policen/regeln.ts (erinnerungOptin).
+  buchung_erinnerung: {
+    titel: "Buchungsseite /book: Häkchen Erinnerung zur Terminvorbereitung",
+    ziel: "erinnerung_optin",
+    a: "Standard (Ole 20.11.2026): fett „Damit in Ihrem Termin nichts fehlt:“ Ja, bitte per WhatsApp an meine Unterlagen erinnern (empfohlen). Abmelden jederzeit mit STOP. Als grauer Kleindruck",
+    b: "Gleicher Wortlaut als hervorgehobene Karte (Rahmen, Hintergrund, größere Schrift und Häkchen)",
+    min: 150,
+  },
   // Beratungspräsentation (19.11.2026): Herausforderer C gegen Standard B, Einheit Lead-ID (lib/praesentation-variante-server.ts).
   // Ole hat C am 19.11.2026 freigegeben: läuft ab dem Deploy (kein Eintrag in „Experiment“ nötig; anhalten per aktiv = false).
   praesentation: {
@@ -69,6 +111,44 @@ export const EXPERIMENTE = {
     b: "Fassung C: Einstieg mit dem Anliegen, Beitrag auf der Entscheidungsfolie, Wahl zwischen zwei Paketen, bisheriger Vertrag in Euro",
     // Termine sind seltener als Leads und der Cron prüft stündlich: erst ab 100 Präsentationen je Fassung entscheiden
     min: 100,
+  },
+  // Buchungsbestätigung im WhatsApp-Assistenten (Ole, 20.11.2026 freigegeben; Lernbuch docs/firma/ab-tests.md, Hypothese
+  // lib/ab-hypothesen.ts). Einheit Lead-ID, zugeteilt nur bei der Bestätigung eines im Chat gebuchten Termins (bot.ts).
+  // Gegenproben: ereignis(„termin_zusage“, leadId, „zusage_ja“ | „zusage_andere“), Komplettcheck ja.
+  termin_zusage: {
+    titel: "Buchungsbestätigung im Chat (Zusage-Frage)",
+    ziel: "erschienen",
+    a: "Bisher: Bestätigung ohne Frage, Komplettcheck-Frage (bzw. Tierfrage) sofort als eigene Nachricht",
+    b: "Neu: Bestätigung plus fett „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], Komplettcheck erst danach",
+    min: 150,
+    nurReif: "termin_vorbei",
+  },
+  // Eigener PKV-Funnel (lib/funnel, Ole 20.11.2026): Beispiel, AUS und an keinem Schritt mehr (nur Muster).
+  // Einheit = Besucher-ID je Seitenaufruf (kein Cookie, Auflage L4), Zuteilung beim ersten Aufruf des Schritts.
+  // Haupt-Kennzahl: Abnehmer hat den Lead erreicht (je Besucher; Leads an Abnehmer ohne Rückmeldung zählen nicht),
+  // Neben-Kennzahlen Termin, Abschluss, verkauft und nicht storniert.
+  funnel_pkv_beispiel: {
+    titel: "PKV-Funnel: Überschrift der Startseite (Beispiel, aus)",
+    ziel: "ppl_erreicht",
+    a: "Bisher: „Viele PKV-Kunden mit Beiträgen über 700 € zahlen unnötig zu viel: …“",
+    b: "Beispiel: „Über 700 € im Monat für deine PKV? …“",
+    aktiv: false,
+    reifTage: 14,
+    ohneEreignis: "ppl_unbekannt",
+    anzeigeZiele: ["funnel_lead", "ppl_termin", "ppl_abschluss", "ppl_umsatz"],
+  },
+  // Erster echter Test im PKV-Funnel (A/B-Test-Labor, Freigabe Ole 20.11.2026; Lernbuch docs/firma/ab-tests.md,
+  // Hypothese lib/ab-hypothesen.ts): Überschrift der Startseite mit Anlass. Läuft ab dem Livegang (Schritt „start“,
+  // lib/funnel/definition.ts). Mindestmenge wie beim Erstanschreiben (150 je Fassung), Reife 14 Tage.
+  funnel_pkv_anlass: {
+    titel: "PKV-Funnel: Überschrift mit Anlass (Beitragserhöhung zum 1. Januar)",
+    ziel: "ppl_erreicht",
+    a: "Standard: „Über 650 € im Monat für deine PKV? Ein interner Tarifwechsel kann helfen“",
+    b: "Neu: „Hat deine PKV den Beitrag zum 1. Januar erhöht? Lass deinen Tarif kostenlos prüfen“",
+    min: 150,
+    reifTage: 14,
+    ohneEreignis: "ppl_unbekannt",
+    anzeigeZiele: ["funnel_lead", "ppl_termin", "ppl_abschluss", "ppl_umsatz"],
   },
 } as const satisfies Record<string, ExperimentDef>;
 
@@ -169,7 +249,7 @@ export async function zielErreicht(einheiten: (string | null | undefined)[], zie
   if (!ids.length) return;
   try {
     const keys = Object.entries(EXPERIMENTE as Record<string, ExperimentDef>)
-      .filter(([, d]) => d.ziel === ziel)
+      .filter(([, d]) => d.ziel === ziel || d.ohneEreignis === ziel || !!d.anzeigeZiele?.includes(ziel))
       .map(([k]) => k);
     if (!keys.length) return;
     const z = await prisma.experimentZuteilung.findMany({ where: { experiment: { in: keys }, einheit: { in: ids } }, select: { experiment: true, einheit: true } });
@@ -179,10 +259,41 @@ export async function zielErreicht(einheiten: (string | null | undefined)[], zie
   }
 }
 
-/** Zugeteilte Einheiten und Einheiten mit Ziel (nach der Zuteilung) je Fassung. */
-export async function experimentStats(experiment: string): Promise<ExperimentStats> {
+/**
+ * Reife-Filter (ExperimentDef.nurReif = „termin_vorbei“) als SQL-Bedingung auf die Zuteilung z: Die Einheit (Lead-ID) hat
+ * seit der Zuteilung (10 Min. Spielraum: gebucht wird kurz vor der Zuteilung) einen Termin, und keiner ihrer gebuchten Termine beginnt später als 1 Tag vor now. Abgesagte,
+ * abgeschlossene und als nicht erschienen eingetragene Termine zählen damit sofort, gebuchte erst 1 Tag nach Beginn.
+ */
+export function reifeBedingung(nurReif: ExperimentDef["nurReif"], now: Date): Prisma.Sql {
+  if (nurReif !== "termin_vorbei") return Prisma.sql`TRUE`;
+  const grenze = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  return Prisma.sql`(
+        EXISTS (
+          SELECT 1 FROM "Appointment" a
+          WHERE a."leadId" = z."einheit" AND a."createdAt" >= z."createdAt" - interval '10 minutes'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM "Appointment" a
+          WHERE a."leadId" = z."einheit" AND a."status" = 'booked' AND a."startsAt" > ${grenze}
+        )
+      )`;
+}
+
+/**
+ * Zugeteilte Einheiten und Einheiten mit Ziel (nach der Zuteilung) je Fassung. Mit nurReif nur reife Einheiten
+ * (reifeBedingung), mit reifTage nur Zuteilungen, die mindestens so alt sind, mit ohneEreignis ohne diese Einheiten;
+ * o.ziel = anderes Ziel zur Anzeige (anzeigeZiele), o.ohneReife = Reife aus (z. B. „funnel_lead“, sofort messbar).
+ * Alles, was entscheidet (promoteExperimentWinners, Admin, Diagnose), zählt über diese Funktion.
+ */
+export async function experimentStats(experiment: string, opt: { ziel?: Ziel; ohneReife?: boolean; now?: Date } | Date = {}): Promise<ExperimentStats> {
+  // Zweites Argument: Zeitpunkt (termin_zusage, nurReif) oder Optionen (Funnel: ziel, ohneReife); beides möglich
+  const o = opt instanceof Date ? { now: opt } : opt;
+  const now = o.now ?? new Date();
   const d = def(experiment);
-  const ziel = d?.ziel ?? "";
+  const ziel = o.ziel ?? d?.ziel ?? "";
+  const reif = reifeBedingung(o.ohneReife ? undefined : d?.nurReif, now);
+  const reifTage = o.ohneReife ? 0 : Math.max(0, Math.floor(d?.reifTage ?? 0));
+  const ohne = o.ohneReife ? null : (d?.ohneEreignis ?? null);
   const rows = await prisma.$queryRaw<{ variante: string; n: bigint; ziel: bigint }[]>(Prisma.sql`
     SELECT z."variante" AS variante,
            COUNT(*) AS n,
@@ -193,11 +304,14 @@ export async function experimentStats(experiment: string): Promise<ExperimentSta
            )) AS ziel
     FROM "ExperimentZuteilung" z
     WHERE z."experiment" = ${experiment}
+      ${reifTage > 0 ? Prisma.sql`AND z."createdAt" <= now() - make_interval(days => ${reifTage}::int)` : Prisma.empty}
+      ${ohne ? Prisma.sql`AND NOT EXISTS (SELECT 1 FROM "ExperimentEreignis" u WHERE u."experiment" = z."experiment" AND u."einheit" = z."einheit" AND u."ziel" = ${ohne})` : Prisma.empty}
       -- Über alle Kunden hinweg, ohne Testleads und Testkunden (Ole, 19.11.2026); Einheit ist meist die Lead-ID
       AND NOT EXISTS (
         SELECT 1 FROM "Lead" l JOIN "Customer" cu ON cu."id" = l."customerId"
         WHERE l."id" = z."einheit" AND (l."isTest" OR cu."isTest")
       )
+      AND ${reif}
     GROUP BY z."variante"
   `);
   const of = (v: Variante): FassungStats => {
@@ -285,7 +399,7 @@ export async function promoteExperimentWinners(now = new Date()): Promise<{ key:
   for (const [key, d] of Object.entries(EXPERIMENTE as Record<string, ExperimentDef>)) {
     const row = await prisma.experiment.findUnique({ where: { key } });
     if (row?.winner || !laeuft(d, row)) continue;
-    const stats = await experimentStats(key);
+    const stats = await experimentStats(key, now);
     const e = entscheide(stats, d.min ?? MIN_JE_FASSUNG);
     if (!e.winner) continue;
     const data = { winner: e.winner, decidedAt: now, stats: { ...stats, p: e.p, z: e.z } as unknown as Prisma.InputJsonValue };

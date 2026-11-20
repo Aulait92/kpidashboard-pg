@@ -3,6 +3,8 @@ import { MAIL_BLOCKED_TEXT, mailClient, wasBlocked } from "@/lib/mail-guard";
 import { PROVIDER } from "@/lib/legal-texts";
 import { eur } from "@/lib/offer-pricing";
 import { VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
+import { ersteWocheMailzeile } from "@/lib/ppl/erste-woche-shared";
+import { kundenkontoMailAbsatz, type KundenkontoAngebot } from "@/lib/ppl/kundenkonto";
 import { entscheidungsCallMailText, entscheidungsCallText, type EntscheidungsCall } from "@/lib/vertrieb/entscheidungs-call";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
@@ -111,25 +113,25 @@ export async function sendBuyerInviteEmail(opts: {
     const { error } = await resend.emails.send({
       from,
       to: opts.to,
-      subject: "Dein Zugang zum Kunden-CRM · performancegrowth",
+      subject: "Ihr Zugang zum Kunden-CRM · performancegrowth",
       text: [
-        "Hallo,",
+        "Guten Tag,",
         "",
-        `für dich (${opts.customerName}) wurde ein Zugang zum Kunden-CRM von performancegrowth angelegt.`,
-        "Lege über diesen Link dein Passwort fest:",
+        `für Sie (${opts.customerName}) wurde ein Zugang zum Kunden-CRM von performancegrowth angelegt.`,
+        "Legen Sie über diesen Link Ihr Passwort fest:",
         opts.setPasswordUrl,
         "",
-        "Der Link ist 7 Tage gültig. Danach kannst du dich jederzeit hier anmelden:",
+        "Der Link ist 7 Tage gültig. Danach können Sie sich jederzeit hier anmelden:",
         loginUrl,
         "",
-        `Deine Login-E-Mail: ${opts.to}`,
+        `Ihre Login-E-Mail: ${opts.to}`,
         "",
         signatureText(),
       ].join("\n"),
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0b1220">
           <h1 style="margin:0 0 16px;font-size:18px;font-weight:700">Willkommen im Kunden-CRM</h1>
-          <p style="margin:0 0 16px;font-size:14px;line-height:1.5">Für dich (<strong>${opts.customerName}</strong>) wurde ein Zugang angelegt. Hier siehst du deine Leads, Termine und wen du zurückrufen solltest.</p>
+          <p style="margin:0 0 16px;font-size:14px;line-height:1.5">Für Sie (<strong>${opts.customerName}</strong>) wurde ein Zugang angelegt. Hier sehen Sie Ihre Leads, Termine und wen Sie zurückrufen sollten.</p>
           <p style="margin:24px 0">
             <a href="${opts.setPasswordUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">Passwort festlegen</a>
           </p>
@@ -259,6 +261,10 @@ export type AngebotsMailInhalt = {
   vorauszahlung?: boolean;
   /** Zahlung nachträglich (Ole, 19.11.2026): erste Abbuchung (YYYY-MM-DD) und Setup netto */
   nachtraeglich?: { ersteIso: string | null; setup: number } | null;
+  /** Erste Woche (Pay-per-Lead + Software, Ole 20.11.2026): Leadkosten statt nur „0 €“ */
+  ersteWoche?: { productKey: string; name: string; price: number; quantity: number } | null;
+  /** Kampagnen im eigenen Werbekonto (Ole, 20.11.2026): kurzer Absatz zur Variante, Software-Listenpreis netto */
+  kundenkonto?: { angebot: KundenkontoAngebot; softwareNetto: number } | null;
 };
 
 /**
@@ -278,6 +284,11 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
   const discount = opts.discount ? offerDiscountLine(opts.discount) : null;
   const bonusText = opts.bonus ? offerBonusLine(opts.bonus, !!opts.du, !!opts.bonusSpaeter) : null;
   const vorausText = opts.nachtraeglich ? offerMailNachtraeglich(opts.nachtraeglich) : opts.vorauszahlung ? OFFER_MAIL_VORAUSZAHLUNG : null;
+  const wocheText = opts.kundenkonto
+    ? kundenkontoMailAbsatz(opts.kundenkonto.angebot, opts.kundenkonto.softwareNetto, !!opts.du)
+    : opts.ersteWoche
+      ? ersteWocheMailzeile(opts.ersteWoche, !!opts.du)
+      : null;
   const text = [
     opts.greeting,
     "",
@@ -288,6 +299,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
     "",
     ...(discount ? [discount.text, ""] : []),
     ...(bonusText ? [bonusText, ""] : []),
+    ...(wocheText ? [wocheText, ""] : []),
     ...(vorausText ? [vorausText, ""] : []),
     ...(rechner ? [`${t.rechner}:`, rechner, ""] : []),
     ...(praes ? [`${t.praesentation}:`, praes, ""] : []),
@@ -303,6 +315,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
         <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
         ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
         ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
+        ${wocheText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(wocheText)}</p>` : ""}
         ${vorausText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(vorausText)}</p>` : ""}
         ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
         ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}

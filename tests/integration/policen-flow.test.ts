@@ -205,7 +205,7 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     const rec = await prisma.policenFlow.findUniqueOrThrow({ where: { customerId } });
     expect(rec).toMatchObject({ flowId: "flow-neu", status: "veroeffentlicht", jsonHash: flowJsonHash() });
     const v = rec.vorlagen as Record<string, { status: string; category: string }>;
-    expect(Object.keys(v)).toHaveLength(6);
+    expect(Object.keys(v)).toHaveLength(4);
     expect(Object.values(v).every((x) => x.category === "utility")).toBe(true);
     expect(await prisma.policenFlow.count({ where: { customerId: pplId } })).toBe(0);
     // Pay-per-Lead nie aktiv, auch mit veröffentlichtem Flow
@@ -231,7 +231,9 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     expect(f).toBeTruthy();
     const o = f[3] as { body: string; footer: string; flowId: string; token: string; cta: string; screen: string; data: Record<string, string> };
     expect(o.body).toMatch(/^Kleiner Tipp für \S+ 💡\n\nWenn Herr Kannapinn Ihre Policen vorab sieht, prüft er schon vor dem Termin, \*ob Sie Geld sparen können\*/);
-    expect(o.footer).toBe("Ihr Termin findet auch ohne Policen statt.");
+    // Satz als letzter Absatz statt Fußzeile (Ole, 20.11.2026)
+    expect(o.body.endsWith("\n\nIhr Termin findet auch ohne Policen statt.")).toBe(true);
+    expect(o.footer ?? null).toBeNull();
     expect(o).toMatchObject({ flowId: "flow-123", cta: "Policen senden", screen: "POLICEN" });
     expect(o.data.punkt1).toBe("1. **Nur für Ihren Termin:** Herr Kannapinn (Kannapinn Versicherungen) speichert sie zur Vorbereitung.");
     // Auslesen nicht eingerichtet: neutraler Satz, ohne Freigabe Kranken/BU/Leben ohne Gesundheitssatz
@@ -364,18 +366,16 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     const [e1] = calls("template");
     expect(e1[3]).toBe(flow.vorlagenName("erinnerung1", "sie", flowJsonHash()));
     expect((e1[5] as { sub_type?: string; parameters: { payload?: string }[] }[])[2].parameters[0].payload).toBe("policen:nein_danke");
-    // Erinnerung 2 am Vortag ab 18 Uhr Berlin
+    // Erinnerung 2 als eigene Nachricht am Vortag entfällt seit 19.11.2026 (A8 a, Commit 9ad8b86): Stattdessen steht ein
+    // Satz in der Vortags-Terminerinnerung. „Höchstens zweimal“ = Erinnerung 1 plus dieser Satz.
     const vortag18 = new Date(termin.startsAt.getTime() - DAY);
     const berlin = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(vortag18);
     const t2 = new Date(`${berlin}T17:10:00Z`); // 18:10 Berlin (Winterzeit)
     waSend.mockClear();
-    expect(await flow.runPolicenFlowErinnerungen(t2)).toEqual({ gesendet: 1 });
-    expect(calls("template")[0][3]).toBe(flow.vorlagenName("erinnerung2", "sie", flowJsonHash()));
-    // Mehr als 2: nie
-    expect(await flow.runPolicenFlowErinnerungen(new Date(t2.getTime() + 30 * 60 * 1000))).toEqual({ gesendet: 0 });
-    expect((await strecke.streckenStand(conv.id, termin.id)).policenErinnerungen).toBe(2);
-    // Vortags-Erinnerung bekommt keine eigene Policen-Zeile mehr (Erinnerung 2 ist eine eigene Nachricht)
-    expect(await strecke.policenVortagSatzFuer({ id: termin.id, conversationId: conv.id, leadId: lead.id }, "sie")).toBeNull();
+    expect(await flow.runPolicenFlowErinnerungen(t2)).toEqual({ gesendet: 0 });
+    expect(calls("template")).toHaveLength(0);
+    expect((await strecke.streckenStand(conv.id, termin.id)).policenErinnerungen).toBe(1);
+    expect(await strecke.policenVortagSatzFuer({ id: termin.id, conversationId: conv.id, leadId: lead.id }, "sie")).not.toBeNull();
 
     // „Nein, danke“ (Knopf der Vorlage): Nachweis erinnerung_stopp, Antwort mit Termin
     waSend.mockClear();

@@ -7,6 +7,7 @@
 // Fassung 1 läuft weiter, bis die passende Variante bei Meta freigegeben ist (waehleTerminVorlage).
 
 import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
+import { direktNachBestaetigung, erinnerungsFenster, vorlaufOk } from "@/lib/vertrieb/termin-erinnerungen";
 import { decryptSecret } from "@/lib/encryption";
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
@@ -327,7 +328,7 @@ export async function supportVorlagenNutzbar(): Promise<Nutzbar> {
   };
 }
 
-type SendOutcome = "sent" | "no_account" | "no_template" | "opted_out" | "gesperrt";
+type SendOutcome = "sent" | "no_account" | "no_template" | "opted_out" | "gesperrt" | "festnetz";
 
 /**
  * Vorlage von der Support-Nummer an einen Vertriebskontakt senden und im Support-Chat sowie im
@@ -344,6 +345,9 @@ async function sendSupportTemplate(opts: {
 }): Promise<SendOutcome> {
   // Feste Sperrliste im Vertrieb (lib/vertrieb/sperrliste.ts)
   if (await kontaktGesperrt(opts.contactId)) return "gesperrt";
+  // Festnetznummern haben kein WhatsApp (Ole, 20.11.2026: Erinnerung an +49 5426 … schlug fehl): nicht senden
+  const { istFestnetz } = await import("@/lib/mail-strecke/server");
+  if (await istFestnetz(opts.phone)) return "festnetz";
   const acc = await supportAccount();
   if (!acc) return "no_account";
   if (!(await templateApproved(opts.template.name))) return "no_template";
@@ -468,8 +472,6 @@ export async function sendTerminConfirmation(
 
 // ─── Erinnerungen 24 Stunden und 1 Stunde vorher ────────────────────────
 
-const HOUR = 60 * 60 * 1000;
-
 /** Ort des Termins für die Erinnerung (Videolink bzw. Art), wie bei der Bestätigung. */
 function meetingLoc(m: { joinUrl: string | null; location: string | null }): Parameters<typeof terminArt>[0] {
   if (m.joinUrl) return { type: "video", join_url: m.joinUrl };
@@ -520,14 +522,15 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
   if (!(await supportAccount())) return result;
   const nutzbar = await supportVorlagenNutzbar();
   const morgen = addDaysYmd(berlinYmd(now), 1);
+  // Zeitregeln gemeinsam mit E-Mail-Versand und Übersicht „Geplante Nachrichten“ (lib/vertrieb/termin-erinnerungen.ts)
   const kinds = [
-    { field: "waReminderAt", status: "waReminderStatus", error: "waReminderError", tries: "waReminderTries", art: "erinnerung", from: 2 * HOUR, to: 24 * HOUR, minLead: 26 * HOUR, key: "day" },
-    { field: "waSoonAt", status: "waSoonStatus", error: "waSoonError", tries: "waSoonTries", art: "gleich", from: 10 * 60 * 1000, to: HOUR, minLead: 3 * HOUR, key: "soon" },
+    { field: "waReminderAt", status: "waReminderStatus", error: "waReminderError", tries: "waReminderTries", art: "erinnerung", plan: "tag", key: "day" },
+    { field: "waSoonAt", status: "waSoonStatus", error: "waSoonError", tries: "waSoonTries", art: "gleich", plan: "gleich", key: "soon" },
   ] as const;
   for (const k of kinds) {
     if (!TERMIN_VORLAGEN.some((v) => v.art === k.art && nutzbar(v.name, v.version))) continue;
     const due = await prisma.salesMeeting.findMany({
-      where: { status: "GEPLANT", [k.field]: null, startAt: { gt: new Date(now.getTime() + k.from), lte: new Date(now.getTime() + k.to) } },
+      where: { status: "GEPLANT", [k.field]: null, startAt: erinnerungsFenster(k.plan, now) },
       select: {
         id: true,
         title: true,
@@ -568,12 +571,12 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
         result.skipped++;
         await setStatus(status);
       };
-      if (m.startAt.getTime() - (await urspruenglichGebucht(m)).getTime() < k.minLead) {
+      if (!vorlaufOk(k.plan, "whatsapp", { startAt: m.startAt, gebucht: m.createdAt, urspruenglich: await urspruenglichGebucht(m) })) {
         await skip("kurzfristig");
         continue;
       }
       // Gerade erst bestätigt (z. B. kurz vorher verschoben): keine 24-Stunden-Erinnerung direkt hinterher
-      if (k.key === "day" && m.waConfirmStatus === "sent" && m.waConfirmAt && now.getTime() - m.waConfirmAt.getTime() < 2 * HOUR) {
+      if (k.key === "day" && direktNachBestaetigung({ status: m.waConfirmStatus, at: m.waConfirmAt }, now)) {
         await skip("nach_bestaetigung");
         continue;
       }

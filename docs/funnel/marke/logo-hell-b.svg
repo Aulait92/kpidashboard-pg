@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 236 40" width="236" height="40" role="img" aria-label="pkv-tarife.com">
+  <path d="M20 3.5 32.5 8v9.6c0 8.2-5.3 14.4-12.5 17-7.2-2.6-12.5-8.8-12.5-17V8Z" fill="#0E5F68"/>
+  <path d="M13.5 12.5 18 17l3-3 5 5.5M20.5 19.5h5.5V14" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="42" y="27" font-family="Geist, 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif" font-size="21" letter-spacing="-0.4"><tspan font-weight="700" fill="#0B4A52">pkv-tarife</tspan><tspan font-weight="500" fill="#5B6B78">.com</tspan></text>
+</svg>

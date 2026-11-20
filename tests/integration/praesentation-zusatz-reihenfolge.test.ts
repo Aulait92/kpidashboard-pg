@@ -8,6 +8,13 @@ import { demoAngebote } from "@/lib/demo-beratung";
 import { kundenlinkErstellen, loadKundenPraesentation, loadPraesentation, sparteUmschalten } from "@/lib/termin-vorbereitung-server";
 import { cleanupCustomer, makeBuyer, makeCustomer, nurFassungB, requireTestDb } from "./db";
 
+// Fassung vor dem 19.11.2026: nur Haftpflicht im Vergleich, die übrigen Sparten per „Mit anschauen“ (diese Tests prüfen
+// Paketwahl und Reihenfolge der hinzugefügten Sparten; die Live-Demo hat seitdem drei Sparten im Vergleich)
+const nurHaftpflicht = () => {
+  const d = demoAngebote();
+  return { ...d, items: d.items.map((i) => (i.kombi?.sparte !== "haftpflicht" ? { ...i, zusatz: true, gewaehlt: false } : i)) };
+};
+
 // Prüft Fassung B (Standard) der Präsentation
 nurFassungB();
 
@@ -23,7 +30,7 @@ async function termin() {
       mode: "video",
       startsAt: new Date(Date.now() + 86400000),
       status: "booked",
-      offersJson: demoAngebote() as unknown as Prisma.InputJsonValue,
+      offersJson: nurHaftpflicht() as unknown as Prisma.InputJsonValue,
       offersConfirmedAt: new Date(),
     },
   });

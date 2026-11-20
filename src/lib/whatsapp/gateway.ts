@@ -7,6 +7,7 @@ import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
+import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
 import { sendButtons, sendFlow, sendTemplate, sendText, type SendResult } from "@/lib/whatsapp/dialog360";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import type { StatusError } from "@/lib/whatsapp/zustellfehler";
@@ -357,6 +358,12 @@ async function persistInbound(
   let botErlaubt = conversation.botActive && (pipeline || (await nurLeads.assistentDarfAntworten(conversation)));
   // Vermittler telefoniert gerade mit dem Lead (lib/telefonat.ts): Assistent schweigt, die Nachricht wartet auf den Vermittler
   if (botErlaubt && conversation.leadId && (await import("@/lib/telefonat-server").then((m) => m.anrufPausiert(conversation.leadId)))) botErlaubt = false;
+  // Produkt ohne automatische Nachrichten (Ole, 20.11.2026: PKV-Tarifoptimierung): der Assistent antwortet nicht, der
+  // Vermittler bekommt den Hinweis „braucht dich“ (unten, !botErlaubt)
+  if (botErlaubt && conversation.leadId) {
+    const quelle = await prisma.lead.findUnique({ where: { id: conversation.leadId }, select: { source: true } });
+    if (ohneAutoNachrichten(quelle?.source)) botErlaubt = false;
+  }
 
   // „STOPP“ beendet alle Nachrichten an diese Nummer (lib/whatsapp/stopp.ts). Schreibt der Kontakt nach einem
   // Stopp wieder selbst, ist die Sperre aufgehoben; der Assistent bleibt aus, der Vermittler antwortet.
@@ -625,6 +632,9 @@ export async function sendWhatsAppMessage(opts: {
   // „STOPP“: keine Nachrichten mehr an diese Nummer, auch nicht von Hand (lib/whatsapp/stopp.ts)
   const { isOptedOut, WhatsAppOptOutError } = await import("@/lib/whatsapp/stopp");
   if (await isOptedOut(opts.customerId, opts.to)) throw new WhatsAppOptOutError();
+  // Festnetznummer ohne eigene Nachricht des Kontakts: nicht senden (lib/whatsapp/festnetz.ts)
+  const { pruefeFestnetz } = await import("@/lib/whatsapp/festnetz");
+  await pruefeFestnetz({ customerId: opts.customerId, to: opts.to });
 
   const apiKey = decryptSecret(account.apiKeyEnc);
   // Keine Gedankenstriche an Leads (auch KI-Antworten des Assistenten)

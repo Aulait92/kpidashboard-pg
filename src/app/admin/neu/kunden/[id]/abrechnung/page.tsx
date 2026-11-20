@@ -11,11 +11,13 @@ import { AddOnsCard } from "@/app/admin/kunden/[id]/abrechnung/addons-card";
 import { BudgetHistoryCard } from "@/app/admin/kunden/[id]/abrechnung/budget-card";
 import { EraseCustomerCard } from "@/app/admin/kunden/[id]/abrechnung/erase-card";
 import { LebenszyklusCard } from "@/app/admin/kunden/[id]/abrechnung/lebenszyklus-card";
+import { PilotCard } from "@/app/admin/kunden/[id]/abrechnung/pilot-card";
 import { ProductBookingsCard } from "@/app/admin/kunden/[id]/abrechnung/produkt-card";
 import { RetainerCard } from "@/app/admin/kunden/[id]/abrechnung/retainer-card";
 import { ZahlweiseCard } from "@/app/admin/kunden/[id]/abrechnung/zahlweise-card";
 import { billingEnabled, listCustomerInvoices, type CustomerInvoice } from "@/lib/billing";
 import { packageLabel } from "@/lib/customer-package";
+import { pilotAbzeichen } from "@/lib/pilot";
 import { garantieStatus } from "@/lib/garantien-server";
 import { mahnwesenAktiv } from "@/lib/mahnwesen";
 import { reportError } from "@/lib/monitoring";
@@ -35,7 +37,7 @@ const RECHNUNG: Record<string, { label: string; tone: "success" | "warning" | "d
   draft: { label: "Entwurf", tone: "neutral" },
 };
 
-type Suche = { pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; zahlweise?: string; fehler?: string };
+type Suche = { pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; zahlweise?: string; pilot?: string; fehler?: string };
 
 // Kundenakte › Abrechnung (Umbau 20.11.2026, früher „Abrechnung & Pause“ mit 8 offenen Karten und rund 12 Knöpfen):
 // oben die Karte „Vertrag“ mit dem Stand in vier Zeilen und EINER Hauptaktion „Ändern“ (Fenster mit Betreuungsgebühr,
@@ -54,6 +56,7 @@ export default async function KundeAbrechnung({ params, searchParams }: { params
       name: true,
       plan: true,
       isTest: true,
+      pilotBis: true,
       archived: true,
       stripeCustomerId: true,
       paymentOverdueSince: true,
@@ -172,6 +175,14 @@ export default async function KundeAbrechnung({ params, searchParams }: { params
               <AddOnsCard customerId={id} message={sp.zusatz ?? null} failed={fehler && !!sp.zusatz} teile={["verkaeufer", "bestand", "empfehlung"]} titel="Verkäufer und Module" />
             </Aufklapp>
           </div>
+
+          {!c.isTest ? (
+            <div data-funktion="pilot-actions-savepilotaction--pilot-kostenlos-bis-setzen-oder-entfernen">
+              <Aufklapp titel="Pilot" zusammenfassung={pilotAbzeichen(c.pilotBis)?.text ?? "kein Pilot"} offen={!!sp.pilot}>
+                <PilotCard customerId={id} message={sp.pilot ?? null} failed={fehler && !!sp.pilot} />
+              </Aufklapp>
+            </div>
+          ) : null}
 
           <div data-funktion="onboarding-actions-adminplanpauseaction--pause-urlaub-eintragen-ab-neustart-grund onboarding-actions-adminendpauseaction--pause-beenden">
             <Aufklapp titel="Pause" zusammenfassung={pause ? status : "keine Pause geplant"} offen={!!sp.pause}>

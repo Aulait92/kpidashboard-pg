@@ -61,10 +61,20 @@
 // und Kampagnen (Regeln zu Leadgenerierung, Werbebudget, Preisstaffel, Meta-Zugriff, Pause und Garantien gelten dafür
 // nicht), Leads gesondert per Stück, keine Mindestabnahme, ohne Mindestlaufzeit. Ändert nichts für
 // bestehende Verträge anderer Pakete.
+// 20.11.2026 (Ole): „Vergütung und Zahlung“: Absatz „Umsatzsteuer auf Leads“ (§ 4 Nr. 11 UStG nur an Vertreter/Makler
+// mit geprüftem Registereintrag, Nachberechnung bei abweichender Entscheidung der Finanzverwaltung, übrige Preise zzgl.
+// USt.); Satz „Alle Preise sind netto …“ verweist darauf. Prüfung: docs/recht/ust-leadverkauf-2026-11-19.md.
+// 20.11.2026 (Fassung 2, Ole: „für alle in den AGB klarstellen“): „Garantien“: neuer Absatz „Wahrgenommene Termine“.
+// Wahrgenommen heißt vom Kunden wahrgenommen; Absage, Verschiebung oder Nichterscheinen des Interessenten zählen als
+// wahrgenommen, im Zweifel zugunsten des Kunden; Berechnung mit Terminliste auf Anfrage in Textform. Nur zugunsten der
+// Kunden, gilt als Klarstellung auch für bestehende Verträge (keine Mitteilung mit Widerspruchsfrist nötig). Berechnung
+// in lib/garantien.ts terminQuote angeglichen. Prüfung: docs/recht/garantie-termine-wahrgenommen-2026-11-20.md.
+// 20.11.2026 (Ole): Neue Besondere Bedingungen „Kampagnen im eigenen Werbekonto“ (PPL_KUNDENKONTO_BEDINGUNGEN), nur
+// Bestandteil von Angeboten dieser Variante; AGB und AVV unverändert.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "19.11.2026 (Fassung 3)";
+export const LEGAL_VERSION = "20.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -79,7 +89,7 @@ export const PROVIDER = {
   register: "Amtsgericht Charlottenburg, HRB 172651",
   // Standard für den Rechnungsfuß; ein abweichender Wert unter Admin → Einstellungen →
   // Rechnungsangaben geht vor (Ole, 14.11.2026).
-  vatId: "DE295007828",
+  vatId: "DE305778241",
 };
 
 export type LegalSection = { title: string; items: (string | { sub: string; text: string })[] };
@@ -144,7 +154,9 @@ export const AGB: LegalSection[] = [
     title: "Vergütung und Zahlung",
     items: [
       // Prüfen: Sonderregel Zahlung nachträglich (19.11.2026, Fassung 2; docs/recht/zahlung-nachtraeglich.md)
-      "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus. Ist im Angebot nachträgliche Zahlung vereinbart, wird die monatliche Vergütung abweichend davon jeweils nachträglich für den abgelaufenen Leistungsmonat fällig, erstmals einen Monat nach dem Startdatum; das gilt bis zum Vertragsende, die Vergütung für den letzten Leistungsmonat wird danach fällig. Alle Preise sind netto zuzüglich Umsatzsteuer.",
+      "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus. Ist im Angebot nachträgliche Zahlung vereinbart, wird die monatliche Vergütung abweichend davon jeweils nachträglich für den abgelaufenen Leistungsmonat fällig, erstmals einen Monat nach dem Startdatum; das gilt bis zum Vertragsende, die Vergütung für den letzten Leistungsmonat wird danach fällig. Alle Preise sind netto zuzüglich Umsatzsteuer, soweit nicht unter „Umsatzsteuer auf Leads“ anders geregelt.",
+      // Prüfen: Steuerklausel Leads (20.11.2026, docs/recht/ust-leadverkauf-2026-11-19.md)
+      { sub: "Umsatzsteuer auf Leads", text: "Leads an Versicherungsvertreter und Versicherungsmakler mit geprüftem Registereintrag berechnet der Anbieter umsatzsteuerfrei nach § 4 Nr. 11 UStG. Beurteilt die Finanzverwaltung diese Leistungen als umsatzsteuerpflichtig, darf der Anbieter die gesetzliche Umsatzsteuer für diese Leads nachberechnen, auch rückwirkend für bereits gelieferte Leads. Alle übrigen Preise verstehen sich zuzüglich der gesetzlichen Umsatzsteuer. Das gilt insbesondere für Software, Betreuung und Einrichtung, für Leads an Kunden ohne geprüften Registereintrag als Versicherungsvertreter oder Versicherungsmakler und für Leads ohne Versicherungsbezug (z. B. Kindersparpläne)." },
       "Die monatliche Vergütung richtet sich nach dem vereinbarten Werbebudget und der im Angebot vollständig genannten Preisstaffel. Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat; der Kundenbereich zeigt die neue Vergütung vor der Änderung an.",
       // Prüfen: Vorauszahlung für 6 Monate (Laufzeit 6 Monate, 18.11.2026); Fälligkeit mit Vertragsschluss (19.11.2026)
       { sub: "Vorauszahlung", text: "Ist sie vereinbart, wird die Vergütung für 12 Monate (jährlich, mit 12 Monaten Laufzeit) bzw. für 6 Monate (mit 6 Monaten Laufzeit) im Voraus gezahlt (Nachlass laut Angebot). Die Vorauszahlung für den ersten Zahlungszeitraum ist mit Vertragsschluss fällig, die für jeden weiteren Zahlungszeitraum zu dessen Beginn. Zahlungszeiträume und Laufzeit beginnen mit dem Startdatum. Für Verträge, die vor dem 19.11.2026 angenommen wurden, ist die erste Vorauszahlung zum Start fällig. Im Zahlungszeitraum hinzukommende Verkäufer oder Module werden anteilig berechnet. Eine Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung des Kunden aus wichtigem Grund." },
@@ -190,7 +202,8 @@ export const AGB: LegalSection[] = [
     title: "Garantien",
     items: [
       "Die Garantien gelten für die Katzenversicherung (TKV) und für weitere im Angebot genannte Produkte, ab dem Tag der ersten Auslieferung der Anzeigen.",
-      { sub: "Gemeinsame Voraussetzungen", text: "Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt. Für Break-even- und Vertrags-Garantie außerdem: mindestens 80 % der über die Software gebuchten Termine wahrgenommen und für mindestens 80 % der Leads das Ergebnis in der Software eingetragen. Pausen verlängern den Prüfzeitraum um ihre Dauer; bei Zahlungsverzug ruht der Anspruch bis zum Ausgleich." },
+      { sub: "Gemeinsame Voraussetzungen", text: "Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt. Für Break-even- und Vertrags-Garantie außerdem: mindestens 80 % der über die Software gebuchten Termine vom Kunden wahrgenommen und für mindestens 80 % der Leads das Ergebnis in der Software eingetragen. Pausen verlängern den Prüfzeitraum um ihre Dauer; bei Zahlungsverzug ruht der Anspruch bis zum Ausgleich." },
+      { sub: "Wahrgenommene Termine", text: "Nicht wahrgenommen sind nur Termine, die der Kunde selbst absagt oder versäumt. Sagt der Interessent ab, verschiebt er oder erscheint er nicht, gilt der Termin als wahrgenommen. Verschiebt der Kunde einen Termin, zählt nur der neue. Im Zweifel, etwa wenn nicht feststeht, wer abgesagt hat, gilt der Termin als wahrgenommen. Auf Anfrage legt der Anbieter dem Kunden die Berechnung beider Quoten in Textform vor, mit der Liste der zugrunde liegenden Termine und Leads und dem jeweils eingetragenen Ergebnis." },
       { sub: "Lead-Garantie", text: "Erhält der Kunde in den ersten 30 aktiven Tagen weniger als 100 Leads für das Produkt, entfällt die Vergütung für Betreuung und Software im folgenden Abrechnungsmonat. Das Werbebudget zahlt er weiter an Meta." },
       { sub: "Break-even-Garantie (Vertreter mit Abschlussprovision)", text: "Liegt die Provision aus den über den Anbieter gewonnenen Verträgen nach 120 aktiven Tagen unter Werbebudget plus Vergütung für Betreuung und Software in diesem Zeitraum, betreut der Anbieter ohne diese Vergütung weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis die Provision seit Start die Kosten erreicht, längstens 6 Monate. Grundlage ist die Berechnung in der Software mit den unter „Meine Provisionen“ hinterlegten Sätzen; der Anbieter kann Nachweise zu Abschlüssen verlangen." },
       { sub: "Vertrags-Garantie (Makler, statt Break-even)", text: "Hat der Kunde nach 120 aktiven Tagen weniger als 15 Verträge aus den Leads abgeschlossen (in der Software als Abschluss eingetragen), betreut der Anbieter ohne Vergütung für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis 15 Verträge erreicht sind, längstens 6 Monate. Der Anbieter kann eine Courtage- bzw. Provisionsabrechnung des Versicherers anfordern; verschweigt der Kunde Abschlüsse, entfällt der Anspruch." },
@@ -247,6 +260,56 @@ export const AGB: LegalSection[] = [
       "Änderungen und Ergänzungen des Vertrags bedürfen der Textform.",
       "Sollte eine Bestimmung unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.",
       "Es gilt das Recht der Bundesrepublik Deutschland. Ist der Kunde Kaufmann, ist Gerichtsstand der Sitz des Anbieters in Berlin.",
+    ],
+  },
+];
+
+/**
+ * Besondere Bedingungen „Kampagnen im eigenen Werbekonto“ (Ole, 20.11.2026): nur für Angebote Pay-per-Lead + Software
+ * in dieser Variante (Offer.pplModell = „kundenkonto“, lib/ppl/kundenkonto.ts). Bestandteil des Angebots (Rangfolge:
+ * Angebot vor AGB), daher ändern sie die AGB nicht und gelten nicht für andere Verträge. Klauseln nach der internen
+ * Rechtsprüfung im Protokoll docs/firma/protokolle/2026-11-20-ppl-im-kundenkonto.md, Umsatzsteuer nach
+ * docs/recht/ust-ppl-im-kundenkonto-2026-11-20.md (19 %, nicht § 4 Nr. 11). Prüfen: vor dem ersten Pilotvertrag
+ * mit dem Steuerberater-Ergebnis abgleichen. Mindestbestellung und Software-Schwelle: MINDESTBESTELLUNG_KUNDENKONTO.
+ */
+export const PPL_KUNDENKONTO_BEDINGUNGEN: LegalSection[] = [
+  {
+    title: "Leistung und Werbekonto",
+    items: [
+      "Abweichend vom Absatz „Paket Pay-per-Lead + Software“ der AGB erstellt und steuert der Anbieter Werbekampagnen auf Facebook und Instagram (Meta) im eigenen Werbekonto des Kunden. Der Kunde räumt dem Anbieter dafür einen Partnerzugriff ein und hinterlegt bei Meta eine eigene Zahlungsmethode. Das Werbebudget zahlt der Kunde direkt an Meta. Die Software ist wie im Angebot beschrieben enthalten.",
+      "Werbekonto, Pixel, Zielgruppen und Leads gehören dem Kunden. An den vom Anbieter erstellten Werbemitteln und Texten erhält der Kunde ein einfaches Nutzungsrecht für die Vertragslaufzeit. Bei Vertragsende beendet der Anbieter seinen Partnerzugriff.",
+      "Der Kunde gibt die Anzeigen vor dem Start frei. Er haftet für die Pflichtangaben in der Werbung und für die Einhaltung der Vorgaben seines Versicherers.",
+    ],
+  },
+  {
+    title: "Voraussetzungen",
+    items: [
+      "Der Kunde hat eine Erlaubnis nach § 34d GewO für Versicherungsprodukte, für Kindersparpläne eine Erlaubnis nach § 34f GewO oder ein Haftungsdach. Ist der Kunde Ausschließlichkeitsvertreter, bestätigt er mit der Annahme, dass sein Versicherer dieser Werbung zugestimmt hat.",
+    ],
+  },
+  {
+    title: "Abrechenbare Leads",
+    items: [
+      "Abrechenbar ist ein Lead mit vollständig ausgefülltem Formular und gültiger Telefonnummer, der keine Dublette innerhalb von 30 Tagen und kein erkennbarer Fake ist. Der Kunde kann einen Lead innerhalb von 7 Tagen nach Zustellung in der App reklamieren.",
+      "Gezählt werden die Leads in der Software des Anbieters; die Angaben von Meta dienen als zweite Quelle.",
+    ],
+  },
+  {
+    title: "Preis je Lead, Abrechnung und Umsatzsteuer",
+    items: [
+      "Der im Angebot genannte Preis je Lead ist ein Endpreis einschließlich Umsatzsteuer und zugleich eine Preisobergrenze: Die Werbekosten des Kunden bei Meta werden darauf voll angerechnet. Eine bestimmte Zahl an Leads oder ein bestimmtes Ergebnis schuldet der Anbieter nicht.",
+      "Der Anbieter rechnet wöchentlich ab und zieht den Betrag per SEPA-Lastschrift ein: Leads der Vorwoche multipliziert mit dem Preis je Lead, abzüglich der Kosten, die Meta dem Kunden für dieselbe Woche berechnet hat, einschließlich der Umsatzsteuer nach § 13b UStG. Die Vergütung des Anbieters enthält 19 % Umsatzsteuer; eine Befreiung nach § 4 Nr. 11 UStG gilt für diese Leistung nicht.",
+      "Liegt der rechnerische Preis je Lead über der Obergrenze, entsteht eine Gutschrift. Sie wird nur mit der Vergütung desselben Abrechnungsmonats verrechnet und nicht ausgezahlt.",
+      "Die Obergrenze gilt nur, solange Budget, Ziele und Regionen der Kampagnen vom Anbieter gesteuert werden. Greift der Kunde selbst ein (etwa Budget ändern, Kampagnen pausieren oder Anzeigen ändern), entfällt sie für den betreffenden Kalendermonat.",
+      "Zum Start sagt der Kunde die Abnahme der im Angebot genannten Startmenge zu (Startpaket); sie wird nach Lieferung wöchentlich abgerechnet, eine Vorauszahlung erfolgt nicht. Die Software ist inklusive, solange der Kunde im Kalendermonat Leads für mindestens 1.500 € (Preis je Lead mal Anzahl) bezieht, sonst wird sie in diesem Monat zum Listenpreis berechnet. Auf der Rechnung steht die Software stets als eigene Position; ist sie inklusive, mindert sich der Betrag für die Leads entsprechend.",
+    ],
+  },
+  {
+    title: "Ausfälle, Pausen und Lastschrift",
+    items: [
+      "Akzeptiert Meta die Zahlung des Kunden nicht oder sperrt Meta das Werbekonto, schuldet für die Ausfallzeit keine Seite der anderen etwas.",
+      "Der Anbieter darf Kampagnen pausieren, wenn sie unwirtschaftlich werden; er informiert den Kunden darüber.",
+      "Wird eine Lastschrift zurückgegeben, darf der Anbieter die Kampagnen pausieren, bis der offene Betrag gezahlt ist.",
     ],
   },
 ];
@@ -383,6 +446,17 @@ export const TOMS: string[] = [
   "Automatische, protokollierte Löschung der Unterlagen nach den Fristen im Abschnitt „Löschung und Rückgabe“; das Löschprotokoll wird nach einer Wiederherstellung aus der Sicherung erneut angewendet.",
 ];
 
+/** Speicher der Versicherungsunterlagen laut POLICEN_S3_ENDPOINT (Datenschutz-Prüfung A1, 20.11.2026). */
+export function policenSpeicherAnbieter(endpoint = process.env.POLICEN_S3_ENDPOINT): { name: string; location: string } | null {
+  const eu = euEndpunkt((endpoint ?? "").trim());
+  if (!eu.ok) return null;
+  return eu.region === "auto"
+    ? { name: "Cloudflare, Inc. (R2)", location: "Speicher mit EU-Jurisdiktion; Unternehmen USA" }
+    : { name: "Amazon Web Services EMEA SARL (S3)", location: `Region ${eu.region} (EU); Konzern USA` };
+}
+
+const speicher = policenSpeicherAnbieter();
+
 export const SUBPROCESSORS: { name: string; purpose: string; location: string }[] = [
   { name: "Railway Corporation", purpose: "Hosting von Anwendung und Datenbank", location: "Serverstandort EU (Amsterdam); Unternehmen USA" },
   { name: "Anthropic, PBC", purpose: "KI-System für den digitalen Assistenten: Verarbeitung der Chatnachrichten (ohne Gesundheitsangaben aus Lead-Formularen); Auslesen vom Auftraggeber hochgeladener Versicherungsangebote (nur Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierversicherungen); keine Nutzung zum Training", location: "USA" },
@@ -393,7 +467,14 @@ export const SUBPROCESSORS: { name: string; purpose: string; location: string }[
   { name: "Formagrid Inc. (Airtable)", purpose: "Lead-Datenhaltung, nur noch bis zur vollständigen Umstellung auf den direkten Lead-Eingang", location: "USA" },
   { name: "Zapier, Inc.", purpose: "Übertragung der Leads aus den Meta-Formularen, nur noch bis zur vollständigen Umstellung auf den direkten Lead-Eingang", location: "USA" },
   { name: "OpenAI, L.L.C. / OpenAI Ireland Ltd.", purpose: "Erstellung von Werbemotiven, Videos und Untertiteln für die Kampagnen des Auftraggebers; keine Lead-Daten", location: "Irland / USA" },
+  {
+    name: "OpenAI Ireland Ltd.",
+    purpose: "Auslesen von Versicherungsunterlagen, die Leads oder Kunden des Auftraggebers schicken (Sachversicherungen; Kranken-, BU- und Lebensversicherungen nur nach gesonderter Freischaltung), über den EU-Endpunkt mit Datenresidenz EU; keine Nutzung zum Training",
+    location: "EU (Datenresidenz EU); Konzern USA",
+  },
+  ...(speicher ? [{ name: speicher.name, purpose: "Verschlüsselte Ablage der Versicherungsunterlagen, die Leads oder Kunden des Auftraggebers schicken", location: speicher.location }] : []),
   { name: "Cloudflare, Inc. (R2)", purpose: "Speicherung der Werbemotive für die Kampagnen; keine Lead-Daten", location: "EU / USA" },
   { name: "Functional Software, Inc. (Sentry)", purpose: "Fehlerüberwachung; Sitzungsaufnahmen im Kundenbereich nur mit Einwilligung des einzelnen Nutzers, mit im Browser unkenntlich gemachten Texten, Eingaben und Bildern und ohne Kennungen von Leads (keine Inhalte aus Leads)", location: "Datenregion EU (Deutschland); Unternehmen USA" },
   { name: "Google Ireland Ltd. / Microsoft Ireland Operations Ltd.", purpose: "Kalenderanbindung und E-Mail-Versand über das Postfach des Auftraggebers (einzelne E-Mails und E-Mail-Kampagnen), sofern vom Auftraggeber genutzt", location: "Irland / USA" },
-];
+];import { euEndpunkt } from "@/lib/policen/ablage";
+

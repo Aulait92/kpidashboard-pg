@@ -21,7 +21,7 @@ import { Check, ChevronLeft, ChevronRight, Expand, Lightbulb, MessageCircleQuest
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { folienEinpassen } from "@/lib/folien-einpassen";
-import { rechnerAnwenden, zahlFeld, zahlLesen } from "@/lib/vertrieb/folien-rechner";
+import { rechnerAnwenden, rechnerQuoten, zahlFeld, zahlLesen } from "@/lib/vertrieb/folien-rechner";
 
 export type DeckFolie = { id: string; titel: string; html: string; produkt?: string; hinweis?: string };
 export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean; paket?: number[]; /** Folie, auf der geklickt wurde (Messung „Mit anschauen“) */ folie?: string };
@@ -109,6 +109,11 @@ export function FolienDeck({
     const r = t.closest<HTMLElement>("[data-rechner]");
     if (!r || !(t instanceof HTMLInputElement) || !t.dataset.feld) return;
     eingaben.current.set(`${f.id}:${t.dataset.feld}`, t.value);
+    // Leads geändert: Termine und Abschlüsse ziehen mit gleicher Quote mit (Ole, 20.11.2026)
+    for (const k of rechnerQuoten(r, t.dataset.feld)) {
+      const i = r.querySelector<HTMLInputElement>(`input[data-feld="${k}"]`);
+      if (i) eingaben.current.set(`${f.id}:${k}`, i.value);
+    }
     rechnerAnwenden(r);
   };
   // Beim Verlassen des Felds deutsch formatieren („1200“ → „1.200“)

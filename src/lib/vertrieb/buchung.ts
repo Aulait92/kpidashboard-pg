@@ -24,6 +24,7 @@ import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { findOrCreateContact, type Invitee } from "@/lib/vertrieb/calendly";
 import { Matcher } from "@/lib/vertrieb/linkedin";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
+import { erinnerungsFenster, vorlaufOk } from "@/lib/vertrieb/termin-erinnerungen";
 import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
 import { anredeZeile } from "@/lib/ansprache";
 import { PROVIDER } from "@/lib/legal-texts";
@@ -265,7 +266,19 @@ export type BookingInput = {
   role: Rolle | null;
   interest: string;
   message: string | null;
+  /** Weitere Gäste der Kalendereinladung (nur vom Team gebucht, Ole, 20.11.2026) */
+  weitereGaeste?: string[];
 };
+
+/**
+ * Feld „Einladung an“ (Admin): eine oder mehrere Adressen, getrennt durch Komma, Semikolon oder Leerzeichen.
+ * Erste Adresse = Hauptgast (Bestätigung, Erinnerungen), die übrigen bekommen die Kalendereinladung. null bei ungültiger Adresse.
+ */
+export function einladungsAdressen(raw: string): { email: string; weitere: string[] } | null {
+  const alle = [...new Set(raw.split(/[;,\s]+/).map((e) => e.trim().toLowerCase()).filter(Boolean))];
+  if (!alle.length || alle.some((e) => !EMAIL_RE.test(e))) return null;
+  return { email: alle[0], weitere: alle.slice(1, 10) };
+}
 
 export type InputError = "name" | "email" | "phone" | "company" | "role" | "interest" | "consent";
 
@@ -297,6 +310,7 @@ function answersOf(i: BookingInput): string {
     i.role ? `Vertreter oder Makler: ${roleLabel(i.role)}` : null,
     i.interest ? `Interesse: ${i.interest}` : null,
     i.message ? `Nachricht: ${i.message}` : null,
+    i.weitereGaeste?.length ? `Weitere Gäste: ${i.weitereGaeste.join(", ")}` : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -383,7 +397,7 @@ async function reserveAndCreate(opts: {
       // Die Beschreibung sehen die Gäste (Ole, 18.11.2026): nur Begrüßung, Link bzw. Telefon und Verschieben/Absagen.
       // Interna (CRM-Link, Antworten, „vom Team eingetragen“) stehen im CRM, Push und Terminübersicht.
       description: gastBeschreibung({ name: opts.input.name, mode: t.mode, videoUrl: t.videoUrl, phone, manageUrl: manageLink(manageToken) }),
-      attendeeEmails: [opts.input.email],
+      attendeeEmails: [opts.input.email, ...(opts.input.weitereGaeste ?? [])],
       video: t.mode === "video",
       location: t.mode === "phone" && phone ? `Telefon: ${phone}` : null,
     });
@@ -736,8 +750,9 @@ export async function adminBookSalesMeeting(opts: {
   });
   if (!c) return { ok: false, error: "not_found" };
   if (Number.isNaN(start.getTime()) || start.getTime() <= now.getTime()) return { ok: false, error: "past" };
-  const email = (opts.email?.trim() || c.email || "").toLowerCase();
-  if (!EMAIL_RE.test(email)) return { ok: false, error: "email" };
+  const adressen = einladungsAdressen(opts.email?.trim() || c.email || "");
+  if (!adressen) return { ok: false, error: "email" };
+  const { email, weitere } = adressen;
   if (!(await calendarReady(t))) return { ok: false, error: "unavailable" };
   const end = new Date(start.getTime() + t.durationMin * MIN);
   if (!opts.force) {
@@ -752,6 +767,7 @@ export async function adminBookSalesMeeting(opts: {
     role: c.insurer === "Makler" ? "makler" : null,
     interest: "",
     message: null,
+    weitereGaeste: weitere,
   };
   let res: Created;
   try {
@@ -761,7 +777,7 @@ export async function adminBookSalesMeeting(opts: {
     return { ok: false, error: "error" };
   }
   if (!c.email) await prisma.salesContact.update({ where: { id: c.id }, data: { email } }).catch(() => {});
-  await recordCrm(c.id, res.meetingId, t, start, res.joinUrl, `Vom Team eingetragen, Einladung an ${email}`, `Termin gebucht: ${t.title} am ${fmtDateTime(start)}`).catch((e) =>
+  await recordCrm(c.id, res.meetingId, t, start, res.joinUrl, `Vom Team eingetragen, Einladung an ${[email, ...weitere].join(", ")}`, `Termin gebucht: ${t.title} am ${fmtDateTime(start)}`).catch((e) =>
     reportError(e, "vertrieb-buchung-crm"),
   );
   await sendInviteeMail(res.meetingId, "booked");
@@ -808,6 +824,7 @@ function inputFromMeeting(m: { inviteeName: string | null; inviteeEmail: string 
     role,
     interest: get("Interesse"),
     message: get("Nachricht") || null,
+    weitereGaeste: get("Weitere Gäste").split(/,\s*/).filter(Boolean),
   };
 }
 
@@ -945,8 +962,6 @@ export async function recordPreparation(token: string, what: "video" | "demo", n
 
 // ─── Erinnerungen (WhatsApp-Cron) ───────────────────────────────────────
 
-const HOUR = 60 * MIN;
-
 /**
  * Erinnerung per E-Mail 24 Stunden und 1 Stunde vor Terminen der eigenen Buchungsseite
  * (Calendly-Termine erinnert Calendly per E-Mail selbst), danach WhatsApp für alle Vertriebstermine. Kurzfristig Gebuchtes bekommt keine Erinnerung,
@@ -957,19 +972,19 @@ export async function runSalesBookingReminders(now = new Date()): Promise<{ day:
   let soon = 0;
   const base = { status: "GEPLANT", manageToken: { not: null }, bookingTypeId: { not: null } } as const;
   const dayDue = await prisma.salesMeeting.findMany({
-    where: { ...base, reminderSentAt: null, startAt: { gt: new Date(now.getTime() + 2 * HOUR), lte: new Date(now.getTime() + 24 * HOUR) } },
+    where: { ...base, reminderSentAt: null, startAt: erinnerungsFenster("tag", now) },
     select: { id: true, startAt: true, createdAt: true },
     take: 100,
   });
   for (const m of dayDue) {
     const claimed = await prisma.salesMeeting.updateMany({ where: { id: m.id, reminderSentAt: null }, data: { reminderSentAt: now } });
     if (!claimed.count) continue;
-    // Erst vor kurzem (innerhalb von 26 Stunden vor Beginn) gebucht: Bestätigung reicht
-    if (m.startAt.getTime() - m.createdAt.getTime() <= 26 * HOUR) continue;
+    // Erst vor kurzem (innerhalb von 26 Stunden vor Beginn) gebucht: Bestätigung reicht (lib/vertrieb/termin-erinnerungen.ts)
+    if (!vorlaufOk("tag", "email", { startAt: m.startAt, gebucht: m.createdAt, urspruenglich: m.createdAt })) continue;
     if (await sendInviteeMail(m.id, "reminder")) day++;
   }
   const soonDue = await prisma.salesMeeting.findMany({
-    where: { ...base, soonReminderSentAt: null, startAt: { gt: new Date(now.getTime() + 10 * MIN), lte: new Date(now.getTime() + HOUR) } },
+    where: { ...base, soonReminderSentAt: null, startAt: erinnerungsFenster("gleich", now) },
     select: { id: true, startAt: true, createdAt: true, rescheduledFromId: true },
     take: 100,
   });
@@ -978,7 +993,7 @@ export async function runSalesBookingReminders(now = new Date()): Promise<{ day:
     const claimed = await prisma.salesMeeting.updateMany({ where: { id: m.id, soonReminderSentAt: null }, data: { soonReminderSentAt: now } });
     if (!claimed.count) continue;
     // Verschoben: gemessen an der ursprünglichen Buchung (wie bei WhatsApp)
-    if (m.startAt.getTime() - (await urspruenglichGebucht(m)).getTime() < 3 * HOUR) continue;
+    if (!vorlaufOk("gleich", "email", { startAt: m.startAt, gebucht: m.createdAt, urspruenglich: await urspruenglichGebucht(m) })) continue;
     if (await sendInviteeMail(m.id, "soon")) soon++;
   }
   // WhatsApp von der Support-Nummer (auch für Calendly-Termine), eigene Markierung je Art

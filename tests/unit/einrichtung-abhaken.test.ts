@@ -59,3 +59,22 @@ describe("Für den Kunden abhaken", () => {
     expect(NICHT_ABHAKBAR).toEqual(expect.arrayContaining(["live", "welcome"]));
   });
 });
+
+describe("Pflichtangaben ohne Website (Admin Punkt 11, Ole 20.11.2026)", () => {
+  const ohneWebsite = (erstinformation: unknown) => {
+    const o = ob(null) as unknown as { websiteInfo: unknown; customer: { erstinformation: unknown } };
+    o.websiteInfo = { error: "Keine (gültige) Website hinterlegt.", missing: [] };
+    o.customer.erstinformation = erstinformation;
+    return o as unknown as OnboardingFull;
+  };
+  it("vollständige Erstinformation: Impressum-Schritt erledigt mit „Erstinformation statt Website“", () => {
+    const voll = { registerNummer: "D-ABCD-EFGHI-12", fileName: "erstinfo.pdf", bestaetigtAt: new Date(at) };
+    const item = onboardingChecklist(ohneWebsite(voll), null).find((i) => i.key === "website");
+    expect(item).toMatchObject({ done: true, note: "Erstinformation statt Website" });
+  });
+  it("unvollständige Erstinformation: bleibt offen, ohne Zusatz", () => {
+    const item = onboardingChecklist(ohneWebsite({ registerNummer: "D-ABCD-EFGHI-12", fileName: "erstinfo.pdf", bestaetigtAt: null }), null).find((i) => i.key === "website");
+    expect(item?.done).toBe(false);
+    expect(item?.note).toBeUndefined();
+  });
+});

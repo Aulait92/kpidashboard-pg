@@ -21,6 +21,7 @@ import {
   statusFromImpressum,
   type ErstinfoDaten,
   type ErstinfoWeb,
+  type VermittlerAngaben,
   type VermittlerStatus,
 } from "@/lib/erstinformation-shared";
 
@@ -50,6 +51,14 @@ export async function erstinfoUrlFor(customerId: string): Promise<string> {
   const { token } = await getOrCreateErstinfo(customerId);
   // Eigene Buchungsadresse, sonst App; ohne APP_URL (lokal, Tests) die Standardadresse
   return publicUrlOr(`/erstinformation/${token}`);
+}
+
+/** Datenschutzhinweise im Namen des Vermittlers (app/erstinformation/[token]/datenschutz, Ole 20.11.2026). */
+export async function datenschutzUrlFor(customerId: string): Promise<string | null> {
+  // Nur mit Name und Anschrift des Verantwortlichen (Datenschutz-Prüfung A3, docs/recht/datenschutz-vermittler-seite.md)
+  const { daten } = await loadErstinfo(customerId);
+  if (!daten.name?.trim() || !daten.anschrift?.trim()) return null;
+  return `${await erstinfoUrlFor(customerId)}/datenschutz`;
 }
 
 /** Öffentliche Adresse des PDFs (für das WhatsApp-Dokument; Meta lädt es von dort). */
@@ -183,7 +192,7 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
   if (!["makler", "mehrfachvertreter", "vertreter"].includes(input.status)) return { ok: false, error: "Bitte Ihren Status wählen." };
   const status = input.status as VermittlerStatus;
   const reg = normalizeRegisterNummer(input.registerNummer);
-  if (!reg) return { ok: false, error: "Bitte die Registernummer im Format D-XXXX-XXXXX-XX eingeben (steht im Vermittlerregister bzw. auf Ihrer IHK-Urkunde)." };
+  if (!reg) return { ok: false, error: "Bitte die Registernummer so eingeben, wie sie im Vermittlerregister bzw. auf Ihrer IHK-Urkunde steht, z. B. D-XXXX-XXXXX-XX." };
   const url = input.url?.trim() ? normalizeErstinfoUrl(input.url) : null;
   if (input.url?.trim() && !url) return { ok: false, error: "Der Link ist ungültig. Bitte die vollständige Adresse eingeben, z. B. https://ihre-agentur.de/erstinformation." };
   const file = input.file && input.file.data.length ? input.file : null;
@@ -262,6 +271,20 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
     },
   });
   return { ok: true };
+}
+
+/**
+ * „Ihre Angaben“ (Einrichtung Schritt 1, Ole 20.11.2026): Anrede, Name, Telefon, Anschrift und Registernummer einmal
+ * früh speichern, in denselben Datensatz wie die Erstinformation. Die Signatur der Service-Mails (signaturAngaben)
+ * und die Nennung gegenüber Leads (vermittlerName) lesen ihn. Bestätigt wird die Erstinformation weiter in ihrem
+ * eigenen Schritt (bestaetigtAt bleibt unberührt).
+ */
+export async function saveVermittlerAngaben(customerId: string, a: VermittlerAngaben, userId?: string | null): Promise<void> {
+  const { id } = await getOrCreateErstinfo(customerId);
+  await prisma.erstinformation.update({
+    where: { id },
+    data: { anrede: a.anrede, name: a.name, telefon: a.telefon, anschrift: a.anschrift, registerNummer: a.registerNummer, updatedById: userId ?? null },
+  });
 }
 
 /** Erstinformation-Daten über den öffentlichen Token (Seite und PDF). */

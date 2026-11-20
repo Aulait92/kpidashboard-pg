@@ -45,9 +45,12 @@
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
 import { displayProduct } from "@/lib/products";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
+import { WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
+import { WhatsAppFestnetzError } from "@/lib/whatsapp/festnetz";
 import { a, anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -641,9 +644,11 @@ export function topicOf(formData: Prisma.JsonValue | null, source: string | null
 export async function stopReasonFor(seq: { leadId: string; customerId: string; startedAt: Date; kind?: string }, now = new Date()): Promise<string | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: seq.leadId },
-    select: { status: true, stornoState: true, erasedAt: true, phone: true, abschlussGemeldetAt: true },
+    select: { status: true, stornoState: true, erasedAt: true, phone: true, abschlussGemeldetAt: true, source: true },
   });
   if (!lead || lead.erasedAt) return "Lead gelöscht";
+  // Produkt ohne automatische Nachrichten (Ole, 20.11.2026: PKV-Tarifoptimierung, lib/lead-kontakt-sperre.ts)
+  if (ohneAutoNachrichten(lead.source)) return "Produkt ohne automatische Nachrichten";
   const unterlagen = seq.kind === "unterlagen";
   if (!unterlagen && lead.abschlussGemeldetAt && lead.abschlussGemeldetAt.getTime() >= seq.startedAt.getTime()) return "Lead meldet: schon abgeschlossen";
   if (lead.stornoState) return "Lead reklamiert";
@@ -956,6 +961,11 @@ async function sendStep(
       } catch (err2) {
         if (!(err2 instanceof NoTemplateError)) return { ...base, result: "failed", detail: (err2 instanceof Error ? err2.message : String(err2)).slice(0, 160) };
       }
+    }
+    if (err instanceof WhatsAppUnavailableError) {
+      // Festnetznummer (lib/whatsapp/festnetz.ts) bzw. kein WhatsApp: nichts gesendet, Anruf statt WhatsApp
+      const r = await createCallTask(seq.leadId, step.fallbackNote, now);
+      return { ...base, result: r, detail: err instanceof WhatsAppFestnetzError ? "Nicht gesendet: Festnetznummer" : "Nicht per WhatsApp erreichbar" };
     }
     if (err instanceof NoTemplateError) {
       const r = await createCallTask(seq.leadId, step.fallbackNote, now);

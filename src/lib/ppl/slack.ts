@@ -10,6 +10,7 @@
 
 import { prisma } from "@/lib/prisma";
 import type { DeliveryReport } from "@/lib/ppl/delivery";
+import { parkDeadlineHint } from "@/lib/ppl/parken";
 
 export type SlackLeadInfo = {
   product: string;
@@ -22,6 +23,8 @@ export type SlackLeadInfo = {
   bezug?: string | null;
   /** war vorher geparkt (Nachlieferung) */
   wasParked?: boolean;
+  /** Eingang (für die Verfallsfrist beim Parken, lib/ppl/parken.ts) */
+  createdAt?: Date | null;
   delivery?: Pick<DeliveryReport, "label" | "targets" | "ok" | "error" | "hinweis"> | null;
   adminUrl?: string | null;
 };
@@ -73,6 +76,7 @@ export function pplSlackText(i: SlackLeadInfo): string {
     i.status === "delivered" ? `Bezieher: ${esc(i.customer ?? "unbekannt")}${i.bezug ? ` (Bezug: ${esc(i.bezug)})` : ""}` : null,
     `Lead: ${esc(lead || "ohne Angaben")}`,
     i.status !== "delivered" ? `Status: ${s.text}${i.reason ? `, ${esc(i.reason)}` : ""}` : null,
+    i.status === "parked" && i.createdAt ? `Frist: ${parkDeadlineHint(i.createdAt)}` : null,
     i.delivery ? deliveryLine(i.delivery) : null,
     link(i.adminUrl),
   ]
@@ -152,7 +156,7 @@ function adminBase(): string | null {
 
 /** Infos zum Pool-Lead für Slack (ohne Kontaktdaten außer Vorname und PLZ). */
 export async function slackInfoFor(poolLeadId: string, extra: { delivery?: DeliveryReport | null; wasParked?: boolean } = {}): Promise<{ info: SlackLeadInfo; muted: boolean } | null> {
-  const pl = await prisma.poolLead.findUnique({ where: { id: poolLeadId }, select: { id: true, productKey: true, status: true, reason: true, name: true, plz: true, answers: true, leadId: true } });
+  const pl = await prisma.poolLead.findUnique({ where: { id: poolLeadId }, select: { id: true, productKey: true, status: true, reason: true, name: true, plz: true, answers: true, leadId: true, createdAt: true } });
   if (!pl) return null;
   const lead = pl.leadId
     ? await prisma.lead.findUnique({ where: { id: pl.leadId }, select: { subscription: { select: { label: true, slackNotify: true, customer: { select: { name: true } } } } } })
@@ -182,6 +186,7 @@ export async function slackInfoFor(poolLeadId: string, extra: { delivery?: Deliv
       customer: sub?.customer.name ?? null,
       bezug: sub?.label ?? null,
       wasParked: extra.wasParked,
+      createdAt: pl.createdAt,
       delivery: extra.delivery ?? null,
       adminUrl: base ? `${base}${path}` : null,
     },

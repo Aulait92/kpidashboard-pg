@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";
 import { fetchIcsBusy } from "@/lib/calendar/ics";
+import { appKalenderEinschalten, appKalenderPruefen } from "@/lib/calendar/app-kalender";
 import {
   AllianzCalendarError,
   changeAllianzTemplate,
@@ -15,7 +16,19 @@ import {
   resolveAllianzCalendar,
   type AllianzCalendar,
 } from "@/lib/calendar/allianz-online";
-import { blockRange, leadTimesError, leadTimesFromSchedule, parseSchedule, normalizeDuration, normalizeLeadTimes, normalizeTime, saveLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
+import {
+  blockRange,
+  leadTimesError,
+  leadTimesFromSchedule,
+  loadLeadTimes,
+  nearestDuration,
+  parseSchedule,
+  normalizeDuration,
+  normalizeLeadTimes,
+  normalizeTime,
+  saveLeadTimes,
+  type LeadTimes,
+} from "@/lib/calendar/lead-times";
 
 /** `next: "ics"`: Allianz-Seite gesperrt, die Oberfläche bietet den Kalender-Link (ICS) als nächsten Schritt an. */
 export type SourceResult = { ok?: boolean; error?: string; info?: string; next?: "ics" };
@@ -79,10 +92,26 @@ async function probe(cal: AllianzCalendar): Promise<{ count: number; first: stri
 const fmtDay = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
+/**
+ * Termindauer der gewählten Allianz-Termin-Art übernehmen (Ole, 20.11.2026):
+ * nächste wählbare Dauer (15/30/45/60), Tage und Uhrzeiten bleiben. Gibt den
+ * Satz für die Erfolgsmeldung zurück, leer wenn nichts gespeichert wurde.
+ */
+export async function takeOverAllianzDuration(customerId: string, cal: AllianzCalendar): Promise<string> {
+  const durationMin = nearestDuration(cal.durationMin);
+  const current = await loadLeadTimes(customerId);
+  const lt: LeadTimes = current.schedule ? leadTimesFromSchedule(current.schedule, durationMin) : { ...current, durationMin };
+  if (leadTimesError(lt)) return "";
+  await saveLeadTimes(customerId, customerId, lt);
+  return durationMin === cal.durationMin
+    ? ` Termindauer auf ${durationMin} Min. gesetzt, wie im Allianz-Kalender.`
+    : ` Termindauer auf ${durationMin} Min. gesetzt (Allianz-Kalender: ${cal.durationMin} Min.).`;
+}
+
 /** B) Allianz-Online-Kalender verbinden (Link oder VTNR, Zustimmung nötig). */
 export async function connectAllianz(customerId: string, input: string, consent: boolean): Promise<SourceResult> {
   if (!consent) return { error: "Bitte stimmen Sie zu, dass wir Ihre freien Termine abrufen dürfen." };
-  if (!input.trim()) return { error: "Bitte den Link Ihrer Vertreter-Seite oder Ihre Vertreternummer eingeben." };
+  if (!input.trim()) return { error: "Bitte Ihre Allianz-Vertreternummer eingeben, z. B. 30/410/2222." };
   let cal: AllianzCalendar;
   let check: { count: number; first: string | null };
   try {
@@ -98,11 +127,15 @@ export async function connectAllianz(customerId: string, input: string, consent:
     update: { allianzCalendarEnc: encodeAllianzCalendar(cal), allianzConsentAt: new Date(), allianzLastOkAt: new Date(), allianzLastError: null, allianzAlertAt: null },
   });
   const who = cal.orgName ? `${cal.orgName}, ` : "";
+  // Ohne Google/Outlook: Termine über den App-Kalender mit Einladung per Mail (Ole, 20.11.2026)
+  const app = await appKalenderEinschalten(customerId);
+  const mail = app ? " Termine bekommen Sie als Einladung per Mail." : "";
+  const dauer = await takeOverAllianzDuration(customerId, cal);
   return {
     ok: true,
     info: check.first
-      ? `Verbunden: ${who}Termin-Art „${cal.templateName}“. Nächster freier Termin: ${fmtDay(check.first)} Uhr.`
-      : `Verbunden: ${who}Termin-Art „${cal.templateName}“. In den nächsten 30 Tagen sind dort gerade keine Termine frei.`,
+      ? `Verbunden: ${who}Termin-Art „${cal.templateName}“. Nächster freier Termin: ${fmtDay(check.first)} Uhr.${dauer}${mail}`
+      : `Verbunden: ${who}Termin-Art „${cal.templateName}“. In den nächsten 30 Tagen sind dort gerade keine Termine frei.${dauer}${mail}`,
   };
 }
 
@@ -115,7 +148,8 @@ export async function changeAllianz(customerId: string, templateId: string, reso
     const next = await changeAllianzTemplate(cal, templateId, resourceId);
     await probe(next);
     await prisma.agentConfig.update({ where: { customerId }, data: { allianzCalendarEnc: encodeAllianzCalendar(next), allianzLastOkAt: new Date(), allianzLastError: null } });
-    return { ok: true, info: `Termin-Art: ${next.templateName} (${next.durationMin} Min.).` };
+    const dauer = await takeOverAllianzDuration(customerId, next);
+    return { ok: true, info: `Termin-Art: ${next.templateName} (${next.durationMin} Min.).${dauer}` };
   } catch (err) {
     return { error: err instanceof AllianzCalendarError ? err.message : "Das hat nicht geklappt." };
   }
@@ -126,6 +160,7 @@ export async function disconnectAllianz(customerId: string): Promise<void> {
     where: { customerId },
     data: { allianzCalendarEnc: null, allianzConsentAt: null, allianzLastOkAt: null, allianzLastError: null, allianzAlertAt: null },
   });
+  await appKalenderPruefen(customerId);
 }
 
 /** A) ICS-Link speichern (vorher einmal abrufen). */
@@ -143,11 +178,14 @@ export async function saveIcsLink(customerId: string, raw: string): Promise<Sour
     create: { customerId, availabilityIcsUrlEnc: encryptSecret(url) },
     update: { availabilityIcsUrlEnc: encryptSecret(url) },
   });
-  return { ok: true, info: "Kalender-Link gespeichert. Belegte Zeiten daraus berücksichtigen wir ab sofort." };
+  // Ohne Google/Outlook: Termine über den App-Kalender mit Einladung per Mail (lib/calendar/app-kalender.ts)
+  const app = await appKalenderEinschalten(customerId);
+  return { ok: true, info: `Kalender-Link gespeichert. Belegte Zeiten daraus berücksichtigen wir ab sofort.${app ? " Termine bekommen Sie als Einladung per Mail." : ""}` };
 }
 
 export async function removeIcsLink(customerId: string): Promise<void> {
   await prisma.agentConfig.updateMany({ where: { customerId }, data: { availabilityIcsUrlEnc: null } });
+  await appKalenderPruefen(customerId);
 }
 
 /** C) Lead-Zeiten aus Formularfeldern day_<0-6>, time_<HH:MM>, extraTime. */

@@ -79,19 +79,24 @@ const FELD: Record<BonusSchritt, "bonusMailVorabAt" | "bonusMailLetzterAt" | "bo
 
 type OfferRow = NonNullable<Awaited<ReturnType<typeof prisma.offer.findUnique>>>;
 
-export type BonusCronErgebnis = { geprueft: number; mails: number; pushes: number; whatsapp: number; uebersprungen: number };
-
-export async function runBonusErinnerungen(now = new Date(), opts: { limit?: number } = {}): Promise<BonusCronErgebnis> {
-  const out: BonusCronErgebnis = { geprueft: 0, mails: 0, pushes: 0, whatsapp: 0, uebersprungen: 0 };
-  // Frist höchstens 2 Tage entfernt (Tag vor Ablauf und letzter Tag); ohne gesetzte Frist endet der Bonus am Versandtag
-  const where = {
+/** Verschickte, offene Angebote mit Bonusfrist zwischen `von` und `bis` (Versand und „Geplante Nachrichten“). */
+export function bonusOffenWhere(von: Date, bis: Date) {
+  return {
     status: "sent",
     isTest: false,
     acceptedAt: null,
     declinedAt: null,
     abschlussBonus: { gt: 0 },
-    abschlussBonusBis: { gte: now, lte: new Date(now.getTime() + 2 * DAY + 3_600_000) },
+    abschlussBonusBis: { gte: von, lte: bis },
   } satisfies Prisma.OfferWhereInput;
+}
+
+export type BonusCronErgebnis = { geprueft: number; mails: number; pushes: number; whatsapp: number; uebersprungen: number };
+
+export async function runBonusErinnerungen(now = new Date(), opts: { limit?: number } = {}): Promise<BonusCronErgebnis> {
+  const out: BonusCronErgebnis = { geprueft: 0, mails: 0, pushes: 0, whatsapp: 0, uebersprungen: 0 };
+  // Frist höchstens 2 Tage entfernt (Tag vor Ablauf und letzter Tag); ohne gesetzte Frist endet der Bonus am Versandtag
+  const where = bonusOffenWhere(now, new Date(now.getTime() + 2 * DAY + 3_600_000));
   const offers = await prisma.offer.findMany({ where, orderBy: { abschlussBonusBis: "asc" }, take: opts.limit ?? 200 });
   for (const o of offers) {
     out.geprueft++;

@@ -17,6 +17,7 @@ import { CALL_PAUSE_MAX_MS } from "@/lib/telefonat";
 import { recordLeadProgress } from "@/lib/lead-progress";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
 import { ErstinfoPdfFehltError, firstNameOf, NoTemplateError, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import {
   ersteFrageKnoepfe,
@@ -41,6 +42,9 @@ import type { Ansprache } from "@/lib/ansprache";
 import { erstinfoUrlFor } from "@/lib/erstinformation";
 import { sendErstinfo } from "@/lib/whatsapp/erstinfo-pdf";
 import { KEIN_WHATSAPP_REASON } from "@/lib/whatsapp/kein-whatsapp";
+import { FESTNETZ_REASON } from "@/lib/whatsapp/festnetz";
+import { istFestnetz } from "@/lib/telefon-typ";
+import { WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { logTestLead } from "@/lib/testlead";
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 
@@ -279,6 +283,13 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         select: { id: true, leadId: true, optedOutAt: true, _count: { select: { messages: true } } },
       });
 
+      // Produkt ohne automatische Nachrichten (Ole, 20.11.2026: PKV-Tarifoptimierung, lib/lead-kontakt-sperre.ts)
+      if (ohneAutoNachrichten(source)) {
+        logTestLead(lead, "outreach skipped", { reason: "produkt_ohne_nachrichten" });
+        await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: new Date(), outreachStatus: "skipped_produkt" } });
+        result.skipped++;
+        continue;
+      }
       // Nummer schon als „kein WhatsApp“ bekannt (lib/whatsapp/kein-whatsapp.ts): nicht anschreiben, steht oben auf der Anrufliste
       if (lead.waUnavailableAt) {
         logTestLead(lead, "outreach skipped", { reason: "no_whatsapp" });
@@ -338,6 +349,13 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         logTestLead(lead, "outreach failed", { reason: err instanceof NoTemplateError ? "no_template" : err instanceof ErstinfoPdfFehltError ? "no_pdf" : msg.replace(/\d{6,}/g, "#").slice(0, 120) });
+        if (err instanceof WhatsAppUnavailableError) {
+          // Festnetznummer (lib/whatsapp/festnetz.ts) bzw. inzwischen „kein WhatsApp“: nichts gesendet, kein neuer Versuch.
+          // markLeadNoWhatsApp hat outreachStatus „no_whatsapp“ gesetzt; sonst hier nachtragen.
+          await prisma.lead.updateMany({ where: { id: lead.id, outreachAt: null }, data: { outreachAt: new Date(), outreachStatus: "no_whatsapp" } });
+          result.skipped++;
+          continue;
+        }
         if (err instanceof ErstinfoPdfFehltError) {
           // PDF der Erstinformation nicht erzeugbar: nicht senden, erneut versuchen, Vermittler und Admin einmal je Lead
           // Bescheid geben („Erstinformation vervollständigen“)
@@ -489,7 +507,7 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
     const lastCancel = l.appointments[0]?.cancelledBy;
     if (l.waUnavailableAt && !replied) {
       // Nummer nicht per WhatsApp erreichbar (lib/whatsapp/kein-whatsapp.ts): sofort, ganz oben
-      reason = KEIN_WHATSAPP_REASON;
+      reason = (await istFestnetz(l.phone)) ? FESTNETZ_REASON : KEIN_WHATSAPP_REASON;
       urgent = true;
     } else if (l.appointments[0]?.status === "no_show") {
       reason = "Nicht zum Termin erschienen, neuen Termin vereinbaren";

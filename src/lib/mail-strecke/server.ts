@@ -18,6 +18,7 @@
 
 import { NUR_PPL_WHERE, istNurPayPerLead } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
+import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
 import { asAnsprache, anredeName, anredeZeile, type Ansprache } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { vermittlerName, type VermittlerName } from "@/lib/vermittler-nennung";
@@ -40,6 +41,7 @@ import {
   type Oeffnungsfrage,
 } from "@/lib/mail-strecke/texte";
 import type { LeadMailAnhang } from "@/lib/mail/lead-versand";
+import { istFestnetz, istMobil } from "@/lib/telefon-typ";
 
 const OFFEN = new Set(["", "neuer lead", "nicht erreicht", "im gespräch"]);
 const istOffen = (status: string | null | undefined) => OFFEN.has((status ?? "").trim().toLowerCase());
@@ -51,23 +53,8 @@ export function streckeAn(env: Record<string, string | undefined> = process.env)
   return !/^(0|aus|off|false|nein)$/i.test((env.MAIL_STRECKE ?? "").trim());
 }
 
-/** Ist die Nummer eine Festnetznummer (rein, libphonenumber)? Unbekannt bzw. ungültig: false. */
-export async function istFestnetz(phone: string | null | undefined): Promise<boolean> {
-  const d = (phone ?? "").replace(/\D/g, "");
-  if (d.length < 6) return false;
-  const { parsePhoneNumberFromString } = await import("libphonenumber-js/max");
-  const nr = parsePhoneNumberFromString(`+${d}`);
-  return !!nr && nr.isValid() && nr.getType() === "FIXED_LINE";
-}
-
-/** Handynummer (für SMS)? */
-export async function istMobil(phone: string | null | undefined): Promise<boolean> {
-  const d = (phone ?? "").replace(/\D/g, "");
-  if (d.length < 8) return false;
-  const { parsePhoneNumberFromString } = await import("libphonenumber-js/max");
-  const nr = parsePhoneNumberFromString(`+${d}`);
-  return !!nr && nr.isValid() && nr.getType() === "MOBILE";
-}
+// Art der Nummer (rein, lib/telefon-typ.ts); hier weiter exportiert, der Vertrieb importiert sie von hier
+export { istFestnetz, istMobil };
 
 /** Daten-Sperre nach Betroffenenrechten (lib/dsgvo): Adresse bzw. Nummer gesperrt? */
 async function gesperrt(customerId: string, email: string | null, phone: string | null): Promise<boolean> {
@@ -96,6 +83,7 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
         airtableId: true,
         externalId: true,
         formData: true,
+        source: true,
         customer: { select: { dormantSince: true, dataDeletedAt: true, mailFeaturesOff: true, plan: true, retainerMonthly: true, onboarding: { select: { id: true } }, agentConfig: { select: { active: true, outreachEnabled: true } } } },
       },
     });
@@ -108,6 +96,8 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
     const c = lead.customer;
     // Pay-per-Lead (Ole, 18.11.2026): Leads der PPL-Kunden kontaktieren wir nie (weder Mail noch SMS)
     if (istNurPayPerLead(c)) return { ergebnis: "nicht_moeglich", grund: "pay_per_lead" };
+    // Produkt ohne automatische Nachrichten (Ole, 20.11.2026: PKV-Tarifoptimierung, lib/lead-kontakt-sperre.ts)
+    if (ohneAutoNachrichten(lead.source)) return { ergebnis: "nicht_moeglich", grund: "produkt" };
     if (c.dormantSince || c.dataDeletedAt) return { ergebnis: "nicht_moeglich", grund: "ruhend" };
     if (c.mailFeaturesOff) return { ergebnis: "nicht_moeglich", grund: "mail_aus" };
     if (!c.agentConfig?.active || !c.agentConfig.outreachEnabled) return { ergebnis: "nicht_moeglich", grund: "assistent_aus" };
@@ -358,8 +348,9 @@ export async function merkeReaktion(streckeId: string, now = new Date()): Promis
 async function stoppGrund(s: { id: string; leadId: string; reaktionAt: Date | null; appointmentId: string | null; erstmailAt: Date | null; schritt: string }, now: Date): Promise<string | null> {
   if (s.reaktionAt) return "reaktion";
   if (s.appointmentId) return "gebucht";
-  const lead = await prisma.lead.findUnique({ where: { id: s.leadId }, select: { status: true, reached: true, erasedAt: true, customerId: true, email: true, phone: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: s.leadId }, select: { status: true, reached: true, erasedAt: true, customerId: true, email: true, phone: true, source: true } });
   if (!lead || lead.erasedAt) return "geloescht";
+  if (ohneAutoNachrichten(lead.source)) return "produkt";
   if (await prisma.customer.count({ where: { id: lead.customerId, ...NUR_PPL_WHERE } })) return "pay_per_lead";
   if (!istOffen(lead.status)) return "status";
   if (lead.reached) return "anruf_erreicht";

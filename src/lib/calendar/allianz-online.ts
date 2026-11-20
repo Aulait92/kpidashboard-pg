@@ -59,7 +59,7 @@ export type AllianzCalendar = {
 };
 
 export class AllianzCalendarError extends Error {
-  /** "blocked": Allianz lässt den Abruf der Vertreter-Seite vom Server nicht zu (Oberfläche bietet Vertreternummer bzw. ICS an). */
+  /** "blocked": Allianz lässt den Abruf der Vertreter-Seite vom Server nicht zu (dann hilft die Vertreternummer, sie braucht die Seite nicht; Ole, 20.11.2026: Feld fragt nur nach der Seite, die Nummer nennt nur diese Meldung). */
   readonly code: "blocked" | "other";
   constructor(message: string, code: "blocked" | "other" = "other") {
     super(message);
@@ -69,8 +69,8 @@ export class AllianzCalendarError extends Error {
 }
 
 export const ALLIANZ_BLOCKED_MESSAGE =
-  "Die Allianz lässt den automatischen Abruf gerade nicht zu. Geben Sie stattdessen Ihre Vertreternummer ein oder nutzen Sie den Kalender-Link (ICS).";
-const NOT_FOUND_MESSAGE = "Vertreter-Seite nicht gefunden. Bitte den Link prüfen oder Ihre Vertreternummer eingeben.";
+  "Die Allianz lässt den Abruf Ihrer Vertreter-Seite nicht zu. Tragen Sie stattdessen Ihre Vertreternummer in das Feld ein und verbinden Sie erneut.";
+const NOT_FOUND_MESSAGE = "Vertreter-Seite nicht gefunden. Bitte den Link prüfen, z. B. vertretung.allianz.de/vorname.nachname.";
 
 // ─── Eingabe ────────────────────────────────────────────────────────────
 
@@ -80,7 +80,10 @@ const NOT_FOUND_MESSAGE = "Vertreter-Seite nicht gefunden. Bitte den Link prüfe
  */
 export function parseVertretungInput(raw: string): { vtnr: string } | { pageUrl: string } | null {
   const s = raw.trim();
-  const digits = s.replace(/[\s.]/g, "");
+  // Ganze Adresse aus „Termin vereinbaren“ eingefügt (…bookingtime.com/?vtnr=101511203), Einrichtung 20.11.2026
+  const ausAdresse = /[?&]vtnr=(\d{6,12})\b/i.exec(s);
+  if (ausAdresse) return { vtnr: ausAdresse[1] };
+  const digits = s.replace(/[\s./]/g, ""); // z. B. 30/410/2222 (Ole, 20.11.2026: mit Schrägstrichen abgelehnt)
   if (/^\d{6,12}(-\d{1,4})?$/.test(digits)) return { vtnr: digits };
   let url: URL;
   try {
@@ -304,7 +307,7 @@ async function vtnrFromPage(pageUrl: string): Promise<string> {
   const res = await fetchPage(pageUrl, { log: "allianz-seite" });
   if (!res.ok) {
     if (res.reason === "blocked") throw new AllianzCalendarError(ALLIANZ_BLOCKED_MESSAGE, "blocked");
-    if (res.reason === "network") throw new AllianzCalendarError("Die Vertreter-Seite ist gerade nicht erreichbar. Bitte später noch einmal versuchen oder Ihre Vertreternummer eingeben.");
+    if (res.reason === "network") throw new AllianzCalendarError("Die Vertreter-Seite ist gerade nicht erreichbar. Bitte später noch einmal versuchen.");
     throw new AllianzCalendarError(NOT_FOUND_MESSAGE);
   }
   const finalHost = (() => {
@@ -326,7 +329,7 @@ async function vtnrFromPage(pageUrl: string): Promise<string> {
  */
 export async function resolveAllianzCalendar(raw: string): Promise<AllianzCalendar> {
   const parsed = parseVertretungInput(raw);
-  if (!parsed) throw new AllianzCalendarError("Bitte den Link Ihrer Vertreter-Seite (vertretung.allianz.de/…) oder Ihre Vertreternummer eingeben.");
+  if (!parsed) throw new AllianzCalendarError("Bitte Ihre Allianz-Vertreternummer eingeben, z. B. 30/410/2222.");
   const pageUrl = "pageUrl" in parsed ? parsed.pageUrl : null;
   const vtnr = "vtnr" in parsed ? parsed.vtnr : await vtnrFromPage(parsed.pageUrl);
   const { rootOrgId } = await moduleConfig();
@@ -428,10 +431,24 @@ export function decodeAllianzCalendar(enc: string | null | undefined): AllianzCa
   }
 }
 
-/** Belegte Zeiten aus dem Allianz-Online-Kalender eines Kunden (Agentur-Kalender). */
-export async function allianzBusy(customerId: string, cal: AllianzCalendar, min: Date, max: Date): Promise<Busy[]> {
+/**
+ * Belegte Zeiten aus dem Allianz-Online-Kalender eines Kunden (Agentur-Kalender).
+ *
+ * Vor dem frühesten Buchungstag kennt die App keine Allianz-Daten. Sicherer
+ * Standard (Ole, 20.11.2026): diese Tage gelten als belegt. Nur wenn ein
+ * eigener Kalender (Google/Outlook) die belegten Zeiten liefert
+ * (`leadTimesBeforeEarliest`), gelten dort die Lead-Zeiten als frei.
+ */
+export async function allianzBusy(
+  customerId: string,
+  cal: AllianzCalendar,
+  min: Date,
+  max: Date,
+  opts: { leadTimesBeforeEarliest?: boolean } = {},
+): Promise<Busy[]> {
   const knownFrom = berlinMidnight(addDaysYmd(berlinYmd(new Date()), cal.bookingDayEarliest));
-  const fallbackFree = min < knownFrom ? leadTimeWindows(await loadLeadTimes(customerId), min, knownFrom, Math.max(cal.durationMin, 60)) : [];
+  const fallbackFree =
+    opts.leadTimesBeforeEarliest && min < knownFrom ? leadTimeWindows(await loadLeadTimes(customerId), min, knownFrom, Math.max(cal.durationMin, 60)) : [];
   try {
     const slots = max > knownFrom ? await fetchFreeSlots(cal, min > knownFrom ? min : knownFrom, max) : [];
     const busy = busyFromSlots({ slots, durationMin: cal.durationMin, leadTimeMin: cal.leadTimeMin, followupMin: cal.followupMin, min, max, knownFrom, fallbackFree });

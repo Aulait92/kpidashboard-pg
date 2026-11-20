@@ -36,7 +36,7 @@ export const STUCK_AFTER_DAYS = 7;
 /** Schritte der Einrichtung (Reihenfolge = Anzeige im Kundenbereich). */
 export const SETUP_STEPS = [
   { key: "login", label: "Login" },
-  { key: "questionnaire", label: "Fragebogen" },
+  { key: "questionnaire", label: "Ihre Angaben" },
   { key: "app", label: "App aufs Handy und Mitteilungen" },
   { key: "calendar", label: "Kalender" },
   { key: "mailbox", label: "E-Mail-Postfach" },
@@ -657,7 +657,7 @@ export function openCustomerSteps(items: ChecklistItem[]): ChecklistItem[] {
 
 const STEP_HINT: Record<string, string> = {
   login: "Passwort festlegen und einloggen",
-  questionnaire: "Kurzen Fragebogen ausfüllen",
+  questionnaire: "Ihre Angaben eintragen",
   metaAccess: "Meta-Werbekonto und Facebook-Seite für uns freigeben",
   calendar: "Kalender verbinden",
   whatsapp: "WhatsApp-Nummer verbinden",

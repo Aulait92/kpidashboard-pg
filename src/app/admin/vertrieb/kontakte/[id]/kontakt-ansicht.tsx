@@ -299,7 +299,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               appUrl={appUrl}
               offers={c.offers.map(toOfferRow)}
                 kontakt
-              mail={{ audience: audienceForContact(c), pdf: { vertreter: pdfs.has("vertreter"), makler: pdfs.has("makler") }, link: true, entscheidung: entscheidungsHinweis }}
+              mail={{ audience: audienceForContact(c), pdf: { vertreter: pdfs.has("vertreter"), makler: pdfs.has("makler"), ppl: pdfs.has("ppl") }, link: true, entscheidung: entscheidungsHinweis }}
             />
           </div>
 

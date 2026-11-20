@@ -96,6 +96,7 @@ export function toOfferRow(o: Offer): DealOfferRow {
     zahlweise: o.zahlweise,
     ueberweisungVerfuegbar: ueberweisungAktiv(),
     mailDu: o.mailDu,
+    paket: o.package ?? null,
     paymentReminderAt: o.paymentReminderAt ? o.paymentReminderAt.toISOString().slice(0, 10) : null,
     paymentReminderCount: o.paymentReminderCount,
     paymentReminderLastAt: o.paymentReminderLastAt?.toISOString() ?? null,

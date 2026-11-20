@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { effektiveSteuer } from "@/lib/ppl/steuer";
 import { registerVorschlag } from "@/lib/ppl/erste-woche";
 import { RegisterForm } from "./register-form";
+import { PartnerForm } from "./partner-form";
 
 const berlinIso = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
 
@@ -12,7 +13,7 @@ export async function SteuerKarte({ sub }: { sub: { id: string; customerId: stri
   const [kunde, wartet] = await Promise.all([
     prisma.customer.findUnique({
       where: { id: sub.customerId },
-      select: { vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true, vermittlerGeprueftVon: true },
+      select: { vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true, vermittlerGeprueftVon: true, partnerFirma: true, partnerAnschrift: true, partnerRegisterNr: true },
     }),
     prisma.leadOrder.count({ where: { subscriptionId: sub.id, status: "wartet" } }),
   ]);
@@ -45,6 +46,7 @@ export async function SteuerKarte({ sub }: { sub: { id: string; customerId: stri
         geprueftAm={geprueft ? berlinIso(geprueft) : ""}
         heute={berlinIso(new Date())}
       />
+      <PartnerForm customerId={sub.customerId} firma={kunde?.partnerFirma ?? ""} anschrift={kunde?.partnerAnschrift ?? ""} registerNr={kunde?.partnerRegisterNr ?? ""} />
     </Card>
   );
 }
