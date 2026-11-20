@@ -754,7 +754,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       { id: "zusage:andere", title: "Lieber andere Zeit" },
     ];
     const KOMPLETT_OHNE_DANKE =
-      "(Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind|Oft zahlen Menschen für dieselbe Absicherung doppelt\\. Soll Herr Kannapinn im Termin kurz drüberschauen, \\*wo Sie und Ihre Familie)";
+      "(Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind|Soll Herr Kannapinn im Termin auch kurz \\*über die anderen Versicherungen von Ihnen und Ihrer Familie)";
     beforeAll(async () => {
       await prisma.experiment.update({ where: { key: "termin_zusage" }, data: { aktiv: true } });
       experimenteCacheLeeren();
