@@ -6,11 +6,11 @@ import { userIdOfKey } from "@/lib/calendar/tokens";
 import { loadLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
 import { loadSources, upcomingBlocks, type AllianzSummary } from "@/lib/calendar/sources";
 
-const PROVIDER: Record<string, string> = { google: "Google-Kalender", microsoft: "Outlook-Kalender" };
+const PROVIDER: Record<string, string> = { google: "Google-Kalender", microsoft: "Outlook-Kalender", app: "App-Kalender" };
 
 export type CalendarSetupView = {
   status: {
-    native: { connected: boolean; label: string | null; account?: string | null };
+    native: { connected: boolean; label: string | null; account?: string | null; app?: boolean };
     hasIcs: boolean;
     allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null } | null;
   };
@@ -35,7 +35,13 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
   const a = sources.allianz;
   return {
     status: {
-      native: { connected: native?.status === "connected", label: native ? (PROVIDER[native.provider] ?? "Kalender") : null, account: native?.accountEmail ?? null },
+      native: {
+        connected: native?.status === "connected",
+        label: native ? (PROVIDER[native.provider] ?? "Kalender") : null,
+        account: native?.accountEmail ?? null,
+        // App-Kalender (lib/calendar/app-kalender.ts): Termine per Mail-Einladung, Google/Outlook bleibt wählbar
+        app: native?.status === "connected" && native.provider === "app",
+      },
       hasIcs: sources.hasIcs,
       allianz: a ? { orgName: a.orgName, templateName: a.templateName, durationMin: a.durationMin, lastError: a.lastError } : null,
     },

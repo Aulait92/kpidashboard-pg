@@ -17,6 +17,15 @@ vi.mock("@/lib/calendar/google", () => ({
   googleGetResponses: vi.fn(async () => []),
 }));
 vi.mock("@/lib/calendar/lead-email", () => ({ sendLeadEmail: vi.fn(async () => ({ sent: true })) }));
+// App-Kalender (Ole, 20.11.2026): Einladungen per Mail mitschneiden
+const mails = vi.hoisted(() => [] as Array<{ to: string | string[]; subject: string; ics: string }>);
+vi.mock("@/lib/email", async (orig) => ({
+  ...(await orig<typeof import("@/lib/email")>()),
+  sendCustomerMail: vi.fn(async (o: { to: string | string[]; subject: string; attachments?: { content: string | Buffer }[] }) => {
+    mails.push({ to: o.to, subject: o.subject, ics: String(o.attachments?.[0]?.content ?? "") });
+    return { ok: true };
+  }),
+}));
 vi.mock("@/lib/lead-progress", () => ({ recordLeadProgress: vi.fn(async () => {}) }));
 vi.mock("@/lib/push", () => ({
   sendToUser: vi.fn(async () => {}),
@@ -217,3 +226,42 @@ describe("Vorschläge mit Allianz-Online-Kalender, Lead-Zeiten und Blockierungen
 function addDays(ymd: string): number {
   return Math.round((Date.parse(`${ymd}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86400000);
 }
+
+describe("App-Kalender: ohne Google/Outlook buchen (Ole, 20.11.2026)", () => {
+  it("Allianz verbinden schaltet den App-Kalender ein; Buchung belegt den Slot und schickt eine Einladung", async () => {
+    const c = await makeCustomer();
+    customers.push(c.id);
+    await prisma.agentConfig.create({ data: { customerId: c.id, advisorEmail: "test.vertreter@allianz.de" } });
+    const d1 = workday(4);
+    bt.slots = [slotTs(d1, "10:10"), slotTs(d1, "15:40")];
+    const res = await connectAllianz(c.id, "10/151/1203", true);
+    expect(res.ok).toBe(true);
+    expect(res.info).toContain("Einladung per Mail");
+    const conn = await prisma.calendarConnection.findUnique({ where: { customerId: c.id } });
+    expect(conn).toMatchObject({ provider: "app", status: "connected" });
+
+    const vorher = (await suggestSlots(c.id, 30, 10, "lead", 3, null, new Date(berlinAt(d1, "00:00")))).map((s) => s.start);
+    const slot = berlinAt(d1, "10:00").toISOString();
+    expect(vorher).toContain(slot);
+
+    mails.length = 0;
+    const appt = await bookAppointment({ customerId: c.id, start: slot, mode: "phone", summary: "Beratung Test", leadPhone: "491701234567" });
+    expect(appt.appointmentId).toBeTruthy();
+    expect(mails).toHaveLength(1);
+    expect(mails[0].to).toEqual(["test.vertreter@allianz.de"]);
+    expect(mails[0].ics).toContain("METHOD:REQUEST");
+
+    const nachher = (await suggestSlots(c.id, 30, 10, "lead", 3, null, new Date(berlinAt(d1, "00:00")))).map((s) => s.start);
+    expect(nachher).not.toContain(slot);
+    // Zweite Buchung derselben Zeit scheitert (Doppelbuchungs-Schutz)
+    await expect(bookAppointment({ customerId: c.id, start: slot, mode: "phone", summary: "Doppelt" })).rejects.toThrow();
+  });
+
+  it("verbundener Google-Kalender bleibt unangetastet", async () => {
+    const id = await setup();
+    bt.slots = [slotTs(workday(4), "10:10")];
+    expect((await connectAllianz(id, "101511203", true)).ok).toBe(true);
+    const conn = await prisma.calendarConnection.findUnique({ where: { customerId: id } });
+    expect(conn?.provider).toBe("google");
+  });
+});

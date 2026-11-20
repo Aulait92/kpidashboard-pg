@@ -495,7 +495,7 @@ export function BlockTimes({
 // ─── Quellen ────────────────────────────────────────────────────────────
 
 export type SourceStatus = {
-  native: { connected: boolean; label: string | null; account?: string | null };
+  native: { connected: boolean; label: string | null; account?: string | null; app?: boolean };
   hasIcs: boolean;
   allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null } | null;
 };
@@ -603,7 +603,25 @@ export function SourcePicker({
   return (
     <div className="space-y-4">
       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-ihr-kalender>
-        {status.native.connected ? (
+        {status.native.app ? (
+          <div className="space-y-2">
+            <span className="flex items-center gap-1.5 text-[15px] font-medium text-emerald-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              Termine bekommen Sie als Einladung per Mail
+            </span>
+            <p className="text-sm text-[color:var(--muted)]">
+              Lieber direkt im Kalender?{" "}
+              <a href={connectLinks.google} className={`font-medium text-[color:var(--brand)] hover:underline ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
+                Google
+              </a>{" "}
+              oder{" "}
+              <a href={connectLinks.microsoft} className={`font-medium text-[color:var(--brand)] hover:underline ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
+                Outlook
+              </a>{" "}
+              verbinden.
+            </p>
+          </div>
+        ) : status.native.connected ? (
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1.5 text-[15px] font-medium text-emerald-700">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
