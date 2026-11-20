@@ -40,7 +40,7 @@ import { referralSetupDiscount } from "@/lib/kollegen";
 import { checkBusiness, type BusinessInput } from "@/lib/unternehmer";
 import { contractSummaryLines, hasPriceStep, NACHTRAEGLICH_MAX_STARTTAG, nachtraeglichStartOk, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 import { parseAbrechnungstag } from "@/lib/abrechnungstag";
-import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_STANDARD, ersteWocheAus, ersteWocheMenge } from "@/lib/ppl/erste-woche-shared";
+import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_STANDARD, ersteWocheAus, ersteWocheMenge, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
 import { normalizeRegisterNummer } from "@/lib/erstinformation-shared";
 
 
@@ -465,7 +465,7 @@ export async function acceptOffer(
   }
   const startDate = choice.startIso ? new Date(`${choice.startIso}T12:00:00Z`) : null;
   // Konditionen wie direkt am Annahme-Knopf (Startpreis mit Übergang braucht ein eigenes Häkchen)
-  const summary = offerSummaryInput(offerEff, { term: choice.term, startIso: choice.startIso, setup: choice.setupFee, annual: choice.annualPrepay, freeMonths: choice.annualFreeMonths });
+  const summary = offerSummaryInput(offerEff, { term: choice.term, startIso: choice.startIso, setup: choice.setupFee, annual: choice.annualPrepay, freeMonths: choice.annualFreeMonths, ersteWoche: ersteWocheWahl });
   const priceStep = hasPriceStep(summary);
   if (priceStep && !opts.priceStepAck) return { ok: false, error: "Bitte bestätigen Sie den Übergang vom Startpreis in die reguläre Vergütung." };
 
@@ -571,11 +571,16 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
   offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
-    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "package">> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew">> &
     Parameters<typeof offerAddOnsOf>[0],
-  chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null }> = {},
+  chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null; ersteWoche: { quantity: number; autoRenew: boolean } | null }> = {},
 ): ContractSummaryInput {
   const add = offerAddOns(offerAddOnsOf(offer));
+  // Erste Woche (Pay-per-Lead + Software): Wahl des Kunden geht vor, sonst wie im Angebot
+  const w = ersteWocheAus(offer);
+  const ersteWoche = w
+    ? { productKey: w.productKey, name: ersteWocheName(w), price: w.price, quantity: chosen.ersteWoche?.quantity ?? w.quantity, autoRenew: chosen.ersteWoche?.autoRenew ?? offer.pplAutoRenew ?? true }
+    : null;
   const extras = add.monthlyTotal - Number(offer.monthlyFee);
   const intro = offer.introMonthlyFee != null && offer.introMonths ? { months: offer.introMonths, monthly: Math.round((Number(offer.introMonthlyFee) + extras) * 100) / 100 } : null;
   return {
@@ -591,6 +596,7 @@ export function offerSummaryInput(
     prepayAtAcceptance: vorauszahlungMitAnnahme(offer),
     paymentInArrears: !!offer.paymentInArrears,
     paket: offer.package ?? null,
+    ersteWoche,
   };
 }
 

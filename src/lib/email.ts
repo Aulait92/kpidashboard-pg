@@ -3,6 +3,7 @@ import { MAIL_BLOCKED_TEXT, mailClient, wasBlocked } from "@/lib/mail-guard";
 import { PROVIDER } from "@/lib/legal-texts";
 import { eur } from "@/lib/offer-pricing";
 import { VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
+import { ersteWocheMailzeile } from "@/lib/ppl/erste-woche-shared";
 import { entscheidungsCallMailText, entscheidungsCallText, type EntscheidungsCall } from "@/lib/vertrieb/entscheidungs-call";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
@@ -259,6 +260,8 @@ export type AngebotsMailInhalt = {
   vorauszahlung?: boolean;
   /** Zahlung nachträglich (Ole, 19.11.2026): erste Abbuchung (YYYY-MM-DD) und Setup netto */
   nachtraeglich?: { ersteIso: string | null; setup: number } | null;
+  /** Erste Woche (Pay-per-Lead + Software, Ole 20.11.2026): Leadkosten statt nur „0 €“ */
+  ersteWoche?: { productKey: string; name: string; price: number; quantity: number } | null;
 };
 
 /**
@@ -278,6 +281,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
   const discount = opts.discount ? offerDiscountLine(opts.discount) : null;
   const bonusText = opts.bonus ? offerBonusLine(opts.bonus, !!opts.du, !!opts.bonusSpaeter) : null;
   const vorausText = opts.nachtraeglich ? offerMailNachtraeglich(opts.nachtraeglich) : opts.vorauszahlung ? OFFER_MAIL_VORAUSZAHLUNG : null;
+  const wocheText = opts.ersteWoche ? ersteWocheMailzeile(opts.ersteWoche, !!opts.du) : null;
   const text = [
     opts.greeting,
     "",
@@ -288,6 +292,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
     "",
     ...(discount ? [discount.text, ""] : []),
     ...(bonusText ? [bonusText, ""] : []),
+    ...(wocheText ? [wocheText, ""] : []),
     ...(vorausText ? [vorausText, ""] : []),
     ...(rechner ? [`${t.rechner}:`, rechner, ""] : []),
     ...(praes ? [`${t.praesentation}:`, praes, ""] : []),
@@ -303,6 +308,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
         <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
         ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
         ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
+        ${wocheText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(wocheText)}</p>` : ""}
         ${vorausText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(vorausText)}</p>` : ""}
         ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
         ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}

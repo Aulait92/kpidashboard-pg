@@ -3,7 +3,7 @@
 // „Ihre erste Woche“ auf der Angebotsseite (Ole, 20.11.2026; nur Pay-per-Lead + Software mit Lead-Produkt):
 // Anzahl wählen, jede Woche wiederholen, Registernummer. Verbindlich prüft und rechnet der Server (lib/offers.ts).
 
-import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Minus, Plus } from "lucide-react";
 import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_MAX, ersteWocheBetrag } from "@/lib/ppl/erste-woche-shared";
 import { bruttoJeLead } from "@/lib/ppl/steuer";
@@ -23,8 +23,10 @@ export type ErsteWocheProps = {
   registerVorschlag: string | null;
 };
 
-export function ErsteWocheFelder(p: ErsteWocheProps) {
-  const [qty, setQty] = useState(Math.max(ERSTE_WOCHE_MIN, p.quantity));
+/** Gewählte Anzahl und Wiederholung liegen im Annahmeformular (für „Das vereinbaren Sie mit dem Klick“). */
+export type ErsteWocheWahlState = { qty: number; setQty: Dispatch<SetStateAction<number>>; autoRenew: boolean; setAutoRenew: (v: boolean) => void };
+
+export function ErsteWocheFelder({ qty, setQty, autoRenew, setAutoRenew, ...p }: ErsteWocheProps & ErsteWocheWahlState) {
   const betrag = ersteWocheBetrag(p, qty);
   const frei = betrag.steuer === "steuerfrei_4_11";
   const step = qty >= 50 ? 10 : 5;
@@ -67,7 +69,7 @@ export function ErsteWocheFelder(p: ErsteWocheProps) {
       </div>
       {qty < ERSTE_WOCHE_MIN ? <p className="mt-2 text-rose-700">Bitte mindestens {ERSTE_WOCHE_MIN} Leads wählen.</p> : null}
       <label className="mt-3 flex min-h-10 items-center gap-2">
-        <input type="checkbox" name="ersteWocheWiederholen" defaultChecked className="h-5 w-5 accent-[color:var(--brand)]" />
+        <input type="checkbox" name="ersteWocheWiederholen" checked={autoRenew} onChange={(e) => setAutoRenew(e.target.checked)} className="h-5 w-5 accent-[color:var(--brand)]" />
         Jede Woche wiederholen (in der App jederzeit änderbar)
       </label>
       <div className="mt-3">
