@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, ExternalLink, FileDown, FileText, Mail, Pencil, Plus, Send } from "lucide-react";
+import { Copy, CopyPlus, ExternalLink, FileDown, FileText, Mail, Pencil, Plus, Send } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschlussBonusAction, setBankTransferAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
 import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
@@ -248,11 +248,15 @@ export function DealOffersCard({
               <ButtonLink href={`/angebot/${current.token}`} external icon={ExternalLink}>Ansehen</ButtonLink>
               <ButtonLink href={`/angebot/${current.token}/pdf`} external icon={FileDown}>PDF</ButtonLink>
               {/* Entwurf bearbeiten (Ole, 20.11.2026): gleiches Formular, vorbefüllt; verschickte Angebote nur als neue Version */}
-              {current.status === "draft" ? (
+              {current.status === "draft" || current.status === "sent" ? (
                 <ButtonLink href={`${newOfferHref}?bearbeiten=${current.id}`} icon={Pencil}>
                   Bearbeiten
                 </ButtonLink>
               ) : null}
+              {/* Duplizieren (Ole, 20.11.2026): vorbefüllt als neuen Entwurf anlegen, auch bei angenommenen Angeboten */}
+              <ButtonLink href={`${newOfferHref}?vorlage=${current.id}`} icon={CopyPlus}>
+                Duplizieren
+              </ButtonLink>
               {current.status === "draft" || current.status === "sent" ? (
                 <>
                   <Button
@@ -379,7 +383,7 @@ export function DealOffersCard({
             {older.map((o, i) => (
               <span key={o.id}>
                 {i ? ", " : ""}
-                <Link href={`/angebot/${o.token}`} target="_blank" className="underline">{o.number}</Link>
+                <Link href={`/angebot/${o.token}`} target="_blank" className="underline">{o.number}</Link> (<Link href={`${newOfferHref}?vorlage=${o.id}`} className="underline">duplizieren</Link>)
               </span>
             ))}
           </div>
