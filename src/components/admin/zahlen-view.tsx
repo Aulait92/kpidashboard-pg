@@ -1915,3 +1915,8 @@ function Produkte({ p }: { p: ProdukteData }) {
     </div>
   );
 }
+
+// Bausteine für Geld › Übersicht im neuen Admin (components/admin-neu/zahlen/uebersicht.tsx): gleiche Diagramme und
+// Fenster, aber eigene Anordnung (4 Kennzahlen, 4 Abschnitte). Die alte Seite /admin/zahlen bleibt unverändert.
+export { PALETTE as ZAHLEN_PALETTE, Tooltip as ZahlenTooltip, Wachstum, Kunden, Wirtschaft, Wirkung, Produkte, Vertrieb, BwaTab, Ppl, DrillSheet, UpdateSheet };
+export type { DrillKind as ZahlenDrill };

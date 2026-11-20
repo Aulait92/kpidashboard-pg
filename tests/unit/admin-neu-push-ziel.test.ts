@@ -32,7 +32,7 @@ describe("Push-Ziele der Admins in beiden Oberflächen", () => {
       return pushWeiche({ pathname, search: q ? `?${q}` : "", neueOberflaeche: true });
     };
     expect(neu(pushAdresse("/admin/marketing/linkedin"))).toBe("/admin/neu/marketing");
-    expect(neu(pushAdresse("/admin/einstellungen/bank"))).toBe("/admin/neu/zahlen/kosten");
+    expect(neu(pushAdresse("/admin/einstellungen/bank"))).toBe("/admin/neu/zahlen/kosten/konten");
     expect(neu(pushAdresse("/admin/monatsberichte?monat=2026-10"))).toBe("/admin/neu/kunden/berichte?monat=2026-10");
     expect(neu(pushAdresse("/admin/einstellungen/status"))).toBe("/admin/neu/einstellungen/status");
     expect(neu(pushAdresse("/admin/marketing/empfehlungen"))).toBe("/admin/neu/marketing/empfehlungen");

@@ -43,6 +43,9 @@ export const ENTFERNT: string[] = [
   "actions-settemplateapprovedaction--vorlage-von-hand-als-freigegeben-markieren", // F199 (im neuen Admin per CSS ausgeblendet)
   "actions-customerfootersaction--fusszeile-bei-bestehenden-kunden-setzen", // F391
   "actions-countinvoicesaction--finalisierte-rechnungen-zaehlen", // F392
+  // Geld (Umbau 19.11.2026): die Investoren-Ansicht blendete nur interne Abschnitte aus und zeigte Definitionen. Das leistet
+  // jetzt die Detailseite „Für Investoren“ (Auswertung mit „So rechnen wir“, Export PDF/CSV), erreichbar aus der Übersicht.
+  "zahlen-view-toggleinvestor--investoren-ansicht-interne-reiter-ausblenden",
 ];
 
 /** Funktionen ohne Oberfläche, vom Neudesign nicht betroffen (bleiben, wie sie sind). */

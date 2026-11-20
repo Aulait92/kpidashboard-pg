@@ -3897,7 +3897,7 @@
   "id": "zahlen-view--kennzahlen-kacheln-mrr-kunden-churn-cac",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3909,7 +3909,7 @@
   "id": "zahlen-view-sicht--sicht-kerngeschaeft-oder-gesamt-mit-pay-per-lead",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3921,7 +3921,7 @@
   "id": "zahlen-view-setdrill--kachel-aufklappen-drill-down-kunden-je-kennzahl",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3932,8 +3932,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view-toggleinvestor--investoren-ansicht-interne-reiter-ausblenden",
   "bereich": "geld",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -3945,7 +3945,7 @@
   "id": "actions-saveupdatetextsaction--investoren-update-highlights-texte-speichern",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3957,7 +3957,7 @@
   "id": "zahlen-view--reiter-wachstum-umsatz-je-strom-umsatzmix",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3969,7 +3969,7 @@
   "id": "zahlen-view--reiter-kunden-kohorten-kundenbasis-abhaengigkeit",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3981,7 +3981,7 @@
   "id": "zahlen-view--reiter-wirtschaftlichkeit-kundengewinnung",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3993,7 +3993,7 @@
   "id": "zahlen-view--reiter-wirkung-beim-vertreter-pro-1-lead-bis",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4005,7 +4005,7 @@
   "id": "zahlen-view--reiter-produkte-ueber-alle-vertreter-und-je",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4017,7 +4017,7 @@
   "id": "zahlen-view--reiter-vertrieb-pipeline-woher-kunden-kommen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4029,7 +4029,7 @@
   "id": "zahlen-view--reiter-pay-per-lead-verkaufte-leads-je-monat",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4041,7 +4041,7 @@
   "id": "zahlen-view-bwa--reiter-bwa-mit-drill-down-je-zeile-und-hinweis",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/uebersicht.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4785,7 +4785,7 @@
   "id": "actions-savekpisettingsaction--annahmen-fuer-kennzahlen-stunden-stundensatz",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4797,7 +4797,7 @@
   "id": "actions-connectbankaction--bank-verbinden",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4809,7 +4809,7 @@
   "id": "actions-syncbankaction--umsaetze-jetzt-abrufen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4821,7 +4821,7 @@
   "id": "actions-disconnectbankaction--bank-trennen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4845,7 +4845,7 @@
   "id": "actions-saveruleaction--regel-speichern",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4857,7 +4857,7 @@
   "id": "actions-deleteruleaction--regel-loeschen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/konten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -5205,7 +5205,7 @@
   "id": "offene-posten--zahlungseingang-bestaetigen-oder-verwerfen",
   "bereich": "geld",
   "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/offene-posten/page.tsx"
+  "ort_neu": "src/components/admin-neu/zahlen/offene-posten-liste.tsx"
  },
  {
   "heute": "(neu)",

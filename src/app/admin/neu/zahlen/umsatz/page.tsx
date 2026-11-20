@@ -2,13 +2,14 @@ import { connection } from "next/server";
 import { BuchungenAnsicht } from "@/components/admin/buchungen-ansicht";
 import { ZahlenEinmalUmsatz, ZahlenOhneBetreuungsgebuehr } from "@/components/admin/zahlen-view";
 import { Seite } from "@/components/admin-neu/ui/seite";
+import { Aufklapp } from "@/components/admin-neu/zahlen/aufklapp";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { loadZahlen } from "@/lib/zahlen";
 
-export const metadata = { title: "Umsatz & Buchungen | performancegrowth Admin" };
+export const metadata = { title: "Umsatz | performancegrowth Admin" };
 
-// Zahlen → Umsatz & Buchungen: Buchungsliste aller Kunden (wie /admin/zahlen/buchungen, gleiche Bausteine), dazu aus der
-// alten Zahlen-Übersicht der Hinweis „Kunden ohne Betreuungsgebühr“ und die Einrichtungsgebühren mit „Einmal-Umsatz nachtragen“.
+// Geld › Umsatz: Buchungsliste aller Kunden (wie /admin/zahlen/buchungen, gleiche Bausteine), oben nur bei Bedarf der
+// Hinweis „Kunden ohne Betreuungsgebühr“, unten zugeklappt die Einrichtungsgebühren mit „Einmal-Umsatz nachtragen“.
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await connection();
   const session = await requireAuth();
@@ -32,9 +33,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
             export: "route-get--csv-export-buchungen",
           }}
         />
-        <div data-funktion="actions-savemanualrevenueaction--einrichtungsgebuehren-je-monat-umsatz-von-hand actions-deletemanualrevenueaction--manuellen-umsatz-loeschen">
+        <Aufklapp titel="Einrichtungsgebühren" hinweis="einmalig, mit Nachtragen" funktion="actions-savemanualrevenueaction--einrichtungsgebuehren-je-monat-umsatz-von-hand actions-deletemanualrevenueaction--manuellen-umsatz-loeschen">
           <ZahlenEinmalUmsatz data={data} />
-        </div>
+        </Aufklapp>
       </div>
     </Seite>
   );
