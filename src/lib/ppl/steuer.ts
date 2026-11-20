@@ -23,8 +23,6 @@ export const isSteuer = (v: unknown): v is Steuer => v === "steuerfrei_4_11" || 
 export const STEUERFREI_RECHNUNGSHINWEIS = "Steuerfreie Leistung nach § 4 Nr. 11 UStG";
 /** Hinweis am Preis im Kundenbereich. */
 export const STEUERFREI_PREISHINWEIS = "umsatzsteuerfrei nach § 4 Nr. 11 UStG";
-/** Hinweis auf die Nachberechnung laut AGB „Umsatzsteuer auf Leads“ (Ole, 20.11.2026; Text vom Conversion-Texter). */
-export const STEUERFREI_NACHBERECHNUNG = "Entscheidet das Finanzamt anders, berechnen wir die Umsatzsteuer laut AGB nach.";
 
 export const UST_PROZENT = 19;
 
