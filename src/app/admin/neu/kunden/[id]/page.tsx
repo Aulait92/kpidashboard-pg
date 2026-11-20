@@ -80,11 +80,21 @@ export default async function KundeUebersicht({ params, searchParams }: { params
   ].join(" · ");
 
   const einrichtung = (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <div
+        className={live ? undefined : "order-2"}
         data-funktion="setup-card--einrichtungsschritte-ansehen-einwilligung onboarding-actions-opensetupaction--selbst-einrichtung-freischalten onboarding-actions-sendsetupreminderaction--erinnerung-zur-einrichtung-senden onboarding-actions-admincheckmetaaction--meta-zugriff-pruefen onboarding-actions-restartsetupaction--einrichtung-neu-starten onboarding-actions-toggleonboardingstepaction--onboarding-schritte-abhaken"
       >
-        <SetupCard customerId={id} notice={notice} />
+        {/* Während der Einrichtung: Onboarding-Checkliste mit „Live schalten“ offen (eine Hauptaktion), die Sicht des
+            Kunden (Selbst-Einrichtung, Erinnerung, Einwilligung, Meta-Zugriff) zugeklappt. Beide Listen offen waren am
+            Handy rund 3.700 px mit zwei blauen Knöpfen (SUS-Prüfung 20.11.2026). */}
+        {onboarding && !live ? (
+          <Aufklapp titel="Selbst-Einrichtung des Kunden" zusammenfassung="Erinnerung senden, Einwilligung, Meta-Zugriff prüfen" offen={!!notice}>
+            <SetupCard customerId={id} notice={notice} />
+          </Aufklapp>
+        ) : (
+          <SetupCard customerId={id} notice={notice} />
+        )}
       </div>
       {onboarding ? (
         <div

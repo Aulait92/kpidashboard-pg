@@ -63,7 +63,8 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
         ) : null}
         <Badge>{packageLabel(c)}</Badge>
         {c.isTest ? <Badge>Test</Badge> : null}
-        {c.onboarding && !c.onboarding.liveAt ? <Badge tone="brand">Onboarding</Badge> : null}
+        {/* Kein zweites „Onboarding“, wenn die Status-Wahl es schon zeigt (SUS-Prüfung 20.11.2026) */}
+        {c.onboarding && !c.onboarding.liveAt && !(c.salesContact && stage === "ONBOARDING") ? <Badge tone="brand">Onboarding</Badge> : null}
         {c.plan !== "service" ? (
           c.agentConfig?.active && c.whatsAppAccount?.status === "connected" ? <Badge tone="success">WhatsApp aktiv</Badge> : <Badge>WhatsApp aus</Badge>
         ) : null}
