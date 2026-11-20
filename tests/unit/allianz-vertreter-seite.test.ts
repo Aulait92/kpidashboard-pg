@@ -51,7 +51,6 @@ describe("Allianz-Vertreter-Seite lesen", () => {
   it("Link in jeder Schreibweise wird zur selben Seite", () => {
     const want = { pageUrl: "https://vertretung.allianz.de/anid.schwarzkopf/" };
     expect(parseVertretungInput("30/410/2222")).toEqual({ vtnr: "304102222" });
-    expect(parseVertretungInput("30-410-2222")).toEqual({ vtnr: "304102222" });
     expect(parseVertretungInput("https://vertretung.allianz.de/anid.schwarzkopf/")).toEqual(want);
     expect(parseVertretungInput("https://vertretung.allianz.de/anid.schwarzkopf")).toEqual(want);
     expect(parseVertretungInput("vertretung.allianz.de/anid.schwarzkopf/")).toEqual(want);

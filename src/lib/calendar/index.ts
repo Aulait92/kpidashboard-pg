@@ -152,7 +152,7 @@ export function candidateTimes(spec: SlotHours, lt: LeadTimes, dow: number): str
   return [...new Set([...prefer, ...own])];
 }
 
-/** Freie Slots der nächsten Tage (Standard: Lead-Zeiten, ohne Einstellung Mo–Fr 10/14/16 Uhr). */
+/** Freie Slots der nächsten Tage (Standard: Lead-Zeiten, ohne Einstellung Mo–Fr 10 bis 17 Uhr). */
 export async function suggestSlots(
   customerId: string,
   durationMin = 30,
