@@ -68,7 +68,7 @@ function groupByDay(slots: Slot[]): { label: string; slots: Slot[] }[] {
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string; t?: string; kc?: string }>;
+  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string; t?: string; kc?: string; bk?: string }>;
 };
 
 export default async function BookingPage({ params, searchParams }: Props) {
@@ -408,6 +408,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
               defaultInternational={prefill?.phone}
             />
             {streckeT ? <input type="hidden" name="t" value={streckeT} /> : null}
+            {/* Terminlink aus einer Bestandskampagne (lib/bestand/terminlink.ts): signiert, wird beim Buchen geprüft */}
+            {sp.bk && /^[A-Za-z0-9_.-]{1,80}$/.test(sp.bk) ? <input type="hidden" name="bk" value={sp.bk} /> : null}
             {/* Bot-Falle: für Menschen unsichtbar. Bewusst ein Name, den
                 Autofill/Passwortmanager nicht zuordnen (früher „website" →
                 wurde von Passwortmanagern befüllt und blockierte echte Leads). */}

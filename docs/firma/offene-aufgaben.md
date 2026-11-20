@@ -91,6 +91,11 @@ Freiburg 14 bis 15 (anteilig ca. 13 bzw. 7 bis 8). Nichts angelegt; Start nur na
 - Leitfaden Setter-Call liegt als PDF unter Marketing → Unterlagen (19.11.2026). Offen: Zahlweise im Beratungsgespräch, Quoten nach 10 Setter-Calls prüfen (Erscheinen mindestens 80 %).
 - **Ab 21.11.2026 bauen:** Abschlussbonus 300 € gilt nur bei Abschluss im Beratungsgespräch (Annahme im Call), nicht mehr mit Frist bis zum Folgetag (Ole, 19.11.2026).
 
+- Bestandskunden-Modul einschalten (Stufe A): bleibt aus (`BESTAND_MODULE_AVAILABLE = false`). UX-Prüfung 20.11.2026
+  (Branch `bestand-champions`): SUS 91. Vor dem Einschalten: AVV-Ergänzung, `docs/datenschutz.md` Abschnitt Bestand,
+  Muster-Datenschutztext für Vermittler, ProductUpdate (audience software), Eintrag in `docs/webseite-offen.md`,
+  Erklärvideos prüfen, `docs/recht/bestand-champions.md` anlegen.
+
 ## Fehlende Zugänge für das Team
 Diagnose-Schnittstelle (`app.performancegrowth.de/api/ops/diagnose`, nur lesend) ist seit 19.11.2026 in der Cloud-Umgebung
 „kpidashboard-pg“ freigeschaltet (Schlüssel als Netzwerk-Secret, kein Wert im Repo). Sitzungen für dieses Repo in dieser

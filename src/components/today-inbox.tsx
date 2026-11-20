@@ -64,6 +64,8 @@ import { CrossSellZusatzKnopf } from "@/components/bestand/cross-sell-angebot";
 import { istCrossSellAufgabe, type CrossSellVerkauf } from "@/lib/cross-sell-verkauf";
 import { eingangAlter, neuerLeadGrund } from "@/lib/eingang-alter";
 import { istWartenderNeuerLead } from "@/lib/neue-leads-shared";
+import { bestandWarmErledigtAction } from "@/app/buyer/bestand/actions";
+import { WARM_TITLE } from "@/lib/bestand/warm-shared";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -290,7 +292,9 @@ export function TodayInbox({
   }, [callMode]);
   const noStep = data.noNextStep.leads.filter((l) => !hidden.has(`n:${l.leadId}`));
   const noStepTotal = Math.max(noStep.length, data.noNextStep.total - (data.noNextStep.leads.length - noStep.length));
-  const nothing = appointments.length + outcomes.length + angebote.length + openCalls.length + chats.length + calls.length + noStep.length + (data.datenschutz?.length ?? 0) === 0;
+  // Bestand Paket 4: geantwortet ohne Termin (nur mit sichtbarem Modul geladen)
+  const warm = (data.bestandWarm ?? []).filter((w) => !hidden.has(`w:${w.recipientId}`));
+  const nothing = appointments.length + outcomes.length + angebote.length + openCalls.length + chats.length + calls.length + noStep.length + warm.length + (data.datenschutz?.length ?? 0) === 0;
   const noStepHref = leadHref.startsWith("/buyer?") ? "/buyer/kontakte?ansicht=ohne-schritt" : "/buyer/leads?ansicht=ohne-schritt";
 
   const laterSheet = (c: CallItem) =>
@@ -673,6 +677,47 @@ export function TodayInbox({
                   >
                     Senden
                   </Button>
+                  {more}
+                </TapRow>
+              );
+            })}
+          </ul>
+        </Card>
+      ) : null}
+
+      {warm.length > 0 ? (
+        <Card>
+          <div id="bestand-nachfassen" className="scroll-mt-20" data-bestand-warm />
+          <CardHeader icon={MessageCircle} title={WARM_TITLE} count={warm.length} />
+          <ul className="divide-y divide-[color:var(--border)]">
+            {warm.map((w) => {
+              const key = `w:${w.recipientId}`;
+              const href = w.conversationId ? `/buyer/chats?c=${w.conversationId}` : leadUrl(w.leadId);
+              const open = () =>
+                setSheet({
+                  kind: "actions",
+                  title: w.name,
+                  message: `Hat auf „${w.kampagne}“ geantwortet, noch kein Termin.`,
+                  actions: [
+                    { label: "Nachricht schreiben", icon: MessageCircle, href, tone: "primary" },
+                    { label: "Termin buchen", icon: CalendarPlus, onSelect: () => openLeadBooking(w.leadId, w.name) },
+                    { label: "Kontakt öffnen", icon: UserRound, href: leadUrl(w.leadId) },
+                    { label: "Erledigt", icon: Check, onSelect: () => run(key, `${w.name}: erledigt`, () => bestandWarmErledigtAction(w.recipientId)) },
+                  ],
+                });
+              return (
+                <TapRow key={key} className={sel(w.leadId)} onTap={() => openDetailOnDesktop(w.leadId) || open()}>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{w.name}</div>
+                    <p className="truncate text-xs text-[color:var(--muted)]" data-bestand-warm-row>
+                      Antwort auf {w.kampagne} · {since(w.repliedAt)} ohne Termin
+                    </p>
+                  </div>
+                  <span onClick={stop}>
+                    <ButtonLink href={href} variant="secondary" icon={MessageCircle}>
+                      Nachricht
+                    </ButtonLink>
+                  </span>
                   {more}
                 </TapRow>
               );

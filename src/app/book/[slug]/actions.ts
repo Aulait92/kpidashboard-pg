@@ -108,7 +108,7 @@ export async function bookPublicAction(
     select: { leadId: true, lead: { select: { source: true } } },
   });
   const product = linked?.lead?.source ?? null;
-  const leadId = linked?.leadId ?? null;
+  let leadId = linked?.leadId ?? null;
 
   // Pro Lead nur ein offener Termin.
   const existing = await prisma.appointment.findFirst({
@@ -126,6 +126,18 @@ export async function bookPublicAction(
     where: { id: conversation.id },
     data: { contactName: name, contactEmail: emailRaw },
   });
+
+  // Terminlink aus einer Bestandskampagne (bk, signiert): Termin zählt für die Kampagne, Lead wird bei Bedarf angelegt.
+  // Fehler dürfen die Buchung nicht verhindern.
+  const bk = String(formData.get("bk") ?? "");
+  if (bk) {
+    leadId = await import("@/lib/bestand/campaigns")
+      .then((m) => m.bookingFromCampaign(customerId, bk, conversation.id, leadId))
+      .catch((e) => {
+        console.error("[booking page bestand]", e instanceof Error ? e.name : "Fehler");
+        return leadId;
+      });
+  }
 
   let appointmentId: string;
   try {

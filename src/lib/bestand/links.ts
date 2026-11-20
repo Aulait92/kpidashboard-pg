@@ -37,6 +37,8 @@ export const unsubscribeUrl = (recipientId: string) => `${base()}/abmelden/${sig
 export const unsubscribePostUrl = (recipientId: string) => `${base()}/api/abmelden/${signLink("r", recipientId)}`;
 /** Abmeldelink in werblichen Vorlagen-Mails an Leads (lib/mail/vorlagen-mail.ts): trägt die Adresse in die Sperrliste ein. */
 export const leadAbmeldeUrl = (leadId: string) => `${base()}/abmelden/${signLink("l", leadId)}`;
+/** Abmeldelink je Bestandskunde (Bitte um Einwilligung per E-Mail, Paket 3): gleiche Seite wie in Kampagnen-Mails. */
+export const existingAbmeldeUrl = (existingCustomerId: string) => `${base()}/abmelden/${signLink("e", existingCustomerId)}`;
 export const consentUrl = (existingCustomerId: string) => `${base()}/einwilligung/${signLink("e", existingCustomerId)}`;
 
 /** Zufälliges Bestätigungstoken (Double-Opt-in) und sein Hash. */

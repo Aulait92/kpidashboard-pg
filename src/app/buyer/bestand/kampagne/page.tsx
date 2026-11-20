@@ -1,12 +1,28 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { Download, Mail, Megaphone, MessageCircle, Scale, Send } from "lucide-react";
+import { ChevronDown, Mail, MessageCircle, UserPlus, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
-import { Button, ButtonLink, Card, CardHeader } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { campaignMailFor, offeredFor, channelAvailability, effectiveMode, NEEDS_EMPFEHLUNG, OCCASIONS, planAudience, TOPIC_LABEL, WEITERES_PRODUKT_NAME, type Occasion, type Segment } from "@/lib/bestand/campaigns";
+import {
+  bookingSlugFor,
+  campaignMailFor,
+  channelAvailability,
+  datumText,
+  effectiveMode,
+  LINE_LABEL,
+  NEEDS_EMPFEHLUNG,
+  OCCASIONS,
+  offeredFor,
+  planAudience,
+  TOPIC_LABEL,
+  vorlagenThema,
+  WEITERES_PRODUKT_NAME,
+  type Occasion,
+  type Segment,
+} from "@/lib/bestand/campaigns";
 import { crossSellOffenWhere } from "@/lib/cross-sell-offen";
 import { rankTemplates, renderTemplate, templateTextFor, fillNames, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { templateNamesOf } from "@/lib/whatsapp/template-plan";
@@ -15,23 +31,39 @@ import { bestandMailQuota, bestandQuota } from "@/lib/bestand/quota";
 import { packPurchaseBlocker } from "@/lib/bestand/packs";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { QuotaLowNotice } from "@/components/bestand/quota-bar";
-import { displayName } from "@/lib/bestand/rows";
 import { asChannelMode, CHANNEL_MODES, isSameNeedOccasion, NEEDS_CONSENT_REASON } from "@/lib/bestand/einwilligung";
 import { loadConsentSettings } from "@/lib/bestand/einwilligung-server";
-import { defaultCampaignMail, imprintFromWebsiteInfo } from "@/lib/bestand/kampagnen-mail";
-import { needsSubmit, templateNotice, templateState, TEMPLATE_STATE_LABEL } from "@/lib/whatsapp/vorlagen-hinweis";
+import { defaultCampaignMail, hasImprint, imprintFromWebsiteInfo, PLATZHALTER_LABEL, platzhalterFuer, platzhalterZuAnzeige } from "@/lib/bestand/kampagnen-mail";
+import { CONNECT_HREF, needsSubmit, templateNotice, templateState } from "@/lib/whatsapp/vorlagen-hinweis";
 import { advisorPerson } from "@/lib/lead-anrede";
 import { publicUrlOr } from "@/lib/public-url";
 import { agentConfirmText, isAgencyBound, mayOffer, needsAgentConfirm } from "@/lib/bestand/befugnis";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
+import { loadCustomerProvision } from "@/lib/provision-server";
+import { eigeneZahlen, erwarteteProvision, provisionForLine, quotenFor, spanneText } from "@/lib/bestand/potenzial";
+import { loadCampaignStats } from "@/lib/bestand/statistik";
+import { terminlinkFuer } from "@/lib/bestand/terminlink";
+import { KampagneStart, type StartBlocker } from "@/components/bestand/kampagne-start";
+import { MailEditor } from "@/components/bestand/mail-editor";
+import { ErinnerungSchalter } from "@/components/bestand/erinnerung-schalter";
+import { FOLLOW_UP_OCCASIONS } from "@/lib/bestand/nachfassen";
+import { nowMs } from "@/lib/now";
 
 export const dynamic = "force-dynamic";
 
+// Kampagne in einem Bildschirm (Paket 2, 20.11.2026, docs/ux/2026-11-19-bestand-champions.md): drei Blöcke (Wer,
+// Nachricht, Knopf). Kanal, Ausschlüsse, Bearbeiten und Einstellungen liegen in Aufklappern. Der Startknopf klebt am
+// Handy unten und nennt, was fehlt. Bei 0 Empfängern statt Editor ein leerer Zustand mit nächster Handlung.
+
 const de = (n: number) => n.toLocaleString("de-DE");
+const FORM_ID = "kampagne";
 const box = "rounded-[var(--radius-md)] border px-4 py-3 text-sm";
 const warnBox = `${box} border-amber-200 bg-amber-50 text-amber-900`;
+const summary = "flex min-h-11 cursor-pointer list-none items-center gap-2 py-2 text-sm font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden";
 
-export default async function CampaignSetup({ searchParams }: { searchParams: Promise<{ anlass?: string; segment?: string; thema?: string; kanal?: string; fehler?: string }> }) {
+type Sp = { anlass?: string; segment?: string; thema?: string; kanal?: string; fehler?: string; vorschau?: string };
+
+export default async function CampaignSetup({ searchParams }: { searchParams: Promise<Sp> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, empfehlungEnabled: true, name: true, bestandAgentConfirmedAt: true, bestandAgentConfirmedVersion: true, vermittlerTyp: true, bestandSparten: true, mailFeaturesOff: true } });
@@ -40,8 +72,8 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const occasion = (sp.anlass && sp.anlass in OCCASIONS ? sp.anlass : "review") as Occasion;
   // E-Mail-Funktionen aus („Meine Gesellschaft erlaubt das nicht“): Kampagnen nur per WhatsApp
-  const mode = c?.mailFeaturesOff ? "whatsapp" : asChannelMode(sp.kanal);
-  // Empfehlungsbitte nur mit Modul „Empfehlungen & Bewertungen“ – sonst Hinweis zum Modul
+  let mode = c.mailFeaturesOff ? "whatsapp" : asChannelMode(sp.kanal);
+  // Empfehlungsbitte nur mit Modul „Empfehlungen & Bewertungen“
   const locked = NEEDS_EMPFEHLUNG.includes(occasion) && !c.empfehlungEnabled;
   let segment: Segment = {};
   try {
@@ -49,12 +81,11 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   } catch {
     /* leer */
   }
-  // „Weiteres Produkt anbieten“ aus den Kontakten (lib/cross-sell-verkauf.ts): genau die Kunden ohne weiteres Produkt,
-  // Thema je Kunde automatisch (naheliegende Ergänzung), Hauptaktion „Senden“
+  // „Weiteres Produkt anbieten“ aus den Kontakten (lib/cross-sell-verkauf.ts): Thema je Kunde automatisch
   const weiteres = occasion === "cross_sell" && !!segment.ohneWeiteresProdukt;
   const topic = sp.thema ?? (segment.lacks?.[0] ? (TOPIC_LABEL[segment.lacks[0]] ?? segment.lacks[0]) : null);
   const purpose = OCCASIONS[occasion].purpose as NoticePurpose;
-  const [avail, templates, allTemplates, quota, mailQuota, packBlocker, settings, sender, offered] = await Promise.all([
+  const [avail, templates, allTemplates, quota, mailQuota, packBlocker, settings, sender, offered, provision, slug] = await Promise.all([
     channelAvailability(ctx.customerId, occasion, ctx.userId),
     prisma.messageTemplate.findMany({ where: { customerId: ctx.customerId, purpose, status: "approved" }, orderBy: { updatedAt: "desc" } }),
     prisma.messageTemplate.findMany({ where: { customerId: ctx.customerId, purpose: { startsWith: "campaign_" } }, select: { purpose: true, status: true } }),
@@ -64,11 +95,42 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
     loadConsentSettings(ctx.customerId),
     ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
     offeredFor(ctx.customerId),
+    loadCustomerProvision(ctx.customerId),
+    bookingSlugFor(ctx.customerId),
   ]);
   // Ausschließlichkeitsvertreter: Cross-Selling in eine Sparte, die er nicht anbietet → deutlicher Hinweis
   const foreignLines = occasion === "cross_sell" ? (segment.lacks ?? []).filter((l) => !mayOffer(offered, l)) : [];
+  // E-Mail gerade nicht möglich (kein Postfach, kein Impressum, Monatsgrenze), WhatsApp schon: Standard „Nur WhatsApp“,
+  // damit die Mehrheit sofort angeschrieben werden kann. Die übrigen nennt eine Zeile mit dem einen Schritt, der fehlt.
+  const imprintEarly = settings.imprint ?? imprintFromWebsiteInfo(settings.websiteInfo);
+  const mailFix: StartBlocker | null = !avail.mailbox
+    ? { label: "Postfach verbinden", href: "/buyer/postfach" }
+    : !hasImprint(imprintEarly)
+      ? { label: "Impressum eintragen", href: "/buyer/bestand/einwilligungen?offen=recht#recht" }
+      : mailQuota.remaining <= 0
+        ? { label: "E-Mails ab dem 1. wieder frei", href: "/buyer/bestand" }
+        : null;
+  let plan = await planAudience(ctx.customerId, occasion, segment, { mode, waAvailable: avail.waAvailable });
+  let mailMissed = 0;
+  let waMissed = 0;
+  // Nachbesserung 20.11.2026: WhatsApp-Vorlage noch nicht freigegeben, E-Mail geht → „Nur E-Mail“ als Standard (wie im
+  // Cockpit „Heute zuerst“). Wer nur per WhatsApp erreichbar ist, lässt sich mit einem Klick dazu vormerken.
+  const waTplReady = templateState([...allTemplates, ...templates.map((t) => ({ purpose: t.purpose, status: t.status }))], purpose) === "freigegeben";
+  if (!sp.kanal && mode === "whatsapp_first" && avail.waAvailable && !waTplReady && !mailFix && plan.counts.whatsapp > 0) {
+    const mailOnly = await planAudience(ctx.customerId, occasion, segment, { mode: "email", waAvailable: true });
+    if (mailOnly.recipients.length) {
+      waMissed = Math.max(0, plan.recipients.length - mailOnly.recipients.length);
+      mode = "email";
+      plan = mailOnly;
+    }
+  }
+  if (!sp.kanal && mode === "whatsapp_first" && avail.waAvailable && mailFix && plan.counts.whatsapp > 0 && plan.counts.email > 0) {
+    const waOnly = await planAudience(ctx.customerId, occasion, segment, { mode: "whatsapp", waAvailable: true });
+    mailMissed = Math.max(0, plan.recipients.length - waOnly.recipients.length);
+    mode = "whatsapp";
+    plan = waOnly;
+  }
   const used = effectiveMode(mode, avail.waAvailable);
-  const plan = await planAudience(ctx.customerId, occasion, segment, { mode, waAvailable: avail.waAvailable });
   const ids = plan.recipients.map((r) => r.id);
   const counts = plan.counts;
 
@@ -82,44 +144,12 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   }
   const notice = used === "email" ? null : templateNotice(avail.waAvailable, tplRows, [purpose], "kampagne");
 
-  // Zielgruppe nach Wert: Summe der Jahresbeiträge und die wertvollsten Empfänger (werden zuerst angeschrieben)
-  const [value, top] = ids.length
-    ? await Promise.all([
-        prisma.existingCustomer.aggregate({ where: { id: { in: ids }, premiumTotal: { not: null } }, _sum: { premiumTotal: true } }),
-        prisma.existingCustomer.findMany({
-          where: { id: { in: ids }, premiumTotal: { not: null } },
-          orderBy: { premiumTotal: "desc" },
-          take: 5,
-          select: { id: true, firstName: true, lastName: true, company: true, email: true, premiumTotal: true },
-        }),
-      ])
-    : [null, []];
-  const valueSum = Number(value?._sum.premiumTotal ?? 0);
-  const eurRound = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-  // Vorschau wie beim Versand: Bestandskunden werden gesiezt, „Guten Tag Frau Muster,“ (Anrede aus dem Bestand)
-  const linkExample = publicUrlOr("/empfehlung/…");
-  // Ablauf/Wechsel: Thema kommt je Empfänger aus dem ablaufenden Vertrag, in der Vorschau ein Beispiel
-  const beispielThema = occasion === "renewal" ? (TOPIC_LABEL.KFZ ?? "Kfz-Versicherung") : weiteres ? (TOPIC_LABEL.Hausrat ?? "Hausrat") : "";
-  const rest = [occasion === "empfehlung" ? linkExample : (topic ?? beispielThema)];
-  const pick = rankTemplates(templates, purpose, "sie", { firstName: "Erika", lastName: "Muster", salutation: "Frau" });
-  const preview = pick
-    ? renderTemplate(pick.tpl.body, pick.params(rest))
-    : renderTemplate(fillNames(templateTextFor(purpose, "sie"), templateNamesOf(c.name)), ["Frau Muster", ...rest]);
-  const imprint = settings.imprint ?? imprintFromWebsiteInfo(settings.websiteInfo);
-  const meinname = advisorPerson(c.name, sender?.displayName ?? null);
-  // E-Mail in der Ansprache, die der Vermittler für seine Bestandskunden gewählt hat (Einwilligungen & Versand)
-  const def = defaultCampaignMail(occasion, settings.ansprache);
-  const mailPreview = await campaignMailFor(
-    { customerId: ctx.customerId, occasion, topic: topic ?? (weiteres ? beispielThema : null), mailSubject: null, mailBody: null },
-    { id: "vorschau", firstName: "Erika", lastName: "Muster", salutation: "Frau" },
-    { recipientId: "vorschau0", customerName: c.name, imprint, meinname, empfehlungslink: occasion === "empfehlung" ? linkExample : null, ansprache: settings.ansprache },
-  );
+  // Euro-Spanne (Schätzung, nur intern): wie im Cockpit, Provision der angebotenen Sparte aus „Meine Provisionen“
+  const line = occasion === "cross_sell" ? (segment.lacks?.[0] ?? null) : null;
+  // Gleiche Rechnung wie „Heute zuerst“ im Cockpit (eigene Quoten ab 30 Empfängern), sonst widersprechen sich die Zahlen
+  const own = eigeneZahlen(await loadCampaignStats(ctx.customerId, { rates: provision.rates }));
+  const euro = spanneText(erwarteteProvision(ids.length, quotenFor(occasion, own[occasion]), provisionForLine(line, provision.rates)));
 
-  // Startbereit? Je Kanal nur prüfen, wenn er gebraucht wird. WhatsApp-Vorlage darf noch warten (startet nach Freigabe).
-  const waBlock = counts.whatsapp > 0 && (!avail.waAvailable || quota.remaining <= 0 || notice?.kind === "connect");
-  const mailBlock = counts.email > 0 && (!avail.mailbox || !imprint || mailQuota.remaining <= 0);
-  const ready = !locked && ids.length > 0 && !waBlock && !mailBlock;
-  const modeHref = (k: string) => `/buyer/bestand/kampagne?${new URLSearchParams({ anlass: occasion, segment: JSON.stringify(segment), ...(topic ? { thema: topic } : {}), kanal: k })}`;
   // Kontakte ohne Eintrag im Bestand (Abschluss ohne eingetragenen Vertrag) können nicht dabei sein: ehrlich mitzählen
   const nichtImBestand = weiteres
     ? await prisma.lead.count({ where: { customerId: ctx.customerId, ...crossSellOffenWhere(new Date()), bestandKunde: { is: null } } })
@@ -130,298 +160,367 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   ].sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
   const excludedTotal = counts.excludedTotal + nichtImBestand;
 
+  const title = weiteres
+    ? WEITERES_PRODUKT_NAME
+    : occasion === "cross_sell" && segment.has?.length && segment.lacks?.length
+      ? `${segment.has.map(LINE_LABEL).join(", ")}-Kunden ohne ${segment.lacks.map((l) => TOPIC_LABEL[l] ?? l).join(", ")}`
+      : OCCASIONS[occasion].label;
+
+  // ─── 0 Empfänger: leerer Zustand mit nächster Handlung statt Editor ───
+  if (!locked && ids.length === 0) {
+    const top = excluded[0]?.[0];
+    return (
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <Link href="/buyer/bestand" className="text-sm text-[color:var(--brand)] hover:underline">
+          ← Bestand
+        </Link>
+        <PageHeader title={title} />
+        <Card>
+          <div data-campaign-empty>
+            <EmptyState
+              icon={Users}
+              title="Noch niemand erreichbar"
+              text={top ? `Häufigster Grund: ${top}. Mit Einwilligung dürfen Sie zu jedem Anlass schreiben.` : "Tragen Sie Verträge ein oder holen Sie Einwilligungen ein."}
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  <ButtonLink href="/buyer/bestand/einwilligungen" variant="primary" size="md" icon={UserPlus}>
+                    Einwilligung anfragen
+                  </ButtonLink>
+                  <ButtonLink href="/buyer/bestand/import" variant="secondary" size="md">
+                    Vertrag eintragen
+                  </ButtonLink>
+                </div>
+              }
+            />
+          </div>
+        </Card>
+      </main>
+    );
+  }
+
+  // ─── Vorschau: eine Nachricht mit Beispielkunde ───
+  const needWa = counts.whatsapp > 0;
+  const needMail = counts.email > 0;
+  const showMail = !needWa || used === "email" || (sp.vorschau === "email" && needMail);
+  const bothChannels = needWa && needMail;
+  const beispielThema = occasion === "renewal" ? (TOPIC_LABEL.KFZ ?? "Kfz-Versicherung") : weiteres ? (TOPIC_LABEL.Hausrat ?? "Hausrat") : "";
+  const linkExample = publicUrlOr("/empfehlung/…");
+  const rest = [occasion === "empfehlung" ? linkExample : vorlagenThema(occasion, topic ?? (beispielThema || null))];
+  const pick = rankTemplates(templates, purpose, "sie", { firstName: "Erika", lastName: "Muster", salutation: "Frau" });
+  const waPreview = pick
+    ? renderTemplate(pick.tpl.body, pick.params(rest))
+    : renderTemplate(fillNames(templateTextFor(purpose, "sie"), templateNamesOf(c.name)), ["Frau Muster", ...rest]);
+  const imprint = settings.imprint ?? imprintFromWebsiteInfo(settings.websiteInfo);
+  const meinname = advisorPerson(c.name, sender?.displayName ?? null);
+  const def = defaultCampaignMail(occasion, settings.ansprache);
+  const mailPreview = await campaignMailFor(
+    { customerId: ctx.customerId, occasion, topic: topic ?? (weiteres || occasion === "renewal" ? beispielThema : null), mailSubject: null, mailBody: null },
+    { id: "vorschau", firstName: "Erika", lastName: "Muster", salutation: "Frau" },
+    {
+      recipientId: "vorschau0",
+      customerName: c.name,
+      imprint,
+      meinname,
+      empfehlungslink: occasion === "empfehlung" ? linkExample : null,
+      ansprache: settings.ansprache,
+      extras: {
+        terminlink: occasion === "birthday" || occasion === "empfehlung" ? null : terminlinkFuer(slug),
+        datum: occasion === "renewal" ? datumText(new Date(nowMs() + 45 * 86_400_000)) : null,
+        anzahl: occasion === "review" ? 3 : null,
+      },
+    },
+  );
+  // Text und Fuß der Vorschau getrennt (Fuß im Aufklapper, steht in jeder Mail)
+  const [mailBodyPreview, ...footerParts] = mailPreview.text.split("\n\n\n");
+  const mailFooterPreview = footerParts.join("\n\n\n");
+
+  // ─── Startbereit? Fehlt etwas, nennt der Knopf genau das (nie grau ohne Grund) ───
+  const modeHref = (k: string, extra: Record<string, string> = {}) =>
+    `/buyer/bestand/kampagne?${new URLSearchParams({ anlass: occasion, segment: JSON.stringify(segment), ...(topic ? { thema: topic } : {}), kanal: k, ...extra })}`;
+  let blocker: StartBlocker | null = null;
+  let blockKind: "wa" | "mail" | "other" = "other";
+  if (locked) {
+    blocker = EMPFEHLUNG_MODULE_AVAILABLE ? { label: "Erst Modul Empfehlungen testen", href: "/buyer/konto?modul=empfehlung#zusatzmodule" } : { label: "Modul gerade nicht buchbar", href: "/buyer/bestand" };
+  } else if (needWa && (!avail.waAvailable || notice?.kind === "connect")) {
+    blocker = { label: "Erst WhatsApp verbinden", href: notice?.kind === "connect" ? notice.href : CONNECT_HREF };
+    blockKind = "wa";
+  } else if (needWa && quota.remaining <= 0) {
+    blocker = { label: "Erst Nachrichten nachbuchen", href: "/buyer/bestand?kontingent=1" };
+    blockKind = "wa";
+  } else if (needMail && !avail.mailbox) {
+    blocker = { label: "Erst Postfach verbinden", href: "/buyer/postfach" };
+    blockKind = "mail";
+  } else if (needMail && !hasImprint(imprint)) {
+    blocker = { label: "Erst Impressum eintragen", href: "/buyer/bestand/einwilligungen" };
+    blockKind = "mail";
+  } else if (needMail && mailQuota.remaining <= 0) {
+    blocker = { label: "E-Mails ab dem 1. wieder frei", href: "/buyer/bestand" };
+    blockKind = "mail";
+  }
+  // Ausweg: nur der andere Kanal
+  const alt: StartBlocker | null =
+    blockKind === "mail" && avail.waAvailable && mode !== "whatsapp"
+      ? { label: "Nur WhatsApp", href: modeHref("whatsapp") }
+      : blockKind === "wa" && !c.mailFeaturesOff && mode !== "email"
+        ? { label: "Nur E-Mail", href: modeHref("email") }
+        : null;
+
+  // Alle per WhatsApp und die Vorlage wartet noch auf Meta: ehrlich „vormerken“ (gleicher Begriff wie im Cockpit)
+  const waits = !blocker && needWa && !needMail && (notice?.kind === "pending" || notice?.kind === "rejected");
+  const label = waits ? `${de(ids.length)} Kunden vormerken` : weiteres ? `${de(ids.length)} Kunden ein weiteres Produkt anbieten` : `${de(ids.length)} Kunden anschreiben`;
+  const hint = blocker
+    ? blockKind === "mail"
+      ? `${de(counts.email)} Kunden bekommen eine E-Mail. ${alt ? "Oder Sie schreiben nur per WhatsApp." : ""}`.trim()
+      : blockKind === "wa"
+        ? `${de(counts.whatsapp)} Kunden bekommen eine WhatsApp-Nachricht. ${alt ? "Oder Sie schreiben nur per E-Mail." : ""}`.trim()
+        : null
+    : notice?.kind === "rejected" && needWa
+      ? "Meta hat die WhatsApp-Vorlage abgelehnt, wir kümmern uns darum und starten danach automatisch."
+      : notice?.kind === "pending" && needWa
+      ? "WhatsApp startet, sobald Meta die Vorlage freigegeben hat."
+      : occasion === "birthday"
+        ? "Jeder Glückwunsch geht am Geburtstag selbst raus."
+        : `Geht schrittweise raus, ${needWa ? "WhatsApp Mo bis Sa 9 bis 19 Uhr" : "werktags 8 bis 18 Uhr"}. Antworten landen als Lead in Ihrer Pipeline.`;
+  const confirm = needsAgentConfirm(c)
+    ? {
+        text: agentConfirmText(c.vermittlerTyp),
+        intro: isAgencyBound(c.vermittlerTyp)
+          ? "Als Vertreter mit Agenturvertrag gehören die Kundendaten oft dem Versicherer. Nutzen Sie sie nur im Rahmen Ihres Agenturvertrags bzw. mit der Einwilligung „laut Versicherer“. Die rechtliche Bewertung liegt bei Ihnen."
+          : null,
+      }
+    : null;
+  const modeLabel = { whatsapp_first: "WhatsApp bevorzugt", whatsapp: "Nur WhatsApp", email: "Nur E-Mail" }[mode];
+  const chips = platzhalterFuer(occasion).map((k) => ({ key: k, label: PLATZHALTER_LABEL[k] }));
+  const tab = (active: boolean) => `rounded-full px-3 py-1 ${active ? "bg-[color:var(--brand-soft)] text-[color:var(--foreground)]" : "text-[color:var(--muted)]"}`;
+
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+    // Unten Platz in Höhe des klebenden Startknopfs (Handy), damit er das Ende der Vorschau nie verdeckt
+    <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-36 pt-6 sm:px-6 md:pb-6 lg:px-8">
       <Link href="/buyer/bestand" className="text-sm text-[color:var(--brand)] hover:underline">
         ← Bestand
       </Link>
-      <PageHeader
-        title={`Kampagne: ${weiteres ? WEITERES_PRODUKT_NAME : OCCASIONS[occasion].label}`}
-        subtitle={weiteres ? "Kunden mit Abschluss, die noch kein weiteres Produkt haben" : OCCASIONS[occasion].hint}
-      />
+      <PageHeader title={title} />
       {foreignLines.length ? (
-        <p className={`mb-5 ${warnBox}`} data-campaign-foreign-line>
-          {foreignLines.join(", ")} steht nicht bei den Sparten, die Sie anbieten. Als Ausschließlichkeitsvertreter dürfen Sie in der Regel nur Produkte Ihres
-          Versicherers vermitteln. Bitte prüfen Sie das vor dem Start.{" "}
+        <p className={`mb-4 ${warnBox}`} data-campaign-foreign-line>
+          {foreignLines.join(", ")} steht nicht bei Ihren Sparten. Als Ausschließlichkeitsvertreter vermitteln Sie in der Regel nur Produkte Ihres Versicherers.{" "}
           <Link href="/buyer/bestand/einwilligungen#sparten" className="font-semibold underline">
             Meine Sparten
           </Link>
         </p>
       ) : null}
       {sp.fehler ? (
-        <p className={`mb-5 ${box} border-rose-200 bg-rose-50 text-rose-900`} data-campaign-error>
+        <p className={`mb-4 ${box} border-rose-200 bg-rose-50 text-rose-900`} data-campaign-error>
           {sp.fehler}
         </p>
       ) : null}
       {/* Außerhalb des Kampagnen-Formulars: Das Paket-Fenster hat ein eigenes Formular */}
-      {counts.whatsapp > 0 && quota.low ? (
-        <div className="mb-5">
+      {needWa && quota.low ? (
+        <div className="mb-4">
           <QuotaLowNotice
             quota={quota}
+            waiting={counts.whatsapp}
             booking={{ packs: PRICE_LIST.bestandPacks, months: PRICE_LIST.bestandPackMonths, individualFrom: PRICE_LIST.bestandPackIndividualFrom, readOnly: ctx.preview, blocker: packBlocker }}
           />
         </div>
-      ) : counts.whatsapp > quota.remaining ? (
-        <p className="mb-5 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]" data-campaign-quota-hint>
-          Diesen Monat sind noch {de(quota.remaining)} WhatsApp-Nachrichten frei. Die übrigen Empfänger bekommen ihre Nachricht nach einem Zusatzpaket oder im
-          nächsten Monat, bis dahin pausiert die Kampagne.
-        </p>
       ) : null}
-      <form action={startCampaignAction} className="space-y-5">
+      <form id={FORM_ID} action={startCampaignAction} className="space-y-4">
         <input type="hidden" name="occasion" value={occasion} />
         <input type="hidden" name="segment" value={JSON.stringify(segment)} />
         <input type="hidden" name="channelMode" value={mode} />
-        <Card>
-          <CardHeader title="Kanal" icon={Send} />
-          <div className="space-y-2 px-5 pb-5 text-sm" data-campaign-modes>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {CHANNEL_MODES.filter((m) => !c.mailFeaturesOff || m.key === "whatsapp").map((m) => (
-                <Link
-                  key={m.key}
-                  href={modeHref(m.key)}
-                  aria-current={m.key === mode ? "true" : undefined}
-                  className={`rounded-[var(--radius-md)] border px-3 py-2.5 ${m.key === mode ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] font-semibold" : "border-[color:var(--border)] hover:border-[color:var(--border-strong)]"}`}
-                  data-campaign-mode={m.key}
-                >
-                  {m.label}
-                  <span className="mt-0.5 block text-xs font-normal text-[color:var(--muted)]">{m.hint}</span>
-                </Link>
-              ))}
-            </div>
-            {mode === "whatsapp_first" && used === "email" ? (
-              <p className="text-xs text-[color:var(--muted)]">Ihre WhatsApp-Nummer ist nicht verbunden: Alle erreichbaren Kunden bekommen eine E-Mail.</p>
-            ) : null}
-          </div>
-        </Card>
 
+        {/* ─── Wer ─── */}
         <Card>
-          <CardHeader title={`${de(ids.length)} Empfänger`} icon={Megaphone} />
-          <div className="space-y-4 px-5 pb-5 text-sm">
-            <div className="grid grid-cols-2 gap-3" data-campaign-counts>
-              <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3">
-                <div className="flex items-center gap-1.5 text-[color:var(--muted)]">
-                  <MessageCircle className="h-4 w-4" /> WhatsApp
-                </div>
-                <div className="text-2xl font-semibold tabular-nums" data-count-whatsapp>
-                  {de(counts.whatsapp)}
-                </div>
-              </div>
-              <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3">
-                <div className="flex items-center gap-1.5 text-[color:var(--muted)]">
-                  <Mail className="h-4 w-4" /> E-Mail
-                </div>
-                <div className="text-2xl font-semibold tabular-nums" data-count-email>
-                  {de(counts.email)}
-                </div>
-                {counts.emailUwg ? <div className="text-xs text-[color:var(--muted)]">davon {de(counts.emailUwg)} ohne Einwilligung (§ 7 Abs. 3 UWG)</div> : null}
-              </div>
-            </div>
-            {counts.noProof > 0 ? (
-              <p className={warnBox} data-campaign-noproof>
-                <b>{de(counts.noProof)} ohne Nachweis, nur mit Einwilligung:</b> Für diese Kunden fehlt der Nachweis, dass sie bei der Erhebung der E-Mail-Adresse
-                auf ihr Widerspruchsrecht hingewiesen wurden. Ohne Einwilligung bekommen sie deshalb keine E-Mail.{" "}
-                <Link href="/buyer/bestand/einwilligungen" className="font-semibold underline">
-                  Nachweis eintragen
+          <div className="px-5 pb-3 pt-4" data-campaign-who>
+            <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">Wer</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums" data-campaign-count>
+              {de(ids.length)} Kunden
+            </p>
+            {euro ? (
+              <p className="mt-0.5 flex flex-wrap items-center gap-2 text-sm" data-campaign-euro>
+                <span>
+                  <b className="tabular-nums">{euro}</b> Provision möglich
+                </span>
+                <Badge>Schätzung</Badge>
+              </p>
+            ) : null}
+            <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[color:var(--muted)]" data-campaign-counts>
+              {needWa ? (
+                <span className="inline-flex items-center gap-1" data-count-whatsapp>
+                  <MessageCircle className="h-4 w-4" /> {de(counts.whatsapp)} per WhatsApp
+                </span>
+              ) : null}
+              {needMail ? (
+                <span className="inline-flex items-center gap-1" data-count-email>
+                  <Mail className="h-4 w-4" /> {de(counts.email)} per E-Mail
+                </span>
+              ) : null}
+            </p>
+            {waMissed > 0 ? (
+              <p className="mt-1 text-sm" data-campaign-wa-missed>
+                <span className="text-[color:var(--muted)]">+{de(waMissed)} per WhatsApp nach der Freigabe durch Meta: </span>
+                <Link href={modeHref("whatsapp_first")} className="font-medium text-[color:var(--brand)] hover:underline">
+                  Mit vormerken
                 </Link>
               </p>
             ) : null}
-            {excluded.length ? (
-              <div data-campaign-excluded>
-                <p className="font-medium">Nicht dabei ({de(excludedTotal)}):</p>
-                <ul className="mt-1 space-y-0.5 text-[color:var(--muted)]">
-                  {excluded.map(([reason, n]) => (
-                    <li key={reason} className="flex justify-between gap-3">
-                      <span>{reason}</span>
-                      <span className="tabular-nums">{de(n ?? 0)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {mailMissed > 0 && mailFix ? (
+              <p className="mt-1 text-sm" data-campaign-mail-missed>
+                <span className="text-[color:var(--muted)]">+{de(mailMissed)} per E-Mail: </span>
+                <Link href={mailFix.href} className="font-medium text-[color:var(--brand)] hover:underline">
+                  {mailFix.label}
+                </Link>
+              </p>
             ) : null}
-            <p className="text-[color:var(--muted)]">
-              {weiteres
-                ? "Ihre Kontakte mit Abschluss (mindestens 3 Wochen her) ohne weiteres Produkt. "
-                : occasion === "cross_sell"
-                  ? `Kunden mit ${segment.has?.join(", ")} und ohne ${segment.lacks?.join(", ")}. `
-                  : ""}
-              Ebenfalls nicht dabei: alle, die in den letzten 30 Tagen schon angeschrieben wurden.{" "}
-              {isSameNeedOccasion(occasion)
-                ? "Dieser Anlass betrifft bestehende Verträge: Per E-Mail geht er auch ohne Einwilligung, wenn Sie die Bestätigung zu § 7 Abs. 3 UWG abgegeben haben und für den Kunden der Nachweis zum Widerspruchshinweis vorliegt."
-                : `${NEEDS_CONSENT_REASON[occasion]}.`}{" "}
-              <Link href="/buyer/bestand/einwilligungen" className="underline">
-                Einwilligungen &amp; Versand
-              </Link>
-            </p>
-            {counts.excludedTotal > 0 || counts.noProof > 0 ? (
-              <div className="rounded-[var(--radius-md)] border border-[color:var(--brand)] bg-[color:var(--brand-soft)] px-4 py-3" data-campaign-consent-cta>
-                <p className="font-semibold">Mehr Kunden erreichen: Einwilligung einholen</p>
-                <p className="mt-1">
-                  Mit Einwilligung dürfen Sie zu jedem Anlass schreiben, auch per WhatsApp. Jeder Kunde hat einen persönlichen Link, über den er selbst zustimmt.
-                  Geben Sie ihn im Termin, im Jahresgespräch oder per Serienbrief weiter.
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <a href="/buyer/bestand/einwilligungslinks" className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-3 font-medium" data-campaign-consent-links>
-                    <Download className="h-4 w-4" /> Einwilligungslinks (CSV)
-                  </a>
-                  <Link href="/buyer/bestand/einwilligungen" className="inline-flex h-9 items-center rounded-[var(--radius-md)] px-3 font-medium underline">
-                    Einwilligungen &amp; Versand
+            {counts.whatsapp > quota.remaining && !quota.low ? (
+              <p className="mt-1 text-xs text-[color:var(--muted)]" data-campaign-quota-hint>
+                {de(quota.remaining)} WhatsApp-Nachrichten frei, danach pausiert die Kampagne bis zum Nachbuchen oder nächsten Monat.
+              </p>
+            ) : null}
+          </div>
+          <div className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)] px-5">
+            {!c.mailFeaturesOff ? (
+              <details className="group" data-campaign-modes>
+                <summary className={summary}>
+                  <span className="min-w-0 flex-1 truncate text-[color:var(--foreground)]">
+                    Kanal: <span className="font-normal">{modeLabel}</span>
+                  </span>
+                  <span>Ändern</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
+                </summary>
+                <div className="grid gap-2 pb-3 sm:grid-cols-3">
+                  {CHANNEL_MODES.map((m) => (
+                    <Link
+                      key={m.key}
+                      href={modeHref(m.key)}
+                      aria-current={m.key === mode ? "true" : undefined}
+                      className={`rounded-[var(--radius-md)] border px-3 py-2.5 text-sm ${m.key === mode ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] font-semibold" : "border-[color:var(--border)] hover:border-[color:var(--border-strong)]"}`}
+                      data-campaign-mode={m.key}
+                    >
+                      {m.label}
+                    </Link>
+                  ))}
+                  {mode === "whatsapp_first" && used === "email" ? <p className="text-xs text-[color:var(--muted)] sm:col-span-3">WhatsApp ist nicht verbunden: Alle bekommen eine E-Mail.</p> : null}
+                </div>
+              </details>
+            ) : null}
+            {excludedTotal > 0 || counts.noProof > 0 ? (
+              <details className="group" data-campaign-excluded>
+                <summary className={summary}>
+                  <span className="flex-1 text-[color:var(--foreground)]">{de(excludedTotal)} nicht dabei</span>
+                  <span>Warum?</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
+                </summary>
+                <div className="space-y-2 pb-3 text-sm">
+                  <ul className="space-y-0.5 text-[color:var(--muted)]">
+                    {excluded.map(([reason, n]) => (
+                      <li key={reason} className="flex justify-between gap-3">
+                        <span>{reason}</span>
+                        <span className="tabular-nums">{de(n ?? 0)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {counts.noProof > 0 ? (
+                    <p className="text-[color:var(--muted)]" data-campaign-noproof>
+                      {de(counts.noProof)} ohne Nachweis zum Widerspruchshinweis bekommen ohne Einwilligung keine E-Mail.
+                    </p>
+                  ) : null}
+                  <p className="text-xs text-[color:var(--muted)]">
+                    Nie dabei: wer in den letzten 30 Tagen angeschrieben wurde.{" "}
+                    {isSameNeedOccasion(occasion)
+                      ? "Zu bestehenden Verträgen geht die E-Mail auch ohne Einwilligung, wenn Ihre Bestätigung zu § 7 Abs. 3 UWG und der Nachweis zum Widerspruchshinweis vorliegen."
+                      : `${NEEDS_CONSENT_REASON[occasion]}.`}{" "}
+                    Die rechtliche Bewertung im Einzelfall liegt bei Ihnen.
+                  </p>
+                  <ButtonLink href="/buyer/bestand/einwilligungen" variant="secondary" size="sm" icon={UserPlus}>
+                    Einwilligung anfragen
+                  </ButtonLink>
+                </div>
+              </details>
+            ) : null}
+            <details className="group" data-campaign-settings>
+              <summary className={summary}>
+                <span className="flex-1 text-[color:var(--foreground)]">Einstellungen</span>
+                <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
+              </summary>
+              <label className="block pb-3 text-xs font-medium text-[color:var(--muted)]">
+                Höchstens pro Tag
+                <input name="dailyLimit" type="number" min={10} max={1000} defaultValue={150} className="mt-1 block h-10 w-32 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm text-[color:var(--foreground)]" />
+                <span className="mt-1 block font-normal">Kunden mit höherem Jahresbeitrag zuerst. E-Mails werktags 8 bis 18 Uhr mit Pausen, langsam starten schützt Nummer und Postfach.</span>
+              </label>
+            </details>
+          </div>
+        </Card>
+
+        {/* ─── Nachricht ─── */}
+        <Card>
+          <div className="px-5 pb-3 pt-4" data-campaign-message>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">Nachricht</p>
+              {bothChannels && used !== "email" ? (
+                <div className="flex rounded-full border border-[color:var(--border)] p-0.5 text-xs font-medium" data-campaign-preview-tabs>
+                  <Link href={modeHref(mode)} scroll={false} className={tab(!showMail)}>
+                    WhatsApp
+                  </Link>
+                  <Link href={modeHref(mode, { vorschau: "email" })} scroll={false} className={tab(showMail)}>
+                    E-Mail
                   </Link>
                 </div>
-              </div>
-            ) : null}
-            {valueSum > 0 ? (
-              <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3" data-campaign-value>
-                <p>
-                  <b>Beitragsvolumen der Empfänger: {eurRound(valueSum)} pro Jahr.</b> Die wertvollsten Kunden (höchster Jahresbeitrag) werden zuerst angeschrieben.
-                </p>
-                <ol className="mt-2 space-y-0.5 text-[color:var(--muted)]">
-                  {top.map((t) => (
-                    <li key={t.id} className="flex justify-between gap-3">
-                      <span className="min-w-0 truncate">{displayName(t)}</span>
-                      <span className="tabular-nums">{eurRound(Number(t.premiumTotal))}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ) : null}
-            {occasion === "cross_sell" || occasion === "renewal" ? (
-              <label className="block text-xs font-medium text-[color:var(--muted)]">
-                Thema in der Nachricht
-                <input name="topic" defaultValue={topic ?? ""} className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm text-[color:var(--foreground)]" />
-                {occasion === "renewal" ? (
-                  <span className="mt-1 block font-normal">Jede Nachricht nennt die Sparte des Vertrags, der bei diesem Kunden abläuft. Das Thema hier gilt nur, wenn sie fehlt.</span>
-                ) : weiteres ? (
-                  <span className="mt-1 block font-normal">Leer lassen: Jede Nachricht nennt die naheliegende Ergänzung zum Vertrag des Kunden.</span>
+              ) : null}
+            </div>
+            {showMail ? (
+              <div className="mt-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-campaign-mail data-campaign-preview>
+                <p className="font-semibold [overflow-wrap:anywhere]">{mailPreview.subject}</p>
+                <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed [overflow-wrap:anywhere]">{mailBodyPreview}</pre>
+                {mailFooterPreview ? (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer list-none text-xs text-[color:var(--muted)] [&::-webkit-details-marker]:hidden">Darunter immer: Abmeldelink und Impressum ▾</summary>
+                    <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-[color:var(--muted)] [overflow-wrap:anywhere]">{mailFooterPreview}</pre>
+                  </details>
                 ) : null}
-              </label>
+              </div>
+            ) : (
+              <div className="mt-3" data-campaign-preview>
+                <div className="max-w-sm rounded-2xl rounded-tl-sm bg-[#dcf8c6] px-4 py-3 text-[15px] leading-snug text-zinc-900 shadow-sm">{waPreview}</div>
+              </div>
+            )}
+            <p className="mt-2 text-xs text-[color:var(--muted)]">
+              Beispiel mit Erika Muster. {showMail ? "Persönlich von Ihrer Adresse, ohne Tracking." : "Antworten übernimmt Ihr Assistent, „Stopp“ sperrt sofort."}
+            </p>
+            {FOLLOW_UP_OCCASIONS.includes(occasion) ? (
+              <div className="mt-2 border-t border-[color:var(--border)]">
+                <ErinnerungSchalter hint="Nur ohne Antwort, kurz und freundlich. Danach nichts mehr." />
+              </div>
             ) : null}
-            <label className="block text-xs font-medium text-[color:var(--muted)]">
-              Höchstens pro Tag
-              <input name="dailyLimit" type="number" min={10} max={1000} defaultValue={150} className="mt-1 h-10 w-32 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm text-[color:var(--foreground)]" />
-              <span className="mt-1 block font-normal">
-                {occasion === "birthday" ? "Jeder Glückwunsch geht am Geburtstag selbst raus. " : ""}WhatsApp Mo bis Sa 9 bis 19 Uhr. E-Mails werktags 8 bis 18 Uhr in zufälligen Abständen, mit Tageslimit Ihres Postfachs. Langsam starten schützt Nummer und
-                Postfach.
-              </span>
-            </label>
+            {needMail || occasion === "cross_sell" || occasion === "renewal" ? (
+              <details className={`group border-t border-[color:var(--border)] ${FOLLOW_UP_OCCASIONS.includes(occasion) ? "" : "mt-2"}`} data-campaign-edit>
+                <summary className={summary}>
+                  <span className="flex-1">{needMail ? "Text bearbeiten" : "Thema ändern"}</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
+                </summary>
+                <div className="space-y-3 pb-2">
+                  {occasion === "cross_sell" || occasion === "renewal" ? (
+                    <label className="block text-xs font-medium text-[color:var(--muted)]">
+                      Thema
+                      <input name="topic" defaultValue={topic ?? ""} className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm text-[color:var(--foreground)]" />
+                      {occasion === "renewal" || weiteres ? (
+                        <span className="mt-1 block font-normal">{occasion === "renewal" ? "Sonst die Sparte des Vertrags, der abläuft." : "Leer lassen: die naheliegende Ergänzung je Kunde."}</span>
+                      ) : null}
+                    </label>
+                  ) : null}
+                  {needMail ? <MailEditor subject={platzhalterZuAnzeige(def.subject)} body={platzhalterZuAnzeige(def.body)} chips={chips} /> : null}
+                  {needMail && counts.emailUwg > 0 ? (
+                    <p className="text-xs text-[color:var(--muted)]" data-campaign-uwg>
+                      {de(counts.emailUwg)} E-Mails gehen ohne Einwilligung raus (§ 7 Abs. 3 UWG): Schreiben Sie darin nur zum bestehenden Vertrag.
+                    </p>
+                  ) : null}
+                  {needWa && needMail ? <p className="text-xs text-[color:var(--muted)]">Gilt für die E-Mail. Die WhatsApp-Nachricht ist eine von Meta freigegebene Vorlage.</p> : null}
+                </div>
+              </details>
+            ) : null}
           </div>
         </Card>
 
-        {counts.whatsapp > 0 || used !== "email" ? (
-          <Card>
-            <CardHeader title="So sieht die WhatsApp-Nachricht aus" icon={MessageCircle} />
-            <div className="px-5 pb-5">
-              <div className="max-w-sm rounded-2xl rounded-tl-sm bg-[#dcf8c6] px-4 py-3 text-[15px] leading-snug text-zinc-900 shadow-sm">{preview}</div>
-              <p className="mt-3 text-xs text-[color:var(--muted)]">
-                Antwortet ein Kunde, übernimmt Ihr digitaler Assistent, klärt kurz den Bedarf und bietet einen Termin an. Das Gespräch erscheint als Lead in
-                Ihrer Pipeline. „Stopp“ sperrt den Kunden automatisch.
-                {settings.ansprache === "du" ? " Die erste WhatsApp-Nachricht ist eine von Meta freigegebene Vorlage und bleibt deshalb in der Sie-Form." : null}
-              </p>
-              {avail.waAvailable ? (
-                <p className="mt-2 text-xs text-[color:var(--muted)]" data-template-state>
-                  Vorlage für diesen Anlass: <b>{TEMPLATE_STATE_LABEL[templateState(tplRows, purpose)]}</b>
-                </p>
-              ) : null}
-            </div>
-          </Card>
-        ) : null}
-
-        {counts.email > 0 || used !== "whatsapp" ? (
-          <Card>
-            <CardHeader title="So sieht die E-Mail aus" icon={Mail} />
-            <div className="space-y-3 px-5 pb-5 text-sm" data-campaign-mail>
-              <label className="block text-xs font-medium text-[color:var(--muted)]">
-                Betreff
-                <input name="mailSubject" defaultValue={def.subject} maxLength={200} className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm text-[color:var(--foreground)]" />
-              </label>
-              <label className="block text-xs font-medium text-[color:var(--muted)]">
-                Text (Platzhalter: {"{anrede}"}, {"{thema}"}, {"{meinname}"}{occasion === "empfehlung" ? ", {empfehlungslink}" : ""})
-                <textarea name="mailBody" defaultValue={def.body} rows={9} maxLength={5000} className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-sm text-[color:var(--foreground)]" />
-              </label>
-              <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3">
-                <p className="text-xs text-[color:var(--muted)]">Vorschau mit Standardtext:</p>
-                <p className="mt-1 font-semibold">{mailPreview.subject}</p>
-                <pre className="mt-2 whitespace-pre-wrap break-words font-sans [overflow-wrap:anywhere] text-[13px] leading-relaxed">{mailPreview.text}</pre>
-              </div>
-              <p className="text-xs text-[color:var(--muted)]">
-                {counts.emailUwg > 0 ? (
-                  <>
-                    <b>{de(counts.emailUwg)} E-Mails gehen ohne Einwilligung nach § 7 Abs. 3 UWG raus:</b> Schreiben Sie darin nur zum bestehenden Vertrag, nicht zu
-                    anderen Produkten.{" "}
-                  </>
-                ) : null}
-                Persönliche Einzelmail über Ihr Postfach{avail.mailbox ? ` (${avail.mailbox.email})` : ""}, Text und schlichtes HTML ohne Tracking. Abmeldelink und Ihre Pflichtangaben
-                stehen immer unten. Antworten landen in Ihrem Postfach: Tragen Sie sie in der Kampagne unter „Antwort zuordnen“ ein, dann wird daraus ein Lead.
-              </p>
-            </div>
-          </Card>
-        ) : null}
-
-        {locked ? (
-          <p className={warnBox}>
-            Die Empfehlungsbitte gehört zum Modul „Empfehlungen &amp; Bewertungen“: Jeder Kunde bekommt seinen persönlichen Empfehlungslink, die empfohlene
-            Person trägt sich selbst ein und landet als Lead bei Ihnen.{" "}
-            {EMPFEHLUNG_MODULE_AVAILABLE ? (
-              <Link href="/buyer/konto?modul=empfehlung#zusatzmodule" className="font-semibold underline">
-                Modul 30 Tage kostenlos testen
-              </Link>
-            ) : (
-              "Das Modul ist gerade nicht buchbar."
-            )}
-          </p>
-        ) : null}
-        {!locked && notice ? (
-          <div className={`flex flex-wrap items-center gap-3 ${notice.kind === "pending" ? `${box} border-sky-200 bg-sky-50 text-sky-900` : warnBox}`} data-template-notice={notice.kind}>
-            <span className="min-w-0 flex-1">{notice.text}</span>
-            {notice.kind === "connect" ? (
-              <ButtonLink href={notice.href} variant="primary">
-                WhatsApp verbinden
-              </ButtonLink>
-            ) : null}
-          </div>
-        ) : null}
-        {counts.email > 0 && !avail.mailbox ? (
-          <div className={`flex flex-wrap items-center gap-3 ${warnBox}`} data-mail-connect>
-            <span className="min-w-0 flex-1">Für E-Mails verbinden Sie bitte Ihr Postfach. Die Mails gehen dann persönlich von Ihrer Adresse raus.</span>
-            <ButtonLink href="/buyer/postfach" variant="primary">
-              Postfach verbinden
-            </ButtonLink>
-          </div>
-        ) : null}
-        {counts.email > 0 && !imprint ? (
-          <p className={warnBox} data-mail-imprint>
-            Unter jeder E-Mail stehen Ihre Pflichtangaben (Impressum). Bitte tragen Sie sie unter{" "}
-            <Link href="/buyer/bestand/einwilligungen" className="font-semibold underline">
-              Einwilligungen &amp; Versand
-            </Link>{" "}
-            ein.
-          </p>
-        ) : null}
-        {counts.email > 0 && mailQuota.remaining <= 0 ? <p className={warnBox}>Das E-Mail-Kontingent für diesen Monat ist aufgebraucht ({de(mailQuota.limit)} E-Mails). Ab dem 1. geht es weiter.</p> : null}
-
-        {needsAgentConfirm(c) ? (
-          <Card>
-            <CardHeader title="Vor der ersten Kampagne" icon={Scale} />
-            <div className="space-y-3 px-5 pb-5 text-sm">
-              {isAgencyBound(c.vermittlerTyp) ? (
-                <p className="text-[color:var(--muted)]">
-                  Als Vertreter mit Agenturvertrag gehören die Kundendaten oft dem Versicherer. Nutzen Sie sie nur im Rahmen Ihres Agenturvertrags bzw. mit der
-                  Einwilligung „laut Versicherer“. Die rechtliche Bewertung liegt bei Ihnen.
-                </p>
-              ) : null}
-              <label className="flex items-start gap-2">
-                <input type="checkbox" name="agentConfirm" className="mt-0.5 h-4 w-4" data-agent-confirm />
-                <span>{agentConfirmText(c.vermittlerTyp)}</span>
-              </label>
-            </div>
-          </Card>
-        ) : null}
-        <p className="text-xs text-[color:var(--muted)]">
-          Hinweis: Wir prüfen Einwilligung und Anlass nach den Regeln, die Sie unter Einwilligungen &amp; Versand finden. Die rechtliche Bewertung im Einzelfall liegt bei
-          Ihnen.
-        </p>
-        <Button type="submit" variant="primary" size="md" icon={Send} disabled={!ready || ctx.preview} data-campaign-start>
-          {notice?.kind === "pending" && counts.whatsapp > 0 ? "Kampagne vorbereiten" : weiteres ? "Senden" : "Kampagne starten"}
-        </Button>
+        <KampagneStart formId={FORM_ID} label={label} blocker={blocker} alt={alt} confirm={confirm} hint={hint} readOnly={ctx.preview} />
       </form>
     </main>
   );
