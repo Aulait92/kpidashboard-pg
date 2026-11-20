@@ -1,7 +1,8 @@
 // P8 „So arbeitet Ihr Assistent“ (Ole, 17.11.2026): Zeitleiste mit drei Spuren und Beispielchat aus denselben
 // Textfunktionen wie der Assistent; M7: Vorschläge im Nachrichtenplan und Antwortweg der Service-Mails.
 import { describe, expect, it } from "vitest";
-import { assistentMomente, beispielVerlauf, nachfassTage, type BeispielEingabe, type ChatZeile } from "@/lib/so-arbeitet";
+import { assistentMomente, beispielVerlauf, beispielZeiten, nachfassTage, type BeispielEingabe, type ChatZeile } from "@/lib/so-arbeitet";
+import { DEFAULT_LEAD_TIMES, leadTimesFromSchedule } from "@/lib/calendar/lead-times";
 import { erstanschreibenText } from "@/lib/whatsapp/erstanschreiben";
 import { buchungsText, eingetragenFrage, einladungUnterwegs, komplettcheckFrage } from "@/lib/whatsapp/gespraech";
 import { policenBitte } from "@/lib/policen/bitte";
@@ -45,7 +46,8 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
     expect(nachrichten(z)[0].fusszeile).toBe("Digitaler KI-Assistent");
     expect(texte[1]).toBe("Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wer soll mitversichert sein?");
     expect(texte[2]).toMatch(/^Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Sie kosten/);
-    expect(texte[3]).toBe(buchungsText({ an: "sie", start: new Date("2026-11-20T15:00:00.000Z"), mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person: e.person }));
+    // zweite Zeit: früheste an einem anderen Tag nach den Lead-Zeiten (Standard Mo bis Fr ab 10 Uhr)
+    expect(texte[3]).toBe(buchungsText({ an: "sie", start: new Date("2026-11-20T09:00:00.000Z"), mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person: e.person }));
     expect(texte[4]).toBe(komplettcheckFrage("sie", e.person, false));
     // Nutzen stand schon in der Zwischenfrage: knapp, ohne zweites „Damit … zeigen kann:“ (Ole, 19.11.2026)
     expect(texte[5]).toBe("Super! Und Ihr Geburtsdatum?");
@@ -87,6 +89,31 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
     expect(texte[0]).toMatch(/^Hallo Frau Becker, schön, dass Sie Minka gut absichern möchten 🐾 \*.+\?\*$/);
     expect(texte.join("\n")).not.toContain("Wer soll mitversichert sein?");
     expect(texte[1]).toContain("Minka");
+  });
+});
+
+describe("Beispielverlauf: Terminvorschlag nach den Lead-Zeiten (Ole, 20.11.2026)", () => {
+  // Freitag, 20.11.2026, 9 Uhr: früher kamen „morgen um 10 Uhr oder Sonntag, 22.11. um 16 Uhr“
+  const freitag = new Date("2026-11-20T08:00:00.000Z");
+  const tag = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long" }).format(d);
+
+  it("Standard Mo bis Fr: kein Wochenende, früheste Zeit und früheste an einem anderen Tag", () => {
+    const [z1, z2] = beispielZeiten(DEFAULT_LEAD_TIMES, freitag);
+    expect(z1.toISOString()).toBe("2026-11-23T09:00:00.000Z"); // Mo 10 Uhr
+    expect(z2.toISOString()).toBe("2026-11-24T09:00:00.000Z"); // Di 10 Uhr
+    const texte = vomAssistenten(beispielVerlauf(eingabe("sie", { now: freitag }))).join("\n");
+    expect(texte).not.toMatch(/Samstag|Sonntag|morgen um/);
+    expect(texte).toContain("Montag, 23.11. um 10 Uhr");
+  });
+
+  it("eigene Lead-Zeiten des Kunden (z. B. nur Samstag 9 bis 12 Uhr)", () => {
+    const lt = leadTimesFromSchedule({ step: 60, days: { 6: [["09:00", "12:00"]] } }, 60);
+    const [z1, z2] = beispielZeiten(lt, freitag);
+    expect(tag(z1)).toBe("Samstag");
+    expect(z1.toISOString()).toBe("2026-11-21T08:00:00.000Z");
+    expect(z2.toISOString()).toBe("2026-11-28T08:00:00.000Z");
+    const texte = vomAssistenten(beispielVerlauf(eingabe("sie", { now: freitag, leadTimes: lt }))).join("\n");
+    expect(texte).toContain("morgen um 9 Uhr");
   });
 });
 

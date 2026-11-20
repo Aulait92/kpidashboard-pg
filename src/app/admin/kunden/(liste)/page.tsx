@@ -10,6 +10,7 @@ import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
 import { cn } from "@/lib/utils";
 import { nextStepRatesByCustomer, type NextStepRate } from "@/lib/lead-next-step-server";
 import { NEXT_STEP_WARN_BELOW } from "@/lib/lead-next-step";
+import { pilotAbzeichen } from "@/lib/pilot";
 
 export const metadata = { title: "Kunden | performancegrowth Admin" };
 
@@ -41,6 +42,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
     id: true,
     name: true,
     isTest: true,
+    pilotBis: true,
     plan: true,
     retainerMonthly: true,
     paymentOverdueSince: true,
@@ -112,6 +114,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate font-medium">{c.name.replace(/^Allianz\s+/i, "")}</span>
                       {testKennung(c) ? <span className="badge bg-amber-100 text-amber-900">{testKennung(c)}</span> : null}
+                      {pilotAbzeichen(c.pilotBis) ? <Badge tone={pilotAbzeichen(c.pilotBis)!.laeuft ? "brand" : "warning"}>{pilotAbzeichen(c.pilotBis)!.text}</Badge> : null}
                       {stage ? (
                         <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span>
                       ) : null}

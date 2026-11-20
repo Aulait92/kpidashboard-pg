@@ -22,6 +22,8 @@ import {
 import { AcceptForm, type OfferChoiceProps } from "./accept-form";
 import { PayButton } from "./pay-button";
 import { PayLater } from "./pay-later";
+import { PasswortJetzt } from "./passwort-jetzt";
+import { annahmeImBrowser, direktZugang } from "@/lib/annahme-direktzugang-server";
 import { erinnerungsGrenzen, tagIso } from "@/lib/angebot-zahlungserinnerung";
 import { billingEnabled, STRIPE_MIN_EUR } from "@/lib/billing";
 import { CalendarClock, CheckCircle2, Clock } from "lucide-react";
@@ -80,6 +82,10 @@ export default async function OfferPage({
   const ua = (await headers().catch(() => null))?.get("user-agent") ?? null;
   if (zaehltAlsGeoeffnet({ sessionRole: session?.role ?? null, userAgent: ua })) await markOfferViewed(offer.id);
 
+  // „Passwort jetzt festlegen“: nur im Browser der Annahme, solange der Kunde sich noch nie angemeldet hat
+  // (lib/annahme-direktzugang.ts). Der Knopf erzeugt den Link erst beim Tippen, auf der Seite steht nie einer.
+  const direkt =
+    offer.status === "accepted" && (await annahmeImBrowser(offer.id)) ? (await direktZugang(offer.id).catch(() => null))?.stand !== "angemeldet" : false;
   const expired = offer.validUntil.getTime() < nowMs();
   // Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026): Setup und erster Zeitraum auf einer Rechnung
   const vorausJetzt = offer.annualPrepay && offer.prepayAtAcceptance && !offer.isTest;
@@ -124,6 +130,7 @@ export default async function OfferPage({
             <div>
               <div className="font-semibold">Testangebot angenommen</div>
               <p className="mt-1 text-sm">Ohne Zahlung. Sie bekommen gleich eine E-Mail mit Ihrem Zugang und können direkt mit der Einrichtung beginnen.</p>
+              {direkt ? <PasswortJetzt token={token} /> : null}
             </div>
           </div>
         ) : offer.status === "accepted" ? (
@@ -139,6 +146,7 @@ export default async function OfferPage({
             rechnung={vorausJetzt || Number(offer.setupFee) - Number(offer.abschlussBonusGewaehrt ?? 0) >= STRIPE_MIN_EUR}
             vorausJetzt={vorausJetzt}
             nachtraeglichAb={offer.paymentInArrears && !offer.annualPrepay && offer.startDate ? nachtraeglichErsteIso(offer.startDate.toISOString().slice(0, 10)) : null}
+            direkt={direkt}
           />
         ) : null}
         <OfferDocument offer={doc} collapseAgb />
@@ -336,6 +344,7 @@ function PaymentBox({
   ueberweisung = null,
   vorausJetzt = false,
   nachtraeglichAb = null,
+  direkt = false,
 }: {
   token: string;
   status: string;
@@ -353,6 +362,8 @@ function PaymentBox({
   vorausJetzt?: boolean;
   /** Zahlung nachträglich (Ole, 19.11.2026): Tag der ersten Abbuchung (YYYY-MM-DD) */
   nachtraeglichAb?: string | null;
+  /** „Passwort jetzt festlegen“ zeigen (Browser der Annahme, noch nie angemeldet) */
+  direkt?: boolean;
 }) {
   const ersteNachtraeglich = nachtraeglichAb ? nachtraeglichAb.split("-").reverse().join(".") : null;
   const box = "mx-auto mb-6 max-w-[880px] rounded-[20px] border px-6 py-5 sm:px-10";
@@ -380,6 +391,7 @@ function PaymentBox({
               <dd>Rechnungsnummer (steht auf der Rechnung)</dd>
             </dl>
           ) : null}
+          {direkt ? <PasswortJetzt token={token} /> : null}
         </div>
       </div>
     );
@@ -394,6 +406,7 @@ function PaymentBox({
             Sie bekommen gleich eine E-Mail mit Ihrem Zugang. Die Einrichtung dauert ca. 20 bis 30 Minuten, Sie können
             jederzeit unterbrechen; auf Wunsch helfen wir Ihnen in einem 15-Minuten-Termin.{rechnung ? " Ihre Rechnung kommt per E-Mail." : ""}
           </p>
+          {direkt ? <PasswortJetzt token={token} /> : null}
         </div>
       </div>
     );
@@ -408,11 +421,24 @@ function PaymentBox({
             Sie bekommen gleich eine E-Mail mit Ihrem Zugang und können direkt mit der Einrichtung (ca. 20 bis 30 Minuten,
             jederzeit unterbrechbar) beginnen. Bei SEPA-Lastschrift dauert die Bestätigung der Bank ein paar Tage.
           </p>
+          {direkt ? <PasswortJetzt token={token} /> : null}
         </div>
       </div>
     );
   }
-  if (!enabled) return null;
+  if (!enabled) {
+    // Ohne Online-Zahlung startet das Onboarding mit der Annahme: Zugang gleich anbieten
+    return direkt ? (
+      <div className={`${box} flex items-start gap-3 border-emerald-200 bg-emerald-50 text-emerald-900`}>
+        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+        <div>
+          <div className="font-semibold">Angebot angenommen, vielen Dank!</div>
+          <p className="mt-1 text-sm">Sie bekommen gleich eine E-Mail mit Ihrem Zugang und können direkt mit der Einrichtung beginnen.</p>
+          <PasswortJetzt token={token} />
+        </div>
+      </div>
+    ) : null;
+  }
   return (
     <div id="zahlung" className={`${box} scroll-mt-4 border-[#e5e7eb] bg-white`}>
       <div className="font-semibold">

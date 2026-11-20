@@ -607,8 +607,11 @@ export async function runPolicenFlowErinnerungen(now = new Date()): Promise<{ ge
 
 const CHECK_OFFEN_MS = 30 * 60 * 1000;
 const CHECK_RUHIG_MS = 6 * HOUR;
-const VORLAGEN_ARTEN: VorlagenArt[] = ["bitte", "erinnerung1", "erinnerung2"];
+// Erinnerung 2 (Vortag) entfällt seit 19.11.2026 (Satz in der Vortags-Terminerinnerung), daher keine Vorlage mehr dafür
+const VORLAGEN_ARTEN: VorlagenArt[] = ["bitte", "erinnerung1"];
 const FORMEN: Ansprache[] = ["sie", "du"];
+/** Namen der Vorlagen, die zu einem Flow gehören (je Art und Ansprache). */
+const vorlagenNamen = (jsonHash: string) => VORLAGEN_ARTEN.flatMap((art) => FORMEN.map((an) => vorlagenName(art, an, jsonHash)));
 
 /** Vorlage mit Flow-Knopf und Quick Reply (Meta: erst die Nicht-Quick-Reply-Gruppe, dann die Quick Replies). */
 export function vorlagenAntrag(art: VorlagenArt, an: Ansprache, o: { flowId: string; jsonHash: string }) {
@@ -699,7 +702,9 @@ export async function syncPolicenFlowFuerKunde(customerId: string, now = new Dat
   if (rec.status !== "veroeffentlicht" || !rec.flowId) return { customerId, status: rec.status, vorlagen: {} };
 
   // Vorlagen einreichen bzw. Status holen
-  const stand: VorlagenStand = { ...((rec.vorlagen as VorlagenStand | null) ?? {}) };
+  // Nur die aktuellen Vorlagen führen (alte, z. B. Erinnerung 2, fallen heraus)
+  const bisher = (rec.vorlagen as VorlagenStand | null) ?? {};
+  const stand: VorlagenStand = Object.fromEntries(vorlagenNamen(hash).filter((n) => bisher[n]).map((n) => [n, bisher[n]]));
   let remote: Awaited<ReturnType<typeof listTemplates>> = [];
   try {
     remote = await listTemplates(apiKey);
@@ -749,7 +754,7 @@ export async function syncPolicenFlows(now = new Date(), opts: { limit?: number 
     if (geprueft >= (opts.limit ?? 5)) break;
     if (!flowKundeErlaubt(customerId)) continue;
     const r = recs.get(customerId);
-    const fertig = r?.status === "veroeffentlicht" && r.jsonHash === flowJsonHash() && Object.values((r.vorlagen as VorlagenStand | null) ?? {}).length === 6 && Object.values(r.vorlagen as VorlagenStand).every((v) => v.status === "approved" || v.status === "rejected");
+    const fertig = r?.status === "veroeffentlicht" && r.jsonHash === flowJsonHash() && vorlagenNamen(r.jsonHash).every((n) => ["approved", "rejected"].includes(((r.vorlagen as VorlagenStand | null) ?? {})[n]?.status ?? ""));
     const abstand = fertig ? CHECK_RUHIG_MS : CHECK_OFFEN_MS;
     if (r?.checkedAt && now.getTime() - r.checkedAt.getTime() < abstand) continue;
     geprueft++;

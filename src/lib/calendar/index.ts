@@ -107,7 +107,8 @@ export async function adapterFor(customerId: string) {
       const lists = await Promise.all([
         native.getBusy(min, max),
         icsUrl ? fetchIcsBusy(icsUrl, min, max) : Promise.resolve([] as Busy[]),
-        allianz ? allianzBusy(customerId, allianz, min, max) : Promise.resolve([] as Busy[]),
+        // Vor dem frühesten Allianz-Buchungstag nur mit eigenem Kalender (Google/Outlook) Lead-Zeiten anbieten
+        allianz ? allianzBusy(customerId, allianz, min, max, { leadTimesBeforeEarliest: conn.provider !== APP_PROVIDER }) : Promise.resolve([] as Busy[]),
         calendarBlocksBusy(customerId, min, max),
       ]);
       return lists.flat();

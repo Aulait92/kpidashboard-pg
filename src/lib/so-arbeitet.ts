@@ -44,6 +44,8 @@ import {
 import { folgefragen, folgefrageText, spartenDesLeads } from "@/lib/preise/rechner-angaben";
 import { nachEinwilligungText, policenBitte, type BitteVermittler } from "@/lib/policen/bitte";
 import type { Salutation } from "@/lib/ansprache";
+import { berlinAt, DEFAULT_LEAD_TIMES, timesForDay, type LeadTimes } from "@/lib/calendar/lead-times";
+import { addDaysYmd, berlinYmd, weekdayOfYmd } from "@/lib/absence";
 
 // ─── Zeitleiste ─────────────────────────────────────────────────────────
 
@@ -138,8 +140,27 @@ export type BeispielEingabe = {
   policen: boolean;
   /** Kranken/BU/Leben für diesen Vermittler freigegeben */
   gesundheitAn?: boolean;
+  /** Lead-Zeiten des Kunden (lib/calendar/lead-times.ts); fehlt = Standard wie bei echten Leads */
+  leadTimes?: LeadTimes;
   now: Date;
 };
+
+/**
+ * Zwei Beispielzeiten im Terminvorschlag aus den Lead-Zeiten des Kunden (wie bei echten Leads, Ole 20.11.2026:
+ * die Vorschau bot einen Sonntag an): die früheste ab morgen und die früheste an einem anderen Tag.
+ */
+export function beispielZeiten(lt: LeadTimes, now: Date): [Date, Date] {
+  const zeiten: Date[] = [];
+  const heute = berlinYmd(now);
+  for (let i = 1; i <= 21 && zeiten.length < 50; i++) {
+    const ymd = addDaysYmd(heute, i);
+    for (const t of timesForDay(lt, weekdayOfYmd(ymd))) zeiten.push(berlinAt(ymd, t));
+  }
+  if (!zeiten.length) return lt === DEFAULT_LEAD_TIMES ? [berlinZeit(now, 1, 10), berlinZeit(now, 2, 16)] : beispielZeiten(DEFAULT_LEAD_TIMES, now);
+  const erste = zeiten[0];
+  const zweite = zeiten.find((z) => berlinYmd(z) !== berlinYmd(erste)) ?? zeiten[1] ?? erste;
+  return [erste, zweite];
+}
 
 export const BEISPIEL_EMAIL = "julia.becker@example.com";
 const BEISPIEL_LINK = "https://meet.google.com/abc-defg-hij";
@@ -222,8 +243,7 @@ export function beispielVerlauf(o: BeispielEingabe): ChatZeile[] {
   }
 
   // 3. Terminvorschlag mit zwei Zeiten (früheste und früheste an einem anderen Tag)
-  const z1 = berlinZeit(now, 1, 10);
-  const z2 = berlinZeit(now, 2, 16);
+  const [z1, z2] = beispielZeiten(o.leadTimes ?? DEFAULT_LEAD_TIMES, now);
   const vorschlagJetzt = new Date(t);
   assistent(
     terminVorschlagText({ an, source: produkt, formular, angaben, person, zeiten: [zeitKurz(z1, vorschlagJetzt), zeitKurz(z2, vorschlagJetzt)], video: true }),

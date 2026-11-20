@@ -11,6 +11,7 @@ import { setzeErinnerungPerToken } from "@/lib/angebot-zahlungserinnerung-server
 import { richteUeberweisungEin, ueberweisungMoeglich } from "@/lib/ueberweisung";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
+import { annahmeImBrowser, direktLink, direktZugang, merkeAnnahme } from "@/lib/annahme-direktzugang-server";
 
 export type AcceptState = { ok?: boolean; error?: string; checkoutUrl?: string };
 
@@ -56,12 +57,15 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
     agent: h.get("user-agent"),
   });
   if (!res.ok) return { error: res.error };
+  // Diesen Browser merken: danach „Passwort jetzt festlegen“ statt nur Warten auf die Mail (lib/annahme-direktzugang.ts)
+  const angenommen = await getOfferByToken(token);
+  if (angenommen) await merkeAnnahme(angenommen.id).catch((err) => reportError(err, "angebot-direktzugang-cookie"));
   revalidatePath(`/angebot/${token}`);
   // Direkt weiter zur Zahlung (gewählte Zahlart, Standard Lastschrift). Serverseitige
   // Weiterleitung: Die Seite wechselt nach der Annahme in die Zahlungsansicht,
   // ein clientseitiger Redirect im Formular käme deshalb nicht mehr zum Zug.
   if (billingEnabled()) {
-    const offer = await getOfferByToken(token);
+    const offer = angenommen;
     // Testangebot: keine Zahlung, das Onboarding startet schon mit der Annahme.
     // „Später zahlen erlaubt“: nicht direkt weiterleiten, die Seite zeigt „Zahlung einrichten“ und „Ich zahle später“.
     if (offer && !offer.isTest && !offer.allowPayLater) {
@@ -82,6 +86,26 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
     }
   }
   return { ok: true };
+}
+
+/**
+ * „Passwort jetzt festlegen“ (Ole, 20.11.2026): nur in dem Browser, in dem das Angebot angenommen wurde, und nur,
+ * solange sich der Kunde noch nie angemeldet hat. Erzeugt erst beim Tippen einen frischen, kurz gültigen Link; der Link
+ * aus der Willkommens-Mail bleibt gültig. Legt die Zahlung das Login gerade erst an (Stripe-Webhook), kurz warten.
+ */
+export async function passwortJetztAction(token: string): Promise<{ url?: string; error?: string; angemeldet?: boolean }> {
+  if (!checkLimit("offerAccept", clientIp(await headers())).ok) return { error: RATE_LIMIT_MESSAGE };
+  const offer = await getOfferByToken(token);
+  if (!offer || !(await annahmeImBrowser(offer.id))) return { error: "Bitte nutzen Sie den Link aus der E-Mail mit Ihrem Zugang." };
+  let zugang = await direktZugang(offer.id);
+  for (let i = 0; zugang.stand === "wartet" && i < 4; i++) {
+    await new Promise((r) => setTimeout(r, 1500));
+    zugang = await direktZugang(offer.id);
+  }
+  if (zugang.stand === "angemeldet") return { angemeldet: true };
+  if (zugang.stand === "wartet") return { error: "Ihr Zugang wird gerade angelegt. Bitte tippen Sie in ein paar Sekunden noch einmal." };
+  const url = await direktLink(offer.id, zugang);
+  return url ? { url } : { error: "Das hat gerade nicht geklappt. Bitte nutzen Sie den Link aus der E-Mail." };
 }
 
 /** Zahlung (erneut) starten – z. B. nach Abbruch auf der Bezahlseite. */
