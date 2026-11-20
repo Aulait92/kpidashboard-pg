@@ -5,7 +5,8 @@
 //   „Bitte verschieben“ …       → Assistent mit Hinweis: freie Zeiten holen, verschieben (reschedule_appointment);
 //                                 keine weiteren Erinnerungen zur alten Zeit (Appointment.rescheduleRequestedAt)
 //   „Kein Bedarf mehr“, „Nein, danke“ → Lead sauber verloren (Kein Interesse, Grund „kein Bedarf“), Abfolgen stopp, Dank
-//   „Ja, neuer Termin“, „Andere Zeit“ → Assistent mit Hinweis: zwei freie Zeiten anbieten
+//   „Ja, neuer Termin“, „Andere Zeit“ → Assistent mit Hinweis: zwei freie Zeiten anbieten; ab dem 2. „Andere Zeit“ im
+//                                 Chat schickt die App selbst den Buchungslink (lib/whatsapp/buchungslink.ts), Assistent schweigt
 //   „Erste/Zweite Zeit passt“ (Payload slot:<ISO>) → Assistent mit genauer Startzeit, bucht bzw. verschiebt
 //   „Eher der Beitrag“/„Eher die Leistung“ (Angebot) → Assistent: Gespräch zum Anpassen anbieten, ohne Beträge
 // Termin-Strecke (Ole, 17.11.2026, lib/whatsapp/termin-strecke.ts), immer am Payload erkannt:
@@ -175,6 +176,35 @@ async function markLostKeinBedarf(leadId: string, now: Date): Promise<boolean> {
   return true;
 }
 
+/**
+ * Buchungslink ab dem 2. „Andere Zeit“ senden (lib/whatsapp/buchungslink.ts). false = nichts gesendet: erstes Mal, schon
+ * ein kommender Termin, keine Buchungsseite (kein Kurzname oder Kalender nicht verbunden) bzw. Fehler.
+ */
+export async function buchungslinkSenden(conversationId: string, now = new Date()): Promise<boolean> {
+  try {
+    const b = await import("@/lib/whatsapp/buchungslink");
+    const eingaenge = await prisma.message.findMany({
+      where: { conversationId, direction: "inbound", kind: { in: ["button", "interactive"] } },
+      select: { kind: true, body: true },
+    });
+    if (!b.buchungslinkFaellig(b.andereZeitAnzahl(eingaenge))) return false;
+    const { streckenKontext } = await import("@/lib/whatsapp/termin-strecke");
+    const k = await streckenKontext(conversationId, now);
+    if (!k || k.termin) return false;
+    const cal = await prisma.calendarConnection.findUnique({ where: { customerId: k.customerId }, select: { bookingSlug: true, status: true } });
+    const url = cal?.status === "connected" ? b.chatBuchungUrl(cal.bookingSlug, conversationId) : null;
+    if (!url) return false;
+    const { variante } = await import("@/lib/experimente");
+    const v = await variante(b.BUCHUNGSLINK_EXPERIMENT, k.leadId ?? conversationId);
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+    await sendWhatsAppMessage({ customerId: k.customerId, to: k.phone, body: b.buchungslinkText(k.an, k.person, url, v), sentBy: "bot" });
+    return true;
+  } catch (e) {
+    console.error("[knopf buchungslink]", e instanceof Error ? e.message.slice(0, 120) : e);
+    return false;
+  }
+}
+
 async function reply(conversationId: string, body: string): Promise<void> {
   const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { customerId: true, contactPhone: true } });
   if (!conv) return;
@@ -274,6 +304,9 @@ export async function handleButtonReply(
     const { bedenkzeitKnopf } = await import("@/lib/bedenkzeit-server");
     return { handled: await bedenkzeitKnopf(conversationId, k.wahl, now) };
   }
+  // Zweites „Andere Zeit“ im selben Chat (Ole, 20.11.2026, lib/whatsapp/buchungslink.ts): die App schickt selbst den
+  // Buchungslink mit der Bitte um den Wunschtag, der Assistent schweigt. Erstes Mal bzw. ohne Buchungsseite: wie bisher.
+  if (k.aktion === "andere_zeit" && (await buchungslinkSenden(conversationId, now))) return { handled: true };
   // „Bitte verschieben“ (Show-up-Paket, Ole 17.11.2026): keine weiteren Erinnerungen zur alten Zeit; das Verschieben
   // selbst übernimmt der Assistent wie bisher (reschedule_appointment legt einen neuen Termin an)
   if (k.aktion === "verschieben") {
