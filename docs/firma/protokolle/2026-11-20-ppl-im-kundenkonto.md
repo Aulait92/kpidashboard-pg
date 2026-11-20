@@ -44,3 +44,9 @@ Vor jedem Angebot: Umsatzsteuerfrage durch den Steuerberater klären. Nur Pilot,
 2. Bei grüner Vorprüfung Pilot mit 3 Maklern/Mehrfachvertretern, 4 Wochen, Mechanik nach CFO, Klauseln nach Recht.
 3. Allianz-Vertreter und kleine Mengen bleiben im bisherigen PPL über unser Konto, mit Vorkasse.
 4. Offen für Ole: Preis netto oder brutto, Software in den 35 € enthalten oder zusätzlich.
+
+## Nachtrag Ole (20.11.2026)
+- Sichtbare Marge ist „ein Ding“. Geprüfte Alternativen: „wir nehmen so viel wie Meta, höchstens 35 €“ (Fehlanreiz: wir
+  verdienen mehr, je teurer der Lead) und „Meta 1:1 plus feste Pauschale, höchstens 35 €“.
+- **Entscheidung Ole: Mechanik bleibt „35 € pro Lead minus Werbekosten“.** Sales-Verpackung: Rechnung zeigt Leads × Preis,
+  abzüglich bereits an Meta gezahlt, keine Margenzeile.
