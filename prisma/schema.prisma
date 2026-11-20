@@ -1242,6 +1242,8 @@ model WhatsAppAccount {
   // Client und Channel aus dem Redirect; der API-Key wird daraus erzeugt.
   dialog360ClientId  String?
   dialog360ChannelId String?
+  /// Einladung an eine andere E-Mail als den Login (Ole, 20.11.2026: Firmen-Postfach filtert die Mail von 360dialog)
+  dialog360InviteEmail String?
   // Vorlagen automatisch einreichen/nachziehen (lib/whatsapp/template-submit.ts):
   // letzter Abgleich mit 360dialog (gedrosselt im WhatsApp-Cron).
   templatesCheckedAt DateTime?
