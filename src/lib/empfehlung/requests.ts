@@ -563,7 +563,7 @@ export async function sendReferralThanks(now = new Date()): Promise<number> {
           existingCustomerId: true,
           kind: true,
           token: true,
-          lead: { select: { id: true, name: true, phone: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true, feedbackConsentText: true } },
+          lead: { select: { id: true, name: true, phone: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true, feedbackConsentText: true, bestandKunde: { select: { optOutAt: true, blockedAt: true } } } },
           existingCustomer: { select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true, blockedAt: true } },
         },
       },
@@ -578,7 +578,7 @@ export async function sendReferralThanks(now = new Date()): Promise<number> {
     const ref = l.referralLink;
     if (!ref || ref.kind === "general") continue;
     const target =
-      ref.lead && !ref.lead.erasedAt && feedbackAllowed(ref.lead)
+      ref.lead && !ref.lead.erasedAt && feedbackAllowed(ref.lead) && !ref.lead.bestandKunde?.optOutAt && !ref.lead.bestandKunde?.blockedAt
         ? { name: ref.lead.name, phone: ref.lead.phone, leadId: ref.lead.id, kontakt: null, consent: { at: ref.lead.feedbackConsentAt, text: ref.lead.feedbackConsentText } as { at: Date | null; text: string | null } | null, bestand: false }
         : !ref.lead && ref.existingCustomer && !ref.existingCustomer.optOutAt && !ref.existingCustomer.blockedAt
           ? { name: [ref.existingCustomer.firstName, ref.existingCustomer.lastName].filter(Boolean).join(" "), phone: ref.existingCustomer.phone, leadId: null, kontakt: kontaktFromExisting(ref.existingCustomer), consent: null, bestand: true }
@@ -646,7 +646,7 @@ export async function sendReferralUpdates(now = new Date()): Promise<number> {
       _count: { select: { appointments: { where: { status: { in: ["booked", "completed"] } } } } },
       referralLink: {
         select: {
-          lead: { select: { id: true, name: true, phone: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true, reviewRequest: { select: { note: true } } } },
+          lead: { select: { id: true, name: true, phone: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true, bestandKunde: { select: { optOutAt: true, blockedAt: true } }, reviewRequest: { select: { note: true } } } },
           existingCustomer: { select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true, blockedAt: true } },
         },
       },
@@ -664,7 +664,7 @@ export async function sendReferralUpdates(now = new Date()): Promise<number> {
     const ref = l.referralLink;
     const optedOut = /keine Nachrichten/i.test(ref?.lead?.reviewRequest?.note ?? "");
     // Nur mit Einwilligung des Empfehlenden (Lead) bzw. ohne STOPP und Sperre (Bestandskunde)
-    const target = ref?.lead && !ref.lead.erasedAt && !optedOut && feedbackAllowed(ref.lead)
+    const target = ref?.lead && !ref.lead.erasedAt && !optedOut && feedbackAllowed(ref.lead) && !ref.lead.bestandKunde?.optOutAt && !ref.lead.bestandKunde?.blockedAt
       ? { name: ref.lead.name, phone: ref.lead.phone, leadId: ref.lead.id, kontakt: null, an: settings.leadAn }
       : !ref?.lead && ref?.existingCustomer && !ref.existingCustomer.optOutAt && !ref.existingCustomer.blockedAt
         ? { name: [ref.existingCustomer.firstName, ref.existingCustomer.lastName].filter(Boolean).join(" "), phone: ref.existingCustomer.phone, leadId: null, kontakt: kontaktFromExisting(ref.existingCustomer), an: settings.bestandAn }
@@ -1320,7 +1320,7 @@ export type ReferralSubmit = {
   email: string | null;
   topic: string | null;
   message: string | null;
-  /** Absenden = Einwilligung (Satz unter dem Knopf, contactConsentText) */
+  /** Absenden = Einwilligung (Satz direkt über dem Knopf, contactConsentText) */
   consent: boolean;
   statusConsent?: boolean;
   /** Ansprache der Kontaktseite (für den gespeicherten Wortlaut) */

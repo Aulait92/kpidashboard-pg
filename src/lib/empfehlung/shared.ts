@@ -209,7 +209,7 @@ export function renderText(
  * Bewertungsbitte gezielt positiv? (Review-Gating, Google-Richtlinien, UWG): „5 Sterne“, „gute/positive Bewertung“
  * oder die Bitte nur an Zufriedene.
  */
-const GATED_REVIEW = /((5|fünf)\s*(\*|sterne|⭐)|⭐{2,}|(gute|positive|tolle|super)\s+(google-)?bewertung|wenn sie zufrieden (waren|sind))/i;
+const GATED_REVIEW = /((5|fünf)\s*(\*|sterne|⭐)|⭐{2,}|(gute|positive|tolle|super)\s+(google-)?bewertung|wenn sie zufrieden (waren|sind)|wenn du zufrieden (warst|bist))/i;
 
 /** Texte, die um etwas bitten und darum STOPP nennen müssen. */
 export const STOPP_KEYS: readonly TextKey[] = ["review", "praiseReferral", "referral", "referralThanks"];
@@ -893,7 +893,7 @@ export function shareIntro(an: Ansprache): string {
 }
 
 /**
- * Einwilligung der empfohlenen Person als Satz direkt unter dem Knopf („Absenden = Einwilligung“). Enthält alle
+ * Einwilligung der empfohlenen Person als Satz direkt über dem Knopf, vor dem Absenden lesbar („Absenden = Einwilligung“). Enthält alle
  * Pflichtangaben: wer ({Vertreter}), Kanäle, Zweck, Widerruf; der Link zur Datenschutzerklärung steht dahinter.
  * Gespeichert wird genau dieser Wortlaut mit Zeitstempel (submitReferral).
  */

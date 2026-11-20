@@ -71,7 +71,7 @@ zuerst, Knöpfe als Handlung, Rechtliches an die Stelle der Handlung). Danach Ab
 
 | Pflichtangabe | Wo jetzt | Stand |
 |---|---|---|
-| Wer ({Vertreter}) | Satz unter „Rückruf anfordern“ (`contactConsentText`) | erhalten |
+| Wer ({Vertreter}) | Satz direkt über „Rückruf anfordern“ (`contactConsentText`), vor dem Klick lesbar | erhalten |
 | Kanäle Telefon, WhatsApp, E-Mail | derselbe Satz | erhalten |
 | Zweck „zu Ihrer Anfrage“ | derselbe Satz | erhalten |
 | Widerruf jederzeit | derselbe Satz („Widerruf jederzeit möglich.“) | erhalten |
@@ -86,6 +86,25 @@ zuerst, Knöpfe als Handlung, Rechtliches an die Stelle der Handlung). Danach Ab
 
 Weggefallen ist nur der Satzteil „und meine Angaben dafür verarbeitet“ (Plan-Wortlaut); die Verarbeitung zur
 Bearbeitung der Anfrage stützt sich ohnehin auf Art. 6 Abs. 1 lit. b DSGVO, der Datenschutzlink steht am Satz.
+
+## Rechtsprüfung des gesamten Umbaus (20.11.2026)
+
+Diff `50e4634..empfehlung-champions` gegen die Pflichtangaben geprüft: alle erhalten, keine roten Punkte offen.
+Direkt behoben:
+
+- Einwilligungssatz der empfohlenen Person steht jetzt **über** dem Knopf „Rückruf anfordern“ (vorher darunter), damit er
+  vor dem Klick gelesen wird (Art. 7 DSGVO, informierte Einwilligung). Wortlaut unverändert.
+- Gating-Erkennung auch in der Du-Fassung („wenn du zufrieden warst/bist“).
+- Dank und Rückmeldung an Empfehlende prüfen zusätzlich STOPP und Sperre des verknüpften Bestandskunden.
+
+Gelb, offen (Entscheidung beim Einschalten):
+
+- „Link senden“ ohne Einwilligung im offenen 24-h-Fenster (`nurFenster` in `sendReferralLinkNow`): einzelne, von Hand
+  ausgelöste Nachricht mit STOPP-Hinweis. Rechtlich bleibt es Werbung per elektronischer Post (§ 7 Abs. 2 Nr. 2 UWG);
+  § 7 Abs. 3 greift nicht, weil beim Erheben der Nummer nicht auf den Widerspruch hingewiesen wurde. Empfehlung: Knopf
+  ohne Einwilligung nur als „Kunde hat zugestimmt, jetzt senden“ (setzt `feedbackConsentAt`) anbieten statt still zu senden.
+- Ein-Tipp-Bestätigung „Kunde hat zugestimmt“ in der Liste „Einwilligung fehlt“: Beweislast liegt beim Vermittler;
+  Hinweis in AGB bzw. Hilfe, dass nur nach echter Zustimmung getippt wird.
 
 ## Beim Einschalten nötig (Stufe A, Ole)
 

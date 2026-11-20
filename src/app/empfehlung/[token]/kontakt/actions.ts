@@ -47,7 +47,7 @@ export async function submitReferralAction(token: string, fd: FormData): Promise
   if (!name) fail("name");
   if (!phone) fail("phone");
   if (emailRaw && !EMAIL_RE.test(emailRaw)) fail("email");
-  // Absenden = Einwilligung: Der Satz steht direkt unter dem Knopf „Rückruf anfordern“ (contactConsentText).
+  // Absenden = Einwilligung: Der Satz steht direkt über dem Knopf „Rückruf anfordern“ (contactConsentText).
   // submitReferral speichert genau diesen Wortlaut (in der Ansprache der Seite) mit Zeitstempel am Lead.
   const r = await submitReferral(token, { name, phone: phone!, email: emailRaw || null, topic, message, consent: true, statusConsent: fd.get("statusConsent") === "on", an });
   if (!r.ok) fail(r.error, r.error !== "unavailable");

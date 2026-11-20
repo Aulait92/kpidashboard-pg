@@ -75,6 +75,7 @@ describe("Empfehlungen & Bewertungen – Regeln", () => {
     // Kein Review-Gating: nie um fünf Sterne oder nur um gute Bewertungen bitten
     expect(validateText("review", "Hallo {Vorname}, über 5 Sterne freue ich mich: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
     expect(validateText("review", "Hallo {Vorname}, wenn Sie zufrieden waren, gern eine Bewertung: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
+    expect(validateText("review", "Hallo {Vorname}, wenn du zufrieden warst, gern eine Bewertung: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
     expect(validateText("review", "Hallo {Vorname}, über eine positive Bewertung freue ich mich: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
     expect(validateText("referral", "Empfehlen Sie mich: {empfehlungslink} Keine Nachrichten mehr? STOPP.")).toBeNull();
     // Empfehlungsbitte, Dank bei Lob und Dank an Empfehlende nennen STOPP (Widerspruch), der Dank braucht den Link

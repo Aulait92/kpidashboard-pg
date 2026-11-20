@@ -1222,7 +1222,7 @@ Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, d
   **An wen?** (Freunde oder Familie per Du, Kollegen oder Nachbarn per Sie) und tippt **Per WhatsApp weiterleiten**,
   gern an mehrere. Er gibt dabei keine Daten von anderen weiter.
 - **Seite der empfohlenen Person:** sichtbar nur Name und Handynummer, E-Mail, Thema und Nachricht unter „Mehr angeben“,
-  Knopf **Rückruf anfordern**. Die Einwilligung steht als Satz direkt unter dem Knopf (Absenden gilt als Einwilligung,
+  Knopf **Rückruf anfordern**. Die Einwilligung steht als Satz direkt über dem Knopf (Absenden gilt als Einwilligung,
   Wortlaut und Zeitpunkt werden am Kontakt gespeichert). Darunter, wenn Ihr WhatsApp verbunden ist, „Lieber per WhatsApp
   schreiben“. Die Seite folgt der Ansprache, die Ihr Kunde beim Teilen gewählt hat. Nach dem Absenden sieht die Person
   Ihre Nummer mit **Nummer speichern**, damit sie Ihren Anruf erkennt (Nummer aus der Erstinformation, sonst aus dem

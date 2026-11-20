@@ -15,7 +15,7 @@ import { submitReferralAction } from "./actions";
 
 // Empfohlene Person: trägt sich selbst ein. Daraus wird ein normaler Lead beim Vertreter mit Quelle „Empfehlung“,
 // der Vertreter bekommt den Push „jetzt anrufen“ (lib/lead-intake.ts). Paket 3 (20.11.2026): sichtbar nur Name und
-// Handy, der Rest hinter „Mehr angeben“; Einwilligung als Satz direkt unter dem Knopf (Absenden = Einwilligung,
+// Handy, der Rest hinter „Mehr angeben“; Einwilligung als Satz direkt über dem Knopf (Absenden = Einwilligung,
 // Wortlaut und Zeitstempel werden gespeichert); Rückmeldung an den Empfehlenden als eigenes, freiwilliges Häkchen.
 // Ansprache: ?an=du (vom Empfehlenden beim Teilen gewählt), sonst Sie.
 export const dynamic = "force-dynamic";
@@ -150,12 +150,12 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
             <span>{statusConsentText(page.recommender, page.vertreter)}</span>
           </label>
         ) : null}
-        <SubmitButton pendingLabel="Wird gesendet …" className={buttonClass("primary", "md", "h-12 w-full text-base")}>
-          <Phone className="h-5 w-5" /> Rückruf anfordern
-        </SubmitButton>
         <p className="text-xs leading-relaxed text-[color:var(--muted)]" data-referral-consent>
           {contactConsentText(page.vertreter, an)} {privacyLink}
         </p>
+        <SubmitButton pendingLabel="Wird gesendet …" className={buttonClass("primary", "md", "h-12 w-full text-base")}>
+          <Phone className="h-5 w-5" /> Rückruf anfordern
+        </SubmitButton>
       </form>
       {page.whatsappUrl ? (
         <div className="mt-5 border-t border-[color:var(--border)] pt-4" data-referral-whatsapp>
