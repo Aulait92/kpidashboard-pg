@@ -76,7 +76,6 @@ export default async function CampaignDetail({ params, searchParams }: { params:
                 </button>
               </form>
             ) : null}
-            {s.status === "running" || s.status === "paused" ? <CampaignEndButton id={s.id} waiting={f.gesamt.wartend} readOnly={ctx.preview} /> : null}
           </div>
         }
       />
@@ -268,6 +267,12 @@ export default async function CampaignDetail({ params, searchParams }: { params:
         {usesMail ? (
           <div data-campaign-reply>
             <ReplySheetButton readOnly={ctx.preview} />
+          </div>
+        ) : null}
+        {/* Endgültiges ganz unten statt neben dem Titel (Fehlklick am Handy), mit Bestätigung im Fenster */}
+        {s.status === "running" || s.status === "paused" ? (
+          <div className="border-t border-[color:var(--border)] pt-4" data-campaign-end-area>
+            <CampaignEndButton id={s.id} waiting={f.gesamt.wartend} readOnly={ctx.preview} />
           </div>
         ) : null}
       </div>

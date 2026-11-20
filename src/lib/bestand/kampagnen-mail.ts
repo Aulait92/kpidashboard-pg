@@ -98,14 +98,14 @@ export function defaultCampaignMail(o: Occasion, an: Ansprache = "sie"): { subje
           GRUSS,
       };
     case "birthday":
-      // Zurückhaltend, ohne Produkt und ohne Altersaussage (nur mit Einwilligung)
+      // Nur gratulieren: ohne Produkt, ohne Altersaussage und ohne Frage nach Veränderungen (Persona-Abnahme 20.11.2026)
       return {
         subject: "Herzlichen Glückwunsch zum Geburtstag",
         body:
           a(
             an,
-            "{anrede}\n\nherzlichen Glückwunsch zum Geburtstag und alles Gute für das neue Lebensjahr!\n\nHat sich bei dir etwas verändert, etwa Umzug, Familie oder Job? Dann schauen wir gern kurz gemeinsam drauf. Antworte einfach auf diese E-Mail.",
-            "{anrede}\n\nherzlichen Glückwunsch zum Geburtstag und alles Gute für das neue Lebensjahr!\n\nHat sich bei Ihnen etwas verändert, etwa Umzug, Familie oder Job? Dann schauen wir gern kurz gemeinsam drauf. Antworten Sie einfach auf diese E-Mail.",
+            "{anrede}\n\nherzlichen Glückwunsch zum Geburtstag! Ich wünsche dir einen schönen Tag und alles Gute für das neue Lebensjahr.",
+            "{anrede}\n\nherzlichen Glückwunsch zum Geburtstag! Ich wünsche Ihnen einen schönen Tag und alles Gute für das neue Lebensjahr.",
           ) + GRUSS,
       };
     case "renewal":

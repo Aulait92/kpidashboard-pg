@@ -33,6 +33,10 @@ import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { bestandVisible } from "@/lib/bestand/sichtbar";
 import { bestandMitMails } from "@/lib/mail/kontakt-mail";
 import { BestandMailVerlauf } from "@/components/bestand/mail-verlauf";
+import { consentChip, heroPlan, lockedHeadline, reachSummary, type Schritt } from "@/lib/bestand/cockpit";
+import { templateState } from "@/lib/whatsapp/vorlagen-hinweis";
+import { crossSellOffenWhere } from "@/lib/cross-sell-offen";
+import { CLOSED_STATUS } from "@/lib/products";
 
 // Bestand-Cockpit (Plan docs/ux/2026-11-19-bestand-champions.md, Paket 1): „App öffnen, sehen wen ich heute ansprechen
 // soll und warum, mit Euro-Potenzial, ein Tipp.“ Reihenfolge: Heute zuerst (einziger primärer Knopf), Hinweise als
@@ -72,7 +76,8 @@ const QUOTA_TOP_SHARE = 0.2;
 /** Link einer Chance: Kampagne vorbelegt bzw. Einwilligungen. */
 function oppHref(o: Opportunity): string {
   if (o.kind === "einwilligung") return "/buyer/bestand/einwilligungen";
-  return `/buyer/bestand/kampagne?${new URLSearchParams({ anlass: o.occasion, segment: JSON.stringify(o.segment), ...(o.topic ? { thema: o.topic } : {}) })}`;
+  // Auf „Nur E-Mail“ gerechnet (WhatsApp-Vorlage nicht freigegeben): Kampagne mit demselben Kanal öffnen, gleiche Zahl
+  return `/buyer/bestand/kampagne?${new URLSearchParams({ anlass: o.occasion, segment: JSON.stringify(o.segment), ...(o.topic ? { thema: o.topic } : {}), ...(o.channelMode ? { kanal: o.channelMode } : {}) })}`;
 }
 
 /** Überschrift mit Zahl: „22 Kfz-Kunden ohne Hausrat“, „Jahresgespräch: 140 Kunden“. */
@@ -100,9 +105,16 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   if (!bestandVisible(c, { admin: ctx.preview })) redirect("/buyer");
   // Ohne gebuchtes Modul: freundlicher Hinweis statt Sperre ohne Erklärung
   if (!c.existingCustomersEnabled) {
-    const check = await canSelfBookBestand(ctx.customerId);
+    const lockNow = new Date();
+    const [check, einVertrag, abschluesse] = await Promise.all([
+      canSelfBookBestand(ctx.customerId),
+      // Eigene Zahlen statt Fließtext (Plan „Gesperrter Zustand“): Kunden mit Abschluss ohne weiteren Vertrag
+      prisma.lead.count({ where: { customerId: ctx.customerId, ...crossSellOffenWhere(lockNow) } }),
+      prisma.lead.count({ where: { customerId: ctx.customerId, status: CLOSED_STATUS, erasedAt: null } }),
+    ]);
     return (
       <LockedBestand
+        headline={lockedHeadline({ einVertrag, abschluesse })}
         requestedAt={c.bestandRequestedAt?.toISOString() ?? null}
         readOnly={ctx.preview}
         canBook={check.ok}
@@ -164,21 +176,62 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
     : [[], null];
   // Chancen nach erwarteter Provision: eigene Sätze und, ab 30 eigenen Empfängern je Anlass, eigene Quoten
   // E-Mail gerade nicht möglich (kein Postfach, kein Impressum, Monatsgrenze): Chancen zählen wie die Kampagne nur WhatsApp
-  const mailBlocked = total
-    ? await Promise.all([channelAvailability(customerId, "review", ctx.userId), bestandMailQuota(customerId)]).then(
-        ([av, mq]) => !av.mailbox || !hasImprint(consentSettings.imprint ?? imprintFromWebsiteInfo(consentSettings.websiteInfo)) || mq.remaining <= 0,
-      )
-    : false;
-  const opps = total ? await opportunities(customerId, now, { rates: provision.rates, own: eigeneZahlen(stats), mailBlocked }) : [];
+  // mailFix: der eine Schritt, den der Vermittler für E-Mail selbst erledigen kann (Monatsgrenze ist keiner)
+  const [av, mq, tplRows] = total
+    ? await Promise.all([
+        channelAvailability(customerId, "review", ctx.userId),
+        bestandMailQuota(customerId),
+        prisma.messageTemplate.findMany({ where: { customerId, purpose: { in: Object.values(OCCASIONS).map((o) => o.purpose) } }, select: { purpose: true, status: true } }),
+      ])
+    : [null, null, []];
+  const mailFix: Schritt | null = !av
+    ? null
+    : !av.mailbox
+      ? { label: "Postfach verbinden", href: "/buyer/postfach" }
+      : !hasImprint(consentSettings.imprint ?? imprintFromWebsiteInfo(consentSettings.websiteInfo))
+        ? { label: "Impressum eintragen", href: "/buyer/bestand/einwilligungen?offen=recht#recht" }
+        : null;
+  const mailBlocked = !!av && (!!mailFix || (mq?.remaining ?? 0) <= 0);
+  // Nachbesserung 20.11.2026: WhatsApp-Vorlage je Anlass freigegeben? Sonst rechnet „Heute zuerst“ mit E-Mail bzw. „vormerken“
+  const waState = (o: Occasion) => templateState(tplRows, OCCASIONS[o].purpose);
+  const waReady = Object.fromEntries((Object.keys(OCCASIONS) as Occasion[]).map((o) => [o, waState(o) === "freigegeben"])) as Record<Occasion, boolean>;
+  const offer = total ? await loadOfferReach(customerId, now) : null;
+  const reach = offer && offer.total > 0 ? reachSummary(offer, OFFER_REACH_GOAL, total) : null;
+  const opps = (total ? await opportunities(customerId, now, { rates: provision.rates, own: eigeneZahlen(stats), mailBlocked, waReady }) : [])
+    // Ziel erreicht: Einwilligung ist keine Aufforderung mehr; sonst dieselbe Zahl wie „Für Angebote erreichbar“
+    .filter((o) => o.kind !== "einwilligung" || (reach?.cta ?? false))
+    .map((o) => (o.kind === "einwilligung" && offer && o.count ? { ...o, euro: { low: (o.euro.low * offer.withoutConsent) / o.count, high: (o.euro.high * offer.withoutConsent) / o.count }, count: offer.withoutConsent } : o));
   const top = opps[0] ?? null;
+  const hero =
+    top && top.kind === "kampagne"
+      ? heroPlan({
+          count: top.count,
+          whatsapp: top.whatsapp,
+          email: top.email,
+          channelMode: top.channelMode,
+          waWaiting: top.waWaiting,
+          emailIfFixed: top.emailIfFixed,
+          waState: waState(top.occasion),
+          mailFix,
+          href: oppHref(top),
+          label: `${de(top.count)} Kunden anschreiben`,
+        })
+      : null;
   // Einwilligung steht als Kennzahl mit eigenem Knopf da (Paket 3), nicht noch einmal in „Weitere Chancen“
   const rest = opps.slice(1).filter((o) => o.kind !== "einwilligung");
-  const offer = total ? await loadOfferReach(customerId, now) : null;
   const thirtyAgo = new Date(now.getTime() - 30 * 86_400_000);
-  const notConsented = { AND: [{ OR: [{ emailConsent: null }, { emailConsent: { not: "ja" } }] }, { OR: [{ whatsappConsent: null }, { whatsappConsent: { not: "ja" } }] }] };
   const filterWhere: Record<FilterKey, Prisma.ExistingCustomerWhereInput> = {
     alle: {},
-    ohne: { optOutAt: null, blockedAt: null, ...notConsented },
+    // Gleiche Zählweise wie „Für Angebote erreichbar“ (countsForReach und nicht reachableForOffers, ohne Sperrliste)
+    ohne: {
+      optOutAt: null,
+      blockedAt: null,
+      OR: [{ email: { not: null }, emailOptOutAt: null }, { phone: { not: null } }],
+      NOT: [
+        { phone: { not: null }, waUnavailableAt: null, whatsappConsent: "ja" },
+        { email: { not: null }, emailOptOutAt: null, emailConsent: "ja" },
+      ],
+    },
     chance: {
       optOutAt: null,
       blockedAt: null,
@@ -230,17 +283,8 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   const quotaTotal = quota.remaining + quota.sentThisMonth;
   const quotaTop = quotaPaused || (quotaTotal > 0 && quota.remaining < QUOTA_TOP_SHARE * quotaTotal);
   // Hinweis zur Einwilligung als Chip mit Zahl, der Rechtssatz im Aufklapper „Warum?“
-  const consentHint =
-    total && legacy > 0 && !consentSettings.legacyReviewedAt
-      ? {
-          chip: `${de(legacy)} Einwilligungen prüfen`,
-          why: `Für ${de(legacy)} Kunden gilt die Einwilligung aus Ihrer pauschalen Bestätigung beim Import („laut Versicherer“) für WhatsApp und E-Mail. Bitte prüfen Sie, ob sie nachweisbar ist.`,
-        }
-      : total && !consentSettings.uwgConfirmed
-        ? { chip: "Bestätigung für E-Mails fehlt", why: "Ohne Einwilligung gehen E-Mails nur nach § 7 Abs. 3 UWG raus. Dafür fehlt noch Ihre Bestätigung." }
-        : total && noProof > 0
-          ? { chip: `${de(noProof)} Kunden ohne Nachweis`, why: `${de(noProof)} Kunden ohne Nachweis zum Hinweis auf das Widerspruchsrecht: E-Mails an sie gehen nur mit Einwilligung.` }
-          : null;
+  // Als Handlung beschriftet („6 Nachweise ergänzen“), führt direkt in den offenen Aufklapper
+  const consentHint = consentChip({ total, legacy, legacyReviewed: !!consentSettings.legacyReviewedAt, uwgConfirmed: consentSettings.uwgConfirmed, noProof });
   const mehrHref = "/buyer/bestand?mehr=1#mehr";
 
   return (
@@ -297,11 +341,27 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                       <Badge>Schätzung</Badge>
                     </p>
                   ) : null}
-                  {top.kind === "kampagne" && channelLine(top) ? <p className="mt-1 text-sm text-[color:var(--muted)]">{channelLine(top)}</p> : null}
+                  {hero?.showChannels && channelLine(top) ? <p className="mt-1 text-sm text-[color:var(--muted)]">{channelLine(top)}</p> : null}
+                  {hero?.status ? (
+                    <p className="mt-1 text-sm text-[color:var(--muted)]" data-bestand-hero-status>
+                      {hero.status}
+                    </p>
+                  ) : null}
                   <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-                    <ButtonLink href={oppHref(top)} variant="primary" size="md" icon={top.kind === "einwilligung" ? ShieldCheck : Megaphone} className="w-full sm:w-auto" >
-                      {top.kind === "einwilligung" ? "Einwilligung anfragen" : `${de(top.count)} Kunden anschreiben`}
+                    <ButtonLink
+                      href={hero ? hero.primary.href : oppHref(top)}
+                      variant="primary"
+                      size="md"
+                      icon={top.kind === "einwilligung" ? ShieldCheck : Megaphone}
+                      className="w-full sm:w-auto"
+                    >
+                      {hero ? hero.primary.label : "Einwilligung anfragen"}
                     </ButtonLink>
+                    {hero?.secondary ? (
+                      <Link href={hero.secondary.href} className="text-sm font-medium text-[color:var(--brand)] hover:underline" data-bestand-hero-secondary>
+                        {hero.secondary.label}
+                      </Link>
+                    ) : null}
                     <Warum>
                       {top.why} Schätzung aus {top.ownQuotes ? "Ihren bisherigen Kampagnen" : "üblichen Antwort- und Abschlussquoten"} und Ihren Sätzen aus{" "}
                       <Link href="/buyer/provisionen" className="underline">
@@ -326,7 +386,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
           {consentHint ? (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" data-bestand-consent-notice>
               <Link
-                href="/buyer/bestand/einwilligungen"
+                href={consentHint.href}
                 className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 font-medium text-amber-900 hover:bg-amber-100 sm:min-h-8"
               >
                 <ShieldCheck className="h-4 w-4" />
@@ -336,22 +396,30 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
             </div>
           ) : null}
 
-          {offer && offer.total > 0 ? (
+          {offer && reach ? (
             <Card>
               <div className="px-5 py-4" data-bestand-reach>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <p className="text-sm font-medium">
                     Für Angebote erreichbar: <b className="tabular-nums">{pct(offer.share)}</b>
                   </p>
-                  <span className="text-xs text-[color:var(--muted)]">{offer.share >= OFFER_REACH_GOAL ? `Ziel ${pct(OFFER_REACH_GOAL)} erreicht` : `Ziel ${pct(OFFER_REACH_GOAL)}`}</span>
+                  <span className={`text-xs ${reach.goalReached ? "font-medium text-emerald-700" : "text-[color:var(--muted)]"}`}>
+                    {reach.goalReached ? `Ziel ${pct(OFFER_REACH_GOAL)} erreicht` : `Ziel ${pct(OFFER_REACH_GOAL)}`}
+                  </span>
                 </div>
                 <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken)]" aria-hidden>
                   <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${Math.min(100, Math.round(offer.share * 100))}%` }} />
                   <div className="absolute inset-y-0 w-0.5 bg-[color:var(--foreground)]/40" style={{ left: `${OFFER_REACH_GOAL * 100}%` }} />
                 </div>
-                {offer.withoutConsent > 0 ? (
-                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <p className="min-w-0 flex-1 text-sm text-[color:var(--muted)] tabular-nums">+{de(offer.withoutConsent)} Kunden erreichbar mit Einwilligung</p>
+                {/* Eine Basis für alle Zahlen (Kunden mit Kontaktweg); Ziel erreicht → keine Aufforderung mehr */}
+                <p className="mt-2 text-sm text-[color:var(--muted)] tabular-nums" data-bestand-reach-basis>
+                  {reach.basis}
+                </p>
+                {reach.cta && reach.ohne ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <p className="min-w-0 flex-1 text-sm text-[color:var(--muted)] tabular-nums" data-bestand-reach-ohne>
+                      {reach.ohne}
+                    </p>
                     {top?.kind !== "einwilligung" ? (
                       <ButtonLink href="/buyer/bestand/einwilligungen" icon={ShieldCheck}>
                         Einwilligung anfragen
@@ -796,6 +864,7 @@ function CampaignAction({ id, status, quotaStop, booking, readOnly }: { id: stri
 }
 
 function LockedBestand({
+  headline,
   requestedAt,
   readOnly,
   canBook,
@@ -804,6 +873,7 @@ function LockedBestand({
   prepayMonths,
   freeMonths,
 }: {
+  headline: { title: string; text: string };
   requestedAt: string | null;
   readOnly: boolean;
   canBook: boolean;
@@ -816,15 +886,30 @@ function LockedBestand({
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8" data-bestand-locked>
       <PageHeader title="Bestand" subtitle="Ihre Bestandskunden gezielt ansprechen" />
-      <Card>
-        <CardHeader title="Bestandskunden-Modul" icon={Users} />
-        <div className="space-y-4 px-5 pb-5 pt-4 text-[15px]">
-          <h2 className="text-xl font-semibold leading-snug tracking-tight">Geschäft im eigenen Bestand finden</h2>
-          <p className="-mt-2">
-            Die App zeigt, wem ein Angebot fehlt (z. B. Kfz ohne Hausrat), und schreibt die passenden Kunden mit einem Klick an. Antworten landen als Lead in
-            Ihrer Pipeline.
-          </p>
-          <ul className="list-disc space-y-1 pl-5 text-sm text-[color:var(--muted)]">
+      {/* Plan „Gesperrter Zustand“: eigene Zahlen oben, eine Hauptaktion, Preis und Bedingungen im Aufklapper (Preise unverändert) */}
+      <Card className="border-[color:var(--brand)]/40">
+        <div className="space-y-4 px-5 py-5 text-[15px]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--brand)]">Bestandskunden-Modul</p>
+          <h2 className="-mt-3 text-xl font-semibold leading-snug tracking-tight" data-bestand-locked-title>
+            {headline.title}
+          </h2>
+          <p className="-mt-2 text-[color:var(--muted)]">{headline.text}</p>
+          <ModuleBookButton
+            monthlyNet={PRICE_LIST.bestandModuleMonthly}
+            includedMessages={PRICE_LIST.bestandIncludedMessages}
+            canBook={canBook}
+            reason={reason}
+            requestedAt={requestedAt}
+            readOnly={readOnly}
+            annual={annual}
+            freeMonths={freeMonths ?? (prepayMonths === 6 ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths)}
+            prepayMonths={prepayMonths}
+          />
+          <details className="group text-sm [&>summary::-webkit-details-marker]:hidden" data-bestand-locked-terms>
+            <summary className="inline-flex min-h-10 cursor-pointer items-center gap-1 font-medium text-[color:var(--brand)]">
+              Preis und Bedingungen <ChevronDown className="h-3.5 w-3.5 transition group-open:rotate-180" />
+            </summary>
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-[color:var(--muted)]">
             <li>
               {eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat,{" "}
               {annual
@@ -837,21 +922,9 @@ function LockedBestand({
             <li>Bis zu {PRICE_LIST.bestandIncludedEmails.toLocaleString("de-DE")} Kampagnen-E-Mails im Monat über Ihr eigenes Postfach inklusive</li>
             <li>Mehr Nachrichten jederzeit als Zusatzpaket: {bestandPacksText()}</li>
             <li>Gesundheitsdaten werden nie übernommen</li>
+            {canBook ? <li>Sofort nutzbar, Sie buchen es hier selbst, anteilig ab heute</li> : null}
           </ul>
-          {canBook ? (
-            <p className="text-sm text-[color:var(--muted)]">Sofort nutzbar, Sie buchen es hier selbst, anteilig ab heute.</p>
-          ) : null}
-          <ModuleBookButton
-            monthlyNet={PRICE_LIST.bestandModuleMonthly}
-            includedMessages={PRICE_LIST.bestandIncludedMessages}
-            canBook={canBook}
-            reason={reason}
-            requestedAt={requestedAt}
-            readOnly={readOnly}
-            annual={annual}
-            freeMonths={freeMonths ?? (prepayMonths === 6 ? PRICE_LIST.halfYearFreeMonths : PRICE_LIST.annualFreeMonths)}
-            prepayMonths={prepayMonths}
-          />
+          </details>
         </div>
       </Card>
     </main>

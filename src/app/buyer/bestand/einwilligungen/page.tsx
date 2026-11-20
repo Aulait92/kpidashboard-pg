@@ -17,6 +17,7 @@ import { ConsentBulkButton } from "@/components/bestand/consent-bulk";
 import { isExclusiveAgent } from "@/lib/bestand/befugnis";
 import { LINE_NAMES } from "@/lib/bestand/rows";
 import { a, anredeZeile } from "@/lib/ansprache";
+import { reachSummary } from "@/lib/bestand/cockpit";
 
 // Einwilligungen (Plan docs/ux/2026-11-19-bestand-champions.md, Paket 3, 20.11.2026): oben die Kennzahl „Für Angebote
 // erreichbar“ mit Ziel 40 % und genau eine Hauptaktion (Sammelanfrage per E-Mail, sonst „Nachweis ergänzen“).
@@ -39,7 +40,8 @@ export default async function EinwilligungenPage({ searchParams }: { searchParam
   const { offen } = await searchParams;
   const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { existingCustomersEnabled: true, vermittlerTyp: true, bestandSparten: true } });
   if (!c?.existingCustomersEnabled) redirect("/buyer/bestand");
-  const [settings, reach, offer, legacy, legacyFirst, unknownEmail, unknownWa, optOuts, emailOptOuts, logs, mailbox, mailQuota, hinweisMissing, hinweisJa] = await Promise.all([
+  const [allCustomers, settings, reach, offer, legacy, legacyFirst, unknownEmail, unknownWa, optOuts, emailOptOuts, logs, mailbox, mailQuota, hinweisMissing, hinweisJa] = await Promise.all([
+    prisma.existingCustomer.count({ where: { customerId } }),
     loadConsentSettings(customerId),
     reachByOccasion(customerId),
     loadOfferReach(customerId),
@@ -75,6 +77,8 @@ export default async function EinwilligungenPage({ searchParams }: { searchParam
   const rechtOffen = !settings.uwgConfirmed || !imprint.trim() || hinweisMissing > 0 || (legacy > 0 && !settings.legacyReviewedAt);
   const share = offer.share;
   const goal = OFFER_REACH_GOAL;
+  // Gleiche Basis wie im Cockpit und im Filter „Ohne Einwilligung“; Differenz zur Kundenliste in einem Satz
+  const sum = reachSummary(offer, goal, allCustomers);
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -112,15 +116,16 @@ export default async function EinwilligungenPage({ searchParams }: { searchParam
               <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${Math.min(100, Math.round(share * 100))}%` }} />
               <div className="absolute inset-y-0 w-0.5 bg-[color:var(--foreground)]/40" style={{ left: `${goal * 100}%` }} />
             </div>
-            <p className="mt-2 text-sm text-[color:var(--muted)] tabular-nums">
-              {de(offer.reachable)} von {de(offer.total)} Kunden
+            <p className="mt-2 text-sm text-[color:var(--muted)] tabular-nums" data-consent-basis>
+              {sum.basis}
               {offer.confirmed30 ? ` · ${de(offer.confirmed30)} Zusagen in 30 Tagen` : ""}
             </p>
+            {sum.basisHinweis ? <p className="text-xs text-[color:var(--muted)]">{sum.basisHinweis}</p> : null}
             <div className="mt-4 space-y-2">
               {offer.askable > 0 ? (
                 <>
                   <ConsentBulkButton count={offer.askable} preview={preview} readOnly={ctx.preview} />
-                  <p className="text-sm text-[color:var(--muted)]">Mit Einwilligung dürfen Sie ihnen auch weitere Produkte anbieten.</p>
+                  {sum.ohne ? <p className="text-sm text-[color:var(--muted)]" data-consent-ohne>{sum.ohne}</p> : null}
                 </>
               ) : rechtOffen && offer.withoutConsent > 0 ? (
                 <>

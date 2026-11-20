@@ -17,7 +17,7 @@ import { a, anredeZeile, type AnredeKontakt, type Ansprache } from "@/lib/anspra
 import { kontaktFromExisting } from "@/lib/lead-anrede";
 import { empfehlungsThema } from "@/lib/empfehlung/shared";
 import { BESTAND_SOURCE } from "@/lib/lead-herkunft";
-import { BLOCKED_REASON, chooseChannel, wantsConsentPs, countAudience, asChannelMode, type AudienceCounts, type Channel, type ChannelMode, type ConsentSettings, type LegalBasis } from "@/lib/bestand/einwilligung";
+import { BLOCKED_REASON, chooseChannel, countsForReach, reachableForOffers, wantsConsentPs, countAudience, asChannelMode, type AudienceCounts, type Channel, type ChannelMode, type ConsentSettings, type LegalBasis } from "@/lib/bestand/einwilligung";
 import { loadBestandAnsprache, loadConsentSettings, loadSuppression, optOutExisting, subjectOf, SUBJECT_SELECT, type Suppression } from "@/lib/bestand/einwilligung-server";
 import { afterSend, bounceCheck, innerGap, isBounceError, mailSlots, providerDailyLimit, type SendOutcome, type ThrottleState } from "@/lib/bestand/mail-drossel";
 import { consentUrl } from "@/lib/bestand/links";
@@ -47,7 +47,7 @@ export type Segment = {
 export const OCCASIONS: Record<Occasion, { label: string; hint: string; purpose: string }> = {
   cross_sell: { label: "Weiteres Produkt anbieten", hint: "Kunden mit Sparte A, aber ohne Sparte B", purpose: "campaign_cross_sell" },
   review: { label: "Jahresgespräch", hint: "Vertragscheck: Passt noch alles?", purpose: "campaign_review" },
-  birthday: { label: "Geburtstag", hint: "Gruß zum Geburtstag mit Gesprächsangebot", purpose: "campaign_birthday" },
+  birthday: { label: "Geburtstag", hint: "Persönlicher Gruß zum Geburtstag", purpose: "campaign_birthday" },
   renewal: { label: "Ablauf / Wechsel", hint: "Verträge mit Ablauf oder Wechseltermin in Kürze", purpose: "campaign_renewal" },
   // Nur mit Modul „Empfehlungen & Bewertungen“: persönlicher Empfehlungslink je Kunde ({empfehlungslink})
   empfehlung: { label: "Jährliche Empfehlungsbitte", hint: "Zufriedene Bestandskunden um eine Empfehlung bitten, mit persönlichem Link", purpose: "referral_request" },
@@ -297,6 +297,12 @@ export type Opportunity = {
   euro: Spanne;
   /** Quoten aus eigenen Kampagnen statt Standard */
   ownQuotes: boolean;
+  /** Auf „Nur E-Mail“ gerechnet, weil die WhatsApp-Vorlage des Anlasses noch nicht freigegeben ist */
+  channelMode?: "email";
+  /** WhatsApp-Empfänger warten auf die Freigabe der Vorlage, E-Mail geht gerade nicht */
+  waWaiting?: boolean;
+  /** Bei waWaiting: so viele wären per E-Mail erreichbar, sobald E-Mail wieder geht */
+  emailIfFixed?: number;
 };
 
 /**
@@ -307,7 +313,13 @@ export type Opportunity = {
 export async function opportunities(
   customerId: string,
   now = new Date(),
-  opts: { rates?: ProvisionOverrides; own?: Partial<Record<Occasion, EigeneZahlen>>; mailBlocked?: boolean } = {},
+  opts: {
+    rates?: ProvisionOverrides;
+    own?: Partial<Record<Occasion, EigeneZahlen>>;
+    mailBlocked?: boolean;
+    /** WhatsApp-Vorlage je Anlass freigegeben? Fehlt der Eintrag, gilt sie als freigegeben. */
+    waReady?: Partial<Record<Occasion, boolean>>;
+  } = {},
 ): Promise<Opportunity[]> {
   const [cands, settings, sup, wa, c, offered] = await Promise.all([
     loadCandidates(customerId, now),
@@ -329,12 +341,27 @@ export async function opportunities(
   const avgProv = (ids: string[]) => (ids.length ? ids.reduce((n, id) => n + prov(nextBestLine(linesOf.get(id) ?? [], offered)), 0) / ids.length : prov(null));
   const opp = (o: Occasion, s: Segment, topic: string | null, title: string, why: string, line?: string): Opportunity => {
     let p = planFromCandidates(cands, o, s, mode, settings, sup, now);
-    // Wie im Kampagnen-Bildschirm: E-Mail gerade nicht möglich, WhatsApp schon → nur WhatsApp zählen (gleiche Zahl, gleicher Euro-Wert)
-    if (opts.mailBlocked && mode === "whatsapp_first" && p.counts.whatsapp > 0 && p.counts.email > 0) p = planFromCandidates(cands, o, s, "whatsapp", settings, sup, now);
+    const extra: Pick<Opportunity, "channelMode" | "waWaiting" | "emailIfFixed"> = {};
+    if (mode !== "email" && opts.waReady?.[o] === false && p.counts.whatsapp > 0) {
+      // Nachbesserung 20.11.2026: WhatsApp-Vorlage noch nicht freigegeben. Geht E-Mail, ist „Nur E-Mail“ der Standard
+      // (wie im Kampagnen-Bildschirm ohne ?kanal); sonst warten die WhatsApp-Empfänger auf die Freigabe.
+      const mailPlan = planFromCandidates(cands, o, s, "email", settings, sup, now);
+      if (!opts.mailBlocked && mailPlan.recipients.length) {
+        p = mailPlan;
+        extra.channelMode = "email";
+      } else {
+        extra.waWaiting = true;
+        extra.emailIfFixed = mailPlan.recipients.length;
+        if (opts.mailBlocked && p.counts.email > 0) p = planFromCandidates(cands, o, s, "whatsapp", settings, sup, now);
+      }
+    } else if (opts.mailBlocked && mode === "whatsapp_first" && p.counts.whatsapp > 0 && p.counts.email > 0) {
+      // Wie im Kampagnen-Bildschirm: E-Mail gerade nicht möglich, WhatsApp schon → nur WhatsApp zählen (gleiche Zahl, gleicher Euro-Wert)
+      p = planFromCandidates(cands, o, s, "whatsapp", settings, sup, now);
+    }
     const ids = p.recipients.map((r) => r.id);
     const q = quotenFor(o, opts.own?.[o]);
     const euro = erwarteteProvision(ids.length, q, line ? prov(line) : avgProv(ids));
-    return { kind: "kampagne", occasion: o, segment: s, topic, title, why, count: ids.length, whatsapp: p.counts.whatsapp, email: p.counts.email, excluded: p.counts.excludedTotal, euro, ownQuotes: q.own };
+    return { kind: "kampagne", occasion: o, segment: s, topic, title, why, count: ids.length, whatsapp: p.counts.whatsapp, email: p.counts.email, excluded: p.counts.excludedTotal, euro, ownQuotes: q.own, ...extra };
   };
   const gaps: Opportunity[] = [];
   for (const [has, lacks] of NEXT_BEST) {
@@ -351,14 +378,11 @@ export async function opportunities(
     ...(c?.empfehlungEnabled ? [opp("empfehlung", {}, null, "Um eine Empfehlung bitten", "Höchstens einmal im Jahr je Kunde.")] : []),
   ].filter((o) => o.count);
   const kampagnen = nachEuro([...nachEuro(gaps).slice(0, 4), ...extra]);
-  // Einwilligung als eigene Chance: nicht abgemeldet oder gesperrt, mit Kontaktweg, aber ohne Einwilligung für einen Kanal
+  // Einwilligung als eigene Chance. Gleiche Zählweise wie „Für Angebote erreichbar“ (offerReach, Nachbesserung
+  // 20.11.2026): mit Kontaktweg, nicht abgemeldet oder gesperrt, noch nicht für Angebote erreichbar.
   const ohne = cands.filter((x) => {
     const sub = subjectOf(x, sup);
-    if (sub.blockedAt || sub.optOutAt || sub.suppressed?.all) return false;
-    if (x.emailConsent === "ja" || x.whatsappConsent === "ja") return false;
-    const mailOpen = !!x.email && !x.emailOptOutAt && !sub.suppressed?.email && x.emailConsent !== "nein";
-    const waOpen = !!x.phone && x.whatsappConsent !== "nein";
-    return mailOpen || waOpen;
+    return countsForReach(sub) && !reachableForOffers(sub);
   });
   const out = [...kampagnen];
   if (ohne.length) {
@@ -1167,7 +1191,8 @@ export function campaignText(o: Occasion, kontakt: AnredeKontakt | string, topic
       return `${hi}, ${zahl}${zahl ? "Einmal" : "einmal"} im Jahr lohnt ein kurzer Blick, ob Beitrag und Leistung noch zu ${a(an, "deiner", "Ihrer")} Situation passen. 15 Minuten am Telefon reichen. ${ja}`;
     }
     case "birthday":
-      return `${hi}, herzlichen Glückwunsch zum Geburtstag und alles Gute für das neue Lebensjahr! ${a(an, "Hat sich bei dir etwas verändert, etwa Umzug, Familie oder Job? Dann schauen wir gern kurz gemeinsam drauf.", "Hat sich bei Ihnen etwas verändert, etwa Umzug, Familie oder Job? Dann schauen wir gern kurz gemeinsam drauf.")}`;
+      // Nur gratulieren, ohne Frage nach Veränderungen (Persona-Abnahme 20.11.2026: sonst wirkt der Glückwunsch wie Verkauf)
+      return `${hi}, herzlichen Glückwunsch zum Geburtstag! ${a(an, "Ich wünsche dir einen schönen Tag und alles Gute für das neue Lebensjahr.", "Ich wünsche Ihnen einen schönen Tag und alles Gute für das neue Lebensjahr.")}`;
     case "empfehlung":
       return `${hi}, ${a(an, "kennst du jemanden, dem ich genauso weiterhelfen kann? Über deinen persönlichen Link", "kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link")} kann die Person ganz einfach selbst Kontakt mit mir aufnehmen.`;
     case "renewal": {

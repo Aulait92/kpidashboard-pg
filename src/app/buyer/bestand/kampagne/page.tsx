@@ -34,7 +34,7 @@ import { QuotaLowNotice } from "@/components/bestand/quota-bar";
 import { asChannelMode, CHANNEL_MODES, isSameNeedOccasion, NEEDS_CONSENT_REASON } from "@/lib/bestand/einwilligung";
 import { loadConsentSettings } from "@/lib/bestand/einwilligung-server";
 import { defaultCampaignMail, hasImprint, imprintFromWebsiteInfo, PLATZHALTER_LABEL, platzhalterFuer, platzhalterZuAnzeige } from "@/lib/bestand/kampagnen-mail";
-import { CONNECT_HREF, needsSubmit, templateNotice } from "@/lib/whatsapp/vorlagen-hinweis";
+import { CONNECT_HREF, needsSubmit, templateNotice, templateState } from "@/lib/whatsapp/vorlagen-hinweis";
 import { advisorPerson } from "@/lib/lead-anrede";
 import { publicUrlOr } from "@/lib/public-url";
 import { agentConfirmText, isAgencyBound, mayOffer, needsAgentConfirm } from "@/lib/bestand/befugnis";
@@ -112,6 +112,18 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
         : null;
   let plan = await planAudience(ctx.customerId, occasion, segment, { mode, waAvailable: avail.waAvailable });
   let mailMissed = 0;
+  let waMissed = 0;
+  // Nachbesserung 20.11.2026: WhatsApp-Vorlage noch nicht freigegeben, E-Mail geht → „Nur E-Mail“ als Standard (wie im
+  // Cockpit „Heute zuerst“). Wer nur per WhatsApp erreichbar ist, lässt sich mit einem Klick dazu vormerken.
+  const waTplReady = templateState([...allTemplates, ...templates.map((t) => ({ purpose: t.purpose, status: t.status }))], purpose) === "freigegeben";
+  if (!sp.kanal && mode === "whatsapp_first" && avail.waAvailable && !waTplReady && !mailFix && plan.counts.whatsapp > 0) {
+    const mailOnly = await planAudience(ctx.customerId, occasion, segment, { mode: "email", waAvailable: true });
+    if (mailOnly.recipients.length) {
+      waMissed = Math.max(0, plan.recipients.length - mailOnly.recipients.length);
+      mode = "email";
+      plan = mailOnly;
+    }
+  }
   if (!sp.kanal && mode === "whatsapp_first" && avail.waAvailable && mailFix && plan.counts.whatsapp > 0 && plan.counts.email > 0) {
     const waOnly = await planAudience(ctx.customerId, occasion, segment, { mode: "whatsapp", waAvailable: true });
     mailMissed = Math.max(0, plan.recipients.length - waOnly.recipients.length);
@@ -253,14 +265,18 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
         ? { label: "Nur E-Mail", href: modeHref("email") }
         : null;
 
-  const label = weiteres ? `${de(ids.length)} Kunden ein weiteres Produkt anbieten` : `${de(ids.length)} Kunden anschreiben`;
+  // Alle per WhatsApp und die Vorlage wartet noch auf Meta: ehrlich „vormerken“ (gleicher Begriff wie im Cockpit)
+  const waits = !blocker && needWa && !needMail && (notice?.kind === "pending" || notice?.kind === "rejected");
+  const label = waits ? `${de(ids.length)} Kunden vormerken` : weiteres ? `${de(ids.length)} Kunden ein weiteres Produkt anbieten` : `${de(ids.length)} Kunden anschreiben`;
   const hint = blocker
     ? blockKind === "mail"
       ? `${de(counts.email)} Kunden bekommen eine E-Mail. ${alt ? "Oder Sie schreiben nur per WhatsApp." : ""}`.trim()
       : blockKind === "wa"
         ? `${de(counts.whatsapp)} Kunden bekommen eine WhatsApp-Nachricht. ${alt ? "Oder Sie schreiben nur per E-Mail." : ""}`.trim()
         : null
-    : notice?.kind === "pending" && needWa
+    : notice?.kind === "rejected" && needWa
+      ? "Meta hat die WhatsApp-Vorlage abgelehnt, wir kümmern uns darum und starten danach automatisch."
+      : notice?.kind === "pending" && needWa
       ? "WhatsApp startet, sobald Meta die Vorlage freigegeben hat."
       : occasion === "birthday"
         ? "Jeder Glückwunsch geht am Geburtstag selbst raus."
@@ -278,7 +294,8 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const tab = (active: boolean) => `rounded-full px-3 py-1 ${active ? "bg-[color:var(--brand-soft)] text-[color:var(--foreground)]" : "text-[color:var(--muted)]"}`;
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+    // Unten Platz in Höhe des klebenden Startknopfs (Handy), damit er das Ende der Vorschau nie verdeckt
+    <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-36 pt-6 sm:px-6 md:pb-6 lg:px-8">
       <Link href="/buyer/bestand" className="text-sm text-[color:var(--brand)] hover:underline">
         ← Bestand
       </Link>
@@ -338,6 +355,14 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
                 </span>
               ) : null}
             </p>
+            {waMissed > 0 ? (
+              <p className="mt-1 text-sm" data-campaign-wa-missed>
+                <span className="text-[color:var(--muted)]">+{de(waMissed)} per WhatsApp nach der Freigabe durch Meta: </span>
+                <Link href={modeHref("whatsapp_first")} className="font-medium text-[color:var(--brand)] hover:underline">
+                  Mit vormerken
+                </Link>
+              </p>
+            ) : null}
             {mailMissed > 0 && mailFix ? (
               <p className="mt-1 text-sm" data-campaign-mail-missed>
                 <span className="text-[color:var(--muted)]">+{de(mailMissed)} per E-Mail: </span>
