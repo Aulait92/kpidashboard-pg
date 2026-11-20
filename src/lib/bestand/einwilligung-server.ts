@@ -4,8 +4,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
-import { optOutHash, doiToken, doiConfirmUrl, hashToken, consentUrl } from "@/lib/bestand/links";
-import { consentQuestion, consentRequestByMailAllowed, type Channel, type ConsentSettings, type ConsentSubject, type ConsentValue } from "@/lib/bestand/einwilligung";
+import { optOutHash, doiToken, doiConfirmUrl, hashToken, consentUrl, existingAbmeldeUrl } from "@/lib/bestand/links";
+import { campaignMailFooter } from "@/lib/bestand/kampagnen-mail";
+import { consentAskEligible, consentQuestion, consentRequestByMailAllowed, offerReach, type Channel, type ConsentSettings, type ConsentSubject, type ConsentValue } from "@/lib/bestand/einwilligung";
 import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { kontaktFromExisting, advisorPerson, firmDisplayName } from "@/lib/lead-anrede";
 
@@ -386,22 +387,35 @@ async function sendTransactionalMail(
   return { ok: r.sent };
 }
 
-/** Bitte um Einwilligung (Text vor dem persönlichen Link), je Ansprache. */
+/**
+ * Bitte um Einwilligung (Text vor dem persönlichen Link), je Ansprache. Paket 3 (20.11.2026): kürzer, Nutzen zuerst.
+ * Bestandteile bleiben: Kanäle (E-Mail, WhatsApp), Inhalt (passende Angebote und Neuigkeiten zu den Verträgen),
+ * selbst festlegen, jederzeit widerrufbar. Der protokollierte Wortlaut der Einwilligung ist consentQuestion.
+ */
 export function consentRequestText(an: Ansprache): string {
   return a(
     an,
-    "darf ich dich künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu deinen Verträgen informieren? Hier kannst du das mit einem Klick festlegen und jederzeit widerrufen:",
-    "darf ich Sie künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Hier können Sie das mit einem Klick festlegen und jederzeit widerrufen:",
+    "darf ich mich per E-Mail oder WhatsApp melden, wenn es zu deinen Verträgen passende Angebote oder Neuigkeiten gibt? Mit einem Klick legst du es fest und kannst es jederzeit widerrufen:",
+    "darf ich mich per E-Mail oder WhatsApp melden, wenn es zu Ihren Verträgen passende Angebote oder Neuigkeiten gibt? Mit einem Klick legen Sie es fest und können es jederzeit widerrufen:",
   );
 }
 
 export type ConsentRequestResult = { ok: true; url: string; text: string; mailed: boolean } | { ok: false; error: string };
 
+/** Fuß der Bitte um Einwilligung per E-Mail: Sie ist selbst Werbung, also Absender und Widerspruchshinweis mit Abmeldelink. */
+export function consentRequestFooter(an: Ansprache, firm: string, unsubscribeUrl: string): string {
+  return campaignMailFooter({ firm, unsubscribeUrl, imprint: null, ansprache: an });
+}
+
 /**
  * Einwilligung einholen (Bestand, Kontakt): Link und Text zum Kopieren bzw. für den persönlichen Kontakt.
  * Per E-Mail nur, wenn ein anderer Weg zulässig ist (die Bitte ist selbst Werbung).
  */
-export async function requestConsent(existingCustomerId: string, customerId: string, opts: { byMail: boolean; actorUserId: string | null; now?: Date }): Promise<ConsentRequestResult> {
+export async function requestConsent(
+  existingCustomerId: string,
+  customerId: string,
+  opts: { byMail: boolean; actorUserId: string | null; now?: Date; source?: string },
+): Promise<ConsentRequestResult> {
   const now = opts.now ?? new Date();
   const ec = await prisma.existingCustomer.findFirst({
     where: { id: existingCustomerId, customerId },
@@ -421,12 +435,126 @@ export async function requestConsent(existingCustomerId: string, customerId: str
   if (!consentRequestByMailAllowed(subjectOf(ec, sup), settings as ConsentSettings)) {
     return { ok: false, error: "Per E-Mail nur, wenn dieser Kunde per E-Mail angeschrieben werden darf. Geben Sie den Link im persönlichen Kontakt weiter." };
   }
+  const footer = consentRequestFooter(an, firmDisplayName(settings.name), existingAbmeldeUrl(ec.id));
   const r = await sendTransactionalMail(customerId, {
     to: ec.email!,
     subject: a(an, "Darf ich dich auf dem Laufenden halten?", "Darf ich Sie auf dem Laufenden halten?"),
-    text: (signatur) => `${anrede}\n\n${frage}\n${url}\n\n${signatur}`,
+    text: (signatur) => `${anrede}\n\n${frage}\n${url}\n\n${signatur}\n\n\n${footer}`,
   }, ec.id, "Anfrage");
   if (!r.ok) return { ok: false, error: "Die E-Mail konnte nicht gesendet werden. Bitte das Postfach prüfen." };
-  await logConsent({ customerId, existingCustomerId: ec.id, channel: "email", action: "angefragt", source: "vermittler", text: "Einwilligungs-Abfrage per E-Mail gesendet", address: ec.email, actorUserId: opts.actorUserId, at: now });
+  await logConsent({ customerId, existingCustomerId: ec.id, channel: "email", action: "angefragt", source: opts.source ?? "vermittler", text: "Einwilligungs-Abfrage per E-Mail gesendet", address: ec.email, actorUserId: opts.actorUserId, at: now });
   return { ok: true, url, text, mailed: true };
+}
+
+// ── Paket 3: Sammelanfrage, WhatsApp im offenen Fenster, Kennzahl ───────────────────────────────────────────
+
+/** Warteschlange der Sammelanfrage im Protokoll: geplant → gesendet bzw. übersprungen (kein Nachweis, nur Zustand). */
+export const ASK_PLANNED = "sammel_geplant";
+export const ASK_DONE = "sammel_gesendet";
+export const ASK_SKIPPED = "sammel_uebersprungen";
+/** Höchstens so viele Bitten je Vermittler und Tag (schont Postfach und Ruf, zusätzlich zu mail-drossel). */
+export const CONSENT_ASK_DAILY = 40;
+
+/** Zuletzt per E-Mail um Einwilligung gebeten (oder zur Sammelanfrage eingeplant), je Bestandskunde. */
+export async function lastAskedMap(customerId: string): Promise<Map<string, Date>> {
+  const rows = await prisma.bestandConsentLog.groupBy({
+    by: ["existingCustomerId"],
+    where: { customerId, action: "angefragt", existingCustomerId: { not: null }, OR: [{ address: { not: null } }, { source: ASK_PLANNED }] },
+    _max: { createdAt: true },
+  });
+  return new Map(rows.filter((r) => r.existingCustomerId && r._max.createdAt).map((r) => [r.existingCustomerId!, r._max.createdAt!]));
+}
+
+/** Kennzahl „Für Angebote erreichbar“ und Stand der Sammelanfrage für Cockpit und Einwilligungsseite. */
+export async function loadOfferReach(customerId: string, now = new Date()) {
+  const [rows, settings, sup, asked, planned, confirmed] = await Promise.all([
+    prisma.existingCustomer.findMany({ where: { customerId }, select: { id: true, ...SUBJECT_SELECT } }),
+    loadConsentSettings(customerId),
+    loadSuppression(customerId),
+    lastAskedMap(customerId),
+    prisma.bestandConsentLog.count({ where: { customerId, source: ASK_PLANNED } }),
+    prisma.bestandConsentLog.count({ where: { customerId, action: { in: ["bestaetigt", "erteilt"] }, source: "formular", createdAt: { gte: new Date(now.getTime() - 30 * 86_400_000) } } }),
+  ]);
+  const reach = offerReach(rows.map((r) => ({ subject: subjectOf(r, sup), lastAskedAt: asked.get(r.id) ?? null })), settings, now);
+  return { ...reach, planned, confirmed30: confirmed, uwgConfirmed: settings.uwgConfirmed };
+}
+
+/**
+ * Sammelanfrage einplanen: nur Kunden, die consentAskEligible bestehen (Werbeerlaubnis per E-Mail, nicht abgemeldet
+ * oder gesperrt, noch ohne Einwilligung, 30 Tage nicht gefragt). Der Versand läuft gedrosselt im Cron
+ * (runConsentRequests), jede Mail mit Double-Opt-in über die Einwilligungsseite. Gibt die Zahl zurück.
+ */
+export async function planConsentRequests(customerId: string, opts: { actorUserId: string | null; now?: Date }): Promise<number> {
+  const now = opts.now ?? new Date();
+  const [rows, settings, sup, asked] = await Promise.all([
+    prisma.existingCustomer.findMany({ where: { customerId }, select: { id: true, ...SUBJECT_SELECT } }),
+    loadConsentSettings(customerId),
+    loadSuppression(customerId),
+    lastAskedMap(customerId),
+  ]);
+  const ids = rows.filter((r) => consentAskEligible(subjectOf(r, sup), settings, asked.get(r.id) ?? null, now)).map((r) => r.id);
+  if (!ids.length) return 0;
+  await prisma.bestandConsentLog.createMany({
+    data: ids.map((id) => ({ customerId, existingCustomerId: id, channel: "email", action: "angefragt", source: ASK_PLANNED, text: "Sammelanfrage eingeplant", actorUserId: opts.actorUserId, createdAt: now })),
+  });
+  return ids.length;
+}
+
+/**
+ * Cron: eingeplante Bitten gedrosselt versenden (werktags 8 bis 18 Uhr wie mail-drossel.inMailWindow, je Lauf
+ * höchstens MAX_PER_RUN je Vermittler, am Tag höchstens CONSENT_ASK_DAILY). Vor jeder Mail neu prüfen.
+ */
+export async function runConsentRequests(now = new Date()): Promise<{ sent: number; skipped: number }> {
+  const { inMailWindow, MAX_PER_RUN } = await import("@/lib/bestand/mail-drossel");
+  const out = { sent: 0, skipped: 0 };
+  if (!inMailWindow(now)) return out;
+  const owners = await prisma.bestandConsentLog.findMany({ where: { source: ASK_PLANNED }, distinct: ["customerId"], select: { customerId: true } });
+  const dayStart = new Date(now.getTime() - 12 * 3600_000);
+  for (const { customerId } of owners) {
+    const cust = await prisma.customer.findUnique({ where: { id: customerId }, select: { existingCustomersEnabled: true, dormantSince: true } });
+    if (!cust?.existingCustomersEnabled || cust.dormantSince) continue;
+    const today = await prisma.bestandConsentLog.count({ where: { customerId, source: "sammel", createdAt: { gte: dayStart } } });
+    const take = Math.min(MAX_PER_RUN, CONSENT_ASK_DAILY - today);
+    if (take <= 0) continue;
+    const due = await prisma.bestandConsentLog.findMany({ where: { customerId, source: ASK_PLANNED }, orderBy: { createdAt: "asc" }, take });
+    const [settings, sup] = await Promise.all([loadConsentSettings(customerId), loadSuppression(customerId)]);
+    for (const row of due) {
+      const ec = row.existingCustomerId ? await prisma.existingCustomer.findUnique({ where: { id: row.existingCustomerId }, select: { id: true, ...SUBJECT_SELECT } }) : null;
+      // Inzwischen eingewilligt, abgemeldet, gesperrt oder keine Werbeerlaubnis mehr: überspringen
+      const ok = !!ec && consentAskEligible(subjectOf(ec, sup), settings, null, now);
+      const r = ok ? await requestConsent(ec!.id, customerId, { byMail: true, actorUserId: row.actorUserId, now, source: "sammel" }).catch(() => null) : null;
+      const sent = !!r?.ok && r.mailed;
+      await prisma.bestandConsentLog.update({ where: { id: row.id }, data: { source: sent ? ASK_DONE : ASK_SKIPPED, text: sent ? "Sammelanfrage gesendet" : "Sammelanfrage übersprungen" } });
+      if (sent) out.sent++;
+      else out.skipped++;
+    }
+  }
+  return out;
+}
+
+/**
+ * Einwilligungslink per WhatsApp: nur im vom Kunden geöffneten 24-h-Fenster (er hat selbst geschrieben), nicht nach
+ * „Stopp“, Abmeldung, Sperre oder WhatsApp-Einwilligung „nein“. Von Hand ausgelöst, wird protokolliert.
+ */
+export async function sendConsentWhatsApp(existingCustomerId: string, customerId: string, opts: { actorUserId: string | null; now?: Date }): Promise<{ ok: true } | { ok: false; error: string }> {
+  const now = opts.now ?? new Date();
+  const ec = await prisma.existingCustomer.findFirst({ where: { id: existingCustomerId, customerId }, select: { id: true, firstName: true, lastName: true, salutation: true, ...SUBJECT_SELECT } });
+  if (!ec?.phone) return { ok: false, error: "Keine Mobilnummer hinterlegt." };
+  const [settings, sup] = await Promise.all([loadConsentSettings(customerId), loadSuppression(customerId)]);
+  const s = subjectOf(ec, sup);
+  if (s.blockedAt || s.optOutAt || s.suppressed?.all || ec.whatsappConsent === "nein") return { ok: false, error: "Dieser Kunde möchte keine Nachrichten per WhatsApp." };
+  if (!(await waWindowOpenFor(customerId, [ec.phone], now)).has(ec.phone)) return { ok: false, error: "Per WhatsApp nur, wenn der Kunde Ihnen in den letzten 24 Stunden geschrieben hat." };
+  const an = settings.ansprache;
+  const body = `${anredeZeile(an, kontaktFromExisting(ec))} ${consentRequestText(an)} ${consentUrl(ec.id)}`;
+  const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+  await sendWhatsAppMessage({ customerId, to: ec.phone, body, sentBy: "agent", sentByUserId: opts.actorUserId });
+  await logConsent({ customerId, existingCustomerId: ec.id, channel: "whatsapp", action: "angefragt", source: "vermittler", text: "Einwilligungs-Abfrage per WhatsApp gesendet (offenes Fenster)", address: ec.phone, actorUserId: opts.actorUserId, at: now });
+  return { ok: true };
+}
+
+/** Nummern mit offenem 24-h-Fenster (der Kunde hat zuletzt selbst geschrieben). */
+export async function waWindowOpenFor(customerId: string, phones: string[], now = new Date()): Promise<Set<string>> {
+  if (!phones.length) return new Set();
+  const convs = await prisma.conversation.findMany({ where: { customerId, contactPhone: { in: phones }, windowExpiresAt: { gt: now }, optedOutAt: null }, select: { contactPhone: true } });
+  return new Set(convs.map((c) => c.contactPhone));
 }

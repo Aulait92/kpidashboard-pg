@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BarChart3, ChevronDown, Lightbulb, Megaphone, MoreHorizontal, PackagePlus, ShieldCheck, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, ButtonLink, Card, CardHeader, EmptyState, buttonClass } from "@/components/ui";
+import type { Prisma } from "@/generated/prisma/client";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { OCCASIONS, opportunities, type Occasion, type Opportunity } from "@/lib/bestand/campaigns";
@@ -14,16 +15,17 @@ import { lastUndoableImport } from "@/lib/bestand/import";
 import { autoTopUpState, packPurchaseBlocker, resumeQuotaPausedCampaigns } from "@/lib/bestand/packs";
 import { QuotaBar, type PackBooking } from "@/components/bestand/quota-bar";
 import { AutoTopUpForm, PackBookButton } from "@/components/bestand/packs";
-import { CustomerRowActions } from "@/components/bestand/customer-actions";
 import { ImportUndoButton } from "@/components/bestand/import-undo";
 import { ModuleBookButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { groupStats, loadCampaignStats, loadPeriodTiles, quote } from "@/lib/bestand/statistik";
 import { eigeneZahlen, spanneText } from "@/lib/bestand/potenzial";
-import { loadConsentSettings, loadSuppression, subjectOf } from "@/lib/bestand/einwilligung-server";
-import { consentRequestByMailAllowed } from "@/lib/bestand/einwilligung";
-import { ConsentBadges, ConsentRowAction } from "@/components/bestand/consent-actions";
+import { loadConsentSettings, loadOfferReach, loadSuppression, subjectOf, waWindowOpenFor } from "@/lib/bestand/einwilligung-server";
+import { consentRequestByMailAllowed, OFFER_REACH_GOAL, reachableForOffers } from "@/lib/bestand/einwilligung";
+import { ConsentBadges } from "@/components/bestand/consent-actions";
+import { KundeAktionen } from "@/components/bestand/kunde-aktionen";
+import { KundenSuche } from "@/components/bestand/kunden-suche";
 import { isExclusiveAgent } from "@/lib/bestand/befugnis";
 import { loadCustomerContracts } from "@/lib/vertraege";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
@@ -51,6 +53,18 @@ const de = (n: number) => n.toLocaleString("de-DE");
 
 const PERIODS = [30, 90, 365] as const;
 
+/** Filter der Kundenliste (Paket 3): Chips statt Formular, gelten sofort. */
+const FILTERS = [
+  { key: "alle", label: "Alle" },
+  { key: "ohne", label: "Ohne Einwilligung" },
+  { key: "chance", label: "Mit Chance" },
+  { key: "angeschrieben", label: "Angeschrieben" },
+] as const;
+type FilterKey = (typeof FILTERS)[number]["key"];
+/** „Mehr laden“ in Schritten von 50 */
+const LIST_STEP = 50;
+const pct = (x: number) => `${Math.round(x * 100).toLocaleString("de-DE")} %`;
+
 /** Kontingent oben nur bei unter 20 % frei (oder bei einer Pause wegen Kontingent). */
 const QUOTA_TOP_SHARE = 0.2;
 
@@ -72,7 +86,7 @@ function channelLine(o: Opportunity): string {
   return [o.whatsapp ? `${de(o.whatsapp)} per WhatsApp` : "", o.email ? `${de(o.email)} per E-Mail` : ""].filter(Boolean).join(" · ");
 }
 
-export default async function BestandPage({ searchParams }: { searchParams: Promise<{ q?: string; gestartet?: string; kontingent?: string; sort?: string; tage?: string; mehr?: string }> }) {
+export default async function BestandPage({ searchParams }: { searchParams: Promise<{ q?: string; gestartet?: string; kontingent?: string; sort?: string; tage?: string; mehr?: string; filter?: string; n?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
@@ -98,7 +112,9 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
       />
     );
   }
-  const { q = "", gestartet, kontingent, sort, tage, mehr } = await searchParams;
+  const { q = "", gestartet, kontingent, sort, tage, mehr, filter: filterRaw, n: nRaw } = await searchParams;
+  const filter = FILTERS.find((f) => f.key === filterRaw)?.key ?? "alle";
+  const pageSize = Math.min(1000, Math.max(LIST_STEP, Math.floor(Number(nRaw) / LIST_STEP) * LIST_STEP || LIST_STEP));
   const days = PERIODS.find((d) => String(d) === tage) ?? 90;
   const byValue = sort === "beitrag";
   const customerId = ctx.customerId;
@@ -148,7 +164,27 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   // Chancen nach erwarteter Provision: eigene Sätze und, ab 30 eigenen Empfängern je Anlass, eigene Quoten
   const opps = total ? await opportunities(customerId, now, { rates: provision.rates, own: eigeneZahlen(stats) }) : [];
   const top = opps[0] ?? null;
-  const rest = opps.slice(1);
+  // Einwilligung steht als Kennzahl mit eigenem Knopf da (Paket 3), nicht noch einmal in „Weitere Chancen“
+  const rest = opps.slice(1).filter((o) => o.kind !== "einwilligung");
+  const offer = total ? await loadOfferReach(customerId, now) : null;
+  const thirtyAgo = new Date(now.getTime() - 30 * 86_400_000);
+  const notConsented = { AND: [{ OR: [{ emailConsent: null }, { emailConsent: { not: "ja" } }] }, { OR: [{ whatsappConsent: null }, { whatsappConsent: { not: "ja" } }] }] };
+  const filterWhere: Record<FilterKey, Prisma.ExistingCustomerWhereInput> = {
+    alle: {},
+    ohne: { optOutAt: null, blockedAt: null, ...notConsented },
+    chance: {
+      optOutAt: null,
+      blockedAt: null,
+      AND: [
+        { OR: [{ emailConsent: "ja", email: { not: null }, emailOptOutAt: null }, { whatsappConsent: "ja", phone: { not: null } }] },
+        { OR: [{ lastCampaignAt: null }, { lastCampaignAt: { lt: thirtyAgo } }] },
+      ],
+    },
+    angeschrieben: { lastCampaignAt: { not: null } },
+  };
+  const filterCounts = total
+    ? Object.fromEntries(await Promise.all(FILTERS.map(async (f) => [f.key, f.key === "alle" ? total : await prisma.existingCustomer.count({ where: { customerId, ...filterWhere[f.key] } })] as const)))
+    : {};
   const byOccasion = groupStats(stats, "occasion", (k) => OCCASIONS[k as Occasion]?.label ?? k);
   const byTopic = groupStats(stats, "topic", (k) => k);
   const qDigits = q.replace(/\D/g, "");
@@ -156,6 +192,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
     ? await prisma.existingCustomer.findMany({
         where: {
           customerId,
+          ...filterWhere[filter],
           ...(q
             ? {
                 OR: [
@@ -170,10 +207,15 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
         },
         orderBy: byValue
           ? [{ premiumTotal: { sort: "desc", nulls: "last" } }, { lastName: "asc" }]
-          : [{ lastName: { sort: "asc", nulls: "last" } }, { firstName: "asc" }, { company: { sort: "asc", nulls: "last" } }, { email: "asc" }],
-        take: 50,
+          : filter === "angeschrieben"
+            ? [{ lastCampaignAt: { sort: "desc", nulls: "last" } }, { lastName: "asc" }]
+            : [{ lastName: { sort: "asc", nulls: "last" } }, { firstName: "asc" }, { company: { sort: "asc", nulls: "last" } }, { email: "asc" }],
+        take: pageSize,
       })
     : [];
+  const listTotal = filter === "alle" && !q ? total : null;
+  // WhatsApp-Knopf für den Einwilligungslink nur im offenen 24-h-Fenster (der Kunde hat selbst geschrieben)
+  const waOpen = await waWindowOpenFor(customerId, list.map((e) => e.phone).filter((p): p is string => !!p), now);
   // E-Mail-Verlauf: Knopf nur bei Kunden, an die schon E-Mails gingen
   const withMails = await bestandMitMails(customerId, list.map((e) => e.id));
 
@@ -285,6 +327,33 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
               </Link>
               <Warum>{consentHint.why}</Warum>
             </div>
+          ) : null}
+
+          {offer && offer.total > 0 ? (
+            <Card>
+              <div className="px-5 py-4" data-bestand-reach>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <p className="text-sm font-medium">
+                    Für Angebote erreichbar: <b className="tabular-nums">{pct(offer.share)}</b>
+                  </p>
+                  <span className="text-xs text-[color:var(--muted)]">Ziel {pct(OFFER_REACH_GOAL)}</span>
+                </div>
+                <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken)]" aria-hidden>
+                  <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${Math.min(100, Math.round(offer.share * 100))}%` }} />
+                  <div className="absolute inset-y-0 w-0.5 bg-[color:var(--foreground)]/40" style={{ left: `${OFFER_REACH_GOAL * 100}%` }} />
+                </div>
+                {offer.withoutConsent > 0 ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <p className="min-w-0 flex-1 text-sm text-[color:var(--muted)] tabular-nums">+{de(offer.withoutConsent)} Kunden erreichbar mit Einwilligung</p>
+                    {top?.kind !== "einwilligung" ? (
+                      <ButtonLink href="/buyer/bestand/einwilligungen" icon={ShieldCheck}>
+                        Einwilligung anfragen
+                      </ButtonLink>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </Card>
           ) : null}
 
           {rest.length ? (
@@ -434,22 +503,30 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
             </Card>
           ) : null}
 
-          <Card>
+          <Card id="kunden" className="scroll-mt-20" menus>
             <CardHeader title="Kunden" icon={Users} count={total} />
-            <form className="flex flex-wrap gap-2 px-5 py-3">
-              <input name="q" defaultValue={q} placeholder="Name, Telefon, E-Mail oder Kundennummer" aria-label="Kunden suchen" className="h-10 min-w-[14rem] flex-1 rounded-full border border-[color:var(--border)] bg-white px-4 text-sm outline-none focus:border-[color:var(--brand)]" />
-              {premiumSum > 0 ? (
-                <select name="sort" defaultValue={byValue ? "beitrag" : ""} aria-label="Sortierung" className="h-10 rounded-full border border-[color:var(--border)] bg-white px-3 text-sm">
-                  <option value="">Nach Name</option>
-                  <option value="beitrag">Nach Jahresbeitrag</option>
-                </select>
-              ) : null}
-              {premiumSum > 0 ? (
-                <button type="submit" className="h-10 rounded-full border border-[color:var(--border)] bg-white px-4 text-sm font-medium">
-                  Anzeigen
-                </button>
-              ) : null}
-            </form>
+            <div className="space-y-3 px-5 py-3">
+              <KundenSuche withSort={premiumSum > 0} />
+              <nav className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 text-sm" aria-label="Kunden filtern" data-bestand-filter>
+                {FILTERS.map((f) => {
+                  const sp = new URLSearchParams({ ...(q ? { q } : {}), ...(byValue ? { sort: "beitrag" } : {}), ...(f.key !== "alle" ? { filter: f.key } : {}) });
+                  const active = f.key === filter;
+                  return (
+                    <Link
+                      key={f.key}
+                      href={`/buyer/bestand${sp.size ? `?${sp}` : ""}#kunden`}
+                      scroll={false}
+                      aria-current={active ? "true" : undefined}
+                      className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 sm:min-h-8 ${active ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] font-semibold" : "border-[color:var(--border)] bg-white"}`}
+                      data-bestand-filter-chip={f.key}
+                    >
+                      {f.label}
+                      <span className="tabular-nums text-[color:var(--muted)]">{de(filterCounts[f.key] ?? 0)}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
             <ul className="divide-y divide-[color:var(--border)]" data-bestand-list>
               {list.map((e) => {
                 const person = [e.firstName, e.lastName].filter(Boolean).join(" ");
@@ -502,21 +579,20 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                     </span>
                     {e.premiumTotal != null ? <span className="hidden w-20 shrink-0 text-right text-sm tabular-nums sm:block">{eurRound(Number(e.premiumTotal))}</span> : null}
                     <span className="hidden w-32 shrink-0 truncate text-right text-xs text-[color:var(--muted)] sm:block">{e.phone ? `+${e.phone}` : "keine Mobilnummer"}</span>
-                    <ConsentRowAction
-                      existingCustomerId={e.id}
-                      name={title}
-                      email={(e.emailConsent as "ja" | "nein" | null) ?? null}
-                      whatsapp={(e.whatsappConsent as "ja" | "nein" | null) ?? null}
-                      hinweis={(e.widerspruchHinweis as "ja" | "nein" | null) ?? null}
-                      mailAllowed={consentRequestByMailAllowed(subjectOf(e, suppression), consentSettings)}
-                      readOnly={ctx.preview}
-                    />
                     {withMails.has(e.id) ? <BestandMailVerlauf existingCustomerId={e.id} name={title} /> : null}
-                    <CustomerRowActions
-                      existingCustomerId={e.id}
-                      name={title}
+                    <KundeAktionen
+                      consent={{
+                        existingCustomerId: e.id,
+                        name: title,
+                        email: (e.emailConsent as "ja" | "nein" | null) ?? null,
+                        whatsapp: (e.whatsappConsent as "ja" | "nein" | null) ?? null,
+                        hinweis: (e.widerspruchHinweis as "ja" | "nein" | null) ?? null,
+                        mailAllowed: consentRequestByMailAllowed(subjectOf(e, suppression), consentSettings),
+                        waWindowOpen: !!e.phone && waOpen.has(e.phone),
+                        readOnly: ctx.preview,
+                      }}
+                      needsConsent={!e.optOutAt && !e.blockedAt && !reachableForOffers(subjectOf(e, suppression)) && (!!e.email || !!e.phone)}
                       hasPhone={!!e.phone}
-                      readOnly={ctx.preview}
                       referral={c.empfehlungEnabled && !e.optOutAt && !e.blockedAt}
                       blocked={!!e.blockedAt}
                     />
@@ -524,22 +600,22 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                 );
               })}
             </ul>
-            {q && !list.length ? (
+            {!list.length ? (
               <p className="px-5 pb-4 text-sm text-[color:var(--muted)]" data-bestand-no-hits>
-                Keine Kunden zu „{q}“.{" "}
-                <Link href="/buyer/bestand" className="font-medium text-[color:var(--brand)] hover:underline">
-                  Suche zurücksetzen
-                </Link>
-              </p>
-            ) : q ? (
-              <p className="px-5 py-3 text-xs text-[color:var(--muted)]" data-bestand-hits>
-                {list.length === 50 ? "Erste 50 Treffer" : `${list.length.toLocaleString("de-DE")} Treffer`} zu „{q}“.{" "}
-                <Link href="/buyer/bestand" className="underline">
+                {q ? `Keine Kunden zu „${q}“.` : "Hier ist gerade niemand."}{" "}
+                <Link href="/buyer/bestand#kunden" scroll={false} className="font-medium text-[color:var(--brand)] hover:underline">
                   Alle anzeigen
                 </Link>
               </p>
-            ) : total > list.length ? (
-              <p className="px-5 py-3 text-xs text-[color:var(--muted)]">Erste {list.length} von {total.toLocaleString("de-DE")}, Suche nutzen.</p>
+            ) : list.length >= pageSize && (listTotal == null || listTotal > list.length) ? (
+              <div className="px-5 py-3" data-bestand-more>
+                <ButtonLink
+                  href={`/buyer/bestand?${new URLSearchParams({ ...(q ? { q } : {}), ...(byValue ? { sort: "beitrag" } : {}), ...(filter !== "alle" ? { filter } : {}), n: String(pageSize + LIST_STEP) })}#kunden`}
+                  className="w-full sm:w-auto"
+                >
+                  Mehr laden
+                </ButtonLink>
+              </div>
             ) : null}
           </Card>
 

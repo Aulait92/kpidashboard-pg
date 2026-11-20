@@ -23,23 +23,24 @@ export function RechtForm({ uwg, uwgAt, imprint, readOnly }: { uwg: boolean; uwg
       <label className="flex items-start gap-2">
         <input type="checkbox" name="uwg" defaultChecked={uwg} className="mt-0.5 h-4 w-4" data-uwg-confirm />
         <span>
-          <b>Bestätigung zu § 7 Abs. 3 UWG:</b> Die E-Mail-Adressen meiner Bestandskunden habe ich im Zusammenhang mit dem Abschluss ihrer Verträge erhalten.
-          Ich bewerbe per E-Mail ohne Einwilligung nur eigene, ähnliche Leistungen zum selben Bedarf. Den Hinweis auf das Widerspruchsrecht mit Abmeldelink
-          enthält jede Kampagnen-Mail automatisch.
+          <b>Bestätigung zu § 7 Abs. 3 UWG</b>
+          <span className="mt-1 block space-y-0.5">
+            <span className="block">· Die E-Mail-Adressen meiner Bestandskunden habe ich im Zusammenhang mit dem Abschluss ihrer Verträge erhalten.</span>
+            <span className="block">· Ich bewerbe per E-Mail ohne Einwilligung nur eigene, ähnliche Leistungen zum selben Bedarf.</span>
+            <span className="block">· Den Hinweis auf das Widerspruchsrecht mit Abmeldelink enthält jede Kampagnen-Mail automatisch.</span>
+          </span>
           {uwg && uwgAt ? <span className="block text-xs text-[color:var(--muted)]">Bestätigt am {uwgAt}</span> : null}
         </span>
       </label>
       <p className="text-xs text-[color:var(--muted)]">
-        Zusätzlich braucht jeder Kunde einen Nachweis, dass er schon bei der Erhebung der Adresse auf sein Widerspruchsrecht hingewiesen wurde (beim Import,
-        unten für alle oder je Kunde). Ohne Einwilligung gehen dann nur E-Mails zum selben Bedarf bzw. Vertrag raus (Ablauf oder Wechsel, Vertragscheck im Jahresgespräch). Kein Cross-Selling in
-        andere Sparten, kein Geburtstag mit Angebot, keine Empfehlungs- oder Bewertungsbitte. WhatsApp nie ohne Einwilligung.
+        Zusätzlich braucht jeder Kunde einen Nachweis zum Widerspruchshinweis (unten, beim Import oder je Kunde). WhatsApp nie ohne Einwilligung.
       </p>
       <label className="block text-xs font-medium text-[color:var(--muted)]">
         Pflichtangaben unter jeder E-Mail (Impressum: Name bzw. Firma, Anschrift, Kontakt, Vermittlerregister)
         <textarea name="imprint" defaultValue={imprint} rows={6} maxLength={2000} className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-sm text-[color:var(--foreground)]" />
       </label>
       <Msg s={state} />
-      <Button type="submit" variant="primary" size="md" disabled={readOnly || pending}>
+      <Button type="submit" size="md" disabled={readOnly || pending}>
         Speichern
       </Button>
     </form>
@@ -74,7 +75,7 @@ export function LegacyForm({ count, date, readOnly }: { count: number; date: str
         <span>Beim Zurücksetzen: Ich weiß, dass diese Kunden dann nur noch mit neuer Einwilligung (bzw. per E-Mail nach § 7 Abs. 3 UWG) angeschrieben werden.</span>
       </label>
       <Msg s={state} />
-      <Button type="submit" variant="primary" size="md" disabled={readOnly || pending}>
+      <Button type="submit" size="md" disabled={readOnly || pending}>
         Übernehmen
       </Button>
     </form>
@@ -116,8 +117,8 @@ export function HinweisBulkForm({ missing, readOnly }: { missing: number; readOn
   return (
     <form action={action} className="space-y-3 text-sm" data-hinweis-form>
       <p>
-        Für <b>{missing.toLocaleString("de-DE")} Kunden</b> mit E-Mail-Adresse fehlt der Nachweis, dass sie bei der Erhebung der Adresse auf ihr Widerspruchsrecht
-        hingewiesen wurden. Ohne diesen Nachweis greift § 7 Abs. 3 UWG nicht: E-Mails an sie gehen nur mit Einwilligung raus.
+        Für <b>{missing.toLocaleString("de-DE")} Kunden</b> fehlt der Nachweis, dass sie bei der Erhebung der E-Mail-Adresse auf ihr Widerspruchsrecht hingewiesen
+        wurden. Ohne ihn gehen E-Mails an sie nur mit Einwilligung raus (§ 7 Abs. 3 UWG).
       </p>
       <input type="hidden" name="hinweis_bulk" value="on" />
       <label className="block text-xs font-medium text-[color:var(--muted)]">

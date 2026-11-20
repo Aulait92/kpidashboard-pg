@@ -254,3 +254,79 @@ export function consentQuestion(advisor: string, channels: Channel[]): string {
   const ways = channels.map((c) => CHANNEL_LABEL[c]).join(" bzw. ");
   return `Ich bin einverstanden, dass ${advisor} mich über passende Versicherungsangebote und Neuigkeiten zu meinen Verträgen per ${ways} informiert. Die Einwilligung kann ich jederzeit widerrufen, zum Beispiel über den Abmeldelink in jeder E-Mail oder mit „Stopp“ per WhatsApp.`;
 }
+
+// ── Paket 3 (20.11.2026): Einwilligung als Umsatzhebel ──────────────────────────────────────────────────────
+
+/** Abstand zwischen zwei Bitten um Einwilligung per E-Mail an denselben Kunden (wie COOLDOWN_DAYS der Kampagnen). */
+export const CONSENT_ASK_GAP_DAYS = 30;
+/** Ziel für den Anteil „Für Angebote erreichbar“ (Plan Paket 3). */
+export const OFFER_REACH_GOAL = 0.4;
+
+/**
+ * „Für Angebote erreichbar“: zu allen Anlässen anschreibbar, also mit Einwilligung für einen Kanal (WhatsApp mit
+ * Opt-in oder E-Mail mit Einwilligung). § 7 Abs. 3 UWG allein reicht dafür nicht (nur derselbe Bedarf).
+ */
+export function reachableForOffers(s: ConsentSubject): boolean {
+  if (whatsappDecision(s).ok) return true;
+  if (s.blockedAt || s.optOutAt || s.suppressed?.all || !s.email || s.emailOptOutAt || s.suppressed?.email) return false;
+  return consent(s.emailConsent) === "ja";
+}
+
+/** Zählbar für die Quote: nicht abgemeldet oder gesperrt und mit mindestens einem Kontaktweg. */
+export function countsForReach(s: ConsentSubject): boolean {
+  if (s.blockedAt || s.optOutAt || s.suppressed?.all) return false;
+  const mailOpen = !!s.email && !s.emailOptOutAt && !s.suppressed?.email;
+  return mailOpen || !!s.phone;
+}
+
+/**
+ * Darf dieser Kunde in der Sammelanfrage per E-Mail um Einwilligung gebeten werden? Nur wer noch nicht für Angebote
+ * erreichbar ist, die Bitte per E-Mail bekommen darf (consentRequestByMailAllowed: Werbeerlaubnis per E-Mail) und in
+ * den letzten CONSENT_ASK_GAP_DAYS Tagen nicht gefragt wurde. Abgemeldete, Gesperrte und „nein“ fallen damit raus.
+ */
+export function consentAskEligible(s: ConsentSubject, settings: ConsentSettings, lastAskedAt: Date | null, now: Date): boolean {
+  if (reachableForOffers(s)) return false;
+  if (!consentRequestByMailAllowed(s, settings)) return false;
+  return !lastAskedAt || now.getTime() - lastAskedAt.getTime() >= CONSENT_ASK_GAP_DAYS * 86_400_000;
+}
+
+/**
+ * P.S. mit Einwilligungslink in einer Kampagnen-Mail (§ 7 Abs. 3 UWG, Plan Paket 3): nur wenn die Bitte per E-Mail
+ * erlaubt ist und noch eine Einwilligung fehlt (E-Mail, oder WhatsApp bei vorhandener Mobilnummer). Nicht in
+ * Geburtstags- und Empfehlungs-Mails (eigener Ton bzw. eigener Link), nie in Double-Opt-in- oder Service-Mails
+ * (die laufen nicht über campaignMailFor).
+ */
+export function wantsConsentPs(s: ConsentSubject, settings: ConsentSettings, occasion: Occasion): boolean {
+  if (occasion === "birthday" || occasion === "empfehlung") return false;
+  if (!consentRequestByMailAllowed(s, settings)) return false;
+  const mailMissing = consent(s.emailConsent) !== "ja";
+  const waMissing = !!s.phone && !s.waUnavailableAt && consent(s.whatsappConsent) === null;
+  return mailMissing || waMissing;
+}
+
+export type OfferReach = {
+  /** zählbare Kunden (nicht abgemeldet oder gesperrt, mit Kontaktweg) */
+  total: number;
+  /** davon für Angebote erreichbar */
+  reachable: number;
+  /** Anteil 0..1 (0 ohne zählbare Kunden) */
+  share: number;
+  /** ohne Einwilligung, aber mit Kontaktweg (persönlicher Link möglich) */
+  withoutConsent: number;
+  /** davon per E-Mail anfragbar (Sammelanfrage) */
+  askable: number;
+};
+
+/** Kennzahl „Für Angebote erreichbar“ und Zahl der per E-Mail anfragbaren Kunden. Rein. */
+export function offerReach(rows: { subject: ConsentSubject; lastAskedAt: Date | null }[], settings: ConsentSettings, now: Date): OfferReach {
+  let total = 0;
+  let reachable = 0;
+  let askable = 0;
+  for (const r of rows) {
+    if (!countsForReach(r.subject)) continue;
+    total++;
+    if (reachableForOffers(r.subject)) reachable++;
+    else if (consentAskEligible(r.subject, settings, r.lastAskedAt, now)) askable++;
+  }
+  return { total, reachable, share: total ? reachable / total : 0, withoutConsent: total - reachable, askable };
+}

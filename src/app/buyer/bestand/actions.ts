@@ -10,7 +10,7 @@ import { createCampaign, endCampaign, OCCASIONS, recordEmailReply, type EmailRep
 import { QUOTA_REACHED } from "@/lib/bestand/quota";
 import { asChannelMode } from "@/lib/bestand/einwilligung";
 import { platzhalterAusAnzeige } from "@/lib/bestand/kampagnen-mail";
-import { logConsent, requestConsent, setConsent, setHinweis } from "@/lib/bestand/einwilligung-server";
+import { logConsent, planConsentRequests, requestConsent, sendConsentWhatsApp, setConsent, setHinweis } from "@/lib/bestand/einwilligung-server";
 import { hinweisStatement } from "@/lib/bestand/import";
 import { agentConfirmText, agentConfirmVersion, needsAgentConfirm } from "@/lib/bestand/befugnis";
 import { LINE_NAMES } from "@/lib/bestand/rows";
@@ -429,6 +429,37 @@ export async function requestConsentAction(existingCustomerId: string, byMail: b
     const r = await requestConsent(existingCustomerId, ctx.customerId, { byMail, actorUserId: ctx.userId });
     if (!r.ok) return { error: r.error };
     return { ok: true, url: r.url, text: r.text, mailed: r.mailed };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}
+
+export type BulkAskState = { ok?: boolean; error?: string; planned?: number };
+
+/**
+ * Sammelanfrage (Paket 3): Bitte um Einwilligung per E-Mail an alle, die sie bekommen dürfen. Der Vermittler hat die
+ * Zahl im Fenster bestätigt; der Versand läuft gedrosselt (runConsentRequests), jede Antwort mit Double-Opt-in.
+ */
+export async function bulkConsentRequestAction(_prev: BulkAskState, fd: FormData): Promise<BulkAskState> {
+  try {
+    const ctx = await ownerCtx();
+    if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie die Anfrage." };
+    const planned = await planConsentRequests(ctx.customerId, { actorUserId: ctx.userId });
+    await audit("bestand.consent_bulk_request", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { planned, userId: ctx.userId } });
+    revalidatePath("/buyer/bestand");
+    revalidatePath("/buyer/bestand/einwilligungen");
+    return planned ? { ok: true, planned } : { error: "Gerade darf niemand per E-Mail gefragt werden." };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}
+
+/** Einwilligungslink per WhatsApp, nur im offenen 24-h-Fenster (der Kunde hat selbst geschrieben). */
+export async function consentWhatsAppAction(existingCustomerId: string): Promise<{ ok?: boolean; error?: string }> {
+  try {
+    const ctx = await ownerCtx();
+    const r = await sendConsentWhatsApp(existingCustomerId, ctx.customerId, { actorUserId: ctx.userId });
+    return r.ok ? { ok: true } : { error: r.error };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
   }

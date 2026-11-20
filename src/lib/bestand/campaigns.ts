@@ -17,10 +17,11 @@ import { a, anredeZeile, type AnredeKontakt, type Ansprache } from "@/lib/anspra
 import { kontaktFromExisting } from "@/lib/lead-anrede";
 import { empfehlungsThema } from "@/lib/empfehlung/shared";
 import { BESTAND_SOURCE } from "@/lib/lead-herkunft";
-import { BLOCKED_REASON, chooseChannel, countAudience, asChannelMode, type AudienceCounts, type Channel, type ChannelMode, type ConsentSettings, type LegalBasis } from "@/lib/bestand/einwilligung";
+import { BLOCKED_REASON, chooseChannel, wantsConsentPs, countAudience, asChannelMode, type AudienceCounts, type Channel, type ChannelMode, type ConsentSettings, type LegalBasis } from "@/lib/bestand/einwilligung";
 import { loadBestandAnsprache, loadConsentSettings, loadSuppression, optOutExisting, subjectOf, SUBJECT_SELECT, type Suppression } from "@/lib/bestand/einwilligung-server";
 import { afterSend, bounceCheck, innerGap, isBounceError, mailSlots, providerDailyLimit, type SendOutcome, type ThrottleState } from "@/lib/bestand/mail-drossel";
-import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, hasImprint, imprintFromWebsiteInfo, istPersonenversicherung, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
+import { consentUrl } from "@/lib/bestand/links";
+import { buildCampaignMail, campaignMailFooter, consentPsLine, defaultCampaignMail, fillCampaignMail, hasImprint, imprintFromWebsiteInfo, istPersonenversicherung, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
 import { classifyReply, isAutoReplyText } from "@/lib/vertrieb/sentiment";
 import { isExclusiveAgent, mayOffer, offeredLines } from "@/lib/bestand/befugnis";
 import { crossSellOffenWhere } from "@/lib/cross-sell-offen";
@@ -710,7 +711,17 @@ async function checkBounces(mb: MailboxRun, now: Date) {
 export async function campaignMailFor(
   c: { id?: string; customerId: string; occasion: string; topic: string | null; mailSubject: string | null; mailBody: string | null },
   ec: { id: string; firstName: string | null; lastName: string | null; salutation: string | null },
-  opts: { recipientId: string; customerName: string; imprint: string | null; meinname: string; empfehlungslink?: string | null; ansprache?: Ansprache; extras?: TextExtras },
+  opts: {
+    recipientId: string;
+    customerName: string;
+    imprint: string | null;
+    meinname: string;
+    empfehlungslink?: string | null;
+    ansprache?: Ansprache;
+    extras?: TextExtras;
+    /** Persönlicher Einwilligungslink als P.S. (nur wenn wantsConsentPs gilt, Paket 3) */
+    consentLink?: string | null;
+  },
 ) {
   const { unsubscribeUrl } = await import("@/lib/bestand/links");
   const { firmDisplayName } = await import("@/lib/lead-anrede");
@@ -723,7 +734,8 @@ export async function campaignMailFor(
   const filled = fillCampaignMail(tpl, { ansprache: an, kontakt: kontaktFromExisting(ec), thema: c.topic, empfehlungslink: opts.empfehlungslink, meinname: opts.meinname, terminlink: x.terminlink, datum: x.datum, anzahl: x.anzahl });
   const url = unsubscribeUrl(opts.recipientId);
   const footer = campaignMailFooter({ firm: firmDisplayName(opts.customerName), unsubscribeUrl: url, imprint: opts.imprint, ansprache: an });
-  return { subject: ohneGedankenstriche(filled.subject), ...buildCampaignMail(filled.body, footer), unsubscribeUrl: url };
+  const body = opts.consentLink ? `${filled.body}\n\n${consentPsLine(opts.consentLink, an)}` : filled.body;
+  return { subject: ohneGedankenstriche(filled.subject), ...buildCampaignMail(body, footer), unsubscribeUrl: url };
 }
 
 async function sendMailPart(
@@ -775,7 +787,18 @@ async function sendMailPart(
     if (!first) await sleep(innerGap(rand()));
     first = false;
     const referral = c.occasion === "empfehlung" ? await referralCampaignParts(c.customerId, ec.id, ec.firstName?.split(/\s+/)[0] || "", kontaktFromExisting(ec)) : null;
-    const mail = await campaignMailFor({ ...c, topic: await recipientTopic(c, ec) }, ec, { recipientId: r.id, customerName: c.customer.name, imprint, meinname, empfehlungslink: referral?.url ?? null, ansprache: cx.settings.ansprache, extras: await recipientExtras(c, ec, r.id, slug) });
+    // P.S. mit Einwilligungslink nur bei Werbeerlaubnis per E-Mail und fehlender Einwilligung (Paket 3)
+    const consentLink = wantsConsentPs(subjectOf(ec, cx.sup), cx.settings, c.occasion as Occasion) ? consentUrl(ec.id) : null;
+    const mail = await campaignMailFor({ ...c, topic: await recipientTopic(c, ec) }, ec, {
+      recipientId: r.id,
+      customerName: c.customer.name,
+      imprint,
+      meinname,
+      empfehlungslink: referral?.url ?? null,
+      ansprache: cx.settings.ansprache,
+      extras: await recipientExtras(c, ec, r.id, slug),
+      consentLink,
+    });
     const messageId = `bk-${r.id}@${(mb.email.split("@")[1] ?? "mail").toLowerCase()}`;
     const result = await sendViaPostfach(mb.userId, {
       to: ec.email!,

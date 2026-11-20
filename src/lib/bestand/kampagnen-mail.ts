@@ -217,6 +217,18 @@ export function campaignMailFooter(o: { firm: string; unsubscribeUrl: string; im
   ].join("\n");
 }
 
+/**
+ * P.S. mit persönlichem Einwilligungslink unter einer Kampagnen-Mail (Paket 3, 20.11.2026). Nur wenn
+ * wantsConsentPs (lib/bestand/einwilligung.ts) gilt; nie in Double-Opt-in- oder Service-Mails. Ohne Gedankenstriche.
+ */
+export function consentPsLine(url: string, ansprache: Ansprache = "sie"): string {
+  return a(
+    ansprache,
+    `P.S. Lieber per WhatsApp oder auch zu anderen Themen von mir hören? Hier legst du es mit einem Klick fest: ${url}`,
+    `P.S. Lieber per WhatsApp oder auch zu anderen Themen von mir hören? Hier legen Sie es mit einem Klick fest: ${url}`,
+  );
+}
+
 /** Liegen Pflichtangaben (Impressum) vor? Ohne sie geht keine Kampagnen-Mail raus (Start und Versand). */
 export function hasImprint(imprint: string | null | undefined): boolean {
   return !!imprint?.trim();
