@@ -61,6 +61,7 @@ export function UnterlagenGrid({
         </div>
       ) : null}
       <Leitfaeden />
+      <Matrix />
     </div>
   );
 }
@@ -73,6 +74,21 @@ function Leitfaeden() {
       <p className="mt-1 text-sm text-[color:var(--muted)]">15-Minuten-Telefonat vor dem Beratungsgespräch. Nur für Sie, nicht zum Weitergeben.</p>
       <div className="mt-3">
         <ButtonLink href="/api/admin/unterlagen/leitfaden-setter-call" external icon={FileText}>
+          PDF öffnen
+        </ButtonLink>
+      </div>
+    </Card>
+  );
+}
+
+/** Wirtschaftlichkeits-Matrix Bestandskunden vs. Mitarbeiter (Ole, 20.11.2026), PDF aus assets/unterlagen. */
+function Matrix() {
+  return (
+    <Card className="p-4 sm:p-5" data-matrix>
+      <h2 className="text-base font-semibold">Wirtschaftlichkeits-Matrix</h2>
+      <p className="mt-1 text-sm text-[color:var(--muted)]">Bestandskunden gegen Mitarbeiter: ab wann sich das Paket rechnet.</p>
+      <div className="mt-3">
+        <ButtonLink href="/api/admin/unterlagen/wirtschaftlichkeits-matrix" external icon={FileText}>
           PDF öffnen
         </ButtonLink>
       </div>
