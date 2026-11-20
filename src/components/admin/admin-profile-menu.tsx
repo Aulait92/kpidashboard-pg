@@ -74,7 +74,7 @@ export function AdminProfileMenu({ email, variant = "header" }: { email: string;
             <div className="text-xs text-[color:var(--muted)]">Admin</div>
           </div>
           {/* Neuer Admin (/admin/neu) zum Ausprobieren, je Admin (Cookie, src/lib/admin-neu/schalter.ts) */}
-          <NeueOberflaecheSchalter an={false} label="Neue Oberfläche ausprobieren" />
+          <NeueOberflaecheSchalter an={false} label="Zur neuen Oberfläche" />
           <Link href="/admin/einstellungen" onClick={() => setOpen(false)} className={itemCls}>
             <Settings className="h-4 w-4" /> Einstellungen
           </Link>

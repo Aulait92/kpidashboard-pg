@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Bell, BellOff, BellRing, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { Bell, BellOff, BellRing, Compass, History, LogOut, Settings, Wrench } from "lucide-react";
 import { neueOberflaecheAction } from "@/app/admin/neu/schalter-actions";
 import { usePush } from "@/lib/use-push";
 import { cn } from "@/lib/utils";
@@ -51,8 +51,22 @@ function PushZeile() {
   );
 }
 
+/** „Zur alten Oberfläche“: der neue Admin ist Standard (Cookie pg_admin_neu, lib/admin-neu/schalter.ts), zurück nur auf Wunsch. */
+function AlteOberflaeche() {
+  return (
+    <form action={neueOberflaecheAction}>
+      <input type="hidden" name="an" value="0" />
+      <button type="submit" className={cn(zeile, "text-[color:var(--muted)]")}>
+        <History className="h-4 w-4" /> Alte Oberfläche
+      </button>
+    </form>
+  );
+}
+
 /**
- * Profilmenü des neuen Admins: Schalter „Neue Oberfläche“, Push, Einstellungen, Sicherheit, Abmelden.
+ * Profilmenü des neuen Admins (wie /buyer: Profil › Einstellungen): Einstellungen, Werkzeuge (Technik), Push, dann
+ * die Umzugshilfen „Was wo ist“ und „Alte Oberfläche“ (bis Ole den alten Admin abschaltet, Stufe A), Abmelden.
+ * Zwei-Faktor liegt in Einstellungen › Konto & Sicherheit (Hinweis dort, solange er fehlt).
  * variant „sidebar“ unten in der Seitenleiste, sonst rund in der Kopfzeile (Handy).
  */
 export function ProfilMenue({ email, variant = "kopf" }: { email: string; variant?: "sidebar" | "kopf" }) {
@@ -109,14 +123,20 @@ export function ProfilMenue({ email, variant = "kopf" }: { email: string; varian
             <div className="truncate font-semibold">{email}</div>
             <div className="text-xs text-[color:var(--muted)]">Admin</div>
           </div>
-          <NeueOberflaecheSchalter an />
+          <div className="border-b border-[color:var(--border)]">
+            <Link href="/admin/neu/einstellungen" onClick={() => setOpen(false)} className={zeile}>
+              <Settings className="h-4 w-4" /> Einstellungen
+            </Link>
+            <Link href="/admin/neu/werkzeuge" onClick={() => setOpen(false)} className={zeile} data-profil="werkzeuge">
+              <Wrench className="h-4 w-4" /> Werkzeuge
+              <span className="ml-auto text-xs text-[color:var(--muted)]">Technik</span>
+            </Link>
+          </div>
           <PushZeile />
-          <Link href="/admin/neu/einstellungen" onClick={() => setOpen(false)} className={zeile}>
-            <Settings className="h-4 w-4" /> Einstellungen
+          <Link href="/admin/neu/was-wo-ist" onClick={() => setOpen(false)} className={cn(zeile, "text-[color:var(--muted)]")} data-profil="was-wo-ist">
+            <Compass className="h-4 w-4" /> Was wo ist
           </Link>
-          <Link href="/admin/einstellungen/sicherheit" onClick={() => setOpen(false)} className={zeile}>
-            <ShieldCheck className="h-4 w-4" /> Sicherheit (Zwei-Faktor)
-          </Link>
+          <AlteOberflaeche />
           <form action="/api/auth/logout" method="post" className="border-t border-[color:var(--border)]">
             <button type="submit" className={zeile}>
               <LogOut className="h-4 w-4" /> Abmelden

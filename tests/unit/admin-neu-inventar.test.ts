@@ -105,10 +105,14 @@ describe("Navigation neuer Admin", () => {
     expect(reiterFuer("kundenakte", { id: "k1" })[0]).toEqual({ href: "/admin/neu/kunden/k1", label: "Übersicht", exact: true });
   });
 
-  it("Rahmen v2: Mein Tag und vier Rollen oben, Werkzeuge, Einstellungen, Was wo ist unten; Handy 5 + Mehr", () => {
+  it("Rahmen (Umbau 20.11.2026): Mein Tag und vier Rollen oben, unten nur Einstellungen; Werkzeuge und Was wo ist im Profilmenü; Handy 5 Punkte ohne Mehr", () => {
     expect(BEREICHE.filter((b) => b.ort === "oben").map((b) => b.label)).toEqual(["Mein Tag", "Verkaufen", "Betreuen", "Liefern", "Geld"]);
-    expect(BEREICHE.filter((b) => b.ort === "unten").map((b) => b.label)).toEqual(["Werkzeuge", "Einstellungen", "Was wo ist"]);
+    expect(BEREICHE.filter((b) => b.ort === "unten").map((b) => b.label)).toEqual(["Einstellungen"]);
+    expect(BEREICHE.filter((b) => b.ort === "profil").map((b) => b.label)).toEqual(["Werkzeuge", "Was wo ist"]);
     expect(BEREICHE.filter((b) => b.handy === "leiste").map((b) => b.id)).toEqual(["mein-tag", "verkaufen", "betreuen", "liefern", "geld"]);
+    // Profilmenü-Seiten markieren in der Seitenleiste „Einstellungen“; sie bleiben über die Suche erreichbar
+    expect(bereichFuer("/admin/neu/was-wo-ist")?.ort).toBe("profil");
+    expect(SUCH_SEITEN.some((s) => s.href === "/admin/neu/was-wo-ist")).toBe(true);
   });
 
   it("Reiter je Rolle; Start genau, Listen auch auf Unterseiten aktiv", () => {
@@ -141,7 +145,9 @@ describe("Navigation neuer Admin", () => {
   });
 
   it("„+ Neu“ enthält alle vereinbarten Einträge, nach Rollen geordnet", () => {
-    expect(NEU_EINTRAEGE.map((e) => e.id)).toEqual(["aufgabe", "kontakt", "termin", "angebot", "linkedin", "neuigkeit", "ppl-bezug", "zuordnung", "kosten"]);
+    // Umbau 20.11.2026: nur, was man im Alltag schnell anlegt; alle Ziele im neuen Admin
+    expect(NEU_EINTRAEGE.map((e) => e.id)).toEqual(["aufgabe", "kontakt", "termin", "angebot", "ppl-bezug"]);
+    expect(NEU_EINTRAEGE.every((e) => e.art === "dialog" || e.href.startsWith("/admin/neu/"))).toBe(true);
     const reihe = BEREICHE.map((b) => b.id);
     const idx = NEU_EINTRAEGE.map((e) => reihe.indexOf(e.rolle));
     expect(idx.every((v, i) => v >= 0 && (i === 0 || v >= idx[i - 1]))).toBe(true);

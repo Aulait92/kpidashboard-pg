@@ -3,7 +3,8 @@
 // Inventar-Test lesen nur von hier. Konventionen: docs/ux/admin-neu/README.md, Plan v2: docs/ux/admin-v2-plan.md.
 //
 // Admin v2 (Paket A1): Navigation nach Rollen statt nach Funktionen. Oben „Mein Tag“ und die vier Rollen Verkaufen,
-// Betreuen, Liefern, Geld; unten Werkzeuge (Technik, Einrichtung), Einstellungen (einmal einrichten) und „Was wo ist“.
+// Betreuen, Liefern, Geld. Umbau 20.11.2026 (Rahmen, Ziel SUS 90+ wie /buyer): unten nur noch Einstellungen; Werkzeuge
+// (Technik) und „Was wo ist“ (Umzugshilfe) liegen im Profilmenü und in der Suche, die Handy-Leiste hat 5 Punkte ohne „Mehr“.
 // Die Adressen der Seiten bleiben (Push-Ziele, Umzugs-Links in push-ziel.ts/umzug.ts), nur die Gruppierung ändert sich:
 // z. B. liegt /admin/neu/leads/chats jetzt unter Betreuen, /admin/neu/zahlen/qualitaet ebenfalls.
 //
@@ -55,10 +56,11 @@ export type NeuBereich = {
   hinweis?: string;
   /** Startseite des Bereichs */
   pfad: string;
-  /** Seitenleiste: oben (Mein Tag und Rollen) oder unten (Werkzeuge, Einstellungen, Was wo ist) */
-  ort: "oben" | "unten";
-  /** Handy: direkt in der Leiste unten oder unter „Mehr“ */
-  handy: "leiste" | "mehr";
+  /** Seitenleiste: oben (Mein Tag und Rollen), unten (Einstellungen) oder nur im Profilmenü (Werkzeuge, Was wo ist).
+   *  Seiten im Profilmenü markieren in der Seitenleiste „Einstellungen“. */
+  ort: "oben" | "unten" | "profil";
+  /** Handy: in der Leiste unten (höchstens 5 Punkte, wie /buyer) oder über das Profilmenü oben rechts */
+  handy: "leiste" | "profil";
   seiten: NeuSeite[];
 };
 
@@ -88,7 +90,7 @@ export const BEREICHE: NeuBereich[] = [
     seiten: [
       { view: "vertrieb", pfad: n("/vertrieb"), titel: "Pipeline", alt: ["/admin/vertrieb/pipeline"], reiter: { gruppe: "verkaufen", label: "Pipeline" }, suchwoerter: "Vertrieb Akquise Stufen", fertig: true },
       { view: "vertrieb-kontakte", pfad: n("/vertrieb/kontakte"), titel: "Kontakte", alt: ["/admin/vertrieb/kontakte"], reiter: { gruppe: "verkaufen", label: "Kontakte" }, suchwoerter: "Vertrieb Cold Mail", fertig: true },
-      { view: "vertrieb-termine", pfad: n("/vertrieb/termine"), titel: "Termine", alt: ["/admin/vertrieb/buchungsseite"], reiter: { gruppe: "verkaufen", label: "Termine" }, suchwoerter: "Vertrieb Buchungsseite", fertig: true },
+      { view: "vertrieb-termine", pfad: n("/vertrieb/termine"), titel: "Termine", alt: ["/admin/vertrieb/buchungsseite", "/admin/vertrieb/termine"], reiter: { gruppe: "verkaufen", label: "Termine" }, suchwoerter: "Vertrieb Buchungsseite", fertig: true },
       { view: "vertrieb-angebote", pfad: n("/vertrieb/angebote"), titel: "Angebote", alt: ["/admin/vertrieb/angebote"], reiter: { gruppe: "verkaufen", label: "Angebote" }, suchwoerter: "Vertrieb", fertig: true },
       {
         view: "marketing",
@@ -183,8 +185,8 @@ export const BEREICHE: NeuBereich[] = [
     kurz: "Werkzeuge",
     hinweis: "Technik, Einrichtung",
     pfad: n("/werkzeuge"),
-    ort: "unten",
-    handy: "mehr",
+    ort: "profil",
+    handy: "profil",
     seiten: [
       { view: "werkzeuge", pfad: n("/werkzeuge"), titel: "Werkzeuge", alt: [], suchwoerter: "Technik Diagnose Verbindungen Import", fertig: true },
       { view: "w-zustand", pfad: n("/werkzeuge/zustand"), titel: "Systemzustand", gruppe: "Zustand", alt: [], suchwoerter: "Diagnose Hintergrund-Jobs Heartbeat Meta Stripe Bank LinkedIn WhatsApp-Zustellung Google-Kontingent Werbekosten", fertig: true },
@@ -203,7 +205,7 @@ export const BEREICHE: NeuBereich[] = [
     kurz: "Einstellungen",
     pfad: n("/einstellungen"),
     ort: "unten",
-    handy: "mehr",
+    handy: "profil",
     seiten: [
       { view: "einstellungen", pfad: n("/einstellungen"), titel: "Einstellungen", alt: ["/admin/einstellungen"], fertig: true },
       { view: "e-sicherheit", pfad: n("/einstellungen/sicherheit"), titel: "Zwei-Faktor & Geräte", gruppe: "Konto & Sicherheit", alt: ["/admin/einstellungen/sicherheit"], suchwoerter: "Sicherheit 2FA", untertitel: "Anmeldung schützen.", fertig: true },
@@ -226,8 +228,9 @@ export const BEREICHE: NeuBereich[] = [
     label: "Was wo ist",
     kurz: "Was wo ist",
     pfad: n("/was-wo-ist"),
-    ort: "unten",
-    handy: "mehr",
+    // Umzugshilfe bis zur Abschaltung des alten Admins (Stufe A, Ole): nicht in der Navigation, nur Profilmenü und Suche
+    ort: "profil",
+    handy: "profil",
     seiten: [{ view: "landkarte", pfad: n("/was-wo-ist"), titel: "Was wo ist", alt: [], suchwoerter: "Landkarte Umzug alte Seiten Funktionen", fertig: true }],
   },
 ];
@@ -282,24 +285,23 @@ export function altePfad(seite: NeuSeite, params: Record<string, string> = {}): 
 
 // ─── „+ Neu“ ─────────────────────────────────────────────────────────────
 // Nach Rollen geordnet (Admin v2), rechts steht die Rolle. art „dialog“: öffnet den bestehenden Ablauf im Fenster,
-// art „link“: führt zur bestehenden Seite.
+// art „link“: führt zur bestehenden Seite (immer die Adresse im neuen Admin).
+// Umbau 20.11.2026: nur noch, was man im Alltag schnell anlegt (5 statt 9 Einträge). Neuigkeit, LinkedIn-Entwurf,
+// Formular-Zuordnung und Laufende Kosten legt man auf ihrer Seite an (Knopf dort), sie entstehen selten oder automatisch.
 export type NeuEintrag = {
-  id: "kontakt" | "aufgabe" | "angebot" | "termin" | "zuordnung" | "ppl-bezug" | "linkedin" | "neuigkeit" | "kosten";
+  id: "kontakt" | "aufgabe" | "angebot" | "termin" | "ppl-bezug";
   label: string;
   rolle: BereichId;
 } & ({ art: "link"; href: string } | { art: "dialog"; dialog: "aufgabe" | "termin" });
 
 export const NEU_EINTRAEGE: NeuEintrag[] = [
   { id: "aufgabe", label: "Aufgabe", rolle: "mein-tag", art: "dialog", dialog: "aufgabe" },
-  { id: "kontakt", label: "Kontakt", rolle: "verkaufen", art: "link", href: "/admin/vertrieb/kontakte/neu" },
+  { id: "kontakt", label: "Kontakt", rolle: "verkaufen", art: "link", href: n("/vertrieb/kontakte/neu") },
   // Termin buchen wie in der Kontaktakte (Kontakt wählen, dann Termintyp, Datum, Uhrzeit); in einer Kontaktakte sofort für diesen Kontakt
-  { id: "termin", label: "Termin buchen", rolle: "verkaufen", art: "link", href: "/admin/neu/vertrieb/termine?buchen=1" },
-  { id: "angebot", label: "Angebot", rolle: "verkaufen", art: "link", href: "/admin/vertrieb/kontakte" },
-  { id: "linkedin", label: "LinkedIn-Entwurf", rolle: "verkaufen", art: "link", href: "/admin/neu/marketing" },
-  { id: "neuigkeit", label: "Neuigkeit für Kunden", rolle: "betreuen", art: "link", href: "/admin/einstellungen/neuigkeiten" },
-  { id: "ppl-bezug", label: "Pay-per-Lead-Bezug", rolle: "liefern", art: "link", href: "/admin/neu/leads/ppl/bezug/neu" },
-  { id: "zuordnung", label: "Formular-Zuordnung", rolle: "liefern", art: "link", href: "/admin/neu/leads?neu=1#zuordnen" },
-  { id: "kosten", label: "Laufende Kosten", rolle: "geld", art: "link", href: "/admin/neu/zahlen/kosten" },
+  { id: "termin", label: "Termin buchen", rolle: "verkaufen", art: "link", href: n("/vertrieb/termine?buchen=1") },
+  // Angebot gehört immer zu einem Kontakt: in einer Kontaktakte direkt „Angebot erstellen“, sonst Kontakt wählen
+  { id: "angebot", label: "Angebot", rolle: "verkaufen", art: "link", href: n("/vertrieb/kontakte") },
+  { id: "ppl-bezug", label: "Pay-per-Lead-Bezug", rolle: "liefern", art: "link", href: n("/leads/ppl/bezug/neu") },
 ];
 
 // ─── Suche: Seiten ───────────────────────────────────────────────────────

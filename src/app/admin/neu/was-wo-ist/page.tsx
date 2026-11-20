@@ -27,7 +27,7 @@ export default async function Page() {
   });
   const da = zeilen.filter((z) => z.status === "vorhanden").length;
   return (
-    <Seite titel="Was wo ist" untertitel={`Jede Funktion des heutigen Admins und ihr neuer Ort. ${da} von ${zeilen.length} sind schon im neuen Admin.`}>
+    <Seite titel="Was wo ist" untertitel={`Wo jede Funktion der alten Oberfläche jetzt liegt (${da} von ${zeilen.length} umgezogen).`}>
       <Funktionsliste zeilen={zeilen} />
     </Seite>
   );

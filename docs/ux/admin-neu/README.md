@@ -15,7 +15,8 @@ in Texten an Kunden). Der alte Admin bleibt vollständig erreichbar, bis Ole abn
 | Navigation, Reiter, „+ Neu“, Seitenliste der Suche | `src/lib/admin-neu/navigation.ts` (einzige Quelle) |
 | Umzug alt → neu (noch nicht aktiv) | `src/lib/admin-neu/umzug.ts` |
 | Offene Funktionen je Bereich | `src/lib/admin-neu/offen/<bereich>.ts` |
-| Schalter „Neue Oberfläche“ | Profilmenü; Cookie `pg_admin_neu` (`src/lib/admin-neu/schalter.ts`) |
+| Schalter „Neue Oberfläche“ | Neuer Admin ist Standard (seit 20.11.2026); „Alte Oberfläche“ im Profilmenü setzt Cookie `pg_admin_neu=0` (`src/lib/admin-neu/schalter.ts`). Abschalten des alten Admins: Stufe A (Ole) |
+| Rahmen-Regeln (Umbau 20.11.2026) | Handy-Leiste 5 Punkte ohne „Mehr“ (Mein Tag + 4 Rollen); Seitenleiste unten nur Einstellungen; Werkzeuge und „Was wo ist“ im Profilmenü (`ort: "profil"`) und in der Suche; „+ Neu“ nur Alltägliches (5 Einträge), Seltenes legt man auf seiner Seite an |
 | Rückweg nach dem Speichern (gemeinsame Actions) | `adminZiel` in `src/components/admin-neu/ui/rueckweg.ts` (Referer /admin/neu → neue Seite) |
 | Rücksprung nach Kalender, LinkedIn, Bank, 360dialog | `src/lib/admin-neu/ruecksprung.ts` (Cookie `pg_neu_back`, nur wenn der Start aus /admin/neu kam) |
 | Push an Admins (alle Ziele unter /admin) | `src/lib/admin-neu/push-ziel.ts`: `sendToAdmins` hängt `?von=push` an, die Middleware leitet mit Schalter auf die fertige neue Seite, sonst auf die alte Adresse |
