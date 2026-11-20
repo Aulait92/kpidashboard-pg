@@ -31,11 +31,11 @@ Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der 
 - **USt Leadverkauf (19.11.2026, Recht):** FA-Nachfrage vom 18.09.2026 zur verbindlichen Auskunft (Frist 21.10. abgelaufen)
   beantworten lassen, Antrag auf Umgestaltung ab 01.01.2027 zuschneiden; bis dahin Leads nur an geprüfte Vertreter/Makler
   steuerfrei, sonst 19 %. Entwurf und offene Punkte: `docs/recht/ust-leadverkauf-2026-11-19.md`. App-Umbau (Nachweis,
-  Steuerkennzeichen, Stripe) erst nach Oles Freigabe (CTO).
+  Steuerkennzeichen, Stripe, getrennte Rechnungen) live seit 20.11.2026, AGB-Klausel „Umsatzsteuer auf Leads“ live;
+  verrata24 geprüft (Registernr. eingetragen), HvK kein Vermittler (19 %).
 - Instantly: Light Speed und 60 Postfächer einrichten, Liste in der App importieren, Kampagne erst starten, wenn warm;
   Entscheidung zu den Textbefunden in `kaltakquise.md`.
 - Alte Löschverlangen per Knopf „Auf Verlangen löschen“ nachziehen.
-- Pay-per-Lead: Bezug von verrata24 im Admin aktivieren.
 - Meta-Freigabe des ersten Software-Kunden vorziehen.
 - Bedrock-Freischaltung (KI in der EU).
 - LinkedIn-App anlegen; Gmail API (falls weiter gewünscht).
