@@ -50,3 +50,5 @@ Vor jedem Angebot: Umsatzsteuerfrage durch den Steuerberater klären. Nur Pilot,
   verdienen mehr, je teurer der Lead) und „Meta 1:1 plus feste Pauschale, höchstens 35 €“.
 - **Entscheidung Ole: Mechanik bleibt „35 € pro Lead minus Werbekosten“.** Sales-Verpackung: Rechnung zeigt Leads × Preis,
   abzüglich bereits an Meta gezahlt, keine Margenzeile.
+- **Entscheidung Ole: 35 € sind Endpreis brutto, Software zusätzlich.** Unsere Nettogebühr je Lead = (35 € minus Meta-Kosten
+  inkl. 13b-Steuer) / 1,19, solange der Steuerberater die Gebühr als steuerpflichtig einstuft. Ist sie steuerfrei, gilt wieder brutto = netto.
