@@ -52,6 +52,14 @@ export async function erstinfoUrlFor(customerId: string): Promise<string> {
   return publicUrlOr(`/erstinformation/${token}`);
 }
 
+/** Datenschutzhinweise im Namen des Vermittlers (app/erstinformation/[token]/datenschutz, Ole 20.11.2026). */
+export async function datenschutzUrlFor(customerId: string): Promise<string | null> {
+  // Nur mit Name und Anschrift des Verantwortlichen (Datenschutz-Prüfung A3, docs/recht/datenschutz-vermittler-seite.md)
+  const { daten } = await loadErstinfo(customerId);
+  if (!daten.name?.trim() || !daten.anschrift?.trim()) return null;
+  return `${await erstinfoUrlFor(customerId)}/datenschutz`;
+}
+
 /** Öffentliche Adresse des PDFs (für das WhatsApp-Dokument; Meta lädt es von dort). */
 export async function erstinfoPdfUrlFor(customerId: string): Promise<string> {
   return `${await erstinfoUrlFor(customerId)}/pdf`;

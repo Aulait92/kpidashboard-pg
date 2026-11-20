@@ -97,7 +97,13 @@ export default async function BookingPage({ params, searchParams }: Props) {
   // Datenschutzhinweis des Beraters (verantwortlich für die Termindaten),
   // sonst der allgemeine Link.
   const customerPrivacy = (conn?.customer.onboarding?.websiteInfo as { privacyUrl?: string | null } | null)?.privacyUrl;
-  const privacyUrl = customerPrivacy && /^https?:\/\//.test(customerPrivacy) ? customerPrivacy : PRIVACY_URL;
+  // Ohne eigene URL: Datenschutzhinweise im Namen des Vermittlers (Ole, 20.11.2026), nicht unsere Erklärung
+  const privacyUrl =
+    customerPrivacy && /^https?:\/\//.test(customerPrivacy)
+      ? customerPrivacy
+      : conn?.customerId
+        ? await import("@/lib/erstinformation").then((m) => m.datenschutzUrlFor(conn.customerId)).then((u) => u ?? PRIVACY_URL).catch(() => PRIVACY_URL)
+        : PRIVACY_URL;
 
   // Berater bucht für einen Lead (Rückrufliste): Kontaktdaten vorbelegen —
   // nur für den eingeloggten Kunden selbst, keine Daten in der URL.
@@ -410,7 +416,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
                   rel="noopener noreferrer"
                   className="underline"
                 >
-                  Datenschutzerklärung
+                  Datenschutzhinweisen
                 </a>
                 .
               </span>
