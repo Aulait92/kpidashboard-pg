@@ -27,7 +27,7 @@ export function LebenszyklusAnsicht({
   const s = d.stats;
   return (
     <div className="space-y-5">
-  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" data-funktion={funktionen.kennzahlen}>
+  <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4" data-funktion={funktionen.kennzahlen}>
     {[
       { k: "Ruhende Konten", v: String(s.dormantNow), sub: s.avgDormantDays != null ? `Ø ${s.avgDormantDays} Tage ruhend` : "noch keine" },
       { k: "Reaktivierungsquote", v: pct(s.rate), sub: `${s.reactivations} von ${s.cancelled} Kündigungen zurückgekommen` },
@@ -36,7 +36,7 @@ export function LebenszyklusAnsicht({
     ].map((x) => (
       <div key={x.k} className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-3">
         <div className="text-xs text-[color:var(--muted)]">{x.k}</div>
-        <div className="mt-1 text-2xl font-semibold tabular-nums">{x.v}</div>
+        <div className="mt-1 text-xl font-semibold tabular-nums sm:text-2xl">{x.v}</div>
         <div className="mt-0.5 text-xs text-[color:var(--muted)]">{x.sub}</div>
       </div>
     ))}

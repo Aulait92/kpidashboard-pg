@@ -74,7 +74,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         ) : null}
 
         <Card>
-          <CardHeader title="Laufende Kosten" hint={costs.length ? `${eur(monatlich)} im Monat` : undefined} />
+          <CardHeader title="Laufende Kosten" actions={costs.length ? <span className="text-sm font-semibold tabular-nums">{eur(monatlich)} im Monat</span> : undefined} />
           <div data-funktion="actions-deleterecurringcostaction--laufende-kosten-loeschen">
             <LaufendeKostenListe costs={costs} />
           </div>

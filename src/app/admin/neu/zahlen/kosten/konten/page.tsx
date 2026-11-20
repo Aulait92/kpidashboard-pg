@@ -34,12 +34,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
           <BankKarte title="Commerzbank (Geschäftskonto)" icon={Building2} aspsp="Commerzbank" c={commerz} csv={csvCount("csv:commerzbank")} configured={configured} soon={soonOf(commerz)} />
           <BankKarte title="American Express" icon={CreditCard} aspsp="American Express" c={amex} csv={csvCount("csv:amex")} configured={configured} soon={soonOf(amex)} />
         </div>
-        <Aufklapp titel="Regeln" hinweis={rules.length ? `${rules.length}` : "neu beim Zuordnen mit „immer so“"} funktion="actions-saveruleaction--regel-speichern actions-deleteruleaction--regel-loeschen">
+        <Aufklapp titel="Regeln" hinweis={rules.length ? `${rules.length}` : undefined} funktion="actions-saveruleaction--regel-speichern actions-deleteruleaction--regel-loeschen">
           <Card className="p-4 sm:p-5">
             <BankRegeln rules={rules} />
           </Card>
         </Aufklapp>
-        <Aufklapp titel="Annahmen für Kennzahlen" hinweis="Gründerzeit, Kampagnen, Pilotphase" funktion="actions-savekpisettingsaction--annahmen-fuer-kennzahlen-stunden-stundensatz">
+        <Aufklapp titel="Annahmen für Kennzahlen" funktion="actions-savekpisettingsaction--annahmen-fuer-kennzahlen-stunden-stundensatz">
           <Card className="p-4 sm:p-5">
             <KpiSettingsForm hours={settings.founderHoursPerWeek} rate={settings.founderHourlyRate} campaigns={settings.acquisitionCampaigns.join(", ")} pplPilotEnd={settings.pplPilotEnd} />
           </Card>

@@ -255,21 +255,21 @@ export function GeldUebersicht({
         <Kachel
           label="MRR"
           wert={kEur(h.mrr)}
-          hinweis={mrrDiff != null ? `${mrrDiff >= 0 ? "+" : "−"}${kEur(Math.abs(mrrDiff))} zum Vormonat` : `${monat(data.current)} hochgerechnet`}
+          hinweis={mrrDiff != null ? `${mrrDiff >= 0 ? "+" : "−"}${kEur(Math.abs(mrrDiff))} seit ${monat(data.lastComplete).slice(0, 3)}.` : `${monat(data.current)} hochgerechnet`}
           ton={mrrDiff == null ? undefined : mrrDiff >= 0 ? "gut" : "schlecht"}
           onClick={() => setDrill("mrr")}
         />
         <Kachel
           label={`Ergebnis ${ergebnis ? monat(ergebnis.monat) : "Vormonat"}`}
-          wert={ergebnis ? kEur(ergebnis.wert) : "noch offen"}
-          hinweis={ergebnis ? (ergebnis.wert >= 0 ? "Gewinn nach allen Kosten" : "Verlust nach allen Kosten") : "braucht Bankdaten"}
+          wert={ergebnis ? kEur(ergebnis.wert) : "fehlt"}
+          hinweis={ergebnis ? (ergebnis.wert >= 0 ? "Gewinn nach allen Kosten" : "Verlust nach allen Kosten") : "Kosten unvollständig"}
           ton={ergebnis ? (ergebnis.wert >= 0 ? "gut" : "schlecht") : undefined}
           onClick={() => oeffnen("wirtschaft")}
         />
         <Kachel
           label="Aktive Kunden"
           wert={String(h.active)}
-          hinweis={`${kundenDiff >= 0 ? "+" : ""}${kundenDiff} in ${monat(data.lastComplete)}`}
+          hinweis={kundenDiff ? `${kundenDiff > 0 ? "+" : ""}${kundenDiff} zum Vormonat` : "wie im Vormonat"}
           ton={kundenDiff > 0 ? "gut" : kundenDiff < 0 ? "schlecht" : undefined}
           onClick={() => setDrill("active")}
         />

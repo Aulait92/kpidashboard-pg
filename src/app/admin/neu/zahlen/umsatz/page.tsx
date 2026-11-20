@@ -33,7 +33,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
             export: "route-get--csv-export-buchungen",
           }}
         />
-        <Aufklapp titel="Einrichtungsgebühren" hinweis="einmalig, mit Nachtragen" funktion="actions-savemanualrevenueaction--einrichtungsgebuehren-je-monat-umsatz-von-hand actions-deletemanualrevenueaction--manuellen-umsatz-loeschen">
+        <Aufklapp titel="Einrichtungsgebühren" hinweis="einmalig" funktion="actions-savemanualrevenueaction--einrichtungsgebuehren-je-monat-umsatz-von-hand actions-deletemanualrevenueaction--manuellen-umsatz-loeschen">
           <ZahlenEinmalUmsatz data={data} />
         </Aufklapp>
       </div>

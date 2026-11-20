@@ -1257,7 +1257,7 @@ function Ppl({ data }: { data: ZahlenData }) {
   return (
     <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
       <p className="text-[13px] text-[color:var(--muted)] lg:col-span-2" data-ppl-pilot>
-        Pay-per-Lead (Pilotphase {pilotLabel(data.pplPilot.from, data.pplPilot.to)}). Dieser Reiter rechnet immer mit allen Pay-per-Lead-Daten, auch in der Sicht „Kerngeschäft“. Ende der Pilotphase unter Einstellungen → Kosten.
+        Pay-per-Lead (Pilotphase {pilotLabel(data.pplPilot.from, data.pplPilot.to)}). Rechnet immer mit allen Pay-per-Lead-Daten, auch in der Sicht „Kerngeschäft“. Ende der Pilotphase unter „Annahmen für Kennzahlen“.
       </p>
       <Card title="Verkaufte Leads je Monat" cap="Nicht stornierte Leads (Revenue-Zeilen).">
         {max ? p.months.map((m) => <BarRow key={m.month} label={`${shortMonth(m.month)}${m.month === data.current ? " (bisher)" : ""}`} value={m.leads} max={max} color="var(--z-s1)" right={m.leads.toLocaleString("de-DE")} labelWidth={90} />) : <Empty />}

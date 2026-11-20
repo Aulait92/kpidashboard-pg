@@ -75,22 +75,22 @@ export async function BuchungenAnsicht({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Card className="px-5 py-4">
-          <div className={`text-2xl font-semibold tabular-nums ${sums.monthly > 0 ? "text-emerald-700" : sums.monthly < 0 ? "text-rose-700" : ""}`}>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <Card className="px-3 py-3 sm:px-5 sm:py-4">
+          <div className={`text-lg font-semibold tabular-nums sm:text-2xl ${sums.monthly > 0 ? "text-emerald-700" : sums.monthly < 0 ? "text-rose-700" : ""}`}>
             {sums.monthly >= 0 ? "+" : "−"}
             {eur(Math.abs(sums.monthly))}
           </div>
-          <div className="text-sm text-[color:var(--muted)]">monatlich wiederkehrend</div>
+          <div className="text-xs text-[color:var(--muted)] sm:text-sm">monatlich</div>
         </Card>
-        <Card className="px-5 py-4">
-          <div className="text-2xl font-semibold tabular-nums">{sums.oneOff < 0 ? `−${eur(-sums.oneOff)}` : eur(sums.oneOff)}</div>
-          <div className="text-sm text-[color:var(--muted)]">einmalig</div>
+        <Card className="px-3 py-3 sm:px-5 sm:py-4">
+          <div className="text-lg font-semibold tabular-nums sm:text-2xl">{sums.oneOff < 0 ? `−${eur(-sums.oneOff)}` : eur(sums.oneOff)}</div>
+          <div className="text-xs text-[color:var(--muted)] sm:text-sm">einmalig</div>
         </Card>
         <Link href={`${basis}?${openQs.toString()}`} className="block">
-          <Card className="px-5 py-4 transition hover:border-[color:var(--border-strong)]">
-            <div className={`text-2xl font-semibold tabular-nums ${sums.open ? "text-amber-700" : ""}`}>{sums.open}</div>
-            <div className="text-sm text-[color:var(--muted)]">offene Anfragen bzw. Aufgaben</div>
+          <Card className="h-full px-3 py-3 transition sm:px-5 sm:py-4 hover:border-[color:var(--border-strong)]">
+            <div className={`text-lg font-semibold tabular-nums sm:text-2xl ${sums.open ? "text-amber-700" : ""}`}>{sums.open}</div>
+            <div className="text-xs text-[color:var(--muted)] sm:text-sm">Anfragen offen</div>
           </Card>
         </Link>
       </div>

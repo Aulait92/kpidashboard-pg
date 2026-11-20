@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { CheckCircle2 } from "lucide-react";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
+import { Aufklapp } from "@/components/admin-neu/zahlen/aufklapp";
 import { GeldOffenePostenListe } from "@/components/admin-neu/zahlen/offene-posten-liste";
 import { ladeOffenePosten } from "@/lib/mahnwesen-server";
 import { STUFEN } from "@/lib/mahnwesen";
@@ -49,9 +50,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
         </Card>
 
         {d.bezahlt.length ? (
-          <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)]">
-            <summary className="cursor-pointer px-5 py-3 text-sm font-semibold">Bezahlt in den letzten 30 Tagen ({d.bezahlt.length})</summary>
-            <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)] text-sm">
+          <Aufklapp titel="Bezahlt in den letzten 30 Tagen" hinweis={`${d.bezahlt.length}`}>
+            <Card>
+            <ul className="divide-y divide-[color:var(--border)] text-sm">
               {d.bezahlt.map((b, i) => (
                 <li key={i} className="flex flex-wrap gap-x-4 px-5 py-2">
                   <span className="min-w-0 flex-1 truncate">
@@ -64,12 +65,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
                 </li>
               ))}
             </ul>
-          </details>
+            </Card>
+          </Aufklapp>
         ) : null}
 
-        <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)]" data-funktion="offene-posten--ablauf-und-vorbereitete-schalter">
-          <summary className="cursor-pointer px-5 py-3 text-sm font-semibold">So wird gemahnt</summary>
-          <div className="space-y-3 border-t border-[color:var(--border)] px-5 py-4 text-sm">
+        <Aufklapp titel="So wird gemahnt" funktion="offene-posten--ablauf-und-vorbereitete-schalter">
+          <Card className="space-y-3 px-5 py-4 text-sm">
             <ul className="space-y-1">
               {STUFEN.map((s) => (
                 <li key={s.nr}>
@@ -87,8 +88,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
                 <input type="checkbox" disabled checked={d.settings.leadsPause} readOnly className="h-4 w-4" /> Leads pausieren bei Verzug (vorbereitet, aus)
               </label>
             </div>
-          </div>
-        </details>
+          </Card>
+        </Aufklapp>
       </div>
     </Seite>
   );
