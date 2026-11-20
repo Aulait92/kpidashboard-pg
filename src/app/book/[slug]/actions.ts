@@ -20,7 +20,9 @@ export async function bookPublicAction(
   slug: string,
   formData: FormData,
 ): Promise<void> {
-  const fail = (code: string): never => redirect(`/book/${slug}?err=${code}`);
+  // Buchungslink aus dem WhatsApp-Chat (lib/whatsapp/buchungslink.ts): Token bleibt bei Fehlern erhalten
+  const chatToken = String(formData.get("c") ?? "");
+  const fail = (code: string): never => redirect(`/book/${slug}?${chatToken ? `c=${encodeURIComponent(chatToken)}&` : ""}err=${code}`);
   if (!checkLimit("publicBooking", await requestIp()).ok) fail("busy");
 
   // Bot-Falle: unsichtbares Feld ausgefüllt UND blitzschnell abgeschickt.
@@ -47,7 +49,15 @@ export async function bookPublicAction(
   const ort = wunsch === "onsite" && formate.vorOrt ? await agenturOrt(customerId).catch(() => null) : null;
   const mode: "phone" | "video" | "onsite" = wunsch === "phone" && formate.telefon ? "phone" : ort ? "onsite" : "video";
   const name = String(formData.get("name") ?? "").trim().slice(0, 80);
-  const phone = normalizePhone(String(formData.get("phone") ?? ""));
+  let phone = normalizePhone(String(formData.get("phone") ?? ""));
+  // Chat-Kontext: gebucht wird über die WhatsApp-Nummer des Chats, damit Termin, Lead und Strecke im selben Chat landen
+  if (chatToken) {
+    const { pruefeChatBuchungToken } = await import("@/lib/whatsapp/buchungslink");
+    const cid = pruefeChatBuchungToken(chatToken);
+    const c = cid ? await prisma.conversation.findUnique({ where: { id: cid }, select: { customerId: true, contactPhone: true } }) : null;
+    if (!c || c.customerId !== customerId) fail("invalid");
+    phone = c!.contactPhone;
+  }
   const emailRaw = String(formData.get("email") ?? "").trim().toLowerCase();
   // Splittest buchungsseite_kompakt (lib/experimente.ts): Fassung b ohne Pflicht-Haken, Datenschutz als Hinweis am
   // Knopf (Verarbeitung zur Terminvereinbarung nach Art. 6 Abs. 1 lit. b DSGVO, keine Einwilligung nötig)
