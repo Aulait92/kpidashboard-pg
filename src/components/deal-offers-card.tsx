@@ -165,6 +165,77 @@ export function DealOffersCard({
     });
   }
 
+  // Mail-Optionen (Anrede, Anhänge, Zahlung): offen im alten Admin, mit `kompakt` unter „Optionen“
+  const extras = current ? (
+    <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-mail-extras>
+      <div className="flex items-center gap-2" data-anrede>
+        <span className="text-xs font-medium text-[color:var(--muted)]">Anrede</span>
+        <div className="inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white p-0.5">
+          {([false, true] as const).map((v) => (
+            <button
+              key={String(v)}
+              type="button"
+              onClick={() => setDu(v)}
+              aria-pressed={du === v}
+              className={`rounded-[6px] px-2.5 py-0.5 text-xs font-medium ${du === v ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"}`}
+            >
+              {v ? "Du" : "Sie"}
+            </button>
+          ))}
+        </div>
+      </div>
+      {mail.entscheidung ? (
+        <div className="space-y-1" data-entscheidungs-call>
+          {!ohneCall ? <p className="text-xs text-[color:var(--muted)]">{mail.entscheidung}</p> : null}
+          <label className="flex items-center gap-2" data-ohne-entscheidungs-call>
+            <input type="checkbox" className="h-4 w-4" checked={ohneCall} onChange={(e) => setOhneCall(e.target.checked)} />
+            Ohne Bitte um den Entscheidungs-Call
+          </label>
+        </div>
+      ) : null}
+      <div className="text-xs font-medium text-[color:var(--muted)]">Mit der E-Mail mitschicken</div>
+      <label className="flex items-center gap-2">
+        <input type="checkbox" className="h-4 w-4" checked={mitRechner} onChange={(e) => setMitRechner(e.target.checked)} />
+        Rechner-Link
+      </label>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className={`flex items-center gap-2 ${pdfDa ? "" : "opacity-60"}`}>
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            disabled={!pdfDa}
+            checked={mitPraesentation && pdfDa}
+            onChange={(e) => setMitPraesentation(e.target.checked)}
+          />
+          Präsentation als PDF
+        </label>
+        <select
+          aria-label="Präsentation für"
+          value={audience}
+          onChange={(e) => setAudience(e.target.value as Audience)}
+          className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm"
+        >
+          <option value="vertreter">Vertreter</option>
+          <option value="makler">Makler</option>
+        </select>
+        {!pdfDa ? (
+          <Link href="/admin/marketing/unterlagen" className="text-xs text-[color:var(--brand)] underline">
+            PDF unter Unterlagen hochladen
+          </Link>
+        ) : null}
+      </div>
+      {mail.link ? (
+        <label className="flex items-center gap-2" data-praesentation-link>
+          <input type="checkbox" className="h-4 w-4" checked={mitLink} onChange={(e) => setMitLink(e.target.checked)} />
+          Link zur Präsentation zum Durchklicken (14 Tage, mit den Preisen aus dem Angebot)
+        </label>
+      ) : null}
+      <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p>
+      {!current.isTest ? <PayLaterToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
+      {!current.isTest ? <BankTransferToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
+    </div>
+  ) : null;
+
   return (
     <div id="angebot">
       <Card>
@@ -291,143 +362,11 @@ export function DealOffersCard({
                         </Button>
                       ) : null}
                     </div>
-                    <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-mail-extras>
-                <div className="flex items-center gap-2" data-anrede>
-                  <span className="text-xs font-medium text-[color:var(--muted)]">Anrede</span>
-                  <div className="inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white p-0.5">
-                    {([false, true] as const).map((v) => (
-                      <button
-                        key={String(v)}
-                        type="button"
-                        onClick={() => setDu(v)}
-                        aria-pressed={du === v}
-                        className={`rounded-[6px] px-2.5 py-0.5 text-xs font-medium ${du === v ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"}`}
-                      >
-                        {v ? "Du" : "Sie"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {mail.entscheidung ? (
-                  <div className="space-y-1" data-entscheidungs-call>
-                    {!ohneCall ? <p className="text-xs text-[color:var(--muted)]">{mail.entscheidung}</p> : null}
-                    <label className="flex items-center gap-2" data-ohne-entscheidungs-call>
-                      <input type="checkbox" className="h-4 w-4" checked={ohneCall} onChange={(e) => setOhneCall(e.target.checked)} />
-                      Ohne Bitte um den Entscheidungs-Call
-                    </label>
-                  </div>
-                ) : null}
-                <div className="text-xs font-medium text-[color:var(--muted)]">Mit der E-Mail mitschicken</div>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" className="h-4 w-4" checked={mitRechner} onChange={(e) => setMitRechner(e.target.checked)} />
-                  Rechner-Link
-                </label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className={`flex items-center gap-2 ${pdfDa ? "" : "opacity-60"}`}>
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4"
-                      disabled={!pdfDa}
-                      checked={mitPraesentation && pdfDa}
-                      onChange={(e) => setMitPraesentation(e.target.checked)}
-                    />
-                    Präsentation als PDF
-                  </label>
-                  <select
-                    aria-label="Präsentation für"
-                    value={audience}
-                    onChange={(e) => setAudience(e.target.value as Audience)}
-                    className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm"
-                  >
-                    <option value="vertreter">Vertreter</option>
-                    <option value="makler">Makler</option>
-                  </select>
-                  {!pdfDa ? (
-                    <Link href="/admin/marketing/unterlagen" className="text-xs text-[color:var(--brand)] underline">
-                      PDF unter Unterlagen hochladen
-                    </Link>
-                  ) : null}
-                </div>
-                {mail.link ? (
-                  <label className="flex items-center gap-2" data-praesentation-link>
-                    <input type="checkbox" className="h-4 w-4" checked={mitLink} onChange={(e) => setMitLink(e.target.checked)} />
-                    Link zur Präsentation zum Durchklicken (14 Tage, mit den Preisen aus dem Angebot)
-                  </label>
-                ) : null}
-                <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p>
-                {!current.isTest ? <PayLaterToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
-                {!current.isTest ? <BankTransferToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
-              </div>
+                    {extras}
                   </div>
                 </details>
               ) : (
-                <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-mail-extras>
-                <div className="flex items-center gap-2" data-anrede>
-                  <span className="text-xs font-medium text-[color:var(--muted)]">Anrede</span>
-                  <div className="inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white p-0.5">
-                    {([false, true] as const).map((v) => (
-                      <button
-                        key={String(v)}
-                        type="button"
-                        onClick={() => setDu(v)}
-                        aria-pressed={du === v}
-                        className={`rounded-[6px] px-2.5 py-0.5 text-xs font-medium ${du === v ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"}`}
-                      >
-                        {v ? "Du" : "Sie"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {mail.entscheidung ? (
-                  <div className="space-y-1" data-entscheidungs-call>
-                    {!ohneCall ? <p className="text-xs text-[color:var(--muted)]">{mail.entscheidung}</p> : null}
-                    <label className="flex items-center gap-2" data-ohne-entscheidungs-call>
-                      <input type="checkbox" className="h-4 w-4" checked={ohneCall} onChange={(e) => setOhneCall(e.target.checked)} />
-                      Ohne Bitte um den Entscheidungs-Call
-                    </label>
-                  </div>
-                ) : null}
-                <div className="text-xs font-medium text-[color:var(--muted)]">Mit der E-Mail mitschicken</div>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" className="h-4 w-4" checked={mitRechner} onChange={(e) => setMitRechner(e.target.checked)} />
-                  Rechner-Link
-                </label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className={`flex items-center gap-2 ${pdfDa ? "" : "opacity-60"}`}>
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4"
-                      disabled={!pdfDa}
-                      checked={mitPraesentation && pdfDa}
-                      onChange={(e) => setMitPraesentation(e.target.checked)}
-                    />
-                    Präsentation als PDF
-                  </label>
-                  <select
-                    aria-label="Präsentation für"
-                    value={audience}
-                    onChange={(e) => setAudience(e.target.value as Audience)}
-                    className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm"
-                  >
-                    <option value="vertreter">Vertreter</option>
-                    <option value="makler">Makler</option>
-                  </select>
-                  {!pdfDa ? (
-                    <Link href="/admin/marketing/unterlagen" className="text-xs text-[color:var(--brand)] underline">
-                      PDF unter Unterlagen hochladen
-                    </Link>
-                  ) : null}
-                </div>
-                {mail.link ? (
-                  <label className="flex items-center gap-2" data-praesentation-link>
-                    <input type="checkbox" className="h-4 w-4" checked={mitLink} onChange={(e) => setMitLink(e.target.checked)} />
-                    Link zur Präsentation zum Durchklicken (14 Tage, mit den Preisen aus dem Angebot)
-                  </label>
-                ) : null}
-                <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p>
-                {!current.isTest ? <PayLaterToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
-                {!current.isTest ? <BankTransferToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
-              </div>
+                extras
               )
             ) : null}
             {msg ? <p className="text-xs font-medium text-emerald-700">{msg}</p> : null}
