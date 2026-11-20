@@ -12,7 +12,7 @@ und Mittelpunkte bleiben); Chats auf Folie 11 und 14 und die Zitate auf Folie 14
 Berater „Max Berger“). Überschriften per Glyphen-Übernahme aus dem Original (Komma aus „Sonntag,“), Fließtext mit Inter neu
 gesetzt, Lead-Antworten im Chat unverändert übernommen. PPTX und PDF (Seiten 3, 6, 10 bis 12, 21, 22, 28 bis 31, Makler
 zusätzlich 32), Web-Folien der geänderten Folien neu. Folie 13 (Video: Du-Form und Gedankenstriche) und 17 unverändert.
-Die PPL-Präsentation nutzt dieselben Bilder (Vorstellung, „Niemand geht ran?“, „Kein Lead …“, „Heute“) und ist noch alt.
+Die PPL-Präsentation ist seit 20.11.2026 ebenso bereinigt (Abschnitt „Pay-per-Lead + Software“).
 
 Fassung 19.11.2026, Folie 19 „Policen vorab“ (Ole): statt WhatsApp-Telefon jetzt oben das Vergleichsblatt kompakt
 (Doppelt, Kündbar, Fehlt) und darunter ein echter Screenshot der Vergleichsfolie der Beratungspräsentation mit Spalte
@@ -107,6 +107,21 @@ Marketing → Unterlagen gedacht (dort gibt es nur Vertreter/Makler), sondern zu
 - Preise: Leads 17/22/35/65 € je Lead ohne Zusatz „brutto/netto“ (Umsatzsteuer auf Leads wird geprüft), Software
   349 € netto im Monat, keine Einrichtung, ohne Mindestlaufzeit, monatlich kündbar, 3 aktive Verkäufer inklusive (weitere 49 €).
   Ändern sich Preise, Folien 4, 10, 11 und den Sprechzettel anpassen.
+
+Fassung 20.11.2026, ohne Gedankenstriche und mit Sie-Form im Chat (wie Vertreter/Makler): Folie 3, 6, 9, 10, 11 und 12
+aus den bereinigten Vertreter-Bildern (Vertreter 3, 6, 11, 12, 14, 15) übernommen; Seitenzahl „n / 19“ und die
+PPL-Kennzeichen („Problem 02 gelöst“ auf 9, „Problem 01 + 03 gelöst“ auf 10, passend zu Folie 8) aus der alten PPL-Folie.
+Die eigenen PPL-Folien (1, 7, 8, 13, 15 bis 19) hatten keine Gedankenstriche, Folie 14 (Live-Demo) unverändert.
+PPTX, PDF (Seiten 3, 6, 9 bis 12) und Web-Folien `public/praesentation/vertrieb/ppl/03, 06, 09 bis 12.webp` neu.
+Keine Bonusfolie. Upload nach Oles OK (Zielgruppe `ppl`):
+
+```bash
+for f in pptx pdf; do
+  curl -sS -X POST "https://kpidashboard-pg-production.up.railway.app/api/ops/unterlagen?audience=ppl&format=$f" \
+    -H "X-Ops-Upload-Token: dummy" -H "X-File-Name: PPL-Software-Praesentation.$f" \
+    --data-binary @docs/unterlagen/PPL-Software-Praesentation.$f
+done
+```
 
 ## Web-Präsentation (Ole, 15.11.2026)
 

@@ -1,4 +1,4 @@
-# Sprechzettel Pay-per-Lead + Software (Stand 19.11.2026)
+# Sprechzettel Pay-per-Lead + Software (Stand 20.11.2026: Folien ohne Gedankenstriche, Chats in Sie-Form)
 
 Für `PPL-Software-Praesentation.pptx/.pdf` (19 Folien). Für Vermittler, die Leads pro Stück kaufen wollen; Ziel ist,
 zusätzlich die Software zu verkaufen. Grundregel: Fragen stellen, Zahlen des Gegenübers einsammeln, keine Quoten oder
@@ -46,6 +46,7 @@ Die vier Punkte kurz durchgehen, nicht vorlesen. Auf die Antwort von Folie 1 zur
 ## 9. Niemand geht ran? Egal, der Lead bucht selbst.
 „Statt anzurufen, schreibt Ihr Assistent jeden Lead sofort per WhatsApp an, in Ihrem Namen.“
 „Er stellt die richtigen Fragen, und der Lead bucht den Termin direkt in Ihren Kalender. Bestätigung und Erinnerung laufen automatisch.“
+Der Chat auf der Folie siezt den Lead („Guten Tag Frau Becker …“); der Assistent siezt Leads standardmäßig.
 „Sie führen nur noch das Beratungsgespräch.“
 
 ## 10. Sonntag, 21:47 Uhr
@@ -57,9 +58,9 @@ Die Geschichte erzählen: Formular am Sonntagabend, wenige Minuten später steht
 „Antwortet der Lead, hört das Nachfassen sofort auf.“
 „So holen Sie aus jedem bezahlten Lead mehr heraus, ohne selbst hinterherzutelefonieren.“
 
-## 12. Jeden Morgen wissen Sie, wen Sie anrufen
+## 12. Jeden Morgen wissen Sie, wen Sie anrufen und was er will
 Startseite „Heute“: neue Leads ganz oben, Termine mit der Zusammenfassung des Assistenten.
-„Nach dem Gespräch zwei Klicks, keine Dokumentation am Abend. Am Computer und am Handy.“
+„Nach dem Gespräch zwei Klicks, keine Dokumentation am Abend. Notizen diktieren Sie einfach am Handy. Läuft am Computer und am Handy.“
 
 ## 13. Perfekt vorbereitet in jeden Termin
 „Am Vortag steht ‚Termin vorbereiten‘ auf Ihrer Liste. Alles, was der Kunde im Formular und im Chat gesagt hat, auf einen Blick.“
