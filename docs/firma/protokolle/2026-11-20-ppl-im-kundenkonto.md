@@ -52,3 +52,6 @@ Vor jedem Angebot: Umsatzsteuerfrage durch den Steuerberater klären. Nur Pilot,
   abzüglich bereits an Meta gezahlt, keine Margenzeile.
 - **Entscheidung Ole: 35 € sind Endpreis brutto, Software zusätzlich.** Unsere Nettogebühr je Lead = (35 € minus Meta-Kosten
   inkl. 13b-Steuer) / 1,19, solange der Steuerberater die Gebühr als steuerpflichtig einstuft. Ist sie steuerfrei, gilt wieder brutto = netto.
+- **Entscheidung Ole: Abrechnung wöchentlich per Lastschrift** (Montag, Vorwoche; Stripe; Rücklastschrift = Kampagnen pausieren).
+- Vorprüfung: Umsatzsteuer voraussichtlich 19 % (`docs/recht/ust-ppl-im-kundenkonto-2026-11-20.md`); CPL gegen Budget mit
+  heutigen Daten offen (`docs/firma/analysen/2026-11-20-cpl-gegen-budget.md`), Nachweis per Kontotest im Pilot.
