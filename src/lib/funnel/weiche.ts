@@ -4,8 +4,8 @@
 // mitgegeben. Gemessen wird je Aufruf (FunnelEreignis schritt „weiche“, variante „eigen“ | „perspective“); Vergleich
 // über Leads und Erreichbarkeit (Perspective-Leads kommen als PoolLead mit externalId „perspective:…“).
 
-// start.pkv-tarife.com zeigt seit 21.11.2026 auf die Weiche, deshalb die Standardadresse des Perspective-Funnels
-export const PERSPECTIVE_URL_DEFAULT = "https://perspectivefunnel.co/67ed5355348f3c003b28f120/6a38fdb2394ea98588f321a5/";
+// start.pkv-tarife.com zeigt seit 21.11.2026 auf die Weiche; Perspective läuft dafür unter leads.performancegrowth.de
+export const PERSPECTIVE_URL_DEFAULT = "https://leads.performancegrowth.de/beitrag-halbieren/";
 /** Ziel für unseren Funnel, wenn die Weiche auf einer fremden Adresse sitzt (start.pkv-tarife.com). */
 export const EIGEN_URL_DEFAULT = "https://beitrag.pkv-tarife.com/";
 export type WeichenArm = "eigen" | "perspective";
