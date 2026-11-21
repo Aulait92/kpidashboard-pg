@@ -42,6 +42,7 @@ function errorsFor(an: Ansprache): Record<string, string> {
     email: a(an, "Bitte gib eine gültige E-Mail-Adresse an.", "Bitte geben Sie eine gültige E-Mail-Adresse an."),
     consent: a(an, "Bitte bestätige die Datenschutzhinweise.", "Bitte bestätigen Sie die Datenschutzhinweise."),
     taken: a(an, "Diese Uhrzeit ist leider gerade vergeben worden. Bitte wähle eine andere.", "Diese Uhrzeit ist leider gerade vergeben worden. Bitte wählen Sie eine andere."),
+    schon: a(an, "Du hast schon einen Termin. Möchtest du ihn verschieben? Nutze dafür den Link aus deiner Bestätigung.", "Sie haben schon einen Termin. Möchten Sie ihn verschieben? Nutzen Sie dafür den Link aus Ihrer Bestätigung."),
     busy: a(an, "Gerade gehen sehr viele Buchungen ein. Bitte versuche es in ein paar Minuten erneut.", "Gerade gehen sehr viele Buchungen ein. Bitte versuchen Sie es in ein paar Minuten erneut."),
     unavailable: "Die Online-Buchung ist aktuell nicht verfügbar.",
     invalid: "Die Buchung konnte nicht verarbeitet werden.",

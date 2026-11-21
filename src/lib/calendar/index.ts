@@ -312,6 +312,13 @@ export class SlotBusyError extends Error {
   }
 }
 
+/** Lead hat schon einen künftigen Termin: kein zweiter Termin, nur Verschieben (Ole, 21.11.2026: doppelte Buchung). */
+export class SchonGebuchtError extends Error {
+  constructor(public startsAt: Date) {
+    super("SCHON_GEBUCHT");
+  }
+}
+
 /**
  * Erster Kalender (in Reihenfolge von `keys`), der [start, end] (plus Puffer) frei hat, mit Adapter.
  * Abwesende Personen werden übersprungen. Nichts frei → SlotBusyError; fällt der einzige Kalender
@@ -380,6 +387,16 @@ export async function bookAppointment(opts: {
   const durationMin = opts.durationMin ?? (await durationForKeys(opts.customerId, keys));
   const end = new Date(start.getTime() + durationMin * 60000);
   if (start.getTime() < Date.now()) throw new Error("Startzeit liegt in der Vergangenheit.");
+  // Doppelte Buchung verhindern (Ole, 21.11.2026): Hat der Lead schon einen künftigen Termin, entsteht kein zweiter.
+  // Ausnahmen: Verschieben (bucht neu und sagt danach ab) und bewusste Buchung durch den Berater (z. B. Folgetermin).
+  if (opts.leadId && opts.notifyLead !== "rescheduled" && opts.bookedVia !== "advisor") {
+    const schon = await prisma.appointment.findFirst({
+      where: { leadId: opts.leadId, status: "booked", startsAt: { gt: new Date() } },
+      orderBy: { startsAt: "asc" },
+      select: { startsAt: true },
+    });
+    if (schon) throw new SchonGebuchtError(schon.startsAt);
+  }
   // Unmittelbar vor dem Anlegen erneut prüfen — der Slot kann seit dem
   // Vorschlag belegt worden sein (oder der Bot nennt eine eigene Zeit).
   const { key: calendarKey, adapter } = await findFreeCalendar(opts.customerId, keys, start, end, { leadId: opts.leadId });

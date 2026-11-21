@@ -34,7 +34,7 @@ vi.mock("@/lib/push", () => ({
 }));
 
 import { prisma } from "@/lib/prisma";
-import { bookAppointment, suggestSlots } from "@/lib/calendar";
+import { bookAppointment, SchonGebuchtError, suggestSlots } from "@/lib/calendar";
 import { __resetAllianzCache, decodeAllianzCalendar } from "@/lib/calendar/allianz-online";
 import { addBlock, changeAllianz, connectAllianz, loadSources, updateLeadTimes } from "@/lib/calendar/sources";
 import { addDaysYmd, berlinYmd, weekdayOfYmd } from "@/lib/absence";
@@ -322,6 +322,22 @@ describe("App-Kalender: ohne Google/Outlook buchen (Ole, 20.11.2026)", () => {
     expect(nachher).not.toContain(slot);
     // Zweite Buchung derselben Zeit scheitert (Doppelbuchungs-Schutz)
     await expect(bookAppointment({ customerId: c.id, start: slot, mode: "phone", summary: "Doppelt" })).rejects.toThrow();
+  });
+
+  it("Lead mit künftigem Termin: kein zweiter Termin, Verschieben und Berater-Buchung bleiben möglich (Ole, 21.11.2026)", async () => {
+    const c = await makeCustomer();
+    customers.push(c.id);
+    await prisma.agentConfig.create({ data: { customerId: c.id, advisorEmail: "test.vertreter@allianz.de" } });
+    const d1 = workday(4);
+    bt.slots = [slotTs(d1, "10:10"), slotTs(d1, "15:40")];
+    expect((await connectAllianz(c.id, "10/151/1203", true)).ok).toBe(true);
+    const lead = await prisma.lead.create({ data: { customerId: c.id, name: "Doppelt Test", phone: "491701234599" } });
+    await bookAppointment({ customerId: c.id, leadId: lead.id, start: berlinAt(d1, "10:00").toISOString(), mode: "video", summary: "Erster", bookedVia: "bot" });
+    // Zweite Buchung (Assistent oder Buchungsseite) für denselben Lead: abgelehnt
+    await expect(bookAppointment({ customerId: c.id, leadId: lead.id, start: berlinAt(d1, "15:30").toISOString(), mode: "video", summary: "Zweiter", bookedVia: "booking_page" })).rejects.toBeInstanceOf(SchonGebuchtError);
+    expect(await prisma.appointment.count({ where: { leadId: lead.id, status: "booked" } })).toBe(1);
+    // Verschieben bucht neu (danach wird der alte abgesagt) und ist erlaubt
+    await expect(bookAppointment({ customerId: c.id, leadId: lead.id, start: berlinAt(d1, "15:30").toISOString(), mode: "video", summary: "Verschoben", notifyLead: "rescheduled" })).resolves.toBeTruthy();
   });
 
   it("verbundener Google-Kalender bleibt unangetastet", async () => {

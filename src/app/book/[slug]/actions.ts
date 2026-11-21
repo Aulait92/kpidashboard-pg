@@ -4,7 +4,7 @@ import { recordUsage } from "@/lib/usage";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
-import { bookAppointment, SlotBusyError } from "@/lib/calendar";
+import { bookAppointment, SchonGebuchtError, SlotBusyError } from "@/lib/calendar";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import { sendBookingConfirmation } from "@/lib/whatsapp/reminders";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
@@ -217,6 +217,7 @@ export async function bookPublicAction(
     }).catch((e) => console.error("[booking page confirmation]", e));
   } catch (err) {
     if (err instanceof SlotBusyError) fail("taken");
+    if (err instanceof SchonGebuchtError) fail("schon");
     console.error("[booking page]", err);
     fail("error");
   }
@@ -284,6 +285,7 @@ async function bookViaStrecke(
   } catch (err) {
     await prisma.leadMailStrecke.update({ where: { id: s!.id }, data: { buchungAt: null } }).catch(() => null);
     if (err instanceof SlotBusyError) fail("taken");
+    if (err instanceof SchonGebuchtError) fail("schon");
     console.error("[booking page strecke]", err instanceof Error ? err.message.slice(0, 120) : err);
     fail("error");
   }
