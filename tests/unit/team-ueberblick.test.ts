@@ -105,6 +105,19 @@ describe("Team-Überblick: Schwellen", () => {
     expect(u.get(LENA)!.warn).toEqual([]);
   });
 
+  it("Rückruf (nicht neu) wartet über 24 Std.: gelb, schon bei einem (Ole, 21.11.2026)", () => {
+    const u = baueTeamUeberblick(
+      eingabe({
+        anrufe: [
+          { leadId: "a", name: "A", createdAt: h(-25), urgent: false, assignedUserId: FRANK },
+          { leadId: "b", name: "B", createdAt: h(-5), urgent: false, assignedUserId: LENA },
+        ],
+      }),
+    );
+    expect(u.get(FRANK)!.warn).toEqual(["anruf"]);
+    expect(u.get(LENA)!.warn).toEqual([]);
+  });
+
   it("Wiedervorlagen: ab 3 oder eine älter als 24 Std.", () => {
     const zwei = baueTeamUeberblick(
       eingabe({

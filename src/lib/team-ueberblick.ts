@@ -18,6 +18,8 @@ const STUNDE = 60 * 60 * 1000;
 export const TEAM_SCHWELLEN = {
   neuerLeadWartetMs: 2 * STUNDE,
   anrufAb: 3,
+  // Ole, 21.11.2026: schon ein Rückruf, der länger als 24 Std. wartet, reicht
+  anrufAlterMs: 24 * STUNDE,
   ueberfaelligAb: 3,
   ueberfaelligAlterMs: 24 * STUNDE,
   ergebnisAb: 3,
@@ -151,7 +153,7 @@ export function warnGruende(m: Pick<MitgliedUeberblick, "offen" | "quote">, urge
   const alt = (l: UeberblickLead, ms: number) => t - new Date(l.at).getTime() > ms;
   const s = TEAM_SCHWELLEN;
   const warn: Record<OffenArt, boolean> = {
-    anruf: m.offen.anruf.length >= s.anrufAb || m.offen.anruf.some((l) => urgent.get(l.leadId) && alt(l, s.neuerLeadWartetMs)),
+    anruf: m.offen.anruf.length >= s.anrufAb || m.offen.anruf.some((l) => (urgent.get(l.leadId) && alt(l, s.neuerLeadWartetMs)) || alt(l, s.anrufAlterMs)),
     wiedervorlage: m.offen.wiedervorlage.length >= s.ueberfaelligAb || m.offen.wiedervorlage.some((l) => alt(l, s.ueberfaelligAlterMs)),
     ergebnis: m.offen.ergebnis.length >= s.ergebnisAb || m.offen.ergebnis.some((l) => alt(l, s.ergebnisAlterMs)),
     ohneSchritt: m.offen.ohneSchritt.length > 0 && m.quote != null && m.quote < s.ohneSchrittQuoteUnter,
