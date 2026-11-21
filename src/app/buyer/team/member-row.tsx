@@ -2,13 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ChevronRight, Mail, Pencil, Plane, UserMinus } from "lucide-react";
+import { CalendarDays, ChevronRight, Mail, Pencil, Plane, UserMinus } from "lucide-react";
+import { BeraterAllianzForm } from "@/components/calendar-sources";
 import { Badge, Button } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { AbsenceSheet, dayShort, type AbsenceColleague } from "@/components/absence-sheet";
 import type { AbsenceView } from "@/lib/absence";
-import { removeMemberAction, renameMemberAction, resendInviteAction, toggleReceivesLeadsAction } from "./actions";
+import { removeMemberAction, renameMemberAction, resendInviteAction, setMemberAllianzAction, toggleReceivesLeadsAction } from "./actions";
 
 export type MemberView = {
   id: string;
@@ -19,12 +20,16 @@ export type MemberView = {
   owner: boolean;
   receivesLeads: boolean;
   ownCalendar: boolean;
+  /** „bekommt Leads nach: …“, solange Kalender oder App fehlen (lib/team-bereit.ts) */
+  wartet?: string | null;
   leads30: number;
   loggedIn: boolean;
   /** Zwei-Faktor-Login aktiv */
   twoFactor?: boolean;
   /** Laufende oder kommende Abwesenheit */
   absence: AbsenceView | null;
+  /** Agentur mit Allianz-Online-Kalender: Person des Mitglieds wählen (Termine per Einladung), sonst null */
+  allianz?: { resources: Array<{ id: string; name: string }>; resourceId: string | null; email: string } | null;
   /** Kostenhinweis, falls „bekommt Leads“ an einen weiteren aktiven Verkäufer über den inklusiven bedeutet */
   enableCostHint?: string | null;
 };
@@ -39,7 +44,7 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
   const router = useRouter();
   const toast = useToast();
   const [pending, start] = useTransition();
-  const [open, setOpen] = useState<"menu" | "rename" | "remove" | "absence" | "cost" | null>(null);
+  const [open, setOpen] = useState<"menu" | "rename" | "remove" | "absence" | "cost" | "allianz" | null>(null);
   const [name, setName] = useState(m.displayName ?? "");
 
   const run = (fn: () => Promise<void>, message: string) =>
@@ -60,6 +65,7 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
       onSelect: () => setTimeout(() => setOpen("absence"), 0),
     },
     { label: "Namen ändern", icon: Pencil, onSelect: () => setTimeout(() => setOpen("rename"), 0) },
+    ...(m.allianz ? [{ label: "Allianz-Kalender", icon: CalendarDays, onSelect: () => setTimeout(() => setOpen("allianz"), 0) }] : []),
     ...(!m.owner && !m.loggedIn
       ? [{ label: "Einladung erneut senden", icon: Mail, onSelect: () => run(() => resendInviteAction(fd({ userId: m.id })), "Einladung gesendet") }]
       : []),
@@ -83,8 +89,9 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
             ) : null}
           </div>
           <div className="line-clamp-2 text-sm text-[color:var(--muted)]">
-            {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "Kalender verbunden" : m.owner ? "Kalender unter „Mein Kalender“" : "kein Kalender (Termine beim Inhaber)"}
+            {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "Kalender verbunden" : m.owner ? "Kalender unter „Mein Kalender“" : "kein Kalender"}
           </div>
+          {m.wartet ? <div className="text-sm font-medium text-amber-700" data-wartet>{m.wartet}</div> : null}
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
       </button>
@@ -139,6 +146,22 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
           </Button>
         </form>
       </Sheet>
+      {m.allianz ? (
+        <Sheet open={open === "allianz"} onClose={() => setOpen(null)} title="Allianz-Kalender" message="Termine gehen als Einladung an diese Adresse.">
+          <div className="p-5">
+            <BeraterAllianzForm
+              action={setMemberAllianzAction}
+              resources={m.allianz.resources}
+              resourceId={m.allianz.resourceId}
+              email={m.allianz.email}
+              readOnly={readOnly}
+              hidden={{ userId: m.id }}
+              frage={`Wer ist ${m.name} im Allianz-Online-Kalender?`}
+              kompakt
+            />
+          </div>
+        </Sheet>
+      ) : null}
       <Sheet open={open === "cost"} onClose={() => setOpen(null)} title={`${m.name} bekommt Leads?`} message={m.enableCostHint ?? undefined}>
         <div className="space-y-2 p-5" data-seat-confirm>
           <Button

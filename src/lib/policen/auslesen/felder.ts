@@ -118,6 +118,13 @@ export const FELDER: readonly Feld[] = [
     ],
     beschreibung: "Art der Kaskoversicherung",
   },
+  // Kfz für den Beitrag (Ole, 21.11.2026): aus der Rechnung des Vorversicherers die volle Versicherungsscheinnummer (nur
+  // Kfz, für die Übernahme der SF-Klasse; andere Sparten nur die letzten 4 Zeichen, docs/recht/), aus dem Fahrzeugschein
+  // (Zulassungsbescheinigung Teil I) Hersteller- und Typschlüssel und die Erstzulassung
+  { key: "versicherungsnummer_voll", label: "Vers.-Nr. (voll)", typ: "text", sparten: ["kfz"], beschreibung: "vollständige Versicherungsscheinnummer der Kfz-Versicherung, wie auf dem Dokument (für die Übernahme der SF-Klasse beim Vorversicherer)" },
+  { key: "hsn", label: "Herstellerschlüssel (HSN)", typ: "text", sparten: ["kfz"], beschreibung: "Herstellerschlüssel aus dem Fahrzeugschein, Feld 2.1, genau 4 Ziffern" },
+  { key: "tsn", label: "Typschlüssel (TSN)", typ: "text", sparten: ["kfz"], beschreibung: "Typschlüssel aus dem Fahrzeugschein, Feld 2.2, die ersten 3 Zeichen (Ziffern oder Buchstaben)" },
+  { key: "erstzulassung", label: "Erstzulassung", typ: "datum", sparten: ["kfz"], beschreibung: "Datum der Erstzulassung aus dem Fahrzeugschein, Feld B" },
   { key: "fahrleistung", label: "Fahrleistung", typ: "ganzzahl", sparten: ["kfz"], einheit: "km/Jahr", beschreibung: "jährliche Fahrleistung in km" },
   { key: "werkstattbindung", label: "Werkstattbindung", typ: "janein", sparten: ["kfz"], beschreibung: "Werkstattbindung vereinbart" },
   // Wohngebäude
@@ -290,6 +297,29 @@ export function normDatum(v: unknown): string | null {
   return y >= 1950 && y <= 2100 ? iso : null;
 }
 
+/** Volle Versicherungsscheinnummer (nur Kfz): Ziffern, Buchstaben, Punkt, Schrägstrich, Bindestrich, 4 bis 30 Zeichen. */
+export function volleNummer(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.replace(/\s+/g, " ").trim();
+  if (!/^[0-9A-Za-z][0-9A-Za-z ./-]{2,28}[0-9A-Za-z]$/.test(t)) return null;
+  return (t.match(/[0-9a-z]/gi) ?? []).length >= 4 ? t : null;
+}
+
+/** Herstellerschlüssel (HSN, Feld 2.1): genau 4 Ziffern. */
+export function normHsn(v: unknown): string | null {
+  if (typeof v !== "string" && typeof v !== "number") return null;
+  const z = String(v).replace(/\s+/g, "");
+  return /^\d{4}$/.test(z) ? z : null;
+}
+
+/** Typschlüssel (TSN, Feld 2.2): die ersten 3 Zeichen, Ziffern oder Buchstaben (groß). */
+export function normTsn(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const z = v.replace(/[\s-]+/g, "").toUpperCase();
+  const m = /^([A-Z0-9]{3})[A-Z0-9]{0,8}$/.exec(z);
+  return m ? m[1] : null;
+}
+
 /** Versicherungsnummer: nur die letzten 4 Zeichen (Buchstaben/Ziffern), maskiert. */
 export function maskiereNummer(v: unknown): string | null {
   if (typeof v !== "string") return null;
@@ -314,6 +344,9 @@ export function pruefeWert(f: Feld, v: unknown): FeldWert | null {
     case "text": {
       if (typeof v !== "string") return null;
       if (f.key === "versicherungsnummer") return maskiereNummer(v);
+      if (f.key === "versicherungsnummer_voll") return volleNummer(v);
+      if (f.key === "hsn") return normHsn(v);
+      if (f.key === "tsn") return normTsn(v);
       if (f.key === "sf_haftpflicht" || f.key === "sf_kasko") return normSf(v);
       const t = v.replace(/\s+/g, " ").trim().slice(0, 80);
       if (!t || hatGesundheitsbegriff(t)) return null;

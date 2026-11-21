@@ -50,9 +50,10 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
     if (!p.ok) return { error: p.error };
     let video: string | null | undefined;
     if (fd.has("videoRoomUrl")) {
-      const raw = str(fd, "videoRoomUrl", 300);
-      video = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw || null;
-      if (video && !/^https:\/\/[^\s/]+\.[^\s]+$/i.test(video)) return { error: "Bitte den ganzen Webex-Link einfügen, z. B. https://allianz.webex.com/meet/vorname.nachname." };
+      const { pruefeVideoLink } = await import("@/lib/video-raum");
+      const geprueft = pruefeVideoLink(str(fd, "videoRoomUrl", 300));
+      if (!geprueft.ok) return { error: geprueft.error };
+      video = geprueft.url;
     }
     const { saveVermittlerAngaben } = await import("@/lib/erstinformation");
     await saveVermittlerAngaben(ob.customerId, p.angaben);

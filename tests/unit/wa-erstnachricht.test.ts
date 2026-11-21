@@ -95,7 +95,7 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
     expect(anredeName("sie", { fullName: "Kim Mustermann", salutation: "divers" })).toBe("Kim Mustermann");
     expect(anredeName("sie", { fullName: "Kim Mustermann" })).toBe("Kim Mustermann");
     expect(V9("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *{{1}}?*");
-    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
+    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*");
   });
 
   it("alle Produkte: gleicher kurzer Aufbau, bestehende Öffnungsfrage, kurz genug für WhatsApp Desktop", () => {
@@ -110,7 +110,7 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
       expect(f).toBe(frage);
     }
     for (const p of OUTREACH_PURPOSES) {
-      expect(PURPOSE_VERSION[p]).toBe("v12");
+      expect(PURPOSE_VERSION[p]).toBe(p === "outreach_privatschutz" ? "v13" : "v12");
       for (const form of ["du", "sie", "sie_ohne_name"] as const) {
         const req = buildTemplateRequest(p, templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", "Herr"), undefined, form, { documentExample: "https://x.de/e.pdf" });
         const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
@@ -118,7 +118,7 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
         expect(metaTemplateProblems(body.text!, body.example?.body_text[0] ?? [])).toEqual([]);
         expect(comps.find((c) => c.type === "FOOTER")?.text).toBe(ERSTINFO_FOOTER_V12);
         expect(comps.find((c) => c.type === "HEADER")).toBeTruthy();
-        expect(req.name).toMatch(/_v12(_|$)/);
+        expect(req.name).toMatch(/_v1[23](_|$)/);
         // gerendert mit Beispielwerten kurz (v7 lag bei rund 230 Zeichen und klappte ein)
         expect(renderTemplate(body.text!, body.example?.body_text[0] ?? []).length).toBeLessThanOrEqual(190);
       }
@@ -171,10 +171,10 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
 
   it("Freitext im offenen Fenster: gleicher Aufbau, Frage fett, KI-Kennzeichnung als Zeile darunter (keine Fußzeile)", () => {
     const t = erstanschreibenText({ an: "sie", kontakt: { fullName: "Erika Mustermann", salutation: "Frau" }, name: "Ole", vermittler: HERR.dat, vermittlerNom: HERR.nom, source: "Privatschutz", formular: PS_FORM });
-    expect(t).toBe("Hallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\n_Digitaler KI-Assistent_");
+    expect(t).toBe("Hallo Frau Mustermann, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*\n\n_Digitaler KI-Assistent_");
     expect(t).not.toMatch(/[–—]/);
     const du = erstanschreibenText({ an: "du", kontakt: { fullName: "Erika Mustermann" }, name: "Ole", vermittler: DU.dat, source: "Privatschutz", formular: PS_FORM });
-    expect(du).toContain("danke für deine Anfrage zum Privatschutz! *");
+    expect(du).toContain("danke für deine Anfrage zu Haftpflicht und Hausrat! *");
     expect(du).toMatch(/\n\n_Digitaler KI-Assistent/);
   });
 

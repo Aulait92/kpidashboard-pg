@@ -166,7 +166,7 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
   });
 
   it("v12: Knopf „Alles neu“ auf die feste erste Frage → trotzdem genau eine Zwischenfrage (Ole, 20.11.2026, Testchat)", async () => {
-    const { conv, phone } = await leadNachErstanschreiben(undefined, "[Erstinformation als PDF]\nHallo Julia Schneider, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\nDigitaler KI-Assistent");
+    const { conv, phone } = await leadNachErstanschreiben(undefined, "[Erstinformation als PDF]\nHallo Julia Schneider, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*\n\nDigitaler KI-Assistent");
     await inbound(phone, { type: "button", button: { text: "Alles neu", payload: "Alles neu" } });
     expect(st.ai).toBe(0);
     const frage = gesendet().at(-1)!;

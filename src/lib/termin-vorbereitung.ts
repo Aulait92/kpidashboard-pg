@@ -153,6 +153,26 @@ export function abschnitte(d: VorbereitungDaten): Abschnitt[] {
     return out;
   }
 
+  if (kat === "kfz") {
+    // Kfz (Ole, 21.11.2026): was der Allianz-Rechner braucht; aus den Fotos stehen die Werte auf der Vertragsseite
+    return [
+      {
+        titel: "Allianz-Rechner Kfz",
+        felder: [
+          { label: "Fahrzeug (HSN 2.1, TSN 2.2)", wert: q("fahrzeug") },
+          { label: "Bisherige Kfz-Versicherung (Versicherer, SF-Klasse, Vers.-Nr.)", wert: q("vorversicherung") },
+          { label: "Adresse / PLZ", wert: plz },
+          { label: "Geburtsdatum", wert: q("geburt") },
+          { label: "Beruf (öffentlicher Dienst)", wert: q("beruf") },
+          { label: "Anlass, Schutz, Schäden (3 Jahre)", wert: q("kfzVertrag") },
+          { label: "Nutzung, Führerschein seit, weitere Fahrer", wert: q("kfzFahrer") },
+          { label: "km im Jahr, Finanzierung", wert: q("kfzDetails") },
+        ],
+      },
+      { titel: "Weitere Verträge", felder: [{ label: "Bestehende Verträge", wert: q("vorhanden") }] },
+    ];
+  }
+
   // Andere Produkte: was der Assistent und das Formular wissen
   return [{ titel: "Angaben des Assistenten", felder: qualificationPoints(d.angaben).map((p) => ({ label: p.label, wert: p.value })) }];
 }

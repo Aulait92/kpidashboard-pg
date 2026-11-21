@@ -22,7 +22,7 @@ Stabilität vor Tempo bei allem, was Kunden berührt. Jede Änderung mit Tests, 
 Führungsrunde, Produkt- und Design-Review.
 
 ## Besonderes
-Deploy nur bei grüner Testpipeline. Code-Deploys im Abendfenster ab 20 Uhr, Blocker früher nur mit Oles Freigabe. Vor jedem Push live: `git fetch`, beide Branches mergen, Tests (`npx vitest run --maxWorkers=1`), Typen, `node tools/admin-neu/inventar-stand.mjs --check`. Prisma-Migrationen nur additiv mit eindeutigem Zeitstempel.
+Deploy nur bei grüner Testpipeline. Code-Deploys werktags im Abendfenster ab 20 Uhr, am Wochenende (Samstag, Sonntag) jederzeit (Ole, 21.11.2026); Blocker früher nur mit Oles Freigabe. Vor jedem Push live: `git fetch`, beide Branches mergen, Tests (`npx vitest run --maxWorkers=1`), Typen, `node tools/admin-neu/inventar-stand.mjs --check`. Prisma-Migrationen nur additiv mit eindeutigem Zeitstempel.
 
 ## Bevor du anfängst
 1. Lies `docs/firma/README.md` (Grundsätze, Freigabestufen, Meetings) und `AGENTS.md` (Regeln von Ole).
