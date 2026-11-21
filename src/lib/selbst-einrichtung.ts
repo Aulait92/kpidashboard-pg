@@ -616,7 +616,10 @@ export async function appInstalled(customerId: string): Promise<boolean> {
   if (ob?.appSkippedAt) return true;
   const users = await prisma.user.findMany({ where: { customerId, role: "BUYER" }, select: { id: true } });
   if (!users.length) return false;
-  return (await prisma.pushSubscription.count({ where: { userId: { in: users.map((u) => u.id) } } })) > 0;
+  const ids = users.map((u) => u.id);
+  // Web-Push oder App-Store-App (native Geräte, lib/native-push.ts): beides zählt als „Mitteilungen an“
+  const [web, nativ] = await Promise.all([prisma.pushSubscription.count({ where: { userId: { in: ids } } }), prisma.deviceToken.count({ where: { userId: { in: ids } } })]);
+  return web + nativ > 0;
 }
 
 export async function loadSetupOverview(customerId: string) {
