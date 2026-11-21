@@ -146,7 +146,7 @@ export type KostenErgebnis = {
  * Kosten je Anzeige und Tag abgleichen. `voll`: alle Konten bis 90 Tage zurück (sonst nur beim ersten Lauf eines
  * Kontos). `fetch` ersetzbar für Tests.
  */
-export async function syncAnzeigeKosten(opts: { now?: Date; voll?: boolean; fetch?: FetchAdInsights } = {}): Promise<KostenErgebnis> {
+export async function syncAnzeigeKosten(opts: { now?: Date; voll?: boolean; fetch?: FetchAdInsights; /** nur dieses Werbekonto (Ziffern), z. B. direkt nach der Meta-Freigabe */ nurKonto?: string } = {}): Promise<KostenErgebnis> {
   const now = opts.now ?? new Date();
   const fetchRows = opts.fetch ?? fetchAdInsightsDaily;
   if (!opts.fetch && !process.env.META_ACCESS_TOKEN) return { übersprungen: "META_ACCESS_TOKEN fehlt", konten: [], gespeichert: 0, fehler: 0 };
@@ -177,7 +177,8 @@ export async function syncAnzeigeKosten(opts: { now?: Date; voll?: boolean; fetc
     ...[...owners.entries()].map(([id, inhaber]) => ({ id, inhaber, agentur: false })),
     ...[...new Set(agentur)].map((id) => ({ id, inhaber: [] as KundeMitStart[], agentur: true })),
   ];
-  for (const konto of konten) {
+  const nur = opts.nurKonto?.replace(/^act_/, "").trim();
+  for (const konto of nur ? konten.filter((k) => k.id === nur) : konten) {
     const einziger = konto.inhaber.length === 1 ? konto.inhaber[0] : null;
     const res: KontoErgebnis = { konto: `act_${konto.id}`, kunde: einziger?.name ?? null, agentur: konto.agentur, von: null, bis: today, zeilen: 0, gespeichert: 0, vorStart: 0, ohneStart: 0, ohneKunde: 0 };
     out.konten.push(res);
