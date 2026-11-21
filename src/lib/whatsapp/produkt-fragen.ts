@@ -78,6 +78,15 @@ export const istKfzProdukt = (product: string | null | undefined): boolean => {
  * Fahrzeugschein. 2 Dokumente: Fahrzeugschein und Rechnung vom Vorversicherer.“ Fotos zuerst, Fragen nur als Rückfall
  * (Rechner-Tabelle lib/preise/rechner-angaben.ts, Sparte „kfz“).
  */
+/**
+ * Fragen im Meta-Leadformular Kfz (Entwurf docs/kfz-leadformular.md, Ole 21.11.2026). Erkennung über die Beschriftung,
+ * in Sie- und Du-Fassung; was das Formular liefert, fragt der Assistent nicht noch einmal.
+ */
+export const KFZ_FORMULAR = {
+  anlass: /worum geht es|wechsel oder neu|anlass/i,
+  schutz: /welchen schutz|gew(ü|ue)nschte[rn]? schutz|welche deckung/i,
+} as const;
+
 function kfzCheckliste(): ProduktCheckliste {
   return {
     key: "kfz",

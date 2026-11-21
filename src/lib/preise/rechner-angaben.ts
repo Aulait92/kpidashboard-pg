@@ -10,7 +10,7 @@
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
-import { istKfzProdukt } from "@/lib/whatsapp/produkt-fragen";
+import { istKfzProdukt, KFZ_FORMULAR } from "@/lib/whatsapp/produkt-fragen";
 
 /** Sparten mit Rechner (Schlüssel wie im Tarifkatalog bzw. RECHNER in pilot.ts). */
 export type RechnerSparte =
@@ -160,10 +160,11 @@ export const ANGABEN = {
     label: "Anlass, Schutz, Schäden (3 Jahre)",
     wer: "lead",
     rang: 22,
-    wert: (c) => c.q("kfzVertrag"),
+    // Anlass und Schutz kommen meist aus dem Leadformular (KFZ_FORMULAR), Schäden fragt der Assistent
+    wert: (c) => [c.form(KFZ_FORMULAR.anlass), c.form(KFZ_FORMULAR.schutz), c.q("kfzVertrag")].filter(Boolean).join("; ") || null,
     fragen: [
       f("kfzAnlass", "kfzVertrag", "Geht es um einen Versicherungswechsel für Ihr jetziges Fahrzeug oder um ein neu gekauftes Fahrzeug?", "Geht es um einen Versicherungswechsel für dein jetziges Fahrzeug oder um ein neu gekauftes Fahrzeug?", /wechsel|neu|ersatz|gekauft/i),
-      f("kfzSchutz", "kfzVertrag", "Welcher Schutz ist Ihnen wichtig: nur Haftpflicht, Teilkasko oder Vollkasko?", "Welcher Schutz ist dir wichtig: nur Haftpflicht, Teilkasko oder Vollkasko?", /haftpflicht|teilkasko|vollkasko|\btk\b|\bvk\b/i),
+      f("kfzSchutz", "kfzVertrag", "Welcher Schutz ist Ihnen wichtig: nur Haftpflicht, Teilkasko oder Vollkasko?", "Welcher Schutz ist dir wichtig: nur Haftpflicht, Teilkasko oder Vollkasko?", /haftpflicht|teilkasko|vollkasko|\btk\b|\bvk\b|noch nicht|wei(ß|ss) (ich )?(es )?nicht|beraten/i),
       f("kfzSchaeden", "kfzVertrag", "Hat Ihre Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt?", "Hat deine Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt?", /sch(ä|a)den|schadenfrei/i, JA_NEIN),
     ],
   },

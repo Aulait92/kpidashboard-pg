@@ -6,7 +6,7 @@
 
 import { formatPhone } from "@/lib/format";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
-import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
+import { KFZ_FORMULAR, produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -164,7 +164,7 @@ export function abschnitte(d: VorbereitungDaten): Abschnitt[] {
           { label: "Adresse / PLZ", wert: plz },
           { label: "Geburtsdatum", wert: q("geburt") },
           { label: "Beruf (öffentlicher Dienst)", wert: q("beruf") },
-          { label: "Anlass, Schutz, Schäden (3 Jahre)", wert: q("kfzVertrag") },
+          { label: "Anlass, Schutz, Schäden (3 Jahre)", wert: [formWert(d.formular, KFZ_FORMULAR.anlass), formWert(d.formular, KFZ_FORMULAR.schutz), q("kfzVertrag")].filter(Boolean).join("; ") || null },
           { label: "Nutzung, Führerschein seit, weitere Fahrer", wert: q("kfzFahrer") },
           { label: "km im Jahr, Finanzierung", wert: q("kfzDetails") },
         ],
