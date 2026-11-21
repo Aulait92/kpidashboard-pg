@@ -14,13 +14,16 @@ export default async function KontaktPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ von?: string }>;
+  searchParams: Promise<{ von?: string; m?: string }>;
 }) {
   const session = await getBuyerContext();
   if (!session) redirect("/login");
   const { id } = await params;
-  const { von } = await searchParams;
-  const backHref = von === "pipeline" ? "/buyer/kontakte?modus=pipeline" : "/buyer/kontakte";
+  const { von, m } = await searchParams;
+  // Aus dem Team-Überblick (Inhaber): zurück zur aufgeklappten Person
+  const team = von === "team" && session.teamRole === "owner";
+  const mitglied = m && /^[\w-]{1,64}$/.test(m) ? m : null;
+  const backHref = team ? `/buyer/team${mitglied ? `?m=${mitglied}#m-${mitglied}` : ""}` : von === "pipeline" ? "/buyer/kontakte?modus=pipeline" : "/buyer/kontakte";
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -29,7 +32,7 @@ export default async function KontaktPage({
         className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-base font-medium text-[color:var(--brand)] hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
-        {von === "pipeline" ? "Pipeline" : "Kontakte"}
+        {team ? "Team" : von === "pipeline" ? "Pipeline" : "Kontakte"}
       </Link>
       <LeadDetailBody leadId={id} team={session} newUi />
     </main>

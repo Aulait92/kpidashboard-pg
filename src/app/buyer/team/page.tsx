@@ -12,18 +12,31 @@ import { InviteForm } from "./invite-form";
 import { MemberRow } from "./member-row";
 import { bereitFuerLeads, wartetText } from "@/lib/team-bereit";
 import { loadBeraterPersonen } from "@/lib/calendar/berater-allianz";
+import { ladeTeamUeberblick } from "@/lib/team-ueberblick-server";
+import { offenText, termineKurz } from "@/lib/team-ueberblick";
+import { isNewUi } from "@/lib/new-ui";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Team | performancegrowth" };
 
 
-export default async function TeamPage() {
+export default async function TeamPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const readOnly = ctx.preview;
 
-  const [members, personen] = await Promise.all([teamMembers(ctx.customerId), loadBeraterPersonen(ctx.customerId)]);
+  const members = await teamMembers(ctx.customerId);
+  const now = new Date();
+  const [personen, ueberblick, newUi, sp] = await Promise.all([
+    loadBeraterPersonen(ctx.customerId),
+    // Team-Überblick je Mitglied: Termine 7 Tage und Offenes (Ole, 21.11.2026, lib/team-ueberblick.ts), ab 2 Personen
+    ladeTeamUeberblick(ctx, now, members).catch(() => null),
+    isNewUi(ctx.customerId),
+    searchParams,
+  ]);
+  // Kontakt öffnen mit Rücksprung auf die aufgeklappte Person (neue Oberfläche), sonst die alte Kontaktseite
+  const leadHref = (userId: string) => (newUi ? `/buyer/kontakte/{id}?von=team&m=${encodeURIComponent(userId)}` : "/buyer/leads/{id}");
   // Bereit für Leads erst mit Kalender und App mit Mitteilungen (Ole, 21.11.2026, lib/team-bereit.ts)
   const mitPush = new Set(
     (await prisma.pushSubscription.findMany({ where: { userId: { in: members.map((m) => m.id) } }, select: { userId: true } })).map((p) => p.userId),
@@ -87,9 +100,16 @@ export default async function TeamPage() {
                       ? { resources: personen.resources, resourceId: personen.gewaehlt[m.id]?.resourceId ?? null, email: personen.gewaehlt[m.id]?.email ?? m.email }
                       : null,
                   enableCostHint: !m.receivesLeads && !activeToday.has(m.id) ? enableCost : null,
+                  ueberblick: (() => {
+                    const u = ueberblick?.get(m.id);
+                    return u ? { u, termine: termineKurz(u), offen: offenText(u), warn: u.warn.length > 0 } : null;
+                  })(),
                 }}
                 colleagues={members.filter((o) => o.id !== m.id).map((o) => ({ id: o.id, name: memberName(o) }))}
                 today={today}
+                nowIso={now.toISOString()}
+                leadHref={leadHref(m.id)}
+                defaultOpen={sp.m === m.id}
               />
             ))}
           </ul>

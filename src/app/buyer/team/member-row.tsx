@@ -2,13 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { CalendarDays, ChevronRight, Mail, Pencil, Plane, UserMinus } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronRight, Mail, Pencil, Plane, Settings2, UserMinus } from "lucide-react";
 import { BeraterAllianzForm } from "@/components/calendar-sources";
 import { Badge, Button } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { AbsenceSheet, dayShort, type AbsenceColleague } from "@/components/absence-sheet";
 import type { AbsenceView } from "@/lib/absence";
+import { TERMINE_TAGE, type MitgliedUeberblick } from "@/lib/team-ueberblick";
+import { MemberUeberblick } from "./member-ueberblick";
 import { removeMemberAction, renameMemberAction, resendInviteAction, setMemberAllianzAction, toggleReceivesLeadsAction } from "./actions";
 
 export type MemberView = {
@@ -32,6 +34,12 @@ export type MemberView = {
   allianz?: { resources: Array<{ id: string; name: string }>; resourceId: string | null; email: string } | null;
   /** Kostenhinweis, falls „bekommt Leads“ an einen weiteren aktiven Verkäufer über den inklusiven bedeutet */
   enableCostHint?: string | null;
+  /**
+   * Team-Überblick (nur Teams ab 2 Personen, lib/team-ueberblick.ts): Zeile klappt auf (Termine, Offen), die
+   * seltenen Aktionen liegen dann hinter „Verwalten“. termine/offen = Statuszeile, warn = über der Schwelle (nur
+   * der Teil „offen“ wird gelb).
+   */
+  ueberblick?: { u: MitgliedUeberblick; termine: string; offen: string; warn: boolean } | null;
 };
 
 const fd = (o: Record<string, string>) => {
@@ -40,12 +48,32 @@ const fd = (o: Record<string, string>) => {
   return f;
 };
 
-export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; readOnly: boolean; colleagues: AbsenceColleague[]; today: string }) {
+export function MemberRow({
+  m,
+  readOnly,
+  colleagues,
+  today,
+  nowIso,
+  leadHref = "/buyer/leads/{id}",
+  defaultOpen = false,
+}: {
+  m: MemberView;
+  readOnly: boolean;
+  colleagues: AbsenceColleague[];
+  today: string;
+  /** „jetzt“ des Servers für Zeitangaben im Überblick */
+  nowIso?: string;
+  leadHref?: string;
+  /** Aufgeklappt öffnen (Link von Heute: /buyer/team?m=<id>) */
+  defaultOpen?: boolean;
+}) {
   const router = useRouter();
   const toast = useToast();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState<"menu" | "rename" | "remove" | "absence" | "cost" | "allianz" | null>(null);
   const [name, setName] = useState(m.displayName ?? "");
+  const ub = m.ueberblick ?? null;
+  const [auf, setAuf] = useState(!!ub && defaultOpen);
 
   const run = (fn: () => Promise<void>, message: string) =>
     start(async () => {
@@ -73,8 +101,15 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
   ];
 
   return (
-    <li className="flex items-center gap-3 px-5 py-3.5">
-      <button type="button" disabled={readOnly} onClick={() => setOpen("menu")} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+    <li id={`m-${m.id}`} className="scroll-mt-20">
+      <div className="flex items-center gap-3 px-5 py-3.5">
+      <button
+        type="button"
+        disabled={readOnly && !ub}
+        onClick={() => (ub ? setAuf((x) => !x) : setOpen("menu"))}
+        aria-expanded={ub ? auf : undefined}
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+      >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="truncate font-medium">{m.name}</span>
@@ -88,12 +123,21 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
               </Badge>
             ) : null}
           </div>
-          <div className="line-clamp-2 text-sm text-[color:var(--muted)]">
-            {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "Kalender verbunden" : m.owner ? "Kalender unter „Mein Kalender“" : "kein Kalender"}
-          </div>
+          {ub ? (
+            <div className="line-clamp-2 text-sm text-[color:var(--muted)]" data-team-status>
+              {ub.termine}
+              <span className="hidden sm:inline"> in {TERMINE_TAGE} Tagen</span> · <span className={ub.warn ? "font-medium text-amber-700" : undefined}>{ub.offen}</span>
+            </div>
+          ) : (
+            <div className="line-clamp-2 text-sm text-[color:var(--muted)]">{memberMeta(m)}</div>
+          )}
           {m.wartet ? <div className="text-sm font-medium text-amber-700" data-wartet>{m.wartet}</div> : null}
         </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+        {ub ? (
+          <ChevronDown className={`h-4 w-4 shrink-0 text-[color:var(--border-strong)] transition ${auf ? "rotate-180" : ""}`} />
+        ) : (
+          <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+        )}
       </button>
       <label className="flex shrink-0 items-center gap-2 text-sm text-[color:var(--muted)]">
         <button
@@ -113,6 +157,17 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
           <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${m.receivesLeads ? "left-[22px]" : "left-0.5"}`} />
         </button>
       </label>
+      </div>
+      {ub && auf ? (
+        <div className="border-t border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-5 py-4">
+          <MemberUeberblick u={ub.u} nowIso={nowIso ?? new Date().toISOString()} leadHref={leadHref} meta={memberMeta(m)} />
+          {readOnly ? null : (
+            <Button variant="ghost" size="sm" icon={Settings2} className="mt-3 -ml-3" onClick={() => setOpen("menu")} data-team-verwalten>
+              Verwalten
+            </Button>
+          )}
+        </div>
+      ) : null}
 
       {open === "absence" ? (
         <AbsenceSheet
@@ -197,4 +252,9 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
       </Sheet>
     </li>
   );
+}
+
+/** Leads in 30 Tagen und Kalenderstatus (Zeile ohne Team, sonst im aufgeklappten Teil). */
+function memberMeta(m: Pick<MemberView, "leads30" | "ownCalendar" | "owner">): string {
+  return `${m.leads30} ${m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · ${m.ownCalendar ? "Kalender verbunden" : m.owner ? "Kalender unter „Mein Kalender“" : "kein Kalender"}`;
 }

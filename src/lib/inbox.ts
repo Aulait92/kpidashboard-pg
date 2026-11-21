@@ -19,7 +19,25 @@ import { wartetStand } from "@/lib/showup-server";
 
 const TZ = "Europe/Berlin";
 const DAY = 24 * 60 * 60 * 1000;
-const POST_STATUSES = ["Angebot gesendet", "Abschluss", "Kein Interesse", "Disqualifiziert"];
+export const POST_STATUSES = ["Angebot gesendet", "Abschluss", "Kein Interesse", "Disqualifiziert"];
+
+/**
+ * Wiedervorlage, die noch zu erledigen ist (Heute, Kommende Tage, Team-Überblick): offene Phase oder eine Aufgabe nach dem
+ * Abschluss („Police fertig machen“, NACH_ABSCHLUSS_TODOS) bzw. die Bestandsübertragung. Nach dem Abschluss bleibt nur das
+ * (Ole, 13.11.2026).
+ */
+export function offeneWiedervorlageWhere() {
+  return {
+    OR: [
+      { NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } } },
+      { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
+      // Aufgaben nach dem Abschluss (lib/lead-aufgaben.ts): „Police da …?“ nach 2, „Weiteres Produkt anbieten?“ nach 6 Wochen
+      ...NACH_ABSCHLUSS_TODOS.map((t) => ({ status: "Abschluss", followUpNote: { startsWith: t } })),
+      // Bestandsübertragung bestätigt? (Maklervollmacht) in jeder Phase
+      { followUpNote: { startsWith: UEBERTRAGUNG_TODO } },
+    ],
+  };
+}
 
 function berlinDayStart(d: Date): Date {
   const ymd = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
@@ -167,16 +185,7 @@ export async function loadInbox(ctx: TeamCtx & { preview?: boolean; demo?: boole
   const tomorrowEnd = new Date(todayStart.getTime() + 2 * DAY);
 
   const horizon = new Date(todayStart.getTime() + 15 * DAY);
-  const followUpOpen = {
-    OR: [
-      { NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } } },
-      { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
-      // Aufgaben nach dem Abschluss (lib/lead-aufgaben.ts): „Police da …?“ nach 2, „Weiteres Produkt anbieten?“ nach 6 Wochen
-      ...NACH_ABSCHLUSS_TODOS.map((t) => ({ status: "Abschluss", followUpNote: { startsWith: t } })),
-      // Bestandsübertragung bestätigt? (Maklervollmacht) in jeder Phase
-      { followUpNote: { startsWith: UEBERTRAGUNG_TODO } },
-    ],
-  };
+  const followUpOpen = offeneWiedervorlageWhere();
   const [laterFollowUps, laterAppts] = await Promise.all([
     prisma.lead.findMany({
       where: { ...leadScope(ctx), followUpAt: { gte: new Date(todayStart.getTime() + DAY), lt: horizon }, ...followUpOpen },
@@ -235,13 +244,7 @@ export async function loadInbox(ctx: TeamCtx & { preview?: boolean; demo?: boole
         ...leadScope(ctx),
         followUpAt: { lt: new Date(todayStart.getTime() + DAY) },
         // Nach dem Abschluss bleibt nur „Police fertig machen“ (Ole, 13.11.2026)
-        OR: [
-          { NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } } },
-          { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
-          ...NACH_ABSCHLUSS_TODOS.map((t) => ({ status: "Abschluss", followUpNote: { startsWith: t } })),
-          // Bestandsübertragung bestätigt? (Maklervollmacht) in jeder Phase
-          { followUpNote: { startsWith: UEBERTRAGUNG_TODO } },
-        ],
+        ...offeneWiedervorlageWhere(),
       },
       orderBy: { followUpAt: "asc" },
       take: 50,

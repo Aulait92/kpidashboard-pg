@@ -27,6 +27,7 @@ import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-ka
 import { VollmachtVersandHinweis } from "@/components/vollmacht-versand-hinweis";
 import { grussName } from "@/lib/vermittler-nennung";
 import { vermittlerDuAus } from "@/lib/vermittler-ansprache";
+import { TeamHeuteKarte } from "@/components/team-heute";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -88,6 +89,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   // Push „Jetzt anrufen?“ (lib/anruf-ausloeser.ts): Anruf-Blatt für diesen Kontakt öffnen
   const anrufenRaw = (await searchParams).anrufen;
   const anrufen = anrufenRaw && /^[\w-]{1,64}$/.test(anrufenRaw) ? anrufenRaw : null;
+  // Team (nur Inhaber, ab 2 Personen): wer Leads warten lässt, steht oben, weil Zeit bis zum Anruf zählt (Ole, 21.11.2026)
+  const teamKarte = ctx.teamRole === "owner" ? <TeamHeuteKarte ctx={ctx} /> : null;
   // Hinweise, die nicht dringend sind, stehen unter den Aufgaben (UX, Ole 15.11.2026)
   const hinweise = (
     <div className="mt-6 space-y-4">
@@ -156,6 +159,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
             {erstinfoHint}
+            {teamKarte}
             <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />
             {hinweise}
           </section>
@@ -198,6 +202,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       {erstinfoHint}
+      {teamKarte}
       <TodayInbox data={data} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />
       {hinweise}
     </main>
