@@ -486,11 +486,12 @@ describe("Einwilligungsnachweis je Lead (L3)", () => {
     expect(renderTemplate("Name: {name}\nEinwilligung: {einwilligung}", { id: "L1", name: "Erika", phone: null, email: null, answers: [] })).toBe("Name: Erika");
   });
 
-  it("E-Mail „Dein Experte“ (L9): Du-Form, Nummer, Widerruf, keine Gedankenstriche", () => {
+  it("E-Mail „Dein Experte“ (L9): Du-Form, ohne Nummer, Widerruf, keine Gedankenstriche", () => {
     const m = experteMail({ email: "e@x.de", vorname: "Erika", experte: { name: "Max Muster", firma: "Muster Finanz GmbH", telefon: "030 1234567" }, datenschutzEmail: "datenschutz@example.de" });
     expect(m.subject).toBe("Dein Experte für die PKV-Prüfung: Max Muster");
     expect(m.text).toContain("Hallo Erika,");
-    expect(m.text).toContain("Max Muster von Muster Finanz GmbH ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an, und zwar von dieser Nummer: 030 1234567.");
+    expect(m.text).toContain("Max Muster von Muster Finanz GmbH ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an.");
+    expect(m.text).not.toContain("030 1234567");
     expect(m.text).toContain("Widerruf jederzeit per E-Mail an datenschutz@example.de.");
     expect(m.text).not.toMatch(/[–—]/);
   });

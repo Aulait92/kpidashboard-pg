@@ -251,12 +251,13 @@ export async function experteFuer(leadId: string): Promise<Experte | null> {
 
 /** E-Mail „Dein Experte“ (Texte: docs/funnel/pkv-beitrag-texte-conversion.md, L9). Rein. */
 export function experteMail(p: { email: string; vorname: string; experte: Experte; datenschutzEmail: string }): { to: string; subject: string; text: string } {
-  const { name, firma, telefon } = p.experte;
+  // Ohne Telefonnummer des Experten (Ole, 21.11.2026)
+  const { name, firma } = p.experte;
   const hallo = p.vorname.trim() ? `Hallo ${p.vorname.trim()},` : "Hallo,";
   const text = [
     hallo,
     "",
-    `${name} von ${firma} ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an, und zwar von dieser Nummer: ${telefon}. Speichere sie dir am besten gleich.`,
+    `${name} von ${firma} ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an. Geh am besten auch bei unbekannten Nummern ran.`,
     "",
     `Widerruf jederzeit per E-Mail an ${p.datenschutzEmail}.`,
     "",
