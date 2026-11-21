@@ -224,7 +224,7 @@ describe("Funnel-Konfiguration", () => {
     expect(PKV_TARIFE.farben).toMatchObject({ primaer: "#0E5F68", seite: "#F8F7F4", feldRand: "#7C8C9A" });
     for (const d of Object.values(PKV_TARIFE.dateien)) expect(d).toMatch(/^\/marken\/pkv-tarife\//);
     expect(PKV_TARIFE.bilder.start?.alt).toBe("Paar am Küchentisch prüft Unterlagen");
-    expect(PKV_TARIFE.bilder.zwischenseite?.symbolbild).toBe(true);
+    expect(PKV_TARIFE.bilder.zwischenseite?.symbolbild).toBeUndefined();
   });
 });
 
