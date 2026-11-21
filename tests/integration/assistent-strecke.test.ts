@@ -404,7 +404,12 @@ describe("Termin-Strecke mit Knöpfen", () => {
       return gesendet().slice(ab).map((s) => s.body);
     };
 
-    expect(await antwort("22.08.1992", { geburt: "22.08.1992" }, "Danke! Wie viele Quadratmeter Wohnfläche hat Ihre Wohnung? Bitte als Zahl, zum Beispiel 72.")).toEqual(["Danke! Wie viele Quadratmeter Wohnfläche hat Ihre Wohnung? Bitte als Zahl, zum Beispiel 72."]);
+    // Geburtsdatum prüft die App selbst (868dcd73, termin-strecke.ts angebotDatumAntwort), ohne den Assistenten
+    const abDatum = gesendet().length;
+    await text(phone, "22.08.1992");
+    const nachDatum = gesendet().slice(abDatum).map((s) => s.body);
+    expect(nachDatum).toHaveLength(1);
+    expect(nachDatum[0]).toMatch(/Wohnfläche/);
     expect(await antwort("95", { wohnflaeche: "95 m²" }, "Danke! Sind Sie im öffentlichen Dienst tätig?")).toEqual(["Danke! Sind Sie im öffentlichen Dienst tätig?"]);
     // Letzte Angebotsfrage: statt eigener Worte die Vertragsfrage der App
     const letzte = await antwort("Nein", { beruf: "nicht im öffentlichen Dienst" }, "Danke, notiert.");
