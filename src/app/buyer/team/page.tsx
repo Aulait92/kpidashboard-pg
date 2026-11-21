@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/buyer-shell";
 import { Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { memberName, teamMembers } from "@/lib/team";
+import { memberName, nutzerMitPush, teamMembers } from "@/lib/team";
 import { berlinYmd, teamAbsences } from "@/lib/absence";
 import { addSeatCostHint, addsSeatCost, berlinDayStart, isActiveSeller, seatSummary } from "@/lib/seats";
 import { InviteForm } from "./invite-form";
@@ -38,9 +38,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   // Kontakt öffnen mit Rücksprung auf die aufgeklappte Person (neue Oberfläche), sonst die alte Kontaktseite
   const leadHref = (userId: string) => (newUi ? `/buyer/kontakte/{id}?von=team&m=${encodeURIComponent(userId)}` : "/buyer/leads/{id}");
   // Bereit für Leads erst mit Kalender und App mit Mitteilungen (Ole, 21.11.2026, lib/team-bereit.ts)
-  const mitPush = new Set(
-    (await prisma.pushSubscription.findMany({ where: { userId: { in: members.map((m) => m.id) } }, select: { userId: true } })).map((p) => p.userId),
-  );
+  const mitPush = await nutzerMitPush(members.map((m) => m.id));
   const since = daysAgo(30);
   const counts = await prisma.lead.groupBy({
     by: ["assignedUserId"],
@@ -92,6 +90,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                     : null,
                   leads30: leads30.get(m.id) ?? 0,
                   loggedIn: !!m.lastLoginAt,
+                  push: mitPush.has(m.id),
                   twoFactor: !!m.totpEnabledAt,
                   absence: absences.get(m.id) ?? null,
                   // Allianz-Person nur für Berater ohne eigenen Google-/Outlook-Kalender
