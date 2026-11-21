@@ -14,6 +14,7 @@ import { BlockTimes, LeadTimesForm, RemindButton, SourcePicker, VideoRaumForm } 
 import { userCalendarKey } from "@/lib/calendar/tokens";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import { loadTeamCalendars, providerLabel } from "@/lib/calendar/team";
+import { terminAdresseFuer } from "@/lib/calendar/termin-weiterleitung-server";
 import {
   addBlockAction,
   adoptOwnCalendarAction,
@@ -53,6 +54,8 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
   const key = owner ? ctx.customerId : ownConnected ? userCalendarKey(ctx.userId!) : null;
   const setup = key ? await loadCalendarSetup(ctx.customerId, key) : null;
   const mainConnected = !!setup?.status.native.connected;
+  // App-Kalender (kein Google/Outlook): Outlook-Termine per Weiterleitung blockieren (Ole, 21.11.2026)
+  const terminAdresse = owner && setup?.status.native.app && key ? await terminAdresseFuer(key, ctx.customerId) : null;
   // Buchungsseite des Kundenkontos (Slug entsteht mit der Kalender-Verbindung des Kontos)
   const hasConnection = !!(await prisma.calendarConnection.findUnique({ where: { customerId: ctx.customerId }, select: { id: true } }));
   // Auf der eigenen Buchungsadresse (dein-beratungstermin.de/<slug>), sobald eingerichtet
@@ -225,7 +228,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
               <Ban className="h-4 w-4 text-[color:var(--muted)]" /> Ausnahmen: Zeit blockieren
             </h3>
             <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">In diesen Zeiten bieten wir keine Termine an, auch wenn Ihr Kalender frei ist.</p>
-            <BlockTimes blocks={setup.blocks} addAction={addBlockAction} deleteAction={deleteBlockAction} readOnly={ro} />
+            <BlockTimes blocks={setup.blocks} addAction={addBlockAction} deleteAction={deleteBlockAction} readOnly={ro} terminAdresse={terminAdresse} />
           </div>
         </Card>
       ) : !(mainConnected || ownConnected) ? null : (
