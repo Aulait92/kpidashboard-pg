@@ -136,6 +136,9 @@ export function leadFormPayload(
       // Vorausgefüllt je Produkt (Kfz: Adresse und Geburtsdatum, Privatschutz: Adresse), lib/kampagnen/formular-vorgaben.ts
       ...standardFelder(ctx.product),
     ],
+    // Überschrift über den Kontaktfragen (Ole, 21.11.2026: erster Lohmann-Lead mit Festnetznummer): auf die Handynummer
+    // lenken, weil der Assistent per WhatsApp schreibt. Neutral formuliert (passt zu Sie und Du), ohne Gedankenstrich.
+    question_page_custom_headline: "Bitte Handynummer angeben, die Rückmeldung kommt per WhatsApp",
     privacy_policy: { url: ctx.privacyUrl, link_text: "Datenschutzerklärung" },
     // PARAGRAPH_STYLE erlaubt nur ein Element (Meta-Fehler #100, 21.11.2026): Absätze zusammenfassen
     context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: [form.introParagraphs.filter(Boolean).join("\n\n").slice(0, 2000)], button_text: "Weiter" },
