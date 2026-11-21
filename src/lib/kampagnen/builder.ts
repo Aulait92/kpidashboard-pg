@@ -6,6 +6,7 @@
 
 import { cleanToken, redactTokens } from "@/lib/meta-leads";
 import type { AdCopy, BuiltState, CampaignContext, CampaignPlan, CreativeImage, LeadFormDraft } from "@/lib/kampagnen/types";
+import { standardFelder } from "@/lib/kampagnen/formular-vorgaben";
 
 const GRAPH = "https://graph.facebook.com/v22.0";
 
@@ -94,7 +95,10 @@ const slug = (s: string) =>
     .slice(0, 40) || "antwort";
 
 /** Payload für POST /{page_id}/leadgen_forms (Felder laut Graph-Referenz „Page leadgen_forms“). */
-export function leadFormPayload(form: LeadFormDraft, ctx: Pick<CampaignContext, "privacyUrl" | "website" | "advisorName" | "bookingUrl">): Record<string, unknown> {
+export function leadFormPayload(
+  form: LeadFormDraft,
+  ctx: Pick<CampaignContext, "privacyUrl" | "website" | "advisorName" | "bookingUrl"> & Partial<Pick<CampaignContext, "product">>,
+): Record<string, unknown> {
   if (!ctx.privacyUrl) throw new Error("Datenschutz-URL fehlt.");
   return {
     name: form.formName,
@@ -110,6 +114,8 @@ export function leadFormPayload(form: LeadFormDraft, ctx: Pick<CampaignContext, 
       { type: "FULL_NAME", key: "full_name" },
       { type: "PHONE", key: "phone_number" },
       { type: "EMAIL", key: "email" },
+      // Vorausgefüllt je Produkt (Kfz: Adresse und Geburtsdatum, Privatschutz: Adresse), lib/kampagnen/formular-vorgaben.ts
+      ...standardFelder(ctx.product),
     ],
     privacy_policy: { url: ctx.privacyUrl, link_text: "Datenschutzerklärung" },
     context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: form.introParagraphs, button_text: "Weiter" },
@@ -198,6 +204,44 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   }
 
   // 3. Anzeigengruppen
+  // EU (Digital Services Act): Meta verlangt Begünstigten und Zahler je Anzeigengruppe („Werbetreibender fehlt“,
+  // Fehler 3858634, Lohmann 20.11.2026). Vorschlag des Werbekontos (dsa_recommendations), sonst der Kundenname.
+  // Reihenfolge: Standard des Werbekontos („Default advertiser and payer“), Vorschläge (dsa_recommendations, z. B. der
+  // EU-Eintrag), zuletzt der Kundenname. Meta verlangt den Namen genau so, wie er im Werbekonto hinterlegt ist.
+  let dsa: string | null = null;
+  let payor: string | null = null;
+  try {
+    const acc = await api.get<{ default_dsa_beneficiary?: string; default_dsa_payor?: string }>(act, { fields: "default_dsa_beneficiary,default_dsa_payor" });
+    dsa = acc.default_dsa_beneficiary?.trim() || null;
+    payor = acc.default_dsa_payor?.trim() || null;
+  } catch {
+    /* weiter mit den Vorschlägen */
+  }
+  if (!dsa) {
+    try {
+      const rec = await api.get<{ data?: ({ recommendations?: string[] } | string)[] }>(`${act}/dsa_recommendations`);
+      const first = Array.isArray(rec.data) ? rec.data[0] : null;
+      dsa = (typeof first === "string" ? first : first?.recommendations?.[0]) ?? null;
+    } catch {
+      dsa = null;
+    }
+  }
+  dsa = (dsa || ctx.customerName || ctx.advisorName || "").slice(0, 120) || null;
+  payor = (payor || dsa || "").slice(0, 120) || null;
+  // Verifizierter Werbetreibender (Meta seit 2025: regional_regulation_identities mit der ID der Verifizierung, z. B.
+  // „Allianz“ bei Lohmann). Die API liefert den Standard nicht; wir übernehmen die IDs der jüngsten Anzeigengruppe des
+  // Kontos, die welche hat (Ole hat den Standard im Werbekonto gewählt, 21.11.2026).
+  let identities: { universal_beneficiary?: string; universal_payer?: string } | null = null;
+  try {
+    const r = await api.get<{ data?: { regional_regulation_identities?: { universal_beneficiary?: string; universal_payer?: string } }[] }>(`${act}/adsets`, {
+      fields: "regional_regulation_identities",
+      limit: "50",
+    });
+    const hit = (r.data ?? []).find((x) => x.regional_regulation_identities?.universal_beneficiary);
+    identities = hit?.regional_regulation_identities ?? null;
+  } catch {
+    identities = null;
+  }
   for (let i = 0; i < plan.adSets.length; i++) {
     if (built.adSetIds[i]) continue;
     const a = plan.adSets[i];
@@ -210,6 +254,11 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
       promoted_object: { page_id: ctx.pageId },
       targeting: adSetTargeting(a, built.geoKey ?? null),
       status: "PAUSED",
+      ...(identities?.universal_beneficiary
+        ? { regional_regulation_identities: { universal_beneficiary: identities.universal_beneficiary, universal_payer: identities.universal_payer ?? identities.universal_beneficiary } }
+        : dsa
+          ? { dsa_beneficiary: dsa, dsa_payor: payor ?? dsa }
+          : {}),
     });
     built.adSetIds[i] = r.id;
     await save();

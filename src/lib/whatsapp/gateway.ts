@@ -484,6 +484,16 @@ async function persistInbound(
     }
   }
 
+  // Freie Antwort auf die Kfz-Einstiegsfrage (Ole, 21.11.2026, knopf.ts erstfrageFreitext): wie ein Knopf festhalten
+  if (botErlaubt && type === "text" && !botHint) {
+    try {
+      const { erstfrageFreitext } = await import("@/lib/whatsapp/knopf");
+      botHint = await erstfrageFreitext(conversation.id, body);
+    } catch (e) {
+      console.error("[whatsapp erstfrage]", e instanceof Error ? e.name : "Fehler");
+    }
+  }
+
   // Bedenkzeit zum Angebot (Paket P5, lib/bedenkzeit-server.ts): „ich überlege noch“ → Frage nach dem Datum mit Knöpfen
   if (botErlaubt && type === "text" && linkedLead?.leadId && !botHint) {
     try {

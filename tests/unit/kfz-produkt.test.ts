@@ -53,7 +53,7 @@ describe("Rechner-Angaben und Folgefragen", () => {
       expect(f.sie).not.toMatch(/\b(du|dein\w*|dir|dich)\b/);
       expect(f.du).not.toMatch(/\b(Sie|Ihr\w*|Ihnen)\b/);
     }
-    expect(ff.find((f) => f.key === "kfzSchaeden")!.knoepfe).toEqual(["Ja", "Nein"]);
+    expect(ff.find((f) => f.key === "kfzSchaeden")!.knoepfe).toEqual(["Nein", "Ja, 1 Schaden", "Ja, 2 oder mehr"]);
   });
 
   it("bekannte Angaben werden nicht mehr gefragt; Werte aus Formular und Fotos werden angezeigt", () => {

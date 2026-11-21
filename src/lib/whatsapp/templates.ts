@@ -31,7 +31,7 @@ import { vermittlerName, type VermittlerName } from "@/lib/vermittler-nennung";
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
-import { ERSTANSCHREIBEN_V10, erstanschreibenV10, erstanschreibenV11, ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12, ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
+import { ERSTANSCHREIBEN_V10, erstanschreibenV10, erstanschreibenV11, istKfzZweck, ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12, ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
   | "outreach"
@@ -40,6 +40,10 @@ export type NoticePurpose =
   | "outreach_pkv"
   | "outreach_privatschutz"
   | "outreach_hausrat"
+  // Kfz je Anlass (Ole, 21.11.2026, erstanschreiben.ts KFZ_ZWECKE)
+  | "outreach_kfz"
+  | "outreach_kfz_wechsel"
+  | "outreach_kfz_neu"
   | "booking_confirmation"
   | "reminder"
   | "reminder_soon"
@@ -75,6 +79,9 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach_pkv: "Erstanschreiben private Krankenversicherung",
   outreach_privatschutz: "Erstanschreiben Privatschutz",
   outreach_hausrat: "Erstanschreiben Hausrat (nur Hausrat angefragt)",
+  outreach_kfz: "Erstanschreiben Kfz (Anlass offen)",
+  outreach_kfz_wechsel: "Erstanschreiben Kfz (Wechsel, jetziges Auto)",
+  outreach_kfz_neu: "Erstanschreiben Kfz (neues Auto)",
   booking_confirmation: "Buchungsbestätigung",
   reminder: "Termin-Erinnerung",
   reminder_soon: "Termin gleich: passt alles?",
@@ -104,8 +111,28 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
 };
 
 /** Erstanschreiben je Produkt (lib/whatsapp/erstanschreiben.ts wählt anhand des Leadformulars). */
-export const OUTREACH_PURPOSES = ["outreach", "outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat"] as const satisfies readonly NoticePurpose[];
+export const OUTREACH_PURPOSES = [
+  "outreach",
+  "outreach_tkv",
+  "outreach_zahn",
+  "outreach_pkv",
+  "outreach_privatschutz",
+  "outreach_hausrat",
+  "outreach_kfz",
+  "outreach_kfz_wechsel",
+  "outreach_kfz_neu",
+] as const satisfies readonly NoticePurpose[];
 export const isOutreachPurpose = (p: string): boolean => (OUTREACH_PURPOSES as readonly string[]).includes(p);
+
+/**
+ * Höchste Textversion je Zweck fürs Erstanschreiben (rankOutreach, rein): ohne feste Frage (v10Moeglich) höchstens v9;
+ * mit fester Frage nie die allgemeine Telefonatsfrage für einen Produkt-Lead (Rückfall „outreach“ höchstens v9). Kfz
+ * (Ole, 21.11.2026): bis zur Freigabe der Kfz-Vorlage bei Meta das bisherige allgemeine Erstanschreiben (v12, Telefonat).
+ */
+export function outreachMaxVersion(purpose: NoticePurpose, v10: boolean): Partial<Record<NoticePurpose, number>> {
+  if (!v10) return Object.fromEntries(OUTREACH_PURPOSES.map((x) => [x, 9]));
+  return purpose === "outreach" || istKfzZweck(purpose) ? {} : { outreach: 9 };
+}
 
 /**
  * Version der automatisch eingereichten Texte. v2 (14.11.2026): Anrede „Guten Tag Frau Schneider“
@@ -150,6 +177,12 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // Reine Hausrat-Leads (Ole, 18.11.2026, zur Einreichung freigegeben): „zu Ihrer Hausratversicherung“ statt „zum
   // Privatschutz“; bis zur Freigabe bei Meta die allgemeine bzw. die Privatschutz-Fassung (outreach.ts fallbackPurposes)
   outreach_hausrat: "v12",
+  // Kfz (Ole, 21.11.2026: Einstiegsfrage je Anlass, erstanschreiben.ts): neu, Fußzeile wie v12; bis zur Freigabe bei Meta
+  // geht das bisherige allgemeine Erstanschreiben raus (outreach.ts fallbackPurposes, Telefonatsfrage)
+  // v13 (21.11.2026): Fassung b nennt die Kfz-Versicherung; bis zur Freigabe sendet die App v12 (rankOutreach)
+  outreach_kfz: "v13",
+  outreach_kfz_wechsel: "v12",
+  outreach_kfz_neu: "v12",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern
   // (bis zur Freigabe bei Meta die bisherige v4, PLATZHALTER_AB), 15 Minuten und „wartet im Videoraum“ neu
   reminder: "v5",
@@ -203,6 +236,9 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   outreach_pkv: [],
   outreach_privatschutz: [],
   outreach_hausrat: [],
+  outreach_kfz: [],
+  outreach_kfz_wechsel: [],
+  outreach_kfz_neu: [],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   // Ab v5 (Show-up-Paket); ältere freigegebene Fassungen: PLATZHALTER_AB
   reminder: ["Wann (z. B. morgen um 10 Uhr)", "Nutzen (ein Satz, ggf. mit Verträgen)", "Zugang (Videolink bzw. Anruf)"],
@@ -251,6 +287,9 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   outreach_pkv: erstanschreibenV10("outreach_pkv"),
   outreach_privatschutz: erstanschreibenV10("outreach_privatschutz"),
   outreach_hausrat: erstanschreibenV10("outreach_hausrat"),
+  outreach_kfz: erstanschreibenV10("outreach_kfz"),
+  outreach_kfz_wechsel: erstanschreibenV10("outreach_kfz_wechsel"),
+  outreach_kfz_neu: erstanschreibenV10("outreach_kfz_neu"),
   // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
   booking_confirmation: {
     du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
@@ -391,6 +430,10 @@ export const TEMPLATE_BODY_B: Partial<Record<NoticePurpose, { du?: string; sie: 
   outreach_pkv: erstanschreibenV11("outreach_pkv"),
   outreach_privatschutz: erstanschreibenV11("outreach_privatschutz"),
   outreach_hausrat: erstanschreibenV11("outreach_hausrat"),
+  // Kfz (A/B-Test-Labor 21.11.2026): Fassung b „Frage zuerst“ wie v11, eigener Test je Anlass (docs/firma/ab-tests.md)
+  outreach_kfz: erstanschreibenV11("outreach_kfz"),
+  outreach_kfz_wechsel: erstanschreibenV11("outreach_kfz_wechsel"),
+  outreach_kfz_neu: erstanschreibenV11("outreach_kfz_neu"),
   followup_last: {
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte dich nicht weiter stören: Soll [BeraterNom] sich noch um deine Anfrage kümmern?",
     sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte Sie nicht weiter stören: Soll [BeraterNom] sich noch um Ihre Anfrage kümmern?",
@@ -457,6 +500,10 @@ export const PLATZHALTER_AB: Partial<Record<NoticePurpose, { version: number; fr
   outreach_pkv: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_pkv") },
   outreach_privatschutz: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_privatschutz") },
   outreach_hausrat: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_hausrat") },
+  // Kfz gibt es erst ab v12; Einträge nur der Einheitlichkeit halber (ältere Fassungen sind die allgemeinen)
+  outreach_kfz: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_kfz") },
+  outreach_kfz_wechsel: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_kfz_wechsel") },
+  outreach_kfz_neu: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_kfz_neu") },
 };
 
 /** Hat die Vorlage dieser Textversion schon die aktuelle Platzhalter-Belegung (REST_PARAMS)? Von Hand angelegte (0): nein. */
@@ -841,6 +888,9 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   outreach_pkv: [...ERSTANSCHREIBEN_V10.outreach_pkv.knoepfe],
   outreach_privatschutz: [...ERSTANSCHREIBEN_V10.outreach_privatschutz.knoepfe],
   outreach_hausrat: [...ERSTANSCHREIBEN_V10.outreach_hausrat.knoepfe],
+  outreach_kfz: [...ERSTANSCHREIBEN_V10.outreach_kfz.knoepfe],
+  outreach_kfz_wechsel: [...ERSTANSCHREIBEN_V10.outreach_kfz_wechsel.knoepfe],
+  outreach_kfz_neu: [...ERSTANSCHREIBEN_V10.outreach_kfz_neu.knoepfe],
   booking_confirmation: [KNOPF.terminVerschieben],
   reminder: [KNOPF.passt, KNOPF.verschieben],
   reminder_soon: [KNOPF.passt, KNOPF.verschieben],
@@ -1137,7 +1187,9 @@ export async function sendWhatsAppNotice(opts: {
     pricingCategory = tpl.category.toLowerCase();
     // A/B-Fassung nur bei der aktuellen Textversion speichern (Ole, 19.11.2026): ältere Fassungen (z. B. v9, solange v10
     // nicht freigegeben ist) zählten sonst als „a“ und verzerrten den Test der aktuellen Fassungen (ab-test.ts)
-    variant = pick.current ? pick.variant : null;
+    // Rückfall auf einen anderen Zweck (z. B. Kfz/Hausrat → allgemeines Erstanschreiben, solange die eigene Vorlage nicht
+    // freigegeben ist) nicht als Fassung zählen: der Rückfall wählt immer „a“ und verzerrte sonst den Test (21.11.2026)
+    variant = pick.current && purpose === opts.purpose ? pick.variant : null;
     documentHeader = !!doc;
     pdf = doc ? (pick.dokument === "entwurf" ? "entwurf" : "vollstaendig") : null;
     if (pdf === "entwurf") console.warn("[whatsapp] Erstanschreiben mit unvollständiger Erstinformation im Kopf", opts.customerId);

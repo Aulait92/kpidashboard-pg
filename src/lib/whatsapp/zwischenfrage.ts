@@ -39,7 +39,7 @@ export type ZwischenDef = {
 const PRIVATSCHUTZ_VERSICHERN: ZwischenDef = {
   key: "versichern",
   feld: "versichern",
-  bekannt: /lebenssituation|familienstand|zu versichernde|mitversichert/i,
+  bekannt: /lebenssituation|familienstand|zu versichernde|mitversichert|für wen soll/i,
   bekanntAngaben: ["versichern", "lebenssituation"],
   sie: "Wer soll mitversichert sein?",
   du: "Wer soll mitversichert sein?",

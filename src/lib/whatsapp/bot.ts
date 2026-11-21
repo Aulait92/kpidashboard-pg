@@ -764,6 +764,23 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       return;
     }
   }
+  // Antwort auf die Angebotsfrage nach dem Geburtsdatum (Ole, 21.11.2026: „220.8.92“ wurde übernommen): die App prüft
+  // das Datum selbst, fragt bei Tippfehler bzw. unlesbar genau einmal nach (termin-strecke.ts angebotDatumAntwort)
+  if (
+    upcoming &&
+    stand?.angebotsfragenAt &&
+    folgeVorher[0]?.feld === "geburt" &&
+    latest?.direction === "inbound" &&
+    latest.createdAt > stand.angebotsfragenAt &&
+    !opts.anstoss &&
+    !opts.knopfZeit &&
+    !opts.hint
+  ) {
+    if (await strecke.angebotDatumAntwort(conversation.id, latest.body ?? "")) {
+      logTestLead(lead, "geburtsdatum geprueft");
+      return;
+    }
+  }
   // Schluss der Strecke (P2, Ole 17.11.2026): Antwort auf die Frage nach der Adresse (übernehmen, einladen, kurze
   // Antwort) bzw. „ja“ auf „Stimmt die Adresse?“ (ohne Assistent); sonst antwortet der Assistent
   const emailOffen = !!stand && strecke.emailFrageOffen(stand);
@@ -918,7 +935,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     zusage: boolean;
   } = { gebucht: null, vorschlag: null, komplett: null, emailOk: false, email: null, zusage: false };
   /** Geburtsdatum geprüft (geburt-chat.ts): wörtliche Rückfrage der App bzw. als offen notiert */
-  let geburt: { frage: string | null; offen: boolean } | null = null;
+  let geburt: { frage: string | null; offen: boolean; buttons?: Knopf[] } | null = null;
   /** Termin buchen (Werkzeug book_appointment bzw. Zeit-Knopf); Rückgabe = Ergebnis für den Assistenten. */
   const buche = async (input: { modus?: unknown; start?: unknown; email?: unknown }): Promise<string> => {
     let content = "ok";
@@ -1154,7 +1171,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           if (g.tier) ang.tier = g.tier;
           if (g.merker) await persistInternal(conversation.id, GEBURT_MERKER, g.merker);
           if (g.hinweis) content = g.hinweis;
-          if (g.frage || g.offen) geburt = { frage: g.frage ?? null, offen: !!g.offen };
+          if (g.frage || g.offen) geburt = { frage: g.frage ?? null, offen: !!g.offen, ...(g.buttons ? { buttons: g.buttons } : {}) };
         }
         await persistInternal(conversation.id, "qualification", { ...input, angaben }); // Audit-Log
         // Strukturierte Punkte zusätzlich zum Fließtext; neue Angaben ergänzen die bisherigen.
@@ -1462,6 +1479,8 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       }
     }
   }
+  // Rückfrage zum Geburtsdatum mit Vorschlag (Tippfehler): Knöpfe [Ja, genau] [Anderes Datum] bzw. beide Daten
+  if (geburt?.buttons && finalText === geburt.frage) knoepfe = geburt.buttons;
 
   if (finalText) {
     // Harte Sperre: keine Versicherer, Tarife, Preise, Vergleiche oder Eignungsaussagen (lib/whatsapp/beratungs-sperre.ts)

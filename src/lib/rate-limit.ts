@@ -69,6 +69,8 @@ export const LIMITS = {
   // Geschützter Upload der Vertriebsunterlagen (/api/ops/unterlagen)
   opsUpload: { limit: 20, windowMs: HOUR },
   opsAktion: { limit: 60, windowMs: HOUR },
+  // Kampagnen-Assistent ohne Admin-Login (/api/ops/kampagne), je Start KI- und Meta-Kosten
+  opsKampagne: { limit: 20, windowMs: HOUR },
   // Öffentliche Seiten
   publicBooking: { limit: 20, windowMs: 10 * MIN },
   offerAccept: { limit: 10, windowMs: 10 * MIN },
