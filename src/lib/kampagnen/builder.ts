@@ -228,6 +228,20 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   }
   dsa = (dsa || ctx.customerName || ctx.advisorName || "").slice(0, 120) || null;
   payor = (payor || dsa || "").slice(0, 120) || null;
+  // Verifizierter Werbetreibender (Meta seit 2025: regional_regulation_identities mit der ID der Verifizierung, z. B.
+  // „Allianz“ bei Lohmann). Die API liefert den Standard nicht; wir übernehmen die IDs der jüngsten Anzeigengruppe des
+  // Kontos, die welche hat (Ole hat den Standard im Werbekonto gewählt, 21.11.2026).
+  let identities: { universal_beneficiary?: string; universal_payer?: string } | null = null;
+  try {
+    const r = await api.get<{ data?: { regional_regulation_identities?: { universal_beneficiary?: string; universal_payer?: string } }[] }>(`${act}/adsets`, {
+      fields: "regional_regulation_identities",
+      limit: "50",
+    });
+    const hit = (r.data ?? []).find((x) => x.regional_regulation_identities?.universal_beneficiary);
+    identities = hit?.regional_regulation_identities ?? null;
+  } catch {
+    identities = null;
+  }
   for (let i = 0; i < plan.adSets.length; i++) {
     if (built.adSetIds[i]) continue;
     const a = plan.adSets[i];
@@ -240,7 +254,11 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
       promoted_object: { page_id: ctx.pageId },
       targeting: adSetTargeting(a, built.geoKey ?? null),
       status: "PAUSED",
-      ...(dsa ? { dsa_beneficiary: dsa, dsa_payor: payor ?? dsa } : {}),
+      ...(identities?.universal_beneficiary
+        ? { regional_regulation_identities: { universal_beneficiary: identities.universal_beneficiary, universal_payer: identities.universal_payer ?? identities.universal_beneficiary } }
+        : dsa
+          ? { dsa_beneficiary: dsa, dsa_payor: payor ?? dsa }
+          : {}),
     });
     built.adSetIds[i] = r.id;
     await save();
