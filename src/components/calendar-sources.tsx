@@ -1,4 +1,5 @@
 "use client";
+import { WebexAnleitung } from "@/components/webex-anleitung";
 
 // Verfügbarkeit einstellen: Quelle wählen (Google/Microsoft, ICS-Link,
 // Allianz-Online-Kalender), Lead-Zeiten und „Zeit blockieren".
@@ -886,6 +887,7 @@ export function VideoRaumForm({ action, readOnly, initial, noetig }: { action: F
           Speichern
         </Submit>
       </div>
+      <WebexAnleitung />
       <Result state={state} />
     </form>
   );
