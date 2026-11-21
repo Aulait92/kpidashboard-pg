@@ -56,6 +56,7 @@ vi.mock("@/lib/push", () => ({ sendToAdmins: vi.fn(async () => ({ sent: 0, remov
 import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { acceptOffer, createOffer } from "@/lib/offers";
+import { zugesagterBonus } from "./zugesagter-bonus";
 import { createCheckoutForOffer } from "@/lib/billing";
 import { handleStripeEvent } from "@/lib/billing-webhook";
 import { setzeErinnerungPerToken } from "@/lib/angebot-zahlungserinnerung-server";
@@ -73,7 +74,7 @@ async function offer1Euro(opts: { bonus?: number; payLater?: boolean; startIn?: 
   contacts.push(contact.id);
   const email = `klara-${tag}@example.test`;
   emails.push(email);
-  return createOffer(
+  const offer = await createOffer(
     { salesContactId: contact.id },
     {
       contactName: "Klara Kaufmann",
@@ -84,11 +85,11 @@ async function offer1Euro(opts: { bonus?: number; payLater?: boolean; startIn?: 
       setupOverride: opts.setup ?? 1,
       startDate: addDaysIso(today, opts.startIn ?? 20),
       allowPayLater: opts.payLater ?? false,
-      abschlussBonus: opts.bonus ?? 0,
-      abschlussBonusBis: opts.bonus ? addDaysIso(today, 1) : null,
     },
     null,
   );
+  // Abschlussbonus seit 21.11.2026 nur noch als Altfall (schon zugesagt)
+  return opts.bonus ? zugesagterBonus(offer.id, opts.bonus, addDaysIso(today, 1)) : offer;
 }
 
 const accept = (token: string) =>

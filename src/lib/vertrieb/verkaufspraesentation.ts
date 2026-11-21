@@ -2,12 +2,13 @@
 // Präsentieren im Admin (Vertrieb → Kontakt → „Präsentation“) und zum Nachklicken für den Interessenten
 // (/praesentation/<token>). Die Folien sind Bilder aus den PPTX (scripts/vertrieb-folien.mjs), außer:
 // Folie 13 (Video des Assistenten), Folie 17 „Beraten mit echten Preisen“ (rechts die Live-Demo aus /demo/beratung),
-// „Rechnet sich das?“ und „Ihr Paket“ (als HTML, mit Namen und Preisen aus dem Angebot des Kontakts, sonst Listenpreise).
+// „Rechnet sich das?“, „Ihr Paket“ und „Jahresplan: 3 Monate sparen“ (als HTML, mit Namen und Preisen aus dem Angebot
+// des Kontakts, sonst Listenpreise).
 // Keine Sprechzettel (Ole, 15.11.2026). Reine Funktionen; Laden und Links: verkaufspraesentation-server.ts.
 //
 // Texte gehen an Interessenten: keine Gedankenstriche (Bis-Striche in Zahlenbereichen sind ok), Minus als „−“.
 
-import { ABSCHLUSSBONUS_STANDARD, betreuungsSatz, eurText, monthlyBudgetOf, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, VORAUSZAHLUNG, type OfferTerm } from "@/lib/offer-pricing";
+import { betreuungsSatz, eurText, monthlyBudgetOf, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, VORAUSZAHLUNG, vorauszahlungBetraege, type OfferTerm } from "@/lib/offer-pricing";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { kundenkontoMailAbsatz, type KundenkontoAngebot } from "@/lib/ppl/kundenkonto";
 import { PPL_BEISPIEL, rechnerAusgabe, VERTRETER_BEISPIEL, vertreterRechnung, zahlFeld, type RechnerArt, type RechnerFest, type RechnerWerte } from "@/lib/vertrieb/folien-rechner";
@@ -22,7 +23,7 @@ export const BILD_BASIS = "/praesentation/vertrieb";
 // Startet mit Folie 1 (Ole, 15.11.2026), nicht mehr auf dem Vergleich
 export const DEMO_EINGEBETTET = "/demo/beratung?eingebettet=1";
 
-type Art = "bild" | "video" | "demo" | "rechnung" | "paket" | "bonus" | "rechner";
+type Art = "bild" | "video" | "demo" | "rechnung" | "paket" | "jahresplan" | "bonus" | "rechner";
 /** nr: Position in der Präsentation; bild: Nummer des Folienbilds aus der PPTX (Bild-, Video- und Demofolien). */
 export type VerkaufsFolieDef = { nr: number; titel: string; art: Art; bild: number };
 
@@ -69,12 +70,22 @@ const ENDE: Record<"vertreter" | "makler", Omit<VerkaufsFolieDef, "nr" | "bild">
   ],
 };
 
-/** Folie „Ihr Abschlussbonus“ (Ole, 16.11.2026): vorletzte Folie, vor „Ihr Start in 3 Schritten“; nicht in den PPTX. */
+/**
+ * Folie „Jahresplan: 3 Monate sparen“ (Ole, 21.11.2026, statt der Bonusfolie): vor „Ihr Start in 3 Schritten“, als HTML
+ * mit der Ersparnis aus Listen- bzw. Angebotspreisen. In den PPTX/PDF als Bild jahresplan.png
+ * (scripts/jahresplan-folie-unterlagen.ts), das scripts/vertrieb-folien.mjs überspringt.
+ */
+export const JAHRESPLAN_FOLIE_TITEL = "Jahresplan: 3 Monate sparen";
+/**
+ * Folie „Ihr Abschlussbonus“ (Ole, 16.11.2026; seit 21.11.2026 abgeschafft): nur noch in der Präsentation zu einem
+ * Angebot, dem der Bonus schon zugesagt ist und dessen Frist noch läuft, direkt nach dem Jahresplan.
+ */
 export const BONUS_FOLIE_TITEL = "Ihr Abschlussbonus";
 
 /**
  * Folienliste je Zielgruppe (Vertreter 24, Makler 25 Folien aus den PPTX, Bildnummern wie dort), dazu vor
- * „Ihr Start in 3 Schritten“ die Folie zum Abschlussbonus (mitBonus, Standard an).
+ * „Ihr Start in 3 Schritten“ die Jahresplan-Folie (wenn das Angebot bzw. die Liste einen Jahresplan hat, Standard an)
+ * und die Bonusfolie (nur Angebote mit zugesagtem Bonus).
  */
 const PPL_RECHNER_TITEL = "Rechnen Sie mit Ihren Zahlen";
 /** Pay-per-Lead + Software: Bildfolien und die Live-Demo, ohne Video, Rechnung, Paket und Bonus (Preise stehen auf den Folien). */
@@ -101,13 +112,17 @@ const PPL_FOLIEN: string[] = [
   "Ihr Start in 3 Schritten",
 ];
 
-export function folienListe(audience: VerkaufsAudience, mitBonus = true): VerkaufsFolieDef[] {
+export function folienListe(audience: VerkaufsAudience, opts: { jahresplan?: boolean; bonus?: boolean } = {}): VerkaufsFolieDef[] {
   // „Beraten mit echten Preisen“ wie bei Vertreter/Makler als Live-Demo (Ole, 20.11.2026: 1-Klick-Beratungspräsentation)
   // „Rechnen Sie mit Ihren Zahlen“ im Web als HTML mit Eingabefeldern zum Mitrechnen (Ole, 20.11.2026); PDF/PPTX bleiben Bild
   const pplArt = (titel: string): Art => (titel === "Beraten mit echten Preisen" ? "demo" : titel === PPL_RECHNER_TITEL ? "rechner" : "bild");
   if (audience === "ppl") return PPL_FOLIEN.map((titel, i) => ({ titel, art: pplArt(titel), bild: i + 1, nr: i + 1 }));
   const basis = [...GEMEINSAM, ...ENDE[audience]].map((f, i) => ({ ...f, bild: i + 1 }));
-  const liste = mitBonus ? [...basis.slice(0, -1), { titel: BONUS_FOLIE_TITEL, art: "bonus" as const, bild: 0 }, ...basis.slice(-1)] : basis;
+  const extra: VerkaufsFolieDef[] = [
+    ...(opts.jahresplan !== false ? [{ titel: JAHRESPLAN_FOLIE_TITEL, art: "jahresplan" as const, bild: 0, nr: 0 }] : []),
+    ...(opts.bonus ? [{ titel: BONUS_FOLIE_TITEL, art: "bonus" as const, bild: 0, nr: 0 }] : []),
+  ];
+  const liste = [...basis.slice(0, -1), ...extra, ...basis.slice(-1)];
   return liste.map((f, i) => ({ ...f, nr: i + 1 }));
 }
 
@@ -190,11 +205,24 @@ export type PaketDaten = {
   betreuungsSatz: string | null;
   team: string;
   pause: string;
-  /** Abschlussbonus: Setup vorher/nachher (netto); bis = Frist, null = „heute“ (Listenpreise, noch kein Angebot). */
+  /**
+   * Jahresplan (jährlich im Voraus, 12 Monate Laufzeit): Monatsbetrag netto (inkl. Zusätze), bezahlte und geschenkte
+   * Monate, Summen und Ersparnis; null, wenn das Angebot keinen Jahresplan vorsieht (z. B. feste Laufzeit ohne Vorauszahlung).
+   */
+  jahresplan: Jahresplan | null;
+  /** Abschlussbonus (nur Angebote mit zugesagtem, noch laufendem Bonus): Setup vorher/nachher (netto); bis = Frist. */
   bonus: { betrag: number; setupVorher: number; setupNachher: number; bis: Date | null; spaeter?: boolean } | null;
   /** Kurzer Absatz zur Variante „Kampagnen im eigenen Werbekonto“ (nur wenn im Angebot gewählt). */
   kundenkonto?: string | null;
 };
+
+export type Jahresplan = { monatlich: number; monate: number; bezahlt: number; frei: number; summeMonatlich: number; summeJahr: number; ersparnis: number };
+
+/** Jahresplan aus Monatsbetrag (netto) und geschenkten Monaten (null = heutiger Standard), gerechnet wie im Angebot. */
+export function jahresplanAus(monatlich: number, frei: number | null = null): Jahresplan {
+  const v = vorauszahlungBetraege(monatlich, "12m", frei);
+  return { monatlich, monate: v.months, bezahlt: v.paidMonths, frei: v.freeMonths, summeMonatlich: Math.round(monatlich * v.months * 100) / 100, summeJahr: v.total, ersparnis: v.savings };
+}
 
 // Beträge wie im ganzen Angebot (ganze Euro ohne „,00“, sonst mit Cent)
 const eur0 = eurText;
@@ -236,11 +264,9 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
       betreuungsSatz: null,
       team,
       pause: `Anzeigen stoppen automatisch. Sie zahlen dann nur ${PRICE_LIST.softwareFee} € netto für die Software.`,
-      bonus: (() => {
-        const vorher = audience === "makler" ? PRICE_LIST.setup12m : PRICE_LIST.setupNoTerm;
-        const betrag = Math.min(ABSCHLUSSBONUS_STANDARD, vorher);
-        return betrag > 0 ? { betrag, setupVorher: vorher, setupNachher: vorher - betrag, bis: null } : null;
-      })(),
+      // Listenpreis Betreuung + Software (Werbebudget bis 3.000 €), 3 Monate geschenkt
+      jahresplan: jahresplanAus(PRICE_LIST.tiers[0].monthly),
+      bonus: null,
     };
   }
 
@@ -310,11 +336,25 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     }),
     team: software ? `Ihr Angebot: ${seats} Berater, davon ${inkl} inklusive. Jeder weitere ${eur0(add.hasSeats ? add.seatMonthly : PRICE_LIST.seatMonthly)} netto im Monat.` : team,
     pause: software ? `Anzeigen stoppen automatisch. Sie zahlen dann nur ${PRICE_LIST.softwareFee} € netto für die Software.` : "Anzeigen stoppen automatisch, die Betreuung pausiert mit.",
+    jahresplan: jahresplanImAngebot(angebot, term, add.monthlyTotal),
     bonus: angebot.abschlussBonus
       ? { betrag: angebot.abschlussBonus.betrag, setupVorher: angebot.setupFee, setupNachher: Math.round((angebot.setupFee - angebot.abschlussBonus.betrag) * 100) / 100, bis: angebot.abschlussBonus.bis, spaeter: !!angebot.allowPayLater }
       : null,
     kundenkonto: angebot.kundenkonto ? kundenkontoMailAbsatz(angebot.kundenkonto, PRICE_LIST.softwareFee, false) : null,
   };
+}
+
+/**
+ * Jahresplan laut Angebot: nur, wenn die Vorauszahlung vereinbart oder zur Wahl ist und 12 Monate Laufzeit gelten bzw.
+ * wählbar sind; nicht mit Startpreis und nicht bei Pay-per-Lead (dort gibt es keine Vorauszahlung).
+ */
+function jahresplanImAngebot(angebot: AngebotFuerFolien, term: OfferTerm, monatlich: number): Jahresplan | null {
+  if (angebot.package === "ppl_software" || angebot.introMonthlyFee != null || !(monatlich > 0)) return null;
+  const angeboten = angebot.annualPrepay || !!angebot.annualChoice;
+  const zwoelf = term === "12m" || (angebot.customerChoosesTerm && !!angebot.annualChoice);
+  if (!angeboten || !zwoelf) return null;
+  // Gespeicherte Freimonate gelten für die Laufzeit des Angebots (Altangebote: 2), sonst Standard
+  return jahresplanAus(monatlich, term === "12m" ? angebot.annualFreeMonths : null);
 }
 
 // ─── Rechnungen (Beispiel aus echten Ergebnissen, Preise aus dem Angebot bzw. der Liste) ────────────────
@@ -445,6 +485,7 @@ export function verkaufsCss(): string {
 .vk [data-ton=plus]{color:#16a34a}.vk [data-ton=leer]{color:#94a3b8;font-weight:500;font-size:15px}
 .vk-fazit{margin-top:12px;border-radius:10px;padding:12px 16px;font-size:16.5px;line-height:1.4;font-weight:500;background:#eff6ff;color:#1d4ed8}
 .vk .vk-fazit[data-ton=plus]{background:#ecfdf3;color:#15803d}.vk .vk-fazit[data-ton=minus]{background:#fff7ed;color:#9a3412}
+.vk .vk-wert b.vk-gross{display:block;font-size:128px;font-weight:800;letter-spacing:-.045em;line-height:1;margin-top:12px}
 .vk-demo iframe{flex:1;width:100%;border:0;border-radius:12px;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.12)}
 `;
 }
@@ -529,6 +570,38 @@ ${schritt(3, "Start frei wählen", "Sie bestimmen, wann Ihre Kampagne live geht,
 </div>
 </div>`;
   const fuss = `Gilt bei Annahme des Angebots${b.spaeter ? "" : " und Zahlung des Setups"} ${e(frist)}. Danach gilt automatisch das reguläre Setup. Monatliche Preise bleiben unverändert. Alle Preise zzgl. 19 % USt.`;
+  return rahmen("Ihr Vorteil", inhalt, nr, gesamt, fuss);
+}
+
+const monateText = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"}`;
+
+/**
+ * „Jahresplan: 3 Monate sparen“ (Ole, 21.11.2026): eine Botschaft, die Ersparnis in Euro groß, daneben die Rechnung
+ * monatlich × 12 gegen den Jahresplan. Werte aus dem Angebot bzw. den Listenpreisen ({@link jahresplanAus}).
+ */
+export function jahresplanFolie(p: PaketDaten, j: Jahresplan, nr: number, gesamt: number): string {
+  const leistung = p.software ? "Betreuung + Software" : "Betreuung";
+  const inhalt = `<div class="vk-chips"><span class="vk-chip">Jahresplan</span>${angebotChip(p)}</div>
+<h2>Jahresplan: ${e(monateText(j.frei))} sparen</h2>
+<div style="display:grid;grid-template-columns:1fr 1.15fr;gap:16px;margin-top:30px;height:440px">
+<div class="vk-karte vk-wert blau" style="padding:34px 36px;display:flex;flex-direction:column;justify-content:center">
+<span style="font-size:22px">Sie sparen</span>
+<b class="vk-gross"${j.ersparnis >= 10000 ? ' style="font-size:100px"' : ""}>${e(euro(j.ersparnis))}</b>
+<small style="font-size:17px;margin-top:14px">netto im Jahr, gegenüber monatlicher Zahlung</small>
+<div style="margin-top:30px;font-size:20px;line-height:1.4;font-weight:600">${e(`${j.monate} Monate ${leistung}, Sie zahlen ${j.bezahlt}.`)}</div>
+</div>
+<div class="vk-karte" style="padding:30px 32px;display:flex;flex-direction:column;justify-content:center"><div class="vk-label">${e(`${j.monate} Monate im Vergleich`)}</div>
+<div class="vk-zeile" style="margin-top:10px;font-size:22px;padding:16px 0"><span>Monatlich zahlen<span class="det">${e(`${j.monate} × ${euro(j.monatlich)}`)}</span></span><b style="color:#64748b">${e(euro(j.summeMonatlich))}</b></div>
+<div class="vk-zeile" style="font-size:22px;padding:16px 0"><span>Jahresplan<span class="det">${e(`${j.bezahlt} × ${euro(j.monatlich)}, jährlich im Voraus`)}</span></span><b>${e(euro(j.summeJahr))}</b></div>
+<div class="vk-zeile summe" style="font-size:24px;padding-top:18px"><span>Ihre Ersparnis</span><b class="vk-plus" style="font-size:40px">${e(euro(j.ersparnis))}</b></div>
+<div class="vk-hinweis" style="font-size:15px;padding:12px 16px;margin-top:14px">Gleiche Leistung, gleiche Laufzeit. Nur die Zahlweise ist anders.</div>
+</div>
+</div>`;
+  const basis =
+    p.quelle === "angebot"
+      ? `Beträge aus Ihrem Angebot ${e(p.angebotNr ?? "")}, monatlich ${e(euro(j.monatlich))} netto.`
+      : `Beispiel mit dem Listenpreis bei Werbebudget bis ${e(euro(PRICE_LIST.tiers[0].maxBudget))} im Monat.`;
+  const fuss = `Jahresplan: ${j.monate} Monate Laufzeit, Zahlung jährlich im Voraus, fällig mit der Annahme. Bei einer Pause gibt es keine Gutschrift. ${basis} Das Werbebudget zahlen Sie wie gewohnt direkt an Meta. Alle Preise zzgl. 19 % USt.`;
   return rahmen("Ihr Vorteil", inhalt, nr, gesamt, fuss);
 }
 
@@ -643,7 +716,7 @@ function maklerFolie(p: PaketDaten, nr: number, gesamt: number): string {
 
 /** Alle Folien einer Zielgruppe. demoSrc: Adresse der eingebetteten Live-Demo (gleiche Herkunft). */
 export function verkaufsFolien(audience: VerkaufsAudience, p: PaketDaten, demoSrc = DEMO_EINGEBETTET): VerkaufsFolie[] {
-  const liste = folienListe(audience, p.bonus != null);
+  const liste = folienListe(audience, { jahresplan: p.jahresplan != null, bonus: p.bonus != null });
   const gesamt = liste.length;
   return liste.map((f) => {
     const id = `folie-${f.nr}`;
@@ -663,6 +736,8 @@ export function verkaufsFolien(audience: VerkaufsAudience, p: PaketDaten, demoSr
         return { id, titel: f.titel, html: pplRechnerFolie(p, f.nr, gesamt) };
       case "paket":
         return { id, titel: f.titel, html: paketFolie(p, audience, f.nr, gesamt) };
+      case "jahresplan":
+        return { id, titel: f.titel, html: p.jahresplan ? jahresplanFolie(p, p.jahresplan, f.nr, gesamt) : "" };
       case "bonus":
         return { id, titel: f.titel, html: p.bonus ? bonusFolie(p, p.bonus, f.nr, gesamt) : "" };
       default:

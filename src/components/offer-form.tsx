@@ -109,10 +109,10 @@ export function OfferForm({
   // Überweisung nur auf Anfrage des Kunden (Ole, 17.11.2026): Standard aus, Zahlungsziel Standard 14 Tage
   const [allowBankTransfer, setAllowBankTransfer] = useState(w0.allowBankTransfer);
   const [bankTransferDays, setBankTransferDays] = useState(w0.bankTransferDays);
-  // Abschlussbonus (Ole, 16.11.2026): Standard an, 300 € auf die Einrichtung bei Annahme und Zahlung am Versandtag
+  // Abschlussbonus (Ole, 21.11.2026: abgeschafft): nur noch sichtbar, wenn das bearbeitete Angebot schon einen hat
+  const bonusVorhanden = w0.bonusVorhanden;
   const [bonusAn, setBonusAn] = useState(w0.bonusAn);
   const [bonusBetrag, setBonusBetrag] = useState(w0.bonusBetrag);
-  // Frist frei wählbar (Ole, 16.11.2026): Vorschlag morgen 23:59 Uhr
   const [bonusBis, setBonusBis] = useState(w0.bonusBis);
   // Testangebot (Ole, 15.11.2026): 0 €, ohne Zahlung, legt einen Testkunden an
   const [test, setTest] = useState(w0.test);
@@ -128,7 +128,7 @@ export function OfferForm({
   const werte: OfferFormWerte = {
     contactName, company, email, street, zip, city, products, pkg, term, setupOverride, discount, monthlyOverride, introFee, introMonths,
     specialTerms, startDate, billingDay, billingFree, validDays, seats, annual, bestand, empfehlung, vermittler, customerChoice,
-    customerProducts, allowPayLater, arrears, allowBankTransfer, bankTransferDays, bonusAn, bonusBetrag, bonusBis, test,
+    customerProducts, allowPayLater, arrears, allowBankTransfer, bankTransferDays, bonusVorhanden, bonusAn, bonusBetrag, bonusBis, test,
     wocheProdukt, wocheLabel, wochePreis, wocheBrutto, wocheMenge, pplModell, kkProdukte,
   };
 
@@ -157,7 +157,7 @@ export function OfferForm({
         num(setupOverride) != null && !ppl ? `Setup ${eur(num(setupOverride)!)}` : null,
         num(monthlyOverride) != null ? `monatlich ${eur(num(monthlyOverride)!)}` : null,
         num(introFee) != null && !ppl ? `Startpreis ${eur(num(introFee)!)}` : null,
-        bonusAn && !ppl ? `Abschlussbonus ${eur(num(bonusBetrag) ?? 0)}` : null,
+        bonusVorhanden && bonusAn && !ppl ? `Abschlussbonus ${eur(num(bonusBetrag) ?? 0)}` : null,
         customerChoice ? "Kunde wählt Start" : null,
         allowPayLater && !ppl ? "später zahlen" : null,
         arrears ? "nachträglich" : null,
@@ -504,7 +504,7 @@ export function OfferForm({
                 <AbrechnungstagFeld startDate={startDate} day={billingDay} setDay={setBillingDay} free={billingFree} setFree={setBillingFree} voraus={annual && annualPossible} />
               </div>
             </div>
-            {/* Selten Geändertes (SUS-Prüfung 20.11.2026): Preise, Bonus, Zahlungsoptionen, Test und Sondervereinbarung
+            {/* Selten Geändertes (SUS-Prüfung 20.11.2026): Preise, Zahlungsoptionen, Test und Sondervereinbarung
                 zugeklappt; die Zeile darunter zeigt, was gerade gilt. Offen, wenn ein Preis eingetragen werden muss. */}
             <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white" open={price.listMonthly == null || price.seatsIndividual || undefined} data-sonderkonditionen>
               <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-sm [&::-webkit-details-marker]:hidden">
@@ -579,6 +579,7 @@ export function OfferForm({
                 </span>
               </span>
             </label>
+            {bonusVorhanden ? (
             <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-abschlussbonus-toggle>
               <input type="checkbox" name="abschlussBonus" className="mt-0.5 h-4 w-4" checked={bonusAn && !test} disabled={test} onChange={(e) => setBonusAn(e.target.checked)} />
               <span className="min-w-0 flex-1">
@@ -605,7 +606,7 @@ export function OfferForm({
                   />
                 </span>
                 <span className="block text-xs text-[color:var(--muted)]">
-                  Gilt bei Annahme und Zahlung der Einrichtung bis 23:59 Uhr an diesem Tag (mit „Später zahlen“ reicht die Annahme). Start bleibt frei wählbar, danach automatisch Normalpreis.
+                  Schon zugesagt, bleibt für dieses Angebot. Neue Angebote haben keinen Abschlussbonus mehr.
                 </span>
                 {bonusAn && !test && price.setupFee > 0 && (num(bonusBetrag) ?? 0) >= price.setupFee ? (
                   <span className="mt-1 block text-xs font-medium text-amber-700" data-abschlussbonus-ganzes-setup>
@@ -614,6 +615,7 @@ export function OfferForm({
                 ) : null}
               </span>
             </label>
+            ) : null}
             <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-pay-later-toggle>
               <input
                 type="checkbox"

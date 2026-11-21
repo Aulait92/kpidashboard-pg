@@ -78,6 +78,7 @@ vi.mock("@/lib/whatsapp/template-submit", () => ({ submitTemplatesAfterModule: v
 import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { acceptOffer, createOffer } from "@/lib/offers";
+import { zugesagterBonus } from "./zugesagter-bonus";
 import { createCheckoutForOffer, createScheduleForOffer, setBestandModule } from "@/lib/billing";
 import { richteUeberweisungEin } from "@/lib/ueberweisung";
 import { startNachZahlungVerschieben } from "@/lib/angebot-zahlungserinnerung-server";
@@ -126,24 +127,23 @@ async function angebot(extra: Partial<Parameters<typeof createOffer>[1]> = {}) {
   const tag = uid();
   const contact = await prisma.salesContact.create({ data: { name: `Voraus ${tag}`, email: `vz-${tag}@example.test` } });
   contacts.push(contact.id);
-  return createOffer(
-    { salesContactId: contact.id },
-    {
-      contactName: "Vera Voraus",
-      company: `Agentur ${tag}`,
-      email: `vera-${tag}@example.test`,
-      term: "12m",
-      products: [{ name: "TKV-Katze", dailyBudget: 30 }],
-      seats: 5,
-      startDate: zukunftErster(),
-      annual: true,
-      abschlussBonus: 300,
-      abschlussBonusBis: addDaysIso(berlinTodayIso(), 2),
-      customerChoice: false,
-      ...extra,
-    },
-    null,
-  );
+  const input = {
+    contactName: "Vera Voraus",
+    company: `Agentur ${tag}`,
+    email: `vera-${tag}@example.test`,
+    term: "12m",
+    products: [{ name: "TKV-Katze", dailyBudget: 30 }],
+    seats: 5,
+    startDate: zukunftErster(),
+    annual: true,
+    abschlussBonus: 300,
+    abschlussBonusBis: addDaysIso(berlinTodayIso(), 2),
+    customerChoice: false,
+    ...extra,
+  } as Parameters<typeof createOffer>[1];
+  const offer = await createOffer({ salesContactId: contact.id }, input, null);
+  // Abschlussbonus seit 21.11.2026 nur noch als Altfall (schon zugesagt): nach dem Anlegen setzen
+  return Number(input.abschlussBonus ?? 0) > 0 ? zugesagterBonus(offer.id, Number(input.abschlussBonus), input.abschlussBonusBis ?? null) : offer;
 }
 /** Annahme, standardmäßig mit Vorauszahlung (Angebote bieten sie zur Wahl an, monatlich vorausgewählt) */
 const accept = (token: string, extra: { annual?: boolean | null } = {}) =>

@@ -1,6 +1,6 @@
 # Einwandbehandlung im Beratungsgespräch
 
-Stand 20.11.2026. Für: Ole. Nur intern, nicht zum Weitergeben. Grundlage: Einwand-Schema in vier Stufen (Baulig),
+Stand 21.11.2026. Für: Ole. Nur intern, nicht zum Weitergeben. Grundlage: Einwand-Schema in vier Stufen (Baulig),
 übertragen auf unser Angebot an Vermittler. Regeln: Sie-Form, keine Versprechen zu Ergebnissen, keine Verknappung ohne echte Frist.
 
 ## Die Abschlussfrage
@@ -56,7 +56,7 @@ Jetzt nur fragen, nichts widerlegen. Ziel: den wahren Einwand finden.
 | Will kostenlos testen | „Kostenlos testen heißt für Sie: Werbebudget bezahlen, ohne dass jemand optimiert. Die Absicherung im Vertrag ist der bessere Test: Sie tragen das Risiko nicht allein.“ Ohne Laufzeit ist möglich, dann ist die Einrichtung höher. |
 | Angst, die Investition nicht hereinzuholen | Mit seinen Zahlen rechnen: Leads × Terminquote × Abschlussquote × Wert je Abschluss gegen Budget plus Gebühr. Ziel offen sagen: profitabel schon vor Bestand, Cross-Selling und Empfehlungen. Dann die Absicherung zeigen. |
 | Mangelndes Selbstvertrauen („Ich bin kein Verkäufer“) | „Die Leads haben selbst angefragt und kommen vorbereitet in den Termin. Der Komplettcheck und die Policen vorab geben Ihnen den roten Faden fürs Gespräch.“ |
-| Falscher Zeitpunkt | „Den Start legen Sie selbst fest, bis zu 90 Tage. Unterschreiben heute heißt: Kampagnen und Assistent sind bereit, wenn Sie loslegen wollen.“ Den Abschlussbonus nur nennen, wenn er für dieses Angebot gilt und die Frist echt ist. |
+| Falscher Zeitpunkt | „Den Start legen Sie selbst fest, bis zu 90 Tage. Unterschreiben heute heißt: Kampagnen und Assistent sind bereit, wenn Sie loslegen wollen.“ |
 | Betreuung nicht gut genug | „Was ist Ihnen bei der Betreuung wichtig?“ Dann konkret: feste Ansprechperson, laufende Optimierung der Kampagnen, Zahlen jederzeit in der App. |
 | In der Vergangenheit enttäuscht (Leadkauf, Agentur) | „Was ist damals schiefgelaufen?“ Unterschied zeigen: Anfragen gehören nur ihm, kein Weiterverkauf, der Assistent meldet sich in Minuten statt Stunden. |
 | Sieht den Mehrwert nicht | Zurück zu seinen Zielen aus dem Setter-Call: „Sie wollten [x] Neukunden im Monat. Wie kommen Sie heute dahin?“ Dann die Lücke mit seinen Zahlen schließen. |

@@ -1,6 +1,6 @@
 # Leitfaden Setter-Call (15 Minuten, Telefon)
 
-Stand 20.11.2026, Fassung 4 (Problem zugeben lassen, Mitarbeiter und Bestand, Budget und Entscheider geschärft; Rahmen für den Auftrag raus). Verfasst: Head of Sales. Für: Ole.
+Stand 21.11.2026, Fassung 4 (Abschlussbonus entfallen; Problem zugeben lassen, Mitarbeiter und Bestand, Budget und Entscheider geschärft; Rahmen für den Auftrag raus). Verfasst: Head of Sales. Für: Ole.
 Nur für **neue Inbound-Kontakte** (Buchung über performancegrowth.de/termin). Die 7 offenen Vermittler gehen direkt ins
 Beratungsgespräch. Für das Beratungsgespräch gilt die Verkaufspräsentation (kein eigenes Skript).
 Belege: `src/lib/offer-pricing.ts` (PRICE_LIST, Zeile 140 Vorauszahlung mit Annahme, 145 keine Gutschrift bei Vorauszahlung,
@@ -170,5 +170,4 @@ Status **Termin**, sonst **Wiedervorlage** (Aufgabe mit Datum) oder **Verloren**
 Schritt mit Datum.
 
 ## Offen bei Ole
-- Abschlussbonus (300 €) gilt künftig nur bei Abschluss im Beratungsgespräch (Umbau ab 21.11.2026). Im Setter-Call nicht nennen.
 - Nach 10 Setter-Calls Erscheinungs- und Abschlussquote prüfen (Ziel Erscheinen mindestens 80 %).

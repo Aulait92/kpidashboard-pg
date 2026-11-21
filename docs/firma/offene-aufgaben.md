@@ -89,7 +89,9 @@ Freiburg 14 bis 15 (anteilig ca. 13 bzw. 7 bis 8). Nichts angelegt; Start nur na
 - LinkedIn-App anlegen; Gmail API (falls weiter gewünscht).
 - Später: Calendly im Vertrieb durch eigenes Buchungstool ersetzen.
 - Leitfaden Setter-Call liegt als PDF unter Marketing → Unterlagen (19.11.2026). Offen: Zahlweise im Beratungsgespräch, Quoten nach 10 Setter-Calls prüfen (Erscheinen mindestens 80 %).
-- **Ab 21.11.2026 bauen:** Abschlussbonus 300 € gilt nur bei Abschluss im Beratungsgespräch (Annahme im Call), nicht mehr mit Frist bis zum Folgetag (Ole, 19.11.2026).
+- ~~**Ab 21.11.2026 bauen:** Abschlussbonus 300 € gilt nur bei Abschluss im Beratungsgespräch (Annahme im Call), nicht mehr mit Frist bis zum Folgetag (Ole, 19.11.2026).~~
+  Entfallen 21.11.2026: Abschlussbonus ganz abgeschafft (Ole), neue Angebote ohne Bonus, in der Präsentation stattdessen
+  „Jahresplan: 3 Monate sparen“. Bereits zugesagte Boni (offene und angenommene Angebote) gelten weiter. Siehe Entscheidungslog.
 
 - Bestandskunden-Modul einschalten (Stufe A): bleibt aus (`BESTAND_MODULE_AVAILABLE = false`). UX-Prüfung 20.11.2026
   (Branch `bestand-champions`): SUS 91. Vor dem Einschalten: AVV-Ergänzung, `docs/datenschutz.md` Abschnitt Bestand,

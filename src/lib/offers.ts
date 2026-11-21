@@ -111,8 +111,9 @@ export type OfferFormInput = {
   allowBankTransfer?: boolean;
   bankTransferDays?: number | null;
   /**
-   * Abschlussbonus auf die Einrichtung (netto) bei Annahme und Zahlung am Versandtag (Ole, 16.11.2026).
-   * Das Formular schlägt 300 € vor (ABSCHLUSSBONUS_STANDARD); leer/0 = kein Bonus. Nicht bei Testangeboten oder ohne Einrichtung.
+   * Abschlussbonus auf die Einrichtung (netto) bei Annahme und Zahlung bis zur Frist (Ole, 16.11.2026). Seit 21.11.2026
+   * abgeschafft: nur noch, wenn ein offenes Angebot desselben Kontakts bzw. Deals ihn schon hat (neue Version, Entwurf
+   * bearbeiten), höchstens bis zu diesem Betrag; sonst wird er ignoriert. Nicht bei Testangeboten oder ohne Einrichtung.
    */
   abschlussBonus?: number | null;
   /** Letzter Tag des Bonus (YYYY-MM-DD, gilt bis 23:59 Uhr Berlin); leer = Versandtag. */
@@ -182,6 +183,17 @@ export const NUR_ENTWURF_BEARBEITEN =
  * Bearbeiten eines Entwurfs ({@link updateDraftOffer}). Liefert die eingefrorenen Konditionen (ohne Nummer, Version,
  * Token, Besitzer) und die Adresse für die Stammdaten des Vertriebskontakts.
  */
+/**
+ * Abschlussbonus (Ole, 21.11.2026: abgeschafft, „bei den offenen drin lassen, habe ich schon versprochen“): höchster
+ * zugesagter Bonus der offenen Angebote (Entwurf oder verschickt) dieses Kontakts bzw. Deals, sonst null. Nur bis zu
+ * diesem Betrag darf eine neue Version bzw. ein bearbeiteter Entwurf einen Bonus tragen; neue Angebote bekommen keinen.
+ */
+async function zugesagterBonus(owner: OfferOwner): Promise<number | null> {
+  const r = await prisma.offer.aggregate({ where: { ...owner, status: { in: ["draft", "sent"] }, abschlussBonus: { gt: 0 } }, _max: { abschlussBonus: true } });
+  const b = Number(r._max.abschlussBonus ?? 0);
+  return b > 0 ? b : null;
+}
+
 async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
   const products = input.products
     .map((p) => ({ name: p.name.trim(), dailyBudget: Math.max(0, Number(p.dailyBudget) || 0) }))
@@ -287,6 +299,11 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
     input.introMonthlyFee == null &&
     !price.individual;
 
+  // Abschlussbonus nur noch, wenn er für ein offenes Angebot schon zugesagt war (höchstens dieser Betrag)
+  const wunschBonus = Number(input.abschlussBonus ?? 0);
+  const zugesagt = !test && price.setupFee > 0 && Number.isFinite(wunschBonus) && wunschBonus > 0 ? await zugesagterBonus(owner) : null;
+  const bonus = zugesagt != null ? Math.min(wunschBonus, zugesagt, price.setupFee) : null;
+
   const { termsUrl, dpaUrl } = legalUrls();
   const validUntil = new Date(Date.now() + (input.validDays ?? 14) * 24 * 60 * 60 * 1000);
 
@@ -336,17 +353,8 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
     allowPayLater: input.allowPayLater === true && !test && !ppl,
     allowBankTransfer: input.allowBankTransfer === true && !test,
     bankTransferDays: parseZahlungsziel(input.bankTransferDays),
-    abschlussBonus:
-      test || !(price.setupFee > 0)
-        ? null
-        : (() => {
-            const b = Number(input.abschlussBonus ?? 0);
-            return Number.isFinite(b) && b > 0 ? Math.min(b, price.setupFee) : null;
-          })(),
-    abschlussBonusBis:
-      !test && price.setupFee > 0 && input.abschlussBonus !== 0 && isIsoDate(input.abschlussBonusBis) && input.abschlussBonusBis >= berlinTodayIso()
-        ? berlinTagesendeIso(input.abschlussBonusBis)
-        : null,
+    abschlussBonus: bonus,
+    abschlussBonusBis: bonus != null && isIsoDate(input.abschlussBonusBis) && input.abschlussBonusBis >= berlinTodayIso() ? berlinTagesendeIso(input.abschlussBonusBis) : null,
     // Immer gesetzt (auch leer), damit Bearbeiten die erste Woche auch entfernen kann
     pplProductKey: ersteWoche?.productKey ?? null,
     pplLabel: ersteWoche?.label ?? null,

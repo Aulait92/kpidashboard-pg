@@ -87,6 +87,7 @@ vi.mock("@/lib/mail-guard", () => ({
 import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { acceptOffer, createOffer } from "@/lib/offers";
+import { zugesagterBonus } from "./zugesagter-bonus";
 import { createCheckoutForOffer } from "@/lib/billing";
 import { handleStripeEvent } from "@/lib/billing-webhook";
 import { addDaysIso, berlinTodayIso } from "@/lib/offer-pricing";
@@ -96,7 +97,7 @@ const uid = () => Math.random().toString(36).slice(2, 8);
 const contacts: string[] = [];
 const offers: string[] = [];
 
-/** Angebot wie im Admin: Setup abweichend 1 €, Abschlussbonus wie im Formular (Standard an, 300 €) oder aus. */
+/** Angebot wie im Admin: Setup abweichend 1 €, mit schon zugesagtem Abschlussbonus (300 €, Altfall seit 21.11.2026) oder ohne. */
 async function einEuroAngebot(opts: { bonus: number }) {
   const tag = uid();
   const contact = await prisma.salesContact.create({ data: { name: `Euro ${tag}`, email: `euro-${tag}@example.test` } });
@@ -111,12 +112,11 @@ async function einEuroAngebot(opts: { bonus: number }) {
       products: [{ name: "TKV-Katze", dailyBudget: 30 }],
       startDate: addDaysIso(berlinTodayIso(), 20),
       setupOverride: 1,
-      abschlussBonus: opts.bonus,
-      abschlussBonusBis: opts.bonus ? addDaysIso(berlinTodayIso(), 1) : null,
     } as Parameters<typeof createOffer>[1],
     null,
   );
   offers.push(offer.id);
+  if (opts.bonus) await zugesagterBonus(offer.id, opts.bonus, addDaysIso(berlinTodayIso(), 1));
   expect(
     await acceptOffer(offer.token, { name: "Erik Euro", ip: null, agent: "vitest", termsAccepted: true, business: { company: `Agentur Euro ${tag}`, vatId: "DE123456789", confirmed: true } }),
   ).toEqual({ ok: true });
@@ -210,9 +210,9 @@ describe("Checkout mit 1 € Setup", () => {
     expect((await offerRow(offer.id)).paymentStatus).toBe("pending");
   });
 
-  it("mit Abschlussbonus (Formular-Standard): kein 0-€-Checkout, sondern Zahlungsart hinterlegen (Modus setup)", async () => {
+  it("mit zugesagtem Abschlussbonus: kein 0-€-Checkout, sondern Zahlungsart hinterlegen (Modus setup)", async () => {
     const offer = await einEuroAngebot({ bonus: 300 });
-    // Bonus wird beim Anlegen auf das Setup gedeckelt
+    // Bonus ist auf das Setup gedeckelt
     expect(Number(offer.abschlussBonus)).toBe(1);
     const res = await createCheckoutForOffer(offer.id, "card");
     expect(res).toEqual({ url: csUrl(1) });
