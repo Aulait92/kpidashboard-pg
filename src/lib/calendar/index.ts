@@ -660,6 +660,8 @@ export async function rescheduleAppointment(opts: {
   });
   // Alte Zeit still absagen — der Lead bekommt nur die „verschoben"-Mail.
   await cancelAppointment(old.id, opts.customerId, opts.by, false);
+  // Gegenprobe der Splittests (z. B. partner_vor_termin: Verschiebequote), nie störend
+  await import("@/lib/experimente").then((m) => m.zielErreicht([old.leadId, old.conversationId], "termin_verschoben")).catch(() => null);
   return booked;
 }
 

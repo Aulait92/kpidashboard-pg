@@ -3,6 +3,11 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 21.11.2026
+- **„Entscheidet noch jemand mit?“ vor dem Terminvorschlag** (A, Ole, 21.11. spät: als eigene Frage vor dem
+  Terminvorschlag, damit der Termin nicht verlegt werden muss). Standard (Fassung a); ohne Antwort kommen die Zeiten nach
+  30 Min. trotzdem, Terminwunsch geht immer vor. Nach AGENTS.md läuft trotzdem ein Test (`partner_vor_termin`, Fassung b:
+  Halbsatz im Terminvorschlag plus Frage nach der Buchung); entschieden wird über die Buchungsquote, Verschiebequote als
+  Gegenprobe (docs/firma/ab-tests.md).
 - **Meilenstein: erste Agentur ongeboardet, erste Leads** (Allianz Henrik Lohmann). Führungsrunde (CEO, Customer Success,
   CPO): Lohmann erst „live“, wenn ein echter Lead geantwortet hat; 14-Tage-Begleitplan; Feature-Stopp außer Korrekturen
   für Lohmann und Einrichtung; Allianz-Einrichtungs-Branches bis 24.11. mergen.

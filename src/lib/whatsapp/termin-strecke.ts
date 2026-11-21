@@ -5,7 +5,9 @@
 //     → Komplettcheck [Ja, gern] [Nein, danke] (Kennzeichen am Termin); bei Ja 45 Min.: frei → verlängert, belegt →
 //       zwei andere Zeiten mit 45 Min. [Zeit 1] [Zeit 2] [Zeit behalten] (lib/komplettcheck-dauer.ts)
 //     → „Entscheidet noch jemand mit, zum Beispiel Ihr Partner?“ [Ja, gemeinsam] [Nein, ich allein] (Ole, 21.11.2026; nicht
-//       bei Alleinstehenden bzw. bekannter Antwort); bei „gemeinsam“ kommen beide zum Termin (Angabe entscheidung)
+//       bei Alleinstehenden bzw. bekannter Antwort); bei „gemeinsam“ kommen beide zum Termin (Angabe entscheidung).
+//       Seit 21.11.2026 spät steht die Frage schon VOR dem Terminvorschlag (partnerVorStand, Splittest partner_vor_termin
+//       Fassung a); hier nach der Buchung nur noch, wenn sie davor unbeantwortet blieb (bzw. in Fassung b)
 //     → fehlende Angaben fürs Angebot (Rechner-Tabelle), eine Frage pro Nachricht (Assistent, bot.ts)
 //     → nur bei „Ja, gern“: Frage nach bestehenden Verträgen → Antwort (KI-Extraktion, tolerant) am Lead
 //     → Policen-Bitte (nur Sachprodukte, genau einmal) [Schicke ich gleich] [Nicht zur Hand]
@@ -138,6 +140,13 @@ export const STRECKE = {
   partnerFrage: "partner_frage",
   /** Antwort darauf (body.art: mit, allein, ohne_antwort) */
   partnerAntwort: "partner_antwort",
+  /**
+   * Dieselbe Frage VOR dem Terminvorschlag (Ole, 21.11.2026 spät; Splittest partner_vor_termin Fassung a), noch ohne
+   * Termin (body.bekannt). Eigene Merker, damit der Stand je Termin (streckenStand) unberührt bleibt.
+   */
+  partnerVorFrage: "partner_frage_vor",
+  /** Antwort darauf (body.art: mit, allein, ohne_antwort, termin = inzwischen gebucht) */
+  partnerVorAntwort: "partner_antwort_vor",
 } as const;
 
 const HOUR = 60 * 60 * 1000;
@@ -898,18 +907,129 @@ export async function partnerAntwort(conversationId: string, art: "mit" | "allei
     }
     return true;
   }
-  const angaben = { entscheidung: art === "mit" ? ENTSCHEIDUNG.mit : ENTSCHEIDUNG.allein };
-  const neu = mergeQualificationData(k.angaben, angaben);
-  await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: (neu ?? undefined) as Prisma.InputJsonValue | undefined } });
-  await prisma.message.create({ data: { conversationId, direction: "internal", kind: "qualification", body: JSON.stringify({ angaben, via: "partner_frage" }), sentBy: "system" } });
-  k.angaben = neu;
-  if (art === "mit" && k.leadId) {
-    const { logLeadHistory } = await import("@/lib/lead-history");
-    await logLeadHistory(k.leadId, "notiz", `${ENTSCHEIDUNG.mit} (per WhatsApp)`, { customerId: k.customerId, userId: null }).catch(() => null);
-  }
+  k.angaben = await entscheidungSpeichern(conversationId, art, "partner_frage");
   const dank = partnerDank(k.an, art === "mit");
   await weiterZumAngebot(k, dank, `${dank} ${abschlussEinleitung(k.an, k.person, "ohne_antwort")}`);
   return true;
+}
+
+/**
+ * Antwort auf „Entscheidet noch jemand mit?“ speichern (vor bzw. nach der Buchung): Conversation.qualificationData.entscheidung
+ * (Terminvorbereitung, Seitenleiste im Chat), Protokoll, bei „gemeinsam“ Vermerk im Verlauf des Leads. Gibt die neuen Angaben zurück.
+ */
+export async function entscheidungSpeichern(conversationId: string, art: "mit" | "allein", via: "partner_frage" | "partner_frage_vor"): Promise<unknown> {
+  const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { customerId: true, leadId: true, qualificationData: true } });
+  const angaben = { entscheidung: art === "mit" ? ENTSCHEIDUNG.mit : ENTSCHEIDUNG.allein };
+  const neu = mergeQualificationData(conv?.qualificationData, angaben);
+  await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: (neu ?? undefined) as Prisma.InputJsonValue | undefined } });
+  await prisma.message.create({ data: { conversationId, direction: "internal", kind: "qualification", body: JSON.stringify({ angaben, via }), sentBy: "system" } });
+  if (art === "mit" && conv?.leadId) {
+    const { logLeadHistory } = await import("@/lib/lead-history");
+    await logLeadHistory(conv.leadId, "notiz", `${ENTSCHEIDUNG.mit} (per WhatsApp)`, { customerId: conv.customerId, userId: null }).catch(() => null);
+  }
+  return neu;
+}
+
+// ─── „Entscheidet noch jemand mit?“ VOR dem Terminvorschlag (Ole, 21.11.2026 spät) ──────────────────────────────────
+// Die App stellt die Frage statt des ersten Terminvorschlags (bot.ts, Splittest partner_vor_termin Fassung a) und schickt
+// den Vorschlag nach der Antwort (Knopf bzw. getippt). Ohne Antwort kommt der Vorschlag nach PARTNER_VOR_WARTEN trotzdem
+// (runPartnerVorTerminNachholen, WhatsApp-Cron), damit keine Buchung verloren geht. Bleibt die Frage unbeantwortet,
+// kommt sie nach der Buchung noch einmal (sendePartnerFrage, nur solange entscheidung fehlt).
+
+/** Wartezeit ohne Antwort, bis der Terminvorschlag trotzdem kommt (kurz, die Buchung geht vor). */
+export const PARTNER_VOR_WARTEN = 30 * 60 * 1000;
+
+export type PartnerVorStand = {
+  /** Frage gestellt (letzte), mit bekanntem Partner */
+  frageAt: Date | null;
+  bekannt: boolean;
+  /** Antwort bzw. Abschluss der Frage (mit, allein, ohne_antwort, termin) */
+  antwortAt: Date | null;
+  /** Terminvorschlag nach der Frage schon gesendet (z. B. vom Assistenten nach einer Rückfrage) */
+  vorschlagDanach: boolean;
+  /** Terminvorschläge im Chat insgesamt (die Frage kommt nur vor dem ersten) */
+  vorschlaege: number;
+};
+
+/** Stand der Frage vor dem Terminvorschlag (aus den Merkern). */
+export async function partnerVorStand(conversationId: string): Promise<PartnerVorStand> {
+  const rows = await prisma.message.findMany({
+    where: { conversationId, direction: "internal", kind: { in: [STRECKE.partnerVorFrage, STRECKE.partnerVorAntwort, STRECKE.vorschlag] } },
+    orderBy: { createdAt: "asc" },
+    select: { kind: true, createdAt: true, body: true },
+  });
+  const frage = rows.filter((r) => r.kind === STRECKE.partnerVorFrage).at(-1) ?? null;
+  const nach = (k: string) => (frage ? (rows.find((r) => r.kind === k && r.createdAt >= frage.createdAt) ?? null) : null);
+  return {
+    frageAt: frage?.createdAt ?? null,
+    bekannt: daten(frage?.body ?? null).bekannt === true,
+    antwortAt: nach(STRECKE.partnerVorAntwort)?.createdAt ?? null,
+    vorschlagDanach: !!nach(STRECKE.vorschlag),
+    vorschlaege: rows.filter((r) => r.kind === STRECKE.vorschlag).length,
+  };
+}
+
+/** Frage gestellt und noch nicht beantwortet (eine getippte bzw. geklickte Antwort zählt noch)? */
+export function partnerVorUnbeantwortet(s: PartnerVorStand): boolean {
+  return !!s.frageAt && !s.antwortAt;
+}
+
+/** Wartet der Terminvorschlag auf die Antwort (unbeantwortet und noch kein Vorschlag danach)? */
+export function partnerVorOffen(s: PartnerVorStand): boolean {
+  return partnerVorUnbeantwortet(s) && !s.vorschlagDanach;
+}
+
+/**
+ * Knopf auf die Frage vor dem Terminvorschlag, wenn inzwischen schon ein Termin steht (z. B. über die Buchungsseite):
+ * Angabe speichern, kurzer Dank (bei „gemeinsam“: beide zum Termin). true = erledigt; false = kein Termin bzw. Frage
+ * nicht offen (dann übernimmt bot.ts: Terminvorschlag nach der Antwort).
+ */
+export async function partnerVorNachBuchung(conversationId: string, art: "mit" | "allein", now = new Date()): Promise<boolean> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  if (!partnerVorUnbeantwortet(await partnerVorStand(conversationId))) return false;
+  await merke(conversationId, STRECKE.partnerVorAntwort, { art });
+  await entscheidungSpeichern(conversationId, art, "partner_frage_vor");
+  await sende(k, partnerDank(k.an, art === "mit"));
+  return true;
+}
+
+/**
+ * Frage vor dem Terminvorschlag ohne Antwort: nach PARTNER_VOR_WARTEN (gerechnet ab der Frage bzw. der letzten Nachricht
+ * des Leads) den Terminvorschlag trotzdem schicken (bot.ts runBotTurn mit partnerNachholen, ohne Assistent). Nur im
+ * 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, nicht nach „Stopp“ bzw. bei pausiertem Assistenten. Steht schon ein Termin, wird
+ * die Frage still geschlossen (sie kommt nach der Buchung noch einmal, solange die Angabe fehlt).
+ */
+export async function runPartnerVorTerminNachholen(now = new Date()): Promise<{ gesendet: number }> {
+  if (!inStreckenFenster(now)) return { gesendet: 0 };
+  const fragen = await prisma.message.findMany({
+    where: { direction: "internal", kind: STRECKE.partnerVorFrage, createdAt: { lte: new Date(now.getTime() - PARTNER_VOR_WARTEN), gte: new Date(now.getTime() - 48 * HOUR) } },
+    orderBy: { createdAt: "asc" },
+    take: 50,
+    select: { conversationId: true },
+  });
+  let gesendet = 0;
+  for (const conversationId of new Set(fragen.map((f) => f.conversationId))) {
+    try {
+      const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { botActive: true, optedOutAt: true, windowExpiresAt: true } });
+      if (!conv?.botActive || conv.optedOutAt || !conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) continue;
+      const s = await partnerVorStand(conversationId);
+      if (!partnerVorOffen(s)) continue;
+      const letzte = await prisma.message.findFirst({ where: { conversationId, direction: "inbound", createdAt: { gt: s.frageAt! } }, orderBy: { createdAt: "desc" }, select: { createdAt: true } });
+      if ((letzte?.createdAt ?? s.frageAt!).getTime() > now.getTime() - PARTNER_VOR_WARTEN) continue;
+      const termin = await prisma.appointment.findFirst({ where: { conversationId, status: "booked", startsAt: { gt: now } }, select: { id: true } });
+      if (termin) {
+        await merke(conversationId, STRECKE.partnerVorAntwort, { art: "termin" });
+        continue;
+      }
+      const { runBotTurn } = await import("@/lib/whatsapp/bot");
+      await runBotTurn(conversationId, { partnerNachholen: true });
+      if ((await partnerVorStand(conversationId)).vorschlagDanach) gesendet++;
+    } catch (e) {
+      console.error("[strecke partner vor termin]", e instanceof Error ? e.message.slice(0, 120) : e);
+    }
+  }
+  return { gesendet };
 }
 
 /** Zwei freie Zeiten mit 45 Min. (früheste und früheste an einem anderen Tag), null = keine. */

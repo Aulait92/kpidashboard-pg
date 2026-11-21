@@ -23,6 +23,8 @@ export type Variante = "a" | "b";
 /** Ziel-Kennzahlen (frei erweiterbar; dieselbe Zeichenkette bei ereignis bzw. zielErreicht verwenden). */
 export type Ziel =
   | "termin_gebucht"
+  /** Termin verschoben (lib/calendar rescheduleAppointment), Gegenprobe zu termin_gebucht */
+  | "termin_verschoben"
   | "komplettcheck_ja"
   | "erschienen"
   // Eigener Funnel (lib/funnel/server.ts), Einheit Besucher-ID
@@ -131,6 +133,21 @@ export const EXPERIMENTE = {
     ziel: "termin_gebucht",
     a: "Standard (Ole): „Kein Problem! Suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link> Oder schreiben Sie mir einfach Ihren Wunschtag.“",
     b: "Neu: Wunschtag im Chat zuerst, Link am Ende: „Kein Problem! Schreiben Sie mir einfach Ihren Wunschtag, oder suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link>“",
+  },
+  // „Entscheidet noch jemand mit?“ vor dem Terminvorschlag (Ole, 21.11.2026 spät, direkt freigegeben: Fassung a sofort
+  // Standard; Lernbuch docs/firma/ab-tests.md, Hypothese lib/ab-hypothesen.ts). Einheit Lead-ID (sonst Chat-ID),
+  // zugeteilt nur beim ersten Terminvorschlag eines Leads, bei dem die Frage überhaupt nötig ist (nicht bei
+  // Alleinstehenden, bekannter Antwort oder Terminwunsch; bot.ts schlageVor). Texte lib/whatsapp/gespraech.ts.
+  // Hypothese B: ohne Extra-Schritt buchen mehr Leads; Hypothese A: mit der Frage vorab wird seltener verschoben.
+  // Entschieden wird über die Buchungsquote; Gegenprobe (nur Anzeige) Verschiebequote = termin_verschoben / termin_gebucht
+  // (lib/calendar rescheduleAppointment). Siehe Entscheidungsregeln im Lernbuch.
+  partner_vor_termin: {
+    titel: "Mitentscheider vor dem Terminvorschlag im Chat",
+    ziel: "termin_gebucht",
+    a: "Standard (Ole): eigene Frage vor dem Terminvorschlag „Danke! Entscheidet noch jemand mit, zum Beispiel Ihr Partner?“ [Ja, gemeinsam] [Nein, ich allein], danach die Zeiten (bei „gemeinsam“: „Prima, dann schlage ich Zeiten vor, die für Sie beide passen.“)",
+    b: "Neu: keine eigene Frage; Terminvorschlag endet mit „Entscheiden Sie gemeinsam mit Ihrem Partner? Dann wählen Sie gern eine Zeit, die für Sie beide passt.“, die Frage mit Knöpfen kommt nach der Buchung",
+    min: 150,
+    anzeigeZiele: ["termin_verschoben"],
   },
   // Eigener PKV-Funnel (lib/funnel, Ole 20.11.2026): Beispiel, AUS und an keinem Schritt mehr (nur Muster).
   // Einheit = Besucher-ID je Seitenaufruf (kein Cookie, Auflage L4), Zuteilung beim ersten Aufruf des Schritts.

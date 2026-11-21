@@ -14,7 +14,8 @@
 //   „Ja, sicher“/„Lieber andere Zeit“ (zusage:ja|andere, Splittest termin_zusage Fassung b) → zugesagt, dann Komplettcheck
 //                                                    bzw. Tierfrage mit „Super, danke!“; bzw. wie „Bitte verschieben“
 //   „Ja, gern“/„Nein, danke“ (komplettcheck:ja|nein) → Komplettcheck am Termin, dann Vertragsfrage bzw. Abschluss
-//   „Ja, gemeinsam“/„Nein, ich allein“ (partner:ja|nein) → wer mitentscheidet (Ole, 21.11.2026), dann die erste Angebotsfrage
+//   „Ja, gemeinsam“/„Nein, ich allein“ (partner:ja|nein) → wer mitentscheidet (Ole, 21.11.2026), dann die erste Angebotsfrage;
+//                                                    vor dem Terminvorschlag (noch kein Termin): bot.ts, dann der Terminvorschlag
 //   Zeit mit 45 Min. (lang:<ISO>) / „Zeit behalten“ (lang:behalten) → Komplettcheck-Termin verlegen bzw. behalten
 //   „Schicke ich gleich“/„Nicht zur Hand“ (policenbitte:<Titel>) → Reaktion auf die Policen-Bitte, dann der Schluss
 //   „Ja, stimmt“/„Andere Adresse“ (email:ja|andere) → Einladung (einmal) bzw. Frage nach der neuen Adresse
@@ -306,8 +307,11 @@ export async function handleButtonReply(
     return { handled: await komplettcheckAntwort(conversationId, k.ja, now) };
   }
   if (k.aktion === "partner") {
-    const { partnerAntwort } = await import("@/lib/whatsapp/termin-strecke");
-    return { handled: await partnerAntwort(conversationId, k.ja ? "mit" : "allein", now) };
+    // Nach der Buchung (Frage nach dem Komplettcheck) bzw. Frage vor dem Terminvorschlag, inzwischen gebucht; sonst
+    // (noch kein Termin) übernimmt bot.ts: Antwort speichern, dann der Terminvorschlag (Ole, 21.11.2026 spät)
+    const { partnerAntwort, partnerVorNachBuchung } = await import("@/lib/whatsapp/termin-strecke");
+    if (await partnerAntwort(conversationId, k.ja ? "mit" : "allein", now)) return { handled: true };
+    return { handled: await partnerVorNachBuchung(conversationId, k.ja ? "mit" : "allein", now) };
   }
   if (k.aktion === "kalender") {
     const { kalenderAntwort } = await import("@/lib/whatsapp/termin-strecke");

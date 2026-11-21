@@ -130,6 +130,8 @@ import { experimenteCacheLeeren, zuteilen } from "@/lib/experimente";
 
 // Buchungen im Chat immer mit Fassung a der Bestätigung (Splittest termin_zusage; Fassung b: eigener Test)
 ohneSplittest("termin_zusage");
+// Mitentscheider vor dem Terminvorschlag (Splittest partner_vor_termin): angehalten = Fassung a; beide Fassungen unten
+ohneSplittest("partner_vor_termin", "termin_gebucht");
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 let seq = 0;
@@ -475,6 +477,82 @@ describe("Termin-Strecke mit Knöpfen", () => {
     const q = (await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id }, select: { qualificationData: true } })).qualificationData as Record<string, string>;
     expect(q.entscheidung).toBe("Partner entscheidet mit, soll beim Termin dabei sein");
     await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
+  });
+
+  // Ole, 21.11.2026 spät: Frage als eigene Nachricht VOR dem Terminvorschlag (Fassung a, Standard); Fassung b: Halbsatz im
+  // Terminvorschlag und Frage nach der Buchung (Splittest partner_vor_termin, Einheit Lead-ID)
+  describe("Splittest partner_vor_termin: Mitentscheider vor dem Terminvorschlag", () => {
+    const idFuer = (v: "a" | "b") => {
+      for (;;) {
+        const id = `partner${uid()}${uid()}`;
+        if (zuteilen("partner_vor_termin", id) === v) return id;
+      }
+    };
+    beforeAll(async () => {
+      await prisma.experiment.update({ where: { key: "partner_vor_termin" }, data: { aktiv: true } });
+      experimenteCacheLeeren();
+    });
+    afterAll(async () => {
+      await prisma.experiment.update({ where: { key: "partner_vor_termin" }, data: { aktiv: false } });
+      experimenteCacheLeeren();
+    });
+    const zuteilung = (leadId: string) => prisma.experimentZuteilung.findUnique({ where: { experiment_einheit: { experiment: "partner_vor_termin", einheit: leadId } } });
+    const q = { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" };
+
+    it("Fassung a: Frage statt des ersten Vorschlags, „Ja, gemeinsam“ → Zeiten „für Sie beide“; nach der Buchung keine Frage mehr", async () => {
+      const x = await leadMitChat({ id: idFuer("a"), entscheidungOffen: true, qualificationData: q });
+      st.queue.push([{ type: "tool_use", id: "t1", name: "termin_vorschlagen", input: {} }], [{ type: "text", text: "(ignoriert)" }]);
+      await runBotTurn(x.conv.id);
+      const frage = gesendet().at(-1)!;
+      expect(frage.body).toBe("Danke! Entscheiden Sie gemeinsam mit Ihrem Partner?");
+      expect(frage.buttons!.map((b) => b.id)).toEqual(["partner:ja", "partner:nein"]);
+      expect(await prisma.message.count({ where: { conversationId: x.conv.id, kind: STRECKE.vorschlag } })).toBe(0);
+      expect(await zuteilung(x.lead.id)).toMatchObject({ variante: "a" });
+
+      st.ai = 0;
+      await knopf(x.phone, "partner:ja", "Ja, gemeinsam");
+      expect(st.ai).toBe(0);
+      const vorschlag = gesendet().at(-1)!;
+      expect(vorschlag.body).toMatch(/^Prima, dann schlage ich Zeiten vor, die für Sie beide passen\. In einem kurzen(, kostenlosen)? Videotermin zeigt Ihnen Herr Kannapinn, .+ Passt Ihnen .+ oder .+\?$/);
+      expect(vorschlag.buttons!.map((b) => b.id.split(":")[0])).toEqual(["slot", "slot", "andere_zeit"]);
+      const c = await prisma.conversation.findUniqueOrThrow({ where: { id: x.conv.id }, select: { qualificationData: true } });
+      expect((c.qualificationData as Record<string, string>).entscheidung).toBe("Partner entscheidet mit, soll beim Termin dabei sein");
+
+      // Buchung, Komplettcheck „Ja“: direkt die Angebotsfrage, keine zweite Frage zum Mitentscheider
+      await knopf(x.phone, vorschlag.buttons![0].id, vorschlag.buttons![0].title);
+      const ab = gesendet().length;
+      await knopf(x.phone, "komplettcheck:ja", "Ja, gern");
+      expect(gesendet().slice(ab).map((s) => s.body)).toEqual(["Super! Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig?"]);
+      const appt = await prisma.appointment.findFirstOrThrow({ where: { leadId: x.lead.id, status: "booked" } });
+      await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
+    });
+
+    it("Fassung b: keine eigene Frage, Halbsatz am Ende des Terminvorschlags; die Frage kommt nach der Buchung", async () => {
+      const x = await leadMitChat({ id: idFuer("b"), entscheidungOffen: true, qualificationData: q });
+      st.queue.push([{ type: "tool_use", id: "t1", name: "termin_vorschlagen", input: {} }], [{ type: "text", text: "(ignoriert)" }]);
+      await runBotTurn(x.conv.id);
+      const vorschlag = gesendet().at(-1)!;
+      expect(vorschlag.body).toMatch(/^Danke! In einem kurzen(, kostenlosen)? Videotermin .+ Passt Ihnen .+ oder .+\? Entscheiden Sie gemeinsam mit Ihrem Partner\? Dann wählen Sie gern eine Zeit, die für Sie beide passt\.$/);
+      expect(vorschlag.buttons!.map((b) => b.id.split(":")[0])).toEqual(["slot", "slot", "andere_zeit"]);
+      expect(await prisma.message.count({ where: { conversationId: x.conv.id, kind: STRECKE.partnerVorFrage } })).toBe(0);
+      expect(await zuteilung(x.lead.id)).toMatchObject({ variante: "b" });
+
+      await knopf(x.phone, vorschlag.buttons![1].id, vorschlag.buttons![1].title);
+      const ab = gesendet().length;
+      await knopf(x.phone, "komplettcheck:ja", "Ja, gern");
+      expect(gesendet().slice(ab).map((s) => s.body)).toEqual(["Super! Entscheiden Sie gemeinsam mit Ihrem Partner?"]);
+      const appt = await prisma.appointment.findFirstOrThrow({ where: { leadId: x.lead.id, status: "booked" } });
+      await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
+    });
+
+    it("Alleinstehend bzw. Antwort bekannt: weder Frage noch Halbsatz, keine Zuteilung", async () => {
+      const x = await leadMitChat({ id: idFuer("a"), qualificationData: q });
+      st.queue.push([{ type: "tool_use", id: "t1", name: "termin_vorschlagen", input: {} }], [{ type: "text", text: "(ignoriert)" }]);
+      await runBotTurn(x.conv.id);
+      expect(gesendet().at(-1)!.body).not.toMatch(/Entscheide/);
+      expect(gesendet().at(-1)!.buttons!.map((b) => b.id.split(":")[0])).toEqual(["slot", "slot", "andere_zeit"]);
+      expect(await zuteilung(x.lead.id)).toBeNull();
+    });
   });
 
   it("Komplettcheck „Ja“, Zeit danach belegt: zwei Zeiten mit 45 Min.; Wahl verlegt denselben Termin, erst danach Einladung", async () => {

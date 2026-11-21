@@ -196,11 +196,13 @@ export function terminVorschlagText(o: {
   erneut?: boolean;
   /** Splittest terminvorschlag_kostenlos, Fassung b: „In einem kurzen, kostenlosen Videotermin …“ */
   kostenlos?: boolean;
+  /** Splittest partner_vor_termin, Fassung b: Halbsatz zum Mitentscheider nach der Zeitfrage (partnerSatzImVorschlag) */
+  partnerSatz?: string | null;
 }): string {
   const frage = a(o.an, `Passt dir ${o.zeiten[0]} oder ${o.zeiten[1]}?`, `Passt Ihnen ${o.zeiten[0]} oder ${o.zeiten[1]}?`);
   const einleitung = o.einleitung?.replace(/\s+/g, " ").trim() || (o.dank === false || o.erneut ? null : "Danke!");
   const nutzen = o.erneut ? null : terminNutzenSatz({ source: o.source, formular: o.formular, angaben: o.angaben, an: o.an, person: o.person, video: o.video, kostenlos: o.kostenlos });
-  return [einleitung, nutzen, frage].filter(Boolean).join(" ");
+  return [einleitung, nutzen, frage, o.erneut ? null : o.partnerSatz].filter(Boolean).join(" ");
 }
 
 /** Nachfassen 2 Std. nach einem unbeantworteten Terminvorschlag (lib/lead-sequences.ts, mit denselben Knöpfen). */
@@ -397,7 +399,7 @@ function lebenText(formular: Form, angaben?: unknown): string {
 }
 
 const SINGLE_RE = /\b(single|alleinstehend|alleinerziehend|allein ?lebend|verwitwet)\b/i;
-const PARTNER_RE = /partner|ehe|verheiratet|\bpaar\b|familie|frau|mann|freundin|freund\b|lebensgef/i;
+const PARTNER_RE = /partner|ehe|verheiratet|\bpaar\b|zu zweit|familie|frau|mann|freundin|freund\b|lebensgef/i;
 
 /**
  * Frage stellen? Nicht, wenn die Antwort schon bekannt ist (entscheidung, z. B. vom Assistenten festgehalten) und nicht
@@ -433,6 +435,39 @@ export function partnerDank(an: Ansprache, mit: boolean): string {
     "Prima, dann kommen Sie am besten zu zweit zum Termin, so können Sie direkt gemeinsam entscheiden. Passt die Zeit nicht für Sie beide, schreiben Sie mir einfach.",
   );
 }
+
+// ─── Vor dem Terminvorschlag (Ole, 21.11.2026 spät) ────────────────────────────────────────────────────────────────
+// „Als eigene Frage VOR dem Terminvorschlag, damit der Termin nicht verlegt werden muss.“ Ablauf: Antwort auf die
+// Öffnungsfrage (bzw. Zwischenfrage) → „Danke! Entscheidet noch jemand mit, zum Beispiel Ihr Partner?“ [Ja, gemeinsam]
+// [Nein, ich allein] → Terminvorschlag (bei „gemeinsam“ mit partnerVorschlagEinleitung). Splittest partner_vor_termin
+// (lib/experimente.ts): Fassung a = diese Frage (Standard, von Ole freigegeben), Fassung b = keine eigene Frage, sondern
+// partnerSatzImVorschlag im Terminvorschlag und die Frage nach der Buchung wie bisher. Steuerung bot.ts, Merker und
+// Nachholen ohne Antwort termin-strecke.ts (partnerVorStand, runPartnerVorTerminNachholen).
+
+/** Die Frage vor dem Terminvorschlag: „Danke!“ (bzw. eine kurze Antwort des Assistenten) und die Frage. */
+export function partnerVorFrageText(an: Ansprache, bekannt: boolean, einleitung?: string | null): string {
+  return [einleitung?.replace(/\s+/g, " ").trim() || "Danke!", partnerFrage(an, bekannt)].join(" ");
+}
+
+/** Einleitung des Terminvorschlags nach „Ja, gemeinsam“ (vor der Frage gestellt). */
+export function partnerVorschlagEinleitung(an: Ansprache): string {
+  return a(an, "Prima, dann schlage ich Zeiten vor, die für euch beide passen.", "Prima, dann schlage ich Zeiten vor, die für Sie beide passen.");
+}
+
+/** Fassung b (Splittest partner_vor_termin): Halbsatz am Ende des Terminvorschlags statt eigener Frage. */
+export function partnerSatzImVorschlag(an: Ansprache, bekannt: boolean): string {
+  return `${partnerFrage(an, bekannt)} ${a(an, "Dann wähl gern eine Zeit, die für euch beide passt.", "Dann wählen Sie gern eine Zeit, die für Sie beide passt.")}`;
+}
+
+/**
+ * Prompt-Hinweis, solange die Frage vor dem Terminvorschlag offen ist und die Antwort nicht eindeutig war (Rückfrage,
+ * Terminwunsch): Buchung geht vor, nie blockieren.
+ */
+export const PARTNER_VOR_HINWEIS =
+  "Offen ist die Frage, ob noch jemand mitentscheidet (z. B. der Partner). Nennt der Lead, wer mitentscheidet, halte es mit record_qualification fest (angaben.entscheidung). Nennt er einen Terminwunsch, gilt die Regel zur Wunschzeit (buchen bzw. passende Zeiten anbieten). Stellt er eine Frage, beantworte sie kurz als einleitung. Dann nutze sofort termin_vorschlagen (die App schickt die Zeiten). Stell keine weitere Frage.";
+
+/** Ausdrückliche Angabe zum Mitentscheider (nicht nur „ja“/„nein“), z. B. „mit meiner Frau, Montag 10 Uhr“. */
+export const PARTNER_AUSDRUECKLICH_RE = /\b(gemeinsam|zusammen|zu zweit|beide|partner|partnerin|frau|mann|ehefrau|ehemann|freundin|freund|allein|alleine)\b/i;
 
 /**
  * Getippte Antwort auf die Frage auswerten: „mit“ (ja, gemeinsam, meine Frau …), „allein“ (nein, ich allein …), null =

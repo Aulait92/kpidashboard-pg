@@ -227,3 +227,138 @@ describe("Einbindung", () => {
     expect(regel).not.toContain("Angebotsfragen, nur für die Beitragsberechnung");
   });
 });
+
+// Ole, 21.11.2026 spät: „als eigene Frage VOR dem Terminvorschlag, damit der Termin nicht verlegt werden muss“.
+// Splittest partner_vor_termin: a = eigene Frage (Standard), b = Halbsatz im Terminvorschlag plus Frage nach der Buchung.
+describe("Vor dem Terminvorschlag", () => {
+  const person = { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" } as never;
+  const vorschlag = (o: Partial<Parameters<typeof g.terminVorschlagText>[0]> = {}) =>
+    g.terminVorschlagText({ an: "sie", source: null, formular: [], person, zeiten: ["Mo 10 Uhr", "Di 14 Uhr"], video: true, ...o });
+
+  beforeEach(() => {
+    db.messages = [];
+    db.qualificationData = null;
+    db.komplettcheck = null;
+    db.leadAddress = "sie";
+    sent.length = 0;
+    history.length = 0;
+  });
+
+  it("Frage als eigene Nachricht mit „Danke!“ (bzw. kurzer Antwort des Assistenten), Sie und Du, bekannter Partner", () => {
+    expect(g.partnerVorFrageText("sie", false)).toBe("Danke! Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+    expect(g.partnerVorFrageText("du", false)).toBe("Danke! Entscheidet noch jemand mit, zum Beispiel dein Partner?");
+    expect(g.partnerVorFrageText("sie", true)).toBe("Danke! Entscheiden Sie gemeinsam mit Ihrem Partner?");
+    expect(g.partnerVorFrageText("du", true)).toBe("Danke! Entscheidest du gemeinsam mit deinem Partner?");
+    expect(g.partnerVorFrageText("sie", false, "Gern, das ist kostenlos.")).toBe("Gern, das ist kostenlos. Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+    // gleiche Knöpfe wie nach der Buchung
+    expect(g.knoepfeFuerText(g.partnerVorFrageText("sie", false))).toEqual(g.PARTNER_KNOEPFE);
+  });
+
+  it("nach „gemeinsam“ beginnt der Terminvorschlag mit „Zeiten, die für Sie beide passen“; sonst „Danke!“; ohne Antwort ohne Einleitung", () => {
+    expect(g.partnerVorschlagEinleitung("sie")).toBe("Prima, dann schlage ich Zeiten vor, die für Sie beide passen.");
+    expect(g.partnerVorschlagEinleitung("du")).toBe("Prima, dann schlage ich Zeiten vor, die für euch beide passen.");
+    expect(vorschlag({ einleitung: g.partnerVorschlagEinleitung("sie") })).toMatch(/^Prima, dann schlage ich Zeiten vor, die für Sie beide passen\. In einem kurzen Videotermin .+ Passt Ihnen Mo 10 Uhr oder Di 14 Uhr\?$/);
+    expect(vorschlag()).toMatch(/^Danke! In einem kurzen Videotermin/);
+    expect(vorschlag({ dank: false })).toMatch(/^In einem kurzen Videotermin/);
+  });
+
+  it("Fassung b: Halbsatz am Ende des Terminvorschlags (nicht beim erneuten Vorschlag)", () => {
+    expect(g.partnerSatzImVorschlag("sie", true)).toBe("Entscheiden Sie gemeinsam mit Ihrem Partner? Dann wählen Sie gern eine Zeit, die für Sie beide passt.");
+    expect(g.partnerSatzImVorschlag("du", true)).toBe("Entscheidest du gemeinsam mit deinem Partner? Dann wähl gern eine Zeit, die für euch beide passt.");
+    expect(g.partnerSatzImVorschlag("sie", false)).toBe("Entscheidet noch jemand mit, zum Beispiel Ihr Partner? Dann wählen Sie gern eine Zeit, die für Sie beide passt.");
+    expect(vorschlag({ partnerSatz: g.partnerSatzImVorschlag("sie", true) })).toMatch(
+      /Passt Ihnen Mo 10 Uhr oder Di 14 Uhr\? Entscheiden Sie gemeinsam mit Ihrem Partner\? Dann wählen Sie gern eine Zeit, die für Sie beide passt\.$/,
+    );
+    expect(vorschlag({ partnerSatz: "x", erneut: true })).toBe("Passt Ihnen Mo 10 Uhr oder Di 14 Uhr?");
+  });
+
+  it("keine Gedankenstriche, kein Geld; Hinweis für den Assistenten lässt die Buchung vorgehen", () => {
+    const alle = (["sie", "du"] as const).flatMap((an) => [true, false].flatMap((b) => [g.partnerVorFrageText(an, b), g.partnerSatzImVorschlag(an, b), g.partnerVorschlagEinleitung(an)]));
+    for (const t of alle) {
+      expect(t).not.toMatch(STRICH);
+      expect(t).not.toMatch(/budget|geld|euro|€|kosten|beitrag/i);
+    }
+    expect(g.PARTNER_VOR_HINWEIS).toContain("termin_vorschlagen");
+    expect(g.PARTNER_VOR_HINWEIS).toContain("Wunschzeit");
+    expect(g.PARTNER_VOR_HINWEIS).toContain("angaben.entscheidung");
+  });
+
+  it("Terminwunsch erkannt (dann keine Frage vorab, die Buchung geht vor); „zu zweit“ heißt Partner bekannt", async () => {
+    const { nenntTerminwunsch } = await import("@/lib/whatsapp/zwischenfrage");
+    expect(nenntTerminwunsch("Können wir morgen telefonieren?")).toBe(true);
+    expect(nenntTerminwunsch("ja, meine Frau, Montag 10 Uhr")).toBe(true);
+    expect(nenntTerminwunsch("Ja, gemeinsam")).toBe(false);
+    expect(nenntTerminwunsch("Beides neu")).toBe(false);
+    expect(g.PARTNER_AUSDRUECKLICH_RE.test("ja, meine Frau, Montag 10 Uhr")).toBe(true);
+    expect(g.PARTNER_AUSDRUECKLICH_RE.test("ja, Montag 10 Uhr")).toBe(false);
+    expect(g.partnerBekannt([], { versichern: "Zu zweit" })).toBe(true);
+  });
+
+  it("Stand: offen bis Antwort bzw. Terminvorschlag; zählt nicht im Stand je Termin", async () => {
+    let s = await strecke.partnerVorStand("conv");
+    expect(s).toMatchObject({ frageAt: null, vorschlaege: 0 });
+    expect(strecke.partnerVorOffen(s)).toBe(false);
+    await strecke.merke("conv", strecke.STRECKE.partnerVorFrage, { bekannt: true });
+    s = await strecke.partnerVorStand("conv");
+    expect(s.bekannt).toBe(true);
+    expect(strecke.partnerVorOffen(s)).toBe(true);
+    // Vorschlag vom Assistenten (nach einer Rückfrage): nicht mehr offen fürs Nachholen, eine Antwort zählt aber noch
+    await strecke.merke("conv", strecke.STRECKE.vorschlag, { starts: [] });
+    s = await strecke.partnerVorStand("conv");
+    expect(strecke.partnerVorOffen(s)).toBe(false);
+    expect(strecke.partnerVorUnbeantwortet(s)).toBe(true);
+    expect(s.vorschlaege).toBe(1);
+    await strecke.merke("conv", strecke.STRECKE.partnerVorAntwort, { art: "mit" });
+    expect(strecke.partnerVorUnbeantwortet(await strecke.partnerVorStand("conv"))).toBe(false);
+    expect(strecke.partnerFrageOffen(await strecke.streckenStand("conv", "appt1"))).toBe(false);
+  });
+
+  it("Knopf, wenn inzwischen gebucht: gespeichert, kurzer Dank; danach keine Frage nach der Buchung mehr", async () => {
+    await strecke.merke("conv", strecke.STRECKE.partnerVorFrage, { bekannt: false });
+    expect(await strecke.partnerVorNachBuchung("conv", "mit")).toBe(true);
+    expect(cleanQualificationData(db.qualificationData)).toEqual({ entscheidung: "Partner entscheidet mit, soll beim Termin dabei sein" });
+    expect(sent.at(-1)!.body).toBe(g.partnerDank("sie", true));
+    expect(history).toEqual(["Partner entscheidet mit, soll beim Termin dabei sein (per WhatsApp)"]);
+    expect(await strecke.partnerVorNachBuchung("conv", "mit")).toBe(false);
+    sent.length = 0;
+    await strecke.komplettcheckAntwort("conv", true);
+    expect(sent[0].body).not.toMatch(g.PARTNER_FRAGE_RE);
+  });
+
+  it("vorab unbeantwortet: nach der Buchung kommt die Frage noch einmal", async () => {
+    await strecke.merke("conv", strecke.STRECKE.partnerVorFrage, { bekannt: false });
+    await strecke.merke("conv", strecke.STRECKE.partnerVorAntwort, { art: "ohne_antwort" });
+    await strecke.komplettcheckAntwort("conv", true);
+    expect(sent[0].body).toBe("Super! Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+  });
+
+  const botSrc = readFileSync("src/lib/whatsapp/bot.ts", "utf8");
+  const strSrc = readFileSync("src/lib/whatsapp/termin-strecke.ts", "utf8");
+  const cron = readFileSync("src/app/api/whatsapp/cron/route.ts", "utf8");
+  it("Einbindung: Frage statt des ersten Terminvorschlags (Splittest), Antwort ohne Assistent, Nachholen nach 30 Min. im Cron", () => {
+    expect(botSrc).toContain('m.variante("partner_vor_termin", conversation.leadId ?? conversation.id)');
+    expect(botSrc).toMatch(/if \(v === "a"\) \{\s*zug\.partnerVor = \{ text: partnerVorFrageText\(/);
+    expect(botSrc).toContain("partnerSatz = partnerSatzImVorschlag(ansprache, bekannt);");
+    // nur beim ersten Vorschlag, nie bei Terminwunsch bzw. vom Assistenten gewählten Zeiten
+    expect(botSrc).toMatch(/partnerVor\.vorschlaege === 0 &&[\s\S]*?nenntTerminwunsch\(latest\.body\)\) &&\s*partnerFrageNoetig\(form\.normal, angabenJetzt\)/);
+    expect(botSrc).toContain("!(Array.isArray(input.starts) && input.starts.length)");
+    expect(botSrc).toContain('einleitung: partnerJetzt.art === "mit" ? partnerVorschlagEinleitung(ansprache) : null');
+    expect(botSrc).toContain("!zug.gebucht && !appSchreibt()");
+    expect(strSrc).toContain("export const PARTNER_VOR_WARTEN = 30 * 60 * 1000;");
+    expect(strSrc).toContain("await runBotTurn(conversationId, { partnerNachholen: true });");
+    expect(cron).toContain("m.runPartnerVorTerminNachholen(now)");
+  });
+
+  it("Splittest eingetragen: Ziel Buchungsquote, Verschiebequote als Gegenprobe, Hypothese und Lernbuch", async () => {
+    const { EXPERIMENTE } = await vi.importActual<typeof import("@/lib/experimente")>("@/lib/experimente");
+    const { SPLITTEST_HYPOTHESE } = await import("@/lib/ab-hypothesen");
+    const e = EXPERIMENTE.partner_vor_termin;
+    expect(e.ziel).toBe("termin_gebucht");
+    expect(e.anzeigeZiele).toEqual(["termin_verschoben"]);
+    expect(e.min).toBe(150);
+    expect(SPLITTEST_HYPOTHESE.partner_vor_termin).toMatch(/bucht mehr/);
+    expect(SPLITTEST_HYPOTHESE.partner_vor_termin).toMatch(/seltener verschoben/);
+    expect(readFileSync("src/lib/calendar/index.ts", "utf8")).toContain('"termin_verschoben"');
+    expect(readFileSync("docs/firma/ab-tests.md", "utf8")).toContain("partner_vor_termin");
+  });
+});

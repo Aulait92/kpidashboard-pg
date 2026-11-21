@@ -250,6 +250,13 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-strecke");
       return { error: e instanceof Error ? e.message : String(e) };
     });
+  // „Entscheidet noch jemand mit?“ vor dem Terminvorschlag ohne Antwort: nach 30 Min. trotzdem die Zeiten (Ole, 21.11.2026)
+  const partnerVorTermin = await import("@/lib/whatsapp/termin-strecke")
+    .then((m) => m.runPartnerVorTerminNachholen(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-partner-vor-termin");
+      return { error: e instanceof Error ? e.message : String(e) };
+    });
   // Buchung über die Buchungsseite mit Chat, Strecke nach 15 Min. nicht begonnen: erste Frage im Chat (Ole, 20.11.2026)
   const buchungsseite = await import("@/lib/whatsapp/termin-strecke")
     .then((m) => m.runBuchungsseiteNachholen(now))
@@ -518,7 +525,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, buchungsseite, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
 }
 
 export const GET = handle;
