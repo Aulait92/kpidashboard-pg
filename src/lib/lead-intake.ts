@@ -304,6 +304,8 @@ export async function processNewLead(leadId: string) {
       source: true,
       customerId: true,
       isTest: true,
+      phone: true,
+      status: true,
       customer: { select: { plan: true } },
       // Empfehlung (Modul Empfehlungen & Bewertungen): Vorname des Empfehlenden für Push und Gesprächseinstieg
       referralLink: { select: { kind: true, lead: { select: { name: true } }, existingCustomer: { select: { firstName: true } } } },
@@ -312,6 +314,15 @@ export async function processNewLead(leadId: string) {
   if (!lead) return;
   // Testlead (lib/testlead.ts): jede Station als Logzeile „[testlead <id>] …“
   logTestLead(lead, "process", { customer: lead.customerId });
+  // Eindeutig falsche Nummer (Ole, 21.11.2026: „23456789“): selbst auf „Verloren: falsche Daten“, ohne Push, ohne
+  // WhatsApp und ohne Mail-Strecke. Nur sichere Fälle (lib/ppl/telefon-pruefung.ts offensichtlichFalscheNummer).
+  if (!lead.isTest && (!lead.status || lead.status === "Neuer Lead")) {
+    const falsch = (await import("@/lib/ppl/telefon-pruefung")).offensichtlichFalscheNummer(lead.phone);
+    if (falsch) {
+      await alsFalscheDatenVerloren(lead.id, lead.customerId, falsch).catch((err) => reportError(err, "lead-intake-falsche-nummer", { lead: lead.id }));
+      return;
+    }
+  }
   // Team (Großkunden): gleichmäßig zuteilen, Push nur an den Zuständigen.
   await assignLead(lead.id).catch((err) => reportError(err, "lead-intake-assign"));
   await attachLeadToContact(lead.id).catch((err) => reportError(err, "lead-intake-attach"));
@@ -343,6 +354,18 @@ export async function processNewLead(leadId: string) {
   } else {
     logTestLead(lead, "outreach not immediate", { agentActive: !!agent?.active, outreachEnabled: !!agent?.outreachEnabled, delayMin: agent?.outreachDelayMin ?? null });
   }
+}
+
+/** Neuer Lead mit eindeutig falscher Nummer: Verloren mit Grund „falsche_daten“ (wie markLeadLostResult, ohne Warnung). */
+export async function alsFalscheDatenVerloren(leadId: string, customerId: string, grund: string): Promise<void> {
+  const { lostReason } = await import("@/lib/lead-lost");
+  const reason = lostReason("falsche_daten")!;
+  const note = `Automatisch: ${grund}`;
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: { status: reason.status, reached: false, closedAt: null, lostReason: reason.key, lostNote: note, lostAt: new Date(), lostEarly: false, disqualifyReason: reason.key },
+  });
+  await (await import("@/lib/lead-history")).logLeadHistory(leadId, "status", `Verloren: ${reason.label} · ${note}`, { customerId });
 }
 
 /** Formular zuordnen und alle wartenden Leads dieses Formulars übernehmen. */

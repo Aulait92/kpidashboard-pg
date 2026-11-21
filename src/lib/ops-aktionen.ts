@@ -104,6 +104,20 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `Erledigt: ${t.title}` };
     },
   },
+  lead_falsche_nummer: {
+    beschreibung: "Offenen Lead mit eindeutig falscher Nummer auf „Verloren: falsche Daten“ setzen (nur wenn die Prüfung greift)",
+    felder: { leadId: "ID des Leads" },
+    run: async (p) => {
+      const l = await prisma.lead.findUnique({ where: { id: text(p.leadId) }, select: { id: true, customerId: true, phone: true, status: true, isTest: true } });
+      if (!l?.customerId) return { ok: false, error: "Lead nicht gefunden." };
+      if (l.status && l.status !== "Neuer Lead") return { ok: false, error: `Lead ist nicht mehr neu (Status ${l.status}).` };
+      const grund = (await import("@/lib/ppl/telefon-pruefung")).offensichtlichFalscheNummer(l.phone);
+      if (!grund) return { ok: false, error: "Nummer ist nicht eindeutig falsch." };
+      await (await import("@/lib/lead-intake")).alsFalscheDatenVerloren(l.id, l.customerId, grund);
+      await audit("lead.falsche_nummer", { entity: "Lead", entityId: l.id, details: { grund }, actor: OPS_ACTOR });
+      return { ok: true, info: `Verloren: falsche Daten (${grund})` };
+    },
+  },
   produkte_auflisten: {
     beschreibung: "Produktbuchungen eines Kunden auflisten (nur lesen, für IDs)",
     felder: { customerId: "Kunden-ID" },

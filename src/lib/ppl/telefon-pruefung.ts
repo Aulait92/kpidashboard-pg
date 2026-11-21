@@ -43,3 +43,20 @@ export function pruefeTelefon(raw: string | null | undefined): TelefonPruefung {
   }
   return { ok: true, typ: mobil ? "mobil" : festnetz ? "festnetz" : "sonstige" };
 }
+
+/**
+ * Eindeutig falsche Nummer eines Kunden-Leads (Ole, 21.11.2026: Lohmann-Lead mit „23456789“ selbst auf „Verloren:
+ * falsche Daten“ setzen). Nur sichere Fälle: Fantasienummer (Ziffernreihe, gleiche Ziffern), ungültige Rufnummer,
+ * zu kurze Nummer. Ohne Nummer: null. Ausländische Nummern, Festnetz und falsche Längen bleiben offen (könnte echt sein). Erwartet die Nummer
+ * wie gespeichert (international ohne „+“, z. B. „4930123456“). Grund oder null.
+ */
+export function offensichtlichFalscheNummer(phone: string | null | undefined): string | null {
+  const d = (phone ?? "").replace(/\D/g, "");
+  if (!d) return null; // ohne Nummer (z. B. Empfehlung nur mit E-Mail) nicht aussortieren
+  if (d.length < 5) return "keine gültige Telefonnummer";
+  const raw = (phone ?? "").trim();
+  const text = raw.startsWith("+") || raw.startsWith("00") || raw.startsWith("0") ? raw : `+${d}`;
+  const p = pruefeTelefon(text);
+  if (p.ok) return null;
+  return /^Fantasienummer|^ungültige Rufnummer|^keine gültige/.test(p.grund) ? p.grund : null;
+}
