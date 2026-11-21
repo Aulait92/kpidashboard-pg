@@ -164,6 +164,6 @@ describe("Privatschutz: Versicherungsinteresse aus dem Formular (Ole, 21.11.2026
     expect(spartenDesLeads("Privatschutz", src("Welche Versicherung interessiert Sie am meisten?", "Wohngebäude") as never)).toEqual(["wohngebaeude"]);
     expect(spartenDesLeads("Privatschutz", src("Welche Versicherung interessiert Sie am meisten?", "Alles in einem Paket") as never)).toEqual(["haftpflicht", "hausrat", "rechtsschutz", "unfall"]);
     expect(spartenDesLeads("Privatschutz", src("An welchen Versicherungen bist Du interessiert? Sie sparen …", "Rechtschutzversicherung") as never)).toEqual(["rechtsschutz"]);
-    expect(spartenDesLeads("Privatschutz", src("Welche Versicherung interessiert Sie am meisten?", "Tierhalterhaftpflicht Hund") as never)).toEqual(["tierhalter-hund"]);
+    expect(spartenDesLeads("Privatschutz", { formular: [{ label: "Welche Versicherung interessiert Sie am meisten?", value: "Tierkrankenversicherung / Tierhalterhaftpflicht" }], angaben: { tier: "Katze, Krankenversicherung" } } as never)).toEqual(["katze-kranken"]);
   });
 });

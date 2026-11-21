@@ -53,7 +53,8 @@ export function festeFragen(product: string | null | undefined, du: boolean): Fo
       {
         key: "versicherungsinteresse",
         label: du ? "Welche Versicherung interessiert dich am meisten?" : "Welche Versicherung interessiert Sie am meisten?",
-        options: ["Haftpflicht", "Hausrat", "Rechtsschutz", "Wohngebäude", "Unfall", "Tierhalterhaftpflicht Hund", "Tierhalterhaftpflicht Pferd", "Alles in einem Paket"],
+        // wie das bewährte Lohmann-Formular; Tierart und Kranken bzw. Halterhaftpflicht klärt der Assistent im Chat
+        options: ["Haftpflicht", "Hausrat", "Rechtsschutz", "Wohngebäude", "Unfall", "Tierkrankenversicherung / Tierhalterhaftpflicht", "Alles in einem Paket"],
       },
     ];
   }
