@@ -136,13 +136,15 @@ export function policenBitte(o: {
       ? "Haftpflicht, Hausrat, Kfz, Kranken-, BU- oder Lebensversicherung"
       : "Haftpflicht, Hausrat oder Kfz";
   const p = pronomen(o.vermittler, wer);
+  // Wie die Flow-Nachricht (Paket 4, Ole 20.11.2026): konkreter Nutzen, nur das Bemühen ums Sparen, kein Versprechen
+  const wer2 = p ?? wer;
   const dann = p
-    ? a(an, `Dann sieht ${p} vorher, wo du doppelt zahlst oder Lücken hast,`, `Dann sieht ${p} vorher, wo Sie doppelt zahlen oder Lücken haben,`)
-    : a(an, "Dann ist vorher klar, wo du doppelt zahlst oder Lücken hast,", "Dann ist vorher klar, wo Sie doppelt zahlen oder Lücken haben,");
+    ? a(an, `Dann sieht ${p} vorher, ob du etwas doppelt zahlst und wann du kündigen kannst, und versucht, dir Geld zu sparen.`, `Dann sieht ${p} vorher, ob Sie etwas doppelt zahlen und wann Sie kündigen können, und versucht, Ihnen Geld zu sparen.`)
+    : a(an, `Dann ist vorher klar, ob du etwas doppelt zahlst und wann du kündigen kannst, und ${wer2} versucht, dir Geld zu sparen.`, `Dann ist vorher klar, ob Sie etwas doppelt zahlen und wann Sie kündigen können, und ${wer2} versucht, Ihnen Geld zu sparen.`);
   const text = a(
     an,
-    `Damit ${wer} deinen Termin gut vorbereiten kann: Schick bitte vorab Fotos oder PDFs deiner aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} und der Termin geht deutlich schneller.`,
-    `Damit ${wer} Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} und der Termin geht deutlich schneller.`,
+    `Damit ${wer} deinen Termin gut vorbereiten kann: Schick bitte vorab Fotos oder PDFs deiner aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} So wird der Termin kürzer und konkreter.`,
+    `Damit ${wer} Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} So wird der Termin kürzer und konkreter.`,
   );
   return { text, knoepfe: [], fusszeile: null, einwilligung: policenEinwilligung(o) };
 }
