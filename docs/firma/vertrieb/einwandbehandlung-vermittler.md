@@ -50,6 +50,7 @@ Leicht lächeln, nicken, schweigen.
 
 ## Stufe 3: Durchfragen (nur Fragen, kein Argument)
 
+> „Was genau macht Sie noch unsicher?“ (Einstieg, genau so)
 > „Gibt es sonst noch etwas, das Sie zögern lässt?“ · „Was genau daran?“
 > „Liegt es am Monatsbeitrag oder an einzelnen Bausteinen?“ · „Ist es eher die Leistung, der Beitrag oder der Zeitpunkt?“
 
