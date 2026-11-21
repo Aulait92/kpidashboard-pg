@@ -204,6 +204,17 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   }
 
   // 3. Anzeigengruppen
+  // EU (Digital Services Act): Meta verlangt Begünstigten und Zahler je Anzeigengruppe („Werbetreibender fehlt“,
+  // Fehler 3858634, Lohmann 20.11.2026). Vorschlag des Werbekontos (dsa_recommendations), sonst der Kundenname.
+  let dsa: string | null = null;
+  try {
+    const rec = await api.get<{ data?: { recommendations?: string[] }[] | string[] }>(`${act}/dsa_recommendations`);
+    const first = Array.isArray(rec.data) ? rec.data[0] : null;
+    dsa = (typeof first === "string" ? first : first?.recommendations?.[0]) ?? null;
+  } catch {
+    dsa = null;
+  }
+  dsa = (dsa || ctx.customerName || ctx.advisorName || "").slice(0, 120) || null;
   for (let i = 0; i < plan.adSets.length; i++) {
     if (built.adSetIds[i]) continue;
     const a = plan.adSets[i];
@@ -216,6 +227,7 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
       promoted_object: { page_id: ctx.pageId },
       targeting: adSetTargeting(a, built.geoKey ?? null),
       status: "PAUSED",
+      ...(dsa ? { dsa_beneficiary: dsa, dsa_payor: dsa } : {}),
     });
     built.adSetIds[i] = r.id;
     await save();
