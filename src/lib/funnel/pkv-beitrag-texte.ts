@@ -54,9 +54,15 @@ export const PKV_TEXTE = {
     fehlerOrt: "Bitte gib deinen Wohnort ein.",
   },
 
+  // Nah am Perspective-Original (Ole, 21.11.2026: „näher am Text von Perspective“), ohne Ergebnisversprechen (L8):
+  // statt „Wir können deinen Beitrag sehr wahrscheinlich stark reduzieren“ das allgemeine Sparpotenzial wie im Einstieg.
   fastFertig: {
-    ueberschrift: "Passt! Deine Angaben eignen sich für eine Tarifprüfung.",
-    text: "Ein PKV-Experte prüft kostenlos, ob und wie viel du sparen kannst, und ruft dich mit dem Ergebnis an. Dafür brauchen wir nur noch deinen Namen und deine Telefonnummer.",
+    ueberschrift: "Fast fertig! Bei Beiträgen in deiner Höhe steckt oft viel Sparpotenzial.",
+    text: [
+      "Nachdem du dich auf der nächsten Seite eingetragen hast, prüft ein PKV-Experte kostenlos für dich, wie viel Sparpotenzial du realisieren kannst. Mit dem Ergebnis meldet er sich telefonisch bei dir.",
+      "Die Prüfung vorab und das persönliche Gespräch sind für dich kostenlos und unverbindlich.",
+      "Danach entscheidest du ganz entspannt, ob du in deinem aktuellen Tarif bleibst oder einen günstigeren wählst.",
+    ],
     knopf: "Weiter",
     symbolbild: "Symbolbild",
   },

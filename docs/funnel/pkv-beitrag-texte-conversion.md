@@ -37,8 +37,13 @@ Beschriftungen ändern sich.
 - „Wie lauten deine Postleitzahl und dein Wohnort?“ · Unterzeile „Damit wir einen passenden Experten für deine Region finden.“
 
 ## Zwischenseite
-- „Passt! Deine Angaben eignen sich für eine Tarifprüfung.“
-- „Ein PKV-Experte prüft kostenlos, ob und wie viel du sparen kannst, und ruft dich mit dem Ergebnis an. Dafür brauchen wir nur noch deinen Namen und deine Telefonnummer.“ · Knopf „Weiter“
+Nah am Perspective-Original (Ole, 21.11.2026), ohne Ergebnisversprechen:
+- „Fast fertig! Bei Beiträgen in deiner Höhe steckt oft viel Sparpotenzial.“
+- „Nachdem du dich auf der nächsten Seite eingetragen hast, prüft ein PKV-Experte kostenlos für dich, wie viel Sparpotenzial du realisieren kannst. Mit dem Ergebnis meldet er sich telefonisch bei dir.“
+- „Die Prüfung vorab und das persönliche Gespräch sind für dich kostenlos und unverbindlich.“
+- „Danach entscheidest du ganz entspannt, ob du in deinem aktuellen Tarif bleibst oder einen günstigeren wählst.“ · Knopf „Weiter“
+- Perspective-Original: „Fast fertig...! Sehr gut! Wir können deinen Beitrag sehr wahrscheinlich stark reduzieren!“ (Versprechen vor
+  der Prüfung, deshalb nicht übernommen) und die drei Absätze sinngemäß wie oben.
 
 ## Name
 - Überschrift „Spare bis zu 50 % deines PKV-Beitrags“ · Fußnote „Im Einzelfall möglich, abhängig von Tarif, Leistungen und Selbstbehalt. Ob und wie viel du sparen kannst, zeigt die Prüfung.“
