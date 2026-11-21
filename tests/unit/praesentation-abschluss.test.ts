@@ -135,9 +135,12 @@ describe("Tarifname in der Zusammenfassung", () => {
 });
 
 describe("Einwand-Folien", () => {
-  it("vier Sprungziele mit Frage, Preis aus den Angeboten, ohne Versprechen", () => {
+  it("sechs Sprungziele mit Frage, Preis aus den Angeboten, ohne Versprechen", () => {
     const es = einwandFolien(d, ang, m);
-    expect(es.map((f) => f.id)).toEqual(["einwand-preis", "einwand-nachdenken", "einwand-vorhanden", "einwand-partner"]);
+    expect(es.map((f) => f.id)).toEqual(["einwand-preis", "einwand-nachdenken", "einwand-partner", "einwand-vorhanden", "einwand-vergleich", "einwand-unsicher"]);
+    // Hinweis führt durch die vier Stufen (Prüfen, Durchfragen, Festnageln, Lösen)
+    expect(es.every((f) => /1\. Prüfen[\s\S]*2\. Durchfragen[\s\S]*3\. Festnageln[\s\S]*4\. Lösen/.test(f.hinweis ?? ""))).toBe(true);
+    expect(folie(es, "einwand-unsicher")).toContain('class="karten"');
     expect(es.every((f) => f.hinweis && f.html.includes('class="frage"'))).toBe(true);
     // 7,40 + 8,20 = 15,60 € im Monat → rund 0,52 € am Tag; kleinste Stufen 5,90 + 8,20 = 14,10 €
     expect(folie(es, "einwand-preis")).toContain("0,52");
@@ -148,6 +151,9 @@ describe("Einwand-Folien", () => {
     const du = einwandFolien(d, ang, m, "du");
     // ohne Fußzeile (dort steht neutral „Ihre Beratung“ bzw. die Gesellschaft)
     expect(du.map((f) => f.html.replace(/<div class="foot">[\s\S]*$/, "")).join(" ")).not.toMatch(/\bSie\b|\bIhnen\b|\bIhr\b/);
+    // Zitate im Hinweis ebenfalls in Du-Form
+    expect(du.map((f) => (f.hinweis ?? "").match(/„[^“]*“/g)?.join(" ") ?? "").join(" ")).not.toMatch(/\bSie\b|\bIhnen\b|\bIhr\b|\bIhres\b/);
+    expect(hatGedankenstrich(es.map((f) => f.hinweis).join(" "))).toBe(false);
   });
 
   it("ohne günstigere Stufe kein Satz zur kleinsten Stufe", () => {
@@ -161,7 +167,7 @@ describe("Demo zeigt Fassung B", () => {
     const fs = demoFolien(demoAngebote());
     expect(fs.map((f) => f.id)).not.toContain("risiken");
     expect(folie(fs, "entscheidung")).toContain("data-zusage");
-    expect(demoEinwaende(demoAngebote())).toHaveLength(4);
+    expect(demoEinwaende(demoAngebote())).toHaveLength(6);
   });
 });
 

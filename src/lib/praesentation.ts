@@ -245,6 +245,8 @@ export function praesentationCss(m: Marke): string {
 .zusage{font:inherit;display:inline-flex;align-items:center;justify-content:center;min-width:420px;padding:18px 40px;border:0;border-radius:14px;background:var(--a);color:#fff;font-size:28px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .zusage.an{background:#047857}
 .einwand .punkte li{font-size:26px}
+.einwand .karten{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:10px}
+.einwand .karten div{display:flex;align-items:center;justify-content:center;min-height:130px;border-radius:18px;padding:20px 24px;background:var(--fh);font-size:28px;font-weight:700;color:var(--f);text-align:center}
 .einwand .gegen{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:26px}
 .einwand .gegen>div{border-radius:18px;padding:24px 28px;background:var(--fh)}
 .einwand .gegen span{display:block;font-size:20px;color:#4b5568;margin-bottom:6px}.einwand .gegen b{font-size:40px;color:var(--f)}
@@ -1083,17 +1085,36 @@ function ueberblickFolie(
   };
 }
 
-// ─── Einwände (Sales-Coach, 19.11.2026) ────────────────────────────────────────────────────────────
+// ─── Einwände (Sales-Coach 19.11.2026, Fassung 2 vom 21.11.2026) ────────────────────────────────────
 // Optionale Folien außerhalb der Reihenfolge: der Vermittler springt im Termin über „Einwände“ hin und wieder zurück.
 // Nicht im Kundenlink und nicht im PDF. Sachlich, ohne Druck, ohne Versprechen; Preise nur aus den Angeboten.
+// Fassung 2 (Ole, 21.11.2026): Einwand-Schema in vier Stufen nach Baulig, für Vermittler übertragen
+// (docs/firma/vertrieb/einwandbehandlung-vermittler.md). Die Folie zeigt dem Kunden die Lösung (Stufe 4), der Hinweis
+// führt den Vermittler durch Prüfen (Tatsache-Satz), Durchfragen, Festnageln und Lösen. „Noch unsicher“ ist das
+// Kartenspiel: der Kunde zeigt auf den Grund, der stimmt.
 
-/** Kurzname im Menü des Vermittlers je Einwand-Folie. */
+/** Kurzname im Menü des Vermittlers je Einwand-Folie (Reihenfolge = Tasten 1 bis 6). */
 export const EINWAND_MENUE: Record<string, string> = {
   "einwand-preis": "Zu teuer",
   "einwand-nachdenken": "Noch nachdenken",
+  "einwand-partner": "Erst mit Partner sprechen",
   "einwand-vorhanden": "Schon versichert",
-  "einwand-partner": "Erst mit Partner besprechen",
+  "einwand-vergleich": "Erst vergleichen",
+  "einwand-unsicher": "Noch unsicher",
 };
+
+/** Ablauf für den Vermittler (Hinweis, nur für ihn): vier Stufen, Zitate in der Ansprache des Kunden. */
+function einwandAblauf(an: Ansprache, o: { tatsache: { du: string; sie: string } | null; fragen: string[]; festnageln: { du: string; sie: string }; loesen: string }): string {
+  const pruefen = o.tatsache
+    ? `1. Prüfen: ${a(an, `„Die Tatsache, dass du ${o.tatsache.du}, würde dich aber nicht davon abhalten, das heute so zu machen, oder?“`, `„Die Tatsache, dass Sie ${o.tatsache.sie}, würde Sie aber nicht davon abhalten, das heute so zu machen, oder?“`)} Lächeln, schweigen. Hält es nicht ab: Antrag aufnehmen.`
+    : `1. Prüfen: ${a(an, "„Okay. Was macht dich noch unsicher?“", "„Okay. Was macht Sie noch unsicher?“")} Dann diese Folie zeigen, der Kunde zeigt auf die Karte, die stimmt.`;
+  return [
+    pruefen,
+    `2. Durchfragen, nur Fragen, kein Argument: ${o.fragen.join(" ")}`,
+    `3. Festnageln: ${a(an, `„Angenommen, ${o.festnageln.du}: Machen wir es dann heute so, ja oder nein?“`, `„Angenommen, ${o.festnageln.sie}: Machen wir es dann heute so, ja oder nein?“`)} Nur ein klares Ja zählt, sonst weiter fragen.`,
+    `4. Lösen: ${o.loesen} Danach: ${a(an, "„Ist das damit geklärt? Dann machen wir es so.“", "„Ist das damit geklärt? Dann machen wir es so.“")}`,
+  ].join("\n");
+}
 
 export function einwandFolien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Marke, an: Ansprache = "sie"): Folie[] {
   const R = (inhalt: string, frage?: string) => rahmen(m, inhalt, "einwand", frage);
@@ -1110,11 +1131,12 @@ export function einwandFolien(d: VorbereitungDaten, angebote: AngeboteDaten | nu
   const sparte = sparteKey(gew[0]?.sparte ?? items[0]?.sparte ?? d.lead.produkt);
   const b = beispielFuer(sparte, an);
   const punkte2 = (xs: string[]) => `<div class="punkte">${punkte(xs)}</div>`;
-  const folie = (id: string, titel: string, inhalt: string, frage: string, hinweis: string): Folie => ({ id, titel, html: R(inhalt, frage), hinweis });
+  const folie = (id: string, inhalt: string, frage: string, hinweis: string): Folie => ({ id, titel: EINWAND_MENUE[id], html: R(inhalt, frage), hinweis });
+  const q = (du: string, sie: string) => a(an, `„${du}“`, `„${sie}“`);
+  const karten = (xs: string[]) => `<div class="karten">${xs.map((x) => `<div>${e(x)}</div>`).join("")}</div>`;
   return [
     folie(
       "einwand-preis",
-      EINWAND_MENUE["einwand-preis"],
       `<h2>${e(a(an, "Lohnt sich das für dich?", "Lohnt sich das für Sie?"))}</h2><div class="gegen">${
         summe != null ? `<div><span>${e(a(an, "Dein Schutz", "Ihr Schutz"))}</span><b>rund ${eur(summe / 30)}</b><span>am Tag</span></div>` : ""
       }<div class="schaden"><span>${e(b.szene)}</span><b>${e(b.ohne)}</b></div></div>${punkte2([
@@ -1124,39 +1146,89 @@ export function einwandFolien(d: VorbereitungDaten, angebote: AngeboteDaten | nu
         a(an, "Bausteine, die du nicht brauchst, lassen wir weg.", "Bausteine, die Sie nicht brauchen, lassen wir weg."),
       ])}`,
       a(an, "Was wäre für dich ein guter Beitrag?", "Was wäre für Sie ein guter Beitrag?"),
-      "Nicht verteidigen. Fragen, welcher Beitrag passt, und gemeinsam eine kleinere Stufe oder weniger Bausteine anschauen.",
+      einwandAblauf(an, {
+        tatsache: { du: "es teuer findest", sie: "es teuer finden" },
+        fragen: [q("Liegt es am Monatsbeitrag oder an einzelnen Bausteinen?", "Liegt es am Monatsbeitrag oder an einzelnen Bausteinen?"), q("Gibt es sonst noch etwas, das dich zögern lässt?", "Gibt es sonst noch etwas, das Sie zögern lässt?")],
+        festnageln: { du: "wir finden einen Beitrag, der für dich passt", sie: "wir finden einen Beitrag, der für Sie passt" },
+        loesen: "Diese Folie zeigen, nach dem passenden Beitrag fragen, dann gemeinsam eine kleinere Stufe oder weniger Bausteine wählen. Ist gerade das Geld knapp: Beginn später legen, monatlich zahlen. Keinen Rabatt erfinden.",
+      }),
     ),
     folie(
       "einwand-nachdenken",
-      EINWAND_MENUE["einwand-nachdenken"],
       `<h2>${e(a(an, "In Ruhe entscheiden", "In Ruhe entscheiden"))}</h2>${punkte2([
         a(an, "Was ist noch offen: die Leistung, der Beitrag oder der Zeitpunkt?", "Was ist noch offen: die Leistung, der Beitrag oder der Zeitpunkt?"),
         a(an, "Alles bekommst du per Link zum Nachlesen.", "Alles bekommen Sie per Link zum Nachlesen."),
         a(an, "Nach dem Abschluss hast du 14 Tage Widerrufsrecht, ohne Angabe von Gründen.", "Nach dem Abschluss haben Sie 14 Tage Widerrufsrecht, ohne Angabe von Gründen."),
       ])}`,
       a(an, "Was genau möchtest du dir noch überlegen?", "Was genau möchten Sie sich noch überlegen?"),
-      "Den offenen Punkt finden und gleich klären. Bleibt es beim Nachdenken: Link schicken und einen festen Rückruftermin ausmachen.",
+      einwandAblauf(an, {
+        tatsache: { du: "darüber nachdenken willst", sie: "darüber nachdenken wollen" },
+        fragen: [q("Was genau möchtest du dir noch überlegen?", "Was genau möchten Sie sich noch überlegen?"), q("Ist es eher die Leistung, der Beitrag oder der Zeitpunkt?", "Ist es eher die Leistung, der Beitrag oder der Zeitpunkt?")],
+        festnageln: { du: "wir klären diesen Punkt jetzt", sie: "wir klären diesen Punkt jetzt" },
+        loesen: "Den offenen Punkt gleich klären. Bleibt es beim Nachdenken: Link schicken und einen festen Rückruf heute Abend oder morgen eintragen, nicht „ich melde mich“.",
+      }),
+    ),
+    folie(
+      "einwand-partner",
+      `<h2>${e(a(an, "Gemeinsam entscheiden", "Gemeinsam entscheiden"))}</h2>${punkte2([
+        a(an, "Du bekommst den Link mit allen Folien zum Zeigen.", "Sie bekommen den Link mit allen Folien zum Zeigen."),
+        a(an, "Gern erklären wir es euch auch zu zweit, in einem kurzen Termin.", "Gern erklären wir es Ihnen auch zu zweit, in einem kurzen Termin."),
+      ])}`,
+      a(an, "Wann passt es euch beiden?", "Wann passt es Ihnen beiden?"),
+      einwandAblauf(an, {
+        tatsache: { du: "erst mit deinem Partner sprechen willst", sie: "erst mit Ihrem Partner sprechen wollen" },
+        fragen: [q("Was, glaubst du, wird dein Partner fragen?", "Was, glauben Sie, wird Ihr Partner fragen?"), q("Wie siehst du es selbst?", "Wie sehen Sie es selbst?")],
+        festnageln: { du: "wir klären die Fragen deines Partners", sie: "wir klären die Fragen Ihres Partners" },
+        loesen: `${a(an, "„Ruf gern kurz an, ich warte.“", "„Rufen Sie gern kurz an, ich warte.“")} Sonst gleich einen kurzen Termin zu zweit eintragen und den Link schicken. Nächstes Mal beim Terminvorschlag fragen, ob jemand mitentscheidet.`,
+      }),
     ),
     folie(
       "einwand-vorhanden",
-      EINWAND_MENUE["einwand-vorhanden"],
       `<h2>${e(a(an, "Du bist schon versichert?", "Sie sind schon versichert?"))}</h2>${punkte2([
         a(an, "Wir vergleichen deinen Vertrag Punkt für Punkt mit dem neuen.", "Wir vergleichen Ihren Vertrag Punkt für Punkt mit dem neuen."),
         a(an, "Lohnt sich ein Wechsel nicht, sagen wir dir das.", "Lohnt sich ein Wechsel nicht, sagen wir Ihnen das."),
         a(an, "Wechselst du, beginnt der neue Schutz, wenn der alte endet. Bei der Kündigung helfen wir.", "Wechseln Sie, beginnt der neue Schutz, wenn der alte endet. Bei der Kündigung helfen wir."),
       ])}`,
       a(an, "Was steht in deinem bisherigen Vertrag?", "Was steht in Ihrem bisherigen Vertrag?"),
-      "Police zeigen lassen oder Daten aufnehmen. Ehrlich bleiben: Ist der alte Vertrag gleich gut, nicht wechseln lassen.",
+      einwandAblauf(an, {
+        tatsache: { du: "schon versichert bist", sie: "schon versichert sind" },
+        fragen: [q("Wann läuft dein jetziger Vertrag aus?", "Wann läuft Ihr jetziger Vertrag aus?"), q("Was gefällt dir daran, was fehlt dir?", "Was gefällt Ihnen daran, was fehlt Ihnen?")],
+        festnageln: { du: "der Wechsel klappt ohne Lücke und ohne doppelten Beitrag", sie: "der Wechsel klappt ohne Lücke und ohne doppelten Beitrag" },
+        loesen: "Police zeigen lassen und vergleichen. Heute beantragen heißt: Beginn, wenn der alte Vertrag endet. Ehrlich bleiben: Ist der alte gleich gut, nicht wechseln lassen.",
+      }),
     ),
     folie(
-      "einwand-partner",
-      EINWAND_MENUE["einwand-partner"],
-      `<h2>${e(a(an, "Gemeinsam entscheiden", "Gemeinsam entscheiden"))}</h2>${punkte2([
-        a(an, "Du bekommst den Link mit allen Folien zum Zeigen.", "Sie bekommen den Link mit allen Folien zum Zeigen."),
-        a(an, "Gern erklären wir es euch auch zu zweit, in einem kurzen Termin.", "Gern erklären wir es Ihnen auch zu zweit, in einem kurzen Termin."),
+      "einwand-vergleich",
+      `<h2>${e(a(an, "Worauf es beim Vergleich ankommt", "Worauf es beim Vergleich ankommt"))}</h2>${punkte2([
+        a(an, "Gleiche Leistungen vergleichen, nicht nur den Beitrag.", "Gleiche Leistungen vergleichen, nicht nur den Beitrag."),
+        a(an, "Ein fester Ansprechpartner, auch im Schadenfall.", "Ein fester Ansprechpartner, auch im Schadenfall."),
+        a(an, "Alles aus einer Hand statt vieler Einzelverträge.", "Alles aus einer Hand statt vieler Einzelverträge."),
       ])}`,
-      a(an, "Wann passt es euch beiden?", "Wann passt es Ihnen beiden?"),
-      "Fragen, was der Partner wissen möchte, und gleich einen kurzen Termin zu zweit vorschlagen.",
+      a(an, "Was müsste ein anderes Angebot haben, das dir hier fehlt?", "Was müsste ein anderes Angebot haben, das Ihnen hier fehlt?"),
+      einwandAblauf(an, {
+        tatsache: { du: "noch vergleichen willst", sie: "noch vergleichen wollen" },
+        fragen: [q("Womit möchtest du vergleichen?", "Womit möchten Sie vergleichen?"), q("Was ist dir beim Vergleich am wichtigsten?", "Was ist Ihnen beim Vergleich am wichtigsten?")],
+        festnageln: { du: "wir klären diesen Punkt", sie: "wir klären diesen Punkt" },
+        loesen: "Genau diesen Punkt beantworten, sachlich und ohne andere Anbieter schlechtzumachen. Bei Misstrauen („die zahlen doch nicht“): nach dem Erlebnis fragen und offen zeigen, was versichert ist und was nicht.",
+      }),
+    ),
+    folie(
+      "einwand-unsicher",
+      `<h2>${e(a(an, "Was hält dich noch ab?", "Was hält Sie noch ab?"))}</h2>${karten([
+        "Der Beitrag",
+        "Die Leistung",
+        "Der Zeitpunkt",
+        a(an, "Erst mit jemandem sprechen", "Erst mit jemandem sprechen"),
+        "Erst vergleichen",
+        a(an, "Mein bisheriger Vertrag", "Mein bisheriger Vertrag"),
+      ])}`,
+      a(an, "Was davon trifft am ehesten zu?", "Was davon trifft am ehesten zu?"),
+      einwandAblauf(an, {
+        tatsache: null,
+        fragen: [q("Gibt es sonst noch etwas?", "Gibt es sonst noch etwas?"), q("Hattest du schon einmal Ärger mit einer Versicherung?", "Hatten Sie schon einmal Ärger mit einer Versicherung?")],
+        festnageln: { du: "wir klären diesen Punkt", sie: "wir klären diesen Punkt" },
+        loesen: "Zur passenden Einwand-Folie springen (Tasten 1 bis 5) und genau diesen einen Punkt lösen.",
+      }),
     ),
   ];
 }
