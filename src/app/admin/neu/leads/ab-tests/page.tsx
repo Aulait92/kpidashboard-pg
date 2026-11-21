@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { AbTestCard } from "@/app/admin/whatsapp/settings/ab-test-card";
 import { ExperimenteCard } from "@/app/admin/whatsapp/settings/experimente-card";
 import { FunnelCard } from "./funnel-card";
+import { WeicheCard } from "./weiche-card";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
@@ -19,6 +20,7 @@ export default async function Page() {
   return (
     <Seite titel="A/B-Tests" zurueck={{ href: "/admin/neu/leads/alle", label: "Leads" }}>
       <div className="space-y-4 [&>section]:mt-0 [&>section]:rounded-[var(--radius-lg)] [&>section]:shadow-[var(--shadow-md)]" data-funktion="ab-test-card--a-b-tests-der-vorlagen-mit-antwort-und">
+        <WeicheCard />
         <AbTestCard />
         <ExperimenteCard />
         <FunnelCard />

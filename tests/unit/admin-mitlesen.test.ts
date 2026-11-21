@@ -1,9 +1,9 @@
 // Admin liest mit (Ole, 21.11.2026): Push bei Lead, Termin, Abschluss; nie bei Testkunden/Testleads oder abgeschaltet.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const db = vi.hoisted(() => ({ lead: null as unknown }));
+const db = vi.hoisted(() => ({ lead: null as unknown, pool: null as unknown }));
 const pushes = vi.hoisted(() => ({ calls: [] as unknown[] }));
-vi.mock("@/lib/prisma", () => ({ prisma: { lead: { findUnique: async () => db.lead } } }));
+vi.mock("@/lib/prisma", () => ({ prisma: { lead: { findUnique: async () => db.lead }, poolLead: { findFirst: async () => db.pool } } }));
 vi.mock("@/lib/push", () => ({ sendToAdmins: async (p: unknown) => void pushes.calls.push(p) }));
 vi.mock("@/lib/monitoring", () => ({ reportError: () => {} }));
 
@@ -20,6 +20,16 @@ const lead = (o: Record<string, unknown> = {}, c: Record<string, unknown> = {}) 
 describe("adminMitlesen", () => {
   beforeEach(() => {
     pushes.calls = [];
+    db.pool = null;
+  });
+
+  it("Lead über Perspective: kein Push (Mail kommt von Perspective), Termin trotzdem", async () => {
+    db.lead = lead();
+    db.pool = { via: "perspective" };
+    await adminMitlesen({ leadId: "l1", ereignis: "lead" });
+    expect(pushes.calls).toEqual([]);
+    await adminMitlesen({ leadId: "l1", ereignis: "termin", detail: "x" });
+    expect(pushes.calls).toHaveLength(1);
   });
 
   it("Text ohne Allianz-Präfix, Detail oder Standard", () => {

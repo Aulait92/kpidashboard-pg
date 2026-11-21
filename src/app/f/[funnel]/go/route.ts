@@ -13,7 +13,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ funnel: string 
   const hvk = nurPerspective(url.search);
   const arm = hvk ? "perspective" : weichenArm(Math.random(), anteilEigen(process.env.WEICHE_ANTEIL_EIGEN));
   await prisma.funnelEreignis
-    .create({ data: { besuchId: crypto.randomUUID(), funnel, schritt: "weiche", art: "zuteilung", variante: hvk ? "hvk" : arm } })
+    .create({ data: { besuchId: crypto.randomUUID(), funnel, schritt: "weiche", art: "zuteilung", variante: hvk ? "hvk" : arm, grund: url.searchParams.get("utm_source")?.slice(0, 40) ?? null } })
     .catch((err) => console.error("[funnel weiche]", err instanceof Error ? err.message : err));
   const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? url.host).split(",")[0].trim();
   // Weiche auf start.pkv-tarife.com: unser Funnel liegt unter beitrag.pkv-tarife.com
