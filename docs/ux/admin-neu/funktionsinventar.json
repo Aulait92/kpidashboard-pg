@@ -2748,6 +2748,18 @@
   "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
  },
  {
+  "heute": "neu (21.11.2026)",
+  "funktion": "Admin liest mit: Push bei Lead, Termin und Abschluss je Kunde an/aus",
+  "quelle": "app/admin/neu/kunden/mitlesen-actions.ts:mitlesenUmschaltenAction",
+  "neu": "Kundenakte › Kopf › Mitlesen an/aus",
+  "status": "abgedeckt",
+  "demo_view": "kunde",
+  "id": "mitlesen-actions--admin-push-bei-lead-termin-abschluss",
+  "bereich": "betreuen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
+ },
+ {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
   "funktion": "Login-Liste aller Kunden (Suche nach E-Mail)",
   "quelle": "app/admin/buyers/page.tsx",
