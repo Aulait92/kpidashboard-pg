@@ -762,9 +762,10 @@ async function sicherheitStatus() {
   };
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, "d360-kunde": d360kunde, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), sicherheit: sicherheitStatus };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, "d360-kunde": d360kunde, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), "policen-gesundheit": async (p) => (await import("@/lib/ops/policen-gesundheit")).policenGesundheit(p), sicherheit: sicherheitStatus };
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
+//   q=policen-gesundheit[&kunde=<id>]       Kranken/BU/Leben je Kunde: AVV-Ergänzung, Datenschutz-URL, freigegeben (lib/ops/policen-gesundheit.ts)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
 //   q=vermittler-anrede[&alle=1]  Kunden ohne Anrede in den Anbieterangaben, nur ID und Name (lib/ops/vermittler-anrede.ts)
 //   q=admin-nutzung[&tage=30]              Nutzung des Admins: Änderungsprotokoll je Aktion, Klicks je Funktion und Seite, nur Zahlen (lib/ops/admin-nutzung.ts)
