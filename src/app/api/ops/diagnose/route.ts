@@ -814,6 +814,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
   "test-chat": async (p) => (await import("@/lib/ops/test-chat")).testChatDiagnose(p),
   buchungslinks: async () => (await import("@/lib/ops/buchungslinks")).buchungslinksDiagnose(),
+  einwilligungstext: async (p) => (await import("@/lib/ops/einwilligungstext")).einwilligungstextDiagnose(p),
 };
 
 export async function GET(req: Request): Promise<Response> {
