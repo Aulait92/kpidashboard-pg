@@ -1111,7 +1111,8 @@ export async function runBotTurn(
       partnerFrageNoetig(form.normal, angabenJetzt);
     if (partnerTest && !zug.partnerVor) {
       const bekannt = partnerBekannt(form.normal, angabenJetzt);
-      const v = await import("@/lib/experimente").then((m) => m.variante("partner_vor_termin", conversation.leadId ?? conversation.id)).catch(() => "a" as const);
+      // Ole, 22.11.2026: „die Frage nach Partner immer eigenständig vor der Buchung“, kein Splittest (Fassung b aus)
+      const v: "a" | "b" = "a";
       if (v === "a") {
         zug.partnerVor = { text: partnerVorFrageText(ansprache, bekannt, typeof input.einleitung === "string" ? input.einleitung : null), bekannt };
         return "Die App fragt zuerst kurz, ob noch jemand mitentscheidet, und schickt die Zeiten nach der Antwort selbst. Schreib nichts weiter.";
@@ -1484,6 +1485,11 @@ export async function runBotTurn(
   // notiert: keine erneute Frage nach dem Geburtsdatum (Ole, 19.11.2026)
   if (geburt?.frage) finalText = geburt.frage;
   else if (geburt?.offen && finalText) finalText = ohneGeburtsFrage(finalText, ansprache);
+  // Angebotsfragen nach der Buchung: keine Dank-Floskel bei jeder Frage, keine erneute Terminbestätigung (Ole, 22.11.2026)
+  if (upcoming && angebotsphase && finalText && !geburt?.frage) {
+    const { angebotsfrageEntschlackt } = await import("@/lib/whatsapp/gespraech");
+    finalText = angebotsfrageEntschlackt(finalText, outbound.at(-1)?.body ?? null);
+  }
 
   // Komplettcheck vom Assistenten erkannt (Lead hat getippt statt geklickt): die App schickt Vertragsfrage bzw. Abschluss
   if (zug.komplett !== null) {

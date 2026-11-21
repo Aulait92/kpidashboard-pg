@@ -494,7 +494,28 @@ export function vertragsFrage(an: Ansprache, familie: boolean, einleitung = "Sup
     : a(an, "Welche Versicherungen hast du heute schon?", "Welche Versicherungen haben Sie heute schon?");
   // Grund in einem Halbsatz (Leitmotiv „doppelt zahlen“, Ole 19.11.2026): wer weiß wofür, antwortet eher
   const warum = person ? `${a(an, `Damit ${person.nom} sieht, ob du irgendwo doppelt zahlst:`, `Damit ${person.nom} sieht, ob Sie irgendwo doppelt zahlen:`)} ` : "";
-  return `${einleitung} ${warum}${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.`;
+  // Frage fett (Ole, 22.11.2026), damit sie zwischen Grund und Beispielen auffällt
+  return `${einleitung} ${warum}*${wer}* Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.`;
+}
+
+/**
+ * Angebotsfragen nach der Buchung entschlacken (Ole, 22.11.2026: „er sagt 3 x danke das notiere ich und bestätigt random
+ * die Terminbuchung“). Rein.
+ * - Floskel „Danke, das notiere ich.“ bzw. „Danke, notiert.“ am Anfang: höchstens ein kurzes „Danke!“, und auch das
+ *   nur, wenn unsere letzte Nachricht nicht schon mit Dank begann.
+ * - Wiederholte Terminbestätigung („Ihr Termin mit Herrn K. steht: Montag, 23.11., 10:00 Uhr per Video.“): raus, die
+ *   Buchung ist längst bestätigt.
+ * Bleibt nichts übrig, kommt der Text unverändert zurück.
+ */
+export function angebotsfrageEntschlackt(text: string, vorher: string | null | undefined): string {
+  const DANK = /^(vielen dank|danke(schön)?|super|prima|perfekt|alles klar|gut)\b[^.!?]*?(notier|festgehalten|vermerk)[^.!?]*[.!]\s*/i;
+  const DANK_KURZ = /^(vielen dank|danke(schön)?|super|prima|perfekt|alles klar)(?:[,!.]\s*|\s+)(?=\S)/i;
+  let t = text.trim().replace(/\s*(Ihr|Dein) (Video|Telefon)?[Tt]ermin( mit [^:.!?]{1,60})? (steht|ist gebucht|ist bestätigt)\b.{0,80}?(Uhr|Video|Telefon|vor Ort)[^.!?]*[.!]/g, "").trim();
+  const vorherDank = /^(vielen dank|danke|super|prima|perfekt|alles klar)/i.test((vorher ?? "").trim());
+  if (DANK.test(t)) t = t.replace(DANK, vorherDank ? "" : "Danke! ");
+  else if (vorherDank) t = t.replace(DANK_KURZ, "");
+  t = t.trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : text;
 }
 
 /** Erkennt die Vertragsfrage in einer Nachricht von uns. */
@@ -810,6 +831,7 @@ export function nachBuchungRegel(o: {
       `- Angebotsfragen, nur für die Beitragsberechnung, genau in dieser Reihenfolge, je eine eigene Nachricht, jede Antwort mit record_qualification festhalten: ${o.fragen.map((f, i) => `${i + 1}. „${f.text}“ (angaben.${f.feld})`).join(" ")}`,
       "- Was der Lead im Chat schon beantwortet hat, überspringst du. Frag nichts anderes: keine Selbstbeteiligung, Summen oder Tarife (legt der Vermittler im Termin fest), keine Tiere ohne Tierhalterhaftpflicht, nie Gesundheitsangaben.",
       "- Kommt die Antwort per Knopf („Ja“, „Nein“), ist sie die Antwort auf genau diese Frage.",
+      "- Stell die nächste Frage direkt, ohne Floskel davor (kein „Danke, das notiere ich“ bei jeder Antwort) und ohne den Termin noch einmal zu bestätigen: Er ist schon bestätigt.",
       "- Nach der Antwort auf die letzte Frage: festhalten und nichts weiter fragen. Die App schickt die nächste Nachricht selbst.",
     );
   } else if (!o.abschlussGesendet) {

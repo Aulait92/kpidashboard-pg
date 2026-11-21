@@ -130,7 +130,7 @@ import { experimenteCacheLeeren, zuteilen } from "@/lib/experimente";
 
 // Buchungen im Chat immer mit Fassung a der Bestätigung (Splittest termin_zusage; Fassung b: eigener Test)
 ohneSplittest("termin_zusage");
-// Mitentscheider vor dem Terminvorschlag (Splittest partner_vor_termin): angehalten = Fassung a; beide Fassungen unten
+// Mitentscheider vor dem Terminvorschlag: immer eigene Frage (Ole, 22.11.2026, kein Splittest mehr)
 ohneSplittest("partner_vor_termin", "termin_gebucht");
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -523,24 +523,6 @@ describe("Termin-Strecke mit Knöpfen", () => {
       const ab = gesendet().length;
       await knopf(x.phone, "komplettcheck:ja", "Ja, gern");
       expect(gesendet().slice(ab).map((s) => s.body)).toEqual(["Super! Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig?"]);
-      const appt = await prisma.appointment.findFirstOrThrow({ where: { leadId: x.lead.id, status: "booked" } });
-      await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
-    });
-
-    it("Fassung b: keine eigene Frage, Halbsatz am Ende des Terminvorschlags; die Frage kommt nach der Buchung", async () => {
-      const x = await leadMitChat({ id: idFuer("b"), entscheidungOffen: true, qualificationData: q });
-      st.queue.push([{ type: "tool_use", id: "t1", name: "termin_vorschlagen", input: {} }], [{ type: "text", text: "(ignoriert)" }]);
-      await runBotTurn(x.conv.id);
-      const vorschlag = gesendet().at(-1)!;
-      expect(vorschlag.body).toMatch(/^Danke! In einem kurzen(, kostenlosen)? Videotermin .+ Passt Ihnen .+ oder .+\? Entscheiden Sie gemeinsam mit Ihrem Partner\? Dann wählen Sie gern eine Zeit, die für Sie beide passt\.$/);
-      expect(vorschlag.buttons!.map((b) => b.id.split(":")[0])).toEqual(["slot", "slot", "andere_zeit"]);
-      expect(await prisma.message.count({ where: { conversationId: x.conv.id, kind: STRECKE.partnerVorFrage } })).toBe(0);
-      expect(await zuteilung(x.lead.id)).toMatchObject({ variante: "b" });
-
-      await knopf(x.phone, vorschlag.buttons![1].id, vorschlag.buttons![1].title);
-      const ab = gesendet().length;
-      await knopf(x.phone, "komplettcheck:ja", "Ja, gern");
-      expect(gesendet().slice(ab).map((s) => s.body)).toEqual(["Super! Entscheiden Sie gemeinsam mit Ihrem Partner?"]);
       const appt = await prisma.appointment.findFirstOrThrow({ where: { leadId: x.lead.id, status: "booked" } });
       await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
     });

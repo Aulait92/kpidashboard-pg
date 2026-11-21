@@ -33,8 +33,5 @@ export const SPLITTEST_HYPOTHESE: Record<string, string> = {
   // Ole 20.11.2026 (lib/experimente.ts buchungslink_andere_zeit, Texte lib/whatsapp/buchungslink.ts)
   buchungslink_andere_zeit:
     "Steht nach dem zweiten „Andere Zeit“ der Wunschtag im Chat vorn und der Buchungslink nur als Alternative am Ende, bleibt der Lead im Gespräch und bucht öfter als mit dem Link zuerst.",
-  // Ole 21.11.2026 spät (lib/experimente.ts partner_vor_termin, Texte lib/whatsapp/gespraech.ts)
-  partner_vor_termin:
-    "B (Halbsatz im Terminvorschlag statt eigener Frage vorab) bucht mehr Termine, weil ein Schritt wegfällt; A (eigene Frage „Entscheidet noch jemand mit?“ vor dem Terminvorschlag) wird seltener verschoben, weil die Zeit gleich für beide passt.",
   termin_zusage: "Endet die Buchungsbestätigung mit der Zusage-Frage „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], erscheinen mehr Leads zum Termin.",
 };

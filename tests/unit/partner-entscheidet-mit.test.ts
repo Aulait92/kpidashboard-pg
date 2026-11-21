@@ -336,7 +336,7 @@ describe("Vor dem Terminvorschlag", () => {
   const strSrc = readFileSync("src/lib/whatsapp/termin-strecke.ts", "utf8");
   const cron = readFileSync("src/app/api/whatsapp/cron/route.ts", "utf8");
   it("Einbindung: Frage statt des ersten Terminvorschlags (Splittest), Antwort ohne Assistent, Nachholen nach 30 Min. im Cron", () => {
-    expect(botSrc).toContain('m.variante("partner_vor_termin", conversation.leadId ?? conversation.id)');
+    expect(botSrc).toContain('const v: "a" | "b" = "a";');
     expect(botSrc).toMatch(/if \(v === "a"\) \{\s*zug\.partnerVor = \{ text: partnerVorFrageText\(/);
     expect(botSrc).toContain("partnerSatz = partnerSatzImVorschlag(ansprache, bekannt);");
     // nur beim ersten Vorschlag, nie bei Terminwunsch bzw. vom Assistenten gewählten Zeiten
@@ -349,16 +349,10 @@ describe("Vor dem Terminvorschlag", () => {
     expect(cron).toContain("m.runPartnerVorTerminNachholen(now)");
   });
 
-  it("Splittest eingetragen: Ziel Buchungsquote, Verschiebequote als Gegenprobe, Hypothese und Lernbuch", async () => {
+  it("kein Splittest (Ole, 22.11.2026): immer eigene Frage vor dem Terminvorschlag", async () => {
     const { EXPERIMENTE } = await vi.importActual<typeof import("@/lib/experimente")>("@/lib/experimente");
-    const { SPLITTEST_HYPOTHESE } = await import("@/lib/ab-hypothesen");
-    const e = EXPERIMENTE.partner_vor_termin;
-    expect(e.ziel).toBe("termin_gebucht");
-    expect(e.anzeigeZiele).toEqual(["termin_verschoben"]);
-    expect(e.min).toBe(150);
-    expect(SPLITTEST_HYPOTHESE.partner_vor_termin).toMatch(/bucht mehr/);
-    expect(SPLITTEST_HYPOTHESE.partner_vor_termin).toMatch(/seltener verschoben/);
-    expect(readFileSync("src/lib/calendar/index.ts", "utf8")).toContain('"termin_verschoben"');
-    expect(readFileSync("docs/firma/ab-tests.md", "utf8")).toContain("partner_vor_termin");
+    expect(Object.keys(EXPERIMENTE)).not.toContain("partner_vor_termin");
+    expect(readFileSync("src/lib/whatsapp/bot.ts", "utf8")).toContain('const v: "a" | "b" = "a";');
   });
+
 });
