@@ -192,6 +192,35 @@ describe("PKV-Funnel (Datenbank)", () => {
     expect(await prisma.poolLead.count({ where: { productKey: produkt } })).toBe(vor);
   });
 
+  it("Qualitäts-Ereignis früh: sobald erreicht und freigegeben, nicht erst nach 14 Tagen (Ole, 21.11.2026)", async () => {
+    const r1 = await absenden({ funnel: "pkv-beitrag", besuchId: bid(8), antworten: antworten(8), eventId: "evt-frueh0001", metaEinwilligung: true, fbp: "fb.1.1700000000000.99" });
+    expect(r1.ok).toBe(true);
+    const b = await prisma.funnelBesuch.findUniqueOrThrow({ where: { id: bid(8) } });
+    const pool = await prisma.poolLead.findUniqueOrThrow({ where: { id: b.poolLeadId! } });
+    await prisma.lead.update({ where: { id: pool.leadId! }, data: { status: "Im Gespräch", reached: true } });
+    const altFetch = globalThis.fetch;
+    const aufrufe: string[] = [];
+    globalThis.fetch = (async (u: RequestInfo | URL) => {
+      aufrufe.push(String(u));
+      return new Response(JSON.stringify({ events_received: 1 }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }) as typeof fetch;
+    process.env.FUNNEL_META_QUALITAET = "an";
+    process.env.FUNNEL_META_TOKEN = "EAAtest0000000000";
+    try {
+      const r = await funnelReifePruefen(new Date());
+      expect(r.qualitaet).toBeGreaterThanOrEqual(1);
+    } finally {
+      globalThis.fetch = altFetch;
+      delete process.env.FUNNEL_META_QUALITAET;
+      delete process.env.FUNNEL_META_TOKEN;
+    }
+    expect(aufrufe.some((u) => u.includes("graph.facebook.com"))).toBe(true);
+    const nach = await prisma.funnelBesuch.findUniqueOrThrow({ where: { id: bid(8) } });
+    expect(nach.qualitaetGesendetAt).not.toBeNull();
+    expect(nach.reifGeprueftAt).toBeNull();
+    expect(nach.metaFbp).toBeNull();
+  });
+
   it("Ergebnis beim Abnehmer erst nach 14 Tagen; E-Mail-Abnehmer = unbekannt; Reife-Filter in experimentStats", async () => {
     // Lead 2 (App-Abnehmer) hat der Vermittler erreicht; Lead 5 geht an einen Abnehmer per E-Mail
     const b2 = await prisma.funnelBesuch.findUniqueOrThrow({ where: { id: bid(2) } });

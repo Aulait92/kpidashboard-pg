@@ -3,6 +3,10 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 21.11.2026
+- **Qualitäts-Ereignis „LeadErreicht“ an Meta eingeschaltet** (A, Ole: „Ja“): FUNNEL_META_QUALITAET=an (Railway). Gesendet
+  über die Conversions API, sobald der Vermittler einen Funnel-Lead als erreicht markiert (stündlich, nicht erst nach 14 Tagen),
+  nur mit Cookie-Einwilligung, mit dem Leadpreis als Wert. Kampagnen optimieren weiter auf „Lead“; Umstellung auf das neue
+  Ereignis erst bei genug Ereignissen je Woche (Lernphase). Perspective-Leads ohne Einwilligung zur Weitergabe: nie.
 - **Eigener PKV-Funnel live, 50/50 gegen Perspective** (A, Ole: „50/50 vom Traffic, wenn unsere Version besser ist,
   Perspective abschalten“; DNS-Weg statt Anzeigen ändern): start.pkv-tarife.com (Ziel aller PKV-Anzeigen) zeigt seit
   21.11.2026 auf die App; die Weiche (`src/lib/funnel/weiche.ts`, `/f/pkv-beitrag/go`) schickt je Aufruf zufällig 50 % nach
