@@ -392,8 +392,9 @@ export async function testleadSelbstAction(_prev: TestleadSelbstState, fd: FormD
   if (wa?.status !== "connected") return { error: "Erst WhatsApp verbinden, dann testen." };
   const heute = await prisma.auditLog.count({ where: { customerId: ctx.customerId, action: "lead.test_create", at: { gte: new Date(Date.now() - 86_400_000) } } });
   if (heute >= 5) return { error: "Für heute sind genug Tests gelaufen. Morgen geht es wieder." };
-  const { createTestLead, testLeadProducts } = await import("@/lib/testlead");
-  const product = (await testLeadProducts(ctx.customerId))[0];
+  const { createTestLead, gebuchteProdukte, testLeadProducts } = await import("@/lib/testlead");
+  // Immer das gebuchte Produkt (Ole, 21.11.2026), nur ohne Buchung das erste aus der Auswahl
+  const product = (await gebuchteProdukte(ctx.customerId))[0] ?? (await testLeadProducts(ctx.customerId))[0];
   if (!product) return { error: "Noch kein Produkt eingerichtet. Bitte kurz bei uns melden." };
   const r = await createTestLead({ customerId: ctx.customerId, phone: str(fd, "phone", 40), product, confirmed: true, name: "Test Lead" }, { id: ctx.userId, email: ctx.email, role: "BUYER" });
   if (!r.ok) return { error: r.error };

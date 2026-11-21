@@ -81,15 +81,43 @@ export function mergeProductNames(...lists: string[][]): string[] {
 }
 
 /**
- * Produkte für die Auswahl: gebuchte Produkte des Kunden, Leadformulare und zuletzt genutzte Produkte. Testkunden und
- * interne Kunden (Ole, 17.11.2026) bekommen dahinter alle übrigen aktiven Produkte, damit jedes Produkt testbar ist;
- * echte Kunden ohne bekannte Produkte ebenfalls alle aktiven.
+ * Gebuchte Produkte (Ole, 21.11.2026: „Testlead muss immer das Produkt sein, das der Kunde gebucht hat“): Produkte am
+ * Kunden, aktive Pay-per-Lead-Bezüge, Produkte aus dem angenommenen Angebot (Kampagnen, erste Woche, Kundenkonto-Variante)
+ * und eigene Leadformulare. Reihenfolge = Vorrang.
+ */
+export async function gebuchteProdukte(customerId: string): Promise<string[]> {
+  const [cps, subs, sources, ob] = await Promise.all([
+    prisma.customerProduct.findMany({ where: { customerId }, select: { product: { select: { name: true } } } }),
+    prisma.leadSubscription.findMany({ where: { customerId, active: true }, orderBy: { createdAt: "asc" }, select: { productKey: true } }),
+    prisma.leadSource.findMany({ where: { customerId, active: true }, select: { productKey: true } }),
+    prisma.onboarding.findUnique({ where: { customerId }, select: { offerId: true } }).catch(() => null),
+  ]);
+  const offer = ob?.offerId
+    ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { products: true, pplProductKey: true, pplProdukte: true } }).catch(() => null)
+    : null;
+  const namen = (raw: unknown) =>
+    (Array.isArray(raw) ? raw : [])
+      .map((p) => (p && typeof p === "object" && typeof (p as { name?: unknown }).name === "string" ? String((p as { name: string }).name).trim() : ""))
+      .filter(Boolean);
+  return mergeProductNames(
+    cps.map((c) => c.product.name),
+    subs.map((s) => s.productKey),
+    namen(offer?.pplProdukte),
+    offer?.pplProductKey ? [offer.pplProductKey] : [],
+    namen(offer?.products),
+    sources.map((s) => s.productKey),
+  );
+}
+
+/**
+ * Produkte für die Auswahl beim Testlead. Echte Kunden mit gebuchten Produkten: nur diese (Ole, 21.11.2026), das erste
+ * ist der Standard. Ohne gebuchte Produkte: zuletzt genutzte, sonst alle aktiven. Testkunden und interne Kunden
+ * (Ole, 17.11.2026) bekommen hinter den gebuchten alle übrigen aktiven Produkte, damit jedes Produkt testbar ist.
  */
 export async function testLeadProducts(customerId: string): Promise<string[]> {
-  const [customer, cps, sources, recent] = await Promise.all([
+  const [customer, gebucht, recent] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId }, select: { isTest: true, plan: true } }),
-    prisma.customerProduct.findMany({ where: { customerId }, select: { product: { select: { name: true } } } }),
-    prisma.leadSource.findMany({ where: { customerId, active: true }, select: { productKey: true } }),
+    gebuchteProdukte(customerId),
     prisma.lead.findMany({
       where: { customerId, source: { not: null }, NOT: { source: { in: ["Empfehlung", "Bestandskunde"] } } },
       distinct: ["source"],
@@ -98,12 +126,10 @@ export async function testLeadProducts(customerId: string): Promise<string[]> {
       select: { source: true },
     }),
   ]);
-  const known = mergeProductNames(
-    cps.map((c) => c.product.name),
-    sources.map((s) => s.productKey),
-    recent.map((l) => l.source ?? ""),
-  );
-  if (known.length && !isTestLeadSandbox(customer)) return known;
+  const sandbox = isTestLeadSandbox(customer);
+  if (gebucht.length && !sandbox) return gebucht;
+  const known = mergeProductNames(gebucht, recent.map((l) => l.source ?? ""));
+  if (known.length && !sandbox) return known;
   const all = await prisma.product.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { name: true } });
   return mergeProductNames(known, all.map((p) => p.name));
 }
