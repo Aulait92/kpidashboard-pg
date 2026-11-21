@@ -34,6 +34,21 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 
 Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der Sitzung, die sie angelegt hat.
 
+## Erster Kunde live: Allianz Henrik Lohmann (Führungsrunde 21.11.2026)
+
+| Aufgabe | Frist | Wer |
+|---|---|---|
+| Täglich prüfen: Erstnachricht unter 5 Min., Antworten, Termine, Zustellfehler, Assistent stumm (q=whatsapp, nutzung-woche, zustellfehler, bot-stumm, d360-kunde) | täglich bis 05.12. | Customer Success |
+| Werbekosten von act_837321052753778 kommen nicht an (q=anzeige-abdeckung): Sync prüfen | 22.11.2026 | CTO |
+| Ziel bis 28.11.: mind. 30 % Antworten binnen 72 h, 3 Termine; Tag-7-Anruf mit Zahlen, Tag-14-Rückblick mit NPS | 28.11. / 05.12. | Customer Success |
+| Journey-Diagnose reparieren (alle Stufen 0 trotz Leads) | 24.11.2026 | CTO, Data/BI |
+| Allianz-Einrichtungs-Branches mergen (Angaben einmal, Kalender per Vertreternummer, Meta-Vorprüfung) | 24.11.2026 | CTO |
+| Doppelte Terminvorschläge trotz gebuchtem Termin beheben | 24.11.2026 | CTO |
+| Vorab-Checkliste 48 h vor Onboarding (Nummer beim alten Anbieter freigeben, private Mail für 360dialog, Absender-Freigabe durch IT, Webex-Link) | 24.11.2026 | Customer Success |
+| Klären, warum Embedded Signup gesperrt war (Konzern-Business-Manager?), Anleitung festhalten | 25.11.2026 | Customer Success |
+| Zwei weitere Kunden live, Dauer bis Livegang messen | 28.11.2026 | Sales, Customer Success |
+| Entscheidungen Ole: Modell A gegen B, PPL-Pilotkunde, Datenschutz-Adresse, Steuerberater-Termin | 25.11.2026 | Ole |
+
 ## Vertrieb: Generalprobe Pay-per-Lead + Software (20.11.2026)
 
 Leitfaden und Ergebnis: `docs/firma/protokolle/2026-11-20-generalprobe-ppl.md` und `.pdf`.
