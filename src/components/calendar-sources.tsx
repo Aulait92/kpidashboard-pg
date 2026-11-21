@@ -9,6 +9,7 @@ import { useActionState, useState, useTransition } from "react";
 import { CheckCircle2, Copy, Loader2, Plus, Trash2, X } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { TimeSelect } from "@/components/time-select";
+import { CopyField } from "@/components/termin/copy-field";
 import type { SourceResult } from "@/lib/calendar/sources";
 import { aktiveTage, aufTageVerteilen, gemeinsameZeiten } from "@/lib/calendar/zeiten-gleich";
 
@@ -428,12 +429,18 @@ export function BlockTimes({
   deleteAction,
   readOnly,
   hidden,
+  terminAdresse,
 }: {
-  blocks: Array<{ id: string; startsAt: Date; endsAt: Date; note: string | null }>;
+  blocks: Array<{ id: string; startsAt: Date; endsAt: Date; note: string | null; quelle?: string | null }>;
   addAction: FormAction;
   deleteAction: PlainAction;
   readOnly: boolean;
   hidden?: Record<string, string>;
+  /**
+   * Persönliche Termin-Adresse (App-Kalender, Ole 21.11.2026, lib/calendar/termin-weiterleitung.ts): weitergeleitete
+   * Outlook-Einladungen blockieren die Zeit automatisch. Nur ohne Google/Outlook-Verbindung.
+   */
+  terminAdresse?: string | null;
 }) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(addAction, {});
   const [blockFrom, setBlockFrom] = useState("09:00");
@@ -443,6 +450,13 @@ export function BlockTimes({
   const hiddenInputs = hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null;
   return (
     <div className="space-y-4">
+      {terminAdresse ? (
+        <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken,#f1f5f9)] p-3" data-termin-weiterleitung>
+          <p className="text-sm font-medium">Termine aus Outlook blockieren: Einladung an diese Adresse weiterleiten</p>
+          <CopyField value={terminAdresse} />
+          <p className="text-xs text-[color:var(--muted)]">Wir übernehmen nur Beginn und Ende. Leiten Sie eine Absage weiter, ist die Zeit wieder frei.</p>
+        </div>
+      ) : null}
       {!offen && !state.error && !state.ok ? (
         <button type="button" disabled={readOnly} onClick={() => setOffen(true)} className={buttonClass("secondary", "md")} data-block-oeffnen>
           Zeit blockieren
@@ -480,6 +494,7 @@ export function BlockTimes({
               <span className="min-w-0 flex-1">
                 {fmtBlock(new Date(b.startsAt), new Date(b.endsAt))}
                 {b.note ? <span className="block truncate text-sm text-[color:var(--muted)]">{b.note}</span> : null}
+                {b.quelle === "weitergeleitet" ? <span className="block text-sm text-[color:var(--muted)]">weitergeleitet</span> : null}
               </span>
               <form action={deleteAction}>
                 {hiddenInputs}

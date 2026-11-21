@@ -71,6 +71,11 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
   Kundendaten; Eingänge ohne Kontakt (nur Ablauf, keine Inhalte) nach 90 Tagen. Bei Resend gilt deren Aufbewahrung empfangener
   Mails. **Prüfen** vor dem Einschalten: Zweck in AVV Anlage 2 (`SUBPROCESSORS`: „Versand und Empfang von E-Mails“) und
   Datenschutzhinweis für Leads.
+- **Termine per Weiterleitung blockieren (21.11.2026, `lib/calendar/termin-weiterleitung.ts`):** Vermittler mit App-Kalender
+  leiten Outlook-Einladungen an `termine-<token>@antwort.dein-beratungstermin.de` weiter (Resend Receiving wie Paket M2,
+  unabhängig vom Schalter). Gespeichert: nur Beginn, Ende, Hash der UID, SEQUENCE, Vorkommen, Quelle „weitergeleitet“
+  (`CalendarBlock`), Token je Kalender (`KalenderWeiterleitung`); kein Betreff, keine Teilnehmer, kein Ort, keine
+  Absenderadresse. Bestätigung nur an Absender des Kontos, sonst Push. Kurzcheck: `docs/recht/termine-weiterleiten-2026-11-21.md`.
 - **Terminvorbereitung, Angebote und Präsentation (15.11.2026):** Der Kunde lädt Angebote im Lead hoch
   (`LeadFile`, Art „Angebot“) oder trägt sie ein (`Appointment.offersJson`). Auslesen per Anthropic nur für Produkte
   ohne Gesundheitsangaben einer Person (`angebotOhneGesundheitsdaten`: Privatschutz, Haftpflicht, Hausrat,

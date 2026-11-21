@@ -255,6 +255,6 @@ export async function upcomingBlocks(calendarKey: string) {
     where: { calendarKey, endsAt: { gt: new Date() } },
     orderBy: { startsAt: "asc" },
     take: 50,
-    select: { id: true, startsAt: true, endsAt: true, note: true },
+    select: { id: true, startsAt: true, endsAt: true, note: true, quelle: true },
   });
 }
