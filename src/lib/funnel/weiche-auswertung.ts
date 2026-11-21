@@ -3,6 +3,8 @@
 // Leads: eigene = FunnelBesuch mit Lead, Perspective = PoolLead via „perspective“, jeweils ab Start der Weiche, ohne
 // HvK. Ergebnis beim Abnehmer wie in lib/funnel/auswertung.ts (bewerteLead). Entscheidung nach der A/B-Regel
 // (lib/whatsapp/ab-test.ts decideAbWinner: p < 0,01, je Seite mind. 10 Treffer und Nicht-Treffer, Mindestmenge).
+// Hauptkennzahl vorerst „gültige Leads je Besucher“ (geliefert, verkauft, nicht storniert, nicht reklamiert), weil kaum
+// ein PKV-Abnehmer „erreicht“ zurückmeldet (Ole, 21.11.2026: „erstmal nur Ersatzkennzahl“). Erreicht/Termin bleiben sichtbar.
 
 import { prisma } from "@/lib/prisma";
 import { bewerteLead, ladeLeadFakten } from "@/lib/funnel/server";
@@ -15,10 +17,10 @@ export const WEICHE_TEST_QUELLEN = ["test", "deploycheck", "weichecheck"];
 /** Mindestbesucher je Seite für eine Entscheidung */
 export const WEICHE_MIN_BESUCHER = 300;
 
-export type WeichenSeite = { besucher: number; leads: number; geliefert: number; erreicht: number; termin: number; abschluss: number };
+export type WeichenSeite = { besucher: number; leads: number; geliefert: number; gueltig: number; erreicht: number; termin: number; abschluss: number };
 export type WeichenAuswertung = { seit: Date; hvk: number; eigen: WeichenSeite; perspective: WeichenSeite; entscheidung: AbDecision };
 
-const leer = (): WeichenSeite => ({ besucher: 0, leads: 0, geliefert: 0, erreicht: 0, termin: 0, abschluss: 0 });
+const leer = (): WeichenSeite => ({ besucher: 0, leads: 0, geliefert: 0, gueltig: 0, erreicht: 0, termin: 0, abschluss: 0 });
 
 async function ergebnisse(poolLeadIds: string[], s: WeichenSeite) {
   s.leads = poolLeadIds.length;
@@ -28,6 +30,7 @@ async function ergebnisse(poolLeadIds: string[], s: WeichenSeite) {
     if (!e) continue;
     const w = bewerteLead(e.fakten);
     if (w.geliefert) s.geliefert++;
+    if (w.umsatz) s.gueltig++;
     if (w.erreicht) s.erreicht++;
     if (w.termin) s.termin++;
     if (w.abschluss) s.abschluss++;
@@ -53,9 +56,9 @@ export async function weichenAuswertung(funnel = "pkv-beitrag", seit = WEICHE_SE
   const ohneHvk = pers.filter((p) => !/hvk/i.test(JSON.stringify(p.adInfo ?? {})));
   await ergebnisse(ohneHvk.map((p) => p.id), perspective);
 
-  // a = Perspective (bisher), b = eigener Funnel; Treffer = erreicht je Besucher
+  // a = Perspective (bisher), b = eigener Funnel; Treffer = gültiger Lead je Besucher (Ersatzkennzahl)
   const entscheidung = decideAbWinner(
-    { a: { sent: perspective.besucher, replied: perspective.erreicht }, b: { sent: eigen.besucher, replied: eigen.erreicht } },
+    { a: { sent: perspective.besucher, replied: perspective.gueltig }, b: { sent: eigen.besucher, replied: eigen.gueltig } },
     { min: WEICHE_MIN_BESUCHER },
   );
   return { seit, hvk: anzahl("hvk"), eigen, perspective, entscheidung };

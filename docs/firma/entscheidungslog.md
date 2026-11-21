@@ -3,6 +3,10 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 21.11.2026
+- **50/50-Test PKV: vorerst Ersatzkennzahl „gültige Leads je Besucher“** (A, Ole: „erstmal nur Ersatzkennzahl“): geliefert,
+  verkauft, nicht storniert, nicht reklamiert. Grund: Von 66 PKV-Leads in 30 Tagen ist nur einer als erreicht markiert
+  (Socki 0 von 29, Müller 1 von 3, verrata24 und HvK nur per E-Mail ohne Rückmeldung; Diagnose q=ppl-rueckmeldung).
+  Klick-Rückmeldung in Mail/PDF vorerst nicht gebaut.
 - **Qualitäts-Ereignis „LeadErreicht“ an Meta eingeschaltet** (A, Ole: „Ja“): FUNNEL_META_QUALITAET=an (Railway). Gesendet
   über die Conversions API, sobald der Vermittler einen Funnel-Lead als erreicht markiert (stündlich, nicht erst nach 14 Tagen),
   nur mit Cookie-Einwilligung, mit dem Leadpreis als Wert. Kampagnen optimieren weiter auf „Lead“; Umstellung auf das neue

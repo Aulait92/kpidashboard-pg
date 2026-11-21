@@ -8,7 +8,8 @@ const datum = (d: Date) => d.toLocaleString("de-DE", { timeZone: "Europe/Berlin"
 const ZEILEN: { name: string; key: keyof WeichenSeite; haupt?: boolean }[] = [
   { name: "Besucher", key: "besucher" },
   { name: "Leads", key: "leads" },
-  { name: "Erreicht", key: "erreicht", haupt: true },
+  { name: "Gültige Leads", key: "gueltig", haupt: true },
+  { name: "Erreicht", key: "erreicht" },
   { name: "Termin", key: "termin" },
   { name: "Abschluss", key: "abschluss" },
 ];
@@ -24,12 +25,12 @@ export async function WeicheCard() {
         : "Entschieden: Perspective ist besser. Eigenen Funnel überarbeiten."
       : e.reason === "kein_unterschied"
         ? `Noch kein signifikanter Unterschied (p = ${e.p.toFixed(3)}). Weiterlaufen lassen.`
-        : `Noch zu wenig Daten: je Seite mindestens ${WEICHE_MIN_BESUCHER} Besucher und 10 erreichte Leads.`;
+        : `Noch zu wenig Daten: je Seite mindestens ${WEICHE_MIN_BESUCHER} Besucher und 10 gültige Leads.`;
   return (
     <section id="weiche" className="rounded-xl border border-[color:var(--border)] bg-white p-5 text-sm" data-weiche-auswertung>
       <h2 className="text-base font-semibold">Eigener Funnel gegen Perspective</h2>
       <p className="mt-1 text-[color:var(--muted)]">
-        PKV-Anzeigen 50/50 seit {datum(w.seit)} Uhr. Hauptkennzahl: erreichte Leads je Besucher. HvK läuft getrennt ({w.hvk} Besucher).
+        PKV-Anzeigen 50/50 seit {datum(w.seit)} Uhr. Hauptkennzahl vorerst: gültige Leads je Besucher (ohne Storno und Reklamation), weil kaum ein Vermittler „erreicht“ zurückmeldet. HvK läuft getrennt ({w.hvk} Besucher).
       </p>
       <table className="mt-3 w-full text-sm">
         <thead>
