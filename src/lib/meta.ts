@@ -373,6 +373,9 @@ export async function syncCustomerAdSpend(): Promise<CustomerAdSpendSyncResult> 
   // Nur echte Konto-IDs (Ziffern) — „demo" o. Ä. nicht abfragen.
   const real = customers.filter((c) => /^\d+$/.test(c.metaAdAccountId ?? ""));
   const until = format(new Date(), "yyyy-MM-dd");
+  // Nur Kampagnen, die mit der App verbunden sind (Ole, 21.11.2026), siehe lib/anzeige-kosten.ts
+  const { verbundeneKampagnenJeKunde } = await import("@/lib/anzeige-kosten");
+  const verbunden = await verbundeneKampagnenJeKunde();
   for (const c of real) {
     const accountId = c.metaAdAccountId!;
     // Immer mind. die letzten 90 Tage (Budget kann schon vor Retainer-Start
@@ -386,11 +389,19 @@ export async function syncCustomerAdSpend(): Promise<CustomerAdSpendSyncResult> 
           : floor
         : d90;
     try {
+      const erlaubt = verbunden.get(c.id) ?? new Set<string>();
       const rows = await fetchAccountDailySpend(accountId, token, format(start, "yyyy-MM-dd"), until);
+      // Je Tag nur die Summe der verbundenen Kampagnen (Tage ohne verbundene Kampagne = 0)
+      const jeTag = new Map<string, number>();
       for (const r of rows) {
-        const amount = Number.parseFloat(r.spend ?? "0");
-        if (!r.date_start || !Number.isFinite(amount)) continue;
-        const date = dayAtNoonUtc(r.date_start);
+        if (!r.date_start) continue;
+        const v = Number.parseFloat(r.spend ?? "0");
+        const zaehlt = !!r.campaign_id && erlaubt.has(r.campaign_id) && Number.isFinite(v);
+        jeTag.set(r.date_start, (jeTag.get(r.date_start) ?? 0) + (zaehlt ? v : 0));
+      }
+      for (const [tag, summe] of jeTag) {
+        const amount = Math.round(summe * 100) / 100;
+        const date = dayAtNoonUtc(tag);
         await prisma.customerAdSpend.upsert({
           where: { customerId_accountId_date: { customerId: c.id, accountId, date } },
           create: { customerId: c.id, accountId, date, amount },
@@ -411,8 +422,9 @@ async function fetchAccountDailySpend(
   token: string,
   since: string,
   until: string,
-): Promise<{ spend?: string; date_start?: string }[]> {
-  const rows: { spend?: string; date_start?: string }[] = [];
+): Promise<{ spend?: string; date_start?: string; campaign_id?: string }[]> {
+  // Je Kampagne und Tag, damit nur verbundene Kampagnen zählen (Ole, 21.11.2026)
+  const rows: { spend?: string; date_start?: string; campaign_id?: string }[] = [];
   let chunkStart = new Date(`${since}T00:00:00Z`);
   const end = new Date(`${until}T00:00:00Z`);
   while (chunkStart.getTime() <= end.getTime()) {
@@ -422,15 +434,15 @@ async function fetchAccountDailySpend(
     const u = format(chunkEnd, "yyyy-MM-dd");
     const url = new URL(`${META_GRAPH}/act_${accountId}/insights`);
     url.searchParams.set("access_token", token);
-    url.searchParams.set("level", "account");
-    url.searchParams.set("fields", "spend,date_start");
+    url.searchParams.set("level", "campaign");
+    url.searchParams.set("fields", "spend,date_start,campaign_id");
     url.searchParams.set("time_increment", "1");
     url.searchParams.set("time_range", JSON.stringify({ since: s, until: u }));
     url.searchParams.set("limit", "500");
     let nextUrl: string | null = url.toString();
     while (nextUrl) {
       const json = await fetchMetaPage(nextUrl, accountId, s, u);
-      if (json.data) rows.push(...(json.data as { spend?: string; date_start?: string }[]));
+      if (json.data) rows.push(...(json.data as { spend?: string; date_start?: string; campaign_id?: string }[]));
       nextUrl = json.paging?.next ?? null;
     }
     chunkStart = addDays(chunkEnd, 1);
