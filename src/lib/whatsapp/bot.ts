@@ -1415,7 +1415,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       zusageGefragt = true;
     } else if (sk?.termin) zweite = await strecke.ersteNachBuchung(sk);
     else {
-      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id) });
+      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id), source: lead?.source ?? null });
       zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
     }
   } else if (zug.vorschlag) {
@@ -1446,7 +1446,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       if (sk?.termin?.id === upcoming.id && (zusageWartet || zusageAndere)) zweite = null;
       else if (sk?.termin?.id === upcoming.id) zweite = await strecke.ersteNachBuchung(sk);
       else {
-        const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id) });
+        const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id), source: lead?.source ?? null });
         zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
       }
     } else if (upcoming && stand && strecke.policenBitteOffen(stand) && latest?.direction === "inbound" && latest.createdAt > stand.policenBitteAt! && !knoepfe) {

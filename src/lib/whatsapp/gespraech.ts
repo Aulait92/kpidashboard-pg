@@ -318,10 +318,28 @@ export const KOMPLETTCHECK_TEXT_B = {
 } as const;
 
 /** Komplettcheck-Frage für Ansprache und Lebenssituation; variante a = bisher (KOMPLETTCHECK_TEXT), b = neu (Standard). */
-export function komplettcheckFrage(an: Ansprache, person: VermittlerName, familie: boolean, variante: Variante = "b"): string {
+export function komplettcheckFrage(an: Ansprache, person: VermittlerName, familie: boolean, variante: Variante = "b", source?: string | null): string {
   const T = variante === "a" ? KOMPLETTCHECK_TEXT : KOMPLETTCHECK_TEXT_B;
   const t = an === "du" ? (familie ? T.duFamilie : T.du) : familie ? T.sieFamilie : T.sie;
-  return t.split("[Person]").join(person.nom);
+  return t.split("[Person]").join(person.nom).replace("etwa Haftpflicht, Hausrat oder Kfz?", `etwa ${komplettcheckBeispiele(source)}?`);
+}
+
+/**
+ * Beispiele für „die anderen Versicherungen“ ohne das, was der Lead schon angefragt hat (Ole, 21.11.2026: bei
+ * Privatschutz nicht „Haftpflicht, Hausrat“). Drei aus Haftpflicht, Hausrat, Kfz, Rechtsschutz, Unfall, Altersvorsorge.
+ */
+export function komplettcheckBeispiele(source?: string | null): string {
+  const q = (source ?? "").toLowerCase();
+  const raus: Record<string, RegExp> = {
+    Haftpflicht: /privatschutz|haftpflicht/,
+    Hausrat: /privatschutz|hausrat/,
+    Kfz: /kfz|auto/,
+    Rechtsschutz: /rechtsschutz/,
+    Unfall: /unfall/,
+    Altersvorsorge: /altersvorsorge|rente/,
+  };
+  const liste = Object.keys(raus).filter((k) => !raus[k].test(q)).slice(0, 3);
+  return `${liste.slice(0, -1).join(", ")} oder ${liste.at(-1)}`;
 }
 
 /** Erkennt die Komplettcheck-Frage (beide Fassungen) in einer Nachricht von uns. */

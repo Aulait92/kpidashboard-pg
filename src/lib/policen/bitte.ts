@@ -113,10 +113,25 @@ export function policenEinwilligung(o: { an: Ansprache; vermittler: BitteVermitt
  * aus): an = auch Kranken-, BU- und Lebensversicherung im Text. vermittler null = „Ihr Berater“.
  * Senden: erst die Bitte (text, ohne Knöpfe), dann einwilligung (interaktiv) – siehe policenNachrichten.
  */
-export function policenBitte(o: { an: Ansprache; vermittler: BitteVermittler | null; gesundheitAn?: boolean; firma?: string | null; datenschutzUrl?: string | null }): PolicenBitte {
+export function policenBitte(o: {
+  an: Ansprache;
+  vermittler: BitteVermittler | null;
+  gesundheitAn?: boolean;
+  firma?: string | null;
+  datenschutzUrl?: string | null;
+  /** Bestehende Verträge des Leads (Vertragsfrage im Chat): stehen statt der festen Beispiele im Text (Ole, 21.11.2026) */
+  vertraege?: string[] | null;
+}): PolicenBitte {
   const { an } = o;
   const wer = nominativ(an, o.vermittler);
-  const sparten = o.gesundheitAn ? "Haftpflicht, Hausrat, Kfz, Kranken-, BU- oder Lebensversicherung" : "Haftpflicht, Hausrat oder Kfz";
+  const eigene = [...new Set((o.vertraege ?? []).map((v) => v.trim()).filter(Boolean))].slice(0, 4);
+  const sparten = eigene.length
+    ? eigene.length === 1
+      ? a(an, `deine ${eigene[0]}`, `Ihre ${eigene[0]}`)
+      : `${eigene.slice(0, -1).join(", ")} oder ${eigene.at(-1)}`
+    : o.gesundheitAn
+      ? "Haftpflicht, Hausrat, Kfz, Kranken-, BU- oder Lebensversicherung"
+      : "Haftpflicht, Hausrat oder Kfz";
   const p = pronomen(o.vermittler, wer);
   const dann = p
     ? a(an, `Dann sieht ${p} vorher, wo du doppelt zahlst oder Lücken hast,`, `Dann sieht ${p} vorher, wo Sie doppelt zahlen oder Lücken haben,`)

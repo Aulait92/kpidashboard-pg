@@ -149,7 +149,13 @@ export async function policenBitteFuerChat(conversationId: string): Promise<impo
   if (!chat || chat.minderjaehrig) return null;
   const sp = await sprecher(chat);
   const { policenBitte } = await import("@/lib/policen/bitte");
-  return policenBitte(sp);
+  // Beispiele aus den genannten Verträgen statt „Haftpflicht, Hausrat oder Kfz“ (die der Lead evtl. gar nicht hat)
+  const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { vorvertraege: true } });
+  const { vorvertraegeAus } = await import("@/lib/whatsapp/vorvertraege");
+  const vertraege = (vorvertraegeAus(lead?.vorvertraege)?.liste ?? [])
+    .map((v) => (v.sparte === "Private Krankenversicherung" ? "private Krankenversicherung" : v.sparte))
+    .filter((x) => x !== "Sonstige" && (sp.gesundheitAn || !gesundheitInText(x)));
+  return policenBitte({ ...sp, vertraege });
 }
 
 /** Chat und Sprecher für die Policen-Strecke v2 (lib/policen/flow/server.ts). null = kein Lead-Chat. */

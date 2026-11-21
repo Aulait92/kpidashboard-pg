@@ -452,8 +452,8 @@ export async function komplettcheckVariante(einheit: string | null | undefined):
  * Komplettcheck-Frage mit Knöpfen (Text und Knöpfe; der Aufrufer sendet und setzt den Merker). Mit prefix entfällt das
  * „Danke!“ am Anfang der Frage. variante: Splittest komplettcheck_text (ohne Angabe die neue Fassung b).
  */
-export function komplettcheckNachricht(k: Pick<StreckenKontext, "an" | "person" | "familie"> & { variante?: Variante }, prefix?: string | null): { text: string; buttons: Knopf[] } {
-  const frage = komplettcheckFrage(k.an, k.person, k.familie, k.variante ?? "b");
+export function komplettcheckNachricht(k: Pick<StreckenKontext, "an" | "person" | "familie"> & { variante?: Variante; source?: string | null }, prefix?: string | null): { text: string; buttons: Knopf[] } {
+  const frage = komplettcheckFrage(k.an, k.person, k.familie, k.variante ?? "b", k.source);
   return { text: prefix ? `${prefix} ${frage.replace(/^Danke!\s*/, "")}` : frage, buttons: KOMPLETTCHECK_KNOEPFE };
 }
 
