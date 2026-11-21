@@ -74,6 +74,17 @@ function dueBefore(start: Date | null, daysBefore: number, minDaysFromNow: numbe
   return due;
 }
 
+/** Kalenderschritt erledigt: Zeitenquelle da und, ohne Google/Microsoft, ein Video-Link hinterlegt. (rein) */
+export function kalenderSchrittFertig(c: {
+  calendarConnection?: { status: string; provider: string } | null;
+  agentConfig?: { availabilityIcsUrlEnc: string | null; allianzCalendarEnc: string | null; videoRoomUrl: string | null } | null;
+}): boolean {
+  const verbunden = c.calendarConnection?.status === "connected";
+  const meetOderTeams = verbunden && (c.calendarConnection?.provider === "google" || c.calendarConnection?.provider === "microsoft");
+  const zeiten = verbunden || !!c.agentConfig?.availabilityIcsUrlEnc || !!c.agentConfig?.allianzCalendarEnc;
+  return zeiten && (meetOderTeams || !!c.agentConfig?.videoRoomUrl?.trim());
+}
+
 export async function startOnboarding(offerId: string, opts: StartOpts = {}): Promise<StartResult> {
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
   if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
@@ -417,8 +428,8 @@ export const MANUAL_FIELDS = {
 /** Kundendaten für Checkliste und Fortschritt (eine Quelle für Einrichtung, Startseite und Admin). */
 export const ONBOARDING_CUSTOMER_INCLUDE = {
   users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true, mailConnection: { select: { id: true } } } },
-  calendarConnection: { select: { status: true } },
-  agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } },
+  calendarConnection: { select: { status: true, provider: true } },
+  agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, videoRoomUrl: true } },
   whatsAppAccount: { select: { status: true } },
   messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
   reviewSettings: { select: { googleReviewUrl: true } },
@@ -491,12 +502,10 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         key: "calendar",
         label: "Kalender verbunden",
         owner: "kunde",
-        // Google/Microsoft verbunden oder freie Zeiten über ICS-Link bzw. Allianz-Online-Kalender.
-        done:
-          ob.customer.calendarConnection?.status === "connected" ||
-          !!ob.customer.agentConfig?.availabilityIcsUrlEnc ||
-          !!ob.customer.agentConfig?.allianzCalendarEnc ||
-          !!skip("calendar"),
+        // Google/Microsoft verbunden oder freie Zeiten über App-Kalender, ICS-Link bzw. Allianz-Online-Kalender. Ohne
+        // Google/Microsoft entsteht kein Meet-/Teams-Link: dann gehört der Video-Link (z. B. Webex) dazu (Ole, 21.11.2026:
+        // „Lohmann hat im Onboarding gar keinen Webex-Link hinterlegt“).
+        done: kalenderSchrittFertig(ob.customer) || !!skip("calendar"),
         at: null,
       },
       {
