@@ -84,6 +84,15 @@ describe("PKV-Funnel (Datenbank)", () => {
     expect((await ereignisMerken({ funnel: "pkv-beitrag", besuchId: bid(1), schritt: "start", art: "hack" })).ok).toBe(false);
   });
 
+  it("Testanfrage (Nachname „Test“): kein PPL-Lead, kein Partner, Meta-Ereignis trotzdem vorbereitet", async () => {
+    const r = await absenden({ funnel: "pkv-beitrag", besuchId: bid(9), antworten: antworten(9, { nachname: "Test" }), eventId: "evt-test0001", metaEinwilligung: true });
+    expect(r).toMatchObject({ ok: true, lead: true, status: "delivered", experte: null });
+    if (!r.ok) return;
+    expect(r.meta).not.toBeNull();
+    expect(await prisma.poolLead.findUnique({ where: { externalId: `funnel:pkv-beitrag:${bid(9)}` } })).toBeNull();
+    expect((await prisma.funnelBesuch.findUnique({ where: { id: bid(9) } }))?.poolLeadId ?? null).toBeNull();
+  });
+
   it("Absenden: PPL-Lead mit den Perspective-Feldnamen, geliefert, Besucher verknüpft, Ziel funnel_lead, zweites Absenden kein neuer Lead", async () => {
     await ereignisMerken({ funnel: "pkv-beitrag", besuchId: bid(2), schritt: "start", art: "angesehen", quelle: { utm_source: "fb", utm_campaign: "120200000000001", utm_content: "Anzeige A" } });
     const r = await absenden({ funnel: "pkv-beitrag", besuchId: bid(2), antworten: antworten(2), eventId: "evt-12345678", metaEinwilligung: false });

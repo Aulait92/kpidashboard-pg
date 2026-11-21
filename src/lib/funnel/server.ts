@@ -133,6 +133,9 @@ export async function absenden(p: AbsendenInput, now = new Date()): Promise<Abse
   if (!tel.ok) return { ok: false, fehler: { telefon: PKV_TEXTE.kontakt.fehlerTelefon }, abbruch: null, schritt: "kontakt" };
 
   await besuchSicherstellen(f.key, p.besuchId, p.quelle);
+  // Testanfrage (Ole, 21.11.2026): Nachname „Test“ geht nicht an einen Partner, sondern als Mail an den Admin; das
+  // Meta-Ereignis „Lead“ läuft trotzdem (Pixel-Prüfung). Zählt nicht in Messung und A/B-Tests.
+  if (istTestAnfrage(a)) return testAnfrage(f, a, p, now);
   const vorher = await prisma.funnelBesuch.findUnique({ where: { id: p.besuchId }, select: { poolLeadId: true, quelle: true } });
   const { productKey } = await resolvePplProduct(process.env.PKV_FUNNEL_PRODUKT?.trim() || f.produkt);
   const quelle = (saubereQuelle(p.quelle) ?? (vorher?.quelle as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
@@ -189,6 +192,41 @@ export async function absenden(p: AbsendenInput, now = new Date()): Promise<Abse
       }
     : null;
   return { ok: true, lead: neu, status: r.status, meta, experte, mail };
+}
+
+/** Testanfrage: Nachname „Test“ (Groß-/Kleinschreibung egal). (rein) */
+export function istTestAnfrage(a: Record<string, string | undefined>): boolean {
+  return (a.nachname ?? "").trim().toLowerCase() === "test";
+}
+
+/** Testanfrage nicht ausliefern: Mail mit den Angaben an den Admin, Meta-Ereignis wie bei einem echten Lead. */
+async function testAnfrage(f: NonNullable<ReturnType<typeof funnelDef>>, a: Record<string, string | undefined>, p: AbsendenInput, now: Date): Promise<AbsendenErgebnis> {
+  const felder = pplFelder(f, a, now);
+  const text = ["Testanfrage aus dem Funnel (Nachname „Test“), nicht an einen Partner gegeben.", "", ...Object.entries(felder).map(([k, v]) => `${k}: ${v}`)].join("\n");
+  const { sendPlainMail } = await import("@/lib/email");
+  const { PROVIDER } = await import("@/lib/legal-texts");
+  await sendPlainMail({ to: process.env.ADMIN_EMAIL?.trim() || PROVIDER.email, subject: `Testanfrage ${f.key}`, text }).catch((err: unknown) => reportError(err, "funnel-testanfrage"));
+  const einw = !!p.metaEinwilligung;
+  const eventId = p.eventId && EVENT_ID_RE.test(p.eventId) ? p.eventId : null;
+  const fbc = einw ? (p.fbc && p.fbc.startsWith("fb.") ? p.fbc : fbcAusFbclid(p.fbclid, now.getTime())) : null;
+  const fbp = einw && p.fbp && p.fbp.startsWith("fb.") ? p.fbp : null;
+  const nutzer: FunnelNutzer = {
+    besuchId: p.besuchId,
+    email: a.email,
+    telefon: normalizePhone(a.telefon ?? ""),
+    vorname: a.vorname,
+    nachname: a.nachname,
+    geburtsdatum: felder.Geburtsdatum,
+    plz: a.plz,
+    ort: a.ort,
+    fbc,
+    fbp,
+    ip: p.ip,
+    userAgent: p.userAgent,
+  };
+  const { productKey } = await resolvePplProduct(process.env.PKV_FUNNEL_PRODUKT?.trim() || f.produkt);
+  const meta = einw && eventId ? () => sendeMetaEreignisse([leadEreignis({ eventId, zeit: now, url: p.url, nutzer, produkt: productKey })]) : null;
+  return { ok: true, lead: true, status: "delivered", meta, experte: null, mail: null };
 }
 
 /** Einwilligungsnachweis beim Absenden (L3): Wortlaut mit eingesetzter Adresse, Fassung, Zeitpunkt, Kanäle, Knopf, Funnel. */
