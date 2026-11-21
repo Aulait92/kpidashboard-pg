@@ -11,7 +11,7 @@ import { generateDrafts } from "@/lib/linkedin/drafts";
 import { addPhoto } from "@/lib/linkedin/photos";
 import { importFile } from "@/lib/linkedin/import";
 
-const PATH = "/admin/marketing/linkedin";
+const PATH = "/admin/neu/marketing";
 /** Neuer Admin (Marketing → LinkedIn) */
 const NEU = "/admin/neu";
 export type LiResult = { ok?: boolean; error?: string; info?: string };

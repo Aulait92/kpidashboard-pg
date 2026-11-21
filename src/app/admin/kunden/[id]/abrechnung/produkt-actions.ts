@@ -23,9 +23,9 @@ export async function decideProductAction(fd: FormData): Promise<void> {
       : decision === "accept"
         ? await acceptProductRequest(bookingId, note, actor)
         : await rejectProduct(bookingId, note, actor);
-  revalidatePath(`/admin/kunden/${customerId}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${customerId}`, "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   const done = decision === "start" ? "Produkt gestartet, Kunde informiert." : decision === "accept" ? "Anfrage übernommen, Kunde informiert." : "Buchung abgelehnt, Kunde informiert.";
   const msg = r.ok ? (r.note ? `${done} ${r.note}` : done) : r.error;
-  redirect(await adminZiel(`/admin/kunden/${customerId}/abrechnung?produkt=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`));
+  redirect(await adminZiel(`/admin/neu/kunden/${customerId}/abrechnung?produkt=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`));
 }

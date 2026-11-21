@@ -35,7 +35,7 @@ export async function toggleBotAction(formData: FormData): Promise<void> {
   });
   if (!conv) return;
   await setBotActive(conversationId, !conv.botActive);
-  revalidatePath("/admin/whatsapp");
+  revalidatePath("/admin/neu/leads/chats");
   revalidatePath("/admin/neu", "layout");
 }
 
@@ -44,7 +44,7 @@ export async function takeOverAction(conversationId: string): Promise<AdminChatR
   await requireAdmin();
   if (typeof conversationId !== "string" || !conversationId) return { ok: false, error: "Chat nicht gefunden." };
   const ok = await setBotActive(conversationId, false);
-  revalidatePath("/admin/whatsapp");
+  revalidatePath("/admin/neu/leads/chats");
   revalidatePath("/admin/neu", "layout");
   return ok ? { ok: true } : { ok: false, error: "Chat nicht gefunden." };
 }
@@ -78,7 +78,7 @@ export async function sendReplyAction(conversationId: string, rawBody: string): 
   }
   // Wer selbst schreibt, hat übernommen: der Bot antwortet nicht dazwischen.
   await setBotActive(conversationId, false);
-  revalidatePath("/admin/whatsapp");
+  revalidatePath("/admin/neu/leads/chats");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
@@ -120,7 +120,7 @@ export async function sendTemplateAction(conversationId: string, purpose: string
     console.error("[whatsapp template]", err);
     return { ok: false, error: err instanceof NoTemplateError ? "Für diese Vorlage gibt es noch keine Freigabe von Meta." : "Vorlage konnte nicht gesendet werden." };
   }
-  revalidatePath("/admin/whatsapp");
+  revalidatePath("/admin/neu/leads/chats");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
@@ -137,7 +137,7 @@ export async function assignSupportContactAction(_prev: SupportAssignState, fd: 
   if (!conversationId) return { error: "Chat fehlt." };
   if (fd.get("unlink")) {
     await assignSupportConversation(conversationId, null);
-    revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu/leads/chats");
     revalidatePath("/admin/neu", "layout");
     return { ok: true };
   }
@@ -146,7 +146,7 @@ export async function assignSupportContactAction(_prev: SupportAssignState, fd: 
     const [type, id] = pick.split(":");
     if ((type !== "contact" && type !== "customer") || !id) return { error: "Ungültige Auswahl." };
     const ok = await assignSupportConversation(conversationId, { type, id });
-    revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu/leads/chats");
     revalidatePath("/admin/neu", "layout");
     return ok ? { ok: true } : { error: "Zuordnung nicht möglich." };
   }
@@ -154,7 +154,7 @@ export async function assignSupportContactAction(_prev: SupportAssignState, fd: 
   if (!candidates.length) return { error: "Nichts gefunden. Name, Firma oder E-Mail eingeben." };
   if (candidates.length === 1) {
     await assignSupportConversation(conversationId, candidates[0]);
-    revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu/leads/chats");
     revalidatePath("/admin/neu", "layout");
     return { ok: true };
   }

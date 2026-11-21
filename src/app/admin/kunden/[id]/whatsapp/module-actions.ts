@@ -15,7 +15,7 @@ export async function toggleNewUiAction(fd: FormData): Promise<void> {
   if (!c) return;
   await prisma.customer.update({ where: { id }, data: { newUi: !c.newUi } });
   await audit("customer.new_ui", { entity: "Customer", entityId: id, customerId: id, details: { enabled: !c.newUi } });
-  revalidatePath(`/admin/kunden/${id}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${id}`, "layout");
   revalidatePath("/buyer", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
@@ -31,7 +31,7 @@ export async function setVermittlerTypAction(fd: FormData): Promise<void> {
   if (!c || c.vermittlerTyp === typ) return;
   await prisma.customer.update({ where: { id }, data: { vermittlerTyp: typ } });
   await audit("customer.provision", { entity: "Customer", entityId: id, customerId: id, details: { typ, durch: "admin" } });
-  revalidatePath(`/admin/kunden/${id}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${id}`, "layout");
   revalidatePath("/buyer", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
@@ -44,7 +44,7 @@ export async function setVermittlerDuAction(fd: FormData): Promise<void> {
   const raw = fd.get("anrede");
   if (raw !== "du" && raw !== "sie") return;
   if (!(await setzeVermittlerDu(id, raw === "du", { id: s.userId, email: s.email, role: s.role }))) return;
-  revalidatePath(`/admin/kunden/${id}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${id}`, "layout");
   revalidatePath("/buyer", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }

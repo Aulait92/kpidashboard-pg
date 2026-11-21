@@ -33,7 +33,7 @@ export function RegisterForm(p: { customerId: string; registerNr: string; status
         <input type="date" name="geprueftAm" defaultValue={p.geprueftAm || p.heute} max={p.heute} className={input} />
       </label>
       <div className="flex flex-wrap items-center gap-3 sm:col-span-3">
-        <Button type="submit" variant="primary" size="md" disabled={pending}>
+        <Button type="submit" variant="secondary" size="md" disabled={pending}>
           {pending ? "Speichert …" : "Prüfung speichern"}
         </Button>
         <a href="https://www.vermittlerregister.info" target="_blank" rel="noreferrer" className="text-sm font-medium text-[color:var(--brand)] hover:underline">

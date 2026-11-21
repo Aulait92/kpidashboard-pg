@@ -52,7 +52,7 @@ describe("Vertrieb-Zahlen mit Zeitraum", () => {
     expect(by.meetings.rows.find((r) => r.muted)?.status).toBe("abgesagt");
     expect(by.offers.v).toBe(2);
     expect(by.won.v).toBe(1);
-    expect(by.won.rows[0].href).toBe(`/admin/vertrieb/kontakte/${contactIds[0]}`);
+    expect(by.won.rows[0].href).toBe(`/admin/neu/vertrieb/kontakte/${contactIds[0]}`);
     expect(v.winRate).toBe(0.5);
     expect(v.acceptedOfSent).toBe(1);
   });

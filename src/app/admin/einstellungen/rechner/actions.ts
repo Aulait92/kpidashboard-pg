@@ -19,7 +19,7 @@ export async function saveRechnerAction(_prev: RechnerFormState, fd: FormData): 
   const res = await saveRechnerConfig(raw, { id: session.userId, email: session.email, role: session.role });
   if (!res.ok) return { errors: res.errors };
   revalidatePath("/rechner");
-  revalidatePath("/admin/einstellungen/rechner");
+  revalidatePath("/admin/neu/marketing/webseite");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }

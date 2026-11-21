@@ -88,14 +88,14 @@ export async function datenluecken(k: InvestorKennzahlen, costs: MonthCosts[], n
   const ohneGebuehr = kandidatenOhneGebuehr.filter((c) => !mitAngebot(c)).length;
   // Retainer ohne angenommenes Angebot: Software-Anteil unbekannt, alles zählt als Betreuung
   const ohneAngebot = retainerAktiv.filter((c) => !mitAngebot(c)).length;
-  if (ohneGebuehr) out.push({ key: "ohne-betreuungsgebuehr", anzahl: ohneGebuehr, text: `${ohneGebuehr} ${ohneGebuehr === 1 ? "Kunde" : "Kunden"} live ohne Betreuungsgebühr, fehlt im MRR.`, href: "/admin/neu/zahlen/umsatz", link: "Umsatz & Buchungen" });
+  if (ohneGebuehr) out.push({ key: "ohne-betreuungsgebuehr", anzahl: ohneGebuehr, text: `${ohneGebuehr} ${ohneGebuehr === 1 ? "Kunde" : "Kunden"} live ohne Betreuungsgebühr, fehlt im MRR.`, href: "/admin/neu/zahlen/umsatz", link: "Umsatz" });
   if (offeneBank) out.push({ key: "bank-offen", anzahl: offeneBank, text: `${offeneBank} ${offeneBank === 1 ? "Ausgabe" : "Ausgaben"} auf Konto oder Karte noch nicht zugeordnet, Marge und CAC können zu gut aussehen.`, href: "/admin/neu/zahlen/kosten/zuordnen", link: "Ausgaben zuordnen" });
-  if (!letzteBank) out.push({ key: "bank-fehlt", text: "Kein Bankkonto verbunden: Tools, KI und Server fehlen in Marge und CAC.", href: "/admin/neu/zahlen/kosten", link: "Kosten & Bank" });
+  if (!letzteBank) out.push({ key: "bank-fehlt", text: "Kein Bankkonto verbunden: Tools, KI und Server fehlen in Marge und CAC.", href: "/admin/neu/zahlen/kosten/konten", link: "Konten & Regeln" });
   else if (now.getTime() - letzteBank.bookingDate.getTime() > 35 * DAY) {
-    out.push({ key: "bank-alt", text: `Letzte Bankbuchung vom ${letzteBank.bookingDate.toLocaleDateString("de-DE")}: Kosten danach fehlen.`, href: "/admin/neu/zahlen/kosten", link: "Kosten & Bank" });
+    out.push({ key: "bank-alt", text: `Letzte Bankbuchung vom ${letzteBank.bookingDate.toLocaleDateString("de-DE")}: Kosten danach fehlen.`, href: "/admin/neu/zahlen/kosten/konten", link: "Konten & Regeln" });
   }
   if (k.cac.neukunden > 0 && !(k.cac.kosten > 0)) {
-    out.push({ key: "cac-ohne-kosten", text: `Keine Kosten der Kundengewinnung in den letzten ${CAC_FENSTER} Monaten erfasst, CAC wäre 0 €.`, href: "/admin/neu/zahlen/kosten", link: "Kosten & Bank" });
+    out.push({ key: "cac-ohne-kosten", text: `Keine Kosten der Kundengewinnung in den letzten ${CAC_FENSTER} Monaten erfasst, CAC wäre 0 €.`, href: "/admin/neu/zahlen/kosten", link: "Kosten" });
   }
   const kiLetzter = costs.find((c) => c.month === k.lastComplete)?.ki ?? 0;
   if (letzteBank && !(kiLetzter > 0)) {

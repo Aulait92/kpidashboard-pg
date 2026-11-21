@@ -26,5 +26,8 @@ export const SPLITTEST_HYPOTHESE: Record<string, string> = {
   // A/B-Test-Labor 20.11.2026 (lib/experimente.ts buchung_erinnerung, Wortlaut lib/policen/regeln.ts)
   buchung_erinnerung:
     "Steht das freiwillige Häkchen als hervorgehobene Karte statt als grauer Kleindruck da, wird es wahrgenommen und öfter angehakt (gleicher Wortlaut, nie vorausgewählt).",
+  // Ole 20.11.2026 (lib/experimente.ts buchungslink_andere_zeit, Texte lib/whatsapp/buchungslink.ts)
+  buchungslink_andere_zeit:
+    "Steht nach dem zweiten „Andere Zeit“ der Wunschtag im Chat vorn und der Buchungslink nur als Alternative am Ende, bleibt der Lead im Gespräch und bucht öfter als mit dem Link zuerst.",
   termin_zusage: "Endet die Buchungsbestätigung mit der Zusage-Frage „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], erscheinen mehr Leads zum Termin.",
 };

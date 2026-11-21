@@ -5,14 +5,49 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
 
 ## Was der Vermittler sieht
 
-- **Terminvorbereitung** (Karte „Das will der Kunde“ bzw. „Unterlagen vom Kunden“): eine Zeile „Vergleichsblatt“ mit
-  Anzahl Verträge, Summe im Monat und Hinweisen; führt auf `/buyer/termine/{id}/vorbereitung/vertraege`.
-- **Vergleichsblatt:** oben Summe der Monatsbeiträge, Kündigungstermine in den nächsten 3 Monaten (mit „Kündigung bis“),
-  Hinweise „Zum Ansprechen“ (gleiche Sparte zweimal; Haftpflicht ohne Forderungsausfall bzw. Schlüsselverlust, Hausrat
-  ohne Elementar bzw. Unterversicherungsverzicht, Wohngebäude ohne Elementar, nur wenn das Dokument ausdrücklich „nein“
-  sagt). Je Vertrag eine Karte mit den gefundenen Feldern, „Ausgelesen, bitte prüfen“, unsichere Felder „bitte prüfen“,
-  Link „Original“. Knöpfe: „Bearbeiten“ (Speichern gilt als geprüft), „Werte stimmen“, danach „In Bestand übernehmen“.
-  Unten Unterlagen, die nicht ausgelesen wurden, mit der nächsten Handlung (Sparte wählen, erneut versuchen, Original).
+- **Spickzettel in der Terminvorbereitung** (Paket 3, 19.11.2026; Logik rein in `auslesen/spickzettel.ts`, Anzeige
+  `components/policen-vergleich-kurz.tsx`): ganz oben in „Das will der Kunde“ ein Kasten „Verträge des Kunden“. Fertig:
+  Beiträge im Monat, Zeile „Jahr · Anzahl · n bitte prüfen“, Badge „Bitte prüfen“, bis zu 3 Fragen für den Termin (Rest
+  „Mehr (n)“), K6-Satz; Texte wortgleich mit der Vertragsseite (`kopfZeile`, `K6_SATZ`, `GRUND_TEXT`, `SPERRE_TEXT` in
+  `vertragsseite.ts`). Ein Tipp auf den Kopf öffnet die Vertragsseite, ein Tipp auf eine Frage springt zur Karte. Weitere
+  Zustände, jeweils mit nächster Handlung: nie gebeten („Ihr Assistent bittet vor dem Termin darum“, nur wenn Policen per
+  WhatsApp eingerichtet ist), gebeten am TT.MM. (aus dem Strecken-Eintrag `policen_bitte`, keine neue Spalte; „Sonst im
+  Termin nach den Policen fragen.“), Sparte offen (Chips direkt im Kasten, `sparteAction`), wird ausgelesen, ohne KI
+  (Link „Unterlagen ansehen“, Liste aufgeklappt), gesperrt (Link „Im Original ansehen“ bzw. zur Liste). Funktion aus
+  oder Konto nicht freigeschaltet: kein Kasten, die Unterlagen-Liste ist aufgeklappt. Chat-Angaben („Bestehende
+  Verträge“) einer Sparte, die ausgelesen vorliegt, werden ausgeblendet. Die Dateien stehen eingeklappt unter
+  „Unterlagen (n)“; ohne Zwei-Faktor steht „Zum Öffnen Zwei-Faktor einrichten“ am Link und die Begründung einmal darunter
+  (kein gelber Kasten mehr).
+- **Vertragsseite** (bis 19.11.2026 „Vergleichsblatt“; Route und Dateinamen bleiben; Paket 2 „Champions League“,
+  Logik rein in `auslesen/vertragsseite.ts`): Titel „Verträge: {Name}“ ohne Untertitel. Kopf: Beiträge im Monat groß,
+  darunter Jahr, Anzahl, „n bitte prüfen“, ein K6-Satz „Maschinell ausgelesen: bitte vor dem Termin mit dem Original
+  prüfen.“ (ohne Zwei-Faktor-Login dahinter der Link zur Einrichtung). Darunter „Zum Ansprechen im Termin“ (bis 20.11.2026 „Fragen für den Termin“; 3 sichtbar, Rest
+  unter „Mehr (n)“), jede mit Nummer und Sprung zur Karte, die dieselbe Nummer trägt. Karten sortiert: mit Frage, dann
+  mit unsicheren Feldern, dann ungeprüft, dann Rest. Sichtbar: Beitrag im Monat, „Kündigung bis“ (nur Sach, vorsichtig)
+  bzw. Laufzeit, Deckungs- bzw. Versicherungssumme, Wer ist versichert, SF-Klassen, Kasko, Rechtsschutz-Bausteine,
+  BU-/Rente, Bausteine mit „nein“ und immer alle unsicheren Felder; Badge „Bitte prüfen“ je ungeprüfter Karte, „bitte
+  prüfen“ am Feld. Ein Tipp auf den Kartenkopf zeigt „Alle Angaben“ (Beitrag laut Unterlage, Kündigung zum, Laufzeit,
+  Tarif, Vers.-Nr., SB …), „Original“ und „Bearbeiten“ (Speichern gilt als geprüft). „Werte stimmen“ je Karte und
+  „In Bestand übernehmen“ je Karte entfallen.
+  Genau eine Hauptaktion (am Handy fest unten über der Navigation): „Alle als geprüft markieren (n)“ (nur angezeigte,
+  ausgelesene, ungeprüfte Auszüge; `bestaetigeAlle`, Audit `policen.auslesen_geprueft_alle`), danach nur mit sichtbarem
+  Bestandsmodul „n Verträge in Bestand übernehmen“ (`uebernimmAlle`: nur Auszüge mit `geprueftAt`, nie ungeprüfte, keine
+  stille Prüfungsfiktion; je Vertrag `uebernimmInBestand` mit Audit `policen.auslesen_bestand`, Kündigungsfrist als Notiz
+  im Verlauf; Sammel-Audit `policen.auslesen_bestand_alle`). Ohne Bestandsmodul danach nur „Alle geprüft“. Bei „ohne KI“
+  passiert beides nicht. Ohne ausgelesene Verträge: Hauptaktion „Zur Terminvorbereitung“, der Grund (z. B. „Nicht
+  ausgelesen auf Wunsch des Kunden.“) steht einmal oben, die Unterlagen bleiben zu öffnen. Unten Unterlagen, die nicht
+  ausgelesen wurden (Sparte wählen, erneut versuchen, Original).
+- **Zum Ansprechen im Termin** (intern weiter „Fragen“; 19.11.2026, `auslesen/zusammenfassung.ts`, rein; SUS-Runde 20.11.2026: Kündigung mit Frist zuerst, Beitrag laut Unterlage als leise zweite Zeile `zusatz`; im Spickzettel steht „n bitte prüfen“ im Badge statt zusätzlich in der Zeile; nicht ausgelesene Unterlagen ohne Sparte heißen nach dem Dateinamen; Anzeige auf der Vertragsseite, Spickzettel
+  in der Terminvorbereitung): feste Vorlagen, Sie-Form, Euro nur als Beitrag „laut Unterlage“. Reihenfolge: Kündigungsfristen
+  (nach Tagen, dann Beitrag), doppelt, Bausteine „nein“, nicht geschickt. Regeln (K8): Kündigungen nur Sach (Haftpflicht,
+  Hausrat, Wohngebäude, Rechtsschutz, Kfz); „doppelt“ nur Haftpflicht, Hausrat, Rechtsschutz (mit beiden Versicherern,
+  Summe nur, wenn alle Beiträge bekannt); nie PKV, BU, Leben. Frist vorsichtig: „bis“ = (Termin minus Frist) minus
+  1 Tag; „noch n Tage“ nur mit Frist aus dem Dokument, Tagesgrenze Europe/Berlin; verpasste Frist mit nächster
+  Kündigung; ohne Frist „Kündigungsfrist im Original prüfen“. „Nicht geschickt“ (Haftpflicht, Hausrat, Rechtsschutz)
+  gegen die Sparten aller Unterlagen, entfällt bei „ohne KI“, ohne Auszug oder wenn eine Unterlage keine Sparte hat.
+- **Plausibilität** (`auslesen/plausibel.ts`, nach `bereinige()`): „bitte prüfen“ bei Ablauf vor Beginn,
+  Kündigungsfrist über 12 Monate, Monatsbeitrag Sach über 500 €, Deckungssumme unter 1 Mio., Versicherungssumme unter
+  1.000 €. Werte bleiben unverändert.
 - Nur der zuständige Vermittler bzw. Inhaber (`appointmentScope`, `writableCustomerId`). Admin-Vorschau: keine Inhalte.
 - Keine Beratung, keine Bewertung: keine Hinweise zu PKV, BU, Leben (K8, kein Risiko-Scoring).
 
@@ -26,8 +61,10 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
    `.g1` (`konfig.ts textVersionKi`). PKV, BU und Leben nur mit der Fassung, die Gesundheitsangaben nennt (`.gN`).
    Ablehnung, Widerruf, alte Einwilligungen oder fehlende Tabelle: nie.
 4. **Sparte vorab, ohne KI** (K2): Wahl des Vermittlers, sonst Sparte der Unterlage (Dateiname/Begleittext) und
-   Stichworte auf Seite 1 der PDF-Textebene (lokal mit pdf.js). Widerspruch, mehrere Sparten oder unklar: nicht
-   auslesen, der Vermittler wählt. Meldet die KI danach eine andere Sparte: nichts übernommen.
+   Stichworte auf Seite 1 der PDF-Textebene (lokal mit pdf.js; dazu PHV, Autoversicherung; „Haftpflicht“ bzw. „Kfz“
+   allein nur, wenn kein eindeutiges Wort dasteht; Kfz-, Grundbesitzer-, Berufs-Haftpflicht zählen nicht als
+   Privathaftpflicht; Glas allein bleibt offen; PKV, BU, Leben nie aus schwachen Stichworten). Widerspruch, mehrere
+   Sparten oder unklar: nicht auslesen, der Vermittler wählt. Meldet die KI danach eine andere Sparte: nichts übernommen.
 5. **Sparte freigegeben** (K2): Haftpflicht, Hausrat, Kfz, Wohngebäude, Rechtsschutz sofort. PKV, BU, Leben erst,
    wenn im Admin (Einstellungen → Anbindungen → „KI für Unterlagen“) der Nachweis „keine Speicherung“ beim Anbieter
    mit Datum und Referenz hinterlegt ist (OpenAI: EU-Projekt mit Zero Data Retention). Optional einschränkbar mit
@@ -87,6 +124,18 @@ ungültig“ höchstens einmal am Tag.
   nur dynamisch ein, damit es nicht in der Importkette des Chats liegt.
 - Tests: `tests/unit/policen-auslesen-grenze.test.ts` (Importgrenze), `tests/integration/policen-auslesen.test.ts`
   (zur Laufzeit: Auslesen ohne Chat-Client, Chat-Anfrage ohne Dokumente und ohne Auszüge; gemockte SDKs).
+
+## Texte an den Lead (Strecke v2, Paket 4 vom 20.11.2026)
+
+`src/lib/policen/flow/texte.ts`: Chat-Nachricht, Bestätigung und Erinnerungen nennen einen konkreten Nutzen („ob Sie
+etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist“) statt „ob Sie Geld sparen können“
+(§ 5 UWG, K8). Der Test `tests/unit/policen-flow.test.ts` sperrt „sparen“, „günstiger“, „zu teuer“, „Garantie“,
+„deutlich schneller“, „fehlt“ und „Lücke“ in allen Lead-Texten und hält den Formular-Wortlaut (Hash) und
+`FLOW_TEXT_VERSION` fest. Formular, Fußzeilen, `BESTAETIGUNG_RE` und `istNeinDanke` sind unverändert.
+Vorlagennamen tragen jetzt zusätzlich einen Hash des Textes (`pg_policen_<art>_<flow>_<text>_<an>`): Neuer Text heißt
+neue Vorlage bei Meta. Bis sie freigegeben ist, geht im 24-Stunden-Fenster die Flow-Nachricht mit neuem Text,
+außerhalb nichts (kein Rückfall auf den alten Text). Der WhatsApp-Cron reicht die neuen Vorlagen bei `POLICEN_FLOW=1`
+selbst ein, also erst nach Oles Freigabe mergen bzw. einschalten.
 
 ## Offen
 

@@ -345,7 +345,7 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
     if (review.status === "rot") {
       await saveRunStep(state, "anlegen", { status: "uebersprungen", note: "Prüfung rot, nichts bei Meta angelegt" });
       await prisma.campaignRun.update({ where: { id }, data: { status: "blocked", finishedAt: new Date(), error: `Prüfung rot: ${review.summary}`.slice(0, 1000) } });
-      await taskFn(contactId, `Auffrischung ${row.customer.name}: Prüfung rot`, `Neue Anzeigen wurden nicht angelegt: ${review.summary}\nKundenakte → Kampagne (KI): /admin/kunden/${row.customerId}/kampagne`, new Date());
+      await taskFn(contactId, `Auffrischung ${row.customer.name}: Prüfung rot`, `Neue Anzeigen wurden nicht angelegt: ${review.summary}\nKundenakte → Kampagne (KI): /admin/neu/kunden/${row.customerId}/kampagne`, new Date());
       return "blocked";
     }
 
@@ -369,7 +369,7 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
     await saveRunStep(state, current, { status: "fertig", finishedAt: t(), note: `${built.adIds.length} neue Anzeigen pausiert angelegt` });
 
     const fatigued = (row.fatigue as unknown as Fatigued[] | null) ?? [];
-    const link = baseCtx.adAccountId && row.refreshCampaignId ? adsManagerUrl(baseCtx.adAccountId, row.refreshCampaignId) : `/admin/kunden/${row.customerId}/kampagne`;
+    const link = baseCtx.adAccountId && row.refreshCampaignId ? adsManagerUrl(baseCtx.adAccountId, row.refreshCampaignId) : `/admin/neu/kunden/${row.customerId}/kampagne`;
     const names = fatigued.map((f) => f.adName).join(", ");
     await deps.notify(`Neue Anzeigen für ${row.customer.name} bereit (pausiert)`, `Müde Anzeigen: ${names}`.slice(0, 180), link);
     await taskFn(

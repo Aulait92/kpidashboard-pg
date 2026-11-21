@@ -3,7 +3,8 @@
 // Inventar-Test lesen nur von hier. Konventionen: docs/ux/admin-neu/README.md, Plan v2: docs/ux/admin-v2-plan.md.
 //
 // Admin v2 (Paket A1): Navigation nach Rollen statt nach Funktionen. Oben „Mein Tag“ und die vier Rollen Verkaufen,
-// Betreuen, Liefern, Geld; unten Werkzeuge (Technik, Einrichtung), Einstellungen (einmal einrichten) und „Was wo ist“.
+// Betreuen, Liefern, Geld. Umbau 20.11.2026 (Rahmen, Ziel SUS 90+ wie /buyer): unten nur noch Einstellungen; Werkzeuge
+// (Technik) und „Was wo ist“ (Umzugshilfe) liegen im Profilmenü und in der Suche, die Handy-Leiste hat 5 Punkte ohne „Mehr“.
 // Die Adressen der Seiten bleiben (Push-Ziele, Umzugs-Links in push-ziel.ts/umzug.ts), nur die Gruppierung ändert sich:
 // z. B. liegt /admin/neu/leads/chats jetzt unter Betreuen, /admin/neu/zahlen/qualitaet ebenfalls.
 //
@@ -17,11 +18,12 @@ export const NEU = "/admin/neu";
 
 export type BereichId = "mein-tag" | "verkaufen" | "betreuen" | "liefern" | "geld" | "werkzeuge" | "einstellungen" | "was-wo-ist";
 
-/** Reiter-Leisten: je Rolle eine, dazu Marketing (zweite Leiste unter Verkaufen) und die Kundenakte. */
+/** Reiter-Leisten: je Rolle eine, dazu Marketing (eigene Leiste der Marketing-Seiten, erreichbar über „Mehr“ in Verkaufen) und die Kundenakte. */
 export type ReiterGruppe = BereichId | "marketing" | "kundenakte";
 
 /** Zweite Reiter-Leiste unter der Leiste einer Rolle (Seite zeigt beide). */
-export const OBER_REITER: Partial<Record<ReiterGruppe, ReiterGruppe>> = { marketing: "verkaufen" };
+// Admin-Umbau (19.11.2026): Marketing ist keine zweite Leiste unter Verkaufen mehr (UX-Regel: eine Reiterleiste je Seite).
+export const OBER_REITER: Partial<Record<ReiterGruppe, ReiterGruppe>> = {};
 
 type Reiter = { gruppe: ReiterGruppe; label: string };
 
@@ -55,10 +57,11 @@ export type NeuBereich = {
   hinweis?: string;
   /** Startseite des Bereichs */
   pfad: string;
-  /** Seitenleiste: oben (Mein Tag und Rollen) oder unten (Werkzeuge, Einstellungen, Was wo ist) */
-  ort: "oben" | "unten";
-  /** Handy: direkt in der Leiste unten oder unter „Mehr“ */
-  handy: "leiste" | "mehr";
+  /** Seitenleiste: oben (Mein Tag und Rollen), unten (Einstellungen), nur im Profilmenü (Was wo ist) oder keiner
+   *  (Technik: nur Rolle für Mein Tag, Seiten unter Einstellungen). Seiten im Profilmenü markieren „Einstellungen“. */
+  ort: "oben" | "unten" | "profil" | "keiner";
+  /** Handy: in der Leiste unten (höchstens 5 Punkte, wie /buyer), über das Profilmenü oben rechts oder keiner */
+  handy: "leiste" | "profil" | "keiner";
   seiten: NeuSeite[];
 };
 
@@ -88,23 +91,14 @@ export const BEREICHE: NeuBereich[] = [
     seiten: [
       { view: "vertrieb", pfad: n("/vertrieb"), titel: "Pipeline", alt: ["/admin/vertrieb/pipeline"], reiter: { gruppe: "verkaufen", label: "Pipeline" }, suchwoerter: "Vertrieb Akquise Stufen", fertig: true },
       { view: "vertrieb-kontakte", pfad: n("/vertrieb/kontakte"), titel: "Kontakte", alt: ["/admin/vertrieb/kontakte"], reiter: { gruppe: "verkaufen", label: "Kontakte" }, suchwoerter: "Vertrieb Cold Mail", fertig: true },
-      { view: "vertrieb-termine", pfad: n("/vertrieb/termine"), titel: "Termine", alt: ["/admin/vertrieb/buchungsseite"], reiter: { gruppe: "verkaufen", label: "Termine" }, suchwoerter: "Vertrieb Buchungsseite", fertig: true },
+      { view: "vertrieb-termine", pfad: n("/vertrieb/termine"), titel: "Termine", alt: ["/admin/vertrieb/buchungsseite", "/admin/vertrieb/termine"], reiter: { gruppe: "verkaufen", label: "Termine" }, suchwoerter: "Vertrieb Buchungsseite", fertig: true },
       { view: "vertrieb-angebote", pfad: n("/vertrieb/angebote"), titel: "Angebote", alt: ["/admin/vertrieb/angebote"], reiter: { gruppe: "verkaufen", label: "Angebote" }, suchwoerter: "Vertrieb", fertig: true },
-      {
-        view: "marketing",
-        pfad: n("/marketing"),
-        titel: "LinkedIn",
-        alt: ["/admin/marketing/linkedin", "/admin/marketing"],
-        reiter: [
-          { gruppe: "verkaufen", label: "Marketing" },
-          { gruppe: "marketing", label: "LinkedIn" },
-        ],
-        suchwoerter: "Marketing Entwürfe Posts",
-        fertig: true,
-      },
+      // Marketing (Admin-Umbau 19.11.2026): kein Reiter von Verkaufen mehr, sondern über „Mehr“ im Kopf von Verkaufen;
+      // die drei Marketing-Seiten haben eine eigene Leiste. Webseite & Rechner ist Einrichtung (ohne Reiter, Link in Unterlagen).
+      { view: "marketing", pfad: n("/marketing"), titel: "LinkedIn", alt: ["/admin/marketing/linkedin", "/admin/marketing"], reiter: { gruppe: "marketing", label: "LinkedIn" }, suchwoerter: "Marketing Entwürfe Posts", fertig: true },
       { view: "marketing-empfehlungen", pfad: n("/marketing/empfehlungen"), titel: "Empfehlungen", alt: ["/admin/marketing/empfehlungen"], reiter: { gruppe: "marketing", label: "Empfehlungen" }, suchwoerter: "Marketing Kollegen empfehlen Prämie", fertig: true },
       { view: "marketing-unterlagen", pfad: n("/marketing/unterlagen"), titel: "Unterlagen", alt: ["/admin/marketing/unterlagen"], reiter: { gruppe: "marketing", label: "Unterlagen" }, suchwoerter: "Marketing Präsentation", fertig: true },
-      { view: "marketing-webseite", pfad: n("/marketing/webseite"), titel: "Webseite & Rechner", alt: ["/admin/einstellungen/rechner"], reiter: { gruppe: "marketing", label: "Webseite & Rechner" }, suchwoerter: "Marketing Preise Rechner", fertig: true },
+      { view: "marketing-webseite", pfad: n("/marketing/webseite"), titel: "Webseite & Rechner", alt: ["/admin/einstellungen/rechner"], suchwoerter: "Marketing Preise Rechner Einstellungen", fertig: true },
       // Datenschutz und Recht (Ole, 19.11.2026): Liste der Fälle aus der Kaltakquise, erreichbar über Kontakte (Umschalter)
       { view: "vertrieb-datenschutz", pfad: n("/vertrieb/datenschutz"), titel: "Datenschutz und Recht", alt: ["/admin/vertrieb/datenschutz"], suchwoerter: "DSGVO Auskunft Löschung Widerspruch Abmahnung Art. 15 Art. 17", fertig: true },
       // Geplante Nachrichten (Ole, 20.11.2026): automatische E-Mails und WhatsApps der nächsten 14 Tage, erreichbar über Mein Tag → Vertrieb
@@ -127,19 +121,19 @@ export const BEREICHE: NeuBereich[] = [
     seiten: [
       { view: "kunden", pfad: n("/kunden"), titel: "Kunden", alt: ["/admin/kunden", "/admin/kunden/pipeline", "/admin/vertrieb/kunden"], reiter: { gruppe: "betreuen", label: "Kunden" }, suchwoerter: "Kundenliste Onboarding", fertig: true },
       { view: "leads-chats", pfad: n("/leads/chats"), titel: "Chats", alt: ["/admin/whatsapp"], reiter: { gruppe: "betreuen", label: "Chats" }, suchwoerter: "WhatsApp Support-Nummer Assistent", fertig: true },
-      { view: "kunden-berichte", pfad: n("/kunden/berichte"), titel: "Monatsberichte", alt: ["/admin/monatsberichte"], reiter: { gruppe: "betreuen", label: "Monatsberichte" }, fertig: true },
-      { view: "zahlen-qualitaet", pfad: n("/zahlen/qualitaet"), titel: "Qualität & Nutzung", alt: ["/admin/zahlen/stornoquote", "/admin/zahlen/whatsapp", "/admin/nutzung"], reiter: { gruppe: "betreuen", label: "Qualität & Nutzung" }, suchwoerter: "Stornoquote WhatsApp-Zustellung Nutzung NPS", fertig: true },
+      { view: "kunden-berichte", pfad: n("/kunden/berichte"), titel: "Monatsberichte", alt: ["/admin/monatsberichte"], reiter: { gruppe: "betreuen", label: "Berichte" }, suchwoerter: "Monatsberichte freigeben", fertig: true },
+      { view: "zahlen-qualitaet", pfad: n("/zahlen/qualitaet"), titel: "Qualität & Nutzung", alt: ["/admin/zahlen/stornoquote", "/admin/zahlen/whatsapp", "/admin/nutzung"], reiter: { gruppe: "betreuen", label: "Qualität" }, suchwoerter: "Stornoquote WhatsApp-Zustellung Nutzung NPS", fertig: true },
       // Alter Link auf einen Bericht: leitet in die Kundenakte (Reiter Monatsberichte, Bericht geöffnet)
       { view: "kunden-berichte", pfad: n("/kunden/berichte/[id]"), titel: "Monatsbericht", alt: ["/admin/monatsberichte/[id]"], fertig: true },
       { view: "leads-chat", pfad: n("/leads/chats/[id]"), titel: "Chat", alt: ["/admin/whatsapp"], fertig: true },
       { view: "kunde", pfad: n("/kunden/[id]"), titel: "Kunde", alt: ["/admin/kunden/[id]"], reiter: { gruppe: "kundenakte", label: "Übersicht" }, fertig: true },
       { view: "kunde", pfad: n("/kunden/[id]/kontakt"), titel: "Kontaktakte", alt: [], fertig: true },
-      { view: "kunde-leads", pfad: n("/kunden/[id]/leads"), titel: "Kampagne & Leads", alt: ["/admin/kunden/[id]/leads"], reiter: { gruppe: "kundenakte", label: "Kampagne & Leads" }, fertig: true },
-      { view: "kunde-optimierung", pfad: n("/kunden/[id]/optimierung"), titel: "Optimierung", alt: ["/admin/kunden/[id]/optimierung"], reiter: { gruppe: "kundenakte", label: "Optimierung" }, fertig: true },
+      { view: "kunde-leads", pfad: n("/kunden/[id]/leads"), titel: "Leads", alt: ["/admin/kunden/[id]/leads"], reiter: { gruppe: "kundenakte", label: "Leads" }, fertig: true },
+      { view: "kunde-optimierung", pfad: n("/kunden/[id]/optimierung"), titel: "Optimierung", alt: ["/admin/kunden/[id]/optimierung"], fertig: true },
       { view: "kunde-whatsapp", pfad: n("/kunden/[id]/whatsapp"), titel: "WhatsApp", alt: ["/admin/kunden/[id]/whatsapp"], reiter: { gruppe: "kundenakte", label: "WhatsApp" }, fertig: true },
-      { view: "kunde-berichte", pfad: n("/kunden/[id]/berichte"), titel: "Monatsberichte", alt: [], reiter: { gruppe: "kundenakte", label: "Monatsberichte" }, fertig: true },
-      { view: "kunde-abrechnung", pfad: n("/kunden/[id]/abrechnung"), titel: "Abrechnung & Pause", alt: ["/admin/kunden/[id]/abrechnung"], reiter: { gruppe: "kundenakte", label: "Abrechnung & Pause" }, fertig: true },
-      { view: "kunde-team", pfad: n("/kunden/[id]/team"), titel: "Team & Logins", alt: ["/admin/kunden/[id]/logins"], reiter: { gruppe: "kundenakte", label: "Team & Logins" }, fertig: true },
+      { view: "kunde-berichte", pfad: n("/kunden/[id]/berichte"), titel: "Monatsberichte", alt: [], fertig: true },
+      { view: "kunde-abrechnung", pfad: n("/kunden/[id]/abrechnung"), titel: "Abrechnung", alt: ["/admin/kunden/[id]/abrechnung"], reiter: { gruppe: "kundenakte", label: "Abrechnung" }, fertig: true },
+      { view: "kunde-team", pfad: n("/kunden/[id]/team"), titel: "Team & Logins", alt: ["/admin/kunden/[id]/logins", "/admin/buyers"], reiter: { gruppe: "kundenakte", label: "Team" }, fertig: true },
       { view: "leads-ki", pfad: n("/kunden/[id]/kampagne"), titel: "Kampagne mit KI", alt: ["/admin/kunden/[id]/kampagne"], fertig: true },
     ],
   },
@@ -152,11 +146,12 @@ export const BEREICHE: NeuBereich[] = [
     ort: "oben",
     handy: "leiste",
     seiten: [
-      { view: "leads-ppl", pfad: n("/leads/ppl"), titel: "Pay-per-Lead", alt: ["/admin/ppl", "/admin/ppl/import"], reiter: { gruppe: "liefern", label: "Pay-per-Lead" }, suchwoerter: "PPL Bezug Bezüge Storno Reklamation Import Käufer", fertig: true },
+      { view: "leads-ppl", pfad: n("/leads/ppl"), titel: "Pay-per-Lead", alt: ["/admin/ppl"], reiter: { gruppe: "liefern", label: "Pay-per-Lead" }, suchwoerter: "PPL Bezug Bezüge Storno Reklamation Käufer Auswertung Eingang Heinrich von Kleist HvK Gutschrift Slack", fertig: true },
       { view: "leads-alle", pfad: n("/leads/alle"), titel: "Alle Leads", alt: ["/admin/leads"], reiter: { gruppe: "liefern", label: "Leads" }, fertig: true },
-      { view: "leads", pfad: n("/leads"), titel: "Lead-Eingang", alt: ["/admin/lead-eingang"], reiter: { gruppe: "liefern", label: "Lead-Eingang" }, suchwoerter: "Formulare Zuordnung Meta", fertig: true },
-      { view: "leads-optimierung", pfad: n("/leads/werbekonten"), titel: "Werbekonten", alt: ["/admin/optimierung", "/admin/media-buyer"], reiter: { gruppe: "liefern", label: "Werbekonten" }, suchwoerter: "Optimierung Media Buyer Budget Pool", fertig: true },
-      { view: "leads-ab-tests", pfad: n("/leads/ab-tests"), titel: "A/B-Tests", alt: [], reiter: { gruppe: "liefern", label: "A/B-Tests" }, suchwoerter: "Splittest Experiment Vorlagen Fassung Antwortquote Terminquote Erstanschreiben Hypothese", fertig: true },
+      { view: "leads", pfad: n("/leads"), titel: "Formulare", alt: ["/admin/lead-eingang"], reiter: { gruppe: "liefern", label: "Formulare" }, suchwoerter: "Lead-Eingang Leadformular Zuordnung Meta", fertig: true },
+      { view: "leads-optimierung", pfad: n("/leads/werbekonten"), titel: "Werbekonten", alt: ["/admin/optimierung", "/admin/media-buyer"], reiter: { gruppe: "liefern", label: "Werbekonten" }, suchwoerter: "Optimierung Media Buyer Budget Pool Tagesbudget Maßnahmen freigeben", fertig: true },
+      // A/B-Tests: kein eigener Reiter mehr (höchstens 4 je Rolle, UX-Umbau 20.11.2026), erreichbar über Leads › „A/B-Tests“ und die Suche
+      { view: "leads-ab-tests", pfad: n("/leads/ab-tests"), titel: "A/B-Tests", alt: [], suchwoerter: "Splittest Experiment Vorlagen Fassung Antwortquote Terminquote Erstanschreiben Hypothese", fertig: true },
       { view: "leads-bezug", pfad: n("/leads/ppl/bezug/[id]"), titel: "Bezug", alt: ["/admin/ppl/bezug/[id]"], fertig: true },
       { view: "leads-konto", pfad: n("/leads/werbekonten/[id]"), titel: "Werbekonto", alt: ["/admin/optimierung/[id]"], fertig: true },
     ],
@@ -170,57 +165,64 @@ export const BEREICHE: NeuBereich[] = [
     ort: "oben",
     handy: "leiste",
     seiten: [
-      { view: "zahlen", pfad: n("/zahlen"), titel: "Übersicht", alt: ["/admin/zahlen", "/"], reiter: { gruppe: "geld", label: "Übersicht" }, suchwoerter: "Zahlen Kennzahlen Investoren MRR BWA Dashboard", fertig: true },
-      { view: "zahlen-umsatz", pfad: n("/zahlen/umsatz"), titel: "Umsatz & Buchungen", alt: ["/admin/zahlen/buchungen"], reiter: { gruppe: "geld", label: "Umsatz & Buchungen" }, suchwoerter: "Rechnungen", fertig: true },
+      { view: "zahlen", pfad: n("/zahlen"), titel: "Übersicht", alt: ["/admin/zahlen", "/"], reiter: { gruppe: "geld", label: "Übersicht" }, suchwoerter: "Zahlen Kennzahlen MRR Ergebnis Gewinn BWA Wachstum Kohorten Wirtschaftlichkeit Vertrieb Pay-per-Lead Dashboard", fertig: true },
+      { view: "zahlen-umsatz", pfad: n("/zahlen/umsatz"), titel: "Umsatz", alt: ["/admin/zahlen/buchungen"], reiter: { gruppe: "geld", label: "Umsatz" }, suchwoerter: "Buchungen Rechnungen Einrichtungsgebühr Einmal-Umsatz", fertig: true },
       { view: "zahlen-offene-posten", pfad: n("/zahlen/offene-posten"), titel: "Offene Posten", alt: [], reiter: { gruppe: "geld", label: "Offene Posten" }, suchwoerter: "Mahnung Mahnwesen Überweisung offene Rechnungen Zahlungserinnerung Zahlungseingang", fertig: true },
-      { view: "zahlen-kosten", pfad: n("/zahlen/kosten"), titel: "Kosten & Bank", alt: ["/admin/einstellungen/kosten", "/admin/einstellungen/bank"], reiter: { gruppe: "geld", label: "Kosten & Bank" }, suchwoerter: "Laufende Kosten Ausgaben Karten", fertig: true },
-      { view: "zahlen-kunden", pfad: n("/zahlen/kunden"), titel: "Kunden-Lebenszyklus", alt: ["/admin/zahlen/lebenszyklus"], reiter: { gruppe: "geld", label: "Kunden-Lebenszyklus" }, suchwoerter: "Kündigung Ruhephase Rückkehr Kohorten", fertig: true },
-      { view: "zahlen-auswertung", pfad: n("/zahlen/auswertung"), titel: "Auswertung", alt: [], reiter: { gruppe: "geld", label: "Auswertung" }, suchwoerter: "Investoren Kennzahlen NRR Umsatzbindung CAC CLV LTV Kundenwert Amortisation Bruttomarge KI-Kosten Kohorten Export PDF CSV", fertig: true },
+      { view: "zahlen-kosten", pfad: n("/zahlen/kosten"), titel: "Kosten", alt: ["/admin/einstellungen/kosten"], reiter: { gruppe: "geld", label: "Kosten" }, suchwoerter: "Laufende Kosten Ausgaben", fertig: true },
+      // Detailseiten ohne Reiter (Umbau 19.11.2026: 6 Reiter → 4), erreichbar aus Übersicht bzw. Kosten und über die Suche
+      { view: "zahlen-kunden", pfad: n("/zahlen/kunden"), titel: "Kündigung & Rückkehr", alt: ["/admin/zahlen/lebenszyklus"], suchwoerter: "Kunden-Lebenszyklus Kündigung Ruhephase Rückkehr Halteangebote", fertig: true },
+      { view: "zahlen-auswertung", pfad: n("/zahlen/auswertung"), titel: "Für Investoren", alt: [], suchwoerter: "Auswertung Investoren Kennzahlen NRR Umsatzbindung CAC CLV LTV Kundenwert Amortisation Bruttomarge KI-Kosten Kohorten Export PDF CSV", fertig: true },
       { view: "zahlen-kosten", pfad: n("/zahlen/kosten/zuordnen"), titel: "Ausgaben zuordnen", alt: ["/admin/einstellungen/bank/zuordnen"], fertig: true },
+      { view: "zahlen-kosten", pfad: n("/zahlen/kosten/konten"), titel: "Konten & Regeln", alt: ["/admin/einstellungen/bank"], suchwoerter: "Bank Commerzbank American Express Amex Karten Regeln Annahmen Gründerzeit Stundensatz Pilotphase", fertig: true },
     ],
   },
   {
+    // Werkzeuge und Einstellungen zusammengelegt (UX-Umbau 20.11.2026): Die Seiten der Technik stehen unter
+    // Einstellungen › Technik (Adressen bleiben). Die Rolle bleibt nur für „Mein Tag“ (Technik-Punkte wie
+    // Hintergrund-Jobs, lib/admin-neu/rollen.ts) und führt dort zum Systemzustand; in Seitenleiste und Leiste unten
+    // erscheint sie nicht mehr (ort/handy „keiner“).
     id: "werkzeuge",
-    label: "Werkzeuge",
-    kurz: "Werkzeuge",
-    hinweis: "Technik, Einrichtung",
-    pfad: n("/werkzeuge"),
-    ort: "unten",
-    handy: "mehr",
-    seiten: [
-      { view: "werkzeuge", pfad: n("/werkzeuge"), titel: "Werkzeuge", alt: [], suchwoerter: "Technik Diagnose Verbindungen Import", fertig: true },
-      { view: "w-zustand", pfad: n("/werkzeuge/zustand"), titel: "Systemzustand", gruppe: "Zustand", alt: [], suchwoerter: "Diagnose Hintergrund-Jobs Heartbeat Meta Stripe Bank LinkedIn WhatsApp-Zustellung Google-Kontingent Werbekosten", fertig: true },
-      { view: "e-status", pfad: n("/einstellungen/status"), titel: "Status & Support", gruppe: "Zustand", alt: ["/admin/einstellungen/status"], suchwoerter: "Störung Statusmeldung", untertitel: "Öffentliche Statusseite und Support-Kontakt im Hilfe-Chat.", fertig: true },
-      { view: "e-anbindungen", pfad: n("/einstellungen/anbindungen"), titel: "Anbindungen & Import", gruppe: "Verbindungen & Importe", alt: ["/admin/vertrieb/import"], suchwoerter: "Instantly Webhook Meta-Verbindung LinkedIn Agenturliste", untertitel: "Woher Vertrieb und Lead-Eingang ihre Daten bekommen.", fertig: true },
-      { view: "e-vorlagen", pfad: n("/einstellungen/whatsapp"), titel: "WhatsApp-Vorlagen & Support-Nummer", gruppe: "WhatsApp", alt: ["/admin/whatsapp/settings"], suchwoerter: "Vorlagen Assistent Support-Nummer A/B-Test", untertitel: "Support-Nummer und A/B-Tests der Vorlagen.", fertig: true },
-      { view: "w-gebuehren", pfad: n("/werkzeuge/meta-gebuehren"), titel: "Meta-Gebühren", gruppe: "WhatsApp", alt: [], suchwoerter: "WhatsApp Gebühren Kosten Meta intern", fertig: true },
-      { view: "e-login", pfad: n("/einstellungen/login"), titel: "Login-Seite", gruppe: "Inhalte & Einrichtung", alt: ["/admin/einstellungen/login"], suchwoerter: "Infokarten", untertitel: "Infokarten neben dem Login, aktive Karten wechseln sich ab.", fertig: true },
-      { view: "e-einrichtung", pfad: n("/einstellungen/einrichtung"), titel: "Einrichtung neuer Kunden", gruppe: "Inhalte & Einrichtung", alt: ["/admin/einstellungen/einrichtung"], suchwoerter: "Business-ID Erklärvideos Team-Kalender", untertitel: "Was neue Kunden unter Einrichtung sehen.", fertig: true },
-      { view: "e-protokoll", pfad: n("/einstellungen/protokoll"), titel: "Änderungsprotokoll", gruppe: "Protokoll & Testdaten", alt: ["/admin/einstellungen/protokoll"], untertitel: "Wer hat wann was geändert. Einträge bleiben 1 Jahr.", fertig: true },
-    ],
+    label: "Technik",
+    kurz: "Technik",
+    pfad: n("/werkzeuge/zustand"),
+    ort: "keiner",
+    handy: "keiner",
+    seiten: [],
   },
   {
+    // Eine Seite Einstellungen (UX-Umbau 20.11.2026) mit Gruppen nach Rollen wie in der Seitenleiste, Technik zuletzt.
+    // Reihenfolge der Gruppen: GRUPPEN in src/app/admin/neu/einstellungen/page.tsx. Seiten ohne `gruppe` sind
+    // Unterseiten (Statusseite unter Systemzustand, Meta-Gebühren unter WhatsApp).
     id: "einstellungen",
     label: "Einstellungen",
     kurz: "Einstellungen",
     pfad: n("/einstellungen"),
     ort: "unten",
-    handy: "mehr",
+    handy: "profil",
     seiten: [
-      { view: "einstellungen", pfad: n("/einstellungen"), titel: "Einstellungen", alt: ["/admin/einstellungen"], fertig: true },
+      { view: "einstellungen", pfad: n("/einstellungen"), titel: "Einstellungen", alt: ["/admin/einstellungen"], suchwoerter: "Werkzeuge Technik", fertig: true },
       { view: "e-sicherheit", pfad: n("/einstellungen/sicherheit"), titel: "Zwei-Faktor & Geräte", gruppe: "Konto & Sicherheit", alt: ["/admin/einstellungen/sicherheit"], suchwoerter: "Sicherheit 2FA", untertitel: "Anmeldung schützen.", fertig: true },
       { view: "e-admins", pfad: n("/einstellungen/admins"), titel: "Admins & Rechte", gruppe: "Konto & Sicherheit", alt: [], untertitel: "Wer Zugang zum Admin hat.", fertig: true },
+      { view: "e-buchung", pfad: n("/einstellungen/buchungsseiten"), titel: "Buchungsseiten", gruppe: "Verkaufen", alt: ["/admin/vertrieb/buchungsseite"], suchwoerter: "Kalender Termintypen Zeiten", untertitel: "Interessenten buchen Vertriebstermine direkt in Ihrem Kalender.", fertig: true },
       { view: "e-followups", pfad: n("/einstellungen/follow-ups"), titel: "Später-Follow-ups", gruppe: "Verkaufen", alt: ["/admin/vertrieb/follow-ups"], untertitel: "Kontakte, die „später“ gesagt haben, bekommen zum Zeitpunkt zwei Mails.", fertig: true },
-      { view: "e-buchung", pfad: n("/einstellungen/buchungsseiten"), titel: "Buchungsseiten", gruppe: "Verkaufen", alt: ["/admin/vertrieb/buchungsseite"], untertitel: "Interessenten buchen Vertriebstermine direkt in Ihrem Kalender.", fertig: true },
-      { view: "e-halte", pfad: n("/einstellungen/halteangebote"), titel: "Halteangebote", gruppe: "Kunden", alt: ["/admin/einstellungen/halteangebote"], untertitel: "Was Kunden beim Kündigen je Grund angeboten wird.", fertig: true },
-      { view: "e-berichte", pfad: n("/einstellungen/monatsberichte"), titel: "Monatsberichte", gruppe: "Kunden", alt: ["/admin/einstellungen/monatsberichte"], suchwoerter: "automatischer Versand", untertitel: "Ab dem 2. entsteht für jeden aktiven Kunden ein Bericht über den Vormonat.", fertig: true },
-      { view: "e-neuigkeiten", pfad: n("/einstellungen/neuigkeiten"), titel: "Neuigkeiten", gruppe: "Kunden", alt: ["/admin/einstellungen/neuigkeiten"], untertitel: "Einträge unter Profil → Neuigkeiten im Kundenbereich. Entwürfe sind unsichtbar.", fertig: true },
+      { view: "e-empfehlen", pfad: n("/einstellungen/kollegen-empfehlen"), titel: "Kollegen empfehlen", gruppe: "Verkaufen", alt: ["/admin/einstellungen/empfehlungen"], suchwoerter: "Prämie Empfehlungsprogramm", untertitel: "Kunden empfehlen uns mit persönlichem Link an Kollegen.", fertig: true },
       { view: "e-produkte", pfad: n("/einstellungen/produkte"), titel: "Produkte", gruppe: "Angebot & Produkte", alt: ["/admin/einstellungen/produkte"], untertitel: "Sparten, die Kunden selbst dazubuchen können.", fertig: true },
       { view: "e-tarife", pfad: n("/einstellungen/tarife"), titel: "Tarifkatalog", gruppe: "Angebot & Produkte", alt: ["/admin/einstellungen/beitraege"], suchwoerter: "Beiträge Beitragsrechner Vorschläge Vermittler", untertitel: "Vorschläge von Vermittlern, Gesellschaften und Beiträge rechnen.", fertig: true },
-      { view: "e-automatik", pfad: n("/einstellungen/kampagnen-automatik"), titel: "Kampagnen-Automatik", gruppe: "Werbung", alt: ["/admin/einstellungen/kampagnen-automatik"], suchwoerter: "Autopilot Media Buyer Budget", untertitel: "Was das Agenten-Team selbst erledigt. Bei Meta wird nie etwas aktiviert.", fertig: true },
-      { view: "e-empfehlen", pfad: n("/einstellungen/kollegen-empfehlen"), titel: "Kollegen empfehlen", gruppe: "Marketing", alt: ["/admin/einstellungen/empfehlungen"], untertitel: "Kunden empfehlen uns mit persönlichem Link an Kollegen.", fertig: true },
-      { view: "e-rechnung", pfad: n("/einstellungen/rechnungsangaben"), titel: "Rechnungsangaben", gruppe: "Finanzen", alt: ["/admin/einstellungen/rechnungsangaben"], suchwoerter: "Steuernummer Stripe Fußzeile", untertitel: "Pflichtangaben auf jeder Stripe-Rechnung.", fertig: true },
-      { view: "e-zahlung", pfad: n("/einstellungen/zahlungserinnerungen"), titel: "Zahlungserinnerungen", gruppe: "Finanzen", alt: [], untertitel: "Angenommene, aber nicht bezahlte Angebote.", fertig: true },
+      { view: "e-neuigkeiten", pfad: n("/einstellungen/neuigkeiten"), titel: "Neuigkeiten", gruppe: "Betreuen", alt: ["/admin/einstellungen/neuigkeiten"], untertitel: "Einträge unter Profil › Neuigkeiten im Kundenbereich. Entwürfe sind unsichtbar.", fertig: true },
+      { view: "e-berichte", pfad: n("/einstellungen/monatsberichte"), titel: "Monatsberichte", gruppe: "Betreuen", alt: ["/admin/einstellungen/monatsberichte"], suchwoerter: "automatischer Versand", untertitel: "Ab dem 2. entsteht für jeden aktiven Kunden ein Bericht über den Vormonat.", fertig: true },
+      { view: "e-halte", pfad: n("/einstellungen/halteangebote"), titel: "Halteangebote", gruppe: "Betreuen", alt: ["/admin/einstellungen/halteangebote"], suchwoerter: "Kündigung", untertitel: "Was Kunden beim Kündigen je Grund angeboten wird.", fertig: true },
+      { view: "e-einrichtung", pfad: n("/einstellungen/einrichtung"), titel: "Einrichtung neuer Kunden", gruppe: "Betreuen", alt: ["/admin/einstellungen/einrichtung"], suchwoerter: "Business-ID Erklärvideos Team-Kalender Hilfetermin", untertitel: "Was neue Kunden unter Einrichtung sehen.", fertig: true },
+      { view: "e-login", pfad: n("/einstellungen/login"), titel: "Login-Seite", gruppe: "Betreuen", alt: ["/admin/einstellungen/login"], suchwoerter: "Infokarten", untertitel: "Infokarten neben dem Login, aktive Karten wechseln sich ab.", fertig: true },
+      { view: "e-automatik", pfad: n("/einstellungen/kampagnen-automatik"), titel: "Kampagnen-Automatik", gruppe: "Liefern", alt: ["/admin/einstellungen/kampagnen-automatik"], suchwoerter: "Autopilot Media Buyer Budget Optimierung", untertitel: "Was das Agenten-Team selbst erledigt. Bei Meta wird nie etwas aktiviert.", fertig: true },
+      { view: "e-rechnung", pfad: n("/einstellungen/rechnungsangaben"), titel: "Rechnungsangaben", gruppe: "Geld", alt: ["/admin/einstellungen/rechnungsangaben"], suchwoerter: "Steuernummer Stripe Fußzeile", untertitel: "Pflichtangaben auf jeder Stripe-Rechnung.", fertig: true },
+      { view: "e-zahlung", pfad: n("/einstellungen/zahlungserinnerungen"), titel: "Zahlungserinnerungen", gruppe: "Geld", alt: [], untertitel: "Angenommene, aber nicht bezahlte Angebote.", fertig: true },
+      // Technik (bis 20.11.2026 eigener Bereich „Werkzeuge“, Adressen unter /werkzeuge bleiben)
+      { view: "w-zustand", pfad: n("/werkzeuge/zustand"), titel: "Systemzustand", gruppe: "Technik", alt: [], suchwoerter: "Werkzeuge Diagnose Hintergrund-Jobs Heartbeat Meta Stripe Bank LinkedIn WhatsApp-Zustellung Google-Kontingent Werbekosten", fertig: true },
+      { view: "e-status", pfad: n("/einstellungen/status"), titel: "Statusseite & Support", alt: ["/admin/einstellungen/status"], suchwoerter: "Störung Statusmeldung Support-Kontakt", untertitel: "Störungen für Kunden melden, Support-Kontakt im Hilfe-Chat.", fertig: true },
+      { view: "e-anbindungen", pfad: n("/einstellungen/anbindungen"), titel: "Anbindungen & Import", gruppe: "Technik", alt: ["/admin/vertrieb/import"], suchwoerter: "Instantly Webhook Meta-Verbindung LinkedIn Google Agenturliste CSV Policen KI", untertitel: "Woher Vertrieb und Lead-Eingang ihre Daten bekommen.", fertig: true },
+      { view: "e-vorlagen", pfad: n("/einstellungen/whatsapp"), titel: "WhatsApp", gruppe: "Technik", alt: ["/admin/whatsapp/settings"], suchwoerter: "Vorlagen Support-Nummer 360dialog A/B-Test Meta-Gebühren", untertitel: "Support-Nummer für Hilfe-Chat und Zahlungserinnerungen.", fertig: true },
+      { view: "w-gebuehren", pfad: n("/werkzeuge/meta-gebuehren"), titel: "Meta-Gebühren", alt: [], suchwoerter: "WhatsApp Gebühren Kosten Meta intern", fertig: true },
+      { view: "e-protokoll", pfad: n("/einstellungen/protokoll"), titel: "Änderungsprotokoll", gruppe: "Technik", alt: ["/admin/einstellungen/protokoll"], suchwoerter: "Audit Verlauf", untertitel: "Wer hat wann was geändert. Einträge bleiben 1 Jahr.", fertig: true },
     ],
   },
   {
@@ -228,8 +230,9 @@ export const BEREICHE: NeuBereich[] = [
     label: "Was wo ist",
     kurz: "Was wo ist",
     pfad: n("/was-wo-ist"),
-    ort: "unten",
-    handy: "mehr",
+    // Umzugshilfe bis zur Abschaltung des alten Admins (Stufe A, Ole): nicht in der Navigation, nur Profilmenü und Suche
+    ort: "profil",
+    handy: "profil",
     seiten: [{ view: "landkarte", pfad: n("/was-wo-ist"), titel: "Was wo ist", alt: [], suchwoerter: "Landkarte Umzug alte Seiten Funktionen", fertig: true }],
   },
 ];
@@ -284,24 +287,23 @@ export function altePfad(seite: NeuSeite, params: Record<string, string> = {}): 
 
 // ─── „+ Neu“ ─────────────────────────────────────────────────────────────
 // Nach Rollen geordnet (Admin v2), rechts steht die Rolle. art „dialog“: öffnet den bestehenden Ablauf im Fenster,
-// art „link“: führt zur bestehenden Seite.
+// art „link“: führt zur bestehenden Seite (immer die Adresse im neuen Admin).
+// Umbau 20.11.2026: nur noch, was man im Alltag schnell anlegt (5 statt 9 Einträge). Neuigkeit, LinkedIn-Entwurf,
+// Formular-Zuordnung und Laufende Kosten legt man auf ihrer Seite an (Knopf dort), sie entstehen selten oder automatisch.
 export type NeuEintrag = {
-  id: "kontakt" | "aufgabe" | "angebot" | "termin" | "zuordnung" | "ppl-bezug" | "linkedin" | "neuigkeit" | "kosten";
+  id: "kontakt" | "aufgabe" | "angebot" | "termin" | "ppl-bezug";
   label: string;
   rolle: BereichId;
 } & ({ art: "link"; href: string } | { art: "dialog"; dialog: "aufgabe" | "termin" });
 
 export const NEU_EINTRAEGE: NeuEintrag[] = [
   { id: "aufgabe", label: "Aufgabe", rolle: "mein-tag", art: "dialog", dialog: "aufgabe" },
-  { id: "kontakt", label: "Kontakt", rolle: "verkaufen", art: "link", href: "/admin/vertrieb/kontakte/neu" },
+  { id: "kontakt", label: "Kontakt", rolle: "verkaufen", art: "link", href: n("/vertrieb/kontakte/neu") },
   // Termin buchen wie in der Kontaktakte (Kontakt wählen, dann Termintyp, Datum, Uhrzeit); in einer Kontaktakte sofort für diesen Kontakt
-  { id: "termin", label: "Termin buchen", rolle: "verkaufen", art: "link", href: "/admin/neu/vertrieb/termine?buchen=1" },
-  { id: "angebot", label: "Angebot", rolle: "verkaufen", art: "link", href: "/admin/vertrieb/kontakte" },
-  { id: "linkedin", label: "LinkedIn-Entwurf", rolle: "verkaufen", art: "link", href: "/admin/neu/marketing" },
-  { id: "neuigkeit", label: "Neuigkeit für Kunden", rolle: "betreuen", art: "link", href: "/admin/einstellungen/neuigkeiten" },
-  { id: "ppl-bezug", label: "Pay-per-Lead-Bezug", rolle: "liefern", art: "link", href: "/admin/neu/leads/ppl/bezug/neu" },
-  { id: "zuordnung", label: "Formular-Zuordnung", rolle: "liefern", art: "link", href: "/admin/neu/leads?neu=1#zuordnen" },
-  { id: "kosten", label: "Laufende Kosten", rolle: "geld", art: "link", href: "/admin/neu/zahlen/kosten" },
+  { id: "termin", label: "Termin buchen", rolle: "verkaufen", art: "link", href: n("/vertrieb/termine?buchen=1") },
+  // Angebot gehört immer zu einem Kontakt: in einer Kontaktakte direkt „Angebot erstellen“, sonst Kontakt wählen
+  { id: "angebot", label: "Angebot", rolle: "verkaufen", art: "link", href: n("/vertrieb/kontakte") },
+  { id: "ppl-bezug", label: "Pay-per-Lead-Bezug", rolle: "liefern", art: "link", href: n("/leads/ppl/bezug/neu") },
 ];
 
 // ─── Suche: Seiten ───────────────────────────────────────────────────────

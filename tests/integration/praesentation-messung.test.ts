@@ -10,13 +10,20 @@ import { experimenteCacheLeeren, experimentStats, zuteilen } from "@/lib/experim
 import { PRAESENTATION_EXPERIMENT } from "@/lib/praesentation-variante";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
+// Fassung vor dem 19.11.2026: nur Haftpflicht im Vergleich, die übrigen Sparten per „Mit anschauen“ (diese Tests prüfen
+// Paketwahl und Reihenfolge der hinzugefügten Sparten; die Live-Demo hat seitdem drei Sparten im Vergleich)
+const nurHaftpflicht = () => {
+  const d = demoAngebote();
+  return { ...d, items: d.items.map((i) => (i.kombi?.sparte !== "haftpflicht" ? { ...i, zusatz: true, gewaehlt: false } : i)) };
+};
+
 let customerId = "";
 let ctx: { customerId: string; userId: string | null; teamRole: "owner" | "advisor" };
 
 async function termin(name = "Dominik Schmid") {
   const lead = await prisma.lead.create({ data: { customerId, name, source: "Privatschutz" } });
   const appt = await prisma.appointment.create({
-    data: { customerId, leadId: lead.id, mode: "video", startsAt: new Date(Date.now() - 3600_000), status: "booked", offersJson: demoAngebote() as unknown as Prisma.InputJsonValue, offersConfirmedAt: new Date() },
+    data: { customerId, leadId: lead.id, mode: "video", startsAt: new Date(Date.now() - 3600_000), status: "booked", offersJson: nurHaftpflicht() as unknown as Prisma.InputJsonValue, offersConfirmedAt: new Date() },
   });
   return { lead, appt };
 }

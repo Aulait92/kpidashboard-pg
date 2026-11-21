@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
-import { ArrowRight } from "lucide-react";
-import { Card, CardHeader } from "@/components/ui";
+import { ArrowRight, ChevronRight } from "lucide-react";
+import { Badge, Card, CardHeader } from "@/components/ui";
+import { RATING_TONE } from "@/components/admin-neu/kunden/bericht-bewertung";
+import { monthLabel, STATUS_LABEL } from "@/lib/monatsbericht/shared";
 import { KundenakteSeite } from "@/components/admin-neu/kunden/akte";
 import { Kennzahlen, LeadsJeTag } from "@/components/admin-neu/kunden/kennzahlen";
 import { Aufklapp } from "@/components/admin-neu/kunden/aufklapp";
@@ -28,7 +30,8 @@ const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", curren
 // Kundenakte › Übersicht: kompakt. Oben Kennzahlen, dann Einrichtung (offen nur, solange sie läuft), Verlauf mit
 // Sprung in die ganze Kontaktakte, Grunddaten und die seltenen Einstellungen zugeklappt. Früher bettete die Übersicht
 // die ganze Kontaktseite ein (am Handy rund 2.700 px); die liegt jetzt unter „Ganze Kontaktakte“ (./kontakt).
-// Lead-Qualität → Kampagne & Leads, Nächster Schritt je Berater → Team & Logins, Garantien → Abrechnung & Pause.
+// Lead-Qualität → Leads, Nächster Schritt je Berater → Team, Garantien → Abrechnung. Monatsberichte (Umbau 20.11.2026:
+// kein eigener Reiter mehr) als Karte mit dem letzten Bericht und „Alle Berichte“ (./berichte).
 export default async function KundeUebersicht({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ einrichtung?: string }> }) {
   await connection();
   const { id } = await params;
@@ -60,7 +63,10 @@ export default async function KundeUebersicht({ params, searchParams }: { params
     },
   });
   if (!c) notFound();
-  const onboarding = await loadOnboarding({ customerId: id });
+  const [onboarding, bericht] = await Promise.all([
+    loadOnboarding({ customerId: id }),
+    prisma.monthlyReport.findFirst({ where: { customerId: id }, orderBy: { month: "desc" }, select: { id: true, month: true, rating: true, status: true, sentAt: true } }),
+  ]);
   const live = !onboarding || !!onboarding.liveAt;
   const contact = c.salesContact;
   const obOffer = onboarding?.offerId ? (contact?.offers.find((o) => o.id === onboarding.offerId) ?? null) : null;
@@ -74,11 +80,21 @@ export default async function KundeUebersicht({ params, searchParams }: { params
   ].join(" · ");
 
   const einrichtung = (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <div
+        className={live ? undefined : "order-2"}
         data-funktion="setup-card--einrichtungsschritte-ansehen-einwilligung onboarding-actions-opensetupaction--selbst-einrichtung-freischalten onboarding-actions-sendsetupreminderaction--erinnerung-zur-einrichtung-senden onboarding-actions-admincheckmetaaction--meta-zugriff-pruefen onboarding-actions-restartsetupaction--einrichtung-neu-starten onboarding-actions-toggleonboardingstepaction--onboarding-schritte-abhaken"
       >
-        <SetupCard customerId={id} notice={notice} />
+        {/* Während der Einrichtung: Onboarding-Checkliste mit „Live schalten“ offen (eine Hauptaktion), die Sicht des
+            Kunden (Selbst-Einrichtung, Erinnerung, Einwilligung, Meta-Zugriff) zugeklappt. Beide Listen offen waren am
+            Handy rund 3.700 px mit zwei blauen Knöpfen (SUS-Prüfung 20.11.2026). */}
+        {onboarding && !live ? (
+          <Aufklapp titel="Selbst-Einrichtung des Kunden" zusammenfassung="Erinnerung senden, Einwilligung, Meta-Zugriff prüfen" offen={!!notice}>
+            <SetupCard customerId={id} notice={notice} />
+          </Aufklapp>
+        ) : (
+          <SetupCard customerId={id} notice={notice} />
+        )}
       </div>
       {onboarding ? (
         <div
@@ -120,6 +136,37 @@ export default async function KundeUebersicht({ params, searchParams }: { params
 
           <div className="min-w-0 space-y-5">
             <Card>
+              <CardHeader
+                title="Monatsbericht"
+                actions={
+                  <Link href={`/admin/neu/kunden/${id}/berichte`} className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-[color:var(--brand)] hover:underline">
+                    Alle Berichte <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                }
+              />
+              {bericht ? (
+                <Link
+                  href={`/admin/neu/kunden/${id}/berichte?bericht=${bericht.id}#bericht`}
+                  className="flex min-h-12 items-center gap-3 px-5 py-3 text-sm transition hover:bg-[color:var(--surface-sunken)]"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{monthLabel(bericht.month)}</span>
+                    <span className="block text-xs text-[color:var(--muted)]">
+                      {STATUS_LABEL[bericht.status] ?? bericht.status}
+                      {bericht.sentAt ? ` am ${fmtDate(bericht.sentAt)}` : ""}
+                    </span>
+                  </span>
+                  <Badge tone={RATING_TONE[bericht.rating] ?? "neutral"}>{bericht.rating}</Badge>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+                </Link>
+              ) : (
+                <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch kein Bericht. Er entsteht automatisch ab dem 2. des Folgemonats.</p>
+              )}
+            </Card>
+
+            {/* Ohne Vertriebskontakt keine leere Verlaufskarte (SUS-Prüfung 20.11.2026) */}
+            {contact ? (
+            <Card>
               <div data-funktion="page-contactpage-embedded--eingebettete-kontaktakte-verlauf-aufgaben">
                 <CardHeader
                   title="Verlauf"
@@ -158,11 +205,10 @@ export default async function KundeUebersicht({ params, searchParams }: { params
                       </li>
                     ) : null}
                   </ul>
-                ) : (
-                  <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Kein Vertriebskontakt verknüpft.</p>
-                )}
+                ) : null}
               </div>
             </Card>
+            ) : null}
 
             <Card>
               <div data-funktion="page-grunddaten--grunddaten-region-betreuungsgebuehr-meta">

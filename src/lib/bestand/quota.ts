@@ -74,17 +74,21 @@ export function isLow(remaining: number, sentThisMonth: number): boolean {
 /** Verbrauch im laufenden Monat und gültige Pakete. */
 export async function bestandQuota(customerId: string, now = new Date()): Promise<BestandQuota> {
   const monthStart = berlinMonthStart(now);
-  const [c, used, sentThisMonth, rows] = await Promise.all([
+  const [c, used1, sent1, follow, rows] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId }, select: { bestandMessageQuota: true } }),
     // Nur WhatsApp: E-Mails haben ein eigenes Kontingent (bestandMailQuota)
     prisma.campaignRecipient.count({ where: { campaign: { customerId }, channel: "whatsapp", sentAt: { gte: monthStart }, packId: null } }),
     prisma.campaignRecipient.count({ where: { campaign: { customerId }, channel: "whatsapp", sentAt: { gte: monthStart } } }),
+    // Erinnerungen per WhatsApp (Paket 4, lib/bestand/nachfassen.ts) zählen mit, immer aus dem Monatskontingent
+    prisma.campaignRecipient.count({ where: { campaign: { customerId }, followUpChannel: "whatsapp", followUpAt: { gte: monthStart } } }),
     prisma.bestandMessagePack.findMany({
       where: { customerId, purchasedAt: { lte: now }, expiresAt: { gt: now } },
       orderBy: [{ purchasedAt: "asc" }, { id: "asc" }],
       include: { _count: { select: { recipients: { where: { sentAt: { not: null } } } } } },
     }),
   ]);
+  const used = used1 + follow;
+  const sentThisMonth = sent1 + follow;
   const limit = quotaLimit(c?.bestandMessageQuota);
   const packs: QuotaPack[] = rows.map((p) => ({
     id: p.id,
@@ -135,7 +139,13 @@ export type MailQuota = { limit: number; used: number; remaining: number };
 
 /** E-Mail-Kontingent im laufenden Monat (Berliner Zeit), getrennt vom WhatsApp-Kontingent. */
 export async function bestandMailQuota(customerId: string, now = new Date()): Promise<MailQuota> {
-  const used = await prisma.campaignRecipient.count({ where: { campaign: { customerId }, channel: "email", sentAt: { gte: berlinMonthStart(now) } } });
+  const monthStart = berlinMonthStart(now);
+  // Erinnerungen per E-Mail (Paket 4) zählen mit
+  const [first, follow] = await Promise.all([
+    prisma.campaignRecipient.count({ where: { campaign: { customerId }, channel: "email", sentAt: { gte: monthStart } } }),
+    prisma.campaignRecipient.count({ where: { campaign: { customerId }, followUpChannel: "email", followUpAt: { gte: monthStart } } }),
+  ]);
+  const used = first + follow;
   const limit = PRICE_LIST.bestandIncludedEmails;
   return { limit, used, remaining: Math.max(0, limit - used) };
 }

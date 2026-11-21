@@ -302,7 +302,7 @@ describe("Stufe 2: Mein Tag „Ergebnis fehlt“", () => {
       tone: "bad",
       title: "Ergebnis fehlt: Max Muster",
       detail: "Erstgespräch am Di 17.11. 15 Uhr",
-      action: { label: "Ergebnis eintragen", href: "/admin/vertrieb/kontakte/k1#aktivitaet" },
+      action: { label: "Ergebnis eintragen", href: "/admin/neu/vertrieb/kontakte/k1#aktivitaet" },
     });
     expect(p.quick).toBeUndefined();
   });
@@ -310,7 +310,7 @@ describe("Stufe 2: Mein Tag „Ergebnis fehlt“", () => {
   it("offene Nachfrage: Ergebnis-Knöpfe direkt auf Mein Tag", () => {
     const [p] = punkte({ termine: [termin({ startAt: vor(T), reviewTaskId: "r1" })], aufgaben: [aufgabe({ id: "r1", title: "Wie lief der Termin?" })] });
     expect(p.quick).toEqual({ kind: "termin", taskId: "r1" });
-    expect(p.action.href).toBe("/admin/vertrieb/kontakte/k1#ergebnis");
+    expect(p.action.href).toBe("/admin/neu/vertrieb/kontakte/k1#ergebnis");
   });
 
   it("nicht am selben Tag, nicht mit Ergebnis, nicht älter als 14 Tage, nicht bei Abschluss oder späterem Termin", () => {

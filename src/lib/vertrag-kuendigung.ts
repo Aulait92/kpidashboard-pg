@@ -175,7 +175,7 @@ export async function cancelContract(
     })
     .catch((err) => reportError(err, "contract-cancel-task", { customer: customerId }));
   const { sendToAdmins } = await import("@/lib/push");
-  await sendToAdmins({ title: `Kündigung: ${name}`, body: `Zum ${end}${stripe.manual ? " · Stripe bitte von Hand prüfen" : ""}${reason ? ` · ${reason.slice(0, 80)}` : ""}`, url: `/admin/kunden/${customerId}/abrechnung`, tag: `kuendigung:${customerId}` }).catch(() => {});
+  await sendToAdmins({ title: `Kündigung: ${name}`, body: `Zum ${end}${stripe.manual ? " · Stripe bitte von Hand prüfen" : ""}${reason ? ` · ${reason.slice(0, 80)}` : ""}`, url: `/admin/neu/kunden/${customerId}/abrechnung`, tag: `kuendigung:${customerId}` }).catch(() => {});
 
   // Bestätigung in Textform an Inhaber und die kündigende Person
   const to = [...new Set([...(r?.c.users.map((u) => u.email) ?? []), ...(opts.actor.email ? [opts.actor.email] : [])])];

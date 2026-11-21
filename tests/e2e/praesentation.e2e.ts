@@ -1,5 +1,5 @@
-// Klick-Test: Verkaufspräsentation zum Nachklicken (/praesentation/<token>) mit Folie „Ihr Abschlussbonus“
-// als vorletzter Folie; Blättern mit der Pfeiltaste bis dorthin.
+// Klick-Test: Verkaufspräsentation zum Nachklicken (/praesentation/<token>) mit Folie „Jahresplan: 3 Monate sparen“
+// als vorletzter Folie (Ole, 21.11.2026, statt der Bonusfolie); Blättern mit der Pfeiltaste bis dorthin.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser } from "playwright";
 import { prisma } from "@/lib/prisma";
@@ -7,7 +7,7 @@ import { folienListe } from "@/lib/vertrieb/verkaufspraesentation";
 import { verkaufsLinkErstellen } from "@/lib/vertrieb/verkaufspraesentation-server";
 import { BASE, browser, context } from "./helpers";
 
-describe("Verkaufspräsentation: Bonusfolie", () => {
+describe("Verkaufspräsentation: Jahresplan-Folie", () => {
   let b: Browser;
   let contactId = "";
   let token = "";
@@ -24,26 +24,26 @@ describe("Verkaufspräsentation: Bonusfolie", () => {
     await prisma.salesContact.delete({ where: { id: contactId } }).catch(() => {});
   });
 
-  it("vorletzte Folie zeigt den Bonus mit Frist „morgen“", async () => {
+  it("vorletzte Folie zeigt die Ersparnis im Jahresplan (Listenpreis)", async () => {
     const liste = folienListe("vertreter");
-    const bonusNr = liste.findIndex((f) => f.art === "bonus") + 1;
-    expect(bonusNr).toBe(liste.length - 1);
+    const jahresNr = liste.findIndex((f) => f.art === "jahresplan") + 1;
+    expect(jahresNr).toBe(liste.length - 1);
 
     const ctx = await context(b);
     const p = await ctx.newPage();
     await p.goto(`${BASE}/praesentation/${token}`, { waitUntil: "networkidle" });
-    for (let i = 1; i < bonusNr; i++) {
+    for (let i = 1; i < jahresNr; i++) {
       await p.keyboard.press("ArrowRight");
       await p.waitForTimeout(60);
     }
     await expect
       .poll(async () => {
         for (const el of await p.$$("section.vk")) {
-          if ((await el.isVisible()) && (await el.innerText()).includes("Abschlussbonus")) return await el.innerText();
+          if ((await el.isVisible()) && (await el.innerText()).includes("Jahresplan")) return await el.innerText();
         }
         return "";
       }, { timeout: 20_000 })
-      .toContain("morgen bis 23:59 Uhr");
+      .toContain("2.970 €");
     await ctx.close();
   });
 });

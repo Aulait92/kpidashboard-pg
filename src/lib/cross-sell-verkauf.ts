@@ -44,6 +44,11 @@ export function crossSellLeisteText(anzahl: number): string {
   return `${anzahl.toLocaleString("de-DE")} ${anzahl === 1 ? "Kunde" : "Kunden"} ohne weiteres Produkt`;
 }
 
+/** Knopf in der Leiste: „12 Kunden ein weiteres Produkt anbieten“ (Begriff wie im Bestand-Cockpit). */
+export function crossSellAnbietenText(anzahl: number): string {
+  return `${anzahl.toLocaleString("de-DE")} Kunden ein weiteres Produkt anbieten`;
+}
+
 /**
  * Ein Satz Nutzen mit eigenen Zahlen (kein Preis, kein Versprechen): die Zahl der Kunden und, wenn bekannt, der eigene
  * bisherige Schnitt je Vertrag.

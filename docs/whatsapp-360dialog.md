@@ -177,3 +177,7 @@ Stand 16.11.2026:
 - 17.11.2026: Ungenutzte Testnummer +1 618 202 4132 (360dialog-Channel JGeqqrCH, Client „Ole Agentur“/test2,
   49 €/Monat) gekündigt, um bis zur Tech-Provider-Freigabe einen Platz freizumachen. Verbunden bleiben
   +1 501 430 4325 (Testkonto „Ole Agentur“) und +49 15679 811535 (Support).
+- 21.11.2026: Nummern-Onboarding bei 360dialog brach ab. Ursache laut 360dialog-Support: die im Partner Hub eingetragene
+  Tech-Provider-Solution-ID (1125545677133515; App Review und Publish noch offen). 360dialog hat sie vorübergehend
+  deaktiviert, Onboarding läuft damit wieder über 360dialog selbst (Grenze: 3 Konten bis zur Tech-Provider-Freigabe).
+  Erst nach App-Freigabe, Publish und „Active“ der Partner Solution wieder aktivieren lassen.

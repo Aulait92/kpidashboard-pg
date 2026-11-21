@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { publicSalesBookingUrl } from "@/lib/vertrieb/buchung";
 import Link from "next/link";
 import { approveFollowupAction, saveFollowupSettingsAction } from "@/app/admin/vertrieb/followup-actions";
@@ -33,7 +34,7 @@ export default async function Page() {
   const planned = active.filter((f) => f.status === "GEPLANT" && f.step === 0);
   const running = active.filter((f) => f.status === "GEPLANT" && f.step > 0);
   const autoSync = process.env.INSTANTLY_AUTO_SYNC === "1" && !!process.env.INSTANTLY_API_KEY;
-  const kontakt = (id: string) => ziel(`/admin/vertrieb/kontakte/${id}`) + "#follow-up";
+  const kontakt = (id: string) => ziel(`/admin/neu/vertrieb/kontakte/${id}`) + "#follow-up";
 
   const zeile = (f: Item, aktion?: React.ReactNode) => (
     <li key={f.id} className="px-5 py-3 text-sm">
@@ -55,7 +56,7 @@ export default async function Page() {
         ) : null}
         {aktion ? <span className="ml-auto">{aktion}</span> : null}
       </div>
-      <details className="mt-1">
+      <details className="group mt-1">
         <summary className="inline-flex min-h-8 cursor-pointer items-center text-xs text-[color:var(--muted)]">Vorschau</summary>
         <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <p className="whitespace-pre-wrap rounded bg-[color:var(--surface-sunken)] p-2 text-xs">{f.body1 ?? "Text wird beim nächsten Lauf erstellt."}</p>
@@ -106,10 +107,11 @@ export default async function Page() {
         {gruppe("Geplant", planned, "Gerade nichts. Neue „Später“-Antworten aus Instantly landen automatisch hier.", settings.enabled ? undefined : "Automatik aus: es wird nichts gesendet")}
         {gruppe("Laufend", running, "Gerade keine Follow-ups nach Mail 1.")}
         {done.length ? (
-          <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
-            <summary className="flex min-h-12 cursor-pointer items-center px-5 text-[15px] font-semibold">
+          <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
+            <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center px-5 text-[15px] font-semibold">
               Zuletzt beendet oder gestoppt <span className="ml-1.5 font-normal text-[color:var(--muted)]">{done.length}</span>
-            </summary>
+            <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
             <ul className={`${LISTE} border-t border-[color:var(--border)]`}>
               {done.map((f) => (
                 <li key={f.id} className="flex flex-wrap items-center gap-2 px-5 py-2.5 text-sm">
@@ -130,8 +132,9 @@ export default async function Page() {
         ) : null}
       </div>
 
-      <details id="einstellungen" className="scroll-mt-20 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
-        <summary className="flex min-h-12 cursor-pointer items-center px-5 text-[15px] font-semibold">Einstellungen</summary>
+      <details id="einstellungen" className="group scroll-mt-20 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
+        <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center px-5 text-[15px] font-semibold">Einstellungen<ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
         <div className="space-y-4 border-t border-[color:var(--border)] p-5">
           {!autoSync ? (
             <p className="rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-sm text-amber-800">

@@ -16,7 +16,7 @@ export async function GET(req: Request): Promise<Response> {
     new Response(null, {
       status: 302,
       headers: [
-        ["Location", new URL(ruecksprungZiel(`/admin/marketing/linkedin?li=${status}`, req.headers.get("cookie")), origin).toString()],
+        ["Location", new URL(ruecksprungZiel(`/admin/neu/marketing?li=${status}`, req.headers.get("cookie")), origin).toString()],
         ["Set-Cookie", neuRuecksprungCookie(null)],
       ],
     });

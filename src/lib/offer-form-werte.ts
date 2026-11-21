@@ -25,8 +25,6 @@ import { KUNDENKONTO_VORSCHLAEGE, kundenkontoProdukteAus, normalizePplModell, st
 /** Feste Sondervereinbarung eines Testangebots (createOffer setzt sie, beim Bearbeiten nicht ins Feld übernehmen). */
 export const TEST_SONDERVEREINBARUNG = "Testangebot: kostenlos, ohne Zahlung. Dient nur zum Ausprobieren und wird danach gelöscht.";
 
-export const ABSCHLUSSBONUS_FORMULAR = 300;
-
 /** Zustand des Formulars (Eingabefelder als Text, wie getippt). */
 export type OfferFormWerte = {
   contactName: string;
@@ -59,6 +57,11 @@ export type OfferFormWerte = {
   arrears: boolean;
   allowBankTransfer: boolean;
   bankTransferDays: string;
+  /**
+   * Abschlussbonus (Ole, 21.11.2026: abgeschafft): nur noch bei neuen Versionen bzw. Entwürfen eines Angebots, das
+   * schon einen Bonus hat (zugesagt). Neue Angebote haben keinen; createOffer prüft das auch serverseitig.
+   */
+  bonusVorhanden: boolean;
   bonusAn: boolean;
   bonusBetrag: string;
   bonusBis: string;
@@ -129,9 +132,10 @@ export function standardFormWerte(initial: OfferFormInitial, referralDiscount: {
     arrears: false,
     allowBankTransfer: false,
     bankTransferDays: String(UEBERWEISUNG_TAGE_STANDARD),
-    bonusAn: true,
-    bonusBetrag: String(ABSCHLUSSBONUS_FORMULAR),
-    bonusBis: abschlussBonusStandardTag(now),
+    bonusVorhanden: false,
+    bonusAn: false,
+    bonusBetrag: "",
+    bonusBis: "",
     test: false,
     wocheProdukt: "",
     wocheLabel: "",
@@ -265,9 +269,10 @@ export function entwurfZuFormWerte(o: OfferEntwurf, referralDiscount: { amount: 
     arrears: o.paymentInArrears,
     allowBankTransfer: o.allowBankTransfer,
     bankTransferDays: String(o.bankTransferDays),
-    // Bonus wird bei Test, Pay-per-Lead oder ohne Einrichtung nicht gespeichert: dort Standard (an) lassen
-    bonusAn: bonus != null || test || ppl || !(setupFee > 0),
-    bonusBetrag: text(bonus ?? ABSCHLUSSBONUS_FORMULAR),
+    // Zugesagter Bonus bleibt bei neuer Version bzw. beim Bearbeiten erhalten (Ole, 21.11.2026), sonst keiner
+    bonusVorhanden: bonus != null && bonus > 0 && !test && !ppl,
+    bonusAn: bonus != null && bonus > 0 && !test && !ppl,
+    bonusBetrag: bonus == null ? "" : text(bonus),
     bonusBis: bonusBisIso && bonusBisIso >= heute ? bonusBisIso : abschlussBonusStandardTag(now),
     test,
     wocheProdukt: o.pplProductKey ?? "",
@@ -318,7 +323,7 @@ export function formWerteZuInput(w: OfferFormWerte, opts: { referral: boolean; u
     empfehlungModule: w.empfehlung && softwarePkg,
     setupDiscount: opts.referral ? num(w.discount) : null,
   });
-  const bonus = w.bonusAn && !w.test && !ppl;
+  const bonus = w.bonusVorhanden && w.bonusAn && !w.test && !ppl;
   return {
     contactName: w.contactName,
     company: w.company,
@@ -351,7 +356,7 @@ export function formWerteZuInput(w: OfferFormWerte, opts: { referral: boolean; u
     allowPayLater: w.allowPayLater && !w.test && !ppl,
     allowBankTransfer: opts.ueberweisungVerfuegbar && w.allowBankTransfer && !w.test,
     bankTransferDays: num(w.bankTransferDays),
-    abschlussBonus: bonus ? (num(w.bonusBetrag) ?? ABSCHLUSSBONUS_FORMULAR) : 0,
+    abschlussBonus: bonus ? (num(w.bonusBetrag) ?? 0) : 0,
     abschlussBonusBis: bonus ? w.bonusBis : null,
     test: w.test,
     pplModell: ppl ? w.pplModell : null,

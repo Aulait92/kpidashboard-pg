@@ -36,7 +36,8 @@ export function PplOverview({ rows }: { rows: CustomerOverviewRow[] }) {
         <div className="flex items-start gap-2 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            <b>Liegt zurück:</b> {behind.map((r) => `${r.customer} (${r.product})`).join(", ")} – weniger geliefert als anteilig bestellt.
+            <b>Liegt zurück:</b> {behind.slice(0, 3).map((r) => `${r.customer} (${r.product})`).join(", ")}
+            {behind.length > 3 ? ` und ${behind.length - 3} weitere` : ""}: weniger geliefert als anteilig bestellt.
           </span>
         </div>
       ) : null}
@@ -62,8 +63,7 @@ export function PplOverview({ rows }: { rows: CustomerOverviewRow[] }) {
                 {rows.map((r) => (
                   <tr key={`${r.customerId}-${r.product}`}>
                     <td className="whitespace-nowrap px-3 py-2">
-                      <Link href={`/admin/kunden/${r.customerId}`} className="font-medium text-[color:var(--brand)] hover:underline">{r.customer}</Link>
-                      {r.source === "airtable" ? <span className="ml-1.5 text-xs text-[color:var(--muted)]">Airtable</span> : null}
+                      <Link href={`/admin/neu/kunden/${r.customerId}`} className="font-medium text-[color:var(--brand)] hover:underline">{r.customer}</Link>
                     </td>
                     <td className="whitespace-nowrap px-3 py-2">{r.product}</td>
                     <Period p={r.week} />
@@ -76,10 +76,13 @@ export function PplOverview({ rows }: { rows: CustomerOverviewRow[] }) {
         ) : (
           <p className="p-5 text-sm text-[color:var(--muted)]">Diese Woche und diesen Monat noch keine Pay-per-Lead-Kunden mit Bestellung oder Lieferung.</p>
         )}
-        <p className="border-t border-[color:var(--border)] px-5 py-3 text-xs text-[color:var(--muted)]">
-          Bestellt: Wochenbestellung bzw. Monatsziel des Bezugs (Airtable: Lead-Ziel je Monat, Woche anteilig). Geliefert = verkaufte Leads im Zeitraum,
+        <details className="border-t border-[color:var(--border)] px-5 py-3 text-xs text-[color:var(--muted)]">
+          <summary className="inline-flex min-h-8 cursor-pointer items-center font-medium">So wird gezählt</summary>
+          <p className="mt-1">
+          Bestellt: Wochenbestellung bzw. Monatsziel des Bezugs (Monatsziel: Woche anteilig). Geliefert = verkaufte Leads im Zeitraum,
           reklamiert = davon storniert. „Liegt zurück“: weniger geliefert als bis heute anteilig bestellt.
         </p>
+        </details>
       </Card>
     </div>
   );
@@ -104,7 +107,7 @@ function Bars({ rows }: { rows: PplReport["rows"] }) {
 }
 
 export function PplReportView({ report }: { report: PplReport }) {
-  const q = (g: string, p: string | null) => `/admin/ppl?ansicht=auswertung&zeitraum=${g}${p ? `&produkt=${encodeURIComponent(p)}` : ""}`;
+  const q = (g: string, p: string | null) => `/admin/neu/leads/ppl?ansicht=auswertung&zeitraum=${g}${p ? `&produkt=${encodeURIComponent(p)}` : ""}`;
   const rows = [...report.rows].reverse();
   const keys = Object.keys(REJECT_LABELS) as RejectKey[];
   const tot = report.rows.reduce(
@@ -188,17 +191,19 @@ export function PplReportView({ report }: { report: PplReport }) {
           </table>
         </div>
         <div className="space-y-1 border-t border-[color:var(--border)] px-5 py-3 text-xs text-[color:var(--muted)]">
-          <p>
+          <details>
+          <summary className="inline-flex min-h-8 cursor-pointer items-center font-medium">So wird gerechnet</summary>
+          <p className="mt-1">
             Leadpreis = Meta-Kosten Pay-per-Lead (ohne eigene Akquise-Kampagnen) ÷ Eingang bzw. ÷ geliefert bzw. ÷ (geliefert − reklamiert). Umsatz = verkaufte Leads
             nach Reklamationen. Ausgaben = Meta-Kosten + direkte Pay-per-Lead-Kosten aus Bank/Karte und laufenden Kosten (anteilig je Tag).
           </p>
           <p>
-            Eingang und „von uns abgelehnt“ kommen aus der Airtable-Leads-Tabelle (alle eingegangenen Leads, auch nicht verteilte) und nach der Umstellung aus
-            der App. Leads ohne Produkt (z. B. Pflege-Check) zählen nicht dazu. „Offen“ = wartet auf Zustimmung zur Weitergabe oder noch in Bearbeitung.
+            Eingang und „von uns abgelehnt“ zählen alle eingegangenen Leads, auch nicht verteilte. Leads ohne Produkt (z. B. Pflege-Check) zählen nicht dazu. „Offen“ = wartet auf Zustimmung zur Weitergabe oder noch in Bearbeitung.
             „verworfen (geparkt &gt; 48 h)“ = ohne freien Bezug endgültig verworfen, in Klammern ihre Werbekosten (Anzahl × Leadpreis vor Ablehnung).
           </p>
+          </details>
           {report.poolSince ? null : (
-            <p className="font-medium text-amber-800">Noch keine Eingangsdaten – sie erscheinen nach dem nächsten Airtable-Abgleich.</p>
+            <p className="font-medium text-amber-800">Noch keine Eingangsdaten, sie erscheinen mit den ersten eingegangenen Leads.</p>
           )}
           {report.otherCostNote ? <p>Mit Produktfilter: nur Meta-Kosten des Produkts; sonstige Pay-per-Lead-Kosten lassen sich keinem Produkt zuordnen.</p> : null}
         </div>

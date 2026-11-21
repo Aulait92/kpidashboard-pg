@@ -18,11 +18,14 @@ export function ActivityForm({
   contactId,
   hasOpenTasks,
   offenesAngebot = null,
+  onDone,
 }: {
   contactId: string;
   hasOpenTasks: boolean;
   /** Bei „Verloren“: „Offenes Angebot auch als abgelehnt markieren?“ (Standard ja, gleicher Grund) */
   offenesAngebot?: { id: string; number: string } | null;
+  /** Nach dem Speichern (z. B. Fenster schließen, neuer Admin) */
+  onDone?: () => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [outcomeId, setOutcomeId] = useState("nicht_erreicht");
@@ -50,6 +53,7 @@ export function ActivityForm({
         await logActivity(fd);
         formRef.current?.reset();
         pick("nicht_erreicht");
+        onDone?.();
       }}
       className="space-y-3"
     >

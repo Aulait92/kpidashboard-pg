@@ -72,7 +72,7 @@ export default async function PraesentationPage({ params, searchParams }: { para
                   PDF ({LABEL[p.audience]})
                 </ButtonLink>
               ) : (
-                <Link href="/admin/marketing/unterlagen" className="text-xs text-[color:var(--brand)] underline">
+                <Link href="/admin/neu/marketing/unterlagen" className="text-xs text-[color:var(--brand)] underline">
                   PDF unter Unterlagen hochladen
                 </Link>
               )

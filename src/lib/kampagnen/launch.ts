@@ -115,7 +115,7 @@ async function upsertTask(wishId: string, customerId: string, product: string, t
     `Die Kampagne wird automatisch vom Agenten-Team angelegt (pausiert), sobald Folgendes erledigt ist:`,
     ...problems.map((p) => `• ${p.message}`),
     "",
-    `Kundenakte → Kampagne (KI): /admin/kunden/${customerId}/kampagne`,
+    `Kundenakte → Kampagne (KI): /admin/neu/kunden/${customerId}/kampagne`,
   ].join("\n");
   if (taskId) {
     const t = await prisma.salesTask.findUnique({ where: { id: taskId }, select: { doneAt: true } });
@@ -155,7 +155,7 @@ export async function processCampaignWishes(now = new Date(), deps: LaunchDeps =
           contactId,
           type: "SONSTIGES",
           title: `Kampagne ${w.product} für ${name}: automatisch nicht möglich`,
-          note: [`Lauf ${run.status === "blocked" ? "von der Prüfung gestoppt" : "abgebrochen"}: ${run.error ?? "ohne Meldung"}`, `Kundenakte → Kampagne (KI): /admin/kunden/${w.customerId}/kampagne`].join("\n"),
+          note: [`Lauf ${run.status === "blocked" ? "von der Prüfung gestoppt" : "abgebrochen"}: ${run.error ?? "ohne Meldung"}`, `Kundenakte → Kampagne (KI): /admin/neu/kunden/${w.customerId}/kampagne`].join("\n"),
           dueAt: now,
         },
       });

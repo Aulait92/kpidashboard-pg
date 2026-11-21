@@ -201,6 +201,24 @@ export const AUDIT_LABEL: Record<string, string> = {
   "loeschprotokoll.angewendet": "Löschprotokoll nach einer Wiederherstellung erneut angewendet",
   "einrichtung.abgehakt": "Einrichtungsschritt für den Kunden abgehakt",
   "einrichtung.zurueckgesetzt": "Einrichtungsschritt für den Kunden zurückgesetzt",
+  // Policen-Upload und Auslesen (Beschriftung fürs Änderungsprotokoll, UX-Umbau 20.11.2026)
+  "policen.einwilligung": "Policen: Einwilligung zum Auslesen",
+  "policen.ohne_ki": "Policen: ohne KI hochgeladen",
+  "policen.abruf": "Policen: Datei abgerufen",
+  "policen.widerruf": "Policen: Einwilligung widerrufen",
+  "policen.spaeter": "Policen: Upload auf später verschoben",
+  "policen.nein_danke": "Policen: Upload abgelehnt",
+  "policen.lieber_nicht": "Policen: lieber nicht hochladen",
+  "policen.geloescht": "Policen: Datei gelöscht",
+  "policen.behalten": "Policen: Datei behalten",
+  "policen.verworfen": "Policen: Datei verworfen",
+  "policen.avv_zustimmung": "Policen: Auftragsverarbeitung zugestimmt",
+  "policen.auslesen_zdr": "KI für Unterlagen: Nachweis „keine Speicherung“",
+  "policen.auslesen_pause_aufgehoben": "KI für Unterlagen: Pause aufgehoben",
+  "policen.auslesen_korrigiert": "Policen: ausgelesene Werte korrigiert",
+  "policen.auslesen_bestand": "Policen: in den Bestand übernommen",
+  "calendar.remind": "Kalender-Erinnerung gesendet",
+  "lead.test_create": "Test-Lead angelegt",
 };
 
 export async function audit(

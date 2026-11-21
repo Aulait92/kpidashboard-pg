@@ -5,8 +5,10 @@
 // Abmeldung, Abwesenheitsnotiz und Unzustellbarkeit und legt bei Interesse einen Lead an.
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { Inbox } from "lucide-react";
 import { Button } from "@/components/ui";
+import { Sheet } from "@/components/ui/sheet";
 import { recordReplyAction, type ReplyState } from "@/app/buyer/bestand/actions";
 
 const input = "mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm";
@@ -14,11 +16,7 @@ const input = "mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(-
 export function ReplyForm({ readOnly }: { readOnly: boolean }) {
   const [state, action, pending] = useActionState<ReplyState, FormData>(recordReplyAction, {});
   return (
-    <form action={action} className="space-y-3 px-5 pb-5 text-sm" data-reply-form>
-      <p className="text-[color:var(--muted)]">
-        Antworten auf Kampagnen-Mails landen in Ihrem Postfach. Fügen Sie Absender und Text hier ein: Bei Interesse wird daraus ein Lead in Ihrer Pipeline,
-        „bitte abmelden“ sperrt den Kunden für E-Mails, Unzustellbares bremst den Versand.
-      </p>
+    <form action={action} className="space-y-3 px-5 py-4 text-sm" data-reply-form>
       <label className="block text-xs font-medium text-[color:var(--muted)]">
         E-Mail-Adresse des Kunden
         <input name="fromEmail" type="email" required className={`${input} h-10`} placeholder="kunde@beispiel.de" />
@@ -57,5 +55,28 @@ export function ReplyForm({ readOnly }: { readOnly: boolean }) {
         {pending ? "Wird zugeordnet …" : "Antwort zuordnen"}
       </Button>
     </form>
+  );
+}
+
+/**
+ * „Antwort zuordnen“ hinter einem Knopf (Paket 2, 20.11.2026): Das Formular öffnet als Fenster (am Handy von unten),
+ * statt offen auf der Seite zu stehen.
+ */
+export function ReplySheetButton({ readOnly }: { readOnly: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button type="button" variant="secondary" size="md" icon={Inbox} onClick={() => setOpen(true)} data-reply-open>
+        E-Mail-Antwort zuordnen
+      </Button>
+      <Sheet
+        open={open}
+        onClose={() => setOpen(false)}
+        title="E-Mail-Antwort zuordnen"
+        message="Antworten landen in Ihrem Postfach. Bei Interesse wird daraus ein Lead, „bitte abmelden“ sperrt E-Mails."
+      >
+        <ReplyForm readOnly={readOnly} />
+      </Sheet>
+    </>
   );
 }

@@ -325,10 +325,10 @@ describe("KI-Assistent: Anrede im Prompt", () => {
 
 describe("Weitere Texte an Leads und Kunden", () => {
   it("Bestandskampagnen: Sie mit Anrede aus dem Bestand", () => {
-    expect(campaignText("review", { firstName: "Erika", lastName: "Muster", salutation: "Frau" }, null)).toMatch(/^Guten Tag Frau Muster, es ist Zeit/);
+    expect(campaignText("review", { firstName: "Erika", lastName: "Muster", salutation: "Frau" }, null)).toMatch(/^Guten Tag Frau Muster, einmal im Jahr lohnt/);
     expect(campaignText("birthday", { firstName: "Erika", lastName: "Muster" }, null)).toMatch(/^Guten Tag Frau Muster, herzlichen Glückwunsch/);
     expect(campaignText("birthday", { firstName: "Kim", lastName: "Muster" }, null)).toMatch(/^Guten Tag Kim Muster, herzlichen Glückwunsch/);
-    expect(campaignText("cross_sell", "Erika", "Hausrat")).toMatch(/^Guten Tag, viele meiner Kunden haben beim Thema Hausrat eine Lücke/);
+    expect(campaignText("cross_sell", "Erika", "Hausrat")).toMatch(/^Guten Tag, eine Hausratversicherung habe ich bei Ihnen noch nicht notiert/);
   });
 
   it("Empfehlungs-Anlässe: „Guten Tag Frau Schneider“ statt „Hallo Julia“ mit Sie; alte eigene Texte auch", () => {

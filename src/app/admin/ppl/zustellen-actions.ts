@@ -20,7 +20,7 @@ export async function erneutZustellenAction(_prev: ZustellenState, fd: FormData)
   const { sendDelivery } = await import("@/lib/ppl/delivery");
   const report = await sendDelivery(lead.id, lead.subscription);
   await audit("ppl.erneut_zugestellt", { entity: "Lead", entityId: lead.id, details: { ok: report.ok, ziele: report.targets.map((t) => ({ ziel: t.target, ok: t.ok, fehler: t.error ?? null })) } });
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   const ziele = report.targets.map((t) => `${t.target} ${t.ok ? "✓" : `✗ ${t.error ?? ""}`}`).join(", ");
   return report.ok ? { message: `Erneut zugestellt: ${ziele || report.label}.${report.hinweis ? ` Achtung: ${report.hinweis}.` : ""}` } : { error: `Nicht zugestellt: ${report.error ?? ziele}` };

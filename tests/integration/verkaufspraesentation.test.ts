@@ -16,6 +16,7 @@ vi.mock("@/lib/auth", async (orig) => ({
 
 import { prisma } from "@/lib/prisma";
 import { createOffer } from "@/lib/offers";
+import { zugesagterBonus } from "./zugesagter-bonus";
 import { addDaysIso, berlinTodayIso } from "@/lib/offer-pricing";
 import { verkaufsLinkAction, verkaufsLinkBeendenAction } from "@/app/admin/vertrieb/kontakte/[id]/praesentation/actions";
 import { sendOfferEmailAction } from "@/app/admin/vertrieb/offer-actions";
@@ -53,9 +54,10 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
   it("ohne Angebot: Makler-Fassung mit Listenpreisen; mit Angebot: Preise und Zielgruppe aus dem Angebot", async () => {
     const ohne = await ladeVerkaufsPraesentation(contactId);
     expect(ohne).toMatchObject({ audience: "makler", angebotNr: null });
-    // Listenpreise: mit Folie „Ihr Abschlussbonus“ (300 € bis morgen)
+    // Listenpreise: mit Folie „Jahresplan: 3 Monate sparen“, ohne Abschlussbonus (seit 21.11.2026)
     expect(ohne!.folien).toHaveLength(26);
-    expect(ohne!.folien.map((f) => f.titel)).toContain("Ihr Abschlussbonus");
+    expect(ohne!.folien.map((f) => f.titel)).toContain("Jahresplan: 3 Monate sparen");
+    expect(ohne!.folien.map((f) => f.titel)).not.toContain("Ihr Abschlussbonus");
     expect(ohne!.preise.quelle).toBe("liste");
     const offer = await createOffer(
       { salesContactId: contactId },
@@ -65,15 +67,16 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
     const mit = await ladeVerkaufsPraesentation(contactId);
     expect(mit).toMatchObject({ audience: offer.vermittlerTyp === "makler" ? "makler" : "vertreter", angebotNr: offer.number });
     expect(mit!.preise).toMatchObject({ quelle: "angebot", name: "Finanzkontor Test", monatlichNetto: Number(offer.monthlyFee) });
-    // Angebot ohne Abschlussbonus: keine Bonusfolie
+    // Angebot ohne Abschlussbonus und ohne Vorauszahlung: weder Bonus- noch Jahresplan-Folie
     expect((await ladeVerkaufsPraesentation(contactId, "makler"))!.folien).toHaveLength(25);
-    // Angebot mit Abschlussbonus bis morgen: Folie mit Betrag und Frist
+    // Angebot mit schon zugesagtem Abschlussbonus bis morgen (Altfall): Folie mit Betrag und Frist
     const morgen = addDaysIso(berlinTodayIso(), 1);
-    await createOffer(
+    const zweites = await createOffer(
       { salesContactId: contactId },
-      { contactName: "Eva Test", company: "Finanzkontor Test", email: `vk-${tag}@example.test`, term: "12m", products: [{ name: "TKV-Katze", dailyBudget: 40 }], startDate: addDaysIso(berlinTodayIso(), 20), abschlussBonus: 300, abschlussBonusBis: morgen },
+      { contactName: "Eva Test", company: "Finanzkontor Test", email: `vk-${tag}@example.test`, term: "12m", products: [{ name: "TKV-Katze", dailyBudget: 40 }], startDate: addDaysIso(berlinTodayIso(), 20) },
       null,
     );
+    await zugesagterBonus(zweites.id, 300, morgen);
     const bonus = await ladeVerkaufsPraesentation(contactId, "makler");
     expect(bonus!.folien).toHaveLength(26);
     expect(bonus!.preise.bonus).toMatchObject({ betrag: 300 });

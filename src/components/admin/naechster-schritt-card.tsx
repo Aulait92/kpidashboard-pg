@@ -1,6 +1,7 @@
 // Kundenakte (Admin): „Leads mit nächstem Schritt“ (Ziel 100 %, Warnung unter 80 %) und „vorzeitig verloren“
 // (nie erreicht, unter 6 Anrufversuchen auf Verloren gesetzt) je Berater, 90 Tage (Ole, 14.11.2026).
 
+import { AUFKLAPP_KARTE, AufklappKopf } from "@/components/admin-neu/kunden/aufklapp";
 import { prisma } from "@/lib/prisma";
 import { NEXT_STEP_WARN_BELOW } from "@/lib/lead-next-step";
 import { lostEarlyStats, nextStepRate, nextStepRatesByAdvisor } from "@/lib/lead-next-step-server";
@@ -22,15 +23,13 @@ export async function NaechsterSchrittCard({ customerId }: { customerId: string 
   const name = (id: string | null) => (id == null ? "Nicht zugeteilt" : (users.find((u) => u.id === id)?.displayName ?? users.find((u) => u.id === id)?.email ?? "Unbekannt"));
   const keys = [...new Set<string | null>([...byAdvisor.keys(), ...lost.byAdvisor.keys()])];
   return (
-    <details className="card px-4 py-3 text-sm" data-naechster-schritt open={warn}>
-      <summary className="cursor-pointer font-medium">
-        Leads mit nächstem Schritt: <span className={warn ? "font-semibold text-rose-600" : ""}>{pct(total.rate)}</span>
-        {warn ? <span className="ml-2 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">unter 80 %</span> : null}
-        <span className="text-slate-500">
-          {" "}
-          · {total.withoutNextStep} von {total.open} offenen ohne Schritt · vorzeitig verloren (90 Tage): {lost.total.early} von {lost.total.lost}
-        </span>
-      </summary>
+    <details className={`${AUFKLAPP_KARTE} text-sm`} data-naechster-schritt open={warn}>
+      <AufklappKopf
+        titel={`Leads mit nächstem Schritt: ${pct(total.rate)}`}
+        zusammenfassung={`${total.withoutNextStep} von ${total.open} offenen ohne Schritt · vorzeitig verloren: ${lost.total.early} von ${lost.total.lost}`}
+        abzeichen={warn ? <span className="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">unter 80 %</span> : null}
+      />
+      <div className="overflow-x-auto border-t border-[color:var(--border)] px-5 pb-4 pt-1">
       <p className="mt-2 text-slate-500">
         Nächster Schritt = künftiger Termin, Wiedervorlage oder laufendes Bot-Gespräch (Stand jetzt). Vorzeitig verloren = nie erreicht und unter {CALL_ATTEMPTS_TARGET} Anrufversuchen auf
         Verloren gesetzt (ohne falsche Daten, „nichts angefragt“ und „kein Interesse“ im Gespräch).
@@ -61,6 +60,7 @@ export async function NaechsterSchrittCard({ customerId }: { customerId: string 
           </tbody>
         </table>
       ) : null}
+      </div>
     </details>
   );
 }

@@ -17,9 +17,10 @@ export function PunkteGekuerzt({ punkte, max = 3 }: { punkte: HeuteItem[]; max?:
         <button
           type="button"
           onClick={() => setAlle(true)}
-          className="mt-2 inline-flex min-h-10 w-full items-center justify-center gap-1 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white text-sm font-medium text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]"
+          // Schlichter Textlink statt eigener Karte (Umbau 20.11.2026: weniger Kästen auf Mein Tag)
+          className="mt-1 inline-flex min-h-10 items-center gap-1 px-1 text-sm font-medium text-[color:var(--brand)] hover:underline"
         >
-          Alle {punkte.length} anzeigen
+          {rest === 1 ? "1 weiterer Punkt" : `${rest} weitere Punkte`}
           <ChevronDown className="h-4 w-4" />
         </button>
       ) : null}

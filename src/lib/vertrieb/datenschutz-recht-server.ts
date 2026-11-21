@@ -190,7 +190,7 @@ export async function rechtsFallAnlegen(contactId: string, opts: FallOpts): Prom
   let push = false;
   if (opts.art === "abmahnung") {
     const { sendToAdmins } = await import("@/lib/push");
-    await sendToAdmins({ title: "Abmahnung bzw. rechtliche Drohung im Vertrieb", body: ABMAHNUNG_HINWEIS, url: `/admin/vertrieb/kontakte/${contactId}` })
+    await sendToAdmins({ title: "Abmahnung bzw. rechtliche Drohung im Vertrieb", body: ABMAHNUNG_HINWEIS, url: `/admin/neu/vertrieb/kontakte/${contactId}` })
       .then(() => (push = true))
       .catch((e) => reportError(e, "recht-push"));
   }

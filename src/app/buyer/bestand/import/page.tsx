@@ -28,10 +28,8 @@ export default async function ImportPage() {
       <PageHeader title="Bestandskunden importieren" subtitle="Excel oder CSV aus Ihrem Bestandssystem. Erneut hochladen aktualisiert vorhandene Kunden." />
       <ImportFlow agentConfirm={needsAgentConfirm(c) ? { text: agentConfirmText(c.vermittlerTyp), bound: isAgencyBound(c.vermittlerTyp) } : null} />
       {last && last.removable > 0 ? (
-        <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-[color:var(--border)] pt-4 text-sm text-[color:var(--muted)]" data-import-last>
-          <span className="min-w-0 flex-1">
-            Falsch zugeordnet? Der letzte Import hat {last.removable.toLocaleString("de-DE")} Kunden neu angelegt.
-          </span>
+        <div className="mt-6 flex flex-col items-start gap-2 border-t border-[color:var(--border)] pt-4 text-sm text-[color:var(--muted)] sm:flex-row sm:items-center sm:gap-3" data-import-last>
+          <span className="min-w-0 sm:flex-1">Falsch zugeordnet? Der letzte Import hat {last.removable.toLocaleString("de-DE")} Kunden neu angelegt.</span>
           <ImportUndoButton
             readOnly={ctx.preview}
             run={{ createdAt: last.createdAt.toISOString(), fileName: last.fileName, created: last.created, updated: last.updated, removable: last.removable }}

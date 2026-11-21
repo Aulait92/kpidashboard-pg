@@ -15,7 +15,7 @@ export async function startPreviewAction(formData: FormData): Promise<void> {
   const customer = customerId
     ? await prisma.customer.findUnique({ where: { id: customerId }, select: { id: true } })
     : null;
-  if (!customer) redirect("/admin/buyers");
+  if (!customer) redirect("/admin/neu/kunden");
   await audit("preview.start", { entity: "Customer", entityId: customer.id, customerId: customer.id });
   (await cookies()).set(VIEW_AS_COOKIE, customer.id, {
     httpOnly: true,
@@ -30,5 +30,5 @@ export async function startPreviewAction(formData: FormData): Promise<void> {
 /** Vorschau beenden und zurück zur Buyer-Verwaltung. */
 export async function endPreviewAction(): Promise<void> {
   (await cookies()).delete(VIEW_AS_COOKIE);
-  redirect("/admin/buyers");
+  redirect("/admin/neu/kunden");
 }

@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ChevronDown, ExternalLink, GitMerge, MoreHorizontal, ShieldX, Trash2 } from "lucide-react";
+import { ChevronDown, ExternalLink, GitMerge, MoreHorizontal, Presentation, ShieldX, Trash2 } from "lucide-react";
 import { MergeSheet, type MergeCandidate } from "@/components/vertrieb/contact-merge";
 import { art17LoeschenAction, deleteContact, setStage } from "@/app/admin/vertrieb/actions";
 import { Button } from "@/components/ui";
@@ -109,6 +109,7 @@ export function ContactMore({
   duplicates = [],
   geloescht = false,
   gesperrt = false,
+  praesentationHref,
 }: {
   contactId: string;
   name: string;
@@ -119,12 +120,15 @@ export function ContactMore({
   geloescht?: boolean;
   /** „nie kontaktieren“ bzw. Datenschutzfall: nur „Auf Verlangen löschen (Art. 17)“, damit der Sperrvermerk bleibt */
   gesperrt?: boolean;
+  /** Neuer Admin (Umbau 19.11.2026): „Präsentation öffnen“ oben im Menü statt eigenem Knopf im Kopf der Akte */
+  praesentationHref?: string;
 }) {
   const [open, setOpen] = useState<"menu" | "delete" | "merge" | "art17" | null>(null);
   const [pending, start] = useTransition();
   const [art17Info, setArt17Info] = useState<string | null>(null);
   const router = useRouter();
   const actions: SheetAction[] = [
+    ...(praesentationHref ? [{ label: "Präsentation öffnen", icon: Presentation, href: praesentationHref }] : []),
     ...(url ? [{ label: "Website öffnen", icon: ExternalLink, href: url }] : []),
     ...(linkedinUrl ? [{ label: "LinkedIn-Profil öffnen", icon: ExternalLink, href: linkedinUrl }] : []),
     { label: "Mit anderem Kontakt zusammenführen", icon: GitMerge, onSelect: () => setTimeout(() => setOpen("merge"), 0) },

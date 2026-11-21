@@ -641,9 +641,11 @@ describe("Empfehlungen & Bewertungen", () => {
     const rec = await closedLead(id, `4915${uid()}61`, "Gerd Empfiehlt", 25);
     const link = await prisma.referralLink.create({ data: { customerId: id, leadId: rec.id, token: `tok-ref-${uid()}-abcdef` } });
     expect(await submitReferral(link.token, { name: "Hanna Neu", phone: `4915${uid()}62`, email: null, topic: "TKV", message: null, consent: false }, NOW)).toMatchObject({ ok: false, error: "consent" });
-    const r = await submitReferral(link.token, { name: "Hanna Neu", phone: `4915${uid()}62`, email: null, topic: "TKV", message: "Bitte anrufen", consent: true }, NOW);
+    const r = await submitReferral(link.token, { name: "Hanna Neu", phone: `4915${uid()}62`, email: null, topic: "TKV", message: "Bitte anrufen", consent: true, statusConsent: true }, NOW);
     expect(r.ok).toBe(true);
+    // Dank an den Empfehlenden nur mit Zustimmung der empfohlenen Person zur Rückmeldung („und Kunde wurde“)
     const lead = await prisma.lead.findFirstOrThrow({ where: { referralLinkId: link.id } });
+    expect(lead.referralStatusConsent).toBe(true);
     expect(lead.source).toBe("Empfehlung");
     expect(JSON.stringify(lead.formData)).toContain("Empfehlung von Gerd Empfiehlt");
 

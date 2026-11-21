@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { Loader2, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Sparkles, Trash2, ChevronDown } from "lucide-react";
 import { UpdateEntry } from "@/components/neuigkeiten";
 import { AUDIENCE_LABEL, KIND_LABEL, UPDATE_AUDIENCES, UPDATE_KINDS, asKind, type UpdateView } from "@/lib/neuigkeiten-shared";
 import { deleteUpdateAction, draftUpdateAction, saveUpdateAction, type UpdateFormState } from "./actions";
@@ -9,28 +9,51 @@ import { deleteUpdateAction, draftUpdateAction, saveUpdateAction, type UpdateFor
 const EMPTY: UpdateView = { id: "", title: "", body: "", kind: "neu", audience: "alle", publishedAt: null };
 const input = "w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 py-2 text-[15px]";
 
+// UX-Umbau 20.11.2026: Einträge entstehen meist automatisch (Migration je Änderung). Darum zuerst die Liste mit EINER
+// Hauptaktion „Neuer Eintrag“; der Editor (mit KI-Entwurf eingeklappt und Vorschau) öffnet sich erst beim Anlegen oder
+// Bearbeiten. Die Liste zeigt die neuesten Einträge, der Rest hinter „Alle zeigen“.
+const ERSTE = 12;
+
 export function NeuigkeitenAdmin({ items }: { items: UpdateView[] }) {
-  const [edit, setEdit] = useState<UpdateView>(EMPTY);
+  const [edit, setEdit] = useState<UpdateView | null>(null);
   const [key, setKey] = useState(0);
+  const [alle, setAlle] = useState(false);
+  const sichtbar = alle ? items : items.slice(0, ERSTE);
+  const oeffnen = (u: UpdateView) => {
+    setEdit(u);
+    setKey((k) => k + 1);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1fr]">
-      <Editor key={key} initial={edit} onDone={() => (setEdit(EMPTY), setKey((k) => k + 1))} />
+    <div className={edit ? "grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1fr]" : "max-w-3xl"}>
+      {edit ? <Editor key={key} initial={edit} onDone={() => setEdit(null)} /> : null}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-[color:var(--muted)]">Alle Einträge</h2>
-        {!items.length ? <p className="text-sm text-[color:var(--muted)]">Noch keine Einträge.</p> : null}
-        <ul className="space-y-2">
-          {items.map((u) => (
-            <li key={u.id} className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-3">
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{u.title}</div>
-                <div className="text-sm text-[color:var(--muted)]">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-[color:var(--muted)]">
+            Alle Einträge <span className="font-normal">{items.length}</span>
+          </h2>
+          {edit ? null : (
+            <button
+              type="button"
+              onClick={() => oeffnen(EMPTY)}
+              className="inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white"
+            >
+              <Plus className="h-4 w-4" /> Neuer Eintrag
+            </button>
+          )}
+        </div>
+        {!items.length ? <p className="text-sm text-[color:var(--muted)]">Noch keine Einträge. Neue entstehen automatisch mit jeder Änderung für Kunden.</p> : null}
+        <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white">
+          {sichtbar.map((u) => (
+            <li key={u.id} className="flex items-center gap-1 pl-4 pr-2">
+              <button type="button" className="min-w-0 flex-1 py-3 text-left" aria-label={`${u.title} bearbeiten`} onClick={() => oeffnen(u)}>
+                <span className="block truncate text-sm font-medium">{u.title}</span>
+                <span className="block text-sm text-[color:var(--muted)]">
                   {KIND_LABEL[u.kind]} · {AUDIENCE_LABEL[u.audience]} ·{" "}
                   {u.publishedAt ? new Date(u.publishedAt).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" }) : <span className="text-amber-700">Entwurf</span>}
-                </div>
-              </div>
-              <button type="button" className="rounded p-1.5 text-[color:var(--muted)] hover:text-[color:var(--brand)]" aria-label={`${u.title} bearbeiten`} onClick={() => (setEdit(u), setKey((k) => k + 1))}>
-                <Pencil className="h-4 w-4" />
+                </span>
               </button>
+              <Pencil className="h-4 w-4 shrink-0 text-[color:var(--muted)]" aria-hidden="true" />
               <form
                 action={deleteUpdateAction}
                 onSubmit={(e) => {
@@ -38,13 +61,18 @@ export function NeuigkeitenAdmin({ items }: { items: UpdateView[] }) {
                 }}
               >
                 <input type="hidden" name="id" value={u.id} />
-                <button className="rounded p-1.5 text-[color:var(--muted)] hover:text-rose-600" aria-label={`${u.title} löschen`}>
+                <button className="flex h-10 w-10 items-center justify-center rounded text-[color:var(--muted)] hover:text-rose-600" aria-label={`${u.title} löschen`}>
                   <Trash2 className="h-4 w-4" />
                 </button>
               </form>
             </li>
           ))}
         </ul>
+        {items.length > ERSTE && !alle ? (
+          <button type="button" onClick={() => setAlle(true)} className="h-10 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white text-sm font-medium">
+            Alle zeigen ({items.length - ERSTE} weitere)
+          </button>
+        ) : null}
       </section>
     </div>
   );
@@ -67,10 +95,12 @@ function Editor({ initial, onDone }: { initial: UpdateView; onDone: () => void }
 
   return (
     <section className="space-y-4">
-      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4">
-        <h2 className="mb-2 flex items-center gap-2 font-semibold">
-          <Sparkles className="h-4 w-4 text-[color:var(--brand)]" /> Entwurf mit KI
-        </h2>
+      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4">
+        <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2 text-sm font-semibold">
+          <Sparkles className="h-4 w-4 text-[color:var(--brand)]" /> Text mit KI aus Stichworten
+        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
+        <div className="pb-4">
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Stichworte: Was ist neu? Wo finden Kunden es?" className={`${input} h-20`} />
         {aiError ? <p className="mt-1 text-sm text-rose-600">{aiError}</p> : null}
         <button
@@ -88,9 +118,10 @@ function Editor({ initial, onDone }: { initial: UpdateView; onDone: () => void }
           }
           className="mt-2 inline-flex h-9 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm font-medium disabled:opacity-50"
         >
-          {drafting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Entwurf erstellen
+          {drafting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Text vorschlagen
         </button>
-      </div>
+        </div>
+      </details>
 
       <form action={action} className="space-y-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4">
         <h2 className="font-semibold">{initial.id ? "Eintrag bearbeiten" : "Neuer Eintrag"}</h2>
@@ -137,11 +168,9 @@ function Editor({ initial, onDone }: { initial: UpdateView; onDone: () => void }
           <button name="intent" value="draft" disabled={saving} className="inline-flex h-10 items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] px-4 text-sm font-medium disabled:opacity-50">
             {published ? "Zurück auf Entwurf" : "Als Entwurf speichern"}
           </button>
-          {initial.id ? (
-            <button type="button" onClick={onDone} className="h-10 px-2 text-sm text-[color:var(--muted)] hover:underline">
-              Abbrechen
-            </button>
-          ) : null}
+          <button type="button" onClick={onDone} className="h-10 px-2 text-sm text-[color:var(--muted)] hover:underline">
+            Abbrechen
+          </button>
         </div>
       </form>
 

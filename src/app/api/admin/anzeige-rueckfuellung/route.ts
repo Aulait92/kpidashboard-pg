@@ -66,7 +66,7 @@ export async function POST(req: Request): Promise<Response> {
       const text = `Leads ergänzt: ${r.leads.aktualisiert} von ${r.leads.geprueft}, Einsendungen: ${r.einsendungen.aktualisiert}, Meta-Abrufe ${r.meta.ok}/${r.meta.abfragen}${r.meta.abgebrochen ? " (abgebrochen)" : ""}. Kosten je Anzeige: ${k.gespeichert} Zeilen${k.fehler ? `, ${k.fehler} Konten mit Fehler` : ""}.`;
       console.log(`[anzeige-rueckfuellung] ${text}`, JSON.stringify({ felder: r.leads.felder, quellen: r.quellen, fehler: r.fehler, konten: k.konten }));
       await audit("anzeige.rueckfuellung", { actor: { id: session.userId, email: session.email, role: session.role }, details: { leads: r.leads.aktualisiert, einsendungen: r.einsendungen.aktualisiert, kostenZeilen: k.gespeichert } }).catch(() => {});
-      await sendToAdmins({ title: "Anzeige am Lead nachgetragen", body: text, url: "/admin", tag: "anzeige-rueckfuellung" }).catch(() => {});
+      await sendToAdmins({ title: "Anzeige am Lead nachgetragen", body: text, url: "/admin/neu", tag: "anzeige-rueckfuellung" }).catch(() => {});
     } catch (err) {
       reportError(err, "anzeige-rueckfuellung");
     } finally {

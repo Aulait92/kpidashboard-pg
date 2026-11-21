@@ -247,7 +247,7 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
       await sendToAdmins({
         title: `Vermittlerstatus geändert: ${before.name}`,
         body: `Erstinformation: ${before.vermittlerTyp} → ${status}. Provisionssätze und Garantien prüfen.`,
-        url: `/admin/kunden/${customerId}`,
+        url: `/admin/neu/kunden/${customerId}`,
         tag: `vermittlerstatus:${customerId}`,
       }).catch(() => {});
     }

@@ -10,9 +10,10 @@ import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Systemzustand | performancegrowth Admin" };
 
-// Werkzeuge › Systemzustand (Admin v2, Paket A5 „Zusammenlegen“): alle technischen Prüfungen auf einer Seite statt
-// verteilt über Status, Anbindungen, Rechnungsangaben, Kosten & Bank, Qualität und Werbekonten. Probleme zuerst,
-// je Zeile ein Satz und der Weg zur Stelle, an der man es behebt. Punkte „Hintergrund-Jobs“ auf Mein Tag führen hierher.
+// Einstellungen › Technik › Systemzustand (Admin v2, Paket A5 „Zusammenlegen“; bis 20.11.2026 unter Werkzeuge): alle
+// technischen Prüfungen auf einer Seite statt verteilt über Status, Anbindungen, Rechnungsangaben, Kosten & Bank,
+// Qualität und Werbekonten. Probleme zuerst, je Zeile ein Satz und der Weg zur Stelle, an der man es behebt. Punkte
+// „Hintergrund-Jobs“ auf Mein Tag führen hierher. Die Zeile „Statusseite für Kunden“ führt zu Statusseite & Support.
 
 const AMPEL: Record<Ampel, { icon: typeof AlertCircle; farbe: string; label: string }> = {
   fehler: { icon: AlertCircle, farbe: "bg-rose-50 text-rose-600", label: "Fehler" },
@@ -27,7 +28,7 @@ export default async function Systemzustand() {
   const pruefungen = await ladeSystemzustand();
   const { text } = zusammenfassung(pruefungen);
   return (
-    <Seite titel="Systemzustand" untertitel={text} zurueck={{ href: `${NEU}/werkzeuge`, label: "Werkzeuge" }}>
+    <Seite titel="Systemzustand" untertitel={text} zurueck={{ href: `${NEU}/einstellungen`, label: "Einstellungen" }}>
       <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" data-systemzustand="">
         {pruefungen.map((p) => {
           const a = AMPEL[p.ampel];

@@ -1,11 +1,11 @@
 import { connection } from "next/server";
-import { UserPlus } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { KundenakteSeite } from "@/components/admin-neu/kunden/akte";
 import { Aufklapp } from "@/components/admin-neu/kunden/aufklapp";
 import { NaechsterSchrittCard } from "@/components/admin/naechster-schritt-card";
 import { CreateBuyerForm } from "@/app/admin/buyers/buyer-management";
 import { LoginList, type LoginRow } from "@/app/admin/buyers/login-list";
+import { randomInt } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = { title: "Team & Logins | performancegrowth Admin" };
@@ -39,7 +39,6 @@ export default async function KundeTeam({ params }: { params: Promise<{ id: stri
     lastLogin: b.lastLoginAt ? kurz(b.lastLoginAt) : null,
     customer: b.customer,
   }));
-  const dieser = customers.filter((c) => c.id === id);
 
   return (
     <KundenakteSeite id={id}>
@@ -54,15 +53,15 @@ export default async function KundeTeam({ params }: { params: Promise<{ id: stri
                 {rows.length ? (
                   <LoginList rows={rows} customers={customers} />
                 ) : (
-                  <p className="pt-4 text-sm text-[color:var(--muted)]">Noch kein Login. Legen Sie unten den ersten an, die Einladung geht per E-Mail raus.</p>
+                  <p className="pt-4 text-sm text-[color:var(--muted)]">Noch kein Login. Legen Sie unten den ersten an.</p>
                 )}
               </div>
             </div>
           </Card>
           <div data-funktion="actions-createbuyeraccount--neuen-login-anlegen-e-mail-passwort-kunde">
-            <Aufklapp titel="+ Login anlegen" zusammenfassung={<span className="inline-flex items-center gap-1"><UserPlus className="h-3 w-3" /> E-Mail, Passwort, Rolle</span>} offen={!rows.length}>
+            <Aufklapp titel="Login anlegen" zusammenfassung="E-Mail genügt, das Startpasswort ist vorbelegt" offen={!rows.length}>
               <div className="rounded-[var(--radius-md)] bg-white px-4 pb-4 pt-1">
-                <CreateBuyerForm customers={dieser.length ? dieser : customers} />
+                <CreateBuyerForm customers={customers} kundeId={id} startPasswort={startPasswort()} />
               </div>
             </Aufklapp>
           </div>
@@ -73,4 +72,10 @@ export default async function KundeTeam({ params }: { params: Promise<{ id: stri
       </div>
     </KundenakteSeite>
   );
+}
+
+/** Zufälliges Startpasswort als Standardwert (12 Zeichen ohne verwechselbare wie 0/O, 1/l). */
+function startPasswort(): string {
+  const z = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from({ length: 12 }, () => z[randomInt(z.length)]).join("");
 }

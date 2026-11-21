@@ -46,7 +46,7 @@ export async function hvkFetchNowAction(_prev: HvkRunState, _fd: FormData): Prom
   const { checkHvkMails } = await import("@/lib/ppl/hvk-abrechnung-server");
   const run = await checkHvkMails(new Date(Date.now() - 21 * 86_400_000), { actor });
   if (!run.ok) return { error: run.error };
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
   const rows = rowsOf(run.results);
   const neu = rows.filter((r) => r.ok && r.status === "neu").length;
@@ -61,7 +61,7 @@ export async function hvkBackfillAction(_prev: HvkRunState, fd: FormData): Promi
   const run = await hvkBackfill({ dryRun, actor });
   if (!run.ok) return { error: run.error, dryRun };
   if (!dryRun) {
-    revalidatePath("/admin/ppl", "layout");
+    revalidatePath("/admin/neu/leads/ppl", "layout");
     revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
   }
   const rows = rowsOf(run.results);
@@ -84,7 +84,7 @@ export async function hvkUploadAction(_prev: HvkRunState, fd: FormData): Promise
   const { importHvkPdf } = await import("@/lib/ppl/hvk-abrechnung-server");
   const r = await importHvkPdf(new Uint8Array(await file.arrayBuffer()), { pdfName: file.name, source: "upload" }, { actor });
   if (!r.ok) return { error: r.error };
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
   return { rows: rowsOf([r]), message: r.result.status === "vorhanden" ? `${r.result.invoiceNo} war schon übernommen.` : `${r.result.invoiceNo} übernommen.` };
 }
@@ -99,7 +99,7 @@ export async function hvkReabgleichAction(_prev: HvkReabgleichState, fd: FormDat
   try {
     const s = await reabgleichHvk({ dryRun, actor });
     if (!dryRun) {
-      revalidatePath("/admin/ppl", "layout");
+      revalidatePath("/admin/neu/leads/ppl", "layout");
       revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
     }
     const t = s.totals;
@@ -126,7 +126,7 @@ export async function hvkAssignAction(_prev: HvkReklamationState, fd: FormData):
   const { assignHvkReklamation } = await import("@/lib/ppl/hvk-abrechnung-server");
   const r = await assignHvkReklamation(String(fd.get("reklamationId") ?? ""), String(fd.get("leadId") ?? ""), actor);
   if (!r.ok) return { error: r.error };
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
   return { message: r.message };
 }
@@ -135,6 +135,6 @@ export async function hvkDiscardAction(fd: FormData): Promise<void> {
   const actor = await requireAdmin();
   const { discardHvkReklamation } = await import("@/lib/ppl/hvk-abrechnung-server");
   await discardHvkReklamation(String(fd.get("reklamationId") ?? ""), actor);
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
 }

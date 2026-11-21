@@ -248,6 +248,8 @@ describe("Vertrieb: eigene Buchungsseite", () => {
   });
 
   it("Entscheidungs-Call: eigener Typ (30 Minuten), persönlicher Link hängt direkt am bekannten Kontakt", async () => {
+    // Online seit 19.11.2026 aus (Migration vertrieb_entscheidungs_call_aus); für den Test eingeschaltet
+    await prisma.salesBookingType.update({ where: { slug: "entscheidung" }, data: { active: true } });
     const decision = (await loadBookingType("entscheidung"))!;
     expect(decision).toMatchObject({ durationMin: 30, thanksPage: false, title: "Entscheidungs-Call mit Ole Kannapinn" });
     const known = await prisma.salesContact.create({ data: { name: "Agentur Bekannt", email: `bekannt@${DOMAIN}`, stage: "INTERESSE" } });
@@ -264,6 +266,7 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     expect(m.endAt!.getTime() - m.startAt.getTime()).toBe(30 * 60000);
     expect(await prisma.salesContact.count({ where: { email: `petra.anders@${DOMAIN}` } })).toBe(0);
     expect(calls.mails[0].subject).toContain("Ihr Termin mit performancegrowth");
+    await prisma.salesBookingType.update({ where: { slug: "entscheidung" }, data: { active: false } });
   });
 
   it("Später-Follow-ups: eigene Buchungsseite wird je Kontakt zum persönlichen Link, Calendly bleibt unverändert", async () => {

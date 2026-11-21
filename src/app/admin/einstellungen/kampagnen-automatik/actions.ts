@@ -29,6 +29,6 @@ export async function saveAutomationAction(_prev: AutomationState, fd: FormData)
     details: next,
     actor: { id: session.userId, email: session.email, role: session.role },
   }).catch(() => undefined);
-  revalidatePath("/admin/einstellungen/kampagnen-automatik");
+  revalidatePath("/admin/neu/einstellungen/kampagnen-automatik");
   return { ok: true, savedAt: Date.now() };
 }

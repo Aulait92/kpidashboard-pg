@@ -12,7 +12,7 @@ const LEVELS = ["info", "degraded", "down"] as const;
 
 function refresh() {
   revalidatePath("/status");
-  revalidatePath("/admin/einstellungen/status");
+  revalidatePath("/admin/neu/einstellungen/status");
 }
 
 /** Neue Meldung für die öffentliche Statusseite (nur Admin, mit Änderungsprotokoll). */

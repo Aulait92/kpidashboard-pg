@@ -303,7 +303,7 @@ async function persistInbound(
       await sendToAdmins({
         title: `🛟 Support-WhatsApp abgemeldet: ${contactName ?? "Kontakt"}`,
         body: "Hat STOPP geschrieben: keine Termin- und Zahlungserinnerungen mehr per WhatsApp.",
-        url: `/admin/whatsapp?c=${conversation.id}`,
+        url: `/admin/neu/leads/chats?c=${conversation.id}`,
         tag: `support-wa:${conversation.id}`,
       }).catch((e) => console.error("[whatsapp support push]", e));
       return;
@@ -316,7 +316,7 @@ async function persistInbound(
     await sendToAdmins({
       title: `🛟 Support-WhatsApp: ${contactName ?? `+${from}`}`,
       body: (waOhneMarker(body) ?? "Neue Nachricht").slice(0, 140),
-      url: `/admin/whatsapp?c=${conversation.id}`,
+      url: `/admin/neu/leads/chats?c=${conversation.id}`,
       tag: `support-wa:${conversation.id}`,
     }).catch((e) => console.error("[whatsapp support push]", e));
     return;
@@ -451,7 +451,10 @@ async function persistInbound(
       // Hintergrund; ohne Schlüssel, Einwilligung mit KI oder freigegebene Sparte passiert nichts
       void import("@/lib/policen/auslesen/server")
         .then((x) => x.nachEingang(linkedLead.leadId!, now))
-        .catch(() => console.error("[policen-auslesen] nach eingang fehlgeschlagen"));
+        .catch(() => console.error("[policen-auslesen] nach eingang fehlgeschlagen"))
+        // „Unterlagen sind da“ an den Vermittler (nur Name und Anzahl), auch wenn das Auslesen aus ist
+        .then(() => (media || nfm ? import("@/lib/policen/eingang-push").then((x) => x.meldeUnterlagen(linkedLead.leadId!, now)) : false))
+        .catch(() => console.error("[policen-eingang] push fehlgeschlagen"));
       if (r.handled) {
         // Termin-Strecke (P2): Antwort auf die Einwilligung zur Policen-Bitte → jetzt der Schluss (Adresse bestätigen)
         // Nur das Stichwort „ohne KI“ (A9, weiter = false): keine Antwort auf die Bitte, die Strecke wartet

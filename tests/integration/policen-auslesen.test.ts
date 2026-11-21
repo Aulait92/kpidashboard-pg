@@ -268,7 +268,7 @@ describe("Policen auslesen", () => {
     expect(v.vertraege).toHaveLength(1);
     expect(v.vertraege[0]).toMatchObject({ sparte: "hausrat", monat: 10, geprueft: false });
     expect(v.zusammenfassung).toMatchObject({ monatSumme: 10, vertraege: 1, ungeprueft: 1 });
-    expect(v.zusammenfassung.kuendigungen).toEqual([{ id: z.id, sparte: "hausrat", versicherer: "Teststadt Versicherung AG", zum: "2027-03-01", bis: "2026-12-01" }]);
+    expect(v.zusammenfassung.kuendigungen).toMatchObject([{ id: z.id, sparte: "hausrat", versicherer: "Teststadt Versicherung AG", zum: "2027-03-01", bis: "2026-11-30", tageBis: 10, verpasst: null }]);
     expect(v.zusammenfassung.bausteine.map((b) => b.text)).toEqual(["Hausrat ohne Elementarschäden"]);
     expect(await vergleichKurz(a.lead.id, customerId)).toMatchObject({ vertraege: 1, monat: 10 });
   });

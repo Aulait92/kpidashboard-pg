@@ -19,11 +19,11 @@ async function requireAdmin() {
 }
 
 async function done(id: string, r: AddOnResult): Promise<never> {
-  revalidatePath(`/admin/kunden/${id}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${id}`, "layout");
   revalidatePath("/buyer", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   const msg = r.ok ? (r.note ? `Gespeichert. ${r.note}` : "Gespeichert.") : r.error;
-  redirect(await adminZiel(`/admin/kunden/${id}/abrechnung?zusatz=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`));
+  redirect(await adminZiel(`/admin/neu/kunden/${id}/abrechnung?zusatz=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`));
 }
 
 /** Inklusive aktive Verkäufer und Preis je weiterem Verkäufer setzen, danach Abo abgleichen. */

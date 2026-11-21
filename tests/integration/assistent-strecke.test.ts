@@ -53,6 +53,8 @@ vi.mock("@/lib/policen/server", async (orig) => {
       return policenBitte({ an: "sie", vermittler: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn", anrede: "Herr" } });
     },
     darfPolicenErinnern: async (leadId: string) => policenModul.an && policenModul.optIn.has(leadId),
+    // Satz am Vortag: ohne Opt-in (A8 a), aber nur mit eingeschalteter Funktion
+    darfPolicenVortagSatz: async (leadId: string, now?: Date) => policenModul.an && real.darfPolicenVortagSatz(leadId, now),
     handlePolicenAntwort: async (conversationId: string, o: { payload?: string | null }) => {
       if (o.payload !== "policen:ja" && o.payload !== "policen:nein") return { handled: false };
       const { prisma } = await import("@/lib/prisma");
@@ -677,7 +679,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       );
       await text(x.phone, "14.05.1985");
       const komplett = gesendet().at(-1)!;
-      expect(komplett.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind|Oft zahlen Menschen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen, \*?wo Sie)/);
+      expect(komplett.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie insgesamt gut abgesichert sind|Soll Herr Kannapinn im Termin auch kurz \*?über Ihre anderen Versicherungen)/);
       expect(komplett.buttons?.map((b) => b.id)).toEqual(["komplettcheck:ja", "komplettcheck:nein"]);
       // Geschlecht, Geburtsjahr, Haltung, Schutzwunsch (Formular bzw. Erstanschreiben) und Kastration nie gefragt
       expect(gesendet().some((s) => /männlich|geboren|Wohnungskatze|Operation|kastriert/i.test(s.body))).toBe(false);
@@ -718,7 +720,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       st.ai = 0;
       await text(x.phone, "Ja, sie ist kerngesund");
       expect((await angaben(x.conv.id)).tiergesundheit).toBe("gesund");
-      expect(gesendet().at(-1)!.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen|Oft zahlen Menschen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen)/);
+      expect(gesendet().at(-1)!.body).toMatch(/^Danke! (Soll Herr Kannapinn im Termin auch kurz schauen|Soll Herr Kannapinn im Termin auch kurz \*?über Ihre anderen Versicherungen)/);
       expect(st.ai).toBe(0);
       // Doppelter Klick auf den alten Knopf: nichts
       const n = gesendet().length;
@@ -735,7 +737,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       await prisma.conversation.update({ where: { id: x.conv.id }, data: { windowExpiresAt: new Date(Math.max(now.getTime(), Date.now()) + 10 * HOUR) } });
       await prisma.message.create({ data: { conversationId: x.conv.id, direction: "internal", kind: STRECKE.tierFrage, body: JSON.stringify({ appointmentId: appt.id, key: "gesundheit" }), sentBy: "bot", createdAt: new Date(now.getTime() - 2 * HOUR) } });
       expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
-      expect(gesendet().at(-1)!.body).toMatch(/^Noch eine kurze Frage: (Soll Herr Kannapinn im Termin auch kurz schauen|Oft zahlen Menschen für dieselbe Absicherung doppelt\. Soll Herr Kannapinn im Termin kurz drüberschauen)/);
+      expect(gesendet().at(-1)!.body).toMatch(/^Noch eine kurze Frage: (Soll Herr Kannapinn im Termin auch kurz schauen|Soll Herr Kannapinn im Termin auch kurz \*?über Ihre anderen Versicherungen)/);
       expect((await runStreckeAbschliessen(now)).gesendet).toBe(0);
     });
   });
@@ -754,7 +756,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       { id: "zusage:andere", title: "Lieber andere Zeit" },
     ];
     const KOMPLETT_OHNE_DANKE =
-      "(Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind|Oft zahlen Menschen für dieselbe Absicherung doppelt\\. Soll Herr Kannapinn im Termin kurz drüberschauen, \\*wo Sie und Ihre Familie)";
+      "(Soll Herr Kannapinn im Termin auch kurz schauen, ob Sie und Ihre Familie insgesamt gut abgesichert sind|Soll Herr Kannapinn im Termin auch kurz \\*über die anderen Versicherungen von Ihnen und Ihrer Familie)";
     beforeAll(async () => {
       await prisma.experiment.update({ where: { key: "termin_zusage" }, data: { aktiv: true } });
       experimenteCacheLeeren();
@@ -978,9 +980,9 @@ describe("Termin-Strecke mit Knöpfen", () => {
         await runPolicenErinnerung(new Date());
         expect(nur(g.phone)).toHaveLength(1);
         const satz = await policenVortagSatzFuer(g.appt, "sie");
-        expect(satz).toBe("Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.");
+        expect(satz).toBe("Wenn Sie mögen, schicken Sie vorab Ihre Policen hier in den Chat (ein Foto reicht), dann kann sich Ihr Berater schon vorbereiten. Geht aber auch ohne.");
         expect(vortagText({ an: "sie", hi: "Guten Tag Frau Schneider,", wann: "morgen um 10 Uhr", nutzen: "In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was es kostet.", komplettcheck: true, mode: "video", meetUrl: "https://x", person: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" }, policen: satz })).toContain(
-          "Legen Sie gern Ihre bestehenden Verträge bereit. Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.",
+          "was es kostet. Wenn Sie mögen, schicken Sie vorab Ihre Policen hier in den Chat (ein Foto reicht)",
         );
         await merke(g.conv.id, STRECKE.policenErinnerung, { appointmentId: g.appt.id, art: "vortag" });
         expect(await policenVortagSatzFuer(g.appt, "sie")).toBeNull();
@@ -1002,7 +1004,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       }
     });
 
-    it("Stopp: Police da, „habe keine“, „Lieber nicht“, ohne Opt-in, Schalter aus", async () => {
+    it("Stopp: Police da, „habe keine“, „Lieber nicht“, Schalter aus; ohne Opt-in bleibt der Satz", async () => {
       const doc = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
       await prisma.leadDocument.create({ data: { leadId: doc.lead.id, customerId, fileName: "hausrat.pdf", mimeType: "application/pdf", size: 10 } });
       expect(await policenVortagSatzFuer(doc.appt, "sie")).toBeNull();
@@ -1013,7 +1015,8 @@ describe("Termin-Strecke mit Knöpfen", () => {
       await prisma.message.create({ data: { conversationId: lieber.conv.id, direction: "inbound", body: "Lieber nicht" } });
       expect(await policenVortagSatzFuer(lieber.appt, "sie")).toBeNull();
       const ohne = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR, optIn: false });
-      expect(await policenVortagSatzFuer(ohne.appt, "sie")).toBeNull();
+      // Ohne Opt-in kommt der Satz trotzdem (Vortags-Terminerinnerung, A8 a, seit 19.11.2026)
+      expect(await policenVortagSatzFuer(ohne.appt, "sie")).not.toBeNull();
       const aus = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
       expect(await policenVortagSatzFuer(aus.appt, "sie")).not.toBeNull();
       policenModul.an = false;

@@ -9,7 +9,7 @@ export function TaskForm({ contactId, compact, defaultType = "NACHFASSEN" }: { c
     <form action={createTask} className={compact ? "grid grid-cols-2 gap-2 [&>div:first-of-type]:col-span-2" : "grid gap-2 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end"}>
       {contactId && <input type="hidden" name="contactId" value={contactId} />}
       <div>
-        <label className="label">Neue Aufgabe</label>
+        <label className="label">Was ist zu tun?</label>
         <input name="title" required placeholder="z.B. Nachfassen wegen Präsentation" className="input" />
       </div>
       <div>

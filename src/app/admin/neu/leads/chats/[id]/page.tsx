@@ -28,7 +28,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   if (!chat) notFound();
   const qs = new URLSearchParams(Object.entries(sp).filter(([k, v]) => v && k !== "c") as [string, string][]).toString();
   return (
-    <Seite titel={chat.contactName ?? formatPhone(chat.contactPhone)} zurueck={{ href: `/admin/neu/leads/chats${qs ? `?${qs}` : ""}`, label: "WhatsApp-Chats" }} breit>
+    <Seite titel={chat.contactName ?? formatPhone(chat.contactPhone)} zurueck={{ href: `/admin/neu/leads/chats${qs ? `?${qs}` : ""}`, label: "Chats" }} breit>
       <div data-funktion={FUNKTIONEN}>
         <ChatsAnsicht sp={sp} basis="/admin/neu/leads/chats" chatId={id} neu />
       </div>

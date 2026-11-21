@@ -622,7 +622,7 @@ export async function acceptHalteOffer(customerId: string, input: HalteInput, ac
     await sendToAdmins({
       title: `Halteangebot angenommen: ${name}`,
       body: `${HALTE_LABEL[input.kind]} · ${churnReasonLabel(reason)}${fx.stripeStatus === "manual" ? " · bitte von Hand" : ""}`,
-      url: `/admin/kunden/${customerId}/abrechnung`,
+      url: `/admin/neu/kunden/${customerId}/abrechnung`,
       tag: `halten:${customerId}`,
     }).catch(() => {});
   }

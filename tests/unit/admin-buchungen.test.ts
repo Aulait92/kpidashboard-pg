@@ -199,7 +199,7 @@ describe("Buchungen: Zeilen aus jeder Quelle", () => {
   });
 
   it("Produkt, Budget, Pause, Paket, Prämie, Plätze, Modul, Anfrage", () => {
-    expect(byId("productBooking:pb1")).toMatchObject({ art: "produkt", monthly: 350, status: "aktiv", href: "/admin/kunden/c1/abrechnung" });
+    expect(byId("productBooking:pb1")).toMatchObject({ art: "produkt", monthly: 350, status: "aktiv", href: "/admin/neu/kunden/c1/abrechnung" });
     expect(byId("budgetChange:bc1")).toMatchObject({ art: "budget", monthly: 0, status: "aktiv" });
     expect(byId("budgetChange:bc2")).toMatchObject({ art: "budget", monthly: null, status: "angefragt" });
     expect(byId("pause:p1")).toMatchObject({ art: "pause", status: "beendet" });
@@ -212,7 +212,7 @@ describe("Buchungen: Zeilen aus jeder Quelle", () => {
   });
 
   it("offene Aufgabe: passende Vertriebsaufgabe mit Link zum Kontakt", () => {
-    expect(byId("audit:a-anfrage").task).toEqual({ open: true, title: "Produkt-Anfrage Agentur Muster: Hundehaftpflicht für Züchter", href: "/admin/vertrieb/kontakte/k1" });
+    expect(byId("audit:a-anfrage").task).toEqual({ open: true, title: "Produkt-Anfrage Agentur Muster: Hundehaftpflicht für Züchter", href: "/admin/neu/vertrieb/kontakte/k1" });
     expect(byId("budgetChange:bc2").task?.open).toBe(true);
     expect(byId("productBooking:pb1").task).toBeNull();
   });
@@ -366,7 +366,7 @@ describe("Buchungen: CSV", () => {
     expect(lines.find((l) => l.includes("Rabatt"))).toContain(";-500,00;");
     const anfrage = lines.find((l) => l.includes("Hundehaftpflicht"))!;
     expect(anfrage).toContain(";angefragt;ja;");
-    expect(anfrage.endsWith(";https://app.example/admin/kunden/c1/abrechnung")).toBe(true);
+    expect(anfrage.endsWith(";https://app.example/admin/neu/kunden/c1/abrechnung")).toBe(true);
   });
 
   it("maskiert Semikolon und Anführungszeichen", () => {

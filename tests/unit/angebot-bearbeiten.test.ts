@@ -8,6 +8,8 @@ const db = vi.hoisted(() => ({
   updated: [] as { where: Record<string, unknown>; data: Record<string, unknown> }[],
   status: "draft" as string | null,
   updateCount: 1,
+  /** Höchster zugesagter Abschlussbonus der offenen Angebote des Kontakts (null = keiner) */
+  zugesagt: null as number | null,
 }));
 
 vi.mock("@/lib/prisma", () => {
@@ -31,6 +33,7 @@ vi.mock("@/lib/prisma", () => {
     prisma: {
       offer: {
         findFirst: async () => null,
+        aggregate: async () => ({ _max: { abschlussBonus: db.zugesagt } }),
         findUnique: async () => (db.status == null ? null : { id: "off_1", status: db.status, dealId: null, salesContactId: "sc_1" }),
       },
       $transaction: async (fn: (t: typeof tx) => unknown) => fn(tx),
@@ -78,6 +81,7 @@ beforeEach(() => {
   db.updated.length = 0;
   db.status = "draft";
   db.updateCount = 1;
+  db.zugesagt = null;
 });
 
 describe("Entwurf → Formular → Speichern: keine Werte gehen verloren", () => {
@@ -167,6 +171,30 @@ describe("Vorbefüllen", () => {
     await createOffer({ salesContactId: "sc_1" }, formWerteZuInput(basis, opts), "u_1");
     const alt = zeile({ ...db.created.at(-1)!, abschlussBonusBis: new Date("2020-01-01T22:59:00Z") });
     expect(entwurfZuFormWerte(alt, null).bonusBis).toBe(abschlussBonusStandardTag());
+  });
+});
+
+describe("Abschlussbonus abgeschafft (Ole, 21.11.2026)", () => {
+  it("neues Angebot: kein Bonus im Formular und keiner gespeichert, auch wenn die Eingabe einen verlangt", async () => {
+    expect(basis).toMatchObject({ bonusVorhanden: false, bonusAn: false });
+    expect(formWerteZuInput({ ...basis, bonusAn: true, bonusBetrag: "300", bonusBis: addDaysIso(berlinTodayIso(), 1) }, opts).abschlussBonus).toBe(0);
+    await createOffer({ salesContactId: "sc_1" }, { ...formWerteZuInput(basis, opts), abschlussBonus: 300, abschlussBonusBis: addDaysIso(berlinTodayIso(), 1) }, "u_1");
+    expect(db.created.at(-1)).toMatchObject({ abschlussBonus: null, abschlussBonusBis: null });
+  });
+
+  it("neue Version bzw. Entwurf eines Angebots mit zugesagtem Bonus: bleibt, höchstens bis zum zugesagten Betrag", async () => {
+    db.zugesagt = 300;
+    const bis = addDaysIso(berlinTodayIso(), 2);
+    const w = { ...basis, bonusVorhanden: true, bonusAn: true, bonusBetrag: "300", bonusBis: bis };
+    const { erst, werte } = await rundlauf(w);
+    expect(Number(erst.abschlussBonus)).toBe(300);
+    expect(berlinTodayIso(erst.abschlussBonusBis as Date)).toBe(bis);
+    expect(werte).toMatchObject({ bonusVorhanden: true, bonusAn: true, bonusBetrag: "300", bonusBis: bis });
+    await createOffer({ salesContactId: "sc_1" }, formWerteZuInput({ ...w, bonusBetrag: "500" }, opts), "u_1");
+    expect(Number(db.created.at(-1)!.abschlussBonus)).toBe(300);
+    // bewusst abgewählt: kein Bonus
+    await createOffer({ salesContactId: "sc_1" }, formWerteZuInput({ ...w, bonusAn: false }, opts), "u_1");
+    expect(db.created.at(-1)!.abschlussBonus).toBeNull();
   });
 });
 

@@ -1,6 +1,13 @@
-# Vertriebsunterlagen (Stand 17.11.2026: Commit eca12945, Folie 19 „Policen vorab“)
+# Vertriebsunterlagen (Stand 21.11.2026: Jahresplan-Folie statt Abschlussbonus, Paket-Folie mit aktuellen Preisen)
 
 Aktuelle Präsentationen für Admin → Marketing → Unterlagen (je Zielgruppe PPTX und PDF).
+
+Fassung 21.11.2026 (Ole: „Nimm den Abschlussbonus raus überall und nimm in die Vertriebspräsentation den Jahresplan für
+3 Monate sparen auf.“): Die Bonusfolie entfällt, an ihrer Stelle (vor „Ihr Start in 3 Schritten“) kommt beim Upload die
+Folie „Jahresplan: 3 Monate sparen“ dazu (Abschnitt unten). Die Paket-Folie (Vertreter 22, Makler 23; PDF Seite 29 bzw. 30)
+nannte noch 1.000/1.400/1.800 € und „Jährlich im Voraus: 2 Monate geschenkt“ und ist jetzt in PPTX und PDF hier im
+Ordner durch die HTML-Folie der Web-Präsentation mit Listenpreisen ersetzt (990/1.390/1.790 €, 3 Monate geschenkt;
+`scripts/paket-folie-ersetzen.py`).
 
 Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unverändert, neu: Terminvorbereitung,
 Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 24 Folien, Makler 25 (Fassung eca12945). Die Folien sind Bilder (Text nicht
@@ -47,7 +54,7 @@ Folie 14 bleibt „Problem 04 gelöst“. Ziffern aus der Nachbarfolie übernomm
 Fassung 19.11.2026 (Branch `claude/vertreter-folien-screenshots`, nur Vertreter): App-Screenshots auf Folie 15 („Heute“ mit
 neuen Leads oben, Termin mit Zusammenfassung, „Wie lief es?“; Satz jetzt „Nach dem Gespräch: 2 Klicks“), 16 (neue
 Terminvorbereitung) und 20 („Wachstum“ mit „Rechnet sich das?“) neu, sonst unverändert; in PPTX und PDF (Seiten 22, 23, 27)
-ersetzt, Web-Folien vertreter/15, 16, 20 neu. Zum Hochladen Bonusfolie wie unten einfügen.
+ersetzt, Web-Folien vertreter/15, 16, 20 neu. Zum Hochladen Jahresplan-Folie wie unten einfügen (bis 21.11.2026: Bonusfolie).
 Makler (19.11.2026, Ole: „makler auch nachziehen“): dieselben drei Folien (15, 16, 20, Seitenzahl „n / 25“), PDF Seiten 22, 23, 27,
 Web-Folien makler/15, 16, 20 neu.
 
@@ -89,10 +96,10 @@ In Produktion erst nach Oles OK hochladen.
 
 | Datei | Zielgruppe | Format | Hinweis |
 |---|---|---|---|
-| `Vertreter-Praesentation.pptx` | vertreter | pptx | neues Design, 24 Folien (ohne Bonusfolie) |
-| `Vertreter-Praesentation.pdf` | vertreter | pdf | Versandfassung, 31 Seiten (ohne Bonusfolie) |
-| `Makler-Praesentation.pptx` | makler | pptx | neues Design, 25 Folien (ohne Bonusfolie) |
-| `Makler-Praesentation.pdf` | makler | pdf | Versandfassung, 32 Seiten (ohne Bonusfolie) |
+| `Vertreter-Praesentation.pptx` | vertreter | pptx | neues Design, 24 Folien (ohne Jahresplan-Folie) |
+| `Vertreter-Praesentation.pdf` | vertreter | pdf | Versandfassung, 31 Seiten (ohne Jahresplan-Folie) |
+| `Makler-Praesentation.pptx` | makler | pptx | neues Design, 25 Folien (ohne Jahresplan-Folie) |
+| `Makler-Praesentation.pdf` | makler | pdf | Versandfassung, 32 Seiten (ohne Jahresplan-Folie) |
 
 Hochladen ohne Admin-Login über den geschützten Upload (docs/sicherheit-cron.md):
 
@@ -146,7 +153,8 @@ Die Folien gibt es auch als Web-Präsentation (Vollbild, Pfeiltasten, Wischen am
   laut Anreicherung), umschaltbar. „Rechnet sich das?“ und „Ihr Paket“ sind HTML-Folien mit Namen und Preisen aus dem
   aktuellen Angebot des Kontakts, ohne Angebot mit Listenpreisen. Folie 17 zeigt rechts die Live-Demo
   (`/demo/beratung`, zum Anklicken), Folie 13 das Video des Assistenten, Folie 18 den Komplettcheck und Folie 19
-  „Policen vorab“ (Bilder). Mit Bonusfolie: Vertreter 25, Makler 26 Folien.
+  „Policen vorab“ (Bilder). Mit Jahresplan-Folie (Listenpreise bzw. Angebot mit Vorauszahlung und 12 Monaten):
+  Vertreter 25, Makler 26 Folien. Bonusfolie nur noch bei Angeboten, denen der Abschlussbonus schon zugesagt ist.
 - **Link für den Interessenten** (`/praesentation/<token>`, nur App-Adresse): im Kontakt oder als Häkchen beim Versand des
   Angebots; 14 Tage gültig, verlängerbar, beendbar. Aufrufe stehen im Kontakt („Präsentation geöffnet am …“), eigene
   Aufrufe als Admin zählen nicht.
@@ -156,23 +164,25 @@ Die Folien gibt es auch als Web-Präsentation (Vollbild, Pfeiltasten, Wischen am
   und `assistent.mp4` neu; Folienliste und Sonderfolien in `src/lib/vertrieb/verkaufspraesentation.ts` prüfen
   (Nummern von Rechnung, Paket und Demo).
 
-## Folie „Ihr Abschlussbonus“ in PPTX und PDF (17.11.2026, nach Oles OK hochgeladen am 17.11.2026, 10:40 Uhr)
+## Folie „Jahresplan: 3 Monate sparen“ in PPTX und PDF (21.11.2026, ersetzt die Bonusfolie)
 
-Vorletzte Folie (vor „Ihr Start in 3 Schritten“), gleiche Gestaltung wie in der Web-Präsentation, aber mit fester
-Frist „bis zur Frist in Ihrem Angebot“ (die PDF geht mit der Angebotsmail raus und wird später gelesen) und ohne
-Seitenzahl. Listenpreise: Vertreter 2.490 € → 2.190 €, Makler 990 € → 690 €. Erzeugen und einfügen:
+Vorletzte Folie (vor „Ihr Start in 3 Schritten“), gleiche Gestaltung wie in der Web-Präsentation, ohne Seitenzahl.
+Listenpreis Betreuung + Software bei Werbebudget bis 3.000 €: monatlich 12 × 990 € = 11.880 €, Jahresplan 9 × 990 € =
+8.910 €, Ersparnis 2.970 € netto (`PRICE_LIST.tiers[0]`, `VORAUSZAHLUNG["12m"]` in `src/lib/offer-pricing.ts`).
+Erzeugen und einfügen (das erste Skript schreibt auch die Paket-Folien für `scripts/paket-folie-ersetzen.py`):
 
 ```bash
-npx tsx scripts/bonus-folie-unterlagen.ts /tmp/bonus
-python3 scripts/bonus-folie-einfuegen.py /tmp/bonus /tmp/unterlagen-neu
+E2E_CHROMIUM=/opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell \
+  npx tsx scripts/jahresplan-folie-unterlagen.ts /tmp/jahresplan
+python3 scripts/jahresplan-folie-einfuegen.py /tmp/jahresplan /tmp/unterlagen-neu
 ```
 
-Ergebnis mit der Fassung eca12945 (Policen vorab, 17.11.2026): Vertreter 25 Folien (PDF 32 Seiten), Makler 26 Folien
-(PDF 33 Seiten); Upload in Produktion nach dem Deploy (Ole: „überall ersetzen“).
+Ergebnis: Vertreter 25 Folien (PDF 32 Seiten), Makler 26 Folien (PDF 33 Seiten). Das Einfügen ist wiederholbar (erkennt
+eine schon vorhandene Jahresplan-Folie). `scripts/vertrieb-folien.mjs` überspringt die Folie (Bild `jahresplan.png`,
+ebenso die alte `abschlussbonus.png`), weil die Web-Präsentation sie selbst mit den Preisen aus dem Angebot einfügt.
+Die fertigen Dateien liegen bewusst nicht im Repo (je ca. 15 MB); mit dem Upload oben (Ordner `/tmp/unterlagen-neu` statt
+`docs/unterlagen`) hochladen. Upload-Stand 21.11.2026: noch nicht hochgeladen (aus der Claude-Umgebung war der Host
+`kpidashboard-pg-production.up.railway.app` gesperrt), bis dahin enthalten die Dateien in Produktion noch die Bonusfolie.
 
-Ergebnis mit der Fassung bc0fecc (Komplettcheck, 17.11.2026, nach Oles OK in Produktion hochgeladen am 17.11.2026, 15:59 Uhr): Vertreter 24 Folien (PDF 31 Seiten),
-Makler 25 Folien (PDF 32 Seiten); vorher (22/23 Folien) 23 und 24. Ohne Playwright-Chromium mit
-`E2E_CHROMIUM=/usr/bin/google-chrome`, Python mit python-pptx/pypdf/Pillow (`/usr/bin/python3`). Das Einfügen ist wiederholbar
-(erkennt eine schon vorhandene Bonusfolie). `scripts/vertrieb-folien.mjs` überspringt die Folie, weil die
-Web-Präsentation sie selbst mit der Frist aus dem Angebot einfügt. Die Dateien liegen bewusst nicht im Repo
-(je ca. 15 MB); nach Oles OK mit dem Upload oben (Ordner `/tmp/unterlagen-neu` statt `docs/unterlagen`) hochladen.
+Frühere Bonusfolie (17.11.2026 bis 21.11.2026): `scripts/bonus-folie-unterlagen.ts` und `scripts/bonus-folie-einfuegen.py`
+(heute `scripts/jahresplan-folie-*`), siehe Git-Verlauf.

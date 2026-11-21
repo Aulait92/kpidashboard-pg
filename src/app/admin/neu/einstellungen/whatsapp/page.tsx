@@ -1,14 +1,16 @@
-import Link from "next/link";
 import { connection } from "next/server";
+import { FlaskConical, Receipt, Smartphone } from "lucide-react";
 import { SupportInboxCard } from "@/app/admin/whatsapp/settings/support-card";
-import { EinstellungSeite } from "@/components/admin-neu/einstellungen/rahmen";
+import { EinstellungSeite, LinkZeile, LISTE } from "@/components/admin-neu/einstellungen/rahmen";
+import { Card } from "@/components/ui";
+import { NEU } from "@/lib/admin-neu/navigation";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
-export const metadata = { title: "WhatsApp-Vorlagen & Support-Nummer | performancegrowth Admin" };
+export const metadata = { title: "WhatsApp | performancegrowth Admin" };
 
-// WhatsApp, globaler Teil (Demo „e-vorlagen“, heute /admin/whatsapp/settings): Support-Nummer über 360dialog verbinden
-// und die A/B-Tests der Vorlagen (beides bestehende Bausteine). Assistent, Nummer und Vorlagen je Kunde gehören in die
-// Kundenakte → WhatsApp (Bereich Kunden). Der Rücksprung nach dem Verbinden führt noch auf die heutige Seite.
+// Einstellungen › Technik › WhatsApp (Demo „e-vorlagen“, heute /admin/whatsapp/settings): oben die Support-Nummer über
+// 360dialog (bestehender Baustein), darunter die Wege zu allem anderen rund um WhatsApp: Meta-Gebühren (Unterseite,
+// bis 20.11.2026 eigener Punkt unter Werkzeuge), A/B-Tests der Vorlagen (Liefern) und Nummer/Vorlagen je Kunde (Kundenakte).
 export default async function Page({ searchParams }: { searchParams: Promise<{ support?: string }> }) {
   await connection();
   await requireAuth();
@@ -18,18 +20,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
       <div className="[&>section]:mt-0 [&>section]:rounded-[var(--radius-lg)] [&>section]:shadow-[var(--shadow-md)]" data-funktion="route-get--support-whatsapp-verbinden-360dialog">
         <SupportInboxCard status={support ?? null} />
       </div>
-      <p className="text-sm text-[color:var(--muted)]">
-        A/B-Tests der Vorlagen und der Lead-Reise:{" "}
-        <Link href="/admin/neu/leads/ab-tests" className="text-[color:var(--brand)] hover:underline">
-          Liefern › A/B-Tests
-        </Link>
-      </p>
-      <p className="text-sm text-[color:var(--muted)]">
-        Assistent, Nummer und Vorlagen je Kunde (bis die Kundenakte sie hat):{" "}
-        <Link href="/admin/whatsapp/settings" className="text-[color:var(--brand)] hover:underline">
-          WhatsApp-Assistent je Kunde
-        </Link>
-      </p>
+      <Card>
+        <ul className={LISTE}>
+          <LinkZeile href={`${NEU}/werkzeuge/meta-gebuehren`} icon={Receipt} titel="Meta-Gebühren" text="Kosten je Kunde und Monat" />
+          <LinkZeile href={`${NEU}/leads/ab-tests`} icon={FlaskConical} titel="A/B-Tests der Vorlagen" text="Liefern › A/B-Tests" />
+          <LinkZeile href={`${NEU}/kunden`} icon={Smartphone} titel="Nummer und Vorlagen je Kunde" text="In der Kundenakte unter WhatsApp" />
+        </ul>
+      </Card>
     </EinstellungSeite>
   );
 }

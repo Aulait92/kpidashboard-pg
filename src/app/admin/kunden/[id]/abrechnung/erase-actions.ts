@@ -22,7 +22,7 @@ export async function eraseCustomerDataAction(_prev: EraseCustomerState, fd: For
   const blocker = eraseBlocker(c, { confirmName: String(fd.get("confirm") ?? ""), contractEnded: fd.get("contractEnded") === "on", reason });
   if (blocker) return { error: blocker };
   const r = await finalDeleteCustomer(id, { actor: { id: session.userId, email: session.email, role: session.role }, reason });
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return {
     ok: true,

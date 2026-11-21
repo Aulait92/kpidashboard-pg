@@ -2,27 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Bell, BellOff, BellRing, LogOut, Settings, ShieldCheck } from "lucide-react";
-import { neueOberflaecheAction } from "@/app/admin/neu/schalter-actions";
+import { Bell, BellOff, BellRing, Compass, LogOut, Settings, Wrench } from "lucide-react";
 import { usePush } from "@/lib/use-push";
 import { cn } from "@/lib/utils";
 
 const zeile = "flex min-h-11 w-full items-center gap-2 px-3 text-left hover:bg-[color:var(--surface-sunken)]";
-
-/** Schalter „Neue Oberfläche“ (in beiden Profilmenüs). `an` = aktueller Zustand. */
-export function NeueOberflaecheSchalter({ an, label = "Neue Oberfläche" }: { an: boolean; label?: string }) {
-  return (
-    <form action={neueOberflaecheAction} className="border-b border-[color:var(--border)]">
-      <input type="hidden" name="an" value={an ? "0" : "1"} />
-      <button type="submit" role="switch" aria-checked={an} className={cn(zeile, "justify-between")}>
-        <span>{label}</span>
-        <span className={cn("relative h-[22px] w-[38px] shrink-0 rounded-full transition", an ? "bg-[color:var(--brand)]" : "bg-[color:var(--border-strong)]")}>
-          <span className={cn("absolute top-[3px] h-4 w-4 rounded-full bg-white transition-all", an ? "left-[19px]" : "left-[3px]")} />
-        </span>
-      </button>
-    </form>
-  );
-}
 
 /** Push-Mitteilungen an/aus und Test (früher eigener Knopf in der Seitenleiste). */
 function PushZeile() {
@@ -52,7 +36,9 @@ function PushZeile() {
 }
 
 /**
- * Profilmenü des neuen Admins: Schalter „Neue Oberfläche“, Push, Einstellungen, Sicherheit, Abmelden.
+ * Profilmenü des Admins (wie /buyer: Profil › Einstellungen): Einstellungen, Technik, Push, „Was wo ist“ (wo jede
+ * Funktion der früheren Oberfläche jetzt liegt), Abmelden. Die alte Oberfläche gibt es seit dem Umbau 20.11.2026 nicht mehr.
+ * Zwei-Faktor liegt in Einstellungen › Konto & Sicherheit (Hinweis dort, solange er fehlt).
  * variant „sidebar“ unten in der Seitenleiste, sonst rund in der Kopfzeile (Handy).
  */
 export function ProfilMenue({ email, variant = "kopf" }: { email: string; variant?: "sidebar" | "kopf" }) {
@@ -109,13 +95,17 @@ export function ProfilMenue({ email, variant = "kopf" }: { email: string; varian
             <div className="truncate font-semibold">{email}</div>
             <div className="text-xs text-[color:var(--muted)]">Admin</div>
           </div>
-          <NeueOberflaecheSchalter an />
+          <div className="border-b border-[color:var(--border)]">
+            <Link href="/admin/neu/einstellungen" onClick={() => setOpen(false)} className={zeile}>
+              <Settings className="h-4 w-4" /> Einstellungen
+            </Link>
+            <Link href="/admin/neu/einstellungen#technik" onClick={() => setOpen(false)} className={zeile} data-profil="technik">
+              <Wrench className="h-4 w-4" /> Technik
+            </Link>
+          </div>
           <PushZeile />
-          <Link href="/admin/neu/einstellungen" onClick={() => setOpen(false)} className={zeile}>
-            <Settings className="h-4 w-4" /> Einstellungen
-          </Link>
-          <Link href="/admin/einstellungen/sicherheit" onClick={() => setOpen(false)} className={zeile}>
-            <ShieldCheck className="h-4 w-4" /> Sicherheit (Zwei-Faktor)
+          <Link href="/admin/neu/was-wo-ist" onClick={() => setOpen(false)} className={cn(zeile, "text-[color:var(--muted)]")} data-profil="was-wo-ist">
+            <Compass className="h-4 w-4" /> Was wo ist
           </Link>
           <form action="/api/auth/logout" method="post" className="border-t border-[color:var(--border)]">
             <button type="submit" className={zeile}>

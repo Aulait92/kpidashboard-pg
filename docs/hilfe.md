@@ -1173,30 +1173,69 @@ Bewertung im Einzelfall liegt bei Ihnen.**
 
 ## Empfehlungen & Bewertungen (Zusatzmodul)
 
-- **Was es macht:** Einige Tage nach jedem Abschluss (Standard 7) bekommt Ihr Kunde per WhatsApp in Ihrem Namen
-  eine Nachricht: erst der direkte Draht zu Ihnen („Wenn etwas nicht passt, antworten Sie mir direkt hier“), dann die
-  neutrale Bitte „Außerdem freue ich mich über Ihre ehrliche Bewertung bei Google“ mit Link. **Alle bekommen dieselbe
-  Nachricht**, es gibt keine Vorab-Frage, die darüber entscheidet, wer den Google-Link bekommt (das verbieten die
-  Google-Richtlinien), und nie die Bitte um fünf Sterne oder nur um gute Bewertungen. Mit Knopf „Keine Nachrichten
-  mehr“ bzw. Hinweis auf STOPP. **Einmal je Person**, auch bei mehreren Verträgen.
-- **Nur mit Einwilligung (seit 15.11.2026):** Die Bitte um eine Bewertung oder Empfehlung ist Werbung und geht per
-  WhatsApp nur, wenn Ihr Kunde einverstanden ist. Fragen Sie im Abschlussgespräch, ob Sie nachfragen und um eine
-  ehrliche Bewertung und eine Empfehlung bitten dürfen, und bestätigen Sie das im Kontakt unter „Empfehlungen &
-  Bewertungen“ mit **„Kunde ist einverstanden“** (gespeichert mit Zeitpunkt und Wortlaut). Bis dahin wartet die
-  Nachfrage („Wartet auf Ihre Bestätigung der Einwilligung“), und die geplante Bitte um Empfehlung entfällt ohne
-  Einwilligung. Antwortet der Kunde „STOPP“ oder tippt „Keine Nachrichten mehr“, bekommt er keine Nachfrage und keine
-  Bitte mehr. Eigene Texte für die Nachfrage brauchen den Hinweis auf STOPP und dürfen nicht um fünf Sterne bitten.
+Begriffe: **Bewertungsbitte** (Nachfrage nach dem Abschluss mit Google-Link), **Empfehlungsbitte** (Bitte um eine
+Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, die sich über einen Link gemeldet haben),
+**Neukunden aus Empfehlungen**, Antworten als **Lob**, **Kritik** oder **Frage**.
+
+- **So ist die Seite aufgebaut (seit 19.11.2026):** Reiter **Übersicht | Teilen | Einstellungen**. Die Übersicht zeigt
+  oben die geschätzte Provision aus Empfehlungen der letzten 90 Tage (mit Ihren Provisionssätzen, im Vergleich zu den
+  Modulkosten von 177 € je 90 Tage) und darunter Empfehlungen, Termine und Neukunden. Dann **Heute um Empfehlung bitten**, dann
+  **Zu erledigen** (nur wenn etwas offen ist) und eine Zeile vom Link zum Neukunden mit einem Tipp. Alle Zahlen im Detail
+  unter **Auswertung ansehen**. Gibt es noch keine Daten, zeigt die Übersicht drei Schritte zum Start (Google-Link,
+  Angebot für Empfohlene, erster Empfehlungslink).
+- **Heute um Empfehlung bitten:** Kunden, bei denen gerade ein guter Moment für eine Empfehlungsbitte ist, mit dem Grund: hat gelobt,
+  wollte bei Google bewerten (Google-Link geöffnet), Termin vor kurzem (bis 14 Tage) oder Abschluss vor 21 Tagen oder mehr (bis ein Jahr).
+  Je Zeile ein Knopf **Link senden** (am Computer **Empfehlungslink senden**), der den persönlichen Empfehlungslink per WhatsApp in Ihrem Namen schickt (nach einem
+  Termin mit dem Einstieg „Nach dem Jahresgespräch“). Es erscheinen nur Kunden mit Zustimmung, ohne STOPP, ohne Kritik
+  oder offene Aufgabe „unzufrieden“, nicht auf „Nicht anfragen“, nicht in den letzten 90 Tagen gefragt (auch nicht per
+  QR-Code) und unter der Obergrenze von 3 Empfehlungsbitten im Jahr. Höchstens 5 Zeilen sind sichtbar, der Rest unter
+  „Alle anzeigen“. Ein „Allen senden“ gibt es bewusst nicht. Senden Sie von Hand, entfällt die geplante automatische
+  Empfehlungsbitte an diesen Kunden. Auf **Heute** steht „n Kunden bereit für eine Empfehlung“ mit Link auf die Liste,
+  im Menü der Eintrag **Empfehlungen** mit „n bereit“.
+- **Zu erledigen:** Kritik (Anrufen, Als geklärt markieren), Google-Bewertung ohne Antwort, **Zustimmung fehlt bei x von
+  y Abschlüssen** (aufklappen: je Kunde „Kunde hat zugestimmt“ oder der QR-Code für den Termin) und offene Dankeschöns.
+- **Was es macht:** Einige Tage nach jedem Abschluss (Standard 14) bekommt Ihr Kunde per WhatsApp in Ihrem Namen
+  die Bewertungsbitte: erst der direkte Draht zu Ihnen („Wenn nicht, antworten Sie einfach hier“), dann die neutrale
+  Bitte um eine ehrliche Bewertung bei Google mit Link. **Alle bekommen dieselbe Nachricht mit demselben Google-Link**,
+  unabhängig davon, wie zufrieden sie sind; es gibt keine Vorab-Frage, die darüber entscheidet, wer den Google-Link
+  bekommt (das verbieten die Google-Richtlinien), und nie die Bitte um fünf Sterne oder nur um gute Bewertungen. Mit
+  Hinweis auf STOPP. **Einmal je Person**, auch bei mehreren Verträgen. Für eine Bewertung gibt es nie eine Gegenleistung.
+- **Nur mit Zustimmung (seit 15.11.2026, Wortlaut seit 19.11.2026):** Die Bewertungs- und Empfehlungsbitte ist Werbung
+  und geht per WhatsApp nur, wenn Ihr Kunde einverstanden ist. Fragen Sie im Abschlussgespräch (Satz zum Vorlesen in
+  der Abschluss-Karte) und setzen Sie im Kontakt in der Abschluss-Karte das Häkchen **„Kunde hat zugestimmt: Nachfrage,
+  ehrliche Google-Bewertung, gelegentlich Empfehlungsbitte (STOPP jederzeit)“**. Gespeichert wird der Wortlaut mit
+  Zeitpunkt: Nachfrage, ehrliche Google-Bewertung und gelegentlich, höchstens 3-mal im Jahr, eine Empfehlung.
+  Zustimmungen mit dem alten Wortlaut (bis 18.11.2026) decken eine Empfehlungsbitte. Ohne Zustimmung geht keine
+  Nachricht raus; der QR-Code im Termin geht trotzdem, weil Ihr Kunde dann selbst teilt. Antwortet der Kunde „STOPP“,
+  bekommt er nichts mehr. Eigene Texte brauchen den Hinweis auf STOPP und dürfen nicht um fünf Sterne bitten.
 - **Bewertungen anzeigen:** Wo die App Google-Bewertungen zeigt, steht „Bewertungen stammen von Google, keine eigene
   Echtheitsprüfung.“ Zeigen Sie Bewertungen auf Ihrer eigenen Website, nennen Sie dort ebenfalls die Herkunft.
-- **Antworten:** Die KI liest die Antwort. Kritik oder Beschwerde → sofort Push und die Aufgabe „Kunde unzufrieden –
-  bitte heute anrufen“ mit Zitat in „Heute“; die Bitte um Empfehlung geht an diesen Kunden nicht raus. Lob → Dank
-  mit dem persönlichen Empfehlungslink (abschaltbar unter „Der richtige Moment“; ohne zweiten Google-Link). Rückfragen landen als „Wartet auf Sie“ im Chat. Geklärte Kritik markieren Sie in
-  „Empfehlungen & Bewertungen“ mit „Als geklärt markieren“.
+- **Antworten:** Die KI liest die Antwort (Gesundheitsangaben werden vorher entfernt). Kritik → sofort Push und die
+  Aufgabe „Kunde unzufrieden, bitte heute anrufen“ mit Zitat in „Heute“; an diesen Kunden geht keine Empfehlungsbitte.
+  Lob → Dank mit dem persönlichen Empfehlungslink (abschaltbar unter Einstellungen → Erweitert; ohne zweiten
+  Google-Link). Fragen landen als „Wartet auf Sie“ im Chat. Die KI-Einordnung entscheidet nie über den Google-Link.
+- **Kontakt-Karte:** Im Kontakt steht der Verlauf als kleine Marken (Bewertungsbitte, Lob, Kritik oder Frage, Google
+  geöffnet, Empfehlungsbitte, Empfehlungen). Darunter **Empfehlungslink senden** (Anlass automatisch, unter „Mehr“
+  änderbar, dort auch „Nicht anfragen“) und **Im Termin zeigen**. Fehlt die Zustimmung, steht dort „Kunde hat zugestimmt“.
 - **Bitte um Empfehlung:** einige Wochen nach dem Abschluss (Standard 21 Tage), nicht bei Kritik und nicht bei offener
-  Aufgabe „unzufrieden“. Der persönliche Link führt Ihren Kunden auf eine Seite zum Teilen (WhatsApp oder Teilen-Knopf).
-  Die empfohlene Person trägt sich selbst ein (mit Einwilligung) und landet als Lead mit Quelle „Empfehlung“ bei Ihnen,
-  inklusive der üblichen ersten Nachricht. Wird daraus ein Abschluss, bekommt der Empfehlende automatisch einen Dank –
-  ohne Namen der empfohlenen Person.
+  Aufgabe „unzufrieden“. Der persönliche Link führt Ihren Kunden auf seine Seite zum Teilen (seit 20.11.2026): Er wählt
+  **An wen?** (Freunde oder Familie per Du, Kollegen oder Nachbarn per Sie) und tippt **Per WhatsApp weiterleiten**,
+  gern an mehrere. Er gibt dabei keine Daten von anderen weiter.
+- **Seite der empfohlenen Person:** sichtbar nur Name und Handynummer, E-Mail, Thema und Nachricht unter „Mehr angeben“,
+  Knopf **Rückruf anfordern**. Die Einwilligung steht als Satz direkt über dem Knopf (Absenden gilt als Einwilligung,
+  Wortlaut und Zeitpunkt werden am Kontakt gespeichert). Darunter, wenn Ihr WhatsApp verbunden ist, „Lieber per WhatsApp
+  schreiben“. Die Seite folgt der Ansprache, die Ihr Kunde beim Teilen gewählt hat. Nach dem Absenden sieht die Person
+  Ihre Nummer mit **Nummer speichern**, damit sie Ihren Anruf erkennt (Nummer aus der Erstinformation, sonst aus dem
+  Impressum oder Ihrer WhatsApp-Nummer). Die App schreibt die empfohlene Person nicht automatisch an: Sie rufen an.
+- **Wenn eine Empfehlung reinkommt:** Push **„Empfehlung von {Vorname}: jetzt anrufen“** mit Gesprächseinstieg (ohne
+  Telefonnummer). Auf **Heute** steht der Kontakt ganz oben unter „Neue Leads: jetzt anrufen“, mit Wartezeit und dem Satz
+  „{Empfehlender} hat mir erzählt, dass …“, bis Sie das erste Mal angerufen haben. Unter **Auswertung ansehen** steht
+  die **Zeit bis zum ersten Anruf** (Median).
+- **Dank an Empfehlende:** Wird aus der Empfehlung ein Abschluss und hat die empfohlene Person der Rückmeldung zugestimmt,
+  bekommt Ihr Kunde automatisch einen Dank, ohne Namen der empfohlenen Person und mit dem Hinweis „Ihr Link funktioniert
+  weiterhin“ (nur mit seiner Zustimmung und unter der Obergrenze, sonst ohne Link). Zwei Tage später legt die App eine
+  Anruf-Aufgabe mit Gesprächssatz an („Fällt Ihnen noch jemand ein …?“), keine zweite Nachricht. Ohne Zustimmung der
+  empfohlenen Person gibt es keinen Dank, weil schon der Zeitpunkt den Abschluss verraten würde.
 - **Empfehlungsangebot:** In den Einstellungen wählen Sie, was die empfohlene Person bekommt: Versicherungs-Check,
   Kfz-Check, Absicherungs-Check oder ein eigenes Angebot. Es steht auf der Empfehlungsseite und im Text, den Ihr Kunde
   weiterleitet. Keine Prämien, Gutscheine, Geldbeträge oder Garantien im Angebot.
@@ -1204,18 +1243,22 @@ Bewertung im Einzelfall liegt bei Ihnen.**
   nach dem Jahresgespräch). Der Text passt dann zum Moment.
 - **Im Termin zeigen:** Im Kontakt öffnet „Im Termin zeigen“ einen QR-Code zum persönlichen Link. Ihr Kunde scannt ihn
   und teilt die Empfehlung gleich am Tisch.
-- **E-Mail-Signatur:** In „Empfehlungen & Bewertungen“ → „Im Gespräch und per E-Mail“ finden Sie eine Zeile für Ihre
-  E-Mail-Signatur. Sie nutzt einen allgemeinen Link.
-- **Per WhatsApp anfragen:** Ist Ihr WhatsApp verbunden, kann die empfohlene Person mit einem Tipp schreiben statt
-  das Formular auszufüllen. Die Nachricht ist vorgeschrieben und landet als Lead mit Quelle „Empfehlung“ in Ihrem Chat.
-- **Persönlicher Link aus der Signatur:** Öffnet ein Kunde den Link aus Ihrer Signatur, kann er seine Handynummer
-  angeben und bekommt seinen persönlichen Link. So wissen Sie, von wem die Empfehlung kommt.
-- **Nach jedem Termin (optional):** Unter „Der richtige Moment“ einschaltbar. Markieren Sie einen Termin mit einem Kunden
+- **Teilen:** Im Reiter **Teilen** steht der allgemeine Empfehlungslink als großer QR-Code mit „Link kopieren“, darunter
+  aufklappbar eine Zeile für Ihre **E-Mail-Signatur**. Persönliche Links senden Sie im Kontakt oder über „Heute um Empfehlung bitten“.
+  Dort steht auch der Bewertungs-Wächter für Ihr Google-Unternehmensprofil.
+- **Per WhatsApp schreiben:** Ist Ihr WhatsApp verbunden, kann die empfohlene Person unter dem Formular mit einem Tipp
+  schreiben. Die Nachricht ist vorgeschrieben (mit kurzem Code zur Zuordnung) und landet als Lead mit Quelle „Empfehlung“
+  in Ihrem Chat.
+- **Persönlicher Link aus der Signatur:** Öffnet ein Kunde den Link aus Ihrer Signatur, kann er unter „Schon Kunde?
+  Persönlichen Link holen“ seine Handynummer angeben und bekommt seinen persönlichen Link. So wissen Sie, von wem die Empfehlung kommt.
+- **Nach jedem Termin (optional, Standard aus):** Unter Einstellungen → Erweitert einschaltbar. Markieren Sie einen Termin mit einem Kunden
   als stattgefunden, geht einige Stunden später der Empfehlungslink raus (höchstens alle 180 Tage je Kontakt).
 - **Nachfassen:** Nach „Empfehlungslink senden“ oder „Im Termin zeigen“ legt die App eine Aufgabe in „Heute“ an
   (Standard nach 48 Stunden, einstellbar, 0 = aus), wenn am Kontakt keine andere Wiedervorlage steht.
-- **Vom Empfehlungslink zum Neukunden** (Reiter Übersicht): Links ausgegeben, Kunde hat geöffnet, Bekannte haben
-  geöffnet (je Person einmal gezählt), Empfehlungen, Neukunden – mit einem Tipp, wo gerade das meiste Potenzial steckt.
+- **Vom Empfehlungslink zum Neukunden** (Übersicht, Details unter „Auswertung ansehen“): Links gesendet oder gezeigt,
+  Kunde hat geöffnet, Bekannte haben geöffnet (je Person einmal gezählt, Link-Vorschauen zählen nicht), Empfehlungen,
+  Neukunden, mit einem Tipp, wo gerade das meiste Potenzial steckt. Empfehlungen über den Link in der E-Mail-Signatur
+  zählen bei Bekannten, Empfehlungen und Neukunden mit.
 - **Empfehlende auf dem Laufenden halten:** Wenn die empfohlene Person auf der Empfehlungsseite zustimmt, bekommt Ihr
   Kunde eine kurze Nachricht, sobald sie sich gemeldet hat und sobald ein Termin steht. Abschaltbar.
 - **Empfehlungen im Gespräch ansprechen (Leitfaden):** 1. Zu Beginn ankündigen, dass Sie am Ende kurz nach der
@@ -1228,7 +1271,7 @@ Bewertung im Einzelfall liegt bei Ihnen.**
 - **Dankeschön für Empfehlende (optional, standardmäßig aus):** Gutschein oder Spende (kein Bargeld), vorher
   angekündigt auf der Seite Ihres Kunden. Fällig, sobald ein Gespräch mit der empfohlenen Person stattgefunden hat,
   **nicht an einen Abschluss gekoppelt** (seit 15.11.2026; die Einstellung „nach dem Abschluss“ gibt es nicht mehr).
-  Die App erinnert Sie, Sie übergeben selbst und haken unter „Offene Dankeschöns“ ab. Es geht nie an die empfohlene
+  Die App erinnert Sie, Sie übergeben selbst und haken in der Übersicht unter „Zu erledigen“ ab. Es geht nie an die empfohlene
   Person und nicht bei Selbstempfehlung. **Höchstens 15 € je Empfehler und Kalenderjahr** (§ 48b VAG): Der Wert ist
   auf 15 € begrenzt, und die App zählt alle Dankeschöns eines Empfehlers im Jahr zusammen (auch über seinen Link als
   Bestandskunde). Würde die Grenze überschritten, merkt die App für diese Empfehlung kein Dankeschön vor. Die App gibt
@@ -1244,13 +1287,17 @@ Bewertung im Einzelfall liegt bei Ihnen.**
   Empfehlungsbitte“ (persönlicher Link je Kunde, höchstens einmal im Jahr).<!-- /bestand-modul -->
 - **Nicht anfragen:** Im Kontakt können Sie die Nachfrage für einzelne Kunden abschalten (z. B. wer keine Nachrichten
   möchte). Das ist kein Zufriedenheitsfilter und passiert nie automatisch.
-- **Einrichten:** Wachstum → „Empfehlungen & Bewertungen“ (bzw. Konto & Rechnungen → Zusatzmodule →
-  „Einstellungen & Auswertung“): Google-Bewertungslink hinterlegen (Google-Unternehmensprofil → „Rezensionen erhalten“ →
-  Link kopieren), Tage einstellen, Texte anpassen (Platzhalter {Anrede} für „Guten Tag Frau Schneider“, {Vorname}, {Link}, {Vertreter}; Empfehlung: erst der
-  direkte Draht, dann der Link), „Test an mich senden“. Eigene Texte gelten im offenen WhatsApp-Chat; sonst sendet
+- **Einrichten:** Menü → **Empfehlungen** bzw. Wachstum → „Empfehlungen & Bewertungen“, Reiter **Einstellungen**:
+  sichtbar sind nur Automatik an/aus, Google-Bewertungslink (Google-Unternehmensprofil → „Rezensionen erhalten“ → Link
+  kopieren; ohne eigenes Profil fragen Sie Ihre Agentur nach dem Bewertungslink) und das Angebot für Empfohlene mit
+  Vorschau. Unter **Erweitert**: Tage (7, 14, 21 oder 30), Nachfassen, Empfehlungsbitte bei Lob, nach Terminen,
+  Rückmeldungen an Empfehlende, Dankeschön und die Texte (eine Vorlage mit Vorschau in der Ansprache Ihrer Kontakte;
+  Platzhalter {Anrede}, {Vorname}, {Link}, {Vertreter}, {Thema}). Darunter „Test an mich senden“. Eigene Texte gelten im offenen WhatsApp-Chat; sonst sendet
   die App die von Meta freigegebene Standardvorlage (Freigabe dauert meist wenige Stunden bis zwei Tage).
-- **Auswertung:** Empfehlungs-Leads, daraus Termine, Abschlüsse und geschätzte Provision (Ihre Provisionssätze),
-  dazu Nachfragen, Klicks auf den Google-Link, positive und kritische Rückmeldungen und geklärte Fälle.
+- **Auswertung ansehen:** Trichter, Bewertungsbitten, Google-Link geöffnet, Lob, Kritik (davon geklärt), Fragen,
+  Empfehlungsbitten, Zeit bis zum ersten Anruf (Median) und die letzten Bewertungsbitten. Die Provision ist geschätzt (Ihre Provisionssätze), kein Versprechen.
+- **Rückmeldungen an Empfehlende** gibt es nur, wenn die empfohlene Person zugestimmt hat; ohne diese Zustimmung erfährt
+  der Empfehlende weder Namen noch Stand. Ein Dankeschön geht nur an Empfehlende, nie an die empfohlene Person.
 - **Buchen (nur Inhaber):** Konto & Rechnungen → Zusatzmodule → „30 Tage kostenlos testen“. Bestätigungsblatt mit
   Preis und Bedingungen, Häkchen setzen, fertig – das Modul ist sofort frei. Die Testphase ist kostenlos; 3 Tage vor
   dem Ende erinnern wir per Push und E-Mail. Danach läuft es automatisch für 59 € netto im Monat weiter (tagesgenau

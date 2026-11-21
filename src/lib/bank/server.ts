@@ -341,7 +341,7 @@ async function remindReconnect(bank: string, validUntil: Date) {
     },
   });
   const { sendToAdmins } = await import("@/lib/push");
-  await sendToAdmins({ title: `${bank}: bitte neu verbinden`, body: `Die Zustimmung für den Kontoabruf endet am ${until}.`, url: "/admin/einstellungen/bank" }).catch(() => {});
+  await sendToAdmins({ title: `${bank}: bitte neu verbinden`, body: `Die Zustimmung für den Kontoabruf endet am ${until}.`, url: "/admin/neu/zahlen/kosten/konten" }).catch(() => {});
 }
 
 /** Buchungen für „Kosten zuordnen“: offen oder alle der letzten 90 Tage. */

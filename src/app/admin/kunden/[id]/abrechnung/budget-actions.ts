@@ -17,8 +17,8 @@ export async function decideBudgetAction(fd: FormData): Promise<void> {
   const accept = fd.get("decision") === "accept";
   const note = String(fd.get("note") ?? "").trim() || null;
   const r = await decideBudgetRequest(changeId, accept, note, { id: session.userId, email: session.email, role: session.role });
-  revalidatePath(`/admin/kunden/${customerId}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${customerId}`, "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   const msg = r.ok ? (accept ? "Budget übernommen, Kunde informiert." : "Anfrage abgelehnt, Kunde informiert.") : r.error;
-  redirect(await adminZiel(`/admin/kunden/${customerId}/abrechnung?budget=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`));
+  redirect(await adminZiel(`/admin/neu/kunden/${customerId}/abrechnung?budget=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`));
 }

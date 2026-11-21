@@ -185,10 +185,10 @@ export function candidateTips(s: TipSignals): Tip[] {
       key: "bestand",
       title: "Bestand nutzen",
       text: s.bestandImported
-        ? "Starten Sie eine Cross-Selling-Kampagne an Ihre Bestandskunden. Diese Kontakte kosten keine Werbung."
-        : "Importieren Sie Ihren Bestand und starten Sie eine Cross-Selling-Kampagne. Diese Kontakte kosten keine Werbung.",
+        ? "Bieten Sie Ihren Bestandskunden ein weiteres Produkt an. Diese Kontakte kosten keine Werbung."
+        : "Importieren Sie Ihren Bestand und bieten Sie ein weiteres Produkt an. Diese Kontakte kosten keine Werbung.",
       href: "/buyer/bestand",
-      cta: s.bestandImported ? "Kampagne starten" : "Bestand importieren",
+      cta: s.bestandImported ? "Kunden anschreiben" : "Bestand importieren",
       impact: prov,
       kurz: { title: "Bestand nutzen", text: "Kontakte aus Ihrem Bestand kosten keine Werbung." },
     });

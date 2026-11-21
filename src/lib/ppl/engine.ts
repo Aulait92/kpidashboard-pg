@@ -247,7 +247,7 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
     if (notify) await sendToAdmins({
       title: `⏸️ Lead geparkt: ${pl.productKey}`,
       body: `${reason}. Unter Kunden → Pay-per-Lead zuweisen. Lead ${parkDeadlineHint(pl.createdAt)}.`,
-      url: "/admin/ppl",
+      url: "/admin/neu/leads/ppl",
       tag: `ppl-parked:${pl.productKey}`,
     }).catch(() => {});
     return { status: "parked", reason };

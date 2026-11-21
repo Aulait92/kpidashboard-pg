@@ -22,7 +22,7 @@
 //
 // Kategorie der Vorlagen: UTILITY. Begründung: ausgelöst durch die Buchung des Leads, bezieht sich auf genau diesen
 // Termin und bittet um Unterlagen für dessen Vorbereitung; keine Angebote, Preise oder Rabatte. Risiko: Meta kann die
-// Bitte wegen „ob Sie Geld sparen können“ als MARKETING einstufen (seit 2025 stuft Meta selbst um). Dann gilt hier: im
+// Bitte trotzdem als MARKETING einstufen (seit 2025 stuft Meta selbst um). Dann gilt hier: im
 // Fenster die (kostenlose) Flow-Nachricht statt der Vorlage, außerhalb die Vorlage (Marketing-Preis). Die Kategorie laut
 // Meta steht in PolicenFlow.vorlagen.
 
@@ -257,8 +257,15 @@ export type FlowMerker = {
 
 const neuesToken = () => `pf1_${randomBytes(18).toString("base64url")}`;
 
-/** Name einer Vorlage (Meta: Kleinbuchstaben, Ziffern, Unterstrich), an den Flow gebunden (Hash). */
-export const vorlagenName = (art: VorlagenArt, an: Ansprache, jsonHash: string) => `pg_policen_${art.replace("erinnerung", "erinn")}_${jsonHash.slice(0, 6)}_${an}`;
+/**
+ * Name einer Vorlage (Meta: Kleinbuchstaben, Ziffern, Unterstrich), an den Flow (Hash des Flow JSON) und an den eigenen
+ * Text gebunden (Hash von Text und Fußzeile). Neuer Text = neuer Name = neue Freigabe bei Meta; sonst würde Meta unter
+ * dem alten Namen weiter den alten, freigegebenen Text zustellen, während der Verlauf den neuen zeigt.
+ */
+export const vorlagenName = (art: VorlagenArt, an: Ansprache, jsonHash: string) => {
+  const t = vorlagenText(art, an);
+  return `pg_policen_${art.replace("erinnerung", "erinn")}_${jsonHash.slice(0, 6)}_${textHash(`${t.text}\n${t.fusszeile ?? ""}`).slice(0, 4)}_${an}`;
+};
 
 function nachrichtFuer(art: FlowArt, c: FlowChat, extra?: Nachricht): Nachricht {
   if (art === "bitte") return chatNachricht(c.text);
@@ -610,8 +617,8 @@ const CHECK_RUHIG_MS = 6 * HOUR;
 // Erinnerung 2 (Vortag) entfällt seit 19.11.2026 (Satz in der Vortags-Terminerinnerung), daher keine Vorlage mehr dafür
 const VORLAGEN_ARTEN: VorlagenArt[] = ["bitte", "erinnerung1"];
 const FORMEN: Ansprache[] = ["sie", "du"];
-/** Namen der Vorlagen, die zu einem Flow gehören (je Art und Ansprache). */
-const vorlagenNamen = (jsonHash: string) => VORLAGEN_ARTEN.flatMap((art) => FORMEN.map((an) => vorlagenName(art, an, jsonHash)));
+/** Die Vorlagennamen (Bitte und Erinnerung 1 je Ansprache) zum Flow JSON und zum aktuellen Textstand. */
+const aktuelleVorlagenNamen = (jsonHash: string) => VORLAGEN_ARTEN.flatMap((art) => FORMEN.map((an) => vorlagenName(art, an, jsonHash)));
 
 /** Vorlage mit Flow-Knopf und Quick Reply (Meta: erst die Nicht-Quick-Reply-Gruppe, dann die Quick Replies). */
 export function vorlagenAntrag(art: VorlagenArt, an: Ansprache, o: { flowId: string; jsonHash: string }) {
@@ -702,9 +709,10 @@ export async function syncPolicenFlowFuerKunde(customerId: string, now = new Dat
   if (rec.status !== "veroeffentlicht" || !rec.flowId) return { customerId, status: rec.status, vorlagen: {} };
 
   // Vorlagen einreichen bzw. Status holen
-  // Nur die aktuellen Vorlagen führen (alte, z. B. Erinnerung 2, fallen heraus)
-  const bisher = (rec.vorlagen as VorlagenStand | null) ?? {};
-  const stand: VorlagenStand = Object.fromEntries(vorlagenNamen(hash).filter((n) => bisher[n]).map((n) => [n, bisher[n]]));
+  // Nur die Vorlagen des aktuellen Flow JSON und Textstands (alte Namen nach einer Textänderung fallen heraus, damit
+  // syncPolicenFlows „fertig“ wieder an genau die aktuellen Vorlagen erkennt).
+  const aktuelleNamen = new Set(aktuelleVorlagenNamen(hash));
+  const stand: VorlagenStand = Object.fromEntries(Object.entries((rec.vorlagen as VorlagenStand | null) ?? {}).filter(([n]) => aktuelleNamen.has(n)));
   let remote: Awaited<ReturnType<typeof listTemplates>> = [];
   try {
     remote = await listTemplates(apiKey);
@@ -750,11 +758,15 @@ export async function syncPolicenFlows(now = new Date(), opts: { limit?: number 
   const recs = new Map((await prisma.policenFlow.findMany({ where: { customerId: { in: accounts.map((a) => a.customerId) } } })).map((r) => [r.customerId, r]));
   let geprueft = 0;
   let fehler = 0;
+  const jsonHash = flowJsonHash();
   for (const { customerId } of accounts) {
     if (geprueft >= (opts.limit ?? 5)) break;
     if (!flowKundeErlaubt(customerId)) continue;
     const r = recs.get(customerId);
-    const fertig = r?.status === "veroeffentlicht" && r.jsonHash === flowJsonHash() && vorlagenNamen(r.jsonHash).every((n) => ["approved", "rejected"].includes(((r.vorlagen as VorlagenStand | null) ?? {})[n]?.status ?? ""));
+    // Fertig nur mit allen Vorlagen des aktuellen Textstands (nach einer Textänderung sofort neu einreichen, nicht erst
+    // nach 6 Std.).
+    const stand = (r?.vorlagen as VorlagenStand | null) ?? {};
+    const fertig = r?.status === "veroeffentlicht" && r.jsonHash === jsonHash && aktuelleVorlagenNamen(jsonHash).every((n) => stand[n]?.status === "approved" || stand[n]?.status === "rejected");
     const abstand = fertig ? CHECK_RUHIG_MS : CHECK_OFFEN_MS;
     if (r?.checkedAt && now.getTime() - r.checkedAt.getTime() < abstand) continue;
     geprueft++;

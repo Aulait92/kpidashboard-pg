@@ -22,10 +22,10 @@ export type HeuteUndo =
 const DAY = 86_400_000;
 
 function refresh(contactId?: string | null) {
-  revalidatePath("/admin/heute", "layout");
+  revalidatePath("/admin/neu", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin: Heute und Vertrieb → Aufgaben
-  revalidatePath("/admin/vertrieb", "layout");
-  if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+  revalidatePath("/admin/neu/vertrieb", "layout");
+  if (contactId) revalidatePath(`/admin/neu/vertrieb/kontakte/${contactId}`);
 }
 
 const fail = (error = "Das hat nicht geklappt. Bitte die Seite neu laden."): HeuteResult => ({ ok: false, error });
@@ -64,9 +64,9 @@ export async function postponeTaskAction(taskId: string): Promise<HeuteResult> {
 export async function decideStornoQuickAction(leadId: string, approve: boolean): Promise<HeuteResult> {
   await requireAuth();
   const done = await decideStorno(String(leadId), approve === true);
-  revalidatePath("/admin/heute");
   revalidatePath("/admin/neu");
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   if (!done) return fail("Diese Reklamation ist schon entschieden.");
   return { ok: true, message: approve ? "Reklamation anerkannt, Gutschrift auf die nächste Rechnung" : "Reklamation abgelehnt" };
 }
@@ -75,9 +75,9 @@ export async function decideStornoQuickAction(leadId: string, approve: boolean):
 export async function garantieGewaehrenAction(fallId: string): Promise<HeuteResult> {
   const session = await requireAuth();
   const res = await gewaehreFall(String(fallId), { id: session.userId, email: session.email, role: session.role });
-  revalidatePath("/admin/heute");
   revalidatePath("/admin/neu");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu");
+  revalidatePath("/admin/neu/kunden", "layout");
   return res.ok ? { ok: true, message: res.message } : fail(res.error);
 }
 
@@ -85,9 +85,9 @@ export async function garantieGewaehrenAction(fallId: string): Promise<HeuteResu
 export async function garantieAblehnenAction(fallId: string, grund: string): Promise<HeuteResult> {
   const session = await requireAuth();
   const res = await lehneFallAb(String(fallId), String(grund ?? ""), { id: session.userId, email: session.email, role: session.role });
-  revalidatePath("/admin/heute");
   revalidatePath("/admin/neu");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu");
+  revalidatePath("/admin/neu/kunden", "layout");
   return res.ok ? { ok: true, message: res.message } : fail(res.error);
 }
 
@@ -111,7 +111,7 @@ export async function dismissAction(key: string, days: number): Promise<HeuteRes
   if (!validHeuteKey(key)) return fail();
   const d = Math.min(60, Math.max(1, Math.round(Number(days) || 1)));
   await dismissQuery(session.userId, key, d);
-  revalidatePath("/admin/heute");
+  revalidatePath("/admin/neu");
   revalidatePath("/admin/neu");
   return { ok: true, message: d === 1 ? "Kommt morgen wieder" : d >= 30 ? "Ausgeblendet" : `Kommt in ${d} Tagen wieder, falls noch offen`, undo: { kind: "undismiss", key } };
 }

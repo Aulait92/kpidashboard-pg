@@ -115,6 +115,8 @@ export default async function BuyerLayout({
   // Menge wie die Karte „Neue Leads: jetzt anrufen“ auf Heute (lib/neue-leads.ts). Leads, die der Assistent per
   // WhatsApp betreut, zählen nicht.
   const noStepBadge = ctx ? await wartendeNeueLeads(ctx).then((l) => l.length).catch(() => 0) : 0;
+  // Zusatzmodul Empfehlungen (Paket 2): Menüeintrag nur bei aktivem Modul bzw. Testphase, mit „n bereit“
+  const empfehlungReady = await empfehlungMenuCount(ctx);
 
   return (
     <>
@@ -136,7 +138,7 @@ export default async function BuyerLayout({
       ) : null}
       {ctx ? (
         <ProvisionRatesProvider rates={provision?.rates ?? {}} products={provision?.products ?? []}>
-          <BuyerShell demo={demo} newUi={newUi} displayName={displayName} hilfeGruss={gruss} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge}>
+          <BuyerShell demo={demo} newUi={newUi} displayName={displayName} hilfeGruss={gruss} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} empfehlungReady={empfehlungReady} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge}>
             {demo ? (
               <>
                 <meta name="robots" content="noindex, nofollow" />
@@ -173,4 +175,15 @@ export default async function BuyerLayout({
       )}
     </>
   );
+}
+
+/** Anzahl „Heute fragen“ für den Menüeintrag „Empfehlungen“; null = Modul nicht aktiv (kein Eintrag). Nur Inhaber. */
+async function empfehlungMenuCount(ctx: { customerId: string; teamRole: string; demo?: boolean } | null): Promise<number | null> {
+  if (!ctx || ctx.teamRole !== "owner" || ctx.demo) return null;
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { empfehlungEnabled: true, plan: true } }).catch(() => null);
+  if (!c?.empfehlungEnabled || c.plan === "service") return null;
+  const { loadReferralCandidates } = await import("@/lib/empfehlung/requests");
+  return loadReferralCandidates(ctx.customerId)
+    .then((r) => r.ready.length)
+    .catch(() => 0);
 }

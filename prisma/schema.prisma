@@ -2976,6 +2976,9 @@ model CustomerCampaign {
   mailBody     String?
   // Login, über dessen Postfach die Mails rausgehen (Standard: wer die Kampagne gestartet hat)
   senderUserId String?
+  // Nachfassen (Paket 4, 20.11.2026): nach 5 Werktagen ohne Antwort genau eine Erinnerung (lib/bestand/nachfassen.ts).
+  // Standard in der Datenbank aus (bestehende Kampagnen bekommen nichts nachträglich), neue Kampagnen setzen es beim Start.
+  followUp     Boolean   @default(false)
   startedAt    DateTime?
   finishedAt   DateTime?
   createdAt    DateTime  @default(now())
@@ -3014,6 +3017,10 @@ model CampaignRecipient {
   bouncedAt          DateTime?
   // Abmeldung infolge dieser Kampagne („Stopp“ oder Abmeldelink)
   optOutAt           DateTime?
+  // Nachfassen: Zeitpunkt und Kanal der einen Erinnerung. Gesetzt wird vor dem Versand per bedingtem Update
+  // (nur wenn noch null), damit eine zweite Erinnerung technisch ausgeschlossen ist.
+  followUpAt         DateTime?
+  followUpChannel    String?
 
   @@unique([campaignId, existingCustomerId])
   @@index([campaignId, status])

@@ -233,8 +233,8 @@ const date = (v: unknown): Date | null => {
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const join = (parts: (string | null | undefined | false)[]) => parts.filter(Boolean).join(" · ") || null;
 
-const abrechnungHref = (customerId: string) => `/admin/kunden/${customerId}/abrechnung`;
-const taskHref = (t: SrcTask) => (t.contactId ? `/admin/vertrieb/kontakte/${t.contactId}` : "/admin/heute/aufgaben");
+const abrechnungHref = (customerId: string) => `/admin/neu/kunden/${customerId}/abrechnung`;
+const taskHref = (t: SrcTask) => (t.contactId ? `/admin/neu/vertrieb/kontakte/${t.contactId}` : "/admin/neu/vertrieb/aufgaben");
 
 type TaskHint = { match: (title: string) => boolean; from: Date; to: Date };
 
@@ -267,7 +267,7 @@ export function buildBuchungen(src: BuchungSources, now: Date = new Date()): Buc
   const add = (r: Omit<BuchungRow, "customerName" | "href" | "task" | "statusFrom" | "detail"> & Partial<Pick<BuchungRow, "customerName" | "href" | "task" | "statusFrom" | "detail">>): BuchungRow => {
     const row: BuchungRow = {
       customerName: nameOf(r.customerId),
-      href: r.customerId ? abrechnungHref(r.customerId) : "/admin/vertrieb/angebote",
+      href: r.customerId ? abrechnungHref(r.customerId) : "/admin/neu/vertrieb/angebote",
       task: null,
       statusFrom: null,
       detail: null,
@@ -299,7 +299,7 @@ export function buildBuchungen(src: BuchungSources, now: Date = new Date()): Buc
     const discount = offerSetupDiscount(o);
     const canceled = o.subscriptionStatus === "canceled";
     const label = o.company || o.contactName;
-    const href = o.customerId ? abrechnungHref(o.customerId) : o.salesContactId ? `/admin/vertrieb/kontakte/${o.salesContactId}` : "/admin/vertrieb/angebote";
+    const href = o.customerId ? abrechnungHref(o.customerId) : o.salesContactId ? `/admin/neu/vertrieb/kontakte/${o.salesContactId}` : "/admin/neu/vertrieb/angebote";
     const name = o.customerId ? nameOf(o.customerId) : label;
     const st = canceled ? { status: "beendet" as const, statusFrom: null } : planned(o.startDate);
     add({
@@ -750,7 +750,7 @@ export function buildBuchungen(src: BuchungSources, now: Date = new Date()): Buc
       at,
       customerId: o.customerId,
       customerName: o.customerId ? nameOf(o.customerId) : o.company || o.contactName,
-      href: o.customerId ? abrechnungHref(o.customerId) : o.salesContactId ? `/admin/vertrieb/kontakte/${o.salesContactId}` : "/admin/vertrieb/angebote",
+      href: o.customerId ? abrechnungHref(o.customerId) : o.salesContactId ? `/admin/neu/vertrieb/kontakte/${o.salesContactId}` : "/admin/neu/vertrieb/angebote",
       art: "kuendigung",
       title: "Abo beendet (Stripe)",
       detail: `Angebot ${o.number}`,

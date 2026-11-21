@@ -43,8 +43,7 @@ export async function BezugZusatz({ sub }: { sub: Bezug | null }) {
           <Card>
             <CardHeader title="Gebiete mit Vorrang" />
             <p className="px-5 pb-1 text-sm text-[color:var(--muted)]">
-              Leads aus diesen PLZ-Gebieten gehen zuerst an diesen Bezug, bis die Menge des Gebiets im Zeitraum erreicht ist (100 %). Danach normale Verteilung.
-              Ist beim Bezug kein eigener PLZ-Filter gesetzt, bekommt er nur Leads aus seinen Gebieten.
+              Leads aus diesen PLZ gehen zuerst hierher, bis die Menge erreicht ist; ohne PLZ-Filter nur Leads aus den Gebieten.
             </p>
             <ul className="divide-y divide-[color:var(--border)] text-sm">
               {sub.areas.map((a) => {
@@ -109,7 +108,7 @@ export async function BezugZusatz({ sub }: { sub: Bezug | null }) {
                   <option value="month">Monat</option>
                 </select>
               </label>
-              <button className="h-9 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-3 font-semibold text-white">Gebiet hinzufügen</button>
+              <button className="h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 font-medium">Gebiet hinzufügen</button>
             </form>
           </Card>
         ) : null}

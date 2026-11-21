@@ -31,7 +31,7 @@ const BACK_COOKIE = "pg_cal_back";
 const BACK_TARGETS: Record<string, string> = { kalender: "/buyer/kalender", einrichtung: "/buyer/einrichtung" };
 /** Admins: Vertriebskalender der Buchungsseite /termin (lib/vertrieb/buchung.ts). Kam der Start aus dem neuen Admin
  *  (/admin/neu/…), geht der Rücksprung auf genau diese Seite (lib/admin-neu/ruecksprung.ts). */
-const ADMIN_BACK_TARGETS: Record<string, string> = { buchungsseite: "/admin/vertrieb/buchungsseite" };
+const ADMIN_BACK_TARGETS: Record<string, string> = { buchungsseite: "/admin/neu/vertrieb/termine" };
 
 function cookieValue(req: Request, name: string): string | null {
   const raw = req.headers.get("cookie") ?? "";
@@ -104,7 +104,7 @@ export async function callbackRoute(
     const dest = new URL(
       isBuyer
         ? (wanted ?? (customerId === ownKey ? "/buyer/kalender" : "/buyer/einrichtung"))
-        : ruecksprungZiel(wanted ?? "/admin/whatsapp", req.headers.get("cookie")),
+        : ruecksprungZiel(wanted ?? "/admin/neu/leads/chats", req.headers.get("cookie")),
       publicOrigin(req),
     );
     dest.searchParams.set("gcal", status);

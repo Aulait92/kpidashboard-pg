@@ -38,7 +38,9 @@ export const DECISION_BOOKING_TYPE = "entscheidung";
 /** Sales-Call nach dem kurzen Telefonat (Setter): nur Ole bucht ihn im Vertriebskontakt (Ole, 19.11.2026). */
 export const SALES_CALL_BOOKING_TYPE = "sales-call";
 
-/** Vorbereitungsvideo auf der Danke-Seite (zum Tauschen: Datei oder Adresse hier ändern). */
+/** Vorbereitungsvideo auf der Danke-Seite: YouTube (Ole, 20.11.2026), eingebettet über youtube-nocookie.com. */
+export const PREPARATION_YOUTUBE_ID = "YLbnlWcAALE";
+/** Frühere Datei (nicht mehr auf der Danke-Seite). */
 export const PREPARATION_VIDEO_URL = process.env.SALES_PREPARATION_VIDEO_URL?.trim() || "/praesentation/vertrieb/assistent.mp4";
 /** „Demo ansehen“ auf der Danke-Seite: jetzt die Präsentations-Demo, später die Software-Demo. */
 export const DEMO_URL = process.env.SALES_DEMO_URL?.trim() || "/demo";
@@ -449,7 +451,7 @@ const whenShort = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
 
 async function pushOle(title: string, body: string, contactId: string, tag: string) {
-  await sendToAdmins({ title, body, url: `/admin/vertrieb/kontakte/${contactId}`, tag }).catch((e) => reportError(e, "vertrieb-buchung-push"));
+  await sendToAdmins({ title, body, url: `/admin/neu/vertrieb/kontakte/${contactId}`, tag }).catch((e) => reportError(e, "vertrieb-buchung-push"));
 }
 
 // ─── E-Mail an uns (Ole, 19.11.2026): jede Buchung, Verschiebung und Absage über /termin auch per Mail ──
@@ -485,7 +487,7 @@ async function mailOle(kind: TeamMailKind, contactId: string, m: Parameters<type
     const c = teamMailContent(kind, m);
     let button: { label: string; url: string } | undefined;
     try {
-      button = { label: "Kontakt öffnen", url: `${getAppUrl()}/admin/vertrieb/kontakte/${contactId}` };
+      button = { label: "Kontakt öffnen", url: `${getAppUrl()}/admin/neu/vertrieb/kontakte/${contactId}` };
     } catch {
       button = undefined; // ohne APP_URL (z. B. Tests) Mail ohne Knopf
     }

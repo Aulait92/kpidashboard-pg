@@ -89,7 +89,7 @@ describe("Pay-per-Lead: Slack, maschinenlesbare Mail, Testdatensatz", () => {
     expect(msg).toContain(`Bezieher: Beispiel GmbH ${run} (Bezug: Beispiel (Callcenter))`);
     expect(msg).toContain("Lead: Erika, 36251 Bad Hersfeld");
     expect(msg).toContain("an 3 Adressen (example.com, example.org, hook.example.net): zugestellt");
-    expect(msg).toContain(`https://app.example.com/admin/ppl?ansicht=geliefert&q=${r.leadId}`);
+    expect(msg).toContain(`https://app.example.com/admin/neu/leads/ppl?ansicht=geliefert&q=${r.leadId}`);
     expect(msg).not.toMatch(/Musterfrau|1522|@|abc123/);
   });
 

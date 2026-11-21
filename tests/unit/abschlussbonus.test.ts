@@ -63,36 +63,20 @@ describe("Abschlussbonus: später zahlen (Ole, 16.11.2026: Abschluss zählt)", (
   });
 });
 
-describe("Abschlussbonus: Präsentation und Mail", () => {
-  it("Folie als vorletzte, Bildnummern bleiben wie in den PPTX", () => {
-    for (const a of ["vertreter", "makler"] as const) {
-      const ohne = folienListe(a, false);
-      const mit = folienListe(a);
-      expect(mit.length).toBe(ohne.length + 1);
-      const i = mit.findIndex((f) => f.art === "bonus");
-      expect(i).toBe(mit.length - 2);
-      expect(mit[i + 1].titel).toBe("Ihr Start in 3 Schritten");
-      expect(mit[i + 1].bild).toBe(ohne[i].bild);
-      expect(mit.map((f) => f.nr)).toEqual(mit.map((_, k) => k + 1));
-    }
-  });
-
-  it("Listenpreise: 300 € bis morgen; ohne Bonus im Angebot keine Folie", () => {
+describe("Abschlussbonus: Präsentation und Mail (seit 21.11.2026 nur noch zugesagte Boni)", () => {
+  it("Listenpreise: kein Bonus mehr, keine Bonusfolie", () => {
     const p = paketDaten(null, "vertreter");
-    expect(p.bonus).toMatchObject({ betrag: 300, bis: null });
-    expect(verkaufsFolien("vertreter", p).some((f) => f.titel === "Ihr Abschlussbonus")).toBe(true);
-    expect(verkaufsFolien("vertreter", { ...p, bonus: null }).some((f) => f.titel === "Ihr Abschlussbonus")).toBe(false);
-    const html = bonusFolie(p, p.bonus!, 21, 23);
-    expect(html).toContain("morgen bis 23:59 Uhr");
-    expect(html).not.toMatch(/[–—]/);
+    expect(p.bonus).toBeNull();
+    expect(verkaufsFolien("vertreter", p).some((f) => f.titel === "Ihr Abschlussbonus")).toBe(false);
   });
 
-  it("Fassung für die Unterlagen: feste Frist, ohne Seitenzahl", () => {
-    const p = paketDaten(null, "makler");
-    const html = bonusFolie(p, p.bonus!, 0, 0, { fristText: "bis zur Frist in Ihrem Angebot" });
-    expect(html).toContain("bis zur Frist in Ihrem Angebot");
-    expect(html).not.toContain("morgen");
-    expect(html).not.toContain("vk-nr");
+  it("Angebot mit zugesagtem Bonus: Folie mit Frist, ohne Gedankenstriche", () => {
+    const p = { ...paketDaten(null, "vertreter"), bonus: { betrag: 300, setupVorher: 2490, setupNachher: 2190, bis: berlinTagesendeIso("2026-11-23") } };
+    const folien = verkaufsFolien("vertreter", p);
+    expect(folien.some((f) => f.titel === "Ihr Abschlussbonus")).toBe(true);
+    expect(folienListe("vertreter", { bonus: true }).findIndex((f) => f.art === "bonus")).toBe(folien.length - 2);
+    const html = bonusFolie(p, p.bonus, 21, 23);
+    expect(html).toContain("bis Montag, 23. November, 23:59 Uhr");
     expect(html).not.toMatch(/[–—]/);
   });
 

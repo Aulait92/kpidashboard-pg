@@ -81,7 +81,8 @@ describe("Navigation neuer Admin", () => {
     const pfade = SEITEN.map((s) => s.pfad);
     expect(new Set(pfade).size).toBe(pfade.length);
     expect(pfade.every((p) => p === "/admin/neu" || p.startsWith("/admin/neu/"))).toBe(true);
-    expect(BEREICHE.every((b) => b.seiten.some((s) => s.pfad === b.pfad))).toBe(true);
+    // Startseite liegt im eigenen Bereich; eine Rolle ohne Platz in der Navigation (Technik, nur für Mein Tag) führt auf eine Seite eines anderen
+    expect(BEREICHE.every((b) => (b.ort === "keiner" ? SEITEN : b.seiten).some((s) => s.pfad === b.pfad))).toBe(true);
   });
 
   it("Bereich und Seite werden aus der Adresse erkannt (Rollen, Admin v2)", () => {
@@ -95,7 +96,9 @@ describe("Navigation neuer Admin", () => {
     expect(bereichFuer("/admin/neu/leads/ppl/bezug/neu")?.id).toBe("liefern");
     expect(bereichFuer("/admin/neu/leads/werbekonten/123")?.id).toBe("liefern");
     expect(bereichFuer("/admin/neu/zahlen/kosten/zuordnen")?.id).toBe("geld");
-    expect(bereichFuer("/admin/neu/einstellungen/anbindungen")?.id).toBe("werkzeuge");
+    // Werkzeuge ist seit 20.11.2026 die Gruppe „Technik“ der Einstellungen (Adressen bleiben)
+    expect(bereichFuer("/admin/neu/einstellungen/anbindungen")?.id).toBe("einstellungen");
+    expect(bereichFuer("/admin/neu/werkzeuge/zustand")?.id).toBe("einstellungen");
     expect(bereichFuer("/admin/neu/einstellungen/produkte")?.id).toBe("einstellungen");
     // Unbekannte Unterseite: Bereich der Seite darüber
     expect(bereichFuer("/admin/neu/leads/ppl/etwas/neues")?.id).toBe("liefern");
@@ -105,25 +108,31 @@ describe("Navigation neuer Admin", () => {
     expect(reiterFuer("kundenakte", { id: "k1" })[0]).toEqual({ href: "/admin/neu/kunden/k1", label: "Übersicht", exact: true });
   });
 
-  it("Rahmen v2: Mein Tag und vier Rollen oben, Werkzeuge, Einstellungen, Was wo ist unten; Handy 5 + Mehr", () => {
+  it("Rahmen (Umbau 20.11.2026): Mein Tag und vier Rollen oben, unten nur Einstellungen (mit Technik); Was wo ist im Profilmenü; Handy 5 Punkte ohne Mehr", () => {
     expect(BEREICHE.filter((b) => b.ort === "oben").map((b) => b.label)).toEqual(["Mein Tag", "Verkaufen", "Betreuen", "Liefern", "Geld"]);
-    expect(BEREICHE.filter((b) => b.ort === "unten").map((b) => b.label)).toEqual(["Werkzeuge", "Einstellungen", "Was wo ist"]);
+    expect(BEREICHE.filter((b) => b.ort === "unten").map((b) => b.label)).toEqual(["Einstellungen"]);
+    expect(BEREICHE.filter((b) => b.ort === "profil").map((b) => b.label)).toEqual(["Was wo ist"]);
     expect(BEREICHE.filter((b) => b.handy === "leiste").map((b) => b.id)).toEqual(["mein-tag", "verkaufen", "betreuen", "liefern", "geld"]);
+    // Profilmenü-Seiten markieren in der Seitenleiste „Einstellungen“; sie bleiben über die Suche erreichbar
+    expect(bereichFuer("/admin/neu/was-wo-ist")?.ort).toBe("profil");
+    expect(SUCH_SEITEN.some((s) => s.href === "/admin/neu/was-wo-ist")).toBe(true);
   });
 
   it("Reiter je Rolle; Start genau, Listen auch auf Unterseiten aktiv", () => {
     const labels = (g: Parameters<typeof reiterFuer>[0]) => reiterFuer(g).map((r) => r.label);
-    expect(labels("verkaufen")).toEqual(["Pipeline", "Kontakte", "Termine", "Angebote", "Marketing"]);
-    expect(labels("marketing")).toEqual(["LinkedIn", "Empfehlungen", "Unterlagen", "Webseite & Rechner"]);
-    expect(labels("betreuen")).toEqual(["Kunden", "Chats", "Monatsberichte", "Qualität & Nutzung"]);
-    expect(labels("liefern")).toEqual(["Pay-per-Lead", "Leads", "Lead-Eingang", "Werbekonten", "A/B-Tests"]);
-    expect(labels("geld")).toEqual(["Übersicht", "Umsatz & Buchungen", "Offene Posten", "Kosten & Bank", "Kunden-Lebenszyklus", "Auswertung"]);
+    // Admin-Umbau 19.11.2026: Marketing kein Reiter von Verkaufen mehr (über „Mehr“), Webseite & Rechner ohne Reiter
+    expect(labels("verkaufen")).toEqual(["Pipeline", "Kontakte", "Termine", "Angebote"]);
+    expect(labels("marketing")).toEqual(["LinkedIn", "Empfehlungen", "Unterlagen"]);
+    expect(labels("betreuen")).toEqual(["Kunden", "Chats", "Berichte", "Qualität"]);
+    // Kundenakte höchstens 5 Reiter (Umbau 20.11.2026): Optimierung liegt unter Leads, Monatsberichte in der Übersicht
+    expect(labels("kundenakte")).toEqual(["Übersicht", "Leads", "WhatsApp", "Abrechnung", "Team"]);
+    expect(labels("liefern")).toEqual(["Pay-per-Lead", "Leads", "Formulare", "Werbekonten"]);
+    expect(labels("geld")).toEqual(["Übersicht", "Umsatz", "Offene Posten", "Kosten"]);
     const ex = (g: Parameters<typeof reiterFuer>[0], label: string) => reiterFuer(g).find((r) => r.label === label)?.exact;
     expect(ex("verkaufen", "Pipeline")).toBe(true);
     expect(ex("verkaufen", "Kontakte")).toBe(false);
-    expect(ex("verkaufen", "Marketing")).toBe(false);
     expect(ex("marketing", "LinkedIn")).toBe(true);
-    expect(ex("liefern", "Lead-Eingang")).toBe(true);
+    expect(ex("liefern", "Formulare")).toBe(true);
     expect(ex("liefern", "Pay-per-Lead")).toBe(false);
     expect(ex("betreuen", "Kunden")).toBe(true);
   });
@@ -137,11 +146,13 @@ describe("Navigation neuer Admin", () => {
     for (const p of ["/admin/neu/vertrieb", "/admin/neu/kunden", "/admin/neu/leads", "/admin/neu/leads/chats", "/admin/neu/zahlen", "/admin/neu/marketing", "/admin/neu/einstellungen/anbindungen"]) {
       expect(seiteFuer(p), p).not.toBeNull();
     }
-    expect(SUCH_SEITEN.find((s) => s.href === "/admin/neu/werkzeuge")?.bereich).toBe("Werkzeuge");
+    expect(SUCH_SEITEN.find((s) => s.href === "/admin/neu/werkzeuge/zustand")?.bereich).toBe("Einstellungen · Technik");
   });
 
   it("„+ Neu“ enthält alle vereinbarten Einträge, nach Rollen geordnet", () => {
-    expect(NEU_EINTRAEGE.map((e) => e.id)).toEqual(["aufgabe", "kontakt", "termin", "angebot", "linkedin", "neuigkeit", "ppl-bezug", "zuordnung", "kosten"]);
+    // Umbau 20.11.2026: nur, was man im Alltag schnell anlegt; alle Ziele im neuen Admin
+    expect(NEU_EINTRAEGE.map((e) => e.id)).toEqual(["aufgabe", "kontakt", "termin", "angebot", "ppl-bezug"]);
+    expect(NEU_EINTRAEGE.every((e) => e.art === "dialog" || e.href.startsWith("/admin/neu/"))).toBe(true);
     const reihe = BEREICHE.map((b) => b.id);
     const idx = NEU_EINTRAEGE.map((e) => reihe.indexOf(e.rolle));
     expect(idx.every((v, i) => v >= 0 && (i === 0 || v >= idx[i - 1]))).toBe(true);

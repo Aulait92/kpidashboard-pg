@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
-import { ChevronRight, MoreHorizontal, TrendingUp } from "lucide-react";
-import { Sheet } from "@/components/ui/sheet";
+import { Fragment, useEffect } from "react";
+import { TrendingUp } from "lucide-react";
 import { BEREICHE, NEU, bereichFuer, type NeuBereich } from "@/lib/admin-neu/navigation";
 import { neuerPfad } from "@/lib/admin-neu/umzug";
 import type { NavZaehler } from "@/lib/admin-neu/rollen-server";
@@ -17,9 +16,11 @@ import { ProfilMenue } from "./profil-menue";
 import { Suche } from "./suche";
 
 // Rahmen des neuen Admins (/admin/neu; Admin v2 nach Rollen, Ole 17.11.2026, Vorlage docs/ux/admin-v2/demo.html):
-// Rechner: Seitenleiste mit „Mein Tag“, den vier Rollen (Verkaufen, Betreuen, Liefern, Geld) und unten Werkzeuge,
-// Einstellungen, „Was wo ist“ und Profil; oben Suche und „+ Neu“.
-// Handy: Kopfzeile mit Suche, „+ Neu“, Profil; unten Mein Tag, die vier Rollen und „Mehr“ (Werkzeuge, Einstellungen, Was wo ist).
+// Rechner: Seitenleiste mit „Mein Tag“, den vier Rollen (Verkaufen, Betreuen, Liefern, Geld) und unten Einstellungen
+// und Profil; oben Suche und „+ Neu“.
+// Handy: Kopfzeile mit Suche, „+ Neu“, Profil; unten Mein Tag und die vier Rollen (5 Punkte, kein „Mehr“, wie /buyer).
+// Werkzeuge (Technik) und „Was wo ist“ liegen im Profilmenü (Umbau 20.11.2026, SUS 90+); auf ihren Seiten ist in der
+// Seitenleiste „Einstellungen“ markiert.
 // Bereiche und Seiten: src/lib/admin-neu/navigation.ts. data-admin-shell → Abstände aus globals.css (wie die alte Shell).
 
 export type { NavZaehler } from "@/lib/admin-neu/rollen-server";
@@ -120,14 +121,13 @@ function SeitenleistenLink({ b, aktiv, zaehler }: { b: NeuBereich; aktiv: boolea
 export function AdminNeuShell({ email, zaehler, children }: { email: string; zaehler: NavZaehler; children: React.ReactNode }) {
   const pathname = usePathname() ?? NEU;
   const aktuell = bereichFuer(pathname);
-  const [mehr, setMehr] = useState(false);
   useUmzugLinks();
 
   const oben = BEREICHE.filter((b) => b.ort === "oben");
   const unten = BEREICHE.filter((b) => b.ort === "unten");
   const leiste = BEREICHE.filter((b) => b.handy === "leiste");
-  const unterMehr = BEREICHE.filter((b) => b.handy === "mehr");
-  const mehrAktiv = !!aktuell && aktuell.handy === "mehr";
+  // Seiten aus dem Profilmenü (Werkzeuge, Was wo ist) markieren „Einstellungen“
+  const aktivId = aktuell?.ort === "profil" ? "einstellungen" : aktuell?.id;
 
   return (
     <div data-admin-shell="" data-admin-neu="" className="flex min-h-dvh flex-1 flex-col">
@@ -142,13 +142,13 @@ export function AdminNeuShell({ email, zaehler, children }: { email: string; zae
             <Fragment key={b.id}>
               {/* „Mein Tag“ allein oben, darunter die Rollen */}
               {i === 1 ? <div className="px-3 pb-1.5 pt-4 text-xs font-semibold uppercase tracking-wider text-[color:var(--muted)]/80">Rollen</div> : null}
-              <SeitenleistenLink b={b} aktiv={aktuell?.id === b.id} zaehler={zaehlerVon(b, zaehler)} />
+              <SeitenleistenLink b={b} aktiv={aktivId === b.id} zaehler={zaehlerVon(b, zaehler)} />
             </Fragment>
           ))}
         </nav>
-        <nav className="mt-auto space-y-0.5 pt-3" aria-label="Werkzeuge und Einstellungen">
+        <nav className="mt-auto space-y-0.5 pt-3" aria-label="Einstellungen">
           {unten.map((b) => (
-            <SeitenleistenLink key={b.id} b={b} aktiv={aktuell?.id === b.id} zaehler={zaehlerVon(b, zaehler)} />
+            <SeitenleistenLink key={b.id} b={b} aktiv={aktivId === b.id} zaehler={zaehlerVon(b, zaehler)} />
           ))}
           <div className="pt-2">
             <ProfilMenue email={email} variant="sidebar" />
@@ -206,36 +206,8 @@ export function AdminNeuShell({ email, zaehler, children }: { email: string; zae
               </li>
             );
           })}
-          <li className="min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={() => setMehr(true)}
-              aria-current={mehrAktiv ? "page" : undefined}
-              className={cn("flex w-full flex-col items-center gap-0.5 py-2 text-[11px] font-medium", mehrAktiv ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]")}
-            >
-              <MoreHorizontal className="h-6 w-6" strokeWidth={mehrAktiv ? 2.4 : 1.9} />
-              Mehr
-            </button>
-          </li>
         </ul>
       </nav>
-
-      <Sheet open={mehr} onClose={() => setMehr(false)} title="Mehr">
-        <ul className="divide-y divide-[color:var(--border)]">
-          {unterMehr.map((b) => {
-            const Icon = BEREICH_SYMBOL[b.id];
-            return (
-              <li key={b.id}>
-                <Link href={b.pfad} onClick={() => setMehr(false)} className="flex h-12 items-center gap-3 px-5 text-[15px] hover:bg-[color:var(--surface-sunken)]">
-                  <Icon className="h-[18px] w-[18px] text-[color:var(--muted)]" />
-                  <span className="flex-1">{b.label}</span>
-                  <ChevronRight className="h-4 w-4 text-[color:var(--border-strong)]" />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </Sheet>
     </div>
   );
 }

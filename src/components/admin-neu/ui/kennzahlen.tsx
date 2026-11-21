@@ -36,7 +36,7 @@ export function Kennzahlen({ werte }: { werte: Kennzahl[] }) {
   const k = offen == null ? null : liste[offen];
   return (
     <>
-      <section aria-label="Kennzahlen" className={cn("mb-4 grid grid-cols-2 gap-2 sm:gap-3", GRID[liste.length])}>
+      <section aria-label="Kennzahlen" className={cn("mb-4 grid grid-cols-2 gap-2 sm:gap-3 [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1", GRID[liste.length])}>
         {liste.map((z, i) => {
           const inhalt = (
             <>

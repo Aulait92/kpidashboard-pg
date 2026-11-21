@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { offeredFor, opportunities, potentialHint } from "@/lib/bestand/campaigns";
+import { offeredFor, opportunities } from "@/lib/bestand/campaigns";
 import { buildCustomerExport } from "@/lib/export/kundendaten";
 import { eraseCustomerData } from "@/lib/erasure";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
@@ -40,14 +40,14 @@ describe("Ausschließlichkeitsvertreter, Export und Löschung", () => {
     customers.push(ao.id, makler.id);
     await bestandWithGap(ao.id);
     await bestandWithGap(makler.id);
-    const titles = async (id: string) => (await opportunities(id, NOW)).filter((o) => o.occasion === "cross_sell").map((o) => o.title).sort();
+    const titles = async (id: string) => (await opportunities(id, NOW)).filter((o) => o.kind === "kampagne" && o.occasion === "cross_sell").map((o) => o.title).sort();
     // Bestand des AO hat KFZ und Hausrat → „KFZ ohne Hausrat“ ja, „KFZ ohne Rechtsschutz/Haftpflicht“ nein
-    expect(await titles(ao.id)).toEqual(["KFZ ohne Hausrat"]);
-    expect(await titles(makler.id)).toEqual(expect.arrayContaining(["KFZ ohne Hausrat", "KFZ ohne Haftpflicht", "KFZ ohne Rechtsschutz"]));
+    expect(await titles(ao.id)).toEqual(["Kfz-Kunden ohne Hausrat"]);
+    expect(await titles(makler.id)).toEqual(expect.arrayContaining(["Kfz-Kunden ohne Hausrat", "Kfz-Kunden ohne Privathaftpflicht", "Kfz-Kunden ohne Rechtsschutz"]));
     // Profil: nur Rechtsschutz und KFZ → kein Hausrat mehr, dafür Rechtsschutz
     await prisma.customer.update({ where: { id: ao.id }, data: { bestandSparten: ["KFZ", "Rechtsschutz"] } });
-    expect(await titles(ao.id)).toEqual(["KFZ ohne Rechtsschutz"]);
-    expect((await potentialHint(ao.id, NOW))?.topic).toBe("Rechtsschutz");
+    expect(await titles(ao.id)).toEqual(["Kfz-Kunden ohne Rechtsschutz"]);
+    expect((await opportunities(ao.id, NOW)).find((o) => o.occasion === "cross_sell" && o.kind === "kampagne")?.topic).toBe("Rechtsschutz");
     expect(await offeredFor(makler.id)).toBeNull();
   });
 

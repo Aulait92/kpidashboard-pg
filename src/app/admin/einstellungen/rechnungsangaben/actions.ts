@@ -13,9 +13,9 @@ export async function saveTaxNumberAction(_prev: TaxNumberState, fd: FormData): 
   await requireAuth();
   const res = await saveTaxNumber(String(fd.get("taxNumber") ?? ""));
   if (!res.ok) return { error: res.error };
-  revalidatePath("/admin/einstellungen/rechnungsangaben");
-  revalidatePath("/admin/einstellungen");
-  revalidatePath("/admin/heute");
+  revalidatePath("/admin/neu/einstellungen/rechnungsangaben");
+  revalidatePath("/admin/neu/einstellungen");
+  revalidatePath("/admin/neu");
   if (!res.changed) return { ok: true, message: "Gespeichert (unverändert)." };
   await audit("rechnung.steuernummer", { entity: "InvoiceSettings", entityId: "default", details: { gesetzt: !!res.value } });
   if (!billingEnabled()) return { ok: true, message: "Gespeichert. Stripe ist nicht eingerichtet, Kunden werden später aktualisiert." };

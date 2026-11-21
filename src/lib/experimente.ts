@@ -77,7 +77,7 @@ export const EXPERIMENTE = {
     titel: "Komplettcheck-Frage nach der Buchung",
     ziel: "komplettcheck_ja",
     a: "Bisher: „ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können“",
-    b: "Neu (Ole): „Oft zahlen Menschen für dieselbe Absicherung doppelt …“, kostenlos, nur ein paar Minuten länger",
+    b: "Neu (b2, 20.11.2026): „Soll … auch kurz über Ihre anderen Versicherungen schauen, etwa Haftpflicht, Hausrat oder Kfz? Oft zahlt man … doppelt …“, kostenlos",
   },
   terminvorschlag_kostenlos: {
     titel: "Terminvorschlag im Chat",
@@ -122,6 +122,15 @@ export const EXPERIMENTE = {
     b: "Neu: Bestätigung plus fett „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], Komplettcheck erst danach",
     min: 150,
     nurReif: "termin_vorbei",
+  },
+  // Buchungslink nach dem 2. „Andere Zeit“ im WhatsApp-Assistenten (Ole, 20.11.2026 beauftragt: Fassung a sofort
+  // Standard; Lernbuch docs/firma/ab-tests.md, Hypothese lib/ab-hypothesen.ts). Einheit Lead-ID (sonst Chat-ID),
+  // zugeteilt nur beim Senden des Links (lib/whatsapp/knopf.ts buchungslinkSenden), Texte lib/whatsapp/buchungslink.ts.
+  buchungslink_andere_zeit: {
+    titel: "Buchungslink nach dem 2. „Andere Zeit“ im Chat",
+    ziel: "termin_gebucht",
+    a: "Standard (Ole): „Kein Problem! Suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link> Oder schreiben Sie mir einfach Ihren Wunschtag.“",
+    b: "Neu: Wunschtag im Chat zuerst, Link am Ende: „Kein Problem! Schreiben Sie mir einfach Ihren Wunschtag, oder suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link>“",
   },
   // Eigener PKV-Funnel (lib/funnel, Ole 20.11.2026): Beispiel, AUS und an keinem Schritt mehr (nur Muster).
   // Einheit = Besucher-ID je Seitenaufruf (kein Cookie, Auflage L4), Zuteilung beim ersten Aufruf des Schritts.
