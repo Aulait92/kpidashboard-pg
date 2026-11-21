@@ -292,6 +292,14 @@ export function spartenDesLeads(source: string | null | undefined, src: AngabenQ
   const tierText = `${interesse} ${a.tier ?? ""}`;
   if (/halter/i.test(tierText) && /hund/i.test(tierText)) out.push("tierhalter-hund");
   if (/halter/i.test(tierText) && /pferd/i.test(tierText)) out.push("tierhalter-pferd");
+  // Tierkranken im Privatschutz (Formularauswahl „Tierkrankenversicherung / Tierhalterhaftpflicht“): Tierart und
+  // Kranken klärt der Assistent im Chat (angaben.tier, z. B. „Katze, Krankenversicherung“), Ole 21.11.2026
+  const tierAngabe = a.tier ?? "";
+  if (/kranken|\bop\b|op-schutz/i.test(tierAngabe)) {
+    const op = /\bop\b|op-schutz|nur op/i.test(tierAngabe) && !/voll|behandlung/i.test(tierAngabe);
+    if (/katze|kater/i.test(tierAngabe)) out.push(op ? "katze-op" : "katze-kranken");
+    if (/hund/i.test(tierAngabe) && !/halter/i.test(tierAngabe.replace(/[^;]*kranken[^;]*/gi, ""))) out.push(op ? "hund-op" : "hund-kranken");
+  }
   return out;
 }
 
