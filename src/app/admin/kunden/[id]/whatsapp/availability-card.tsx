@@ -1,7 +1,9 @@
 import { CalendarDays } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
-import { AllianzForm, AllianzTemplateForm, BlockTimes, LeadTimesForm } from "@/components/calendar-sources";
+import { AllianzForm, AllianzTemplateForm, BeraterAllianzForm, BlockTimes, LeadTimesForm } from "@/components/calendar-sources";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
+import { loadBeraterPersonen } from "@/lib/calendar/berater-allianz";
+import { prisma } from "@/lib/prisma";
 import {
   adminAddBlockAction,
   adminChangeAllianzAction,
@@ -9,6 +11,7 @@ import {
   adminDeleteBlockAction,
   adminDisconnectAllianzAction,
   adminSaveLeadTimesAction,
+  adminSetBeraterAllianzAction,
 } from "./calendar-actions";
 
 const fmt = (d: Date) =>
@@ -16,7 +19,15 @@ const fmt = (d: Date) =>
 
 /** Kundenakte → Verfügbarkeit: Quellen, Allianz-Online-Kalender, Lead-Zeiten, Blockierungen. */
 export async function AvailabilityCard({ customerId }: { customerId: string }) {
-  const setup = await loadCalendarSetup(customerId, customerId);
+  const [setup, personen, berater] = await Promise.all([
+    loadCalendarSetup(customerId, customerId),
+    loadBeraterPersonen(customerId),
+    prisma.user.findMany({
+      where: { customerId, role: "BUYER", teamRole: "advisor" },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, email: true, displayName: true, advisorCalendar: { select: { provider: true, status: true } } },
+    }),
+  ]);
   const a = setup.allianz;
   const hidden = { customerId };
   const sources = [
@@ -59,6 +70,32 @@ export async function AvailabilityCard({ customerId }: { customerId: string }) {
                   action={adminChangeAllianzAction}
                   hidden={hidden}
                 />
+                {/* Berater-App-Kalender (lib/calendar/berater-allianz.ts): Person je Mitglied, Termine per Einladung */}
+                {personen && personen.resources.length && berater.length ? (
+                  <div className="space-y-3 border-t border-[color:var(--border)] pt-3" data-admin-berater-allianz>
+                    <div className="font-medium">Team: Person je Berater (Termine per Einladung)</div>
+                    {berater.map((u) =>
+                      u.advisorCalendar?.status === "connected" && u.advisorCalendar.provider !== "app" ? (
+                        <p key={u.id} className="text-[color:var(--muted)]">
+                          {u.displayName ?? u.email}: eigener Kalender verbunden
+                        </p>
+                      ) : (
+                        <div key={u.id} className="rounded-lg bg-[color:var(--surface-sunken,#f8fafc)] p-3">
+                          <BeraterAllianzForm
+                            action={adminSetBeraterAllianzAction}
+                            resources={personen.resources}
+                            resourceId={personen.gewaehlt[u.id]?.resourceId ?? null}
+                            email={personen.gewaehlt[u.id]?.email ?? u.email}
+                            readOnly={false}
+                            hidden={{ customerId, userId: u.id }}
+                            frage={`${u.displayName ?? u.email}${personen.gewaehlt[u.id] && !personen.gewaehlt[u.id].connected ? " (ruht)" : ""}`}
+                            kompakt
+                          />
+                        </div>
+                      ),
+                    )}
+                  </div>
+                ) : null}
                 <form action={adminDisconnectAllianzAction}>
                   <input type="hidden" name="customerId" value={customerId} />
                   <button type="submit" className="text-sm text-rose-700 hover:underline">

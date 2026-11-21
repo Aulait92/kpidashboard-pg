@@ -17,6 +17,7 @@ import {
 import { fetchIcsBusy } from "@/lib/calendar/ics";
 import { APP_PROVIDER, appBusy, appCreateEvent, appDeleteEvent, appUpdateEventEnd, appUpdateEventTime } from "@/lib/calendar/app-kalender";
 import { allianzBusy, decodeAllianzCalendar } from "@/lib/calendar/allianz-online";
+import { allianzFuerBerater } from "@/lib/calendar/berater-allianz";
 import { berlinAt, calendarBlocksBusy, DEFAULT_DURATION_MIN, durationForKey, loadLeadTimes, timesForDay, type LeadTimes } from "@/lib/calendar/lead-times";
 import {
   microsoftCreateEvent,
@@ -62,22 +63,37 @@ export function hasRequiredScopes(conn: { provider: string; scope: string | null
 /** Adapter für einen Kalender-Schlüssel (customerId oder user:<id>). */
 export async function adapterFor(customerId: string) {
   const conn = await loadConnection(customerId);
-  // Veröffentlichter Firmenkalender (ICS) und Allianz-Online-Kalender gelten
-  // nur für den Agentur-Kalender.
-  const agent = userIdOfKey(customerId)
-    ? null
-    : await prisma.agentConfig.findUnique({
-        where: { customerId },
-        select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, allianzConsentAt: true },
-      });
-  const icsUrl = agent?.availabilityIcsUrlEnc ? decryptSecret(agent.availabilityIcsUrlEnc) : null;
-  const allianz = agent?.allianzConsentAt ? decodeAllianzCalendar(agent.allianzCalendarEnc) : null;
+  const beraterId = userIdOfKey(customerId);
+  // Kunde (Agentur), zu dem der Kalender gehört
+  const agencyId = conn.customerId;
+  // Berater-App-Kalender mit Allianz-Person (lib/calendar/berater-allianz.ts, 21.11.2026)
+  const beraterApp = !!beraterId && conn.provider === APP_PROVIDER;
+  // Veröffentlichter Firmenkalender (ICS) gilt nur für den Agentur-Kalender, der Allianz-Online-Kalender
+  // für die Agentur und (eingeschränkt auf ihre Person) für Berater mit App-Kalender.
+  const agent =
+    beraterId && !beraterApp
+      ? null
+      : await prisma.agentConfig.findUnique({
+          where: { customerId: agencyId },
+          select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, allianzConsentAt: true },
+        });
+  const icsUrl = !beraterId && agent?.availabilityIcsUrlEnc ? decryptSecret(agent.availabilityIcsUrlEnc) : null;
+  const agencyAllianz = agent?.allianzConsentAt ? decodeAllianzCalendar(agent.allianzCalendarEnc) : null;
+  const allianz = beraterApp
+    ? agencyAllianz && "allianzResourceId" in conn
+      ? allianzFuerBerater(agencyAllianz, conn.allianzResourceId)
+      : null
+    : agencyAllianz;
 
   const native =
     conn.provider === APP_PROVIDER
       ? {
-          // App-Kalender (lib/calendar/app-kalender.ts): Termine der App belegt, Einladung per Mail
-          getBusy: (min: Date, max: Date) => appBusy(customerId, min, max),
+          // App-Kalender (lib/calendar/app-kalender.ts): Termine der App belegt, Einladung per Mail.
+          // Berater ohne Allianz-Person: keine Quelle für belegte Zeiten, nie still „frei“.
+          getBusy: (min: Date, max: Date) =>
+            beraterApp && !allianz
+              ? Promise.reject(new Error("Allianz-Person des Beraters nicht eingerichtet."))
+              : appBusy(customerId, min, max),
           createEvent: (ev: NewEvent) => appCreateEvent(customerId, ev),
           deleteEvent: (id: string) => appDeleteEvent(customerId, id),
           updateEventEnd: (id: string, end: Date) => appUpdateEventEnd(customerId, id, end),
@@ -108,7 +124,7 @@ export async function adapterFor(customerId: string) {
         native.getBusy(min, max),
         icsUrl ? fetchIcsBusy(icsUrl, min, max) : Promise.resolve([] as Busy[]),
         // Vor dem frühesten Allianz-Buchungstag nur mit eigenem Kalender (Google/Outlook) Lead-Zeiten anbieten
-        allianz ? allianzBusy(customerId, allianz, min, max, { leadTimesBeforeEarliest: conn.provider !== APP_PROVIDER }) : Promise.resolve([] as Busy[]),
+        allianz ? allianzBusy(agencyId, allianz, min, max, { leadTimesBeforeEarliest: conn.provider !== APP_PROVIDER }) : Promise.resolve([] as Busy[]),
         calendarBlocksBusy(customerId, min, max),
       ]);
       return lists.flat();

@@ -10,7 +10,8 @@ import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { bookingPageUrl } from "@/lib/public-url";
 import { prisma } from "@/lib/prisma";
 import { disconnectOwnCalendarAction } from "./actions";
-import { BlockTimes, LeadTimesForm, RemindButton, SourcePicker, VideoRaumForm } from "@/components/calendar-sources";
+import { BeraterAllianzForm, BlockTimes, LeadTimesForm, RemindButton, SourcePicker, VideoRaumForm } from "@/components/calendar-sources";
+import { loadBeraterPersonen } from "@/lib/calendar/berater-allianz";
 import { userCalendarKey } from "@/lib/calendar/tokens";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import { loadTeamCalendars, providerLabel } from "@/lib/calendar/team";
@@ -23,6 +24,7 @@ import {
   disconnectNativeCalendarAction,
   remindAdvisorCalendarAction,
   removeIcsAction,
+  saveBeraterAllianzAction,
   saveIcsAction,
   saveLeadTimesAction,
   saveVideoRaumAction,
@@ -40,14 +42,18 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
   const { gcal } = await searchParams;
   const ro = ctx.preview;
   const owner = ctx.teamRole === "owner" || !ctx.userId;
-  const [own, customer, team] = await Promise.all([
+  const [own, customer, team, personen] = await Promise.all([
     ctx.userId
-      ? prisma.advisorCalendar.findUnique({ where: { userId: ctx.userId }, select: { status: true, provider: true, accountEmail: true } })
+      ? prisma.advisorCalendar.findUnique({ where: { userId: ctx.userId }, select: { status: true, provider: true, accountEmail: true, allianzResourceId: true } })
       : null,
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }),
     owner ? loadTeamCalendars(ctx.customerId) : null,
+    // Berater einer Agentur mit Allianz-Online-Kalender: Termine per Einladung an die Allianz-Adresse (21.11.2026)
+    owner ? null : loadBeraterPersonen(ctx.customerId),
   ]);
   const ownConnected = own?.status === "connected";
+  const ownApp = own?.provider === "app";
+  const person = ownApp ? (personen?.resources.find((r) => r.id === own?.allianzResourceId) ?? null) : null;
   const makler = customer?.vermittlerTyp === "makler";
   // Inhaber: Kalender des Kundenkontos. Berater: eigener (nur wenn verbunden gibt es Lead-Zeiten/Blockierungen).
   const key = owner ? ctx.customerId : ownConnected ? userCalendarKey(ctx.userId!) : null;
@@ -130,6 +136,50 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
                 </div>
               ) : null}
             </>
+          ) : ownApp && ownConnected ? (
+            <div className="space-y-3" data-berater-app>
+              <p className="flex items-start gap-1.5 font-medium text-emerald-700">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  Termine bekommen Sie als Einladung an {own!.accountEmail}
+                  {person ? ` (${person.name} im Allianz-Online-Kalender)` : ""}.
+                </span>
+              </p>
+              <details className="text-sm">
+                <summary className="cursor-pointer text-[color:var(--muted)]">Ändern</summary>
+                <div className="mt-3 space-y-4">
+                  {personen ? (
+                    <BeraterAllianzForm action={saveBeraterAllianzAction} resources={personen.resources} resourceId={own!.allianzResourceId} email={own!.accountEmail ?? ctx.email} readOnly={ro} />
+                  ) : null}
+                  <form action={disconnectOwnCalendarAction}>
+                    <button className={buttonClass("ghost", "sm")} disabled={ro}>
+                      Trennen
+                    </button>
+                  </form>
+                </div>
+              </details>
+            </div>
+          ) : !ownConnected && personen && personen.resources.length ? (
+            <div className="space-y-4" data-berater-allianz-start>
+              <div>
+                <h3 className="text-[15px] font-semibold">Termine per Einladung an Ihre Allianz-Adresse</h3>
+                <p className="mt-1 text-sm text-[color:var(--muted)]">
+                  {ownApp ? "Ihre Person fehlt gerade im Allianz-Online-Kalender der Agentur. Bitte neu wählen." : "Wir buchen nur, wenn Sie im Allianz-Online-Kalender frei sind."}
+                </p>
+              </div>
+              <BeraterAllianzForm action={saveBeraterAllianzAction} resources={personen.resources} resourceId={own?.allianzResourceId ?? null} email={own?.accountEmail ?? ctx.email} readOnly={ro} />
+              <details className="text-sm">
+                <summary className="cursor-pointer text-[color:var(--muted)]">Anderen Kalender verbinden</summary>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <a href="/api/google/connect?fuer=mich" className={buttonClass("secondary", "md", ro ? "pointer-events-none opacity-60" : "")}>
+                    Google-Kalender verbinden
+                  </a>
+                  <a href="/api/microsoft/connect?fuer=mich" className={buttonClass("secondary", "md", ro ? "pointer-events-none opacity-60" : "")}>
+                    Outlook / Microsoft 365 verbinden
+                  </a>
+                </div>
+              </details>
+            </div>
           ) : ownConnected ? (
             <div className="flex flex-wrap items-center gap-3">
               <span className="flex items-center gap-1.5 font-medium text-emerald-700">
