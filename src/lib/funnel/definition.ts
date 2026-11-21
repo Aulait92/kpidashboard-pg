@@ -13,7 +13,7 @@ import { PKV_DAUER, PKV_SITUATION_LABEL, PKV_SITUATIONEN, PKV_TEXTE as T, PKV_VE
 export type FeldId = "versichert" | "versicherung" | "situation" | "dauer" | "beitrag" | "geburtsdatum" | "plz" | "ort" | "vorname" | "nachname" | "email" | "telefon";
 export type Antworten = Partial<Record<FeldId, string>>;
 export type Fehler = Partial<Record<FeldId, string>>;
-export type AbbruchGrund = "gesetzlich" | "unter_650";
+export type AbbruchGrund = "gesetzlich" | "unter_650" | "debeka";
 export type Variante = "a" | "b";
 
 export type SchrittTexte = {
@@ -351,6 +351,8 @@ export const PKV_BEITRAG: FunnelDef = {
       optionen: PKV_VERSICHERER,
       labels: PKV_VERSICHERER_LABEL,
       haeufig: PKV_VERSICHERER_HAEUFIG,
+      // Debeka: interner Tarifwechsel bringt dort nichts (Ole, 21.11.2026), freundlich aussteigen statt 5 weitere Fragen
+      abbruch: (a) => (a.versicherung === "Debeka" ? "debeka" : null),
       suche: { label: T.versicherung.suche, keineTreffer: T.versicherung.keineTreffer },
       spalten: 2,
       texte: { frage: T.versicherung.frage, hinweis: T.versicherung.hinweis },
@@ -412,6 +414,7 @@ export const PKV_BEITRAG: FunnelDef = {
     { id: "danke", art: "danke", texte: { ueberschrift: T.danke.ueberschrift, frage: T.danke.untertitel, liste: T.danke.schritte, nachsatz: T.danke.verpasst } },
     { id: "ende-gesetzlich", art: "ende", grund: "gesetzlich", zurueckZu: "start", texte: { ueberschrift: T.endeGesetzlich.ueberschrift, text: [T.endeGesetzlich.text], knopf: T.endeGesetzlich.knopf } },
     { id: "ende-beitrag", art: "ende", grund: "unter_650", zurueckZu: "beitrag", texte: { ueberschrift: T.endeBeitrag.ueberschrift, text: [T.endeBeitrag.text], knopf: T.endeBeitrag.knopf } },
+    { id: "ende-debeka", art: "ende", grund: "debeka", zurueckZu: "versicherung", texte: { ueberschrift: T.endeDebeka.ueberschrift, text: [T.endeDebeka.text], knopf: T.endeDebeka.knopf } },
   ],
 };
 

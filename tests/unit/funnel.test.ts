@@ -71,7 +71,7 @@ describe("Funnel-Konfiguration", () => {
     const nr = f.schritte.flatMap((s) => ("frageNr" in s && s.frageNr ? [s.frageNr] : []));
     expect(nr).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(f.fragenGesamt).toBe(7);
-    expect(f.schritte.filter((s) => s.art === "ende").map((s) => (s as { grund: string }).grund).sort()).toEqual(["gesetzlich", "unter_650"]);
+    expect(f.schritte.filter((s) => s.art === "ende").map((s) => (s as { grund: string }).grund).sort()).toEqual(["debeka", "gesetzlich", "unter_650"]);
     expect(PKV_VERSICHERER.at(-1)).toBe("Sonstige");
     const sit = schritt("situation");
     expect(sit.art === "auswahl" ? sit.optionen : []).toHaveLength(9);
@@ -80,6 +80,10 @@ describe("Funnel-Konfiguration", () => {
   it("Abbruchregeln: gesetzlich und Beitrag unter 650 € enden freundlich, sonst weiter", () => {
     expect(naechsterSchritt(f, "start", { versichert: "Gesetzlich" })).toEqual({ id: "ende-gesetzlich", abbruch: "gesetzlich" });
     expect(naechsterSchritt(f, "start", { versichert: "Privat" })).toEqual({ id: "versicherung", abbruch: null });
+    // Debeka: nicht optimierbar (Ole, 21.11.2026), freundlich aussteigen; keine Kachel mehr
+    expect(naechsterSchritt(f, "versicherung", { versichert: "Privat", versicherung: "Debeka" })).toEqual({ id: "ende-debeka", abbruch: "debeka" });
+    expect(naechsterSchritt(f, "versicherung", { versichert: "Privat", versicherung: "DKV" })).toEqual({ id: "situation", abbruch: null });
+    expect(PKV_VERSICHERER).toContain("Debeka");
     expect(naechsterSchritt(f, "beitrag", { beitrag: "649" })).toEqual({ id: "ende-beitrag", abbruch: "unter_650" });
     expect(naechsterSchritt(f, "beitrag", { beitrag: "650" })).toEqual({ id: "geburtsdatum", abbruch: null });
     expect(naechsterSchritt(f, "beitrag", { beitrag: "1.200,50" }).id).toBe("geburtsdatum");

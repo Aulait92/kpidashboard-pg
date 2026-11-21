@@ -142,6 +142,12 @@ export const PKV_TEXTE = {
     text: "Du bist doch privat versichert? Dann geht es hier weiter.",
     knopf: "Ich bin doch privat versichert",
   },
+  endeDebeka: {
+    // Ole, 21.11.2026: Debeka ist nicht optimierbar. Sachlich, ohne Wertung des Versicherers.
+    ueberschrift: "Bei der Debeka lohnt sich diese Prüfung leider nicht",
+    text: "Durch den Tarifaufbau der Debeka lässt sich der Beitrag mit einem internen Tarifwechsel in der Regel nicht senken. Deshalb bieten wir die Prüfung für Debeka-Versicherte nicht an. Danke für dein Interesse.",
+    knopf: "Andere Versicherung wählen",
+  },
   endeBeitrag: {
     // Freundlich, mit klarem nächsten Schritt (Personas, 21.11.2026); sachlich richtig (Recht: wir prüfen nur nicht)
     ueberschrift: "Diese Prüfung gibt es ab 650\u00a0€ im Monat",
@@ -265,7 +271,8 @@ export const PKV_VERSICHERER = [
  * Die 8 häufigsten Versicherer als Kacheln (ux-ui.md Muss 6), alle übrigen über die Suche. Reihenfolge vorerst nach
  * Marktgröße (Vollversicherte); mit den Zahlen der bisherigen Perspective-Leads abgleichen (Data/BI).
  */
-export const PKV_VERSICHERER_HAEUFIG = ["Debeka", "DKV", "Allianz", "AXA", "Signal Iduna", "HUK-Coburg", "Barmenia", "Continentale"] as const;
+// Ohne Debeka (nicht optimierbar, Ole 21.11.2026), dafür Gothaer
+export const PKV_VERSICHERER_HAEUFIG = ["DKV", "Allianz", "AXA", "Signal Iduna", "HUK-Coburg", "Barmenia", "Continentale", "Gothaer"] as const;
 
 /** Beschriftung je Versicherer, wo sie vom gespeicherten Wert abweicht (texte.md Nr. 2 und 3). */
 export const PKV_VERSICHERER_LABEL: Record<string, string> = { Sonstige: "Andere Versicherung", HALLESCHE: "Hallesche" };

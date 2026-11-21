@@ -120,3 +120,7 @@ Logos von Versicherern.
 - Überschrift B mit Anlass „Beitragserhöhung zum 1. Januar“.
 - Beitragsfrage von Platz 5 auf Platz 2 (frühes Aussteigen unter 650 €).
 - Zusatzfrage „Wann erreicht dich dein Experte am besten?“ (braucht neues Feld in der Zustellung).
+
+## Abbruch Debeka (Ole, 21.11.2026)
+- Debeka ist nicht optimierbar: keine Kachel mehr (dafür Gothaer), Auswahl über die Suche führt auf die Endseite.
+- „Bei der Debeka lohnt sich diese Prüfung leider nicht“ · „Durch den Tarifaufbau der Debeka lässt sich der Beitrag mit einem internen Tarifwechsel in der Regel nicht senken. Deshalb bieten wir die Prüfung für Debeka-Versicherte nicht an. Danke für dein Interesse.“ · Knopf „Andere Versicherung wählen“
