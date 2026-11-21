@@ -18,7 +18,7 @@ import { recordLeadProgress } from "@/lib/lead-progress";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
-import { ErstinfoPdfFehltError, firstNameOf, NoTemplateError, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { ErstinfoPdfFehltError, firstNameOf, NoTemplateError, outreachMaxVersion, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import {
   ersteFrageKnoepfe,
   erstanschreibenText,
@@ -129,11 +129,7 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   // Höchste Textversion je Zweck (templates.ts rankOutreach): ohne v10 höchstens v9; mit v10 nie die allgemeine
   // Telefonatsfrage für einen Produkt-Lead (Rückfall „outreach“ höchstens v9; reine Hausrat-Leads dürfen die v10 des
   // Privatschutzes bekommen, deren Frage nach bestehenden Verträgen passt)
-  const maxVersion: Partial<Record<NoticePurpose, number>> = !v10
-    ? Object.fromEntries((["outreach", "outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat"] as const).map((x) => [x, 9]))
-    : purpose === "outreach"
-      ? {}
-      : { outreach: 9 };
+  const maxVersion = outreachMaxVersion(purpose, v10);
   return {
     who,
     purpose,

@@ -42,6 +42,7 @@
 import { displayProduct } from "@/lib/products";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import type { NoticePurpose } from "@/lib/whatsapp/templates";
+import { istKfzProdukt, KFZ_FORMULAR } from "@/lib/whatsapp/produkt-fragen";
 
 /**
  * Erstanschreiben v6 (Ole, 17.11.2026), zentral zum Feilen: Text nach „Hallo {{1}}, “ (ohne Namen „Hallo, “, dann
@@ -72,14 +73,34 @@ export const V8_THEMA: Record<"outreach" | "outreach_tkv" | "outreach_zahn" | "o
   outreach_privatschutz: " zum Privatschutz",
 };
 
-/** Zwecke des Erstanschreibens ab v8 (je Produkt und für reine Hausrat-Leads). */
-export type ErstanschreibenZweck = keyof typeof V8_THEMA | "outreach_hausrat";
+/**
+ * Zwecke des Erstanschreibens ab v8 (je Produkt und für reine Hausrat-Leads). Kfz (Ole, 21.11.2026) je Anlass aus dem
+ * Kfz-Leadformular („Worum geht es?“): Wechsel fürs jetzige Auto, neues Auto, Anlass unbekannt (KFZ_ZWECKE).
+ */
+export type ErstanschreibenZweck = keyof typeof V8_THEMA | "outreach_hausrat" | KfzZweck;
+
+/** Erstanschreiben Kfz (Ole, 21.11.2026: „Einstiegsfrage, die nicht direkt auf den Termin geht“), je Anlass. */
+export const KFZ_ZWECKE = ["outreach_kfz", "outreach_kfz_wechsel", "outreach_kfz_neu"] as const;
+export type KfzZweck = (typeof KFZ_ZWECKE)[number];
+export const istKfzZweck = (z: string | null | undefined): z is KfzZweck => (KFZ_ZWECKE as readonly string[]).includes(z ?? "");
+
+/**
+ * Zweck des Kfz-Erstanschreibens aus dem Leadformular (rein): „Versicherung wechseln (jetziges Auto)“ → Wechsel,
+ * „Neues Auto versichern“ → neues Auto, sonst (Feld fehlt) die Frage nach dem Anlass.
+ */
+export function kfzZweck(formular?: FormAntwort[] | null): KfzZweck {
+  const anlass = (formular ?? []).find((f) => KFZ_FORMULAR.anlass.test(f.label.trim()) && f.value?.trim())?.value ?? "";
+  if (/wechsel|jetzig|bisherig/i.test(anlass)) return "outreach_kfz_wechsel";
+  if (/neu/i.test(anlass)) return "outreach_kfz_neu";
+  return "outreach_kfz";
+}
 
 /** Thema für reine Hausrat-Leads (Ole, 18.11.2026), je Ansprache. */
 export const HAUSRAT_THEMA = { sie: " zu Ihrer Hausratversicherung", du: " zu deiner Hausratversicherung" } as const;
 
 /** Thema des Erstanschreibens ab v8 je Zweck und Ansprache („ zum Privatschutz“, „ zu Ihrer Hausratversicherung“). */
 export function v8Thema(purpose: ErstanschreibenZweck, an: Ansprache): string {
+  if (istKfzZweck(purpose)) return " zur Kfz-Versicherung";
   return purpose === "outreach_hausrat" ? HAUSRAT_THEMA[an] : V8_THEMA[purpose];
 }
 
@@ -126,7 +147,44 @@ export type V10Frage = {
   planKey: "frage1" | "frage2" | "vorhanden" | null;
   /** Gespeicherter Wert je Knopf (Standard: der Knopftext) */
   werte?: Record<string, string>;
+  /**
+   * Freie Antwort einem Knopf zuordnen (Kfz, Ole 21.11.2026: „Ende Dezember“ = „Zum Jahresende“); null = unklar, dann
+   * hält der Assistent die Antwort fest. Nur kurze Antworten ohne Rückfrage.
+   */
+  freitext?: (text: string) => string | null;
 };
+
+/** Kurze, schlichte Freitext-Antwort (keine Rückfrage, nicht lang), sonst übernimmt der Assistent. */
+const kurzeAntwort = (t: string) => !!t.trim() && t.trim().length <= 120 && !t.includes("?");
+
+/** Kfz Wechsel: „Wann läuft Ihr jetziger Vertrag aus?“ frei beantwortet. */
+function kfzAblaufFrei(text: string): string | null {
+  const t = text.trim().toLowerCase();
+  if (!kurzeAntwort(t)) return null;
+  if (/wei(ß|ss) (ich )?(es )?nicht|keine ahnung|nicht sicher|unsicher|(muss|müsste) ich (erst )?(nach)?(schauen|sehen)|nachschauen|nachsehen/.test(t)) return "Weiß ich nicht";
+  if (/jahresende|jahreswechsel|ende (des|dieses|vom) jahr|ende dezember|dezember|silvester|neujahr|neuen jahr|31\.\s?12|\b0?1\.\s?0?1\b|januar|zum 1\.1/.test(t)) return "Zum Jahresende";
+  if (/februar|märz|maerz|april|\bmai\b|juni|juli|august|september|oktober|november|\b\d{1,2}\.\s?\d{1,2}\.?|anderes datum|unterjährig|später|im (sommer|frühjahr|herbst)/.test(t)) return "Anderes Datum";
+  return null;
+}
+
+/** Kfz neues Auto: „Ist das neue Auto schon da?“ frei beantwortet. */
+function kfzNeuFrei(text: string): string | null {
+  const t = text.trim().toLowerCase();
+  if (!kurzeAntwort(t)) return null;
+  if (/such|schaue? noch|noch nicht (entschieden|gekauft|gefunden)|vergleich|überleg|noch kein(s|es|en)?\b|weiß noch nicht welch/.test(t)) return "Suche noch";
+  if (/kommt|bestellt|geliefert|lieferung|liefertermin|abholung|hole (es|ihn) |nächste woche|nächsten monat|bald/.test(t)) return "Kommt noch";
+  if (/^ja\b|schon da|ist da|steht (schon )?(da|vor der tür)|abgeholt|bereits da|hab(e)? (es|ihn|das auto)( schon)?\b|schon gekauft/.test(t)) return "Ja, ist schon da";
+  return null;
+}
+
+/** Kfz ohne Anlass: „Für Ihr jetziges Auto oder ein neues?“ frei beantwortet. */
+function kfzAnlassFrei(text: string): string | null {
+  const t = text.trim().toLowerCase();
+  if (!kurzeAntwort(t)) return null;
+  if (/\bneu|gekauft|bestellt|neuwagen|gebraucht(en|wagen)? gekauft|zweit(es|wagen)/.test(t)) return "Neues Auto";
+  if (/jetzig|aktuell|bisherig|wechsel|vorhanden|altes?\b|meins?\b|mein auto|das alte/.test(t)) return "Jetziges Auto";
+  return null;
+}
 
 /**
  * Erstanschreiben v10 und v11 (Ole, 19.11.2026). TKV: „Was soll abgesichert sein?“ ersetzt die bisherige Frage 2
@@ -182,6 +240,41 @@ export const ERSTANSCHREIBEN_V10: Record<ErstanschreibenZweck, V10Frage> = {
     knoepfe: ["Angestellt", "Selbstständig", "Beamter"],
     feld: "beruf",
     planKey: "frage1",
+  },
+  // Kfz (Ole, 21.11.2026: „Einstiegsfrage, die nicht direkt auf den Termin geht“, A/B-Test-Labor 21.11.2026): eine Frage
+  // je Anlass aus dem Leadformular, die das Gespräch öffnet und nichts aus dem Formular wiederholt. Fassung b „Frage
+  // zuerst“ wie v11. Antwort in angaben.kfzStart (Ablauf bzw. Auto schon da) bzw. kfzVertrag (Anlass); danach direkt der
+  // Terminvorschlag, der die Antwort aufgreift (gespraech.ts terminNutzenSatz). Kein Stichtag im Text (keine Verknappung).
+  outreach_kfz_wechsel: {
+    a: { sie: "danke für Ihre Anfrage zur Kfz-Versicherung! *Wann läuft Ihr jetziger Vertrag aus?*", du: "danke für deine Anfrage zur Kfz-Versicherung! *Wann läuft dein jetziger Vertrag aus?*" },
+    b: { sie: "*wann läuft Ihre jetzige Kfz-Versicherung aus?* Danke für Ihre Anfrage!", du: "*wann läuft deine jetzige Kfz-Versicherung aus?* Danke für deine Anfrage!" },
+    knoepfe: ["Zum Jahresende", "Anderes Datum", "Weiß ich nicht"],
+    feld: "kfzStart",
+    planKey: null,
+    werte: {
+      "Zum Jahresende": "jetziger Vertrag läuft zum Jahresende aus (Wechsel zum 1.1.)",
+      "Anderes Datum": "jetziger Vertrag läuft zu einem anderen Datum aus",
+      "Weiß ich nicht": "Ablauf des jetzigen Vertrags unbekannt (steht auf der letzten Rechnung)",
+    },
+    freitext: kfzAblaufFrei,
+  },
+  outreach_kfz_neu: {
+    a: { sie: "danke für Ihre Anfrage zur Kfz-Versicherung! *Ist das neue Auto schon da?*", du: "danke für deine Anfrage zur Kfz-Versicherung! *Ist das neue Auto schon da?*" },
+    b: { sie: "*ist das neue Auto schon da?* Danke für Ihre Anfrage zur Kfz-Versicherung!", du: "*ist das neue Auto schon da?* Danke für deine Anfrage zur Kfz-Versicherung!" },
+    knoepfe: ["Ja, ist schon da", "Kommt noch", "Suche noch"],
+    feld: "kfzStart",
+    planKey: null,
+    werte: { "Ja, ist schon da": "neues Auto ist schon da", "Kommt noch": "neues Auto kommt noch (bestellt bzw. gekauft)", "Suche noch": "neues Auto wird noch ausgesucht" },
+    freitext: kfzNeuFrei,
+  },
+  outreach_kfz: {
+    a: { sie: "danke für Ihre Anfrage zur Kfz-Versicherung! *Für Ihr jetziges Auto oder ein neues?*", du: "danke für deine Anfrage zur Kfz-Versicherung! *Für dein jetziges Auto oder ein neues?*" },
+    b: { sie: "*geht es um Ihr jetziges Auto oder ein neues?* Danke für Ihre Anfrage!", du: "*geht es um dein jetziges Auto oder ein neues?* Danke für deine Anfrage!" },
+    knoepfe: ["Jetziges Auto", "Neues Auto"],
+    feld: "kfzVertrag",
+    planKey: null,
+    werte: { "Jetziges Auto": "Versicherungswechsel für das jetzige Auto", "Neues Auto": "neues Auto versichern" },
+    freitext: kfzAnlassFrei,
   },
   outreach: {
     a: { sie: "danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*", du: "danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*" },
@@ -246,6 +339,21 @@ export function erstfrageKnopfWert(gesendet: string | null | undefined, knopf: s
   const k = (knopf ?? "").trim().toLowerCase().replace(/[.!]+$/, "");
   if (!v || !k) return null;
   const titel = v.def.knoepfe.find((x) => x.toLowerCase() === k);
+  if (!titel) return null;
+  return { feld: v.def.feld, wert: v.def.werte?.[titel] ?? titel, frage: v.frage, knopf: titel };
+}
+
+/**
+ * Freie Antwort auf die feste Frage (rein, testbar), nur bei Fragen mit Freitext-Erkennung (Kfz, Ole 21.11.2026):
+ * „Ende Dezember“ auf „Wann läuft Ihr jetziger Vertrag aus?“ gilt wie der Knopf „Zum Jahresende“. Ein genauer Knopftext
+ * zählt ebenfalls. null = keine solche Frage gesendet bzw. Antwort unklar (dann hält der Assistent sie fest).
+ */
+export function erstfrageFreitextWert(gesendet: string | null | undefined, text: string | null | undefined, bevorzugt?: string | null): { feld: string; wert: string; frage: string; knopf: string } | null {
+  const v = v10FrageIn(gesendet, bevorzugt);
+  if (!v?.def.freitext || !text?.trim()) return null;
+  const knopf = erstfrageKnopfWert(gesendet, text, bevorzugt);
+  if (knopf) return knopf;
+  const titel = v.def.freitext(text);
   if (!titel) return null;
   return { feld: v.def.feld, wert: v.def.werte?.[titel] ?? titel, frage: v.frage, knopf: titel };
 }
@@ -329,6 +437,9 @@ const PRIVATSCHUTZ = /privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|a
 export function outreachProdukt(source: string | null | undefined): OutreachProdukt | null {
   const s = (source ?? "").trim();
   if (!s) return null;
+  // Kfz ist kein Produkt dieses Frageplans (eigene Einstiegsfrage, erstanschreibenZweck), auch nicht „Kfz-Haftpflicht“
+  // (sonst Privatschutz) oder „Kfz-Versicherung wechseln“ (sonst PKV); wie produktCheckliste: Kfz zuerst
+  if (istKfzProdukt(s)) return null;
   // Tierhalter-Haftpflicht und Futter sind keine Tierkrankenversicherung
   if (TIER.test(s) && !/privatschutz|halter|futter/i.test(s)) {
     const tier: Tier = /katze/i.test(s) ? "katze" : /hund/i.test(s) ? "hund" : /pferd/i.test(s) ? "pferd" : "tier";
@@ -476,7 +587,7 @@ export type PlanFrage = {
  * Frage im Erstanschreiben, die nicht im Plan steht: ältere TKV-Frage, Frage nach dem Videotermin bzw. (v10 allgemein,
  * Ole 19.11.2026) die feste Frage nach dem Telefonat.
  */
-type SonstigeFrage = { key: "tier_v4" | "termin" | "telefonat"; sie: string; du: string; feld: string; bekannt: null; knoepfe?: readonly string[] };
+type SonstigeFrage = { key: "tier_v4" | "termin" | "telefonat" | "kfz"; sie: string; du: string; feld: string; bekannt: null; knoepfe?: readonly string[] };
 
 export type Frageplan = {
   produkt: OutreachProdukt | null;
@@ -521,6 +632,8 @@ export function nurHausrat(source: string | null | undefined, formular?: FormAnt
  */
 export function erstanschreibenZweck(source: string | null | undefined, formular?: FormAntwort[] | null): NoticePurpose {
   const p = outreachProdukt(source);
+  // Kfz (Ole, 21.11.2026): eigene Einstiegsfrage je Anlass; Gespräch und Strecke bleiben beim Kfz-Produkt (produkt-fragen.ts)
+  if (!p && istKfzProdukt(source)) return kfzZweck(formular);
   if (!p) return "outreach";
   return nurHausrat(source, formular) ? "outreach_hausrat" : p.purpose;
 }
@@ -550,8 +663,9 @@ export function frageplan(source: string | null | undefined, formular: FormAntwo
   const termin: SonstigeFrage | null = TERMIN_RE.test(gesendet) ? { key: "termin", sie: "", du: "", feld: "wunsch", bekannt: null } : null;
   // Feste Frage aus v10/v11 (Ole, 19.11.2026), Vorlage oder Freitext, Fassung a oder b
   const v10 = v10FrageIn(gesendet, erstanschreibenZweck(source, formular));
+  // Kfz (Ole, 21.11.2026): feste Einstiegsfrage je Anlass, ohne Produkt im Frageplan (Formular reicht vor dem Termin)
   const telefonat: SonstigeFrage | null =
-    v10 && !v10.def.planKey ? { key: "telefonat", sie: v10.frage, du: v10.frage, feld: v10.def.feld, bekannt: null, knoepfe: v10.def.knoepfe } : null;
+    v10 && !v10.def.planKey ? { key: istKfzZweck(v10.zweck) ? "kfz" : "telefonat", sie: v10.frage, du: v10.frage, feld: v10.def.feld, bekannt: null, knoepfe: v10.def.knoepfe } : null;
   if (!p) return { produkt: null, fragen: [], gestellt: telefonat ?? termin, offen: [] };
   const bekannt = bekannteAntworten(p, formular);
   const find = (re: RegExp) => {
@@ -617,6 +731,8 @@ export function ersteFrageRegel(
     personNom?: string | null;
     /** Die App stellt nach der Öffnungsfrage selbst genau eine Zwischenfrage (lib/whatsapp/zwischenfrage.ts) */
     zwischenApp?: boolean;
+    /** Heute (Kfz: Hinweis auf den 30. November nur bis dahin) */
+    heute?: Date;
   } = {},
 ): string {
   const an = opts.an ?? "sie";
@@ -625,6 +741,7 @@ export function ersteFrageRegel(
   const termine = "setze qualifiziert=true und mach sofort den Terminvorschlag (siehe „Terminvorschlag“).";
   if (!p) {
     if (opts.jetzt) return "";
+    if (plan.gestellt?.key === "kfz") return kfzFrageRegel(plan.gestellt, opts.gesendet, an, opts.heute ?? new Date());
     if (plan.gestellt?.key === "termin") return `Erste Frage (stand schon in unserer ersten WhatsApp): „${terminFrage(an, advisorName)}“.\n- Sagt der Lead ja oder nennt er einen Tag: ${termine}`;
     // v10/v11 (Ole, 19.11.2026): feste Frage „Wann passt Ihnen ein kurzes Telefonat?“, Wortlaut wie gesendet
     const frage = plan.gestellt?.key === "telefonat" ? plan.gestellt.sie : `Wann erreicht ${opts.personNom || advisorName} ${a(an, "dich", "Sie")} am besten für ein kurzes Telefonat?`;
@@ -677,6 +794,39 @@ export function ersteFrageRegel(
   return [...lines, ...zahn].join("\n");
 }
 
+/** Liegt dieser Tag (Europe/Berlin) zwischen 1. Oktober und 30. November (Wechselzeit zum 1. Januar)? Rein. */
+export function vorKfzStichtag(heute: Date): boolean {
+  const [m, d] = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Berlin", month: "numeric", day: "numeric" })
+    .format(heute)
+    .split("/")
+    .map(Number);
+  return m === 10 || (m === 11 && d <= 30);
+}
+
+/**
+ * Prompt-Regel nach der Kfz-Einstiegsfrage (Ole, 21.11.2026): Antwort festhalten, vor dem Termin nichts weiter fragen
+ * (Formular reicht, Fahrzeugschein und letzte Rechnung holt die App nach der Buchung per Foto), Terminvorschlag. Beim
+ * Wechsel zum Jahresende darf der Assistent bis 30.11. sachlich die übliche Kündigungsfrist nennen, nichts erfinden.
+ */
+function kfzFrageRegel(g: SonstigeFrage, gesendet: string | null | undefined, an: Ansprache, heute: Date): string {
+  const v = v10FrageIn(gesendet);
+  const werte = v?.def.werte ?? {};
+  const lines = [
+    `Erste Frage (stand schon in unserer ersten WhatsApp): „${g.sie}“ mit den Knöpfen ${(g.knoepfe ?? []).map((k) => `„${k}“`).join(", ")}.`,
+    `- Die nächste Nachricht des Leads (per Knopf oder frei) ist die Antwort darauf: mit record_qualification festhalten (angaben.${g.feld}), kurz bestätigen, nicht erneut fragen. Werte: ${Object.entries(werte).map(([k, w]) => `„${k}“ = „${w}“`).join(", ")}; freie Antworten sinngemäß zuordnen, sonst kurz in eigenen Worten.`,
+    "- Vor dem Termin fragst du nichts weiter: Anlass und gewünschter Schutz stehen im Leadformular, Fahrzeugschein und letzte Rechnung holt die App nach der Buchung per Foto. Setze qualifiziert=true und mach sofort den Terminvorschlag (siehe „Terminvorschlag“).",
+  ];
+  if (v?.zweck === "outreach_kfz_wechsel") {
+    lines.push(
+      vorKfzStichtag(heute)
+        ? `- Antwortet der Lead „Zum Jahresende“: In der einleitung des Terminvorschlags darfst du sachlich sagen, dass für einen Wechsel zum 1. Januar der jetzige Vertrag meist bis zum 30. November gekündigt sein muss (z. B. ${a(an, "„Gut, dass du dich jetzt meldest: Für einen Wechsel zum 1. Januar muss der jetzige Vertrag meist bis 30. November gekündigt sein.“", "„Gut, dass Sie sich jetzt melden: Für einen Wechsel zum 1. Januar muss der jetzige Vertrag meist bis 30. November gekündigt sein.“")}). Kein Druck, keine anderen Fristen, nichts zu Preisen oder Ersparnis.`
+        : "- Nenn keine Kündigungsfristen oder Stichtage: was beim Wechsel möglich ist, klärt der Berater im Termin.",
+      "- „Weiß ich nicht“: kein Problem, das Ablaufdatum steht auf der letzten Rechnung, die der Lead nach der Buchung per Foto schicken kann. Nicht nachbohren.",
+    );
+  }
+  return lines.join("\n");
+}
+
 /** Regel, wenn die App die Zwischenfrage selbst stellt (Privatschutz, lib/whatsapp/zwischenfrage.ts). */
 const ZWISCHEN_APP_REGEL =
   "- Die eine Frage danach (z. B. „Wer soll mitversichert sein?“ mit Knöpfen) stellt die App selbst. Du stellst vor dem Termin keine weitere Frage, auch nicht nach der Antwort darauf.";
@@ -687,6 +837,8 @@ const ZWISCHEN_APP_REGEL =
  */
 export function enthaeltErsteFrage(text: string | null | undefined, source: string | null | undefined): boolean {
   const p = outreachProdukt(source);
+  // Kfz (Ole, 21.11.2026): feste Einstiegsfrage je Anlass
+  if (!p && text && istKfzProdukt(source)) return istKfzZweck(v10FrageIn(text, erstanschreibenZweck(source))?.zweck);
   if (!p || !text) return false;
   return (
     [p.frage1, p.frage1Du, p.frage2Sie, p.frage2Du].some((f) => text.includes(f)) ||
