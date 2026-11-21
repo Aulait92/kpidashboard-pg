@@ -1,71 +1,131 @@
 # Einwandbehandlung im Beratungsgespräch
 
-Stand 21.11.2026. Für: Ole. Nur intern, nicht zum Weitergeben. Grundlage: Einwand-Schema in vier Stufen (Baulig),
-übertragen auf unser Angebot an Vermittler. Regeln: Sie-Form, keine Versprechen zu Ergebnissen, keine Verknappung ohne echte Frist.
+Stand 21.11.2026, Fassung 2. Für: Ole. Nur intern, nicht zum Weitergeben. Grundlage: Einwand-Schema in vier Stufen und
+Live-Call zur Einwandbehandlung (Baulig, Aufnahme von Ole), übertragen auf unser Angebot an Vermittler.
+Regeln: Sie-Form, keine Versprechen zu Ergebnissen, keine erfundenen Referenzen, keine Verknappung ohne echte Frist.
+
+## Die drei Grundsätze
+
+1. **Es gibt nur einen einzigen wahren Einwand.** Wer nicht kauft, hat genau einen Grund. Alles andere sind Nebelkerzen.
+2. **Drei Viertel ist Finden, ein Viertel ist Behandeln.** Wie ein Arzt: erst die Ursache suchen, dann behandeln. Wer auf eine
+   Nebelkerze eingeht (Rabatt auf „zu teuer“), macht sie echt und verfehlt den wahren Grund.
+3. **Geld und Entscheider lassen sich im Gespräch nicht lösen.** Deshalb klärt der Setter-Call vorher Budget-Spanne und alle
+   Entscheider. Sitzt im Beratungsgespräch nicht jeder Entscheider dabei, ist das ein Fehler im Setter-Call, nicht im Closing.
+
+## Vor der Abschlussfrage
+
+- **Preis früh nebenbei nennen**, nicht erst am Ende: „Grundsätzlich arbeiten Vermittler mit uns ab [Betrag] im Monat. Aber
+  jetzt habe ich genug von uns erzählt. Wie läuft es heute bei Ihnen?“ Dann ist der Preis gesetzt, ohne dass er im Mittelpunkt steht.
+- **Erst beraten, dann das Paket zeigen.** Leistungen und Folien zum Paket erst im Pitch, nicht vorher.
+- **Ein Paket empfehlen**, nicht drei zur Auswahl. Der Kunde will, dass Sie wissen, was für ihn passt.
 
 ## Die Abschlussfrage
 
-> „Dann lassen Sie uns das so machen. Wollen wir das Angebot jetzt gemeinsam durchgehen und annehmen?“
+> „Dann lassen Sie uns das so machen.“
 
-Danach schweigen. Was dann kommt, gehört in eine der vier Stufen.
+Danach schweigen. Es gibt drei mögliche Antworten: Ja, eine Verständnisfrage oder alles andere.
 
 ## Stufe 1: Kein Einwand
 
-Der Kunde sagt Ja oder stellt Verständnisfragen („Also 20 € am Tag Budget?“, „Der Start ist dann am 1.?“).
-Nur die Frage beantworten, kurz bestätigen, schweigen. Nichts nachschieben. Kommt „Ok“ oder „Alles klar“: Angebot gemeinsam
-annehmen und bezahlen (Bildschirm teilen), erst auflegen, wenn „Zahlung eingerichtet“ erscheint.
+**Ja:** Sofort gemeinsam annehmen und bezahlen (Bildschirm teilen). Erst auflegen, wenn „Zahlung eingerichtet“ erscheint.
+Nach einem Ja nichts mehr nachschieben („Wollen Sie nicht noch darüber nachdenken?“, „Sie wissen aber, dass …“). Wer nach dem
+Ja weiterredet, erzeugt selbst neue Einwände.
 
-## Stufe 2: Beschwerde
+**Verständnisfrage** („Also 990 € im Monat?“, „Der Start ist dann am 1.?“, „Das Budget zahle ich direkt an Meta?“): kurz
+beantworten, ein Wort reicht oft („Genau.“), dann schweigen. Kommt nichts: „Also machen wir das jetzt?“
 
-Typische Sätze: „Das ist mir zu teuer.“ · „Ich muss darüber nachdenken.“ · „Ich muss mit meiner Frau / meinem Partner reden.“ ·
-„Ich will eine Nacht darüber schlafen.“ · „Ich kann nicht sofort starten.“
+## Stufe 2: Beschwerde prüfen
 
-Prüfen, ob es ein echter Einwand ist:
+Alles außer Ja und Verständnisfrage: „Zu teuer.“ · „Ich muss darüber nachdenken.“ · „Ich muss mit meiner Frau reden.“ ·
+„Ich will eine Nacht darüber schlafen.“ · „Ich habe morgen noch ein anderes Gespräch.“ · „Jetzt noch nicht.“ · „Keine Zeit.“
 
-> „Die Tatsache, dass [Punkt], hält Sie aber nicht davon ab, das jetzt zu machen, oder?“
+Dieselben Worte können drei Dinge sein. Beispiel „zu teuer“:
+- **Beschwerde:** Er findet es teuer, kauft aber trotzdem (wie Popcorn im Kino). Reiner Schutzreflex.
+- **Vorwand:** Ihm passt etwas anderes nicht, er sagt nur „teuer“.
+- **Wahrer Einwand:** Er hat das Geld wirklich nicht.
 
-Beispiel: „Die Tatsache, dass Sie erst im Januar starten wollen, hält Sie aber nicht davon ab, heute zu unterschreiben, oder?
-Den Start legen Sie ohnehin selbst fest, bis zu 90 Tage.“
+Darum **immer zuerst** dieser Satz, nie zuerst „Warum?“:
 
-- „Nein, tut es nicht.“ → zurück zu Stufe 1, Angebot annehmen.
-- „Doch, tut es.“ → Stufe 3.
+> „Die Tatsache, dass Sie [Punkt], würde Sie aber nicht davon abhalten, das jetzt zu machen, oder?“
 
-## Stufe 3: Vorwände hinterfragen
+Leicht lächeln, leicht nicken, schweigen. Beispiele:
+- „Die Tatsache, dass Sie es teuer finden, würde Sie aber nicht davon abhalten, jetzt zu starten, oder?“
+- „Die Tatsache, dass Sie darüber nachdenken wollen, würde Sie aber nicht davon abhalten, das jetzt zu machen, oder?“
+- „Die Tatsache, dass Sie erst im Januar starten wollen, würde Sie aber nicht davon abhalten, heute anzunehmen, oder? Den
+  Start legen Sie ohnehin selbst fest, bis zu 90 Tage.“
 
-Jetzt nur fragen, nichts widerlegen. Ziel: den wahren Einwand finden.
+**Nur „Nein“ ohne Grund:** „Okay. Was macht Sie noch unsicher?“
 
-> „Okay. Gibt es sonst noch etwas, das Sie unsicher macht?“
-> „Was genau daran?“
-> „Woran machen Sie das fest?“
+- „Nein, hält mich nicht ab.“ → Stufe 1, annehmen.
+- „Doch.“ → Stufe 3.
 
-**Festnageln**, sobald der wahre Punkt auf dem Tisch liegt:
+## Stufe 3: Vorwände durchfragen
 
-> „Also wenn [Einwand] gelöst wäre, würden Sie dann heute starten und das Angebot annehmen?“
+Jetzt **nur Fragen**, kein einziges Argument, nichts widerlegen. Jeder Vorwand ist ein Blatt im Dschungel: wegschieben, nächstes.
 
-- „Nein“ → es gibt einen anderen Punkt: weiter fragen (Stufe 3).
-- „Ja“ → Stufe 4, genau diesen Punkt lösen, dann annehmen.
+> „Gibt es sonst noch etwas, das Ihnen Sorgen macht?“
+> „Warum ist das so?“ · „Was genau daran?“
+> „Ist es eher zeitlich oder fachlich?“ · „Liegt es am Gesamtbetrag oder an der monatlichen Höhe?“
 
-## Stufe 4: Wahrer Einwand, Argumente
+**In die Vergangenheit fragen**, sie verrät die Zukunft: „Sie hatten schon einmal Leads gekauft. Warum hat das nicht
+funktioniert?“ Kommt „Ich habe die nicht schnell genug angerufen“, ist der wahre Punkt die Umsetzung, nicht der Preis.
+
+**Kartenspiel**, wenn der Kunde nichts preisgibt: mögliche Gründe nacheinander anbieten. „Ist es das Geld? Trauen Sie sich die
+Umsetzung nicht zu? Wollen Sie noch andere Angebote vergleichen? Müssen Sie noch mit jemandem sprechen? Ist das Geld gerade
+nicht auf dem Konto?“ Er zeigt auf die richtige Karte.
+
+Beispiel aus dem Call: „Ich muss es mit meinem Team besprechen“ → „keine Zeit“ → „schon teuer“ → „ob ich das hinbekomme“.
+Vier Vorwände, ein wahrer Einwand: Er traut sich die Umsetzung nicht zu. Kein Rabatt hätte das gelöst.
+
+## Festnageln
+
+Erst wenn Sie ziemlich sicher sind, den wahren Punkt zu haben:
+
+> „Angenommen, wir bekommen [Punkt] gemeinsam gelöst: Würden Sie dann heute starten, ja oder nein?“
+
+Nur Ja oder Nein zählt, kein „Joa“.
+- **Ja** → das ist der wahre Einwand. Stufe 4, genau diesen einen Punkt lösen, dann annehmen.
+- **Nein** → zu früh gefragt, es steckt noch etwas anderes dahinter. Zurück in Stufe 3.
+
+## Stufe 4: Wahrer Einwand, Antworten
+
+Für jeden wahren Einwand eine vorbereitete Antwort, die logisch zu unserem Angebot passt. Danach: „Ist das damit für Sie
+geklärt? Dann lassen Sie uns das jetzt so machen.“
 
 | Wahrer Einwand | Antwort (Kern) |
 |---|---|
-| Glaubt nicht an das Produkt | „Verständlich. Deshalb gibt es die vertragliche Absicherung: Kommen in den ersten 30 aktiven Tagen weniger als 100 Leads, zahlen Sie im Folgemonat nichts für Betreuung und Software. Und als Vertreter die Break-even-Regel bzw. als Makler die Vertrags-Regel aus dem Angebot.“ Dann Live-Demo der App zeigen, nicht reden. |
-| Keine Zeit für die Umsetzung | „Genau dafür ist die App da: Der Assistent schreibt die Anfragen an, klärt den Bedarf und bucht die Termine in Ihren Kalender. Sie führen nur die Gespräche. Bei der Einrichtung ist Ihr eigener Aufwand gering, den Rest machen wir.“ |
-| Muss den Partner fragen | „Was wird Ihr Partner fragen?“ Antworten gemeinsam vorbereiten. Besser: „Rufen wir ihn kurz dazu?“ Sonst festen 15-Minuten-Termin mit beiden innerhalb von 48 Stunden, Einladung sofort raus. |
-| Kein Geld (Gesamtpreis oder Raten) | Erst rechnen: „Was bringt Ihnen ein Abschluss?“ Dann Rechnung mit seinen Zahlen auf der Rechner-Folie. Hebel: monatliche Zahlung statt Vorauszahlung, Startdatum bis 90 Tage, Pause jederzeit möglich. Keinen neuen Rabatt erfinden. |
-| Will kostenlos testen | „Kostenlos testen heißt für Sie: Werbebudget bezahlen, ohne dass jemand optimiert. Die Absicherung im Vertrag ist der bessere Test: Sie tragen das Risiko nicht allein.“ Ohne Laufzeit ist möglich, dann ist die Einrichtung höher. |
-| Angst, die Investition nicht hereinzuholen | Mit seinen Zahlen rechnen: Leads × Terminquote × Abschlussquote × Wert je Abschluss gegen Budget plus Gebühr. Ziel offen sagen: profitabel schon vor Bestand, Cross-Selling und Empfehlungen. Dann die Absicherung zeigen. |
-| Mangelndes Selbstvertrauen („Ich bin kein Verkäufer“) | „Die Leads haben selbst angefragt und kommen vorbereitet in den Termin. Der Komplettcheck und die Policen vorab geben Ihnen den roten Faden fürs Gespräch.“ |
-| Falscher Zeitpunkt | „Den Start legen Sie selbst fest, bis zu 90 Tage. Unterschreiben heute heißt: Kampagnen und Assistent sind bereit, wenn Sie loslegen wollen.“ |
-| Betreuung nicht gut genug | „Was ist Ihnen bei der Betreuung wichtig?“ Dann konkret: feste Ansprechperson, laufende Optimierung der Kampagnen, Zahlen jederzeit in der App. |
-| In der Vergangenheit enttäuscht (Leadkauf, Agentur) | „Was ist damals schiefgelaufen?“ Unterschied zeigen: Anfragen gehören nur ihm, kein Weiterverkauf, der Assistent meldet sich in Minuten statt Stunden. |
-| Sieht den Mehrwert nicht | Zurück zu seinen Zielen aus dem Setter-Call: „Sie wollten [x] Neukunden im Monat. Wie kommen Sie heute dahin?“ Dann die Lücke mit seinen Zahlen schließen. |
-| Geld gerade nicht auf dem Konto | Start später legen (bis 90 Tage) und monatlich zahlen statt vorab. Fällig ist zum Start nur, was im Angebot steht. |
+| Glaubt nicht an das Produkt | „Verständlich. Deshalb gibt es die vertragliche Absicherung: Kommen in den ersten 30 aktiven Tagen weniger als 100 Leads, zahlen Sie im Folgemonat nichts für Betreuung und Software. Dazu als Vertreter die Break-even-Regel bzw. als Makler die Vertrags-Regel aus dem Angebot.“ Dann die Live-Demo zeigen, nicht reden. |
+| Traut sich die Umsetzung nicht zu | „Andere Vermittler ohne Technikwissen haben es auch geschafft. Der Assistent schreibt die Anfragen an und bucht die Termine, Sie führen nur die Gespräche. Und wir sehen in den Zahlen, wenn Leads liegen bleiben, und melden uns.“ |
+| Keine Zeit | „Genau dafür ist die App da: Sie verbringen Ihre Zeit in Terminen statt mit Hinterhertelefonieren. Bei der Einrichtung ist Ihr eigener Aufwand gering, den Rest machen wir.“ |
+| Muss Partner oder Frau fragen | Im Setter-Call hätte er dabei sein sollen. Jetzt: „Rufen Sie sie doch kurz an, ich warte gern.“ Sonst ein Termin mit beiden noch heute oder morgen, Einladung sofort raus. |
+| Kein Geld (Gesamtbetrag oder Raten) | Erst fragen: „Liegt es am Gesamtbetrag oder an der monatlichen Höhe?“ Dann mit seinen Zahlen rechnen (Rechner-Folie). Hebel: monatlich statt Vorauszahlung, Start bis 90 Tage später, Pause jederzeit. Wer viel zahlt, spart mit dem Jahresplan 3 Monatsbeträge. Keinen Rabatt erfinden. Sie werden hier eher zum Finanzplaner als zum Verkäufer. |
+| Geld gerade nicht auf dem Konto („eine Nacht drüber schlafen“ heißt oft genau das) | „Heute annehmen heißt nicht heute zahlen: Den Start legen Sie selbst fest, bis zu 90 Tage, und monatlich zahlen geht auch.“ Fällig ist nur, was im Angebot steht. |
+| Will eine Nacht darüber schlafen (wirklich) | Kommt fast nie als wahrer Einwand vor, morgen kauft kaum jemand. Statt einer Woche: „Dann lassen Sie uns heute um [Uhrzeit] noch einmal zehn Minuten sprechen, dann entscheiden Sie.“ Termin sofort eintragen. |
+| Will andere Angebote vergleichen | „Was müsste ein anderer Anbieter haben, das Sie bei uns vermissen?“ Unterschiede sachlich: Anfragen nur für ihn, kein Weiterverkauf, Assistent meldet sich in Minuten, Termine landen in seinem Kalender. |
+| Will kostenlos testen | „Kostenlos testen heißt Werbebudget zahlen, ohne dass jemand optimiert. Die Absicherung im Vertrag ist der bessere Test: Sie tragen das Risiko nicht allein.“ Ohne Laufzeit geht auch, dann ist die Einrichtung höher. |
+| Angst, die Investition nicht hereinzuholen | Mit seinen Zahlen rechnen: Leads × Terminquote × Abschlussquote × Wert je Abschluss gegen Budget plus Gebühr. Ziel offen sagen: profitabel schon vor Bestand, Cross-Selling und Empfehlungen. Dann die Absicherung. |
+| „Ich bin kein Verkäufer“ | „Die Leads haben selbst angefragt und kommen vorbereitet. Komplettcheck und Policen vorab geben Ihnen den roten Faden fürs Gespräch.“ |
+| Falscher Zeitpunkt | „Den Start legen Sie selbst fest, bis zu 90 Tage. Heute annehmen heißt: Kampagnen und Assistent sind bereit, wenn Sie loslegen.“ |
+| Betreuung nicht gut genug | „Was ist Ihnen bei der Betreuung wichtig?“ Dann konkret: feste Ansprechperson, laufende Optimierung, Zahlen jederzeit in der App. |
+| Früher enttäuscht (Leadkauf, Agentur) | „Was ist damals schiefgelaufen?“ Dann genau diesen Punkt beantworten, nicht alles. |
+| Sieht den Mehrwert nicht | Zurück zu seinem Ziel aus dem Setter-Call: „Sie wollten [x] Neukunden im Monat. Wie kommen Sie heute dahin?“ Die Lücke mit seinen Zahlen schließen. |
+| Will mit einer Referenz sprechen | Kommt selten vor. Wenn doch: echten Kunden nennen, der zugestimmt hat. Nie etwas erfinden. |
 
-Nach jeder Antwort: „Ist das damit für Sie geklärt?“ Bei Ja: „Dann lassen Sie uns das jetzt so machen.“ und gemeinsam annehmen.
+## Nach dem Gespräch
+
+- **Nicht erschienen:** anrufen und fragen, warum. Guter Grund (krank, Notfall): einen neuen Termin, zwei Zeiten zur Wahl, kein
+  zweites Verschieben. Kein Interesse mehr: erst den Bedarf wieder wecken, dann Termin. Passt es grundsätzlich nicht: höflich beenden.
+- **Nicht gekauft, später nachfassen:** „Wie ist es seitdem gelaufen?“ Kein Bedarf mehr heißt kein Verkauf, nicht drängen.
+
+## Üben
+
+Jeden Tag 15 Minuten Rollenspiel (Kollegin, Partner, Head of Sales): einer wirft Vorwände, einer fragt durch bis zum
+Festnageln. Nicht an echten Interessenten üben.
 
 ## Nicht tun
 
-- Keine Ergebnisse versprechen (Zahl der Abschlüsse, Umsatz).
-- Keine künstliche Frist oder erfundene Rabatte.
-- Nicht drei Argumente auf einmal; ein Punkt, eine Antwort, dann fragen.
+- Auf den ersten Satz argumentieren statt den Tatsache-Satz zu sagen.
+- Mehrere Argumente auf einmal. Ein Punkt, eine Antwort, dann fragen.
+- Rabatt auf „zu teuer“. Ein Rabatt löst keinen anderen Einwand.
+- Ergebnisse versprechen (Zahl der Abschlüsse, Umsatz), Referenzen erfinden, künstliche Fristen.
+- Nach einem Ja weiterreden.
