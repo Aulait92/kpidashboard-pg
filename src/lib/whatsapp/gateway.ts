@@ -635,9 +635,7 @@ export async function sendWhatsAppMessage(opts: {
   // „STOPP“: keine Nachrichten mehr an diese Nummer, auch nicht von Hand (lib/whatsapp/stopp.ts)
   const { isOptedOut, WhatsAppOptOutError } = await import("@/lib/whatsapp/stopp");
   if (await isOptedOut(opts.customerId, opts.to)) throw new WhatsAppOptOutError();
-  // Festnetznummer ohne eigene Nachricht des Kontakts: nicht senden (lib/whatsapp/festnetz.ts)
-  const { pruefeFestnetz } = await import("@/lib/whatsapp/festnetz");
-  await pruefeFestnetz({ customerId: opts.customerId, to: opts.to });
+  // Festnetznummern: kein Vorab-Stopp mehr (lib/whatsapp/festnetz.ts, Ole 21.11.2026)
 
   const apiKey = decryptSecret(account.apiKeyEnc);
   // Keine Gedankenstriche an Leads (auch KI-Antworten des Assistenten)

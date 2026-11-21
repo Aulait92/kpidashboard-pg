@@ -188,11 +188,11 @@ export default async function BookingPage({ params, searchParams }: Props) {
       if (kcOffen) {
         const { komplettcheckFrage, istFamilie, formularAus, vermittlerName } = await import("@/lib/whatsapp/gespraech");
         const { ansprechpartner } = await import("@/lib/lead-anrede");
-        const lead = appt.leadId ? await prisma.lead.findUnique({ where: { id: appt.leadId }, select: { formData: true, name: true, needData: true } }) : null;
+        const lead = appt.leadId ? await prisma.lead.findUnique({ where: { id: appt.leadId }, select: { formData: true, name: true, needData: true, source: true } }) : null;
         const who = await ansprechpartner({ customerId: conn.customerId, leadId: appt.leadId, phone: null, name: lead?.name ?? null });
         const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || advisor });
         const v = await variante("komplettcheck_text", appt.leadId ?? appt.conversationId ?? appt.id);
-        kcFrage = komplettcheckFrage(an, person, istFamilie(formularAus(lead?.formData), lead?.needData), v).replace(/^Danke! /, "");
+        kcFrage = komplettcheckFrage(an, person, istFamilie(formularAus(lead?.formData), lead?.needData), v, lead?.source).replace(/^Danke! /, "");
       }
       return (
         <Shell customerId={conn?.customerId}>
