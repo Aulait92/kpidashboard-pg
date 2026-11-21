@@ -1,6 +1,6 @@
 // Resend Receiving (Paket M2, lib/mail/eingang.ts): empfangene Mail, Anhänge mit frischer Download-Adresse (1 h gültig)
 // und Datei laden. Eigene Datei, damit Tests sie ersetzen können. Keine Inhalte in Logs.
-//   GET /emails/receiving/{id}                 Text, HTML, Kopfzeilen, authentication (spf, dkim, dmarc)
+//   GET /emails/receiving/{id}                 Text, HTML, Kopfzeilen, authentication (spf, dkim, dmarc), raw.download_url
 //   GET /emails/receiving/{id}/attachments     Liste mit download_url und expires_at
 //   GET /emails/receiving/{id}/attachments/{a} ein Anhang mit frischer download_url
 
@@ -18,6 +18,8 @@ export type EmpfangeneMail = {
   /** Kopfzeilen, Namen klein */
   headers: Record<string, string>;
   authentication: AuthErgebnis;
+  /** Download der Rohmail (MIME, signiert, kurz gültig), z. B. für Kalenderteile (lib/calendar/termin-weiterleitung.ts) */
+  rawUrl?: string | null;
 };
 
 export type EmpfangenerAnhang = {
@@ -61,6 +63,7 @@ export function eingangApi(apiKey: string) {
         html: d.html ?? null,
         headers: kopf(d.headers),
         authentication: d.authentication ?? null,
+        rawUrl: d.raw?.download_url ?? null,
       };
     },
     async anhaenge(emailId: string): Promise<EmpfangenerAnhang[]> {

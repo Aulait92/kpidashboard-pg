@@ -127,6 +127,8 @@ model Customer {
   // Angaben für die öffentliche Partnerliste der Funnels (Ole, 20.11.2026, docs/recht/pkv-funnel.md L2): rechtlicher
   // Empfänger der Leads, wenn er vom Kontonamen abweicht (z. B. Vertriebspartner eines Maklers). Unabhängig von der
   // Registerprüfung oben (Umsatzsteuer).
+  // Admin liest mit (Ole, 21.11.2026): Push an Admins bei neuem Lead, gebuchtem Termin und Abschluss (erste Kunden).
+  adminMitlesen            Boolean   @default(true)
   partnerFirma             String?
   partnerAnschrift         String?
   partnerRegisterNr        String?
@@ -367,6 +369,7 @@ model Customer {
   agentConfig                    AgentConfig?
   calendarLeadTimes              CalendarLeadTimes[]
   calendarBlocks                 CalendarBlock[]
+  kalenderWeiterleitungen        KalenderWeiterleitung[]
   conversations                  Conversation[]            @relation("ConversationCustomer")
   whatsAppAppContacts            WhatsAppAppContact[]
   /// Support-Chats (Support-Nummer), die diesem Kunden zugeordnet sind (lib/whatsapp/support-contacts.ts)
@@ -3355,11 +3358,33 @@ model CalendarBlock {
   startsAt    DateTime
   endsAt      DateTime
   note        String?
+  // Herkunft (Ole, 21.11.2026, lib/calendar/termin-weiterleitung.ts): null = von Hand, „weitergeleitet“ = aus einer an
+  // die persönliche Termin-Adresse weitergeleiteten Einladung. Dazu nur Hash der UID, SEQUENCE und bei Serien das
+  // ursprüngliche Vorkommen (RECURRENCE-ID), damit Aktualisierung und Absage greifen. Kein Betreff, keine Teilnehmer.
+  quelle      String?
+  uidHash     String?
+  sequence    Int?
+  vorkommen   DateTime?
   createdAt   DateTime @default(now())
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([calendarKey, endsAt])
+  @@index([calendarKey, uidHash])
+  @@index([customerId])
+}
+
+// Persönliche Termin-Adresse je Kalender (Ole, 21.11.2026, lib/calendar/termin-weiterleitung.ts):
+// termine-<token>@antwort.dein-beratungstermin.de. Weitergeleitete Einladungen (.ics) blockieren die Zeit im
+// App-Kalender. token: 20 Zeichen base32 (100 Bit, zufällig), nicht erratbar; neu vergeben = alte Adresse ungültig.
+model KalenderWeiterleitung {
+  calendarKey String   @id
+  customerId  String
+  token       String   @unique
+  createdAt   DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
   @@index([customerId])
 }
 
@@ -4126,9 +4151,9 @@ model MailEingang {
   lead             Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
   contactMailId    String?      @unique
   contactMail      ContactMail? @relation(fields: [contactMailId], references: [id], onDelete: SetNull)
-  // code | absender | kunde | keine
+  // code | absender | kunde | keine | termin (weitergeleitete Einladung, lib/calendar/termin-weiterleitung.ts)
   zuordnung        String       @default("keine")
-  // in_arbeit | antwort | hinweis | ignoriert | fehler
+  // in_arbeit | antwort | hinweis | termin | ignoriert | fehler
   ergebnis         String       @default("in_arbeit")
   // Kurzer Grund ohne Inhalte (z. B. „auto_antwort“, „schleife“, „absender_unbestaetigt“, „schalter_aus“)
   grund            String?

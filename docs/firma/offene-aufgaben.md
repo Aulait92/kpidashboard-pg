@@ -20,6 +20,7 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 | Einrichtung: „Mein Versicherer erlaubt das nicht“ bei Maklern ausblenden (W3) | Teilarbeit Branch `golive-auflagen` | CTO / UX |
 | Go-live-Auflagen W1, W4 bis W7 und Kleinpunkte | Branch `golive-auflagen` | CTO |
 | Lead-Name-Rangfolge | Branch `lead-name-rangfolge` | CTO |
+| Termine per Weiterleitung blockieren (App-Kalender, 21.11.2026): nach dem Merge Migration einspielen, dann mit einem Testkonto eine echte Outlook-Einladung an die Termin-Adresse weiterleiten (Receiving-Webhook `email.received` muss aktiv sein, Schalter `MAIL_ANTWORT_EINGANG` egal). Optional: AVV-Zweck Resend „Versand und Empfang“ (`docs/recht/termine-weiterleiten-2026-11-21.md`, E1) | Branch `worktree-agent-ae2d4101af79bec3d`, nicht gepusht | CTO |
 | Terminsuche 7 Tage: Wiedervorlage nur bei Wunsch über 7 Tage; ab 3. Runde Rückfrage plus Buchungslink; Kalender voll → Aufgabe und Hinweis, dass Herr Kannapinn sich meldet | Branch `terminsuche-7-tage` | CTO |
 | Freitext verstehen (z. B. Vorerkrankung Tier) | Branch `freitext-verstehen` | CTO |
 | Policen-Bitte nennt die genannten Sparten | Branch `policen-bitte-sparten` | CTO |

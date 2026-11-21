@@ -81,7 +81,8 @@ describe("Angaben für den Rechner", () => {
     expect(rechnerAngaben(tier, "hund-op")).toContainEqual({ label: "Tierart", wert: "Katze" });
     expect(rechnerAngaben(d({ angaben: {} }), "unfall").map((x) => x.wert)).toEqual([null, null, null]);
     // Kfz (Ole, 21.11.2026): Fahrzeug und bisherige Kfz-Versicherung, unbekannt = leer
-    expect(rechnerAngaben(d(), "kfz").map((x) => x.wert)).toEqual([null, null]);
+    // Kfz: HSN/TSN und Vorversicherung aus den Fotos, PLZ, Geburt und Beruf aus den Angaben, Rest offen
+    expect(rechnerAngaben(d(), "kfz").map((x) => x.wert)).toEqual([null, null, "50667", "12.03.1985", "Lehrerin, Beamtin", null, null, null]);
     expect(rechnerAngaben(d(), "sonstwas")).toEqual([]);
   });
 

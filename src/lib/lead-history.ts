@@ -15,6 +15,9 @@ export async function logLeadHistory(leadId: string, kind: LeadHistoryKind, text
     if (!customerId) return;
     const userId = opts.userId !== undefined ? opts.userId : ((await getBuyerContext().catch(() => null))?.userId ?? null);
     await prisma.leadHistory.create({ data: { leadId, customerId, kind, text: text.trim().slice(0, 4000), userId } });
+    // Abschluss eingetragen: Admin liest mit (erste Kunden, lib/admin-mitlesen.ts), Text ohne Namen („Abschluss · Katze · Beitrag …“)
+    // Nur neue Abschlüsse, nicht Änderungen, Kündigungen oder nachgetragene Beiträge
+    if (kind === "abschluss" && /^(Weiterer\s+)?Abschluss\b/.test(text.trim())) await (await import("@/lib/admin-mitlesen")).adminMitlesen({ leadId, ereignis: "abschluss", detail: text.trim().slice(0, 140) });
   } catch (err) {
     console.error("[lead-history]", err);
   }

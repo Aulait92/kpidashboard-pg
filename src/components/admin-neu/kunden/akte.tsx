@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Eye } from "lucide-react";
+import { Bell, BellOff, Eye } from "lucide-react";
 import { Badge, buttonClass } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { SubTabs } from "@/components/admin/sub-tabs";
 import { reiterFuer } from "@/lib/admin-neu/navigation";
 import { startPreviewAction } from "@/app/buyer/preview-actions";
+import { mitlesenUmschaltenAction } from "@/app/admin/neu/kunden/mitlesen-actions";
 import { packageLabel } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -33,6 +34,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
       id: true,
       name: true,
       isTest: true,
+      adminMitlesen: true,
       pilotBis: true,
       plan: true,
       retainerMonthly: true,
@@ -104,6 +106,23 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
       zurueck={{ href: "/admin/neu/kunden", label: "Kunden" }}
       zeile={zeile}
       aktionen={
+        <div className="flex flex-wrap items-center gap-2">
+        {/* Admin liest mit (Ole, 21.11.2026): Push bei Lead, Termin und Abschluss, je Kunde an/aus (lib/admin-mitlesen.ts) */}
+        {!c.isTest ? (
+          <form action={mitlesenUmschaltenAction} data-funktion="mitlesen-actions--admin-push-bei-lead-termin-abschluss">
+            <input type="hidden" name="customerId" value={c.id} />
+            <input type="hidden" name="an" value={c.adminMitlesen ? "0" : "1"} />
+            <button
+              type="submit"
+              className={buttonClass("secondary", "md")}
+              title={c.adminMitlesen ? "Du bekommst Pushs bei Lead, Termin und Abschluss. Klicken zum Abschalten." : "Pushs bei Lead, Termin und Abschluss einschalten"}
+              aria-label={c.adminMitlesen ? "Mitlesen aus" : "Mitlesen an"}
+            >
+              {c.adminMitlesen ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+              <span className="hidden sm:inline">{c.adminMitlesen ? "Mitlesen an" : "Mitlesen aus"}</span>
+            </button>
+          </form>
+        ) : null}
         <form action={startPreviewAction} data-funktion="preview-actions-startpreviewaction--als-kunde-ansehen-nur-lesend">
           <input type="hidden" name="customerId" value={c.id} />
           <button type="submit" className={buttonClass("secondary", "md")} title="Kundenbereich nur lesend ansehen">
@@ -112,6 +131,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
             <span className="hidden sm:inline">Als Kunde ansehen</span>
           </button>
         </form>
+        </div>
       }
     >
       <SubTabs tabs={reiterFuer("kundenakte", { id: c.id }).map((t) => ({ ...t, also: (AUCH[t.label] ?? []).map((u) => `/admin/neu/kunden/${c.id}/${u}`) }))} />

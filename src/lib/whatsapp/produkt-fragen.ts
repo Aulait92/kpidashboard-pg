@@ -78,16 +78,31 @@ export const istKfzProdukt = (product: string | null | undefined): boolean => {
  * Fahrzeugschein. 2 Dokumente: Fahrzeugschein und Rechnung vom Vorversicherer.“ Fotos zuerst, Fragen nur als Rückfall
  * (Rechner-Tabelle lib/preise/rechner-angaben.ts, Sparte „kfz“).
  */
+/**
+ * Fragen im Meta-Leadformular Kfz (Entwurf docs/kfz-leadformular.md, Ole 21.11.2026). Erkennung über die Beschriftung,
+ * in Sie- und Du-Fassung; was das Formular liefert, fragt der Assistent nicht noch einmal.
+ */
+export const KFZ_FORMULAR = {
+  anlass: /worum geht es|wechsel oder neu|anlass/i,
+  schutz: /welchen schutz|gew(ü|ue)nschte[rn]? schutz|welche deckung/i,
+} as const;
+
 function kfzCheckliste(): ProduktCheckliste {
   return {
     key: "kfz",
     vorher: "Vor dem Termin (Kfz-Versicherung): Das Formular reicht. Frag vorher nichts weiter ab, setze qualifiziert=true und biete direkt Termine an.",
     fragen: [
       "Pflichtangaben für das Angebot (Kfz-Versicherung): Damit der Berater im Termin den Beitrag rechnen kann, braucht er zwei Unterlagen: den Fahrzeugschein (Zulassungsbescheinigung Teil I, Vorderseite) und die letzte Rechnung der bisherigen Kfz-Versicherung.",
-      "- Bitte NACH der Buchung zuerst um ein Foto dieser beiden Unterlagen hier im Chat. Darauf steht alles Nötige.",
+      "- Um die Fotos bittet die App nach der Buchung selbst (Unterlagen-Bitte). Darauf stehen HSN, TSN, Erstzulassung, Halter, Kennzeichen, Versicherer, SF-Klassen, Versicherungsscheinnummer und Ablauf.",
       "- Nur wenn der Lead kein Foto schicken kann oder möchte, fragst du einzeln nach (je eine Frage pro Nachricht):",
       "  • Herstellerschlüssel (HSN, 4 Ziffern, Feld 2.1) und Typschlüssel (TSN, 3 Zeichen, Feld 2.2) aus dem Fahrzeugschein (angaben.fahrzeug)",
       "  • bisheriger Versicherer, SF-Klasse Haftpflicht und Vollkasko und Versicherungsscheinnummer von der letzten Rechnung (angaben.vorversicherung)",
+      "- Danach die übrigen Angaben des Allianz-Kfz-Rechners, die nicht auf den Unterlagen stehen (nur was noch unbekannt ist, je eine Frage pro Nachricht):",
+      "  • Geburtsdatum (angaben.geburt) und ob der Lead im öffentlichen Dienst arbeitet (angaben.beruf); die Postleitzahl kommt aus dem Formular",
+      "  • Versicherungswechsel für das jetzige Fahrzeug oder neu gekauftes Fahrzeug; gewünschter Schutz (nur Haftpflicht, Teilkasko oder Vollkasko); ob die Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt hat (angaben.kfzVertrag)",
+      "  • privat oder auch geschäftlich genutzt; Jahr des Führerscheins; weitere Fahrer und das Alter der jüngsten Person (angaben.kfzFahrer)",
+      "  • Kilometer pro Jahr; bezahlt, finanziert oder geleast (angaben.kfzDetails)",
+      "  • Erstzulassung, Halter, Kennzeichen und Vertragsbeginn (Ablauf des bisherigen Vertrags) stehen auf den Unterlagen: nur fragen, wenn der Lead ausdrücklich kein Foto schicken möchte.",
       "- Danach (Cross-Selling, Ole 21.11.2026): Welche Versicherungen hat der Lead sonst noch (Haftpflicht, Hausrat, Rechtsschutz, Wohngebäude, Unfall)? Das fragt die App über den Komplettcheck und die Vertragsfrage selbst (lib/whatsapp/vorvertraege.ts); nennt der Lead Verträge von sich aus, halte sie in angaben.vorhanden fest und lade ihn ein, diese Policen gleich mitzuschicken, damit der Berater im Termin alles mit ansehen kann. Kein Versprechen zu Ersparnis oder Preisen; erlaubt ist nur, dass der Berater versucht, Geld zu sparen.",
       "- Weiß der Lead etwas nicht: nicht nachbohren, als „offen“ festhalten und weitermachen. Der Berater klärt es im Termin.",
       "- Preise, Tarife, Selbstbeteiligung und Kasko-Umfang fragst du nicht ab und nennst du nicht, und du empfiehlst nichts: das macht der Berater im Termin.",

@@ -65,6 +65,10 @@ export function bedarfFelder(input: { produkt: string | null | undefined; formul
     // Kfz (Ole, 21.11.2026): Fahrzeugschein und letzte Rechnung des Vorversicherers, dazu andere Verträge (Cross-Selling)
     add("fahrzeug", "Fahrzeug (HSN 2.1, TSN 2.2)");
     add("vorversicherung", "Bisherige Kfz-Versicherung (Versicherer, SF-Klasse, Vers.-Nr.)");
+    add("kfzVertrag", "Anlass, Schutz, Schäden (3 Jahre)");
+    add("kfzFahrer", "Nutzung, Führerschein seit, weitere Fahrer");
+    add("kfzDetails", "km im Jahr, Finanzierung");
+    add("geburt", "Geburtsdatum");
     add("vorhanden", "Weitere Verträge (Haftpflicht, Hausrat …)");
     return out;
   }

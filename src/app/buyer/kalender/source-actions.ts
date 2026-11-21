@@ -99,9 +99,10 @@ export async function saveIcsAction(_prev: SourceResult, fd: FormData): Promise<
 export async function saveVideoRaumAction(_prev: SourceResult, fd: FormData): Promise<SourceResult> {
   const c = await ctxOrError(true);
   if ("error" in c) return { error: c.error };
-  const raw = String(fd.get("videoRoomUrl") ?? "").trim();
-  const url = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw;
-  if (url && !/^https:\/\/[^\s/]+\.[^\s]+$/i.test(url)) return { error: "Bitte den ganzen Link einfügen, z. B. https://allianz.webex.com/meet/vorname.nachname." };
+  const { pruefeVideoLink } = await import("@/lib/video-raum");
+  const geprueft = pruefeVideoLink(String(fd.get("videoRoomUrl") ?? ""));
+  if (!geprueft.ok) return { error: geprueft.error };
+  const url = geprueft.url ?? "";
   await prisma.agentConfig.upsert({
     where: { customerId: c.ctx.customerId },
     create: { customerId: c.ctx.customerId, videoRoomUrl: url || null },

@@ -328,6 +328,8 @@ export async function processNewLead(leadId: string) {
           url: "/buyer",
         },
   );
+  // Admin liest mit (erste Kunden, lib/admin-mitlesen.ts)
+  await (await import("@/lib/admin-mitlesen")).adminMitlesen({ leadId: lead.id, ereignis: "lead" });
   logTestLead(lead, "notify push");
   {
     await emailLeads(new Date(), lead.customerId).catch((err) => reportError(err, "lead-intake-email"));

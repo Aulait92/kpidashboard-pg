@@ -478,6 +478,7 @@ export async function finalDeleteCustomer(
     prisma.leadSource.deleteMany({ where: { customerId } }),
     prisma.calendarLeadTimes.deleteMany({ where: { customerId } }),
     prisma.calendarBlock.deleteMany({ where: { customerId } }),
+    prisma.kalenderWeiterleitung.deleteMany({ where: { customerId } }),
     prisma.reviewSettings.deleteMany({ where: { customerId } }),
     prisma.monthlyReport.deleteMany({ where: { customerId } }),
     prisma.campaignWish.deleteMany({ where: { customerId } }),

@@ -43,18 +43,25 @@ describe("Erkennung des Produkts", () => {
 });
 
 describe("Rechner-Angaben und Folgefragen", () => {
-  it("Sparte kfz mit genau den zwei Angaben aus Oles Liste", () => {
+  it("Sparte kfz: Folgefragen nach dem Allianz-Rechner, nur was nicht auf den Unterlagen steht (Ole, 21.11.2026)", () => {
     expect(spartenDesLeads("Kfz-Versicherung", leer)).toEqual(["kfz"]);
     const ff = folgefragen(["kfz"], leer);
-    expect(ff.map((f) => f.key)).toEqual(["fahrzeug", "vorversicherung"]);
-    expect(ff[0].sie).toMatch(/2\.1.*2\.2.*Foto vom Fahrzeugschein/);
-    expect(ff[1].du).toMatch(/SF-Klasse.*Foto der Rechnung/);
+    expect(ff.map((f) => f.key)).toEqual(["geburt", "oeffentlicherDienst", "plz", "kfzAnlass", "kfzSchutz", "kfzSchaeden", "kfzNutzung", "kfzFuehrerschein", "kfzWeitereFahrer", "kfzKm", "kfzFinanzierung"]);
+    // HSN/TSN und Vorversicherung kommen aus den Fotos (Unterlagen-Bitte), nicht als Frage
+    expect(ff.some((f) => /2\.1|SF-Klasse/.test(f.sie))).toBe(false);
+    for (const f of ff) {
+      expect(f.sie).not.toMatch(/\b(du|dein\w*|dir|dich)\b/);
+      expect(f.du).not.toMatch(/\b(Sie|Ihr\w*|Ihnen)\b/);
+    }
+    expect(ff.find((f) => f.key === "kfzSchaeden")!.knoepfe).toEqual(["Ja", "Nein"]);
   });
 
-  it("bekannte Angaben bzw. geschickte Fotos werden nicht mehr gefragt", () => {
-    expect(folgefragen(["kfz"], { formular: [], angaben: { fahrzeug: "HSN 0603, TSN BJP" } }).map((f) => f.key)).toEqual(["vorversicherung"]);
-    const foto = { fahrzeug: "laut Foto (Unterlagen im Kontakt)", vorversicherung: "laut Foto (Unterlagen im Kontakt)" };
-    expect(folgefragen(["kfz"], { formular: [], angaben: foto })).toEqual([]);
+  it("bekannte Angaben werden nicht mehr gefragt; Werte aus Formular und Fotos werden angezeigt", () => {
+    const bekannt = { geburt: "01.02.1985", beruf: "nein", plz: "12209", kfzVertrag: "Wechsel, Vollkasko, keine Schäden", kfzFahrer: "privat, Führerschein 2004, nur ich", kfzDetails: "12.000 km, bezahlt" };
+    expect(folgefragen(["kfz"], { formular: [], angaben: bekannt })).toEqual([]);
+    const teil = { kfzVertrag: "Wechsel, Teilkasko" };
+    expect(folgefragen(["kfz"], { formular: [], angaben: teil }).map((f) => f.key)).toContain("kfzSchaeden");
+    expect(folgefragen(["kfz"], { formular: [], angaben: teil }).map((f) => f.key)).not.toContain("kfzAnlass");
     expect(angabenFuerSparte({ formular: [{ label: "Herstellerschlüssel", value: "0603" }], angaben: null }, "kfz")[0].wert).toBe("0603");
   });
 
@@ -66,7 +73,7 @@ describe("Rechner-Angaben und Folgefragen", () => {
   });
 
   it("Telefonat: Bedarfspunkte für Kfz", () => {
-    expect(bedarfFelder({ produkt: "Kfz-Versicherung", formular: [], angaben: null }).map((f) => f.key)).toEqual(["fahrzeug", "vorversicherung", "vorhanden"]);
+    expect(bedarfFelder({ produkt: "Kfz-Versicherung", formular: [], angaben: null }).map((f) => f.key)).toEqual(["fahrzeug", "vorversicherung", "kfzVertrag", "kfzFahrer", "kfzDetails", "geburt", "vorhanden"]);
   });
 });
 
@@ -138,5 +145,29 @@ describe("Auslesen: Fahrzeugschein und volle Versicherungsscheinnummer (nur Kfz)
   it("Plausibilität markiert ungültige Schlüssel", () => {
     expect(unplausibel({ hsn: { w: "603", s: "ok" }, tsn: { w: "BJ", s: "ok" } } as never, "kfz")).toEqual(["hsn", "tsn"]);
     expect(unplausibel({ hsn: { w: "0603", s: "ok" }, tsn: { w: "BJP", s: "ok" } } as never, "kfz")).toEqual([]);
+  });
+});
+
+describe("Kfz-Leadformular (docs/kfz-leadformular.md)", () => {
+  it("Anlass und Schutz aus dem Formular werden erkannt und nicht noch einmal gefragt", () => {
+    for (const [anlass, schutz] of [
+      ["Worum geht es?", "Welchen Schutz wünschen Sie?"],
+      ["Worum geht es dir?", "Welchen Schutz wünschst du dir?"],
+    ]) {
+      const src = { formular: [{ label: anlass, value: "Versicherung wechseln (jetziges Auto)" }, { label: schutz, value: "Vollkasko" }, { label: "Geburtsdatum", value: "1985-02-01" }, { label: "Postleitzahl", value: "12209" }], angaben: null };
+      const keys = folgefragen(["kfz"], src).map((f) => f.key);
+      expect(keys).not.toContain("kfzAnlass");
+      expect(keys).not.toContain("kfzSchutz");
+      expect(keys).not.toContain("geburt");
+      expect(keys).not.toContain("plz");
+      expect(keys).toContain("kfzSchaeden");
+    }
+  });
+
+  it("„Weiß ich noch nicht“ gilt als beantwortet (klärt der Berater), neues Auto ebenso", () => {
+    const src = { formular: [{ label: "Worum geht es?", value: "Neues Auto versichern" }, { label: "Welchen Schutz wünschen Sie?", value: "Weiß ich noch nicht" }], angaben: null };
+    const keys = folgefragen(["kfz"], src).map((f) => f.key);
+    expect(keys).not.toContain("kfzAnlass");
+    expect(keys).not.toContain("kfzSchutz");
   });
 });
