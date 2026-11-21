@@ -70,7 +70,7 @@ export const PKV_TARIFE: Marke = {
     // 12:5, Handy 358 × 149, Desktop 576 × 240 (CI)
     start: { src: `${BASIS}/hero.webp`, breite: 1152, hoehe: 480, alt: "Paar am Küchentisch prüft Unterlagen", sizes: "(max-width: 640px) calc(100vw - 32px), 576px" },
     // 16:9, höchstens 160 px hoch (Symbolbild)
-    zwischenseite: { src: `${BASIS}/fast-fertig.webp`, breite: 568, hoehe: 320, alt: "Symbolbild: PKV-Experte am Telefon", sizes: "284px", symbolbild: true },
+    zwischenseite: { src: `${BASIS}/fast-fertig.webp`, breite: 568, hoehe: 320, alt: "PKV-Experte am Telefon", sizes: "284px" },
   },
 };
 

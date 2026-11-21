@@ -14,7 +14,7 @@ export const ALTER_BESUCH_COOKIE = "pf_bid";
 /** Pfade, die die Funnel-Adresse außer dem Funnel selbst braucht (Next.js-Dateien, Icons, Marken-Dateien, Messung, Fehlerberichte). */
 const SUPPORT = ["/_next", "/api/funnel", "/icon", "/apple-icon", "/favicon.ico", "/marken", "/monitoring", "/api/csp-report"];
 /** Unterseiten des Funnels, auf der Funnel-Adresse ohne /f/<funnel> erreichbar (z. B. /partner → /f/pkv-beitrag/partner). */
-const UNTERSEITEN = ["/partner"];
+const UNTERSEITEN = ["/partner", "/go"];
 
 const under = (p: string, prefix: string) => p === prefix || p.startsWith(`${prefix}/`);
 
