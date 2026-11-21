@@ -2,8 +2,8 @@
 
 Stand 21.11.2026, Fassung 1. Für: Vermittler (Allianz-Vertreter, Makler) im Termin mit einem Lead. Grundlage: unser
 Skript für Oles Vertrieb (`einwandbehandlung.md`, Einwand-Schema in vier Stufen nach Baulig), übertragen auf den Verkauf von
-Versicherungen an Privatkunden. Eingebaut in die Präsentation im Termin: Knopf **Einwände** (Folie für den Kunden, Ablauf unter
-**Hinweise**, nur für den Vermittler).
+Versicherungen an Privatkunden. Für den Vermittler als Merkblatt zum Auswendiglernen (eine Seite): `public/anleitung/einwand-merkblatt.pdf`, Knopf
+**Einwände** auf der Präsentationsseite im Termin. Keine Folien (Ole, 21.11.2026).
 Regeln: kein Druck, keine Versprechen (keine Leistungs- oder Ersparniszusagen, die nicht im Angebot stehen), nie zu einem
 Wechsel raten, der dem Kunden nichts bringt. Beratungspflicht und Dokumentation gelten wie immer.
 
@@ -53,8 +53,8 @@ Leicht lächeln, nicken, schweigen.
 **In die Vergangenheit fragen:** „Hatten Sie schon einmal einen Schaden, bei dem die Versicherung nicht gezahlt hat?“ Dahinter
 steckt oft Misstrauen, nicht der Preis.
 
-**Kartenspiel**, wenn der Kunde nichts sagt: Folie **Noch unsicher** zeigen. Er tippt auf die Karte, die stimmt (Beitrag,
-Leistung, Zeitpunkt, mit jemandem sprechen, vergleichen, bestehender Vertrag).
+**Kartenspiel**, wenn der Kunde nichts sagt: Gründe nacheinander anbieten (Beitrag, Leistung, Zeitpunkt, mit jemandem
+sprechen, vergleichen, bestehender Vertrag). Er nennt den, der stimmt.
 
 ## Festnageln
 
@@ -66,10 +66,10 @@ Nur Ja oder Nein zählt.
 
 ## Stufe 4: Den wahren Einwand lösen
 
-Die passende Folie unter **Einwände** zeigen, genau diesen einen Punkt lösen, dann: „Ist das damit geklärt? Dann machen wir
+Genau diesen einen Punkt lösen, dann: „Ist das damit geklärt? Dann machen wir
 es so.“
 
-| Wahrer Einwand | Lösung (Folie) |
+| Wahrer Einwand | Lösung |
 |---|---|
 | **Beitrag zu hoch** | Beitrag pro Tag neben einem typischen Schaden. Fragen: „Was wäre für Sie ein guter Beitrag?“ Dann gemeinsam kleinere Stufe oder Bausteine weglassen. Kein Rabatt erfinden. |
 | **Geld gerade knapp** | Beginn später legen (zum Monatsersten bzw. wenn der alte Vertrag endet), monatlich statt jährlich zahlen. Nichts versprechen, was nicht im Angebot steht. |

@@ -3,11 +3,11 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { cleanAngebote } from "@/lib/angebote";
-import { einwandFolien, folien, markeFuer, paketName, praesentationHtml, SPRECHHINWEIS } from "@/lib/praesentation";
+import { folien, markeFuer, paketName, praesentationHtml, SPRECHHINWEIS } from "@/lib/praesentation";
 import { istVariante, mitAbschlussLeiste, PRAESENTATION_EXPERIMENT, varianteAusExperiment } from "@/lib/praesentation-variante";
 import { EXPERIMENTE, laeuft } from "@/lib/experimente";
 import { auswerten, zaehltAlsGezeigt, type Ereignis } from "@/lib/praesentation-messung";
-import { demoAngebote, demoEinwaende, demoFolien } from "@/lib/demo-beratung";
+import { demoAngebote, demoFolien } from "@/lib/demo-beratung";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
@@ -134,40 +134,11 @@ describe("Tarifname in der Zusammenfassung", () => {
   });
 });
 
-describe("Einwand-Folien", () => {
-  it("sechs Sprungziele mit Frage, Preis aus den Angeboten, ohne Versprechen", () => {
-    const es = einwandFolien(d, ang, m);
-    expect(es.map((f) => f.id)).toEqual(["einwand-preis", "einwand-nachdenken", "einwand-partner", "einwand-vorhanden", "einwand-vergleich", "einwand-unsicher"]);
-    // Hinweis führt durch die vier Stufen (Prüfen, Durchfragen, Festnageln, Lösen)
-    expect(es.every((f) => /1\. Prüfen[\s\S]*2\. Durchfragen[\s\S]*3\. Festnageln[\s\S]*4\. Lösen/.test(f.hinweis ?? ""))).toBe(true);
-    expect(folie(es, "einwand-unsicher")).toContain('class="karten"');
-    expect(es.every((f) => f.hinweis && f.html.includes('class="frage"'))).toBe(true);
-    // 7,40 + 8,20 = 15,60 € im Monat → rund 0,52 € am Tag; kleinste Stufen 5,90 + 8,20 = 14,10 €
-    expect(folie(es, "einwand-preis")).toContain("0,52");
-    expect(folie(es, "einwand-preis")).toContain("14,10");
-    const alles = text(es.map((f) => f.html).join(" "));
-    expect(alles).not.toMatch(/Garantie|garantiert|sofort abschließen/i);
-    expect(hatGedankenstrich(alles)).toBe(false);
-    const du = einwandFolien(d, ang, m, "du");
-    // ohne Fußzeile (dort steht neutral „Ihre Beratung“ bzw. die Gesellschaft)
-    expect(du.map((f) => f.html.replace(/<div class="foot">[\s\S]*$/, "")).join(" ")).not.toMatch(/\bSie\b|\bIhnen\b|\bIhr\b/);
-    // Zitate im Hinweis ebenfalls in Du-Form
-    expect(du.map((f) => (f.hinweis ?? "").match(/„[^“]*“/g)?.join(" ") ?? "").join(" ")).not.toMatch(/\bSie\b|\bIhnen\b|\bIhr\b|\bIhres\b/);
-    expect(hatGedankenstrich(es.map((f) => f.hinweis).join(" "))).toBe(false);
-  });
-
-  it("ohne günstigere Stufe kein Satz zur kleinsten Stufe", () => {
-    const eine = cleanAngebote({ items: [{ sparte: "Hausrat", tarif: "Komfort", beitragMonat: 8.2, empfohlen: true }] });
-    expect(folie(einwandFolien(d, eine, m), "einwand-preis")).not.toContain("kleinste Stufe");
-  });
-});
-
 describe("Demo zeigt Fassung B", () => {
-  it("Entscheidung mit Abschluss-Knopf, Einwände vorhanden", () => {
+  it("Entscheidung mit Abschluss-Knopf", () => {
     const fs = demoFolien(demoAngebote());
     expect(fs.map((f) => f.id)).not.toContain("risiken");
     expect(folie(fs, "entscheidung")).toContain("data-zusage");
-    expect(demoEinwaende(demoAngebote())).toHaveLength(6);
   });
 });
 
