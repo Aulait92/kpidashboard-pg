@@ -57,6 +57,10 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "outreach_privatschutz",
   // Reine Hausrat-Leads (Ole hat die Einreichung am 18.11.2026 freigegeben): „zu Ihrer Hausratversicherung“
   "outreach_hausrat",
+  // Kfz je Anlass (Ole, 21.11.2026: „Bei KFZ brauchen wir noch eine Einstiegsfrage“, direkt beauftragt)
+  "outreach_kfz",
+  "outreach_kfz_wechsel",
+  "outreach_kfz_neu",
   "booking_confirmation",
   "reminder",
   "reminder_soon",
@@ -379,6 +383,9 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   outreach_pkv: { title: "Erste Nachricht: private Krankenversicherung", when: "Wenige Minuten nach dem Formular, mit der ersten Frage und der Erstinformation als PDF." },
   outreach_privatschutz: { title: "Erste Nachricht: Privatschutz", when: "Wenige Minuten nach dem Formular, mit der ersten Frage und der Erstinformation als PDF." },
   outreach_hausrat: { title: "Erste Nachricht: Hausrat", when: "Wenige Minuten nach dem Formular, wenn nur Hausrat angefragt wurde, mit der ersten Frage und der Erstinformation als PDF." },
+  outreach_kfz: { title: "Erste Nachricht: Kfz", when: "Wenige Minuten nach dem Formular, wenn der Anlass nicht angegeben ist: jetziges oder neues Auto, mit der Erstinformation als PDF." },
+  outreach_kfz_wechsel: { title: "Erste Nachricht: Kfz-Wechsel", when: "Wenige Minuten nach dem Formular bei einem Wechsel fürs jetzige Auto: wann der Vertrag ausläuft, mit der Erstinformation als PDF." },
+  outreach_kfz_neu: { title: "Erste Nachricht: Kfz für ein neues Auto", when: "Wenige Minuten nach dem Formular bei einem neuen Auto: ob es schon da ist, mit der Erstinformation als PDF." },
   booking_confirmation: { title: "Terminbestätigung", when: "Sobald ein Lead einen Termin gebucht hat." },
   reminder: { title: "Terminerinnerung", when: "Etwa 24 Stunden vor dem Termin." },
   reminder_soon: { title: "Kurz vor dem Termin", when: "Etwa eine Stunde vor dem Termin: passt alles?" },

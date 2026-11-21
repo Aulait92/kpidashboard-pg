@@ -173,6 +173,13 @@ export const ANGABEN = {
       f("kfzSchadenAnzahl", "kfzVertrag", "Waren es 2 Schäden oder 3 oder mehr?", "Waren es 2 Schäden oder 3 oder mehr?", /sch(ä|a)den[^;]*:\s*(2(?!\s*oder)|3 oder mehr)|\b(2|3 oder mehr) sch(ä|a)den/i, ["2 Schäden", "3 oder mehr"], /2 oder mehr|mehrere/i),
     ],
   },
+  // Antwort auf die Kfz-Einstiegsfrage im Erstanschreiben (Ole, 21.11.2026): nur Anzeige, keine Folgefrage
+  kfzStart: {
+    label: "Ablauf jetziger Vertrag bzw. neues Auto da",
+    wer: "lead",
+    rang: 22,
+    wert: (c) => c.q("kfzStart"),
+  },
   kfzFahrer: {
     label: "Nutzung, Führerschein seit, weitere Fahrer",
     wer: "lead",
@@ -226,7 +233,7 @@ export const RECHNER_ANGABEN: Record<RechnerSparte, AngabeKey[]> = {
   unfall: ["versichern", "geburt", "berufsgruppe"],
   "tierhalter-hund": ["plz", "hunderasse", "hunde"],
   "tierhalter-pferd": ["plz", "pferde"],
-  kfz: ["fahrzeug", "vorversicherung", "plz", "geburt", "oeffentlicherDienst", "kfzVertrag", "kfzFahrer", "kfzDetails"],
+  kfz: ["fahrzeug", "vorversicherung", "plz", "geburt", "oeffentlicherDienst", "kfzVertrag", "kfzStart", "kfzFahrer", "kfzDetails"],
 };
 
 const TIERART: Partial<Record<RechnerSparte, string>> = { "katze-kranken": "Katze", "katze-op": "Katze", "hund-kranken": "Hund", "hund-op": "Hund", "tierhalter-hund": "Hund", "tierhalter-pferd": "Pferd" };

@@ -32,7 +32,7 @@
 import { a, asAnsprache } from "@/lib/ansprache";
 import { prisma } from "@/lib/prisma";
 import { KNOPF, OUTREACH_PURPOSES } from "@/lib/whatsapp/templates";
-import { erstfrageKnopfWert } from "@/lib/whatsapp/erstanschreiben";
+import { erstfrageFreitextWert, erstfrageKnopfWert } from "@/lib/whatsapp/erstanschreiben";
 export { ERSTFRAGE_HINWEIS_RE } from "@/lib/whatsapp/erstanschreiben";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
 import { WUNSCHZEIT_REGEL } from "@/lib/whatsapp/gespraech";
@@ -150,6 +150,35 @@ async function erstfrageKnopf(conversationId: string, text: string | null | unde
   if (data) await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: data } });
   await prisma.message.create({ data: { conversationId, direction: "internal", kind: "qualification", body: JSON.stringify({ angaben: { [e.feld]: e.wert }, via: "erstfrage_knopf" }), sentBy: "system" } });
   return erstfrageHinweis(e);
+}
+
+/** Hinweis an den Assistenten nach einer freien Antwort auf die feste erste Frage (Kfz, rein, testbar). */
+export function erstfrageFreitextHinweis(e: { feld: string; wert: string; frage: string }): string {
+  return `Der Lead hat frei auf unsere erste Frage („${e.frage}“) geantwortet. Schon festgehalten: angaben.${e.feld} = „${e.wert}“. Bestätige kurz, frag das nicht erneut und mach mit dem Frageplan weiter.`;
+}
+
+/**
+ * Freie Antwort auf die feste erste Frage (Kfz, Ole 21.11.2026: „Ende Dezember“ = „Zum Jahresende“): nur, wenn unsere
+ * letzte Nachricht im Chat das Erstanschreiben war (danach nur die Erstinformation als PDF). Antwort wie beim Knopf
+ * speichern und den Hinweis für den Assistenten liefern. null = keine solche Frage bzw. Antwort unklar.
+ */
+export async function erstfrageFreitext(conversationId: string, text: string | null | undefined): Promise<string | null> {
+  if (!text?.trim()) return null;
+  const letzte = await prisma.message.findMany({
+    where: { conversationId, direction: "outbound" },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    select: { body: true, purpose: true, kind: true },
+  });
+  const erst = letzte.find((m) => m.kind !== "document" && !/^Erstinformation zu /.test(m.body ?? ""));
+  if (!erst?.purpose || !(OUTREACH_PURPOSES as readonly string[]).includes(erst.purpose)) return null;
+  const e = erstfrageFreitextWert(erst.body, text, erst.purpose);
+  if (!e) return null;
+  const prev = (await prisma.conversation.findUnique({ where: { id: conversationId }, select: { qualificationData: true } }))?.qualificationData;
+  const data = mergeQualificationData(prev, { [e.feld]: e.wert });
+  if (data) await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: data } });
+  await prisma.message.create({ data: { conversationId, direction: "internal", kind: "qualification", body: JSON.stringify({ angaben: { [e.feld]: e.wert }, via: "erstfrage_freitext" }), sentBy: "system" } });
+  return erstfrageFreitextHinweis(e);
 }
 
 /** Lead „verloren“ mit Grund „Kein Interesse“ und Notiz „kein Bedarf“ (wie Verloren im Kontakt, ohne Warnung). */

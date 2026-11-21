@@ -3,6 +3,12 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 21.11.2026
+- **Kfz: Einstiegsfrage im Erstanschreiben** (B, Ole: „Bei KFZ brauchen wir noch eine Einstiegsfrage, die nicht direkt auf
+  den Termin geht.“). Je Anlass aus dem Kfz-Leadformular eine feste Frage mit Knöpfen (Wechsel: „Wann läuft Ihr jetziger
+  Vertrag aus?“, neues Auto: „Ist das neue Auto schon da?“, ohne Angabe: „Für Ihr jetziges Auto oder ein neues?“), danach
+  direkt der Terminvorschlag mit der Antwort. A ist Standard (direkt beauftragt), B „Frage zuerst“ im A/B-Test
+  (docs/firma/ab-tests.md). Vorlagen werden automatisch bei Meta eingereicht, bis zur Freigabe das bisherige Erstanschreiben.
+  Wortlaut vom A/B-Test-Labor; Ole sieht ihn im Bericht und kann ihn vor dem Deploy ändern (sonst neue Version).
 - **Kfz-Versicherung als Lead-Produkt** (B, Ole: „Folgendes braucht der Allianzer, um Preise zu rechnen: aus letzter
   Rechnung von Vorversicherer die SFR, Versicherungsscheinnummer und Versicherer. Typ (3 Ziffern oder Buchstaben),
   Hersteller (4 Ziffern), Fahrzeugschein.“; „Volle Versicherungsscheinnummer bitte mit auslesen“; „Bei Kfz auch

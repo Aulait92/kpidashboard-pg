@@ -53,9 +53,12 @@ const QUELLE: Record<ErstanschreibenZweck, { source: string | null; formular: { 
   outreach_pkv: { source: "PKV Wechsel", formular: [] },
   outreach_privatschutz: { source: "Privatschutz", formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }] },
   outreach_hausrat: { source: "Privatschutz", formular: [{ label: "Versicherungsinteresse", value: "Hausrat" }] },
+  outreach_kfz: { source: "Kfz-Versicherung", formular: [] },
+  outreach_kfz_wechsel: { source: "Kfz-Versicherung", formular: [{ label: "Worum geht es?", value: "Versicherung wechseln (jetziges Auto)" }] },
+  outreach_kfz_neu: { source: "Kfz-Versicherung", formular: [{ label: "Worum geht es dir?", value: "Neues Auto versichern" }] },
 };
 /** Formularfeld, das genau die feste Frage beantwortet (dann v9). Zahn: kein Formularfeld fragt den Tarifbaustein ab. */
-const BEANTWORTET: Record<Exclude<ErstanschreibenZweck, "outreach" | "outreach_zahn">, { label: string; value: string }> = {
+const BEANTWORTET: Record<Exclude<ErstanschreibenZweck, "outreach" | "outreach_zahn" | "outreach_kfz" | "outreach_kfz_wechsel" | "outreach_kfz_neu">, { label: string; value: string }> = {
   outreach_tkv: { label: "Gewünschter Schutz", value: "OP-Schutz" },
   outreach_pkv: { label: "Situation", value: "Angestellt" },
   outreach_privatschutz: { label: "Bereits versichert", value: "nein" },

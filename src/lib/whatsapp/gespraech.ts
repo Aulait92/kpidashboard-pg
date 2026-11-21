@@ -17,6 +17,7 @@ import { a, type Ansprache } from "@/lib/ansprache";
 import type { Variante } from "@/lib/experimente";
 import { terminArtRegel, type TerminFormate, type TerminModus } from "@/lib/termin-formate";
 import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { istKfzProdukt, KFZ_FORMULAR } from "@/lib/whatsapp/produkt-fragen";
 import { angabenFuerSparte, spartenDesLeads, type AngabenQuelle, type Folgefrage, type RechnerSparte } from "@/lib/preise/rechner-angaben";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 
@@ -115,6 +116,17 @@ export function terminNutzenSatz(o: { source: string | null | undefined; formula
     const w = spartenWorte(interesse);
     if (!w.length) return `${zeigt} was ein guter Schutz für ${fuer} kostet ${achten}.`;
     return `${zeigt} was ${liste(w)} für ${fuer} ${w.length > 1 ? "kosten" : "kostet"} ${achten}.`;
+  }
+  // Kfz (Ole, 21.11.2026): greift Anlass und Antwort auf die Einstiegsfrage auf (erstanschreiben.ts, angaben.kfzStart)
+  if (istKfzProdukt(o.source)) {
+    const q = qualificationPoints(o.angaben);
+    const qv = (k: QualificationKey) => q.find((x) => x.key === k)?.value ?? "";
+    const anlass = `${wert(o.formular, KFZ_FORMULAR.anlass) ?? ""} ${qv("kfzVertrag")}`;
+    const fuer = a(an, "dich", "Sie");
+    if (/jahresende/i.test(qv("kfzStart"))) return `${zeigt} was eine neue Kfz-Versicherung ab dem 1. Januar für ${fuer} kostet ${achten}.`;
+    if (/wechsel|jetzig/i.test(anlass)) return `${zeigt} was eine neue Kfz-Versicherung für ${fuer} kostet ${achten}.`;
+    if (/neu/i.test(anlass) || /neues auto/i.test(qv("kfzStart"))) return `${zeigt} was die Versicherung für ${a(an, "dein", "Ihr")} neues Auto kostet ${achten}.`;
+    return `${zeigt} was eine Kfz-Versicherung für ${fuer} kostet ${achten}.`;
   }
   return `${zeigt} was ein passender Schutz für ${a(an, "dich", "Sie")} kostet ${achten}.`;
 }

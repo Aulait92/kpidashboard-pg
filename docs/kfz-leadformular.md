@@ -27,3 +27,10 @@ Versicherungsscheinnummer kommen aus den Fotos von Fahrzeugschein und letzter Re
 
 Kurze Fassung (oben) gegen eine längere mit „Wie viele Kilometer fahren Sie im Jahr?“ (Auswahl: bis 9.000 · 9.000 bis
 15.000 · über 15.000). Messgröße: Kosten je Termin, nicht je Lead.
+
+## Erste WhatsApp (Ole, 21.11.2026)
+
+Die Antwort auf „Worum geht es?“ wählt die Einstiegsfrage im Erstanschreiben (`erstanschreibenZweck`, Zwecke
+`outreach_kfz_wechsel`, `outreach_kfz_neu`, ohne Angabe `outreach_kfz`): Wechsel „Wann läuft Ihr jetziger Vertrag aus?“,
+neues Auto „Ist das neue Auto schon da?“, sonst „Für Ihr jetziges Auto oder ein neues?“. Die Werte der Antworten
+(„Versicherung wechseln (jetziges Auto)“, „Neues Auto versichern“) bitte so lassen, die App erkennt „wechsel“ bzw. „neu“.

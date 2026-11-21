@@ -165,6 +165,7 @@ export function abschnitte(d: VorbereitungDaten): Abschnitt[] {
           { label: "Geburtsdatum", wert: q("geburt") },
           { label: "Beruf (öffentlicher Dienst)", wert: q("beruf") },
           { label: "Anlass, Schutz, Schäden (3 Jahre)", wert: [formWert(d.formular, KFZ_FORMULAR.anlass), formWert(d.formular, KFZ_FORMULAR.schutz), q("kfzVertrag")].filter(Boolean).join("; ") || null },
+          { label: "Ablauf jetziger Vertrag bzw. neues Auto da", wert: q("kfzStart") },
           { label: "Nutzung, Führerschein seit, weitere Fahrer", wert: q("kfzFahrer") },
           { label: "km im Jahr, Finanzierung", wert: q("kfzDetails") },
         ],
