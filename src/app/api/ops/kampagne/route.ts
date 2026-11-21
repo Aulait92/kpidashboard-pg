@@ -42,6 +42,34 @@ export async function POST(req: Request): Promise<Response> {
 
   const c = await findCustomer(String(get("kunde") ?? ""));
   if (!c.ok) return Response.json({ error: c.error }, { status: 404, headers: noStore });
+  // Neues Formular statt eines bestehenden zuordnen (Ole, 21.11.2026: Formular korrigiert, Meta-Formulare sind nicht
+  // änderbar): { kunde, formId, ersetzt: <altes formId>, produkt? } übernimmt Produkt, Fragen-Beschriftungen und
+  // Einwilligungsnachweis vom alten Formular, legt die Zuordnung an und schaltet das alte ab.
+  const neuForm = get("formId");
+  const altForm = get("ersetzt");
+  if (neuForm && altForm) {
+    const alt = await prisma.leadSource.findFirst({ where: { formId: String(altForm), customerId: c.id } });
+    if (!alt) return Response.json({ error: "Altes Formular gehört nicht zu diesem Kunden." }, { status: 404, headers: noStore });
+    const productKey = String(get("produkt") ?? "").trim() || alt.productKey;
+    const labels = get("labels");
+    const neu = await prisma.leadSource.upsert({
+      where: { formId: String(neuForm) },
+      create: {
+        formId: String(neuForm),
+        pageId: alt.pageId,
+        formName: String(get("formName") ?? alt.formName ?? ""),
+        customerId: c.id,
+        productKey,
+        questionLabels: (labels as object) ?? alt.questionLabels ?? undefined,
+        consentText: String(get("consentText") ?? alt.consentText ?? "") || null,
+        consentVersion: alt.consentVersion,
+      },
+      update: { customerId: c.id, productKey, active: true },
+    });
+    await prisma.leadSource.update({ where: { id: alt.id }, data: { active: false } });
+    await audit("leadsource.ersetzt", { entity: "LeadSource", entityId: neu.formId, customerId: c.id, details: { ersetzt: alt.formId, productKey } }).catch(() => undefined);
+    return Response.json({ ok: true, formId: neu.formId, productKey, ersetzt: alt.formId }, { headers: noStore });
+  }
   // Fortsetzen (Ole, 21.11.2026): gescheiterten Lauf an der Fehlerstelle neu anlegen lassen (z. B. nach dem Eintrag von
   // Begünstigtem und Zahler im Werbekonto), Texte, Bilder und Formular bleiben. { kunde, weiter: <runId> }
   const weiter = get("weiter");

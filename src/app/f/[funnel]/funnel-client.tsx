@@ -27,7 +27,7 @@ type Props = {
   basis: string;
 };
 
-type Experte = { name: string; firma: string; telefon: string };
+type Experte = { name: string; firma: string };
 
 type Fbq = ((...args: unknown[]) => void) & { callMethod?: (...args: unknown[]) => void; queue: unknown[]; push: unknown; loaded: boolean; version: string };
 declare global {
@@ -507,12 +507,6 @@ function SchrittInhalt(p: InhaltProps) {
             <p className="text-[13px] font-semibold uppercase tracking-wide text-[var(--m-primaer-dunkel)]">{T.danke.experte}</p>
             <p className="mt-1 font-semibold">{p.experte.name}</p>
             <p className={textLeise}>{p.experte.firma}</p>
-            <p className="mt-1">
-              {T.danke.experteTel}{" "}
-              <a href={`tel:${p.experte.telefon.replace(/[^\d+]/g, "")}`} className={linkKlasse}>
-                {p.experte.telefon}
-              </a>
-            </p>
           </div>
         )}
         {texte.frage && <p className="mt-5 font-semibold">{texte.frage}</p>}

@@ -110,7 +110,7 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
       expect(f).toBe(frage);
     }
     for (const p of OUTREACH_PURPOSES) {
-      expect(PURPOSE_VERSION[p]).toBe(p === "outreach_privatschutz" ? "v13" : "v12");
+      expect(PURPOSE_VERSION[p]).toBe(p === "outreach_privatschutz" || p === "outreach_kfz" ? "v13" : "v12");
       for (const form of ["du", "sie", "sie_ohne_name"] as const) {
         const req = buildTemplateRequest(p, templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", "Herr"), undefined, form, { documentExample: "https://x.de/e.pdf" });
         const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];

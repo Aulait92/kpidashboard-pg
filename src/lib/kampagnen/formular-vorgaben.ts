@@ -2,7 +2,7 @@
 // (lib/whatsapp/produkt-fragen.ts KFZ_FORMULAR, lib/whatsapp/gespraech.ts istFamilie), darum legt diese Datei die
 // Fragen und die vorausgefüllten Meta-Standardfelder fest, statt sie dem Formular-Agenten zu überlassen.
 //   Kfz:          „Worum geht es?“ + „Welchen Schutz wünschen Sie?“, dazu Straße, PLZ, Ort, Geburtsdatum
-//   Privatschutz: „Für wen soll der Schutz gelten?“ (+ bis zu 2 Fragen des Agenten), dazu Straße, PLZ, Ort
+//   Privatschutz: „Für wen soll der Schutz gelten?“ + „Welche Versicherung interessiert Sie am meisten?“, dazu Straße, PLZ, Ort
 // Meta liefert die Standardfelder mit den Schlüsseln unten; lib/lead-intake.ts (META_STANDARD) macht daraus
 // „Straße“, „Postleitzahl“, „Ort“ und „Geburtsdatum“.
 
@@ -46,7 +46,16 @@ export function festeFragen(product: string | null | undefined, du: boolean): Fo
     ];
   }
   if (art === "privatschutz") {
-    return [{ key: "versicherte_personen", label: "Für wen soll der Schutz gelten?", options: ["Nur für mich", "Mit Partner", "Mit Familie"] }];
+    // Ole, 21.11.2026: alle Bausteine wie im bestehenden Privatschutz-Formular (Wohngebäude, Unfall, Tierhalter …);
+    // die App fragt je gewählter Sparte die passenden Angebotsdaten (lib/preise/rechner-angaben.ts spartenDesLeads)
+    return [
+      { key: "versicherte_personen", label: "Für wen soll der Schutz gelten?", options: ["Nur für mich", "Mit Partner", "Mit Familie"] },
+      {
+        key: "versicherungsinteresse",
+        label: du ? "Welche Versicherung interessiert dich am meisten?" : "Welche Versicherung interessiert Sie am meisten?",
+        options: ["Haftpflicht", "Hausrat", "Rechtsschutz", "Wohngebäude", "Unfall", "Tierhalterhaftpflicht Hund", "Tierhalterhaftpflicht Pferd", "Alles in einem Paket"],
+      },
+    ];
   }
   return [];
 }
@@ -61,7 +70,7 @@ const DOPPELT = /postleitzahl|\bplz\b|adresse|stra(ß|ss)e|wohnort|\bort\b|gebur
 export function mitFestenFragen(form: LeadFormDraft, product: string | null | undefined, du: boolean): LeadFormDraft {
   const feste = festeFragen(product, du);
   if (!feste.length) return form;
-  if (formularArt(product) === "kfz") return { ...form, questions: feste };
+  if (formularArt(product) === "kfz" || formularArt(product) === "privatschutz") return { ...form, questions: feste };
   const belegt = new Set([...feste.map((q) => q.key), ...standardFelder(product).map((f) => f.key), "full_name", "phone_number", "email"]);
   const weitere = form.questions.filter((q) => !belegt.has(q.key) && !DOPPELT.test(q.label)).slice(0, 2);
   return { ...form, questions: [...feste, ...weitere] };
@@ -74,7 +83,7 @@ export function vorgabenHinweis(product: string | null | undefined, du: boolean)
   const felder = standardFelder(product).map((f) => ({ STREET_ADDRESS: "Straße", ZIP: "Postleitzahl", CITY: "Ort", DOB: "Geburtsdatum" })[f.type]);
   const art = formularArt(product);
   return `FESTE VORGABEN (nicht ändern, nicht bemängeln): Das Formular enthält immer ${feste.map((q) => `„${q.label}“ (${q.options.join(" · ")})`).join(" und ")}${
-    art === "privatschutz" ? " als erste Frage; schlage höchstens 2 weitere Fragen vor, ohne Wohnort, Adresse oder Personenkreis" : ""
+    art === "privatschutz" ? "; keine weiteren Fragen" : ""
   }. Vorausgefüllt fragt Meta zusätzlich Name, Telefon, E-Mail, ${felder.join(", ")} ab.`;
 }
 

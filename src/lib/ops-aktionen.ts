@@ -76,6 +76,23 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${c.name}: ${included} inklusive, ${price} € je weiterem.${s.ok && s.note ? ` ${s.note}` : !s.ok ? ` Abgleich: ${s.error}` : ""}` };
     },
   },
+  video_link_setzen: {
+    beschreibung: "Festen Video-Link (z. B. Webex-Raum) setzen; schon gebuchte Videotermine ohne Link bekommen ihn",
+    felder: { customerId: "Kunden-ID", videoRoomUrl: "https://…/meet/vorname.nachname" },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const { pruefeVideoLink } = await import("@/lib/video-raum");
+      const g = pruefeVideoLink(text(p.videoRoomUrl, 300));
+      if (!g.ok) return g;
+      if (!g.url) return { ok: false, error: "Bitte einen Link angeben." };
+      await prisma.agentConfig.upsert({ where: { customerId: c.id }, create: { customerId: c.id, videoRoomUrl: g.url }, update: { videoRoomUrl: g.url } });
+      await audit("calendar.video_room", { entity: "AgentConfig", customerId: c.id, actor: OPS_ACTOR });
+      const { videoRaumNachtragen } = await import("@/lib/video-raum-server");
+      const n = await videoRaumNachtragen(c.id, g.url);
+      return { ok: true, info: `${c.name}: Video-Link gesetzt${n ? `, ${n} gebuchte Videotermine nachgetragen` : ""}.` };
+    },
+  },
   aufgabe_erledigen: {
     beschreibung: "Admin-Aufgabe abhaken",
     felder: { taskId: "ID der Aufgabe" },

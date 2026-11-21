@@ -94,6 +94,25 @@ const slug = (s: string) =>
     .replace(/^_+|_+$/g, "")
     .slice(0, 40) || "antwort";
 
+/**
+ * Bild für eine Anzeige: Upload über /adimages (Hash). Fehlt der App dafür die Berechtigung (Meta #3 „Application does
+ * not have the capability“, Lohmann 21.11.2026), nehmen wir die öffentliche Bild-Adresse direkt im Creative (picture).
+ */
+async function bildFuerAnzeige(api: MetaApi, act: string, imageUrl: string): Promise<string> {
+  try {
+    const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: imageUrl });
+    const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
+    if (hash) return hash;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/capability|\(#3\)|"code":3\b/.test(msg)) throw e;
+  }
+  return `url:${imageUrl}`;
+}
+
+/** link_data-Feld zum gespeicherten Bild: Hash bzw. Adresse (picture). */
+const bildFeld = (ref: string): Record<string, string> => (ref.startsWith("url:") ? { picture: ref.slice(4) } : { image_hash: ref });
+
 /** Payload für POST /{page_id}/leadgen_forms (Felder laut Graph-Referenz „Page leadgen_forms“). */
 export function leadFormPayload(
   form: LeadFormDraft,
@@ -118,9 +137,11 @@ export function leadFormPayload(
       ...standardFelder(ctx.product),
     ],
     privacy_policy: { url: ctx.privacyUrl, link_text: "Datenschutzerklärung" },
-    context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: form.introParagraphs, button_text: "Weiter" },
+    // PARAGRAPH_STYLE erlaubt nur ein Element (Meta-Fehler #100, 21.11.2026): Absätze zusammenfassen
+    context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: [form.introParagraphs.filter(Boolean).join("\n\n").slice(0, 2000)], button_text: "Weiter" },
     custom_disclaimer: {
-      title: "Einwilligung",
+      // Ole, 21.11.2026: Handlung statt Fachwort; Häkchen bleibt Pflicht (Rechtsprüfung, aktive Einwilligung)
+      title: "Wichtig: Haken setzen und unten auf „Senden“ klicken",
       body: { text: form.consentText },
       checkboxes: [{ key: "einwilligung_kontakt", text: "Ich bin einverstanden.", is_required: true, is_checked_by_default: false }],
     },
@@ -188,7 +209,9 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   // 2. Ort → Meta-Standortschlüssel (Stadt), sonst Deutschland
   if (built.geoKey === undefined) {
     let key: string | null = null;
-    const q = ctx.city ?? ctx.region;
+    // „bundesweit“ im Wunsch (Ole, 21.11.2026: Lohmann bundesweit statt lokal): ganz Deutschland statt Umkreis
+    const bundesweit = /bundesweit|deutschlandweit|ganz deutschland/i.test(ctx.wish ?? "");
+    const q = bundesweit ? null : (ctx.city ?? ctx.region);
     if (q) {
       const r = await api.get<{ data: { key: string; name: string; country_code?: string }[] }>("search", {
         type: "adgeolocation",
@@ -277,10 +300,7 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   for (let i = 0; i < pairs.length; i++) {
     const { copy, image } = pairs[i];
     if (!built.imageHashes[i]) {
-      const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: image!.imageUrl });
-      const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
-      if (!hash) throw new Error("Meta /adimages lieferte keinen Hash.");
-      built.imageHashes[i] = hash;
+      built.imageHashes[i] = await bildFuerAnzeige(api, act, image!.imageUrl);
       await save();
     }
     if (!built.creativeIds[i]) {
@@ -289,7 +309,7 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
         object_story_spec: {
           page_id: ctx.pageId,
           link_data: {
-            image_hash: built.imageHashes[i],
+            ...bildFeld(built.imageHashes[i]),
             link: "http://fb.me/",
             message: copy.primaryText,
             name: copy.headline,
@@ -346,10 +366,7 @@ export async function buildRefreshAds(api: MetaApi, input: RefreshBuildInput): P
   for (let i = 0; i < pairs.length; i++) {
     const { copy, image } = pairs[i];
     if (!built.imageHashes[i]) {
-      const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: image!.imageUrl });
-      const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
-      if (!hash) throw new Error("Meta /adimages lieferte keinen Hash.");
-      built.imageHashes[i] = hash;
+      built.imageHashes[i] = await bildFuerAnzeige(api, act, image!.imageUrl);
       await save();
     }
     if (!built.creativeIds[i]) {
@@ -358,7 +375,7 @@ export async function buildRefreshAds(api: MetaApi, input: RefreshBuildInput): P
         object_story_spec: {
           page_id: ctx.pageId,
           link_data: {
-            image_hash: built.imageHashes[i],
+            ...bildFeld(built.imageHashes[i]),
             link: "http://fb.me/",
             message: copy.primaryText,
             name: copy.headline,

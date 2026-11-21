@@ -59,3 +59,4 @@ gesperrt; nachtragen, sobald der Datenzugang steht).
   Privatschutz zählen die Sendungen ab der Freigabe von v13 neu.
 
 - Lehre (21.11.2026): Sendungen, die mangels freigegebener eigener Vorlage auf das allgemeine Erstanschreiben zurückfallen (Kfz, Hausrat), zählen nicht mehr als Fassung „a“ des allgemeinen Tests. Vorher landeten sie alle in „a“ und verzerrten die Auswertung.
+- 21.11.2026 Kfz ohne Anlass, Fassung b v13: „*Kfz-Versicherung für Ihr jetziges Auto oder ein neues?* Danke für Ihre Anfrage!“ (Ole: Thema muss klar sein, kurz bleiben). Zählung der b-Fassung beginnt mit v13 neu.

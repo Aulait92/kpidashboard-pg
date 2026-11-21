@@ -99,7 +99,6 @@ export const PKV_TEXTE = {
     ],
     verpasst: "Anruf verpasst? Ruf einfach zurück, dein Experte freut sich.",
     experte: "Dein Experte",
-    experteTel: "Tel.",
   },
 
   endeGesetzlich: {
