@@ -262,14 +262,20 @@ const NEIN = /^(nein|nee|ne|nö|noe|no|leider nein|leider nicht|nicht)\b/;
 /**
  * Antwort auf eine Tierfrage auswerten (Knopf: wert aus der Payload, sonst Text). null = keine Antwort auf die Frage
  * (z. B. eine Rückfrage des Leads): dann antwortet der Assistent, und die Frage kommt noch einmal.
+ * ungeprueft: Datum auch nach der Nachfrage unklar (lib/whatsapp/datum-nachfrage.ts), wörtlich mit Vermerk übernehmen.
  */
-export function tierAntwortAuswerten(key: TierFrageKey, text: string, knopfWert: string | null, q: TierQuelle, jetzt: Date = new Date()): TierAuswertung | null {
+export function tierAntwortAuswerten(key: TierFrageKey, text: string, knopfWert: string | null, q: TierQuelle, jetzt: Date = new Date(), o: { ungeprueft?: boolean } = {}): TierAuswertung | null {
   const roh = (text ?? "").replace(/\s+/g, " ").trim();
   const t = norm(roh);
   if (!knopfWert && (!t || (roh.includes("?") && !WEISS_NICHT.test(t)))) return null;
   const g = angabenVon(q.angaben);
   const i = tierInfo(q);
   const tier = (label: string, wert: string): TierAuswertung => ({ angaben: { tier: tierErgaenzen(g.tier, label, wert) }, beantwortet: [key] });
+  if (o.ungeprueft) {
+    if (key === "vorhandenAblauf") return { angaben: { vorhanden: `Tierversicherung vorhanden, läuft bis ${roh}` }, beantwortet: [key] };
+    if (key === "geburt" || key === "geburtEigen" || key === "geburtNochmal") return { angaben: { geburt: roh }, beantwortet: ["geburt", "geburtEigen", "geburtNochmal"] };
+    if (key === "geburtTier") return tier("Geboren", roh);
+  }
   const offen = !knopfWert && WEISS_NICHT.test(t);
   switch (key) {
     case "gesundheit": {
