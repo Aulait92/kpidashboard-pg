@@ -217,6 +217,8 @@ describe("Kosten je Anzeige und Tag", () => {
     if (acc === account) {
       return days.flatMap((d): AdInsightRow[] => [
         { ad_id: "kad-1", ad_name: "Bild 1", adset_id: "ks", adset_name: "Gruppe", campaign_id: "kc", campaign_name: "Kampagne", spend, impressions: "500", clicks: "9", actions: [{ action_type: "lead", value: "2" }], date_start: ymd(d) },
+        // Alte Kampagne im selben Konto, nicht mit der App verbunden (Ole, 21.11.2026): zählt nicht
+        { ad_id: "alt-ad", campaign_id: "alt-c", campaign_name: "Alte Kampagne", spend: "99", date_start: ymd(d) },
       ]).filter((r) => r.date_start! >= since && r.date_start! <= until);
     }
     if (acc === agency) {
@@ -234,12 +236,14 @@ describe("Kosten je Anzeige und Tag", () => {
     customerId = (await makeCustomer({ metaAdAccountId: account, retainerStart: new Date(now.getTime() - 30 * DAY) })).id;
     poolCustomer = (await makeCustomer({ retainerStart: new Date(now.getTime() - 10 * DAY) })).id;
     await prisma.lead.create({ data: { customerId: poolCustomer, adId: "kunden-ad" } });
+    // Kampagne „kc“ liefert Leads in die App, ist also verbunden
+    await prisma.lead.create({ data: { customerId, adCampaignId: "kc" } });
     process.env.META_AD_ACCOUNT_IDS = `act_${agency}`;
   });
   afterAll(async () => {
     process.env.META_AD_ACCOUNT_IDS = prevEnv;
     await prisma.adSpendDaily.deleteMany({ where: { adAccountId: { in: [account, agency] } } });
-    await prisma.lead.deleteMany({ where: { customerId: poolCustomer } });
+    await prisma.lead.deleteMany({ where: { customerId: { in: [poolCustomer, customerId] } } });
     await cleanupCustomer(customerId);
     await cleanupCustomer(poolCustomer);
   });
@@ -256,6 +260,8 @@ describe("Kosten je Anzeige und Tag", () => {
     expect(ag.find((x) => x.adId === "kunden-ad")?.customerId).toBe(poolCustomer);
     expect(ag.find((x) => x.adId === "pool-ad")?.customerId).toBeNull();
     expect(r.konten.find((k) => k.konto === `act_${account}`)?.gespeichert).toBe(3);
+    expect(r.konten.find((k) => k.konto === `act_${account}`)?.nichtVerbunden).toBe(3);
+    expect(rows.some((x) => x.campaignId === "alt-c")).toBe(false);
   });
 
   it("zweiter Lauf: nur die letzten 7 Tage, idempotent, korrigierte Werte werden übernommen", async () => {

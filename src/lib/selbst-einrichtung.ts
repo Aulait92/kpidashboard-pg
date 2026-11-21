@@ -449,6 +449,13 @@ export async function checkMetaAccess(
     where: { id: ob.id },
     data: { metaCheck: check as unknown as Prisma.InputJsonValue, metaCheckedAt: new Date(), ...(becameOk ? { metaAccessAt: new Date() } : {}) },
   });
+  if (becameOk && accountId) {
+    // Werbekosten sofort holen, nicht erst beim Lauf um 5 Uhr (Ole, 21.11.2026: Lohmanns Kosten fehlten am ersten Tag)
+    void import("@/lib/anzeige-kosten")
+      .then((m) => m.syncAnzeigeKosten({ voll: true, nurKonto: accountId }))
+      .then(() => import("@/lib/meta").then((m) => m.syncCustomerAdSpend()))
+      .catch((err) => reportError(err, "setup-meta-kosten"));
+  }
   if (becameOk) {
     await logOfferActivity({ dealId: null, salesContactId: ob.salesContactId }, `Onboarding: Meta-Zugriff geprüft und vorhanden (${opts.source ?? "kunde"})`).catch(() => {});
     await sendToAdmins({

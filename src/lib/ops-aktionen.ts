@@ -93,6 +93,24 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${c.name}: Video-Link gesetzt${n ? `, ${n} gebuchte Videotermine nachgetragen` : ""}.` };
     },
   },
+  werbekosten_abgleichen: {
+    beschreibung: "Werbekosten eines Kunden mit eigenem Werbekonto sofort abgleichen (je Anzeige ab Startdatum und je Tag), statt auf den Lauf um 5 Uhr zu warten",
+    felder: { customerId: "Kunden-ID" },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const k = await prisma.customer.findUnique({ where: { id: c.id }, select: { metaAdAccountId: true } });
+      const konto = (k?.metaAdAccountId ?? "").replace(/^act_/, "");
+      if (!/^\d+$/.test(konto)) return { ok: false, error: "Kein eigenes Werbekonto hinterlegt." };
+      const { syncAnzeigeKosten } = await import("@/lib/anzeige-kosten");
+      const r = await syncAnzeigeKosten({ voll: true, nurKonto: konto });
+      const { syncCustomerAdSpend } = await import("@/lib/meta");
+      const t = await syncCustomerAdSpend();
+      const z = r.konten[0];
+      await audit("meta.werbekosten_abgleich", { entity: "Customer", entityId: c.id, customerId: c.id, actor: OPS_ACTOR, details: { gespeichert: r.gespeichert, fehler: z?.fehler ?? null } });
+      return z?.fehler ? { ok: false, error: `${c.name}: ${z.fehler}` } : { ok: true, info: `${c.name}: ${r.gespeichert} Kostenzeilen je Anzeige (${z?.von ?? "?"} bis ${z?.bis ?? "?"}), Tageswerte für ${t.customers} Kundenkonten aktualisiert.` };
+    },
+  },
   aufgabe_erledigen: {
     beschreibung: "Admin-Aufgabe abhaken",
     felder: { taskId: "ID der Aufgabe" },

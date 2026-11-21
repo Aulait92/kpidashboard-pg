@@ -3,6 +3,12 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 21.11.2026
+- **Meilenstein: erste Agentur ongeboardet, erste Leads** (Allianz Henrik Lohmann). Führungsrunde (CEO, Customer Success,
+  CPO): Lohmann erst „live“, wenn ein echter Lead geantwortet hat; 14-Tage-Begleitplan; Feature-Stopp außer Korrekturen
+  für Lohmann und Einrichtung; Allianz-Einrichtungs-Branches bis 24.11. mergen.
+- **Admin liest mit** (A, Ole, 21.11.): Push an Admins bei Lead (nur eigener Funnel bzw. Software, nicht Perspective),
+  Termin und Abschluss, je Kunde über die Glocke abschaltbar. **Assistent automatisch an** beim Verbinden von WhatsApp,
+  bei allen verbundenen Kunden eingeschaltet (A, Ole).
 - **50/50-Test PKV: vorerst Ersatzkennzahl „gültige Leads je Besucher“** (A, Ole: „erstmal nur Ersatzkennzahl“): geliefert,
   verkauft, nicht storniert, nicht reklamiert. Grund: Von 66 PKV-Leads in 30 Tagen ist nur einer als erreicht markiert
   (Socki 0 von 29, Müller 1 von 3, verrata24 und HvK nur per E-Mail ohne Rückmeldung; Diagnose q=ppl-rueckmeldung).

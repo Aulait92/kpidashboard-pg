@@ -15,7 +15,7 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 | Team-Überblick für Inhaber (Termine 7 Tage, Offenes je Mitglied, Karte auf Heute), Branch `worktree-agent-abe206f8fef110ae2`, nicht gepusht; Notiz `docs/ux/team-ueberblick-2026-11-21.md`. Offen: Persona-Test auf Staging mit echtem Team, nach Livegang Fehlklicks auf der Team-Zeile (Tippen klappt jetzt auf statt Menü) prüfen | wartet auf Merge | UX/UI / CTO |
 | Tierversicherung Katze: Text je Umfang (OP, voll, offen) statt immer „OP-Versicherung“ | Teilarbeit Branch `tkv-umfang` | CTO |
 | Keine neuen Terminvorschläge, wenn der Lead schon einen künftigen Termin hat | offen | CTO |
-| Einrichtung Allianz (Punkte 3, 4, 10 von Ole): Ihre Angaben einmal, Kalender mit Vertreternummer, Meta-Vorprüfung; Branch `worktree-agent-ab123bfa8feb0009d`, nicht gepusht. Offen: Persona-Test auf Staging, nach Livegang messen (Abbruch im Schritt Kalender, Zeit bis Schritt 4) | wartet auf Merge | UX/UI / CTO |
+| Einrichtung Allianz (Angaben einmal, Kalender mit Vertreternummer, Meta-Vorprüfung): live seit 20.11.2026 (81ada26e). Offen: nach Livegang messen (Abbruch im Schritt Kalender, Zeit bis Schritt 4) | live | UX/UI / CTO |
 | Einrichtung: Allianz-Online-Kalender nur bei Versicherer Allianz zeigen (W2) | Teilarbeit Branch `golive-auflagen` | CTO / UX |
 | Einrichtung: „Mein Versicherer erlaubt das nicht“ bei Maklern ausblenden (W3) | Teilarbeit Branch `golive-auflagen` | CTO / UX |
 | Go-live-Auflagen W1, W4 bis W7 und Kleinpunkte | Branch `golive-auflagen` | CTO |
@@ -33,6 +33,21 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 | Empfehlungsmodul Champions-Umbau (3 Pakete, Plan `docs/ux/2026-11-19-empfehlung-champions.md`); Modul bleibt aus, Einschalten Stufe A | Branch `empfehlung-champions`: Pakete 1 bis 3 gebaut (20.11.2026), UX-Prüfung 20.11.2026: SUS 82, 88, 91 (Übersicht, Teilen, öffentliche Seiten); offen: Screenshot Heute und Kontakt-Karte nach Umstellung auf sekundären Knopf (Speicher, OOM), Einschalten-Liste in `docs/empfehlungen-modul.md` | CPO / CTO |
 
 Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der Sitzung, die sie angelegt hat.
+
+## Erster Kunde live: Allianz Henrik Lohmann (Führungsrunde 21.11.2026)
+
+| Aufgabe | Frist | Wer |
+|---|---|---|
+| Täglich prüfen: Erstnachricht unter 5 Min., Antworten, Termine, Zustellfehler, Assistent stumm (q=whatsapp, nutzung-woche, zustellfehler, bot-stumm, d360-kunde) | täglich bis 05.12. | Customer Success |
+| ~~Werbekosten von act_837321052753778 kommen nicht an~~ Erledigt 21.11.: Abgleich läuft jetzt direkt nach der Meta-Freigabe, Lohmann nachgeholt (Ops-Aktion werbekosten_abgleichen) | erledigt | CTO |
+| Ziel bis 28.11.: mind. 30 % Antworten binnen 72 h, 3 Termine; Tag-7-Anruf mit Zahlen, Tag-14-Rückblick mit NPS | 28.11. / 05.12. | Customer Success |
+| Journey-Diagnose reparieren (alle Stufen 0 trotz Leads) | 24.11.2026 | CTO, Data/BI |
+| ~~Allianz-Einrichtung mergen~~ Erledigt: seit 20.11.2026 live (81ada26e) | erledigt | CTO |
+| Doppelte Terminvorschläge trotz gebuchtem Termin beheben | 24.11.2026 | CTO |
+| Vorab-Checkliste 48 h vor Onboarding (Nummer beim alten Anbieter freigeben, private Mail für 360dialog, Absender-Freigabe durch IT, Webex-Link) | 24.11.2026 | Customer Success |
+| Klären, warum Embedded Signup gesperrt war (Konzern-Business-Manager?), Anleitung festhalten | 25.11.2026 | Customer Success |
+| Zwei weitere Kunden live, Dauer bis Livegang messen | 28.11.2026 | Sales, Customer Success |
+| Entscheidungen Ole: Modell A gegen B, PPL-Pilotkunde, Datenschutz-Adresse, Steuerberater-Termin | 25.11.2026 | Ole |
 
 ## Vertrieb: Generalprobe Pay-per-Lead + Software (20.11.2026)
 
