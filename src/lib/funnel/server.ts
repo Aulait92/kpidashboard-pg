@@ -34,7 +34,7 @@ export const REIF_TAGE = 14;
 
 export const EREIGNIS_ARTEN = ["angesehen", "beantwortet", "abbruch", "abgeschickt"] as const;
 export type EreignisArt = (typeof EREIGNIS_ARTEN)[number];
-const GRUENDE: AbbruchGrund[] = ["gesetzlich", "unter_650", "debeka"];
+const GRUENDE: AbbruchGrund[] = ["gesetzlich", "unter_650", "debeka", "beamte"];
 
 // ─── Herkunft (nur Tracking-Schlüssel, keine Personendaten) ───────────────
 

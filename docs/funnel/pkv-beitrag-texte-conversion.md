@@ -124,3 +124,7 @@ Logos von Versicherern.
 ## Abbruch Debeka (Ole, 21.11.2026)
 - Debeka ist nicht optimierbar: keine Kachel mehr (dafür Gothaer), Auswahl über die Suche führt auf die Endseite.
 - „Bei der Debeka lohnt sich diese Prüfung leider nicht“ · „Durch den Tarifaufbau der Debeka lässt sich der Beitrag mit einem internen Tarifwechsel in der Regel nicht senken. Deshalb bieten wir die Prüfung für Debeka-Versicherte nicht an. Danke für dein Interesse.“ · Knopf „Andere Versicherung wählen“
+
+## Abbruch Beamte (Ole, 21.11.2026)
+- Beamte sind nicht optimierbar: Auswahl „Beamtin/Beamter“ (Frage 3) führt auf die Endseite.
+- „Für Beamte lohnt sich diese Prüfung leider nicht“ · „Mit Beihilfe bist du nur für deinen Eigenanteil privat versichert. Ein interner Tarifwechsel senkt diesen Beitrag in der Regel nicht spürbar. Deshalb bieten wir die Prüfung für Beamtinnen und Beamte nicht an. Danke für dein Interesse.“ · Knopf „Andere Situation wählen“

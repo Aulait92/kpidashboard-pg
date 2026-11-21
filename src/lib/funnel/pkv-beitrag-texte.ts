@@ -142,6 +142,12 @@ export const PKV_TEXTE = {
     text: "Du bist doch privat versichert? Dann geht es hier weiter.",
     knopf: "Ich bin doch privat versichert",
   },
+  endeBeamte: {
+    // Ole, 21.11.2026: Beamte sind nicht optimierbar (Beihilfe, Restkostentarif)
+    ueberschrift: "Für Beamte lohnt sich diese Prüfung leider nicht",
+    text: "Mit Beihilfe bist du nur für deinen Eigenanteil privat versichert. Ein interner Tarifwechsel senkt diesen Beitrag in der Regel nicht spürbar. Deshalb bieten wir die Prüfung für Beamtinnen und Beamte nicht an. Danke für dein Interesse.",
+    knopf: "Andere Situation wählen",
+  },
   endeDebeka: {
     // Ole, 21.11.2026: Debeka ist nicht optimierbar. Sachlich, ohne Wertung des Versicherers.
     ueberschrift: "Bei der Debeka lohnt sich diese Prüfung leider nicht",

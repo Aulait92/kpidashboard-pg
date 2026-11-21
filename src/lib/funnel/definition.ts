@@ -13,7 +13,7 @@ import { PKV_DAUER, PKV_SITUATION_LABEL, PKV_SITUATIONEN, PKV_TEXTE as T, PKV_VE
 export type FeldId = "versichert" | "versicherung" | "situation" | "dauer" | "beitrag" | "geburtsdatum" | "plz" | "ort" | "vorname" | "nachname" | "email" | "telefon";
 export type Antworten = Partial<Record<FeldId, string>>;
 export type Fehler = Partial<Record<FeldId, string>>;
-export type AbbruchGrund = "gesetzlich" | "unter_650" | "debeka";
+export type AbbruchGrund = "gesetzlich" | "unter_650" | "debeka" | "beamte";
 export type Variante = "a" | "b";
 
 export type SchrittTexte = {
@@ -357,7 +357,7 @@ export const PKV_BEITRAG: FunnelDef = {
       spalten: 2,
       texte: { frage: T.versicherung.frage, hinweis: T.versicherung.hinweis },
     },
-    { id: "situation", art: "auswahl", frageNr: 3, feld: "situation", optionen: PKV_SITUATIONEN, labels: PKV_SITUATION_LABEL, spalten: 2, texte: { frage: T.situation.frage } },
+    { id: "situation", art: "auswahl", frageNr: 3, feld: "situation", optionen: PKV_SITUATIONEN, labels: PKV_SITUATION_LABEL, spalten: 2, abbruch: (a) => (a.situation === "Beamter" ? "beamte" : null), texte: { frage: T.situation.frage } },
     { id: "dauer", art: "auswahl", frageNr: 4, feld: "dauer", optionen: PKV_DAUER, spalten: 1, texte: { frage: T.dauer.frage } },
     {
       id: "beitrag",
@@ -414,6 +414,8 @@ export const PKV_BEITRAG: FunnelDef = {
     { id: "danke", art: "danke", texte: { ueberschrift: T.danke.ueberschrift, frage: T.danke.untertitel, liste: T.danke.schritte, nachsatz: T.danke.verpasst } },
     { id: "ende-gesetzlich", art: "ende", grund: "gesetzlich", zurueckZu: "start", texte: { ueberschrift: T.endeGesetzlich.ueberschrift, text: [T.endeGesetzlich.text], knopf: T.endeGesetzlich.knopf } },
     { id: "ende-beitrag", art: "ende", grund: "unter_650", zurueckZu: "beitrag", texte: { ueberschrift: T.endeBeitrag.ueberschrift, text: [T.endeBeitrag.text], knopf: T.endeBeitrag.knopf } },
+    // Beamte: Beihilfe plus Restkostentarif, ein interner Wechsel bringt nichts (Ole, 21.11.2026)
+    { id: "ende-beamte", art: "ende", grund: "beamte", zurueckZu: "situation", texte: { ueberschrift: T.endeBeamte.ueberschrift, text: [T.endeBeamte.text], knopf: T.endeBeamte.knopf } },
     { id: "ende-debeka", art: "ende", grund: "debeka", zurueckZu: "versicherung", texte: { ueberschrift: T.endeDebeka.ueberschrift, text: [T.endeDebeka.text], knopf: T.endeDebeka.knopf } },
   ],
 };
