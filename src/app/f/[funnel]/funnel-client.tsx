@@ -17,6 +17,7 @@ import {
   funnelDef,
   hinweisFuer,
   naechsterSchritt,
+  mitTrennstellen,
   optionLabel,
   pruefeFeld,
   pruefeSchritt,
@@ -125,7 +126,8 @@ const knopf =
 const knopfZweit =
   "flex min-h-12 w-full items-center justify-center rounded-[14px] border border-[var(--m-primaer)] bg-white px-5 py-3 text-[17px] font-semibold text-[var(--m-primaer)] transition [@media(pointer:fine)]:hover:bg-[var(--m-primaer-hell)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--m-primaer-hell)]";
 const linkKlasse = "text-[var(--m-primaer)] underline underline-offset-2";
-const frageKlasse = "text-[22px] font-semibold leading-[28px] tracking-[-0.01em] outline-none sm:text-[24px] sm:leading-[30px]";
+// Schriftstufen (Feinschliff 21.11.2026): nur 13/15/17/22/28 px, Gewichte 400/600
+const frageKlasse = "text-[22px] font-semibold leading-[28px] tracking-[-0.01em] outline-none";
 
 export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId, einwilligungNoetig, datenschutzEmail, basis }: Props) {
   const f = funnelDef(funnelKey)!;
@@ -342,7 +344,7 @@ export function FunnelClient({ funnelKey, besuchId, varianten, geladen, pixelId,
           className="scroll-mt-3 rounded-[20px] bg-[var(--m-karte)] p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] sm:border sm:border-[var(--m-karte-rand)] sm:p-7"
           aria-live="polite"
         >
-          {fortschritt && <Fortschritt nr={fortschritt.nr} von={fortschritt.von} />}
+          {fortschritt && <Fortschritt {...fortschritt} />}
           <div key={schrittId} className="motion-safe:animate-[funnel-ein_200ms_ease-out]">
             <SchrittInhalt
               schritt={schritt}
@@ -425,7 +427,7 @@ function Fliesstext({ text }: { text: string }) {
   const stern = (t: string) =>
     t.split("*").map((x, i) => (
       <Fragment key={i}>
-        {i > 0 && <sup className="text-[0.7em]">*</sup>}
+        {i > 0 && <sup className="text-[13px] leading-none">*</sup>}
         {x}
       </Fragment>
     ));
@@ -459,11 +461,11 @@ function Advertorial({ marke, ueberschrift, sofortRef, zurKarte }: { marke: Mark
   );
   return (
     <article className="mb-6">
-      <p className={`text-[12px] uppercase leading-[16px] tracking-[0.04em] ${textLeise}`}>{T.start.anzeige}</p>
-      <h1 data-fokus="titel" tabIndex={-1} className="mt-2 text-[28px] font-semibold leading-[34px] tracking-[-0.02em] outline-none sm:text-[34px] sm:leading-[40px]">
+      <p className={`text-[13px] uppercase leading-[18px] tracking-[0.04em] ${textLeise}`}>{T.start.anzeige}</p>
+      <h1 data-fokus="titel" tabIndex={-1} className="mt-2 text-[28px] font-semibold leading-[34px] tracking-[-0.02em] outline-none">
         {ueberschrift}
       </h1>
-      <p className="mt-3 text-[18px] leading-[27px]">{T.start.einleitung}</p>
+      <p className="mt-3 text-[17px] leading-[26px]">{T.start.einleitung}</p>
       <a
         ref={sofortRef}
         href="#frage-karte"
@@ -493,14 +495,18 @@ function MarkenBild({ bild, className = "", vorladen = false, position }: { bild
   );
 }
 
-/** Balken über alle Schritte bis zum Absenden; Text nur beim letzten Schritt (ux-ui.md Muss 2) */
-function Fortschritt({ nr, von }: { nr: number; von: number }) {
-  const letzter = nr === von;
+/** Balken über alle Schritte: bis zum Absenden höchstens 90 %, voll erst auf der Danke-Seite (fortschrittFuer);
+ * Text nur beim letzten Schritt (ux-ui.md Muss 2). Auf der Danke-Seite nur Bild, die Überschrift sagt es. */
+function Fortschritt({ nr, von, prozent, fertig }: { nr: number; von: number; prozent: number; fertig: boolean }) {
+  const letzter = !fertig && nr === von;
   return (
     <div className="mb-5">
       {letzter && <div className={`mb-1.5 text-[13px] leading-[19px] ${textLeise}`}>{T.letzterSchritt}</div>}
-      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--m-spur)]" role="progressbar" aria-valuemin={0} aria-valuemax={von} aria-valuenow={nr} aria-label={T.fortschritt(nr, von)}>
-        <div className="h-full rounded-full bg-[var(--m-primaer)] transition-[width] duration-300 ease-out motion-reduce:transition-none" style={{ width: `${Math.round((nr / von) * 100)}%` }} />
+      <div
+        className="h-1.5 overflow-hidden rounded-full bg-[var(--m-spur)]"
+        {...(fertig ? { "aria-hidden": true } : { role: "progressbar", "aria-valuemin": 0, "aria-valuemax": von, "aria-valuenow": nr, "aria-label": T.fortschritt(nr, von) })}
+      >
+        <div className="h-full rounded-full bg-[var(--m-primaer)] transition-[width] duration-300 ease-out motion-reduce:transition-none" style={{ width: `${prozent}%` }} />
       </div>
     </div>
   );
@@ -538,8 +544,8 @@ const optionAus = "border-[var(--m-option-rand)] bg-white text-[var(--m-text)] s
 function Option({ label, an, onClick, breit = false, schmal = false }: { label: string; an: boolean; onClick: () => void; breit?: boolean; schmal?: boolean }) {
   return (
     <button type="button" role="radio" aria-checked={an} onClick={onClick} lang="de" className={`${optionBasis} ${schmal ? "px-3.5" : "px-4"} ${an ? optionAn : optionAus} ${breit ? "col-span-2" : ""}`}>
-      {/* Keine Silbentrennung (visual.md M2); nach „/“ darf umbrochen werden */}
-      <span className="min-w-0 [hyphens:manual]">{label.replace("/", "/​")}</span>
+      {/* Keine automatische Silbentrennung (visual.md M2), nur weiche Trennstellen in langen Wörtern (große Schrift) */}
+      <span className="min-w-0 [hyphens:manual]">{mitTrennstellen(label)}</span>
       {an && <HakenKlein className="h-5 w-5 shrink-0 text-[var(--m-primaer)]" />}
     </button>
   );
@@ -560,7 +566,7 @@ function NutzenZeile({ text, fussnote }: { text: string; fussnote?: string }) {
     <div className="mb-3">
       <p className="text-[15px] font-semibold leading-[21px] text-[var(--m-primaer)]">
         {text}
-        {fussnote && <sup className="ml-0.5 text-[11px]">*</sup>}
+        {fussnote && <sup className="ml-0.5 text-[13px] leading-none">*</sup>}
       </p>
       {fussnote && <p className={`mt-0.5 text-[13px] leading-[19px] ${textLeise}`}>* {fussnote}</p>}
     </div>

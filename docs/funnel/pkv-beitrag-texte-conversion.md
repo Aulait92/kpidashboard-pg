@@ -12,7 +12,7 @@ Keine Gedankenstriche. Gespeicherte Antwortwerte bleiben unverändert (Filter, L
 Beschriftungen ändern sich.
 
 ## Durchgehend
-- Fortschrittsbalken über alle 10 Schritte bis zum Absenden, ohne Zähler; beim Kontakt „Letzter Schritt“
+- Fortschrittsbalken über alle 10 Schritte bis zum Absenden, ohne Zähler; beim Kontakt „Letzter Schritt“ und höchstens 90 %, voll (100 %) erst auf der Danke-Seite (Feinschliff 21.11.2026)
   (Screenreader: „Schritt {nr} von {von}“). „Zurück“ mit Pfeil.
 
 ## Start: Advertorial und Frage 1 (Ole, 21.11.2026)
@@ -68,13 +68,13 @@ Nah am Perspective-Original (Ole, 21.11.2026, ausdrücklich bestätigt), ohne Er
 - „Danach entscheidest du ganz entspannt, ob du in deinem aktuellen Tarif bleibst oder einen günstigeren wählst.“ · Knopf „Weiter“
 
 ## Name
-- Kleine Nutzenzeile (Petrol, 15 px) über der Frage „Spare bis zu 50 % deines PKV-Beitrags“ · Fußnote „Im Einzelfall möglich, abhängig von Tarif, Leistungen und Selbstbehalt. Ob und wie viel du sparen kannst, zeigt die Prüfung.“
+- Reine Frage, ohne Nutzenzeile und Fußnote (Feinschliff 21.11.2026: „bis zu 50 %“ nur noch auf Kontakt).
 - „Wie darf dich dein Experte ansprechen?“ · Vorname, Nachname · „Deine Daten werden vertraulich behandelt.“ · Knopf „Weiter“
 
 ## Kontakt (Absenden)
-- Oben dieselbe Nutzenzeile mit Fußnote wie beim Namen (texte.md Nr. 9).
+- Oben kleine Nutzenzeile (Petrol, 15 px) „Spare bis zu 50 % deines PKV-Beitrags“ mit Fußnote „Im Einzelfall möglich, abhängig von Tarif, Leistungen und Selbstbehalt. Ob und wie viel du sparen kannst, zeigt die Prüfung.“ (L8, texte.md Nr. 9). Im Funnel nur hier, außerdem im Advertorial auf dem Start.
 - „{Vorname}, unter welcher Nummer erreicht dich dein Experte?“ (ohne Vorname wie bisher) · Unterzeile „Er ruft dich mit deinem Ergebnis an, in der Regel innerhalb von 24 bis 48 Stunden.“
-- Telefon zuerst: „Telefon (am besten Handy)“, Platzhalter „z. B. 0151 23456789“, Hinweis „Deine Nummer bekommt nur ein Experte, nicht mehrere.“, Fehler „Bitte gib eine Nummer ein, unter der du gut erreichbar bist, z. B. 0151 23456789.“
+- Telefon zuerst: „Telefon (am besten Handy)“, Platzhalter „z. B. 0151 23456789“, Hinweis „Nur ein Experte bekommt deine Nummer.“ (gekürzt, Feinschliff 21.11.2026), Fehler „Bitte gib eine Nummer ein, unter der du gut erreichbar bist, z. B. 0151 23456789.“
 - Dann „E-Mail“ (Pflichtfeld, Ole 21.11.2026; bewusst ohne Zusatz „für Name und Nummer deines Experten“, weil die Mail
   „Dein Experte“ nur bei selbst beratenden Abnehmern rausgeht und keine Nummer enthält). Telefon und E-Mail werden schon
   beim Verlassen des Felds geprüft; beim Absenden springt der Fokus aufs erste fehlerhafte Feld.
@@ -82,7 +82,7 @@ Nah am Perspective-Original (Ole, 21.11.2026, ausdrücklich bestätigt), ohne Er
   „Mit Klick auf „Kostenlos prüfen lassen“ willige ich ein, dass pkv-tarife.com (Ole Kannapinn UG) meine Angaben an einen PKV-Experten aus der **Partnerliste** weitergibt und dieser mich zur Prüfung meines Tarifs per Telefon, E-Mail und WhatsApp kontaktiert. Seine Erstinformation erhalte ich elektronisch, auf Wunsch auf Papier. Widerruf jederzeit per E-Mail an {DATENSCHUTZ_EMAIL}. **Datenschutz**“
   (Partnerliste und Datenschutz als Links, neuer Tab. Knopfname im Text = Knopf.)
 - Gestaltung der Einwilligung: 13 px, leiser Text, Adresse ohne Umbruch im Wort (Wortlaut und Adresse unverändert).
-- Knopf „Kostenlos prüfen lassen“ · darunter klein „Das Absenden kostet nichts und verpflichtet dich zu nichts.“ · Lädt mit Spinner „Wird gesendet …“
+- Knopf „Kostenlos prüfen lassen“ · kein Satz darunter (Feinschliff 21.11.2026: „Kostenlos“ steht im Knopf) · Lädt mit Spinner „Wird gesendet …“
 - Netzfehler: „Das hat leider nicht geklappt. Deine Angaben sind noch da.“ mit Knopf „Noch einmal senden“.
 
 ## Danke-Seite
@@ -127,3 +127,10 @@ Logos von Versicherern.
 ## Abbruch Beamte (Ole, 21.11.2026)
 - Beamte sind nicht optimierbar: Auswahl „Beamtin/Beamter“ (Frage 3) führt auf die Endseite.
 - „Für Beamte lohnt sich diese Prüfung leider nicht“ · „Mit Beihilfe bist du nur für deinen Eigenanteil privat versichert. Ein interner Tarifwechsel senkt diesen Beitrag in der Regel nicht spürbar. Deshalb bieten wir die Prüfung für Beamtinnen und Beamte nicht an. Danke für dein Interesse.“ · Knopf „Andere Situation wählen“
+
+## Feinschliff auf SUS 90+ (Ole, 21.11.2026: „Alle 4“)
+Grundlage: docs/funnel/review-2026-11-21/neubewertung.md.
+- Kontakt entlastet: Satz unter dem Knopf gestrichen, Telefon-Hinweis gekürzt. Einwilligung und Knopftext unverändert (Fassung pkv-beitrag-2026-11-20).
+- „bis zu 50 %“ mit Fußnote nur noch auf Kontakt (und im Advertorial), Name ist eine reine Frage.
+- Fortschritt: Kontakt 90 %, Danke-Seite 100 %.
+- Schriftstufen 13/15/17/22/28 px (Gewichte 400/600; Wortmarke im Logo ausgenommen), „Mehr dazu“ im Cookie-Hinweis mit 44 px Tippfläche, weiche Trennstellen in langen Kachelwörtern (Selbst·ständig, erwerbs·tätig, Conti·nentale, ver·sichert, Aus·bildung; nur Anzeige, Werte unverändert).

@@ -216,11 +216,19 @@ export function pruefeFeld(feld: FeldId, wert: string | undefined, heute = new D
   return feldOk(feld, wert, heute) ? null : fehlerText(feld, wert);
 }
 
-/** Position im Ablauf bis zum Absenden (Fortschrittsbalken über alle Schritte) oder null (Danke, Endseiten). */
-export function fortschrittFuer(f: FunnelDef, id: string): { nr: number; von: number } | null {
+/** Höchster Stand vor dem Absenden: 100 % erst auf der Danke-Seite (Feinschliff 21.11.2026) */
+export const FORTSCHRITT_VOR_ABSENDEN = 90;
+
+/**
+ * Position im Ablauf (Fortschrittsbalken über alle Schritte): Schritte bis zum Absenden gleichmäßig bis höchstens 90 %,
+ * Danke-Seite 100 % (fertig); null auf den Endseiten.
+ */
+export function fortschrittFuer(f: FunnelDef, id: string): { nr: number; von: number; prozent: number; fertig: boolean } | null {
   const liste = ablauf(f);
-  const i = liste.findIndex((s) => s.id === id);
-  return i < 0 ? null : { nr: i + 1, von: liste.length };
+  const s = f.schritte.find((x) => x.id === id);
+  if (s?.art === "danke") return { nr: liste.length, von: liste.length, prozent: 100, fertig: true };
+  const i = liste.findIndex((x) => x.id === id);
+  return i < 0 ? null : { nr: i + 1, von: liste.length, prozent: Math.round(((i + 1) / liste.length) * FORTSCHRITT_VOR_ABSENDEN), fertig: false };
 }
 
 /** Hinweis eines Schritts passend zu früheren Antworten (hinweisJe), sonst der feste Hinweis. */
@@ -270,6 +278,21 @@ export function pruefeAlles(f: FunnelDef, a: Antworten, heute = new Date()): { o
 /** Beschriftung einer Auswahl-Option (Wert bleibt gespeichert). */
 export function optionLabel(s: Schritt, wert: string): string {
   return s.art === "auswahl" ? (s.labels?.[wert] ?? wert) : wert;
+}
+
+/**
+ * Weiche Trennstellen (&shy;) nur an Wortfugen langer Kachelwörter, damit sie bei 130 % Schrift in zwei Spalten nicht
+ * über den Rand ragen; nach „/“ darf umbrochen werden. Nur die Anzeige, Werte und Beschriftungen bleiben unverändert.
+ */
+const TRENNSTELLEN: Readonly<Record<string, string>> = {
+  Selbstständig: "Selbst\u00adständig",
+  erwerbstätig: "erwerbs\u00adtätig",
+  Continentale: "Conti\u00adnentale",
+  versichert: "ver\u00adsichert",
+  Ausbildung: "Aus\u00adbildung",
+};
+export function mitTrennstellen(label: string): string {
+  return label.replace(/\p{L}+/gu, (w) => TRENNSTELLEN[w] ?? w).replace("/", "/\u200b");
 }
 
 export function texteFuer(s: Schritt, v: Variante = "a"): SchrittTexte {
@@ -397,7 +420,7 @@ export const PKV_BEITRAG: FunnelDef = {
         { feld: "vorname", label: T.name.vorname, typ: "text", autocomplete: "given-name" },
         { feld: "nachname", label: T.name.nachname, typ: "text", autocomplete: "family-name" },
       ],
-      texte: { ueberschrift: T.name.ueberschrift, fussnote: T.name.fussnote, frage: T.name.frage, knopf: T.weiter },
+      texte: { frage: T.name.frage, knopf: T.weiter },
       vertraulich: T.name.vertraulich,
     },
     {
@@ -408,8 +431,8 @@ export const PKV_BEITRAG: FunnelDef = {
         { feld: "telefon", label: T.kontakt.telefon, typ: "tel", autocomplete: "tel", platzhalter: T.kontakt.telefonPlatzhalter, hinweis: T.kontakt.telefonHinweis },
         { feld: "email", label: T.kontakt.email, typ: "email", autocomplete: "email" },
       ],
-      // Nutzen bis zum Absenden sichtbar (texte.md Nr. 9), gleiche Fußnote (L8)
-      texte: { ueberschrift: T.name.ueberschrift, fussnote: T.name.fussnote, frage: T.kontakt.frage, hinweis: T.kontakt.hinweis, knopf: T.kontakt.knopf, nachsatz: T.kontakt.unterKnopf },
+      // Nutzen bis zum Absenden sichtbar (texte.md Nr. 9), mit Fußnote (L8); kein Satz unter dem Knopf
+      texte: { ueberschrift: T.kontakt.ueberschrift, fussnote: T.kontakt.fussnote, frage: T.kontakt.frage, hinweis: T.kontakt.hinweis, knopf: T.kontakt.knopf },
     },
     { id: "danke", art: "danke", texte: { ueberschrift: T.danke.ueberschrift, frage: T.danke.untertitel, liste: T.danke.schritte, nachsatz: T.danke.verpasst } },
     { id: "ende-gesetzlich", art: "ende", grund: "gesetzlich", zurueckZu: "start", texte: { ueberschrift: T.endeGesetzlich.ueberschrift, text: [T.endeGesetzlich.text], knopf: T.endeGesetzlich.knopf } },
