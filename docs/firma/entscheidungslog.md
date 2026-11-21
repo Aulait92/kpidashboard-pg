@@ -3,6 +3,12 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 21.11.2026
+- **Eigener PKV-Funnel live, 50/50 gegen Perspective** (A, Ole: „50/50 vom Traffic, wenn unsere Version besser ist,
+  Perspective abschalten“; DNS-Weg statt Anzeigen ändern): start.pkv-tarife.com (Ziel aller PKV-Anzeigen) zeigt seit
+  21.11.2026 auf die App; die Weiche (`src/lib/funnel/weiche.ts`, `/f/pkv-beitrag/go`) schickt je Aufruf zufällig 50 % nach
+  beitrag.pkv-tarife.com, 50 % zu Perspective (leads.performancegrowth.de/beitrag-halbieren). HvK-Anzeigen (utm_campaign
+  hvk) immer Perspective. Entscheidung nach A/B-Regel (p < 0,01) auf erreichte bzw. terminierte Leads je Besucher; Testaufrufe
+  (utm_source test, deploycheck, weichecheck) nicht mitzählen. L7 (Impressum, Datenschutz 6a) über Lovable veröffentlicht.
 - **Kfz: Einstiegsfrage im Erstanschreiben** (B, Ole: „Bei KFZ brauchen wir noch eine Einstiegsfrage, die nicht direkt auf
   den Termin geht.“). Je Anlass aus dem Kfz-Leadformular eine feste Frage mit Knöpfen (Wechsel: „Wann läuft Ihr jetziger
   Vertrag aus?“, neues Auto: „Ist das neue Auto schon da?“, ohne Angabe: „Für Ihr jetziges Auto oder ein neues?“), danach
