@@ -63,6 +63,8 @@ import {
 import { detailNachfrageText, detailVerstaendlich, istTierStrecke, offeneTierFragen, tierAntwortAuswerten, tierFrage, type TierFrageKey } from "@/lib/whatsapp/tier-fragen";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
 import { ZWISCHEN_TEXT } from "@/lib/whatsapp/zwischenfrage";
+import { DATUM_NACHFRAGE_RE, datumMerkerAus, datumSchritt } from "@/lib/whatsapp/datum-nachfrage";
+import type { DatumArt } from "@/lib/datum-antwort";
 import {
   fehlendeVersicherer,
   normalisiereVertraege,
@@ -115,6 +117,11 @@ export const STRECKE = {
   tierAntwort: "tier_antwort",
   /** Einmalige Nachfrage bei unverständlicher Antwort auf eine Tierfrage (body.key), Ole 20.11.2026 */
   tierNachfrage: "tier_nachfrage",
+  /**
+   * Einmalige Nachfrage bei einem unklaren Datum auf die Angebotsfrage nach dem Geburtsdatum (body.feld, vorschlaege,
+   * roh, andere; lib/whatsapp/datum-nachfrage.ts), Ole 21.11.2026
+   */
+  datumNachfrage: "datum_nachfrage",
   /** Zusage-Frage unter der Buchungsbestätigung (Splittest termin_zusage, Fassung b) */
   zusageFrage: "zusage_frage",
   /** Antwort auf die Zusage-Frage (body.art: ja, andere, ohne_antwort) */
@@ -501,6 +508,53 @@ export async function sendeAngebotsfrage(k: StreckenKontext, prefix?: string | n
   return true;
 }
 
+/** Höchstlänge einer Antwort, die die App selbst als Datum prüft (längere Antworten mit mehr Inhalt: Assistent). */
+const DATUM_ANTWORT_MAX = 60;
+
+/**
+ * Antwort auf die Angebotsfrage nach dem Geburtsdatum prüfen, ohne Assistent (Ole, 21.11.2026: „220.8.92“ wurde
+ * übernommen). Gültig: als TT.MM.JJJJ speichern, dann die nächste Angebotsfrage bzw. der nächste Schritt der Strecke.
+ * Kein gültiges Datum: genau einmal nachfragen (bei Tippfehler mit Vorschlag und Knöpfen), die zweite unklare Antwort
+ * mit „(bitte im Termin prüfen)“ übernehmen und weiter. false = nicht zuständig (keine offene Geburtsdatumsfrage, keine
+ * Zahl, Rückfrage, unter 18 bzw. „weiß nicht“): der Assistent antwortet wie bisher (geburt-chat.ts).
+ */
+export async function angebotDatumAntwort(conversationId: string, text: string, now = new Date()): Promise<boolean> {
+  const roh = (text ?? "").replace(/\s+/g, " ").trim();
+  if (!roh || roh.length > DATUM_ANTWORT_MAX) return false;
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  if (offeneAngebotsfragen(k)[0]?.feld !== "geburt") return false;
+  const stand = await streckenStand(conversationId, k.termin.id);
+  if (!stand.angebotsfragenAt || stand.abschlussAt) return false;
+  // Unsere letzte Nachricht muss die Frage nach dem Geburtsdatum bzw. unsere Nachfrage sein
+  const letzte = await prisma.message.findFirst({ where: { conversationId, direction: "outbound" }, orderBy: { createdAt: "desc" }, select: { body: true, createdAt: true } });
+  if (!letzte || !(/geburtsdatum/i.test(letzte.body ?? "") || DATUM_NACHFRAGE_RE.test(letzte.body ?? ""))) return false;
+  const vorher = await prisma.message.findFirst({
+    where: { conversationId, direction: "internal", kind: STRECKE.datumNachfrage, body: { contains: k.termin.id } },
+    orderBy: { createdAt: "desc" },
+    select: { body: true },
+  });
+  const s = datumSchritt({ art: "geburt", feld: "geburt", text: roh, an: k.an, merker: vorher ? datumMerkerAus(vorher.body) : null, jetzt: now });
+  if (!s) return false;
+  if (s.art === "fragen") {
+    await merke(conversationId, STRECKE.datumNachfrage, { appointmentId: k.termin.id, feld: "geburt", ...s.merker });
+    await sende(k, s.text, s.buttons);
+    return true;
+  }
+  const angaben = { geburt: s.wert };
+  const neu = mergeQualificationData(k.angaben, angaben);
+  await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: (neu ?? undefined) as Prisma.InputJsonValue | undefined } });
+  await prisma.message.create({ data: { conversationId, direction: "internal", kind: "qualification", body: JSON.stringify({ angaben, via: "datum_pruefung" }), sentBy: "system" } });
+  k.angaben = neu;
+  if (!(await sendeAngebotsfrage(k, "Danke!"))) {
+    const schritt = await naechsterSchritt(k, { einleitung: "Danke!" });
+    if (schritt) await sendeSchritt(k, schritt);
+    else await sende(k, "Danke, das habe ich notiert.");
+  }
+  await einladungPruefen(k, now);
+  return true;
+}
+
 // ─── Tierfragen (TKV) nach der Buchung, vor dem Komplettcheck ─────────────────────────────────────────────────────────
 
 /** Nächste offene Tierfrage (Text und Knöpfe), null = keine offen bzw. kein TKV-Lead. */
@@ -576,6 +630,15 @@ export async function zusageAntwort(conversationId: string, art: "ja" | "andere"
   return true;
 }
 
+/** Tierfragen, deren Antwort ein Datum ist (Prüfung mit einmaliger Nachfrage, lib/whatsapp/datum-nachfrage.ts). */
+const TIER_DATUM: Partial<Record<TierFrageKey, DatumArt>> = {
+  geburtTier: "geburtTier",
+  vorhandenAblauf: "ablauf",
+  geburt: "geburt",
+  geburtEigen: "geburt",
+  geburtNochmal: "geburt",
+};
+
 /**
  * Antwort auf die offene Tierfrage (Knopf tier:<key>:<wert> bzw. Text): Angabe speichern (Conversation.qualificationData,
  * erscheint in der Terminvorbereitung), dann die nächste offene Tierfrage bzw. der Komplettcheck. false = keine Antwort
@@ -601,7 +664,27 @@ export async function tierAntwort(conversationId: string, text: string, knopf: {
       return true;
     }
   }
-  const r = tierAntwortAuswerten(key, text, knopf?.wert ?? null, quelle);
+  // Datum (Geburt des Tieres, Ablauf der Versicherung, Geburtsdatum des Halters, Ole 21.11.2026): kein gültiges Datum
+  // genau einmal nachfragen (bei Tippfehler mit Vorschlag), die zweite unklare Antwort mit Vermerk übernehmen
+  let antwort = text;
+  let ungeprueft = false;
+  const datumArt = TIER_DATUM[key];
+  if (datumArt && !knopf) {
+    const vorher = await prisma.message.findFirst({
+      where: { conversationId, direction: "internal", kind: STRECKE.tierNachfrage, body: { contains: `"key":"${key}"` }, createdAt: { gte: stand.tierFrageLetzte?.at ?? new Date(0) } },
+      orderBy: { createdAt: "desc" },
+      select: { body: true },
+    });
+    const s = datumSchritt({ art: datumArt, feld: key, text, an: k.an, merker: vorher ? datumMerkerAus(vorher.body) : null, jetzt: now });
+    if (s?.art === "fragen") {
+      await merke(conversationId, STRECKE.tierNachfrage, { appointmentId: k.termin.id, key, ...s.merker });
+      await sende(k, s.text, s.buttons);
+      return true;
+    }
+    if (s) antwort = s.wert;
+    ungeprueft = s?.art === "vermerk";
+  }
+  const r = tierAntwortAuswerten(key, antwort, knopf?.wert ?? null, quelle, now, { ungeprueft });
   if (!r) return false;
   const neu = mergeQualificationData(k.angaben, r.angaben);
   await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: (neu ?? undefined) as Prisma.InputJsonValue | undefined } });

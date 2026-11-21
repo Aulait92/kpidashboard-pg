@@ -5,19 +5,23 @@
 //   - unter 18 ohne Tier: nicht speichern, einmal fragen, ob es das eigene ist; erst wenn der Lead das bestätigt (der
 //     Assistent hält dasselbe Datum noch einmal fest), gilt der Lead als minderjährig (lib/policen/regeln.ts
 //     minderjaehrigLautChat: dann der bestehende Ablauf für Minderjährige)
-//   - Zukunft oder über 100: nicht speichern, einmal neu fragen
-//   - kein Datum erkennbar (z. B. „36272“): nicht speichern, einmal mit Beispiel neu fragen
-//   - zweite unpassende Antwort: „offen (Angabe: …)“, nicht weiter nachfragen; „weiß nicht“ wie bisher
+//   - Zukunft oder über 110: nicht speichern, einmal neu fragen
+//   - kein Datum erkennbar (z. B. „36272“): nicht speichern, einmal mit Beispiel neu fragen; bei eindeutigem Tippfehler
+//     („220.8.92“) mit Vorschlag und Knöpfen (Ole, 21.11.2026, lib/whatsapp/datum-nachfrage.ts)
+//   - zweite unpassende Antwort: wörtlich mit „(bitte im Termin prüfen)“, nicht weiter nachfragen; „weiß nicht“ wie bisher
 // Die Fragen formuliert der Assistent wörtlich nach dem Hinweis im Werkzeug-Ergebnis.
 
 import { a, type Ansprache } from "@/lib/ansprache";
-import { geburtsdatumPruefen } from "@/lib/datum-antwort";
+import { datumVorschlaege, GEBURT_MAX_ALTER, geburtsdatumPruefen } from "@/lib/datum-antwort";
+import { DATUM_VERMERK, nachfrageText, vorschlagKnoepfe, vorschlagText } from "@/lib/whatsapp/datum-nachfrage";
+import type { Knopf } from "@/lib/whatsapp/gespraech";
 import { tierErgaenzen } from "@/lib/whatsapp/tier-fragen";
 
 /** Kennung der internen Merker (Message.kind) für bereits gestellte Nachfragen. */
 export const GEBURT_MERKER = "geburt_pruefung";
 
-export type GeburtMerker = { art: "unplausibel" | "unlesbar" | "minderjaehrig" | "tier"; datum: string };
+/** vorschlaege: bei einem Tippfehler vorgeschlagene Daten (TT.MM.JJJJ), Ole 21.11.2026 */
+export type GeburtMerker = { art: "unplausibel" | "unlesbar" | "minderjaehrig" | "tier"; datum: string; vorschlaege?: string[] };
 
 /** Zusatz am gespeicherten Datum, wenn der Lead bestätigt hat, dass es sein eigenes ist (unter 18). */
 export const BESTAETIGT = "eigenes, bestätigt";
@@ -36,6 +40,8 @@ export type GeburtErgebnis = {
    * Quatsch-Eingabe kam „Vielen Dank, das notiere ich …“ und dann doch die Frage)
    */
   frage?: string;
+  /** Knöpfe zur Rückfrage (Vorschlag bei Tippfehler: [Ja, genau] [Anderes Datum] bzw. beide Daten) */
+  buttons?: Knopf[];
   /** als offen notiert: im Chat nicht weiter nach dem Geburtsdatum fragen */
   offen?: true;
 };
@@ -51,33 +57,44 @@ export function geburtImChat(o: {
   schon: readonly GeburtMerker[];
   jetzt?: Date;
 }): GeburtErgebnis {
-  const p = geburtsdatumPruefen(o.wert, o.jetzt ?? new Date());
+  const jetzt = o.jetzt ?? new Date();
+  const angabe = o.wert.replace(/\s+/g, " ").trim().slice(0, 40);
+  // „Ja, genau“ auf unseren Vorschlag nach einem Tippfehler (Ole, 21.11.2026): der vorgeschlagene Tag gilt
+  const vorschlag = o.schon.filter((m) => m.vorschlaege?.length === 1).at(-1)?.vorschlaege?.[0];
+  if (vorschlag && !/\d/.test(angabe) && /^(ja|jap|jo|yes|genau|richtig|stimmt|korrekt)\b/i.test(angabe)) return { geburt: vorschlag, hinweis: null, merker: null };
+  const p = geburtsdatumPruefen(o.wert, jetzt);
   if (p.art === "unbekannt") return { geburt: o.wert, hinweis: null, merker: null };
   if (p.art === "ok") return { geburt: p.datum, hinweis: null, merker: null };
   const gefragt = (art: GeburtMerker["art"]) => o.schon.some((m) => m.art === art);
-  // Kein Datum erkennbar, z. B. „36272“ (Ole, 19.11.2026: wurde als Geburtsdatum notiert): nicht speichern, einmal mit
-  // Beispiel neu fragen; passt die zweite Antwort wieder nicht, als offen notieren und weitermachen
+  // Zweite unklare Antwort (Ole, 21.11.2026): wörtlich mit Vermerk übernehmen und weitermachen
+  const vermerk: GeburtErgebnis = {
+    geburt: `${angabe} ${DATUM_VERMERK}`,
+    hinweis: "Notiert mit Vermerk zur Prüfung. Frag nicht weiter nach dem Geburtsdatum, das klärt der Berater im Termin.",
+    merker: null,
+    offen: true,
+  };
+  // Kein Datum erkennbar, z. B. „36272“ (Ole, 19.11.2026: wurde als Geburtsdatum notiert) bzw. Tippfehler wie
+  // „220.8.92“ (Ole, 21.11.2026): nicht speichern, einmal nachfragen, bei eindeutigem Tippfehler mit Vorschlag und Knöpfen
   if (p.art === "unlesbar") {
-    const angabe = o.wert.replace(/\s+/g, " ").trim().slice(0, 40);
-    if (gefragt("unlesbar") || gefragt("unplausibel")) {
-      return { geburt: `offen (Angabe: ${angabe})`, hinweis: "Notiert als offen. Frag nicht weiter nach dem Geburtsdatum, das klärt der Berater im Termin.", merker: null, offen: true };
-    }
-    const frage = a(o.an, "Das habe ich nicht als Datum erkannt. Wie lautet dein Geburtsdatum, zum Beispiel 14.05.1985?", "Das habe ich nicht als Datum erkannt. Wie lautet Ihr Geburtsdatum, zum Beispiel 14.05.1985?");
+    if (gefragt("unlesbar") || gefragt("unplausibel")) return vermerk;
+    const v = datumVorschlaege(o.wert, "geburt", jetzt);
+    const frage = v.length ? vorschlagText(o.an, v) : nachfrageText("geburt", "unlesbar", jetzt);
     return {
       geburt: null,
-      hinweis: `Nicht gespeichert: „${angabe}“ ist kein erkennbares Datum. Frag genau einmal freundlich neu, wörtlich: „${frage}“ Passt die nächste Antwort wieder nicht oder weiß der Lead es nicht, halte sie fest und mach weiter.`,
-      merker: { art: "unlesbar", datum: angabe },
+      hinweis: `Nicht gespeichert: „${angabe}“ ist kein gültiges Datum. Frag genau einmal freundlich neu, wörtlich: „${frage}“ Bestätigt der Lead einen Vorschlag, halte dieses Datum fest. Passt die nächste Antwort wieder nicht oder weiß der Lead es nicht, halte sie fest und mach weiter.`,
+      merker: { art: "unlesbar", datum: angabe, ...(v.length ? { vorschlaege: v } : {}) },
       frage,
+      ...(v.length ? { buttons: vorschlagKnoepfe("geburt", v) } : {}),
     };
   }
   const offen: GeburtErgebnis = { geburt: `offen (Angabe: ${p.datum})`, hinweis: "Notiert als offen. Frag nicht weiter nach dem Geburtsdatum, das klärt der Berater im Termin.", merker: null, offen: true };
 
   if (p.art === "unplausibel") {
-    if (gefragt("unplausibel")) return offen;
-    const frage = a(o.an, "Das Datum scheint nicht zu passen. Wie lautet dein Geburtsdatum, zum Beispiel 14.05.1985?", "Das Datum scheint nicht zu passen. Wie lautet Ihr Geburtsdatum, zum Beispiel 14.05.1985?");
+    if (gefragt("unplausibel") || gefragt("unlesbar")) return vermerk;
+    const frage = nachfrageText("geburt", "unplausibel", jetzt);
     return {
       geburt: null,
-      hinweis: `Nicht gespeichert: Das Geburtsdatum ${p.datum} liegt in der Zukunft oder ergibt über 100 Jahre. Frag genau einmal freundlich neu, wörtlich: „${frage}“ Passt die nächste Antwort wieder nicht oder weiß der Lead es nicht, halte sie fest und mach weiter.`,
+      hinweis: `Nicht gespeichert: Das Geburtsdatum ${p.datum} liegt in der Zukunft oder ergibt über ${GEBURT_MAX_ALTER} Jahre. Frag genau einmal freundlich neu, wörtlich: „${frage}“ Passt die nächste Antwort wieder nicht oder weiß der Lead es nicht, halte sie fest und mach weiter.`,
       merker: { art: "unplausibel", datum: p.datum },
       frage,
     };

@@ -56,10 +56,11 @@ describe("geburtsdatumPruefen", () => {
     expect(geburtsdatumPruefen("1985-05-14", heute)).toMatchObject({ art: "ok", datum: "14.05.1985" });
     expect(geburtsdatumPruefen("14. Mai 1985", heute)).toMatchObject({ art: "ok", datum: "14.05.1985" });
   });
-  it("unter 18, Zukunft, über 100, Grenzen", () => {
+  it("unter 18, Zukunft, über 110, Grenzen", () => {
     expect(geburtsdatumPruefen("23.09.2025", heute)).toMatchObject({ art: "minderjaehrig", datum: "23.09.2025", alter: 1 });
     expect(geburtsdatumPruefen("1.1.2090", heute)).toEqual({ art: "unplausibel", datum: "01.01.2090" });
-    expect(geburtsdatumPruefen("01.01.1920", heute)).toEqual({ art: "unplausibel", datum: "01.01.1920" });
+    expect(geburtsdatumPruefen("01.01.1910", heute)).toEqual({ art: "unplausibel", datum: "01.01.1910" });
+    expect(geburtsdatumPruefen("01.01.1920", heute).art).toBe("ok"); // 106 (Ole, 21.11.2026: bis 110)
     expect(geburtsdatumPruefen("19.11.2008", heute).art).toBe("ok"); // heute 18
     expect(geburtsdatumPruefen("20.11.2008", heute).art).toBe("minderjaehrig");
     expect(geburtsdatumPruefen("31.02.1985", heute).art).toBe("unlesbar");
@@ -100,12 +101,12 @@ describe("geburtImChat (Assistent)", () => {
     expect(geburtImChat({ ...basis, wert: "05.06.2013", tierLead: false, schon: [r.merker!] }).geburt).toBe("offen (Angabe: 05.06.2013)");
   });
 
-  it("Zukunft bzw. über 100: einmal neu fragen, danach offen", () => {
+  it("Zukunft bzw. über 110: einmal neu fragen, danach mit Vermerk", () => {
     const r = geburtImChat({ ...basis, wert: "1.1.2090", tierLead: false });
     expect(r.geburt).toBeNull();
-    expect(r.hinweis).toContain("„Das Datum scheint nicht zu passen. Wie lautet Ihr Geburtsdatum, zum Beispiel 14.05.1985?“");
+    expect(r.hinweis).toContain("„Das Datum scheint nicht zu passen. Bitte so: TT.MM.JJJJ, zum Beispiel 22.08.1992.“");
     const zweite = geburtImChat({ ...basis, wert: "1.1.2091", tierLead: false, schon: [r.merker!] });
-    expect(zweite.geburt).toBe("offen (Angabe: 01.01.2091)");
+    expect(zweite.geburt).toBe("1.1.2091 (bitte im Termin prüfen)");
     expect(zweite.merker).toBeNull();
   });
 
@@ -122,11 +123,11 @@ describe("geburtImChat: kein Datum erkennbar (Ole, 19.11.2026)", () => {
     const r = geburtImChat({ ...basis, wert: "36272", tierLead: false });
     expect(r.geburt).toBeNull();
     expect(r.merker).toEqual({ art: "unlesbar", datum: "36272" });
-    expect(r.hinweis).toContain("zum Beispiel 14.05.1985");
+    expect(r.hinweis).toContain("zum Beispiel 22.08.1992");
   });
-  it("notiert die zweite unlesbare Antwort als offen", () => {
+  it("notiert die zweite unlesbare Antwort wörtlich mit Vermerk", () => {
     const r = geburtImChat({ ...basis, wert: "irgendwann im Mai", tierLead: false, schon: [{ art: "unlesbar", datum: "36272" }] });
-    expect(r.geburt).toBe("offen (Angabe: irgendwann im Mai)");
+    expect(r.geburt).toBe("irgendwann im Mai (bitte im Termin prüfen)");
     expect(r.merker).toBeNull();
   });
   it("„weiß nicht“ bleibt wie bisher", () => {
@@ -137,7 +138,7 @@ describe("geburtImChat: kein Datum erkennbar (Ole, 19.11.2026)", () => {
 describe("Geburtsdatum: Antwort der App statt freier Worte", () => {
   it("unlesbar: wörtliche Rückfrage, beim zweiten Mal offen", () => {
     const g = geburtImChat({ wert: "asdfgh", tierLead: false, an: "sie", person: { nom: "Herr Berger" } as never, schon: [] } as never);
-    expect(g.frage).toBe("Das habe ich nicht als Datum erkannt. Wie lautet Ihr Geburtsdatum, zum Beispiel 14.05.1985?");
+    expect(g.frage).toBe("Das Datum habe ich nicht erkannt. Bitte so: TT.MM.JJJJ, zum Beispiel 22.08.1992.");
     const g2 = geburtImChat({ wert: "qwertz", tierLead: false, an: "sie", person: "Herr Berger", schon: [{ art: "unlesbar", datum: "asdfgh" }] } as never);
     expect(g2.offen).toBe(true);
     expect(g2.frage).toBeUndefined();
