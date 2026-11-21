@@ -21,6 +21,7 @@ import {
   cancelAppointment,
   rescheduleAppointment,
   SlotBusyError,
+  SchonGebuchtError,
   suggestSlots,
   bookingPausedUntil,
   type Slot,
@@ -114,6 +115,7 @@ const TOOLS: Anthropic.Tool[] = [
           description: "Optional: genau zwei start-Werte aus get_available_slots (z. B. nach einem Wunschtag des Leads).",
         },
         erneut: { type: "boolean", description: "true, wenn schon einmal Zeiten vorgeschlagen wurden (kürzer, ohne Nutzensatz)." },
+        verschieben: { type: "boolean", description: "true NUR, wenn der Lead schon einen Termin hat und ausdrücklich einen anderen Zeitpunkt möchte (Verschieben). Sonst weglassen." },
         einleitung: { type: "string", description: "Optional: ein kurzer Satz vorweg, z. B. die Antwort auf eine Frage des Leads (statt „Danke!“)." },
       },
     },
@@ -1014,6 +1016,8 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         if (err instanceof SlotBusyError) {
           content =
             "Diese Zeit ist im Kalender bereits belegt: NICHT buchen. Entschuldige dich kurz (einleitung) und nutze termin_vorschlagen mit erneut=true.";
+        } else if (err instanceof SchonGebuchtError) {
+          content = `NICHT gebucht: Der Lead hat schon einen Termin am ${formatSlotDE(err.startsAt.toISOString())}. Bestätige diesen; nur auf ausdrücklichen Wunsch mit reschedule_appointment verschieben.`;
         } else {
           console.error("[whatsapp bot] Buchung", err);
           content =
@@ -1081,7 +1085,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   if (zw?.art === "antwort" && (zw.wert || zw.ohneWert)) {
     const { zwischenAngabeSpeichern } = await import("@/lib/whatsapp/zwischenfrage-server");
     await zwischenAngabeSpeichern(conversation.id, zw.wert ? { [zw.def.feld]: zw.wert } : {}, { qualifiziert: true, tier: istTierLead(lead?.source) });
-    await schlageVor({});
+    if (!upcoming) await schlageVor({});
     if (zug.vorschlag) logTestLead(lead, "zwischenfrage beantwortet, terminvorschlag");
   }
 
@@ -1227,6 +1231,9 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           "NICHT gebucht: Der Lead hat bereits einen Termin (siehe System-Prompt). Bestätige diesen stattdessen.";
       } else if (tu.name === "book_appointment") {
         content = await buche(tu.input as { modus?: unknown; start?: unknown; email?: unknown });
+      } else if (tu.name === "termin_vorschlagen" && upcoming && (tu.input as { verschieben?: unknown }).verschieben !== true) {
+        // Doppelte Buchung verhindern (Ole, 21.11.2026): mit künftigem Termin keine neuen Vorschläge, außer zum Verschieben
+        content = "NICHT gesendet: Der Lead hat bereits einen Termin (siehe System-Prompt). Bestätige diesen. Nur wenn er ausdrücklich verschieben möchte: termin_vorschlagen mit verschieben=true und danach reschedule_appointment.";
       } else if (tu.name === "termin_vorschlagen") {
         content = await schlageVor(tu.input as { starts?: unknown; erneut?: unknown; einleitung?: unknown });
       } else if (tu.name === "komplettcheck") {
