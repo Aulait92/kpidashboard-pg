@@ -179,7 +179,7 @@ export async function processCampaignRun(id: string, deps: CampaignDeps = defaul
     let plan = row.plan as unknown as CampaignPlan | null;
     if (!plan) {
       await saveStep(state, current, { status: "laeuft", startedAt: now() });
-      const r = await strategist(deps.llm, ctx, campaignName(row.customer.name, row.product, new Date()));
+      const r = await strategist(deps.llm, ctx, campaignName(row.product, new Date()));
       plan = r.value;
       await saveStep(state, current, { status: "fertig", finishedAt: now() }, { plan: json(plan) }, r.usage);
     }

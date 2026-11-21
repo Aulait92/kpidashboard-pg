@@ -80,7 +80,7 @@ describe("Kampagnen-Agenten: Ausgaben prüfen", () => {
   });
 
   it("Benennungsschema", () => {
-    expect(campaignName("Agentur Muster", "Katze", new Date("2026-11-13T10:00:00Z"))).toBe("PG | Agentur Muster | Katze | 2026-11-13");
+    expect(campaignName("Katze", new Date("2026-11-13T10:00:00Z"))).toBe("PG | Katze | 2026-11-13");
   });
 });
 

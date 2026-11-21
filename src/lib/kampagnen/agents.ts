@@ -308,7 +308,7 @@ const FORM_SCHEMA = {
   },
 } as const;
 
-const FORM_SPEC = `- formName: interner Name, z. B. „${"PG | <Kunde> | <Produkt> | Formular"}“
+const FORM_SPEC = `- formName: interner Name, z. B. „${"PG | <Produkt> | Formular"}“ (ohne Kundennamen, das Konto gehört nur einer Agentur)
 - introTitle (höchstens ${LIMITS.introTitle} Zeichen) und introParagraphs (1–3 kurze Sätze: was passiert nach dem Absenden, wer meldet sich)
 - questions: 2–4 Qualifizierungsfragen (key in snake_case, label höchstens ${LIMITS.questionLabel} Zeichen, options = 2–6 Antwortmöglichkeiten; Multiple Choice bevorzugt, damit es schnell geht). Name, Telefon und E-Mail fragt das Formular automatisch ab, NICHT als Frage aufnehmen.
 - thankYouTitle (höchstens ${LIMITS.thankYouTitle} Zeichen), thankYouBody: was jetzt passiert (z. B. „Ich melde mich in Kürze per WhatsApp oder Telefon.“)
