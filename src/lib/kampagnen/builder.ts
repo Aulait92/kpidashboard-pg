@@ -140,7 +140,8 @@ export function leadFormPayload(
     // PARAGRAPH_STYLE erlaubt nur ein Element (Meta-Fehler #100, 21.11.2026): Absätze zusammenfassen
     context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: [form.introParagraphs.filter(Boolean).join("\n\n").slice(0, 2000)], button_text: "Weiter" },
     custom_disclaimer: {
-      title: "Einwilligung",
+      // Ole, 21.11.2026: Handlung statt Fachwort; Häkchen bleibt Pflicht (Rechtsprüfung, aktive Einwilligung)
+      title: "Wichtig: Haken setzen und unten auf „Senden“ klicken",
       body: { text: form.consentText },
       checkboxes: [{ key: "einwilligung_kontakt", text: "Ich bin einverstanden.", is_required: true, is_checked_by_default: false }],
     },
