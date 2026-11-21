@@ -10,19 +10,20 @@
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: Inter, "Helvetica Neue", Arial, sans-serif; color: #0f172a; }
-  .seite { width: 210mm; height: 297mm; padding: 14mm 15mm 12mm; display: flex; flex-direction: column; gap: 5mm; }
-  h1 { margin: 0; font-size: 25pt; letter-spacing: -0.02em; }
+  .seite { width: 210mm; height: 297mm; padding: 12mm 15mm 10mm; display: flex; flex-direction: column; gap: 3.4mm; }
+  h1 { margin: 0; font-size: 22pt; letter-spacing: -0.02em; }
   .unter { margin: 1mm 0 0; color: #475569; font-size: 11pt; }
-  .abschluss { background: #0f172a; color: #fff; border-radius: 4mm; padding: 4.5mm 6mm; font-size: 13pt; }
+  .abschluss { background: #0f172a; color: #fff; border-radius: 4mm; padding: 3.5mm 6mm; font-size: 12pt; }
   .abschluss b { font-size: 16pt; }
   .stufe { display: grid; grid-template-columns: 11mm 1fr; gap: 4mm; align-items: start; }
   .nr { width: 11mm; height: 11mm; border-radius: 50%; background: #2563eb; color: #fff; font-weight: 800; font-size: 15pt; display: flex; align-items: center; justify-content: center; }
-  .stufe h2 { margin: 0.5mm 0 1mm; font-size: 14pt; }
-  .satz { margin: 0; font-size: 13pt; font-weight: 600; color: #1e3a8a; }
+  .stufe h2 { margin: 0.5mm 0 1mm; font-size: 13pt; }
+  .satz { margin: 0; font-size: 12pt; font-weight: 600; color: #1e3a8a; }
   .klein { margin: 1mm 0 0; font-size: 10.5pt; color: #475569; }
+  .erkl { margin: 0 0 1.5mm; font-size: 10.5pt; color: #0f172a; background: #f1f5f9; border-radius: 2.5mm; padding: 2mm 3mm; }
   table { width: 100%; border-collapse: collapse; font-size: 10.5pt; }
   th { text-align: left; font-size: 9.5pt; color: #64748b; font-weight: 600; padding: 0 2mm 1.5mm 0; }
-  td { padding: 1.8mm 2mm 1.8mm 0; border-top: 0.3mm solid #e2e8f0; vertical-align: top; }
+  td { padding: 1.2mm 2mm 1.2mm 0; border-top: 0.3mm solid #e2e8f0; vertical-align: top; }
   td:first-child { font-weight: 700; width: 36mm; }
   .nie { margin-top: auto; background: #fef2f2; border-radius: 4mm; padding: 3.5mm 6mm; font-size: 10.5pt; color: #7f1d1d; }
   .nie b { display: block; margin-bottom: 1mm; font-size: 11pt; }
@@ -40,9 +41,10 @@
   <div class="stufe">
     <div class="nr">1</div>
     <div>
-      <h2>Prüfen</h2>
+      <h2>Prüfen: Beschwerde oder Einwand?</h2>
+      <p class="erkl"><b>Beschwerde:</b> Der Kunde findet es teuer, macht es aber trotzdem, wie Popcorn im Kino. Nur ein Reflex.<br><b>Einwand:</b> Etwas hält ihn wirklich ab. Dieser Satz trennt beides. Genau so sagen, nie zuerst „Warum?“:</p>
       <p class="satz">„Die Tatsache, dass Sie [es teuer finden], würde Sie aber nicht davon abhalten, das heute so zu machen, oder?“</p>
-      <p class="klein">Lächeln, nicken, schweigen. Nein: Antrag aufnehmen. Doch: weiter mit 2.</p>
+      <p class="klein">Lächeln, nicken, schweigen. „Nein“ = Beschwerde: Antrag aufnehmen. „Doch“ = Einwand: weiter mit 2.</p>
     </div>
   </div>
 

@@ -35,14 +35,17 @@ Danach schweigen. Es gibt drei Antworten: Ja, eine Verständnisfrage oder alles 
 
 ## Stufe 2: Prüfen, ob es überhaupt ein Einwand ist
 
+Dieselben Worte können eine **Beschwerde** oder ein **Einwand** sein. Beschwerde: Der Kunde findet es teuer, macht es aber
+trotzdem, wie Popcorn im Kino (nur ein Reflex). Einwand: Etwas hält ihn wirklich ab. Der folgende Satz trennt beides.
+
 Bei allem anderen („zu teuer“, „ich muss nachdenken“, „erst mit meinem Mann reden“, „ich bin schon versichert“) **immer
-zuerst** dieser Satz, nie zuerst „Warum?“:
+zuerst** dieser Satz, nie zuerst „Warum?“: (genau diese Formulierung)
 
 > „Die Tatsache, dass Sie [Punkt], würde Sie aber nicht davon abhalten, das heute so zu machen, oder?“
 
 Leicht lächeln, nicken, schweigen.
-- „Nein, eigentlich nicht.“ → Stufe 1, Antrag aufnehmen.
-- „Doch.“ → Stufe 3.
+- „Nein, eigentlich nicht.“ → Beschwerde. Stufe 1, Antrag aufnehmen.
+- „Doch.“ → Einwand. Stufe 3.
 - Nur „Nein“ ohne Grund: „Okay. Was macht Sie noch unsicher?“
 
 ## Stufe 3: Durchfragen (nur Fragen, kein Argument)

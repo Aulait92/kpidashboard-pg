@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
-import { CalendarDays, CheckCircle2, ChevronDown, ClipboardCheck, ClipboardList, FileSignature, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronDown, ClipboardCheck, ClipboardList, FileSignature, FileText, KeyRound, Mail, MessageCircle, MessageCircleQuestion, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -113,7 +113,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     "app",
     ...(software ? ["calendar", "mailbox"] : []),
     "provision",
-    ...(software ? ["erstinfo", "assistent", "serviceMails"] : []),
+    ...(software ? ["erstinfo", "assistent"] : []),
+    "einwaende",
+    ...(software ? ["serviceMails"] : []),
     ...(kampagnen ? ["metaAccess"] : []),
     ...(waEnabled ? ["whatsapp"] : []),
     ...["bestandImport", "reviewLink", "team"].filter(has),
@@ -525,6 +527,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {!done("assistent") ? <WeiterButton kind="gesehen:assistent" next={laterHref("assistent")} readOnly={readOnly} /> : null}
           </Step>
         ) : null}
+
+        <Step n={nextNo()} title="Einwände im Termin (3 Minuten)" icon={MessageCircleQuestion} done={done("einwaende")} open={isOpen("einwaende")} id="einwaende" current={current === "einwaende"}>
+          <p className="text-sm text-[color:var(--muted)]">Eine Seite mit vier Schritten und den Sätzen dazu. Bitte vor dem ersten Termin lesen und einprägen.</p>
+          <a href="/anleitung/einwand-merkblatt.pdf" target="_blank" rel="noopener noreferrer" className={`mt-3 ${buttonClass("secondary", "md")}`}>
+            <FileText className="h-4 w-4" /> Merkblatt öffnen
+          </a>
+          {!done("einwaende") ? <WeiterButton kind="gesehen:einwaende" next={laterHref("einwaende")} readOnly={readOnly} /> : null}
+        </Step>
 
         {software ? (
           <Step n={nextNo()} title="Service-Mails in Ihrem Namen" icon={Mail} done={done("serviceMails")} open={isOpen("serviceMails")} id="serviceMails" current={current === "serviceMails"}>
