@@ -1,4 +1,4 @@
-// Flow JSON „Policen senden“ (Policen-Strecke v2) und eine Prüfung gegen die bekannten Regeln von Meta. Rein.
+// Flow JSON „Unterlagen senden“ (bis 22.11.2026 „Policen senden“; Policen-Strecke v2) und eine Prüfung gegen die bekannten Regeln von Meta. Rein.
 //
 // Ein Flow je WhatsApp-Konto (WABA), alle Varianten (Sie/Du, mit/ohne Gesundheitssatz, KI-Satz) über dynamische Daten
 // (${data.…}), die die Nachricht beim Öffnen mitgibt (flow_action navigate, flow_action_payload.data). Kein Endpoint,
@@ -37,8 +37,9 @@ export const SCREEN_PDFS = "POLICEN_PDF";
 /** Höchstens so viele Dateien je Absenden (Meta: 10 in der Antwortnachricht). */
 export const MAX_DATEIEN_JE_SENDEN = 10;
 
-const DATEN_KEYS: (keyof FormularDaten)[] = ["ueberschrift", "punkt1", "punkt2", "punkt3", "punkt4", "hinweis", "datenschutz_url"];
+const DATEN_KEYS: (keyof FormularDaten)[] = ["intro", "ueberschrift", "punkt1", "punkt2", "punkt3", "punkt4", "hinweis", "datenschutz_url"];
 const BEISPIEL: FormularDaten = {
+  intro: "Meist reicht ein Foto der ersten Seite. Gern mehrere Verträge auf einmal.",
   ueberschrift: "Das passiert mit Ihren Policen",
   punkt1: "1. **Nur für Ihren Termin:** Herr Kannapinn (Ole Kannapinn UG) speichert sie zur Vorbereitung.",
   punkt2: "2. **Per KI ausgelesen, damit Ihr Vergleich zum Termin schon fertig ist:** Die Vertragsdaten liest ein KI-Dienst in der EU aus.",
@@ -64,7 +65,8 @@ function bildschirm(o: { id: string; picker: Komponente; wechsel: { text: string
     layout: {
       type: "SingleColumnLayout",
       children: [
-        { type: "TextBody", text: FORMULAR.intro },
+        // Einleitung dynamisch (Kfz: Fahrzeugschein und Rechnung, Ole 22.11.2026)
+        { type: "TextBody", text: "${data.intro}" },
         o.picker,
         ...(o.wechsel ? [{ type: "EmbeddedLink", text: o.wechsel.text, "on-click-action": { name: "navigate", next: { type: "screen", name: o.wechsel.ziel }, payload: durchreichen() } }] : []),
         { type: "TextSubheading", text: "${data.ueberschrift}" },

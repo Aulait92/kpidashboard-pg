@@ -192,13 +192,14 @@ describe("Paket 4: Lead-Texte ohne Ersparnisversprechen (§ 5 UWG, K8)", () => {
 
   it("Formular-Wortlaut (Nachweis A3) und Textversionen sind unverändert", () => {
     // Hashes des Formular-Wortlauts vor Paket 4 (Stand b13c3f8). Ändert sich einer, ist das eine neue Einwilligung
-    // (neue FLOW_TEXT_VERSION, textVersionKi, Stufe A), keine Textpflege.
+    // (neue FLOW_TEXT_VERSION, textVersionKi, Stufe A), keine Textpflege. 22.11.2026 (Ole): Titel „Unterlagen senden“
+    // statt „Policen senden“, Inhalt der Einwilligung gleich, darum Fassung 2026-11-22.
     const u = "https://x.de/d";
-    expect(textHash(formularWortlaut(formularDaten(SIE, u)))).toBe("d7d946b40d5fb5968f0530eee27759ffd699172bc0c5e0f59f6a6ca5a791b470");
-    expect(textHash(formularWortlaut(formularDaten(DU, u)))).toBe("ef69b86159ca91568d1891f00efd28130abcd14ae120e87bd45eced8bdc77970");
-    expect(textHash(formularWortlaut(formularDaten({ ...SIE, kiFertig: false, gesundheit: false, pronomen: null }, u)))).toBe("69a236db7f1ddb8765d44c5a8c4e33742048731f9af9ddb4d799ce7fc7b87ee2");
-    expect(FLOW_TEXT_VERSION).toBe("2026-11-19.g1");
-    expect(FLOW_TEXT_VERSION_SACH).toBe("2026-11-19.s1");
+    expect(textHash(formularWortlaut(formularDaten(SIE, u)))).toBe("a6c1d4719f4b98f7b4b034ed725d15cf10cb364f32a9e947bfadcfb4748d6fca");
+    expect(textHash(formularWortlaut(formularDaten(DU, u)))).toBe("d708d4723e122f857a6462a5466436026937a4c12e3424cb2282200db5aff75a");
+    expect(textHash(formularWortlaut(formularDaten({ ...SIE, kiFertig: false, gesundheit: false, pronomen: null }, u)))).toBe("52a3dd04a8ca6c87d0835fd216dc99c219a201f5df6b8e998f85f1eef1d11350");
+    expect(FLOW_TEXT_VERSION).toBe("2026-11-22.g1");
+    expect(FLOW_TEXT_VERSION_SACH).toBe("2026-11-22.s1");
   });
 
   it("Abmeldehinweis „Nein, danke“ oder STOP wörtlich in beiden Erinnerungen und ihren Vorlagen", () => {

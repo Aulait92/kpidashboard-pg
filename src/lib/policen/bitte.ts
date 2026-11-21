@@ -21,6 +21,7 @@
 
 import { a, type Ansprache, type Salutation } from "@/lib/ansprache";
 import type { Person } from "@/lib/policen/regeln";
+import { anderePolicenSatz } from "@/lib/policen/andere-policen";
 
 export type Knopf = { id: string; title: string };
 /** Eine WhatsApp-Nachricht: Text, Knöpfe (leer = reiner Text), Fußzeile (nur mit Knöpfen). */
@@ -123,10 +124,15 @@ export function policenBitte(o: {
   vertraege?: string[] | null;
   /** Kfz-Lead (Ole, 21.11.2026): konkret Fahrzeugschein und letzte Rechnung der Kfz-Versicherung statt „Policen“ */
   kfz?: boolean;
+  /** Kfz: Komplettcheck Ja (dann auch ohne genannte Verträge die Bitte um die anderen Policen, Ole 22.11.2026) */
+  komplettcheck?: boolean | null;
 }): PolicenBitte {
   const { an } = o;
   const wer = nominativ(an, o.vermittler);
-  if (o.kfz) return { text: kfzBitteText(an, wer), knoepfe: [], fusszeile: null, einwilligung: policenEinwilligung(o) };
+  if (o.kfz) {
+    const andere = anderePolicenSatz(an, pronomen(o.vermittler, wer) ?? wer, { vertraege: o.vertraege, komplettcheck: o.komplettcheck, verb: "schicken" });
+    return { text: kfzBitteText(an, wer, andere), knoepfe: [], fusszeile: null, einwilligung: policenEinwilligung(o) };
+  }
   const eigene = [...new Set((o.vertraege ?? []).map((v) => v.trim()).filter(Boolean))].slice(0, 4);
   const sparten = eigene.length
     ? eigene.length === 1
@@ -153,12 +159,14 @@ export function policenBitte(o: {
  * Bitte an Kfz-Leads (Ole, 21.11.2026): die zwei Unterlagen, aus denen der Beitrag gerechnet wird. Ohne Versprechen zu
  * Preisen oder Ersparnis. wer = Vermittler im Nominativ.
  */
-export function kfzBitteText(an: Ansprache, wer: string): string {
-  return a(
+export function kfzBitteText(an: Ansprache, wer: string, andere?: string | null): string {
+  const kern = a(
     an,
-    `Damit ${wer} deinen Beitrag vorab rechnen kann: Schick bitte ein Foto von deinem Fahrzeugschein (Vorderseite) und von der letzten Rechnung deiner Kfz-Versicherung hier in den Chat. Darauf steht alles Nötige, zum Beispiel deine SF-Klasse. Gern auch deine anderen Policen, etwa Haftpflicht oder Hausrat: Dann schaut ${wer} im Termin alles mit an und versucht, dir Geld zu sparen.`,
-    `Damit ${wer} Ihren Beitrag vorab rechnen kann: Schicken Sie bitte ein Foto von Ihrem Fahrzeugschein (Vorderseite) und von der letzten Rechnung Ihrer Kfz-Versicherung hier in den Chat. Darauf steht alles Nötige, zum Beispiel Ihre SF-Klasse. Gern auch Ihre anderen Policen, etwa Haftpflicht oder Hausrat: Dann schaut ${wer} im Termin alles mit an und versucht, Ihnen Geld zu sparen.`,
+    `Damit ${wer} deinen Beitrag vorab rechnen kann: Schick bitte ein Foto von deinem Fahrzeugschein (Vorderseite) und von der letzten Rechnung deiner Kfz-Versicherung hier in den Chat. Darauf steht alles Nötige, zum Beispiel deine SF-Klasse.`,
+    `Damit ${wer} Ihren Beitrag vorab rechnen kann: Schicken Sie bitte ein Foto von Ihrem Fahrzeugschein (Vorderseite) und von der letzten Rechnung Ihrer Kfz-Versicherung hier in den Chat. Darauf steht alles Nötige, zum Beispiel Ihre SF-Klasse.`,
   );
+  // Andere Policen nur mit Komplettcheck Ja bzw. genannten Verträgen, mit Grund und den genannten Verträgen (Ole, 22.11.2026)
+  return andere ? `${kern}\n\n${andere}` : kern;
 }
 
 /** Beide Nachrichten in der Reihenfolge zum Senden. */

@@ -6,7 +6,8 @@ import { istKfzProdukt, produktCheckliste } from "@/lib/whatsapp/produkt-fragen"
 import { folgefragen, spartenDesLeads, angabenFuerSparte } from "@/lib/preise/rechner-angaben";
 import { bereitlegenListe } from "@/lib/whatsapp/gespraech";
 import { kfzBitteText, policenBitte } from "@/lib/policen/bitte";
-import { chatNachricht, vorlagenText } from "@/lib/policen/flow/texte";
+import { chatNachricht, bestaetigung, flowKnopf, formularDaten, KNOPF_POLICEN_SENDEN, KNOPF_UNTERLAGEN_SENDEN, vorlagenText, type FlowTextKontext } from "@/lib/policen/flow/texte";
+import { andereVertraege, anderePolicenSatz } from "@/lib/policen/andere-policen";
 import { policenErinnerungText } from "@/lib/whatsapp/termin-strecke";
 import { FELDER, felderFuer, maskiereNummer, normHsn, normTsn, pruefeWert, volleNummer } from "@/lib/policen/auslesen/felder";
 import { spartenImText } from "@/lib/policen/auslesen/sparte";
@@ -80,9 +81,9 @@ describe("Rechner-Angaben und Folgefragen", () => {
 describe("Texte an Kfz-Leads", () => {
   const vermittler = { nom: "Herr Kannapinn", dat: "Herrn Kannapinn", anrede: "Herr" as const };
   const texte = (an: "sie" | "du") => [
-    kfzBitteText(an, an === "sie" ? "Herr Kannapinn" : "Ole"),
-    policenBitte({ an, vermittler, kfz: true }).text,
-    chatNachricht({ an, name: an === "sie" ? "Herr Kannapinn" : "Ole", pronomen: "er", tag: "Donnerstag", kiFertig: false, gesundheit: false, kfz: true }).text,
+    kfzBitteText(an, an === "sie" ? "Herr Kannapinn" : "Ole", anderePolicenSatz(an, "er", { komplettcheck: true, verb: "schicken" })),
+    policenBitte({ an, vermittler, kfz: true, komplettcheck: true }).text,
+    chatNachricht({ an, name: an === "sie" ? "Herr Kannapinn" : "Ole", pronomen: "er", tag: "Donnerstag", kiFertig: false, gesundheit: false, kfz: true, komplettcheck: true }).text,
     policenErinnerungText(an, { nom: "Herr Kannapinn" }, null, true),
   ];
 
@@ -95,10 +96,59 @@ describe("Texte an Kfz-Leads", () => {
         expect(ohneBemuehen(t), t).not.toMatch(VERBOTEN);
         expect(ohneBemuehen(t), t).not.toMatch(/sparen/i);
       }
-      for (const t of texte(an).slice(0, 3)) expect(t, t).toMatch(/anderen Policen, etwa Haftpflicht oder Hausrat/);
+      for (const t of texte(an).slice(0, 3)) expect(t, t).toMatch(/anderen Policen(?: hoch)?\*, zum Beispiel Haftpflicht oder Hausrat\. Dann sieht er im Komplettcheck, ob/);
     }
     for (const t of texte("sie")) expect(t, t).not.toMatch(/\b(du|dein(e[nmr]?)?|dich|dir)\b/);
     for (const t of texte("du")) expect(t, t).not.toMatch(/\b(Sie|Ihre[nmr]?|Ihnen)\b/);
+  });
+
+  const KFZ: FlowTextKontext = { an: "sie", name: "Herr Kannapinn", pronomen: "er", tag: "Montag", kiFertig: false, gesundheit: false, kfz: true };
+
+  it("Chat-Nachricht (Ole, 22.11.2026): andere Policen klar, mit Grund und genannten Verträgen, ohne Unterlagen", () => {
+    expect(chatNachricht({ ...KFZ, andereVertraege: ["Haftpflicht bei Allianz"], komplettcheck: true }).text).toBe(
+      "Kleiner Tipp für Montag 💡\n\nWenn Herr Kannapinn Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung vorab hat, kann er *Ihren Beitrag schon vor dem Termin rechnen.* Darauf steht alles Nötige, zum Beispiel Ihre SF-Klasse.\n\n*Je ein Foto reicht* (beim Fahrzeugschein die Vorderseite). Dauert etwa eine Minute.\n\n*Laden Sie gern auch Ihre anderen Policen hoch*, zum Beispiel Ihre Haftpflicht bei Allianz. Dann sieht er im Komplettcheck, ob Sie etwas doppelt zahlen.\n\nIhr Termin findet auch ohne Unterlagen statt.",
+    );
+    expect(chatNachricht({ ...KFZ, an: "du", name: "Ole", andereVertraege: ["Haftpflicht bei Allianz", "Hausrat"], komplettcheck: null }).text).toContain(
+      "*Lade gern auch deine anderen Policen hoch*, zum Beispiel Haftpflicht bei Allianz und Hausrat. Dann sieht er, ob du etwas doppelt zahlst.\n\nDein Termin findet auch ohne Unterlagen statt.",
+    );
+    // Ohne Komplettcheck und ohne genannte Verträge: keine Bitte um andere Policen
+    const ohne = chatNachricht({ ...KFZ, komplettcheck: false }).text;
+    expect(ohne).not.toMatch(/anderen Policen/);
+    expect(ohne.endsWith("Dauert etwa eine Minute.\n\nIhr Termin findet auch ohne Unterlagen statt.")).toBe(true);
+    expect(chatNachricht(KFZ).text).not.toMatch(/anderen Policen/);
+    // Ohne Kfz bleibt alles wie bisher
+    expect(chatNachricht({ ...KFZ, kfz: false }).text.endsWith("Ihr Termin findet auch ohne Policen statt.")).toBe(true);
+  });
+
+  it("Knopf „Unterlagen senden“ nur für Kfz (höchstens 20 Zeichen), Formular und Bestätigung passend", () => {
+    expect(flowKnopf(KFZ)).toBe(KNOPF_UNTERLAGEN_SENDEN);
+    expect(flowKnopf({ kfz: false })).toBe(KNOPF_POLICEN_SENDEN);
+    expect(KNOPF_UNTERLAGEN_SENDEN.length).toBeLessThanOrEqual(20);
+    const d = formularDaten(KFZ, "https://x.de/d");
+    expect(d.ueberschrift).toBe("Das passiert mit Ihren Unterlagen");
+    expect(d.hinweis.endsWith("Ihr Termin findet auch ohne Unterlagen statt.")).toBe(true);
+    expect(d.intro).toMatch(/Fahrzeugschein/);
+    expect(formularDaten({ ...KFZ, kfz: false }, "https://x.de/d").ueberschrift).toBe("Das passiert mit Ihren Policen");
+    expect(bestaetigung(KFZ, 1, true).text).not.toMatch(/Kfz/);
+    expect(bestaetigung({ ...KFZ, kfz: false }, 1, true).text).toMatch(/etwa Kfz oder Hausrat/);
+  });
+
+  it("andere Verträge: ohne das angefragte Produkt, mit Gesellschaft, ohne Gesundheit ohne Freigabe", () => {
+    const vv = { at: "x", liste: [{ sparte: "Kfz", gesellschaft: "HUK" }, { sparte: "Haftpflicht", gesellschaft: "Allianz" }, { sparte: "Hausrat" }, { sparte: "Zahnzusatz", gesellschaft: "DKV" }, { sparte: "Sonstige" }] };
+    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true })).toEqual(["Haftpflicht bei Allianz", "Hausrat"]);
+    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true, gesundheitAn: true })).toEqual(["Haftpflicht bei Allianz", "Hausrat", "Zahnzusatz bei DKV"]);
+    expect(andereVertraege(null, { kfz: true })).toEqual([]);
+    // Feste Beispiele nie mit dem angefragten Produkt
+    expect(anderePolicenSatz("sie", "er", { komplettcheck: true, verb: "hochladen" })).toMatch(/zum Beispiel Haftpflicht oder Hausrat\./);
+    expect(anderePolicenSatz("sie", "er", { komplettcheck: true, verb: "hochladen", ausgenommen: ["Haftpflicht", "Hausrat"] })).toMatch(/zum Beispiel Rechtsschutz oder Kfz\./);
+    expect(anderePolicenSatz("sie", "er", { komplettcheck: false, verb: "hochladen" })).toBeNull();
+  });
+
+  it("Bitte ohne Formular nennt die genannten Verträge bzw. keine anderen Policen", () => {
+    expect(policenBitte({ an: "sie", vermittler, kfz: true, vertraege: ["Haftpflicht bei Allianz"] }).text).toContain(
+      "*Schicken Sie gern auch Ihre anderen Policen*, zum Beispiel Ihre Haftpflicht bei Allianz. Dann sieht er, ob Sie etwas doppelt zahlen.",
+    );
+    expect(policenBitte({ an: "sie", vermittler, kfz: true }).text).not.toMatch(/anderen Policen/);
   });
 
   it("die Einwilligung und die Meta-Vorlage bleiben unverändert", () => {
