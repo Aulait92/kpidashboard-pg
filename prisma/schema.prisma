@@ -2596,6 +2596,9 @@ model AdvisorCalendar {
   tokenExpiresAt  DateTime?
   scope           String?
   status          String    @default("pending")
+  // Berater-App-Kalender (provider "app", 21.11.2026): Person im Allianz-Online-Kalender der Agentur (bookingtime-Ressource).
+  // Belegt = eigene Termine + freie Slots dieser Person; Einladung per Mail an accountEmail (Standard: Login-Adresse).
+  allianzResourceId String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

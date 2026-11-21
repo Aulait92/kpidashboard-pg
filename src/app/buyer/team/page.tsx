@@ -11,6 +11,7 @@ import { addSeatCostHint, addsSeatCost, berlinDayStart, isActiveSeller, seatSumm
 import { InviteForm } from "./invite-form";
 import { MemberRow } from "./member-row";
 import { bereitFuerLeads, wartetText } from "@/lib/team-bereit";
+import { loadBeraterPersonen } from "@/lib/calendar/berater-allianz";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Team | performancegrowth" };
@@ -22,7 +23,7 @@ export default async function TeamPage() {
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const readOnly = ctx.preview;
 
-  const members = await teamMembers(ctx.customerId);
+  const [members, personen] = await Promise.all([teamMembers(ctx.customerId), loadBeraterPersonen(ctx.customerId)]);
   // Bereit für Leads erst mit Kalender und App mit Mitteilungen (Ole, 21.11.2026, lib/team-bereit.ts)
   const mitPush = new Set(
     (await prisma.pushSubscription.findMany({ where: { userId: { in: members.map((m) => m.id) } }, select: { userId: true } })).map((p) => p.userId),
@@ -80,6 +81,11 @@ export default async function TeamPage() {
                   loggedIn: !!m.lastLoginAt,
                   twoFactor: !!m.totpEnabledAt,
                   absence: absences.get(m.id) ?? null,
+                  // Allianz-Person nur für Berater ohne eigenen Google-/Outlook-Kalender
+                  allianz:
+                    personen?.resources.length && m.teamRole === "advisor" && !(m.advisorCalendar?.status === "connected" && !personen.gewaehlt[m.id])
+                      ? { resources: personen.resources, resourceId: personen.gewaehlt[m.id]?.resourceId ?? null, email: personen.gewaehlt[m.id]?.email ?? m.email }
+                      : null,
                   enableCostHint: !m.receivesLeads && !activeToday.has(m.id) ? enableCost : null,
                 }}
                 colleagues={members.filter((o) => o.id !== m.id).map((o) => ({ id: o.id, name: memberName(o) }))}

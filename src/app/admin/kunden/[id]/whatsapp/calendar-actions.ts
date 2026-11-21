@@ -79,3 +79,18 @@ export async function adminDeleteBlockAction(fd: FormData): Promise<void> {
   await deleteBlock(customerId, String(fd.get("id") ?? ""));
   done(customerId);
 }
+
+/** Kundenakte: Person im Allianz-Online-Kalender je Team-Mitglied (Termine per Einladung, lib/calendar/berater-allianz.ts). */
+export async function adminSetBeraterAllianzAction(_prev: SourceResult, fd: FormData): Promise<SourceResult> {
+  const customerId = await adminCustomer(fd);
+  if (!customerId) return { error: "Nicht erlaubt." };
+  const userId = String(fd.get("userId") ?? "");
+  const { beraterAllianzSetzen } = await import("@/lib/calendar/berater-allianz");
+  const res = await beraterAllianzSetzen({ customerId, userId, resourceId: String(fd.get("resourceId") ?? "") || null, email: String(fd.get("email") ?? "") });
+  if (res.ok) {
+    await audit("calendar.berater_allianz", { customerId, entity: "AdvisorCalendar", entityId: userId, details: { by: "admin" } });
+    done(customerId);
+    return { ok: true, info: res.info?.replace("Termine bekommen Sie als Einladung an", "Einladungen an") };
+  }
+  return res;
+}
