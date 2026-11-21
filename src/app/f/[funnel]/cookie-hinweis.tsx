@@ -61,11 +61,13 @@ export function entscheide(e: "ja" | "nein") {
   melden();
 }
 
+// Gleichwertige Knöpfe (L6), nebeneinander, 44 px; Hover nur mit echter Maus (visual.md M3)
 const knopf =
-  "min-h-11 flex-1 rounded-xl border-2 border-[var(--m-option-rand)] bg-white px-4 text-[15px] font-semibold text-[var(--m-text)] transition hover:border-[var(--m-primaer)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--m-primaer-hell)]";
+  "min-h-11 flex-1 rounded-[12px] border border-[var(--m-feld-rand)] bg-white px-4 text-[15px] font-semibold text-[var(--m-text)] transition [@media(pointer:fine)]:hover:border-[var(--m-primaer)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--m-primaer-hell)]";
 
 /**
- * Hinweis unten auf der Seite. aufWunsch = nur nach Klick auf „Cookies“ (Seiten ohne Pixel, z. B. Partnerliste);
+ * Hinweis unten auf der Seite, kompakt (ux-ui.md Muss 1): Text inhaltlich unverändert (L6), 13 px, Knöpfe nebeneinander.
+ * Am Start verdeckt er keine Antwort mehr: Die Frage-Karte steht unter dem Advertorial, und unten bleibt Platz frei. aufWunsch = nur nach Klick auf „Cookies“ (Seiten ohne Pixel, z. B. Partnerliste);
  * sonst auch, solange nichts entschieden ist (einwilligungNoetig).
  */
 export function CookieHinweis({ aufWunsch = false, einwilligungNoetig = true }: { aufWunsch?: boolean; einwilligungNoetig?: boolean }) {
@@ -74,11 +76,11 @@ export function CookieHinweis({ aufWunsch = false, einwilligungNoetig = true }: 
   const sichtbar = offen || (!aufWunsch && einwilligungNoetig && e === null);
   if (!sichtbar) return null;
   return (
-    <div role="dialog" aria-label="Cookies" className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--m-karte-rand)] bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.25)]">
-      <div className="mx-auto flex max-w-xl flex-col gap-2.5 sm:max-w-3xl sm:flex-row sm:items-center sm:gap-4">
-        <p className="flex-1 text-[13px] leading-snug text-[var(--m-text)]">
+    <div role="dialog" aria-label="Cookies" className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--m-karte-rand)] bg-white px-4 pb-[max(0.625rem,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.25)]">
+      <div className="mx-auto flex max-w-xl flex-col gap-2 sm:max-w-3xl sm:flex-row sm:items-center sm:gap-4">
+        <p className="flex-1 text-[13px] leading-[18px] text-[var(--m-text)]">
           {T.cookies.text}{" "}
-          <a href={T.datenschutzUrl} target="_blank" rel="noopener" className="font-medium text-[var(--m-primaer)] underline underline-offset-2">
+          <a href={T.datenschutzUrl} target="_blank" rel="noopener" className="py-1 text-[var(--m-primaer)] underline underline-offset-2">
             {T.cookies.mehr}
           </a>
         </p>

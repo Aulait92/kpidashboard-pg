@@ -24,6 +24,11 @@ export async function adminMitlesen(o: { leadId: string; ereignis: MitlesenEreig
       select: { isTest: true, source: true, customerId: true, customer: { select: { name: true, isTest: true, adminMitlesen: true } } },
     });
     if (!lead?.customer || lead.isTest || lead.customer.isTest || !lead.customer.adminMitlesen) return;
+    // Leads über Perspective: Ole bekommt dafür schon eine Mail von Perspective (21.11.2026), kein zweiter Push
+    if (o.ereignis === "lead") {
+      const pool = await prisma.poolLead.findFirst({ where: { leadId: o.leadId }, select: { via: true } });
+      if (pool?.via === "perspective") return;
+    }
     const { title, body } = mitlesenText(o.ereignis, lead.customer.name, o.detail ?? lead.source);
     await sendToAdmins({ title, body, url: `/admin/neu/kunden/${lead.customerId}`, tag: `mitlesen-${o.ereignis}:${o.tagZusatz ?? o.leadId}` });
   } catch (err) {

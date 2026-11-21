@@ -34,7 +34,7 @@ export const REIF_TAGE = 14;
 
 export const EREIGNIS_ARTEN = ["angesehen", "beantwortet", "abbruch", "abgeschickt"] as const;
 export type EreignisArt = (typeof EREIGNIS_ARTEN)[number];
-const GRUENDE: AbbruchGrund[] = ["gesetzlich", "unter_650"];
+const GRUENDE: AbbruchGrund[] = ["gesetzlich", "unter_650", "debeka", "beamte"];
 
 // ─── Herkunft (nur Tracking-Schlüssel, keine Personendaten) ───────────────
 
@@ -251,12 +251,13 @@ export async function experteFuer(leadId: string): Promise<Experte | null> {
 
 /** E-Mail „Dein Experte“ (Texte: docs/funnel/pkv-beitrag-texte-conversion.md, L9). Rein. */
 export function experteMail(p: { email: string; vorname: string; experte: Experte; datenschutzEmail: string }): { to: string; subject: string; text: string } {
-  const { name, firma, telefon } = p.experte;
+  // Ohne Telefonnummer des Experten (Ole, 21.11.2026)
+  const { name, firma } = p.experte;
   const hallo = p.vorname.trim() ? `Hallo ${p.vorname.trim()},` : "Hallo,";
   const text = [
     hallo,
     "",
-    `${name} von ${firma} ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an, und zwar von dieser Nummer: ${telefon}. Speichere sie dir am besten gleich.`,
+    `${name} von ${firma} ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an. Geh am besten auch bei unbekannten Nummern ran.`,
     "",
     `Widerruf jederzeit per E-Mail an ${p.datenschutzEmail}.`,
     "",
@@ -430,6 +431,30 @@ export async function funnelReifePruefen(now = new Date(), o: { limit?: number }
     orderBy: { reifGeprueftAt: "asc" },
     take: limit,
   });
+  // Früh (Ole, 21.11.2026): Qualitäts-Ereignis sofort, sobald erreicht, nicht erst nach 14 Tagen (Meta braucht das
+  // Signal zeitnah). Nur Ereignis und Löschen der Meta-Kennungen, die Reife-Bewertung bleibt beim 14-Tage-Lauf.
+  if (qualitaetAn()) {
+    const frueh = await prisma.funnelBesuch.findMany({
+      where: { poolLeadId: { not: null }, reifGeprueftAt: null, leadAt: { gt: reifAb }, metaEinwilligung: true, qualitaetGesendetAt: null },
+      orderBy: { leadAt: "asc" },
+      take: limit,
+    });
+    const fakten = await ladeLeadFakten([...new Set(frueh.map((b) => b.poolLeadId!))]);
+    for (const b of frueh) {
+      try {
+        const e = fakten.get(b.poolLeadId!);
+        if (!e?.pool) continue;
+        const w = bewerteLead(e.fakten);
+        if (!w.erreicht || !w.rueckmeldungMoeglich) continue;
+        if (await qualitaetSenden(b, e.pool, e.umsatz, now)) {
+          await prisma.funnelBesuch.update({ where: { id: b.id }, data: { qualitaetGesendetAt: now, metaFbc: null, metaFbp: null } });
+          out.qualitaet++;
+        }
+      } catch (err) {
+        reportError(err, "funnel-qualitaet-frueh");
+      }
+    }
+  }
   const liste: [Besuch, boolean][] = [...faellig.map((x): [Besuch, boolean] => [x, true]), ...nach.map((x): [Besuch, boolean] => [x, false])];
   const alle = await ladeLeadFakten([...new Set(liste.map(([b]) => b.poolLeadId!))]);
   for (const [b, erst] of liste) {
