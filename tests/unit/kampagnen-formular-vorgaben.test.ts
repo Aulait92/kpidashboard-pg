@@ -162,6 +162,8 @@ describe("Privatschutz: Versicherungsinteresse aus dem Formular (Ole, 21.11.2026
   const src = (label: string, value: string) => ({ formular: [{ label, value }], angaben: null });
   it("neue und alte Formularfrage, Paket und Tippfehler", () => {
     expect(spartenDesLeads("Privatschutz", src("Welche Versicherung interessiert Sie am meisten?", "Wohngebäude") as never)).toEqual(["wohngebaeude"]);
+    // Mehrfachauswahl: Meta liefert mehrere Antworten kommagetrennt (lib/lead-intake.ts)
+    expect(spartenDesLeads("Privatschutz", src("Welche Versicherungen interessieren Sie?", "Hausrat, Rechtsschutz, Unfall") as never)).toEqual(expect.arrayContaining(["hausrat", "rechtsschutz", "unfall"]));
     expect(spartenDesLeads("Privatschutz", src("Welche Versicherung interessiert Sie am meisten?", "Alles in einem Paket") as never)).toEqual(["haftpflicht", "hausrat", "rechtsschutz", "unfall"]);
     expect(spartenDesLeads("Privatschutz", src("An welchen Versicherungen bist Du interessiert? Sie sparen …", "Rechtschutzversicherung") as never)).toEqual(["rechtsschutz"]);
     expect(spartenDesLeads("Privatschutz", { formular: [{ label: "Welche Versicherung interessiert Sie am meisten?", value: "Tierkrankenversicherung / Tierhalterhaftpflicht" }], angaben: { tier: "Katze, Krankenversicherung" } } as never)).toEqual(["katze-kranken"]);

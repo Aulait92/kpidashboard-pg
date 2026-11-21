@@ -2,7 +2,7 @@
 // (lib/whatsapp/produkt-fragen.ts KFZ_FORMULAR, lib/whatsapp/gespraech.ts istFamilie), darum legt diese Datei die
 // Fragen und die vorausgefüllten Meta-Standardfelder fest, statt sie dem Formular-Agenten zu überlassen.
 //   Kfz:          „Worum geht es?“ + „Welchen Schutz wünschen Sie?“, dazu Straße, PLZ, Ort, Geburtsdatum
-//   Privatschutz: „Für wen soll der Schutz gelten?“ + „Welche Versicherung interessiert Sie am meisten?“, dazu Straße, PLZ, Ort
+//   Privatschutz: „Für wen soll der Schutz gelten?“ + „Welche Versicherungen interessieren Sie?“ (Mehrfachauswahl), dazu Straße, PLZ, Ort
 // Meta liefert die Standardfelder mit den Schlüsseln unten; lib/lead-intake.ts (META_STANDARD) macht daraus
 // „Straße“, „Postleitzahl“, „Ort“ und „Geburtsdatum“.
 
@@ -52,9 +52,11 @@ export function festeFragen(product: string | null | undefined, du: boolean): Fo
       { key: "versicherte_personen", label: "Für wen soll der Schutz gelten?", options: ["Nur für mich", "Mit Partner", "Mit Familie"] },
       {
         key: "versicherungsinteresse",
-        label: du ? "Welche Versicherung interessiert dich am meisten?" : "Welche Versicherung interessiert Sie am meisten?",
-        // wie das bewährte Lohmann-Formular; Tierart und Kranken bzw. Halterhaftpflicht klärt der Assistent im Chat
-        options: ["Haftpflicht", "Hausrat", "Rechtsschutz", "Wohngebäude", "Unfall", "Tierkrankenversicherung / Tierhalterhaftpflicht", "Alles in einem Paket"],
+        label: du ? "Welche Versicherungen interessieren dich?" : "Welche Versicherungen interessieren Sie?",
+        // Mehrfachauswahl (im Werbeanzeigenmanager „Mehrere Antworten erlauben“, per API nicht möglich), Meta erlaubt dann
+        // höchstens 6 Antworten: „Alles in einem Paket“ entfällt, weil man alles ankreuzen kann (Ole, 21.11.2026).
+        // Tierart und Kranken bzw. Halterhaftpflicht klärt der Assistent im Chat.
+        options: ["Haftpflicht", "Hausrat", "Rechtsschutz", "Wohngebäude", "Unfall", "Tierkrankenversicherung / Tierhalterhaftpflicht"],
       },
     ];
   }
