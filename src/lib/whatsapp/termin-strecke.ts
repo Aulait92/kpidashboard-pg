@@ -747,7 +747,7 @@ async function langeZeiten(k: StreckenKontext, now: Date): Promise<[string, stri
   try {
     const { suggestSlots } = await import("@/lib/calendar");
     const { pickTwoSlots } = await import("@/lib/whatsapp/termin-vorschlaege");
-    const frei = (await suggestSlots(k.customerId, LANG_MIN, 8, "lead", 10, k.leadId)).filter((s) => new Date(s.start).getTime() > now.getTime() + HOUR);
+    const frei = (await suggestSlots(k.customerId, LANG_MIN, 40, "lead", 10, k.leadId)).filter((s) => new Date(s.start).getTime() > now.getTime() + HOUR);
     const two = pickTwoSlots(frei, { now });
     return two ? [two[0].start, two[1].start] : null;
   } catch {
