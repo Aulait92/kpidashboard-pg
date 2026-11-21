@@ -60,12 +60,40 @@ export type CampaignContext = {
   patterns: string;
   /** Lange laufende Anzeigen anderer aus der Meta-Werbebibliothek (Vorlage, nicht wörtlich übernehmen). */
   libraryWinners?: string | null;
+  /** Bestlaufende Anzeigen aus dem eigenen Werbekonto des Kunden (lib/kampagnen/eigene-gewinner.ts), Vorrang vor der Werbebibliothek. */
+  eigeneGewinner?: EigenerGewinner[] | null;
+  /** Warum keine eigenen Gewinner da sind (z. B. keine Berechtigung), nur für den Admin. */
+  eigeneGewinnerHinweis?: string | null;
   /** Buchungsseite des Kunden – Pflicht auf der Dankeseite (Ole, 13.11.2026), damit Leads direkt einen Termin buchen. */
   bookingUrl?: string | null;
   /** Paket mit Software: Buchungsseite ist Pflicht (Nur Betreuung: ohne Kalender). */
   needsBooking?: boolean;
   /** Fester Einwilligungstext fürs Formular (lib/einwilligung-leadformular.ts); ersetzt den Vorschlag des Formular-Agenten. */
   consentText?: string | null;
+};
+
+/** Eine bestlaufende Anzeige aus dem eigenen Meta-Werbekonto des Kunden (letzte 90 Tage). */
+export type EigenerGewinner = {
+  adId: string;
+  name: string;
+  kampagne: string | null;
+  ausgaben: number;
+  /** Leads: aus unserer Datenbank (Lead.adId), sonst laut Meta */
+  leads: number;
+  leadsQuelle: "app" | "meta";
+  /** Termine aus unserer Datenbank (nicht abgesagt), null = keine Leads in der App */
+  termine: number | null;
+  cpl: number;
+  kostenJeTermin: number | null;
+  /** Klickrate in Prozent */
+  ctr: number | null;
+  primaryText: string | null;
+  headline: string | null;
+  description: string | null;
+  cta: string | null;
+  bildUrl: string | null;
+  video: boolean;
+  passtZumProdukt: boolean;
 };
 
 // ─── Agenten-Ergebnisse ─────────────────────────────────────────────────

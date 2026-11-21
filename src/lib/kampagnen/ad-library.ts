@@ -19,6 +19,11 @@ const SUCHBEGRIFFE: [RegExp, string[]][] = [
   [/kinder|sparplan/i, ["Kindersparplan"]],
 ];
 
+/** Erkennungsmuster der Produktfamilie (z. B. Katze), null wenn unbekannt. */
+export function produktMuster(product: string): RegExp | null {
+  return SUCHBEGRIFFE.find(([re]) => re.test(product))?.[0] ?? null;
+}
+
 export function suchbegriffe(product: string): string[] {
   return SUCHBEGRIFFE.find(([re]) => re.test(product))?.[1] ?? [product];
 }

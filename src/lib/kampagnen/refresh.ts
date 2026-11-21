@@ -322,7 +322,7 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
     let review = row.review as unknown as ReviewResult | null;
     if (!review) {
       await saveRunStep(state, current, { status: "laeuft", startedAt: t() });
-      let r = await reviewer(deps.llm, ctx, { plan, copies, form, images });
+      let r = await reviewer(deps.llm, ctx, { plan, copies, form, images, angles });
       await saveRunStep(state, current, {}, {}, r.usage);
       review = r.value;
       if (review.status === "rot") {
@@ -334,7 +334,7 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
           images = await renderRunImages(deps, ctx, angles, copies, id, images, copies.map(() => true));
           await prisma.campaignRun.update({ where: { id }, data: { creatives: json(images) } });
         }
-        r = await reviewer(deps.llm, ctx, { plan, copies, form, images });
+        r = await reviewer(deps.llm, ctx, { plan, copies, form, images, angles });
         review = { ...r.value, revised: true };
         await saveRunStep(state, current, {}, {}, r.usage);
       }

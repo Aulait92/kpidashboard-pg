@@ -1369,6 +1369,8 @@ async function callAnthropic(opts: {
   maxTokens: number;
   model: string;
   timeoutMs: number;
+  /** Referenzbilder (öffentliche URLs), werden vor den Text gestellt */
+  imageUrls?: string[];
 }): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
@@ -1381,7 +1383,14 @@ async function callAnthropic(opts: {
       const body: Record<string, unknown> = {
         model: opts.model,
         max_tokens: opts.maxTokens,
-        messages: [{ role: "user", content: opts.user }],
+        messages: [
+          {
+            role: "user",
+            content: opts.imageUrls?.length
+              ? [...opts.imageUrls.map((url) => ({ type: "image", source: { type: "url", url } })), { type: "text", text: opts.user }]
+              : opts.user,
+          },
+        ],
       };
       if (opts.system) body.system = opts.system;
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -1444,6 +1453,7 @@ async function llmText(opts: {
   user: string;
   maxTokens: number;
   model?: string; // Override; sonst OPENAI_TEXT_MODEL
+  imageUrls?: string[]; // nur Claude-Pfad (Referenzbilder)
 }): Promise<string> {
   const model = opts.model || process.env.OPENAI_TEXT_MODEL || "gpt-5.5";
   const timeoutMs = Number(process.env.OPENAI_TEXT_TIMEOUT_MS) || 90000;
@@ -1723,14 +1733,22 @@ export async function renderProductCreative(opts: {
   angle: string;
   requestId: string;
   index: number;
+  /** Bild einer eigenen Gewinner-Anzeige des Kunden als Stilvorlage (Ole, 21.11.2026) */
+  referenceImageUrl?: string | null;
+  styleHint?: string | null;
 }): Promise<{ imageUrl: string; imagePrompt: string }> {
-  const userPrompt = `Erstelle EIN Meta-Ad-Creative.
+  const ref = opts.referenceImageUrl && /^https:\/\//i.test(opts.referenceImageUrl) ? opts.referenceImageUrl : null;
+  const vorlage = (mitBild: boolean) =>
+    opts.styleHint
+      ? `\nBILDSTIL-VORLAGE (bestlaufende eigene Anzeige des Kunden${mitBild ? ", Bild oben angehängt" : ""}): ${opts.styleHint}\n`
+      : "";
+  const userPrompt = (mitBild: boolean) => `Erstelle EIN Meta-Ad-Creative.
 
 PRODUKT: ${opts.product}
 ORT: ${opts.place ?? "Deutschland"}
 ABSENDER (klein im Bild, z. B. unten): ${opts.advisorName}
 WINKEL: ${opts.angle}
-
+${vorlage(mitBild)}
 TEXTE IM BILD (genau so verwenden):
 - Headline: "${opts.headline}"
 - Subline: "${opts.subline}"
@@ -1743,12 +1761,15 @@ Antworte mit GENAU EINEM <creative_html>-Block:
 …
 </html>
 </creative_html>`;
-  const text = await llmText({
-    system: PRODUCT_CREATIVE_SYSTEM_PROMPT,
-    user: userPrompt,
-    maxTokens: 8000,
-    model: process.env.CAMPAIGN_CREATIVE_MODEL || "claude-opus-5-5",
-  });
+  const model = process.env.CAMPAIGN_CREATIVE_MODEL || "claude-opus-5-5";
+  let text: string;
+  try {
+    text = await llmText({ system: PRODUCT_CREATIVE_SYSTEM_PROMPT, user: userPrompt(!!ref), maxTokens: 8000, model, imageUrls: ref ? [ref] : undefined });
+  } catch (err) {
+    // Vorlagenbild nicht abrufbar (z. B. abgelaufene Meta-URL): ohne Bild erneut, Stilhinweis bleibt
+    if (!ref || !/Anthropic 400/.test(err instanceof Error ? err.message : "")) throw err;
+    text = await llmText({ system: PRODUCT_CREATIVE_SYSTEM_PROMPT, user: userPrompt(false), maxTokens: 8000, model });
+  }
   const html = extractTag(text, "creative_html");
   if (!html) throw new Error(`Creative lieferte kein <creative_html>: ${text.slice(0, 200)}`);
   let resolvedHtml = await resolvePhotoPlaceholders(html);
