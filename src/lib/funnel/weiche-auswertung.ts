@@ -10,8 +10,8 @@ import { prisma } from "@/lib/prisma";
 import { bewerteLead, ladeLeadFakten } from "@/lib/funnel/server";
 import { decideAbWinner, type AbDecision } from "@/lib/whatsapp/ab-test";
 
-/** Start der Weiche auf start.pkv-tarife.com (nach den Testaufrufen). */
-export const WEICHE_SEIT = new Date("2026-11-21T19:15:00Z");
+/** Start der Zählung: Livegang des Redesigns (21.11.2026, Zählung neu gestartet, alter Funnel nicht vergleichbar). */
+export const WEICHE_SEIT = new Date("2026-11-21T20:45:00Z");
 /** Testaufrufe (utm_source) zählen nicht. */
 export const WEICHE_TEST_QUELLEN = ["test", "deploycheck", "weichecheck"];
 /** Mindestbesucher je Seite für eine Entscheidung */
