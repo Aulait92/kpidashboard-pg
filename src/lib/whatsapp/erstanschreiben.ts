@@ -144,8 +144,10 @@ export const ERSTANSCHREIBEN_V10: Record<ErstanschreibenZweck, V10Frage> = {
     werte: { "Nur Operationen": "nur OP-Schutz", "Auch Behandlungen": "volle Krankenversicherung (auch Tierarztbehandlung)", "Noch unsicher": "offen" },
   },
   outreach_privatschutz: {
-    a: { sie: "danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*", du: "danke für deine Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*" },
-    b: { sie: "*ist beim Privatschutz schon etwas versichert?* Danke für Ihre Anfrage!", du: "*ist beim Privatschutz schon etwas versichert?* Danke für deine Anfrage!" },
+    // v13 (Ole, 21.11.2026: „Kunde weiß nicht genau, was mit Privatschutz gemeint ist“): Thema in Worten, wie überall in
+    // der App („Haftpflicht und Hausrat“), in Fassung a und b. Bis zur Freigabe bei Meta geht die v12 raus.
+    a: { sie: "danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*", du: "danke für deine Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*" },
+    b: { sie: "*ist bei Haftpflicht und Hausrat schon etwas versichert?* Danke für Ihre Anfrage!", du: "*ist bei Haftpflicht und Hausrat schon etwas versichert?* Danke für deine Anfrage!" },
     knoepfe: ["Alles neu", "Schon versichert", "Teils, teils"],
     feld: "vorhanden",
     planKey: "vorhanden",
@@ -212,6 +214,9 @@ const V10_MUSTER: { zweck: ErstanschreibenZweck; variant: "a" | "b"; re: RegExp 
     }),
   ),
 );
+
+// Frühere feste Fragen (v12 und älter), damit Antworten auf schon gesendete Vorlagen weiter erkannt werden
+V10_MUSTER.push({ zweck: "outreach_privatschutz", variant: "b", re: /ist beim Privatschutz schon etwas versichert\?/i });
 
 /**
  * Steht die feste Frage von v10 bzw. v11 in diesem gesendeten Text (Vorlage oder Freitext)? Liefert Zweck, Fassung und

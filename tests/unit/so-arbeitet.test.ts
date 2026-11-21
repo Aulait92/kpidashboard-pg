@@ -41,7 +41,7 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
       erstanschreibenText({ an: "sie", kontakt: BEISPIEL_KONTAKT, name: e.person.nom, vermittler: e.person.dat, vermittlerNom: e.person.nom, source: "Privatschutz", formular: PRIVATSCHUTZ.slice(1) }, { ohneFuss: true }),
     );
     expect(texte[0]).toContain("Hallo Frau Becker");
-    expect(texte[0]).toBe("Hallo Frau Becker, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
+    expect(texte[0]).toBe("Hallo Frau Becker, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*");
     expect(nachrichten(z)[0].knoepfe).toEqual(["Alles neu", "Schon versichert", "Teils, teils"]);
     expect(nachrichten(z)[0].fusszeile).toBe("Digitaler KI-Assistent");
     expect(texte[1]).toBe("Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wer soll mitversichert sein?");
