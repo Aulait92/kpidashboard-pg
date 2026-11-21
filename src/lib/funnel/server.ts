@@ -198,7 +198,13 @@ export function einwilligungNachweis(funnel: string, datenschutzEmail: string, n
 
 /** Name, Firma und Telefon des Abnehmers aus seiner Erstinformation; fehlt etwas, null (dann kein Kasten, keine Mail). */
 export async function experteFuer(leadId: string): Promise<Experte | null> {
-  const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { customer: { select: { erstinformation: { select: { name: true, firma: true, telefon: true } } } } } });
+  const l = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { customer: { select: { vermittlerRegisterStatus: true, erstinformation: { select: { name: true, firma: true, telefon: true } } } } },
+  });
+  // Nur bei Vermittlern, die selbst beraten (z. B. Novus). Leadbroker wie HvK geben den Lead weiter, der Experte steht
+  // noch nicht fest (Ole, 21.11.2026)
+  if (l?.customer.vermittlerRegisterStatus === "keiner") return null;
   const e = l?.customer.erstinformation;
   const t = (v: string | null | undefined) => (v ?? "").trim();
   if (!e || !t(e.name) || !t(e.firma) || !t(e.telefon)) return null;
