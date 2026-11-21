@@ -57,3 +57,5 @@ gesperrt; nachtragen, sobald der Datenzugang steht).
 - Erstanschreiben Privatschutz (Ole, 21.11.2026, direkt freigegeben, v13): Leads verstehen „Privatschutz“ nicht. Thema in
   Worten („zu Haftpflicht und Hausrat“) in Fassung a und b; der laufende Test v10 gegen v11 (Frage zuerst) bleibt, für
   Privatschutz zählen die Sendungen ab der Freigabe von v13 neu.
+
+- Lehre (21.11.2026): Sendungen, die mangels freigegebener eigener Vorlage auf das allgemeine Erstanschreiben zurückfallen (Kfz, Hausrat), zählen nicht mehr als Fassung „a“ des allgemeinen Tests. Vorher landeten sie alle in „a“ und verzerrten die Auswertung.

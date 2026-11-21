@@ -1186,7 +1186,9 @@ export async function sendWhatsAppNotice(opts: {
     pricingCategory = tpl.category.toLowerCase();
     // A/B-Fassung nur bei der aktuellen Textversion speichern (Ole, 19.11.2026): ältere Fassungen (z. B. v9, solange v10
     // nicht freigegeben ist) zählten sonst als „a“ und verzerrten den Test der aktuellen Fassungen (ab-test.ts)
-    variant = pick.current ? pick.variant : null;
+    // Rückfall auf einen anderen Zweck (z. B. Kfz/Hausrat → allgemeines Erstanschreiben, solange die eigene Vorlage nicht
+    // freigegeben ist) nicht als Fassung zählen: der Rückfall wählt immer „a“ und verzerrte sonst den Test (21.11.2026)
+    variant = pick.current && purpose === opts.purpose ? pick.variant : null;
     documentHeader = !!doc;
     pdf = doc ? (pick.dokument === "entwurf" ? "entwurf" : "vollstaendig") : null;
     if (pdf === "entwurf") console.warn("[whatsapp] Erstanschreiben mit unvollständiger Erstinformation im Kopf", opts.customerId);
