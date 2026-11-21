@@ -11,6 +11,7 @@ import { claudeCall, AgentError, type AgentUsage, type LlmCall } from "@/lib/kam
 import { CONSENT_VERSION } from "@/lib/einwilligung-leadformular";
 import { angleResearcher, copywriter, formAgent, reviewer, reviseCopies, reviseForm, strategist } from "@/lib/kampagnen/agents";
 import { checkPrerequisites, loadCampaignContext, type Problem } from "@/lib/kampagnen/context";
+import { gewinnerFuerWinkel } from "@/lib/kampagnen/eigene-gewinner";
 import { adsManagerUrl, buildCampaign, cleanupCampaign, explainMetaError, formUrl, graphApi, pageAccessToken, type MetaApi } from "@/lib/kampagnen/builder";
 import {
   ACTIVE_STATUSES,
@@ -39,6 +40,10 @@ export type RenderCreative = (o: {
   angle: string;
   requestId: string;
   index: number;
+  /** Bild eines eigenen Gewinners als Stilvorlage (lib/kampagnen/eigene-gewinner.ts), optional */
+  referenceImageUrl?: string | null;
+  /** Stilhinweis zum eigenen Gewinner (Name, Zahlen, was übernehmen) */
+  styleHint?: string | null;
 }) => Promise<{ imageUrl: string }>;
 
 export type CampaignDeps = {
@@ -223,7 +228,7 @@ export async function processCampaignRun(id: string, deps: CampaignDeps = defaul
     let review = row.review as unknown as ReviewResult | null;
     if (!review) {
       await saveStep(state, current, { status: "laeuft", startedAt: now() });
-      let r = await reviewer(deps.llm, ctx, { plan, copies, form, images });
+      let r = await reviewer(deps.llm, ctx, { plan, copies, form, images, angles });
       await saveStep(state, current, {}, {}, r.usage);
       review = r.value;
       if (review.status === "rot") {
@@ -247,7 +252,7 @@ export async function processCampaignRun(id: string, deps: CampaignDeps = defaul
           form = rf.value;
           await saveStep(state, current, { note: "Formular überarbeitet" }, { form: json(form) }, rf.usage);
         }
-        r = await reviewer(deps.llm, ctx, { plan, copies, form, images });
+        r = await reviewer(deps.llm, ctx, { plan, copies, form, images, angles });
         review = { ...r.value, revised: true };
         await saveStep(state, current, {}, {}, r.usage);
       }
@@ -291,6 +296,8 @@ async function renderImages(
       continue;
     }
     const angle = angles.find((a) => a.key === c.angleKey);
+    // Eigener Gewinner als Bildvorlage: der im Winkel genannte, sonst der beste mit Bild
+    const vorlage = gewinnerFuerWinkel(ctx.eigeneGewinner, angle ? `${angle.title} ${angle.hook} ${angle.insight}` : "");
     try {
       const r = await deps.renderCreative({
         product: ctx.product,
@@ -301,6 +308,10 @@ async function renderImages(
         angle: angle ? `${angle.title}: ${angle.hook}` : c.angleKey,
         requestId: runId,
         index: i,
+        referenceImageUrl: vorlage?.bildUrl ?? null,
+        styleHint: vorlage
+          ? `Eigene Gewinner-Anzeige des Kunden „${vorlage.name}“ (${vorlage.cpl.toLocaleString("de-DE")} € je Lead, ${vorlage.leads} Leads${vorlage.video ? ", Video, Bild ist das Vorschaubild" : ""}${vorlage.headline ? `, Überschrift „${vorlage.headline}“` : ""}). Bildaufbau, Motivart, Farbwelt, Bildausschnitt und Platzierung der Texte als Vorlage nehmen und für das neue Produkt abwandeln. Keine Texte, Logos oder Preise aus dem Vorlagenbild übernehmen.`
+          : null,
       });
       out.push({ angleKey: c.angleKey, imageUrl: r.imageUrl });
     } catch (err) {
@@ -485,6 +496,9 @@ export async function getRunView(id: string) {
     form: r.form as unknown as LeadFormDraft | null,
     review: r.review as unknown as ReviewResult | null,
     built,
+    // Eigene Gewinner aus dem Werbekonto, die das Team als Vorlage hatte (nur Admin)
+    eigeneGewinner: ctx?.eigeneGewinner ?? null,
+    eigeneGewinnerHinweis: ctx?.eigeneGewinnerHinweis ?? null,
     error: r.error,
     costCents: r.costCents,
     createdAt: r.createdAt.toISOString(),
