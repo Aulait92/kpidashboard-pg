@@ -30,7 +30,7 @@ export const PKV_TEXTE = {
       "Je nach Tarif, Leistungen und Selbstbehalt sind **Ersparnisse von bis zu 50 %*** möglich.",
       "**So geht es:** Du beantwortest ein paar kurze Fragen, das dauert etwa 1 Minute. Ein PKV-Experte prüft deinen Tarif kostenlos und ruft dich mit dem Ergebnis an.",
     ],
-    // L8: gleiche Fußnote wie im Schritt Name, direkt unter dem Absatz mit der Zahl
+    // L8: gleiche Fußnote wie im Schritt Kontakt, direkt unter dem Absatz mit der Zahl
     fussnote: "Im Einzelfall möglich, abhängig von Tarif, Leistungen und Selbstbehalt. Ob und wie viel du sparen kannst, zeigt die Prüfung.",
     vertrauen: ["Kostenlos und unverbindlich", "Du bleibst bei deiner Versicherung", "Dauert etwa 1 Minute"],
     frage: "Bist du gesetzlich oder privat versichert?",
@@ -95,9 +95,7 @@ export const PKV_TEXTE = {
   },
 
   name: {
-    // L8: „bis zu 50 %“ (Risiko trägt Ole, 20.11.2026) nur mit Fußnote
-    ueberschrift: "Spare bis zu 50 % deines PKV-Beitrags",
-    fussnote: "Im Einzelfall möglich, abhängig von Tarif, Leistungen und Selbstbehalt. Ob und wie viel du sparen kannst, zeigt die Prüfung.",
+    // Reine Frage, ohne Werbezeile (Feinschliff 21.11.2026: „bis zu 50 %“ steht nur noch auf Kontakt)
     frage: "Wie darf dich dein Experte ansprechen?",
     vorname: "Vorname",
     nachname: "Nachname",
@@ -107,16 +105,19 @@ export const PKV_TEXTE = {
   },
 
   kontakt: {
+    // L8: „bis zu 50 %“ (Risiko trägt Ole, 20.11.2026) nur mit Fußnote; im Funnel nur hier, kurz vor dem Absenden
+    ueberschrift: "Spare bis zu 50 % deines PKV-Beitrags",
+    fussnote: "Im Einzelfall möglich, abhängig von Tarif, Leistungen und Selbstbehalt. Ob und wie viel du sparen kannst, zeigt die Prüfung.",
     frage: "Unter welcher Nummer erreicht dich dein Experte?",
     frageMitName: (vorname: string) => `${vorname}, unter welcher Nummer erreicht dich dein Experte?`,
     hinweis: "Er ruft dich mit deinem Ergebnis an, in der Regel innerhalb von 24 bis 48 Stunden.",
     telefon: "Telefon (am besten Handy)",
     telefonPlatzhalter: "z.\u00a0B. 0151 23456789",
-    telefonHinweis: "Deine Nummer bekommt nur ein Experte, nicht mehrere.",
+    telefonHinweis: "Nur ein Experte bekommt deine Nummer.",
     email: "E-Mail",
     // Knopfname steht wörtlich in der Einwilligung (einwilligungTeile)
+    // Kein Satz unter dem Knopf (Feinschliff 21.11.2026): „Kostenlos“ steht im Knopf
     knopf: "Kostenlos prüfen lassen",
-    unterKnopf: "Das Absenden kostet nichts und verpflichtet dich zu nichts.",
     fehlerEmail: "Bitte gib eine gültige E-Mail-Adresse ein.",
     fehlerTelefon: "Bitte gib eine Nummer ein, unter der du gut erreichbar bist, z.\u00a0B. 0151 23456789.",
     fehlerSenden: "Das hat leider nicht geklappt. Deine Angaben sind noch da.",

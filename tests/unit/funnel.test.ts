@@ -11,6 +11,7 @@ import {
   hinweisFuer,
   geburtsdatumOk,
   naechsterSchritt,
+  mitTrennstellen,
   optionLabel,
   PKV_BEITRAG,
   pplFelder,
@@ -118,9 +119,11 @@ describe("Funnel-Konfiguration", () => {
     expect(pruefeSchritt(schritt("geburtsdatum"), { geburtsdatum: "1975" }, HEUTE)).toEqual({ geburtsdatum: PKV_TEXTE.geburtsdatum.fehler });
     expect(pruefeFeld("email", "a@b")).toBe(PKV_TEXTE.kontakt.fehlerEmail);
     expect(pruefeFeld("telefon", "0151 23456781")).toBeNull();
-    expect(fortschrittFuer(f, "start")).toEqual({ nr: 1, von: 10 });
-    expect(fortschrittFuer(f, "kontakt")).toEqual({ nr: 10, von: 10 });
-    expect(fortschrittFuer(f, "danke")).toBeNull();
+    expect(fortschrittFuer(f, "start")).toEqual({ nr: 1, von: 10, prozent: 9, fertig: false });
+    // Vor dem Absenden höchstens 90 %, 100 % erst auf der Danke-Seite
+    expect(fortschrittFuer(f, "kontakt")).toEqual({ nr: 10, von: 10, prozent: 90, fertig: false });
+    for (const s of ablauf(f)) expect(fortschrittFuer(f, s.id)!.prozent, s.id).toBeLessThanOrEqual(90);
+    expect(fortschrittFuer(f, "danke")).toMatchObject({ prozent: 100, fertig: true });
     expect(fortschrittFuer(f, "ende-beitrag")).toBeNull();
   });
 
@@ -205,11 +208,25 @@ describe("Funnel-Konfiguration", () => {
     expect(v.art === "auswahl" && v.haeufig?.length).toBe(8);
     for (const h of v.art === "auswahl" ? (v.haeufig ?? []) : []) expect(PKV_VERSICHERER).toContain(h);
     expect(optionLabel(v, "Sonstige")).toBe("Andere Versicherung");
+    // Weiche Trennstellen nur in der Anzeige (große Schrift), sichtbarer Text und Werte unverändert
+    expect(mitTrennstellen("Selbstständig")).toBe("Selbst\u00adständig");
+    expect(mitTrennstellen("Nicht erwerbstätig")).toBe("Nicht erwerbs\u00adtätig");
+    expect(mitTrennstellen("Hausfrau/Hausmann")).toBe("Hausfrau/\u200bHausmann");
+    expect(mitTrennstellen("DKV")).toBe("DKV");
+    for (const o of [...PKV_SITUATIONEN, ...PKV_VERSICHERER]) expect(mitTrennstellen(optionLabel(schritt("situation"), o)).replace(/[\u00ad\u200b]/g, "")).toBe(optionLabel(schritt("situation"), o));
     expect(optionLabel(v, "HALLESCHE")).toBe("Hallesche");
     expect(pruefeSchritt(v, { versicherung: "HALLESCHE" })).toEqual({});
     // Situation: die vier häufigsten zuerst, Werte unverändert
     expect(PKV_SITUATIONEN.slice(0, 4)).toEqual(["Angestellt", "Selbstständig", "Beamter", "Rentner"]);
-    expect(texteFuer(schritt("name")).fussnote).toMatch(/^Im Einzelfall möglich/);
+    // Name: reine Frage ohne Werbezeile; „bis zu 50 %“ mit Fußnote nur auf Kontakt (und im Advertorial)
+    expect(texteFuer(schritt("name")).ueberschrift).toBeUndefined();
+    expect(texteFuer(schritt("name")).fussnote).toBeUndefined();
+    expect(texteFuer(schritt("kontakt")).fussnote).toMatch(/^Im Einzelfall möglich/);
+    // Kontakt entlastet: kein Satz unter dem Knopf, kurzer Telefon-Hinweis
+    expect(texteFuer(schritt("kontakt")).nachsatz).toBeUndefined();
+    const kt = schritt("kontakt");
+    expect(kt.art === "absenden" && kt.felder[0].hinweis).toBe(PKV_TEXTE.kontakt.telefonHinweis);
+    expect(PKV_TEXTE.kontakt.telefonHinweis.split(" ").length).toBeLessThanOrEqual(8);
     expect(schritt("ende-gesetzlich")).toMatchObject({ zurueckZu: "start" });
     expect(schritt("ende-beitrag")).toMatchObject({ zurueckZu: "beitrag" });
     expect(f.marke).toBe("pkv-tarife");
@@ -228,11 +245,12 @@ describe("Funnel-Konfiguration", () => {
     for (const t of alle) expect(t, t).not.toMatch(/[–—]/);
     // „Nicht verwenden“ laut Conversion-Dokument
     expect(alle.join(" ")).not.toMatch(/sehr wahrscheinlich|garant|unabhängig|ohne Gesundheitsprüfung|Auswertung|Berechnung/i);
-    // „bis zu 50 %“ nur mit Fußnote (L8): Schritt Name/Kontakt und Advertorial (Sternchen an der Zahl)
-    expect(alle.filter((t) => /%/.test(t))).toEqual([PKV_TEXTE.start.text[2], PKV_TEXTE.name.ueberschrift]);
+    // „bis zu 50 %“ nur mit Fußnote (L8): Schritt Kontakt und Advertorial (Sternchen an der Zahl)
+    expect(alle.filter((t) => /%/.test(t))).toEqual([PKV_TEXTE.start.text[2], PKV_TEXTE.kontakt.ueberschrift]);
     expect(PKV_TEXTE.start.text[2]).toMatch(/50 %\*/);
-    expect(PKV_TEXTE.start.fussnote).toBe(PKV_TEXTE.name.fussnote);
-    expect(texteFuer(schritt("kontakt")).fussnote).toBe(PKV_TEXTE.name.fussnote);
+    expect(PKV_TEXTE.start.fussnote).toBe(PKV_TEXTE.kontakt.fussnote);
+    expect(texteFuer(schritt("kontakt")).fussnote).toBe(PKV_TEXTE.kontakt.fussnote);
+    expect(f.schritte.filter((s) => texteFuer(s).ueberschrift?.includes("%")).map((s) => s.id)).toEqual(["kontakt"]);
     // Keine Ausrufezeichen in Überschriften (CI), „ob und wie viel“ (Recht), Advertorial als Anzeige gekennzeichnet
     // Ausnahme Zwischenseite: „Fast fertig!“ wie bei Perspective (Ole, 21.11.2026)
     for (const s of f.schritte) if (s.id !== "fast-fertig") expect(texteFuer(s).ueberschrift ?? "", s.id).not.toMatch(/!/);

@@ -44,7 +44,7 @@ const link = "inline-flex min-h-11 items-center rounded px-1.5 text-[var(--m-tex
 export function Fusszeile({ marke, partnerHref }: { marke: Marke; partnerHref: string }) {
   return (
     <footer className="mx-auto w-full max-w-xl px-4 pb-8 pt-2 text-center text-[13px] leading-[19px] text-[var(--m-text-leise)]">
-      <p className="text-[12px] leading-[18px]">{marke.anbieter}</p>
+      <p>{marke.anbieter}</p>
       <nav aria-label="Rechtliches" className="mt-1 flex flex-wrap items-center justify-center gap-x-1">
         <a href={T.impressumUrl} target="_blank" rel="noopener" className={link}>
           {T.impressum}
