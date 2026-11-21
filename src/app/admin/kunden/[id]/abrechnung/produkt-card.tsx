@@ -1,6 +1,7 @@
 import { Layers } from "lucide-react";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { productHistory } from "@/lib/produkt-buchen";
+import { currentBudgets } from "@/lib/budget";
 import { MANUAL_REASON_LABEL, STATUS_LABEL } from "@/lib/produkt-buchen-shared";
 import { adminProduktAnlegenAction, decideProductAction } from "./produkt-actions";
 
@@ -29,16 +30,33 @@ const FEE: Record<string, string> = {
   error: "Monatspreis: Stripe-Fehler (Aufgabe in Heute)",
 };
 
-/** Kundenakte → Abrechnung: selbst gebuchte Produkte mit Status und Entscheidung. */
+/**
+ * Kundenakte → Abrechnung: laufende Produkte (aus dem Angebot bzw. Werbebudget) und dazugebuchte mit Status und
+ * Entscheidung. Ole, 21.11.2026: Produkte aus dem Angebot (z. B. Privatschutz bei Lohmann) standen nur beim
+ * Werbebudget, die Karte wirkte, als sei nichts angelegt.
+ */
 export async function ProductBookingsCard({ customerId, message, failed }: { customerId: string; message: string | null; failed: boolean }) {
-  const rows = await productHistory(customerId);
+  const [rows, { lines }] = await Promise.all([productHistory(customerId), currentBudgets(customerId)]);
+  const offen = new Set(rows.filter((r) => ["live", "setup", "requested"].includes(r.status)).map((r) => r.product.toLowerCase()));
+  const laufend = lines.filter((l) => l.dailyBudget > 0 && !offen.has(l.product.toLowerCase()));
   return (
     <Card>
-      <CardHeader title="Produkte" icon={Layers} hint="Vom Kunden dazugebucht" />
+      <CardHeader title="Produkte" icon={Layers} hint="Laufend und dazugebucht" />
       <div className="space-y-4 p-5 text-sm" data-admin-produkte>
         {message ? <p className={failed ? "font-medium text-rose-700" : "font-medium text-emerald-700"}>{message}</p> : null}
+        {laufend.length ? (
+          <ul className="divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]" data-admin-produkte-laufend>
+            {laufend.map((l) => (
+              <li key={l.product} className="flex flex-wrap items-center gap-2 px-4 py-3">
+                <span className="font-medium">{l.product}</span>
+                <Badge tone="success">Läuft</Badge>
+                <span className="text-[color:var(--muted)]">{eur0(l.dailyBudget)}/Tag · aus Angebot bzw. Werbebudget</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {rows.length === 0 ? (
-          <p className="text-[color:var(--muted)]">Noch keine Produktbuchungen. Kunden buchen unter Konto & Rechnungen → Produkte.</p>
+          laufend.length ? null : <p className="text-[color:var(--muted)]">Noch keine Produkte. Kunden buchen unter Konto & Rechnungen → Produkte.</p>
         ) : (
           <ul className="divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]">
             {rows.map((r) => (
