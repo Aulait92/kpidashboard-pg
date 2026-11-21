@@ -8,7 +8,7 @@
 
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { formatBirthday, parseEuro } from "@/lib/ppl/perspective";
-import { PKV_DAUER, PKV_SITUATION_LABEL, PKV_SITUATIONEN, PKV_TEXTE as T, PKV_VERSICHERER, PKV_VERSICHERT_LABEL } from "@/lib/funnel/pkv-beitrag-texte";
+import { PKV_DAUER, PKV_SITUATION_LABEL, PKV_SITUATIONEN, PKV_TEXTE as T, PKV_VERSICHERER, PKV_VERSICHERER_HAEUFIG, PKV_VERSICHERER_LABEL, PKV_VERSICHERT_LABEL } from "@/lib/funnel/pkv-beitrag-texte";
 
 export type FeldId = "versichert" | "versicherung" | "situation" | "dauer" | "beitrag" | "geburtsdatum" | "plz" | "ort" | "vorname" | "nachname" | "email" | "telefon";
 export type Antworten = Partial<Record<FeldId, string>>;
@@ -50,6 +50,8 @@ type Basis = {
   texte: SchrittTexte;
   /** A/B-Test dieses Schritts: Experiment-Schlüssel (lib/experimente.ts) und Texte der Fassung b */
   test?: { experiment: string; b: Partial<SchrittTexte> };
+  /** Hinweis je früherer Antwort (z. B. Beitrag je Situation); sonst texte.hinweis */
+  hinweisJe?: { feld: FeldId; texte: Readonly<Record<string, string>> };
 };
 
 export type Schritt =
@@ -62,6 +64,10 @@ export type Schritt =
       /** Beschriftung je Wert, wo sie vom Wert abweicht */
       labels?: Readonly<Record<string, string>>;
       spalten: 1 | 2;
+      /** Nur diese Optionen als Kacheln, alle übrigen über ein Suchfeld (lange Listen wie Versicherer) */
+      haeufig?: readonly string[];
+      /** Suchfeld: Beschriftung und Text ohne Treffer */
+      suche?: { label: string; keineTreffer: string };
       abbruch?: (a: Antworten) => AbbruchGrund | null;
     })
   | (Basis & { art: "eingabe"; frageNr?: number; felder: Eingabefeld[]; abbruch?: (a: Antworten) => AbbruchGrund | null; vertraulich?: string })
@@ -181,15 +187,46 @@ function feldOk(feld: FeldId, wert: string | undefined, heute: Date): boolean {
   }
 }
 
+/** Fehlertext eines Felds; beim Geburtsdatum genauer (unmögliches Datum, Alter außerhalb 18 bis 99). */
+function fehlerText(feld: FeldId, wert: string | undefined): string {
+  if (feld === "geburtsdatum") {
+    const m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec((wert ?? "").trim());
+    if (m) {
+      const [t, mo, j] = [Number(m[1]), Number(m[2]), Number(m[3])];
+      const d = new Date(Date.UTC(j, mo - 1, t));
+      return d.getUTCFullYear() === j && d.getUTCMonth() === mo - 1 && d.getUTCDate() === t ? T.geburtsdatum.fehlerAlter : T.geburtsdatum.fehlerDatum;
+    }
+  }
+  return FEHLER[feld];
+}
+
 /** Fehler eines Schritts (leer = in Ordnung). */
 export function pruefeSchritt(s: Schritt, a: Antworten, heute = new Date()): Fehler {
   const out: Fehler = {};
   if (s.art === "auswahl") {
     if (!a[s.feld] || !s.optionen.includes(a[s.feld]!)) out[s.feld] = FEHLER[s.feld];
   } else if (s.art === "eingabe" || s.art === "absenden") {
-    for (const f of s.felder) if (!feldOk(f.feld, a[f.feld], heute)) out[f.feld] = FEHLER[f.feld];
+    for (const f of s.felder) if (!feldOk(f.feld, a[f.feld], heute)) out[f.feld] = fehlerText(f.feld, a[f.feld]);
   }
   return out;
+}
+
+/** Ein einzelnes Feld prüfen (beim Verlassen des Felds im Browser): Fehlertext oder null. */
+export function pruefeFeld(feld: FeldId, wert: string | undefined, heute = new Date()): string | null {
+  return feldOk(feld, wert, heute) ? null : fehlerText(feld, wert);
+}
+
+/** Position im Ablauf bis zum Absenden (Fortschrittsbalken über alle Schritte) oder null (Danke, Endseiten). */
+export function fortschrittFuer(f: FunnelDef, id: string): { nr: number; von: number } | null {
+  const liste = ablauf(f);
+  const i = liste.findIndex((s) => s.id === id);
+  return i < 0 ? null : { nr: i + 1, von: liste.length };
+}
+
+/** Hinweis eines Schritts passend zu früheren Antworten (hinweisJe), sonst der feste Hinweis. */
+export function hinweisFuer(s: Schritt, texte: SchrittTexte, a: Antworten): string | undefined {
+  const wert = s.hinweisJe ? a[s.hinweisJe.feld] : undefined;
+  return (wert && s.hinweisJe?.texte[wert]) || texte.hinweis;
 }
 
 /** Abbruchregel des Schritts (z. B. gesetzlich versichert, Beitrag unter 650 €) oder null. */
@@ -299,12 +336,25 @@ export const PKV_BEITRAG: FunnelDef = {
       optionen: ["Privat", "Gesetzlich"],
       labels: PKV_VERSICHERT_LABEL,
       spalten: 2,
-      texte: { ueberschrift: T.start.ueberschrift, text: T.start.text, vertrauen: T.start.vertrauen, frage: T.start.frage },
+      // Advertorial (Einleitung, Absätze, Fußnote) steht in PKV_TEXTE.start und wird nur auf der Startseite gezeigt
+      texte: { ueberschrift: T.start.ueberschrift, text: T.start.text, fussnote: T.start.fussnote, vertrauen: T.start.vertrauen, frage: T.start.frage },
       abbruch: (a) => (a.versichert === "Gesetzlich" ? "gesetzlich" : null),
       // Erster echter Test (A/B-Test-Labor, 20.11.2026): Überschrift mit Anlass „Beitragserhöhung zum 1. Januar“
       test: { experiment: "funnel_pkv_anlass", b: { ueberschrift: T.startB.ueberschrift } },
     },
-    { id: "versicherung", art: "auswahl", frageNr: 2, feld: "versicherung", optionen: PKV_VERSICHERER, spalten: 2, texte: { frage: T.versicherung.frage, hinweis: T.versicherung.hinweis } },
+    {
+      id: "versicherung",
+      art: "auswahl",
+      frageNr: 2,
+      feld: "versicherung",
+      // Alle Versicherer bleiben gültige Werte; Kacheln nur für die 8 häufigsten, der Rest über die Suche
+      optionen: PKV_VERSICHERER,
+      labels: PKV_VERSICHERER_LABEL,
+      haeufig: PKV_VERSICHERER_HAEUFIG,
+      suche: { label: T.versicherung.suche, keineTreffer: T.versicherung.keineTreffer },
+      spalten: 2,
+      texte: { frage: T.versicherung.frage, hinweis: T.versicherung.hinweis },
+    },
     { id: "situation", art: "auswahl", frageNr: 3, feld: "situation", optionen: PKV_SITUATIONEN, labels: PKV_SITUATION_LABEL, spalten: 2, texte: { frage: T.situation.frage } },
     { id: "dauer", art: "auswahl", frageNr: 4, feld: "dauer", optionen: PKV_DAUER, spalten: 1, texte: { frage: T.dauer.frage } },
     {
@@ -313,6 +363,8 @@ export const PKV_BEITRAG: FunnelDef = {
       frageNr: 5,
       felder: [{ feld: "beitrag", label: T.beitrag.frage, typ: "euro", platzhalter: T.beitrag.platzhalter, einheit: T.beitrag.einheit }],
       texte: { frage: T.beitrag.frage, hinweis: T.beitrag.hinweis, knopf: T.weiter },
+      // Arbeitgeberzuschuss nur bei Angestellten, Beamte: Eigenanteil nach Beihilfe (Personas, 21.11.2026)
+      hinweisJe: { feld: "situation", texte: { Angestellt: T.beitrag.hinweisAngestellt, Beamter: T.beitrag.hinweisBeamter } },
       abbruch: (a) => {
         const n = beitragZahl(a.beitrag);
         return n != null && n < MIN_BEITRAG ? "unter_650" : null;
@@ -335,7 +387,7 @@ export const PKV_BEITRAG: FunnelDef = {
       ],
       texte: { frage: T.wohnort.frage, hinweis: T.wohnort.hinweis, knopf: T.weiter },
     },
-    { id: "fast-fertig", art: "info", bild: "zwischenseite", texte: { ueberschrift: T.fastFertig.ueberschrift, text: [...T.fastFertig.text], knopf: T.fastFertig.knopf } },
+    { id: "fast-fertig", art: "info", bild: "zwischenseite", texte: { ueberschrift: T.fastFertig.ueberschrift, liste: T.fastFertig.liste, knopf: T.fastFertig.knopf } },
     {
       id: "name",
       art: "eingabe",
@@ -354,7 +406,8 @@ export const PKV_BEITRAG: FunnelDef = {
         { feld: "telefon", label: T.kontakt.telefon, typ: "tel", autocomplete: "tel", platzhalter: T.kontakt.telefonPlatzhalter, hinweis: T.kontakt.telefonHinweis },
         { feld: "email", label: T.kontakt.email, typ: "email", autocomplete: "email" },
       ],
-      texte: { frage: T.kontakt.frage, hinweis: T.kontakt.hinweis, knopf: T.kontakt.knopf, nachsatz: T.kontakt.unterKnopf },
+      // Nutzen bis zum Absenden sichtbar (texte.md Nr. 9), gleiche Fußnote (L8)
+      texte: { ueberschrift: T.name.ueberschrift, fussnote: T.name.fussnote, frage: T.kontakt.frage, hinweis: T.kontakt.hinweis, knopf: T.kontakt.knopf, nachsatz: T.kontakt.unterKnopf },
     },
     { id: "danke", art: "danke", texte: { ueberschrift: T.danke.ueberschrift, frage: T.danke.untertitel, liste: T.danke.schritte, nachsatz: T.danke.verpasst } },
     { id: "ende-gesetzlich", art: "ende", grund: "gesetzlich", zurueckZu: "start", texte: { ueberschrift: T.endeGesetzlich.ueberschrift, text: [T.endeGesetzlich.text], knopf: T.endeGesetzlich.knopf } },

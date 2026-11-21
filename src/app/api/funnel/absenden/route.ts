@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
     if (r.meta) after(r.meta);
     if (r.mail) after(r.mail);
     // Dankeseite ohne Telefonnummer (Ole, 21.11.2026); die Nummer steht nur in der Mail „Dein Experte“
-    return Response.json({ ok: true, lead: r.lead, experte: r.experte ? { name: r.experte.name, firma: r.experte.firma } : null });
+    // mail: Hinweis auf der Danke-Seite, dass die Mail „Dein Experte“ unterwegs ist
+    return Response.json({ ok: true, lead: r.lead, experte: r.experte ? { name: r.experte.name, firma: r.experte.firma } : null, mail: !!r.mail });
   } catch (err) {
     reportError(err, "funnel-absenden");
     return Response.json({ ok: false, fehler: {}, meldung: PKV_TEXTE.kontakt.fehlerSenden }, { status: 500 });
