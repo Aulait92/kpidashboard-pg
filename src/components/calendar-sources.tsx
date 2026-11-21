@@ -890,3 +890,58 @@ export function VideoRaumForm({ action, readOnly, initial, noetig }: { action: F
     </form>
   );
 }
+
+// ─── Berater: Termine per Einladung an die Allianz-Adresse (21.11.2026) ─
+
+/**
+ * Person im Allianz-Online-Kalender der Agentur wählen (lib/calendar/berater-allianz.ts). Berater selbst („Mein
+ * Kalender“), Inhaber im Team und Admin in der Kundenakte nutzen dasselbe Formular; `hidden` trägt userId/customerId.
+ */
+export function BeraterAllianzForm({
+  action,
+  resources,
+  resourceId,
+  email,
+  readOnly,
+  hidden,
+  frage = "Wer sind Sie im Allianz-Online-Kalender?",
+  kompakt = false,
+}: {
+  action: FormAction;
+  resources: Array<{ id: string; name: string }>;
+  resourceId: string | null;
+  email: string;
+  readOnly: boolean;
+  hidden?: Record<string, string>;
+  frage?: string;
+  /** Inhaber/Admin: zweitrangiger Knopf, Auswahl „keine“ zum Entfernen */
+  kompakt?: boolean;
+}) {
+  const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
+  return (
+    <form action={formAction} className="space-y-3" data-berater-allianz>
+      {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
+      <label className="block text-[15px] font-medium">
+        {frage}
+        <select name="resourceId" defaultValue={resourceId ?? ""} required={!kompakt} className={`${input} mt-1`}>
+          <option value="">{kompakt ? "keine" : "Bitte wählen"}</option>
+          {resources.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-[15px] font-medium">
+        Einladung an
+        <input name="email" type="email" defaultValue={email} autoComplete="email" className={`${input} mt-1`} />
+      </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <Submit pending={pending} disabled={readOnly} variant={kompakt ? "secondary" : "primary"}>
+          Speichern
+        </Submit>
+        <Result state={state} />
+      </div>
+    </form>
+  );
+}
