@@ -189,7 +189,9 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   // 2. Ort → Meta-Standortschlüssel (Stadt), sonst Deutschland
   if (built.geoKey === undefined) {
     let key: string | null = null;
-    const q = ctx.city ?? ctx.region;
+    // „bundesweit“ im Wunsch (Ole, 21.11.2026: Lohmann bundesweit statt lokal): ganz Deutschland statt Umkreis
+    const bundesweit = /bundesweit|deutschlandweit|ganz deutschland/i.test(ctx.wish ?? "");
+    const q = bundesweit ? null : (ctx.city ?? ctx.region);
     if (q) {
       const r = await api.get<{ data: { key: string; name: string; country_code?: string }[] }>("search", {
         type: "adgeolocation",
