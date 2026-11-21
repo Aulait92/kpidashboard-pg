@@ -127,6 +127,8 @@ model Customer {
   // Angaben für die öffentliche Partnerliste der Funnels (Ole, 20.11.2026, docs/recht/pkv-funnel.md L2): rechtlicher
   // Empfänger der Leads, wenn er vom Kontonamen abweicht (z. B. Vertriebspartner eines Maklers). Unabhängig von der
   // Registerprüfung oben (Umsatzsteuer).
+  // Admin liest mit (Ole, 21.11.2026): Push an Admins bei neuem Lead, gebuchtem Termin und Abschluss (erste Kunden).
+  adminMitlesen            Boolean   @default(true)
   partnerFirma             String?
   partnerAnschrift         String?
   partnerRegisterNr        String?

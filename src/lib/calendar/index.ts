@@ -456,6 +456,8 @@ export async function bookAppointment(opts: {
       tag: `appt:${appt.id}`,
       url: "/buyer",
     };
+    // Admin liest mit (erste Kunden, lib/admin-mitlesen.ts): Zeit und Art, ohne Namen
+    if (opts.leadId) await (await import("@/lib/admin-mitlesen")).adminMitlesen({ leadId: opts.leadId, ereignis: "termin", detail: payload.body, tagZusatz: appt.id });
     // Team: nur an den zuständigen Berater.
     if (opts.leadId) await notifyLeadPush(opts.leadId, payload);
     else if (advisorUserId) await sendToUser(advisorUserId, payload).catch((e) => console.error("[appt push]", e));
