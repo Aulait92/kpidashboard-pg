@@ -9,6 +9,8 @@
 //              Vorlage der Kategorie UTILITY (zeigt [Policen senden] und den Antwort-Knopf in EINER Nachricht und ist im
 //              offenen 24-Stunden-Fenster kostenlos); sonst im Fenster die interaktive Flow-Nachricht (nur ein Knopf
 //              möglich, siehe unten); außerhalb des Fensters ohne freigegebene Vorlage nichts.
+//              Ausnahme Kfz-Bitte (Ole, 22.11.2026): im Fenster immer die Flow-Nachricht mit eigenem Text und Knopf
+//              [Unterlagen senden] (keine Vorlage dafür, also auch kein Knopf „Später“).
 //   Antwort    lib/policen/server.ts handleFlowAntwort (Einwilligung mit Textversion, Hash, Zeit, ki; Dateien laden,
 //              prüfen, Virenprüfung, Ablage), „Später“ und „Nein, danke“ (handleSpaeter hier, Nein in server.ts).
 //
@@ -47,6 +49,7 @@ import {
   flowTextVersion,
   formularDaten,
   formularWortlaut,
+  flowKnopf,
   KNOPF_POLICEN_SENDEN,
   KNOPF_WEITERE_SENDEN,
   NEIN_DANKE_KNOEPFE,
@@ -180,14 +183,19 @@ export async function flowChat(conversationId: string, now = new Date()): Promis
   if (!s) return null;
   const conv = await prisma.conversation.findUnique({
     where: { id: conversationId },
-    select: { windowExpiresAt: true, botActive: true, qualificationData: true, lead: { select: { source: true, formData: true } } },
+    select: { windowExpiresAt: true, botActive: true, qualificationData: true, lead: { select: { source: true, formData: true, vorvertraege: true } } },
   });
   const termin = await prisma.appointment.findFirst({
     where: { leadId: s.chat.leadId, status: "booked", startsAt: { gt: now } },
     orderBy: { startsAt: "asc" },
-    select: { id: true, startsAt: true, mode: true },
+    select: { id: true, startsAt: true, mode: true, komplettcheck: true },
   });
   const source = conv?.lead?.source ?? null;
+  const kfz = await import("@/lib/whatsapp/produkt-fragen").then((m) => m.istKfzProdukt(source));
+  // Kfz: genannte andere Verträge ohne das angefragte Produkt (Ole, 22.11.2026, lib/policen/andere-policen.ts)
+  const andereVertraege = kfz
+    ? await import("@/lib/policen/andere-policen").then((m) => m.andereVertraege(conv?.lead?.vorvertraege ?? null, { source, kfz, gesundheitAn: s.sp.gesundheitAn }))
+    : [];
   const formular = formAnswers(conv?.lead?.formData);
   const { istTierStrecke } = await import("@/lib/whatsapp/tier-fragen");
   const tier = istTierStrecke(source);
@@ -204,7 +212,7 @@ export async function flowChat(conversationId: string, now = new Date()): Promis
     minderjaehrig: s.chat.minderjaehrig,
     gesundheitAn: s.sp.gesundheitAn,
     source,
-    termin,
+    termin: termin ? { id: termin.id, startsAt: termin.startsAt, mode: termin.mode } : null,
     text: {
       an: s.sp.an,
       name: s.sp.person.nom,
@@ -216,7 +224,9 @@ export async function flowChat(conversationId: string, now = new Date()): Promis
       kiFertig,
       // Tierkranken: ohne Gesundheitssatz (Tierdaten sind keine Gesundheitsdaten nach Art. 9 DSGVO)
       gesundheit: s.sp.gesundheitAn && !tier,
-      kfz: await import("@/lib/whatsapp/produkt-fragen").then((m) => m.istKfzProdukt(source)),
+      kfz,
+      andereVertraege,
+      komplettcheck: termin?.komplettcheck ?? null,
     },
   };
 }
@@ -341,14 +351,20 @@ async function sendeFlowNachrichtRoh(
   if (!c || !c.datenschutzUrl) return null;
   const flow = await aktiverFlow(c.customerId);
   if (!flow) return null;
-  const n = nachrichtFuer(art, c, o.nachricht);
+  let n = nachrichtFuer(art, c, o.nachricht);
   const daten = formularDaten(c.text, c.datenschutzUrl);
   const wortlaut = formularWortlaut(daten);
   const token = neuesToken();
   const vName = art === "weitere" ? null : vorlagenName(art, c.an, flow.jsonHash);
   const v = vName ? flow.vorlagen[vName] : undefined;
-  const vorlageOk = !!v && v.status === "approved" && (!c.fensterOffen || (v.category ?? "").toLowerCase() === "utility");
+  // Kfz-Bitte (Fahrzeugschein, Rechnung, genannte Verträge, Knopf „Unterlagen senden“) gibt es nicht als Vorlage: im
+  // Fenster immer die Flow-Nachricht, sonst stellte Meta den allgemeinen Vorlagentext zu, während der Verlauf den
+  // Kfz-Text zeigt (Ole, 22.11.2026). Außerhalb des Fensters bleibt die allgemeine Vorlage.
+  const eigenerText = art === "bitte" && !!c.text.kfz && c.fensterOffen;
+  const vorlageOk = !eigenerText && !!v && v.status === "approved" && (!c.fensterOffen || (v.category ?? "").toLowerCase() === "utility");
   if (!vorlageOk && !c.fensterOffen) return null;
+  // Kfz außerhalb des Fensters: Meta stellt die allgemeine (bestehende) Vorlage zu, der Verlauf zeigt deren Text
+  if (vorlageOk && art === "bitte" && c.text.kfz) n = chatNachricht({ ...c.text, kfz: false });
   const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
   if (o.vorweg?.trim() && c.fensterOffen) {
     await sendWhatsAppMessage({ customerId: c.customerId, to: c.phone, body: o.vorweg, sentBy: "bot" });
@@ -379,7 +395,7 @@ async function sendeFlowNachrichtRoh(
           body: n.text,
           footer: n.fusszeile,
           sentBy: "bot",
-          flow: { flowId: flow.flowId, token, cta: art === "weitere" ? KNOPF_WEITERE_SENDEN : KNOPF_POLICEN_SENDEN, screen: SCREEN_FOTOS, data: datenText },
+          flow: { flowId: flow.flowId, token, cta: art === "weitere" ? KNOPF_WEITERE_SENDEN : art === "bitte" ? flowKnopf(c.text) : KNOPF_POLICEN_SENDEN, screen: SCREEN_FOTOS, data: datenText },
         });
   const merker: FlowMerker = {
     token,

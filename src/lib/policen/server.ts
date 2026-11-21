@@ -153,7 +153,13 @@ export async function policenBitteFuerChat(conversationId: string): Promise<impo
   const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { vorvertraege: true, source: true } });
   // Kfz-Lead: konkret Fahrzeugschein und letzte Rechnung (Ole, 21.11.2026)
   const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
-  if (istKfzProdukt(lead?.source)) return policenBitte({ ...sp, kfz: true });
+  if (istKfzProdukt(lead?.source)) {
+    // Andere Policen nur mit Komplettcheck Ja bzw. genannten Verträgen, ohne Kfz (Ole, 22.11.2026)
+    const { andereVertraege } = await import("@/lib/policen/andere-policen");
+    const termin = await prisma.appointment.findFirst({ where: { leadId: chat.leadId, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { komplettcheck: true } });
+    const vertraege = andereVertraege(lead?.vorvertraege ?? null, { source: lead?.source, kfz: true, gesundheitAn: sp.gesundheitAn });
+    return policenBitte({ ...sp, kfz: true, vertraege, komplettcheck: termin?.komplettcheck ?? null });
+  }
   const { vorvertraegeAus } = await import("@/lib/whatsapp/vorvertraege");
   const vertraege = (vorvertraegeAus(lead?.vorvertraege)?.liste ?? [])
     .map((v) => (v.sparte === "Private Krankenversicherung" ? "private Krankenversicherung" : v.sparte))

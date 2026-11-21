@@ -1,7 +1,8 @@
 // Policen-Strecke v2 (Ole, 18.11.2026 freigegeben, docs/ux/policen-flow/texte-v2.md auf claude/loving-mendel-j965x3):
 // alle Texte an den Lead, rein und ohne Datenbank, in Sie und Du (a(an, du, sie)), ohne Gedankenstriche.
 //   1. Chat-Nachricht „Kleiner Tipp für {Tag}“ mit Flow-Knopf [Policen senden] und Quick Reply [Später]
-//   2. Formular (WhatsApp Flow) „Policen senden“: Kurzliste 1 bis 4, Häkchen „Lieber ohne KI: nur speichern“ (leer),
+//      (Kfz-Lead: Fahrzeugschein, letzte Rechnung, genannte andere Verträge, Knopf [Unterlagen senden], Ole 22.11.2026)
+//   2. Formular (WhatsApp Flow) „Policen senden“ (für alle Leads gleich, auch Kfz): Kurzliste 1 bis 4, Häkchen „Lieber ohne KI: nur speichern“ (leer),
 //      Link Datenschutzhinweise, Hinweis, Knopf „Zustimmen & senden“ (Flow JSON: flow-json.ts)
 //   3. Bestätigung mit Anzahl Dateien und Knopf [Weitere senden], Fußzeile Widerruf; bei ki = false ein Zusatzsatz
 //   4. „Später“, zwei Erinnerungen (je [Policen senden] [Nein, danke]) und die Antwort auf „Nein, danke“
@@ -16,6 +17,7 @@
 
 import { createHash } from "node:crypto";
 import { a, type Ansprache } from "@/lib/ansprache";
+import { anderePolicenSatz } from "@/lib/policen/andere-policen";
 
 export type Pronomen = "er" | "sie";
 
@@ -37,6 +39,12 @@ export type FlowTextKontext = {
   gesundheit: boolean;
   /** Kfz-Lead (Ole, 21.11.2026): die freie Chat-Nachricht nennt Fahrzeugschein und letzte Rechnung (Vorlage bleibt allgemein) */
   kfz?: boolean;
+  /**
+   * Genannte Verträge ohne das angefragte Produkt („Haftpflicht bei Allianz“, lib/policen/andere-policen.ts) und
+   * Komplettcheck Ja: nur dann bittet die Kfz-Nachricht auch um die anderen Policen (Ole, 22.11.2026).
+   */
+  andereVertraege?: string[] | null;
+  komplettcheck?: boolean | null;
 };
 
 // ─── Knöpfe und Payloads ────────────────────────────────────────────────────
@@ -45,6 +53,13 @@ export const PAYLOAD_SPAETER = "policen:spaeter";
 export const PAYLOAD_NEIN_DANKE = "policen:nein_danke";
 /** Flow-Knopf in Chat-Nachricht und Erinnerungen (Vorlage höchstens 25, flow_cta höchstens 30 Zeichen, ohne Emoji). */
 export const KNOPF_POLICEN_SENDEN = "Policen senden";
+/**
+ * Flow-Knopf der Kfz-Nachricht (Ole, 22.11.2026: es geht um Fahrzeugschein, Rechnung und Policen, nicht nur Policen).
+ * Nur in der freien Nachricht (flow_cta beim Senden), keine Vorlage.
+ */
+export const KNOPF_UNTERLAGEN_SENDEN = "Unterlagen senden";
+/** Knopf der Chat-Nachricht je Lead. */
+export const flowKnopf = (k: Pick<FlowTextKontext, "kfz">) => (k.kfz ? KNOPF_UNTERLAGEN_SENDEN : KNOPF_POLICEN_SENDEN);
 /** Flow-Knopf der Bestätigung (öffnet das Formular erneut). */
 export const KNOPF_WEITERE_SENDEN = "Weitere senden";
 export const KNOPF_SPAETER = "Später";
@@ -93,6 +108,8 @@ export type Nachricht = { text: string; fusszeile: string | null };
 
 /** „Ihr Termin findet auch ohne Policen statt.“ (letzter Absatz der Chat-Nachricht, Zeile im Formular). */
 export const ohnePolicenSatz = (an: Ansprache) => a(an, "Dein Termin findet auch ohne Policen statt.", "Ihr Termin findet auch ohne Policen statt.");
+/** Kfz (Ole, 22.11.2026): „… ohne Unterlagen statt.“ (Fahrzeugschein und Rechnung sind keine Policen). */
+export const ohneUnterlagenSatz = (an: Ansprache) => a(an, "Dein Termin findet auch ohne Unterlagen statt.", "Ihr Termin findet auch ohne Unterlagen statt.");
 
 /**
  * Text der Chat-Nachricht. Ohne Pronomen ein Satz ohne er/sie; ohne Termin „vor Ihrem Termin“.
@@ -117,7 +134,11 @@ export function chatNachricht(k: FlowTextKontext): Nachricht {
       `Wenn ${k.name} deinen Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung vorab hat, kann ${wer} *deinen Beitrag schon vor dem Termin rechnen.* Darauf steht alles Nötige, zum Beispiel deine SF-Klasse.`,
       `Wenn ${k.name} Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung vorab hat, kann ${wer} *Ihren Beitrag schon vor dem Termin rechnen.* Darauf steht alles Nötige, zum Beispiel Ihre SF-Klasse.`,
     );
-    return { text: `${tag}\n\n${kfzKern}\n\n*Je ein Foto reicht* (beim Fahrzeugschein die Vorderseite). Gern auch ${a(k.an, "deine", "Ihre")} anderen Policen, etwa Haftpflicht oder Hausrat. Dauert etwa eine Minute.\n\n${ohnePolicenSatz(k.an)}`, fusszeile: null };
+    // Andere Policen als eigener Absatz mit Grund und den genannten Verträgen (Ole, 22.11.2026), nur bei Komplettcheck Ja
+    // bzw. genannten Verträgen
+    const andere = anderePolicenSatz(k.an, wer, { vertraege: k.andereVertraege, komplettcheck: k.komplettcheck, verb: "hochladen" });
+    const teile = [tag, kfzKern, "*Je ein Foto reicht* (beim Fahrzeugschein die Vorderseite). Dauert etwa eine Minute.", andere, ohneUnterlagenSatz(k.an)];
+    return { text: teile.filter(Boolean).join("\n\n"), fusszeile: null };
   }
   // „Termin findet auch ohne Policen statt“ als eigener letzter Absatz statt Fußzeile (Ole, 20.11.2026: zwischen Text und
   // Fußzeile kaum Platz; den Abstand setzt WhatsApp, Leerzeilen am Ende werden abgeschnitten)
@@ -139,6 +160,7 @@ export type FormularDaten = {
 
 /** Feste Texte des Formulars (stehen im Flow JSON). */
 export const FORMULAR = {
+  // Bleibt „Policen senden“ (Ole, 22.11.2026): sonst neues Flow JSON, neue Einwilligungsfassung und neue Vorlagen
   titel: "Policen senden",
   intro: "Meist reicht ein Foto der ersten Seite. Gern mehrere Verträge auf einmal.",
   fotos: "Fotos aufnehmen oder wählen",
@@ -155,6 +177,7 @@ export function formularDaten(k: FlowTextKontext, datenschutzUrl: string): Formu
     ? a(an, "damit dein Vergleich zum Termin schon fertig ist", "damit Ihr Vergleich zum Termin schon fertig ist")
     : `damit ${k.pronomen ?? k.name} sich vorbereiten kann`;
   const gesundheit = k.gesundheit ? ", auch wenn die Policen Gesundheitsangaben enthalten" : "";
+  // Formular für alle Leads gleich, auch Kfz (Ole, 22.11.2026: keine neue Einwilligungsfassung)
   return {
     ueberschrift: a(an, "Das passiert mit deinen Policen", "Das passiert mit Ihren Policen"),
     punkt1: `1. **${a(an, "Nur für deinen Termin:", "Nur für Ihren Termin:")}** ${mitFirma(k.name, k.firma)} speichert sie zur Vorbereitung.`,
@@ -212,12 +235,14 @@ export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean): Nachri
     `✅ Danke, ${angekommen}`,
     ...(ki ? [] : [OHNE_KI_SATZ]),
     a(an, `${k.name} sieht sie sich ${wann} an und versucht, dir Geld zu sparen. Bis dahin musst du nichts weiter tun.`, `${k.name} sieht sie sich ${wann} an und versucht, Ihnen Geld zu sparen. Bis dahin müssen Sie nichts weiter tun.`),
-    NOCH_EINE_POLICE,
+    k.kfz ? NOCH_EINE_POLICE_KFZ : NOCH_EINE_POLICE,
   ];
   return { text: teile.join("\n\n"), fusszeile: WIDERRUF_FUSSZEILE };
 }
 /** Letzte Zeile der Bestätigung (beide Ansprachen gleich): lädt zu weiteren Verträgen ein, Knopf „Weitere senden“. */
 export const NOCH_EINE_POLICE = "Noch eine Police, etwa Kfz oder Hausrat? Einfach nachsenden.";
+/** Kfz-Lead: nie Kfz als „noch eine“ Police (Ole, 22.11.2026). */
+export const NOCH_EINE_POLICE_KFZ = "Noch eine Police, etwa Haftpflicht oder Hausrat? Einfach nachsenden.";
 /** Zusatzsatz bei „Lieber ohne KI: nur speichern“. */
 export const OHNE_KI_SATZ = "Alles klar, wir lesen nichts automatisch aus.";
 export const BESTAETIGUNG_RE = /^✅ Danke, \*\d+ Dateie?n? (ist|sind) angekommen\.\*/;
