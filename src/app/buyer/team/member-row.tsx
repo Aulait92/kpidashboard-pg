@@ -19,6 +19,8 @@ export type MemberView = {
   owner: boolean;
   receivesLeads: boolean;
   ownCalendar: boolean;
+  /** „bekommt Leads nach: …“, solange Kalender oder App fehlen (lib/team-bereit.ts) */
+  wartet?: string | null;
   leads30: number;
   loggedIn: boolean;
   /** Zwei-Faktor-Login aktiv */
@@ -83,8 +85,9 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
             ) : null}
           </div>
           <div className="line-clamp-2 text-sm text-[color:var(--muted)]">
-            {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "Kalender verbunden" : m.owner ? "Kalender unter „Mein Kalender“" : "kein Kalender (Termine beim Inhaber)"}
+            {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "Kalender verbunden" : m.owner ? "Kalender unter „Mein Kalender“" : "kein Kalender"}
           </div>
+          {m.wartet ? <div className="text-sm font-medium text-amber-700" data-wartet>{m.wartet}</div> : null}
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
       </button>

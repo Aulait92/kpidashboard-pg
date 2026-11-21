@@ -21,6 +21,12 @@ export async function makeBuyer(customerId: string, teamRole: "owner" | "advisor
   });
 }
 
+/** Mitglied bereit für Leads (lib/team-bereit.ts): eigener Kalender verbunden und ein Gerät mit Mitteilungen. */
+export async function leadBereit(user: { id: string; customerId: string | null }) {
+  await prisma.advisorCalendar.upsert({ where: { userId: user.id }, create: { userId: user.id, customerId: user.customerId!, status: "connected" }, update: { status: "connected" } });
+  await prisma.pushSubscription.create({ data: { endpoint: `https://push.test/${user.id}`, p256dh: "x", auth: "x", userId: user.id } });
+}
+
 export async function cleanupCustomer(id: string) {
   await prisma.customer.delete({ where: { id } }).catch(() => {});
 }

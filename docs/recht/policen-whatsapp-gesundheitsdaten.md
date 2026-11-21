@@ -410,3 +410,18 @@ einen Pilotkreis. Hinweis vorab: Die AVV-Ergänzung (Anlage 2, Unterauftragsvera
 nicht bei allen Kunden vor. Auflage: Ergänzung zeitnah an alle betroffenen Kunden senden. Unverändert gilt: Kranken,
 BU und Leben werden nur mit Freigabe je Vermittler und Nachweis „keine Speicherung“ automatisch ausgelesen (K2).
 Rücknahme jederzeit über `POLICEN_FLOW=0`; dann gilt wieder Bitte mit Einwilligung.
+
+## Anweisung Ole 21.11.2026: volle Versicherungsscheinnummer nur bei Kfz
+
+Bisher speichert das Auslesen von der Versicherungsscheinnummer nur die letzten 4 Zeichen (Datensparsamkeit,
+Art. 5 Abs. 1 lit. c DSGVO). Ole hat am 21.11.2026 angewiesen, bei Kfz die volle Nummer auszulesen und zu speichern
+(Feld `versicherungsnummer_voll`, nur Sparte `kfz`, `src/lib/policen/auslesen/felder.ts`).
+
+- Zweck: Übernahme der SF-Klasse vom Vorversicherer. Der Vermittler braucht die volle Nummer für die Anfrage beim
+  bisherigen Kfz-Versicherer (Kfz-Antrag mit SF-Übertragung). Ohne sie müsste er sie im Termin abtippen.
+- Umfang: nur Kfz-Unterlagen (Police oder Beitragsrechnung der Kfz-Versicherung). Alle anderen Sparten bleiben bei
+  den letzten 4 Zeichen. Keine Gesundheitsdaten (Kfz ist Sach).
+- Rechtsgrundlage wie die übrige Policen-Ablage (Einwilligung des Leads beim Senden, Vertragsanbahnung). Löschung
+  wie das Dokument (Löschkonzept der Policen-Ablage).
+- Neu ausgelesen werden außerdem aus dem Fahrzeugschein Hersteller- und Typschlüssel (HSN, TSN) und die
+  Erstzulassung. Name, Anschrift und Fahrzeug-Identifizierungsnummer werden nicht ausgelesen.

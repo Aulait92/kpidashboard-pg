@@ -49,3 +49,6 @@ gesperrt; nachtragen, sobald der Datenzugang steht).
 - Erstanschreiben: Lange Texte klappt WhatsApp hinter „Mehr lesen“ ein (etwa ab 4 bis 5 Zeilen, PDF-Kopf zählt mit).
   Antwortknöpfe senken die Hürde. Firmenname und PDF als erster Eindruck wecken Misstrauen (Persona-Test 19.11.2026,
   noch nicht gemessen).
+- Erstanschreiben Privatschutz (Ole, 21.11.2026, direkt freigegeben, v13): Leads verstehen „Privatschutz“ nicht. Thema in
+  Worten („zu Haftpflicht und Hausrat“) in Fassung a und b; der laufende Test v10 gegen v11 (Frage zuerst) bleibt, für
+  Privatschutz zählen die Sendungen ab der Freigabe von v13 neu.

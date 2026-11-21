@@ -2,7 +2,7 @@ import { Layers } from "lucide-react";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { productHistory } from "@/lib/produkt-buchen";
 import { MANUAL_REASON_LABEL, STATUS_LABEL } from "@/lib/produkt-buchen-shared";
-import { decideProductAction } from "./produkt-actions";
+import { adminProduktAnlegenAction, decideProductAction } from "./produkt-actions";
 
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 const eur0 = (n: number) => `${Math.round(n).toLocaleString("de-DE")} €`;
@@ -89,6 +89,22 @@ export async function ProductBookingsCard({ customerId, message, failed }: { cus
             ))}
           </ul>
         )}
+        <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" data-admin-produkt-anlegen>
+          <summary className="cursor-pointer font-medium">Produkt hinzufügen (ohne Aufpreis)</summary>
+          <form action={adminProduktAnlegenAction} className="mt-3 flex flex-wrap items-end gap-2">
+            <input type="hidden" name="customerId" value={customerId} />
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-[color:var(--muted)]">Produkt</span>
+              <input name="product" defaultValue="KFZ" required className="input h-9 w-40 text-sm" />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-[color:var(--muted)]">Tagesbudget Meta (€)</span>
+              <input name="dailyBudget" defaultValue="40" inputMode="decimal" required className="input h-9 w-28 text-sm" />
+            </label>
+            <button className="btn-primary h-9 text-sm">Hinzufügen</button>
+          </form>
+          <p className="mt-2 text-xs text-[color:var(--muted)]">Kein neuer Monatspreis, keine Einrichtung. Danach „Gestartet“ setzen, sobald die Kampagne läuft.</p>
+        </details>
         <p className="text-xs text-[color:var(--muted)]">
           „Gestartet“ erst setzen, wenn Kampagne, Formular und Assistent laufen: Ab dann zählen Budget und Garantie, und der neue Monatspreis kommt ins Abo (ab dem nächsten
           Abrechnungsmonat). Beenden-Anfragen kommen als Aufgabe in „Heute“.

@@ -31,6 +31,11 @@ export function unplausibel(f: Felder, sparte: AuslesenSparte): string[] {
   if (typeof deckung === "number" && deckung < PLAUSIBEL.deckungMin) raus.add("deckungssumme");
   const summe = f.versicherungssumme?.w;
   if (typeof summe === "number" && summe < PLAUSIBEL.summeMin) raus.add("versicherungssumme");
+  // Kfz-Schlüssel aus dem Fahrzeugschein (Ole, 21.11.2026): HSN 4 Ziffern, TSN 3 Zeichen
+  const hsn = f.hsn?.w;
+  if (typeof hsn === "string" && !/^\d{4}$/.test(hsn)) raus.add("hsn");
+  const tsn = f.tsn?.w;
+  if (typeof tsn === "string" && !/^[A-Z0-9]{3}$/.test(tsn)) raus.add("tsn");
   return [...raus];
 }
 

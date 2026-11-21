@@ -10,6 +10,7 @@ import { berlinYmd, teamAbsences } from "@/lib/absence";
 import { addSeatCostHint, addsSeatCost, berlinDayStart, isActiveSeller, seatSummary } from "@/lib/seats";
 import { InviteForm } from "./invite-form";
 import { MemberRow } from "./member-row";
+import { bereitFuerLeads, wartetText } from "@/lib/team-bereit";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Team | performancegrowth" };
@@ -22,6 +23,10 @@ export default async function TeamPage() {
   const readOnly = ctx.preview;
 
   const members = await teamMembers(ctx.customerId);
+  // Bereit für Leads erst mit Kalender und App mit Mitteilungen (Ole, 21.11.2026, lib/team-bereit.ts)
+  const mitPush = new Set(
+    (await prisma.pushSubscription.findMany({ where: { userId: { in: members.map((m) => m.id) } }, select: { userId: true } })).map((p) => p.userId),
+  );
   const since = daysAgo(30);
   const counts = await prisma.lead.groupBy({
     by: ["assignedUserId"],
@@ -44,7 +49,7 @@ export default async function TeamPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader back="/buyer/einstellungen" title="Team" subtitle="Neue Leads werden reihum verteilt, Abwesende übersprungen. Berater sehen nur ihre eigenen." />
+      <PageHeader back="/buyer/einstellungen" title="Team" subtitle="Neue Leads gehen reihum an alle mit Kalender und App, Abwesende werden übersprungen. Berater sehen nur ihre eigenen." />
       <div className="space-y-5">
         {members.length > 1 && receivers === 0 ? (
           <p className="rounded-[var(--radius-md)] bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 ring-1 ring-amber-200">
@@ -68,6 +73,9 @@ export default async function TeamPage() {
                   owner: m.teamRole !== "advisor",
                   receivesLeads: m.receivesLeads,
                   ownCalendar: m.advisorCalendar?.status === "connected",
+                  wartet: m.receivesLeads
+                    ? wartetText(bereitFuerLeads({ owner: m.teamRole !== "advisor", kalender: m.advisorCalendar?.status === "connected", push: mitPush.has(m.id) }).fehlt)
+                    : null,
                   leads30: leads30.get(m.id) ?? 0,
                   loggedIn: !!m.lastLoginAt,
                   twoFactor: !!m.totpEnabledAt,

@@ -144,7 +144,9 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   outreach_tkv: "v12",
   outreach_zahn: "v12",
   outreach_pkv: "v12",
-  outreach_privatschutz: "v12",
+  // v13 (Ole, 21.11.2026): „zu Haftpflicht und Hausrat“ statt „zum Privatschutz“ (erstanschreiben.ts); bis zur Freigabe
+  // bei Meta sendet die App v12 (rankOutreach)
+  outreach_privatschutz: "v13",
   // Reine Hausrat-Leads (Ole, 18.11.2026, zur Einreichung freigegeben): „zu Ihrer Hausratversicherung“ statt „zum
   // Privatschutz“; bis zur Freigabe bei Meta die allgemeine bzw. die Privatschutz-Fassung (outreach.ts fallbackPurposes)
   outreach_hausrat: "v12",

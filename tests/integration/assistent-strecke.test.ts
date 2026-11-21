@@ -428,7 +428,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await knopf(phone, "folge:oeffentlicherDienst:nein", "Nein");
     const bitte = gesendet().at(-2)!;
     expect(bitte.body).toBe(
-      "Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat oder Kfz. Dann sieht er vorher, wo Sie doppelt zahlen oder Lücken haben, und der Termin geht deutlich schneller.",
+      "Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat oder Kfz. Dann sieht er vorher, ob Sie etwas doppelt zahlen und wann Sie kündigen können, und versucht, Ihnen Geld zu sparen. So wird der Termin kürzer und konkreter.",
     );
     expect(gesendet().at(-1)!.buttons?.map((b) => b.id)).toEqual(["policen:ja", "policen:nein"]);
     // Antwort als Text statt Knopf: der Assistent antwortet, dann der Schluss

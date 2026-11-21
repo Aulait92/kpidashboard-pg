@@ -3,6 +3,13 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 21.11.2026
+- **Kfz-Versicherung als Lead-Produkt** (B, Ole: „Folgendes braucht der Allianzer, um Preise zu rechnen: aus letzter
+  Rechnung von Vorversicherer die SFR, Versicherungsscheinnummer und Versicherer. Typ (3 Ziffern oder Buchstaben),
+  Hersteller (4 Ziffern), Fahrzeugschein.“; „Volle Versicherungsscheinnummer bitte mit auslesen“; „Bei Kfz auch
+  Cross-Selling betreiben, also nach anderen Policen fragen“). Assistent bittet nach der Buchung um Fahrzeugschein und
+  letzte Rechnung (Rückfall: HSN/TSN und Versicherer/SF-Klasse im Chat), lädt ein, weitere Policen mitzuschicken
+  (Komplettcheck). Auslesen: HSN, TSN, Erstzulassung, volle Vers.-Nr. nur bei Kfz (Zweck SF-Übertragung,
+  docs/recht/policen-whatsapp-gesundheitsdaten.md). Einwilligungs- und Vorlagentexte unverändert.
 - **Kleine Fixes sofort deployen** (A, Ole: „bei kleinen fixes direkt pushen“): Kleine Fehlerkorrekturen mit grünen Tests
   gehen direkt live, auch tagsüber. Größere Änderungen (neue Funktionen, Umbauten, Migrationen mit Datenänderung) weiter
   abends ab 20 Uhr bzw. früher nur mit Oles Freigabe.
@@ -116,7 +123,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **Löschverlangen aus Kalt-Mails:** automatisch löschen und im Kontakt vermerken; bei Abmahnung keine Auto-Löschung;
   nur eigene Domains sperren, keine Konzern-Domains (Ole).
 - **Zahlung nachträglich** und **Vorauszahlung mit Annahme** live (A, Ole), siehe `docs/recht/`.
-- **Deploy nur bei grüner Testpipeline**; Code-Deploys abends ab 20 Uhr, Blocker früher nur mit Oles Freigabe.
+- **Deploy nur bei grüner Testpipeline**; Code-Deploys werktags abends ab 20 Uhr, am Wochenende jederzeit (Ole, 21.11.2026); Blocker früher nur mit Oles Freigabe.
 - **Policen auslesen für alle Sparten** (Ole): neu Unfall, Tier, Reise, Krankenzusatz, Pflege und „Sonstige“
   (Grunddaten jeder anderen Police). Unfall, Pflege und Krankenzusatz zählen wie PKV/BU/Leben als Gesundheitssparten:
   ausgelesen erst mit Nachweis „keine Speicherung“ beim KI-Anbieter (K2, Admin → Anbindungen) und Einwilligung mit

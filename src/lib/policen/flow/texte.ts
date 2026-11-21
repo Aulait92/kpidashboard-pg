@@ -35,6 +35,8 @@ export type FlowTextKontext = {
   kiFertig: boolean;
   /** Satz zu Gesundheitsangaben (aus bei Tierkranken und wenn Kranken/BU/Leben für den Vermittler nicht freigegeben ist) */
   gesundheit: boolean;
+  /** Kfz-Lead (Ole, 21.11.2026): die freie Chat-Nachricht nennt Fahrzeugschein und letzte Rechnung (Vorlage bleibt allgemein) */
+  kfz?: boolean;
 };
 
 // ─── Knöpfe und Payloads ────────────────────────────────────────────────────
@@ -108,6 +110,15 @@ export function chatNachricht(k: FlowTextKontext): Nachricht {
     `Wenn ${k.name} deine Policen vorab hat, ${pruefung}, *ob du etwas doppelt zahlst, wann du kündigen kannst und was genau versichert ist.* ${spart} dir Geld zu sparen. So wird der Termin kürzer und konkreter.`,
     `Wenn ${k.name} Ihre Policen vorab hat, ${pruefung}, *ob Sie etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist.* ${spart} Ihnen Geld zu sparen. So wird der Termin kürzer und konkreter.`,
   );
+  if (k.kfz) {
+    const wer = k.pronomen ?? k.name;
+    const kfzKern = a(
+      k.an,
+      `Wenn ${k.name} deinen Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung vorab hat, kann ${wer} *deinen Beitrag schon vor dem Termin rechnen.* Darauf steht alles Nötige, zum Beispiel deine SF-Klasse.`,
+      `Wenn ${k.name} Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung vorab hat, kann ${wer} *Ihren Beitrag schon vor dem Termin rechnen.* Darauf steht alles Nötige, zum Beispiel Ihre SF-Klasse.`,
+    );
+    return { text: `${tag}\n\n${kfzKern}\n\n*Je ein Foto reicht* (beim Fahrzeugschein die Vorderseite). Gern auch ${a(k.an, "deine", "Ihre")} anderen Policen, etwa Haftpflicht oder Hausrat. Dauert etwa eine Minute.\n\n${ohnePolicenSatz(k.an)}`, fusszeile: null };
+  }
   // „Termin findet auch ohne Policen statt“ als eigener letzter Absatz statt Fußzeile (Ole, 20.11.2026: zwischen Text und
   // Fußzeile kaum Platz; den Abstand setzt WhatsApp, Leerzeilen am Ende werden abgeschnitten)
   return { text: `${tag}\n\n${kern}\n\n*Meist reicht ein Foto der ersten Seite.* Dauert etwa eine Minute.\n\n${ohnePolicenSatz(k.an)}`, fusszeile: null };

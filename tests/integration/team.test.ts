@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { assignLead, leadScope } from "@/lib/team";
-import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { cleanupCustomer, leadBereit, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 describe("Team: gleichmäßige Lead-Verteilung", () => {
   let customerId = "";
@@ -21,8 +21,8 @@ describe("Team: gleichmäßige Lead-Verteilung", () => {
   });
 
   it("drei Personen: reihum, jeder gleich oft", async () => {
-    await makeBuyer(customerId, "advisor");
-    await makeBuyer(customerId, "advisor");
+    await leadBereit(await makeBuyer(customerId, "advisor"));
+    await leadBereit(await makeBuyer(customerId, "advisor"));
     const counts = new Map<string, number>();
     for (let i = 0; i < 9; i++) {
       const lead = await prisma.lead.create({ data: { customerId, name: `L${i}` } });
@@ -54,5 +54,25 @@ describe("Team: gleichmäßige Lead-Verteilung", () => {
     const assigned = await prisma.lead.count({ where: { customerId, assignedUserId: advisor!.id } });
     expect(own).toBe(assigned);
     expect(own).toBeLessThan(all);
+  });
+
+  it("Eingeladene ohne Kalender oder App bekommen keine Leads (Ole, 21.11.2026)", async () => {
+    const neu = await makeBuyer(customerId, "advisor");
+    for (let i = 0; i < 6; i++) {
+      const lead = await prisma.lead.create({ data: { customerId, name: `N${i}` } });
+      expect(await assignLead(lead.id)).not.toBe(neu.id);
+    }
+    await prisma.advisorCalendar.create({ data: { userId: neu.id, customerId, status: "connected" } });
+    for (let i = 0; i < 6; i++) {
+      const lead = await prisma.lead.create({ data: { customerId, name: `K${i}` } });
+      expect(await assignLead(lead.id)).not.toBe(neu.id);
+    }
+    await prisma.pushSubscription.create({ data: { endpoint: `https://push.test/${neu.id}`, p256dh: "x", auth: "x", userId: neu.id } });
+    const got = new Set<string | null>();
+    for (let i = 0; i < 6; i++) {
+      const lead = await prisma.lead.create({ data: { customerId, name: `B${i}` } });
+      got.add(await assignLead(lead.id));
+    }
+    expect(got.has(neu.id)).toBe(true);
   });
 });

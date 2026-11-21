@@ -61,12 +61,19 @@ export async function assignLead(leadId: string): Promise<string | null> {
   if (!lead || lead.assignedUserId) return lead?.assignedUserId ?? null;
   const members = await prisma.user.findMany({
     where: { customerId: lead.customerId, role: "BUYER" },
-    select: { id: true, receivesLeads: true, lastLeadAssignedAt: true, createdAt: true },
+    select: { id: true, teamRole: true, receivesLeads: true, lastLeadAssignedAt: true, createdAt: true, advisorCalendar: { select: { status: true } } },
   });
   if (members.length < 2) return null;
+  // Erst nach Kalender und App mit Mitteilungen (Ole, 21.11.2026, lib/team-bereit.ts)
+  const mitPush = new Set(
+    (await prisma.pushSubscription.findMany({ where: { userId: { in: members.map((m) => m.id) } }, select: { userId: true } })).map((p) => p.userId),
+  );
+  const { bereitFuerLeads } = await import("@/lib/team-bereit");
+  const bereit = (m: (typeof members)[number]) =>
+    bereitFuerLeads({ owner: m.teamRole !== "advisor", kalender: m.advisorCalendar?.status === "connected", push: mitPush.has(m.id) }).bereit;
   // Abwesende (Urlaub, Krank …) werden übersprungen, ohne ihren Schalter zu ändern.
   const absent = await absentUserIds(lead.customerId);
-  const receivers = members.filter((m) => m.receivesLeads && !absent.has(m.id));
+  const receivers = members.filter((m) => m.receivesLeads && !absent.has(m.id) && bereit(m));
   if (receivers.length === 0) return null; // niemand eingeteilt/da → Inhaber sieht ihn
   receivers.sort(
     (a, b) =>
