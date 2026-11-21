@@ -155,9 +155,9 @@ describe("KI-Hinweis nach Anwalts-Memo (Rechtsvorprüfung 16.11.2026)", () => {
 
   it("Erstanschreiben v10 (Ole, 19.11.2026): kurz, KI-Kennzeichnung in der Fußzeile, kein „Mensch“, kein Tarif-Hinweis; wird eingereicht", () => {
     for (const p of OUTREACH_PURPOSES) {
-      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v12_sie`);
+      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_${p === "outreach_privatschutz" ? "v13" : "v12"}_sie`);
       const req = buildTemplateRequest(p, names, undefined, "sie", { documentExample: "https://x.de/e.pdf" });
-      expect(req.name, p).toBe(`pg_${p}_v12_sie`);
+      expect(req.name, p).toBe(`pg_${p}_${p === "outreach_privatschutz" ? "v13" : "v12"}_sie`);
       expect((req.components as { type: string; text?: string }[]).find((c) => c.type === "FOOTER")?.text, p).toBe(ERSTINFO_FOOTER_V12);
       expect(NAECHSTE_FASSUNG[p], p).toBeUndefined();
       for (const t of [TEMPLATE_BODY[p].du!, TEMPLATE_BODY[p].sie, TEMPLATE_BODY_B[p]!.du!, TEMPLATE_BODY_B[p]!.sie]) {
