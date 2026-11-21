@@ -113,20 +113,52 @@ export function policenEinwilligung(o: { an: Ansprache; vermittler: BitteVermitt
  * aus): an = auch Kranken-, BU- und Lebensversicherung im Text. vermittler null = „Ihr Berater“.
  * Senden: erst die Bitte (text, ohne Knöpfe), dann einwilligung (interaktiv) – siehe policenNachrichten.
  */
-export function policenBitte(o: { an: Ansprache; vermittler: BitteVermittler | null; gesundheitAn?: boolean; firma?: string | null; datenschutzUrl?: string | null }): PolicenBitte {
+export function policenBitte(o: {
+  an: Ansprache;
+  vermittler: BitteVermittler | null;
+  gesundheitAn?: boolean;
+  firma?: string | null;
+  datenschutzUrl?: string | null;
+  /** Bestehende Verträge des Leads (Vertragsfrage im Chat): stehen statt der festen Beispiele im Text (Ole, 21.11.2026) */
+  vertraege?: string[] | null;
+  /** Kfz-Lead (Ole, 21.11.2026): konkret Fahrzeugschein und letzte Rechnung der Kfz-Versicherung statt „Policen“ */
+  kfz?: boolean;
+}): PolicenBitte {
   const { an } = o;
   const wer = nominativ(an, o.vermittler);
-  const sparten = o.gesundheitAn ? "Haftpflicht, Hausrat, Kfz, Kranken-, BU- oder Lebensversicherung" : "Haftpflicht, Hausrat oder Kfz";
+  if (o.kfz) return { text: kfzBitteText(an, wer), knoepfe: [], fusszeile: null, einwilligung: policenEinwilligung(o) };
+  const eigene = [...new Set((o.vertraege ?? []).map((v) => v.trim()).filter(Boolean))].slice(0, 4);
+  const sparten = eigene.length
+    ? eigene.length === 1
+      ? a(an, `deine ${eigene[0]}`, `Ihre ${eigene[0]}`)
+      : `${eigene.slice(0, -1).join(", ")} oder ${eigene.at(-1)}`
+    : o.gesundheitAn
+      ? "Haftpflicht, Hausrat, Kfz, Kranken-, BU- oder Lebensversicherung"
+      : "Haftpflicht, Hausrat oder Kfz";
   const p = pronomen(o.vermittler, wer);
+  // Wie die Flow-Nachricht (Paket 4, Ole 20.11.2026): konkreter Nutzen, nur das Bemühen ums Sparen, kein Versprechen
+  const wer2 = p ?? wer;
   const dann = p
-    ? a(an, `Dann sieht ${p} vorher, wo du doppelt zahlst oder Lücken hast,`, `Dann sieht ${p} vorher, wo Sie doppelt zahlen oder Lücken haben,`)
-    : a(an, "Dann ist vorher klar, wo du doppelt zahlst oder Lücken hast,", "Dann ist vorher klar, wo Sie doppelt zahlen oder Lücken haben,");
+    ? a(an, `Dann sieht ${p} vorher, ob du etwas doppelt zahlst und wann du kündigen kannst, und versucht, dir Geld zu sparen.`, `Dann sieht ${p} vorher, ob Sie etwas doppelt zahlen und wann Sie kündigen können, und versucht, Ihnen Geld zu sparen.`)
+    : a(an, `Dann ist vorher klar, ob du etwas doppelt zahlst und wann du kündigen kannst, und ${wer2} versucht, dir Geld zu sparen.`, `Dann ist vorher klar, ob Sie etwas doppelt zahlen und wann Sie kündigen können, und ${wer2} versucht, Ihnen Geld zu sparen.`);
   const text = a(
     an,
-    `Damit ${wer} deinen Termin gut vorbereiten kann: Schick bitte vorab Fotos oder PDFs deiner aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} und der Termin geht deutlich schneller.`,
-    `Damit ${wer} Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} und der Termin geht deutlich schneller.`,
+    `Damit ${wer} deinen Termin gut vorbereiten kann: Schick bitte vorab Fotos oder PDFs deiner aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} So wird der Termin kürzer und konkreter.`,
+    `Damit ${wer} Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} So wird der Termin kürzer und konkreter.`,
   );
   return { text, knoepfe: [], fusszeile: null, einwilligung: policenEinwilligung(o) };
+}
+
+/**
+ * Bitte an Kfz-Leads (Ole, 21.11.2026): die zwei Unterlagen, aus denen der Beitrag gerechnet wird. Ohne Versprechen zu
+ * Preisen oder Ersparnis. wer = Vermittler im Nominativ.
+ */
+export function kfzBitteText(an: Ansprache, wer: string): string {
+  return a(
+    an,
+    `Damit ${wer} deinen Beitrag vorab rechnen kann: Schick bitte ein Foto von deinem Fahrzeugschein (Vorderseite) und von der letzten Rechnung deiner Kfz-Versicherung hier in den Chat. Darauf steht alles Nötige, zum Beispiel deine SF-Klasse. Gern auch deine anderen Policen, etwa Haftpflicht oder Hausrat: Dann schaut ${wer} im Termin alles mit an und versucht, dir Geld zu sparen.`,
+    `Damit ${wer} Ihren Beitrag vorab rechnen kann: Schicken Sie bitte ein Foto von Ihrem Fahrzeugschein (Vorderseite) und von der letzten Rechnung Ihrer Kfz-Versicherung hier in den Chat. Darauf steht alles Nötige, zum Beispiel Ihre SF-Klasse. Gern auch Ihre anderen Policen, etwa Haftpflicht oder Hausrat: Dann schaut ${wer} im Termin alles mit an und versucht, Ihnen Geld zu sparen.`,
+  );
 }
 
 /** Beide Nachrichten in der Reihenfolge zum Senden. */

@@ -33,6 +33,7 @@ import type { Variante } from "@/lib/experimente";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { folgefragen, folgefrageText, spartenDesLeads, type Folgefrage } from "@/lib/preise/rechner-angaben";
+import { istKfzProdukt } from "@/lib/whatsapp/produkt-fragen";
 import {
   abschlussEinleitung,
   abschlussText,
@@ -141,8 +142,13 @@ export function policenSpaeterText(an: Ansprache): string {
 }
 
 /** Eigene Erinnerung 24 Std. nach der Buchung (nur bei mehr als 2 Tagen bis zum Termin). police = null: alle Policen. */
-export function policenErinnerungText(an: Ansprache, person: { nom: string }, police: string | null): string {
-  const was = police ? a(an, `deine ${police}`, `Ihre ${police}`) : a(an, "deine Policen für Haftpflicht, Hausrat oder Kfz", "Ihre Policen für Haftpflicht, Hausrat oder Kfz");
+export function policenErinnerungText(an: Ansprache, person: { nom: string }, police: string | null, kfz = false): string {
+  // Kfz-Lead (Ole, 21.11.2026): die zwei Unterlagen für den Beitrag
+  const was = kfz
+    ? a(an, "deinen Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung", "Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung")
+    : police
+      ? a(an, `deine ${police}`, `Ihre ${police}`)
+      : a(an, "deine Policen für Haftpflicht, Hausrat oder Kfz", "Ihre Policen für Haftpflicht, Hausrat oder Kfz");
   return a(
     an,
     `Kurze Erinnerung: Hast du ${was} schon zur Hand? Einfach abfotografieren und hier schicken, dann kann ${person.nom} alles vorbereiten.\n\nKeine Nachrichten mehr? Antworte einfach STOP.`,
@@ -452,8 +458,8 @@ export async function komplettcheckVariante(einheit: string | null | undefined):
  * Komplettcheck-Frage mit Knöpfen (Text und Knöpfe; der Aufrufer sendet und setzt den Merker). Mit prefix entfällt das
  * „Danke!“ am Anfang der Frage. variante: Splittest komplettcheck_text (ohne Angabe die neue Fassung b).
  */
-export function komplettcheckNachricht(k: Pick<StreckenKontext, "an" | "person" | "familie"> & { variante?: Variante }, prefix?: string | null): { text: string; buttons: Knopf[] } {
-  const frage = komplettcheckFrage(k.an, k.person, k.familie, k.variante ?? "b");
+export function komplettcheckNachricht(k: Pick<StreckenKontext, "an" | "person" | "familie"> & { variante?: Variante; source?: string | null }, prefix?: string | null): { text: string; buttons: Knopf[] } {
+  const frage = komplettcheckFrage(k.an, k.person, k.familie, k.variante ?? "b", k.source);
   return { text: prefix ? `${prefix} ${frage.replace(/^Danke!\s*/, "")}` : frage, buttons: KOMPLETTCHECK_KNOEPFE };
 }
 
@@ -747,7 +753,7 @@ async function langeZeiten(k: StreckenKontext, now: Date): Promise<[string, stri
   try {
     const { suggestSlots } = await import("@/lib/calendar");
     const { pickTwoSlots } = await import("@/lib/whatsapp/termin-vorschlaege");
-    const frei = (await suggestSlots(k.customerId, LANG_MIN, 8, "lead", 10, k.leadId)).filter((s) => new Date(s.start).getTime() > now.getTime() + HOUR);
+    const frei = (await suggestSlots(k.customerId, LANG_MIN, 40, "lead", 10, k.leadId)).filter((s) => new Date(s.start).getTime() > now.getTime() + HOUR);
     const two = pickTwoSlots(frei, { now });
     return two ? [two[0].start, two[1].start] : null;
   } catch {
@@ -1315,7 +1321,7 @@ export async function runPolicenErinnerung(now = new Date()): Promise<{ gesendet
       const k = await streckenKontext(b.conversationId, now);
       if (!k?.termin) continue;
       await merke(b.conversationId, STRECKE.policenErinnerung, { appointmentId, art: "tag" });
-      await sende(k, policenErinnerungText(k.an, k.person, stand.policenPolice));
+      await sende(k, policenErinnerungText(k.an, k.person, stand.policenPolice, istKfzProdukt(k.source)));
       gesendet++;
     } catch (err) {
       console.error("[policen erinnerung]", err instanceof Error ? err.message.slice(0, 160) : err);

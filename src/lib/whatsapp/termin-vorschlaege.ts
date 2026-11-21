@@ -39,16 +39,28 @@ export function werktageBis(iso: string, now: Date): number {
 }
 
 /**
- * Zwei Vorschläge: der früheste und der früheste an einem anderen Tag (sonst der nächste). Rein, testbar. Mit `now`
+ * Zwei Vorschläge: der früheste und der früheste an einem anderen Tag. Gibt es keinen anderen Tag (bzw. mit
+ * gleicherTag: nur dieser Tag gefragt), eine Zeit mindestens 3 Stunden später, sonst 2 Stunden, sonst die späteste
+ * (Ole, 21.11.2026: „lieber 2 Vorschläge, die nicht nur 30 Min. auseinander liegen“). Rein, testbar. Mit `now`
  * nur Zeiten innerhalb von 3 Werktagen, solange es dort zwei gibt (sonst wie bisher, damit überhaupt Zeiten kommen).
  */
-export function pickTwoSlots<T extends { start: string }>(slots: T[], opts: { now?: Date; maxWerktage?: number } = {}): [T, T] | null {
+export function pickTwoSlots<T extends { start: string }>(slots: T[], opts: { now?: Date; maxWerktage?: number; gleicherTag?: boolean } = {}): [T, T] | null {
   if (slots.length < 2) return null;
   const nah = opts.now ? slots.filter((s) => werktageBis(s.start, opts.now!) <= (opts.maxWerktage ?? MAX_VORLAUF_WERKTAGE)) : slots;
   const pool = nah.length >= 2 ? nah : slots;
   const first = pool[0];
-  const other = pool.find((s) => dayKey(s.start) !== dayKey(first.start)) ?? pool[1];
+  const t0 = new Date(first.start).getTime();
+  const rest = pool.slice(1).filter((s) => new Date(s.start).getTime() > t0);
+  const tag = rest.filter((s) => dayKey(s.start) === dayKey(first.start));
+  const abstand = (h: number) => (s: T) => new Date(s.start).getTime() - t0 >= h * 60 * 60 * 1000;
+  const anderer = opts.gleicherTag ? undefined : rest.find((s) => dayKey(s.start) !== dayKey(first.start));
+  const other = anderer ?? tag.find(abstand(3)) ?? tag.find(abstand(2)) ?? (opts.gleicherTag ? tag.at(-1) : rest.find(abstand(3)) ?? rest.at(-1)) ?? pool[1];
   return [first, other];
+}
+
+/** Liegen zwei Vorschläge am selben Tag weniger als 2 Stunden auseinander? (dann neu wählen) */
+export function zuNahBeieinander(a: string, b: string): boolean {
+  return dayKey(a) === dayKey(b) && Math.abs(new Date(a).getTime() - new Date(b).getTime()) < 2 * 60 * 60 * 1000;
 }
 
 export type Terminvorschlaege = { labels: [string, string]; starts: [string, string]; payloads: string[] };
@@ -58,7 +70,7 @@ export async function zweiTerminvorschlaege(customerId: string, leadId: string |
   try {
     const { bookingDurationMin, suggestSlots } = await import("@/lib/calendar");
     const duration = await bookingDurationMin(customerId, leadId).catch(() => 30);
-    const two = pickTwoSlots(await suggestSlots(customerId, duration, 8, "lead", 10, leadId), { now: new Date() });
+    const two = pickTwoSlots(await suggestSlots(customerId, duration, 40, "lead", 10, leadId), { now: new Date() });
     if (!two) return null;
     const starts: [string, string] = [two[0].start, two[1].start];
     // Dritter Knopf „Andere Zeit“ ohne eigenen Payload (Knopftext genügt)

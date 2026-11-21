@@ -61,6 +61,14 @@ export function bedarfFelder(input: { produkt: string | null | undefined; formul
     return out;
   }
 
+  if (kat === "kfz") {
+    // Kfz (Ole, 21.11.2026): Fahrzeugschein und letzte Rechnung des Vorversicherers, dazu andere Verträge (Cross-Selling)
+    add("fahrzeug", "Fahrzeug (HSN 2.1, TSN 2.2)");
+    add("vorversicherung", "Bisherige Kfz-Versicherung (Versicherer, SF-Klasse, Vers.-Nr.)");
+    add("vorhanden", "Weitere Verträge (Haftpflicht, Hausrat …)");
+    return out;
+  }
+
   if (kat === "privatschutz") {
     const interesse = [formWert(input.formular, /versicherungsinteresse|interesse/i), q.interesse].filter(Boolean).join(" ");
     const sp = spartenAus(interesse);

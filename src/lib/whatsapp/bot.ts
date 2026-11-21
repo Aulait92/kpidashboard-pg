@@ -1016,11 +1016,25 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         const durationMin = await bookingDurationMin(conversation.customerId, conversation.leadId).catch(() => 30);
         const { pickTwoSlots } = await import("@/lib/whatsapp/termin-vorschlaege");
         // Vorlauf höchstens 3 Werktage (Ole, 17.11.2026), mehr nur auf Wunsch (get_available_slots mit Wunschzeit)
-        const two = pickTwoSlots(await suggestSlots(conversation.customerId, durationMin, 8, "lead", 10, conversation.leadId), { now });
+        const two = pickTwoSlots(await suggestSlots(conversation.customerId, durationMin, 40, "lead", 10, conversation.leadId), { now });
         starts = two ? [two[0].start, two[1].start] : [];
       } catch (err) {
         console.error("[whatsapp bot] Terminvorschlag", err);
         return "Kalender ist nicht verbunden. Nutze stattdessen propose_appointment, um die Wunschzeit festzuhalten.";
+      }
+    } else {
+      // Vom Assistenten gewählt, aber am selben Tag nur kurz auseinander (z. B. 9 und 9:30 Uhr): zweite Zeit am selben
+      // Tag mit Abstand wählen (Ole, 21.11.2026)
+      const { zuNahBeieinander, pickTwoSlots } = await import("@/lib/whatsapp/termin-vorschlaege");
+      if (zuNahBeieinander(starts[0], starts[1])) {
+        try {
+          const durationMin = await bookingDurationMin(conversation.customerId, conversation.leadId).catch(() => 30);
+          const frei = await suggestSlots(conversation.customerId, durationMin, 40, "lead", 14, conversation.leadId, new Date(starts[0]));
+          const two = pickTwoSlots([{ start: starts[0] }, ...frei.filter((x) => x.start !== starts[0])], { gleicherTag: true });
+          if (two && !zuNahBeieinander(two[0].start, two[1].start)) starts = [two[0].start, two[1].start];
+        } catch {
+          /* bleibt bei der Wahl des Assistenten */
+        }
       }
     }
     if (starts.length < 2) return "Keine zwei freien Zeiten gefunden. Frag den Lead nach seiner Wunschzeit und nutze propose_appointment.";
@@ -1169,8 +1183,8 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           // Wunschtag des Leads (Ole, 19.11.2026): kann er nur später, bekommt er den späteren Termin, statt wieder die nächsten Zeiten
           const ab = wunschTagAb((tu.input as { ab?: unknown }).ab);
           const slots: Slot[] = ab
-            ? await suggestSlots(conversation.customerId, durationMin, 6, "lead", 14, conversation.leadId, ab)
-            : await suggestSlots(conversation.customerId, durationMin, 6, "lead", 10, conversation.leadId);
+            ? await suggestSlots(conversation.customerId, durationMin, 12, "lead", 14, conversation.leadId, ab)
+            : await suggestSlots(conversation.customerId, durationMin, 12, "lead", 10, conversation.leadId);
           // Berater abwesend (Urlaub, Krank …): ab wann wieder Termine gehen – ohne Grund.
           const pausedUntil = await bookingPausedUntil(conversation.customerId, conversation.leadId).catch(() => null);
           const absenceNote = pausedUntil
@@ -1181,7 +1195,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
               "Aktuell keine freien Slots in den nächsten Werktagen gefunden. Frage den Lead nach seiner Wunschzeit und nutze propose_appointment." + absenceNote;
           } else {
             content =
-              "Freie Zeiten (für den Vorschlag termin_vorschlagen mit genau zwei start-Werten nutzen; zum Buchen den exakten start-Wert an book_appointment übergeben):\n" +
+              "Freie Zeiten (für den Vorschlag termin_vorschlagen mit genau zwei start-Werten nutzen, an verschiedenen Tagen oder am selben Tag mindestens 3 Stunden auseinander; zum Buchen den exakten start-Wert an book_appointment übergeben):\n" +
               slots
                 .map((s) => `- ${zeitKurz(new Date(s.start))} (start=${s.start})`)
                 .join("\n") + absenceNote;
@@ -1401,7 +1415,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       zusageGefragt = true;
     } else if (sk?.termin) zweite = await strecke.ersteNachBuchung(sk);
     else {
-      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id) });
+      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id), source: lead?.source ?? null });
       zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
     }
   } else if (zug.vorschlag) {
@@ -1432,7 +1446,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       if (sk?.termin?.id === upcoming.id && (zusageWartet || zusageAndere)) zweite = null;
       else if (sk?.termin?.id === upcoming.id) zweite = await strecke.ersteNachBuchung(sk);
       else {
-        const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id) });
+        const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id), source: lead?.source ?? null });
         zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
       }
     } else if (upcoming && stand && strecke.policenBitteOffen(stand) && latest?.direction === "inbound" && latest.createdAt > stand.policenBitteAt! && !knoepfe) {

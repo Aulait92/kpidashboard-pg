@@ -138,8 +138,44 @@ export async function appCreateEvent(customerId: string, ev: NewEvent): Promise<
 async function terminZu(eventId: string) {
   return prisma.appointment.findFirst({
     where: { OR: [{ calendarEventId: eventId }, { advisorEventId: eventId }] },
-    select: { customerId: true, startsAt: true, endsAt: true, meetUrl: true, mode: true, ort: true },
+    select: { customerId: true, startsAt: true, endsAt: true, meetUrl: true, mode: true, ort: true, leadId: true, conversationId: true, bookedVia: true },
   });
+}
+
+type TerminZeile = NonNullable<Awaited<ReturnType<typeof terminZu>>>;
+
+/**
+ * Titel und Beschreibung wie bei der Buchung (lib/whatsapp/event-text.ts). Eine Aktualisierung (gleiche UID) ersetzt
+ * den Eintrag in Outlook ganz; ohne das stand nach Verschieben oder neuer Dauer nur noch „Beratungstermin“ ohne Namen
+ * (Ole, 21.11.2026, Allianz-Kalender).
+ */
+export async function eintragText(t: TerminZeile | null): Promise<{ summary: string; description: string }> {
+  if (!t) return { summary: "Beratungstermin", description: "" };
+  const [lead, conv] = await Promise.all([
+    t.leadId ? prisma.lead.findUnique({ where: { id: t.leadId }, select: { name: true, phone: true, email: true, source: true } }) : null,
+    t.conversationId
+      ? prisma.conversation.findUnique({ where: { id: t.conversationId }, select: { contactName: true, contactPhone: true, contactEmail: true, qualificationSummary: true } })
+      : null,
+  ]);
+  const name = lead?.name?.trim() || conv?.contactName?.trim() || "";
+  if (!name) return { summary: "Beratungstermin", description: "" };
+  const mode = t.mode === "video" || t.mode === "onsite" ? t.mode : "phone";
+  const phone = lead?.phone ?? conv?.contactPhone ?? "";
+  const bookedVia = t.bookedVia === "bot" || t.bookedVia === "advisor" || t.bookedVia === "mail_strecke" ? t.bookedVia : "booking_page";
+  const { eventSummary, buildEventDescription } = await import("@/lib/whatsapp/event-text");
+  return {
+    summary: eventSummary(mode, name, lead?.source ?? null),
+    description: buildEventDescription({
+      name,
+      phone,
+      email: conv?.contactEmail ?? lead?.email ?? null,
+      product: lead?.source ?? null,
+      mode,
+      summary: conv?.qualificationSummary ?? null,
+      conversationId: t.conversationId,
+      bookedVia,
+    }),
+  };
 }
 
 async function beraterAdresse(customerId: string): Promise<string[]> {
@@ -156,9 +192,10 @@ async function aktualisieren(customerId: string, eventId: string, method: "REQUE
   const e = end ?? t?.endsAt ?? (s ? new Date(s.getTime() + 30 * 60_000) : undefined);
   if (!s || !e) return;
   const location = t?.mode === "video" ? t.meetUrl : t?.mode === "onsite" ? t.ort : null;
+  const text = await eintragText(t);
   await sendeEinladung(
     t?.customerId ?? customerId,
-    { uid: uidOf(eventId), method, sequence: seqNow(), start: s, end: e, summary: "Beratungstermin", description: "", location: location ?? null },
+    { uid: uidOf(eventId), method, sequence: seqNow(), start: s, end: e, ...text, location: location ?? null },
     await beraterAdresse(t?.customerId ?? customerId),
   ).catch((err) => console.warn("[app-kalender]", err instanceof Error ? err.message : err));
 }

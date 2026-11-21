@@ -149,7 +149,16 @@ export async function policenBitteFuerChat(conversationId: string): Promise<impo
   if (!chat || chat.minderjaehrig) return null;
   const sp = await sprecher(chat);
   const { policenBitte } = await import("@/lib/policen/bitte");
-  return policenBitte(sp);
+  // Beispiele aus den genannten Verträgen statt „Haftpflicht, Hausrat oder Kfz“ (die der Lead evtl. gar nicht hat)
+  const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { vorvertraege: true, source: true } });
+  // Kfz-Lead: konkret Fahrzeugschein und letzte Rechnung (Ole, 21.11.2026)
+  const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
+  if (istKfzProdukt(lead?.source)) return policenBitte({ ...sp, kfz: true });
+  const { vorvertraegeAus } = await import("@/lib/whatsapp/vorvertraege");
+  const vertraege = (vorvertraegeAus(lead?.vorvertraege)?.liste ?? [])
+    .map((v) => (v.sparte === "Private Krankenversicherung" ? "private Krankenversicherung" : v.sparte))
+    .filter((x) => x !== "Sonstige" && (sp.gesundheitAn || !gesundheitInText(x)));
+  return policenBitte({ ...sp, vertraege });
 }
 
 /** Chat und Sprecher für die Policen-Strecke v2 (lib/policen/flow/server.ts). null = kein Lead-Chat. */
@@ -562,7 +571,8 @@ async function speichere(
   await setzeBody(x.messageId, CHAT_HINWEIS);
   // Verlauf und Push ohne Dateinamen (A7)
   await logLeadHistory(chat.leadId, "dokument", "Dokument per WhatsApp erhalten (mit Einwilligung)", { customerId: chat.customerId, userId: null });
-  const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { name: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { name: true, source: true } });
+  await kfzFotoVermerken(chat.id, lead?.source ?? null).catch(() => logFehler("kfz-foto", null));
   const { notifyLeadPush } = await import("@/lib/team");
   await notifyLeadPush(chat.leadId, {
     title: `Neue Unterlagen von ${lead?.name?.trim() || "Ihrem Kontakt"}`,
@@ -571,6 +581,25 @@ async function speichere(
     url: `/buyer/leads/${chat.leadId}#dokumente`,
   }).catch(() => null);
   return doc.id;
+}
+
+/** Vermerk in den Angaben, wenn ein Kfz-Lead Unterlagen geschickt hat (rein). */
+export const KFZ_FOTO_VERMERK = "laut Foto (Unterlagen im Kontakt)";
+
+/**
+ * Kfz-Lead hat Unterlagen geschickt (Ole, 21.11.2026): Fahrzeug und bisherige Kfz-Versicherung gelten als bekannt, damit
+ * der Assistent nicht noch einmal nach Schlüsselnummern und SF-Klasse fragt. Werte stehen nach dem Auslesen auf der
+ * Vertragsseite. Bereits genannte Angaben bleiben unverändert.
+ */
+async function kfzFotoVermerken(conversationId: string, source: string | null): Promise<void> {
+  const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
+  if (!istKfzProdukt(source)) return;
+  const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { qualificationData: true } });
+  const { cleanQualificationData, mergeQualificationData } = await import("@/lib/whatsapp/qualification");
+  const bisher = cleanQualificationData(conv?.qualificationData);
+  const neu = { ...(bisher.fahrzeug ? {} : { fahrzeug: KFZ_FOTO_VERMERK }), ...(bisher.vorversicherung ? {} : { vorversicherung: KFZ_FOTO_VERMERK }) };
+  if (!Object.keys(neu).length) return;
+  await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: mergeQualificationData(bisher, neu) ?? undefined } });
 }
 
 type Antwort = { kind: string; text: string | null; payload: string | null; waMessageId?: string | null; frageWaMessageId?: string | null };
