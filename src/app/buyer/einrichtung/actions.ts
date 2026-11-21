@@ -59,6 +59,7 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
     await saveVermittlerAngaben(ob.customerId, p.angaben);
     if (video !== undefined) {
       await prisma.agentConfig.upsert({ where: { customerId: ob.customerId }, create: { customerId: ob.customerId, videoRoomUrl: video }, update: { videoRoomUrl: video } });
+      await import("@/lib/video-raum-server").then((m) => m.videoRaumNachtragen(ob.customerId, video)).catch(() => 0);
     }
   }
 
