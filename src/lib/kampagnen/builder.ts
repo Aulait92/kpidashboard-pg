@@ -94,6 +94,25 @@ const slug = (s: string) =>
     .replace(/^_+|_+$/g, "")
     .slice(0, 40) || "antwort";
 
+/**
+ * Bild für eine Anzeige: Upload über /adimages (Hash). Fehlt der App dafür die Berechtigung (Meta #3 „Application does
+ * not have the capability“, Lohmann 21.11.2026), nehmen wir die öffentliche Bild-Adresse direkt im Creative (picture).
+ */
+async function bildFuerAnzeige(api: MetaApi, act: string, imageUrl: string): Promise<string> {
+  try {
+    const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: imageUrl });
+    const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
+    if (hash) return hash;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/capability|\(#3\)|"code":3\b/.test(msg)) throw e;
+  }
+  return `url:${imageUrl}`;
+}
+
+/** link_data-Feld zum gespeicherten Bild: Hash bzw. Adresse (picture). */
+const bildFeld = (ref: string): Record<string, string> => (ref.startsWith("url:") ? { picture: ref.slice(4) } : { image_hash: ref });
+
 /** Payload für POST /{page_id}/leadgen_forms (Felder laut Graph-Referenz „Page leadgen_forms“). */
 export function leadFormPayload(
   form: LeadFormDraft,
@@ -280,10 +299,7 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   for (let i = 0; i < pairs.length; i++) {
     const { copy, image } = pairs[i];
     if (!built.imageHashes[i]) {
-      const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: image!.imageUrl });
-      const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
-      if (!hash) throw new Error("Meta /adimages lieferte keinen Hash.");
-      built.imageHashes[i] = hash;
+      built.imageHashes[i] = await bildFuerAnzeige(api, act, image!.imageUrl);
       await save();
     }
     if (!built.creativeIds[i]) {
@@ -292,7 +308,7 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
         object_story_spec: {
           page_id: ctx.pageId,
           link_data: {
-            image_hash: built.imageHashes[i],
+            ...bildFeld(built.imageHashes[i]),
             link: "http://fb.me/",
             message: copy.primaryText,
             name: copy.headline,
@@ -349,10 +365,7 @@ export async function buildRefreshAds(api: MetaApi, input: RefreshBuildInput): P
   for (let i = 0; i < pairs.length; i++) {
     const { copy, image } = pairs[i];
     if (!built.imageHashes[i]) {
-      const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: image!.imageUrl });
-      const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
-      if (!hash) throw new Error("Meta /adimages lieferte keinen Hash.");
-      built.imageHashes[i] = hash;
+      built.imageHashes[i] = await bildFuerAnzeige(api, act, image!.imageUrl);
       await save();
     }
     if (!built.creativeIds[i]) {
@@ -361,7 +374,7 @@ export async function buildRefreshAds(api: MetaApi, input: RefreshBuildInput): P
         object_story_spec: {
           page_id: ctx.pageId,
           link_data: {
-            image_hash: built.imageHashes[i],
+            ...bildFeld(built.imageHashes[i]),
             link: "http://fb.me/",
             message: copy.primaryText,
             name: copy.headline,
