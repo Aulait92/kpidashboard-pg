@@ -61,7 +61,7 @@ export async function handleFailedStatus(waMessageId: string, errors: StatusErro
   await prisma.message.updateMany({ where: { waMessageId }, data: { errorCode: error.code, errorTitle: error.title } });
   const msg = await prisma.message.findUnique({
     where: { waMessageId },
-    select: { direction: true, purpose: true, conversation: { select: { id: true, customerId: true, leadId: true } } },
+    select: { direction: true, purpose: true, conversation: { select: { id: true, customerId: true, leadId: true, contactPhone: true } } },
   });
   // Kampagnen-Empfänger (Bestand): Status, bei „kein WhatsApp“ künftig nur E-Mail
   const { applyCampaignStatus } = await import("@/lib/bestand/campaigns");
@@ -77,7 +77,9 @@ export async function handleFailedStatus(waMessageId: string, errors: StatusErro
     if (conv.leadId) {
       // Hat der Lead je selbst geschrieben, hat er WhatsApp: dann ist es kein „kein WhatsApp“
       const inbound = await prisma.message.count({ where: { conversationId: conv.id, direction: "inbound" } });
-      out.lead = inbound > 0 ? "skipped" : await markLeadNoWhatsApp(conv.leadId, { now, code: error.code });
+      const { istFestnetz } = await import("@/lib/telefon-typ");
+      const grund = (await istFestnetz(conv.contactPhone)) ? ("festnetz" as const) : undefined;
+      out.lead = inbound > 0 ? "skipped" : await markLeadNoWhatsApp(conv.leadId, { now, code: error.code, grund });
     }
     return out;
   }
@@ -155,7 +157,7 @@ export async function markLeadOutreachFailed(
  */
 export async function markLeadNoWhatsApp(
   leadId: string,
-  /** grund „festnetz“: vor dem Versand erkannt (lib/whatsapp/festnetz.ts), eigene Texte und Mail-Strecke mit Auslöser „festnetz“ */
+  /** grund „festnetz“: Festnetznummer ohne WhatsApp (lib/whatsapp/festnetz.ts), eigene Texte und Mail-Strecke mit Auslöser „festnetz“ */
   opts: { now?: Date; code?: number | null; grund?: "festnetz" } = {},
 ): Promise<"flagged" | "already" | "skipped"> {
   const now = opts.now ?? new Date();

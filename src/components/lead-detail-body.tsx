@@ -561,7 +561,7 @@ export async function LeadDetailBody({
           <span className="min-w-0 flex-1">
             {festnetz ? (
               <>
-                <b>Keine Handynummer:</b> Festnetznummer, darum schreibt der Assistent nicht per WhatsApp. Bitte anrufen.
+                <b>Keine Handynummer:</b> Festnetznummer ohne WhatsApp, der Assistent schreibt nicht. Bitte anrufen.
               </>
             ) : (
               <>

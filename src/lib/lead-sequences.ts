@@ -50,7 +50,6 @@ import { displayProduct } from "@/lib/products";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
-import { WhatsAppFestnetzError } from "@/lib/whatsapp/festnetz";
 import { a, anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -965,7 +964,7 @@ async function sendStep(
     if (err instanceof WhatsAppUnavailableError) {
       // Festnetznummer (lib/whatsapp/festnetz.ts) bzw. kein WhatsApp: nichts gesendet, Anruf statt WhatsApp
       const r = await createCallTask(seq.leadId, step.fallbackNote, now);
-      return { ...base, result: r, detail: err instanceof WhatsAppFestnetzError ? "Nicht gesendet: Festnetznummer" : "Nicht per WhatsApp erreichbar" };
+      return { ...base, result: r, detail: "Nicht per WhatsApp erreichbar" };
     }
     if (err instanceof NoTemplateError) {
       const r = await createCallTask(seq.leadId, step.fallbackNote, now);
