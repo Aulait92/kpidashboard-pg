@@ -45,6 +45,7 @@ export const SETUP_STEPS = [
   { key: "assistent", label: "So arbeitet Ihr Assistent" },
   { key: "einwaende", label: "Einwände im Termin" },
   { key: "serviceMails", label: "Service-Mails in Ihrem Namen" },
+  { key: "policenGesundheit", label: "Kranken, BU und Leben freischalten" },
   { key: "metaAccess", label: "Meta freigeben" },
   { key: "whatsapp", label: "WhatsApp verbinden" },
   { key: "bestandImport", label: "Kundenliste hochladen" },

@@ -16,7 +16,8 @@ import { policenAvvSpaeterAction, policenAvvZustimmenAction } from "@/app/buyer/
 
 const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
 
-export function PolicenFreischaltung({ f, ort }: { f: Freischaltung; ort: "karte" | "einstellungen" }) {
+/** ohneKopf: im Einrichtungsschritt (Titel steht schon im Schritt), ohne Symbol und Überschrift */
+export function PolicenFreischaltung({ f, ort, ohneKopf = false }: { f: Freischaltung; ort: "karte" | "einstellungen"; ohneKopf?: boolean }) {
   const toast = useToast();
   const [lesen, setLesen] = useState(false);
   const [weg, setWeg] = useState(false);
@@ -56,11 +57,13 @@ export function PolicenFreischaltung({ f, ort }: { f: Freischaltung; ort: "karte
   return (
     <div className={ort === "karte" ? "rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-sm)] sm:p-5" : "px-5 py-4"} data-policen-freischaltung={ort}>
       <div className="flex gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-emerald-600 text-white">
-          <ShieldCheck className="h-5 w-5" />
-        </span>
+        {ohneKopf ? null : (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-emerald-600 text-white">
+            <ShieldCheck className="h-5 w-5" />
+          </span>
+        )}
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold">Policen aus Kranken, BU und Leben freischalten</h2>
+          {ohneKopf ? null : <h2 className="font-semibold">Policen aus Kranken, BU und Leben freischalten</h2>}
           {an ? (
             <p className="mt-1 text-sm text-[color:var(--muted)]" data-policen-an>
               {f.intern ? "Eingeschaltet (internes Konto)." : f.zugestimmtAt ? `Eingeschaltet, zugestimmt am ${day(f.zugestimmtAt)}.` : "Eingeschaltet."}
