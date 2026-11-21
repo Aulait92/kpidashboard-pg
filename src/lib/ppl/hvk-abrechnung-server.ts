@@ -270,7 +270,7 @@ export async function runHvkCron(now = new Date()) {
     await sendToAdmins({
       title: `🧾 HvK-Abrechnung ${r.invoiceNo}`,
       body: [`${r.billed} abgerechnet, ${r.delivered} geliefert`, r.stornoReview ? `${r.stornoReview} Reklamation prüfen` : null, diff ? `${diff} Abweichung` : null].filter(Boolean).join(" · "),
-      url: r.stornoReview ? "/admin/ppl?ansicht=storno" : "/admin/ppl?ansicht=hvk",
+      url: r.stornoReview ? "/admin/neu/leads/ppl?ansicht=storno" : "/admin/neu/leads/ppl?ansicht=hvk",
       tag: `hvk-abrechnung:${r.invoiceNo}`,
     }).catch(() => {});
   }

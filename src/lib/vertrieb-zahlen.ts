@@ -32,7 +32,7 @@ const ACTIVITY_LABEL: Record<string, string> = { ANRUF: "Anruf", EMAIL: "E-Mail"
 const MEETING_STATUS: Record<string, string> = { GEPLANT: "geplant", ABGESAGT: "abgesagt", VERSCHOBEN: "verschoben" };
 const OFFER_STATUS: Record<string, string> = { sent: "offen", accepted: "angenommen", declined: "abgelehnt", draft: "Entwurf" };
 
-const contactHref = (id: string) => `/admin/vertrieb/kontakte/${id}`;
+const contactHref = (id: string) => `/admin/neu/vertrieb/kontakte/${id}`;
 const eur = (v: unknown) => `${Number(v ?? 0).toLocaleString("de-DE", { maximumFractionDigits: 0 })} €`;
 
 function offerStatus(o: { status: string; validUntil: Date; declineReason: string | null }, now: Date): string {

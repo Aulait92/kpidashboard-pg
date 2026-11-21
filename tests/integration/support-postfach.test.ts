@@ -46,7 +46,7 @@ describe("Support-Postfach", () => {
     expect(conv.leadId).toBeNull();
     expect(conv.messages).toHaveLength(1);
     expect(runBotTurn).not.toHaveBeenCalled();
-    expect(adminPushes.at(-1)).toMatchObject({ url: `/admin/whatsapp?c=${conv.id}` });
+    expect(adminPushes.at(-1)).toMatchObject({ url: `/admin/neu/leads/chats?c=${conv.id}` });
     expect(adminPushes.at(-1)!.title).toMatch(/Support-WhatsApp/);
   });
 });

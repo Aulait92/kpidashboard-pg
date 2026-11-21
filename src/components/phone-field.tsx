@@ -43,10 +43,16 @@ export function PhoneField({
   label,
   required = true,
   defaultInternational,
+  error,
+  labelClassName = "mb-1 block text-xs font-medium text-[color:var(--muted)]",
 }: {
   name: string;
   label: string;
   required?: boolean;
+  /** Fehlermeldung direkt am Feld (rote Umrandung, Text darunter) */
+  error?: string | null;
+  /** Beschriftung wie die übrigen Felder des Formulars (Standard: klein und grau) */
+  labelClassName?: string;
   /** Vorbelegung als internationale Ziffern, z. B. „491711234567". */
   defaultInternational?: string;
 }) {
@@ -66,8 +72,10 @@ export function PhoneField({
 
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-[color:var(--muted)]">{label}</span>
-      <div className="flex items-stretch overflow-hidden rounded-lg border border-[color:var(--border)] bg-white focus-within:border-[color:var(--brand)]">
+      <span className={labelClassName}>{label}</span>
+      <div
+        className={`flex items-stretch overflow-hidden rounded-lg border bg-white focus-within:border-[color:var(--brand)] ${error ? "border-rose-500 ring-1 ring-rose-500" : "border-[color:var(--border)]"}`}
+      >
         <div className="relative flex items-center gap-1 border-r border-[color:var(--border)] pl-3 pr-2">
           <span aria-hidden="true" className="text-xl leading-none">
             {country.flag}
@@ -102,10 +110,16 @@ export function PhoneField({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="151 23456789"
+          aria-invalid={error ? true : undefined}
           className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-base focus:outline-none"
         />
       </div>
       <input type="hidden" name={name} value={international} />
+      {error ? (
+        <span className="mt-1 block text-sm font-medium text-rose-700" role="alert" data-phone-error>
+          {error}
+        </span>
+      ) : null}
     </label>
   );
 }

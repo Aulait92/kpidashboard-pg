@@ -75,7 +75,7 @@ describe("Support-Nummer: Kunde oder Interessent", () => {
     await refreshSupportLinks(new Date());
     const conv = (p: string) => prisma.conversation.findFirstOrThrow({ where: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: p }, select: { id: true, ...SUPPORT_BADGE_SELECT } });
     expect(supportBadge(await conv(PH_I)).kind).toBe("interessent");
-    expect(supportBadge(await conv(PH_K))).toMatchObject({ kind: "kunde", href: `/admin/kunden/${customerId}` });
+    expect(supportBadge(await conv(PH_K))).toMatchObject({ kind: "kunde", href: `/admin/neu/kunden/${customerId}` });
     expect(supportBadge(await conv(PH_U)).kind).toBe("unbekannt");
     const phones = async (k: "kunde" | "interessent" | "unbekannt") => (await prisma.conversation.findMany({ where: supportKindWhere(k), select: { contactPhone: true } })).map((c) => c.contactPhone);
     expect(await phones("kunde")).toContain(PH_K);

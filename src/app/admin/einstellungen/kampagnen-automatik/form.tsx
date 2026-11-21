@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 import type { AutomationSettings } from "@/lib/kampagnen/settings";
 import { saveAutomationAction, type AutomationState } from "./actions";
 
@@ -38,28 +38,33 @@ export function AutomationForm({ s }: { s: AutomationSettings }) {
           name="budgetSync"
           checked={s.budgetSync}
           title="Budgetänderungen automatisch bei Meta umsetzen"
-          text="Ändert ein Kunde sein Werbebudget, stellt die App das Tagesbudget der passenden Kampagne um, aber nur bei genau einer passenden Kampagne. Der Status bleibt unverändert. Sonst Aufgabe „Meta-Budget …“ mit Grund."
+          text="Neues Werbebudget des Kunden landet im Tagesbudget seiner Kampagne, im Zweifel als Aufgabe."
         />
         <Toggle
           name="autoLaunch"
           checked={s.autoLaunch}
           title="Gebuchte Produkte starten das Agenten-Team"
-          text="Neues Produkt bzw. angenommenes Angebot → Kampagne wird automatisch pausiert angelegt. Fehlt etwas (Meta-Zugriff, Seite, Datenschutz-URL), gibt es eine Aufgabe; der Lauf startet von selbst, sobald alles da ist."
+          text="Neues Produkt oder angenommenes Angebot legt die Kampagne pausiert an. Fehlt etwas, kommt eine Aufgabe."
         />
         <Toggle
           name="refresh"
           checked={s.refresh}
           title="Müde Anzeigen erkennen und neue Anzeigen vorbereiten"
-          text="Wöchentliche Prüfung laufender Kampagnen. Bei Ermüdung legt das Agenten-Team 2 bis 3 neue Anzeigen pausiert in derselben Anzeigengruppe an (höchstens alle 14 Tage je Kampagne). Pausiert und aktiviert wird nichts automatisch."
+          text="Legt bei Ermüdung 2 bis 3 neue Anzeigen pausiert an. Aktiviert wird nichts automatisch."
         />
       </div>
-      <div className="space-y-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-sm)]">
-        <h2 className="font-medium">Schwellen für müde Anzeigen (letzte 14 Tage)</h2>
+      {/* UX-Umbau 20.11.2026: Schwellen selten geändert, darum eingeklappt (Standardwerte gesetzt) */}
+      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-5 shadow-[var(--shadow-sm)]">
+        <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center text-sm font-medium">Schwellen für müde Anzeigen<ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
+        <div className="space-y-3 pb-5">
+        <p className="text-sm text-[color:var(--muted)]">Gemessen über die letzten 14 Tage.</p>
         <Num name="refreshMaxFrequency" label="Frequenz über" value={s.refreshMaxFrequency} suffix="" step="0.1" />
-        <Num name="refreshCtrDrop" label="CTR gesunken gegenüber den ersten 7 Tagen um mindestens" value={Math.round(s.refreshCtrDrop * 100)} suffix="%" step="1" />
-        <Num name="refreshCplRise" label="Leadpreis über dem Kampagnenschnitt um mindestens" value={Math.round(s.refreshCplRise * 100)} suffix="%" step="1" />
+        <Num name="refreshCtrDrop" label="Klickrate gesunken (ggü. ersten 7 Tagen) um" value={Math.round(s.refreshCtrDrop * 100)} suffix="%" step="1" />
+        <Num name="refreshCplRise" label="Leadpreis über Kampagnenschnitt um" value={Math.round(s.refreshCplRise * 100)} suffix="%" step="1" />
         <Num name="refreshMinSpendEur" label="… sobald die Anzeige mindestens ausgegeben hat" value={s.refreshMinSpendEur} suffix="€" step="1" />
-      </div>
+        </div>
+      </details>
       <div className="flex items-center gap-3">
         <button className="btn-primary h-10 text-sm" disabled={pending}>
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null} Speichern

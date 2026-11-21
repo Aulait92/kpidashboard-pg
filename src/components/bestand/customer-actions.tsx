@@ -42,6 +42,7 @@ export function CustomerRowActions({
   readOnly,
   referral = true,
   blocked = false,
+  extraActions = [],
 }: {
   existingCustomerId: string;
   name: string;
@@ -51,6 +52,8 @@ export function CustomerRowActions({
   referral?: boolean;
   /** Vom Vermittler gesperrt */
   blocked?: boolean;
+  /** Weitere Einträge oben im „…“-Menü (z. B. „Einwilligung“, Paket 3) */
+  extraActions?: SheetAction[];
 }) {
   const [dialog, setDialog] = useState<null | "send" | "copy" | "delete">(null);
   const [menu, setMenu] = useState(false);
@@ -75,6 +78,7 @@ export function CustomerRowActions({
     startQr(async () => setQr(await referralQrAction({ existingCustomerId })));
   };
   const actions: SheetAction[] = [
+    ...extraActions,
     ...(referral && hasPhone ? [{ label: "Empfehlungslink senden", icon: Send, onSelect: () => setDialog("send") }] : []),
     ...(referral ? [{ label: "Im Termin zeigen (QR-Code)", icon: QrCode, onSelect: showQr }, { label: "Text und Link zum Kopieren", icon: Link2, onSelect: () => setDialog("copy") }] : []),
     blocked ? { label: "Entsperren", icon: Undo2, onSelect: () => block(false) } : { label: "Sperren (nicht mehr anschreiben)", icon: Ban, onSelect: () => block(true) },

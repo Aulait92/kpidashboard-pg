@@ -53,7 +53,7 @@ export async function rescheduleAppointmentAdminAction(appointmentId: string, st
   if (typeof start !== "string" || !start || Number.isNaN(new Date(start).getTime())) return { ok: false, error: ERR.slot, code: "error" };
   try {
     const res = await rescheduleOpenAppointment(r.appt, start, { by: "team", userId: r.userId }, "admin");
-    revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu/leads/chats");
     revalidatePath("/admin/neu", "layout");
     return { ok: true, start: res.start };
   } catch (err) {
@@ -69,7 +69,7 @@ export async function cancelAppointmentAdminAction(appointmentId: string): Promi
   if (!isOpenAppointment(r.appt)) return { ok: false, error: ERR.closed, code: "closed" };
   try {
     await cancelOpenAppointment(r.appt, { by: "team", userId: r.userId }, "admin");
-    revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu/leads/chats");
     revalidatePath("/admin/neu", "layout");
     return { ok: true };
   } catch (err) {

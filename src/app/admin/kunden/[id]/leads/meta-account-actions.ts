@@ -20,7 +20,7 @@ export async function setMetaAdAccountAction(_prev: MetaAccountState, fd: FormDa
   if (raw === null) return { error: "Bitte die Werbekonto-ID eingeben (z. B. act_1234567890123456 oder nur die Ziffern)." };
   await prisma.customer.update({ where: { id: customerId }, data: { metaAdAccountId: raw || null } });
   await audit("customer.meta_account", { entity: "Customer", entityId: customerId, customerId, details: { account: raw || null } });
-  revalidatePath(`/admin/kunden/${customerId}`, "layout");
+  revalidatePath(`/admin/neu/kunden/${customerId}`, "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   if (!raw) return { ok: true, message: "Werbekonto entfernt." };
   const check = await checkAdAccountAccess(raw);

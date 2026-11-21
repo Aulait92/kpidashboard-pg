@@ -48,7 +48,7 @@ export async function variablenBeimStart(): Promise<void> {
     if (schon) return;
     await prisma.salesTask.create({ data: { contactId: null, type: "SONSTIGES", title, note: text, dueAt: new Date() } });
     const { sendToAdmins } = await import("@/lib/push");
-    await sendToAdmins({ title: "Variable fehlt in der Produktion", body: text.slice(0, 180), url: "/admin/einstellungen/status" });
+    await sendToAdmins({ title: "Variable fehlt in der Produktion", body: text.slice(0, 180), url: "/admin/neu/einstellungen/status" });
   } catch (err) {
     console.error("[env-check] Alarm fehlgeschlagen", err instanceof Error ? err.message : err);
   }

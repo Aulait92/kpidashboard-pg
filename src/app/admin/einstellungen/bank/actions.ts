@@ -15,8 +15,8 @@ import { deleteSession } from "@/lib/bank/enable-banking";
 export type BankState = { ok?: boolean; message?: string; error?: string } | null;
 
 const refresh = () => {
-  revalidatePath("/admin/einstellungen/bank", "layout");
-  revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu/zahlen/kosten/konten", "layout");
+  revalidatePath("/admin/neu/zahlen");
   revalidatePath("/admin/neu", "layout");
 };
 
@@ -26,7 +26,7 @@ export async function connectBankAction(fd: FormData) {
   const r = await startBankConnection(aspsp || "Commerzbank", session.userId);
   // Aus dem neuen Admin (Zahlen → Kosten & Bank): Rücksprung der Bank dorthin (api/bank/callback, lib/admin-neu/ruecksprung.ts)
   const neu = neuPfadAusReferer((await headers()).get("referer"));
-  if ("error" in r) redirect(`${neu ?? "/admin/einstellungen/bank"}?fehler=${encodeURIComponent(r.error.slice(0, 200))}`);
+  if ("error" in r) redirect(`${neu ?? "/admin/neu/zahlen/kosten/konten"}?fehler=${encodeURIComponent(r.error.slice(0, 200))}`);
   const jar = await cookies();
   if (neu) jar.set(NEU_RUECKSPRUNG_COOKIE, neu, { path: "/api", maxAge: NEU_RUECKSPRUNG_MAX_AGE, httpOnly: true, secure: true, sameSite: "lax" });
   else jar.delete({ name: NEU_RUECKSPRUNG_COOKIE, path: "/api" });

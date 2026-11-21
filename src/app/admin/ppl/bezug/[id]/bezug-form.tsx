@@ -89,7 +89,7 @@ export function BezugForm({
               ))}
             </select>
           </F>
-          <F label="Produkt (Pool)" hint="Wie im Eingang: ?produkt=…">
+          <F label="Produkt (Pool)" hint="Kurzname des Pools, Vorschläge beim Tippen.">
             <input name="productKey" list="ppl-products" value={produkt} onChange={(e) => setProdukt(e.target.value)} required className={input} />
             <datalist id="ppl-products">
               {products.map((p) => (
@@ -104,10 +104,10 @@ export function BezugForm({
             <Check name="active" label="Aktiv (bekommt Leads)" defaultChecked={sub?.active ?? true} />
             <Check name="slackNotify" label="Slack-Nachricht je Lead" defaultChecked={sub?.slackNotify ?? true} />
           </div>
-          <F label="Preis je Lead (€)" hint="Gespeichert wird netto. Brutto kalkuliert (z. B. 65 € inkl. USt.): wird in netto umgerechnet (54,62 €).">
+          <F label="Preis je Lead (€)" hint="Brutto gewählt: wird beim Speichern in netto umgerechnet.">
             <div className="flex gap-2">
-              <input name="price" inputMode="decimal" defaultValue={sub?.price ?? ""} required className={input} />
-              <select name="priceMode" defaultValue="netto" className={`${input} w-40 shrink-0`} aria-label="Preisangabe">
+              <input name="price" inputMode="decimal" defaultValue={sub?.price ?? ""} required className={`${input} min-w-0 flex-1`} />
+              <select name="priceMode" defaultValue="netto" className={`${input.replace("w-full", "w-36")} shrink-0`} aria-label="Preisangabe">
                 <option value="netto">netto</option>
                 <option value="brutto">brutto inkl. 19 %</option>
               </select>

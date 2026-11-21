@@ -139,7 +139,7 @@ export async function orderInvoiceEvent(orderId: string, paid: boolean) {
     await sendToAdmins({
       title: `⚠️ Lead-Bestellung nicht bezahlt: ${order.subscription.customer.name}`,
       body: `${order.quantity} Leads, ${fmtWeek(order.periodStart)}, Lieferung gestoppt.`,
-      url: "/admin/ppl",
+      url: "/admin/neu/leads/ppl",
     }).catch(() => {});
   }
 }
@@ -166,7 +166,7 @@ export async function renewOrders(now = new Date()): Promise<{ renewed: number; 
     if (r.ok) renewed++;
     else {
       failed++;
-      await sendToAdmins({ title: "⚠️ Wochenbestellung nicht verlängert", body: r.error, url: "/admin/ppl" }).catch(() => {});
+      await sendToAdmins({ title: "⚠️ Wochenbestellung nicht verlängert", body: r.error, url: "/admin/neu/leads/ppl" }).catch(() => {});
     }
   }
   return { renewed, failed };

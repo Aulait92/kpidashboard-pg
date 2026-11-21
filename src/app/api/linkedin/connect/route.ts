@@ -12,6 +12,6 @@ export async function GET(req: Request): Promise<Response> {
   if (!session || session.role !== "ADMIN") return Response.redirect(new URL("/login", origin), 302);
   // Aus dem neuen Admin (Marketing, Einstellungen → Anbindungen): Rücksprung dorthin (lib/admin-neu/ruecksprung.ts)
   const neu = neuPfadAusReferer(req.headers.get("referer"));
-  if (!linkedInAvailable()) return Response.redirect(new URL(`${neu ?? "/admin/marketing/linkedin"}?li=config`, origin), 302);
+  if (!linkedInAvailable()) return Response.redirect(new URL(`${neu ?? "/admin/neu/marketing"}?li=config`, origin), 302);
   return new Response(null, { status: 302, headers: [["Location", linkedInAuthUrl(session.userId, origin)], ["Set-Cookie", neuRuecksprungCookie(neu)]] });
 }

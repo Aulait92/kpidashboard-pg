@@ -24,6 +24,6 @@ export async function saveHalteAction(_prev: HalteFormState, fd: FormData): Prom
     details: next,
     actor: { id: session.userId, email: session.email, role: session.role },
   }).catch(() => undefined);
-  revalidatePath("/admin/einstellungen/halteangebote");
+  revalidatePath("/admin/neu/einstellungen/halteangebote");
   return { ok: true, savedAt: Date.now() };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 import type { ReportSettingsView } from "@/lib/monatsbericht/server";
 import { saveReportSettingsAction, type ReportActionState } from "@/app/admin/monatsberichte/actions";
 
@@ -25,21 +25,25 @@ export function ReportSettingsForm({ s }: { s: ReportSettingsView }) {
         <input type="checkbox" name="autoSendGood" defaultChecked={s.autoSendGood} className="mt-1 h-5 w-5" />
         <span>
           <b>Gute Berichte automatisch senden</b>
-          <span className="block text-sm text-[color:var(--muted)]">Aus: Du siehst jeden Bericht zuerst (empfohlen für den ersten Monat). Mittel und schwach gehen nie automatisch raus.</span>
+          <span className="block text-sm text-[color:var(--muted)]">Aus: Sie sehen jeden Bericht vor dem Versand. Mittel und schwach gehen nie automatisch raus.</span>
         </span>
       </label>
-      <fieldset className="space-y-2">
-        <legend className="mb-1 text-sm font-semibold">Einstufung</legend>
-        <Num name="goodLeadsPct" label="„Gut“ ab Leads (von der Erwartung)" value={s.goodLeadsPct} suffix="%" />
-        <Num name="weakLeadsPct" label="„Schwach“ unter Leads (von der Erwartung)" value={s.weakLeadsPct} suffix="%" />
-        <Num name="weakCplPct" label="„Schwach“ bei Leadpreis über (vom Ziel)" value={s.weakCplPct} suffix="%" />
-        <Num name="weakNoMeetingLeads" label="„Schwach“: 0 Termine ab so vielen Leads" value={s.weakNoMeetingLeads} suffix="Leads" />
-        <Num name="minResultPct" label="Datenlage unsicher unter (Leads mit Ergebnis)" value={s.minResultPct} suffix="%" />
-        <Num name="minActiveDays" label="Kein Bericht bei weniger aktiven Tagen als" value={s.minActiveDays} suffix="Tage" />
+      {/* UX-Umbau 20.11.2026: Schwellen ändert man selten, darum eingeklappt; Standardwerte sind gesetzt */}
+      <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] px-4">
+        <summary className="flex min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center text-sm font-semibold">Einstufung gut, mittel, schwach<ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
+      <fieldset className="space-y-2 pb-4">
+        <Num name="goodLeadsPct" label="Gut ab (Leads von der Erwartung)" value={s.goodLeadsPct} suffix="%" />
+        <Num name="weakLeadsPct" label="Schwach unter (Leads von der Erwartung)" value={s.weakLeadsPct} suffix="%" />
+        <Num name="weakCplPct" label="Schwach über (Leadpreis vom Ziel)" value={s.weakCplPct} suffix="%" />
+        <Num name="weakNoMeetingLeads" label="Schwach bei 0 Terminen ab" value={s.weakNoMeetingLeads} suffix="Leads" />
+        <Num name="minResultPct" label="Unsicher unter (Leads mit Ergebnis)" value={s.minResultPct} suffix="%" />
+        <Num name="minActiveDays" label="Kein Bericht unter (aktive Tage)" value={s.minActiveDays} suffix="Tage" />
       </fieldset>
+      </details>
       <label className="block text-sm">
         <span className="font-semibold">Ziel-Leadpreis (€)</span>
-        <span className="block text-[color:var(--muted)]">Leer = aus dem Rechner (Katzenversicherung, Makler mit eigenem Wert).</span>
+        <span className="block text-[color:var(--muted)]">Leer: Wert aus dem Rechner.</span>
         <input name="targetCpl" defaultValue={s.targetCpl ?? ""} inputMode="decimal" className="input mt-1 h-9 w-32" />
       </label>
       <label className="block text-sm">

@@ -26,6 +26,7 @@ describe("Login mit „+“-Adresse", () => {
     requireTestDb();
     delete process.env.STRIPE_SECRET_KEY; // ohne Online-Zahlung startet das Onboarding mit der Annahme
     process.env.APP_URL = process.env.APP_URL || "https://app.test";
+    process.env.AUTH_SECRET ||= "localtestsecret_localtestsecret_0123456789"; // Einladungslink (Passwort festlegen) wird signiert
     process.env.OPS_READ_TOKEN = TOKEN;
   });
   afterAll(async () => {

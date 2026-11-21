@@ -89,14 +89,14 @@ export async function requestStorno(
     await sendToAdmins({
       title: `Stornoquote ${Math.round(quota * 100)} %: mit dem Kunden sprechen`,
       body: `${bezug}: ${reason}${grenzfall ? " (50:50)" : " (voll gutgeschrieben)"}`,
-      url: "/admin/ppl?ansicht=geliefert",
+      url: "/admin/neu/leads/ppl?ansicht=geliefert",
       tag: `ppl-storno-quote:${sub.id}`,
     }).catch(() => {});
   } else if (grenzfall) {
     await sendToAdmins({
       title: `Storno 50:50: ${bezug}`,
       body: `${reason}: ${note.trim().slice(0, 80)} · Quote ${Math.round(quota * 100)} %`,
-      url: "/admin/ppl?ansicht=geliefert",
+      url: "/admin/neu/leads/ppl?ansicht=geliefert",
       tag: `ppl-storno:${lead.id}`,
     }).catch(() => {});
   }

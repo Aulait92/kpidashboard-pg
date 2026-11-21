@@ -11,17 +11,18 @@ export const metadata = { title: "Änderungsprotokoll | performancegrowth Admin"
 // Änderungsprotokoll (Demo „e-protokoll“, heute /admin/einstellungen/protokoll): dieselbe Abfrage mit Filter nach
 // Kunde und Art, 100 je Seite. Statt Tabelle eine Liste (am Handy lesbar ohne waagrechtes Scrollen).
 
-const PAGE = 100;
+const PAGE = 50;
 const BASIS = "/admin/neu/einstellungen/protokoll";
 const SELECT = "h-10 min-w-0 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2.5 text-sm sm:flex-none";
 const fmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
-const ROLE: Record<string, string> = { ADMIN: "Admin", BUYER: "Kunde", kunde: "Kunde (Angebot)", system: "System" };
+const ROLE: Record<string, string> = { ADMIN: "Admin", BUYER: "Kunde", kunde: "Kunde (Angebot)", system: "System", lead: "Lead" };
 
 function detailText(d: unknown): string {
   if (!d || typeof d !== "object") return "";
   return Object.entries(d as Record<string, unknown>)
-    .filter(([k, v]) => v != null && v !== "" && k !== "filter")
+    // Interne Kennungen (leadId, existingContractId, nachweisId …) helfen beim Lesen nicht
+    .filter(([k, v]) => v != null && v !== "" && k !== "filter" && !/id$/i.test(k))
     .map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : String(v)}`)
     .join(" · ");
 }
@@ -30,7 +31,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ k
   await requireAuth();
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.seite) || 1);
-  const where = { ...(sp.kunde ? { customerId: sp.kunde } : {}), ...(sp.art ? { action: sp.art } : {}) };
+  // UX-Umbau 20.11.2026: Standard ohne erfolgreiche Anmeldungen (die machen den Großteil aus und verdecken Änderungen);
+  // „Alles, auch Anmeldungen“ (art=alle) zeigt sie wieder, fehlgeschlagene Anmeldungen bleiben immer sichtbar.
+  const artFilter = sp.art === "alle" ? {} : sp.art ? { action: sp.art } : { action: { notIn: ["login", "login.2fa"] } };
+  const where = { ...(sp.kunde ? { customerId: sp.kunde } : {}), ...artFilter };
   const [rows, total, customers] = await Promise.all([
     prisma.auditLog.findMany({ where, orderBy: { at: "desc" }, skip: (page - 1) * PAGE, take: PAGE }),
     prisma.auditLog.count({ where }),
@@ -52,7 +56,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ k
           ))}
         </select>
         <select name="art" defaultValue={sp.art ?? ""} className={SELECT} aria-label="Art">
-          <option value="">Alle Arten</option>
+          <option value="">Alle Änderungen</option>
+          <option value="alle">Alles, auch Anmeldungen</option>
           {Object.entries(AUDIT_LABEL).map(([k, l]) => (
             <option key={k} value={k}>
               {l}
@@ -66,13 +71,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ k
           {rows.map((r) => (
             <li key={r.id} className="px-5 py-3 text-sm">
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span className="font-medium">{AUDIT_LABEL[r.action] ?? r.action}</span>
-                {r.customerId ? <span>{names.get(r.customerId) ?? "-"}</span> : null}
+                <span className="font-medium">{AUDIT_LABEL[r.action] ?? r.action.replace(".", ": ").replace(/_/g, " ")}</span>
+                {r.customerId && names.get(r.customerId) ? <span>{names.get(r.customerId)}</span> : null}
                 <span className="ml-auto whitespace-nowrap text-xs text-[color:var(--muted)]">{fmt(r.at)}</span>
               </div>
               <div className="text-[color:var(--muted)]">
-                {r.actorEmail ?? "-"}
-                {r.actorRole ? ` · ${ROLE[r.actorRole] ?? r.actorRole}` : ""}
+                {[r.actorEmail, r.actorRole ? (ROLE[r.actorRole] ?? r.actorRole) : null].filter(Boolean).join(" · ") || "Unbekannt"}
               </div>
               {detailText(r.details) ? <div className="mt-0.5 break-words text-xs text-[color:var(--muted)]">{detailText(r.details)}</div> : null}
             </li>

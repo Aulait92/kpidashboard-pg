@@ -1,11 +1,12 @@
-// Klick-Test: Angebot mit Abschlussbonus und „später zahlen“ (Ole, 16.11.2026) auf dem Handy annehmen.
+// Klick-Test: Angebot mit (schon zugesagtem) Abschlussbonus und „später zahlen“ (Ole, 16.11.2026) auf dem Handy
+// annehmen. Neue Angebote haben seit 21.11.2026 keinen Bonus mehr, der Bonus wird deshalb nach dem Anlegen gesetzt.
 // Prüft: Bonus-Hinweis vor der Annahme, Hinweis auf späteres Zahlen, Annahme ohne Weiterleitung zu Stripe,
 // danach „Bonus gesichert“ und Erinnerungstag speichern. Keine Zahlung, keine Mail.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser } from "playwright";
 import { prisma } from "@/lib/prisma";
 import { createOffer } from "@/lib/offers";
-import { addDaysIso, berlinTodayIso } from "@/lib/offer-pricing";
+import { addDaysIso, berlinTagesendeIso, berlinTodayIso } from "@/lib/offer-pricing";
 import { BASE, browser, context } from "./helpers";
 
 describe("Angebot: Abschlussbonus und später zahlen", () => {
@@ -29,12 +30,11 @@ describe("Angebot: Abschlussbonus und später zahlen", () => {
         term: "12m",
         products: [{ name: "TKV-Katze", dailyBudget: 30 }],
         startDate: addDaysIso(berlinTodayIso(), 30),
-        abschlussBonus: 300,
-        abschlussBonusBis: addDaysIso(berlinTodayIso(), 1),
         allowPayLater: true,
       },
       null,
     );
+    await prisma.offer.update({ where: { id: offer.id }, data: { abschlussBonus: 300, abschlussBonusBis: berlinTagesendeIso(addDaysIso(berlinTodayIso(), 1)) } });
     token = offer.token;
     offerId = offer.id;
   });

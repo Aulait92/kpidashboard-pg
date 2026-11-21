@@ -15,9 +15,7 @@ export async function savePilotAction(fd: FormData): Promise<void> {
   const id = String(fd.get("customerId") ?? "");
   const parsed = fd.get("entfernen") === "1" ? ({ ok: true, value: null } as const) : parsePilotBis(fd.get("pilotBis"));
   const res = parsed.ok ? await setzePilot(id, parsed.value) : parsed;
-  revalidatePath(`/admin/kunden/${id}`, "layout");
-  revalidatePath("/admin/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenliste und Kundenakte)
   const msg = !res.ok ? res.error : parsed.ok && parsed.value ? "Pilot gespeichert, Erinnerungen sind angelegt." : "Pilot entfernt.";
-  redirect(await adminZiel(`/admin/kunden/${id}/abrechnung?pilot=${encodeURIComponent(msg)}${res.ok ? "" : "&fehler=1"}#pilot`));
+  redirect(await adminZiel(`/admin/neu/kunden/${id}/abrechnung?pilot=${encodeURIComponent(msg)}${res.ok ? "" : "&fehler=1"}#pilot`));
 }

@@ -16,6 +16,7 @@ import {
   Megaphone,
   MessageCircle,
   MessageSquareText,
+  MessageSquareHeart,
   Plane,
   ShoppingCart,
   Sun,
@@ -61,6 +62,7 @@ export function BuyerShell({
   hasTeam = false,
   showOrders = false,
   showBestand = false,
+  empfehlungReady = null,
   newUi = false,
   absence = null,
   updatesUnread = 0,
@@ -80,6 +82,8 @@ export function BuyerShell({
   absence?: ShellAbsence | null;
   /** Modul Bestandskunden-Kampagnen freigeschaltet. */
   showBestand?: boolean;
+  /** Modul Empfehlungen aktiv (auch Testphase): Kunden in „Heute fragen“; null = Modul aus, kein Menüeintrag. */
+  empfehlungReady?: number | null;
   /** Pay-per-Lead-Käufer: Reiter „Bestellen“. */
   showOrders?: boolean;
   /** Mehrere Logins → „Mein Kalender" im Profilmenü. */
@@ -115,6 +119,7 @@ export function BuyerShell({
         absence={absence}
         updatesUnread={updatesUnread}
         noStepBadge={noStepBadge}
+        empfehlungReady={empfehlungReady}
       >
         {children}
       </BuyerShellA>
@@ -185,7 +190,7 @@ export function BuyerShell({
             <BuyerSearchButton variant="field" className="hidden w-52 lg:flex" />
             <BuyerSearchButton variant="icon" className="lg:hidden" />
             <HilfeChat greeting={hilfeGruss} owner={teamRole === "owner"} />
-            <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} absence={absence} updatesUnread={updatesUnread} showBestand={showBestand} />
+            <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} absence={absence} updatesUnread={updatesUnread} showBestand={showBestand} empfehlungReady={empfehlungReady} />
           </div>
         </div>
       </header>
@@ -269,9 +274,12 @@ function ProfileMenu({
   variant = "header",
   absence = null,
   updatesUnread = 0,
+  empfehlungReady = null,
 }: {
   /** Modul Bestandskunden freigeschaltet: Link im Menü */
   showBestand?: boolean;
+  /** Modul Empfehlungen aktiv: Eintrag „Empfehlungen“ mit Zahl der Kunden in „Heute fragen“ */
+  empfehlungReady?: number | null;
   absence?: ShellAbsence | null;
   updatesUnread?: number;
   name: string;
@@ -430,6 +438,22 @@ function ProfileMenu({
             <Megaphone className="h-4 w-4" /> Neuigkeiten
             {updatesUnread > 0 ? <span className="ml-auto h-2 w-2 rounded-full bg-[color:var(--brand)]" aria-label="Ungelesene Neuigkeiten" /> : null}
           </Link>
+          {/* Zusatzmodul Empfehlungen & Bewertungen (Paket 2, 19.11.2026): nur bei aktivem Modul bzw. Testphase */}
+          {owner && empfehlungReady != null ? (
+            <Link
+              href="/buyer/empfehlungen"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+              data-menu-empfehlungen
+            >
+              <MessageSquareHeart className="h-4 w-4" /> Empfehlungen
+              {empfehlungReady > 0 ? (
+                <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800" title="Kunden bereit für eine Empfehlung">
+                  {empfehlungReady} bereit
+                </span>
+              ) : null}
+            </Link>
+          ) : null}
           {/* Kollegen-Empfehlungen (UX-Runde 19.11.2026): bisher nur über Einstellungen erreichbar */}
           {owner ? (
             <Link
@@ -478,11 +502,13 @@ function BuyerShellA({
   absence,
   updatesUnread,
   noStepBadge,
+  empfehlungReady = null,
   children,
 }: {
   absence: ShellAbsence | null;
   updatesUnread: number;
   noStepBadge: number;
+  empfehlungReady?: number | null;
   pathname: string;
   displayName: string;
   hilfeGruss: string;
@@ -564,7 +590,7 @@ function BuyerShellA({
           ) : (
             <div className="mt-auto space-y-2 border-t border-[color:var(--border)] pt-3">
               <HilfeChat greeting={hilfeGruss} owner={owner} variant="nav" />
-              <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" absence={absence} updatesUnread={updatesUnread} />
+              <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" absence={absence} updatesUnread={updatesUnread} empfehlungReady={empfehlungReady} />
             </div>
           )}
         </aside>
@@ -583,7 +609,7 @@ function BuyerShellA({
               <div className="ml-auto flex items-center gap-2">
                 <BuyerSearchButton variant="icon" />
                 <HilfeChat greeting={hilfeGruss} owner={owner} />
-                <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} absence={absence} updatesUnread={updatesUnread} />
+                <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} absence={absence} updatesUnread={updatesUnread} empfehlungReady={empfehlungReady} />
               </div>
             )}
           </div>

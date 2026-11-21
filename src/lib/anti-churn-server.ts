@@ -34,7 +34,7 @@ export async function recordChurnIntent(
     await sendToAdmins({
       title: `Kündigungsabsicht: ${c.name}`,
       body: `${churnReasonLabel(input.reason)}${note ? ` · ${note.slice(0, 80)}` : ""}`,
-      url: `/admin/kunden/${customerId}/abrechnung`,
+      url: `/admin/neu/kunden/${customerId}/abrechnung`,
       tag: `churn:${customerId}`,
     }).catch(() => {});
   }
@@ -73,7 +73,7 @@ export async function chooseChurnOffer(customerId: string, intentId: string, off
     await sendToAdmins({
       title: `${offer === "check" ? "Kampagnen-Check" : "Rückruf"} statt Kündigung: ${name}`,
       body: churnReasonLabel(intent.reason),
-      url: `/admin/kunden/${customerId}/abrechnung`,
+      url: `/admin/neu/kunden/${customerId}/abrechnung`,
       tag: `churn-offer:${customerId}`,
     }).catch(() => {});
   }

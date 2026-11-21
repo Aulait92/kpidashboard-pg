@@ -18,7 +18,7 @@ export async function saveUpdateTextsAction(fd: FormData): Promise<{ ok: boolean
     create: { id: "default", updateChallenges, updateNext },
     update: { updateChallenges, updateNext },
   });
-  revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu/zahlen");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
@@ -50,8 +50,8 @@ export async function saveRecurringCostAction(_prev: KostenState, fd: FormData):
   };
   const saved = id ? await prisma.recurringCost.update({ where: { id }, data }) : await prisma.recurringCost.create({ data });
   await audit("kpi.kosten", { entity: "RecurringCost", entityId: saved.id, details: { name, amount, purpose } });
-  revalidatePath("/admin/einstellungen/kosten");
-  revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu/zahlen/kosten");
+  revalidatePath("/admin/neu/zahlen");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
@@ -62,8 +62,8 @@ export async function deleteRecurringCostAction(fd: FormData): Promise<void> {
   if (!id) return;
   await prisma.recurringCost.delete({ where: { id } }).catch(() => null);
   await audit("kpi.kosten", { entity: "RecurringCost", entityId: id, details: { deleted: true } });
-  revalidatePath("/admin/einstellungen/kosten");
-  revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu/zahlen/kosten");
+  revalidatePath("/admin/neu/zahlen");
   revalidatePath("/admin/neu", "layout");
 }
 
@@ -85,8 +85,8 @@ export async function saveKpiSettingsAction(_prev: KostenState, fd: FormData): P
     update: { founderHoursPerWeek: hours, founderHourlyRate: rate, acquisitionCampaigns: campaigns, pplPilotEnd },
   });
   await audit("kpi.einstellungen", { details: { hours, rate, campaigns, pplPilotEnd } });
-  revalidatePath("/admin/einstellungen/kosten");
-  revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu/zahlen/kosten");
+  revalidatePath("/admin/neu/zahlen");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
@@ -116,7 +116,7 @@ export async function saveManualRevenueAction(_prev: NachtragState, fd: FormData
   const session = await getCurrentSession().catch(() => null);
   const saved = await prisma.manualRevenue.create({ data: { month, customerId, amount, kind, note, createdBy: session?.email ?? null } });
   await audit("kpi.nachtrag", { entity: "ManualRevenue", entityId: saved.id, customerId, details: { month, amount, kind, note } });
-  revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu/zahlen");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
@@ -129,7 +129,7 @@ export async function deleteManualRevenueAction(fd: FormData): Promise<void> {
   if (!row) return;
   await prisma.manualRevenue.delete({ where: { id } });
   await audit("kpi.nachtrag", { entity: "ManualRevenue", entityId: id, customerId: row.customerId, details: { deleted: true, month: row.month, amount: Number(row.amount), kind: row.kind } });
-  revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu/zahlen");
   revalidatePath("/admin/neu", "layout");
 }
 
@@ -146,7 +146,7 @@ export async function saveChanceQuotenAction(_prev: KostenState, fd: FormData): 
   const data = { chanceQuoteAngebot: Math.round(angebot * 10) / 1000, chanceQuoteTermin: Math.round(termin * 10) / 1000 };
   await prisma.kpiSettings.upsert({ where: { id: "default" }, create: { id: "default", ...data }, update: data });
   await audit("kpi.chancen_quoten", { details: data });
-  revalidatePath("/admin/einstellungen/kosten");
+  revalidatePath("/admin/neu/zahlen/kosten");
   revalidatePath("/buyer/wachstum");
   revalidatePath("/buyer/zahlen");
   return { ok: true };

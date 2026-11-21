@@ -577,7 +577,7 @@ export function ergebnisFehltPunkte(zeilen: TerminZeile[], now: Date): HeuteItem
       icon: "calendar",
       title: `Ergebnis fehlt: ${z.person}`,
       detail: `${z.artLabel} am ${terminKurz(m.startAt)}`,
-      action: { label: "Ergebnis eintragen", href: `/admin/vertrieb/kontakte/${z.kontakt.id}#${offen ? "ergebnis" : "aktivitaet"}` },
+      action: { label: "Ergebnis eintragen", href: `/admin/neu/vertrieb/kontakte/${z.kontakt.id}#${offen ? "ergebnis" : "aktivitaet"}` },
       since: m.startAt,
       ...(offen ? { quick: { kind: "termin" as const, taskId: m.reviewTaskId! } } : {}),
     });

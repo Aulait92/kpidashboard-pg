@@ -35,7 +35,7 @@ export async function submitFeedbackAction(token: string, _prev: FeedbackState, 
       await sendToAdmins({
         title: `⚠️ Unzufrieden: ${fb.customer.name} (${of})`,
         body: comment ?? `Feedback ${label}`,
-        url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/vertrieb/kunden",
+        url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}` : "/admin/neu/kunden",
       });
       if (contactId) {
         await prisma.salesTask.create({

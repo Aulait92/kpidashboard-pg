@@ -18,9 +18,9 @@ async function requireAdmin() {
 // Rückweg: alte Seite oder (Feld „zurueck“) der neue Admin unter /admin/neu/leads
 const ziel = (fd: FormData) => {
   const z = String(fd.get("zurueck") ?? "");
-  return z.startsWith("/admin/neu/") && !z.includes("?") ? z : "/admin/lead-eingang";
+  return z.startsWith("/admin/neu/") && !z.includes("?") ? z : "/admin/neu/leads";
 };
-const back = (msg: string, ok = true, basis = "/admin/lead-eingang") => redirect(`${basis}?${ok ? "ok" : "err"}=${encodeURIComponent(msg)}`);
+const back = (msg: string, ok = true, basis = "/admin/neu/leads") => redirect(`${basis}?${ok ? "ok" : "err"}=${encodeURIComponent(msg)}`);
 
 export async function assignFormAction(fd: FormData) {
   await requireAdmin();
@@ -29,7 +29,9 @@ export async function assignFormAction(fd: FormData) {
   const customerId = String(fd.get("customerId") ?? "");
   const productKey = String(fd.get("productKey") ?? "").trim();
   const priceRaw = String(fd.get("leadPrice") ?? "").replace(",", ".").trim();
-  const bezug = String(fd.get("bezugAirtableId") ?? "").trim() || null;
+  // Airtable-Bezug: Feld gibt es in der Oberfläche nicht mehr (UX-Umbau 20.11.2026). Nur setzen, wenn es mitkommt,
+  // sonst bleibt der gespeicherte Wert (Stornogründe nach Airtable, solange der Abgleich läuft).
+  const bezugFeld = fd.has("bezugAirtableId") ? { bezugAirtableId: String(fd.get("bezugAirtableId") ?? "").trim() || null } : {};
   const pageId = String(fd.get("pageId") ?? "").trim() || null;
   if (!/^\d{5,}$/.test(formId)) back("Bitte eine gültige Formular-ID angeben.", false, basis);
   if (customerId === VERTRIEB_ZIEL) return assignToVertrieb(formId, pageId, basis);
@@ -50,8 +52,8 @@ export async function assignFormAction(fd: FormData) {
 
   await prisma.leadSource.upsert({
     where: { formId },
-    create: { formId, pageId, formName, customerId, productKey, leadPrice, bezugAirtableId: bezug, questionLabels: questionLabels ?? undefined },
-    update: { pageId: pageId ?? undefined, formName: formName ?? undefined, customerId, productKey, leadPrice, bezugAirtableId: bezug, active: true, ...(questionLabels ? { questionLabels } : {}) },
+    create: { formId, pageId, formName, customerId, productKey, leadPrice, ...bezugFeld, questionLabels: questionLabels ?? undefined },
+    update: { pageId: pageId ?? undefined, formName: formName ?? undefined, customerId, productKey, leadPrice, ...bezugFeld, active: true, ...(questionLabels ? { questionLabels } : {}) },
   });
   await audit("leadsource.assign", { entity: "LeadSource", entityId: formId, customerId, details: { productKey, leadPrice: leadPrice ? Number(leadPrice) : null } });
   // Ein Formular hat genau ein Ziel: gehörte es bisher dem Vertrieb, jetzt nicht mehr
@@ -64,10 +66,10 @@ export async function assignFormAction(fd: FormData) {
 }
 
 function aktualisieren() {
-  revalidatePath("/admin/lead-eingang");
+  revalidatePath("/admin/neu/leads");
   revalidatePath("/admin/neu", "layout");
-  revalidatePath("/admin/kunden", "layout");
-  revalidatePath("/admin/vertrieb", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
+  revalidatePath("/admin/neu/vertrieb", "layout");
 }
 
 /** Seite am Meta-Webhook abonnieren (leadgen). Gibt den Hinweis für die Meldung zurück. */
@@ -126,16 +128,16 @@ export async function toggleSourceAction(fd: FormData) {
     const u = await prisma.leadSource.update({ where: { id }, data: { active: !s.active } });
     await audit("leadsource.toggle", { entity: "LeadSource", entityId: u.formId, customerId: u.customerId, details: { active: u.active } });
   }
-  revalidatePath("/admin/lead-eingang");
+  revalidatePath("/admin/neu/leads");
   revalidatePath("/admin/neu", "layout");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
 }
 
 export async function dismissUnassignedAction(fd: FormData) {
   await requireAdmin();
   const formId = String(fd.get("formId") ?? "");
   await prisma.unassignedLead.updateMany({ where: { formId: formId || null, resolvedAt: null }, data: { resolvedAt: new Date() } });
-  revalidatePath("/admin/lead-eingang");
+  revalidatePath("/admin/neu/leads");
   revalidatePath("/admin/neu", "layout");
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
 }

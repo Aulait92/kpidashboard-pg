@@ -38,7 +38,7 @@ export function buildEventDescription(d: {
     "Qualifizierung:",
     d.summary?.trim() || "-",
     "",
-    base && d.conversationId ? `Chatverlauf: ${base}/admin/whatsapp?c=${d.conversationId}` : "",
+    base && d.conversationId ? `Chatverlauf: ${base}/admin/neu/leads/chats?c=${d.conversationId}` : "",
     d.bookedVia === "bot"
       ? "Gebucht durch den KI-Assistenten via WhatsApp."
       : d.bookedVia === "advisor"

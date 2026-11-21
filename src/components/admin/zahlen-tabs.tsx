@@ -8,13 +8,13 @@ export function ZahlenTabs({ neueBuchungen = 0 }: { neueBuchungen?: number }) {
   return (
     <SubTabs
       tabs={[
-        { href: "/admin/zahlen", label: "Übersicht", exact: true },
-        { href: "/admin/zahlen/buchungen", label: "Buchungen", count: neueBuchungen },
-        { href: "/admin/zahlen/stornoquote", label: "Stornoquote" },
-        { href: "/admin/zahlen/lebenszyklus", label: "Kündigung & Rückkehr" },
-        { href: "/admin/zahlen/whatsapp", label: "WhatsApp-Zustellung" },
+        { href: "/admin/neu/zahlen", label: "Übersicht", exact: true },
+        { href: "/admin/neu/zahlen/umsatz", label: "Buchungen", count: neueBuchungen },
+        { href: "/admin/neu/zahlen/qualitaet", label: "Stornoquote" },
+        { href: "/admin/neu/zahlen/kunden", label: "Kündigung & Rückkehr" },
+        { href: "/admin/neu/zahlen/qualitaet", label: "WhatsApp-Zustellung" },
         { href: "/", label: "Leads & Werbung", exact: true },
-        { href: "/admin/nutzung", label: "Nutzung" },
+        { href: "/admin/neu/zahlen/qualitaet", label: "Nutzung" },
       ]}
     />
   );

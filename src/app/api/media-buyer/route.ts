@@ -28,7 +28,7 @@ async function handle(req: Request) {
 
   try {
     const result = await runMediaBuyer({ dryRun, force });
-    revalidatePath("/admin/media-buyer");
+    revalidatePath("/admin/neu/leads/werbekonten");
     return NextResponse.json({
       ok: true,
       dryRun,

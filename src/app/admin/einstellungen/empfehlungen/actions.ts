@@ -26,6 +26,6 @@ export async function saveReferralSettingsAction(_prev: ReferralSettingsState, f
     { id: session.userId, email: session.email, role: session.role },
   );
   if (!res.ok) return { error: res.error };
-  revalidatePath("/admin/einstellungen/empfehlungen");
+  revalidatePath("/admin/neu/einstellungen/kollegen-empfehlen");
   return { ok: true, savedAt: Date.now() };
 }

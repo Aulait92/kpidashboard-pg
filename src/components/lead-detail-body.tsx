@@ -4,7 +4,7 @@ import { AlertTriangle, ClipboardList, MessageCircle, PhoneCall } from "lucide-r
 import { NextStepButton, NextStepPrompt } from "@/components/next-step";
 import { NEXT_STEP_LABEL, pastOpenAppointmentWhere } from "@/lib/lead-next-step";
 import { nextStepStateOf } from "@/lib/lead-next-step-server";
-import { EmpfehlungLeadCard } from "@/components/empfehlung/server";
+import { EmpfehlungConsentRow, EmpfehlungLeadCard } from "@/components/empfehlung/server";
 import { MaklervollmachtCard } from "@/components/maklervollmacht-card";
 import { Card, CardHeader } from "@/components/ui";
 import { TerminKarte } from "@/components/termin-karte";
@@ -719,6 +719,8 @@ export async function LeadDetailBody({
           unterlagenMail={!lead.erasedAt && !mailAus.includes("unterlagen_fehlen") && vorlagen.some((v) => v.standardKey === "unterlagen_fehlen")}
         >
           <LeadContracts leadId={lead.id} contracts={contracts} readOnly={!team.userId} />
+          {/* Einwilligung für Nachfrage, Bewertung und Empfehlung direkt beim Abschluss (Modul Empfehlungen) */}
+          <EmpfehlungConsentRow leadId={lead.id} customerId={team.customerId} readOnly={!team.userId || !!lead.erasedAt} />
         </AbschlussCard>
       ) : null}
 

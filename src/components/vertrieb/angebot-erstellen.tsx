@@ -74,6 +74,13 @@ export async function AngebotErstellen({ c, backHref, bearbeiten = null, vorlage
       }
     : null;
 
+  // Abschlussbonus (Ole, 21.11.2026: abgeschafft): nur ein zugesagter Bonus eines offenen Angebots (Entwurf oder
+  // verschickt) geht in die neue Version mit; ein Duplikat eines abgeschlossenen Angebots bekommt keinen
+  const formWerte = (o: NonNullable<typeof entwurf>) => {
+    const w = entwurfZuFormWerte(o, referralDiscount);
+    return o.status === "draft" || o.status === "sent" ? w : { ...w, bonusVorhanden: false, bonusAn: false };
+  };
+
   return (
     <>
       {!legal.termsUrl || !legal.dpaUrl ? (
@@ -102,7 +109,7 @@ export async function AngebotErstellen({ c, backHref, bearbeiten = null, vorlage
           ueberweisungVerfuegbar={ueberweisungAktiv()}
           backHref={backHref}
           referralDiscount={referralDiscount}
-          entwurf={entwurf ? { offerId: entwurf.id, werte: entwurfZuFormWerte(entwurf, referralDiscount), neueVersion, duplikat } : undefined}
+          entwurf={entwurf ? { offerId: entwurf.id, werte: formWerte(entwurf), neueVersion, duplikat } : undefined}
           initial={{
             contactName: person,
             company: c.name,

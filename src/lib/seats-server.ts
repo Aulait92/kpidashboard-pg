@@ -42,7 +42,7 @@ export async function manualSeatTask(
     const note = [
       `Weitere aktive Verkäufer über den inklusiven: bisher ${o.from}, jetzt ${o.to} (je ${fmtSeatPrice(o.price)} im Monat, tagesgenau).`,
       `Automatisch nicht möglich: ${o.reason}`,
-      `Kunden-ID ${customerId} · Kundenakte → Abrechnung: /admin/kunden/${customerId}/abrechnung`,
+      `Kunden-ID ${customerId} · Kundenakte → Abrechnung: /admin/neu/kunden/${customerId}/abrechnung`,
     ].join("\n");
     const marker = `Kunden-ID ${customerId}`;
     const open = await prisma.salesTask.findFirst({
@@ -59,7 +59,7 @@ export async function manualSeatTask(
     if (done) return "skipped";
     await prisma.salesTask.create({ data: { contactId, type: "SONSTIGES", title, note, dueAt: now } });
     const { sendToAdmins } = await import("@/lib/push");
-    await sendToAdmins({ title: `${MANUAL_SEAT_TASK}: ${c.name}`, body: `${o.to} weitere aktive Verkäufer. ${o.reason}`, url: `/admin/kunden/${customerId}/abrechnung` }).catch(() => {});
+    await sendToAdmins({ title: `${MANUAL_SEAT_TASK}: ${c.name}`, body: `${o.to} weitere aktive Verkäufer. ${o.reason}`, url: `/admin/neu/kunden/${customerId}/abrechnung` }).catch(() => {});
     return "created";
   } catch (err) {
     reportError(err, "seat-manual-task", { customer: customerId });

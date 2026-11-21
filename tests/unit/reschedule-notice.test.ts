@@ -14,6 +14,11 @@ vi.mock("@/lib/whatsapp/templates", async (orig) => {
   };
 });
 const approved: { reschedule: boolean } = { reschedule: true };
+// Ohne Datenbank: jede Abfrage schlägt fehl, der Code fällt auf Standardwerte zurück (Sie-Form, kein Name).
+vi.mock("@/lib/prisma", () => {
+  const model = new Proxy({}, { get: () => () => Promise.reject(new Error("keine Datenbank im Test")) });
+  return { prisma: new Proxy({}, { get: () => model }) };
+});
 
 import { sendRescheduleNotice } from "@/lib/whatsapp/reminders";
 import { SUGGESTED_TEMPLATE_TEXT, PURPOSE_PARAMS } from "@/lib/whatsapp/templates";

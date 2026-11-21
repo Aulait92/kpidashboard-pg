@@ -434,7 +434,15 @@ async function berichte() {
       customerId: r.k,
       month: m,
       rating: r.rating,
-      metrics: { leads: 18, termine: 7, abschluesse: 3 },
+      // Form wie lib/monatsbericht/shared.ts (ReportMetrics); vorher fehlte `current`, die Berichtsansicht brach ab
+      metrics: {
+        month: m,
+        current: { leads: 18, spend: 760, cpl: 42.22, termine: 7, abschluesse: 3, provision: 2400, ergebnisQuote: 0.8 },
+        previous: null,
+        expectedLeads: 20,
+        targetCpl: 40,
+        actions: ["Anzeigentext getauscht"],
+      },
       subject: `Ihr Monatsrückblick ${m}`,
       body: { version: 2, paragraphs: ["Guten Tag, hier ist Ihr Rückblick auf den letzten Monat. Die Anfragen kamen gleichmäßig, aus den Terminen sind mehrere Abschlüsse entstanden."], tips: [] },
       status: r.status,

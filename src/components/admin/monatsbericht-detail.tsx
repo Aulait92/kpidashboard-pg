@@ -46,7 +46,7 @@ export async function MonatsberichtDetail({ id, ohneSchalter = false }: { id: st
             </ul>
           ) : (
             <p className="text-amber-800">
-              Ohne Maßnahme geht der Bericht nicht automatisch raus. Maßnahme eintragen unter <Link href="/admin/optimierung" className="underline">Optimierung</Link>, dann hier senden oder aussetzen.
+              Ohne Maßnahme geht der Bericht nicht automatisch raus. Maßnahme eintragen unter <Link href="/admin/neu/leads/werbekonten" className="underline">Optimierung</Link>, dann hier senden oder aussetzen.
             </p>
           )}
         </div>

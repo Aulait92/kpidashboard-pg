@@ -53,6 +53,8 @@ vi.mock("@/lib/policen/server", async (orig) => {
       return policenBitte({ an: "sie", vermittler: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn", anrede: "Herr" } });
     },
     darfPolicenErinnern: async (leadId: string) => policenModul.an && policenModul.optIn.has(leadId),
+    // Satz am Vortag: ohne Opt-in (A8 a), aber nur mit eingeschalteter Funktion
+    darfPolicenVortagSatz: async (leadId: string, now?: Date) => policenModul.an && real.darfPolicenVortagSatz(leadId, now),
     handlePolicenAntwort: async (conversationId: string, o: { payload?: string | null }) => {
       if (o.payload !== "policen:ja" && o.payload !== "policen:nein") return { handled: false };
       const { prisma } = await import("@/lib/prisma");
@@ -978,9 +980,9 @@ describe("Termin-Strecke mit Knöpfen", () => {
         await runPolicenErinnerung(new Date());
         expect(nur(g.phone)).toHaveLength(1);
         const satz = await policenVortagSatzFuer(g.appt, "sie");
-        expect(satz).toBe("Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.");
+        expect(satz).toBe("Wenn Sie mögen, schicken Sie vorab Ihre Policen hier in den Chat (ein Foto reicht), dann kann sich Ihr Berater schon vorbereiten. Geht aber auch ohne.");
         expect(vortagText({ an: "sie", hi: "Guten Tag Frau Schneider,", wann: "morgen um 10 Uhr", nutzen: "In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was es kostet.", komplettcheck: true, mode: "video", meetUrl: "https://x", person: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" }, policen: satz })).toContain(
-          "Legen Sie gern Ihre bestehenden Verträge bereit. Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.",
+          "was es kostet. Wenn Sie mögen, schicken Sie vorab Ihre Policen hier in den Chat (ein Foto reicht)",
         );
         await merke(g.conv.id, STRECKE.policenErinnerung, { appointmentId: g.appt.id, art: "vortag" });
         expect(await policenVortagSatzFuer(g.appt, "sie")).toBeNull();
@@ -1002,7 +1004,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       }
     });
 
-    it("Stopp: Police da, „habe keine“, „Lieber nicht“, ohne Opt-in, Schalter aus", async () => {
+    it("Stopp: Police da, „habe keine“, „Lieber nicht“, Schalter aus; ohne Opt-in bleibt der Satz", async () => {
       const doc = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
       await prisma.leadDocument.create({ data: { leadId: doc.lead.id, customerId, fileName: "hausrat.pdf", mimeType: "application/pdf", size: 10 } });
       expect(await policenVortagSatzFuer(doc.appt, "sie")).toBeNull();
@@ -1013,7 +1015,8 @@ describe("Termin-Strecke mit Knöpfen", () => {
       await prisma.message.create({ data: { conversationId: lieber.conv.id, direction: "inbound", body: "Lieber nicht" } });
       expect(await policenVortagSatzFuer(lieber.appt, "sie")).toBeNull();
       const ohne = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR, optIn: false });
-      expect(await policenVortagSatzFuer(ohne.appt, "sie")).toBeNull();
+      // Ohne Opt-in kommt der Satz trotzdem (Vortags-Terminerinnerung, A8 a, seit 19.11.2026)
+      expect(await policenVortagSatzFuer(ohne.appt, "sie")).not.toBeNull();
       const aus = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
       expect(await policenVortagSatzFuer(aus.appt, "sie")).not.toBeNull();
       policenModul.an = false;

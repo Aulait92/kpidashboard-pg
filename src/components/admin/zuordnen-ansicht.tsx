@@ -38,7 +38,9 @@ export async function ZuordnenAnsicht({ ansicht, basis }: { ansicht: "offen" | "
           const amount = Number(t.amount);
           const pattern = suggestPattern(t);
           // Offene Buchungen: Zweck bewusst wählen (kein vorausgewählter Zweck)
-          const current = t.status === "ignoriert" ? "ignore" : ((t.costPurpose as CostAction | null) ?? "");
+          // Ausnahme Zahlungseingang (Betrag positiv): sind keine Kosten, darum „Ignorieren“ vorgewählt und keine Regel (SUS-Prüfung 20.11.2026)
+          const eingang = amount > 0 && t.status === "neu";
+          const current = t.status === "ignoriert" || eingang ? "ignore" : ((t.costPurpose as CostAction | null) ?? "");
           // Deutsche Firma (GmbH, AG …) → Rechnung enthält meist 19 % USt
           const vatGuess = t.status === "neu" ? /\b(gmbh|ag|kg|ohg|ug|e\.\s?k\.?|gbr|mbh)\b/i.test(`${t.counterparty ?? ""} ${t.purpose ?? ""}`) : t.vatIncluded;
           return (
@@ -48,6 +50,7 @@ export async function ZuordnenAnsicht({ ansicht, basis }: { ansicht: "offen" | "
                 <span className={`font-semibold tabular-nums ${amount < 0 ? "" : "text-emerald-700"}`}>{eur(amount)}</span>
               </div>
               <div className="mt-0.5 text-sm text-[color:var(--muted)]">
+                {amount > 0 ? "Zahlungseingang · " : ""}
                 {day(t.bookingDate)} · {SOURCE_LABEL(t.accountKey)}
                 {t.purpose ? ` · ${t.purpose.slice(0, 140)}` : ""}
               </div>
@@ -73,7 +76,7 @@ export async function ZuordnenAnsicht({ ansicht, basis }: { ansicht: "offen" | "
                   <input type="checkbox" name="vat" defaultChecked={vatGuess} /> inkl. USt
                 </label>
                 <label className="flex items-center gap-1 text-xs">
-                  <input type="checkbox" name="always" defaultChecked={t.status === "neu"} /> immer so bei
+                  <input type="checkbox" name="always" defaultChecked={t.status === "neu" && !eingang} /> künftig automatisch bei
                 </label>
                 <input name="pattern" defaultValue={pattern} className="h-9 w-40 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-2 text-xs" aria-label="Muster" />
                 <button className="btn-primary h-9 text-sm">{t.status === "neu" ? "Zuordnen" : "Ändern"}</button>
@@ -83,9 +86,12 @@ export async function ZuordnenAnsicht({ ansicht, basis }: { ansicht: "offen" | "
         })}
       </ul>
     ) : (
-      <p className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-8 text-center text-sm text-[color:var(--muted)]">
-        {ansicht === "offen" ? "Alles zugeordnet." : "Noch keine Buchungen."}
-      </p>
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-8 text-center text-sm text-[color:var(--muted)]">
+        <p>{ansicht === "offen" ? "Alles zugeordnet." : "Noch keine Buchungen von Konto oder Karte."}</p>
+        <Link href={ansicht === "offen" ? `${basis}?ansicht=alle` : basis.replace(/\/zuordnen$/, "/konten")} className="mt-2 inline-flex min-h-10 items-center font-semibold text-[color:var(--brand)] hover:underline">
+          {ansicht === "offen" ? "Alle Ausgaben ansehen" : "Konten verbinden"}
+        </Link>
+      </div>
     )}
     </div>
   );

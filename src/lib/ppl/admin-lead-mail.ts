@@ -100,7 +100,7 @@ async function sendeAdminLeadMail(poolLeadId: string, extra: { delivery?: Delive
     : null;
   const status = (["delivered", "parked", "duplicate", "invalid"].includes(pl.status) ? pl.status : "parked") as AdminLeadMailInfo["status"];
   const base = adminBase();
-  const path = status === "delivered" && pl.leadId ? `/admin/ppl?ansicht=geliefert&q=${encodeURIComponent(pl.leadId)}` : status === "parked" ? "/admin/ppl?ansicht=geparkt" : "/admin/ppl?ansicht=eingang";
+  const path = status === "delivered" && pl.leadId ? `/admin/neu/leads/ppl?ansicht=geliefert&q=${encodeURIComponent(pl.leadId)}` : status === "parked" ? "/admin/neu/leads/ppl?ansicht=geparkt" : "/admin/neu/leads/ppl?ansicht=eingang";
   const m = adminLeadMail({
     product: pl.productKey,
     status,

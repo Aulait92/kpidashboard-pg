@@ -103,7 +103,7 @@ async function notifyPlanned(pauseId: string) {
   await sendToAdmins({
     title: `🏖️ Pause geplant: ${customer.name}`,
     body: `${fmt(p.startsAt)}${p.endsAt ? ` bis ${fmt(p.endsAt)}` : " (offen)"}`,
-    url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/vertrieb/kunden",
+    url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}` : "/admin/neu/kunden",
   }).catch(() => {});
   if (contactId) {
     await logOfferActivity({ dealId: null, salesContactId: contactId }, `Pause geplant: ${fmt(p.startsAt)}${p.endsAt ? ` bis ${fmt(p.endsAt)}` : " (offen)"}`, p.reason);
@@ -168,7 +168,7 @@ export async function applyPause(pauseId: string): Promise<void> {
   await sendToAdmins({
     title: `⏸️ Pause gestartet: ${customer.name}`,
     body: problems.length ? `Bitte erledigen: ${problems.join("; ")}` : adsNote,
-    url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/vertrieb/kunden",
+    url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}` : "/admin/neu/kunden",
   }).catch(() => {});
 
   const to = customer.users.map((u) => u.email);
@@ -231,7 +231,7 @@ export async function resumePause(pauseId: string): Promise<void> {
   await sendToAdmins({
     title: `▶️ Pause beendet: ${customer.name}`,
     body: problems.length ? `Bitte erledigen: ${problems.join("; ")}` : "Kampagnen laufen wieder.",
-    url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/vertrieb/kunden",
+    url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}` : "/admin/neu/kunden",
   }).catch(() => {});
   const to = customer.users.map((u) => u.email);
   if (to.length) {
@@ -356,7 +356,7 @@ export async function runDunningCron(now = new Date(), sendMails = true) {
         button: { label: "Rechnung jetzt bezahlen", url },
       }).catch((err) => reportError(err, "dunning-warn-mail"));
       await prisma.customer.update({ where: { id: c.id }, data: { paymentWarnedAt: now } });
-      await sendToAdmins({ title: `💶 Zahlungserinnerung: ${customer.name}`, body: `Rechnung seit ${Math.floor(days)} Tagen offen.`, url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/leads" }).catch(() => {});
+      await sendToAdmins({ title: `💶 Zahlungserinnerung: ${customer.name}`, body: `Rechnung seit ${Math.floor(days)} Tagen offen.`, url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}` : "/admin/neu/leads/alle" }).catch(() => {});
       warned++;
     }
 
@@ -394,7 +394,7 @@ export async function runDunningCron(now = new Date(), sendMails = true) {
           await prisma.salesTask.create({ data: { contactId, type: "SONSTIGES", title: `Zahlungsverzug ${customer.name}: Kampagnen von Hand pausieren`, dueAt: now } }).catch(() => {});
         }
       }
-      await sendToAdmins({ title: `⛔ Anzeigen gestoppt: ${customer.name}`, body: `Zahlungsverzug seit ${Math.floor(days)} Tagen · ${adsNote}`, url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/leads" }).catch(() => {});
+      await sendToAdmins({ title: `⛔ Anzeigen gestoppt: ${customer.name}`, body: `Zahlungsverzug seit ${Math.floor(days)} Tagen · ${adsNote}`, url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}` : "/admin/neu/leads/alle" }).catch(() => {});
       if (sendMails && to.length) {
         const url = (await openInvoiceUrl(c.stripeCustomerId!)) ?? `${getAppUrl()}/buyer/konto`;
         await sendCustomerMail({

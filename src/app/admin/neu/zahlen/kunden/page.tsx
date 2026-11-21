@@ -4,16 +4,16 @@ import { Seite } from "@/components/admin-neu/ui/seite";
 import { loadLebenszyklus } from "@/lib/lebenszyklus";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
-export const metadata = { title: "Kunden-Lebenszyklus | performancegrowth Admin" };
+export const metadata = { title: "Kündigung & Rückkehr | performancegrowth Admin" };
 
-// Zahlen → Kunden-Lebenszyklus: Kündigung, Ruhephase, Rückkehr und Halteangebote (wie /admin/zahlen/lebenszyklus,
+// Geld › Übersicht › Kunden › Kündigung & Rückkehr (Detailseite ohne Reiter seit 19.11.2026): Kündigung, Ruhephase, Rückkehr und Halteangebote (wie /admin/zahlen/lebenszyklus,
 // gleicher Baustein components/admin/lebenszyklus-ansicht.tsx). Kohorten und Kundenbasis stehen in der Übersicht.
 export default async function Page() {
   await connection();
   await requireAuth();
   const d = await loadLebenszyklus();
   return (
-    <Seite titel="Geld" reiter="geld" breit>
+    <Seite titel="Kündigung & Rückkehr" zurueck={{ href: "/admin/neu/zahlen", label: "Übersicht" }} breit>
       <LebenszyklusAnsicht
         d={d}
         funktionen={{

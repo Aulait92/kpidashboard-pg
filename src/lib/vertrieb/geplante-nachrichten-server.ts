@@ -4,7 +4,6 @@
 
 import { prisma } from "@/lib/prisma";
 import type { SalesStage } from "@/generated/prisma/enums";
-import { neuerPfad } from "@/lib/admin-neu/umzug";
 import { berlinYmd, addDaysYmd } from "@/lib/absence";
 import { mahnwesenAktiv, naechsteStufe, mahnStoppGrund, rechnungVorlage, VERSAND_AB_STUNDE as MAHN_AB, VERSAND_BIS_STUNDE as MAHN_BIS } from "@/lib/mahnwesen";
 import { istErsetzt, naechsteErinnerung, zahlungVorlage, VERSAND_AB_STUNDE, VERSAND_BIS_STUNDE } from "@/lib/angebot-zahlungserinnerung";
@@ -46,7 +45,7 @@ type Ctx = {
 };
 
 const kurzName = (s: string | null | undefined) => (s ?? "").trim();
-const kundenPfad = (id: string, unter = "") => neuerPfad(`/admin/kunden/${id}${unter}`, { nurFertige: false }) ?? `/admin/kunden/${id}${unter}`;
+const kundenPfad = (id: string, unter = "") => `/admin/neu/kunden/${id}${unter}`;
 const telefon = (p: string | null | undefined) => (p ? normalizePhone(p) : null);
 
 /**

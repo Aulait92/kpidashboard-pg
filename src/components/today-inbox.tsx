@@ -64,6 +64,8 @@ import { CrossSellZusatzKnopf } from "@/components/bestand/cross-sell-angebot";
 import { istCrossSellAufgabe, type CrossSellVerkauf } from "@/lib/cross-sell-verkauf";
 import { eingangAlter, neuerLeadGrund } from "@/lib/eingang-alter";
 import { istWartenderNeuerLead } from "@/lib/neue-leads-shared";
+import { bestandWarmErledigtAction } from "@/app/buyer/bestand/actions";
+import { WARM_TITLE } from "@/lib/bestand/warm-shared";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -100,6 +102,8 @@ type CallItem = {
   erledigtOk?: boolean;
   /** Neuer Lead (urgent): Zeile in „Neue Leads“ mit Produkt und Wartezeit */
   neu?: { grund: string; seit: string };
+  /** Empfohlene Person: Gesprächseinstieg unter der Zeile (Modul Empfehlungen & Bewertungen) */
+  einstieg?: string | null;
 };
 
 type SheetState =
@@ -226,7 +230,8 @@ export function TodayInbox({
     conversationId: c.conversationId,
     urgent: c.urgent,
     known: c.known ?? null,
-    ...(c.urgent ? { neu: { grund: neuerLeadGrund(c.reason), seit: ago(c.createdAt) } } : {}),
+    ...(c.urgent ? { neu: { grund: c.empfehlung ? c.reason : neuerLeadGrund(c.reason), seit: ago(c.createdAt) } } : {}),
+    einstieg: c.empfehlung?.einstieg ?? null,
   });
   const urgentIds = new Set(data.callbacks.filter((c) => c.urgent).map((c) => c.leadId));
   const calls: CallItem[] = [
@@ -287,7 +292,9 @@ export function TodayInbox({
   }, [callMode]);
   const noStep = data.noNextStep.leads.filter((l) => !hidden.has(`n:${l.leadId}`));
   const noStepTotal = Math.max(noStep.length, data.noNextStep.total - (data.noNextStep.leads.length - noStep.length));
-  const nothing = appointments.length + outcomes.length + angebote.length + openCalls.length + chats.length + calls.length + noStep.length + (data.datenschutz?.length ?? 0) === 0;
+  // Bestand Paket 4: geantwortet ohne Termin (nur mit sichtbarem Modul geladen)
+  const warm = (data.bestandWarm ?? []).filter((w) => !hidden.has(`w:${w.recipientId}`));
+  const nothing = appointments.length + outcomes.length + angebote.length + openCalls.length + chats.length + calls.length + noStep.length + warm.length + (data.datenschutz?.length ?? 0) === 0;
   const noStepHref = leadHref.startsWith("/buyer?") ? "/buyer/kontakte?ansicht=ohne-schritt" : "/buyer/leads?ansicht=ohne-schritt";
 
   const laterSheet = (c: CallItem) =>
@@ -386,7 +393,7 @@ export function TodayInbox({
               <span className="font-semibold text-rose-600" data-call-urgent>
                 {c.neu.seit}
               </span>
-              {` · ${[c.neu.grund, c.source].filter(Boolean).join(" · ")}`}
+              {` · ${[c.neu.grund, c.einstieg ? null : c.source].filter(Boolean).join(" · ")}`}
             </>
           ) : (
             <>
@@ -395,6 +402,11 @@ export function TodayInbox({
             </>
           )}
         </p>
+        {c.einstieg ? (
+          <p className="truncate text-xs text-emerald-700" data-call-einstieg>
+            Einstieg: {c.einstieg}
+          </p>
+        ) : null}
         {weiteresProdukt && c.kind === "followup" && istCrossSellAufgabe(c.reason) ? <CrossSellZusatzKnopf verkauf={weiteresProdukt} /> : null}
       </div>
       {c.phone ? (
@@ -665,6 +677,47 @@ export function TodayInbox({
                   >
                     Senden
                   </Button>
+                  {more}
+                </TapRow>
+              );
+            })}
+          </ul>
+        </Card>
+      ) : null}
+
+      {warm.length > 0 ? (
+        <Card>
+          <div id="bestand-nachfassen" className="scroll-mt-20" data-bestand-warm />
+          <CardHeader icon={MessageCircle} title={WARM_TITLE} count={warm.length} />
+          <ul className="divide-y divide-[color:var(--border)]">
+            {warm.map((w) => {
+              const key = `w:${w.recipientId}`;
+              const href = w.conversationId ? `/buyer/chats?c=${w.conversationId}` : leadUrl(w.leadId);
+              const open = () =>
+                setSheet({
+                  kind: "actions",
+                  title: w.name,
+                  message: `Hat auf „${w.kampagne}“ geantwortet, noch kein Termin.`,
+                  actions: [
+                    { label: "Nachricht schreiben", icon: MessageCircle, href, tone: "primary" },
+                    { label: "Termin buchen", icon: CalendarPlus, onSelect: () => openLeadBooking(w.leadId, w.name) },
+                    { label: "Kontakt öffnen", icon: UserRound, href: leadUrl(w.leadId) },
+                    { label: "Erledigt", icon: Check, onSelect: () => run(key, `${w.name}: erledigt`, () => bestandWarmErledigtAction(w.recipientId)) },
+                  ],
+                });
+              return (
+                <TapRow key={key} className={sel(w.leadId)} onTap={() => openDetailOnDesktop(w.leadId) || open()}>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{w.name}</div>
+                    <p className="truncate text-xs text-[color:var(--muted)]" data-bestand-warm-row>
+                      Antwort auf {w.kampagne} · {since(w.repliedAt)} ohne Termin
+                    </p>
+                  </div>
+                  <span onClick={stop}>
+                    <ButtonLink href={href} variant="secondary" icon={MessageCircle}>
+                      Nachricht
+                    </ButtonLink>
+                  </span>
                   {more}
                 </TapRow>
               );
@@ -1012,6 +1065,11 @@ function CallModePanel({
                   Ziel: <span className="text-[color:var(--foreground)]">{z.ziel}</span>
                 </div>
                 {/* Was der Assistent im Chat schon erfahren hat, damit der Vermittler nicht doppelt fragt (Ole, 16.11.2026) */}
+                {item.einstieg ? (
+                  <p className="mt-1.5 text-sm text-[color:var(--muted)]" data-anruf-einstieg>
+                    <span className="font-medium text-[color:var(--foreground)]">Einstieg:</span> {item.einstieg}
+                  </p>
+                ) : null}
                 {item.known ? (
                   <p className="mt-1.5 text-sm text-[color:var(--muted)]" data-anruf-bekannt>
                     <span className="font-medium text-[color:var(--foreground)]">Aus dem Chat:</span> {item.known}

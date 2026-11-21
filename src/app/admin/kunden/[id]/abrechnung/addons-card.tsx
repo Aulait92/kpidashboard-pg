@@ -13,8 +13,30 @@ const input = "h-9 w-24 rounded-[var(--radius-sm)] border border-[color:var(--bo
 const btn = "h-10 sm:h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold";
 const secondary = `${btn} border border-[color:var(--border)] bg-white`;
 
-/** Verkäufer-Plätze, Bestandskunden-Modul (inkl. Kontingent) und Zahlweise – mit Stripe-Abgleich. */
-export async function AddOnsCard({ customerId, message, failed }: { customerId: string; message: string | null; failed: boolean }) {
+export type AddOnTeil = "verkaeufer" | "bestand" | "empfehlung" | "zahlweise";
+const ALLE_TEILE: AddOnTeil[] = ["verkaeufer", "bestand", "empfehlung", "zahlweise"];
+
+/**
+ * Verkäufer-Plätze, Bestandskunden-Modul (inkl. Kontingent) und Zahlweise – mit Stripe-Abgleich.
+ * `teile`/`titel`: der neue Admin (Kundenakte › Abrechnung) zeigt die Abschnitte getrennt (Zahlweise im Fenster „Vertrag
+ * ändern“, Module und Verkäufer zugeklappt); ohne Angabe wie bisher alles in einer Karte.
+ */
+export async function AddOnsCard({
+  customerId,
+  message,
+  failed,
+  teile = ALLE_TEILE,
+  titel = "Verkäufer, Module und Zahlweise",
+}: {
+  customerId: string;
+  message: string | null;
+  failed: boolean;
+  teile?: AddOnTeil[];
+  titel?: string;
+}) {
+  const zeigt = (t: AddOnTeil) => teile.includes(t);
+  // Trennlinie nur zwischen sichtbaren Abschnitten
+  const trenner = (t: AddOnTeil) => (teile.indexOf(t) > 0 ? "border-t border-[color:var(--border)] pt-4" : "");
   const [c, usage, quota, packHistory] = await Promise.all([
     prisma.customer.findUnique({
       where: { id: customerId },
@@ -70,13 +92,14 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
 
   return (
     <Card>
-      <CardHeader title="Verkäufer, Module und Zahlweise" />
+      <CardHeader title={titel} />
       <div className="space-y-5 px-5 pb-5 pt-4 text-sm" data-admin-addons>
         {message ? (
           <p className={`rounded-[var(--radius-sm)] px-3 py-2 font-medium ${failed ? "bg-rose-50 text-rose-800" : "bg-emerald-50 text-emerald-900"}`}>{message}</p>
         ) : null}
 
-        <section className="space-y-2">
+        {zeigt("verkaeufer") ? (
+        <section className={`space-y-2 ${trenner("verkaeufer")}`}>
           <h3 className="font-semibold">Aktive Verkäufer</h3>
           <p className="text-[color:var(--muted)]" data-admin-seats>
             {usage.active} aktiv (bekommen Leads oder heute Leads bekommen) · {usage.logins} Logins
@@ -103,7 +126,10 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
           ) : null}
         </section>
 
-        <section className="space-y-2 border-t border-[color:var(--border)] pt-4">
+        ) : null}
+
+        {zeigt("bestand") ? (
+        <section className={`space-y-2 ${trenner("bestand")}`}>
           <h3 className="font-semibold">Bestandskunden-Modul</h3>
           <p className="text-[color:var(--muted)]" data-admin-bestand-status>
             {c.existingCustomersEnabled
@@ -174,7 +200,10 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
           ) : null}
         </section>
 
-        <section className="space-y-2 border-t border-[color:var(--border)] pt-4">
+        ) : null}
+
+        {zeigt("empfehlung") ? (
+        <section className={`space-y-2 ${trenner("empfehlung")}`}>
           <h3 className="font-semibold">Empfehlungen &amp; Bewertungen</h3>
           <p className="text-[color:var(--muted)]" data-admin-empfehlung-status>
             {empfState === "inactive"
@@ -213,7 +242,10 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
           </div>
         </section>
 
-        <section className="space-y-2 border-t border-[color:var(--border)] pt-4">
+        ) : null}
+
+        {zeigt("zahlweise") ? (
+        <section className={`space-y-2 ${trenner("zahlweise")}`}>
           <h3 className="font-semibold">Zahlweise</h3>
           <p className="text-[color:var(--muted)]" data-admin-interval>
             {RHYTHMUS_LABEL[rhythmus]}
@@ -238,6 +270,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
             <span className="text-xs text-[color:var(--muted)]">Stripe stellt sofort um und verrechnet anteilig.</span>
           </form>
         </section>
+        ) : null}
       </div>
     </Card>
   );

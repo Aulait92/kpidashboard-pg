@@ -30,7 +30,8 @@ describe("Ops-Upload Vertriebsunterlagen", () => {
     expect((await post("audience=vertreter&format=pdf", PDF)).status).toBe(403);
     expect((await post("audience=vertreter&format=pdf", PDF, { "x-ops-upload-token": "falsch" })).status).toBe(403);
     expect((await post("audience=vertreter&format=pdf", PDF, { "x-ops-upload-token": process.env.OPS_READ_TOKEN! })).status).toBe(403);
-    expect((await post("audience=vertreter&format=pdf", PDF, { authorization: `Bearer ${TOKEN}` })).status).toBe(403);
+    // Bearer mit dem Upload-Schlüssel ist seit 19.11.2026 erlaubt (lib/ops-auth.ts), mit dem Lese-Schlüssel nicht
+    expect((await post("audience=vertreter&format=pdf", PDF, { authorization: `Bearer ${process.env.OPS_READ_TOKEN}` })).status).toBe(403);
   });
 
   it("ohne gesetzten oder mit zu kurzem Schlüssel ist der Upload aus", async () => {
@@ -53,7 +54,7 @@ describe("Ops-Upload Vertriebsunterlagen", () => {
 
     const list = await GET(new Request("https://app.test/api/ops/unterlagen", { headers: h }));
     const j = (await list.json()) as { slots: { audience: string; format: string; fileName: string | null }[] };
-    expect(j.slots).toHaveLength(4);
+    expect(j.slots).toHaveLength(6); // Vertreter, Makler, Pay-per-Lead je PDF und PPTX
     expect(j.slots.find((s) => s.audience === "vertreter" && s.format === "pdf")?.fileName).toBe("Test-Vertreter.pdf");
     expect((await GET(new Request("https://app.test/api/ops/unterlagen"))).status).toBe(403);
   });

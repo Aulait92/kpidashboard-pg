@@ -15,7 +15,7 @@ export async function versandTestAction(_prev: VersandTestState, _fd: FormData):
   if (!(await versandPostfachVerbunden())) return { error: "Versand-Postfach nicht verbunden." };
   const r = await sendViaVersandPostfach(testMail(s.email));
   await audit("ppl.versand_testmail", { entity: "AdminMailbox", entityId: "ppl-versand", details: { an: s.email, ok: r.ok, fehler: r.error ?? null } });
-  revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   if (!r.ok) return { error: r.error ?? "Nicht gesendet." };
   if (r.blocked) return { error: `Testumgebung: ${s.email} ist durch MAIL_NUR_AN gesperrt.` };

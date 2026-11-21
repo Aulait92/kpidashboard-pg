@@ -65,7 +65,7 @@ export async function WhatsAppZustellung() {
                 {kunden.slice(0, 50).map((k) => (
                   <tr key={k.customerId}>
                     <td className="py-1.5 pr-3">
-                      <Link href={`/admin/kunden/${k.customerId}`} className="hover:text-[color:var(--brand)] hover:underline">
+                      <Link href={`/admin/neu/kunden/${k.customerId}`} className="hover:text-[color:var(--brand)] hover:underline">
                         {k.name}
                       </Link>
                     </td>
@@ -104,7 +104,7 @@ export async function WhatsAppZustellung() {
                   <tr key={a.id} data-wa-alarm={a.code}>
                     <td className="whitespace-nowrap py-1.5 pr-3">{a.day}</td>
                     <td className="px-3 py-1.5">
-                      <Link href={`/admin/kunden/${a.customerId}`} className="hover:text-[color:var(--brand)] hover:underline">
+                      <Link href={`/admin/neu/kunden/${a.customerId}`} className="hover:text-[color:var(--brand)] hover:underline">
                         {a.customer.name}
                       </Link>
                     </td>

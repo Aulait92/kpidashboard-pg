@@ -123,7 +123,7 @@ async function push(contactId: string | null, person: string | null, terminId: s
   await sendToAdmins({
     title: reviewTitle(person),
     body: "Antippen und mit einem Tipp eintragen: Angebot, Folgetermin, kein Interesse oder nicht erschienen.",
-    url: contactId ? `/admin/vertrieb/kontakte/${contactId}#ergebnis` : "/admin/heute/aufgaben",
+    url: contactId ? `/admin/neu/vertrieb/kontakte/${contactId}#ergebnis` : "/admin/neu/vertrieb/aufgaben",
     tag: `termin-review:${terminId}`,
   }).catch((e) => reportError(e, "termin-review-push"));
 }

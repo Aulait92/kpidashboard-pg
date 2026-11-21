@@ -10,7 +10,7 @@ export async function deleteTestCustomerAction(customerId: string): Promise<{ ok
   if (!session || session.role !== "ADMIN") return { ok: false, error: "Nur Admins." };
   const r = await deleteTestCustomer(customerId);
   if (!r.ok) return { ok: false, error: r.error };
-  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true };
 }

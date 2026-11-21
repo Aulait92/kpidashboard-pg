@@ -1,0 +1,538 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { ACTIVITY_LABEL, CUSTOMER_COLOR, CUSTOMER_LABEL, CUSTOMER_STAGES, SOURCES, SOURCE_COLOR, SOURCE_LABEL, LOSS_LABEL, shortName } from "@/lib/vertrieb/crm";
+import { dayKey, fmtDate, fmtDateTime, timeKey, todayKey } from "@/lib/vertrieb/dates";
+import { stripQuoted } from "@/lib/vertrieb/instantly";
+import { TaskRow } from "@/components/vertrieb/ui";
+import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
+import { ContactEmails, ContactPhones, DuplicateHint } from "@/components/vertrieb/contact-merge";
+import { DatenschutzRechtKarte } from "@/components/vertrieb/datenschutz-recht";
+import { fallZeilen, rechtsFaelleVon } from "@/lib/vertrieb/datenschutz-recht-server";
+import { KATEGORIE_RECHT, RECHTS_ART_LABEL, istRechtsArt } from "@/lib/vertrieb/datenschutz-recht";
+import { enrichedLine as enrichedLineOf, ladeKontakt, ladeKontaktakte, waConfirmLabel } from "@/lib/vertrieb/kontaktakte";
+import { ArrowLeft, Mail, Phone, Presentation, Trash2 } from "lucide-react";
+import { ActivityForm } from "@/components/vertrieb/activity-form";
+import { Collapsible } from "@/components/vertrieb/collapsible";
+import { TaskForm } from "@/components/vertrieb/task-form";
+import { addReplyManually, deleteActivity, enrichAddressAction, linkContactCustomer, updateActivity, updateContactAddress, setReplySentiment, updateCustomer, updateLinkedIn } from "@/app/admin/vertrieb/actions";
+import { LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
+import { ConfirmButton } from "@/components/vertrieb/confirm-button";
+import { DealOffersCard } from "@/components/deal-offers-card";
+import { toOfferRow } from "@/lib/offer-links";
+import { offenesAngebot } from "@/lib/vertrieb/angebot-ablehnen";
+import { onboardingChecklist } from "@/lib/onboarding";
+import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
+import type { ImpressumInfo } from "@/lib/impressum";
+import { BackToList } from "@/components/admin/list-memory";
+import { ADMIN_BACK_CLASS } from "@/components/admin/admin-back";
+import { VERTRIEB_LISTS } from "@/lib/admin-lists";
+import { eur as eurOffer } from "@/lib/offer-pricing";
+import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
+import { audienceForContact } from "@/lib/vertrieb/praesentationen";
+import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card";
+import { VerkaufsLinkKarte } from "./praesentation/link-karte";
+import { AdminRescheduleButton, AdminTerminButton } from "@/components/termin/admin-termin";
+import { adminBookTerminAction, adminRescheduleTerminAction } from "@/app/admin/vertrieb/buchungsseite/actions";
+
+export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
+  const { id } = await params;
+  // embedded = in der Kundenakte (/admin/kunden/[id]) eingebettet.
+  const embedded = (await searchParams).embedded === "1";
+  // Daten der Kontaktakte: lib/vertrieb/kontaktakte.ts (gemeinsam mit dem neuen Admin)
+  const c = await ladeKontakt(id);
+  if (!c) notFound();
+  // „Offenes Angebot auch als abgelehnt markieren?“ beim Verloren-Markieren
+  const offen = offenesAngebot(c.offers);
+  const angebotOffen = offen ? { id: offen.id, number: offen.number } : null;
+  // Kunden haben eine eigene Akte mit allen Reitern.
+  if (c.customerId && !embedded) redirect(`/admin/neu/kunden/${c.customerId}`);
+  const {
+    emailSources, extraPhones, extrasSummary, open, done, activeFollowup, threadMail, followupMail, suggested,
+    onboarding, obOffer, acceptedOffer, freeCustomers, linkable, duplicates, decisionLink, entscheidungsHinweis, bookingTypes, defaultTermin,
+    referral, referralBenefit, referralDiscount, pdfs, appUrl, praesLink, praesAufrufe, praesFassung,
+  } = await ladeKontaktakte(c);
+  // Datenschutz und Recht (Ole, 19.11.2026): Fälle mit Frist und Antwortvorlagen
+  const rechtsFaelle = fallZeilen(await rechtsFaelleVon(c.id));
+  const praesDatum = (d: Date, mitZeit = false) =>
+    new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: mitZeit ? "2-digit" : "numeric", month: mitZeit ? "2-digit" : "long", ...(mitZeit ? { year: "numeric", hour: "2-digit", minute: "2-digit" } : {}) }).format(d);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          {embedded ? null : (
+            <>
+              <BackToList id="vertrieb" fallback="/admin/neu/vertrieb/kontakte" allowed={VERTRIEB_LISTS} className={ADMIN_BACK_CLASS}>
+                <ArrowLeft className="h-4 w-4 shrink-0" />
+                Zurück
+              </BackToList>
+              <h1 className="mt-1 text-2xl font-semibold">{shortName(c.name)}</h1>
+            </>
+          )}
+          {(c.firstName || c.leaderNames) && (
+            <p className="text-sm text-slate-600">
+              Ansprechpartner: {[c.salutation, c.firstName, c.lastName].filter(Boolean).join(" ")}
+              {c.leaderNames && c.leaderNames !== [c.firstName, c.lastName].filter(Boolean).join(" ") && <span className="text-slate-400"> · Inhaber: {c.leaderNames}</span>}
+            </p>
+          )}
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
+            <StagePicker contactId={c.id} stage={c.stage} competitor={c.competitor} offenesAngebot={angebotOffen} />
+            {activeFollowup ? (
+              <a href="#follow-up">
+                <FollowupBadge f={activeFollowup} />
+              </a>
+            ) : null}
+            {c.customerStage && <span className={`badge ${CUSTOMER_COLOR[c.customerStage]}`}>Kunde: {CUSTOMER_LABEL[c.customerStage]}</span>}
+            {c.customerSource && <span className={`badge ${SOURCE_COLOR[c.customerSource]}`}>über {SOURCE_LABEL[c.customerSource]}</span>}
+            {c.lossReason && <span className="badge bg-rose-50 text-rose-700">{LOSS_LABEL[c.lossReason]}</span>}
+            {c.competitor && <span className="badge bg-slate-100 text-slate-600">{c.competitor}</span>}
+            {(c.street || c.zip || c.city) && <span>{[c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ")}</span>}
+            {c.ratingValue != null && (
+              <span className="text-amber-600" title="Google-Bewertung" data-kontakt-rating>
+                ★ {c.ratingValue.toLocaleString("de-DE")} <span className="text-slate-400">({c.ratingCount ?? 0})</span>
+              </span>
+            )}
+            {c.businessStatus === "CLOSED_PERMANENTLY" && <span className="badge bg-rose-50 text-rose-700">laut Google dauerhaft geschlossen</span>}
+            <form action={enrichAddressAction}>
+              <input type="hidden" name="id" value={c.id} />
+              <button className="inline-flex min-h-10 items-center text-xs text-[color:var(--brand)] hover:underline" title="Website und Google erneut auswerten: Adresse, Öffnungszeiten, Bewertung, Social-Links … (nur leere Felder)">
+                Jetzt anreichern
+              </button>
+            </form>
+            <span>{c.callAttempts} Anrufversuch{c.callAttempts === 1 ? "" : "e"}</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {c.phone && (
+            <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="btn-primary">
+              <Phone className="h-4 w-4" /> {c.phone}
+            </a>
+          )}
+          <a href={`mailto:${c.email}`} className="btn-ghost">
+            <Mail className="h-4 w-4" /> E-Mail
+          </a>
+          <Link href={`/admin/neu/vertrieb/kontakte/${c.id}/praesentation`} className="btn-ghost" data-praesentation-knopf>
+            <Presentation className="h-4 w-4" /> Präsentation
+          </Link>
+          <AdminTerminButton
+            action={adminBookTerminAction}
+            contactId={c.id}
+            contactName={shortName(c.name)}
+            email={c.email || null}
+            types={bookingTypes}
+            defaultType={defaultTermin}
+            decisionLink={decisionLink}
+          />
+          <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} geloescht={!!c.art17GeloeschtAt} gesperrt={!!c.nieKontaktierenAt || rechtsFaelle.length > 0} />
+        </div>
+      </div>
+      <DuplicateHint contactId={c.id} contactName={shortName(c.name)} duplicates={duplicates} />
+      {referral ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-kontakt-empfehlung>
+          <span
+            className="mb-1.5 mr-2 inline-flex items-center rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-semibold text-white"
+            data-kontakt-empfehlung-badge
+          >
+            Empfehlung von {referral.referrer.name}
+            {referralDiscount?.eligible ? `, ${eurOffer(referralDiscount.amount)} Setup-Rabatt` : ""}
+          </span>
+          {referralDiscount && !referralDiscount.eligible && referralDiscount.settingAmount != null ? (
+            <span className="mb-1.5 inline-block text-xs text-amber-800">Kein automatischer Setup-Rabatt: {referralDiscount.reason}.</span>
+          ) : null}
+          <br />
+          <span className="font-medium">Empfohlen von </span>
+          <Link href={`/admin/neu/kunden/${referral.referrer.id}`} className="font-medium underline">
+            {referral.referrer.name}
+          </Link>{" "}
+          am {fmtDate(referral.createdAt)}. Wird der Kontakt Kunde und zahlt die erste Rechnung, bekommt der Empfehler seine Prämie automatisch.
+          {referralBenefit ? <span className="block">Neukunden-Vorteil fürs Angebot: {referralBenefit}</span> : null}
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[3fr_2fr]">
+        <div className="space-y-5">
+          {rechtsFaelle.length ? <DatenschutzRechtKarte contactId={c.id} faelle={rechtsFaelle} /> : null}
+          <section className="card p-4">
+            <h2 className="mb-3 font-medium">Aktivität erfassen</h2>
+            <ActivityForm contactId={c.id} hasOpenTasks={open.length > 0} offenesAngebot={angebotOffen} />
+          </section>
+
+          {c.emails.length === 0 ? (
+            <Fold title="Antworten auf Cold Mails" summary="keine">
+              <p className="mb-2 text-sm text-slate-500">Antwort manuell einfügen:</p>
+              <form action={addReplyManually} className="space-y-2">
+                <input type="hidden" name="contactId" value={c.id} />
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_150px]">
+                  <input name="subject" placeholder="Betreff" className="input" />
+                  <input name="date" type="date" defaultValue={todayKey()} className="input" />
+                </div>
+                <textarea name="text" rows={4} required placeholder="Antworttext hier einfügen" className="input" />
+                <button className="btn-ghost">Antwort speichern</button>
+              </form>
+            </Fold>
+          ) : (
+          <Collapsible
+            id="antworten"
+            title={<>Antworten auf Cold Mails <span className="font-normal text-slate-400">({c.emails.length})</span></>}
+          >
+            {c.emails.length > 0 && (
+              <ol className="divide-y divide-slate-100">
+                {c.emails.map((e) => {
+                  const body = e.text ?? "";
+                  const main = stripQuoted(body);
+                  const quoted = body.length > main.length + 5 ? body.slice(main.length).trim() : "";
+                  return (
+                    <li key={e.id} className="px-4 py-3 text-sm">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`badge ${e.direction === "OUT" ? "bg-sky-100 text-sky-800" : e.isAutoReply ? "bg-slate-100 text-slate-600" : "bg-emerald-100 text-emerald-800"}`}>
+                          {e.direction === "OUT" ? "Gesendet" : e.isAutoReply ? "Auto-Reply" : "Antwort"}
+                        </span>
+                        {e.direction === "IN" && e.rechtsArt ? (
+                          <span className="badge bg-rose-50 text-rose-700 ring-1 ring-rose-200">{KATEGORIE_RECHT}: {istRechtsArt(e.rechtsArt) ? RECHTS_ART_LABEL[e.rechtsArt] : e.rechtsArt}</span>
+                        ) : e.direction === "IN" && !e.isAutoReply && e.sentiment && (
+                          <span className={`badge ${e.sentiment === "POSITIV" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : e.sentiment === "NEGATIV" ? "bg-rose-50 text-rose-700 ring-1 ring-rose-200" : e.sentiment === "SPAETER" ? "bg-teal-50 text-teal-700 ring-1 ring-teal-200" : "bg-slate-50 text-slate-500 ring-1 ring-slate-200"}`}>
+                            {e.sentiment === "POSITIV" ? "positiv" : e.sentiment === "NEGATIV" ? "negativ" : e.sentiment === "SPAETER" ? "später" : "neutral"}
+                          </span>
+                        )}
+                        <span className="font-medium">{e.subject || "(ohne Betreff)"}</span>
+                        <span className="ml-auto text-xs text-slate-400">{fmtDateTime(e.sentAt)}</span>
+                      </div>
+                      <div className="mt-0.5 text-xs text-slate-400">
+                        {e.fromEmail}{e.campaign ? ` · Kampagne: ${e.campaign}` : ""}
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap text-slate-700">{main || "(kein Text)"}</p>
+                      {e.direction === "IN" && !e.rechtsArt && <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-slate-400">
+                        Einordnung ändern:
+                        {(["POSITIV", "SPAETER", "NEUTRAL", "NEGATIV", "AUTO"] as const)
+                          .filter((x) => (x === "AUTO" ? !e.isAutoReply : e.isAutoReply || x !== e.sentiment))
+                          .map((x) => (
+                            <form key={x} action={setReplySentiment}>
+                              <input type="hidden" name="id" value={e.id} />
+                              <input type="hidden" name="sentiment" value={x} />
+                              <button className="btn-ghost px-2 py-0.5 text-xs">
+                                {x === "POSITIV" ? "positiv" : x === "NEGATIV" ? "negativ" : x === "AUTO" ? "automatische Antwort" : x === "SPAETER" ? "später (Follow-up)" : "neutral"}
+                              </button>
+                            </form>
+                          ))}
+                      </div>}
+                      {quoted && (
+                        <details className="mt-1">
+                          <summary className="cursor-pointer text-xs text-slate-400">Zitierten Verlauf anzeigen</summary>
+                          <p className="mt-1 whitespace-pre-wrap text-xs text-slate-500">{quoted}</p>
+                        </details>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            <details className="border-t border-slate-100">
+              <summary className="cursor-pointer px-4 py-2 text-sm text-slate-500">Antwort manuell einfügen</summary>
+              <form action={addReplyManually} className="space-y-2 px-4 pb-4">
+                <input type="hidden" name="contactId" value={c.id} />
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_150px]">
+                  <input name="subject" placeholder="Betreff" className="input" />
+                  <input name="date" type="date" defaultValue={todayKey()} className="input" />
+                </div>
+                <textarea name="text" rows={4} required placeholder="Antworttext hier einfügen" className="input" />
+                <button className="btn-ghost">Antwort speichern</button>
+              </form>
+            </details>
+          </Collapsible>
+          )}
+
+          <Collapsible id="verlauf" title={<>Verlauf <span className="font-normal text-slate-400">({c.activities.length})</span></>}>
+            <ol className="divide-y divide-slate-100">
+              {c.activities.map((a) => (
+                <li key={a.id} className="px-4 py-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="badge bg-slate-100 text-slate-700">{ACTIVITY_LABEL[a.type]}</span>
+                    {a.outcome && <span className="font-medium">{a.outcome}</span>}
+                    <span className="ml-auto text-xs text-slate-400">{fmtDateTime(a.occurredAt)}</span>
+                  </div>
+                  {a.note && <p className="mt-1 whitespace-pre-wrap text-slate-600">{a.note}</p>}
+                  <details className="mt-1">
+                    <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Bearbeiten</summary>
+                    <CloseDetailsForm key={`${a.outcome}-${a.note}-${a.occurredAt.getTime()}-${a.type}`} action={updateActivity} className="mt-2 grid grid-cols-1 gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[130px_1fr_140px_100px]">
+                      <input type="hidden" name="id" value={a.id} />
+                      <select name="type" defaultValue={a.type} className="input">
+                        {Object.entries(ACTIVITY_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                      </select>
+                      <input name="outcome" defaultValue={a.outcome ?? ""} placeholder="Ergebnis" className="input" />
+                      <input name="date" type="date" defaultValue={dayKey(a.occurredAt)} className="input" required />
+                      <input name="time" type="time" defaultValue={timeKey(a.occurredAt)} className="input" />
+                      <textarea name="note" rows={3} defaultValue={a.note ?? ""} placeholder="Notiz" className="input sm:col-span-4" />
+                      <div className="flex justify-between gap-2 sm:col-span-4">
+                        <button className="btn-primary">Speichern</button>
+                        <ConfirmButton formAction={deleteActivity} message="Diesen Verlaufseintrag wirklich löschen?" className="btn-ghost text-rose-600 hover:bg-rose-50">
+                          <Trash2 className="h-4 w-4" /> Eintrag löschen
+                        </ConfirmButton>
+                      </div>
+                    </CloseDetailsForm>
+                  </details>
+                </li>
+              ))}
+              {!c.activities.length && <li className="px-4 py-6 text-center text-sm text-slate-500">Noch keine Aktivitäten.</li>}
+            </ol>
+          </Collapsible>
+        </div>
+
+        <div className="space-y-5">
+          {onboarding ? (
+            <OnboardingCard
+              onboarding={onboarding}
+              items={onboardingChecklist(onboarding, obOffer)}
+              customerName={onboarding.customer.name}
+              loginEmail={onboarding.customer.users[0]?.email ?? null}
+              feedback={await prisma.customerFeedback.findMany({ where: { customerId: onboarding.customerId }, orderBy: { sentAt: "asc" } })}
+              websiteInfo={(onboarding.websiteInfo ?? null) as ImpressumInfo | null}
+            />
+          ) : acceptedOffer ? (
+            <StartOnboardingCard offerId={acceptedOffer.id} offerNumber={acceptedOffer.number} customers={freeCustomers} />
+          ) : null}
+
+
+          <div id="angebot">
+            <DealOffersCard
+              newOfferHref={`/admin/neu/vertrieb/kontakte/${c.id}/angebot`}
+              appUrl={appUrl}
+              offers={c.offers.map(toOfferRow)}
+                kontakt
+              mail={{ audience: audienceForContact(c), pdf: { vertreter: pdfs.has("vertreter"), makler: pdfs.has("makler"), ppl: pdfs.has("ppl") }, link: true, entscheidung: entscheidungsHinweis }}
+            />
+          </div>
+
+          <VerkaufsLinkKarte
+            contactId={c.id}
+            audience={praesFassung}
+            start={praesLink && appUrl ? { url: `${appUrl}/praesentation/${praesLink.token}`, bis: praesDatum(praesLink.bis) } : null}
+            aufrufe={praesAufrufe.map((d) => praesDatum(d, true))}
+          />
+
+          {c.meetings.length > 0 && (
+            <section className="card">
+              <h2 className="border-b border-slate-100 px-4 py-3 font-medium">Termine</h2>
+              <ul className="divide-y divide-slate-100">
+                {c.meetings.map((m) => {
+                  const past = m.startAt < new Date();
+                  return (
+                    <li key={m.id} className="px-4 py-3 text-sm">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`badge ${m.status === "GEPLANT" ? (past ? "bg-slate-100 text-slate-600" : "bg-indigo-100 text-indigo-800") : "bg-rose-50 text-rose-700"}`}>
+                          {m.status === "GEPLANT" ? (past ? "Vergangen" : "Geplant") : m.status === "VERSCHOBEN" ? "Verschoben" : "Abgesagt"}
+                        </span>
+                        <span className={`font-medium ${m.status !== "GEPLANT" ? "text-slate-400 line-through" : ""}`}>{fmtDateTime(m.startAt)}</span>
+                        <span className="text-slate-600">{m.title}</span>
+                        {m.status === "GEPLANT" && !past && m.bookingTypeId && m.manageToken ? (
+                          <span className="ml-auto">
+                            <AdminRescheduleButton action={adminRescheduleTerminAction} meetingId={m.id} title={`${m.title}, ${fmtDateTime(m.startAt)}`} startAt={m.startAt.toISOString()} />
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-slate-500">
+                        {m.inviteeName && <span>{m.inviteeName} ({m.inviteeEmail})</span>}
+                        {m.joinUrl ? <a href={m.joinUrl} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">Meeting-Link ↗</a> : m.location && <span>{m.location}</span>}
+                        {m.utmSource && <span>Quelle: {m.utmSource}</span>}
+                        {m.cancelReason && <span>Grund: {m.cancelReason}</span>}
+                        {m.waConfirmStatus ? <span data-wa-confirm={m.waConfirmStatus}>WhatsApp-Bestätigung: {waConfirmLabel(m.waConfirmStatus)}</span> : null}
+                      </div>
+                      {m.answers && <p className="mt-1 whitespace-pre-wrap text-xs text-slate-500">{m.answers}</p>}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
+          {activeFollowup || c.followups.length || c.stage === "SPAETER" || c.emails.some((e) => e.sentiment === "SPAETER") ? (
+            <FollowupCard contactId={c.id} followups={c.followups} plannable={!!threadMail} eaccount={followupMail?.eaccount ?? null} />
+          ) : null}
+
+          <section className="card">
+            <h2 className="border-b border-slate-100 px-4 py-3 font-medium">Aufgaben</h2>
+            {open.length > 0 && <ul className="divide-y divide-slate-100">{open.map((t) => <TaskRow key={t.id} t={t} showContact={false} />)}</ul>}
+            {!open.length ? <p className="px-4 py-4 text-sm text-slate-500">Keine offenen Aufgaben.</p> : null}
+            <details className="group border-t border-slate-100">
+              <summary className="cursor-pointer list-none px-4 py-2.5 text-sm font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">+ Neue Aufgabe</summary>
+              <div className="px-4 pb-4"><TaskForm contactId={c.id} compact /></div>
+            </details>
+            {done.length > 0 && (
+              <details className="border-t border-slate-100">
+                <summary className="cursor-pointer px-4 py-2 text-sm text-slate-500">Erledigt ({done.length})</summary>
+                <ul className="divide-y divide-slate-100">{done.map((t) => <TaskRow key={t.id} t={t} showContact={false} />)}</ul>
+              </details>
+            )}
+          </section>
+
+          {c.campaigns.length ? (
+            <Fold title="Cold Mails" summary={`${c.campaigns.length} Kampagne${c.campaigns.length === 1 ? "" : "n"} · ${c.campaigns.reduce((n, x) => n + x.replyCount, 0)} Antworten`}>
+              <ul className="space-y-2 text-sm">
+                {c.campaigns.map((cl) => (
+                  <li key={cl.id} className="rounded-lg bg-slate-50 p-3">
+                    <div className="font-medium">{cl.campaign.name}</div>
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
+                      <span>{cl.sentAt ? `Gesendet ${fmtDate(cl.sentAt)}` : "Noch nicht gesendet"}</span>
+                      {cl.status && <span>Status: {cl.status}</span>}
+                      <span>{cl.openCount}× geöffnet</span>
+                      <span className={cl.replyCount ? "font-medium text-emerald-700" : ""}>{cl.replyCount}× Antwort</span>
+                      {cl.clickCount > 0 && <span>{cl.clickCount}× Klick</span>}
+                      {cl.bounced && <span className="text-rose-600">Bounced</span>}
+                      {cl.unsubscribed && <span className="text-rose-600">Abgemeldet</span>}
+                      {cl.interest && <span>Interesse: {cl.interest}</span>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Fold>
+          ) : null}
+
+          <Fold title="LinkedIn" summary={c.linkedinStatus ? LI_LABEL[c.linkedinStatus] : "kein Status"}>
+            <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
+              {c.linkedinRequestAt && <span>Anfrage {fmtDate(c.linkedinRequestAt)}</span>}
+              {c.linkedinConnectedAt && <span>Vernetzt {fmtDate(c.linkedinConnectedAt)}</span>}
+              {c.linkedinMessageAt && <span>Nachricht {fmtDate(c.linkedinMessageAt)}</span>}
+              {c.linkedinReplyAt && <span className="font-medium text-emerald-700">Antwort {fmtDate(c.linkedinReplyAt)}</span>}
+              {c.linkedinList && <span>Liste: {c.linkedinList}</span>}
+              {c.linkedinTags && <span>Tags: {c.linkedinTags}</span>}
+              {!c.linkedinStatus && <span className="text-slate-400">Noch keine LinkedIn-Aktivität.</span>}
+            </div>
+            <form key={`${c.linkedinStatus}-${c.linkedinUrl}`} action={updateLinkedIn} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <input type="hidden" name="contactId" value={c.id} />
+              <input name="linkedinUrl" defaultValue={c.linkedinUrl ?? ""} placeholder="https://www.linkedin.com/in/…" className="input sm:col-span-2" />
+              <select name="linkedinStatus" defaultValue={c.linkedinStatus ?? ""} className="input">
+                <option value="">Kein Status</option>
+                {LI_STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+              <div className="flex gap-2">
+                <button className="btn-ghost flex-1">Speichern</button>
+                {c.linkedinUrl && <a href={c.linkedinUrl} target="_blank" rel="noreferrer" className="btn-ghost">Profil ↗</a>}
+              </div>
+            </form>
+          </Fold>
+
+          <Fold title="Kundendaten" summary={c.customerStage ? `${CUSTOMER_LABEL[c.customerStage]}${c.monthlyValue ? ` · ${c.monthlyValue} €/Monat` : ""}` : "noch kein Kunde"}>
+            <form key={`${c.customerStage}-${c.monthlyValue}-${c.products}-${c.customerSource}-${c.customerSourceNote}`} action={updateCustomer} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <input type="hidden" name="contactId" value={c.id} />
+              <div>
+                <label className="label">Kunden-Stufe</label>
+                <select name="customerStage" defaultValue={c.customerStage ?? ""} className="input">
+                  <option value="">Noch kein Kunde</option>
+                  {CUSTOMER_STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">Monatswert (€)</label>
+                <input name="monthlyValue" inputMode="numeric" defaultValue={c.monthlyValue ?? ""} placeholder="z.B. 1250" className="input" />
+              </div>
+              <div>
+                <label className="label">Produkte</label>
+                <input name="products" defaultValue={c.products ?? ""} placeholder="PKV, TKV, Leben" className="input" />
+              </div>
+              <div>
+                <label className="label">Vertragsstart</label>
+                <input name="contractStart" type="date" defaultValue={c.contractStart ? dayKey(c.contractStart) : ""} className="input" />
+              </div>
+              <div>
+                <label className="label">Gewonnen über{suggested && !c.customerSource ? " (Vorschlag)" : ""}</label>
+                <select name="customerSource" defaultValue={c.customerSource ?? suggested?.source ?? ""} className="input">
+                  <option value="">– bitte wählen –</option>
+                  {SOURCES.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">Details zur Herkunft</label>
+                <input name="customerSourceNote" defaultValue={c.customerSourceNote ?? suggested?.note ?? ""} placeholder="z.B. Empfehlung von Hr. Müller" className="input" />
+              </div>
+              <button className="btn-ghost sm:col-span-2">{c.customerStage ? "Speichern" : "Als Kunde speichern"}</button>
+            </form>
+            {c.customerSince && <p className="mt-2 text-xs text-slate-500">Aktiver Kunde seit {fmtDate(c.customerSince)}</p>}
+            <form action={linkContactCustomer} className="mt-3 flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3">
+              <input type="hidden" name="contactId" value={c.id} />
+              <label className="min-w-0 flex-1">
+                <span className="label">Kundenakte</span>
+                <select name="customerId" defaultValue={c.customerId ?? ""} className="input">
+                  <option value="">Nicht verknüpft</option>
+                  {linkable.map((k) => (
+                    <option key={k.id} value={k.id}>{k.name}</option>
+                  ))}
+                </select>
+              </label>
+              <button className="btn-ghost">{c.customerId ? "Verknüpfung ändern" : "Mit Kundenakte verknüpfen"}</button>
+            </form>
+          </Fold>
+
+          <Fold title="Stammdaten" summary={extrasSummary || undefined}>
+            <div className="text-sm">
+            <dl className="grid grid-cols-[110px_1fr] gap-y-1.5">
+              <dt className="text-slate-500">Name</dt><dd>{c.name}</dd>
+              <dt className="text-slate-500">E-Mail</dt><dd className="min-w-0"><ContactEmails contactId={c.id} email={c.email} altEmails={c.altEmails} sources={emailSources} /></dd>
+              <dt className="text-slate-500">Telefon</dt><dd className="min-w-0"><ContactPhones contactId={c.id} phone={c.phone} extras={extraPhones} /></dd>
+              <dt className="text-slate-500">Adresse</dt>
+              <dd className="min-w-0">
+                <span>{[c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ") || <span className="text-slate-400">keine Adresse</span>}</span>
+                <details className="mt-1">
+                  <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Adresse und Telefon bearbeiten</summary>
+                  <CloseDetailsForm key={`${c.street}-${c.zip}-${c.city}-${c.phone}`} action={updateContactAddress} className="mt-2 grid grid-cols-1 gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[1fr_90px_1fr]">
+                    <input type="hidden" name="contactId" value={c.id} />
+                    <input name="street" defaultValue={c.street ?? ""} placeholder="Straße und Hausnummer" className="input sm:col-span-3" />
+                    <input name="zip" defaultValue={c.zip ?? ""} placeholder="PLZ" inputMode="numeric" className="input" />
+                    <input name="city" defaultValue={c.city ?? ""} placeholder="Ort" className="input sm:col-span-2" />
+                    <input name="phone" defaultValue={c.phone ?? ""} placeholder="Telefon" className="input sm:col-span-3" />
+                    <div className="sm:col-span-3"><button className="btn-primary">Speichern</button></div>
+                  </CloseDetailsForm>
+                </details>
+              </dd>
+              {c.fax && (<><dt className="text-slate-500">Fax</dt><dd>{c.fax}</dd></>)}
+              {c.agencyType && (<><dt className="text-slate-500">Agenturtyp</dt><dd>{c.agencyType === "GENERAL" ? "Generalvertretung" : c.agencyType === "HAUPT" ? "Hauptvertretung" : c.agencyType}</dd></>)}
+              {c.insurer && (<><dt className="text-slate-500">Versicherer</dt><dd>{c.insurer}</dd></>)}
+              {c.leaderNames && (<><dt className="text-slate-500">Inhaber</dt><dd>{c.leaderNames}</dd></>)}
+              {c.teamSize != null && (<><dt className="text-slate-500">Teamgröße</dt><dd>{c.teamSize}</dd></>)}
+              {c.potentialScore != null && (<><dt className="text-slate-500">Potenzial-Score</dt><dd>{c.potentialScore}</dd></>)}
+              {(c.facebookUrl || c.instagramUrl || c.xingUrl || c.linkedinUrl) && (
+                <>
+                  <dt className="text-slate-500">Social</dt>
+                  <dd className="flex flex-wrap gap-2">
+                    {[["Facebook", c.facebookUrl], ["Instagram", c.instagramUrl], ["XING", c.xingUrl], ["LinkedIn", c.linkedinUrl]]
+                      .filter(([, u]) => u)
+                      .map(([l, u]) => <a key={l} href={u!} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">{l}</a>)}
+                  </dd>
+                </>
+              )}
+              {c.ratingValue != null && (
+                <>
+                  <dt className="text-slate-500">Bewertung</dt>
+                  <dd>
+                    <span className="text-amber-600">{"★".repeat(Math.round(c.ratingValue))}{"☆".repeat(Math.max(0, 5 - Math.round(c.ratingValue)))}</span>{" "}
+                    {c.ratingValue.toLocaleString("de-DE")} ({c.ratingCount ?? 0} Bewertungen)
+                    {c.googleMapsUrl && (
+                      <a href={c.googleMapsUrl} target="_blank" rel="noreferrer" className="ml-2 text-sky-700 hover:underline">Google Maps</a>
+                    )}
+                  </dd>
+                </>
+              )}
+              {c.ratingValue == null && c.googleMapsUrl && (<><dt className="text-slate-500">Google</dt><dd><a href={c.googleMapsUrl} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">Google Maps</a></dd></>)}
+              {c.openingHours && (
+                <>
+                  <dt className="text-slate-500">Öffnungszeiten</dt>
+                  <dd className="text-xs">
+                    <details>
+                      <summary className="cursor-pointer text-slate-600">{c.openingHours.split("\n")[0]}{c.openingHours.includes("\n") ? " …" : ""}</summary>
+                      <p className="mt-1 whitespace-pre-line text-slate-600">{c.openingHours}</p>
+                    </details>
+                  </dd>
+                </>
+              )}
+              {enrichedLine(c.enrichment) && (<><dt className="text-slate-500">Ergänzt</dt><dd className="text-xs text-slate-500">{enrichedLine(c.enrichment)}</dd></>)}
+              {c.legacyStatus && (<><dt className="text-slate-500">Alter Status</dt><dd className="text-xs">{c.legacyStatus}</dd></>)}
+            </dl>
+            </div>
+          </Fold>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** „Zuletzt ergänzt am … (Quelle)“ aus SalesContact.enrichment. */
+const enrichedLine = (raw: unknown) => enrichedLineOf(raw, fmtDate);

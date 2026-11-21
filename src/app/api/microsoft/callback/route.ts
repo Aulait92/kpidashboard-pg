@@ -24,7 +24,7 @@ export async function GET(req: Request): Promise<Response> {
 /** Zurück zu Pay-per-Lead › HvK-Abrechnungen mit Meldung (?postfach=… bzw. ?versand=…). */
 function zurueckZuHvk(req: Request, param: "postfach" | "versand", status: string): Response {
   // Start aus dem neuen Admin (Cookie): zurück nach Leads › Pay-per-Lead › HvK-Abrechnungen, sonst /admin/ppl
-  const dest = new URL(ruecksprungZiel("/admin/ppl", req.headers.get("cookie")), publicOrigin(req));
+  const dest = new URL(ruecksprungZiel("/admin/neu/leads/ppl", req.headers.get("cookie")), publicOrigin(req));
   dest.searchParams.set("ansicht", "hvk");
   dest.searchParams.set(param, status);
   const headers = new Headers({ Location: dest.toString() });

@@ -49,7 +49,7 @@ export async function NpsCard() {
                   {x.score}/10
                 </b>
                 <div className="min-w-0 flex-1">
-                  <a href={`/admin/kunden/${x.customer.id}`} className="font-medium hover:underline">
+                  <a href={`/admin/neu/kunden/${x.customer.id}`} className="font-medium hover:underline">
                     {x.customer.name}
                   </a>
                   <span className="text-[color:var(--muted)]"> · {kindLabel(x.kind)} · {formatDateTime(x.answeredAt!)}</span>

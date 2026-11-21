@@ -1,6 +1,7 @@
 // Kontingent oben auf der Bestand-Seite (Ole, 14.11.2026): Balken mit verbraucht, inklusive und
-// Zusatzpaketen (mit Ablaufdatum). Unter 10 % Rest: Hinweis „Noch X Nachrichten diesen Monat“ mit
-// „Paket dazubuchen“. Reine Anzeige; Buchen über PackBookButton (Client).
+// Zusatzpaketen (mit Ablaufdatum). Unter 10 % Rest: Hinweis „Noch X Nachrichten frei“ mit „Paket dazubuchen“.
+// Im Cockpit seit 19.11.2026 nur oben bei unter 20 % frei oder bei einer Pause wegen Kontingent (sonst unter „Mehr“).
+// Reine Anzeige; Buchen über PackBookButton (Client).
 
 import { AlertTriangle } from "lucide-react";
 import type { BestandQuota } from "@/lib/bestand/quota";
@@ -11,27 +12,45 @@ const fmtDate = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europ
 
 export type PackBooking = { packs: readonly PackOffer[]; months: number; individualFrom: number; readOnly: boolean; blocker: string | null };
 
-/** „Noch X Nachrichten diesen Monat“ mit Knopf (Bestand-Seite, Kampagnenstart, pausierte Kampagne). */
-export function QuotaLowNotice({ quota, booking, paused = false }: { quota: BestandQuota; booking: PackBooking; paused?: boolean }) {
+/**
+ * „Noch X Nachrichten diesen Monat“ mit Knopf (Bestand-Seite, Kampagnenstart, pausierte Kampagne). waiting = wartende
+ * WhatsApp-Nachrichten laufender Kampagnen: „Danach pausieren …“ nur bei echtem Engpass (mehr wartend als frei).
+ */
+export function QuotaLowNotice({
+  quota,
+  booking,
+  paused = false,
+  waiting,
+  variant = "primary",
+}: {
+  quota: BestandQuota;
+  booking: PackBooking;
+  paused?: boolean;
+  waiting?: number;
+  variant?: "primary" | "secondary";
+}) {
+  const engpass = waiting == null || waiting > quota.remaining;
   return (
     <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm sm:flex-row sm:items-center" data-quota-low>
       <AlertTriangle className="hidden h-4 w-4 shrink-0 text-amber-900 sm:block" />
       <div className="min-w-0 flex-1 text-amber-900">
-        <p className="font-semibold">Noch {de(quota.remaining)} Nachrichten diesen Monat</p>
+        <p className="font-semibold">Noch {de(quota.remaining)} Nachrichten frei diesen Monat</p>
         <p className="text-amber-800">
           {quota.remaining <= 0
             ? paused
-              ? "Laufende Kampagnen sind pausiert und laufen nach dem Dazubuchen sofort weiter, sonst zum Monatsanfang."
+              ? "Pausiert, bis Sie ein Paket buchen (läuft dann sofort weiter) oder bis zum Monatsanfang."
               : "Neue Kampagnen starten wieder mit einem Zusatzpaket oder zum Monatsanfang."
-            : "Danach pausieren laufende Kampagnen bis zum Monatsanfang oder bis Sie ein Paket dazubuchen."}
+            : engpass
+              ? "Danach pausieren laufende Kampagnen bis zum Monatsanfang oder bis Sie ein Paket dazubuchen."
+              : "Reicht für alle wartenden Nachrichten."}
         </p>
       </div>
-      <PackBookButton {...booking} />
+      <PackBookButton {...booking} variant={variant} />
     </div>
   );
 }
 
-export function QuotaBar({ quota, booking }: { quota: BestandQuota; booking: PackBooking }) {
+export function QuotaBar({ quota, booking, waiting, variant = "primary" }: { quota: BestandQuota; booking: PackBooking; waiting?: number; variant?: "primary" | "secondary" }) {
   const sent = quota.sentThisMonth;
   const total = Math.max(1, sent + quota.remaining);
   const pct = (n: number) => `${Math.max(0, Math.min(100, (n / total) * 100))}%`;
@@ -39,7 +58,7 @@ export function QuotaBar({ quota, booking }: { quota: BestandQuota; booking: Pac
   return (
     <section id="kontingent" className="mb-5 scroll-mt-20 space-y-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-4 shadow-[var(--shadow-sm)]" data-quota>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-[15px] font-semibold">Kampagnen-Nachrichten diesen Monat</h2>
+        <h2 className="text-[15px] font-semibold">Nachrichten frei diesen Monat</h2>
         <span className="text-sm tabular-nums text-[color:var(--muted)]">
           <b className="text-[color:var(--foreground)]">{de(quota.remaining)}</b> von {de(total)} frei
         </span>
@@ -71,7 +90,7 @@ export function QuotaBar({ quota, booking }: { quota: BestandQuota; booking: Pac
           </li>
         ))}
       </ul>
-      {quota.low ? <QuotaLowNotice quota={quota} booking={booking} paused={quota.remaining <= 0} /> : (
+      {quota.low ? <QuotaLowNotice quota={quota} booking={booking} paused={quota.remaining <= 0} waiting={waiting} variant={variant} /> : (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[color:var(--muted)]">
           <span>Mehr Nachrichten nötig? Zusatzpakete gelten {booking.months} Monate.</span>
           <PackBookButton {...booking} variant="secondary" />

@@ -33,7 +33,7 @@ export function ReferralSettingsForm({
         <span>
           <span className="font-medium">Empfehlungsprogramm aktiv</span>
           <span className="block text-sm text-[color:var(--muted)]">
-            Aus = keine Hinweise im Kundenbereich, die Landingpage nimmt keine Anfragen an. Zugesagte Prämien werden trotzdem gebucht.
+            Aus: kein Hinweis im Kundenbereich, keine neuen Anfragen. Zugesagte Prämien bleiben.
           </span>
         </span>
       </label>
@@ -42,8 +42,7 @@ export function ReferralSettingsForm({
         <span>
           <span className="font-medium">Kunden aktiv auf das Empfehlen hinweisen</span>
           <span className="block text-sm text-[color:var(--muted)]">
-            Hinweis in „Heute“ nach dem 5. bzw. 10. Abschluss und Link nach gutem Feedback. Standard aus: „Kollegen empfehlen“ bleibt im Profilmenü und
-            unter Konto &amp; Rechnungen erreichbar, wird aber nicht beworben.
+            Hinweis auf „Heute“ nach dem 5. und 10. Abschluss und nach gutem Feedback.
           </span>
         </span>
       </label>
@@ -53,8 +52,8 @@ export function ReferralSettingsForm({
         <label className="flex items-start gap-2 text-[15px]">
           <input type="radio" name="rewardKind" value="fixed" checked={rewardKind === "fixed"} onChange={() => setRewardKind("fixed")} className="mt-1" />
           <span>
-            Fester Betrag je Empfehlung (netto, Standard {DEFAULT_REWARD_FIXED} €)
-            <span className="block text-sm text-[color:var(--muted)]">Gutschrift auf die nächste Rechnung, Rest mit den folgenden verrechnet. Jede Empfehlung zählt, ohne Obergrenze.</span>
+            Fester Betrag je Empfehlung (netto)
+            <span className="block text-sm text-[color:var(--muted)]">Gutschrift auf die nächsten Rechnungen, ohne Obergrenze.</span>
           </span>
         </label>
         {rewardKind === "fixed" ? (
@@ -86,12 +85,11 @@ export function ReferralSettingsForm({
           <input type="radio" name="rewardKind" value="month" checked={rewardKind === "month"} onChange={() => setRewardKind("month")} className="mt-1" />
           <span>
             1 Monat Betreuung gratis
-            <span className="block text-sm text-[color:var(--muted)]">Gutschrift in Höhe seines aktuellen Monatspreises (netto, ohne Zusätze)</span>
+            <span className="block text-sm text-[color:var(--muted)]">Gutschrift in Höhe seines Monatspreises (netto).</span>
           </span>
         </label>
         <p className="text-sm text-[color:var(--muted)]">
-          Gebucht wird automatisch als Gutschrift in Stripe, sobald der Neukunde angenommen und die erste Zahlung geleistet hat. Ohne Stripe-Konto entsteht
-          die Aufgabe „Prämie manuell gutschreiben“.
+          Die Gutschrift bucht sich nach der ersten Zahlung des Neukunden selbst (ohne Stripe: Aufgabe für Sie).
         </p>
       </fieldset>
 
@@ -99,9 +97,9 @@ export function ReferralSettingsForm({
         <legend className="text-base mb-1 font-semibold">Vorteil für den Neukunden</legend>
         {[
           { v: "none", l: "Kein Vorteil" },
-          { v: "setup_free", l: "Einrichtung gratis (wird im Angebot vorbelegt)" },
-          { v: "setup_discount", l: "Rabatt auf die Einrichtung (Betrag netto, wird im Angebot automatisch abgezogen)" },
-          { v: "custom", l: "Eigener Vorteil (Text, wird nicht gerechnet)" },
+          { v: "setup_free", l: "Einrichtung gratis" },
+          { v: "setup_discount", l: "Rabatt auf die Einrichtung (netto)" },
+          { v: "custom", l: "Eigener Vorteil (nur Text)" },
         ].map((o) => (
           <label key={o.v} className="flex items-center gap-2 text-[15px]">
             <input type="radio" name="benefitKind" value={o.v} checked={benefitKind === o.v} onChange={() => setBenefitKind(o.v)} />
@@ -119,22 +117,17 @@ export function ReferralSettingsForm({
               aria-label="Rabatt auf die Einrichtung in Euro netto"
             />
             <p className="text-sm text-[color:var(--muted)]">
-              Gilt für jede Laufzeit (bei 300 €: 2.490 € → 2.190 €, 990 € → 690 €), nie unter 0. Ist im Angebot „Setup abweichend“ günstiger, gilt dieser Betrag. Im Angebot
-              lässt sich der Rabatt übersteuern. Kein Rabatt bei Selbstempfehlung, bestehenden Kunden, Kontakten mit früherem Angebot und nach 12 Monaten.
+              Wird im Angebot automatisch abgezogen und lässt sich dort ändern. Nicht bei Selbstempfehlung, Bestandskunden, früheren Angeboten oder nach 12 Monaten.
             </p>
           </div>
         ) : null}
         {benefitKind === "custom" ? (
           <input name="benefitText" defaultValue={initial.benefitText ?? ""} maxLength={300} placeholder="z. B. 200 € Rabatt auf die Einrichtung" className={input} />
         ) : null}
-        <p className="text-sm text-[color:var(--muted)]">
-          Steht auf der Landingpage, in der Bestätigungsmail, unter „Kollegen empfehlen“ im Kundenbereich und als Hinweis beim Angebot für den empfohlenen
-          Kontakt.
-        </p>
       </fieldset>
 
       <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm" data-einstellung-satz>
-        So steht es (gespeicherter Stand) im Kundenbereich: „{referralIncentiveSentence(initial)}“
+        So lesen es Kunden und Empfohlene: „{referralIncentiveSentence(initial)}“
       </p>
 
       {state.error ? <p className="text-sm font-medium text-rose-700">{state.error}</p> : null}

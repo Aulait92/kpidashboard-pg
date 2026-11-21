@@ -64,6 +64,7 @@ vi.mock("@/lib/push", () => ({ sendToAdmins: vi.fn(async () => ({ sent: 0, remov
 import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { acceptOffer, createOffer } from "@/lib/offers";
+import { zugesagterBonus } from "./zugesagter-bonus";
 import { createCheckoutForOffer, createScheduleForOffer } from "@/lib/billing";
 import { richteUeberweisungEin } from "@/lib/ueberweisung";
 import { abrechnungsplan, anteilCent } from "@/lib/abrechnungstag";
@@ -94,22 +95,21 @@ async function angebot(extra: Partial<Parameters<typeof createOffer>[1]> = {}) {
   const tag = uid();
   const contact = await prisma.salesContact.create({ data: { name: `Jahreswahl ${tag}`, email: `jw-${tag}@example.test` } });
   contacts.push(contact.id);
-  return createOffer(
-    { salesContactId: contact.id },
-    {
-      contactName: "Jana Jahr",
-      company: `Agentur ${tag}`,
-      email: `jana-${tag}@example.test`,
-      term: "12m",
-      products: [{ name: "TKV-Katze", dailyBudget: 30 }],
-      seats: 5,
-      startDate: zukunftErster(),
-      annual: true,
-      abschlussBonus: 0,
-      ...extra,
-    },
-    null,
-  );
+  const input = {
+    contactName: "Jana Jahr",
+    company: `Agentur ${tag}`,
+    email: `jana-${tag}@example.test`,
+    term: "12m",
+    products: [{ name: "TKV-Katze", dailyBudget: 30 }],
+    seats: 5,
+    startDate: zukunftErster(),
+    annual: true,
+    abschlussBonus: 0,
+    ...extra,
+  } as Parameters<typeof createOffer>[1];
+  const offer = await createOffer({ salesContactId: contact.id }, input, null);
+  // Abschlussbonus seit 21.11.2026 nur noch als Altfall (schon zugesagt): nach dem Anlegen setzen
+  return Number(input.abschlussBonus ?? 0) > 0 ? zugesagterBonus(offer.id, Number(input.abschlussBonus), input.abschlussBonusBis ?? null) : offer;
 }
 
 const accept = (token: string, extra: { term?: string; annual?: boolean | null } = {}) =>

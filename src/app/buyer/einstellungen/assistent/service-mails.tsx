@@ -64,6 +64,7 @@ function Erklaerschritt(p: Parameters<typeof ServiceMails>[0]) {
   const [anrede, setAnrede] = useState<string>(p.vorschlaege?.anrede ?? "");
   // Angaben, die weiter oben (Erstinformation) erst später gespeichert werden, in leere Felder übernehmen (Ole, 20.11.2026)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- nur leere Felder nachfüllen, wenn neue Angaben vom Server kommen
     setAngaben((cur) => {
       const next = { ...cur };
       for (const k of Object.keys(p.angaben) as (keyof SignaturAngaben)[]) if (!cur[k]?.trim() && p.angaben[k]?.trim()) next[k] = p.angaben[k];

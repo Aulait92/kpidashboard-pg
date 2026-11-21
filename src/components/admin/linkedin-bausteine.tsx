@@ -50,10 +50,11 @@ export async function ladeLinkedIn() {
   const avg30 = last30.length ? Math.round(last30.reduce((s, p) => s + scoreOf(p, share)!, 0) / last30.length) : null;
   const photoOptions = photos.map((f) => ({ id: f.id, description: f.description }));
   const steps = [
-    { done: connected, text: "LinkedIn verbinden" },
-    { done: !!settings.about.trim(), text: "„Über mich“ ausfüllen (Einstellungen unten)" },
-    { done: photos.length > 0, text: "Fotos hochladen (eigene oder Screenshots; sonst nimmt die KI Grafiken)" },
-    { done: !!settings.lastImportAt || (!!conn && hasAnalyticsScope(conn.scopes)), text: "Statistik hochladen (zeigt der KI, was ankommt)" },
+    // anker: Abschnitt der Seite, der den Schritt erledigt (aufklappen und hinspringen)
+    { done: connected, text: "LinkedIn verbinden", anker: "verbindung" },
+    { done: !!settings.about.trim(), text: "„Über mich“ ausfüllen", hinweis: "nötig für die Entwürfe", anker: "einstellungen" },
+    { done: photos.length > 0, text: "Fotos hochladen", hinweis: "sonst nimmt die KI Grafiken", anker: "fotos" },
+    { done: !!settings.lastImportAt || (!!conn && hasAnalyticsScope(conn.scopes)), text: "Statistik hochladen", hinweis: "zeigt der KI, was ankommt", anker: "statistik" },
   ];
   return { now, settings, conn, drafts, planned, results, photos, connected, share, scored, best, last30, avg30, photoOptions, steps };
 }
@@ -90,7 +91,14 @@ export function LinkedInEinrichten({ d }: { d: LinkedInDaten }) {
         {d.steps.map((s) => (
           <li key={s.text} className="flex items-start gap-2">
             {s.done ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> : <Circle className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />}
-            <span className={s.done ? "text-[color:var(--muted)] line-through" : undefined}>{s.text}</span>
+            {s.done ? (
+              <span className="text-[color:var(--muted)] line-through">{s.text}</span>
+            ) : (
+              <a href={`#${s.anker}`} className="font-medium text-[color:var(--brand)] hover:underline">
+                {s.text}
+                {s.hinweis ? <span className="font-normal text-[color:var(--muted)]"> ({s.hinweis})</span> : null}
+              </a>
+            )}
           </li>
         ))}
       </ol>

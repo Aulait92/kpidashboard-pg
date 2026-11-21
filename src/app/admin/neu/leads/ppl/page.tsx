@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertTriangle, ChevronRight, CloudDownload, PackageOpen, Plus } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, FileText, Inbox, MessageSquare, PackageOpen, Plus } from "lucide-react";
 import { Badge, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { Ansichten, Meldung } from "@/components/admin-neu/leads/ansichten";
+import { ladeProduktNamen, type ProduktName } from "@/components/admin-neu/leads/produkt-namen";
 import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
 import { Kennzahlen } from "@/components/admin-neu/ui/kennzahlen";
 import { punkteDerRolle } from "@/lib/admin-neu/rollen-server";
@@ -12,40 +13,33 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
 import { prisma } from "@/lib/prisma";
 import { quotaFor } from "@/lib/ppl/engine";
-import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { parkDeadline } from "@/lib/ppl/parken";
 import { loadCustomerOverview, loadPplReport, type Granularity } from "@/lib/ppl/auswertung";
-import { airtableSyncOff } from "@/lib/airtable-switch";
 import { nowMs } from "@/lib/now";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "@/app/admin/ppl/actions";
-import { ImportButton } from "@/app/admin/ppl/import/import-button";
 import { SlackTest } from "@/app/admin/ppl/slack-test";
 import { HvkAbrechnungen, HvkReklamationenReview } from "@/app/admin/ppl/hvk-abrechnungen";
 import { PplVersandPostfach } from "@/app/admin/ppl/ppl-versand";
 import { HvkReabgleich } from "@/app/admin/ppl/hvk-client";
-import { AirtableNachholen } from "@/app/admin/ppl/nachholen";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
 import { KEINE_ANGABE } from "@/lib/platzhalter";
 
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 
-// Leads & Kampagnen → Pay-per-Lead. Früher 8 Ansichten unter /admin/ppl, jetzt 3:
-//   Bezüge (Start): Kennzahlen, zu Erledigendes (Storno prüfen, Geparkt) und die Bezüge je Produkt
-//   Auswertung: Übersicht je Kunde und Auswertung mit Zeitraum/Produkt untereinander
-//   Eingang: alle Pool-Leads mit Ergebnis
-//   HvK-Abrechnungen: Gutschriften je Woche (gleicher Baustein wie /admin/ppl?ansicht=hvk); offene
-//   HvK-Reklamationen stehen auf dem Start bei „Storno prüfen“; darin oben die Zeile „Versand an Pivacom“
-//   (Microsoft-365-Versand-Postfach, ppl-versand.tsx)
-// Gelieferte Leads (Suche, Storno von Hand) → Alle Leads › „Pay-per-Lead geliefert“; Media Buyer → Werbekonten.
-// Alte Adressen (?ansicht=storno|geparkt|uebersicht|geliefert, Push-Ziele) werden verstanden.
-// „Aus Airtable übernehmen“ ist selten: Ansicht ?ansicht=import ohne eigenen Schalter.
-// „Lead aus Airtable nachholen“ (alter Admin: unter Geparkt) steht oben im Eingang: Dort landet der Lead mit Ergebnis,
-// und der Eingang ist immer erreichbar (die Karte Geparkt nur, wenn etwas geparkt ist).
+// Liefern → Pay-per-Lead (UX-Umbau 20.11.2026, Ziel SUS 90+). Zwei Ansichten statt vier:
+//   Bezüge (Start): zu Erledigendes (Storno prüfen, Geparkt, Reklamationen ohne Lead), Kennzahlen, Bezüge je Produkt
+//   Auswertung: Übersicht je Kunde, Auswertung mit Zeitraum/Produkt, darunter „Mehr“ mit Eingang, Abrechnungen
+//   Heinrich von Kleist und dem Slack-Test. Eingang (?ansicht=eingang) und Abrechnungen (?ansicht=hvk) sind
+//   Unteransichten der Auswertung (Push-Ziele bleiben gültig).
+// Gelieferte Leads (Suche, Storno von Hand) → Leads › „Pay-per-Lead“; Tagesbudgets der Pools → Werbekonten.
+// Airtable ist aus der Oberfläche genommen (Kennzeichen, „Aus Airtable übernehmen“, „Lead aus Airtable nachholen“):
+// der Abgleich im Hintergrund (lib/sync.ts) läuft weiter, bis AIRTABLE_SYNC_OFF gesetzt ist. Alte Adressen
+// (?ansicht=geliefert|storno|geparkt|uebersicht|import) werden verstanden.
 
 const PFAD = "/admin/neu/leads/ppl";
+const SCHRITT = 25;
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const dt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
-const DELIVERY: Record<string, string> = { app: "Kundenbereich", app_pdf: "Kundenbereich + PDF per Mail", email: "E-Mail", webhook: "Webhook" };
 const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   delivered: { label: "ausgeliefert", tone: "success" },
   parked: { label: "geparkt", tone: "warning" },
@@ -54,17 +48,17 @@ const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" |
   expired: { label: "verworfen (> 48 h geparkt)", tone: "neutral" },
 };
 
-type Suche = { ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; gespeichert?: string; postfach?: string; versand?: string };
+type Suche = { ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; gespeichert?: string; postfach?: string; versand?: string; anzahl?: string };
 
 export default async function Page({ searchParams }: { searchParams: Promise<Suche> }) {
   const sp = await searchParams;
-  // Alte Ansichten: Gelieferte Leads liegen jetzt in Alle Leads
+  // Alte Ansichten: Gelieferte Leads liegen jetzt in Leads, der Airtable-Import ist entfallen
   if (sp.ansicht === "geliefert") {
     const qs = new URLSearchParams({ art: "ppl", ...(sp.q ? { q: sp.q } : {}), ...(sp.bezug ? { bezug: sp.bezug } : {}) });
     redirect(`/admin/neu/leads/alle?${qs.toString()}`);
   }
-  const ansicht = sp.ansicht === "uebersicht" ? "auswertung" : ["auswertung", "eingang", "hvk", "import"].includes(sp.ansicht ?? "") ? sp.ansicht! : "";
-  const syncAus = airtableSyncOff();
+  if (sp.ansicht === "import") redirect(PFAD);
+  const ansicht = sp.ansicht === "uebersicht" ? "auswertung" : ["auswertung", "eingang", "hvk"].includes(sp.ansicht ?? "") ? sp.ansicht! : "";
 
   return (
     <Seite
@@ -81,56 +75,65 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
     >
       <div data-funktion="orders--push-an-admins-mit-sprungziel-pay-per-lead">
         <Ansichten
-          aktiv={ansicht === "import" ? "" : ansicht}
+          aktiv={ansicht ? "auswertung" : ""}
           items={[
             { key: "", label: "Bezüge", href: PFAD },
             { key: "auswertung", label: "Auswertung", href: `${PFAD}?ansicht=auswertung` },
-            { key: "eingang", label: "Eingang", href: `${PFAD}?ansicht=eingang`, funktion: "page-eingang--eingang-aller-ppl-leads-ausgeliefert-geparkt" },
-            { key: "hvk", label: "HvK-Abrechnungen", href: `${PFAD}?ansicht=hvk`, funktion: "hvk-abrechnungen-hvkabrechnungen--hvk-abrechnungen-gutschrift-pdf-je-woche" },
           ]}
         />
         {sp.gespeichert ? <Meldung ok="Bezug gespeichert." /> : null}
         {ansicht === "auswertung" ? (
-          <div className="space-y-4">
-            <div data-funktion="ppl-auswertung--uebersicht-je-kunde-woche-monat-liegt-zurueck">
-              <PplOverview rows={await loadCustomerOverview()} />
-            </div>
-            <div data-funktion="ppl-auswertung--auswertung-mit-zeitraum-und-produktfilter">
-              <PplReportView report={await loadPplReport((["tag", "woche", "monat"].includes(sp.zeitraum ?? "") ? sp.zeitraum : "tag") as Granularity, sp.produkt ?? null)} />
-            </div>
-          </div>
+          <Auswertung sp={sp} />
         ) : ansicht === "eingang" ? (
-          <Eingang />
+          <Unter titel="Eingang">
+            <Eingang anzahl={Math.max(SCHRITT, Number(sp.anzahl) || SCHRITT)} />
+          </Unter>
         ) : ansicht === "hvk" ? (
-          <HvkAbrechnungen
-            postfach={sp.postfach}
-            versand={
-              <div data-funktion="ppl-versand-pplversandpostfach--versand-postfach-fuer-pivacom-verbinden">
-                <PplVersandPostfach meldung={sp.versand} />
-              </div>
-            }
-            abgleich={
-              <div data-funktion="hvk-client-hvkreabgleich--hvk-abrechnungen-neu-abgleichen-vorschau-je">
-                <HvkReabgleich />
-              </div>
-            }
-          />
-        ) : ansicht === "import" ? (
-          <Import />
+          <Unter titel="Abrechnungen Heinrich von Kleist">
+            <div data-funktion="hvk-abrechnungen-hvkabrechnungen--hvk-abrechnungen-gutschrift-pdf-je-woche">
+              <HvkAbrechnungen
+                postfach={sp.postfach}
+                versand={
+                  <div data-funktion="ppl-versand-pplversandpostfach--versand-postfach-fuer-pivacom-verbinden">
+                    <PplVersandPostfach meldung={sp.versand} />
+                  </div>
+                }
+                abgleich={
+                  <div data-funktion="hvk-client-hvkreabgleich--hvk-abrechnungen-neu-abgleichen-vorschau-je">
+                    <HvkReabgleich />
+                  </div>
+                }
+              />
+            </div>
+          </Unter>
         ) : (
-          <Start syncAus={syncAus} />
+          <Start />
         )}
       </div>
     </Seite>
   );
 }
 
+/** Unteransicht der Auswertung: Rückweg in einer Zeile, dann der Inhalt. */
+function Unter({ titel, children }: { titel: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <Link href={`${PFAD}?ansicht=auswertung`} className="-ml-1 inline-flex min-h-10 items-center gap-1 text-sm text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
+        <ChevronLeft className="h-4 w-4" />
+        Auswertung
+      </Link>
+      <h2 className="sr-only">{titel}</h2>
+      {children}
+    </div>
+  );
+}
+
 type Subs = Awaited<ReturnType<typeof prisma.leadSubscription.findMany<{ include: { customer: { select: { name: true } } } }>>>;
 
-async function Start({ syncAus }: { syncAus: boolean }) {
+async function Start() {
   const session = await requireAuth();
   const seit = new Date(nowMs() - 7 * 86_400_000);
-  const [punkte, eingangJeStatus, subs, parked, review, eingang7, geliefert7, hvkOffen] = await Promise.all([
+  const [punkte, eingangJeStatus, subs, parked, review, hvkOffen] = await Promise.all([
     punkteDerRolle(session.userId, "liefern"),
     prisma.poolLead.groupBy({ by: ["status"], where: { createdAt: { gte: seit } }, _count: { _all: true } }),
     prisma.leadSubscription.findMany({ include: { customer: { select: { name: true } } }, orderBy: [{ productKey: "asc" }, { active: "desc" }, { createdAt: "asc" }] }),
@@ -140,32 +143,31 @@ async function Start({ syncAus }: { syncAus: boolean }) {
       orderBy: { stornoRequestedAt: "asc" },
       select: { id: true, name: true, source: true, deliveredAt: true, stornoReason: true, stornoNote: true, customer: { select: { name: true } }, revenues: { select: { amount: true }, take: 1 } },
     }),
-    prisma.poolLead.count({ where: { createdAt: { gte: seit } } }),
-    prisma.poolLead.count({ where: { createdAt: { gte: seit }, status: "delivered" } }),
-    // Reklamationen aus der HvK-Abrechnung ohne eindeutigen Lead (wie /admin/ppl → Storno prüfen)
+    // Reklamationen aus der Abrechnung von Heinrich von Kleist ohne eindeutigen Lead
     prisma.hvkReklamation.count({ where: { status: "offen" } }),
   ]);
+  const name = await ladeProduktNamen([...subs.map((s) => s.productKey), ...parked.map((p) => p.productKey)]);
+  const eingang7 = eingangJeStatus.reduce((a, g) => a + g._count._all, 0);
+  const geliefert7 = eingangJeStatus.find((g) => g.status === "delivered")?._count._all ?? 0;
+  // Geparkt und Storno stehen als Karten mit Knöpfen darunter (keine doppelten Kacheln), oben nur, was diese Seite nicht zeigt
+  const oben = punkte?.filter((p) => p.key !== "parked" && !p.key.startsWith("storno")) ?? [];
   return (
     <div className="space-y-4">
-      {/* Seitenmuster Admin v2 (A2): oben, was die Rolle Liefern braucht; Kennzahlen mit Aufschlüsselung im Fenster */}
-      {/* Geparkt und Storno stehen unten als Karten mit Knöpfen, oben nur, was diese Seite nicht zeigt */}
-      <Aufmerksamkeit punkte={punkte?.filter((p) => p.key !== "parked" && !p.key.startsWith("storno")) ?? null} />
+      {oben.length ? <Aufmerksamkeit punkte={oben} /> : null}
       <Kennzahlen
         werte={[
           {
             label: "Eingang 7 Tage",
             wert: String(eingang7),
             details: {
-              text: "Pool-Leads der letzten 7 Tage nach Ergebnis.",
-              zeilen: eingangJeStatus
+              text: "Pay-per-Lead-Leads der letzten 7 Tage nach Ergebnis.",
+              zeilen: [...eingangJeStatus]
                 .sort((a, b) => b._count._all - a._count._all)
                 .map((g) => ({ label: POOL_STATUS[g.status]?.label ?? g.status, wert: String(g._count._all) })),
               link: { href: `${PFAD}?ansicht=eingang`, label: "Eingang ansehen" },
             },
           },
           { label: "Ausgeliefert 7 Tage", wert: String(geliefert7), hinweis: eingang7 ? `${Math.round((geliefert7 / eingang7) * 100)} % vom Eingang` : undefined },
-          { label: "Geparkt", wert: String(parked.length), ton: parked.length > 0 ? "schlecht" : undefined, href: "#geparkt" },
-          { label: "Storno in Prüfung", wert: String(review.length + hvkOffen), ton: review.length + hvkOffen > 0 ? "schlecht" : undefined, href: "#storno" },
         ]}
       />
       {hvkOffen ? (
@@ -176,45 +178,30 @@ async function Start({ syncAus }: { syncAus: boolean }) {
       {review.length || parked.length ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {review.length ? <StornoPruefen leads={review} /> : null}
-          {parked.length ? <Geparkt parked={parked} subs={subs} /> : null}
+          {parked.length ? <Geparkt parked={parked} subs={subs} name={name} /> : null}
         </div>
       ) : null}
-      <Bezuege subs={subs} syncAus={syncAus} />
+      <Bezuege subs={subs} name={name} />
     </div>
   );
 }
 
-async function Bezuege({ subs, syncAus }: { subs: Subs; syncAus: boolean }) {
-  const { start } = weekRange();
+async function Bezuege({ subs, name }: { subs: Subs; name: ProduktName }) {
   const rows = await Promise.all(subs.map(async (s) => ({ s, q: s.active ? await quotaFor(s) : null })));
   const products = [...new Set(subs.map((s) => s.productKey))];
-  const fuss = (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[color:var(--border)] px-4 py-2.5 text-xs text-[color:var(--muted)] sm:px-5">
-      <span data-funktion="page-airtable-sync-off--anzeige-airtable-abgleich-an-aus">
-        {syncAus ? <Badge tone="warning">Airtable-Abgleich aus</Badge> : <Badge>Airtable-Abgleich an</Badge>}
-      </span>
-      <span data-funktion="slack-test-slacktest--slack-testen-testnachricht-an-den-ppl-kanal">
-        <SlackTest configured={!!slackWebhookUrl()} />
-      </span>
-      <Link href={`${PFAD}?ansicht=import`} className="inline-flex min-h-10 items-center gap-1 font-medium text-[color:var(--brand)] hover:underline sm:min-h-0" data-funktion="actions-runimportaction--bezuege-aus-airtable-uebernehmen">
-        <CloudDownload className="h-3.5 w-3.5" /> Aus Airtable übernehmen
-      </Link>
-    </div>
-  );
   if (!subs.length) {
     return (
       <Card>
         <EmptyState
           icon={PackageOpen}
           title="Noch keine Bezüge."
-          text="Einen Bezug anlegen oder aus Airtable übernehmen."
+          text="Ein Bezug ist das Lead-Abo eines Käufers: Produkt, Menge und Preis je Lead."
           action={
             <ButtonLink href={`${PFAD}/bezug/neu`} variant="primary" icon={Plus}>
-              Bezug anlegen
+              Ersten Bezug anlegen
             </ButtonLink>
           }
         />
-        {fuss}
       </Card>
     );
   }
@@ -224,42 +211,37 @@ async function Bezuege({ subs, syncAus }: { subs: Subs; syncAus: boolean }) {
         <CardHeader title="Bezüge" count={subs.filter((s) => s.active).length} />
         {products.map((p) => (
           <div key={p}>
-            <div className="bg-[color:var(--surface-sunken)] px-4 py-1.5 text-xs font-semibold text-[color:var(--muted)] sm:px-5">{p}</div>
+            <div className="bg-[color:var(--surface-sunken)] px-4 py-1.5 text-xs font-semibold text-[color:var(--muted)] sm:px-5">{name(p)}</div>
             <ul className="divide-y divide-[color:var(--border)]">
               {rows
                 .filter((r) => r.s.productKey === p)
                 .map(({ s, q }) => {
-                  const filters = [
-                    s.plzRanges ? "PLZ" : null,
-                    !s.acceptWeak ? `keine schwachen${s.weakThreshold ? ` (<${s.weakThreshold} €)` : ""}` : null,
-                    s.onlyWeak ? "nur schwache" : null,
-                    !s.acceptCivilServants ? "keine Beamten" : null,
-                    s.insurerInclude.length ? `nur ${s.insurerInclude.length} Ges.` : null,
-                    s.insurerExclude.length ? `ohne ${s.insurerExclude.length} Ges.` : null,
-                    s.scoreFloor ? `Score ≥ ${s.scoreFloor}` : null,
-                  ].filter(Boolean);
+                  // Zeile 2 höchstens zwei Angaben: Preis und Menge. Filter und Lieferweg stehen im Bezug.
                   const menge =
                     s.period === "week"
                       ? q
-                        ? `${q.quota} / Woche ${fmtWeek(start)}`
-                        : `nichts bezahlt für ${fmtWeek(start)}`
-                      : `${s.goal ?? s.testQuantity ?? KEINE_ANGABE} ${s.period === "month" ? "/ Monat" : "einmalig"}`;
+                        ? `${q.quota} diese Woche`
+                        : "diese Woche nichts bestellt"
+                      : `${s.goal ?? s.testQuantity ?? KEINE_ANGABE} ${s.period === "month" ? "je Monat" : "einmalig"}`;
+                  const status = !s.active ? <Badge>pausiert</Badge> : s.status === "test" ? <Badge tone="warning">Test</Badge> : null;
                   return (
                     <li key={s.id}>
-                      <Link href={`${PFAD}/bezug/${s.id}`} className={`flex items-center gap-3 px-4 py-3 text-sm hover:bg-[color:var(--surface-sunken)] sm:px-5 ${s.active ? "" : "opacity-60"}`}>
+                      <Link href={`${PFAD}/bezug/${s.id}`} className={`flex min-h-14 items-center gap-3 px-4 py-3 text-sm hover:bg-[color:var(--surface-sunken)] sm:px-5 ${s.active ? "" : "opacity-60"}`}>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">{s.customer.name}</span>
-                            {s.label ? <span className="text-xs text-[color:var(--muted)]">{s.label}</span> : null}
-                            {s.status === "test" ? <Badge tone="warning">Test {s.testQuantity ?? ""}</Badge> : null}
-                            {!s.active ? <Badge>pausiert</Badge> : null}
+                            {status}
                           </div>
-                          <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-                            {menge} · {eur(Number(s.price))} · {DELIVERY[s.delivery] ?? s.delivery}
-                            {filters.length ? ` · ${filters.join(" · ")}` : ""}
+                          <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">
+                            {eur(Number(s.price))} je Lead · {menge}
                           </div>
                         </div>
-                        <span className="shrink-0 text-sm tabular-nums">{q ? `${q.delivered} / ${q.quota}` : ""}</span>
+                        {q ? (
+                          <span className="shrink-0 text-right text-sm tabular-nums">
+                            {q.delivered} / {q.quota}
+                            <span className="block text-xs text-[color:var(--muted)]">geliefert</span>
+                          </span>
+                        ) : null}
                         <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
                       </Link>
                     </li>
@@ -269,7 +251,6 @@ async function Bezuege({ subs, syncAus }: { subs: Subs; syncAus: boolean }) {
           </div>
         ))}
       </div>
-      {fuss}
     </Card>
   );
 }
@@ -291,8 +272,8 @@ function StornoPruefen({
                   {l.name ?? "Lead"} · {l.stornoReason}
                 </div>
                 <div className="text-xs text-[color:var(--muted)]">
-                  {l.customer.name} · {l.source}
-                  {l.stornoNote ? ` · „${l.stornoNote}“` : ""} · geliefert {l.deliveredAt ? dt(l.deliveredAt) : KEINE_ANGABE} · {eur(Number(l.revenues[0]?.amount ?? 0))}
+                  {l.customer.name} · geliefert {l.deliveredAt ? dt(l.deliveredAt) : KEINE_ANGABE} · {eur(Number(l.revenues[0]?.amount ?? 0))}
+                  {l.stornoNote ? <span className="block">„{l.stornoNote}“</span> : null}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -304,7 +285,7 @@ function StornoPruefen({
                       pendingLabel="…"
                       className={`h-10 rounded-[var(--radius-sm)] px-3 text-[13px] font-semibold sm:h-8 sm:text-xs ${d === "approve" ? "bg-[color:var(--brand)] text-white" : "border border-[color:var(--border)] bg-white"}`}
                     >
-                      {d === "approve" ? "Gutschreiben" : d === "half" ? "50:50" : "Ablehnen"}
+                      {d === "approve" ? "Gutschreiben" : d === "half" ? "Halb gutschreiben" : "Ablehnen"}
                     </SubmitButton>
                   </form>
                 ))}
@@ -317,7 +298,7 @@ function StornoPruefen({
   );
 }
 
-function Geparkt({ parked, subs }: { parked: Awaited<ReturnType<typeof prisma.poolLead.findMany>>; subs: Subs }) {
+function Geparkt({ parked, subs, name }: { parked: Awaited<ReturnType<typeof prisma.poolLead.findMany>>; subs: Subs; name: ProduktName }) {
   return (
     <Card tone="attention" id="geparkt">
       <CardHeader title="Geparkt" count={parked.length} hint="kein passender Bezug frei" />
@@ -328,31 +309,33 @@ function Geparkt({ parked, subs }: { parked: Awaited<ReturnType<typeof prisma.po
             <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-sm sm:px-5">
               <div className="min-w-0 flex-1 basis-48">
                 <div className="font-medium">
-                  {p.productKey} · {dt(p.createdAt)}
+                  {name(p.productKey)} <span className="font-normal text-[color:var(--muted)]">· {dt(p.createdAt)}</span>
                 </div>
                 <div className="text-xs text-[color:var(--muted)]">
-                  {[p.plz ? `PLZ ${p.plz}` : null, p.contribution ? `${p.contribution} €` : null, p.weak ? "schwach" : null, p.insurer].filter(Boolean).join(" · ")}
+                  {[p.plz ? `PLZ ${p.plz}` : null, p.insurer].filter(Boolean).join(" · ")}
                   {p.reason ? <span className="text-amber-700"> · {p.reason}</span> : null}
                   <span className="text-[color:var(--muted)]"> · verfällt {dt(parkDeadline(p.createdAt))}</span>
                 </div>
               </div>
-              <form action={assignParkedAction} className="flex min-w-0 items-center gap-2" data-funktion="actions-assignparkedaction--geparkte-leads-einem-bezug-zuordnen">
-                <input type="hidden" name="poolLeadId" value={p.id} />
-                <select name="subscriptionId" required aria-label="Bezug" className="h-10 min-w-0 max-w-[11rem] rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm sm:h-8">
-                  {options.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.customer.name}
-                    </option>
-                  ))}
-                </select>
-                {options.length ? (
+              {options.length ? (
+                <form action={assignParkedAction} className="flex min-w-0 items-center gap-2" data-funktion="actions-assignparkedaction--geparkte-leads-einem-bezug-zuordnen">
+                  <input type="hidden" name="poolLeadId" value={p.id} />
+                  <select name="subscriptionId" required aria-label="Bezug" className="h-10 min-w-0 max-w-[11rem] rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm sm:h-8">
+                    {options.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.customer.name}
+                      </option>
+                    ))}
+                  </select>
                   <SubmitButton pendingLabel="…" className="h-10 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-3 text-[13px] font-semibold text-white sm:h-8 sm:text-xs">
                     Ausliefern
                   </SubmitButton>
-                ) : (
-                  <span className="text-xs text-[color:var(--muted)]">kein aktiver Bezug</span>
-                )}
-              </form>
+                </form>
+              ) : (
+                <ButtonLink href={`${PFAD}/bezug/neu`} size="sm" icon={Plus}>
+                  Bezug anlegen
+                </ButtonLink>
+              )}
               <form action={discardParkedAction} data-funktion="actions-discardparkedaction--geparkten-lead-verwerfen">
                 <input type="hidden" name="poolLeadId" value={p.id} />
                 <SubmitButton pendingLabel="…" className="h-10 px-1 text-xs font-medium text-[color:var(--muted)] hover:text-rose-700 sm:h-8">
@@ -367,89 +350,104 @@ function Geparkt({ parked, subs }: { parked: Awaited<ReturnType<typeof prisma.po
   );
 }
 
-async function Eingang() {
-  const rows = await prisma.poolLead.findMany({ orderBy: { createdAt: "desc" }, take: 100 });
-  const leadIds = rows.map((r) => r.leadId).filter((x): x is string => !!x);
-  const owners = new Map((await prisma.lead.findMany({ where: { id: { in: leadIds } }, select: { id: true, customer: { select: { name: true } } } })).map((l) => [l.id, l.customer.name]));
+async function Auswertung({ sp }: { sp: Suche }) {
+  const [overview, report] = await Promise.all([
+    loadCustomerOverview(),
+    loadPplReport((["tag", "woche", "monat"].includes(sp.zeitraum ?? "") ? sp.zeitraum : "tag") as Granularity, sp.produkt ?? null),
+  ]);
+  const zeile = "flex min-h-14 items-center gap-3 px-4 py-3 text-sm sm:px-5";
   return (
-    <Card>
-      <CardHeader title="Eingang" count={rows.length} hint="neueste 100" />
-      <div data-funktion="nachholen-airtablenachholen--lead-aus-airtable-nachholen-lead-nr-laeuft-durch">
-        <AirtableNachholen />
-      </div>
-      {rows.length ? (
+    <div className="space-y-4">
+      {/* Selteneres als kurze Liste oben (Muster wie /buyer/konto), damit es am Handy nicht unter den Tabellen verschwindet */}
+      <Card>
         <ul className="divide-y divide-[color:var(--border)]">
-          {rows.map((r) => (
-            <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm sm:px-5">
-              <div className="min-w-0 flex-1">
-                <div className="font-medium">
-                  {r.productKey} <span className="font-normal text-[color:var(--muted)]">· {dt(r.createdAt)}</span>
-                </div>
-                <div className="truncate text-xs text-[color:var(--muted)]">
-                  {[r.plz, r.contribution ? `${r.contribution} €` : null, r.weak ? "schwach" : null, r.smsVerified ? "SMS" : null, r.leadId ? owners.get(r.leadId) : r.reason].filter(Boolean).join(" · ")}
-                </div>
-              </div>
-              <Badge tone={POOL_STATUS[r.status]?.tone ?? "neutral"}>{POOL_STATUS[r.status]?.label ?? r.status}</Badge>
-            </li>
-          ))}
+          <li>
+            <Link href={`${PFAD}?ansicht=eingang`} className={`${zeile} hover:bg-[color:var(--surface-sunken)]`} data-funktion="page-eingang--eingang-aller-ppl-leads-ausgeliefert-geparkt">
+              <Inbox className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium">Eingang</span>
+                <span className="block text-xs text-[color:var(--muted)]">Alle Pay-per-Lead-Leads mit Ergebnis</span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+            </Link>
+          </li>
+          <li>
+            <Link href={`${PFAD}?ansicht=hvk`} className={`${zeile} hover:bg-[color:var(--surface-sunken)]`}>
+              <FileText className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium">Abrechnungen Heinrich von Kleist</span>
+                <span className="block text-xs text-[color:var(--muted)]">Gutschriften und Reklamationen je Woche</span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+            </Link>
+          </li>
+          <li className={`${zeile} flex-wrap`} data-funktion="slack-test-slacktest--slack-testen-testnachricht-an-den-ppl-kanal">
+            <MessageSquare className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium">Slack-Kanal</span>
+              <span className="block text-xs text-[color:var(--muted)]">Meldet gelieferte Leads</span>
+            </span>
+            <div className="basis-full pl-7 sm:basis-auto sm:pl-0">
+              <SlackTest configured={!!slackWebhookUrl()} />
+            </div>
+          </li>
         </ul>
-      ) : (
-        <EmptyState icon={PackageOpen} title="Noch keine Pay-per-Lead-Leads eingegangen." />
-      )}
-    </Card>
+      </Card>
+      <div data-funktion="ppl-auswertung--uebersicht-je-kunde-woche-monat-liegt-zurueck">
+        <PplOverview rows={overview} />
+      </div>
+      <div data-funktion="ppl-auswertung--auswertung-mit-zeitraum-und-produktfilter">
+        <PplReportView report={report} />
+      </div>
+    </div>
   );
 }
 
-/** Bezüge aus Airtable übernehmen: Vorschau (ändert nichts), dann „Jetzt übernehmen“ (wie /admin/ppl/import). */
-async function Import() {
-  let rows: Awaited<ReturnType<typeof import("@/lib/ppl/import-airtable").importSubscriptions>> = [];
-  let error: string | null = null;
-  try {
-    const { importSubscriptions } = await import("@/lib/ppl/import-airtable");
-    rows = await importSubscriptions({ dryRun: true });
-  } catch (err) {
-    error = err instanceof Error ? err.message : String(err);
-  }
+async function Eingang({ anzahl }: { anzahl: number }) {
+  const [rows, gesamt] = await Promise.all([prisma.poolLead.findMany({ orderBy: { createdAt: "desc" }, take: anzahl }), prisma.poolLead.count()]);
+  const leadIds = rows.map((r) => r.leadId).filter((x): x is string => !!x);
+  const [owners, name] = await Promise.all([
+    prisma.lead.findMany({ where: { id: { in: leadIds } }, select: { id: true, customer: { select: { name: true } } } }).then((ls) => new Map(ls.map((l) => [l.id, l.customer.name]))),
+    ladeProduktNamen(rows.map((r) => r.productKey)),
+  ]);
   return (
     <Card>
-      <CardHeader title="Aus Airtable übernehmen" hint="Vorschau, noch nichts geändert" />
-      <div className="space-y-3 p-4 text-sm sm:p-5">
-        <p className="text-[color:var(--muted)]">
-          Aktualisiert Ziel, Preis, Filter, Storno, Test und aktiv. Zeitraum, Bezeichnung, Lieferweg und Gebiete aus der App bleiben. Am besten zum Monatsanfang.
-        </p>
-        {rows.length ? (
-          <p>
-            {(["neu", "aktualisieren", "verknüpfen", "unverändert", "übersprungen"] as const)
-              .map((a) => [a, rows.filter((r) => r.action === a).length] as const)
-              .filter(([, n]) => n)
-              .map(([a, n]) => `${n} ${a}`)
-              .join(" · ")}
-          </p>
-        ) : null}
-        {error ? <p className="rounded-[var(--radius-md)] bg-rose-50 px-4 py-3 text-rose-800">{error}</p> : null}
-      </div>
+      <CardHeader title="Eingang" count={gesamt} />
       {rows.length ? (
-        <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]">
-          {rows.map((r) => (
-            <li key={r.airtableId} className={`px-4 py-2.5 text-sm sm:px-5 ${r.active ? "" : "opacity-60"}`}>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{r.bezug}</span>
-                <Badge tone={r.action === "übersprungen" ? "danger" : r.action === "neu" ? "success" : r.action === "unverändert" ? "neutral" : "warning"}>{r.action}</Badge>
-              </div>
-              <div className="text-xs text-[color:var(--muted)]">
-                {r.goal ?? KEINE_ANGABE} {r.period === "month" ? "/ Monat" : r.period === "once" ? "einmalig" : "/ Woche"} · {eur(r.price)} · {r.filters || "ohne Filter"} · Storno {r.stornoDays ? `${r.stornoDays} Tage` : KEINE_ANGABE} · {r.delivery}
-              </div>
-              {r.note ? <div className="text-xs text-rose-700">{r.note}</div> : null}
-              {r.changes.length ? <div className="text-xs">{r.changes.join(" · ")}</div> : null}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {!error && rows.length ? (
-        <div className="border-t border-[color:var(--border)] p-4 sm:p-5">
-          <ImportButton />
-        </div>
-      ) : null}
+        <>
+          <ul className="divide-y divide-[color:var(--border)]">
+            {rows.map((r) => (
+              <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm sm:px-5">
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium">
+                    {name(r.productKey)} <span className="font-normal text-[color:var(--muted)]">· {dt(r.createdAt)}</span>
+                  </div>
+                  <div className="truncate text-xs text-[color:var(--muted)]">{[r.plz ? `PLZ ${r.plz}` : null, r.leadId ? owners.get(r.leadId) : r.reason].filter(Boolean).join(" · ")}</div>
+                </div>
+                <Badge tone={POOL_STATUS[r.status]?.tone ?? "neutral"}>{POOL_STATUS[r.status]?.label ?? r.status}</Badge>
+              </li>
+            ))}
+          </ul>
+          {gesamt > rows.length ? (
+            <div className="border-t border-[color:var(--border)] p-3 text-center">
+              <Link href={`${PFAD}?ansicht=eingang&anzahl=${anzahl + SCHRITT}`} scroll={false} className="inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline">
+                Mehr laden
+              </Link>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <EmptyState
+          icon={PackageOpen}
+          title="Noch keine Pay-per-Lead-Leads eingegangen."
+          text="Neue Leads erscheinen hier, sobald ein Formular einem Pool zugeordnet ist."
+          action={
+            <ButtonLink href="/admin/neu/leads" variant="secondary">
+              Formulare ansehen
+            </ButtonLink>
+          }
+        />
+      )}
     </Card>
   );
 }

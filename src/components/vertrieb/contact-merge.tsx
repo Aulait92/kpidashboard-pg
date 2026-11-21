@@ -264,7 +264,7 @@ export function DuplicateHint({ contactId, contactName, duplicates }: { contactI
       <ul className="mt-1 space-y-1">
         {duplicates.map((d) => (
           <li key={d.id} className="flex flex-wrap items-baseline gap-x-2">
-            <a href={`/admin/vertrieb/kontakte/${d.id}`} className="underline">{d.name}</a>
+            <a href={`/admin/neu/vertrieb/kontakte/${d.id}`} className="underline">{d.name}</a>
             {d.reason ? <span className="text-amber-800">{d.reason}</span> : null}
             <button type="button" className="font-semibold text-[color:var(--brand)] hover:underline" onClick={() => setPick(d)}>
               Zusammenführen

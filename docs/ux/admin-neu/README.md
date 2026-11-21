@@ -13,12 +13,13 @@ in Texten an Kunden). Der alte Admin bleibt vollständig erreichbar, bis Ole abn
 | Gemeinsame Bausteine (nur hier) | `src/components/admin-neu/ui/` (`Seite`, `Platzhalter`). Sonst `src/components/ui` (Card, Badge, Button, Sheet, EmptyState) |
 | Rahmen (Seitenleiste, Leiste unten, Suche, „+ Neu“, Profil) | `src/components/admin-neu/rahmen/`, Layout `src/app/admin/neu/layout.tsx` |
 | Navigation, Reiter, „+ Neu“, Seitenliste der Suche | `src/lib/admin-neu/navigation.ts` (einzige Quelle) |
-| Umzug alt → neu (noch nicht aktiv) | `src/lib/admin-neu/umzug.ts` |
+| Umzug alt → neu (aktiv seit 20.11.2026) | `src/lib/admin-neu/umzug.ts`: jede alte Adresse leitet in `src/middleware.ts` dauerhaft (308) auf ihr Gegenstück; die alten Seiten sind gelöscht |
 | Offene Funktionen je Bereich | `src/lib/admin-neu/offen/<bereich>.ts` |
-| Schalter „Neue Oberfläche“ | Profilmenü; Cookie `pg_admin_neu` (`src/lib/admin-neu/schalter.ts`) |
+| Schalter „Neue Oberfläche“ | Entfernt (20.11.2026): Der neue Admin ist der einzige. `src/lib/admin-neu/schalter.ts` enthält nur noch `ADMIN_START` |
+| Rahmen-Regeln (Umbau 20.11.2026) | Handy-Leiste 5 Punkte ohne „Mehr“ (Mein Tag + 4 Rollen); Seitenleiste unten nur Einstellungen; Werkzeuge und „Was wo ist“ im Profilmenü (`ort: "profil"`) und in der Suche; „+ Neu“ nur Alltägliches (5 Einträge), Seltenes legt man auf seiner Seite an |
 | Rückweg nach dem Speichern (gemeinsame Actions) | `adminZiel` in `src/components/admin-neu/ui/rueckweg.ts` (Referer /admin/neu → neue Seite) |
 | Rücksprung nach Kalender, LinkedIn, Bank, 360dialog | `src/lib/admin-neu/ruecksprung.ts` (Cookie `pg_neu_back`, nur wenn der Start aus /admin/neu kam) |
-| Push an Admins (alle Ziele unter /admin) | `src/lib/admin-neu/push-ziel.ts`: `sendToAdmins` hängt `?von=push` an, die Middleware leitet mit Schalter auf die fertige neue Seite, sonst auf die alte Adresse |
+| Push an Admins | `src/lib/admin-neu/push-ziel.ts`: `sendToAdmins` schreibt alte Admin-Adressen gleich auf die neue Seite um; ältere Pushes mit `?von=push` leitet die Middleware wie jede alte Adresse weiter |
 
 Andere Bereiche nicht anfassen. Was mehrere Bereiche brauchen, gehört nach `components/admin-neu/ui/` (kurz im
 Commit begründen).

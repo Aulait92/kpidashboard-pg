@@ -31,7 +31,7 @@ export async function saveUpdateAction(_prev: UpdateFormState, fd: FormData): Pr
       actor,
     );
     if (!res.ok) return { error: res.error };
-    revalidatePath("/admin/einstellungen/neuigkeiten");
+    revalidatePath("/admin/neu/einstellungen/neuigkeiten");
     revalidatePath("/buyer", "layout");
     const pushNote = res.pushed > 0 ? ` Push an ${res.pushed} Gerät${res.pushed === 1 ? "" : "e"} gesendet.` : "";
     return { ok: true, savedAt: Date.now(), message: publish ? `Veröffentlicht.${pushNote}` : "Als Entwurf gespeichert." };
@@ -43,7 +43,7 @@ export async function saveUpdateAction(_prev: UpdateFormState, fd: FormData): Pr
 export async function deleteUpdateAction(fd: FormData): Promise<void> {
   const actor = await admin();
   await deleteUpdate(String(fd.get("id") ?? ""), actor);
-  revalidatePath("/admin/einstellungen/neuigkeiten");
+  revalidatePath("/admin/neu/einstellungen/neuigkeiten");
   revalidatePath("/buyer", "layout");
 }
 

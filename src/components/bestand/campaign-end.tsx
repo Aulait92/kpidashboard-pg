@@ -1,7 +1,8 @@
 "use client";
 
 // Kampagne beenden (Ole, 18.11.2026): endgültig, mit kurzer Bestätigung im Auswahlfenster. Danach geht keine
-// Nachricht mehr raus; wartende Empfänger werden übersprungen. Steht als Textknopf neben „Pausieren“.
+// Nachricht mehr raus; wartende Empfänger werden übersprungen. Steht seit 20.11.2026 als Textknopf ganz unten in der
+// Detailansicht (nicht mehr neben dem Titel, Fehlklick am Handy).
 
 import { useActionState, useState } from "react";
 import { Loader2, Square } from "lucide-react";
@@ -15,8 +16,8 @@ export function CampaignEndButton({ id, waiting, readOnly }: { id: string; waiti
   if (state.ok) return null;
   return (
     <>
-      <button type="button" className="text-sm font-medium text-rose-700 hover:underline" disabled={readOnly} onClick={() => setOpen(true)} data-campaign-end>
-        Beenden
+      <button type="button" className="inline-flex min-h-11 items-center text-sm font-medium text-rose-700 hover:underline disabled:opacity-50" disabled={readOnly} onClick={() => setOpen(true)} data-campaign-end>
+        Kampagne beenden
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Kampagne beenden?" message="Endgültig, lässt sich nicht fortsetzen.">
         <form action={action} className="space-y-3 px-5 py-4 text-sm" data-campaign-end-dialog>

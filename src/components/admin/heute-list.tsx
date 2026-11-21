@@ -54,7 +54,8 @@ export function HeuteList({ items, ohneBereich }: { items: HeuteItem[]; ohneBere
 // Am Handy teilen sich die Knöpfe eine Zeile (gleich breit), am Rechner so breit wie nötig.
 const btn = "inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] px-2 text-sm font-semibold transition disabled:opacity-50 sm:h-9 sm:flex-none sm:shrink-0 sm:px-3 [&_svg]:hidden sm:[&_svg]:block";
 const secondary = "border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)]";
-const primary = "bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]";
+// Hauptknopf steht in jeder Zeile rechts (am Handy ganz rechts), Nebenknöpfe davor: order-last statt Umsortieren im Markup
+const primary = "order-last bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]";
 
 function HeuteRow({ it, ohneBereich }: { it: HeuteItem; ohneBereich?: boolean }) {
   const Icon = HEUTE_ICONS[it.icon];
@@ -120,7 +121,7 @@ function HeuteRow({ it, ohneBereich }: { it: HeuteItem; ohneBereich?: boolean })
                 type="button"
                 disabled={pending}
                 onClick={() => run(() => meetingOutcomeAction(q.taskId, c.outcome))}
-                className={cn(btn, c.outcome === "gewonnen" ? primary : secondary, "flex-none px-3")}
+                className={cn(btn, c.outcome === "gewonnen" ? primary : secondary, "order-none flex-none px-3")}
               >
                 {c.label}
               </button>
@@ -226,7 +227,7 @@ function HeuteRow({ it, ohneBereich }: { it: HeuteItem; ohneBereich?: boolean })
 
         {it.later ? (
           <button type="button" disabled={pending} onClick={() => run(() => dismissAction(it.key, it.later!.days))} className={cn(btn, secondary)}>
-            {it.later.days === 1 ? <Clock className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+            {/Morgen|Später|Woche/.test(it.later.label) ? <Clock className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             {it.later.label}
           </button>
         ) : null}

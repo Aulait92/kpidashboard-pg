@@ -1,6 +1,7 @@
 "use server";
 
-// Vergleichsblatt (Policen auslesen): Werte korrigieren, als geprüft markieren, Sparte wählen, in den Bestand übernehmen.
+// Vertragsseite (Policen auslesen): Werte korrigieren, als geprüft markieren (einzeln bzw. alle angezeigten), Sparte
+// wählen, geprüfte Verträge in den Bestand übernehmen (nur mit Bestandsmodul, K7).
 // Nur der zuständige Vermittler bzw. Inhaber (appointmentScope + writableCustomerId), nie in der Vorschau.
 
 import { revalidatePath } from "next/cache";
@@ -9,7 +10,7 @@ import { writableCustomerId } from "@/lib/buyer-write";
 import { prisma } from "@/lib/prisma";
 import { appointmentScope } from "@/lib/team";
 import { isAuslesenSparte } from "@/lib/policen/auslesen/felder";
-import { bestaetigeAuszug, korrigiereAuszug, nachEingang, uebernimmInBestand, waehleSparte } from "@/lib/policen/auslesen/server";
+import { bestaetigeAlle, bestaetigeAuszug, korrigiereAuszug, nachEingang, uebernimmAlle, waehleSparte } from "@/lib/policen/auslesen/server";
 
 type Antwort = { ok: boolean; error?: string; status?: string };
 
@@ -42,12 +43,24 @@ export async function geprueftAction(terminId: string, auszugId: string, ja: boo
   return ok ? { ok: true } : { ok: false, error: "Nicht gefunden." };
 }
 
-export async function bestandAction(terminId: string, auszugId: string): Promise<Antwort> {
+/** „Alle als geprüft markieren“: nur die angezeigten, ausgelesenen, ungeprüften Auszüge (Prüfung im Server). */
+export async function alleGeprueftAction(terminId: string, auszugIds: string[]): Promise<Antwort & { anzahl?: number }> {
   const x = await wer(terminId);
   if ("error" in x) return { ok: false, error: x.error };
-  const r = await uebernimmInBestand(x.w, auszugId);
+  const anzahl = await bestaetigeAlle(x.w, auszugIds);
   revalidatePath(pfad(terminId));
-  return r ? { ok: true } : { ok: false, error: "Konnte nicht übernommen werden." };
+  return anzahl ? { ok: true, anzahl } : { ok: false, error: "Nichts zu markieren. Bitte Seite neu laden." };
+}
+
+/** „n Verträge in Bestand übernehmen“: nur geprüfte, nur mit sichtbarem Bestandsmodul. */
+export async function alleUebernehmenAction(terminId: string, auszugIds: string[]): Promise<Antwort & { anzahl?: number }> {
+  const x = await wer(terminId);
+  if ("error" in x) return { ok: false, error: x.error };
+  const r = await uebernimmAlle(x.w, auszugIds);
+  revalidatePath(pfad(terminId));
+  if (!r) return { ok: false, error: "Übernahme ist für Ihr Konto nicht verfügbar." };
+  if (!r.uebernommen) return { ok: false, error: "Nichts übernommen. Bitte zuerst prüfen." };
+  return r.fehler ? { ok: true, anzahl: r.uebernommen, error: `${r.fehler} konnten nicht übernommen werden.` } : { ok: true, anzahl: r.uebernommen };
 }
 
 export async function sparteAction(terminId: string, documentId: string, sparte: string): Promise<Antwort> {
@@ -56,6 +69,8 @@ export async function sparteAction(terminId: string, documentId: string, sparte:
   if (!isAuslesenSparte(sparte) && sparte !== "andere") return { ok: false, error: "Sparte unbekannt." };
   const r = await waehleSparte(x.w, documentId, sparte);
   revalidatePath(pfad(terminId));
+  // Sparten-Wahl auch direkt im Spickzettel der Terminvorbereitung (Paket 3)
+  revalidatePath(`/buyer/termine/${terminId}/vorbereitung`);
   return r ? { ok: true, status: r.status } : { ok: false, error: "Nicht gefunden." };
 }
 

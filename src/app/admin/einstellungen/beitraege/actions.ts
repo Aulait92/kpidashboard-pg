@@ -10,5 +10,5 @@ export async function preisPilotUmschaltenAction(fd: FormData): Promise<void> {
   const schluessel = String(fd.get("schluessel") ?? "");
   const an = fd.get("an") === "1";
   await preisPilotSetzen(schluessel, an, { id: session.userId, email: session.email, role: session.role });
-  revalidatePath("/admin/einstellungen/beitraege");
+  revalidatePath("/admin/neu/einstellungen/tarife");
 }

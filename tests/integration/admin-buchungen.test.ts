@@ -102,7 +102,7 @@ describe("Buchungen aus der Datenbank", () => {
     expect(mods.find((r) => r.monthly === -149)?.detail).not.toContain("geschätzt");
     const seat = rows.find((r) => r.art === "plaetze")!;
     expect(seat.monthly).toBe(49);
-    expect(seat.task).toMatchObject({ open: true, href: `/admin/vertrieb/kontakte/${contactId}` });
+    expect(seat.task).toMatchObject({ open: true, href: `/admin/neu/vertrieb/kontakte/${contactId}` });
     const audit = await prisma.auditLog.findFirst({ where: { customerId, action: "billing.seats" } });
     expect((audit?.details as { price?: number }).price).toBe(49);
   });

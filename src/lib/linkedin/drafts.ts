@@ -263,7 +263,7 @@ export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: D
     await sendToAdmins({
       title: `LinkedIn: ${value.length} Entwürfe für ${label}`,
       body: "Antippen, lesen und mit einem Klick freigeben.",
-      url: "/admin/marketing/linkedin",
+      url: "/admin/neu/marketing",
       tag: "linkedin-drafts",
     }).catch(() => null);
   }

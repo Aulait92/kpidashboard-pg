@@ -8,10 +8,18 @@ import {
   type CreateBuyerState,
 } from "./actions";
 
+const FELD = "mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none";
+
+// Neuen Login anlegen. In der Kundenakte steht der Kunde fest (`kundeId`), dann gibt es kein Auswahlfeld.
+// `startPasswort` (vom Server erzeugt) belegt das Passwort vor; es kann überschrieben werden.
 export function CreateBuyerForm({
   customers,
+  kundeId,
+  startPasswort,
 }: {
   customers: { id: string; name: string }[];
+  kundeId?: string;
+  startPasswort?: string;
 }) {
   const [state, formAction, pending] = useActionState<
     CreateBuyerState,
@@ -22,51 +30,39 @@ export function CreateBuyerForm({
     <form action={formAction} className="mt-3 space-y-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-            Email
-          </span>
-          <input
-            name="email"
-            type="email"
-            required
-            placeholder="buyer@example.com"
-            className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-          />
+          <span className="text-sm font-medium">E-Mail</span>
+          <input name="email" type="email" required placeholder="name@agentur.de" className={FELD} />
         </label>
         <label className="block">
-          <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-            Passwort (min. 8 Zeichen)
-          </span>
+          <span className="text-sm font-medium">Startpasswort</span>
           <input
             name="password"
             type="text"
             required
             minLength={8}
-            placeholder="zufällig generieren oder selber wählen"
-            className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+            defaultValue={startPasswort}
+            placeholder={startPasswort ? undefined : "mindestens 8 Zeichen"}
+            className={FELD}
           />
         </label>
       </div>
-      <label className="block">
-        <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-          Kunde verknüpfen
-        </span>
-        <select
-          name="customerId"
-          required
-          defaultValue=""
-          className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-        >
-          <option value="" disabled>
-            – Kunde wählen –
-          </option>
-          {customers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
+      {kundeId ? (
+        <input type="hidden" name="customerId" value={kundeId} />
+      ) : (
+        <label className="block">
+          <span className="text-sm font-medium">Kunde</span>
+          <select name="customerId" required defaultValue="" className={FELD}>
+            <option value="" disabled>
+              Kunde wählen
             </option>
-          ))}
-        </select>
-      </label>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {state.error ? (
         <div className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
@@ -75,8 +71,7 @@ export function CreateBuyerForm({
       ) : null}
       {state.ok && state.createdEmail ? (
         <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-          Account für {state.createdEmail} angelegt. Schick die
-          Zugangsdaten dem Buyer.
+          Login für {state.createdEmail} angelegt. Senden Sie oben in der Liste die Einladung.
         </div>
       ) : null}
 
@@ -85,7 +80,7 @@ export function CreateBuyerForm({
         disabled={pending}
         className="rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
       >
-        {pending ? "Lege an…" : "Account anlegen"}
+        {pending ? "Lege an…" : "Login anlegen"}
       </button>
     </form>
   );

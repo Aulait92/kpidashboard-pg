@@ -2,7 +2,22 @@
 
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
+## 21.11.2026
+- **Abschlussbonus abgeschafft, stattdessen Jahresplan in der Präsentation** (A, Ole: „Nimm den Abschlussbonus raus
+  überall und nimm in die Vertriebspräsentation den Jahresplan für 3 Monate sparen auf.“; Nachtrag: „Bei den offenen
+  drin lassen. Habe ich schon versprochen.“). Neue Angebote haben keinen Bonus mehr (Formularfeld weg, serverseitig nur
+  noch bei neuen Versionen bzw. Entwürfen offener Angebote, die ihn schon haben). Offene Angebote mit Bonus behalten ihn
+  samt Anzeige, Erinnerungen und Abrechnung; angenommene Angebote werden wie vereinbart abgerechnet. Präsentation
+  (Web, PPTX/PDF Vertreter und Makler): Folie „Jahresplan: 3 Monate sparen“ vor „Ihr Start in 3 Schritten“ (12 Monate
+  Laufzeit, jährlich im Voraus, 9 statt 12 Monatsbeträge, Ersparnis in Euro); Bonusfolie nur noch bei Angeboten mit
+  zugesagtem Bonus. Leitfaden Setter-Call, Einwandbehandlung und Sprechzettel ohne Bonus. Aufgabe „Abschlussbonus nur
+  im Call ab 21.11.“ entfällt.
+
 ## 20.11.2026
+- **Leitfaden Setter-Call, Fassung 4** (Ole): Interessent soll das Problem bei Neukundengewinnung oder Wachstum selbst
+  aussprechen (Fragen nach Ursache, Versuchen, Dauer, Folgen, dann Bedarf bestätigen); neu Mitarbeiter und Bestand als
+  Maßstab fürs Budget; Budget erst Bereitschaft, dann Zahl, dann Verfügbarkeit; Entscheider mit Nachfrage und Einladung.
+  Rahmen „Auftrag im Termin, IBAN bereithalten“ samt Zögern-Satz gestrichen. `docs/firma/vertrieb/leitfaden-setter-call.md`.
 - **Onboarding Herr Lohmann, Nacharbeiten** (A, Ole): (1) Nach der Annahme „Passwort jetzt festlegen“ auf der
   Angebotsseite, nur im Browser der Annahme (signiertes httpOnly-Merkmal, 12 h), Link entsteht erst beim Tippen; Mail
   bleibt Rückfall. Neue Links aus Knopf und „Einladungslink kopieren“ (Admin) entwerten den Mail-Link nicht mehr; sobald
@@ -67,6 +82,22 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **Entscheidungs-Call abgeschaltet** (Ole): nicht mehr online buchbar, kein Buchungslink mehr in Angebotsmail,
   Angebotsseite und Zahlungserinnerung. Abgeschlossen wird im Beratungsgespräch. Schon gebuchte Termine bleiben.
 
+- **Policen auslesen überarbeitet** (B, Umsetzung; Livegang für alle A, Ole): Spickzettel oben in der
+  Terminvorbereitung, Vertragsseite mit einer Hauptaktion, Fristen konservativ mit Resttagen, „doppelt“ nur Haftpflicht,
+  Hausrat, Rechtsschutz, Lead-Texte ohne Ersparnisversprechen. SUS 68 → 90 (Personas 84 bis 88), Recht GRÜN mit zwei
+  gelben Auflagen (Sammelprüfung nicht für unplausible Felder; neue Meta-Vorlagen). **Einwilligungstexte werden nur
+  geändert, wenn Versionierung (`FLOW_TEXT_VERSION`, `textHash`) und Nachweis stimmen**; diesmal unverändert.
+  Quelle: `docs/ux/2026-11-19-policen-champions.md`, Abschnitt Ergebnis.
+- **Empfehlungsmodul überarbeitet, bleibt ausgeblendet bis Ole einschaltet** (C, Führungsteam/CPO; Einschalten A, Ole).
+  Umbau auf Branch `empfehlung-champions`: Einwilligung beim Abschluss, Obergrenze 3 Bitten je 365 Tage, Arbeitsliste
+  „Heute fragen“, öffentliche Seiten in Du und Sie. SUS 58 → 91 (UX-Messung), Persona-Abnahme 84; Rechtsprüfung grün mit
+  gelben Punkten. Vor dem Einschalten Hindernisse 1 bis 4 beheben und Screenshots nachholen.
+  Quelle: `docs/ux/2026-11-19-empfehlung-champions.md` (Abschnitt 11), `docs/recht/empfehlungsmodul-2026-11-19.md`.
+- **Bestandskunden-Modul überarbeitet, bleibt ausgeblendet** (B umgesetzt, Einschalten A, Ole). Cockpit „Heute zuerst“,
+  Kampagne in einem Bildschirm mit Terminlink, Einwilligung als Umsatzhebel, ein automatisches Nachfassen.
+  SUS 48 → 84 → 88 → 91 (Personas: 84 bis 89), Recht intern GRÜN. Vor dem Einschalten 5 Fehler beheben und eine
+  Testwoche mit einem Allianz-Vertreter und einem Makler. Quelle: `docs/ux/2026-11-19-bestand-champions.md`
+  (Abschnitt „Ergebnis“), Branch `bestand-champions`.
 - **Führungsteam Phase 1 mit 19 Agenten** (A, Ole). Content & Brand, Partnerships, Investor Relations später.
   Alle Meetings laufen von Anfang an; an Agentenkosten wird nicht gespart.
 - **Fokus zwei Wochen:** Abschlüsse mit Vorauszahlung, Umsatzsteuer klären, neue Kunden sauber live bringen.
@@ -88,6 +119,16 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   ausgelesen erst mit Nachweis „keine Speicherung“ beim KI-Anbieter (K2, Admin → Anbindungen) und Einwilligung mit
   Gesundheitsangaben. Unbeantwortete Sparten auf „Ihr Schutz im Überblick“ grau „Gleich besprechen“ (Entscheidung
   an Claude delegiert).
+- **Ein Admin** (20.11.2026, Auftrag Ole 19.11.: „alte dinge, wie airtable können rausgenommen werden“): Der neue Admin
+  unter /admin/neu ist der einzige. Die 60 alten Seiten unter /admin sind gelöscht, jede alte Adresse (auch Pushes,
+  Mails, Lesezeichen) leitet dauerhaft weiter (`src/lib/admin-neu/umzug.ts`, `src/middleware.ts`). Werkzeuge ist die
+  Gruppe Technik der Einstellungen. Airtable verschwindet aus der Oberfläche, der Abgleich im Hintergrund bleibt, bis
+  AIRTABLE_SYNC_OFF gesetzt ist.
+- **Admin v2 ist der einzige Admin** (19.11.2026, Abnahme in der Nacht zum 20.11.): Der alte Admin und der Schalter
+  „Neue Oberfläche“ (Cookie pg_admin_neu) sind entfernt, alte Adressen leiten auf ihr Gegenstück. Airtable ist aus der
+  Oberfläche raus, der Abgleich im Hintergrund bleibt, bis AIRTABLE_SYNC_OFF gesetzt ist. Abnahme: tsc, eslint, alle
+  Unit-Tests und `next build` grün, Durchklick 124 Aufrufe (390 und 1280 px) ohne Fehler. Bewertung, SUS vorher/nachher
+  und Restliste: `docs/ux/admin-neu/umbau-2026-11-19.md` (Abschnitt „Ergebnis“).
 
 ## 20.11.2026
 
