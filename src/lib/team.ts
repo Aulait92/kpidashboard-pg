@@ -28,6 +28,15 @@ export function conversationScope(ctx: TeamCtx): Prisma.ConversationWhereInput {
   };
 }
 
+/**
+ * Gespräche für Chatliste und Zähler (Ole, 21.11.2026): ohne Leads, die per WhatsApp nicht erreichbar sind
+ * (Lead.waUnavailableAt, z. B. Festnetz oder „kein WhatsApp“) und nie selbst geschrieben haben. Die stehen auf der
+ * Anrufliste bzw. in der Mail-Strecke; ein Chat ohne zugestellte Nachricht wäre nur Ballast.
+ */
+export function chatListeScope(ctx: TeamCtx): Prisma.ConversationWhereInput {
+  return { ...conversationScope(ctx), NOT: { lead: { waUnavailableAt: { not: null } }, messages: { none: { direction: "inbound" } } } };
+}
+
 /** Sichtbare Termine. */
 export function appointmentScope(ctx: TeamCtx): Prisma.AppointmentWhereInput {
   return {
