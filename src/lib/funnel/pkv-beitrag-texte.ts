@@ -185,7 +185,7 @@ export function einwilligungText(datenschutzEmail: string): string {
 export const PKV_VERSICHERER = [
   // Alle Krankenvollversicherer (Ole, 21.11.2026: „hier müssen alle stehen“), Mitglieder des PKV-Verbands mit
   // Vollversicherung plus Postbeamtenkrankenkasse und KVB. Barmenia und Gothaer getrennt (rechtlich noch zwei Versicherer,
-  // Kunden kennen ihren Namen). Stand Marktwissen 21.11.2026, Abgleich mit der Mitgliederliste pkv.de offen.
+  // Kunden kennen ihren Namen). Dazu alle Namen aus der Perspective-Liste (DBV, Deutscher Ring, Die Bayerische, Ergo, Mannheimer, VGH). Stand Marktwissen 21.11.2026, Abgleich mit der Mitgliederliste pkv.de offen.
   "Allianz",
   "Alte Oldenburger",
   "ARAG",
@@ -194,9 +194,13 @@ export const PKV_VERSICHERER = [
   "Bayerische Beamtenkrankenkasse",
   "Concordia",
   "Continentale",
+  "DBV",
   "Debeka",
+  "Deutscher Ring",
   "DEVK",
+  "Die Bayerische",
   "DKV",
+  "Ergo",
   "FAMK",
   "Generali (ehem. Central)",
   "Gothaer",
@@ -207,6 +211,7 @@ export const PKV_VERSICHERER = [
   "KVB (Bundesbahnbeamte)",
   "LKH",
   "LVM",
+  "Mannheimer",
   "Mecklenburgische",
   "Münchener Verein",
   "Nürnberger",
@@ -219,6 +224,7 @@ export const PKV_VERSICHERER = [
   "Signal Iduna",
   "Union Krankenversicherung",
   "uniVersa",
+  "VGH",
   "vigo",
   "Württembergische",
   "Sonstige",
