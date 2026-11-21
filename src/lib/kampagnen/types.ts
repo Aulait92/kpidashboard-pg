@@ -43,6 +43,8 @@ export type CampaignContext = {
   product: string;
   wish: string | null;
   anrede: "Sie" | "Du";
+  /** Ansprache der Leads (Customer.leadAddress, lib/ansprache.ts): feste Formularfragen in Sie- bzw. Du-Fassung. Fehlt bei älteren Läufen. */
+  leadAddress?: "sie" | "du";
   city: string | null;
   zip: string | null;
   region: string | null;

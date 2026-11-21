@@ -4,6 +4,7 @@
 
 import { runAgent, type AgentUsage, type LlmCall } from "@/lib/kampagnen/llm";
 import { eigeneGewinnerBlock, winkelMitEigenemGewinner } from "@/lib/kampagnen/eigene-gewinner";
+import { formularMitVorgaben, leadsDuzen, vorgabenHinweis } from "@/lib/kampagnen/formular-vorgaben";
 import {
   CTAS,
   LIMITS,
@@ -330,7 +331,8 @@ WISSEN DES WHATSAPP-ASSISTENTEN DIESES KUNDEN (gekürzt, für passende Fragen):
 ${c.assistantKnowledge ?? "(nicht hinterlegt)"}
 
 AUFGABE: Entwirf das Sofortformular für „${c.product}“, Anrede „${c.anrede}“.
-${FORM_SPEC}${c.bookingUrl ? `
+${FORM_SPEC}${vorgaben(c) ? `
+${vorgaben(c)}` : ""}${c.bookingUrl ? `
 ${BOOKING_THANKS}` : ""}`,
       schema: FORM_SCHEMA,
     },
@@ -338,9 +340,13 @@ ${BOOKING_THANKS}` : ""}`,
   ));
 }
 
-/** Einwilligungstext immer mit dem festen Wortlaut (nicht vom Agenten formuliert). */
+/** Feste Fragen bei Kfz und Privatschutz in der Ansprache der Leads (lib/kampagnen/formular-vorgaben.ts). */
+const vorgaben = (c: CampaignContext) => vorgabenHinweis(c.product, leadsDuzen(c));
+
+/** Einwilligungstext immer mit dem festen Wortlaut, feste Fragen je Produkt (beides nicht vom Agenten formuliert). */
 function withConsent<T extends { value: LeadFormDraft }>(c: CampaignContext, r: T): T {
-  return c.consentText ? { ...r, value: { ...r.value, consentText: c.consentText } } : r;
+  const value = formularMitVorgaben(r.value, c);
+  return { ...r, value: c.consentText ? { ...value, consentText: c.consentText } : value };
 }
 
 export async function reviseForm(llm: LlmCall, c: CampaignContext, form: LeadFormDraft, findings: Finding[]): Promise<{ value: LeadFormDraft; usage: AgentUsage }> {
@@ -358,7 +364,8 @@ BEFUNDE DES PRÜFERS:
 ${findings.map((f) => `- [${f.severity}] ${f.issue} → ${f.fix}`).join("\n")}
 
 Gib das vollständige Formular zurück.
-${FORM_SPEC}`,
+${FORM_SPEC}${vorgaben(c) ? `
+${vorgaben(c)}` : ""}`,
       schema: FORM_SCHEMA,
     },
     validateForm,
@@ -421,7 +428,8 @@ ${[...CHECKLIST, ...(c.eigeneGewinner?.length ? [CHECK_EIGENE_GEWINNER] : [])].m
 ${input.angles?.length ? `\nWINKEL: ${JSON.stringify(input.angles)}\n` : ""}
 PLAN: ${JSON.stringify({ dailyBudgetEur: input.plan.dailyBudgetEur, adSets: input.plan.adSets, zielgruppe: input.plan.zielgruppe })}
 ANZEIGEN (index ab 0): ${JSON.stringify(input.copies)}
-FORMULAR: ${JSON.stringify(input.form)}
+FORMULAR: ${JSON.stringify(input.form)}${vorgaben(c) ? `
+${vorgaben(c)}` : ""}
 BILDER: ${input.images.length} Stück erzeugt.
 
 Gib status, summary (1–3 Sätze) und findings zurück (index = Anzeige ab 0 bzw. Frage ab 0, sonst null).`,

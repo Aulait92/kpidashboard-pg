@@ -6,6 +6,7 @@
 
 import { cleanToken, redactTokens } from "@/lib/meta-leads";
 import type { AdCopy, BuiltState, CampaignContext, CampaignPlan, CreativeImage, LeadFormDraft } from "@/lib/kampagnen/types";
+import { standardFelder } from "@/lib/kampagnen/formular-vorgaben";
 
 const GRAPH = "https://graph.facebook.com/v22.0";
 
@@ -94,7 +95,10 @@ const slug = (s: string) =>
     .slice(0, 40) || "antwort";
 
 /** Payload für POST /{page_id}/leadgen_forms (Felder laut Graph-Referenz „Page leadgen_forms“). */
-export function leadFormPayload(form: LeadFormDraft, ctx: Pick<CampaignContext, "privacyUrl" | "website" | "advisorName" | "bookingUrl">): Record<string, unknown> {
+export function leadFormPayload(
+  form: LeadFormDraft,
+  ctx: Pick<CampaignContext, "privacyUrl" | "website" | "advisorName" | "bookingUrl"> & Partial<Pick<CampaignContext, "product">>,
+): Record<string, unknown> {
   if (!ctx.privacyUrl) throw new Error("Datenschutz-URL fehlt.");
   return {
     name: form.formName,
@@ -110,6 +114,8 @@ export function leadFormPayload(form: LeadFormDraft, ctx: Pick<CampaignContext, 
       { type: "FULL_NAME", key: "full_name" },
       { type: "PHONE", key: "phone_number" },
       { type: "EMAIL", key: "email" },
+      // Vorausgefüllt je Produkt (Kfz: Adresse und Geburtsdatum, Privatschutz: Adresse), lib/kampagnen/formular-vorgaben.ts
+      ...standardFelder(ctx.product),
     ],
     privacy_policy: { url: ctx.privacyUrl, link_text: "Datenschutzerklärung" },
     context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: form.introParagraphs, button_text: "Weiter" },

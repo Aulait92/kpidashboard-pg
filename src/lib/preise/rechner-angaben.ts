@@ -94,7 +94,7 @@ export const ANGABEN = {
     label: "Familienstand (Single, Paar, Familie)",
     wer: "lead",
     rang: 4,
-    wert: (c) => c.form(/lebenssituation|familienstand/i) ?? c.q("lebenssituation") ?? c.q("versichern"),
+    wert: (c) => c.form(/lebenssituation|familienstand|für wen soll/i) ?? c.q("lebenssituation") ?? c.q("versichern"),
     fragen: [f("familienstand", "versichern", "Wer soll mitversichert sein: nur Sie, mit Partner oder die ganze Familie?", "Wer soll mitversichert sein: nur du, mit Partner oder die ganze Familie?")],
   },
   oeffentlicherDienst: {

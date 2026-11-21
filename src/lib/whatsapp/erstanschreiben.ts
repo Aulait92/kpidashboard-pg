@@ -415,7 +415,7 @@ const BEKANNT: Partial<Record<NoticePurpose, { frage1?: RegExp; frage2?: RegExp 
   // Gewünschter Schutz (Ole, 19.11.2026: feste Frage in v10) aus Formularfeldern wie „Gewünschter Schutz: OP-Schutz“
   outreach_tkv: { frage1: /geburtsjahr|^alter\b|alter \(tier\)|alter des tieres/i, frage2: /tarifwunsch|gewünschter schutz|^schutz\b|op-schutz|absicherungswunsch|^tarifart\b/i },
   outreach_pkv: { frage1: /^situation\b|berufliche situation|^beruf\b/i, frage2: /gesetzlich oder privat|wie lange in pkv|aktuelle versicherung/i },
-  outreach_privatschutz: { frage1: /versicherungsinteresse/i, frage2: /lebenssituation|familienstand|zu versichernde/i },
+  outreach_privatschutz: { frage1: /versicherungsinteresse/i, frage2: /lebenssituation|familienstand|zu versichernde|für wen soll/i },
 };
 
 /** Formularfelder, die schon sagen, ob es bestehende Verträge gibt (Privatschutz: Frage „schon versichert?“). */
