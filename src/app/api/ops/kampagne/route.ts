@@ -4,7 +4,7 @@ import { checkLimit } from "@/lib/rate-limit";
 import { uploadAuthorized } from "@/lib/ops-upload";
 import { aktionAuthorized } from "@/lib/ops-aktionen";
 import { prisma } from "@/lib/prisma";
-import { processCampaignRun, startCampaignRun } from "@/lib/kampagnen/run";
+import { buildCampaignRun, processCampaignRun, startCampaignRun } from "@/lib/kampagnen/run";
 import { ACTIVE_STATUSES } from "@/lib/kampagnen/types";
 import { findCustomer, katalogAliase, produktZeilen, resolveProduct, runOverview } from "@/lib/kampagnen/ops";
 
@@ -42,6 +42,17 @@ export async function POST(req: Request): Promise<Response> {
 
   const c = await findCustomer(String(get("kunde") ?? ""));
   if (!c.ok) return Response.json({ error: c.error }, { status: 404, headers: noStore });
+  // Fortsetzen (Ole, 21.11.2026): gescheiterten Lauf an der Fehlerstelle neu anlegen lassen (z. B. nach dem Eintrag von
+  // Begünstigtem und Zahler im Werbekonto), Texte, Bilder und Formular bleiben. { kunde, weiter: <runId> }
+  const weiter = get("weiter");
+  if (weiter) {
+    const run = await prisma.campaignRun.findFirst({ where: { id: String(weiter), customerId: c.id }, select: { id: true, status: true } });
+    if (!run) return Response.json({ error: "Lauf nicht gefunden." }, { status: 404, headers: noStore });
+    if (!["failed", "review"].includes(run.status)) return Response.json({ error: `Lauf hat Status ${run.status}.` }, { status: 409, headers: noStore });
+    await audit("kampagne.weiter", { entity: "CampaignRun", entityId: run.id, customerId: c.id, details: { via: "ops" } }).catch(() => undefined);
+    after(() => buildCampaignRun(run.id).then(() => undefined));
+    return Response.json({ ok: true, runId: run.id, weiter: true }, { headers: noStore });
+  }
   // Warteschlange: ein aktiver Lauf je Kunde, nichts abbrechen; der Aufrufer fragt später erneut (zählt nicht ins Limit)
   const laeuft = await aktiverLauf(c.id);
   if (laeuft) return Response.json({ ok: false, error: "läuft schon", ...laeuft }, { status: 409, headers: noStore });

@@ -206,15 +206,28 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   // 3. Anzeigengruppen
   // EU (Digital Services Act): Meta verlangt Begünstigten und Zahler je Anzeigengruppe („Werbetreibender fehlt“,
   // Fehler 3858634, Lohmann 20.11.2026). Vorschlag des Werbekontos (dsa_recommendations), sonst der Kundenname.
+  // Reihenfolge: Standard des Werbekontos („Default advertiser and payer“), Vorschläge (dsa_recommendations, z. B. der
+  // EU-Eintrag), zuletzt der Kundenname. Meta verlangt den Namen genau so, wie er im Werbekonto hinterlegt ist.
   let dsa: string | null = null;
+  let payor: string | null = null;
   try {
-    const rec = await api.get<{ data?: { recommendations?: string[] }[] | string[] }>(`${act}/dsa_recommendations`);
-    const first = Array.isArray(rec.data) ? rec.data[0] : null;
-    dsa = (typeof first === "string" ? first : first?.recommendations?.[0]) ?? null;
+    const acc = await api.get<{ default_dsa_beneficiary?: string; default_dsa_payor?: string }>(act, { fields: "default_dsa_beneficiary,default_dsa_payor" });
+    dsa = acc.default_dsa_beneficiary?.trim() || null;
+    payor = acc.default_dsa_payor?.trim() || null;
   } catch {
-    dsa = null;
+    /* weiter mit den Vorschlägen */
+  }
+  if (!dsa) {
+    try {
+      const rec = await api.get<{ data?: ({ recommendations?: string[] } | string)[] }>(`${act}/dsa_recommendations`);
+      const first = Array.isArray(rec.data) ? rec.data[0] : null;
+      dsa = (typeof first === "string" ? first : first?.recommendations?.[0]) ?? null;
+    } catch {
+      dsa = null;
+    }
   }
   dsa = (dsa || ctx.customerName || ctx.advisorName || "").slice(0, 120) || null;
+  payor = (payor || dsa || "").slice(0, 120) || null;
   for (let i = 0; i < plan.adSets.length; i++) {
     if (built.adSetIds[i]) continue;
     const a = plan.adSets[i];
@@ -227,7 +240,7 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
       promoted_object: { page_id: ctx.pageId },
       targeting: adSetTargeting(a, built.geoKey ?? null),
       status: "PAUSED",
-      ...(dsa ? { dsa_beneficiary: dsa, dsa_payor: dsa } : {}),
+      ...(dsa ? { dsa_beneficiary: dsa, dsa_payor: payor ?? dsa } : {}),
     });
     built.adSetIds[i] = r.id;
     await save();
