@@ -5,7 +5,7 @@
 // Der Browser fragt ihn alle paar Sekunden ab (components/use-live-poll.ts).
 
 import { prisma } from "@/lib/prisma";
-import { appointmentScope, conversationScope, leadScope, type TeamCtx } from "@/lib/team";
+import { appointmentScope, chatListeScope, conversationScope, leadScope, type TeamCtx } from "@/lib/team";
 import { adminChatFingerprintOf, fingerprintOf, type FingerprintParts } from "@/lib/live-state";
 
 export { fingerprintOf, nextLiveState, type FingerprintParts } from "@/lib/live-state";
@@ -15,7 +15,7 @@ export async function loadFingerprintParts(ctx: TeamCtx): Promise<FingerprintPar
   const [leads, convs, attention, appts, msgs] = await Promise.all([
     prisma.lead.aggregate({ where: leadScope(ctx), _count: { _all: true }, _max: { createdAt: true, statusChangedAt: true } }),
     prisma.conversation.aggregate({ where: conversationScope(ctx), _count: { _all: true }, _max: { updatedAt: true } }),
-    prisma.conversation.count({ where: { ...conversationScope(ctx), needsAttention: true, status: "open" } }),
+    prisma.conversation.count({ where: { ...chatListeScope(ctx), needsAttention: true, status: "open" } }),
     prisma.appointment.aggregate({ where: appointmentScope(ctx), _count: { _all: true }, _max: { updatedAt: true } }),
     // Neue Nachricht (auch Echo aus der WhatsApp-Business-App), selbst wenn der Chat dabei nicht angefasst wird
     prisma.message.aggregate({ where: { conversation: conversationScope(ctx) }, _max: { createdAt: true } }),

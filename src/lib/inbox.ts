@@ -8,7 +8,7 @@ import { NACH_ABSCHLUSS_TODOS, UEBERTRAGUNG_TODO } from "@/lib/vertraege-shared"
 import { prisma } from "@/lib/prisma";
 import { callbackLeadsFor } from "@/lib/neue-leads";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
-import { appointmentScope, conversationScope, isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
+import { appointmentScope, chatListeScope, isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
 import { listWithoutNextStep, type NoStepLead } from "@/lib/lead-next-step-server";
 import { APPOINTMENT_RESULT_AFTER_MS } from "@/lib/lead-next-step";
 import { isErneutNote } from "@/lib/lead-erneut";
@@ -233,7 +233,7 @@ export async function loadInbox(ctx: TeamCtx & { preview?: boolean; demo?: boole
       select: { id: true, startsAt: true, mode: true, leadId: true, attendance: true, lead: { select: { name: true, status: true, source: true, formData: true, contactOverrides: true } } },
     }),
     prisma.conversation.findMany({
-      where: { ...conversationScope(ctx), needsAttention: true },
+      where: { ...chatListeScope(ctx), needsAttention: true },
       orderBy: { attentionAt: "desc" },
       select: { id: true, contactName: true, contactPhone: true, attentionReason: true, attentionAt: true },
     }),
