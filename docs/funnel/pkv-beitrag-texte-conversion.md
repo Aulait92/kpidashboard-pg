@@ -61,12 +61,11 @@ zusammen mit dem Cookie-Hinweis.
 - Ort aus der PLZ: nicht gebaut (im Repo gibt es keine PLZ-Tabelle).
 
 ## Zwischenseite
-Lob, das wahr ist (privat, ab 650 €), ohne Ergebnisversprechen; drei Haken-Zeilen, linksbündig; Bild flach, ohne „Symbolbild“ (Ole).
-- „Sehr gut. Deine Angaben passen für eine kostenlose Prüfung.“
-- ✓ „Ein PKV-Experte prüft kostenlos, ob und wie viel du sparen kannst.“
-- ✓ „Er ruft dich mit dem Ergebnis an, in der Regel innerhalb von 24 bis 48 Stunden.“
-- ✓ „Danach entscheidest du in Ruhe, ganz unverbindlich.“
-- Knopf „Noch 2 Angaben“
+Nah am Perspective-Original (Ole, 21.11.2026, ausdrücklich bestätigt), ohne Ergebnisversprechen, „ob und wie viel“ (Recht):
+- „Fast fertig! Bei Beiträgen in deiner Höhe steckt oft viel Sparpotenzial.“ (Ausrufezeichen wie Perspective, Ausnahme von der CI)
+- „Nachdem du dich auf der nächsten Seite eingetragen hast, prüft ein PKV-Experte kostenlos für dich, ob und wie viel Sparpotenzial du realisieren kannst. Mit dem Ergebnis meldet er sich telefonisch bei dir.“
+- „Die Prüfung vorab und das persönliche Gespräch sind für dich kostenlos und unverbindlich.“
+- „Danach entscheidest du ganz entspannt, ob du in deinem aktuellen Tarif bleibst oder einen günstigeren wählst.“ · Knopf „Weiter“
 
 ## Name
 - Kleine Nutzenzeile (Petrol, 15 px) über der Frage „Spare bis zu 50 % deines PKV-Beitrags“ · Fußnote „Im Einzelfall möglich, abhängig von Tarif, Leistungen und Selbstbehalt. Ob und wie viel du sparen kannst, zeigt die Prüfung.“

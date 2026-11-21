@@ -389,7 +389,7 @@ export const PKV_BEITRAG: FunnelDef = {
       ],
       texte: { frage: T.wohnort.frage, hinweis: T.wohnort.hinweis, knopf: T.weiter },
     },
-    { id: "fast-fertig", art: "info", bild: "zwischenseite", texte: { ueberschrift: T.fastFertig.ueberschrift, liste: T.fastFertig.liste, knopf: T.fastFertig.knopf } },
+    { id: "fast-fertig", art: "info", bild: "zwischenseite", texte: { ueberschrift: T.fastFertig.ueberschrift, text: [...T.fastFertig.text], knopf: T.fastFertig.knopf } },
     {
       id: "name",
       art: "eingabe",

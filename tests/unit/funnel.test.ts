@@ -234,8 +234,9 @@ describe("Funnel-Konfiguration", () => {
     expect(PKV_TEXTE.start.fussnote).toBe(PKV_TEXTE.name.fussnote);
     expect(texteFuer(schritt("kontakt")).fussnote).toBe(PKV_TEXTE.name.fussnote);
     // Keine Ausrufezeichen in Überschriften (CI), „ob und wie viel“ (Recht), Advertorial als Anzeige gekennzeichnet
-    for (const s of f.schritte) expect(texteFuer(s).ueberschrift ?? "", s.id).not.toMatch(/!/);
-    expect(PKV_TEXTE.fastFertig.liste.join(" ")).toContain("ob und wie viel");
+    // Ausnahme Zwischenseite: „Fast fertig!“ wie bei Perspective (Ole, 21.11.2026)
+    for (const s of f.schritte) if (s.id !== "fast-fertig") expect(texteFuer(s).ueberschrift ?? "", s.id).not.toMatch(/!/);
+    expect(PKV_TEXTE.fastFertig.text.join(" ")).toContain("ob und wie viel");
     expect(PKV_TEXTE.start.anzeige).toBe("Anzeige");
     expect(PKV_TEXTE.start.vertrauen).toContain("Dauert etwa 1 Minute");
   });

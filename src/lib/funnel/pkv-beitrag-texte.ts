@@ -81,14 +81,17 @@ export const PKV_TEXTE = {
 
   // Lob wie bei Perspective, aber wahr (privat, ab 650 €) und ohne Ergebnisversprechen; drei Haken-Zeilen, linksbündig.
   // „ob und wie viel“ nach Recht (docs/recht/pkv-funnel.md Abschnitt 2). Kein Ausrufezeichen (CI), kein „Symbolbild“ (Ole).
+  // Nah am Perspective-Original (Ole, 21.11.2026, zweimal bestätigt: „hier wollten wir nah an Perspective bleiben“).
+  // Perspective: „Fast fertig...! Sehr gut! Wir können deinen Beitrag sehr wahrscheinlich stark reduzieren!“ plus drei
+  // Absätze. Das Versprechen vor der Prüfung ist ersetzt (L8), „ob und wie viel“ (Recht), sonst sinngemäß gleich.
   fastFertig: {
-    ueberschrift: "Sehr gut. Deine Angaben passen für eine kostenlose Prüfung.",
-    liste: [
-      "Ein PKV-Experte prüft kostenlos, ob und wie viel du sparen kannst.",
-      "Er ruft dich mit dem Ergebnis an, in der Regel innerhalb von 24 bis 48 Stunden.",
-      "Danach entscheidest du in Ruhe, ganz unverbindlich.",
+    ueberschrift: "Fast fertig! Bei Beiträgen in deiner Höhe steckt oft viel Sparpotenzial.",
+    text: [
+      "Nachdem du dich auf der nächsten Seite eingetragen hast, prüft ein PKV-Experte kostenlos für dich, ob und wie viel Sparpotenzial du realisieren kannst. Mit dem Ergebnis meldet er sich telefonisch bei dir.",
+      "Die Prüfung vorab und das persönliche Gespräch sind für dich kostenlos und unverbindlich.",
+      "Danach entscheidest du ganz entspannt, ob du in deinem aktuellen Tarif bleibst oder einen günstigeren wählst.",
     ],
-    knopf: "Noch 2 Angaben",
+    knopf: "Weiter",
   },
 
   name: {
