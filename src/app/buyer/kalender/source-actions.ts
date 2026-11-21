@@ -109,8 +109,9 @@ export async function saveVideoRaumAction(_prev: SourceResult, fd: FormData): Pr
     update: { videoRoomUrl: url || null },
   });
   await audit("calendar.video_room", { customerId: c.ctx.customerId, entity: "AgentConfig" });
+  const nach = await import("@/lib/video-raum-server").then((m) => m.videoRaumNachtragen(c.ctx.customerId, url || null)).catch(() => 0);
   refresh();
-  return { ok: true, info: url ? "Gespeichert. Videotermine bekommen diesen Link." : "Entfernt." };
+  return { ok: true, info: url ? `Gespeichert. Videotermine bekommen diesen Link${nach ? `, auch ${nach} schon gebuchte` : ""}.` : "Entfernt." };
 }
 
 export async function removeIcsAction(): Promise<void> {
