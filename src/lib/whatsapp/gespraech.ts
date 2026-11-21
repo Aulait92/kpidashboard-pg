@@ -369,6 +369,86 @@ export const KOMPLETTCHECK_KNOEPFE: Knopf[] = [
   { id: "komplettcheck:nein", title: "Nein, danke" },
 ];
 
+// ─── Wer entscheidet mit? (Ole, 21.11.2026) ──────────────────────────────────────────────────────────────────────────
+// „Wenn Partner mit entscheidet, wird Termin mit Partner gemacht, damit eine Entscheidung getroffen werden kann.“
+// Eine Frage direkt nach dem Komplettcheck (gleiche Nachricht wie „Super!“), Knöpfe [Ja, gemeinsam] [Nein, ich allein].
+// Bei „gemeinsam“: kurzer Satz, dass beide zum Termin kommen, und dass sich eine unpassende Zeit leicht ändern lässt.
+// Kein Budget, kein Geld (Ole: „das müssen wir nicht qualifizieren“). Angabe: qualificationData.entscheidung.
+
+/** Gespeicherte Angabe (Terminvorbereitung, Seitenleiste im Chat, Prompt des Assistenten). */
+export const ENTSCHEIDUNG = {
+  mit: "Partner entscheidet mit, soll beim Termin dabei sein",
+  allein: "Entscheidet allein",
+} as const;
+
+/** Knöpfe zur Frage „Entscheidet noch jemand mit?“ (Payload partner:ja|nein, Titel höchstens 20 Zeichen). */
+export const PARTNER_KNOEPFE: Knopf[] = [
+  { id: "partner:ja", title: "Ja, gemeinsam" },
+  { id: "partner:nein", title: "Nein, ich allein" },
+];
+
+/** Alles, was über Partner bzw. Lebenssituation bekannt ist (Formular und Chat), als ein Text. */
+function lebenText(formular: Form, angaben?: unknown): string {
+  const f = formular.filter((x) => /lebenssituation|familienstand|zu versichernde|für wen soll/i.test(x.label)).map((x) => x.value);
+  const q = qualificationPoints(angaben)
+    .filter((p) => p.key === "lebenssituation" || p.key === "versichern")
+    .map((p) => p.value);
+  return [...f, ...q].join(" ");
+}
+
+const SINGLE_RE = /\b(single|alleinstehend|alleinerziehend|allein ?lebend|verwitwet)\b/i;
+const PARTNER_RE = /partner|ehe|verheiratet|\bpaar\b|familie|frau|mann|freundin|freund\b|lebensgef/i;
+
+/**
+ * Frage stellen? Nicht, wenn die Antwort schon bekannt ist (entscheidung, z. B. vom Assistenten festgehalten) und nicht
+ * bei Alleinstehenden bzw. Alleinerziehenden laut Formular oder Chat.
+ */
+export function partnerFrageNoetig(formular: Form, angaben?: unknown): boolean {
+  if (qualificationPoints(angaben).some((p) => p.key === "entscheidung")) return false;
+  return !SINGLE_RE.test(lebenText(formular, angaben));
+}
+
+/** Partner bekannt (z. B. „Mit Partner“, „Familie“)? Dann direkt gefragt: „Entscheiden Sie gemeinsam mit Ihrem Partner?“ */
+export function partnerBekannt(formular: Form, angaben?: unknown): boolean {
+  const t = lebenText(formular, angaben);
+  return PARTNER_RE.test(t) && !SINGLE_RE.test(t);
+}
+
+/** Die Frage (ohne Einleitung). Ja heißt in beiden Fassungen: jemand entscheidet mit. */
+export function partnerFrage(an: Ansprache, bekannt: boolean): string {
+  return bekannt
+    ? a(an, "Entscheidest du gemeinsam mit deinem Partner?", "Entscheiden Sie gemeinsam mit Ihrem Partner?")
+    : a(an, "Entscheidet noch jemand mit, zum Beispiel dein Partner?", "Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+}
+
+/** Erkennt die Frage in einer Nachricht von uns. */
+export const PARTNER_FRAGE_RE = /Entscheidet noch jemand mit|Entscheide(st du|n Sie) gemeinsam mit/;
+
+/** Antwort auf die Frage (Einleitung der nächsten Nachricht der Strecke). */
+export function partnerDank(an: Ansprache, mit: boolean): string {
+  if (!mit) return "Alles klar.";
+  return a(
+    an,
+    "Prima, dann kommt am besten zu zweit zum Termin, so könnt ihr direkt gemeinsam entscheiden. Passt die Zeit nicht für euch beide, schreib mir einfach.",
+    "Prima, dann kommen Sie am besten zu zweit zum Termin, so können Sie direkt gemeinsam entscheiden. Passt die Zeit nicht für Sie beide, schreiben Sie mir einfach.",
+  );
+}
+
+/**
+ * Getippte Antwort auf die Frage auswerten: „mit“ (ja, gemeinsam, meine Frau …), „allein“ (nein, ich allein …), null =
+ * keine klare Antwort (z. B. eine Rückfrage; der Assistent antwortet, ohne Antwort geht es nach 1 Std. weiter). Rein.
+ */
+export function partnerAusText(text: string | null | undefined): "mit" | "allein" | null {
+  const t = (text ?? "").trim().toLowerCase();
+  if (!t || t.length > 160 || /\?\s*$/.test(t)) return null;
+  if (/nicht (allein|alleine)/.test(t)) return "mit";
+  if (/\b(allein|alleine|nur ich|ich selbst|ich entscheide|entscheide ich|niemand|keiner|keine)\b/.test(t)) return "allein";
+  if (/^(nein|nö|ne|nee|no)\b/.test(t)) return "allein";
+  if (/\b(gemeinsam|zusammen|zu zweit|beide|wir|partner|partnerin|frau|mann|ehefrau|ehemann|freundin|freund|verlobte|eltern|mutter|vater|mama|papa)\b/.test(t)) return "mit";
+  if (/^(ja|jap|jo|jep|yes|genau|klar|natürlich|richtig)\b/.test(t)) return "mit";
+  return null;
+}
+
 /**
  * Bei Komplettcheck „Ja“ (nach den Angebotsfragen, P2): Frage nach den bestehenden Verträgen (eigene Nachricht, ohne
  * Knöpfe). einleitung: „Super!“ direkt nach dem Knopf, „Danke!“ nach der letzten Angebotsfrage.
@@ -527,6 +607,7 @@ export function knoepfeFuerText(text: string | null | undefined, folgefragen: re
   if (KALENDER_FRAGE_RE.test(t)) return KALENDER_KNOEPFE;
   if (KOMPLETTCHECK_RE.test(t)) return KOMPLETTCHECK_KNOEPFE;
   if (ZUSAGE_FRAGE_RE.test(t)) return ZUSAGE_KNOEPFE;
+  if (PARTNER_FRAGE_RE.test(t)) return PARTNER_KNOEPFE;
   const fr = folgefragen.find((f) => f.knoepfe?.length && (t.includes(f.sie) || t.includes(f.du)));
   if (fr?.knoepfe) return fr.knoepfe.map((k) => ({ id: `folge:${fr.key}:${k.toLowerCase()}`, title: k }));
   return null;
@@ -655,6 +736,8 @@ export function nachBuchungRegel(o: {
    * „andere“ = Lead möchte eine andere Zeit (Knopf), der Termin ist noch nicht verlegt
    */
   zusage?: "offen" | "andere" | null;
+  /** „Entscheidet noch jemand mit?“ offen (nach dem Komplettcheck, Ole 21.11.2026) */
+  partnerOffen?: boolean;
   abschlussGesendet: boolean;
   /** Adresse bestätigt bzw. Termin zugesagt */
   zugesagt: boolean;
@@ -676,6 +759,10 @@ export function nachBuchungRegel(o: {
   } else if (o.zusage === "offen") {
     lines.push(
       `- Offen ist die Frage „${o.an === "du" ? `Kann ${o.person.nom} fest mit dir rechnen?` : `Kann ${o.person.nom} fest mit Ihnen rechnen?`}“. Sagt der Lead zu (auch frei formuliert, z. B. „ja“, „passt“, „sicher“, „bin dabei“), nutze termin_zugesagt und schreib nichts dazu: Die App antwortet selbst. Möchte er eine andere Zeit, hole mit get_available_slots freie Zeiten, biete zwei konkrete an und verschiebe nach seiner Wahl mit reschedule_appointment. Sonst beantworte nur kurz, was er geschrieben hat, und stell keine eigene Frage.`,
+    );
+  } else if (o.partnerOffen) {
+    lines.push(
+      "- Offen ist die Frage, ob noch jemand mitentscheidet (z. B. der Partner). Beantworte nur kurz, was der Lead geschrieben hat, und stell keine eigene Frage. Sagt er, wer mitentscheidet, halte es mit record_qualification fest (angaben.entscheidung) und bitte darum, dass beide beim Termin dabei sind. Die App schickt die nächste Nachricht selbst.",
     );
   } else if (!gestellt) {
     lines.push("- Die App schickt gleich selbst die nächste Frage. Beantworte nur kurz, was der Lead geschrieben hat, und stell keine eigene Frage.");

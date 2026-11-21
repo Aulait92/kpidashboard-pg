@@ -13,7 +13,7 @@ describe("Strecke nach Buchung über die Buchungsseite", () => {
   it("nur mit aktivem Assistenten, ohne Abmeldung, im 24-Std.-Fenster und nie doppelt", () => {
     const f = strecke.slice(strecke.indexOf("export async function weiterNachBuchungsseite"), strecke.indexOf("export async function runBuchungsseiteNachholen"));
     expect(f).toContain("!conv?.botActive || conv.optedOutAt || !conv.windowExpiresAt");
-    expect(f).toContain("if (stand.angebotsfragenAt || stand.vertragsfrageAt || stand.policenBitteAt || stand.langAngebotAt) return false;");
+    expect(f).toContain("if (stand.angebotsfragenAt || stand.vertragsfrageAt || stand.policenBitteAt || stand.langAngebotAt || stand.partnerFrageAt) return false;");
     expect(f).toContain("if (stand.komplettFrageAt || stand.tierFrageLetzte) return false;");
   });
   it("Cron holt nach 15 Min. die erste Frage nach, wenn die Strecke nie begonnen hat", () => {
