@@ -12,6 +12,7 @@ import { CONSENT_VERSION } from "@/lib/einwilligung-leadformular";
 import { angleResearcher, copywriter, formAgent, reviewer, reviseCopies, reviseForm, strategist } from "@/lib/kampagnen/agents";
 import { checkPrerequisites, loadCampaignContext, type Problem } from "@/lib/kampagnen/context";
 import { gewinnerFuerWinkel } from "@/lib/kampagnen/eigene-gewinner";
+import { formularMitVorgaben } from "@/lib/kampagnen/formular-vorgaben";
 import { adsManagerUrl, buildCampaign, cleanupCampaign, explainMetaError, formUrl, graphApi, pageAccessToken, type MetaApi } from "@/lib/kampagnen/builder";
 import {
   ACTIVE_STATUSES,
@@ -353,7 +354,8 @@ export async function buildCampaignRun(id: string, deps: CampaignDeps = defaultD
     const plan = row.plan as unknown as CampaignPlan;
     const copies = row.copies as unknown as AdCopy[];
     const images = row.creatives as unknown as CreativeImage[];
-    const form = row.form as unknown as LeadFormDraft;
+    // Feste Fragen je Produkt auch für Läufe, deren Formular vor dieser Regel entstand (idempotent)
+    const form = formularMitVorgaben(row.form as unknown as LeadFormDraft, ctx);
     const built = await buildCampaign(deps.meta, {
       ctx,
       plan,

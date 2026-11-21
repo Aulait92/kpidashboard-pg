@@ -65,7 +65,7 @@ function angabe(formular: Form, angaben: unknown, re: RegExp, keys: Qualificatio
 
 /** Lebenssituation aus Formular bzw. Chat: „Familie mit Kindern“, „Paar“ … */
 export function lebenssituationAus(formular: Form, angaben?: unknown): string | null {
-  return angabe(formular, angaben, /lebenssituation|familienstand|zu versichernde/i, ["lebenssituation", "versichern"]);
+  return angabe(formular, angaben, /lebenssituation|familienstand|zu versichernde|für wen soll/i, ["lebenssituation", "versichern"]);
 }
 
 /** Familie mit Kindern (für „Sie und Ihre Familie“)? */
