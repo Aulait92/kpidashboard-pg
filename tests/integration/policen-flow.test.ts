@@ -276,7 +276,7 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     await nfm(phone, { flow_token: m.token, ohne_ki: false, bildschirm: "POLICEN", fotos: [{ id: "m1", file_name: "IMG_1.jpg", mime_type: "image/jpeg", sha256: b64sha(JPG) }, { id: "m2", file_name: "Hausrat.pdf", mime_type: "application/pdf", sha256: b64sha(PDF) }] }, m.waMessageId);
 
     const n = await prisma.policenNachweis.findFirstOrThrow({ where: { leadId: lead.id, art: "einwilligung" } });
-    expect(n).toMatchObject({ ki: true, quelle: "whatsapp", textVersion: FLOW_TEXT_VERSION_SACH, textHash: m.hash, frageWaMessageId: m.waMessageId, datenschutzVersion: "2026-11-22.1" });
+    expect(n).toMatchObject({ ki: true, quelle: "whatsapp", textVersion: FLOW_TEXT_VERSION_SACH, textHash: m.hash, frageWaMessageId: m.waMessageId, datenschutzVersion: "2026-11-19.1" });
     expect(n.textHash).toBe(createHash("sha256").update(m.wortlaut).digest("hex"));
     expect(n.wortlaut).toContain("Zustimmen & senden");
     expect(n.wortlaut).toContain("Häkchen „Lieber ohne KI: nur speichern“: nicht gesetzt");

@@ -50,7 +50,8 @@ gesperrt; nachtragen, sobald der Datenzugang steht).
   andere Policen“ nebenbei wurde überlesen. Jetzt eigener Absatz mit fetter Handlung („*Laden Sie gern auch Ihre anderen
   Policen hoch*“), Grund (im Komplettcheck sehen, ob doppelt gezahlt wird) und den Verträgen, die der Lead selbst genannt
   hat („Ihre Haftpflicht bei Allianz“), nie das angefragte Produkt; nur bei Komplettcheck Ja oder genannten Verträgen.
-  Knopf „Unterlagen senden“ statt „Policen senden“, wenn es um Fahrzeugschein und Rechnung geht. Kennzahl zum Ansehen:
+  Knopf „Unterlagen senden“ statt „Policen senden“ in der Kfz-Nachricht (beim Senden gesetzt, keine neue Vorlage);
+  Formular und Einwilligung bleiben unverändert („Policen senden“, Ole 22.11.2026). Kennzahl zum Ansehen:
   Anteil Kfz-Leads mit Unterlagen vor dem Termin und Anteil mit mehr als zwei Dateien (Policen zusätzlich).
 - Einwilligungen auf Seiten (Buchung 20.11.2026): nie vorausgewählt; was zählt, ist Nutzen und Begrenzung im Text, nicht
   der Haken. Ein freiwilliges Häkchen kostet kaum Buchungen, die Zustimmungsquote ist die eigene Kennzahl (noch nicht gemessen).

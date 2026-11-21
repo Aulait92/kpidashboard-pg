@@ -363,7 +363,7 @@ async function sendeFlowNachrichtRoh(
   const eigenerText = art === "bitte" && !!c.text.kfz && c.fensterOffen;
   const vorlageOk = !eigenerText && !!v && v.status === "approved" && (!c.fensterOffen || (v.category ?? "").toLowerCase() === "utility");
   if (!vorlageOk && !c.fensterOffen) return null;
-  // Kfz außerhalb des Fensters: Meta stellt die allgemeine Vorlage zu, der Verlauf zeigt deren Text
+  // Kfz außerhalb des Fensters: Meta stellt die allgemeine (bestehende) Vorlage zu, der Verlauf zeigt deren Text
   if (vorlageOk && art === "bitte" && c.text.kfz) n = chatNachricht({ ...c.text, kfz: false });
   const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
   if (o.vorweg?.trim() && c.fensterOffen) {

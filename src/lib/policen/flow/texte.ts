@@ -2,7 +2,7 @@
 // alle Texte an den Lead, rein und ohne Datenbank, in Sie und Du (a(an, du, sie)), ohne Gedankenstriche.
 //   1. Chat-Nachricht „Kleiner Tipp für {Tag}“ mit Flow-Knopf [Policen senden] und Quick Reply [Später]
 //      (Kfz-Lead: Fahrzeugschein, letzte Rechnung, genannte andere Verträge, Knopf [Unterlagen senden], Ole 22.11.2026)
-//   2. Formular (WhatsApp Flow) „Unterlagen senden“ (bis 22.11.2026 „Policen senden“): Kurzliste 1 bis 4, Häkchen „Lieber ohne KI: nur speichern“ (leer),
+//   2. Formular (WhatsApp Flow) „Policen senden“ (für alle Leads gleich, auch Kfz): Kurzliste 1 bis 4, Häkchen „Lieber ohne KI: nur speichern“ (leer),
 //      Link Datenschutzhinweise, Hinweis, Knopf „Zustimmen & senden“ (Flow JSON: flow-json.ts)
 //   3. Bestätigung mit Anzahl Dateien und Knopf [Weitere senden], Fußzeile Widerruf; bei ki = false ein Zusatzsatz
 //   4. „Später“, zwei Erinnerungen (je [Policen senden] [Nein, danke]) und die Antwort auf „Nein, danke“
@@ -110,7 +110,6 @@ export type Nachricht = { text: string; fusszeile: string | null };
 export const ohnePolicenSatz = (an: Ansprache) => a(an, "Dein Termin findet auch ohne Policen statt.", "Ihr Termin findet auch ohne Policen statt.");
 /** Kfz (Ole, 22.11.2026): „… ohne Unterlagen statt.“ (Fahrzeugschein und Rechnung sind keine Policen). */
 export const ohneUnterlagenSatz = (an: Ansprache) => a(an, "Dein Termin findet auch ohne Unterlagen statt.", "Ihr Termin findet auch ohne Unterlagen statt.");
-const ohneSatz = (k: Pick<FlowTextKontext, "an" | "kfz">) => (k.kfz ? ohneUnterlagenSatz(k.an) : ohnePolicenSatz(k.an));
 
 /**
  * Text der Chat-Nachricht. Ohne Pronomen ein Satz ohne er/sie; ohne Termin „vor Ihrem Termin“.
@@ -150,7 +149,6 @@ export function chatNachricht(k: FlowTextKontext): Nachricht {
 
 /** Dynamische Texte des Formulars (Flow JSON: ${data.<key>}). */
 export type FormularDaten = {
-  intro: string;
   ueberschrift: string;
   punkt1: string;
   punkt2: string;
@@ -162,9 +160,8 @@ export type FormularDaten = {
 
 /** Feste Texte des Formulars (stehen im Flow JSON). */
 export const FORMULAR = {
-  /** Ole, 22.11.2026: passt zu „Policen senden“ und „Unterlagen senden“ (Kfz: Fahrzeugschein, Rechnung, Policen) */
-  titel: "Unterlagen senden",
-  /** Einleitung (dynamisch, data.intro); Kfz siehe formularDaten */
+  // Bleibt „Policen senden“ (Ole, 22.11.2026): sonst neues Flow JSON, neue Einwilligungsfassung und neue Vorlagen
+  titel: "Policen senden",
   intro: "Meist reicht ein Foto der ersten Seite. Gern mehrere Verträge auf einmal.",
   fotos: "Fotos aufnehmen oder wählen",
   pdfs: "PDFs auswählen",
@@ -180,15 +177,14 @@ export function formularDaten(k: FlowTextKontext, datenschutzUrl: string): Formu
     ? a(an, "damit dein Vergleich zum Termin schon fertig ist", "damit Ihr Vergleich zum Termin schon fertig ist")
     : `damit ${k.pronomen ?? k.name} sich vorbereiten kann`;
   const gesundheit = k.gesundheit ? ", auch wenn die Policen Gesundheitsangaben enthalten" : "";
-  const unterlagen = k.kfz ? a(an, "deinen Unterlagen", "Ihren Unterlagen") : a(an, "deinen Policen", "Ihren Policen");
+  // Formular für alle Leads gleich, auch Kfz (Ole, 22.11.2026: keine neue Einwilligungsfassung)
   return {
-    intro: k.kfz ? "Je ein Foto reicht, beim Fahrzeugschein die Vorderseite. Gern mehrere auf einmal." : FORMULAR.intro,
-    ueberschrift: `Das passiert mit ${unterlagen}`,
+    ueberschrift: a(an, "Das passiert mit deinen Policen", "Das passiert mit Ihren Policen"),
     punkt1: `1. **${a(an, "Nur für deinen Termin:", "Nur für Ihren Termin:")}** ${mitFirma(k.name, k.firma)} speichert sie zur Vorbereitung.`,
     punkt2: `2. **Per KI ausgelesen, ${zweck}:** Die Vertragsdaten liest ein KI-Dienst in der EU aus${gesundheit}.`,
     punkt3: "3. **Beteiligt:** WhatsApp (Meta, Zugriff auch aus den USA) und der Dienstleister performancegrowth.",
     punkt4: `4. **Jederzeit widerrufbar:** ${a(an, "Schreib „Widerruf“, dann wird alles gelöscht.", "Schreiben Sie „Widerruf“, dann wird alles gelöscht.")}`,
-    hinweis: `${a(an, "Mit „Zustimmen & senden“ bist du mit den Punkten oben einverstanden.", "Mit „Zustimmen & senden“ sind Sie mit den Punkten oben einverstanden.")} ${ohneSatz(k)}`,
+    hinweis: `${a(an, "Mit „Zustimmen & senden“ bist du mit den Punkten oben einverstanden.", "Mit „Zustimmen & senden“ sind Sie mit den Punkten oben einverstanden.")} ${ohnePolicenSatz(an)}`,
     datenschutz_url: datenschutzUrl,
   };
 }
@@ -199,7 +195,7 @@ const ohneMarkdown = (t: string) => t.replace(/\*\*/g, "");
 export function formularWortlaut(d: FormularDaten): string {
   return [
     FORMULAR.titel,
-    d.intro,
+    FORMULAR.intro,
     `${FORMULAR.fotos} / ${FORMULAR.pdfs}`,
     d.ueberschrift,
     ohneMarkdown(d.punkt1),
@@ -221,10 +217,8 @@ export const textHash = (wortlaut: string) => createHash("sha256").update(wortla
  * textVersionKi sie erkennt): mit Gesundheitsangaben „.g1“, ohne (Tierkranken bzw. Kranken/BU/Leben nicht freigegeben)
  * „.s1“. Bei jeder inhaltlichen Änderung hochzählen; der genaue Wortlaut steht zusätzlich als Hash im Nachweis.
  */
-// 2026-11-22: Titel „Unterlagen senden“ (vorher „Policen senden“), bei Kfz Einleitung, Überschrift und „ohne Unterlagen“
-// (Ole, 22.11.2026); Inhalt der Einwilligung (Zweck, Beteiligte, KI, Widerruf) unverändert.
-export const FLOW_TEXT_VERSION = "2026-11-22.g1";
-export const FLOW_TEXT_VERSION_SACH = "2026-11-22.s1";
+export const FLOW_TEXT_VERSION = "2026-11-19.g1";
+export const FLOW_TEXT_VERSION_SACH = "2026-11-19.s1";
 export const flowTextVersion = (gesundheit: boolean) => (gesundheit ? FLOW_TEXT_VERSION : FLOW_TEXT_VERSION_SACH);
 
 // ─── 3. Bestätigung ─────────────────────────────────────────────────────────

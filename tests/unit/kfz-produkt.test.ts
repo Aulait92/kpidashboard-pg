@@ -120,15 +120,12 @@ describe("Texte an Kfz-Leads", () => {
     expect(chatNachricht({ ...KFZ, kfz: false }).text.endsWith("Ihr Termin findet auch ohne Policen statt.")).toBe(true);
   });
 
-  it("Knopf „Unterlagen senden“ nur für Kfz (höchstens 20 Zeichen), Formular und Bestätigung passend", () => {
+  it("Knopf „Unterlagen senden“ nur für Kfz (höchstens 20 Zeichen), Formular unverändert, Bestätigung ohne Kfz", () => {
     expect(flowKnopf(KFZ)).toBe(KNOPF_UNTERLAGEN_SENDEN);
     expect(flowKnopf({ kfz: false })).toBe(KNOPF_POLICEN_SENDEN);
     expect(KNOPF_UNTERLAGEN_SENDEN.length).toBeLessThanOrEqual(20);
-    const d = formularDaten(KFZ, "https://x.de/d");
-    expect(d.ueberschrift).toBe("Das passiert mit Ihren Unterlagen");
-    expect(d.hinweis.endsWith("Ihr Termin findet auch ohne Unterlagen statt.")).toBe(true);
-    expect(d.intro).toMatch(/Fahrzeugschein/);
-    expect(formularDaten({ ...KFZ, kfz: false }, "https://x.de/d").ueberschrift).toBe("Das passiert mit Ihren Policen");
+    // Formular (Einwilligung) für Kfz genau wie für alle anderen (Ole, 22.11.2026: keine neue Fassung)
+    expect(formularDaten(KFZ, "https://x.de/d")).toEqual(formularDaten({ ...KFZ, kfz: false }, "https://x.de/d"));
     expect(bestaetigung(KFZ, 1, true).text).not.toMatch(/Kfz/);
     expect(bestaetigung({ ...KFZ, kfz: false }, 1, true).text).toMatch(/etwa Kfz oder Hausrat/);
   });
