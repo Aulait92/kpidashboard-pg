@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { audit } from "@/lib/audit";
 import { adoptOwnCalendar, remindAdvisorCalendar } from "@/lib/calendar/team";
+import { beraterAllianzSetzen } from "@/lib/calendar/berater-allianz";
 import {
   addBlock,
   connectAllianz,
@@ -166,4 +167,20 @@ export async function remindAdvisorCalendarAction(_prev: SourceResult, fd: FormD
   if (!res.ok) return { error: res.error };
   refresh();
   return { ok: true, info: "Erinnerung gesendet." };
+}
+
+/** Berater: Termine per Einladung an die Allianz-Adresse, Person im Allianz-Online-Kalender der Agentur wählen (21.11.2026). */
+export async function saveBeraterAllianzAction(_prev: SourceResult, fd: FormData): Promise<SourceResult> {
+  const c = await ctxOrError(false);
+  if ("error" in c) return { error: c.error };
+  if (!c.ctx.userId) return { error: "In der Vorschau nicht möglich." };
+  const resourceId = String(fd.get("resourceId") ?? "");
+  if (!resourceId) return { error: "Bitte wählen Sie sich in der Liste aus." };
+  const res = await beraterAllianzSetzen({ customerId: c.ctx.customerId, userId: c.ctx.userId, resourceId, email: String(fd.get("email") ?? "") });
+  if (res.ok) {
+    await audit("calendar.berater_allianz", { customerId: c.ctx.customerId, entity: "AdvisorCalendar", entityId: c.ctx.userId });
+    refresh();
+    revalidatePath("/buyer/team");
+  }
+  return res;
 }

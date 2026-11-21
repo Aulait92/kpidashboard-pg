@@ -67,7 +67,8 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
     },
     allianz: a,
     // ICS und Allianz-Online gelten nur für den Agentur-Kalender.
-    source: userId ? "none" : a ? "allianz" : sources.hasIcs ? "ics" : "none",
+    // Berater mit App-Kalender: freie Zeiten aus dem Allianz-Online-Kalender (lib/calendar/berater-allianz.ts)
+    source: userId ? (a && native?.provider === "app" ? "allianz" : "none") : a ? "allianz" : sources.hasIcs ? "ics" : "none",
     leadTimes,
     videoRoomUrl: agent?.videoRoomUrl ?? null,
     blocks,
