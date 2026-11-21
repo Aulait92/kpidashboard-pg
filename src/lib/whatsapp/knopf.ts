@@ -14,6 +14,7 @@
 //   „Ja, sicher“/„Lieber andere Zeit“ (zusage:ja|andere, Splittest termin_zusage Fassung b) → zugesagt, dann Komplettcheck
 //                                                    bzw. Tierfrage mit „Super, danke!“; bzw. wie „Bitte verschieben“
 //   „Ja, gern“/„Nein, danke“ (komplettcheck:ja|nein) → Komplettcheck am Termin, dann Vertragsfrage bzw. Abschluss
+//   „Ja, gemeinsam“/„Nein, ich allein“ (partner:ja|nein) → wer mitentscheidet (Ole, 21.11.2026), dann die erste Angebotsfrage
 //   Zeit mit 45 Min. (lang:<ISO>) / „Zeit behalten“ (lang:behalten) → Komplettcheck-Termin verlegen bzw. behalten
 //   „Schicke ich gleich“/„Nicht zur Hand“ (policenbitte:<Titel>) → Reaktion auf die Policen-Bitte, dann der Schluss
 //   „Ja, stimmt“/„Andere Adresse“ (email:ja|andere) → Einladung (einmal) bzw. Frage nach der neuen Adresse
@@ -47,6 +48,7 @@ export type KnopfAktion =
   | { aktion: "angebot"; fokus: "beitrag" | "leistung" }
   | { aktion: "komplettcheck"; ja: boolean }
   | { aktion: "zusage"; ja: boolean }
+  | { aktion: "partner"; ja: boolean }
   | { aktion: "kalender"; art: "ja" | "gleich" }
   | { aktion: "email"; art: "ja" | "andere" }
   | { aktion: "eingetragen"; ja: boolean }
@@ -72,6 +74,7 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
   }
   if (p === "komplettcheck:ja" || p === "komplettcheck:nein") return { aktion: "komplettcheck", ja: p.endsWith(":ja") };
   if (p === "zusage:ja" || p === "zusage:andere") return { aktion: "zusage", ja: p.endsWith(":ja") };
+  if (p === "partner:ja" || p === "partner:nein") return { aktion: "partner", ja: p.endsWith(":ja") };
   if (p === "kalender:ja" || p === "kalender:gleich") return { aktion: "kalender", art: p.endsWith(":ja") ? "ja" : "gleich" };
   if (p === "email:ja" || p === "email:andere") return { aktion: "email", art: p.endsWith(":ja") ? "ja" : "andere" };
   if (p === "eingetragen:ja" || p === "eingetragen:nein") return { aktion: "eingetragen", ja: p.endsWith(":ja") };
@@ -301,6 +304,10 @@ export async function handleButtonReply(
   if (k.aktion === "komplettcheck") {
     const { komplettcheckAntwort } = await import("@/lib/whatsapp/termin-strecke");
     return { handled: await komplettcheckAntwort(conversationId, k.ja, now) };
+  }
+  if (k.aktion === "partner") {
+    const { partnerAntwort } = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: await partnerAntwort(conversationId, k.ja ? "mit" : "allein", now) };
   }
   if (k.aktion === "kalender") {
     const { kalenderAntwort } = await import("@/lib/whatsapp/termin-strecke");

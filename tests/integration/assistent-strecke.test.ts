@@ -154,7 +154,8 @@ describe("Termin-Strecke mit Knöpfen", () => {
   const text = (from: string, body: string) => inbound(from, { type: "text", text: { body } });
   const knopf = (from: string, id: string, title: string) => inbound(from, { type: "interactive", interactive: { type: "button_reply", button_reply: { id, title } } });
 
-  async function leadMitChat(o: { qualificationData?: Record<string, string>; now?: Date; email?: string | null; source?: string; formData?: { label: string; value: string }[]; id?: string } = {}) {
+  // „Wer entscheidet mit?“ (Ole, 21.11.2026) ist in den übrigen Pfaden schon beantwortet; eigener Test mit entscheidungOffen
+  async function leadMitChat(o: { qualificationData?: Record<string, string>; now?: Date; email?: string | null; source?: string; formData?: { label: string; value: string }[]; id?: string; entscheidungOffen?: boolean } = {}) {
     const now = o.now ?? new Date();
     const phone = newPhone();
     const lead = await prisma.lead.create({
@@ -185,7 +186,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
         qualified: true,
         windowExpiresAt: new Date(now.getTime() + 20 * HOUR),
         lastMessageAt: now,
-        qualificationData: o.qualificationData ?? { versichern: "Familie", vorhanden: "neu" },
+        qualificationData: { ...(o.entscheidungOffen ? {} : { entscheidung: "Entscheidet allein" }), ...(o.qualificationData ?? { versichern: "Familie", vorhanden: "neu" }) },
         messages: {
           create: [
             { direction: "outbound", body: "Hallo Julia Schneider, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.", sentBy: "system", createdAt: new Date(now.getTime() - 30 * 60_000) },
@@ -458,6 +459,22 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).einladungAn).toBe("julia.neu@example.com");
     expect(policenBitten(gesendet())).toBe(1);
     expect(st.ai).toBeGreaterThan(0);
+  });
+
+  it("Wer entscheidet mit (Ole, 21.11.2026): Frage nach dem Komplettcheck mit Knöpfen; „Ja, gemeinsam“ gespeichert, dann die Angebotsfrage mit Dank", async () => {
+    const { appt, conv, phone } = await gebuchtPerKnopf({ entscheidungOffen: true, qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" } });
+    const ab = gesendet().length;
+    st.ai = 0;
+    await knopf(phone, "komplettcheck:ja", "Ja, gern");
+    const [frage] = gesendet().slice(ab);
+    expect(frage.body).toBe("Super! Entscheiden Sie gemeinsam mit Ihrem Partner?");
+    expect(frage.buttons?.map((b) => b.id)).toEqual(["partner:ja", "partner:nein"]);
+    await knopf(phone, "partner:ja", "Ja, gemeinsam");
+    expect(st.ai).toBe(0);
+    expect(gesendet().at(-1)!.body).toMatch(/^Prima, dann kommen Sie am besten zu zweit zum Termin, so können Sie direkt gemeinsam entscheiden\. Passt die Zeit nicht für Sie beide, schreiben Sie mir einfach\. Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: /);
+    const q = (await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id }, select: { qualificationData: true } })).qualificationData as Record<string, string>;
+    expect(q.entscheidung).toBe("Partner entscheidet mit, soll beim Termin dabei sein");
+    await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
   });
 
   it("Komplettcheck „Ja“, Zeit danach belegt: zwei Zeiten mit 45 Min.; Wahl verlegt denselben Termin, erst danach Einladung", async () => {

@@ -76,6 +76,10 @@ export function kundeWill(d: VorbereitungDaten): { punkte: string[]; quelle: str
   };
   const interesseF = formWert(d, /versicherungsinteresse|interesse/i);
   dazu(q.interesse ?? interesseF ?? d.lead.produkt, !q.interesse && !!interesseF);
+  // Wer entscheidet mit (Ole, 21.11.2026, Frage nach dem Komplettcheck): „Partner entscheidet mit“ gleich oben, damit der
+  // Vermittler beide begrüßt und die Entscheidung im Termin fallen kann; „allein“ weiter unten
+  const mitEntscheider = !!q.entscheidung && !/allein/i.test(q.entscheidung);
+  if (mitEntscheider) dazu(q.entscheidung);
   const tier = [formWert(d, /tierart/i), formWert(d, /name des tieres|tiername/i), formWert(d, /rasse/i)].filter(Boolean).join(", ");
   dazu(q.tier ?? (tier || null), !q.tier && !!tier);
   // Gesundheit des Tieres (TKV, Frage nach der Buchung) gut sichtbar direkt danach
@@ -87,6 +91,7 @@ export function kundeWill(d: VorbereitungDaten): { punkte: string[]; quelle: str
   if (q.anlass) dazu(`Anlass: ${q.anlass}`);
   if (q.tarifwunsch) dazu(`Wunsch: ${q.tarifwunsch}`);
   if (q.einwaende) dazu(`Bedenken: ${q.einwaende}`);
+  if (q.entscheidung && !mitEntscheider) dazu(q.entscheidung);
   if (p.length < 3 && d.zusammenfassung) for (const satz of d.zusammenfassung.split(/(?<=[.!?])\s+/).slice(0, 3 - p.length)) dazu(satz);
   const punkte = p.slice(0, 5);
   const chat = punkte.some((x) => !ausFormular.has(x)) && (qualificationPoints(d.angaben).length > 0 || !!d.zusammenfassung);

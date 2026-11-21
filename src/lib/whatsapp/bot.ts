@@ -47,6 +47,7 @@ import {
   KALENDER_FRAGE_RE,
   knoepfeFuerText,
   nachBuchungRegel,
+  partnerAusText,
   terminKnoepfe,
   terminRegeln,
   terminVorschlagText,
@@ -807,6 +808,16 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       return;
     }
   }
+  // „Entscheidet noch jemand mit?“ (Ole, 21.11.2026): getipptes „ja“, „meine Frau“, „nein, allein“ zählt wie der Knopf
+  // (ohne Assistent); eine Rückfrage beantwortet der Assistent, ohne Antwort geht es nach 1 Std. weiter
+  const partnerWartet = !!stand && strecke.partnerFrageOffen(stand);
+  if (upcoming && partnerWartet && latest?.direction === "inbound" && latest.createdAt > stand!.partnerFrageAt! && !opts.anstoss && !opts.knopfZeit && !opts.hint) {
+    const art = partnerAusText(latest.body);
+    if (art && (await strecke.partnerAntwort(conversation.id, art))) {
+      logTestLead(lead, "partner beantwortet", { art });
+      return;
+    }
+  }
   // „Lieber andere Zeit“ gewählt, Termin noch nicht verlegt: der Assistent bietet Zeiten an, der Komplettcheck wartet
   const zusageAndere = !!upcoming?.rescheduleRequestedAt && stand?.zusageAntwort?.art === "andere" && !stand.komplettFrageAt && !stand.tierFrageLetzte;
   // Lead hat nach der Policen-Bitte keine Policen (bzw. keine Versicherungen): Erinnerungen entfallen, weiter zum Schluss
@@ -819,7 +830,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     await strecke.merke(conversation.id, strecke.STRECKE.policenAntwort, { appointmentId: upcoming.id, art: "keine" });
   }
   // Angebotsfragen erst nach dem Komplettcheck (Reihenfolge P2: Buchung, Komplettcheck, Angebot, Verträge, Abschluss)
-  const angebotsphase = !!stand && strecke.komplettcheckErledigt(stand);
+  const angebotsphase = !!stand && strecke.komplettcheckErledigt(stand) && !partnerWartet;
   const nachBuchung = upcoming
     ? nachBuchungRegel({
         an: ansprache,
@@ -830,6 +841,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         komplettcheckGestellt: !!stand?.komplettFrageAt,
         komplettcheckOffen: !!stand?.komplettFrageAt && !strecke.komplettcheckErledigt(stand),
         zusage: zusageWartet ? "offen" : zusageAndere ? "andere" : null,
+        partnerOffen: partnerWartet,
         abschlussGesendet: !!stand?.abschlussAt || outbound.some((m) => KALENDER_FRAGE_RE.test(m.body ?? "") || EMAIL_BESTAETIGEN_RE.test(m.body ?? "")),
         zugesagt: !!stand?.emailOkLetzte,
       })
