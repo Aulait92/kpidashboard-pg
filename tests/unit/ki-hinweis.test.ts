@@ -157,9 +157,9 @@ describe("KI-Hinweis nach Anwalts-Memo (Rechtsvorprüfung 16.11.2026)", () => {
     for (const p of OUTREACH_PURPOSES) {
       expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v12_sie`);
       const req = buildTemplateRequest(p, names, undefined, "sie", { documentExample: "https://x.de/e.pdf" });
-      expect(req.name, p).toBe(`pg_${p}_v12_sie`);
+      expect(req.name, p).toBe(`pg_${p}_${p === "outreach_privatschutz" ? "v13" : "v12"}_sie`); // Einreichen: nächste Fassung
       expect((req.components as { type: string; text?: string }[]).find((c) => c.type === "FOOTER")?.text, p).toBe(ERSTINFO_FOOTER_V12);
-      expect(NAECHSTE_FASSUNG[p], p).toBeUndefined();
+      expect(NAECHSTE_FASSUNG[p], p).toBe(p === "outreach_privatschutz" ? "v13" : undefined); // v13 wartet auf Freigabe
       for (const t of [TEMPLATE_BODY[p].du!, TEMPLATE_BODY[p].sie, TEMPLATE_BODY_B[p]!.du!, TEMPLATE_BODY_B[p]!.sie]) {
         expect(t, p).not.toContain("Hier schreibt");
         expect(t, p).toMatch(/\*[^*]+\?\*/);
