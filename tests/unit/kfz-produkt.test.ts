@@ -147,3 +147,27 @@ describe("Auslesen: Fahrzeugschein und volle Versicherungsscheinnummer (nur Kfz)
     expect(unplausibel({ hsn: { w: "0603", s: "ok" }, tsn: { w: "BJP", s: "ok" } } as never, "kfz")).toEqual([]);
   });
 });
+
+describe("Kfz-Leadformular (docs/kfz-leadformular.md)", () => {
+  it("Anlass und Schutz aus dem Formular werden erkannt und nicht noch einmal gefragt", () => {
+    for (const [anlass, schutz] of [
+      ["Worum geht es?", "Welchen Schutz wünschen Sie?"],
+      ["Worum geht es dir?", "Welchen Schutz wünschst du dir?"],
+    ]) {
+      const src = { formular: [{ label: anlass, value: "Versicherung wechseln (jetziges Auto)" }, { label: schutz, value: "Vollkasko" }, { label: "Geburtsdatum", value: "1985-02-01" }, { label: "Postleitzahl", value: "12209" }], angaben: null };
+      const keys = folgefragen(["kfz"], src).map((f) => f.key);
+      expect(keys).not.toContain("kfzAnlass");
+      expect(keys).not.toContain("kfzSchutz");
+      expect(keys).not.toContain("geburt");
+      expect(keys).not.toContain("plz");
+      expect(keys).toContain("kfzSchaeden");
+    }
+  });
+
+  it("„Weiß ich noch nicht“ gilt als beantwortet (klärt der Berater), neues Auto ebenso", () => {
+    const src = { formular: [{ label: "Worum geht es?", value: "Neues Auto versichern" }, { label: "Welchen Schutz wünschen Sie?", value: "Weiß ich noch nicht" }], angaben: null };
+    const keys = folgefragen(["kfz"], src).map((f) => f.key);
+    expect(keys).not.toContain("kfzAnlass");
+    expect(keys).not.toContain("kfzSchutz");
+  });
+});
