@@ -65,14 +65,14 @@ const BEANTWORTET: Record<Exclude<ErstanschreibenZweck, "outreach" | "outreach_z
 describe("v10/v11: Texte und Knöpfe", () => {
   it("Texte wie von Ole vorgegeben (Sie)", () => {
     expect(TEMPLATE_BODY.outreach_tkv.sie).toBe("schön, dass Sie {{2}} gut absichern möchten 🐾 *Was soll abgesichert sein?*");
-    expect(TEMPLATE_BODY.outreach_privatschutz.sie).toBe("danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
+    expect(TEMPLATE_BODY.outreach_privatschutz.sie).toBe("danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*");
     expect(TEMPLATE_BODY.outreach_hausrat.sie).toBe("danke für Ihre Anfrage zu Ihrer Hausratversicherung! *Haben Sie schon eine Hausrat?*");
     expect(TEMPLATE_BODY.outreach_zahn.sie).toBe("danke für Ihre Anfrage zur Zahnzusatzversicherung! *Was ist Ihnen am wichtigsten?*");
     expect(TEMPLATE_BODY.outreach_pkv.sie).toBe("danke für Ihre Anfrage zur privaten Krankenversicherung! *Wie sind Sie beruflich aufgestellt?*");
     expect(TEMPLATE_BODY.outreach.sie).toBe("danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*");
     expect(TEMPLATE_BODY.outreach_tkv.du).toBe("schön, dass du {{2}} gut absichern möchtest 🐾 *Was soll abgesichert sein?*");
     expect(TEMPLATE_BODY_B.outreach_tkv!.sie).toBe("*was soll für {{2}} abgesichert sein?* 🐾");
-    expect(TEMPLATE_BODY_B.outreach_privatschutz!.sie).toBe("*ist beim Privatschutz schon etwas versichert?* Danke für Ihre Anfrage!");
+    expect(TEMPLATE_BODY_B.outreach_privatschutz!.sie).toBe("*ist bei Haftpflicht und Hausrat schon etwas versichert?* Danke für Ihre Anfrage!");
   });
 
   it.each(ZWECKE)("%s: kurz (ca. 90 Zeichen nach der Anrede), eine Zeile, Frage fett, keine Gedankenstriche, richtige Ansprache", (z) => {
@@ -299,5 +299,14 @@ describe("A/B-Test v10 gegen v11: erst ab 150 Sendungen je Fassung", () => {
     expect(decideAbWinner(s, { min: minJeFassung("outreach_tkv") })).toMatchObject({ winner: null, reason: "zu_wenig" });
     const genug = { a: { sent: 150, replied: 30 }, b: { sent: 150, replied: 68 } };
     expect(decideAbWinner(genug, { min: minJeFassung("outreach_tkv") }).winner).toBe("b");
+  });
+});
+
+describe("Privatschutz v13 (Ole, 21.11.2026): Thema in Worten", () => {
+  it("Antworten auf die frühere Fassung b („beim Privatschutz“) werden weiter erkannt", async () => {
+    const { v10FrageIn } = await import("@/lib/whatsapp/erstanschreiben");
+    expect(v10FrageIn("Hallo Herr Meier, *ist beim Privatschutz schon etwas versichert?* Danke für Ihre Anfrage!")?.zweck).toBe("outreach_privatschutz");
+    expect(v10FrageIn("Hallo Herr Meier, *ist bei Haftpflicht und Hausrat schon etwas versichert?* Danke für Ihre Anfrage!")?.variant).toBe("b");
+    expect(v10FrageIn("Hallo Herr Meier, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*")?.variant).toBe("a");
   });
 });

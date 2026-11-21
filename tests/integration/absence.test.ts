@@ -42,7 +42,7 @@ import {
   undoTaskMoves,
   type AbsenceActor,
 } from "@/lib/absence-flow";
-import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb, leadBereit } from "./db";
 
 const HOUR = 60 * 60 * 1000;
 const today = berlinYmd(new Date());
@@ -75,13 +75,18 @@ beforeEach(() => {
   vi.mocked(sendWhatsAppNotice).mockClear();
 });
 
-async function setup(advisors: number) {
+async function setup(advisors: number, bereit = false) {
   const c = await makeCustomer();
   customers.push(c.id);
   await prisma.calendarConnection.create({ data: { customerId: c.id, provider: "google", status: "connected" } });
   const owner = await makeBuyer(c.id, "owner");
   const team = [];
-  for (let i = 0; i < advisors; i++) team.push(await makeBuyer(c.id, "advisor"));
+  for (let i = 0; i < advisors; i++) {
+    const u = await makeBuyer(c.id, "advisor");
+    // Lead-Verteilung erst mit Kalender und App (lib/team-bereit.ts)
+    if (bereit) await leadBereit(u);
+    team.push(u);
+  }
   const actorOf = (u: { id: string; teamRole: string }, extra: Partial<AbsenceActor> = {}): AbsenceActor => ({
     customerId: c.id,
     userId: u.id,
@@ -94,7 +99,7 @@ async function setup(advisors: number) {
 
 describe("Abwesenheit: Lead-Verteilung", () => {
   it("überspringt Abwesende, ohne „bekommt Leads“ zu ändern", async () => {
-    const { customerId, owner, team, actorOf } = await setup(2);
+    const { customerId, owner, team, actorOf } = await setup(2, true);
     const [a] = team;
     const saved = await saveAbsence(actorOf(a), { userId: a.id, from: today, to: addDaysYmd(today, 3), kind: "krank" });
     for (let i = 0; i < 6; i++) {
