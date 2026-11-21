@@ -1,6 +1,6 @@
 // Weiche eigener Funnel gegen Perspective (Ole, 21.11.2026).
 import { describe, expect, it } from "vitest";
-import { anteilEigen, PERSPECTIVE_URL_DEFAULT, weichenArm, weichenZiel } from "@/lib/funnel/weiche";
+import { anteilEigen, nurPerspective, PERSPECTIVE_URL_DEFAULT, weichenArm, weichenZiel } from "@/lib/funnel/weiche";
 import { decideFunnelHost } from "@/lib/funnel/host";
 
 describe("Funnel-Weiche", () => {
@@ -27,5 +27,19 @@ describe("Funnel-Weiche", () => {
 
   it("/go auf der Funnel-Adresse wird zur Weiche umgeschrieben", () => {
     expect(decideFunnelHost({ host: "beitrag.pkv-tarife.com", pathname: "/go", search: "?utm_source=fb" })).toEqual({ kind: "rewrite", pathname: "/f/pkv-beitrag/go", funnel: "pkv-beitrag" });
+  });
+
+  it("start.pkv-tarife.com: jeder Pfad geht in die Weiche, Hilfspfade und robots bleiben", () => {
+    expect(decideFunnelHost({ host: "start.pkv-tarife.com", pathname: "/beitrag-halbieren/", search: "?utm_source=fb" })).toEqual({ kind: "rewrite", pathname: "/f/pkv-beitrag/go", funnel: "pkv-beitrag" });
+    expect(decideFunnelHost({ host: "start.pkv-tarife.com", pathname: "/" })).toEqual({ kind: "rewrite", pathname: "/f/pkv-beitrag/go", funnel: "pkv-beitrag" });
+    expect(decideFunnelHost({ host: "start.pkv-tarife.com", pathname: "/robots.txt" })).toEqual({ kind: "robots" });
+    expect(decideFunnelHost({ host: "start.pkv-tarife.com", pathname: "/_next/static/x.js" }).kind).toBe("serve");
+  });
+
+  it("eigener Funnel auf fremder Adresse und HvK immer Perspective", () => {
+    expect(weichenZiel("eigen", "?a=1", { eigenUrl: "https://beitrag.pkv-tarife.com/" })).toBe("https://beitrag.pkv-tarife.com/?a=1");
+    expect(nurPerspective("?utm_campaign=hvk_geo&utm_content=x")).toBe(true);
+    expect(nurPerspective("?utm_campaign=pkv")).toBe(false);
+    expect(PERSPECTIVE_URL_DEFAULT).not.toContain("start.pkv-tarife.com");
   });
 });

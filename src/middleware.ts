@@ -174,7 +174,7 @@ function funnelPage(req: NextRequest, rewrite?: string): NextResponse {
 
 /** Funnel-Adresse (FUNNEL_HOSTS, Standard beitrag.pkv-tarife.com): nur der Funnel, alles andere zurück auf /. */
 function funnelHost(req: NextRequest): NextResponse | null {
-  const d = decideFunnelHost({ host: requestHost(req.headers), pathname: req.nextUrl.pathname, search: req.nextUrl.search, hosts: process.env.FUNNEL_HOSTS });
+  const d = decideFunnelHost({ host: requestHost(req.headers), pathname: req.nextUrl.pathname, search: req.nextUrl.search, hosts: process.env.FUNNEL_HOSTS, weicheHosts: process.env.WEICHE_HOSTS });
   switch (d.kind) {
     case "pass":
       return null;
