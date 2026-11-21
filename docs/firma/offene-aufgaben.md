@@ -12,6 +12,7 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 
 | Aufgabe | Stand | Wer |
 |---|---|---|
+| Team-Überblick für Inhaber (Termine 7 Tage, Offenes je Mitglied, Karte auf Heute), Branch `worktree-agent-abe206f8fef110ae2`, nicht gepusht; Notiz `docs/ux/team-ueberblick-2026-11-21.md`. Offen: Persona-Test auf Staging mit echtem Team, nach Livegang Fehlklicks auf der Team-Zeile (Tippen klappt jetzt auf statt Menü) prüfen | wartet auf Merge | UX/UI / CTO |
 | Tierversicherung Katze: Text je Umfang (OP, voll, offen) statt immer „OP-Versicherung“ | Teilarbeit Branch `tkv-umfang` | CTO |
 | Keine neuen Terminvorschläge, wenn der Lead schon einen künftigen Termin hat | offen | CTO |
 | Einrichtung Allianz (Punkte 3, 4, 10 von Ole): Ihre Angaben einmal, Kalender mit Vertreternummer, Meta-Vorprüfung; Branch `worktree-agent-ab123bfa8feb0009d`, nicht gepusht. Offen: Persona-Test auf Staging, nach Livegang messen (Abbruch im Schritt Kalender, Zeit bis Schritt 4) | wartet auf Merge | UX/UI / CTO |
