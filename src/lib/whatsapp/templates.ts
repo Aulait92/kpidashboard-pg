@@ -179,7 +179,8 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   outreach_hausrat: "v12",
   // Kfz (Ole, 21.11.2026: Einstiegsfrage je Anlass, erstanschreiben.ts): neu, Fußzeile wie v12; bis zur Freigabe bei Meta
   // geht das bisherige allgemeine Erstanschreiben raus (outreach.ts fallbackPurposes, Telefonatsfrage)
-  outreach_kfz: "v12",
+  // v13 (21.11.2026): Fassung b nennt die Kfz-Versicherung; bis zur Freigabe sendet die App v12 (rankOutreach)
+  outreach_kfz: "v13",
   outreach_kfz_wechsel: "v12",
   outreach_kfz_neu: "v12",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern

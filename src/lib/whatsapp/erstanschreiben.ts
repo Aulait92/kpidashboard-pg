@@ -269,7 +269,8 @@ export const ERSTANSCHREIBEN_V10: Record<ErstanschreibenZweck, V10Frage> = {
   },
   outreach_kfz: {
     a: { sie: "danke für Ihre Anfrage zur Kfz-Versicherung! *Für Ihr jetziges Auto oder ein neues?*", du: "danke für deine Anfrage zur Kfz-Versicherung! *Für dein jetziges Auto oder ein neues?*" },
-    b: { sie: "*geht es um Ihr jetziges Auto oder ein neues?* Danke für Ihre Anfrage!", du: "*geht es um dein jetziges Auto oder ein neues?* Danke für deine Anfrage!" },
+    // b v13 (Ole, 21.11.2026: „hier wird noch nicht klar, dass es um die Kfz-Versicherung geht“, aber kurz bleiben)
+    b: { sie: "*Kfz-Versicherung für Ihr jetziges Auto oder ein neues?* Danke für Ihre Anfrage!", du: "*Kfz-Versicherung für dein jetziges Auto oder ein neues?* Danke für deine Anfrage!" },
     knoepfe: ["Jetziges Auto", "Neues Auto"],
     feld: "kfzVertrag",
     planKey: null,

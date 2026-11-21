@@ -67,7 +67,7 @@ describe("Kfz: Texte, Knöpfe, Vorlagen", () => {
     expect(TEMPLATE_BODY.outreach_kfz_neu.sie).toBe("danke für Ihre Anfrage zur Kfz-Versicherung! *Ist das neue Auto schon da?*");
     expect(TEMPLATE_BODY_B.outreach_kfz_neu!.du).toBe("*ist das neue Auto schon da?* Danke für deine Anfrage zur Kfz-Versicherung!");
     expect(TEMPLATE_BODY.outreach_kfz.du).toBe("danke für deine Anfrage zur Kfz-Versicherung! *Für dein jetziges Auto oder ein neues?*");
-    expect(TEMPLATE_BODY_B.outreach_kfz!.sie).toBe("*geht es um Ihr jetziges Auto oder ein neues?* Danke für Ihre Anfrage!");
+    expect(TEMPLATE_BODY_B.outreach_kfz!.sie).toBe("*Kfz-Versicherung für Ihr jetziges Auto oder ein neues?* Danke für Ihre Anfrage!");
     expect(templateTextFor("outreach_kfz_wechsel", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zur Kfz-Versicherung! *Wann läuft Ihr jetziger Vertrag aus?*");
     expect(templateTextFor("outreach_kfz_wechsel", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zur Kfz-Versicherung! *Wann läuft Ihr jetziger Vertrag aus?*");
   });
