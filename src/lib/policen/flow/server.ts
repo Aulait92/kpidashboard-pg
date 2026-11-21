@@ -216,6 +216,7 @@ export async function flowChat(conversationId: string, now = new Date()): Promis
       kiFertig,
       // Tierkranken: ohne Gesundheitssatz (Tierdaten sind keine Gesundheitsdaten nach Art. 9 DSGVO)
       gesundheit: s.sp.gesundheitAn && !tier,
+      kfz: await import("@/lib/whatsapp/produkt-fragen").then((m) => m.istKfzProdukt(source)),
     },
   };
 }

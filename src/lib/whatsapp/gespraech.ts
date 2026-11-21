@@ -226,6 +226,12 @@ export function bereitlegenListe(
   if (purpose === "outreach_tkv") return mit([a(an, "die Chipnummer deines Tieres", "die Chipnummer Ihres Tieres")]);
   if (purpose === "outreach_pkv") return mit([a(an, "deine aktuelle Police mit dem letzten Beitragsschreiben", "Ihre aktuelle Police mit dem letzten Beitragsschreiben"), ...(familie ? [geburtsdaten] : [])]);
   if (purpose === "outreach_zahn") return mit(familie ? [geburtsdaten] : []);
+  // Kfz (Ole, 21.11.2026): die zwei Unterlagen, die der Rechner braucht
+  if (sparten.includes("kfz"))
+    return mit([
+      a(an, "deinen Fahrzeugschein", "Ihren Fahrzeugschein"),
+      a(an, "die letzte Rechnung deiner Kfz-Versicherung (mit SF-Klasse)", "die letzte Rechnung Ihrer Kfz-Versicherung (mit SF-Klasse)"),
+    ]);
   if (purpose !== "outreach_privatschutz" && !sparten.length) return vertraege;
   const unbekannt = (sparte: RechnerSparte, key: string) => !angabenFuerSparte(quelle, sparte).find((x) => x.key === key)?.wert;
   return mit([

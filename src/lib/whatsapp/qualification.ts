@@ -20,6 +20,9 @@ export const QUALIFICATION_FIELDS = [
   // Gesundheit des Tieres (TKV, feste Frage nach der Buchung, lib/whatsapp/tier-fragen.ts); keine Art.-9-Daten
   { key: "tiergesundheit", label: "Gesundheit (Tier)", hint: "nur Tiere: z. B. gesund oder War in Behandlung: Zahnbehandlung im Frühjahr" },
   { key: "tarifwunsch", label: "Gewünschter Schutz", hint: "z. B. nur OP-Schutz oder volle Krankenversicherung" },
+  // Kfz (Ole, 21.11.2026): was der Allianz-Rechner braucht, aus Fahrzeugschein und letzter Rechnung des Vorversicherers
+  { key: "fahrzeug", label: "Fahrzeug", hint: "nur Kfz: Herstellerschlüssel (HSN, 4 Ziffern, Feld 2.1) und Typschlüssel (TSN, 3 Zeichen, Feld 2.2), z. B. HSN 0603, TSN BJP; oder: Foto vom Fahrzeugschein geschickt" },
+  { key: "vorversicherung", label: "Bisherige Kfz-Versicherung", hint: "nur Kfz: Versicherer, SF-Klasse Haftpflicht und Vollkasko, Versicherungsscheinnummer, z. B. HUK-Coburg, SF 12 / SF 8, KV-123456; oder: Foto der Rechnung geschickt" },
   { key: "vorschaeden", label: "Vorschäden (5 Jahre)", hint: "je Art mit Anzahl, z. B. Hausrat 0, Fahrraddiebstahl 1; oder offen" },
   { key: "anlass", label: "Anlass", hint: "z. B. Umzug, Schaden, Geburt" },
   { key: "einwaende", label: "Einwände", hint: "Bedenken oder Fragen des Leads" },

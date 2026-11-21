@@ -97,7 +97,7 @@ ungültig“ höchstens einmal am Tag.
 ## Schema und Filter (K4, K5)
 
 - Festes Schema (`felder.ts`): alle Sparten Versicherer, Tarif, Versicherungsnummer (nur letzte 4 Zeichen,
-  „…1234“), Beitrag, Zahlweise (Monatsbetrag berechnet), Beginn, Ablauf, Kündigungsfrist, nächster Kündigungstermin;
+  „…1234“; bei Kfz zusätzlich die volle Nummer für die SF-Übertragung, Ole 21.11.2026, Feld `versicherungsnummer_voll`), Beitrag, Zahlweise (Monatsbetrag berechnet), Beginn, Ablauf, Kündigungsfrist, nächster Kündigungstermin;
   Selbstbeteiligung (Sach). Je Sparte: Hausrat (Versicherungssumme, Wohnfläche, Unterversicherungsverzicht, Elementar,
   Fahrrad), Haftpflicht (Deckungssumme, Single/Paar/Familie/Alleinerziehend, Schlüsselverlust, Forderungsausfall), Kfz
   (SF Haftpflicht/Kasko, Kasko-Art, Fahrleistung, Werkstattbindung), Wohngebäude (Versicherungssumme, Wert 1914,

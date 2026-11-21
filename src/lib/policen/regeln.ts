@@ -128,7 +128,7 @@ const SPARTE_RE: [RegExp, Sparte][] = [
   [/wohngeb(ä|ae)ude|geb(ä|ae)udevers/i, "wohngebaeude"],
   [/hausrat/i, "hausrat"],
   [/rechtsschutz/i, "rechtsschutz"],
-  [/\bkfz\b|kraftfahr|auto\s*vers|autoversicherung|teilkasko|vollkasko|motorrad/i, "kfz"],
+  [/\bkfz\b|kraftfahr|auto\s*vers|autoversicherung|teilkasko|vollkasko|motorrad|fahrzeugschein|zulassungsbescheinigung/i, "kfz"],
   [/haftpflicht|\bphv\b/i, "haftpflicht"],
 ];
 

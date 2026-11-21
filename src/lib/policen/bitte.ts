@@ -121,9 +121,12 @@ export function policenBitte(o: {
   datenschutzUrl?: string | null;
   /** Bestehende Verträge des Leads (Vertragsfrage im Chat): stehen statt der festen Beispiele im Text (Ole, 21.11.2026) */
   vertraege?: string[] | null;
+  /** Kfz-Lead (Ole, 21.11.2026): konkret Fahrzeugschein und letzte Rechnung der Kfz-Versicherung statt „Policen“ */
+  kfz?: boolean;
 }): PolicenBitte {
   const { an } = o;
   const wer = nominativ(an, o.vermittler);
+  if (o.kfz) return { text: kfzBitteText(an, wer), knoepfe: [], fusszeile: null, einwilligung: policenEinwilligung(o) };
   const eigene = [...new Set((o.vertraege ?? []).map((v) => v.trim()).filter(Boolean))].slice(0, 4);
   const sparten = eigene.length
     ? eigene.length === 1
@@ -142,6 +145,18 @@ export function policenBitte(o: {
     `Damit ${wer} Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob ${sparten}. ${dann} und der Termin geht deutlich schneller.`,
   );
   return { text, knoepfe: [], fusszeile: null, einwilligung: policenEinwilligung(o) };
+}
+
+/**
+ * Bitte an Kfz-Leads (Ole, 21.11.2026): die zwei Unterlagen, aus denen der Beitrag gerechnet wird. Ohne Versprechen zu
+ * Preisen oder Ersparnis. wer = Vermittler im Nominativ.
+ */
+export function kfzBitteText(an: Ansprache, wer: string): string {
+  return a(
+    an,
+    `Damit ${wer} deinen Beitrag vorab rechnen kann: Schick bitte ein Foto von deinem Fahrzeugschein (Vorderseite) und von der letzten Rechnung deiner Kfz-Versicherung hier in den Chat. Darauf steht alles Nötige, zum Beispiel deine SF-Klasse. Gern auch deine anderen Policen, etwa Haftpflicht oder Hausrat: Dann schaut ${wer} im Termin alles mit an und versucht, dir Geld zu sparen.`,
+    `Damit ${wer} Ihren Beitrag vorab rechnen kann: Schicken Sie bitte ein Foto von Ihrem Fahrzeugschein (Vorderseite) und von der letzten Rechnung Ihrer Kfz-Versicherung hier in den Chat. Darauf steht alles Nötige, zum Beispiel Ihre SF-Klasse. Gern auch Ihre anderen Policen, etwa Haftpflicht oder Hausrat: Dann schaut ${wer} im Termin alles mit an und versucht, Ihnen Geld zu sparen.`,
+  );
 }
 
 /** Beide Nachrichten in der Reihenfolge zum Senden. */

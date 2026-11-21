@@ -10,6 +10,7 @@
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
+import { istKfzProdukt } from "@/lib/whatsapp/produkt-fragen";
 
 /** Sparten mit Rechner (Schlüssel wie im Tarifkatalog bzw. RECHNER in pilot.ts). */
 export type RechnerSparte =
@@ -23,7 +24,8 @@ export type RechnerSparte =
   | "wohngebaeude"
   | "unfall"
   | "tierhalter-hund"
-  | "tierhalter-pferd";
+  | "tierhalter-pferd"
+  | "kfz";
 
 /** Woraus eine Angabe gelesen wird: Formular, Angaben des Assistenten, Adresse des Leads, Tierart der Sparte. */
 export type AngabenQuelle = {
@@ -138,6 +140,36 @@ export const ANGABEN = {
       f("bauweise", "gebaeude", "Ist das Haus massiv gebaut, oder ist es zum Beispiel ein Holz- oder Fertighaus?", "Ist das Haus massiv gebaut, oder ist es zum Beispiel ein Holz- oder Fertighaus?", /massiv|holz|fertighaus|bauweise|stein|beton|ziegel/i),
     ],
   },
+  // Kfz (Ole, 21.11.2026): Fotos von Fahrzeugschein und letzter Rechnung gehen vor (Policen-Bitte der Strecke); die
+  // Fragen sind der Rückfall und nennen das Foto als Alternative. Ein geschicktes Foto zählt als bekannt.
+  fahrzeug: {
+    label: "Fahrzeug (HSN, TSN)",
+    wer: "lead",
+    rang: 20,
+    wert: (c) => c.q("fahrzeug") ?? ([c.form(/herstellerschl|\bhsn\b|2\.1/i), c.form(/typschl|\btsn\b|2\.2/i)].filter(Boolean).join(" / ") || null),
+    fragen: [
+      f(
+        "fahrzeug",
+        "fahrzeug",
+        "Wie lauten die Schlüsselnummern Ihres Fahrzeugs? Sie stehen im Fahrzeugschein unter 2.1 (4 Ziffern) und 2.2 (3 Zeichen). Ein Foto vom Fahrzeugschein reicht auch.",
+        "Wie lauten die Schlüsselnummern deines Fahrzeugs? Sie stehen im Fahrzeugschein unter 2.1 (4 Ziffern) und 2.2 (3 Zeichen). Ein Foto vom Fahrzeugschein reicht auch.",
+      ),
+    ],
+  },
+  vorversicherung: {
+    label: "Bisherige Kfz-Versicherung (Versicherer, SF-Klasse, Vers.-Nr.)",
+    wer: "lead",
+    rang: 21,
+    wert: (c) => c.q("vorversicherung") ?? c.form(/sf-?klasse|schadenfrei|vorversicher/i),
+    fragen: [
+      f(
+        "vorversicherung",
+        "vorversicherung",
+        "Bei welcher Gesellschaft ist Ihr Fahrzeug bisher versichert, und welche SF-Klasse steht auf der letzten Rechnung? Ein Foto der Rechnung reicht auch, dann ist die Versicherungsscheinnummer gleich dabei.",
+        "Bei welcher Gesellschaft ist dein Fahrzeug bisher versichert, und welche SF-Klasse steht auf der letzten Rechnung? Ein Foto der Rechnung reicht auch, dann ist die Versicherungsscheinnummer gleich dabei.",
+      ),
+    ],
+  },
   summen: { label: "Versicherungssummen", wer: "termin", rang: 99, wert: () => null },
   tierart: { label: "Tierart", wer: "lead", rang: 10, wert: (c) => c.form(/tierart/i) ?? c.tierart },
   rasse: { label: "Rasse", wer: "lead", rang: 11, wert: (c) => c.form(/rasse/i) ?? ausChat(c, "Rasse"), fragen: [f("rasse", "tier", "Welche Rasse hat Ihr Tier?", "Welche Rasse hat dein Tier?")] },
@@ -170,6 +202,7 @@ export const RECHNER_ANGABEN: Record<RechnerSparte, AngabeKey[]> = {
   unfall: ["versichern", "geburt", "berufsgruppe"],
   "tierhalter-hund": ["plz", "hunderasse", "hunde"],
   "tierhalter-pferd": ["plz", "pferde"],
+  kfz: ["fahrzeug", "vorversicherung"],
 };
 
 const TIERART: Partial<Record<RechnerSparte, string>> = { "katze-kranken": "Katze", "katze-op": "Katze", "hund-kranken": "Hund", "hund-op": "Hund", "tierhalter-hund": "Hund", "tierhalter-pferd": "Pferd" };
@@ -197,6 +230,8 @@ export function angabenFuerSparte(src: AngabenQuelle, sparte: string): { key: An
  */
 export function spartenDesLeads(source: string | null | undefined, src: AngabenQuelle): RechnerSparte[] {
   const s = (source ?? "").toLowerCase();
+  // Kfz-Versicherung als Produkt (lib/whatsapp/produkt-fragen.ts istKfzProdukt)
+  if (istKfzProdukt(source)) return ["kfz"];
   const op = /\bop\b|op-/.test(s);
   if (!/privatschutz/.test(s) && /\btkv\b|tierkranken|tier-?op|katze|hundekranken|hunde-?op|pferd/.test(s) && !/futter|halter/.test(s)) {
     if (/katze/.test(s) || /\btkv\b|tierkranken|tier-?op/.test(s)) {

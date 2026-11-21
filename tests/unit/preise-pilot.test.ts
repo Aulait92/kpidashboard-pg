@@ -80,7 +80,9 @@ describe("Angaben für den Rechner", () => {
     expect(JSON.stringify(a)).not.toContain("Mimi");
     expect(rechnerAngaben(tier, "hund-op")).toContainEqual({ label: "Tierart", wert: "Katze" });
     expect(rechnerAngaben(d({ angaben: {} }), "unfall").map((x) => x.wert)).toEqual([null, null, null]);
-    expect(rechnerAngaben(d(), "kfz")).toEqual([]);
+    // Kfz (Ole, 21.11.2026): Fahrzeug und bisherige Kfz-Versicherung, unbekannt = leer
+    expect(rechnerAngaben(d(), "kfz").map((x) => x.wert)).toEqual([null, null]);
+    expect(rechnerAngaben(d(), "sonstwas")).toEqual([]);
   });
 
   it("Knopf „In Ihrem Allianz-System berechnen“: alle bekannten Angaben als Text, fehlende weggelassen", () => {

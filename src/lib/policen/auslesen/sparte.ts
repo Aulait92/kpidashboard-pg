@@ -34,6 +34,8 @@ const STICHWORTE: [RegExp, AuslesenSparte][] = [
   [/hausrat/i, "hausrat"],
   [/rechtsschutz/i, "rechtsschutz"],
   [/kraftfahrt|kfz-versicherung|kfz-haftpflicht|teilkasko|vollkasko|fahrzeugversicherung|auto-?versicherung/i, "kfz"],
+  // Fahrzeugschein (Ole, 21.11.2026): Hersteller- und Typschlüssel für den Kfz-Beitrag
+  [/zulassungsbescheinigung|fahrzeugschein/i, "kfz"],
   [new RegExp(`privathaftpflicht|privat-haftpflicht|\\bphv\\b|${NICHT_PRIVAT}haftpflichtversicherung`, "i"), "haftpflicht"],
 ];
 
