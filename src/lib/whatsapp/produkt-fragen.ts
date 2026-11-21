@@ -99,7 +99,7 @@ function kfzCheckliste(): ProduktCheckliste {
       "  • bisheriger Versicherer, SF-Klasse Haftpflicht und Vollkasko und Versicherungsscheinnummer von der letzten Rechnung (angaben.vorversicherung)",
       "- Danach die übrigen Angaben des Allianz-Kfz-Rechners, die nicht auf den Unterlagen stehen (nur was noch unbekannt ist, je eine Frage pro Nachricht):",
       "  • Geburtsdatum (angaben.geburt) und ob der Lead im öffentlichen Dienst arbeitet (angaben.beruf); die Postleitzahl kommt aus dem Formular",
-      "  • Versicherungswechsel für das jetzige Fahrzeug oder neu gekauftes Fahrzeug; gewünschter Schutz (nur Haftpflicht, Teilkasko oder Vollkasko); ob die Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt hat (angaben.kfzVertrag)",
+      "  • Versicherungswechsel für das jetzige Fahrzeug oder neu gekauftes Fahrzeug; gewünschter Schutz (nur Haftpflicht, Teilkasko oder Vollkasko); ob die Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt hat und wenn ja wie viele, gespeichert als „Schäden (3 Jahre): Nein“, „Schäden (3 Jahre): 1“, „Schäden (3 Jahre): 2 oder mehr“ und nach der Rückfrage „Schäden (3 Jahre): 2“ bzw. „Schäden (3 Jahre): 3 oder mehr“ (angaben.kfzVertrag, bisherige Angaben dort behalten)",
       "  • privat oder auch geschäftlich genutzt; Jahr des Führerscheins; weitere Fahrer und das Alter der jüngsten Person (angaben.kfzFahrer)",
       "  • Kilometer pro Jahr; bezahlt, finanziert oder geleast (angaben.kfzDetails)",
       "  • Erstzulassung, Halter, Kennzeichen und Vertragsbeginn (Ablauf des bisherigen Vertrags) stehen auf den Unterlagen: nur fragen, wenn der Lead ausdrücklich kein Foto schicken möchte.",

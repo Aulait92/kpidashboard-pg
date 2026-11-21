@@ -69,13 +69,15 @@ export function plzAus(...texte: (string | null | undefined)[]): string | null {
 /** Antwort auf eine Tierfrage im Chat (lib/whatsapp/tier-fragen.ts: angaben.tier „Rasse: …; Geschlecht: …“). */
 const ausChat = (c: Ctx, label: string): string | null => c.q("tier")?.match(new RegExp(`(?:^|;\\s*)${label}:\\s*([^;]+)`, "i"))?.[1]?.trim() || null;
 
-const f = (key: string, feld: QualificationKey, sie: string, du: string, bekannt?: RegExp, knoepfe?: readonly string[]) => ({
+const f = (key: string, feld: QualificationKey, sie: string, du: string, bekannt?: RegExp, knoepfe?: readonly string[], wenn?: RegExp) => ({
   key,
   feld,
   sie,
   du,
   ...(bekannt ? { bekannt } : {}),
   ...(knoepfe ? { knoepfe: [...knoepfe] } : {}),
+  // Nur fragen, wenn der bisherige Wert passt (z. B. Anzahl der Schäden nur nach „mehrere“)
+  ...(wenn ? { wenn } : {}),
 });
 
 /** Wohnfläche als genaue Zahl (Ole, 19.11.2026: Bereiche reichen dem Rechner nicht); gleiche Frage wie die Zwischenfrage. */
@@ -165,7 +167,10 @@ export const ANGABEN = {
     fragen: [
       f("kfzAnlass", "kfzVertrag", "Geht es um einen Versicherungswechsel für Ihr jetziges Fahrzeug oder um ein neu gekauftes Fahrzeug?", "Geht es um einen Versicherungswechsel für dein jetziges Fahrzeug oder um ein neu gekauftes Fahrzeug?", /wechsel|neu|ersatz|gekauft/i),
       f("kfzSchutz", "kfzVertrag", "Welcher Schutz ist Ihnen wichtig: nur Haftpflicht, Teilkasko oder Vollkasko?", "Welcher Schutz ist dir wichtig: nur Haftpflicht, Teilkasko oder Vollkasko?", /haftpflicht|teilkasko|vollkasko|\btk\b|\bvk\b|noch nicht|wei(ß|ss) (ich )?(es )?nicht|beraten/i),
-      f("kfzSchaeden", "kfzVertrag", "Hat Ihre Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt?", "Hat deine Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt?", /sch(ä|a)den|schadenfrei/i, JA_NEIN),
+      // Anzahl der regulierten Schäden fragt der Allianz-Rechner (1, 2, 3 oder mehr), Ole 21.11.2026: Knöpfe mit Anzahl,
+      // bei „2 oder mehr“ eine Rückfrage. Speichern als „Schäden (3 Jahre): Nein | 1 | 2 | 3 oder mehr“.
+      f("kfzSchaeden", "kfzVertrag", "Hat Ihre Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt?", "Hat deine Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt?", /sch(ä|a)den|schadenfrei/i, ["Nein", "Ja, 1 Schaden", "Ja, 2 oder mehr"]),
+      f("kfzSchadenAnzahl", "kfzVertrag", "Waren es 2 Schäden oder 3 oder mehr?", "Waren es 2 Schäden oder 3 oder mehr?", /sch(ä|a)den[^;]*:\s*(2(?!\s*oder)|3 oder mehr)|\b(2|3 oder mehr) sch(ä|a)den/i, ["2 Schäden", "3 oder mehr"], /2 oder mehr|mehrere/i),
     ],
   },
   kfzFahrer: {
@@ -295,6 +300,8 @@ export function folgefragen(sparten: readonly RechnerSparte[], src: AngabenQuell
       const wert = def.wert(c);
       for (const fr of def.fragen) {
         if (seen.has(fr.key)) continue;
+        const wenn = (fr as { wenn?: RegExp }).wenn;
+        if (wenn && !(wert && wenn.test(wert))) continue;
         // Mehrteilige Angabe (Gebäude): ein Teil gilt als bekannt, wenn er im bisherigen Wert erkennbar ist
         const bekannt = fr.bekannt ? !!wert && fr.bekannt.test(wert) : !!wert;
         seen.add(fr.key);
