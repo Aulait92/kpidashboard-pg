@@ -3,6 +3,7 @@
 // run.ts bzw. builder.ts – hier gibt es keine Seiteneffekte.
 
 import { runAgent, type AgentUsage, type LlmCall } from "@/lib/kampagnen/llm";
+import { eigeneGewinnerBlock, winkelMitEigenemGewinner } from "@/lib/kampagnen/eigene-gewinner";
 import {
   CTAS,
   LIMITS,
@@ -67,15 +68,28 @@ ${c.special ? `- Besonderheiten laut Kunde: ${c.special}` : ""}
 ${c.wish ? `- Zusatzwunsch von Ole: ${c.wish}` : ""}
 
 BEWÄHRTE MUSTER (unsere eigenen Kampagnen):
-${c.patterns}${
+${c.patterns}${eigeneGewinnerAbschnitt(c)}${
     c.libraryWinners
       ? `
 
 GEWINNER AUS DER META-WERBEBIBLIOTHEK (Anzeigen anderer, die in Deutschland seit mindestens 30 Tagen laufen, lange Laufzeit heißt meist: sie rechnen sich):
 ${c.libraryWinners}
-So nutzen: Hook, Aufbau, Tonfall und Winkel dieser Gewinner als Vorlage nehmen und leicht abwandeln, auf den Vermittler, seinen Ort und die Anrede zuschneiden. Nie wörtlich übernehmen, keine fremden Firmen-, Marken- oder Personennamen, keine Preise oder Versprechen daraus übernehmen.`
+So nutzen: Hook, Aufbau, Tonfall und Winkel dieser Gewinner als Vorlage nehmen und leicht abwandeln, auf den Vermittler, seinen Ort und die Anrede zuschneiden. Nie wörtlich übernehmen, keine fremden Firmen-, Marken- oder Personennamen, keine Preise oder Versprechen daraus übernehmen.${
+          eigeneGewinnerBlock(c.eigeneGewinner) ? " Die eigenen Gewinner oben haben Vorrang, die Werbebibliothek ist nur Ergänzung." : ""
+        }`
       : ""
   }`;
+}
+
+/** Abschnitt „Eigene Gewinner“ (Ole, 21.11.2026): echte Zahlen aus dem Werbekonto des Kunden, Vorrang vor der Werbebibliothek. */
+export function eigeneGewinnerAbschnitt(c: Pick<CampaignContext, "eigeneGewinner" | "anrede">): string {
+  const block = eigeneGewinnerBlock(c.eigeneGewinner);
+  if (!block) return "";
+  return `
+
+EIGENE GEWINNER AUS IHREM WERBEKONTO (echte Zahlen der letzten 90 Tage, bestlaufende Anzeigen dieses Kunden, beste zuerst):
+${block}
+So nutzen (Vorrang vor allen anderen Vorlagen): Hook, Aufbau, Länge, Tonfall, Winkel und Bildstil dieser Gewinner übernehmen und für das neue Produkt abwandeln. Es sind die eigenen Anzeigen des Kunden, Formulierungen dürfen deshalb näher übernommen werden als bei fremden Anzeigen. Trotzdem gelten alle Regeln: keine Preise, Prozentzahlen, Ersparnisse oder Versprechen erfinden oder ungeprüft übernehmen, keine Gedankenstriche, Anrede durchgehend „${c.anrede}“ (auch wenn der Gewinner anders anspricht), Einwilligung und Rechtliches bleiben unverändert. Gewinner für ein anderes Produkt: nur Stil, Aufbau und Tonfall übertragen, keine Produktaussagen.`;
 }
 
 // ─── 1. Stratege ───────────────────────────────────────────────────────
@@ -174,7 +188,11 @@ AUFGABE: Leite ${plan.adsPerAdSet} unterschiedliche Werbe-Winkel ab (3–5). Jed
 - hook: die erste Zeile bzw. Kernbotschaft, die im Feed stoppt
 - insight: warum das bei dieser Zielgruppe in dieser Region wirkt
 Die Winkel sollen sich klar unterscheiden (z. B. Kosten-Realität, Regionalität/persönlicher Berater, Neugier/Wissenslücke, Alltagsszene, Vergleich).${
-        c.libraryWinners ? "\nMindestens zwei Winkel lehnen sich an die Gewinner aus der Werbebibliothek an (leicht abgewandelt); nenne im insight, an welchen." : ""
+        c.eigeneGewinner?.length
+          ? `\nMindestens zwei Winkel (bei nur einem eigenen Gewinner: mindestens einer) bauen auf den eigenen Gewinnern aus dem Werbekonto auf (Hook und Aufbau übernehmen, für das Produkt abwandeln); schreibe im insight wörtlich „Eigener Gewinner <Nummer>“ und warum.`
+          : c.libraryWinners
+            ? "\nMindestens zwei Winkel lehnen sich an die Gewinner aus der Werbebibliothek an (leicht abgewandelt); nenne im insight, an welchen."
+            : ""
       }`,
       schema: ANGLES_SCHEMA,
     },
@@ -229,7 +247,11 @@ export async function copywriter(llm: LlmCall, c: CampaignContext, plan: Campaig
 WINKEL:
 ${angles.map((a) => `- ${a.key}: ${a.title}, Hook: ${a.hook} (${a.insight})`).join("\n")}
 
-AUFGABE: Schreibe genau eine Anzeige je Winkel (${angles.length} Anzeigen), Anrede „${c.anrede}“.
+AUFGABE: Schreibe genau eine Anzeige je Winkel (${angles.length} Anzeigen), Anrede „${c.anrede}“.${
+        c.eigeneGewinner?.length
+          ? "\nWinkel mit „Eigener Gewinner N“: Primärtext, Überschrift und Bildzeilen eng am genannten Gewinner ausrichten (Hook, Satzbau, Länge, Tonfall, Aufforderung), Produkt, Ort und Anrede anpassen."
+          : ""
+      }
 ${COPY_SPEC}`,
       schema: COPIES_SCHEMA,
     },
@@ -379,10 +401,13 @@ export const CHECKLIST = [
   "Plan: Budget passt zum Vertrag, Ort stimmt mit der Kundenakte überein.",
 ];
 
+export const CHECK_EIGENE_GEWINNER =
+  "Eigene Gewinner: Mindestens zwei Winkel (bei nur einem Gewinner: einer) orientieren sich erkennbar an den eigenen Gewinnern aus dem Werbekonto (insight nennt „Eigener Gewinner N“), ohne deren Preise oder Versprechen ungeprüft zu übernehmen; sonst gelb.";
+
 export async function reviewer(
   llm: LlmCall,
   c: CampaignContext,
-  input: { plan: CampaignPlan; copies: AdCopy[]; form: LeadFormDraft; images: CreativeImage[] },
+  input: { plan: CampaignPlan; copies: AdCopy[]; form: LeadFormDraft; images: CreativeImage[]; angles?: Angle[] },
 ): Promise<{ value: ReviewResult; usage: AgentUsage }> {
   const r = await runAgent(
     llm,
@@ -392,8 +417,8 @@ export async function reviewer(
       user: `${contextBlock(c)}
 
 CHECKLISTE:
-${CHECKLIST.map((x, i) => `${i + 1}. ${x}`).join("\n")}
-
+${[...CHECKLIST, ...(c.eigeneGewinner?.length ? [CHECK_EIGENE_GEWINNER] : [])].map((x, i) => `${i + 1}. ${x}`).join("\n")}
+${input.angles?.length ? `\nWINKEL: ${JSON.stringify(input.angles)}\n` : ""}
 PLAN: ${JSON.stringify({ dailyBudgetEur: input.plan.dailyBudgetEur, adSets: input.plan.adSets, zielgruppe: input.plan.zielgruppe })}
 ANZEIGEN (index ab 0): ${JSON.stringify(input.copies)}
 FORMULAR: ${JSON.stringify(input.form)}
@@ -409,8 +434,15 @@ Gib status, summary (1–3 Sätze) und findings zurück (index = Anzeige ab 0 bz
 }
 
 /** Feste Prüfungen ohne KI (laufen immer zusätzlich zum Prüfer). */
-export function staticChecks(c: CampaignContext, input: { plan: CampaignPlan; copies: AdCopy[]; form: LeadFormDraft; images: CreativeImage[] }): Finding[] {
+export function staticChecks(c: CampaignContext, input: { plan: CampaignPlan; copies: AdCopy[]; form: LeadFormDraft; images: CreativeImage[]; angles?: Angle[] }): Finding[] {
   const out: Finding[] = [];
+  if (c.eigeneGewinner?.length && input.angles?.length) {
+    const soll = Math.min(2, c.eigeneGewinner.length);
+    const ist = winkelMitEigenemGewinner(input.angles);
+    if (ist < soll) {
+      out.push({ severity: "gelb", area: "text", index: null, issue: `Nur ${ist} Winkel orientieren sich an eigenen Gewinnern aus dem Werbekonto (Soll: ${soll}).`, fix: "Winkel bzw. Anzeigen stärker an den eigenen Gewinnern ausrichten." });
+    }
+  }
   if (!c.privacyUrl) out.push({ severity: "rot", area: "formular", index: null, issue: "Keine Datenschutz-URL des Kunden.", fix: "Datenschutz-URL in der Kampagnen-Karte eintragen." });
   if (!c.city && !c.zip && !c.region) out.push({ severity: "gelb", area: "plan", index: null, issue: "Kein Ort in der Kundenakte, Kampagne läuft deutschlandweit.", fix: "Ort/PLZ im Vertriebskontakt ergänzen." });
   if (Math.abs(input.plan.dailyBudgetEur - c.dailyBudgetEur) > 0.5) {

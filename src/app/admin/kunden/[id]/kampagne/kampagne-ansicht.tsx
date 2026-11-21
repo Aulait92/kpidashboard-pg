@@ -29,7 +29,7 @@ export default async function KundenKampagne({ params }: { params: Promise<{ id:
     campaignProducts(id),
     prisma.campaignRun.findMany({ where: { customerId: id }, orderBy: { createdAt: "desc" }, take: 10, select: { id: true, product: true, status: true, createdAt: true, costCents: true, kind: true, trigger: true } }),
   ]);
-  const defaults = products[0] ? await loadCampaignContext(id, products[0].product).catch(() => null) : null;
+  const defaults = products[0] ? await loadCampaignContext(id, products[0].product, { vorlagen: false }).catch(() => null) : null;
   const latest = runs[0] ? await getRunView(runs[0].id) : null;
 
   return (

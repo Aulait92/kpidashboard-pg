@@ -3,7 +3,9 @@
 import { publicUrl } from "@/lib/public-url";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
 import { libraryWinners, winnersBlock } from "@/lib/kampagnen/ad-library";
+import { ladeEigeneGewinnerStandard, type EigeneGewinnerErgebnis } from "@/lib/kampagnen/eigene-gewinner";
 import { prisma } from "@/lib/prisma";
+import { redactTokens } from "@/lib/meta-leads";
 import { currentBudgets, customerCpl } from "@/lib/budget";
 import { productPatterns } from "@/lib/kampagnen/agents";
 import type { CampaignContext } from "@/lib/kampagnen/types";
@@ -34,7 +36,15 @@ export async function campaignProducts(customerId: string): Promise<{ product: s
 export async function loadCampaignContext(
   customerId: string,
   product: string,
-  opts: { wish?: string | null; privacyUrl?: string | null; dailyBudgetEur?: number | null } = {},
+  opts: {
+    wish?: string | null;
+    privacyUrl?: string | null;
+    dailyBudgetEur?: number | null;
+    /** false: ohne Vorlagen (eigene Gewinner, Werbebibliothek), z. B. für Vorgabewerte beim Seitenaufruf */
+    vorlagen?: boolean;
+    /** ersetzbar für Tests */
+    eigeneGewinner?: (input: { customerId: string; adAccountId: string | null; product: string }) => Promise<EigeneGewinnerErgebnis>;
+  } = {},
 ): Promise<CampaignContext> {
   const c = await prisma.customer.findUniqueOrThrow({
     where: { id: customerId },
@@ -64,6 +74,14 @@ export async function loadCampaignContext(
   const privacyUrl = httpUrl(opts.privacyUrl) ?? httpUrl(web.privacyUrl) ?? httpUrl(web.impressumUrl);
   // Einwilligung im Formular: fester Wortlaut mit Vermittler, Anschrift, KI-Assistent, Widerruf (Ole, 15.11.2026)
   const angaben = await consentAngabenFor(customerId).catch(() => null);
+  const vorlagen = opts.vorlagen !== false;
+  // Eigene Gewinner aus dem angebundenen Werbekonto (Ole, 21.11.2026): Vorrang vor der Werbebibliothek
+  const eigene: EigeneGewinnerErgebnis = vorlagen
+    ? await (opts.eigeneGewinner ?? ladeEigeneGewinnerStandard)({ customerId, adAccountId: c.metaAdAccountId, product }).catch((err) => ({
+        gewinner: [],
+        hinweis: `Eigene Gewinner nicht genutzt: ${redactTokens(err instanceof Error ? err.message : String(err)).slice(0, 160)}`,
+      }))
+    : { gewinner: [], hinweis: null };
   const consentText = angaben ? leadFormConsentText({ ...angaben, datenschutzUrl: privacyUrl ?? angaben.datenschutzUrl }) : null;
   return {
     customerId: c.id,
@@ -95,7 +113,10 @@ export async function loadCampaignContext(
         ? publicUrl(`/book/${await getOrCreateBookingSlug(c.id)}`)
         : null,
     // Gewinner anderer aus der Meta-Werbebibliothek (ohne Zugang zur Bibliothek: leer)
-    libraryWinners: winnersBlock(await libraryWinners(product, { excludePages: [c.name] }).catch(() => [])),
+    libraryWinners: vorlagen ? winnersBlock(await libraryWinners(product, { excludePages: [c.name] }).catch(() => [])) : null,
+    // Bestlaufende Anzeigen aus dem eigenen Werbekonto (ohne Konto/Daten/Berechtigung: leer, Hinweis für den Admin)
+    eigeneGewinner: eigene.gewinner.length ? eigene.gewinner : null,
+    eigeneGewinnerHinweis: eigene.hinweis,
   };
 }
 
