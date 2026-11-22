@@ -2,6 +2,18 @@
 
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
+## 22.11.2026
+- **OFFEN (A, Ole): Belegwerkzeug GetMyInvoices Professional** (Empfehlung CFO mit Red Team): Abruf aus Portalen und
+  Postfächern ab 1.1.2026, Abgleich mit Commerzbank und Amex, Übergabe an DATEV Unternehmen online der Kanzlei, API für
+  „Beleg ja/nein + Link“ je `BankTransaction`. Kosten ca. 99 € netto/Monat plus einmalig bis ca. 275 € fürs Nachholen,
+  DATEV-Module ca. 21 €/Monat falls nicht über die Kanzlei. Candis (ab 389 €), DATEV allein (kein Portalabruf),
+  Lexware Office und BuchhaltungsButler (doppelte Buchhaltung) verworfen. Bedingungen: 14-Tage-Test mit
+  Abdeckungsprüfung der 19 Anbieter, AVV/Serverstandort geprüft, Fragen an den Steuerberater geklärt, Monatszahlung im
+  ersten Quartal. Vorgaben Ole (22.11.): DATEV, ab 1.1.2026, Werkzeug statt Eigenbau. `protokolle/2026-11-22-belegwerkzeug.md`.
+- **Bestellkonto für PPL-Hauptkunden** (A, Ole): Nico Yagci und Tobias D'Angelo bestellen wöchentlich selbst für ihre
+  Vertriebspartner (vorerst nur Dennis Müller bzw. Lukas Socki) und zahlen zentral (eine Zahlungsart, Rechnung an sie).
+  Technik und Livegang: docs/pay-per-lead.md, Abschnitt „Bestellkonto“.
+
 ## 21.11.2026
 - **„Entscheidet noch jemand mit?“ vor dem Terminvorschlag** (A, Ole, 21.11. spät: als eigene Frage vor dem
   Terminvorschlag, damit der Termin nicht verlegt werden muss). Standard (Fassung a); ohne Antwort kommen die Zeiten nach
@@ -208,3 +220,15 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   „WhatsApp erlaubt“); reine Kaltkontakte bekommen nichts (§ 7 UWG, Schutz der Support-Nummer und der Hauptdomain).
   WhatsApp erst nach Freigabe der Vorlage bei Meta. Kontaktakte: Knöpfe „Gewonnen“ und „Verloren“ (mit Grund).
   Code: `lib/vertrieb/nicht-erreicht.ts`, `nicht-erreicht-server.ts`.
+- **22.11.2026, ohne Garantie verkaufen** (Ole: „nimm die garantien für alle kommenden angebote raus, auch aus den
+  vertriebsfolien. ich verkaufe erstmal ohne garantie“): Angebote ab 22.11.2026, 19:15 Uhr ohne Abschnitt „Garantien“
+  (`GUARANTEES_UNTIL`), AGB „Garantien“ nur noch für ältere Angebote (Stand 22.11.2026), Empfehlungsseite ohne Garantien,
+  Vertriebsfolie „Und wenn es schlecht läuft?“ ohne Garantien. Bestehende Verträge und schon versendete Angebote behalten
+  ihre Garantien. Webseite: Eintrag in `docs/webseite-offen.md` (Montag).
+- **22.11.2026, Keine Faxnummern im CRM:** Ole: „Fax-Nummern können bei allen Kontakten und Kontakten in der Zukunft
+  immer raus.“ Spalte `SalesContact.fax` samt bestehender Nummern gelöscht (Migration `20261122140000_kontakt_fax_entfernen`),
+  Anreicherung liest kein Fax mehr aus Impressum/Website, CSV-Import und Kontaktansicht ohne Fax.
+- **22.11.2026, Vorauszahlung standardmäßig anbieten:** Ole: „biete die Vorauszahlung standardmäßig immer an“. Neue
+  Angebote haben „Vorauszahlung anbieten“ vorausgewählt (6 Monate: 1 geschenkt, 12 Monate: 3 geschenkt); der Kunde wählt
+  bei der Annahme weiter selbst, monatlich bleibt vorausgewählt. Abwählbar; greift nicht bei Pay-per-Lead, Startpreis
+  oder ohne Laufzeit. Für „Zahlung nachträglich“ muss sie abgewählt werden.

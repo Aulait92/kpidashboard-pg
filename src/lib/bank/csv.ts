@@ -4,6 +4,8 @@
 //   Ausgaben negativ, deutsches Zahlenformat (1.234,56), Datum TT.MM.JJJJ.
 // American Express (Umsätze → Herunterladen → CSV): „Datum,Beschreibung,Betrag,…,Referenz,…“,
 //   Belastungen POSITIV, Gutschriften/Zahlungen negativ → Vorzeichen wird umgedreht.
+// N26 (Ole, 22.11.2026, einmalig geschäftliche Ausgaben vom Privatkonto): neuer Export „Booking Date, Partner Name,
+//   Payment Reference, Amount (EUR)“ bzw. alter deutscher „Datum, Empfänger, Verwendungszweck, Betrag (EUR)“.
 // Spalten werden über ihre Überschrift erkannt (Reihenfolge egal).
 
 import { createHash } from "node:crypto";
@@ -96,11 +98,11 @@ export function parseDate(raw: string): string | null {
 
 const H = (s: string) => s.toLowerCase().replace(/[^a-zäöüß]/g, "");
 const ALIASES = {
-  date: ["buchungstag", "datum", "buchungsdatum", "date", "transaktionsdatum"],
-  amount: ["betrag", "betrageur", "amount", "betragineur", "umsatz"],
+  date: ["buchungstag", "datum", "buchungsdatum", "date", "transaktionsdatum", "bookingdate"],
+  amount: ["betrag", "betrageur", "amount", "betragineur", "umsatz", "amounteur"],
   currency: ["währung", "waehrung", "currency"],
-  counterparty: ["erscheintaufihrerabrechnungals", "beguenstigterzahlungspflichtiger", "begünstigterzahlungspflichtiger", "empfänger", "empfaenger", "auftraggeber", "nameauftraggeberempfänger", "name"],
-  purpose: ["buchungstext", "beschreibung", "verwendungszweck", "description", "erweitertedetails"],
+  counterparty: ["erscheintaufihrerabrechnungals", "beguenstigterzahlungspflichtiger", "begünstigterzahlungspflichtiger", "empfänger", "empfaenger", "auftraggeber", "nameauftraggeberempfänger", "partnername", "name"],
+  purpose: ["buchungstext", "beschreibung", "verwendungszweck", "description", "erweitertedetails", "paymentreference"],
   reference: ["referenz", "reference", "transaktionsid"],
 };
 

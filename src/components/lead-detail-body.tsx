@@ -197,6 +197,8 @@ export async function LeadDetailBody({
       consentData: true,
       waUnavailableAt: true,
       waUnavailableMailAt: true,
+      // Nur SMS (E-Mail-Funktionen aus, Ole 22.11.2026): Stand der SMS im Hinweis „Kein WhatsApp“
+      mailStrecke: { select: { nurSms: true, smsZahl: true, schritt: true } },
     },
   });
   if (!lead) notFound();
@@ -568,7 +570,17 @@ export async function LeadDetailBody({
                 <b>Kein WhatsApp:</b> Diese Nummer ist nicht per WhatsApp erreichbar, der Assistent schreibt nicht. Bitte direkt anrufen.
               </>
             )}
-            {lead.waUnavailableMailAt ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}
+            {lead.mailStrecke?.nurSms
+              ? lead.mailStrecke.smsZahl > 0
+                ? lead.mailStrecke.smsZahl === 1
+                  ? " Eine SMS mit Ihrem Terminlink ist raus."
+                  : " Zwei SMS mit Ihrem Terminlink sind raus."
+                : lead.mailStrecke.schritt === "sms"
+                  ? " Eine SMS mit Ihrem Terminlink geht zur Geschäftszeit raus."
+                  : ""
+              : lead.waUnavailableMailAt
+                ? " Eine E-Mail mit Ihrem Terminlink ist raus."
+                : ""}
           </span>
           {lead.phone ? (
             <a href={`tel:+${lead.phone}`} className="font-semibold">

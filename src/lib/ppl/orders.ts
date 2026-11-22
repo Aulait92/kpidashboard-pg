@@ -10,6 +10,7 @@ import { sendToAdmins } from "@/lib/push";
 import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { openCredits } from "@/lib/ppl/storno";
 import { bestellBetrag, effektiveSteuer } from "@/lib/ppl/steuer";
+import { ZAHLER_SELECT, zahlerVon } from "@/lib/ppl/bestellkonto";
 
 export const MIN_ORDER = 5;
 export const MAX_ORDER = 2000;
@@ -38,9 +39,12 @@ export async function placeOrder(opts: {
   if (!Number.isFinite(qty) || qty < MIN_ORDER || qty > MAX_ORDER) return { ok: false, error: `Bitte zwischen ${MIN_ORDER} und ${MAX_ORDER} Leads bestellen.` };
   const sub = await prisma.leadSubscription.findUnique({
     where: { id: opts.subscriptionId },
-    include: { customer: { select: { id: true, name: true, stripeCustomerId: true, vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true } } },
+    include: { customer: { select: { ...ZAHLER_SELECT, bestelltUeber: { select: ZAHLER_SELECT } } } },
   });
   if (!sub || !sub.active) return { ok: false, error: "Bezug nicht gefunden oder pausiert." };
+  // Bestellkonto (lib/ppl/bestellkonto.ts): bestellt ein Hauptkunde für diesen Vertriebspartner, zahlt er (Stripe,
+  // Rechnung) und seine Registerprüfung bestimmt die Umsatzsteuer
+  const zahler = zahlerVon(sub.customer);
   if (sub.period !== "week") return { ok: false, error: "Für diesen Bezug gibt es keine Wochenbestellung." };
 
   const { start, end } = weekRange(now, opts.weekOffset);
@@ -57,8 +61,9 @@ export async function placeOrder(opts: {
   const price = Number(sub.price);
   const credits = await openCredits(sub.id);
   // Umsatzsteuer (Ole, 20.11.2026): steuerfrei nach § 4 Nr. 11 UStG nur mit geprüftem Vermittlerstatus, sonst 19 %
-  const { steuer } = effektiveSteuer(sub, sub.customer);
-  const label = `${qty} Leads ${sub.label ?? sub.productKey}, Woche ${fmtWeek(start)}`;
+  const { steuer } = effektiveSteuer(sub, zahler);
+  const fuer = zahler.id !== sub.customerId ? ` für ${sub.customer.name}` : "";
+  const label = `${qty} Leads ${sub.label ?? sub.productKey}${fuer}, Woche ${fmtWeek(start)}`;
   // Einzige Rechenstelle für Anzeige und Abbuchung (lib/ppl/steuer.ts)
   const betrag = bestellBetrag({
     price,
@@ -83,16 +88,16 @@ export async function placeOrder(opts: {
     status = "paid";
   } else {
     const { billingEnabled, chargeNow, hasPaymentMethod } = await import("@/lib/billing");
-    if (!billingEnabled() || !(await hasPaymentMethod(sub.customer.stripeCustomerId))) {
+    if (!billingEnabled() || !(await hasPaymentMethod(zahler.stripeCustomerId))) {
       return { ok: false, error: "Bitte zuerst eine Zahlungsart hinterlegen." };
     }
     try {
       const res = await chargeNow({
-        stripeCustomerId: sub.customer.stripeCustomerId!,
+        stripeCustomerId: zahler.stripeCustomerId!,
         lines: betrag.lines,
         description: label,
         idempotencyKey: `ppl-order-${order.id}-${order.updatedAt.getTime()}`,
-        metadata: { kind: "ppl_order", order_id: order.id, customer_id: sub.customerId },
+        metadata: { kind: "ppl_order", order_id: order.id, customer_id: sub.customerId, ...(fuer ? { zahler_id: zahler.id } : {}) },
         steuer,
       });
       status = res.status;
@@ -110,7 +115,7 @@ export async function placeOrder(opts: {
   if (credit > 0 && status !== "failed") {
     await prisma.lead.updateMany({ where: { id: { in: credits.leadIds } }, data: { creditedAt: now } });
   }
-  await audit("ppl.order", { entity: "LeadOrder", entityId: order.id, customerId: sub.customerId, actor: opts.actor, details: { qty, amount, steuer, brutto: betrag.brutto, week: start.toISOString().slice(0, 10), status } });
+  await audit("ppl.order", { entity: "LeadOrder", entityId: order.id, customerId: sub.customerId, actor: opts.actor, details: { qty, amount, steuer, brutto: betrag.brutto, week: start.toISOString().slice(0, 10), status, ...(fuer ? { zahler: zahler.id } : {}) } });
   if (["paid", "processing"].includes(status) && start <= now) {
     const { redistributeParked } = await import("@/lib/ppl/engine");
     await redistributeParked(sub.productKey, now).catch((err) => reportError(err, "ppl-redistribute"));

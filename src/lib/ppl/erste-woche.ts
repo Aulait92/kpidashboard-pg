@@ -101,11 +101,14 @@ export type FreigabeErgebnis = { released: number; waiting: number; failed: numb
  */
 export async function wartendeFreigeben(customerId: string, actor: AuditActor = { role: "system" }, now = new Date()): Promise<FreigabeErgebnis> {
   const orders = await prisma.leadOrder.findMany({
-    where: { status: "wartet", subscription: { customerId, active: true, period: "week" } },
+    // Bestellkonto (lib/ppl/bestellkonto.ts): Prüfung am Hauptkunden gibt auch die Bestellungen seiner Partner frei
+    where: { status: "wartet", subscription: { active: true, period: "week", OR: [{ customerId }, { customer: { bestelltUeberId: customerId } }] } },
     orderBy: { periodStart: "asc" },
   });
   if (!orders.length) return { released: 0, waiting: 0, failed: 0 };
-  const kunde = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, stripeCustomerId: true, vermittlerGeprueftAt: true } });
+  const zahlerFelder = { name: true, stripeCustomerId: true, vermittlerGeprueftAt: true } as const;
+  const konto = await prisma.customer.findUnique({ where: { id: customerId }, select: { ...zahlerFelder, bestelltUeber: { select: zahlerFelder } } });
+  const kunde = konto?.bestelltUeber ?? konto;
   if (!kunde?.vermittlerGeprueftAt) return { released: 0, waiting: orders.length, failed: 0, reason: "Registernummer noch nicht geprüft" };
   const billing = await import("@/lib/billing");
   if (!billing.billingEnabled() || !(await billing.hasPaymentMethod(kunde.stripeCustomerId).catch(() => false))) {

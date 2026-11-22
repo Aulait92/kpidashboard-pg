@@ -109,7 +109,9 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - Frage: „Welches Budget pro Tag können Sie sich für den Start vorstellen?“
 
 ## 23. Und wenn es schlecht läuft? Ihr Risiko ist klar begrenzt.
-- Garantien kurz erklären, Voraussetzungen offen nennen.
+- Seit 22.11.2026 ohne Garantien (Ole: „ich verkaufe erstmal ohne Garantie“). Garantien nicht erwähnen, auch nicht auf Nachfrage zusagen.
+- Risiko über die Zahlen erklären: „Ab 8 Kunden im Monat sind Sie im Plus“ (Makler: „Selbst mit halber Quote 2× zurück“).
+- Pause und Urlaub jederzeit, Kampagne wird laufend nach Umsatz je Werbe-Euro nachgeschärft.
 - „Ihr Bestand gehört Ihnen, auch wenn Sie aufhören.“
 
 ## 24. Jahresplan: 3 Monate sparen

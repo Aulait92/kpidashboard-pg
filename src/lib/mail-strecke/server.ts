@@ -12,6 +12,10 @@
 //                 Tag 10 letzte Mail. Höchstens 2 SMS (nur Handynummer, Schalter MAIL_STRECKE_SMS), nichts zwischen 20
 //                 und 8 Uhr. Stopp bei jeder Reaktion: Seite im Browser geöffnet, Antwort, Buchung, Antwort per Mail,
 //                 Anruf erreicht, Abmeldung, Lead nicht mehr offen.
+//   Nur SMS       (Ole, 22.11.2026, lib/mail-strecke/nur-sms.ts) E-Mail-Funktionen beim Kunden aus und Nummer nicht bei
+//                 WhatsApp: statt nichts höchstens 2 SMS an die Handynummer, nur zu Geschäftszeiten (sonst wartet die
+//                 SMS bis zum nächsten Fenster), die zweite nach 2 Geschäftstagen; Rückruf zu Geschäftszeiten in der SMS.
+//                 Gleiche Sperren und Stopps wie oben, Festnetz nie. Schalter STRECKE_NUR_SMS=aus.
 //   E3/E4 Seite   app/t/[token]: Antworten und Buchung nur per POST (Server-Aktion) nach Klick im Browser; Termin über
 //                 bookAppointment (Kalender sofort geblockt, Zeit beim Klick neu geprüft). Danach Komplettcheck,
 //                 Angebotsfragen, Bereitlegen, Adresse, Einladung genau einmal (lib/calendar/einladung.ts).
@@ -41,6 +45,7 @@ import {
   type Oeffnungsfrage,
 } from "@/lib/mail-strecke/texte";
 import type { LeadMailAnhang } from "@/lib/mail/lead-versand";
+import { GESCHAEFTSZEITEN_STANDARD, geschaeftszeitenAusPlan, geschaeftszeitText, imGeschaeftsfenster, nurSmsAn, nurSmsText, smsFuerVerlauf, zweiteSmsFaellig, type Geschaeftszeiten } from "@/lib/mail-strecke/nur-sms";
 import { istFestnetz, istMobil } from "@/lib/telefon-typ";
 
 const OFFEN = new Set(["", "neuer lead", "nicht erreicht", "im gespräch"]);
@@ -62,7 +67,22 @@ async function gesperrt(customerId: string, email: string | null, phone: string 
   return !!(await sperreFuer(customerId, { email, phone }));
 }
 
-export type StartErgebnis = { ergebnis: "gestartet" | "schon" | "nicht_moeglich"; grund?: string; gesendet?: boolean };
+export type StartErgebnis = { ergebnis: "gestartet" | "schon" | "nicht_moeglich"; grund?: string; gesendet?: boolean; /** „sms“ = nur SMS (E-Mail-Funktionen aus) */ kanal?: "email" | "sms" };
+
+/** Geschäftszeiten des Kunden (Zeiten des Agentur-Kalenders für Leads, sonst Mo bis Fr 9 bis 18 Uhr). */
+export async function geschaeftszeitenFuer(customerId: string): Promise<Geschaeftszeiten> {
+  const row = await prisma.calendarLeadTimes.findUnique({ where: { calendarKey: customerId }, select: { schedule: true } }).catch(() => null);
+  if (!row?.schedule) return GESCHAEFTSZEITEN_STANDARD;
+  const { parseSchedule } = await import("@/lib/calendar/lead-times");
+  const p = parseSchedule(row.schedule);
+  return geschaeftszeitenAusPlan(p && "schedule" in p ? p.schedule : null);
+}
+
+/** Nummer auf der Sperrliste des Kunden (Abmeldung für alle Kanäle)? */
+async function nummerAbgemeldet(customerId: string, phone: string): Promise<boolean> {
+  const { optOutHash } = await import("@/lib/bestand/links");
+  return (await prisma.bestandOptOut.count({ where: { customerId, kind: "phone", hash: optOutHash("phone", phone), scope: "all" } })) > 0;
+}
 
 /**
  * Strecke für einen Lead starten (idempotent je Lead) und die Erstmail senden. Wirft nicht.
@@ -88,7 +108,9 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
       },
     });
     if (!lead || lead.erasedAt) return { ergebnis: "nicht_moeglich", grund: "nicht_gefunden" };
-    if (!EMAIL_RE.test(lead.email?.trim() ?? "")) return { ergebnis: "nicht_moeglich", grund: "keine_adresse" };
+    // Nur SMS (Ole, 22.11.2026): E-Mail-Funktionen aus und Nummer nicht bei WhatsApp (Festnetz kann keine SMS)
+    const nurSms = !!lead.customer.mailFeaturesOff && ausloeser === "kein_whatsapp";
+    if (!nurSms && !EMAIL_RE.test(lead.email?.trim() ?? "")) return { ergebnis: "nicht_moeglich", grund: "keine_adresse" };
     if (!istOffen(lead.status)) return { ergebnis: "nicht_moeglich", grund: "status" };
     // Rechtsgrundlage wie beim WhatsApp-Erstkontakt (lib/lead-manual.ts startLeadChat): nur eigene Anfrage des Leads
     // (Formular, Meta, Empfehlung); von Hand angelegte Kontakte nicht. Bei „kein WhatsApp“ lief das Erstanschreiben schon.
@@ -99,24 +121,42 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
     // Produkt ohne automatische Nachrichten (Ole, 20.11.2026: PKV-Tarifoptimierung, lib/lead-kontakt-sperre.ts)
     if (ohneAutoNachrichten(lead.source)) return { ergebnis: "nicht_moeglich", grund: "produkt" };
     if (c.dormantSince || c.dataDeletedAt) return { ergebnis: "nicht_moeglich", grund: "ruhend" };
-    if (c.mailFeaturesOff) return { ergebnis: "nicht_moeglich", grund: "mail_aus" };
+    if (c.mailFeaturesOff && (!nurSms || !nurSmsAn())) return { ergebnis: "nicht_moeglich", grund: "mail_aus" };
     if (!c.agentConfig?.active || !c.agentConfig.outreachEnabled) return { ergebnis: "nicht_moeglich", grund: "assistent_aus" };
     const termin = await prisma.appointment.count({ where: { leadId, status: "booked", startsAt: { gt: now } } });
     if (termin) return { ergebnis: "nicht_moeglich", grund: "termin" };
     if (await gesperrt(lead.customerId, lead.email, lead.phone)) return { ergebnis: "nicht_moeglich", grund: "gesperrt" };
+    if (nurSms) {
+      if (!lead.phone || !(await istMobil(lead.phone))) return { ergebnis: "nicht_moeglich", grund: "keine_handynummer" };
+      if (await nummerAbgemeldet(lead.customerId, lead.phone)) return { ergebnis: "nicht_moeglich", grund: "gesperrt" };
+      const { smsAktiv } = await import("@/lib/sms/seven");
+      if (!smsAktiv()) return { ergebnis: "nicht_moeglich", grund: "sms_aus" };
+    }
 
     let id: string;
     try {
-      id = (await prisma.leadMailStrecke.create({ data: { customerId: lead.customerId, leadId, ausloeser, createdAt: now }, select: { id: true } })).id;
+      id = (await prisma.leadMailStrecke.create({ data: { customerId: lead.customerId, leadId, ausloeser, createdAt: now, ...(nurSms ? { nurSms: true, schritt: "sms" } : {}) }, select: { id: true } })).id;
     } catch (e) {
       if (istEindeutigFehler(e)) return { ergebnis: "schon" };
       throw e;
+    }
+    if (nurSms) {
+      const gz = await geschaeftszeitenFuer(lead.customerId);
+      await logLeadHistory(
+        leadId,
+        "status",
+        `SMS-Strecke gestartet (Nummer nicht bei WhatsApp, E-Mail-Funktionen aus): bis zu 2 SMS mit Terminlink und Ihrer Nummer für den Rückruf, nur zu Geschäftszeiten (${geschaeftszeitText(gz)}).`,
+        { customerId: lead.customerId, userId: null },
+      ).catch(() => null);
+      // Sofort, wenn Geschäftszeit ist; sonst zum nächsten Fenster per Cron
+      const r = await sendeStreckenSms(id, "erst", now);
+      return { ergebnis: "gestartet", kanal: "sms", gesendet: r === "sent", ...(r === "sent" ? {} : { grund: r }) };
     }
     await logLeadHistory(leadId, "status", `E-Mail-Strecke gestartet (${(await import("@/lib/mail-strecke/texte")).AUSLOESER_LABEL[ausloeser]}): erste E-Mail mit Terminvorschlägen an den Lead.`, { customerId: lead.customerId, userId: null }).catch(() => null);
     const r = await sendeStreckenMail(id, "erst", now);
     // Tag 1: SMS sofort mit (nur Handynummer, nur mit Schalter, nicht in der Ruhezeit; sonst morgens per Cron)
     if (r.sent) await sendeStreckenSms(id, "erst", now).catch(() => null);
-    return { ergebnis: "gestartet", gesendet: r.sent, ...(r.sent ? {} : { grund: r.reason }) };
+    return { ergebnis: "gestartet", kanal: "email", gesendet: r.sent, ...(r.sent ? {} : { grund: r.reason }) };
   } catch (err) {
     console.error("[mail-strecke] Start", err instanceof Error ? err.message.slice(0, 160) : err);
     return { ergebnis: "nicht_moeglich", grund: "fehler" };
@@ -305,33 +345,51 @@ export async function sendeStreckenMail(streckeId: string, art: MailArtStrecke, 
 
 /**
  * SMS der Strecke (Tag 1 bzw. Tag 4) über seven.io: nur mit Schalter MAIL_STRECKE_SMS, nur an Handynummern, höchstens 2,
- * nicht zwischen 20 und 8 Uhr, nicht nach Abmeldung bzw. Sperre. Wirft nicht.
+ * nicht zwischen 20 und 8 Uhr, nicht nach Abmeldung bzw. Sperre. Nur-SMS-Strecke (nurSms): Schalter STRECKE_NUR_SMS,
+ * nur zu Geschäftszeiten des Kunden, Text mit Rückruf zu Geschäftszeiten (lib/mail-strecke/nur-sms.ts). Wirft nicht.
  */
 export async function sendeStreckenSms(streckeId: string, art: "erst" | "erinnerung", now = new Date()): Promise<"sent" | "aus" | "keine_nummer" | "ruhezeit" | "max" | "gesperrt" | "fehler"> {
   try {
-    if (!smsStreckeAn()) return "aus";
-    if (!sendeFenster(now)) return "ruhezeit";
     const k = await leadKontext(streckeId);
     if (!k) return "fehler";
     const { s, lead, an, who, person } = k;
-    if (s.smsZahl >= MAX_SMS || ["abgemeldet", "gestoppt", "fertig"].includes(s.schritt)) return "max";
+    const nur = s.nurSms === true;
+    if (nur ? !nurSmsAn() : !smsStreckeAn()) return "aus";
+    const gz = nur ? await geschaeftszeitenFuer(lead.customerId) : null;
+    if (gz ? !imGeschaeftsfenster(now, gz) : !sendeFenster(now)) return "ruhezeit";
+    if (s.smsZahl >= MAX_SMS || ["abgemeldet", "gestoppt", "fertig", "gebucht"].includes(s.schritt)) return "max";
     if (!lead.phone || !(await istMobil(lead.phone))) return "keine_nummer";
     if (lead.erasedAt || (await gesperrt(lead.customerId, lead.email, lead.phone))) return "gesperrt";
     const { istAbgemeldet } = await import("@/lib/mail/sperren");
     if (lead.email && (await istAbgemeldet(lead.customerId, lead.email, lead.id))) return "gesperrt";
+    if (nur && (await nummerAbgemeldet(lead.customerId, lead.phone))) return "gesperrt";
     const { sendSms, smsAktiv } = await import("@/lib/sms/seven");
     if (!smsAktiv()) return "aus";
     // Je Strecke höchstens MAX_SMS: Zähler vorher belegen (parallele Läufe)
     const claim = await prisma.leadMailStrecke.updateMany({ where: { id: s.id, smsZahl: s.smsZahl }, data: { smsZahl: { increment: 1 }, smsAt: now } });
     if (!claim.count) return "max";
     const telefon = (await prisma.erstinformation.findUnique({ where: { customerId: lead.customerId }, select: { telefon: true } }).catch(() => null))?.telefon ?? null;
-    const text = smsText({ an, anredeName: an === "sie" && !who.kontakt.salutation ? null : anredeName(an, who.kontakt), person, source: lead.source, link: streckenUrl(s.id), abmelden: `${streckenUrl(s.id)}?ab=1`, art, telefon });
+    const name = an === "sie" && !who.kontakt.salutation ? null : anredeName(an, who.kontakt);
+    // Nur SMS: zwei freie Zeiten auf der Antwortseite (Termin mit einem Klick), wenn der Kalender verbunden ist
+    if (nur && lead.customer.calendarConnection?.status === "connected") {
+      const zeiten = await zweiZeiten(lead.customerId, lead.id, s.zeiten).catch(() => [] as string[]);
+      if (zeiten.length) await prisma.leadMailStrecke.update({ where: { id: s.id }, data: { zeiten } }).catch(() => null);
+    }
+    const text = gz
+      ? nurSmsText({ an, anredeName: name, person, source: lead.source, link: streckenUrl(s.id), art, telefon, zeiten: gz })
+      : smsText({ an, anredeName: name, person, source: lead.source, link: streckenUrl(s.id), abmelden: `${streckenUrl(s.id)}?ab=1`, art, telefon });
     const r = await sendSms(lead.phone, text, { from: smsAbsenderFuer(who.vermittler.name ?? who.advisor) });
     if (r.status !== "sent" && r.status !== "blocked") {
       await prisma.leadMailStrecke.update({ where: { id: s.id }, data: { smsZahl: { decrement: 1 } } }).catch(() => null);
       return "fehler";
     }
-    await logLeadHistory(lead.id, "status", `SMS an den Lead (${art === "erst" ? "erste Nachricht" : "Erinnerung"}) mit Link zur Terminwahl.`, { customerId: lead.customerId, userId: null }).catch(() => null);
+    if (nur && s.smsZahl + 1 >= MAX_SMS) await prisma.leadMailStrecke.updateMany({ where: { id: s.id, schritt: "sms" }, data: { schritt: "fertig" } }).catch(() => null);
+    await logLeadHistory(
+      lead.id,
+      "status",
+      nur ? `SMS an den Lead (${art === "erst" ? "erste Nachricht" : "Erinnerung"}): ${smsFuerVerlauf(text)}` : `SMS an den Lead (${art === "erst" ? "erste Nachricht" : "Erinnerung"}) mit Link zur Terminwahl.`,
+      { customerId: lead.customerId, userId: null },
+    ).catch(() => null);
     return "sent";
   } catch (err) {
     console.error("[mail-strecke] SMS", err instanceof Error ? err.message.slice(0, 160) : err);
@@ -345,9 +403,14 @@ export async function merkeReaktion(streckeId: string, now = new Date()): Promis
 }
 
 /** Grund, warum das Nachfassen jetzt stoppt (null = weiter). */
-async function stoppGrund(s: { id: string; leadId: string; reaktionAt: Date | null; appointmentId: string | null; erstmailAt: Date | null; schritt: string }, now: Date): Promise<string | null> {
+async function stoppGrund(
+  s: { id: string; leadId: string; reaktionAt: Date | null; appointmentId: string | null; erstmailAt: Date | null; schritt: string; nurSms?: boolean; createdAt?: Date },
+  now: Date,
+): Promise<string | null> {
   if (s.reaktionAt) return "reaktion";
   if (s.appointmentId) return "gebucht";
+  // Antworten zählen ab der Erstmail bzw. (nur SMS) ab dem Start
+  const seit = s.erstmailAt ?? (s.nurSms ? (s.createdAt ?? null) : null);
   const lead = await prisma.lead.findUnique({ where: { id: s.leadId }, select: { status: true, reached: true, erasedAt: true, customerId: true, email: true, phone: true, source: true } });
   if (!lead || lead.erasedAt) return "geloescht";
   if (ohneAutoNachrichten(lead.source)) return "produkt";
@@ -357,8 +420,15 @@ async function stoppGrund(s: { id: string; leadId: string; reaktionAt: Date | nu
   if (await prisma.appointment.count({ where: { leadId: s.leadId, status: "booked", startsAt: { gt: now } } })) return "gebucht";
   const { hatMailAntwort } = await import("@/lib/mail/kontakt-mail");
   if (s.erstmailAt && (await hatMailAntwort(s.leadId, s.erstmailAt))) return "mail_antwort";
-  if (s.erstmailAt && (await prisma.message.count({ where: { direction: "inbound", createdAt: { gt: s.erstmailAt }, conversation: { leadId: s.leadId } } }))) return "whatsapp_antwort";
+  if (seit && (await prisma.message.count({ where: { direction: "inbound", createdAt: { gt: seit }, conversation: { leadId: s.leadId } } }))) return "whatsapp_antwort";
   if (await gesperrt(lead.customerId, lead.email, lead.phone)) return "gesperrt";
+  if (s.nurSms) {
+    // Nur SMS: auch Abmeldung der Nummer, ruhender Kunde und ausgeschalteter Assistent stoppen
+    if (lead.phone && (await nummerAbgemeldet(lead.customerId, lead.phone))) return "gesperrt";
+    const c = await prisma.customer.findUnique({ where: { id: lead.customerId }, select: { dormantSince: true, dataDeletedAt: true, agentConfig: { select: { active: true, outreachEnabled: true } } } });
+    if (!c || c.dormantSince || c.dataDeletedAt) return "ruhend";
+    if (!c.agentConfig?.active || !c.agentConfig.outreachEnabled) return "assistent_aus";
+  }
   return null;
 }
 
@@ -439,9 +509,59 @@ export async function runMailStrecke(now = new Date()): Promise<CronErgebnis> {
     }
   }
 
+  // 2b. Nur SMS (E-Mail-Funktionen aus): erste SMS zur nächsten Geschäftszeit, zweite nach 2 Geschäftstagen
+  out.sms += await nurSmsTakt(now, out);
+
   // 3. Einladung ohne Antwort nachholen (Termin über die Seite, ausstehend bis Adresse und Komplettcheck feststehen)
   out.einladungen = await einladungenNachholen(now);
   return out;
+}
+
+/** Erste SMS höchstens so lange nach dem Start nachholen (Wochenende mit Feiertagen). */
+const NUR_SMS_ERSTE_BIS_MS = 5 * 86_400_000;
+
+/**
+ * Takt der Nur-SMS-Strecke (Cron): Stopp bei Reaktion, Buchung, Abmeldung, Status usw. (stoppGrund); sonst zur
+ * Geschäftszeit die erste SMS (falls der Start außerhalb lag) bzw. die zweite ab dem zweiten Geschäftstag. Liefert die
+ * Zahl gesendeter SMS.
+ */
+export async function nurSmsTakt(now: Date, out?: Pick<CronErgebnis, "gestoppt" | "fehler">): Promise<number> {
+  const rows = await prisma.leadMailStrecke.findMany({
+    where: { nurSms: true, schritt: "sms", createdAt: { gt: new Date(now.getTime() - 14 * 86_400_000) } },
+    select: { id: true, leadId: true, customerId: true, reaktionAt: true, appointmentId: true, erstmailAt: true, schritt: true, smsZahl: true, smsAt: true, createdAt: true, nurSms: true },
+    take: 500,
+  });
+  const zeiten = new Map<string, Geschaeftszeiten>();
+  let n = 0;
+  for (const s of rows) {
+    try {
+      const stopp = await stoppGrund(s, now);
+      if (stopp) {
+        await prisma.leadMailStrecke.update({ where: { id: s.id }, data: { schritt: stopp === "gebucht" ? "gebucht" : stopp === "gesperrt" ? "abgemeldet" : "gestoppt", stopGrund: stopp } });
+        if (out) out.gestoppt++;
+        continue;
+      }
+      if (s.smsZahl >= MAX_SMS) {
+        await prisma.leadMailStrecke.update({ where: { id: s.id }, data: { schritt: "fertig" } });
+        continue;
+      }
+      let gz = zeiten.get(s.customerId);
+      if (!gz) zeiten.set(s.customerId, (gz = await geschaeftszeitenFuer(s.customerId)));
+      if (!imGeschaeftsfenster(now, gz)) continue;
+      if (s.smsZahl === 0) {
+        if (now.getTime() - s.createdAt.getTime() > NUR_SMS_ERSTE_BIS_MS) {
+          await prisma.leadMailStrecke.update({ where: { id: s.id }, data: { schritt: "gestoppt", stopGrund: "abgelaufen" } });
+          continue;
+        }
+        if ((await sendeStreckenSms(s.id, "erst", now)) === "sent") n++;
+      } else if (s.smsAt && zweiteSmsFaellig(s.smsAt, now, gz)) {
+        if ((await sendeStreckenSms(s.id, "erinnerung", now)) === "sent") n++;
+      }
+    } catch (err) {
+      out?.fehler.push(`${s.id}: ${err instanceof Error ? err.message.slice(0, 120) : String(err)}`);
+    }
+  }
+  return n;
 }
 
 /** Ausstehende Einladungen der Strecke: 15 Min. nach der letzten Antwort (kurzfristig 5), spätestens 60 Min. vorher. */
@@ -740,10 +860,11 @@ export async function adresseSetzen(streckeId: string, o: { email?: string | nul
 
 /** Abmelden von der Seite (SMS-Link bzw. Knopf): keine E-Mails und SMS mehr aus der Strecke. */
 export async function streckeAbmelden(streckeId: string, now = new Date()): Promise<{ ok: boolean }> {
-  const s = await prisma.leadMailStrecke.findUnique({ where: { id: streckeId }, select: { id: true, leadId: true, customerId: true } });
+  const s = await prisma.leadMailStrecke.findUnique({ where: { id: streckeId }, select: { id: true, leadId: true, customerId: true, nurSms: true, schritt: true } });
   if (!s) return { ok: false };
   const { leadAbmelden } = await import("@/lib/bestand/abmelden");
   await leadAbmelden(s.leadId, s.customerId, now);
+  if (s.nurSms && s.schritt !== "abgemeldet") await logLeadHistory(s.leadId, "status", "Hat sich über den Link in der SMS abgemeldet: keine weiteren SMS.", { customerId: s.customerId, userId: null }).catch(() => null);
   await prisma.leadMailStrecke.update({ where: { id: s.id }, data: { schritt: "abgemeldet", stopGrund: "abgemeldet", reaktionAt: now } });
   return { ok: true };
 }

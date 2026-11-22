@@ -1,17 +1,13 @@
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import Link from "next/link";
 import {
-  AlertCircle,
   ArrowLeft,
   Bot,
   Check,
-  CheckCheck,
   ChevronDown,
   ExternalLink,
-  FileText,
   Mail,
   Phone,
-  Smartphone,
   TriangleAlert,
   UserRound,
   Video,
@@ -35,8 +31,9 @@ import { cn } from "@/lib/utils";
 import { nowMs } from "@/lib/now";
 import { LiveRefresh, NewMessageHint, StickToBottom } from "@/components/live-refresh";
 import { lastInboundAt } from "@/lib/live";
-import { avatarFarbe, initialen, type Absender } from "@/lib/chat-ansicht";
-import { ChatAvatar, ChatVerlauf, type Etikett } from "@/components/chat/chat-verlauf";
+import { avatarFarbe, initialen } from "@/lib/chat-ansicht";
+import { ChatAvatar, ChatVerlauf } from "@/components/chat/chat-verlauf";
+import { DeliveryStatus, etikettAdmin } from "@/components/chat/chat-admin";
 import { waOhneMarker } from "@/lib/wa-format";
 
 // Chats (WhatsApp): Liste, Verlauf und Lead-Seitenleiste. Gemeinsam für /admin/whatsapp (Chat per ?c=) und den
@@ -103,33 +100,7 @@ function parseFormAnswers(raw: unknown): { label: string; value: string }[] {
   );
 }
 
-/** Absender als kleines Etikett (beim Wechsel des Absenders, components/chat/chat-verlauf.tsx). */
-function etikettAdmin(m: { sentBy: string | null; kind: string | null }, a: Absender): Etikett {
-  if (a === "lead") return null;
-  const sentBy = m.sentBy;
-  const kind = m.kind ?? "text";
-  if (sentBy === "bot") return { label: "KI-Bot", icon: Bot };
-  if (sentBy === "agent") return { label: "Agent", icon: UserRound };
-  if (sentBy === "app") return { label: "WhatsApp-App", icon: Smartphone };
-  if (sentBy === "system") return { label: kind === "template" ? "Vorlage" : "System", icon: FileText };
-  return null;
-}
-
-/** Häkchen wie bei WhatsApp: gesendet, zugestellt, gelesen (fehlgeschlagen rot). */
-function DeliveryStatus({ status }: { status: string | null }) {
-  if (status === "failed") {
-    return (
-      <span className="inline-flex items-center gap-0.5 text-rose-700" title="Nicht zugestellt">
-        <AlertCircle className="h-3.5 w-3.5" /> nicht zugestellt
-      </span>
-    );
-  }
-  if (status === "read") return <CheckCheck className="h-4 w-4 text-sky-600" aria-label="Gelesen" />;
-  if (status === "delivered") return <CheckCheck className="h-4 w-4" aria-label="Zugestellt" />;
-  if (status === "sent") return <Check className="h-4 w-4" aria-label="Gesendet" />;
-  return null;
-}
-
+// Absender-Etikett und Zustellhäkchen: components/chat/chat-admin.tsx (auch in der Kontakt- und Kundenakte)
 export async function ChatsAnsicht({
   sp,
   basis = "/admin/neu/leads/chats",

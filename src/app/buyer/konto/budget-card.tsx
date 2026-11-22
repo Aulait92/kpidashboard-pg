@@ -88,7 +88,7 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
         <div className="space-y-4">
           {lines.map((l) => {
             const v = values[l.product] ?? l.dailyBudget;
-            const low = v < LEAD_GUARANTEE_MIN_DAILY;
+            const low = ctx.garantien !== false && v < LEAD_GUARANTEE_MIN_DAILY;
             return (
               <div key={l.product} className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
                 <input type="hidden" name="product" value={l.product} />

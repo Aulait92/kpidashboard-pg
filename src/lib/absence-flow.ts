@@ -13,6 +13,7 @@
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { kundeHatGarantien } from "@/lib/garantien-kunde";
 import { audit } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { adapterFor, rescheduleAppointment, suggestSlots } from "@/lib/calendar";
@@ -84,7 +85,7 @@ export type AbsenceOverview = {
   /** Nur ein Nutzer im Konto: Leads kommen weiter, der Assistent bietet Termine erst ab der Rückkehr an. */
   solo: boolean;
   /** Einzel-Vertreter: Anzeigen pausieren anbieten – ab 3 Tagen dezent, ab 7 Tagen hervorgehoben (`strong`). */
-  pauseHint: { from: string; until: string; strong: boolean } | null;
+  pauseHint: { from: string; until: string; strong: boolean; /** Kunde hat Garantien: Pause verlängert den Garantie-Zeitraum */ garantie?: boolean } | null;
 };
 
 // ─── Rechte ─────────────────────────────────────────────────────────────
@@ -284,7 +285,12 @@ export async function absenceOverview(actor: AbsenceActor, absenceId: string, no
     solo: members === 1,
     pauseHint:
       members === 1 && openPause === 0 && pauseOfferLevel(absenceDays(absence)) !== "none" && actor.teamRole === "owner"
-        ? { from: view.from > today ? view.from : today, until: view.returnDay, strong: pauseOfferLevel(absenceDays(absence)) === "strong" }
+        ? {
+            from: view.from > today ? view.from : today,
+            until: view.returnDay,
+            strong: pauseOfferLevel(absenceDays(absence)) === "strong",
+            garantie: await kundeHatGarantien(actor.customerId),
+          }
         : null,
   };
 }

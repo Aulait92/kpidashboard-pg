@@ -762,9 +762,10 @@ async function sicherheitStatus() {
   };
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, "d360-kunde": d360kunde, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), "policen-gesundheit": async (p) => (await import("@/lib/ops/policen-gesundheit")).policenGesundheit(p), "media-buyer": async (p) => (await import("@/lib/ops/media-buyer")).mediaBuyerStatus(p), sicherheit: sicherheitStatus, "ppl-rueckmeldung": async (p) => (await import("@/lib/ops/ppl-rueckmeldung")).pplRueckmeldung(p) };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, "d360-kunde": d360kunde, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), "policen-gesundheit": async (p) => (await import("@/lib/ops/policen-gesundheit")).policenGesundheit(p), "media-buyer": async (p) => (await import("@/lib/ops/media-buyer")).mediaBuyerStatus(p), "bank-anbieter": async (p) => (await import("@/lib/ops/bank-anbieter")).bankAnbieter(p), sicherheit: sicherheitStatus, "ppl-rueckmeldung": async (p) => (await import("@/lib/ops/ppl-rueckmeldung")).pplRueckmeldung(p) };
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
+//   q=bank-anbieter[&ab=2026-01-01]        Ausgaben je Gegenpartei aus allen Kontoumsätzen (für Belege je Anbieter, lib/ops/bank-anbieter.ts)
 //   q=media-buyer[&pool=<text>][&n=50]       Media Buyer: Pools (Ziel, Ist, Hochrechnung, Budget) und letzte Entscheidungen (lib/ops/media-buyer.ts)
 //   q=policen-gesundheit[&kunde=<id>]       Kranken/BU/Leben je Kunde: AVV-Ergänzung, Datenschutz-URL, freigegeben (lib/ops/policen-gesundheit.ts)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
@@ -814,6 +815,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "vertrieb-auskunft": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebAuskunftDiagnose(p),
   "vertrieb-dsgvo": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebDsgvoDiagnose(p),
   "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
+  "ppl-kunde": async (p) => (await import("@/lib/ops/ppl-kunde")).pplKunde(p),
   "push-geraete": async () => (await import("@/lib/ops/push-geraete")).pushGeraeteDiagnose(),
   // PKV-Leads nach Beitragsband und Ergebnis (Ole, 22.11.2026: Funnel-Grenze 650 → 700), nur Anzahlen, ?tage=60
   "pkv-beitrag": async (p) => {

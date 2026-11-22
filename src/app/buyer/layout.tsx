@@ -24,6 +24,10 @@ import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 import { AppDemoRahmen } from "@/components/app-demo-rahmen";
 import { demoTourZiele } from "@/lib/app-demo/tour-server";
 import { LiveRefresh } from "@/components/live-refresh";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { istReinesBestellkonto } from "@/lib/ppl/bestellkonto";
 
 // Seiten, die bei jeder Änderung (Lead, Chat, Termin) sofort neu laden; überall sonst nur der Zähler „Braucht dich“.
 const LIVE_PATHS = ["/buyer", "/buyer/leads", "/buyer/kanban", "/buyer/kontakte", "/buyer/chats"];
@@ -64,6 +68,13 @@ export default async function BuyerLayout({
       )?.name ?? "Kunde")
     : null;
   // KI-Hilfe: Inhaber mit Anrede und Nachname aus dem Vertriebskontakt, Berater neutral (lib/hilfe-gruss)
+  // Bestellkonto (Ole, 22.11.2026, lib/ppl/bestellkonto.ts): Hauptkunden, die nur für ihre Vertriebspartner bestellen,
+  // sehen nur „Leads bestellen“ in einem schlichten Rahmen, ohne CRM (das wäre für sie leer)
+  if (ctx && !ctx.demo && (await istReinesBestellkonto(ctx.customerId))) {
+    const pfad = (await headers()).get("x-buyer-pfad");
+    if (pfad && pfad !== "/buyer/bestellen") redirect("/buyer/bestellen");
+    return <BestellkontoRahmen name={customerName ?? ""} previewName={ctx.preview ? customerName : null}>{children}</BestellkontoRahmen>;
+  }
   const gruss = hilfeGruss(
     ctx && ctx.teamRole === "owner"
       ? await prisma.salesContact.findUnique({ where: { customerId: ctx.customerId }, select: { salutation: true, lastName: true } }).catch(() => null)
@@ -174,6 +185,39 @@ export default async function BuyerLayout({
         </>
       )}
     </>
+  );
+}
+
+/** Schlichter Rahmen für reine Bestellkonten: Name, Abmelden, Seite. Vorschau mit demselben Hinweisbalken. */
+function BestellkontoRahmen({ name, previewName, children }: { name: string; previewName: string | null; children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-dvh flex-col bg-[color:var(--background)]">
+      {previewName ? (
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 bg-amber-400 px-4 py-2 text-sm font-medium text-amber-950">
+          <span>
+            Vorschau: Bestellkonto von <b>{previewName}</b>, nur lesend.
+          </span>
+          <form action={endPreviewAction}>
+            <button type="submit" className="rounded-md bg-amber-950 px-3 py-1 text-xs font-semibold text-amber-50 hover:bg-black">
+              Vorschau beenden
+            </button>
+          </form>
+        </div>
+      ) : null}
+      <header className="border-b border-[color:var(--border)] bg-white">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <span className="min-w-0 truncate text-sm font-semibold">{name}</span>
+          {previewName ? null : (
+            <form action="/api/auth/logout" method="post">
+              <button type="submit" className="inline-flex min-h-10 items-center gap-2 text-sm text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
+                <LogOut className="h-4 w-4" /> Abmelden
+              </button>
+            </form>
+          )}
+        </div>
+      </header>
+      {children}
+    </div>
   );
 }
 
