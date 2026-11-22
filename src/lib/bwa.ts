@@ -104,7 +104,7 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
       purpose: true,
       accountKey: true,
       rule: { select: { label: true } },
-      beleg: { select: { gmiUid: true, netto: true, brutto: true, waehrung: true } },
+      beleg: { select: { id: true, netto: true, brutto: true, waehrung: true } },
     },
     orderBy: { bookingDate: "asc" },
   });
@@ -132,7 +132,7 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
       ]
         .filter(Boolean)
         .join(" · "),
-      href: b ? `/api/admin/belege/${b.gmiUid}` : ZUORDNEN,
+      href: b ? `/api/admin/belege/${b.id}` : ZUORDNEN,
     });
   }
 

@@ -5549,7 +5549,19 @@ model FunnelEreignis {
 // Beleg ersetzen in der BWA die Schätzung aus dem Bankbetrag.
 model Beleg {
   id                String           @id @default(cuid())
-  gmiUid            Int              @unique
+  /// GetMyInvoices-Dokument (Übernahme); null bei eigenen Belegen (Mail-Eingang, Upload)
+  gmiUid            Int?             @unique
+  // gmi | mail | upload
+  quelle            String           @default("gmi")
+  /// Originaldatei (PDF/Bild), in der Datenbank, GoBD: unverändert aufbewahren
+  datei             Bytes?
+  mimeType          String?
+  /// SHA-256 der Datei gegen doppelte Ablage
+  hash              String?          @unique
+  /// Absender der Mail bzw. Login beim Upload
+  absender          String?
+  // ki | gmi | fehler: woher Betrag, Datum usw. stammen
+  ausgelesen        String?
   typ               String
   firma             String?
   nummer            String?

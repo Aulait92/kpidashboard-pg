@@ -207,11 +207,11 @@ export type EmailReceivedEvent = {
   data?: { email_id?: string; from?: string; to?: string[]; cc?: string[]; bcc?: string[]; received_for?: string[]; subject?: string };
 };
 
-export type EingangErgebnis = { ergebnis: "antwort" | "hinweis" | "termin" | "ignoriert" | "doppelt" | "fehler"; grund?: string; eingangId?: string };
+export type EingangErgebnis = { ergebnis: "antwort" | "hinweis" | "termin" | "beleg" | "ignoriert" | "doppelt" | "fehler"; grund?: string; eingangId?: string };
 
 type Zeile = { id: string; contactMailId: string | null; weitergeleitetAt: Date | null; pushAt: Date | null; versuche: number };
 
-const FERTIG = new Set(["antwort", "hinweis", "termin", "ignoriert"]);
+const FERTIG = new Set(["antwort", "hinweis", "termin", "beleg", "ignoriert"]);
 const istEindeutigFehler = (e: unknown) => !!e && typeof e === "object" && (e as { code?: string }).code === "P2002";
 
 /** Eintrag je Resend-ID anlegen bzw. für eine Wiederholung übernehmen; null = schon erledigt bzw. gerade in Arbeit. */
@@ -276,6 +276,18 @@ export async function verarbeiteMailEingang(event: EmailReceivedEvent, o: { now?
   const zeile = await reserviere(emailId, now);
   if (!zeile) return { ergebnis: "doppelt" };
   const id = zeile.id;
+  // Beleg-Adresse (lib/belege/eingang.ts): Anhänge als Belege ablegen
+  const { istBelegAdresse } = await import("@/lib/belege/eingang");
+  if (empfaenger.some((a) => istBelegAdresse(a))) {
+    const apiKey = process.env.RESEND_API_KEY?.trim();
+    if (!apiKey) {
+      await abschliessen(id, { ergebnis: "fehler", grund: "kein_schluessel" });
+      return { ergebnis: "fehler", grund: "kein_schluessel", eingangId: id };
+    }
+    const { verarbeiteBelegMail } = await import("@/lib/belege/eingang");
+    const r = await verarbeiteBelegMail({ eingangId: id, emailId, api: o.api ?? (await ladeApi(apiKey)) });
+    return { ergebnis: "beleg", grund: `neu ${r.neu}`, eingangId: id };
+  }
   if (terminToken) {
     const { verarbeiteTerminMail } = await import("@/lib/calendar/termin-weiterleitung-server");
     return verarbeiteTerminMail({ eingangId: id, emailId, token: terminToken, now, api: o.api, zeile, fromEvent: event.data?.from ?? null });

@@ -33,7 +33,7 @@ export async function syncBelege(): Promise<BelegLauf> {
     };
     const alt = await prisma.beleg.findUnique({ where: { gmiUid: d.documentUid }, select: { id: true, zuordnung: true } });
     if (!alt) {
-      await prisma.beleg.create({ data: { gmiUid: d.documentUid, ...daten } });
+      await prisma.beleg.create({ data: { gmiUid: d.documentUid, quelle: "gmi", ausgelesen: "gmi", ...daten } });
       neu++;
       continue;
     }
@@ -43,6 +43,19 @@ export async function syncBelege(): Promise<BelegLauf> {
       where: { id: alt.id },
       data: { ...daten, ...(keinEingang && alt.zuordnung === "auto" ? { bankTransactionId: null, zuordnung: null } : {}) },
     });
+  }
+  // Originaldateien einmal übernehmen (eigene Ablage, damit GetMyInvoices gekündigt werden kann); je Lauf begrenzt
+  const ohneDatei = await prisma.beleg.findMany({ where: { gmiUid: { not: null }, datei: null }, select: { id: true, gmiUid: true }, take: 60 });
+  const { gmiDatei } = await import("./gmi");
+  const crypto = await import("node:crypto");
+  for (const b of ohneDatei) {
+    const d = await gmiDatei(b.gmiUid!).catch(() => null);
+    if (!d || !d.daten.length) continue;
+    const hash = crypto.createHash("sha256").update(d.daten).digest("hex");
+    await prisma.beleg.update({ where: { id: b.id }, data: { datei: Buffer.from(d.daten), mimeType: d.typ, hash } }).catch(() =>
+      // gleicher Inhalt schon als anderer Beleg da (Doppel in GetMyInvoices): nur Datei ohne Hash
+      prisma.beleg.update({ where: { id: b.id }, data: { datei: Buffer.from(d.daten), mimeType: d.typ } }).catch(() => null),
+    );
   }
   const zugeordnet = await belegeAbgleichen();
   return { geholt: docs.length, neu, zugeordnet };
