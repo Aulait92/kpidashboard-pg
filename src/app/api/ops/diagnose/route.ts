@@ -820,7 +820,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   // nur eine Entscheidung mit dryRun=true (wie „Simulieren“ im Admin)
   "media-buyer-trockenlauf": async () => {
     const r = await (await import("@/lib/media-buyer")).runMediaBuyer({ dryRun: true, force: true });
-    return { ranAt: r.ranAt, eingeschaltet: process.env.MEDIA_BUYER_ENABLED === "1", pools: r.pools.filter((p) => p.goal > 0 || p.prevBudget).map((p) => ({ roh: Object.fromEntries(Object.entries(p).filter(([, v]) => typeof v === "number" || v === null)), pool: p.poolLabel, aktion: p.action, leadsMtd: p.leadsMtd, ziel: p.goal, prognose: p.projected, budgetVorher: p.prevBudget, budgetNeu: p.newBudget, grund: p.reason, fehler: p.error })) };
+    return { ranAt: r.ranAt, eingeschaltet: process.env.MEDIA_BUYER_ENABLED === "1", pools: r.pools.filter((p) => p.goal > 0 || p.prevBudget).map((p) => ({ kampagnen: p.campaigns, roh: Object.fromEntries(Object.entries(p).filter(([, v]) => typeof v === "number" || v === null)), pool: p.poolLabel, aktion: p.action, leadsMtd: p.leadsMtd, ziel: p.goal, prognose: p.projected, budgetVorher: p.prevBudget, budgetNeu: p.newBudget, grund: p.reason, fehler: p.error })) };
   },
   "test-chat": async (p) => (await import("@/lib/ops/test-chat")).testChatDiagnose(p),
   buchungslinks: async () => (await import("@/lib/ops/buchungslinks")).buchungslinksDiagnose(),
