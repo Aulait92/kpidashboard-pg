@@ -24,7 +24,11 @@ describe("genannte Verträge bei Nicht-Kfz-Produkten", () => {
     expect(andereVertraege(vv, { source: "Privatschutz" })).toEqual([]);
     expect(andereVertraege(VV([{ sparte: "Tierkranken", gesellschaft: "Uelzener" }, { sparte: "Tierhalterhaftpflicht" }]), { source: "Hundekrankenversicherung", mitAngefragt: true })).toEqual([
       "Tierhalterhaftpflicht",
-      "Tierkrankenversicherung bei der Uelzener",
+      "die Tierkrankenversicherung bei der Uelzener",
+    ]);
+    // Ole 22.11.2026: „zum Beispiel die private Krankenversicherung bei der Allianz“ (vorher fehlte „die“)
+    expect(andereVertraege(VV([{ sparte: "Private Krankenversicherung", gesellschaft: "Allianz" }]), { source: "PKV", mitAngefragt: true, gesundheitAn: true })).toEqual([
+      "die private Krankenversicherung bei der Allianz",
     ]);
   });
 
