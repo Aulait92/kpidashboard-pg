@@ -19,7 +19,7 @@ export default async function GeplanteNachrichtenPage() {
   const now = new Date();
   const items = await ladeGeplanteNachrichten({ now });
   return (
-    <Seite titel="Geplante Nachrichten" untertitel={`Was die App in den nächsten ${TAGE_STANDARD} Tagen automatisch verschickt.`} zurueck={{ href: V, label: "Verkaufen" }}>
+    <Seite titel="Geplante Nachrichten" untertitel={`Was die App in den nächsten ${TAGE_STANDARD} Tagen automatisch verschickt, antippen für die Vorschau.`} zurueck={{ href: V, label: "Verkaufen" }}>
       <div data-geplante-nachrichten>
         {items.length ? (
           <GeplanteNachrichtenListe items={items} now={now} />
