@@ -11,6 +11,7 @@ import { bruttoJeLead, effektiveSteuer, isSteuer, STEUERFREI_PREISHINWEIS, type 
 import { OrderForm } from "./order-form";
 import { paymentSetupAction, toggleAutoRenewAction } from "./actions";
 import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
+import { partnerBezuege, ZAHLER_SELECT } from "@/lib/ppl/bestellkonto";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Bestellen | performancegrowth" };
@@ -33,13 +34,24 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
   if (!ctx) redirect("/login");
   if (ctx.teamRole === "advisor") redirect("/buyer");
   const { zahlung } = await searchParams;
-  const [subs, customer] = await Promise.all([
-    prisma.leadSubscription.findMany({ where: { customerId: ctx.customerId, active: true, delivery: { in: ["app", "app_pdf"] } }, orderBy: { createdAt: "asc" } }),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { stripeCustomerId: true, vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true } }),
+  const [own, customer, partner] = await Promise.all([
+    prisma.leadSubscription.findMany({
+      where: { customerId: ctx.customerId, active: true, delivery: { in: ["app", "app_pdf"] } },
+      include: { customer: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { ...ZAHLER_SELECT, bestelltUeber: { select: ZAHLER_SELECT } } }),
+    // Bestellkonto (Ole, 22.11.2026, lib/ppl/bestellkonto.ts): Hauptkunde bestellt und zahlt für seine Vertriebspartner
+    partnerBezuege(ctx.customerId),
   ]);
-  if (!subs.length) redirect("/buyer");
+  const subs = [...own, ...partner];
+  const istHauptkunde = partner.length > 0 || (await prisma.customer.count({ where: { bestelltUeberId: ctx.customerId } })) > 0;
+  // Vertriebspartner eines Hauptkunden: sieht seine Lieferungen, bestellt aber nicht selbst
+  const bestelltVon = customer?.bestelltUeber?.name ?? null;
+  if (!subs.length && !istHauptkunde) redirect("/buyer");
+  const zahlerReg = (customerId: string) => (customerId === ctx.customerId ? (customer?.bestelltUeber ?? customer) : customer);
   const { hasPaymentMethod, billingEnabled } = await import("@/lib/billing");
-  const hasPm = billingEnabled() ? await hasPaymentMethod(customer?.stripeCustomerId ?? null).catch(() => false) : false;
+  const hasPm = !bestelltVon && billingEnabled() ? await hasPaymentMethod(customer?.stripeCustomerId ?? null).catch(() => false) : false;
   const now = new Date();
   const thisWeek = weekRange(now);
   const nextWeek = weekRange(now, 1);
@@ -64,12 +76,22 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader back="/buyer/wachstum" title="Leads bestellen" subtitle="Exklusive Leads, im Voraus bezahlt. Geliefert wird sofort nach Eingang." />
+      {istHauptkunde && !own.length ? (
+        // Reines Bestellkonto: diese Seite ist die einzige, kein Zurück
+        <PageHeader title="Leads bestellen" subtitle="Für Ihre Vertriebspartner. Im Voraus bezahlt, geliefert direkt in das Konto des Partners." />
+      ) : (
+        <PageHeader back="/buyer/wachstum" title="Leads bestellen" subtitle={bestelltVon ? `Ihre Leads bestellt ${bestelltVon} für Sie.` : "Exklusive Leads, im Voraus bezahlt. Geliefert wird sofort nach Eingang."} />
+      )}
       <div className="space-y-5">
+        {istHauptkunde && !subs.length ? (
+          <Card>
+            <p className="p-5 text-sm">Für Ihre Vertriebspartner ist noch kein Bezug eingerichtet. Wir richten ihn ein und melden uns bei Ihnen.</p>
+          </Card>
+        ) : null}
         {zahlung === "ok" ? (
           <div className="rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">Zahlungsart ist hinterlegt. Jetzt können Sie bestellen.</div>
         ) : null}
-        {!hasPm ? (
+        {!hasPm && !bestelltVon && subs.length ? (
           <Card>
             <div className="space-y-4 p-5">
               <div className="flex items-center gap-3">
@@ -87,12 +109,13 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
         {cards.map(({ s, current, next, credits, delivered, stornos, quota }) => {
           const pct = quota ? Math.min(100, Math.round((delivered / quota) * 100)) : 0;
           const price = Number(s.price);
-          const steuer = effektiveSteuer(s, customer).steuer;
+          const steuer = effektiveSteuer(s, zahlerReg(s.customerId)).steuer;
           const frei = steuer === "steuerfrei_4_11";
+          const fuerPartner = s.customerId !== ctx.customerId;
           return (
             <Card key={s.id}>
               <CardHeader
-                title={s.label ?? s.productKey}
+                title={fuerPartner ? s.customer.name : (s.label ?? s.productKey)}
                 icon={Package}
                 actions={
                   <span className="text-right text-sm text-[color:var(--muted)]">
@@ -101,7 +124,8 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
                   </span>
                 }
               />
-              <div className="space-y-4 px-5 pb-5 text-sm">
+              <div className="space-y-4 px-5 pb-5 pt-4 text-sm">
+                {fuerPartner ? <p className="text-[color:var(--muted)]">{s.label ?? s.productKey}</p> : null}
                 <div>
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="font-medium">
@@ -129,7 +153,19 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
                   </p>
                 ) : null}
 
-                {s.period === "week" ? (
+                {s.period !== "week" && fuerPartner ? (
+                  <p className="border-t border-[color:var(--border)] pt-4 text-[color:var(--muted)]" data-festes-kontingent>
+                    Läuft noch als festes Kontingent. Sobald wir auf Wochenbestellung umstellen, bestellen Sie hier selbst.
+                  </p>
+                ) : null}
+
+                {s.period === "week" && bestelltVon ? (
+                  <p className="border-t border-[color:var(--border)] pt-4 text-[color:var(--muted)]" data-bestellt-von>
+                    {next && ["paid", "processing"].includes(next.status)
+                      ? `Nächste Woche (${fmtWeek(nextWeek.start)}): ${next.quantity} Leads bestellt von ${bestelltVon}.`
+                      : `Bestellungen für nächste Woche gibt ${bestelltVon} auf.`}
+                  </p>
+                ) : s.period === "week" ? (
                   <div className="border-t border-[color:var(--border)] pt-4">
                     {[current, next].find((o) => o?.status === "wartet") ? (
                       // Erste Woche aus dem Angebot (lib/ppl/erste-woche.ts): wartet auf Registerprüfung bzw. Zahlungsart
@@ -176,9 +212,13 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
             </Card>
           );
         })}
-        <p className="text-xs text-[color:var(--muted)]">
-          Storno: innerhalb der vereinbarten Frist im Lead unter „Mehr“ → „Stornieren“ mit Grund. Stornierte Leads werden ersatzlos gutgeschrieben.
-        </p>
+        {subs.length ? (
+          <p className="text-xs text-[color:var(--muted)]">
+            {istHauptkunde && !own.length
+              ? "Stornos meldet Ihr Partner innerhalb der Frist im Lead. Die Gutschrift wird mit Ihrer nächsten Bestellung verrechnet."
+              : "Storno: innerhalb der vereinbarten Frist im Lead unter „Mehr“ → „Stornieren“ mit Grund. Stornierte Leads werden ersatzlos gutgeschrieben."}
+          </p>
+        ) : null}
       </div>
     </main>
   );
