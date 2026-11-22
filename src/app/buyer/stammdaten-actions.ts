@@ -8,7 +8,7 @@ import { writableCustomerId } from "@/lib/buyer-write";
 import { fetchLeadRecord } from "@/lib/airtable-write";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
-import { saveLeadStammdaten, type SaveStammdatenResult, type StammdatenInput } from "@/lib/lead-stammdaten";
+import { erstnachrichtAnNeueNummer, saveLeadStammdaten, type SaveStammdatenResult, type StammdatenInput } from "@/lib/lead-stammdaten";
 
 export async function saveLeadStammdatenAction(leadId: string, input: Partial<StammdatenInput>): Promise<SaveStammdatenResult> {
   const customerId = await writableCustomerId(leadId);
@@ -29,6 +29,18 @@ export async function saveLeadStammdatenAction(leadId: string, input: Partial<St
     revalidatePath(`/buyer/leads/${leadId}`);
     revalidatePath("/buyer/leads");
     revalidatePath("/buyer");
+  }
+  return r;
+}
+
+/** Nach dem Ändern der Nummer: Erstnachricht per WhatsApp an die neue Nummer (Klick des Vermittlers, Ole 22.11.2026). */
+export async function erstnachrichtAnNeueNummerAction(leadId: string): Promise<{ ok: boolean; text: string }> {
+  const customerId = await writableCustomerId(leadId);
+  if (!customerId) return { ok: false, text: "Diesen Lead können Sie nicht bearbeiten." };
+  const r = await erstnachrichtAnNeueNummer(leadId, customerId);
+  if (r.ok) {
+    await recordUsage("action", "lead.erstnachricht_neue_nummer");
+    revalidatePath(`/buyer/leads/${leadId}`);
   }
   return r;
 }

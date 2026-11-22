@@ -5,7 +5,7 @@
 
 import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/audit";
-import { writableCustomerId } from "@/lib/buyer-write";
+import { adminVorschauCustomerId, writableCustomerId } from "@/lib/buyer-write";
 import { logLeadHistory } from "@/lib/lead-history";
 import { getCurrentSession } from "@/lib/auth";
 import { fortsetzen, jetztSenden, pausieren, ueberspringen, verschieben, zielAus, type AktionsErgebnis } from "@/lib/nachrichtenplan-aktionen";
@@ -23,7 +23,8 @@ const VERLAUF: Partial<Record<NachrichtenAktion["aktion"], string>> = {
 };
 
 export async function nachrichtenAktion(leadId: string, a: NachrichtenAktion): Promise<AktionsErgebnis> {
-  const customerId = await writableCustomerId(leadId);
+  // Admin in der Vorschau: Nachrichten steuern auch bei echten Leads (lib/buyer-write.ts adminVorschauCustomerId)
+  const customerId = (await writableCustomerId(leadId)) ?? (await adminVorschauCustomerId(leadId));
   if (!customerId) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
   if ("key" in a && !zielAus(a.key)) return { ok: false, error: "Dieser Eintrag lässt sich nicht ändern." };
   let res: AktionsErgebnis;
@@ -51,7 +52,14 @@ export async function nachrichtenAktion(leadId: string, a: NachrichtenAktion): P
       return { ok: false, error: "Unbekannte Aktion." };
   }
   if (res.ok) {
-    await audit("lead.nachrichten", { entity: "Lead", entityId: leadId, customerId, details: { aktion: a.aktion, ...("key" in a ? { key: a.key } : {}) } });
+    const s = await getCurrentSession();
+    await audit("lead.nachrichten", {
+      entity: "Lead",
+      entityId: leadId,
+      customerId,
+      details: { aktion: a.aktion, ...("key" in a ? { key: a.key } : {}), ...(s?.role === "ADMIN" ? { vorschau: true } : {}) },
+      ...(s?.role === "ADMIN" ? { actor: { id: s.userId, email: s.email, role: s.role } } : {}),
+    });
     await recordUsage("action", `nachrichten.${a.aktion}`);
     const verlauf = VERLAUF[a.aktion];
     if (verlauf) {

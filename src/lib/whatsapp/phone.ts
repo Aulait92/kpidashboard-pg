@@ -7,7 +7,11 @@ export function normalizePhone(input: string): string | null {
   let digits = trimmed.replace(/\D/g, "");
   if (!digits) return null;
   if (trimmed.startsWith("+")) {
-    // bereits international
+    // bereits international. Aber (Ole, 22.11.2026, Lohmann-Lead „+101752429849“): Im Meta-Formular war eine falsche
+    // Ländervorwahl gewählt bzw. die 0 der Vorwahl mitgetippt. Nach +1 (USA/Kanada) beginnt nie eine 0, das ist eine
+    // deutsche Nummer (0175… → 49175…). Nach +49, +43, +41 die 0 der Vorwahl entfernen (Italien +39 behält die 0).
+    if (digits.startsWith("10") && digits.length >= 11) digits = `49${digits.slice(2)}`;
+    else if (/^(49|43|41)0/.test(digits)) digits = digits.slice(0, 2) + digits.slice(3);
   } else if (digits.startsWith("00")) {
     digits = digits.slice(2);
   } else if (digits.startsWith("0")) {

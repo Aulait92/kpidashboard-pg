@@ -20,3 +20,14 @@ describe("Pay-per-Lead: Formatprüfung der Telefonnummer", () => {
     expect(pruefeTelefon("")).toMatchObject({ ok: false, grund: "keine Telefonnummer" });
   });
 });
+
+describe("Nummer prüfen (Ole, 22.11.2026)", () => {
+  it("markiert zweifelhafte, aber nicht eindeutig falsche Nummern", async () => {
+    const { nummerZweifelhaft } = await import("@/lib/ppl/telefon-pruefung");
+    expect(nummerZweifelhaft("491752429849")).toBeNull(); // deutsche Handynummer
+    expect(nummerZweifelhaft("4941819283746")).toBe("Festnetznummer, per WhatsApp nicht erreichbar");
+    expect(nummerZweifelhaft("14155551234")).toBe("ausländische Nummer (Ländervorwahl prüfen)");
+    expect(nummerZweifelhaft("4923456789")).toBeNull(); // eindeutig falsch: eigener Weg
+    expect(nummerZweifelhaft(null)).toBeNull();
+  });
+});
