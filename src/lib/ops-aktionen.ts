@@ -185,6 +185,23 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${konto}: ${parsed.rows.length} Umsätze gelesen (${parsed.skipped} übersprungen), ${r.created} neu, ${r.existing} schon da, ${r.assigned} per Regel zugeordnet, ${r.open} offen zum Zuordnen.` };
     },
   },
+  bank_zuordnen: {
+    beschreibung: "Importierte Umsätze eines CSV-Kontos (z. B. n26) nach Gegenpartei einer Kostenart zuordnen: ppl, software, ki, akquise, betrieb oder ignore; legt keine Regel an",
+    felder: { konto: "Kurzname, z. B. n26", muster: "Teil der Gegenpartei, z. B. outbrain", aktion: "ppl | software | ki | akquise | betrieb | ignore" },
+    run: async (p) => {
+      const konto = text(p.konto, 30).toLowerCase();
+      const muster = text(p.muster, 60);
+      const { COST_ACTIONS } = await import("@/lib/bank/rules");
+      const aktion = text(p.aktion, 20) as (typeof COST_ACTIONS)[number];
+      if (!/^[a-z0-9]{2,30}$/.test(konto) || muster.length < 2 || !(COST_ACTIONS as readonly string[]).includes(aktion)) return { ok: false, error: "Konto, Muster oder Kostenart ungültig." };
+      const rows = await prisma.bankTransaction.findMany({ where: { accountKey: `csv:${konto}`, counterparty: { contains: muster, mode: "insensitive" } }, select: { id: true } });
+      if (!rows.length) return { ok: false, error: "Keine passenden Umsätze." };
+      const { assignTransaction } = await import("@/lib/bank/server");
+      for (const r of rows) await assignTransaction(r.id, aktion, {});
+      await audit("bank.zuordnen", { details: { konto, muster, aktion, anzahl: rows.length }, actor: OPS_ACTOR });
+      return { ok: true, info: `${rows.length} Umsätze (${muster}) → ${aktion}.` };
+    },
+  },
   buchungslink_senden: {
     beschreibung: "Buchungslink per WhatsApp an einen Lead ohne Termin schicken (einmal je Chat, nur im offenen 24-h-Fenster), Lead über Kunde und Namen",
     felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
