@@ -216,11 +216,13 @@ async function markLostKeinBedarf(leadId: string, now: Date): Promise<boolean> {
 export async function buchungslinkSenden(conversationId: string, now = new Date()): Promise<boolean> {
   try {
     const b = await import("@/lib/whatsapp/buchungslink");
-    const eingaenge = await prisma.message.findMany({
-      where: { conversationId, direction: "inbound", kind: { in: ["button", "interactive"] } },
-      select: { kind: true, body: true },
+    // „Andere Zeit“ und getippte Absagen auf einen Terminvorschlag (Ole, 22.11.2026: „passt nicht“ zählt mit)
+    const verlauf = await prisma.message.findMany({
+      where: { conversationId, OR: [{ direction: "inbound" }, { direction: "internal", kind: "termin_vorschlag" }] },
+      orderBy: { createdAt: "asc" },
+      select: { direction: true, kind: true, body: true },
     });
-    if (!b.buchungslinkFaellig(b.andereZeitAnzahl(eingaenge))) return false;
+    if (!b.buchungslinkFaellig(b.abgelehnteRunden(verlauf))) return false;
     const { streckenKontext } = await import("@/lib/whatsapp/termin-strecke");
     const k = await streckenKontext(conversationId, now);
     if (!k || k.termin) return false;

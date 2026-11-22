@@ -63,9 +63,13 @@ import {
   vermittlerName,
   zeitKurz,
   zusageDank,
+  kalenderVollText,
+  wiedervorlageText,
   type Knopf,
   type VermittlerName,
 } from "@/lib/whatsapp/gespraech";
+import { fernerTerminwunsch, mehrAls7Tage, wiedervorlageAm } from "@/lib/whatsapp/termin-vorschlaege";
+import { lehntZeitenAb } from "@/lib/whatsapp/buchungslink";
 import { folgefragen, spartenDesLeads } from "@/lib/preise/rechner-angaben";
 import { istTierStrecke } from "@/lib/whatsapp/tier-fragen";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
@@ -103,11 +107,11 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "get_available_slots",
     description:
-      "Liefert freie Termin-Vorschläge aus dem echten Kundenkalender (ohne ab: die nächsten freien Zeiten). Erst nach erfolgter Qualifizierung nutzen, um dem Lead konkrete Zeiten anzubieten. Nennt der Lead einen Wunschtag oder einen späteren Zeitraum (z. B. „Dienstag“, „nächste Woche“, „erst im Dezember“), immer mit ab = diesem Tag aufrufen: dann kommen freie Zeiten ab diesem Tag, auch Wochen im Voraus. Sag nie, ein Tag sei „noch nicht frei“, ohne vorher mit ab gesucht zu haben.",
+      "Liefert freie Termin-Vorschläge aus dem echten Kundenkalender (ohne ab: die nächsten freien Zeiten). Erst nach erfolgter Qualifizierung nutzen, um dem Lead konkrete Zeiten anzubieten. Nennt der Lead einen Wunschtag oder einen späteren Zeitraum (z. B. „Dienstag“, „nächste Woche“, „erst im Dezember“), immer mit ab = diesem Tag aufrufen: dann kommen freie Zeiten ab diesem Tag. Liegt der Tag mehr als 7 Tage in der Zukunft, legt die App stattdessen eine Wiedervorlage an und bestätigt sie dem Lead selbst. Sag nie, ein Tag sei „noch nicht frei“, ohne vorher mit ab gesucht zu haben.",
     input_schema: {
       type: "object",
       properties: {
-        ab: { type: "string", description: "Optional: Wunschtag des Leads als Datum JJJJ-MM-TT (deutsche Zeit), z. B. der nächste Dienstag. Höchstens 90 Tage im Voraus." },
+        ab: { type: "string", description: "Optional: Wunschtag des Leads als Datum JJJJ-MM-TT (deutsche Zeit), z. B. der nächste Dienstag. Höchstens 90 Tage im Voraus; mehr als 7 Tage: Wiedervorlage statt Zeiten." },
       },
     },
   },
@@ -876,12 +880,28 @@ export async function runBotTurn(
       return [];
     }
   })();
+  // Terminsuche über 7 Tage (Ole, 22.11.2026): getippte Nachricht des Leads ohne Termin und ohne Rückfrage
+  const leadTippt = !upcoming && latest?.direction === "inbound" && !opts.anstoss && !opts.knopfZeit && !opts.partnerNachholen;
+  // Wunsch mehr als 7 Tage in der Zukunft („in drei Wochen“, „im Dezember“): keine Zeiten in den nächsten Tagen, die App
+  // legt unten eine Wiedervorlage an und bestätigt sie (ohne Assistent, ohne Zwischenfrage). Mit Frage: der Assistent
+  // antwortet, get_available_slots mit ab legt die Wiedervorlage dann ebenso an.
+  const fern = leadTippt && conversation.leadId && !(latest?.body ?? "").includes("?") ? fernerTerminwunsch(latest?.body, now) : null;
+  // Auch die zweite Vorschlagsrunde abgelehnt (auch getippt: „passt nicht“, ohne neuen Wunsch): statt einer dritten
+  // Runde mit Zeiten fragt die App nach dem Wunschtag und schickt den Buchungslink (wie nach dem 2. „Andere Zeit“,
+  // lib/whatsapp/buchungslink.ts). Ohne Buchungsseite: der Assistent wie bisher.
+  if (leadTippt && !fern && lehntZeitenAb(latest?.body)) {
+    const { buchungslinkSenden } = await import("@/lib/whatsapp/knopf");
+    if (await buchungslinkSenden(conversation.id)) {
+      logTestLead(lead, "buchungslink nach zwei abgelehnten runden");
+      return;
+    }
+  }
   // Genau eine Zwischenfrage vor dem Terminvorschlag (Ole, 17.11.2026, lib/whatsapp/zwischenfrage.ts): nach der Antwort
   // auf die Öffnungsfrage fragt die App selbst (mit Knöpfen); nach der Antwort darauf schickt sie den Terminvorschlag.
   // Terminwunsch, Rückfrage, Absage oder Freitext: der Assistent übernimmt ohne weitere Frage (zwischenHinweis).
   const zw =
     // Ein Knopf auf die feste erste Frage (v10/v11) bringt einen Hinweis mit; die Zwischenfrage kommt trotzdem
-    !upcoming && !conversation.qualified && !opts.anstoss && !opts.knopfZeit && !opts.partnerNachholen && (!opts.hint || ERSTFRAGE_HINWEIS_RE.test(opts.hint)) && latest?.direction === "inbound"
+    !upcoming && !fern && !conversation.qualified && !opts.anstoss && !opts.knopfZeit && !opts.partnerNachholen && (!opts.hint || ERSTFRAGE_HINWEIS_RE.test(opts.hint)) && latest?.direction === "inbound"
       ? await (await import("@/lib/whatsapp/zwischenfrage-server"))
           .zwischenStand({ conversationId: conversation.id, source: lead?.source ?? null, formular: form.normal, angaben: conversation.qualificationData })
           .catch((e) => (console.error("[whatsapp bot] Zwischenfrage", e instanceof Error ? e.message : e), null))
@@ -998,7 +1018,24 @@ export async function runBotTurn(
     zusage: boolean;
     /** Statt des ersten Terminvorschlags: „Entscheidet noch jemand mit?“ (Splittest partner_vor_termin, Fassung a) */
     partnerVor: { text: string; bekannt: boolean } | null;
-  } = { gebucht: null, vorschlag: null, komplett: null, emailOk: false, email: null, zusage: false, partnerVor: null };
+    /** Terminwunsch mehr als 7 Tage in der Zukunft: Wiedervorlage gelegt (Zeitpunkt), die App bestätigt (Ole, 22.11.2026) */
+    recall: { am: Date } | null;
+    /** Keine zwei freien Zeiten: Aufgabe für den Vermittler, der Lead hört „meldet sich persönlich“ (Ole, 22.11.2026) */
+    kalenderVoll: { einleitung: string | null } | null;
+  } = { gebucht: null, vorschlag: null, komplett: null, emailOk: false, email: null, zusage: false, partnerVor: null, recall: null, kalenderVoll: null };
+  /** Wiedervorlage zum Wunschtag (scheduleBotRecall, Abfolge „recall“); false = nicht möglich (kein Lead, Assistent aus). */
+  const legeWiedervorlage = async (tag: Date, anlass: string | null): Promise<boolean> => {
+    if (!conversation.leadId) return false;
+    const seq = await scheduleBotRecall(conversation.leadId, wiedervorlageAm(tag), anlass ? `Terminwunsch: ${anlass}` : "Terminwunsch später").catch((e) => {
+      console.error("[whatsapp bot] Wiedervorlage", e);
+      return null;
+    });
+    if (!seq?.nextAt) return false;
+    await persistInternal(conversation.id, "followup_scheduled", { at: seq.nextAt.toISOString(), anlass: "terminwunsch_fern" });
+    logTestLead(lead, "wiedervorlage terminwunsch", { at: seq.nextAt.toISOString() });
+    zug.recall = { am: seq.nextAt };
+    return true;
+  };
   /** Geburtsdatum geprüft (geburt-chat.ts): wörtliche Rückfrage der App bzw. als offen notiert */
   let geburt: { frage: string | null; offen: boolean; buttons?: Knopf[] } | null = null;
   /** Termin buchen (Werkzeug book_appointment bzw. Zeit-Knopf); Rückgabe = Ergebnis für den Assistenten. */
@@ -1094,6 +1131,11 @@ export async function runBotTurn(
   /** Terminvorschlag der App: zwei freie Zeiten (gewählt oder die nächsten), Text mit Nutzen, Knöpfe. */
   const schlageVor = async (input: { starts?: unknown; erneut?: unknown; einleitung?: unknown; dank?: boolean }): Promise<string> => {
     const now = new Date();
+    // Wunsch des Leads mehr als 7 Tage in der Zukunft (auch mit Rückfrage): keine Zeiten in den nächsten Tagen
+    const wunschFern = leadTippt && !zug.recall ? fernerTerminwunsch(latest?.body, now) : null;
+    if (wunschFern && (await legeWiedervorlage(wunschFern, latest?.body ?? null))) {
+      return "Der Lead möchte erst später: Die App hat eine Wiedervorlage gelegt und bestätigt sie ihm selbst. Schreib nichts weiter.";
+    }
     // Erster Terminvorschlag (Ole, 21.11.2026 spät): vorher „Entscheidet noch jemand mit?“, wenn nötig (nicht bei
     // Alleinstehenden bzw. bekannter Antwort), noch nie gefragt, kein Terminwunsch des Leads und keine vom Assistenten
     // gewählten Zeiten (Wunschzeit geht vor). Splittest partner_vor_termin: a = eigene Frage, b = Halbsatz im Vorschlag.
@@ -1146,7 +1188,11 @@ export async function runBotTurn(
         }
       }
     }
-    if (starts.length < 2) return "Keine zwei freien Zeiten gefunden. Frag den Lead nach seiner Wunschzeit und nutze propose_appointment.";
+    // Kalender voll (Ole, 22.11.2026): deterministisch statt freier Worte der KI; Aufgabe für den Vermittler unten
+    if (starts.length < 2) {
+      zug.kalenderVoll = { einleitung: typeof input.einleitung === "string" ? input.einleitung : null };
+      return "Keine freien Zeiten. Die App gibt dem Vermittler eine Aufgabe und schreibt dem Lead selbst, dass er sich persönlich meldet. Schreib nichts weiter.";
+    }
     const pair: [string, string] = [starts[0], starts[1]];
     // Splittest terminvorschlag_kostenlos (lib/experimente.ts): nur der erste Vorschlag (mit Nutzensatz) zählt
     const kostenlos =
@@ -1185,7 +1231,9 @@ export async function runBotTurn(
     if (opts.partnerNachholen && !zug.vorschlag) return;
   }
   // Die App schreibt selbst (Terminvorschlag nach einer festen Frage bzw. die Frage zum Mitentscheider): kein Assistent
-  const appSchreibt = () => !!zug.partnerVor || ((zw?.art === "antwort" || !!partnerJetzt) && !!zug.vorschlag);
+  const appSchreibt = () => !!zug.partnerVor || !!zug.recall || !!zug.kalenderVoll || ((zw?.art === "antwort" || !!partnerJetzt) && !!zug.vorschlag);
+  // Terminwunsch mehr als 7 Tage in der Zukunft (Ole, 22.11.2026): Wiedervorlage und Bestätigung der App, ohne Assistent
+  if (fern && !zug.recall && !zug.vorschlag && !zug.partnerVor) await legeWiedervorlage(fern, latest?.body ?? null);
 
   // Zeit-Knopf (Payload slot:<ISO>, lib/whatsapp/knopf.ts): genau diese Zeit sofort buchen, ohne Assistent, auch ohne
   // bekannte E-Mail-Adresse (P2: erst reservieren, dann nach der Adresse fragen); ist sie belegt, bekommt der Assistent
@@ -1301,15 +1349,25 @@ export async function runBotTurn(
           const durationMin = await bookingDurationMin(conversation.customerId, conversation.leadId).catch(() => 30);
           // Wunschtag des Leads (Ole, 19.11.2026): kann er nur später, bekommt er den späteren Termin, statt wieder die nächsten Zeiten
           const ab = wunschTagAb((tu.input as { ab?: unknown }).ab);
-          const slots: Slot[] = ab
-            ? await suggestSlots(conversation.customerId, durationMin, 12, "lead", 14, conversation.leadId, ab)
-            : await suggestSlots(conversation.customerId, durationMin, 12, "lead", 10, conversation.leadId);
+          // Mehr als 7 Tage im Voraus (Ole, 22.11.2026): Wiedervorlage statt Zeiten, die App bestätigt dem Lead selbst
+          const spaeter = !!ab && !upcoming && mehrAls7Tage(ab) && (await legeWiedervorlage(ab, latest?.direction === "inbound" ? (latest.body ?? null) : null));
+          const slots: Slot[] = spaeter
+            ? []
+            : ab
+              ? await suggestSlots(conversation.customerId, durationMin, 12, "lead", 14, conversation.leadId, ab)
+              : await suggestSlots(conversation.customerId, durationMin, 12, "lead", 10, conversation.leadId);
           // Berater abwesend (Urlaub, Krank …): ab wann wieder Termine gehen – ohne Grund.
-          const pausedUntil = await bookingPausedUntil(conversation.customerId, conversation.leadId).catch(() => null);
+          const pausedUntil = spaeter ? null : await bookingPausedUntil(conversation.customerId, conversation.leadId).catch(() => null);
           const absenceNote = pausedUntil
             ? `\nHinweis: Termine sind erst ab ${fmtDayLong(pausedUntil)} möglich. Sag das dem Lead freundlich, wenn er früher möchte, ohne einen Grund zu nennen (keine Angaben zu Urlaub oder Krankheit).`
             : "";
-          if (slots.length === 0) {
+          if (spaeter) {
+            content = "Der Lead möchte erst später: Die App hat eine Wiedervorlage gelegt und bestätigt sie ihm selbst. Schreib nichts weiter.";
+          } else if (slots.length === 0 && !upcoming && !pausedUntil) {
+            // Kalender voll (Ole, 22.11.2026): Aufgabe für den Vermittler, der Lead hört „meldet sich persönlich“
+            zug.kalenderVoll = { einleitung: null };
+            content = "Keine freien Zeiten. Die App gibt dem Vermittler eine Aufgabe und schreibt dem Lead selbst, dass er sich persönlich meldet. Schreib nichts weiter.";
+          } else if (slots.length === 0) {
             content =
               "Aktuell keine freien Slots in den nächsten Werktagen gefunden. Frage den Lead nach seiner Wunschzeit und nutze propose_appointment." + absenceNote;
           } else {
@@ -1465,7 +1523,7 @@ export async function runBotTurn(
   // Iterationslimit erreicht, aber noch keine Antwort (z. B. nach mehreren
   // Tool-Aufrufen): einmal ohne Tool-Nutzung nachfragen, damit der Lead
   // garantiert eine Antwort/Bestätigung bekommt.
-  if (!finalText && !zug.gebucht && !zug.vorschlag && !zug.partnerVor && zug.komplett === null && !zug.zusage) {
+  if (!finalText && !zug.gebucht && !zug.vorschlag && !zug.partnerVor && !zug.recall && !zug.kalenderVoll && zug.komplett === null && !zug.zusage) {
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
@@ -1548,6 +1606,23 @@ export async function runBotTurn(
   } else if (zug.partnerVor) {
     finalText = zug.partnerVor.text;
     knoepfe = PARTNER_KNOEPFE;
+  } else if (zug.recall) {
+    // Terminwunsch mehr als 7 Tage in der Zukunft (Ole, 22.11.2026): kurze Bestätigung der Wiedervorlage
+    finalText = wiedervorlageText(ansprache, person, zug.recall.am);
+    knoepfe = null;
+  } else if (zug.kalenderVoll) {
+    // Kalender voll (Ole, 22.11.2026): Aufgabe (Wiedervorlage heute) und Hinweis im Chat für den Vermittler, kein
+    // Nachfassen mit Zeiten mehr; der Lead hört, dass der Vermittler sich persönlich meldet
+    finalText = kalenderVollText(ansprache, person, zug.kalenderVoll.einleitung);
+    knoepfe = null;
+    if (conversation.leadId) {
+      const { createCallTask, KALENDER_VOLL_AUFGABE, stopSequences } = await import("@/lib/lead-sequences");
+      await stopSequences(conversation.leadId, "Kalender voll: Vermittler meldet sich persönlich").catch(() => 0);
+      await createCallTask(conversation.leadId, KALENDER_VOLL_AUFGABE, new Date()).catch((e) => console.error("[whatsapp bot] Aufgabe Kalender voll", e));
+    }
+    await flagAttention(conversation.id, "Kalender voll: keine freien Zeiten für einen Terminvorschlag, bitte persönlich melden").catch((e) => console.error("[whatsapp bot] Hinweis Kalender voll", e));
+    await persistInternal(conversation.id, "kalender_voll", { einleitung: !!zug.kalenderVoll.einleitung });
+    logTestLead(lead, "kalender voll, aufgabe für den vermittler");
   } else if (zug.vorschlag) {
     finalText = zug.vorschlag.text;
     knoepfe = terminKnoepfe(zug.vorschlag.starts);
@@ -1669,7 +1744,7 @@ export async function runBotTurn(
     // (lib/whatsapp/erstinfo-pdf.ts)
     await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName: person.dat });
     // Antwortet der Lead nicht mehr: nach wenigen Stunden nachfassen (lib/lead-sequences.ts, „Chat ruht“; nach einem
-    // Terminvorschlag mit denselben Zeit-Knöpfen)
-    if (conversation.leadId) await restartSilentSequence(conversation.leadId).catch((e) => console.error("[lead-sequences silent]", e));
+    // Terminvorschlag mit denselben Zeit-Knöpfen). Nicht nach Wiedervorlage bzw. Kalender voll (Ole, 22.11.2026)
+    if (conversation.leadId && !zug.recall && !zug.kalenderVoll) await restartSilentSequence(conversation.leadId).catch((e) => console.error("[lead-sequences silent]", e));
   }
 }
