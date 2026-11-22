@@ -103,3 +103,14 @@ describe("belegeZuordnen: keine falschen Treffer", () => {
     expect(belegeZuordnen([u("t1", "2026-07-29", -20, "Irgendwer")], [b("b1", "2026-07-25", 19.99, null)])).toEqual([]);
   });
 });
+
+describe("belegeZuordnen: doppelte Belege", () => {
+  it("per Mail und Portal doppelt: der Beleg vom selben Tag gewinnt, nicht der Vormonat", () => {
+    const r = belegeZuordnen(
+      [u("aug", "2026-08-19", -29.99, "MICROSOFT MSBILL.INFO")],
+      [b("jul", "2026-07-19", 29.99, "Microsoft 365"), b("aug1", "2026-08-19", 29.99, "Microsoft 365"), b("aug2", "2026-08-19", 29.99, "Microsoft 365")],
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0].belegId).toMatch(/^aug/);
+  });
+});

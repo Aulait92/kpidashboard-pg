@@ -101,11 +101,17 @@ export function belegeZuordnen(umsaetze: AbgleichUmsatz[], belege: AbgleichBeleg
   kandidaten.sort((x, y) => y.stufe - x.stufe || x.abstand - y.abstand);
   const belegt = new Set<string>();
   const out: { umsatzId: string; belegId: string }[] = [];
+  // Doppelt erfasste Belege (z. B. per Mail und Portal: gleicher Anbieter, Tag und Betrag) zählen als einer
+  const gleicherBeleg = (x: AbgleichBeleg, y: AbgleichBeleg) => x.firma === y.firma && x.datum === y.datum && x.brutto === y.brutto && x.waehrung === y.waehrung;
   for (const k of kandidaten) {
     if (belegt.has(k.u.id) || belegt.has(k.b.id)) continue;
-    // Gleichstand gleicher Stufe und gleichen Abstands bei einem anderen freien Beleg → nicht raten
-    const gleich = kandidaten.filter((x) => x !== k && x.u === k.u && x.stufe === k.stufe && x.abstand === k.abstand && !belegt.has(x.b.id));
-    if (gleich.length) continue;
+    // Gleichstand mit einem anderen (nicht doppelten) Beleg → nicht raten und auch nicht auf einen schlechteren ausweichen
+    const gleich = kandidaten.filter((x) => x !== k && x.u === k.u && x.stufe === k.stufe && x.abstand === k.abstand && !belegt.has(x.b.id) && !gleicherBeleg(x.b, k.b));
+    if (gleich.length) {
+      belegt.add(k.u.id);
+      continue;
+    }
+    for (const x of frei) if (x !== k.b && gleicherBeleg(x, k.b)) belegt.add(x.id);
     belegt.add(k.u.id);
     belegt.add(k.b.id);
     out.push({ umsatzId: k.u.id, belegId: k.b.id });
