@@ -115,7 +115,7 @@ export async function KundenakteSeite({ id, children }: { id: string; children: 
             <button
               type="submit"
               className={buttonClass("secondary", "md")}
-              title={c.adminMitlesen ? "Du bekommst Pushs bei Lead, Termin und Abschluss. Klicken zum Abschalten." : "Pushs bei Lead, Termin und Abschluss einschalten"}
+              title={c.adminMitlesen ? "Du bekommst Pushs bei Lead, Antwort im Chat, Termin und Abschluss. Klicken zum Abschalten." : "Pushs bei Lead, Antwort im Chat, Termin und Abschluss einschalten"}
               aria-label={c.adminMitlesen ? "Mitlesen aus" : "Mitlesen an"}
             >
               {c.adminMitlesen ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}

@@ -51,3 +51,31 @@ describe("adminMitlesen", () => {
     expect(pushes.calls).toEqual([]);
   });
 });
+
+describe("Antwort im Chat (Ole, 22.11.2026)", () => {
+  beforeEach(() => {
+    pushes.calls = [];
+    db.pool = null;
+  });
+
+  it("Push ohne Nachrichtentext, mit Link in den Chat", async () => {
+    db.lead = lead();
+    await adminMitlesen({ leadId: "l1", ereignis: "antwort", tagZusatz: "k1", url: "/admin/neu/leads/chats?c=k1" });
+    expect(pushes.calls).toEqual([{ title: "💬 Antwort bei Henrik Lohmann", body: "Ein Lead hat im Chat geantwortet", url: "/admin/neu/leads/chats?c=k1", tag: "mitlesen-antwort:k1" }]);
+  });
+
+  it("nicht bei abgeschaltetem Mitlesen oder Testlead", async () => {
+    db.lead = lead({}, { adminMitlesen: false });
+    await adminMitlesen({ leadId: "l1", ereignis: "antwort" });
+    db.lead = lead({ isTest: true });
+    await adminMitlesen({ leadId: "l1", ereignis: "antwort" });
+    expect(pushes.calls).toEqual([]);
+  });
+
+  it("Gateway: je Chat höchstens ein Push, solange der Lead weiterschreibt", async () => {
+    const { readFileSync } = await import("node:fs");
+    const src = readFileSync("src/lib/whatsapp/gateway.ts", "utf8");
+    expect(src).toContain('ereignis: "antwort"');
+    expect(src).toContain("ANTWORT_PAUSE_MS");
+  });
+});

@@ -430,6 +430,12 @@ async function persistInbound(
   if (linkedLead?.leadId) {
     const { recordLeadProgress } = await import("@/lib/lead-progress");
     await recordLeadProgress(linkedLead.leadId, "replied");
+    // Admin liest mit (Ole, 22.11.2026): Push, wenn ein Lead antwortet; je Chat höchstens einer, solange er weiterschreibt
+    const { adminMitlesen, ANTWORT_PAUSE_MS } = await import("@/lib/admin-mitlesen");
+    const kurzVorher = await prisma.message.count({
+      where: { conversationId: conversation.id, direction: "inbound", id: { not: inboundMsg.id }, createdAt: { gte: new Date(Date.now() - ANTWORT_PAUSE_MS) } },
+    });
+    if (!kurzVorher) await adminMitlesen({ leadId: linkedLead.leadId, ereignis: "antwort", tagZusatz: conversation.id, url: `/admin/neu/leads/chats?c=${conversation.id}` });
     // Antwort auf eine Bestandskampagne hat gerade den Lead angelegt: Lead-Chat, der Assistent darf (wie bisher) antworten
     if (!botErlaubt && conversation.botActive && !conversation.leadId) botErlaubt = true;
   }
