@@ -816,6 +816,19 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
   "push-geraete": async () => (await import("@/lib/ops/push-geraete")).pushGeraeteDiagnose(),
   "lead-felder": async (p) => (await import("@/lib/ops/lead-felder")).leadFelderDiagnose(p),
+  // Eingänge je Tag und Kanal für ein Produkt (Media Buyer zählt nur adChannel „Meta“), ?produkt=Wechsel&tage=14
+  "leads-je-tag": async (p) => {
+    const produkt = (p.get("produkt") ?? "").trim();
+    const tage = Math.min(40, Math.max(1, Number(p.get("tage") ?? 14) || 14));
+    const seit = new Date(Date.now() - tage * 86_400_000);
+    const rows = await prisma.lead.findMany({ where: { ...(produkt ? { source: produkt } : {}), createdAt: { gte: seit }, isTest: false }, select: { createdAt: true, adChannel: true, source: true } });
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      const k = `${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(r.createdAt)} | ${r.source ?? "-"} | ${r.adChannel ?? "ohne Kanal"}`;
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return [...m.entries()].sort().map(([k, n]) => `${k}: ${n}`);
+  },
   // Trockenlauf des Media Buyers (22.11.2026): rechnet Budgets, schreibt nichts an Meta, keine Pushs; protokolliert
   // nur eine Entscheidung mit dryRun=true (wie „Simulieren“ im Admin)
   "media-buyer-trockenlauf": async () => {
