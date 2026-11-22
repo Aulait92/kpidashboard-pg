@@ -24,3 +24,8 @@ mit „STOPP“ oder per E-Mail an {E-Mail}. Datenschutz: {Link}“
 3. Nur Kontakt zu dieser Anfrage, kein Nachfassen zu anderen Sparten ohne neue Einwilligung.
 4. Vor dem Einsatz Conversion-Texter/UX, danach Pflichtangaben prüfen (Vermittler, Anschrift, Kanäle, KI, Erstinformation
    mit Papier, Widerruf, Datenschutz).
+
+## Nachweis Auflage 1 (22.11.2026)
+Vorschau Lohmann Kfz v4 Knopf, Seite 4 von 5 („Privacy review“): Titel und Wortlaut stehen direkt über dem Knopf
+„Senden“, der den Lead abschickt (Seite 5 ist die Dankeseite). Screenshot: `nachweise/2026-11-22-leadformular-knopf-vorschau.png`.
+Darunter folgt der feste Meta-Hinweis (Du-Form, von Meta vorgegeben, nicht änderbar). Keine SMS-Bestätigung.
