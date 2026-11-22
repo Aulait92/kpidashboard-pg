@@ -4,7 +4,7 @@ import { ClipboardCheck, FilePlus2, Mail, Phone, Send } from "lucide-react";
 import { Badge, ButtonLink, Card, CardHeader, buttonClass } from "@/components/ui";
 import { DealOffersCard } from "@/components/deal-offers-card";
 import { EintragenKnopf } from "@/components/admin-neu/vertrieb/eintragen-knopf";
-import { ContactMore, StagePicker } from "@/components/vertrieb/contact-controls";
+import { ContactMore, GewonnenVerlorenKnoepfe, StagePicker } from "@/components/vertrieb/contact-controls";
 import { DuplicateHint } from "@/components/vertrieb/contact-merge";
 import { DatenschutzRechtKarte } from "@/components/vertrieb/datenschutz-recht";
 import { fallZeilen, rechtsFaelleVon } from "@/lib/vertrieb/datenschutz-recht-server";
@@ -164,6 +164,10 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                 Präsentation {a.praesAufrufe.length}× geöffnet
               </span>
             ) : null}
+            {/* Gewonnen / Verloren mit einem Tipp (Ole, 22.11.2026), nur solange der Kontakt offen ist; als Paar, am Desktop rechts */}
+            <span className="flex gap-2 sm:ml-auto" data-funktion="actions-gewonnenverlorenaction--gewonnen-verloren-knoepfe">
+              <GewonnenVerlorenKnoepfe contactId={c.id} stage={c.stage} competitor={c.competitor} offenesAngebot={angebotOffen} />
+            </span>
           </div>
         </div>
 

@@ -2,9 +2,11 @@ import Link from "next/link";
 import { ChevronDown, Mail, MessageCircle } from "lucide-react";
 import { gruppiere, kanaeleText, zeitLabel, type GeplanteNachricht } from "@/lib/vertrieb/geplante-nachrichten";
 import { cn } from "@/lib/utils";
+import { NachrichtVorschauKnopf } from "@/components/admin-neu/vertrieb/nachricht-vorschau-knopf";
 
 // Geplante Nachrichten (lib/vertrieb/geplante-nachrichten.ts): eine Zeile je Nachricht, gruppiert nach Heute, Morgen,
-// nächste 7 Tage; „Später“ eingeklappt. Zeile antippen öffnet die Kontakt- bzw. Kundenakte, „Stoppen“ führt zum
+// nächste 7 Tage; „Später“ eingeklappt. Zeile antippen zeigt die Nachricht mit den echten Daten
+// (Ole, 22.11.2026; von dort weiter zur Kontakt- bzw. Kundenakte), „Stoppen“ führt zum
 // bestehenden Weg (Später-Follow-up in der Kontaktakte, Mahnungen in der Abrechnung des Kunden).
 
 export const GEPLANTE_NACHRICHTEN_PFAD = "/admin/neu/vertrieb/nachrichten";
@@ -25,9 +27,7 @@ export function NachrichtZeile({ n, now, nurZeit }: { n: GeplanteNachricht; now:
       <span className={cn("w-20 shrink-0 pt-px text-sm tabular-nums sm:w-28", n.sofort ? "text-[color:var(--brand)]" : "font-semibold")}>{zeitLabel(n, now, { nurZeit })}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <Link href={n.href} className="min-w-0 truncate text-sm font-medium after:absolute after:inset-0 after:content-[''] hover:underline">
-            {n.empfaenger}
-          </Link>
+          <span className="min-w-0 truncate text-sm font-medium">{n.empfaenger}</span>
           <KanalSymbole n={n} />
         </div>
         <div className="text-xs text-[color:var(--muted)]">
@@ -37,6 +37,7 @@ export function NachrichtZeile({ n, now, nurZeit }: { n: GeplanteNachricht; now:
           {n.hinweis ? ` · ${n.hinweis}` : ""}
         </div>
       </div>
+      <NachrichtVorschauKnopf nachricht={{ key: n.key, at: n.at.toISOString(), kanaele: n.kanaele, art: n.art, empfaenger: n.empfaenger, href: n.href }} />
       {n.stoppHref ? (
         <Link href={n.stoppHref} className="relative z-10 -my-1 inline-flex min-h-10 shrink-0 items-center self-center text-xs font-medium text-[color:var(--muted)] hover:text-[color:var(--foreground)] hover:underline">
           Stoppen

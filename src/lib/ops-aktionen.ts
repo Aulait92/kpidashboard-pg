@@ -168,6 +168,16 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r === "nichts" ? { ok: false, error: "Nichts versucht (keine Sperre „kein WhatsApp“ oder keine Nummer)." } : { ok: true, info: r === "termin" ? "Terminbestätigung per WhatsApp versucht." : "Erstanschreiben per WhatsApp versucht." };
     },
   },
+  belege_abgleichen: {
+    beschreibung: "Belege jetzt aus GetMyInvoices holen und eindeutig passenden Kontoumsätzen zuordnen (sonst nachts automatisch)",
+    felder: {},
+    run: async () => {
+      const r = await (await import("@/lib/belege/server")).syncBelege();
+      await audit("belege.abgleich", { details: { ...r }, actor: OPS_ACTOR });
+      if (r.fehler) return { ok: false, error: r.fehler };
+      return { ok: true, info: `${r.geholt} Belege geholt (${r.neu} neu), ${r.zugeordnet} neu zugeordnet.` };
+    },
+  },
   bank_csv_importieren: {
     beschreibung: "Kontoumsätze aus einer CSV in die Buchhaltung (Geld › Kosten) übernehmen, je Konto getrennt (z. B. n26 für geschäftliche Ausgaben vom Privatkonto); Regeln greifen, Rest steht offen zum Zuordnen. Ohne Oberfläche.",
     felder: { konto: "Kurzname, nur Kleinbuchstaben/Ziffern, z. B. n26", csv: "Inhalt der CSV-Datei" },

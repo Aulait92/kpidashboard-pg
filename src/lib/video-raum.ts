@@ -19,3 +19,19 @@ export function pruefeVideoLink(raw: string): { ok: true; url: string | null } |
     return { ok: false, error: "Das ist der Link zu einem einzelnen Meeting, er verfällt danach. Bitte den Link Ihres persönlichen Raums nehmen, er endet auf /meet/vorname.nachname." };
   return { ok: true, url };
 }
+
+// Videoraum-Pflicht (Go-live-Prüfung Einrichtung, 22.11.2026): Meet- bzw. Teams-Links entstehen nur mit verbundenem
+// Google- bzw. Microsoft-Kalender. App-Kalender, Kalender-Link (ICS), Allianz-Online-Kalender oder der Ausweg
+// „Mein Versicherer erlaubt das nicht“ liefern keinen Raum, dann muss ein fester Link her.
+
+export type KalenderVerbindung = { status: string; provider: string } | null | undefined;
+
+/** Erstellt der verbundene Kalender selbst Meet- bzw. Teams-Links? (rein) */
+export function meetOderTeams(conn: KalenderVerbindung): boolean {
+  return conn?.status === "connected" && (conn.provider === "google" || conn.provider === "microsoft");
+}
+
+/** Braucht es einen festen Video-Link? Ja, solange weder Google noch Microsoft verbunden ist. (rein) */
+export function videoLinkNoetig(conn: KalenderVerbindung): boolean {
+  return !meetOderTeams(conn);
+}

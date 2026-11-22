@@ -93,7 +93,7 @@ function AngabenFelder({ a, allianz, videoRoomUrl }: { a: AngabenInitial; allian
       {allianz ? (
         <div className="min-w-0 sm:col-span-2">
           <label className={label} htmlFor="angaben-video">
-            Ihr Webex-Link (optional)
+            Ihr Webex-Link
           </label>
           <input
             id="angaben-video"

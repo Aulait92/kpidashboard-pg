@@ -177,7 +177,7 @@ export async function applyRulesToOpen(): Promise<number> {
 export async function monthlyBankCosts(from: Date): Promise<Map<string, Record<CostPurposeKey, number>>> {
   const rows = await prisma.bankTransaction.findMany({
     where: { status: "zugeordnet", bookingDate: { gte: from }, amount: { lt: 0 }, costPurpose: { not: null } },
-    select: { bookingDate: true, amount: true, costPurpose: true, vatIncluded: true, counterparty: true, purpose: true },
+    select: { bookingDate: true, amount: true, costPurpose: true, vatIncluded: true, counterparty: true, purpose: true, beleg: { select: { netto: true, brutto: true, waehrung: true } } },
   });
   const out = new Map<string, Record<CostPurposeKey, number>>();
   const r2 = (x: number) => Math.round(x * 100) / 100;
@@ -186,7 +186,12 @@ export async function monthlyBankCosts(from: Date): Promise<Map<string, Record<C
     const cur = out.get(m) ?? { ppl: 0, software: 0, ki: 0, akquise: 0, betrieb: 0 };
     const p = r.costPurpose === "ki" ? "software" : r.costPurpose!;
     const k = (["ppl", "software", "akquise", "betrieb"].includes(p) ? p : "betrieb") as CostPurposeKey;
-    const net = netCost(Number(r.amount), r.vatIncluded);
+    // Netto laut Beleg (GetMyInvoices), wenn der EUR-Betrag zum Umsatz passt; sonst Schätzung (wie BWA, lib/bwa.ts)
+    const b = r.beleg;
+    const net =
+      b && b.waehrung === "EUR" && b.netto != null && b.brutto != null && Math.abs(Number(b.brutto) + Number(r.amount)) <= 0.02
+        ? r2(Number(b.netto))
+        : netCost(Number(r.amount), r.vatIncluded);
     cur[k] = r2(cur[k] + net);
     if (istKiKosten(r)) cur.ki = r2(cur.ki + net);
     out.set(m, cur);

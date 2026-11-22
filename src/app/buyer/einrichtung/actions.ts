@@ -418,3 +418,38 @@ export async function gesellschaftenEinrichtungAction(keys: string[]): Promise<S
   revalidatePath("/buyer/einrichtung");
   return { ok: true };
 }
+
+// ─── Test-Einladung im Kalenderschritt (App-Kalender/Allianz, Go-live-Prüfung 22.11.2026) ───
+
+export type TestEinladungState = { ok?: boolean; to?: string; error?: string; angekommen?: boolean };
+
+/** Test-Einladung an die Adresse schicken, an die auch echte Termine gehen. */
+export async function testEinladungAction(_prev: TestEinladungState, _fd: FormData): Promise<TestEinladungState> {
+  let ob;
+  try {
+    ({ ob } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const { sendeTestEinladung } = await import("@/lib/calendar/app-kalender");
+  const r = await sendeTestEinladung(ob.customerId);
+  return r.ok ? { ok: true, to: r.to } : { error: r.error };
+}
+
+/** „Ist angekommen“: Erst damit gilt der Kalenderschritt mit App-Kalender als erledigt (lib/onboarding.ts). */
+export async function einladungAngekommenAction(_prev: TestEinladungState, _fd: FormData): Promise<TestEinladungState> {
+  let ob;
+  try {
+    ({ ob } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const { EINLADUNG_TEST_KEY } = await import("@/lib/onboarding");
+  const current = (ob.stepSkips && typeof ob.stepSkips === "object" ? ob.stepSkips : {}) as Record<string, unknown>;
+  await prisma.onboarding.update({
+    where: { id: ob.id },
+    data: { stepSkips: { ...current, [EINLADUNG_TEST_KEY]: { at: new Date().toISOString(), reason: "angekommen" } } as Prisma.InputJsonValue },
+  });
+  revalidatePath("/buyer", "layout");
+  return { ok: true, angekommen: true };
+}

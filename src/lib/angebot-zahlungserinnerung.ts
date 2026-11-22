@@ -14,6 +14,7 @@
 
 import { addDaysIso, berlinTodayIso } from "@/lib/offer-pricing";
 import { fromDayKey } from "@/lib/vertrieb/dates";
+import { naechsteSchritteZahlung } from "@/lib/vertrieb/ab-tests";
 
 export const ABSTAENDE_MIT_DATUM = [0, 3, 7] as const;
 export const ABSTAENDE_OHNE_DATUM = [0, 7, 14, 21] as const;
@@ -194,9 +195,14 @@ export function erinnerungsMail(o: {
   du: boolean;
   /** Schon gebuchter Entscheidungs-Call (lib/vertrieb/entscheidungs-call.ts), eigener Absatz vor „Fragen?“ */
   entscheidungsCall?: string | null;
+  /**
+   * A/B-Test vertrieb_angebot_naechste_schritte (lib/vertrieb/ab-tests.ts), Fassung B: Absatz „So geht es danach
+   * weiter …“ (gleiche Fassung wie Angebotsmail und Bonus-Erinnerung des Angebots).
+   */
+  naechsteSchritte?: boolean;
 }): { subject: string; paragraphs: string[]; button: string } {
   const start = o.startIso ? fmtTag(o.startIso) : null;
-  const call = o.entscheidungsCall ? [o.entscheidungsCall] : [];
+  const call = [...(o.naechsteSchritte ? [naechsteSchritteZahlung(o.du)] : []), ...(o.entscheidungsCall ? [o.entscheidungsCall] : [])];
   if (o.du) {
     return {
       subject: o.stufe > 1 ? `Erinnerung: Zahlung für dein Angebot ${o.number}` : `Zahlung für dein Angebot ${o.number} einrichten`,

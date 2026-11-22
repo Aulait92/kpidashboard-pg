@@ -6,6 +6,7 @@ import { VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 import { ersteWocheMailzeile } from "@/lib/ppl/erste-woche-shared";
 import { kundenkontoMailAbsatz, type KundenkontoAngebot } from "@/lib/ppl/kundenkonto";
 import { entscheidungsCallMailText, entscheidungsCallText, type EntscheidungsCall } from "@/lib/vertrieb/entscheidungs-call";
+import { naechsteSchritteAngebot } from "@/lib/vertrieb/ab-tests";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
 
@@ -265,6 +266,11 @@ export type AngebotsMailInhalt = {
   ersteWoche?: { productKey: string; name: string; price: number; quantity: number } | null;
   /** Kampagnen im eigenen Werbekonto (Ole, 20.11.2026): kurzer Absatz zur Variante, Software-Listenpreis netto */
   kundenkonto?: { angebot: KundenkontoAngebot; softwareNetto: number } | null;
+  /**
+   * A/B-Test vertrieb_angebot_naechste_schritte (lib/vertrieb/ab-tests.ts), Fassung B: Absatz „So geht es nach Ihrer
+   * Annahme weiter …“. Hypothese: Wer vor dem Ja sieht, was danach passiert, nimmt öfter an und zahlt.
+   */
+  naechsteSchritte?: boolean;
 };
 
 /**
@@ -289,6 +295,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
     : opts.ersteWoche
       ? ersteWocheMailzeile(opts.ersteWoche, !!opts.du)
       : null;
+  const schritte = opts.naechsteSchritte ? naechsteSchritteAngebot(!!opts.du) : null;
   const text = [
     opts.greeting,
     "",
@@ -301,6 +308,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
     ...(bonusText ? [bonusText, ""] : []),
     ...(wocheText ? [wocheText, ""] : []),
     ...(vorausText ? [vorausText, ""] : []),
+    ...(schritte ? [schritte, ""] : []),
     ...(rechner ? [`${t.rechner}:`, rechner, ""] : []),
     ...(praes ? [`${t.praesentation}:`, praes, ""] : []),
     ...(terminText ? [terminText, ""] : []),
@@ -317,6 +325,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
         ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
         ${wocheText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(wocheText)}</p>` : ""}
         ${vorausText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(vorausText)}</p>` : ""}
+        ${schritte ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(schritte)}</p>` : ""}
         ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
         ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}
         ${termin ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(termin.satz)}${termin.url ? ` <a href="${escapeHtml(termin.url)}" style="color:#2563eb;font-weight:600">${escapeHtml(termin.linkLabel)}</a>` : ""}</p>` : ""}
@@ -396,7 +405,7 @@ export function setupParts(software: boolean, whatsappSelfConnect: boolean, meta
 }
 
 /** Willkommens-Mail nach Vertragsannahme: Zugang, Einrichtung, Ablauf bis zum Start. */
-export async function sendOnboardingWelcomeEmail(opts: {
+export type WillkommensMailOpts = {
   to: string;
   /** z. B. „Hallo Herr Weber,“ */
   greeting: string;
@@ -410,13 +419,10 @@ export async function sendOnboardingWelcomeEmail(opts: {
   /** Kunde verbindet seine WhatsApp-Nummer selbst (360dialog konfiguriert, Paket mit Software). */
   whatsappSelfConnect?: boolean;
   replyTo?: string | null;
-}): Promise<SendResult> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
-  if (!apiKey) {
-    console.warn(`[email] RESEND_API_KEY fehlt — Willkommens-Mail an ${opts.to}, Link: ${opts.setPasswordUrl ?? opts.loginUrl}`);
-    return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
-  }
+};
+
+/** Inhalt der Willkommens-Mail (rein): gemeinsam für Versand und Vorschau. */
+export function willkommensMailInhalt(opts: WillkommensMailOpts): { subject: string; text: string; html: string } {
   const start = opts.startDate
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.startDate)
     : null;
@@ -444,40 +450,53 @@ export async function sendOnboardingWelcomeEmail(opts: {
         ]),
   ];
   const greeting = escapeHtml(opts.greeting);
+  return {
+    subject: "Willkommen bei performancegrowth: Ihre nächsten Schritte",
+    text: [
+      opts.greeting,
+      "",
+      `vielen Dank für Ihr Vertrauen, wir freuen uns auf die Zusammenarbeit${products ? ` (${products})` : ""}.`,
+      "So geht es weiter:",
+      "",
+      ...steps.map((s, i) => `${i + 1}. ${s}`),
+      "",
+      opts.setPasswordUrl ? `Passwort festlegen: ${opts.setPasswordUrl}` : `Login: ${opts.loginUrl}`,
+      `Einrichtung: ${opts.setupUrl}`,
+      "",
+      "Bei Fragen antworten Sie einfach auf diese E-Mail.",
+      "",
+      signatureText(),
+    ].join("\n"),
+    html: `
+      <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für Ihr Vertrauen, wir freuen uns auf die Zusammenarbeit${products ? ` (${escapeHtml(products)})` : ""}. So geht es weiter:</p>
+        <ol style="margin:0 0 20px;padding-left:20px;font-size:15px;line-height:1.6">
+          ${steps.map((s) => `<li style="margin:0 0 8px">${escapeHtml(s)}</li>`).join("")}
+        </ol>
+        <p style="margin:24px 0"><a href="${accessUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">${opts.setPasswordUrl ? "Zugang einrichten" : "Zum Kundenbereich"}</a></p>
+        <p style="margin:0 0 4px;font-size:13px;color:#5b5e68">Login-E-Mail: ${escapeHtml(opts.to)}</p>
+        ${start ? `<p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Start: ${start}</p>` : ""}
+        <p style="margin:16px 0 0;font-size:15px;line-height:1.6">Bei Fragen antworten Sie einfach auf diese E-Mail.</p>
+        ${signatureHtml()}
+      </div>`,
+  };
+}
+
+export async function sendOnboardingWelcomeEmail(opts: WillkommensMailOpts): Promise<SendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
+  if (!apiKey) {
+    console.warn(`[email] RESEND_API_KEY fehlt — Willkommens-Mail an ${opts.to}, Link: ${opts.setPasswordUrl ?? opts.loginUrl}`);
+    return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+  }
+  const inhalt = willkommensMailInhalt(opts);
   try {
     const { error } = await mailClient(apiKey).emails.send({
       from,
       to: opts.to,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
-      subject: "Willkommen bei performancegrowth: Ihre nächsten Schritte",
-      text: [
-        opts.greeting,
-        "",
-        `vielen Dank für Ihr Vertrauen, wir freuen uns auf die Zusammenarbeit${products ? ` (${products})` : ""}.`,
-        "So geht es weiter:",
-        "",
-        ...steps.map((s, i) => `${i + 1}. ${s}`),
-        "",
-        opts.setPasswordUrl ? `Passwort festlegen: ${opts.setPasswordUrl}` : `Login: ${opts.loginUrl}`,
-        `Einrichtung: ${opts.setupUrl}`,
-        "",
-        "Bei Fragen antworten Sie einfach auf diese E-Mail.",
-        "",
-        signatureText(),
-      ].join("\n"),
-      html: `
-        <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für Ihr Vertrauen, wir freuen uns auf die Zusammenarbeit${products ? ` (${escapeHtml(products)})` : ""}. So geht es weiter:</p>
-          <ol style="margin:0 0 20px;padding-left:20px;font-size:15px;line-height:1.6">
-            ${steps.map((s) => `<li style="margin:0 0 8px">${escapeHtml(s)}</li>`).join("")}
-          </ol>
-          <p style="margin:24px 0"><a href="${accessUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">${opts.setPasswordUrl ? "Zugang einrichten" : "Zum Kundenbereich"}</a></p>
-          <p style="margin:0 0 4px;font-size:13px;color:#5b5e68">Login-E-Mail: ${escapeHtml(opts.to)}</p>
-          ${start ? `<p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Start: ${start}</p>` : ""}
-          <p style="margin:16px 0 0;font-size:15px;line-height:1.6">Bei Fragen antworten Sie einfach auf diese E-Mail.</p>
-          ${signatureHtml()}
-        </div>`,
+      ...inhalt,
     });
     if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
     return { ok: true };
@@ -536,9 +555,9 @@ export function customerMailHtml(opts: MailBody): string {
  * Einfache Kunden-Mail im performancegrowth-Stil (Absender wie Angebote).
  * Absätze werden escaped; `html`-Blöcke (z. B. Smiley-Leiste) gehen roh durch.
  */
-export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResult> {
-  // Keine Gedankenstriche in Mails an Kunden (Bis-Striche zwischen Zahlen bleiben)
-  opts = {
+/** Keine Gedankenstriche in Mails an Kunden (Bis-Striche zwischen Zahlen bleiben); gemeinsam für Versand und Vorschau. */
+export function kundenMailBereinigt<T extends Omit<CustomerMailOpts, "to">>(opts: T): T {
+  return {
     ...opts,
     subject: ohneGedankenstriche(opts.subject),
     greeting: ohneGedankenstriche(opts.greeting),
@@ -546,6 +565,16 @@ export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResu
     ...(opts.list ? { list: opts.list.map((l) => ohneGedankenstriche(l)) } : {}),
     ...(opts.textBlocks ? { textBlocks: opts.textBlocks.map((l) => ohneGedankenstriche(l)) } : {}),
   };
+}
+
+/** Vorschau einer Kunden-Mail: Betreff, HTML und Text genau wie beim Versand (rein). */
+export function kundenMailVorschau(opts: Omit<CustomerMailOpts, "to">): { betreff: string; html: string; text: string; anhaenge: string[] } {
+  const o = kundenMailBereinigt(opts);
+  return { betreff: o.subject, html: customerMailHtml(o), text: customerMailText(o), anhaenge: (o.attachments ?? []).map((a) => a.filename) };
+}
+
+export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResult> {
+  opts = kundenMailBereinigt(opts);
   const apiKey = process.env.RESEND_API_KEY;
   const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
   if (!apiKey) {

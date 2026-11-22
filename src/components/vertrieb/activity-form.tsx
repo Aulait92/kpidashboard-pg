@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { logActivity } from "@/app/admin/vertrieb/actions";
 import { LOSS_REASONS, OUTCOMES, TASK_TYPES } from "@/lib/vertrieb/crm";
+import { useToast } from "@/components/ui/toast";
 
 function addWorkdaysLocal(n: number): string {
   const d = new Date();
@@ -28,6 +29,7 @@ export function ActivityForm({
   onDone?: () => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const toast = useToast();
   const [outcomeId, setOutcomeId] = useState("nicht_erreicht");
   const outcome = OUTCOMES.find((o) => o.id === outcomeId)!;
   const [createTask, setCreateTask] = useState(!!outcome.task);
@@ -50,7 +52,9 @@ export function ActivityForm({
     <form
       ref={formRef}
       action={async (fd) => {
-        await logActivity(fd);
+        const r = await logActivity(fd);
+        // „Nicht erreicht“: was automatisch rausging (E-Mail, WhatsApp) oder warum nicht
+        if (r?.hinweis) toast.show({ message: r.hinweis, durationMs: 8000 });
         formRef.current?.reset();
         pick("nicht_erreicht");
         onDone?.();

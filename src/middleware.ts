@@ -9,6 +9,7 @@ import { demoDatenbankUrl } from "@/lib/app-demo/konfig";
 import { clientIp, hit } from "@/lib/rate-limit";
 import { ALTER_BESUCH_COOKIE, decideFunnelHost } from "@/lib/funnel/host";
 import { wwwAppRedirect } from "@/lib/www-app-host";
+import { antwortHeader, mussTunneln, tunnelAnfrage } from "@/lib/carddav/tunnel";
 
 const SESSION_COOKIE = "kpi_session";
 
@@ -64,6 +65,7 @@ const PUBLIC_PREFIXES = [
   "/marken", // Logo, Icons und Bilder der Funnel-Marken (public/marken, lib/funnel/marken.ts)
   "/feedback", // Kunden-Feedback per Mail-Link (geheimer Token, ohne Login)
   "/api/vertrieb", // Vertriebs-Webhooks (Instantly, Calendly, Leads, LinkedIn) – per Token gesichert
+  "/api/carddav", // Adressbuch fürs iPhone (CardDAV, nur lesend, HTTP Basic mit CARDDAV_PASSWORD, lib/carddav/dav.ts)
   "/manifest.webmanifest",
   "/icon",
   "/apple-icon",
@@ -238,6 +240,23 @@ async function appDemo(req: NextRequest): Promise<NextResponse> {
   return noindex(NextResponse.rewrite(url, { request: { headers } }));
 }
 
+/**
+ * Adressbuch fürs iPhone (CardDAV): PROPFIND, REPORT usw. kann ein Route Handler nicht annehmen. Die Middleware
+ * schickt sie als POST mit Kopf x-carddav-methode an den eigenen Route Handler und gibt dessen Antwort zurück
+ * (lib/carddav/tunnel.ts). Anmeldung und alles Weitere prüft der Route Handler.
+ */
+async function carddavTunnel(req: NextRequest): Promise<NextResponse> {
+  try {
+    const body = await req.text();
+    const t = tunnelAnfrage(req, body, process.env.PORT);
+    const res = await fetch(t.url, t.init);
+    return new NextResponse(await res.arrayBuffer(), { status: res.status, headers: antwortHeader(res.headers) });
+  } catch (e) {
+    console.error("[carddav] Tunnel fehlgeschlagen:", e instanceof Error ? e.message : e);
+    return new NextResponse("Adressbuch gerade nicht erreichbar.", { status: 503, headers: { "content-type": "text/plain; charset=utf-8", "Retry-After": "60" } });
+  }
+}
+
 export async function middleware(req: NextRequest) {
   // App-Demo-Kennzeichen setzt nur die Middleware selbst (beim Umschreiben). Kommt es von außen, ist es gefälscht.
   if (req.headers.has(APP_DEMO_HEADER)) return new NextResponse("Bad Request", { status: 400, headers: { "X-Robots-Tag": NO_INDEX } });
@@ -251,6 +270,15 @@ export async function middleware(req: NextRequest) {
   const booking = bookingHost(req);
   if (booking) return booking;
   const { pathname } = req.nextUrl;
+  // Adressbuch fürs iPhone (CardDAV, lib/carddav/dav.ts): Einstieg nach RFC 6764 auf den Endpunkt umleiten, auch für
+  // PROPFIND (manche Clients fragen zuerst die Wurzel). Der Endpunkt prüft Passwort und ob das Adressbuch an ist.
+  if (pathname === "/.well-known/carddav" || (pathname === "/" && req.method === "PROPFIND")) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/api/carddav";
+    url.search = "";
+    return NextResponse.redirect(url, 301);
+  }
+  if (mussTunneln(pathname, req.method)) return carddavTunnel(req);
   if (istDemoPfad(pathname)) return appDemo(req);
   // Aus der Demo heraus keine API (Downloads, Suche, Nutzungsmessung …): die Demo hat keine Sitzung und schreibt nichts
   if (pathname.startsWith("/api/") && vonDemoSeite(req.headers.get("referer"), requestHost(req.headers))) {
@@ -426,6 +454,8 @@ export async function middleware(req: NextRequest) {
   if (pathname === "/buyer" || pathname.startsWith("/buyer/")) {
     const headers = new Headers(req.headers);
     headers.set("x-app-area", "buyer");
+    // Bestellkonto (lib/ppl/bestellkonto.ts): Layout leitet reine Bestellkonten auf /buyer/bestellen
+    headers.set("x-buyer-pfad", pathname);
     return NextResponse.next({ request: { headers } });
   }
 

@@ -96,10 +96,10 @@ describe("Text der SMS", () => {
     zeiten: GESCHAEFTSZEITEN_STANDARD,
   };
 
-  it("Sie: Dank, KI-Assistent, Link, Rückruf zu Geschäftszeiten, Abmelden", () => {
+  it("Sie: Dank, Link, Rückruf zu Geschäftszeiten, Abmelden", () => {
     const t = nurSmsText(basis);
     expect(t).toBe(
-      `Hallo Frau Becker, danke für Ihre Anfrage zur Zahnzusatzversicherung. Hier ist der KI-Assistent von Herrn Lohmann. Termin wählen: ${LINK} Oder rufen Sie an: 0451 1234567 (Mo bis Fr, 9 bis 18 Uhr). Abmelden über den Link.`,
+      `Hallo Frau Becker, danke für Ihre Anfrage zur Zahnzusatzversicherung bei Herrn Lohmann. Termin wählen: ${LINK} Oder rufen Sie an: 0451 1234567 (Mo bis Fr, 9 bis 18 Uhr). Abmelden über den Link.`,
     );
     expect(smsSegmente(t)).toMatchObject({ unicode: false });
     expect(smsSegmente(t).segmente).toBeLessThanOrEqual(2);
@@ -239,7 +239,7 @@ describe("Start bei E-Mail-Funktionen aus", () => {
     expect(sms.sendSms).toHaveBeenCalledTimes(1);
     const [nummer, text, opts] = sms.sendSms.mock.calls[0];
     expect(nummer).toBe("491631234567");
-    expect(text).toContain("Hallo Frau Becker, danke für Ihre Anfrage zur Zahnzusatzversicherung.");
+    expect(text).toContain("Hallo Frau Becker, danke für Ihre Anfrage zur Zahnzusatzversicherung bei Herrn Lohmann.");
     expect(text).toContain("Oder rufen Sie an: 0451 1234567 (Mo bis Fr, 9 bis 18 Uhr).");
     expect(opts).toEqual({ from: null }); // „Thomas Lohmann“ hat mehr als 11 Zeichen: Standard-Absender
     // Verlauf: Start und SMS-Text (ohne Link)
@@ -360,5 +360,16 @@ describe("Takt (Cron)", () => {
     db.leadMailStrecke.findMany.mockResolvedValue([zeile({ createdAt: berlin("2026-11-16T19:00:00") })]);
     expect(await nurSmsTakt(berlin("2026-11-23T10:00:00"))).toBe(0);
     expect(db.leadMailStrecke.update).toHaveBeenCalledWith({ where: { id: "s1" }, data: { schritt: "gestoppt", stopGrund: "abgelaufen" } });
+  });
+});
+
+describe("naechsteSmsZeit (Vorschau Nächste Nachrichten)", () => {
+  it("erste SMS: nächstes Geschäftsfenster; zweite: ab dem 2. Geschäftstag; danach keine", async () => {
+    const { naechsteSmsZeit, GESCHAEFTSZEITEN_STANDARD: g } = await import("@/lib/mail-strecke/nur-sms");
+    // So 22.11.2026 19:00 Berlin → Mo 23.11. 9:00 Berlin (8:00 UTC)
+    expect(naechsteSmsZeit({ smsZahl: 0, smsAt: null, g, now: new Date("2026-11-22T18:00:00Z") })?.toISOString()).toBe("2026-11-23T08:00:00.000Z");
+    // erste SMS Mo 23.11. 9:00 → zweite frühestens Mi 25.11. 9:00
+    expect(naechsteSmsZeit({ smsZahl: 1, smsAt: new Date("2026-11-23T08:00:00Z"), g, now: new Date("2026-11-23T08:00:00Z") })?.toISOString()).toBe("2026-11-25T08:00:00.000Z");
+    expect(naechsteSmsZeit({ smsZahl: 2, smsAt: new Date(), g, now: new Date() })).toBeNull();
   });
 });

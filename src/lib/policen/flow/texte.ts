@@ -18,7 +18,7 @@
 
 import { createHash } from "node:crypto";
 import { a, type Ansprache } from "@/lib/ansprache";
-import { anderePolicenBeispiel, anderePolicenSatz } from "@/lib/policen/andere-policen";
+import { anderePolicenBeispiel, anderePolicenSatz, genannteVertraegeBeispiel } from "@/lib/policen/andere-policen";
 
 export type Pronomen = "er" | "sie";
 
@@ -46,6 +46,11 @@ export type FlowTextKontext = {
    */
   andereVertraege?: string[] | null;
   komplettcheck?: boolean | null;
+  /**
+   * Nicht-Kfz (Ole, 22.11.2026): genannte Verträge MIT dem angefragten Produkt („Haftpflicht bei der Allianz“), stehen in
+   * der freien Chat-Nachricht und der freien Erinnerung 1 als „zum Beispiel …“. Leer = Text wie in den Vorlagen.
+   */
+  genannteVertraege?: string[] | null;
 };
 
 // ─── Knöpfe und Payloads ────────────────────────────────────────────────────
@@ -123,10 +128,14 @@ export function chatNachricht(k: FlowTextKontext): Nachricht {
   const pruefung = k.pronomen ? `sieht ${k.pronomen} schon vor dem Termin` : "ist schon vor dem Termin klar";
   // Ole 20.11.2026: sagen, dass versucht wird, Geld zu sparen (Bemühen, kein Ergebnisversprechen nach § 5 UWG)
   const spart = `Dabei versucht ${k.pronomen ?? k.name},`;
+  // Genannte Verträge statt nichts (Ole, 22.11.2026), nur in der freien Nachricht: die Vorlage „bitte“ entsteht ohne
+  // genannteVertraege und bleibt damit Wort für Wort gleich (Name hängt am Text-Hash, server.ts vorlagenName)
+  const beispiel = k.kfz ? null : genannteVertraegeBeispiel(k.an, k.genannteVertraege);
+  const zb = beispiel ? `, zum Beispiel ${beispiel},` : "";
   const kern = a(
     k.an,
-    `Wenn ${k.name} deine Policen vorab hat, ${pruefung}, *ob du etwas doppelt zahlst, wann du kündigen kannst und was genau versichert ist.* ${spart} dir Geld zu sparen. So wird der Termin kürzer und konkreter.`,
-    `Wenn ${k.name} Ihre Policen vorab hat, ${pruefung}, *ob Sie etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist.* ${spart} Ihnen Geld zu sparen. So wird der Termin kürzer und konkreter.`,
+    `Wenn ${k.name} deine Policen vorab hat${zb || ","} ${pruefung}, *ob du etwas doppelt zahlst, wann du kündigen kannst und was genau versichert ist.* ${spart} dir Geld zu sparen. So wird der Termin kürzer und konkreter.`,
+    `Wenn ${k.name} Ihre Policen vorab hat${zb || ","} ${pruefung}, *ob Sie etwas doppelt zahlen, wann Sie kündigen können und was genau versichert ist.* ${spart} Ihnen Geld zu sparen. So wird der Termin kürzer und konkreter.`,
   );
   if (k.kfz) {
     const wer = k.pronomen ?? k.name;
@@ -323,10 +332,13 @@ export function erinnerung1(k: FlowTextKontext): Nachricht {
     const beispiel = anderePolicenBeispiel(k.an, { vertraege: k.andereVertraege, komplettcheck: k.komplettcheck });
     return { text: erinnerung1KfzText(k.an, tag, k.name, beispiel, k.pronomen ?? k.name), fusszeile: erinnerungFusszeile(k.an) };
   }
+  // Genannte Verträge (Ole, 22.11.2026) nur in der freien Erinnerung; die Vorlage „erinnerung1“ entsteht ohne sie
+  const beispiel = genannteVertraegeBeispiel(k.an, k.genannteVertraege);
+  const zb = beispiel ? `, zum Beispiel ${beispiel}` : "";
   const text = a(
     k.an,
-    `Kurze Frage zu deinem Termin am ${tag}: Hast du deine Policen gerade zur Hand? Meist reicht ein Foto der ersten Seite. Dann sieht ${k.name} vorab, wann du kündigen kannst und ob du etwas doppelt zahlst.`,
-    `Kurze Frage zu Ihrem Termin am ${tag}: Haben Sie Ihre Policen gerade zur Hand? Meist reicht ein Foto der ersten Seite. Dann sieht ${k.name} vorab, wann Sie kündigen können und ob Sie etwas doppelt zahlen.`,
+    `Kurze Frage zu deinem Termin am ${tag}: Hast du deine Policen gerade zur Hand${zb}? Meist reicht ein Foto der ersten Seite. Dann sieht ${k.name} vorab, wann du kündigen kannst und ob du etwas doppelt zahlst.`,
+    `Kurze Frage zu Ihrem Termin am ${tag}: Haben Sie Ihre Policen gerade zur Hand${zb}? Meist reicht ein Foto der ersten Seite. Dann sieht ${k.name} vorab, wann Sie kündigen können und ob Sie etwas doppelt zahlen.`,
   );
   return { text, fusszeile: erinnerungFusszeile(k.an) };
 }
@@ -428,7 +440,7 @@ export function vorlagenText(art: VorlagenArt, an: Ansprache): Nachricht & { kno
       fusszeile: ohne,
       knopf1: KNOPF_UNTERLAGEN_SENDEN,
       knopf2: KNOPF_SPAETER,
-      beispiele: ["Donnerstag", beispielName(an), "er", ...(andere ? [a(an, "deine Haftpflicht bei Allianz", "Ihre Haftpflicht bei Allianz")] : [])],
+      beispiele: ["Donnerstag", beispielName(an), "er", ...(andere ? ["Haftpflicht bei der Allianz"] : [])],
     };
   }
   if (art === "erinnerung1_kfz" || art === "erinnerung1_kfz_andere") {
@@ -438,7 +450,7 @@ export function vorlagenText(art: VorlagenArt, an: Ansprache): Nachricht & { kno
       fusszeile: erinnerungFusszeile(an),
       knopf1: KNOPF_UNTERLAGEN_SENDEN,
       knopf2: KNOPF_NEIN_DANKE,
-      beispiele: ["Donnerstag", beispielName(an), ...(andere ? [a(an, "deine Haftpflicht bei Allianz", "Ihre Haftpflicht bei Allianz"), "er"] : [])],
+      beispiele: ["Donnerstag", beispielName(an), ...(andere ? ["Haftpflicht bei der Allianz", "er"] : [])],
     };
   }
   if (art === "erinnerung1") {

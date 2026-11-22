@@ -19,7 +19,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
-import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail } from "@/lib/email";
+import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail, type WillkommensMailOpts } from "@/lib/email";
 import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { sendToAdmins } from "@/lib/push";
@@ -27,6 +27,7 @@ import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { validLoginEmail } from "@/lib/login-email";
+import { videoLinkNoetig } from "@/lib/video-raum";
 import { ersterAbrechnungstag } from "@/lib/abrechnungstag";
 import { mitKampagnen, mitSoftware, normalizePackage, PACKAGE_LABEL, prepayFreeMonthsFor, rhythmusFuer } from "@/lib/offer-pricing";
 
@@ -79,15 +80,34 @@ function dueBefore(start: Date | null, daysBefore: number, minDaysFromNow: numbe
   return due;
 }
 
-/** Kalenderschritt erledigt: Zeitenquelle da und, ohne Google/Microsoft, ein Video-Link hinterlegt. (rein) */
-export function kalenderSchrittFertig(c: {
-  calendarConnection?: { status: string; provider: string } | null;
-  agentConfig?: { availabilityIcsUrlEnc: string | null; allianzCalendarEnc: string | null; videoRoomUrl: string | null } | null;
-}): boolean {
+/**
+ * Kalenderschritt erledigt: Zeitenquelle da und, ohne Google/Microsoft, ein Video-Link hinterlegt. Mit dem Ausweg
+ * „Mein Versicherer erlaubt das nicht“ (uebersprungen) entfällt die Zeitenquelle, der Video-Link bleibt Pflicht
+ * (Go-live-Prüfung 22.11.2026: sonst haben Videotermine keinen Raum). (rein)
+ */
+export function kalenderSchrittFertig(
+  c: {
+    calendarConnection?: { status: string; provider: string } | null;
+    agentConfig?: { availabilityIcsUrlEnc: string | null; allianzCalendarEnc: string | null; videoRoomUrl: string | null } | null;
+  },
+  uebersprungen = false,
+  einladungAngekommen = true,
+): boolean {
   const verbunden = c.calendarConnection?.status === "connected";
-  const meetOderTeams = verbunden && (c.calendarConnection?.provider === "google" || c.calendarConnection?.provider === "microsoft");
-  const zeiten = verbunden || !!c.agentConfig?.availabilityIcsUrlEnc || !!c.agentConfig?.allianzCalendarEnc;
-  return zeiten && (meetOderTeams || !!c.agentConfig?.videoRoomUrl?.trim());
+  const zeiten = uebersprungen || verbunden || !!c.agentConfig?.availabilityIcsUrlEnc || !!c.agentConfig?.allianzCalendarEnc;
+  if (einladungsTestNoetig(c.calendarConnection) && !einladungAngekommen) return false;
+  return zeiten && (!videoLinkNoetig(c.calendarConnection) || !!c.agentConfig?.videoRoomUrl?.trim());
+}
+
+/** stepSkips-Eintrag „Test-Einladung angekommen“ (Kalenderschritt mit App-Kalender, 22.11.2026). */
+export const EINLADUNG_TEST_KEY = "calendarEinladung";
+
+/**
+ * App-Kalender (auch Allianz): Termine kommen als Einladung per Mail, oft an eine Konzernadresse, deren Filter sie
+ * blockieren kann. Dann gilt der Kalenderschritt erst nach bestätigter Test-Einladung als erledigt. (rein)
+ */
+export function einladungsTestNoetig(conn: { status: string; provider: string } | null | undefined): boolean {
+  return conn?.status === "connected" && conn.provider === "app";
 }
 
 export async function startOnboarding(offerId: string, opts: StartOpts = {}): Promise<StartResult> {
@@ -370,13 +390,56 @@ async function upgradeExistingCustomer(
 }
 
 /** Willkommens-Mail (erneut) senden. Ohne Link wird ein frischer Einladungslink erzeugt, solange der Kunde noch nie eingeloggt war. */
-export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?: string | null } = {}) {
+type WelcomeOnboarding = { id: string; offerId: string | null; salesContactId: string | null; package: string; startDate: Date | null; customer: { users: { email: string; lastLoginAt: Date | null }[] } };
+
+async function welcomeLaden(onboardingId: string) {
   const ob = await prisma.onboarding.findUnique({
     where: { id: onboardingId },
     include: { customer: { include: { users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true } } } } },
   });
-  if (!ob) return { ok: false as const, error: "Onboarding nicht gefunden." };
+  if (!ob) return null;
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId } }) : null;
+  return { ob, offer };
+}
+
+/** Daten der Willkommens-Mail (gemeinsam für Versand und Vorschau, Inhalt: willkommensMailInhalt). */
+async function welcomeOpts(
+  ob: WelcomeOnboarding,
+  offer: { contactName: string | null; email: string | null; products: unknown } | null,
+  to: string,
+  setPasswordUrl: string | null,
+): Promise<WillkommensMailOpts> {
+  return {
+    to,
+    greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
+    packageType: normalizePackage(ob.package),
+    startDate: ob.startDate,
+    products: offer ? offerProducts(offer.products as Parameters<typeof offerProducts>[0]).map((p) => p.name) : [],
+    setPasswordUrl,
+    loginUrl: `${getAppUrl()}/login`,
+    setupUrl: `${getAppUrl()}/buyer/einrichtung`,
+    whatsappSelfConnect: ob.package !== "service" && selfConnectEnabled(),
+    replyTo: process.env.OFFER_REPLY_TO ?? null,
+  };
+}
+
+/**
+ * Vorschau der Willkommens-Mail ohne Seiteneffekte: Der Link zum Passwort wird erst beim Senden erstellt, hier steht
+ * ein Platzhalter (nur, wenn sich der Kunde noch nie eingeloggt hat).
+ */
+export async function welcomeVorschauOpts(onboardingId: string): Promise<WillkommensMailOpts | null> {
+  const r = await welcomeLaden(onboardingId);
+  if (!r) return null;
+  const user = r.ob.customer.users[0];
+  const to = user?.email ?? r.offer?.email;
+  if (!to) return null;
+  return welcomeOpts(r.ob, r.offer, to, user && !user.lastLoginAt ? buildResetUrl("LINK-WIRD-BEIM-SENDEN-ERSTELLT") : null);
+}
+
+export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?: string | null } = {}) {
+  const r = await welcomeLaden(onboardingId);
+  if (!r) return { ok: false as const, error: "Onboarding nicht gefunden." };
+  const { ob, offer } = r;
   const user = ob.customer.users[0];
   const to = user?.email ?? offer?.email;
   if (!to) return { ok: false as const, error: "Keine E-Mail-Adresse für den Kunden hinterlegt." };
@@ -386,18 +449,7 @@ export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?:
     const token = await issuePasswordResetToken(user.email, INVITE_TTL_MS);
     if (token) setPasswordUrl = buildResetUrl(token.rawToken);
   }
-  const res = await sendOnboardingWelcomeEmail({
-    to,
-    greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
-    packageType: normalizePackage(ob.package),
-    startDate: ob.startDate,
-    products: offer ? offerProducts(offer.products).map((p) => p.name) : [],
-    setPasswordUrl,
-    loginUrl: `${getAppUrl()}/login`,
-    setupUrl: `${getAppUrl()}/buyer/einrichtung`,
-    whatsappSelfConnect: ob.package !== "service" && selfConnectEnabled(),
-    replyTo: process.env.OFFER_REPLY_TO ?? null,
-  });
+  const res = await sendOnboardingWelcomeEmail(await welcomeOpts(ob, offer, to, setPasswordUrl));
   if (res.ok) {
     await prisma.onboarding.update({ where: { id: ob.id }, data: { welcomeSentAt: new Date() } });
     if (offer) await logOfferActivity(offer, `Willkommens-Mail an ${to} gesendet`);
@@ -510,7 +562,9 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         // Google/Microsoft verbunden oder freie Zeiten über App-Kalender, ICS-Link bzw. Allianz-Online-Kalender. Ohne
         // Google/Microsoft entsteht kein Meet-/Teams-Link: dann gehört der Video-Link (z. B. Webex) dazu (Ole, 21.11.2026:
         // „Lohmann hat im Onboarding gar keinen Webex-Link hinterlegt“).
-        done: kalenderSchrittFertig(ob.customer) || !!skip("calendar"),
+        // App-Kalender: erst mit bestätigter Test-Einladung (IT-Filter der Konzernadresse, 22.11.2026)
+        // Schon live (z. B. Lohmann): Test-Einladung nicht nachträglich verlangen (22.11.2026)
+        done: kalenderSchrittFertig(ob.customer, !!skip("calendar"), !!skip(EINLADUNG_TEST_KEY) || !!ob.liveAt),
         at: null,
       },
       {
