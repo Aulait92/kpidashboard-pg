@@ -7,6 +7,8 @@ import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { getAppUrl, sendCustomerMail, type CustomerMailOpts } from "@/lib/email";
+import { AB_ANGEBOT } from "@/lib/vertrieb/ab-tests";
+import { fassung } from "@/lib/vertrieb/ab-tests-server";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { customerGreeting, logOfferActivity, offerAdminHref } from "@/lib/offer-links";
@@ -217,7 +219,7 @@ async function aufgabeAnlegen(o: OfferRow, now: Date): Promise<boolean> {
 
 /** Mail der Zahlungserinnerung (gemeinsam für Versand und Vorschau). */
 export async function zahlungMailOpts(
-  o: Pick<OfferRow, "email" | "number" | "startDate" | "mailDu" | "salesContactId" | "contactName" | "ohneEntscheidungsCall">,
+  o: Pick<OfferRow, "id" | "email" | "number" | "startDate" | "mailDu" | "salesContactId" | "contactName" | "ohneEntscheidungsCall">,
   stufe: number,
   link: string,
   now = new Date(),
@@ -226,7 +228,10 @@ export async function zahlungMailOpts(
   // Ohne Buchung wie bisher kein Buchungslink (das Angebot ist schon angenommen).
   const call = o.ohneEntscheidungsCall ? null : await entscheidungsCallStand(o.salesContactId, now).catch(() => null);
   const callText = call?.art === "gebucht" ? entscheidungsCallMailText(call, o.mailDu) : null;
-  const text = erinnerungsMail({ number: o.number, startIso: tagIso(o.startDate), stufe, du: o.mailDu, entscheidungsCall: callText });
+  // A/B-Test der Angebots-Strecke (lib/vertrieb/ab-tests.ts): Fassung des Angebots, ohne neue Zuteilung (gezählt werden
+  // Angebote ab Angebotsmail bzw. Bonus-Erinnerung; schon angenommene Angebote kämen sonst verzerrt dazu)
+  const naechsteSchritte = (await fassung(AB_ANGEBOT, o.id)) === "b";
+  const text = erinnerungsMail({ number: o.number, startIso: tagIso(o.startDate), stufe, du: o.mailDu, entscheidungsCall: callText, naechsteSchritte });
   return {
     to: o.email ?? "",
     subject: text.subject,

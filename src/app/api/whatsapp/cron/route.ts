@@ -310,6 +310,15 @@ async function handle(req: Request): Promise<Response> {
           return null;
         })
       : undefined;
+  // A/B-Tests der Vertriebs-Nachrichten (lib/vertrieb/ab-tests.ts): Ziele (Zahlung, erschienen, Antwort) aus der
+  // Datenbank nachtragen, einmal je Stunde vor der Entscheidung
+  const vertriebAbZiele =
+    now.getUTCMinutes() < 5
+      ? await import("@/lib/vertrieb/ab-tests-server").then((m) => m.vertriebZieleNachtragen(now)).catch((e: unknown) => {
+          reportError(e, "cron-vertrieb-ab-ziele");
+          return null;
+        })
+      : undefined;
   // Splittests der Lead-Reise (lib/experimente.ts): gleiche Regel, einmal je Stunde
   const experimente =
     now.getUTCMinutes() < 5
@@ -532,7 +541,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, vertriebAbZiele, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
 }
 
 export const GET = handle;

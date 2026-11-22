@@ -11,6 +11,8 @@ import { customerGreeting, logOfferActivity } from "@/lib/offer-links";
 import { abschlussBonusJetzt, berlinTodayIso, eur } from "@/lib/offer-pricing";
 import { ersetzt, sendeVorlageAnKontakt } from "@/lib/angebot-zahlungserinnerung-server";
 import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
+import { AB_ANGEBOT } from "@/lib/vertrieb/ab-tests";
+import { fassung, zuteilungMerken } from "@/lib/vertrieb/ab-tests-server";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import {
   bonusErinnerungStopp,
@@ -131,7 +133,9 @@ export async function runBonusErinnerungen(now = new Date(), opts: { limit?: num
 export async function bonusMailOpts(o: OfferRow, art: "vorab" | "letzter", now = new Date()): Promise<CustomerMailOpts | null> {
   const bonus = abschlussBonusJetzt(o, now);
   if (!o.email || !bonus) return null;
-  const text = bonusMail(art, { betrag: bonus.betrag, fristIso: berlinTodayIso(bonus.bis), number: o.number, du: o.mailDu, spaeterZahlen: o.allowPayLater });
+  // A/B-Test der Angebots-Strecke (lib/vertrieb/ab-tests.ts): Fassung lesen, Zuteilung erst nach dem Versand
+  const naechsteSchritte = (await fassung(AB_ANGEBOT, o.id)) === "b";
+  const text = bonusMail(art, { betrag: bonus.betrag, fristIso: berlinTodayIso(bonus.bis), number: o.number, du: o.mailDu, spaeterZahlen: o.allowPayLater, naechsteSchritte });
   return {
     to: o.email,
     subject: text.subject,
@@ -150,6 +154,7 @@ async function bonusMailSenden(o: OfferRow, art: "vorab" | "letzter", now: Date,
   const mail = await bonusMailOpts(o, art, now);
   if (!mail) return false;
   const sent = await sendCustomerMail(mail);
+  if (sent.ok) await zuteilungMerken(AB_ANGEBOT, o.id);
   await logOfferActivity(
     o,
     sent.ok ? `${label} per E-Mail an ${o.email} gesendet` : `${label} per E-Mail fehlgeschlagen`,
