@@ -9,7 +9,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, CalendarClock, ChevronDown, Mail, MessageCircle, MoreHorizontal, Phone, Play, Send, SkipForward, Undo2, type LucideIcon } from "lucide-react";
+import { Bell, CalendarClock, ChevronDown, Mail, MessageCircle, MessageSquare, MoreHorizontal, Phone, Play, Send, SkipForward, Undo2, type LucideIcon } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { ActionMenu } from "@/components/ui/menu";
 import { Sheet } from "@/components/ui/sheet";
@@ -27,6 +27,7 @@ const TZ = "Europe/Berlin";
 const KANAL: Record<PlanKanal, { icon: LucideIcon; farbe: string; name: string }> = {
   whatsapp: { icon: MessageCircle, farbe: "bg-emerald-50 text-emerald-700", name: "WhatsApp" },
   email: { icon: Mail, farbe: "bg-blue-50 text-blue-700", name: "E-Mail" },
+  sms: { icon: MessageSquare, farbe: "bg-sky-50 text-sky-700", name: "SMS" },
   push: { icon: Bell, farbe: "bg-violet-50 text-violet-700", name: "Push an Sie" },
   anruf: { icon: Phone, farbe: "bg-amber-50 text-amber-800", name: "Anruf-Aufgabe" },
 };
@@ -119,7 +120,7 @@ export function NaechsteNachrichten({
   const eintraege = alleEintraege.filter((e) => !begleitend(e));
   const pausiert = !!pausiertAt;
   // Vorschläge (M7) gehen nicht von selbst raus: zählen nicht als Nachricht an den Lead
-  const anLead = eintraege.filter((e) => (e.kanal === "whatsapp" || e.kanal === "email") && e.quelle !== "vorschlag" && !e.uebersprungen);
+  const anLead = eintraege.filter((e) => (e.kanal === "whatsapp" || e.kanal === "email" || e.kanal === "sms") && e.quelle !== "vorschlag" && !e.uebersprungen);
   const gezeigt = alle ? eintraege : eintraege.slice(0, ZUERST);
 
   function los(a: NachrichtenAktion, opts: { danach?: () => void; rueckgaengig?: NachrichtenAktion } = {}) {

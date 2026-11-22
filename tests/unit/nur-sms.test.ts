@@ -362,3 +362,14 @@ describe("Takt (Cron)", () => {
     expect(db.leadMailStrecke.update).toHaveBeenCalledWith({ where: { id: "s1" }, data: { schritt: "gestoppt", stopGrund: "abgelaufen" } });
   });
 });
+
+describe("naechsteSmsZeit (Vorschau Nächste Nachrichten)", () => {
+  it("erste SMS: nächstes Geschäftsfenster; zweite: ab dem 2. Geschäftstag; danach keine", async () => {
+    const { naechsteSmsZeit, GESCHAEFTSZEITEN_STANDARD: g } = await import("@/lib/mail-strecke/nur-sms");
+    // So 22.11.2026 19:00 Berlin → Mo 23.11. 9:00 Berlin (8:00 UTC)
+    expect(naechsteSmsZeit({ smsZahl: 0, smsAt: null, g, now: new Date("2026-11-22T18:00:00Z") })?.toISOString()).toBe("2026-11-23T08:00:00.000Z");
+    // erste SMS Mo 23.11. 9:00 → zweite frühestens Mi 25.11. 9:00
+    expect(naechsteSmsZeit({ smsZahl: 1, smsAt: new Date("2026-11-23T08:00:00Z"), g, now: new Date("2026-11-23T08:00:00Z") })?.toISOString()).toBe("2026-11-25T08:00:00.000Z");
+    expect(naechsteSmsZeit({ smsZahl: 2, smsAt: new Date(), g, now: new Date() })).toBeNull();
+  });
+});
