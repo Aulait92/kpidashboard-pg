@@ -114,11 +114,13 @@ describe("Kampagnen-Agenten: Bauer", () => {
   });
 
   it("Formular-Payload: Datenschutz, Einwilligung, Kontaktfelder mit den Schlüsseln der Lead-Verarbeitung", () => {
-    const p = leadFormPayload(form, ctx) as { questions: { type: string; key: string }[]; privacy_policy: { url: string }; custom_disclaimer: { checkboxes: { is_required: boolean }[] }; locale: string };
+    const p = leadFormPayload(form, ctx) as { questions: { type: string; key: string }[]; privacy_policy: { url: string }; custom_disclaimer: { title: string; checkboxes?: unknown }; locale: string };
     expect(p.privacy_policy.url).toBe(ctx.privacyUrl);
     expect(p.locale).toBe("DE_DE");
     expect(p.questions.map((q) => q.key)).toEqual(["katze_alter", "haltung", "full_name", "phone_number", "email"]);
-    expect(p.custom_disclaimer.checkboxes[0].is_required).toBe(true);
+    // Ohne Checkbox, Einwilligung per Klick auf „Senden“ (Ole, 22.11.2026)
+    expect(p.custom_disclaimer.checkboxes).toBeUndefined();
+    expect(p.custom_disclaimer.title).toMatch(/Senden/);
     expect(() => leadFormPayload(form, { ...ctx, privacyUrl: null })).toThrow(/Datenschutz/);
     // Dankeseite: Buchungskalender des Kunden geht vor der Website (Ole, 13.11.2026)
     const booking = leadFormPayload(form, { ...ctx, bookingUrl: "https://app.example.de/book/agentur-muster" }) as {
