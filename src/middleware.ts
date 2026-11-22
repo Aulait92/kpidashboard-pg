@@ -426,6 +426,8 @@ export async function middleware(req: NextRequest) {
   if (pathname === "/buyer" || pathname.startsWith("/buyer/")) {
     const headers = new Headers(req.headers);
     headers.set("x-app-area", "buyer");
+    // Bestellkonto (lib/ppl/bestellkonto.ts): Layout leitet reine Bestellkonten auf /buyer/bestellen
+    headers.set("x-buyer-pfad", pathname);
     return NextResponse.next({ request: { headers } });
   }
 

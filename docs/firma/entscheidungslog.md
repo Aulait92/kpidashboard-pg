@@ -2,6 +2,11 @@
 
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
+## 22.11.2026
+- **Bestellkonto für PPL-Hauptkunden** (A, Ole): Nico Yagci und Tobias D'Angelo bestellen wöchentlich selbst für ihre
+  Vertriebspartner (vorerst nur Dennis Müller bzw. Lukas Socki) und zahlen zentral (eine Zahlungsart, Rechnung an sie).
+  Technik und Livegang: docs/pay-per-lead.md, Abschnitt „Bestellkonto“.
+
 ## 21.11.2026
 - **„Entscheidet noch jemand mit?“ vor dem Terminvorschlag** (A, Ole, 21.11. spät: als eigene Frage vor dem
   Terminvorschlag, damit der Termin nicht verlegt werden muss). Standard (Fassung a); ohne Antwort kommen die Zeiten nach

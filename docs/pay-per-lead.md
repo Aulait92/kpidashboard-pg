@@ -66,6 +66,20 @@
    Abrechnung (PDF), nicht über die App. Zuordnung zu unserem Lead automatisch, siehe
    `docs/ppl-abloesung-plan.md` Abschnitt 4; nur Unklares landet unter **Storno prüfen**.
 
+## Bestellkonto: Hauptkunde bestellt für Vertriebspartner (22.11.2026)
+
+Für PPL-Kunden mit Vertriebspartnern (Nico Yagci → Dennis Müller, Tobias D'Angelo → Lukas Socki). `Customer.bestelltUeberId`
+(lib/ppl/bestellkonto.ts) zeigt auf den Hauptkunden. Der Hauptkunde bestellt unter **/buyer/bestellen** je Partner die
+Wochenmenge („Jede Woche wiederholen“, Verlängerung freitags), bezahlt über seine eigene Zahlungsart, Rechnung an ihn,
+Umsatzsteuer nach **seiner** Registerprüfung. Leads landen im Konto des Partners; der Partner sieht die Bestellung, bestellt
+aber nicht selbst. Logins eines reinen Bestellkontos (Partner, aber kein eigener Bezug) sehen nur diese Seite.
+Admin: Pay-per-Lead → Bezug → „Bestellt und bezahlt über“; Registerprüfung dort gilt dann für den Hauptkunden.
+
+Livegang je Hauptkunde: 1. Login für das Konto „Nico Yagci“ bzw. „Tobias D'Angelo“ anlegen (Einladung), 2. Registernummer
+am Bezug des Partners prüfen (gilt für den Hauptkunden, sonst 19 %), 3. Hauptkunde hinterlegt Zahlungsart, 4. Bezug des
+Partners von `month`/`once` auf Wochenbestellung umstellen (vorher keine Lieferung ohne bezahlte Woche, darum erst wenn
+Schritt 3 erledigt ist; Socki hat noch Rest aus dem Einmal-Kontingent).
+
 ## Unterschiede zum bisherigen Zap (bewusst)
 - Dubletten wie im Zap produktübergreifend (bis 15.11.2026 prüfte die App nur im selben
   Produkt). Abschaltbar über `DUPLICATE_ACROSS_PRODUCTS = false` in `src/lib/ppl/engine.ts`.
