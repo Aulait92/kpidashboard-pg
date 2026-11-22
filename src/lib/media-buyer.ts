@@ -557,6 +557,8 @@ async function loadSoftwareGoals(now: Date): Promise<SoftwareGoalRow[]> {
           vermittlerRegisterNr: true,
           vermittlerRegisterStatus: true,
           vermittlerGeprueftAt: true,
+          // Bestellkonto: Umsatzsteuer nach der Registerprüfung des Hauptkunden (lib/ppl/bestellkonto.ts)
+          bestelltUeber: { select: { vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true } },
         },
       },
       areas: { select: { quantity: true, period: true, plzRanges: true } },
@@ -621,7 +623,7 @@ async function loadSoftwareGoals(now: Date): Promise<SoftwareGoalRow[]> {
       testQuantity: s.testQuantity,
       startDate: s.startDate,
       price: decToNumber(s.price) ?? 0,
-      taxFree: effektiveSteuer(s, s.customer).steuer === "steuerfrei_4_11",
+      taxFree: effektiveSteuer(s, s.customer.bestelltUeber ?? s.customer).steuer === "steuerfrei_4_11",
       areas: s.areas,
       deliveredMonth: monthCount.get(s.id) ?? 0,
       deliveredBefore: beforeCount.get(s.id) ?? 0,

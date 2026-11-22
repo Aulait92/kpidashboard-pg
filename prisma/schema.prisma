@@ -132,6 +132,12 @@ model Customer {
   partnerFirma             String?
   partnerAnschrift         String?
   partnerRegisterNr        String?
+  // Bestellkonto (Ole, 22.11.2026): Hauptkunde, der für dieses Konto (seinen Vertriebspartner) die Wochenbestellungen
+  // aufgibt und bezahlt (Zahlungsart, Rechnung und Registerprüfung für die Umsatzsteuer am Hauptkunden). Der Partner
+  // bekommt die Leads in seinem Konto, bestellt aber nicht selbst. Hauptkunde mit Login landet auf /bestellung.
+  bestelltUeberId          String?
+  bestelltUeber            Customer?  @relation("Bestellkonto", fields: [bestelltUeberId], references: [id], onDelete: SetNull)
+  bestellPartner           Customer[] @relation("Bestellkonto")
   // Maklervollmacht (Ole, 18.11.2026, nur Makler): wer schickt sie den Kunden? app | eigene; null = noch nicht entschieden
   // (Frage in der Einrichtung und als Hinweis auf „Heute“, änderbar unter Einstellungen → Assistent)
   vollmachtVersand     String?
