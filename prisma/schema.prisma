@@ -1922,7 +1922,6 @@ model SalesContact {
   /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118706300)
   phoneDigits          String?
   phoneDigitsRev       String?
-  fax                  String?
   street               String?
   zip                  String?
   city                 String?

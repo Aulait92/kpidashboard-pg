@@ -483,7 +483,6 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                   </CloseDetailsForm>
                 </details>
               </dd>
-              {c.fax && (<><dt className="text-slate-500">Fax</dt><dd>{c.fax}</dd></>)}
               {c.agencyType && (<><dt className="text-slate-500">Agenturtyp</dt><dd>{c.agencyType === "GENERAL" ? "Generalvertretung" : c.agencyType === "HAUPT" ? "Hauptvertretung" : c.agencyType}</dd></>)}
               {c.insurer && (<><dt className="text-slate-500">Versicherer</dt><dd>{c.insurer}</dd></>)}
               {c.leaderNames && (<><dt className="text-slate-500">Inhaber</dt><dd>{c.leaderNames}</dd></>)}

@@ -84,7 +84,6 @@ describe("Vertriebskontakte maximal anreichern", () => {
       zip: "12345",
       city: "Alphastadt",
       phone: "030 5550001",
-      fax: "030 5550002",
       leaderNames: "Anna Alpha",
       insurer: "Makler",
       facebookUrl: "https://www.facebook.com/agentur.alpha.test",
@@ -100,7 +99,8 @@ describe("Vertriebskontakte maximal anreichern", () => {
     expect(c.googleCheckedAt).not.toBeNull();
     expect((c.enrichment as { google?: { placeId?: string } }).google?.placeId).toBe("place-alpha");
     const act = await prisma.salesActivity.findFirst({ where: { contactId: `${P}1`, note: { startsWith: "Automatisch ergänzt" } } });
-    expect(act?.note).toContain("Fax");
+    expect(act?.note).not.toContain("Fax");
+    expect(c).not.toHaveProperty("fax");
     expect(act?.note).toContain("(Google)");
     // Zweiter Lauf: nichts fällig, keine weitere Google-Anfrage
     googleCalls = 0;

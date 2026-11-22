@@ -168,6 +168,40 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r === "nichts" ? { ok: false, error: "Nichts versucht (keine Sperre „kein WhatsApp“ oder keine Nummer)." } : { ok: true, info: r === "termin" ? "Terminbestätigung per WhatsApp versucht." : "Erstanschreiben per WhatsApp versucht." };
     },
   },
+  bank_csv_importieren: {
+    beschreibung: "Kontoumsätze aus einer CSV in die Buchhaltung (Geld › Kosten) übernehmen, je Konto getrennt (z. B. n26 für geschäftliche Ausgaben vom Privatkonto); Regeln greifen, Rest steht offen zum Zuordnen. Ohne Oberfläche.",
+    felder: { konto: "Kurzname, nur Kleinbuchstaben/Ziffern, z. B. n26", csv: "Inhalt der CSV-Datei" },
+    run: async (p) => {
+      const konto = text(p.konto, 30).toLowerCase();
+      if (!/^[a-z0-9]{2,30}$/.test(konto)) return { ok: false, error: "Konto: nur Kleinbuchstaben und Ziffern." };
+      const csv = typeof p.csv === "string" ? p.csv : "";
+      if (csv.length < 20 || csv.length > 2_000_000) return { ok: false, error: "CSV fehlt oder ist zu groß." };
+      const { parseBankCsv } = await import("@/lib/bank/csv");
+      const parsed = parseBankCsv(csv, "auto");
+      if (parsed.error) return { ok: false, error: parsed.error };
+      const { importTransactions } = await import("@/lib/bank/server");
+      const r = await importTransactions(`csv:${konto}`, parsed.rows, { source: "csv" });
+      await audit("bank.sync", { details: { csv: konto, rows: parsed.rows.length, created: r.created }, actor: OPS_ACTOR });
+      return { ok: true, info: `${konto}: ${parsed.rows.length} Umsätze gelesen (${parsed.skipped} übersprungen), ${r.created} neu, ${r.existing} schon da, ${r.assigned} per Regel zugeordnet, ${r.open} offen zum Zuordnen.` };
+    },
+  },
+  bank_zuordnen: {
+    beschreibung: "Importierte Umsätze eines CSV-Kontos (z. B. n26) nach Gegenpartei einer Kostenart zuordnen: ppl, software, ki, akquise, betrieb oder ignore; legt keine Regel an",
+    felder: { konto: "Kurzname, z. B. n26", muster: "Teil der Gegenpartei, z. B. outbrain", kostenart: "ppl | software | ki | akquise | betrieb | ignore" },
+    run: async (p) => {
+      const konto = text(p.konto, 30).toLowerCase();
+      const muster = text(p.muster, 60);
+      const { COST_ACTIONS } = await import("@/lib/bank/rules");
+      const aktion = text(p.kostenart, 20) as (typeof COST_ACTIONS)[number];
+      if (!/^[a-z0-9]{2,30}$/.test(konto) || muster.length < 2 || !(COST_ACTIONS as readonly string[]).includes(aktion)) return { ok: false, error: "Konto, Muster oder Kostenart ungültig." };
+      const rows = await prisma.bankTransaction.findMany({ where: { accountKey: `csv:${konto}`, counterparty: { contains: muster, mode: "insensitive" } }, select: { id: true } });
+      if (!rows.length) return { ok: false, error: "Keine passenden Umsätze." };
+      const { assignTransaction } = await import("@/lib/bank/server");
+      for (const r of rows) await assignTransaction(r.id, aktion, {});
+      await audit("bank.zuordnen", { details: { konto, muster, aktion, anzahl: rows.length }, actor: OPS_ACTOR });
+      return { ok: true, info: `${rows.length} Umsätze (${muster}) → ${aktion}.` };
+    },
+  },
   buchungslink_senden: {
     beschreibung: "Buchungslink per WhatsApp an einen Lead ohne Termin schicken (einmal je Chat, nur im offenen 24-h-Fenster), Lead über Kunde und Namen",
     felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
@@ -183,6 +217,18 @@ export const AKTIONEN: Record<string, Aktion> = {
       if (!ok) return { ok: false, error: "Nicht gesendet (schon Termin, Link schon gesendet oder kein Kalender)." };
       await audit("lead.buchungslink", { entity: "Lead", entityId: leads[0].id, details: {}, actor: OPS_ACTOR });
       return { ok: true, info: "Buchungslink gesendet." };
+    },
+  },
+  bezug_aktiv: {
+    beschreibung: "Pay-per-Lead-Bezug pausieren bzw. wieder einschalten (aktiv true/false), z. B. für einen Tag keine Lieferung",
+    felder: { subscriptionId: "ID des Bezugs", aktiv: "true oder false" },
+    run: async (p) => {
+      const aktiv = text(p.aktiv) === "true";
+      const sub = await prisma.leadSubscription.findUnique({ where: { id: text(p.subscriptionId) }, select: { id: true, active: true, customer: { select: { name: true } } } });
+      if (!sub) return { ok: false, error: "Bezug nicht gefunden." };
+      if (sub.active !== aktiv) await prisma.leadSubscription.update({ where: { id: sub.id }, data: { active: aktiv } });
+      await audit(aktiv ? "subscription.resume" : "subscription.pause", { entity: "LeadSubscription", entityId: sub.id, details: { kunde: sub.customer?.name ?? null }, actor: OPS_ACTOR });
+      return { ok: true, info: `${sub.customer?.name ?? "Bezug"}: ${aktiv ? "liefert wieder" : "pausiert"}` };
     },
   },
   produkte_auflisten: {

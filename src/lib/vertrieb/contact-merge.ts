@@ -109,7 +109,7 @@ export async function updatePrimaryEmail(contactId: string, raw: string): Promis
 
 // Felder, die beim Zusammenführen aus dem zweiten Kontakt übernommen werden, wenn sie beim ersten leer sind.
 const FILL_FIELDS = [
-  "phone", "fax", "street", "zip", "city", "ratingValue", "ratingCount", "openingHours", "url", "salutation", "firstName", "lastName",
+  "phone", "street", "zip", "city", "ratingValue", "ratingCount", "openingHours", "url", "salutation", "firstName", "lastName",
   "leaderNames", "agencyType", "teamSize", "potentialScore", "facebookUrl", "instagramUrl", "xingUrl", "linkedinUrl", "linkedinStatus",
   "linkedinRequestAt", "linkedinConnectedAt", "linkedinMessageAt", "linkedinReplyAt", "linkedinList", "linkedinTags", "lossReason",
   "competitor", "legacyStatus", "customerStage", "products", "monthlyValue", "contractStart", "customerSince", "customerSource",

@@ -35,6 +35,20 @@ export function addWorkdays(d: Date, n: number): Date {
   return r;
 }
 
+/** Fällt d (deutsche Zeit) auf Samstag oder Sonntag, auf den Montag danach (gleiche Uhrzeit) schieben. */
+export function aufWerktag(d: Date): Date {
+  const wd = new Date(d.toLocaleString("en-US", { timeZone: TZ })).getDay();
+  return wd === 6 ? addDays(d, 2) : wd === 0 ? addDays(d, 1) : d;
+}
+
+/**
+ * Aufgabe um n Tage verschieben, ohne auf dem Wochenende zu landen (Ole, 22.11.2026: „Bei den Aufgaben Tag +1 im CRM
+ * Wochenende überspringen“): 1 Tag = nächster Werktag (Fr → Mo), sonst n Kalendertage und vom Wochenende auf Montag.
+ */
+export function verschiebeAufgabe(d: Date, n: number): Date {
+  return n === 1 ? addWorkdays(d, 1) : aufWerktag(addDays(d, n));
+}
+
 export function todayKey(): string {
   return dayKey(new Date());
 }
