@@ -60,3 +60,18 @@ export function offensichtlichFalscheNummer(phone: string | null | undefined): s
   if (p.ok) return null;
   return /^Fantasienummer|^ungültige Rufnummer|^keine gültige/.test(p.grund) ? p.grund : null;
 }
+
+/**
+ * Nummer prüfen (Ole, 22.11.2026: „Nummer prüfen markieren und Aufgabe anlegen“, Anlass Lohmann-Lead „+1 0175…“ und
+ * Festnetz-Lead): Nummer, die nicht eindeutig falsch ist, über die der Assistent aber wahrscheinlich niemanden per
+ * WhatsApp erreicht: ausländisch, falsche Länge, Festnetz, Sonderrufnummer. Grund (für die Aufgabe) oder null = in Ordnung.
+ * Ohne Nummer null (Empfehlung nur mit E-Mail). Erwartet die Nummer wie gespeichert (international ohne „+“).
+ */
+export function nummerZweifelhaft(phone: string | null | undefined): string | null {
+  const d = (phone ?? "").replace(/\D/g, "");
+  if (!d) return null;
+  if (offensichtlichFalscheNummer(phone)) return null; // eindeutig falsch: eigener Weg (Verloren: falsche Daten)
+  const p = pruefeTelefon(`+${d}`);
+  if (p.ok) return p.typ === "festnetz" ? "Festnetznummer, per WhatsApp nicht erreichbar" : null;
+  return p.grund === "keine deutsche Telefonnummer" ? "ausländische Nummer (Ländervorwahl prüfen)" : p.grund;
+}
