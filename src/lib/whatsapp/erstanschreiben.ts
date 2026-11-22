@@ -976,7 +976,10 @@ export function v10Moeglich(source: string | null | undefined, formular?: FormAn
   const zweck = erstanschreibenZweck(source, formular) as ErstanschreibenZweck;
   const def = ERSTANSCHREIBEN_V10[zweck];
   if (!def) return false;
-  if (!def.planKey) return !opts.gebucht;
+  // Kfz (Ole, 22.11.2026, Lohmann-Lead mit Termin über die Dankeseite): die feste Kfz-Frage („Wann läuft Ihre jetzige
+  // Kfz-Versicherung aus?“ bzw. neues Auto) ist keine Terminfrage, passt also auch nach der Buchung. Ohne das gab es für
+  // gebuchte Kfz-Leads keine freigegebene Vorlage (Kfz nur ab v12).
+  if (!def.planKey) return !opts.gebucht || String(zweck).startsWith("outreach_kfz");
   const f = frageplan(source, formular).fragen.find((x) => x.key === def.planKey);
   return !!f && !f.bekannt;
 }

@@ -15,7 +15,7 @@ vi.mock("@/lib/whatsapp/outreach", () => ({ runOutreach: outreach }));
 
 import { nachNummernKorrektur } from "@/lib/whatsapp/kein-whatsapp";
 
-const lead = (o: Record<string, unknown> = {}) => ({ id: "l1", customerId: "c1", name: "Herr Defontaine", phone: "491752429849", waUnavailableAt: new Date(), erasedAt: null, isTest: false, ...o });
+const lead = (o: Record<string, unknown> = {}) => ({ id: "l1", customerId: "c1", name: "Herr Defontaine", phone: "491752429849", waUnavailableAt: new Date(), erasedAt: null, isTest: false, outreachStatus: "sent", ...o });
 
 describe("nachNummernKorrektur", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -28,6 +28,14 @@ describe("nachNummernKorrektur", () => {
     expect(db.conversation.updateMany).toHaveBeenCalledWith({ where: { customerId: "c1", leadId: "l1" }, data: { botActive: true } });
     expect(bestaetigung).toHaveBeenCalledWith(expect.objectContaining({ to: "491752429849", leadId: "l1", mode: "video" }));
     expect(outreach).not.toHaveBeenCalled();
+  });
+
+  it("Erstanschreiben kam nie an (Defontaine): zuerst das Erstanschreiben, auch mit Termin", async () => {
+    db.lead.findUnique.mockResolvedValue(lead({ outreachStatus: "no_whatsapp" }));
+    db.appointment.findFirst.mockResolvedValue({ startsAt: new Date("2026-11-24T09:00:00Z"), mode: "video", meetUrl: null, ort: null });
+    expect(await nachNummernKorrektur("l1", new Date("2026-11-22T12:00:00Z"))).toBe("erstanschreiben");
+    expect(outreach).toHaveBeenCalledWith("c1", { leadIds: ["l1"] });
+    expect(bestaetigung).not.toHaveBeenCalled();
   });
 
   it("ohne Termin: Erstanschreiben nur für diesen Lead", async () => {
