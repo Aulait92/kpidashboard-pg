@@ -1,5 +1,12 @@
 # Garantien: automatische Prüfung
 
+**Seit 22.11.2026 ohne Garantien verkauft** (Ole: „ich verkaufe erstmal ohne garantie“). Angebote, die ab
+`GUARANTEES_UNTIL` (22.11.2026, 19:15 Uhr, `lib/garantien.ts`) erstellt werden, enthalten keinen Abschnitt „Garantien“,
+die AGB beschränken die Garantien auf ältere Angebote, und `offerHasGuarantee` ist für sie falsch (keine Prüfung, keine
+Fälle). Kunden ohne Garantie-Angebot sehen in der App keine Garantie-Hinweise (`lib/garantien-kunde.ts`, über
+`BudgetContext.garantien` und den Pause-Hinweis der Abwesenheit). Kunden mit älterem, angenommenem Garantie-Angebot behalten
+alles wie unten beschrieben. Wieder einführen: Stichtag anpassen bzw. durch eine Angebotsoption ersetzen, AGB-Satz ändern.
+
 Stand 11.11.2026. Grundlage: AGB „Garantien“ (`src/lib/legal-texts.ts`) und die
 Rechner-Konfiguration (Admin → Einstellungen → Rechner). Code:
 

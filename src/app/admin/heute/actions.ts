@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { validHeuteKey } from "@/lib/admin-heute";
 import { decideStorno } from "@/lib/ppl/storno";
-import { addDays } from "@/lib/vertrieb/dates";
+import { addDays, verschiebeAufgabe } from "@/lib/vertrieb/dates";
 import { gewaehreFall, lehneFallAb } from "@/lib/garantien-server";
 import { recordMeetingOutcome } from "@/lib/vertrieb/termin-review";
 import { TERMIN_REVIEW_CHOICES } from "@/lib/vertrieb/crm";
@@ -56,9 +56,12 @@ export async function postponeTaskAction(taskId: string): Promise<HeuteResult> {
   // Überfällige auf morgen zur gleichen Uhrzeit, sonst einen Tag weiter (wie „Verschieben“ im Vertrieb).
   const now = new Date();
   const base = t.dueAt < now ? new Date(new Date(now).setUTCHours(t.dueAt.getUTCHours(), t.dueAt.getUTCMinutes(), 0, 0)) : t.dueAt;
-  await prisma.salesTask.update({ where: { id: t.id }, data: { dueAt: addDays(base, 1) } });
+  const neu = verschiebeAufgabe(base, 1);
+  await prisma.salesTask.update({ where: { id: t.id }, data: { dueAt: neu } });
   refresh(t.contactId);
-  return { ok: true, message: "Auf morgen verschoben", undo: { kind: "task-due", taskId: t.id, dueAt: t.dueAt.toISOString() } };
+  // Freitag (bzw. Wochenende) → Montag: so sagen (Ole, 22.11.2026)
+  const montag = neu.getTime() - base.getTime() > 36 * 60 * 60 * 1000;
+  return { ok: true, message: montag ? "Auf Montag verschoben" : "Auf morgen verschoben", undo: { kind: "task-due", taskId: t.id, dueAt: t.dueAt.toISOString() } };
 }
 
 export async function decideStornoQuickAction(leadId: string, approve: boolean): Promise<HeuteResult> {

@@ -71,10 +71,14 @@
 // in lib/garantien.ts terminQuote angeglichen. Prüfung: docs/recht/garantie-termine-wahrgenommen-2026-11-20.md.
 // 20.11.2026 (Ole): Neue Besondere Bedingungen „Kampagnen im eigenen Werbekonto“ (PPL_KUNDENKONTO_BEDINGUNGEN), nur
 // Bestandteil von Angeboten dieser Variante; AGB und AVV unverändert.
+// 22.11.2026 (neuer Stand „22.11.2026“, Ole: „ich verkaufe erstmal ohne Garantie“): „Garantien“ gelten nur noch für
+// Verträge aus Angeboten, die vor dem 22.11.2026, 19:15 Uhr erstellt wurden (GUARANTEES_UNTIL in lib/garantien.ts);
+// spätere Angebote enthalten keine Garantien, außer das Angebot sagt sie ausdrücklich zu (Sondervereinbarung).
+// Bestehende Verträge unverändert, darum keine Mitteilung nötig.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "20.11.2026";
+export const LEGAL_VERSION = "22.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -198,10 +202,11 @@ export const AGB: LegalSection[] = [
     ],
   },
   {
-    // Prüfen: Garantien (von Ole am 11.11.2026 freigegeben); 120 statt 90 Tage für neue Angebote (Übergang bleibt, da eine URL)
+    // Prüfen: Garantien (von Ole am 11.11.2026 freigegeben); 120 statt 90 Tage für neue Angebote (Übergang bleibt, da eine URL).
+    // Seit 22.11.2026 nur noch für ältere Angebote (Ole: ohne Garantie verkaufen), Stichtag GUARANTEES_UNTIL.
     title: "Garantien",
     items: [
-      "Die Garantien gelten für die Katzenversicherung (TKV) und für weitere im Angebot genannte Produkte, ab dem Tag der ersten Auslieferung der Anzeigen.",
+      "Die Garantien gelten nur für Verträge aus Angeboten, die vor dem 22.11.2026, 19:15 Uhr erstellt wurden, und dort für die Katzenversicherung (TKV) und für weitere im Angebot genannte Produkte, ab dem Tag der ersten Auslieferung der Anzeigen. Spätere Angebote enthalten keine Garantien, es sei denn, das Angebot sagt sie ausdrücklich zu.",
       { sub: "Gemeinsame Voraussetzungen", text: "Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt. Für Break-even- und Vertrags-Garantie außerdem: mindestens 80 % der über die Software gebuchten Termine vom Kunden wahrgenommen und für mindestens 80 % der Leads das Ergebnis in der Software eingetragen. Pausen verlängern den Prüfzeitraum um ihre Dauer; bei Zahlungsverzug ruht der Anspruch bis zum Ausgleich." },
       { sub: "Wahrgenommene Termine", text: "Nicht wahrgenommen sind nur Termine, die der Kunde selbst absagt oder versäumt. Sagt der Interessent ab, verschiebt er oder erscheint er nicht, gilt der Termin als wahrgenommen. Verschiebt der Kunde einen Termin, zählt nur der neue. Im Zweifel, etwa wenn nicht feststeht, wer abgesagt hat, gilt der Termin als wahrgenommen. Auf Anfrage legt der Anbieter dem Kunden die Berechnung beider Quoten in Textform vor, mit der Liste der zugrunde liegenden Termine und Leads und dem jeweils eingetragenen Ergebnis." },
       { sub: "Lead-Garantie", text: "Erhält der Kunde in den ersten 30 aktiven Tagen weniger als 100 Leads für das Produkt, entfällt die Vergütung für Betreuung und Software im folgenden Abrechnungsmonat. Das Werbebudget zahlt er weiter an Meta." },
