@@ -5434,5 +5434,17 @@
   "bereich": "betreuen",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
+ },
+ {
+  "heute": "neu (22.11.2026)",
+  "funktion": "WhatsApp-Verlauf der Support-Nummer in Kontakt- und Kundenakte, Sprung in den ganzen Chat",
+  "quelle": "components/admin-neu/vertrieb/whatsapp-verlauf.tsx",
+  "neu": "Kontaktakte › Karte WhatsApp; Kundenakte › Übersicht › Karte WhatsApp",
+  "status": "ergänzen",
+  "demo_view": "kontakt",
+  "id": "whatsapp-verlauf--support-chat-in-kontakt-und-kundenakte",
+  "bereich": "verkaufen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/whatsapp-verlauf.tsx"
  }
 ]
