@@ -159,6 +159,31 @@ async function fetchInsightsWindow(
 // Request limitiert (über längere Zeiträume bricht die API still ab oder
 // liefert leere Antworten). Größere Zeiträume zerlegen wir in 90-Tage-
 // Fenster und fügen die Resultate zusammen.
+/** Name eines Werbekontos (für den Produkt-Rückfall), null bei Fehler. */
+async function fetchAccountName(accountId: string, token: string): Promise<string | null> {
+  try {
+    const url = new URL(`${META_GRAPH}/act_${accountId}`);
+    url.searchParams.set("access_token", token);
+    url.searchParams.set("fields", "name");
+    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (!res.ok) return null;
+    const j = (await res.json()) as { name?: string };
+    return j.name?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Produkt einer Kampagne: aus dem Kampagnennamen, sonst aus dem Namen des Werbekontos (Ole, 22.11.2026: „die neue
+ * Kampagne im Konto PKV-Tarifoptimierung muss auch in die Statistiken zählen und weitere Kampagnen, die wir erstellen,
+ * auch“). Konten mit Produktnamen (PKV-Tarifoptimierung, Unfall, Zahnzusatzversicherung …) ordnen damit jede Kampagne
+ * zu; gemischte Konten (z. B. „Performance Growth Leads“) bleiben bei der Zuordnung über den Kampagnennamen. Rein.
+ */
+export function produktMitKonto(classify: (name: string) => string | null, kampagne: string, konto: string | null): string | null {
+  return classify(kampagne) ?? (konto ? classify(konto) : null);
+}
+
 async function fetchInsights(
   accountId: string,
   token: string,
@@ -246,6 +271,7 @@ export async function syncMeta(
     try {
       const rows = await fetchInsights(accountId, token, since, until);
       result.accounts.push({ id: accountId, rows: rows.length });
+      const kontoName = await fetchAccountName(accountId, token);
 
       for (const row of rows) {
         const name = row.campaign_name?.trim();
@@ -258,7 +284,7 @@ export async function syncMeta(
         const amount = Number.parseFloat(spendStr);
         if (!Number.isFinite(amount) || amount <= 0) continue;
 
-        const product = classify(name);
+        const product = produktMitKonto(classify, name, kontoName);
         const occurredAt = dayAtNoonUtc(startStr);
 
         if (!product) {
