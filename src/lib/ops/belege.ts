@@ -26,7 +26,9 @@ export async function belegeStatus(p?: URLSearchParams) {
       select: { typ: true, firma: true, nummer: true, datum: true, brutto: true, waehrung: true, ocrFertig: true, dateiname: true },
     }),
   ]);
+  const { belegAdresse } = await import("@/lib/belege/eingang");
   return {
+    adresse: belegAdresse(),
     konfiguriert: gmiKonfiguriert(),
     belege: gesamt,
     zugeordnet,
