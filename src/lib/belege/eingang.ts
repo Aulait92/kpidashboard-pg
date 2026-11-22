@@ -74,7 +74,7 @@ export async function verarbeiteBelegMail(o: { eingangId: string; emailId: strin
  * Doppelte Verarbeitung verhindert der Eintrag je Resend-ID in MailEingang (lib/mail/eingang.ts). Alle 15 Minuten (Cron)
  * und per Ops-Aktion belege_postfach.
  */
-export async function belegePostfachAbholen(): Promise<{ gesehen: number; verarbeitet: number }> {
+export async function belegePostfachAbholen(o: { erneut?: boolean } = {}): Promise<{ gesehen: number; verarbeitet: number }> {
   const apiKey = process.env.RESEND_EMPFANG_API_KEY?.trim() || process.env.RESEND_API_KEY?.trim();
   if (!apiKey) return { gesehen: 0, verarbeitet: 0 };
   const { Resend } = await import("resend");
@@ -83,6 +83,10 @@ export async function belegePostfachAbholen(): Promise<{ gesehen: number; verarb
   if (res.error || !res.data) throw new Error(`resend_receiving_list:${res.error?.name ?? "leer"} (Schlüssel: ${process.env.RESEND_EMPFANG_API_KEY?.trim() ? "RESEND_EMPFANG_API_KEY" : "RESEND_API_KEY"})`);
   const fuerBelege = res.data.data.filter((m) => (m.to ?? []).some((a) => istBelegAdresse(a)));
   if (!fuerBelege.length) return { gesehen: 0, verarbeitet: 0 };
+  // erneut: Mails ohne Ergebnis („neu 0, doppelt 0“) noch einmal verarbeiten, z. B. nach einer Verbesserung der Erkennung
+  if (o.erneut) {
+    await prisma.mailEingang.updateMany({ where: { resendEmailId: { in: fuerBelege.map((m) => m.id) }, ergebnis: "beleg", grund: "neu 0, doppelt 0" }, data: { ergebnis: "fehler", versuche: 0 } });
+  }
   const bekannt = new Set(
     (await prisma.mailEingang.findMany({ where: { resendEmailId: { in: fuerBelege.map((m) => m.id) }, ergebnis: { in: ["beleg", "ignoriert"] } }, select: { resendEmailId: true } })).map((x) => x.resendEmailId),
   );

@@ -169,10 +169,10 @@ export const AKTIONEN: Record<string, Aktion> = {
     },
   },
   belege_postfach: {
-    beschreibung: "Mails an die Beleg-Adresse jetzt bei Resend abholen und als Belege ablegen (sonst alle 15 Minuten)",
-    felder: {},
-    run: async () => {
-      const r = await (await import("@/lib/belege/eingang")).belegePostfachAbholen();
+    beschreibung: "Mails an die Beleg-Adresse jetzt bei Resend abholen und als Belege ablegen (sonst alle 15 Minuten); erneut=true verarbeitet Mails ohne Ergebnis noch einmal",
+    felder: { erneut: "optional true" },
+    run: async (p) => {
+      const r = await (await import("@/lib/belege/eingang")).belegePostfachAbholen({ erneut: text(p.erneut) === "true" });
       return { ok: true, info: `${r.gesehen} Mails an die Beleg-Adresse, ${r.verarbeitet} neu verarbeitet.` };
     },
   },
