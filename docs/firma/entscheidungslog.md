@@ -191,3 +191,9 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   (nur `.gN`, ein Aufzählungsfeld, Bremse, VVT/DSFA). Ole: „Ja einbauen“ → lokale Texterkennung (Tesseract im Dockerfile,
   `lib/policen/texterkennung.ts`): nur Kfz-Leads mit KI-Einwilligung, Text nie gespeichert, nur `LeadDocument.dokumentArt`;
   die Bestätigung nennt, was noch nicht erkannt ist. VVT-Eintrag „Dokumentart bestimmen (lokal)“ nachziehen.
+- **22.11.2026, Leadformular ohne Häkchen (Lohmann):** Ole gibt den Wortlaut „Mit Klick auf ‚Senden‘ willigen Sie ein …“
+  frei (Rechtsprüfung Gelb gering, `docs/recht/leadformular-einwilligung-knopf-2026-11-22.md`). Neue Formulare Kfz v4 Knopf
+  (1712355006964288) und Privatschutz v5 Knopf (1867444814681861), Zuordnung mit Fassung `2026-11-22-knopf`, alte Formulare
+  bleiben für Nachzügler zugeordnet. Alle 8 Anzeigen als Kopie mit neuem Formular, alte pausiert. Auswertung: Leads je
+  Link-Klick vorher (Formular mit Häkchen) und nachher. Offen: Handy-Screenshot der Formular-Vorschau (Auflage 1);
+  Kampagnen-Builder für neue Kunden noch mit Häkchen (umstellen, wenn der Vergleich trägt).
