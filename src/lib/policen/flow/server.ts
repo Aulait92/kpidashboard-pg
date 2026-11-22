@@ -199,9 +199,11 @@ export async function flowChat(conversationId: string, now = new Date()): Promis
   const source = conv?.lead?.source ?? null;
   const kfz = await import("@/lib/whatsapp/produkt-fragen").then((m) => m.istKfzProdukt(source));
   // Kfz: genannte andere Verträge ohne das angefragte Produkt (Ole, 22.11.2026, lib/policen/andere-policen.ts)
-  const andereVertraege = kfz
-    ? await import("@/lib/policen/andere-policen").then((m) => m.andereVertraege(conv?.lead?.vorvertraege ?? null, { source, kfz, gesundheitAn: s.sp.gesundheitAn }))
-    : [];
+  // Übrige Produkte (Ole, 22.11.2026): genannte Verträge mit dem angefragten Produkt (Bitte um alle Policen)
+  const { andereVertraege: vertraegeFuerText } = await import("@/lib/policen/andere-policen");
+  const vv = conv?.lead?.vorvertraege ?? null;
+  const andereVertraege = kfz ? vertraegeFuerText(vv, { source, kfz, gesundheitAn: s.sp.gesundheitAn }) : [];
+  const genannteVertraege = kfz ? [] : vertraegeFuerText(vv, { source, gesundheitAn: s.sp.gesundheitAn, mitAngefragt: true });
   const formular = formAnswers(conv?.lead?.formData);
   const { istTierStrecke } = await import("@/lib/whatsapp/tier-fragen");
   const tier = istTierStrecke(source);
@@ -233,6 +235,7 @@ export async function flowChat(conversationId: string, now = new Date()): Promis
       kfz,
       andereVertraege,
       komplettcheck: termin?.komplettcheck ?? null,
+      genannteVertraege,
     },
   };
 }
@@ -314,6 +317,10 @@ export function waehleVorlage(art: FlowArt, k: FlowTextKontext, o: { an: Ansprac
     const name = freigegeben(kfzArt);
     return name ? { weg: "vorlage", art: kfzArt, name } : { weg: "flow" };
   }
+  // Übrige Produkte mit genannten Verträgen im 24-h-Fenster (Ole, 22.11.2026): die freie Flow-Nachricht nennt die
+  // Verträge, die freigegebene Vorlage nicht (ihr Text bleibt unverändert, sonst neue Freigabe). Kostet im Fenster
+  // ebenfalls nichts; es fehlt nur der zweite Knopf ([Später] bzw. [Nein, danke]), wie bei Kfz ohne Kfz-Vorlage.
+  if (!k.kfz && o.fensterOffen && art !== "erinnerung2" && k.genannteVertraege?.length) return { weg: "flow" };
   for (const a of kfzArt ? [kfzArt, art] : [art]) {
     const name = freigegeben(a);
     if (name) return { weg: "vorlage", art: a, name };
@@ -396,6 +403,8 @@ async function sendeFlowNachrichtRoh(
   // Kfz mit Vorlage: der Verlauf zeigt, was Meta zustellt, also den Text der Kfz-Vorlage bzw. (Kfz-Vorlage noch nicht
   // freigegeben) den allgemeinen Text
   if (vorlage && c.text.kfz) n = vorlage.art === art ? nachrichtFuer(art, { ...c, text: { ...c.text, kfz: false } }) : vorlageGerendert(vorlage.art, c.text);
+  // Übrige Produkte mit Vorlage (Fenster zu): die Vorlage nennt keine Verträge, der Verlauf also auch nicht
+  else if (vorlage && c.text.genannteVertraege?.length) n = nachrichtFuer(art, { ...c, text: { ...c.text, genannteVertraege: null } });
   const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
   if (o.vorweg?.trim() && c.fensterOffen) {
     await sendWhatsAppMessage({ customerId: c.customerId, to: c.phone, body: o.vorweg, sentBy: "bot" });
