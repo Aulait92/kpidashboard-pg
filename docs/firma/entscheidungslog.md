@@ -251,3 +251,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Beleg-Adresse belege-<token>@antwort.dein-beratungstermin.de, Upload (PDF/Bild/ZIP), KI-Auslesung, automatische Zuordnung
   zu Kontoumsätzen, Netto laut Beleg in der BWA. GetMyInvoices bleibt bis zur Übernahme seiner Dateien (Nachtlauf), dann
   kündbar (Probezeit bis 06.12.2026).
+- **23.11.2026, Geschäftsführergehalt und Büromiete ab 01.01.2027 (Ole):** Kein rückwirkender Beginn (Rückwirkungsverbot
+  beim beherrschenden Gesellschafter-GF, sonst vGA). Verträge schriftlich vor dem 01.01.2027: GF-Vertrag mit Festgehalt,
+  Tantieme-Vereinbarung für 2027, Mietvertrag Arbeitszimmer (ortsüblich, eigener Raum). Steuerbüro prüft vorab und
+  richtet die Lohnabrechnung ein. Erhöhungen später nur per Beschluss für die Zukunft.
