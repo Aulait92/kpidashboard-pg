@@ -1551,17 +1551,23 @@ export async function runBotTurn(
   } else if (zug.vorschlag) {
     finalText = zug.vorschlag.text;
     knoepfe = terminKnoepfe(zug.vorschlag.starts);
-  } else if (upcoming && finalText && angebotsphase && folgeVorher.length && stand && !stand.abschlussAt && !stand.vertragsfrageAt && !stand.policenBitteAt) {
+  } else if (upcoming && angebotsphase && folgeVorher.length && stand && !stand.abschlussAt && !stand.vertragsfrageAt && !stand.policenBitteAt) {
     // Letzte Angebotsfrage beantwortet: statt eigener Worte des Assistenten die nächste Nachricht der App (bei
-    // Komplettcheck „Ja“ die Vertragsfrage, sonst die Policen-Bitte bzw. der Schluss)
+    // Komplettcheck „Ja“ die Vertragsfrage, sonst die Policen-Bitte bzw. der Schluss). Auch ohne Text des Assistenten
+    // (Produktionsfehler 22.11.2026: nach „Geleast“ blieb der Chat stumm, weil der Assistent nichts schrieb); fehlt eine
+    // Angebotsfrage noch und der Assistent schweigt, stellt die App sie selbst.
     const k = await strecke.streckenKontext(conversation.id);
-    if (k?.termin?.id === upcoming.id && !strecke.offeneAngebotsfragen(k).length) {
+    const offen = k?.termin?.id === upcoming.id ? strecke.offeneAngebotsfragen(k) : null;
+    if (k && offen && !offen.length) {
       schritt = await strecke.naechsterSchritt(k, { einleitung: "Danke!" });
       if (schritt) {
         finalText = schritt.text;
         knoepfe = schritt.buttons;
       }
-    } else {
+    } else if (!finalText && offen?.length) {
+      finalText = ansprache === "du" ? offen[0].du : offen[0].sie;
+      knoepfe = knoepfeFuerText(finalText, offen);
+    } else if (finalText) {
       knoepfe = knoepfeFuerText(finalText, folgeVorher);
     }
   } else {

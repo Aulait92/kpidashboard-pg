@@ -427,6 +427,19 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
   });
 
+  it("Letzte Angebotsfrage beantwortet, Assistent schreibt nichts: die App schickt trotzdem den nächsten Schritt (22.11.2026)", async () => {
+    const { appt, phone } = await gebuchtPerKnopf({ qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" } });
+    await knopf(phone, "komplettcheck:nein", "Nein, danke");
+    expect(gesendet().at(-1)!.body).toMatch(/Sind Sie im öffentlichen Dienst tätig\?$/);
+    st.queue.push([{ type: "tool_use", id: "q-leer", name: "record_qualification", input: { zusammenfassung: "x", angaben: { beruf: "nicht im öffentlichen Dienst" } } }], [{ type: "text", text: "" }], [{ type: "text", text: "" }]);
+    const ab = gesendet().length;
+    await text(phone, "Nein, bin ich nicht");
+    const neu = gesendet().slice(ab);
+    expect(neu.length).toBeGreaterThan(0);
+    expect(neu[0].body).toMatch(/Policen/);
+    await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
+  });
+
   it("Pfad Nein: Angebotsfrage, Policen-Bitte nur für die Sparte, Schluss; andere Adresse (geprüft) bekommt die einzige Einladung", async () => {
     const { appt, phone } = await gebuchtPerKnopf({ qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" } });
     await knopf(phone, "komplettcheck:nein", "Nein, danke");
