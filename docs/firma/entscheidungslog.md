@@ -236,3 +236,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Angebote haben „Vorauszahlung anbieten“ vorausgewählt (6 Monate: 1 geschenkt, 12 Monate: 3 geschenkt); der Kunde wählt
   bei der Annahme weiter selbst, monatlich bleibt vorausgewählt. Abwählbar; greift nicht bei Pay-per-Lead, Startpreis
   oder ohne Laufzeit. Für „Zahlung nachträglich“ muss sie abgewählt werden.
+- **22.11.2026, 20 Uhr eingespielt:** Terminsuche über 7 Tage (Wiedervorlage, Buchungslink nach zwei Absagen, Kalender
+  voll → Aufgabe), Policen-Bitte nennt genannte Verträge bei allen Produkten (Ole: Variante A, im Fenster freie Nachricht
+  ohne zweiten Knopf), Einrichtung Go-live-Hürden (anderer WhatsApp-Anbieter, private Einladungsmail, Firmengerät,
+  Videolink-Pflicht, Makler, Test-Einladung; schon live geschaltete Kunden bleiben unberührt).
