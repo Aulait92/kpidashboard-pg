@@ -35,7 +35,7 @@ const META_KOMPAKT = /facebook|facebk|metaplatforms|fb\.me\/ads/i;
 // Verwendungszwecke aus der Bank-CSV brechen Wörter um („FACEBOO K PAYMENTS“): ohne Leerzeichen vergleichen
 const META = { test: (t: string) => META_KOMPAKT.test(t.replace(/\s+/g, "")) };
 // Bankentgelte (Kontoauszug genügt) und Darlehensraten (Vertrag liegt einmal vor) brauchen keinen Einzelbeleg
-const OHNE_BELEG = /american express|\bamex\b|zahlung erhalten|stripe|umbuchung|übertrag|finanzamt|bundeskasse|privat|gehalt|kontoführung|kontofuehrung|darlehen|tilgung/i;
+const OHNE_BELEG = /american express|\bamex\b|zahlung erhalten|stripe|umbuchung|übertrag|finanzamt|bundeskasse|privat|gehalt|kontoführung|kontofuehrung|darlehen|tilgung|entgelt/i;
 
 /** Braucht diese Ausgabe einen Beleg? */
 export function brauchtBeleg(u: Pick<AbgleichUmsatz, "betrag" | "gegenpartei" | "zweck" | "status">): boolean {

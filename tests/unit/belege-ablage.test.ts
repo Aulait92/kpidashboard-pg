@@ -82,3 +82,12 @@ describe("Dateityp und Adresse", () => {
     expect(istBelegAdresse("belege-0000000000@antwort.dein-beratungstermin.de", "geheim")).toBe(false);
   });
 });
+
+import { eigenbelegPdf } from "@/lib/belege/eigenbeleg";
+describe("Eigenbeleg", () => {
+  it("erzeugt ein PDF mit Umlauten", async () => {
+    const pdf = await eigenbelegPdf({ nummer: "EB-2026-001", empfaenger: "GODADDY Amsterdam", datum: "2026-07-06", betrag: 5.99, konto: "American Express", verwendungszweck: null, gegenstand: "Domainverlängerung", zweck: "Domain für die Webseite der Firma – Betrieb", grund: "Originalbeleg nicht auffindbar.", erstelltAm: "2026-11-23" });
+    expect(Buffer.from(pdf).subarray(0, 4).toString()).toBe("%PDF");
+    expect(pdf.length).toBeGreaterThan(800);
+  });
+});

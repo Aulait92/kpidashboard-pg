@@ -168,6 +168,20 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r === "nichts" ? { ok: false, error: "Nichts versucht (keine Sperre „kein WhatsApp“ oder keine Nummer)." } : { ok: true, info: r === "termin" ? "Terminbestätigung per WhatsApp versucht." : "Erstanschreiben per WhatsApp versucht." };
     },
   },
+  eigenbeleg_erstellen: {
+    beschreibung: "Eigenbeleg (PDF) für eine Ausgabe ohne Originalbeleg erstellen, ablegen und fest zuordnen (kleine Beträge, auf Oles Anweisung)",
+    felder: { umsatzId: "ID der Zahlung (diagnose q=belege&liste=offen)", gegenstand: "was gekauft wurde", zweck: "betrieblicher Zweck", empfaenger: "optional: Name des Empfängers", grund: "optional" },
+    run: async (p) => {
+      const gegenstand = text(p.gegenstand, 300);
+      const zweck = text(p.zweck, 300);
+      if (gegenstand.length < 3 || zweck.length < 3) return { ok: false, error: "Gegenstand und Zweck nötig." };
+      const { eigenbelegErstellen } = await import("@/lib/belege/eigenbeleg");
+      const r = await eigenbelegErstellen({ umsatzId: text(p.umsatzId, 40), gegenstand, zweck, empfaenger: text(p.empfaenger, 120) || undefined, grund: text(p.grund, 300) || undefined });
+      if (!r.ok) return r;
+      await audit("belege.eigenbeleg", { entity: "Beleg", entityId: r.id, details: { nummer: r.nummer }, actor: OPS_ACTOR });
+      return { ok: true, info: `Eigenbeleg ${r.nummer} erstellt und zugeordnet.` };
+    },
+  },
   belege_postfach: {
     beschreibung: "Mails an die Beleg-Adresse jetzt bei Resend abholen und als Belege ablegen (sonst alle 15 Minuten); erneut=true verarbeitet Mails ohne Ergebnis noch einmal",
     felder: { erneut: "optional true" },

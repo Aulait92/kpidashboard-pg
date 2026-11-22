@@ -8,6 +8,7 @@ import { gmiKonfiguriert } from "@/lib/belege/gmi";
 export async function belegeStatus(p?: URLSearchParams) {
   const anbieter = (p?.get("anbieter") ?? "").trim();
   if (anbieter.length >= 3) return belegeJeAnbieter(anbieter);
+  if (p?.get("liste") === "offen") return offeneZahlungen();
   const [gesamt, zugeordnet, jeTyp, ohne, letzte, frei] = await Promise.all([
     prisma.beleg.count(),
     prisma.beleg.count({ where: { bankTransactionId: { not: null } } }),
@@ -57,4 +58,25 @@ async function belegeJeAnbieter(name: string) {
     umsaetze: umsaetze.map((u) => `${u.bookingDate.toISOString().slice(0, 10)} ${u.amount} ${u.accountKey} ${u.status} ${u.counterparty ?? ""} -> ${u.beleg ? `${u.beleg.nummer ?? ""} ${u.beleg.datum?.toISOString().slice(0, 10) ?? ""} ${u.beleg.brutto} ${u.beleg.waehrung}` : "ohne Beleg"}`),
     belege: belege.map((b) => `${b.datum?.toISOString().slice(0, 10) ?? "?"} ${b.brutto} ${b.waehrung} ${b.typ} ${b.nummer ?? ""} uid=${b.gmiUid} ${b.bankTransactionId ? `zugeordnet (${b.zuordnung})` : "frei"}`),
   };
+}
+
+/** Alle Ausgaben seit 1.1., die einen Beleg brauchen und keinen haben (für Eigenbelege und Nachfragen). */
+async function offeneZahlungen() {
+  const { brauchtBeleg, anbieterName } = await import("@/lib/belege/abgleich");
+  const rows = await prisma.bankTransaction.findMany({
+    where: { bookingDate: { gte: new Date("2026-01-01T00:00:00Z") }, amount: { lt: 0 }, beleg: { is: null } },
+    orderBy: { bookingDate: "asc" },
+    select: { id: true, bookingDate: true, amount: true, accountKey: true, counterparty: true, purpose: true, status: true },
+  });
+  return rows
+    .filter((r) => brauchtBeleg({ betrag: Number(r.amount), gegenpartei: r.counterparty, zweck: r.purpose, status: r.status }))
+    .map((r) => ({
+      id: r.id,
+      datum: r.bookingDate.toISOString().slice(0, 10),
+      betrag: Number(r.amount),
+      konto: r.accountKey,
+      anbieter: anbieterName({ gegenpartei: r.counterparty, zweck: r.purpose }),
+      gegenpartei: r.counterparty,
+      zweck: r.purpose?.replace(/\s+/g, " ").slice(0, 100) ?? null,
+    }));
 }
