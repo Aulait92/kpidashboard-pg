@@ -1,4 +1,5 @@
 // Diagnose q=ppl-kunde&kunde=<Kunden-ID> (Ole, 22.11.2026: Abgleich „wie viele Leads stehen noch zu“, z. B. Daniel Seidel).
+// Alle Leads des Kunden (auch aus Airtable importierte ohne Bezug/Lieferdatum), mit Umsatzzeilen (cancelled = in Airtable storniert).
 // Nur lesend: Pay-per-Lead-Bezüge des Kunden, Bestellungen (Zeitraum, Menge, Status) und alle gelieferten Leads mit
 // Lieferzeit, Name, PLZ/Ort und Storno (Status, Grund, Bemerkung, Zeitpunkte, Gutschrift). Keine Telefonnummern/E-Mails.
 import { prisma } from "@/lib/prisma";
@@ -26,12 +27,13 @@ export async function pplKunde(p: URLSearchParams) {
     },
   });
   const leads = await prisma.lead.findMany({
-    where: { customerId: id, OR: [{ subscriptionId: { not: null } }, { deliveredAt: { not: null } }] },
-    orderBy: [{ deliveredAt: "asc" }, { createdAt: "asc" }],
+    where: { customerId: id },
+    orderBy: [{ createdAt: "asc" }],
     select: {
       id: true, airtableId: true, source: true, name: true, subscriptionId: true, orderId: true, deliveredAt: true, createdAt: true, isTest: true,
       status: true, stornoState: true, stornoReason: true, stornoNote: true, stornoRequestedAt: true, stornoDecidedAt: true, creditAmount: true,
-      creditedAt: true, disqualifyReason: true, lostReason: true, lostNote: true, formData: true,
+      creditedAt: true, disqualifyReason: true, lostReason: true, lostNote: true, lostAt: true, erasedAt: true, formData: true,
+      revenues: { select: { amount: true, occurredAt: true, cancelled: true } },
     },
   });
   return {
