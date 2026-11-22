@@ -34,6 +34,7 @@ import {
   type BudgetPreview,
 } from "@/lib/budget-shared";
 import { KEINE_ANGABE } from "@/lib/platzhalter";
+import { kundeHatGarantien } from "@/lib/garantien-kunde";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const eur = (n: number) => `${Math.round(n).toLocaleString("de-DE")} €`;
@@ -114,13 +115,17 @@ export async function budgetState(customerId: string, now = new Date()) {
     select: { plan: true, retainerMonthly: true, billingInterval: true, vermittlerTyp: true },
   });
   const { lines, upcoming, estimated } = await currentBudgets(customerId, now);
-  const { cpl, source } = await customerCpl(customerId, lines.map((l) => l.product), c.vermittlerTyp, now);
+  const [{ cpl, source }, garantien] = await Promise.all([
+    customerCpl(customerId, lines.map((l) => l.product), c.vermittlerTyp, now),
+    kundeHatGarantien(customerId),
+  ]);
   const ctx: BudgetContext = {
     plan: c.plan,
     feeMonthly: c.retainerMonthly == null ? null : Number(c.retainerMonthly),
     billingInterval: c.billingInterval,
     cpl,
     cplSource: source,
+    garantien,
   };
   const pending = await prisma.budgetChange.findFirst({ where: { customerId, status: "pending" }, orderBy: { createdAt: "desc" } });
   return { lines, upcoming, ctx, pending, estimated: !!estimated };

@@ -262,7 +262,7 @@ export function AbsenceSheet({
                 </div>
                 <p className="mt-1">
                   Sie sind länger weg. Pausieren Sie die Anzeigen, kommen keine Leads, die warten müssten. Neustart am {dayShort(overview.pauseHint.until)}.
-                  Die Pause verlängert auch den Garantie-Zeitraum.
+                  {overview.pauseHint.garantie ? " Die Pause verlängert auch den Garantie-Zeitraum." : null}
                 </p>
                 <Button className="mt-2" disabled={pending} onClick={pauseAds}>
                   Anzeigen in dieser Zeit pausieren
@@ -271,7 +271,7 @@ export function AbsenceSheet({
             ) : (
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-2.5 text-sm">
                 <span className="text-[color:var(--muted)]">
-                  Anzeigen in dieser Zeit pausieren? Neustart am {dayShort(overview.pauseHint.until)}, verlängert den Garantie-Zeitraum.
+                  Anzeigen in dieser Zeit pausieren? Neustart am {dayShort(overview.pauseHint.until)}{overview.pauseHint.garantie ? ", verlängert den Garantie-Zeitraum." : "."}
                 </span>
                 <button type="button" disabled={pending} onClick={pauseAds} className="font-semibold text-[color:var(--brand)] hover:underline disabled:opacity-50">
                   Pausieren

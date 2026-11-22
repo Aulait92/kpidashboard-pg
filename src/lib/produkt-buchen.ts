@@ -126,7 +126,16 @@ export async function productOverview(customerId: string, now = new Date()) {
   const taken = (item: CatalogItem) => booked.some((p) => matchesCatalog(item, p.name));
   const bookable: BookableProduct[] = catalog
     .filter((i) => i.enabled && !taken(i))
-    .map((i) => ({ key: i.key, name: i.name, benefit: i.benefit, proven: i.proven, cpl: cpls[i.key]?.cpl ?? null, cplFrom: cpls[i.key]?.cplFrom ?? null, guarantee: /katze|\btkv\b|tierkranken/i.test(i.name) }));
+    .map((i) => ({
+      key: i.key,
+      name: i.name,
+      // Kunden ohne Garantien (Angebote ab 22.11.2026) sehen keinen Garantie-Hinweis, auch nicht im Nutzentext
+      benefit: ctx.garantien === false ? i.benefit.replace(/,?\s*mit Lead-Garantie/i, "") : i.benefit,
+      proven: i.proven,
+      cpl: cpls[i.key]?.cpl ?? null,
+      cplFrom: cpls[i.key]?.cplFrom ?? null,
+      guarantee: ctx.garantien !== false && /katze|\btkv\b|tierkranken/i.test(i.name),
+    }));
   return { lines, ctx, booked, bookable, budgetRequestPending: !!pending, bookings };
 }
 

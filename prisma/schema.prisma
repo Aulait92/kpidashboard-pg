@@ -1922,7 +1922,6 @@ model SalesContact {
   /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118706300)
   phoneDigits          String?
   phoneDigitsRev       String?
-  fax                  String?
   street               String?
   zip                  String?
   city                 String?
@@ -5228,7 +5227,7 @@ model LeadMailStrecke {
   lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
   // kein_whatsapp | keine_nummer | festnetz | keine_einwilligung
   ausloeser     String
-  // neu | erstmail | gebucht | fertig | abgemeldet | gestoppt
+  // neu | erstmail | sms | gebucht | fertig | abgemeldet | gestoppt
   schritt       String    @default("neu")
   // Antworten auf der Seite: { oeffnung, komplettcheck, angaben, adresse, ... } (keine Gesundheitsangaben)
   antworten     Json?
@@ -5249,6 +5248,9 @@ model LeadMailStrecke {
   // SMS über seven.io (Schalter MAIL_STRECKE_SMS): Anzahl (höchstens 2) und zuletzt
   smsZahl       Int       @default(0)
   smsAt         DateTime?
+  // Nur SMS (Ole, 22.11.2026, lib/mail-strecke/nur-sms.ts): Kunde mit ausgeschalteten E-Mail-Funktionen, Lead ohne
+  // WhatsApp mit Handynummer. Höchstens 2 SMS zu Geschäftszeiten, keine E-Mail; schritt dann „sms“ statt „erstmail“.
+  nurSms        Boolean   @default(false)
   // Erste Reaktion (Seite im Browser geöffnet, Antwort, Buchung, Mail-Antwort, Anruf erreicht): stoppt das Nachfassen
   reaktionAt    DateTime?
   stopGrund     String?

@@ -756,6 +756,8 @@ Seiten aus der Liste „Seiten“ unten.
   zurück. Nur der Inhaber kann speichern, Berater sehen die Sätze. Alle Zahlen rechnen danach mit den eigenen Sätzen.
 
 ## Garantien (Katzenversicherung)
+- **Nur für Verträge aus Angeboten vor dem 22.11.2026, 19:15 Uhr.** Neuere Verträge enthalten keine Garantien. Wer nicht
+  sicher ist, schaut ins eigene Angebot (Abschnitt 2.2) oder fragt bei uns nach.
 - **Lead-Garantie:** Bei mindestens 20 € Werbebudget pro Tag gibt es in den ersten 30 Tagen nach Kampagnenstart mindestens
   100 Leads, sonst sind Betreuung und Software im Folgemonat kostenlos.
 - **Break-even-Garantie (nur Vertreter, nicht Makler), spätestens ab dem 5. Monat profitabel:** Liegt die Provision nach 4 Monaten
@@ -820,7 +822,7 @@ Seiten aus der Liste „Seiten“ unten.
 - Wiedervorlagen und zurückgestellte Rückrufe in der Zeit gehen an die Vertretung, sonst rücken sie auf den
   ersten Werktag nach der Rückkehr (8 Uhr). Der Hinweis dazu hat „Rückgängig“.
 - Allein und mindestens 7 Tage weg: Die App bietet „Anzeigen in dieser Zeit pausieren“ an (die normale Pause
-  unter Wachstum, Neustart am Rückkehrtag). Eine Pause verlängert auch den Garantie-Zeitraum.
+  unter Wachstum, Neustart am Rückkehrtag). Bei Verträgen mit Garantie verlängert eine Pause auch den Garantie-Zeitraum.
 - Während der Abwesenheit steht oben ein Hinweis „Du bist bis … abwesend“ mit „ändern“ und „beenden“. Früher
   zurück: „beenden“ (oder „Ich bin wieder da“). Eine geplante Abwesenheit lässt sich im Profilmenü ändern
   oder löschen.
@@ -864,7 +866,7 @@ Seiten aus der Liste „Seiten“ unten.
   Schritt „Start“): Tagesbudget je Produkt mit Plus/Minus (5-€-Schritte) oder Regler. Die Vorschau zeigt sofort
   das Werbebudget pro Monat (Tagesbudget × 30), die erwarteten Leads pro Monat (mit dem eigenen Leadpreis der
   letzten 30 Tage, sonst mit einem üblichen Leadpreis) und die Betreuungsstufe. Unter 20 € pro Tag erscheint der
-  Hinweis „Lead-Garantie gilt ab 20 €/Tag“.
+  Hinweis „Lead-Garantie gilt ab 20 €/Tag“ (nur bei Verträgen mit Garantie).
   - Betreuungsstufen (Betreuung + Software, netto im Monat, seit 18.11.2026): bis 3.000 € Werbebudget 990 €,
     3.000 – 6.000 € 1.390 €, 6.000 – 10.000 € 1.790 €; jedes weitere Produkt 350 €. Wer vorher zum damaligen
     Listenpreis (1.000 €, 1.400 €, 1.800 €) abgeschlossen hat, behält seinen Preis und die Staffel aus seinem Angebot.

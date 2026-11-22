@@ -460,7 +460,6 @@ export function Agentur({ c }: { c: Kontakt }) {
     ...(c.leaderNames ? [["Inhaber", c.leaderNames] as [string, React.ReactNode]] : []),
     ...(c.teamSize != null ? [["Teamgröße", String(c.teamSize)] as [string, React.ReactNode]] : []),
     ...(c.potentialScore != null ? [["Potenzial", String(c.potentialScore)] as [string, React.ReactNode]] : []),
-    ...(c.fax ? [["Fax", c.fax] as [string, React.ReactNode]] : []),
   ];
   return (
     <Abschnitt
