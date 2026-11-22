@@ -8,6 +8,7 @@ import { KNOPF_TITEL } from "@/lib/einwilligung-leadformular";
 import { cleanToken, redactTokens } from "@/lib/meta-leads";
 import type { AdCopy, BuiltState, CampaignContext, CampaignPlan, CreativeImage, LeadFormDraft } from "@/lib/kampagnen/types";
 import { standardFelder } from "@/lib/kampagnen/formular-vorgaben";
+import { formularBuchungsUrl } from "@/lib/buchung-formular";
 
 const GRAPH = "https://graph.facebook.com/v22.0";
 
@@ -149,13 +150,14 @@ export function leadFormPayload(
       title: KNOPF_TITEL,
       body: { text: form.consentText },
     },
-    // Dankeseite: immer zum Buchungskalender des Kunden (Ole, 13.11.2026), sonst Website
+    // Dankeseite: immer zum Buchungskalender des Kunden (Ole, 13.11.2026), sonst Website. Mit Marker von=formular
+    // (Ole, 22.11.2026): die Buchungsseite fragt dann nur die Handynummer ab (lib/buchung-formular.ts)
     thank_you_page: ctx.bookingUrl
-      ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: ctx.bookingUrl }
+      ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: formularBuchungsUrl(ctx.bookingUrl) }
       : ctx.website
         ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Zur Website", website_url: ctx.website }
         : { title: form.thankYouTitle, body: form.thankYouBody, button_type: "NONE" },
-    ...(ctx.bookingUrl ? { follow_up_action_url: ctx.bookingUrl } : ctx.website ? { follow_up_action_url: ctx.website } : {}),
+    ...(ctx.bookingUrl ? { follow_up_action_url: formularBuchungsUrl(ctx.bookingUrl) } : ctx.website ? { follow_up_action_url: ctx.website } : {}),
   };
 }
 
