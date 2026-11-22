@@ -7,10 +7,13 @@ import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { customerSetupProgress, loadOnboarding, onboardingChecklist, vonUnsAbgehakt } from "@/lib/onboarding";
+import { customerSetupProgress, EINLADUNG_TEST_KEY, loadOnboarding, onboardingChecklist, stepSkipOf, vonUnsAbgehakt } from "@/lib/onboarding";
+import { einladungAbsender } from "@/lib/calendar/app-kalender";
+import { TestEinladung } from "./test-einladung";
 import { prisma } from "@/lib/prisma";
 import { DatenschutzUrlForm, HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits, WeiterButton, type AngabenInitial } from "./forms";
 import { istAllianzVertreter } from "@/lib/vertreter-seite";
+import { schrittAuswege, zeigePostfachVersichererHinweis } from "@/lib/einrichtung-auswege";
 import { anredeAusVorname } from "@/lib/vorname-anrede";
 import { SoArbeitet } from "@/components/so-arbeitet";
 import { ladeSoArbeitet } from "@/lib/so-arbeitet-server";
@@ -37,7 +40,7 @@ import { provisionSetupHint } from "@/lib/provision";
 import { META_LERNT } from "@/lib/zahlen-tipps";
 import Link from "next/link";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
-import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
+import { ERROR_HELP, FIRMENGERAET, parseConnectPath } from "@/lib/whatsapp/connect-guide";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
 import { WaCheckButton, WaPendingRefresh, WaResetButton } from "./wa-check";
 import { WaInvited } from "./wa-invited";
@@ -178,6 +181,10 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   // Gesellschaften bekannt und keiner ist die Allianz (z. B. ERGO-Vertreter), fällt die Option weg; unbekannt: anbieten.
   const genannteGesellschaften = [...(erstinfo?.daten.versicherer ?? []), ...(vertrieb?.vertrieb.gesellschaften ?? [])];
   const allianzMoeglich = !makler && (!!calendar.status.allianz || !genannteGesellschaften.length || genannteGesellschaften.some((g) => /allianz/i.test(g)));
+  // Videoraum (Go-live-Prüfung 22.11.2026): fester Link Pflicht, solange weder Google noch Microsoft verbunden ist, auch bei
+  // Kalender-Link (ICS) und nach „Mein Versicherer erlaubt das nicht“ (gleiche Regel wie kalenderSchrittFertig).
+  const videoNoetig = !calendar.status.native.meetOderTeams;
+  const kalenderUebersprungen = !!stepSkipOf(ob.stepSkips, "calendar");
   // Ihre Angaben (Schritt 1): einmal fragen, vorausgefüllt aus Erstinformation, Impressum, Angebot und Vertriebskontakt
   let angaben: AngabenInitial | null = null;
   if (software && erstinfo) {
@@ -339,6 +346,12 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 allianzOption={allianzMoeglich}
               />
             )}
+            {calendar.status.native.app ? (
+              // App-Kalender/Allianz: Termine kommen als Einladung per Mail; erst nach bestätigtem Test erledigt (22.11.2026)
+              <div className="mt-5">
+                <TestEinladung absender={einladungAbsender()} angekommen={!!stepSkipOf(ob.stepSkips, EINLADUNG_TEST_KEY)} readOnly={readOnly} />
+              </div>
+            ) : null}
             <div className="mt-6 border-t border-[color:var(--border)] pt-5">
               {allianz && calendar.videoRoomUrl ? (
                 // Schon in „Ihre Angaben“ eingetragen: nur anzeigen, ändern hinter einem Klick
@@ -351,11 +364,11 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                     </span>
                   </summary>
                   <div className="mt-3">
-                    <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={allianz || !!calendar.status.native.app} />
+                    <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={videoNoetig} />
                   </div>
                 </details>
               ) : (
-                <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={allianz || !!calendar.status.native.app} />
+                <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={videoNoetig} />
               )}
             </div>
             <div className="mt-6 border-t border-[color:var(--border)] pt-5">
@@ -399,8 +412,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 laterHref={laterHref("calendar")}
                 readOnly={readOnly}
                 // Allianz: die Vertreternummer klappt immer, „erlaubt das nicht“ wäre eine Sackgasse. Makler (W3, Ole
-                // 22.11.2026): kein Versicherer, der den Kalender verbieten könnte, also kein Ausweg zum Überspringen
-                skips={allianz || makler ? [] : [{ kind: "skip:calendar:gesellschaft", label: "Mein Versicherer erlaubt das nicht" }]}
+                // 22.11.2026): kein Versicherer, der den Kalender verbieten könnte. Schon übersprungen, aber der Video-Link
+                // fehlt: nur der Link hilft weiter (lib/einrichtung-auswege.ts).
+                skips={schrittAuswege("calendar", { makler, allianz, uebersprungen: kalenderUebersprungen })}
               />
             ) : null}
           </Step>
@@ -412,10 +426,12 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Damit schreiben Sie Leads direkt aus der App an, mit Vorlagen und auf Wunsch mit dem Angebot im Anhang. Die E-Mails gehen über Ihr eigenes Postfach,
               Antworten landen dort. Wir senden nur E-Mails, die Sie selbst auslösen, und lesen Ihr Postfach nicht.
             </p>
-            <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-postfach-gesellschaft>
-              Manche Versicherer (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu verbinden. Klären Sie
-              das im Zweifel vorher. Sie können den Schritt überspringen.
-            </p>
+            {zeigePostfachVersichererHinweis(vermittlerTyp) ? (
+              <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-postfach-gesellschaft>
+                Manche Versicherer (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu verbinden. Klären Sie
+                das im Zweifel vorher. Sie können den Schritt überspringen.
+              </p>
+            ) : null}
             {ob.customer.mailFeaturesOff ? (
               <p className="text-sm text-[color:var(--muted)]">
                 E-Mail-Funktionen sind ausgeschaltet. Wieder einschalten unter{" "}
@@ -448,7 +464,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                     <SmtpForm readOnly={readOnly} />
                   </div>
                 </details>
-                <StepExits laterHref={laterHref("mailbox")} readOnly={readOnly} skips={[{ kind: "mailbox_off", label: "Mein Versicherer erlaubt das nicht" }]} />
+                <StepExits laterHref={laterHref("mailbox")} readOnly={readOnly} skips={schrittAuswege("mailbox", { makler })} />
               </>
             )}
           </Step>
@@ -649,6 +665,12 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                   Business Manager gleich bestätigt.
                 </span>
               </li>
+              <li className="flex gap-2" data-meta-firmengeraet>
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                <span>
+                  <b>Privater Computer:</b> {FIRMENGERAET}
+                </span>
+              </li>
             </ul>
           </div>
           <p className="mt-4 text-[15px] font-medium">So geben Sie uns Zugriff (ca. 3 Minuten)</p>
@@ -743,10 +765,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <StepExits
                 laterHref={laterHref("whatsapp")}
                 readOnly={readOnly}
-                skips={[
-                  { kind: "skip:whatsapp:gesellschaft", label: "Mein Versicherer erlaubt das nicht" },
-                  { kind: "skip:whatsapp:nicht_noetig", label: "Ohne WhatsApp arbeiten" },
-                ]}
+                skips={schrittAuswege("whatsapp", { makler })}
               />
             ) : null}
           </Step>
@@ -1003,14 +1022,7 @@ function WhatsAppStep({
           <p className="mb-4 text-sm text-[color:var(--muted)]">
             Über diese Nummer schreibt Ihr Assistent neuen Leads in Ihrem Namen. Das Verbinden machen Sie einmal, es dauert etwa 10 Minuten.
           </p>
-          <div className="mb-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3" data-wa-checklist>
-            <p className="text-[15px] font-medium">Vorher kurz prüfen:</p>
-            <ul className="mt-2 space-y-1.5 text-[15px]">
-              <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>Eine Nummer, die <b>nicht</b> in der normalen WhatsApp-App genutzt wird (z. B. zweite SIM, Festnetz oder neue Nummer).</span></li>
-              <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Sie können an dieser Nummer jetzt eine SMS oder einen Anruf mit Bestätigungscode empfangen.</li>
-              <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Sie sind bei Facebook angemeldet und Admin Ihres Business Managers.</li>
-            </ul>
-          </div>
+          {/* „Vorher kurz prüfen“ steht jetzt in WhatsAppGuide (erster Punkt: Nummer bei keinem anderen Anbieter, 22.11.2026) */}
           <WhatsAppGuide initialPath={parseConnectPath(weg)} readOnly={readOnly} inviteEmail={email || undefined} helpHref={`/buyer/einrichtung?schritt=${hilfeSchritt}#hilfetermin`} />
           <WaCheckButton readOnly={readOnly} />
         </>

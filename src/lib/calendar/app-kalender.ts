@@ -134,6 +134,49 @@ async function sendeEinladung(customerId: string, e: Omit<EinladungIcs, "organiz
   if (!res.ok) console.warn(`[app-kalender] Einladung nicht gesendet (${customerId}): ${res.error}`);
 }
 
+/** Absender der Einladungen (E-Mail „From“), den eine Firmen-IT zulassen muss. (rein) */
+export function einladungAbsender(env: Record<string, string | undefined> = process.env): string {
+  const raw = env.OFFER_EMAIL_FROM ?? env.RESEND_FROM ?? "";
+  const m = raw.match(/<([^>]+)>/) ?? raw.match(/([^\s<>]+@[^\s<>]+)/);
+  return (m?.[1] ?? organizerEmail(env)).trim();
+}
+
+/**
+ * Test-Einladung an dieselbe Adresse wie echte Termine (Go-live-Prüfung 20./21.11.2026: Konzernpostfächer wie bei der
+ * Allianz filtern die Einladungen oft, dann fehlen Termine unbemerkt). Gleicher Weg wie sendeEinladung, mit Ergebnis.
+ */
+export async function sendeTestEinladung(customerId: string): Promise<{ ok: true; to: string } | { ok: false; error: string }> {
+  const agent = await prisma.agentConfig.findUnique({ where: { customerId }, select: { advisorEmail: true } });
+  const advisor = agent?.advisorEmail?.trim().toLowerCase();
+  const to = await empfaenger(customerId, advisor ? [advisor] : []);
+  if (!to.length) return { ok: false, error: "Keine E-Mail-Adresse für Einladungen hinterlegt." };
+  const start = new Date(Date.now() + 24 * 3600_000);
+  start.setUTCMinutes(0, 0, 0);
+  const end = new Date(start.getTime() + 15 * 60_000);
+  const ics = einladungIcs({
+    uid: `test-${randomBytes(8).toString("hex")}@terminbuchung`,
+    method: "REQUEST",
+    sequence: 0,
+    start,
+    end,
+    summary: "Test: Termineinladung",
+    description: "Nur ein Test. Sie müssen nichts annehmen.",
+    location: null,
+    organizer: organizerEmail(),
+    attendees: to,
+  });
+  const { sendCustomerMail } = await import("@/lib/email");
+  const res = await sendCustomerMail({
+    to,
+    subject: "Test: So kommen Ihre Termine an",
+    greeting: "Guten Tag,",
+    paragraphs: ["das ist eine Test-Einladung. So kommen künftig Ihre Termine an. Sie müssen sie nicht annehmen. Bitte bestätigen Sie in der Einrichtung, dass sie angekommen ist."],
+    attachments: [{ filename: "termin.ics", content: Buffer.from(ics, "utf8"), contentType: "text/calendar; charset=utf-8; method=REQUEST" }],
+    replyTo: null,
+  });
+  return res.ok ? { ok: true, to: to[0] } : { ok: false, error: "Die Test-Einladung ließ sich gerade nicht schicken. Bitte gleich noch einmal versuchen." };
+}
+
 /**
  * Welche Termine belegen diesen App-Kalender? (rein, getestet)
  * - Agentur (customerId): nur Termine im Agentur-Kalender (calendarKey leer). Termine in eigenen Kalendern der Berater
