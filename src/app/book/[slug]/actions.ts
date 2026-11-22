@@ -9,6 +9,16 @@ import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import { sendBookingConfirmation } from "@/lib/whatsapp/reminders";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { checkLimit, requestIp } from "@/lib/rate-limit";
+import {
+  abweichendeNummerNotiz,
+  dankeKennung,
+  findeFormularLead,
+  formularChatWeiterNutzen,
+  istVonFormular,
+  nummerToken,
+  type FormularLead,
+} from "@/lib/buchung-formular";
+import { phoneKey } from "@/lib/vertrieb/dubletten";
 
 // Öffentliche Buchung (Buchungsseite / Meta-Leadformular). Kein Login — daher
 // alles serverseitig validieren, Slot direkt vor dem Anlegen neu prüfen
@@ -22,7 +32,12 @@ export async function bookPublicAction(
 ): Promise<void> {
   // Buchungslink aus dem WhatsApp-Chat (lib/whatsapp/buchungslink.ts): Token bleibt bei Fehlern erhalten
   const chatToken = String(formData.get("c") ?? "");
-  const fail = (code: string): never => redirect(`/book/${slug}?${chatToken ? `c=${encodeURIComponent(chatToken)}&` : ""}err=${code}`);
+  // Vom Dankeseiten-Knopf des Leadformulars (lib/buchung-formular.ts): Marker und Fassung bleiben bei Fehlern erhalten
+  const vonFormular = istVonFormular(formData.get("von"));
+  const dk = dankeKennung(formData.get("dk"));
+  const voll = formData.get("voll") === "1";
+  const formularQ = vonFormular ? `von=formular&${dk ? `dk=${dk}&` : ""}${voll ? "voll=1&" : ""}` : "";
+  const fail = (code: string): never => redirect(`/book/${slug}?${chatToken ? `c=${encodeURIComponent(chatToken)}&` : ""}${formularQ}err=${code}`);
   if (!checkLimit("publicBooking", await requestIp()).ok) fail("busy");
 
   // Bot-Falle: unsichtbares Feld ausgefüllt UND blitzschnell abgeschickt.
@@ -48,7 +63,7 @@ export async function bookPublicAction(
   // „In der Agentur“ nur freigegeben und mit Anschrift (Ole, 20.11.2026)
   const ort = wunsch === "onsite" && formate.vorOrt ? await agenturOrt(customerId).catch(() => null) : null;
   const mode: "phone" | "video" | "onsite" = wunsch === "phone" && formate.telefon ? "phone" : ort ? "onsite" : "video";
-  const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+  let name = String(formData.get("name") ?? "").trim().slice(0, 80);
   let phone = normalizePhone(String(formData.get("phone") ?? ""));
   // Chat-Kontext: gebucht wird über die WhatsApp-Nummer des Chats, damit Termin, Lead und Strecke im selben Chat landen
   if (chatToken) {
@@ -58,7 +73,7 @@ export async function bookPublicAction(
     if (!c || c.customerId !== customerId) fail("invalid");
     phone = c!.contactPhone;
   }
-  const emailRaw = String(formData.get("email") ?? "").trim().toLowerCase();
+  let emailRaw = String(formData.get("email") ?? "").trim().toLowerCase();
   // Splittest buchungsseite_kompakt (lib/experimente.ts): Fassung b ohne Pflicht-Haken, Datenschutz als Hinweis am
   // Knopf (Verarbeitung zur Terminvereinbarung nach Art. 6 Abs. 1 lit. b DSGVO, keine Einwilligung nötig)
   const consent = formData.get("consent") === "on" || formData.get("datenschutz") === "hinweis";
@@ -69,9 +84,33 @@ export async function bookPublicAction(
   const aufruf = seitenAufruf(formData.get("xv"));
 
   if (!start || Number.isNaN(new Date(start).getTime())) fail("slot");
-  if (!name) fail("name");
   // Lead-Kontext aus der Mail-Strecke (Link „Andere Zeit“, lib/mail-strecke): Lead bekannt, Telefon freiwillig
   const streckeToken = String(formData.get("t") ?? "");
+
+  // Nur Handynummer (Ole, 22.11.2026): direkt nach dem Leadformular Name und E-Mail aus dem frischen Lead dieses
+  // Vermittlers übernehmen (gleiche Nummer, letzte 2 Stunden). Nichts davon wird angezeigt. Kein Treffer: zurück mit den
+  // normalen Feldern, Uhrzeit, Gesprächsart und Nummer bleiben (Nummer verschlüsselt, lib/buchung-formular.ts).
+  let formularLead: FormularLead | null = null;
+  if (vonFormular && !voll && !chatToken && !streckeToken && !name && !emailRaw) {
+    if (!phone) fail("phone");
+    if (!consent) fail("consent");
+    if (!checkLimit("formularAbgleich", await requestIp()).ok) fail("busy");
+    formularLead = await findeFormularLead(customerId, { phone }, { warten: [2000, 3000] }).catch((e) => {
+      console.error("[booking page formular]", e instanceof Error ? e.name : "Fehler");
+      return null;
+    });
+    if (!formularLead) {
+      const q = new URLSearchParams({ von: "formular", ...(dk ? { dk } : {}), voll: "1", err: "angaben", s: start, m: mode });
+      const pk = await nummerToken(phone!);
+      if (pk) q.set("pk", pk);
+      redirect(`/book/${slug}?${q.toString()}`);
+    }
+    name = formularLead!.name;
+    emailRaw = formularLead!.email;
+  }
+  const nurHandy = !!formularLead;
+
+  if (!name) fail("name");
   if (streckeToken) {
     const { pruefeStreckenToken } = await import("@/lib/mail-strecke/token");
     const streckeId = pruefeStreckenToken(streckeToken);
@@ -90,6 +129,34 @@ export async function bookPublicAction(
     },
   });
   if (recent >= MAX_BOOKINGS_PER_10_MIN) fail("busy");
+
+  // Andere Nummer als im Formular (Ole, 22.11.2026): passt die E-Mail zu einer frischen Anfrage (gleicher Vermittler,
+  // letzte 2 Stunden), hängt der Termin an diesem Lead. Die Formular-Nummer bleibt, die neue kommt in den Verlauf; hat
+  // der Lead schon einen WhatsApp-Chat mit der Formular-Nummer, läuft die Buchung dort (Assistent kennt den Termin).
+  // Nichts davon wird angezeigt. Kein Treffer: Buchung wie bisher.
+  let abweichendeNummer: { neu: string; chatWeiter: boolean } | null = null;
+  if (!formularLead && !chatToken && !bkGesetzt(formData)) {
+    const perMail = await findeFormularLead(customerId, { email: emailRaw }).catch(() => null);
+    if (perMail && phoneKey(perMail.phone) !== phoneKey(phone)) {
+      formularLead = perMail;
+      const neu = phone!;
+      let chatWeiter = false;
+      if (perMail.phone) {
+        const [chat, l] = await Promise.all([
+          prisma.conversation.findUnique({
+            where: { customerId_contactPhone: { customerId, contactPhone: perMail.phone } },
+            select: { optedOutAt: true, _count: { select: { messages: { where: { direction: "outbound" } } } } },
+          }),
+          prisma.lead.findUnique({ where: { id: perMail.id }, select: { waUnavailableAt: true } }),
+        ]);
+        chatWeiter = formularChatWeiterNutzen(chat ? { optedOutAt: chat.optedOutAt, ausgehend: chat._count.messages } : null, { waUnavailableAt: l?.waUnavailableAt ?? null });
+        if (chatWeiter) phone = perMail.phone;
+      }
+      abweichendeNummer = { neu, chatWeiter };
+    } else if (perMail) {
+      formularLead = perMail;
+    }
+  }
 
   // Konversation über die Telefonnummer zuordnen (gleiche Nummer wie WhatsApp).
   const account = await prisma.whatsAppAccount.findUnique({
@@ -113,12 +180,18 @@ export async function bookPublicAction(
   await linkLeadToConversation(conversation.id).catch((e) =>
     console.error("[booking page lead-link]", e),
   );
+  // Nur-Handynummer-Buchung: Chat sicher mit dem gefundenen Lead verknüpfen (kein zweiter Lead), falls noch frei
+  if (formularLead) {
+    await prisma.conversation
+      .updateMany({ where: { id: conversation.id, leadId: null }, data: { leadId: formularLead.id } })
+      .catch((e) => console.error("[booking page formular-link]", e instanceof Error ? e.name : "Fehler"));
+  }
   const linked = await prisma.conversation.findUnique({
     where: { id: conversation.id },
     select: { leadId: true, lead: { select: { source: true } } },
   });
   const product = linked?.lead?.source ?? null;
-  let leadId = linked?.leadId ?? null;
+  let leadId = formularLead?.id ?? linked?.leadId ?? null;
 
   // Pro Lead nur ein offener Termin.
   const existing = await prisma.appointment.findFirst({
@@ -180,7 +253,8 @@ export async function bookPublicAction(
         conversationId: conversation.id,
         direction: "internal",
         kind: "appointment_booked",
-        body: JSON.stringify({ via: "booking_page", modus: mode, start }),
+        // von/dk: kam vom Dankeseiten-Knopf des Leadformulars (Splittest der Dankeseiten-Texte), nurHandy: Name und E-Mail aus dem Lead
+        body: JSON.stringify({ via: "booking_page", modus: mode, start, ...(vonFormular ? { von: "formular", ...(dk ? { dk } : {}), nurHandy } : {}), ...(abweichendeNummer ? { abweichendeNummer: true } : {}) }),
         sentBy: "lead",
       },
     });
@@ -225,7 +299,12 @@ export async function bookPublicAction(
   // Bucht ein eingeloggter Berater für einen Lead (Rückrufliste) → mitzählen.
   // Für Leads ohne Sitzung schreibt recordUsage nichts.
   await recordUsage("action", "appointment.book_by_advisor");
-  redirect(`/book/${slug}?ok=1&a=${appointmentId!}`);
+  // Andere Nummer als im Formular: im Verlauf des Leads vermerken (Formular-Nummer wird nicht überschrieben)
+  if (abweichendeNummer && leadId) {
+    const { logLeadHistory } = await import("@/lib/lead-history");
+    await logLeadHistory(leadId, "notiz", abweichendeNummerNotiz(abweichendeNummer.neu, abweichendeNummer.chatWeiter), { customerId, userId: null }).catch(() => null);
+  }
+  redirect(`/book/${slug}?ok=1&a=${appointmentId!}${nurHandy ? "&von=formular" : ""}`);
 }
 
 /**
@@ -290,6 +369,11 @@ async function bookViaStrecke(
     fail("error");
   }
   redirect(`/t/${token}`);
+}
+
+/** Terminlink aus einer Bestandskampagne (eigene Lead-Zuordnung, dort kein Abgleich über die E-Mail). */
+function bkGesetzt(formData: FormData): boolean {
+  return !!String(formData.get("bk") ?? "");
 }
 
 /** Seitenaufruf-ID für den Splittest der Buchungsseite (zufällige UUID je Aufruf, kein Bezug zur Person). */

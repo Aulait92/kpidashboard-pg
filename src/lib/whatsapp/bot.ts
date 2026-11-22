@@ -667,9 +667,11 @@ export async function runBotTurn(
     })
   ).reverse();
 
+  // Auch Termine des Leads aus einem anderen Chat (Buchungsseite mit abweichender Nummer, Ole 22.11.2026): sonst schlägt
+  // der Assistent der Formular-Nummer weiter Zeiten vor, obwohl schon gebucht ist (wie knopf.ts und termin-strecke.ts)
   const upcoming = await prisma.appointment.findFirst({
     where: {
-      conversationId: conversation.id,
+      OR: [{ conversationId: conversation.id }, ...(conversation.leadId ? [{ leadId: conversation.leadId }] : [])],
       status: "booked",
       startsAt: { gt: new Date() },
     },
