@@ -237,6 +237,13 @@ export async function saveLeadStammdaten(opts: {
     const l = await prisma.lead.findUnique({ where: { id: lead.id }, select: { outreachStatus: true } });
     if (l && l.outreachStatus !== "sent") erstnachrichtAnbieten = true;
   }
+  // Galt der Lead wegen der alten Nummer als „kein WhatsApp“: neu versuchen (lib/whatsapp/kein-whatsapp.ts)
+  if (after.phone && after.phone !== before.phone) {
+    const { nachNummernKorrektur } = await import("@/lib/whatsapp/kein-whatsapp");
+    const r = await nachNummernKorrektur(lead.id);
+    if (r === "termin") hinweise.push("Die Terminbestätigung geht per WhatsApp an die neue Nummer.");
+    if (r === "erstanschreiben") hinweise.push("Der Assistent schreibt die neue Nummer per WhatsApp an.");
+  }
   if (after.email && after.email !== before.email) {
     await prisma.conversation.updateMany({ where: { customerId: opts.customerId, leadId: lead.id }, data: { contactEmail: after.email } });
   }
