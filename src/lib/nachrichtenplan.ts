@@ -19,7 +19,7 @@
 import type { Ansprache } from "@/lib/ansprache";
 import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 import { CALL_ATTEMPTS_TARGET, callPlanNote, isCallPlanNote, nextCallAttemptAt } from "@/lib/call-plan";
-import { SEQUENCES, istAngebotsAbfolge, istBedenkzeitAbfolge, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
+import { SEQUENCES, SONNTAG_NACHFASS_STUNDEN, TERMIN_NACHFASS_STUNDEN, istAngebotsAbfolge, istBedenkzeitAbfolge, naechstesSendefenster, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
 import { istRueckrufNotiz } from "@/lib/rueckruf";
 import { erinnerungsPlan, gleichText, startPush, stundeText, vortagText } from "@/lib/showup";
 import { anrufPush } from "@/lib/anruf-ausloeser";
@@ -123,6 +123,8 @@ export type PlanEingabe = {
     daten?: unknown;
   }[];
   abfolgeKontext: SequenceCtx;
+  /** Offener Terminvorschlag (erster Schritt „Chat ruht“ fasst mit den Zeiten nach): fertiger Text der Nachfrage */
+  terminNachfass?: { text: string } | null;
   anrufplan: { followUpAt: Date | null; followUpNote: string | null; callAttempts: number; callPlanStartedAt: Date | null; lastCallAttemptAt: Date | null };
   /** Auslöser „keine Antwort 30 Min. nach dem Erstanschreiben“, falls noch offen: wann er greift */
   anrufAusloeserAt?: Date | null;
@@ -223,7 +225,14 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
     const roh = i === a.step ? fruehestens(nextAt, p.now) : new Date(Math.max(base.getTime() + step.day * DAY, prev.getTime() + 2 * HOUR));
     // Angebot (P3): WhatsApp und E-Mail gehen erst im Versandfenster (Mo bis Sa 9 bis 19 Uhr) raus
     const angebot = istAngebotsAbfolge(a.kind);
-    const at = angebot && step.action !== "call" ? naechsterVersand(roh) : roh;
+    // „Chat ruht“: wie runSequences Mo bis Sa 9 bis 19 Uhr (Termin-Nachfassen 8 bis 20 Uhr), sonntags 10 bis 18 Uhr
+    const terminSchritt = a.kind === "silent" && i === 0 && !!p.terminNachfass;
+    const at =
+      angebot && step.action !== "call"
+        ? naechsterVersand(roh)
+        : a.kind === "silent" && step.action !== "call"
+          ? naechstesSendefenster(roh, terminSchritt ? TERMIN_NACHFASS_STUNDEN : undefined, SONNTAG_NACHFASS_STUNDEN)
+          : roh;
     prev = at;
     // Erster Schritt nach der Bedenkzeit: antwortet der Lead vorher, wird es eine Aufgabe für Sie
     const nr = `(Schritt ${i + 1} von ${def.steps.length})${istBedenkzeitAbfolge(a.kind) && i === 0 ? ", nach der Bedenkzeit" : ""}`;
@@ -286,14 +295,15 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
         abfolgeId: a.id,
       });
     } else {
-      const zeiten = step.purpose === "followup" || step.slots ? " (mit zwei freien Zeiten, falls der Kalender verbunden ist)" : "";
+      const terminSchrittText = a.kind === "silent" && i === 0 && p.terminNachfass ? p.terminNachfass.text : null;
+      const zeiten = terminSchrittText ? " (mit den vorgeschlagenen Zeiten als Knöpfe)" : step.purpose === "followup" || step.slots ? " (mit zwei freien Zeiten, falls der Kalender verbunden ist)" : "";
       out.push({
         ...p6,
         at: iso(at),
         kanal: "whatsapp",
         quelle: "abfolge",
         titel: `${def.label}: WhatsApp ${nr}${zeiten}`,
-        vorschau: step.text(p.abfolgeKontext),
+        vorschau: terminSchrittText ?? step.text(p.abfolgeKontext),
         // WhatsApp nur Mo bis Sa 9 bis 19 Uhr, ohne Antwort; ohne Vorlage wird es eine Anruf-Aufgabe
         voraussichtlich: true,
         abfolgeId: a.id,

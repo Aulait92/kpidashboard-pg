@@ -415,6 +415,15 @@ export function inSendWindow(now: Date, stunden: { von: number; bis: number } = 
   return hour >= stunden.von && hour < stunden.bis;
 }
 
+/** Erster Zeitpunkt ab `at` im Versandfenster (volle Stunden), für die Vorschau „Nächste Nachrichten“. */
+export function naechstesSendefenster(at: Date, stunden: { von: number; bis: number } = { von: 9, bis: 19 }, sonntag: { von: number; bis: number } | null = null): Date {
+  if (inSendWindow(at, stunden, sonntag)) return at;
+  const H = 60 * 60 * 1000;
+  let d = new Date(Math.ceil(at.getTime() / H) * H);
+  for (let i = 0; i < 96 && !inSendWindow(d, stunden, sonntag); i++) d = new Date(d.getTime() + H);
+  return d;
+}
+
 /** Zeitfenster für das Termin-Nachfassen nach einem Terminvorschlag (Ole, 17.11.2026). */
 export const TERMIN_NACHFASS_STUNDEN = { von: 8, bis: 20 } as const;
 /**
