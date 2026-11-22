@@ -246,3 +246,8 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   der WhatsApp-Vorlagen. Versand und Vorschau nutzen dieselben Funktionen (`lib/vertrieb/nachricht-vorschau.ts`).
 - **22.11.2026, A/B-Test „Nicht erreicht“ (Vertrieb):** Ole bestätigt den Wortlaut von Fassung B („Erreiche ich Sie besser
   vormittags oder nachmittags?“, Vorlage `pg_vertrieb_nicht_erreicht_b_v1`): „passt so“. Test läuft, Details in `docs/firma/ab-tests.md`.
+- **22.11.2026, Belege: eigene Ablage statt GetMyInvoices (Ole):** GetMyInvoices ist unzuverlässig (Portale brechen ab,
+  Mail-Import lückenhaft, falsche Belegdaten bei Weiterleitungen). Belege liegen jetzt in der App (Geld › Kosten › Belege):
+  Beleg-Adresse belege-<token>@antwort.dein-beratungstermin.de, Upload (PDF/Bild/ZIP), KI-Auslesung, automatische Zuordnung
+  zu Kontoumsätzen, Netto laut Beleg in der BWA. GetMyInvoices bleibt bis zur Übernahme seiner Dateien (Nachtlauf), dann
+  kündbar (Probezeit bis 06.12.2026).
