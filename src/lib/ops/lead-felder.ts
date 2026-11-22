@@ -13,7 +13,7 @@ export async function leadFelderDiagnose(p: URLSearchParams) {
     where: { customerId: kunde, name: { contains: name, mode: "insensitive" } },
     orderBy: { createdAt: "desc" },
     take: 5,
-    select: { id: true, createdAt: true, source: true, adFormId: true, formData: true },
+    select: { id: true, createdAt: true, source: true, adFormId: true, formData: true, waUnavailableAt: true, history: { orderBy: { createdAt: "desc" }, take: 12, select: { createdAt: true, kind: true, text: true } } },
   });
   return leads.map((l) => {
     const fd = l.formData as unknown;
@@ -27,6 +27,8 @@ export async function leadFelderDiagnose(p: URLSearchParams) {
       eingang: l.createdAt,
       quelle: l.source,
       formular: l.adFormId,
+      keinWhatsappSeit: l.waUnavailableAt,
+      verlauf: l.history.map((h) => `${h.createdAt.toISOString().slice(11, 16)} ${h.kind}: ${h.text.slice(0, 160)}`),
       felder: eintraege.map((e) => ({ feld: e.label, befuellt: !!e.value.trim(), ...(/geburt/i.test(e.label) ? { format: format(e.value) } : {}) })),
     };
   });
