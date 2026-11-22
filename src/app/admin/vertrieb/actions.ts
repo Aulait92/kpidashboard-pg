@@ -45,7 +45,7 @@ function refresh(contactId?: string | null) {
 const ziel = (altPfad: string) => adminZiel(altPfad);
 
 // ─── Aktivität erfassen ─────────────────────────────────────────────────
-export async function logActivity(fd: FormData) {
+export async function logActivity(fd: FormData): Promise<{ hinweis: string | null }> {
   await requireAuth();
   const contactId = s(fd, "contactId")!;
   const type = (s(fd, "type") ?? "ANRUF") as ActivityType;
@@ -100,7 +100,35 @@ export async function logActivity(fd: FormData) {
     const due = s(fd, "taskDue");
     await planFromOutcome(contactId, note, fd.get("createTask") === "on" && due ? fromDayKey(due) : null);
   }
+  // „Nicht erreicht“ nach einem Anruf: E-Mail und WhatsApp mit Buchungslink (Ole, 22.11.2026, lib/vertrieb/nicht-erreicht.ts)
+  let hinweis: string | null = null;
+  if (outcome.id === "nicht_erreicht" && type === "ANRUF") {
+    const { nachNichtErreicht, ergebnisText } = await import("@/lib/vertrieb/nicht-erreicht-server");
+    hinweis = ergebnisText(await nachNichtErreicht(contactId));
+  }
   refresh(contactId);
+  return { hinweis };
+}
+
+/**
+ * Knöpfe „Gewonnen“ und „Verloren“ in der Kontaktakte (Ole, 22.11.2026). Verloren schließt offene Aufgaben (wie das
+ * Ergebnis „Kein Interesse“) und markiert auf Wunsch das offene Angebot als abgelehnt.
+ */
+export async function gewonnenVerlorenAction(
+  contactId: string,
+  stage: "GEWONNEN" | "VERLOREN",
+  opts: { lossReason?: string | null; competitor?: string | null; declineOfferId?: string | null } = {},
+): Promise<{ ok: true }> {
+  await requireAuth();
+  const lossReason = stage === "VERLOREN" ? ((opts.lossReason as LossReason | null) ?? "SONSTIGES") : null;
+  await setzeStufe(contactId, stage, { lossReason, competitor: stage === "VERLOREN" ? opts.competitor?.trim() || null : undefined });
+  await prisma.salesContact.update({ where: { id: contactId }, data: { lastContactAt: new Date() } });
+  if (stage === "VERLOREN") {
+    await prisma.salesTask.updateMany({ where: { contactId, doneAt: null }, data: { doneAt: new Date() } });
+    if (opts.declineOfferId) await offenesAngebotAblehnen(contactId, opts.declineOfferId, lossReason);
+  }
+  refresh(contactId);
+  return { ok: true };
 }
 
 export async function setStage(fd: FormData) {
