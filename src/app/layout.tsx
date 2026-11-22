@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { NativeAppBridge } from "@/components/native-app-bridge";
 import { NeueVersion } from "@/components/neue-version";
+import { DatumKlick } from "@/components/datum-klick";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -71,6 +72,7 @@ export default function RootLayout({
         <SiteFooter />
         <NativeAppBridge />
         <NeueVersion />
+        <DatumKlick />
       </body>
     </html>
   );

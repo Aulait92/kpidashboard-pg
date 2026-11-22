@@ -52,7 +52,9 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
   // Bestellung für diesen Käufer tatsächlich mit 19 % abgerechnet wird, sonst wäre brutto = netto.
   let price = priceInput;
   if (fd.get("priceMode") === "brutto") {
-    const kunde = await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true } });
+    const reg = { vermittlerRegisterNr: true, vermittlerRegisterStatus: true, vermittlerGeprueftAt: true } as const;
+    const konto = await prisma.customer.findUnique({ where: { id: customerId }, select: { ...reg, bestelltUeber: { select: reg } } });
+    const kunde = konto?.bestelltUeber ?? konto;
     if (effektiveSteuer({ productKey, steuer }, kunde).steuer !== "steuerpflichtig") {
       return { error: "Bruttopreis nur bei steuerpflichtigen Leads. Für steuerfreie Leads ist der Preis netto gleich brutto." };
     }
@@ -171,6 +173,31 @@ export async function savePartnerAngabenAction(_prev: PartnerAngabenState, fd: F
   const data = { partnerFirma: t("partnerFirma"), partnerAnschrift: anschrift, partnerRegisterNr: nr };
   await prisma.customer.update({ where: { id: customerId }, data });
   await audit("ppl.partnerangaben", { entity: "Customer", entityId: customerId, customerId, actor: { id: s.userId, email: s.email, role: s.role }, details: data });
+  revalidatePath("/admin/neu/leads/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
+  return { ok: true };
+}
+
+export type BestellkontoState = { error?: string; ok?: boolean };
+
+/**
+ * Bestellkonto setzen (Ole, 22.11.2026, lib/ppl/bestellkonto.ts): Hauptkunde, der für diesen Kunden (Vertriebspartner)
+ * bestellt und bezahlt. Leer = der Kunde bestellt selbst. Keine Ketten: Hauptkunde darf selbst nicht über jemanden bestellen.
+ */
+export async function saveBestellkontoAction(_prev: BestellkontoState, fd: FormData): Promise<BestellkontoState> {
+  const s = await requireAdmin();
+  const customerId = String(fd.get("customerId") ?? "");
+  const hauptId = String(fd.get("bestelltUeberId") ?? "") || null;
+  if (!customerId) return { error: "Kunde fehlt." };
+  if (hauptId === customerId) return { error: "Ein Kunde kann nicht über sich selbst bestellen." };
+  if (hauptId) {
+    const haupt = await prisma.customer.findUnique({ where: { id: hauptId }, select: { bestelltUeberId: true } });
+    if (!haupt) return { error: "Hauptkunde nicht gefunden." };
+    if (haupt.bestelltUeberId) return { error: "Dieser Kunde bestellt selbst über einen Hauptkunden. Bitte den Hauptkunden wählen." };
+    if (await prisma.customer.count({ where: { bestelltUeberId: customerId } })) return { error: "Für diesen Kunden bestellen schon Partner mit. Erst dort lösen." };
+  }
+  await prisma.customer.update({ where: { id: customerId }, data: { bestelltUeberId: hauptId } });
+  await audit("ppl.bestellkonto", { entity: "Customer", entityId: customerId, customerId, actor: { id: s.userId, email: s.email, role: s.role }, details: { bestelltUeberId: hauptId } });
   revalidatePath("/admin/neu/leads/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   return { ok: true };
