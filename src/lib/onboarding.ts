@@ -19,7 +19,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
-import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail } from "@/lib/email";
+import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail, type WillkommensMailOpts } from "@/lib/email";
 import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { sendToAdmins } from "@/lib/push";
@@ -370,13 +370,56 @@ async function upgradeExistingCustomer(
 }
 
 /** Willkommens-Mail (erneut) senden. Ohne Link wird ein frischer Einladungslink erzeugt, solange der Kunde noch nie eingeloggt war. */
-export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?: string | null } = {}) {
+type WelcomeOnboarding = { id: string; offerId: string | null; salesContactId: string | null; package: string; startDate: Date | null; customer: { users: { email: string; lastLoginAt: Date | null }[] } };
+
+async function welcomeLaden(onboardingId: string) {
   const ob = await prisma.onboarding.findUnique({
     where: { id: onboardingId },
     include: { customer: { include: { users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true } } } } },
   });
-  if (!ob) return { ok: false as const, error: "Onboarding nicht gefunden." };
+  if (!ob) return null;
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId } }) : null;
+  return { ob, offer };
+}
+
+/** Daten der Willkommens-Mail (gemeinsam für Versand und Vorschau, Inhalt: willkommensMailInhalt). */
+async function welcomeOpts(
+  ob: WelcomeOnboarding,
+  offer: { contactName: string | null; email: string | null; products: unknown } | null,
+  to: string,
+  setPasswordUrl: string | null,
+): Promise<WillkommensMailOpts> {
+  return {
+    to,
+    greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
+    packageType: normalizePackage(ob.package),
+    startDate: ob.startDate,
+    products: offer ? offerProducts(offer.products as Parameters<typeof offerProducts>[0]).map((p) => p.name) : [],
+    setPasswordUrl,
+    loginUrl: `${getAppUrl()}/login`,
+    setupUrl: `${getAppUrl()}/buyer/einrichtung`,
+    whatsappSelfConnect: ob.package !== "service" && selfConnectEnabled(),
+    replyTo: process.env.OFFER_REPLY_TO ?? null,
+  };
+}
+
+/**
+ * Vorschau der Willkommens-Mail ohne Seiteneffekte: Der Link zum Passwort wird erst beim Senden erstellt, hier steht
+ * ein Platzhalter (nur, wenn sich der Kunde noch nie eingeloggt hat).
+ */
+export async function welcomeVorschauOpts(onboardingId: string): Promise<WillkommensMailOpts | null> {
+  const r = await welcomeLaden(onboardingId);
+  if (!r) return null;
+  const user = r.ob.customer.users[0];
+  const to = user?.email ?? r.offer?.email;
+  if (!to) return null;
+  return welcomeOpts(r.ob, r.offer, to, user && !user.lastLoginAt ? buildResetUrl("LINK-WIRD-BEIM-SENDEN-ERSTELLT") : null);
+}
+
+export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?: string | null } = {}) {
+  const r = await welcomeLaden(onboardingId);
+  if (!r) return { ok: false as const, error: "Onboarding nicht gefunden." };
+  const { ob, offer } = r;
   const user = ob.customer.users[0];
   const to = user?.email ?? offer?.email;
   if (!to) return { ok: false as const, error: "Keine E-Mail-Adresse für den Kunden hinterlegt." };
@@ -386,18 +429,7 @@ export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?:
     const token = await issuePasswordResetToken(user.email, INVITE_TTL_MS);
     if (token) setPasswordUrl = buildResetUrl(token.rawToken);
   }
-  const res = await sendOnboardingWelcomeEmail({
-    to,
-    greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
-    packageType: normalizePackage(ob.package),
-    startDate: ob.startDate,
-    products: offer ? offerProducts(offer.products).map((p) => p.name) : [],
-    setPasswordUrl,
-    loginUrl: `${getAppUrl()}/login`,
-    setupUrl: `${getAppUrl()}/buyer/einrichtung`,
-    whatsappSelfConnect: ob.package !== "service" && selfConnectEnabled(),
-    replyTo: process.env.OFFER_REPLY_TO ?? null,
-  });
+  const res = await sendOnboardingWelcomeEmail(await welcomeOpts(ob, offer, to, setPasswordUrl));
   if (res.ok) {
     await prisma.onboarding.update({ where: { id: ob.id }, data: { welcomeSentAt: new Date() } });
     if (offer) await logOfferActivity(offer, `Willkommens-Mail an ${to} gesendet`);

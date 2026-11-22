@@ -17,7 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { adapterFor, findFreeCalendar, SlotBusyError, suggestSlots, type Slot } from "@/lib/calendar";
 import { berlinAt, loadLeadTimes, timesForDay } from "@/lib/calendar/lead-times";
 import { addDaysYmd, berlinYmd, weekdayOfYmd } from "@/lib/absence";
-import { getAppUrl, sendCustomerMail } from "@/lib/email";
+import { getAppUrl, sendCustomerMail, type CustomerMailOpts } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
@@ -834,7 +834,7 @@ function inputFromMeeting(m: { inviteeName: string | null; inviteeEmail: string 
 
 export type InviteeMailKind = "booked" | "rescheduled" | "cancelled" | "reminder" | "soon";
 
-type MailMeeting = {
+export type MailMeeting = {
   title: string;
   startAt: Date;
   joinUrl: string | null;
@@ -893,47 +893,61 @@ export function inviteeMailContent(kind: InviteeMailKind, m: MailMeeting) {
 const escapeHtml = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** Mail senden; Fehler werden gemeldet, nie geworfen. */
-export async function sendInviteeMail(meetingId: string, kind: InviteeMailKind): Promise<boolean> {
-  try {
-    const m = await prisma.salesMeeting.findUnique({
-      where: { id: meetingId },
-      select: {
-        title: true,
-        startAt: true,
-        joinUrl: true,
-        inviteeName: true,
-        inviteeEmail: true,
-        manageToken: true,
-        utmSource: true,
-        bookingType: { select: { confirmText: true, thanksPage: true, slug: true } },
-      },
-    });
-    if (!m?.inviteeEmail || !m.manageToken) return false;
-    // Beratungsgespräch: Vertragsbedingungen vorab mitschicken, damit im Termin direkt beauftragt werden kann
-    const vertragUrls = m.bookingType?.slug === SALES_CALL_BOOKING_TYPE ? legalUrls() : null;
-    const c = inviteeMailContent(kind, {
+/** Mail an den Interessenten (Empfänger und Inhalt), gemeinsam für Versand und Vorschau. null: keine Mail möglich. */
+export async function inviteeMailOpts(meetingId: string, kind: InviteeMailKind): Promise<CustomerMailOpts | null> {
+  const m = await prisma.salesMeeting.findUnique({
+    where: { id: meetingId },
+    select: {
+      title: true,
+      startAt: true,
+      joinUrl: true,
+      inviteeName: true,
+      inviteeEmail: true,
+      manageToken: true,
+      utmSource: true,
+      bookingType: { select: { confirmText: true, thanksPage: true, slug: true } },
+    },
+  });
+  if (!m?.inviteeEmail || !m.manageToken) return null;
+  // Beratungsgespräch: Vertragsbedingungen vorab mitschicken, damit im Termin direkt beauftragt werden kann
+  const vertragUrls = m.bookingType?.slug === SALES_CALL_BOOKING_TYPE ? legalUrls() : null;
+  return {
+    to: m.inviteeEmail,
+    ...inviteeMail(kind, {
       ...m,
       manageToken: m.manageToken,
       confirmText: m.bookingType?.confirmText,
       thanksPage: m.bookingType?.thanksPage,
       byTeam: m.utmSource === "admin",
       vertrag: vertragUrls ? { agb: vertragUrls.termsUrl, avv: vertragUrls.dpaUrl } : null,
-    });
-    const links = [...(c.extra ? [c.extra] : []), ...(("vertrag" in c && c.vertrag) || [])];
-    const res = await sendCustomerMail({
-      to: m.inviteeEmail,
-      subject: c.subject,
-      greeting: c.greeting,
-      paragraphs: c.paragraphs,
-      button: c.button,
-      ...(links.length
-        ? {
-            html: links.map((l) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6"><a href="${l.url}" style="color:#2563eb">${escapeHtml(l.label)}</a></p>`).join(""),
-            textBlocks: links.map((l) => `${l.label}: ${l.url}`),
-          }
-        : {}),
-      signature: "Ole Kannapinn\nperformancegrowth",
-    });
+    }),
+  };
+}
+
+/** Mail an den Interessenten ohne Empfänger (rein, auch für die Vorlagen-Übersicht mit Beispieldaten). */
+export function inviteeMail(kind: InviteeMailKind, m: MailMeeting): Omit<CustomerMailOpts, "to"> {
+  const c = inviteeMailContent(kind, m);
+  const links = [...(c.extra ? [c.extra] : []), ...(("vertrag" in c && c.vertrag) || [])];
+  return {
+    subject: c.subject,
+    greeting: c.greeting,
+    paragraphs: c.paragraphs,
+    button: c.button,
+    ...(links.length
+      ? {
+          html: links.map((l) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6"><a href="${l.url}" style="color:#2563eb">${escapeHtml(l.label)}</a></p>`).join(""),
+          textBlocks: links.map((l) => `${l.label}: ${l.url}`),
+        }
+      : {}),
+    signature: "Ole Kannapinn\nperformancegrowth",
+  };
+}
+
+export async function sendInviteeMail(meetingId: string, kind: InviteeMailKind): Promise<boolean> {
+  try {
+    const opts = await inviteeMailOpts(meetingId, kind);
+    if (!opts) return false;
+    const res = await sendCustomerMail(opts);
     if (!res.ok) console.warn(`[vertrieb-buchung mail] ${kind} ${meetingId}: ${res.error}`);
     return res.ok;
   } catch (err) {

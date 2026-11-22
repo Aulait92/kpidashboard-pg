@@ -208,3 +208,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Angebote haben „Vorauszahlung anbieten“ vorausgewählt (6 Monate: 1 geschenkt, 12 Monate: 3 geschenkt); der Kunde wählt
   bei der Annahme weiter selbst, monatlich bleibt vorausgewählt. Abwählbar; greift nicht bei Pay-per-Lead, Startpreis
   oder ohne Laufzeit. Für „Zahlung nachträglich“ muss sie abgewählt werden.
+- **22.11.2026, Vorschau aller CRM-Nachrichten:** Ole: „Vorschau der Mails, die man im Admin-CRM raussenden wird, inkl.
+  Templates“. Verkaufen → Geplante Nachrichten: Zeile antippen zeigt E-Mail und WhatsApp mit den echten Daten.
+  Einstellungen → Mail- und WhatsApp-Vorlagen: alle automatischen Nachrichten mit Beispieldaten (Sie/Du) und Freigabestand
+  der WhatsApp-Vorlagen. Versand und Vorschau nutzen dieselben Funktionen (`lib/vertrieb/nachricht-vorschau.ts`).

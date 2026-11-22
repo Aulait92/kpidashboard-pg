@@ -17,7 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
-import { getAppUrl, sendCustomerMail } from "@/lib/email";
+import { getAppUrl, sendCustomerMail, type CustomerMailOpts } from "@/lib/email";
 import { customerGreeting, logOfferActivity } from "@/lib/offer-links";
 import { stripeClient } from "@/lib/billing";
 import { erinnerungGestoppt } from "@/lib/angebot-zahlungserinnerung";
@@ -241,6 +241,33 @@ type FallMitKunde = NonNullable<Awaited<ReturnType<typeof prisma.mahnfall.findFi
   customer: { id: string; name: string; salesContact: { id: string; name: string } | null; users: { email: string }[] } | null;
 };
 
+/**
+ * Mail einer Mahnstufe (gemeinsam für Versand und Vorschau). `vorschau`: die Rechnung wird nicht geladen, nur ihr
+ * Dateiname angezeigt. null: keine E-Mail-Adresse.
+ */
+export async function mahnMailOpts(
+  f: Pick<FallMitKunde, "email" | "customer" | "invoiceNumber" | "stripeInvoiceId" | "amountDue" | "dueDate" | "art" | "pdfUrl" | "hostedUrl">,
+  key: Exclude<Stufe["key"], "anruf">,
+  now: Date,
+  opts: { vorschau?: boolean } = {},
+): Promise<CustomerMailOpts | null> {
+  const nummer = f.invoiceNumber ?? f.stripeInvoiceId;
+  const contactId = f.customer?.salesContact?.id ?? null;
+  const to = f.email ? [f.email] : (f.customer?.users ?? []).map((u) => u.email);
+  if (!to.length) return null;
+  const text = mahnText(key, { nummer, betragCent: f.amountDue, dueDate: f.dueDate, art: f.art, now });
+  const mitAnhang = key === "mahnung1" || key === "mahnung2";
+  const anhang = !mitAnhang ? null : opts.vorschau ? (f.pdfUrl ? { filename: `Rechnung-${nummer.replace(/[^A-Za-z0-9-]/g, "_")}.pdf`, content: "" } : null) : await rechnungPdf(f.pdfUrl, nummer);
+  return {
+    to,
+    subject: text.subject,
+    greeting: await customerGreeting({ salesContactId: contactId, contactName: f.customer?.salesContact?.name ?? null }),
+    paragraphs: anhang || !mitAnhang ? text.paragraphs : text.paragraphs.map((p) => p.replace(" Die Rechnung finden Sie im Anhang.", "").replace(" Die Rechnung finden Sie noch einmal im Anhang.", "")),
+    ...(f.hostedUrl ? { button: { label: text.button, url: f.hostedUrl } } : {}),
+    ...(anhang ? { attachments: [anhang] } : {}),
+  };
+}
+
 async function fuehreStufeAus(f: FallMitKunde, stufe: Stufe, now: Date): Promise<{ mail: boolean; whatsapp: boolean; aufgabe: boolean }> {
   const res = { mail: false, whatsapp: false, aufgabe: false };
   const kunde = f.customer?.name ?? f.email ?? f.stripeCustomerId;
@@ -256,22 +283,13 @@ async function fuehreStufeAus(f: FallMitKunde, stufe: Stufe, now: Date): Promise
     res.aufgabe = true;
     return res;
   }
-  const to = f.email ? [f.email] : (f.customer?.users ?? []).map((u) => u.email);
-  const text = mahnText(stufe.key, { nummer, betragCent: f.amountDue, dueDate: f.dueDate, art: f.art, now });
-  if (to.length) {
-    const anhang = stufe.key === "mahnung1" || stufe.key === "mahnung2" ? await rechnungPdf(f.pdfUrl, nummer) : null;
-    const sent = await sendCustomerMail({
-      to,
-      subject: text.subject,
-      greeting: await customerGreeting({ salesContactId: contactId, contactName: f.customer?.salesContact?.name ?? null }),
-      paragraphs: anhang || !(stufe.key === "mahnung1" || stufe.key === "mahnung2") ? text.paragraphs : text.paragraphs.map((p) => p.replace(" Die Rechnung finden Sie im Anhang.", "").replace(" Die Rechnung finden Sie noch einmal im Anhang.", "")),
-      ...(f.hostedUrl ? { button: { label: text.button, url: f.hostedUrl } } : {}),
-      ...(anhang ? { attachments: [anhang] } : {}),
-    });
+  const mail = await mahnMailOpts(f, stufe.key, now);
+  if (mail) {
+    const sent = await sendCustomerMail(mail);
     res.mail = sent.ok;
     if (!sent.ok) await prisma.mahnfall.update({ where: { id: f.id }, data: { lastError: `Mail: ${sent.error}`.slice(0, 300) } });
     if (contactId) {
-      await logOfferActivity(ref, sent.ok ? `${stufe.label} zu Rechnung ${nummer} per E-Mail gesendet` : `${stufe.label} zu Rechnung ${nummer}: E-Mail fehlgeschlagen`, sent.ok ? `Betreff: ${text.subject}` : sent.error, null, "EMAIL");
+      await logOfferActivity(ref, sent.ok ? `${stufe.label} zu Rechnung ${nummer} per E-Mail gesendet` : `${stufe.label} zu Rechnung ${nummer}: E-Mail fehlgeschlagen`, sent.ok ? `Betreff: ${mail.subject}` : sent.error, null, "EMAIL");
     }
   } else {
     await prisma.mahnfall.update({ where: { id: f.id }, data: { lastError: "Keine E-Mail-Adresse" } });

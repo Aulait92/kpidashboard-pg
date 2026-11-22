@@ -486,6 +486,40 @@ function rescheduleLink(m: { manageToken: string | null; rescheduleUrl: string |
   return m.manageToken ? manageUrl(m.manageToken) : m.rescheduleUrl;
 }
 
+type ErinnerungsTermin = {
+  title: string;
+  startAt: Date;
+  joinUrl: string | null;
+  location: string | null;
+  manageToken: string | null;
+  rescheduleUrl: string | null;
+  inviteeName: string | null;
+  inviteePhone: string | null;
+  bookingType: { slug: string } | null;
+  contact: { phone: string | null; firstName: string | null; lastName: string | null; salutation: string | null };
+};
+
+/**
+ * WhatsApp-Terminerinnerung (24 Stunden bzw. 1 Stunde): Vorlage, Parameter und Nummer, gemeinsam für Versand und
+ * Vorschau. null: keine passende Vorlage freigegeben.
+ */
+export function terminErinnerungInhalt(
+  m: ErinnerungsTermin,
+  art: "erinnerung" | "gleich",
+  now: Date,
+  nutzbar: Nutzbar,
+  manageUrl: (token: string) => string,
+): { vorlage: TerminVorlage; params: string[]; phone: string | null; anrede: string | null } | null {
+  const modus = terminModus({ joinUrl: m.joinUrl, locType: m.location, location: m.location });
+  const vorlage = waehleTerminVorlage(art, { thema: terminThema(m), modus, morgen: berlinYmd(m.startAt) === addDaysYmd(berlinYmd(now), 1) }, nutzbar);
+  if (!vorlage) return null;
+  // Dieselbe Nummer wie die Bestätigung: Nummer aus der Buchung vor der Hauptnummer des Kontakts
+  const phone = [m.inviteePhone, m.contact.phone].map((p) => (p ? normalizePhone(p) : null)).find(Boolean) ?? null;
+  const anrede = terminAnrede(m.contact, m.inviteeName);
+  const params = vorlageParams(vorlage, { anrede, startAt: m.startAt, loc: meetingLoc(m), videolink: m.joinUrl, link: rescheduleLink(m, manageUrl) });
+  return { vorlage, params, phone, anrede };
+}
+
 export type WaReminderResult = { day: number; soon: number; skipped: number; errors: number; retry: number };
 
 /** Höchstens so viele Versuche je Erinnerung bei Sendefehlern (je Cron-Lauf einer, solange im Fenster). */
@@ -521,7 +555,6 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
   const result: WaReminderResult = { day: 0, soon: 0, skipped: 0, errors: 0, retry: 0 };
   if (!(await supportAccount())) return result;
   const nutzbar = await supportVorlagenNutzbar();
-  const morgen = addDaysYmd(berlinYmd(now), 1);
   // Zeitregeln gemeinsam mit E-Mail-Versand und Übersicht „Geplante Nachrichten“ (lib/vertrieb/termin-erinnerungen.ts)
   const kinds = [
     { field: "waReminderAt", status: "waReminderStatus", error: "waReminderError", tries: "waReminderTries", art: "erinnerung", plan: "tag", key: "day" },
@@ -555,10 +588,9 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
       take: 100,
     });
     for (const m of due) {
-      const modus = terminModus({ joinUrl: m.joinUrl, locType: m.location, location: m.location });
-      const v = waehleTerminVorlage(k.art, { thema: terminThema(m), modus, morgen: berlinYmd(m.startAt) === morgen }, nutzbar);
+      const inhalt = terminErinnerungInhalt(m, k.art, now, nutzbar, manageUrl);
       // Keine passende Vorlage freigegeben: nicht markieren, der nächste Lauf versucht es wieder
-      if (!v) {
+      if (!inhalt) {
         result.skipped++;
         continue;
       }
@@ -580,14 +612,11 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
         await skip("nach_bestaetigung");
         continue;
       }
-      // Dieselbe Nummer wie die Bestätigung: Nummer aus der Buchung vor der Hauptnummer des Kontakts
-      const phone = [m.inviteePhone, m.contact.phone].map((p) => (p ? normalizePhone(p) : null)).find(Boolean) ?? null;
+      const { vorlage: v, params, phone, anrede } = inhalt;
       if (!phone) {
         await skip("no_phone");
         continue;
       }
-      const anrede = terminAnrede(m.contact, m.inviteeName);
-      const params = vorlageParams(v, { anrede, startAt: m.startAt, loc: meetingLoc(m), videolink: m.joinUrl, link: rescheduleLink(m, manageUrl) });
       try {
         const out = await sendSupportTemplate({
           contactId: m.contactId,
