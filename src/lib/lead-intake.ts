@@ -327,6 +327,15 @@ export async function processNewLead(leadId: string) {
   }
   // Team (Großkunden): gleichmäßig zuteilen, Push nur an den Zuständigen.
   await assignLead(lead.id).catch((err) => reportError(err, "lead-intake-assign"));
+  // Zweifelhafte Nummer (Ole, 22.11.2026): Aufgabe „Nummer prüfen“ auf Heute und am Kontakt, Lead bleibt offen
+  if (!lead.isTest) {
+    const zweifel = (await import("@/lib/ppl/telefon-pruefung")).nummerZweifelhaft(lead.phone);
+    if (zweifel) {
+      await (await import("@/lib/lead-aufgaben"))
+        .planeAufgabe({ leadId: lead.id, customerId: lead.customerId, kind: "nummer_pruefen", note: `Nummer prüfen: ${zweifel}. Bitte anrufen oder die richtige Handynummer eintragen`, dueAt: new Date() })
+        .catch((err) => reportError(err, "lead-intake-nummer-pruefen", { lead: lead.id }));
+    }
+  }
   await attachLeadToContact(lead.id).catch((err) => reportError(err, "lead-intake-attach"));
   // Empfohlene Person hat sich eingetragen: eigener Push „Empfehlung von {Vorname}: jetzt anrufen“ mit Gesprächseinstieg
   // (lib/empfehlung/shared.ts empfehlungPush, ohne Nummern). Geht wie jeder Push nur an Geräte mit erlaubten Mitteilungen.

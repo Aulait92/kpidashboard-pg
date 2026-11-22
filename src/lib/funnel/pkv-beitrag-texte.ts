@@ -18,7 +18,7 @@ export const PKV_TEXTE = {
   weiter: "Weiter",
 
   start: {
-    ueberschrift: "Über 650 € im Monat für deine PKV? Ein interner Tarifwechsel kann helfen",
+    ueberschrift: "Über 700 € im Monat für deine PKV? Ein interner Tarifwechsel kann helfen",
     // Advertorial (Ole, 21.11.2026; texte.md Abschnitt 2, etwa 130 Wörter): als Anzeige gekennzeichnet, Du-Form, keine
     // unbelegten Behauptungen. **fett** = Kernsatz je Absatz. „bis zu 50 %“ nur mit Fußnote direkt darunter (L8).
     anzeige: "Anzeige",
@@ -79,7 +79,7 @@ export const PKV_TEXTE = {
     fehlerOrt: "Bitte gib deinen Wohnort ein.",
   },
 
-  // Lob wie bei Perspective, aber wahr (privat, ab 650 €) und ohne Ergebnisversprechen; drei Haken-Zeilen, linksbündig.
+  // Lob wie bei Perspective, aber wahr (privat, ab 700 €) und ohne Ergebnisversprechen; drei Haken-Zeilen, linksbündig.
   // „ob und wie viel“ nach Recht (docs/recht/pkv-funnel.md Abschnitt 2). Kein Ausrufezeichen (CI), kein „Symbolbild“ (Ole).
   // Nah am Perspective-Original (Ole, 21.11.2026, zweimal bestätigt: „hier wollten wir nah an Perspective bleiben“).
   // Perspective: „Fast fertig...! Sehr gut! Wir können deinen Beitrag sehr wahrscheinlich stark reduzieren!“ plus drei
@@ -160,8 +160,8 @@ export const PKV_TEXTE = {
   },
   endeBeitrag: {
     // Freundlich, mit klarem nächsten Schritt (Personas, 21.11.2026); sachlich richtig (Recht: wir prüfen nur nicht)
-    ueberschrift: "Diese Prüfung gibt es ab 650\u00a0€ im Monat",
-    text: "Danke für deine Angaben. Steigt dein Beitrag einmal über 650\u00a0€, prüft ein Experte gern kostenlos für dich. Falls du dich vertippt hast, kannst du den Betrag ändern.",
+    ueberschrift: "Diese Prüfung gibt es ab 700\u00a0€ im Monat",
+    text: "Danke für deine Angaben. Steigt dein Beitrag einmal über 700\u00a0€, prüft ein Experte gern kostenlos für dich. Falls du dich vertippt hast, kannst du den Betrag ändern.",
     knopf: "Beitrag ändern",
   },
 

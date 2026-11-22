@@ -136,6 +136,38 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `Verloren: falsche Daten (${grund})` };
     },
   },
+  lead_nummer_korrigieren: {
+    beschreibung: "Nummer eines Leads mit der aktuellen Regel neu einlesen (z. B. „+1 0175…“ → 49175…); hat sich etwas geändert und ging noch kein Erstanschreiben raus, wird es jetzt geschickt",
+    felder: { customerId: "Kunden-ID", telefon: "bisher gespeicherte Nummer (nur Ziffern)" },
+    run: async (p) => {
+      const alt = text(p.telefon).replace(/\D/g, "");
+      if (alt.length < 8) return { ok: false, error: "Nummer fehlt." };
+      const l = await prisma.lead.findFirst({ where: { customerId: text(p.customerId), phone: alt }, select: { id: true, customerId: true, phone: true, outreachStatus: true } });
+      if (!l?.customerId || !l.phone) return { ok: false, error: "Lead nicht gefunden." };
+      const neu = (await import("@/lib/whatsapp/phone")).normalizePhone(`+${l.phone}`);
+      if (!neu) return { ok: false, error: "Nummer ungültig." };
+      // „sent_booked“ (schon gebucht) ist auch gesendet: sonst ging die Erstnachricht doppelt raus (22.11.2026)
+      const offen = !l.outreachStatus?.startsWith("sent");
+      // Schon korrigiert, aber die Erstnachricht hing (z. B. „kein WhatsApp“ der alten Nummer): erneut versuchen
+      await prisma.lead.update({ where: { id: l.id }, data: { phone: neu, waUnavailableAt: null, ...(offen ? { outreachAt: null, outreachStatus: null } : {}) } });
+      await audit("lead.nummer_korrigiert", { entity: "Lead", entityId: l.id, details: { neu: `…${neu.slice(-4)}` }, actor: OPS_ACTOR });
+      const r = offen ? await (await import("@/lib/whatsapp/outreach")).runOutreach(l.customerId, { leadIds: [l.id] }) : null;
+      return { ok: true, info: `Nummer korrigiert (…${neu.slice(-4)})${r ? `, Erstanschreiben: ${r.sent} gesendet, ${r.failed} Fehler, ${r.skipped} übersprungen${r.errors.length ? ` (${r.errors.slice(0, 2).join("; ").slice(0, 300)})` : ""}` : ""}` };
+    },
+  },
+  whatsapp_neu_versuchen: {
+    beschreibung: "Lead galt als „kein WhatsApp“ (z. B. falsche Nummer, inzwischen korrigiert): Sperre aufheben und neu versuchen, mit Termin die Terminbestätigung, sonst das Erstanschreiben",
+    felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
+    run: async (p) => {
+      const name = text(p.name);
+      if (name.length < 3) return { ok: false, error: "Name zu kurz." };
+      const leads = await prisma.lead.findMany({ where: { customerId: text(p.customerId), name: { contains: name, mode: "insensitive" }, erasedAt: null }, select: { id: true }, take: 3 });
+      if (leads.length !== 1) return { ok: false, error: `${leads.length} passende Leads, bitte genauer.` };
+      const r = await (await import("@/lib/whatsapp/kein-whatsapp")).nachNummernKorrektur(leads[0].id);
+      await audit("lead.whatsapp_neu", { entity: "Lead", entityId: leads[0].id, details: { ergebnis: r }, actor: OPS_ACTOR });
+      return r === "nichts" ? { ok: false, error: "Nichts versucht (keine Sperre „kein WhatsApp“ oder keine Nummer)." } : { ok: true, info: r === "termin" ? "Terminbestätigung per WhatsApp versucht." : "Erstanschreiben per WhatsApp versucht." };
+    },
+  },
   buchungslink_senden: {
     beschreibung: "Buchungslink per WhatsApp an einen Lead ohne Termin schicken (einmal je Chat, nur im offenen 24-h-Fenster), Lead über Kunde und Namen",
     felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },

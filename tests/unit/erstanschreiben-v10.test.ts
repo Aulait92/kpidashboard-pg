@@ -158,6 +158,8 @@ describe("v10: Rückfall auf v9, wenn das Formular die feste Frage beantwortet",
     expect(v10Moeglich(q.source, q.formular)).toBe(true);
     const f = [...q.formular, BEANTWORTET[z]];
     expect(v10Moeglich(q.source, f)).toBe(false);
+    // Kfz: feste Frage ist keine Terminfrage, also auch nach der Buchung (22.11.2026); andere Produkte ohne planKey nicht
+    expect(v10Moeglich("Kfz-Versicherung", [{ label: "Worum geht es?", value: "Versicherung wechseln (jetziges Auto)" }], { gebucht: true })).toBe(true);
     // Freitext dann wie v9 (Frage als Platzhalter), nie die schon beantwortete feste Frage
     const t = erstanschreibenText({ an: "sie", kontakt: { fullName: "Peter Pan", salutation: "Herr" }, name: "Ole", vermittler: HERR.dat, vermittlerNom: HERR.nom, source: q.source, formular: f });
     expect(v10FrageIn(t)).toBeNull();

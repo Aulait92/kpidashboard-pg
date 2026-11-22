@@ -92,7 +92,9 @@ export type FunnelDef = {
 // ─── Prüfregeln ───────────────────────────────────────────────────────────
 
 /** Mindestbeitrag: darunter bieten wir die Prüfung nicht an */
-export const MIN_BEITRAG = 650;
+// 700 € (Ole, 22.11.2026): die Abnehmer nehmen erst ab 700 € („schwach“, lib/ppl/rules.ts DEFAULT_WEAK_THRESHOLD);
+// Leads zwischen 650 und 699 € wurden bezahlt, aber geparkt. Abbruchgrund heißt weiter „unter_650“ (Auswertung).
+export const MIN_BEITRAG = 700;
 export const ALTER_MIN = 18;
 export const ALTER_MAX = 99;
 
@@ -237,7 +239,7 @@ export function hinweisFuer(s: Schritt, texte: SchrittTexte, a: Antworten): stri
   return (wert && s.hinweisJe?.texte[wert]) || texte.hinweis;
 }
 
-/** Abbruchregel des Schritts (z. B. gesetzlich versichert, Beitrag unter 650 €) oder null. */
+/** Abbruchregel des Schritts (z. B. gesetzlich versichert, Beitrag unter 700 €) oder null. */
 export function abbruchFuer(s: Schritt, a: Antworten): AbbruchGrund | null {
   return (s.art === "auswahl" || s.art === "eingabe") && s.abbruch ? s.abbruch(a) : null;
 }

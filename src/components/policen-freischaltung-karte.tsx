@@ -4,12 +4,12 @@ import { PolicenFreischaltung } from "@/components/policen-freischaltung";
 
 type Ctx = { customerId: string; userId: string | null; preview: boolean; teamRole?: string | null; demo?: boolean };
 
-export async function PolicenFreischaltungKarte({ ctx, ort, className }: { ctx: Ctx; ort: "karte" | "einstellungen"; className?: string }) {
+export async function PolicenFreischaltungKarte({ ctx, ort, className, ohneKopf }: { ctx: Ctx; ort: "karte" | "einstellungen"; className?: string; ohneKopf?: boolean }) {
   const f = await ladeFreischaltung(ctx).catch(() => null);
   if (!f || (ort === "karte" && !f.karte)) return null;
   return (
     <div className={className}>
-      <PolicenFreischaltung f={f} ort={ort} />
+      <PolicenFreischaltung f={f} ort={ort} ohneKopf={ohneKopf} />
     </div>
   );
 }

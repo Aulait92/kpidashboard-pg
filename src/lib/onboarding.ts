@@ -6,6 +6,11 @@
 // bzw. direkt bei Annahme, wenn keine Online-Zahlung aktiv ist. Zusätzlich
 // per Knopf am Vertriebskontakt (z. B. für Bestandskunden).
 
+import { gesundheitFreigegeben, gesundheitNotAus, policenNotAus } from "@/lib/policen/regeln";
+import { ablageBereit } from "@/lib/policen/ablage";
+
+/** Schritt „Kranken, BU und Leben“ möglich: Policen-Ablage eingerichtet, keine Notschalter. */
+export const policenGesundheitMoeglich = () => ablageBereit() && !policenNotAus() && !gesundheitNotAus();
 import { erstinfoVollstaendig, type ErstinfoWeb } from "@/lib/erstinformation-shared";
 import { ERSTINFO_STATT_WEBSITE, erstinfoStattWebsite } from "@/lib/impressum-ersatz";
 import { leseMailAblauf } from "@/lib/mail/ablauf";
@@ -557,6 +562,20 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         done: ob.customer.mailFeaturesOff || !!leseMailAblauf(ob.customer.mailAblauf).bestaetigtAt || !!ob.liveAt,
         at: null,
       },
+      // Kranken, BU und Leben (Ole, 21.11.2026): AVV-Ergänzung zustimmen (Datenschutz-URL setzt die App), sonst nimmt der
+      // Assistent nur Sachversicherungen an. „Brauche ich nicht“ überspringt den Schritt. Nur, wenn Policen per WhatsApp
+      // eingerichtet sind (Ablage, kein Notschalter).
+      ...(policenGesundheitMoeglich()
+        ? [
+            {
+              key: "policenGesundheit",
+              label: "Policen aus Kranken, BU und Leben freigeschaltet",
+              owner: "kunde",
+              done: gesundheitFreigegeben(ob.customer) || !!skip("policenGesundheit"),
+              at: ob.customer.policenAvvZugestimmtAt ?? null,
+            } satisfies ChecklistItem,
+          ]
+        : []),
       {
         key: "templates",
         // Ohne freigegebene Vorlage darf WhatsApp neue Leads nicht anschreiben.
@@ -617,11 +636,11 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "assistent", "einwaende", "serviceMails", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "assistent", "einwaende", "serviceMails", "policenGesundheit", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
 
 /** Übersprungene Schritte (Onboarding.stepSkips): Grund und Zeitpunkt je Schritt. */
 export type StepSkip = { at: string; reason: string };
-export const STEP_SKIP_KEYS = ["calendar", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+export const STEP_SKIP_KEYS = ["calendar", "whatsapp", "bestandImport", "reviewLink", "team", "policenGesundheit"] as const;
 export type StepSkipKey = (typeof STEP_SKIP_KEYS)[number];
 export function stepSkipOf(raw: unknown, key: string): StepSkip | null {
   if (!raw || typeof raw !== "object") return null;
