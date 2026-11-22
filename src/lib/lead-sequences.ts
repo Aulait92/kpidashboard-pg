@@ -424,6 +424,25 @@ export function naechstesSendefenster(at: Date, stunden: { von: number; bis: num
   return d;
 }
 
+/**
+ * 24-Stunden-Fenster (Ole, 22.11.2026: „die morgige Nachricht sollte noch im 24h-Fenster kommen“): Würde ein Schritt von
+ * „Chat ruht“ wegen der Versandzeiten (nachts, sonntags ab 18 Uhr) erst nach Schluss des WhatsApp-Fensters rausgehen,
+ * kommt er stattdessen spätestens 30 Minuten vor Fensterschluss, zur letzten Versandzeit davor. Frühestens 30 Minuten
+ * ab jetzt; geht das nicht, bleibt der Plan. Rein.
+ */
+export function imChatFensterVorziehen(o: { due: Date; fensterBis: Date | null; now: Date; sonntag?: { von: number; bis: number } | null }): Date {
+  const { due, fensterBis, now } = o;
+  if (!fensterBis || fensterBis.getTime() <= now.getTime()) return due;
+  const sonntag = o.sonntag ?? null;
+  const tatsaechlich = naechstesSendefenster(due, undefined, sonntag);
+  const puffer = 30 * 60 * 1000;
+  if (tatsaechlich.getTime() <= fensterBis.getTime() - puffer) return due;
+  let t = new Date(fensterBis.getTime() - puffer);
+  for (let i = 0; i < 200 && !inSendWindow(t, undefined, sonntag); i++) t = new Date(t.getTime() - 15 * 60 * 1000);
+  if (!inSendWindow(t, undefined, sonntag) || t.getTime() < now.getTime() + puffer) return due;
+  return t.getTime() < due.getTime() ? t : due;
+}
+
 /** Zeitfenster für das Termin-Nachfassen nach einem Terminvorschlag (Ole, 17.11.2026). */
 export const TERMIN_NACHFASS_STUNDEN = { von: 8, bis: 20 } as const;
 /**
@@ -793,10 +812,16 @@ export async function runSequences(now = new Date(), opts: { nurId?: string; sof
     }
     // Schritt beanspruchen (nie doppelt, auch bei parallelen Läufen).
     const next = def.steps[seq.step + 1];
+    let naechsterAt = next ? new Date(Math.max((seq.neustartAt ?? seq.startedAt).getTime() + next.day * DAY, now.getTime() + MIN_GAP_MS)) : null;
+    // „Chat ruht“: WhatsApp-Schritt noch im 24-Stunden-Fenster statt am nächsten Morgen danach (imChatFensterVorziehen)
+    if (naechsterAt && next?.action === "whatsapp" && seq.kind === "silent") {
+      const conv = await prisma.conversation.findFirst({ where: { leadId: seq.leadId }, orderBy: { lastMessageAt: "desc" }, select: { windowExpiresAt: true } }).catch(() => null);
+      naechsterAt = imChatFensterVorziehen({ due: naechsterAt, fensterBis: conv?.windowExpiresAt ?? null, now, sonntag: SONNTAG_NACHFASS_STUNDEN });
+    }
     const claimed = await prisma.leadSequence.updateMany({
       where: { id: seq.id, step: seq.step, stoppedAt: null },
       data: next
-        ? { step: seq.step + 1, nextAt: new Date(Math.max((seq.neustartAt ?? seq.startedAt).getTime() + next.day * DAY, now.getTime() + MIN_GAP_MS)) }
+        ? { step: seq.step + 1, nextAt: naechsterAt }
         : { step: seq.step + 1, nextAt: null, stoppedAt: now, stopReason: "Abgeschlossen" },
     });
     if (claimed.count === 0) continue;
