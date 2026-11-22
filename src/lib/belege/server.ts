@@ -48,9 +48,14 @@ export async function syncBelege(): Promise<BelegLauf> {
   return { geholt: docs.length, neu, zugeordnet };
 }
 
-/** Freie Belege offenen Ausgaben zuordnen (eindeutige Treffer). */
+/**
+ * Belege den Ausgaben zuordnen (eindeutige Treffer). Automatische Zuordnungen werden jedes Mal neu berechnet, damit ein
+ * später eintreffender Beleg seinen richtigen Monat bekommt; von Hand Zugeordnetes bleibt.
+ */
 export async function belegeAbgleichen(): Promise<number> {
   const ab = new Date(`${BELEGE_AB}T00:00:00Z`);
+  const vorher = await prisma.beleg.findMany({ where: { zuordnung: "auto" }, select: { id: true, bankTransactionId: true } });
+  await prisma.beleg.updateMany({ where: { zuordnung: "auto" }, data: { bankTransactionId: null, zuordnung: null } });
   const [umsaetze, belege] = await Promise.all([
     prisma.bankTransaction.findMany({
       where: { bookingDate: { gte: new Date(ab.getTime() - 7 * 86_400_000) }, amount: { lt: 0 }, beleg: { is: null } },
@@ -65,7 +70,9 @@ export async function belegeAbgleichen(): Promise<number> {
   for (const p of paare) {
     await prisma.beleg.update({ where: { id: p.belegId }, data: { bankTransactionId: p.umsatzId, zuordnung: "auto" } }).catch(() => null);
   }
-  return paare.length;
+  // Rückgabe: neu hinzugekommene Zuordnungen (nicht die unveränderten)
+  const alt = new Set(vorher.map((v) => `${v.id}:${v.bankTransactionId}`));
+  return paare.filter((p) => !alt.has(`${p.belegId}:${p.umsatzId}`)).length;
 }
 
 export type OhneBelegAnbieter = { anbieter: string; anzahl: number; summe: number; letzter: string };

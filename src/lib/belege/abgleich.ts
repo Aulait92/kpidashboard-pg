@@ -7,7 +7,8 @@
 // - Nur Eingangsbelege (Rechnung, Quittung, Zahlungsbeleg, Auslage, Sonstiges), keine eigenen Ausgangsrechnungen.
 // - Beleg-Datum zwischen 45 Tagen vor und 7 Tagen nach der Buchung (Zahlungsziel bzw. Kartenbuchung später).
 // - Treffer nur, wenn eindeutig: gleicher Betrag in EUR (±2 Cent) und Anbieter passt, oder gleicher Betrag und es gibt
-//   im Zeitfenster genau einen solchen Beleg und genau einen solchen Umsatz; bei Fremdwährung Anbieter + Betrag ±20 % (Wechselkurs).
+//   im Zeitfenster genau einen solchen Beleg und genau einen solchen Umsatz (nur centgenau und nur, wenn der Beleg keinen
+//   erkannten Anbieter hat: ein Beleg von Microsoft gehört nie zu einer Zahlung an Anthropic); bei Fremdwährung Anbieter + Betrag ±20 % (Wechselkurs).
 //   Was nicht eindeutig ist, bleibt offen (Liste „ohne Beleg“) statt geraten.
 
 export type AbgleichUmsatz = {
@@ -68,6 +69,8 @@ export function anbieterPasst(b: Pick<AbgleichBeleg, "firma">, u: Pick<AbgleichU
 const tage = (a: string, b: string) => Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000);
 const imFenster = (beleg: string | null, buchung: string) => !!beleg && tage(buchung, beleg) <= 45 && tage(buchung, beleg) >= -7;
 const gleicherBetrag = (b: AbgleichBeleg, u: AbgleichUmsatz) => b.waehrung === "EUR" && b.brutto != null && Math.abs(b.brutto - -u.betrag) <= 0.02;
+// Ohne passenden Anbieter nur centgenau (sonst trifft z. B. 19,99 € auf eine Zahlung über 20,00 €)
+const centgenau = (b: AbgleichBeleg, u: AbgleichUmsatz) => b.waehrung === "EUR" && b.brutto != null && Math.round(b.brutto * 100) === Math.round(-u.betrag * 100);
 const fremdPasst = (b: AbgleichBeleg, u: AbgleichUmsatz) =>
   b.waehrung !== "EUR" && b.brutto != null && b.brutto > 0 && Math.abs(-u.betrag / b.brutto - 1) <= 0.2;
 
@@ -86,8 +89,8 @@ export function belegeZuordnen(umsaetze: AbgleichUmsatz[], belege: AbgleichBeleg
       const abstand = Math.abs(tage(u.datum, b.datum!));
       if (gleicherBetrag(b, u)) {
         if (anbieterPasst(b, u)) kandidaten.push({ u, b, stufe: 3, abstand });
-        else {
-          // nur Betrag: eindeutig in beide Richtungen
+        else if (centgenau(b, u) && !kennwoerter(b.firma).length) {
+          // nur Betrag (Beleg ohne erkannten Anbieter): centgenau und eindeutig in beide Richtungen
           const andereBelege = frei.filter((x) => x !== b && imFenster(x.datum, u.datum) && gleicherBetrag(x, u)).length;
           const andereUmsaetze = offen.filter((x) => x !== u && imFenster(b.datum, x.datum) && gleicherBetrag(b, x)).length;
           if (!andereBelege && !andereUmsaetze) kandidaten.push({ u, b, stufe: 2, abstand });

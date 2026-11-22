@@ -93,3 +93,13 @@ describe("belegeZuordnen", () => {
     expect(r).toEqual([{ umsatzId: "k1", belegId: "m1" }]);
   });
 });
+
+describe("belegeZuordnen: keine falschen Treffer", () => {
+  it("Beleg eines anderen Anbieters mit fast gleichem Betrag nie", () => {
+    expect(belegeZuordnen([u("t1", "2026-07-29", -20, "ANTHROPIC SAN FRANCISCO")], [b("b1", "2026-07-25", 19.99, "Microsoft 365")])).toEqual([]);
+    expect(belegeZuordnen([u("t1", "2026-07-29", -20, "ANTHROPIC SAN FRANCISCO")], [b("b1", "2026-07-25", 20, "Microsoft 365")])).toEqual([]);
+  });
+  it("ohne Anbieter nur centgenau", () => {
+    expect(belegeZuordnen([u("t1", "2026-07-29", -20, "Irgendwer")], [b("b1", "2026-07-25", 19.99, null)])).toEqual([]);
+  });
+});

@@ -6,7 +6,7 @@ import { ausgabenOhneBeleg } from "@/lib/belege/server";
 import { gmiKonfiguriert } from "@/lib/belege/gmi";
 
 export async function belegeStatus() {
-  const [gesamt, zugeordnet, jeTyp, ohne, letzte] = await Promise.all([
+  const [gesamt, zugeordnet, jeTyp, ohne, letzte, frei] = await Promise.all([
     prisma.beleg.count(),
     prisma.beleg.count({ where: { bankTransactionId: { not: null } } }),
     prisma.beleg.groupBy({ by: ["typ"], _count: { _all: true } }),
@@ -16,6 +16,12 @@ export async function belegeStatus() {
       orderBy: { updatedAt: "desc" },
       take: 15,
       select: { firma: true, nummer: true, datum: true, brutto: true, waehrung: true, zuordnung: true, bankTransaction: { select: { bookingDate: true, amount: true, counterparty: true } } },
+    }),
+    prisma.beleg.findMany({
+      where: { bankTransactionId: null, typ: { not: "SALES_INVOICE" } },
+      orderBy: { datum: "desc" },
+      take: 60,
+      select: { typ: true, firma: true, nummer: true, datum: true, brutto: true, waehrung: true, ocrFertig: true, dateiname: true },
     }),
   ]);
   return {
@@ -30,5 +36,6 @@ export async function belegeStatus() {
       umsatz: b.bankTransaction ? `${b.bankTransaction.bookingDate.toISOString().slice(0, 10)} ${b.bankTransaction.amount} ${b.bankTransaction.counterparty ?? ""}` : null,
       zuordnung: b.zuordnung,
     })),
+    belegeOhneZahlung: frei.map((b) => `${b.datum?.toISOString().slice(0, 10) ?? "?"} ${b.firma ?? b.dateiname ?? "?"} ${b.brutto ?? "?"} ${b.waehrung}${b.ocrFertig ? "" : " (noch nicht ausgelesen)"} ${b.typ}`),
   };
 }
