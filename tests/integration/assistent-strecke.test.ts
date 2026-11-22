@@ -1194,10 +1194,10 @@ describe("Nachfassen 2 Std. nach dem Terminvorschlag", () => {
     expect(ids.at(-1)).toBe("andere_zeit");
   });
 
-  it("nur Mo bis Sa 8 bis 20 Uhr: um 20:30 und sonntags wartet der Schritt, um 8:15 geht er raus", async () => {
+  it("nur Mo bis Sa 8 bis 20 Uhr (sonntags 10 bis 18 Uhr): um 20:30 und sonntags vor 10 Uhr wartet der Schritt, um 8:15 geht er raus", async () => {
     const { lead } = await vorschlagOhneAntwort({ fenster: 30 });
     await runSequences(new Date("2026-11-24T19:30:00Z")); // 20:30
-    await runSequences(new Date("2026-11-29T10:00:00Z")); // Sonntag
+    await runSequences(new Date("2026-11-29T08:30:00Z")); // Sonntag 9:30, vor dem Sonntagsfenster (Ole, 22.11.2026)
     expect(meine(lead.phone!)).toHaveLength(0);
     await runSequences(new Date("2026-11-24T07:15:00Z")); // Dienstag 8:15: Schritt noch nicht fällig
     expect(meine(lead.phone!)).toHaveLength(0);
