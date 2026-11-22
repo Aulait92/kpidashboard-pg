@@ -84,6 +84,8 @@ export const BEGLEIT_KINDS: SequenceKind[] = ["nicht_erreicht_mail", "unterlagen
 export const istBegleitAbfolge = (kind: string | null | undefined) => (BEGLEIT_KINDS as string[]).includes(kind ?? "");
 /** Aufgabe nach der Erinnerung „Unterlagen fehlen“ (gleicher Text wie UNTERLAGEN_NOTE in lib/mail/termin-erinnerung.ts). */
 export const UNTERLAGEN_AUFGABE = "Unterlagen nachfassen";
+/** Aufgabe, wenn der Assistent keine freien Zeiten findet (Ole, 22.11.2026, lib/whatsapp/bot.ts): persönlich melden. */
+export const KALENDER_VOLL_AUFGABE = "Kalender voll: Lead anrufen und Termin vereinbaren";
 
 const DAY = 24 * 60 * 60 * 1000;
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
@@ -529,14 +531,15 @@ const fmtWhen = (d: Date) =>
 
 /**
  * Der Lead möchte später kontaktiert werden: Assistent legt sich eine Wiedervorlage (Abfolge „recall“).
- * Andere laufende Abfolgen enden (auch „Chat ruht“). Zeitpunkt frühestens in 15 Minuten, höchstens 60 Tage.
+ * Andere laufende Abfolgen enden (auch „Chat ruht“). Zeitpunkt frühestens in 15 Minuten, höchstens 90 Tage (bis
+ * 22.11.2026: 60; Terminwünsche bis 90 Tage im Voraus, lib/whatsapp/termin-vorschlaege.ts fernerTerminwunsch).
  */
 export async function scheduleBotRecall(leadId: string, at: Date, note: string | null, now = new Date()) {
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, erasedAt: true } });
   if (!lead || lead.erasedAt) return null;
   const agent = await prisma.agentConfig.findUnique({ where: { customerId: lead.customerId }, select: { active: true } });
   if (!agent?.active) return null;
-  const when = new Date(Math.min(Math.max(at.getTime(), now.getTime() + 15 * 60 * 1000), now.getTime() + 60 * DAY));
+  const when = new Date(Math.min(Math.max(at.getTime(), now.getTime() + 15 * 60 * 1000), now.getTime() + 90 * DAY));
   // Angebot liegt beim Lead (Paket P5): Bedenkzeit, danach startet das Nachfassen zum Angebot neu (nie „followup“)
   if (await imAngebotsstand(leadId, now)) return startBedenkzeit(leadId, when, { quelle: "lead", notiz: note, now });
   await stopSequences(leadId, "Lead möchte später kontaktiert werden", { now });
@@ -752,7 +755,7 @@ export async function stopReasonFor(seq: { leadId: string; customerId: string; s
  * Anruf-Aufgabe: Wiedervorlage für heute – eine eigene, spätere Wiedervorlage bleibt bestehen.
  * Läuft der Anrufplan (lib/call-plan.ts, „Anrufversuch X von 6“), plant er die Anrufe: keine zweite Aufgabe.
  */
-async function createCallTask(leadId: string, note: string, now: Date): Promise<"call_task" | "kept_followup"> {
+export async function createCallTask(leadId: string, note: string, now: Date): Promise<"call_task" | "kept_followup"> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { followUpAt: true, followUpNote: true } });
   if (lead?.followUpAt && lead.followUpAt.getTime() > now.getTime()) return "kept_followup";
   if (lead?.followUpAt && isCallPlanNote(lead.followUpNote)) return "kept_followup";

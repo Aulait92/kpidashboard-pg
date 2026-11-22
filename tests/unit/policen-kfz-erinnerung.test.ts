@@ -44,7 +44,7 @@ describe("Erinnerung 1 an Kfz-Leads", () => {
 
   it("Sie mit genannten Verträgen, Du mit Komplettcheck ohne genannte Verträge", () => {
     expect(erinnerung1({ ...KFZ, ...MIT }).text).toBe(
-      "Kurze Frage zu Ihrem Termin am Montag: Haben Sie Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung gerade zur Hand? Je ein Foto reicht (beim Fahrzeugschein die Vorderseite). Dann kann Herr Kannapinn Ihren Beitrag schon vor dem Termin rechnen.\n\n*Gern auch Ihre anderen Policen*, zum Beispiel Ihre Haftpflicht bei Allianz. Dann sieht er auch, ob Sie etwas doppelt zahlen.",
+      "Kurze Frage zu Ihrem Termin am Montag: Haben Sie Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung gerade zur Hand? Je ein Foto reicht (beim Fahrzeugschein die Vorderseite). Dann kann Herr Kannapinn Ihren Beitrag schon vor dem Termin rechnen.\n\n*Gern auch Ihre anderen Policen*, zum Beispiel Haftpflicht bei Allianz. Dann sieht er auch, ob Sie etwas doppelt zahlen.",
     );
     expect(erinnerung1({ ...KFZ_DU, komplettcheck: true })).toEqual({
       text: "Kurze Frage zu deinem Termin am Montag: Hast du deinen Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung gerade zur Hand? Je ein Foto reicht (beim Fahrzeugschein die Vorderseite). Dann kann Ole deinen Beitrag schon vor dem Termin rechnen.\n\n*Gern auch deine anderen Policen*, zum Beispiel Haftpflicht oder Hausrat. Dann sieht er auch, ob du etwas doppelt zahlst.",
@@ -124,7 +124,7 @@ describe("Kfz-Vorlagen", () => {
       const b = vorlageGerendert(kfzVorlagenArt("bitte", k)!, k);
       expect(`${b.text}\n\n${b.fusszeile}`).toBe(chatNachricht(k).text.replace(" im Komplettcheck", ""));
     }
-    expect(vorlageGerendert("bitte_kfz_andere", { ...KFZ, ...MIT }).text).toContain("*Laden Sie gern auch Ihre anderen Policen hoch*, zum Beispiel Ihre Haftpflicht bei Allianz. Dann sieht er, ob Sie etwas doppelt zahlen.");
+    expect(vorlageGerendert("bitte_kfz_andere", { ...KFZ, ...MIT }).text).toContain("*Laden Sie gern auch Ihre anderen Policen hoch*, zum Beispiel Haftpflicht bei Allianz. Dann sieht er, ob Sie etwas doppelt zahlen.");
     expect(vorlageGerendert("bitte_kfz", KFZ).fusszeile).toBe("Ihr Termin findet auch ohne Unterlagen statt.");
   });
 

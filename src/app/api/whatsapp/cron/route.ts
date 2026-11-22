@@ -190,6 +190,13 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-ppl-renew");
       return null;
     }),
+    // Donnerstags ab 10 Uhr: Erinnerung, wenn für nächste Woche noch nichts bestellt ist (lib/ppl/bestell-erinnerung.ts)
+    erinnert: await import("@/lib/ppl/bestell-erinnerung")
+      .then((m) => m.bestellErinnerungen(now))
+      .catch((e: unknown) => {
+        reportError(e, "cron-ppl-bestellerinnerung");
+        return null;
+      }),
     redistributed: await redistributeParked(undefined, now).catch(() => null),
     // geparkte Leads ab 48 h (PPL_PARK_MAX_HOURS) endgültig verwerfen, Kontaktdaten entfernen (Ole, 20.11.2026)
     expired: await expireParked(now).catch((e: unknown) => {

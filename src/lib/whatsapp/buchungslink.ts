@@ -48,6 +48,46 @@ export function andereZeitAnzahl(eingaenge: readonly { kind: string | null; body
   return eingaenge.filter((m) => knopfAktion(m.kind, m.body)?.aktion === "andere_zeit").length;
 }
 
+// Auch getippte Absagen zählen (Ole, 22.11.2026, „Terminsuche über 7 Tage“): Passt nach zwei Vorschlagsrunden keine
+// Zeit („passt nicht“, „geht beides nicht“ bzw. „Andere Zeit“), fragt die App in der dritten Runde nach dem Wunschtag
+// und schickt den Buchungslink (buchungslinkText). Nennt der Lead dabei einen neuen Tag bzw. eine Zeit, sucht der
+// Assistent dort weiter (keine Absage im Sinne dieser Regel).
+
+/** „passt nicht“, „geht beides nicht“, „kann ich leider nicht“, „keine der Zeiten“ … */
+const ABLEHNUNG_RE =
+  /\b(passt|passen|geht|gehen|klappt|klappen)\b(?: (?:mir|uns|bei mir|bei uns|beide|beides|leider|beides leider|leider beides|beide leider|leider beide|so|da|dann|auch|auch beide|beide auch|leider auch|auch leider))* (nicht|nich|ned|gar nicht|garnicht|überhaupt nicht)\b|\b(beides|beide|keine?r?s?)( davon| der zeiten| der termine| von beiden)? (passt|geht|klappt|passen|gehen)\b|\bkann (ich|da|dann) (leider |beide |beides |da |dann |zu beiden zeiten |an beiden tagen )*nicht\b|\bkeine (der|von den|dieser) (zeiten|termine|vorschläge)\b|\b(da|dann) (bin|habe|hab) ich (leider )?(keine zeit|nicht|schon was|schon etwas)|\bnein,? (leider )?(beides|beide) nicht\b|\b(beides|beide) (leider )?(schlecht|ungünstig)\b|\bleider (beides|beide|nicht)\b/i;
+/** Konkreter neuer Wunsch (Tag, Datum, Uhrzeit, Tageszeit): dann sucht der Assistent dort, statt den Link zu schicken. */
+const KONKRET_RE =
+  /\b(heute|morgen|übermorgen|montags?|dienstags?|mittwochs?|donnerstags?|freitags?|samstags?|sonntags?|wochenende|vormittags?|nachmittags?|abends?|mittags?|früh|nächste woche|kw ?\d+|uhr)\b|\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\.\d{1,2}\.|\b\d{1,2}\s*h\b|\b(januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember|wochen?|monat\w*)\b/i;
+
+/** Lehnt der Lead die vorgeschlagenen Zeiten ab, ohne einen neuen Tag bzw. eine Zeit zu nennen? Rein. */
+export function lehntZeitenAb(text: string | null | undefined): boolean {
+  const t = (text ?? "").replace(/\s+/g, " ").trim();
+  if (!t || t.length > 160 || t.includes("?")) return false;
+  return ABLEHNUNG_RE.test(t) && !KONKRET_RE.test(t);
+}
+
+/**
+ * Abgelehnte Vorschlagsrunden im Chat (zeitlich aufsteigend, inkl. der aktuellen Nachricht): jeder Klick auf „Andere
+ * Zeit“ sowie jede getippte Absage (lehntZeitenAb) als erste Antwort auf einen Terminvorschlag (interner Merker
+ * „termin_vorschlag“, auch beim Nachfassen). Rein.
+ */
+export function abgelehnteRunden(verlauf: readonly { direction: string; kind: string | null; body: string | null }[]): number {
+  let n = 0;
+  let offen = false;
+  for (const m of verlauf) {
+    if (m.direction === "internal") {
+      if (m.kind === "termin_vorschlag") offen = true;
+      continue;
+    }
+    if (m.direction !== "inbound") continue;
+    if (knopfAktion(m.kind, m.body)?.aktion === "andere_zeit") n++;
+    else if (offen && m.kind !== "button" && m.kind !== "interactive" && lehntZeitenAb(m.body)) n++;
+    offen = false;
+  }
+  return n;
+}
+
 /** Bekommt der Lead jetzt den Buchungslink? (Anzahl inkl. des aktuellen Klicks) */
 export function buchungslinkFaellig(anzahl: number): boolean {
   return anzahl >= BUCHUNGSLINK_AB;

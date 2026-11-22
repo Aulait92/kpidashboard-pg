@@ -74,6 +74,9 @@ Wochenmenge („Jede Woche wiederholen“, Verlängerung freitags), bezahlt übe
 Umsatzsteuer nach **seiner** Registerprüfung. Leads landen im Konto des Partners; der Partner sieht die Bestellung, bestellt
 aber nicht selbst. Logins eines reinen Bestellkontos (Partner, aber kein eigener Bezug) sehen nur diese Seite.
 Admin: Pay-per-Lead → Bezug → „Bestellt und bezahlt über“; Registerprüfung dort gilt dann für den Hauptkunden.
+Donnerstags-Erinnerung (lib/ppl/bestell-erinnerung.ts, Cron jede Minute, wirkt donnerstags ab 10 Uhr): Mail und Mitteilung an
+die Inhaber-Logins des Zahlers (Hauptkunde bzw. Kunde selbst), wenn für nächste Woche nichts bestellt ist und keine
+Verlängerung am Freitag ansteht. Eine Mail je Zahler und Woche mit allen offenen Partnern (Protokoll `ppl.bestellerinnerung`).
 
 Livegang je Hauptkunde: 1. Login für das Konto „Nico Yagci“ bzw. „Tobias D'Angelo“ anlegen (Einladung), 2. Registernummer
 am Bezug des Partners prüfen (gilt für den Hauptkunden, sonst 19 %), 3. Hauptkunde hinterlegt Zahlungsart, 4. Bezug des
