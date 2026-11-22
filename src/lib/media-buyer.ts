@@ -1647,11 +1647,15 @@ async function processPool(
         ? googleSpend / googleLeadsMtd
         : null;
 
+    // Nur laufende Kampagnen und solche, die der Buyer selbst pausiert hat (22.11.2026: seit alle Agentur-Konten
+    // gelesen werden, matchten sonst alte, von Hand pausierte Kampagnen mit gleichem Namen; ihr Budget floss in die
+    // Rechnung, obwohl sie nichts ausgeben)
+    const frueher = await loadPoolHistory(def.key);
     const matched = matchPoolCampaigns(
       def,
       ctx.campaigns,
       settings.campaignKeyword,
-    );
+    ).filter((c) => c.effective_status === "ACTIVE" || c.status === "ACTIVE" || frueher.buyerPausedIds.has(`meta:${c.id}`));
     const metaAvailable = matched.length > 0;
 
     // Meta-Steuerstatus (sofern überhaupt Meta-Kampagnen matched).
