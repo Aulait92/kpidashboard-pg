@@ -187,12 +187,12 @@ export const AKTIONEN: Record<string, Aktion> = {
   },
   bank_zuordnen: {
     beschreibung: "Importierte Umsätze eines CSV-Kontos (z. B. n26) nach Gegenpartei einer Kostenart zuordnen: ppl, software, ki, akquise, betrieb oder ignore; legt keine Regel an",
-    felder: { konto: "Kurzname, z. B. n26", muster: "Teil der Gegenpartei, z. B. outbrain", aktion: "ppl | software | ki | akquise | betrieb | ignore" },
+    felder: { konto: "Kurzname, z. B. n26", muster: "Teil der Gegenpartei, z. B. outbrain", kostenart: "ppl | software | ki | akquise | betrieb | ignore" },
     run: async (p) => {
       const konto = text(p.konto, 30).toLowerCase();
       const muster = text(p.muster, 60);
       const { COST_ACTIONS } = await import("@/lib/bank/rules");
-      const aktion = text(p.aktion, 20) as (typeof COST_ACTIONS)[number];
+      const aktion = text(p.kostenart, 20) as (typeof COST_ACTIONS)[number];
       if (!/^[a-z0-9]{2,30}$/.test(konto) || muster.length < 2 || !(COST_ACTIONS as readonly string[]).includes(aktion)) return { ok: false, error: "Konto, Muster oder Kostenart ungültig." };
       const rows = await prisma.bankTransaction.findMany({ where: { accountKey: `csv:${konto}`, counterparty: { contains: muster, mode: "insensitive" } }, select: { id: true } });
       if (!rows.length) return { ok: false, error: "Keine passenden Umsätze." };
