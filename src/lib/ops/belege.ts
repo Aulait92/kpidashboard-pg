@@ -9,6 +9,7 @@ export async function belegeStatus(p?: URLSearchParams) {
   const anbieter = (p?.get("anbieter") ?? "").trim();
   if (anbieter.length >= 3) return belegeJeAnbieter(anbieter);
   if (p?.get("liste") === "offen") return offeneZahlungen();
+  if (p?.get("liste") === "belege") return alleBelege(p.get("von") ?? "2026-01-01", p.get("bis") ?? "2026-12-31");
   const [gesamt, zugeordnet, jeTyp, ohne, letzte, frei] = await Promise.all([
     prisma.beleg.count(),
     prisma.beleg.count({ where: { bankTransactionId: { not: null } } }),
@@ -79,4 +80,15 @@ async function offeneZahlungen() {
       gegenpartei: r.counterparty,
       zweck: r.purpose?.replace(/\s+/g, " ").slice(0, 100) ?? null,
     }));
+}
+
+/** Alle Belege eines Zeitraums (ohne Dateien), z. B. für den Vergleich mit den Auswertungen des Steuerbüros. */
+async function alleBelege(von: string, bis: string) {
+  const ok = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
+  const rows = await prisma.beleg.findMany({
+    where: { datum: { gte: new Date(`${ok(von) ? von : "2026-01-01"}T00:00:00Z`), lte: new Date(`${ok(bis) ? bis : "2026-12-31"}T00:00:00Z`) } },
+    orderBy: { datum: "asc" },
+    select: { id: true, datum: true, typ: true, firma: true, nummer: true, netto: true, ustSatz: true, brutto: true, waehrung: true, dateiname: true, quelle: true, bankTransactionId: true },
+  });
+  return rows.map((b) => ({ ...b, datum: b.datum?.toISOString().slice(0, 10) ?? null, netto: b.netto == null ? null : Number(b.netto), ustSatz: b.ustSatz == null ? null : Number(b.ustSatz), brutto: b.brutto == null ? null : Number(b.brutto), zugeordnet: !!b.bankTransactionId, bankTransactionId: undefined }));
 }
