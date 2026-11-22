@@ -204,3 +204,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **22.11.2026, Keine Faxnummern im CRM:** Ole: „Fax-Nummern können bei allen Kontakten und Kontakten in der Zukunft
   immer raus.“ Spalte `SalesContact.fax` samt bestehender Nummern gelöscht (Migration `20261122140000_kontakt_fax_entfernen`),
   Anreicherung liest kein Fax mehr aus Impressum/Website, CSV-Import und Kontaktansicht ohne Fax.
+- **22.11.2026, Vorauszahlung standardmäßig anbieten:** Ole: „biete die Vorauszahlung standardmäßig immer an“. Neue
+  Angebote haben „Vorauszahlung anbieten“ vorausgewählt (6 Monate: 1 geschenkt, 12 Monate: 3 geschenkt); der Kunde wählt
+  bei der Annahme weiter selbst, monatlich bleibt vorausgewählt. Abwählbar; greift nicht bei Pay-per-Lead, Startpreis
+  oder ohne Laufzeit. Für „Zahlung nachträglich“ muss sie abgewählt werden.

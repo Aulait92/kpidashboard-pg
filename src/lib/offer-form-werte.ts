@@ -122,7 +122,8 @@ export function standardFormWerte(initial: OfferFormInitial, referralDiscount: {
     billingFree: false,
     validDays: "14",
     seats: String(PRICE_LIST.seatsIncluded),
-    annual: false,
+    // Vorauszahlung standardmäßig anbieten (Ole, 22.11.2026); greift nur, wo möglich (vorauszahlungMoeglich)
+    annual: true,
     bestand: false,
     empfehlung: false,
     vermittler: "vertreter",
