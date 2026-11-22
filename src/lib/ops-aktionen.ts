@@ -168,6 +168,23 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r === "nichts" ? { ok: false, error: "Nichts versucht (keine Sperre „kein WhatsApp“ oder keine Nummer)." } : { ok: true, info: r === "termin" ? "Terminbestätigung per WhatsApp versucht." : "Erstanschreiben per WhatsApp versucht." };
     },
   },
+  bank_csv_importieren: {
+    beschreibung: "Kontoumsätze aus einer CSV in die Buchhaltung (Geld › Kosten) übernehmen, je Konto getrennt (z. B. n26 für geschäftliche Ausgaben vom Privatkonto); Regeln greifen, Rest steht offen zum Zuordnen. Ohne Oberfläche.",
+    felder: { konto: "Kurzname, nur Kleinbuchstaben/Ziffern, z. B. n26", csv: "Inhalt der CSV-Datei" },
+    run: async (p) => {
+      const konto = text(p.konto, 30).toLowerCase();
+      if (!/^[a-z0-9]{2,30}$/.test(konto)) return { ok: false, error: "Konto: nur Kleinbuchstaben und Ziffern." };
+      const csv = typeof p.csv === "string" ? p.csv : "";
+      if (csv.length < 20 || csv.length > 2_000_000) return { ok: false, error: "CSV fehlt oder ist zu groß." };
+      const { parseBankCsv } = await import("@/lib/bank/csv");
+      const parsed = parseBankCsv(csv, "auto");
+      if (parsed.error) return { ok: false, error: parsed.error };
+      const { importTransactions } = await import("@/lib/bank/server");
+      const r = await importTransactions(`csv:${konto}`, parsed.rows, { source: "csv" });
+      await audit("bank.sync", { details: { csv: konto, rows: parsed.rows.length, created: r.created }, actor: OPS_ACTOR });
+      return { ok: true, info: `${konto}: ${parsed.rows.length} Umsätze gelesen (${parsed.skipped} übersprungen), ${r.created} neu, ${r.existing} schon da, ${r.assigned} per Regel zugeordnet, ${r.open} offen zum Zuordnen.` };
+    },
+  },
   buchungslink_senden: {
     beschreibung: "Buchungslink per WhatsApp an einen Lead ohne Termin schicken (einmal je Chat, nur im offenen 24-h-Fenster), Lead über Kunde und Namen",
     felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
