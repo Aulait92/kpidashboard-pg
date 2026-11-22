@@ -30,6 +30,8 @@ import { ladeKontakt, ladeKontaktakte } from "@/lib/vertrieb/kontaktakte";
 import { kanaeleText, zeitLabel } from "@/lib/vertrieb/geplante-nachrichten";
 import { ladeGeplanteNachrichten } from "@/lib/vertrieb/geplante-nachrichten-server";
 import { audienceForContact } from "@/lib/vertrieb/praesentationen";
+import { ladeWhatsAppVerlauf } from "@/lib/vertrieb/whatsapp-verlauf";
+import { WhatsAppVerlaufKarte } from "@/components/admin-neu/vertrieb/whatsapp-verlauf";
 
 export const metadata = { title: "Kontakt | performancegrowth Admin" };
 
@@ -39,6 +41,7 @@ export const metadata = { title: "Kontakt | performancegrowth Admin" };
 // „Eintragen“ (Anruf, Mail, Notiz im Fenster statt offenem Formular) und „Mehr“ (Präsentation, Website, Zusammenführen,
 // Löschen). Reihenfolge: Nächster Schritt, Verlauf | Angebot (Optionen zugeklappt), Follow-up, Aufgaben, Daten
 // (Kontakt, Agentur, Cold Mails, Kundendaten in einer zugeklappten Karte; Cold Mails mit Antwort stehen offen darüber).
+// Unter dem Verlauf der WhatsApp-Chat über die Support-Nummer (nur wenn vorhanden, 22.11.2026).
 // In der Kopfzeile die nächste automatische Nachricht an den Kontakt (Link auf Verkaufen → Geplante Nachrichten).
 // ?termin=<beliebig> öffnet „Termin buchen“ sofort („+ Neu → Termin“, Vertrieb → Termine).
 
@@ -74,6 +77,8 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   // Nächste automatische Nachricht an diesen Kontakt (lib/vertrieb/geplante-nachrichten.ts), Liste unter Verkaufen → Geplante Nachrichten
   const jetzt = new Date();
   const naechsteNachricht = (await ladeGeplanteNachrichten({ now: jetzt, contactId: c.id }).catch(() => []))[0] ?? null;
+  // WhatsApp mit dem Kontakt über die Support-Nummer (lib/vertrieb/whatsapp-verlauf.ts)
+  const whatsapp = await ladeWhatsAppVerlauf({ salesContactId: c.id }).catch(() => null);
 
   const coldMailsOben = hatAntwort(c);
   const tel = c.phone ? `tel:${c.phone.replace(/\s/g, "")}` : null;
@@ -194,6 +199,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
             <NaechsterSchritt c={c} a={a} termin={termin ?? null} />
             {/* Sprungmarke #aktivitaet öffnet „Eintragen“ (EintragenKnopf), #aufgaben springt zu den Aufgaben */}
             <Verlauf c={c} />
+            {whatsapp ? <WhatsAppVerlaufKarte v={whatsapp} now={jetzt.getTime()} /> : null}
             {coldMailsOben ? <ColdMails c={c} /> : null}
           </div>
 
