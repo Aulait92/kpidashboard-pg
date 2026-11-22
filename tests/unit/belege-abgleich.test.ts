@@ -124,3 +124,13 @@ describe("Meta über Klarna mit umbrochenem Verwendungszweck", () => {
     expect(belegeZuordnen([u0], [b("m", "2026-06-10", 865, "Meta Platforms Ireland Limited")])).toEqual([{ umsatzId: "k", belegId: "m" }]);
   });
 });
+
+describe("centgenau vor ±2 Cent", () => {
+  it("37,22 und 37,23 werden nicht vertauscht", () => {
+    const r = belegeZuordnen(
+      [u("a", "2026-06-30", -37.23, "META PLATFORMS IRELAND LIMITED", "ignoriert"), u("b", "2026-06-30", -37.22, "META PLATFORMS IRELAND LIMITED", "ignoriert")],
+      [b("x", "2026-06-28", 37.22, "Meta Platforms Ireland Limited"), b("y", "2026-06-27", 37.23, "Meta Platforms Ireland Limited")],
+    );
+    expect(r).toEqual(expect.arrayContaining([{ umsatzId: "a", belegId: "y" }, { umsatzId: "b", belegId: "x" }]));
+  });
+});

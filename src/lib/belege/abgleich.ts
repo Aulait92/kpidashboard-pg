@@ -92,7 +92,8 @@ export function belegeZuordnen(umsaetze: AbgleichUmsatz[], belege: AbgleichBeleg
       if (!imFenster(b.datum, u.datum)) continue;
       const abstand = Math.abs(tage(u.datum, b.datum!));
       if (gleicherBetrag(b, u)) {
-        if (anbieterPasst(b, u)) kandidaten.push({ u, b, stufe: 3, abstand });
+        // centgenau vor ±2 Cent (sonst tauschen zwei fast gleiche Beträge die Belege)
+        if (anbieterPasst(b, u)) kandidaten.push({ u, b, stufe: centgenau(b, u) ? 4 : 3, abstand });
         else if (centgenau(b, u) && !kennwoerter(b.firma).length) {
           // nur Betrag (Beleg ohne erkannten Anbieter): centgenau und eindeutig in beide Richtungen
           const andereBelege = frei.filter((x) => x !== b && imFenster(x.datum, u.datum) && gleicherBetrag(x, u)).length;
