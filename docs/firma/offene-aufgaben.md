@@ -12,6 +12,7 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 
 | Aufgabe | Stand | Wer |
 |---|---|---|
+| Kranken/BU/Leben auslesen: Nachweis „keine Speicherung“. Weg A AWS Bedrock (Support-Fall 179502644300918, Konto 048394350784) und Weg B OpenAI (Anfrage „Sprich mit uns“ 22.11.2026: Zero Data Retention + EU-Datenresidenz, API). Danach: EU-Projekt, Railway-Variablen, Datum unter Admin › Einstellungen › Anbindungen, Diagnose q=policen-auslesen prüfen. Je Vermittler zusätzlich Freischaltung (Einrichtungsschritt; Lohmann, Anid offen, q=policen-gesundheit) | wartet auf AWS bzw. OpenAI | Ole / CTO |
 | Team-Überblick für Inhaber (Termine 7 Tage, Offenes je Mitglied, Karte auf Heute), Branch `worktree-agent-abe206f8fef110ae2`, nicht gepusht; Notiz `docs/ux/team-ueberblick-2026-11-21.md`. Offen: Persona-Test auf Staging mit echtem Team, nach Livegang Fehlklicks auf der Team-Zeile (Tippen klappt jetzt auf statt Menü) prüfen | wartet auf Merge | UX/UI / CTO |
 | Tierversicherung Katze: Text je Umfang (OP, voll, offen) statt immer „OP-Versicherung“ | Teilarbeit Branch `tkv-umfang` | CTO |
 | Keine neuen Terminvorschläge, wenn der Lead schon einen künftigen Termin hat | offen | CTO |
