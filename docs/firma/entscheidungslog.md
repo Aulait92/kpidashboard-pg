@@ -213,6 +213,13 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **22.11.2026, Einwilligungstext kürzer (alle Formulare):** Ole: KI-Satz raus, Text conversionoptimiert. Standard jetzt
   Fassung `2026-11-22b-knopf`, Titel „Letzter Schritt: Tippen Sie unten auf „Senden““. Lohmann: neue Formulare Kfz v5
   (1829825371571727) und Privatschutz v6 (1837248347700709), Anzeigen erneut umgestellt (Lernphase am 22.11. zweimal neu).
+- **22.11.2026, Vertriebs-CRM „Nicht erreicht“ und Gewonnen/Verloren:** Ole: „Bei Nicht erreicht geht WhatsApp und Email
+  raus + ich brauche einen gewonnen, verloren button“. Nach dem Anruf-Ergebnis „Nicht erreicht“ gehen E-Mail (Resend,
+  Antwort an Ole) und WhatsApp (Support-Nummer, Vorlage `pg_vertrieb_nicht_erreicht_v1`, UTILITY) mit persönlichem
+  Buchungslink raus, höchstens einmal je 7 Tage, nur an warme Kontakte (Formular-Lead, Termin, Angebot, Antwort,
+  „WhatsApp erlaubt“); reine Kaltkontakte bekommen nichts (§ 7 UWG, Schutz der Support-Nummer und der Hauptdomain).
+  WhatsApp erst nach Freigabe der Vorlage bei Meta. Kontaktakte: Knöpfe „Gewonnen“ und „Verloren“ (mit Grund).
+  Code: `lib/vertrieb/nicht-erreicht.ts`, `nicht-erreicht-server.ts`.
 - **22.11.2026, ohne Garantie verkaufen** (Ole: „nimm die garantien für alle kommenden angebote raus, auch aus den
   vertriebsfolien. ich verkaufe erstmal ohne garantie“): Angebote ab 22.11.2026, 19:15 Uhr ohne Abschnitt „Garantien“
   (`GUARANTEES_UNTIL`), AGB „Garantien“ nur noch für ältere Angebote (Stand 22.11.2026), Empfehlungsseite ohne Garantien,

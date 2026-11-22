@@ -31,6 +31,7 @@ import {
   ZAHLUNG_TEMPLATE_SIE_V2,
 } from "@/lib/angebot-zahlungserinnerung";
 import { BONUS_TEMPLATE_PURPOSE, BONUS_VORLAGEN } from "@/lib/vertrieb/bonus-erinnerung";
+import { NE_TEMPLATE_BODY, NE_TEMPLATE_EXAMPLES, NE_TEMPLATE_NAME, NE_TEMPLATE_PURPOSE } from "@/lib/vertrieb/nicht-erreicht";
 
 export const TERMIN_TEMPLATE_NAME = "pg_vertrieb_termin_v1";
 export const TERMIN_TEMPLATE_PURPOSE = "vertrieb_termin";
@@ -162,6 +163,8 @@ export const SUPPORT_TEMPLATES: SupportTemplate[] = [
   { name: ZAHLUNG_TEMPLATE_DU_V2, body: ZAHLUNG_TEMPLATE_BODY_DU_V2, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
   // Erinnerung am letzten Tag des Abschlussbonus (lib/vertrieb/bonus-erinnerung.ts), Sie/Du, mit bzw. ohne „später zahlen“
   ...BONUS_VORLAGEN.map(({ name, body, examples, purpose }) => ({ name, body, examples: [...examples], purpose })),
+  // Nach dem Anruf-Ergebnis „Nicht erreicht“ mit Buchungslink (lib/vertrieb/nicht-erreicht.ts)
+  { name: NE_TEMPLATE_NAME, body: NE_TEMPLATE_BODY, examples: NE_TEMPLATE_EXAMPLES, purpose: NE_TEMPLATE_PURPOSE },
 ];
 
 export function supportTemplateRequest(t: SupportTemplate): CreateTemplateInput {
@@ -628,6 +631,7 @@ const LABEL: Record<string, string> = {
   vertrieb_gleich: "Termin gleich",
   [ZAHLUNG_TEMPLATE_PURPOSE]: "Zahlungserinnerung",
   [BONUS_TEMPLATE_PURPOSE]: "Bonus-Erinnerung",
+  [NE_TEMPLATE_PURPOSE]: "Nicht erreicht",
 };
 
 /**
