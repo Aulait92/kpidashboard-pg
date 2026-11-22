@@ -816,6 +816,12 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
   "push-geraete": async () => (await import("@/lib/ops/push-geraete")).pushGeraeteDiagnose(),
   "lead-felder": async (p) => (await import("@/lib/ops/lead-felder")).leadFelderDiagnose(p),
+  // Trockenlauf des Media Buyers (22.11.2026): rechnet Budgets, schreibt nichts an Meta, keine Pushs; protokolliert
+  // nur eine Entscheidung mit dryRun=true (wie „Simulieren“ im Admin)
+  "media-buyer-trockenlauf": async () => {
+    const r = await (await import("@/lib/media-buyer")).runMediaBuyer({ dryRun: true, force: true });
+    return { ranAt: r.ranAt, eingeschaltet: process.env.MEDIA_BUYER_ENABLED === "1", pools: r.pools.map((p) => ({ pool: p.poolLabel, aktion: p.action, leadsMtd: p.leadsMtd, ziel: p.goal, prognose: p.projected, budgetVorher: p.prevBudget, budgetNeu: p.newBudget, grund: p.reason, fehler: p.error })) };
+  },
   "test-chat": async (p) => (await import("@/lib/ops/test-chat")).testChatDiagnose(p),
   buchungslinks: async () => (await import("@/lib/ops/buchungslinks")).buchungslinksDiagnose(),
   einwilligungstext: async (p) => (await import("@/lib/ops/einwilligungstext")).einwilligungstextDiagnose(p),
