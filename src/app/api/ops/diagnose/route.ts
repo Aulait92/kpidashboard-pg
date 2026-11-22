@@ -780,6 +780,7 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=nutzung-woche[&tage=7][&gruppe=software|ppl]  Usability-Woche im Vermittlerbereich: aktive Kunden/Nutzer, Top- und ungenutzte Seiten/Aktionen, Abbrüche, Fehler-Toasts, Feedback/NPS, Support, Hilfe-Themen, Aufgaben, nächster Schritt, erste Reaktion, Admin-Nutzung; letzte N Tage gegen die N davor, nur Zahlen (lib/ops/nutzung-woche.ts)
 //   q=journey[&tage=30]                    Lead-Reise je Vermittler: Lead → erste Antwort → Vorschlag → Termin → Komplettcheck → erschienen, nur Zahlen (lib/ops/journey.ts)
 //   q=experimente                          Splittests der Lead-Reise: laufende Tests, Quoten je Fassung, Gewinner, nur Zahlen (lib/experimente.ts)
+//   q=vertrieb-nicht-erreicht              A/B-Test der „Nicht erreicht“-Nachricht im Vertrieb: Antwort oder Termin binnen 72 h je Fassung, nur Zahlen (lib/vertrieb/nicht-erreicht-server.ts)
 //   q=funnel[&tage=30]                     Eigener PKV-Funnel: Besucher, Abbruch je Schritt, Leads, geliefert, mit Rückmeldung, erreicht, Termin,
 //                                          Abschluss, Umsatz je Besucher, Funnel-Tests je Fassung, nur Zahlen (lib/funnel/auswertung.ts)
 //   q=vertrieb-auskunft&email=…|&id=…|&suche=…  Auskunft nach Art. 15 für einen Vertriebskontakt (Felder, Herkunft, Empfänger, Mails, Sperre); Suche nur ID, Name, Firma, Status (lib/ops/vertrieb-auskunft.ts)
@@ -810,6 +811,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "nutzung-woche": async (p) => (await import("@/lib/ops/nutzung-woche")).nutzungWocheGetrennt(p),
   journey: async (p) => (await import("@/lib/ops/journey")).journeyDiagnose(p),
   experimente: async () => (await import("@/lib/experimente")).experimenteDiagnose(),
+  "vertrieb-nicht-erreicht": async () => (await import("@/lib/vertrieb/nicht-erreicht-server")).nichtErreichtAbDiagnose(),
   funnel: async (p) => (await import("@/lib/funnel/auswertung")).funnelDiagnose(p),
   "praesentation-quote": async (p) => (await import("@/lib/praesentation-messung")).praesentationQuoteDiagnose(p),
   "vertrieb-auskunft": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebAuskunftDiagnose(p),

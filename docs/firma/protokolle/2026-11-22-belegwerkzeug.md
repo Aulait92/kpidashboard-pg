@@ -146,7 +146,7 @@ sites.getmyinvoices.com/mcp.
 - Bewertung: für Geschäftsrechnungen vertretbar (gelb-grün). Auflagen: (1) Postfach-Import per Filter auf Rechnungen
   begrenzen, beim privaten Gmail nur Absender bzw. Betreff mit Rechnung, keine Komplettspiegelung; (2) bei fino nachfragen,
   ob Belege für das OCR-Training durch Plenty Staff ausgeschlossen werden können (Opt-out); (3) 2FA im Konto einschalten;
-  (4) AVV im Konto abschließen und als PDF in docs/recht ablegen.
+  (4) AVV gilt laut Ziffer 1.1 automatisch mit dem Vertrag (Testkonto G-6712208-0 seit 22.11.2026), PDF in docs/recht/getmyinvoices-avv-2023-08-01.pdf, Unterauftragnehmer in docs/recht/getmyinvoices-unterauftragnehmer-2025-03.pdf. 2FA ist eingeschaltet (Ole, 22.11.2026).
 - MCP-Server: nur lesend, ohne Aufpreis, Adresse https://api.getmyinvoices.com/accounts/mcp-v1/public/index.php;
   Einrichtung als Connector in claude.ai, danach neue Sitzung.
 - Preise: auf der Preisseite werden Beträge per Skript geladen, Leistungen je Paket gelesen (Professional: 200 Dokumente,

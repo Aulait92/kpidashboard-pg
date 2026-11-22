@@ -73,7 +73,19 @@ const FB_LOGIN =
 const VERIFIED =
   "Wissen, ob Ihr Portfolio verifiziert ist: business.facebook.com → Einstellungen → Sicherheitscenter → „Unternehmensverifizierung“. Zum Verbinden ist das nicht nötig. Ohne Verifizierung gelten bei Meta aber engere Grenzen, zum Beispiel beim Anzeigenamen und bei der Zahl der Nachrichten an neue Kontakte. Starten Sie die Verifizierung am besten parallel (Handelsregisterauszug oder Gewerbeanmeldung, Adresse, Telefon, Website mit Impressum), sie dauert meist einige Tage.";
 const MAILBOX = "Zugang zu Ihrem E-Mail-Postfach. Von 360dialog kommen eine Einladung und später ein Anmeldecode.";
-const DESKTOP = "Einen Computer statt des Handys. Erlauben Sie Pop-up-Fenster im Browser.";
+/**
+ * Firmengerät (Go-live-Prüfung 20./21.11.2026, Allianz-Generalvertretung): Auf Konzernrechnern und im Firmennetz sind
+ * Facebook und das Fenster von Meta oft gesperrt. Gleicher Satz in der Vorprüfung von Meta- und WhatsApp-Schritt.
+ */
+export const FIRMENGERAET = "Nutzen Sie einen privaten Computer außerhalb des Firmennetzes. Auf Firmengeräten sind Facebook und das Meta-Fenster oft gesperrt.";
+const DESKTOP = `Einen Computer statt des Handys. ${FIRMENGERAET} Erlauben Sie Pop-up-Fenster im Browser.`;
+
+/**
+ * Erster Prüfpunkt vor dem Verbinden (Go-live-Prüfung 20./21.11.2026): Eine Nummer läuft immer nur bei einem
+ * WhatsApp-Anbieter. Hängt sie z. B. noch bei Superchat, muss der alte Anbieter sie erst freigeben.
+ */
+export const VORPRUEFUNG_ANBIETER =
+  "Die Nummer ist bei keinem anderen WhatsApp-Anbieter (z. B. Superchat). Sonst lassen Sie sie dort zuerst freigeben, das kann einige Werktage dauern.";
 
 // Ablauf wie im echten Durchlauf (Ole, 15.11.2026): Software → Einladung per E-Mail → Anmeldung bei 360dialog
 // mit Code → Nummer und Frage „already on WhatsApp?“ → SMS-Code (bzw. später QR-Code) → „Meta Business Signup“
@@ -237,7 +249,7 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
       ...LOGIN,
       numberQuestion(
         "Yes, Business app",
-        "Wählen Sie nicht „No, It's not connected“, sonst schlägt die Bestätigung fehl. Läuft die Nummer nicht in der App, sondern bei einem anderen Anbieter (z. B. Superchat), wählen Sie „Yes, Business API“.",
+        "Wählen Sie nicht „No, It's not connected“, sonst schlägt die Bestätigung fehl. Läuft die Nummer nicht in der App, sondern bei einem anderen Anbieter (z. B. Superchat), brechen Sie ab: Der Anbieter muss sie zuerst freigeben.",
       ),
       ...META_START,
       metaNumber(`${NOT_DISPLAY_NAME} Tippen Sie die Nummer nicht neu ein und wählen Sie keine neue Nummer, sonst klappt die Verbindung mit der WhatsApp Business App nicht.`),
@@ -299,12 +311,39 @@ export const ERROR_HELP = [
   "Meldung „This phone number belongs to another business“: Die Nummer hängt schon in einem anderen Meta-Portfolio. Dort entfernen oder eine andere Nummer nehmen.",
   "„Nummer wird bereits verwendet“: Die Nummer läuft noch in einer WhatsApp-App. Wählen Sie oben den passenden Weg.",
   "360dialog zeigt „Choose a plan“ oder „Pending Activation“: nichts kaufen, Fenster schließen und uns schreiben. Wir schalten die Nummer frei.",
+  `Facebook oder das Fenster von Meta lädt nicht: ${FIRMENGERAET}`,
+  "Die Nummer läuft noch bei einem anderen Anbieter (z. B. Superchat): Lassen Sie sie dort zuerst freigeben, dann noch einmal verbinden.",
 ];
+
+// Weg „Meine Nummer läuft bei einem anderen Anbieter“ (Go-live-Prüfung 20./21.11.2026): kein eigener ConnectPath, weil
+// hier noch nicht verbunden wird. Erst gibt der bisherige Anbieter die Nummer frei, dann verbinden wir gemeinsam.
+
+export const ANBIETER_OPTION = {
+  label: "Meine Nummer läuft bei einem anderen Anbieter",
+  hint: "Zum Beispiel Superchat. Der Anbieter muss die Nummer zuerst freigeben, das kann einige Werktage dauern.",
+};
+
+export const ANBIETER_GUIDE = {
+  intro: "Eine Nummer kann immer nur bei einem WhatsApp-Anbieter laufen. Wenn es schneller gehen soll, nehmen Sie für Ihren Assistenten eine neue Nummer.",
+  steps: [
+    {
+      title: "Freigabe beim bisherigen Anbieter anfragen",
+      text: "Schreiben Sie dem Support Ihres Anbieters: „Bitte geben Sie meine WhatsApp-Nummer für den Wechsel zu einem anderen Anbieter frei.“ Kündigen Sie den Vertrag dort erst, wenn die Nummer bei uns verbunden ist.",
+    },
+    {
+      title: "Bestätigung abwarten",
+      text: "Das kann einige Werktage dauern. Die übrigen Schritte der Einrichtung können Sie in der Zeit schon erledigen.",
+    },
+    {
+      title: "Gemeinsam verbinden",
+      text: "Buchen Sie den 15-Minuten-Hilfetermin für die Zeit nach der Freigabe. Wir verbinden die Nummer dann zusammen.",
+    },
+  ],
+};
 
 // Zusatzfrage beim Weg „WhatsApp Business App“: schon bei einem anderen Anbieter verbunden?
 
 export type ProviderAnswer = "nein" | "ja" | "unklar";
-export type CoexAnswer = "nein" | "ja";
 
 export const PROVIDER_QUESTION = {
   question: "Ist die Nummer schon mit einem anderen Anbieter verbunden (z. B. Superchat, MessageBird, Charles, WATI)?",
@@ -315,13 +354,13 @@ export const PROVIDER_QUESTION = {
   ],
 };
 
+/**
+ * Go-live-Prüfung 20./21.11.2026: Früher hieß es hier „vorher nichts kündigen oder löschen“ und es ging direkt los. Eine
+ * Nummer läuft aber nur bei einem Anbieter, der bisherige muss sie zuerst freigeben. Darum kein Start, sondern der Weg
+ * „Meine Nummer läuft bei einem anderen Anbieter“ (ANBIETER_GUIDE).
+ */
 export const PROVIDER_YES =
-  "Das geht. Sie wählen im Fenster von Meta Ihre bestehende Nummer aus. Beim bisherigen Anbieter müssen Sie vorher nichts kündigen oder löschen. Danach legen Sie in der Meta Business Suite fest, dass die Gespräche an uns gehen. Beide Anbieter gleichzeitig funktionieren nicht zuverlässig. Wenn Sie den bisherigen Anbieter weiter nutzen möchten, nehmen Sie für Ihren Assistenten besser eine zweite Nummer.";
-
-export const COEX_QUESTION = "Läuft die Nummer beim bisherigen Anbieter zusätzlich in der WhatsApp Business App auf Ihrem Handy?";
-
-export const COEX_WITH_PROVIDER =
-  "Dann ist ein eigener Ablauf nötig: Die Verbindung beim bisherigen Anbieter wird getrennt, Ihre Chats werden gesichert und die Nummer wird neu verbunden. Bitte buchen Sie dafür den 15-Minuten-Hilfetermin. Wir machen das gemeinsam.";
+  "Dann muss Ihr bisheriger Anbieter die Nummer zuerst freigeben, das kann einige Werktage dauern. Möchten Sie ihn weiter nutzen, nehmen Sie für Ihren Assistenten eine zweite Nummer.";
 
 export const PROVIDER_UNSURE = [
   "Sie bekommen eine Rechnung von einem WhatsApp-Tool oder haben dort einen Login.",
@@ -329,9 +368,7 @@ export const PROVIDER_UNSURE = [
   "Trifft beides nicht zu, ist die Nummer in der Regel nicht verbunden. Im Zweifel klären wir es im 15-Minuten-Hilfetermin.",
 ];
 
-/** Darf der Kunde beim Business-Weg mit diesen Antworten selbst starten? */
-export function businessCanStart(provider: ProviderAnswer | null, coex: CoexAnswer | null): boolean {
-  if (provider === "nein") return true;
-  if (provider === "ja") return coex === "nein";
-  return false;
+/** Darf der Kunde beim Business-Weg selbst starten? Nur, wenn die Nummer bei keinem anderen Anbieter hängt. */
+export function businessCanStart(provider: ProviderAnswer | null): boolean {
+  return provider === "nein";
 }

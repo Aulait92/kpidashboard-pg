@@ -211,6 +211,32 @@ export function terminNachfassText(an: Ansprache, person: VermittlerName, zeiten
   return a(an, `Kurze Nachfrage: Passt dir ${zeiten[0]} oder ${zeiten[1]} für ${art} mit ${person.dat}?`, `Kurze Nachfrage: Passt Ihnen ${zeiten[0]} oder ${zeiten[1]} für ${art} mit ${person.dat}?`);
 }
 
+/** „Dienstag, 15. Dezember“ (deutsche Zeit). */
+const tagLang = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" }).format(d);
+
+/**
+ * Terminwunsch mehr als 7 Tage in der Zukunft (Ole, 22.11.2026, „Terminsuche über 7 Tage“): statt Zeiten in den
+ * nächsten Tagen eine Wiedervorlage (bot.ts), der Lead bekommt diese kurze Bestätigung. `am` = Zeitpunkt der
+ * Wiedervorlage. Keine Gedankenstriche, keine Zusage zu einem bestimmten Termin.
+ */
+export function wiedervorlageText(an: Ansprache, person: VermittlerName, am: Date): string {
+  const tag = tagLang(am);
+  return a(
+    an,
+    `Alles klar, dann melde ich mich am ${tag} wieder bei dir und wir suchen einen passenden Termin mit ${person.dat}.`,
+    `Alles klar, dann melde ich mich am ${tag} wieder bei Ihnen und wir suchen einen passenden Termin mit ${person.dat}.`,
+  );
+}
+
+/**
+ * Kalender voll (Ole, 22.11.2026): findet die App keine zwei freien Zeiten, bekommt der Vermittler eine Aufgabe (bot.ts)
+ * und der Lead diesen Satz. einleitung = kurzer Satz des Assistenten vorweg (statt des Danks).
+ */
+export function kalenderVollText(an: Ansprache, person: VermittlerName, einleitung?: string | null): string {
+  const vorweg = einleitung?.replace(/\s+/g, " ").trim() || a(an, "Danke dir!", "Vielen Dank!");
+  return `${vorweg} ${a(an, `${person.nom} meldet sich persönlich bei dir, um einen passenden Termin zu finden.`, `${person.nom} meldet sich persönlich bei Ihnen, um einen passenden Termin zu finden.`)}`;
+}
+
 /** Höchstens so viele Punkte in der Bereitlegen-Liste (Ole, 17.11.2026). */
 export const MAX_BEREITLEGEN = 3;
 
@@ -763,7 +789,7 @@ export function istZusageText(text: string | null | undefined): boolean {
  * Lead Tag und Uhrzeit und ist sie frei, wird direkt gebucht. Nur bei belegter Zeit oder nur Tag/Tageszeit: zwei Zeiten.
  */
 export const WUNSCHZEIT_REGEL =
-  "Nennt der Lead eine konkrete Zeit (Tag und Uhrzeit, z. B. „Mittwoch um 16 Uhr“) und ist genau diese Zeit unter den freien Zeiten von get_available_slots: frag nicht noch einmal nach und biete keine zweite Zeit an, sondern buche sie direkt mit book_appointment (gleiche Regeln zur E-Mail-Adresse wie unten). Nur wenn sie belegt ist oder er nur einen Tag bzw. eine Tageszeit nennt: termin_vorschlagen mit erneut=true und den zwei nächstgelegenen freien start-Werten (bei belegter Zeit als einleitung kurz: „Um 16 Uhr ist leider schon belegt.“). Nennt der Lead einen Tag oder Zeitraum, der nicht unter den freien Zeiten ist (z. B. „Dienstag“, „erst nächste Woche“): hol mit get_available_slots und ab = diesem Tag die freien Zeiten dort und schlag zwei davon vor; kann er nur später, bekommt er den späteren Termin. Zeiten, die der Lead schon abgelehnt hat (z. B. mit „Andere Zeit“), nie noch einmal anbieten.";
+  "Nennt der Lead eine konkrete Zeit (Tag und Uhrzeit, z. B. „Mittwoch um 16 Uhr“) und ist genau diese Zeit unter den freien Zeiten von get_available_slots: frag nicht noch einmal nach und biete keine zweite Zeit an, sondern buche sie direkt mit book_appointment (gleiche Regeln zur E-Mail-Adresse wie unten). Nur wenn sie belegt ist oder er nur einen Tag bzw. eine Tageszeit nennt: termin_vorschlagen mit erneut=true und den zwei nächstgelegenen freien start-Werten (bei belegter Zeit als einleitung kurz: „Um 16 Uhr ist leider schon belegt.“). Nennt der Lead einen Tag oder Zeitraum, der nicht unter den freien Zeiten ist (z. B. „Dienstag“, „erst nächste Woche“): hol mit get_available_slots und ab = diesem Tag die freien Zeiten dort und schlag zwei davon vor; kann er nur später, bekommt er den späteren Termin. Liegt der Wunsch mehr als 7 Tage in der Zukunft (z. B. „in drei Wochen“, „im Dezember“): ebenfalls get_available_slots mit ab = diesem Tag, die App legt dann eine Wiedervorlage an und bestätigt sie dem Lead selbst; schlag dann keine Zeiten in den nächsten Tagen vor. Zeiten, die der Lead schon abgelehnt hat (z. B. mit „Andere Zeit“), nie noch einmal anbieten.";
 
 /** Prompt-Block Terminvorschlag und Buchung (vor dem Termin). beispiel = terminVorschlagText mit Platzhaltern. */
 export function terminRegeln(o: { an: Ansprache; person: VermittlerName; formate: TerminFormate; beispiel: string; emailBekannt: boolean }): string {

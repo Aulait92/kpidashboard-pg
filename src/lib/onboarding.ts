@@ -27,6 +27,7 @@ import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { validLoginEmail } from "@/lib/login-email";
+import { videoLinkNoetig } from "@/lib/video-raum";
 import { ersterAbrechnungstag } from "@/lib/abrechnungstag";
 import { mitKampagnen, mitSoftware, normalizePackage, PACKAGE_LABEL, prepayFreeMonthsFor, rhythmusFuer } from "@/lib/offer-pricing";
 
@@ -79,15 +80,34 @@ function dueBefore(start: Date | null, daysBefore: number, minDaysFromNow: numbe
   return due;
 }
 
-/** Kalenderschritt erledigt: Zeitenquelle da und, ohne Google/Microsoft, ein Video-Link hinterlegt. (rein) */
-export function kalenderSchrittFertig(c: {
-  calendarConnection?: { status: string; provider: string } | null;
-  agentConfig?: { availabilityIcsUrlEnc: string | null; allianzCalendarEnc: string | null; videoRoomUrl: string | null } | null;
-}): boolean {
+/**
+ * Kalenderschritt erledigt: Zeitenquelle da und, ohne Google/Microsoft, ein Video-Link hinterlegt. Mit dem Ausweg
+ * „Mein Versicherer erlaubt das nicht“ (uebersprungen) entfällt die Zeitenquelle, der Video-Link bleibt Pflicht
+ * (Go-live-Prüfung 22.11.2026: sonst haben Videotermine keinen Raum). (rein)
+ */
+export function kalenderSchrittFertig(
+  c: {
+    calendarConnection?: { status: string; provider: string } | null;
+    agentConfig?: { availabilityIcsUrlEnc: string | null; allianzCalendarEnc: string | null; videoRoomUrl: string | null } | null;
+  },
+  uebersprungen = false,
+  einladungAngekommen = true,
+): boolean {
   const verbunden = c.calendarConnection?.status === "connected";
-  const meetOderTeams = verbunden && (c.calendarConnection?.provider === "google" || c.calendarConnection?.provider === "microsoft");
-  const zeiten = verbunden || !!c.agentConfig?.availabilityIcsUrlEnc || !!c.agentConfig?.allianzCalendarEnc;
-  return zeiten && (meetOderTeams || !!c.agentConfig?.videoRoomUrl?.trim());
+  const zeiten = uebersprungen || verbunden || !!c.agentConfig?.availabilityIcsUrlEnc || !!c.agentConfig?.allianzCalendarEnc;
+  if (einladungsTestNoetig(c.calendarConnection) && !einladungAngekommen) return false;
+  return zeiten && (!videoLinkNoetig(c.calendarConnection) || !!c.agentConfig?.videoRoomUrl?.trim());
+}
+
+/** stepSkips-Eintrag „Test-Einladung angekommen“ (Kalenderschritt mit App-Kalender, 22.11.2026). */
+export const EINLADUNG_TEST_KEY = "calendarEinladung";
+
+/**
+ * App-Kalender (auch Allianz): Termine kommen als Einladung per Mail, oft an eine Konzernadresse, deren Filter sie
+ * blockieren kann. Dann gilt der Kalenderschritt erst nach bestätigter Test-Einladung als erledigt. (rein)
+ */
+export function einladungsTestNoetig(conn: { status: string; provider: string } | null | undefined): boolean {
+  return conn?.status === "connected" && conn.provider === "app";
 }
 
 export async function startOnboarding(offerId: string, opts: StartOpts = {}): Promise<StartResult> {
@@ -542,7 +562,9 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         // Google/Microsoft verbunden oder freie Zeiten über App-Kalender, ICS-Link bzw. Allianz-Online-Kalender. Ohne
         // Google/Microsoft entsteht kein Meet-/Teams-Link: dann gehört der Video-Link (z. B. Webex) dazu (Ole, 21.11.2026:
         // „Lohmann hat im Onboarding gar keinen Webex-Link hinterlegt“).
-        done: kalenderSchrittFertig(ob.customer) || !!skip("calendar"),
+        // App-Kalender: erst mit bestätigter Test-Einladung (IT-Filter der Konzernadresse, 22.11.2026)
+        // Schon live (z. B. Lohmann): Test-Einladung nicht nachträglich verlangen (22.11.2026)
+        done: kalenderSchrittFertig(ob.customer, !!skip("calendar"), !!skip(EINLADUNG_TEST_KEY) || !!ob.liveAt),
         at: null,
       },
       {

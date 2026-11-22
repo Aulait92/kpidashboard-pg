@@ -88,6 +88,21 @@ export function zweiteSmsFaellig(ersteAt: Date, now: Date, g: Geschaeftszeiten):
   return berlinTag(now) >= tag;
 }
 
+/**
+ * Wann geht die nächste SMS der Nur-SMS-Strecke raus? (Vorschau „Nächste Nachrichten“, Ole 22.11.2026) Erste SMS:
+ * nächstes Geschäftsfenster ab jetzt; zweite: erster Zeitpunkt, an dem zweiteSmsFaellig gilt. null = keine mehr. Rein.
+ */
+export function naechsteSmsZeit(o: { smsZahl: number; smsAt: Date | null; g: Geschaeftszeiten; now: Date; max?: number }): Date | null {
+  if (o.smsZahl >= (o.max ?? 2)) return null;
+  if (o.smsZahl >= 1 && !o.smsAt) return null;
+  const schritt = 15 * 60 * 1000;
+  let t = new Date(Math.ceil(o.now.getTime() / schritt) * schritt);
+  for (let i = 0; i < 14 * 96; i++, t = new Date(t.getTime() + schritt)) {
+    if (o.smsZahl === 0 ? imGeschaeftsfenster(t, o.g) : zweiteSmsFaellig(o.smsAt!, t, o.g)) return t;
+  }
+  return null;
+}
+
 // ─── Länge (GSM 03.38) ─────────────────────────────────────────────────────────────────
 
 const GSM = "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";

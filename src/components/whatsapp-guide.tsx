@@ -7,20 +7,24 @@ import { IntroVideo } from "@/components/intro-video";
 import { VIDEOS } from "@/lib/intro-videos";
 import { buttonClass } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { istFreemail } from "@/lib/freemail";
 import {
+  ANBIETER_GUIDE,
+  ANBIETER_OPTION,
   businessCanStart,
-  COEX_QUESTION,
-  COEX_WITH_PROVIDER,
   GUIDES,
   PATH_OPTIONS,
   PROVIDER_QUESTION,
   PROVIDER_UNSURE,
   PROVIDER_YES,
-  type CoexAnswer,
+  VORPRUEFUNG_ANBIETER,
   type ConnectPath,
   type GuideStep,
   type ProviderAnswer,
 } from "@/lib/whatsapp/connect-guide";
+
+/** Gewählter Weg: einer der drei Verbindungswege oder „Nummer läuft bei einem anderen Anbieter“ (erst freigeben). */
+type Wahl = ConnectPath | "anbieter";
 
 const WHERE_LABEL: Record<GuideStep["where"], string> = {
   app: "Bei uns",
@@ -68,9 +72,14 @@ export function WhatsAppGuide({
   /** Video „WhatsApp verbinden“ aufklappbar über dem Knopf (Hilfeseite zeigt es separat). */
   showVideo?: boolean;
 }) {
-  const [path, setPath] = useState<ConnectPath | null>(initialPath);
-  const [email, setEmail] = useState(inviteEmail ?? "");
-  const [emailAendern, setEmailAendern] = useState(false);
+  const [wahl, setWahl] = useState<Wahl | null>(initialPath);
+  const anbieter = wahl === "anbieter";
+  const path: ConnectPath | null = wahl && wahl !== "anbieter" ? wahl : null;
+  // Firmen- bzw. Konzernadresse vorbelegt (Go-live-Prüfung 20./21.11.2026): Die Einladung von 360dialog bleibt dort oft im
+  // Filter hängen. Dann das Feld leer und offen zeigen und nach einer privaten Adresse fragen; leer = Firmenadresse.
+  const firmenAdresse = !!inviteEmail && !istFreemail(inviteEmail);
+  const [email, setEmail] = useState(firmenAdresse ? "" : (inviteEmail ?? ""));
+  const [emailAendern, setEmailAendern] = useState(firmenAdresse);
   const andereEmail = !!inviteEmail && email.trim().toLowerCase() !== inviteEmail.toLowerCase() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const startHref = (() => {
     const q = new URLSearchParams();
@@ -80,21 +89,34 @@ export function WhatsAppGuide({
     return qs ? `${connectHref}?${qs}` : connectHref;
   })();
   const [provider, setProvider] = useState<ProviderAnswer | null>(null);
-  const [coex, setCoex] = useState<CoexAnswer | null>(null);
   const guide = path ? GUIDES[path] : null;
   // Beim Business-Weg erst klären, ob die Nummer schon bei einem anderen Anbieter hängt.
   const isBusiness = path === "business";
-  const canStart = !guide ? false : isBusiness ? businessCanStart(provider, coex) : guide.canStart;
+  const canStart = !guide ? false : isBusiness ? businessCanStart(provider) : guide.canStart;
   const showSteps = !!guide && (!isBusiness || canStart);
-  const needsHelp = isBusiness && (provider === "unklar" || (provider === "ja" && coex === "ja"));
+  const needsHelp = anbieter || (isBusiness && provider === "unklar");
+  const hilfeKnopf = (
+    <Link href={helpHref} className={buttonClass(needsHelp ? "primary" : "secondary", "md", "justify-center gap-1.5")}>
+      <LifeBuoy className="h-4 w-4" /> Lieber gemeinsam? 15-Minuten-Hilfetermin buchen
+    </Link>
+  );
 
   return (
     <div className="space-y-5">
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3" data-wa-checklist>
+        <p className="text-[15px] font-medium">Vorher kurz prüfen:</p>
+        <ul className="mt-2 space-y-1.5 text-[15px]">
+          <li className="flex gap-2" data-wa-pruefpunkt-anbieter><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>{VORPRUEFUNG_ANBIETER}</span></li>
+          <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>Eine Nummer, die <b>nicht</b> in der normalen WhatsApp-App genutzt wird (z. B. zweite SIM, Festnetz oder neue Nummer).</span></li>
+          <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>Sie können an dieser Nummer jetzt eine SMS oder einen Anruf mit Bestätigungscode empfangen.</span></li>
+          <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>Sie sind bei Facebook angemeldet und Admin Ihres Business Managers.</span></li>
+        </ul>
+      </div>
       <fieldset>
         <legend className="mb-2 text-[15px] font-semibold">Welche Nummer soll Ihr Assistent nutzen?</legend>
         <div className="grid gap-2" role="radiogroup" aria-label="Welche Nummer soll Ihr Assistent nutzen?">
-          {PATH_OPTIONS.map((o) => {
-            const on = path === o.path;
+          {[...PATH_OPTIONS, { path: "anbieter" as const, ...ANBIETER_OPTION }].map((o) => {
+            const on = wahl === o.path;
             return (
               <button
                 key={o.path}
@@ -102,7 +124,7 @@ export function WhatsAppGuide({
                 role="radio"
                 aria-checked={on}
                 data-weg={o.path}
-                onClick={() => setPath(o.path)}
+                onClick={() => setWahl(o.path)}
                 className={cn(
                   "flex w-full items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]",
                   on ? "border-[color:var(--brand)] bg-[color:var(--brand-soft,#eef3ff)]" : "border-[color:var(--border)] hover:border-[color:var(--brand)]",
@@ -123,7 +145,23 @@ export function WhatsAppGuide({
         </div>
       </fieldset>
 
-      {guide ? (
+      {anbieter ? (
+        <div className="space-y-5" data-guide="anbieter">
+          <p className={cn("rounded-[var(--radius-md)] border px-4 py-3 text-sm", TONE_CLASS.warn)}>{ANBIETER_GUIDE.intro}</p>
+          <ol className="space-y-3">
+            {ANBIETER_GUIDE.steps.map((s, i) => (
+              <li key={s.title} className="flex gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-sunken,#f1f5f9)] text-xs font-semibold tabular-nums">{i + 1}</span>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[15px] font-medium">{s.title}</span>
+                  <p className="mt-0.5 text-sm text-[color:var(--muted)]">{s.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="flex flex-col gap-2 sm:flex-row">{hilfeKnopf}</div>
+        </div>
+      ) : guide ? (
         <div className="space-y-5" data-guide={path}>
           <p className={cn("rounded-[var(--radius-md)] border px-4 py-3 text-sm", TONE_CLASS[guide.tone])}>{guide.intro}</p>
 
@@ -134,30 +172,15 @@ export function WhatsAppGuide({
                 question={PROVIDER_QUESTION.question}
                 options={PROVIDER_QUESTION.answers}
                 value={provider}
-                onChange={(v) => {
-                  setProvider(v);
-                  setCoex(null);
-                }}
+                onChange={setProvider}
               />
               {provider === "ja" ? (
-                <>
+                <div className="space-y-2" data-wa-anbieter-ja>
                   <p className="text-sm">{PROVIDER_YES}</p>
-                  <Choice
-                    name="coex"
-                    question={COEX_QUESTION}
-                    options={[
-                      { value: "nein" as const, label: "Nein" },
-                      { value: "ja" as const, label: "Ja" },
-                    ]}
-                    value={coex}
-                    onChange={setCoex}
-                  />
-                  {coex === "ja" ? (
-                    <p className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
-                      {COEX_WITH_PROVIDER}
-                    </p>
-                  ) : null}
-                </>
+                  <button type="button" onClick={() => setWahl("anbieter")} className={buttonClass("primary", "md", "justify-center")}>
+                    So lassen Sie die Nummer freigeben
+                  </button>
+                </div>
               ) : null}
               {provider === "unklar" ? (
                 <div className="text-sm">
@@ -229,12 +252,15 @@ export function WhatsAppGuide({
             <div className="text-sm" data-wa-einladung-email>
               {emailAendern ? (
                 <label className="block">
-                  <span className="font-medium">Einladung von 360dialog an</span>
+                  <span className="font-medium">
+                    {firmenAdresse ? "An welche private E-Mail soll die Einladung gehen? Firmen-Postfächer blockieren sie oft." : "Einladung von 360dialog an"}
+                  </span>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
+                    placeholder={firmenAdresse ? "z. B. name@gmail.com" : undefined}
                     className="mt-1 block w-full rounded-[var(--radius-md)] border border-[color:var(--border)] px-3 py-2 text-[15px]"
                     data-wa-einladung-email-feld
                   />
@@ -247,7 +273,15 @@ export function WhatsAppGuide({
                   </button>
                 </p>
               )}
-              <p className="mt-1 text-[color:var(--muted)]">Firmen-Postfächer filtern diese E-Mail manchmal, dann besser eine private Adresse nehmen.</p>
+              <p className="mt-1 text-[color:var(--muted)]">
+                {firmenAdresse ? (
+                  <>
+                    Leer lassen, dann geht sie an <span className="break-all">{inviteEmail}</span>.
+                  </>
+                ) : (
+                  "Firmen-Postfächer filtern diese E-Mail manchmal, dann besser eine private Adresse nehmen."
+                )}
+              </p>
             </div>
           ) : null}
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -260,9 +294,7 @@ export function WhatsAppGuide({
                 Jetzt WhatsApp verbinden
               </a>
             ) : null}
-            <Link href={helpHref} className={buttonClass(needsHelp ? "primary" : "secondary", "md", "justify-center gap-1.5")}>
-              <LifeBuoy className="h-4 w-4" /> Lieber gemeinsam? 15-Minuten-Hilfetermin buchen
-            </Link>
+            {hilfeKnopf}
           </div>
           {canStart ? (
             <p className="text-sm text-[color:var(--muted)]">Dauer: etwa {guide.minutes} Minuten. Sie können jederzeit abbrechen und später weitermachen.</p>

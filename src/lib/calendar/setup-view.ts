@@ -5,12 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { userIdOfKey } from "@/lib/calendar/tokens";
 import { loadLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
 import { loadSources, upcomingBlocks, type AllianzSummary } from "@/lib/calendar/sources";
+import { meetOderTeams } from "@/lib/video-raum";
 
 const PROVIDER: Record<string, string> = { google: "Google-Kalender", microsoft: "Outlook-Kalender", app: "App-Kalender" };
 
 export type CalendarSetupView = {
   status: {
-    native: { connected: boolean; label: string | null; account?: string | null; app?: boolean };
+    /** meetOderTeams: Google bzw. Microsoft verbunden, dann entsteht der Videoraum je Termin automatisch (lib/video-raum.ts). */
+    native: { connected: boolean; label: string | null; account?: string | null; app?: boolean; meetOderTeams?: boolean };
     hasIcs: boolean;
     allianz: {
       orgName: string;
@@ -53,6 +55,7 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
         account: native?.accountEmail ?? null,
         // App-Kalender (lib/calendar/app-kalender.ts): Termine per Mail-Einladung, Google/Outlook bleibt wählbar
         app: native?.status === "connected" && native.provider === "app",
+        meetOderTeams: meetOderTeams(native),
       },
       hasIcs: sources.hasIcs,
       allianz: a

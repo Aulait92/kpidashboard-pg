@@ -236,7 +236,13 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Angebote haben „Vorauszahlung anbieten“ vorausgewählt (6 Monate: 1 geschenkt, 12 Monate: 3 geschenkt); der Kunde wählt
   bei der Annahme weiter selbst, monatlich bleibt vorausgewählt. Abwählbar; greift nicht bei Pay-per-Lead, Startpreis
   oder ohne Laufzeit. Für „Zahlung nachträglich“ muss sie abgewählt werden.
+- **22.11.2026, 20 Uhr eingespielt:** Terminsuche über 7 Tage (Wiedervorlage, Buchungslink nach zwei Absagen, Kalender
+  voll → Aufgabe), Policen-Bitte nennt genannte Verträge bei allen Produkten (Ole: Variante A, im Fenster freie Nachricht
+  ohne zweiten Knopf), Einrichtung Go-live-Hürden (anderer WhatsApp-Anbieter, private Einladungsmail, Firmengerät,
+  Videolink-Pflicht, Makler, Test-Einladung; schon live geschaltete Kunden bleiben unberührt).
 - **22.11.2026, Vorschau aller CRM-Nachrichten:** Ole: „Vorschau der Mails, die man im Admin-CRM raussenden wird, inkl.
   Templates“. Verkaufen → Geplante Nachrichten: Zeile antippen zeigt E-Mail und WhatsApp mit den echten Daten.
   Einstellungen → Mail- und WhatsApp-Vorlagen: alle automatischen Nachrichten mit Beispieldaten (Sie/Du) und Freigabestand
   der WhatsApp-Vorlagen. Versand und Vorschau nutzen dieselben Funktionen (`lib/vertrieb/nachricht-vorschau.ts`).
+- **22.11.2026, A/B-Test „Nicht erreicht“ (Vertrieb):** Ole bestätigt den Wortlaut von Fassung B („Erreiche ich Sie besser
+  vormittags oder nachmittags?“, Vorlage `pg_vertrieb_nicht_erreicht_b_v1`): „passt so“. Test läuft, Details in `docs/firma/ab-tests.md`.

@@ -10,13 +10,25 @@ import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 import { whatsappErlaubtStand } from "@/lib/vertrieb/bonus-erinnerung-server";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import {
+  NE_AB_TEST,
+  NE_FENSTER_STUNDEN,
+  NE_GEWINNER,
   NE_MAIL_AKTIVITAET,
+  NE_MIN_JE_FASSUNG,
   NE_TEMPLATE_BODY,
+  NE_TEMPLATE_BODY_B,
   NE_TEMPLATE_NAME,
+  NE_TEMPLATE_NAME_B,
   NE_WA_AKTIVITAET,
   istWarm,
+  neFassung,
+  neFassungAusNotiz,
+  neFassungVermerk,
+  nichtErreichtAbStand,
   nichtErreichtMail,
   nichtErreichtStopp,
+  type NeEinheit,
+  type NeFassung,
 } from "@/lib/vertrieb/nicht-erreicht";
 
 export type NichtErreichtErgebnis = { mail: "sent" | string; whatsapp: "sent" | string } | { stopp: string };
@@ -53,10 +65,16 @@ export async function nachNichtErreicht(contactId: string, now = new Date()): Pr
     const eingestellt = (await loadFollowupSettings()).bookingUrl?.trim() || publicSalesBookingUrl();
     const buchungslink = await vertriebsLinkFuerKontakt(eingestellt, contactId).catch(() => eingestellt);
 
+    // A/B-Test: Fassung fest je Kontakt, Rückfall auf A, solange nur Vorlage A freigegeben ist (lib/vertrieb/nicht-erreicht.ts)
+    const { supportVorlagenNutzbar } = await import("@/lib/vertrieb/termin-whatsapp");
+    const nutzbar = await supportVorlagenNutzbar().catch(() => () => false);
+    const fassung: NeFassung = neFassung(contactId, { a: nutzbar(NE_TEMPLATE_NAME, 2), b: nutzbar(NE_TEMPLATE_NAME_B, 2) });
+    const vermerk = neFassungVermerk(fassung);
+
     // E-Mail
     let mail = "keine_adresse";
     if (c.email && !c.email.endsWith("@kontakt.invalid")) {
-      const text = nichtErreichtMail({ buchungslink });
+      const text = nichtErreichtMail({ buchungslink, fassung });
       const anrede = anredeName("sie", { salutation: c.salutation, firstName: c.firstName, lastName: c.lastName, fullName: null });
       const r = await sendCustomerMail({
         to: c.email,
@@ -67,7 +85,7 @@ export async function nachNichtErreicht(contactId: string, now = new Date()): Pr
       });
       mail = r.ok ? "sent" : "failed";
       await prisma.salesActivity.create({
-        data: { contactId, type: "EMAIL", outcome: r.ok ? NE_MAIL_AKTIVITAET : "Nicht erreicht: E-Mail fehlgeschlagen", note: r.ok ? `An ${c.email}, Betreff: ${text.subject}` : r.error },
+        data: { contactId, type: "EMAIL", outcome: r.ok ? NE_MAIL_AKTIVITAET : "Nicht erreicht: E-Mail fehlgeschlagen", note: r.ok ? `An ${c.email}, Betreff: ${text.subject}, ${vermerk}` : r.error },
       });
     }
 
@@ -79,11 +97,12 @@ export async function nachNichtErreicht(contactId: string, now = new Date()): Pr
         contactName: [c.firstName, c.lastName].filter(Boolean).join(" ") || c.name,
         du: false,
         vorlage: async () => {
-          const { supportVorlagenNutzbar } = await import("@/lib/vertrieb/termin-whatsapp");
-          return (await supportVorlagenNutzbar())(NE_TEMPLATE_NAME, 2) ? { name: NE_TEMPLATE_NAME, body: NE_TEMPLATE_BODY } : null;
+          const v = fassung === "b" ? { name: NE_TEMPLATE_NAME_B, body: NE_TEMPLATE_BODY_B } : { name: NE_TEMPLATE_NAME, body: NE_TEMPLATE_BODY };
+          return nutzbar(v.name, 2) ? v : null;
         },
         params: (anrede) => [anrede, buchungslink],
         activity: NE_WA_AKTIVITAET,
+        activityNote: `Vorlage ${fassung === "b" ? NE_TEMPLATE_NAME_B : NE_TEMPLATE_NAME}, ${vermerk}`,
         logRef: { dealId: null, salesContactId: contactId },
         errorLabel: "nicht-erreicht-whatsapp",
         now,
@@ -94,6 +113,60 @@ export async function nachNichtErreicht(contactId: string, now = new Date()): Pr
     reportError(err, "nicht-erreicht", { contact: contactId });
     return { stopp: "Fehler" };
   }
+}
+
+/**
+ * Auswertung des A/B-Tests (Diagnose q=vertrieb-nicht-erreicht, nur Zahlen): je Kontakt die erste „Nicht erreicht“-
+ * Nachricht mit vermerkter Fassung (Einträge vor dem Teststart haben keinen Vermerk und zählen nicht), dazu Antworten
+ * (Mail IN ohne Abwesenheitsnotiz, WhatsApp eingehend im Support-Chat) und gebuchte Termine (SalesMeeting.createdAt).
+ */
+export async function nichtErreichtAbDiagnose(now = new Date()) {
+  const akt = await prisma.salesActivity.findMany({
+    where: { outcome: { in: [NE_MAIL_AKTIVITAET, NE_WA_AKTIVITAET] }, note: { contains: "Fassung " } },
+    orderBy: { occurredAt: "asc" },
+    select: { contactId: true, occurredAt: true, note: true },
+  });
+  const erste = new Map<string, { fassung: NeFassung; gesendet: Date }>();
+  for (const x of akt) {
+    const f = neFassungAusNotiz(x.note);
+    if (f && !erste.has(x.contactId)) erste.set(x.contactId, { fassung: f, gesendet: x.occurredAt });
+  }
+  const ids = [...erste.keys()];
+  const ab = new Date(Math.min(now.getTime(), ...[...erste.values()].map((e) => e.gesendet.getTime())));
+  const [mails, wa, termine] = ids.length
+    ? await Promise.all([
+        prisma.salesEmail.findMany({ where: { contactId: { in: ids }, direction: "IN", isAutoReply: false, sentAt: { gte: ab } }, select: { contactId: true, sentAt: true } }),
+        prisma.message.findMany({
+          where: { direction: "inbound", createdAt: { gte: ab }, conversation: { customerId: SUPPORT_CUSTOMER_ID, salesContactId: { in: ids } } },
+          select: { createdAt: true, conversation: { select: { salesContactId: true } } },
+        }),
+        prisma.salesMeeting.findMany({ where: { contactId: { in: ids }, createdAt: { gte: ab } }, select: { contactId: true, createdAt: true } }),
+      ])
+    : [[], [], []];
+  const einheiten: NeEinheit[] = ids.map((id) => ({
+    ...erste.get(id)!,
+    antworten: [...mails.filter((m) => m.contactId === id).map((m) => m.sentAt), ...wa.filter((m) => m.conversation.salesContactId === id).map((m) => m.createdAt)],
+    termine: termine.filter((t) => t.contactId === id).map((t) => t.createdAt),
+  }));
+  const st = nichtErreichtAbStand(einheiten, now);
+  const pct = (x: number) => Math.round(x * 1000) / 10;
+  return {
+    test: NE_AB_TEST,
+    regeln: { treffer: `Antwort oder Termin gebucht binnen ${NE_FENSTER_STUNDEN} h`, minJeFassung: NE_MIN_JE_FASSUNG, alpha: 0.01, minTrefferUndNichtTreffer: 10 },
+    gewinnerImCode: NE_GEWINNER,
+    datenschutz: "Nur Anzahlen und Quoten je Fassung, keine Kontakt-IDs.",
+    fassungA: { kontakte: st.a.n, treffer: st.a.treffer, quoteProzent: pct(st.quoteA), termin: st.a.termin, terminProzent: pct(st.terminQuoteA) },
+    fassungB: { kontakte: st.b.n, treffer: st.b.treffer, quoteProzent: pct(st.quoteB), termin: st.b.termin, terminProzent: pct(st.terminQuoteB) },
+    nochNicht72h: st.unreif,
+    p: Number(st.p.toFixed(4)),
+    terminP: Number(st.terminP.toFixed(4)),
+    stand:
+      st.entscheidung.reason === "entschieden"
+        ? `Fassung ${st.entscheidung.winner?.toUpperCase()} liegt klar vorn: Gewinner in NE_GEWINNER eintragen, Lernbuch nachtragen, nächsten Test anlegen`
+        : st.entscheidung.reason === "zu_wenig"
+          ? `läuft (ab ${NE_MIN_JE_FASSUNG} Kontakten und je 10 Treffern bzw. Nicht-Treffern je Fassung)`
+          : "läuft (noch kein klarer Unterschied)",
+  };
 }
 
 /** Kurzer Satz fürs Fenster nach dem Speichern bzw. den Verlauf. */
