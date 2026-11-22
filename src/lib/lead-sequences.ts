@@ -40,7 +40,7 @@
 //
 // Termin-Nachfassen (Ole, 17.11.2026): Antwortet der Lead 2 Std. nach dem Terminvorschlag des Assistenten nicht, ist der
 // erste Schritt von „Chat ruht“ ein kurzes Nachfassen mit denselben (bzw. neu berechneten, noch freien) Zeit-Knöpfen:
-// nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
+// nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr (sonntags 10 bis 18 Uhr, Ole 22.11.2026), einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
 // gebucht, „Stopp“, Kein Interesse, Assistent pausiert, Anruf läuft).
 
 import type { Prisma } from "@/generated/prisma/client";
@@ -407,15 +407,21 @@ export type SequenceLogEntry = {
 };
 
 /** Mo–Sa 9–19 Uhr Berlin (wie Bestandskunden-Kampagnen); Termin-Nachfassen: 8–20 Uhr. */
-export function inSendWindow(now: Date, stunden: { von: number; bis: number } = { von: 9, bis: 19 }): boolean {
+export function inSendWindow(now: Date, stunden: { von: number; bis: number } = { von: 9, bis: 19 }, sonntag: { von: number; bis: number } | null = null): boolean {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", hourCycle: "h23" }).formatToParts(now);
   const wd = parts.find((p) => p.type === "weekday")?.value;
   const hour = Number(parts.find((p) => p.type === "hour")?.value);
-  return wd !== "Sun" && hour >= stunden.von && hour < stunden.bis;
+  if (wd === "Sun") return !!sonntag && hour >= sonntag.von && hour < sonntag.bis;
+  return hour >= stunden.von && hour < stunden.bis;
 }
 
 /** Zeitfenster für das Termin-Nachfassen nach einem Terminvorschlag (Ole, 17.11.2026). */
 export const TERMIN_NACHFASS_STUNDEN = { von: 8, bis: 20 } as const;
+/**
+ * „Chat ruht“ auch sonntags (Ole, 22.11.2026: „ja, sonntags auch nachfassen“, Anlass: erster Lohmann-Lead antwortete
+ * sonntags, das Nachfassen hätte bis Montag gewartet). Kürzeres Fenster als werktags; andere Abfolgen bleiben Mo bis Sa.
+ */
+export const SONNTAG_NACHFASS_STUNDEN = { von: 10, bis: 18 } as const;
 
 async function enabledFor(customerId: string): Promise<boolean> {
   const agent = await prisma.agentConfig.findUnique({ where: { customerId }, select: { active: true, followUpSequencesEnabled: true } });
@@ -760,11 +766,14 @@ export async function runSequences(now = new Date(), opts: { nurId?: string; sof
     }
     // Vom Vermittler übersprungen (P6): ohne Versand weiter, nicht aufs Versandfenster warten
     const skip = seq.uebersprungen.includes(seq.step);
-    // Offener Terminvorschlag (erster Schritt „Chat ruht“): Nachfassen mit den Zeit-Knöpfen, Mo bis Sa 8 bis 20 Uhr
+    // Offener Terminvorschlag (erster Schritt „Chat ruht“): Nachfassen mit den Zeit-Knöpfen, Mo bis Sa 8 bis 20 Uhr,
+    // sonntags 10 bis 18 Uhr (wie alle Schritte von „Chat ruht“, Ole 22.11.2026)
     const terminNachfass =
       !skip && seq.kind === "silent" && seq.step === 0 ? await import("@/lib/whatsapp/termin-strecke").then((m) => m.offenerTerminvorschlag(seq.leadId, seq.customerId)).catch(() => null) : null;
+    const sonntag = seq.kind === "silent" ? SONNTAG_NACHFASS_STUNDEN : null;
+    const imFenster = terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN, sonntag) : sonntag ? inSendWindow(now, undefined, sonntag) : windowOpen;
     // WhatsApp und E-Mail nur im Versandfenster – Schritt wartet, Anruf-Aufgaben jederzeit.
-    if (!skip && !opts.sofort && (step.action === "whatsapp" || step.action === "email") && !(terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN) : windowOpen)) {
+    if (!skip && !opts.sofort && (step.action === "whatsapp" || step.action === "email") && !imFenster) {
       res.waiting++;
       continue;
     }

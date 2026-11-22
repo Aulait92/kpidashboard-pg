@@ -46,6 +46,10 @@ describe("Nachfass-Abfolgen", () => {
   it("Versandfenster: Mo–Sa 9–19 Uhr Berlin", () => {
     expect(inSendWindow(T0)).toBe(true);
     expect(inSendWindow(SUNDAY)).toBe(false);
+    // „Chat ruht“ auch sonntags 10 bis 18 Uhr (Ole, 22.11.2026)
+    expect(inSendWindow(new Date("2026-11-22T10:00:00.000Z"), undefined, { von: 10, bis: 18 })).toBe(true); // So 11:00 Berlin
+    expect(inSendWindow(new Date("2026-11-22T08:00:00.000Z"), undefined, { von: 10, bis: 18 })).toBe(false); // So 9:00 Berlin
+    expect(inSendWindow(new Date("2026-11-22T17:30:00.000Z"), undefined, { von: 10, bis: 18 })).toBe(false); // So 18:30 Berlin
     expect(inSendWindow(new Date("2026-11-17T18:30:00.000Z"))).toBe(false); // 19:30 Berlin
   });
 
