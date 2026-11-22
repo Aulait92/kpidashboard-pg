@@ -165,7 +165,24 @@ export function diffText(before: Stammdaten, after: Stammdaten): string[] {
   return out;
 }
 
-export type SaveStammdatenResult = { ok: true; changed: string[]; hinweise: string[] } | { ok: false; error: string };
+export type SaveStammdatenResult =
+  | { ok: true; changed: string[]; hinweise: string[]; /** Nummer geändert, noch keine Erstnachricht: Knopf „Per WhatsApp anschreiben“ */ erstnachrichtAnbieten?: boolean }
+  | { ok: false; error: string };
+
+/**
+ * Erstnachricht an die (korrigierte) Nummer schicken (Knopf nach dem Ändern, Ole 22.11.2026). Gleiche Regeln wie das
+ * automatische Erstanschreiben (Assistent an, WhatsApp verbunden, Einwilligung). Text für die Meldung.
+ */
+export async function erstnachrichtAnNeueNummer(leadId: string, customerId: string): Promise<{ ok: boolean; text: string }> {
+  const l = await prisma.lead.findFirst({ where: { id: leadId, customerId, erasedAt: null }, select: { id: true, phone: true, outreachStatus: true } });
+  if (!l?.phone) return { ok: false, text: "Keine Telefonnummer hinterlegt." };
+  if (l.outreachStatus === "sent") return { ok: false, text: "Die Erstnachricht ist schon rausgegangen." };
+  await prisma.lead.update({ where: { id: l.id }, data: { outreachAt: null, outreachStatus: null, waUnavailableAt: null } });
+  const r = await import("@/lib/whatsapp/outreach").then((m) => m.runOutreach(customerId, { leadIds: [l.id] })).catch(() => null);
+  if (r?.sent) return { ok: true, text: "Die WhatsApp-Erstnachricht ist rausgegangen." };
+  const st = (await prisma.lead.findUnique({ where: { id: l.id }, select: { outreachStatus: true } }))?.outreachStatus;
+  return { ok: false, text: st ? `Nicht gesendet (${st}). Bitte rufen Sie an.` : "Nicht gesendet: Assistent oder WhatsApp ist nicht aktiv. Bitte rufen Sie an." };
+}
 
 export async function saveLeadStammdaten(opts: {
   leadId: string;
@@ -201,10 +218,12 @@ export async function saveLeadStammdaten(opts: {
   const name = [after.firstName, after.lastName].filter(Boolean).join(" ");
   await prisma.lead.update({
     where: { id: lead.id },
-    data: { name, phone: after.phone, email: after.email, weitereEmails: bereinigeWeitereEmails(after.weitereEmails.split(", "), after.email), contactOverrides: overrides, contactEditedAt: new Date() },
+    // Neue Nummer: „kein WhatsApp“ galt der alten Nummer (Ole, 22.11.2026)
+    data: { ...(after.phone !== before.phone ? { waUnavailableAt: null } : {}), name, phone: after.phone, email: after.email, weitereEmails: bereinigeWeitereEmails(after.weitereEmails.split(", "), after.email), contactOverrides: overrides, contactEditedAt: new Date() },
   });
 
   const hinweise: string[] = [];
+  let erstnachrichtAnbieten = false;
   // WhatsApp: Chat mit der alten Nummer zieht auf die neue Nummer um (Verlauf bleibt am Lead)
   if (after.phone && after.phone !== before.phone) {
     const moved = await moveConversation(opts.customerId, lead.id, before.phone, after.phone);
@@ -214,15 +233,9 @@ export async function saveLeadStammdaten(opts: {
     // schickt die App sie jetzt an die neue Nummer (gleiche Regeln wie sonst: Assistent an, WhatsApp verbunden)
     await prisma.leadTask.updateMany({ where: { leadId: lead.id, kind: "nummer_pruefen", status: { in: ["wartet", "aktiv"] } }, data: { status: "entfallen", endedReason: "Nummer korrigiert" } });
     await prisma.lead.updateMany({ where: { id: lead.id, followUpNote: { startsWith: "Nummer prüfen" } }, data: { followUpAt: null, followUpNote: null } });
+    // Ole, 22.11.2026: Der Vermittler entscheidet per Klick, ob die neue Nummer die Erstnachricht bekommt
     const l = await prisma.lead.findUnique({ where: { id: lead.id }, select: { outreachStatus: true } });
-    if (l && l.outreachStatus !== "sent") {
-      await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: null, outreachStatus: null } });
-      const r = await import("@/lib/whatsapp/outreach")
-        .then((m) => m.runOutreach(opts.customerId, { leadIds: [lead.id] }))
-        .catch(() => null);
-      if (r?.sent) hinweise.push("Die WhatsApp-Erstnachricht ist an die neue Nummer rausgegangen.");
-      else if (r && r.failed) hinweise.push("Die WhatsApp-Erstnachricht an die neue Nummer hat nicht geklappt. Bitte rufen Sie an.");
-    }
+    if (l && l.outreachStatus !== "sent") erstnachrichtAnbieten = true;
   }
   if (after.email && after.email !== before.email) {
     await prisma.conversation.updateMany({ where: { customerId: opts.customerId, leadId: lead.id }, data: { contactEmail: after.email } });
@@ -243,7 +256,7 @@ export async function saveLeadStammdaten(opts: {
   }
 
   await logLeadHistory(lead.id, "stammdaten", changed.join("\n"), { customerId: opts.customerId, userId: opts.userId });
-  return { ok: true, changed, hinweise };
+  return { ok: true, changed, hinweise, ...(erstnachrichtAnbieten ? { erstnachrichtAnbieten } : {}) };
 }
 
 async function moveConversation(customerId: string, leadId: string, oldPhone: string | null, newPhone: string): Promise<"moved" | "linked" | "none"> {

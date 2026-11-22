@@ -145,9 +145,10 @@ export const AKTIONEN: Record<string, Aktion> = {
       const l = await prisma.lead.findFirst({ where: { customerId: text(p.customerId), phone: alt }, select: { id: true, customerId: true, phone: true, outreachStatus: true } });
       if (!l?.customerId || !l.phone) return { ok: false, error: "Lead nicht gefunden." };
       const neu = (await import("@/lib/whatsapp/phone")).normalizePhone(`+${l.phone}`);
-      if (!neu || neu === l.phone) return { ok: false, error: "Nummer bleibt gleich." };
+      if (!neu) return { ok: false, error: "Nummer ungültig." };
       const offen = l.outreachStatus !== "sent";
-      await prisma.lead.update({ where: { id: l.id }, data: { phone: neu, ...(offen ? { outreachAt: null, outreachStatus: null } : {}) } });
+      // Schon korrigiert, aber die Erstnachricht hing (z. B. „kein WhatsApp“ der alten Nummer): erneut versuchen
+      await prisma.lead.update({ where: { id: l.id }, data: { phone: neu, waUnavailableAt: null, ...(offen ? { outreachAt: null, outreachStatus: null } : {}) } });
       await audit("lead.nummer_korrigiert", { entity: "Lead", entityId: l.id, details: { neu: `…${neu.slice(-4)}` }, actor: OPS_ACTOR });
       const r = offen ? await (await import("@/lib/whatsapp/outreach")).runOutreach(l.customerId, { leadIds: [l.id] }) : null;
       return { ok: true, info: `Nummer korrigiert (…${neu.slice(-4)})${r ? `, Erstanschreiben: ${r.sent} gesendet, ${r.failed} Fehler, ${r.skipped} übersprungen` : ""}` };
