@@ -161,9 +161,12 @@ describe("Wahl beim Senden", () => {
   const alle = st([...VORLAGEN_ARTEN, "erinnerung2" as const].map((a) => name(a)));
   const basis = { an: "sie" as const, jsonHash: HASH };
 
-  it("Kfz im Fenster: immer die Flow-Nachricht (auch mit freigegebenen Vorlagen)", () => {
+  it("Kfz im Fenster: freigegebene Kfz-Vorlage (beide Knöpfe), sonst Flow-Nachricht, nie die allgemeine Vorlage", () => {
     for (const art of ["bitte", "erinnerung1"] as const) {
-      expect(waehleVorlage(art, KFZ, { ...basis, fensterOffen: true, vorlagen: alle })).toEqual({ weg: "flow" });
+      const r = waehleVorlage(art, KFZ, { ...basis, fensterOffen: true, vorlagen: alle });
+      expect(r && r.weg === "vorlage" && r.art.endsWith("_kfz") || (r && r.weg === "vorlage" && r.art.includes("_kfz"))).toBe(true);
+      const nurAllgemein = st([name(art)]);
+      expect(waehleVorlage(art, KFZ, { ...basis, fensterOffen: true, vorlagen: nurAllgemein })).toEqual({ weg: "flow" });
     }
   });
 

@@ -303,12 +303,17 @@ export type VorlagenWahl = { weg: "vorlage"; art: VorlagenArt; name: string } | 
 export function waehleVorlage(art: FlowArt, k: FlowTextKontext, o: { an: Ansprache; fensterOffen: boolean; jsonHash: string; vorlagen: VorlagenStand }): VorlagenWahl {
   if (art === "weitere") return o.fensterOffen ? { weg: "flow" } : null;
   const kfzArt = kfzVorlagenArt(art, k);
-  if (kfzArt && o.fensterOffen) return { weg: "flow" };
   const freigegeben = (a: VorlagenArt) => {
     const name = vorlagenName(a, o.an, o.jsonHash);
     const v = o.vorlagen[name];
     return v && v.status === "approved" && (!o.fensterOffen || (v.category ?? "").toLowerCase() === "utility") ? name : null;
   };
+  // Kfz im 24-h-Fenster (Ole, 22.11.2026): freigegebene Kfz-Vorlage mit beiden Knöpfen ([Unterlagen senden] plus
+  // [Später] bzw. [Nein, danke]); sonst die Flow-Nachricht mit Kfz-Text, nie die allgemeine Vorlage (falscher Text)
+  if (kfzArt && o.fensterOffen) {
+    const name = freigegeben(kfzArt);
+    return name ? { weg: "vorlage", art: kfzArt, name } : { weg: "flow" };
+  }
   for (const a of kfzArt ? [kfzArt, art] : [art]) {
     const name = freigegeben(a);
     if (name) return { weg: "vorlage", art: a, name };
