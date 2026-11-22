@@ -115,3 +115,17 @@ mit Zahlungsstatus, Webhook ja/nein.
 - Lexware DATEV-Datenservices: help.lexware.de (Rechnungsdatenservice 1.0 / Buchungsdatenservice), lexware.de/funktionen/datev-schnittstelle
 - BuchhaltungsButler: gruenderkueche.de/empfehlungen/buchhaltungsbutler-im-test, buchhaltungsbutler.de (AVV)
 - Nicht abrufbar aus der Sitzung: getmyinvoices.com, candis.io (Hosts müssen in den Netzwerkeinstellungen erlaubt werden)
+
+## Belegprüfung Postfach performancegrowth.de (22.11.2026)
+
+Grundlage: Ausgaben seit 1.1.2026 je Gegenpartei (Ops-Diagnose `q=bank-anbieter`, 35 Anbieter, 346 Umsätze) gegen Rechnungsmails im
+Microsoft-365-Postfach ole.kannapinn@performancegrowth.de. Das Postfach enthält erst Mails ab 16.04.2026.
+
+- Vollständig per Postfach: Asana (Abo gekündigt, läuft bis 12.12.2026), seven.io.
+- Teilweise: Instantly (ab Juni, Stripe-Belege), Anthropic (erst ab November).
+- Fehlt im Postfach, Abruf per Portal nötig: Meta (beide Werbekonten, ca. 41.800 €, größter Posten), Amex-Kontoauszüge,
+  Microsoft 365 (dazu offene Mahnung, Karte abgelehnt), Google Cloud/Workspace/One, Outbrain, Zapier, Airtable, Slack, Railway,
+  Telekom, Commerzbank-Postbox, Fiverr, XING, Byteplant, Wolt, Klarna (Händlerbeleg beim Händler).
+- Über DATEV bzw. Post: Steuerberater Dr. Müller, DATEV eG, odacer.
+- Von Meta und Google gab es keine Mails an dieses Postfach: Rechnungen gehen vermutlich an Gmail bzw. hallo@olekannapinn.com.
+  Empfehlung: diese Postfächer im Belegwerkzeug anbinden, künftig alle Rechnungsadressen auf eine Adresse umstellen.
