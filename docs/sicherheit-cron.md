@@ -14,6 +14,7 @@ Betroffene Jobs:
 | WhatsApp-Cron (alle 5 Min.) | `https://app.performancegrowth.de/api/whatsapp/cron` | `Bearer ` + Wert von `WHATSAPP_WEBHOOK_SECRET` |
 | Airtable-Abgleich (Sync) | `https://app.performancegrowth.de/api/sync` | `Bearer ` + Wert von `SYNC_TOKEN` |
 | Termin-Erinnerungen (alt, falls noch aktiv) | `https://app.performancegrowth.de/api/whatsapp/reminders` | wie WhatsApp-Cron |
+| Media Buyer (stündlich, POST; drosselt sich selbst) | `https://app.performancegrowth.de/api/media-buyer` | `Bearer ` + Wert von `SYNC_TOKEN` |
 | Überwachung | `https://app.performancegrowth.de/api/status` | bleibt ohne Token (zeigt ohne Token nur ok/Fehler) |
 
 Für **Staging** genauso mit `https://staging.performancegrowth.de/…` und den
