@@ -49,6 +49,9 @@ describe("Einrichtung: E-Mail-Postfach und Überspringen mit Grund", () => {
       where: { customerId },
       data: { stepSkips: { calendar: { at: new Date().toISOString(), reason: "gesellschaft" }, whatsapp: { at: new Date().toISOString(), reason: "nicht_noetig" } } },
     });
+    // Go-live-Prüfung 22.11.2026: Auch nach „Mein Versicherer erlaubt das nicht“ braucht es den Link für Videotermine
+    expect(await item("calendar")).toMatchObject({ done: false });
+    await prisma.agentConfig.upsert({ where: { customerId }, create: { customerId, videoRoomUrl: "https://x.webex.com/meet/max.muster" }, update: { videoRoomUrl: "https://x.webex.com/meet/max.muster" } });
     expect(await item("calendar")).toMatchObject({ done: true });
     expect(await item("whatsapp")).toMatchObject({ done: true });
     const ob = await loadOnboarding({ customerId });
