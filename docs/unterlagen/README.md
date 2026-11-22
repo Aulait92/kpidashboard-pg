@@ -2,6 +2,14 @@
 
 Aktuelle Präsentationen für Admin → Marketing → Unterlagen (je Zielgruppe PPTX und PDF).
 
+Fassung 22.11.2026, ohne Garantien (Ole: „nimm die garantien für alle kommenden angebote raus, auch aus den
+vertriebsfolien. ich verkaufe erstmal ohne garantie“): Folie „Und wenn es schlecht läuft?“ (Vertreter 23, Makler 24; PDF
+Seite 30 bzw. 31) rechts ohne Lead-, Break-even- und Vertrags-Garantie. Jetzt: „Pause, Urlaub, ohne Laufzeit“ (Original),
+neu „Kampagne wird nachgeschärft“ (Aussage wie Folie 20) und „Ihre Kunden bleiben Ihre Kunden“ bzw. „Ihr Bestand gehört
+Ihnen“ (Original). Fußnote ohne Garantie-Satz. Umbau mit `python3 scripts/folie-ohne-garantien.py` (PPTX, PDF und
+`public/praesentation/vertrieb/{vertreter/23,makler/24}.webp`). Der Abschnitt „Garantien nach 120 Tagen“ weiter unten ist
+damit überholt. Sprechzettel Folie 23 angepasst. PPL-Präsentation hatte keine Garantien.
+
 Fassung 21.11.2026 (Ole: „Nimm den Abschlussbonus raus überall und nimm in die Vertriebspräsentation den Jahresplan für
 3 Monate sparen auf.“): Die Bonusfolie entfällt, an ihrer Stelle (vor „Ihr Start in 3 Schritten“) kommt beim Upload die
 Folie „Jahresplan: 3 Monate sparen“ dazu (Abschnitt unten). Die Paket-Folie (Vertreter 22, Makler 23; PDF Seite 29 bzw. 30)
