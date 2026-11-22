@@ -302,8 +302,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
   },
   // Chat ruht (Ole, 15.11.2026: „schon nach wenigen Stunden … recht aggressiv, der Interessent hat ja
   // Interesse gezeigt“; „nach 6–10 Stunden nochmal nachhaken“): startet bei jeder Nachricht des Assistenten neu
-  // (restartSilentSequence) und läuft, solange der Lead nicht antwortet: 2 Std., 8 Std., ca. 20 Std. (nur als
-  // Freitext im offenen Fenster), 3 Tage. Außerhalb des Fensters jede Vorlage nur einmal (followup,
+  // (restartSilentSequence) und läuft, solange der Lead nicht antwortet: 2 Std., 8 Std., ca. 20 Std. (im offenen Fenster als
+  // Freitext, sonst als Vorlage, Ole 22.11.2026), 3 Tage. Außerhalb des Fensters jede Vorlage nur einmal (followup,
   // followup_nudge, followup_last).
   silent: {
     label: "Chat ruht",
@@ -404,6 +404,8 @@ export type SequenceLogEntry = {
   /** sent | template | call_task | kept_followup | skipped | failed | stopped | planned */
   result: string;
   detail?: string;
+  /** tatsächlich gesendeter Zweck (z. B. followup_nudge statt followup ohne Kalender), für „keine Vorlage doppelt“ */
+  purpose?: string;
 };
 
 /** Mo–Sa 9–19 Uhr Berlin (wie Bestandskunden-Kampagnen); Termin-Nachfassen: 8–20 Uhr. */
@@ -910,8 +912,19 @@ async function sendTerminNachfass(
   }
 }
 
+/** Ging die Vorlage dieses Zwecks seit dem (Neu-)Start schon als Vorlage raus? (Log-Ergebnis „template“) */
+function vorlageSchonGesendet(seq: { kind?: string; log?: Prisma.JsonValue; startedAt?: Date; neustartAt?: Date | null }, purpose: string): boolean {
+  const def = seq.kind ? SEQUENCES[seq.kind as SequenceKind] : null;
+  if (!def) return true;
+  const ab = (seq.neustartAt ?? seq.startedAt)?.getTime() ?? 0;
+  const log = Array.isArray(seq.log) ? (seq.log as unknown as SequenceLogEntry[]) : [];
+  // Ältere Einträge ohne Zweck: „followup“ ohne Kalender ging als followup_nudge raus, beide zählen dann als gleich
+  const gleich = (p: string | undefined) => p === purpose || (!!p && [p, purpose].every((x) => x === "followup" || x === "followup_nudge"));
+  return log.some((e) => e.result === "template" && new Date(e.at).getTime() >= ab && e.step >= 0 && (e.purpose ? e.purpose === purpose : gleich((def.steps[e.step] as { purpose?: string } | undefined)?.purpose)));
+}
+
 async function sendStep(
-  seq: { leadId: string; customerId: string; step: number; kind?: string },
+  seq: { leadId: string; customerId: string; step: number; kind?: string; log?: Prisma.JsonValue; startedAt?: Date; neustartAt?: Date | null },
   step: Extract<Step, { action: "whatsapp" }>,
   now: Date,
 ): Promise<SequenceLogEntry> {
@@ -944,13 +957,16 @@ async function sendStep(
     an,
     person: (await import("@/lib/whatsapp/gespraech")).vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm }),
   };
+  let fensterZu = false;
   if (step.onlyInWindow) {
     const conv = await prisma.conversation.findUnique({
       where: { customerId_contactPhone: { customerId: seq.customerId, contactPhone: lead.phone } },
       select: { windowExpiresAt: true },
     });
     if (!conv?.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) {
-      return { ...base, result: "skipped", detail: "24h-Fenster geschlossen, keine zweite Vorlage" };
+      // Fenster zu (Ole, 22.11.2026: „ja, dann als Vorlage schicken“): als Vorlage, außer dieselbe Vorlage ging in diesem
+      // Durchlauf schon raus (keine doppelte Vorlage mit gleichem Text; Prüfung unten mit dem tatsächlichen Zweck)
+      fensterZu = true;
     }
   }
   let purpose = step.purpose;
@@ -981,6 +997,7 @@ async function sendStep(
       buttons = { textButtons: knoepfe.map((b) => b.title), buttonPayloads: knoepfe.map((b) => b.id) };
     }
   }
+  if (fensterZu && vorlageSchonGesendet(seq, purpose)) return { ...base, result: "skipped", detail: "24h-Fenster geschlossen, Vorlage schon gesendet" };
   try {
     const { mode } = await sendWhatsAppNotice({
       customerId: seq.customerId,
@@ -993,7 +1010,7 @@ async function sendStep(
       anrede: ctx.kontakt,
       ...buttons,
     });
-    return { ...base, result: mode === "template" ? "template" : "sent" };
+    return { ...base, result: mode === "template" ? "template" : "sent", purpose };
   } catch (err) {
     if (err instanceof NoTemplateError && step.fallback) {
       // Neue Vorlage noch nicht freigegeben: die bisherige (freigegebene) Vorlage
