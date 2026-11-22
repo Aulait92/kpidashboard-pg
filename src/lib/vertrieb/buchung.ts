@@ -880,7 +880,7 @@ export function inviteeMailContent(kind: InviteeMailKind, m: MailMeeting) {
       return {
         subject: `Erinnerung: Ihr ${m.title} am ${w}`,
         greeting,
-        paragraphs: [`kurze Erinnerung an Ihren ${m.title}: ${w}.`, how, ...(m.vorabFrage ? [vorabFrageTermin()] : [])],
+        paragraphs: [`kurze Erinnerung: Ihr ${m.title} ist am ${w}.`, how, ...(m.vorabFrage ? [vorabFrageTermin()] : [])],
         button: manage,
         extra: null,
       };

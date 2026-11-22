@@ -182,8 +182,7 @@ export const EXPERIMENTE = {
     ziel: "zahlung_eingerichtet",
     a: "Bisher: Angebotsmail, Bonus- und Zahlungserinnerung ohne Absatz zu den nächsten Schritten",
     b: "Neu: Absatz „So geht es nach Ihrer Annahme weiter: Sie richten die Zahlung ein und bekommen direkt danach Ihren Zugang. Die Einrichtung führt Sie Schritt für Schritt …“ (Zahlungserinnerung: „So geht es danach weiter …“)",
-    // Startet angehalten, bis Ole die B-Texte freigibt (22.11.2026); Start: diese Zeile entfernen
-    aktiv: false,
+    // B-Texte von Ole freigegeben (22.11.2026), läuft ab dem Deploy
     min: 50,
     reifTage: 21,
     anzeigeZiele: ["angebot_angenommen"],
@@ -195,10 +194,9 @@ export const EXPERIMENTE = {
   vertrieb_termin_vorabfrage: {
     titel: "Vertrieb: Terminerinnerung 24 Stunden vorher (Vorab-Frage)",
     ziel: "erschienen",
-    a: "Bisher: „kurze Erinnerung an Ihren Termin: … Den Videocall starten Sie über diesen Link …“",
+    a: "Bisher: „kurze Erinnerung: Ihr <Termin> ist am … Den Videocall starten Sie über diesen Link …“",
     b: "Neu: zusätzlich „Damit wir die Zeit gut nutzen: Was ist Ihre wichtigste Frage für unser Gespräch? Antworten Sie einfach kurz auf diese E-Mail.“",
-    // Startet angehalten, bis Ole die B-Texte freigibt (22.11.2026); Start: diese Zeile entfernen
-    aktiv: false,
+    // B-Texte von Ole freigegeben (22.11.2026), läuft ab dem Deploy
     min: 50,
     nurMitEreignis: "termin_ausgewertet",
   },
@@ -211,8 +209,7 @@ export const EXPERIMENTE = {
     ziel: "antwort",
     a: "Bisher: Mail 1 endet mit der Frage nach einem kurzen Termin von 15 Minuten und dem Buchungslink",
     b: "Neu: Mail 1 endet mit „Ist das Thema bei Ihnen noch aktuell? Ein kurzes Ja oder Nein als Antwort genügt mir.“, Buchungslink danach als Angebot",
-    // Startet angehalten, bis Ole die B-Texte freigibt (22.11.2026); Start: diese Zeile entfernen
-    aktiv: false,
+    // B-Texte von Ole freigegeben (22.11.2026), läuft ab dem Deploy
     min: 50,
     nurMitEreignis: "followup_reif",
     anzeigeZiele: ["termin_gebucht"],

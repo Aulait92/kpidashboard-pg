@@ -34,12 +34,12 @@ const GEDANKENSTRICH = /[–—]/;
 const now = new Date("2026-11-22T10:00:00Z");
 
 describe("Experimente der Vertriebs-Nachrichten", () => {
-  it("alle drei eingetragen, mit Hypothese, Ziel und Mindestmenge 50, starten angehalten bis zur Freigabe der B-Texte", () => {
+  it("alle drei eingetragen, mit Hypothese, Ziel und Mindestmenge 50, laufen ab dem Deploy (Freigabe Ole 22.11.2026)", () => {
     for (const key of VERTRIEB_AB_TESTS) {
       const d = EXPERIMENTE[key];
       expect(d, key).toBeTruthy();
       expect(d.min, key).toBe(50);
-      expect((d as { aktiv?: false }).aktiv, key).toBe(false);
+      expect("aktiv" in d, key).toBe(false);
       expect(SPLITTEST_HYPOTHESE[key], key).toBeTruthy();
       expect(GEDANKENSTRICH.test(d.a + d.b + SPLITTEST_HYPOTHESE[key]), key).toBe(false);
     }
