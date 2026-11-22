@@ -116,7 +116,7 @@ describe("Entwurf → Formular → Speichern: keine Werte gehen verloren", () =>
     ["Sonderpreis gleich Listenpreis (Laufzeit fest)", { ...basis, setupOverride: String(PRICE_LIST.setup12m) }],
     ["Produktwahl bewusst abgewählt", { ...basis, customerProducts: false }],
     ["Nur Betreuung", { ...basis, pkg: "service", term: "3m" }],
-    ["Zahlung nachträglich", { ...basis, arrears: true, startDate: "2027-01-01" }],
+    ["Zahlung nachträglich", { ...basis, annual: false, arrears: true, startDate: "2027-01-01" }],
     [
       "Pay-per-Lead + Software mit erster Woche",
       { ...basis, pkg: "ppl_software", term: "none", seats: "4", wocheProdukt: "PKV-Tarifoptimierung", wocheLabel: "PKV Bayern", wochePreis: "17.5", wocheMenge: "30" },
@@ -233,5 +233,12 @@ describe("Speichern nur für Entwürfe", () => {
   it("unbekanntes Angebot", async () => {
     db.status = null;
     await expect(updateDraftOffer("off_x", eingabe)).rejects.toThrow("Angebot nicht gefunden.");
+  });
+});
+
+describe("Standardwerte neues Angebot", () => {
+  it("bietet die Vorauszahlung standardmäßig an (Ole, 22.11.2026)", () => {
+    expect(basis.annual).toBe(true);
+    expect(formWerteZuInput(basis, { referral: false, ueberweisungVerfuegbar: false }).annual).toBe(true);
   });
 });

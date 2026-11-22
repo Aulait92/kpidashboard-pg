@@ -8,7 +8,7 @@ Jeder neue Vertriebskontakt wird im Hintergrund angereichert, egal ob er aus Ins
 
 **1. Website bzw. Agenturseite**
 - Woher: Feld „Website“, sonst die E-Mail-Domain. Für Allianz, AXA und Signal Iduna ist die Agenturseite schon eingebaut.
-- Was: Straße, PLZ, Ort, Telefon, Fax, Öffnungszeiten, Inhaber laut Impressum, Versicherer bzw. „Makler“, Teamgröße (nur bei eindeutigen Angaben) und Social-Links zu Facebook, Instagram, XING und LinkedIn.
+- Was: Straße, PLZ, Ort, Telefon, Öffnungszeiten (keine Faxnummern, Ole 22.11.2026), Inhaber laut Impressum, Versicherer bzw. „Makler“, Teamgröße (nur bei eindeutigen Angaben) und Social-Links zu Facebook, Instagram, XING und LinkedIn.
 - Gelesen werden höchstens drei Seiten: Startseite, Impressum und gegebenenfalls Kontakt.
 - Ohne KI. Läuft einmal je Kontakt und nach 30 Tagen erneut, wenn die Adresse noch fehlt.
 

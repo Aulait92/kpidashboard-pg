@@ -93,7 +93,6 @@ export async function importContactsCsv(text: string): Promise<ImportStats> {
     };
     base.name = get("name") ?? email;
     set("phone", get("phone") ?? null);
-    set("fax", get("fax") ?? null);
     set("street", get("street") ?? null);
     set("zip", get("zip")?.replace(/\.0$/, "").padStart(5, "0") ?? null);
     set("city", get("city") ?? null);

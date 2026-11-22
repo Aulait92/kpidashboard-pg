@@ -39,6 +39,8 @@ export type BudgetContext = {
   /** Echter Leadpreis des Kunden (letzte 30 Tage) oder Standard aus dem Rechner. */
   cpl: number;
   cplSource: "kunde" | "standard";
+  /** Kunde hat Garantien (angenommenes Garantie-Angebot, lib/garantien-kunde.ts); false = keine Garantie-Hinweise. Fehlt = wie bisher. */
+  garantien?: boolean;
 };
 
 export type PricingMode =
@@ -102,7 +104,7 @@ export function previewChange(current: BudgetLine[], next: BudgetLine[], ctx: Bu
     feeFrom,
     feeTo,
     pricing,
-    belowGuarantee: next.filter((l) => l.dailyBudget < LEAD_GUARANTEE_MIN_DAILY).map((l) => l.product),
+    belowGuarantee: ctx.garantien === false ? [] : next.filter((l) => l.dailyBudget < LEAD_GUARANTEE_MIN_DAILY).map((l) => l.product),
     changed: next.some((l) => Math.abs((byProduct.get(l.product) ?? -1) - l.dailyBudget) > 0.001),
   };
 }

@@ -21,6 +21,9 @@ import { prisma } from "@/lib/prisma";
 import { ACTIVITY_LABEL } from "@/lib/vertrieb/crm";
 import { fmtDate } from "@/lib/vertrieb/dates";
 import type { ImpressumInfo } from "@/lib/impressum";
+import { nowMs } from "@/lib/now";
+import { ladeWhatsAppVerlauf } from "@/lib/vertrieb/whatsapp-verlauf";
+import { WhatsAppVerlaufKarte } from "@/components/admin-neu/vertrieb/whatsapp-verlauf";
 
 export const metadata = { title: "Kunde | performancegrowth Admin" };
 
@@ -28,7 +31,7 @@ const TYP_LABEL: Record<string, string> = { vertreter: "Vertreter", mehrfachvert
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
 // Kundenakte › Übersicht: kompakt. Oben Kennzahlen, dann Einrichtung (offen nur, solange sie läuft), Verlauf mit
-// Sprung in die ganze Kontaktakte, Grunddaten und die seltenen Einstellungen zugeklappt. Früher bettete die Übersicht
+// Sprung in die ganze Kontaktakte, WhatsApp über die Support-Nummer (nur wenn vorhanden), Grunddaten und die seltenen Einstellungen zugeklappt. Früher bettete die Übersicht
 // die ganze Kontaktseite ein (am Handy rund 2.700 px); die liegt jetzt unter „Ganze Kontaktakte“ (./kontakt).
 // Lead-Qualität → Leads, Nächster Schritt je Berater → Team, Garantien → Abrechnung. Monatsberichte (Umbau 20.11.2026:
 // kein eigener Reiter mehr) als Karte mit dem letzten Bericht und „Alle Berichte“ (./berichte).
@@ -63,9 +66,11 @@ export default async function KundeUebersicht({ params, searchParams }: { params
     },
   });
   if (!c) notFound();
-  const [onboarding, bericht] = await Promise.all([
+  const [onboarding, bericht, whatsapp] = await Promise.all([
     loadOnboarding({ customerId: id }),
     prisma.monthlyReport.findFirst({ where: { customerId: id }, orderBy: { month: "desc" }, select: { id: true, month: true, rating: true, status: true, sentAt: true } }),
+    // WhatsApp mit dem Kunden über die Support-Nummer (lib/vertrieb/whatsapp-verlauf.ts)
+    ladeWhatsAppVerlauf({ customerId: id, salesContactId: c.salesContact?.id ?? null }).catch(() => null),
   ]);
   const live = !onboarding || !!onboarding.liveAt;
   const contact = c.salesContact;
@@ -209,6 +214,8 @@ export default async function KundeUebersicht({ params, searchParams }: { params
               </div>
             </Card>
             ) : null}
+
+            {whatsapp ? <WhatsAppVerlaufKarte v={whatsapp} now={nowMs()} /> : null}
 
             <Card>
               <div data-funktion="page-grunddaten--grunddaten-region-betreuungsgebuehr-meta">

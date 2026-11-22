@@ -5,7 +5,6 @@ import { consentTextFor, loadReferralSettings, referrerByCode } from "@/lib/koll
 import { benefitSentence } from "@/lib/kollegen-shared";
 import { loadRechnerConfig } from "@/lib/rechner-server";
 import { nowMs } from "@/lib/now";
-import { garantienFuerEmpfehlung } from "@/lib/empfehlen-garantien";
 import { ReferralForm } from "./referral-form";
 
 export const metadata = {
@@ -52,9 +51,8 @@ export default async function EmpfehlenPage({ params }: { params: Promise<{ code
   }
 
   const config = await loadRechnerConfig();
-  // Garantien passend zum Produkt und Status des Empfehlers (Usability-Check 18.11.2026)
-  const garantien = garantienFuerEmpfehlung(config.guarantees, { person: ref.person, makler: !!ref.makler, produkte: ref.produkte ?? [] });
-  const guarantees = garantien.karten;
+  // Keine Garantien mehr auf der Empfehlungsseite (Ole, 22.11.2026: ohne Garantie verkaufen). Bis dahin passend zum
+  // Empfehler aus lib/empfehlen-garantien.ts (garantienFuerEmpfehlung), dort bei Bedarf wieder einbauen.
   // Satz aus der Einstellung, mit Namen des Empfehlers (steht ohnehin in der Überschrift)
   const benefit = benefitSentence(settings, ref.person);
   const bookingUrl = /^https:\/\//i.test(config.contactUrl) ? config.contactUrl : null;
@@ -98,23 +96,6 @@ export default async function EmpfehlenPage({ params }: { params: Promise<{ code
               <span>Auf Wunsch meldet sich ein WhatsApp-Assistent direkt bei neuen Leads und vereinbart Termine.</span>
             </li>
           </ul>
-          {guarantees.length ? (
-            <div className="mt-6 space-y-3">
-              <h2 className="text-lg font-semibold tracking-tight">Unsere Garantien</h2>
-              <p className="text-sm text-[color:var(--muted)]" data-garantie-produkt>
-                {garantien.satz}
-              </p>
-              {guarantees.map((g) => (
-                <div key={g.title} className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-4">
-                  <div className="font-semibold">{g.title}</div>
-                  <p className="mt-1 text-sm leading-relaxed text-[color:var(--muted)]">{g.text}</p>
-                </div>
-              ))}
-              <a href={config.termsUrl} target="_blank" rel="noopener" className="text-sm text-[color:var(--muted)] underline">
-                Details in unseren AGB
-              </a>
-            </div>
-          ) : null}
           <Link
             href="/rechner"
             className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-4 text-[15px] font-semibold transition hover:bg-[color:var(--surface-sunken)]"

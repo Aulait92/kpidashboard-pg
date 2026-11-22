@@ -101,6 +101,12 @@ describe("Geltung und Start", () => {
     expect(offerHasGuarantee({ status: "sent", createdAt: D("2026-11-12"), products })).toBe(false);
     expect(offerHasGuarantee({ status: "accepted", createdAt: D("2026-11-12"), products: [{ name: "PKV" }] })).toBe(false);
   });
+  it("Angebote ab 22.11.2026, 19:15 Uhr ohne Garantien (Ole: ohne Garantie verkaufen)", () => {
+    const products = [{ name: "Katze", dailyBudget: 20 }];
+    expect(offerHasGuarantee({ status: "accepted", createdAt: new Date("2026-11-22T19:14:00+01:00"), products })).toBe(true);
+    expect(offerHasGuarantee({ status: "accepted", createdAt: new Date("2026-11-22T19:15:00+01:00"), products })).toBe(false);
+    expect(offerHasGuarantee({ status: "accepted", createdAt: D("2026-12-01"), products })).toBe(false);
+  });
   it("Start = erste Meta-Kosten ab Annahme, sonst Go-live, sonst nicht gestartet", () => {
     const spend = [
       { date: D("2026-11-01"), amount: 30 }, // vor Annahme (altes Konto) zählt nicht

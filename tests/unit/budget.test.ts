@@ -42,6 +42,8 @@ describe("previewChange", () => {
   });
   it("Warnung unter 20 €/Tag (Lead-Garantie)", () => {
     expect(previewChange(one(30), one(15), ctx()).belowGuarantee).toEqual(["TKV"]);
+    // Kunde ohne Garantie-Angebot (ab 22.11.2026): kein Hinweis
+    expect(previewChange(one(30), one(15), { ...ctx(), garantien: false }).belowGuarantee).toEqual([]);
   });
   it("über individualFrom → individuelles Angebot", () => {
     const p = previewChange(one(100), one(Math.ceil(PRICE_LIST.individualFrom / days) + 5), ctx());
