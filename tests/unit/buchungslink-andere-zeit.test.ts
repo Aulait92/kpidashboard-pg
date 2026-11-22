@@ -3,7 +3,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const db = vi.hoisted(() => ({
-  eingaenge: [] as { kind: string | null; body: string | null }[],
+  eingaenge: [] as { direction?: string; kind: string | null; body: string | null }[],
   termin: null as { id: string } | null,
   cal: null as { bookingSlug: string | null; status: string } | null,
   gesendet: [] as { to: string; body: string; sentBy?: string }[],
@@ -48,7 +48,7 @@ import { EXPERIMENTE } from "@/lib/experimente";
 import { SPLITTEST_HYPOTHESE } from "@/lib/ab-hypothesen";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
 
-const knopf = { kind: "interactive", body: "Andere Zeit" };
+const knopf = { direction: "inbound", kind: "interactive", body: "Andere Zeit" };
 
 beforeEach(() => {
   db.eingaenge = [];
