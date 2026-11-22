@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import {
   Dropdown,
@@ -50,6 +50,7 @@ export function FilterBar({
       ? products
       : PRODUCTS.map((p) => ({ key: p, label: displayProduct(p) }));
   const router = useRouter();
+  const pathname = usePathname() || "/";
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
@@ -64,7 +65,7 @@ export function FilterBar({
       params.delete("to");
     }
     startTransition(() => {
-      router.replace(`/?${params.toString()}`, { scroll: false });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     });
   }
 
