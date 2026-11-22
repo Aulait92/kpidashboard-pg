@@ -88,6 +88,21 @@ export function zweiteSmsFaellig(ersteAt: Date, now: Date, g: Geschaeftszeiten):
   return berlinTag(now) >= tag;
 }
 
+/**
+ * Wann geht die nächste SMS der Nur-SMS-Strecke raus? (Vorschau „Nächste Nachrichten“, Ole 22.11.2026) Erste SMS:
+ * nächstes Geschäftsfenster ab jetzt; zweite: erster Zeitpunkt, an dem zweiteSmsFaellig gilt. null = keine mehr. Rein.
+ */
+export function naechsteSmsZeit(o: { smsZahl: number; smsAt: Date | null; g: Geschaeftszeiten; now: Date; max?: number }): Date | null {
+  if (o.smsZahl >= (o.max ?? 2)) return null;
+  if (o.smsZahl >= 1 && !o.smsAt) return null;
+  const schritt = 15 * 60 * 1000;
+  let t = new Date(Math.ceil(o.now.getTime() / schritt) * schritt);
+  for (let i = 0; i < 14 * 96; i++, t = new Date(t.getTime() + schritt)) {
+    if (o.smsZahl === 0 ? imGeschaeftsfenster(t, o.g) : zweiteSmsFaellig(o.smsAt!, t, o.g)) return t;
+  }
+  return null;
+}
+
 // ─── Länge (GSM 03.38) ─────────────────────────────────────────────────────────────────
 
 const GSM = "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
@@ -127,7 +142,8 @@ export type NurSmsInput = {
 
 /**
  * SMS an den Lead (rein): Dank bzw. Erinnerung, Link zur Terminwahl, Rückruf zu Geschäftszeiten, Abmeldehinweis. Ohne
- * Gedankenstriche, höchstens 2 Teile: zu lang, fällt erst das Thema, dann der Name weg.
+ * Gedankenstriche, ohne KI-Hinweis (Ole, 22.11.2026: feste Nachricht, kein KI-Gespräch; Absender nicht als Person
+ * ausgeben), höchstens 2 Teile: zu lang, fällt erst das Thema, dann der Name weg.
  */
 export function nurSmsText(o: NurSmsInput): string {
   const an = o.an;
@@ -142,7 +158,7 @@ export function nurSmsText(o: NurSmsInput): string {
     const thema = mitThema ? anfrageThema(o.source, an) : "";
     const kern =
       o.art === "erst"
-        ? `${hallo}${a(an, "danke für deine Anfrage", "danke für Ihre Anfrage")}${thema}. Hier ist der KI-Assistent von ${o.person.dat}. Termin wählen: ${o.link}`
+        ? `${hallo}${a(an, "danke für deine Anfrage", "danke für Ihre Anfrage")}${thema} bei ${o.person.dat}. Termin wählen: ${o.link}`
         : `${hallo}${a(an, `${o.person.nom} hat noch Zeit für dich. Termin wählen`, `${o.person.nom} hat noch Zeit für Sie. Termin wählen`)}: ${o.link}`;
     return ohneGedankenstriche(`${kern} ${rueckruf} ${abmelden}`);
   };

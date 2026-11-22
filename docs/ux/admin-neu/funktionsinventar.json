@@ -2964,6 +2964,18 @@
   "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
+  "heute": "neu (22.11.2026)",
+  "funktion": "Kontakte aufs iPhone: Adressbuch Vertrieb (CardDAV) mit Server, Benutzer und Anleitung",
+  "quelle": "app/admin/neu/einstellungen/anbindungen/page.tsx:carddav",
+  "neu": "Einstellungen › Anbindungen & Import › Kontakte aufs iPhone",
+  "status": "neu",
+  "demo_view": "e-anbindungen",
+  "id": "page-carddav--kontakte-aufs-iphone-adressbuch-vertrieb",
+  "bereich": "einstellungen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
+ },
+ {
   "heute": "/admin/lead-eingang",
   "funktion": "Übergang: Webhook für Zapier",
   "quelle": "app/admin/lead-eingang/page.tsx",

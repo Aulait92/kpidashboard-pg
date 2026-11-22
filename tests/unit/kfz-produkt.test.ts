@@ -106,7 +106,7 @@ describe("Texte an Kfz-Leads", () => {
 
   it("Chat-Nachricht (Ole, 22.11.2026): andere Policen klar, mit Grund und genannten Verträgen, ohne Unterlagen", () => {
     expect(chatNachricht({ ...KFZ, andereVertraege: ["Haftpflicht bei Allianz"], komplettcheck: true }).text).toBe(
-      "Kleiner Tipp für Montag 💡\n\nWenn Herr Kannapinn Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung vorab hat, kann er *Ihren Beitrag schon vor dem Termin rechnen.* Darauf steht alles Nötige, zum Beispiel Ihre SF-Klasse.\n\n*Je ein Foto reicht* (beim Fahrzeugschein die Vorderseite). Dauert etwa eine Minute.\n\n*Laden Sie gern auch Ihre anderen Policen hoch*, zum Beispiel Ihre Haftpflicht bei Allianz. Dann sieht er im Komplettcheck, ob Sie etwas doppelt zahlen.\n\nIhr Termin findet auch ohne Unterlagen statt.",
+      "Kleiner Tipp für Montag 💡\n\nWenn Herr Kannapinn Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung vorab hat, kann er *Ihren Beitrag schon vor dem Termin rechnen.* Darauf steht alles Nötige, zum Beispiel Ihre SF-Klasse.\n\n*Je ein Foto reicht* (beim Fahrzeugschein die Vorderseite). Dauert etwa eine Minute.\n\n*Laden Sie gern auch Ihre anderen Policen hoch*, zum Beispiel Haftpflicht bei Allianz. Dann sieht er im Komplettcheck, ob Sie etwas doppelt zahlen.\n\nIhr Termin findet auch ohne Unterlagen statt.",
     );
     expect(chatNachricht({ ...KFZ, an: "du", name: "Ole", andereVertraege: ["Haftpflicht bei Allianz", "Hausrat"], komplettcheck: null }).text).toContain(
       "*Lade gern auch deine anderen Policen hoch*, zum Beispiel Haftpflicht bei Allianz und Hausrat. Dann sieht er, ob du etwas doppelt zahlst.\n\nDein Termin findet auch ohne Unterlagen statt.",
@@ -148,7 +148,7 @@ describe("Texte an Kfz-Leads", () => {
 
   it("Bitte ohne Formular nennt die genannten Verträge bzw. keine anderen Policen", () => {
     expect(policenBitte({ an: "sie", vermittler, kfz: true, vertraege: ["Haftpflicht bei Allianz"] }).text).toContain(
-      "*Schicken Sie gern auch Ihre anderen Policen*, zum Beispiel Ihre Haftpflicht bei Allianz. Dann sieht er, ob Sie etwas doppelt zahlen.",
+      "*Schicken Sie gern auch Ihre anderen Policen*, zum Beispiel Haftpflicht bei Allianz. Dann sieht er, ob Sie etwas doppelt zahlen.",
     );
     expect(policenBitte({ an: "sie", vermittler, kfz: true }).text).not.toMatch(/anderen Policen/);
   });

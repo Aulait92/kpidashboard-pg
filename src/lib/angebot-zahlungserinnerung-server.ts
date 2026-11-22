@@ -6,7 +6,7 @@
 import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
-import { getAppUrl, sendCustomerMail } from "@/lib/email";
+import { getAppUrl, sendCustomerMail, type CustomerMailOpts } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { customerGreeting, logOfferActivity, offerAdminHref } from "@/lib/offer-links";
@@ -215,6 +215,27 @@ async function aufgabeAnlegen(o: OfferRow, now: Date): Promise<boolean> {
   return true;
 }
 
+/** Mail der Zahlungserinnerung (gemeinsam für Versand und Vorschau). */
+export async function zahlungMailOpts(
+  o: Pick<OfferRow, "email" | "number" | "startDate" | "mailDu" | "salesContactId" | "contactName" | "ohneEntscheidungsCall">,
+  stufe: number,
+  link: string,
+  now = new Date(),
+): Promise<CustomerMailOpts> {
+  // Entscheidungs-Call schon gebucht (auch erst nach dem Angebot): Termin nennen, geprüft bei jedem Versand.
+  // Ohne Buchung wie bisher kein Buchungslink (das Angebot ist schon angenommen).
+  const call = o.ohneEntscheidungsCall ? null : await entscheidungsCallStand(o.salesContactId, now).catch(() => null);
+  const callText = call?.art === "gebucht" ? entscheidungsCallMailText(call, o.mailDu) : null;
+  const text = erinnerungsMail({ number: o.number, startIso: tagIso(o.startDate), stufe, du: o.mailDu, entscheidungsCall: callText });
+  return {
+    to: o.email ?? "",
+    subject: text.subject,
+    greeting: await customerGreeting(o, o.mailDu),
+    paragraphs: text.paragraphs,
+    button: { label: text.button, url: link },
+  };
+}
+
 async function sendeErinnerung(o: OfferRow, stufe: number, now: Date): Promise<{ mail: boolean; whatsapp: boolean }> {
   const res = { mail: false, whatsapp: false };
   if (await gesperrt(o.salesContactId)) {
@@ -229,23 +250,13 @@ async function sendeErinnerung(o: OfferRow, stufe: number, now: Date): Promise<{
     return res;
   }
   if (o.email) {
-    // Entscheidungs-Call schon gebucht (auch erst nach dem Angebot): Termin nennen, geprüft bei jedem Versand.
-    // Ohne Buchung wie bisher kein Buchungslink (das Angebot ist schon angenommen).
-    const call = o.ohneEntscheidungsCall ? null : await entscheidungsCallStand(o.salesContactId, now).catch(() => null);
-    const callText = call?.art === "gebucht" ? entscheidungsCallMailText(call, o.mailDu) : null;
-    const text = erinnerungsMail({ number: o.number, startIso: tagIso(o.startDate), stufe, du: o.mailDu, entscheidungsCall: callText });
-    const sent = await sendCustomerMail({
-      to: o.email,
-      subject: text.subject,
-      greeting: await customerGreeting(o, o.mailDu),
-      paragraphs: text.paragraphs,
-      button: { label: text.button, url: link },
-    });
+    const mail = await zahlungMailOpts(o, stufe, link, now);
+    const sent = await sendCustomerMail(mail);
     res.mail = sent.ok;
     await logOfferActivity(
       o,
       sent.ok ? `Zahlungserinnerung ${stufe} per E-Mail an ${o.email} gesendet` : `Zahlungserinnerung ${stufe} per E-Mail fehlgeschlagen`,
-      sent.ok ? `Betreff: ${text.subject}` : sent.error,
+      sent.ok ? `Betreff: ${mail.subject}` : sent.error,
       null,
       "EMAIL",
     );
@@ -272,6 +283,27 @@ export async function sendeZahlungWhatsApp(o: OfferRow, link: string, now = new 
     errorLabel: "zahlungserinnerung-whatsapp",
     now,
   });
+}
+
+const waClean = (v: string) => v.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() || "-";
+
+/** Anrede für {{1}} einer Vorlage an einen Vertriebskontakt (gemeinsam für Versand und Vorschau). */
+export function vorlagenAnrede(
+  contact: { firstName?: string | null; lastName?: string | null; salutation?: string | null } | null | undefined,
+  du: boolean,
+  contactName: string,
+): string {
+  return du
+    ? contact?.firstName?.trim() || contactName.trim().replace(/^(herr|frau)\s+/i, "").split(/\s+/)[0]
+    : // Sie: „Herr Mustermann“ nur bei bekannter Anrede, sonst Vor- und Nachname (nie geraten)
+      anredeName("sie", { salutation: contact?.salutation, firstName: contact?.firstName, lastName: contact?.lastName, fullName: contactName }) ||
+        [contact?.firstName, contact?.lastName].filter(Boolean).join(" ").trim() ||
+        contactName.trim();
+}
+
+/** Parameter einer Vorlage (ohne Zeilenumbrüche, je höchstens 300 Zeichen, wie Meta es verlangt). */
+export function vorlagenParams(params: (anrede: string) => string[], anrede: string): string[] {
+  return params(waClean(anrede)).map((v) => waClean(v).slice(0, 300));
 }
 
 /**
@@ -309,14 +341,8 @@ export async function sendeVorlageAnKontakt(opts: {
     const prior = await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: phone } }, select: { optedOutAt: true } });
     if (prior?.optedOutAt) return "opted_out";
 
-    const clean = (v: string) => v.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() || "-";
-    const anrede = opts.du
-      ? contact?.firstName?.trim() || opts.contactName.trim().replace(/^(herr|frau)\s+/i, "").split(/\s+/)[0]
-      : // Sie: „Herr Mustermann“ nur bei bekannter Anrede, sonst Vor- und Nachname (nie geraten)
-        anredeName("sie", { salutation: contact?.salutation, firstName: contact?.firstName, lastName: contact?.lastName, fullName: opts.contactName }) ||
-        [contact?.firstName, contact?.lastName].filter(Boolean).join(" ").trim() ||
-        opts.contactName.trim();
-    const params = opts.params(clean(anrede)).map((v) => clean(v).slice(0, 300));
+    const anrede = vorlagenAnrede(contact, opts.du, opts.contactName);
+    const params = vorlagenParams(opts.params, anrede);
     const { sendTemplate } = await import("@/lib/whatsapp/dialog360");
     const r = await sendTemplate(decryptSecret(acc.apiKeyEnc), phone, name, "de", [{ type: "body", parameters: params.map((text) => ({ type: "text", text })) }]);
     const conv = await prisma.conversation.upsert({

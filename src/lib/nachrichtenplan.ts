@@ -29,7 +29,7 @@ import { STANDARD_VORLAGEN_JE, type VorlageKey } from "@/lib/mail/vorlagen";
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
 
-export type PlanKanal = "whatsapp" | "email" | "push" | "anruf";
+export type PlanKanal = "whatsapp" | "email" | "sms" | "push" | "anruf";
 export type PlanQuelle = "erinnerung" | "terminbeginn" | "abfolge" | "anrufplan" | "vorschlag";
 
 /** Was der Vermittler mit einem Eintrag tun kann (Paket P6). */
@@ -387,7 +387,7 @@ export function planeNachrichten(p: PlanEingabe): PlanEintrag[] {
 }
 
 /** Geht an den Lead (WhatsApp, E-Mail), nicht an den Vermittler (Push, Anruf-Aufgabe). */
-export const anLead = (e: Pick<PlanEintrag, "kanal"> & { quelle?: PlanQuelle }) => (e.kanal === "whatsapp" || e.kanal === "email") && e.quelle !== "vorschlag";
+export const anLead = (e: Pick<PlanEintrag, "kanal"> & { quelle?: PlanQuelle }) => (e.kanal === "whatsapp" || e.kanal === "email" || e.kanal === "sms") && e.quelle !== "vorschlag";
 
 /**
  * Automatische Nachrichten an den Lead in [von, bis) (Zeile „Morgen … automatische Nachrichten“ auf „Heute“, P6):

@@ -16,7 +16,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { checkAdAccountAccess } from "@/lib/meta";
 import { cleanToken, redactTokens } from "@/lib/meta-leads";
 import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
-import { getAppUrl, sendCustomerMail } from "@/lib/email";
+import { getAppUrl, sendCustomerMail, type CustomerMailOpts } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { customerGreeting, logOfferActivity } from "@/lib/offer-links";
 import { loadOnboarding, onboardingChecklist, sendWelcome, vonUnsAbgehakt, type ChecklistItem, type OnboardingFull } from "@/lib/onboarding";
@@ -679,6 +679,34 @@ const STEP_HINT: Record<string, string> = {
   serviceMails: "Service-Mails in Ihrem Namen bestätigen",
 };
 
+/** Inhalt der Erinnerungsmail (rein, auch für die Vorlagen-Übersicht mit Beispieldaten). */
+export function setupReminderInhalt(o: { greeting: string; open: Pick<ChecklistItem, "key" | "label">[]; day?: number | null }): Omit<CustomerMailOpts, "to"> {
+  return {
+    subject: o.day === 7 ? "Ihre Einrichtung: nur noch wenige Minuten" : "Kurze Erinnerung: Ihre Einrichtung bei performancegrowth",
+    greeting: o.greeting,
+    paragraphs: ["damit Ihre Kampagne pünktlich starten kann, fehlen noch ein paar Minuten Einrichtung von Ihrer Seite:"],
+    list: o.open.map((i) => STEP_HINT[i.key] ?? i.label),
+    button: { label: "Zur Einrichtung", url: `${getAppUrl()}/buyer/einrichtung` },
+    html: `<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#5b5e68">Jeder Schritt hat eine kurze Anleitung mit Video. Klappt etwas nicht? Antworten Sie einfach auf diese Mail oder buchen Sie in der Einrichtung einen 15-Minuten-Hilfetermin.</p>`,
+  };
+}
+
+/**
+ * Erinnerungsmail zur Einrichtung (gemeinsam für Versand und Vorschau). Ist der Kunde noch nicht eingeloggt, geht
+ * stattdessen die Willkommens-Mail raus (sendSetupReminder); dann null.
+ */
+export async function setupReminderOpts(
+  ob: Pick<OnboardingFull, "offerId" | "salesContactId"> & { customer: { users: { email: string }[] } },
+  open: ChecklistItem[],
+  day?: number | null,
+): Promise<CustomerMailOpts | null> {
+  const to = ob.customer.users.map((u) => u.email);
+  if (!to.length || !open.length || open.some((i) => i.key === "login")) return null;
+  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { contactName: true } }) : null;
+  const greeting = await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null });
+  return { to, ...setupReminderInhalt({ greeting, open, day }) };
+}
+
 /** Erinnerung (Mail + Push) an den Kunden senden. `force` = sofort, unabhängig von Tag 1/3/7 (Admin-Knopf). */
 export async function sendSetupReminder(
   ob: OnboardingFull,
@@ -690,18 +718,9 @@ export async function sendSetupReminder(
   if (notLoggedIn) {
     await sendWelcome(ob.id);
   } else {
-    const to = ob.customer.users.map((u) => u.email);
-    if (!to.length) return false;
-    const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { contactName: true } }) : null;
-    const res = await sendCustomerMail({
-      to,
-      subject: opts.day === 7 ? "Ihre Einrichtung: nur noch wenige Minuten" : "Kurze Erinnerung: Ihre Einrichtung bei performancegrowth",
-      greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
-      paragraphs: ["damit Ihre Kampagne pünktlich starten kann, fehlen noch ein paar Minuten Einrichtung von Ihrer Seite:"],
-      list: open.map((i) => STEP_HINT[i.key] ?? i.label),
-      button: { label: "Zur Einrichtung", url: `${getAppUrl()}/buyer/einrichtung` },
-      html: `<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#5b5e68">Jeder Schritt hat eine kurze Anleitung mit Video. Klappt etwas nicht? Antworten Sie einfach auf diese Mail oder buchen Sie in der Einrichtung einen 15-Minuten-Hilfetermin.</p>`,
-    });
+    const mail = await setupReminderOpts(ob, open, opts.day);
+    if (!mail) return false;
+    const res = await sendCustomerMail(mail);
     if (!res.ok) {
       reportError(new Error(res.error), "setup-reminder", { onboarding: ob.id });
       return false;

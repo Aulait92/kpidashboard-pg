@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Bell, ChevronDown, Hand, Mail, MessageCircle, Phone, type LucideIcon } from "lucide-react";
+import { Bell, ChevronDown, Hand, Mail, MessageCircle, MessageSquare, Phone, type LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { NachrichtVorschau } from "@/components/nachricht-vorschau";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -25,6 +25,7 @@ export const metadata = { title: "Ablauf | performancegrowth" };
 const KANAL: Record<AblaufKanal, { icon: LucideIcon; farbe: string; name: string }> = {
   whatsapp: { icon: MessageCircle, farbe: "bg-emerald-50 text-emerald-700 ring-emerald-200", name: "WhatsApp" },
   email: { icon: Mail, farbe: "bg-blue-50 text-blue-700 ring-blue-200", name: "E-Mail" },
+  sms: { icon: MessageSquare, farbe: "bg-sky-50 text-sky-700 ring-sky-200", name: "SMS" },
   push: { icon: Bell, farbe: "bg-violet-50 text-violet-700 ring-violet-200", name: "Push an Sie" },
   anruf: { icon: Phone, farbe: "bg-amber-50 text-amber-800 ring-amber-200", name: "Aufgabe für Sie" },
   aktion: { icon: Hand, farbe: "bg-zinc-100 text-zinc-700 ring-zinc-200", name: "Sie" },

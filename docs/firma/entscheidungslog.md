@@ -3,7 +3,11 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 22.11.2026
-- **OFFEN (A, Ole): Belegwerkzeug GetMyInvoices Professional** (Empfehlung CFO mit Red Team): Abruf aus Portalen und
+- **BESCHLOSSEN (Ole, 22.11.2026): Variante A, Steuerberater bleibt, Belege automatisch per GetMyInvoices an DATEV.**
+  Erst alles vollständig und zugeordnet übergeben, danach verhandelt Ole die laufende Buchhaltung (heute 250 € netto im
+  Monat, Jahresabschluss extra) nach. Variante B (BuchhaltungsButler, Steuerberater nur Abschluss) bleibt Rückfall, falls
+  er nicht nachgibt. Nächste Schritte siehe offene Aufgaben.
+- **Vorlage dazu: Belegwerkzeug GetMyInvoices Professional** (Empfehlung CFO mit Red Team): Abruf aus Portalen und
   Postfächern ab 1.1.2026, Abgleich mit Commerzbank und Amex, Übergabe an DATEV Unternehmen online der Kanzlei, API für
   „Beleg ja/nein + Link“ je `BankTransaction`. Kosten ca. 99 € netto/Monat plus einmalig bis ca. 275 € fürs Nachholen,
   DATEV-Module ca. 21 €/Monat falls nicht über die Kanzlei. Candis (ab 389 €), DATEV allein (kein Portalabruf),
@@ -232,3 +236,11 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Angebote haben „Vorauszahlung anbieten“ vorausgewählt (6 Monate: 1 geschenkt, 12 Monate: 3 geschenkt); der Kunde wählt
   bei der Annahme weiter selbst, monatlich bleibt vorausgewählt. Abwählbar; greift nicht bei Pay-per-Lead, Startpreis
   oder ohne Laufzeit. Für „Zahlung nachträglich“ muss sie abgewählt werden.
+- **22.11.2026, 20 Uhr eingespielt:** Terminsuche über 7 Tage (Wiedervorlage, Buchungslink nach zwei Absagen, Kalender
+  voll → Aufgabe), Policen-Bitte nennt genannte Verträge bei allen Produkten (Ole: Variante A, im Fenster freie Nachricht
+  ohne zweiten Knopf), Einrichtung Go-live-Hürden (anderer WhatsApp-Anbieter, private Einladungsmail, Firmengerät,
+  Videolink-Pflicht, Makler, Test-Einladung; schon live geschaltete Kunden bleiben unberührt).
+- **22.11.2026, Vorschau aller CRM-Nachrichten:** Ole: „Vorschau der Mails, die man im Admin-CRM raussenden wird, inkl.
+  Templates“. Verkaufen → Geplante Nachrichten: Zeile antippen zeigt E-Mail und WhatsApp mit den echten Daten.
+  Einstellungen → Mail- und WhatsApp-Vorlagen: alle automatischen Nachrichten mit Beispieldaten (Sie/Du) und Freigabestand
+  der WhatsApp-Vorlagen. Versand und Vorschau nutzen dieselben Funktionen (`lib/vertrieb/nachricht-vorschau.ts`).

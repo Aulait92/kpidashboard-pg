@@ -2,6 +2,9 @@
 // schicken soll, mit Grund (Komplettcheck: ob er etwas doppelt zahlt), und die Verträge nennen, die er auf die
 // Vertragsfrage genannt hat („Haftpflicht bei der Allianz“) statt fester Beispiele. Nie das angefragte Produkt (Kfz) als
 // „andere“ Police. Nur, wenn der Lead Ja zum Komplettcheck gesagt oder Verträge genannt hat. Rein, ohne Datenbank.
+// Alle übrigen Produkte (Ole, 22.11.2026): Die Policen-Bitte nennt ebenfalls die genannten Verträge („zum Beispiel Ihre
+// Haftpflicht bei der Allianz und Hausrat“), dort mit dem angefragten Produkt, weil sie um alle Policen bittet (nicht um
+// „andere“). Ohne genannte Verträge bleibt der bisherige Text (genannteVertraegeBeispiel, mitAngefragt).
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { gesundheitInText } from "@/lib/policen/regeln";
@@ -25,17 +28,40 @@ const MAX = 3;
  * Genannte Verträge für den Text („Haftpflicht bei Allianz“, „Hausrat“), ohne das angefragte Produkt (Sparte aus der
  * Quelle bzw. Kfz), ohne „Sonstige“ und ohne Gesundheitssparten, wenn Kranken/BU/Leben nicht freigegeben ist.
  */
-export function andereVertraege(raw: unknown, o: { source?: string | null; kfz?: boolean; gesundheitAn?: boolean }): string[] {
+export function andereVertraege(
+  raw: unknown,
+  o: { source?: string | null; kfz?: boolean; gesundheitAn?: boolean; mitAngefragt?: boolean; max?: number },
+): string[] {
   const v = vorvertraegeAus(raw);
   if (!v?.liste.length) return [];
-  const angefragt = new Set(zuErsetzendeVertraege(v, [o.source, o.kfz ? "Kfz" : null]));
+  // mitAngefragt: Bitte um alle Policen (Nicht-Kfz), dann gehört der bestehende Vertrag zum angefragten Produkt dazu
+  const angefragt = new Set(o.mitAngefragt ? [] : zuErsetzendeVertraege(v, [o.source, o.kfz ? "Kfz" : null]));
   const out = v.liste
     .filter((x) => !angefragt.has(x) && x.sparte !== "Sonstige" && (o.gesundheitAn || !gesundheitInText(x.sparte)))
     .map((x) => {
-      const sparte = x.sparte === "Private Krankenversicherung" ? "private Krankenversicherung" : x.sparte;
+      const sparte = SPARTE_IM_TEXT[x.sparte] ?? x.sparte;
       return x.gesellschaft ? `${sparte} ${beiGesellschaft(x.gesellschaft)}` : sparte;
     });
-  return [...new Set(out)].slice(0, MAX);
+  return [...new Set(out)].slice(0, o.max ?? MAX);
+}
+
+/** Sparte im Fließtext („Ihre private Krankenversicherung“, „Ihre Tierkrankenversicherung“ statt „Ihre Tierkranken“). */
+const SPARTE_IM_TEXT: Partial<Record<VertragSparte, string>> = {
+  "Private Krankenversicherung": "private Krankenversicherung",
+  Tierkranken: "Tierkrankenversicherung",
+};
+
+/**
+ * Genannte Verträge für die Bitte an Nicht-Kfz-Leads (Ole, 22.11.2026): „Ihre Haftpflicht bei der Allianz“, „Ihre
+ * Haftpflicht bei der Allianz und Hausrat“, „Ihre Hausrat, Rechtsschutz und Unfall“. null = keine genannt (dann bleibt
+ * der bisherige Text ohne Beispiele, auch in den freigegebenen Vorlagen).
+ */
+export function genannteVertraegeBeispiel(an: Ansprache, vertraege: readonly string[] | null | undefined): string | null {
+  const v = [...new Set((vertraege ?? []).map((x) => x.trim()).filter(Boolean))].slice(0, MAX);
+  if (!v.length) return null;
+  // Ohne „Ihre/deine“ (Ole, 22.11.2026: „zum Beispiel deine Hausrat“ war falsch): „zum Beispiel Hausrat bei der Allianz“
+  void an;
+  return v.length === 1 ? v[0] : `${v.slice(0, -1).join(", ")} und ${v.at(-1)}`;
 }
 
 /** Beispiele ohne genannte Verträge, ohne das angefragte Produkt („Haftpflicht oder Hausrat“). */
@@ -58,7 +84,7 @@ export function anderePolicenBeispiel(
   return !vertraege.length
     ? festeBeispiele(o.ausgenommen ?? ["Kfz"])
     : vertraege.length === 1
-      ? a(an, `deine ${vertraege[0]}`, `Ihre ${vertraege[0]}`)
+      ? vertraege[0]
       : `${vertraege.slice(0, -1).join(", ")} und ${vertraege.at(-1)}`;
 }
 

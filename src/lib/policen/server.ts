@@ -161,10 +161,10 @@ export async function policenBitteFuerChat(conversationId: string): Promise<impo
     const vertraege = andereVertraege(lead?.vorvertraege ?? null, { source: lead?.source, kfz: true, gesundheitAn: sp.gesundheitAn });
     return policenBitte({ ...sp, kfz: true, vertraege, komplettcheck: termin?.komplettcheck ?? null });
   }
-  const { vorvertraegeAus } = await import("@/lib/whatsapp/vorvertraege");
-  const vertraege = (vorvertraegeAus(lead?.vorvertraege)?.liste ?? [])
-    .map((v) => (v.sparte === "Private Krankenversicherung" ? "private Krankenversicherung" : v.sparte))
-    .filter((x) => x !== "Sonstige" && (sp.gesundheitAn || !gesundheitInText(x)));
+  // Übrige Produkte (Ole, 22.11.2026): wie bei Kfz mit Gesellschaft („Haftpflicht bei der Allianz“), hier mit dem
+  // angefragten Produkt (Bitte um alle Policen), ohne „Sonstige“ und Gesundheitssparten ohne Freigabe
+  const { andereVertraege } = await import("@/lib/policen/andere-policen");
+  const vertraege = andereVertraege(lead?.vorvertraege ?? null, { source: lead?.source, gesundheitAn: sp.gesundheitAn, mitAngefragt: true, max: 4 });
   return policenBitte({ ...sp, vertraege });
 }
 
