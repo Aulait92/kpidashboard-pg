@@ -91,8 +91,8 @@ describe("Kfz: Texte, Knöpfe, Vorlagen", () => {
     expect(gesendet(NEU, "sie", "b")).toBe("Hallo Frau Mustermann, *ist das neue Auto schon da?* Danke für Ihre Anfrage zur Kfz-Versicherung!\n\n_Digitaler KI-Assistent_");
     expect(gesendet(WECHSEL, "du")).toContain("Hallo Erika, danke für deine Anfrage zur Kfz-Versicherung!");
     expect(ersteFrageKnoepfe("Kfz-Versicherung", WECHSEL)).toEqual(["Zum Jahresende", "Anderes Datum", "Weiß ich nicht"]);
-    // Schon gebucht (Dankeseite): keine Einstiegsfrage, wie bisher die allgemeine Fassung
-    expect(v10Moeglich("Kfz-Versicherung", WECHSEL, { gebucht: true })).toBe(false);
+    // Schon gebucht (Dankeseite): seit 22.11.2026 trotzdem die Kfz-Fassung (feste Kfz-Frage ist keine Terminfrage)
+    expect(v10Moeglich("Kfz-Versicherung", WECHSEL, { gebucht: true })).toBe(true);
   });
 
   it("Rückfall bis zur Freigabe bei Meta: das bisherige allgemeine Erstanschreiben v12 (Telefonat), danach die Kfz-Vorlage", () => {
