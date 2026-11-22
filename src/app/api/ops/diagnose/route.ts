@@ -814,6 +814,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "vertrieb-dsgvo": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebDsgvoDiagnose(p),
   "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
   "push-geraete": async () => (await import("@/lib/ops/push-geraete")).pushGeraeteDiagnose(),
+  "lead-felder": async (p) => (await import("@/lib/ops/lead-felder")).leadFelderDiagnose(p),
   "test-chat": async (p) => (await import("@/lib/ops/test-chat")).testChatDiagnose(p),
   buchungslinks: async () => (await import("@/lib/ops/buchungslinks")).buchungslinksDiagnose(),
   einwilligungstext: async (p) => (await import("@/lib/ops/einwilligungstext")).einwilligungstextDiagnose(p),

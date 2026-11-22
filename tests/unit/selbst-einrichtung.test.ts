@@ -60,7 +60,8 @@ describe("Selbst-Einrichtung: Eingaben", () => {
   });
 
   it("Einwilligungstext nennt die Agentur und WhatsApp", () => {
-    expect(consentText("Agentur Muster")).toMatch(/Agentur Muster.*WhatsApp.*KI-gestützter Assistent.*STOPP/);
+    // KI-Hinweis steht seit 22.11.2026 in der ersten WhatsApp statt im Formular (Fassung 2026-11-22b-knopf)
+    expect(consentText("Agentur Muster")).toMatch(/WhatsApp.*Agentur Muster.*STOPP/);
   });
 });
 
