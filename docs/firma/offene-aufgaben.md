@@ -12,9 +12,10 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 
 | Aufgabe | Stand | Wer |
 |---|---|---|
+| Kranken/BU/Leben auslesen: Nachweis „keine Speicherung“. Weg A AWS Bedrock (Support-Fall 179502644300918, Konto 048394350784) und Weg B OpenAI (Anfrage „Sprich mit uns“ 22.11.2026: Zero Data Retention + EU-Datenresidenz, API). Danach: EU-Projekt, Railway-Variablen, Datum unter Admin › Einstellungen › Anbindungen, Diagnose q=policen-auslesen prüfen. Je Vermittler zusätzlich Freischaltung (Einrichtungsschritt; Lohmann, Anid offen, q=policen-gesundheit) | wartet auf AWS bzw. OpenAI | Ole / CTO |
 | Team-Überblick für Inhaber (Termine 7 Tage, Offenes je Mitglied, Karte auf Heute), Branch `worktree-agent-abe206f8fef110ae2`, nicht gepusht; Notiz `docs/ux/team-ueberblick-2026-11-21.md`. Offen: Persona-Test auf Staging mit echtem Team, nach Livegang Fehlklicks auf der Team-Zeile (Tippen klappt jetzt auf statt Menü) prüfen | wartet auf Merge | UX/UI / CTO |
 | Tierversicherung Katze: Text je Umfang (OP, voll, offen) statt immer „OP-Versicherung“ | Teilarbeit Branch `tkv-umfang` | CTO |
-| Keine neuen Terminvorschläge, wenn der Lead schon einen künftigen Termin hat | offen | CTO |
+| ~~Keine neuen Terminvorschläge, wenn der Lead schon einen künftigen Termin hat~~ erledigt 21.11.2026 (da36ae2b) | erledigt | CTO |
 | Einrichtung Allianz (Angaben einmal, Kalender mit Vertreternummer, Meta-Vorprüfung): live seit 20.11.2026 (81ada26e). Offen: nach Livegang messen (Abbruch im Schritt Kalender, Zeit bis Schritt 4) | live | UX/UI / CTO |
 | Einrichtung: Allianz-Online-Kalender nur bei Versicherer Allianz zeigen (W2) | Teilarbeit Branch `golive-auflagen` | CTO / UX |
 | Einrichtung: „Mein Versicherer erlaubt das nicht“ bei Maklern ausblenden (W3) | Teilarbeit Branch `golive-auflagen` | CTO / UX |
@@ -43,7 +44,7 @@ Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der 
 | Ziel bis 28.11.: mind. 30 % Antworten binnen 72 h, 3 Termine; Tag-7-Anruf mit Zahlen, Tag-14-Rückblick mit NPS | 28.11. / 05.12. | Customer Success |
 | Journey-Diagnose reparieren (alle Stufen 0 trotz Leads) | 24.11.2026 | CTO, Data/BI |
 | ~~Allianz-Einrichtung mergen~~ Erledigt: seit 20.11.2026 live (81ada26e) | erledigt | CTO |
-| Doppelte Terminvorschläge trotz gebuchtem Termin beheben | 24.11.2026 | CTO |
+| ~~Doppelte Terminvorschläge trotz gebuchtem Termin beheben~~ erledigt 21.11.2026 (da36ae2b, Sperre in bookAppointment) | erledigt | CTO |
 | Vorab-Checkliste 48 h vor Onboarding (Nummer beim alten Anbieter freigeben, private Mail für 360dialog, Absender-Freigabe durch IT, Webex-Link) | 24.11.2026 | Customer Success |
 | Klären, warum Embedded Signup gesperrt war (Konzern-Business-Manager?), Anleitung festhalten | 25.11.2026 | Customer Success |
 | Zwei weitere Kunden live, Dauer bis Livegang messen | 28.11.2026 | Sales, Customer Success |

@@ -167,6 +167,17 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     emailKontakt: !!lead.email || !!conv?.contactEmail,
     whatsapp,
     abfolgen,
+    // Offener Terminvorschlag: erster Schritt „Chat ruht“ ist die Nachfrage mit den Zeiten (lib/lead-sequences.ts)
+    terminNachfass: abfolgen.some((s) => s.kind === "silent" && s.step === 0 && !s.stoppedAt)
+      ? await import("@/lib/whatsapp/termin-strecke")
+          .then(async (m) => {
+            const v = await m.offenerTerminvorschlag(leadId, lead.customerId);
+            if (!v || v.starts.length < 2) return null;
+            const g = await import("@/lib/whatsapp/gespraech");
+            return { text: g.terminNachfassText(an, person, [g.zeitKurz(new Date(v.starts[0]), now), g.zeitKurz(new Date(v.starts[1]), now)]) };
+          })
+          .catch(() => null)
+      : null,
     abfolgeKontext: {
       firstName: firstNameOf(lead.name),
       hi: anredeZeile(an, who.kontakt),
