@@ -287,7 +287,7 @@ async function huelleSchreiben(contactId: string, hashes: string[], gesperrtAt: 
         instantlyGesperrtAt: now,
         instantlySperreVersuche: 0,
         instantlySperreFehler: null,
-        phone: null, fax: null, street: null, zip: null, city: null,
+        phone: null, street: null, zip: null, city: null,
         ratingValue: null, ratingCount: null, openingHours: null, url: null, description: null,
         googlePlaceId: null, googleMapsUrl: null, businessStatus: null, insurer: null,
         salutation: null, firstName: null, lastName: null, leaderNames: null, agencyType: null, teamSize: null, potentialScore: null,

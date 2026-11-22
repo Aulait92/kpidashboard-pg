@@ -1,5 +1,5 @@
 // Vertriebskontakte maximal anreichern (Ole, 12.11.2026):
-//  1. Website/Agenturseite (ohne KI): Adresse, Telefon, Fax, Öffnungszeiten, Social-Links,
+//  1. Website/Agenturseite (ohne KI): Adresse, Telefon, Öffnungszeiten, Social-Links,
 //     Inhaber laut Impressum, Versicherer bzw. Makler, Teamgröße (nur wenn eindeutig).
 //  2. Google Places API (New): Bewertung, Anzahl, Öffnungszeiten, Maps-Link, Betriebsstatus;
 //     Adresse/Telefon/Website nur wenn leer. Nur mit GOOGLE_PLACES_API_KEY, gedeckelt je Tag.
@@ -75,16 +75,6 @@ export function extractSocials(html: string): Socials {
     else if (!out.linkedinUrl && host === "linkedin.com" && /^\/(in|company)\//.test(path)) out.linkedinUrl = clean;
   }
   return out;
-}
-
-const FAX = /(?:Telefax|Fax)\.?\s*[:.]?\s*(\+?\d[\d\s/()\-–.]{5,24}\d)/i;
-
-export function extractFax(text: string): string | null {
-  for (const l of text.split(/\n/)) {
-    const m = l.match(FAX);
-    if (m && m[1].replace(/\D/g, "").length >= 6) return m[1].replace(/\s+/g, " ").trim();
-  }
-  return null;
 }
 
 const NAME_WORD = /^(?:Dr\.|Prof\.|Dipl\.-\w+\.?|[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?|von|van|de|zu)$/;
@@ -171,7 +161,6 @@ export function extractTeamSize(text: string): number | null {
 
 export type WebDetails = {
   openingHours: string | null;
-  fax: string | null;
   leaderNames: string | null;
   insurer: string | null;
   teamSize: number | null;
@@ -181,7 +170,6 @@ export function extractWebDetails(input: { homeHtml: string; homeText: string; i
   const all = `${input.homeText}\n${input.impressumText}`;
   return {
     openingHours: extractOpeningHours(input.homeText) ?? extractOpeningHours(input.impressumText),
-    fax: extractFax(input.impressumText) ?? extractFax(input.homeText),
     leaderNames: extractLeaders(input.impressumText),
     insurer: detectInsurer(input.impressumText || all, input.email),
     teamSize: extractTeamSize(input.homeText),
@@ -376,7 +364,7 @@ type EnrichmentLog = {
 };
 
 const LABEL: Record<string, string> = {
-  street: "Straße", zip: "PLZ", city: "Ort", phone: "Telefon", fax: "Fax", url: "Website", openingHours: "Öffnungszeiten",
+  street: "Straße", zip: "PLZ", city: "Ort", phone: "Telefon", url: "Website", openingHours: "Öffnungszeiten",
   leaderNames: "Inhaber", insurer: "Versicherer", teamSize: "Teamgröße", facebookUrl: "Facebook", instagramUrl: "Instagram",
   xingUrl: "XING", linkedinUrl: "LinkedIn", ratingValue: "Google-Bewertung", googleMapsUrl: "Google Maps", businessStatus: "Betriebsstatus",
 };
@@ -386,7 +374,7 @@ const empty = (v: unknown) => v == null || (typeof v === "string" && !v.trim());
 export type ContactEnrichResult = { web: string; google: string; fields: string[] };
 
 const SELECT = {
-  id: true, name: true, email: true, url: true, phone: true, fax: true, street: true, zip: true, city: true, firstName: true, lastName: true,
+  id: true, name: true, email: true, url: true, phone: true, street: true, zip: true, city: true, firstName: true, lastName: true,
   leaderNames: true, insurer: true, teamSize: true, openingHours: true, facebookUrl: true, instagramUrl: true, xingUrl: true, linkedinUrl: true,
   ratingValue: true, ratingCount: true, googlePlaceId: true, googleMapsUrl: true, businessStatus: true, webEnrichAt: true, googleCheckedAt: true,
   addressEnrichTriedAt: true, enrichment: true,
@@ -434,9 +422,9 @@ async function webStep(c: Row, log: EnrichmentLog, force: boolean): Promise<{ st
     phone: address.phone ?? homeAddr?.phone ?? null,
     ...details,
   };
-  // Konzern-Impressum (Vorstand/Aufsichtsrat) statt Agentur: keine Adresse, kein Fax, keine „Inhaber“
+  // Konzern-Impressum (Vorstand/Aufsichtsrat) statt Agentur: keine Adresse, keine „Inhaber“
   if (isCorporateImprint(impressumText)) {
-    for (const k of ["street", "zip", "city", "phone", "fax", "leaderNames"]) found[k] = null;
+    for (const k of ["street", "zip", "city", "phone", "leaderNames"]) found[k] = null;
   }
   const fields: string[] = [];
   const cur = c as unknown as Record<string, unknown>;

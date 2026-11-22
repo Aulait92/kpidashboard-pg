@@ -15,7 +15,7 @@ import { STAGE_LABEL } from "@/lib/vertrieb/crm";
 /** Gespeicherte Felder mit Bezeichnung (Reihenfolge der Ausgabe). Technische Felder (IDs, Zähler, Prüfzeitpunkte) fehlen. */
 const FELDER: [string, string][] = [
   ["salutation", "Anrede"], ["firstName", "Vorname"], ["lastName", "Nachname"], ["name", "Firma bzw. Name"], ["leaderNames", "Inhaber bzw. Geschäftsführer"],
-  ["email", "E-Mail"], ["altEmails", "weitere E-Mail-Adressen"], ["phone", "Telefon"], ["fax", "Fax"],
+  ["email", "E-Mail"], ["altEmails", "weitere E-Mail-Adressen"], ["phone", "Telefon"],
   ["street", "Straße"], ["zip", "PLZ"], ["city", "Ort"], ["url", "Website"], ["description", "Beschreibung"], ["insurer", "Versicherer"],
   ["agencyType", "Agenturtyp"], ["teamSize", "Teamgröße"], ["openingHours", "Öffnungszeiten"], ["ratingValue", "Google-Bewertung"], ["ratingCount", "Anzahl Google-Bewertungen"],
   ["googleMapsUrl", "Google-Maps-Eintrag"], ["businessStatus", "Google-Geschäftsstatus"],
