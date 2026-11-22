@@ -3,7 +3,11 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 22.11.2026
-- **OFFEN (A, Ole): Belegwerkzeug GetMyInvoices Professional** (Empfehlung CFO mit Red Team): Abruf aus Portalen und
+- **BESCHLOSSEN (Ole, 22.11.2026): Variante A, Steuerberater bleibt, Belege automatisch per GetMyInvoices an DATEV.**
+  Erst alles vollständig und zugeordnet übergeben, danach verhandelt Ole die laufende Buchhaltung (heute 250 € netto im
+  Monat, Jahresabschluss extra) nach. Variante B (BuchhaltungsButler, Steuerberater nur Abschluss) bleibt Rückfall, falls
+  er nicht nachgibt. Nächste Schritte siehe offene Aufgaben.
+- **Vorlage dazu: Belegwerkzeug GetMyInvoices Professional** (Empfehlung CFO mit Red Team): Abruf aus Portalen und
   Postfächern ab 1.1.2026, Abgleich mit Commerzbank und Amex, Übergabe an DATEV Unternehmen online der Kanzlei, API für
   „Beleg ja/nein + Link“ je `BankTransaction`. Kosten ca. 99 € netto/Monat plus einmalig bis ca. 275 € fürs Nachholen,
   DATEV-Module ca. 21 €/Monat falls nicht über die Kanzlei. Candis (ab 389 €), DATEV allein (kein Portalabruf),
