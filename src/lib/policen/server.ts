@@ -21,7 +21,7 @@
 // ablegen, aber erst nach der Prüfung anbieten), Öffnen nur mit Zwei-Faktor-Login (AVV § 5), jede Löschung im
 // Löschprotokoll (lib/loeschprotokoll.ts), eigener Datenschlüssel je Datei (Crypto-Shredding, ablage.ts Format 2).
 
-import { dokumentArt, kfzStand, texterkennungAn, unterlageText, unterlagenSparte } from "@/lib/policen/texterkennung";
+import { dokumentArt, erkanntePolicen, kfzStand, texterkennungAn, unterlageText, unterlagenSparte } from "@/lib/policen/texterkennung";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { decryptBytes, decryptSecret } from "@/lib/encryption";
@@ -949,10 +949,11 @@ export async function handleFlowAntwort(o: {
     if (vorher?.ki !== false || geloescht) await audit("policen.ohne_ki", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { geloescht, quelle: "formular" }, actor: { role: "lead" } });
   }
 
-  // Kfz-Lead mit KI-Einwilligung: jede Datei lokal per Texterkennung einordnen (Fahrzeugschein, Kfz-Police), damit die
-  // Bestätigung sagt, was noch fehlt (Ole, 22.11.2026; lib/policen/texterkennung.ts, kein Drittanbieter)
+  // Mit KI-Einwilligung: jede Datei lokal per Texterkennung einordnen (Fahrzeugschein, Kfz-Police, Sparte anderer
+  // Policen), damit die Bestätigung sagt, was da ist bzw. noch fehlt, und das Auslesen auch Fotos zuordnen kann
+  // (Ole, 22.11.2026: für alle Leads; lib/policen/texterkennung.ts, kein Drittanbieter)
   const fc = await flow.flowChat(chat.id, now).catch(() => null);
-  const ocr = ki && !!fc?.text.kfz && texterkennungAn();
+  const ocr = ki && texterkennungAn();
   // Dateien laden, prüfen, ablegen
   let ok = 0;
   let virus = 0;
@@ -1019,8 +1020,10 @@ export async function handleFlowAntwort(o: {
 
   if (o.botErlaubt) {
     const c = fc;
-    const stand = ok && ocr ? kfzStand((await prisma.leadDocument.findMany({ where: { leadId: chat.leadId, status: "gespeichert" }, select: { dokumentArt: true } })).map((d) => d.dokumentArt)) : null;
-    if (ok && c) await flow.sendeBestaetigung(chat.id, bestaetigung(c.text, ok, ki, stand), now).catch((e) => logFehler("bestätigung", e));
+    const docs = ok && ocr ? await prisma.leadDocument.findMany({ where: { leadId: chat.leadId, status: "gespeichert" }, select: { dokumentArt: true, sparte: true } }) : [];
+    const stand = ok && ocr && c?.text.kfz ? kfzStand(docs.map((d) => d.dokumentArt)) : null;
+    const erkannt = ok && ocr ? erkanntePolicen(docs.map((d) => d.sparte), { ohneKfz: !!c?.text.kfz }) : [];
+    if (ok && c) await flow.sendeBestaetigung(chat.id, bestaetigung(c.text, ok, ki, stand, erkannt), now).catch((e) => logFehler("bestätigung", e));
     if (virus) await antworte(virenText(an));
     else if (spaeter) await antworte(spaeterText(an));
     else if (gesundheit) await antworte(gesundheitAusText(an, person));

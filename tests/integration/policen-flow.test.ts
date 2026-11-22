@@ -294,7 +294,7 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     // Bestätigung als Flow-Nachricht „Weitere senden“ mit Fußzeile
     const [b] = calls("flow");
     const bo = b[3] as { body: string; footer: string; cta: string };
-    expect(bo.body).toMatch(/^✅ Danke, \*2 Dateien sind angekommen\.\*\n\nHerr Kannapinn sieht sie sich vor \S+ an und versucht, Ihnen Geld zu sparen\. Bis dahin müssen Sie nichts weiter tun\./);
+    expect(bo.body).toMatch(/^✅ Danke, \*2 Dateien sind angekommen\.\* Erkannt: Hausrat\.\n\nHerr Kannapinn sieht sie sich vor \S+ an und versucht, Ihnen Geld zu sparen\. Bis dahin müssen Sie nichts weiter tun\./);
     expect(bo.body).not.toContain("nichts automatisch");
     expect(bo.footer).toBe("Widerruf jederzeit: einfach „Widerruf“ schreiben.");
     expect(bo.cta).toBe("Weitere senden");

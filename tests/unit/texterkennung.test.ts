@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { dokumentArt, kfzStand, texterkennungAn, unterlagenSparte } from "@/lib/policen/texterkennung";
+import { dokumentArt, erkanntePolicen, kfzStand, texterkennungAn, unterlagenSparte } from "@/lib/policen/texterkennung";
 import { bestaetigung } from "@/lib/policen/flow/texte";
 
-const K = { an: "sie" as const, name: "Herr Kannapinn", tag: "Montag", kfz: true, kiFertig: false, gesundheit: false };
+const K = { an: "sie" as const, name: "Herr Kannapinn", pronomen: "er" as const, tag: "Montag", kfz: true, kiFertig: false, gesundheit: false };
 
 describe("Texterkennung Kfz-Unterlagen (Ole, 22.11.2026)", () => {
   it("Dokumentart aus dem Text", () => {
@@ -33,5 +33,15 @@ describe("Texterkennung Kfz-Unterlagen (Ole, 22.11.2026)", () => {
     // Keine Gedankenstriche
     for (const st of [null, { schein: false, police: false }, { schein: true, police: false }, { schein: false, police: true }, { schein: true, police: true }])
       expect(bestaetigung(K, 1, true, st).text).not.toMatch(/[–—]/);
+  });
+
+  it("Erkannte Policen für alle Leads: ohne Gesundheit, beim Kfz-Lead ohne Kfz, im Dank genannt", () => {
+    expect(erkanntePolicen(["hausrat", "kranken", null, "haftpflicht", "sonstig", "hausrat"])).toEqual(["Haftpflicht", "Hausrat"]);
+    expect(erkanntePolicen(["kfz", "hausrat"], { ohneKfz: true })).toEqual(["Hausrat"]);
+    expect(erkanntePolicen(["kfz", "hausrat"])).toEqual(["Hausrat", "Kfz"]);
+    const P = { ...K, kfz: false };
+    expect(bestaetigung(P, 2, true, null, ["Haftpflicht", "Hausrat"]).text.startsWith("✅ Danke, *2 Dateien sind angekommen.* Erkannt: Haftpflicht und Hausrat.\n\n")).toBe(true);
+    expect(bestaetigung(P, 1, true, null, []).text.startsWith("✅ Danke, *1 Datei ist angekommen.*\n\n")).toBe(true);
+    expect(bestaetigung(K, 3, true, { schein: true, police: true }, ["Hausrat"]).text).toContain("Erkannt: Hausrat.\n\n*Fahrzeugschein und Rechnung sind dabei.*");
   });
 });

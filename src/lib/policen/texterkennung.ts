@@ -8,7 +8,7 @@
 import { execFile } from "node:child_process";
 import { spartenImText } from "@/lib/policen/auslesen/sparte";
 import type { AuslesenSparte } from "@/lib/policen/auslesen/felder";
-import type { Sparte } from "@/lib/policen/regeln";
+import { isSparte, SPARTEN, type Sparte } from "@/lib/policen/regeln";
 
 export type DokumentArt = "fahrzeugschein" | "kfz_police" | "police";
 
@@ -74,3 +74,13 @@ export type KfzStand = { schein: boolean; police: boolean };
 
 /** Stand der Kfz-Unterlagen aus den Dokumentarten aller Unterlagen des Leads. */
 export const kfzStand = (arten: readonly (string | null)[]): KfzStand => ({ schein: arten.includes("fahrzeugschein"), police: arten.includes("kfz_police") });
+
+/**
+ * Erkannte Policen für die Bestätigung („Hausrat und Haftpflicht“): Sparten aller Unterlagen ohne Gesundheitssparten,
+ * ohne „Sonstiges“, beim Kfz-Lead ohne Kfz (das sagt dort der eigene Satz). Reihenfolge wie SPARTEN, höchstens 3.
+ */
+export function erkanntePolicen(sparten: readonly (string | null)[], o: { ohneKfz?: boolean } = {}): string[] {
+  const da = new Set(sparten.filter((s): s is Sparte => isSparte(s) && !SPARTEN[s].gesundheit && s !== "sonstig" && !(o.ohneKfz && s === "kfz")));
+  return (Object.keys(SPARTEN) as Sparte[]).filter((s) => da.has(s)).map((s) => SPARTEN[s].label).slice(0, 3);
+}
+

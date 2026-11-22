@@ -231,13 +231,15 @@ export const WIDERRUF_FUSSZEILE = "Widerruf jederzeit: einfach „Widerruf“ sc
  * kfz: Stand der Kfz-Unterlagen aus der lokalen Texterkennung (lib/policen/texterkennung.ts, alle Unterlagen des
  * Leads); null = nicht geprüft (ohne KI-Einwilligung bzw. Texterkennung aus), dann die offene Nachfrage.
  */
-export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean, kfz: { schein: boolean; police: boolean } | null = null): Nachricht {
+export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean, kfz: { schein: boolean; police: boolean } | null = null, erkannt: readonly string[] = []): Nachricht {
   const { an } = k;
   const angekommen = n === 1 ? "*1 Datei ist angekommen.*" : `*${n} Dateien sind angekommen.*`;
   const wann = k.tag ? `vor ${k.tag}` : a(an, "vor deinem Termin", "vor Ihrem Termin");
   // Ohne KI steht die Bestätigung der Wahl direkt nach dem Dank (Paket 4), danach wie mit KI.
+  // Erkannte Policen (Texterkennung, Ole 22.11.2026): „Erkannt: Hausrat und Haftpflicht.“ direkt hinter dem Dank
+  const erkanntSatz = erkannt.length ? ` Erkannt: ${erkannt.length === 1 ? erkannt[0] : `${erkannt.slice(0, -1).join(", ")} und ${erkannt.at(-1)}`}.` : "";
   const teile = [
-    `✅ Danke, ${angekommen}`,
+    `✅ Danke, ${angekommen}${erkanntSatz}`,
     ...(ki ? [] : [OHNE_KI_SATZ]),
     // Kfz (Ole, 22.11.2026: „checken, ob Fahrzeugschein und Rechnung schon hochgeladen sind, sonst auffordern“): Die
     // App liest Fotos ohne ZDR-Nachweis nicht per KI ein (Datenschutz-Prüfung 22.11.2026, K2), darum fragt sie nach
