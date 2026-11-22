@@ -952,6 +952,22 @@ async function countPoolLeads(
     where.customerId = { in: def.customerIds };
   }
   if (channel) where.adChannel = channel;
+  // Pay-per-Lead seit 17.11.2026: Eingänge kommen als PoolLead (Produktschlüssel des Bezugs, z. B.
+  // „PKV-Tarifoptimierung“), nicht mehr als Lead mit source „Wechsel“ und adChannel „Meta“ (Airtable-Abgleich aus).
+  // Ohne sie zählte der Buyer seit dem 17.11. keine Eingänge mehr (7-Tage-CPL 81 € statt 13 €, Ole 22.11.2026).
+  // Eingänge = PoolLeads (alle Wege, hier Meta-Werbung) plus alte Leads aus der Zeit vor dem ersten PoolLead.
+  if (def.productKeys.length && (!channel || channel === "Meta") && !def.customerIds) {
+    const erster = await prisma.poolLead.findFirst({ where: { productKey: { in: def.productKeys } }, orderBy: { createdAt: "asc" }, select: { createdAt: true } });
+    if (erster) {
+      const [pool, alt] = await Promise.all([
+        prisma.poolLead.count({ where: { productKey: { in: def.productKeys }, createdAt: { gte: monthStart, lte: mtdEnd } } }),
+        erster.createdAt > monthStart
+          ? prisma.lead.count({ where: { ...where, createdAt: { gte: monthStart, lt: erster.createdAt < mtdEnd ? erster.createdAt : mtdEnd } } })
+          : Promise.resolve(0),
+      ]);
+      return pool + alt;
+    }
+  }
   return prisma.lead.count({ where });
 }
 
