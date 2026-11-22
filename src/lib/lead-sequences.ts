@@ -434,12 +434,12 @@ export function imChatFensterVorziehen(o: { due: Date; fensterBis: Date | null; 
   const { due, fensterBis, now } = o;
   if (!fensterBis || fensterBis.getTime() <= now.getTime()) return due;
   const sonntag = o.sonntag ?? null;
-  const tatsaechlich = naechstesSendefenster(due, undefined, sonntag);
+  const tatsaechlich = naechstesSendefenster(due, CHAT_RUHT_STUNDEN, sonntag);
   const puffer = 30 * 60 * 1000;
   if (tatsaechlich.getTime() <= fensterBis.getTime() - puffer) return due;
   let t = new Date(fensterBis.getTime() - puffer);
-  for (let i = 0; i < 200 && !inSendWindow(t, undefined, sonntag); i++) t = new Date(t.getTime() - 15 * 60 * 1000);
-  if (!inSendWindow(t, undefined, sonntag) || t.getTime() < now.getTime() + puffer) return due;
+  for (let i = 0; i < 200 && !inSendWindow(t, CHAT_RUHT_STUNDEN, sonntag); i++) t = new Date(t.getTime() - 15 * 60 * 1000);
+  if (!inSendWindow(t, CHAT_RUHT_STUNDEN, sonntag) || t.getTime() < now.getTime() + puffer) return due;
   return t.getTime() < due.getTime() ? t : due;
 }
 
@@ -450,6 +450,8 @@ export const TERMIN_NACHFASS_STUNDEN = { von: 8, bis: 20 } as const;
  * sonntags, das Nachfassen hätte bis Montag gewartet). Kürzeres Fenster als werktags; andere Abfolgen bleiben Mo bis Sa.
  */
 export const SONNTAG_NACHFASS_STUNDEN = { von: 10, bis: 18 } as const;
+/** „Chat ruht“ werktags ab 8 Uhr (Ole, 22.11.2026: „ja, generell ab 8 Uhr“), sonst wie das Versandfenster bis 19 Uhr. */
+export const CHAT_RUHT_STUNDEN = { von: 8, bis: 19 } as const;
 
 async function enabledFor(customerId: string): Promise<boolean> {
   const agent = await prisma.agentConfig.findUnique({ where: { customerId }, select: { active: true, followUpSequencesEnabled: true } });
@@ -799,7 +801,7 @@ export async function runSequences(now = new Date(), opts: { nurId?: string; sof
     const terminNachfass =
       !skip && seq.kind === "silent" && seq.step === 0 ? await import("@/lib/whatsapp/termin-strecke").then((m) => m.offenerTerminvorschlag(seq.leadId, seq.customerId)).catch(() => null) : null;
     const sonntag = seq.kind === "silent" ? SONNTAG_NACHFASS_STUNDEN : null;
-    const imFenster = terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN, sonntag) : sonntag ? inSendWindow(now, undefined, sonntag) : windowOpen;
+    const imFenster = terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN, sonntag) : sonntag ? inSendWindow(now, CHAT_RUHT_STUNDEN, sonntag) : windowOpen;
     // WhatsApp und E-Mail nur im Versandfenster – Schritt wartet, Anruf-Aufgaben jederzeit.
     if (!skip && !opts.sofort && (step.action === "whatsapp" || step.action === "email") && !imFenster) {
       res.waiting++;

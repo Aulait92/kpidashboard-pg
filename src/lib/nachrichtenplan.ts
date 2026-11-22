@@ -19,7 +19,7 @@
 import type { Ansprache } from "@/lib/ansprache";
 import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 import { CALL_ATTEMPTS_TARGET, callPlanNote, isCallPlanNote, nextCallAttemptAt } from "@/lib/call-plan";
-import { SEQUENCES, SONNTAG_NACHFASS_STUNDEN, TERMIN_NACHFASS_STUNDEN, istAngebotsAbfolge, istBedenkzeitAbfolge, naechstesSendefenster, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
+import { CHAT_RUHT_STUNDEN, SEQUENCES, SONNTAG_NACHFASS_STUNDEN, TERMIN_NACHFASS_STUNDEN, istAngebotsAbfolge, istBedenkzeitAbfolge, naechstesSendefenster, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
 import { istRueckrufNotiz } from "@/lib/rueckruf";
 import { erinnerungsPlan, gleichText, startPush, stundeText, vortagText } from "@/lib/showup";
 import { anrufPush } from "@/lib/anruf-ausloeser";
@@ -225,13 +225,13 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
     const roh = i === a.step ? fruehestens(nextAt, p.now) : new Date(Math.max(base.getTime() + step.day * DAY, prev.getTime() + 2 * HOUR));
     // Angebot (P3): WhatsApp und E-Mail gehen erst im Versandfenster (Mo bis Sa 9 bis 19 Uhr) raus
     const angebot = istAngebotsAbfolge(a.kind);
-    // „Chat ruht“: wie runSequences Mo bis Sa 9 bis 19 Uhr (Termin-Nachfassen 8 bis 20 Uhr), sonntags 10 bis 18 Uhr
+    // „Chat ruht“: wie runSequences Mo bis Sa 8 bis 19 Uhr (Termin-Nachfassen 8 bis 20 Uhr), sonntags 10 bis 18 Uhr
     const terminSchritt = a.kind === "silent" && i === 0 && !!p.terminNachfass;
     const at =
       angebot && step.action !== "call"
         ? naechsterVersand(roh)
         : a.kind === "silent" && step.action !== "call"
-          ? naechstesSendefenster(roh, terminSchritt ? TERMIN_NACHFASS_STUNDEN : undefined, SONNTAG_NACHFASS_STUNDEN)
+          ? naechstesSendefenster(roh, terminSchritt ? TERMIN_NACHFASS_STUNDEN : CHAT_RUHT_STUNDEN, SONNTAG_NACHFASS_STUNDEN)
           : roh;
     prev = at;
     // Erster Schritt nach der Bedenkzeit: antwortet der Lead vorher, wird es eine Aufgabe für Sie
