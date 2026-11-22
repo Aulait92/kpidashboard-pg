@@ -1,5 +1,5 @@
 // Admin liest mit (Ole, 21.11.2026: „bei den ersten Kunden als Admin Notifications, wenn Leads reinkommen, Termine
-// gebucht werden und Abschlüsse reinkommen“). Push an alle Admins, je Kunde abschaltbar (Customer.adminMitlesen,
+// gebucht werden und Abschlüsse reinkommen“), dazu Antworten von Leads im Chat (Ole, 22.11.2026). Push an alle Admins, je Kunde abschaltbar (Customer.adminMitlesen,
 // Glocke im Kopf der Kundenakte). Nie bei Testkunden oder Testleads. Ohne Namen und Nummern des Leads (nur Kunde,
 // Produkt, Zeit), Link in die Kundenakte.
 
@@ -7,17 +7,20 @@ import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 
-export type MitlesenEreignis = "lead" | "termin" | "abschluss";
+export type MitlesenEreignis = "lead" | "termin" | "abschluss" | "antwort";
 
-const TITEL: Record<MitlesenEreignis, string> = { lead: "🆕 Lead", termin: "📅 Termin", abschluss: "🏆 Abschluss" };
+const TITEL: Record<MitlesenEreignis, string> = { lead: "🆕 Lead", termin: "📅 Termin", abschluss: "🏆 Abschluss", antwort: "💬 Antwort" };
+const STANDARD: Record<MitlesenEreignis, string> = { lead: "Neuer Lead", termin: "Neuer Termin", abschluss: "Neuer Abschluss", antwort: "Ein Lead hat im Chat geantwortet" };
+/** Antworten: höchstens ein Push je Chat, solange der Lead innerhalb dieser Zeit weiterschreibt (Ole, 22.11.2026). */
+export const ANTWORT_PAUSE_MS = 15 * 60 * 1000;
 
 /** Titel und Text des Pushs. (rein) */
 export function mitlesenText(e: MitlesenEreignis, kunde: string, detail: string | null): { title: string; body: string } {
-  return { title: `${TITEL[e]} bei ${kunde.replace(/^Allianz\s+/i, "")}`, body: detail?.trim() || (e === "lead" ? "Neuer Lead" : e === "termin" ? "Neuer Termin" : "Neuer Abschluss") };
+  return { title: `${TITEL[e]} bei ${kunde.replace(/^Allianz\s+/i, "")}`, body: detail?.trim() || STANDARD[e] };
 }
 
 /** Push an Admins, wenn der Kunde mitgelesen wird. Fehler werden nur gemeldet, nie geworfen. */
-export async function adminMitlesen(o: { leadId: string; ereignis: MitlesenEreignis; detail?: string | null; tagZusatz?: string }): Promise<void> {
+export async function adminMitlesen(o: { leadId: string; ereignis: MitlesenEreignis; detail?: string | null; tagZusatz?: string; url?: string }): Promise<void> {
   try {
     const lead = await prisma.lead.findUnique({
       where: { id: o.leadId },
@@ -29,8 +32,9 @@ export async function adminMitlesen(o: { leadId: string; ereignis: MitlesenEreig
       const pool = await prisma.poolLead.findFirst({ where: { leadId: o.leadId }, select: { via: true } });
       if (pool?.via === "perspective") return;
     }
-    const { title, body } = mitlesenText(o.ereignis, lead.customer.name, o.detail ?? lead.source);
-    await sendToAdmins({ title, body, url: `/admin/neu/kunden/${lead.customerId}`, tag: `mitlesen-${o.ereignis}:${o.tagZusatz ?? o.leadId}` });
+    // Antwort: nie der Nachrichtentext (Datenschutz), nur dass geantwortet wurde
+    const { title, body } = mitlesenText(o.ereignis, lead.customer.name, o.ereignis === "antwort" ? null : (o.detail ?? lead.source));
+    await sendToAdmins({ title, body, url: o.url ?? `/admin/neu/kunden/${lead.customerId}`, tag: `mitlesen-${o.ereignis}:${o.tagZusatz ?? o.leadId}` });
   } catch (err) {
     reportError(err, "admin-mitlesen");
   }
