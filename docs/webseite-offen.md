@@ -2,6 +2,7 @@
 
 Wird einmal pro Woche (montags) gesammelt umgesetzt und danach geleert. Regeln: AGENTS.md, „Webseite mitpflegen“.
 Letzte Aktualisierung der Webseite: 14.11.2026 (Zahlen, mehrere Verträge, Schnellsuche, Bestand-Import, Zusatzpakete).
+Zwischendurch 22.11.2026 (Ole: „webseite vorziehen“): Garantien entfernt (Hero-Zeile, Karte im Abschnitt „Dein Risiko ist klar begrenzt“, jetzt „Kampagne wird laufend nachgeschärft“); Projektwissen: keine Garantie-Aussagen mehr.
 
 ## Offen
 
@@ -60,8 +61,6 @@ Letzte Aktualisierung der Webseite: 14.11.2026 (Zahlen, mehrere Verträge, Schne
 - 15.11.: Leads ohne WhatsApp: Ist die Nummer nicht per WhatsApp erreichbar, bekommst du sofort eine Push-Nachricht, der Lead steht oben auf deiner Anrufliste und bekommt (mit E-Mail-Adresse) einmal eine kurze E-Mail mit deinem Terminlink. Falls die Seite beschreibt, wie der Assistent neue Leads anschreibt, ergänzen: „Hat ein Lead kein WhatsApp, siehst du das sofort und rufst direkt an.“ Keine Quoten nennen.
 - 15.11.: Notizen diktieren gibt es nicht mehr (Notizen werden getippt). In src/routes/software.tsx entfernen: Satzteil „und Notizen diktieren“ (Zeile ~57), Feature-Karte „Notizen diktieren“ (~165) und „Diktieren statt tippen“ (~194); Mic-Icon dort weg, nichts Neues dafür versprechen.
 - 15.11.: Alle E-Mails im Verlauf: Jede E-Mail an deine Leads und Bestandskunden, auch die automatischen (Terminbestätigung, Erinnerung, Kampagnen), steht im Verlauf des Kontakts, mit Zustellstatus. So siehst du vor dem Anruf, was dein Kunde schon bekommen hat. Falls die Seite den Kontaktverlauf oder das CRM beschreibt, so ergänzen, ohne Versprechen.
-- 22.11.: Ohne Garantien (Ole: „ich verkaufe erstmal ohne garantie“): Alle Garantie-Aussagen von der Seite nehmen (Lead-Garantie, Break-even-Garantie, Vertrags-Garantie, „Ihr Risiko“ mit Garantien, FAQ). Stattdessen höchstens: Pause und Urlaub jederzeit, Kampagne wird laufend nachgeschärft, Kunden bleiben deine Kunden. Der Eintrag vom 15.11. (120 Tage) entfällt damit.
-- (entfällt, siehe 22.11.) 15.11.: Garantien nach 120 Tagen (Ole): Break-even-Garantie (Vertreter) und Vertrags-Garantie (Makler, 15 Verträge) werden für neue Kunden nach 120 aktiven Tagen geprüft statt nach 90. Falls die Seite eine Frist nennt (z. B. „nach 90 Tagen“, „nach 3 Monaten“), auf „nach 120 Tagen“ ändern. Nur die Frist anpassen, keine neuen Garantie- oder Ergebnisversprechen ergänzen.
 - 15.11.: Oberfläche aufgeräumt (Kontakte mit Phase und nächstem Schritt, Präsentation direkt am Termin). Keine Textänderung nötig, außer die Seite zeigt Screenshots der alten Oberfläche.
 - 15.11.: Bestandskunden-Modul ist für Kunden vorerst ausgeblendet (Ole testet es noch). Falls die Seite /software das Modul (Bestand importieren, Kampagnen an Bestandskunden, E-Mail-Kampagnen, Zusatzpakete) als verfügbar beschreibt: dort als „demnächst“ kennzeichnen statt als verfügbar, keine Preise. Die offenen Einträge oben zum Bestandskunden-Modul (14.11. und 15.11.) bis dahin nicht als verfügbar umsetzen.
 - 16.11.: „Heute“ nach Dringlichkeit sortiert (wartet auf Antwort, Termine mit Vorbereiten, Anrufe, Aufräumen). Falls die Webseite „Heute“ beschreibt oder zeigt, so anpassen.
