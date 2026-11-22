@@ -153,15 +153,15 @@ export async function applyRuleToOpen(ruleId: string): Promise<number> {
  */
 export async function applyRulesToOpen(): Promise<number> {
   const rules = await ownRules();
-  if (!rules.length) return 0;
   const open = await prisma.bankTransaction.findMany({ where: { status: "neu" }, select: { id: true, amount: true, counterparty: true, purpose: true } });
   let n = 0;
   for (const t of open) {
-    const c = classify({ amount: Number(t.amount), counterparty: t.counterparty, purpose: t.purpose }, rules, []);
-    if (c.status === "neu" || !c.rule?.id) continue;
+    // Eigene Regeln vor den Standardregeln (z. B. Meta-Zahlungen über Klarna mit umbrochenem Verwendungszweck)
+    const c = classify({ amount: Number(t.amount), counterparty: t.counterparty, purpose: t.purpose }, rules);
+    if (c.status === "neu" || !c.rule) continue;
     await prisma.bankTransaction.update({
       where: { id: t.id },
-      data: { status: c.status, costPurpose: c.costPurpose, vatIncluded: c.vatIncluded, ruleId: c.rule.id, assignedAt: new Date() },
+      data: { status: c.status, costPurpose: c.costPurpose, vatIncluded: c.vatIncluded, ruleId: c.rule.id ?? null, assignedAt: new Date() },
     });
     n++;
   }

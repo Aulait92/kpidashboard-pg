@@ -31,7 +31,9 @@ export type AbgleichBeleg = {
 
 export const EINGANGS_TYPEN = ["INCOMING_INVOICE", "RECEIPT", "PAYMENT_RECEIPT", "EXPENSE_REIMBURSEMENT", "MISC"] as const;
 
-const META = /facebook|facebk|meta platforms|fb\.me\/ads/i;
+const META_KOMPAKT = /facebook|facebk|metaplatforms|fb\.me\/ads/i;
+// Verwendungszwecke aus der Bank-CSV brechen Wörter um („FACEBOO K PAYMENTS“): ohne Leerzeichen vergleichen
+const META = { test: (t: string) => META_KOMPAKT.test(t.replace(/\s+/g, "")) };
 // Bankentgelte (Kontoauszug genügt) und Darlehensraten (Vertrag liegt einmal vor) brauchen keinen Einzelbeleg
 const OHNE_BELEG = /american express|\bamex\b|zahlung erhalten|stripe|umbuchung|übertrag|finanzamt|bundeskasse|privat|gehalt|kontoführung|kontofuehrung|darlehen|tilgung/i;
 
@@ -64,7 +66,8 @@ export function kennwoerter(firma: string | null): string[] {
 /** Passt der Anbieter des Belegs zum Umsatz? */
 export function anbieterPasst(b: Pick<AbgleichBeleg, "firma">, u: Pick<AbgleichUmsatz, "gegenpartei" | "zweck">): boolean {
   const text = `${u.gegenpartei ?? ""} ${u.zweck ?? ""}`.toLowerCase();
-  return kennwoerter(b.firma).some((k) => text.includes(k));
+  const kompakt = text.replace(/\s+/g, "");
+  return kennwoerter(b.firma).some((k) => text.includes(k) || kompakt.includes(k.replace(/\s+/g, "")));
 }
 
 const tage = (a: string, b: string) => Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000);

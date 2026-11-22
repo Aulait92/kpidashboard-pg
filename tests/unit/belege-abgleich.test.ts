@@ -115,3 +115,12 @@ describe("belegeZuordnen: doppelte Belege", () => {
     expect(r[0].belegId).toMatch(/^aug/);
   });
 });
+
+describe("Meta über Klarna mit umbrochenem Verwendungszweck", () => {
+  it("FACEBOO K wird erkannt", () => {
+    const u0 = u("k", "2026-06-11", -865, "Klarna Bank AB (publ)", "neu", "XA4, FACEBOO K PAYMENTS INTERNATIONAL LIMITED");
+    expect(brauchtBeleg(u0)).toBe(true);
+    expect(anbieterName(u0)).toBe("Meta (Werbung)");
+    expect(belegeZuordnen([u0], [b("m", "2026-06-10", 865, "Meta Platforms Ireland Limited")])).toEqual([{ umsatzId: "k", belegId: "m" }]);
+  });
+});
