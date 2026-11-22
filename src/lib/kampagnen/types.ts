@@ -318,8 +318,12 @@ export function worstStatus(status: ReviewResult["status"], findings: Finding[])
   return "gruen";
 }
 
-/** Einheitliches Benennungsschema: „PG | <Kunde> | <Produkt> | <Datum>“. */
-export function campaignName(customer: string, product: string, now: Date): string {
+/**
+ * Einheitliches Benennungsschema: „PG | <Produkt> | <Datum>“. Ohne Kundennamen (Ole, 21.11.2026): ein Werbekonto gehört
+ * immer genau einer Agentur, der Name machte die Kampagnen nur unnötig lang. Ältere Kampagnen heißen noch
+ * „PG | <Kunde> | <Produkt> | <Datum>“ (budget-sync.ts erkennt beide).
+ */
+export function campaignName(product: string, now: Date): string {
   const d = now.toISOString().slice(0, 10);
-  return `PG | ${customer} | ${product} | ${d}`.slice(0, 200);
+  return `PG | ${product} | ${d}`.slice(0, 200);
 }

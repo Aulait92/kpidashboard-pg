@@ -73,6 +73,8 @@ export const LIMITS = {
   opsKampagne: { limit: 20, windowMs: HOUR },
   // Öffentliche Seiten
   publicBooking: { limit: 20, windowMs: 10 * MIN },
+  // Buchung nur mit Handynummer nach dem Leadformular (lib/buchung-formular.ts): Abgleich mit frischen Leads je IP
+  formularAbgleich: { limit: 6, windowMs: 10 * MIN },
   offerAccept: { limit: 10, windowMs: 10 * MIN },
   publicApi: { limit: 60, windowMs: MIN },
   // Eigene Funnels (lib/funnel): Messung je Schritt (ein Besuch erzeugt rund 25 Ereignisse) und Absenden

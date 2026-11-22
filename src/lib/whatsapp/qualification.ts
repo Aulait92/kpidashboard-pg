@@ -32,6 +32,8 @@ export const QUALIFICATION_FIELDS = [
   { key: "vorschaeden", label: "Vorschäden (5 Jahre)", hint: "je Art mit Anzahl, z. B. Hausrat 0, Fahrraddiebstahl 1; oder offen" },
   { key: "anlass", label: "Anlass", hint: "z. B. Umzug, Schaden, Geburt" },
   { key: "einwaende", label: "Einwände", hint: "Bedenken oder Fragen des Leads" },
+  // Wer entscheidet mit (Ole, 21.11.2026; feste Frage nach dem Komplettcheck, lib/whatsapp/termin-strecke.ts). Kein Budget.
+  { key: "entscheidung", label: "Entscheidung", hint: "wer mitentscheidet, z. B. Partner entscheidet mit, soll beim Termin dabei sein; oder Entscheidet allein" },
   { key: "wunsch", label: "Wunsch", hint: "Telefon oder Videocall, Wunschzeit" },
   { key: "sonstiges", label: "Sonstiges", hint: "alles Weitere, kurz" },
 ] as const;

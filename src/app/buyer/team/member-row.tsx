@@ -26,6 +26,8 @@ export type MemberView = {
   wartet?: string | null;
   leads30: number;
   loggedIn: boolean;
+  /** Mindestens ein Gerät empfängt Mitteilungen (Web-Push oder App-Store-App) */
+  push?: boolean;
   /** Zwei-Faktor-Login aktiv */
   twoFactor?: boolean;
   /** Laufende oder kommende Abwesenheit */
@@ -116,6 +118,7 @@ export function MemberRow({
             {m.isMe ? <Badge>Sie</Badge> : null}
             {m.owner ? <Badge tone="success">Inhaber</Badge> : null}
             {!m.owner && !m.loggedIn ? <Badge tone="warning">eingeladen</Badge> : null}
+            {m.loggedIn && m.push === false && !m.wartet ? <Badge tone="warning">Mitteilungen aus</Badge> : null}
             {m.twoFactor ? <Badge tone="info">2FA</Badge> : null}
             {m.absence ? (
               <Badge tone="info">

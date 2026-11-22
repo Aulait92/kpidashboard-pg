@@ -85,7 +85,7 @@ Weitergabe an den Abnehmer sind wir Verantwortlicher; Empfänger bzw. Kategorien
 
 ## 2. Werbeaussagen (§ 5 UWG)
 
-- **„Spare jetzt bis zu 50 % deines PKV-Beitrags“** (Schritt Name). Ole hat am 20.11.2026 entschieden, dass die Aussage
+- **„Spare jetzt bis zu 50 % deines PKV-Beitrags“** (Schritt Kontakt, seit 21.11.2026; vorher Name). Ole hat am 20.11.2026 entschieden, dass die Aussage
   bleibt; kein Veto, Risiko dokumentiert. Höchstwerbung mit „bis zu“ ist irreführend, wenn der Höchstwert nur in
   vernachlässigbar wenigen Fällen erreicht wird oder nur mit deutlich weniger Leistung (§ 5 Abs. 1, 2 Nr. 1 UWG); im
   Streit müssen wir die Grundlage darlegen. Gerade PKV-Tarifwechsel-Werbung mit Prozentzahlen wird von
@@ -168,7 +168,7 @@ diesen Knopfnamen verwenden).
 vorhandene Fassung b). Erster Absatz statt der Behauptung: „Die Beiträge in der privaten Krankenversicherung sind für
 viele Versicherte deutlich gestiegen, oft ohne bessere Leistungen.“
 
-**Schritt Name, unter der Überschrift (Fußnote, klein):**
+**Schritt Kontakt (seit 21.11.2026, vorher Name), unter der Überschrift (Fußnote, klein):**
 > Im Einzelfall möglich, abhängig von Tarif, Leistungen und Selbstbehalt. Ob und wie viel du sparen kannst, zeigt die
 > Prüfung.
 

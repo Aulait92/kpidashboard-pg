@@ -10,7 +10,7 @@ import { chooseFollowup, nachfassOptionen } from "@/lib/whatsapp/followup";
 import { NachfassenWahl } from "./nachfassen-wahl";
 import { SubmitButton } from "@/components/submit-button";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { appointmentScope, conversationScope } from "@/lib/team";
+import { appointmentScope, chatListeScope, conversationScope } from "@/lib/team";
 import { formatDateTime, formatPhone } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { displayProduct, statusLabel } from "@/lib/products";
@@ -137,12 +137,12 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
     ...(q ? { q } : {}),
   }).toString();
   const attentionTotal = await prisma.conversation.count({
-    where: { ...conversationScope(ctx), needsAttention: true },
+    where: { ...chatListeScope(ctx), needsAttention: true },
   });
 
   const conversations = await prisma.conversation.findMany({
     where: {
-      ...conversationScope(ctx),
+      ...chatListeScope(ctx),
       ...(filter === "attention" ? { needsAttention: true } : {}),
       ...(q
         ? {

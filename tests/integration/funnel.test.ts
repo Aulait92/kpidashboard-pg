@@ -84,6 +84,15 @@ describe("PKV-Funnel (Datenbank)", () => {
     expect((await ereignisMerken({ funnel: "pkv-beitrag", besuchId: bid(1), schritt: "start", art: "hack" })).ok).toBe(false);
   });
 
+  it("Testanfrage (Nachname „Test“): kein PPL-Lead, kein Partner, Meta-Ereignis trotzdem vorbereitet", async () => {
+    const r = await absenden({ funnel: "pkv-beitrag", besuchId: bid(9), antworten: antworten(9, { nachname: "Test" }), eventId: "evt-test0001", metaEinwilligung: true });
+    expect(r).toMatchObject({ ok: true, lead: true, status: "delivered", experte: null });
+    if (!r.ok) return;
+    expect(r.meta).not.toBeNull();
+    expect(await prisma.poolLead.findUnique({ where: { externalId: `funnel:pkv-beitrag:${bid(9)}` } })).toBeNull();
+    expect((await prisma.funnelBesuch.findUnique({ where: { id: bid(9) } }))?.poolLeadId ?? null).toBeNull();
+  });
+
   it("Absenden: PPL-Lead mit den Perspective-Feldnamen, geliefert, Besucher verknüpft, Ziel funnel_lead, zweites Absenden kein neuer Lead", async () => {
     await ereignisMerken({ funnel: "pkv-beitrag", besuchId: bid(2), schritt: "start", art: "angesehen", quelle: { utm_source: "fb", utm_campaign: "120200000000001", utm_content: "Anzeige A" } });
     const r = await absenden({ funnel: "pkv-beitrag", besuchId: bid(2), antworten: antworten(2), eventId: "evt-12345678", metaEinwilligung: false });
@@ -181,6 +190,35 @@ describe("PKV-Funnel (Datenbank)", () => {
     expect(await absenden({ funnel: "pkv-beitrag", besuchId: bid(4), antworten: antworten(4, { beitrag: "600" }) })).toMatchObject({ ok: false, abbruch: "unter_650" });
     expect(await absenden({ funnel: "pkv-beitrag", besuchId: bid(4), antworten: antworten(4, { email: "kaputt" }) })).toMatchObject({ ok: false, fehler: { email: expect.any(String) } });
     expect(await prisma.poolLead.count({ where: { productKey: produkt } })).toBe(vor);
+  });
+
+  it("Qualitäts-Ereignis früh: sobald erreicht und freigegeben, nicht erst nach 14 Tagen (Ole, 21.11.2026)", async () => {
+    const r1 = await absenden({ funnel: "pkv-beitrag", besuchId: bid(8), antworten: antworten(8), eventId: "evt-frueh0001", metaEinwilligung: true, fbp: "fb.1.1700000000000.99" });
+    expect(r1.ok).toBe(true);
+    const b = await prisma.funnelBesuch.findUniqueOrThrow({ where: { id: bid(8) } });
+    const pool = await prisma.poolLead.findUniqueOrThrow({ where: { id: b.poolLeadId! } });
+    await prisma.lead.update({ where: { id: pool.leadId! }, data: { status: "Im Gespräch", reached: true } });
+    const altFetch = globalThis.fetch;
+    const aufrufe: string[] = [];
+    globalThis.fetch = (async (u: RequestInfo | URL) => {
+      aufrufe.push(String(u));
+      return new Response(JSON.stringify({ events_received: 1 }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }) as typeof fetch;
+    process.env.FUNNEL_META_QUALITAET = "an";
+    process.env.FUNNEL_META_TOKEN = "EAAtest0000000000";
+    try {
+      const r = await funnelReifePruefen(new Date());
+      expect(r.qualitaet).toBeGreaterThanOrEqual(1);
+    } finally {
+      globalThis.fetch = altFetch;
+      delete process.env.FUNNEL_META_QUALITAET;
+      delete process.env.FUNNEL_META_TOKEN;
+    }
+    expect(aufrufe.some((u) => u.includes("graph.facebook.com"))).toBe(true);
+    const nach = await prisma.funnelBesuch.findUniqueOrThrow({ where: { id: bid(8) } });
+    expect(nach.qualitaetGesendetAt).not.toBeNull();
+    expect(nach.reifGeprueftAt).toBeNull();
+    expect(nach.metaFbp).toBeNull();
   });
 
   it("Ergebnis beim Abnehmer erst nach 14 Tagen; E-Mail-Abnehmer = unbekannt; Reife-Filter in experimentStats", async () => {

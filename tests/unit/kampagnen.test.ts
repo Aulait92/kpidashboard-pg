@@ -80,7 +80,7 @@ describe("Kampagnen-Agenten: Ausgaben prüfen", () => {
   });
 
   it("Benennungsschema", () => {
-    expect(campaignName("Agentur Muster", "Katze", new Date("2026-11-13T10:00:00Z"))).toBe("PG | Agentur Muster | Katze | 2026-11-13");
+    expect(campaignName("Katze", new Date("2026-11-13T10:00:00Z"))).toBe("PG | Katze | 2026-11-13");
   });
 });
 
@@ -114,19 +114,21 @@ describe("Kampagnen-Agenten: Bauer", () => {
   });
 
   it("Formular-Payload: Datenschutz, Einwilligung, Kontaktfelder mit den Schlüsseln der Lead-Verarbeitung", () => {
-    const p = leadFormPayload(form, ctx) as { questions: { type: string; key: string }[]; privacy_policy: { url: string }; custom_disclaimer: { checkboxes: { is_required: boolean }[] }; locale: string };
+    const p = leadFormPayload(form, ctx) as { questions: { type: string; key: string }[]; privacy_policy: { url: string }; custom_disclaimer: { checkboxes?: unknown[]; body: { text: string } }; locale: string };
     expect(p.privacy_policy.url).toBe(ctx.privacyUrl);
     expect(p.locale).toBe("DE_DE");
     expect(p.questions.map((q) => q.key)).toEqual(["katze_alter", "haltung", "full_name", "phone_number", "email"]);
-    expect(p.custom_disclaimer.checkboxes[0].is_required).toBe(true);
+    // Immer ohne Checkbox (Ole, 22.11.2026): Einwilligung per Klick auf „Senden“, Text über dem Knopf
+    expect(p.custom_disclaimer.checkboxes).toBeUndefined();
+    expect(p.custom_disclaimer.body.text).toBe(form.consentText);
     expect(() => leadFormPayload(form, { ...ctx, privacyUrl: null })).toThrow(/Datenschutz/);
     // Dankeseite: Buchungskalender des Kunden geht vor der Website (Ole, 13.11.2026)
     const booking = leadFormPayload(form, { ...ctx, bookingUrl: "https://app.example.de/book/agentur-muster" }) as {
       thank_you_page: { button_type: string; button_text: string; website_url: string };
       follow_up_action_url: string;
     };
-    expect(booking.thank_you_page).toMatchObject({ button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: "https://app.example.de/book/agentur-muster" });
-    expect(booking.follow_up_action_url).toBe("https://app.example.de/book/agentur-muster");
+    expect(booking.thank_you_page).toMatchObject({ button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: "https://app.example.de/book/agentur-muster?von=formular" });
+    expect(booking.follow_up_action_url).toBe("https://app.example.de/book/agentur-muster?von=formular");
   });
 
   it("Targeting: Stadt mit Umkreis, Advantage+ mit weiter Altersgrenze, sonst Deutschland", () => {

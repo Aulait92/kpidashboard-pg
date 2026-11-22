@@ -34,7 +34,7 @@ export const REIF_TAGE = 14;
 
 export const EREIGNIS_ARTEN = ["angesehen", "beantwortet", "abbruch", "abgeschickt"] as const;
 export type EreignisArt = (typeof EREIGNIS_ARTEN)[number];
-const GRUENDE: AbbruchGrund[] = ["gesetzlich", "unter_650"];
+const GRUENDE: AbbruchGrund[] = ["gesetzlich", "unter_650", "debeka", "beamte"];
 
 // ─── Herkunft (nur Tracking-Schlüssel, keine Personendaten) ───────────────
 
@@ -133,6 +133,9 @@ export async function absenden(p: AbsendenInput, now = new Date()): Promise<Abse
   if (!tel.ok) return { ok: false, fehler: { telefon: PKV_TEXTE.kontakt.fehlerTelefon }, abbruch: null, schritt: "kontakt" };
 
   await besuchSicherstellen(f.key, p.besuchId, p.quelle);
+  // Testanfrage (Ole, 21.11.2026): Nachname „Test“ geht nicht an einen Partner, sondern als Mail an den Admin; das
+  // Meta-Ereignis „Lead“ läuft trotzdem (Pixel-Prüfung). Zählt nicht in Messung und A/B-Tests.
+  if (istTestAnfrage(a)) return testAnfrage(f, a, p, now);
   const vorher = await prisma.funnelBesuch.findUnique({ where: { id: p.besuchId }, select: { poolLeadId: true, quelle: true } });
   const { productKey } = await resolvePplProduct(process.env.PKV_FUNNEL_PRODUKT?.trim() || f.produkt);
   const quelle = (saubereQuelle(p.quelle) ?? (vorher?.quelle as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
@@ -191,6 +194,41 @@ export async function absenden(p: AbsendenInput, now = new Date()): Promise<Abse
   return { ok: true, lead: neu, status: r.status, meta, experte, mail };
 }
 
+/** Testanfrage: Nachname „Test“ (Groß-/Kleinschreibung egal). (rein) */
+export function istTestAnfrage(a: Record<string, string | undefined>): boolean {
+  return (a.nachname ?? "").trim().toLowerCase() === "test";
+}
+
+/** Testanfrage nicht ausliefern: Mail mit den Angaben an den Admin, Meta-Ereignis wie bei einem echten Lead. */
+async function testAnfrage(f: NonNullable<ReturnType<typeof funnelDef>>, a: Record<string, string | undefined>, p: AbsendenInput, now: Date): Promise<AbsendenErgebnis> {
+  const felder = pplFelder(f, a, now);
+  const text = ["Testanfrage aus dem Funnel (Nachname „Test“), nicht an einen Partner gegeben.", "", ...Object.entries(felder).map(([k, v]) => `${k}: ${v}`)].join("\n");
+  const { sendPlainMail } = await import("@/lib/email");
+  const { PROVIDER } = await import("@/lib/legal-texts");
+  await sendPlainMail({ to: process.env.ADMIN_EMAIL?.trim() || PROVIDER.email, subject: `Testanfrage ${f.key}`, text }).catch((err: unknown) => reportError(err, "funnel-testanfrage"));
+  const einw = !!p.metaEinwilligung;
+  const eventId = p.eventId && EVENT_ID_RE.test(p.eventId) ? p.eventId : null;
+  const fbc = einw ? (p.fbc && p.fbc.startsWith("fb.") ? p.fbc : fbcAusFbclid(p.fbclid, now.getTime())) : null;
+  const fbp = einw && p.fbp && p.fbp.startsWith("fb.") ? p.fbp : null;
+  const nutzer: FunnelNutzer = {
+    besuchId: p.besuchId,
+    email: a.email,
+    telefon: normalizePhone(a.telefon ?? ""),
+    vorname: a.vorname,
+    nachname: a.nachname,
+    geburtsdatum: felder.Geburtsdatum,
+    plz: a.plz,
+    ort: a.ort,
+    fbc,
+    fbp,
+    ip: p.ip,
+    userAgent: p.userAgent,
+  };
+  const { productKey } = await resolvePplProduct(process.env.PKV_FUNNEL_PRODUKT?.trim() || f.produkt);
+  const meta = einw && eventId ? () => sendeMetaEreignisse([leadEreignis({ eventId, zeit: now, url: p.url, nutzer, produkt: productKey })]) : null;
+  return { ok: true, lead: true, status: "delivered", meta, experte: null, mail: null };
+}
+
 /** Einwilligungsnachweis beim Absenden (L3): Wortlaut mit eingesetzter Adresse, Fassung, Zeitpunkt, Kanäle, Knopf, Funnel. */
 export function einwilligungNachweis(funnel: string, datenschutzEmail: string, now: Date): PoolEinwilligung {
   return { at: now.toISOString(), funnel, version: EINWILLIGUNG_VERSION, text: einwilligungText(datenschutzEmail), kanaele: [...EINWILLIGUNG_KANAELE], knopf: PKV_TEXTE.kontakt.knopf };
@@ -213,12 +251,13 @@ export async function experteFuer(leadId: string): Promise<Experte | null> {
 
 /** E-Mail „Dein Experte“ (Texte: docs/funnel/pkv-beitrag-texte-conversion.md, L9). Rein. */
 export function experteMail(p: { email: string; vorname: string; experte: Experte; datenschutzEmail: string }): { to: string; subject: string; text: string } {
-  const { name, firma, telefon } = p.experte;
+  // Ohne Telefonnummer des Experten (Ole, 21.11.2026)
+  const { name, firma } = p.experte;
   const hallo = p.vorname.trim() ? `Hallo ${p.vorname.trim()},` : "Hallo,";
   const text = [
     hallo,
     "",
-    `${name} von ${firma} ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an, und zwar von dieser Nummer: ${telefon}. Speichere sie dir am besten gleich.`,
+    `${name} von ${firma} ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an. Geh am besten auch bei unbekannten Nummern ran.`,
     "",
     `Widerruf jederzeit per E-Mail an ${p.datenschutzEmail}.`,
     "",
@@ -392,6 +431,30 @@ export async function funnelReifePruefen(now = new Date(), o: { limit?: number }
     orderBy: { reifGeprueftAt: "asc" },
     take: limit,
   });
+  // Früh (Ole, 21.11.2026): Qualitäts-Ereignis sofort, sobald erreicht, nicht erst nach 14 Tagen (Meta braucht das
+  // Signal zeitnah). Nur Ereignis und Löschen der Meta-Kennungen, die Reife-Bewertung bleibt beim 14-Tage-Lauf.
+  if (qualitaetAn()) {
+    const frueh = await prisma.funnelBesuch.findMany({
+      where: { poolLeadId: { not: null }, reifGeprueftAt: null, leadAt: { gt: reifAb }, metaEinwilligung: true, qualitaetGesendetAt: null },
+      orderBy: { leadAt: "asc" },
+      take: limit,
+    });
+    const fakten = await ladeLeadFakten([...new Set(frueh.map((b) => b.poolLeadId!))]);
+    for (const b of frueh) {
+      try {
+        const e = fakten.get(b.poolLeadId!);
+        if (!e?.pool) continue;
+        const w = bewerteLead(e.fakten);
+        if (!w.erreicht || !w.rueckmeldungMoeglich) continue;
+        if (await qualitaetSenden(b, e.pool, e.umsatz, now)) {
+          await prisma.funnelBesuch.update({ where: { id: b.id }, data: { qualitaetGesendetAt: now, metaFbc: null, metaFbp: null } });
+          out.qualitaet++;
+        }
+      } catch (err) {
+        reportError(err, "funnel-qualitaet-frueh");
+      }
+    }
+  }
   const liste: [Besuch, boolean][] = [...faellig.map((x): [Besuch, boolean] => [x, true]), ...nach.map((x): [Besuch, boolean] => [x, false])];
   const alle = await ladeLeadFakten([...new Set(liste.map(([b]) => b.poolLeadId!))]);
   for (const [b, erst] of liste) {

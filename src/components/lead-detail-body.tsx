@@ -837,8 +837,9 @@ function ReadOnlyCard({
     "Produkt (Eingang)",
     "Zielgruppe Bezeichnung (from Produkt (Eingang))",
     // group-Felder, die bei diesem kind evtl. nicht in curated sind, trotzdem
-    // nicht doppelt als „weitere Angabe" zeigen:
-    ...ALL_GROUP_KEYS,
+    // nicht doppelt als „weitere Angabe" zeigen. Ausnahme Geburtsdatum (Ole, 22.11.2026: fehlte bei Kfz-Leads,
+    // weil es nur in den PKV- und Kinderwunsch-Gruppen steht): steht es nicht schon oben, kommt es unter „Weitere Angaben“.
+    ...ALL_GROUP_KEYS.filter((k) => k !== "Geburtsdatum" || curated.some((f) => f.key === k)),
   ]);
   const extra = Object.entries(fields)
     .filter(
@@ -856,6 +857,8 @@ function ReadOnlyCard({
         !k.includes("(Privatschutz)"),
     )
     .map(([k, v]) => ({ key: k, value: firstString(v) }))
+    // Datum aus Meta („1950-08-08“ bzw. „08/08/1950“) deutsch anzeigen
+    .map((r) => (r.key === "Geburtsdatum" && r.value ? { ...r, value: r.value.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3.$2.$1").replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, "$2.$1.$3") } : r))
     .filter((r): r is { key: string; value: string } => r.value != null);
 
   return (

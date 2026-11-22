@@ -165,7 +165,9 @@ export const BEREICHE: NeuBereich[] = [
     ort: "oben",
     handy: "leiste",
     seiten: [
-      { view: "zahlen", pfad: n("/zahlen"), titel: "Übersicht", alt: ["/admin/zahlen", "/"], reiter: { gruppe: "geld", label: "Übersicht" }, suchwoerter: "Zahlen Kennzahlen MRR Ergebnis Gewinn BWA Wachstum Kohorten Wirtschaftlichkeit Vertrieb Pay-per-Lead Dashboard", fertig: true },
+      { view: "zahlen", pfad: n("/zahlen"), titel: "Übersicht", alt: ["/admin/zahlen"], reiter: { gruppe: "geld", label: "Übersicht" }, suchwoerter: "Zahlen Kennzahlen MRR Ergebnis Gewinn BWA Wachstum Kohorten Wirtschaftlichkeit Vertrieb Pay-per-Lead Dashboard", fertig: true },
+      // Leads & Werbung (früher „/“, Umzug 22.11.2026): Trichter, Monatsziele, Speed-to-Lead, Kosten je Lead
+      { view: "zahlen-leads", pfad: n("/zahlen/leads"), titel: "Leads & Werbung", alt: ["/"], reiter: { gruppe: "geld", label: "Leads & Werbung" }, suchwoerter: "Leads Werbung Trichter Monatsziele Speed-to-Lead Kosten je Lead CPL Erreichbarkeit Dashboard", fertig: true },
       { view: "zahlen-umsatz", pfad: n("/zahlen/umsatz"), titel: "Umsatz", alt: ["/admin/zahlen/buchungen"], reiter: { gruppe: "geld", label: "Umsatz" }, suchwoerter: "Buchungen Rechnungen Einrichtungsgebühr Einmal-Umsatz", fertig: true },
       { view: "zahlen-offene-posten", pfad: n("/zahlen/offene-posten"), titel: "Offene Posten", alt: [], reiter: { gruppe: "geld", label: "Offene Posten" }, suchwoerter: "Mahnung Mahnwesen Überweisung offene Rechnungen Zahlungserinnerung Zahlungseingang", fertig: true },
       { view: "zahlen-kosten", pfad: n("/zahlen/kosten"), titel: "Kosten", alt: ["/admin/einstellungen/kosten"], reiter: { gruppe: "geld", label: "Kosten" }, suchwoerter: "Laufende Kosten Ausgaben", fertig: true },

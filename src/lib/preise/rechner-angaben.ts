@@ -275,20 +275,31 @@ export function spartenDesLeads(source: string | null | undefined, src: AngabenQ
     return []; // Pferdekranken: noch kein Rechner im Pilot
   }
   const a = Object.fromEntries(qualificationPoints(src.angaben).map((p) => [p.key, p.value])) as Partial<Record<QualificationKey, string>>;
-  const interesse = [src.formular.find((x) => /versicherungsinteresse|^interesse\b|sparte/i.test(x.label))?.value, a.interesse, /privatschutz/.test(s) ? "" : source]
+  // Interesse aus dem Formular: auch „Welche Versicherung interessiert Sie am meisten?“ und das ältere Lohmann-Formular
+  // „An welchen Versicherungen bist Du interessiert?“ (Ole, 21.11.2026); „Alles in einem Paket“ = alle Privatschutz-Bausteine
+  const roh = [src.formular.find((x) => /versicherungsinteresse|^interesse\b|sparte|welche versicherung|an welchen versicherungen|interessiert (sie|dich)/i.test(x.label))?.value, a.interesse, /privatschutz/.test(s) ? "" : source]
     .filter(Boolean)
     .join(", ");
+  const interesse = /alles in einem|paket|bundle/i.test(roh) ? `${roh}, Haftpflicht, Hausrat, Rechtsschutz, Unfall` : roh;
   const ohneTier = interesse.replace(/tierhalter-?\s*haftpflicht|tierkrankenversicherung/gi, "");
   const out: RechnerSparte[] = [];
   if (/haftpflicht/i.test(ohneTier)) out.push("haftpflicht");
   if (/hausrat/i.test(interesse)) out.push("hausrat");
-  if (/rechtsschutz/i.test(interesse)) out.push("rechtsschutz");
+  if (/rechts?schutz/i.test(interesse)) out.push("rechtsschutz");
   if (/wohngeb(ä|a)ude/i.test(interesse)) out.push("wohngebaeude");
   if (/unfall/i.test(interesse)) out.push("unfall");
   // Tierhalterhaftpflicht nur mit klarer Tierart (Ole, 17.11.2026: kein Hund oder Pferd ohne Tierhalterhaftpflicht)
   const tierText = `${interesse} ${a.tier ?? ""}`;
   if (/halter/i.test(tierText) && /hund/i.test(tierText)) out.push("tierhalter-hund");
   if (/halter/i.test(tierText) && /pferd/i.test(tierText)) out.push("tierhalter-pferd");
+  // Tierkranken im Privatschutz (Formularauswahl „Tierkrankenversicherung / Tierhalterhaftpflicht“): Tierart und
+  // Kranken klärt der Assistent im Chat (angaben.tier, z. B. „Katze, Krankenversicherung“), Ole 21.11.2026
+  const tierAngabe = a.tier ?? "";
+  if (/kranken|\bop\b|op-schutz/i.test(tierAngabe)) {
+    const op = /\bop\b|op-schutz|nur op/i.test(tierAngabe) && !/voll|behandlung/i.test(tierAngabe);
+    if (/katze|kater/i.test(tierAngabe)) out.push(op ? "katze-op" : "katze-kranken");
+    if (/hund/i.test(tierAngabe) && !/halter/i.test(tierAngabe.replace(/[^;]*kranken[^;]*/gi, ""))) out.push(op ? "hund-op" : "hund-kranken");
+  }
   return out;
 }
 

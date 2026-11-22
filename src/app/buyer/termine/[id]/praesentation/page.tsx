@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { FileDown } from "lucide-react";
+import { FileDown, MessageCircleQuestion } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { ZurueckLink } from "@/components/zurueck-link";
 import { ButtonLink } from "@/components/ui";
@@ -60,8 +60,12 @@ export default async function PraesentationPage({ params, searchParams }: { para
             <ButtonLink href={`/api/buyer/termine/${id}/praesentation`} external variant="secondary" size="md" icon={FileDown}>
               Als PDF
             </ButtonLink>
+            {/* Einwände (Ole, 21.11.2026): Merkblatt zum Auswendiglernen statt Folien */}
+            <ButtonLink href="/anleitung/einwand-merkblatt.pdf" external variant="secondary" size="md" icon={MessageCircleQuestion}>
+              Einwände
+            </ButtonLink>
           </div>
-          <Deck id={id} css={p.css} folien={p.folien} einwaende={p.einwaende} interaktiv={!ctx.preview} />
+          <Deck id={id} css={p.css} folien={p.folien} interaktiv={!ctx.preview} />
         </>
       )}
       {/* Selten: Logo-Hinweis unter den Folien statt neben dem Knopf (16.11.2026) */}

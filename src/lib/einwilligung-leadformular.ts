@@ -8,7 +8,11 @@
 // Reine Funktionen (ohne Datenbank).
 
 /** Version des Wortlauts; ändert sich der Text, hochzählen (steht im Nachweis am Lead). */
-export const CONSENT_VERSION = "2026-11-16";
+// Ole, 22.11.2026: „Immer ohne Checkbox“. Seitdem ist die Knopf-Fassung der Standard (leadFormConsentText); die
+// Häkchen-Fassung 2026-11-16 (leadFormConsentTextHaekchen) bleibt nur für den Nachweis alter Formulare.
+// 22.11.2026 spät (Ole: „KI raus, Text kürzen“): KI-Hinweis nur noch in der ersten WhatsApp (Art. 50 KI-VO, Information),
+// Fassung 2026-11-22b-knopf; vorher 2026-11-22-knopf mit KI-Satz.
+export const CONSENT_VERSION = "2026-11-22b-knopf";
 
 /**
  * Zustimmung zur elektronischen Erstinformation (Rechtsprüfung 16.11.2026): Über eine Website (unser Link
@@ -38,13 +42,33 @@ const PLATZHALTER = {
 
 const clean = (s: string | null | undefined) => (s ?? "").replace(/\s*\n\s*/g, ", ").replace(/\s+/g, " ").trim();
 
-/** Wortlaut mit den Angaben des Vermittlers; fehlende Angaben als Platzhalter in eckigen Klammern. */
-export function leadFormConsentText(x: ConsentAngaben): string {
+/** Alte Häkchen-Fassung (2026-11-16), nur noch zum Nachlesen; neue Formulare nutzen leadFormConsentText. */
+export function leadFormConsentTextHaekchen(x: ConsentAngaben): string {
   const v = clean(x.vermittler) || PLATZHALTER.vermittler;
   const adr = clean(x.anschrift) || PLATZHALTER.anschrift;
   const mail = clean(x.email) || PLATZHALTER.email;
   const url = clean(x.datenschutzUrl) || PLATZHALTER.datenschutzUrl;
   return `Ich willige ein, dass ${v}, ${adr}, mich zu meiner Anfrage per WhatsApp, E-Mail und Telefon kontaktiert. Dabei antwortet zunächst ein KI-gestützter Assistent und vereinbart Termine. Widerruf jederzeit, z. B. mit ‚STOPP‘ oder per E-Mail an ${mail}. ${ERSTINFO_ZUSTIMMUNG} Datenschutzhinweise: ${url}`;
+}
+
+/**
+ * Einwilligung per Knopf statt Häkchen (Rechtsprüfung 22.11.2026, Gelb gering, Stufe A Ole): Text direkt über
+ * „Senden“, Meta custom_disclaimer ohne checkboxes. Meta liefert dann keine custom_disclaimer_responses; der Nachweis
+ * kommt aus der Zuordnung des Formulars (LeadSource.consentVersion = CONSENT_VERSION_KNOPF, Wortlaut, Zeitpunkt).
+ * Anlass: seit dem Pflicht-Häkchen kaum Abschlüsse im Formular (Lohmann Kfz: 10 Klicks, 1 Lead).
+ */
+export const CONSENT_VERSION_KNOPF = CONSENT_VERSION;
+export const istKnopfFassung = (v: string | null | undefined) => typeof v === "string" && v.endsWith("-knopf");
+/** Titel über dem Text (max. 60 Zeichen, nennt den Knopf, der den Lead abschickt). */
+export const KNOPF_TITEL = "Letzter Schritt: Tippen Sie unten auf „Senden“";
+
+/** Wortlaut mit den Angaben des Vermittlers (Einwilligung per Knopf); fehlende Angaben als Platzhalter in eckigen Klammern. */
+export function leadFormConsentText(x: ConsentAngaben): string {
+  const v = clean(x.vermittler) || PLATZHALTER.vermittler;
+  const adr = clean(x.anschrift) || PLATZHALTER.anschrift;
+  const mail = clean(x.email) || PLATZHALTER.email;
+  const url = clean(x.datenschutzUrl) || PLATZHALTER.datenschutzUrl;
+  return `Ihr Angebot und Ihren Termin erhalten Sie per WhatsApp, E-Mail oder Telefon. Mit Klick auf „Senden“ willigen Sie ein, dass ${v}, ${adr}, Sie auf diesen Wegen zu dieser Anfrage kontaktiert. Die Erstinformation nach § 15 VersVermV bekommen Sie elektronisch als Link und PDF, auf Wunsch auf Papier. Widerruf jederzeit mit „STOPP“ oder per E-Mail an ${mail}. Datenschutz: ${url}`;
 }
 
 /** Welche Angaben fehlen für den Wortlaut? */

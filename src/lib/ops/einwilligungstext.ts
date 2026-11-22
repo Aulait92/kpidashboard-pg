@@ -3,7 +3,7 @@
 // fehlende Angaben. Nur Geschäftsangaben des Vermittlers, keine Lead-Daten.
 //   GET /api/ops/diagnose?q=einwilligungstext&kunde=<Kunden-ID>
 import { consentAngabenFor } from "@/lib/einwilligung-leadformular-server";
-import { consentMissing, leadFormConsentText, CONSENT_CHECKBOX_KEY, CONSENT_VERSION } from "@/lib/einwilligung-leadformular";
+import { consentMissing, leadFormConsentText, CONSENT_VERSION, KNOPF_TITEL } from "@/lib/einwilligung-leadformular";
 
 export async function einwilligungstextDiagnose(p: URLSearchParams) {
   const kunde = (p.get("kunde") ?? "").trim();
@@ -11,5 +11,5 @@ export async function einwilligungstextDiagnose(p: URLSearchParams) {
   const angaben = await consentAngabenFor(kunde);
   const privacy = await import("@/lib/erstinformation").then((m) => m.datenschutzUrlFor(kunde)).catch(() => null);
   const x = { ...angaben, datenschutzUrl: privacy ?? angaben.datenschutzUrl };
-  return { version: CONSENT_VERSION, haekchenKey: CONSENT_CHECKBOX_KEY, text: leadFormConsentText(x), fehlt: consentMissing(x) };
+  return { version: CONSENT_VERSION, titel: KNOPF_TITEL, haekchen: false, text: leadFormConsentText(x), fehlt: consentMissing(x) };
 }

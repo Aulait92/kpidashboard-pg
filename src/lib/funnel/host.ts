@@ -5,6 +5,12 @@
 // Reine Funktionen ohne Imports: läuft in der Middleware (src/middleware.ts) und in Tests.
 
 export const FUNNEL_HOSTS_DEFAULT = "beitrag.pkv-tarife.com=pkv-beitrag";
+/**
+ * Weichen-Adressen (Ole, 21.11.2026, DNS-Weg): start.pkv-tarife.com war die Perspective-Domain der laufenden Anzeigen.
+ * Jeder Aufruf dort (z. B. /beitrag-halbieren) geht in die Weiche /f/<funnel>/go (lib/funnel/weiche.ts), die Anzeigen
+ * bleiben unverändert. WEICHE_HOSTS wie FUNNEL_HOSTS.
+ */
+export const WEICHE_HOSTS_DEFAULT = "start.pkv-tarife.com=pkv-beitrag";
 
 /**
  * Früherer Cookie mit der Besucher-ID (bis 20.11.2026). Wird nicht mehr gesetzt (L4); ein vorhandener wird gelöscht.
@@ -38,8 +44,15 @@ export type FunnelHostDecision =
  * Entscheidung je Anfrage auf einer Funnel-Adresse: / → Funnel (intern umschreiben), /f/<funnel> und Hilfspfade
  * ausliefern, robots.txt sperrt alles (Werbe-Landingpage, nicht indexieren), alles andere → / (Query bleibt).
  */
-export function decideFunnelHost(input: { host: string; pathname: string; search?: string; hosts?: string | null }): FunnelHostDecision {
+export function decideFunnelHost(input: { host: string; pathname: string; search?: string; hosts?: string | null; weicheHosts?: string | null }): FunnelHostDecision {
   const host = input.host.toLowerCase().replace(/:\d+$/, "");
+  const weiche = parseFunnelHosts(input.weicheHosts ?? WEICHE_HOSTS_DEFAULT).get(host);
+  if (weiche) {
+    const p = input.pathname || "/";
+    if (p === "/robots.txt") return { kind: "robots" };
+    if (under(p, `/f/${weiche}`) || SUPPORT.some((x) => under(p, x))) return { kind: "serve", funnel: weiche };
+    return { kind: "rewrite", pathname: `/f/${weiche}/go`, funnel: weiche };
+  }
   const funnel = parseFunnelHosts(input.hosts).get(host);
   if (!funnel) return { kind: "pass" };
   const path = input.pathname || "/";

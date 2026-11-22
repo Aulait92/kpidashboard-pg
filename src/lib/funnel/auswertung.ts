@@ -30,7 +30,7 @@ export type FunnelKennzahlen = {
   tage: number;
   besucher: number;
   schritte: { id: string; name: string; angesehen: number; beantwortet: number }[];
-  abbrueche: { gesetzlich: number; unter_650: number };
+  abbrueche: { gesetzlich: number; unter_650: number; debeka: number; beamte: number };
   leads: number;
   geliefert: number;
   /** an Abnehmer in der App geliefert (können zurückmelden) */
@@ -100,7 +100,7 @@ export async function funnelKennzahlen(funnel = PKV_BEITRAG.key, tage = 30, now 
     tage,
     besucher,
     schritte: ablauf(f).map((s) => ({ id: s.id, name: SCHRITT_NAME[s.id] ?? s.id, angesehen: zahl(s.id, "angesehen"), beantwortet: zahl(s.id, s.art === "absenden" ? "abgeschickt" : "beantwortet") })),
-    abbrueche: { gesetzlich: abbruch("gesetzlich"), unter_650: abbruch("unter_650") },
+    abbrueche: { gesetzlich: abbruch("gesetzlich"), unter_650: abbruch("unter_650"), debeka: abbruch("debeka"), beamte: abbruch("beamte") },
     leads: mitLead.length,
     geliefert,
     mitRueckmeldung,

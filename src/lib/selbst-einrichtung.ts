@@ -43,6 +43,7 @@ export const SETUP_STEPS = [
   { key: "provision", label: "Provisionen" },
   { key: "erstinfo", label: "Erstinformation" },
   { key: "assistent", label: "So arbeitet Ihr Assistent" },
+  { key: "einwaende", label: "Einwände im Termin" },
   { key: "serviceMails", label: "Service-Mails in Ihrem Namen" },
   { key: "metaAccess", label: "Meta freigeben" },
   { key: "whatsapp", label: "WhatsApp verbinden" },
@@ -449,6 +450,13 @@ export async function checkMetaAccess(
     where: { id: ob.id },
     data: { metaCheck: check as unknown as Prisma.InputJsonValue, metaCheckedAt: new Date(), ...(becameOk ? { metaAccessAt: new Date() } : {}) },
   });
+  if (becameOk && accountId) {
+    // Werbekosten sofort holen, nicht erst beim Lauf um 5 Uhr (Ole, 21.11.2026: Lohmanns Kosten fehlten am ersten Tag)
+    void import("@/lib/anzeige-kosten")
+      .then((m) => m.syncAnzeigeKosten({ voll: true, nurKonto: accountId }))
+      .then(() => import("@/lib/meta").then((m) => m.syncCustomerAdSpend()))
+      .catch((err) => reportError(err, "setup-meta-kosten"));
+  }
   if (becameOk) {
     await logOfferActivity({ dealId: null, salesContactId: ob.salesContactId }, `Onboarding: Meta-Zugriff geprüft und vorhanden (${opts.source ?? "kunde"})`).catch(() => {});
     await sendToAdmins({
@@ -616,7 +624,10 @@ export async function appInstalled(customerId: string): Promise<boolean> {
   if (ob?.appSkippedAt) return true;
   const users = await prisma.user.findMany({ where: { customerId, role: "BUYER" }, select: { id: true } });
   if (!users.length) return false;
-  return (await prisma.pushSubscription.count({ where: { userId: { in: users.map((u) => u.id) } } })) > 0;
+  const ids = users.map((u) => u.id);
+  // Web-Push oder App-Store-App (native Geräte, lib/native-push.ts): beides zählt als „Mitteilungen an“
+  const [web, nativ] = await Promise.all([prisma.pushSubscription.count({ where: { userId: { in: ids } } }), prisma.deviceToken.count({ where: { userId: { in: ids } } })]);
+  return web + nativ > 0;
 }
 
 export async function loadSetupOverview(customerId: string) {

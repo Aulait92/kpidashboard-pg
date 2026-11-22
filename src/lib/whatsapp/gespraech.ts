@@ -196,11 +196,13 @@ export function terminVorschlagText(o: {
   erneut?: boolean;
   /** Splittest terminvorschlag_kostenlos, Fassung b: „In einem kurzen, kostenlosen Videotermin …“ */
   kostenlos?: boolean;
+  /** Splittest partner_vor_termin, Fassung b: Halbsatz zum Mitentscheider nach der Zeitfrage (partnerSatzImVorschlag) */
+  partnerSatz?: string | null;
 }): string {
   const frage = a(o.an, `Passt dir ${o.zeiten[0]} oder ${o.zeiten[1]}?`, `Passt Ihnen ${o.zeiten[0]} oder ${o.zeiten[1]}?`);
   const einleitung = o.einleitung?.replace(/\s+/g, " ").trim() || (o.dank === false || o.erneut ? null : "Danke!");
   const nutzen = o.erneut ? null : terminNutzenSatz({ source: o.source, formular: o.formular, angaben: o.angaben, an: o.an, person: o.person, video: o.video, kostenlos: o.kostenlos });
-  return [einleitung, nutzen, frage].filter(Boolean).join(" ");
+  return [einleitung, nutzen, frage, o.erneut ? null : o.partnerSatz].filter(Boolean).join(" ");
 }
 
 /** Nachfassen 2 Std. nach einem unbeantworteten Terminvorschlag (lib/lead-sequences.ts, mit denselben Knöpfen). */
@@ -369,6 +371,131 @@ export const KOMPLETTCHECK_KNOEPFE: Knopf[] = [
   { id: "komplettcheck:nein", title: "Nein, danke" },
 ];
 
+// ─── Wer entscheidet mit? (Ole, 21.11.2026) ──────────────────────────────────────────────────────────────────────────
+// „Wenn Partner mit entscheidet, wird Termin mit Partner gemacht, damit eine Entscheidung getroffen werden kann.“
+// Eine Frage direkt nach dem Komplettcheck (gleiche Nachricht wie „Super!“), Knöpfe [Ja, gemeinsam] [Nein, ich allein].
+// Bei „gemeinsam“: kurzer Satz, dass beide zum Termin kommen, und dass sich eine unpassende Zeit leicht ändern lässt.
+// Kein Budget, kein Geld (Ole: „das müssen wir nicht qualifizieren“). Angabe: qualificationData.entscheidung.
+
+/** Gespeicherte Angabe (Terminvorbereitung, Seitenleiste im Chat, Prompt des Assistenten). */
+export const ENTSCHEIDUNG = {
+  mit: "Partner entscheidet mit, soll beim Termin dabei sein",
+  allein: "Entscheidet allein",
+} as const;
+
+/** Knöpfe zur Frage „Entscheidet noch jemand mit?“ (Payload partner:ja|nein, Titel höchstens 20 Zeichen). */
+export const PARTNER_KNOEPFE: Knopf[] = [
+  { id: "partner:ja", title: "Ja, gemeinsam" },
+  { id: "partner:nein", title: "Nein, ich allein" },
+];
+
+/** Alles, was über Partner bzw. Lebenssituation bekannt ist (Formular und Chat), als ein Text. */
+function lebenText(formular: Form, angaben?: unknown): string {
+  const f = formular.filter((x) => /lebenssituation|familienstand|zu versichernde|für wen soll/i.test(x.label)).map((x) => x.value);
+  const q = qualificationPoints(angaben)
+    .filter((p) => p.key === "lebenssituation" || p.key === "versichern")
+    .map((p) => p.value);
+  return [...f, ...q].join(" ");
+}
+
+const SINGLE_RE = /\b(single|alleinstehend|alleinerziehend|allein ?lebend|verwitwet)\b/i;
+const PARTNER_RE = /partner|ehe|verheiratet|\bpaar\b|zu zweit|familie|frau|mann|freundin|freund\b|lebensgef/i;
+
+/**
+ * Frage stellen? Nicht, wenn die Antwort schon bekannt ist (entscheidung, z. B. vom Assistenten festgehalten) und nicht
+ * bei Alleinstehenden bzw. Alleinerziehenden laut Formular oder Chat.
+ */
+export function partnerFrageNoetig(formular: Form, angaben?: unknown): boolean {
+  if (qualificationPoints(angaben).some((p) => p.key === "entscheidung")) return false;
+  return !SINGLE_RE.test(lebenText(formular, angaben));
+}
+
+/** Partner bekannt (z. B. „Mit Partner“, „Familie“)? Dann direkt gefragt: „Entscheiden Sie gemeinsam mit Ihrem Partner?“ */
+export function partnerBekannt(formular: Form, angaben?: unknown): boolean {
+  const t = lebenText(formular, angaben);
+  return PARTNER_RE.test(t) && !SINGLE_RE.test(t);
+}
+
+/** Keine Versicherung (Sparen, Anlage, Finanzierung): dann ohne „bei der Versicherung“. */
+const KEINE_VERSICHERUNG_RE = /spar|anlage|invest|fonds|etf|finanzier|kredit|darlehen|immobil|bausp|teilverkauf/i;
+
+/**
+ * Die Frage (ohne Einleitung). Ja heißt in beiden Fassungen: jemand entscheidet mit. Mit „bei der Versicherung“, damit
+ * klar ist, worum es geht (Ole, 22.11.2026); `source` = Produkt des Leads (ohne Angabe: Versicherung).
+ */
+export function partnerFrage(an: Ansprache, bekannt: boolean, source?: string | null): string {
+  const vers = !(source && KEINE_VERSICHERUNG_RE.test(source));
+  if (bekannt) {
+    return vers
+      ? a(an, "Entscheidest du bei der Versicherung gemeinsam mit deinem Partner?", "Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner?")
+      : a(an, "Entscheidest du gemeinsam mit deinem Partner?", "Entscheiden Sie gemeinsam mit Ihrem Partner?");
+  }
+  return vers
+    ? a(an, "Entscheidet bei der Versicherung noch jemand mit, zum Beispiel dein Partner?", "Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner?")
+    : a(an, "Entscheidet noch jemand mit, zum Beispiel dein Partner?", "Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+}
+
+/** Erkennt die Frage in einer Nachricht von uns. */
+export const PARTNER_FRAGE_RE = /Entscheidet (bei der Versicherung )?noch jemand mit|Entscheide(st du|n Sie) (bei der Versicherung )?gemeinsam mit/;
+
+/** Antwort auf die Frage (Einleitung der nächsten Nachricht der Strecke). */
+export function partnerDank(an: Ansprache, mit: boolean): string {
+  if (!mit) return "Alles klar.";
+  return a(
+    an,
+    "Prima, dann kommt am besten zu zweit zum Termin, so könnt ihr direkt gemeinsam entscheiden. Passt die Zeit nicht für euch beide, schreib mir einfach.",
+    "Prima, dann kommen Sie am besten zu zweit zum Termin, so können Sie direkt gemeinsam entscheiden. Passt die Zeit nicht für Sie beide, schreiben Sie mir einfach.",
+  );
+}
+
+// ─── Vor dem Terminvorschlag (Ole, 21.11.2026 spät) ────────────────────────────────────────────────────────────────
+// „Als eigene Frage VOR dem Terminvorschlag, damit der Termin nicht verlegt werden muss.“ Ablauf: Antwort auf die
+// Öffnungsfrage (bzw. Zwischenfrage) → „Danke! Entscheidet noch jemand mit, zum Beispiel Ihr Partner?“ [Ja, gemeinsam]
+// [Nein, ich allein] → Terminvorschlag (bei „gemeinsam“ mit partnerVorschlagEinleitung). Splittest partner_vor_termin
+// (lib/experimente.ts): Fassung a = diese Frage (Standard, von Ole freigegeben), Fassung b = keine eigene Frage, sondern
+// partnerSatzImVorschlag im Terminvorschlag und die Frage nach der Buchung wie bisher. Steuerung bot.ts, Merker und
+// Nachholen ohne Antwort termin-strecke.ts (partnerVorStand, runPartnerVorTerminNachholen).
+
+/** Die Frage vor dem Terminvorschlag: „Danke!“ (bzw. eine kurze Antwort des Assistenten) und die Frage. */
+export function partnerVorFrageText(an: Ansprache, bekannt: boolean, einleitung?: string | null, source?: string | null): string {
+  return [einleitung?.replace(/\s+/g, " ").trim() || "Danke!", partnerFrage(an, bekannt, source)].join(" ");
+}
+
+/** Einleitung des Terminvorschlags nach „Ja, gemeinsam“ (vor der Frage gestellt). */
+export function partnerVorschlagEinleitung(an: Ansprache): string {
+  return a(an, "Prima, dann schlage ich Zeiten vor, die für euch beide passen.", "Prima, dann schlage ich Zeiten vor, die für Sie beide passen.");
+}
+
+/** Fassung b (Splittest partner_vor_termin): Halbsatz am Ende des Terminvorschlags statt eigener Frage. */
+export function partnerSatzImVorschlag(an: Ansprache, bekannt: boolean, source?: string | null): string {
+  return `${partnerFrage(an, bekannt, source)} ${a(an, "Dann wähl gern eine Zeit, die für euch beide passt.", "Dann wählen Sie gern eine Zeit, die für Sie beide passt.")}`;
+}
+
+/**
+ * Prompt-Hinweis, solange die Frage vor dem Terminvorschlag offen ist und die Antwort nicht eindeutig war (Rückfrage,
+ * Terminwunsch): Buchung geht vor, nie blockieren.
+ */
+export const PARTNER_VOR_HINWEIS =
+  "Offen ist die Frage, ob noch jemand mitentscheidet (z. B. der Partner). Nennt der Lead, wer mitentscheidet, halte es mit record_qualification fest (angaben.entscheidung). Nennt er einen Terminwunsch, gilt die Regel zur Wunschzeit (buchen bzw. passende Zeiten anbieten). Stellt er eine Frage, beantworte sie kurz als einleitung. Dann nutze sofort termin_vorschlagen (die App schickt die Zeiten). Stell keine weitere Frage.";
+
+/** Ausdrückliche Angabe zum Mitentscheider (nicht nur „ja“/„nein“), z. B. „mit meiner Frau, Montag 10 Uhr“. */
+export const PARTNER_AUSDRUECKLICH_RE = /\b(gemeinsam|zusammen|zu zweit|beide|partner|partnerin|frau|mann|ehefrau|ehemann|freundin|freund|allein|alleine)\b/i;
+
+/**
+ * Getippte Antwort auf die Frage auswerten: „mit“ (ja, gemeinsam, meine Frau …), „allein“ (nein, ich allein …), null =
+ * keine klare Antwort (z. B. eine Rückfrage; der Assistent antwortet, ohne Antwort geht es nach 1 Std. weiter). Rein.
+ */
+export function partnerAusText(text: string | null | undefined): "mit" | "allein" | null {
+  const t = (text ?? "").trim().toLowerCase();
+  if (!t || t.length > 160 || /\?\s*$/.test(t)) return null;
+  if (/nicht (allein|alleine)/.test(t)) return "mit";
+  if (/\b(allein|alleine|nur ich|ich selbst|ich entscheide|entscheide ich|niemand|keiner|keine)\b/.test(t)) return "allein";
+  if (/^(nein|nö|ne|nee|no)\b/.test(t)) return "allein";
+  if (/\b(gemeinsam|zusammen|zu zweit|beide|wir|partner|partnerin|frau|mann|ehefrau|ehemann|freundin|freund|verlobte|eltern|mutter|vater|mama|papa)\b/.test(t)) return "mit";
+  if (/^(ja|jap|jo|jep|yes|genau|klar|natürlich|richtig)\b/.test(t)) return "mit";
+  return null;
+}
+
 /**
  * Bei Komplettcheck „Ja“ (nach den Angebotsfragen, P2): Frage nach den bestehenden Verträgen (eigene Nachricht, ohne
  * Knöpfe). einleitung: „Super!“ direkt nach dem Knopf, „Danke!“ nach der letzten Angebotsfrage.
@@ -379,7 +506,28 @@ export function vertragsFrage(an: Ansprache, familie: boolean, einleitung = "Sup
     : a(an, "Welche Versicherungen hast du heute schon?", "Welche Versicherungen haben Sie heute schon?");
   // Grund in einem Halbsatz (Leitmotiv „doppelt zahlen“, Ole 19.11.2026): wer weiß wofür, antwortet eher
   const warum = person ? `${a(an, `Damit ${person.nom} sieht, ob du irgendwo doppelt zahlst:`, `Damit ${person.nom} sieht, ob Sie irgendwo doppelt zahlen:`)} ` : "";
-  return `${einleitung} ${warum}${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.`;
+  // Frage fett (Ole, 22.11.2026), damit sie zwischen Grund und Beispielen auffällt
+  return `${einleitung} ${warum}*${wer}* Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.`;
+}
+
+/**
+ * Angebotsfragen nach der Buchung entschlacken (Ole, 22.11.2026: „er sagt 3 x danke das notiere ich und bestätigt random
+ * die Terminbuchung“). Rein.
+ * - Floskel „Danke, das notiere ich.“ bzw. „Danke, notiert.“ am Anfang: höchstens ein kurzes „Danke!“, und auch das
+ *   nur, wenn unsere letzte Nachricht nicht schon mit Dank begann.
+ * - Wiederholte Terminbestätigung („Ihr Termin mit Herrn K. steht: Montag, 23.11., 10:00 Uhr per Video.“): raus, die
+ *   Buchung ist längst bestätigt.
+ * Bleibt nichts übrig, kommt der Text unverändert zurück.
+ */
+export function angebotsfrageEntschlackt(text: string, vorher: string | null | undefined): string {
+  const DANK = /^(vielen dank|danke(schön)?|super|prima|perfekt|alles klar|gut)\b[^.!?]*?(notier|festgehalten|vermerk)[^.!?]*[.!]\s*/i;
+  const DANK_KURZ = /^(vielen dank|danke(schön)?|super|prima|perfekt|alles klar)(?:[,!.]\s*|\s+)(?=\S)/i;
+  let t = text.trim().replace(/\s*(Ihr|Dein) (Video|Telefon)?[Tt]ermin( mit [^:.!?]{1,60})? (steht|ist gebucht|ist bestätigt)\b.{0,80}?(Uhr|Video|Telefon|vor Ort)[^.!?]*[.!]/g, "").trim();
+  const vorherDank = /^(vielen dank|danke|super|prima|perfekt|alles klar)/i.test((vorher ?? "").trim());
+  if (DANK.test(t)) t = t.replace(DANK, vorherDank ? "" : "Danke! ");
+  else if (vorherDank) t = t.replace(DANK_KURZ, "");
+  t = t.trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : text;
 }
 
 /** Erkennt die Vertragsfrage in einer Nachricht von uns. */
@@ -527,6 +675,7 @@ export function knoepfeFuerText(text: string | null | undefined, folgefragen: re
   if (KALENDER_FRAGE_RE.test(t)) return KALENDER_KNOEPFE;
   if (KOMPLETTCHECK_RE.test(t)) return KOMPLETTCHECK_KNOEPFE;
   if (ZUSAGE_FRAGE_RE.test(t)) return ZUSAGE_KNOEPFE;
+  if (PARTNER_FRAGE_RE.test(t)) return PARTNER_KNOEPFE;
   const fr = folgefragen.find((f) => f.knoepfe?.length && (t.includes(f.sie) || t.includes(f.du)));
   if (fr?.knoepfe) return fr.knoepfe.map((k) => ({ id: `folge:${fr.key}:${k.toLowerCase()}`, title: k }));
   return null;
@@ -655,6 +804,8 @@ export function nachBuchungRegel(o: {
    * „andere“ = Lead möchte eine andere Zeit (Knopf), der Termin ist noch nicht verlegt
    */
   zusage?: "offen" | "andere" | null;
+  /** „Entscheidet noch jemand mit?“ offen (nach dem Komplettcheck, Ole 21.11.2026) */
+  partnerOffen?: boolean;
   abschlussGesendet: boolean;
   /** Adresse bestätigt bzw. Termin zugesagt */
   zugesagt: boolean;
@@ -677,6 +828,10 @@ export function nachBuchungRegel(o: {
     lines.push(
       `- Offen ist die Frage „${o.an === "du" ? `Kann ${o.person.nom} fest mit dir rechnen?` : `Kann ${o.person.nom} fest mit Ihnen rechnen?`}“. Sagt der Lead zu (auch frei formuliert, z. B. „ja“, „passt“, „sicher“, „bin dabei“), nutze termin_zugesagt und schreib nichts dazu: Die App antwortet selbst. Möchte er eine andere Zeit, hole mit get_available_slots freie Zeiten, biete zwei konkrete an und verschiebe nach seiner Wahl mit reschedule_appointment. Sonst beantworte nur kurz, was er geschrieben hat, und stell keine eigene Frage.`,
     );
+  } else if (o.partnerOffen) {
+    lines.push(
+      "- Offen ist die Frage, ob noch jemand mitentscheidet (z. B. der Partner). Beantworte nur kurz, was der Lead geschrieben hat, und stell keine eigene Frage. Sagt er, wer mitentscheidet, halte es mit record_qualification fest (angaben.entscheidung) und bitte darum, dass beide beim Termin dabei sind. Die App schickt die nächste Nachricht selbst.",
+    );
   } else if (!gestellt) {
     lines.push("- Die App schickt gleich selbst die nächste Frage. Beantworte nur kurz, was der Lead geschrieben hat, und stell keine eigene Frage.");
   } else if (o.komplettcheckOffen) {
@@ -688,6 +843,7 @@ export function nachBuchungRegel(o: {
       `- Angebotsfragen, nur für die Beitragsberechnung, genau in dieser Reihenfolge, je eine eigene Nachricht, jede Antwort mit record_qualification festhalten: ${o.fragen.map((f, i) => `${i + 1}. „${f.text}“ (angaben.${f.feld})`).join(" ")}`,
       "- Was der Lead im Chat schon beantwortet hat, überspringst du. Frag nichts anderes: keine Selbstbeteiligung, Summen oder Tarife (legt der Vermittler im Termin fest), keine Tiere ohne Tierhalterhaftpflicht, nie Gesundheitsangaben.",
       "- Kommt die Antwort per Knopf („Ja“, „Nein“), ist sie die Antwort auf genau diese Frage.",
+      "- Stell die nächste Frage direkt, ohne Floskel davor (kein „Danke, das notiere ich“ bei jeder Antwort) und ohne den Termin noch einmal zu bestätigen: Er ist schon bestätigt.",
       "- Nach der Antwort auf die letzte Frage: festhalten und nichts weiter fragen. Die App schickt die nächste Nachricht selbst.",
     );
   } else if (!o.abschlussGesendet) {

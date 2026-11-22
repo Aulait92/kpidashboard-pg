@@ -19,6 +19,7 @@ const PUBLIC_PREFIXES = [
   "/reset-password",
   "/api/auth", // login/logout server actions tunneln über server actions, hier sind direkte API-Routen nur Logout
   "/api/sync", // cron-job.org braucht Zugriff (per Token gesichert)
+  "/api/media-buyer", // cron-job.org, stündlich (per SYNC_TOKEN im Header gesichert, Route prüft selbst)
   "/api/push", // service worker registriert Subscriptions
   "/api/telegram", // Telegram Bot webhook (Whitelist intern via TELEGRAM_ADMIN_USER_ID + Secret-Token-Header)
   "/api/whatsapp", // 360dialog-Webhook + Dev-Seed (per WHATSAPP_WEBHOOK_SECRET-Token gesichert)
@@ -174,7 +175,7 @@ function funnelPage(req: NextRequest, rewrite?: string): NextResponse {
 
 /** Funnel-Adresse (FUNNEL_HOSTS, Standard beitrag.pkv-tarife.com): nur der Funnel, alles andere zurück auf /. */
 function funnelHost(req: NextRequest): NextResponse | null {
-  const d = decideFunnelHost({ host: requestHost(req.headers), pathname: req.nextUrl.pathname, search: req.nextUrl.search, hosts: process.env.FUNNEL_HOSTS });
+  const d = decideFunnelHost({ host: requestHost(req.headers), pathname: req.nextUrl.pathname, search: req.nextUrl.search, hosts: process.env.FUNNEL_HOSTS, weicheHosts: process.env.WEICHE_HOSTS });
   switch (d.kind) {
     case "pass":
       return null;

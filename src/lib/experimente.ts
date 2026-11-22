@@ -23,6 +23,8 @@ export type Variante = "a" | "b";
 /** Ziel-Kennzahlen (frei erweiterbar; dieselbe Zeichenkette bei ereignis bzw. zielErreicht verwenden). */
 export type Ziel =
   | "termin_gebucht"
+  /** Termin verschoben (lib/calendar rescheduleAppointment), Gegenprobe zu termin_gebucht */
+  | "termin_verschoben"
   | "komplettcheck_ja"
   | "erschienen"
   // Eigener Funnel (lib/funnel/server.ts), Einheit Besucher-ID
@@ -132,6 +134,8 @@ export const EXPERIMENTE = {
     a: "Standard (Ole): „Kein Problem! Suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link> Oder schreiben Sie mir einfach Ihren Wunschtag.“",
     b: "Neu: Wunschtag im Chat zuerst, Link am Ende: „Kein Problem! Schreiben Sie mir einfach Ihren Wunschtag, oder suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link>“",
   },
+  // „Entscheidet noch jemand mit?“ vor dem Terminvorschlag: kein Splittest mehr (Ole, 22.11.2026: immer eigene Frage vor der
+  // Buchung), siehe docs/firma/ab-tests.md.
   // Eigener PKV-Funnel (lib/funnel, Ole 20.11.2026): Beispiel, AUS und an keinem Schritt mehr (nur Muster).
   // Einheit = Besucher-ID je Seitenaufruf (kein Cookie, Auflage L4), Zuteilung beim ersten Aufruf des Schritts.
   // Haupt-Kennzahl: Abnehmer hat den Lead erreicht (je Besucher; Leads an Abnehmer ohne Rückmeldung zählen nicht),

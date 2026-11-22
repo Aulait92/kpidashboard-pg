@@ -13,7 +13,7 @@ export function ZahlenTabs({ neueBuchungen = 0 }: { neueBuchungen?: number }) {
         { href: "/admin/neu/zahlen/qualitaet", label: "Stornoquote" },
         { href: "/admin/neu/zahlen/kunden", label: "Kündigung & Rückkehr" },
         { href: "/admin/neu/zahlen/qualitaet", label: "WhatsApp-Zustellung" },
-        { href: "/", label: "Leads & Werbung", exact: true },
+        { href: "/admin/neu/zahlen/leads", label: "Leads & Werbung", exact: true },
         { href: "/admin/neu/zahlen/qualitaet", label: "Nutzung" },
       ]}
     />

@@ -1,5 +1,6 @@
 // KI-Kennzeichnung, Beratungssperre, Erstinformation, Einwilligung im Leadformular, STOPP und Gesundheitsangaben
 // (Anwalts-Memo, Ole 15.11.2026): Abläufe gegen die echte Test-Datenbank, 360dialog und Claude nachgebildet.
+import { CONSENT_VERSION_KNOPF } from "@/lib/einwilligung-leadformular";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
@@ -403,6 +404,15 @@ describe("Einwilligung im Meta-Leadformular", () => {
     expect(lOhne.waConsent).toBeNull();
     expect(lOhne.outreachStatus).toBe("sent");
     expect((await prisma.leadSource.findUniqueOrThrow({ where: { formId } })).lastConsentState).toBe("ohne");
+  });
+
+  it("Einwilligung per Knopf (22.11.2026): Formular ohne Häkchen, Fassung „-knopf“ an der Zuordnung → eingewilligt mit Nachweis", async () => {
+    const formId = `form-knopf-${uid()}`;
+    await prisma.leadSource.create({ data: { formId, customerId, productKey: "Zahnzusatz", consentVersion: CONSENT_VERSION_KNOPF, consentText: "Mit Klick auf „Senden“ willigen Sie ein, …" } });
+    const r = await ingestLead(inc(formId, null, "0176 44440009"), "meta");
+    const l = await prisma.lead.findUniqueOrThrow({ where: { id: r.leadId! } });
+    expect(l.waConsent).toBe("ja");
+    expect(l.consentData).toMatchObject({ formId, textVersion: CONSENT_VERSION_KNOPF, text: "Mit Klick auf „Senden“ willigen Sie ein, …", responses: [] });
   });
 });
 

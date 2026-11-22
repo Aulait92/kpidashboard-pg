@@ -1,0 +1,531 @@
+import { Seite } from "@/components/admin-neu/ui/seite";
+import { ChevronDown } from "lucide-react";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { AutoRefresh } from "@/components/auto-refresh";
+import { CplTrendChart } from "@/components/cpl-trend-chart";
+import { FilterBar } from "@/components/filter-bar";
+import { FunnelHero } from "@/components/funnel-hero";
+import { KpiCard, type Delta } from "@/components/kpi-card";
+import { LiveUpdated } from "@/components/live-updated";
+import { MonthlyForecast } from "@/components/monthly-forecast";
+import { MonthlyGoalsCard } from "@/components/monthly-goals";
+import { NotificationsButton } from "@/components/notifications-button";
+import { PerformanceTable } from "@/components/performance-table";
+import { PnLStatement } from "@/components/pnl-statement";
+import { PullToRefresh } from "@/components/pull-to-refresh";
+import { SpeedToLeadCard } from "@/components/speed-to-lead-card";
+import { TrendCharts } from "@/components/trend-charts";
+import { getCurrentSession } from "@/lib/auth";
+import { computeMonthlyForecast } from "@/lib/forecast";
+import { computeMonthlyGoalProgress } from "@/lib/goals";
+import { computeSpeedToLeadAnalysis } from "@/lib/speed-to-lead";
+import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
+import {
+  computeChannelPerformance,
+  computeCustomerLeaderboard,
+  computeKpis,
+  computePnL,
+  computeProductBreakdown,
+  computeTimeSeries,
+  listCustomers,
+  type ChannelPerformance,
+  type Kpis,
+  type TimeSeriesPoint,
+} from "@/lib/kpis";
+import {
+  formatDate,
+  formatDuration,
+  formatEUR,
+  formatNumber,
+  formatPercent,
+} from "@/lib/format";
+import { listActiveProducts } from "@/lib/product-catalog";
+import { nowMs } from "@/lib/now";
+
+type SearchParams = Promise<{
+  range?: string;
+  from?: string;
+  to?: string;
+  customerId?: string;
+  product?: string;
+}>;
+
+export const dynamic = "force-dynamic";
+
+export default async function LeadsWerbungPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  if (!process.env.DATABASE_URL) {
+    return <SetupNotice />;
+  }
+
+  const session = await getCurrentSession();
+  if (!session) {
+    redirect("/login");
+  }
+  if (session.role === "BUYER") {
+    redirect("/buyer");
+  }
+
+  const sp = await searchParams;
+  // Standard-Zeitraum = „Heute" (statt der globalen Default „Letzte 30 Tage"),
+  // sobald kein Range explizit in der URL steht.
+  const { key: rangeKey, range } = parseRangeFromSearchParams({
+    ...sp,
+    range: sp.range ?? "today",
+  });
+  const customerId =
+    sp.customerId && sp.customerId.length > 0 ? sp.customerId : null;
+  // Produkt-Filter ist ein freier Produkt-Key (Legacy-Sparte ODER neuer
+  // Produktname aus der Produkte-Tabelle). Ein unbekannter Wert liefert
+  // schlicht leere Resultate, deshalb genügt die Nicht-Leer-Prüfung.
+  const product = sp.product && sp.product.length > 0 ? sp.product : null;
+  const renderedAt = nowMs();
+
+  // Umzug in den neuen Admin (Ole, 22.11.2026: „hier wird noch die alte Zahlenseite angezeigt“): gleiche Inhalte und
+  // Filter unter Geld → Leads & Werbung, „/“ leitet hierher weiter
+  return (
+    <PullToRefresh>
+      <AutoRefresh />
+      <Seite
+        titel="Leads & Werbung"
+        reiter="geld"
+        breit
+        untertitel={
+          <>
+            {formatDate(range.from)} bis {formatDate(range.to)} · aktualisiert <LiveUpdated since={renderedAt} />
+          </>
+        }
+        aktionen={
+          <div className="flex flex-wrap items-center gap-2">
+            <Suspense
+              fallback={
+                <div className="text-xs text-[color:var(--muted)]">Lade Filter…</div>
+              }
+            >
+              <FiltersSection
+                currentRange={rangeKey}
+                currentCustomerId={customerId}
+                currentProduct={product}
+                customFrom={sp.from}
+                customTo={sp.to}
+              />
+            </Suspense>
+            <NotificationsButton />
+          </div>
+        }
+      >
+        <Suspense
+          fallback={
+            <div className="mt-6 text-sm text-[color:var(--muted)]">Lade Dashboard…</div>
+          }
+        >
+          <DashboardBody
+            range={range}
+            customerId={customerId}
+            product={product}
+          />
+        </Suspense>
+      </Seite>
+    </PullToRefresh>
+  );
+}
+
+async function DashboardBody({
+  range,
+  customerId,
+  product,
+}: {
+  range: { from: Date; to: Date };
+  customerId: string | null;
+  product: string | null;
+}) {
+  const prev = previousRange(range);
+  const [
+    k,
+    p,
+    ts,
+    customerRows,
+    productRows,
+    pnl,
+    forecast,
+    speed,
+    goals,
+    channels,
+    channelsPrev,
+  ] = await Promise.all([
+    computeKpis({ range, customerId, product }),
+    computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
+    computeTimeSeries({ range, customerId, product }),
+    computeCustomerLeaderboard({ range, product }),
+    computeProductBreakdown({ range, customerId }),
+    computePnL({ range, customerId, product }),
+    computeMonthlyForecast({
+      customerId,
+      product,
+      revenueLabel: "Umsatz",
+    }),
+    computeSpeedToLeadAnalysis({ range, customerId, product }),
+    computeMonthlyGoalProgress({ product }),
+    computeChannelPerformance({ range, customerId, product }),
+    computeChannelPerformance({ range: prev, customerId, product }),
+  ]);
+
+  return (
+    <div className="mt-6 space-y-8">
+      <FunnelHero kpis={k} />
+      <MonthlyGoalsCard progress={goals} />
+      <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
+      <ChannelPerformanceGrid current={channels} previous={channelsPrev} />
+      <PerformanceTable customerRows={customerRows} productRows={productRows} />
+      <Details title="Gewinn- und Verlustrechnung">
+        <PnLStatement pnl={pnl} />
+      </Details>
+      <Details title="Hochrechnung für diesen Monat">
+        <MonthlyForecast forecast={forecast} />
+      </Details>
+      <Details title="Reaktionszeit (Speed to Lead)">
+        <SpeedToLeadCard data={speed} />
+      </Details>
+      <Details title="Verlauf im Zeitraum">
+        <div className="space-y-6">
+          <CplTrendChart points={ts.points} granularity={ts.granularity} />
+          <TrendCharts points={ts.points} granularity={ts.granularity} />
+        </div>
+      </Details>
+    </div>
+  );
+}
+
+function SetupNotice() {
+  return (
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-16 sm:px-6">
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900 shadow-sm">
+        <h1 className="text-xl font-semibold">Setup erforderlich</h1>
+        <p className="mt-2 text-sm">
+          Die Umgebungsvariable <code className="rounded bg-amber-100 px-1 py-0.5">DATABASE_URL</code> ist nicht gesetzt.
+          Bitte verbinde den App-Service mit deiner PostgreSQL-Datenbank
+          (z.&nbsp;B. via Variable Reference auf den Postgres-Service in Railway)
+          und starte den Service neu.
+        </p>
+      </div>
+    </main>
+  );
+}
+
+async function FiltersSection({
+  currentRange,
+  currentCustomerId,
+  currentProduct,
+  customFrom,
+  customTo,
+}: {
+  currentRange: ReturnType<typeof parseRangeFromSearchParams>["key"];
+  currentCustomerId: string | null;
+  currentProduct: string | null;
+  customFrom?: string;
+  customTo?: string;
+}) {
+  const [customers, products] = await Promise.all([
+    listCustomers(),
+    listActiveProducts(),
+  ]);
+  return (
+    <FilterBar
+      customers={customers}
+      products={products}
+      currentRange={currentRange}
+      currentCustomerId={currentCustomerId}
+      currentProduct={currentProduct}
+      customFrom={customFrom}
+      customTo={customTo}
+    />
+  );
+}
+
+// Δ-Berechnung: relative Veränderung gegenüber Vorperiode. Bei Raten
+// (closingRate etc.) ist es ebenfalls relative Änderung — Prozentpunkte
+// wären präziser, aber für Sparkline-Cards genügt eine Richtungsanzeige.
+function delta(
+  current: number | null,
+  previous: number | null,
+  lowerIsBetter = false,
+): Delta {
+  if (current == null || previous == null) return { pct: null, lowerIsBetter };
+  if (previous === 0) {
+    if (current === 0) return { pct: 0, lowerIsBetter };
+    return { pct: null, lowerIsBetter };
+  }
+  return { pct: (current - previous) / Math.abs(previous), lowerIsBetter };
+}
+
+function KpiGrid({
+  kpis: k,
+  prev: p,
+  points,
+  customerId,
+}: {
+  kpis: Kpis;
+  prev: Kpis;
+  points: TimeSeriesPoint[];
+  customerId: string | null;
+}) {
+  return (
+    <div className="space-y-6">
+      <KpiSection eyebrow="Funnel" title="Wie performt dein Funnel">
+        <KpiCard
+          label="Erreichbarkeitsquote"
+          value={formatPercent(k.reachabilityRate)}
+          hint={`${k.reachedLeads} von ${k.nettoLeads} Leads erreicht${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Stornos exkl.)` : ""}`}
+          delta={delta(k.reachabilityRate, p.reachabilityRate)}
+          sparkline={{ points, dataKey: "reachabilityRate" }}
+        />
+        <KpiCard
+          label="Kontaktversuche / Lead"
+          value={formatNumber(k.avgContactAttempts)}
+          hint="Durchschnitt im Zeitraum"
+          delta={delta(k.avgContactAttempts, p.avgContactAttempts, true)}
+          sparkline={{ points, dataKey: "avgContactAttempts" }}
+        />
+        <KpiCard
+          label="Zeit bis Erstkontakt"
+          value={formatDuration(k.avgHoursToFirstContact)}
+          hint="Median über Zeitraum"
+          delta={delta(k.avgHoursToFirstContact, p.avgHoursToFirstContact, true)}
+          sparkline={{ points, dataKey: "avgHoursToFirstContact" }}
+        />
+        <KpiCard
+          label="Closing Rate"
+          value={formatPercent(k.closingRate)}
+          hint={`${k.closedLeads} von ${k.nettoLeads} abgeschlossen${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Stornos exkl.)` : ""}`}
+          delta={delta(k.closingRate, p.closingRate)}
+          sparkline={{ points, dataKey: "closingRate" }}
+        />
+      </KpiSection>
+
+      <KpiSection
+        eyebrow="Wirtschaftlichkeit"
+        title="Umsatz & Profit"
+      >
+        <KpiCard
+          label="Umsatz"
+          value={formatEUR(k.revenue)}
+          hint={
+            k.cancelledLeads > 0
+              ? `Netto im Zeitraum · Stornos abgezogen`
+              : "Brutto im Zeitraum"
+          }
+          tone="positive"
+          delta={delta(k.revenue, p.revenue)}
+          sparkline={{ points, dataKey: "revenue" }}
+        />
+        <KpiCard
+          label="Stornos"
+          value={formatEUR(k.cancelledRevenue)}
+          hint={`${formatNumber(k.cancelledLeads)} stornierte ${
+            k.cancelledLeads === 1 ? "Lead" : "Leads"
+          } im Zeitraum (vom Umsatz abgezogen)`}
+          tone={k.cancelledRevenue > 0 ? "negative" : undefined}
+          delta={delta(k.cancelledRevenue, p.cancelledRevenue, true)}
+        />
+        <KpiCard
+          label="Kosten / Netto-Lead"
+          value={formatEUR(k.costPerLead)}
+          hint={`Lead-Kosten gesamt: ${formatEUR(k.leadCosts)}${
+            customerId ? " (anteilig)" : ""
+          }`}
+          delta={delta(k.costPerLead, p.costPerLead, true)}
+          sparkline={{ points, dataKey: "costPerLead" }}
+        />
+        <KpiCard
+          label="Kosten / Termin"
+          value={formatEUR(
+            k.terminLeads > 0 ? k.leadCosts / k.terminLeads : null,
+          )}
+          hint={`Aus ${formatNumber(k.terminLeads)} Terminen`}
+          delta={delta(
+            k.terminLeads > 0 ? k.leadCosts / k.terminLeads : null,
+            p.terminLeads > 0 ? p.leadCosts / p.terminLeads : null,
+            true,
+          )}
+          sparkline={{ points, dataKey: "costPerTermin" }}
+        />
+        <KpiCard
+          label="Kosten / Abschluss"
+          value={formatEUR(
+            k.closedLeads > 0 ? k.leadCosts / k.closedLeads : null,
+          )}
+          hint={`Aus ${formatNumber(k.closedLeads)} Abschlüssen`}
+          delta={delta(
+            k.closedLeads > 0 ? k.leadCosts / k.closedLeads : null,
+            p.closedLeads > 0 ? p.leadCosts / p.closedLeads : null,
+            true,
+          )}
+          sparkline={{ points, dataKey: "costPerClosed" }}
+        />
+      </KpiSection>
+
+      <KpiSection
+        eyebrow="Margen"
+        title="Effizienz im Überblick"
+      >
+        <KpiCard
+          label="Marge vor weiteren Kosten"
+          value={formatPercent(k.marginBeforeOther)}
+          hint="Operativ vor Fixkosten"
+          tone={
+            k.marginBeforeOther != null && k.marginBeforeOther >= 0
+              ? "positive"
+              : "negative"
+          }
+          delta={delta(k.marginBeforeOther, p.marginBeforeOther)}
+          sparkline={{ points, dataKey: "marginBeforeOther" }}
+        />
+        <KpiCard
+          label="Marge nach weiteren Kosten"
+          value={formatPercent(k.marginAfterOther)}
+          hint="Nach Werbe- & Toolkosten"
+          tone={
+            k.marginAfterOther != null && k.marginAfterOther >= 0
+              ? "positive"
+              : "negative"
+          }
+          delta={delta(k.marginAfterOther, p.marginAfterOther)}
+          sparkline={{ points, dataKey: "marginAfterOther" }}
+        />
+        <KpiCard
+          label="Gewinn vor weiteren Kosten"
+          value={formatEUR(k.profitBeforeOther)}
+          hint="Vor Werbe- & Toolkosten"
+          tone={k.profitBeforeOther >= 0 ? "positive" : "negative"}
+          delta={delta(k.profitBeforeOther, p.profitBeforeOther)}
+          sparkline={{ points, dataKey: "profitBeforeOther" }}
+        />
+        <KpiCard
+          label="Gewinn nach weiteren Kosten"
+          value={formatEUR(k.profitAfterOther)}
+          hint={`Weitere Kosten: ${formatEUR(k.otherCosts)}`}
+          tone={k.profitAfterOther >= 0 ? "positive" : "negative"}
+          delta={delta(k.profitAfterOther, p.profitAfterOther)}
+          sparkline={{ points, dataKey: "profitAfterOther" }}
+        />
+      </KpiSection>
+    </div>
+  );
+}
+
+function ChannelPerformanceGrid({
+  current,
+  previous,
+}: {
+  current: ChannelPerformance;
+  previous: ChannelPerformance;
+}) {
+  function channelCards(
+    label: string,
+    cur: ChannelPerformance[keyof ChannelPerformance],
+    prv: ChannelPerformance[keyof ChannelPerformance],
+    emptyHint?: string,
+  ) {
+    const hasAny =
+      cur.spend > 0 || cur.totalLeads > 0 || prv.spend > 0 || prv.totalLeads > 0;
+    const cplHint = hasAny
+      ? `${formatEUR(cur.spend)} Spend / ${formatNumber(cur.nettoLeads)} Netto-Leads`
+      : (emptyHint ?? "Noch keine Daten im Zeitraum");
+    return (
+      <>
+        <KpiCard
+          label={`${label} · Brutto Leads`}
+          value={formatNumber(cur.totalLeads)}
+          hint={
+            cur.cancelledLeads > 0
+              ? `${formatNumber(cur.cancelledLeads)} Stornos`
+              : "Inkl. Stornos"
+          }
+          delta={delta(cur.totalLeads, prv.totalLeads)}
+        />
+        <KpiCard
+          label={`${label} · Netto Leads`}
+          value={formatNumber(cur.nettoLeads)}
+          hint="Brutto minus Stornos"
+          delta={delta(cur.nettoLeads, prv.nettoLeads)}
+        />
+        <KpiCard
+          label={`${label} · Spend`}
+          value={formatEUR(cur.spend)}
+          hint="Werbeausgaben im Zeitraum"
+          tone="neutral"
+          delta={delta(cur.spend, prv.spend, true)}
+        />
+        <KpiCard
+          label={`${label} · CPL`}
+          value={formatEUR(cur.costPerLead)}
+          hint={cplHint}
+          delta={delta(cur.costPerLead, prv.costPerLead, true)}
+        />
+      </>
+    );
+  }
+
+  // Nur Kanäle mit Daten zeigen (Spend oder Leads, jetzt oder im Vorzeitraum).
+  const used = (k: keyof ChannelPerformance) =>
+    current[k].spend > 0 || current[k].totalLeads > 0 || previous[k].spend > 0 || previous[k].totalLeads > 0;
+  const list = (
+    [
+      ["meta", "Meta (Facebook & Instagram)", "Meta"],
+      ["outbrain", "Outbrain", "Outbrain"],
+      ["tiktok", "TikTok", "TikTok"],
+      ["google", "Google Ads", "Google"],
+    ] as const
+  ).filter(([k]) => used(k));
+  if (list.length === 0) return null;
+  return (
+    <div className="space-y-6">
+      {list.map(([k, title, label]) => (
+        <KpiSection key={k} eyebrow="Werbekanal" title={title}>
+          {channelCards(label, current[k], previous[k])}
+        </KpiSection>
+      ))}
+    </div>
+  );
+}
+
+function KpiSection({
+  eyebrow,
+  title,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="mb-3">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
+          {eyebrow}
+        </div>
+        <h2 className="mt-0.5 text-lg font-semibold tracking-tight">{title}</h2>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+/** Zugeklappter Detailbereich (selten gebraucht, hält die Seite kurz). */
+function Details({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)] [&>summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer items-center justify-between px-5 py-3.5 text-[15px] font-semibold">
+        {title}
+        <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-[color:var(--border)] p-3 sm:p-4">{children}</div>
+    </details>
+  );
+}

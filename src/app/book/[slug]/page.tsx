@@ -19,6 +19,7 @@ import { randomUUID } from "node:crypto";
 import { variante, type Variante } from "@/lib/experimente";
 import { nowMs } from "@/lib/now";
 import { erinnerungOptin } from "@/lib/policen/regeln";
+import { dankeKennung, istVonFormular, nummerAusToken } from "@/lib/buchung-formular";
 
 // Öffentliche Buchungsseite je Kunde — z. B. als „Custom"-Scheduling-Link im
 // Meta-Leadformular. Zeigt echte freie Zeiten aus dem Google-Kalender.
@@ -42,10 +43,13 @@ function errorsFor(an: Ansprache): Record<string, string> {
     email: a(an, "Bitte gib eine gültige E-Mail-Adresse an.", "Bitte geben Sie eine gültige E-Mail-Adresse an."),
     consent: a(an, "Bitte bestätige die Datenschutzhinweise.", "Bitte bestätigen Sie die Datenschutzhinweise."),
     taken: a(an, "Diese Uhrzeit ist leider gerade vergeben worden. Bitte wähle eine andere.", "Diese Uhrzeit ist leider gerade vergeben worden. Bitte wählen Sie eine andere."),
+    schon: a(an, "Du hast schon einen Termin. Möchtest du ihn verschieben? Nutze dafür den Link aus deiner Bestätigung.", "Sie haben schon einen Termin. Möchten Sie ihn verschieben? Nutzen Sie dafür den Link aus Ihrer Bestätigung."),
     busy: a(an, "Gerade gehen sehr viele Buchungen ein. Bitte versuche es in ein paar Minuten erneut.", "Gerade gehen sehr viele Buchungen ein. Bitte versuchen Sie es in ein paar Minuten erneut."),
     unavailable: "Die Online-Buchung ist aktuell nicht verfügbar.",
     invalid: "Die Buchung konnte nicht verarbeitet werden.",
     error: a(an, "Etwas ist schiefgelaufen. Bitte versuche es erneut.", "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."),
+    // Nur-Handynummer nach dem Leadformular ohne passende Anfrage (lib/buchung-formular.ts): normale Felder ergänzen
+    angaben: a(an, "Bitte ergänze noch Name und E-Mail, deine Uhrzeit ist vorgemerkt.", "Bitte ergänzen Sie noch Name und E-Mail, Ihre Uhrzeit ist vorgemerkt."),
   };
 }
 
@@ -68,7 +72,12 @@ function groupByDay(slots: Slot[]): { label: string; slots: Slot[] }[] {
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string; t?: string; c?: string; kc?: string; bk?: string }>;
+  searchParams: Promise<{
+    ok?: string; a?: string; dup?: string; err?: string; lead?: string; t?: string; c?: string; kc?: string; bk?: string;
+    // Vom Dankeseiten-Knopf des Leadformulars (lib/buchung-formular.ts): von=formular, dk = Fassung der Dankeseite,
+    // voll = normale Felder (kein Treffer), s/m = gewählte Uhrzeit und Gesprächsart, pk = eingetippte Nummer (verschlüsselt)
+    von?: string; dk?: string; voll?: string; s?: string; m?: string; pk?: string;
+  }>;
 };
 
 export default async function BookingPage({ params, searchParams }: Props) {
@@ -218,6 +227,12 @@ export default async function BookingPage({ params, searchParams }: Props) {
             </div>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-[color:var(--muted)]">
+            {/* Nur-Handynummer-Buchung: E-Mail-Adresse nie anzeigen, nur sagen, wohin die Einladung geht */}
+            {istVonFormular(sp.von) ? (
+              <span className="mb-1 block font-medium text-[color:var(--foreground)]" data-einladung-anfrage>
+                {a(an, "Die Einladung geht an die E-Mail-Adresse aus deiner Anfrage.", "Die Einladung geht an die E-Mail-Adresse aus Ihrer Anfrage.")}
+              </span>
+            ) : null}
             {appt.mode === "video"
               ? a(an, "Die Bestätigung mit dem Link zum Videocall bekommst du per WhatsApp und E-Mail.", "Die Bestätigung mit dem Link zum Videocall bekommen Sie per WhatsApp und E-Mail.")
               : appt.mode === "onsite"
@@ -304,6 +319,15 @@ export default async function BookingPage({ params, searchParams }: Props) {
   // Aus dem WhatsApp-Chat (chatT) bucht der Lead selbst mit seiner WhatsApp-Nummer: Häkchen wie ohne Vorbelegung.
   const erinnerungAufruf = prefill && !chatT ? null : randomUUID();
   const erinnerungFassung: Variante = erinnerungAufruf ? await variante("buchung_erinnerung", erinnerungAufruf, { merken: false }) : "a";
+  // Vom Dankeseiten-Knopf des Leadformulars (Ole, 22.11.2026): nur die Handynummer abfragen, Name und E-Mail nimmt der
+  // Server aus der gerade abgeschickten Anfrage (lib/buchung-formular.ts). Kein Treffer (voll=1): normale Felder, die
+  // eingetippte Nummer, Uhrzeit und Gesprächsart bleiben. Nicht mit Vorbelegung aus Chat, Mail-Strecke oder Rückrufliste.
+  const vonFormular = istVonFormular(sp.von) && !prefill && !streckeT && !chatT;
+  const dk = vonFormular ? dankeKennung(sp.dk) : null;
+  const nurHandy = vonFormular && sp.voll !== "1";
+  const formularNummer = vonFormular && !nurHandy ? await nummerAusToken(sp.pk) : null;
+  const gewaehlt = vonFormular && sp.s && slots.some((x) => x.start === sp.s) ? sp.s : null;
+  const modusVorwahl = vonFormular && optionen.some((o) => o.v === sp.m) ? sp.m! : null;
   // Zeitstempel für die Bot-Falle (echte Menschen brauchen > 3 s).
   const renderedAt = nowMs();
   const ERRORS = errorsFor(an);
@@ -360,14 +384,14 @@ export default async function BookingPage({ params, searchParams }: Props) {
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
               <StepNo n={1} /> {a(an, "Wähle eine Uhrzeit", "Wählen Sie eine Uhrzeit")}
             </h2>
-            <Tage days={nah} />
+            <Tage days={nah} gewaehlt={gewaehlt} />
             {spaeter.length ? (
-              <details className="group mt-4" data-weitere-tage>
+              <details className="group mt-4" data-weitere-tage open={!!gewaehlt && spaeter.some((d) => d.slots.some((x) => x.start === gewaehlt))}>
                 <summary className="cursor-pointer list-none rounded-[var(--radius-sm)] border border-dashed border-[color:var(--border)] py-2.5 text-center text-sm font-medium text-[color:var(--brand-dark)] group-open:hidden">
                   Weitere Tage anzeigen
                 </summary>
                 <div className="mt-1">
-                  <Tage days={spaeter} />
+                  <Tage days={spaeter} gewaehlt={gewaehlt} />
                 </div>
               </details>
             ) : null}
@@ -390,7 +414,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
                       </span>
                     ) : null}
                     <o.Icon className="h-4 w-4" />
-                    <input type="radio" name="mode" value={o.v} defaultChecked={o.empfohlen} className="sr-only" />
+                    <input type="radio" name="mode" value={o.v} defaultChecked={modusVorwahl ? o.v === modusVorwahl : o.empfohlen} className="sr-only" />
                     {o.label}
                   </label>
                 ))}
@@ -407,24 +431,36 @@ export default async function BookingPage({ params, searchParams }: Props) {
 
           <section className="space-y-3">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <StepNo n={mitAuswahl ? 3 : 2} /> {a(an, "Deine Kontaktdaten", "Ihre Kontaktdaten")}
+              <StepNo n={mitAuswahl ? 3 : 2} />{" "}
+              {nurHandy ? a(an, "Deine Handynummer", "Ihre Handynummer") : a(an, "Deine Kontaktdaten", "Ihre Kontaktdaten")}
             </h2>
-            <Field name="name" label="Vor- und Nachname" autoComplete="name" defaultValue={prefill?.name} />
-            <Field
-              name="email"
-              label="E-Mail-Adresse"
-              type="email"
-              autoComplete="email"
-              defaultValue={prefill?.email}
-            />
+            {nurHandy ? (
+              <p className="-mt-1 text-xs text-[color:var(--muted)]" data-nur-handy>
+                {a(an, "Name und E-Mail nehmen wir aus deiner Anfrage.", "Name und E-Mail nehmen wir aus Ihrer Anfrage.")}
+              </p>
+            ) : (
+              <>
+                <Field name="name" label="Vor- und Nachname" autoComplete="name" defaultValue={prefill?.name} />
+                <Field
+                  name="email"
+                  label="E-Mail-Adresse"
+                  type="email"
+                  autoComplete="email"
+                  defaultValue={prefill?.email}
+                />
+              </>
+            )}
+            {vonFormular ? <input type="hidden" name="von" value="formular" /> : null}
+            {dk ? <input type="hidden" name="dk" value={dk} /> : null}
+            {vonFormular && !nurHandy ? <input type="hidden" name="voll" value="1" /> : null}
             {chatT ? (
               <input type="hidden" name="c" value={chatT} />
             ) : (
               <PhoneField
                 name="phone"
-                label={streckeT ? "Telefonnummer (freiwillig, nur für einen Anruf)" : "Handynummer (für WhatsApp/Anruf)"}
+                label={streckeT ? "Telefonnummer (freiwillig, nur für einen Anruf)" : nurHandy ? "Handynummer wie in der Anfrage" : "Handynummer (für WhatsApp/Anruf)"}
                 required={!streckeT}
-                defaultInternational={prefill?.phone}
+                defaultInternational={prefill?.phone ?? formularNummer ?? undefined}
               />
             )}
             {streckeT ? <input type="hidden" name="t" value={streckeT} /> : null}
@@ -506,7 +542,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
 const NAH_TAGE = 3;
 
 /** Freie Zeiten je Tag als Auswahl (eine Gruppe „start“ über alle Tage). */
-function Tage({ days }: { days: { label: string; slots: Slot[] }[] }) {
+function Tage({ days, gewaehlt }: { days: { label: string; slots: Slot[] }[]; gewaehlt?: string | null }) {
   return (
     <div className="space-y-4">
       {days.map((day) => (
@@ -518,7 +554,7 @@ function Tage({ days }: { days: { label: string; slots: Slot[] }[] }) {
                 key={s.start}
                 className="cursor-pointer rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-2.5 text-center text-sm font-semibold tabular-nums transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand)] has-checked:text-white"
               >
-                <input type="radio" name="start" value={s.start} required className="sr-only" />
+                <input type="radio" name="start" value={s.start} required defaultChecked={s.start === gewaehlt} className="sr-only" />
                 {fmt(new Date(s.start), { hour: "2-digit", minute: "2-digit" })}
               </label>
             ))}

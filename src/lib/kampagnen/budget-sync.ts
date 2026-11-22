@@ -43,8 +43,10 @@ export function budgetOnlyBody(dailyBudgetEur: number): Record<string, unknown> 
   return { daily_budget: Math.round(dailyBudgetEur * 100) };
 }
 
-/** Präfix des Benennungsschemas (siehe campaignName in types.ts). */
+/** Präfix des älteren Benennungsschemas mit Kundennamen. */
 export const namePrefix = (customer: string, product: string) => norm(`PG | ${customer} | ${product} |`);
+/** Präfixe, an denen eine Kampagne des Produkts erkannt wird: aktuelles Schema (campaignName in types.ts) und älteres. */
+export const namePrefixes = (customer: string, product: string) => [norm(`PG | ${product} |`), namePrefix(customer, product)];
 
 export type CampaignMatch = { ok: true; campaign: MetaCampaign } | { ok: false; reason: string };
 
@@ -78,10 +80,10 @@ export async function findCampaignForProduct(
   let found = alive;
   if (!found.length) {
     const r = await meta.get<{ data: MetaCampaign[] }>(`act_${input.adAccountId}/campaigns`, { fields: "id,name,status,effective_status,daily_budget", limit: "200" });
-    const prefix = namePrefix(input.customerName, input.product);
-    found = (r.data ?? []).filter((c) => norm(c.name).startsWith(prefix) && !GONE.has(c.effective_status ?? c.status ?? ""));
+    const prefixes = namePrefixes(input.customerName, input.product);
+    found = (r.data ?? []).filter((c) => prefixes.some((p) => norm(c.name).startsWith(p)) && !GONE.has(c.effective_status ?? c.status ?? ""));
   }
-  if (found.length === 0) return { ok: false, reason: `keine Kampagne „PG | ${input.customerName} | ${input.product} | …“ gefunden` };
+  if (found.length === 0) return { ok: false, reason: `keine Kampagne „PG | ${input.product} | …“ gefunden` };
   if (found.length > 1) return { ok: false, reason: `${found.length} passende Kampagnen (${found.map((c) => c.name).join(", ").slice(0, 200)}), nicht eindeutig` };
   if (!found[0].daily_budget) return { ok: false, reason: `Kampagne „${found[0].name}“ hat kein Kampagnenbudget (Budget auf Anzeigengruppen-Ebene)` };
   return { ok: true, campaign: found[0] };

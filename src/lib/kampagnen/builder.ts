@@ -4,9 +4,11 @@
 // Idempotent: Jede angelegte ID wird sofort gespeichert (onProgress), ein
 // erneuter Lauf überspringt Vorhandenes und macht an der Fehlerstelle weiter.
 
+import { KNOPF_TITEL } from "@/lib/einwilligung-leadformular";
 import { cleanToken, redactTokens } from "@/lib/meta-leads";
 import type { AdCopy, BuiltState, CampaignContext, CampaignPlan, CreativeImage, LeadFormDraft } from "@/lib/kampagnen/types";
 import { standardFelder } from "@/lib/kampagnen/formular-vorgaben";
+import { formularBuchungsUrl } from "@/lib/buchung-formular";
 
 const GRAPH = "https://graph.facebook.com/v22.0";
 
@@ -136,21 +138,26 @@ export function leadFormPayload(
       // Vorausgefüllt je Produkt (Kfz: Adresse und Geburtsdatum, Privatschutz: Adresse), lib/kampagnen/formular-vorgaben.ts
       ...standardFelder(ctx.product),
     ],
+    // Überschrift über den Kontaktfragen (Ole, 21.11.2026: erster Lohmann-Lead mit Festnetznummer): auf die Handynummer
+    // lenken, weil der Assistent per WhatsApp schreibt. Neutral formuliert (passt zu Sie und Du), ohne Gedankenstrich.
+    question_page_custom_headline: "Bitte Handynummer angeben, die Rückmeldung kommt per WhatsApp",
     privacy_policy: { url: ctx.privacyUrl, link_text: "Datenschutzerklärung" },
     // PARAGRAPH_STYLE erlaubt nur ein Element (Meta-Fehler #100, 21.11.2026): Absätze zusammenfassen
     context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: [form.introParagraphs.filter(Boolean).join("\n\n").slice(0, 2000)], button_text: "Weiter" },
     custom_disclaimer: {
-      title: "Einwilligung",
+      // Ole, 22.11.2026: „Immer ohne Checkbox“. Einwilligung per Klick auf „Senden“ (Rechtsprüfung 22.11.2026 Gelb
+      // gering, docs/recht/leadformular-einwilligung-knopf-2026-11-22.md); der Text steht über dem Senden-Knopf
+      title: KNOPF_TITEL,
       body: { text: form.consentText },
-      checkboxes: [{ key: "einwilligung_kontakt", text: "Ich bin einverstanden.", is_required: true, is_checked_by_default: false }],
     },
-    // Dankeseite: immer zum Buchungskalender des Kunden (Ole, 13.11.2026), sonst Website
+    // Dankeseite: immer zum Buchungskalender des Kunden (Ole, 13.11.2026), sonst Website. Mit Marker von=formular
+    // (Ole, 22.11.2026): die Buchungsseite fragt dann nur die Handynummer ab (lib/buchung-formular.ts)
     thank_you_page: ctx.bookingUrl
-      ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: ctx.bookingUrl }
+      ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: formularBuchungsUrl(ctx.bookingUrl) }
       : ctx.website
         ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Zur Website", website_url: ctx.website }
         : { title: form.thankYouTitle, body: form.thankYouBody, button_type: "NONE" },
-    ...(ctx.bookingUrl ? { follow_up_action_url: ctx.bookingUrl } : ctx.website ? { follow_up_action_url: ctx.website } : {}),
+    ...(ctx.bookingUrl ? { follow_up_action_url: formularBuchungsUrl(ctx.bookingUrl) } : ctx.website ? { follow_up_action_url: ctx.website } : {}),
   };
 }
 

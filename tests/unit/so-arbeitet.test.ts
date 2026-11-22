@@ -51,7 +51,7 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
     expect(texte[4]).toBe(komplettcheckFrage("sie", e.person, false));
     // Nutzen stand schon in der Zwischenfrage: knapp, ohne zweites „Damit … zeigen kann:“ (Ole, 19.11.2026)
     expect(texte[5]).toBe("Super! Und Ihr Geburtsdatum?");
-    expect(texte[6]).toMatch(/^Danke! Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: Welche Versicherungen haben Sie heute schon\?/);
+    expect(texte[6]).toMatch(/^Danke! Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: \*Welche Versicherungen haben Sie heute schon\?\*/);
     expect(texte[7]).toBe(`Danke! ${policenBitte({ an: "sie", vermittler: { ...e.person, anrede: "Herr", name: "Ole Kannapinn" }, firma: e.firma }).text}`);
     expect(texte[8]).toMatch(/^Kurz zum Datenschutz: Ich bin einverstanden, dass Ole Kannapinn \(Kannapinn Versicherungen\)/);
     expect(texte.at(-3)).toContain("Zum Schluss: Die Einladung mit Kalendereintrag geht an julia.becker@example.com. Stimmt die Adresse?");

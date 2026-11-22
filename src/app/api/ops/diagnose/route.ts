@@ -762,9 +762,10 @@ async function sicherheitStatus() {
   };
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, "d360-kunde": d360kunde, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), "policen-gesundheit": async (p) => (await import("@/lib/ops/policen-gesundheit")).policenGesundheit(p), sicherheit: sicherheitStatus };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, "d360-kunde": d360kunde, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), "policen-gesundheit": async (p) => (await import("@/lib/ops/policen-gesundheit")).policenGesundheit(p), "media-buyer": async (p) => (await import("@/lib/ops/media-buyer")).mediaBuyerStatus(p), sicherheit: sicherheitStatus, "ppl-rueckmeldung": async (p) => (await import("@/lib/ops/ppl-rueckmeldung")).pplRueckmeldung(p) };
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
+//   q=media-buyer[&pool=<text>][&n=50]       Media Buyer: Pools (Ziel, Ist, Hochrechnung, Budget) und letzte Entscheidungen (lib/ops/media-buyer.ts)
 //   q=policen-gesundheit[&kunde=<id>]       Kranken/BU/Leben je Kunde: AVV-Ergänzung, Datenschutz-URL, freigegeben (lib/ops/policen-gesundheit.ts)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
 //   q=vermittler-anrede[&alle=1]  Kunden ohne Anrede in den Anbieterangaben, nur ID und Name (lib/ops/vermittler-anrede.ts)
@@ -813,6 +814,27 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "vertrieb-auskunft": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebAuskunftDiagnose(p),
   "vertrieb-dsgvo": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebDsgvoDiagnose(p),
   "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
+  "push-geraete": async () => (await import("@/lib/ops/push-geraete")).pushGeraeteDiagnose(),
+  "lead-felder": async (p) => (await import("@/lib/ops/lead-felder")).leadFelderDiagnose(p),
+  // Eingänge je Tag und Kanal für ein Produkt (Media Buyer zählt nur adChannel „Meta“), ?produkt=Wechsel&tage=14
+  "leads-je-tag": async (p) => {
+    const produkt = (p.get("produkt") ?? "").trim();
+    const tage = Math.min(40, Math.max(1, Number(p.get("tage") ?? 14) || 14));
+    const seit = new Date(Date.now() - tage * 86_400_000);
+    const rows = await prisma.lead.findMany({ where: { ...(produkt ? { source: produkt } : {}), createdAt: { gte: seit }, isTest: false }, select: { createdAt: true, adChannel: true, source: true } });
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      const k = `${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(r.createdAt)} | ${r.source ?? "-"} | ${r.adChannel ?? "ohne Kanal"}`;
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return [...m.entries()].sort().map(([k, n]) => `${k}: ${n}`);
+  },
+  // Trockenlauf des Media Buyers (22.11.2026): rechnet Budgets, schreibt nichts an Meta, keine Pushs; protokolliert
+  // nur eine Entscheidung mit dryRun=true (wie „Simulieren“ im Admin)
+  "media-buyer-trockenlauf": async () => {
+    const r = await (await import("@/lib/media-buyer")).runMediaBuyer({ dryRun: true, force: true });
+    return { ranAt: r.ranAt, eingeschaltet: process.env.MEDIA_BUYER_ENABLED === "1", pools: r.pools.filter((p) => p.goal > 0 || p.prevBudget).map((p) => ({ kampagnen: p.campaigns, roh: Object.fromEntries(Object.entries(p).filter(([, v]) => typeof v === "number" || v === null)), pool: p.poolLabel, aktion: p.action, leadsMtd: p.leadsMtd, ziel: p.goal, prognose: p.projected, budgetVorher: p.prevBudget, budgetNeu: p.newBudget, grund: p.reason, fehler: p.error })) };
+  },
   "test-chat": async (p) => (await import("@/lib/ops/test-chat")).testChatDiagnose(p),
   buchungslinks: async () => (await import("@/lib/ops/buchungslinks")).buchungslinksDiagnose(),
   einwilligungstext: async (p) => (await import("@/lib/ops/einwilligungstext")).einwilligungstextDiagnose(p),

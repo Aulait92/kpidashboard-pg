@@ -21,6 +21,10 @@ export type MarkeFarben = {
   grau: string;
   feldRand: string;
   optionRand: string;
+  /** Platzhalter in Feldern (Kontrast mindestens 4,5 : 1, visual.md M7) */
+  platzhalter: string;
+  /** Spur des Fortschrittsbalkens (visual.md M7) */
+  spur: string;
   fehler: string;
   erfolg: string;
 };
@@ -62,12 +66,14 @@ export const PKV_TARIFE: Marke = {
     grau: "#5B6B78",
     feldRand: "#7C8C9A",
     optionRand: "#CFD6DC",
+    platzhalter: "#6B7785",
+    spur: "#D9E6E4",
     fehler: "#B42318",
     erfolg: "#047857",
   },
   dateien: { favicon: `${BASIS}/favicon.svg`, appleIcon: `${BASIS}/apple-touch-icon.png`, logoHell: `${BASIS}/logo-hell.svg`, logoDunkel: `${BASIS}/logo-dunkel.svg` },
   bilder: {
-    // 12:5, Handy 358 × 149, Desktop 576 × 240 (CI)
+    // Quelle 12:5; am Handy 16:9 mit Ausschnitt aufs Paar (Advertorial, nach dem ersten Absatz), Desktop 12:5
     start: { src: `${BASIS}/hero.webp`, breite: 1152, hoehe: 480, alt: "Paar am Küchentisch prüft Unterlagen", sizes: "(max-width: 640px) calc(100vw - 32px), 576px" },
     // 16:9, höchstens 160 px hoch (Symbolbild)
     zwischenseite: { src: `${BASIS}/fast-fertig.webp`, breite: 568, hoehe: 320, alt: "PKV-Experte am Telefon", sizes: "284px" },
@@ -94,6 +100,8 @@ export function markeCssVars(m: Marke): Record<string, string> {
     "--m-grau": f.grau,
     "--m-feld-rand": f.feldRand,
     "--m-option-rand": f.optionRand,
+    "--m-platzhalter": f.platzhalter,
+    "--m-spur": f.spur,
     "--m-fehler": f.fehler,
     "--m-erfolg": f.erfolg,
   };

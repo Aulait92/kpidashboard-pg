@@ -21,6 +21,7 @@
 // ablegen, aber erst nach der Prüfung anbieten), Öffnen nur mit Zwei-Faktor-Login (AVV § 5), jede Löschung im
 // Löschprotokoll (lib/loeschprotokoll.ts), eigener Datenschlüssel je Datei (Crypto-Shredding, ablage.ts Format 2).
 
+import { dokumentArt, erkanntePolicen, kfzStand, texterkennungAn, unterlageText, unterlagenSparte } from "@/lib/policen/texterkennung";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { decryptBytes, decryptSecret } from "@/lib/encryption";
@@ -153,7 +154,13 @@ export async function policenBitteFuerChat(conversationId: string): Promise<impo
   const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { vorvertraege: true, source: true } });
   // Kfz-Lead: konkret Fahrzeugschein und letzte Rechnung (Ole, 21.11.2026)
   const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
-  if (istKfzProdukt(lead?.source)) return policenBitte({ ...sp, kfz: true });
+  if (istKfzProdukt(lead?.source)) {
+    // Andere Policen nur mit Komplettcheck Ja bzw. genannten Verträgen, ohne Kfz (Ole, 22.11.2026)
+    const { andereVertraege } = await import("@/lib/policen/andere-policen");
+    const termin = await prisma.appointment.findFirst({ where: { leadId: chat.leadId, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { komplettcheck: true } });
+    const vertraege = andereVertraege(lead?.vorvertraege ?? null, { source: lead?.source, kfz: true, gesundheitAn: sp.gesundheitAn });
+    return policenBitte({ ...sp, kfz: true, vertraege, komplettcheck: termin?.komplettcheck ?? null });
+  }
   const { vorvertraegeAus } = await import("@/lib/whatsapp/vorvertraege");
   const vertraege = (vorvertraegeAus(lead?.vorvertraege)?.liste ?? [])
     .map((v) => (v.sparte === "Private Krankenversicherung" ? "private Krankenversicherung" : v.sparte))
@@ -942,6 +949,11 @@ export async function handleFlowAntwort(o: {
     if (vorher?.ki !== false || geloescht) await audit("policen.ohne_ki", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { geloescht, quelle: "formular" }, actor: { role: "lead" } });
   }
 
+  // Mit KI-Einwilligung: jede Datei lokal per Texterkennung einordnen (Fahrzeugschein, Kfz-Police, Sparte anderer
+  // Policen), damit die Bestätigung sagt, was da ist bzw. noch fehlt, und das Auslesen auch Fotos zuordnen kann
+  // (Ole, 22.11.2026: für alle Leads; lib/policen/texterkennung.ts, kein Drittanbieter)
+  const fc = await flow.flowChat(chat.id, now).catch(() => null);
+  const ocr = ki && texterkennungAn();
   // Dateien laden, prüfen, ablegen
   let ok = 0;
   let virus = 0;
@@ -993,6 +1005,11 @@ export async function handleFlowAntwort(o: {
       return null;
     });
     if (id) ok++;
+    if (id && ocr) {
+      const e = dokumentArt(await unterlageText(dl.data, typ).catch(() => ""));
+      const sp = e && !sparte ? unterlagenSparte(e.sparte) : null;
+      if (e) await prisma.leadDocument.update({ where: { id }, data: { dokumentArt: e.art, ...(sp ? { sparte: sp } : {}) } }).catch((x) => logFehler("dokumentart", x));
+    }
     await mediaWeg(chat.customerId, [d.id], apiKey);
   }
   await setzeBody(o.messageId, `Formular „Policen senden“: ${ok === 1 ? "1 Dokument" : `${ok} Dokumente`} für den Vermittler`);
@@ -1002,8 +1019,11 @@ export async function handleFlowAntwort(o: {
   if (fehler || !antwort.dateien.length) console.error("[policen formular] aufbau", formularAufbau(o.responseJson));
 
   if (o.botErlaubt) {
-    const c = await flow.flowChat(chat.id, now).catch(() => null);
-    if (ok && c) await flow.sendeBestaetigung(chat.id, bestaetigung(c.text, ok, ki), now).catch((e) => logFehler("bestätigung", e));
+    const c = fc;
+    const docs = ok && ocr ? await prisma.leadDocument.findMany({ where: { leadId: chat.leadId, status: "gespeichert" }, select: { dokumentArt: true, sparte: true } }) : [];
+    const stand = ok && ocr && c?.text.kfz ? kfzStand(docs.map((d) => d.dokumentArt)) : null;
+    const erkannt = ok && ocr ? erkanntePolicen(docs.map((d) => d.sparte), { ohneKfz: !!c?.text.kfz }) : [];
+    if (ok && c) await flow.sendeBestaetigung(chat.id, bestaetigung(c.text, ok, ki, stand, erkannt), now).catch((e) => logFehler("bestätigung", e));
     if (virus) await antworte(virenText(an));
     else if (spaeter) await antworte(spaeterText(an));
     else if (gesundheit) await antworte(gesundheitAusText(an, person));

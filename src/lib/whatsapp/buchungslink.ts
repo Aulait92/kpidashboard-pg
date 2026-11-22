@@ -73,3 +73,17 @@ export function buchungslinkText(an: Ansprache, person: VermittlerName, url: str
     `Kein Problem! Suchen Sie sich hier selbst eine passende Zeit bei ${person.dat} aus: ${url}\n\nOder schreiben Sie mir einfach Ihren Wunschtag.`,
   );
 }
+
+/**
+ * Absage ohne Wunschzeit auf einen Terminvorschlag (Ole, 22.11.2026: „Termin passt nicht. Komme ggf. auf Sie zu.“ →
+ * der Assistent hat aufgegeben, statt andere Zeiten bzw. den Buchungslink anzubieten). Rein. Kein Treffer bei
+ * Wunschzeit (die bucht der Assistent), Abmeldung bzw. „kein Interesse“ (eigene Behandlung).
+ */
+export function absageOhneWunsch(text: string | null | undefined): boolean {
+  const t = (text ?? "").trim();
+  if (!t || t.length > 300) return false;
+  if (/kein(e)? interesse|kein bedarf|nicht mehr interess|\bstopp?\b|abmelden|bitte nicht mehr|schon erledigt|schon versichert|abgeschlossen/i.test(t)) return false;
+  // Konkrete Wunschzeit (Tag, Tageszeit, Uhrzeit, Datum): die bucht der Assistent
+  if (/\b(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|übermorgen|morgen früh|nächste[nr]? woche|vormittags?|nachmittags?|abends?|\d{1,2}([.:]\d{2})? ?uhr|\d{1,2}\.\d{1,2}\.)/i.test(t)) return false;
+  return /passt (mir |uns )?(leider )?nicht|geht (bei mir |bei uns )?(leider )?nicht|kann (ich |da )?(leider )?nicht|keine zeit|verhindert|komm(e|en)? .{0,30}(auf sie|auf dich|auf euch|wieder) zu|meld(e|en)? (mich|uns)|ein andermal|nicht passend|zu früh|zu spät|klappt (leider )?nicht/i.test(t);
+}

@@ -239,13 +239,14 @@ export async function skipSetupStepAction(_prev: SetupState, fd: FormData): Prom
   } else if (kind === "mailbox_off") {
     // „Meine Gesellschaft erlaubt das nicht“: E-Mail-Funktionen aus, Schritt gilt als erledigt
     await prisma.customer.update({ where: { id: ob.customerId }, data: { mailFeaturesOff: true } });
-  } else if (kind === "gesehen:assistent") {
-    // „So arbeitet Ihr Assistent“ (P8): mit „Weiter“ gesehen
+  } else if (kind === "gesehen:assistent" || kind === "gesehen:einwaende") {
+    // „So arbeitet Ihr Assistent“ (P8) bzw. Merkblatt „Einwände im Termin“: mit „Weiter“ gesehen
+    const key = kind.slice("gesehen:".length);
     const current = (ob.stepSkips && typeof ob.stepSkips === "object" ? ob.stepSkips : {}) as Record<string, unknown>;
-    if (!current.assistent) {
+    if (!current[key]) {
       await prisma.onboarding.update({
         where: { id: ob.id },
-        data: { stepSkips: { ...current, assistent: { at: new Date().toISOString(), reason: "gesehen" } } as Prisma.InputJsonValue },
+        data: { stepSkips: { ...current, [key]: { at: new Date().toISOString(), reason: "gesehen" } } as Prisma.InputJsonValue },
       });
     }
   } else if (kind.startsWith("skip:")) {

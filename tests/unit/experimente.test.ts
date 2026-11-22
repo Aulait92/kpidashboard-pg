@@ -68,8 +68,8 @@ describe("Fassungen der Journey-Texte", () => {
   });
 
   it("Vertragsfrage mit Grund (doppelt zahlen), Du und Sie", () => {
-    expect(vertragsFrage("sie", false, "Super!", PERSON)).toMatch(/^Super! Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: Welche Versicherungen haben Sie heute schon\?/);
-    expect(vertragsFrage("du", true, "Danke!", PERSON_DU)).toMatch(/^Danke! Damit Ole sieht, ob du irgendwo doppelt zahlst: Welche Versicherungen habt ihr als Familie heute schon\?/);
-    expect(vertragsFrage("sie", false)).toMatch(/^Super! Welche Versicherungen haben Sie heute schon\?/);
+    expect(vertragsFrage("sie", false, "Super!", PERSON)).toMatch(/^Super! Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: \*Welche Versicherungen haben Sie heute schon\?\*/);
+    expect(vertragsFrage("du", true, "Danke!", PERSON_DU)).toMatch(/^Danke! Damit Ole sieht, ob du irgendwo doppelt zahlst: \*Welche Versicherungen habt ihr als Familie heute schon\?\*/);
+    expect(vertragsFrage("sie", false)).toMatch(/^Super! \*Welche Versicherungen haben Sie heute schon\?\*/);
   });
 });

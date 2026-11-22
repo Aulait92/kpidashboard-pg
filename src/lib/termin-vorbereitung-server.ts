@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { angebotOhneGesundheitsdaten, angeboteAuslesen, bausteinSchalten, cleanAngebote, paketWaehlen, sparteSchalten, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
-import { einwandFolien, entscheidungsPakete, folien, markeFuer, paketName, praesentationCss } from "@/lib/praesentation";
+import { entscheidungsPakete, folien, markeFuer, paketName, praesentationCss } from "@/lib/praesentation";
 import { beitragAus, beitragEffektiv } from "@/lib/angebote-daten";
 import { praesentationsVariante } from "@/lib/praesentation-variante-server";
 import { zusageAm } from "@/lib/praesentation-messung";
@@ -189,7 +189,6 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
     d,
     marke,
     folien: fs,
-    einwaende: einwandFolien(d, angebote, marke, an),
     css: praesentationCss(marke),
     angeboteBestaetigt: !!ang?.bestaetigt,
     variante,

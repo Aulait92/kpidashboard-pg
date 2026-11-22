@@ -197,6 +197,8 @@ describe("Paket 4: Lead-Texte ohne Ersparnisversprechen (§ 5 UWG, K8)", () => {
     expect(textHash(formularWortlaut(formularDaten(SIE, u)))).toBe("d7d946b40d5fb5968f0530eee27759ffd699172bc0c5e0f59f6a6ca5a791b470");
     expect(textHash(formularWortlaut(formularDaten(DU, u)))).toBe("ef69b86159ca91568d1891f00efd28130abcd14ae120e87bd45eced8bdc77970");
     expect(textHash(formularWortlaut(formularDaten({ ...SIE, kiFertig: false, gesundheit: false, pronomen: null }, u)))).toBe("69a236db7f1ddb8765d44c5a8c4e33742048731f9af9ddb4d799ce7fc7b87ee2");
+    // Flow JSON unverändert (Ole, 22.11.2026: kein neuer Flow, keine neuen Vorlagen bei Meta, Titel „Policen senden“)
+    expect(flowJsonHash()).toBe("e19b92080615af92b80f453defec461979210cc33cb0cb67a43ee1fbc9f97c48");
     expect(FLOW_TEXT_VERSION).toBe("2026-11-19.g1");
     expect(FLOW_TEXT_VERSION_SACH).toBe("2026-11-19.s1");
   });

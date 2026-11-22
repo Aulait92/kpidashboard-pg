@@ -60,7 +60,7 @@ describe("Selbst-Einrichtung: Eingaben", () => {
   });
 
   it("Einwilligungstext nennt die Agentur und WhatsApp", () => {
-    expect(consentText("Agentur Muster")).toMatch(/Agentur Muster.*WhatsApp.*KI-gestützter Assistent.*STOPP/);
+    expect(consentText("Agentur Muster")).toMatch(/WhatsApp.*Mit Klick auf „Senden“.*Agentur Muster.*STOPP/);
   });
 });
 

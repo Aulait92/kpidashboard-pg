@@ -59,6 +59,10 @@ export function usePush() {
       const reg = await navigator.serviceWorker.getRegistration("/");
       const sub = await reg?.pushManager.getSubscription();
       setStatus(sub ? "on" : "off");
+      // Gerät beim Server auffrischen (Ole, 21.11.2026: Admin-Pushs kamen nicht an, sent=0): Der Browser hielt noch ein
+      // Abo, auf dem Server fehlte es bzw. hing es an einem anderen Login (z. B. nach Anmeldung als Testkunde auf
+      // demselben Handy). Upsert ordnet es dem aktuell angemeldeten Nutzer zu.
+      if (sub) void fetch("/api/push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub.toJSON()) }).catch(() => undefined);
     } catch {
       setStatus("off");
     }

@@ -541,6 +541,15 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         done: !!skip("assistent") || !!ob.liveAt,
         at: null,
       },
+      // Ole, 21.11.2026: Merkblatt „Einwände im Termin“ lesen (mit „Gelesen“ bestätigt). Nach dem Livegang erledigt,
+      // damit bestehende Kunden keinen neuen offenen Schritt bekommen (Merkblatt bleibt auf der Präsentationsseite).
+      {
+        key: "einwaende",
+        label: "Merkblatt Einwände gelesen",
+        owner: "kunde",
+        done: !!skip("einwaende") || !!ob.liveAt,
+        at: null,
+      },
       {
         key: "serviceMails",
         label: "Service-Mails in Ihrem Namen bestätigt",
@@ -608,7 +617,7 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "assistent", "serviceMails", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "assistent", "einwaende", "serviceMails", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
 
 /** Übersprungene Schritte (Onboarding.stepSkips): Grund und Zeitpunkt je Schritt. */
 export type StepSkip = { at: string; reason: string };

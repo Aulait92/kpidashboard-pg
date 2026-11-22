@@ -93,6 +93,24 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${c.name}: Video-Link gesetzt${n ? `, ${n} gebuchte Videotermine nachgetragen` : ""}.` };
     },
   },
+  werbekosten_abgleichen: {
+    beschreibung: "Werbekosten eines Kunden mit eigenem Werbekonto sofort abgleichen (je Anzeige ab Startdatum und je Tag), statt auf den Lauf um 5 Uhr zu warten",
+    felder: { customerId: "Kunden-ID" },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const k = await prisma.customer.findUnique({ where: { id: c.id }, select: { metaAdAccountId: true } });
+      const konto = (k?.metaAdAccountId ?? "").replace(/^act_/, "");
+      if (!/^\d+$/.test(konto)) return { ok: false, error: "Kein eigenes Werbekonto hinterlegt." };
+      const { syncAnzeigeKosten } = await import("@/lib/anzeige-kosten");
+      const r = await syncAnzeigeKosten({ voll: true, nurKonto: konto });
+      const { syncCustomerAdSpend } = await import("@/lib/meta");
+      const t = await syncCustomerAdSpend();
+      const z = r.konten[0];
+      await audit("meta.werbekosten_abgleich", { entity: "Customer", entityId: c.id, customerId: c.id, actor: OPS_ACTOR, details: { gespeichert: r.gespeichert, fehler: z?.fehler ?? null } });
+      return z?.fehler ? { ok: false, error: `${c.name}: ${z.fehler}` } : { ok: true, info: `${c.name}: ${r.gespeichert} Kostenzeilen je Anzeige (${z?.von ?? "?"} bis ${z?.bis ?? "?"}), Tageswerte für ${t.customers} Kundenkonten aktualisiert.` };
+    },
+  },
   aufgabe_erledigen: {
     beschreibung: "Admin-Aufgabe abhaken",
     felder: { taskId: "ID der Aufgabe" },
@@ -102,6 +120,37 @@ export const AKTIONEN: Record<string, Aktion> = {
       if (!t.doneAt) await prisma.salesTask.update({ where: { id: t.id }, data: { doneAt: new Date() } });
       await audit("task.done", { entity: "SalesTask", entityId: t.id, details: { title: t.title }, actor: OPS_ACTOR });
       return { ok: true, info: `Erledigt: ${t.title}` };
+    },
+  },
+  lead_falsche_nummer: {
+    beschreibung: "Offenen Lead mit eindeutig falscher Nummer auf „Verloren: falsche Daten“ setzen (nur wenn die Prüfung greift)",
+    felder: { leadId: "ID des Leads" },
+    run: async (p) => {
+      const l = await prisma.lead.findUnique({ where: { id: text(p.leadId) }, select: { id: true, customerId: true, phone: true, status: true, isTest: true } });
+      if (!l?.customerId) return { ok: false, error: "Lead nicht gefunden." };
+      if (l.status && l.status !== "Neuer Lead") return { ok: false, error: `Lead ist nicht mehr neu (Status ${l.status}).` };
+      const grund = (await import("@/lib/ppl/telefon-pruefung")).offensichtlichFalscheNummer(l.phone);
+      if (!grund) return { ok: false, error: "Nummer ist nicht eindeutig falsch." };
+      await (await import("@/lib/lead-intake")).alsFalscheDatenVerloren(l.id, l.customerId, grund);
+      await audit("lead.falsche_nummer", { entity: "Lead", entityId: l.id, details: { grund }, actor: OPS_ACTOR });
+      return { ok: true, info: `Verloren: falsche Daten (${grund})` };
+    },
+  },
+  buchungslink_senden: {
+    beschreibung: "Buchungslink per WhatsApp an einen Lead ohne Termin schicken (einmal je Chat, nur im offenen 24-h-Fenster), Lead über Kunde und Namen",
+    felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
+    run: async (p) => {
+      const name = text(p.name);
+      if (name.length < 3) return { ok: false, error: "Name zu kurz." };
+      const leads = await prisma.lead.findMany({ where: { customerId: text(p.customerId), name: { contains: name, mode: "insensitive" } }, select: { id: true, name: true }, take: 3 });
+      if (leads.length !== 1) return { ok: false, error: `${leads.length} passende Leads, bitte genauer.` };
+      const conv = await prisma.conversation.findFirst({ where: { leadId: leads[0].id }, orderBy: { lastMessageAt: "desc" }, select: { id: true, windowExpiresAt: true } });
+      if (!conv) return { ok: false, error: "Kein WhatsApp-Chat." };
+      if (!conv.windowExpiresAt || conv.windowExpiresAt.getTime() < Date.now()) return { ok: false, error: "24-Stunden-Fenster ist zu." };
+      const ok = await (await import("@/lib/whatsapp/knopf")).buchungslinkNachAbsage(conv.id);
+      if (!ok) return { ok: false, error: "Nicht gesendet (schon Termin, Link schon gesendet oder kein Kalender)." };
+      await audit("lead.buchungslink", { entity: "Lead", entityId: leads[0].id, details: {}, actor: OPS_ACTOR });
+      return { ok: true, info: "Buchungslink gesendet." };
     },
   },
   produkte_auflisten: {

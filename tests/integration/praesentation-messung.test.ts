@@ -65,7 +65,6 @@ describe("Präsentation: Messung und Zusage (Datenbank)", () => {
     const { lead, appt } = await termin("Julia Neu");
     const p = (await loadPraesentation(appt.id, ctx))!;
     expect(p.variante).toBe("B");
-    expect(p.einwaende).toHaveLength(4);
     expect(p.abschluss.produkte).toEqual(["Haftpflicht Komfort"]);
     expect(p.abschluss.summe).toBe(8.4);
     expect(p.folien.map((f) => f.id).includes("risiken")).toBe(false);

@@ -98,7 +98,7 @@ describe("Formular-Vorgaben: Payload", () => {
   it("Privatschutz: feste Frage zuerst, doppelte KI-Fragen raus, Straße, PLZ, Ort", async () => {
     const c = ctx("Privatschutz");
     const { value } = await formAgent(llm, c);
-    expect(value.questions.map((q) => q.key)).toEqual(["versicherte_personen", "interesse"]);
+    expect(value.questions.map((q) => q.key)).toEqual(["versicherte_personen", "versicherungsinteresse"]);
     expect(value.questions[0]).toEqual({ key: "versicherte_personen", label: "Für wen soll der Schutz gelten?", options: ["Nur für mich", "Mit Partner", "Mit Familie"] });
     const p = leadFormPayload(value, c) as Payload;
     expect(p.questions.slice(-3).map((q) => q.type)).toEqual(["STREET_ADDRESS", "ZIP", "CITY"]);
@@ -154,5 +154,18 @@ describe("Ops-Start: Produkt tolerant auflösen", () => {
     expect(resolveProduct("Sterbegeld", zeilen)).toEqual({ ok: true, product: "Sterbegeld", matched: false });
     const r = resolveProduct("kfz", [...zeilen, { product: "Autoversicherung", dailyBudget: 10 }]);
     expect(r.ok).toBe(false);
+  });
+});
+
+import { spartenDesLeads } from "@/lib/preise/rechner-angaben";
+describe("Privatschutz: Versicherungsinteresse aus dem Formular (Ole, 21.11.2026)", () => {
+  const src = (label: string, value: string) => ({ formular: [{ label, value }], angaben: null });
+  it("neue und alte Formularfrage, Paket und Tippfehler", () => {
+    expect(spartenDesLeads("Privatschutz", src("Welche Versicherung interessiert Sie am meisten?", "Wohngebäude") as never)).toEqual(["wohngebaeude"]);
+    // Mehrfachauswahl: Meta liefert mehrere Antworten kommagetrennt (lib/lead-intake.ts)
+    expect(spartenDesLeads("Privatschutz", src("Welche Versicherungen interessieren Sie?", "Hausrat, Rechtsschutz, Unfall") as never)).toEqual(expect.arrayContaining(["hausrat", "rechtsschutz", "unfall"]));
+    expect(spartenDesLeads("Privatschutz", src("Welche Versicherung interessiert Sie am meisten?", "Alles in einem Paket") as never)).toEqual(["haftpflicht", "hausrat", "rechtsschutz", "unfall"]);
+    expect(spartenDesLeads("Privatschutz", src("An welchen Versicherungen bist Du interessiert? Sie sparen …", "Rechtschutzversicherung") as never)).toEqual(["rechtsschutz"]);
+    expect(spartenDesLeads("Privatschutz", { formular: [{ label: "Welche Versicherung interessiert Sie am meisten?", value: "Tierkrankenversicherung / Tierhalterhaftpflicht" }], angaben: { tier: "Katze, Krankenversicherung" } } as never)).toEqual(["katze-kranken"]);
   });
 });

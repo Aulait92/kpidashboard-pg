@@ -9,6 +9,10 @@
 //              Vorlage der Kategorie UTILITY (zeigt [Policen senden] und den Antwort-Knopf in EINER Nachricht und ist im
 //              offenen 24-Stunden-Fenster kostenlos); sonst im Fenster die interaktive Flow-Nachricht (nur ein Knopf
 //              möglich, siehe unten); außerhalb des Fensters ohne freigegebene Vorlage nichts.
+//              Ausnahme Kfz-Bitte und Kfz-Erinnerung 1 (Ole, 22.11.2026): im Fenster immer die Flow-Nachricht mit
+//              eigenem Text und Knopf [Unterlagen senden] (also ohne Antwort-Knopf). Außerhalb des Fensters die
+//              Kfz-Vorlage (VORLAGEN_ARTEN_KFZ, Knopf [Unterlagen senden]), solange Meta sie nicht freigegeben hat die
+//              allgemeine Vorlage mit deren Text.
 //   Antwort    lib/policen/server.ts handleFlowAntwort (Einwilligung mit Textversion, Hash, Zeit, ki; Dateien laden,
 //              prüfen, Virenprüfung, Ablage), „Später“ und „Nein, danke“ (handleSpaeter hier, Nein in server.ts).
 //
@@ -47,6 +51,8 @@ import {
   flowTextVersion,
   formularDaten,
   formularWortlaut,
+  flowKnopf,
+  kfzVorlagenArt,
   KNOPF_POLICEN_SENDEN,
   KNOPF_WEITERE_SENDEN,
   NEIN_DANKE_KNOEPFE,
@@ -57,11 +63,14 @@ import {
   tagText,
   textHash,
   uhrzeitText,
+  vorlageGerendert,
   vorlagenParameter,
   vorlagenText,
+  VORLAGEN_ARTEN_KFZ,
   type FlowTextKontext,
   type Nachricht,
   type VorlagenArt,
+  type VorlagenBasis,
 } from "@/lib/policen/flow/texte";
 
 type Env = Record<string, string | undefined>;
@@ -180,14 +189,19 @@ export async function flowChat(conversationId: string, now = new Date()): Promis
   if (!s) return null;
   const conv = await prisma.conversation.findUnique({
     where: { id: conversationId },
-    select: { windowExpiresAt: true, botActive: true, qualificationData: true, lead: { select: { source: true, formData: true } } },
+    select: { windowExpiresAt: true, botActive: true, qualificationData: true, lead: { select: { source: true, formData: true, vorvertraege: true } } },
   });
   const termin = await prisma.appointment.findFirst({
     where: { leadId: s.chat.leadId, status: "booked", startsAt: { gt: now } },
     orderBy: { startsAt: "asc" },
-    select: { id: true, startsAt: true, mode: true },
+    select: { id: true, startsAt: true, mode: true, komplettcheck: true },
   });
   const source = conv?.lead?.source ?? null;
+  const kfz = await import("@/lib/whatsapp/produkt-fragen").then((m) => m.istKfzProdukt(source));
+  // Kfz: genannte andere Verträge ohne das angefragte Produkt (Ole, 22.11.2026, lib/policen/andere-policen.ts)
+  const andereVertraege = kfz
+    ? await import("@/lib/policen/andere-policen").then((m) => m.andereVertraege(conv?.lead?.vorvertraege ?? null, { source, kfz, gesundheitAn: s.sp.gesundheitAn }))
+    : [];
   const formular = formAnswers(conv?.lead?.formData);
   const { istTierStrecke } = await import("@/lib/whatsapp/tier-fragen");
   const tier = istTierStrecke(source);
@@ -204,7 +218,7 @@ export async function flowChat(conversationId: string, now = new Date()): Promis
     minderjaehrig: s.chat.minderjaehrig,
     gesundheitAn: s.sp.gesundheitAn,
     source,
-    termin,
+    termin: termin ? { id: termin.id, startsAt: termin.startsAt, mode: termin.mode } : null,
     text: {
       an: s.sp.an,
       name: s.sp.person.nom,
@@ -216,7 +230,9 @@ export async function flowChat(conversationId: string, now = new Date()): Promis
       kiFertig,
       // Tierkranken: ohne Gesundheitssatz (Tierdaten sind keine Gesundheitsdaten nach Art. 9 DSGVO)
       gesundheit: s.sp.gesundheitAn && !tier,
-      kfz: await import("@/lib/whatsapp/produkt-fragen").then((m) => m.istKfzProdukt(source)),
+      kfz,
+      andereVertraege,
+      komplettcheck: termin?.komplettcheck ?? null,
     },
   };
 }
@@ -241,7 +257,7 @@ export async function policenFlowMoeglich(conversationId: string, now = new Date
 // ─── Senden ─────────────────────────────────────────────────────────────────
 
 export const MERKER_FLOW = "policen_flow";
-export type FlowArt = VorlagenArt | "weitere";
+export type FlowArt = VorlagenBasis | "weitere";
 /** Merker je gesendeter Flow-Nachricht (interne Nachricht): Token, Wortlaut, Hash, Textversion für den Nachweis. */
 export type FlowMerker = {
   token: string;
@@ -274,7 +290,36 @@ function nachrichtFuer(art: FlowArt, c: FlowChat, extra?: Nachricht): Nachricht 
   if (art === "erinnerung2") return erinnerung2(c.text);
   return extra ?? bestaetigung(c.text, 1, true);
 }
-const PAYLOAD_KNOPF2: Record<VorlagenArt, string> = { bitte: PAYLOAD_SPAETER, erinnerung1: PAYLOAD_NEIN_DANKE, erinnerung2: PAYLOAD_NEIN_DANKE };
+const PAYLOAD_KNOPF2: Record<VorlagenBasis, string> = { bitte: PAYLOAD_SPAETER, erinnerung1: PAYLOAD_NEIN_DANKE, erinnerung2: PAYLOAD_NEIN_DANKE };
+
+export type VorlagenWahl = { weg: "vorlage"; art: VorlagenArt; name: string } | { weg: "flow" } | null;
+
+/**
+ * Welche Nachricht geht raus? Rein (Test). Kfz-Bitte und Kfz-Erinnerung 1 (Ole, 22.11.2026): im Fenster immer die
+ * Flow-Nachricht mit Kfz-Text; außerhalb die freigegebene Kfz-Vorlage, sonst (noch nicht freigegeben) die allgemeine
+ * Vorlage. Alle anderen: freigegebene Vorlage (im Fenster nur UTILITY, dort kostenlos), sonst im Fenster die
+ * Flow-Nachricht, außerhalb nichts (null).
+ */
+export function waehleVorlage(art: FlowArt, k: FlowTextKontext, o: { an: Ansprache; fensterOffen: boolean; jsonHash: string; vorlagen: VorlagenStand }): VorlagenWahl {
+  if (art === "weitere") return o.fensterOffen ? { weg: "flow" } : null;
+  const kfzArt = kfzVorlagenArt(art, k);
+  const freigegeben = (a: VorlagenArt) => {
+    const name = vorlagenName(a, o.an, o.jsonHash);
+    const v = o.vorlagen[name];
+    return v && v.status === "approved" && (!o.fensterOffen || (v.category ?? "").toLowerCase() === "utility") ? name : null;
+  };
+  // Kfz im 24-h-Fenster (Ole, 22.11.2026): freigegebene Kfz-Vorlage mit beiden Knöpfen ([Unterlagen senden] plus
+  // [Später] bzw. [Nein, danke]); sonst die Flow-Nachricht mit Kfz-Text, nie die allgemeine Vorlage (falscher Text)
+  if (kfzArt && o.fensterOffen) {
+    const name = freigegeben(kfzArt);
+    return name ? { weg: "vorlage", art: kfzArt, name } : { weg: "flow" };
+  }
+  for (const a of kfzArt ? [kfzArt, art] : [art]) {
+    const name = freigegeben(a);
+    if (name) return { weg: "vorlage", art: a, name };
+  }
+  return o.fensterOffen ? { weg: "flow" } : null;
+}
 
 /**
  * Flow-Nachricht senden (Vorlage bzw. interaktiv, siehe oben) und den Merker setzen. vorweg: Text davor (z. B.
@@ -341,46 +386,47 @@ async function sendeFlowNachrichtRoh(
   if (!c || !c.datenschutzUrl) return null;
   const flow = await aktiverFlow(c.customerId);
   if (!flow) return null;
-  const n = nachrichtFuer(art, c, o.nachricht);
+  let n = nachrichtFuer(art, c, o.nachricht);
   const daten = formularDaten(c.text, c.datenschutzUrl);
   const wortlaut = formularWortlaut(daten);
   const token = neuesToken();
-  const vName = art === "weitere" ? null : vorlagenName(art, c.an, flow.jsonHash);
-  const v = vName ? flow.vorlagen[vName] : undefined;
-  const vorlageOk = !!v && v.status === "approved" && (!c.fensterOffen || (v.category ?? "").toLowerCase() === "utility");
-  if (!vorlageOk && !c.fensterOffen) return null;
+  const wahl = waehleVorlage(art, c.text, { an: c.an, fensterOffen: c.fensterOffen, jsonHash: flow.jsonHash, vorlagen: flow.vorlagen });
+  if (!wahl) return null;
+  const vorlage = wahl.weg === "vorlage" && art !== "weitere" ? { ...wahl, basis: art } : null;
+  // Kfz mit Vorlage: der Verlauf zeigt, was Meta zustellt, also den Text der Kfz-Vorlage bzw. (Kfz-Vorlage noch nicht
+  // freigegeben) den allgemeinen Text
+  if (vorlage && c.text.kfz) n = vorlage.art === art ? nachrichtFuer(art, { ...c, text: { ...c.text, kfz: false } }) : vorlageGerendert(vorlage.art, c.text);
   const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
   if (o.vorweg?.trim() && c.fensterOffen) {
     await sendWhatsAppMessage({ customerId: c.customerId, to: c.phone, body: o.vorweg, sentBy: "bot" });
     st.vorwegGesendet = true;
   }
   const datenText = daten as unknown as Record<string, string>;
-  const res =
-    vorlageOk && art !== "weitere"
-      ? await sendWhatsAppMessage({
-          customerId: c.customerId,
-          to: c.phone,
-          body: n.text,
-          footer: n.fusszeile,
-          sentBy: "bot",
-          vorlage: {
-            name: vName!,
-            language: TEMPLATE_LANGUAGE,
-            components: [
-              { type: "body", parameters: vorlagenParameter(art, c.text).map((text) => ({ type: "text", text })) },
-              { type: "button", sub_type: "flow", index: "0", parameters: [{ type: "action", action: { flow_token: token, flow_action_data: datenText } }] },
-              { type: "button", sub_type: "quick_reply", index: "1", parameters: [{ type: "payload", payload: PAYLOAD_KNOPF2[art] }] },
-            ],
-          },
-        })
-      : await sendWhatsAppMessage({
-          customerId: c.customerId,
-          to: c.phone,
-          body: n.text,
-          footer: n.fusszeile,
-          sentBy: "bot",
-          flow: { flowId: flow.flowId, token, cta: art === "weitere" ? KNOPF_WEITERE_SENDEN : KNOPF_POLICEN_SENDEN, screen: SCREEN_FOTOS, data: datenText },
-        });
+  const res = vorlage
+    ? await sendWhatsAppMessage({
+        customerId: c.customerId,
+        to: c.phone,
+        body: n.text,
+        footer: n.fusszeile,
+        sentBy: "bot",
+        vorlage: {
+          name: vorlage.name,
+          language: TEMPLATE_LANGUAGE,
+          components: [
+            { type: "body", parameters: vorlagenParameter(vorlage.art, c.text).map((text) => ({ type: "text", text })) },
+            { type: "button", sub_type: "flow", index: "0", parameters: [{ type: "action", action: { flow_token: token, flow_action_data: datenText } }] },
+            { type: "button", sub_type: "quick_reply", index: "1", parameters: [{ type: "payload", payload: PAYLOAD_KNOPF2[vorlage.basis] }] },
+          ],
+        },
+      })
+    : await sendWhatsAppMessage({
+        customerId: c.customerId,
+        to: c.phone,
+        body: n.text,
+        footer: n.fusszeile,
+        sentBy: "bot",
+        flow: { flowId: flow.flowId, token, cta: art === "weitere" ? KNOPF_WEITERE_SENDEN : art === "erinnerung2" ? KNOPF_POLICEN_SENDEN : flowKnopf(c.text), screen: SCREEN_FOTOS, data: datenText },
+      });
   const merker: FlowMerker = {
     token,
     art,
@@ -394,7 +440,7 @@ async function sendeFlowNachrichtRoh(
     appointmentId: c.termin?.id ?? null,
   };
   await prisma.message.create({ data: { conversationId, direction: "internal", kind: MERKER_FLOW, body: JSON.stringify(merker), sentBy: "bot" } });
-  return { messageId: res.messageId, weg: vorlageOk && art !== "weitere" ? "vorlage" : "flow" };
+  return { messageId: res.messageId, weg: vorlage ? "vorlage" : "flow" };
 }
 
 /** Bestätigung nach dem Absenden mit Knopf „Weitere senden“; ohne aktiven Flow als Text mit Fußzeile. */
@@ -615,11 +661,12 @@ export async function runPolicenFlowErinnerungen(now = new Date()): Promise<{ ge
 
 const CHECK_OFFEN_MS = 30 * 60 * 1000;
 const CHECK_RUHIG_MS = 6 * HOUR;
-// Erinnerung 2 (Vortag) entfällt seit 19.11.2026 (Satz in der Vortags-Terminerinnerung), daher keine Vorlage mehr dafür
-const VORLAGEN_ARTEN: VorlagenArt[] = ["bitte", "erinnerung1"];
+// Erinnerung 2 (Vortag) entfällt seit 19.11.2026 (Satz in der Vortags-Terminerinnerung), daher keine Vorlage mehr dafür.
+// Kfz-Vorlagen (Ole, 22.11.2026) hinten angehängt: neue Namen, die bestehenden bleiben, nichts wird neu eingereicht.
+export const VORLAGEN_ARTEN: readonly VorlagenArt[] = ["bitte", "erinnerung1", ...VORLAGEN_ARTEN_KFZ];
 const FORMEN: Ansprache[] = ["sie", "du"];
-/** Die Vorlagennamen (Bitte und Erinnerung 1 je Ansprache) zum Flow JSON und zum aktuellen Textstand. */
-const aktuelleVorlagenNamen = (jsonHash: string) => VORLAGEN_ARTEN.flatMap((art) => FORMEN.map((an) => vorlagenName(art, an, jsonHash)));
+/** Die Vorlagennamen (Bitte und Erinnerung 1, allgemein und Kfz, je Ansprache) zum Flow JSON und zum aktuellen Textstand. */
+export const aktuelleVorlagenNamen = (jsonHash: string) => VORLAGEN_ARTEN.flatMap((art) => FORMEN.map((an) => vorlagenName(art, an, jsonHash)));
 
 /** Vorlage mit Flow-Knopf und Quick Reply (Meta: erst die Nicht-Quick-Reply-Gruppe, dann die Quick Replies). */
 export function vorlagenAntrag(art: VorlagenArt, an: Ansprache, o: { flowId: string; jsonHash: string }) {
@@ -634,7 +681,7 @@ export function vorlagenAntrag(art: VorlagenArt, an: Ansprache, o: { flowId: str
       {
         type: "BUTTONS",
         buttons: [
-          { type: "FLOW", text: KNOPF_POLICEN_SENDEN, flow_id: o.flowId, flow_action: "navigate", navigate_screen: SCREEN_FOTOS },
+          { type: "FLOW", text: t.knopf1, flow_id: o.flowId, flow_action: "navigate", navigate_screen: SCREEN_FOTOS },
           { type: "QUICK_REPLY", text: t.knopf2 },
         ],
       },

@@ -4258,6 +4258,9 @@ model LeadDocument {
   kind             String    @default("police")
   // Sparte laut Klassifikation, z. B. haftpflicht, hausrat, kfz, kranken, bu (lib/policen/regeln.ts SPARTEN)
   sparte           String?
+  // Dokumentart aus der lokalen Texterkennung (lib/policen/texterkennung.ts): fahrzeugschein | kfz_police | police.
+  // null = nicht erkannt bzw. nicht geprüft (ohne KI-Einwilligung). Der erkannte Text wird nie gespeichert.
+  dokumentArt      String?
   gesundheitsbezug Boolean   @default(false)
   // Einwilligung (seit 18.11.2026 PolicenNachweis.id, vorher BestandConsentLog.id) und Zeitpunkt
   consentId        String?
