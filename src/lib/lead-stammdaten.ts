@@ -210,6 +210,19 @@ export async function saveLeadStammdaten(opts: {
     const moved = await moveConversation(opts.customerId, lead.id, before.phone, after.phone);
     if (moved === "moved") hinweise.push("Der WhatsApp-Chat läuft ab jetzt über die neue Nummer.");
     if (moved === "linked") hinweise.push("Zur neuen Nummer gab es schon einen WhatsApp-Chat, er ist jetzt mit diesem Lead verbunden.");
+    // Nummer korrigiert (Ole, 22.11.2026): Aufgabe „Nummer prüfen“ ist erledigt, und ging noch keine Erstnachricht raus,
+    // schickt die App sie jetzt an die neue Nummer (gleiche Regeln wie sonst: Assistent an, WhatsApp verbunden)
+    await prisma.leadTask.updateMany({ where: { leadId: lead.id, kind: "nummer_pruefen", status: { in: ["wartet", "aktiv"] } }, data: { status: "entfallen", endedReason: "Nummer korrigiert" } });
+    await prisma.lead.updateMany({ where: { id: lead.id, followUpNote: { startsWith: "Nummer prüfen" } }, data: { followUpAt: null, followUpNote: null } });
+    const l = await prisma.lead.findUnique({ where: { id: lead.id }, select: { outreachStatus: true } });
+    if (l && l.outreachStatus !== "sent") {
+      await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: null, outreachStatus: null } });
+      const r = await import("@/lib/whatsapp/outreach")
+        .then((m) => m.runOutreach(opts.customerId, { leadIds: [lead.id] }))
+        .catch(() => null);
+      if (r?.sent) hinweise.push("Die WhatsApp-Erstnachricht ist an die neue Nummer rausgegangen.");
+      else if (r && r.failed) hinweise.push("Die WhatsApp-Erstnachricht an die neue Nummer hat nicht geklappt. Bitte rufen Sie an.");
+    }
   }
   if (after.email && after.email !== before.email) {
     await prisma.conversation.updateMany({ where: { customerId: opts.customerId, leadId: lead.id }, data: { contactEmail: after.email } });
