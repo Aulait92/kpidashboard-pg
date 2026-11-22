@@ -95,3 +95,45 @@ export function zaehle(e: AblageErgebnis[]): Record<AblageErgebnis["ergebnis"], 
   for (const x of e) z[x.ergebnis]++;
   return z;
 }
+
+/**
+ * Mail ohne Beleg-Anhang (Rechnung steht im Mailtext, z. B. Apple, Airbnb): die Originalmail (.eml) ist der Beleg.
+ * Auslesen aus dem Text. Nur ablegen, wenn die KI einen Betrag findet (sonst ist es kein Beleg, z. B. Werbung).
+ */
+export async function belegAusMail(o: { eml: Uint8Array | null; text: string; betreff: string; absender: string | null }): Promise<AblageErgebnis> {
+  const name = `${o.betreff || "Mail"}.eml`.replace(/[\\/:*?"<>|]+/g, " ").slice(0, 200);
+  const text = `Betreff: ${o.betreff}\n\n${o.text}`;
+  const d = await liesBelegAus(Buffer.from(text, "utf8"), "text/plain");
+  if (!d || d.brutto == null || d.typ === "MISC") return { name, ergebnis: "kein_beleg", daten: d };
+  const datei = o.eml && o.eml.length ? Buffer.from(o.eml) : Buffer.from(text, "utf8");
+  const mimeType = o.eml && o.eml.length ? "message/rfc822" : "text/plain";
+  if (d.nummer) {
+    const gleich = await prisma.beleg.findFirst({ where: { nummer: d.nummer, brutto: d.brutto }, select: { id: true } });
+    if (gleich) return { name, ergebnis: "doppelt", id: gleich.id, daten: d };
+  }
+  const hash = crypto.createHash("sha256").update(`${d.firma}|${d.nummer}|${d.datum}|${d.brutto}|${d.waehrung}|${o.text.slice(0, 2000)}`).digest("hex");
+  const vorhanden = await prisma.beleg.findUnique({ where: { hash }, select: { id: true } });
+  if (vorhanden) return { name, ergebnis: "doppelt", id: vorhanden.id, daten: d };
+  const b = await prisma.beleg.create({
+    data: {
+      quelle: "mail",
+      datei,
+      mimeType,
+      hash,
+      dateiname: name,
+      absender: o.absender?.slice(0, 200) ?? null,
+      ausgelesen: "ki",
+      ocrFertig: true,
+      typ: d.typ,
+      firma: d.firma,
+      nummer: d.nummer,
+      datum: datum(d.datum),
+      netto: d.netto,
+      ustSatz: d.ustSatz,
+      brutto: d.brutto,
+      waehrung: d.waehrung,
+    },
+    select: { id: true },
+  });
+  return { name, ergebnis: "neu", id: b.id, daten: d };
+}

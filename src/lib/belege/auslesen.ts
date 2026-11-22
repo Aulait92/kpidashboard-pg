@@ -79,7 +79,9 @@ export async function liesBelegAus(data: Uint8Array, mimeType: string): Promise<
   if (!apiKey) return null;
   const model = process.env.BELEGE_OPENAI_MODEL?.trim() || OPENAI_EU_STANDARD_MODELL;
   let teil: OpenAI.Responses.ResponseInputContent;
-  if (mimeType === "application/pdf") {
+  if (mimeType === "text/plain") {
+    teil = { type: "input_text", text: `Beleg als Mailtext (ggf. weitergeleitet, maßgeblich ist die ursprüngliche Mail):\n\n${Buffer.from(data).toString("utf8").slice(0, 30_000)}` };
+  } else if (mimeType === "application/pdf") {
     const pdf = await ersteSeiten(data, 3);
     if (!pdf) return null;
     teil = { type: "input_file", filename: "beleg.pdf", file_data: `data:application/pdf;base64,${Buffer.from(pdf).toString("base64")}` };

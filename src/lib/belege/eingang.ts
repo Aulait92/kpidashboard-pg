@@ -48,6 +48,19 @@ export async function verarbeiteBelegMail(o: { eingangId: string; emailId: strin
     neu += e.filter((x) => x.ergebnis === "neu").length;
     doppelt += e.filter((x) => x.ergebnis === "doppelt").length;
   }
+  // Kein Beleg-Anhang: Rechnung im Mailtext (Apple, Airbnb …) → die Mail selbst ablegen
+  if (!neu && !doppelt) {
+    const { belegAusMail } = await import("./ablage");
+    const { htmlZuText } = await import("@/lib/mail/eingang");
+    const text = (mail.text?.trim() || (mail.html ? htmlZuText(mail.html) : "")).slice(0, 40_000);
+    if (text.length > 40) {
+      let eml: Uint8Array | null = null;
+      if (mail.rawUrl) eml = await o.api.datei(mail.rawUrl, 20 * 1024 * 1024).catch(() => null);
+      const e = await belegAusMail({ eml, text, betreff: mail.subject, absender });
+      if (e.ergebnis === "neu") neu++;
+      if (e.ergebnis === "doppelt") doppelt++;
+    }
+  }
   await prisma.mailEingang.update({ where: { id: o.eingangId }, data: { ergebnis: "beleg", grund: `neu ${neu}, doppelt ${doppelt}`.slice(0, 80) } });
   if (neu) {
     const { belegeAbgleichen } = await import("./server");
