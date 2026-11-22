@@ -168,6 +168,14 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r === "nichts" ? { ok: false, error: "Nichts versucht (keine Sperre „kein WhatsApp“ oder keine Nummer)." } : { ok: true, info: r === "termin" ? "Terminbestätigung per WhatsApp versucht." : "Erstanschreiben per WhatsApp versucht." };
     },
   },
+  belege_postfach: {
+    beschreibung: "Mails an die Beleg-Adresse jetzt bei Resend abholen und als Belege ablegen (sonst alle 15 Minuten)",
+    felder: {},
+    run: async () => {
+      const r = await (await import("@/lib/belege/eingang")).belegePostfachAbholen();
+      return { ok: true, info: `${r.gesehen} Mails an die Beleg-Adresse, ${r.verarbeitet} neu verarbeitet.` };
+    },
+  },
   belege_abgleichen: {
     beschreibung: "Belege jetzt aus GetMyInvoices holen und eindeutig passenden Kontoumsätzen zuordnen (sonst nachts automatisch)",
     felder: {},

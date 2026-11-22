@@ -495,6 +495,10 @@ async function handle(req: Request): Promise<Response> {
   after(() => import("@/lib/linkedin/cron").then((m) => m.runLinkedIn(now)).catch((e: unknown) => reportError(e, "cron-linkedin")));
   // Bank & Karten: Kontoumsätze täglich abrufen, an Neuverbindung erinnern (nach der Antwort)
   after(() => runBankSync(now).catch((e: unknown) => reportError(e, "cron-bank")));
+  // Mails an die Beleg-Adresse bei Resend abholen (alle 15 Minuten, lib/belege/eingang.ts), auch ohne aktives Webhook-Ereignis
+  if (now.getUTCMinutes() % 15 < 5 && process.env.RESEND_API_KEY) {
+    after(() => import("@/lib/belege/eingang").then((m) => m.belegePostfachAbholen()).catch((e: unknown) => reportError(e, "cron-belege-postfach")));
+  }
   // Belege aus GetMyInvoices holen und Kontoumsätzen zuordnen: einmal nachts gegen 3/4 Uhr Berlin (lib/belege/server.ts)
   if (now.getUTCHours() === 2 && now.getUTCMinutes() < 5 && process.env.GETMYINVOICES_API_KEY) {
     after(() =>

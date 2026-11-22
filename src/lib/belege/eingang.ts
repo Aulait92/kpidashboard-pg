@@ -55,3 +55,30 @@ export async function verarbeiteBelegMail(o: { eingangId: string; emailId: strin
   }
   return { ergebnis: "beleg", neu, doppelt };
 }
+
+/**
+ * Mails an die Beleg-Adresse selbst bei Resend abholen (unabhängig davon, ob das Webhook-Ereignis email.received aktiv ist).
+ * Doppelte Verarbeitung verhindert der Eintrag je Resend-ID in MailEingang (lib/mail/eingang.ts). Alle 15 Minuten (Cron)
+ * und per Ops-Aktion belege_postfach.
+ */
+export async function belegePostfachAbholen(): Promise<{ gesehen: number; verarbeitet: number }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) return { gesehen: 0, verarbeitet: 0 };
+  const { Resend } = await import("resend");
+  const r = new Resend(apiKey);
+  const res = await r.emails.receiving.list({ limit: 100 });
+  if (res.error || !res.data) throw new Error(`resend_receiving_list:${res.error?.name ?? "leer"}`);
+  const fuerBelege = res.data.data.filter((m) => (m.to ?? []).some((a) => istBelegAdresse(a)));
+  if (!fuerBelege.length) return { gesehen: 0, verarbeitet: 0 };
+  const bekannt = new Set(
+    (await prisma.mailEingang.findMany({ where: { resendEmailId: { in: fuerBelege.map((m) => m.id) }, ergebnis: { in: ["beleg", "ignoriert"] } }, select: { resendEmailId: true } })).map((x) => x.resendEmailId),
+  );
+  const { verarbeiteMailEingang } = await import("@/lib/mail/eingang");
+  let verarbeitet = 0;
+  for (const m of fuerBelege) {
+    if (bekannt.has(m.id)) continue;
+    const e = await verarbeiteMailEingang({ type: "email.received", data: { email_id: m.id, to: m.to ?? [], from: m.from ?? undefined } });
+    if (e.ergebnis === "beleg") verarbeitet++;
+  }
+  return { gesehen: fuerBelege.length, verarbeitet };
+}
