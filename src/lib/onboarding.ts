@@ -531,7 +531,8 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         // Google/Microsoft entsteht kein Meet-/Teams-Link: dann gehört der Video-Link (z. B. Webex) dazu (Ole, 21.11.2026:
         // „Lohmann hat im Onboarding gar keinen Webex-Link hinterlegt“).
         // App-Kalender: erst mit bestätigter Test-Einladung (IT-Filter der Konzernadresse, 22.11.2026)
-        done: kalenderSchrittFertig(ob.customer, !!skip("calendar"), !!skip(EINLADUNG_TEST_KEY)),
+        // Schon live (z. B. Lohmann): Test-Einladung nicht nachträglich verlangen (22.11.2026)
+        done: kalenderSchrittFertig(ob.customer, !!skip("calendar"), !!skip(EINLADUNG_TEST_KEY) || !!ob.liveAt),
         at: null,
       },
       {
