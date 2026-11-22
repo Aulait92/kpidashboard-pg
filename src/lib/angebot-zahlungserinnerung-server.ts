@@ -286,6 +286,8 @@ export async function sendeVorlageAnKontakt(opts: {
   vorlage: () => Promise<{ name: string; body: string } | null>;
   params: (anrede: string) => string[];
   activity: string;
+  /** Zusatz im Verlaufseintrag (z. B. die Fassung eines A/B-Tests) */
+  activityNote?: string;
   logRef: { dealId: string | null; salesContactId: string | null };
   errorLabel: string;
   now?: Date;
@@ -345,7 +347,7 @@ export async function sendeVorlageAnKontakt(opts: {
         pricingCategory: "utility",
       },
     });
-    await logOfferActivity(opts.logRef, opts.activity);
+    await logOfferActivity(opts.logRef, opts.activity, opts.activityNote ?? null);
     return "sent";
   } catch (err) {
     reportError(err, opts.errorLabel, { contact: opts.salesContactId ?? "" });
