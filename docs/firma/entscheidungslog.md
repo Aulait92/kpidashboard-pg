@@ -3,6 +3,13 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 22.11.2026
+- **OFFEN (A, Ole): Belegwerkzeug GetMyInvoices Professional** (Empfehlung CFO mit Red Team): Abruf aus Portalen und
+  Postfächern ab 1.1.2026, Abgleich mit Commerzbank und Amex, Übergabe an DATEV Unternehmen online der Kanzlei, API für
+  „Beleg ja/nein + Link“ je `BankTransaction`. Kosten ca. 99 € netto/Monat plus einmalig bis ca. 275 € fürs Nachholen,
+  DATEV-Module ca. 21 €/Monat falls nicht über die Kanzlei. Candis (ab 389 €), DATEV allein (kein Portalabruf),
+  Lexware Office und BuchhaltungsButler (doppelte Buchhaltung) verworfen. Bedingungen: 14-Tage-Test mit
+  Abdeckungsprüfung der 19 Anbieter, AVV/Serverstandort geprüft, Fragen an den Steuerberater geklärt, Monatszahlung im
+  ersten Quartal. Vorgaben Ole (22.11.): DATEV, ab 1.1.2026, Werkzeug statt Eigenbau. `protokolle/2026-11-22-belegwerkzeug.md`.
 - **Bestellkonto für PPL-Hauptkunden** (A, Ole): Nico Yagci und Tobias D'Angelo bestellen wöchentlich selbst für ihre
   Vertriebspartner (vorerst nur Dennis Müller bzw. Lukas Socki) und zahlen zentral (eine Zahlungsart, Rechnung an sie).
   Technik und Livegang: docs/pay-per-lead.md, Abschnitt „Bestellkonto“.
