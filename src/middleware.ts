@@ -19,6 +19,7 @@ const PUBLIC_PREFIXES = [
   "/reset-password",
   "/api/auth", // login/logout server actions tunneln über server actions, hier sind direkte API-Routen nur Logout
   "/api/sync", // cron-job.org braucht Zugriff (per Token gesichert)
+  "/api/media-buyer", // cron-job.org, stündlich (per SYNC_TOKEN im Header gesichert, Route prüft selbst)
   "/api/push", // service worker registriert Subscriptions
   "/api/telegram", // Telegram Bot webhook (Whitelist intern via TELEGRAM_ADMIN_USER_ID + Secret-Token-Header)
   "/api/whatsapp", // 360dialog-Webhook + Dev-Seed (per WHATSAPP_WEBHOOK_SECRET-Token gesichert)
