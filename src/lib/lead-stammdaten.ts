@@ -176,7 +176,7 @@ export type SaveStammdatenResult =
 export async function erstnachrichtAnNeueNummer(leadId: string, customerId: string): Promise<{ ok: boolean; text: string }> {
   const l = await prisma.lead.findFirst({ where: { id: leadId, customerId, erasedAt: null }, select: { id: true, phone: true, outreachStatus: true } });
   if (!l?.phone) return { ok: false, text: "Keine Telefonnummer hinterlegt." };
-  if (l.outreachStatus === "sent") return { ok: false, text: "Die Erstnachricht ist schon rausgegangen." };
+  if (l.outreachStatus?.startsWith("sent")) return { ok: false, text: "Die Erstnachricht ist schon rausgegangen." };
   await prisma.lead.update({ where: { id: l.id }, data: { outreachAt: null, outreachStatus: null, waUnavailableAt: null } });
   const r = await import("@/lib/whatsapp/outreach").then((m) => m.runOutreach(customerId, { leadIds: [l.id] })).catch(() => null);
   if (r?.sent) return { ok: true, text: "Die WhatsApp-Erstnachricht ist rausgegangen." };
@@ -235,7 +235,8 @@ export async function saveLeadStammdaten(opts: {
     await prisma.lead.updateMany({ where: { id: lead.id, followUpNote: { startsWith: "Nummer prüfen" } }, data: { followUpAt: null, followUpNote: null } });
     // Ole, 22.11.2026: Der Vermittler entscheidet per Klick, ob die neue Nummer die Erstnachricht bekommt
     const l = await prisma.lead.findUnique({ where: { id: lead.id }, select: { outreachStatus: true } });
-    if (l && l.outreachStatus !== "sent") erstnachrichtAnbieten = true;
+    // „sent“ und „sent_booked“ (schon gebucht) zählen als gesendet (22.11.2026: doppelte Erstnachricht)
+    if (l && !l.outreachStatus?.startsWith("sent")) erstnachrichtAnbieten = true;
   }
   // Galt der Lead wegen der alten Nummer als „kein WhatsApp“: neu versuchen (lib/whatsapp/kein-whatsapp.ts)
   if (after.phone && after.phone !== before.phone) {

@@ -59,6 +59,18 @@ function prepHint(an: Ansprache): string {
   return a(an, "Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.", "Zur Vorbereitung: Legen Sie sich gern Ihre bisherigen Unterlagen zum Thema bereit, falls vorhanden.");
 }
 
+/**
+ * Kfz (Ole, 22.11.2026): Die Bestätigung bittet gleich um die beiden Unterlagen, damit der Berater den Beitrag vorab
+ * rechnen kann. Steht in der Vorlage im freien Feld {{4}} (keine neue Meta-Vorlage), ohne Zeilenumbruch.
+ */
+export function kfzUnterlagenSatz(an: Ansprache): string {
+  return a(
+    an,
+    "Damit der Beitrag vorab gerechnet werden kann, schick bitte hier ein Foto von deinem Fahrzeugschein (Vorderseite) und von der letzten Rechnung deiner Kfz-Versicherung.",
+    "Damit der Beitrag vorab gerechnet werden kann, schicken Sie bitte hier ein Foto von Ihrem Fahrzeugschein (Vorderseite) und von der letzten Rechnung Ihrer Kfz-Versicherung.",
+  );
+}
+
 /** Bestätigung nach Buchung (z. B. über die Buchungsseite). */
 export async function sendBookingConfirmation(opts: {
   customerId: string;
@@ -76,7 +88,10 @@ export async function sendBookingConfirmation(opts: {
   const an = await anspracheOf(opts.customerId);
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
   // Verschieben per Knopf „Termin verschieben“ (v4) bzw. per Chat (ältere Vorlagen: Satz im Parameter)
-  const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), linkOrHint(opts.mode, opts.meetUrl, an, opts.ort)];
+  const lead = opts.leadId ? await prisma.lead.findUnique({ where: { id: opts.leadId }, select: { source: true } }).catch(() => null) : null;
+  const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
+  const kfz = istKfzProdukt(lead?.source ?? "") ? kfzUnterlagenSatz(an) : null;
+  const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), [linkOrHint(opts.mode, opts.meetUrl, an, opts.ort), kfz].filter(Boolean).join(" ")];
   const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(an)}`];
   // „Guten Tag Frau Schneider, Ihr Videocall mit Herrn Kannapinn ist bestätigt: …“ (Nennungsregel, lib/vermittler-nennung.ts)
   const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
@@ -87,7 +102,7 @@ export async function sendBookingConfirmation(opts: {
       : opts.mode === "onsite"
         ? linkOrHint("onsite", null, an, opts.ort)
       : a(an, `${person.nom} ruft dich zur vereinbarten Zeit an.`, `${person.nom} ruft Sie zur vereinbarten Zeit an.`)) +
-    `\n\n${prepHint(an)} Bis dann! 🙂`;
+    `\n\n${kfz ?? prepHint(an)} Bis dann! 🙂`;
   await sendWhatsAppNotice({
     customerId: opts.customerId,
     to: opts.to,

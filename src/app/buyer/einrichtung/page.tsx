@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
+import { gesundheitFreigegeben } from "@/lib/policen/regeln";
+import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
-import { CalendarDays, CheckCircle2, ChevronDown, ClipboardCheck, ClipboardList, FileSignature, FileText, KeyRound, Mail, MessageCircle, MessageCircleQuestion, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, ShieldCheck, ChevronDown, ClipboardCheck, ClipboardList, FileSignature, FileText, KeyRound, Mail, MessageCircle, MessageCircleQuestion, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -85,6 +87,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const businessId = settings.businessId;
   const video = (k: SetupStepKey) => settings.videos[k] ?? null;
   const readOnly = ctx.preview;
+  // Kranken, BU und Leben freigeschaltet (AVV-Ergänzung, lib/policen/regeln.ts)
+  const gesundheitAn = gesundheitFreigegeben(ob.customer);
   const newUi = await isNewUi(ctx.customerId);
   const provisionGeladen = await loadCustomerProvision(ctx.customerId);
   // Von uns abgehakt (Kundenakte) zählt wie hinterlegt
@@ -116,6 +120,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     ...(software ? ["erstinfo", "assistent"] : []),
     "einwaende",
     ...(software ? ["serviceMails"] : []),
+    ...(has("policenGesundheit") ? ["policenGesundheit"] : []),
     ...(kampagnen ? ["metaAccess"] : []),
     ...(waEnabled ? ["whatsapp"] : []),
     ...["bestandImport", "reviewLink", "team"].filter(has),
@@ -553,6 +558,17 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 </Link>
               </p>
             )}
+          </Step>
+        ) : null}
+
+        {has("policenGesundheit") ? (
+          <Step n={nextNo()} title="Kranken, BU und Leben" icon={ShieldCheck} done={done("policenGesundheit")} open={isOpen("policenGesundheit")} id="policenGesundheit" current={current === "policenGesundheit"}>
+            {done("policenGesundheit") && !gesundheitAn ? (
+              <p className="text-sm text-[color:var(--muted)]">Übersprungen. Freischalten können Sie jederzeit unter Einstellungen.</p>
+            ) : (
+              <PolicenFreischaltungKarte ctx={ctx} ort="einstellungen" className="-mx-5 -my-4" ohneKopf />
+            )}
+            {!done("policenGesundheit") ? <StepExits laterHref={laterHref("policenGesundheit")} readOnly={readOnly} skips={[{ kind: "skip:policenGesundheit:nicht_noetig", label: "Brauche ich nicht" }]} /> : null}
           </Step>
         ) : null}
 
