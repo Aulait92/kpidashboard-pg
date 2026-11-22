@@ -1,11 +1,21 @@
 // „Andere Policen“ in der Bitte an Kfz-Leads (Ole, 22.11.2026): Klar sagen, dass der Lead AUCH seine anderen Policen
 // schicken soll, mit Grund (Komplettcheck: ob er etwas doppelt zahlt), und die Verträge nennen, die er auf die
-// Vertragsfrage genannt hat („Haftpflicht bei Allianz“) statt fester Beispiele. Nie das angefragte Produkt (Kfz) als
+// Vertragsfrage genannt hat („Haftpflicht bei der Allianz“) statt fester Beispiele. Nie das angefragte Produkt (Kfz) als
 // „andere“ Police. Nur, wenn der Lead Ja zum Komplettcheck gesagt oder Verträge genannt hat. Rein, ohne Datenbank.
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { gesundheitInText } from "@/lib/policen/regeln";
 import { vorvertraegeAus, zuErsetzendeVertraege, type VertragSparte } from "@/lib/whatsapp/vorvertraege";
+
+/**
+ * „bei der Allianz“ statt „bei Allianz“ (Ole, 22.11.2026). Versicherer stehen mit Artikel („die Allianz“, „die HUK-Coburg“),
+ * außer Online-Marken, die ohne Artikel genannt werden, und Namen, die schon einen Artikel tragen.
+ */
+const OHNE_ARTIKEL_RE = /^(der|die|den|dem)\s|^(huk24|check24|cosmos ?direkt|getsafe|wefox|friday|verti|neodigital|adam riese|da direkt|dadirekt)\b/i;
+export function beiGesellschaft(gesellschaft: string): string {
+  const g = gesellschaft.trim();
+  return OHNE_ARTIKEL_RE.test(g) ? `bei ${g}` : `bei der ${g}`;
+}
 
 /** Feste Beispiele, wenn der Lead keine Verträge genannt hat (das angefragte Produkt fällt weg). */
 const BEISPIELE: VertragSparte[] = ["Haftpflicht", "Hausrat", "Rechtsschutz", "Kfz"];
@@ -23,7 +33,7 @@ export function andereVertraege(raw: unknown, o: { source?: string | null; kfz?:
     .filter((x) => !angefragt.has(x) && x.sparte !== "Sonstige" && (o.gesundheitAn || !gesundheitInText(x.sparte)))
     .map((x) => {
       const sparte = x.sparte === "Private Krankenversicherung" ? "private Krankenversicherung" : x.sparte;
-      return x.gesellschaft ? `${sparte} bei ${x.gesellschaft}` : sparte;
+      return x.gesellschaft ? `${sparte} ${beiGesellschaft(x.gesellschaft)}` : sparte;
     });
   return [...new Set(out)].slice(0, MAX);
 }

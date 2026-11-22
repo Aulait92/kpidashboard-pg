@@ -132,9 +132,10 @@ describe("Texte an Kfz-Leads", () => {
 
   it("andere Verträge: ohne das angefragte Produkt, mit Gesellschaft, ohne Gesundheit ohne Freigabe", () => {
     const vv = { at: "x", liste: [{ sparte: "Kfz", gesellschaft: "HUK" }, { sparte: "Haftpflicht", gesellschaft: "Allianz" }, { sparte: "Hausrat" }, { sparte: "Zahnzusatz", gesellschaft: "DKV" }, { sparte: "Sonstige" }] };
-    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true })).toEqual(["Haftpflicht bei Allianz", "Hausrat"]);
-    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true, gesundheitAn: true })).toEqual(["Haftpflicht bei Allianz", "Hausrat", "Zahnzusatz bei DKV"]);
+    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true })).toEqual(["Haftpflicht bei der Allianz", "Hausrat"]);
+    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true, gesundheitAn: true })).toEqual(["Haftpflicht bei der Allianz", "Hausrat", "Zahnzusatz bei der DKV"]);
     expect(andereVertraege(null, { kfz: true })).toEqual([]);
+    expect(andereVertraege({ at: "x", liste: [{ sparte: "Hausrat", gesellschaft: "HUK24" }] }, { kfz: true })).toEqual(["Hausrat bei HUK24"]);
     // Feste Beispiele nie mit dem angefragten Produkt
     expect(anderePolicenSatz("sie", "er", { komplettcheck: true, verb: "hochladen" })).toMatch(/zum Beispiel Haftpflicht oder Hausrat\./);
     expect(anderePolicenSatz("sie", "er", { komplettcheck: true, verb: "hochladen", ausgenommen: ["Haftpflicht", "Hausrat"] })).toMatch(/zum Beispiel Rechtsschutz oder Kfz\./);
