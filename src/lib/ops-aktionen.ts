@@ -231,6 +231,20 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${sub.customer?.name ?? "Bezug"}: ${aktiv ? "liefert wieder" : "pausiert"}` };
     },
   },
+  strecke_starten: {
+    beschreibung: "Mail- bzw. SMS-Strecke für einen Lead ohne WhatsApp nachträglich starten (Auslöser kein_whatsapp), Lead über Kunde und Namen",
+    felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
+    run: async (p) => {
+      const name = text(p.name);
+      if (name.length < 3) return { ok: false, error: "Name zu kurz." };
+      const leads = await prisma.lead.findMany({ where: { customerId: text(p.customerId), name: { contains: name, mode: "insensitive" } }, select: { id: true, waUnavailableAt: true }, take: 3 });
+      if (leads.length !== 1) return { ok: false, error: `${leads.length} passende Leads, bitte genauer.` };
+      if (!leads[0].waUnavailableAt) return { ok: false, error: "Lead ist nicht als „kein WhatsApp“ markiert." };
+      const r = await (await import("@/lib/mail-strecke/server")).starteMailStrecke(leads[0].id, "kein_whatsapp");
+      await audit("lead.strecke_start", { entity: "Lead", entityId: leads[0].id, details: { ergebnis: r.ergebnis }, actor: OPS_ACTOR });
+      return r.ergebnis === "gestartet" || r.ergebnis === "schon" ? { ok: true, info: JSON.stringify(r) } : { ok: false, error: JSON.stringify(r) };
+    },
+  },
   produkte_auflisten: {
     beschreibung: "Produktbuchungen eines Kunden auflisten (nur lesen, für IDs)",
     felder: { customerId: "Kunden-ID" },

@@ -1424,6 +1424,8 @@ export async function syncAirtable(): Promise<SyncResult> {
         leadSources: { none: {} },
         // In der App angelegte Pay-per-Lead-Bezieher (Bezug ohne Airtable-Herkunft) bleiben
         leadSubscriptions: { none: { airtableId: null } },
+        // Bestellkonten (Hauptkunde bestellt für Vertriebspartner) stehen nicht in Airtable
+        bestellPartner: { none: {} },
       },
       data: { archived: true },
     });
@@ -1462,6 +1464,8 @@ export async function syncAirtable(): Promise<SyncResult> {
         salesContact: null,
         // Bezüge hängen per Cascade am Kunden: Kunden mit Bezug nie löschen
         leadSubscriptions: { none: {} },
+        // Bestellkonten (Hauptkunde bestellt für Vertriebspartner) stehen nicht in Airtable
+        bestellPartner: { none: {} },
       },
     });
   }

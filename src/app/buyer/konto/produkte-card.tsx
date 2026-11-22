@@ -263,12 +263,15 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
             </div>
           ) : null}
 
-          <p className="flex items-start gap-2 text-sm text-[color:var(--muted)]">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-            {p.guarantee
-              ? "Für dieses Produkt gelten unsere Garantien (Lead-Garantie ab 20 € pro Tag), ab dem Start der Kampagne."
-              : "Für dieses Produkt gelten keine Garantien. Es ist ein neues Produkt, wir optimieren gemeinsam mit Ihnen."}
-          </p>
+          {/* Nur für Kunden mit Garantie-Angebot (Angebote bis 22.11.2026) */}
+          {ctx.garantien !== false ? (
+            <p className="flex items-start gap-2 text-sm text-[color:var(--muted)]">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+              {p.guarantee
+                ? "Für dieses Produkt gelten unsere Garantien (Lead-Garantie ab 20 € pro Tag), ab dem Start der Kampagne."
+                : "Für dieses Produkt gelten keine Garantien. Es ist ein neues Produkt, wir optimieren gemeinsam mit Ihnen."}
+            </p>
+          ) : null}
 
           {!p.overIndividual ? (
             <fieldset className="space-y-2">

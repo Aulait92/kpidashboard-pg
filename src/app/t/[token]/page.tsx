@@ -65,6 +65,12 @@ export default async function StreckenSeite({ params, searchParams }: Props) {
         </div>
       ) : null}
       {sp.ab ? <Abmelden st={st} token={token} fertig={sp.ab === "fertig"} /> : st.termin ? <NachBuchung st={st} token={token} /> : <VorBuchung st={st} token={token} sp={sp} />}
+      {/* Abmelden auch ohne Link in der SMS (SMS mit Rückruf zu Geschäftszeiten, Ole 22.11.2026) */}
+      {!sp.ab && !st.termin && !st.abgemeldet ? (
+        <a href="?ab=1" className="mt-6 block text-center text-xs text-[color:var(--muted)] underline" data-abmelden-link>
+          Keine Nachrichten mehr? Abmelden
+        </a>
+      ) : null}
     </Shell>
   );
 }
