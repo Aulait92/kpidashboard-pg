@@ -19,10 +19,10 @@ describe("Einwilligungstext im Leadformular", () => {
   const angaben = { vermittler: "Agentur Meier", anschrift: "Hauptstr. 1\n12345 Berlin", email: "info@meier.de", datenschutzUrl: "https://meier.de/datenschutz" };
   it("Wortlaut mit Vermittler, Anschrift, KI-Assistent, STOPP, E-Mail und Datenschutz", () => {
     expect(leadFormConsentText(angaben)).toBe(
-      "Ich willige ein, dass Agentur Meier, Hauptstr. 1, 12345 Berlin, mich zu meiner Anfrage per WhatsApp, E-Mail und Telefon kontaktiert. Dabei antwortet zunächst ein KI-gestützter Assistent und vereinbart Termine. Widerruf jederzeit, z. B. mit ‚STOPP‘ oder per E-Mail an info@meier.de. Die Erstinformation nach § 15 VersVermV erhalte ich elektronisch als Link und PDF, auf Wunsch auch auf Papier. Datenschutzhinweise: https://meier.de/datenschutz",
+      "Ihr Angebot und Ihren Termin bekommen Sie per WhatsApp, E-Mail oder Telefon. Mit Klick auf „Senden“ willigen Sie ein, dass Agentur Meier, Hauptstr. 1, 12345 Berlin, Sie zu dieser Anfrage kontaktiert. Zuerst antwortet ein KI-Assistent und schlägt Termine vor. Die Erstinformation nach § 15 VersVermV erhalten Sie elektronisch als Link und PDF, auf Wunsch auf Papier. Widerruf jederzeit mit „STOPP“ oder per E-Mail an info@meier.de. Datenschutz: https://meier.de/datenschutz",
     );
-    // Zustimmung zur elektronischen Erstinformation (§ 16 Abs. 2 VersVermV), Version erhöht
-    expect(CONSENT_VERSION).toBe("2026-11-16");
+    // Einwilligung per Knopf statt Häkchen (Ole, 22.11.2026: „Immer ohne Checkbox“), Erstinformation mit Papier
+    expect(CONSENT_VERSION).toBe("2026-11-22-knopf");
     expect(leadFormConsentText(angaben)).not.toMatch(/[–—]/);
     expect(consentMissing(angaben)).toEqual([]);
   });
@@ -32,14 +32,15 @@ describe("Einwilligungstext im Leadformular", () => {
     expect(t).toContain("[E-Mail-Adresse]");
     expect(consentMissing({ vermittler: "Agentur Meier", anschrift: null, email: null, datenschutzUrl: null })).toEqual(["Anschrift", "E-Mail-Adresse für den Widerruf", "Link zur Datenschutzerklärung"]);
   });
-  it("Formular der Kampagnen-Agenten: Pflicht-Häkchen mit festem Wortlaut", () => {
+  it("Formular der Kampagnen-Agenten: fester Wortlaut über „Senden“, ohne Häkchen (Ole, 22.11.2026)", () => {
     const text = leadFormConsentText(angaben);
     const p = leadFormPayload(
       { formName: "F", introTitle: "T", introParagraphs: ["x"], questions: [], thankYouTitle: "Danke", thankYouBody: "x", consentText: text },
       { privacyUrl: "https://meier.de/datenschutz", website: null, advisorName: "Meier", bookingUrl: null },
-    ) as { custom_disclaimer: { body: { text: string }; checkboxes: { key: string; is_required: boolean; is_checked_by_default: boolean }[] } };
+    ) as { custom_disclaimer: { title: string; body: { text: string }; checkboxes?: unknown } };
     expect(p.custom_disclaimer.body.text).toBe(text);
-    expect(p.custom_disclaimer.checkboxes[0]).toMatchObject({ key: CONSENT_CHECKBOX_KEY, is_required: true, is_checked_by_default: false });
+    expect(p.custom_disclaimer.title).toBe("Fast geschafft: Jetzt unten auf „Senden“ tippen");
+    expect(p.custom_disclaimer.checkboxes).toBeUndefined();
   });
 });
 

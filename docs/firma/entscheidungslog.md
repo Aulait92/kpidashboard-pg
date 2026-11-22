@@ -196,4 +196,5 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   (1712355006964288) und Privatschutz v5 Knopf (1867444814681861), Zuordnung mit Fassung `2026-11-22-knopf`, alte Formulare
   bleiben für Nachzügler zugeordnet. Alle 8 Anzeigen als Kopie mit neuem Formular, alte pausiert. Auswertung: Leads je
   Link-Klick vorher (Formular mit Häkchen) und nachher. Offen: Handy-Screenshot der Formular-Vorschau (Auflage 1);
-  Kampagnen-Builder für neue Kunden noch mit Häkchen (umstellen, wenn der Vergleich trägt).
+  Ole danach: „Immer ohne Checkbox“ → Kampagnen-Builder legt alle neuen Formulare ohne Häkchen an (Standard-Fassung
+  `2026-11-22-knopf`); alte Häkchen-Formulare werden weiter ausgewertet.

@@ -4,6 +4,7 @@
 // Idempotent: Jede angelegte ID wird sofort gespeichert (onProgress), ein
 // erneuter Lauf überspringt Vorhandenes und macht an der Fehlerstelle weiter.
 
+import { KNOPF_TITEL } from "@/lib/einwilligung-leadformular";
 import { cleanToken, redactTokens } from "@/lib/meta-leads";
 import type { AdCopy, BuiltState, CampaignContext, CampaignPlan, CreativeImage, LeadFormDraft } from "@/lib/kampagnen/types";
 import { standardFelder } from "@/lib/kampagnen/formular-vorgaben";
@@ -143,10 +144,10 @@ export function leadFormPayload(
     // PARAGRAPH_STYLE erlaubt nur ein Element (Meta-Fehler #100, 21.11.2026): Absätze zusammenfassen
     context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: [form.introParagraphs.filter(Boolean).join("\n\n").slice(0, 2000)], button_text: "Weiter" },
     custom_disclaimer: {
-      // Ole, 21.11.2026: Handlung statt Fachwort; Häkchen bleibt Pflicht (Rechtsprüfung, aktive Einwilligung)
-      title: "Wichtig: Haken setzen und unten auf „Senden“ klicken",
+      // Ole, 22.11.2026: „Immer ohne Checkbox“. Einwilligung per Klick auf „Senden“ (Rechtsprüfung 22.11.2026 Gelb
+      // gering, docs/recht/leadformular-einwilligung-knopf-2026-11-22.md); der Text steht über dem Senden-Knopf
+      title: KNOPF_TITEL,
       body: { text: form.consentText },
-      checkboxes: [{ key: "einwilligung_kontakt", text: "Ich bin einverstanden.", is_required: true, is_checked_by_default: false }],
     },
     // Dankeseite: immer zum Buchungskalender des Kunden (Ole, 13.11.2026), sonst Website
     thank_you_page: ctx.bookingUrl

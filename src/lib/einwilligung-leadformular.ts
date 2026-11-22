@@ -8,7 +8,9 @@
 // Reine Funktionen (ohne Datenbank).
 
 /** Version des Wortlauts; ändert sich der Text, hochzählen (steht im Nachweis am Lead). */
-export const CONSENT_VERSION = "2026-11-16";
+// Ole, 22.11.2026: „Immer ohne Checkbox“. Seitdem ist die Knopf-Fassung der Standard (leadFormConsentText); die
+// Häkchen-Fassung 2026-11-16 (leadFormConsentTextHaekchen) bleibt nur für den Nachweis alter Formulare.
+export const CONSENT_VERSION = "2026-11-22-knopf";
 
 /**
  * Zustimmung zur elektronischen Erstinformation (Rechtsprüfung 16.11.2026): Über eine Website (unser Link
@@ -38,8 +40,8 @@ const PLATZHALTER = {
 
 const clean = (s: string | null | undefined) => (s ?? "").replace(/\s*\n\s*/g, ", ").replace(/\s+/g, " ").trim();
 
-/** Wortlaut mit den Angaben des Vermittlers; fehlende Angaben als Platzhalter in eckigen Klammern. */
-export function leadFormConsentText(x: ConsentAngaben): string {
+/** Alte Häkchen-Fassung (2026-11-16), nur noch zum Nachlesen; neue Formulare nutzen leadFormConsentText. */
+export function leadFormConsentTextHaekchen(x: ConsentAngaben): string {
   const v = clean(x.vermittler) || PLATZHALTER.vermittler;
   const adr = clean(x.anschrift) || PLATZHALTER.anschrift;
   const mail = clean(x.email) || PLATZHALTER.email;
@@ -53,12 +55,13 @@ export function leadFormConsentText(x: ConsentAngaben): string {
  * kommt aus der Zuordnung des Formulars (LeadSource.consentVersion = CONSENT_VERSION_KNOPF, Wortlaut, Zeitpunkt).
  * Anlass: seit dem Pflicht-Häkchen kaum Abschlüsse im Formular (Lohmann Kfz: 10 Klicks, 1 Lead).
  */
-export const CONSENT_VERSION_KNOPF = "2026-11-22-knopf";
+export const CONSENT_VERSION_KNOPF = CONSENT_VERSION;
 export const istKnopfFassung = (v: string | null | undefined) => typeof v === "string" && v.endsWith("-knopf");
 /** Titel über dem Text (max. 60 Zeichen, nennt den Knopf, der den Lead abschickt). */
 export const KNOPF_TITEL = "Fast geschafft: Jetzt unten auf „Senden“ tippen";
 
-export function leadFormConsentTextKnopf(x: ConsentAngaben): string {
+/** Wortlaut mit den Angaben des Vermittlers (Einwilligung per Knopf); fehlende Angaben als Platzhalter in eckigen Klammern. */
+export function leadFormConsentText(x: ConsentAngaben): string {
   const v = clean(x.vermittler) || PLATZHALTER.vermittler;
   const adr = clean(x.anschrift) || PLATZHALTER.anschrift;
   const mail = clean(x.email) || PLATZHALTER.email;
