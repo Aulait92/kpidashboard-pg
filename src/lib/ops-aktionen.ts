@@ -136,6 +136,23 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `Verloren: falsche Daten (${grund})` };
     },
   },
+  buchungslink_senden: {
+    beschreibung: "Buchungslink per WhatsApp an einen Lead ohne Termin schicken (einmal je Chat, nur im offenen 24-h-Fenster), Lead über Kunde und Namen",
+    felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
+    run: async (p) => {
+      const name = text(p.name);
+      if (name.length < 3) return { ok: false, error: "Name zu kurz." };
+      const leads = await prisma.lead.findMany({ where: { customerId: text(p.customerId), name: { contains: name, mode: "insensitive" } }, select: { id: true, name: true }, take: 3 });
+      if (leads.length !== 1) return { ok: false, error: `${leads.length} passende Leads, bitte genauer.` };
+      const conv = await prisma.conversation.findFirst({ where: { leadId: leads[0].id }, orderBy: { lastMessageAt: "desc" }, select: { id: true, windowExpiresAt: true } });
+      if (!conv) return { ok: false, error: "Kein WhatsApp-Chat." };
+      if (!conv.windowExpiresAt || conv.windowExpiresAt.getTime() < Date.now()) return { ok: false, error: "24-Stunden-Fenster ist zu." };
+      const ok = await (await import("@/lib/whatsapp/knopf")).buchungslinkNachAbsage(conv.id);
+      if (!ok) return { ok: false, error: "Nicht gesendet (schon Termin, Link schon gesendet oder kein Kalender)." };
+      await audit("lead.buchungslink", { entity: "Lead", entityId: leads[0].id, details: {}, actor: OPS_ACTOR });
+      return { ok: true, info: "Buchungslink gesendet." };
+    },
+  },
   produkte_auflisten: {
     beschreibung: "Produktbuchungen eines Kunden auflisten (nur lesen, für IDs)",
     felder: { customerId: "Kunden-ID" },
