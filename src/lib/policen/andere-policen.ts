@@ -45,10 +45,14 @@ export function andereVertraege(
   return [...new Set(out)].slice(0, o.max ?? MAX);
 }
 
-/** Sparte im Fließtext („Ihre private Krankenversicherung“, „Ihre Tierkrankenversicherung“ statt „Ihre Tierkranken“). */
+/**
+ * Sparte im Fließtext hinter „zum Beispiel“: „die private Krankenversicherung bei der Allianz“ (Ole, 22.11.2026: ohne
+ * „die“ fehlte der Artikel), „die Tierkrankenversicherung“ statt „Tierkranken“. Kurze Sparten bleiben ohne Artikel
+ * („Haftpflicht bei der Allianz“, „Hausrat“).
+ */
 const SPARTE_IM_TEXT: Partial<Record<VertragSparte, string>> = {
-  "Private Krankenversicherung": "private Krankenversicherung",
-  Tierkranken: "Tierkrankenversicherung",
+  "Private Krankenversicherung": "die private Krankenversicherung",
+  Tierkranken: "die Tierkrankenversicherung",
 };
 
 /**
