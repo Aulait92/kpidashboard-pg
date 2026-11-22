@@ -201,3 +201,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **22.11.2026, Einwilligungstext kürzer (alle Formulare):** Ole: KI-Satz raus, Text conversionoptimiert. Standard jetzt
   Fassung `2026-11-22b-knopf`, Titel „Letzter Schritt: Tippen Sie unten auf „Senden““. Lohmann: neue Formulare Kfz v5
   (1829825371571727) und Privatschutz v6 (1837248347700709), Anzeigen erneut umgestellt (Lernphase am 22.11. zweimal neu).
+- **22.11.2026, Vorauszahlung standardmäßig anbieten:** Ole: „biete die Vorauszahlung standardmäßig immer an“. Neue
+  Angebote haben „Vorauszahlung anbieten“ vorausgewählt (6 Monate: 1 geschenkt, 12 Monate: 3 geschenkt); der Kunde wählt
+  bei der Annahme weiter selbst, monatlich bleibt vorausgewählt. Abwählbar; greift nicht bei Pay-per-Lead, Startpreis
+  oder ohne Laufzeit. Für „Zahlung nachträglich“ muss sie abgewählt werden.
