@@ -278,7 +278,9 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         where: {
           customerId_contactPhone: { customerId: agent.customerId, contactPhone: phone },
         },
-        select: { id: true, leadId: true, optedOutAt: true, _count: { select: { messages: true } } },
+        // Nur Nachrichten vom Lead zählen (Ole, 22.11.2026, Defontaine: gescheiterte eigene Versuche an eine falsche Nummer
+        // zogen mit der korrigierten Nummer in den Chat und galten als „Lead hat schon geschrieben“)
+        select: { id: true, leadId: true, optedOutAt: true, _count: { select: { messages: { where: { direction: "inbound" } } } } },
       });
 
       // Produkt ohne automatische Nachrichten (Ole, 20.11.2026: PKV-Tarifoptimierung, lib/lead-kontakt-sperre.ts)
