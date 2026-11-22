@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { CUSTOMER_LABEL, CUSTOMER_STAGES, OUTCOME_BY_ID, SOURCE_LABEL, STAGE_RANK, STAGE_LABEL } from "@/lib/vertrieb/crm";
-import { addDays, fromDayKey } from "@/lib/vertrieb/dates";
+import { addDays, fromDayKey, verschiebeAufgabe } from "@/lib/vertrieb/dates";
 import type { SalesActivityType as ActivityType, SalesCustomerStage as CustomerStage, SalesLossReason as LossReason, SalesStage as Stage, SalesTaskType as TaskType } from "@/generated/prisma/enums";
 import { importContactsCsv, importVermittlerListe } from "@/lib/vertrieb/import-contacts";
 import { istVermittlerListe, summeUebersprungen, type ListenErgebnis } from "@/lib/vertrieb/vermittler-format";
@@ -170,7 +170,7 @@ export async function snoozeTask(fd: FormData) {
   const days = Number(s(fd, "days") ?? 1);
   const t = await prisma.salesTask.findUniqueOrThrow({ where: { id } });
   const base = t.dueAt < new Date() ? new Date(new Date().setUTCHours(t.dueAt.getUTCHours(), t.dueAt.getUTCMinutes())) : t.dueAt;
-  await prisma.salesTask.update({ where: { id }, data: { dueAt: addDays(base, days) } });
+  await prisma.salesTask.update({ where: { id }, data: { dueAt: verschiebeAufgabe(base, days) } });
   refresh(t.contactId);
 }
 
