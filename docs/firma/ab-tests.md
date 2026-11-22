@@ -53,6 +53,11 @@ gesperrt; nachtragen, sobald der Datenzugang steht).
   Knopf „Unterlagen senden“ statt „Policen senden“ in der Kfz-Nachricht (beim Senden gesetzt, keine neue Vorlage);
   Formular und Einwilligung bleiben unverändert („Policen senden“, Ole 22.11.2026). Kennzahl zum Ansehen:
   Anteil Kfz-Leads mit Unterlagen vor dem Termin und Anteil mit mehr als zwei Dateien (Policen zusätzlich).
+  Nachtrag 22.11.2026 (Ole, direkt beauftragt): Erinnerung 1 an Kfz-Leads genauso (Fahrzeugschein Vorderseite, letzte
+  Rechnung, damit der Beitrag vorab gerechnet werden kann; „*Gern auch Ihre anderen Policen*“ nur bei Komplettcheck Ja
+  bzw. genannten Verträgen; Knopf „Unterlagen senden“). Außerhalb des Fensters eigene Kfz-Vorlagen für Bitte und
+  Erinnerung 1 (bis zur Meta-Freigabe die allgemeine Vorlage); Vortags-Satz sagt bei Kfz „Unterlagen“ statt „Policen“.
+  Gleiche Kennzahl ansehen, dazu Anteil Unterlagen nach Erinnerung 1 (Kfz-Vorlage gegen allgemeine, solange beide laufen).
 - Einwilligungen auf Seiten (Buchung 20.11.2026): nie vorausgewählt; was zählt, ist Nutzen und Begrenzung im Text, nicht
   der Haken. Ein freiwilliges Häkchen kostet kaum Buchungen, die Zustimmungsquote ist die eigene Kennzahl (noch nicht gemessen).
 - Erstanschreiben: Lange Texte klappt WhatsApp hinter „Mehr lesen“ ein (etwa ab 4 bis 5 Zeilen, PDF-Kopf zählt mit).

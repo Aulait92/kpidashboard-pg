@@ -35,21 +35,35 @@ function festeBeispiele(ausgenommen: readonly string[]): string {
 }
 
 /**
- * Satz zu den anderen Policen, null = nicht nennen (kein Komplettcheck und keine Verträge genannt).
- * verb: „hochladen“ (Formular) bzw. „schicken“ (Bitte ohne Formular, Dateien in den Chat). wer = er/sie bzw. Name.
+ * Beispiel hinter „zum Beispiel“ („Ihre Haftpflicht bei Allianz“, „Haftpflicht bei Allianz und Hausrat“, ohne genannte
+ * Verträge „Haftpflicht oder Hausrat“), null = andere Policen nicht nennen (kein Komplettcheck und keine Verträge
+ * genannt). Auch Wert des Platzhalters in den Kfz-Vorlagen (lib/policen/flow/texte.ts).
  */
-export function anderePolicenSatz(
+export function anderePolicenBeispiel(
   an: Ansprache,
-  wer: string,
-  o: { vertraege?: readonly string[] | null; komplettcheck?: boolean | null; verb: "hochladen" | "schicken"; ausgenommen?: readonly string[] },
+  o: { vertraege?: readonly string[] | null; komplettcheck?: boolean | null; ausgenommen?: readonly string[] },
 ): string | null {
   const vertraege = [...new Set((o.vertraege ?? []).map((v) => v.trim()).filter(Boolean))].slice(0, MAX);
   if (!vertraege.length && o.komplettcheck !== true) return null;
-  const beispiel = !vertraege.length
+  return !vertraege.length
     ? festeBeispiele(o.ausgenommen ?? ["Kfz"])
     : vertraege.length === 1
       ? a(an, `deine ${vertraege[0]}`, `Ihre ${vertraege[0]}`)
       : `${vertraege.slice(0, -1).join(", ")} und ${vertraege.at(-1)}`;
+}
+
+/**
+ * Satz zu den anderen Policen, null = nicht nennen (kein Komplettcheck und keine Verträge genannt).
+ * verb: „hochladen“ (Formular) bzw. „schicken“ (Bitte ohne Formular, Dateien in den Chat). wer = er/sie bzw. Name.
+ * beispiel: fester Text statt der Verträge (Platzhalter der Vorlage, dann ohne „im Komplettcheck“).
+ */
+export function anderePolicenSatz(
+  an: Ansprache,
+  wer: string,
+  o: { vertraege?: readonly string[] | null; komplettcheck?: boolean | null; verb: "hochladen" | "schicken"; ausgenommen?: readonly string[]; beispiel?: string },
+): string | null {
+  const beispiel = o.beispiel ?? anderePolicenBeispiel(an, o);
+  if (!beispiel) return null;
   const aufruf =
     o.verb === "hochladen"
       ? a(an, "*Lade gern auch deine anderen Policen hoch*", "*Laden Sie gern auch Ihre anderen Policen hoch*")

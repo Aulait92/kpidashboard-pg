@@ -6,6 +6,7 @@
 //      Link Datenschutzhinweise, Hinweis, Knopf „Zustimmen & senden“ (Flow JSON: flow-json.ts)
 //   3. Bestätigung mit Anzahl Dateien und Knopf [Weitere senden], Fußzeile Widerruf; bei ki = false ein Zusatzsatz
 //   4. „Später“, zwei Erinnerungen (je [Policen senden] [Nein, danke]) und die Antwort auf „Nein, danke“
+//      (Kfz-Lead, Erinnerung 1: Fahrzeugschein, letzte Rechnung, genannte andere Verträge, [Unterlagen senden], Ole 22.11.2026)
 // Regeln aus texte-v2.md: „Später“ ist weder Einwilligung noch Ablehnung; KI-Satz „damit Ihr Vergleich zum Termin schon
 // fertig ist“ nur, wenn das Auslesen für die Sparte des Leads aktiv ist (kiFertig, sonst neutral „damit er sich
 // vorbereiten kann“); keine Aussage zur automatischen Löschung; „ohne KI“ nie schlechtreden.
@@ -17,7 +18,7 @@
 
 import { createHash } from "node:crypto";
 import { a, type Ansprache } from "@/lib/ansprache";
-import { anderePolicenSatz } from "@/lib/policen/andere-policen";
+import { anderePolicenBeispiel, anderePolicenSatz } from "@/lib/policen/andere-policen";
 
 export type Pronomen = "er" | "sie";
 
@@ -37,7 +38,7 @@ export type FlowTextKontext = {
   kiFertig: boolean;
   /** Satz zu Gesundheitsangaben (aus bei Tierkranken und wenn Kranken/BU/Leben für den Vermittler nicht freigegeben ist) */
   gesundheit: boolean;
-  /** Kfz-Lead (Ole, 21.11.2026): die freie Chat-Nachricht nennt Fahrzeugschein und letzte Rechnung (Vorlage bleibt allgemein) */
+  /** Kfz-Lead (Ole, 21./22.11.2026): Bitte und Erinnerung 1 nennen Fahrzeugschein und letzte Rechnung (eigene Kfz-Vorlagen) */
   kfz?: boolean;
   /**
    * Genannte Verträge ohne das angefragte Produkt („Haftpflicht bei Allianz“, lib/policen/andere-policen.ts) und
@@ -54,11 +55,11 @@ export const PAYLOAD_NEIN_DANKE = "policen:nein_danke";
 /** Flow-Knopf in Chat-Nachricht und Erinnerungen (Vorlage höchstens 25, flow_cta höchstens 30 Zeichen, ohne Emoji). */
 export const KNOPF_POLICEN_SENDEN = "Policen senden";
 /**
- * Flow-Knopf der Kfz-Nachricht (Ole, 22.11.2026: es geht um Fahrzeugschein, Rechnung und Policen, nicht nur Policen).
- * Nur in der freien Nachricht (flow_cta beim Senden), keine Vorlage.
+ * Flow-Knopf der Kfz-Nachrichten (Ole, 22.11.2026: es geht um Fahrzeugschein, Rechnung und Policen, nicht nur Policen):
+ * Bitte und Erinnerung 1, in der freien Nachricht (flow_cta) und in den Kfz-Vorlagen (FLOW-Knopf).
  */
 export const KNOPF_UNTERLAGEN_SENDEN = "Unterlagen senden";
-/** Knopf der Chat-Nachricht je Lead. */
+/** Knopf der Chat-Nachricht und der Erinnerung 1 je Lead. */
 export const flowKnopf = (k: Pick<FlowTextKontext, "kfz">) => (k.kfz ? KNOPF_UNTERLAGEN_SENDEN : KNOPF_POLICEN_SENDEN);
 /** Flow-Knopf der Bestätigung (öffnet das Formular erneut). */
 export const KNOPF_WEITERE_SENDEN = "Weitere senden";
@@ -267,12 +268,37 @@ export const erinnerungFusszeile = (an: Ansprache) => a(an, "Kein Interesse? Tip
  */
 export function erinnerung1(k: FlowTextKontext): Nachricht {
   const tag = k.tag ?? "";
+  if (k.kfz) {
+    const beispiel = anderePolicenBeispiel(k.an, { vertraege: k.andereVertraege, komplettcheck: k.komplettcheck });
+    return { text: erinnerung1KfzText(k.an, tag, k.name, beispiel, k.pronomen ?? k.name), fusszeile: erinnerungFusszeile(k.an) };
+  }
   const text = a(
     k.an,
     `Kurze Frage zu deinem Termin am ${tag}: Hast du deine Policen gerade zur Hand? Meist reicht ein Foto der ersten Seite. Dann sieht ${k.name} vorab, wann du kündigen kannst und ob du etwas doppelt zahlst.`,
     `Kurze Frage zu Ihrem Termin am ${tag}: Haben Sie Ihre Policen gerade zur Hand? Meist reicht ein Foto der ersten Seite. Dann sieht ${k.name} vorab, wann Sie kündigen können und ob Sie etwas doppelt zahlen.`,
   );
   return { text, fusszeile: erinnerungFusszeile(k.an) };
+}
+
+/**
+ * Erinnerung 1 an Kfz-Leads (Ole, 22.11.2026), auch die Kfz-Vorlagen mit {{1}} Tag, {{2}} Name, {{3}} Beispiel und
+ * {{4}} er/sie bzw. Name: wie die Kfz-Bitte Fahrzeugschein (Vorderseite) und letzte Rechnung, damit der Vermittler den
+ * Beitrag vorab rechnen kann; die anderen Policen nur mit Beispiel (Komplettcheck Ja bzw. genannte Verträge,
+ * lib/policen/andere-policen.ts), ohne „im Komplettcheck“ (eine Vorlage für beide Fälle). Kurz, weil Erinnerung.
+ */
+function erinnerung1KfzText(an: Ansprache, tag: string, name: string, beispiel: string | null, wer: string): string {
+  const kern = a(
+    an,
+    `Kurze Frage zu deinem Termin am ${tag}: Hast du deinen Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung gerade zur Hand? Je ein Foto reicht (beim Fahrzeugschein die Vorderseite). Dann kann ${name} deinen Beitrag schon vor dem Termin rechnen.`,
+    `Kurze Frage zu Ihrem Termin am ${tag}: Haben Sie Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung gerade zur Hand? Je ein Foto reicht (beim Fahrzeugschein die Vorderseite). Dann kann ${name} Ihren Beitrag schon vor dem Termin rechnen.`,
+  );
+  if (!beispiel) return kern;
+  const andere = a(
+    an,
+    `*Gern auch deine anderen Policen*, zum Beispiel ${beispiel}. Dann sieht ${wer} auch, ob du etwas doppelt zahlst.`,
+    `*Gern auch Ihre anderen Policen*, zum Beispiel ${beispiel}. Dann sieht ${wer} auch, ob Sie etwas doppelt zahlen.`,
+  );
+  return `${kern}\n\n${andere}`;
 }
 
 /** Text der Erinnerung 2 (auch die Vorlage mit {{1}} … {{3}}). */
@@ -309,28 +335,85 @@ export function istNeinDanke(text: string | null | undefined): boolean {
 /**
  * Vorlagentexte mit Platzhaltern (Meta: {{1}} …), je Ansprache. Kategorie UTILITY (Begründung in server.ts
  * VORLAGEN_KATEGORIE). Reihenfolge der Parameter siehe vorlagenParameter.
+ * Kfz-Vorlagen (Ole, 22.11.2026): Bitte und Erinnerung 1 je ohne und mit den anderen Policen („_andere“, Beispiel als
+ * Platzhalter), Knopf [Unterlagen senden]. Neue Arten ändern die Namen der bestehenden nicht (Name = Art, Flow, Text).
  */
-export type VorlagenArt = "bitte" | "erinnerung1" | "erinnerung2";
+export const VORLAGEN_ARTEN_KFZ = ["bitte_kfz", "bitte_kfz_andere", "erinnerung1_kfz", "erinnerung1_kfz_andere"] as const;
+export type VorlagenArtKfz = (typeof VORLAGEN_ARTEN_KFZ)[number];
+export type VorlagenArt = "bitte" | "erinnerung1" | "erinnerung2" | VorlagenArtKfz;
+/** Nachricht, zu der eine Vorlage gehört (Bitte, Erinnerung 1 bzw. 2). */
+export type VorlagenBasis = "bitte" | "erinnerung1" | "erinnerung2";
+export const vorlagenBasis = (art: VorlagenArt): VorlagenBasis => (art.startsWith("bitte") ? "bitte" : art.startsWith("erinnerung1") ? "erinnerung1" : "erinnerung2");
 
-export function vorlagenText(art: VorlagenArt, an: Ansprache): Nachricht & { knopf2: string; beispiele: string[] } {
+/** Kfz-Vorlage für diese Nachricht und diesen Lead, null = kein Kfz-Lead bzw. keine Kfz-Fassung (Erinnerung 2). */
+export function kfzVorlagenArt(art: VorlagenBasis, k: FlowTextKontext): VorlagenArtKfz | null {
+  if (!k.kfz || art === "erinnerung2") return null;
+  const andere = !!anderePolicenBeispiel(k.an, { vertraege: k.andereVertraege, komplettcheck: k.komplettcheck });
+  return `${art}_kfz${andere ? "_andere" : ""}` as VorlagenArtKfz;
+}
+
+const beispielName = (an: Ansprache) => (an === "du" ? "Ole" : "Herr Kannapinn");
+
+export function vorlagenText(art: VorlagenArt, an: Ansprache): Nachricht & { knopf1: string; knopf2: string; beispiele: string[] } {
   if (art === "bitte") {
     const t = chatNachricht({ an, name: "{{2}}", pronomen: "{{3}}" as Pronomen, tag: "{{1}}", kiFertig: false, gesundheit: false });
     // Vorlage bei Meta unverändert: Satz „… auch ohne Policen statt“ weiter als Fußzeile (nur die freie Nachricht hat ihn im Text)
     const ohne = ohnePolicenSatz(an);
-    return { text: t.text.replace(`\n\n${ohne}`, ""), fusszeile: ohne, knopf2: KNOPF_SPAETER, beispiele: ["Donnerstag", an === "du" ? "Ole" : "Herr Kannapinn", "er"] };
+    return { text: t.text.replace(`\n\n${ohne}`, ""), fusszeile: ohne, knopf1: KNOPF_POLICEN_SENDEN, knopf2: KNOPF_SPAETER, beispiele: ["Donnerstag", beispielName(an), "er"] };
+  }
+  if (art === "bitte_kfz" || art === "bitte_kfz_andere") {
+    const andere = art === "bitte_kfz_andere";
+    const t = chatNachricht({ an, name: "{{2}}", pronomen: "{{3}}" as Pronomen, tag: "{{1}}", kiFertig: false, gesundheit: false, kfz: true });
+    let text = t.text;
+    if (andere) {
+      // Absatz mit Platzhalter {{4}} für das Beispiel, ohne „im Komplettcheck“ (gilt für beide Fälle)
+      const satz = anderePolicenSatz(an, "{{3}}", { verb: "hochladen", beispiel: "{{4}}" })!;
+      text = text.replace(`\n\n${ohneUnterlagenSatz(an)}`, `\n\n${satz}\n\n${ohneUnterlagenSatz(an)}`);
+    }
+    // Wie bei der allgemeinen Bitte: „… auch ohne Unterlagen statt“ als Fußzeile
+    const ohne = ohneUnterlagenSatz(an);
+    return {
+      text: text.replace(`\n\n${ohne}`, ""),
+      fusszeile: ohne,
+      knopf1: KNOPF_UNTERLAGEN_SENDEN,
+      knopf2: KNOPF_SPAETER,
+      beispiele: ["Donnerstag", beispielName(an), "er", ...(andere ? [a(an, "deine Haftpflicht bei Allianz", "Ihre Haftpflicht bei Allianz")] : [])],
+    };
+  }
+  if (art === "erinnerung1_kfz" || art === "erinnerung1_kfz_andere") {
+    const andere = art === "erinnerung1_kfz_andere";
+    return {
+      text: erinnerung1KfzText(an, "{{1}}", "{{2}}", andere ? "{{3}}" : null, "{{4}}"),
+      fusszeile: erinnerungFusszeile(an),
+      knopf1: KNOPF_UNTERLAGEN_SENDEN,
+      knopf2: KNOPF_NEIN_DANKE,
+      beispiele: ["Donnerstag", beispielName(an), ...(andere ? [a(an, "deine Haftpflicht bei Allianz", "Ihre Haftpflicht bei Allianz"), "er"] : [])],
+    };
   }
   if (art === "erinnerung1") {
     const t = erinnerung1({ an, name: "{{2}}", pronomen: null, tag: "{{1}}", kiFertig: false, gesundheit: false });
-    return { ...t, knopf2: KNOPF_NEIN_DANKE, beispiele: ["Donnerstag", an === "du" ? "Ole" : "Herr Kannapinn"] };
+    return { ...t, knopf1: KNOPF_POLICEN_SENDEN, knopf2: KNOPF_NEIN_DANKE, beispiele: ["Donnerstag", beispielName(an)] };
   }
   const t = erinnerung2Text(an, "{{1}}", "{{2}}", "{{3}}");
-  return { text: t, fusszeile: erinnerungFusszeile(an), knopf2: KNOPF_NEIN_DANKE, beispiele: ["10 Uhr", "Videotermin", an === "du" ? "Ole" : "Herr Kannapinn"] };
+  return { text: t, fusszeile: erinnerungFusszeile(an), knopf1: KNOPF_POLICEN_SENDEN, knopf2: KNOPF_NEIN_DANKE, beispiele: ["10 Uhr", "Videotermin", beispielName(an)] };
 }
 
 /** Werte für {{1}} … einer Vorlage (passend zu vorlagenText). */
 export function vorlagenParameter(art: VorlagenArt, k: FlowTextKontext): string[] {
   const wer = k.pronomen ?? k.name;
-  if (art === "bitte") return [k.tag ?? a(k.an, "deinen Termin", "Ihren Termin"), k.name, wer];
+  const beispiel = () => anderePolicenBeispiel(k.an, { vertraege: k.andereVertraege, komplettcheck: k.komplettcheck }) ?? "";
+  const tagOder = k.tag ?? a(k.an, "deinen Termin", "Ihren Termin");
+  if (art === "bitte" || art === "bitte_kfz") return [tagOder, k.name, wer];
+  if (art === "bitte_kfz_andere") return [tagOder, k.name, wer, beispiel()];
   if (art === "erinnerung1") return [k.tag ?? "", k.name];
+  if (art === "erinnerung1_kfz") return [k.tag ?? "", k.name];
+  if (art === "erinnerung1_kfz_andere") return [k.tag ?? "", k.name, beispiel(), wer];
   return [k.uhrzeit ?? "", k.video === false ? "Termin" : "Videotermin", k.name];
+}
+
+/** Vorlagentext mit eingesetzten Werten und Fußzeile (so stellt Meta sie zu; für den Verlauf). */
+export function vorlageGerendert(art: VorlagenArt, k: FlowTextKontext): Nachricht {
+  const v = vorlagenText(art, k.an);
+  const p = vorlagenParameter(art, k);
+  return { text: v.text.replace(/\{\{(\d+)\}\}/g, (_, i) => p[Number(i) - 1] ?? ""), fusszeile: v.fusszeile };
 }

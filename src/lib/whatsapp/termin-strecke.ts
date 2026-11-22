@@ -187,13 +187,16 @@ export function policenErinnerungText(an: Ansprache, person: { nom: string }, po
 /**
  * Satz im Nutzensatz der Vortags-Terminerinnerung (A8 a, Rechtsprüfung 19.11.2026): freiwillig, Sparte nie nennen,
  * ohne Zeilenumbruch (steht in einer Vorlagen-Variable). person = Vermittler im Nominativ, sonst „Ihr Berater“.
+ * Kfz-Lead (Ole, 22.11.2026): „Unterlagen“ statt „Policen“ (Fahrzeugschein und Rechnung sind keine Policen).
  */
-export function policenVortagSatz(an: Ansprache, person?: { nom: string } | null): string {
+export function policenVortagSatz(an: Ansprache, person?: { nom: string } | null, kfz = false): string {
   const wer = person?.nom?.trim() || a(an, "dein Berater", "Ihr Berater");
+  const was = kfz ? a(an, "deine Unterlagen", "Ihre Unterlagen") : a(an, "deine Policen", "Ihre Policen");
+  const foto = kfz ? "Fotos reichen" : "ein Foto reicht";
   return a(
     an,
-    `Wenn du magst, schick vorab deine Policen hier in den Chat (ein Foto reicht), dann kann sich ${wer} schon vorbereiten. Geht aber auch ohne.`,
-    `Wenn Sie mögen, schicken Sie vorab Ihre Policen hier in den Chat (ein Foto reicht), dann kann sich ${wer} schon vorbereiten. Geht aber auch ohne.`,
+    `Wenn du magst, schick vorab ${was} hier in den Chat (${foto}), dann kann sich ${wer} schon vorbereiten. Geht aber auch ohne.`,
+    `Wenn Sie mögen, schicken Sie vorab ${was} hier in den Chat (${foto}), dann kann sich ${wer} schon vorbereiten. Geht aber auch ohne.`,
   );
 }
 
@@ -1665,7 +1668,18 @@ export async function policenVortagSatzFuer(
   const stand = await streckenStand(appt.conversationId, appt.id);
   if (!(await policenVortagSatzErlaubt(appt.conversationId, appt.leadId, stand))) return null;
   if (o.merken) await merke(appt.conversationId, STRECKE.policenErinnerung, { appointmentId: appt.id, art: "vortag" });
-  return policenVortagSatz(an, o.person);
+  return policenVortagSatz(an, o.person, await leadIstKfz(appt.leadId));
+}
+
+/** Kfz-Lead (Produkt aus der Quelle)? Fehler zählen als nein (dann der allgemeine Satz). */
+async function leadIstKfz(leadId: string | null): Promise<boolean> {
+  if (!leadId) return false;
+  try {
+    const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { source: true } });
+    return istKfzProdukt(l?.source ?? null);
+  } catch {
+    return false;
+  }
 }
 
 /** Letzter Terminvorschlag im Chat, solange der Lead danach nicht geschrieben hat (für das Nachfassen). */
