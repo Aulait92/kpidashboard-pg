@@ -201,3 +201,8 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **22.11.2026, Einwilligungstext kürzer (alle Formulare):** Ole: KI-Satz raus, Text conversionoptimiert. Standard jetzt
   Fassung `2026-11-22b-knopf`, Titel „Letzter Schritt: Tippen Sie unten auf „Senden““. Lohmann: neue Formulare Kfz v5
   (1829825371571727) und Privatschutz v6 (1837248347700709), Anzeigen erneut umgestellt (Lernphase am 22.11. zweimal neu).
+- **22.11.2026, ohne Garantie verkaufen** (Ole: „nimm die garantien für alle kommenden angebote raus, auch aus den
+  vertriebsfolien. ich verkaufe erstmal ohne garantie“): Angebote ab 22.11.2026, 19:15 Uhr ohne Abschnitt „Garantien“
+  (`GUARANTEES_UNTIL`), AGB „Garantien“ nur noch für ältere Angebote (Stand 22.11.2026), Empfehlungsseite ohne Garantien,
+  Vertriebsfolie „Und wenn es schlecht läuft?“ ohne Garantien. Bestehende Verträge und schon versendete Angebote behalten
+  ihre Garantien. Webseite: Eintrag in `docs/webseite-offen.md` (Montag).

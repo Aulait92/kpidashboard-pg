@@ -153,7 +153,7 @@ describe("Abwesenheit: Einzel-Vertreter, Termine", () => {
     expect(saved.tasks).toEqual({ moved: 1, transferred: 0 });
     expect(saved.solo).toBe(true);
     // 7 Tage allein → Pause hervorgehoben anbieten
-    expect(saved.pauseHint).toEqual({ from, until: returnDayYmd({ endsAt: berlinMidnight(addDaysYmd(to, 1)) }), strong: true });
+    expect(saved.pauseHint).toEqual({ from, until: returnDayYmd({ endsAt: berlinMidnight(addDaysYmd(to, 1)) }), strong: true, garantie: false });
     const back = saved.absence.returnDay;
     expect((await prisma.lead.findUnique({ where: { id: task.id } }))!.followUpAt!.toISOString()).toBe(at(back, 8).toISOString());
     expect((await prisma.lead.findUnique({ where: { id: later.id } }))!.followUpAt!.toISOString()).toBe(at(addDaysYmd(to, 10), 9).toISOString());
