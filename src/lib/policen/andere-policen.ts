@@ -59,8 +59,9 @@ const SPARTE_IM_TEXT: Partial<Record<VertragSparte, string>> = {
 export function genannteVertraegeBeispiel(an: Ansprache, vertraege: readonly string[] | null | undefined): string | null {
   const v = [...new Set((vertraege ?? []).map((x) => x.trim()).filter(Boolean))].slice(0, MAX);
   if (!v.length) return null;
-  const liste = v.length === 1 ? v[0] : `${v.slice(0, -1).join(", ")} und ${v.at(-1)}`;
-  return a(an, `deine ${liste}`, `Ihre ${liste}`);
+  // Ohne „Ihre/deine“ (Ole, 22.11.2026: „zum Beispiel deine Hausrat“ war falsch): „zum Beispiel Hausrat bei der Allianz“
+  void an;
+  return v.length === 1 ? v[0] : `${v.slice(0, -1).join(", ")} und ${v.at(-1)}`;
 }
 
 /** Beispiele ohne genannte Verträge, ohne das angefragte Produkt („Haftpflicht oder Hausrat“). */
@@ -83,7 +84,7 @@ export function anderePolicenBeispiel(
   return !vertraege.length
     ? festeBeispiele(o.ausgenommen ?? ["Kfz"])
     : vertraege.length === 1
-      ? a(an, `deine ${vertraege[0]}`, `Ihre ${vertraege[0]}`)
+      ? vertraege[0]
       : `${vertraege.slice(0, -1).join(", ")} und ${vertraege.at(-1)}`;
 }
 

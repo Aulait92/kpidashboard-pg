@@ -440,7 +440,7 @@ export function vorlagenText(art: VorlagenArt, an: Ansprache): Nachricht & { kno
       fusszeile: ohne,
       knopf1: KNOPF_UNTERLAGEN_SENDEN,
       knopf2: KNOPF_SPAETER,
-      beispiele: ["Donnerstag", beispielName(an), "er", ...(andere ? [a(an, "deine Haftpflicht bei Allianz", "Ihre Haftpflicht bei Allianz")] : [])],
+      beispiele: ["Donnerstag", beispielName(an), "er", ...(andere ? ["Haftpflicht bei der Allianz"] : [])],
     };
   }
   if (art === "erinnerung1_kfz" || art === "erinnerung1_kfz_andere") {
@@ -450,7 +450,7 @@ export function vorlagenText(art: VorlagenArt, an: Ansprache): Nachricht & { kno
       fusszeile: erinnerungFusszeile(an),
       knopf1: KNOPF_UNTERLAGEN_SENDEN,
       knopf2: KNOPF_NEIN_DANKE,
-      beispiele: ["Donnerstag", beispielName(an), ...(andere ? [a(an, "deine Haftpflicht bei Allianz", "Ihre Haftpflicht bei Allianz"), "er"] : [])],
+      beispiele: ["Donnerstag", beispielName(an), ...(andere ? ["Haftpflicht bei der Allianz", "er"] : [])],
     };
   }
   if (art === "erinnerung1") {

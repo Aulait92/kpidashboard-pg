@@ -1,5 +1,5 @@
 // Policen-Bitte bei allen Produkten (Ole, 22.11.2026): Die freie Chat-Nachricht und die freie Erinnerung 1 nennen die
-// Verträge, die der Lead auf die Vertragsfrage genannt hat („zum Beispiel Ihre Haftpflicht bei der Allianz und
+// Verträge, die der Lead auf die Vertragsfrage genannt hat („zum Beispiel Haftpflicht bei der Allianz und
 // Hausrat“), mit dem angefragten Produkt, ohne Gesundheitssparten ohne Freigabe. Ohne genannte Verträge bleibt der Text
 // wie bisher. Die freigegebenen Meta-Vorlagen (Name am Text-Hash) bleiben Wort für Wort gleich.
 import { describe, expect, it } from "vitest";
@@ -28,10 +28,10 @@ describe("genannte Verträge bei Nicht-Kfz-Produkten", () => {
     ]);
   });
 
-  it("Aufzählung mit Ihre/deine", () => {
-    expect(genannteVertraegeBeispiel("sie", ["Haftpflicht bei der Allianz"])).toBe("Ihre Haftpflicht bei der Allianz");
-    expect(genannteVertraegeBeispiel("du", ["Haftpflicht bei der Allianz", "Hausrat"])).toBe("deine Haftpflicht bei der Allianz und Hausrat");
-    expect(genannteVertraegeBeispiel("sie", ["A", "B", "C", "D"])).toBe("Ihre A, B und C");
+  it("Aufzählung ohne Ihre/deine (22.11.2026)", () => {
+    expect(genannteVertraegeBeispiel("sie", ["Haftpflicht bei der Allianz"])).toBe("Haftpflicht bei der Allianz");
+    expect(genannteVertraegeBeispiel("du", ["Haftpflicht bei der Allianz", "Hausrat"])).toBe("Haftpflicht bei der Allianz und Hausrat");
+    expect(genannteVertraegeBeispiel("sie", ["A", "B", "C", "D"])).toBe("A, B und C");
     expect(genannteVertraegeBeispiel("sie", [])).toBeNull();
     expect(genannteVertraegeBeispiel("sie", null)).toBeNull();
   });
@@ -39,9 +39,9 @@ describe("genannte Verträge bei Nicht-Kfz-Produkten", () => {
   it("Chat-Nachricht Privatschutz in Sie und Du", () => {
     const mit = { genannteVertraege: ["Haftpflicht bei der Allianz", "Hausrat"] };
     expect(chatNachricht({ ...SIE, ...mit }).text).toContain(
-      "Wenn Herr Kannapinn Ihre Policen vorab hat, zum Beispiel Ihre Haftpflicht bei der Allianz und Hausrat, sieht er schon vor dem Termin, *ob Sie etwas doppelt zahlen",
+      "Wenn Herr Kannapinn Ihre Policen vorab hat, zum Beispiel Haftpflicht bei der Allianz und Hausrat, sieht er schon vor dem Termin, *ob Sie etwas doppelt zahlen",
     );
-    expect(chatNachricht({ ...DU, ...mit }).text).toContain("Wenn Ole deine Policen vorab hat, zum Beispiel deine Haftpflicht bei der Allianz und Hausrat, sieht er schon vor dem Termin, *ob du etwas doppelt zahlst");
+    expect(chatNachricht({ ...DU, ...mit }).text).toContain("Wenn Ole deine Policen vorab hat, zum Beispiel Haftpflicht bei der Allianz und Hausrat, sieht er schon vor dem Termin, *ob du etwas doppelt zahlst");
     // ohne genannte Verträge unverändert
     expect(chatNachricht(SIE).text).toContain("Wenn Herr Kannapinn Ihre Policen vorab hat, sieht er schon vor dem Termin,");
     expect(chatNachricht({ ...SIE, genannteVertraege: [] })).toEqual(chatNachricht(SIE));
@@ -49,11 +49,11 @@ describe("genannte Verträge bei Nicht-Kfz-Produkten", () => {
 
   it("Chat-Nachricht Tier und Erinnerung 1", () => {
     const tier = { ...SIE, genannteVertraege: ["Tierhalterhaftpflicht bei der Uelzener"] };
-    expect(chatNachricht(tier).text).toContain("Ihre Policen vorab hat, zum Beispiel Ihre Tierhalterhaftpflicht bei der Uelzener, sieht er");
+    expect(chatNachricht(tier).text).toContain("Ihre Policen vorab hat, zum Beispiel Tierhalterhaftpflicht bei der Uelzener, sieht er");
     expect(erinnerung1(tier).text).toBe(
-      "Kurze Frage zu Ihrem Termin am Montag: Haben Sie Ihre Policen gerade zur Hand, zum Beispiel Ihre Tierhalterhaftpflicht bei der Uelzener? Meist reicht ein Foto der ersten Seite. Dann sieht Herr Kannapinn vorab, wann Sie kündigen können und ob Sie etwas doppelt zahlen.",
+      "Kurze Frage zu Ihrem Termin am Montag: Haben Sie Ihre Policen gerade zur Hand, zum Beispiel Tierhalterhaftpflicht bei der Uelzener? Meist reicht ein Foto der ersten Seite. Dann sieht Herr Kannapinn vorab, wann Sie kündigen können und ob Sie etwas doppelt zahlen.",
     );
-    expect(erinnerung1({ ...DU, genannteVertraege: ["Hausrat"] }).text).toContain("Hast du deine Policen gerade zur Hand, zum Beispiel deine Hausrat?");
+    expect(erinnerung1({ ...DU, genannteVertraege: ["Hausrat"] }).text).toContain("Hast du deine Policen gerade zur Hand, zum Beispiel Hausrat?");
     expect(erinnerung1({ ...SIE, genannteVertraege: [] })).toEqual(erinnerung1(SIE));
   });
 
