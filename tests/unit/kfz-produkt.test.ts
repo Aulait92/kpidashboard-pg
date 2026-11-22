@@ -126,15 +126,20 @@ describe("Texte an Kfz-Leads", () => {
     expect(KNOPF_UNTERLAGEN_SENDEN.length).toBeLessThanOrEqual(20);
     // Formular (Einwilligung) für Kfz genau wie für alle anderen (Ole, 22.11.2026: keine neue Fassung)
     expect(formularDaten(KFZ, "https://x.de/d")).toEqual(formularDaten({ ...KFZ, kfz: false }, "https://x.de/d"));
-    expect(bestaetigung(KFZ, 1, true).text).not.toMatch(/Kfz/);
+    expect(bestaetigung(KFZ, 1, true).text).not.toMatch(/etwa Kfz/);
+    // Kfz: nachfragen, ob Fahrzeugschein und Rechnung dabei sind, statt „nichts weiter tun“ (Ole, 22.11.2026)
+    expect(bestaetigung(KFZ, 1, true).text).toContain("*Sind Ihr Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung beide dabei?* Falls etwas fehlt, laden Sie es gern noch hoch.");
+    expect(bestaetigung(KFZ, 1, true).text).not.toMatch(/nichts weiter tun/);
+    expect(bestaetigung({ ...KFZ, an: "du" }, 1, true).text).toContain("*Sind dein Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung beide dabei?*");
     expect(bestaetigung({ ...KFZ, kfz: false }, 1, true).text).toMatch(/etwa Kfz oder Hausrat/);
   });
 
   it("andere Verträge: ohne das angefragte Produkt, mit Gesellschaft, ohne Gesundheit ohne Freigabe", () => {
     const vv = { at: "x", liste: [{ sparte: "Kfz", gesellschaft: "HUK" }, { sparte: "Haftpflicht", gesellschaft: "Allianz" }, { sparte: "Hausrat" }, { sparte: "Zahnzusatz", gesellschaft: "DKV" }, { sparte: "Sonstige" }] };
-    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true })).toEqual(["Haftpflicht bei Allianz", "Hausrat"]);
-    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true, gesundheitAn: true })).toEqual(["Haftpflicht bei Allianz", "Hausrat", "Zahnzusatz bei DKV"]);
+    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true })).toEqual(["Haftpflicht bei der Allianz", "Hausrat"]);
+    expect(andereVertraege(vv, { source: "Kfz-Versicherung", kfz: true, gesundheitAn: true })).toEqual(["Haftpflicht bei der Allianz", "Hausrat", "Zahnzusatz bei der DKV"]);
     expect(andereVertraege(null, { kfz: true })).toEqual([]);
+    expect(andereVertraege({ at: "x", liste: [{ sparte: "Hausrat", gesellschaft: "HUK24" }] }, { kfz: true })).toEqual(["Hausrat bei HUK24"]);
     // Feste Beispiele nie mit dem angefragten Produkt
     expect(anderePolicenSatz("sie", "er", { komplettcheck: true, verb: "hochladen" })).toMatch(/zum Beispiel Haftpflicht oder Hausrat\./);
     expect(anderePolicenSatz("sie", "er", { komplettcheck: true, verb: "hochladen", ausgenommen: ["Haftpflicht", "Hausrat"] })).toMatch(/zum Beispiel Rechtsschutz oder Kfz\./);

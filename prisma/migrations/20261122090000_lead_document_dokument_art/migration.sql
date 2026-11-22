@@ -1,0 +1,1 @@
+ALTER TABLE "LeadDocument" ADD COLUMN IF NOT EXISTS "dokumentArt" TEXT;

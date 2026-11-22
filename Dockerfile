@@ -4,6 +4,11 @@
 # JS-Version passt.
 FROM mcr.microsoft.com/playwright:v1.65.0-jammy
 
+# Texterkennung hochgeladener Unterlagen auf unserem Server (lib/policen/texterkennung.ts, kein Drittanbieter)
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-deu \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Dependencies separat installieren für besseres Layer-Caching.

@@ -67,10 +67,12 @@ const STRICH = /[–—]/;
 
 describe("Texte", () => {
   it("Frage in Sie und Du, mit bekanntem Partner direkt, ohne Gedankenstriche, ohne Geld", () => {
-    expect(g.partnerFrage("sie", false)).toBe("Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
-    expect(g.partnerFrage("du", false)).toBe("Entscheidet noch jemand mit, zum Beispiel dein Partner?");
-    expect(g.partnerFrage("sie", true)).toBe("Entscheiden Sie gemeinsam mit Ihrem Partner?");
-    expect(g.partnerFrage("du", true)).toBe("Entscheidest du gemeinsam mit deinem Partner?");
+    expect(g.partnerFrage("sie", false)).toBe("Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner?");
+    expect(g.partnerFrage("du", false)).toBe("Entscheidet bei der Versicherung noch jemand mit, zum Beispiel dein Partner?");
+    expect(g.partnerFrage("sie", false, "Kindersparplan")).toBe("Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+    expect(g.PARTNER_FRAGE_RE.test("Entscheidet noch jemand mit, zum Beispiel Ihr Partner?")).toBe(true);
+    expect(g.partnerFrage("sie", true)).toBe("Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner?");
+    expect(g.partnerFrage("du", true)).toBe("Entscheidest du bei der Versicherung gemeinsam mit deinem Partner?");
     const alle = [true, false].flatMap((b) => [g.partnerFrage("sie", b), g.partnerFrage("du", b), g.partnerDank("sie", b), g.partnerDank("du", b)]);
     for (const t of alle) {
       expect(t).not.toMatch(STRICH);
@@ -143,7 +145,7 @@ describe("Ablauf nach dem Komplettcheck", () => {
   it("„Ja, gern“ → Frage in derselben Nachricht wie „Super!“, mit Knöpfen; „Ja, gemeinsam“ → gespeichert, Vermerk, dann Vertragsfrage mit Dank", async () => {
     await strecke.komplettcheckAntwort("conv", true);
     expect(sent).toHaveLength(1);
-    expect(sent[0].body).toBe("Super! Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+    expect(sent[0].body).toBe("Super! Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner?");
     expect(sent[0].buttons).toEqual(g.PARTNER_KNOEPFE);
     const s = await strecke.streckenStand("conv", "appt1");
     expect(strecke.partnerFrageOffen(s)).toBe(true);
@@ -160,7 +162,7 @@ describe("Ablauf nach dem Komplettcheck", () => {
 
   it("„Nein, danke“ und „ich allein“: Schluss mit „Alles klar. Damit ist alles Wichtige … notiert.“, kein Vermerk", async () => {
     await strecke.komplettcheckAntwort("conv", false);
-    expect(sent[0].body).toBe("Alles klar. Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+    expect(sent[0].body).toBe("Alles klar. Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner?");
     await strecke.partnerAntwort("conv", "allein");
     expect(cleanQualificationData(db.qualificationData)).toEqual({ entscheidung: "Entscheidet allein" });
     expect(history).toEqual([]);
@@ -172,7 +174,7 @@ describe("Ablauf nach dem Komplettcheck", () => {
     db.leadAddress = "du";
     db.qualificationData = { versichern: "Mit Partner" };
     await strecke.komplettcheckAntwort("conv", false);
-    expect(sent[0].body).toBe("Alles klar. Entscheidest du gemeinsam mit deinem Partner?");
+    expect(sent[0].body).toBe("Alles klar. Entscheidest du bei der Versicherung gemeinsam mit deinem Partner?");
   });
 
   it("ohne Antwort: weiter ohne Angabe, nichts gespeichert", async () => {
@@ -245,11 +247,11 @@ describe("Vor dem Terminvorschlag", () => {
   });
 
   it("Frage als eigene Nachricht mit „Danke!“ (bzw. kurzer Antwort des Assistenten), Sie und Du, bekannter Partner", () => {
-    expect(g.partnerVorFrageText("sie", false)).toBe("Danke! Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
-    expect(g.partnerVorFrageText("du", false)).toBe("Danke! Entscheidet noch jemand mit, zum Beispiel dein Partner?");
-    expect(g.partnerVorFrageText("sie", true)).toBe("Danke! Entscheiden Sie gemeinsam mit Ihrem Partner?");
-    expect(g.partnerVorFrageText("du", true)).toBe("Danke! Entscheidest du gemeinsam mit deinem Partner?");
-    expect(g.partnerVorFrageText("sie", false, "Gern, das ist kostenlos.")).toBe("Gern, das ist kostenlos. Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+    expect(g.partnerVorFrageText("sie", false)).toBe("Danke! Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner?");
+    expect(g.partnerVorFrageText("du", false)).toBe("Danke! Entscheidet bei der Versicherung noch jemand mit, zum Beispiel dein Partner?");
+    expect(g.partnerVorFrageText("sie", true)).toBe("Danke! Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner?");
+    expect(g.partnerVorFrageText("du", true)).toBe("Danke! Entscheidest du bei der Versicherung gemeinsam mit deinem Partner?");
+    expect(g.partnerVorFrageText("sie", false, "Gern, das ist kostenlos.")).toBe("Gern, das ist kostenlos. Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner?");
     // gleiche Knöpfe wie nach der Buchung
     expect(g.knoepfeFuerText(g.partnerVorFrageText("sie", false))).toEqual(g.PARTNER_KNOEPFE);
   });
@@ -263,11 +265,11 @@ describe("Vor dem Terminvorschlag", () => {
   });
 
   it("Fassung b: Halbsatz am Ende des Terminvorschlags (nicht beim erneuten Vorschlag)", () => {
-    expect(g.partnerSatzImVorschlag("sie", true)).toBe("Entscheiden Sie gemeinsam mit Ihrem Partner? Dann wählen Sie gern eine Zeit, die für Sie beide passt.");
-    expect(g.partnerSatzImVorschlag("du", true)).toBe("Entscheidest du gemeinsam mit deinem Partner? Dann wähl gern eine Zeit, die für euch beide passt.");
-    expect(g.partnerSatzImVorschlag("sie", false)).toBe("Entscheidet noch jemand mit, zum Beispiel Ihr Partner? Dann wählen Sie gern eine Zeit, die für Sie beide passt.");
+    expect(g.partnerSatzImVorschlag("sie", true)).toBe("Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner? Dann wählen Sie gern eine Zeit, die für Sie beide passt.");
+    expect(g.partnerSatzImVorschlag("du", true)).toBe("Entscheidest du bei der Versicherung gemeinsam mit deinem Partner? Dann wähl gern eine Zeit, die für euch beide passt.");
+    expect(g.partnerSatzImVorschlag("sie", false)).toBe("Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner? Dann wählen Sie gern eine Zeit, die für Sie beide passt.");
     expect(vorschlag({ partnerSatz: g.partnerSatzImVorschlag("sie", true) })).toMatch(
-      /Passt Ihnen Mo 10 Uhr oder Di 14 Uhr\? Entscheiden Sie gemeinsam mit Ihrem Partner\? Dann wählen Sie gern eine Zeit, die für Sie beide passt\.$/,
+      /Passt Ihnen Mo 10 Uhr oder Di 14 Uhr\? Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner\? Dann wählen Sie gern eine Zeit, die für Sie beide passt\.$/,
     );
     expect(vorschlag({ partnerSatz: "x", erneut: true })).toBe("Passt Ihnen Mo 10 Uhr oder Di 14 Uhr?");
   });
@@ -329,7 +331,7 @@ describe("Vor dem Terminvorschlag", () => {
     await strecke.merke("conv", strecke.STRECKE.partnerVorFrage, { bekannt: false });
     await strecke.merke("conv", strecke.STRECKE.partnerVorAntwort, { art: "ohne_antwort" });
     await strecke.komplettcheckAntwort("conv", true);
-    expect(sent[0].body).toBe("Super! Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+    expect(sent[0].body).toBe("Super! Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner?");
   });
 
   const botSrc = readFileSync("src/lib/whatsapp/bot.ts", "utf8");
@@ -338,7 +340,7 @@ describe("Vor dem Terminvorschlag", () => {
   it("Einbindung: Frage statt des ersten Terminvorschlags (Splittest), Antwort ohne Assistent, Nachholen nach 30 Min. im Cron", () => {
     expect(botSrc).toContain('const v: "a" | "b" = "a";');
     expect(botSrc).toMatch(/if \(v === "a"\) \{\s*zug\.partnerVor = \{ text: partnerVorFrageText\(/);
-    expect(botSrc).toContain("partnerSatz = partnerSatzImVorschlag(ansprache, bekannt);");
+    expect(botSrc).toContain("partnerSatz = partnerSatzImVorschlag(ansprache, bekannt, lead?.source ?? null);");
     // nur beim ersten Vorschlag, nie bei Terminwunsch bzw. vom Assistenten gewählten Zeiten
     expect(botSrc).toMatch(/partnerVor\.vorschlaege === 0 &&[\s\S]*?nenntTerminwunsch\(latest\.body\)\) &&\s*partnerFrageNoetig\(form\.normal, angabenJetzt\)/);
     expect(botSrc).toContain("!(Array.isArray(input.starts) && input.starts.length)");

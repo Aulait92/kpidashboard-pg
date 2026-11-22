@@ -157,7 +157,7 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
     expect(st.ai).toBe(0);
     // Ole, 21.11.2026 spät: vor dem Terminvorschlag als eigene Frage, wer mitentscheidet (Knöpfe wie nach der Buchung)
     const partner = gesendet().at(-1)!;
-    expect(partner.body).toBe("Danke! Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
+    expect(partner.body).toBe("Danke! Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner?");
     expect(partner.buttons!.map((b) => b.id)).toEqual(["partner:ja", "partner:nein"]);
     expect(await prisma.message.count({ where: { conversationId: conv.id, kind: STRECKE.vorschlag } })).toBe(0);
     expect(await prisma.message.count({ where: { conversationId: conv.id, kind: STRECKE.partnerVorFrage } })).toBe(1);
@@ -235,7 +235,7 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
     await text(phone, "ca. 72 qm");
     expect(st.ai).toBe(0);
     // verheiratet: Partner bekannt, direkt gefragt; getippte Antwort zählt wie der Knopf, Zeiten „für Sie beide“
-    expect(gesendet().at(-1)!.body).toBe("Danke! Entscheiden Sie gemeinsam mit Ihrem Partner?");
+    expect(gesendet().at(-1)!.body).toBe("Danke! Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner?");
     await text(phone, "ja, meine Frau");
     expect(st.ai).toBe(0);
     expect(gesendet().at(-1)!.body).toMatch(/^Prima, dann schlage ich Zeiten vor, die für Sie beide passen\. In einem kurzen(, kostenlosen)? Videotermin zeigt Ihnen Herr Kannapinn/);
@@ -252,7 +252,7 @@ describe("Zwischenfrage vor dem Terminvorschlag (Privatschutz) und Vermittler-Ne
       const x = await leadNachErstanschreiben();
       await text(x.phone, "Beides neu");
       await knopf(x.phone, "zwischen:versichern:zu_zweit", "Zu zweit");
-      expect(gesendet().at(-1)!.body).toBe("Danke! Entscheiden Sie gemeinsam mit Ihrem Partner?");
+      expect(gesendet().at(-1)!.body).toBe("Danke! Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner?");
       return x;
     }
 

@@ -1114,10 +1114,10 @@ export async function runBotTurn(
       // Ole, 22.11.2026: „die Frage nach Partner immer eigenständig vor der Buchung“, kein Splittest (Fassung b aus)
       const v: "a" | "b" = "a";
       if (v === "a") {
-        zug.partnerVor = { text: partnerVorFrageText(ansprache, bekannt, typeof input.einleitung === "string" ? input.einleitung : null), bekannt };
+        zug.partnerVor = { text: partnerVorFrageText(ansprache, bekannt, typeof input.einleitung === "string" ? input.einleitung : null, lead?.source ?? null), bekannt };
         return "Die App fragt zuerst kurz, ob noch jemand mitentscheidet, und schickt die Zeiten nach der Antwort selbst. Schreib nichts weiter.";
       }
-      partnerSatz = partnerSatzImVorschlag(ansprache, bekannt);
+      partnerSatz = partnerSatzImVorschlag(ansprache, bekannt, lead?.source ?? null);
     }
     let starts: string[] = Array.isArray(input.starts) ? input.starts.filter((x): x is string => typeof x === "string" && new Date(x).getTime() > now.getTime() + 30 * 60 * 1000) : [];
     if (starts.length < 2) {
@@ -1551,17 +1551,23 @@ export async function runBotTurn(
   } else if (zug.vorschlag) {
     finalText = zug.vorschlag.text;
     knoepfe = terminKnoepfe(zug.vorschlag.starts);
-  } else if (upcoming && finalText && angebotsphase && folgeVorher.length && stand && !stand.abschlussAt && !stand.vertragsfrageAt && !stand.policenBitteAt) {
+  } else if (upcoming && angebotsphase && folgeVorher.length && stand && !stand.abschlussAt && !stand.vertragsfrageAt && !stand.policenBitteAt) {
     // Letzte Angebotsfrage beantwortet: statt eigener Worte des Assistenten die nächste Nachricht der App (bei
-    // Komplettcheck „Ja“ die Vertragsfrage, sonst die Policen-Bitte bzw. der Schluss)
+    // Komplettcheck „Ja“ die Vertragsfrage, sonst die Policen-Bitte bzw. der Schluss). Auch ohne Text des Assistenten
+    // (Produktionsfehler 22.11.2026: nach „Geleast“ blieb der Chat stumm, weil der Assistent nichts schrieb); fehlt eine
+    // Angebotsfrage noch und der Assistent schweigt, stellt die App sie selbst.
     const k = await strecke.streckenKontext(conversation.id);
-    if (k?.termin?.id === upcoming.id && !strecke.offeneAngebotsfragen(k).length) {
+    const offen = k?.termin?.id === upcoming.id ? strecke.offeneAngebotsfragen(k) : null;
+    if (k && offen && !offen.length) {
       schritt = await strecke.naechsterSchritt(k, { einleitung: "Danke!" });
       if (schritt) {
         finalText = schritt.text;
         knoepfe = schritt.buttons;
       }
-    } else {
+    } else if (!finalText && offen?.length) {
+      finalText = ansprache === "du" ? offen[0].du : offen[0].sie;
+      knoepfe = knoepfeFuerText(finalText, offen);
+    } else if (finalText) {
       knoepfe = knoepfeFuerText(finalText, folgeVorher);
     }
   } else {

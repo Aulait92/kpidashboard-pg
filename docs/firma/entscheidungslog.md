@@ -185,3 +185,19 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **Pay-per-Lead + Software** live (nur monatlich kündbar, erste Woche im Angebot, USt-Umbau, AGB „Umsatzsteuer auf Leads“).
 - **Ergebnis-Präsentation** nach jedem Meeting/Team-Einsatz (README).
 - **22.11.2026, Partnerfrage:** im WhatsApp-Assistenten immer als eigene Frage vor dem Terminvorschlag, Splittest `partner_vor_termin` beendet (Fassung B aus). Ole: „ich möchte die frage nach partner immer eigenständig vor der buchung“.
+- **22.11.2026, Kfz-Unterlagen prüfen:** Keine KI-Einordnung hochgeladener Fotos ohne ZDR-Nachweis (Datenschutz: Rot, K2,
+  Fassung `.s1` ohne Gesundheitssatz). Stattdessen fragt die Bestätigung bei Kfz-Leads nach, ob Fahrzeugschein und letzte
+  Rechnung beide dabei sind, mit Knopf „Weitere senden“. KI-Einordnung erst nach ZDR-Nachweis mit Auflagen A bis F
+  (nur `.gN`, ein Aufzählungsfeld, Bremse, VVT/DSFA). Ole: „Ja einbauen“ → lokale Texterkennung (Tesseract im Dockerfile,
+  `lib/policen/texterkennung.ts`): nur Kfz-Leads mit KI-Einwilligung, Text nie gespeichert, nur `LeadDocument.dokumentArt`;
+  die Bestätigung nennt, was noch nicht erkannt ist. VVT-Eintrag „Dokumentart bestimmen (lokal)“ nachziehen.
+- **22.11.2026, Leadformular ohne Häkchen (Lohmann):** Ole gibt den Wortlaut „Mit Klick auf ‚Senden‘ willigen Sie ein …“
+  frei (Rechtsprüfung Gelb gering, `docs/recht/leadformular-einwilligung-knopf-2026-11-22.md`). Neue Formulare Kfz v4 Knopf
+  (1712355006964288) und Privatschutz v5 Knopf (1867444814681861), Zuordnung mit Fassung `2026-11-22-knopf`, alte Formulare
+  bleiben für Nachzügler zugeordnet. Alle 8 Anzeigen als Kopie mit neuem Formular, alte pausiert. Auswertung: Leads je
+  Link-Klick vorher (Formular mit Häkchen) und nachher. Offen: Handy-Screenshot der Formular-Vorschau (Auflage 1);
+  Ole danach: „Immer ohne Checkbox“ → Kampagnen-Builder legt alle neuen Formulare ohne Häkchen an (Standard-Fassung
+  `2026-11-22-knopf`); alte Häkchen-Formulare werden weiter ausgewertet.
+- **22.11.2026, Einwilligungstext kürzer (alle Formulare):** Ole: KI-Satz raus, Text conversionoptimiert. Standard jetzt
+  Fassung `2026-11-22b-knopf`, Titel „Letzter Schritt: Tippen Sie unten auf „Senden““. Lohmann: neue Formulare Kfz v5
+  (1829825371571727) und Privatschutz v6 (1837248347700709), Anzeigen erneut umgestellt (Lernphase am 22.11. zweimal neu).

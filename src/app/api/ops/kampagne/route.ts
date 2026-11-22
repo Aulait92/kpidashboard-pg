@@ -44,7 +44,8 @@ export async function POST(req: Request): Promise<Response> {
   if (!c.ok) return Response.json({ error: c.error }, { status: 404, headers: noStore });
   // Neues Formular statt eines bestehenden zuordnen (Ole, 21.11.2026: Formular korrigiert, Meta-Formulare sind nicht
   // änderbar): { kunde, formId, ersetzt: <altes formId>, produkt? } übernimmt Produkt, Fragen-Beschriftungen und
-  // Einwilligungsnachweis vom alten Formular, legt die Zuordnung an und schaltet das alte ab.
+  // Einwilligungsnachweis vom alten Formular, legt die Zuordnung an und schaltet das alte ab. Optional consentText,
+  // consentVersion (z. B. CONSENT_VERSION_KNOPF) und parallel=true (altes bleibt aktiv).
   const neuForm = get("formId");
   const altForm = get("ersetzt");
   if (neuForm && altForm) {
@@ -62,11 +63,18 @@ export async function POST(req: Request): Promise<Response> {
         productKey,
         questionLabels: (labels as object) ?? alt.questionLabels ?? undefined,
         consentText: String(get("consentText") ?? alt.consentText ?? "") || null,
-        consentVersion: alt.consentVersion,
+        consentVersion: String(get("consentVersion") ?? "") || alt.consentVersion,
       },
-      update: { customerId: c.id, productKey, active: true },
+      update: {
+        customerId: c.id,
+        productKey,
+        active: true,
+        ...(get("consentText") ? { consentText: String(get("consentText")) } : {}),
+        ...(get("consentVersion") ? { consentVersion: String(get("consentVersion")) } : {}),
+      },
     });
-    await prisma.leadSource.update({ where: { id: alt.id }, data: { active: false } });
+    // parallel: altes Formular bleibt aktiv (Vergleich zweier Formulare, z. B. Einwilligung per Knopf, 22.11.2026)
+    if (!bool(get("parallel"), false)) await prisma.leadSource.update({ where: { id: alt.id }, data: { active: false } });
     await audit("leadsource.ersetzt", { entity: "LeadSource", entityId: neu.formId, customerId: c.id, details: { ersetzt: alt.formId, productKey } }).catch(() => undefined);
     return Response.json({ ok: true, formId: neu.formId, productKey, ersetzt: alt.formId }, { headers: noStore });
   }
