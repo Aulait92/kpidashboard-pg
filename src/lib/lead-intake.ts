@@ -18,7 +18,7 @@ import { runOutreach } from "@/lib/whatsapp/outreach";
 import { emailLeads } from "@/lib/onboarding-cron";
 import { tryReentry } from "@/lib/lead-erneut";
 import type { MetaLead } from "@/lib/meta-leads";
-import { consentStateOf, parseDisclaimerResponses, type ConsentNachweis, type DisclaimerResponse } from "@/lib/einwilligung-leadformular";
+import { consentStateOf, istKnopfFassung, parseDisclaimerResponses, type ConsentNachweis, type DisclaimerResponse } from "@/lib/einwilligung-leadformular";
 import { logTestLead } from "@/lib/testlead";
 import { adData, adFromFlat, adFromMetaLead, mergeAd, type LeadAd } from "@/lib/anzeige";
 import { handleInboundLead } from "@/lib/vertrieb/inbound";
@@ -218,12 +218,14 @@ export async function ingestLead(
   // Einwilligung (lib/einwilligung-leadformular.ts): Nachweis mit Zeitpunkt, Formular, Textversion und Wortlaut.
   // Formular ohne Häkchen → waConsent null (bisheriges Verhalten), Hinweis da und Häkchen fehlt → "nein".
   const responses = inc.disclaimer ?? null;
-  const waConsent = consentStateOf(responses);
+  // Einwilligung per Knopf (Formular ohne Häkchen, CONSENT_VERSION_KNOPF an der Zuordnung): Absenden = eingewilligt
+  const knopf = !responses && istKnopfFassung(source?.consentVersion);
+  const waConsent = knopf ? "ja" : consentStateOf(responses);
   const nachweis: ConsentNachweis = {
     at: (createdAt.getTime() > Date.now() ? new Date() : createdAt).toISOString(),
     formId: inc.formId,
-    textVersion: responses ? (source?.consentVersion ?? null) : null,
-    text: responses ? (source?.consentText ?? null) : null,
+    textVersion: responses || knopf ? (source?.consentVersion ?? null) : null,
+    text: responses || knopf ? (source?.consentText ?? null) : null,
     responses: responses ?? [],
   };
   // Dieselbe Person hat sich bei diesem Kunden schon eingetragen (gleiche Nummer oder E-Mail): kein zweiter Lead,

@@ -47,6 +47,25 @@ export function leadFormConsentText(x: ConsentAngaben): string {
   return `Ich willige ein, dass ${v}, ${adr}, mich zu meiner Anfrage per WhatsApp, E-Mail und Telefon kontaktiert. Dabei antwortet zunächst ein KI-gestützter Assistent und vereinbart Termine. Widerruf jederzeit, z. B. mit ‚STOPP‘ oder per E-Mail an ${mail}. ${ERSTINFO_ZUSTIMMUNG} Datenschutzhinweise: ${url}`;
 }
 
+/**
+ * Einwilligung per Knopf statt Häkchen (Rechtsprüfung 22.11.2026, Gelb gering, Stufe A Ole): Text direkt über
+ * „Senden“, Meta custom_disclaimer ohne checkboxes. Meta liefert dann keine custom_disclaimer_responses; der Nachweis
+ * kommt aus der Zuordnung des Formulars (LeadSource.consentVersion = CONSENT_VERSION_KNOPF, Wortlaut, Zeitpunkt).
+ * Anlass: seit dem Pflicht-Häkchen kaum Abschlüsse im Formular (Lohmann Kfz: 10 Klicks, 1 Lead).
+ */
+export const CONSENT_VERSION_KNOPF = "2026-11-22-knopf";
+export const istKnopfFassung = (v: string | null | undefined) => typeof v === "string" && v.endsWith("-knopf");
+/** Titel über dem Text (max. 60 Zeichen, nennt den Knopf, der den Lead abschickt). */
+export const KNOPF_TITEL = "Fast geschafft: Jetzt unten auf „Senden“ tippen";
+
+export function leadFormConsentTextKnopf(x: ConsentAngaben): string {
+  const v = clean(x.vermittler) || PLATZHALTER.vermittler;
+  const adr = clean(x.anschrift) || PLATZHALTER.anschrift;
+  const mail = clean(x.email) || PLATZHALTER.email;
+  const url = clean(x.datenschutzUrl) || PLATZHALTER.datenschutzUrl;
+  return `Ihr Angebot und Ihren Termin bekommen Sie per WhatsApp, E-Mail oder Telefon. Mit Klick auf „Senden“ willigen Sie ein, dass ${v}, ${adr}, Sie zu dieser Anfrage kontaktiert. Zuerst antwortet ein KI-Assistent und schlägt Termine vor. Die Erstinformation nach § 15 VersVermV erhalten Sie elektronisch als Link und PDF, auf Wunsch auf Papier. Widerruf jederzeit mit „STOPP“ oder per E-Mail an ${mail}. Datenschutz: ${url}`;
+}
+
 /** Welche Angaben fehlen für den Wortlaut? */
 export function consentMissing(x: ConsentAngaben): string[] {
   const out: string[] = [];
