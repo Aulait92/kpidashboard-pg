@@ -32,6 +32,7 @@ describe("brauchtBeleg", () => {
     expect(brauchtBeleg(u("1", "2026-03-01", -900, "American Express", "ignoriert"))).toBe(false);
     expect(brauchtBeleg(u("1", "2026-03-01", -900, "Finanzamt Berlin", "ignoriert"))).toBe(false);
     expect(brauchtBeleg(u("1", "2026-03-01", -900, "Finanzamt Berlin", "neu"))).toBe(false);
+    expect(brauchtBeleg(u("1", "2026-03-01", -31.4, "Kontoführung", "neu"))).toBe(false);
   });
 });
 
