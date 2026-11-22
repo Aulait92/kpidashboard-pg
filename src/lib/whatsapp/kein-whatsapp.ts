@@ -389,3 +389,36 @@ export async function keinWhatsAppJeKunde(from?: Date): Promise<KeinWhatsAppZeil
     })
     .sort((x, y) => (y.share ?? 0) - (x.share ?? 0) || y.attempted - x.attempted);
 }
+
+/**
+ * Nummer korrigiert (Ole, 22.11.2026: „bei ihm hat sich 330 nach der 49 geschlichen … korrigieren und neu versuchen per
+ * WhatsApp“): Hatte der Lead nie selbst geschrieben und galt als „kein WhatsApp“, fällt die Sperre weg, der Assistent
+ * ist wieder an und die App versucht es sofort an die neue Nummer: mit anstehendem Termin die Terminbestätigung, sonst
+ * das Erstanschreiben. Fehler werden nur gemeldet. Rückgabe: was versucht wurde.
+ */
+export async function nachNummernKorrektur(leadId: string, now = new Date()): Promise<"termin" | "erstanschreiben" | "nichts"> {
+  try {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, name: true, phone: true, waUnavailableAt: true, erasedAt: true, isTest: true } });
+    if (!lead?.phone || lead.erasedAt || !lead.waUnavailableAt) return "nichts";
+    await prisma.lead.update({ where: { id: lead.id }, data: { waUnavailableAt: null, outreachAt: null, outreachStatus: null } });
+    await prisma.conversation.updateMany({ where: { customerId: lead.customerId, leadId: lead.id }, data: { botActive: true } });
+    const termin = await prisma.appointment.findFirst({
+      where: { leadId: lead.id, status: "booked", startsAt: { gt: now } },
+      orderBy: { startsAt: "asc" },
+      select: { startsAt: true, mode: true, meetUrl: true, ort: true },
+    });
+    if (termin) {
+      // Termin steht schon: Erstanschreiben überspringen, Bestätigung an die neue Nummer
+      await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: now, outreachStatus: "sent_booked" } });
+      const { sendBookingConfirmation } = await import("@/lib/whatsapp/reminders");
+      await sendBookingConfirmation({ customerId: lead.customerId, to: lead.phone, name: lead.name, leadId: lead.id, startsAt: termin.startsAt, mode: termin.mode, meetUrl: termin.meetUrl, ort: termin.ort });
+      return "termin";
+    }
+    const { runOutreach } = await import("@/lib/whatsapp/outreach");
+    await runOutreach(lead.customerId, { leadIds: [lead.id] });
+    return "erstanschreiben";
+  } catch (err) {
+    reportError(err, "nach-nummern-korrektur", { lead: leadId });
+    return "nichts";
+  }
+}

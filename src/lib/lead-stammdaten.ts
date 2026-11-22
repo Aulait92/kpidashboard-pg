@@ -211,6 +211,13 @@ export async function saveLeadStammdaten(opts: {
     if (moved === "moved") hinweise.push("Der WhatsApp-Chat läuft ab jetzt über die neue Nummer.");
     if (moved === "linked") hinweise.push("Zur neuen Nummer gab es schon einen WhatsApp-Chat, er ist jetzt mit diesem Lead verbunden.");
   }
+  // Galt der Lead wegen der alten Nummer als „kein WhatsApp“: neu versuchen (lib/whatsapp/kein-whatsapp.ts)
+  if (after.phone && after.phone !== before.phone) {
+    const { nachNummernKorrektur } = await import("@/lib/whatsapp/kein-whatsapp");
+    const r = await nachNummernKorrektur(lead.id);
+    if (r === "termin") hinweise.push("Die Terminbestätigung geht per WhatsApp an die neue Nummer.");
+    if (r === "erstanschreiben") hinweise.push("Der Assistent schreibt die neue Nummer per WhatsApp an.");
+  }
   if (after.email && after.email !== before.email) {
     await prisma.conversation.updateMany({ where: { customerId: opts.customerId, leadId: lead.id }, data: { contactEmail: after.email } });
   }
