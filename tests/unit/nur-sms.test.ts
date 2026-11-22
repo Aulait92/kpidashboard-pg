@@ -96,10 +96,10 @@ describe("Text der SMS", () => {
     zeiten: GESCHAEFTSZEITEN_STANDARD,
   };
 
-  it("Sie: Dank, KI-Assistent, Link, Rückruf zu Geschäftszeiten, Abmelden", () => {
+  it("Sie: Dank, Link, Rückruf zu Geschäftszeiten, Abmelden", () => {
     const t = nurSmsText(basis);
     expect(t).toBe(
-      `Hallo Frau Becker, danke für Ihre Anfrage zur Zahnzusatzversicherung. Hier ist der KI-Assistent von Herrn Lohmann. Termin wählen: ${LINK} Oder rufen Sie an: 0451 1234567 (Mo bis Fr, 9 bis 18 Uhr). Abmelden über den Link.`,
+      `Hallo Frau Becker, danke für Ihre Anfrage zur Zahnzusatzversicherung bei Herrn Lohmann. Termin wählen: ${LINK} Oder rufen Sie an: 0451 1234567 (Mo bis Fr, 9 bis 18 Uhr). Abmelden über den Link.`,
     );
     expect(smsSegmente(t)).toMatchObject({ unicode: false });
     expect(smsSegmente(t).segmente).toBeLessThanOrEqual(2);
@@ -239,7 +239,7 @@ describe("Start bei E-Mail-Funktionen aus", () => {
     expect(sms.sendSms).toHaveBeenCalledTimes(1);
     const [nummer, text, opts] = sms.sendSms.mock.calls[0];
     expect(nummer).toBe("491631234567");
-    expect(text).toContain("Hallo Frau Becker, danke für Ihre Anfrage zur Zahnzusatzversicherung.");
+    expect(text).toContain("Hallo Frau Becker, danke für Ihre Anfrage zur Zahnzusatzversicherung bei Herrn Lohmann.");
     expect(text).toContain("Oder rufen Sie an: 0451 1234567 (Mo bis Fr, 9 bis 18 Uhr).");
     expect(opts).toEqual({ from: null }); // „Thomas Lohmann“ hat mehr als 11 Zeichen: Standard-Absender
     // Verlauf: Start und SMS-Text (ohne Link)

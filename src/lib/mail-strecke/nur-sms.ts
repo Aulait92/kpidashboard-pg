@@ -127,7 +127,8 @@ export type NurSmsInput = {
 
 /**
  * SMS an den Lead (rein): Dank bzw. Erinnerung, Link zur Terminwahl, Rückruf zu Geschäftszeiten, Abmeldehinweis. Ohne
- * Gedankenstriche, höchstens 2 Teile: zu lang, fällt erst das Thema, dann der Name weg.
+ * Gedankenstriche, ohne KI-Hinweis (Ole, 22.11.2026: feste Nachricht, kein KI-Gespräch; Absender nicht als Person
+ * ausgeben), höchstens 2 Teile: zu lang, fällt erst das Thema, dann der Name weg.
  */
 export function nurSmsText(o: NurSmsInput): string {
   const an = o.an;
@@ -142,7 +143,7 @@ export function nurSmsText(o: NurSmsInput): string {
     const thema = mitThema ? anfrageThema(o.source, an) : "";
     const kern =
       o.art === "erst"
-        ? `${hallo}${a(an, "danke für deine Anfrage", "danke für Ihre Anfrage")}${thema}. Hier ist der KI-Assistent von ${o.person.dat}. Termin wählen: ${o.link}`
+        ? `${hallo}${a(an, "danke für deine Anfrage", "danke für Ihre Anfrage")}${thema} bei ${o.person.dat}. Termin wählen: ${o.link}`
         : `${hallo}${a(an, `${o.person.nom} hat noch Zeit für dich. Termin wählen`, `${o.person.nom} hat noch Zeit für Sie. Termin wählen`)}: ${o.link}`;
     return ohneGedankenstriche(`${kern} ${rueckruf} ${abmelden}`);
   };
