@@ -47,6 +47,14 @@ const anhang = (a: { id: string; filename?: string | null; size?: number; conten
   downloadUrl: a.download_url ?? null,
 });
 
+/**
+ * Schlüssel zum Lesen empfangener Mails: eigener RESEND_EMPFANG_API_KEY (Vollzugriff), weil der Versandschlüssel
+ * RESEND_API_KEY eingeschränkt sein kann („restricted_api_key“). Ohne eigenen Schlüssel: null (Aufrufer nimmt RESEND_API_KEY).
+ */
+export function empfangsSchluessel(env: Record<string, string | undefined> = process.env): string | null {
+  return env.RESEND_EMPFANG_API_KEY?.trim() || null;
+}
+
 export function eingangApi(apiKey: string) {
   const r = new Resend(apiKey);
   return {

@@ -256,8 +256,8 @@ async function appLink(leadId: string): Promise<string | null> {
 }
 
 async function ladeApi(apiKey: string): Promise<EingangApi> {
-  const { eingangApi } = await import("@/lib/mail/eingang-api");
-  return eingangApi(apiKey);
+  const { eingangApi, empfangsSchluessel } = await import("@/lib/mail/eingang-api");
+  return eingangApi(empfangsSchluessel() ?? apiKey);
 }
 
 /**

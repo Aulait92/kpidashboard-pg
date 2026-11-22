@@ -62,7 +62,7 @@ export async function verarbeiteBelegMail(o: { eingangId: string; emailId: strin
  * und per Ops-Aktion belege_postfach.
  */
 export async function belegePostfachAbholen(): Promise<{ gesehen: number; verarbeitet: number }> {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const apiKey = process.env.RESEND_EMPFANG_API_KEY?.trim() || process.env.RESEND_API_KEY?.trim();
   if (!apiKey) return { gesehen: 0, verarbeitet: 0 };
   const { Resend } = await import("resend");
   const r = new Resend(apiKey);

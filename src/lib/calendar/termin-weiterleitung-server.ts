@@ -249,7 +249,8 @@ export async function verarbeiteTerminMail(o: {
   }
 
   try {
-    const api = o.api ?? (await import("@/lib/mail/eingang-api")).eingangApi(apiKey);
+    const ea = await import("@/lib/mail/eingang-api");
+    const api = o.api ?? ea.eingangApi(ea.empfangsSchluessel() ?? apiKey);
     const mail = await api.mail(o.emailId);
     const from = reineAdresse(mail.from) ?? reineAdresse(o.fromEvent) ?? null;
     if (istSchleife(from, mail.headers)) {
