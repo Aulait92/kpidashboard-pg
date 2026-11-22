@@ -146,7 +146,8 @@ export const AKTIONEN: Record<string, Aktion> = {
       if (!l?.customerId || !l.phone) return { ok: false, error: "Lead nicht gefunden." };
       const neu = (await import("@/lib/whatsapp/phone")).normalizePhone(`+${l.phone}`);
       if (!neu) return { ok: false, error: "Nummer ungültig." };
-      const offen = l.outreachStatus !== "sent";
+      // „sent_booked“ (schon gebucht) ist auch gesendet: sonst ging die Erstnachricht doppelt raus (22.11.2026)
+      const offen = !l.outreachStatus?.startsWith("sent");
       // Schon korrigiert, aber die Erstnachricht hing (z. B. „kein WhatsApp“ der alten Nummer): erneut versuchen
       await prisma.lead.update({ where: { id: l.id }, data: { phone: neu, waUnavailableAt: null, ...(offen ? { outreachAt: null, outreachStatus: null } : {}) } });
       await audit("lead.nummer_korrigiert", { entity: "Lead", entityId: l.id, details: { neu: `…${neu.slice(-4)}` }, actor: OPS_ACTOR });
