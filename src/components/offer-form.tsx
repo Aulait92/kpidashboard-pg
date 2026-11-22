@@ -1,7 +1,5 @@
 "use client";
 
-import { InfoHinweis } from "@/components/info-hinweis";
-import { BREAKEVEN_ERKLAERT, VERTRAGSGARANTIE_ERKLAERT } from "@/lib/begriffe";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
@@ -247,18 +245,12 @@ export function OfferForm({
 
         <Card>
           <CardHeader title="Kunde ist …" hint="geht in die Erstinformation" />
-          {ppl ? null : (
-          <p className="flex flex-wrap items-center gap-x-1.5 px-5 pt-3 text-xs text-[color:var(--muted)]" data-garantie-erklaert>
-            Break-even-Garantie <InfoHinweis begriff="Break-even-Garantie" text={BREAKEVEN_ERKLAERT} /> · Vertrags-Garantie{" "}
-            <InfoHinweis begriff="Vertrags-Garantie" text={VERTRAGSGARANTIE_ERKLAERT} />
-          </p>
-          )}
           <div className="grid gap-2 p-5 sm:grid-cols-3" role="radiogroup" aria-label="Vertreter, Mehrfachvertreter oder Makler">
             {(
               [
-                ["vertreter", "Vertreter (AO)", "Abschlussprovision · Break-even-Garantie"],
-                ["mehrfachvertreter", "Mehrfachvertreter", "wie Vertreter · Break-even-Garantie"],
-                ["makler", "Makler", "Bestandscourtage · Vertrags-Garantie"],
+                ["vertreter", "Vertreter (AO)", "Abschlussprovision"],
+                ["mehrfachvertreter", "Mehrfachvertreter", "rechnet wie Vertreter"],
+                ["makler", "Makler", "Bestandscourtage"],
               ] as const
             ).map(([k, t, s]) => (
               <button

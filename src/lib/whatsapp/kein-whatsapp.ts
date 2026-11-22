@@ -11,7 +11,8 @@
 //   3. Push an den zuständigen Berater (sonst alle Logins des Kunden): „Sofort anrufen: … hat kein WhatsApp“.
 //   4. Mail-Strecke (Ole, 18.11.2026, lib/mail-strecke): Erstmail mit Öffnungsfrage, zwei Zeiten und Antwortseite, dann
 //      der Takt über 10 Tage. Nur wenn die Strecke aus ist: wie bisher einmal je Lead eine kurze E-Mail mit Terminlink
-//      im Namen des Vermittlers (lib/whatsapp/kein-whatsapp-mail.ts).
+//      im Namen des Vermittlers (lib/whatsapp/kein-whatsapp-mail.ts). Sind die E-Mail-Funktionen beim Kunden aus
+//      (Ole, 22.11.2026), läuft die Strecke nur mit SMS (höchstens 2, zu Geschäftszeiten, lib/mail-strecke/nur-sms.ts).
 //      Rechtsgrundlage: Antwort auf die eigene Anfrage des Leads (er hat seine E-Mail-Adresse im Formular dafür
 //      angegeben), nur zur konkreten Anfrage und ohne Werbung für anderes, also keine Werbe-E-Mail im Sinne von
 //      § 7 Abs. 2 Nr. 2 UWG (keine Einwilligung nötig, wie die Terminbestätigung). Trotzdem nicht, wenn die Adresse
@@ -208,13 +209,24 @@ export async function markLeadNoWhatsApp(
           reportError(err, "kein-whatsapp-mail", { lead: leadId });
           return { sent: false as const, reason: "error" };
         });
+  // Nur SMS (Ole, 22.11.2026: E-Mail-Funktionen aus): SMS sofort bzw. zur nächsten Geschäftszeit
+  const sms = strecke.ergebnis === "gestartet" && strecke.kanal === "sms";
+  const hinweis = sms
+    ? strecke.gesendet
+      ? " Eine SMS mit Ihrem Terminlink ist raus."
+      : strecke.grund === "ruhezeit"
+        ? " Eine SMS mit Ihrem Terminlink geht zur Geschäftszeit raus."
+        : ""
+    : mail.sent
+      ? " Eine E-Mail mit Ihrem Terminlink ist raus."
+      : "";
   const { notifyLeadPush } = await import("@/lib/team");
   const { displayProduct } = await import("@/lib/products");
   const name = lead.name?.trim() || "Ein neuer Lead";
   const parts = [lead.phone ? formatPhone(lead.phone) : null, lead.source ? displayProduct(lead.source) : null].filter(Boolean).join(" · ");
   await notifyLeadPush(leadId, {
     title: festnetz ? `Sofort anrufen: ${name} hat keine Handynummer` : `Sofort anrufen: ${name} hat kein WhatsApp`,
-    body: `${parts ? `${parts}. ` : ""}${festnetz ? "Festnetznummer, per WhatsApp nicht erreichbar." : "Die Nummer ist nicht per WhatsApp erreichbar."}${mail.sent ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}`,
+    body: `${parts ? `${parts}. ` : ""}${festnetz ? "Festnetznummer, per WhatsApp nicht erreichbar." : "Die Nummer ist nicht per WhatsApp erreichbar."}${hinweis}`,
     url: `/buyer/leads/${leadId}`,
     tag: `kein-wa:${leadId}`,
   });

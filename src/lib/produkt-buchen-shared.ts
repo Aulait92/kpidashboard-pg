@@ -29,7 +29,7 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
   {
     key: "tkv-katze",
     name: "Katzenversicherung (TKV)",
-    benefit: "Unser bewährtestes Produkt: viele Anfragen zu niedrigem Leadpreis, mit Lead-Garantie.",
+    benefit: "Unser bewährtestes Produkt: viele Anfragen zu niedrigem Leadpreis.",
     proven: true,
     enabled: true,
     sort: 10,
@@ -181,7 +181,7 @@ export function previewBooking(current: BudgetLine[], add: BudgetLine, ctx: Budg
     bookingPricing,
     manualReason,
     leadsNew: cplNew && cplNew > 0 ? Math.round((add.dailyBudget * PRICE_LIST.daysPerMonth) / cplNew) : null,
-    guarantee: hasGuarantee(add.product),
+    guarantee: ctx.garantien !== false && hasGuarantee(add.product),
     changed: true,
   };
 }

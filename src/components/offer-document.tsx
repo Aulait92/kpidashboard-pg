@@ -39,7 +39,7 @@ import {
   type OfferTerm,
 } from "@/lib/offer-pricing";
 // Ab wann und für welche Produkte die Garantien gelten (gleiche Regel wie die automatische Prüfung)
-import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
+import { GUARANTEES_FROM, angebotMitGarantien, isGuaranteeProduct } from "@/lib/garantien";
 import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
 import { ersteWocheAus, ersteWocheBetrag, ersteWocheName, ersteWocheSteuerKurz, ersteWocheZahlen, eurCent, ERSTE_WOCHE_ABBUCHUNG } from "@/lib/ppl/erste-woche-shared";
@@ -251,6 +251,9 @@ export function OfferDocument({
   const serviceOnly = offer.package === "service";
   // Pay-per-Lead + Software (Ole, 19.11.2026): nur Software, keine Einrichtung, kein Werbebudget, keine Garantien
   const ppl = offer.package === PPL_SOFTWARE;
+  // Abschnitt 2.2 Garantie(n) gibt es nur in Angeboten vor GUARANTEES_UNTIL (Ole, 22.11.2026: ohne Garantie verkaufen)
+  const mitGarantieAbschnitt =
+    !ppl && angebotMitGarantien(offer.createdAt) && (offer.createdAt < GUARANTEES_FROM || products.some((p) => isGuaranteeProduct(p.name)));
   const paketName = ppl ? "Software" : serviceOnly ? "Betreuung" : "Betreuung + Software";
   const list = computeOfferPrice({ package: serviceOnly ? "service" : "software", term, products });
   const extra = Math.max(0, products.length - 1);
@@ -778,7 +781,8 @@ export function OfferDocument({
                   : ""
               }`}
         </p>
-        {offer.createdAt < GUARANTEES_FROM ? (
+        {/* Angebote ab GUARANTEES_UNTIL (22.11.2026) ohne Garantien; ältere behalten ihren Abschnitt */}
+        {!angebotMitGarantien(offer.createdAt) ? null : offer.createdAt < GUARANTEES_FROM ? (
           <>
             <H3>2.2 Garantie</H3>
             <p className="text-[#374151]">
@@ -828,7 +832,8 @@ export function OfferDocument({
         )}
         {offer.specialTerms ? (
           <>
-            <H3>2.3 Sondervereinbarung</H3>
+            {/* ältere Angebote behalten ihre Nummer 2.3 */}
+            <H3>{mitGarantieAbschnitt || angebotMitGarantien(offer.createdAt) ? "2.3" : "2.2"} Sondervereinbarung</H3>
             <p className="whitespace-pre-wrap rounded-lg border-l-4 border-[#2563EB] bg-[#f3f6fd] px-4 py-3 text-[#111827]">
               {withBold(offer.specialTerms)}
             </p>
