@@ -815,6 +815,24 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "vertrieb-dsgvo": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebDsgvoDiagnose(p),
   "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
   "push-geraete": async () => (await import("@/lib/ops/push-geraete")).pushGeraeteDiagnose(),
+  // PKV-Leads nach Beitragsband und Ergebnis (Ole, 22.11.2026: Funnel-Grenze 650 → 700), nur Anzahlen, ?tage=60
+  "pkv-beitrag": async (p) => {
+    const tage = Math.min(180, Math.max(1, Number(p.get("tage") ?? 60) || 60));
+    const rows = await prisma.poolLead.findMany({
+      where: { productKey: { contains: "PKV", mode: "insensitive" }, createdAt: { gte: new Date(Date.now() - tage * 86_400_000) } },
+      select: { contribution: true, status: true, answers: true },
+    });
+    const band = (c: number | null) => (c == null ? "ohne" : c < 650 ? "<650" : c < 700 ? "650-699" : c < 800 ? "700-799" : "800+");
+    const out: Record<string, Record<string, Record<string, number>>> = {};
+    for (const r of rows) {
+      const funnel = JSON.stringify(r.answers ?? "").includes("pkv-tarife.com") ? "eigener Funnel" : "andere";
+      const b = band(r.contribution);
+      out[funnel] ??= {};
+      out[funnel][b] ??= {};
+      out[funnel][b][r.status] = (out[funnel][b][r.status] ?? 0) + 1;
+    }
+    return { tage, gesamt: rows.length, nachQuelleBandStatus: out };
+  },
   "lead-felder": async (p) => (await import("@/lib/ops/lead-felder")).leadFelderDiagnose(p),
   // Eingänge je Tag und Kanal für ein Produkt (Media Buyer zählt nur adChannel „Meta“), ?produkt=Wechsel&tage=14
   "leads-je-tag": async (p) => {
