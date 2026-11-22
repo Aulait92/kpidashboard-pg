@@ -126,7 +126,11 @@ describe("Texte an Kfz-Leads", () => {
     expect(KNOPF_UNTERLAGEN_SENDEN.length).toBeLessThanOrEqual(20);
     // Formular (Einwilligung) für Kfz genau wie für alle anderen (Ole, 22.11.2026: keine neue Fassung)
     expect(formularDaten(KFZ, "https://x.de/d")).toEqual(formularDaten({ ...KFZ, kfz: false }, "https://x.de/d"));
-    expect(bestaetigung(KFZ, 1, true).text).not.toMatch(/Kfz/);
+    expect(bestaetigung(KFZ, 1, true).text).not.toMatch(/etwa Kfz/);
+    // Kfz: nachfragen, ob Fahrzeugschein und Rechnung dabei sind, statt „nichts weiter tun“ (Ole, 22.11.2026)
+    expect(bestaetigung(KFZ, 1, true).text).toContain("*Sind Ihr Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung beide dabei?* Falls etwas fehlt, laden Sie es gern noch hoch.");
+    expect(bestaetigung(KFZ, 1, true).text).not.toMatch(/nichts weiter tun/);
+    expect(bestaetigung({ ...KFZ, an: "du" }, 1, true).text).toContain("*Sind dein Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung beide dabei?*");
     expect(bestaetigung({ ...KFZ, kfz: false }, 1, true).text).toMatch(/etwa Kfz oder Hausrat/);
   });
 

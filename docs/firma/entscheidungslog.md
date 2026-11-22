@@ -185,3 +185,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **Pay-per-Lead + Software** live (nur monatlich kündbar, erste Woche im Angebot, USt-Umbau, AGB „Umsatzsteuer auf Leads“).
 - **Ergebnis-Präsentation** nach jedem Meeting/Team-Einsatz (README).
 - **22.11.2026, Partnerfrage:** im WhatsApp-Assistenten immer als eigene Frage vor dem Terminvorschlag, Splittest `partner_vor_termin` beendet (Fassung B aus). Ole: „ich möchte die frage nach partner immer eigenständig vor der buchung“.
+- **22.11.2026, Kfz-Unterlagen prüfen:** Keine KI-Einordnung hochgeladener Fotos ohne ZDR-Nachweis (Datenschutz: Rot, K2,
+  Fassung `.s1` ohne Gesundheitssatz). Stattdessen fragt die Bestätigung bei Kfz-Leads nach, ob Fahrzeugschein und letzte
+  Rechnung beide dabei sind, mit Knopf „Weitere senden“. Später möglich: lokale Texterkennung ohne Drittanbieter (1–3 Tage)
+  oder KI-Einordnung nach ZDR-Nachweis mit Auflagen A bis F (nur `.gN`, ein Aufzählungsfeld, Bremse, VVT/DSFA).

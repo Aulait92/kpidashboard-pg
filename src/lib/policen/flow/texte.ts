@@ -235,8 +235,22 @@ export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean): Nachri
   const teile = [
     `✅ Danke, ${angekommen}`,
     ...(ki ? [] : [OHNE_KI_SATZ]),
-    a(an, `${k.name} sieht sie sich ${wann} an und versucht, dir Geld zu sparen. Bis dahin musst du nichts weiter tun.`, `${k.name} sieht sie sich ${wann} an und versucht, Ihnen Geld zu sparen. Bis dahin müssen Sie nichts weiter tun.`),
-    k.kfz ? NOCH_EINE_POLICE_KFZ : NOCH_EINE_POLICE,
+    // Kfz (Ole, 22.11.2026: „checken, ob Fahrzeugschein und Rechnung schon hochgeladen sind, sonst auffordern“): Die
+    // App liest Fotos ohne ZDR-Nachweis nicht per KI ein (Datenschutz-Prüfung 22.11.2026, K2), darum fragt sie nach
+    // und lädt zum Nachreichen ein (Knopf „Weitere senden“), statt „Bis dahin müssen Sie nichts weiter tun“.
+    ...(k.kfz
+      ? [
+          a(
+            an,
+            `*Sind dein Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung beide dabei?* Falls etwas fehlt, lade es gern noch hoch. Mit beidem kann ${k.name} deinen Beitrag schon ${wann} rechnen.`,
+            `*Sind Ihr Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung beide dabei?* Falls etwas fehlt, laden Sie es gern noch hoch. Mit beidem kann ${k.name} Ihren Beitrag schon ${wann} rechnen.`,
+          ),
+          NOCH_EINE_POLICE_KFZ,
+        ]
+      : [
+          a(an, `${k.name} sieht sie sich ${wann} an und versucht, dir Geld zu sparen. Bis dahin musst du nichts weiter tun.`, `${k.name} sieht sie sich ${wann} an und versucht, Ihnen Geld zu sparen. Bis dahin müssen Sie nichts weiter tun.`),
+          NOCH_EINE_POLICE,
+        ]),
   ];
   return { text: teile.join("\n\n"), fusszeile: WIDERRUF_FUSSZEILE };
 }
