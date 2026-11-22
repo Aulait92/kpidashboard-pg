@@ -19,7 +19,7 @@
 import type { Ansprache } from "@/lib/ansprache";
 import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 import { CALL_ATTEMPTS_TARGET, callPlanNote, isCallPlanNote, nextCallAttemptAt } from "@/lib/call-plan";
-import { CHAT_RUHT_STUNDEN, SEQUENCES, SONNTAG_NACHFASS_STUNDEN, TERMIN_NACHFASS_STUNDEN, istAngebotsAbfolge, istBedenkzeitAbfolge, naechstesSendefenster, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
+import { CHAT_RUHT_ABSTAND_MS, CHAT_RUHT_STUNDEN, SEQUENCES, SONNTAG_NACHFASS_STUNDEN, TERMIN_NACHFASS_STUNDEN, istAngebotsAbfolge, istBedenkzeitAbfolge, naechstesSendefenster, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
 import { istRueckrufNotiz } from "@/lib/rueckruf";
 import { erinnerungsPlan, gleichText, startPush, stundeText, vortagText } from "@/lib/showup";
 import { anrufPush } from "@/lib/anruf-ausloeser";
@@ -222,7 +222,10 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
     const step = def.steps[i];
     // Bedenkzeit bzw. Pause (P5): Die Tage zählen ab dem Neustart
     const base = new Date((a.neustartAt ?? a.startedAt).getTime() + shift);
-    const roh = i === a.step ? fruehestens(nextAt, p.now) : new Date(Math.max(base.getTime() + step.day * DAY, prev.getTime() + 2 * HOUR));
+    // „Chat ruht“: mindestens 5 Std. Abstand, wenn Schritte zusammenrücken (CHAT_RUHT_ABSTAND_MS); übersprungene zählen nicht
+    const vorherUebersprungen = i > a.step && a.uebersprungen?.includes(i - 1);
+    const abstand = a.kind === "silent" && !vorherUebersprungen ? CHAT_RUHT_ABSTAND_MS : 2 * HOUR;
+    const roh = i === a.step ? fruehestens(nextAt, p.now) : new Date(Math.max(base.getTime() + step.day * DAY, prev.getTime() + abstand));
     // Angebot (P3): WhatsApp und E-Mail gehen erst im Versandfenster (Mo bis Sa 9 bis 19 Uhr) raus
     const angebot = istAngebotsAbfolge(a.kind);
     // „Chat ruht“: wie runSequences Mo bis Sa 8 bis 19 Uhr (Termin-Nachfassen 8 bis 20 Uhr), sonntags 10 bis 18 Uhr

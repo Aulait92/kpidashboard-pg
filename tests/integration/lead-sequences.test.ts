@@ -228,11 +228,11 @@ describe("Nachfass-Abfolgen", () => {
     await runSequences(new Date(later.getTime() + 22 * HOUR)); // Mi 09:00
     expect(mine()).toHaveLength(2);
     expect(mine()[1][0]).toMatchObject({ purpose: "followup_nudge" });
-    // nächster Schritt (20 Std. = 07:00, schon fällig) erst nach dem Mindestabstand von 2 Std.
+    // nächster Schritt (20 Std. = 07:00, schon fällig) erst nach dem Mindestabstand von 5 Std. (Ole, 22.11.2026)
     const mid = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
-    expect(mid.nextAt?.getTime()).toBe(later.getTime() + 24 * HOUR);
+    expect(mid.nextAt?.getTime()).toBe(later.getTime() + 27 * HOUR);
     // ohne offenes 24h-Fenster (keine Konversation) → übersprungen, keine Vorlage doppelt
-    await runSequences(new Date(later.getTime() + 24 * HOUR));
+    await runSequences(new Date(later.getTime() + 27 * HOUR));
     expect(mine()).toHaveLength(2);
     await runSequences(new Date(later.getTime() + 3 * DAY));
     expect(mine()).toHaveLength(3);

@@ -452,6 +452,12 @@ export const TERMIN_NACHFASS_STUNDEN = { von: 8, bis: 20 } as const;
 export const SONNTAG_NACHFASS_STUNDEN = { von: 10, bis: 18 } as const;
 /** „Chat ruht“ werktags ab 8 Uhr (Ole, 22.11.2026: „ja, generell ab 8 Uhr“), sonst wie das Versandfenster bis 19 Uhr. */
 export const CHAT_RUHT_STUNDEN = { von: 8, bis: 19 } as const;
+/**
+ * Mindestabstand zwischen zwei Nachrichten von „Chat ruht“ (Ole, 22.11.2026: „die zweite Nachricht um 11 Uhr ist zu nah an
+ * der ersten, lieber am Nachmittag“): Rücken Schritte wegen der Versandzeiten zusammen (z. B. 8 Uhr und 10 Uhr),
+ * kommt der nächste frühestens 5 Stunden später. Andere Abfolgen: 2 Stunden (MIN_GAP_MS).
+ */
+export const CHAT_RUHT_ABSTAND_MS = 5 * 60 * 60 * 1000;
 
 async function enabledFor(customerId: string): Promise<boolean> {
   const agent = await prisma.agentConfig.findUnique({ where: { customerId }, select: { active: true, followUpSequencesEnabled: true } });
@@ -814,7 +820,8 @@ export async function runSequences(now = new Date(), opts: { nurId?: string; sof
     }
     // Schritt beanspruchen (nie doppelt, auch bei parallelen Läufen).
     const next = def.steps[seq.step + 1];
-    let naechsterAt = next ? new Date(Math.max((seq.neustartAt ?? seq.startedAt).getTime() + next.day * DAY, now.getTime() + MIN_GAP_MS)) : null;
+    const abstand = seq.kind === "silent" && !skip ? CHAT_RUHT_ABSTAND_MS : MIN_GAP_MS;
+    let naechsterAt = next ? new Date(Math.max((seq.neustartAt ?? seq.startedAt).getTime() + next.day * DAY, now.getTime() + abstand)) : null;
     // „Chat ruht“: WhatsApp-Schritt noch im 24-Stunden-Fenster statt am nächsten Morgen danach (imChatFensterVorziehen)
     if (naechsterAt && next?.action === "whatsapp" && seq.kind === "silent") {
       const conv = await prisma.conversation.findFirst({ where: { leadId: seq.leadId }, orderBy: { lastMessageAt: "desc" }, select: { windowExpiresAt: true } }).catch(() => null);
