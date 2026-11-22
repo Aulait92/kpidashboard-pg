@@ -1,11 +1,13 @@
 // Diagnose-Abfrage „belege“ (Ole, 22.11.2026): nur lesend. Stand des Belegabgleichs mit GetMyInvoices.
-//   GET /api/ops/diagnose?q=belege
+//   GET /api/ops/diagnose?q=belege[&anbieter=slack]  (mit anbieter: Umsätze und Belege dieses Anbieters samt Zuordnung)
 
 import { prisma } from "@/lib/prisma";
 import { ausgabenOhneBeleg } from "@/lib/belege/server";
 import { gmiKonfiguriert } from "@/lib/belege/gmi";
 
-export async function belegeStatus() {
+export async function belegeStatus(p?: URLSearchParams) {
+  const anbieter = (p?.get("anbieter") ?? "").trim();
+  if (anbieter.length >= 3) return belegeJeAnbieter(anbieter);
   const [gesamt, zugeordnet, jeTyp, ohne, letzte, frei] = await Promise.all([
     prisma.beleg.count(),
     prisma.beleg.count({ where: { bankTransactionId: { not: null } } }),
@@ -37,5 +39,20 @@ export async function belegeStatus() {
       zuordnung: b.zuordnung,
     })),
     belegeOhneZahlung: frei.map((b) => `${b.datum?.toISOString().slice(0, 10) ?? "?"} ${b.firma ?? b.dateiname ?? "?"} ${b.brutto ?? "?"} ${b.waehrung}${b.ocrFertig ? "" : " (noch nicht ausgelesen)"} ${b.typ}`),
+  };
+}
+
+async function belegeJeAnbieter(name: string) {
+  const [umsaetze, belege] = await Promise.all([
+    prisma.bankTransaction.findMany({
+      where: { amount: { lt: 0 }, OR: [{ counterparty: { contains: name, mode: "insensitive" } }, { purpose: { contains: name, mode: "insensitive" } }] },
+      orderBy: { bookingDate: "asc" },
+      select: { bookingDate: true, amount: true, accountKey: true, status: true, counterparty: true, beleg: { select: { firma: true, nummer: true, datum: true, brutto: true, waehrung: true } } },
+    }),
+    prisma.beleg.findMany({ where: { firma: { contains: name, mode: "insensitive" } }, orderBy: { datum: "asc" }, select: { gmiUid: true, typ: true, nummer: true, datum: true, brutto: true, waehrung: true, bankTransactionId: true, zuordnung: true } }),
+  ]);
+  return {
+    umsaetze: umsaetze.map((u) => `${u.bookingDate.toISOString().slice(0, 10)} ${u.amount} ${u.accountKey} ${u.status} ${u.counterparty ?? ""} -> ${u.beleg ? `${u.beleg.nummer ?? ""} ${u.beleg.datum?.toISOString().slice(0, 10) ?? ""} ${u.beleg.brutto} ${u.beleg.waehrung}` : "ohne Beleg"}`),
+    belege: belege.map((b) => `${b.datum?.toISOString().slice(0, 10) ?? "?"} ${b.brutto} ${b.waehrung} ${b.typ} ${b.nummer ?? ""} uid=${b.gmiUid} ${b.bankTransactionId ? `zugeordnet (${b.zuordnung})` : "frei"}`),
   };
 }
