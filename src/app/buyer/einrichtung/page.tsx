@@ -174,6 +174,10 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       webseite: web?.sourceUrl || web?.impressumUrl || null,
       allianzVerbunden: !!calendar.status.allianz,
     });
+  // W2 (Ole, 22.11.2026): Allianz-Online-Kalender nur zeigen, wenn Allianz möglich ist. Sind Versicherer bzw.
+  // Gesellschaften bekannt und keiner ist die Allianz (z. B. ERGO-Vertreter), fällt die Option weg; unbekannt: anbieten.
+  const genannteGesellschaften = [...(erstinfo?.daten.versicherer ?? []), ...(vertrieb?.vertrieb.gesellschaften ?? [])];
+  const allianzMoeglich = !makler && (!!calendar.status.allianz || !genannteGesellschaften.length || genannteGesellschaften.some((g) => /allianz/i.test(g)));
   // Ihre Angaben (Schritt 1): einmal fragen, vorausgefüllt aus Erstinformation, Impressum, Angebot und Vertriebskontakt
   let angaben: AngabenInitial | null = null;
   if (software && erstinfo) {
@@ -332,7 +336,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 allianzAction={connectAllianzAction}
                 disconnectAllianzAction={disconnectAllianzAction}
                 disconnectNativeAction={disconnectNativeCalendarAction}
-                allianzOption={!makler}
+                allianzOption={allianzMoeglich}
               />
             )}
             <div className="mt-6 border-t border-[color:var(--border)] pt-5">
@@ -394,8 +398,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <StepExits
                 laterHref={laterHref("calendar")}
                 readOnly={readOnly}
-                // Allianz: die Vertreternummer klappt immer, „erlaubt das nicht“ wäre eine Sackgasse
-                skips={allianz ? [] : [{ kind: "skip:calendar:gesellschaft", label: "Mein Versicherer erlaubt das nicht" }]}
+                // Allianz: die Vertreternummer klappt immer, „erlaubt das nicht“ wäre eine Sackgasse. Makler (W3, Ole
+                // 22.11.2026): kein Versicherer, der den Kalender verbieten könnte, also kein Ausweg zum Überspringen
+                skips={allianz || makler ? [] : [{ kind: "skip:calendar:gesellschaft", label: "Mein Versicherer erlaubt das nicht" }]}
               />
             ) : null}
           </Step>
