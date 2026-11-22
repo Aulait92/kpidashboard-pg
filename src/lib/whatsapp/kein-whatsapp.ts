@@ -393,13 +393,16 @@ export async function keinWhatsAppJeKunde(from?: Date): Promise<KeinWhatsAppZeil
 /**
  * Nummer korrigiert (Ole, 22.11.2026: „bei ihm hat sich 330 nach der 49 geschlichen … korrigieren und neu versuchen per
  * WhatsApp“): Hatte der Lead nie selbst geschrieben und galt als „kein WhatsApp“, fällt die Sperre weg, der Assistent
- * ist wieder an und die App versucht es sofort an die neue Nummer: mit anstehendem Termin die Terminbestätigung, sonst
- * das Erstanschreiben. Fehler werden nur gemeldet. Rückgabe: was versucht wurde.
+ * ist wieder an und die App versucht es sofort an die neue Nummer: kam das Erstanschreiben nie an, zuerst das
+ * Erstanschreiben (auch mit Termin, dann ohne Terminfrage); sonst mit anstehendem Termin die Terminbestätigung. Fehler werden nur gemeldet. Rückgabe: was versucht wurde.
  */
 export async function nachNummernKorrektur(leadId: string, now = new Date()): Promise<"termin" | "erstanschreiben" | "nichts"> {
   try {
-    const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, name: true, phone: true, waUnavailableAt: true, erasedAt: true, isTest: true } });
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, name: true, phone: true, waUnavailableAt: true, erasedAt: true, isTest: true, outreachStatus: true } });
     if (!lead?.phone || lead.erasedAt || !lead.waUnavailableAt) return "nichts";
+    // Kam das Erstanschreiben nie an, geht es zuerst raus, auch mit Termin (Ole, 22.11.2026: „die erste Nachricht war doch,
+    // wann die Versicherung ausläuft, die war doch gut“; nach der Buchung ohne Terminfrage, lib/whatsapp/outreach.ts)
+    const erstOffen = !["sent", "sent_booked"].includes(lead.outreachStatus ?? "");
     await prisma.lead.update({ where: { id: lead.id }, data: { waUnavailableAt: null, outreachAt: null, outreachStatus: null } });
     await prisma.conversation.updateMany({ where: { customerId: lead.customerId, leadId: lead.id }, data: { botActive: true } });
     const termin = await prisma.appointment.findFirst({
@@ -407,7 +410,7 @@ export async function nachNummernKorrektur(leadId: string, now = new Date()): Pr
       orderBy: { startsAt: "asc" },
       select: { startsAt: true, mode: true, meetUrl: true, ort: true },
     });
-    if (termin) {
+    if (termin && !erstOffen) {
       // Termin steht schon: Erstanschreiben überspringen, Bestätigung an die neue Nummer
       await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: now, outreachStatus: "sent_booked" } });
       const { sendBookingConfirmation } = await import("@/lib/whatsapp/reminders");
