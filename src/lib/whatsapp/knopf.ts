@@ -213,6 +213,31 @@ async function markLostKeinBedarf(leadId: string, now: Date): Promise<boolean> {
  * Buchungslink ab dem 2. „Andere Zeit“ senden (lib/whatsapp/buchungslink.ts). false = nichts gesendet: erstes Mal, schon
  * ein kommender Termin, keine Buchungsseite (kein Kurzname oder Kalender nicht verbunden) bzw. Fehler.
  */
+/**
+ * Buchungslink nach einer Absage ohne Wunschzeit (absageOhneWunsch, Ole 22.11.2026), einmal je Chat (kein zweites Mal,
+ * wenn der Link schon draußen ist). true = gesendet.
+ */
+export async function buchungslinkNachAbsage(conversationId: string, now = new Date()): Promise<boolean> {
+  try {
+    const b = await import("@/lib/whatsapp/buchungslink");
+    const { streckenKontext } = await import("@/lib/whatsapp/termin-strecke");
+    const k = await streckenKontext(conversationId, now);
+    if (!k || k.termin) return false;
+    const cal = await prisma.calendarConnection.findUnique({ where: { customerId: k.customerId }, select: { bookingSlug: true, status: true } });
+    const url = cal?.status === "connected" ? b.chatBuchungUrl(cal.bookingSlug, conversationId) : null;
+    if (!url) return false;
+    const schon = await prisma.message.count({ where: { conversationId, direction: "outbound", body: { contains: `/book/${cal!.bookingSlug}` } } });
+    const kurz = await prisma.message.count({ where: { conversationId, direction: "outbound", body: { contains: `?c=${b.chatBuchungToken(conversationId)}` } } });
+    if (schon + kurz > 0) return false;
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+    await sendWhatsAppMessage({ customerId: k.customerId, to: k.phone, body: b.buchungslinkText(k.an, k.person, url, "a"), sentBy: "bot" });
+    return true;
+  } catch (e) {
+    console.error("[knopf buchungslink absage]", e instanceof Error ? e.message.slice(0, 120) : e);
+    return false;
+  }
+}
+
 export async function buchungslinkSenden(conversationId: string, now = new Date()): Promise<boolean> {
   try {
     const b = await import("@/lib/whatsapp/buchungslink");

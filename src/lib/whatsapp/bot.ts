@@ -459,6 +459,7 @@ export function buildSystemPrompt(
       "- Sobald die Fragen vor dem Termin geklärt sind (Frageplan oben, sonst meist nach 1 bis 2 Antworten), setze qualifiziert=true und mach den Terminvorschlag. Möchte der Lead schon vorher von sich aus einen Termin, mach ihn sofort.",
       "- Halte Infos mit record_qualification fest.",
       "- Erfinde niemals Termine oder Uhrzeiten: nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
+      "- Passen dem Lead die vorgeschlagenen Zeiten nicht (auch „melde mich“, „komme auf Sie zu“), gib nicht auf: frag nach seinem Wunschtag bzw. der Tageszeit und biete mit termin_vorschlagen zwei andere Zeiten an. Verabschiede dich nie ohne ein neues Angebot, außer er hat ausdrücklich kein Interesse.",
       "- Termine finden per Video statt (der Berater zeigt die Angebote am Bildschirm).",
       terminArtRegel(an, formate),
       "- Bei Telefonterminen ruft der Berater auf dieser Nummer an, sofern keine andere bekannt ist.",
@@ -917,6 +918,18 @@ export async function runBotTurn(
   // Knopf bzw. eindeutig getippt („ja, meine Frau“, „nein, allein“): speichern, dann der Terminvorschlag der App (ohne
   // Assistent). Terminwunsch bzw. Rückfrage: nie blockieren, der Assistent bucht bzw. schlägt vor (PARTNER_VOR_HINWEIS),
   // eine ausdrückliche Angabe wird trotzdem festgehalten. Ohne Antwort: Terminvorschlag nach 30 Min. (partnerNachholen).
+  // Absage ohne Wunschzeit auf den Terminvorschlag („passt nicht, komme ggf. auf Sie zu“): nicht aufgeben, sondern
+  // Buchungslink und Wunschtag anbieten, einmal je Chat, ohne Assistent (Ole, 22.11.2026)
+  if (!upcoming && vorschlagStarts.length && latest?.direction === "inbound" && !opts.anstoss && !opts.knopfZeit) {
+    const { absageOhneWunsch } = await import("@/lib/whatsapp/buchungslink");
+    if (absageOhneWunsch(latest.body)) {
+      const { buchungslinkNachAbsage } = await import("@/lib/whatsapp/knopf");
+      if (await buchungslinkNachAbsage(conversation.id)) {
+        logTestLead(lead, "buchungslink nach absage");
+        return;
+      }
+    }
+  }
   const partnerVor = upcoming ? null : await strecke.partnerVorStand(conversation.id);
   let partnerJetzt: { art: "mit" | "allein" | "ohne_antwort" } | null = null;
   let partnerHinweis: string | null = null;
