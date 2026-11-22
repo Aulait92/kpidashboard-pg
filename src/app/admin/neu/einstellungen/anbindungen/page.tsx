@@ -16,6 +16,7 @@ import { auslesenStatus, einstellung as auslesenEinstellung } from "@/lib/police
 import { pauseAufhebenAction, zdrNachweisAction } from "./policen-actions";
 import { placesDailyLimit, placesKey, placesUsedToday } from "@/lib/vertrieb/contact-enrich";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
+import { zugang as carddavZugang } from "@/lib/carddav/dav";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Anbindungen & Import | performancegrowth Admin" };
@@ -121,6 +122,8 @@ export default async function Page() {
   const metaOk = diag.tokenSet && diag.appSecretSet && diag.verifyTokenSet && !diag.missing.includes("leads_retrieval");
   const adresse = (url: string | null) => (url ? <CopyField value={url} /> : <p className="text-amber-700">VERTRIEB_WEBHOOK_TOKEN fehlt in Railway.</p>);
   const policenOk = !!policen && policen.an && !policen.pausiert;
+  // Adressbuch fürs iPhone (lib/carddav/dav.ts): Anrufer aus dem Vertrieb erkennen. Passwort nie anzeigen.
+  const carddav = carddavZugang(process.env);
 
   return (
     <EinstellungSeite pfad="/admin/neu/einstellungen/anbindungen">
@@ -266,6 +269,33 @@ export default async function Page() {
               </div>
             </Quelle>
           ) : null}
+        </ul>
+      </Card>
+
+      <Card>
+        <CardHeader title="Kontakte aufs iPhone" />
+        <ul className={LISTE}>
+          <Quelle
+            name="Adressbuch Vertrieb"
+            was="Alle Vertriebskontakte mit Nummer als Adressbuch auf dem iPhone: Ruft jemand zurück, steht sein Name da. Nur lesen."
+            ok={!!carddav}
+            status={carddav ? "Bereit zum Einrichten" : "Aus: CARDDAV_PASSWORD fehlt in Railway"}
+            funktion="page-carddav--kontakte-aufs-iphone-adressbuch-vertrieb"
+          >
+            <p className="text-[color:var(--muted)]">Server</p>
+            <CopyField value={`${base}/api/carddav`} />
+            <p className="text-[color:var(--muted)]">Benutzername</p>
+            <CopyField value={carddav?.benutzer ?? "vertrieb"} />
+            <Schritte
+              steps={[
+                "iPhone: Einstellungen › Apps › Kontakte › Kontakte-Accounts › Account hinzufügen › Andere › CardDAV-Account hinzufügen",
+                "Server und Benutzername von hier, Passwort aus Railway (Variable CARDDAV_PASSWORD)",
+                "Beschreibung „Vertrieb performancegrowth“, Sichern",
+                "Fertig: Anrufer aus dem Vertrieb werden erkannt, Änderungen kommen automatisch",
+              ]}
+            />
+            <p className="text-[color:var(--muted)]">Liste ausblenden: in der Kontakte-App oben links auf Listen, dort „Vertrieb performancegrowth“ abwählen. Anrufer werden trotzdem erkannt.</p>
+          </Quelle>
         </ul>
       </Card>
 

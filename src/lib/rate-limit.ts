@@ -46,6 +46,12 @@ export function hit(bucket: string, key: string, rule: RateLimitRule, now = Date
   return { ok, remaining: Math.max(0, rule.limit - e.count), retryAfterSec: ok ? 0 : Math.max(1, Math.ceil((e.resetAt - now) / 1000)) };
 }
 
+/** Ist (bucket, key) gerade gesperrt? Zählt nicht mit (z. B. Sperre nach zu vielen Fehlversuchen vor der Prüfung). */
+export function isLimited(bucket: string, key: string, rule: RateLimitRule, now = Date.now()): boolean {
+  const e = store.get(`${bucket}:${key}`);
+  return !!e && e.resetAt > now && e.count >= rule.limit;
+}
+
 /** Nur für Tests. */
 export function resetRateLimits() {
   store.clear();
@@ -59,6 +65,8 @@ export const LIMITS = {
   // Anmeldung: zusätzlich zur Sperre je E-Mail (10 Fehlversuche / 15 Min) je IP
   login: { limit: 30, windowMs: 15 * MIN },
   totp: { limit: 20, windowMs: 15 * MIN },
+  // Adressbuch fürs iPhone (CardDAV, lib/carddav): Fehlversuche je IP, danach 15 Minuten gesperrt
+  carddavLogin: { limit: 10, windowMs: 15 * MIN },
   passwordReset: { limit: 5, windowMs: 15 * MIN },
   // KI (kostet je Aufruf)
   aiHelp: { limit: 30, windowMs: HOUR },
