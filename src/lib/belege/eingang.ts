@@ -67,7 +67,7 @@ export async function belegePostfachAbholen(): Promise<{ gesehen: number; verarb
   const { Resend } = await import("resend");
   const r = new Resend(apiKey);
   const res = await r.emails.receiving.list({ limit: 100 });
-  if (res.error || !res.data) throw new Error(`resend_receiving_list:${res.error?.name ?? "leer"}`);
+  if (res.error || !res.data) throw new Error(`resend_receiving_list:${res.error?.name ?? "leer"} (Schlüssel: ${process.env.RESEND_EMPFANG_API_KEY?.trim() ? "RESEND_EMPFANG_API_KEY" : "RESEND_API_KEY"})`);
   const fuerBelege = res.data.data.filter((m) => (m.to ?? []).some((a) => istBelegAdresse(a)));
   if (!fuerBelege.length) return { gesehen: 0, verarbeitet: 0 };
   const bekannt = new Set(
