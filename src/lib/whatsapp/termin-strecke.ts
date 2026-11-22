@@ -888,7 +888,7 @@ export async function sendePartnerFrage(k: StreckenKontext, prefix?: string | nu
   if (stand.partnerFrageAt || stand.angebotsfragenAt || stand.vertragsfrageAt || stand.policenBitteAt || stand.abschlussAt) return false;
   const bekannt = partnerBekannt(k.formular, k.angaben);
   await merke(k.conversationId, STRECKE.partnerFrage, { appointmentId: k.termin.id, bekannt });
-  await sende(k, [prefix, partnerFrage(k.an, bekannt)].filter(Boolean).join(" "), PARTNER_KNOEPFE);
+  await sende(k, [prefix, partnerFrage(k.an, bekannt, k.source)].filter(Boolean).join(" "), PARTNER_KNOEPFE);
   return true;
 }
 

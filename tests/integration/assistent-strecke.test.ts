@@ -469,7 +469,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     st.ai = 0;
     await knopf(phone, "komplettcheck:ja", "Ja, gern");
     const [frage] = gesendet().slice(ab);
-    expect(frage.body).toBe("Super! Entscheiden Sie gemeinsam mit Ihrem Partner?");
+    expect(frage.body).toBe("Super! Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner?");
     expect(frage.buttons?.map((b) => b.id)).toEqual(["partner:ja", "partner:nein"]);
     await knopf(phone, "partner:ja", "Ja, gemeinsam");
     expect(st.ai).toBe(0);
@@ -504,7 +504,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       st.queue.push([{ type: "tool_use", id: "t1", name: "termin_vorschlagen", input: {} }], [{ type: "text", text: "(ignoriert)" }]);
       await runBotTurn(x.conv.id);
       const frage = gesendet().at(-1)!;
-      expect(frage.body).toBe("Danke! Entscheiden Sie gemeinsam mit Ihrem Partner?");
+      expect(frage.body).toBe("Danke! Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner?");
       expect(frage.buttons!.map((b) => b.id)).toEqual(["partner:ja", "partner:nein"]);
       expect(await prisma.message.count({ where: { conversationId: x.conv.id, kind: STRECKE.vorschlag } })).toBe(0);
       expect(await zuteilung(x.lead.id)).toMatchObject({ variante: "a" });

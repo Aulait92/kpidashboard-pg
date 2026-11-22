@@ -416,15 +416,27 @@ export function partnerBekannt(formular: Form, angaben?: unknown): boolean {
   return PARTNER_RE.test(t) && !SINGLE_RE.test(t);
 }
 
-/** Die Frage (ohne Einleitung). Ja heißt in beiden Fassungen: jemand entscheidet mit. */
-export function partnerFrage(an: Ansprache, bekannt: boolean): string {
-  return bekannt
-    ? a(an, "Entscheidest du gemeinsam mit deinem Partner?", "Entscheiden Sie gemeinsam mit Ihrem Partner?")
+/** Keine Versicherung (Sparen, Anlage, Finanzierung): dann ohne „bei der Versicherung“. */
+const KEINE_VERSICHERUNG_RE = /spar|anlage|invest|fonds|etf|finanzier|kredit|darlehen|immobil|bausp|teilverkauf/i;
+
+/**
+ * Die Frage (ohne Einleitung). Ja heißt in beiden Fassungen: jemand entscheidet mit. Mit „bei der Versicherung“, damit
+ * klar ist, worum es geht (Ole, 22.11.2026); `source` = Produkt des Leads (ohne Angabe: Versicherung).
+ */
+export function partnerFrage(an: Ansprache, bekannt: boolean, source?: string | null): string {
+  const vers = !(source && KEINE_VERSICHERUNG_RE.test(source));
+  if (bekannt) {
+    return vers
+      ? a(an, "Entscheidest du bei der Versicherung gemeinsam mit deinem Partner?", "Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner?")
+      : a(an, "Entscheidest du gemeinsam mit deinem Partner?", "Entscheiden Sie gemeinsam mit Ihrem Partner?");
+  }
+  return vers
+    ? a(an, "Entscheidet bei der Versicherung noch jemand mit, zum Beispiel dein Partner?", "Entscheidet bei der Versicherung noch jemand mit, zum Beispiel Ihr Partner?")
     : a(an, "Entscheidet noch jemand mit, zum Beispiel dein Partner?", "Entscheidet noch jemand mit, zum Beispiel Ihr Partner?");
 }
 
 /** Erkennt die Frage in einer Nachricht von uns. */
-export const PARTNER_FRAGE_RE = /Entscheidet noch jemand mit|Entscheide(st du|n Sie) gemeinsam mit/;
+export const PARTNER_FRAGE_RE = /Entscheidet (bei der Versicherung )?noch jemand mit|Entscheide(st du|n Sie) (bei der Versicherung )?gemeinsam mit/;
 
 /** Antwort auf die Frage (Einleitung der nächsten Nachricht der Strecke). */
 export function partnerDank(an: Ansprache, mit: boolean): string {
@@ -445,8 +457,8 @@ export function partnerDank(an: Ansprache, mit: boolean): string {
 // Nachholen ohne Antwort termin-strecke.ts (partnerVorStand, runPartnerVorTerminNachholen).
 
 /** Die Frage vor dem Terminvorschlag: „Danke!“ (bzw. eine kurze Antwort des Assistenten) und die Frage. */
-export function partnerVorFrageText(an: Ansprache, bekannt: boolean, einleitung?: string | null): string {
-  return [einleitung?.replace(/\s+/g, " ").trim() || "Danke!", partnerFrage(an, bekannt)].join(" ");
+export function partnerVorFrageText(an: Ansprache, bekannt: boolean, einleitung?: string | null, source?: string | null): string {
+  return [einleitung?.replace(/\s+/g, " ").trim() || "Danke!", partnerFrage(an, bekannt, source)].join(" ");
 }
 
 /** Einleitung des Terminvorschlags nach „Ja, gemeinsam“ (vor der Frage gestellt). */
@@ -455,8 +467,8 @@ export function partnerVorschlagEinleitung(an: Ansprache): string {
 }
 
 /** Fassung b (Splittest partner_vor_termin): Halbsatz am Ende des Terminvorschlags statt eigener Frage. */
-export function partnerSatzImVorschlag(an: Ansprache, bekannt: boolean): string {
-  return `${partnerFrage(an, bekannt)} ${a(an, "Dann wähl gern eine Zeit, die für euch beide passt.", "Dann wählen Sie gern eine Zeit, die für Sie beide passt.")}`;
+export function partnerSatzImVorschlag(an: Ansprache, bekannt: boolean, source?: string | null): string {
+  return `${partnerFrage(an, bekannt, source)} ${a(an, "Dann wähl gern eine Zeit, die für euch beide passt.", "Dann wählen Sie gern eine Zeit, die für Sie beide passt.")}`;
 }
 
 /**

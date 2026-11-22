@@ -1114,10 +1114,10 @@ export async function runBotTurn(
       // Ole, 22.11.2026: „die Frage nach Partner immer eigenständig vor der Buchung“, kein Splittest (Fassung b aus)
       const v: "a" | "b" = "a";
       if (v === "a") {
-        zug.partnerVor = { text: partnerVorFrageText(ansprache, bekannt, typeof input.einleitung === "string" ? input.einleitung : null), bekannt };
+        zug.partnerVor = { text: partnerVorFrageText(ansprache, bekannt, typeof input.einleitung === "string" ? input.einleitung : null, lead?.source ?? null), bekannt };
         return "Die App fragt zuerst kurz, ob noch jemand mitentscheidet, und schickt die Zeiten nach der Antwort selbst. Schreib nichts weiter.";
       }
-      partnerSatz = partnerSatzImVorschlag(ansprache, bekannt);
+      partnerSatz = partnerSatzImVorschlag(ansprache, bekannt, lead?.source ?? null);
     }
     let starts: string[] = Array.isArray(input.starts) ? input.starts.filter((x): x is string => typeof x === "string" && new Date(x).getTime() > now.getTime() + 30 * 60 * 1000) : [];
     if (starts.length < 2) {
