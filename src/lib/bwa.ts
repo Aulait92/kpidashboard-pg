@@ -94,13 +94,27 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
   // ── Bank & Karten (zugeordnete Ausgaben, netto) ──
   const bank = await prisma.bankTransaction.findMany({
     where: { status: "zugeordnet", bookingDate: { gte: from }, amount: { lt: 0 }, costPurpose: { not: null } },
-    select: { id: true, bookingDate: true, amount: true, costPurpose: true, vatIncluded: true, counterparty: true, purpose: true, accountKey: true, rule: { select: { label: true } } },
+    select: {
+      id: true,
+      bookingDate: true,
+      amount: true,
+      costPurpose: true,
+      vatIncluded: true,
+      counterparty: true,
+      purpose: true,
+      accountKey: true,
+      rule: { select: { label: true } },
+      beleg: { select: { gmiUid: true, netto: true, brutto: true, waehrung: true } },
+    },
     orderBy: { bookingDate: "asc" },
   });
   for (const t of bank) {
     const m = t.bookingDate.toISOString().slice(0, 7);
     if (!inRange(m)) continue;
-    const net = netCost(Number(t.amount), t.vatIncluded);
+    // Beleg aus GetMyInvoices: echtes Netto statt Schätzung, wenn Betrag in EUR zum Umsatz passt
+    const b = t.beleg;
+    const belegNetto = b && b.waehrung === "EUR" && b.netto != null && b.brutto != null && Math.abs(Number(b.brutto) + Number(t.amount)) <= 0.02 ? r2(Number(b.netto)) : null;
+    const net = belegNetto ?? netCost(Number(t.amount), t.vatIncluded);
     const line =
       t.costPurpose === "ppl" ? "direkt:ppl" : t.costPurpose === "software" || t.costPurpose === "ki" ? "direkt:software" : t.costPurpose === "akquise" ? "akquise:tools" : `betrieb:${betriebGroup(t.rule?.label, t.counterparty)}`;
     items.push({
@@ -110,8 +124,15 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
       date: t.bookingDate.toISOString().slice(0, 10),
       net,
       gross: r2(-Number(t.amount)),
-      detail: [t.accountKey.startsWith("csv:amex") ? "Amex" : "Konto", t.vatIncluded ? "inkl. USt" : "ohne USt", t.purpose?.slice(0, 80)].filter(Boolean).join(" · "),
-      href: ZUORDNEN,
+      detail: [
+        t.accountKey.startsWith("csv:amex") ? "Amex" : "Konto",
+        belegNetto != null ? "netto laut Beleg" : t.vatIncluded ? "inkl. USt" : "ohne USt",
+        b ? "Beleg ✓" : null,
+        t.purpose?.slice(0, 80),
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      href: b ? `/api/admin/belege/${b.gmiUid}` : ZUORDNEN,
     });
   }
 

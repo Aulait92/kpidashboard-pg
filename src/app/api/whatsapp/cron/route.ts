@@ -495,6 +495,15 @@ async function handle(req: Request): Promise<Response> {
   after(() => import("@/lib/linkedin/cron").then((m) => m.runLinkedIn(now)).catch((e: unknown) => reportError(e, "cron-linkedin")));
   // Bank & Karten: Kontoumsätze täglich abrufen, an Neuverbindung erinnern (nach der Antwort)
   after(() => runBankSync(now).catch((e: unknown) => reportError(e, "cron-bank")));
+  // Belege aus GetMyInvoices holen und Kontoumsätzen zuordnen: einmal nachts gegen 3/4 Uhr Berlin (lib/belege/server.ts)
+  if (now.getUTCHours() === 2 && now.getUTCMinutes() < 5 && process.env.GETMYINVOICES_API_KEY) {
+    after(() =>
+      import("@/lib/belege/server")
+        .then((m) => m.syncBelege())
+        .then((r) => console.log(`[belege] ${r.geholt} geholt, ${r.neu} neu, ${r.zugeordnet} zugeordnet`))
+        .catch((e: unknown) => reportError(e, "cron-belege")),
+    );
+  }
   // WhatsApp selbst verbunden: API-Keys für Channels nachholen, die beim Redirect noch eingerichtet wurden
   // 360dialog: Nummern ohne Rücksprung über die Kunden-ID finden (alle 15 Minuten, lib/whatsapp/dialog360-match.ts)
   if (now.getUTCMinutes() % 15 < 5) {
