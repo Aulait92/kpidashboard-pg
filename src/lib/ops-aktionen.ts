@@ -153,6 +153,18 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: "Buchungslink gesendet." };
     },
   },
+  bezug_aktiv: {
+    beschreibung: "Pay-per-Lead-Bezug pausieren bzw. wieder einschalten (aktiv true/false), z. B. für einen Tag keine Lieferung",
+    felder: { subscriptionId: "ID des Bezugs", aktiv: "true oder false" },
+    run: async (p) => {
+      const aktiv = text(p.aktiv) === "true";
+      const sub = await prisma.leadSubscription.findUnique({ where: { id: text(p.subscriptionId) }, select: { id: true, active: true, customer: { select: { name: true } } } });
+      if (!sub) return { ok: false, error: "Bezug nicht gefunden." };
+      if (sub.active !== aktiv) await prisma.leadSubscription.update({ where: { id: sub.id }, data: { active: aktiv } });
+      await audit(aktiv ? "subscription.resume" : "subscription.pause", { entity: "LeadSubscription", entityId: sub.id, details: { kunde: sub.customer?.name ?? null }, actor: OPS_ACTOR });
+      return { ok: true, info: `${sub.customer?.name ?? "Bezug"}: ${aktiv ? "liefert wieder" : "pausiert"}` };
+    },
+  },
   produkte_auflisten: {
     beschreibung: "Produktbuchungen eines Kunden auflisten (nur lesen, für IDs)",
     felder: { customerId: "Kunden-ID" },
