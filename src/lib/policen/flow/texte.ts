@@ -227,7 +227,11 @@ export const flowTextVersion = (gesundheit: boolean) => (gesundheit ? FLOW_TEXT_
 /** Fußzeile der Bestätigung (beide Ansprachen gleich). */
 export const WIDERRUF_FUSSZEILE = "Widerruf jederzeit: einfach „Widerruf“ schreiben.";
 
-export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean): Nachricht {
+/**
+ * kfz: Stand der Kfz-Unterlagen aus der lokalen Texterkennung (lib/policen/texterkennung.ts, alle Unterlagen des
+ * Leads); null = nicht geprüft (ohne KI-Einwilligung bzw. Texterkennung aus), dann die offene Nachfrage.
+ */
+export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean, kfz: { schein: boolean; police: boolean } | null = null): Nachricht {
   const { an } = k;
   const angekommen = n === 1 ? "*1 Datei ist angekommen.*" : `*${n} Dateien sind angekommen.*`;
   const wann = k.tag ? `vor ${k.tag}` : a(an, "vor deinem Termin", "vor Ihrem Termin");
@@ -238,13 +242,23 @@ export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean): Nachri
     // Kfz (Ole, 22.11.2026: „checken, ob Fahrzeugschein und Rechnung schon hochgeladen sind, sonst auffordern“): Die
     // App liest Fotos ohne ZDR-Nachweis nicht per KI ein (Datenschutz-Prüfung 22.11.2026, K2), darum fragt sie nach
     // und lädt zum Nachreichen ein (Knopf „Weitere senden“), statt „Bis dahin müssen Sie nichts weiter tun“.
+    // Mit Texterkennung (Ole, 22.11.2026: „einbauen“): erkannt → fertig; nicht erkannt → genau benennen, was fehlt.
+    // „noch nicht erkannt“ statt „fehlt“: ein unscharfes Foto kann trotzdem der Fahrzeugschein sein.
     ...(k.kfz
       ? [
-          a(
-            an,
-            `*Sind dein Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung beide dabei?* Falls etwas fehlt, lade es gern noch hoch. Mit beidem kann ${k.name} deinen Beitrag schon ${wann} rechnen.`,
-            `*Sind Ihr Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung beide dabei?* Falls etwas fehlt, laden Sie es gern noch hoch. Mit beidem kann ${k.name} Ihren Beitrag schon ${wann} rechnen.`,
-          ),
+          kfz?.schein && kfz.police
+            ? a(
+                an,
+                `*Fahrzeugschein und Rechnung sind dabei.* ${k.name} rechnet deinen Beitrag ${wann}. Bis dahin musst du nichts weiter tun.`,
+                `*Fahrzeugschein und Rechnung sind dabei.* ${k.name} rechnet Ihren Beitrag ${wann}. Bis dahin müssen Sie nichts weiter tun.`,
+              )
+            : kfz
+              ? `${kfzFehlt(an, kfz)} ${a(an, `Mit beidem kann ${k.name} deinen Beitrag schon ${wann} rechnen.`, `Mit beidem kann ${k.name} Ihren Beitrag schon ${wann} rechnen.`)}`
+              : a(
+                  an,
+                  `*Sind dein Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung beide dabei?* Falls etwas fehlt, lade es gern noch hoch. Mit beidem kann ${k.name} deinen Beitrag schon ${wann} rechnen.`,
+                  `*Sind Ihr Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung beide dabei?* Falls etwas fehlt, laden Sie es gern noch hoch. Mit beidem kann ${k.name} Ihren Beitrag schon ${wann} rechnen.`,
+                ),
           NOCH_EINE_POLICE_KFZ,
         ]
       : [
@@ -254,6 +268,27 @@ export function bestaetigung(k: FlowTextKontext, n: number, ki: boolean): Nachri
   ];
   return { text: teile.join("\n\n"), fusszeile: WIDERRUF_FUSSZEILE };
 }
+/** Was bei den Kfz-Unterlagen noch nicht erkannt ist, mit Bitte zum Nachreichen. */
+function kfzFehlt(an: Ansprache, kfz: { schein: boolean; police: boolean }): string {
+  if (!kfz.schein && !kfz.police)
+    return a(
+      an,
+      "*Fahrzeugschein und letzte Rechnung deiner Kfz-Versicherung habe ich darin noch nicht erkannt.* Falls sie fehlen, lade sie gern noch hoch (beim Fahrzeugschein die Vorderseite).",
+      "*Fahrzeugschein und letzte Rechnung Ihrer Kfz-Versicherung habe ich darin noch nicht erkannt.* Falls sie fehlen, laden Sie sie gern noch hoch (beim Fahrzeugschein die Vorderseite).",
+    );
+  if (!kfz.schein)
+    return a(
+      an,
+      "Die Rechnung ist da. *Deinen Fahrzeugschein habe ich noch nicht erkannt.* Falls er fehlt, lade gern noch die Vorderseite hoch.",
+      "Die Rechnung ist da. *Ihren Fahrzeugschein habe ich noch nicht erkannt.* Falls er fehlt, laden Sie gern noch die Vorderseite hoch.",
+    );
+  return a(
+    an,
+    "Der Fahrzeugschein ist da. *Die letzte Rechnung deiner Kfz-Versicherung habe ich noch nicht erkannt.* Falls sie fehlt, lade sie gern noch hoch.",
+    "Der Fahrzeugschein ist da. *Die letzte Rechnung Ihrer Kfz-Versicherung habe ich noch nicht erkannt.* Falls sie fehlt, laden Sie sie gern noch hoch.",
+  );
+}
+
 /** Letzte Zeile der Bestätigung (beide Ansprachen gleich): lädt zu weiteren Verträgen ein, Knopf „Weitere senden“. */
 export const NOCH_EINE_POLICE = "Noch eine Police, etwa Kfz oder Hausrat? Einfach nachsenden.";
 /** Kfz-Lead: nie Kfz als „noch eine“ Police (Ole, 22.11.2026). */

@@ -187,5 +187,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **22.11.2026, Partnerfrage:** im WhatsApp-Assistenten immer als eigene Frage vor dem Terminvorschlag, Splittest `partner_vor_termin` beendet (Fassung B aus). Ole: „ich möchte die frage nach partner immer eigenständig vor der buchung“.
 - **22.11.2026, Kfz-Unterlagen prüfen:** Keine KI-Einordnung hochgeladener Fotos ohne ZDR-Nachweis (Datenschutz: Rot, K2,
   Fassung `.s1` ohne Gesundheitssatz). Stattdessen fragt die Bestätigung bei Kfz-Leads nach, ob Fahrzeugschein und letzte
-  Rechnung beide dabei sind, mit Knopf „Weitere senden“. Später möglich: lokale Texterkennung ohne Drittanbieter (1–3 Tage)
-  oder KI-Einordnung nach ZDR-Nachweis mit Auflagen A bis F (nur `.gN`, ein Aufzählungsfeld, Bremse, VVT/DSFA).
+  Rechnung beide dabei sind, mit Knopf „Weitere senden“. KI-Einordnung erst nach ZDR-Nachweis mit Auflagen A bis F
+  (nur `.gN`, ein Aufzählungsfeld, Bremse, VVT/DSFA). Ole: „Ja einbauen“ → lokale Texterkennung (Tesseract im Dockerfile,
+  `lib/policen/texterkennung.ts`): nur Kfz-Leads mit KI-Einwilligung, Text nie gespeichert, nur `LeadDocument.dokumentArt`;
+  die Bestätigung nennt, was noch nicht erkannt ist. VVT-Eintrag „Dokumentart bestimmen (lokal)“ nachziehen.
