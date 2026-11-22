@@ -19,10 +19,10 @@ describe("Einwilligungstext im Leadformular", () => {
   const angaben = { vermittler: "Agentur Meier", anschrift: "Hauptstr. 1\n12345 Berlin", email: "info@meier.de", datenschutzUrl: "https://meier.de/datenschutz" };
   it("Wortlaut mit Vermittler, Anschrift, KI-Assistent, STOPP, E-Mail und Datenschutz", () => {
     expect(leadFormConsentText(angaben)).toBe(
-      "Ihr Angebot und Ihren Termin bekommen Sie per WhatsApp, E-Mail oder Telefon. Mit Klick auf „Senden“ willigen Sie ein, dass Agentur Meier, Hauptstr. 1, 12345 Berlin, Sie zu dieser Anfrage kontaktiert. Zuerst antwortet ein KI-Assistent und schlägt Termine vor. Die Erstinformation nach § 15 VersVermV erhalten Sie elektronisch als Link und PDF, auf Wunsch auf Papier. Widerruf jederzeit mit „STOPP“ oder per E-Mail an info@meier.de. Datenschutz: https://meier.de/datenschutz",
+      "Ihr Angebot und Ihren Termin erhalten Sie per WhatsApp, E-Mail oder Telefon. Mit Klick auf „Senden“ willigen Sie ein, dass Agentur Meier, Hauptstr. 1, 12345 Berlin, Sie auf diesen Wegen zu dieser Anfrage kontaktiert. Die Erstinformation nach § 15 VersVermV bekommen Sie elektronisch als Link und PDF, auf Wunsch auf Papier. Widerruf jederzeit mit „STOPP“ oder per E-Mail an info@meier.de. Datenschutz: https://meier.de/datenschutz",
     );
     // Einwilligung per Knopf statt Häkchen (Ole, 22.11.2026: „Immer ohne Checkbox“), Erstinformation mit Papier
-    expect(CONSENT_VERSION).toBe("2026-11-22-knopf");
+    expect(CONSENT_VERSION).toBe("2026-11-22b-knopf");
     expect(leadFormConsentText(angaben)).not.toMatch(/[–—]/);
     expect(consentMissing(angaben)).toEqual([]);
   });
@@ -39,7 +39,7 @@ describe("Einwilligungstext im Leadformular", () => {
       { privacyUrl: "https://meier.de/datenschutz", website: null, advisorName: "Meier", bookingUrl: null },
     ) as { custom_disclaimer: { title: string; body: { text: string }; checkboxes?: unknown } };
     expect(p.custom_disclaimer.body.text).toBe(text);
-    expect(p.custom_disclaimer.title).toBe("Fast geschafft: Jetzt unten auf „Senden“ tippen");
+    expect(p.custom_disclaimer.title).toBe("Letzter Schritt: Tippen Sie unten auf „Senden“");
     expect(p.custom_disclaimer.checkboxes).toBeUndefined();
   });
 });

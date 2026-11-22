@@ -103,7 +103,7 @@ export async function SetupCard({ customerId, notice }: { customerId: string; no
           <p className="font-medium">Einwilligung im Leadformular (eigener Hinweis über „Senden“, ohne Häkchen)</p>
           <p className="mt-1 select-all rounded bg-slate-50 p-2 text-xs">{consent.text}</p>
           {consent.missing.length ? <p className="mt-1 text-xs text-amber-800">Fehlt: {consent.missing.join(", ")} (Impressum prüfen).</p> : null}
-          <p className="mt-1 text-xs text-slate-500">Titel: „Fast geschafft: Jetzt unten auf „Senden“ tippen“, keine Checkbox. Die Einwilligung gilt mit dem Absenden.</p>
+          <p className="mt-1 text-xs text-slate-500">Titel: „Letzter Schritt: Tippen Sie unten auf „Senden““, keine Checkbox. Die Einwilligung gilt mit dem Absenden.</p>
         </div>
       ) : null}
       {erstinfo ? (

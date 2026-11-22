@@ -29,3 +29,13 @@ mit „STOPP“ oder per E-Mail an {E-Mail}. Datenschutz: {Link}“
 Vorschau Lohmann Kfz v4 Knopf, Seite 4 von 5 („Privacy review“): Titel und Wortlaut stehen direkt über dem Knopf
 „Senden“, der den Lead abschickt (Seite 5 ist die Dankeseite). Screenshot: `nachweise/2026-11-22-leadformular-knopf-vorschau.png`.
 Darunter folgt der feste Meta-Hinweis (Du-Form, von Meta vorgegeben, nicht änderbar). Keine SMS-Bestätigung.
+
+## Fassung 2026-11-22b-knopf (Ole, 22.11.2026: „KI raus, Text kürzen, conversionoptimieren“)
+KI-Satz gestrichen (Art. 50 KI-VO ist Information, erfüllt durch die erste WhatsApp mit Hinweis „KI-Assistent“; KI-Verarbeitung
+steht in den verlinkten Datenschutzhinweisen). Conversion-Texter, danach Pflichtangaben geprüft (Vermittler, Anschrift, Kanäle,
+nur diese Anfrage, Einwilligung per Klick, Erstinformation mit Papier, Widerruf, Datenschutz).
+Titel: „Letzter Schritt: Tippen Sie unten auf „Senden““
+Text: „Ihr Angebot und Ihren Termin erhalten Sie per WhatsApp, E-Mail oder Telefon. Mit Klick auf „Senden“ willigen Sie ein,
+dass {Vermittler}, {Anschrift}, Sie auf diesen Wegen zu dieser Anfrage kontaktiert. Die Erstinformation nach § 15 VersVermV
+bekommen Sie elektronisch als Link und PDF, auf Wunsch auf Papier. Widerruf jederzeit mit „STOPP“ oder per E-Mail an {E-Mail}.
+Datenschutz: {Link}“

@@ -10,7 +10,9 @@
 /** Version des Wortlauts; ändert sich der Text, hochzählen (steht im Nachweis am Lead). */
 // Ole, 22.11.2026: „Immer ohne Checkbox“. Seitdem ist die Knopf-Fassung der Standard (leadFormConsentText); die
 // Häkchen-Fassung 2026-11-16 (leadFormConsentTextHaekchen) bleibt nur für den Nachweis alter Formulare.
-export const CONSENT_VERSION = "2026-11-22-knopf";
+// 22.11.2026 spät (Ole: „KI raus, Text kürzen“): KI-Hinweis nur noch in der ersten WhatsApp (Art. 50 KI-VO, Information),
+// Fassung 2026-11-22b-knopf; vorher 2026-11-22-knopf mit KI-Satz.
+export const CONSENT_VERSION = "2026-11-22b-knopf";
 
 /**
  * Zustimmung zur elektronischen Erstinformation (Rechtsprüfung 16.11.2026): Über eine Website (unser Link
@@ -58,7 +60,7 @@ export function leadFormConsentTextHaekchen(x: ConsentAngaben): string {
 export const CONSENT_VERSION_KNOPF = CONSENT_VERSION;
 export const istKnopfFassung = (v: string | null | undefined) => typeof v === "string" && v.endsWith("-knopf");
 /** Titel über dem Text (max. 60 Zeichen, nennt den Knopf, der den Lead abschickt). */
-export const KNOPF_TITEL = "Fast geschafft: Jetzt unten auf „Senden“ tippen";
+export const KNOPF_TITEL = "Letzter Schritt: Tippen Sie unten auf „Senden“";
 
 /** Wortlaut mit den Angaben des Vermittlers (Einwilligung per Knopf); fehlende Angaben als Platzhalter in eckigen Klammern. */
 export function leadFormConsentText(x: ConsentAngaben): string {
@@ -66,7 +68,7 @@ export function leadFormConsentText(x: ConsentAngaben): string {
   const adr = clean(x.anschrift) || PLATZHALTER.anschrift;
   const mail = clean(x.email) || PLATZHALTER.email;
   const url = clean(x.datenschutzUrl) || PLATZHALTER.datenschutzUrl;
-  return `Ihr Angebot und Ihren Termin bekommen Sie per WhatsApp, E-Mail oder Telefon. Mit Klick auf „Senden“ willigen Sie ein, dass ${v}, ${adr}, Sie zu dieser Anfrage kontaktiert. Zuerst antwortet ein KI-Assistent und schlägt Termine vor. Die Erstinformation nach § 15 VersVermV erhalten Sie elektronisch als Link und PDF, auf Wunsch auf Papier. Widerruf jederzeit mit „STOPP“ oder per E-Mail an ${mail}. Datenschutz: ${url}`;
+  return `Ihr Angebot und Ihren Termin erhalten Sie per WhatsApp, E-Mail oder Telefon. Mit Klick auf „Senden“ willigen Sie ein, dass ${v}, ${adr}, Sie auf diesen Wegen zu dieser Anfrage kontaktiert. Die Erstinformation nach § 15 VersVermV bekommen Sie elektronisch als Link und PDF, auf Wunsch auf Papier. Widerruf jederzeit mit „STOPP“ oder per E-Mail an ${mail}. Datenschutz: ${url}`;
 }
 
 /** Welche Angaben fehlen für den Wortlaut? */
