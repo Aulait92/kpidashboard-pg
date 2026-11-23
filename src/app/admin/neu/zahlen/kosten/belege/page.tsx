@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { Download, ExternalLink, RefreshCw, Send, Upload } from "lucide-react";
+import { Download, ExternalLink, RefreshCw, Send } from "lucide-react";
 import { Aufklapp } from "@/components/admin-neu/zahlen/aufklapp";
 import { prisma } from "@/lib/prisma";
 import { monatName, paketBelege, STEUERBUERO_EMAIL, ustVorschau, vormonat } from "@/lib/belege/monatspaket";
@@ -9,7 +9,8 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { ausgabenOhneBeleg, BELEGE_AB } from "@/lib/belege/server";
 import { belegAdresse } from "@/lib/belege/eingang";
 import { belegKiKonfiguriert } from "@/lib/belege/auslesen";
-import { belegeHochladenAction, belegeJetztAbgleichenAction, monatspaketSendenAction } from "./actions";
+import { belegeJetztAbgleichenAction, monatspaketSendenAction } from "./actions";
+import { BelegeUpload } from "@/components/admin-neu/zahlen/belege-upload";
 
 export const metadata = { title: "Belege | performancegrowth Admin" };
 
@@ -94,18 +95,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         </Card>
 
         <Card className="px-5 py-4">
-          <form action={belegeHochladenAction} className="flex flex-wrap items-center gap-3">
-            <input
-              type="file"
-              name="dateien"
-              multiple
-              accept="application/pdf,image/jpeg,image/png,image/webp,application/zip,.zip"
-              className="min-w-0 flex-1 basis-56 text-sm file:mr-3 file:rounded-[var(--radius-md)] file:border-0 file:bg-[color:var(--surface-sunken)] file:px-3 file:py-2 file:text-sm file:font-medium"
-            />
-            <Button type="submit" variant={offenFuerPaket ? "secondary" : "primary"} size="md" icon={Upload}>
-              Belege hochladen
-            </Button>
-          </form>
+          <BelegeUpload primaer={!offenFuerPaket} />
           <p className="mt-3 text-xs text-[color:var(--muted)]">
             PDF, Fotos oder ZIP. Oder per Mail an <span className="select-all font-medium text-[color:var(--foreground)]">{adresse}</span>
           </p>

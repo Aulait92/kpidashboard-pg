@@ -74,7 +74,8 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
+        # Nur interne Tester (Gruppe „Team“): keine externe Beta-Prüfung, die bräuchte Testinformationen (Ole, 23.11.2026)
+        submit_to_testflight: false
         expire_build_submitted_for_review: true
 
   android-play-internal:
