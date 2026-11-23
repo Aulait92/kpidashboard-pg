@@ -1,6 +1,6 @@
 // Diagnose (nur lesend, Ole 19.11.2026): Geld auf dem Konto, Bewegungen, Kosten je Monat, Stripe und eine
 // Umsatzsteuer-Schätzung aus den Kontoauszügen.
-//   GET /api/ops/diagnose?q=cash[&jahr=2026]
+//   GET /api/ops/diagnose?q=cash[&jahr=2026][&von=2026-08&bis=2026-10]  (von/bis: Umsatzsteuer nur für diese Monate)
 // - konten: je Bank-Verbindung Status, Ablauf, letzter Abruf/Fehler (gekürzt), Anzahl Konten und der Kontostand LIVE
 //   über Enable Banking (wird nicht gespeichert); Amex nur als CSV (letzter Import, letzte Buchung).
 // - bewegungen: je Konto-Art (Geschäftskonto/Amex) für 30 und 90 Tage Eingänge, Ausgaben, Ausgaben je Zweck (brutto).
@@ -186,7 +186,14 @@ export async function cashDiagnose(params: URLSearchParams, opts: { jetzt?: Date
       ? `Buchungen erst ab ${tag(ersteBuchung) ?? "nie"}: Durchschnitt über ${monate.length} Monate ist zu niedrig.`
       : null;
 
-  const ust = ustSchaetzung(buchungen, { jahr, regeln });
+  // Optional nur bestimmte Monate (z. B. Voranmeldungszeitraum): &von=2026-08&bis=2026-10
+  const vonM = /^\d{4}-\d{2}$/.test(params.get("von") ?? "") ? params.get("von")! : null;
+  const bisM = /^\d{4}-\d{2}$/.test(params.get("bis") ?? "") ? params.get("bis")! : null;
+  const imZeitraum = (b: { bookingDate: Date }) => {
+    const m = b.bookingDate.toISOString().slice(0, 7);
+    return (!vonM || m >= vonM) && (!bisM || m <= bisM);
+  };
+  const ust = { ...ustSchaetzung(vonM || bisM ? buchungen.filter(imZeitraum) : buchungen, { jahr, regeln }), ...(vonM || bisM ? { zeitraum: `${vonM ?? "Jahresbeginn"} bis ${bisM ?? "heute"}` } : {}) };
   const zeitraeume = (["commerzbank", "amex"] as KontoArt[]).map((art) => zeitraum.get(art) ?? { art, erste: null, letzte: null, anzahl: 0, letzterImport: null });
   const hinweise = datenHinweise(zeitraeume, jahr, jetzt);
   const aktiv = verbindungen.find((v) => v.status === "active");

@@ -7,6 +7,7 @@ import { ButtonLink, Card, CardHeader } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { CostForm } from "@/app/admin/einstellungen/kosten/forms";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import { ausgabenOhneBeleg } from "@/lib/belege/server";
 
 export const metadata = { title: "Kosten | performancegrowth Admin" };
 
@@ -31,7 +32,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   await connection();
   await requireAuth();
   const sp = await searchParams;
-  const [{ open, overlap, commerz, amex, soonOf }, { costs }] = await Promise.all([ladeBank(), ladeKosten()]);
+  const [{ open, overlap, commerz, amex, soonOf }, { costs }, belege] = await Promise.all([ladeBank(), ladeKosten(), ausgabenOhneBeleg().catch(() => null)]);
   const today = new Date().toISOString().slice(0, 10);
   const monatlich = costs.filter((c) => !c.endsAt || c.endsAt.toISOString().slice(0, 10) >= today).reduce((a, c) => a + Number(c.monthlyAmount), 0);
   const bank = [bankProblem("Commerzbank", commerz, soonOf(commerz)), bankProblem("American Express", amex, soonOf(amex))].filter(Boolean);
@@ -96,6 +97,17 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
               <Link href="/admin/neu/zahlen/kosten/zuordnen?ansicht=alle" className="flex min-h-12 items-center gap-3 px-5 text-[15px] hover:bg-[color:var(--surface-sunken)]">
                 <span className="min-w-0 flex-1 font-medium">Alle Ausgaben</span>
                 <span className="hidden text-xs text-[color:var(--muted)] sm:inline">letzte 90 Tage von Konto und Karte</span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/neu/zahlen/kosten/belege" className="flex min-h-12 items-center gap-3 px-5 text-[15px] hover:bg-[color:var(--surface-sunken)]">
+                <span className="min-w-0 flex-1 font-medium">Belege</span>
+                {belege?.anzahl ? (
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">{belege.anzahl} ohne Beleg</span>
+                ) : (
+                  <span className="hidden text-xs text-[color:var(--muted)] sm:inline">aus GetMyInvoices</span>
+                )}
                 <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
               </Link>
             </li>

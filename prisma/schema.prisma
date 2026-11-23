@@ -3463,6 +3463,7 @@ model BankTransaction {
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   zahlungsVorschlaege ZahlungsVorschlag[]
+  beleg               Beleg?
 
   @@unique([accountKey, externalId])
   @@index([status, bookingDate])
@@ -5541,4 +5542,56 @@ model FunnelEreignis {
 
   @@unique([besuchId, schritt, art])
   @@index([funnel, createdAt])
+}
+
+// Beleg aus GetMyInvoices (Ole, 22.11.2026: Buchhaltung automatisieren, möglichst lückenlos und ohne Handarbeit).
+// Nächtlich abgerufen; bankTransactionId = automatisch (oder von Hand) zugeordneter Kontoumsatz. Netto/USt aus dem
+// Beleg ersetzen in der BWA die Schätzung aus dem Bankbetrag.
+model Beleg {
+  id                String           @id @default(cuid())
+  /// GetMyInvoices-Dokument (Übernahme); null bei eigenen Belegen (Mail-Eingang, Upload)
+  gmiUid            Int?             @unique
+  // gmi | mail | upload
+  quelle            String           @default("gmi")
+  /// Originaldatei (PDF/Bild), in der Datenbank, GoBD: unverändert aufbewahren
+  datei             Bytes?
+  mimeType          String?
+  /// SHA-256 der Datei gegen doppelte Ablage
+  hash              String?          @unique
+  /// Absender der Mail bzw. Login beim Upload
+  absender          String?
+  // ki | gmi | fehler: woher Betrag, Datum usw. stammen
+  ausgelesen        String?
+  typ               String
+  firma             String?
+  nummer            String?
+  datum             DateTime?        @db.Date
+  netto             Decimal?         @db.Decimal(12, 2)
+  ustSatz           Decimal?         @db.Decimal(5, 2)
+  brutto            Decimal?         @db.Decimal(12, 2)
+  waehrung          String           @default("EUR")
+  dateiname         String?
+  ocrFertig         Boolean          @default(false)
+  bankTransactionId String?          @unique
+  bankTransaction   BankTransaction? @relation(fields: [bankTransactionId], references: [id], onDelete: SetNull)
+  // auto | hand
+  zuordnung         String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([datum])
+}
+
+// Monatspaket an das Steuerbüro (Ole, 23.11.2026): Belege eines Monats als ZIP plus Liste und USt-Vorschau, gesendet
+// erst auf Klick (lib/belege/monatspaket.ts).
+model MonatsPaket {
+  id          String    @id @default(cuid())
+  monat       String    @unique // YYYY-MM
+  gesendetAm  DateTime?
+  empfaenger  String?
+  anzahl      Int       @default(0)
+  zahllast    Decimal?  @db.Decimal(12, 2)
+  erinnertAm  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

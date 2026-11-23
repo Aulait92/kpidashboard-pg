@@ -168,6 +168,46 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r === "nichts" ? { ok: false, error: "Nichts versucht (keine Sperre „kein WhatsApp“ oder keine Nummer)." } : { ok: true, info: r === "termin" ? "Terminbestätigung per WhatsApp versucht." : "Erstanschreiben per WhatsApp versucht." };
     },
   },
+  eigenbeleg_erstellen: {
+    beschreibung: "Eigenbeleg (PDF) für eine Ausgabe ohne Originalbeleg erstellen, ablegen und fest zuordnen (kleine Beträge, auf Oles Anweisung)",
+    felder: { umsatzId: "ID der Zahlung (diagnose q=belege&liste=offen)", gegenstand: "was gekauft wurde", zweck: "betrieblicher Zweck", empfaenger: "optional: Name des Empfängers", grund: "optional" },
+    run: async (p) => {
+      const gegenstand = text(p.gegenstand, 300);
+      const zweck = text(p.zweck, 300);
+      if (gegenstand.length < 3 || zweck.length < 3) return { ok: false, error: "Gegenstand und Zweck nötig." };
+      const { eigenbelegErstellen } = await import("@/lib/belege/eigenbeleg");
+      const r = await eigenbelegErstellen({ umsatzId: text(p.umsatzId, 40), gegenstand, zweck, empfaenger: text(p.empfaenger, 120) || undefined, grund: text(p.grund, 300) || undefined });
+      if (!r.ok) return r;
+      await audit("belege.eigenbeleg", { entity: "Beleg", entityId: r.id, details: { nummer: r.nummer }, actor: OPS_ACTOR });
+      return { ok: true, info: `Eigenbeleg ${r.nummer} erstellt und zugeordnet.` };
+    },
+  },
+  belege_stripe: {
+    beschreibung: "Ausgangsrechnungen und Gutschriften aus Stripe jetzt als Belege übernehmen (sonst nachts)",
+    felder: {},
+    run: async () => {
+      const r = await (await import("@/lib/belege/stripe")).syncStripeBelege();
+      return { ok: true, info: `Stripe: ${r.rechnungen} Rechnungen, ${r.gutschriften} Gutschriften, ${r.neu} neu als Beleg.` };
+    },
+  },
+  belege_postfach: {
+    beschreibung: "Mails an die Beleg-Adresse jetzt bei Resend abholen und als Belege ablegen (sonst alle 15 Minuten); erneut=true verarbeitet Mails ohne Ergebnis noch einmal",
+    felder: { erneut: "optional true" },
+    run: async (p) => {
+      const r = await (await import("@/lib/belege/eingang")).belegePostfachAbholen({ erneut: text(p.erneut) === "true" });
+      return { ok: true, info: `${r.gesehen} Mails an die Beleg-Adresse, ${r.verarbeitet} neu verarbeitet.` };
+    },
+  },
+  belege_abgleichen: {
+    beschreibung: "Belege jetzt aus GetMyInvoices holen und eindeutig passenden Kontoumsätzen zuordnen (sonst nachts automatisch)",
+    felder: {},
+    run: async () => {
+      const r = await (await import("@/lib/belege/server")).syncBelege();
+      await audit("belege.abgleich", { details: { ...r }, actor: OPS_ACTOR });
+      if (r.fehler) return { ok: false, error: r.fehler };
+      return { ok: true, info: `${r.geholt} Belege geholt (${r.neu} neu), ${r.zugeordnet} neu zugeordnet.` };
+    },
+  },
   bank_csv_importieren: {
     beschreibung: "Kontoumsätze aus einer CSV in die Buchhaltung (Geld › Kosten) übernehmen, je Konto getrennt (z. B. n26 für geschäftliche Ausgaben vom Privatkonto); Regeln greifen, Rest steht offen zum Zuordnen. Ohne Oberfläche.",
     felder: { konto: "Kurzname, nur Kleinbuchstaben/Ziffern, z. B. n26", csv: "Inhalt der CSV-Datei" },
@@ -183,6 +223,22 @@ export const AKTIONEN: Record<string, Aktion> = {
       const r = await importTransactions(`csv:${konto}`, parsed.rows, { source: "csv" });
       await audit("bank.sync", { details: { csv: konto, rows: parsed.rows.length, created: r.created }, actor: OPS_ACTOR });
       return { ok: true, info: `${konto}: ${parsed.rows.length} Umsätze gelesen (${parsed.skipped} übersprungen), ${r.created} neu, ${r.existing} schon da, ${r.assigned} per Regel zugeordnet, ${r.open} offen zum Zuordnen.` };
+    },
+  },
+  bank_regel: {
+    beschreibung: "Zuordnungsregel für Kontoumsätze anlegen oder ändern (Muster in Gegenpartei/Verwendungszweck → Kostenart oder ignore, z. B. Darlehenstilgung); wirkt auf offene und künftige Umsätze",
+    felder: { muster: "Teil der Gegenpartei, z. B. rafael frenk", kostenart: "ppl | software | ki | akquise | betrieb | ignore", label: "Bezeichnung, z. B. Darlehen Rafael Frenk (Tilgung)" },
+    run: async (p) => {
+      const muster = text(p.muster, 80).toLowerCase();
+      const { COST_ACTIONS } = await import("@/lib/bank/rules");
+      const aktion = text(p.kostenart, 20) as (typeof COST_ACTIONS)[number];
+      if (muster.length < 3 || !(COST_ACTIONS as readonly string[]).includes(aktion)) return { ok: false, error: "Muster oder Kostenart ungültig." };
+      const label = text(p.label, 120) || null;
+      const rule = await prisma.costRule.upsert({ where: { pattern: muster }, create: { pattern: muster, action: aktion, label, counterpartyOnly: true }, update: { action: aktion, label, counterpartyOnly: true } });
+      const { applyRuleToOpen } = await import("@/lib/bank/server");
+      const n = await applyRuleToOpen(rule.id);
+      await audit("bank.regel", { details: { muster, aktion, angewendet: n }, actor: OPS_ACTOR });
+      return { ok: true, info: `Regel „${muster}“ → ${aktion} gespeichert, auf ${n} offene Umsätze angewendet.` };
     },
   },
   bank_zuordnen: {
