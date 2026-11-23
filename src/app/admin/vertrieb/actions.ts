@@ -45,6 +45,13 @@ function refresh(contactId?: string | null) {
 const ziel = (altPfad: string) => adminZiel(altPfad);
 
 // ─── Aktivität erfassen ─────────────────────────────────────────────────
+/** Vorschau im Fenster „Eintragen“: was nach „Nicht erreicht“ an den Kontakt rausginge (Ole, 23.11.2026). */
+export async function nichtErreichtVorschauAction(contactId: string) {
+  await requireAuth();
+  const { nichtErreichtVorschau } = await import("@/lib/vertrieb/nicht-erreicht-server");
+  return nichtErreichtVorschau(contactId);
+}
+
 export async function logActivity(fd: FormData): Promise<{ hinweis: string | null }> {
   await requireAuth();
   const contactId = s(fd, "contactId")!;
@@ -102,9 +109,12 @@ export async function logActivity(fd: FormData): Promise<{ hinweis: string | nul
   }
   // „Nicht erreicht“ nach einem Anruf: E-Mail und WhatsApp mit Buchungslink (Ole, 22.11.2026, lib/vertrieb/nicht-erreicht.ts)
   let hinweis: string | null = null;
+  // Seit 23.11.2026 mit Vorschau und Häkchen je Kanal im Fenster (neMail/neWa); ohne die Felder (altes Formular) wie bisher beide
   if (outcome.id === "nicht_erreicht" && type === "ANRUF") {
     const { nachNichtErreicht, ergebnisText } = await import("@/lib/vertrieb/nicht-erreicht-server");
-    hinweis = ergebnisText(await nachNichtErreicht(contactId));
+    const mitWahl = fd.get("neWahl") === "1";
+    const wahl = mitWahl ? { mail: fd.get("neMail") === "on", whatsapp: fd.get("neWa") === "on" } : { mail: true, whatsapp: true };
+    hinweis = ergebnisText(await nachNichtErreicht(contactId, new Date(), wahl));
   }
   refresh(contactId);
   return { hinweis };
