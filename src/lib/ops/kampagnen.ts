@@ -94,7 +94,15 @@ export async function kampagnenDiagnose(p: URLSearchParams) {
         budgetTag: c.daily_budget ? Number(c.daily_budget) / 100 : null, gebot: c.bid_strategy ?? null, sonderkategorie: c.special_ad_categories, zahlen: zahlen(await insights(String(c.id))), gruppen,
       });
     }
-    return { kunde: k.name, konto: acc, kampagnenGesamt: camps.length, alleNamen: camps.map((c) => `${c.name} (${c.effective_status})`), kampagnen: out };
+    // Formulare der gezeigten Anzeigen: Fragen, Typ (mehr Volumen / höhere Absicht), Intro, Datenschutz
+    const formIds = [...new Set(out.flatMap((c) => c.gruppen.flatMap((g) => g.anzeigen.map((a) => a.formular).filter((f): f is string => !!f))))].slice(0, 12);
+    const formulare = [];
+    for (const f of formIds) {
+      const r = await get(f, { fields: "id,name,status,locale,created_time,is_optimized_for_quality,questions,context_card,thank_you_page,leads_count,question_page_custom_headline,block_display_for_non_targeted_viewer" }).catch((e: unknown) => ({ id: f, fehler: e instanceof Error ? e.message : String(e) }));
+      const q = (r as { questions?: { type: string; key?: string; label?: string; options?: { value: string }[] }[] }).questions;
+      formulare.push({ ...r, questions: q?.map((x) => ({ typ: x.type, key: x.key, label: x.label, optionen: x.options?.map((o) => o.value) })) });
+    }
+    return { kunde: k.name, konto: acc, kampagnenGesamt: camps.length, alleNamen: camps.map((c) => `${c.name} (${c.effective_status})`), kampagnen: out, formulare };
   } catch (e) {
     return { kunde: k.name, fehler: e instanceof Error ? e.message : String(e) };
   }
