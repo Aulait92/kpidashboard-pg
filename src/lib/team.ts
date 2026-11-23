@@ -34,7 +34,19 @@ export function conversationScope(ctx: TeamCtx): Prisma.ConversationWhereInput {
  * Anrufliste bzw. in der Mail-Strecke; ein Chat ohne zugestellte Nachricht wäre nur Ballast.
  */
 export function chatListeScope(ctx: TeamCtx): Prisma.ConversationWhereInput {
-  return { ...conversationScope(ctx), NOT: { lead: { waUnavailableAt: { not: null } }, messages: { none: { direction: "inbound" } } } };
+  const basis = conversationScope(ctx);
+  const and = Array.isArray(basis.AND) ? basis.AND : basis.AND ? [basis.AND] : [];
+  return {
+    ...basis,
+    // Nur Leads (Ole, 23.11.2026): fremde Nummern, die auf die WhatsApp-Nummer schreiben (Dokumente, private Kontakte),
+    // erscheinen nicht. Sichtbar sind Chats mit Lead, mit Assistent (Schalter „Assistent auch für neue Kontakte“) oder
+    // mit Buchung über die Buchungsseite (lib/whatsapp/nur-leads.ts istPipelineChat).
+    AND: [
+      ...and,
+      { OR: [{ leadId: { not: null } }, { botActive: true }, { messages: { some: { direction: "internal", kind: "appointment_booked", sentBy: "lead" } } }] },
+    ],
+    NOT: { lead: { waUnavailableAt: { not: null } }, messages: { none: { direction: "inbound" } } },
+  };
 }
 
 /**

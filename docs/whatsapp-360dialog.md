@@ -94,8 +94,9 @@ kümmern uns). Nur lesen.
 - **Nur Leads (Ole, 16.11.2026, `lib/whatsapp/nur-leads.ts`):** Assistent und jede automatische Nachricht
   (Erstanschreiben, Nachfassen, Termin-Nachrichten, Knopf-Antworten, STOPP-Bestätigung) nur in Chats mit Lead
   bzw. nach eigener Buchung über die Buchungsseite. Kampagnen und Empfehlungen nur an Leads bzw. importierte
-  Bestandskunden. Unbekannte Nummern: Chat „Neuer Kontakt“, Assistent aus, der Vermittler entscheidet mit
-  „Als Lead übernehmen“. Schalter je Kunde „Assistent auch für neue Kontakte“ (Admin → WhatsApp → Einstellungen,
+  Bestandskunden. Unbekannte Nummern (Ole, 23.11.2026): Nachricht wird gespeichert, aber der Chat steht nicht in der Chatliste und
+  zählt nirgends (`chatListeScope` in `lib/team.ts`), kein „Wartet auf Sie“, keine Mitteilung; wird später ein Lead
+  zugeordnet, erscheint er mit Verlauf. Schalter je Kunde „Assistent auch für neue Kontakte“ (Admin → WhatsApp → Einstellungen,
   Standard aus); Nummern aus der Business-App bleiben auch dann ausgenommen.
 - Nachrichten, die der Kunde selbst in der Business-App schreibt, kommen als Echo
   (`smb_message_echoes`, im Webhook als `value.message_echoes`) an die Nummer-Webhook-URL. Die App
