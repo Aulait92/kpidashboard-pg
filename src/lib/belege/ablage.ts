@@ -9,6 +9,7 @@ import { liesBelegAus, type BelegDaten } from "./auslesen";
 import { entpackeZip, istZip } from "./zip";
 
 export const BELEG_MAX_BYTES = 15 * 1024 * 1024;
+export const ZIP_MAX_BYTES = 100 * 1024 * 1024;
 
 /** MIME-Typ aus Inhalt und Dateiname (nur PDF und Bilder sind Belege). */
 export function belegTyp(daten: Uint8Array, name: string | null): "application/pdf" | "image/jpeg" | "image/png" | "image/webp" | null {
@@ -26,9 +27,10 @@ export type AblageErgebnis = { name: string; ergebnis: "neu" | "doppelt" | "kein
 const datum = (s: string | null) => (s ? new Date(`${s}T00:00:00Z`) : null);
 
 /** Eine Datei (oder ein ZIP mit mehreren) ablegen. Ordnet nicht zu: danach belegeAbgleichen() aufrufen. */
-export async function belegAblegen(o: { daten: Uint8Array; name: string | null; quelle: "mail" | "upload"; absender?: string | null }): Promise<AblageErgebnis[]> {
+export async function belegAblegen(o: { daten: Uint8Array; name: string | null; quelle: "mail" | "upload"; absender?: string | null; spaeter?: boolean }): Promise<AblageErgebnis[]> {
   const name = (o.name ?? "beleg").slice(0, 200);
-  if (o.daten.length > BELEG_MAX_BYTES * 4) return [{ name, ergebnis: "fehler" }];
+  // ZIP-Pakete (z. B. alle Meta-Rechnungen eines Jahres) dürfen groß sein, einzelne Belege nicht
+  if (o.daten.length > ZIP_MAX_BYTES) return [{ name, ergebnis: "fehler" }];
   if (istZip(o.daten)) {
     let dateien;
     try {
@@ -37,7 +39,7 @@ export async function belegAblegen(o: { daten: Uint8Array; name: string | null; 
       return [{ name, ergebnis: "fehler" }];
     }
     const out: AblageErgebnis[] = [];
-    for (const d of dateien) out.push(...(await belegAblegen({ daten: d.daten, name: d.name, quelle: o.quelle, absender: o.absender })));
+    for (const d of dateien) out.push(...(await belegAblegen({ daten: d.daten, name: d.name, quelle: o.quelle, absender: o.absender, spaeter: o.spaeter })));
     return out;
   }
   if (o.daten.length > BELEG_MAX_BYTES) return [{ name, ergebnis: "fehler" }];
@@ -52,6 +54,14 @@ export async function belegAblegen(o: { daten: Uint8Array; name: string | null; 
   const entscheidung = entscheide(viren as Parameters<typeof entscheide>[0]);
   if (entscheidung === "verwerfen" || entscheidung === "ablehnen") return [{ name, ergebnis: "virus" }];
 
+  // Große Uploads: erst nur speichern (schnell, kein Abbruch), auslesen danach im Hintergrund (belegeAuslesenOffen)
+  if (o.spaeter) {
+    const b = await prisma.beleg.create({
+      data: { quelle: o.quelle, datei: Buffer.from(o.daten), mimeType, hash, dateiname: name, absender: o.absender?.slice(0, 200) ?? null, ausgelesen: "offen", ocrFertig: false, typ: "MISC", waehrung: "EUR" },
+      select: { id: true },
+    });
+    return [{ name, ergebnis: "neu", id: b.id }];
+  }
   const d = await liesBelegAus(o.daten, mimeType);
   // Gleicher Beleg schon da (z. B. aus GetMyInvoices oder doppelt weitergeleitet): gleiche Nummer, Anbieter und Betrag
   if (d?.nummer && d.brutto != null) {
@@ -138,4 +148,45 @@ export async function belegAusMail(o: { eml: Uint8Array | null; text: string; be
     select: { id: true },
   });
   return { name, ergebnis: "neu", id: b.id, daten: d };
+}
+
+/**
+ * Gespeicherte, noch nicht ausgelesene Belege (große Uploads) auslesen. Doppelte (gleiche Nummer, gleicher Betrag, gleicher
+ * Anbieter wie ein vorhandener Beleg) werden entfernt. Läuft nach dem Upload im Hintergrund und alle 15 Minuten im Cron.
+ */
+export async function belegeAuslesenOffen(max = 200): Promise<{ ausgelesen: number; doppelt: number; fehler: number }> {
+  const offen = await prisma.beleg.findMany({ where: { ausgelesen: "offen" }, select: { id: true, datei: true, mimeType: true }, orderBy: { createdAt: "asc" }, take: max });
+  let ausgelesen = 0;
+  let doppelt = 0;
+  let fehler = 0;
+  for (const b of offen) {
+    // Gegen parallele Läufe: nur weiter, wenn dieser Lauf den Beleg „nimmt“
+    const genommen = await prisma.beleg.updateMany({ where: { id: b.id, ausgelesen: "offen" }, data: { ausgelesen: "laeuft" } });
+    if (!genommen.count) continue;
+    const d = b.datei && b.mimeType ? await liesBelegAus(new Uint8Array(b.datei), b.mimeType).catch(() => null) : null;
+    if (!d) {
+      fehler++;
+      await prisma.beleg.update({ where: { id: b.id }, data: { ausgelesen: "fehler", ocrFertig: false } });
+      continue;
+    }
+    if (d.nummer && d.brutto != null) {
+      const gleich = await prisma.beleg.findFirst({
+        where: { id: { not: b.id }, nummer: d.nummer, brutto: d.brutto, ...(d.firma ? { firma: { contains: d.firma.split(/\s+/)[0], mode: "insensitive" } } : {}) },
+        select: { id: true },
+      });
+      if (gleich) {
+        doppelt++;
+        await prisma.beleg.delete({ where: { id: b.id } });
+        continue;
+      }
+    }
+    await prisma.beleg.update({
+      where: { id: b.id },
+      data: { ausgelesen: "ki", ocrFertig: true, typ: d.typ, firma: d.firma, nummer: d.nummer, datum: datum(d.datum), netto: d.netto, ustSatz: d.ustSatz, brutto: d.brutto, waehrung: d.waehrung },
+    });
+    ausgelesen++;
+  }
+  // Hängengebliebene Läufe (Neustart mitten im Auslesen) nach einer Stunde wieder freigeben
+  await prisma.beleg.updateMany({ where: { ausgelesen: "laeuft", updatedAt: { lt: new Date(Date.now() - 3_600_000) } }, data: { ausgelesen: "offen" } }).catch(() => null);
+  return { ausgelesen, doppelt, fehler };
 }
