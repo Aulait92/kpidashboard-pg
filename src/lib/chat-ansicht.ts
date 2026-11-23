@@ -108,6 +108,8 @@ const EREIGNISSE: Record<string, Ereignis> = {
   ki_handover: { label: "Möchte einen Menschen: an Sie übergeben, Assistent pausiert", ton: "achtung", icon: "person" },
   advice_blocked: { label: "Antwort ersetzt: keine Tarif-, Preis- oder Versichereraussagen", ton: "achtung", icon: "schild" },
   opt_out: { label: "„STOPP“: keine weiteren WhatsApp-Nachrichten", ton: "stopp", icon: "stopp" },
+  // lib/whatsapp/buchungsnummer.ts: Formular-Nummer ohne WhatsApp, Lead hat online mit dieser Nummer gebucht
+  wa_nummer_uebernommen: { label: "WhatsApp über die Nummer aus der Online-Buchung", ton: "info", icon: "person" },
   erneut_eingetragen: { label: "Hat sich erneut eingetragen", ton: "info", icon: "person" },
   followup_scheduled: { label: "Wiedervorlage geplant", ton: "info", icon: "uhr" },
   email_updated: { label: "E-Mail-Adresse aktualisiert", ton: "info", icon: "post" },

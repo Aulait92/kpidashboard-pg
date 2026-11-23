@@ -26,6 +26,7 @@ const db = vi.hoisted(() => ({
   messages: [] as { body: string }[],
   history: [] as { leadId: string; text: string }[],
   confirmations: [] as { to: string; name: string }[],
+  uebernahmeVorBestaetigung: null as boolean | null,
 }));
 
 class Redirect extends Error {
@@ -84,6 +85,15 @@ const matchWhere = (row: LeadRow, w: Record<string, unknown>): boolean => {
   return true;
 };
 
+// Übernahme der Buchungsnummer (lib/whatsapp/buchungsnummer.ts, eigener Test): hier nur, ob und wann sie passiert
+vi.mock("@/lib/whatsapp/buchungsnummer", async (orig) => ({
+  ...(await orig<typeof import("@/lib/whatsapp/buchungsnummer")>()),
+  uebernimmBuchungsnummer: vi.fn(async (leadId: string, neu: string) => {
+    db.history.push({ leadId, text: `WhatsApp jetzt über die Nummer aus der Online-Buchung +${neu}` });
+    db.uebernahmeVorBestaetigung = db.confirmations.length === 0;
+    return { ok: true, conversationId: "x", nummer: neu, schon: false };
+  }),
+}));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     calendarConnection: { findUnique: vi.fn(async () => ({ customerId: "cust1", status: "connected", customer: { leadAddress: "sie" } })) },
@@ -270,6 +280,7 @@ describe("bookPublicAction mit von=formular", () => {
     db.messages = [];
     db.history = [];
     db.confirmations = [];
+    db.uebernahmeVorBestaetigung = null;
   });
 
   it("nur Handynummer: bucht mit Name und E-Mail des frischen Leads im bestehenden Chat, zeigt nichts davon", async () => {
@@ -324,7 +335,11 @@ describe("bookPublicAction mit von=formular", () => {
     expect(db.booked[0]).toMatchObject({ leadId: "lead1", leadPhone: "4917699999999" });
     expect(db.booked[0].conversationId).not.toBe("convLead");
     expect(db.convs.find((c) => c.contactPhone === "4917699999999")?.leadId).toBe("lead1");
-    expect(db.history[0].text).toContain("neue Nummer");
+    // Formular-Nummer ohne WhatsApp (23.11.2026): neue Nummer wird WhatsApp-Kontakt, vor der Bestätigung; ein Verlaufseintrag
+    expect(db.history).toHaveLength(1);
+    expect(db.history[0].text).toContain("WhatsApp jetzt über die Nummer aus der Online-Buchung +4917699999999");
+    expect(db.uebernahmeVorBestaetigung).toBe(true);
+    expect(db.confirmations[0]?.to).toBe("4917699999999");
   });
 
   it("weder Nummer noch E-Mail passen: normale Buchung wie bisher, kein Verlaufseintrag", async () => {

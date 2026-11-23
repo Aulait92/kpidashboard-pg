@@ -51,6 +51,7 @@ import { displayProduct } from "@/lib/products";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
+import { waNummerFuerLead } from "@/lib/whatsapp/buchungsnummer";
 import { a, anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -937,20 +938,22 @@ async function sendStep(
     prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true, waConsent: true, waUnavailableAt: true } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: seq.customerId }, select: { status: true } }),
   ]);
+  // WhatsApp-Nummer: aus der Online-Buchung übernommen (Formular-Nummer ohne WhatsApp, lib/whatsapp/buchungsnummer.ts), sonst Lead.phone
+  const phone = lead ? await waNummerFuerLead({ id: seq.leadId, customerId: seq.customerId, phone: lead.phone }) : null;
   // Kein WhatsApp (Nummer nicht erreichbar, lib/whatsapp/kein-whatsapp.ts): Anruf statt WhatsApp, außer der Lead hat selbst geschrieben
-  const noWa = !!lead?.waUnavailableAt && lead.phone
-    ? (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId: seq.customerId, contactPhone: lead.phone } } })) === 0
+  const noWa = !!lead?.waUnavailableAt && phone
+    ? (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId: seq.customerId, contactPhone: phone } } })) === 0
     : false;
-  if (!lead?.phone || account?.status !== "connected" || lead.waConsent === "nein" || noWa) {
+  if (!lead || !phone || account?.status !== "connected" || lead.waConsent === "nein" || noWa) {
     const r = await createCallTask(seq.leadId, step.fallbackNote, now);
     return {
       ...base,
       result: r,
-      detail: !lead?.phone ? "Keine Handynummer" : lead.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : noWa ? "Nicht per WhatsApp erreichbar" : "WhatsApp nicht verbunden",
+      detail: !phone ? "Keine Handynummer" : lead?.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : noWa ? "Nicht per WhatsApp erreichbar" : "WhatsApp nicht verbunden",
     };
   }
   const an = await anspracheOf(seq.customerId);
-  const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone: lead.phone, name: lead.name });
+  const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone, name: lead.name });
   const angebot = istAngebotsAbfolge(seq.kind);
   const ctx: Ctx = {
     firstName: firstNameOf(lead.name),
@@ -964,7 +967,7 @@ async function sendStep(
   let fensterZu = false;
   if (step.onlyInWindow) {
     const conv = await prisma.conversation.findUnique({
-      where: { customerId_contactPhone: { customerId: seq.customerId, contactPhone: lead.phone } },
+      where: { customerId_contactPhone: { customerId: seq.customerId, contactPhone: phone } },
       select: { windowExpiresAt: true },
     });
     if (!conv?.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) {
@@ -1005,7 +1008,7 @@ async function sendStep(
   try {
     const { mode } = await sendWhatsAppNotice({
       customerId: seq.customerId,
-      to: lead.phone,
+      to: phone,
       purpose,
       params,
       text,
@@ -1021,7 +1024,7 @@ async function sendStep(
       try {
         const { mode } = await sendWhatsAppNotice({
           customerId: seq.customerId,
-          to: lead.phone,
+          to: phone,
           purpose: step.fallback.purpose,
           params: step.fallback.params(ctx),
           text,
