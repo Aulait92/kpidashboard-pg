@@ -81,6 +81,14 @@ kein grauer Tipp-Blitz, Knöpfe geben beim Drücken leicht nach (97 %).
   (`Lorenzstr. 58`). Antrag am 23.11.2026 abgeschickt, Enrollment-ID **PLB247QF64** (in Prüfung: Apple bestätigt die
   Unterschriftsberechtigung, meist per Anruf, dann Mail mit den nächsten Schritten und der Gebühr).
 
+## Stand Einrichtung (23.11.2026)
+
+- Apple-Konto freigeschaltet, Team ID `JUGFRKCVL4`.
+- App ID `de.performancegrowth.app` mit Push Notifications angelegt.
+- APNs-Schlüssel „performancegrowth Push“, Key ID `A734GR4PSM` (.p8 nur bei Ole). Railway: `APNS_KEY_ID`, `APNS_TEAM_ID`,
+  `APNS_BUNDLE_ID`, `APNS_PRODUCTION=1` gesetzt; `APNS_PRIVATE_KEY` trägt Ole selbst ein.
+- App Store Connect: App „performancegrowth“ angelegt, Apple-ID der App **6838442707** (für Codemagic `APP_STORE_APPLE_ID`).
+
 ## Was Ole tun muss (sobald das Apple-Konto freigeschaltet ist)
 
 Bitte **keine Schlüssel in Chats oder E-Mails kopieren** – nur direkt in Railway
