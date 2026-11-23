@@ -597,6 +597,9 @@ export type RunOptions = { llm?: LlmCall; limit?: number; month?: string; custom
 export const NO_MEASURE_REASON = "keine Maßnahme im Monat eingetragen, Bericht geht nicht automatisch raus";
 
 /** Berichte für den Vormonat erzeugen (idempotent je Kunde und Monat). */
+/** Erster Monatsbericht frühestens nach so vielen Tagen Laufzeit (ab Livegang). */
+export const MINDEST_LAUFZEIT_TAGE = 30;
+
 export async function runMonthlyReports(now = new Date(), opts: RunOptions = {}) {
   const month = opts.month ?? previousMonthKey(now);
   const settings = await loadReportSettings();
@@ -609,6 +612,8 @@ export async function runMonthlyReports(now = new Date(), opts: RunOptions = {})
       // Nicht an reine Pay-per-Lead-Kunden (Ole, 18.11.2026)
       NOT: NUR_PPL_WHERE,
       monthlyReports: { none: { month } },
+      // Erst ab 30 Tagen Laufzeit (Ole, 23.11.2026): live seit mindestens 30 Tagen; ohne Einrichtung zählt das Anlegedatum
+      OR: [{ onboarding: { liveAt: { lte: new Date(now.getTime() - MINDEST_LAUFZEIT_TAGE * 86_400_000) } } }, { onboarding: null, createdAt: { lte: new Date(now.getTime() - MINDEST_LAUFZEIT_TAGE * 86_400_000) } }],
       ...(opts.customerIds ? { id: { in: opts.customerIds } } : {}),
     },
     select: { id: true, name: true, salesContact: { select: { id: true } }, onboarding: { select: { salesContactId: true } } },
