@@ -206,6 +206,15 @@ export const typeKeys = (t: Pick<SalesBookingType, "calendarKeys">): string[] =>
 /** Ist mindestens ein Kalender des Termintyps verbunden? */
 export async function bookingReady(t: SalesBookingType): Promise<boolean> {
   if (!t.active) return false;
+  return calendarReady(t);
+}
+
+/**
+ * Kalender des Termintyps verbunden? (Admins buchen auch Typen, die nicht online buchbar sind.) Reicht zum Verschieben eines schon gebuchten Termins (Ole, 23.11.2026): Ein nicht
+ * öffentlich buchbarer Typ (z. B. Entscheidungs-Call, nur per persönlichem Link bzw. vom Admin gebucht) muss sich
+ * trotzdem verschieben lassen; vorher zeigte die Seite Zeiten und meldete beim Bestätigen „Etwas ist schiefgelaufen“.
+ */
+export async function calendarReady(t: SalesBookingType): Promise<boolean> {
   const conn = await prisma.calendarConnection.findUnique({ where: { customerId: typeKeys(t)[0] }, select: { status: true } });
   return conn?.status === "connected";
 }
@@ -608,7 +617,7 @@ async function deleteCalendarEvent(m: { calendarKey: string | null; calendarEven
   }
 }
 
-export type ChangeResult = { ok: true; token: string } | { ok: false; error: "not_found" | "closed" | "slot" | "taken" | "error" };
+export type ChangeResult = { ok: true; token: string } | { ok: false; error: "not_found" | "closed" | "slot" | "taken" | "unavailable" | "error" };
 
 /** Absagen per Link (oder vom Team). Termin im Kalender löschen, CRM nachziehen, Mail und Push. */
 export async function cancelSalesMeeting(token: string, opts: { reason?: string | null; by?: "invitee" | "team" } = {}): Promise<ChangeResult> {
@@ -642,7 +651,7 @@ export async function rescheduleSalesMeeting(token: string, start: Date, now = n
   if (!m) return { ok: false, error: "not_found" };
   if (!isOpenMeeting(m, now)) return { ok: false, error: "closed" };
   const t = m.bookingType ?? (await loadBookingType(null));
-  if (!t || !(await bookingReady(t))) return { ok: false, error: "error" };
+  if (!t || !(await calendarReady(t))) return { ok: false, error: "unavailable" };
   if (!(await isBookableStart(t, start, now))) return { ok: false, error: "slot" };
   return moveMeeting(m, t, start, false);
 }
@@ -729,12 +738,6 @@ export type AdminResult =
   | { ok: true; meetingId: string; manageToken: string }
   | { ok: false; error: "not_found" | "closed" | "unavailable" | "past" | "email" | "error" }
   | { ok: false; error: "conflict"; conflicts: Conflict[] };
-
-/** Ist der Kalender des Termintyps verbunden? (Admins buchen auch Typen, die nicht online buchbar sind.) */
-async function calendarReady(t: SalesBookingType): Promise<boolean> {
-  const conn = await prisma.calendarConnection.findUnique({ where: { customerId: typeKeys(t)[0] }, select: { status: true } });
-  return conn?.status === "connected";
-}
 
 /** Admin bucht für einen Vertriebskontakt: Datum und Uhrzeit frei, auch außerhalb der freien Zeiten. */
 export async function adminBookSalesMeeting(opts: {
