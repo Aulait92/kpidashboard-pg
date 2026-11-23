@@ -12,6 +12,7 @@
 // Kombi-Rabatt nur, wenn die App ihn für die Auswahl wirklich berechnet (lib/kombi-rabatt.ts über beitragAus).
 // Texte an Leads in beiden Fassungen (a(an, du, sie)), ohne Gedankenstriche; Vermittler-Oberfläche in Sie-Form.
 
+import { mitThema } from "@/lib/thema-artikel";
 import { blattUrl } from "@/lib/abschluss";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
@@ -66,7 +67,7 @@ export type AngebotText = {
 export function angebotWhatsAppText(o: AngebotText): string {
   const name = anredeName(o.an, o.kontakt);
   const teile = [
-    `Vielen Dank für das Gespräch${name ? `, ${name}` : ""}! ${a(o.an, `Wie besprochen hier dein Angebot für ${o.thema}:`, `Wie besprochen hier Ihr Angebot für ${o.thema}:`)}\n${o.link}`,
+    `Vielen Dank für das Gespräch${name ? `, ${name}` : ""}! ${a(o.an, `Wie besprochen hier dein Angebot ${mitThema("für", o.thema)}:`, `Wie besprochen hier Ihr Angebot ${mitThema("für", o.thema)}:`)}\n${o.link}`,
     o.kombi ?? null,
     o.kundenlink ? `${a(o.an, "Deine Beratung zum Nachlesen:", "Ihre Beratung zum Nachlesen:")}\n${o.kundenlink}` : null,
     a(o.an, "Bei Fragen schreib mir einfach hier.", "Bei Fragen schreiben Sie mir einfach hier."),
