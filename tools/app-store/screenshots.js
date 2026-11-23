@@ -17,10 +17,14 @@ const path = require("node:path");
 const BASIS = (process.argv[2] || "https://app.performancegrowth.de").replace(/\/+$/, "");
 const ZIEL = process.argv[3] || path.join(__dirname, "..", "..", "docs", "app-store", "screenshots");
 // 440 × 956 pt × 3 = 1320 × 2868 px (iPhone 16/17 Pro Max)
-const VIEWPORT = { width: 440, height: 956 };
-const SCALE = 3;
-const STATUS_PT = 54;
-const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 performancegrowthApp/1.0";
+// GERAET=ipad: iPad 13" (2064×2752), von App Store Connect verlangt, weil die App auch auf dem iPad läuft
+const IPAD = process.env.GERAET === "ipad";
+const VIEWPORT = IPAD ? { width: 1032, height: 1376 } : { width: 440, height: 956 };
+const SCALE = IPAD ? 2 : 3;
+const STATUS_PT = IPAD ? 32 : 54;
+const UA = IPAD
+  ? "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 performancegrowthApp/1.0"
+  : "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 performancegrowthApp/1.0";
 
 const STATUSLEISTE = `
   <div style="display:flex;align-items:center;justify-content:space-between;height:100%;padding:0 30px 0 44px;font:600 17px -apple-system,'SF Pro Text',system-ui,sans-serif;color:#0f172a">
@@ -32,16 +36,8 @@ const STATUSLEISTE = `
     </span>
   </div>`;
 
-async function vorbereiten(page) {
-  await page.addStyleTag({
-    content: `
-      [data-demo-banner],[data-demo-tour],nextjs-portal{display:none!important}
-      html{scroll-padding-top:${STATUS_PT}px}
-      body{padding-top:${STATUS_PT}px!important}
-      #pg-statusleiste{position:fixed;top:0;left:0;right:0;height:${STATUS_PT}px;z-index:2147483647;background:#fff}
-    `,
-  });
-  // Keine fremden Marken auf den Store-Bildern (Ole, 23.11.2026, Richtlinie 5.2): „Allianz“ aus Tarifnamen entfernen
+// Keine fremden Marken auf den Store-Bildern (Ole, 23.11.2026, Richtlinie 5.2): „Allianz“ aus Tarifnamen entfernen
+async function markenEntfernen(page) {
   await page.evaluate(() => {
     const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const knoten = [];
@@ -52,6 +48,25 @@ async function vorbereiten(page) {
       else if (/Allianz/.test(v)) t.nodeValue = v.replace(/Allianz\s*·\s*/g, "").replace(/Allianz\s+/g, "").replace(/Allianz/g, "");
     }
   });
+}
+
+async function vorbereiten(page) {
+  // iPad: ohne eingeblendete Statusleiste (die feste Seitenleiste würde sonst überdeckt)
+  if (IPAD) {
+    await page.addStyleTag({ content: "[data-demo-banner],[data-demo-tour],nextjs-portal{display:none!important}" });
+    await markenEntfernen(page);
+    await page.waitForTimeout(400);
+    return;
+  }
+  await page.addStyleTag({
+    content: `
+      [data-demo-banner],[data-demo-tour],nextjs-portal{display:none!important}
+      html{scroll-padding-top:${STATUS_PT}px}
+      body{padding-top:${STATUS_PT}px!important}
+      #pg-statusleiste{position:fixed;top:0;left:0;right:0;height:${STATUS_PT}px;z-index:2147483647;background:#fff}
+    `,
+  });
+  await markenEntfernen(page);
   await page.evaluate((html) => {
     const d = document.createElement("div");
     d.id = "pg-statusleiste";
