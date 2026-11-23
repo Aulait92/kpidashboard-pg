@@ -133,14 +133,16 @@ export function leadFormPayload(
         ...(q.options.length ? { options: q.options.map((o) => ({ key: slug(o), value: o })) } : {}),
       })),
       { type: "FULL_NAME", key: "full_name" },
-      { type: "PHONE", key: "phone_number" },
+      // WhatsApp-Nummer statt Telefonnummer (Ole, 23.11.2026: 3 von 7 Lohmann-Leads ohne WhatsApp, meist von Meta
+      // vorausgefülltes Festnetz). Meta füllt das Feld mit der WhatsApp-Nummer vor; der Import liest whatsapp_number vor
+      // phone_number (lib/lead-intake.ts).
+      { type: "WHATSAPP_NUMBER", key: "whatsapp_number" },
       { type: "EMAIL", key: "email" },
       // Vorausgefüllt je Produkt (Kfz: Adresse und Geburtsdatum, Privatschutz: Adresse), lib/kampagnen/formular-vorgaben.ts
       ...standardFelder(ctx.product),
     ],
-    // Überschrift über den Kontaktfragen (Ole, 21.11.2026: erster Lohmann-Lead mit Festnetznummer): auf die Handynummer
-    // lenken, weil der Assistent per WhatsApp schreibt. Neutral formuliert (passt zu Sie und Du), ohne Gedankenstrich.
-    question_page_custom_headline: "Bitte Handynummer angeben, die Rückmeldung kommt per WhatsApp",
+    // Überschrift über den Kontaktfragen: der Assistent schreibt per WhatsApp. Neutral formuliert (passt zu Sie und Du).
+    question_page_custom_headline: "Ihre Rückmeldung kommt per WhatsApp",
     privacy_policy: { url: ctx.privacyUrl, link_text: "Datenschutzerklärung" },
     // PARAGRAPH_STYLE erlaubt nur ein Element (Meta-Fehler #100, 21.11.2026): Absätze zusammenfassen
     context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: [form.introParagraphs.filter(Boolean).join("\n\n").slice(0, 2000)], button_text: "Weiter" },

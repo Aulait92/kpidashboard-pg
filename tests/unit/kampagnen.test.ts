@@ -117,7 +117,7 @@ describe("Kampagnen-Agenten: Bauer", () => {
     const p = leadFormPayload(form, ctx) as { questions: { type: string; key: string }[]; privacy_policy: { url: string }; custom_disclaimer: { checkboxes?: unknown[]; body: { text: string } }; locale: string };
     expect(p.privacy_policy.url).toBe(ctx.privacyUrl);
     expect(p.locale).toBe("DE_DE");
-    expect(p.questions.map((q) => q.key)).toEqual(["katze_alter", "haltung", "full_name", "phone_number", "email"]);
+    expect(p.questions.map((q) => q.key)).toEqual(["katze_alter", "haltung", "full_name", "whatsapp_number", "email"]);
     // Immer ohne Checkbox (Ole, 22.11.2026): Einwilligung per Klick auf „Senden“, Text über dem Knopf
     expect(p.custom_disclaimer.checkboxes).toBeUndefined();
     expect(p.custom_disclaimer.body.text).toBe(form.consentText);

@@ -130,7 +130,7 @@ export function extract(inc: Pick<IncomingLead, "fields">, labels: Record<string
   const first = take(["first_name", "vorname"]);
   const last = take(["last_name", "nachname"]);
   const name = full ?? ([first, last].filter(Boolean).join(" ") || null);
-  const phone = normalizePhone(take(["phone_number", "phone", "telefonnummer", "telefon", "handynummer"]) ?? "");
+  const phone = normalizePhone(take(["whatsapp_number", "phone_number", "phone", "telefonnummer", "telefon", "handynummer"]) ?? "");
   const email = take(["email", "e-mail", "e_mail", "emailadresse"])?.toLowerCase() ?? null;
   const answers = Object.entries(inc.fields)
     .filter(([k, v]) => !used.has(k) && v)
