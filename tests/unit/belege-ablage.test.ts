@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildZip } from "@/lib/export/zip";
 import { deflateRawSync } from "node:zlib";
-import { entpackeZip, istZip } from "@/lib/belege/zip";
+import { entpackeZip, entpackeZipEinzeln, istZip } from "@/lib/belege/zip";
 import { bereinige } from "@/lib/belege/auslesen";
 import { belegTyp } from "@/lib/belege/ablage";
 import { belegAdresse, istBelegAdresse } from "@/lib/belege/eingang";
@@ -42,6 +42,16 @@ describe("ZIP lesen", () => {
     const d = entpackeZip(Buffer.concat([vorne, cd, ende]));
     expect(d).toHaveLength(1);
     expect(d[0].daten.equals(inhalt)).toBe(true);
+  });
+});
+
+describe("ZIP Datei für Datei (große Meta-Pakete)", () => {
+  it("keine Gesamtgrenze, nur je Datei", () => {
+    const pdf = "%PDF-1.4 " + "x".repeat(1000);
+    const zip = buildZip([{ name: "1.pdf", data: pdf }, { name: "2.pdf", data: pdf }, { name: "3.pdf", data: pdf }]);
+    // Gesamt über 2 KB: entpackeZip mit Gesamtgrenze 2 KB lehnt ab, einzeln (je Datei 2 KB) klappt
+    expect(() => entpackeZip(zip, 500, 2048)).toThrow("zip_zu_gross");
+    expect([...entpackeZipEinzeln(zip, 3000, 2048)].map((d) => d.name)).toEqual(["1.pdf", "2.pdf", "3.pdf"]);
   });
 });
 

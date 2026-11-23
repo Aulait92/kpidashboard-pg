@@ -10,6 +10,19 @@ export function istZip(buf: Uint8Array): boolean {
 }
 
 export function entpackeZip(input: Uint8Array, maxDateien = 500, maxBytes = 50 * 1024 * 1024): ZipDatei[] {
+  return [...zipEintraege(input, maxDateien, maxBytes, true)];
+}
+
+/**
+ * Wie entpackeZip, aber Datei für Datei (Ole, 23.11.2026: Meta-ZIP eines Jahres war entpackt über 50 MB und wurde als
+ * „keine lesbare Datei“ abgelehnt). maxBytes gilt hier je Datei, nicht für alle zusammen; so bleibt nur eine Datei im
+ * Speicher.
+ */
+export function* entpackeZipEinzeln(input: Uint8Array, maxDateien = 3000, maxBytes = 15 * 1024 * 1024): Generator<ZipDatei> {
+  for (const d of zipEintraege(input, maxDateien, maxBytes, false)) yield d;
+}
+
+function* zipEintraege(input: Uint8Array, maxDateien: number, maxBytes: number, summeBegrenzen: boolean): Generator<ZipDatei> {
   const buf = Buffer.from(input);
   // Ende des zentralen Verzeichnisses suchen (von hinten)
   let eocd = -1;
@@ -22,9 +35,9 @@ export function entpackeZip(input: Uint8Array, maxDateien = 500, maxBytes = 50 *
   if (eocd < 0) throw new Error("zip_ungueltig");
   const anzahl = buf.readUInt16LE(eocd + 10);
   let p = buf.readUInt32LE(eocd + 16);
-  const out: ZipDatei[] = [];
   let summe = 0;
-  for (let n = 0; n < anzahl && out.length < maxDateien; n++) {
+  let zahl = 0;
+  for (let n = 0; n < anzahl && zahl < maxDateien; n++) {
     if (buf.readUInt32LE(p) !== 0x02014b50) throw new Error("zip_ungueltig");
     const methode = buf.readUInt16LE(p + 10);
     const komprimiert = buf.readUInt32LE(p + 20);
@@ -42,12 +55,20 @@ export function entpackeZip(input: Uint8Array, maxDateien = 500, maxBytes = 50 *
     const roh = buf.subarray(start, start + komprimiert);
     let daten: Buffer;
     if (methode === 0) daten = Buffer.from(roh);
-    else if (methode === 8) daten = inflateRawSync(roh, { maxOutputLength: maxBytes });
+    else if (methode === 8) {
+      // Einzeln: zu große Datei überspringen statt das ganze ZIP abzulehnen
+      try {
+        daten = inflateRawSync(roh, { maxOutputLength: maxBytes });
+      } catch (e) {
+        if (summeBegrenzen) throw e;
+        continue;
+      }
+    }
     else continue;
     if (groesse && daten.length !== groesse) throw new Error("zip_ungueltig");
     summe += daten.length;
-    if (summe > maxBytes) throw new Error("zip_zu_gross");
-    out.push({ name: basis, daten });
+    if (summeBegrenzen && summe > maxBytes) throw new Error("zip_zu_gross");
+    zahl++;
+    yield { name: basis, daten };
   }
-  return out;
 }
