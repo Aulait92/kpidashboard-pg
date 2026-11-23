@@ -72,6 +72,8 @@ export type CampaignContext = {
   needsBooking?: boolean;
   /** Fester Einwilligungstext fürs Formular (lib/einwilligung-leadformular.ts); ersetzt den Vorschlag des Formular-Agenten. */
   consentText?: string | null;
+  /** Für den Einwilligungstext fehlende Angaben (z. B. „Anschrift“): Lauf startet dann nicht. */
+  consentFehlt?: string[];
 };
 
 /** Eine bestlaufende Anzeige aus dem eigenen Meta-Werbekonto des Kunden (letzte 90 Tage). */

@@ -10,7 +10,7 @@ import { currentBudgets, customerCpl } from "@/lib/budget";
 import { productPatterns } from "@/lib/kampagnen/agents";
 import type { CampaignContext } from "@/lib/kampagnen/types";
 import { consentAngabenFor } from "@/lib/einwilligung-leadformular-server";
-import { leadFormConsentText } from "@/lib/einwilligung-leadformular";
+import { consentMissing, leadFormConsentText } from "@/lib/einwilligung-leadformular";
 
 type WebsiteInfo = { privacyUrl?: string | null; impressumUrl?: string | null; sourceUrl?: string | null };
 type Questionnaire = { special?: string; anrede?: string };
@@ -84,6 +84,7 @@ export async function loadCampaignContext(
       }))
     : { gewinner: [], hinweis: null };
   const consentText = angaben ? leadFormConsentText({ ...angaben, datenschutzUrl: privacyUrl ?? angaben.datenschutzUrl }) : null;
+  const consentFehlt = angaben ? consentMissing({ ...angaben, datenschutzUrl: privacyUrl ?? angaben.datenschutzUrl }) : [];
   return {
     customerId: c.id,
     customerName: c.name,
@@ -100,6 +101,7 @@ export async function loadCampaignContext(
     website: httpUrl(sc?.url ?? web.sourceUrl ?? null),
     privacyUrl,
     consentText,
+    consentFehlt,
     pageId: c.metaPageId ?? c.leadSources[0]?.pageId ?? null,
     adAccountId: c.metaAdAccountId,
     // Gebuchtes, noch nicht gestartetes Produkt: Budget aus der Buchung (zählt erst ab „Gestartet“)
@@ -148,6 +150,15 @@ export async function checkPrerequisites(ctx: CampaignContext, deps: Prerequisit
   }
   if (!ctx.privacyUrl) {
     out.push({ key: "privacy", message: "Keine Datenschutz-URL: Bitte die Datenschutzseite des Kunden eintragen (Pflicht im Sofortformular)." });
+  }
+  // Einwilligung braucht Vermittler, Anschrift und Widerrufs-Mail (Ole, 23.11.2026: Schwarzkopf-Lauf lief 15 Minuten und
+  // wurde dann vom Prüfer wegen „[Anschrift]“ gestoppt). Datenschutz-URL prüft der Punkt darüber.
+  const fehlt = (ctx.consentFehlt ?? []).filter((x) => !/Datenschutz/i.test(x));
+  if (fehlt.length) {
+    out.push({
+      key: "consent",
+      message: `Für die Einwilligung im Formular fehlt: ${fehlt.join(", ")}. Bitte in der Kundenakte ergänzen (Vertriebskontakt: Straße, PLZ, Ort, E-Mail).`,
+    });
   }
   if (!ctx.adAccountId) {
     out.push({ key: "adAccount", message: "Kein Meta-Werbekonto hinterlegt (Reiter „Leads & Formulare“ → Meta-Werbekonto)." });
