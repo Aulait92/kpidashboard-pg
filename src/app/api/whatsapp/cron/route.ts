@@ -503,6 +503,27 @@ async function handle(req: Request): Promise<Response> {
   if (now.getUTCHours() === 2 && now.getUTCMinutes() >= 5 && now.getUTCMinutes() < 10 && process.env.STRIPE_SECRET_KEY) {
     after(() => import("@/lib/belege/stripe").then((m) => m.syncStripeBelege()).catch((e: unknown) => reportError(e, "cron-belege-stripe")));
   }
+  // Buchhaltung Anfang des Monats (Ole, 23.11.2026: „oft erinnern“): am 1. Meta-Belege holen; am 4. und 6. erneut,
+  // solange das Monatspaket des Vormonats nicht gesendet ist. Jeweils 9 Uhr Berlin.
+  if ([1, 4, 6].includes(now.getUTCDate()) && now.getUTCHours() === 8 && now.getUTCMinutes() < 5) {
+    after(async () => {
+      try {
+        const m = await import("@/lib/belege/monatspaket");
+        const monat = m.vormonat(now);
+        const { prisma } = await import("@/lib/prisma");
+        const p = await prisma.monatsPaket.findUnique({ where: { monat } });
+        if (p?.gesendetAm) return;
+        const { sendToAdmins } = await import("@/lib/push");
+        const body =
+          now.getUTCDate() === 1
+            ? `Neuer Monat: bitte die Meta-Belege für ${m.monatName(monat)} holen und hochladen (Links auf der Belege-Seite).`
+            : `Monatspaket ${m.monatName(monat)} ist noch nicht beim Steuerbüro. Kurz prüfen und senden.`;
+        await sendToAdmins({ title: "Buchhaltung", body, url: "/admin/neu/zahlen/kosten/belege" });
+      } catch (e) {
+        reportError(e, "cron-buchhaltung-erinnerung");
+      }
+    });
+  }
   // Monatspaket für das Steuerbüro: am 2. um 9 Uhr Berlin Push an die Admins (lib/belege/monatspaket.ts), gesendet wird nur per Klick
   if (now.getUTCDate() === 2 && now.getUTCHours() === 8 && now.getUTCMinutes() < 5) {
     after(async () => {

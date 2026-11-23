@@ -102,6 +102,8 @@ export function zaehle(e: AblageErgebnis[]): Record<AblageErgebnis["ergebnis"], 
  */
 export async function belegAusMail(o: { eml: Uint8Array | null; text: string; betreff: string; absender: string | null }): Promise<AblageErgebnis> {
   const name = `${o.betreff || "Mail"}.eml`.replace(/[\\/:*?"<>|]+/g, " ").slice(0, 200);
+  // Zahlungsmitteilungen, die ausdrücklich keine Rechnung sind (z. B. Meta „This is not an invoice“): kein Beleg
+  if (/this is not an invoice|keine rechnung|dies ist keine rechnung/i.test(`${o.betreff}\n${o.text}`)) return { name, ergebnis: "kein_beleg" };
   const text = `Betreff: ${o.betreff}\n\n${o.text}`;
   const d = await liesBelegAus(Buffer.from(text, "utf8"), "text/plain");
   if (!d || d.brutto == null || d.typ === "MISC") return { name, ergebnis: "kein_beleg", daten: d };
