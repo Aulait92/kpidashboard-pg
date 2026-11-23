@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { completeTotpLogin, login, logout, type LoginResult } from "@/lib/auth";
 import { loginTargetFor } from "@/lib/login-ziel-server";
 import { checkLimit, requestIp } from "@/lib/rate-limit";
+import { istAppReviewEmail } from "@/lib/app-demo/app-review";
 
 export type LoginActionState = {
   error?: string;
@@ -30,6 +31,13 @@ export async function loginAction(
   // Zusätzlich zur Sperre je E-Mail (lib/auth.ts): Drossel je IP
   if (!checkLimit("login", await requestIp()).ok) {
     return { error: "Zu viele Anmeldeversuche. Bitte in ein paar Minuten noch einmal versuchen.", email };
+  }
+
+  // App-Store-Prüfer (lib/app-demo/app-review.ts): reservierte E-Mail führt in die Demo, nie in die echte Anmeldung
+  if (istAppReviewEmail(email)) {
+    const { appReviewLogin } = await import("@/lib/app-demo/app-review-server");
+    const r = await appReviewLogin(email, password);
+    return r.ok ? { redirectTo: r.redirectTo } : { error: r.error, email };
   }
 
   let result: LoginResult;

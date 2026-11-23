@@ -245,19 +245,77 @@ Löschung auf Anfrage möglich (Kontakt: Support).
 > our marketing campaigns. Access is only for our customers; there is no
 > sign-up in the app.
 >
-> Demo account: **E-Mail:** `<DEMO_LOGIN_EMAIL>` **Password:** `<DEMO_LOGIN_PASSWORT>`
-> (contains sample leads, messages and appointments)
+> Demo account: **E-Mail:** `appreview@performancegrowth.de` **Password:** (in App Store Connect)
+> The demo account opens a read-only customer area with fictional sample data
+> (leads, WhatsApp conversations, appointments, numbers). Nothing is saved and no
+> messages are sent from the demo account.
 >
-> How to test: log in → “Heute” shows today’s tasks → tap a lead to call or
-> message → “Einstellungen → Benachrichtigungen” enables push notifications.
+> How to test: log in → “Heute” shows today’s tasks → “Kontakte” lists the leads →
+> “Nachrichten” shows the WhatsApp history with each lead → open an appointment →
+> “Wachstum” shows the numbers. “Abmelden” in the blue bar logs out.
 >
 > Native features: push notifications (APNs) for new leads, app icon badge with
 > new leads, haptic feedback, native share sheet, phone calls, pull-to-refresh,
-> swipe-back navigation, offline screen.
+> swipe-back navigation, offline screen. Push notifications are sent to real
+> customer accounts when a new lead arrives; the demo account receives none.
 
-**Ole:** vor der Einreichung einen Demo-Login (Kunde „Demo“ mit Beispieldaten)
-anlegen und die Platzhalter ersetzen – nur in App Store Connect eintragen, nicht
-ins Repository.
+### Prüfer-Zugang (Demo-Login, 23.11.2026)
+
+Kein echtes Konto: Die reservierte E-Mail `appreview@performancegrowth.de` führt bei richtigem Passwort in die
+**App-Demo** (`/app-demo`, eigene Datenbank `APP_DEMO_DATABASE_URL`, Beispielmarke „Max Berger“, nachts neu
+angelegt). Die Demo ist nur lesend (Postgres `default_transaction_read_only`, gesperrte Schreib-Operationen),
+in Demo-Anfragen geht nichts nach außen (`fetch`/`http(s)` gesperrt, `lib/app-demo/ausgang.ts`), Server Actions
+und `/api/…` aus der Demo beantwortet die Middleware selbst. Es gibt **keine Sitzung** und **keinen Zugriff auf
+echte Kundendaten**; WhatsApp, SMS, Mails, Push und Meta-Aufrufe sind damit ausgeschlossen.
+
+- Anmeldung (`src/app/login/actions.ts` → `src/lib/app-demo/app-review-server.ts`): Passwort nur aus
+  `APP_REVIEW_PASSWORT` (mind. 12 Zeichen, Vergleich in konstanter Zeit). Fehlt die Variable, ist sie zu kurz oder
+  ist die Demo nicht eingerichtet, ist der Zugang aus (Meldung wie bei falschem Passwort). Die reservierte E-Mail
+  erreicht nie die echte Anmeldung.
+- Drossel: wie jede Anmeldung 30 Versuche je IP / 15 Min., zusätzlich höchstens 10 Fehlversuche je 15 Min. über
+  alle IPs (gezählt im Änderungsprotokoll), danach gesperrt.
+- Protokoll: `app_review.login` bzw. `app_review.failed` im Änderungsprotokoll (Akteur `appreview@…`, Rolle `app-review`).
+- Nach der Anmeldung setzt der Server das Kennzeichen-Cookie `pg_app_review=1` (30 Tage). Ohne Sitzung leitet die
+  Middleware `/buyer/…` dann in die Demo; ein Neustart der App (Start-URL `/buyer`) landet also wieder in der Demo.
+  Das Cookie gewährt nichts, was nicht ohnehin öffentlich ist. „Abmelden“ im blauen Demo-Banner löscht es; eine
+  echte Anmeldung oder Abmeldung ebenfalls.
+- In der App: Zähler am Symbol wird in der Demo auf 0 gesetzt (die Demo beantwortet `/api/app/device` mit 403),
+  der Hinweis „Benachrichtigungen einschalten“ ist in der Demo ausgeblendet, Ziehen zum Aktualisieren und Rückkehr
+  in die App laden die Demo-Seite neu. Lokal mit simuliertem Capacitor geprüft.
+- Tests: `tests/unit/app-review-login.test.ts`.
+
+**Ole, vor der Einreichung:**
+
+1. Railway (`live-app`): `APP_REVIEW_PASSWORT` = ein neues, zufälliges Passwort (mind. 12 Zeichen, z. B. aus dem
+   Passwort-Manager). `APP_DEMO_DATABASE_URL` ist bereits gesetzt (die Demo läuft).
+2. App Store Connect → App → Versionsinformationen → **App-Review-Informationen**: „Anmeldung erforderlich“
+   anhaken, Benutzername `appreview@performancegrowth.de`, Passwort wie in Railway. **Nur dort eintragen**, nicht
+   ins Repository, nicht in Chats. Notizen: Text oben (englisch).
+3. Kurz selbst prüfen: in der App mit diesen Daten anmelden → „Demo mit Beispieldaten“ erscheint.
+4. Nach der Freigabe kann das Passwort bleiben (Apple prüft jedes Update erneut); bei Verdacht einfach in Railway
+   ändern und in App Store Connect nachziehen.
+
+**Behoben (23.11.2026):** „Heute“ in der Demo lieferte 500 (beim Rendern der Kontaktakte wurden die
+E-Mail-Vorlagen angelegt, der Lese-Client lehnt das ab). Die Vorlagen legt jetzt das nächtliche Neuanlegen an
+(`src/lib/app-demo/seed.ts`). Wirkt in Produktion nach dem Deploy erst mit dem nächsten Neuanlegen (beim Start, wenn
+die Daten älter als 20 Stunden sind, sonst nachts); zum sofortigen Prüfen: nach dem Deploy `/app-demo` aufrufen,
+notfalls `scripts/app-demo-seed.ts` gegen die Demo-Datenbank.
+
+## Screenshots (iPhone 6,9", 1320 × 2868)
+
+`docs/app-store/screenshots/`: `01-heute.png`, `02-kontakte.png`, `03-chat.png` (WhatsApp-Verlauf mit
+Terminbuchung), `04-termin.png` (Terminvorbereitung), `05-zahlen.png` (Wachstum). Aus der App-Demo mit
+Beispieldaten, ohne Demo-Banner, mit iOS-Statusleiste 9:41. Neu erzeugen (z. B. nach Änderungen der Oberfläche):
+
+```
+node tools/app-store/screenshots.js https://app.performancegrowth.de
+# lokal: node tools/app-store/screenshots.js http://localhost:3000  (mit APP_DEMO_DATABASE_URL)
+# eigener Chromium: PW_CHROME=/pfad/zu/chrome
+```
+
+Hinweis: In der Terminvorbereitung steht als Tarifbeispiel ein echter Versicherername (Beispieldaten der Demo).
+Falls Apple das bemängelt (Markenrechte, 5.2), ein anderes Motiv wählen (z. B. die Präsentation) oder die
+Tarifempfehlung der Demo neutral setzen und neu aufnehmen.
 
 ## Warum das keine „reine Website-Hülle“ ist (Richtlinie 4.2)
 

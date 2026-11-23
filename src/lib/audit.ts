@@ -12,6 +12,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   login: "Anmeldung",
   "login.2fa": "Anmeldung mit Zwei-Faktor",
   "login.failed": "Anmeldung fehlgeschlagen",
+  "app_review.login": "App-Store-Prüfer: Demo geöffnet",
+  "app_review.failed": "App-Store-Prüfer: falsches Passwort",
   "2fa.enable": "Zwei-Faktor eingeschaltet",
   "2fa.disable": "Zwei-Faktor ausgeschaltet",
   "session.revoke_all": "Überall abgemeldet",
