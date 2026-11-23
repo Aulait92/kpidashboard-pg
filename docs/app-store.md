@@ -108,6 +108,10 @@ kein grauer Tipp-Blitz, Knöpfe geben beim Drücken leicht nach (97 %).
 - App Store Connect API Team-Schlüssel „Codemagic“ (App-Manager): Key ID `TL3574822A`, Issuer ID
   `5a11393d-570f-4b3a-997e-34045b2f35bf` (.p8 nur bei Ole, in Codemagic als `PG_ASC_KEY`).
 
+- 23.11.2026, 23:05: Version 1.0 (Build 3) zur App-Prüfung eingereicht (Wirtschaft/Produktivität, 4+, kostenlos,
+  DE/AT/CH, manuelle Veröffentlichung, EU-Händlerstatus aktiv). Nach Freigabe: ProductUpdate-Neuigkeit mit App-Store-Link
+  und Eintrag in docs/webseite-offen.md, dann veröffentlichen.
+
 ## Was Ole tun muss (sobald das Apple-Konto freigeschaltet ist)
 
 Bitte **keine Schlüssel in Chats oder E-Mails kopieren** – nur direkt in Railway
