@@ -269,7 +269,7 @@ describe("Vorlage wählen und Parameter setzen", () => {
     expect(noticeText("outreach_tkv", "sie", { ...names, kurz: "Susanne" }, FRAU, ["Minka"])).toBe("Hallo Frau Schneider, schön, dass Sie Minka gut absichern möchten 🐾 *Was soll abgesichert sein?*");
     expect(noticeText("outreach", "sie", names, NUR_VORNAME, [])).toBe("Hallo, danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*");
     expect(noticeText("outreach", "du", names, FRAU, [])).toBe("Hallo Julia, danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*");
-    expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Andrea Schneider, hier ist der digitale KI-Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zu Hausrat");
+    expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Andrea Schneider, hier ist der digitale KI-Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zum Thema Hausrat");
   });
 });
 

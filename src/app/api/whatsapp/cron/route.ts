@@ -498,6 +498,12 @@ async function handle(req: Request): Promise<Response> {
   // Mails an die Beleg-Adresse bei Resend abholen (alle 15 Minuten, lib/belege/eingang.ts), auch ohne aktives Webhook-Ereignis
   if (now.getUTCMinutes() % 15 < 5 && process.env.RESEND_API_KEY) {
     after(() => import("@/lib/belege/eingang").then((m) => m.belegePostfachAbholen()).catch((e: unknown) => reportError(e, "cron-belege-postfach")));
+    // Hochgeladene, noch nicht ausgelesene Belege (große ZIP-Pakete) nachholen
+    after(async () => {
+      const { belegeAuslesenOffen } = await import("@/lib/belege/ablage");
+      const r = await belegeAuslesenOffen(100);
+      if (r.ausgelesen) await (await import("@/lib/belege/server")).belegeAbgleichen();
+    });
   }
   // Ausgangsrechnungen aus Stripe als Belege (nachts gegen 3/4 Uhr Berlin, lib/belege/stripe.ts)
   if (now.getUTCHours() === 2 && now.getUTCMinutes() >= 5 && now.getUTCMinutes() < 10 && process.env.STRIPE_SECRET_KEY) {

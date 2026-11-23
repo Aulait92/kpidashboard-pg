@@ -22,8 +22,8 @@ Gedankenstriche, kein Platzhalter am Textende (Meta-Regel).
 
 Geht raus, wenn der Vermittler „Über die App senden“ antippt und der Chat länger als 24 Stunden ruht.
 
-- Sie: „Guten Tag {{1}}, vielen Dank für das Gespräch! Wie besprochen hier Ihr Angebot für {{2}}: {{3}} Bei Fragen schreiben Sie mir einfach hier.“
-- Du: „Hallo {{1}}, vielen Dank für das Gespräch! Wie besprochen hier dein Angebot für {{2}}: {{3}} Bei Fragen schreib mir einfach hier.“
+- Sie: „Guten Tag {{1}}, vielen Dank für das Gespräch! Wie besprochen hier Ihr Angebot zum Thema {{2}}: {{3}} Bei Fragen schreiben Sie mir einfach hier.“
+- Du: „Hallo {{1}}, vielen Dank für das Gespräch! Wie besprochen hier dein Angebot zum Thema {{2}}: {{3}} Bei Fragen schreib mir einfach hier.“
 - Keine Knöpfe. {{2}} Thema aus der Auswahl im Termin („Haftpflicht und Hausrat“), {{3}} Link auf das PDF
   (`/ihr-angebot/<token>`, 60 Tage gültig).
 - Kombi-Rabatt und Link zur Beratungspräsentation stehen nur im Freitext (offenes Fenster), nie in der Vorlage.
@@ -66,8 +66,8 @@ Stand 17.11.2026, **zur Einreichung freigegeben** (`BEDENKZEIT_PURPOSES` in `COR
 Geht raus an dem Tag, an dem sich der Kontakt nach seiner Bedenkzeit melden wollte („meldet sich am …“, Standard
 14 Tage), wenn der Chat länger als 24 Stunden ruht. Bewusst **ohne** Terminvorschläge (nicht `followup`).
 
-- Sie: „Guten Tag {{1}}, hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot für {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?“
-- Du: „Hallo {{1}}, hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu deinem Angebot für {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?“
+- Sie: „Guten Tag {{1}}, hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot zum Thema {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?“
+- Du: „Hallo {{1}}, hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu deinem Angebot zum Thema {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?“
 - Knöpfe wie `followup_offer`: „Eher der Beitrag“ · „Eher die Leistung“ · „Kein Bedarf mehr“
 - {{2}} Thema aus der Auswahl im Termin („Haftpflicht und Hausrat“)
 

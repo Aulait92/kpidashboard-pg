@@ -249,7 +249,7 @@ describe("Vorlage offer_bedenkzeit", () => {
         expect(hatGedankenstrich(body)).toBe(false);
         expect(body).toContain("Wie besprochen melde ich mich wieder");
       }
-      expect(templateNameFor(p, undefined, "sie")).toBe(`pg_${p}_v5_sie`);
+      expect(templateNameFor(p, undefined, "sie")).toBe(`pg_${p}_v6_sie`);
       expect(categoryFor(p)).toBe("MARKETING");
     }
     expect(TEMPLATE_BUTTONS.offer_bedenkzeit).toEqual(["Eher der Beitrag", "Eher die Leistung", "Kein Bedarf mehr"]);

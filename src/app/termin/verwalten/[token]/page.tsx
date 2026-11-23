@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { CheckCircle2, Video, XCircle } from "lucide-react";
 import { TerminShell } from "@/components/termin/termin-shell";
 import { TerminForm } from "@/components/termin/termin-form";
-import { availableSlots, isOpenMeeting, meetingByToken, publicSalesBookingUrl } from "@/lib/vertrieb/buchung";
+import { availableSlots, calendarReady, isOpenMeeting, meetingByToken, publicSalesBookingUrl } from "@/lib/vertrieb/buchung";
 import { cancelTerminAction, rescheduleTerminAction } from "../../actions";
 import { slotsToDays, terminMetadata } from "../../booking-page";
 
@@ -52,7 +52,8 @@ export default async function TerminVerwaltenPage({ params, searchParams }: Prop
   }
   const open = isOpenMeeting(m);
   const heading = sp.gebucht ? "Ihr Termin ist gebucht" : sp.verschoben ? "Ihr Termin ist verschoben" : open ? "Ihr Termin" : "Dieser Termin ist vorbei";
-  const days = open && m.bookingType ? slotsToDays(await availableSlots(m.bookingType).catch(() => [])) : [];
+  // Nur Zeiten zeigen, die sich auch bestätigen lassen (Kalender verbunden; rescheduleSalesMeeting prüft dasselbe)
+  const days = open && m.bookingType && (await calendarReady(m.bookingType).catch(() => false)) ? slotsToDays(await availableSlots(m.bookingType).catch(() => [])) : [];
   const hidden = { token, ...(embed ? { einbetten: "1" } : {}) };
 
   return (

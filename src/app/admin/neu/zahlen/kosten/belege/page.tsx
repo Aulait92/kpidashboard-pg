@@ -21,7 +21,7 @@ const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", curren
 const datum = (s: string) => new Date(`${s}T00:00:00Z`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
 const hinweis = "rounded-[var(--radius-md)] border px-4 py-3 text-sm";
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ fehler?: string; ok?: string; hochgeladen?: string; doppelt?: string; fehlerhaft?: string; gesendet?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ fehler?: string; ok?: string; hochgeladen?: string; doppelt?: string; fehlerhaft?: string; gesendet?: string; imHintergrund?: string }> }) {
   await connection();
   await requireAuth();
   const sp = await searchParams;
@@ -57,7 +57,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         {sp.hochgeladen != null ? (
           <p className={`${hinweis} border-emerald-200 bg-emerald-50 text-emerald-800`}>
             {sp.hochgeladen} {sp.hochgeladen === "1" ? "Beleg" : "Belege"} abgelegt{Number(sp.doppelt) ? `, ${sp.doppelt} schon vorhanden` : ""}
-            {Number(sp.fehlerhaft) ? `, ${sp.fehlerhaft} keine lesbare Datei` : ""}, {sp.ok ?? 0} Zahlungen zugeordnet.
+            {Number(sp.fehlerhaft) ? `, ${sp.fehlerhaft} keine lesbare Datei` : ""}
+            {sp.imHintergrund ? ". Sie werden jetzt ausgelesen und den Zahlungen zugeordnet, das dauert einige Minuten." : `, ${sp.ok ?? 0} Zahlungen zugeordnet.`}
           </p>
         ) : sp.ok ? (
           <p className={`${hinweis} border-emerald-200 bg-emerald-50 text-emerald-800`}>Abgeglichen: {sp.ok} neue Zuordnungen.</p>

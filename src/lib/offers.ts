@@ -32,6 +32,7 @@ import {
   type OfferProduct,
   type OfferTerm,
 } from "@/lib/offer-pricing";
+import { erinnerungsGrenzen } from "@/lib/angebot-zahlungserinnerung";
 import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
@@ -659,7 +660,7 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
   offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
-    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew" | "pplModell" | "pplProdukte">> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "allowPayLater" | "isTest" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew" | "pplModell" | "pplProdukte">> &
     Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null; ersteWoche: { quantity: number; autoRenew: boolean } | null }> = {},
 ): ContractSummaryInput {
@@ -671,9 +672,10 @@ export function offerSummaryInput(
     : null;
   const extras = add.monthlyTotal - Number(offer.monthlyFee);
   const intro = offer.introMonthlyFee != null && offer.introMonths ? { months: offer.introMonths, monthly: Math.round((Number(offer.introMonthlyFee) + extras) * 100) / 100 } : null;
+  const startIso = chosen.startIso !== undefined ? chosen.startIso : offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
   return {
     term: chosen.term ?? normalizeTerm(offer.term),
-    startIso: chosen.startIso !== undefined ? chosen.startIso : offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
+    startIso,
     setup: chosen.setup ?? Number(offer.setupFee),
     monthlyTotal: add.monthlyTotal,
     intro,
@@ -686,6 +688,8 @@ export function offerSummaryInput(
     paket: offer.package ?? null,
     ersteWoche,
     kundenkonto: kundenkontoAus(offer),
+    // „Ich zahle später“: wie auf der Angebotsseite nur, wenn erlaubt und der Start weit genug weg ist
+    payLater: !!offer.allowPayLater && !offer.isTest && !!erinnerungsGrenzen(berlinTodayIso(new Date()), startIso),
   };
 }
 

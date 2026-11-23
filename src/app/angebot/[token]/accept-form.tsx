@@ -132,6 +132,8 @@ export function AcceptForm({
     annual,
     ...(choice ? { freeMonths: freiFuer(choice, effTerm) } : {}),
     ...(wocheWahl ? { ersteWoche: wocheWahl } : {}),
+    // „Ich zahle später“ wie unten angeboten (sonst „fällig mit der Annahme“)
+    payLater,
   };
   const hasChoice = !!choice && (choice.choosesTerm || choice.choosesStart || !!choice.choosesAnnual || !!choice.choosesProducts);
   const priceStep = hasPriceStep(summary);
@@ -168,7 +170,7 @@ export function AcceptForm({
     <form action={action} className="space-y-4">
       {ersteWoche ? <ErsteWocheFelder {...ersteWoche} qty={wocheQty} setQty={setWocheQty} autoRenew={wocheRenew} setAutoRenew={setWocheRenew} /> : null}
       {choice && hasChoice ? (
-        <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} faellig={wocheWahl ? ersteWocheFaellig(wocheWahl) : kundenkontoFaellig} />
+        <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} payLater={payLater} faellig={wocheWahl ? ersteWocheFaellig(wocheWahl) : kundenkontoFaellig} />
       ) : null}
       <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm sm:p-5" data-accept-summary aria-live="polite">
         <div className="font-semibold">Das vereinbaren Sie mit dem Klick</div>
@@ -291,6 +293,7 @@ function ChoiceFields({
   setAnnual,
   arrears = false,
   faellig = null,
+  payLater = false,
 }: {
   choice: OfferChoiceProps;
   produkte: OfferProduct[];
@@ -307,6 +310,8 @@ function ChoiceFields({
   arrears?: boolean;
   /** Erste Woche (Pay-per-Lead + Software): Leadkosten statt „Jetzt fällig: 0 €“ */
   faellig?: ReturnType<typeof ersteWocheFaellig> | null;
+  /** „Ich zahle später“ erlaubt: nicht „Jetzt fällig“, sondern „jetzt oder später“ (Ole, 23.11.2026) */
+  payLater?: boolean;
 }) {
   const opt = choice.options.find((o) => o.term === term) ?? choice.options[0];
   // Vorauszahlung mit 6 Monaten (6 Monate im Voraus) oder 12 Monaten (jährlich); zur Wahl angeboten → Wahl des
@@ -390,7 +395,7 @@ function ChoiceFields({
           // Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026): Setup und erster Zeitraum jetzt, danach zur Verlängerung
           <>
             <div>
-              <span className="text-[color:var(--muted)]">Jetzt fällig (Setup und Vorauszahlung): </span>
+              <span className="text-[color:var(--muted)]">{payLater ? "Setup und Vorauszahlung, jetzt oder später: " : "Jetzt fällig (Setup und Vorauszahlung): "}</span>
               <b data-testid="choice-setup">{eur(opt.setup + annualTotal)} netto</b>
               <span className="text-[color:var(--muted)]"> · {eur(withVat(opt.setup + annualTotal))} brutto</span>
             </div>
@@ -421,7 +426,7 @@ function ChoiceFields({
               </div>
             ) : (
             <div>
-              <span className="text-[color:var(--muted)]">Jetzt fällig (Setup): </span>
+              <span className="text-[color:var(--muted)]">{payLater ? "Setup, jetzt oder später: " : "Jetzt fällig (Setup): "}</span>
               {opt.list != null && opt.list > opt.setup ? <s className="mr-1 text-[color:var(--muted)]">{eur(opt.list)}</s> : null}
               <b data-testid="choice-setup">{eur(opt.setup)} netto</b>
               <span className="text-[color:var(--muted)]"> · {eur(withVat(opt.setup))} brutto</span>

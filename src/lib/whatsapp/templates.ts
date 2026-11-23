@@ -194,10 +194,14 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // P4 (Ole, 17.11.2026, Ergänzung D): Glückwunsch zum Abschluss (glueckwunsch, Einreichung siehe template-plan.ts)
   glueckwunsch: "v5",
   // Angebot nach dem Termin (Paket P3, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, ANGEBOT_PURPOSES)
-  offer_send: "v5",
+  // v6 (Ole, 23.11.2026): „Angebot zum Thema {{2}}“ statt „für {{2}}“ (fehlender Artikel, „für Kfz-Versicherung“).
+  // Platzhalter gleich; bis zur Freigabe bei Meta sendet die App die freigegebene v5.
+  offer_send: "v6",
   followup_offer_selbst: "v5",
+  // v5 (Ole, 23.11.2026): „das Angebot zum Thema {{2}}“ statt „zu {{2}}“; bis zur Freigabe bleibt v4 im Einsatz
+  followup_offer: "v5",
   // Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, BEDENKZEIT_PURPOSES)
-  offer_bedenkzeit: "v5",
+  offer_bedenkzeit: "v6", // v6 (23.11.2026): „zu Ihrem Angebot zum Thema {{2}}“ statt „für {{2}}“
   // Nachfassen v5 (Ole, 18.11.2026, zur Einreichung freigegeben): Vermittler als Person („mit Herrn Kannapinn“), vorher
   // in NAECHSTE_FASSUNG vorgemerkt. Platzhalter unverändert, bis zur Freigabe bei Meta bleibt v4 im Einsatz.
   followup: "v5",
@@ -339,15 +343,15 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit Ihrer Anfrage weitermachen? Es dauert nur ein paar Minuten.",
   },
   followup_offer: {
-    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zu {{2}} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
-    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot zu {{2}} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
+    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zum Thema {{2}} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot zum Thema {{2}} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
   // Angebot nach dem Termin (Paket P3, Ole 17.11.2026), zur Einreichung freigegeben (CORE_PURPOSES, ANGEBOT_PURPOSES,
   // docs/vorlagen-angebot.md). Freitext im offenen Fenster: lib/angebot-senden.ts bzw. lib/lead-sequences.ts.
   // Der Link steht nicht am Ende (Meta-Regel).
   offer_send: {
-    du: "vielen Dank für das Gespräch! Wie besprochen hier dein Angebot für {{2}}: {{3}} Bei Fragen schreib mir einfach hier.",
-    sie: "vielen Dank für das Gespräch! Wie besprochen hier Ihr Angebot für {{2}}: {{3}} Bei Fragen schreiben Sie mir einfach hier.",
+    du: "vielen Dank für das Gespräch! Wie besprochen hier dein Angebot zum Thema {{2}}: {{3}} Bei Fragen schreib mir einfach hier.",
+    sie: "vielen Dank für das Gespräch! Wie besprochen hier Ihr Angebot zum Thema {{2}}: {{3}} Bei Fragen schreiben Sie mir einfach hier.",
   },
   followup_offer_selbst: {
     du: "hier ist der digitale KI-Assistent von [BeraterDat]. Konntest du dir das Angebot, das {{2}} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
@@ -356,8 +360,8 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   // Nach der Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026), zur Einreichung freigegeben (BEDENKZEIT_PURPOSES,
   // docs/vorlagen-angebot.md). Bewusst ohne Terminvorschläge; Freitext: lib/bedenkzeit.ts bedenkzeitNeustartText.
   offer_bedenkzeit: {
-    du: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu deinem Angebot für {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
-    sie: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot für {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
+    du: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu deinem Angebot zum Thema {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot zum Thema {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
   followup_noshow: {
     du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",

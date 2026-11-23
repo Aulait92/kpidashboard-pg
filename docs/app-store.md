@@ -73,6 +73,14 @@ kein grauer Tipp-Blitz, Knöpfe geben beim Drücken leicht nach (97 %).
 - In dieser Umgebung gibt es weder Xcode noch Android-SDK: gebaut wird nur in
   Codemagic.
 
+## Apple-Developer-Konto der UG (23.11.2026)
+
+- D-U-N-S-Nummer: **313591176** (Ole Kannapinn UG (haftungsbeschränkt), Lorenzstr. 58, 12209 Berlin).
+- Apples Antragsformular nimmt kein ä/ß (löscht es stillschweigend). Funktioniert hat `Ole Kannapinn UG (haftungsbeschrankt)`
+  (ä → a); „haftungsbeschraenkt“ wird als „passt nicht zum D&B-Profil“ abgelehnt. Adresse übernimmt Apple aus D&B
+  (`Lorenzstr. 58`). Antrag am 23.11.2026 abgeschickt, Enrollment-ID **PLB247QF64** (in Prüfung: Apple bestätigt die
+  Unterschriftsberechtigung, meist per Anruf, dann Mail mit den nächsten Schritten und der Gebühr).
+
 ## Was Ole tun muss (sobald das Apple-Konto freigeschaltet ist)
 
 Bitte **keine Schlüssel in Chats oder E-Mails kopieren** – nur direkt in Railway
