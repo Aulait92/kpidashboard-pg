@@ -22,7 +22,7 @@ import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPo
 import { audit } from "@/lib/audit";
 import { planFollowup, planFromOutcome, stopFollowup, stopFollowupOnStage } from "@/lib/vertrieb/followup";
 import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates, updatePrimaryEmail } from "@/lib/vertrieb/contact-merge";
-import { backfillContactData, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
+import { addContactPhone, backfillContactData, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
 import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 import { nachholenAntworten, type NachholenErgebnis } from "@/lib/vertrieb/instantly-nachholen";
 
@@ -835,6 +835,17 @@ export async function makePrimaryPhoneAction(fd: FormData) {
   const id = s(fd, "contactId")!;
   await makePrimaryPhone(id, s(fd, "phoneId") ?? "");
   refresh(id);
+}
+
+/** „+ Weitere Telefonnummer“ in der Kontaktakte (Ole, 23.11.2026): von Hand, ohne die Hauptnummer zu ändern. */
+export async function addContactPhoneAction(_prev: ContactEmailState, fd: FormData): Promise<ContactEmailState> {
+  await requireAuth();
+  const id = s(fd, "contactId")!;
+  const r = await addContactPhone(id, s(fd, "phone"), { source: "MANUELL" });
+  if (r === "skipped") return { error: "Bitte eine gültige Telefonnummer eingeben." };
+  if (r === "known") return { error: "Diese Nummer ist schon hinterlegt." };
+  refresh(id);
+  return { ok: true };
 }
 
 export async function removeContactPhoneAction(fd: FormData) {
