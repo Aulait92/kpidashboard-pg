@@ -43,6 +43,7 @@
 // nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr (sonntags 10 bis 18 Uhr, Ole 22.11.2026), einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
 // gebucht, „Stopp“, Kein Interesse, Assistent pausiert, Anruf läuft).
 
+import { mitThema } from "@/lib/thema-artikel";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
@@ -149,7 +150,7 @@ const angebotTag2: Extract<Step, { action: "whatsapp" }> = {
   purpose: "followup_offer",
   params: (c) => [c.firstName, c.topic],
   text: (c) =>
-    a(c.an, `${c.hi} konntest du dir das Angebot zu ${c.topic} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?`, `${c.hi} konnten Sie sich das Angebot zu ${c.topic} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?`),
+    a(c.an, `${c.hi} konntest du dir das Angebot ${mitThema("zu", c.topic)} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?`, `${c.hi} konnten Sie sich das Angebot ${mitThema("zu", c.topic)} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?`),
   fallbackNote: "Angebot nachfassen: anrufen",
 };
 const angebotAnruf: Extract<Step, { action: "call" }> = { day: 3, action: "call", note: "Angebot nachfassen: anrufen", push: true };
@@ -167,8 +168,8 @@ const angebotLetzteWa = (selbst: boolean): Extract<Step, { action: "whatsapp" }>
         )
       : a(
           c.an,
-          `${c.hi} ich melde mich ein letztes Mal zu deinem Angebot für ${c.topic}: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
-          `${c.hi} ich melde mich ein letztes Mal zu Ihrem Angebot für ${c.topic}: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+          `${c.hi} ich melde mich ein letztes Mal zu deinem Angebot ${mitThema("für", c.topic)}: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+          `${c.hi} ich melde mich ein letztes Mal zu Ihrem Angebot ${mitThema("für", c.topic)}: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
         ),
   fallbackNote: "Angebot: letzter Versuch, anrufen",
 });
@@ -318,8 +319,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         text: (c) =>
           a(
             c.an,
-            `${c.hi} kurze Nachfrage zu ${c.topic}: Antworte einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich dir Termine vorschlagen.`,
-            `${c.hi} kurze Nachfrage zu ${c.topic}: Antworten Sie einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich Ihnen Termine vorschlagen.`,
+            `${c.hi} kurze Nachfrage ${mitThema("zu", c.topic)}: Antworte einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich dir Termine vorschlagen.`,
+            `${c.hi} kurze Nachfrage ${mitThema("zu", c.topic)}: Antworten Sie einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich Ihnen Termine vorschlagen.`,
           ),
         fallbackNote: "Keine Reaktion im Chat: anrufen",
       },
@@ -331,8 +332,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         text: (c) =>
           a(
             c.an,
-            `${c.hi} sollen wir mit ${c.topic} weitermachen? Es dauert nur ein paar Minuten.`,
-            `${c.hi} sollen wir mit ${c.topic} weitermachen? Es dauert nur ein paar Minuten.`,
+            `${c.hi} sollen wir ${mitThema("mit", c.topic)} weitermachen? Es dauert nur ein paar Minuten.`,
+            `${c.hi} sollen wir ${mitThema("mit", c.topic)} weitermachen? Es dauert nur ein paar Minuten.`,
           ),
         fallbackNote: "Keine Reaktion im Chat: anrufen",
       },
@@ -371,14 +372,14 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         text: (c) =>
           a(
             c.an,
-            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt es dir jetzt? Dann machen wir direkt weiter.`,
-            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt es Ihnen jetzt? Dann machen wir direkt weiter.`,
+            `${c.hi} wie besprochen melde ich mich wieder ${mitThema("zu", c.topic)}. Passt es dir jetzt? Dann machen wir direkt weiter.`,
+            `${c.hi} wie besprochen melde ich mich wieder ${mitThema("zu", c.topic)}. Passt es Ihnen jetzt? Dann machen wir direkt weiter.`,
           ),
         slotText: (c, [z1, z2]) =>
           a(
             c.an,
-            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt dir für ein kurzes Gespräch ${z1} oder ${z2}?`,
-            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt Ihnen für ein kurzes Gespräch ${z1} oder ${z2}?`,
+            `${c.hi} wie besprochen melde ich mich wieder ${mitThema("zu", c.topic)}. Passt dir für ein kurzes Gespräch ${z1} oder ${z2}?`,
+            `${c.hi} wie besprochen melde ich mich wieder ${mitThema("zu", c.topic)}. Passt Ihnen für ein kurzes Gespräch ${z1} oder ${z2}?`,
           ),
         fallbackNote: "Lead wollte, dass wir uns wieder melden: anrufen",
       },
