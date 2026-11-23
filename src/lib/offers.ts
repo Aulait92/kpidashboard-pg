@@ -384,6 +384,34 @@ async function adresseUebernehmen(tx: Prisma.TransactionClient, owner: OfferOwne
   }
 }
 
+/**
+ * Wird eine neuere Version angenommen, gilt eine früher angenommene, aber nie bezahlte Version desselben Kontakts bzw.
+ * Deals als ersetzt: Status „superseded“ (keine Zahlungserinnerungen mehr, nicht mehr in der Übersicht), offene
+ * Stripe-Bezahlseite läuft sofort ab. Bezahlte Angebote oder solche mit Abo bzw. Onboarding bleiben unberührt.
+ */
+export async function fruehereAnnahmenErsetzen(offer: { id: string; number: string; salesContactId: string | null; dealId: string | null; createdAt: Date }): Promise<string[]> {
+  const owner = offer.salesContactId ? { salesContactId: offer.salesContactId } : offer.dealId ? { dealId: offer.dealId } : null;
+  if (!owner) return [];
+  const alte = await prisma.offer.findMany({
+    where: { ...owner, id: { not: offer.id }, status: "accepted", createdAt: { lt: offer.createdAt }, paymentStatus: { not: "paid" }, stripeSubscriptionId: null, stripeScheduleId: null },
+    select: { id: true, number: true, stripeCheckoutSessionId: true },
+  });
+  const ersetzt: string[] = [];
+  for (const a of alte) {
+    if (await prisma.onboarding.findFirst({ where: { offerId: a.id }, select: { id: true } })) continue;
+    const r = await prisma.offer.updateMany({ where: { id: a.id, status: "accepted" }, data: { status: "superseded", paymentReminderAt: null } });
+    if (!r.count) continue;
+    ersetzt.push(a.number);
+    if (a.stripeCheckoutSessionId) {
+      const { stripeClient } = await import("@/lib/billing");
+      await stripeClient()?.checkout.sessions.expire(a.stripeCheckoutSessionId).catch(() => null);
+    }
+    await audit("offer.superseded", { entity: "Offer", entityId: a.id, details: { number: a.number, durch: offer.number } });
+  }
+  if (ersetzt.length) await logOfferActivity(offer as Parameters<typeof logOfferActivity>[0], `Angebot ${ersetzt.join(", ")} ersetzt durch ${offer.number}`, "Die frühere Annahme ist damit hinfällig, Zahlungserinnerungen dazu sind beendet.").catch(() => null);
+  return ersetzt;
+}
+
 export async function createOffer(target: OfferTarget, input: OfferFormInput, createdById: string | null) {
   const owner: OfferOwner = "dealId" in target ? { dealId: target.dealId } : { salesContactId: target.salesContactId };
   const { data, addr } = await angebotsDaten(owner, input);
@@ -607,6 +635,10 @@ export async function acceptOffer(
     },
     actor: { email: offer.email ?? null, role: "kunde" },
   });
+
+  // Frühere, angenommene, aber nie bezahlte Version desselben Kontakts ersetzen (Ole, 23.11.2026: Kunde nahm erst als
+  // Person an, dann die neue Version für seine Firma; beide standen als angenommen mit Zahlungserinnerung da)
+  await fruehereAnnahmenErsetzen(offer).catch((err) => reportError(err, "offer-accept-ersetzen", { offer: offer.number }));
 
   // Deal bzw. Kontakt auf „gewonnen“ setzen und in der Historie vermerken.
   if (offer.salesContactId) {
