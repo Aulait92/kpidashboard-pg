@@ -91,3 +91,30 @@ describe("Eigenbeleg", () => {
     expect(pdf.length).toBeGreaterThan(800);
   });
 });
+
+import { belegeCsv, ohneDoppel, ustVorschau, vormonat, type PaketBeleg } from "@/lib/belege/monatspaket";
+describe("Monatspaket", () => {
+  const b = (o: Partial<PaketBeleg>): PaketBeleg => ({ id: Math.random().toString(), datum: "2026-11-05", typ: "INCOMING_INVOICE", quelle: "mail", firma: "X", nummer: null, netto: 100, ustSatz: 19, brutto: 119, waehrung: "EUR", zugeordnet: true, mimeType: "application/pdf", dateiname: null, ...o });
+  it("USt-Vorschau", () => {
+    const v = ustVorschau([
+      b({ typ: "SALES_INVOICE", netto: 1000, brutto: 1190 }),
+      b({ typ: "SALES_INVOICE", netto: 500, brutto: 500, ustSatz: 0 }),
+      b({ typ: "INCOMING_INVOICE", netto: 100, brutto: 119 }),
+      b({ typ: "INCOMING_INVOICE", netto: 50, brutto: 50, ustSatz: 0 }),
+      b({ quelle: "eigenbeleg", netto: 20, brutto: 20, ustSatz: 0, typ: "RECEIPT" }),
+      b({ waehrung: "USD", netto: 10, brutto: 10, ustSatz: 0 }),
+    ]);
+    expect(v).toMatchObject({ umsatzsteuer: 190, steuerpflichtigNetto: 1000, steuerfreiNetto: 500, vorsteuer: 19, ohneDeutscheUstEur: 50, eigenbelege: 20, fremdwaehrung: 1, zahllast: 171 });
+  });
+  it("Doppel nur einmal, CSV mit Semikolon und BOM", () => {
+    const l = ohneDoppel([b({ nummer: "A1" }), b({ nummer: "A1" }), b({ nummer: "A2" })]);
+    expect(l).toHaveLength(2);
+    const csv = belegeCsv(l, new Map());
+    expect(csv.startsWith("﻿Datum;Art")).toBe(true);
+    expect(csv).toContain("100,00");
+  });
+  it("Vormonat", () => {
+    expect(vormonat(new Date("2026-12-02T08:00:00Z"))).toBe("2026-11");
+    expect(vormonat(new Date("2027-01-02T08:00:00Z"))).toBe("2026-12");
+  });
+});

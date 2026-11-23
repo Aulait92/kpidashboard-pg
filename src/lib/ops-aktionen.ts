@@ -182,6 +182,14 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `Eigenbeleg ${r.nummer} erstellt und zugeordnet.` };
     },
   },
+  belege_stripe: {
+    beschreibung: "Ausgangsrechnungen und Gutschriften aus Stripe jetzt als Belege übernehmen (sonst nachts)",
+    felder: {},
+    run: async () => {
+      const r = await (await import("@/lib/belege/stripe")).syncStripeBelege();
+      return { ok: true, info: `Stripe: ${r.rechnungen} Rechnungen, ${r.gutschriften} Gutschriften, ${r.neu} neu als Beleg.` };
+    },
+  },
   belege_postfach: {
     beschreibung: "Mails an die Beleg-Adresse jetzt bei Resend abholen und als Belege ablegen (sonst alle 15 Minuten); erneut=true verarbeitet Mails ohne Ergebnis noch einmal",
     felder: { erneut: "optional true" },

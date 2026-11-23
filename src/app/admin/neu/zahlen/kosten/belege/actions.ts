@@ -38,3 +38,16 @@ export async function belegeHochladenAction(form: FormData) {
   revalidatePath("/admin/neu/zahlen", "layout");
   redirect(`${ZIEL}?hochgeladen=${z.neu}&doppelt=${z.doppelt}&fehlerhaft=${z.kein_beleg + z.fehler + z.virus}&ok=${zugeordnet}`);
 }
+
+/** Monatspaket an das Steuerbüro senden (nur auf diesen Klick). */
+export async function monatspaketSendenAction(form: FormData) {
+  const session = await requireAuth();
+  const monat = String(form.get("monat") ?? "");
+  if (!/^\d{4}-\d{2}$/.test(monat)) redirect(`${ZIEL}?fehler=${encodeURIComponent("Ungültiger Monat.")}`);
+  const { paketSenden } = await import("@/lib/belege/monatspaket");
+  const r = await paketSenden(monat, { antwortAn: session.email });
+  await audit("belege.monatspaket", { details: { monat, ok: r.ok, ...(r.ok ? { anzahl: r.anzahl } : { error: r.error }) } });
+  revalidatePath(ZIEL);
+  if (!r.ok) redirect(`${ZIEL}?fehler=${encodeURIComponent(r.error)}`);
+  redirect(`${ZIEL}?gesendet=${monat}`);
+}

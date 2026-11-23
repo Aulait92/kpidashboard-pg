@@ -5581,3 +5581,17 @@ model Beleg {
 
   @@index([datum])
 }
+
+// Monatspaket an das Steuerbüro (Ole, 23.11.2026): Belege eines Monats als ZIP plus Liste und USt-Vorschau, gesendet
+// erst auf Klick (lib/belege/monatspaket.ts).
+model MonatsPaket {
+  id          String    @id @default(cuid())
+  monat       String    @unique // YYYY-MM
+  gesendetAm  DateTime?
+  empfaenger  String?
+  anzahl      Int       @default(0)
+  zahllast    Decimal?  @db.Decimal(12, 2)
+  erinnertAm  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

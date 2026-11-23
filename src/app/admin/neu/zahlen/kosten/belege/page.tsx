@@ -1,12 +1,15 @@
 import { connection } from "next/server";
-import { RefreshCw, Upload } from "lucide-react";
-import { Button, Card, CardHeader } from "@/components/ui";
+import { Download, ExternalLink, RefreshCw, Send, Upload } from "lucide-react";
+import { Aufklapp } from "@/components/admin-neu/zahlen/aufklapp";
+import { prisma } from "@/lib/prisma";
+import { monatName, paketBelege, STEUERBUERO_EMAIL, ustVorschau, vormonat } from "@/lib/belege/monatspaket";
+import { Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { ausgabenOhneBeleg, BELEGE_AB } from "@/lib/belege/server";
 import { belegAdresse } from "@/lib/belege/eingang";
 import { belegKiKonfiguriert } from "@/lib/belege/auslesen";
-import { belegeHochladenAction, belegeJetztAbgleichenAction } from "./actions";
+import { belegeHochladenAction, belegeJetztAbgleichenAction, monatspaketSendenAction } from "./actions";
 
 export const metadata = { title: "Belege | performancegrowth Admin" };
 
@@ -18,7 +21,7 @@ const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", curren
 const datum = (s: string) => new Date(`${s}T00:00:00Z`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
 const hinweis = "rounded-[var(--radius-md)] border px-4 py-3 text-sm";
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ fehler?: string; ok?: string; hochgeladen?: string; doppelt?: string; fehlerhaft?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ fehler?: string; ok?: string; hochgeladen?: string; doppelt?: string; fehlerhaft?: string; gesendet?: string }> }) {
   await connection();
   await requireAuth();
   const sp = await searchParams;
@@ -28,6 +31,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   const gesamt = o.anzahl + o.mitBeleg;
   const quote = gesamt ? Math.round((o.mitBeleg / gesamt) * 100) : 100;
   const ab = new Date(`${BELEGE_AB}T00:00:00Z`).toLocaleDateString("de-DE", { timeZone: "UTC" });
+  // Monatspaket für den Vormonat
+  const monat = vormonat();
+  const [paket, paketListe] = await Promise.all([prisma.monatsPaket.findUnique({ where: { monat } }), paketBelege(monat)]);
+  const vorschau = ustVorschau(paketListe);
+  const offenFuerPaket = !paket?.gesendetAm && paketListe.length > 0;
+  // Meta: Werbekonten mit eigener Zahlung, Link zur Zahlungsaktivität (ZIP-Download)
+  const metaKonten = await import("@/lib/meta-ads").then((m) => m.werbekontenMitZahlung()).then((k) => k.filter((x) => x.eigeneZahlung)).catch(() => []);
 
   return (
     <Seite
@@ -56,6 +66,32 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
           <p className={`${hinweis} border-amber-200 bg-amber-50 text-amber-900`}>Auslesen aus: In Railway fehlt OPENAI_API_KEY. Belege werden trotzdem abgelegt.</p>
         ) : null}
 
+        {sp.gesendet ? <p className={`${hinweis} border-emerald-200 bg-emerald-50 text-emerald-800`}>Monatspaket {monatName(sp.gesendet)} an das Steuerbüro gesendet.</p> : null}
+
+        <Card className="px-5 py-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-0 flex-1 basis-56">
+              <p className="font-semibold">Monatspaket {monatName(monat)}</p>
+              <p className="text-sm text-[color:var(--muted)]">
+                {paketListe.length} Belege · USt-Zahllast vorläufig {eur(vorschau.zahllast)}
+                {paket?.gesendetAm ? ` · gesendet am ${paket.gesendetAm.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}` : ""}
+              </p>
+            </div>
+            <ButtonLink href={`/api/admin/belege/monatspaket/${monat}`} variant="ghost" size="md" icon={Download}>
+              ZIP
+            </ButtonLink>
+            {offenFuerPaket ? (
+              <form action={monatspaketSendenAction}>
+                <input type="hidden" name="monat" value={monat} />
+                <Button type="submit" variant="primary" size="md" icon={Send}>
+                  An Steuerbüro senden
+                </Button>
+              </form>
+            ) : null}
+          </div>
+          {offenFuerPaket ? <p className="mt-2 text-xs text-[color:var(--muted)]">Geht an {STEUERBUERO_EMAIL()}, Antworten an Sie.</p> : null}
+        </Card>
+
         <Card className="px-5 py-4">
           <form action={belegeHochladenAction} className="flex flex-wrap items-center gap-3">
             <input
@@ -65,7 +101,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
               accept="application/pdf,image/jpeg,image/png,image/webp,application/zip,.zip"
               className="min-w-0 flex-1 basis-56 text-sm file:mr-3 file:rounded-[var(--radius-md)] file:border-0 file:bg-[color:var(--surface-sunken)] file:px-3 file:py-2 file:text-sm file:font-medium"
             />
-            <Button type="submit" variant="primary" size="md" icon={Upload}>
+            <Button type="submit" variant={offenFuerPaket ? "secondary" : "primary"} size="md" icon={Upload}>
               Belege hochladen
             </Button>
           </form>
@@ -81,6 +117,29 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
             {o.anzahl ? `, ${o.anzahl} fehlen (${eur(o.summe)})` : ""}.
           </p>
         </Card>
+
+        {metaKonten.length ? (
+          <Aufklapp titel="Meta-Belege holen" hinweis={`${metaKonten.length} Werbekonten`}>
+            <Card>
+              <ul className="divide-y divide-[color:var(--border)]">
+                {metaKonten.map((k) => (
+                  <li key={k.id}>
+                    <a
+                      href={`https://business.facebook.com/billing_hub/payment_activity?asset_id=${k.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex min-h-12 items-center gap-3 px-5 text-[15px] hover:bg-[color:var(--surface-sunken)]"
+                    >
+                      <span className="min-w-0 flex-1 truncate font-medium">{k.name}</span>
+                      <ExternalLink className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <p className="border-t border-[color:var(--border)] px-5 py-3 text-xs text-[color:var(--muted)]">Je Konto Zeitraum wählen, alle markieren, herunterladen, die ZIPs oben hochladen.</p>
+            </Card>
+          </Aufklapp>
+        ) : null}
 
         {o.anbieter.length ? (
           <Card>
