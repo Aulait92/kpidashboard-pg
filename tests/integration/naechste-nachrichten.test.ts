@@ -97,10 +97,12 @@ describe("Nächste Nachrichten: Aktionen ändern die echten Abläufe", () => {
 
   it("Jetzt senden: sofort, auch außerhalb des Versandfensters, danach normal weiter", async () => {
     const lead = await neuerLead();
-    const s = (await startSequence(lead.id, "silent", SONNTAG))!;
-    await runSequences(new Date(SONNTAG.getTime() + 3 * H));
-    expect(anrufe(lead.phone!)).toHaveLength(0); // Sonntag: wartet
-    const r = await jetztSenden(lead.id, `abfolge:${s.id}:0`, new Date(SONNTAG.getTime() + 3 * H));
+    // Sonntagabend nach 18 Uhr: „Chat ruht“ wartet (sonntags nur 10 bis 18 Uhr, Ole 22.11.2026)
+    const abend = new Date("2026-11-22T18:00:00.000Z");
+    const s = (await startSequence(lead.id, "silent", abend))!;
+    await runSequences(new Date(abend.getTime() + 3 * H));
+    expect(anrufe(lead.phone!)).toHaveLength(0); // außerhalb des Fensters: wartet
+    const r = await jetztSenden(lead.id, `abfolge:${s.id}:0`, new Date(abend.getTime() + 3 * H));
     expect(r).toEqual({ ok: true, text: "Nachfassen: WhatsApp gesendet" });
     expect(anrufe(lead.phone!)).toHaveLength(1);
     expect((await seq(s.id)).step).toBe(1);

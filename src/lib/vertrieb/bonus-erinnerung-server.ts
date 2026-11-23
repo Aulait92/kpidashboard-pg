@@ -4,13 +4,15 @@
 
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
-import { getAppUrl, sendCustomerMail } from "@/lib/email";
+import { getAppUrl, sendCustomerMail, type CustomerMailOpts } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { customerGreeting, logOfferActivity } from "@/lib/offer-links";
 import { abschlussBonusJetzt, berlinTodayIso, eur } from "@/lib/offer-pricing";
 import { ersetzt, sendeVorlageAnKontakt } from "@/lib/angebot-zahlungserinnerung-server";
 import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
+import { AB_ANGEBOT } from "@/lib/vertrieb/ab-tests";
+import { fassung, zuteilungMerken } from "@/lib/vertrieb/ab-tests-server";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import {
   bonusErinnerungStopp,
@@ -127,26 +129,36 @@ export async function runBonusErinnerungen(now = new Date(), opts: { limit?: num
   return out;
 }
 
+/** Mail der Bonus-Erinnerung (gemeinsam für Versand und Vorschau). null: keine Mail-Adresse oder kein Bonus mehr. */
+export async function bonusMailOpts(o: OfferRow, art: "vorab" | "letzter", now = new Date()): Promise<CustomerMailOpts | null> {
+  const bonus = abschlussBonusJetzt(o, now);
+  if (!o.email || !bonus) return null;
+  // A/B-Test der Angebots-Strecke (lib/vertrieb/ab-tests.ts): Fassung lesen, Zuteilung erst nach dem Versand
+  const naechsteSchritte = (await fassung(AB_ANGEBOT, o.id)) === "b";
+  const text = bonusMail(art, { betrag: bonus.betrag, fristIso: berlinTodayIso(bonus.bis), number: o.number, du: o.mailDu, spaeterZahlen: o.allowPayLater, naechsteSchritte });
+  return {
+    to: o.email,
+    subject: text.subject,
+    greeting: await customerGreeting(o, o.mailDu),
+    paragraphs: text.paragraphs,
+    button: { label: text.button, url: angebotsLink(o.token) },
+  };
+}
+
 async function bonusMailSenden(o: OfferRow, art: "vorab" | "letzter", now: Date, antwort: boolean): Promise<boolean> {
   const label = art === "vorab" ? "Bonus-Erinnerung (Tag vor Ablauf)" : "Bonus-Erinnerung (letzter Tag)";
   if (antwort) {
     await logOfferActivity(o, `${label} nicht gesendet: Kontakt hat geantwortet`);
     return false;
   }
-  const bonus = abschlussBonusJetzt(o, now);
-  if (!o.email || !bonus) return false;
-  const text = bonusMail(art, { betrag: bonus.betrag, fristIso: berlinTodayIso(bonus.bis), number: o.number, du: o.mailDu, spaeterZahlen: o.allowPayLater });
-  const sent = await sendCustomerMail({
-    to: o.email,
-    subject: text.subject,
-    greeting: await customerGreeting(o, o.mailDu),
-    paragraphs: text.paragraphs,
-    button: { label: text.button, url: angebotsLink(o.token) },
-  });
+  const mail = await bonusMailOpts(o, art, now);
+  if (!mail) return false;
+  const sent = await sendCustomerMail(mail);
+  if (sent.ok) await zuteilungMerken(AB_ANGEBOT, o.id);
   await logOfferActivity(
     o,
     sent.ok ? `${label} per E-Mail an ${o.email} gesendet` : `${label} per E-Mail fehlgeschlagen`,
-    sent.ok ? `Betreff: ${text.subject}` : sent.error,
+    sent.ok ? `Betreff: ${mail.subject}` : sent.error,
     null,
     "EMAIL",
   );

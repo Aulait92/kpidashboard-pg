@@ -1,4 +1,5 @@
 import { LeadLegalCard } from "@/components/lead-legal-card";
+import { DochWhatsAppButton } from "@/components/doch-whatsapp-button";
 import { isHealthLabel, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { AlertTriangle, ClipboardList, MessageCircle, PhoneCall } from "lucide-react";
 import { NextStepButton, NextStepPrompt } from "@/components/next-step";
@@ -197,6 +198,8 @@ export async function LeadDetailBody({
       consentData: true,
       waUnavailableAt: true,
       waUnavailableMailAt: true,
+      // Nur SMS (E-Mail-Funktionen aus, Ole 22.11.2026): Stand der SMS im Hinweis „Kein WhatsApp“
+      mailStrecke: { select: { nurSms: true, smsZahl: true, schritt: true } },
     },
   });
   if (!lead) notFound();
@@ -556,25 +559,41 @@ export async function LeadDetailBody({
       ) : null}
 
       {noWhatsApp ? (
-        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-900" data-kein-whatsapp>
-          <PhoneCall className="h-4 w-4 shrink-0" />
-          <span className="min-w-0 flex-1">
+        // Handy (23.11.2026): Text über die volle Breite, Aktionen darunter (vorher Text in schmaler Spalte neben der Nummer)
+        <div className="mb-5 flex items-start gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900" data-kein-whatsapp>
+          <PhoneCall className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="min-w-0 flex-1">
+          <p>
             {festnetz ? (
               <>
-                <b>Keine Handynummer:</b> Festnetznummer, darum schreibt der Assistent nicht per WhatsApp. Bitte anrufen.
+                <b>Keine Handynummer:</b> Festnetznummer ohne WhatsApp, der Assistent schreibt nicht. Bitte anrufen.
               </>
             ) : (
               <>
                 <b>Kein WhatsApp:</b> Diese Nummer ist nicht per WhatsApp erreichbar, der Assistent schreibt nicht. Bitte direkt anrufen.
               </>
             )}
-            {lead.waUnavailableMailAt ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}
-          </span>
-          {lead.phone ? (
-            <a href={`tel:+${lead.phone}`} className="font-semibold">
-              {formatPhone(lead.phone)} anrufen
-            </a>
-          ) : null}
+            {lead.mailStrecke?.nurSms
+              ? lead.mailStrecke.smsZahl > 0
+                ? lead.mailStrecke.smsZahl === 1
+                  ? " Eine SMS mit Ihrem Terminlink ist raus."
+                  : " Zwei SMS mit Ihrem Terminlink sind raus."
+                : lead.mailStrecke.schritt === "sms"
+                  ? " Eine SMS mit Ihrem Terminlink geht zur Geschäftszeit raus."
+                  : ""
+              : lead.waUnavailableMailAt
+                ? " Eine E-Mail mit Ihrem Terminlink ist raus."
+                : ""}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-5">
+            {lead.phone ? (
+              <a href={`tel:+${lead.phone}`} className="inline-flex min-h-10 items-center font-semibold">
+                {formatPhone(lead.phone)} anrufen
+              </a>
+            ) : null}
+            {festnetz || lead.erasedAt ? null : <DochWhatsAppButton leadId={lead.id} />}
+          </div>
+          </div>
         </div>
       ) : null}
 
@@ -837,8 +856,9 @@ function ReadOnlyCard({
     "Produkt (Eingang)",
     "Zielgruppe Bezeichnung (from Produkt (Eingang))",
     // group-Felder, die bei diesem kind evtl. nicht in curated sind, trotzdem
-    // nicht doppelt als „weitere Angabe" zeigen:
-    ...ALL_GROUP_KEYS,
+    // nicht doppelt als „weitere Angabe" zeigen. Ausnahme Geburtsdatum (Ole, 22.11.2026: fehlte bei Kfz-Leads,
+    // weil es nur in den PKV- und Kinderwunsch-Gruppen steht): steht es nicht schon oben, kommt es unter „Weitere Angaben“.
+    ...ALL_GROUP_KEYS.filter((k) => k !== "Geburtsdatum" || curated.some((f) => f.key === k)),
   ]);
   const extra = Object.entries(fields)
     .filter(
@@ -856,6 +876,8 @@ function ReadOnlyCard({
         !k.includes("(Privatschutz)"),
     )
     .map(([k, v]) => ({ key: k, value: firstString(v) }))
+    // Datum aus Meta („1950-08-08“ bzw. „08/08/1950“) deutsch anzeigen
+    .map((r) => (r.key === "Geburtsdatum" && r.value ? { ...r, value: r.value.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3.$2.$1").replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, "$2.$1.$3") } : r))
     .filter((r): r is { key: string; value: string } => r.value != null);
 
   return (

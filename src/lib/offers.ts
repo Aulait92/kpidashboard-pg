@@ -32,6 +32,7 @@ import {
   type OfferProduct,
   type OfferTerm,
 } from "@/lib/offer-pricing";
+import { erinnerungsGrenzen } from "@/lib/angebot-zahlungserinnerung";
 import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
@@ -111,8 +112,9 @@ export type OfferFormInput = {
   allowBankTransfer?: boolean;
   bankTransferDays?: number | null;
   /**
-   * Abschlussbonus auf die Einrichtung (netto) bei Annahme und Zahlung am Versandtag (Ole, 16.11.2026).
-   * Das Formular schlägt 300 € vor (ABSCHLUSSBONUS_STANDARD); leer/0 = kein Bonus. Nicht bei Testangeboten oder ohne Einrichtung.
+   * Abschlussbonus auf die Einrichtung (netto) bei Annahme und Zahlung bis zur Frist (Ole, 16.11.2026). Seit 21.11.2026
+   * abgeschafft: nur noch, wenn ein offenes Angebot desselben Kontakts bzw. Deals ihn schon hat (neue Version, Entwurf
+   * bearbeiten), höchstens bis zu diesem Betrag; sonst wird er ignoriert. Nicht bei Testangeboten oder ohne Einrichtung.
    */
   abschlussBonus?: number | null;
   /** Letzter Tag des Bonus (YYYY-MM-DD, gilt bis 23:59 Uhr Berlin); leer = Versandtag. */
@@ -182,6 +184,17 @@ export const NUR_ENTWURF_BEARBEITEN =
  * Bearbeiten eines Entwurfs ({@link updateDraftOffer}). Liefert die eingefrorenen Konditionen (ohne Nummer, Version,
  * Token, Besitzer) und die Adresse für die Stammdaten des Vertriebskontakts.
  */
+/**
+ * Abschlussbonus (Ole, 21.11.2026: abgeschafft, „bei den offenen drin lassen, habe ich schon versprochen“): höchster
+ * zugesagter Bonus der offenen Angebote (Entwurf oder verschickt) dieses Kontakts bzw. Deals, sonst null. Nur bis zu
+ * diesem Betrag darf eine neue Version bzw. ein bearbeiteter Entwurf einen Bonus tragen; neue Angebote bekommen keinen.
+ */
+async function zugesagterBonus(owner: OfferOwner): Promise<number | null> {
+  const r = await prisma.offer.aggregate({ where: { ...owner, status: { in: ["draft", "sent"] }, abschlussBonus: { gt: 0 } }, _max: { abschlussBonus: true } });
+  const b = Number(r._max.abschlussBonus ?? 0);
+  return b > 0 ? b : null;
+}
+
 async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
   const products = input.products
     .map((p) => ({ name: p.name.trim(), dailyBudget: Math.max(0, Number(p.dailyBudget) || 0) }))
@@ -287,6 +300,11 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
     input.introMonthlyFee == null &&
     !price.individual;
 
+  // Abschlussbonus nur noch, wenn er für ein offenes Angebot schon zugesagt war (höchstens dieser Betrag)
+  const wunschBonus = Number(input.abschlussBonus ?? 0);
+  const zugesagt = !test && price.setupFee > 0 && Number.isFinite(wunschBonus) && wunschBonus > 0 ? await zugesagterBonus(owner) : null;
+  const bonus = zugesagt != null ? Math.min(wunschBonus, zugesagt, price.setupFee) : null;
+
   const { termsUrl, dpaUrl } = legalUrls();
   const validUntil = new Date(Date.now() + (input.validDays ?? 14) * 24 * 60 * 60 * 1000);
 
@@ -336,17 +354,8 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
     allowPayLater: input.allowPayLater === true && !test && !ppl,
     allowBankTransfer: input.allowBankTransfer === true && !test,
     bankTransferDays: parseZahlungsziel(input.bankTransferDays),
-    abschlussBonus:
-      test || !(price.setupFee > 0)
-        ? null
-        : (() => {
-            const b = Number(input.abschlussBonus ?? 0);
-            return Number.isFinite(b) && b > 0 ? Math.min(b, price.setupFee) : null;
-          })(),
-    abschlussBonusBis:
-      !test && price.setupFee > 0 && input.abschlussBonus !== 0 && isIsoDate(input.abschlussBonusBis) && input.abschlussBonusBis >= berlinTodayIso()
-        ? berlinTagesendeIso(input.abschlussBonusBis)
-        : null,
+    abschlussBonus: bonus,
+    abschlussBonusBis: bonus != null && isIsoDate(input.abschlussBonusBis) && input.abschlussBonusBis >= berlinTodayIso() ? berlinTagesendeIso(input.abschlussBonusBis) : null,
     // Immer gesetzt (auch leer), damit Bearbeiten die erste Woche auch entfernen kann
     pplProductKey: ersteWoche?.productKey ?? null,
     pplLabel: ersteWoche?.label ?? null,
@@ -375,6 +384,34 @@ async function adresseUebernehmen(tx: Prisma.TransactionClient, owner: OfferOwne
   }
 }
 
+/**
+ * Wird eine neuere Version angenommen, gilt eine früher angenommene, aber nie bezahlte Version desselben Kontakts bzw.
+ * Deals als ersetzt: Status „superseded“ (keine Zahlungserinnerungen mehr, nicht mehr in der Übersicht), offene
+ * Stripe-Bezahlseite läuft sofort ab. Bezahlte Angebote oder solche mit Abo bzw. Onboarding bleiben unberührt.
+ */
+export async function fruehereAnnahmenErsetzen(offer: { id: string; number: string; salesContactId: string | null; dealId: string | null; createdAt: Date }): Promise<string[]> {
+  const owner = offer.salesContactId ? { salesContactId: offer.salesContactId } : offer.dealId ? { dealId: offer.dealId } : null;
+  if (!owner) return [];
+  const alte = await prisma.offer.findMany({
+    where: { ...owner, id: { not: offer.id }, status: "accepted", createdAt: { lt: offer.createdAt }, paymentStatus: { not: "paid" }, stripeSubscriptionId: null, stripeScheduleId: null },
+    select: { id: true, number: true, stripeCheckoutSessionId: true },
+  });
+  const ersetzt: string[] = [];
+  for (const a of alte) {
+    if (await prisma.onboarding.findFirst({ where: { offerId: a.id }, select: { id: true } })) continue;
+    const r = await prisma.offer.updateMany({ where: { id: a.id, status: "accepted" }, data: { status: "superseded", paymentReminderAt: null } });
+    if (!r.count) continue;
+    ersetzt.push(a.number);
+    if (a.stripeCheckoutSessionId) {
+      const { stripeClient } = await import("@/lib/billing");
+      await stripeClient()?.checkout.sessions.expire(a.stripeCheckoutSessionId).catch(() => null);
+    }
+    await audit("offer.superseded", { entity: "Offer", entityId: a.id, details: { number: a.number, durch: offer.number } });
+  }
+  if (ersetzt.length) await logOfferActivity(offer as Parameters<typeof logOfferActivity>[0], `Angebot ${ersetzt.join(", ")} ersetzt durch ${offer.number}`, "Die frühere Annahme ist damit hinfällig, Zahlungserinnerungen dazu sind beendet.").catch(() => null);
+  return ersetzt;
+}
+
 export async function createOffer(target: OfferTarget, input: OfferFormInput, createdById: string | null) {
   const owner: OfferOwner = "dealId" in target ? { dealId: target.dealId } : { salesContactId: target.salesContactId };
   const { data, addr } = await angebotsDaten(owner, input);
@@ -388,6 +425,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
           select: { id: true, version: true },
         });
         const maxVersion = await tx.offer.aggregate({ where: owner, _max: { version: true } });
+        // Garantien richten sich nach der ersten Version (Ole, 23.11.2026: neue Version eines alten Angebots behält sie)
+        const [erste] = await tx.offer.findMany({ where: owner, orderBy: { createdAt: "asc" }, take: 1, select: { createdAt: true, garantieStichtag: true } });
         if (previous.length) {
           await tx.offer.updateMany({
             where: { id: { in: previous.map((p) => p.id) } },
@@ -399,6 +438,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             ...owner,
             number,
             version: (maxVersion._max.version ?? 0) + 1,
+            ...(erste?.createdAt ? { garantieStichtag: erste.garantieStichtag ?? erste.createdAt } : {}),
             token: crypto.randomBytes(24).toString("base64url"),
             ...data,
             createdById,
@@ -596,6 +636,10 @@ export async function acceptOffer(
     actor: { email: offer.email ?? null, role: "kunde" },
   });
 
+  // Frühere, angenommene, aber nie bezahlte Version desselben Kontakts ersetzen (Ole, 23.11.2026: Kunde nahm erst als
+  // Person an, dann die neue Version für seine Firma; beide standen als angenommen mit Zahlungserinnerung da)
+  await fruehereAnnahmenErsetzen(offer).catch((err) => reportError(err, "offer-accept-ersetzen", { offer: offer.number }));
+
   // Deal bzw. Kontakt auf „gewonnen“ setzen und in der Historie vermerken.
   if (offer.salesContactId) {
     await setContactCustomerStage(offer, "VERTRAG");
@@ -648,7 +692,7 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
   offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
-    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew" | "pplModell" | "pplProdukte">> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "allowPayLater" | "isTest" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew" | "pplModell" | "pplProdukte">> &
     Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null; ersteWoche: { quantity: number; autoRenew: boolean } | null }> = {},
 ): ContractSummaryInput {
@@ -660,9 +704,10 @@ export function offerSummaryInput(
     : null;
   const extras = add.monthlyTotal - Number(offer.monthlyFee);
   const intro = offer.introMonthlyFee != null && offer.introMonths ? { months: offer.introMonths, monthly: Math.round((Number(offer.introMonthlyFee) + extras) * 100) / 100 } : null;
+  const startIso = chosen.startIso !== undefined ? chosen.startIso : offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
   return {
     term: chosen.term ?? normalizeTerm(offer.term),
-    startIso: chosen.startIso !== undefined ? chosen.startIso : offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
+    startIso,
     setup: chosen.setup ?? Number(offer.setupFee),
     monthlyTotal: add.monthlyTotal,
     intro,
@@ -675,6 +720,8 @@ export function offerSummaryInput(
     paket: offer.package ?? null,
     ersteWoche,
     kundenkonto: kundenkontoAus(offer),
+    // „Ich zahle später“: wie auf der Angebotsseite nur, wenn erlaubt und der Start weit genug weg ist
+    payLater: !!offer.allowPayLater && !offer.isTest && !!erinnerungsGrenzen(berlinTodayIso(new Date()), startIso),
   };
 }
 

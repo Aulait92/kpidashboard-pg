@@ -2,6 +2,7 @@
 // Assistent und jede automatische Nachricht nur in Lead-Chats. Unbekannte Kontakte („Neuer Kontakt“) bekommen
 // nichts, bis der Vermittler sie als Lead übernimmt. Coexistence-Abgleich (history, smb_app_state_sync) legt
 // weder Chats noch Leads an, Echos pausieren den Assistenten.
+import { chatListeScope } from "@/lib/team";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const st = { ai: 0 };
@@ -111,13 +112,15 @@ describe("WhatsApp nur für Leads", () => {
     ]);
   });
 
-  it("(b) Unbekannter Kontakt schreibt: kein Assistent, keine Automatik, „Neuer Kontakt“ wartet auf den Vermittler", async () => {
+  it("(b) Unbekannter Kontakt schreibt: kein Assistent, keine Automatik, kein „Wartet auf Sie“, nicht in der Chatliste", async () => {
     const phone = newPhone();
     const res = await inbound(phone, "Hallo, sehen wir uns Samstag?", "Freund Max");
     expect(res.errors).toEqual([]);
     const c = await conv(phone);
-    expect(c).toMatchObject({ leadId: null, botActive: false, needsAttention: true });
-    expect(c!.attentionReason).toMatch(/^Neuer Kontakt: „Hallo, sehen wir uns Samstag\?“/);
+    // Ole, 23.11.2026: fremde Nummern komplett ignorieren (Nachricht gespeichert, aber unsichtbar und ohne Mitteilung)
+    expect(c).toMatchObject({ leadId: null, botActive: false, needsAttention: false });
+    const ctx = { customerId, teamRole: "owner", userId: null } as unknown as Parameters<typeof chatListeScope>[0];
+    expect(await prisma.conversation.count({ where: { ...chatListeScope(ctx), id: c!.id } })).toBe(0);
     expect(waSend).not.toHaveBeenCalled();
     expect(st.ai).toBe(0);
     expect(await prisma.lead.count({ where: { customerId, phone } })).toBe(0);

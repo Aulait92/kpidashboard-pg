@@ -13,6 +13,16 @@ import { addMonths, dayKey, monthKey, monthRange, retainerRows, type RetainerInp
 
 /** Ab diesem Datum erstellte Angebote zeigen die neuen Garantien (ältere behalten ihren Text). */
 export const GUARANTEES_FROM = new Date("2026-11-11T00:00:00+01:00");
+/**
+ * Ab diesem Zeitpunkt erstellte Angebote enthalten keine Garantien mehr (Ole, 22.11.2026: „ich verkaufe erstmal ohne
+ * Garantie“). Ältere Angebote behalten ihren Text, angenommene ihre Garantien (Prüfung, Fälle, Hinweise in der App).
+ */
+export const GUARANTEES_UNTIL = new Date("2026-11-22T19:15:00+01:00");
+/** Enthält ein Angebot mit diesem Erstellungsdatum Garantien (alte Fassung vor GUARANTEES_FROM eingeschlossen)? */
+export const angebotMitGarantien = (createdAt: Date) => createdAt < GUARANTEES_UNTIL;
+
+/** Datum, nach dem sich die Garantien richten: erste Version des Angebots (garantieStichtag), sonst createdAt. */
+export const garantieDatum = (offer: { createdAt: Date; garantieStichtag?: Date | null }): Date => offer.garantieStichtag ?? offer.createdAt;
 /** Garantien gelten für Katzenversicherung (TKV), siehe AGB „Garantien“. */
 export const isGuaranteeProduct = (name: string) => /katze|\btkv\b|tierkranken/i.test(name);
 
@@ -67,9 +77,9 @@ export function regelnAus(config: RechnerConfig): GarantieRegeln {
   };
 }
 
-/** Gilt die Garantie für dieses Angebot? Angenommen, ab GUARANTEES_FROM erstellt, mit Katze/TKV. */
-export function offerHasGuarantee(offer: { status: string; createdAt: Date; products: unknown } | null | undefined): boolean {
-  if (!offer || offer.status !== "accepted" || offer.createdAt < GUARANTEES_FROM) return false;
+/** Gilt die Garantie für dieses Angebot? Angenommen, zwischen GUARANTEES_FROM und GUARANTEES_UNTIL erstellt, mit Katze/TKV. */
+export function offerHasGuarantee(offer: { status: string; createdAt: Date; garantieStichtag?: Date | null; products: unknown } | null | undefined): boolean {
+  if (!offer || offer.status !== "accepted" || garantieDatum(offer) < GUARANTEES_FROM || !angebotMitGarantien(garantieDatum(offer))) return false;
   const products = Array.isArray(offer.products) ? (offer.products as { name?: unknown }[]) : [];
   return products.some((p) => typeof p?.name === "string" && isGuaranteeProduct(p.name));
 }

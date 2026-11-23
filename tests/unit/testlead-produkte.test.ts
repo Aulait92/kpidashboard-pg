@@ -42,6 +42,8 @@ function setupProducts(customer: { isTest: boolean; plan: string }, known: strin
   m("leadSource").findMany.mockResolvedValue([{ productKey: "pkv wechsel" }]);
   m("lead").findMany.mockResolvedValue([]);
   m("product").findMany.mockResolvedValue(CATALOG);
+  m("leadSubscription").findMany.mockResolvedValue([]);
+  m("onboarding").findUnique.mockResolvedValue(null);
 }
 
 beforeEach(() => {
@@ -85,6 +87,32 @@ describe("Produktauswahl", () => {
     setupProducts({ isTest: false, plan: "software" }, []);
     m("leadSource").findMany.mockResolvedValue([]);
     expect(await testLeadProducts("c1")).toEqual(CATALOG.map((p) => p.name));
+  });
+});
+
+describe("Testlead mit gebuchtem Produkt (Ole, 21.11.2026)", () => {
+  beforeEach(() => {
+    for (const model of Object.values(db.models)) for (const fn of Object.values(model)) fn.mockReset();
+  });
+
+  it("echter Kunde: nur gebuchte Produkte (Bezug, Angebot), nicht zuletzt genutzte oder der Katalog", async () => {
+    setupProducts({ isTest: false, plan: "ppl_software" }, []);
+    m("leadSource").findMany.mockResolvedValue([]);
+    m("leadSubscription").findMany.mockResolvedValue([{ productKey: "Privatschutz" }]);
+    m("onboarding").findUnique.mockResolvedValue({ offerId: "o1" });
+    m("offer").findUnique.mockResolvedValue({ products: [], pplProductKey: null, pplProdukte: [{ name: "Kindersparplan", preis: 65, menge: 23 }] });
+    m("lead").findMany.mockResolvedValue([{ source: "TKV-Katze" }]);
+    expect(await testLeadProducts("c1")).toEqual(["Privatschutz", "Kindersparplan"]);
+    expect(m("product").findMany).not.toHaveBeenCalled();
+  });
+
+  it("Produkt aus dem Angebot (Kampagnen) zählt als gebucht", async () => {
+    setupProducts({ isTest: false, plan: "software" }, []);
+    m("leadSource").findMany.mockResolvedValue([]);
+    m("onboarding").findUnique.mockResolvedValue({ offerId: "o1" });
+    m("offer").findUnique.mockResolvedValue({ products: [{ name: "Zahnzusatz", dailyBudget: 20 }], pplProductKey: null, pplProdukte: null });
+    m("lead").findMany.mockResolvedValue([{ source: "PKV Wechsel" }]);
+    expect(await testLeadProducts("c1")).toEqual(["Zahnzusatz"]);
   });
 });
 

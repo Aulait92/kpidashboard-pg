@@ -47,7 +47,7 @@ describe("Entscheidung", () => {
   });
   it("jedes Experiment hat ein Ziel und beide Fassungen beschrieben, ohne Gedankenstriche", () => {
     for (const d of Object.values(EXPERIMENTE)) {
-      expect(["termin_gebucht", "komplettcheck_ja", "erschienen", "zusage", "ppl_erreicht", "erinnerung_optin"]).toContain(d.ziel);
+      expect(["termin_gebucht", "komplettcheck_ja", "erschienen", "zusage", "ppl_erreicht", "erinnerung_optin", "zahlung_eingerichtet", "antwort"]).toContain(d.ziel);
       expect(d.a.length).toBeGreaterThan(5);
       expect(d.b.length).toBeGreaterThan(5);
     }
@@ -68,8 +68,8 @@ describe("Fassungen der Journey-Texte", () => {
   });
 
   it("Vertragsfrage mit Grund (doppelt zahlen), Du und Sie", () => {
-    expect(vertragsFrage("sie", false, "Super!", PERSON)).toMatch(/^Super! Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: Welche Versicherungen haben Sie heute schon\?/);
-    expect(vertragsFrage("du", true, "Danke!", PERSON_DU)).toMatch(/^Danke! Damit Ole sieht, ob du irgendwo doppelt zahlst: Welche Versicherungen habt ihr als Familie heute schon\?/);
-    expect(vertragsFrage("sie", false)).toMatch(/^Super! Welche Versicherungen haben Sie heute schon\?/);
+    expect(vertragsFrage("sie", false, "Super!", PERSON)).toMatch(/^Super! Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: \*Welche Versicherungen haben Sie heute schon\?\*/);
+    expect(vertragsFrage("du", true, "Danke!", PERSON_DU)).toMatch(/^Danke! Damit Ole sieht, ob du irgendwo doppelt zahlst: \*Welche Versicherungen habt ihr als Familie heute schon\?\*/);
+    expect(vertragsFrage("sie", false)).toMatch(/^Super! \*Welche Versicherungen haben Sie heute schon\?\*/);
   });
 });

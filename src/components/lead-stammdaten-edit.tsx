@@ -9,7 +9,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
-import { saveLeadStammdatenAction } from "@/app/buyer/stammdaten-actions";
+import { erstnachrichtAnNeueNummerAction, saveLeadStammdatenAction } from "@/app/buyer/stammdaten-actions";
 import type { StammdatenInput } from "@/lib/lead-stammdaten";
 
 const FIELDS: { key: keyof StammdatenInput & string; label: string; type?: string; autoComplete?: string; inputMode?: "tel" | "email" | "numeric" }[] = [
@@ -52,7 +52,21 @@ export function LeadStammdatenEdit({ leadId, initial }: { leadId: string; initia
         return;
       }
       setOpen(false);
-      toast.show({ message: r.changed.length ? ["Angaben gespeichert.", ...r.hinweise].join(" ") : "Keine Änderung." });
+      const message = r.changed.length ? ["Angaben gespeichert.", ...r.hinweise].join(" ") : "Keine Änderung.";
+      // Nummer geändert, noch keine Erstnachricht: Vermittler entscheidet per Klick (Ole, 22.11.2026)
+      if (r.erstnachrichtAnbieten) {
+        toast.show({
+          message: `${message} Soll die neue Nummer die Erstnachricht per WhatsApp bekommen?`,
+          actionLabel: "Per WhatsApp anschreiben",
+          durationMs: 20000,
+          onAction: () =>
+            start(async () => {
+              const s = await erstnachrichtAnNeueNummerAction(leadId);
+              toast.show({ message: s.text });
+              router.refresh();
+            }),
+        });
+      } else toast.show({ message });
       router.refresh();
     });
 

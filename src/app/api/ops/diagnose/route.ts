@@ -762,9 +762,13 @@ async function sicherheitStatus() {
   };
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, "d360-kunde": d360kunde, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), sicherheit: sicherheitStatus };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, "d360-kunde": d360kunde, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, "spaeter-nachholen": spaeterNachholenDiagnose, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), "policen-gesundheit": async (p) => (await import("@/lib/ops/policen-gesundheit")).policenGesundheit(p), "media-buyer": async (p) => (await import("@/lib/ops/media-buyer")).mediaBuyerStatus(p), "bank-anbieter": async (p) => (await import("@/lib/ops/bank-anbieter")).bankAnbieter(p), belege: async (p) => (await import("@/lib/ops/belege")).belegeStatus(p), sicherheit: sicherheitStatus, "ppl-rueckmeldung": async (p) => (await import("@/lib/ops/ppl-rueckmeldung")).pplRueckmeldung(p), angebot: async (p) => (await import("@/lib/ops/angebot")).angebotDiagnose(p), kampagnen: async (p) => (await import("@/lib/ops/kampagnen")).kampagnenDiagnose(p) };
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
+//   q=bank-anbieter[&ab=2026-01-01]        Ausgaben je Gegenpartei aus allen Kontoumsätzen (für Belege je Anbieter, lib/ops/bank-anbieter.ts)
+//   q=belege                               Belege aus GetMyInvoices: Anzahl, zugeordnet, Ausgaben ohne Beleg je Anbieter (lib/ops/belege.ts)
+//   q=media-buyer[&pool=<text>][&n=50]       Media Buyer: Pools (Ziel, Ist, Hochrechnung, Budget) und letzte Entscheidungen (lib/ops/media-buyer.ts)
+//   q=policen-gesundheit[&kunde=<id>]       Kranken/BU/Leben je Kunde: AVV-Ergänzung, Datenschutz-URL, freigegeben (lib/ops/policen-gesundheit.ts)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
 //   q=vermittler-anrede[&alle=1]  Kunden ohne Anrede in den Anbieterangaben, nur ID und Name (lib/ops/vermittler-anrede.ts)
 //   q=admin-nutzung[&tage=30]              Nutzung des Admins: Änderungsprotokoll je Aktion, Klicks je Funktion und Seite, nur Zahlen (lib/ops/admin-nutzung.ts)
@@ -772,11 +776,14 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=investoren[&sicht=gesamt]           Investoren-Kennzahlen (Geld › Auswertung): Datenlücken, Kennzahlen, KI-Kosten, Gegenprobe mit der Übersicht (lib/ops/investoren.ts)
 //   q=tarif-vorschlaege                    Tarifkatalog lernt von Vermittlern: Vorschläge je Status und Quelle, offene, empfohlene, übernommene, nur Anzahlen (lib/ops/tarif-vorschlaege.ts)
 //   q=mail-eingang[&tage=7]                Antwortadresse mit Eingang: Schalter, Einrichtung, Zählung, letzte Eingänge, Fehler, ohne Inhalte (lib/ops/mail-eingang.ts)
+//   q=kampagnen&kunde=<ID>[&suche=…]       Kampagnen, Anzeigengruppen, Anzeigen eines Kunden-Werbekontos live aus Meta (lib/ops/kampagnen.ts)
+//   q=angebot&nummer=PG-…                  Alle Angebote desselben Kontakts: Status, Version, Annahme, Zahlung, Audit (lib/ops/angebot.ts)
 //   q=preise-offen                         Neue Listenpreise 990/1.390/1.790 €: umgestellte und noch alte offene Angebote (Nummer, Name, alt, neu; lib/ops/preise-offen.ts)
 //   q=praesentation-quote[&tage=30][&kunde=<id>]  Beratungspräsentation: Abschlussquote je Präsentation je Vermittler und Splittest-Variante (A alt, B Standard, C Herausforderer im Experiment „praesentation“), Zusagen im Termin und im Kundenlink (lib/praesentation-messung.ts)
 //   q=nutzung-woche[&tage=7][&gruppe=software|ppl]  Usability-Woche im Vermittlerbereich: aktive Kunden/Nutzer, Top- und ungenutzte Seiten/Aktionen, Abbrüche, Fehler-Toasts, Feedback/NPS, Support, Hilfe-Themen, Aufgaben, nächster Schritt, erste Reaktion, Admin-Nutzung; letzte N Tage gegen die N davor, nur Zahlen (lib/ops/nutzung-woche.ts)
 //   q=journey[&tage=30]                    Lead-Reise je Vermittler: Lead → erste Antwort → Vorschlag → Termin → Komplettcheck → erschienen, nur Zahlen (lib/ops/journey.ts)
 //   q=experimente                          Splittests der Lead-Reise: laufende Tests, Quoten je Fassung, Gewinner, nur Zahlen (lib/experimente.ts)
+//   q=vertrieb-nicht-erreicht              A/B-Test der „Nicht erreicht“-Nachricht im Vertrieb: Antwort oder Termin binnen 72 h je Fassung, nur Zahlen (lib/vertrieb/nicht-erreicht-server.ts)
 //   q=funnel[&tage=30]                     Eigener PKV-Funnel: Besucher, Abbruch je Schritt, Leads, geliefert, mit Rückmeldung, erreicht, Termin,
 //                                          Abschluss, Umsatz je Besucher, Funnel-Tests je Fassung, nur Zahlen (lib/funnel/auswertung.ts)
 //   q=vertrieb-auskunft&email=…|&id=…|&suche=…  Auskunft nach Art. 15 für einen Vertriebskontakt (Felder, Herkunft, Empfänger, Mails, Sperre); Suche nur ID, Name, Firma, Status (lib/ops/vertrieb-auskunft.ts)
@@ -807,12 +814,55 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "nutzung-woche": async (p) => (await import("@/lib/ops/nutzung-woche")).nutzungWocheGetrennt(p),
   journey: async (p) => (await import("@/lib/ops/journey")).journeyDiagnose(p),
   experimente: async () => (await import("@/lib/experimente")).experimenteDiagnose(),
+  "vertrieb-nicht-erreicht": async () => (await import("@/lib/vertrieb/nicht-erreicht-server")).nichtErreichtAbDiagnose(),
   funnel: async (p) => (await import("@/lib/funnel/auswertung")).funnelDiagnose(p),
   "praesentation-quote": async (p) => (await import("@/lib/praesentation-messung")).praesentationQuoteDiagnose(p),
   "vertrieb-auskunft": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebAuskunftDiagnose(p),
   "vertrieb-dsgvo": async (p) => (await import("@/lib/ops/vertrieb-auskunft")).vertriebDsgvoDiagnose(p),
   "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
+  "ppl-kunde": async (p) => (await import("@/lib/ops/ppl-kunde")).pplKunde(p),
+  "push-geraete": async () => (await import("@/lib/ops/push-geraete")).pushGeraeteDiagnose(),
+  // PKV-Leads nach Beitragsband und Ergebnis (Ole, 22.11.2026: Funnel-Grenze 650 → 700), nur Anzahlen, ?tage=60
+  "pkv-beitrag": async (p) => {
+    const tage = Math.min(180, Math.max(1, Number(p.get("tage") ?? 60) || 60));
+    const rows = await prisma.poolLead.findMany({
+      where: { productKey: { contains: "PKV", mode: "insensitive" }, createdAt: { gte: new Date(Date.now() - tage * 86_400_000) } },
+      select: { contribution: true, status: true, answers: true },
+    });
+    const band = (c: number | null) => (c == null ? "ohne" : c < 650 ? "<650" : c < 700 ? "650-699" : c < 800 ? "700-799" : "800+");
+    const out: Record<string, Record<string, Record<string, number>>> = {};
+    for (const r of rows) {
+      const funnel = JSON.stringify(r.answers ?? "").includes("pkv-tarife.com") ? "eigener Funnel" : "andere";
+      const b = band(r.contribution);
+      out[funnel] ??= {};
+      out[funnel][b] ??= {};
+      out[funnel][b][r.status] = (out[funnel][b][r.status] ?? 0) + 1;
+    }
+    return { tage, gesamt: rows.length, nachQuelleBandStatus: out };
+  },
+  "lead-felder": async (p) => (await import("@/lib/ops/lead-felder")).leadFelderDiagnose(p),
+  // Eingänge je Tag und Kanal für ein Produkt (Media Buyer zählt nur adChannel „Meta“), ?produkt=Wechsel&tage=14
+  "leads-je-tag": async (p) => {
+    const produkt = (p.get("produkt") ?? "").trim();
+    const tage = Math.min(40, Math.max(1, Number(p.get("tage") ?? 14) || 14));
+    const seit = new Date(Date.now() - tage * 86_400_000);
+    const rows = await prisma.lead.findMany({ where: { ...(produkt ? { source: produkt } : {}), createdAt: { gte: seit }, isTest: false }, select: { createdAt: true, adChannel: true, source: true } });
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      const k = `${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(r.createdAt)} | ${r.source ?? "-"} | ${r.adChannel ?? "ohne Kanal"}`;
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return [...m.entries()].sort().map(([k, n]) => `${k}: ${n}`);
+  },
+  // Trockenlauf des Media Buyers (22.11.2026): rechnet Budgets, schreibt nichts an Meta, keine Pushs; protokolliert
+  // nur eine Entscheidung mit dryRun=true (wie „Simulieren“ im Admin)
+  "media-buyer-trockenlauf": async () => {
+    const r = await (await import("@/lib/media-buyer")).runMediaBuyer({ dryRun: true, force: true });
+    return { ranAt: r.ranAt, eingeschaltet: process.env.MEDIA_BUYER_ENABLED === "1", pools: r.pools.filter((p) => p.goal > 0 || p.prevBudget).map((p) => ({ kampagnen: p.campaigns, roh: Object.fromEntries(Object.entries(p).filter(([, v]) => typeof v === "number" || v === null)), pool: p.poolLabel, aktion: p.action, leadsMtd: p.leadsMtd, ziel: p.goal, prognose: p.projected, budgetVorher: p.prevBudget, budgetNeu: p.newBudget, grund: p.reason, fehler: p.error })) };
+  },
   "test-chat": async (p) => (await import("@/lib/ops/test-chat")).testChatDiagnose(p),
+  buchungslinks: async () => (await import("@/lib/ops/buchungslinks")).buchungslinksDiagnose(),
+  einwilligungstext: async (p) => (await import("@/lib/ops/einwilligungstext")).einwilligungstextDiagnose(p),
 };
 
 export async function GET(req: Request): Promise<Response> {

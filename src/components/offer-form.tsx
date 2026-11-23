@@ -1,7 +1,5 @@
 "use client";
 
-import { InfoHinweis } from "@/components/info-hinweis";
-import { BREAKEVEN_ERKLAERT, VERTRAGSGARANTIE_ERKLAERT } from "@/lib/begriffe";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
@@ -109,10 +107,10 @@ export function OfferForm({
   // Überweisung nur auf Anfrage des Kunden (Ole, 17.11.2026): Standard aus, Zahlungsziel Standard 14 Tage
   const [allowBankTransfer, setAllowBankTransfer] = useState(w0.allowBankTransfer);
   const [bankTransferDays, setBankTransferDays] = useState(w0.bankTransferDays);
-  // Abschlussbonus (Ole, 16.11.2026): Standard an, 300 € auf die Einrichtung bei Annahme und Zahlung am Versandtag
+  // Abschlussbonus (Ole, 21.11.2026: abgeschafft): nur noch sichtbar, wenn das bearbeitete Angebot schon einen hat
+  const bonusVorhanden = w0.bonusVorhanden;
   const [bonusAn, setBonusAn] = useState(w0.bonusAn);
   const [bonusBetrag, setBonusBetrag] = useState(w0.bonusBetrag);
-  // Frist frei wählbar (Ole, 16.11.2026): Vorschlag morgen 23:59 Uhr
   const [bonusBis, setBonusBis] = useState(w0.bonusBis);
   // Testangebot (Ole, 15.11.2026): 0 €, ohne Zahlung, legt einen Testkunden an
   const [test, setTest] = useState(w0.test);
@@ -128,7 +126,7 @@ export function OfferForm({
   const werte: OfferFormWerte = {
     contactName, company, email, street, zip, city, products, pkg, term, setupOverride, discount, monthlyOverride, introFee, introMonths,
     specialTerms, startDate, billingDay, billingFree, validDays, seats, annual, bestand, empfehlung, vermittler, customerChoice,
-    customerProducts, allowPayLater, arrears, allowBankTransfer, bankTransferDays, bonusAn, bonusBetrag, bonusBis, test,
+    customerProducts, allowPayLater, arrears, allowBankTransfer, bankTransferDays, bonusVorhanden, bonusAn, bonusBetrag, bonusBis, test,
     wocheProdukt, wocheLabel, wochePreis, wocheBrutto, wocheMenge, pplModell, kkProdukte,
   };
 
@@ -157,7 +155,7 @@ export function OfferForm({
         num(setupOverride) != null && !ppl ? `Setup ${eur(num(setupOverride)!)}` : null,
         num(monthlyOverride) != null ? `monatlich ${eur(num(monthlyOverride)!)}` : null,
         num(introFee) != null && !ppl ? `Startpreis ${eur(num(introFee)!)}` : null,
-        bonusAn && !ppl ? `Abschlussbonus ${eur(num(bonusBetrag) ?? 0)}` : null,
+        bonusVorhanden && bonusAn && !ppl ? `Abschlussbonus ${eur(num(bonusBetrag) ?? 0)}` : null,
         customerChoice ? "Kunde wählt Start" : null,
         allowPayLater && !ppl ? "später zahlen" : null,
         arrears ? "nachträglich" : null,
@@ -204,6 +202,10 @@ export function OfferForm({
       setError("Bitte einen Preis je Lead für die erste Woche angeben.");
       return;
     }
+    if (!street.trim() || !zip.trim() || !city.trim()) {
+      setError("Bitte die Adresse des Empfängers angeben (Straße, PLZ, Ort). Sie steht im Vertrag und auf der Rechnung.");
+      return;
+    }
     if (!EMAIL_RE.test(email.trim())) {
       setError("Bitte eine gültige E-Mail-Adresse des Empfängers angeben. Daraus entsteht nach der Zahlung der Login.");
       return;
@@ -229,36 +231,23 @@ export function OfferForm({
             <Field l="Ansprechpartner *"><input className={input} value={contactName} onChange={(e) => setContactName(e.target.value)} /></Field>
             <Field l="Firma / Agentur"><input className={input} value={company} onChange={(e) => setCompany(e.target.value)} /></Field>
             <Field l="E-Mail *"><input className={input} type="email" required autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-            {/* Adresse ist optional und meist aus dem Kontakt vorbelegt: zugeklappt, die Zeile zeigt den Stand */}
-            <details className="group sm:col-span-2" data-empfaenger-adresse>
-              <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 text-sm [&::-webkit-details-marker]:hidden">
-                <span className="font-medium text-[color:var(--brand)]">Adresse</span>
-                <span className="min-w-0 flex-1 truncate text-[color:var(--muted)]">{[street, [zip, city].filter(Boolean).join(" ")].filter(Boolean).join(", ") || "optional"}</span>
-                <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
-              </summary>
-              <div className="grid gap-3 pt-2 sm:grid-cols-[2fr_1fr_2fr]">
-                <Field l="Straße und Hausnummer"><input className={input} value={street} onChange={(e) => setStreet(e.target.value)} /></Field>
-                <Field l="PLZ"><input className={input} value={zip} onChange={(e) => setZip(e.target.value)} /></Field>
-                <Field l="Ort"><input className={input} value={city} onChange={(e) => setCity(e.target.value)} /></Field>
-              </div>
-            </details>
+            {/* Adresse ist Pflicht (Ole, 23.11.2026: „die adresse wird immer gebraucht“, Vertragspartner und Rechnung) */}
+            <div className="grid gap-3 sm:col-span-2 sm:grid-cols-[2fr_1fr_2fr]" data-empfaenger-adresse>
+              <Field l="Straße und Hausnummer *"><input className={input} required autoComplete="off" value={street} onChange={(e) => setStreet(e.target.value)} /></Field>
+              <Field l="PLZ *"><input className={input} required inputMode="numeric" autoComplete="off" value={zip} onChange={(e) => setZip(e.target.value)} /></Field>
+              <Field l="Ort *"><input className={input} required autoComplete="off" value={city} onChange={(e) => setCity(e.target.value)} /></Field>
+            </div>
           </div>
         </Card>
 
         <Card>
           <CardHeader title="Kunde ist …" hint="geht in die Erstinformation" />
-          {ppl ? null : (
-          <p className="flex flex-wrap items-center gap-x-1.5 px-5 pt-3 text-xs text-[color:var(--muted)]" data-garantie-erklaert>
-            Break-even-Garantie <InfoHinweis begriff="Break-even-Garantie" text={BREAKEVEN_ERKLAERT} /> · Vertrags-Garantie{" "}
-            <InfoHinweis begriff="Vertrags-Garantie" text={VERTRAGSGARANTIE_ERKLAERT} />
-          </p>
-          )}
           <div className="grid gap-2 p-5 sm:grid-cols-3" role="radiogroup" aria-label="Vertreter, Mehrfachvertreter oder Makler">
             {(
               [
-                ["vertreter", "Vertreter (AO)", "Abschlussprovision · Break-even-Garantie"],
-                ["mehrfachvertreter", "Mehrfachvertreter", "wie Vertreter · Break-even-Garantie"],
-                ["makler", "Makler", "Bestandscourtage · Vertrags-Garantie"],
+                ["vertreter", "Vertreter (AO)", "Abschlussprovision"],
+                ["mehrfachvertreter", "Mehrfachvertreter", "rechnet wie Vertreter"],
+                ["makler", "Makler", "Bestandscourtage"],
               ] as const
             ).map(([k, t, s]) => (
               <button
@@ -504,7 +493,7 @@ export function OfferForm({
                 <AbrechnungstagFeld startDate={startDate} day={billingDay} setDay={setBillingDay} free={billingFree} setFree={setBillingFree} voraus={annual && annualPossible} />
               </div>
             </div>
-            {/* Selten Geändertes (SUS-Prüfung 20.11.2026): Preise, Bonus, Zahlungsoptionen, Test und Sondervereinbarung
+            {/* Selten Geändertes (SUS-Prüfung 20.11.2026): Preise, Zahlungsoptionen, Test und Sondervereinbarung
                 zugeklappt; die Zeile darunter zeigt, was gerade gilt. Offen, wenn ein Preis eingetragen werden muss. */}
             <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white" open={price.listMonthly == null || price.seatsIndividual || undefined} data-sonderkonditionen>
               <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-sm [&::-webkit-details-marker]:hidden">
@@ -579,6 +568,7 @@ export function OfferForm({
                 </span>
               </span>
             </label>
+            {bonusVorhanden ? (
             <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-abschlussbonus-toggle>
               <input type="checkbox" name="abschlussBonus" className="mt-0.5 h-4 w-4" checked={bonusAn && !test} disabled={test} onChange={(e) => setBonusAn(e.target.checked)} />
               <span className="min-w-0 flex-1">
@@ -605,7 +595,7 @@ export function OfferForm({
                   />
                 </span>
                 <span className="block text-xs text-[color:var(--muted)]">
-                  Gilt bei Annahme und Zahlung der Einrichtung bis 23:59 Uhr an diesem Tag (mit „Später zahlen“ reicht die Annahme). Start bleibt frei wählbar, danach automatisch Normalpreis.
+                  Schon zugesagt, bleibt für dieses Angebot. Neue Angebote haben keinen Abschlussbonus mehr.
                 </span>
                 {bonusAn && !test && price.setupFee > 0 && (num(bonusBetrag) ?? 0) >= price.setupFee ? (
                   <span className="mt-1 block text-xs font-medium text-amber-700" data-abschlussbonus-ganzes-setup>
@@ -614,6 +604,7 @@ export function OfferForm({
                 ) : null}
               </span>
             </label>
+            ) : null}
             <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-pay-later-toggle>
               <input
                 type="checkbox"

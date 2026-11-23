@@ -543,7 +543,7 @@ export async function uebernimmInBestand(w: Wer, id: string): Promise<{ existing
       line: linie,
       product: s("tarifname"),
       insurer: s("versicherer"),
-      contractNo: s("versicherungsnummer"),
+      contractNo: s("versicherungsnummer_voll") ?? s("versicherungsnummer"),
       startDate: s("beginn") ? new Date(`${s("beginn")}T00:00:00Z`) : null,
       renewalDate: kuendbar ? new Date(`${kuendbar}T00:00:00Z`) : null,
       annualPremium: monat != null ? Math.round(monat * 12 * 100) / 100 : null,

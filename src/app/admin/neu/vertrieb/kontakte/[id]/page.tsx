@@ -4,7 +4,7 @@ import { ClipboardCheck, FilePlus2, Mail, Phone, Send } from "lucide-react";
 import { Badge, ButtonLink, Card, CardHeader, buttonClass } from "@/components/ui";
 import { DealOffersCard } from "@/components/deal-offers-card";
 import { EintragenKnopf } from "@/components/admin-neu/vertrieb/eintragen-knopf";
-import { ContactMore, StagePicker } from "@/components/vertrieb/contact-controls";
+import { ContactMore, GewonnenVerlorenKnoepfe, StagePicker } from "@/components/vertrieb/contact-controls";
 import { DuplicateHint } from "@/components/vertrieb/contact-merge";
 import { DatenschutzRechtKarte } from "@/components/vertrieb/datenschutz-recht";
 import { fallZeilen, rechtsFaelleVon } from "@/lib/vertrieb/datenschutz-recht-server";
@@ -30,6 +30,13 @@ import { ladeKontakt, ladeKontaktakte } from "@/lib/vertrieb/kontaktakte";
 import { kanaeleText, zeitLabel } from "@/lib/vertrieb/geplante-nachrichten";
 import { ladeGeplanteNachrichten } from "@/lib/vertrieb/geplante-nachrichten-server";
 import { audienceForContact } from "@/lib/vertrieb/praesentationen";
+import { ladeWhatsAppVerlauf } from "@/lib/vertrieb/whatsapp-verlauf";
+import { WhatsAppVerlaufKarte } from "@/components/admin-neu/vertrieb/whatsapp-verlauf";
+import { EmailKnopf, type EmailKnopfDaten } from "@/components/admin-neu/vertrieb/email-knopf";
+import { ladeEmailKontext } from "@/lib/vertrieb/crm-mail-server";
+import { crmAnbieterVerfuegbar } from "@/lib/vertrieb/crm-postfach";
+import { CRM_POSTFACH_MELDUNG } from "@/lib/vertrieb/crm-postfach-routes";
+import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 
 export const metadata = { title: "Kontakt | performancegrowth Admin" };
 
@@ -39,8 +46,11 @@ export const metadata = { title: "Kontakt | performancegrowth Admin" };
 // „Eintragen“ (Anruf, Mail, Notiz im Fenster statt offenem Formular) und „Mehr“ (Präsentation, Website, Zusammenführen,
 // Löschen). Reihenfolge: Nächster Schritt, Verlauf | Angebot (Optionen zugeklappt), Follow-up, Aufgaben, Daten
 // (Kontakt, Agentur, Cold Mails, Kundendaten in einer zugeklappten Karte; Cold Mails mit Antwort stehen offen darüber).
+// Unter dem Verlauf der WhatsApp-Chat über die Support-Nummer (nur wenn vorhanden, 22.11.2026).
 // In der Kopfzeile die nächste automatische Nachricht an den Kontakt (Link auf Verkaufen → Geplante Nachrichten).
 // ?termin=<beliebig> öffnet „Termin buchen“ sofort („+ Neu → Termin“, Vertrieb → Termine).
+// „E-Mail“ (23.11.2026) öffnet das Fenster mit Vorlagen und sendet über das eigene Postfach des Admins (EmailKnopf);
+// ?postfach=<stand> kommt vom Verbinden zurück und öffnet das Fenster wieder.
 
 const AKTE = [
   // Zurück führt zur zuletzt gefilterten Liste (Seite → zurueck.merken)
@@ -49,10 +59,10 @@ const AKTE = [
   "buchung--push-an-admins-mit-sprungziel-kontaktakte",
 ].join(" ");
 
-export default async function KontaktaktePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ termin?: string }> }) {
-  await requireAuth();
+export default async function KontaktaktePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ termin?: string; onboardingTermin?: string; postfach?: string }> }) {
+  const session = await requireAuth();
   const { id } = await params;
-  const { termin } = await searchParams;
+  const { termin, onboardingTermin, postfach } = await searchParams;
   const c = await ladeKontakt(id);
   if (!c) notFound();
   // „Offenes Angebot auch als abgelehnt markieren?“ beim Verloren-Markieren
@@ -74,6 +84,21 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   // Nächste automatische Nachricht an diesen Kontakt (lib/vertrieb/geplante-nachrichten.ts), Liste unter Verkaufen → Geplante Nachrichten
   const jetzt = new Date();
   const naechsteNachricht = (await ladeGeplanteNachrichten({ now: jetzt, contactId: c.id }).catch(() => []))[0] ?? null;
+  // WhatsApp mit dem Kontakt über die Support-Nummer (lib/vertrieb/whatsapp-verlauf.ts)
+  const whatsapp = await ladeWhatsAppVerlauf({ salesContactId: c.id }).catch(() => null);
+
+  // E-Mail-Fenster: Postfach des Admins, Adressen, Vorlagen mit Werten (lib/vertrieb/crm-mail-server.ts)
+  const mailKontext = await ladeEmailKontext(c, session, a.appUrl);
+  const mailDaten: EmailKnopfDaten = {
+    postfach: mailKontext.postfach ? { provider: mailKontext.postfach.provider, email: mailKontext.postfach.email, status: mailKontext.postfach.status } : null,
+    empfaenger: mailKontext.empfaenger,
+    vorlagen: mailKontext.vorlagen,
+    werte: mailKontext.werte,
+    gesperrt: mailKontext.gesperrt,
+    anbieter: crmAnbieterVerfuegbar(),
+    freigabeUrl: microsoftAdminConsentUrl(a.appUrl || undefined),
+  };
+  const mailMeldung = postfach ? (CRM_POSTFACH_MELDUNG[postfach] ?? null) : null;
 
   const coldMailsOben = hatAntwort(c);
   const tel = c.phone ? `tel:${c.phone.replace(/\s/g, "")}` : null;
@@ -85,7 +110,11 @@ export default async function KontaktaktePage({ params, searchParams }: { params
       untertitel={ansprechpartner || c.leaderNames ? `Ansprechpartner: ${ansprechpartner || c.leaderNames}` : undefined}
       zurueck={{ href: KONTAKTE, label: "Kontakte", merken: { id: VERTRIEB_NEU_LISTE, listen: VERTRIEB_NEU_LISTEN } }}
       aktionen={
-        haupt ? (
+        haupt?.art === "mail" ? (
+          <span className="contents" data-hauptaktion="mail">
+            <EmailKnopf contactId={c.id} daten={mailDaten} variant="primary" label={haupt.label} meldung={mailMeldung} />
+          </span>
+        ) : haupt ? (
           <a href={haupt.href} className={buttonClass("primary", "md")} data-hauptaktion={haupt.art}>
             <haupt.icon className="h-4 w-4" /> {haupt.label}
           </a>
@@ -131,11 +160,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                   <Phone className="h-4 w-4" /> <span className="hidden sm:inline">{c.phone}</span>
                 </a>
               ) : null}
-              {c.email && haupt?.art !== "mail" ? (
-                <a href={`mailto:${c.email}`} className={buttonClass("secondary", "md")} aria-label="E-Mail schreiben">
-                  <Mail className="h-4 w-4" /> <span className="hidden sm:inline">E-Mail</span>
-                </a>
-              ) : null}
+              {c.email && haupt?.art !== "mail" ? <EmailKnopf contactId={c.id} daten={mailDaten} meldung={mailMeldung} /> : null}
             </span>
             <EintragenKnopf contactId={c.id} hasOpenTasks={a.open.length > 0} offenesAngebot={angebotOffen} variant={haupt ? "secondary" : "primary"} />
             <span
@@ -159,6 +184,10 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                 Präsentation {a.praesAufrufe.length}× geöffnet
               </span>
             ) : null}
+            {/* Gewonnen / Verloren mit einem Tipp (Ole, 22.11.2026), nur solange der Kontakt offen ist; als Paar, am Desktop rechts */}
+            <span className="flex gap-2 sm:ml-auto" data-funktion="actions-gewonnenverlorenaction--gewonnen-verloren-knoepfe">
+              <GewonnenVerlorenKnoepfe contactId={c.id} stage={c.stage} competitor={c.competitor} offenesAngebot={angebotOffen} />
+            </span>
           </div>
         </div>
 
@@ -194,6 +223,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
             <NaechsterSchritt c={c} a={a} termin={termin ?? null} />
             {/* Sprungmarke #aktivitaet öffnet „Eintragen“ (EintragenKnopf), #aufgaben springt zu den Aufgaben */}
             <Verlauf c={c} />
+            {whatsapp ? <WhatsAppVerlaufKarte v={whatsapp} now={jetzt.getTime()} /> : null}
             {coldMailsOben ? <ColdMails c={c} /> : null}
           </div>
 
@@ -206,6 +236,8 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                 loginEmail={a.onboarding.customer.users[0]?.email ?? null}
                 feedback={feedback}
                 websiteInfo={(a.onboarding.websiteInfo ?? null) as ImpressumInfo | null}
+                zurueck={`/admin/neu/vertrieb/kontakte/${id}`}
+                terminMeldung={onboardingTermin ?? null}
               />
             ) : a.acceptedOffer ? (
               <div data-funktion="onboarding-actions-startonboardingaction--onboarding-starten-neues-kundenkonto-oder">

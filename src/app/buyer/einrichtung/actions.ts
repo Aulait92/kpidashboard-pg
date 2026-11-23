@@ -50,14 +50,16 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
     if (!p.ok) return { error: p.error };
     let video: string | null | undefined;
     if (fd.has("videoRoomUrl")) {
-      const raw = str(fd, "videoRoomUrl", 300);
-      video = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw || null;
-      if (video && !/^https:\/\/[^\s/]+\.[^\s]+$/i.test(video)) return { error: "Bitte den ganzen Webex-Link einfügen, z. B. https://allianz.webex.com/meet/vorname.nachname." };
+      const { pruefeVideoLink } = await import("@/lib/video-raum");
+      const geprueft = pruefeVideoLink(str(fd, "videoRoomUrl", 300));
+      if (!geprueft.ok) return { error: geprueft.error };
+      video = geprueft.url;
     }
     const { saveVermittlerAngaben } = await import("@/lib/erstinformation");
     await saveVermittlerAngaben(ob.customerId, p.angaben);
     if (video !== undefined) {
       await prisma.agentConfig.upsert({ where: { customerId: ob.customerId }, create: { customerId: ob.customerId, videoRoomUrl: video }, update: { videoRoomUrl: video } });
+      await import("@/lib/video-raum-server").then((m) => m.videoRaumNachtragen(ob.customerId, video)).catch(() => 0);
     }
   }
 
@@ -237,13 +239,14 @@ export async function skipSetupStepAction(_prev: SetupState, fd: FormData): Prom
   } else if (kind === "mailbox_off") {
     // „Meine Gesellschaft erlaubt das nicht“: E-Mail-Funktionen aus, Schritt gilt als erledigt
     await prisma.customer.update({ where: { id: ob.customerId }, data: { mailFeaturesOff: true } });
-  } else if (kind === "gesehen:assistent") {
-    // „So arbeitet Ihr Assistent“ (P8): mit „Weiter“ gesehen
+  } else if (kind === "gesehen:assistent" || kind === "gesehen:einwaende") {
+    // „So arbeitet Ihr Assistent“ (P8) bzw. Merkblatt „Einwände im Termin“: mit „Weiter“ gesehen
+    const key = kind.slice("gesehen:".length);
     const current = (ob.stepSkips && typeof ob.stepSkips === "object" ? ob.stepSkips : {}) as Record<string, unknown>;
-    if (!current.assistent) {
+    if (!current[key]) {
       await prisma.onboarding.update({
         where: { id: ob.id },
-        data: { stepSkips: { ...current, assistent: { at: new Date().toISOString(), reason: "gesehen" } } as Prisma.InputJsonValue },
+        data: { stepSkips: { ...current, [key]: { at: new Date().toISOString(), reason: "gesehen" } } as Prisma.InputJsonValue },
       });
     }
   } else if (kind.startsWith("skip:")) {
@@ -392,8 +395,9 @@ export async function testleadSelbstAction(_prev: TestleadSelbstState, fd: FormD
   if (wa?.status !== "connected") return { error: "Erst WhatsApp verbinden, dann testen." };
   const heute = await prisma.auditLog.count({ where: { customerId: ctx.customerId, action: "lead.test_create", at: { gte: new Date(Date.now() - 86_400_000) } } });
   if (heute >= 5) return { error: "Für heute sind genug Tests gelaufen. Morgen geht es wieder." };
-  const { createTestLead, testLeadProducts } = await import("@/lib/testlead");
-  const product = (await testLeadProducts(ctx.customerId))[0];
+  const { createTestLead, gebuchteProdukte, testLeadProducts } = await import("@/lib/testlead");
+  // Immer das gebuchte Produkt (Ole, 21.11.2026), nur ohne Buchung das erste aus der Auswahl
+  const product = (await gebuchteProdukte(ctx.customerId))[0] ?? (await testLeadProducts(ctx.customerId))[0];
   if (!product) return { error: "Noch kein Produkt eingerichtet. Bitte kurz bei uns melden." };
   const r = await createTestLead({ customerId: ctx.customerId, phone: str(fd, "phone", 40), product, confirmed: true, name: "Test Lead" }, { id: ctx.userId, email: ctx.email, role: "BUYER" });
   if (!r.ok) return { error: r.error };
@@ -413,4 +417,39 @@ export async function gesellschaftenEinrichtungAction(keys: string[]): Promise<S
   await gesellschaftenSpeichern(ctx, Array.isArray(keys) ? keys.map(String) : []);
   revalidatePath("/buyer/einrichtung");
   return { ok: true };
+}
+
+// ─── Test-Einladung im Kalenderschritt (App-Kalender/Allianz, Go-live-Prüfung 22.11.2026) ───
+
+export type TestEinladungState = { ok?: boolean; to?: string; error?: string; angekommen?: boolean };
+
+/** Test-Einladung an die Adresse schicken, an die auch echte Termine gehen. */
+export async function testEinladungAction(_prev: TestEinladungState, _fd: FormData): Promise<TestEinladungState> {
+  let ob;
+  try {
+    ({ ob } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const { sendeTestEinladung } = await import("@/lib/calendar/app-kalender");
+  const r = await sendeTestEinladung(ob.customerId);
+  return r.ok ? { ok: true, to: r.to } : { error: r.error };
+}
+
+/** „Ist angekommen“: Erst damit gilt der Kalenderschritt mit App-Kalender als erledigt (lib/onboarding.ts). */
+export async function einladungAngekommenAction(_prev: TestEinladungState, _fd: FormData): Promise<TestEinladungState> {
+  let ob;
+  try {
+    ({ ob } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const { EINLADUNG_TEST_KEY } = await import("@/lib/onboarding");
+  const current = (ob.stepSkips && typeof ob.stepSkips === "object" ? ob.stepSkips : {}) as Record<string, unknown>;
+  await prisma.onboarding.update({
+    where: { id: ob.id },
+    data: { stepSkips: { ...current, [EINLADUNG_TEST_KEY]: { at: new Date().toISOString(), reason: "angekommen" } } as Prisma.InputJsonValue },
+  });
+  revalidatePath("/buyer", "layout");
+  return { ok: true, angekommen: true };
 }

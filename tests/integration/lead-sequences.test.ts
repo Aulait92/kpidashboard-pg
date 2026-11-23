@@ -46,6 +46,10 @@ describe("Nachfass-Abfolgen", () => {
   it("Versandfenster: Mo–Sa 9–19 Uhr Berlin", () => {
     expect(inSendWindow(T0)).toBe(true);
     expect(inSendWindow(SUNDAY)).toBe(false);
+    // „Chat ruht“ auch sonntags 10 bis 18 Uhr (Ole, 22.11.2026)
+    expect(inSendWindow(new Date("2026-11-22T10:00:00.000Z"), undefined, { von: 10, bis: 18 })).toBe(true); // So 11:00 Berlin
+    expect(inSendWindow(new Date("2026-11-22T08:00:00.000Z"), undefined, { von: 10, bis: 18 })).toBe(false); // So 9:00 Berlin
+    expect(inSendWindow(new Date("2026-11-22T17:30:00.000Z"), undefined, { von: 10, bis: 18 })).toBe(false); // So 18:30 Berlin
     expect(inSendWindow(new Date("2026-11-17T18:30:00.000Z"))).toBe(false); // 19:30 Berlin
   });
 
@@ -224,17 +228,49 @@ describe("Nachfass-Abfolgen", () => {
     await runSequences(new Date(later.getTime() + 22 * HOUR)); // Mi 09:00
     expect(mine()).toHaveLength(2);
     expect(mine()[1][0]).toMatchObject({ purpose: "followup_nudge" });
-    // nächster Schritt (20 Std. = 07:00, schon fällig) erst nach dem Mindestabstand von 2 Std.
+    // nächster Schritt (20 Std. = 07:00, schon fällig) erst nach dem Mindestabstand von 5 Std. (Ole, 22.11.2026)
     const mid = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
-    expect(mid.nextAt?.getTime()).toBe(later.getTime() + 24 * HOUR);
+    expect(mid.nextAt?.getTime()).toBe(later.getTime() + 27 * HOUR);
     // ohne offenes 24h-Fenster (keine Konversation) → übersprungen, keine Vorlage doppelt
-    await runSequences(new Date(later.getTime() + 24 * HOUR));
+    await runSequences(new Date(later.getTime() + 27 * HOUR));
     expect(mine()).toHaveLength(2);
     await runSequences(new Date(later.getTime() + 3 * DAY));
     expect(mine()).toHaveLength(3);
     expect(mine()[2][0]).toMatchObject({ purpose: "followup_last" });
     const done = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
     expect(done.stopReason).toBe("Abgeschlossen");
+  });
+
+  it("„Chat ruht“: Schritt 1 übersprungen, Schritt 3 bei geschlossenem Fenster als Vorlage (Ole, 22.11.2026)", async () => {
+    const HOUR = 60 * 60 * 1000;
+    const lead = await newLead();
+    const seq = await restartSilentSequence(lead.id, T0);
+    await prisma.leadSequence.update({ where: { id: seq!.id }, data: { uebersprungen: [0] } });
+    const mine = () => send.mock.calls.filter((c) => (c[0] as { leadId?: string }).leadId === lead.id);
+    await runSequences(new Date(T0.getTime() + 2 * HOUR)); // Schritt 1 übersprungen
+    expect(mine()).toHaveLength(0);
+    await runSequences(new Date(T0.getTime() + 8 * HOUR)); // Schritt 2
+    expect(mine()).toHaveLength(1);
+    const s = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
+    // Schritt 3 am nächsten Morgen (im Versandfenster): kein offenes Fenster (keine Konversation), mit Kalender-Zeiten
+    // die followup-Vorlage (noch nicht benutzt) statt Überspringen
+    zeiten.mockResolvedValueOnce({ labels: ["Mi., 18.11. um 14:00 Uhr", "Do., 19.11. um 10:00 Uhr"], starts: ["2026-11-18T13:00:00.000Z", "2026-11-19T09:00:00.000Z"], payloads: ["slot:a", "slot:b", "andere_zeit"] });
+    await runSequences(new Date(Math.max(s.nextAt!.getTime(), T0.getTime() + 23 * HOUR)));
+    expect(mine()).toHaveLength(2);
+    expect(mine()[1][0]).toMatchObject({ purpose: "followup" });
+  });
+
+  it("„Chat ruht“: ohne Kalender wäre Schritt 3 dieselbe Vorlage wie Schritt 2, dann übersprungen", async () => {
+    const HOUR = 60 * 60 * 1000;
+    const lead = await newLead();
+    const seq = await restartSilentSequence(lead.id, T0);
+    await prisma.leadSequence.update({ where: { id: seq!.id }, data: { uebersprungen: [0] } });
+    const mine = () => send.mock.calls.filter((c) => (c[0] as { leadId?: string }).leadId === lead.id);
+    await runSequences(new Date(T0.getTime() + 2 * HOUR));
+    await runSequences(new Date(T0.getTime() + 8 * HOUR));
+    const s = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
+    await runSequences(new Date(Math.max(s.nextAt!.getTime(), T0.getTime() + 23 * HOUR)));
+    expect(mine().map((c) => (c[0] as { purpose: string }).purpose)).toEqual(["followup_nudge"]);
   });
 
   it("Nachfassen mit zwei konkreten Zeiten aus dem Kalender und Knöpfen (Payload = Startzeit)", async () => {

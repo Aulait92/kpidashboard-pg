@@ -33,8 +33,9 @@ export function Chips({ eintraege, mehr = [], label = "Filter" }: { eintraege: C
             {mehrAktiv ? <span className="text-xs text-white/70">{mehrAktiv.anzahl}</span> : null}
             <ChevronDown className="h-3.5 w-3.5 transition group-open:rotate-180" />
           </summary>
-          {/* Am Handy fest unter der Chip-Reihe (die Reihe scrollt waagrecht und würde die Liste abschneiden) */}
-          <div className="fixed left-4 right-4 z-30 mt-1 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white py-1 shadow-[var(--shadow-lg)] sm:absolute sm:left-0 sm:right-auto sm:min-w-[13rem]">
+          {/* Am Handy als Liste fest über der unteren Leiste (die Chip-Reihe scrollt waagrecht und würde die Liste abschneiden;
+              ohne feste Höhe lag sie unter der Leiste, 22.11.2026) */}
+          <div className="fixed inset-x-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 max-h-[60vh] overflow-y-auto rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white py-1 shadow-[var(--shadow-lg)] sm:absolute sm:bottom-auto sm:left-0 sm:right-auto sm:mt-1 sm:max-h-none sm:min-w-[13rem]">
             {mehrSichtbar.map((c) => (
               <Link
                 key={c.href}

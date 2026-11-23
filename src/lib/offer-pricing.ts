@@ -887,12 +887,12 @@ export function tierStaffelText(tiers: readonly PreisStufe[] = PRICE_LIST.tiers)
   return `Preisstaffel nach Werbebudget im Monat (netto): ${parts.join("; ")}; über ${de(PRICE_LIST.individualFrom)} € individuelles Angebot. Ändern Sie Ihr Budget dauerhaft, gilt die passende Stufe ab dem folgenden Abrechnungsmonat; Sie sehen sie vorher im Kundenbereich.`;
 }
 
-// ─── Abschlussbonus (Ole, 16.11.2026) ───────────────────────────────────────
-// Nachlass auf die Einrichtung, wenn der Vermittler am selben Tag annimmt UND die Einrichtung bezahlt (bzw. die
+// ─── Abschlussbonus (Ole, 16.11.2026; abgeschafft am 21.11.2026) ─────────────
+// Nachlass auf die Einrichtung, wenn der Vermittler bis zur Frist annimmt UND die Einrichtung bezahlt (bzw. die
 // Lastschrift erteilt). Start bleibt frei wählbar. Die Frist ist echt: danach gilt automatisch der normale Preis.
-
-/** Standardbetrag für neue Angebote (netto). */
-export const ABSCHLUSSBONUS_STANDARD = 300;
+// Seit 21.11.2026 (Ole) bekommen neue Angebote keinen Bonus mehr (lib/offers.ts: nur neue Versionen offener Angebote
+// mit zugesagtem Bonus). Bereits zugesagte Boni (offene und angenommene Angebote) gelten weiter wie vereinbart:
+// Anzeige, Erinnerungen und Abrechnung laufen über die Funktionen hier unverändert.
 
 /** 23:59:59 Uhr (Berlin) des Tages von `d`. */
 export function berlinTagesende(d: Date): Date {

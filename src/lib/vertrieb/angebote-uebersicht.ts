@@ -41,7 +41,8 @@ export async function ladeAngebote(filterKey: string | undefined) {
   const filter = ANGEBOT_FILTER.find((f) => f.key === filterKey) ?? ANGEBOT_FILTER[0];
   const now = new Date();
   const offers = await prisma.offer.findMany({
-    where: { status: { not: "superseded" } },
+    // Testangebote nicht in der Übersicht und nicht in den Kennzahlen (Ole, 23.11.2026)
+    where: { status: { not: "superseded" }, isTest: false },
     orderBy: [{ sentAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
     take: 500,
     select: {

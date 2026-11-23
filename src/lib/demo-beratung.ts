@@ -6,7 +6,7 @@
 import { bausteinSchalten, paketWaehlen, sparteSchalten, tarifWaehlen, type AngeboteDaten, type AngebotItem } from "@/lib/angebote-daten";
 import type { KombiRegel } from "@/lib/kombi-rabatt";
 import type { SchutzZeile } from "@/lib/schutz-ueberblick";
-import { einwandFolien, folien, praesentationCss, type Folie, type Marke } from "@/lib/praesentation";
+import { folien, praesentationCss, type Folie, type Marke } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import type { PraesentationVariante } from "@/lib/praesentation-variante";
 
@@ -200,11 +200,6 @@ export function demoFolien(angebote: AngeboteDaten, now = new Date(), zugesagtAm
 
 /** Fassung aus ?fassung= (nur „c“ zeigt C, sonst B). */
 export const demoFassung = (q: string | null | undefined): PraesentationVariante => (q?.trim().toLowerCase() === "c" ? "C" : "B");
-
-/** Einwand-Folien der Demo (Sprungziele im Deck). */
-export function demoEinwaende(angebote: AngeboteDaten, now = new Date()): Folie[] {
-  return einwandFolien(demoTermin(now), angebote, DEMO_MARKE, "sie");
-}
 
 /** Klick auf einen Schalter der Folie (wie im Termin, nur im Browser). null = unbekannter Schalter. */
 export function demoKlick(

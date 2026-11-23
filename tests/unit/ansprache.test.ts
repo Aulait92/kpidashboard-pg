@@ -107,8 +107,9 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
     const names = plannedTemplates(purposesFor({ bestand: false })).map((t) => templateNameFor(t.purpose, "v2", t.form, t.variant, t.kopf));
     // 22 Zwecke je 3 Fassungen (inkl. Show-up: 15 Min., Wartet, Halbzeit-Erinnerung; Angebot senden, Nachfassen selbst gesendet, Glückwunsch, Bedenkzeit,
     // Erstanschreiben Hausrat), dazu A/B-Fassung b für followup_last und (v11, Ole 19.11.2026) für die 6 Erstanschreiben;
-    // Erstanschreiben ab v7 nur mit PDF-Kopf
-    expect(names).toHaveLength(87);
+    // Erstanschreiben ab v7 nur mit PDF-Kopf; Kfz-Einstiegsfrage (Ole, 21.11.2026): 3 Zwecke je 3 Fassungen, a und b
+    // Nachfassen nach Absage (Ole, 23.11.2026): followup_absage in Du, Sie, Sie ohne Namen
+    expect(names).toHaveLength(108);
     expect(names).toContain("pg_outreach_tkv_v2_b_sie");
     expect(names.some((n) => n.includes("ohnepdf"))).toBe(false);
     expect(names).toContain("pg_followup_last_v2_b_sie");
@@ -269,7 +270,7 @@ describe("Vorlage wählen und Parameter setzen", () => {
     expect(noticeText("outreach_tkv", "sie", { ...names, kurz: "Susanne" }, FRAU, ["Minka"])).toBe("Hallo Frau Schneider, schön, dass Sie Minka gut absichern möchten 🐾 *Was soll abgesichert sein?*");
     expect(noticeText("outreach", "sie", names, NUR_VORNAME, [])).toBe("Hallo, danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*");
     expect(noticeText("outreach", "du", names, FRAU, [])).toBe("Hallo Julia, danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*");
-    expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Andrea Schneider, hier ist der digitale KI-Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zu Hausrat");
+    expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Andrea Schneider, hier ist der digitale KI-Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zum Thema Hausrat");
   });
 });
 

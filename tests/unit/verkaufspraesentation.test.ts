@@ -7,6 +7,7 @@ import {
   audienceFuer,
   bildUrl,
   folienListe,
+  jahresplanFolie,
   maklerRechnung,
   paketDaten,
   verkaufsFolien,
@@ -43,8 +44,8 @@ const text = (html: string) => html.replace(/<style[\s\S]*?<\/style>/g, "").repl
 
 describe("Folienliste", () => {
   it("Vertreter 24, Makler 25 (Folie 18 Komplettcheck, 19 Policen vorab; Makler mit Tarifvergleich nach Folie 21)", () => {
-    const v = folienListe("vertreter", false);
-    const m = folienListe("makler", false);
+    const v = folienListe("vertreter", { jahresplan: false });
+    const m = folienListe("makler", { jahresplan: false });
     expect(v).toHaveLength(24);
     expect(m).toHaveLength(25);
     expect(v[12]).toMatchObject({ nr: 13, art: "video" });
@@ -59,12 +60,19 @@ describe("Folienliste", () => {
     expect(m.filter((f) => f.art === "paket").map((f) => f.nr)).toEqual([23]);
   });
 
-  it("mit Abschlussbonus: vorletzte Folie, Bildnummern bleiben wie in der PPTX", () => {
+  it("mit Jahresplan (Standard): vorletzte Folie, Bildnummern bleiben wie in der PPTX", () => {
     const v = folienListe("vertreter");
     expect(v).toHaveLength(25);
-    expect(v[23]).toMatchObject({ nr: 24, art: "bonus", bild: 0 });
+    expect(v[23]).toMatchObject({ nr: 24, art: "jahresplan", bild: 0, titel: "Jahresplan: 3 Monate sparen" });
     expect(v[24]).toMatchObject({ nr: 25, bild: 24, titel: "Ihr Start in 3 Schritten" });
     expect(folienListe("makler").at(-1)).toMatchObject({ nr: 26, bild: 25 });
+    expect(v.some((f) => f.art === "bonus")).toBe(false);
+  });
+
+  it("zugesagter Abschlussbonus im Angebot: Bonusfolie direkt nach dem Jahresplan", () => {
+    const v = folienListe("vertreter", { bonus: true });
+    expect(v.slice(-3).map((f) => f.art)).toEqual(["jahresplan", "bonus", "bild"]);
+    expect(v.at(-1)).toMatchObject({ nr: 26, bild: 24 });
   });
 
   it("jedes Folienbild liegt in public/ (scripts/vertrieb-folien.mjs)", () => {
@@ -165,5 +173,53 @@ describe("Pay-per-Lead + Software (Ole, 20.11.2026)", () => {
     expect(m.bildUrl("ppl", 19)).toBe("/praesentation/vertrieb/ppl/19.webp");
     expect(m.audienceFuer(null, { vermittlerTyp: "vertreter", package: "ppl_software" })).toBe("ppl");
     expect(m.audienceFuer(null, { vermittlerTyp: "makler", package: "software" })).toBe("makler");
+  });
+});
+
+describe("Jahresplan: 3 Monate sparen (Ole, 21.11.2026, statt Bonusfolie)", () => {
+  it("Listenpreise: 12 × 990 € gegen 9 × 990 €, Ersparnis 2.970 € groß, ohne Gedankenstriche", () => {
+    for (const a of ["vertreter", "makler"] as const) {
+      const p = paketDaten(null, a);
+      expect(p.jahresplan).toEqual({ monatlich: 990, monate: 12, bezahlt: 9, frei: 3, summeMonatlich: 11880, summeJahr: 8910, ersparnis: 2970 });
+      const f = verkaufsFolien(a, p).find((x) => x.titel === "Jahresplan: 3 Monate sparen")!;
+      const t = text(f.html).replace(/\s+/g, " ");
+      expect(t).toContain("Jahresplan: 3 Monate sparen");
+      expect(t).toContain("2.970 €");
+      expect(t).toContain("12 × 990 €");
+      expect(t).toContain("9 × 990 €, jährlich im Voraus");
+      expect(t).toContain("11.880 €");
+      expect(t).toContain("8.910 €");
+      expect(t).toContain("fällig mit der Annahme");
+      expect(t).toContain("keine Gutschrift");
+      expect(hatGedankenstrich(t)).toBe(false);
+      expect(t).not.toMatch(/Abschlussbonus|einmalig|nur heute/i);
+    }
+  });
+
+  it("Angebot mit 12 Monaten und Vorauszahlung zur Wahl: Beträge aus dem Angebot inkl. Zusätze", () => {
+    // 1.000 € + 1 weiterer Berater (49 €) = 1.049 € im Monat
+    const p = paketDaten(angebot({ annualChoice: true }), "vertreter");
+    expect(p.jahresplan).toMatchObject({ monatlich: 1049, bezahlt: 9, summeMonatlich: 12588, summeJahr: 9441, ersparnis: 3147 });
+    expect(text(jahresplanFolie(p, p.jahresplan!, 24, 25))).toContain("Ihrem Angebot PG-2026-0042");
+  });
+
+  it("Altangebot mit 2 geschenkten Monaten: rechnet mit dem gespeicherten Wert", () => {
+    const p = paketDaten(angebot({ annualPrepay: true, annualFreeMonths: 2 }), "vertreter");
+    expect(p.jahresplan).toMatchObject({ bezahlt: 10, frei: 2, ersparnis: 2098 });
+    expect(text(jahresplanFolie(p, p.jahresplan!, 0, 0))).toContain("Jahresplan: 2 Monate sparen");
+  });
+
+  it("ohne Jahresplan im Angebot (feste Laufzeit ohne Vorauszahlung, Startpreis): keine Folie", () => {
+    for (const a of [angebot(), angebot({ term: "3m" }), angebot({ annualChoice: true, introMonthlyFee: 500, introMonths: 3 }), angebot({ term: "3m", annualChoice: true })]) {
+      const p = paketDaten(a, "vertreter");
+      expect(p.jahresplan).toBeNull();
+      expect(verkaufsFolien("vertreter", p).some((f) => f.titel.startsWith("Jahresplan"))).toBe(false);
+    }
+    // Kunde wählt die Laufzeit und Vorauszahlung ist angeboten: Jahresplan mit Standard (3 Monate)
+    expect(paketDaten(angebot({ term: "3m", customerChoosesTerm: true, annualChoice: true }), "vertreter").jahresplan).toMatchObject({ frei: 3 });
+  });
+
+  it("Pay-per-Lead + Software: kein Jahresplan", () => {
+    expect(folienListe("ppl").some((f) => f.art === "jahresplan")).toBe(false);
   });
 });

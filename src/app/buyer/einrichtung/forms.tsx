@@ -1,4 +1,5 @@
 "use client";
+import { WebexAnleitung } from "@/components/webex-anleitung";
 
 import { useActionState, useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight, CheckCircle2, ChevronDown, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
@@ -92,7 +93,7 @@ function AngabenFelder({ a, allianz, videoRoomUrl }: { a: AngabenInitial; allian
       {allianz ? (
         <div className="min-w-0 sm:col-span-2">
           <label className={label} htmlFor="angaben-video">
-            Ihr Webex-Link (optional)
+            Ihr Webex-Link
           </label>
           <input
             id="angaben-video"
@@ -104,6 +105,9 @@ function AngabenFelder({ a, allianz, videoRoomUrl }: { a: AngabenInitial; allian
             autoComplete="off"
           />
           <p className="mt-1 text-xs text-[color:var(--muted)]">Diesen Link bekommen Ihre Kunden für jeden Videotermin.</p>
+          <div className="mt-1">
+            <WebexAnleitung />
+          </div>
         </div>
       ) : null}
     </div>

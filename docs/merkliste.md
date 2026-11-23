@@ -11,8 +11,8 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
   („Für diesen Kunden einblenden“, Feld bestandSichtbar). Kunden mit aktivem Modul behalten es. Wieder an: true setzen,
   dann Webseite (docs/webseite-offen.md), PPTX/PDF-Folien und Kollegen-Prämie „Modul gratis“ prüfen.
 
-- 16.11.2026: **End-to-End-Test WhatsApp mit Testlead** (Ole). Testkunde „Ole Agentur“ (Nummer +1 501 430 4325 ist
-  verbunden): Assistent einschalten (Admin → WhatsApp → Einstellungen), Vorlagen-Freigabe prüfen, Testlead mit Oles
+- 16.11.2026: **End-to-End-Test WhatsApp mit Testlead** (Ole). Testkunde „Ole Agentur“ (Nummer +1 501 430 4325 war
+  verbunden, gekündigt zum 30.11.2026): Assistent einschalten (Admin → WhatsApp → Einstellungen), Vorlagen-Freigabe prüfen, Testlead mit Oles
   Handynummer einspielen, Ole testet den Chat bis zur Terminbuchung (Erstnachricht mit Knöpfen, Erstinformation als PDF,
   Fragen, Termin, Bestätigung).
 

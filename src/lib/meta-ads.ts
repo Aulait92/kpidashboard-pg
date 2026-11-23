@@ -33,6 +33,26 @@ function getAdAccount(): string {
   return first.startsWith("act_") ? first : `act_${first}`;
 }
 
+/**
+ * Alle Agentur-Konten zum Steuern (Media Buyer, 22.11.2026): bisher nur das erste Konto aus META_AD_ACCOUNT_IDS, dort
+ * lagen nur noch alte pausierte Kampagnen (PKV lief im Konto „PKV-Tarifoptimierung“), Ausgaben 0, keine Steuerung.
+ * Ohne Konten, die einem Kunden gehören (lib/meta.ts customerOwnedAdAccounts).
+ */
+async function steuerKonten(): Promise<string[]> {
+  const raw =
+    process.env.META_AD_ACCOUNT_IDS ?? process.env.META_AD_ACCOUNT_ID ?? "";
+  const alle = raw
+    .split(",")
+    .map((x) => x.trim().replace(/^act_/, ""))
+    .filter(Boolean);
+  if (!alle.length) throw new Error("META_AD_ACCOUNT_IDS nicht gesetzt.");
+  const kunden = await import("@/lib/meta")
+    .then((m) => m.customerOwnedAdAccounts())
+    .catch(() => new Set<string>());
+  const frei = alle.filter((a) => !kunden.has(a) && !kunden.has(`act_${a}`));
+  return (frei.length ? frei : alle).map((a) => `act_${a}`);
+}
+
 async function metaGet(
   path: string,
   params: Record<string, string> = {},
@@ -83,18 +103,22 @@ export type MetaCampaign = {
 };
 
 export async function listCampaigns(): Promise<MetaCampaign[]> {
-  const data = (await metaGet(`${getAdAccount()}/campaigns`, {
-    fields: "id,name,status,effective_status,daily_budget",
-    limit: "100",
-    // Nur Kampagnen die nicht gelöscht sind.
-    effective_status: JSON.stringify([
-      "ACTIVE",
-      "PAUSED",
-      "PENDING_REVIEW",
-      "PREAPPROVED",
-    ]),
-  })) as { data: MetaCampaign[] };
-  return data.data;
+  const out: MetaCampaign[] = [];
+  for (const konto of await steuerKonten()) {
+    const data = (await metaGet(`${konto}/campaigns`, {
+      fields: "id,name,status,effective_status,daily_budget",
+      limit: "200",
+      // Nur Kampagnen die nicht gelöscht sind.
+      effective_status: JSON.stringify([
+        "ACTIVE",
+        "PAUSED",
+        "PENDING_REVIEW",
+        "PREAPPROVED",
+      ]),
+    })) as { data: MetaCampaign[] };
+    out.push(...(data.data ?? []));
+  }
+  return out;
 }
 
 // Alle Kampagnen, deren Name das Keyword enthält (case-insensitive). Für die
@@ -145,7 +169,8 @@ export async function listAdSets(campaignId: string): Promise<MetaAdSet[]> {
   // ohne. Der Media Buyer nimmt dann konservativ „unbekannt" an.
   try {
     const data = (await metaGet(`${campaignId}/adsets`, {
-      fields: "id,name,status,effective_status,daily_budget,learning_stage_info",
+      fields:
+        "id,name,status,effective_status,daily_budget,learning_stage_info",
       limit: "50",
     })) as { data: MetaAdSet[] };
     return data.data ?? [];
@@ -299,32 +324,35 @@ export async function getSpendByCampaign(params: {
   const since = params.since.toISOString().slice(0, 10);
   const until = params.until.toISOString().slice(0, 10);
   const map = new Map<string, number>();
-  const url = new URL(
-    `https://graph.facebook.com/${GRAPH_VERSION}/${getAdAccount()}/insights`,
-  );
-  url.searchParams.set("access_token", getToken());
-  url.searchParams.set("level", "campaign");
-  url.searchParams.set("fields", "campaign_id,spend");
-  url.searchParams.set("time_range", JSON.stringify({ since, until }));
-  url.searchParams.set("limit", "500");
+  for (const konto of await steuerKonten()) {
+    const url = new URL(
+      `https://graph.facebook.com/${GRAPH_VERSION}/${konto}/insights`,
+    );
+    url.searchParams.set("access_token", getToken());
+    url.searchParams.set("level", "campaign");
+    url.searchParams.set("fields", "campaign_id,spend");
+    url.searchParams.set("time_range", JSON.stringify({ since, until }));
+    url.searchParams.set("limit", "500");
 
-  let next: string | null = url.toString();
-  while (next) {
-    const res = await fetch(next, { cache: "no-store" });
-    const text = await res.text();
-    if (!res.ok) throw new Error(redactTokens(`Meta insights ${res.status}: ${text}`));
-    const json = JSON.parse(text) as {
-      data?: { campaign_id?: string; spend?: string }[];
-      paging?: { next?: string };
-    };
-    for (const row of json.data ?? []) {
-      if (!row.campaign_id) continue;
-      const spend = Number.parseFloat(row.spend ?? "0");
-      if (Number.isFinite(spend)) {
-        map.set(row.campaign_id, (map.get(row.campaign_id) ?? 0) + spend);
+    let next: string | null = url.toString();
+    while (next) {
+      const res = await fetch(next, { cache: "no-store" });
+      const text = await res.text();
+      if (!res.ok)
+        throw new Error(redactTokens(`Meta insights ${res.status}: ${text}`));
+      const json = JSON.parse(text) as {
+        data?: { campaign_id?: string; spend?: string }[];
+        paging?: { next?: string };
+      };
+      for (const row of json.data ?? []) {
+        if (!row.campaign_id) continue;
+        const spend = Number.parseFloat(row.spend ?? "0");
+        if (Number.isFinite(spend)) {
+          map.set(row.campaign_id, (map.get(row.campaign_id) ?? 0) + spend);
+        }
       }
+      next = json.paging?.next ?? null;
     }
-    next = json.paging?.next ?? null;
   }
   return map;
 }
@@ -348,8 +376,7 @@ export async function getFirstAdSetForCampaign(
     limit: "10",
   })) as { data: { id: string; name: string; effective_status: string }[] };
   const active = data.data.find(
-    (a) =>
-      a.effective_status === "ACTIVE" || a.effective_status === "PAUSED",
+    (a) => a.effective_status === "ACTIVE" || a.effective_status === "PAUSED",
   );
   return active ? { id: active.id, name: active.name } : null;
 }
@@ -418,7 +445,9 @@ export async function createAdCreative(opts: {
     name: opts.name,
     object_story_spec: objectStorySpec,
     degrees_of_freedom_spec: JSON.stringify({
-      creative_features_spec: { standard_enhancements: { enroll_status: "OPT_OUT" } },
+      creative_features_spec: {
+        standard_enhancements: { enroll_status: "OPT_OUT" },
+      },
     }),
   })) as { id: string };
   return resp;
@@ -480,7 +509,9 @@ export async function publishVariantToCampaign(opts: {
     campaign = findCampaignByKeyword(campaigns, opts.campaignKey);
   }
   if (!campaign) {
-    const gesucht = region ? `"${opts.campaignKey}" + "${region}"` : `"${opts.campaignKey}"`;
+    const gesucht = region
+      ? `"${opts.campaignKey}" + "${region}"`
+      : `"${opts.campaignKey}"`;
     throw new Error(
       `Keine Kampagne mit Keyword ${gesucht} gefunden. Verfügbar: ${campaigns
         .map((c) => c.name)
@@ -529,8 +560,12 @@ export async function publishVariantToCampaign(opts: {
 // System-User-Token braucht dafür ads_management auf dem jeweiligen Konto.
 
 /** Aktive Kampagnen eines Kunden-Werbekontos pausieren; gibt die IDs zurück. */
-export async function pauseActiveCampaigns(adAccountId: string): Promise<string[]> {
-  const act = adAccountId.startsWith("act_") ? adAccountId : `act_${adAccountId}`;
+export async function pauseActiveCampaigns(
+  adAccountId: string,
+): Promise<string[]> {
+  const act = adAccountId.startsWith("act_")
+    ? adAccountId
+    : `act_${adAccountId}`;
   const data = (await metaGet(`${act}/campaigns`, {
     fields: "id,name,status,effective_status",
     limit: "200",
@@ -545,7 +580,9 @@ export async function pauseActiveCampaigns(adAccountId: string): Promise<string[
 }
 
 /** Zuvor pausierte Kampagnen wieder aktivieren (nur diese – keine anderen). */
-export async function resumeCampaigns(campaignIds: string[]): Promise<{ resumed: string[]; failed: string[] }> {
+export async function resumeCampaigns(
+  campaignIds: string[],
+): Promise<{ resumed: string[]; failed: string[] }> {
   const resumed: string[] = [];
   const failed: string[] = [];
   for (const id of campaignIds) {
@@ -557,4 +594,20 @@ export async function resumeCampaigns(campaignIds: string[]): Promise<{ resumed:
     }
   }
   return { resumed, failed };
+}
+
+/**
+ * Werbekonten mit Zahlungsquelle (Belege, Ole 23.11.2026): für die Liste „Meta-Belege holen“ auf Geld › Kosten › Belege.
+ * Nur lesend. Konten, die über eine fremde Karte laufen (z. B. Kundenkonto mit eigener Visa), markiert eigeneZahlung=false.
+ */
+export async function werbekontenMitZahlung(): Promise<{ id: string; name: string; zahlung: string | null; eigeneZahlung: boolean }[]> {
+  const res = (await metaGet("me/adaccounts", { fields: "id,name,account_status,funding_source_details,business{name}", limit: "100" })) as {
+    data?: { id: string; name?: string; funding_source_details?: { display_string?: string }; business?: { name?: string } }[];
+  };
+  const iban = (process.env.BELEGE_EIGENE_IBAN_ENDE ?? "5600").trim();
+  return (res.data ?? []).map((a) => {
+    const zahlung = a.funding_source_details?.display_string ?? null;
+    const eigeneZahlung = !zahlung || zahlung.includes(iban) || /kannapinn|performance growth/i.test(a.business?.name ?? "");
+    return { id: a.id.replace(/^act_/, ""), name: a.name ?? a.id, zahlung, eigeneZahlung };
+  });
 }

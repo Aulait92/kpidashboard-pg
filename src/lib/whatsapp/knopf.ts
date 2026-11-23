@@ -14,6 +14,8 @@
 //   „Ja, sicher“/„Lieber andere Zeit“ (zusage:ja|andere, Splittest termin_zusage Fassung b) → zugesagt, dann Komplettcheck
 //                                                    bzw. Tierfrage mit „Super, danke!“; bzw. wie „Bitte verschieben“
 //   „Ja, gern“/„Nein, danke“ (komplettcheck:ja|nein) → Komplettcheck am Termin, dann Vertragsfrage bzw. Abschluss
+//   „Ja, gemeinsam“/„Nein, ich allein“ (partner:ja|nein) → wer mitentscheidet (Ole, 21.11.2026), dann die erste Angebotsfrage;
+//                                                    vor dem Terminvorschlag (noch kein Termin): bot.ts, dann der Terminvorschlag
 //   Zeit mit 45 Min. (lang:<ISO>) / „Zeit behalten“ (lang:behalten) → Komplettcheck-Termin verlegen bzw. behalten
 //   „Schicke ich gleich“/„Nicht zur Hand“ (policenbitte:<Titel>) → Reaktion auf die Policen-Bitte, dann der Schluss
 //   „Ja, stimmt“/„Andere Adresse“ (email:ja|andere) → Einladung (einmal) bzw. Frage nach der neuen Adresse
@@ -32,7 +34,7 @@
 import { a, asAnsprache } from "@/lib/ansprache";
 import { prisma } from "@/lib/prisma";
 import { KNOPF, OUTREACH_PURPOSES } from "@/lib/whatsapp/templates";
-import { erstfrageKnopfWert } from "@/lib/whatsapp/erstanschreiben";
+import { erstfrageFreitextWert, erstfrageKnopfWert } from "@/lib/whatsapp/erstanschreiben";
 export { ERSTFRAGE_HINWEIS_RE } from "@/lib/whatsapp/erstanschreiben";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
 import { WUNSCHZEIT_REGEL } from "@/lib/whatsapp/gespraech";
@@ -47,6 +49,7 @@ export type KnopfAktion =
   | { aktion: "angebot"; fokus: "beitrag" | "leistung" }
   | { aktion: "komplettcheck"; ja: boolean }
   | { aktion: "zusage"; ja: boolean }
+  | { aktion: "partner"; ja: boolean }
   | { aktion: "kalender"; art: "ja" | "gleich" }
   | { aktion: "email"; art: "ja" | "andere" }
   | { aktion: "eingetragen"; ja: boolean }
@@ -72,6 +75,7 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
   }
   if (p === "komplettcheck:ja" || p === "komplettcheck:nein") return { aktion: "komplettcheck", ja: p.endsWith(":ja") };
   if (p === "zusage:ja" || p === "zusage:andere") return { aktion: "zusage", ja: p.endsWith(":ja") };
+  if (p === "partner:ja" || p === "partner:nein") return { aktion: "partner", ja: p.endsWith(":ja") };
   if (p === "kalender:ja" || p === "kalender:gleich") return { aktion: "kalender", art: p.endsWith(":ja") ? "ja" : "gleich" };
   if (p === "email:ja" || p === "email:andere") return { aktion: "email", art: p.endsWith(":ja") ? "ja" : "andere" };
   if (p === "eingetragen:ja" || p === "eingetragen:nein") return { aktion: "eingetragen", ja: p.endsWith(":ja") };
@@ -152,6 +156,35 @@ async function erstfrageKnopf(conversationId: string, text: string | null | unde
   return erstfrageHinweis(e);
 }
 
+/** Hinweis an den Assistenten nach einer freien Antwort auf die feste erste Frage (Kfz, rein, testbar). */
+export function erstfrageFreitextHinweis(e: { feld: string; wert: string; frage: string }): string {
+  return `Der Lead hat frei auf unsere erste Frage („${e.frage}“) geantwortet. Schon festgehalten: angaben.${e.feld} = „${e.wert}“. Bestätige kurz, frag das nicht erneut und mach mit dem Frageplan weiter.`;
+}
+
+/**
+ * Freie Antwort auf die feste erste Frage (Kfz, Ole 21.11.2026: „Ende Dezember“ = „Zum Jahresende“): nur, wenn unsere
+ * letzte Nachricht im Chat das Erstanschreiben war (danach nur die Erstinformation als PDF). Antwort wie beim Knopf
+ * speichern und den Hinweis für den Assistenten liefern. null = keine solche Frage bzw. Antwort unklar.
+ */
+export async function erstfrageFreitext(conversationId: string, text: string | null | undefined): Promise<string | null> {
+  if (!text?.trim()) return null;
+  const letzte = await prisma.message.findMany({
+    where: { conversationId, direction: "outbound" },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    select: { body: true, purpose: true, kind: true },
+  });
+  const erst = letzte.find((m) => m.kind !== "document" && !/^Erstinformation zu /.test(m.body ?? ""));
+  if (!erst?.purpose || !(OUTREACH_PURPOSES as readonly string[]).includes(erst.purpose)) return null;
+  const e = erstfrageFreitextWert(erst.body, text, erst.purpose);
+  if (!e) return null;
+  const prev = (await prisma.conversation.findUnique({ where: { id: conversationId }, select: { qualificationData: true } }))?.qualificationData;
+  const data = mergeQualificationData(prev, { [e.feld]: e.wert });
+  if (data) await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: data } });
+  await prisma.message.create({ data: { conversationId, direction: "internal", kind: "qualification", body: JSON.stringify({ angaben: { [e.feld]: e.wert }, via: "erstfrage_freitext" }), sentBy: "system" } });
+  return erstfrageFreitextHinweis(e);
+}
+
 /** Lead „verloren“ mit Grund „Kein Interesse“ und Notiz „kein Bedarf“ (wie Verloren im Kontakt, ohne Warnung). */
 async function markLostKeinBedarf(leadId: string, now: Date): Promise<boolean> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, status: true, airtableId: true, erasedAt: true } });
@@ -180,14 +213,41 @@ async function markLostKeinBedarf(leadId: string, now: Date): Promise<boolean> {
  * Buchungslink ab dem 2. „Andere Zeit“ senden (lib/whatsapp/buchungslink.ts). false = nichts gesendet: erstes Mal, schon
  * ein kommender Termin, keine Buchungsseite (kein Kurzname oder Kalender nicht verbunden) bzw. Fehler.
  */
+/**
+ * Buchungslink nach einer Absage ohne Wunschzeit (absageOhneWunsch, Ole 22.11.2026), einmal je Chat (kein zweites Mal,
+ * wenn der Link schon draußen ist). true = gesendet.
+ */
+export async function buchungslinkNachAbsage(conversationId: string, now = new Date()): Promise<boolean> {
+  try {
+    const b = await import("@/lib/whatsapp/buchungslink");
+    const { streckenKontext } = await import("@/lib/whatsapp/termin-strecke");
+    const k = await streckenKontext(conversationId, now);
+    if (!k || k.termin) return false;
+    const cal = await prisma.calendarConnection.findUnique({ where: { customerId: k.customerId }, select: { bookingSlug: true, status: true } });
+    const url = cal?.status === "connected" ? b.chatBuchungUrl(cal.bookingSlug, conversationId) : null;
+    if (!url) return false;
+    const schon = await prisma.message.count({ where: { conversationId, direction: "outbound", body: { contains: `/book/${cal!.bookingSlug}` } } });
+    const kurz = await prisma.message.count({ where: { conversationId, direction: "outbound", body: { contains: `?c=${b.chatBuchungToken(conversationId)}` } } });
+    if (schon + kurz > 0) return false;
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+    await sendWhatsAppMessage({ customerId: k.customerId, to: k.phone, body: b.buchungslinkText(k.an, k.person, url, "a"), sentBy: "bot" });
+    return true;
+  } catch (e) {
+    console.error("[knopf buchungslink absage]", e instanceof Error ? e.message.slice(0, 120) : e);
+    return false;
+  }
+}
+
 export async function buchungslinkSenden(conversationId: string, now = new Date()): Promise<boolean> {
   try {
     const b = await import("@/lib/whatsapp/buchungslink");
-    const eingaenge = await prisma.message.findMany({
-      where: { conversationId, direction: "inbound", kind: { in: ["button", "interactive"] } },
-      select: { kind: true, body: true },
+    // „Andere Zeit“ und getippte Absagen auf einen Terminvorschlag (Ole, 22.11.2026: „passt nicht“ zählt mit)
+    const verlauf = await prisma.message.findMany({
+      where: { conversationId, OR: [{ direction: "inbound" }, { direction: "internal", kind: "termin_vorschlag" }] },
+      orderBy: { createdAt: "asc" },
+      select: { direction: true, kind: true, body: true },
     });
-    if (!b.buchungslinkFaellig(b.andereZeitAnzahl(eingaenge))) return false;
+    if (!b.buchungslinkFaellig(b.abgelehnteRunden(verlauf))) return false;
     const { streckenKontext } = await import("@/lib/whatsapp/termin-strecke");
     const k = await streckenKontext(conversationId, now);
     if (!k || k.termin) return false;
@@ -272,6 +332,13 @@ export async function handleButtonReply(
   if (k.aktion === "komplettcheck") {
     const { komplettcheckAntwort } = await import("@/lib/whatsapp/termin-strecke");
     return { handled: await komplettcheckAntwort(conversationId, k.ja, now) };
+  }
+  if (k.aktion === "partner") {
+    // Nach der Buchung (Frage nach dem Komplettcheck) bzw. Frage vor dem Terminvorschlag, inzwischen gebucht; sonst
+    // (noch kein Termin) übernimmt bot.ts: Antwort speichern, dann der Terminvorschlag (Ole, 21.11.2026 spät)
+    const { partnerAntwort, partnerVorNachBuchung } = await import("@/lib/whatsapp/termin-strecke");
+    if (await partnerAntwort(conversationId, k.ja ? "mit" : "allein", now)) return { handled: true };
+    return { handled: await partnerVorNachBuchung(conversationId, k.ja ? "mit" : "allein", now) };
   }
   if (k.aktion === "kalender") {
     const { kalenderAntwort } = await import("@/lib/whatsapp/termin-strecke");

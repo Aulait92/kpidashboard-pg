@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Einwände im Termin: Merkblatt</title>
+<!-- Merkblatt für Vermittler (Ole, 21.11.2026): eine Seite zum Auswendiglernen, statt Einwand-Folien in der Präsentation.
+     Inhalt nach docs/firma/vertrieb/einwandbehandlung-vermittler.md (Vier-Stufen-Schema nach Baulig).
+     PDF erzeugen: node tools/merkblatt/pdf.js → public/anleitung/einwand-merkblatt.pdf -->
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, "Helvetica Neue", Arial, sans-serif; color: #0f172a; }
+  .seite { width: 210mm; height: 297mm; padding: 12mm 15mm 10mm; display: flex; flex-direction: column; gap: 3.4mm; }
+  h1 { margin: 0; font-size: 22pt; letter-spacing: -0.02em; }
+  .unter { margin: 1mm 0 0; color: #475569; font-size: 11pt; }
+  .abschluss { background: #0f172a; color: #fff; border-radius: 4mm; padding: 3.5mm 6mm; font-size: 12pt; }
+  .abschluss b { font-size: 16pt; }
+  .stufe { display: grid; grid-template-columns: 11mm 1fr; gap: 4mm; align-items: start; }
+  .nr { width: 11mm; height: 11mm; border-radius: 50%; background: #2563eb; color: #fff; font-weight: 800; font-size: 15pt; display: flex; align-items: center; justify-content: center; }
+  .stufe h2 { margin: 0.5mm 0 1mm; font-size: 13pt; }
+  .satz { margin: 0; font-size: 12pt; font-weight: 600; color: #1e3a8a; }
+  .klein { margin: 1mm 0 0; font-size: 10.5pt; color: #475569; }
+  .erkl { margin: 0 0 1.5mm; font-size: 10.5pt; color: #0f172a; background: #f1f5f9; border-radius: 2.5mm; padding: 2mm 3mm; }
+  table { width: 100%; border-collapse: collapse; font-size: 10.5pt; }
+  th { text-align: left; font-size: 9.5pt; color: #64748b; font-weight: 600; padding: 0 2mm 1.5mm 0; }
+  td { padding: 1.2mm 2mm 1.2mm 0; border-top: 0.3mm solid #e2e8f0; vertical-align: top; }
+  td:first-child { font-weight: 700; width: 36mm; }
+  .nie { margin-top: auto; background: #fef2f2; border-radius: 4mm; padding: 3.5mm 6mm; font-size: 10.5pt; color: #7f1d1d; }
+  .nie b { display: block; margin-bottom: 1mm; font-size: 11pt; }
+</style>
+</head>
+<body>
+<div class="seite">
+  <div>
+    <h1>Einwände im Termin</h1>
+    <p class="unter">Es gibt nur einen wahren Grund. Erst finden, dann lösen. Kein Argument, bevor Sie ihn kennen.</p>
+  </div>
+
+  <div class="abschluss"><b>„Dann lassen Sie uns das so machen.“</b> Danach schweigen.<br>Ja: Antrag aufnehmen und nichts mehr nachschieben.</div>
+
+  <div class="stufe">
+    <div class="nr">1</div>
+    <div>
+      <h2>Prüfen: Beschwerde oder Einwand?</h2>
+      <p class="erkl"><b>Beschwerde:</b> Der Kunde findet es teuer, macht es aber trotzdem, wie Popcorn im Kino. Nur ein Reflex.<br><b>Einwand:</b> Etwas hält ihn wirklich ab. Dieser Satz trennt beides. Genau so sagen, nie zuerst „Warum?“:</p>
+      <p class="satz">„Die Tatsache, dass Sie [es teuer finden], würde Sie aber nicht davon abhalten, das heute so zu machen, oder?“</p>
+      <p class="klein">Lächeln, nicken, schweigen. „Nein“ = Beschwerde: Antrag aufnehmen. „Doch“ = Einwand: weiter mit 2.</p>
+    </div>
+  </div>
+
+  <div class="stufe">
+    <div class="nr">2</div>
+    <div>
+      <h2>Fragen, nur fragen</h2>
+      <p class="satz">„Was genau macht Sie noch unsicher?“</p>
+      <p class="klein">Dann weiter: „Gibt es sonst noch etwas?“ Sagt der Kunde nichts, Gründe anbieten: Beitrag? Leistung? Zeitpunkt? Partner? Vergleichen? Bisheriger Vertrag?</p>
+    </div>
+  </div>
+
+  <div class="stufe">
+    <div class="nr">3</div>
+    <div>
+      <h2>Festnageln</h2>
+      <p class="satz">„Angenommen, wir klären das: Machen wir es dann heute so, ja oder nein?“</p>
+      <p class="klein">Nur ein klares Ja zählt. Sonst zurück zu 2.</p>
+    </div>
+  </div>
+
+  <div class="stufe">
+    <div class="nr">4</div>
+    <div>
+      <h2>Lösen, genau diesen einen Punkt</h2>
+      <table>
+        <tr><th>Wahrer Grund</th><th>Lösung</th></tr>
+        <tr><td>Zu teuer</td><td>„Was wäre für Sie ein guter Beitrag?“ Dann kleinere Stufe oder Bausteine weglassen. Kein Rabatt.</td></tr>
+        <tr><td>Geld gerade knapp</td><td>Beginn später legen, monatlich zahlen.</td></tr>
+        <tr><td>Nachdenken</td><td>Den offenen Punkt jetzt klären. Sonst Link schicken und festen Rückruf eintragen.</td></tr>
+        <tr><td>Partner fragen</td><td>„Rufen Sie gern kurz an, ich warte.“ Sonst Termin zu zweit, gleich eintragen.</td></tr>
+        <tr><td>Schon versichert</td><td>Police vergleichen. Neuer Schutz beginnt, wenn der alte endet. Ist der alte gleich gut: nicht wechseln.</td></tr>
+        <tr><td>Erst vergleichen</td><td>„Was müsste ein anderes Angebot haben, das hier fehlt?“ Genau das beantworten.</td></tr>
+        <tr><td>Misstrauen</td><td>Nach dem Erlebnis fragen. Offen zeigen, was versichert ist und was nicht.</td></tr>
+      </table>
+      <p class="klein">Danach: „Ist das damit geklärt? Dann machen wir es so.“</p>
+    </div>
+  </div>
+
+  <div class="nie"><b>Nie</b>Auf den ersten Satz argumentieren · mehrere Argumente auf einmal · Rabatt auf „zu teuer“ · etwas versprechen, das nicht im Angebot steht · nach einem Ja weiterreden</div>
+</div>
+</body>
+</html>

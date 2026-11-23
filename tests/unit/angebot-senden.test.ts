@@ -243,11 +243,11 @@ describe("Vorlagen und öffentliche Seiten", () => {
         expect(metaTemplateProblems(body, exampleValuesFor(p, form)), `${p} ${form}`).toEqual([]);
         expect(hatGedankenstrich(body)).toBe(false);
       }
-      expect(templateNameFor(p, undefined, "sie")).toBe(`pg_${p}_v5_sie`);
+      expect(templateNameFor(p, undefined, "sie")).toBe(`pg_${p}_${p === "offer_send" ? "v6" : "v5"}_sie`);
     }
     expect(categoryFor("offer_send")).toBe("UTILITY");
     expect(categoryFor("followup_offer_selbst")).toBe("MARKETING");
-    expect(TEMPLATE_BODY.offer_send.sie).toContain("Wie besprochen hier Ihr Angebot für {{2}}: {{3}} Bei Fragen");
+    expect(TEMPLATE_BODY.offer_send.sie).toContain("Wie besprochen hier Ihr Angebot zum Thema {{2}}: {{3}} Bei Fragen");
   });
 
   it("Angebots-Link und Rückruf-Seite sind Seiten für Endkunden", () => {

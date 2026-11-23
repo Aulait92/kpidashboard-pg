@@ -7,12 +7,13 @@
 // - Nach unten ziehen zum Aktualisieren
 // - Google/Microsoft-Kalender verbinden im System-Browser (Google blockiert
 //   die Anmeldung in eingebetteten Ansichten) – mit Einmal-Übergabe der Anmeldung
+// - Google/Microsoft-Anmeldung: Rücksprung performancegrowth://login abfangen
 // - Beim Abmelden das Gerät vom Login lösen
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { impact, installHapticDelegates } from "@/lib/haptics";
-import { forgetNativeDevice, initNativePushListeners, isNativeApp, needsSystemBrowser, openInSystemBrowser, setAppBadge } from "@/lib/native-bridge";
+import { forgetNativeDevice, initAppLoginListener, initNativePushListeners, isNativeApp, needsSystemBrowser, openInSystemBrowser, setAppBadge } from "@/lib/native-bridge";
 
 type CapApp = { addListener?: (e: string, cb: (d: { canGoBack?: boolean }) => void) => unknown; minimizeApp?: () => Promise<void> };
 
@@ -38,6 +39,8 @@ export function NativeAppBridge() {
     void plugins?.Keyboard?.setAccessoryBarVisible?.({ isVisible: true }).catch(() => {});
     void plugins?.StatusBar?.setStyle?.({ style: "LIGHT" }).catch(() => {});
     void initNativePushListeners((url) => router.push(url));
+    // Rücksprung nach Google/Microsoft-Anmeldung im System-Browser (performancegrowth://login)
+    initAppLoginListener();
 
     const refreshBadge = () =>
       fetch("/api/app/device", { cache: "no-store" })

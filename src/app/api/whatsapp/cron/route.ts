@@ -190,6 +190,21 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-ppl-renew");
       return null;
     }),
+    // Donnerstags ab 10 Uhr: Erinnerung, wenn für nächste Woche noch nichts bestellt ist (lib/ppl/bestell-erinnerung.ts)
+    erinnert: await import("@/lib/ppl/bestell-erinnerung")
+      .then((m) => m.bestellErinnerungen(now))
+      .catch((e: unknown) => {
+        reportError(e, "cron-ppl-bestellerinnerung");
+        return null;
+      }),
+    // Erste Woche zum Starttermin: wartende Bestellungen abbuchen, sobald ihre Startwoche begonnen hat (lib/ppl/erste-woche.ts)
+    // einmal je Stunde (nicht bei jedem 5-Minuten-Lauf, wegen der Zahlungsart-Abfrage bei Stripe)
+    ersteWoche: now.getUTCMinutes() >= 5 ? null : await import("@/lib/ppl/erste-woche")
+      .then((m) => m.faelligeErsteWochenFreigeben(now))
+      .catch((e: unknown) => {
+        reportError(e, "cron-ppl-erste-woche");
+        return null;
+      }),
     redistributed: await redistributeParked(undefined, now).catch(() => null),
     // geparkte Leads ab 48 h (PPL_PARK_MAX_HOURS) endgültig verwerfen, Kontaktdaten entfernen (Ole, 20.11.2026)
     expired: await expireParked(now).catch((e: unknown) => {
@@ -250,6 +265,13 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-strecke");
       return { error: e instanceof Error ? e.message : String(e) };
     });
+  // „Entscheidet noch jemand mit?“ vor dem Terminvorschlag ohne Antwort: nach 30 Min. trotzdem die Zeiten (Ole, 21.11.2026)
+  const partnerVorTermin = await import("@/lib/whatsapp/termin-strecke")
+    .then((m) => m.runPartnerVorTerminNachholen(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-partner-vor-termin");
+      return { error: e instanceof Error ? e.message : String(e) };
+    });
   // Buchung über die Buchungsseite mit Chat, Strecke nach 15 Min. nicht begonnen: erste Frage im Chat (Ole, 20.11.2026)
   const buchungsseite = await import("@/lib/whatsapp/termin-strecke")
     .then((m) => m.runBuchungsseiteNachholen(now))
@@ -293,6 +315,15 @@ async function handle(req: Request): Promise<Response> {
     now.getUTCMinutes() < 5
       ? await import("@/lib/funnel/server").then((m) => m.funnelReifePruefen(now)).catch((e: unknown) => {
           reportError(e, "cron-funnel-reife");
+          return null;
+        })
+      : undefined;
+  // A/B-Tests der Vertriebs-Nachrichten (lib/vertrieb/ab-tests.ts): Ziele (Zahlung, erschienen, Antwort) aus der
+  // Datenbank nachtragen, einmal je Stunde vor der Entscheidung
+  const vertriebAbZiele =
+    now.getUTCMinutes() < 5
+      ? await import("@/lib/vertrieb/ab-tests-server").then((m) => m.vertriebZieleNachtragen(now)).catch((e: unknown) => {
+          reportError(e, "cron-vertrieb-ab-ziele");
           return null;
         })
       : undefined;
@@ -472,6 +503,68 @@ async function handle(req: Request): Promise<Response> {
   after(() => import("@/lib/linkedin/cron").then((m) => m.runLinkedIn(now)).catch((e: unknown) => reportError(e, "cron-linkedin")));
   // Bank & Karten: Kontoumsätze täglich abrufen, an Neuverbindung erinnern (nach der Antwort)
   after(() => runBankSync(now).catch((e: unknown) => reportError(e, "cron-bank")));
+  // Mails an die Beleg-Adresse bei Resend abholen (alle 15 Minuten, lib/belege/eingang.ts), auch ohne aktives Webhook-Ereignis
+  if (now.getUTCMinutes() % 15 < 5 && process.env.RESEND_API_KEY) {
+    after(() => import("@/lib/belege/eingang").then((m) => m.belegePostfachAbholen()).catch((e: unknown) => reportError(e, "cron-belege-postfach")));
+    // Hochgeladene, noch nicht ausgelesene Belege (große ZIP-Pakete) nachholen
+    after(async () => {
+      const { belegeAuslesenOffen } = await import("@/lib/belege/ablage");
+      const r = await belegeAuslesenOffen(100);
+      if (r.ausgelesen) await (await import("@/lib/belege/server")).belegeAbgleichen();
+    });
+  }
+  // Ausgangsrechnungen aus Stripe als Belege (nachts gegen 3/4 Uhr Berlin, lib/belege/stripe.ts)
+  if (now.getUTCHours() === 2 && now.getUTCMinutes() >= 5 && now.getUTCMinutes() < 10 && process.env.STRIPE_SECRET_KEY) {
+    after(() => import("@/lib/belege/stripe").then((m) => m.syncStripeBelege()).catch((e: unknown) => reportError(e, "cron-belege-stripe")));
+  }
+  // Buchhaltung Anfang des Monats (Ole, 23.11.2026: „oft erinnern“): am 1. Meta-Belege holen; am 4. und 6. erneut,
+  // solange das Monatspaket des Vormonats nicht gesendet ist. Jeweils 9 Uhr Berlin.
+  if ([1, 4, 6].includes(now.getUTCDate()) && now.getUTCHours() === 8 && now.getUTCMinutes() < 5) {
+    after(async () => {
+      try {
+        const m = await import("@/lib/belege/monatspaket");
+        const monat = m.vormonat(now);
+        const { prisma } = await import("@/lib/prisma");
+        const p = await prisma.monatsPaket.findUnique({ where: { monat } });
+        if (p?.gesendetAm) return;
+        const { sendToAdmins } = await import("@/lib/push");
+        const body =
+          now.getUTCDate() === 1
+            ? `Neuer Monat: bitte die Meta-Belege für ${m.monatName(monat)} holen und hochladen (Links auf der Belege-Seite).`
+            : `Monatspaket ${m.monatName(monat)} ist noch nicht beim Steuerbüro. Kurz prüfen und senden.`;
+        await sendToAdmins({ title: "Buchhaltung", body, url: "/admin/neu/zahlen/kosten/belege" });
+      } catch (e) {
+        reportError(e, "cron-buchhaltung-erinnerung");
+      }
+    });
+  }
+  // Monatspaket für das Steuerbüro: am 2. um 9 Uhr Berlin Push an die Admins (lib/belege/monatspaket.ts), gesendet wird nur per Klick
+  if (now.getUTCDate() === 2 && now.getUTCHours() === 8 && now.getUTCMinutes() < 5) {
+    after(async () => {
+      try {
+        const m = await import("@/lib/belege/monatspaket");
+        const monat = m.vormonat(now);
+        const { prisma } = await import("@/lib/prisma");
+        const p = await prisma.monatsPaket.findUnique({ where: { monat } });
+        if (p?.gesendetAm || p?.erinnertAm) return;
+        const liste = await m.paketBelege(monat);
+        await prisma.monatsPaket.upsert({ where: { monat }, create: { monat, erinnertAm: now, anzahl: liste.length }, update: { erinnertAm: now, anzahl: liste.length } });
+        const { sendToAdmins } = await import("@/lib/push");
+        await sendToAdmins({ title: `Monatspaket ${m.monatName(monat)} bereit`, body: `${liste.length} Belege. Kurz prüfen und an das Steuerbüro senden.`, url: "/admin/neu/zahlen/kosten/belege" });
+      } catch (e) {
+        reportError(e, "cron-monatspaket");
+      }
+    });
+  }
+  // Belege aus GetMyInvoices holen und Kontoumsätzen zuordnen: einmal nachts gegen 3/4 Uhr Berlin (lib/belege/server.ts)
+  if (now.getUTCHours() === 2 && now.getUTCMinutes() < 5 && process.env.GETMYINVOICES_API_KEY) {
+    after(() =>
+      import("@/lib/belege/server")
+        .then((m) => m.syncBelege())
+        .then((r) => console.log(`[belege] ${r.geholt} geholt, ${r.neu} neu, ${r.zugeordnet} zugeordnet`))
+        .catch((e: unknown) => reportError(e, "cron-belege")),
+    );
+  }
   // WhatsApp selbst verbunden: API-Keys für Channels nachholen, die beim Redirect noch eingerichtet wurden
   // 360dialog: Nummern ohne Rücksprung über die Kunden-ID finden (alle 15 Minuten, lib/whatsapp/dialog360-match.ts)
   if (now.getUTCMinutes() % 15 < 5) {
@@ -518,7 +611,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, buchungsseite, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, vertriebAbZiele, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
 }
 
 export const GET = handle;

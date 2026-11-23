@@ -29,6 +29,7 @@ const PURPOSES = new Set([
   "followup_nudge",
   "followup_offer",
   "followup_noshow",
+  "followup_absage",
   "followup_last",
   "campaign_cross_sell",
   "campaign_review",
@@ -71,6 +72,8 @@ export async function saveOutreachSettingsAction(formData: FormData): Promise<vo
     create: { customerId, ...data },
     update: data,
   });
+  // Schon gebuchte Videotermine ohne Link bekommen den Raum (lib/video-raum-server.ts)
+  await import("@/lib/video-raum-server").then((m) => m.videoRaumNachtragen(customerId, videoRoomUrl)).catch(() => 0);
   revalidatePath("/admin/neu/einstellungen/whatsapp");
   revalidatePath("/admin/neu/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)

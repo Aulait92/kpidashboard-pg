@@ -2,6 +2,90 @@
 
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
+## 23.11.2026
+- **VORLÄUFIG BESCHLOSSEN (Ole, 23.11.2026, Simulation Beratertermin, vor Prüfung durch Steuerberater, Notar, Anwalt):
+  Holding gehört Ole allein, Mirkos Iron Brain Ltd. (Zypern, Director Mirko) direkt 50 % an der operativen GmbH.**
+  Reihenfolge: erst 100 % der UG steuerneutral in Oles Holding, dann Eintritt der Ltd per Kapitalerhöhung. Gewinnvorab,
+  Reverse Vesting, Patt- und Ausschüttungsregel in der operativen Gesellschaft. Ole alleiniger Geschäftsführer („top so
+  machen wir es“), Mirko über Vertriebsvereinbarung, Geschäftsführung für Mirko frühestens nach Prüfung in Zypern. UG
+  zunächst unverändert einbringen, Umwandlung zur GmbH mit geprüfter Bilanz 2026. Gehalt und Miete in der operativen
+  Gesellschaft. Private Entnahmen 2026 höchstens 3.000 €. Ziel: Ole und Mirko ziehen gleich viel aus der Firma.
+  Grundlage und offene Punkte: Claude-Docs-Dokument „Grundlage Beratertermin“ (Abschnitt „Ergebnis der Simulation“).
+- **BESCHLOSSEN (Ole, 23.11.2026): „Ja, bei jeder Absage nachfassen.“** Sagt ein Lead seinen Termin selbst ab (Link
+  „Termin verwalten“, im Chat, Absage der Kalendereinladung), fragt der Assistent einmal per WhatsApp nach einem neuen
+  Termin: 20 Minuten danach (im Chat abgesagt: 2 Stunden), nur Mo bis Sa 9 bis 19 Uhr, vorher in „Nächste Nachrichten“
+  sichtbar und überspringbar. Nicht beim Verschieben, mit weiterem Termin, bei verlorenen Leads, Stopp, ohne WhatsApp,
+  Pay-per-Lead, Assistent bzw. Nachfassen aus. Splittest `absage_nachfassen` (offene Frage gegen zwei konkrete Zeiten),
+  Lernbuch docs/firma/ab-tests.md. Umsetzung: lib/absage-nachfassen.ts.
+
+## 22.11.2026
+- **BESCHLOSSEN (Ole, 22.11.2026): Variante A, Steuerberater bleibt, Belege automatisch per GetMyInvoices an DATEV.**
+  Erst alles vollständig und zugeordnet übergeben, danach verhandelt Ole die laufende Buchhaltung (heute 250 € netto im
+  Monat, Jahresabschluss extra) nach. Variante B (BuchhaltungsButler, Steuerberater nur Abschluss) bleibt Rückfall, falls
+  er nicht nachgibt. Nächste Schritte siehe offene Aufgaben.
+- **Vorlage dazu: Belegwerkzeug GetMyInvoices Professional** (Empfehlung CFO mit Red Team): Abruf aus Portalen und
+  Postfächern ab 1.1.2026, Abgleich mit Commerzbank und Amex, Übergabe an DATEV Unternehmen online der Kanzlei, API für
+  „Beleg ja/nein + Link“ je `BankTransaction`. Kosten ca. 99 € netto/Monat plus einmalig bis ca. 275 € fürs Nachholen,
+  DATEV-Module ca. 21 €/Monat falls nicht über die Kanzlei. Candis (ab 389 €), DATEV allein (kein Portalabruf),
+  Lexware Office und BuchhaltungsButler (doppelte Buchhaltung) verworfen. Bedingungen: 14-Tage-Test mit
+  Abdeckungsprüfung der 19 Anbieter, AVV/Serverstandort geprüft, Fragen an den Steuerberater geklärt, Monatszahlung im
+  ersten Quartal. Vorgaben Ole (22.11.): DATEV, ab 1.1.2026, Werkzeug statt Eigenbau. `protokolle/2026-11-22-belegwerkzeug.md`.
+- **Bestellkonto für PPL-Hauptkunden** (A, Ole): Nico Yagci und Tobias D'Angelo bestellen wöchentlich selbst für ihre
+  Vertriebspartner (vorerst nur Dennis Müller bzw. Lukas Socki) und zahlen zentral (eine Zahlungsart, Rechnung an sie).
+  Technik und Livegang: docs/pay-per-lead.md, Abschnitt „Bestellkonto“.
+
+## 21.11.2026
+- **„Entscheidet noch jemand mit?“ vor dem Terminvorschlag** (A, Ole, 21.11. spät: als eigene Frage vor dem
+  Terminvorschlag, damit der Termin nicht verlegt werden muss). Standard (Fassung a); ohne Antwort kommen die Zeiten nach
+  30 Min. trotzdem, Terminwunsch geht immer vor. Nach AGENTS.md läuft trotzdem ein Test (`partner_vor_termin`, Fassung b:
+  Halbsatz im Terminvorschlag plus Frage nach der Buchung); entschieden wird über die Buchungsquote, Verschiebequote als
+  Gegenprobe (docs/firma/ab-tests.md).
+- **Meilenstein: erste Agentur ongeboardet, erste Leads** (Allianz Henrik Lohmann). Führungsrunde (CEO, Customer Success,
+  CPO): Lohmann erst „live“, wenn ein echter Lead geantwortet hat; 14-Tage-Begleitplan; Feature-Stopp außer Korrekturen
+  für Lohmann und Einrichtung; Allianz-Einrichtungs-Branches bis 24.11. mergen.
+- **Admin liest mit** (A, Ole, 21.11.): Push an Admins bei Lead (nur eigener Funnel bzw. Software, nicht Perspective),
+  Termin und Abschluss, je Kunde über die Glocke abschaltbar. **Assistent automatisch an** beim Verbinden von WhatsApp,
+  bei allen verbundenen Kunden eingeschaltet (A, Ole).
+- **50/50-Test PKV: vorerst Ersatzkennzahl „gültige Leads je Besucher“** (A, Ole: „erstmal nur Ersatzkennzahl“): geliefert,
+  verkauft, nicht storniert, nicht reklamiert. Grund: Von 66 PKV-Leads in 30 Tagen ist nur einer als erreicht markiert
+  (Socki 0 von 29, Müller 1 von 3, verrata24 und HvK nur per E-Mail ohne Rückmeldung; Diagnose q=ppl-rueckmeldung).
+  Klick-Rückmeldung in Mail/PDF vorerst nicht gebaut.
+- **Qualitäts-Ereignis „LeadErreicht“ an Meta eingeschaltet** (A, Ole: „Ja“): FUNNEL_META_QUALITAET=an (Railway). Gesendet
+  über die Conversions API, sobald der Vermittler einen Funnel-Lead als erreicht markiert (stündlich, nicht erst nach 14 Tagen),
+  nur mit Cookie-Einwilligung, mit dem Leadpreis als Wert. Kampagnen optimieren weiter auf „Lead“; Umstellung auf das neue
+  Ereignis erst bei genug Ereignissen je Woche (Lernphase). Perspective-Leads ohne Einwilligung zur Weitergabe: nie.
+- **Eigener PKV-Funnel live, 50/50 gegen Perspective** (A, Ole: „50/50 vom Traffic, wenn unsere Version besser ist,
+  Perspective abschalten“; DNS-Weg statt Anzeigen ändern): start.pkv-tarife.com (Ziel aller PKV-Anzeigen) zeigt seit
+  21.11.2026 auf die App; die Weiche (`src/lib/funnel/weiche.ts`, `/f/pkv-beitrag/go`) schickt je Aufruf zufällig 50 % nach
+  beitrag.pkv-tarife.com, 50 % zu Perspective (leads.performancegrowth.de/beitrag-halbieren). HvK-Anzeigen (utm_campaign
+  hvk) immer Perspective. Entscheidung nach A/B-Regel (p < 0,01) auf erreichte bzw. terminierte Leads je Besucher; Testaufrufe
+  (utm_source test, deploycheck, weichecheck) nicht mitzählen. L7 (Impressum, Datenschutz 6a) über Lovable veröffentlicht.
+- **Kfz: Einstiegsfrage im Erstanschreiben** (B, Ole: „Bei KFZ brauchen wir noch eine Einstiegsfrage, die nicht direkt auf
+  den Termin geht.“). Je Anlass aus dem Kfz-Leadformular eine feste Frage mit Knöpfen (Wechsel: „Wann läuft Ihr jetziger
+  Vertrag aus?“, neues Auto: „Ist das neue Auto schon da?“, ohne Angabe: „Für Ihr jetziges Auto oder ein neues?“), danach
+  direkt der Terminvorschlag mit der Antwort. A ist Standard (direkt beauftragt), B „Frage zuerst“ im A/B-Test
+  (docs/firma/ab-tests.md). Vorlagen werden automatisch bei Meta eingereicht, bis zur Freigabe das bisherige Erstanschreiben.
+  Wortlaut vom A/B-Test-Labor; Ole sieht ihn im Bericht und kann ihn vor dem Deploy ändern (sonst neue Version).
+- **Kfz-Versicherung als Lead-Produkt** (B, Ole: „Folgendes braucht der Allianzer, um Preise zu rechnen: aus letzter
+  Rechnung von Vorversicherer die SFR, Versicherungsscheinnummer und Versicherer. Typ (3 Ziffern oder Buchstaben),
+  Hersteller (4 Ziffern), Fahrzeugschein.“; „Volle Versicherungsscheinnummer bitte mit auslesen“; „Bei Kfz auch
+  Cross-Selling betreiben, also nach anderen Policen fragen“). Assistent bittet nach der Buchung um Fahrzeugschein und
+  letzte Rechnung (Rückfall: HSN/TSN und Versicherer/SF-Klasse im Chat), lädt ein, weitere Policen mitzuschicken
+  (Komplettcheck). Auslesen: HSN, TSN, Erstzulassung, volle Vers.-Nr. nur bei Kfz (Zweck SF-Übertragung,
+  docs/recht/policen-whatsapp-gesundheitsdaten.md). Einwilligungs- und Vorlagentexte unverändert.
+- **Kleine Fixes sofort deployen** (A, Ole: „bei kleinen fixes direkt pushen“): Kleine Fehlerkorrekturen mit grünen Tests
+  gehen direkt live, auch tagsüber. Größere Änderungen (neue Funktionen, Umbauten, Migrationen mit Datenänderung) weiter
+  abends ab 20 Uhr bzw. früher nur mit Oles Freigabe.
+- **Abschlussbonus abgeschafft, stattdessen Jahresplan in der Präsentation** (A, Ole: „Nimm den Abschlussbonus raus
+  überall und nimm in die Vertriebspräsentation den Jahresplan für 3 Monate sparen auf.“; Nachtrag: „Bei den offenen
+  drin lassen. Habe ich schon versprochen.“). Neue Angebote haben keinen Bonus mehr (Formularfeld weg, serverseitig nur
+  noch bei neuen Versionen bzw. Entwürfen offener Angebote, die ihn schon haben). Offene Angebote mit Bonus behalten ihn
+  samt Anzeige, Erinnerungen und Abrechnung; angenommene Angebote werden wie vereinbart abgerechnet. Präsentation
+  (Web, PPTX/PDF Vertreter und Makler): Folie „Jahresplan: 3 Monate sparen“ vor „Ihr Start in 3 Schritten“ (12 Monate
+  Laufzeit, jährlich im Voraus, 9 statt 12 Monatsbeträge, Ersparnis in Euro); Bonusfolie nur noch bei Angeboten mit
+  zugesagtem Bonus. Leitfaden Setter-Call, Einwandbehandlung und Sprechzettel ohne Bonus. Aufgabe „Abschlussbonus nur
+  im Call ab 21.11.“ entfällt.
+
 ## 20.11.2026
 - **Leitfaden Setter-Call, Fassung 4** (Ole): Interessent soll das Problem bei Neukundengewinnung oder Wachstum selbst
   aussprechen (Fragen nach Ursache, Versuchen, Dauer, Folgen, dann Bedarf bestätigen); neu Mitarbeiter und Bestand als
@@ -102,7 +186,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
 - **Löschverlangen aus Kalt-Mails:** automatisch löschen und im Kontakt vermerken; bei Abmahnung keine Auto-Löschung;
   nur eigene Domains sperren, keine Konzern-Domains (Ole).
 - **Zahlung nachträglich** und **Vorauszahlung mit Annahme** live (A, Ole), siehe `docs/recht/`.
-- **Deploy nur bei grüner Testpipeline**; Code-Deploys abends ab 20 Uhr, Blocker früher nur mit Oles Freigabe.
+- **Deploy nur bei grüner Testpipeline**; Code-Deploys werktags abends ab 20 Uhr, am Wochenende jederzeit (Ole, 21.11.2026); Blocker früher nur mit Oles Freigabe.
 - **Policen auslesen für alle Sparten** (Ole): neu Unfall, Tier, Reise, Krankenzusatz, Pflege und „Sonstige“
   (Grunddaten jeder anderen Police). Unfall, Pflege und Krankenzusatz zählen wie PKV/BU/Leben als Gesundheitssparten:
   ausgelesen erst mit Nachweis „keine Speicherung“ beim KI-Anbieter (K2, Admin → Anbindungen) und Einwilligung mit
@@ -132,3 +216,68 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Plan: `protokolle/2026-11-20-hvk-leads.md`. Start erst nach Rechtsprüfung der Texte und Oles Go.
 - **Pay-per-Lead + Software** live (nur monatlich kündbar, erste Woche im Angebot, USt-Umbau, AGB „Umsatzsteuer auf Leads“).
 - **Ergebnis-Präsentation** nach jedem Meeting/Team-Einsatz (README).
+- **23.11.2026, Admin-Chats nur Leads:** Admins sehen in Betreuen → Chats bei Kunden-Nummern nur Pipeline-Chats (Lead
+  zugeordnet oder selbst gebucht) und die Support-Nummer, keine privaten Chats bzw. Bestandskunden der Vermittler
+  (Coexistence). Regel `ADMIN_CHAT_SICHTBAR` in `lib/whatsapp/nur-leads.ts`, gilt für Liste, Chat-Adresse, Aktionen und
+  „Mein Tag“. Dazu Filter je Kunde. Ole: „das sollte ich nicht sehen, nur seine leads“.
+- **22.11.2026, Partnerfrage:** im WhatsApp-Assistenten immer als eigene Frage vor dem Terminvorschlag, Splittest `partner_vor_termin` beendet (Fassung B aus). Ole: „ich möchte die frage nach partner immer eigenständig vor der buchung“.
+- **22.11.2026, Kfz-Unterlagen prüfen:** Keine KI-Einordnung hochgeladener Fotos ohne ZDR-Nachweis (Datenschutz: Rot, K2,
+  Fassung `.s1` ohne Gesundheitssatz). Stattdessen fragt die Bestätigung bei Kfz-Leads nach, ob Fahrzeugschein und letzte
+  Rechnung beide dabei sind, mit Knopf „Weitere senden“. KI-Einordnung erst nach ZDR-Nachweis mit Auflagen A bis F
+  (nur `.gN`, ein Aufzählungsfeld, Bremse, VVT/DSFA). Ole: „Ja einbauen“ → lokale Texterkennung (Tesseract im Dockerfile,
+  `lib/policen/texterkennung.ts`): nur Kfz-Leads mit KI-Einwilligung, Text nie gespeichert, nur `LeadDocument.dokumentArt`;
+  die Bestätigung nennt, was noch nicht erkannt ist. VVT-Eintrag „Dokumentart bestimmen (lokal)“ nachziehen.
+- **22.11.2026, Leadformular ohne Häkchen (Lohmann):** Ole gibt den Wortlaut „Mit Klick auf ‚Senden‘ willigen Sie ein …“
+  frei (Rechtsprüfung Gelb gering, `docs/recht/leadformular-einwilligung-knopf-2026-11-22.md`). Neue Formulare Kfz v4 Knopf
+  (1712355006964288) und Privatschutz v5 Knopf (1867444814681861), Zuordnung mit Fassung `2026-11-22-knopf`, alte Formulare
+  bleiben für Nachzügler zugeordnet. Alle 8 Anzeigen als Kopie mit neuem Formular, alte pausiert. Auswertung: Leads je
+  Link-Klick vorher (Formular mit Häkchen) und nachher. Offen: Handy-Screenshot der Formular-Vorschau (Auflage 1);
+  Ole danach: „Immer ohne Checkbox“ → Kampagnen-Builder legt alle neuen Formulare ohne Häkchen an (Standard-Fassung
+  `2026-11-22-knopf`); alte Häkchen-Formulare werden weiter ausgewertet.
+- **22.11.2026, Einwilligungstext kürzer (alle Formulare):** Ole: KI-Satz raus, Text conversionoptimiert. Standard jetzt
+  Fassung `2026-11-22b-knopf`, Titel „Letzter Schritt: Tippen Sie unten auf „Senden““. Lohmann: neue Formulare Kfz v5
+  (1829825371571727) und Privatschutz v6 (1837248347700709), Anzeigen erneut umgestellt (Lernphase am 22.11. zweimal neu).
+- **22.11.2026, Vertriebs-CRM „Nicht erreicht“ und Gewonnen/Verloren:** Ole: „Bei Nicht erreicht geht WhatsApp und Email
+  raus + ich brauche einen gewonnen, verloren button“. Nach dem Anruf-Ergebnis „Nicht erreicht“ gehen E-Mail (Resend,
+  Antwort an Ole) und WhatsApp (Support-Nummer, Vorlage `pg_vertrieb_nicht_erreicht_v1`, UTILITY) mit persönlichem
+  Buchungslink raus, höchstens einmal je 7 Tage, nur an warme Kontakte (Formular-Lead, Termin, Angebot, Antwort,
+  „WhatsApp erlaubt“); reine Kaltkontakte bekommen nichts (§ 7 UWG, Schutz der Support-Nummer und der Hauptdomain).
+  WhatsApp erst nach Freigabe der Vorlage bei Meta. Kontaktakte: Knöpfe „Gewonnen“ und „Verloren“ (mit Grund).
+  Code: `lib/vertrieb/nicht-erreicht.ts`, `nicht-erreicht-server.ts`.
+- **22.11.2026, ohne Garantie verkaufen** (Ole: „nimm die garantien für alle kommenden angebote raus, auch aus den
+  vertriebsfolien. ich verkaufe erstmal ohne garantie“): Angebote ab 22.11.2026, 19:15 Uhr ohne Abschnitt „Garantien“
+  (`GUARANTEES_UNTIL`), AGB „Garantien“ nur noch für ältere Angebote (Stand 22.11.2026), Empfehlungsseite ohne Garantien,
+  Vertriebsfolie „Und wenn es schlecht läuft?“ ohne Garantien. Bestehende Verträge und schon versendete Angebote behalten
+  ihre Garantien. Webseite: Eintrag in `docs/webseite-offen.md` (Montag).
+- **22.11.2026, Keine Faxnummern im CRM:** Ole: „Fax-Nummern können bei allen Kontakten und Kontakten in der Zukunft
+  immer raus.“ Spalte `SalesContact.fax` samt bestehender Nummern gelöscht (Migration `20261122140000_kontakt_fax_entfernen`),
+  Anreicherung liest kein Fax mehr aus Impressum/Website, CSV-Import und Kontaktansicht ohne Fax.
+- **22.11.2026, Vorauszahlung standardmäßig anbieten:** Ole: „biete die Vorauszahlung standardmäßig immer an“. Neue
+  Angebote haben „Vorauszahlung anbieten“ vorausgewählt (6 Monate: 1 geschenkt, 12 Monate: 3 geschenkt); der Kunde wählt
+  bei der Annahme weiter selbst, monatlich bleibt vorausgewählt. Abwählbar; greift nicht bei Pay-per-Lead, Startpreis
+  oder ohne Laufzeit. Für „Zahlung nachträglich“ muss sie abgewählt werden.
+- **22.11.2026, 20 Uhr eingespielt:** Terminsuche über 7 Tage (Wiedervorlage, Buchungslink nach zwei Absagen, Kalender
+  voll → Aufgabe), Policen-Bitte nennt genannte Verträge bei allen Produkten (Ole: Variante A, im Fenster freie Nachricht
+  ohne zweiten Knopf), Einrichtung Go-live-Hürden (anderer WhatsApp-Anbieter, private Einladungsmail, Firmengerät,
+  Videolink-Pflicht, Makler, Test-Einladung; schon live geschaltete Kunden bleiben unberührt).
+- **22.11.2026, Vorschau aller CRM-Nachrichten:** Ole: „Vorschau der Mails, die man im Admin-CRM raussenden wird, inkl.
+  Templates“. Verkaufen → Geplante Nachrichten: Zeile antippen zeigt E-Mail und WhatsApp mit den echten Daten.
+  Einstellungen → Mail- und WhatsApp-Vorlagen: alle automatischen Nachrichten mit Beispieldaten (Sie/Du) und Freigabestand
+  der WhatsApp-Vorlagen. Versand und Vorschau nutzen dieselben Funktionen (`lib/vertrieb/nachricht-vorschau.ts`).
+- **22.11.2026, A/B-Test „Nicht erreicht“ (Vertrieb):** Ole bestätigt den Wortlaut von Fassung B („Erreiche ich Sie besser
+  vormittags oder nachmittags?“, Vorlage `pg_vertrieb_nicht_erreicht_b_v1`): „passt so“. Test läuft, Details in `docs/firma/ab-tests.md`.
+- **22.11.2026, Belege: eigene Ablage statt GetMyInvoices (Ole):** GetMyInvoices ist unzuverlässig (Portale brechen ab,
+  Mail-Import lückenhaft, falsche Belegdaten bei Weiterleitungen). Belege liegen jetzt in der App (Geld › Kosten › Belege):
+  Beleg-Adresse belege-<token>@antwort.dein-beratungstermin.de, Upload (PDF/Bild/ZIP), KI-Auslesung, automatische Zuordnung
+  zu Kontoumsätzen, Netto laut Beleg in der BWA. GetMyInvoices bleibt bis zur Übernahme seiner Dateien (Nachtlauf), dann
+  kündbar (Probezeit bis 06.12.2026).
+- **23.11.2026, Geschäftsführergehalt und Büromiete ab 01.01.2027 (Ole):** Kein rückwirkender Beginn (Rückwirkungsverbot
+  beim beherrschenden Gesellschafter-GF, sonst vGA). Verträge schriftlich vor dem 01.01.2027: GF-Vertrag mit Festgehalt,
+  Tantieme-Vereinbarung für 2027, Mietvertrag Arbeitszimmer (ortsüblich, eigener Raum). Steuerbüro prüft vorab und
+  richtet die Lohnabrechnung ein. Erhöhungen später nur per Beschluss für die Zukunft.
+- **23.11.2026, Leadformulare fragen die WhatsApp-Nummer ab:** Ole: 3 von 7 Lohmann-Leads ohne WhatsApp (2 Festnetz,
+  vermutlich von Meta vorausgefüllt, 1 Handy ohne WhatsApp), obwohl das Formular auf die Handynummer lenkte. Statt
+  PHONE nutzt der Kampagnen-Builder jetzt Metas Feld WHATSAPP_NUMBER (vorausgefüllt), der Import liest
+  `whatsapp_number` vor `phone_number`. Lohmann sofort umgestellt (Ole): Kfz v6 (1125159183676509) und Privatschutz v7
+  (2500202190504265), 8 neue Anzeigen mit gleichem Motiv und Text, alte werden pausiert, sobald die neuen freigegeben
+  sind; alte Formulare bleiben zugeordnet (Nachzügler). Lernphase beginnt neu.

@@ -91,9 +91,15 @@ function norm(s: string | null | undefined) {
 export function matchRule(tx: { counterparty?: string | null; purpose?: string | null }, ownRules: Rule[], defaults: Rule[] = DEFAULT_RULES): Rule | null {
   // Treffer in der Gegenpartei gehen vor Treffern im Verwendungszweck
   // (sonst fängt z. B. eine Privat-Regel „ole kannapinn“ jede Rechnung, in deren Text der Name steht).
+  // Bank-CSV bricht Wörter um („FACEBOO K“): Muster ab 6 Zeichen auch ohne Leerzeichen vergleichen
+  const ohne = (x: string) => x.replace(/\s+/g, "");
+  const trifft = (hay: string, pattern: string) => {
+    const p = norm(pattern).trim();
+    return hay.includes(p) || (ohne(p).length >= 6 && ohne(hay).includes(ohne(p)));
+  };
   const hitIn = (hay: string, rules: Rule[]) =>
     rules
-      .filter((r) => r.pattern.trim() && hay.includes(norm(r.pattern).trim()))
+      .filter((r) => r.pattern.trim() && trifft(hay, r.pattern))
       .sort((a, b) => b.pattern.length - a.pattern.length)[0] ?? null;
   const cp = norm(tx.counterparty);
   const all = `${cp} | ${norm(tx.purpose)}`;

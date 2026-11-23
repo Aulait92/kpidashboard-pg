@@ -206,6 +206,8 @@ function RunPanel({ run, steps, onChange }: { run: RunView; steps: StepInfo[]; o
           </section>
         ) : null}
 
+        <EigeneGewinner run={run} />
+
         {review ? (
           <section>
             <h3 className="mb-1 flex items-center gap-2 font-semibold">
@@ -264,6 +266,50 @@ function RunPanel({ run, steps, onChange }: { run: RunView; steps: StepInfo[]; o
         ) : null}
       </div>
     </Card>
+  );
+}
+
+const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+
+/** Eigene Gewinner aus dem Werbekonto, die das Team als Vorlage hatte (Ole, 21.11.2026). */
+function EigeneGewinner({ run }: { run: RunView }) {
+  const g = run.eigeneGewinner ?? [];
+  if (!g.length) return run.eigeneGewinnerHinweis ? <p className="text-[color:var(--muted)]">{run.eigeneGewinnerHinweis}</p> : null;
+  const genutzt = new Set(
+    (run.angles ?? []).flatMap((a) => [...`${a.title} ${a.hook} ${a.insight}`.matchAll(/eigene[rnm]?\s+gewinner\s*(\d)/gi)].map((m) => Number(m[1]) - 1)),
+  );
+  return (
+    <section>
+      <h3 className="mb-1 font-semibold">Vorlagen aus dem eigenen Werbekonto</h3>
+      <ul className="space-y-1.5">
+        {g.map((w, i) => (
+          <li key={w.adId} className="flex items-center gap-2">
+            {w.bildUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={w.bildUrl} alt="" className="h-10 w-10 shrink-0 rounded-[var(--radius-sm)] object-cover" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+            ) : (
+              <div className="h-10 w-10 shrink-0 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)]" />
+            )}
+            <span className="min-w-0">
+              <span className="block truncate font-medium">
+                {i + 1}. {w.name}
+                {genutzt.has(i) ? (
+                  <span className="ml-2">
+                    <Badge tone="success">genutzt</Badge>
+                  </span>
+                ) : null}
+              </span>
+              <span className="text-[color:var(--muted)]">
+                {eur(w.cpl)} je Lead · {w.leads} Leads{w.leadsQuelle === "meta" ? " (Meta)" : ""}
+                {w.kostenJeTermin != null ? ` · ${eur(w.kostenJeTermin)} je Termin` : ""}
+                {w.passtZumProdukt ? "" : " · anderes Produkt"}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {run.eigeneGewinnerHinweis ? <p className="mt-1 text-[color:var(--muted)]">{run.eigeneGewinnerHinweis}</p> : null}
+    </section>
   );
 }
 

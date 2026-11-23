@@ -76,7 +76,7 @@ export async function FunnelCard() {
               ))}
             </ul>
             <p className="mt-2 text-[color:var(--muted)]">
-              Nicht passend: gesetzlich {k.abbrueche.gesetzlich}, Beitrag unter 650 € {k.abbrueche.unter_650}. Rückmeldung da bei {k.rueckmeldungDa} von {k.mitRueckmeldung}.
+              Nicht passend: gesetzlich {k.abbrueche.gesetzlich}, Beitrag unter 650 € {k.abbrueche.unter_650}, Debeka {k.abbrueche.debeka}, Beamte {k.abbrueche.beamte}. Rückmeldung da bei {k.rueckmeldungDa} von {k.mitRueckmeldung}.
             </p>
           </details>
         </>

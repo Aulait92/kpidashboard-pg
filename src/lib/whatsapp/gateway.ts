@@ -430,6 +430,12 @@ async function persistInbound(
   if (linkedLead?.leadId) {
     const { recordLeadProgress } = await import("@/lib/lead-progress");
     await recordLeadProgress(linkedLead.leadId, "replied");
+    // Admin liest mit (Ole, 22.11.2026): Push, wenn ein Lead antwortet; je Chat höchstens einer, solange er weiterschreibt
+    const { adminMitlesen, ANTWORT_PAUSE_MS } = await import("@/lib/admin-mitlesen");
+    const kurzVorher = await prisma.message.count({
+      where: { conversationId: conversation.id, direction: "inbound", id: { not: inboundMsg.id }, createdAt: { gte: new Date(Date.now() - ANTWORT_PAUSE_MS) } },
+    });
+    if (!kurzVorher) await adminMitlesen({ leadId: linkedLead.leadId, ereignis: "antwort", tagZusatz: conversation.id, url: `/admin/neu/leads/chats?c=${conversation.id}` });
     // Antwort auf eine Bestandskampagne hat gerade den Lead angelegt: Lead-Chat, der Assistent darf (wie bisher) antworten
     if (!botErlaubt && conversation.botActive && !conversation.leadId) botErlaubt = true;
   }
@@ -484,6 +490,16 @@ async function persistInbound(
     }
   }
 
+  // Freie Antwort auf die Kfz-Einstiegsfrage (Ole, 21.11.2026, knopf.ts erstfrageFreitext): wie ein Knopf festhalten
+  if (botErlaubt && type === "text" && !botHint) {
+    try {
+      const { erstfrageFreitext } = await import("@/lib/whatsapp/knopf");
+      botHint = await erstfrageFreitext(conversation.id, body);
+    } catch (e) {
+      console.error("[whatsapp erstfrage]", e instanceof Error ? e.name : "Fehler");
+    }
+  }
+
   // Bedenkzeit zum Angebot (Paket P5, lib/bedenkzeit-server.ts): „ich überlege noch“ → Frage nach dem Datum mit Knöpfen
   if (botErlaubt && type === "text" && linkedLead?.leadId && !botHint) {
     try {
@@ -500,9 +516,8 @@ async function persistInbound(
   if (!botErlaubt) {
     const { flagAttention } = await import("@/lib/whatsapp/attention");
     if (!linkedLead?.leadId && !pipeline) {
-      // Push nur für wirklich neue Nummern, nicht für Kontakte aus der Business-App (die sieht der Vermittler dort ohnehin)
-      const appKontakt = await nurLeads.istAppKontakt(customerId, from);
-      await flagAttention(conversation.id, nurLeads.neuerKontaktGrund(body), { push: !appKontakt });
+      // Fremde Nummer ohne Lead (Ole, 23.11.2026): komplett ignorieren, kein „Wartet auf Sie“, keine Mitteilung. Die
+      // Nachricht bleibt gespeichert; kommt später ein Lead mit der Nummer, erscheint der Chat mit Verlauf.
     } else {
       await flagAttention(conversation.id, body ? `Neue Nachricht: „${body.slice(0, 100)}"` : "Neue Nachricht");
     }
@@ -635,9 +650,7 @@ export async function sendWhatsAppMessage(opts: {
   // „STOPP“: keine Nachrichten mehr an diese Nummer, auch nicht von Hand (lib/whatsapp/stopp.ts)
   const { isOptedOut, WhatsAppOptOutError } = await import("@/lib/whatsapp/stopp");
   if (await isOptedOut(opts.customerId, opts.to)) throw new WhatsAppOptOutError();
-  // Festnetznummer ohne eigene Nachricht des Kontakts: nicht senden (lib/whatsapp/festnetz.ts)
-  const { pruefeFestnetz } = await import("@/lib/whatsapp/festnetz");
-  await pruefeFestnetz({ customerId: opts.customerId, to: opts.to });
+  // Festnetznummern: kein Vorab-Stopp mehr (lib/whatsapp/festnetz.ts, Ole 21.11.2026)
 
   const apiKey = decryptSecret(account.apiKeyEnc);
   // Keine Gedankenstriche an Leads (auch KI-Antworten des Assistenten)

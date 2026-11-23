@@ -245,6 +245,8 @@ export function praesentationCss(m: Marke): string {
 .zusage{font:inherit;display:inline-flex;align-items:center;justify-content:center;min-width:420px;padding:18px 40px;border:0;border-radius:14px;background:var(--a);color:#fff;font-size:28px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .zusage.an{background:#047857}
 .einwand .punkte li{font-size:26px}
+.einwand .karten{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:10px}
+.einwand .karten div{display:flex;align-items:center;justify-content:center;min-height:130px;border-radius:18px;padding:20px 24px;background:var(--fh);font-size:28px;font-weight:700;color:var(--f);text-align:center}
 .einwand .gegen{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:26px}
 .einwand .gegen>div{border-radius:18px;padding:24px 28px;background:var(--fh)}
 .einwand .gegen span{display:block;font-size:20px;color:#4b5568;margin-bottom:6px}.einwand .gegen b{font-size:40px;color:var(--f)}
@@ -1083,83 +1085,8 @@ function ueberblickFolie(
   };
 }
 
-// ─── Einwände (Sales-Coach, 19.11.2026) ────────────────────────────────────────────────────────────
-// Optionale Folien außerhalb der Reihenfolge: der Vermittler springt im Termin über „Einwände“ hin und wieder zurück.
-// Nicht im Kundenlink und nicht im PDF. Sachlich, ohne Druck, ohne Versprechen; Preise nur aus den Angeboten.
-
-/** Kurzname im Menü des Vermittlers je Einwand-Folie. */
-export const EINWAND_MENUE: Record<string, string> = {
-  "einwand-preis": "Zu teuer",
-  "einwand-nachdenken": "Noch nachdenken",
-  "einwand-vorhanden": "Schon versichert",
-  "einwand-partner": "Erst mit Partner besprechen",
-};
-
-export function einwandFolien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: Marke, an: Ansprache = "sie"): Folie[] {
-  const R = (inhalt: string, frage?: string) => rahmen(m, inhalt, "einwand", frage);
-  const items = angebote?.items ?? [];
-  const gew = items.filter((i) => i.gewaehlt && !zusatzAus(i, items));
-  const summe = angebote ? beitragAus(angebote).endbeitrag : null;
-  // kleinste Stufe je gewählter Sparte (ohne Kombi-Rabatt gerechnet, daher nur nennen, wenn klar günstiger)
-  const kleinste = gew.length
-    ? gew.reduce<number | null>((s, g) => {
-        const ps = items.filter((x) => x.sparte === g.sparte).map((x) => x.beitragMonat).filter((x): x is number => x != null);
-        return s == null || !ps.length ? null : s + Math.min(...ps);
-      }, 0)
-    : null;
-  const sparte = sparteKey(gew[0]?.sparte ?? items[0]?.sparte ?? d.lead.produkt);
-  const b = beispielFuer(sparte, an);
-  const punkte2 = (xs: string[]) => `<div class="punkte">${punkte(xs)}</div>`;
-  const folie = (id: string, titel: string, inhalt: string, frage: string, hinweis: string): Folie => ({ id, titel, html: R(inhalt, frage), hinweis });
-  return [
-    folie(
-      "einwand-preis",
-      EINWAND_MENUE["einwand-preis"],
-      `<h2>${e(a(an, "Lohnt sich das für dich?", "Lohnt sich das für Sie?"))}</h2><div class="gegen">${
-        summe != null ? `<div><span>${e(a(an, "Dein Schutz", "Ihr Schutz"))}</span><b>rund ${eur(summe / 30)}</b><span>am Tag</span></div>` : ""
-      }<div class="schaden"><span>${e(b.szene)}</span><b>${e(b.ohne)}</b></div></div>${punkte2([
-        ...(kleinste != null && summe != null && kleinste < summe - 0.5
-          ? [a(an, `Die kleinste Stufe je Versicherung kostet zusammen ${eur(kleinste)} im Monat.`, `Die kleinste Stufe je Versicherung kostet zusammen ${eur(kleinste)} im Monat.`)]
-          : []),
-        a(an, "Bausteine, die du nicht brauchst, lassen wir weg.", "Bausteine, die Sie nicht brauchen, lassen wir weg."),
-      ])}`,
-      a(an, "Was wäre für dich ein guter Beitrag?", "Was wäre für Sie ein guter Beitrag?"),
-      "Nicht verteidigen. Fragen, welcher Beitrag passt, und gemeinsam eine kleinere Stufe oder weniger Bausteine anschauen.",
-    ),
-    folie(
-      "einwand-nachdenken",
-      EINWAND_MENUE["einwand-nachdenken"],
-      `<h2>${e(a(an, "In Ruhe entscheiden", "In Ruhe entscheiden"))}</h2>${punkte2([
-        a(an, "Was ist noch offen: die Leistung, der Beitrag oder der Zeitpunkt?", "Was ist noch offen: die Leistung, der Beitrag oder der Zeitpunkt?"),
-        a(an, "Alles bekommst du per Link zum Nachlesen.", "Alles bekommen Sie per Link zum Nachlesen."),
-        a(an, "Nach dem Abschluss hast du 14 Tage Widerrufsrecht, ohne Angabe von Gründen.", "Nach dem Abschluss haben Sie 14 Tage Widerrufsrecht, ohne Angabe von Gründen."),
-      ])}`,
-      a(an, "Was genau möchtest du dir noch überlegen?", "Was genau möchten Sie sich noch überlegen?"),
-      "Den offenen Punkt finden und gleich klären. Bleibt es beim Nachdenken: Link schicken und einen festen Rückruftermin ausmachen.",
-    ),
-    folie(
-      "einwand-vorhanden",
-      EINWAND_MENUE["einwand-vorhanden"],
-      `<h2>${e(a(an, "Du bist schon versichert?", "Sie sind schon versichert?"))}</h2>${punkte2([
-        a(an, "Wir vergleichen deinen Vertrag Punkt für Punkt mit dem neuen.", "Wir vergleichen Ihren Vertrag Punkt für Punkt mit dem neuen."),
-        a(an, "Lohnt sich ein Wechsel nicht, sagen wir dir das.", "Lohnt sich ein Wechsel nicht, sagen wir Ihnen das."),
-        a(an, "Wechselst du, beginnt der neue Schutz, wenn der alte endet. Bei der Kündigung helfen wir.", "Wechseln Sie, beginnt der neue Schutz, wenn der alte endet. Bei der Kündigung helfen wir."),
-      ])}`,
-      a(an, "Was steht in deinem bisherigen Vertrag?", "Was steht in Ihrem bisherigen Vertrag?"),
-      "Police zeigen lassen oder Daten aufnehmen. Ehrlich bleiben: Ist der alte Vertrag gleich gut, nicht wechseln lassen.",
-    ),
-    folie(
-      "einwand-partner",
-      EINWAND_MENUE["einwand-partner"],
-      `<h2>${e(a(an, "Gemeinsam entscheiden", "Gemeinsam entscheiden"))}</h2>${punkte2([
-        a(an, "Du bekommst den Link mit allen Folien zum Zeigen.", "Sie bekommen den Link mit allen Folien zum Zeigen."),
-        a(an, "Gern erklären wir es euch auch zu zweit, in einem kurzen Termin.", "Gern erklären wir es Ihnen auch zu zweit, in einem kurzen Termin."),
-      ])}`,
-      a(an, "Wann passt es euch beiden?", "Wann passt es Ihnen beiden?"),
-      "Fragen, was der Partner wissen möchte, und gleich einen kurzen Termin zu zweit vorschlagen.",
-    ),
-  ];
-}
+// Einwände (Ole, 21.11.2026): keine Folien mehr, stattdessen ein Merkblatt für den Vermittler zum Auswendiglernen
+// (public/anleitung/einwand-merkblatt.pdf, Quelle tools/merkblatt/, Knopf „Einwände“ auf der Präsentationsseite).
 
 /** Alle Folien als HTML-Dokument (PDF, Querformat 1280×720 je Seite); eingepasst wie in der Ansicht. */
 export function praesentationHtml(fs: Folie[], m: Marke, titel: string): string {

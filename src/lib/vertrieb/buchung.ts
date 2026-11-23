@@ -17,7 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { adapterFor, findFreeCalendar, SlotBusyError, suggestSlots, type Slot } from "@/lib/calendar";
 import { berlinAt, loadLeadTimes, timesForDay } from "@/lib/calendar/lead-times";
 import { addDaysYmd, berlinYmd, weekdayOfYmd } from "@/lib/absence";
-import { getAppUrl, sendCustomerMail } from "@/lib/email";
+import { getAppUrl, sendCustomerMail, type CustomerMailOpts } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
@@ -29,6 +29,8 @@ import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
 import { anredeZeile } from "@/lib/ansprache";
 import { PROVIDER } from "@/lib/legal-texts";
 import { legalUrls } from "@/lib/offers";
+import { AB_TERMIN, vorabFrageTermin } from "@/lib/vertrieb/ab-tests";
+import { fassung, zuteilungMerken } from "@/lib/vertrieb/ab-tests-server";
 import type { SalesBookingType } from "@/generated/prisma/client";
 
 /** Interner Mandant, an dem der Vertriebskalender hängt (Migration 20261118705300). */
@@ -204,6 +206,15 @@ export const typeKeys = (t: Pick<SalesBookingType, "calendarKeys">): string[] =>
 /** Ist mindestens ein Kalender des Termintyps verbunden? */
 export async function bookingReady(t: SalesBookingType): Promise<boolean> {
   if (!t.active) return false;
+  return calendarReady(t);
+}
+
+/**
+ * Kalender des Termintyps verbunden? (Admins buchen auch Typen, die nicht online buchbar sind.) Reicht zum Verschieben eines schon gebuchten Termins (Ole, 23.11.2026): Ein nicht
+ * öffentlich buchbarer Typ (z. B. Entscheidungs-Call, nur per persönlichem Link bzw. vom Admin gebucht) muss sich
+ * trotzdem verschieben lassen; vorher zeigte die Seite Zeiten und meldete beim Bestätigen „Etwas ist schiefgelaufen“.
+ */
+export async function calendarReady(t: SalesBookingType): Promise<boolean> {
   const conn = await prisma.calendarConnection.findUnique({ where: { customerId: typeKeys(t)[0] }, select: { status: true } });
   return conn?.status === "connected";
 }
@@ -606,7 +617,7 @@ async function deleteCalendarEvent(m: { calendarKey: string | null; calendarEven
   }
 }
 
-export type ChangeResult = { ok: true; token: string } | { ok: false; error: "not_found" | "closed" | "slot" | "taken" | "error" };
+export type ChangeResult = { ok: true; token: string } | { ok: false; error: "not_found" | "closed" | "slot" | "taken" | "unavailable" | "error" };
 
 /** Absagen per Link (oder vom Team). Termin im Kalender löschen, CRM nachziehen, Mail und Push. */
 export async function cancelSalesMeeting(token: string, opts: { reason?: string | null; by?: "invitee" | "team" } = {}): Promise<ChangeResult> {
@@ -640,7 +651,7 @@ export async function rescheduleSalesMeeting(token: string, start: Date, now = n
   if (!m) return { ok: false, error: "not_found" };
   if (!isOpenMeeting(m, now)) return { ok: false, error: "closed" };
   const t = m.bookingType ?? (await loadBookingType(null));
-  if (!t || !(await bookingReady(t))) return { ok: false, error: "error" };
+  if (!t || !(await calendarReady(t))) return { ok: false, error: "unavailable" };
   if (!(await isBookableStart(t, start, now))) return { ok: false, error: "slot" };
   return moveMeeting(m, t, start, false);
 }
@@ -727,12 +738,6 @@ export type AdminResult =
   | { ok: true; meetingId: string; manageToken: string }
   | { ok: false; error: "not_found" | "closed" | "unavailable" | "past" | "email" | "error" }
   | { ok: false; error: "conflict"; conflicts: Conflict[] };
-
-/** Ist der Kalender des Termintyps verbunden? (Admins buchen auch Typen, die nicht online buchbar sind.) */
-async function calendarReady(t: SalesBookingType): Promise<boolean> {
-  const conn = await prisma.calendarConnection.findUnique({ where: { customerId: typeKeys(t)[0] }, select: { status: true } });
-  return conn?.status === "connected";
-}
 
 /** Admin bucht für einen Vertriebskontakt: Datum und Uhrzeit frei, auch außerhalb der freien Zeiten. */
 export async function adminBookSalesMeeting(opts: {
@@ -834,7 +839,7 @@ function inputFromMeeting(m: { inviteeName: string | null; inviteeEmail: string 
 
 export type InviteeMailKind = "booked" | "rescheduled" | "cancelled" | "reminder" | "soon";
 
-type MailMeeting = {
+export type MailMeeting = {
   title: string;
   startAt: Date;
   joinUrl: string | null;
@@ -846,6 +851,11 @@ type MailMeeting = {
   byTeam?: boolean;
   /** Vertragsbedingungen vorab (Sales-Call, Ole 19.11.2026): Links auf AGB und AVV in der Bestätigung */
   vertrag?: { agb: string | null; avv: string | null } | null;
+  /**
+   * A/B-Test vertrieb_termin_vorabfrage (lib/vertrieb/ab-tests.ts), Fassung B der Erinnerung 24 Stunden vorher:
+   * Vorab-Frage nach der wichtigsten Frage fürs Gespräch. Hypothese: Wer vorab etwas investiert, erscheint öfter.
+   */
+  vorabFrage?: boolean;
 };
 
 /** Inhalt der Mail (rein, für Tests). Sie-Form, keine Gedankenstriche. */
@@ -870,7 +880,13 @@ export function inviteeMailContent(kind: InviteeMailKind, m: MailMeeting) {
     case "rescheduled":
       return { subject: `Neuer Termin mit performancegrowth: ${w}`, greeting, paragraphs: [`Ihr Termin wurde verschoben. Neue Zeit: ${w}.`, how], button: manage, extra: null };
     case "reminder":
-      return { subject: `Erinnerung: Ihr ${m.title} am ${w}`, greeting, paragraphs: [`kurze Erinnerung an Ihren ${m.title}: ${w}.`, how], button: manage, extra: null };
+      return {
+        subject: `Erinnerung: Ihr ${m.title} am ${w}`,
+        greeting,
+        paragraphs: [`kurze Erinnerung: Ihr ${m.title} ist am ${w}.`, how, ...(m.vorabFrage ? [vorabFrageTermin()] : [])],
+        button: manage,
+        extra: null,
+      };
     case "soon":
       return {
         subject: `Gleich geht es los: Ihr Termin um ${timeOf(m.startAt)} Uhr`,
@@ -893,48 +909,66 @@ export function inviteeMailContent(kind: InviteeMailKind, m: MailMeeting) {
 const escapeHtml = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** Mail senden; Fehler werden gemeldet, nie geworfen. */
-export async function sendInviteeMail(meetingId: string, kind: InviteeMailKind): Promise<boolean> {
-  try {
-    const m = await prisma.salesMeeting.findUnique({
-      where: { id: meetingId },
-      select: {
-        title: true,
-        startAt: true,
-        joinUrl: true,
-        inviteeName: true,
-        inviteeEmail: true,
-        manageToken: true,
-        utmSource: true,
-        bookingType: { select: { confirmText: true, thanksPage: true, slug: true } },
-      },
-    });
-    if (!m?.inviteeEmail || !m.manageToken) return false;
-    // Beratungsgespräch: Vertragsbedingungen vorab mitschicken, damit im Termin direkt beauftragt werden kann
-    const vertragUrls = m.bookingType?.slug === SALES_CALL_BOOKING_TYPE ? legalUrls() : null;
-    const c = inviteeMailContent(kind, {
+/** Mail an den Interessenten (Empfänger und Inhalt), gemeinsam für Versand und Vorschau. null: keine Mail möglich. */
+export async function inviteeMailOpts(meetingId: string, kind: InviteeMailKind): Promise<CustomerMailOpts | null> {
+  const m = await prisma.salesMeeting.findUnique({
+    where: { id: meetingId },
+    select: {
+      title: true,
+      startAt: true,
+      joinUrl: true,
+      inviteeName: true,
+      inviteeEmail: true,
+      manageToken: true,
+      utmSource: true,
+      bookingType: { select: { confirmText: true, thanksPage: true, slug: true } },
+    },
+  });
+  if (!m?.inviteeEmail || !m.manageToken) return null;
+  // A/B-Test der Erinnerung 24 Stunden vorher: Fassung lesen, Zuteilung erst nach dem Versand (sendInviteeMail)
+  const vorabFrage = kind === "reminder" && (await fassung(AB_TERMIN, meetingId)) === "b";
+  // Beratungsgespräch: Vertragsbedingungen vorab mitschicken, damit im Termin direkt beauftragt werden kann
+  const vertragUrls = m.bookingType?.slug === SALES_CALL_BOOKING_TYPE ? legalUrls() : null;
+  return {
+    to: m.inviteeEmail,
+    ...inviteeMail(kind, {
       ...m,
       manageToken: m.manageToken,
       confirmText: m.bookingType?.confirmText,
       thanksPage: m.bookingType?.thanksPage,
       byTeam: m.utmSource === "admin",
       vertrag: vertragUrls ? { agb: vertragUrls.termsUrl, avv: vertragUrls.dpaUrl } : null,
-    });
-    const links = [...(c.extra ? [c.extra] : []), ...(("vertrag" in c && c.vertrag) || [])];
-    const res = await sendCustomerMail({
-      to: m.inviteeEmail,
-      subject: c.subject,
-      greeting: c.greeting,
-      paragraphs: c.paragraphs,
-      button: c.button,
-      ...(links.length
-        ? {
-            html: links.map((l) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6"><a href="${l.url}" style="color:#2563eb">${escapeHtml(l.label)}</a></p>`).join(""),
-            textBlocks: links.map((l) => `${l.label}: ${l.url}`),
-          }
-        : {}),
-      signature: "Ole Kannapinn\nperformancegrowth",
-    });
+      vorabFrage,
+    }),
+  };
+}
+
+/** Mail an den Interessenten ohne Empfänger (rein, auch für die Vorlagen-Übersicht mit Beispieldaten). */
+export function inviteeMail(kind: InviteeMailKind, m: MailMeeting): Omit<CustomerMailOpts, "to"> {
+  const c = inviteeMailContent(kind, m);
+  const links = [...(c.extra ? [c.extra] : []), ...(("vertrag" in c && c.vertrag) || [])];
+  return {
+    subject: c.subject,
+    greeting: c.greeting,
+    paragraphs: c.paragraphs,
+    button: c.button,
+    ...(links.length
+      ? {
+          html: links.map((l) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6"><a href="${l.url}" style="color:#2563eb">${escapeHtml(l.label)}</a></p>`).join(""),
+          textBlocks: links.map((l) => `${l.label}: ${l.url}`),
+        }
+      : {}),
+    signature: "Ole Kannapinn\nperformancegrowth",
+  };
+}
+
+export async function sendInviteeMail(meetingId: string, kind: InviteeMailKind): Promise<boolean> {
+  try {
+    const opts = await inviteeMailOpts(meetingId, kind);
+    if (!opts) return false;
+    const res = await sendCustomerMail(opts);
     if (!res.ok) console.warn(`[vertrieb-buchung mail] ${kind} ${meetingId}: ${res.error}`);
+    else if (kind === "reminder") await zuteilungMerken(AB_TERMIN, meetingId);
     return res.ok;
   } catch (err) {
     reportError(err, "vertrieb-buchung-mail", { meeting: meetingId, kind });

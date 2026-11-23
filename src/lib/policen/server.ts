@@ -21,6 +21,7 @@
 // ablegen, aber erst nach der Prüfung anbieten), Öffnen nur mit Zwei-Faktor-Login (AVV § 5), jede Löschung im
 // Löschprotokoll (lib/loeschprotokoll.ts), eigener Datenschlüssel je Datei (Crypto-Shredding, ablage.ts Format 2).
 
+import { dokumentArt, erkanntePolicen, kfzStand, texterkennungAn, unterlageText, unterlagenSparte } from "@/lib/policen/texterkennung";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { decryptBytes, decryptSecret } from "@/lib/encryption";
@@ -149,7 +150,22 @@ export async function policenBitteFuerChat(conversationId: string): Promise<impo
   if (!chat || chat.minderjaehrig) return null;
   const sp = await sprecher(chat);
   const { policenBitte } = await import("@/lib/policen/bitte");
-  return policenBitte(sp);
+  // Beispiele aus den genannten Verträgen statt „Haftpflicht, Hausrat oder Kfz“ (die der Lead evtl. gar nicht hat)
+  const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { vorvertraege: true, source: true } });
+  // Kfz-Lead: konkret Fahrzeugschein und letzte Rechnung (Ole, 21.11.2026)
+  const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
+  if (istKfzProdukt(lead?.source)) {
+    // Andere Policen nur mit Komplettcheck Ja bzw. genannten Verträgen, ohne Kfz (Ole, 22.11.2026)
+    const { andereVertraege } = await import("@/lib/policen/andere-policen");
+    const termin = await prisma.appointment.findFirst({ where: { leadId: chat.leadId, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { komplettcheck: true } });
+    const vertraege = andereVertraege(lead?.vorvertraege ?? null, { source: lead?.source, kfz: true, gesundheitAn: sp.gesundheitAn });
+    return policenBitte({ ...sp, kfz: true, vertraege, komplettcheck: termin?.komplettcheck ?? null });
+  }
+  // Übrige Produkte (Ole, 22.11.2026): wie bei Kfz mit Gesellschaft („Haftpflicht bei der Allianz“), hier mit dem
+  // angefragten Produkt (Bitte um alle Policen), ohne „Sonstige“ und Gesundheitssparten ohne Freigabe
+  const { andereVertraege } = await import("@/lib/policen/andere-policen");
+  const vertraege = andereVertraege(lead?.vorvertraege ?? null, { source: lead?.source, gesundheitAn: sp.gesundheitAn, mitAngefragt: true, max: 4 });
+  return policenBitte({ ...sp, vertraege });
 }
 
 /** Chat und Sprecher für die Policen-Strecke v2 (lib/policen/flow/server.ts). null = kein Lead-Chat. */
@@ -562,7 +578,8 @@ async function speichere(
   await setzeBody(x.messageId, CHAT_HINWEIS);
   // Verlauf und Push ohne Dateinamen (A7)
   await logLeadHistory(chat.leadId, "dokument", "Dokument per WhatsApp erhalten (mit Einwilligung)", { customerId: chat.customerId, userId: null });
-  const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { name: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { name: true, source: true } });
+  await kfzFotoVermerken(chat.id, lead?.source ?? null).catch(() => logFehler("kfz-foto", null));
   const { notifyLeadPush } = await import("@/lib/team");
   await notifyLeadPush(chat.leadId, {
     title: `Neue Unterlagen von ${lead?.name?.trim() || "Ihrem Kontakt"}`,
@@ -571,6 +588,25 @@ async function speichere(
     url: `/buyer/leads/${chat.leadId}#dokumente`,
   }).catch(() => null);
   return doc.id;
+}
+
+/** Vermerk in den Angaben, wenn ein Kfz-Lead Unterlagen geschickt hat (rein). */
+export const KFZ_FOTO_VERMERK = "laut Foto (Unterlagen im Kontakt)";
+
+/**
+ * Kfz-Lead hat Unterlagen geschickt (Ole, 21.11.2026): Fahrzeug und bisherige Kfz-Versicherung gelten als bekannt, damit
+ * der Assistent nicht noch einmal nach Schlüsselnummern und SF-Klasse fragt. Werte stehen nach dem Auslesen auf der
+ * Vertragsseite. Bereits genannte Angaben bleiben unverändert.
+ */
+async function kfzFotoVermerken(conversationId: string, source: string | null): Promise<void> {
+  const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
+  if (!istKfzProdukt(source)) return;
+  const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { qualificationData: true } });
+  const { cleanQualificationData, mergeQualificationData } = await import("@/lib/whatsapp/qualification");
+  const bisher = cleanQualificationData(conv?.qualificationData);
+  const neu = { ...(bisher.fahrzeug ? {} : { fahrzeug: KFZ_FOTO_VERMERK }), ...(bisher.vorversicherung ? {} : { vorversicherung: KFZ_FOTO_VERMERK }) };
+  if (!Object.keys(neu).length) return;
+  await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: mergeQualificationData(bisher, neu) ?? undefined } });
 }
 
 type Antwort = { kind: string; text: string | null; payload: string | null; waMessageId?: string | null; frageWaMessageId?: string | null };
@@ -913,6 +949,11 @@ export async function handleFlowAntwort(o: {
     if (vorher?.ki !== false || geloescht) await audit("policen.ohne_ki", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { geloescht, quelle: "formular" }, actor: { role: "lead" } });
   }
 
+  // Mit KI-Einwilligung: jede Datei lokal per Texterkennung einordnen (Fahrzeugschein, Kfz-Police, Sparte anderer
+  // Policen), damit die Bestätigung sagt, was da ist bzw. noch fehlt, und das Auslesen auch Fotos zuordnen kann
+  // (Ole, 22.11.2026: für alle Leads; lib/policen/texterkennung.ts, kein Drittanbieter)
+  const fc = await flow.flowChat(chat.id, now).catch(() => null);
+  const ocr = ki && texterkennungAn();
   // Dateien laden, prüfen, ablegen
   let ok = 0;
   let virus = 0;
@@ -964,6 +1005,11 @@ export async function handleFlowAntwort(o: {
       return null;
     });
     if (id) ok++;
+    if (id && ocr) {
+      const e = dokumentArt(await unterlageText(dl.data, typ).catch(() => ""));
+      const sp = e && !sparte ? unterlagenSparte(e.sparte) : null;
+      if (e) await prisma.leadDocument.update({ where: { id }, data: { dokumentArt: e.art, ...(sp ? { sparte: sp } : {}) } }).catch((x) => logFehler("dokumentart", x));
+    }
     await mediaWeg(chat.customerId, [d.id], apiKey);
   }
   await setzeBody(o.messageId, `Formular „Policen senden“: ${ok === 1 ? "1 Dokument" : `${ok} Dokumente`} für den Vermittler`);
@@ -973,8 +1019,11 @@ export async function handleFlowAntwort(o: {
   if (fehler || !antwort.dateien.length) console.error("[policen formular] aufbau", formularAufbau(o.responseJson));
 
   if (o.botErlaubt) {
-    const c = await flow.flowChat(chat.id, now).catch(() => null);
-    if (ok && c) await flow.sendeBestaetigung(chat.id, bestaetigung(c.text, ok, ki), now).catch((e) => logFehler("bestätigung", e));
+    const c = fc;
+    const docs = ok && ocr ? await prisma.leadDocument.findMany({ where: { leadId: chat.leadId, status: "gespeichert" }, select: { dokumentArt: true, sparte: true } }) : [];
+    const stand = ok && ocr && c?.text.kfz ? kfzStand(docs.map((d) => d.dokumentArt)) : null;
+    const erkannt = ok && ocr ? erkanntePolicen(docs.map((d) => d.sparte), { ohneKfz: !!c?.text.kfz }) : [];
+    if (ok && c) await flow.sendeBestaetigung(chat.id, bestaetigung(c.text, ok, ki, stand, erkannt), now).catch((e) => logFehler("bestätigung", e));
     if (virus) await antworte(virenText(an));
     else if (spaeter) await antworte(spaeterText(an));
     else if (gesundheit) await antworte(gesundheitAusText(an, person));

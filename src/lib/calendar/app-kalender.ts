@@ -9,7 +9,8 @@
 
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import type { Busy, CreatedEvent, NewEvent } from "@/lib/calendar/tokens";
+import type { Prisma } from "@/generated/prisma/client";
+import { userIdOfKey, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export const APP_PROVIDER = "app";
 const ID_PREFIX = "app:";
@@ -82,8 +83,29 @@ const seqNow = () => Math.max(1, Math.floor((Date.now() - Date.UTC(2026, 0, 1)) 
 const fmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
 
-/** Adressen für die Einladung: übergebene (Berater-Adresse), sonst die Logins des Kunden. */
-async function empfaenger(customerId: string, attendees: string[]): Promise<string[]> {
+/**
+ * Einladungsadresse eines Beraters mit eigenem App-Kalender (Schlüssel user:<id>, 21.11.2026): die hinterlegte Adresse
+ * (AdvisorCalendar.accountEmail, z. B. Allianz-Mail), sonst seine Login-Adresse.
+ */
+export async function beraterEinladungsAdresse(userId: string): Promise<string | null> {
+  const [cal, user] = await Promise.all([
+    prisma.advisorCalendar.findUnique({ where: { userId }, select: { accountEmail: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+  ]);
+  return (cal?.accountEmail?.trim() || user?.email?.trim() || "").toLowerCase() || null;
+}
+
+/**
+ * Adressen für die Einladung: Berater-Kalender (user:<id>) immer an dessen Adresse; Agentur-Kalender an die übergebene
+ * (Berater-Adresse der Agentur), sonst an die Logins des Kunden.
+ */
+async function empfaenger(key: string, attendees: string[]): Promise<string[]> {
+  const userId = userIdOfKey(key);
+  if (userId) {
+    const a = await beraterEinladungsAdresse(userId);
+    return a ? [a] : [];
+  }
+  const customerId = key;
   const own = attendees.map((a) => a.trim().toLowerCase()).filter(Boolean);
   if (own.length) return [...new Set(own)];
   const users = await prisma.user.findMany({ where: { customerId, role: "BUYER" }, select: { email: true }, orderBy: { createdAt: "asc" }, take: 3 });
@@ -112,11 +134,68 @@ async function sendeEinladung(customerId: string, e: Omit<EinladungIcs, "organiz
   if (!res.ok) console.warn(`[app-kalender] Einladung nicht gesendet (${customerId}): ${res.error}`);
 }
 
-/** Belegt = gebuchte Termine der App (ohne abgesagte). */
-export async function appBusy(customerId: string, min: Date, max: Date): Promise<Busy[]> {
+/** Absender der Einladungen (E-Mail „From“), den eine Firmen-IT zulassen muss. (rein) */
+export function einladungAbsender(env: Record<string, string | undefined> = process.env): string {
+  const raw = env.OFFER_EMAIL_FROM ?? env.RESEND_FROM ?? "";
+  const m = raw.match(/<([^>]+)>/) ?? raw.match(/([^\s<>]+@[^\s<>]+)/);
+  return (m?.[1] ?? organizerEmail(env)).trim();
+}
+
+/**
+ * Test-Einladung an dieselbe Adresse wie echte Termine (Go-live-Prüfung 20./21.11.2026: Konzernpostfächer wie bei der
+ * Allianz filtern die Einladungen oft, dann fehlen Termine unbemerkt). Gleicher Weg wie sendeEinladung, mit Ergebnis.
+ */
+export async function sendeTestEinladung(customerId: string): Promise<{ ok: true; to: string } | { ok: false; error: string }> {
+  const agent = await prisma.agentConfig.findUnique({ where: { customerId }, select: { advisorEmail: true } });
+  const advisor = agent?.advisorEmail?.trim().toLowerCase();
+  const to = await empfaenger(customerId, advisor ? [advisor] : []);
+  if (!to.length) return { ok: false, error: "Keine E-Mail-Adresse für Einladungen hinterlegt." };
+  const start = new Date(Date.now() + 24 * 3600_000);
+  start.setUTCMinutes(0, 0, 0);
+  const end = new Date(start.getTime() + 15 * 60_000);
+  const ics = einladungIcs({
+    uid: `test-${randomBytes(8).toString("hex")}@terminbuchung`,
+    method: "REQUEST",
+    sequence: 0,
+    start,
+    end,
+    summary: "Test: Termineinladung",
+    description: "Nur ein Test. Sie müssen nichts annehmen.",
+    location: null,
+    organizer: organizerEmail(),
+    attendees: to,
+  });
+  const { sendCustomerMail } = await import("@/lib/email");
+  const res = await sendCustomerMail({
+    to,
+    subject: "Test: So kommen Ihre Termine an",
+    greeting: "Guten Tag,",
+    paragraphs: ["das ist eine Test-Einladung. So kommen künftig Ihre Termine an. Sie müssen sie nicht annehmen. Bitte bestätigen Sie in der Einrichtung, dass sie angekommen ist."],
+    attachments: [{ filename: "termin.ics", content: Buffer.from(ics, "utf8"), contentType: "text/calendar; charset=utf-8; method=REQUEST" }],
+    replyTo: null,
+  });
+  return res.ok ? { ok: true, to: to[0] } : { ok: false, error: "Die Test-Einladung ließ sich gerade nicht schicken. Bitte gleich noch einmal versuchen." };
+}
+
+/**
+ * Welche Termine belegen diesen App-Kalender? (rein, getestet)
+ * - Agentur (customerId): nur Termine im Agentur-Kalender (calendarKey leer). Termine in eigenen Kalendern der Berater
+ *   (calendarKey user:<id>) belegen die Agentur nicht; früher zählten sie mit (Ole, 21.11.2026).
+ * - Berater (user:<id>): seine Termine (calendarKey = Schlüssel) und Termine im Agentur-Kalender für seine Leads
+ *   (z. B. gebucht, bevor er seinen Kalender eingerichtet hatte, oder von Hand eingetragen). Lieber einmal zu viel belegt
+ *   als doppelt gebucht.
+ */
+export function appBusyFilter(key: string): Prisma.AppointmentWhereInput {
+  const userId = userIdOfKey(key);
+  if (userId) return { OR: [{ calendarKey: key }, { calendarKey: null, lead: { assignedUserId: userId } }] };
+  return { customerId: key, calendarKey: null };
+}
+
+/** Belegt = gebuchte Termine der App (ohne abgesagte) für diesen Kalender-Schlüssel. */
+export async function appBusy(key: string, min: Date, max: Date): Promise<Busy[]> {
   const rows = await prisma.appointment.findMany({
     // Ende kann fehlen (Altfälle): dann 30 Min.; Termine bis 4 Std. vor min reichen hinein
-    where: { customerId, status: { not: "cancelled" }, startsAt: { lt: max, gt: new Date(min.getTime() - 4 * 3600_000) } },
+    where: { ...appBusyFilter(key), status: { not: "cancelled" }, startsAt: { lt: max, gt: new Date(min.getTime() - 4 * 3600_000) } },
     select: { startsAt: true, endsAt: true },
   });
   return rows
@@ -138,11 +217,49 @@ export async function appCreateEvent(customerId: string, ev: NewEvent): Promise<
 async function terminZu(eventId: string) {
   return prisma.appointment.findFirst({
     where: { OR: [{ calendarEventId: eventId }, { advisorEventId: eventId }] },
-    select: { customerId: true, startsAt: true, endsAt: true, meetUrl: true, mode: true, ort: true },
+    select: { customerId: true, calendarKey: true, startsAt: true, endsAt: true, meetUrl: true, mode: true, ort: true, leadId: true, conversationId: true, bookedVia: true },
   });
 }
 
+type TerminZeile = NonNullable<Awaited<ReturnType<typeof terminZu>>>;
+
+/**
+ * Titel und Beschreibung wie bei der Buchung (lib/whatsapp/event-text.ts). Eine Aktualisierung (gleiche UID) ersetzt
+ * den Eintrag in Outlook ganz; ohne das stand nach Verschieben oder neuer Dauer nur noch „Beratungstermin“ ohne Namen
+ * (Ole, 21.11.2026, Allianz-Kalender).
+ */
+export async function eintragText(t: Omit<TerminZeile, "calendarKey"> | null): Promise<{ summary: string; description: string }> {
+  if (!t) return { summary: "Beratungstermin", description: "" };
+  const [lead, conv] = await Promise.all([
+    t.leadId ? prisma.lead.findUnique({ where: { id: t.leadId }, select: { name: true, phone: true, email: true, source: true } }) : null,
+    t.conversationId
+      ? prisma.conversation.findUnique({ where: { id: t.conversationId }, select: { contactName: true, contactPhone: true, contactEmail: true, qualificationSummary: true } })
+      : null,
+  ]);
+  const name = lead?.name?.trim() || conv?.contactName?.trim() || "";
+  if (!name) return { summary: "Beratungstermin", description: "" };
+  const mode = t.mode === "video" || t.mode === "onsite" ? t.mode : "phone";
+  const phone = lead?.phone ?? conv?.contactPhone ?? "";
+  const bookedVia = t.bookedVia === "bot" || t.bookedVia === "advisor" || t.bookedVia === "mail_strecke" ? t.bookedVia : "booking_page";
+  const { eventSummary, buildEventDescription } = await import("@/lib/whatsapp/event-text");
+  return {
+    summary: eventSummary(mode, name, lead?.source ?? null),
+    description: buildEventDescription({
+      name,
+      phone,
+      email: conv?.contactEmail ?? lead?.email ?? null,
+      product: lead?.source ?? null,
+      mode,
+      summary: conv?.qualificationSummary ?? null,
+      conversationId: t.conversationId,
+      bookedVia,
+    }),
+  };
+}
+
 async function beraterAdresse(customerId: string): Promise<string[]> {
+  // Berater-Kalender: empfaenger() nimmt dessen eigene Adresse
+  if (userIdOfKey(customerId)) return [];
   const a = await prisma.agentConfig.findUnique({ where: { customerId }, select: { advisorEmail: true } });
   return a?.advisorEmail?.trim() ? [a.advisorEmail.trim()] : [];
 }
@@ -156,10 +273,13 @@ async function aktualisieren(customerId: string, eventId: string, method: "REQUE
   const e = end ?? t?.endsAt ?? (s ? new Date(s.getTime() + 30 * 60_000) : undefined);
   if (!s || !e) return;
   const location = t?.mode === "video" ? t.meetUrl : t?.mode === "onsite" ? t.ort : null;
+  const text = await eintragText(t);
+  // Kalender des Termins: eigener Kalender eines Beraters (calendarKey) bzw. Agentur
+  const key = t?.calendarKey ?? t?.customerId ?? customerId;
   await sendeEinladung(
-    t?.customerId ?? customerId,
-    { uid: uidOf(eventId), method, sequence: seqNow(), start: s, end: e, summary: "Beratungstermin", description: "", location: location ?? null },
-    await beraterAdresse(t?.customerId ?? customerId),
+    key,
+    { uid: uidOf(eventId), method, sequence: seqNow(), start: s, end: e, ...text, location: location ?? null },
+    await beraterAdresse(key),
   ).catch((err) => console.warn("[app-kalender]", err instanceof Error ? err.message : err));
 }
 

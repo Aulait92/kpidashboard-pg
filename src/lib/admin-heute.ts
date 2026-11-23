@@ -2,6 +2,7 @@
 // was jetzt eine Entscheidung oder Handarbeit braucht, und zeigt daneben,
 // was die App von allein erledigt hat. Nur echte Daten, keine Platzhalter.
 
+import { ADMIN_CHAT_SICHTBAR } from "@/lib/whatsapp/nur-leads";
 import { prisma } from "@/lib/prisma";
 import { REASON_LABEL, type EscalationReason } from "@/lib/support";
 import { HEARTBEAT_MAX_AGE_MIN, type HeartbeatKey } from "@/lib/heartbeat";
@@ -177,7 +178,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     prisma.onboarding.findMany({ where: { status: "running", liveAt: null }, select: { customerId: true, startDate: true, customer: { select: { name: true } } } }),
     prisma.conversation.groupBy({
       by: ["customerId"],
-      where: { needsAttention: true, status: "open", attentionAt: { lt: new Date(now.getTime() - DAY) }, customerId: { not: SUPPORT_CUSTOMER_ID } },
+      where: { needsAttention: true, status: "open", attentionAt: { lt: new Date(now.getTime() - DAY) }, customerId: { not: SUPPORT_CUSTOMER_ID }, AND: [ADMIN_CHAT_SICHTBAR] },
       _count: true,
       _min: { attentionAt: true },
     }),

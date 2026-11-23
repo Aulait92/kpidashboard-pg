@@ -63,7 +63,10 @@ export async function ersteWocheAnlegen(offerId: string, customerId: string, now
   if (nr && !kunde?.vermittlerGeprueftAt) {
     await prisma.customer.update({ where: { id: customerId }, data: { vermittlerRegisterNr: nr, vermittlerRegisterStatus: null } });
   }
-  const { start, end } = weekRange(now, berlinWochenende(now) ? 1 : 0);
+  // Erste Woche zum Starttermin (Ole, 23.11.2026): liegt der Start in der Zukunft, gilt die Bestellung für die Woche
+  // des Starts; abgebucht und geliefert wird erst dann (wartendeFreigeben, Cron).
+  const startAb = offer.startDate && offer.startDate.getTime() > now.getTime() ? offer.startDate : now;
+  const { start, end } = weekRange(startAb, berlinWochenende(startAb) ? 1 : 0);
   const betrag = bestellBetrag({ price: w.price, quantity: w.quantity, credit: 0, steuer: bezugSteuer(sub) });
   const order = await prisma.leadOrder.create({
     data: { subscriptionId: sub.id, periodStart: start, periodEnd: end, quantity: w.quantity, amount: betrag.netto, autoRenew: offer.pplAutoRenew, status: "wartet" },
@@ -101,11 +104,14 @@ export type FreigabeErgebnis = { released: number; waiting: number; failed: numb
  */
 export async function wartendeFreigeben(customerId: string, actor: AuditActor = { role: "system" }, now = new Date()): Promise<FreigabeErgebnis> {
   const orders = await prisma.leadOrder.findMany({
-    where: { status: "wartet", subscription: { customerId, active: true, period: "week" } },
+    // Bestellkonto (lib/ppl/bestellkonto.ts): Prüfung am Hauptkunden gibt auch die Bestellungen seiner Partner frei
+    where: { status: "wartet", subscription: { active: true, period: "week", OR: [{ customerId }, { customer: { bestelltUeberId: customerId } }] } },
     orderBy: { periodStart: "asc" },
   });
   if (!orders.length) return { released: 0, waiting: 0, failed: 0 };
-  const kunde = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, stripeCustomerId: true, vermittlerGeprueftAt: true } });
+  const zahlerFelder = { name: true, stripeCustomerId: true, vermittlerGeprueftAt: true } as const;
+  const konto = await prisma.customer.findUnique({ where: { id: customerId }, select: { ...zahlerFelder, bestelltUeber: { select: zahlerFelder } } });
+  const kunde = konto?.bestelltUeber ?? konto;
   if (!kunde?.vermittlerGeprueftAt) return { released: 0, waiting: orders.length, failed: 0, reason: "Registernummer noch nicht geprüft" };
   const billing = await import("@/lib/billing");
   if (!billing.billingEnabled() || !(await billing.hasPaymentMethod(kunde.stripeCustomerId).catch(() => false))) {
@@ -116,7 +122,13 @@ export async function wartendeFreigeben(customerId: string, actor: AuditActor = 
   const target = weekRange(now, offset);
   let released = 0;
   let failed = 0;
+  let spaeter = 0;
   for (const o of orders) {
+    // Bestellung für eine spätere Startwoche: erst in dieser Woche abbuchen (Ole, 23.11.2026)
+    if (o.periodStart.getTime() > now.getTime() && o.periodStart.getTime() > target.start.getTime()) {
+      spaeter++;
+      continue;
+    }
     if (o.periodStart.getTime() < target.start.getTime()) {
       const clash = await prisma.leadOrder.findUnique({ where: { subscriptionId_periodStart: { subscriptionId: o.subscriptionId, periodStart: target.start } } });
       if (clash && clash.id !== o.id) {
@@ -135,5 +147,20 @@ export async function wartendeFreigeben(customerId: string, actor: AuditActor = 
       await sendToAdmins({ title: `⚠️ Erste Woche nicht abgebucht: ${kunde.name}`, body: r.error, url: bezugAdminPfad(o.subscriptionId) }).catch(() => {});
     }
   }
-  return { released, waiting: 0, failed };
+  return { released, waiting: spaeter, failed, ...(spaeter ? { reason: "Start der ersten Woche liegt in der Zukunft, Abbuchung zum Start" } : {}) };
+}
+
+/**
+ * Im Cron: wartende erste Wochen freigeben, deren Startwoche begonnen hat (Register geprüft, Zahlungsart da).
+ */
+export async function faelligeErsteWochenFreigeben(now = new Date()): Promise<number> {
+  const offen = await prisma.leadOrder.findMany({
+    where: { status: "wartet", periodStart: { lte: now }, subscription: { active: true, period: "week" } },
+    select: { subscription: { select: { customerId: true, customer: { select: { bestelltUeberId: true } } } } },
+    take: 200,
+  });
+  const kunden = [...new Set(offen.map((o) => o.subscription.customer?.bestelltUeberId ?? o.subscription.customerId))];
+  let n = 0;
+  for (const k of kunden) n += (await wartendeFreigeben(k, { role: "system" }, now).catch(() => ({ released: 0 }))).released;
+  return n;
 }

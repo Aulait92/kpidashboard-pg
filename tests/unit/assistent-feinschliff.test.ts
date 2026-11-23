@@ -238,7 +238,7 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
 
   it("Vertragsfrage nach „Ja, gern“ (Sie, Familie, Du)", () => {
     expect(vertragsFrage("sie", false)).toBe(
-      "Super! Welche Versicherungen haben Sie heute schon? Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.",
+      "Super! *Welche Versicherungen haben Sie heute schon?* Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.",
     );
     expect(vertragsFrage("sie", true)).toContain("Welche Versicherungen haben Sie und Ihre Familie heute schon?");
     expect(vertragsFrage("du", false)).toContain("Welche Versicherungen hast du heute schon?");
@@ -332,8 +332,8 @@ describe("Erstanschreiben v9 (vorher v8, seit v10 Rückfall): Text und Parameter
     expect(erstanschreibenV9("outreach").du).toBe("danke für deine Anfrage! *{{2}}?*");
     expect(erstanschreibenV9("outreach_tkv").sie).toBe("schön, dass Sie {{2}} gut absichern möchten 🐾 *{{3}}?*");
     // v10 (Ole, 19.11.2026): feste Frage
-    expect(templateTextFor("outreach_privatschutz", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
-    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*");
+    expect(templateTextFor("outreach_privatschutz", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*");
+    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*");
     expect(templateTextFor("outreach", "du")).toBe("Hallo {{1}}, danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*");
     expect(templateTextFor("outreach_tkv", "sie")).toBe("Hallo {{1}}, schön, dass Sie {{2}} gut absichern möchten 🐾 *Was soll abgesichert sein?*");
   });
@@ -341,7 +341,7 @@ describe("Erstanschreiben v9 (vorher v8, seit v10 Rückfall): Text und Parameter
   it("Beispiel Privatschutz, Sie, Lead ohne Anrede, Formular mit Interesse (v10; v9, wenn bestehende Verträge bekannt sind)", () => {
     const o = { an: "sie" as const, kontakt: { fullName: "Julia Schneider" }, name: "Ole", vermittler: "Herrn Kannapinn", source: "Privatschutz" };
     const t = erstanschreibenText({ ...o, formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }] });
-    expect(t).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! *Ist davon schon etwas versichert?*\n\n_Digitaler KI-Assistent_");
+    expect(t).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*\n\n_Digitaler KI-Assistent_");
     // Formular beantwortet die feste Frage schon: v9 mit der nächsten offenen Frage
     const v9 = erstanschreibenText({ ...o, formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }, { label: "Bereits versichert", value: "nein" }] });
     expect(v9).toBe("Hallo Frau Schneider, danke für Ihre Anfrage zum Privatschutz! *Wer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
@@ -434,7 +434,7 @@ describe("Erstanschreiben v10: Einreichung, Auswahl und Erstinformation (Live-Te
       expect(kopf).toBe(true);
       const req = buildTemplateRequest(purpose, names, undefined, form, { variant, documentExample: "https://x.de/erstinformation/abc/pdf", kopf });
       expect(req.name).toBe(templateNameFor(purpose, undefined, form, variant, kopf));
-      expect(req.name).toMatch(/_v12(_b)?(_sie(_ohne_name)?)?$/);
+      expect(req.name).toMatch(/_v1[23](_b)?(_sie(_ohne_name)?)?$/);
       expect(req.category).toBe("MARKETING");
       const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
       expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);

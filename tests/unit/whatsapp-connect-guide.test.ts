@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  ANBIETER_GUIDE,
+  ANBIETER_OPTION,
   businessCanStart,
-  COEX_QUESTION,
-  COEX_WITH_PROVIDER,
   CONNECT_PATHS,
+  FIRMENGERAET,
   ERROR_HELP,
   GUIDES,
   PATH_OPTIONS,
@@ -12,6 +13,7 @@ import {
   PROVIDER_UNSURE,
   PROVIDER_YES,
   stepsAfterInvite,
+  VORPRUEFUNG_ANBIETER,
 } from "@/lib/whatsapp/connect-guide";
 
 describe("Anleitung WhatsApp verbinden", () => {
@@ -104,29 +106,52 @@ describe("Anleitung WhatsApp verbinden", () => {
     expect(g.intro).toMatch(/Chats bleiben dabei erhalten/);
   });
 
-  it("Business-Weg: anderer Anbieter → selbst starten nur ohne parallele Business-App, sonst Hilfetermin", () => {
-    expect(businessCanStart(null, null)).toBe(false);
-    expect(businessCanStart("nein", null)).toBe(true);
-    expect(businessCanStart("ja", null)).toBe(false);
-    expect(businessCanStart("ja", "nein")).toBe(true);
-    expect(businessCanStart("ja", "ja")).toBe(false);
-    expect(businessCanStart("unklar", null)).toBe(false);
+  it("Business-Weg: Nummer bei anderem Anbieter → erst freigeben, nicht selbst starten (Go-live-Prüfung 22.11.2026)", () => {
+    expect(businessCanStart(null)).toBe(false);
+    expect(businessCanStart("nein")).toBe(true);
+    expect(businessCanStart("ja")).toBe(false);
+    expect(businessCanStart("unklar")).toBe(false);
     expect(PROVIDER_QUESTION.question).toMatch(/Superchat/);
-    expect(PROVIDER_YES).toMatch(/nichts kündigen/);
-    expect(COEX_WITH_PROVIDER).toMatch(/15-Minuten-Hilfetermin/);
+    // früher „vorher nichts kündigen oder löschen“ und direkt starten: widersprach der nötigen Freigabe
+    expect(PROVIDER_YES).not.toMatch(/nichts kündigen/);
+    expect(PROVIDER_YES).toMatch(/zuerst freigeben/);
+    expect(GUIDES.business.steps.map((s) => s.pitfall ?? "").join(" ")).not.toMatch(/wählen Sie „Yes, Business API“/);
+  });
+
+  it("anderer Anbieter: erster Prüfpunkt und eigener Weg mit Freigabe und Hilfetermin", () => {
+    expect(VORPRUEFUNG_ANBIETER).toBe(
+      "Die Nummer ist bei keinem anderen WhatsApp-Anbieter (z. B. Superchat). Sonst lassen Sie sie dort zuerst freigeben, das kann einige Werktage dauern.",
+    );
+    expect(ANBIETER_OPTION.label).toBe("Meine Nummer läuft bei einem anderen Anbieter");
+    // kein eigener Verbindungsweg: ?weg=anbieter startet nichts
+    expect(parseConnectPath("anbieter")).toBeNull();
+    expect(ANBIETER_GUIDE.steps.length).toBeLessThanOrEqual(3);
+    const text = ANBIETER_GUIDE.steps.map((s) => s.text).join(" ");
+    expect(text).toMatch(/freigeben|frei\./);
+    expect(text).toMatch(/15-Minuten-Hilfetermin/);
+    expect(ERROR_HELP.some((e) => /anderen Anbieter/.test(e))).toBe(true);
+  });
+
+  it("Firmengerät: privater Computer in Checkliste (DESKTOP) und Fehlerhilfe", () => {
+    expect(FIRMENGERAET).toMatch(/privaten Computer außerhalb des Firmennetzes/);
+    for (const p of CONNECT_PATHS) expect(GUIDES[p].checklist.some((c) => c.includes(FIRMENGERAET))).toBe(true);
+    expect(ERROR_HELP.some((e) => e.includes(FIRMENGERAET))).toBe(true);
   });
 
   it("keine Gedankenstriche als Stilmittel in den Kundentexten", () => {
     const all = [
       PROVIDER_QUESTION.question,
       PROVIDER_YES,
-      COEX_QUESTION,
-      COEX_WITH_PROVIDER,
+      VORPRUEFUNG_ANBIETER,
+      ANBIETER_OPTION.label,
+      ANBIETER_OPTION.hint,
+      ANBIETER_GUIDE.intro,
+      ...ANBIETER_GUIDE.steps.flatMap((s) => [s.title, s.text]),
       ...PROVIDER_UNSURE,
       ...PATH_OPTIONS.flatMap((o) => [o.label, o.hint]),
       ...CONNECT_PATHS.flatMap((p) => [GUIDES[p].intro, ...GUIDES[p].checklist, ...GUIDES[p].steps.flatMap((s) => [s.title, s.text, s.pitfall ?? ""])]),
       ...ERROR_HELP,
     ];
-    for (const t of all) expect(t).not.toMatch(/ – /);
+    for (const t of all) expect(t).not.toMatch(/[–—]/);
   });
 });

@@ -60,9 +60,26 @@ kein grauer Tipp-Blitz, Knöpfe geben beim Drücken leicht nach (97 %).
 
 ### Bekannte Grenzen
 
-- **„Mit Google/Microsoft anmelden“ ist in der App ausgeblendet** – Google erlaubt
-  keine Anmeldung in eingebetteten Ansichten. Anmeldung in der App mit E-Mail +
-  Passwort.
+- **„Mit Google/Microsoft anmelden“ läuft in der App über den System-Browser**
+  (Ole, 23.11.2026) – Google erlaubt keine Anmeldung in eingebetteten Ansichten.
+  Ablauf: Knopf öffnet `/api/auth/<anbieter>/start?app=1` im System-Browser
+  (In-App-Safari bzw. Chrome Custom Tab). Das App-Kennzeichen steht nur im
+  signierten SSO-Status-Cookie. Der Callback setzt dann **keine** Sitzung im
+  Browser, sondern erzeugt einen Einmal-Code (Tabelle `AppHandoff`, Zweck
+  `app-sso:<anbieter>`, an den Login gebunden, gehasht, 5 Minuten, einmalig) und
+  leitet auf `performancegrowth://login?code=…` (Fehler: `?fehler=…`). Die App
+  fängt das ab (App-Plugin `appUrlOpen`, `src/lib/native-bridge.ts`), schließt den
+  Browser und öffnet `/api/app/login-handoff?code=…` in der App-Ansicht. Dort wird
+  der Code eingelöst und wie beim normalen Google/Microsoft-Login angemeldet
+  (2FA-Schritt, falls das Gerät nicht vertraut ist), weiter nach `/buyer` bzw. zur
+  Admin-Startseite. Code: `src/lib/app-handoff.ts`, Tests
+  `tests/unit/app-sso-login.test.ts`.
+  **Braucht einen neuen App-Build** (URL-Schema `performancegrowth` in
+  `mobile/ios/App/App/Info.plist` und `mobile/android/app/src/main/AndroidManifest.xml`).
+  In älteren App-Versionen landet man nach der Anmeldung im System-Browser und
+  kommt nicht zurück; dort weiter mit E-Mail + Passwort anmelden. Nach dem Build auf
+  echten Geräten prüfen: iOS fragt ggf. „In ‚performancegrowth‘ öffnen?“; wurde die
+  App währenddessen vom System beendet, kommt der Rücksprung nicht an (erneut tippen).
 - **Kalender verbinden** öffnet im System-Browser (Safari/Chrome) mit einem
   Einmal-Link (5 Minuten gültig, nur einmal nutzbar). Nach dem Verbinden zurück in
   die App wechseln – die Seite lädt sich beim Zurückkehren neu.
@@ -72,6 +89,24 @@ kein grauer Tipp-Blitz, Knöpfe geben beim Drücken leicht nach (97 %).
 - Der Admin-Bereich funktioniert in der App ebenfalls, ist aber nicht das Ziel.
 - In dieser Umgebung gibt es weder Xcode noch Android-SDK: gebaut wird nur in
   Codemagic.
+
+## Apple-Developer-Konto der UG (23.11.2026)
+
+- D-U-N-S-Nummer: **313591176** (Ole Kannapinn UG (haftungsbeschränkt), Lorenzstr. 58, 12209 Berlin).
+- Apples Antragsformular nimmt kein ä/ß (löscht es stillschweigend). Funktioniert hat `Ole Kannapinn UG (haftungsbeschrankt)`
+  (ä → a); „haftungsbeschraenkt“ wird als „passt nicht zum D&B-Profil“ abgelehnt. Adresse übernimmt Apple aus D&B
+  (`Lorenzstr. 58`). Antrag am 23.11.2026 abgeschickt, Enrollment-ID **PLB247QF64** (in Prüfung: Apple bestätigt die
+  Unterschriftsberechtigung, meist per Anruf, dann Mail mit den nächsten Schritten und der Gebühr).
+
+## Stand Einrichtung (23.11.2026)
+
+- Apple-Konto freigeschaltet, Team ID `JUGFRKCVL4`.
+- App ID `de.performancegrowth.app` mit Push Notifications angelegt.
+- APNs-Schlüssel „performancegrowth Push“, Key ID `A734GR4PSM` (.p8 nur bei Ole). Railway: `APNS_KEY_ID`, `APNS_TEAM_ID`,
+  `APNS_BUNDLE_ID`, `APNS_PRODUCTION=1` gesetzt; `APNS_PRIVATE_KEY` trägt Ole selbst ein.
+- App Store Connect: App „performancegrowth“ angelegt, Apple-ID der App **6838442707** (für Codemagic `APP_STORE_APPLE_ID`).
+- App Store Connect API Team-Schlüssel „Codemagic“ (App-Manager): Key ID `TL3574822A`, Issuer ID
+  `5a11393d-570f-4b3a-997e-34045b2f35bf` (.p8 nur bei Ole, in Codemagic als `PG_ASC_KEY`).
 
 ## Was Ole tun muss (sobald das Apple-Konto freigeschaltet ist)
 

@@ -2,7 +2,9 @@
 // immer in Berlin.
 //   - Ablauf eines bestehenden Vertrags („Bis wann läuft die Versicherung ungefähr? Monat und Jahr reichen, zum Beispiel
 //     03/2027.“, lib/whatsapp/tier-fragen.ts): ablaufLesen, ablaufBeispiel
-//   - Geburtsdatum des Leads mit Plausibilität (18 bis 100 Jahre, nicht in der Zukunft): geburtsdatumPruefen
+//   - Geburtsdatum des Leads mit Plausibilität (18 bis 110 Jahre, nicht in der Zukunft): geburtsdatumPruefen
+//   - Antwort auf eine Datumsfrage einordnen, mit Vorschlag bei Tippfehlern (Ole, 21.11.2026: „220.8.92“ wurde ungeprüft
+//     übernommen): datumBefund, datumVorschlaege (die Nachfrage selbst: lib/whatsapp/datum-nachfrage.ts)
 
 const MONATE: Record<string, number> = {
   januar: 1, jänner: 1, jaenner: 1, jan: 1,
@@ -130,49 +132,209 @@ export type GeburtPruefung =
   | { art: "unbekannt" }
   | { art: "unlesbar" };
 
-/** Geburtsdatum der Person: mindestens 18, höchstens 100 Jahre, nicht in der Zukunft. */
+/** Geburtsdatum der Person: mindestens 18, höchstens 110 Jahre (Ole, 21.11.2026), nicht in der Zukunft. */
 export const GEBURT_MIN_ALTER = 18;
-export const GEBURT_MAX_ALTER = 100;
+export const GEBURT_MAX_ALTER = 110;
+/** Geburt eines Tieres: höchstens 40 Jahre (Pferde), nicht in der Zukunft. */
+export const TIER_MAX_ALTER = 40;
 
-/** Datum aus einer Antwort: „14.05.1985“, „14.5.85“, „1985-05-14“, „14. Mai 1985“; null = keins erkannt. */
-export function datumLesen(text: string | null | undefined, jetzt: Date = new Date()): { tag: number; monat: number; jahr: number } | null {
+type Tmj = { tag: number; monat: number; jahr: number };
+
+/** Zweistelliges Jahr: 19xx, wenn es sonst in der Zukunft läge, sonst 20xx („92“ → 1992, „19“ → 2019). */
+const jahrVoll = (y: string, h: { jahr: number }) => (y.length === 4 ? Number(y) : Number(y) > h.jahr % 100 ? 1900 + Number(y) : 2000 + Number(y));
+
+/** Gibt es den Tag im Kalender (31.02. nicht)? */
+const gibtEs = (d: Tmj) => {
+  const x = new Date(Date.UTC(d.jahr, d.monat - 1, d.tag));
+  return d.jahr >= 1000 && x.getUTCFullYear() === d.jahr && x.getUTCMonth() === d.monat - 1 && x.getUTCDate() === d.tag;
+};
+
+/** „TT.MM.JJJJ“ */
+export const ttMmJjjj = (d: Tmj) => `${String(d.tag).padStart(2, "0")}.${String(d.monat).padStart(2, "0")}.${d.jahr}`;
+
+/**
+ * Datum aus einer Antwort: „14.05.1985“, „14.5.85“, „14/05/1985“, „14 05 1985“, „1985-05-14“, „14. Mai 1985“,
+ * „14051985“, „140585“; null = keins erkannt.
+ */
+export function datumLesen(text: string | null | undefined, jetzt: Date = new Date()): Tmj | null {
   const t = (text ?? "").toLowerCase().replace(/\s+/g, " ").trim();
   const h = berlinHeute(jetzt);
-  const jahr = (y: string) => (y.length === 4 ? Number(y) : Number(y) > h.jahr % 100 ? 1900 + Number(y) : 2000 + Number(y));
-  let d: { tag: number; monat: number; jahr: number } | null = null;
+  const jahr = (y: string) => jahrVoll(y, h);
+  let d: Tmj | null = null;
   let m = /\b(\d{4})-(\d{1,2})-(\d{1,2})\b/.exec(t);
   if (m) d = { jahr: Number(m[1]), monat: Number(m[2]), tag: Number(m[3]) };
-  if (!d && (m = /\b(\d{1,2}) ?[./-] ?(\d{1,2}) ?[./-] ?(\d{4}|\d{2})\b/.exec(t))) d = { tag: Number(m[1]), monat: Number(m[2]), jahr: jahr(m[3]) };
+  if (!d && (m = /\b(\d{1,2})(?: ?[./-] ?| )(\d{1,2})(?: ?[./-] ?| )(\d{4}|\d{2})\b/.exec(t))) d = { tag: Number(m[1]), monat: Number(m[2]), jahr: jahr(m[3]) };
   if (!d && (m = new RegExp(`\\b(\\d{1,2})\\.? ?(${WORT})\\.? ?(\\d{4}|\\d{2})\\b`).exec(t))) {
     const monat = monatAusWort(m[2]);
     if (monat) d = { tag: Number(m[1]), monat, jahr: jahr(m[3]) };
   }
+  // ohne Trennzeichen, nur die Zahl: „22081992“ bzw. „220892“
+  if (!d && (m = /^(\d{2})(\d{2})(\d{4}|\d{2})\.?$/.exec(t))) d = { tag: Number(m[1]), monat: Number(m[2]), jahr: jahr(m[3]) };
   if (!d) return null;
-  const x = new Date(Date.UTC(d.jahr, d.monat - 1, d.tag));
-  return x.getUTCFullYear() === d.jahr && x.getUTCMonth() === d.monat - 1 && x.getUTCDate() === d.tag ? d : null;
+  return gibtEs(d) ? d : null;
 }
 
 /** Alter in vollen Jahren an einem Tag (Berlin). */
-function alterAm(d: { tag: number; monat: number; jahr: number }, h: { tag: number; monat: number; jahr: number }): number {
+function alterAm(d: Tmj, h: Tmj): number {
   return h.jahr - d.jahr - (h.monat < d.monat || (h.monat === d.monat && h.tag < d.tag) ? 1 : 0);
 }
 
 const KEINE_ANGABE_RE = /^(offen|keine angabe|möchte ich nicht|moechte ich nicht|lieber nicht|sag ich nicht|nicht angeben)\b/i;
 
 /**
- * Antwort auf die Frage nach dem eigenen Geburtsdatum prüfen. ok: 18 bis 100 Jahre; minderjaehrig: unter 18 (z. B. das
- * Geburtsdatum des Tieres oder eines Kindes); unplausibel: in der Zukunft oder über 100 (Tippfehler wie 1.1.2090);
+ * Antwort auf die Frage nach dem eigenen Geburtsdatum prüfen. ok: 18 bis 110 Jahre; minderjaehrig: unter 18 (z. B. das
+ * Geburtsdatum des Tieres oder eines Kindes); unplausibel: in der Zukunft oder über 110 (Tippfehler wie 1.1.2090);
  * unbekannt: „weiß nicht“, keine Angabe; unlesbar: kein Datum erkannt. datum immer „TT.MM.JJJJ“.
  */
 export function geburtsdatumPruefen(text: string | null | undefined, jetzt: Date = new Date()): GeburtPruefung {
   const t = (text ?? "").replace(/\s+/g, " ").trim();
   const d = datumLesen(t, jetzt);
   if (!d) return !t || WEISS_NICHT_RE.test(t) || KEINE_ANGABE_RE.test(t) ? { art: "unbekannt" } : { art: "unlesbar" };
-  const datum = `${String(d.tag).padStart(2, "0")}.${String(d.monat).padStart(2, "0")}.${d.jahr}`;
+  const datum = ttMmJjjj(d);
   const h = berlinHeute(jetzt);
   const zukunft = d.jahr * 10000 + d.monat * 100 + d.tag > h.jahr * 10000 + h.monat * 100 + h.tag;
   const alter = alterAm(d, h);
   if (zukunft || alter > GEBURT_MAX_ALTER) return { art: "unplausibel", datum };
   if (alter < GEBURT_MIN_ALTER) return { art: "minderjaehrig", datum, alter, jahr: d.jahr };
   return { art: "ok", datum, alter };
+}
+
+// ─── Antwort auf eine Datumsfrage einordnen (Ole, 21.11.2026) ─────────────────────────────────────────────────────────
+// Nachgefragt wird nur, wenn der Lead eine Zahl geschrieben hat, die kein gültiges, plausibles Datum ergibt. Antworten ohne
+// Zahl („weiß nicht“, „Welpe“, „letzten Sommer“) und Altersangaben („5 Jahre“) bleiben beim bisherigen Ablauf.
+
+/** Welche Datumsfrage: eigenes Geburtsdatum, Geburt des Tieres (das Jahr reicht), Ablauf eines Vertrags (Monat und Jahr). */
+export type DatumArt = "geburt" | "geburtTier" | "ablauf";
+
+export type DatumBefund =
+  /** gültig und plausibel; wert normalisiert (Geburtsdatum „TT.MM.JJJJ“, Tier auch „MM/JJJJ“ bzw. „JJJJ“, Ablauf „MM/JJJJ“) */
+  | { art: "ok"; wert: string }
+  /** eigenes Geburtsdatum unter 18 (meist das des Tieres oder eines Kindes): bisheriger Ablauf (geburt-chat.ts, tier-fragen.ts) */
+  | { art: "jung"; wert: string }
+  /** kein Datumsversuch (keine Zahl, „weiß nicht“, Altersangabe): bisheriger Ablauf */
+  | { art: "frei" }
+  /** Tippfehler mit eindeutiger Korrektur: ein oder zwei Vorschläge */
+  | { art: "vorschlag"; vorschlaege: string[] }
+  /** Datum erkannt, aber in der Zukunft bzw. zu alt */
+  | { art: "unplausibel"; wert: string }
+  /** Zahl, aber kein Datum */
+  | { art: "unlesbar" };
+
+/** Ist d ein plausibles Datum für die Frage? (nicht in der Zukunft, Alter 0 bis 110 bzw. bei Tieren 0 bis 40 Jahre) */
+function plausibel(d: Tmj, art: DatumArt, h: Tmj): boolean {
+  if (!gibtEs(d)) return false;
+  if (art === "ablauf") return d.jahr >= h.jahr - 1 && d.jahr <= h.jahr + 15;
+  const zukunft = d.jahr * 10000 + d.monat * 100 + d.tag > h.jahr * 10000 + h.monat * 100 + h.tag;
+  return !zukunft && alterAm(d, h) <= (art === "geburtTier" ? TIER_MAX_ALTER : GEBURT_MAX_ALTER);
+}
+
+/** Alle Fassungen einer Zahl ohne eine ihrer Ziffern („220“ → „22“, „20“), von hinten nach vorn, ohne Doppelte. */
+function ohneEineZiffer(z: string): string[] {
+  const out: string[] = [];
+  for (let i = z.length - 1; i >= 0; i--) {
+    const x = z.slice(0, i) + z.slice(i + 1);
+    if (!out.includes(x)) out.push(x);
+  }
+  return out;
+}
+
+/**
+ * Vorschläge bei einem Tippfehler (höchstens zwei, sonst keiner): genau ein Teil hat eine Ziffer zu viel
+ * („220.8.92“ → 22.08.1992 oder 20.08.1992, „22.088.1992“ → 22.08.1992, „22.08.19992“ → 22.08.1999 oder 22.08.1992)
+ * bzw. Tag und Monat vertauscht („08.22.1992“ → 22.08.1992). Beim Tier auch nur das Jahr („20199“ → 2019).
+ * Jeder Vorschlag muss ein plausibles Datum für die Frage ergeben.
+ */
+export function datumVorschlaege(text: string | null | undefined, art: DatumArt, jetzt: Date = new Date()): string[] {
+  const t = (text ?? "").replace(/\s+/g, " ").trim();
+  const h = berlinHeute(jetzt);
+  const out: string[] = [];
+  const dazu = (d: Tmj) => {
+    if (plausibel(d, art, h) && !out.includes(ttMmJjjj(d))) out.push(ttMmJjjj(d));
+  };
+  const m = /(?:^|\D)(\d{1,3}) ?[./-] ?(\d{1,3}) ?[./-] ?(\d{2,5})(?!\d)/.exec(t);
+  if (m) {
+    const [tag, monat, jahr] = [m[1], m[2], m[3]];
+    const zuLang = [tag.length > 2, monat.length > 2, jahr.length === 3 || jahr.length > 4];
+    if (zuLang.filter(Boolean).length === 1) {
+      if (zuLang[0]) for (const x of ohneEineZiffer(tag)) dazu({ tag: Number(x), monat: Number(monat), jahr: jahrVoll(jahr, h) });
+      if (zuLang[1]) for (const x of ohneEineZiffer(monat)) dazu({ tag: Number(tag), monat: Number(x), jahr: jahrVoll(jahr, h) });
+      if (zuLang[2]) for (const x of ohneEineZiffer(jahr)) dazu({ tag: Number(tag), monat: Number(monat), jahr: jahrVoll(x, h) });
+    } else if (!zuLang.some(Boolean) && Number(monat) > 12 && Number(tag) <= 12) {
+      dazu({ tag: Number(monat), monat: Number(tag), jahr: jahrVoll(jahr, h) });
+    }
+  } else if (art === "geburtTier") {
+    const j = /^\D*(\d{5})\D*$/.exec(t);
+    if (j) {
+      for (const x of ohneEineZiffer(j[1])) {
+        const y = Number(x);
+        if (!x.startsWith("0") && y >= h.jahr - TIER_MAX_ALTER && y <= h.jahr && !out.includes(x)) out.push(x);
+      }
+    }
+  }
+  return out.length <= 2 ? out : [];
+}
+
+/** Altersangabe statt Datum („5 Jahre“, „8 Monate alt“, „zweijährig“). */
+const ALTER_RE = /\d+\s*(jahr|j\b|monat|mon\b|woche|wo\b|tag)|\balt\b|jährig|jaehrig/i;
+
+/**
+ * Antwort auf eine Datumsfrage einordnen (rein). Nur eine Zahl, die kein gültiges, plausibles Datum ergibt, führt zu
+ * vorschlag, unplausibel bzw. unlesbar; alles ohne Zahl ist „frei“ (bisheriger Ablauf).
+ */
+export function datumBefund(text: string | null | undefined, art: DatumArt, jetzt: Date = new Date()): DatumBefund {
+  const t = (text ?? "").replace(/\s+/g, " ").trim();
+  if (!t || !/\d/.test(t) || WEISS_NICHT_RE.test(t) || KEINE_ANGABE_RE.test(t)) return { art: "frei" };
+  const h = berlinHeute(jetzt);
+  const fehler = (): DatumBefund => {
+    const v = datumVorschlaege(t, art, jetzt);
+    return v.length ? { art: "vorschlag", vorschlaege: v } : { art: "unlesbar" };
+  };
+
+  if (art === "ablauf") {
+    const ab = ablaufLesen(t, jetzt);
+    if (ab === "weiss_nicht") return { art: "frei" };
+    return ab ? { art: "ok", wert: mmJjjj(ab) } : fehler();
+  }
+
+  if (art === "geburt") {
+    const p = geburtsdatumPruefen(t, jetzt);
+    if (p.art === "ok") return { art: "ok", wert: p.datum };
+    if (p.art === "minderjaehrig") return { art: "jung", wert: p.datum };
+    if (p.art === "unplausibel") return { art: "unplausibel", wert: p.datum };
+    return fehler();
+  }
+
+  // Geburt des Tieres: ganzes Datum, Monat und Jahr, nur das Jahr oder eine Altersangabe. Nur reine Zahlen werden
+  // normalisiert, Text mit Datum („ca. März 2019“) bleibt wörtlich.
+  const nurZahl = /^[\d\s./-]+$/.test(t);
+  const d = datumLesen(t, jetzt);
+  if (d) return plausibel(d, art, h) ? { art: "ok", wert: nurZahl ? ttMmJjjj(d) : t } : { art: "unplausibel", wert: ttMmJjjj(d) };
+  const v = datumVorschlaege(t, art, jetzt);
+  if (v.length) return { art: "vorschlag", vorschlaege: v };
+  const lc = t.toLowerCase();
+  let mj: MonatJahr | null = null;
+  const zahl = /\b(\d{1,2}) ?[./-] ?(\d{4}|\d{2})\b/.exec(lc);
+  if (zahl && Number(zahl[1]) >= 1 && Number(zahl[1]) <= 12) mj = { monat: Number(zahl[1]), jahr: jahrVoll(zahl[2], h) };
+  if (!mj) {
+    for (const w of lc.matchAll(new RegExp(`(${WORT})\\.? ?'? ?(\\d{4}|\\d{2})\\b`, "g"))) {
+      const monat = monatAusWort(w[1]);
+      if (monat) {
+        mj = { monat, jahr: jahrVoll(w[2], h) };
+        break;
+      }
+    }
+  }
+  if (mj) {
+    const ok = plausibel({ tag: 1, ...mj }, art, h);
+    return ok ? { art: "ok", wert: nurZahl ? mmJjjj(mj) : t } : { art: "unplausibel", wert: mmJjjj(mj) };
+  }
+  if (ALTER_RE.test(t)) return { art: "frei" };
+  const jahre = [...t.matchAll(/\b(\d{4})\b/g)].map((x) => Number(x[1]));
+  if (jahre.length === 1) {
+    const y = jahre[0];
+    return y >= h.jahr - TIER_MAX_ALTER && y <= h.jahr ? { art: "ok", wert: nurZahl ? String(y) : t } : { art: "unplausibel", wert: String(y) };
+  }
+  // eine bloße Zahl mit höchstens 2 Stellen ist eine Altersangabe („3“, „ca. 5“)
+  if (/^\D*\d{1,2}\D*$/.test(t)) return { art: "frei" };
+  return { art: "unlesbar" };
 }

@@ -39,7 +39,7 @@ export type ZwischenDef = {
 const PRIVATSCHUTZ_VERSICHERN: ZwischenDef = {
   key: "versichern",
   feld: "versichern",
-  bekannt: /lebenssituation|familienstand|zu versichernde|mitversichert/i,
+  bekannt: /lebenssituation|familienstand|zu versichernde|mitversichert|für wen soll/i,
   bekanntAngaben: ["versichern", "lebenssituation"],
   sie: "Wer soll mitversichert sein?",
   du: "Wer soll mitversichert sein?",
@@ -167,6 +167,11 @@ export function offeneZwischenfrage(
 
 /** Terminwunsch (Tag, Uhrzeit, „anrufen“) in einer Nachricht des Leads. */
 const TERMINWUNSCH = /\b(termin\w*|heute|morgen|übermorgen|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|wochenende|uhr|vormittags?|nachmittags?|abends?|mittags?|anruf\w*|telefon\w*|zurückruf\w*|rückruf|video\w*|treffen)\b|\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s*h\b/i;
+/** Nennt der Lead einen Terminwunsch (Tag, Uhrzeit, „Termin“, „anrufen“)? Dann geht die Buchung vor (auch bei der
+ * Frage „Entscheidet noch jemand mit?“ vor dem Terminvorschlag, bot.ts). Rein. */
+export function nenntTerminwunsch(text: string | null | undefined): boolean {
+  return TERMINWUNSCH.test(text ?? "");
+}
 /** Absage, Stopp oder falscher Kontakt: kein Weiterfragen. */
 const ABSAGE = /kein (interesse|bedarf)|nicht (mehr )?(interessiert|nötig)|stopp?\b|abmelden|falsche nummer|aus versehen|versehentlich/i;
 

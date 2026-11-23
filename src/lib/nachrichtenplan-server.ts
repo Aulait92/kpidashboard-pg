@@ -149,7 +149,8 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     anrufAusloeserAt = anrufStartZeitpunkt(new Date(lead.outreachAt.getTime() + ANTWORT_WARTEZEIT_MS), lt);
   }
   const { arbeitstageFuer } = await import("@/lib/call-attempts");
-  return planeNachrichten({
+  const sms = await smsStreckeEintraege(leadId, lead.customerId, now).catch(() => [] as PlanEintrag[]);
+  const plan = planeNachrichten({
     now,
     arbeitstage: await arbeitstageFuer(lead.customerId),
     an,
@@ -167,6 +168,17 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     emailKontakt: !!lead.email || !!conv?.contactEmail,
     whatsapp,
     abfolgen,
+    // Offener Terminvorschlag: erster Schritt „Chat ruht“ ist die Nachfrage mit den Zeiten (lib/lead-sequences.ts)
+    terminNachfass: abfolgen.some((s) => s.kind === "silent" && s.step === 0 && !s.stoppedAt)
+      ? await import("@/lib/whatsapp/termin-strecke")
+          .then(async (m) => {
+            const v = await m.offenerTerminvorschlag(leadId, lead.customerId);
+            if (!v || v.starts.length < 2) return null;
+            const g = await import("@/lib/whatsapp/gespraech");
+            return { text: g.terminNachfassText(an, person, [g.zeitKurz(new Date(v.starts[0]), now), g.zeitKurz(new Date(v.starts[1]), now)]) };
+          })
+          .catch(() => null)
+      : null,
     abfolgeKontext: {
       firstName: firstNameOf(lead.name),
       hi: anredeZeile(an, who.kontakt),
@@ -191,6 +203,37 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     // E-Mail-Schritte (Angebot Tag 5, Pakete M4/M6): Text aus der Vorlage des Vermittlers
     mailVorlagen: await mailVorlagenFuer(lead.customerId, abfolgen, an),
   });
+  return sms.length ? [...plan, ...sms].sort((x, y) => x.at.localeCompare(y.at)) : plan;
+}
+
+/**
+ * SMS der Nur-SMS-Strecke (kein WhatsApp, E-Mail-Funktionen aus; lib/mail-strecke/nur-sms.ts) als Einträge in
+ * „Nächste Nachrichten“ (Ole, 22.11.2026: „bei Klehr ist die SMS nicht in der Vorschau“). Nur Anzeige, ohne Aktionen.
+ */
+async function smsStreckeEintraege(leadId: string, customerId: string, now: Date): Promise<PlanEintrag[]> {
+  const s = await prisma.leadMailStrecke.findUnique({ where: { leadId }, select: { id: true, nurSms: true, schritt: true, smsZahl: true, smsAt: true } });
+  if (!s?.nurSms || ["abgemeldet", "gestoppt", "fertig", "gebucht"].includes(s.schritt)) return [];
+  const m = await import("@/lib/mail-strecke/nur-sms");
+  const { geschaeftszeitenFuer } = await import("@/lib/mail-strecke/server");
+  const g = await geschaeftszeitenFuer(customerId);
+  const out: PlanEintrag[] = [];
+  let zahl = s.smsZahl;
+  let letzte = s.smsAt;
+  for (; zahl < 2; zahl++) {
+    const at = m.naechsteSmsZeit({ smsZahl: zahl, smsAt: letzte, g, now: letzte && zahl > s.smsZahl ? letzte : now });
+    if (!at) break;
+    out.push({
+      key: `sms:${s.id}:${zahl}`,
+      at: at.toISOString(),
+      kanal: "sms",
+      quelle: "abfolge",
+      titel: zahl === 0 ? "SMS mit Terminlink" : "Erinnerung per SMS",
+      vorschau: zahl === 0 ? `SMS mit Ihrem Terminlink und Ihrer Nummer für den Rückruf (${m.geschaeftszeitText(g)}).` : "Kurze Erinnerung mit Terminlink, falls bis dahin nicht gebucht.",
+      voraussichtlich: zahl > s.smsZahl,
+    });
+    letzte = at;
+  }
+  return out;
 }
 
 /** Berlin: Beginn des Tages von `d`. */

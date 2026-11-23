@@ -184,7 +184,8 @@ describe("previewOfferEmailAction", () => {
     expect(r.anhang).toBe("Vertreter Präsentation.pdf");
     expect(r.html).toContain("/rechner?typ=vertreter&amp;budget=30");
     expect(r.html).toContain("/praesentation/neuer-link");
-    expect(r.hinweise).toEqual(["Der Präsentations-Link wird beim Senden erstellt."]);
+    // A/B-Test der Angebots-Strecke (lib/vertrieb/ab-tests.ts): ohne Datenbank immer Fassung A
+    expect(r.hinweise).toEqual(["Der Präsentations-Link wird beim Senden erstellt.", "A/B-Test: Dieser Kontakt bekommt Fassung A (ohne Absatz zu den nächsten Schritten)."]);
     expect(s.linkErstellt).toBe(0);
     expect(s.pdfGeladen).toBe(0);
     expect(s.offerUpdates).toEqual([]);
@@ -197,7 +198,7 @@ describe("previewOfferEmailAction", () => {
     const r = await previewOfferEmailAction("off_1", { praesentationLink: true, du: true });
     expect(r.ok && r.html).toContain("/praesentation/tok-aktiv");
     expect(r.ok && r.betreff).toContain("Dein Angebot");
-    expect(r.ok && r.hinweise).toBeUndefined();
+    expect(r.ok && r.hinweise).toEqual(["A/B-Test: Dieser Kontakt bekommt Fassung A (ohne Absatz zu den nächsten Schritten)."]);
   });
 
   it("gleiche Prüfungen wie beim Senden", async () => {

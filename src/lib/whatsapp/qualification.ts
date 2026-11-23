@@ -20,9 +20,20 @@ export const QUALIFICATION_FIELDS = [
   // Gesundheit des Tieres (TKV, feste Frage nach der Buchung, lib/whatsapp/tier-fragen.ts); keine Art.-9-Daten
   { key: "tiergesundheit", label: "Gesundheit (Tier)", hint: "nur Tiere: z. B. gesund oder War in Behandlung: Zahnbehandlung im Frühjahr" },
   { key: "tarifwunsch", label: "Gewünschter Schutz", hint: "z. B. nur OP-Schutz oder volle Krankenversicherung" },
+  // Kfz (Ole, 21.11.2026): was der Allianz-Rechner braucht, aus Fahrzeugschein und letzter Rechnung des Vorversicherers
+  { key: "fahrzeug", label: "Fahrzeug", hint: "nur Kfz: Herstellerschlüssel (HSN, 4 Ziffern, Feld 2.1) und Typschlüssel (TSN, 3 Zeichen, Feld 2.2), z. B. HSN 0603, TSN BJP; oder: Foto vom Fahrzeugschein geschickt" },
+  { key: "vorversicherung", label: "Bisherige Kfz-Versicherung", hint: "nur Kfz: Versicherer, SF-Klasse Haftpflicht und Vollkasko, Versicherungsscheinnummer, z. B. HUK-Coburg, SF 12 / SF 8, KV-123456; oder: Foto der Rechnung geschickt" },
+  // Weitere Angaben des Allianz-Kfz-Rechners (Screenshot Ole, 21.11.2026)
+  { key: "kfzVertrag", label: "Kfz: Anlass und Schutz", hint: "nur Kfz: Versicherer-Wechsel oder neues Fahrzeug, gewünschter Schutz (Haftpflicht, Teilkasko, Vollkasko), Schäden in den letzten 3 Jahren, z. B. Wechsel, Vollkasko, keine Schäden" },
+  // Antwort auf die Kfz-Einstiegsfrage (Ole, 21.11.2026, erstanschreiben.ts): Ablauf des jetzigen Vertrags bzw. ob das neue Auto schon da ist
+  { key: "kfzStart", label: "Kfz: Ablauf bzw. Auto da", hint: "nur Kfz: wann der jetzige Vertrag ausläuft bzw. ob das neue Auto schon da ist, z. B. läuft zum Jahresende aus; neues Auto kommt noch" },
+  { key: "kfzFahrer", label: "Kfz: Nutzung und Fahrer", hint: "nur Kfz: privat oder geschäftlich, Führerschein seit (Jahr), weitere Fahrer mit Alter, z. B. privat, Führerschein 2010, Partnerin 34" },
+  { key: "kfzDetails", label: "Kfz: Fahrzeugdaten", hint: "nur Kfz: km pro Jahr, bezahlt/finanziert/Leasing, z. B. 12.000 km, finanziert" },
   { key: "vorschaeden", label: "Vorschäden (5 Jahre)", hint: "je Art mit Anzahl, z. B. Hausrat 0, Fahrraddiebstahl 1; oder offen" },
   { key: "anlass", label: "Anlass", hint: "z. B. Umzug, Schaden, Geburt" },
   { key: "einwaende", label: "Einwände", hint: "Bedenken oder Fragen des Leads" },
+  // Wer entscheidet mit (Ole, 21.11.2026; feste Frage nach dem Komplettcheck, lib/whatsapp/termin-strecke.ts). Kein Budget.
+  { key: "entscheidung", label: "Entscheidung", hint: "wer mitentscheidet, z. B. Partner entscheidet mit, soll beim Termin dabei sein; oder Entscheidet allein" },
   { key: "wunsch", label: "Wunsch", hint: "Telefon oder Videocall, Wunschzeit" },
   { key: "sonstiges", label: "Sonstiges", hint: "alles Weitere, kurz" },
 ] as const;

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Folie „Ihr Abschlussbonus“ als vorletzte Folie in die Vertriebsunterlagen einfügen (Ole, 17.11.2026).
+"""Folie „Jahresplan: 3 Monate sparen“ als vorletzte Folie in die Vertriebsunterlagen einfügen (Ole, 21.11.2026;
+ersetzt die frühere Bonusfolie „Ihr Abschlussbonus“, scripts/bonus-folie-*, 17.11.2026).
 
-Bild vorher mit `npx tsx scripts/bonus-folie-unterlagen.ts <Ordner>` erzeugen, dann:
+Bild vorher mit `npx tsx scripts/jahresplan-folie-unterlagen.ts <Ordner>` erzeugen, dann:
 
-    python3 scripts/bonus-folie-einfuegen.py <Ordner mit abschlussbonus-*.png> <Zielordner>
+    python3 scripts/jahresplan-folie-einfuegen.py <Ordner mit jahresplan-*.png> <Zielordner>
 
 Liest docs/unterlagen/{Vertreter,Makler}-Praesentation.{pptx,pdf} und schreibt die neuen Fassungen in den
-Zielordner. Das Bild heißt in der PPTX „abschlussbonus.png“: scripts/vertrieb-folien.mjs überspringt diese Folie,
-weil die Web-Präsentation die Bonusfolie selbst (mit Frist aus dem Angebot) einfügt.
-Läuft die Datei schon mit Bonusfolie, wird nichts doppelt eingefügt.
+Zielordner. Das Bild heißt in der PPTX „jahresplan.png“: scripts/vertrieb-folien.mjs überspringt diese Folie,
+weil die Web-Präsentation die Jahresplan-Folie selbst (mit Preisen aus dem Angebot) einfügt.
+Läuft die Datei schon mit Jahresplan-Folie, wird nichts doppelt eingefügt.
 """
 import copy
 import io
@@ -23,17 +24,17 @@ import pypdf
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATEIEN = {"vertreter": "Vertreter-Praesentation", "makler": "Makler-Praesentation"}
-MEDIA_NAME = "abschlussbonus.png"
+MEDIA_NAME = "jahresplan.png"
 
 
-def pptx_hat_bonus(pfad: str) -> bool:
+def pptx_hat_folie(pfad: str) -> bool:
     with zipfile.ZipFile(pfad) as z:
         return any(n.endswith(MEDIA_NAME) for n in z.namelist())
 
 
 def pptx_einfuegen(quelle: str, bild: str, ziel: str) -> None:
-    if pptx_hat_bonus(quelle):
-        print(f"{os.path.basename(quelle)}: Bonusfolie schon enthalten, unverändert")
+    if pptx_hat_folie(quelle):
+        print(f"{os.path.basename(quelle)}: Jahresplan-Folie schon enthalten, unverändert")
         copy_file(quelle, ziel)
         return
     prs = Presentation(quelle)
@@ -51,7 +52,7 @@ def pptx_einfuegen(quelle: str, bild: str, ziel: str) -> None:
     prs.save(ziel)
     # Bildname in der Datei festlegen (python-pptx nennt Medien imageN.png)
     umbenennen_medium(ziel, slide)
-    print(f"{os.path.basename(ziel)}: Bonusfolie als Folie {len(ids) - 1} von {len(ids)}")
+    print(f"{os.path.basename(ziel)}: Jahresplan-Folie als Folie {len(ids) - 1} von {len(ids)}")
 
 
 def umbenennen_medium(pfad: str, slide) -> None:
@@ -77,7 +78,7 @@ def pdf_einfuegen(quelle: str, bild: str, ziel: str) -> None:
     box = reader.pages[0].mediabox
     w, h = float(box.width), float(box.height)
     if MEDIA_NAME in str((reader.metadata or {}).get("/Subject", "")):
-        print(f"{os.path.basename(quelle)}: Bonusfolie schon enthalten, unverändert")
+        print(f"{os.path.basename(quelle)}: Jahresplan-Folie schon enthalten, unverändert")
         copy_file(quelle, ziel)
         return
     # Bild als PDF-Seite in derselben Größe (72 dpi-Punkte)
@@ -95,7 +96,7 @@ def pdf_einfuegen(quelle: str, bild: str, ziel: str) -> None:
     writer.add_metadata({"/Subject": f"Enthält {MEDIA_NAME}"})
     with open(ziel, "wb") as f:
         writer.write(f)
-    print(f"{os.path.basename(ziel)}: Bonusfolie als Seite {n} von {n + 1}")
+    print(f"{os.path.basename(ziel)}: Jahresplan-Folie als Seite {n} von {n + 1}")
 
 
 def copy_file(a: str, b: str) -> None:
@@ -107,7 +108,7 @@ def main() -> None:
     bilder, ziel = sys.argv[1], sys.argv[2]
     os.makedirs(ziel, exist_ok=True)
     for audience, name in DATEIEN.items():
-        bild = os.path.join(bilder, f"abschlussbonus-{audience}.png")
+        bild = os.path.join(bilder, f"jahresplan-{audience}.png")
         quelle = os.path.join(ROOT, "docs/unterlagen", name)
         pptx_einfuegen(quelle + ".pptx", bild, os.path.join(ziel, name + ".pptx"))
         pdf_einfuegen(quelle + ".pdf", bild, os.path.join(ziel, name + ".pdf"))

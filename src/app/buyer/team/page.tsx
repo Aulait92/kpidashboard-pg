@@ -5,23 +5,40 @@ import { PageHeader } from "@/components/buyer-shell";
 import { Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { memberName, teamMembers } from "@/lib/team";
+import { memberName, nutzerMitPush, teamMembers } from "@/lib/team";
 import { berlinYmd, teamAbsences } from "@/lib/absence";
 import { addSeatCostHint, addsSeatCost, berlinDayStart, isActiveSeller, seatSummary } from "@/lib/seats";
 import { InviteForm } from "./invite-form";
 import { MemberRow } from "./member-row";
+import { bereitFuerLeads, wartetText } from "@/lib/team-bereit";
+import { loadBeraterPersonen } from "@/lib/calendar/berater-allianz";
+import { ladeTeamUeberblick } from "@/lib/team-ueberblick-server";
+import { offenText, termineKurz } from "@/lib/team-ueberblick";
+import { isNewUi } from "@/lib/new-ui";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Team | performancegrowth" };
 
 
-export default async function TeamPage() {
+export default async function TeamPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const readOnly = ctx.preview;
 
   const members = await teamMembers(ctx.customerId);
+  const now = new Date();
+  const [personen, ueberblick, newUi, sp] = await Promise.all([
+    loadBeraterPersonen(ctx.customerId),
+    // Team-Überblick je Mitglied: Termine 7 Tage und Offenes (Ole, 21.11.2026, lib/team-ueberblick.ts), ab 2 Personen
+    ladeTeamUeberblick(ctx, now, members).catch(() => null),
+    isNewUi(ctx.customerId),
+    searchParams,
+  ]);
+  // Kontakt öffnen mit Rücksprung auf die aufgeklappte Person (neue Oberfläche), sonst die alte Kontaktseite
+  const leadHref = (userId: string) => (newUi ? `/buyer/kontakte/{id}?von=team&m=${encodeURIComponent(userId)}` : "/buyer/leads/{id}");
+  // Bereit für Leads erst mit Kalender und App mit Mitteilungen (Ole, 21.11.2026, lib/team-bereit.ts)
+  const mitPush = await nutzerMitPush(members.map((m) => m.id));
   const since = daysAgo(30);
   const counts = await prisma.lead.groupBy({
     by: ["assignedUserId"],
@@ -44,7 +61,7 @@ export default async function TeamPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader back="/buyer/einstellungen" title="Team" subtitle="Neue Leads werden reihum verteilt, Abwesende übersprungen. Berater sehen nur ihre eigenen." />
+      <PageHeader back="/buyer/einstellungen" title="Team" subtitle="Neue Leads gehen reihum an alle mit Kalender und App, Abwesende werden übersprungen. Berater sehen nur ihre eigenen." />
       <div className="space-y-5">
         {members.length > 1 && receivers === 0 ? (
           <p className="rounded-[var(--radius-md)] bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 ring-1 ring-amber-200">
@@ -68,14 +85,30 @@ export default async function TeamPage() {
                   owner: m.teamRole !== "advisor",
                   receivesLeads: m.receivesLeads,
                   ownCalendar: m.advisorCalendar?.status === "connected",
+                  wartet: m.receivesLeads
+                    ? wartetText(bereitFuerLeads({ owner: m.teamRole !== "advisor", kalender: m.advisorCalendar?.status === "connected", push: mitPush.has(m.id) }).fehlt)
+                    : null,
                   leads30: leads30.get(m.id) ?? 0,
                   loggedIn: !!m.lastLoginAt,
+                  push: mitPush.has(m.id),
                   twoFactor: !!m.totpEnabledAt,
                   absence: absences.get(m.id) ?? null,
+                  // Allianz-Person nur für Berater ohne eigenen Google-/Outlook-Kalender
+                  allianz:
+                    personen?.resources.length && m.teamRole === "advisor" && !(m.advisorCalendar?.status === "connected" && !personen.gewaehlt[m.id])
+                      ? { resources: personen.resources, resourceId: personen.gewaehlt[m.id]?.resourceId ?? null, email: personen.gewaehlt[m.id]?.email ?? m.email }
+                      : null,
                   enableCostHint: !m.receivesLeads && !activeToday.has(m.id) ? enableCost : null,
+                  ueberblick: (() => {
+                    const u = ueberblick?.get(m.id);
+                    return u ? { u, termine: termineKurz(u), offen: offenText(u), warn: u.warn.length > 0 } : null;
+                  })(),
                 }}
                 colleagues={members.filter((o) => o.id !== m.id).map((o) => ({ id: o.id, name: memberName(o) }))}
                 today={today}
+                nowIso={now.toISOString()}
+                leadHref={leadHref(m.id)}
+                defaultOpen={sp.m === m.id}
               />
             ))}
           </ul>

@@ -7,12 +7,16 @@ import { getRedirectUrl, getRewrittenUrl, isRewrite } from "next/experimental/te
 import {
   ablauf,
   datumTippen,
+  fortschrittFuer,
+  hinweisFuer,
   geburtsdatumOk,
   naechsterSchritt,
+  mitTrennstellen,
   optionLabel,
   PKV_BEITRAG,
   pplFelder,
   pruefeAlles,
+  pruefeFeld,
   pruefeSchritt,
   saubereAntworten,
   testSchritte,
@@ -68,17 +72,22 @@ describe("Funnel-Konfiguration", () => {
     const nr = f.schritte.flatMap((s) => ("frageNr" in s && s.frageNr ? [s.frageNr] : []));
     expect(nr).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(f.fragenGesamt).toBe(7);
-    expect(f.schritte.filter((s) => s.art === "ende").map((s) => (s as { grund: string }).grund).sort()).toEqual(["gesetzlich", "unter_650"]);
+    expect(f.schritte.filter((s) => s.art === "ende").map((s) => (s as { grund: string }).grund).sort()).toEqual(["beamte", "debeka", "gesetzlich", "unter_650"]);
     expect(PKV_VERSICHERER.at(-1)).toBe("Sonstige");
     const sit = schritt("situation");
     expect(sit.art === "auswahl" ? sit.optionen : []).toHaveLength(9);
   });
 
-  it("Abbruchregeln: gesetzlich und Beitrag unter 650 € enden freundlich, sonst weiter", () => {
+  it("Abbruchregeln: gesetzlich und Beitrag unter 700 € enden freundlich, sonst weiter (Ole, 22.11.2026)", () => {
     expect(naechsterSchritt(f, "start", { versichert: "Gesetzlich" })).toEqual({ id: "ende-gesetzlich", abbruch: "gesetzlich" });
     expect(naechsterSchritt(f, "start", { versichert: "Privat" })).toEqual({ id: "versicherung", abbruch: null });
-    expect(naechsterSchritt(f, "beitrag", { beitrag: "649" })).toEqual({ id: "ende-beitrag", abbruch: "unter_650" });
-    expect(naechsterSchritt(f, "beitrag", { beitrag: "650" })).toEqual({ id: "geburtsdatum", abbruch: null });
+    // Debeka: nicht optimierbar (Ole, 21.11.2026), freundlich aussteigen; keine Kachel mehr
+    expect(naechsterSchritt(f, "versicherung", { versichert: "Privat", versicherung: "Debeka" })).toEqual({ id: "ende-debeka", abbruch: "debeka" });
+    expect(naechsterSchritt(f, "versicherung", { versichert: "Privat", versicherung: "DKV" })).toEqual({ id: "situation", abbruch: null });
+    expect(PKV_VERSICHERER).toContain("Debeka");
+    expect(naechsterSchritt(f, "situation", { versichert: "Privat", versicherung: "DKV", situation: "Beamter" })).toEqual({ id: "ende-beamte", abbruch: "beamte" });
+    expect(naechsterSchritt(f, "beitrag", { beitrag: "699" })).toEqual({ id: "ende-beitrag", abbruch: "unter_650" });
+    expect(naechsterSchritt(f, "beitrag", { beitrag: "700" })).toEqual({ id: "geburtsdatum", abbruch: null });
     expect(naechsterSchritt(f, "beitrag", { beitrag: "1.200,50" }).id).toBe("geburtsdatum");
     expect(naechsterSchritt(f, "kontakt", VOLL).id).toBe("danke");
   });
@@ -102,6 +111,20 @@ describe("Funnel-Konfiguration", () => {
     expect(pruefeSchritt(schritt("kontakt"), { email: "a@b", telefon: "123" })).toEqual({ email: PKV_TEXTE.kontakt.fehlerEmail, telefon: PKV_TEXTE.kontakt.fehlerTelefon });
     expect(pruefeSchritt(schritt("kontakt"), { email: "x@y.de", telefon: "+49 151 23456781" })).toEqual({});
     expect(pruefeSchritt(schritt("kontakt"), { email: "x@y.de", telefon: "+43 660 1234567" })).toHaveProperty("telefon");
+  });
+
+  it("Fehler genauer: unmögliches Datum und Alter getrennt; Fortschritt über alle Schritte bis zum Absenden", () => {
+    expect(pruefeSchritt(schritt("geburtsdatum"), { geburtsdatum: "31.02.1980" }, HEUTE)).toEqual({ geburtsdatum: PKV_TEXTE.geburtsdatum.fehlerDatum });
+    expect(pruefeSchritt(schritt("geburtsdatum"), { geburtsdatum: "21.11.2010" }, HEUTE)).toEqual({ geburtsdatum: PKV_TEXTE.geburtsdatum.fehlerAlter });
+    expect(pruefeSchritt(schritt("geburtsdatum"), { geburtsdatum: "1975" }, HEUTE)).toEqual({ geburtsdatum: PKV_TEXTE.geburtsdatum.fehler });
+    expect(pruefeFeld("email", "a@b")).toBe(PKV_TEXTE.kontakt.fehlerEmail);
+    expect(pruefeFeld("telefon", "0151 23456781")).toBeNull();
+    expect(fortschrittFuer(f, "start")).toEqual({ nr: 1, von: 10, prozent: 9, fertig: false });
+    // Vor dem Absenden höchstens 90 %, 100 % erst auf der Danke-Seite
+    expect(fortschrittFuer(f, "kontakt")).toEqual({ nr: 10, von: 10, prozent: 90, fertig: false });
+    for (const s of ablauf(f)) expect(fortschrittFuer(f, s.id)!.prozent, s.id).toBeLessThanOrEqual(90);
+    expect(fortschrittFuer(f, "danke")).toMatchObject({ prozent: 100, fertig: true });
+    expect(fortschrittFuer(f, "ende-beitrag")).toBeNull();
   });
 
   it("Geburtsdatum beim Tippen", () => {
@@ -173,8 +196,37 @@ describe("Funnel-Konfiguration", () => {
     const k = schritt("kontakt");
     expect(k.art === "absenden" && k.felder.map((x) => x.feld)).toEqual(["telefon", "email"]);
     expect(texteFuer(k).knopf).toBe("Kostenlos prüfen lassen");
-    expect(texteFuer(schritt("beitrag")).hinweis).toBe("Gemeint ist dein ganzer Beitrag, vor Abzug eines Arbeitgeberzuschusses. Ein runder Wert reicht.");
-    expect(texteFuer(schritt("name")).fussnote).toMatch(/^Im Einzelfall möglich/);
+    // Beitragshinweis je Situation: Zuschuss nur bei Angestellten, Beamte mit Eigenanteil nach Beihilfe
+    const b = schritt("beitrag");
+    expect(hinweisFuer(b, texteFuer(b), { situation: "Angestellt" })).toMatch(/vor Arbeitgeberzuschuss/);
+    expect(hinweisFuer(b, texteFuer(b), { situation: "Beamter" })).toMatch(/Eigenanteil nach Beihilfe/);
+    expect(hinweisFuer(b, texteFuer(b), { situation: "Selbstständig" })).toBe(PKV_TEXTE.beitrag.hinweis);
+    expect(PKV_TEXTE.beitrag.hinweis).not.toMatch(/Zuschuss/);
+    // Versicherer: alle bleiben gültige Werte, 8 Kacheln, Beschriftung statt Wert
+    const v = schritt("versicherung");
+    expect(v.art === "auswahl" && v.optionen).toEqual([...PKV_VERSICHERER]);
+    expect(v.art === "auswahl" && v.haeufig?.length).toBe(8);
+    for (const h of v.art === "auswahl" ? (v.haeufig ?? []) : []) expect(PKV_VERSICHERER).toContain(h);
+    expect(optionLabel(v, "Sonstige")).toBe("Andere Versicherung");
+    // Weiche Trennstellen nur in der Anzeige (große Schrift), sichtbarer Text und Werte unverändert
+    expect(mitTrennstellen("Selbstständig")).toBe("Selbst\u00adständig");
+    expect(mitTrennstellen("Nicht erwerbstätig")).toBe("Nicht erwerbs\u00adtätig");
+    expect(mitTrennstellen("Hausfrau/Hausmann")).toBe("Hausfrau/\u200bHausmann");
+    expect(mitTrennstellen("DKV")).toBe("DKV");
+    for (const o of [...PKV_SITUATIONEN, ...PKV_VERSICHERER]) expect(mitTrennstellen(optionLabel(schritt("situation"), o)).replace(/[\u00ad\u200b]/g, "")).toBe(optionLabel(schritt("situation"), o));
+    expect(optionLabel(v, "HALLESCHE")).toBe("Hallesche");
+    expect(pruefeSchritt(v, { versicherung: "HALLESCHE" })).toEqual({});
+    // Situation: die vier häufigsten zuerst, Werte unverändert
+    expect(PKV_SITUATIONEN.slice(0, 4)).toEqual(["Angestellt", "Selbstständig", "Beamter", "Rentner"]);
+    // Name: reine Frage ohne Werbezeile; „bis zu 50 %“ mit Fußnote nur auf Kontakt (und im Advertorial)
+    expect(texteFuer(schritt("name")).ueberschrift).toBeUndefined();
+    expect(texteFuer(schritt("name")).fussnote).toBeUndefined();
+    expect(texteFuer(schritt("kontakt")).fussnote).toMatch(/^Im Einzelfall möglich/);
+    // Kontakt entlastet: kein Satz unter dem Knopf, kurzer Telefon-Hinweis
+    expect(texteFuer(schritt("kontakt")).nachsatz).toBeUndefined();
+    const kt = schritt("kontakt");
+    expect(kt.art === "absenden" && kt.felder[0].hinweis).toBe(PKV_TEXTE.kontakt.telefonHinweis);
+    expect(PKV_TEXTE.kontakt.telefonHinweis.split(" ").length).toBeLessThanOrEqual(8);
     expect(schritt("ende-gesetzlich")).toMatchObject({ zurueckZu: "start" });
     expect(schritt("ende-beitrag")).toMatchObject({ zurueckZu: "beitrag" });
     expect(f.marke).toBe("pkv-tarife");
@@ -189,11 +241,22 @@ describe("Funnel-Konfiguration", () => {
     };
     walk(PKV_TEXTE);
     walk(PKV_TARIFE.anbieter);
-    alle.push(einwilligungText("datenschutz@example.de"), PKV_TEXTE.fortschritt(1, 7));
+    alle.push(einwilligungText("datenschutz@example.de"), PKV_TEXTE.fortschritt(1, 7), PKV_TEXTE.kontakt.frageMitName("Erika"), PKV_TEXTE.danke.ueberschriftMitName("Erika"));
     for (const t of alle) expect(t, t).not.toMatch(/[–—]/);
     // „Nicht verwenden“ laut Conversion-Dokument
     expect(alle.join(" ")).not.toMatch(/sehr wahrscheinlich|garant|unabhängig|ohne Gesundheitsprüfung|Auswertung|Berechnung/i);
-    expect(alle.filter((t) => /%/.test(t))).toEqual([PKV_TEXTE.name.ueberschrift]);
+    // „bis zu 50 %“ nur mit Fußnote (L8): Schritt Kontakt und Advertorial (Sternchen an der Zahl)
+    expect(alle.filter((t) => /%/.test(t))).toEqual([PKV_TEXTE.start.text[2], PKV_TEXTE.kontakt.ueberschrift]);
+    expect(PKV_TEXTE.start.text[2]).toMatch(/50 %\*/);
+    expect(PKV_TEXTE.start.fussnote).toBe(PKV_TEXTE.kontakt.fussnote);
+    expect(texteFuer(schritt("kontakt")).fussnote).toBe(PKV_TEXTE.kontakt.fussnote);
+    expect(f.schritte.filter((s) => texteFuer(s).ueberschrift?.includes("%")).map((s) => s.id)).toEqual(["kontakt"]);
+    // Keine Ausrufezeichen in Überschriften (CI), „ob und wie viel“ (Recht), Advertorial als Anzeige gekennzeichnet
+    // Ausnahme Zwischenseite: „Fast fertig!“ wie bei Perspective (Ole, 21.11.2026)
+    for (const s of f.schritte) if (s.id !== "fast-fertig") expect(texteFuer(s).ueberschrift ?? "", s.id).not.toMatch(/!/);
+    expect(PKV_TEXTE.fastFertig.text.join(" ")).toContain("ob und wie viel");
+    expect(PKV_TEXTE.start.anzeige).toBe("Anzeige");
+    expect(PKV_TEXTE.start.vertrauen).toContain("Dauert etwa 1 Minute");
   });
 
   it("Einwilligung (L1): alle Pflichtbestandteile, Knopfname wörtlich, Adresse eingesetzt, Links", () => {
@@ -224,7 +287,7 @@ describe("Funnel-Konfiguration", () => {
     expect(PKV_TARIFE.farben).toMatchObject({ primaer: "#0E5F68", seite: "#F8F7F4", feldRand: "#7C8C9A" });
     for (const d of Object.values(PKV_TARIFE.dateien)) expect(d).toMatch(/^\/marken\/pkv-tarife\//);
     expect(PKV_TARIFE.bilder.start?.alt).toBe("Paar am Küchentisch prüft Unterlagen");
-    expect(PKV_TARIFE.bilder.zwischenseite?.symbolbild).toBe(true);
+    expect(PKV_TARIFE.bilder.zwischenseite?.symbolbild).toBeUndefined();
   });
 });
 
@@ -486,11 +549,12 @@ describe("Einwilligungsnachweis je Lead (L3)", () => {
     expect(renderTemplate("Name: {name}\nEinwilligung: {einwilligung}", { id: "L1", name: "Erika", phone: null, email: null, answers: [] })).toBe("Name: Erika");
   });
 
-  it("E-Mail „Dein Experte“ (L9): Du-Form, Nummer, Widerruf, keine Gedankenstriche", () => {
+  it("E-Mail „Dein Experte“ (L9): Du-Form, ohne Nummer, Widerruf, keine Gedankenstriche", () => {
     const m = experteMail({ email: "e@x.de", vorname: "Erika", experte: { name: "Max Muster", firma: "Muster Finanz GmbH", telefon: "030 1234567" }, datenschutzEmail: "datenschutz@example.de" });
     expect(m.subject).toBe("Dein Experte für die PKV-Prüfung: Max Muster");
     expect(m.text).toContain("Hallo Erika,");
-    expect(m.text).toContain("Max Muster von Muster Finanz GmbH ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an, und zwar von dieser Nummer: 030 1234567.");
+    expect(m.text).toContain("Max Muster von Muster Finanz GmbH ruft dich in den nächsten Tagen wegen deiner PKV-Prüfung an.");
+    expect(m.text).not.toContain("030 1234567");
     expect(m.text).toContain("Widerruf jederzeit per E-Mail an datenschutz@example.de.");
     expect(m.text).not.toMatch(/[–—]/);
   });

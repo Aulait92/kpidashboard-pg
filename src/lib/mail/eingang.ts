@@ -22,6 +22,8 @@
 //               nicht weitergeleitet, Hinweis „wird noch geprüft“; der Download in der App prüft beim Abruf erneut.
 //   Schalter    MAIL_ANTWORT_EINGANG aus: Eingänge mit gültigem Leadcode (Adresse wurde vergeben) werden trotzdem
 //               verarbeitet, damit keine Antwort verloren geht; alles andere wird ignoriert.
+//   Termine     Mails an termine-<token>@… (persönliche Termin-Adresse, Ole 21.11.2026) gehen an
+//               lib/calendar/termin-weiterleitung-server.ts: weitergeleitete Einladung blockiert Zeit im App-Kalender.
 //   Idempotenz  MailEingang je Resend-ID mit Fortschritt (Verlauf, Weiterleitung, Push); Wiederholungen des Webhooks
 //               setzen dort fort. Keine Inhalte in Logs oder Sentry, nur Kurzgründe.
 
@@ -32,6 +34,7 @@ import { vermittlerAdresse } from "@/lib/mail/lead-versand";
 import { mailVerlaufText, type MailArt } from "@/lib/mail/kontakt-mail";
 import type { AuthErgebnis, EingangApi, EmpfangenerAnhang } from "@/lib/mail/eingang-api";
 import { entscheide, meldeUngeprueft, pruefeAufViren } from "@/lib/sicherheit/virenpruefung";
+import { parseTerminAdresse } from "@/lib/calendar/termin-weiterleitung";
 
 /** Summe der weitergeleiteten Anhänge: Resend nimmt höchstens 40 MB je Mail nach Base64 (gut 29 MB Dateien). */
 export const ANHANG_LIMIT = 28 * 1024 * 1024;
@@ -204,11 +207,11 @@ export type EmailReceivedEvent = {
   data?: { email_id?: string; from?: string; to?: string[]; cc?: string[]; bcc?: string[]; received_for?: string[]; subject?: string };
 };
 
-export type EingangErgebnis = { ergebnis: "antwort" | "hinweis" | "ignoriert" | "doppelt" | "fehler"; grund?: string; eingangId?: string };
+export type EingangErgebnis = { ergebnis: "antwort" | "hinweis" | "termin" | "beleg" | "ignoriert" | "doppelt" | "fehler"; grund?: string; eingangId?: string };
 
 type Zeile = { id: string; contactMailId: string | null; weitergeleitetAt: Date | null; pushAt: Date | null; versuche: number };
 
-const FERTIG = new Set(["antwort", "hinweis", "ignoriert"]);
+const FERTIG = new Set(["antwort", "hinweis", "termin", "beleg", "ignoriert"]);
 const istEindeutigFehler = (e: unknown) => !!e && typeof e === "object" && (e as { code?: string }).code === "P2002";
 
 /** Eintrag je Resend-ID anlegen bzw. für eine Wiederholung übernehmen; null = schon erledigt bzw. gerade in Arbeit. */
@@ -253,8 +256,8 @@ async function appLink(leadId: string): Promise<string | null> {
 }
 
 async function ladeApi(apiKey: string): Promise<EingangApi> {
-  const { eingangApi } = await import("@/lib/mail/eingang-api");
-  return eingangApi(apiKey);
+  const { eingangApi, empfangsSchluessel } = await import("@/lib/mail/eingang-api");
+  return eingangApi(empfangsSchluessel() ?? apiKey);
 }
 
 /**
@@ -266,11 +269,29 @@ export async function verarbeiteMailEingang(event: EmailReceivedEvent, o: { now?
   const emailId = event.data?.email_id;
   if (!emailId) return { ergebnis: "ignoriert", grund: "ohne_id" };
   const empfaenger = [...(event.data?.to ?? []), ...(event.data?.cc ?? []), ...(event.data?.bcc ?? []), ...(event.data?.received_for ?? [])];
-  const ziel = empfaenger.map((a) => parseAntwortAdresse(a)).find((x) => !!x) ?? null;
+  // Termin-Adresse (termine-<token>@…): weitergeleitete Einladung blockiert Zeit (lib/calendar/termin-weiterleitung.ts)
+  const terminToken = empfaenger.map((a) => parseTerminAdresse(a)).find((x) => !!x) ?? null;
+  const ziel = terminToken ? null : (empfaenger.map((a) => parseAntwortAdresse(a)).find((x) => !!x) ?? null);
 
   const zeile = await reserviere(emailId, now);
   if (!zeile) return { ergebnis: "doppelt" };
   const id = zeile.id;
+  // Beleg-Adresse (lib/belege/eingang.ts): Anhänge als Belege ablegen
+  const { istBelegAdresse } = await import("@/lib/belege/eingang");
+  if (empfaenger.some((a) => istBelegAdresse(a))) {
+    const apiKey = process.env.RESEND_API_KEY?.trim();
+    if (!apiKey) {
+      await abschliessen(id, { ergebnis: "fehler", grund: "kein_schluessel" });
+      return { ergebnis: "fehler", grund: "kein_schluessel", eingangId: id };
+    }
+    const { verarbeiteBelegMail } = await import("@/lib/belege/eingang");
+    const r = await verarbeiteBelegMail({ eingangId: id, emailId, api: o.api ?? (await ladeApi(apiKey)) });
+    return { ergebnis: "beleg", grund: `neu ${r.neu}`, eingangId: id };
+  }
+  if (terminToken) {
+    const { verarbeiteTerminMail } = await import("@/lib/calendar/termin-weiterleitung-server");
+    return verarbeiteTerminMail({ eingangId: id, emailId, token: terminToken, now, api: o.api, zeile, fromEvent: event.data?.from ?? null });
+  }
   if (!ziel) {
     await abschliessen(id, { ergebnis: "ignoriert", grund: "fremde_adresse" });
     return { ergebnis: "ignoriert", grund: "fremde_adresse", eingangId: id };

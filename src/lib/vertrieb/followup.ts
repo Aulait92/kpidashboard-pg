@@ -17,6 +17,8 @@ import { inSendWindow, isLaterInterest, laterTiming, monthPhrase, nextWorkdayKey
 import { accountSignature, latestReceivedFrom, replyInThread, stripQuoted, threadEmails } from "@/lib/vertrieb/instantly";
 import { anredeZeile } from "@/lib/ansprache";
 import { STOP_STAGES, followupStoppGrund } from "@/lib/vertrieb/followup-regeln";
+import { AB_FOLLOWUP, janeinAnweisung, janeinFrage } from "@/lib/vertrieb/ab-tests";
+import { fassung, zuteilungMerken } from "@/lib/vertrieb/ab-tests-server";
 
 export const FOLLOWUP_CAMPAIGN = "Später-Follow-up";
 export { STOP_STAGES };
@@ -230,6 +232,12 @@ type Ctx = {
   timing: string | null;
   pitch: string;
   bookingUrl: string | null;
+  /**
+   * A/B-Test vertrieb_followup_janein (lib/vertrieb/ab-tests.ts), Fassung B: Mail 1 endet mit einer Ja/Nein-Frage („Ist
+   * das Thema bei Ihnen noch aktuell?“) statt mit der Terminbitte, der Buchungslink bleibt als Angebot. Mail 2 gleich.
+   * Hypothese: Eine Frage, die sich mit einem Wort beantworten lässt, ist eine kleinere Hürde: Es antworten mehr.
+   */
+  janein?: boolean;
 };
 
 /** Anrede-Zeile nach der zentralen Regel (lib/ansprache.ts): „Guten Tag Frau Meier,“ / „Guten Tag Anna Meier,“ / „Guten Tag,“. */
@@ -268,12 +276,14 @@ async function contextFor(f: { contactId: string; replyEmailId: string | null; t
 }
 
 /** Feste Vorlage (ohne KI oder wenn die KI nichts Brauchbares liefert). */
-export function templateTexts(c: Ctx): { body1: string; body2: string } {
+export function templateTexts(c: Omit<Ctx, "senderName" | "theirReply" | "ourMail">): { body1: string; body2: string } {
   const clause = c.timing ? `das Thema ${c.timing} wieder interessant für Sie wird` : "ein späterer Zeitpunkt besser passt";
   const opener = c.hasLaterReply
     ? `Sie hatten mir ${c.replyMonth} geschrieben, dass ${clause}. Deshalb melde ich mich wie versprochen noch einmal.`
     : `Wir hatten ${c.replyMonth} Kontakt, und Sie meinten, dass ${clause}. Deshalb melde ich mich wie versprochen noch einmal.`;
-  const ask1 = c.bookingUrl
+  const ask1 = c.janein
+    ? janeinFrage(c.bookingUrl)
+    : c.bookingUrl
     ? `Hätten Sie in den nächsten Tagen Zeit für ein kurzes Gespräch von 15 Minuten?\n\nHier können Sie sich direkt einen passenden Termin aussuchen:\n${c.bookingUrl}`
     : "Hätten Sie in den nächsten Tagen Zeit für ein kurzes Gespräch von 15 Minuten? Sagen Sie mir gern, wann es Ihnen passt.";
   const ask2 = c.bookingUrl
@@ -382,7 +392,7 @@ const TEXT_SCHEMA = {
 async function aiTexts(c: Ctx, llm: LlmCall): Promise<{ body1: string; body2: string }> {
   const system = `Du schreibst kurze Follow-up-E-Mails im Vertrieb an Versicherungsvermittler in Deutschland. Wir hatten eine Cold-Mail geschickt, der Vermittler hat geantwortet, dass später ein besserer Zeitpunkt ist. Dieser Zeitpunkt ist jetzt da. Beide Mails gehen als Antwort im selben E-Mail-Verlauf raus.
 
-Mail 1: Geht konkret auf unsere damalige Mail und seine Antwort ein (zum Beispiel: "Sie hatten mir im August geschrieben, dass das Thema ab dem neuen Jahr interessant wird. Deshalb melde ich mich wie versprochen."), dann ein Satz zum Angebot, dann die Frage nach einem kurzen Termin von 15 Minuten${c.bookingUrl ? " mit dem Buchungslink" : ""}.
+Mail 1: Geht konkret auf unsere damalige Mail und seine Antwort ein (zum Beispiel: "Sie hatten mir im August geschrieben, dass das Thema ab dem neuen Jahr interessant wird. Deshalb melde ich mich wie versprochen."), dann ein Satz zum Angebot, ${c.janein ? janeinAnweisung(!!c.bookingUrl) : `dann die Frage nach einem kurzen Termin von 15 Minuten${c.bookingUrl ? " mit dem Buchungslink" : ""}`}.
 Mail 2: Kommt einige Werktage später, falls keine Antwort kam. Sehr kurz, zum Beispiel "Kurz nachgehakt: ...", mit der Frage nach einem kurzen Termin${c.bookingUrl ? " und dem Buchungslink" : ""}.
 
 Regeln:
@@ -409,7 +419,10 @@ Antworte nur mit dem JSON-Objekt {"mail1": "...", "mail2": "..."}.`;
 export async function draftFollowup(id: string, opts: { llm?: LlmCall; force?: boolean } = {}) {
   const f = await prisma.salesFollowup.findUniqueOrThrow({ where: { id } });
   if (f.body1 && f.body2 && !opts.force) return f;
-  const c = await contextFor(f);
+  // A/B-Test (lib/vertrieb/ab-tests.ts): Fassung je Follow-up; zugeteilt, sobald Mail 1 mit dieser Fassung geschrieben wird
+  const neuMail1 = opts.force || !f.body1;
+  const janein = (await fassung(AB_FOLLOWUP, f.id)) === "b";
+  const c = { ...(await contextFor(f)), janein };
   const settings = await loadFollowupSettings();
   let texts = templateTexts(c);
   let source = "VORLAGE";
@@ -422,6 +435,7 @@ export async function draftFollowup(id: string, opts: { llm?: LlmCall; force?: b
       reportError(e, "followup-ai");
     }
   }
+  if (neuMail1) await zuteilungMerken(AB_FOLLOWUP, f.id);
   return prisma.salesFollowup.update({
     where: { id },
     data: { body1: opts.force || !f.body1 ? texts.body1 : f.body1, body2: opts.force || !f.body2 ? texts.body2 : f.body2, textSource: source },

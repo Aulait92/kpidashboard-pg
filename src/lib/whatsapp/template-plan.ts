@@ -57,6 +57,10 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "outreach_privatschutz",
   // Reine Hausrat-Leads (Ole hat die Einreichung am 18.11.2026 freigegeben): „zu Ihrer Hausratversicherung“
   "outreach_hausrat",
+  // Kfz je Anlass (Ole, 21.11.2026: „Bei KFZ brauchen wir noch eine Einstiegsfrage“, direkt beauftragt)
+  "outreach_kfz",
+  "outreach_kfz_wechsel",
+  "outreach_kfz_neu",
   "booking_confirmation",
   "reminder",
   "reminder_soon",
@@ -70,6 +74,8 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "followup_nudge",
   "followup_offer",
   "followup_noshow",
+  // Nachfassen nach Absage (Ole hat die Einreichung am 23.11.2026 freigegeben)
+  "followup_absage",
   "followup_last",
   // Angebot nach dem Termin (P3, Ole hat die Einreichung am 17.11.2026 freigegeben, docs/vorlagen-angebot.md)
   "offer_send",
@@ -379,6 +385,9 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   outreach_pkv: { title: "Erste Nachricht: private Krankenversicherung", when: "Wenige Minuten nach dem Formular, mit der ersten Frage und der Erstinformation als PDF." },
   outreach_privatschutz: { title: "Erste Nachricht: Privatschutz", when: "Wenige Minuten nach dem Formular, mit der ersten Frage und der Erstinformation als PDF." },
   outreach_hausrat: { title: "Erste Nachricht: Hausrat", when: "Wenige Minuten nach dem Formular, wenn nur Hausrat angefragt wurde, mit der ersten Frage und der Erstinformation als PDF." },
+  outreach_kfz: { title: "Erste Nachricht: Kfz", when: "Wenige Minuten nach dem Formular, wenn der Anlass nicht angegeben ist: jetziges oder neues Auto, mit der Erstinformation als PDF." },
+  outreach_kfz_wechsel: { title: "Erste Nachricht: Kfz-Wechsel", when: "Wenige Minuten nach dem Formular bei einem Wechsel fürs jetzige Auto: wann der Vertrag ausläuft, mit der Erstinformation als PDF." },
+  outreach_kfz_neu: { title: "Erste Nachricht: Kfz für ein neues Auto", when: "Wenige Minuten nach dem Formular bei einem neuen Auto: ob es schon da ist, mit der Erstinformation als PDF." },
   booking_confirmation: { title: "Terminbestätigung", when: "Sobald ein Lead einen Termin gebucht hat." },
   reminder: { title: "Terminerinnerung", when: "Etwa 24 Stunden vor dem Termin." },
   reminder_soon: { title: "Kurz vor dem Termin", when: "Etwa eine Stunde vor dem Termin: passt alles?" },
@@ -393,6 +402,7 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   offer_send: { title: "Ihr Angebot nach dem Termin", when: "Wenn Sie das Angebot über die App senden und der Chat länger als 24 Stunden ruht." },
   offer_bedenkzeit: { title: "Nachfassen nach der Bedenkzeit", when: "Am Tag, an dem sich der Kontakt nach seiner Bedenkzeit melden wollte." },
   followup_noshow: { title: "Nachfassen nach verpasstem Termin", when: "Wenn ein Lead nicht zum Termin erschienen ist." },
+  followup_absage: { title: "Nachfassen nach Absage", when: "Wenn ein Lead seinen Termin selbst abgesagt hat." },
   glueckwunsch: { title: "Glückwunsch zum Abschluss", when: "Wenn Sie beim Eintragen eines Abschlusses „Glückwunsch per WhatsApp senden“ anhaken." },
   followup_last: { title: "Letzte Nachricht", when: "Zum Abschluss einer Nachfass-Abfolge." },
   campaign_cross_sell: { title: "Bestandskunden: Lücke schließen", when: "Kampagne an Bestandskunden mit fehlender Sparte." },

@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";
 import { fetchIcsBusy } from "@/lib/calendar/ics";
 import { appKalenderEinschalten, appKalenderPruefen } from "@/lib/calendar/app-kalender";
+import { beraterAppKalenderPruefen } from "@/lib/calendar/berater-allianz";
 import {
   AllianzCalendarError,
   changeAllianzTemplate,
@@ -129,6 +130,8 @@ export async function connectAllianz(customerId: string, input: string, consent:
   const who = cal.orgName ? `${cal.orgName}, ` : "";
   // Ohne Google/Outlook: Termine über den App-Kalender mit Einladung per Mail (Ole, 20.11.2026)
   const app = await appKalenderEinschalten(customerId);
+  // Berater mit Allianz-Person (lib/calendar/berater-allianz.ts) wieder verbunden, falls ihre Person vorkommt
+  await beraterAppKalenderPruefen(customerId);
   const mail = app ? " Termine bekommen Sie als Einladung per Mail." : "";
   const dauer = await takeOverAllianzDuration(customerId, cal);
   return {
@@ -148,6 +151,7 @@ export async function changeAllianz(customerId: string, templateId: string, reso
     const next = await changeAllianzTemplate(cal, templateId, resourceId);
     await probe(next);
     await prisma.agentConfig.update({ where: { customerId }, data: { allianzCalendarEnc: encodeAllianzCalendar(next), allianzLastOkAt: new Date(), allianzLastError: null } });
+    await beraterAppKalenderPruefen(customerId);
     const dauer = await takeOverAllianzDuration(customerId, next);
     return { ok: true, info: `Termin-Art: ${next.templateName} (${next.durationMin} Min.).${dauer}` };
   } catch (err) {
@@ -161,6 +165,7 @@ export async function disconnectAllianz(customerId: string): Promise<void> {
     data: { allianzCalendarEnc: null, allianzConsentAt: null, allianzLastOkAt: null, allianzLastError: null, allianzAlertAt: null },
   });
   await appKalenderPruefen(customerId);
+  await beraterAppKalenderPruefen(customerId);
 }
 
 /** A) ICS-Link speichern (vorher einmal abrufen). */
@@ -250,6 +255,6 @@ export async function upcomingBlocks(calendarKey: string) {
     where: { calendarKey, endsAt: { gt: new Date() } },
     orderBy: { startsAt: "asc" },
     take: 50,
-    select: { id: true, startsAt: true, endsAt: true, note: true },
+    select: { id: true, startsAt: true, endsAt: true, note: true, quelle: true },
   });
 }

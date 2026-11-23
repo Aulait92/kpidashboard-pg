@@ -15,6 +15,7 @@
 
 import { abschlussBonusJetzt, addDaysIso, berlinTodayIso, eur, type AbschlussBonusQuelle } from "@/lib/offer-pricing";
 import { fromDayKey } from "@/lib/vertrieb/dates";
+import { naechsteSchritteAngebot } from "@/lib/vertrieb/ab-tests";
 
 export const MAIL_AB_STUNDE = 9;
 export const WHATSAPP_AB_STUNDE = 13;
@@ -99,7 +100,14 @@ export function fristDatum(iso: string): string {
 
 export type BonusMailText = { subject: string; paragraphs: string[]; button: string };
 
-export function bonusMail(art: "vorab" | "letzter", o: { betrag: number; fristIso: string; number: string; du: boolean; spaeterZahlen: boolean }): BonusMailText {
+/**
+ * naechsteSchritte: A/B-Test vertrieb_angebot_naechste_schritte (lib/vertrieb/ab-tests.ts), Fassung B mit Absatz „So geht
+ * es nach Ihrer Annahme weiter …“ vor „Wenn noch etwas offen ist …“ (gleiche Fassung wie die Angebotsmail).
+ */
+export function bonusMail(
+  art: "vorab" | "letzter",
+  o: { betrag: number; fristIso: string; number: string; du: boolean; spaeterZahlen: boolean; naechsteSchritte?: boolean },
+): BonusMailText {
   const b = eur(o.betrag);
   const du = o.du;
   const wann = art === "vorab" ? `noch bis morgen, ${fristDatum(o.fristIso)}, 23:59 Uhr` : "nur noch heute bis 23:59 Uhr";
@@ -117,7 +125,7 @@ export function bonusMail(art: "vorab" | "letzter", o: { betrag: number; fristIs
   const p3 = du ? "Wenn noch etwas offen ist, antworte einfach auf diese E-Mail." : "Wenn noch etwas offen ist, antworten Sie einfach auf diese E-Mail.";
   return {
     subject: art === "vorab" ? `Noch bis morgen: ${b} Abschlussbonus` : `Heute bis 23:59 Uhr: ${b} Abschlussbonus`,
-    paragraphs: [p1, p2, p3],
+    paragraphs: [p1, p2, ...(o.naechsteSchritte ? [naechsteSchritteAngebot(du)] : []), p3],
     button: art === "vorab" ? "Angebot ansehen" : "Angebot annehmen",
   };
 }

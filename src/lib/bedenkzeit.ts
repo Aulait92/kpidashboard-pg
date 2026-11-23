@@ -10,6 +10,7 @@
 // nennt der Lead selbst eine Zeit, legt der Assistent sie mit schedule_followup an (lib/lead-sequences.ts scheduleBotRecall
 // leitet im Angebotsstand auf die Bedenkzeit um).
 
+import { mitThema } from "@/lib/thema-artikel";
 import { a, type Ansprache } from "@/lib/ansprache";
 import { addDaysYmd, berlinYmd, weekdayOfYmd } from "@/lib/absence";
 import { berlinAt } from "@/lib/calendar/lead-times";
@@ -160,7 +161,7 @@ export function bedenkzeitNeustartText(c: { an: Ansprache; hi: string; topic: st
   const vom = c.person?.nom ?? a(c.an, "dein Berater", "Ihr Berater");
   const wozu = c.selbst
     ? a(c.an, `zum Angebot, das ${vom} dir geschickt hat`, `zum Angebot, das ${vom} Ihnen geschickt hat`)
-    : a(c.an, `zu deinem Angebot für ${c.topic}`, `zu Ihrem Angebot für ${c.topic}`);
+    : a(c.an, `zu deinem Angebot ${mitThema("für", c.topic)}`, `zu Ihrem Angebot ${mitThema("für", c.topic)}`);
   return a(
     c.an,
     `${c.hi} wie besprochen melde ich mich wieder ${wozu}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?`,

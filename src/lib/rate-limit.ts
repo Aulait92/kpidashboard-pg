@@ -46,6 +46,12 @@ export function hit(bucket: string, key: string, rule: RateLimitRule, now = Date
   return { ok, remaining: Math.max(0, rule.limit - e.count), retryAfterSec: ok ? 0 : Math.max(1, Math.ceil((e.resetAt - now) / 1000)) };
 }
 
+/** Ist (bucket, key) gerade gesperrt? Zählt nicht mit (z. B. Sperre nach zu vielen Fehlversuchen vor der Prüfung). */
+export function isLimited(bucket: string, key: string, rule: RateLimitRule, now = Date.now()): boolean {
+  const e = store.get(`${bucket}:${key}`);
+  return !!e && e.resetAt > now && e.count >= rule.limit;
+}
+
 /** Nur für Tests. */
 export function resetRateLimits() {
   store.clear();
@@ -59,6 +65,8 @@ export const LIMITS = {
   // Anmeldung: zusätzlich zur Sperre je E-Mail (10 Fehlversuche / 15 Min) je IP
   login: { limit: 30, windowMs: 15 * MIN },
   totp: { limit: 20, windowMs: 15 * MIN },
+  // Adressbuch fürs iPhone (CardDAV, lib/carddav): Fehlversuche je IP, danach 15 Minuten gesperrt
+  carddavLogin: { limit: 10, windowMs: 15 * MIN },
   passwordReset: { limit: 5, windowMs: 15 * MIN },
   // KI (kostet je Aufruf)
   aiHelp: { limit: 30, windowMs: HOUR },
@@ -68,14 +76,21 @@ export const LIMITS = {
   supportEscalation: { limit: 10, windowMs: HOUR },
   // Geschützter Upload der Vertriebsunterlagen (/api/ops/unterlagen)
   opsUpload: { limit: 20, windowMs: HOUR },
+  opsAktion: { limit: 60, windowMs: HOUR },
+  // Kampagnen-Assistent ohne Admin-Login (/api/ops/kampagne), je Start KI- und Meta-Kosten
+  opsKampagne: { limit: 20, windowMs: HOUR },
   // Öffentliche Seiten
   publicBooking: { limit: 20, windowMs: 10 * MIN },
+  // Buchung nur mit Handynummer nach dem Leadformular (lib/buchung-formular.ts): Abgleich mit frischen Leads je IP
+  formularAbgleich: { limit: 6, windowMs: 10 * MIN },
   offerAccept: { limit: 10, windowMs: 10 * MIN },
   publicApi: { limit: 60, windowMs: MIN },
   // Eigene Funnels (lib/funnel): Messung je Schritt (ein Besuch erzeugt rund 25 Ereignisse) und Absenden
   funnelEreignis: { limit: 120, windowMs: MIN },
   funnelAbsenden: { limit: 10, windowMs: 10 * MIN },
   cspReport: { limit: 30, windowMs: MIN },
+  // E-Mails aus der Kontaktakte über das eigene Postfach (je Admin, lib/vertrieb/crm-mail-server.ts)
+  crmMail: { limit: 30, windowMs: HOUR },
   // Nutzungsmessung im Admin (je Admin; der Browser sendet höchstens alle 15 s und beim Verlassen der Seite)
   adminNutzung: { limit: 30, windowMs: MIN },
   // Webhooks mit Signaturprüfung: nur grobe Obergrenze (Stripe/Meta senden Bursts)

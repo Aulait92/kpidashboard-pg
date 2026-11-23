@@ -92,7 +92,8 @@ export async function addContactPhone(contactId: string, raw: string | null | un
   const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { phone: true, detectedData: true, phones: { select: { phone: true } } } });
   if (!c) return "skipped";
   if (phoneKey(c.phone) === key || c.phones.some((p) => phoneKey(p.phone) === key)) return "known";
-  if (detectedDataOf(c.detectedData).removed?.some((r) => phoneKey(r) === key)) return "known";
+  // Entfernte Nummern nicht automatisch zurückholen; von Hand (MANUELL) wieder eintragen geht
+  if (opts.source !== "MANUELL" && detectedDataOf(c.detectedData).removed?.some((r) => phoneKey(r) === key)) return "known";
   const kind = opts.kind ?? phoneKind(e164, opts.label);
   const at = opts.at ?? new Date();
   const what = `${KIND_LABEL[kind]}, ${sourceLabel("phone", opts.source, at)}`;

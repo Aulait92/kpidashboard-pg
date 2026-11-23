@@ -43,6 +43,8 @@ export type CampaignContext = {
   product: string;
   wish: string | null;
   anrede: "Sie" | "Du";
+  /** Ansprache der Leads (Customer.leadAddress, lib/ansprache.ts): feste Formularfragen in Sie- bzw. Du-Fassung. Fehlt bei älteren Läufen. */
+  leadAddress?: "sie" | "du";
   city: string | null;
   zip: string | null;
   region: string | null;
@@ -60,12 +62,40 @@ export type CampaignContext = {
   patterns: string;
   /** Lange laufende Anzeigen anderer aus der Meta-Werbebibliothek (Vorlage, nicht wörtlich übernehmen). */
   libraryWinners?: string | null;
+  /** Bestlaufende Anzeigen aus dem eigenen Werbekonto des Kunden (lib/kampagnen/eigene-gewinner.ts), Vorrang vor der Werbebibliothek. */
+  eigeneGewinner?: EigenerGewinner[] | null;
+  /** Warum keine eigenen Gewinner da sind (z. B. keine Berechtigung), nur für den Admin. */
+  eigeneGewinnerHinweis?: string | null;
   /** Buchungsseite des Kunden – Pflicht auf der Dankeseite (Ole, 13.11.2026), damit Leads direkt einen Termin buchen. */
   bookingUrl?: string | null;
   /** Paket mit Software: Buchungsseite ist Pflicht (Nur Betreuung: ohne Kalender). */
   needsBooking?: boolean;
   /** Fester Einwilligungstext fürs Formular (lib/einwilligung-leadformular.ts); ersetzt den Vorschlag des Formular-Agenten. */
   consentText?: string | null;
+};
+
+/** Eine bestlaufende Anzeige aus dem eigenen Meta-Werbekonto des Kunden (letzte 90 Tage). */
+export type EigenerGewinner = {
+  adId: string;
+  name: string;
+  kampagne: string | null;
+  ausgaben: number;
+  /** Leads: aus unserer Datenbank (Lead.adId), sonst laut Meta */
+  leads: number;
+  leadsQuelle: "app" | "meta";
+  /** Termine aus unserer Datenbank (nicht abgesagt), null = keine Leads in der App */
+  termine: number | null;
+  cpl: number;
+  kostenJeTermin: number | null;
+  /** Klickrate in Prozent */
+  ctr: number | null;
+  primaryText: string | null;
+  headline: string | null;
+  description: string | null;
+  cta: string | null;
+  bildUrl: string | null;
+  video: boolean;
+  passtZumProdukt: boolean;
 };
 
 // ─── Agenten-Ergebnisse ─────────────────────────────────────────────────
@@ -242,7 +272,7 @@ export function validateForm(x: unknown): Valid<LeadFormDraft> {
     const o = isObj(q) ? q : {};
     const key = str(o.key).toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40);
     if (!key) errors.push(`questions[${i}].key fehlt.`);
-    if (["full_name", "phone_number", "email"].includes(key)) errors.push(`questions[${i}].key „${key}“ ist für Kontaktfelder reserviert.`);
+    if (["full_name", "phone_number", "whatsapp_number", "email"].includes(key)) errors.push(`questions[${i}].key „${key}“ ist für Kontaktfelder reserviert.`);
     if (keys.has(key)) errors.push(`questions[${i}].key doppelt.`);
     keys.add(key);
     const options = (Array.isArray(o.options) ? o.options : []).map((v) => str(v)).filter(Boolean);
@@ -288,8 +318,12 @@ export function worstStatus(status: ReviewResult["status"], findings: Finding[])
   return "gruen";
 }
 
-/** Einheitliches Benennungsschema: „PG | <Kunde> | <Produkt> | <Datum>“. */
-export function campaignName(customer: string, product: string, now: Date): string {
+/**
+ * Einheitliches Benennungsschema: „PG | <Produkt> | <Datum>“. Ohne Kundennamen (Ole, 21.11.2026): ein Werbekonto gehört
+ * immer genau einer Agentur, der Name machte die Kampagnen nur unnötig lang. Ältere Kampagnen heißen noch
+ * „PG | <Kunde> | <Produkt> | <Datum>“ (budget-sync.ts erkennt beide).
+ */
+export function campaignName(product: string, now: Date): string {
   const d = now.toISOString().slice(0, 10);
-  return `PG | ${customer} | ${product} | ${d}`.slice(0, 200);
+  return `PG | ${product} | ${d}`.slice(0, 200);
 }

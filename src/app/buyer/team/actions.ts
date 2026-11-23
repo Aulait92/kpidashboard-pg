@@ -180,3 +180,23 @@ export async function reassignLeadAction(leadId: string, userId: string | null):
     return { ok: false, error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
   }
 }
+
+/** Inhaber: Person im Allianz-Online-Kalender für ein Mitglied setzen (Termine per Einladung, lib/calendar/berater-allianz.ts). */
+export async function setMemberAllianzAction(_prev: { ok?: boolean; error?: string; info?: string }, fd: FormData): Promise<{ ok?: boolean; error?: string; info?: string }> {
+  try {
+    const ctx = await requireOwner();
+    const userId = String(fd.get("userId") ?? "");
+    const { beraterAllianzSetzen } = await import("@/lib/calendar/berater-allianz");
+    const res = await beraterAllianzSetzen({ customerId: ctx.customerId, userId, resourceId: String(fd.get("resourceId") ?? "") || null, email: String(fd.get("email") ?? "") });
+    if (res.ok) {
+      await audit("calendar.berater_allianz", { customerId: ctx.customerId, entity: "AdvisorCalendar", entityId: userId, details: { by: "owner" } });
+      revalidatePath("/buyer/team");
+      revalidatePath("/buyer/kalender");
+      // Rückmeldung für den Inhaber, nicht „Sie bekommen …“
+      if (res.info?.startsWith("Termine bekommen Sie")) return { ok: true, info: res.info.replace("Termine bekommen Sie als Einladung an", "Termine gehen als Einladung an") };
+    }
+    return res;
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}

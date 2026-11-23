@@ -1,6 +1,6 @@
-# Sprechzettel Vertriebspräsentation (Stand 20.11.2026: Folien ohne Gedankenstriche, Chats in Sie-Form)
+# Sprechzettel Vertriebspräsentation (Stand 21.11.2026: Folie „Jahresplan: 3 Monate sparen“ neu, kein Abschlussbonus mehr)
 
-Gilt für die Vertreter-Fassung (24 Folien). Makler-Fassung (25 Folien): nach Folie 21 kommt „Mit Tarifvergleich: alles zurück nach 7 Monaten“ (Notiz unten), danach verschiebt sich alles um eins.
+Gilt für die Vertreter-Fassung (25 Folien). Makler-Fassung (26 Folien): nach Folie 21 kommt „Mit Tarifvergleich: alles zurück nach 7 Monaten“ (Notiz unten), danach verschiebt sich alles um eins.
 Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeanteil unter der Hälfte.
 
 ## 1. Alles Wichtige zur Leadgenerierung mit performancegrowth
@@ -109,10 +109,19 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - Frage: „Welches Budget pro Tag können Sie sich für den Start vorstellen?“
 
 ## 23. Und wenn es schlecht läuft? Ihr Risiko ist klar begrenzt.
-- Garantien kurz erklären, Voraussetzungen offen nennen.
+- Seit 22.11.2026 ohne Garantien (Ole: „ich verkaufe erstmal ohne Garantie“). Garantien nicht erwähnen, auch nicht auf Nachfrage zusagen.
+- Risiko über die Zahlen erklären: „Ab 8 Kunden im Monat sind Sie im Plus“ (Makler: „Selbst mit halber Quote 2× zurück“).
+- Pause und Urlaub jederzeit, Kampagne wird laufend nach Umsatz je Werbe-Euro nachgeschärft.
 - „Ihr Bestand gehört Ihnen, auch wenn Sie aufhören.“
 
-## 24. Ihr Start in 3 Schritten
+## 24. Jahresplan: 3 Monate sparen
+- Nur die Zahlweise erklären: „Bei 12 Monaten Laufzeit können Sie jährlich im Voraus zahlen. Dann zahlen Sie 9 Monatsbeträge statt 12.“
+- Die große Zahl zeigen: mit Listenpreis 990 € sparen Sie 2.970 € netto im Jahr (12 × 990 € = 11.880 € gegen 9 × 990 € = 8.910 €). Mit Angebot stehen dort seine Beträge.
+- Bedingungen offen sagen: Zahlung mit der Annahme fällig, bei einer Pause keine Gutschrift. Monatlich zahlen geht genauso.
+- Frage: „Passt für Sie eher monatlich oder der Jahresplan?“
+- Kein Abschlussbonus mehr (Ole, 21.11.2026). Nur wenn ein Angebot ihn schon enthält, gilt er wie dort zugesagt.
+
+## 25. Ihr Start in 3 Schritten
 - Heute Angebot, diese Woche Einrichtung, in etwa 2 Wochen die ersten Leads.
 - Abschlussfrage: „Spricht etwas dagegen, dass wir mit der Katzenversicherung starten?“
 - Bei Einwand: eingrenzen („Ist das der einzige Punkt?“), dann gezielt beantworten.

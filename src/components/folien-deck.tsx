@@ -10,7 +10,7 @@
 // Kommt per Klick eine Produktfolie dazu (Cross-Selling „Mit anschauen“), springt das Deck vorwärts auf sie und
 // meldet „{Produkt} hinzugefügt“ (Ole, 18.11.2026); im Vollbild und eingebettet steht der Hinweis in der Folie.
 // Abschluss (19.11.2026): „Ja, so machen wir es“ (data-zusage) geht an onZusage, danach eine Folie weiter. Einwände
-// (optionale Folien außerhalb der Reihenfolge) über „Einwände“ bzw. die Tasten 1 bis 4, zurück mit Esc oder Pfeil.
+// (optionale Folien außerhalb der Reihenfolge) über „Einwände“ bzw. die Tasten 1 bis 6, zurück mit Esc oder Pfeil.
 // Sprechhinweise nur für den Vermittler: zum Aufklappen unter dem Deck (Standard aus, nie in der Folie, nicht im
 // Vollbild). onFolie meldet jede erreichte Folie einmal (Messung „Folie erreicht“).
 // Rechen-Folien (data-rechner, Ole 20.11.2026): Eingaben rechnen sofort neu (folien-rechner.ts), bleiben beim Blättern
@@ -216,7 +216,7 @@ export function FolienDeck({
     const onKey = (e: KeyboardEvent) => {
       if (istEingabe(e.target)) return;
       const richtung = WEITER.has(e.key) ? "weiter" : ZURUECK.has(e.key) ? "zurueck" : null;
-      // Tasten 1 bis 4: Einwand-Folie (auch im Vollbild, ohne sichtbares Menü)
+      // Tasten 1 bis 6: Einwand-Folie (auch im Vollbild, ohne sichtbares Menü)
       const nr = /^[1-9]$/.test(e.key) ? Number(e.key) - 1 : -1;
       if (!eingebettet && nr >= 0 && nr < einwaende.length) {
         e.preventDefault();
@@ -406,7 +406,7 @@ export function FolienDeck({
                 onClick={() => setEinwandMenue((x) => !x)}
                 aria-expanded={einwandMenue}
                 aria-label="Einwände"
-                title="Einwände (Tasten 1 bis 4)"
+                title={`Einwände (Tasten 1 bis ${einwaende.length})`}
                 className="px-3 sm:px-4"
                 data-einwaende-knopf
               >
@@ -452,7 +452,7 @@ export function FolienDeck({
             </div>
           ) : null}
           {sprech && f.hinweis ? (
-            <p className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950" data-sprechhinweis>
+            <p className="whitespace-pre-line rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950" data-sprechhinweis>
               <span className="font-semibold">Nur für Sie: </span>
               {f.hinweis}
             </p>

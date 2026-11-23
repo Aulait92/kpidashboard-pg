@@ -126,7 +126,16 @@ export async function productOverview(customerId: string, now = new Date()) {
   const taken = (item: CatalogItem) => booked.some((p) => matchesCatalog(item, p.name));
   const bookable: BookableProduct[] = catalog
     .filter((i) => i.enabled && !taken(i))
-    .map((i) => ({ key: i.key, name: i.name, benefit: i.benefit, proven: i.proven, cpl: cpls[i.key]?.cpl ?? null, cplFrom: cpls[i.key]?.cplFrom ?? null, guarantee: /katze|\btkv\b|tierkranken/i.test(i.name) }));
+    .map((i) => ({
+      key: i.key,
+      name: i.name,
+      // Kunden ohne Garantien (Angebote ab 22.11.2026) sehen keinen Garantie-Hinweis, auch nicht im Nutzentext
+      benefit: ctx.garantien === false ? i.benefit.replace(/,?\s*mit Lead-Garantie/i, "") : i.benefit,
+      proven: i.proven,
+      cpl: cpls[i.key]?.cpl ?? null,
+      cplFrom: cpls[i.key]?.cplFrom ?? null,
+      guarantee: ctx.garantien !== false && /katze|\btkv\b|tierkranken/i.test(i.name),
+    }));
   return { lines, ctx, booked, bookable, budgetRequestPending: !!pending, bookings };
 }
 
@@ -382,6 +391,46 @@ export async function startProduct(bookingId: string, actor?: AuditActor, now = 
     list: [`${before.product}: ${eurDay(Number(before.dailyBudget))}`],
   });
   return { ok: true, ...(note ? { note } : {}) };
+}
+
+/**
+ * Admin legt ein Produkt für den Kunden an (Ole, 21.11.2026: „KFZ für 40 € Tagesbudget, 0 € Aufpreis“), auch ohne
+ * Katalog-Eintrag. Ohne Aufpreis: kein neuer Monatspreis (feeStatus none), keine Einrichtung. Status „In Einrichtung“,
+ * Aufgabe „Kampagne aufsetzen“; „Gestartet“ legt wie bei Kundenbuchungen die Budgetzeile an (startProduct).
+ */
+export async function adminProduktAnlegen(
+  input: { customerId: string; product: string; dailyBudget: number; actor?: AuditActor },
+  now = new Date(),
+): Promise<AdminResult> {
+  const product = input.product.replace(/\s+/g, " ").trim().slice(0, 60);
+  if (!product) return { ok: false, error: "Bitte einen Produktnamen eingeben." };
+  const daily = Number(input.dailyBudget);
+  if (!Number.isFinite(daily) || daily < BUDGET_MIN_DAILY || daily > BUDGET_MAX_DAILY) return { ok: false, error: `Tagesbudget zwischen ${BUDGET_MIN_DAILY} und ${BUDGET_MAX_DAILY} €.` };
+  const offen = await prisma.productBooking.findFirst({ where: { customerId: input.customerId, product, status: { in: OPEN } } });
+  if (offen) return { ok: false, error: `${product} ist schon gebucht.` };
+  const { lines } = await budgetState(input.customerId, now);
+  const monthly = (d: number) => Math.round(d * 30.4);
+  const sum = lines.reduce((s, l) => s + l.dailyBudget, 0);
+  const b = await prisma.productBooking.create({
+    data: {
+      customerId: input.customerId,
+      catalogKey: "admin",
+      product,
+      dailyBudget: daily,
+      status: "setup",
+      monthlyBudgetFrom: monthly(sum),
+      monthlyBudgetTo: monthly(sum + daily),
+      setupFee: 0,
+      pricing: "fixed",
+      acknowledged: true,
+      note: "Vom Admin angelegt, ohne Aufpreis",
+      decidedBy: input.actor?.email ?? "admin",
+    },
+  });
+  const info = await customerInfo(input.customerId);
+  await adminTask(info.contactId, `Kampagne aufsetzen ${info.name}: ${product} (${eurDay(daily)})`, "Vom Admin angelegt, ohne Aufpreis. Nach dem Start in der Kundenakte „Gestartet“ setzen.", now);
+  await audit("produkt.admin_anlegen", { entity: "ProductBooking", entityId: b.id, customerId: input.customerId, details: { product, daily }, ...(input.actor ? { actor: input.actor } : {}) });
+  return { ok: true, note: "Aufgabe „Kampagne aufsetzen“ ist angelegt." };
 }
 
 /** Admin „Ablehnen“: Einrichtungsposition zurücknehmen, Kunde informieren. */

@@ -4,8 +4,11 @@
 // Idempotent: Jede angelegte ID wird sofort gespeichert (onProgress), ein
 // erneuter Lauf überspringt Vorhandenes und macht an der Fehlerstelle weiter.
 
+import { KNOPF_TITEL } from "@/lib/einwilligung-leadformular";
 import { cleanToken, redactTokens } from "@/lib/meta-leads";
 import type { AdCopy, BuiltState, CampaignContext, CampaignPlan, CreativeImage, LeadFormDraft } from "@/lib/kampagnen/types";
+import { standardFelder } from "@/lib/kampagnen/formular-vorgaben";
+import { formularBuchungsUrl } from "@/lib/buchung-formular";
 
 const GRAPH = "https://graph.facebook.com/v22.0";
 
@@ -93,8 +96,30 @@ const slug = (s: string) =>
     .replace(/^_+|_+$/g, "")
     .slice(0, 40) || "antwort";
 
+/**
+ * Bild für eine Anzeige: Upload über /adimages (Hash). Fehlt der App dafür die Berechtigung (Meta #3 „Application does
+ * not have the capability“, Lohmann 21.11.2026), nehmen wir die öffentliche Bild-Adresse direkt im Creative (picture).
+ */
+async function bildFuerAnzeige(api: MetaApi, act: string, imageUrl: string): Promise<string> {
+  try {
+    const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: imageUrl });
+    const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
+    if (hash) return hash;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/capability|\(#3\)|"code":3\b/.test(msg)) throw e;
+  }
+  return `url:${imageUrl}`;
+}
+
+/** link_data-Feld zum gespeicherten Bild: Hash bzw. Adresse (picture). */
+const bildFeld = (ref: string): Record<string, string> => (ref.startsWith("url:") ? { picture: ref.slice(4) } : { image_hash: ref });
+
 /** Payload für POST /{page_id}/leadgen_forms (Felder laut Graph-Referenz „Page leadgen_forms“). */
-export function leadFormPayload(form: LeadFormDraft, ctx: Pick<CampaignContext, "privacyUrl" | "website" | "advisorName" | "bookingUrl">): Record<string, unknown> {
+export function leadFormPayload(
+  form: LeadFormDraft,
+  ctx: Pick<CampaignContext, "privacyUrl" | "website" | "advisorName" | "bookingUrl"> & Partial<Pick<CampaignContext, "product">>,
+): Record<string, unknown> {
   if (!ctx.privacyUrl) throw new Error("Datenschutz-URL fehlt.");
   return {
     name: form.formName,
@@ -108,23 +133,33 @@ export function leadFormPayload(form: LeadFormDraft, ctx: Pick<CampaignContext, 
         ...(q.options.length ? { options: q.options.map((o) => ({ key: slug(o), value: o })) } : {}),
       })),
       { type: "FULL_NAME", key: "full_name" },
-      { type: "PHONE", key: "phone_number" },
+      // WhatsApp-Nummer statt Telefonnummer (Ole, 23.11.2026: 3 von 7 Lohmann-Leads ohne WhatsApp, meist von Meta
+      // vorausgefülltes Festnetz). Meta füllt das Feld mit der WhatsApp-Nummer vor; der Import liest whatsapp_number vor
+      // phone_number (lib/lead-intake.ts).
+      { type: "WHATSAPP_NUMBER", key: "whatsapp_number" },
       { type: "EMAIL", key: "email" },
+      // Vorausgefüllt je Produkt (Kfz: Adresse und Geburtsdatum, Privatschutz: Adresse), lib/kampagnen/formular-vorgaben.ts
+      ...standardFelder(ctx.product),
     ],
+    // Überschrift über den Kontaktfragen: der Assistent schreibt per WhatsApp. Neutral formuliert (passt zu Sie und Du).
+    question_page_custom_headline: "Ihre Rückmeldung kommt per WhatsApp",
     privacy_policy: { url: ctx.privacyUrl, link_text: "Datenschutzerklärung" },
-    context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: form.introParagraphs, button_text: "Weiter" },
+    // PARAGRAPH_STYLE erlaubt nur ein Element (Meta-Fehler #100, 21.11.2026): Absätze zusammenfassen
+    context_card: { title: form.introTitle, style: "PARAGRAPH_STYLE", content: [form.introParagraphs.filter(Boolean).join("\n\n").slice(0, 2000)], button_text: "Weiter" },
     custom_disclaimer: {
-      title: "Einwilligung",
+      // Ole, 22.11.2026: „Immer ohne Checkbox“. Einwilligung per Klick auf „Senden“ (Rechtsprüfung 22.11.2026 Gelb
+      // gering, docs/recht/leadformular-einwilligung-knopf-2026-11-22.md); der Text steht über dem Senden-Knopf
+      title: KNOPF_TITEL,
       body: { text: form.consentText },
-      checkboxes: [{ key: "einwilligung_kontakt", text: "Ich bin einverstanden.", is_required: true, is_checked_by_default: false }],
     },
-    // Dankeseite: immer zum Buchungskalender des Kunden (Ole, 13.11.2026), sonst Website
+    // Dankeseite: immer zum Buchungskalender des Kunden (Ole, 13.11.2026), sonst Website. Mit Marker von=formular
+    // (Ole, 22.11.2026): die Buchungsseite fragt dann nur die Handynummer ab (lib/buchung-formular.ts)
     thank_you_page: ctx.bookingUrl
-      ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: ctx.bookingUrl }
+      ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: formularBuchungsUrl(ctx.bookingUrl) }
       : ctx.website
         ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Zur Website", website_url: ctx.website }
         : { title: form.thankYouTitle, body: form.thankYouBody, button_type: "NONE" },
-    ...(ctx.bookingUrl ? { follow_up_action_url: ctx.bookingUrl } : ctx.website ? { follow_up_action_url: ctx.website } : {}),
+    ...(ctx.bookingUrl ? { follow_up_action_url: formularBuchungsUrl(ctx.bookingUrl) } : ctx.website ? { follow_up_action_url: ctx.website } : {}),
   };
 }
 
@@ -182,7 +217,9 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   // 2. Ort → Meta-Standortschlüssel (Stadt), sonst Deutschland
   if (built.geoKey === undefined) {
     let key: string | null = null;
-    const q = ctx.city ?? ctx.region;
+    // „bundesweit“ im Wunsch (Ole, 21.11.2026: Lohmann bundesweit statt lokal): ganz Deutschland statt Umkreis
+    const bundesweit = /bundesweit|deutschlandweit|ganz deutschland/i.test(ctx.wish ?? "");
+    const q = bundesweit ? null : (ctx.city ?? ctx.region);
     if (q) {
       const r = await api.get<{ data: { key: string; name: string; country_code?: string }[] }>("search", {
         type: "adgeolocation",
@@ -198,6 +235,44 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   }
 
   // 3. Anzeigengruppen
+  // EU (Digital Services Act): Meta verlangt Begünstigten und Zahler je Anzeigengruppe („Werbetreibender fehlt“,
+  // Fehler 3858634, Lohmann 20.11.2026). Vorschlag des Werbekontos (dsa_recommendations), sonst der Kundenname.
+  // Reihenfolge: Standard des Werbekontos („Default advertiser and payer“), Vorschläge (dsa_recommendations, z. B. der
+  // EU-Eintrag), zuletzt der Kundenname. Meta verlangt den Namen genau so, wie er im Werbekonto hinterlegt ist.
+  let dsa: string | null = null;
+  let payor: string | null = null;
+  try {
+    const acc = await api.get<{ default_dsa_beneficiary?: string; default_dsa_payor?: string }>(act, { fields: "default_dsa_beneficiary,default_dsa_payor" });
+    dsa = acc.default_dsa_beneficiary?.trim() || null;
+    payor = acc.default_dsa_payor?.trim() || null;
+  } catch {
+    /* weiter mit den Vorschlägen */
+  }
+  if (!dsa) {
+    try {
+      const rec = await api.get<{ data?: ({ recommendations?: string[] } | string)[] }>(`${act}/dsa_recommendations`);
+      const first = Array.isArray(rec.data) ? rec.data[0] : null;
+      dsa = (typeof first === "string" ? first : first?.recommendations?.[0]) ?? null;
+    } catch {
+      dsa = null;
+    }
+  }
+  dsa = (dsa || ctx.customerName || ctx.advisorName || "").slice(0, 120) || null;
+  payor = (payor || dsa || "").slice(0, 120) || null;
+  // Verifizierter Werbetreibender (Meta seit 2025: regional_regulation_identities mit der ID der Verifizierung, z. B.
+  // „Allianz“ bei Lohmann). Die API liefert den Standard nicht; wir übernehmen die IDs der jüngsten Anzeigengruppe des
+  // Kontos, die welche hat (Ole hat den Standard im Werbekonto gewählt, 21.11.2026).
+  let identities: { universal_beneficiary?: string; universal_payer?: string } | null = null;
+  try {
+    const r = await api.get<{ data?: { regional_regulation_identities?: { universal_beneficiary?: string; universal_payer?: string } }[] }>(`${act}/adsets`, {
+      fields: "regional_regulation_identities",
+      limit: "50",
+    });
+    const hit = (r.data ?? []).find((x) => x.regional_regulation_identities?.universal_beneficiary);
+    identities = hit?.regional_regulation_identities ?? null;
+  } catch {
+    identities = null;
+  }
   for (let i = 0; i < plan.adSets.length; i++) {
     if (built.adSetIds[i]) continue;
     const a = plan.adSets[i];
@@ -210,6 +285,11 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
       promoted_object: { page_id: ctx.pageId },
       targeting: adSetTargeting(a, built.geoKey ?? null),
       status: "PAUSED",
+      ...(identities?.universal_beneficiary
+        ? { regional_regulation_identities: { universal_beneficiary: identities.universal_beneficiary, universal_payer: identities.universal_payer ?? identities.universal_beneficiary } }
+        : dsa
+          ? { dsa_beneficiary: dsa, dsa_payor: payor ?? dsa }
+          : {}),
     });
     built.adSetIds[i] = r.id;
     await save();
@@ -228,10 +308,7 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   for (let i = 0; i < pairs.length; i++) {
     const { copy, image } = pairs[i];
     if (!built.imageHashes[i]) {
-      const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: image!.imageUrl });
-      const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
-      if (!hash) throw new Error("Meta /adimages lieferte keinen Hash.");
-      built.imageHashes[i] = hash;
+      built.imageHashes[i] = await bildFuerAnzeige(api, act, image!.imageUrl);
       await save();
     }
     if (!built.creativeIds[i]) {
@@ -240,7 +317,7 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
         object_story_spec: {
           page_id: ctx.pageId,
           link_data: {
-            image_hash: built.imageHashes[i],
+            ...bildFeld(built.imageHashes[i]),
             link: "http://fb.me/",
             message: copy.primaryText,
             name: copy.headline,
@@ -297,10 +374,7 @@ export async function buildRefreshAds(api: MetaApi, input: RefreshBuildInput): P
   for (let i = 0; i < pairs.length; i++) {
     const { copy, image } = pairs[i];
     if (!built.imageHashes[i]) {
-      const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: image!.imageUrl });
-      const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
-      if (!hash) throw new Error("Meta /adimages lieferte keinen Hash.");
-      built.imageHashes[i] = hash;
+      built.imageHashes[i] = await bildFuerAnzeige(api, act, image!.imageUrl);
       await save();
     }
     if (!built.creativeIds[i]) {
@@ -309,7 +383,7 @@ export async function buildRefreshAds(api: MetaApi, input: RefreshBuildInput): P
         object_story_spec: {
           page_id: ctx.pageId,
           link_data: {
-            image_hash: built.imageHashes[i],
+            ...bildFeld(built.imageHashes[i]),
             link: "http://fb.me/",
             message: copy.primaryText,
             name: copy.headline,

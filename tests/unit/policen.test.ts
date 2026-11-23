@@ -58,7 +58,7 @@ describe("Bitte um Policen (Oles Text)", () => {
   it("Sie, Schalter Kranken/BU/Leben an: Wortlaut wie vorgegeben, ohne Fußzeile und ohne Knöpfe", () => {
     const b = policenBitte({ an: "sie", vermittler: herr, gesundheitAn: true });
     expect(b.text).toBe(
-      "Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat, Kfz, Kranken-, BU- oder Lebensversicherung. Dann sieht er vorher, wo Sie doppelt zahlen oder Lücken haben, und der Termin geht deutlich schneller.",
+      "Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat, Kfz, Kranken-, BU- oder Lebensversicherung. Dann sieht er vorher, ob Sie etwas doppelt zahlen und wann Sie kündigen können, und versucht, Ihnen Geld zu sparen. So wird der Termin kürzer und konkreter.",
     );
     expect(b.knoepfe).toEqual([]);
     expect(b.fusszeile).toBeNull();
@@ -75,7 +75,7 @@ describe("Bitte um Policen (Oles Text)", () => {
   it("Du: Vorname, Pronomen unbekannt ohne er/sie; Rückfall „Ihrem Berater“ wird Nominativ", () => {
     const du = policenBitte({ an: "du", vermittler: ole, gesundheitAn: false });
     expect(du.text).toBe(
-      "Damit Ole deinen Termin gut vorbereiten kann: Schick bitte vorab Fotos oder PDFs deiner aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat oder Kfz. Dann ist vorher klar, wo du doppelt zahlst oder Lücken hast, und der Termin geht deutlich schneller.",
+      "Damit Ole deinen Termin gut vorbereiten kann: Schick bitte vorab Fotos oder PDFs deiner aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat oder Kfz. Dann ist vorher klar, ob du etwas doppelt zahlst und wann du kündigen kannst, und Ole versucht, dir Geld zu sparen. So wird der Termin kürzer und konkreter.",
     );
     expect(du.text).not.toMatch(/\b(Sie|Ihr|Ihren)\b/);
     expect(policenBitte({ an: "sie", vermittler: { nom: "Ihrem Berater", dat: "Ihrem Berater" } }).text).toMatch(/^Damit Ihr Berater Ihren Termin/);

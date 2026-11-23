@@ -37,6 +37,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { prisma } from "@/lib/prisma";
 import { acceptOffer, createOffer } from "@/lib/offers";
+import { zugesagterBonus } from "./zugesagter-bonus";
 import { createCheckoutForOffer } from "@/lib/billing";
 import { backfillReferralDiscounts, consentTextFor, ensureReferralCode, referralSetupDiscount, submitReferral } from "@/lib/kollegen";
 import { addDaysIso, berlinTodayIso } from "@/lib/offer-pricing";
@@ -102,12 +103,16 @@ describe("Empfehlungsrabatt auf die Einrichtung", () => {
     return contact.id;
   }
 
-  const offerFor = (contactId: string, extra: Record<string, unknown> = {}) =>
-    createOffer(
+  // Abschlussbonus (abschlussBonus/abschlussBonusBis in extra) seit 21.11.2026 nur noch als Altfall: nach dem Anlegen setzen
+  const offerFor = async (contactId: string, extra: Record<string, unknown> = {}) => {
+    const { abschlussBonus, abschlussBonusBis, ...rest } = extra;
+    const offer = await createOffer(
       { salesContactId: contactId },
-      { contactName: "Kai Kollege", email: `kai-${uid()}@example.test`, term: "12m", products: [{ name: "TKV-Katze", dailyBudget: 30 }], startDate: addDaysIso(today, 20), ...extra },
+      { contactName: "Kai Kollege", email: `kai-${uid()}@example.test`, term: "12m", products: [{ name: "TKV-Katze", dailyBudget: 30 }], startDate: addDaysIso(today, 20), ...rest },
       null,
     );
+    return Number(abschlussBonus ?? 0) > 0 ? zugesagterBonus(offer.id, Number(abschlussBonus), typeof abschlussBonusBis === "string" ? abschlussBonusBis : null) : offer;
+  };
 
   const accept = (token: string, term: string) =>
     acceptOffer(token, { name: "Kai Kollege", ip: "127.0.0.1", agent: "vitest", termsAccepted: true, business: { company: "Agentur Test", confirmed: true }, term, startDate: addDaysIso(today, 20) });

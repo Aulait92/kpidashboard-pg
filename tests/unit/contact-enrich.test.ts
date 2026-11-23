@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectInsurer, extractFax, extractLeaders, extractOpeningHours, extractSocials, extractTeamSize, isPlausible, placeQuery, type Place } from "@/lib/vertrieb/contact-enrich";
+import { detectInsurer, extractLeaders, extractOpeningHours, extractSocials, extractTeamSize, isPlausible, placeQuery, type Place } from "@/lib/vertrieb/contact-enrich";
 
 // Erfundene Beispieldaten (keine echten Kontakte)
 const HOME_HTML = `
@@ -45,8 +45,7 @@ describe("Kontakt anreichern: Website auswerten", () => {
     });
   });
 
-  it("Fax, Inhaber, Versicherer und Teamgröße", () => {
-    expect(extractFax(IMPRESSUM)).toBe("030 1234568");
+  it("Inhaber, Versicherer und Teamgröße", () => {
     expect(extractLeaders(IMPRESSUM)).toBe("Max Muster, Erika Beispiel");
     expect(detectInsurer(IMPRESSUM, "info@agentur-muster.test")).toBe("Allianz");
     expect(detectInsurer("Wir sind unabhängiger Versicherungsmakler nach § 34d Abs. 1 GewO")).toBe("Makler");

@@ -31,6 +31,19 @@ import {
   ZAHLUNG_TEMPLATE_SIE_V2,
 } from "@/lib/angebot-zahlungserinnerung";
 import { BONUS_TEMPLATE_PURPOSE, BONUS_VORLAGEN } from "@/lib/vertrieb/bonus-erinnerung";
+import {
+  NE_TEMPLATE_BODY,
+  NE_TEMPLATE_BODY_B,
+  NE_TEMPLATE_BODY_B_DU,
+  NE_TEMPLATE_BODY_DU,
+  NE_TEMPLATE_EXAMPLES,
+  NE_TEMPLATE_EXAMPLES_DU,
+  NE_TEMPLATE_NAME,
+  NE_TEMPLATE_NAME_B,
+  NE_TEMPLATE_NAME_B_DU,
+  NE_TEMPLATE_NAME_DU,
+  NE_TEMPLATE_PURPOSE,
+} from "@/lib/vertrieb/nicht-erreicht";
 
 export const TERMIN_TEMPLATE_NAME = "pg_vertrieb_termin_v1";
 export const TERMIN_TEMPLATE_PURPOSE = "vertrieb_termin";
@@ -162,6 +175,13 @@ export const SUPPORT_TEMPLATES: SupportTemplate[] = [
   { name: ZAHLUNG_TEMPLATE_DU_V2, body: ZAHLUNG_TEMPLATE_BODY_DU_V2, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
   // Erinnerung am letzten Tag des Abschlussbonus (lib/vertrieb/bonus-erinnerung.ts), Sie/Du, mit bzw. ohne „später zahlen“
   ...BONUS_VORLAGEN.map(({ name, body, examples, purpose }) => ({ name, body, examples: [...examples], purpose })),
+  // Nach dem Anruf-Ergebnis „Nicht erreicht“ mit Buchungslink (lib/vertrieb/nicht-erreicht.ts)
+  { name: NE_TEMPLATE_NAME, body: NE_TEMPLATE_BODY, examples: NE_TEMPLATE_EXAMPLES, purpose: NE_TEMPLATE_PURPOSE },
+  // Fassung B des A/B-Tests (A/B-Test-Labor 22.11.2026): Entweder-oder-Frage statt offener Bitte
+  { name: NE_TEMPLATE_NAME_B, body: NE_TEMPLATE_BODY_B, examples: NE_TEMPLATE_EXAMPLES, purpose: NE_TEMPLATE_PURPOSE },
+  // Du-Form beider Fassungen (Ole 23.11.2026: Du/Sie im Fenster „Eintragen“ wählbar)
+  { name: NE_TEMPLATE_NAME_DU, body: NE_TEMPLATE_BODY_DU, examples: NE_TEMPLATE_EXAMPLES_DU, purpose: NE_TEMPLATE_PURPOSE },
+  { name: NE_TEMPLATE_NAME_B_DU, body: NE_TEMPLATE_BODY_B_DU, examples: NE_TEMPLATE_EXAMPLES_DU, purpose: NE_TEMPLATE_PURPOSE },
 ];
 
 export function supportTemplateRequest(t: SupportTemplate): CreateTemplateInput {
@@ -486,6 +506,40 @@ function rescheduleLink(m: { manageToken: string | null; rescheduleUrl: string |
   return m.manageToken ? manageUrl(m.manageToken) : m.rescheduleUrl;
 }
 
+type ErinnerungsTermin = {
+  title: string;
+  startAt: Date;
+  joinUrl: string | null;
+  location: string | null;
+  manageToken: string | null;
+  rescheduleUrl: string | null;
+  inviteeName: string | null;
+  inviteePhone: string | null;
+  bookingType: { slug: string } | null;
+  contact: { phone: string | null; firstName: string | null; lastName: string | null; salutation: string | null };
+};
+
+/**
+ * WhatsApp-Terminerinnerung (24 Stunden bzw. 1 Stunde): Vorlage, Parameter und Nummer, gemeinsam für Versand und
+ * Vorschau. null: keine passende Vorlage freigegeben.
+ */
+export function terminErinnerungInhalt(
+  m: ErinnerungsTermin,
+  art: "erinnerung" | "gleich",
+  now: Date,
+  nutzbar: Nutzbar,
+  manageUrl: (token: string) => string,
+): { vorlage: TerminVorlage; params: string[]; phone: string | null; anrede: string | null } | null {
+  const modus = terminModus({ joinUrl: m.joinUrl, locType: m.location, location: m.location });
+  const vorlage = waehleTerminVorlage(art, { thema: terminThema(m), modus, morgen: berlinYmd(m.startAt) === addDaysYmd(berlinYmd(now), 1) }, nutzbar);
+  if (!vorlage) return null;
+  // Dieselbe Nummer wie die Bestätigung: Nummer aus der Buchung vor der Hauptnummer des Kontakts
+  const phone = [m.inviteePhone, m.contact.phone].map((p) => (p ? normalizePhone(p) : null)).find(Boolean) ?? null;
+  const anrede = terminAnrede(m.contact, m.inviteeName);
+  const params = vorlageParams(vorlage, { anrede, startAt: m.startAt, loc: meetingLoc(m), videolink: m.joinUrl, link: rescheduleLink(m, manageUrl) });
+  return { vorlage, params, phone, anrede };
+}
+
 export type WaReminderResult = { day: number; soon: number; skipped: number; errors: number; retry: number };
 
 /** Höchstens so viele Versuche je Erinnerung bei Sendefehlern (je Cron-Lauf einer, solange im Fenster). */
@@ -521,7 +575,6 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
   const result: WaReminderResult = { day: 0, soon: 0, skipped: 0, errors: 0, retry: 0 };
   if (!(await supportAccount())) return result;
   const nutzbar = await supportVorlagenNutzbar();
-  const morgen = addDaysYmd(berlinYmd(now), 1);
   // Zeitregeln gemeinsam mit E-Mail-Versand und Übersicht „Geplante Nachrichten“ (lib/vertrieb/termin-erinnerungen.ts)
   const kinds = [
     { field: "waReminderAt", status: "waReminderStatus", error: "waReminderError", tries: "waReminderTries", art: "erinnerung", plan: "tag", key: "day" },
@@ -555,10 +608,9 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
       take: 100,
     });
     for (const m of due) {
-      const modus = terminModus({ joinUrl: m.joinUrl, locType: m.location, location: m.location });
-      const v = waehleTerminVorlage(k.art, { thema: terminThema(m), modus, morgen: berlinYmd(m.startAt) === morgen }, nutzbar);
+      const inhalt = terminErinnerungInhalt(m, k.art, now, nutzbar, manageUrl);
       // Keine passende Vorlage freigegeben: nicht markieren, der nächste Lauf versucht es wieder
-      if (!v) {
+      if (!inhalt) {
         result.skipped++;
         continue;
       }
@@ -580,14 +632,11 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
         await skip("nach_bestaetigung");
         continue;
       }
-      // Dieselbe Nummer wie die Bestätigung: Nummer aus der Buchung vor der Hauptnummer des Kontakts
-      const phone = [m.inviteePhone, m.contact.phone].map((p) => (p ? normalizePhone(p) : null)).find(Boolean) ?? null;
+      const { vorlage: v, params, phone, anrede } = inhalt;
       if (!phone) {
         await skip("no_phone");
         continue;
       }
-      const anrede = terminAnrede(m.contact, m.inviteeName);
-      const params = vorlageParams(v, { anrede, startAt: m.startAt, loc: meetingLoc(m), videolink: m.joinUrl, link: rescheduleLink(m, manageUrl) });
       try {
         const out = await sendSupportTemplate({
           contactId: m.contactId,
@@ -628,6 +677,7 @@ const LABEL: Record<string, string> = {
   vertrieb_gleich: "Termin gleich",
   [ZAHLUNG_TEMPLATE_PURPOSE]: "Zahlungserinnerung",
   [BONUS_TEMPLATE_PURPOSE]: "Bonus-Erinnerung",
+  [NE_TEMPLATE_PURPOSE]: "Nicht erreicht",
 };
 
 /**

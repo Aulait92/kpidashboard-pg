@@ -3,10 +3,11 @@
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ChevronDown, ExternalLink, GitMerge, MoreHorizontal, Presentation, ShieldX, Trash2 } from "lucide-react";
+import { ChevronDown, ExternalLink, GitMerge, MoreHorizontal, Presentation, ShieldX, ThumbsDown, Trophy, Trash2 } from "lucide-react";
 import { MergeSheet, type MergeCandidate } from "@/components/vertrieb/contact-merge";
-import { art17LoeschenAction, deleteContact, setStage } from "@/app/admin/vertrieb/actions";
+import { art17LoeschenAction, deleteContact, gewonnenVerlorenAction, setStage } from "@/app/admin/vertrieb/actions";
 import { Button } from "@/components/ui";
+import { useToast } from "@/components/ui/toast";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
 import { LOSS_REASONS, STAGES } from "@/lib/vertrieb/crm";
 import { JaNein } from "@/components/vertrieb/angebot-ablehnen";
@@ -34,9 +35,6 @@ export function StagePicker({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState<"pick" | "lost" | null>(null);
-  const [reason, setReason] = useState("");
-  const [comp, setComp] = useState(competitor ?? "");
-  const [ablehnen, setAblehnen] = useState(true);
   const current = STAGES.find((s) => s.id === stage);
   const save = (o: Record<string, string>) =>
     start(async () => {
@@ -68,34 +66,101 @@ export function StagePicker({
           },
         }))}
       />
-      <Sheet open={open === "lost"} onClose={() => setOpen(null)} title="Verloren: warum?">
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setOpen(null);
-            save({ stage: "VERLOREN", lossReason: reason || "SONSTIGES", competitor: comp, ...(offenesAngebot && ablehnen ? { declineOfferId: offenesAngebot.id } : {}) });
-          }}
-        >
-          <div className="grid grid-cols-1 gap-2">
-            {LOSS_REASONS.map((r) => (
-              <label key={r.id} className={clsx("flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm", reason === r.id ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]" : "border-[color:var(--border)]")}>
-                <input type="radio" name="reason" value={r.id} checked={reason === r.id} onChange={() => setReason(r.id)} />
-                {r.label}
-              </label>
-            ))}
+      <VerlorenSheet
+        open={open === "lost"}
+        onClose={() => setOpen(null)}
+        competitor={competitor}
+        offenesAngebot={offenesAngebot}
+        onSave={(o) => save({ stage: "VERLOREN", lossReason: o.lossReason, competitor: o.competitor, ...(o.declineOfferId ? { declineOfferId: o.declineOfferId } : {}) })}
+      />
+    </>
+  );
+}
+
+/** „Verloren: warum?“ mit Grund, Wettbewerber und (bei offenem Angebot) „auch als abgelehnt markieren?“. */
+function VerlorenSheet({
+  open,
+  onClose,
+  competitor,
+  offenesAngebot,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  competitor: string | null;
+  offenesAngebot: { id: string; number: string } | null;
+  onSave: (o: { lossReason: string; competitor: string; declineOfferId: string | null }) => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [comp, setComp] = useState(competitor ?? "");
+  const [ablehnen, setAblehnen] = useState(true);
+  return (
+    <Sheet open={open} onClose={onClose} title="Verloren: warum?">
+      <form
+        className="space-y-3 p-5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onClose();
+          onSave({ lossReason: reason || "SONSTIGES", competitor: comp, declineOfferId: offenesAngebot && ablehnen ? offenesAngebot.id : null });
+        }}
+      >
+        <div className="grid grid-cols-1 gap-2">
+          {LOSS_REASONS.map((r) => (
+            <label key={r.id} className={clsx("flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm", reason === r.id ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]" : "border-[color:var(--border)]")}>
+              <input type="radio" name="reason" value={r.id} checked={reason === r.id} onChange={() => setReason(r.id)} />
+              {r.label}
+            </label>
+          ))}
+        </div>
+        <input value={comp} onChange={(e) => setComp(e.target.value)} placeholder="Wettbewerber (optional)" className="input" />
+        {offenesAngebot ? (
+          <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5">
+            <JaNein name="angebot-ablehnen" label={`Offenes Angebot ${offenesAngebot.number} auch als abgelehnt markieren?`} value={ablehnen} onChange={setAblehnen} />
           </div>
-          <input value={comp} onChange={(e) => setComp(e.target.value)} placeholder="Wettbewerber (optional)" className="input" />
-          {offenesAngebot ? (
-            <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5">
-              <JaNein name="angebot-ablehnen" label={`Offenes Angebot ${offenesAngebot.number} auch als abgelehnt markieren?`} value={ablehnen} onChange={setAblehnen} />
-            </div>
-          ) : null}
-          <Button type="submit" variant="primary" size="md" className="w-full">
-            Als verloren speichern
-          </Button>
-        </form>
-      </Sheet>
+        ) : null}
+        <Button type="submit" variant="primary" size="md" className="w-full">
+          Als verloren speichern
+        </Button>
+      </form>
+    </Sheet>
+  );
+}
+
+/**
+ * „Gewonnen“ und „Verloren“ direkt in der Kontaktakte (Ole, 22.11.2026), statt über „Stufe ändern“ oder „Eintragen“.
+ * Nur solange der Kontakt offen ist (nicht bei Abschluss, Verloren, Ungültig).
+ */
+export function GewonnenVerlorenKnoepfe({
+  contactId,
+  stage,
+  competitor,
+  offenesAngebot = null,
+}: {
+  contactId: string;
+  stage: Stage;
+  competitor: string | null;
+  offenesAngebot?: { id: string; number: string } | null;
+}) {
+  const router = useRouter();
+  const toast = useToast();
+  const [pending, start] = useTransition();
+  const [lost, setLost] = useState(false);
+  if (stage === "GEWONNEN" || stage === "VERLOREN" || stage === "UNGUELTIG") return null;
+  const save = (s: "GEWONNEN" | "VERLOREN", o: { lossReason?: string; competitor?: string; declineOfferId?: string | null } = {}) =>
+    start(async () => {
+      await gewonnenVerlorenAction(contactId, s, o);
+      toast.show({ message: s === "GEWONNEN" ? "Als gewonnen gespeichert" : "Als verloren gespeichert" });
+      router.refresh();
+    });
+  return (
+    <>
+      <Button type="button" variant="secondary" size="md" icon={Trophy} disabled={pending} onClick={() => save("GEWONNEN")} data-gewonnen-knopf>
+        Gewonnen
+      </Button>
+      <Button type="button" variant="secondary" size="md" icon={ThumbsDown} disabled={pending} onClick={() => setLost(true)} data-verloren-knopf>
+        Verloren
+      </Button>
+      <VerlorenSheet open={lost} onClose={() => setLost(false)} competitor={competitor} offenesAngebot={offenesAngebot} onSave={(o) => save("VERLOREN", o)} />
     </>
   );
 }

@@ -11,7 +11,8 @@
 //   3. Push an den zuständigen Berater (sonst alle Logins des Kunden): „Sofort anrufen: … hat kein WhatsApp“.
 //   4. Mail-Strecke (Ole, 18.11.2026, lib/mail-strecke): Erstmail mit Öffnungsfrage, zwei Zeiten und Antwortseite, dann
 //      der Takt über 10 Tage. Nur wenn die Strecke aus ist: wie bisher einmal je Lead eine kurze E-Mail mit Terminlink
-//      im Namen des Vermittlers (lib/whatsapp/kein-whatsapp-mail.ts).
+//      im Namen des Vermittlers (lib/whatsapp/kein-whatsapp-mail.ts). Sind die E-Mail-Funktionen beim Kunden aus
+//      (Ole, 22.11.2026), läuft die Strecke nur mit SMS (höchstens 2, zu Geschäftszeiten, lib/mail-strecke/nur-sms.ts).
 //      Rechtsgrundlage: Antwort auf die eigene Anfrage des Leads (er hat seine E-Mail-Adresse im Formular dafür
 //      angegeben), nur zur konkreten Anfrage und ohne Werbung für anderes, also keine Werbe-E-Mail im Sinne von
 //      § 7 Abs. 2 Nr. 2 UWG (keine Einwilligung nötig, wie die Terminbestätigung). Trotzdem nicht, wenn die Adresse
@@ -61,7 +62,7 @@ export async function handleFailedStatus(waMessageId: string, errors: StatusErro
   await prisma.message.updateMany({ where: { waMessageId }, data: { errorCode: error.code, errorTitle: error.title } });
   const msg = await prisma.message.findUnique({
     where: { waMessageId },
-    select: { direction: true, purpose: true, conversation: { select: { id: true, customerId: true, leadId: true } } },
+    select: { direction: true, purpose: true, conversation: { select: { id: true, customerId: true, leadId: true, contactPhone: true } } },
   });
   // Kampagnen-Empfänger (Bestand): Status, bei „kein WhatsApp“ künftig nur E-Mail
   const { applyCampaignStatus } = await import("@/lib/bestand/campaigns");
@@ -77,7 +78,9 @@ export async function handleFailedStatus(waMessageId: string, errors: StatusErro
     if (conv.leadId) {
       // Hat der Lead je selbst geschrieben, hat er WhatsApp: dann ist es kein „kein WhatsApp“
       const inbound = await prisma.message.count({ where: { conversationId: conv.id, direction: "inbound" } });
-      out.lead = inbound > 0 ? "skipped" : await markLeadNoWhatsApp(conv.leadId, { now, code: error.code });
+      const { istFestnetz } = await import("@/lib/telefon-typ");
+      const grund = (await istFestnetz(conv.contactPhone)) ? ("festnetz" as const) : undefined;
+      out.lead = inbound > 0 ? "skipped" : await markLeadNoWhatsApp(conv.leadId, { now, code: error.code, grund });
     }
     return out;
   }
@@ -155,7 +158,7 @@ export async function markLeadOutreachFailed(
  */
 export async function markLeadNoWhatsApp(
   leadId: string,
-  /** grund „festnetz“: vor dem Versand erkannt (lib/whatsapp/festnetz.ts), eigene Texte und Mail-Strecke mit Auslöser „festnetz“ */
+  /** grund „festnetz“: Festnetznummer ohne WhatsApp (lib/whatsapp/festnetz.ts), eigene Texte und Mail-Strecke mit Auslöser „festnetz“ */
   opts: { now?: Date; code?: number | null; grund?: "festnetz" } = {},
 ): Promise<"flagged" | "already" | "skipped"> {
   const now = opts.now ?? new Date();
@@ -206,13 +209,24 @@ export async function markLeadNoWhatsApp(
           reportError(err, "kein-whatsapp-mail", { lead: leadId });
           return { sent: false as const, reason: "error" };
         });
+  // Nur SMS (Ole, 22.11.2026: E-Mail-Funktionen aus): SMS sofort bzw. zur nächsten Geschäftszeit
+  const sms = strecke.ergebnis === "gestartet" && strecke.kanal === "sms";
+  const hinweis = sms
+    ? strecke.gesendet
+      ? " Eine SMS mit Ihrem Terminlink ist raus."
+      : strecke.grund === "ruhezeit"
+        ? " Eine SMS mit Ihrem Terminlink geht zur Geschäftszeit raus."
+        : ""
+    : mail.sent
+      ? " Eine E-Mail mit Ihrem Terminlink ist raus."
+      : "";
   const { notifyLeadPush } = await import("@/lib/team");
   const { displayProduct } = await import("@/lib/products");
   const name = lead.name?.trim() || "Ein neuer Lead";
   const parts = [lead.phone ? formatPhone(lead.phone) : null, lead.source ? displayProduct(lead.source) : null].filter(Boolean).join(" · ");
   await notifyLeadPush(leadId, {
     title: festnetz ? `Sofort anrufen: ${name} hat keine Handynummer` : `Sofort anrufen: ${name} hat kein WhatsApp`,
-    body: `${parts ? `${parts}. ` : ""}${festnetz ? "Festnetznummer, per WhatsApp nicht erreichbar." : "Die Nummer ist nicht per WhatsApp erreichbar."}${mail.sent ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}`,
+    body: `${parts ? `${parts}. ` : ""}${festnetz ? "Festnetznummer, per WhatsApp nicht erreichbar." : "Die Nummer ist nicht per WhatsApp erreichbar."}${hinweis}`,
     url: `/buyer/leads/${leadId}`,
     tag: `kein-wa:${leadId}`,
   });
@@ -386,4 +400,40 @@ export async function keinWhatsAppJeKunde(from?: Date): Promise<KeinWhatsAppZeil
       return { customerId: r.customerId, name: names.get(r.customerId) ?? r.customerId, attempted: r._count._all, noWhatsApp: n, share: r._count._all > 0 ? n / r._count._all : null };
     })
     .sort((x, y) => (y.share ?? 0) - (x.share ?? 0) || y.attempted - x.attempted);
+}
+
+/**
+ * Nummer korrigiert (Ole, 22.11.2026: „bei ihm hat sich 330 nach der 49 geschlichen … korrigieren und neu versuchen per
+ * WhatsApp“): Hatte der Lead nie selbst geschrieben und galt als „kein WhatsApp“, fällt die Sperre weg, der Assistent
+ * ist wieder an und die App versucht es sofort an die neue Nummer: kam das Erstanschreiben nie an, zuerst das
+ * Erstanschreiben (auch mit Termin, dann ohne Terminfrage); sonst mit anstehendem Termin die Terminbestätigung. Fehler werden nur gemeldet. Rückgabe: was versucht wurde.
+ */
+export async function nachNummernKorrektur(leadId: string, now = new Date()): Promise<"termin" | "erstanschreiben" | "nichts"> {
+  try {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, name: true, phone: true, waUnavailableAt: true, erasedAt: true, isTest: true, outreachStatus: true } });
+    if (!lead?.phone || lead.erasedAt || !lead.waUnavailableAt) return "nichts";
+    // Kam das Erstanschreiben nie an, geht es zuerst raus, auch mit Termin (Ole, 22.11.2026: „die erste Nachricht war doch,
+    // wann die Versicherung ausläuft, die war doch gut“; nach der Buchung ohne Terminfrage, lib/whatsapp/outreach.ts)
+    const erstOffen = !["sent", "sent_booked"].includes(lead.outreachStatus ?? "");
+    await prisma.lead.update({ where: { id: lead.id }, data: { waUnavailableAt: null, outreachAt: null, outreachStatus: null } });
+    await prisma.conversation.updateMany({ where: { customerId: lead.customerId, leadId: lead.id }, data: { botActive: true } });
+    const termin = await prisma.appointment.findFirst({
+      where: { leadId: lead.id, status: "booked", startsAt: { gt: now } },
+      orderBy: { startsAt: "asc" },
+      select: { startsAt: true, mode: true, meetUrl: true, ort: true },
+    });
+    if (termin && !erstOffen) {
+      // Termin steht schon: Erstanschreiben überspringen, Bestätigung an die neue Nummer
+      await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: now, outreachStatus: "sent_booked" } });
+      const { sendBookingConfirmation } = await import("@/lib/whatsapp/reminders");
+      await sendBookingConfirmation({ customerId: lead.customerId, to: lead.phone, name: lead.name, leadId: lead.id, startsAt: termin.startsAt, mode: termin.mode, meetUrl: termin.meetUrl, ort: termin.ort });
+      return "termin";
+    }
+    const { runOutreach } = await import("@/lib/whatsapp/outreach");
+    await runOutreach(lead.customerId, { leadIds: [lead.id] });
+    return "erstanschreiben";
+  } catch (err) {
+    reportError(err, "nach-nummern-korrektur", { lead: leadId });
+    return "nichts";
+  }
 }

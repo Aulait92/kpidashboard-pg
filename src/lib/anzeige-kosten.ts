@@ -121,6 +121,18 @@ async function ladeZuordnung(): Promise<Pick<Zuordnung, "anzeige" | "kampagne">>
   return { anzeige: eindeutig(adPairs), kampagne: eindeutig(campPairs) };
 }
 
+/** Mit der App verbundene Kampagnen je Kunde (von uns angelegt oder mit Leads in der App), für eigene Werbekonten. */
+export async function verbundeneKampagnenJeKunde(): Promise<Map<string, Set<string>>> {
+  const { kampagne } = await ladeZuordnung();
+  const out = new Map<string, Set<string>>();
+  for (const [c, cid] of kampagne) {
+    if (!cid) continue;
+    if (!out.has(cid)) out.set(cid, new Set());
+    out.get(cid)!.add(c);
+  }
+  return out;
+}
+
 export type KontoErgebnis = {
   konto: string;
   kunde: string | null;
@@ -132,6 +144,8 @@ export type KontoErgebnis = {
   vorStart: number;
   ohneStart: number;
   ohneKunde: number;
+  /** Eigenes Konto: Zeilen aus Kampagnen, die nicht mit der App verbunden sind (nicht gezählt) */
+  nichtVerbunden?: number;
   fehler?: string;
 };
 
@@ -146,7 +160,7 @@ export type KostenErgebnis = {
  * Kosten je Anzeige und Tag abgleichen. `voll`: alle Konten bis 90 Tage zurück (sonst nur beim ersten Lauf eines
  * Kontos). `fetch` ersetzbar für Tests.
  */
-export async function syncAnzeigeKosten(opts: { now?: Date; voll?: boolean; fetch?: FetchAdInsights } = {}): Promise<KostenErgebnis> {
+export async function syncAnzeigeKosten(opts: { now?: Date; voll?: boolean; fetch?: FetchAdInsights; /** nur dieses Werbekonto (Ziffern), z. B. direkt nach der Meta-Freigabe */ nurKonto?: string } = {}): Promise<KostenErgebnis> {
   const now = opts.now ?? new Date();
   const fetchRows = opts.fetch ?? fetchAdInsightsDaily;
   if (!opts.fetch && !process.env.META_ACCESS_TOKEN) return { übersprungen: "META_ACCESS_TOKEN fehlt", konten: [], gespeichert: 0, fehler: 0 };
@@ -177,7 +191,8 @@ export async function syncAnzeigeKosten(opts: { now?: Date; voll?: boolean; fetc
     ...[...owners.entries()].map(([id, inhaber]) => ({ id, inhaber, agentur: false })),
     ...[...new Set(agentur)].map((id) => ({ id, inhaber: [] as KundeMitStart[], agentur: true })),
   ];
-  for (const konto of konten) {
+  const nur = opts.nurKonto?.replace(/^act_/, "").trim();
+  for (const konto of nur ? konten.filter((k) => k.id === nur) : konten) {
     const einziger = konto.inhaber.length === 1 ? konto.inhaber[0] : null;
     const res: KontoErgebnis = { konto: `act_${konto.id}`, kunde: einziger?.name ?? null, agentur: konto.agentur, von: null, bis: today, zeilen: 0, gespeichert: 0, vorStart: 0, ohneStart: 0, ohneKunde: 0 };
     out.konten.push(res);
@@ -208,6 +223,18 @@ export async function syncAnzeigeKosten(opts: { now?: Date; voll?: boolean; fetc
       continue;
     }
     res.zeilen = rows.length;
+    // Eigenes Werbekonto: nur Kampagnen, die mit der App verbunden sind (Ole, 21.11.2026: „für Lohmann gelten nur die
+    // heute Abend gestarteten Kampagnen, die anderen waren nicht mit der App verbunden; gleiches für Anid und alle
+    // weiteren Kunden“). Verbunden = von uns angelegt (CampaignRun) oder liefert Leads in die App (Lead.adCampaignId).
+    if (!konto.agentur) {
+      const ids = new Set(konto.inhaber.map((k) => k.id));
+      const erlaubt = new Set([...maps.kampagne.entries()].filter(([, cid]) => cid && ids.has(cid)).map(([c]) => c));
+      const vorher = rows.length;
+      rows = rows.filter((r) => !!r.campaign_id && erlaubt.has(r.campaign_id));
+      res.nichtVerbunden = vorher - rows.length;
+      // Schon gespeicherte Zeilen nicht verbundener Kampagnen entfernen (zählen nicht als Kosten des Kunden)
+      await prisma.adSpendDaily.deleteMany({ where: { adAccountId: konto.id, OR: [{ campaignId: null }, { campaignId: { notIn: [...erlaubt] } }] } });
+    }
     const z: Zuordnung = { inhaber: einziger?.id ?? null, anzeige: maps.anzeige, kampagne: maps.kampagne, start: startById };
     const data: KostenZeile[] = [];
     for (const r of rows) {

@@ -6,7 +6,7 @@
 import { useRef, useState } from "react";
 import { FolienDeck, type DeckKlick } from "@/components/folien-deck";
 import { ToastProvider } from "@/components/ui/toast";
-import { demoAngebote, demoCss, demoEinwaende, demoFolien, demoKlick } from "@/lib/demo-beratung";
+import { demoAngebote, demoCss, demoFolien, demoKlick } from "@/lib/demo-beratung";
 import type { PraesentationVariante } from "@/lib/praesentation-variante";
 
 /** fassung: B (Standard) bzw. C zur Vorschau (/demo/beratung?fassung=c). */
@@ -22,13 +22,12 @@ export function DemoAnsicht({ eingebettet, fassung = "B" }: { eingebettet?: bool
     stand.current = neu;
     return { ok: true as const, folien: demoFolien(neu, new Date(), zugesagt.current, fassung) };
   };
-  const [einwaende] = useState(() => demoEinwaende(anfang));
   // „Ja, so machen wir es“ in der Demo: nur im Browser, nichts wird gespeichert
   const onZusage = async () => {
     zugesagt.current = new Date();
     return { ok: true as const, folien: demoFolien(stand.current, new Date(), zugesagt.current, fassung) };
   };
-  const deck = <FolienDeck css={css} folien={start} onKlick={onKlick} eingebettet={eingebettet} onZusage={onZusage} einwaende={eingebettet ? [] : einwaende} />;
+  const deck = <FolienDeck css={css} folien={start} onKlick={onKlick} eingebettet={eingebettet} onZusage={onZusage} />;
   // Öffentliche Demo ohne App-Rahmen: eigener Toast für „Unfall hinzugefügt“ (eingebettet steht der Hinweis in der Folie)
   return eingebettet ? deck : <ToastProvider>{deck}</ToastProvider>;
 }

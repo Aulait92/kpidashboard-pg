@@ -9,6 +9,10 @@ export const VORLAGEN_HYPOTHESE: Record<string, string> = {
   outreach_pkv: "Steht die Frage direkt hinter der Anrede, ist sie in Benachrichtigung und Chatliste sichtbar und es antworten mehr Leads.",
   outreach_privatschutz: "Steht die Frage direkt hinter der Anrede, ist sie in Benachrichtigung und Chatliste sichtbar und es antworten mehr Leads.",
   outreach_hausrat: "Steht die Frage direkt hinter der Anrede, ist sie in Benachrichtigung und Chatliste sichtbar und es antworten mehr Leads.",
+  // Kfz-Einstiegsfrage (A/B-Test-Labor 21.11.2026, docs/firma/ab-tests.md): gleiche Hypothese, eigener Test je Anlass
+  outreach_kfz: "Kfz: Steht die Einstiegsfrage (jetziges oder neues Auto) direkt hinter der Anrede, sehen Kfz-Leads sie schon in der Benachrichtigung und antworten öfter.",
+  outreach_kfz_wechsel: "Kfz: Steht die Einstiegsfrage (wann läuft der jetzige Vertrag aus) direkt hinter der Anrede, sehen Kfz-Leads sie schon in der Benachrichtigung und antworten öfter.",
+  outreach_kfz_neu: "Kfz: Steht die Einstiegsfrage (ist das neue Auto schon da) direkt hinter der Anrede, sehen Kfz-Leads sie schon in der Benachrichtigung und antworten öfter.",
   followup_last: "Eine rücksichtsvolle Frage („Ich möchte Sie nicht weiter stören“) holt mehr Rückmeldungen als ein weiteres Nachfassen.",
   campaign_cross_sell: "Ein konkretes, kleines Angebot („in 10 Minuten kurz prüfen“) bringt mehr Antworten.",
 };
@@ -29,5 +33,20 @@ export const SPLITTEST_HYPOTHESE: Record<string, string> = {
   // Ole 20.11.2026 (lib/experimente.ts buchungslink_andere_zeit, Texte lib/whatsapp/buchungslink.ts)
   buchungslink_andere_zeit:
     "Steht nach dem zweiten „Andere Zeit“ der Wunschtag im Chat vorn und der Buchungslink nur als Alternative am Ende, bleibt der Lead im Gespräch und bucht öfter als mit dem Link zuerst.",
+  // Vertriebs-CRM, automatische Nachrichten an unsere eigenen Leads (A/B-Test-Labor, Auftrag Ole 22.11.2026;
+  // lib/vertrieb/ab-tests.ts, Lernbuch docs/firma/ab-tests.md)
+  vertrieb_angebot_naechste_schritte:
+    "Wer vor dem Ja sieht, was danach konkret passiert (Zahlung, Zugang, Einrichtung Schritt für Schritt mit Anleitung, persönliche Hilfe), hat weniger Sorge vor Aufwand, nimmt öfter an und richtet die Zahlung ein (Angebotsmail, Bonus- und Zahlungserinnerung gemeinsam).",
+  vertrieb_termin_vorabfrage:
+    "Fragt die Erinnerung 24 Stunden vorher nach der wichtigsten Frage fürs Gespräch, wird der Termin „sein“ Gespräch statt eines Verkaufstermins, und wer antwortet, hat schon etwas investiert: Es erscheinen mehr.",
+  vertrieb_followup_janein:
+    "Eine Frage, die sich mit einem Wort beantworten lässt („Ist das Thema bei Ihnen noch aktuell?“), ist eine kleinere Hürde als die Bitte um einen Termin: Auf Mail 1 des Später-Follow-ups antworten mehr.",
+  // Vertriebs-CRM „Nicht erreicht“ (A/B-Test-Labor, Freigabe Ole 22.11.2026; eigener Test ohne Splittest-Tabelle,
+  // lib/vertrieb/nicht-erreicht.ts, Auswertung Diagnose q=vertrieb-nicht-erreicht)
+  vertrieb_nicht_erreicht:
+    "Eine Entweder-oder-Frage („Erreiche ich Sie besser vormittags oder nachmittags?“) lässt sich mit einem Wort beantworten und holt mehr Antworten bzw. Termine binnen 72 Stunden als die offene Bitte, eine passende Zeit zu nennen.",
+  // Ole 23.11.2026 (lib/experimente.ts absage_nachfassen, Texte lib/absage-nachfassen.ts)
+  absage_nachfassen:
+    "Wer nach einer Absage gleich zwei konkrete neue Zeiten sieht, muss nichts überlegen und bucht öfter neu als nach der offenen Frage nach einem neuen Termin.",
   termin_zusage: "Endet die Buchungsbestätigung mit der Zusage-Frage „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], erscheinen mehr Leads zum Termin.",
 };

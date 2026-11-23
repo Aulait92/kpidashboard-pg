@@ -5,7 +5,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { sendToBuyersOfCustomer, sendToUser } from "@/lib/push";
-import { conversationScope, type TeamCtx } from "@/lib/team";
+import { chatListeScope, type TeamCtx } from "@/lib/team";
 import { waOhneMarker } from "@/lib/wa-format";
 
 /** opts.push = false: nur markieren, kein Push (z. B. Kontakt aus der WhatsApp-Business-App). */
@@ -43,5 +43,6 @@ export async function clearAttention(conversationId: string): Promise<void> {
 }
 
 export async function attentionCount(ctx: TeamCtx): Promise<number> {
-  return prisma.conversation.count({ where: { ...conversationScope(ctx), needsAttention: true } });
+  // Wie Chatliste und Seitenzähler (nur Leads, ohne fremde Nummern)
+  return prisma.conversation.count({ where: { ...chatListeScope(ctx), needsAttention: true } });
 }

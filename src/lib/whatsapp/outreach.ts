@@ -18,7 +18,7 @@ import { recordLeadProgress } from "@/lib/lead-progress";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
-import { ErstinfoPdfFehltError, firstNameOf, NoTemplateError, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { ErstinfoPdfFehltError, firstNameOf, NoTemplateError, outreachMaxVersion, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import {
   ersteFrageKnoepfe,
   erstanschreibenText,
@@ -129,11 +129,7 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   // Höchste Textversion je Zweck (templates.ts rankOutreach): ohne v10 höchstens v9; mit v10 nie die allgemeine
   // Telefonatsfrage für einen Produkt-Lead (Rückfall „outreach“ höchstens v9; reine Hausrat-Leads dürfen die v10 des
   // Privatschutzes bekommen, deren Frage nach bestehenden Verträgen passt)
-  const maxVersion: Partial<Record<NoticePurpose, number>> = !v10
-    ? Object.fromEntries((["outreach", "outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat"] as const).map((x) => [x, 9]))
-    : purpose === "outreach"
-      ? {}
-      : { outreach: 9 };
+  const maxVersion = outreachMaxVersion(purpose, v10);
   return {
     who,
     purpose,
@@ -282,7 +278,9 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         where: {
           customerId_contactPhone: { customerId: agent.customerId, contactPhone: phone },
         },
-        select: { id: true, leadId: true, optedOutAt: true, _count: { select: { messages: true } } },
+        // Nur Nachrichten vom Lead zählen (Ole, 22.11.2026, Defontaine: gescheiterte eigene Versuche an eine falsche Nummer
+        // zogen mit der korrigierten Nummer in den Chat und galten als „Lead hat schon geschrieben“)
+        select: { id: true, leadId: true, optedOutAt: true, _count: { select: { messages: { where: { direction: "inbound" } } } } },
       });
 
       // Produkt ohne automatische Nachrichten (Ole, 20.11.2026: PKV-Tarifoptimierung, lib/lead-kontakt-sperre.ts)

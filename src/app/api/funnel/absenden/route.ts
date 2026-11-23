@@ -50,7 +50,9 @@ export async function POST(req: NextRequest) {
     if (!r.ok) return Response.json({ ok: false, fehler: r.fehler, abbruch: r.abbruch, schritt: r.schritt }, { status: 422 });
     if (r.meta) after(r.meta);
     if (r.mail) after(r.mail);
-    return Response.json({ ok: true, lead: r.lead, experte: r.experte });
+    // Dankeseite ohne Telefonnummer (Ole, 21.11.2026); die Nummer steht nur in der Mail „Dein Experte“
+    // mail: Hinweis auf der Danke-Seite, dass die Mail „Dein Experte“ unterwegs ist
+    return Response.json({ ok: true, lead: r.lead, experte: r.experte ? { name: r.experte.name, firma: r.experte.firma } : null, mail: !!r.mail });
   } catch (err) {
     reportError(err, "funnel-absenden");
     return Response.json({ ok: false, fehler: {}, meldung: PKV_TEXTE.kontakt.fehlerSenden }, { status: 500 });

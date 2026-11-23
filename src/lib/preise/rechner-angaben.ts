@@ -10,6 +10,7 @@
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
+import { istKfzProdukt, KFZ_FORMULAR } from "@/lib/whatsapp/produkt-fragen";
 
 /** Sparten mit Rechner (Schlüssel wie im Tarifkatalog bzw. RECHNER in pilot.ts). */
 export type RechnerSparte =
@@ -23,7 +24,8 @@ export type RechnerSparte =
   | "wohngebaeude"
   | "unfall"
   | "tierhalter-hund"
-  | "tierhalter-pferd";
+  | "tierhalter-pferd"
+  | "kfz";
 
 /** Woraus eine Angabe gelesen wird: Formular, Angaben des Assistenten, Adresse des Leads, Tierart der Sparte. */
 export type AngabenQuelle = {
@@ -67,13 +69,15 @@ export function plzAus(...texte: (string | null | undefined)[]): string | null {
 /** Antwort auf eine Tierfrage im Chat (lib/whatsapp/tier-fragen.ts: angaben.tier „Rasse: …; Geschlecht: …“). */
 const ausChat = (c: Ctx, label: string): string | null => c.q("tier")?.match(new RegExp(`(?:^|;\\s*)${label}:\\s*([^;]+)`, "i"))?.[1]?.trim() || null;
 
-const f = (key: string, feld: QualificationKey, sie: string, du: string, bekannt?: RegExp, knoepfe?: readonly string[]) => ({
+const f = (key: string, feld: QualificationKey, sie: string, du: string, bekannt?: RegExp, knoepfe?: readonly string[], wenn?: RegExp) => ({
   key,
   feld,
   sie,
   du,
   ...(bekannt ? { bekannt } : {}),
   ...(knoepfe ? { knoepfe: [...knoepfe] } : {}),
+  // Nur fragen, wenn der bisherige Wert passt (z. B. Anzahl der Schäden nur nach „mehrere“)
+  ...(wenn ? { wenn } : {}),
 });
 
 /** Wohnfläche als genaue Zahl (Ole, 19.11.2026: Bereiche reichen dem Rechner nicht); gleiche Frage wie die Zwischenfrage. */
@@ -90,7 +94,7 @@ export const ANGABEN = {
     label: "Familienstand (Single, Paar, Familie)",
     wer: "lead",
     rang: 4,
-    wert: (c) => c.form(/lebenssituation|familienstand/i) ?? c.q("lebenssituation") ?? c.q("versichern"),
+    wert: (c) => c.form(/lebenssituation|familienstand|für wen soll/i) ?? c.q("lebenssituation") ?? c.q("versichern"),
     fragen: [f("familienstand", "versichern", "Wer soll mitversichert sein: nur Sie, mit Partner oder die ganze Familie?", "Wer soll mitversichert sein: nur du, mit Partner oder die ganze Familie?")],
   },
   oeffentlicherDienst: {
@@ -138,6 +142,65 @@ export const ANGABEN = {
       f("bauweise", "gebaeude", "Ist das Haus massiv gebaut, oder ist es zum Beispiel ein Holz- oder Fertighaus?", "Ist das Haus massiv gebaut, oder ist es zum Beispiel ein Holz- oder Fertighaus?", /massiv|holz|fertighaus|bauweise|stein|beton|ziegel/i),
     ],
   },
+  // Kfz (Ole, 21.11.2026): HSN/TSN und Vorversicherung kommen aus den Fotos von Fahrzeugschein und letzter Rechnung
+  // (Unterlagen-Bitte der Strecke, die nach den Folgefragen kommt); darum hier keine Folgefrage, nur die Anzeige.
+  fahrzeug: {
+    label: "Fahrzeug (HSN, TSN)",
+    wer: "lead",
+    rang: 20,
+    wert: (c) => c.q("fahrzeug") ?? ([c.form(/herstellerschl|\bhsn\b|2\.1/i), c.form(/typschl|\btsn\b|2\.2/i)].filter(Boolean).join(" / ") || null),
+  },
+  vorversicherung: {
+    label: "Bisherige Kfz-Versicherung (Versicherer, SF-Klasse, Vers.-Nr.)",
+    wer: "lead",
+    rang: 21,
+    wert: (c) => c.q("vorversicherung") ?? c.form(/sf-?klasse|schadenfrei|vorversicher/i),
+  },
+  // Weitere Felder des Allianz-Kfz-Rechners (Screenshot Ole, 21.11.2026). Erstzulassung, Zulassung auf den Halter und
+  // SF-Klasse stehen auf Fahrzeugschein bzw. Rechnung (Fotos); hier nur, was dort nicht steht.
+  kfzVertrag: {
+    label: "Anlass, Schutz, Schäden (3 Jahre)",
+    wer: "lead",
+    rang: 22,
+    // Anlass und Schutz kommen meist aus dem Leadformular (KFZ_FORMULAR), Schäden fragt der Assistent
+    wert: (c) => [c.form(KFZ_FORMULAR.anlass), c.form(KFZ_FORMULAR.schutz), c.q("kfzVertrag")].filter(Boolean).join("; ") || null,
+    fragen: [
+      f("kfzAnlass", "kfzVertrag", "Geht es um einen Versicherungswechsel für Ihr jetziges Fahrzeug oder um ein neu gekauftes Fahrzeug?", "Geht es um einen Versicherungswechsel für dein jetziges Fahrzeug oder um ein neu gekauftes Fahrzeug?", /wechsel|neu|ersatz|gekauft/i),
+      f("kfzSchutz", "kfzVertrag", "Welcher Schutz ist Ihnen wichtig: nur Haftpflicht, Teilkasko oder Vollkasko?", "Welcher Schutz ist dir wichtig: nur Haftpflicht, Teilkasko oder Vollkasko?", /haftpflicht|teilkasko|vollkasko|\btk\b|\bvk\b|noch nicht|wei(ß|ss) (ich )?(es )?nicht|beraten/i),
+      // Anzahl der regulierten Schäden fragt der Allianz-Rechner (1, 2, 3 oder mehr), Ole 21.11.2026: Knöpfe mit Anzahl,
+      // bei „2 oder mehr“ eine Rückfrage. Speichern als „Schäden (3 Jahre): Nein | 1 | 2 | 3 oder mehr“.
+      f("kfzSchaeden", "kfzVertrag", "Hat Ihre Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt?", "Hat deine Kfz-Versicherung in den letzten 3 Jahren einen Schaden bezahlt?", /sch(ä|a)den|schadenfrei/i, ["Nein", "Ja, 1 Schaden", "Ja, 2 oder mehr"]),
+      f("kfzSchadenAnzahl", "kfzVertrag", "Waren es 2 Schäden oder 3 oder mehr?", "Waren es 2 Schäden oder 3 oder mehr?", /sch(ä|a)den[^;]*:\s*(2(?!\s*oder)|3 oder mehr)|\b(2|3 oder mehr) sch(ä|a)den/i, ["2 Schäden", "3 oder mehr"], /2 oder mehr|mehrere/i),
+    ],
+  },
+  // Antwort auf die Kfz-Einstiegsfrage im Erstanschreiben (Ole, 21.11.2026): nur Anzeige, keine Folgefrage
+  kfzStart: {
+    label: "Ablauf jetziger Vertrag bzw. neues Auto da",
+    wer: "lead",
+    rang: 22,
+    wert: (c) => c.q("kfzStart"),
+  },
+  kfzFahrer: {
+    label: "Nutzung, Führerschein seit, weitere Fahrer",
+    wer: "lead",
+    rang: 23,
+    wert: (c) => c.q("kfzFahrer"),
+    fragen: [
+      f("kfzNutzung", "kfzFahrer", "Nutzen Sie das Fahrzeug privat oder auch geschäftlich?", "Nutzt du das Fahrzeug privat oder auch geschäftlich?", /privat|gesch(ä|a)ftlich|beruflich|firma/i),
+      f("kfzFuehrerschein", "kfzFahrer", "In welchem Jahr haben Sie Ihren Führerschein gemacht?", "In welchem Jahr hast du deinen Führerschein gemacht?", /f(ü|ue)hrerschein|seit\s+(19|20)\d{2}/i),
+      f("kfzWeitereFahrer", "kfzFahrer", "Fährt außer Ihnen noch jemand das Fahrzeug? Wenn ja, wie alt ist die jüngste Person?", "Fährt außer dir noch jemand das Fahrzeug? Wenn ja, wie alt ist die jüngste Person?", /fahrer|nur ich|allein|niemand|keine weiteren|partner|frau|mann|sohn|tochter/i),
+    ],
+  },
+  kfzDetails: {
+    label: "km im Jahr, Finanzierung",
+    wer: "lead",
+    rang: 24,
+    wert: (c) => c.q("kfzDetails"),
+    fragen: [
+      f("kfzKm", "kfzDetails", "Wie viele Kilometer fahren Sie ungefähr im Jahr?", "Wie viele Kilometer fährst du ungefähr im Jahr?", /\bkm\b|kilometer|\d{1,3}\.\d{3}|\d{4,6}/i),
+      f("kfzFinanzierung", "kfzDetails", "Ist das Fahrzeug bezahlt, finanziert oder geleast?", "Ist das Fahrzeug bezahlt, finanziert oder geleast?", /bezahlt|eigen|finanziert|kredit|leasing|geleast/i),
+    ],
+  },
   summen: { label: "Versicherungssummen", wer: "termin", rang: 99, wert: () => null },
   tierart: { label: "Tierart", wer: "lead", rang: 10, wert: (c) => c.form(/tierart/i) ?? c.tierart },
   rasse: { label: "Rasse", wer: "lead", rang: 11, wert: (c) => c.form(/rasse/i) ?? ausChat(c, "Rasse"), fragen: [f("rasse", "tier", "Welche Rasse hat Ihr Tier?", "Welche Rasse hat dein Tier?")] },
@@ -170,6 +233,7 @@ export const RECHNER_ANGABEN: Record<RechnerSparte, AngabeKey[]> = {
   unfall: ["versichern", "geburt", "berufsgruppe"],
   "tierhalter-hund": ["plz", "hunderasse", "hunde"],
   "tierhalter-pferd": ["plz", "pferde"],
+  kfz: ["fahrzeug", "vorversicherung", "plz", "geburt", "oeffentlicherDienst", "kfzVertrag", "kfzStart", "kfzFahrer", "kfzDetails"],
 };
 
 const TIERART: Partial<Record<RechnerSparte, string>> = { "katze-kranken": "Katze", "katze-op": "Katze", "hund-kranken": "Hund", "hund-op": "Hund", "tierhalter-hund": "Hund", "tierhalter-pferd": "Pferd" };
@@ -197,6 +261,8 @@ export function angabenFuerSparte(src: AngabenQuelle, sparte: string): { key: An
  */
 export function spartenDesLeads(source: string | null | undefined, src: AngabenQuelle): RechnerSparte[] {
   const s = (source ?? "").toLowerCase();
+  // Kfz-Versicherung als Produkt (lib/whatsapp/produkt-fragen.ts istKfzProdukt)
+  if (istKfzProdukt(source)) return ["kfz"];
   const op = /\bop\b|op-/.test(s);
   if (!/privatschutz/.test(s) && /\btkv\b|tierkranken|tier-?op|katze|hundekranken|hunde-?op|pferd/.test(s) && !/futter|halter/.test(s)) {
     if (/katze/.test(s) || /\btkv\b|tierkranken|tier-?op/.test(s)) {
@@ -209,20 +275,31 @@ export function spartenDesLeads(source: string | null | undefined, src: AngabenQ
     return []; // Pferdekranken: noch kein Rechner im Pilot
   }
   const a = Object.fromEntries(qualificationPoints(src.angaben).map((p) => [p.key, p.value])) as Partial<Record<QualificationKey, string>>;
-  const interesse = [src.formular.find((x) => /versicherungsinteresse|^interesse\b|sparte/i.test(x.label))?.value, a.interesse, /privatschutz/.test(s) ? "" : source]
+  // Interesse aus dem Formular: auch „Welche Versicherung interessiert Sie am meisten?“ und das ältere Lohmann-Formular
+  // „An welchen Versicherungen bist Du interessiert?“ (Ole, 21.11.2026); „Alles in einem Paket“ = alle Privatschutz-Bausteine
+  const roh = [src.formular.find((x) => /versicherungsinteresse|^interesse\b|sparte|welche versicherung|an welchen versicherungen|interessiert (sie|dich)/i.test(x.label))?.value, a.interesse, /privatschutz/.test(s) ? "" : source]
     .filter(Boolean)
     .join(", ");
+  const interesse = /alles in einem|paket|bundle/i.test(roh) ? `${roh}, Haftpflicht, Hausrat, Rechtsschutz, Unfall` : roh;
   const ohneTier = interesse.replace(/tierhalter-?\s*haftpflicht|tierkrankenversicherung/gi, "");
   const out: RechnerSparte[] = [];
   if (/haftpflicht/i.test(ohneTier)) out.push("haftpflicht");
   if (/hausrat/i.test(interesse)) out.push("hausrat");
-  if (/rechtsschutz/i.test(interesse)) out.push("rechtsschutz");
+  if (/rechts?schutz/i.test(interesse)) out.push("rechtsschutz");
   if (/wohngeb(ä|a)ude/i.test(interesse)) out.push("wohngebaeude");
   if (/unfall/i.test(interesse)) out.push("unfall");
   // Tierhalterhaftpflicht nur mit klarer Tierart (Ole, 17.11.2026: kein Hund oder Pferd ohne Tierhalterhaftpflicht)
   const tierText = `${interesse} ${a.tier ?? ""}`;
   if (/halter/i.test(tierText) && /hund/i.test(tierText)) out.push("tierhalter-hund");
   if (/halter/i.test(tierText) && /pferd/i.test(tierText)) out.push("tierhalter-pferd");
+  // Tierkranken im Privatschutz (Formularauswahl „Tierkrankenversicherung / Tierhalterhaftpflicht“): Tierart und
+  // Kranken klärt der Assistent im Chat (angaben.tier, z. B. „Katze, Krankenversicherung“), Ole 21.11.2026
+  const tierAngabe = a.tier ?? "";
+  if (/kranken|\bop\b|op-schutz/i.test(tierAngabe)) {
+    const op = /\bop\b|op-schutz|nur op/i.test(tierAngabe) && !/voll|behandlung/i.test(tierAngabe);
+    if (/katze|kater/i.test(tierAngabe)) out.push(op ? "katze-op" : "katze-kranken");
+    if (/hund/i.test(tierAngabe) && !/halter/i.test(tierAngabe.replace(/[^;]*kranken[^;]*/gi, ""))) out.push(op ? "hund-op" : "hund-kranken");
+  }
   return out;
 }
 
@@ -241,6 +318,8 @@ export function folgefragen(sparten: readonly RechnerSparte[], src: AngabenQuell
       const wert = def.wert(c);
       for (const fr of def.fragen) {
         if (seen.has(fr.key)) continue;
+        const wenn = (fr as { wenn?: RegExp }).wenn;
+        if (wenn && !(wert && wenn.test(wert))) continue;
         // Mehrteilige Angabe (Gebäude): ein Teil gilt als bekannt, wenn er im bisherigen Wert erkennbar ist
         const bekannt = fr.bekannt ? !!wert && fr.bekannt.test(wert) : !!wert;
         seen.add(fr.key);

@@ -48,6 +48,20 @@ describe("Texte", () => {
     expect(contractSummaryLines({ ...base, prepayAtAcceptance: false }).join(" ")).toContain("das erste Mal zum Start am 01.01.2027");
   });
 
+  it("„Ich zahle später“ erlaubt: nicht „mit der Annahme“, sondern jetzt oder vor dem Start (Ole, 23.11.2026)", () => {
+    const base: ContractSummaryInput = { term: "12m", startIso: "2027-01-01", setup: 990, monthlyTotal: 1088, intro: null, annual: true, freeMonths: 3, prepayAtAcceptance: true, payLater: true };
+    const l = contractSummaryLines(base).map((x) => x.replace(/\s/g, " "));
+    expect(l).toContain("Einrichtung: 990 € netto, zahlbar jetzt oder an einem späteren Tag Ihrer Wahl vor dem Start.");
+    expect(l).toContain("Jährlich im Voraus: 9.792 € netto, jedes Jahr am 01.01. fällig, das erste Mal vor dem Start, dann am 01.01.2028.");
+    expect(l).toContain("Die erste Zahlung ist zahlbar jetzt oder an einem späteren Tag Ihrer Wahl vor dem Start, die Laufzeit beginnt mit dem Start der Kampagne.");
+    expect(l.join(" ")).not.toContain("mit der Annahme");
+    for (const x of l) expect(hatGedankenstrich(x)).toBe(false);
+    // Monatlich (wie im Screenshot): nur die Einrichtungszeile ändert sich
+    const m = contractSummaryLines({ ...base, annual: false }).join(" ").replace(/\s/g, " ");
+    expect(m).toContain("zahlbar jetzt oder an einem späteren Tag Ihrer Wahl vor dem Start");
+    expect(m).not.toContain("fällig mit der Annahme");
+  });
+
   it("gilt für offene Angebote und Annahmen ab 19.11.2026, nicht für ältere Verträge", () => {
     expect(vorauszahlungMitAnnahme({ acceptedAt: null })).toBe(true);
     expect(vorauszahlungMitAnnahme({ acceptedAt: new Date("2026-11-19T10:00:00Z"), prepayAtAcceptance: true })).toBe(true);

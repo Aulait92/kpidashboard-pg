@@ -6,6 +6,11 @@
 // bzw. direkt bei Annahme, wenn keine Online-Zahlung aktiv ist. Zusätzlich
 // per Knopf am Vertriebskontakt (z. B. für Bestandskunden).
 
+import { gesundheitFreigegeben, gesundheitNotAus, policenNotAus } from "@/lib/policen/regeln";
+import { ablageBereit } from "@/lib/policen/ablage";
+
+/** Schritt „Kranken, BU und Leben“ möglich: Policen-Ablage eingerichtet, keine Notschalter. */
+export const policenGesundheitMoeglich = () => ablageBereit() && !policenNotAus() && !gesundheitNotAus();
 import { erstinfoVollstaendig, type ErstinfoWeb } from "@/lib/erstinformation-shared";
 import { ERSTINFO_STATT_WEBSITE, erstinfoStattWebsite } from "@/lib/impressum-ersatz";
 import { leseMailAblauf } from "@/lib/mail/ablauf";
@@ -14,7 +19,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
-import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail } from "@/lib/email";
+import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail, type WillkommensMailOpts } from "@/lib/email";
 import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { sendToAdmins } from "@/lib/push";
@@ -22,6 +27,7 @@ import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { validLoginEmail } from "@/lib/login-email";
+import { videoLinkNoetig } from "@/lib/video-raum";
 import { ersterAbrechnungstag } from "@/lib/abrechnungstag";
 import { mitKampagnen, mitSoftware, normalizePackage, PACKAGE_LABEL, prepayFreeMonthsFor, rhythmusFuer } from "@/lib/offer-pricing";
 
@@ -72,6 +78,36 @@ function dueBefore(start: Date | null, daysBefore: number, minDaysFromNow: numbe
   const due = d < min ? min : d;
   due.setUTCHours(8, 0, 0, 0); // 9 bzw. 10 Uhr deutscher Zeit
   return due;
+}
+
+/**
+ * Kalenderschritt erledigt: Zeitenquelle da und, ohne Google/Microsoft, ein Video-Link hinterlegt. Mit dem Ausweg
+ * „Mein Versicherer erlaubt das nicht“ (uebersprungen) entfällt die Zeitenquelle, der Video-Link bleibt Pflicht
+ * (Go-live-Prüfung 22.11.2026: sonst haben Videotermine keinen Raum). (rein)
+ */
+export function kalenderSchrittFertig(
+  c: {
+    calendarConnection?: { status: string; provider: string } | null;
+    agentConfig?: { availabilityIcsUrlEnc: string | null; allianzCalendarEnc: string | null; videoRoomUrl: string | null } | null;
+  },
+  uebersprungen = false,
+  einladungAngekommen = true,
+): boolean {
+  const verbunden = c.calendarConnection?.status === "connected";
+  const zeiten = uebersprungen || verbunden || !!c.agentConfig?.availabilityIcsUrlEnc || !!c.agentConfig?.allianzCalendarEnc;
+  if (einladungsTestNoetig(c.calendarConnection) && !einladungAngekommen) return false;
+  return zeiten && (!videoLinkNoetig(c.calendarConnection) || !!c.agentConfig?.videoRoomUrl?.trim());
+}
+
+/** stepSkips-Eintrag „Test-Einladung angekommen“ (Kalenderschritt mit App-Kalender, 22.11.2026). */
+export const EINLADUNG_TEST_KEY = "calendarEinladung";
+
+/**
+ * App-Kalender (auch Allianz): Termine kommen als Einladung per Mail, oft an eine Konzernadresse, deren Filter sie
+ * blockieren kann. Dann gilt der Kalenderschritt erst nach bestätigter Test-Einladung als erledigt. (rein)
+ */
+export function einladungsTestNoetig(conn: { status: string; provider: string } | null | undefined): boolean {
+  return conn?.status === "connected" && conn.provider === "app";
 }
 
 export async function startOnboarding(offerId: string, opts: StartOpts = {}): Promise<StartResult> {
@@ -354,13 +390,56 @@ async function upgradeExistingCustomer(
 }
 
 /** Willkommens-Mail (erneut) senden. Ohne Link wird ein frischer Einladungslink erzeugt, solange der Kunde noch nie eingeloggt war. */
-export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?: string | null } = {}) {
+type WelcomeOnboarding = { id: string; offerId: string | null; salesContactId: string | null; package: string; startDate: Date | null; customer: { users: { email: string; lastLoginAt: Date | null }[] } };
+
+async function welcomeLaden(onboardingId: string) {
   const ob = await prisma.onboarding.findUnique({
     where: { id: onboardingId },
     include: { customer: { include: { users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true } } } } },
   });
-  if (!ob) return { ok: false as const, error: "Onboarding nicht gefunden." };
+  if (!ob) return null;
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId } }) : null;
+  return { ob, offer };
+}
+
+/** Daten der Willkommens-Mail (gemeinsam für Versand und Vorschau, Inhalt: willkommensMailInhalt). */
+async function welcomeOpts(
+  ob: WelcomeOnboarding,
+  offer: { contactName: string | null; email: string | null; products: unknown } | null,
+  to: string,
+  setPasswordUrl: string | null,
+): Promise<WillkommensMailOpts> {
+  return {
+    to,
+    greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
+    packageType: normalizePackage(ob.package),
+    startDate: ob.startDate,
+    products: offer ? offerProducts(offer.products as Parameters<typeof offerProducts>[0]).map((p) => p.name) : [],
+    setPasswordUrl,
+    loginUrl: `${getAppUrl()}/login`,
+    setupUrl: `${getAppUrl()}/buyer/einrichtung`,
+    whatsappSelfConnect: ob.package !== "service" && selfConnectEnabled(),
+    replyTo: process.env.OFFER_REPLY_TO ?? null,
+  };
+}
+
+/**
+ * Vorschau der Willkommens-Mail ohne Seiteneffekte: Der Link zum Passwort wird erst beim Senden erstellt, hier steht
+ * ein Platzhalter (nur, wenn sich der Kunde noch nie eingeloggt hat).
+ */
+export async function welcomeVorschauOpts(onboardingId: string): Promise<WillkommensMailOpts | null> {
+  const r = await welcomeLaden(onboardingId);
+  if (!r) return null;
+  const user = r.ob.customer.users[0];
+  const to = user?.email ?? r.offer?.email;
+  if (!to) return null;
+  return welcomeOpts(r.ob, r.offer, to, user && !user.lastLoginAt ? buildResetUrl("LINK-WIRD-BEIM-SENDEN-ERSTELLT") : null);
+}
+
+export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?: string | null } = {}) {
+  const r = await welcomeLaden(onboardingId);
+  if (!r) return { ok: false as const, error: "Onboarding nicht gefunden." };
+  const { ob, offer } = r;
   const user = ob.customer.users[0];
   const to = user?.email ?? offer?.email;
   if (!to) return { ok: false as const, error: "Keine E-Mail-Adresse für den Kunden hinterlegt." };
@@ -370,18 +449,7 @@ export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?:
     const token = await issuePasswordResetToken(user.email, INVITE_TTL_MS);
     if (token) setPasswordUrl = buildResetUrl(token.rawToken);
   }
-  const res = await sendOnboardingWelcomeEmail({
-    to,
-    greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
-    packageType: normalizePackage(ob.package),
-    startDate: ob.startDate,
-    products: offer ? offerProducts(offer.products).map((p) => p.name) : [],
-    setPasswordUrl,
-    loginUrl: `${getAppUrl()}/login`,
-    setupUrl: `${getAppUrl()}/buyer/einrichtung`,
-    whatsappSelfConnect: ob.package !== "service" && selfConnectEnabled(),
-    replyTo: process.env.OFFER_REPLY_TO ?? null,
-  });
+  const res = await sendOnboardingWelcomeEmail(await welcomeOpts(ob, offer, to, setPasswordUrl));
   if (res.ok) {
     await prisma.onboarding.update({ where: { id: ob.id }, data: { welcomeSentAt: new Date() } });
     if (offer) await logOfferActivity(offer, `Willkommens-Mail an ${to} gesendet`);
@@ -417,8 +485,8 @@ export const MANUAL_FIELDS = {
 /** Kundendaten für Checkliste und Fortschritt (eine Quelle für Einrichtung, Startseite und Admin). */
 export const ONBOARDING_CUSTOMER_INCLUDE = {
   users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true, mailConnection: { select: { id: true } } } },
-  calendarConnection: { select: { status: true } },
-  agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } },
+  calendarConnection: { select: { status: true, provider: true } },
+  agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, videoRoomUrl: true } },
   whatsAppAccount: { select: { status: true } },
   messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
   reviewSettings: { select: { googleReviewUrl: true } },
@@ -491,12 +559,12 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         key: "calendar",
         label: "Kalender verbunden",
         owner: "kunde",
-        // Google/Microsoft verbunden oder freie Zeiten über ICS-Link bzw. Allianz-Online-Kalender.
-        done:
-          ob.customer.calendarConnection?.status === "connected" ||
-          !!ob.customer.agentConfig?.availabilityIcsUrlEnc ||
-          !!ob.customer.agentConfig?.allianzCalendarEnc ||
-          !!skip("calendar"),
+        // Google/Microsoft verbunden oder freie Zeiten über App-Kalender, ICS-Link bzw. Allianz-Online-Kalender. Ohne
+        // Google/Microsoft entsteht kein Meet-/Teams-Link: dann gehört der Video-Link (z. B. Webex) dazu (Ole, 21.11.2026:
+        // „Lohmann hat im Onboarding gar keinen Webex-Link hinterlegt“).
+        // App-Kalender: erst mit bestätigter Test-Einladung (IT-Filter der Konzernadresse, 22.11.2026)
+        // Schon live (z. B. Lohmann): Test-Einladung nicht nachträglich verlangen (22.11.2026)
+        done: kalenderSchrittFertig(ob.customer, !!skip("calendar"), !!skip(EINLADUNG_TEST_KEY) || !!ob.liveAt),
         at: null,
       },
       {
@@ -532,6 +600,15 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         done: !!skip("assistent") || !!ob.liveAt,
         at: null,
       },
+      // Ole, 21.11.2026: Merkblatt „Einwände im Termin“ lesen (mit „Gelesen“ bestätigt). Nach dem Livegang erledigt,
+      // damit bestehende Kunden keinen neuen offenen Schritt bekommen (Merkblatt bleibt auf der Präsentationsseite).
+      {
+        key: "einwaende",
+        label: "Merkblatt Einwände gelesen",
+        owner: "kunde",
+        done: !!skip("einwaende") || !!ob.liveAt,
+        at: null,
+      },
       {
         key: "serviceMails",
         label: "Service-Mails in Ihrem Namen bestätigt",
@@ -539,6 +616,20 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         done: ob.customer.mailFeaturesOff || !!leseMailAblauf(ob.customer.mailAblauf).bestaetigtAt || !!ob.liveAt,
         at: null,
       },
+      // Kranken, BU und Leben (Ole, 21.11.2026): AVV-Ergänzung zustimmen (Datenschutz-URL setzt die App), sonst nimmt der
+      // Assistent nur Sachversicherungen an. „Brauche ich nicht“ überspringt den Schritt. Nur, wenn Policen per WhatsApp
+      // eingerichtet sind (Ablage, kein Notschalter).
+      ...(policenGesundheitMoeglich()
+        ? [
+            {
+              key: "policenGesundheit",
+              label: "Policen aus Kranken, BU und Leben freigeschaltet",
+              owner: "kunde",
+              done: gesundheitFreigegeben(ob.customer) || !!skip("policenGesundheit"),
+              at: ob.customer.policenAvvZugestimmtAt ?? null,
+            } satisfies ChecklistItem,
+          ]
+        : []),
       {
         key: "templates",
         // Ohne freigegebene Vorlage darf WhatsApp neue Leads nicht anschreiben.
@@ -599,11 +690,11 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "assistent", "serviceMails", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "assistent", "einwaende", "serviceMails", "policenGesundheit", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
 
 /** Übersprungene Schritte (Onboarding.stepSkips): Grund und Zeitpunkt je Schritt. */
 export type StepSkip = { at: string; reason: string };
-export const STEP_SKIP_KEYS = ["calendar", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+export const STEP_SKIP_KEYS = ["calendar", "whatsapp", "bestandImport", "reviewLink", "team", "policenGesundheit"] as const;
 export type StepSkipKey = (typeof STEP_SKIP_KEYS)[number];
 export function stepSkipOf(raw: unknown, key: string): StepSkip | null {
   if (!raw || typeof raw !== "object") return null;

@@ -28,6 +28,40 @@ export function conversationScope(ctx: TeamCtx): Prisma.ConversationWhereInput {
   };
 }
 
+/**
+ * Gespräche für Chatliste und Zähler (Ole, 21.11.2026): ohne Leads, die per WhatsApp nicht erreichbar sind
+ * (Lead.waUnavailableAt, z. B. Festnetz oder „kein WhatsApp“) und nie selbst geschrieben haben. Die stehen auf der
+ * Anrufliste bzw. in der Mail-Strecke; ein Chat ohne zugestellte Nachricht wäre nur Ballast.
+ */
+export function chatListeScope(ctx: TeamCtx): Prisma.ConversationWhereInput {
+  const basis = conversationScope(ctx);
+  const and = Array.isArray(basis.AND) ? basis.AND : basis.AND ? [basis.AND] : [];
+  return {
+    ...basis,
+    // Nur Leads (Ole, 23.11.2026): fremde Nummern, die auf die WhatsApp-Nummer schreiben (Dokumente, private Kontakte),
+    // erscheinen nicht. Sichtbar sind Chats mit Lead, mit Assistent (Schalter „Assistent auch für neue Kontakte“) oder
+    // mit Buchung über die Buchungsseite (lib/whatsapp/nur-leads.ts istPipelineChat).
+    AND: [
+      ...and,
+      { OR: [{ leadId: { not: null } }, { botActive: true }, { messages: { some: { direction: "internal", kind: "appointment_booked", sentBy: "lead" } } }] },
+    ],
+    NOT: { lead: { waUnavailableAt: { not: null } }, messages: { none: { direction: "inbound" } } },
+  };
+}
+
+/**
+ * Logins mit mindestens einem Gerät, das Mitteilungen empfängt: Web-Push (PushSubscription) oder App-Store-App
+ * (DeviceToken, lib/native-push.ts). Bis 21.11.2026 zählte nur Web-Push, Nutzer der App-Store-App galten als „ohne App“.
+ */
+export async function nutzerMitPush(userIds: string[]): Promise<Set<string>> {
+  if (!userIds.length) return new Set();
+  const [web, nativ] = await Promise.all([
+    prisma.pushSubscription.findMany({ where: { userId: { in: userIds } }, select: { userId: true } }),
+    prisma.deviceToken.findMany({ where: { userId: { in: userIds } }, select: { userId: true } }),
+  ]);
+  return new Set([...web, ...nativ].map((r) => r.userId).filter((x): x is string => !!x));
+}
+
 /** Sichtbare Termine. */
 export function appointmentScope(ctx: TeamCtx): Prisma.AppointmentWhereInput {
   return {
@@ -61,12 +95,17 @@ export async function assignLead(leadId: string): Promise<string | null> {
   if (!lead || lead.assignedUserId) return lead?.assignedUserId ?? null;
   const members = await prisma.user.findMany({
     where: { customerId: lead.customerId, role: "BUYER" },
-    select: { id: true, receivesLeads: true, lastLeadAssignedAt: true, createdAt: true },
+    select: { id: true, teamRole: true, receivesLeads: true, lastLeadAssignedAt: true, createdAt: true, advisorCalendar: { select: { status: true } } },
   });
   if (members.length < 2) return null;
+  // Erst nach Kalender und App mit Mitteilungen (Ole, 21.11.2026, lib/team-bereit.ts)
+  const mitPush = await nutzerMitPush(members.map((m) => m.id));
+  const { bereitFuerLeads } = await import("@/lib/team-bereit");
+  const bereit = (m: (typeof members)[number]) =>
+    bereitFuerLeads({ owner: m.teamRole !== "advisor", kalender: m.advisorCalendar?.status === "connected", push: mitPush.has(m.id) }).bereit;
   // Abwesende (Urlaub, Krank …) werden übersprungen, ohne ihren Schalter zu ändern.
   const absent = await absentUserIds(lead.customerId);
-  const receivers = members.filter((m) => m.receivesLeads && !absent.has(m.id));
+  const receivers = members.filter((m) => m.receivesLeads && !absent.has(m.id) && bereit(m));
   if (receivers.length === 0) return null; // niemand eingeteilt/da → Inhaber sieht ihn
   receivers.sort(
     (a, b) =>

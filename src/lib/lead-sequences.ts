@@ -40,9 +40,10 @@
 //
 // Termin-Nachfassen (Ole, 17.11.2026): Antwortet der Lead 2 Std. nach dem Terminvorschlag des Assistenten nicht, ist der
 // erste Schritt von „Chat ruht“ ein kurzes Nachfassen mit denselben (bzw. neu berechneten, noch freien) Zeit-Knöpfen:
-// nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
+// nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr (sonntags 10 bis 18 Uhr, Ole 22.11.2026), einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
 // gebucht, „Stopp“, Kein Interesse, Assistent pausiert, Anruf läuft).
 
+import { mitThema } from "@/lib/thema-artikel";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
@@ -50,7 +51,7 @@ import { displayProduct } from "@/lib/products";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
-import { WhatsAppFestnetzError } from "@/lib/whatsapp/festnetz";
+import { waNummerFuerLead } from "@/lib/whatsapp/buchungsnummer";
 import { a, anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -61,6 +62,7 @@ import type { VorlageKey } from "@/lib/mail/vorlagen";
 import type { Werte } from "@/lib/mail/platzhalter";
 import { hatMailAntwort } from "@/lib/mail/kontakt-mail";
 import { BEDENKZEIT_AUFGABE, bedenkzeitNeustartText, tagKurz } from "@/lib/bedenkzeit";
+import { ABSAGE_FALLBACK_NOTE, ABSAGE_VERZOEGERUNG_MIN, absageText, absageZeitenText } from "@/lib/absage-nachfassen";
 
 export type SequenceKind =
   | "not_reached"
@@ -72,7 +74,10 @@ export type SequenceKind =
   | "silent"
   | "recall"
   | "nicht_erreicht_mail"
-  | "unterlagen";
+  | "unterlagen"
+  // Nachfassen nach einer Absage durch den Lead (Ole, 23.11.2026), Fassung A bzw. B des Splittests absage_nachfassen
+  | "absage"
+  | "absage_b";
 
 /** Abfolgen zum Angebot (Nachfassen, Vorab-Check, Thema aus dem Termin). */
 export const ANGEBOT_KINDS: SequenceKind[] = ["offer", "offer_selbst", "offer_bedenkzeit", "offer_selbst_bedenkzeit"];
@@ -83,8 +88,13 @@ export const istBedenkzeitAbfolge = (kind: string | null | undefined) => (BEDENK
 /** Begleit-Abfolgen (Pakete M4/M6): nur E-Mail bzw. Aufgabe, laufen neben den anderen und beenden keine. */
 export const BEGLEIT_KINDS: SequenceKind[] = ["nicht_erreicht_mail", "unterlagen"];
 export const istBegleitAbfolge = (kind: string | null | undefined) => (BEGLEIT_KINDS as string[]).includes(kind ?? "");
+/** Nachfassen nach einer Absage durch den Lead (lib/absage-nachfassen.ts), Fassung A bzw. B. */
+export const ABSAGE_KINDS: SequenceKind[] = ["absage", "absage_b"];
+export const istAbsageAbfolge = (kind: string | null | undefined) => (ABSAGE_KINDS as string[]).includes(kind ?? "");
 /** Aufgabe nach der Erinnerung „Unterlagen fehlen“ (gleicher Text wie UNTERLAGEN_NOTE in lib/mail/termin-erinnerung.ts). */
 export const UNTERLAGEN_AUFGABE = "Unterlagen nachfassen";
+/** Aufgabe, wenn der Assistent keine freien Zeiten findet (Ole, 22.11.2026, lib/whatsapp/bot.ts): persönlich melden. */
+export const KALENDER_VOLL_AUFGABE = "Kalender voll: Lead anrufen und Termin vereinbaren";
 
 const DAY = 24 * 60 * 60 * 1000;
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
@@ -148,7 +158,7 @@ const angebotTag2: Extract<Step, { action: "whatsapp" }> = {
   purpose: "followup_offer",
   params: (c) => [c.firstName, c.topic],
   text: (c) =>
-    a(c.an, `${c.hi} konntest du dir das Angebot zu ${c.topic} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?`, `${c.hi} konnten Sie sich das Angebot zu ${c.topic} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?`),
+    a(c.an, `${c.hi} konntest du dir das Angebot ${mitThema("zu", c.topic)} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?`, `${c.hi} konnten Sie sich das Angebot ${mitThema("zu", c.topic)} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?`),
   fallbackNote: "Angebot nachfassen: anrufen",
 };
 const angebotAnruf: Extract<Step, { action: "call" }> = { day: 3, action: "call", note: "Angebot nachfassen: anrufen", push: true };
@@ -166,8 +176,8 @@ const angebotLetzteWa = (selbst: boolean): Extract<Step, { action: "whatsapp" }>
         )
       : a(
           c.an,
-          `${c.hi} ich melde mich ein letztes Mal zu deinem Angebot für ${c.topic}: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
-          `${c.hi} ich melde mich ein letztes Mal zu Ihrem Angebot für ${c.topic}: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+          `${c.hi} ich melde mich ein letztes Mal zu deinem Angebot ${mitThema("für", c.topic)}: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+          `${c.hi} ich melde mich ein letztes Mal zu Ihrem Angebot ${mitThema("für", c.topic)}: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
         ),
   fallbackNote: "Angebot: letzter Versuch, anrufen",
 });
@@ -301,10 +311,45 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
       },
     ],
   },
+  // Nachfassen nach einer Absage durch den Lead (Ole, 23.11.2026: „Ja, bei jeder Absage nachfassen.“, lib/absage-nachfassen.ts):
+  // ein Schritt, 20 Minuten nach der Absage (im Chat abgesagt: 2 Stunden), im Versandfenster. Fassung A: offene Frage mit
+  // [Ja, neuer Termin] [Kein Bedarf mehr], außerhalb des Fensters die freigegebene Vorlage followup_noshow.
+  absage: {
+    label: "Termin abgesagt",
+    steps: [
+      {
+        day: ABSAGE_VERZOEGERUNG_MIN / (24 * 60),
+        action: "whatsapp",
+        purpose: "followup_absage",
+        params: (c) => [c.firstName],
+        // bis Meta die Absage-Vorlage freigibt: die freigegebene Vorlage „Nachfassen nach verpasstem Termin“
+        fallback: { purpose: "followup_noshow", params: (c) => [c.firstName] },
+        text: (c) => absageText({ an: c.an, hi: c.hi, person: vom(c) }),
+        fallbackNote: ABSAGE_FALLBACK_NOTE,
+      },
+    ],
+  },
+  // Fassung B: direkt zwei konkrete neue Zeiten (Zeit-Knöpfe), außerhalb des Fensters die freigegebene Vorlage followup
+  // mit zwei Terminvorschlägen; ohne Kalender die kurze Nachfrage
+  absage_b: {
+    label: "Termin abgesagt",
+    steps: [
+      {
+        day: ABSAGE_VERZOEGERUNG_MIN / (24 * 60),
+        action: "whatsapp",
+        purpose: "followup",
+        params: (c) => [c.firstName],
+        text: (c) => absageText({ an: c.an, hi: c.hi, person: vom(c) }),
+        slotText: (c, zeiten) => absageZeitenText({ an: c.an, hi: c.hi, person: vom(c) }, zeiten),
+        fallback: { purpose: "followup_noshow", params: (c) => [c.firstName] },
+        fallbackNote: ABSAGE_FALLBACK_NOTE,
+      },
+    ],
+  },
   // Chat ruht (Ole, 15.11.2026: „schon nach wenigen Stunden … recht aggressiv, der Interessent hat ja
   // Interesse gezeigt“; „nach 6–10 Stunden nochmal nachhaken“): startet bei jeder Nachricht des Assistenten neu
-  // (restartSilentSequence) und läuft, solange der Lead nicht antwortet: 2 Std., 8 Std., ca. 20 Std. (nur als
-  // Freitext im offenen Fenster), 3 Tage. Außerhalb des Fensters jede Vorlage nur einmal (followup,
+  // (restartSilentSequence) und läuft, solange der Lead nicht antwortet: 2 Std., 8 Std., ca. 20 Std. (im offenen Fenster als
+  // Freitext, sonst als Vorlage, Ole 22.11.2026), 3 Tage. Außerhalb des Fensters jede Vorlage nur einmal (followup,
   // followup_nudge, followup_last).
   silent: {
     label: "Chat ruht",
@@ -317,8 +362,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         text: (c) =>
           a(
             c.an,
-            `${c.hi} kurze Nachfrage zu ${c.topic}: Antworte einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich dir Termine vorschlagen.`,
-            `${c.hi} kurze Nachfrage zu ${c.topic}: Antworten Sie einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich Ihnen Termine vorschlagen.`,
+            `${c.hi} kurze Nachfrage ${mitThema("zu", c.topic)}: Antworte einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich dir Termine vorschlagen.`,
+            `${c.hi} kurze Nachfrage ${mitThema("zu", c.topic)}: Antworten Sie einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich Ihnen Termine vorschlagen.`,
           ),
         fallbackNote: "Keine Reaktion im Chat: anrufen",
       },
@@ -330,8 +375,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         text: (c) =>
           a(
             c.an,
-            `${c.hi} sollen wir mit ${c.topic} weitermachen? Es dauert nur ein paar Minuten.`,
-            `${c.hi} sollen wir mit ${c.topic} weitermachen? Es dauert nur ein paar Minuten.`,
+            `${c.hi} sollen wir ${mitThema("mit", c.topic)} weitermachen? Es dauert nur ein paar Minuten.`,
+            `${c.hi} sollen wir ${mitThema("mit", c.topic)} weitermachen? Es dauert nur ein paar Minuten.`,
           ),
         fallbackNote: "Keine Reaktion im Chat: anrufen",
       },
@@ -370,14 +415,14 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         text: (c) =>
           a(
             c.an,
-            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt es dir jetzt? Dann machen wir direkt weiter.`,
-            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt es Ihnen jetzt? Dann machen wir direkt weiter.`,
+            `${c.hi} wie besprochen melde ich mich wieder ${mitThema("zu", c.topic)}. Passt es dir jetzt? Dann machen wir direkt weiter.`,
+            `${c.hi} wie besprochen melde ich mich wieder ${mitThema("zu", c.topic)}. Passt es Ihnen jetzt? Dann machen wir direkt weiter.`,
           ),
         slotText: (c, [z1, z2]) =>
           a(
             c.an,
-            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt dir für ein kurzes Gespräch ${z1} oder ${z2}?`,
-            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt Ihnen für ein kurzes Gespräch ${z1} oder ${z2}?`,
+            `${c.hi} wie besprochen melde ich mich wieder ${mitThema("zu", c.topic)}. Passt dir für ein kurzes Gespräch ${z1} oder ${z2}?`,
+            `${c.hi} wie besprochen melde ich mich wieder ${mitThema("zu", c.topic)}. Passt Ihnen für ein kurzes Gespräch ${z1} oder ${z2}?`,
           ),
         fallbackNote: "Lead wollte, dass wir uns wieder melden: anrufen",
       },
@@ -405,18 +450,62 @@ export type SequenceLogEntry = {
   /** sent | template | call_task | kept_followup | skipped | failed | stopped | planned */
   result: string;
   detail?: string;
+  /** tatsächlich gesendeter Zweck (z. B. followup_nudge statt followup ohne Kalender), für „keine Vorlage doppelt“ */
+  purpose?: string;
 };
 
 /** Mo–Sa 9–19 Uhr Berlin (wie Bestandskunden-Kampagnen); Termin-Nachfassen: 8–20 Uhr. */
-export function inSendWindow(now: Date, stunden: { von: number; bis: number } = { von: 9, bis: 19 }): boolean {
+export function inSendWindow(now: Date, stunden: { von: number; bis: number } = { von: 9, bis: 19 }, sonntag: { von: number; bis: number } | null = null): boolean {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", hourCycle: "h23" }).formatToParts(now);
   const wd = parts.find((p) => p.type === "weekday")?.value;
   const hour = Number(parts.find((p) => p.type === "hour")?.value);
-  return wd !== "Sun" && hour >= stunden.von && hour < stunden.bis;
+  if (wd === "Sun") return !!sonntag && hour >= sonntag.von && hour < sonntag.bis;
+  return hour >= stunden.von && hour < stunden.bis;
+}
+
+/** Erster Zeitpunkt ab `at` im Versandfenster (volle Stunden), für die Vorschau „Nächste Nachrichten“. */
+export function naechstesSendefenster(at: Date, stunden: { von: number; bis: number } = { von: 9, bis: 19 }, sonntag: { von: number; bis: number } | null = null): Date {
+  if (inSendWindow(at, stunden, sonntag)) return at;
+  const H = 60 * 60 * 1000;
+  let d = new Date(Math.ceil(at.getTime() / H) * H);
+  for (let i = 0; i < 96 && !inSendWindow(d, stunden, sonntag); i++) d = new Date(d.getTime() + H);
+  return d;
+}
+
+/**
+ * 24-Stunden-Fenster (Ole, 22.11.2026: „die morgige Nachricht sollte noch im 24h-Fenster kommen“): Würde ein Schritt von
+ * „Chat ruht“ wegen der Versandzeiten (nachts, sonntags ab 18 Uhr) erst nach Schluss des WhatsApp-Fensters rausgehen,
+ * kommt er stattdessen spätestens 30 Minuten vor Fensterschluss, zur letzten Versandzeit davor. Frühestens 30 Minuten
+ * ab jetzt; geht das nicht, bleibt der Plan. Rein.
+ */
+export function imChatFensterVorziehen(o: { due: Date; fensterBis: Date | null; now: Date; sonntag?: { von: number; bis: number } | null }): Date {
+  const { due, fensterBis, now } = o;
+  if (!fensterBis || fensterBis.getTime() <= now.getTime()) return due;
+  const sonntag = o.sonntag ?? null;
+  const tatsaechlich = naechstesSendefenster(due, CHAT_RUHT_STUNDEN, sonntag);
+  const puffer = 30 * 60 * 1000;
+  if (tatsaechlich.getTime() <= fensterBis.getTime() - puffer) return due;
+  let t = new Date(fensterBis.getTime() - puffer);
+  for (let i = 0; i < 200 && !inSendWindow(t, CHAT_RUHT_STUNDEN, sonntag); i++) t = new Date(t.getTime() - 15 * 60 * 1000);
+  if (!inSendWindow(t, CHAT_RUHT_STUNDEN, sonntag) || t.getTime() < now.getTime() + puffer) return due;
+  return t.getTime() < due.getTime() ? t : due;
 }
 
 /** Zeitfenster für das Termin-Nachfassen nach einem Terminvorschlag (Ole, 17.11.2026). */
 export const TERMIN_NACHFASS_STUNDEN = { von: 8, bis: 20 } as const;
+/**
+ * „Chat ruht“ auch sonntags (Ole, 22.11.2026: „ja, sonntags auch nachfassen“, Anlass: erster Lohmann-Lead antwortete
+ * sonntags, das Nachfassen hätte bis Montag gewartet). Kürzeres Fenster als werktags; andere Abfolgen bleiben Mo bis Sa.
+ */
+export const SONNTAG_NACHFASS_STUNDEN = { von: 10, bis: 18 } as const;
+/** „Chat ruht“ werktags ab 8 Uhr (Ole, 22.11.2026: „ja, generell ab 8 Uhr“), sonst wie das Versandfenster bis 19 Uhr. */
+export const CHAT_RUHT_STUNDEN = { von: 8, bis: 19 } as const;
+/**
+ * Mindestabstand zwischen zwei Nachrichten von „Chat ruht“ (Ole, 22.11.2026: „die zweite Nachricht um 11 Uhr ist zu nah an
+ * der ersten, lieber am Nachmittag“): Rücken Schritte wegen der Versandzeiten zusammen (z. B. 8 Uhr und 10 Uhr),
+ * kommt der nächste frühestens 5 Stunden später. Andere Abfolgen: 2 Stunden (MIN_GAP_MS).
+ */
+export const CHAT_RUHT_ABSTAND_MS = 5 * 60 * 60 * 1000;
 
 async function enabledFor(customerId: string): Promise<boolean> {
   const agent = await prisma.agentConfig.findUnique({ where: { customerId }, select: { active: true, followUpSequencesEnabled: true } });
@@ -486,14 +575,15 @@ const fmtWhen = (d: Date) =>
 
 /**
  * Der Lead möchte später kontaktiert werden: Assistent legt sich eine Wiedervorlage (Abfolge „recall“).
- * Andere laufende Abfolgen enden (auch „Chat ruht“). Zeitpunkt frühestens in 15 Minuten, höchstens 60 Tage.
+ * Andere laufende Abfolgen enden (auch „Chat ruht“). Zeitpunkt frühestens in 15 Minuten, höchstens 90 Tage (bis
+ * 22.11.2026: 60; Terminwünsche bis 90 Tage im Voraus, lib/whatsapp/termin-vorschlaege.ts fernerTerminwunsch).
  */
 export async function scheduleBotRecall(leadId: string, at: Date, note: string | null, now = new Date()) {
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, erasedAt: true } });
   if (!lead || lead.erasedAt) return null;
   const agent = await prisma.agentConfig.findUnique({ where: { customerId: lead.customerId }, select: { active: true } });
   if (!agent?.active) return null;
-  const when = new Date(Math.min(Math.max(at.getTime(), now.getTime() + 15 * 60 * 1000), now.getTime() + 60 * DAY));
+  const when = new Date(Math.min(Math.max(at.getTime(), now.getTime() + 15 * 60 * 1000), now.getTime() + 90 * DAY));
   // Angebot liegt beim Lead (Paket P5): Bedenkzeit, danach startet das Nachfassen zum Angebot neu (nie „followup“)
   if (await imAngebotsstand(leadId, now)) return startBedenkzeit(leadId, when, { quelle: "lead", notiz: note, now });
   await stopSequences(leadId, "Lead möchte später kontaktiert werden", { now });
@@ -709,7 +799,7 @@ export async function stopReasonFor(seq: { leadId: string; customerId: string; s
  * Anruf-Aufgabe: Wiedervorlage für heute – eine eigene, spätere Wiedervorlage bleibt bestehen.
  * Läuft der Anrufplan (lib/call-plan.ts, „Anrufversuch X von 6“), plant er die Anrufe: keine zweite Aufgabe.
  */
-async function createCallTask(leadId: string, note: string, now: Date): Promise<"call_task" | "kept_followup"> {
+export async function createCallTask(leadId: string, note: string, now: Date): Promise<"call_task" | "kept_followup"> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { followUpAt: true, followUpNote: true } });
   if (lead?.followUpAt && lead.followUpAt.getTime() > now.getTime()) return "kept_followup";
   if (lead?.followUpAt && isCallPlanNote(lead.followUpNote)) return "kept_followup";
@@ -761,11 +851,14 @@ export async function runSequences(now = new Date(), opts: { nurId?: string; sof
     }
     // Vom Vermittler übersprungen (P6): ohne Versand weiter, nicht aufs Versandfenster warten
     const skip = seq.uebersprungen.includes(seq.step);
-    // Offener Terminvorschlag (erster Schritt „Chat ruht“): Nachfassen mit den Zeit-Knöpfen, Mo bis Sa 8 bis 20 Uhr
+    // Offener Terminvorschlag (erster Schritt „Chat ruht“): Nachfassen mit den Zeit-Knöpfen, Mo bis Sa 8 bis 20 Uhr,
+    // sonntags 10 bis 18 Uhr (wie alle Schritte von „Chat ruht“, Ole 22.11.2026)
     const terminNachfass =
       !skip && seq.kind === "silent" && seq.step === 0 ? await import("@/lib/whatsapp/termin-strecke").then((m) => m.offenerTerminvorschlag(seq.leadId, seq.customerId)).catch(() => null) : null;
+    const sonntag = seq.kind === "silent" ? SONNTAG_NACHFASS_STUNDEN : null;
+    const imFenster = terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN, sonntag) : sonntag ? inSendWindow(now, CHAT_RUHT_STUNDEN, sonntag) : windowOpen;
     // WhatsApp und E-Mail nur im Versandfenster – Schritt wartet, Anruf-Aufgaben jederzeit.
-    if (!skip && !opts.sofort && (step.action === "whatsapp" || step.action === "email") && !(terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN) : windowOpen)) {
+    if (!skip && !opts.sofort && (step.action === "whatsapp" || step.action === "email") && !imFenster) {
       res.waiting++;
       continue;
     }
@@ -776,10 +869,17 @@ export async function runSequences(now = new Date(), opts: { nurId?: string; sof
     }
     // Schritt beanspruchen (nie doppelt, auch bei parallelen Läufen).
     const next = def.steps[seq.step + 1];
+    const abstand = seq.kind === "silent" && !skip ? CHAT_RUHT_ABSTAND_MS : MIN_GAP_MS;
+    let naechsterAt = next ? new Date(Math.max((seq.neustartAt ?? seq.startedAt).getTime() + next.day * DAY, now.getTime() + abstand)) : null;
+    // „Chat ruht“: WhatsApp-Schritt noch im 24-Stunden-Fenster statt am nächsten Morgen danach (imChatFensterVorziehen)
+    if (naechsterAt && next?.action === "whatsapp" && seq.kind === "silent") {
+      const conv = await prisma.conversation.findFirst({ where: { leadId: seq.leadId }, orderBy: { lastMessageAt: "desc" }, select: { windowExpiresAt: true } }).catch(() => null);
+      naechsterAt = imChatFensterVorziehen({ due: naechsterAt, fensterBis: conv?.windowExpiresAt ?? null, now, sonntag: SONNTAG_NACHFASS_STUNDEN });
+    }
     const claimed = await prisma.leadSequence.updateMany({
       where: { id: seq.id, step: seq.step, stoppedAt: null },
       data: next
-        ? { step: seq.step + 1, nextAt: new Date(Math.max((seq.neustartAt ?? seq.startedAt).getTime() + next.day * DAY, now.getTime() + MIN_GAP_MS)) }
+        ? { step: seq.step + 1, nextAt: naechsterAt }
         : { step: seq.step + 1, nextAt: null, stoppedAt: now, stopReason: "Abgeschlossen" },
     });
     if (claimed.count === 0) continue;
@@ -859,8 +959,19 @@ async function sendTerminNachfass(
   }
 }
 
+/** Ging die Vorlage dieses Zwecks seit dem (Neu-)Start schon als Vorlage raus? (Log-Ergebnis „template“) */
+function vorlageSchonGesendet(seq: { kind?: string; log?: Prisma.JsonValue; startedAt?: Date; neustartAt?: Date | null }, purpose: string): boolean {
+  const def = seq.kind ? SEQUENCES[seq.kind as SequenceKind] : null;
+  if (!def) return true;
+  const ab = (seq.neustartAt ?? seq.startedAt)?.getTime() ?? 0;
+  const log = Array.isArray(seq.log) ? (seq.log as unknown as SequenceLogEntry[]) : [];
+  // Ältere Einträge ohne Zweck: „followup“ ohne Kalender ging als followup_nudge raus, beide zählen dann als gleich
+  const gleich = (p: string | undefined) => p === purpose || (!!p && [p, purpose].every((x) => x === "followup" || x === "followup_nudge"));
+  return log.some((e) => e.result === "template" && new Date(e.at).getTime() >= ab && e.step >= 0 && (e.purpose ? e.purpose === purpose : gleich((def.steps[e.step] as { purpose?: string } | undefined)?.purpose)));
+}
+
 async function sendStep(
-  seq: { leadId: string; customerId: string; step: number; kind?: string },
+  seq: { leadId: string; customerId: string; step: number; kind?: string; log?: Prisma.JsonValue; startedAt?: Date; neustartAt?: Date | null },
   step: Extract<Step, { action: "whatsapp" }>,
   now: Date,
 ): Promise<SequenceLogEntry> {
@@ -869,20 +980,22 @@ async function sendStep(
     prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true, waConsent: true, waUnavailableAt: true } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: seq.customerId }, select: { status: true } }),
   ]);
+  // WhatsApp-Nummer: aus der Online-Buchung übernommen (Formular-Nummer ohne WhatsApp, lib/whatsapp/buchungsnummer.ts), sonst Lead.phone
+  const phone = lead ? await waNummerFuerLead({ id: seq.leadId, customerId: seq.customerId, phone: lead.phone }) : null;
   // Kein WhatsApp (Nummer nicht erreichbar, lib/whatsapp/kein-whatsapp.ts): Anruf statt WhatsApp, außer der Lead hat selbst geschrieben
-  const noWa = !!lead?.waUnavailableAt && lead.phone
-    ? (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId: seq.customerId, contactPhone: lead.phone } } })) === 0
+  const noWa = !!lead?.waUnavailableAt && phone
+    ? (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId: seq.customerId, contactPhone: phone } } })) === 0
     : false;
-  if (!lead?.phone || account?.status !== "connected" || lead.waConsent === "nein" || noWa) {
+  if (!lead || !phone || account?.status !== "connected" || lead.waConsent === "nein" || noWa) {
     const r = await createCallTask(seq.leadId, step.fallbackNote, now);
     return {
       ...base,
       result: r,
-      detail: !lead?.phone ? "Keine Handynummer" : lead.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : noWa ? "Nicht per WhatsApp erreichbar" : "WhatsApp nicht verbunden",
+      detail: !phone ? "Keine Handynummer" : lead?.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : noWa ? "Nicht per WhatsApp erreichbar" : "WhatsApp nicht verbunden",
     };
   }
   const an = await anspracheOf(seq.customerId);
-  const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone: lead.phone, name: lead.name });
+  const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone, name: lead.name });
   const angebot = istAngebotsAbfolge(seq.kind);
   const ctx: Ctx = {
     firstName: firstNameOf(lead.name),
@@ -893,13 +1006,16 @@ async function sendStep(
     an,
     person: (await import("@/lib/whatsapp/gespraech")).vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm }),
   };
+  let fensterZu = false;
   if (step.onlyInWindow) {
     const conv = await prisma.conversation.findUnique({
-      where: { customerId_contactPhone: { customerId: seq.customerId, contactPhone: lead.phone } },
+      where: { customerId_contactPhone: { customerId: seq.customerId, contactPhone: phone } },
       select: { windowExpiresAt: true },
     });
     if (!conv?.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) {
-      return { ...base, result: "skipped", detail: "24h-Fenster geschlossen, keine zweite Vorlage" };
+      // Fenster zu (Ole, 22.11.2026: „ja, dann als Vorlage schicken“): als Vorlage, außer dieselbe Vorlage ging in diesem
+      // Durchlauf schon raus (keine doppelte Vorlage mit gleichem Text; Prüfung unten mit dem tatsächlichen Zweck)
+      fensterZu = true;
     }
   }
   let purpose = step.purpose;
@@ -916,6 +1032,11 @@ async function sendStep(
       text = step.slotText ? step.slotText(ctx, zeiten.labels) : noticeText("followup", ctx.an, who, ctx.kontakt, zeiten.labels);
       // Ältere freigegebene „followup“-Fassung (nur Name): ohne Zeiten
       buttons = { buttonPayloads: zeiten.payloads, legacyParams: [ctx.firstName] };
+    } else if (istAbsageAbfolge(seq.kind)) {
+      // Absage, Fassung B ohne freie Zeiten: wie Fassung A (Frage nach neuem Termin, Vorlage followup_absage,
+      // bis zur Freigabe followup_noshow über step.fallback)
+      purpose = "followup_absage";
+      params = [ctx.firstName];
     } else {
       purpose = "followup_nudge";
       buttons = { textButtons: [] };
@@ -930,10 +1051,11 @@ async function sendStep(
       buttons = { textButtons: knoepfe.map((b) => b.title), buttonPayloads: knoepfe.map((b) => b.id) };
     }
   }
+  if (fensterZu && vorlageSchonGesendet(seq, purpose)) return { ...base, result: "skipped", detail: "24h-Fenster geschlossen, Vorlage schon gesendet" };
   try {
     const { mode } = await sendWhatsAppNotice({
       customerId: seq.customerId,
-      to: lead.phone,
+      to: phone,
       purpose,
       params,
       text,
@@ -942,14 +1064,14 @@ async function sendStep(
       anrede: ctx.kontakt,
       ...buttons,
     });
-    return { ...base, result: mode === "template" ? "template" : "sent" };
+    return { ...base, result: mode === "template" ? "template" : "sent", purpose };
   } catch (err) {
     if (err instanceof NoTemplateError && step.fallback) {
       // Neue Vorlage noch nicht freigegeben: die bisherige (freigegebene) Vorlage
       try {
         const { mode } = await sendWhatsAppNotice({
           customerId: seq.customerId,
-          to: lead.phone,
+          to: phone,
           purpose: step.fallback.purpose,
           params: step.fallback.params(ctx),
           text,
@@ -965,7 +1087,7 @@ async function sendStep(
     if (err instanceof WhatsAppUnavailableError) {
       // Festnetznummer (lib/whatsapp/festnetz.ts) bzw. kein WhatsApp: nichts gesendet, Anruf statt WhatsApp
       const r = await createCallTask(seq.leadId, step.fallbackNote, now);
-      return { ...base, result: r, detail: err instanceof WhatsAppFestnetzError ? "Nicht gesendet: Festnetznummer" : "Nicht per WhatsApp erreichbar" };
+      return { ...base, result: r, detail: "Nicht per WhatsApp erreichbar" };
     }
     if (err instanceof NoTemplateError) {
       const r = await createCallTask(seq.leadId, step.fallbackNote, now);

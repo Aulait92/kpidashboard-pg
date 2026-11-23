@@ -17,6 +17,7 @@ import {
 import { fetchIcsBusy } from "@/lib/calendar/ics";
 import { APP_PROVIDER, appBusy, appCreateEvent, appDeleteEvent, appUpdateEventEnd, appUpdateEventTime } from "@/lib/calendar/app-kalender";
 import { allianzBusy, decodeAllianzCalendar } from "@/lib/calendar/allianz-online";
+import { allianzFuerBerater } from "@/lib/calendar/berater-allianz";
 import { berlinAt, calendarBlocksBusy, DEFAULT_DURATION_MIN, durationForKey, loadLeadTimes, timesForDay, type LeadTimes } from "@/lib/calendar/lead-times";
 import {
   microsoftCreateEvent,
@@ -62,22 +63,37 @@ export function hasRequiredScopes(conn: { provider: string; scope: string | null
 /** Adapter für einen Kalender-Schlüssel (customerId oder user:<id>). */
 export async function adapterFor(customerId: string) {
   const conn = await loadConnection(customerId);
-  // Veröffentlichter Firmenkalender (ICS) und Allianz-Online-Kalender gelten
-  // nur für den Agentur-Kalender.
-  const agent = userIdOfKey(customerId)
-    ? null
-    : await prisma.agentConfig.findUnique({
-        where: { customerId },
-        select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, allianzConsentAt: true },
-      });
-  const icsUrl = agent?.availabilityIcsUrlEnc ? decryptSecret(agent.availabilityIcsUrlEnc) : null;
-  const allianz = agent?.allianzConsentAt ? decodeAllianzCalendar(agent.allianzCalendarEnc) : null;
+  const beraterId = userIdOfKey(customerId);
+  // Kunde (Agentur), zu dem der Kalender gehört
+  const agencyId = conn.customerId;
+  // Berater-App-Kalender mit Allianz-Person (lib/calendar/berater-allianz.ts, 21.11.2026)
+  const beraterApp = !!beraterId && conn.provider === APP_PROVIDER;
+  // Veröffentlichter Firmenkalender (ICS) gilt nur für den Agentur-Kalender, der Allianz-Online-Kalender
+  // für die Agentur und (eingeschränkt auf ihre Person) für Berater mit App-Kalender.
+  const agent =
+    beraterId && !beraterApp
+      ? null
+      : await prisma.agentConfig.findUnique({
+          where: { customerId: agencyId },
+          select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, allianzConsentAt: true },
+        });
+  const icsUrl = !beraterId && agent?.availabilityIcsUrlEnc ? decryptSecret(agent.availabilityIcsUrlEnc) : null;
+  const agencyAllianz = agent?.allianzConsentAt ? decodeAllianzCalendar(agent.allianzCalendarEnc) : null;
+  const allianz = beraterApp
+    ? agencyAllianz && "allianzResourceId" in conn
+      ? allianzFuerBerater(agencyAllianz, conn.allianzResourceId)
+      : null
+    : agencyAllianz;
 
   const native =
     conn.provider === APP_PROVIDER
       ? {
-          // App-Kalender (lib/calendar/app-kalender.ts): Termine der App belegt, Einladung per Mail
-          getBusy: (min: Date, max: Date) => appBusy(customerId, min, max),
+          // App-Kalender (lib/calendar/app-kalender.ts): Termine der App belegt, Einladung per Mail.
+          // Berater ohne Allianz-Person: keine Quelle für belegte Zeiten, nie still „frei“.
+          getBusy: (min: Date, max: Date) =>
+            beraterApp && !allianz
+              ? Promise.reject(new Error("Allianz-Person des Beraters nicht eingerichtet."))
+              : appBusy(customerId, min, max),
           createEvent: (ev: NewEvent) => appCreateEvent(customerId, ev),
           deleteEvent: (id: string) => appDeleteEvent(customerId, id),
           updateEventEnd: (id: string, end: Date) => appUpdateEventEnd(customerId, id, end),
@@ -108,7 +124,7 @@ export async function adapterFor(customerId: string) {
         native.getBusy(min, max),
         icsUrl ? fetchIcsBusy(icsUrl, min, max) : Promise.resolve([] as Busy[]),
         // Vor dem frühesten Allianz-Buchungstag nur mit eigenem Kalender (Google/Outlook) Lead-Zeiten anbieten
-        allianz ? allianzBusy(customerId, allianz, min, max, { leadTimesBeforeEarliest: conn.provider !== APP_PROVIDER }) : Promise.resolve([] as Busy[]),
+        allianz ? allianzBusy(agencyId, allianz, min, max, { leadTimesBeforeEarliest: conn.provider !== APP_PROVIDER }) : Promise.resolve([] as Busy[]),
         calendarBlocksBusy(customerId, min, max),
       ]);
       return lists.flat();
@@ -296,6 +312,13 @@ export class SlotBusyError extends Error {
   }
 }
 
+/** Lead hat schon einen künftigen Termin: kein zweiter Termin, nur Verschieben (Ole, 21.11.2026: doppelte Buchung). */
+export class SchonGebuchtError extends Error {
+  constructor(public startsAt: Date) {
+    super("SCHON_GEBUCHT");
+  }
+}
+
 /**
  * Erster Kalender (in Reihenfolge von `keys`), der [start, end] (plus Puffer) frei hat, mit Adapter.
  * Abwesende Personen werden übersprungen. Nichts frei → SlotBusyError; fällt der einzige Kalender
@@ -364,6 +387,16 @@ export async function bookAppointment(opts: {
   const durationMin = opts.durationMin ?? (await durationForKeys(opts.customerId, keys));
   const end = new Date(start.getTime() + durationMin * 60000);
   if (start.getTime() < Date.now()) throw new Error("Startzeit liegt in der Vergangenheit.");
+  // Doppelte Buchung verhindern (Ole, 21.11.2026): Hat der Lead schon einen künftigen Termin, entsteht kein zweiter.
+  // Ausnahmen: Verschieben (bucht neu und sagt danach ab) und bewusste Buchung durch den Berater (z. B. Folgetermin).
+  if (opts.leadId && opts.notifyLead !== "rescheduled" && opts.bookedVia !== "advisor") {
+    const schon = await prisma.appointment.findFirst({
+      where: { leadId: opts.leadId, status: "booked", startsAt: { gt: new Date() } },
+      orderBy: { startsAt: "asc" },
+      select: { startsAt: true },
+    });
+    if (schon) throw new SchonGebuchtError(schon.startsAt);
+  }
   // Unmittelbar vor dem Anlegen erneut prüfen — der Slot kann seit dem
   // Vorschlag belegt worden sein (oder der Bot nennt eine eigene Zeit).
   const { key: calendarKey, adapter } = await findFreeCalendar(opts.customerId, keys, start, end, { leadId: opts.leadId });
@@ -440,6 +473,8 @@ export async function bookAppointment(opts: {
       tag: `appt:${appt.id}`,
       url: "/buyer",
     };
+    // Admin liest mit (erste Kunden, lib/admin-mitlesen.ts): Zeit und Art, ohne Namen
+    if (opts.leadId) await (await import("@/lib/admin-mitlesen")).adminMitlesen({ leadId: opts.leadId, ereignis: "termin", detail: payload.body, tagZusatz: appt.id });
     // Team: nur an den zuständigen Berater.
     if (opts.leadId) await notifyLeadPush(opts.leadId, payload);
     else if (advisorUserId) await sendToUser(advisorUserId, payload).catch((e) => console.error("[appt push]", e));
@@ -519,6 +554,8 @@ export async function cancelAppointment(
   customerId: string,
   by: "lead" | "advisor" | "team" | "system" = "team",
   notifyLead = true,
+  /** Absage durch den Lead: Nachfassen per WhatsApp nach so vielen Minuten (Standard 20, lib/absage-nachfassen.ts). */
+  opts: { nachfassenNachMin?: number } = {},
 ): Promise<{ calendarDeleted: boolean; note?: string }> {
   const appt = await prisma.appointment.findFirst({
     where: { id: appointmentId, customerId },
@@ -563,6 +600,13 @@ export async function cancelAppointment(
   }
   if (notifyLead) {
     await sendLeadEmail(appt.id, "cancelled").catch((e) => console.error("[lead email]", e));
+  }
+  // Nachfassen nach jeder Absage durch den Lead (Ole, 23.11.2026, lib/absage-nachfassen.ts). Nicht beim Verschieben
+  // (rescheduleAppointment sagt die alte Zeit ohne Mail ab, notifyLead = false).
+  if (by === "lead" && notifyLead && appt.leadId) {
+    await import("@/lib/absage-nachfassen-server")
+      .then((m) => m.startAbsageNachfassen(appt.id, { verzoegerungMin: opts.nachfassenNachMin }))
+      .catch((e) => console.error("[absage-nachfassen]", e));
   }
   return { calendarDeleted, note };
 }
@@ -625,6 +669,8 @@ export async function rescheduleAppointment(opts: {
   });
   // Alte Zeit still absagen — der Lead bekommt nur die „verschoben"-Mail.
   await cancelAppointment(old.id, opts.customerId, opts.by, false);
+  // Gegenprobe der Splittests (z. B. partner_vor_termin: Verschiebequote), nie störend
+  await import("@/lib/experimente").then((m) => m.zielErreicht([old.leadId, old.conversationId], "termin_verschoben")).catch(() => null);
   return booked;
 }
 

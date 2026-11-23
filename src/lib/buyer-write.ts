@@ -31,3 +31,17 @@ export async function writableCustomerId(leadId: string): Promise<string | null>
   }
   return null;
 }
+
+/**
+ * Admin in „Als Kunde ansehen“ darf am Kontakt die automatischen Nachrichten steuern (überspringen, verschieben,
+ * pausieren), auch bei echten Leads (Ole, 22.11.2026: „ich muss für Lohmann auch eine Nachricht überspringen können“).
+ * Nur diese Aktionen, nicht allgemein schreiben. null = kein Admin in der Vorschau oder fremder Lead.
+ */
+export async function adminVorschauCustomerId(leadId: string): Promise<string | null> {
+  const session = await getCurrentSession();
+  if (session?.role !== "ADMIN") return null;
+  const ctx = await getBuyerContext();
+  if (!ctx?.preview || ctx.demo || !leadId) return null;
+  const lead = await prisma.lead.count({ where: { id: leadId, customerId: ctx.customerId } });
+  return lead ? ctx.customerId : null;
+}

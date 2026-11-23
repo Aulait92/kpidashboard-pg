@@ -31,7 +31,7 @@ import { vermittlerName, type VermittlerName } from "@/lib/vermittler-nennung";
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
-import { ERSTANSCHREIBEN_V10, erstanschreibenV10, erstanschreibenV11, ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12, ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
+import { ERSTANSCHREIBEN_V10, erstanschreibenV10, erstanschreibenV11, istKfzZweck, ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12, ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
   | "outreach"
@@ -40,6 +40,10 @@ export type NoticePurpose =
   | "outreach_pkv"
   | "outreach_privatschutz"
   | "outreach_hausrat"
+  // Kfz je Anlass (Ole, 21.11.2026, erstanschreiben.ts KFZ_ZWECKE)
+  | "outreach_kfz"
+  | "outreach_kfz_wechsel"
+  | "outreach_kfz_neu"
   | "booking_confirmation"
   | "reminder"
   | "reminder_soon"
@@ -54,6 +58,8 @@ export type NoticePurpose =
   | "offer_send"
   | "offer_bedenkzeit"
   | "followup_noshow"
+  // Nachfassen nach Absage durch den Lead (Ole, 23.11.2026: „Ja einreichen“, lib/absage-nachfassen.ts)
+  | "followup_absage"
   | "followup_last"
   | "glueckwunsch"
   | "campaign_cross_sell"
@@ -75,6 +81,9 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach_pkv: "Erstanschreiben private Krankenversicherung",
   outreach_privatschutz: "Erstanschreiben Privatschutz",
   outreach_hausrat: "Erstanschreiben Hausrat (nur Hausrat angefragt)",
+  outreach_kfz: "Erstanschreiben Kfz (Anlass offen)",
+  outreach_kfz_wechsel: "Erstanschreiben Kfz (Wechsel, jetziges Auto)",
+  outreach_kfz_neu: "Erstanschreiben Kfz (neues Auto)",
   booking_confirmation: "Buchungsbestätigung",
   reminder: "Termin-Erinnerung",
   reminder_soon: "Termin gleich: passt alles?",
@@ -89,6 +98,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   offer_send: "Angebot senden (nach dem Termin)",
   offer_bedenkzeit: "Nachfassen nach der Bedenkzeit zum Angebot",
   followup_noshow: "Nachfassen nach verpasstem Termin",
+  followup_absage: "Nachfassen nach Absage",
   followup_last: "Nachfassen: letzte Nachricht (Abfolge)",
   glueckwunsch: "Glückwunsch zum Abschluss",
   campaign_cross_sell: "Bestandskunden: Lücke schließen",
@@ -104,8 +114,28 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
 };
 
 /** Erstanschreiben je Produkt (lib/whatsapp/erstanschreiben.ts wählt anhand des Leadformulars). */
-export const OUTREACH_PURPOSES = ["outreach", "outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat"] as const satisfies readonly NoticePurpose[];
+export const OUTREACH_PURPOSES = [
+  "outreach",
+  "outreach_tkv",
+  "outreach_zahn",
+  "outreach_pkv",
+  "outreach_privatschutz",
+  "outreach_hausrat",
+  "outreach_kfz",
+  "outreach_kfz_wechsel",
+  "outreach_kfz_neu",
+] as const satisfies readonly NoticePurpose[];
 export const isOutreachPurpose = (p: string): boolean => (OUTREACH_PURPOSES as readonly string[]).includes(p);
+
+/**
+ * Höchste Textversion je Zweck fürs Erstanschreiben (rankOutreach, rein): ohne feste Frage (v10Moeglich) höchstens v9;
+ * mit fester Frage nie die allgemeine Telefonatsfrage für einen Produkt-Lead (Rückfall „outreach“ höchstens v9). Kfz
+ * (Ole, 21.11.2026): bis zur Freigabe der Kfz-Vorlage bei Meta das bisherige allgemeine Erstanschreiben (v12, Telefonat).
+ */
+export function outreachMaxVersion(purpose: NoticePurpose, v10: boolean): Partial<Record<NoticePurpose, number>> {
+  if (!v10) return Object.fromEntries(OUTREACH_PURPOSES.map((x) => [x, 9]));
+  return purpose === "outreach" || istKfzZweck(purpose) ? {} : { outreach: 9 };
+}
 
 /**
  * Version der automatisch eingereichten Texte. v2 (14.11.2026): Anrede „Guten Tag Frau Schneider“
@@ -144,10 +174,18 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   outreach_tkv: "v12",
   outreach_zahn: "v12",
   outreach_pkv: "v12",
-  outreach_privatschutz: "v12",
+  // v13 (Ole, 21.11.2026): „zu Haftpflicht und Hausrat“ statt „zum Privatschutz“ (erstanschreiben.ts); bis zur Freigabe
+  // bei Meta sendet die App v12 (rankOutreach)
+  outreach_privatschutz: "v13",
   // Reine Hausrat-Leads (Ole, 18.11.2026, zur Einreichung freigegeben): „zu Ihrer Hausratversicherung“ statt „zum
   // Privatschutz“; bis zur Freigabe bei Meta die allgemeine bzw. die Privatschutz-Fassung (outreach.ts fallbackPurposes)
   outreach_hausrat: "v12",
+  // Kfz (Ole, 21.11.2026: Einstiegsfrage je Anlass, erstanschreiben.ts): neu, Fußzeile wie v12; bis zur Freigabe bei Meta
+  // geht das bisherige allgemeine Erstanschreiben raus (outreach.ts fallbackPurposes, Telefonatsfrage)
+  // v13 (21.11.2026): Fassung b nennt die Kfz-Versicherung; bis zur Freigabe sendet die App v12 (rankOutreach)
+  outreach_kfz: "v13",
+  outreach_kfz_wechsel: "v12",
+  outreach_kfz_neu: "v12",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern
   // (bis zur Freigabe bei Meta die bisherige v4, PLATZHALTER_AB), 15 Minuten und „wartet im Videoraum“ neu
   reminder: "v5",
@@ -159,14 +197,19 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // P4 (Ole, 17.11.2026, Ergänzung D): Glückwunsch zum Abschluss (glueckwunsch, Einreichung siehe template-plan.ts)
   glueckwunsch: "v5",
   // Angebot nach dem Termin (Paket P3, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, ANGEBOT_PURPOSES)
-  offer_send: "v5",
+  // v6 (Ole, 23.11.2026): „Angebot zum Thema {{2}}“ statt „für {{2}}“ (fehlender Artikel, „für Kfz-Versicherung“).
+  // Platzhalter gleich; bis zur Freigabe bei Meta sendet die App die freigegebene v5.
+  offer_send: "v6",
   followup_offer_selbst: "v5",
+  // v5 (Ole, 23.11.2026): „das Angebot zum Thema {{2}}“ statt „zu {{2}}“; bis zur Freigabe bleibt v4 im Einsatz
+  followup_offer: "v5",
   // Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, BEDENKZEIT_PURPOSES)
-  offer_bedenkzeit: "v5",
+  offer_bedenkzeit: "v6", // v6 (23.11.2026): „zu Ihrem Angebot zum Thema {{2}}“ statt „für {{2}}“
   // Nachfassen v5 (Ole, 18.11.2026, zur Einreichung freigegeben): Vermittler als Person („mit Herrn Kannapinn“), vorher
   // in NAECHSTE_FASSUNG vorgemerkt. Platzhalter unverändert, bis zur Freigabe bei Meta bleibt v4 im Einsatz.
   followup: "v5",
   followup_noshow: "v5",
+  followup_absage: "v1",
   followup_last: "v5",
 };
 
@@ -201,6 +244,9 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   outreach_pkv: [],
   outreach_privatschutz: [],
   outreach_hausrat: [],
+  outreach_kfz: [],
+  outreach_kfz_wechsel: [],
+  outreach_kfz_neu: [],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   // Ab v5 (Show-up-Paket); ältere freigegebene Fassungen: PLATZHALTER_AB
   reminder: ["Wann (z. B. morgen um 10 Uhr)", "Nutzen (ein Satz, ggf. mit Verträgen)", "Zugang (Videolink bzw. Anruf)"],
@@ -216,6 +262,7 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   offer_send: ["Thema (z. B. Haftpflicht und Hausrat)", "Angebotslink"],
   offer_bedenkzeit: ["Thema (z. B. Hausrat, Haftpflicht)"],
   followup_noshow: [],
+  followup_absage: [],
   followup_last: [],
   glueckwunsch: ["Vermittler (Akkusativ)"],
   campaign_cross_sell: ["Thema (z. B. Hausrat)"],
@@ -249,6 +296,9 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   outreach_pkv: erstanschreibenV10("outreach_pkv"),
   outreach_privatschutz: erstanschreibenV10("outreach_privatschutz"),
   outreach_hausrat: erstanschreibenV10("outreach_hausrat"),
+  outreach_kfz: erstanschreibenV10("outreach_kfz"),
+  outreach_kfz_wechsel: erstanschreibenV10("outreach_kfz_wechsel"),
+  outreach_kfz_neu: erstanschreibenV10("outreach_kfz_neu"),
   // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
   booking_confirmation: {
     du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
@@ -298,15 +348,15 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit Ihrer Anfrage weitermachen? Es dauert nur ein paar Minuten.",
   },
   followup_offer: {
-    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zu {{2}} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
-    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot zu {{2}} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
+    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zum Thema {{2}} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot zum Thema {{2}} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
   // Angebot nach dem Termin (Paket P3, Ole 17.11.2026), zur Einreichung freigegeben (CORE_PURPOSES, ANGEBOT_PURPOSES,
   // docs/vorlagen-angebot.md). Freitext im offenen Fenster: lib/angebot-senden.ts bzw. lib/lead-sequences.ts.
   // Der Link steht nicht am Ende (Meta-Regel).
   offer_send: {
-    du: "vielen Dank für das Gespräch! Wie besprochen hier dein Angebot für {{2}}: {{3}} Bei Fragen schreib mir einfach hier.",
-    sie: "vielen Dank für das Gespräch! Wie besprochen hier Ihr Angebot für {{2}}: {{3}} Bei Fragen schreiben Sie mir einfach hier.",
+    du: "vielen Dank für das Gespräch! Wie besprochen hier dein Angebot zum Thema {{2}}: {{3}} Bei Fragen schreib mir einfach hier.",
+    sie: "vielen Dank für das Gespräch! Wie besprochen hier Ihr Angebot zum Thema {{2}}: {{3}} Bei Fragen schreiben Sie mir einfach hier.",
   },
   followup_offer_selbst: {
     du: "hier ist der digitale KI-Assistent von [BeraterDat]. Konntest du dir das Angebot, das {{2}} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
@@ -315,12 +365,17 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   // Nach der Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026), zur Einreichung freigegeben (BEDENKZEIT_PURPOSES,
   // docs/vorlagen-angebot.md). Bewusst ohne Terminvorschläge; Freitext: lib/bedenkzeit.ts bedenkzeitNeustartText.
   offer_bedenkzeit: {
-    du: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu deinem Angebot für {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
-    sie: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot für {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
+    du: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu deinem Angebot zum Thema {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot zum Thema {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
   followup_noshow: {
     du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
     sie: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
+  },
+  // Nach einer Absage durch den Lead (Ole, 23.11.2026 freigegeben). Bis zur Freigabe bei Meta: followup_noshow (lead-sequences.ts)
+  followup_absage: {
+    du: "schade, dass es mit dem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
+    sie: "schade, dass es mit dem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
   },
   followup_last: {
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
@@ -389,6 +444,10 @@ export const TEMPLATE_BODY_B: Partial<Record<NoticePurpose, { du?: string; sie: 
   outreach_pkv: erstanschreibenV11("outreach_pkv"),
   outreach_privatschutz: erstanschreibenV11("outreach_privatschutz"),
   outreach_hausrat: erstanschreibenV11("outreach_hausrat"),
+  // Kfz (A/B-Test-Labor 21.11.2026): Fassung b „Frage zuerst“ wie v11, eigener Test je Anlass (docs/firma/ab-tests.md)
+  outreach_kfz: erstanschreibenV11("outreach_kfz"),
+  outreach_kfz_wechsel: erstanschreibenV11("outreach_kfz_wechsel"),
+  outreach_kfz_neu: erstanschreibenV11("outreach_kfz_neu"),
   followup_last: {
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte dich nicht weiter stören: Soll [BeraterNom] sich noch um deine Anfrage kümmern?",
     sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte Sie nicht weiter stören: Soll [BeraterNom] sich noch um Ihre Anfrage kümmern?",
@@ -455,6 +514,10 @@ export const PLATZHALTER_AB: Partial<Record<NoticePurpose, { version: number; fr
   outreach_pkv: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_pkv") },
   outreach_privatschutz: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_privatschutz") },
   outreach_hausrat: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_hausrat") },
+  // Kfz gibt es erst ab v12; Einträge nur der Einheitlichkeit halber (ältere Fassungen sind die allgemeinen)
+  outreach_kfz: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_kfz") },
+  outreach_kfz_wechsel: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_kfz_wechsel") },
+  outreach_kfz_neu: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_kfz_neu") },
 };
 
 /** Hat die Vorlage dieser Textversion schon die aktuelle Platzhalter-Belegung (REST_PARAMS)? Von Hand angelegte (0): nein. */
@@ -839,6 +902,9 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   outreach_pkv: [...ERSTANSCHREIBEN_V10.outreach_pkv.knoepfe],
   outreach_privatschutz: [...ERSTANSCHREIBEN_V10.outreach_privatschutz.knoepfe],
   outreach_hausrat: [...ERSTANSCHREIBEN_V10.outreach_hausrat.knoepfe],
+  outreach_kfz: [...ERSTANSCHREIBEN_V10.outreach_kfz.knoepfe],
+  outreach_kfz_wechsel: [...ERSTANSCHREIBEN_V10.outreach_kfz_wechsel.knoepfe],
+  outreach_kfz_neu: [...ERSTANSCHREIBEN_V10.outreach_kfz_neu.knoepfe],
   booking_confirmation: [KNOPF.terminVerschieben],
   reminder: [KNOPF.passt, KNOPF.verschieben],
   reminder_soon: [KNOPF.passt, KNOPF.verschieben],
@@ -851,6 +917,7 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   followup_offer_selbst: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
   offer_bedenkzeit: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
   followup_noshow: [KNOPF.neuerTermin, KNOPF.keinBedarfMehr],
+  followup_absage: [KNOPF.neuerTermin, KNOPF.keinBedarfMehr],
   followup_last: [KNOPF.nochAktuell, KNOPF.neinDanke],
   campaign_cross_sell: [KNOPF.gernPruefen, KNOPF.keinBedarf, OPT_OUT_BUTTON],
   campaign_review: [KNOPF.gern, KNOPF.keinBedarf, OPT_OUT_BUTTON],
@@ -1063,9 +1130,8 @@ export async function sendWhatsAppNotice(opts: {
       if (!wrote) throw l.waConsent === "nein" ? new WhatsAppNoConsentError() : new WhatsAppUnavailableError();
     }
   }
-  // Festnetznummer (Ole, 20.11.2026, lib/whatsapp/festnetz.ts): nicht senden, Lead in den Anrufweg, außer er hat selbst geschrieben
-  const { pruefeFestnetz } = await import("@/lib/whatsapp/festnetz");
-  await pruefeFestnetz({ customerId: opts.customerId, to: opts.to, leadId, conversationId: existing?.id ?? null });
+  // Festnetznummern werden nicht mehr vorab gesperrt (Ole, 21.11.2026: manche haben WhatsApp, z. B. über Superchat).
+  // Kommt „kein WhatsApp“ zurück, übernimmt lib/whatsapp/kein-whatsapp.ts mit Grund „festnetz“.
   // Allowlist (Ole, 16.11.2026): automatische Nachrichten nur an Leads aus der Pipeline bzw. (Kampagnen, Empfehlungen)
   // an importierte Bestandskunden. Nie an unbekannte Kontakte, z. B. private Chats der Business-App (Coexistence).
   if (!opts.manuell) {
@@ -1136,7 +1202,9 @@ export async function sendWhatsAppNotice(opts: {
     pricingCategory = tpl.category.toLowerCase();
     // A/B-Fassung nur bei der aktuellen Textversion speichern (Ole, 19.11.2026): ältere Fassungen (z. B. v9, solange v10
     // nicht freigegeben ist) zählten sonst als „a“ und verzerrten den Test der aktuellen Fassungen (ab-test.ts)
-    variant = pick.current ? pick.variant : null;
+    // Rückfall auf einen anderen Zweck (z. B. Kfz/Hausrat → allgemeines Erstanschreiben, solange die eigene Vorlage nicht
+    // freigegeben ist) nicht als Fassung zählen: der Rückfall wählt immer „a“ und verzerrte sonst den Test (21.11.2026)
+    variant = pick.current && purpose === opts.purpose ? pick.variant : null;
     documentHeader = !!doc;
     pdf = doc ? (pick.dokument === "entwurf" ? "entwurf" : "vollstaendig") : null;
     if (pdf === "entwurf") console.warn("[whatsapp] Erstanschreiben mit unvollständiger Erstinformation im Kopf", opts.customerId);

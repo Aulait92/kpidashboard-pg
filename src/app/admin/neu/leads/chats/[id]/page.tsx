@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ADMIN_CHAT_SICHTBAR } from "@/lib/whatsapp/nur-leads";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { ChatsAnsicht, type ChatsSuche } from "@/app/admin/whatsapp/chats-ansicht";
 import { formatPhone } from "@/lib/format";
@@ -24,7 +25,7 @@ const FUNKTIONEN = [
 
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<ChatsSuche> }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const chat = await prisma.conversation.findUnique({ where: { id }, select: { contactName: true, contactPhone: true } });
+  const chat = await prisma.conversation.findFirst({ where: { id, ...ADMIN_CHAT_SICHTBAR }, select: { contactName: true, contactPhone: true } });
   if (!chat) notFound();
   const qs = new URLSearchParams(Object.entries(sp).filter(([k, v]) => v && k !== "c") as [string, string][]).toString();
   return (

@@ -14,8 +14,9 @@ async function handle(req: Request) {
   }
 
   // Media Buyer ist abgeschaltet (wird ggf. später reaktiviert): ohne
-  // MEDIA_BUYER_ENABLED=1 steuert er nichts mehr an Meta.
-  if (process.env.MEDIA_BUYER_ENABLED !== "1") {
+  // MEDIA_BUYER_ENABLED=1 steuert er nichts mehr an Meta. Ein Trockenlauf (?dryRun=1) geht auch ausgeschaltet
+  // (schreibt nichts an Meta, keine Pushs), damit man vor dem Einschalten die Budgets prüfen kann (22.11.2026).
+  if (process.env.MEDIA_BUYER_ENABLED !== "1" && new URL(req.url).searchParams.get("dryRun") !== "1") {
     return NextResponse.json({ ok: true, skipped: "Media Buyer ist abgeschaltet (MEDIA_BUYER_ENABLED=1 zum Reaktivieren)." });
   }
 

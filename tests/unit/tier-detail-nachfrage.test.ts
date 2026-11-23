@@ -23,7 +23,7 @@ describe("Tierfrage „Was war es ungefähr, und wann?“: unverständliche Antw
     const src = readFileSync("src/lib/whatsapp/termin-strecke.ts", "utf8");
     const i = src.indexOf("detailVerstaendlich(text)");
     expect(i).toBeGreaterThan(0);
-    expect(i).toBeLessThan(src.indexOf("const r = tierAntwortAuswerten(key, text"));
+    expect(i).toBeLessThan(src.indexOf("const r = tierAntwortAuswerten(key, antwort"));
     expect(src).toContain("kind: STRECKE.tierNachfrage");
   });
 });
