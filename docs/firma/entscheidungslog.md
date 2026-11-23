@@ -255,3 +255,9 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   beim beherrschenden Gesellschafter-GF, sonst vGA). Verträge schriftlich vor dem 01.01.2027: GF-Vertrag mit Festgehalt,
   Tantieme-Vereinbarung für 2027, Mietvertrag Arbeitszimmer (ortsüblich, eigener Raum). Steuerbüro prüft vorab und
   richtet die Lohnabrechnung ein. Erhöhungen später nur per Beschluss für die Zukunft.
+- **23.11.2026, Leadformulare fragen die WhatsApp-Nummer ab:** Ole: 3 von 7 Lohmann-Leads ohne WhatsApp (2 Festnetz,
+  vermutlich von Meta vorausgefüllt, 1 Handy ohne WhatsApp), obwohl das Formular auf die Handynummer lenkte. Statt
+  PHONE nutzt der Kampagnen-Builder jetzt Metas Feld WHATSAPP_NUMBER (vorausgefüllt), der Import liest
+  `whatsapp_number` vor `phone_number`. Lohmann sofort umgestellt (Ole): Kfz v6 (1125159183676509) und Privatschutz v7
+  (2500202190504265), 8 neue Anzeigen mit gleichem Motiv und Text, alte werden pausiert, sobald die neuen freigegeben
+  sind; alte Formulare bleiben zugeordnet (Nachzügler). Lernphase beginnt neu.
