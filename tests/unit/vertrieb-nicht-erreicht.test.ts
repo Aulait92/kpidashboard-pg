@@ -13,6 +13,16 @@ import {
   neFassungVermerk,
   neZuteilung,
   nichtErreichtAbStand,
+  NE_TEMPLATE_BODY_B_DU,
+  NE_TEMPLATE_BODY_DU,
+  NE_TEMPLATE_EXAMPLES_DU,
+  NE_TEMPLATE_NAME_B_DU,
+  NE_TEMPLATE_NAME_DU,
+  neBearbeitet,
+  neBearbeitetAusNotiz,
+  neMailAusText,
+  neMailText,
+  neVorlage,
   type NeEinheit,
 } from "@/lib/vertrieb/nicht-erreicht";
 import { SUPPORT_TEMPLATES } from "@/lib/vertrieb/termin-whatsapp";
@@ -117,5 +127,67 @@ describe("A/B-Test Nicht erreicht", () => {
     // unter der Mindestmenge keine Entscheidung, auch bei großem Unterschied
     const wenige = [...Array.from({ length: 40 }, (_, i) => e("a", i < 10 ? [h(1)] : [])), ...Array.from({ length: 40 }, (_, i) => e("b", i < 30 ? [h(1)] : []))];
     expect(nichtErreichtAbStand(wenige, h(100)).entscheidung.reason).toBe("zu_wenig");
+  });
+});
+
+describe("Du/Sie und bearbeiteter Text (Ole, 23.11.2026)", () => {
+  it("Du-Fassungen aller Texte: gleiche Fassungslogik, ohne Gedankenstriche, ohne Sie", () => {
+    for (const link of ["https://x.example/t", null])
+      for (const fassung of ["a", "b"] as const) {
+        const du = nichtErreichtMail({ buchungslink: link, fassung, du: true });
+        const sie = nichtErreichtMail({ buchungslink: link, fassung });
+        expect(du.paragraphs).toHaveLength(sie.paragraphs.length);
+        expect(du.button).toEqual(sie.button);
+        for (const t of [du.subject, ...du.paragraphs]) {
+          expect(t).not.toMatch(/[–—]/);
+          expect(t).not.toMatch(/\b(Sie|Ihnen|Ihr)\b/);
+        }
+        expect(du.paragraphs.join(" ").includes("vormittags oder nachmittags?")).toBe(fassung === "b");
+      }
+    for (const [name, body] of [
+      [NE_TEMPLATE_NAME_DU, NE_TEMPLATE_BODY_DU],
+      [NE_TEMPLATE_NAME_B_DU, NE_TEMPLATE_BODY_B_DU],
+    ]) {
+      expect(SUPPORT_TEMPLATES.map((t) => t.name)).toContain(name);
+      expect(metaTemplateProblems(body, NE_TEMPLATE_EXAMPLES_DU)).toEqual([]);
+      expect(body).not.toMatch(/[–—]|\b(Sie|Ihnen)\b/);
+    }
+    // Du-Fassungen unterscheiden sich wie A und B nur im Schluss nach dem Link
+    expect(NE_TEMPLATE_BODY_B_DU.split("{{2}}")[0]).toBe(NE_TEMPLATE_BODY_DU.split("{{2}}")[0]);
+    expect(neVorlage("b", true).name).toBe(NE_TEMPLATE_NAME_B_DU);
+    expect(neVorlage("a", false).name).toBe(NE_TEMPLATE_NAME);
+  });
+
+  it("Mailtext: Anrede und Absätze hin und zurück, bearbeitet erkennt nur echte Änderungen", () => {
+    const text = neMailText("Hallo Max,", ["eins.", "zwei."]);
+    expect(text).toBe("Hallo Max,\n\neins.\n\nzwei.");
+    expect(neMailAusText("Hallo Max,\r\n\r\neins.\n\n\n\nzwei.  \n")).toEqual({ greeting: "Hallo Max,", paragraphs: ["eins.", "zwei."] });
+    const v = { betreff: "Betreff", text };
+    expect(neBearbeitet(v, {})).toBe(false);
+    expect(neBearbeitet(v, { betreff: " Betreff ", text: `${text}\n\n` })).toBe(false);
+    expect(neBearbeitet(v, { betreff: "Anders" })).toBe(true);
+    expect(neBearbeitet(v, { text: text.replace("eins", "drei") })).toBe(true);
+  });
+
+  it("Vermerk mit Du und bearbeitet, bearbeitete Einheiten zählen nicht im A/B-Test", () => {
+    expect(neFassungVermerk("a", { du: true, bearbeitet: true })).toBe("Fassung A, Du, bearbeitet");
+    expect(neFassungAusNotiz("An x@y.de, Betreff: Test, Fassung B, Du, bearbeitet")).toBe("b");
+    expect(neBearbeitetAusNotiz("An x@y.de, Betreff: Test, Fassung B, Du, bearbeitet")).toBe(true);
+    expect(neBearbeitetAusNotiz("An x@y.de, Betreff: bearbeitet, Fassung A")).toBe(false);
+    expect(neBearbeitetAusNotiz("An x@y.de, Fassung A, Du")).toBe(false);
+
+    const t0 = new Date("2026-12-01T10:00:00Z");
+    const h1 = new Date(t0.getTime() + 3_600_000);
+    const s = nichtErreichtAbStand(
+      [
+        { fassung: "a", gesendet: t0, antworten: [h1], termine: [] },
+        { fassung: "a", gesendet: t0, antworten: [h1], termine: [], bearbeitet: true },
+        { fassung: "b", gesendet: t0, antworten: [], termine: [h1], bearbeitet: true },
+      ],
+      new Date(t0.getTime() + 100 * 3_600_000),
+    );
+    expect(s.a).toEqual({ n: 1, treffer: 1, termin: 0 });
+    expect(s.b).toEqual({ n: 0, treffer: 0, termin: 0 });
+    expect(s.bearbeitet).toBe(2);
   });
 });
