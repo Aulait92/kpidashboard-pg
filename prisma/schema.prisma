@@ -1844,6 +1844,9 @@ model Offer {
   bonusWhatsAppAt         DateTime?
   bonusWhatsAppStatus     String?
   createdById             String?
+  // Stichtag für die Garantien (Ole, 23.11.2026): Erstellungsdatum der ersten Version desselben Angebots. Neue Versionen
+  // eines Angebots von vor GUARANTEES_UNTIL behalten so ihre Garantien (lib/garantien.ts garantieDatum).
+  garantieStichtag        DateTime?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 

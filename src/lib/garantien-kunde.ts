@@ -8,6 +8,6 @@ import { offerHasGuarantee } from "@/lib/garantien";
 export async function kundeHatGarantien(customerId: string): Promise<boolean> {
   const ob = await prisma.onboarding.findFirst({ where: { customerId, offerId: { not: null } }, select: { offerId: true } }).catch(() => null);
   if (!ob?.offerId) return false;
-  const offer = await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { status: true, createdAt: true, products: true } }).catch(() => null);
+  const offer = await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { status: true, createdAt: true, garantieStichtag: true, products: true } }).catch(() => null);
   return offerHasGuarantee(offer);
 }

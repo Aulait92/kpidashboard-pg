@@ -396,6 +396,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
           select: { id: true, version: true },
         });
         const maxVersion = await tx.offer.aggregate({ where: owner, _max: { version: true } });
+        // Garantien richten sich nach der ersten Version (Ole, 23.11.2026: neue Version eines alten Angebots behält sie)
+        const [erste] = await tx.offer.findMany({ where: owner, orderBy: { createdAt: "asc" }, take: 1, select: { createdAt: true, garantieStichtag: true } });
         if (previous.length) {
           await tx.offer.updateMany({
             where: { id: { in: previous.map((p) => p.id) } },
@@ -407,6 +409,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             ...owner,
             number,
             version: (maxVersion._max.version ?? 0) + 1,
+            ...(erste?.createdAt ? { garantieStichtag: erste.garantieStichtag ?? erste.createdAt } : {}),
             token: crypto.randomBytes(24).toString("base64url"),
             ...data,
             createdById,
