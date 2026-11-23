@@ -19,7 +19,7 @@
 import type { Ansprache } from "@/lib/ansprache";
 import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 import { CALL_ATTEMPTS_TARGET, callPlanNote, isCallPlanNote, nextCallAttemptAt } from "@/lib/call-plan";
-import { CHAT_RUHT_ABSTAND_MS, CHAT_RUHT_STUNDEN, SEQUENCES, SONNTAG_NACHFASS_STUNDEN, TERMIN_NACHFASS_STUNDEN, istAngebotsAbfolge, istBedenkzeitAbfolge, naechstesSendefenster, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
+import { CHAT_RUHT_ABSTAND_MS, CHAT_RUHT_STUNDEN, SEQUENCES, SONNTAG_NACHFASS_STUNDEN, TERMIN_NACHFASS_STUNDEN, istAbsageAbfolge, istAngebotsAbfolge, istBedenkzeitAbfolge, naechstesSendefenster, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
 import { istRueckrufNotiz } from "@/lib/rueckruf";
 import { erinnerungsPlan, gleichText, startPush, stundeText, vortagText } from "@/lib/showup";
 import { anrufPush } from "@/lib/anruf-ausloeser";
@@ -235,7 +235,10 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
         ? naechsterVersand(roh)
         : a.kind === "silent" && step.action !== "call"
           ? naechstesSendefenster(roh, terminSchritt ? TERMIN_NACHFASS_STUNDEN : CHAT_RUHT_STUNDEN, SONNTAG_NACHFASS_STUNDEN)
-          : roh;
+          : istAbsageAbfolge(a.kind) && step.action !== "call"
+            ? // Nachfassen nach einer Absage: wie runSequences erst im Versandfenster (Mo bis Sa 9 bis 19 Uhr)
+              naechstesSendefenster(roh)
+            : roh;
     prev = at;
     // Erster Schritt nach der Bedenkzeit: antwortet der Lead vorher, wird es eine Aufgabe für Sie
     const nr = `(Schritt ${i + 1} von ${def.steps.length})${istBedenkzeitAbfolge(a.kind) && i === 0 ? ", nach der Bedenkzeit" : ""}`;

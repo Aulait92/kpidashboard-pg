@@ -2,6 +2,14 @@
 
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
+## 23.11.2026
+- **BESCHLOSSEN (Ole, 23.11.2026): „Ja, bei jeder Absage nachfassen.“** Sagt ein Lead seinen Termin selbst ab (Link
+  „Termin verwalten“, im Chat, Absage der Kalendereinladung), fragt der Assistent einmal per WhatsApp nach einem neuen
+  Termin: 20 Minuten danach (im Chat abgesagt: 2 Stunden), nur Mo bis Sa 9 bis 19 Uhr, vorher in „Nächste Nachrichten“
+  sichtbar und überspringbar. Nicht beim Verschieben, mit weiterem Termin, bei verlorenen Leads, Stopp, ohne WhatsApp,
+  Pay-per-Lead, Assistent bzw. Nachfassen aus. Splittest `absage_nachfassen` (offene Frage gegen zwei konkrete Zeiten),
+  Lernbuch docs/firma/ab-tests.md. Umsetzung: lib/absage-nachfassen.ts.
+
 ## 22.11.2026
 - **BESCHLOSSEN (Ole, 22.11.2026): Variante A, Steuerberater bleibt, Belege automatisch per GetMyInvoices an DATEV.**
   Erst alles vollständig und zugeordnet übergeben, danach verhandelt Ole die laufende Buchhaltung (heute 250 € netto im
