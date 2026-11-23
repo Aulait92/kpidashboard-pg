@@ -55,7 +55,8 @@ Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der 
 | ~~Doppelte Terminvorschläge trotz gebuchtem Termin beheben~~ erledigt 21.11.2026 (da36ae2b, Sperre in bookAppointment) | erledigt | CTO |
 | Vorab-Checkliste 48 h vor Onboarding (Nummer beim alten Anbieter freigeben, private Mail für 360dialog, Absender-Freigabe durch IT, Webex-Link) | 24.11.2026 | Customer Success |
 | Klären, warum Embedded Signup gesperrt war (Konzern-Business-Manager?), Anleitung festhalten | 25.11.2026 | Customer Success |
-| Zwei weitere Kunden live, Dauer bis Livegang messen | 28.11.2026 | Sales, Customer Success |
+| Zwei weitere Kunden live, Dauer bis Livegang messen. Stand 23.11.2026: Softwarekunden Allianz Anid Schwarzkopf und neu Holger Kutschfreund (CBM Assekuranzkontor UG, Angebot heute angenommen, Start 11.01.2027, „später zahlen“: Erinnerung auf 28.12. gesetzt), Lohmann als Testkunde | 28.11.2026 | Sales, Customer Success |
+| Holger Kutschfreund (CBM) bis 11.01.2027 startklar: Einrichtung im Kundenbereich, Kalender, WhatsApp-Nummer (360dialog, Grenze 3 Konten bis zur Tech-Provider-Freigabe beachten), Werbekonto/Meta-Freigabe, Zahlung bis spätestens 28.12. | 28.12.2026 | Customer Success |
 | Entscheidungen Ole: Modell A gegen B, PPL-Pilotkunde, Datenschutz-Adresse, Steuerberater-Termin | 25.11.2026 | Ole |
 
 ## Vertrieb: Generalprobe Pay-per-Lead + Software (20.11.2026)
