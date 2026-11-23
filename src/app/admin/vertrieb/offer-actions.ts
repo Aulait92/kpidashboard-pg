@@ -5,6 +5,8 @@ import { entscheidungsCallHinweis, type EntscheidungsCall } from "@/lib/vertrieb
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { baueAngebotsMail, getAppUrl, sendOfferEmail, type AngebotsMailInhalt } from "@/lib/email";
+import { AB_ANGEBOT, abHinweis } from "@/lib/vertrieb/ab-tests";
+import { fassung, zuteilungMerken } from "@/lib/vertrieb/ab-tests-server";
 import { createOffer, updateDraftOffer, type OfferFormInput } from "@/lib/offers";
 import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount, prepayPossible, PRICE_LIST } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
@@ -187,6 +189,7 @@ async function angebotsMailVorbereiten(
   const ohneCall = !!extras.ohneEntscheidungsCall;
   const entscheidungsCall = offer.salesContactId && !ohneCall ? await entscheidungsCallStand(offer.salesContactId) : null;
   const disc = offerSetupDiscount(offer);
+  const abFassung = await fassung(AB_ANGEBOT, offer.id);
   const inhalt: Omit<AngebotsMailInhalt, "attachment"> = {
     entscheidungsCall,
     discount: disc
@@ -217,7 +220,10 @@ async function angebotsMailVorbereiten(
     number: offer.number,
     offerUrl: `${getAppUrl()}/angebot/${offer.token}`,
     validUntil: offer.validUntil,
+    // A/B-Test der Angebots-Strecke (lib/vertrieb/ab-tests.ts): Fassung lesen, Zuteilung erst nach erfolgreichem Versand
+    naechsteSchritte: abFassung === "b",
   };
+  if (modus === "vorschau") hinweise.push(abHinweis(AB_ANGEBOT, abFassung));
   return { ok: true, m: { offer: { ...offer, email: offer.email }, audience, rechner, praesentationUrl, attachment, ohneCall, entscheidungsCall, inhalt, hinweise } };
 }
 
@@ -262,6 +268,7 @@ export async function sendOfferEmailAction(
     replyTo: process.env.OFFER_REPLY_TO ?? session.email ?? null,
   });
   if (!res.ok) return { ok: false, error: res.error };
+  await zuteilungMerken(AB_ANGEBOT, offer.id);
   await prisma.offer.update({
     where: { id: offer.id },
     // Anrede merken: Zahlungserinnerung und weitere Mails zum Angebot folgen ihr

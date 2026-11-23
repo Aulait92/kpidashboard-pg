@@ -178,3 +178,10 @@ describe("Regeln: nur Gegenpartei", () => {
     expect(matchRule({ counterparty: "Ole Kannapinn", purpose: "" }, own, [])?.action).toBe("ignore");
   });
 });
+
+import { matchRule as _matchRule } from "@/lib/bank/rules";
+describe("Regeln bei umbrochenem Verwendungszweck", () => {
+  it("FACEBOO K trifft die Meta-Regel", () => {
+    expect(_matchRule({ counterparty: "Klarna Bank AB (publ)", purpose: "XA4, FACEBOO K PAYMENTS INTERNATIONAL LIMITED" }, [])?.action).toBe("ignore");
+  });
+});

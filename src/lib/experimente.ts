@@ -3,7 +3,7 @@
 //   - Zuteilung: fest je Einheit per Hash (SHA-256 aus Experiment und Einheit), damit niemand beide Fassungen sieht.
 //     Einheit = Lead-ID, sonst Chat-, Termin- bzw. Seitenaufruf-ID; nie Name, Nummer oder Adresse.
 //   - Messung: Quote = Einheiten mit Ziel-Ereignis (nach der Zuteilung) / zugeteilte Einheiten, je Fassung.
-//   - Entscheidung: ab MIN je Fassung und p < 0,05 (zweiseitiger z-Test) wird die bessere Fassung automatisch
+//   - Entscheidung: ab MIN je Fassung, je 10 Treffern und Nicht-Treffern und p < 0,01 (ALPHA, zweiseitiger z-Test) wird die bessere Fassung automatisch
 //     Standard (Experiment.winner, WhatsApp-Cron einmal je Stunde) und im Audit-Log vermerkt („experiment.gewinner“).
 //
 // Schnittstelle (auch für andere Teams, z. B. die Präsentation):
@@ -67,6 +67,11 @@ export type ExperimentDef = {
    * einen Abnehmer ohne Rückmeldung in der App, Ergebnis unbekannt statt Misserfolg.
    */
   ohneEreignis?: Ziel;
+  /**
+   * Nur Einheiten mit diesem Ereignis zählen (Nenner und Zähler), z. B. „termin_ausgewertet“: Termin vorbei und Ergebnis
+   * eingetragen bzw. abgesagt; „followup_reif“: Follow-up-Mail 1 seit mindestens 14 Tagen verschickt. Gegenstück zu ohneEreignis.
+   */
+  nurMitEreignis?: Ziel;
   /** Weitere Ziele nur zur Anzeige (z. B. „funnel_lead“ = abgeschickt); entschieden wird immer über `ziel`. */
   anzeigeZiele?: readonly Ziel[];
 };
@@ -162,6 +167,52 @@ export const EXPERIMENTE = {
     reifTage: 14,
     ohneEreignis: "ppl_unbekannt",
     anzeigeZiele: ["funnel_lead", "ppl_termin", "ppl_abschluss", "ppl_umsatz"],
+  },
+  // ─── Vertriebs-CRM: automatische Nachrichten an unsere eigenen Leads (A/B-Test-Labor, Auftrag Ole 22.11.2026) ───
+  // Lernbuch docs/firma/ab-tests.md, Hypothesen lib/ab-hypothesen.ts, Texte lib/vertrieb/ab-tests.ts, Ziele aus der
+  // Datenbank nachgetragen im WhatsApp-Cron (lib/vertrieb/ab-tests-server.ts vertriebZieleNachtragen). Wenig Volumen:
+  // Entscheidung erst nach Monaten und nur bei großem Unterschied (Schätzung im Lernbuch).
+  //
+  // Hypothese: Wer vor dem Ja sieht, was danach konkret passiert (Zahlung, Zugang, Einrichtung Schritt für Schritt mit
+  // Anleitung, persönliche Hilfe), hat weniger Sorge vor Aufwand, nimmt öfter an und richtet die Zahlung ein.
+  // Einheit Angebots-ID, gemeinsam für Angebotsmail, Bonus-Erinnerungen und Zahlungserinnerungen (zugeteilt beim
+  // ersten Versand einer dieser Mails). Reife 21 Tage (14 Tage Gültigkeit plus Zahlungserinnerungen).
+  vertrieb_angebot_naechste_schritte: {
+    titel: "Vertrieb: Angebotsmail, Bonus- und Zahlungserinnerung (nächste Schritte nach dem Ja)",
+    ziel: "zahlung_eingerichtet",
+    a: "Bisher: Angebotsmail, Bonus- und Zahlungserinnerung ohne Absatz zu den nächsten Schritten",
+    b: "Neu: Absatz „So geht es nach Ihrer Annahme weiter: Sie richten die Zahlung ein und bekommen direkt danach Ihren Zugang. Die Einrichtung führt Sie Schritt für Schritt …“ (Zahlungserinnerung: „So geht es danach weiter …“)",
+    // B-Texte von Ole freigegeben (22.11.2026), läuft ab dem Deploy
+    min: 50,
+    reifTage: 21,
+    anzeigeZiele: ["angebot_angenommen"],
+  },
+  // Hypothese: Eine Vorab-Frage nach dem wichtigsten Anliegen macht den Termin zu „seinem“ Gespräch statt zu einem
+  // Verkaufstermin; wer antwortet, hat schon etwas investiert: Es erscheinen mehr. Einheit Termin-ID (SalesMeeting),
+  // zugeteilt beim Versand der Erinnerung 24 Stunden vorher (nur eigene Buchungsseite, mehr als 26 Stunden Vorlauf).
+  // Gezählt werden nur Termine mit eingetragenem Ergebnis oder Absage (termin_ausgewertet).
+  vertrieb_termin_vorabfrage: {
+    titel: "Vertrieb: Terminerinnerung 24 Stunden vorher (Vorab-Frage)",
+    ziel: "erschienen",
+    a: "Bisher: „kurze Erinnerung: Ihr <Termin> ist am … Den Videocall starten Sie über diesen Link …“",
+    b: "Neu: zusätzlich „Damit wir die Zeit gut nutzen: Was ist Ihre wichtigste Frage für unser Gespräch? Antworten Sie einfach kurz auf diese E-Mail.“",
+    // B-Texte von Ole freigegeben (22.11.2026), läuft ab dem Deploy
+    min: 50,
+    nurMitEreignis: "termin_ausgewertet",
+  },
+  // Hypothese: Eine Frage, die sich mit einem Wort beantworten lässt („Ist das Thema bei Ihnen noch aktuell?“), ist eine
+  // kleinere Hürde als die Bitte um einen Termin: Es antworten mehr. Einheit Follow-up-ID (SalesFollowup), zugeteilt
+  // beim Schreiben der Texte; gezählt nur, wenn Mail 1 seit mindestens 14 Tagen raus ist (followup_reif). Ziel: Antwort
+  // binnen 14 Tagen nach Mail 1.
+  vertrieb_followup_janein: {
+    titel: "Vertrieb: Später-Follow-up, Mail 1 (Ja/Nein-Frage statt Terminbitte)",
+    ziel: "antwort",
+    a: "Bisher: Mail 1 endet mit der Frage nach einem kurzen Termin von 15 Minuten und dem Buchungslink",
+    b: "Neu: Mail 1 endet mit „Ist das Thema bei Ihnen noch aktuell? Ein kurzes Ja oder Nein als Antwort genügt mir.“, Buchungslink danach als Angebot",
+    // B-Texte von Ole freigegeben (22.11.2026), läuft ab dem Deploy
+    min: 50,
+    nurMitEreignis: "followup_reif",
+    anzeigeZiele: ["termin_gebucht"],
   },
 } as const satisfies Record<string, ExperimentDef>;
 
@@ -262,7 +313,7 @@ export async function zielErreicht(einheiten: (string | null | undefined)[], zie
   if (!ids.length) return;
   try {
     const keys = Object.entries(EXPERIMENTE as Record<string, ExperimentDef>)
-      .filter(([, d]) => d.ziel === ziel || d.ohneEreignis === ziel || !!d.anzeigeZiele?.includes(ziel))
+      .filter(([, d]) => d.ziel === ziel || d.ohneEreignis === ziel || d.nurMitEreignis === ziel || !!d.anzeigeZiele?.includes(ziel))
       .map(([k]) => k);
     if (!keys.length) return;
     const z = await prisma.experimentZuteilung.findMany({ where: { experiment: { in: keys }, einheit: { in: ids } }, select: { experiment: true, einheit: true } });
@@ -307,6 +358,7 @@ export async function experimentStats(experiment: string, opt: { ziel?: Ziel; oh
   const reif = reifeBedingung(o.ohneReife ? undefined : d?.nurReif, now);
   const reifTage = o.ohneReife ? 0 : Math.max(0, Math.floor(d?.reifTage ?? 0));
   const ohne = o.ohneReife ? null : (d?.ohneEreignis ?? null);
+  const nurMit = o.ohneReife ? null : (d?.nurMitEreignis ?? null);
   const rows = await prisma.$queryRaw<{ variante: string; n: bigint; ziel: bigint }[]>(Prisma.sql`
     SELECT z."variante" AS variante,
            COUNT(*) AS n,
@@ -319,11 +371,14 @@ export async function experimentStats(experiment: string, opt: { ziel?: Ziel; oh
     WHERE z."experiment" = ${experiment}
       ${reifTage > 0 ? Prisma.sql`AND z."createdAt" <= now() - make_interval(days => ${reifTage}::int)` : Prisma.empty}
       ${ohne ? Prisma.sql`AND NOT EXISTS (SELECT 1 FROM "ExperimentEreignis" u WHERE u."experiment" = z."experiment" AND u."einheit" = z."einheit" AND u."ziel" = ${ohne})` : Prisma.empty}
+      ${nurMit ? Prisma.sql`AND EXISTS (SELECT 1 FROM "ExperimentEreignis" r WHERE r."experiment" = z."experiment" AND r."einheit" = z."einheit" AND r."ziel" = ${nurMit})` : Prisma.empty}
       -- Über alle Kunden hinweg, ohne Testleads und Testkunden (Ole, 19.11.2026); Einheit ist meist die Lead-ID
       AND NOT EXISTS (
         SELECT 1 FROM "Lead" l JOIN "Customer" cu ON cu."id" = l."customerId"
         WHERE l."id" = z."einheit" AND (l."isTest" OR cu."isTest")
       )
+      -- Vertriebs-Tests (Einheit Angebots-ID): Testangebote zählen nicht
+      AND NOT EXISTS (SELECT 1 FROM "Offer" ot WHERE ot."id" = z."einheit" AND ot."isTest")
       AND ${reif}
     GROUP BY z."variante"
   `);

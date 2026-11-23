@@ -244,3 +244,14 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Templates“. Verkaufen → Geplante Nachrichten: Zeile antippen zeigt E-Mail und WhatsApp mit den echten Daten.
   Einstellungen → Mail- und WhatsApp-Vorlagen: alle automatischen Nachrichten mit Beispieldaten (Sie/Du) und Freigabestand
   der WhatsApp-Vorlagen. Versand und Vorschau nutzen dieselben Funktionen (`lib/vertrieb/nachricht-vorschau.ts`).
+- **22.11.2026, A/B-Test „Nicht erreicht“ (Vertrieb):** Ole bestätigt den Wortlaut von Fassung B („Erreiche ich Sie besser
+  vormittags oder nachmittags?“, Vorlage `pg_vertrieb_nicht_erreicht_b_v1`): „passt so“. Test läuft, Details in `docs/firma/ab-tests.md`.
+- **22.11.2026, Belege: eigene Ablage statt GetMyInvoices (Ole):** GetMyInvoices ist unzuverlässig (Portale brechen ab,
+  Mail-Import lückenhaft, falsche Belegdaten bei Weiterleitungen). Belege liegen jetzt in der App (Geld › Kosten › Belege):
+  Beleg-Adresse belege-<token>@antwort.dein-beratungstermin.de, Upload (PDF/Bild/ZIP), KI-Auslesung, automatische Zuordnung
+  zu Kontoumsätzen, Netto laut Beleg in der BWA. GetMyInvoices bleibt bis zur Übernahme seiner Dateien (Nachtlauf), dann
+  kündbar (Probezeit bis 06.12.2026).
+- **23.11.2026, Geschäftsführergehalt und Büromiete ab 01.01.2027 (Ole):** Kein rückwirkender Beginn (Rückwirkungsverbot
+  beim beherrschenden Gesellschafter-GF, sonst vGA). Verträge schriftlich vor dem 01.01.2027: GF-Vertrag mit Festgehalt,
+  Tantieme-Vereinbarung für 2027, Mietvertrag Arbeitszimmer (ortsüblich, eigener Raum). Steuerbüro prüft vorab und
+  richtet die Lohnabrechnung ein. Erhöhungen später nur per Beschluss für die Zukunft.

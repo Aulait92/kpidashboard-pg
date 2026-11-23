@@ -6,6 +6,7 @@ import { VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 import { ersteWocheMailzeile } from "@/lib/ppl/erste-woche-shared";
 import { kundenkontoMailAbsatz, type KundenkontoAngebot } from "@/lib/ppl/kundenkonto";
 import { entscheidungsCallMailText, entscheidungsCallText, type EntscheidungsCall } from "@/lib/vertrieb/entscheidungs-call";
+import { naechsteSchritteAngebot } from "@/lib/vertrieb/ab-tests";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
 
@@ -265,6 +266,11 @@ export type AngebotsMailInhalt = {
   ersteWoche?: { productKey: string; name: string; price: number; quantity: number } | null;
   /** Kampagnen im eigenen Werbekonto (Ole, 20.11.2026): kurzer Absatz zur Variante, Software-Listenpreis netto */
   kundenkonto?: { angebot: KundenkontoAngebot; softwareNetto: number } | null;
+  /**
+   * A/B-Test vertrieb_angebot_naechste_schritte (lib/vertrieb/ab-tests.ts), Fassung B: Absatz „So geht es nach Ihrer
+   * Annahme weiter …“. Hypothese: Wer vor dem Ja sieht, was danach passiert, nimmt öfter an und zahlt.
+   */
+  naechsteSchritte?: boolean;
 };
 
 /**
@@ -289,6 +295,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
     : opts.ersteWoche
       ? ersteWocheMailzeile(opts.ersteWoche, !!opts.du)
       : null;
+  const schritte = opts.naechsteSchritte ? naechsteSchritteAngebot(!!opts.du) : null;
   const text = [
     opts.greeting,
     "",
@@ -301,6 +308,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
     ...(bonusText ? [bonusText, ""] : []),
     ...(wocheText ? [wocheText, ""] : []),
     ...(vorausText ? [vorausText, ""] : []),
+    ...(schritte ? [schritte, ""] : []),
     ...(rechner ? [`${t.rechner}:`, rechner, ""] : []),
     ...(praes ? [`${t.praesentation}:`, praes, ""] : []),
     ...(terminText ? [terminText, ""] : []),
@@ -317,6 +325,7 @@ export function baueAngebotsMail(opts: AngebotsMailInhalt): { subject: string; t
         ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
         ${wocheText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(wocheText)}</p>` : ""}
         ${vorausText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(vorausText)}</p>` : ""}
+        ${schritte ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(schritte)}</p>` : ""}
         ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
         ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}
         ${termin ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(termin.satz)}${termin.url ? ` <a href="${escapeHtml(termin.url)}" style="color:#2563eb;font-weight:600">${escapeHtml(termin.linkLabel)}</a>` : ""}</p>` : ""}

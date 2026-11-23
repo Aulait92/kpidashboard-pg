@@ -14,7 +14,7 @@ describe("Vorlagen-Katalog (Einstellungen → Mail- und WhatsApp-Vorlagen)", () 
   it("jede Mail hat Betreff, HTML und keine Gedankenstriche", () => {
     for (const an of ["sie", "du"] as const) {
       const gruppen = vorlagenKatalog(an, now);
-      expect(gruppen.map((g) => g.key)).toEqual(["termin", "angebot", "einrichtung", "mahnung"]);
+      expect(gruppen.map((g) => g.key)).toEqual(["termin", "angebot", "nachfassen", "einrichtung", "mahnung"]);
       for (const e of gruppen.flatMap((g) => g.eintraege)) {
         expect(e.teile.length).toBeGreaterThan(0);
         for (const t of e.teile) {

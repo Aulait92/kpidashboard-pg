@@ -27,7 +27,9 @@ import { MAHN_VORLAGEN_VORBEREITET, mahnText, rechnungVorlage, STUFEN, eurCent, 
 import { onboardingChecklist, ONBOARDING_CUSTOMER_INCLUDE, welcomeVorschauOpts } from "@/lib/onboarding";
 import { openCustomerSteps, setupReminderInhalt, setupReminderOpts } from "@/lib/selbst-einrichtung";
 import { inviteeMail, inviteeMailOpts, manageLink, type InviteeMailKind } from "@/lib/vertrieb/buchung";
-import { paragraphize, textToHtml } from "@/lib/vertrieb/followup";
+import { paragraphize, templateTexts, textToHtml } from "@/lib/vertrieb/followup";
+import { AB_ANGEBOT, AB_FOLLOWUP, AB_TERMIN, abHinweis, type VertriebAbTest } from "@/lib/vertrieb/ab-tests";
+import { fassung } from "@/lib/vertrieb/ab-tests-server";
 import { supportVorlagenNutzbar, TERMIN_VORLAGEN, terminErinnerungInhalt, type Nutzbar } from "@/lib/vertrieb/termin-whatsapp";
 import { normalizePhone } from "@/lib/whatsapp/phone";
 import { renderTemplate } from "@/lib/whatsapp/templates";
@@ -79,7 +81,8 @@ export async function geplanteVorschau(key: string, at: Date, kanaele: Kanal[]):
     const art = stufe === "tag" ? "tag" : "gleich";
     if (mail) {
       const m = await inviteeMailOpts(id, art === "tag" ? "reminder" : "soon");
-      if (m) out.push(mailTeil(m));
+      // A/B-Test nur auf der Erinnerung 24 Stunden vorher: Fassung zeigen, die der Kontakt bekommt (ohne Zuteilung)
+      if (m) out.push(mailTeil(m, art === "tag" ? await abVorschau(AB_TERMIN, id) : null));
     }
     if (wa) {
       const m = await prisma.salesMeeting.findUnique({
@@ -108,7 +111,7 @@ export async function geplanteVorschau(key: string, at: Date, kanaele: Kanal[]):
     const o = await prisma.offer.findUnique({ where: { id } });
     if (!o) return [];
     const link = zahlungsLink(o.token);
-    if (mail && o.email) out.push(mailTeil(await zahlungMailOpts(o, Number(stufe) || 1, link, at)));
+    if (mail && o.email) out.push(mailTeil(await zahlungMailOpts(o, Number(stufe) || 1, link, at), await abVorschau(AB_ANGEBOT, o.id)));
     if (wa) {
       out.push(
         await kontaktWhatsApp({
@@ -141,7 +144,7 @@ export async function geplanteVorschau(key: string, at: Date, kanaele: Kanal[]):
       }
     } else if (stufe === "vorab" || stufe === "letzter") {
       const m = await bonusMailOpts(o, stufe, at);
-      if (m) out.push(mailTeil(m));
+      if (m) out.push(mailTeil(m, await abVorschau(AB_ANGEBOT, o.id)));
     }
   } else if (quelle === "followup") {
     const f = await prisma.salesFollowup.findUnique({ where: { id }, select: { step: true, body1: true, body2: true, subject: true, contact: { select: { email: true } } } });
@@ -155,7 +158,12 @@ export async function geplanteVorschau(key: string, at: Date, kanaele: Kanal[]):
         ? `<div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;line-height:1.6;padding:16px">${textToHtml(paragraphize(body))}</div>`
         : `<p style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;color:#5b5e68;padding:16px">Der Text wird beim nächsten Lauf geschrieben.</p>`,
       anhaenge: [],
-      hinweis: "Antwort im bisherigen Verlauf: darunter stehen die Signatur des Postfachs und die zitierte letzte Mail.",
+      hinweis: [
+        "Antwort im bisherigen Verlauf: darunter stehen die Signatur des Postfachs und die zitierte letzte Mail.",
+        stufe === "2" ? null : await followupFassung(id),
+      ]
+        .filter(Boolean)
+        .join(" "),
     });
   } else if (quelle === "mahnung") {
     const f = await prisma.mahnfall.findUnique({
@@ -203,6 +211,17 @@ export async function geplanteVorschau(key: string, at: Date, kanaele: Kanal[]):
   return out;
 }
 
+/** Hinweis zur Fassung im A/B-Test (lib/vertrieb/ab-tests.ts), so wie der Kontakt sie bekommt; legt keine Zuteilung an. */
+async function abVorschau(test: VertriebAbTest, einheit: string): Promise<string> {
+  return abHinweis(test, await fassung(test, einheit));
+}
+
+/** Follow-up: Fassung, mit der Mail 1 geschrieben wurde (Zuteilung beim Schreiben); ohne Zuteilung kein Hinweis. */
+async function followupFassung(id: string): Promise<string | null> {
+  const z = await prisma.experimentZuteilung.findUnique({ where: { experiment_einheit: { experiment: AB_FOLLOWUP, einheit: id } }, select: { variante: true } });
+  return z?.variante === "a" || z?.variante === "b" ? abHinweis(AB_FOLLOWUP, z.variante) : null;
+}
+
 async function mahnMailOptsVorschau(...args: Parameters<typeof import("@/lib/mahnwesen-server").mahnMailOpts>) {
   const { mahnMailOpts } = await import("@/lib/mahnwesen-server");
   return mahnMailOpts(args[0], args[1], args[2], { vorschau: true });
@@ -220,6 +239,8 @@ export type KatalogEintrag = {
   /** Gibt es eine Du-Fassung? Sonst immer Sie. */
   du: boolean;
   teile: VorschauTeil[];
+  /** Läuft ein A/B-Test (lib/vertrieb/ab-tests.ts)? Dann zeigen die Teile Fassung A und B. */
+  abTest?: boolean;
 };
 
 export type KatalogGruppe = { key: string; titel: string; eintraege: KatalogEintrag[] };
@@ -241,10 +262,15 @@ const greeting = (an: Ansprache) => (an === "du" ? `Hallo ${BEISPIEL.du},` : `Ha
 const tage = (n: number, von = new Date()) => new Date(von.getTime() + n * 86_400_000);
 const beispielMail = (o: Omit<CustomerMailOpts, "to">, hinweis?: string | null): MailTeil => mailTeil({ to: BEISPIEL.email, ...o }, hinweis);
 
+/** Hinweis über einer Fassung im Vorlagen-Katalog. */
+function fassungHinweis(test: VertriebAbTest, b: boolean): string {
+  return abHinweis(test, b ? "b" : "a", false) + (b ? "" : " Standard.");
+}
+
 /** Alle automatischen Mails des Vertriebs mit Beispieldaten, in der Reihenfolge der Kundenreise. */
 export function vorlagenKatalog(an: Ansprache, now = new Date()): KatalogGruppe[] {
   const du = an === "du";
-  const termin = (kind: InviteeMailKind) =>
+  const termin = (kind: InviteeMailKind, vorabFrage?: boolean) =>
     beispielMail(
       inviteeMail(kind, {
         title: "Kennenlerngespräch",
@@ -253,16 +279,18 @@ export function vorlagenKatalog(an: Ansprache, now = new Date()): KatalogGruppe[
         inviteeName: BEISPIEL.name,
         manageToken: BEISPIEL.token,
         thanksPage: kind === "booked",
+        vorabFrage,
       }),
+      vorabFrage === undefined ? null : fassungHinweis(AB_TERMIN, vorabFrage),
     );
   const start = tage(14, now).toISOString().slice(0, 10);
-  const zahlung = (stufe: number) => {
-    const t = erinnerungsMail({ number: BEISPIEL.angebot, startIso: start, stufe, du });
-    return beispielMail({ subject: t.subject, greeting: greeting(an), paragraphs: t.paragraphs, button: { label: t.button, url: zahlungsLink(BEISPIEL.token) } });
+  const zahlung = (stufe: number, b = false) => {
+    const t = erinnerungsMail({ number: BEISPIEL.angebot, startIso: start, stufe, du, naechsteSchritte: b });
+    return beispielMail({ subject: t.subject, greeting: greeting(an), paragraphs: t.paragraphs, button: { label: t.button, url: zahlungsLink(BEISPIEL.token) } }, fassungHinweis(AB_ANGEBOT, b));
   };
-  const bonus = (art: "vorab" | "letzter") => {
-    const t = bonusMail(art, { betrag: 500, fristIso: tage(art === "vorab" ? 1 : 0, now).toISOString().slice(0, 10), number: BEISPIEL.angebot, du, spaeterZahlen: false });
-    return beispielMail({ subject: t.subject, greeting: greeting(an), paragraphs: t.paragraphs, button: { label: t.button, url: angebotsLink(BEISPIEL.token) } });
+  const bonus = (art: "vorab" | "letzter", b = false) => {
+    const t = bonusMail(art, { betrag: 500, fristIso: tage(art === "vorab" ? 1 : 0, now).toISOString().slice(0, 10), number: BEISPIEL.angebot, du, spaeterZahlen: false, naechsteSchritte: b });
+    return beispielMail({ subject: t.subject, greeting: greeting(an), paragraphs: t.paragraphs, button: { label: t.button, url: angebotsLink(BEISPIEL.token) } }, fassungHinweis(AB_ANGEBOT, b));
   };
   const mahn = (key: Exclude<StufeKey, "anruf">) => {
     const faellig = key === "erinnerung" ? tage(3, now) : key === "faellig" ? now : key === "mahnung1" ? tage(-7, now) : tage(-14, now);
@@ -282,14 +310,39 @@ export function vorlagenKatalog(an: Ansprache, now = new Date()): KatalogGruppe[
     setupUrl: "https://app.performancegrowth.de/buyer/einrichtung",
     whatsappSelfConnect: true,
   });
-  const angebot = baueAngebotsMail({
-    greeting: greeting(an),
-    number: BEISPIEL.angebot,
-    offerUrl: angebotsLink(BEISPIEL.token),
-    validUntil: tage(14, now),
-    du,
-    bonus: { betrag: 500, bis: tage(7, now) },
-  });
+  const angebotMail = (b: boolean): MailTeil => {
+    const m = baueAngebotsMail({
+      greeting: greeting(an),
+      number: BEISPIEL.angebot,
+      offerUrl: angebotsLink(BEISPIEL.token),
+      validUntil: tage(14, now),
+      du,
+      bonus: { betrag: 500, bis: tage(7, now) },
+      naechsteSchritte: b,
+    });
+    const beispiel = "Beispiel mit Abschlussbonus; Rabatt, Präsentation und Entscheidungs-Call kommen je Angebot dazu.";
+    return { kanal: "email", an: BEISPIEL.email, betreff: m.subject, html: m.html, anhaenge: [], hinweis: `${fassungHinweis(AB_ANGEBOT, b)} ${beispiel}` };
+  };
+  // Später-Follow-up (immer Sie): feste Vorlage als Beispiel; meist schreibt die KI den Text nach derselben Vorgabe
+  const followup = (b: boolean): MailTeil => {
+    const t = templateTexts({
+      greeting: "Guten Tag Herr Mustermann,",
+      replyMonth: "im August",
+      hasLaterReply: true,
+      timing: "ab dem neuen Jahr",
+      pitch: "(Satz zum Angebot aus den Einstellungen des Später-Follow-ups)",
+      bookingUrl: "https://app.performancegrowth.de/termin?k=beispiel",
+      janein: b,
+    });
+    return {
+      kanal: "email",
+      an: BEISPIEL.email,
+      betreff: "Re: Unser Austausch",
+      html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;line-height:1.6;padding:16px">${textToHtml(paragraphize(t.body1))}</div>`,
+      anhaenge: [],
+      hinweis: `${fassungHinweis(AB_FOLLOWUP, b)} Feste Vorlage als Beispiel; meist schreibt die KI den Text nach derselben Vorgabe.`,
+    };
+  };
   const offen = [
     { key: "metaAccess", label: "Meta-Freigabe" },
     { key: "calendar", label: "Kalender" },
@@ -300,7 +353,7 @@ export function vorlagenKatalog(an: Ansprache, now = new Date()): KatalogGruppe[
       titel: "Termine",
       eintraege: [
         { key: "termin-bestaetigung", titel: "Terminbestätigung", wann: "Direkt nach der Buchung.", du: false, teile: [termin("booked")] },
-        { key: "termin-24h", titel: "Terminerinnerung 24 Stunden vorher", wann: "Einen Tag vorher, wenn mehr als 26 Stunden im Voraus gebucht.", du: false, teile: [termin("reminder")] },
+        { key: "termin-24h", titel: "Terminerinnerung 24 Stunden vorher", wann: "Einen Tag vorher, wenn mehr als 26 Stunden im Voraus gebucht.", du: false, abTest: true, teile: [termin("reminder", false), termin("reminder", true)] },
         { key: "termin-1h", titel: "Terminerinnerung 1 Stunde vorher", wann: "Eine Stunde vorher, wenn mindestens 3 Stunden im Voraus gebucht.", du: false, teile: [termin("soon")] },
         { key: "termin-verschoben", titel: "Termin verschoben", wann: "Direkt nach dem Verschieben.", du: false, teile: [termin("rescheduled")] },
         { key: "termin-abgesagt", titel: "Termin abgesagt", wann: "Direkt nach der Absage.", du: false, teile: [termin("cancelled")] },
@@ -315,12 +368,27 @@ export function vorlagenKatalog(an: Ansprache, now = new Date()): KatalogGruppe[
           titel: "Angebotsmail",
           wann: "Beim Klick auf „Per E-Mail senden“ am Angebot (dort mit den echten Angaben).",
           du: true,
-          teile: [{ kanal: "email", an: BEISPIEL.email, betreff: angebot.subject, html: angebot.html, anhaenge: [], hinweis: "Beispiel mit Abschlussbonus; Rabatt, Präsentation und Entscheidungs-Call kommen je Angebot dazu." }],
+          abTest: true,
+          teile: [angebotMail(false), angebotMail(true)],
         },
-        { key: "bonus-vorab", titel: "Bonus-Erinnerung am Tag vor Ablauf", wann: "Am Vortag der Bonusfrist ab 9 Uhr, wenn der Kontakt nicht geantwortet hat.", du: true, teile: [bonus("vorab")] },
-        { key: "bonus-letzter", titel: "Bonus-Erinnerung am letzten Tag", wann: "Am letzten Tag der Bonusfrist ab 9 Uhr, WhatsApp ab 13 Uhr.", du: true, teile: [bonus("letzter")] },
-        { key: "zahlung-1", titel: "Zahlungserinnerung", wann: "3 Tage nach der Annahme, wenn die Zahlung noch nicht eingerichtet ist (dazu WhatsApp).", du: true, teile: [zahlung(1)] },
-        { key: "zahlung-2", titel: "Weitere Zahlungserinnerungen", wann: "Nach 3 und 7 Tagen (mit Startdatum) bzw. wöchentlich (ohne).", du: true, teile: [zahlung(2)] },
+        { key: "bonus-vorab", titel: "Bonus-Erinnerung am Tag vor Ablauf", wann: "Am Vortag der Bonusfrist ab 9 Uhr, wenn der Kontakt nicht geantwortet hat.", du: true, abTest: true, teile: [bonus("vorab"), bonus("vorab", true)] },
+        { key: "bonus-letzter", titel: "Bonus-Erinnerung am letzten Tag", wann: "Am letzten Tag der Bonusfrist ab 9 Uhr, WhatsApp ab 13 Uhr.", du: true, abTest: true, teile: [bonus("letzter"), bonus("letzter", true)] },
+        { key: "zahlung-1", titel: "Zahlungserinnerung", wann: "3 Tage nach der Annahme, wenn die Zahlung noch nicht eingerichtet ist (dazu WhatsApp).", du: true, abTest: true, teile: [zahlung(1), zahlung(1, true)] },
+        { key: "zahlung-2", titel: "Weitere Zahlungserinnerungen", wann: "Nach 3 und 7 Tagen (mit Startdatum) bzw. wöchentlich (ohne).", du: true, abTest: true, teile: [zahlung(2), zahlung(2, true)] },
+      ],
+    },
+    {
+      key: "nachfassen",
+      titel: "Nachfassen",
+      eintraege: [
+        {
+          key: "followup-1",
+          titel: "Später-Follow-up, Mail 1",
+          wann: "Zum Zeitpunkt, den der Kontakt genannt hat, als Antwort im bisherigen Verlauf (nach Freigabe).",
+          du: false,
+          abTest: true,
+          teile: [followup(false), followup(true)],
+        },
       ],
     },
     {

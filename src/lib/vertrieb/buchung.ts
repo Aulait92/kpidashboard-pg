@@ -29,6 +29,8 @@ import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
 import { anredeZeile } from "@/lib/ansprache";
 import { PROVIDER } from "@/lib/legal-texts";
 import { legalUrls } from "@/lib/offers";
+import { AB_TERMIN, vorabFrageTermin } from "@/lib/vertrieb/ab-tests";
+import { fassung, zuteilungMerken } from "@/lib/vertrieb/ab-tests-server";
 import type { SalesBookingType } from "@/generated/prisma/client";
 
 /** Interner Mandant, an dem der Vertriebskalender hängt (Migration 20261118705300). */
@@ -846,6 +848,11 @@ export type MailMeeting = {
   byTeam?: boolean;
   /** Vertragsbedingungen vorab (Sales-Call, Ole 19.11.2026): Links auf AGB und AVV in der Bestätigung */
   vertrag?: { agb: string | null; avv: string | null } | null;
+  /**
+   * A/B-Test vertrieb_termin_vorabfrage (lib/vertrieb/ab-tests.ts), Fassung B der Erinnerung 24 Stunden vorher:
+   * Vorab-Frage nach der wichtigsten Frage fürs Gespräch. Hypothese: Wer vorab etwas investiert, erscheint öfter.
+   */
+  vorabFrage?: boolean;
 };
 
 /** Inhalt der Mail (rein, für Tests). Sie-Form, keine Gedankenstriche. */
@@ -870,7 +877,13 @@ export function inviteeMailContent(kind: InviteeMailKind, m: MailMeeting) {
     case "rescheduled":
       return { subject: `Neuer Termin mit performancegrowth: ${w}`, greeting, paragraphs: [`Ihr Termin wurde verschoben. Neue Zeit: ${w}.`, how], button: manage, extra: null };
     case "reminder":
-      return { subject: `Erinnerung: Ihr ${m.title} am ${w}`, greeting, paragraphs: [`kurze Erinnerung an Ihren ${m.title}: ${w}.`, how], button: manage, extra: null };
+      return {
+        subject: `Erinnerung: Ihr ${m.title} am ${w}`,
+        greeting,
+        paragraphs: [`kurze Erinnerung: Ihr ${m.title} ist am ${w}.`, how, ...(m.vorabFrage ? [vorabFrageTermin()] : [])],
+        button: manage,
+        extra: null,
+      };
     case "soon":
       return {
         subject: `Gleich geht es los: Ihr Termin um ${timeOf(m.startAt)} Uhr`,
@@ -909,6 +922,8 @@ export async function inviteeMailOpts(meetingId: string, kind: InviteeMailKind):
     },
   });
   if (!m?.inviteeEmail || !m.manageToken) return null;
+  // A/B-Test der Erinnerung 24 Stunden vorher: Fassung lesen, Zuteilung erst nach dem Versand (sendInviteeMail)
+  const vorabFrage = kind === "reminder" && (await fassung(AB_TERMIN, meetingId)) === "b";
   // Beratungsgespräch: Vertragsbedingungen vorab mitschicken, damit im Termin direkt beauftragt werden kann
   const vertragUrls = m.bookingType?.slug === SALES_CALL_BOOKING_TYPE ? legalUrls() : null;
   return {
@@ -920,6 +935,7 @@ export async function inviteeMailOpts(meetingId: string, kind: InviteeMailKind):
       thanksPage: m.bookingType?.thanksPage,
       byTeam: m.utmSource === "admin",
       vertrag: vertragUrls ? { agb: vertragUrls.termsUrl, avv: vertragUrls.dpaUrl } : null,
+      vorabFrage,
     }),
   };
 }
@@ -949,6 +965,7 @@ export async function sendInviteeMail(meetingId: string, kind: InviteeMailKind):
     if (!opts) return false;
     const res = await sendCustomerMail(opts);
     if (!res.ok) console.warn(`[vertrieb-buchung mail] ${kind} ${meetingId}: ${res.error}`);
+    else if (kind === "reminder") await zuteilungMerken(AB_TERMIN, meetingId);
     return res.ok;
   } catch (err) {
     reportError(err, "vertrieb-buchung-mail", { meeting: meetingId, kind });

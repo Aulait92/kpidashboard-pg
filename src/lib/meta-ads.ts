@@ -595,3 +595,19 @@ export async function resumeCampaigns(
   }
   return { resumed, failed };
 }
+
+/**
+ * Werbekonten mit Zahlungsquelle (Belege, Ole 23.11.2026): für die Liste „Meta-Belege holen“ auf Geld › Kosten › Belege.
+ * Nur lesend. Konten, die über eine fremde Karte laufen (z. B. Kundenkonto mit eigener Visa), markiert eigeneZahlung=false.
+ */
+export async function werbekontenMitZahlung(): Promise<{ id: string; name: string; zahlung: string | null; eigeneZahlung: boolean }[]> {
+  const res = (await metaGet("me/adaccounts", { fields: "id,name,account_status,funding_source_details,business{name}", limit: "100" })) as {
+    data?: { id: string; name?: string; funding_source_details?: { display_string?: string }; business?: { name?: string } }[];
+  };
+  const iban = (process.env.BELEGE_EIGENE_IBAN_ENDE ?? "5600").trim();
+  return (res.data ?? []).map((a) => {
+    const zahlung = a.funding_source_details?.display_string ?? null;
+    const eigeneZahlung = !zahlung || zahlung.includes(iban) || /kannapinn|performance growth/i.test(a.business?.name ?? "");
+    return { id: a.id.replace(/^act_/, ""), name: a.name ?? a.id, zahlung, eigeneZahlung };
+  });
+}

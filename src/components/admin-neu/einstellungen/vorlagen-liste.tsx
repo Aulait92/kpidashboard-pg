@@ -36,7 +36,19 @@ export function KatalogListe({ eintraege, du }: { eintraege: KatalogEintrag[]; d
   return (
     <ul className="divide-y divide-[color:var(--border)]">
       {eintraege.map((e) => (
-        <Zeile key={e.key} titel={e.titel} text={e.wann} rechts={du && !e.du ? <Badge tone="neutral">nur Sie</Badge> : null}>
+        <Zeile
+          key={e.key}
+          titel={e.titel}
+          text={e.wann}
+          rechts={
+            e.abTest || (du && !e.du) ? (
+              <span className="flex shrink-0 flex-wrap justify-end gap-1">
+                {e.abTest ? <Badge tone="info">A/B-Test</Badge> : null}
+                {du && !e.du ? <Badge tone="neutral">nur Sie</Badge> : null}
+              </span>
+            ) : null
+          }
+        >
           <NachrichtVorschauTeile teile={e.teile} />
         </Zeile>
       ))}
