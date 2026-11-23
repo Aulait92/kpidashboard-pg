@@ -16,6 +16,23 @@ export async function register() {
           .catch((e: unknown) => console.error("[loeschprotokoll] Start-Abgleich fehlgeschlagen:", e instanceof Error ? e.name : "fehler"));
       }, 30_000).unref?.();
     }
+    // Kampagnen-Läufe (Ole, 23.11.2026: „seit 20 min sucht er Angles“): Ein Neustart bricht laufende Läufe ab, ihre
+    // Sperre (15 Min.) hielt sie danach fest; bei mehreren Deploys hintereinander blieb ein Lauf so lange hängen.
+    // 60 Sekunden nach dem Start ist der alte Container weg: Sperren von vor dem Start freigeben, der Cron setzt fort.
+    if (!process.env.APP_DEMO_DATABASE_URL && process.env.DATABASE_URL) {
+      const start = new Date();
+      setTimeout(() => {
+        void import("@/lib/prisma")
+          .then(({ prisma }) =>
+            prisma.campaignRun.updateMany({
+              where: { status: { in: ["queued", "running", "building"] }, lockedAt: { lt: start } },
+              data: { lockedAt: null },
+            }),
+          )
+          .then((r) => r.count && console.log(`[kampagnen] ${r.count} Lauf/Läufe nach Neustart freigegeben`))
+          .catch(() => {});
+      }, 60_000).unref?.();
+    }
     // Öffentliche App-Demo: Beispieldaten in der eigenen Demo-Datenbank anlegen, falls älter als 20 Stunden
     // (nur mit APP_DEMO_DATABASE_URL, sonst nichts). Verzögert, damit der Start nicht wartet.
     if (process.env.APP_DEMO_DATABASE_URL) {
