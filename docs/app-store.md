@@ -76,9 +76,9 @@ kein grauer Tipp-Blitz, Knöpfe geben beim Drücken leicht nach (97 %).
 ## Apple-Developer-Konto der UG (23.11.2026)
 
 - D-U-N-S-Nummer: **313591176** (Ole Kannapinn UG (haftungsbeschränkt), Lorenzstr. 58, 12209 Berlin).
-- Apples Antragsformular nimmt kein ä/ß (löscht es stillschweigend). Eintragen: `Ole Kannapinn UG (haftungsbeschraenkt)`,
-  Adresse `Lorenzstr. 58` wie bei D&B. Hängt der Antrag am Namen: Apple anrufen (developer.apple.com/contact →
-  Membership and Account → Program Enrollment) und die Zuordnung zum D-U-N-S-Eintrag mit ä erbitten.
+- Apples Antragsformular nimmt kein ä/ß (löscht es stillschweigend). Funktioniert hat `Ole Kannapinn UG (haftungsbeschrankt)`
+  (ä → a); „haftungsbeschraenkt“ wird als „passt nicht zum D&B-Profil“ abgelehnt. Adresse übernimmt Apple aus D&B
+  (`Lorenzstr. 58`). Antrag am 23.11.2026 abgeschickt.
 
 ## Was Ole tun muss (sobald das Apple-Konto freigeschaltet ist)
 
