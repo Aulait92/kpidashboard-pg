@@ -50,7 +50,7 @@ const INFO: Record<string, { text: string; icon: LucideIcon }> = {
   "e-admins": { text: "Wer Zugang zum Admin hat", icon: Users },
   "e-buchung": { text: "Kalender, Termintypen, Zeiten", icon: CalendarDays },
   "e-followups": { text: "Freigabe, Tageslimit, Signatur", icon: Clock },
-  "e-nachrichten": { text: "Vorschau aller automatischen Nachrichten", icon: Mail },
+  "e-nachrichten": { text: "Eigene E-Mail-Vorlagen, automatische Nachrichten", icon: Mail },
   "e-empfehlen": { text: "Prämie und Vorteil für Neukunden", icon: Gift },
   "e-produkte": { text: "Sparten zum Selbst-Dazubuchen", icon: Layers },
   "e-tarife": { text: "Gesellschaften, Beitragsrechner", icon: BadgeEuro },
@@ -63,7 +63,7 @@ const INFO: Record<string, { text: string; icon: LucideIcon }> = {
   "e-rechnung": { text: "Steuernummer, Stripe-Prüfung", icon: Receipt },
   "e-zahlung": { text: "Angenommen, aber nicht bezahlt", icon: CreditCard },
   "w-zustand": { text: "Prüfungen, Statusseite", icon: Activity },
-  "e-anbindungen": { text: "Instantly, Meta, LinkedIn, CSV", icon: PlugZap },
+  "e-anbindungen": { text: "E-Mail-Postfach, Instantly, Meta, LinkedIn, CSV", icon: PlugZap },
   "e-vorlagen": { text: "Support-Nummer, Meta-Gebühren", icon: MessageCircle },
   "e-protokoll": { text: "Wer hat wann was geändert", icon: History },
 };

@@ -34,7 +34,7 @@ export function userFromMailState(state: string): string | null {
 
 // ─── OAuth-Konfiguration (wie Kalender) ─────────────────────────────────
 
-function google() {
+export function google() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI;

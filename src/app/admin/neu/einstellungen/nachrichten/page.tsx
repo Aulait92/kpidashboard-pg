@@ -6,19 +6,22 @@ import { Card, CardHeader } from "@/components/ui";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { vorlagenKatalog, whatsappVorlagenKatalog } from "@/lib/vertrieb/nachricht-vorschau";
 import { cn } from "@/lib/utils";
+import { CrmVorlagenListe } from "@/components/admin-neu/einstellungen/crm-vorlagen-liste";
+import { ladeCrmVorlagen } from "@/lib/vertrieb/crm-mail-server";
 
 export const metadata = { title: "Mail- und WhatsApp-Vorlagen | performancegrowth Admin" };
 
 // Einstellungen → Mail- und WhatsApp-Vorlagen (Ole, 22.11.2026): alle automatischen Nachrichten an Vertriebskontakte
 // und neue Kunden mit Beispieldaten, aus denselben Funktionen wie der Versand (lib/vertrieb/nachricht-vorschau.ts).
 // Nur ansehen; die Texte stehen im Code. Mit echten Daten je Nachricht: Verkaufen → Geplante Nachrichten → Vorschau.
+// Oben (23.11.2026): eigene Vorlagen für E-Mails aus der Kontaktakte, hier anlegen, ändern und löschen.
 const PFAD = "/admin/neu/einstellungen/nachrichten";
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ an?: string }> }) {
   await requireAuth();
   const du = (await searchParams).an === "du";
   const gruppen = vorlagenKatalog(du ? "du" : "sie");
-  const wa = await whatsappVorlagenKatalog();
+  const [wa, crmVorlagen] = await Promise.all([whatsappVorlagenKatalog(), ladeCrmVorlagen()]);
   const umschalter = (
     <div className="inline-flex rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-0.5 text-sm" role="group" aria-label="Ansprache">
       {(["sie", "du"] as const).map((a) => {
@@ -38,8 +41,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
   );
   return (
     <EinstellungSeite pfad={PFAD} aktionen={umschalter}>
+      <Card data-vorlagen-gruppe="kontakt-mails">
+        <CardHeader title="E-Mails aus dem Kontakt" hint="Zum Auswählen im Fenster „E-Mail“" />
+        <CrmVorlagenListe vorlagen={crmVorlagen} />
+      </Card>
       <p className="text-sm text-[color:var(--muted)]">
-        Mit Beispieldaten. Die echte Nachricht je Kontakt:{" "}
+        Automatische Nachrichten mit Beispieldaten. Die echte Nachricht je Kontakt:{" "}
         <Link href={ziel(GEPLANTE_NACHRICHTEN_PFAD)} className="text-[color:var(--brand)] hover:underline">
           Geplante Nachrichten › Vorschau
         </Link>
