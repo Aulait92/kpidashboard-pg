@@ -413,6 +413,9 @@ export async function middleware(req: NextRequest) {
     if (
       !pathname.startsWith("/buyer") &&
       !pathname.startsWith("/api/") &&
+      // Merkblätter und Anleitungsbilder für den Kundenbereich (public/anleitung: Einwand-Merkblatt, WhatsApp-Anleitung);
+      // vorher leitete die Rollenweiche sie auf /buyer um (Ole, 23.11.2026: „Einwandbehandlungssheet nicht abrufbar“)
+      !pathname.startsWith("/anleitung/") &&
       pathname !== "/logout"
     ) {
       const url = req.nextUrl.clone();
