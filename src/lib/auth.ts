@@ -5,6 +5,7 @@ import { cookies, headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { normalizeLoginEmail } from "@/lib/login-email";
 import { APP_DEMO_HEADER } from "@/lib/app-demo/marke";
+import { APP_REVIEW_COOKIE } from "@/lib/app-demo/weiche";
 
 export const SESSION_COOKIE = "kpi_session";
 const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 30; // 30 Tage
@@ -74,11 +75,14 @@ export async function setSessionCookie(payload: SessionPayload) {
     maxAge: COOKIE_MAX_AGE_SEC,
     path: "/",
   });
+  // Echte Anmeldung: Kennzeichen der App-Store-Prüfer (lib/app-demo/app-review.ts) weg
+  if (store.has(APP_REVIEW_COOKIE)) store.delete(APP_REVIEW_COOKIE);
 }
 
 export async function clearSessionCookie() {
   const store = await cookies();
   store.delete(SESSION_COOKIE);
+  if (store.has(APP_REVIEW_COOKIE)) store.delete(APP_REVIEW_COOKIE);
 }
 
 // ─── Sitzungsversion ─────────────────────────────────────────────────────

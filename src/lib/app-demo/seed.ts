@@ -10,6 +10,7 @@
 
 import { prisma, mitDemoSchreibClient } from "@/lib/prisma";
 import { seedDemoData } from "@/lib/demo-data";
+import { loadVorlagen } from "@/lib/mail/vorlagen";
 import { collectReportData, loadReportSettings } from "@/lib/monatsbericht/server";
 import { reportSubject, type ReportModel } from "@/lib/monatsbericht/bericht";
 import { shiftMonth } from "@/lib/monatsbericht/shared";
@@ -165,6 +166,9 @@ export async function appDemoNeuAnlegen(now = new Date()): Promise<AppDemoSeedEr
         sentAt: new Date(now.getTime() - 10 * DAY),
       },
     });
+    // E-Mail-Vorlagen jetzt anlegen: Sonst legt sie die erste Seite mit Kontaktakte (Heute, rechte Spalte) beim Rendern
+    // an, und das lehnt der Lese-Client der Demo ab (Heute lieferte 500, 23.11.2026).
+    await loadVorlagen(id);
     await prisma.$executeRawUnsafe(`UPDATE "_app_demo" SET stand = now()`);
     return { ok: true as const, leads: r.leads, dauerMs: Date.now() - start };
   });

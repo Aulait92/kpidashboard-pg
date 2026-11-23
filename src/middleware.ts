@@ -4,7 +4,7 @@ import { LOGIN_CARD_COOKIE, LOGIN_CARD_HEADER, nextCardCounter, parseCardCounter
 import { alteAdresseWeiche } from "@/lib/admin-neu/push-ziel";
 import { PUBLIC_NOT_FOUND_HTML, PUBLIC_ROBOTS_TXT, decidePublicHost, requestHost } from "@/lib/public-booking-host";
 import { APP_DEMO_HEADER, signiereDemoMarke } from "@/lib/app-demo/marke";
-import { DEMO_LIMIT, buyerZuDemo, demoActionAntwort, demoWeiche, istDemoPfad, vonDemoSeite } from "@/lib/app-demo/weiche";
+import { APP_REVIEW_COOKIE, DEMO_LIMIT, buyerZuDemo, prueferDemoZiel, demoActionAntwort, demoWeiche, istDemoPfad, vonDemoSeite } from "@/lib/app-demo/weiche";
 import { demoDatenbankUrl } from "@/lib/app-demo/konfig";
 import { clientIp, hit } from "@/lib/rate-limit";
 import { ALTER_BESUCH_COOKIE, decideFunnelHost } from "@/lib/funnel/host";
@@ -392,6 +392,13 @@ export async function middleware(req: NextRequest) {
 
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   if (!token) {
+    // App-Store-Prüfer (lib/app-demo/app-review.ts): ohne Sitzung zurück in die Demo statt zur Anmeldung
+    const pruefer = prueferDemoZiel(pathname, { hatSitzung: false, prueferCookie: req.cookies.get(APP_REVIEW_COOKIE)?.value });
+    if (pruefer) {
+      const url = req.nextUrl.clone();
+      url.pathname = pruefer;
+      return NextResponse.redirect(url, 307);
+    }
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     if (pathname !== "/") url.searchParams.set("next", pathname);

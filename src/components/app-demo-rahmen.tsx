@@ -11,7 +11,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { APP_DEMO_PREFIX } from "@/lib/app-demo/marke";
-import { DEMO_NICHT_ENTHALTEN, buyerZuDemo } from "@/lib/app-demo/weiche";
+import { APP_REVIEW_COOKIE, DEMO_NICHT_ENTHALTEN, buyerZuDemo } from "@/lib/app-demo/weiche";
 
 export type DemoTourZiele = { chat: string | null; termin: string | null };
 
@@ -48,6 +48,19 @@ const schreiben = (v: string) => {
   }
 };
 
+/** Mit dem Prüfer-Zugang angemeldet (lib/app-demo/app-review.ts)? Nur im Browser lesbar. */
+export function hatPrueferCookie(cookie: string): boolean {
+  return cookie.split(";").some((c) => c.trim() === `${APP_REVIEW_COOKIE}=1`);
+}
+
+/** Prüfer-Demo verlassen: Kennzeichen löschen, zurück zur Anmeldung. */
+function demoVerlassen() {
+  document.cookie = `${APP_REVIEW_COOKIE}=; Max-Age=0; path=/`;
+  // Volle Navigation: Root-Layout der Anmeldung (ohne Shell) neu rendern, wie nach der Anmeldung
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+  window.location.assign("/login");
+}
+
 function istAction(h: HeadersInit | undefined): boolean {
   if (!h) return false;
   if (h instanceof Headers) return h.has("next-action");
@@ -71,6 +84,13 @@ export function AppDemoRahmen({ ziele }: { ziele: DemoTourZiele }) {
   const params = useSearchParams();
   const schritte = tourSchritte(ziele);
   const [schritt, setSchritt] = useState<number | null>(null);
+  const [pruefer, setPruefer] = useState(false);
+
+  // Prüfer-Zugang der App-Store-Prüfung: „Abmelden“ im Banner (Demo verlassen)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Cookie nur im Browser lesbar
+    setPruefer(hatPrueferCookie(document.cookie));
+  }, []);
 
   // Rundgang: beim ersten Besuch automatisch, sonst über den Knopf im Banner
   useEffect(() => {
@@ -159,6 +179,11 @@ export function AppDemoRahmen({ ziele }: { ziele: DemoTourZiele }) {
             Rundgang
           </button>
         )}
+        {pruefer ? (
+          <button type="button" onClick={demoVerlassen} className="rounded-md bg-white/15 px-2.5 py-1 text-xs font-semibold hover:bg-white/25" data-demo-abmelden>
+            Abmelden
+          </button>
+        ) : null}
       </div>
       {aktuell ? (
         <div
