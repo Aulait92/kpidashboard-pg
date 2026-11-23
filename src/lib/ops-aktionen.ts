@@ -35,6 +35,28 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r.ok ? { ok: true, info: `${c.name}: ${text(p.product, 60)} angelegt. ${r.note ?? ""}`.trim() } : r;
     },
   },
+  kunde_anschrift_setzen: {
+    beschreibung: "Geschäftsanschrift des Kunden für Einwilligung und Erstinformation setzen (Webseiten-Angaben, sonst Vertriebskontakt)",
+    felder: { customerId: "Kunden-ID", anschrift: "z. B. Legiendamm 6, 10179 Berlin" },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const anschrift = text(p.anschrift, 160);
+      if (!/\d{4,5}/.test(anschrift)) return { ok: false, error: "Anschrift mit PLZ angeben." };
+      const ob = await prisma.onboarding.findUnique({ where: { customerId: c.id }, select: { id: true, websiteInfo: true } });
+      if (ob) {
+        const web = (ob.websiteInfo ?? {}) as Record<string, unknown>;
+        await prisma.onboarding.update({ where: { id: ob.id }, data: { websiteInfo: { ...web, address: anschrift } } });
+      } else {
+        const m = anschrift.match(/^(.*?),\s*(\d{4,5})\s+(.+)$/);
+        if (!m) return { ok: false, error: "Format „Straße Nr., PLZ Ort“." };
+        const r = await prisma.salesContact.updateMany({ where: { customerId: c.id }, data: { street: m[1], zip: m[2], city: m[3] } });
+        if (!r.count) return { ok: false, error: "Weder Onboarding noch Vertriebskontakt vorhanden." };
+      }
+      await audit("kunde.anschrift", { customerId: c.id, details: { anschrift }, actor: OPS_ACTOR });
+      return { ok: true, info: `${c.name}: Anschrift gesetzt (${anschrift}).` };
+    },
+  },
   produkt_starten: {
     beschreibung: "Produkt in Einrichtung auf „Gestartet“ setzen (Budgetzeile, Mail an den Kunden)",
     felder: { bookingId: "ID der Produktbuchung" },
