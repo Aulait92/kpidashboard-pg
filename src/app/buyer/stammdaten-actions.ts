@@ -4,7 +4,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { writableCustomerId } from "@/lib/buyer-write";
+import { adminVorschauCustomerId, writableCustomerId } from "@/lib/buyer-write";
 import { fetchLeadRecord } from "@/lib/airtable-write";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
@@ -51,7 +51,8 @@ export async function erstnachrichtAnNeueNummerAction(leadId: string): Promise<{
  * App versucht es erneut (wie nach einer Nummernkorrektur). Kommt wieder 131026, markiert der Webhook den Lead erneut.
  */
 export async function dochWhatsAppAction(leadId: string): Promise<{ ok: boolean; text: string }> {
-  const customerId = await writableCustomerId(leadId);
+  // Admin in der Vorschau darf das auch bei echten Leads (wie Nachrichten steuern, lib/buyer-write.ts)
+  const customerId = (await writableCustomerId(leadId)) ?? (await adminVorschauCustomerId(leadId));
   if (!customerId) return { ok: false, text: "Diesen Lead können Sie nicht bearbeiten." };
   const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId, erasedAt: null }, select: { id: true, waUnavailableAt: true } });
   if (!lead?.waUnavailableAt) return { ok: false, text: "Der Kontakt ist nicht als „Kein WhatsApp“ markiert." };

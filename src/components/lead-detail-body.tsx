@@ -591,7 +591,7 @@ export async function LeadDetailBody({
                 {formatPhone(lead.phone)} anrufen
               </a>
             ) : null}
-            {festnetz || !team.userId ? null : <DochWhatsAppButton leadId={lead.id} />}
+            {festnetz || lead.erasedAt ? null : <DochWhatsAppButton leadId={lead.id} />}
           </div>
           </div>
         </div>
