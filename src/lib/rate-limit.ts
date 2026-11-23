@@ -89,6 +89,8 @@ export const LIMITS = {
   funnelEreignis: { limit: 120, windowMs: MIN },
   funnelAbsenden: { limit: 10, windowMs: 10 * MIN },
   cspReport: { limit: 30, windowMs: MIN },
+  // E-Mails aus der Kontaktakte über das eigene Postfach (je Admin, lib/vertrieb/crm-mail-server.ts)
+  crmMail: { limit: 30, windowMs: HOUR },
   // Nutzungsmessung im Admin (je Admin; der Browser sendet höchstens alle 15 s und beim Verlassen der Seite)
   adminNutzung: { limit: 30, windowMs: MIN },
   // Webhooks mit Signaturprüfung: nur grobe Obergrenze (Stripe/Meta senden Bursts)

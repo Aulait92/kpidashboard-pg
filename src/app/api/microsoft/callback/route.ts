@@ -6,6 +6,8 @@ import { getCurrentSession } from "@/lib/auth";
 import { hvkMailExchange, isHvkMailState, userFromHvkMailState } from "@/lib/ppl/hvk-mail";
 import { isVersandState, userFromVersandState, versandExchange } from "@/lib/ppl/versand-postfach";
 import { neuRuecksprungCookie, ruecksprungZiel } from "@/lib/admin-neu/ruecksprung";
+import { crmPostfachCallback } from "@/lib/vertrieb/crm-postfach-routes";
+import { isCrmState } from "@/lib/vertrieb/crm-postfach";
 
 // Microsoft-OAuth-Callback: Code gegen Tokens tauschen (verschlüsselt speichern).
 export const dynamic = "force-dynamic";
@@ -18,6 +20,8 @@ export async function GET(req: Request): Promise<Response> {
   if (isHvkMailState(state)) return hvkCallback(req);
   // PPL-Versand-Postfach für Pivacom (Admin, Mail.Send): state „pplversand:…“
   if (isVersandState(state)) return versandCallback(req);
+  // Eigenes Postfach eines Admins für E-Mails aus der Kontaktakte: state „crmmail:…“
+  if (isCrmState(state)) return crmPostfachCallback(req, "microsoft");
   return callbackRoute(req, microsoftExchangeCode, "microsoft");
 }
 
