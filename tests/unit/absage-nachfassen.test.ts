@@ -136,7 +136,7 @@ describe("Abfolgen und Splittest", () => {
     const a = SEQUENCES.absage.steps[0];
     const b = SEQUENCES.absage_b.steps[0];
     if (a.action !== "whatsapp" || b.action !== "whatsapp") throw new Error("WhatsApp erwartet");
-    expect(a.purpose).toBe("followup_noshow");
+    expect(a.purpose).toBe("followup_absage");
     expect(a.slotText).toBeUndefined();
     expect(b.purpose).toBe("followup");
     expect(b.slotText!(ctx, ["Di 10 Uhr", "Mi 16 Uhr"])).toContain("Passt Ihnen Di 10 Uhr oder Mi 16 Uhr");

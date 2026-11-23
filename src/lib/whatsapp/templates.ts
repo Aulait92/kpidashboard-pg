@@ -58,6 +58,8 @@ export type NoticePurpose =
   | "offer_send"
   | "offer_bedenkzeit"
   | "followup_noshow"
+  // Nachfassen nach Absage durch den Lead (Ole, 23.11.2026: „Ja einreichen“, lib/absage-nachfassen.ts)
+  | "followup_absage"
   | "followup_last"
   | "glueckwunsch"
   | "campaign_cross_sell"
@@ -96,6 +98,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   offer_send: "Angebot senden (nach dem Termin)",
   offer_bedenkzeit: "Nachfassen nach der Bedenkzeit zum Angebot",
   followup_noshow: "Nachfassen nach verpasstem Termin",
+  followup_absage: "Nachfassen nach Absage",
   followup_last: "Nachfassen: letzte Nachricht (Abfolge)",
   glueckwunsch: "Glückwunsch zum Abschluss",
   campaign_cross_sell: "Bestandskunden: Lücke schließen",
@@ -206,6 +209,7 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // in NAECHSTE_FASSUNG vorgemerkt. Platzhalter unverändert, bis zur Freigabe bei Meta bleibt v4 im Einsatz.
   followup: "v5",
   followup_noshow: "v5",
+  followup_absage: "v1",
   followup_last: "v5",
 };
 
@@ -258,6 +262,7 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   offer_send: ["Thema (z. B. Haftpflicht und Hausrat)", "Angebotslink"],
   offer_bedenkzeit: ["Thema (z. B. Hausrat, Haftpflicht)"],
   followup_noshow: [],
+  followup_absage: [],
   followup_last: [],
   glueckwunsch: ["Vermittler (Akkusativ)"],
   campaign_cross_sell: ["Thema (z. B. Hausrat)"],
@@ -366,6 +371,11 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   followup_noshow: {
     du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
     sie: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
+  },
+  // Nach einer Absage durch den Lead (Ole, 23.11.2026 freigegeben). Bis zur Freigabe bei Meta: followup_noshow (lead-sequences.ts)
+  followup_absage: {
+    du: "schade, dass es mit dem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
+    sie: "schade, dass es mit dem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
   },
   followup_last: {
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
@@ -907,6 +917,7 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   followup_offer_selbst: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
   offer_bedenkzeit: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
   followup_noshow: [KNOPF.neuerTermin, KNOPF.keinBedarfMehr],
+  followup_absage: [KNOPF.neuerTermin, KNOPF.keinBedarfMehr],
   followup_last: [KNOPF.nochAktuell, KNOPF.neinDanke],
   campaign_cross_sell: [KNOPF.gernPruefen, KNOPF.keinBedarf, OPT_OUT_BUTTON],
   campaign_review: [KNOPF.gern, KNOPF.keinBedarf, OPT_OUT_BUTTON],

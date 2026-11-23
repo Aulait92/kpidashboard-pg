@@ -74,6 +74,8 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "followup_nudge",
   "followup_offer",
   "followup_noshow",
+  // Nachfassen nach Absage (Ole hat die Einreichung am 23.11.2026 freigegeben)
+  "followup_absage",
   "followup_last",
   // Angebot nach dem Termin (P3, Ole hat die Einreichung am 17.11.2026 freigegeben, docs/vorlagen-angebot.md)
   "offer_send",
@@ -400,6 +402,7 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   offer_send: { title: "Ihr Angebot nach dem Termin", when: "Wenn Sie das Angebot über die App senden und der Chat länger als 24 Stunden ruht." },
   offer_bedenkzeit: { title: "Nachfassen nach der Bedenkzeit", when: "Am Tag, an dem sich der Kontakt nach seiner Bedenkzeit melden wollte." },
   followup_noshow: { title: "Nachfassen nach verpasstem Termin", when: "Wenn ein Lead nicht zum Termin erschienen ist." },
+  followup_absage: { title: "Nachfassen nach Absage", when: "Wenn ein Lead seinen Termin selbst abgesagt hat." },
   glueckwunsch: { title: "Glückwunsch zum Abschluss", when: "Wenn Sie beim Eintragen eines Abschlusses „Glückwunsch per WhatsApp senden“ anhaken." },
   followup_last: { title: "Letzte Nachricht", when: "Zum Abschluss einer Nachfass-Abfolge." },
   campaign_cross_sell: { title: "Bestandskunden: Lücke schließen", when: "Kampagne an Bestandskunden mit fehlender Sparte." },

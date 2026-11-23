@@ -145,7 +145,7 @@ export const EXPERIMENTE = {
   absage_nachfassen: {
     titel: "Nachfassen nach einer Absage durch den Lead",
     ziel: "termin_gebucht",
-    a: "Standard (Ole): „Schade, dass es mit dem Termin nicht geklappt hat. Sollen wir einen neuen Termin mit Herrn Kannapinn finden?“ [Ja, neuer Termin] [Kein Bedarf mehr]; als Vorlage followup_noshow",
+    a: "Standard (Ole): „Schade, dass es mit dem Termin nicht geklappt hat. Sollen wir einen neuen Termin mit Herrn Kannapinn finden?“ [Ja, neuer Termin] [Kein Bedarf mehr]; als Vorlage followup_absage (bis zur Meta-Freigabe followup_noshow)",
     b: "Neu: gleich, aber direkt mit zwei konkreten Zeiten „Passt Ihnen Di 10 Uhr oder Mi 16 Uhr für einen neuen Termin mit Herrn Kannapinn?“ (Zeit-Knöpfe); als Vorlage followup mit zwei Terminvorschlägen",
   },
   // „Entscheidet noch jemand mit?“ vor dem Terminvorschlag: kein Splittest mehr (Ole, 22.11.2026: immer eigene Frage vor der

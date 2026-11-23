@@ -29,6 +29,7 @@ const PURPOSES = new Set([
   "followup_nudge",
   "followup_offer",
   "followup_noshow",
+  "followup_absage",
   "followup_last",
   "campaign_cross_sell",
   "campaign_review",

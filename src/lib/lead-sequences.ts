@@ -320,8 +320,10 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
       {
         day: ABSAGE_VERZOEGERUNG_MIN / (24 * 60),
         action: "whatsapp",
-        purpose: "followup_noshow",
+        purpose: "followup_absage",
         params: (c) => [c.firstName],
+        // bis Meta die Absage-Vorlage freigibt: die freigegebene Vorlage „Nachfassen nach verpasstem Termin“
+        fallback: { purpose: "followup_noshow", params: (c) => [c.firstName] },
         text: (c) => absageText({ an: c.an, hi: c.hi, person: vom(c) }),
         fallbackNote: ABSAGE_FALLBACK_NOTE,
       },
@@ -339,6 +341,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         params: (c) => [c.firstName],
         text: (c) => absageText({ an: c.an, hi: c.hi, person: vom(c) }),
         slotText: (c, zeiten) => absageZeitenText({ an: c.an, hi: c.hi, person: vom(c) }, zeiten),
+        fallback: { purpose: "followup_noshow", params: (c) => [c.firstName] },
         fallbackNote: ABSAGE_FALLBACK_NOTE,
       },
     ],
@@ -1030,8 +1033,9 @@ async function sendStep(
       // Ältere freigegebene „followup“-Fassung (nur Name): ohne Zeiten
       buttons = { buttonPayloads: zeiten.payloads, legacyParams: [ctx.firstName] };
     } else if (istAbsageAbfolge(seq.kind)) {
-      // Absage, Fassung B ohne freie Zeiten: wie Fassung A (Frage nach neuem Termin, Vorlage followup_noshow)
-      purpose = "followup_noshow";
+      // Absage, Fassung B ohne freie Zeiten: wie Fassung A (Frage nach neuem Termin, Vorlage followup_absage,
+      // bis zur Freigabe followup_noshow über step.fallback)
+      purpose = "followup_absage";
       params = [ctx.firstName];
     } else {
       purpose = "followup_nudge";
