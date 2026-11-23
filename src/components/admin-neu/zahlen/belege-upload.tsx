@@ -7,7 +7,6 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui";
-import { belegEinzelnHochladenAction, belegeUploadFertigAction } from "@/app/admin/neu/zahlen/kosten/belege/actions";
 
 const MAX_BYTES = 95 * 1024 * 1024;
 const ZIEL = "/admin/neu/zahlen/kosten/belege";
@@ -27,6 +26,7 @@ export function BelegeUpload({ primaer }: { primaer: boolean }) {
     setLaeuft(true);
     const summe = { neu: 0, doppelt: 0, fehlerhaft: 0 };
     const zuGross: string[] = [];
+    const abgelehnt: string[] = [];
     for (let i = 0; i < dateien.length; i++) {
       const f = dateien[i];
       setStatus(`Lädt hoch: ${i + 1} von ${dateien.length}`);
@@ -37,21 +37,24 @@ export function BelegeUpload({ primaer }: { primaer: boolean }) {
       const fd = new FormData();
       fd.append("datei", f);
       try {
-        const r = await belegEinzelnHochladenAction(fd);
+        const res = await fetch("/api/admin/belege/upload", { method: "POST", body: fd });
+        if (!res.ok) throw new Error(String(res.status));
+        const r = (await res.json()) as { neu: number; doppelt: number; fehlerhaft: number };
         summe.neu += r.neu;
         summe.doppelt += r.doppelt;
         summe.fehlerhaft += r.fehlerhaft;
       } catch {
-        summe.fehlerhaft++;
+        abgelehnt.push(f.name);
       }
     }
-    await belegeUploadFertigAction().catch(() => undefined);
+    await fetch("/api/admin/belege/upload?fertig=1", { method: "POST" }).catch(() => undefined);
     setLaeuft(false);
-    if (zuGross.length) {
-      setStatus(`Zu groß (über 95 MB), bitte aufteilen: ${zuGross.join(", ")}`);
-    } else {
-      setStatus(null);
-    }
+    const hinweise = [
+      zuGross.length ? `Zu groß (über 95 MB), bitte aufteilen: ${zuGross.join(", ")}` : "",
+      abgelehnt.length ? `Nicht hochgeladen, bitte noch einmal versuchen: ${abgelehnt.join(", ")}` : "",
+    ].filter(Boolean);
+    setStatus(hinweise.length ? hinweise.join(" · ") : null);
+    if (abgelehnt.length === dateien.length) return;
     if (input.current) input.current.value = "";
     const q = new URLSearchParams({ hochgeladen: String(summe.neu), doppelt: String(summe.doppelt), fehlerhaft: String(summe.fehlerhaft), imHintergrund: "1" });
     router.push(`${ZIEL}?${q.toString()}`);
