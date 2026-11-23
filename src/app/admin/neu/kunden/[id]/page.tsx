@@ -35,10 +35,10 @@ const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", curren
 // die ganze Kontaktseite ein (am Handy rund 2.700 px); die liegt jetzt unter „Ganze Kontaktakte“ (./kontakt).
 // Lead-Qualität → Leads, Nächster Schritt je Berater → Team, Garantien → Abrechnung. Monatsberichte (Umbau 20.11.2026:
 // kein eigener Reiter mehr) als Karte mit dem letzten Bericht und „Alle Berichte“ (./berichte).
-export default async function KundeUebersicht({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ einrichtung?: string }> }) {
+export default async function KundeUebersicht({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ einrichtung?: string; onboardingTermin?: string }> }) {
   await connection();
   const { id } = await params;
-  const { einrichtung: notice } = await searchParams;
+  const { einrichtung: notice, onboardingTermin } = await searchParams;
   const c = await prisma.customer.findUnique({
     where: { id },
     select: {
@@ -112,6 +112,8 @@ export default async function KundeUebersicht({ params, searchParams }: { params
             loginEmail={onboarding.customer.users[0]?.email ?? null}
             feedback={await prisma.customerFeedback.findMany({ where: { customerId: id }, orderBy: { sentAt: "asc" } })}
             websiteInfo={(onboarding.websiteInfo ?? null) as ImpressumInfo | null}
+            zurueck={`/admin/neu/kunden/${id}`}
+            terminMeldung={onboardingTermin ?? null}
           />
         </div>
       ) : null}

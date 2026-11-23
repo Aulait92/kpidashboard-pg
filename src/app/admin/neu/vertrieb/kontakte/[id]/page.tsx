@@ -52,10 +52,10 @@ const AKTE = [
   "buchung--push-an-admins-mit-sprungziel-kontaktakte",
 ].join(" ");
 
-export default async function KontaktaktePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ termin?: string }> }) {
+export default async function KontaktaktePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ termin?: string; onboardingTermin?: string }> }) {
   await requireAuth();
   const { id } = await params;
-  const { termin } = await searchParams;
+  const { termin, onboardingTermin } = await searchParams;
   const c = await ladeKontakt(id);
   if (!c) notFound();
   // „Offenes Angebot auch als abgelehnt markieren?“ beim Verloren-Markieren
@@ -216,6 +216,8 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                 loginEmail={a.onboarding.customer.users[0]?.email ?? null}
                 feedback={feedback}
                 websiteInfo={(a.onboarding.websiteInfo ?? null) as ImpressumInfo | null}
+                zurueck={`/admin/neu/vertrieb/kontakte/${id}`}
+                terminMeldung={onboardingTermin ?? null}
               />
             ) : a.acceptedOffer ? (
               <div data-funktion="onboarding-actions-startonboardingaction--onboarding-starten-neues-kundenkonto-oder">
