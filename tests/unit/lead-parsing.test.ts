@@ -26,6 +26,16 @@ describe("Lead-Eingang: Formate", () => {
     expect(inc.createdAt).toBe("2026-11-10T08:00:00.000Z");
   });
 
+  it("WhatsApp-Feld (Meta WHATSAPP_NUMBER, 23.11.2026) wird zur Telefonnummer, nicht zur Antwort", () => {
+    const inc = fromMetaLead(
+      { id: "L2", created_time: "2026-11-23T08:00:00+0000", form_id: "F1", field_data: [{ name: "full_name", values: ["Julia Muster"] }, { name: "whatsapp_number", values: ["+491711234567"] }] },
+      "P1",
+    );
+    const r = extract(inc, {});
+    expect(r.phone).toBe("491711234567");
+    expect(r.answers).toEqual([]);
+  });
+
   it("Zapier-JSON: technische Felder werden nicht zu Antworten", () => {
     const inc = fromFlatPayload({ id: "Z9", form_id: "F2", ad_name: "Anzeige A", full_name: "Max", email: "max@example.com", platform: "fb" });
     expect(inc.externalId).toBe("Z9");

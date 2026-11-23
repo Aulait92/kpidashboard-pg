@@ -74,7 +74,7 @@ export function mitFestenFragen(form: LeadFormDraft, product: string | null | un
   const feste = festeFragen(product, du);
   if (!feste.length) return form;
   if (formularArt(product) === "kfz" || formularArt(product) === "privatschutz") return { ...form, questions: feste };
-  const belegt = new Set([...feste.map((q) => q.key), ...standardFelder(product).map((f) => f.key), "full_name", "phone_number", "email"]);
+  const belegt = new Set([...feste.map((q) => q.key), ...standardFelder(product).map((f) => f.key), "full_name", "phone_number", "whatsapp_number", "email"]);
   const weitere = form.questions.filter((q) => !belegt.has(q.key) && !DOPPELT.test(q.label)).slice(0, 2);
   return { ...form, questions: [...feste, ...weitere] };
 }

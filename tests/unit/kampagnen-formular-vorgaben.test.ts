@@ -75,7 +75,7 @@ describe("Formular-Vorgaben: Payload", () => {
     const c = ctx("Kfz-Versicherung");
     const { value } = await formAgent(llm, c);
     const p = leadFormPayload(value, c) as Payload;
-    expect(p.questions.map((q) => q.key)).toEqual(["anlass", "schutz", "full_name", "phone_number", "email", "street_address", "zip_code", "city", "date_of_birth"]);
+    expect(p.questions.map((q) => q.key)).toEqual(["anlass", "schutz", "full_name", "whatsapp_number", "email", "street_address", "zip_code", "city", "date_of_birth"]);
     expect(p.questions.slice(5).map((q) => q.type)).toEqual(["STREET_ADDRESS", "ZIP", "CITY", "DOB"]);
     expect(p.questions[0]).toMatchObject({ type: "CUSTOM", label: "Worum geht es?" });
     expect(p.questions[0].options?.map((o) => o.value)).toEqual(["Versicherung wechseln (jetziges Auto)", "Neues Auto versichern"]);
@@ -110,7 +110,7 @@ describe("Formular-Vorgaben: Payload", () => {
     const { value } = await formAgent(llm, c);
     expect(value.questions.map((q) => q.key)).toEqual(["plz", "wer", "interesse"]);
     const p = leadFormPayload(value, c) as Payload;
-    expect(p.questions.slice(-3).map((q) => q.key)).toEqual(["full_name", "phone_number", "email"]);
+    expect(p.questions.slice(-3).map((q) => q.key)).toEqual(["full_name", "whatsapp_number", "email"]);
     expect(standardFelder("Sterbegeld")).toEqual([]);
   });
 

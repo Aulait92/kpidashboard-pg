@@ -272,7 +272,7 @@ export function validateForm(x: unknown): Valid<LeadFormDraft> {
     const o = isObj(q) ? q : {};
     const key = str(o.key).toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40);
     if (!key) errors.push(`questions[${i}].key fehlt.`);
-    if (["full_name", "phone_number", "email"].includes(key)) errors.push(`questions[${i}].key „${key}“ ist für Kontaktfelder reserviert.`);
+    if (["full_name", "phone_number", "whatsapp_number", "email"].includes(key)) errors.push(`questions[${i}].key „${key}“ ist für Kontaktfelder reserviert.`);
     if (keys.has(key)) errors.push(`questions[${i}].key doppelt.`);
     keys.add(key);
     const options = (Array.isArray(o.options) ? o.options : []).map((v) => str(v)).filter(Boolean);

@@ -158,7 +158,7 @@ export async function ingestPoolLead(input: PoolInput, now = new Date()): Promis
     return { status: "invalid", poolLeadId: p.id, reason: p.reason ?? undefined };
   }
   // Formatprüfung der Telefonnummer (lib/ppl/telefon-pruefung.ts): falsche Nummern nicht ausliefern
-  const rawPhone = field(input.fields, ["phone_number", "phone", "telefonnummer", "telefon", "handynummer", "mobilnummer", "mobil"]);
+  const rawPhone = field(input.fields, ["whatsapp_number", "phone_number", "phone", "telefonnummer", "telefon", "handynummer", "mobilnummer", "mobil"]);
   if (rawPhone || phone) {
     const tel = pruefeTelefon(rawPhone ?? `+${phone}`);
     if (!tel.ok) {
