@@ -3,6 +3,10 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 23.11.2026
+- **BESCHLOSSEN (Ole, 23.11.2026, Stufe A, ersetzt den vorläufigen Beschluss unten): Partner-Ltd. erhält eine virtuelle
+  Beteiligung statt echter Anteile; Vergütung im Gleichlauf mit dem GF-Gehalt, Start erst ab fester Liquiditäts- und
+  Rohertragsschwelle.** Einzelheiten nur in den Vertragsentwürfen bei Ole (nicht im Repository). Steuerbüro rechnet beide
+  Varianten.
 - **VORLÄUFIG BESCHLOSSEN (Ole, 23.11.2026, Simulation Beratertermin, vor Prüfung durch Steuerberater, Notar, Anwalt):
   Holding gehört Ole allein, Mirkos Iron Brain Ltd. (Zypern, Director Mirko) direkt 50 % an der operativen GmbH.**
   Reihenfolge: erst 100 % der UG steuerneutral in Oles Holding, dann Eintritt der Ltd per Kapitalerhöhung. Gewinnvorab,
