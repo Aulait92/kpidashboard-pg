@@ -202,6 +202,10 @@ export function OfferForm({
       setError("Bitte einen Preis je Lead für die erste Woche angeben.");
       return;
     }
+    if (!street.trim() || !zip.trim() || !city.trim()) {
+      setError("Bitte die Adresse des Empfängers angeben (Straße, PLZ, Ort). Sie steht im Vertrag und auf der Rechnung.");
+      return;
+    }
     if (!EMAIL_RE.test(email.trim())) {
       setError("Bitte eine gültige E-Mail-Adresse des Empfängers angeben. Daraus entsteht nach der Zahlung der Login.");
       return;
@@ -227,19 +231,12 @@ export function OfferForm({
             <Field l="Ansprechpartner *"><input className={input} value={contactName} onChange={(e) => setContactName(e.target.value)} /></Field>
             <Field l="Firma / Agentur"><input className={input} value={company} onChange={(e) => setCompany(e.target.value)} /></Field>
             <Field l="E-Mail *"><input className={input} type="email" required autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-            {/* Adresse ist optional und meist aus dem Kontakt vorbelegt: zugeklappt, die Zeile zeigt den Stand */}
-            <details className="group sm:col-span-2" data-empfaenger-adresse>
-              <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 text-sm [&::-webkit-details-marker]:hidden">
-                <span className="font-medium text-[color:var(--brand)]">Adresse</span>
-                <span className="min-w-0 flex-1 truncate text-[color:var(--muted)]">{[street, [zip, city].filter(Boolean).join(" ")].filter(Boolean).join(", ") || "optional"}</span>
-                <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
-              </summary>
-              <div className="grid gap-3 pt-2 sm:grid-cols-[2fr_1fr_2fr]">
-                <Field l="Straße und Hausnummer"><input className={input} value={street} onChange={(e) => setStreet(e.target.value)} /></Field>
-                <Field l="PLZ"><input className={input} value={zip} onChange={(e) => setZip(e.target.value)} /></Field>
-                <Field l="Ort"><input className={input} value={city} onChange={(e) => setCity(e.target.value)} /></Field>
-              </div>
-            </details>
+            {/* Adresse ist Pflicht (Ole, 23.11.2026: „die adresse wird immer gebraucht“, Vertragspartner und Rechnung) */}
+            <div className="grid gap-3 sm:col-span-2 sm:grid-cols-[2fr_1fr_2fr]" data-empfaenger-adresse>
+              <Field l="Straße und Hausnummer *"><input className={input} required autoComplete="off" value={street} onChange={(e) => setStreet(e.target.value)} /></Field>
+              <Field l="PLZ *"><input className={input} required inputMode="numeric" autoComplete="off" value={zip} onChange={(e) => setZip(e.target.value)} /></Field>
+              <Field l="Ort *"><input className={input} required autoComplete="off" value={city} onChange={(e) => setCity(e.target.value)} /></Field>
+            </div>
           </div>
         </Card>
 
