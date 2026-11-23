@@ -161,6 +161,11 @@ export type ContractSummaryInput = {
   ersteWoche?: ErsteWocheWahl | null;
   /** Variante „Kampagnen im eigenen Werbekonto“ (Ole, 20.11.2026; lib/ppl/kundenkonto.ts), nur Pay-per-Lead + Software. */
   kundenkonto?: KundenkontoAngebot | null;
+  /**
+   * „Ich zahle später“ erlaubt (Offer.allowPayLater, Start weit genug weg; lib/angebot-zahlungserinnerung.ts): Einrichtung
+   * und Vorauszahlung sind dann nicht „mit der Annahme“ fällig, sondern jetzt oder an einem Tag vor dem Start (Ole, 23.11.2026).
+   */
+  payLater?: boolean;
 };
 
 /** Schlusssatz der Zusammenfassung; Pay-per-Lead + Software: Steuer der Software, Leads stehen mit eigener Steuer davor. */
@@ -245,6 +250,9 @@ export const NACHTRAEGLICH_LETZTE_ZAHLUNG = "Auch danach zahlen Sie nachträglic
  * (Sie-Form, ohne Gedankenstriche; passt auch zur Du-Form, weil ohne Anrede).
  */
 export const VORAUSZAHLUNG_MIT_ANNAHME = "Die Vorauszahlung wird mit Annahme fällig, die Laufzeit beginnt mit dem Start der Kampagne.";
+/** „Ich zahle später“ erlaubt: Fälligkeit der Einrichtung (statt „fällig mit der Annahme“). */
+export const ZAHLBAR_SPAETER = "zahlbar jetzt oder an einem späteren Tag Ihrer Wahl vor dem Start";
+export const VORAUSZAHLUNG_SPAETER = `Die erste Zahlung ist ${ZAHLBAR_SPAETER}, die Laufzeit beginnt mit dem Start der Kampagne.`;
 
 /**
  * Erster Zahlungszeitraum einer Vorauszahlung, die mit der Annahme fällig wird (Ole, 19.11.2026). Der Zeitraum beginnt
@@ -321,7 +329,7 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   // Variante „Kampagnen im eigenen Werbekonto“: eigene Zeilen statt Paketzeile und Hinweis „Leads per Stück“
   if (kk) lines.push(...kundenkontoVertragszeilen(kk));
   else if (ppl) lines.push("Paket: Pay-per-Lead + Software (Software ohne Betreuung und ohne eigene Kampagnen), ohne Einrichtungsgebühr.");
-  if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, fällig mit der Annahme.`);
+  if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, ${i.payLater ? ZAHLBAR_SPAETER : "fällig mit der Annahme"}.`);
   else if (ppl) {
     // Paketzeile nennt schon „ohne Einrichtungsgebühr“
   } else if (arrears) lines.push(`Bei Annahme fällig: ${eur(0)}, ohne Einrichtungsgebühr.`);
@@ -346,8 +354,10 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
       lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach monatlich kündbar zum Ende des jeweiligen Leistungsmonats. ${NACHTRAEGLICH_LETZTE_ZAHLUNG}`);
     }
   } else if (annual) {
-    lines.push(`${pm === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(prepayTotal)} netto, ${vorauszahlungFaellig(billIso, pm, { mitAnnahme: i.prepayAtAcceptance })}.`);
-    if (i.prepayAtAcceptance) lines.push(VORAUSZAHLUNG_MIT_ANNAHME);
+    // „Ich zahle später“: die erste Vorauszahlung nicht „mit der Annahme“, sondern vor dem Start
+    const faelligText = vorauszahlungFaellig(billIso, pm, { mitAnnahme: i.prepayAtAcceptance }).replace("mit der Annahme", i.payLater ? "vor dem Start" : "mit der Annahme");
+    lines.push(`${pm === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(prepayTotal)} netto, ${faelligText}.`);
+    if (i.prepayAtAcceptance) lines.push(i.payLater ? VORAUSZAHLUNG_SPAETER : VORAUSZAHLUNG_MIT_ANNAHME);
   } else if (hasPriceStep(i)) {
     const d = priceStepDates(billIso, i.intro!.months);
     lines.push(
