@@ -233,6 +233,15 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${r.geholt} Belege geholt (${r.neu} neu), ${r.zugeordnet} neu zugeordnet.` };
     },
   },
+  app_demo_neu_anlegen: {
+    beschreibung: "Beispieldaten der App-Demo (und des App-Store-Prüferzugangs) sofort neu anlegen, nur in der Demo-Datenbank (sonst nachts)",
+    felder: {},
+    run: async () => {
+      const r = await (await import("@/lib/app-demo/seed")).appDemoNeuAnlegenEinmal(new Date());
+      await audit("app_demo.neu_angelegt", { details: { ...r }, actor: OPS_ACTOR });
+      return r.ok ? { ok: true, info: `App-Demo neu angelegt (${r.leads} Leads, ${r.dauerMs} ms).` } : { ok: false, error: r.grund };
+    },
+  },
   bank_csv_importieren: {
     beschreibung: "Kontoumsätze aus einer CSV in die Buchhaltung (Geld › Kosten) übernehmen, je Konto getrennt (z. B. n26 für geschäftliche Ausgaben vom Privatkonto); Regeln greifen, Rest steht offen zum Zuordnen. Ohne Oberfläche.",
     felder: { konto: "Kurzname, nur Kleinbuchstaben/Ziffern, z. B. n26", csv: "Inhalt der CSV-Datei" },

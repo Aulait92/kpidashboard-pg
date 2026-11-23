@@ -19,7 +19,7 @@ export async function register() {
     // Kampagnen-Läufe (Ole, 23.11.2026: „seit 20 min sucht er Angles“): Ein Neustart bricht laufende Läufe ab, ihre
     // Sperre (15 Min.) hielt sie danach fest; bei mehreren Deploys hintereinander blieb ein Lauf so lange hängen.
     // 60 Sekunden nach dem Start ist der alte Container weg: Sperren von vor dem Start freigeben, der Cron setzt fort.
-    if (!process.env.APP_DEMO_DATABASE_URL && process.env.DATABASE_URL) {
+    if (process.env.DATABASE_URL) {
       const start = new Date();
       setTimeout(() => {
         void import("@/lib/prisma")

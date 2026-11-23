@@ -41,6 +41,17 @@ async function vorbereiten(page) {
       #pg-statusleiste{position:fixed;top:0;left:0;right:0;height:${STATUS_PT}px;z-index:2147483647;background:#fff}
     `,
   });
+  // Keine fremden Marken auf den Store-Bildern (Ole, 23.11.2026, Richtlinie 5.2): „Allianz“ aus Tarifnamen entfernen
+  await page.evaluate(() => {
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const knoten = [];
+    while (w.nextNode()) knoten.push(w.currentNode);
+    for (const t of knoten) {
+      const v = t.nodeValue || "";
+      if (/^\s*AZ\s*$/.test(v)) t.nodeValue = "";
+      else if (/Allianz/.test(v)) t.nodeValue = v.replace(/Allianz\s*·\s*/g, "").replace(/Allianz\s+/g, "").replace(/Allianz/g, "");
+    }
+  });
   await page.evaluate((html) => {
     const d = document.createElement("div");
     d.id = "pg-statusleiste";
