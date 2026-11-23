@@ -72,6 +72,7 @@ Freiburg 14 bis 15 (anteilig ca. 13 bzw. 7 bis 8). Nichts angelegt; Start nur na
 - **Steuerberater-Termin** zu den 4 offenen Punkten der USt-Recherche (Befreiung bei abschlussunabhängigem Leadpreis, § 15 Abs. 4 Zuordnung, Beginn Vorsteuer-Kürzung, alte 19-%-Rechnungen).
   Eigene Recherche dazu (20.11.2026, CFO) im selben Dokument: Vorsteuerkürzung gilt rückwirkend für alle Vermittler-Pools,
   nicht erst ab 20.11.; Stripe-19-%-Rechnungen vorerst stehen lassen. Mitbringen: Lead-Rechnungsübersicht und Meta-Kosten je Kampagne und Monat.
+- **Umstrukturierung Holding und Eintritt Partner-Ltd. (Stufe A, CFO 23.11.2026):** Unterlagen 08 bis 10 (Bewertung, Holding-Sachgründung, Ablauf/Kosten, Memo Steuerbüro) liegen als Entwurf bei Ole. Bis 31.12.: Darlehensvertrag Verrechnungskonto, Gehaltsnachtrag 2027, Miete Arbeitszimmer ortsüblich; Steuerbüro mit Festpreis beauftragen. Beurkundung erst nach Antwort zu § 22 UmwStG und Schenkungsteuer, vor einer verrata24-Unterschrift. Einmalkosten ca. 4.500 bis 7.500 €.
 - **USt-Rücklage erhöhen** um 19 % der bisherigen Meta-Kosten der Vermittler-Pools (vorsichtiger Fall), Betrag aus Meta-Export je Kampagne (CFO-Vorschlag an Ole, Stufe B, 20.11.2026).
 
 - Plan „1 Mio. € ARR“ (Entwurf, 19.11.2026, `docs/firma/plan-1-mio-arr.md`): Entscheidungen 1 bis 7 bis zur Führungsrunde 23.11.
