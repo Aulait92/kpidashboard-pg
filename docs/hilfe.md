@@ -174,11 +174,10 @@ Seiten aus der Liste „Seiten“ unten.
   freigegebene Vorlagen raus. Dann erscheint „Nachfassen senden“ statt des Textfelds. Antwortet der Kunde,
   können Sie wieder frei schreiben.
 - „Erledigt“ entfernt den Chat aus „Wartet auf Sie“.
-- **Neuer Kontakt:** Schreibt eine Nummer, die zu keinem Lead gehört (z. B. ein privater Kontakt, wenn Ihre Nummer aus der
-  WhatsApp Business App verbunden ist), antwortet der Assistent nicht und es geht keine automatische Nachricht raus. Der
-  Chat steht mit „Neuer Kontakt“ unter „Wartet auf Sie“. Mit **„Als Lead übernehmen“** im Chat wird daraus ein Lead
-  (Herkunft „Eigener Kontakt“, zählt nicht als bezahlter Lead) und der Assistent übernimmt. Sonst antworten Sie selbst oder
-  lassen den Chat liegen. Auf Wunsch schaltet performancegrowth den Assistenten auch für neue Kontakte ein
+- **Fremde Nummern:** Schreibt eine Nummer, die zu keinem Lead gehört (z. B. ein privater Kontakt oder jemand, der ein
+  Dokument schickt), erscheint der Chat nicht unter „Nachrichten“, es gibt keine Mitteilung und der Assistent antwortet
+  nicht. Wird aus der Nummer später ein Lead, erscheint der Chat mit dem bisherigen Verlauf. Auf Wunsch schaltet
+  performancegrowth den Assistenten auch für neue Kontakte ein; dann stehen diese Chats wieder in der Liste
   (Kontakte aus der WhatsApp Business App bleiben trotzdem ausgenommen).
 - **„STOPP“:** Schreibt ein Kontakt „STOPP“ (oder „Stop“, „Abmelden“, „Keine Nachrichten mehr“), bekommt er eine kurze
   Bestätigung und danach keine WhatsApp-Nachrichten mehr: kein Assistent, kein Nachfassen, keine Termin-Nachrichten, keine

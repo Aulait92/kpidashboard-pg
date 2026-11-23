@@ -32,6 +32,7 @@ import {
   type OfferProduct,
   type OfferTerm,
 } from "@/lib/offer-pricing";
+import { erinnerungsGrenzen } from "@/lib/angebot-zahlungserinnerung";
 import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
@@ -383,6 +384,34 @@ async function adresseUebernehmen(tx: Prisma.TransactionClient, owner: OfferOwne
   }
 }
 
+/**
+ * Wird eine neuere Version angenommen, gilt eine früher angenommene, aber nie bezahlte Version desselben Kontakts bzw.
+ * Deals als ersetzt: Status „superseded“ (keine Zahlungserinnerungen mehr, nicht mehr in der Übersicht), offene
+ * Stripe-Bezahlseite läuft sofort ab. Bezahlte Angebote oder solche mit Abo bzw. Onboarding bleiben unberührt.
+ */
+export async function fruehereAnnahmenErsetzen(offer: { id: string; number: string; salesContactId: string | null; dealId: string | null; createdAt: Date }): Promise<string[]> {
+  const owner = offer.salesContactId ? { salesContactId: offer.salesContactId } : offer.dealId ? { dealId: offer.dealId } : null;
+  if (!owner) return [];
+  const alte = await prisma.offer.findMany({
+    where: { ...owner, id: { not: offer.id }, status: "accepted", createdAt: { lt: offer.createdAt }, paymentStatus: { not: "paid" }, stripeSubscriptionId: null, stripeScheduleId: null },
+    select: { id: true, number: true, stripeCheckoutSessionId: true },
+  });
+  const ersetzt: string[] = [];
+  for (const a of alte) {
+    if (await prisma.onboarding.findFirst({ where: { offerId: a.id }, select: { id: true } })) continue;
+    const r = await prisma.offer.updateMany({ where: { id: a.id, status: "accepted" }, data: { status: "superseded", paymentReminderAt: null } });
+    if (!r.count) continue;
+    ersetzt.push(a.number);
+    if (a.stripeCheckoutSessionId) {
+      const { stripeClient } = await import("@/lib/billing");
+      await stripeClient()?.checkout.sessions.expire(a.stripeCheckoutSessionId).catch(() => null);
+    }
+    await audit("offer.superseded", { entity: "Offer", entityId: a.id, details: { number: a.number, durch: offer.number } });
+  }
+  if (ersetzt.length) await logOfferActivity(offer as Parameters<typeof logOfferActivity>[0], `Angebot ${ersetzt.join(", ")} ersetzt durch ${offer.number}`, "Die frühere Annahme ist damit hinfällig, Zahlungserinnerungen dazu sind beendet.").catch(() => null);
+  return ersetzt;
+}
+
 export async function createOffer(target: OfferTarget, input: OfferFormInput, createdById: string | null) {
   const owner: OfferOwner = "dealId" in target ? { dealId: target.dealId } : { salesContactId: target.salesContactId };
   const { data, addr } = await angebotsDaten(owner, input);
@@ -396,6 +425,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
           select: { id: true, version: true },
         });
         const maxVersion = await tx.offer.aggregate({ where: owner, _max: { version: true } });
+        // Garantien richten sich nach der ersten Version (Ole, 23.11.2026: neue Version eines alten Angebots behält sie)
+        const [erste] = await tx.offer.findMany({ where: owner, orderBy: { createdAt: "asc" }, take: 1, select: { createdAt: true, garantieStichtag: true } });
         if (previous.length) {
           await tx.offer.updateMany({
             where: { id: { in: previous.map((p) => p.id) } },
@@ -407,6 +438,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             ...owner,
             number,
             version: (maxVersion._max.version ?? 0) + 1,
+            ...(erste?.createdAt ? { garantieStichtag: erste.garantieStichtag ?? erste.createdAt } : {}),
             token: crypto.randomBytes(24).toString("base64url"),
             ...data,
             createdById,
@@ -604,6 +636,10 @@ export async function acceptOffer(
     actor: { email: offer.email ?? null, role: "kunde" },
   });
 
+  // Frühere, angenommene, aber nie bezahlte Version desselben Kontakts ersetzen (Ole, 23.11.2026: Kunde nahm erst als
+  // Person an, dann die neue Version für seine Firma; beide standen als angenommen mit Zahlungserinnerung da)
+  await fruehereAnnahmenErsetzen(offer).catch((err) => reportError(err, "offer-accept-ersetzen", { offer: offer.number }));
+
   // Deal bzw. Kontakt auf „gewonnen“ setzen und in der Historie vermerken.
   if (offer.salesContactId) {
     await setContactCustomerStage(offer, "VERTRAG");
@@ -656,7 +692,7 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
   offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
-    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew" | "pplModell" | "pplProdukte">> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "allowPayLater" | "isTest" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew" | "pplModell" | "pplProdukte">> &
     Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null; ersteWoche: { quantity: number; autoRenew: boolean } | null }> = {},
 ): ContractSummaryInput {
@@ -668,9 +704,10 @@ export function offerSummaryInput(
     : null;
   const extras = add.monthlyTotal - Number(offer.monthlyFee);
   const intro = offer.introMonthlyFee != null && offer.introMonths ? { months: offer.introMonths, monthly: Math.round((Number(offer.introMonthlyFee) + extras) * 100) / 100 } : null;
+  const startIso = chosen.startIso !== undefined ? chosen.startIso : offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
   return {
     term: chosen.term ?? normalizeTerm(offer.term),
-    startIso: chosen.startIso !== undefined ? chosen.startIso : offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
+    startIso,
     setup: chosen.setup ?? Number(offer.setupFee),
     monthlyTotal: add.monthlyTotal,
     intro,
@@ -683,6 +720,8 @@ export function offerSummaryInput(
     paket: offer.package ?? null,
     ersteWoche,
     kundenkonto: kundenkontoAus(offer),
+    // „Ich zahle später“: wie auf der Angebotsseite nur, wenn erlaubt und der Start weit genug weg ist
+    payLater: !!offer.allowPayLater && !offer.isTest && !!erinnerungsGrenzen(berlinTodayIso(new Date()), startIso),
   };
 }
 

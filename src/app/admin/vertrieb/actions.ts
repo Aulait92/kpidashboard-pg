@@ -22,7 +22,7 @@ import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPo
 import { audit } from "@/lib/audit";
 import { planFollowup, planFromOutcome, stopFollowup, stopFollowupOnStage } from "@/lib/vertrieb/followup";
 import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates, updatePrimaryEmail } from "@/lib/vertrieb/contact-merge";
-import { backfillContactData, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
+import { addContactPhone, backfillContactData, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
 import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 import { nachholenAntworten, type NachholenErgebnis } from "@/lib/vertrieb/instantly-nachholen";
 
@@ -45,6 +45,13 @@ function refresh(contactId?: string | null) {
 const ziel = (altPfad: string) => adminZiel(altPfad);
 
 // ─── Aktivität erfassen ─────────────────────────────────────────────────
+/** Vorschau im Fenster „Eintragen“: was nach „Nicht erreicht“ an den Kontakt rausginge (Ole, 23.11.2026). */
+export async function nichtErreichtVorschauAction(contactId: string) {
+  await requireAuth();
+  const { nichtErreichtVorschau } = await import("@/lib/vertrieb/nicht-erreicht-server");
+  return nichtErreichtVorschau(contactId);
+}
+
 export async function logActivity(fd: FormData): Promise<{ hinweis: string | null }> {
   await requireAuth();
   const contactId = s(fd, "contactId")!;
@@ -102,9 +109,19 @@ export async function logActivity(fd: FormData): Promise<{ hinweis: string | nul
   }
   // „Nicht erreicht“ nach einem Anruf: E-Mail und WhatsApp mit Buchungslink (Ole, 22.11.2026, lib/vertrieb/nicht-erreicht.ts)
   let hinweis: string | null = null;
+  // Seit 23.11.2026 mit Vorschau und Häkchen je Kanal im Fenster (neMail/neWa); ohne die Felder (altes Formular) wie bisher beide
   if (outcome.id === "nicht_erreicht" && type === "ANRUF") {
     const { nachNichtErreicht, ergebnisText } = await import("@/lib/vertrieb/nicht-erreicht-server");
-    hinweis = ergebnisText(await nachNichtErreicht(contactId));
+    const mitWahl = fd.get("neWahl") === "1";
+    const wahl = mitWahl ? { mail: fd.get("neMail") === "on", whatsapp: fd.get("neWa") === "on" } : { mail: true, whatsapp: true };
+    // Du/Sie und bearbeiteter Mailtext aus dem Fenster (Ole, 23.11.2026); ohne Felder: Standard des Kontakts und Vorschlag
+    const neDu = fd.get("neDu");
+    const eingabe = {
+      du: neDu === "1" ? true : neDu === "0" ? false : undefined,
+      betreff: typeof fd.get("neBetreff") === "string" ? (fd.get("neBetreff") as string) : null,
+      text: typeof fd.get("neText") === "string" ? (fd.get("neText") as string) : null,
+    };
+    hinweis = ergebnisText(await nachNichtErreicht(contactId, new Date(), wahl, eingabe));
   }
   refresh(contactId);
   return { hinweis };
@@ -825,6 +842,17 @@ export async function makePrimaryPhoneAction(fd: FormData) {
   const id = s(fd, "contactId")!;
   await makePrimaryPhone(id, s(fd, "phoneId") ?? "");
   refresh(id);
+}
+
+/** „+ Weitere Telefonnummer“ in der Kontaktakte (Ole, 23.11.2026): von Hand, ohne die Hauptnummer zu ändern. */
+export async function addContactPhoneAction(_prev: ContactEmailState, fd: FormData): Promise<ContactEmailState> {
+  await requireAuth();
+  const id = s(fd, "contactId")!;
+  const r = await addContactPhone(id, s(fd, "phone"), { source: "MANUELL" });
+  if (r === "skipped") return { error: "Bitte eine gültige Telefonnummer eingeben." };
+  if (r === "known") return { error: "Diese Nummer ist schon hinterlegt." };
+  refresh(id);
+  return { ok: true };
 }
 
 export async function removeContactPhoneAction(fd: FormData) {

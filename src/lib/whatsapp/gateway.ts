@@ -516,9 +516,8 @@ async function persistInbound(
   if (!botErlaubt) {
     const { flagAttention } = await import("@/lib/whatsapp/attention");
     if (!linkedLead?.leadId && !pipeline) {
-      // Push nur für wirklich neue Nummern, nicht für Kontakte aus der Business-App (die sieht der Vermittler dort ohnehin)
-      const appKontakt = await nurLeads.istAppKontakt(customerId, from);
-      await flagAttention(conversation.id, nurLeads.neuerKontaktGrund(body), { push: !appKontakt });
+      // Fremde Nummer ohne Lead (Ole, 23.11.2026): komplett ignorieren, kein „Wartet auf Sie“, keine Mitteilung. Die
+      // Nachricht bleibt gespeichert; kommt später ein Lead mit der Nummer, erscheint der Chat mit Verlauf.
     } else {
       await flagAttention(conversation.id, body ? `Neue Nachricht: „${body.slice(0, 100)}"` : "Neue Nachricht");
     }

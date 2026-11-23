@@ -4,8 +4,12 @@
 import { prisma } from "@/lib/prisma";
 import { sendCustomerMail } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
-import { anredeName } from "@/lib/ansprache";
-import { sendeVorlageAnKontakt } from "@/lib/angebot-zahlungserinnerung-server";
+import { anredeZeile } from "@/lib/ansprache";
+import { vermittlerDuAus } from "@/lib/vermittler-ansprache";
+import { sendeVorlageAnKontakt, vorlagenAnrede, vorlagenParams } from "@/lib/angebot-zahlungserinnerung-server";
+import { whatsappHindernis } from "@/lib/vertrieb/geplante-nachrichten";
+import { normalizePhone } from "@/lib/whatsapp/phone";
+import { renderTemplate } from "@/lib/whatsapp/templates";
 import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 import { whatsappErlaubtStand } from "@/lib/vertrieb/bonus-erinnerung-server";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
@@ -15,15 +19,18 @@ import {
   NE_GEWINNER,
   NE_MAIL_AKTIVITAET,
   NE_MIN_JE_FASSUNG,
-  NE_TEMPLATE_BODY,
-  NE_TEMPLATE_BODY_B,
   NE_TEMPLATE_NAME,
   NE_TEMPLATE_NAME_B,
   NE_WA_AKTIVITAET,
   istWarm,
+  neBearbeitet,
+  neBearbeitetAusNotiz,
   neFassung,
   neFassungAusNotiz,
   neFassungVermerk,
+  neMailAusText,
+  neMailText,
+  neVorlage,
   nichtErreichtAbStand,
   nichtErreichtMail,
   nichtErreichtStopp,
@@ -33,76 +40,221 @@ import {
 
 export type NichtErreichtErgebnis = { mail: "sent" | string; whatsapp: "sent" | string } | { stopp: string };
 
-/** Nach dem Ergebnis „Nicht erreicht“ (Anruf): Mail und WhatsApp senden, wenn die Regeln es erlauben. Wirft nicht. */
-export async function nachNichtErreicht(contactId: string, now = new Date()): Promise<NichtErreichtErgebnis> {
+/** Bearbeitbarer Mailentwurf: Betreff und Text (Anrede und Absätze, getrennt durch Leerzeilen; Knopf darunter fest). */
+export type NeMailEntwurf = { betreff: string; text: string };
+
+/**
+ * Was nach „Nicht erreicht“ rausginge (Vorschau im Fenster „Eintragen“, Ole 23.11.2026): je Kanal Text oder Grund,
+ * jeweils in Sie- und Du-Form (Umschalter im Fenster, Standard duStandard).
+ */
+export type NichtErreichtVorschau =
+  | { stopp: string; hinweis: string }
+  | {
+      fassung: NeFassung;
+      /** Wie der Kontakt sonst angesprochen wird (Kunde: vermittlerDu, sonst letztes Angebot: mailDu), sonst Sie */
+      duStandard: boolean;
+      mail: { an: string; sie: NeMailEntwurf; du: NeMailEntwurf; knopf: string | null } | null;
+      /** Warum keine Mail (z. B. keine Adresse) */
+      mailGrund: string | null;
+      /** WhatsApp-Vorlage (nicht änderbar); du = null, solange die Du-Vorlage bei Meta nicht freigegeben ist (dann Sie) */
+      whatsapp: { an: string; sie: string; du: string | null } | null;
+      /** Warum keine WhatsApp (Festnetz, Vorlage nicht freigegeben …) */
+      waGrund: string | null;
+    };
+
+const WA_GRUND: Record<string, string> = {
+  festnetz: "WhatsApp nicht möglich (Festnetz)",
+  no_phone: "WhatsApp nicht möglich (keine Nummer)",
+  no_template: "WhatsApp wartet auf Freigabe der Vorlage bei Meta",
+  no_account: "WhatsApp nicht verbunden",
+  opted_out: "WhatsApp abgemeldet",
+  kein_buchungslink: "WhatsApp braucht einen Buchungslink",
+};
+
+type Plan =
+  | { stopp: string }
+  | {
+      fassung: NeFassung;
+      duStandard: boolean;
+      buchungslink: string | null;
+      kontakt: { email: string | null; name: string; salutation: string | null; firstName: string | null; lastName: string | null; phone: string | null };
+      nutzbar: (name: string, version: 1 | 2) => boolean;
+    };
+
+/** Regeln prüfen und Fassung, Buchungslink, Vorlagen bestimmen (gemeinsam für Vorschau und Versand). */
+async function plane(contactId: string, now: Date): Promise<Plan> {
+  const c = await prisma.salesContact.findUnique({
+    where: { id: contactId },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      phone: true,
+      salutation: true,
+      firstName: true,
+      lastName: true,
+      customerSource: true,
+      art17GeloeschtAt: true,
+      customer: { select: { vermittlerDu: true } },
+    },
+  });
+  if (!c) return { stopp: "kein Kontakt" };
+  const [gesperrt, inbound, termin, angebot, mailIn, waIn, waErlaubt, letzte] = await Promise.all([
+    kontaktGesperrt(contactId),
+    prisma.salesInboundLead.findFirst({ where: { contactId }, select: { id: true } }),
+    prisma.salesMeeting.findFirst({ where: { contactId }, select: { id: true } }),
+    prisma.offer.findFirst({ where: { salesContactId: contactId, isTest: false }, orderBy: { createdAt: "desc" }, select: { id: true, mailDu: true } }),
+    prisma.salesEmail.findFirst({ where: { contactId, direction: "IN", isAutoReply: false }, select: { id: true } }),
+    prisma.message.findFirst({ where: { direction: "inbound", conversation: { customerId: SUPPORT_CUSTOMER_ID, salesContactId: contactId } }, select: { id: true } }),
+    whatsappErlaubtStand(contactId),
+    prisma.salesActivity.findFirst({
+      where: { contactId, outcome: { in: [NE_MAIL_AKTIVITAET, NE_WA_AKTIVITAET] } },
+      orderBy: { occurredAt: "desc" },
+      select: { occurredAt: true },
+    }),
+  ]);
+  const warm = istWarm({ inbound: !!inbound, termin: !!termin, angebot: !!angebot, antwort: !!mailIn || !!waIn, whatsappErlaubt: waErlaubt.erlaubt, source: c.customerSource });
+  const stopp = nichtErreichtStopp({ gesperrt: gesperrt || !!c.art17GeloeschtAt, warm, letzteNachricht: letzte?.occurredAt ?? null }, now);
+  if (stopp) return { stopp };
+
+  const { loadFollowupSettings } = await import("@/lib/vertrieb/followup");
+  const { publicSalesBookingUrl, vertriebsLinkFuerKontakt } = await import("@/lib/vertrieb/buchung");
+  // Eingestellter Buchungslink (Follow-up-Einstellungen), sonst unsere Buchungsseite; persönlich, wenn online buchbar
+  const eingestellt = (await loadFollowupSettings()).bookingUrl?.trim() || publicSalesBookingUrl();
+  const buchungslink = await vertriebsLinkFuerKontakt(eingestellt, contactId).catch(() => eingestellt);
+
+  // A/B-Test: Fassung fest je Kontakt, Rückfall auf A, solange nur Vorlage A freigegeben ist (lib/vertrieb/nicht-erreicht.ts)
+  const { supportVorlagenNutzbar } = await import("@/lib/vertrieb/termin-whatsapp");
+  const nutzbar = await supportVorlagenNutzbar().catch(() => () => false);
+  const fassung: NeFassung = neFassung(contactId, { a: nutzbar(NE_TEMPLATE_NAME, 2), b: nutzbar(NE_TEMPLATE_NAME_B, 2) });
+  const duStandard = vermittlerDuAus({ kunde: c.customer?.vermittlerDu, angebot: angebot?.mailDu });
+  return { fassung, duStandard, buchungslink, kontakt: c, nutzbar };
+}
+
+const mailMoeglich = (email: string | null) => !!email && !email.endsWith("@kontakt.invalid");
+const kontaktName = (k: { firstName: string | null; lastName: string | null; name: string }) => [k.firstName, k.lastName].filter(Boolean).join(" ") || k.name;
+
+type Kontakt = { salutation: string | null; firstName: string | null; lastName: string | null };
+/** Mail-Vorschlag für Fassung und Form: Teile für den Versand und der bearbeitbare Entwurf. */
+function mailVorschlag(k: Kontakt, buchungslink: string | null, fassung: NeFassung, du: boolean) {
+  const t = nichtErreichtMail({ buchungslink, fassung, du });
+  const greeting = anredeZeile(du ? "du" : "sie", { salutation: k.salutation, firstName: k.firstName, lastName: k.lastName, fullName: null });
+  const entwurf: NeMailEntwurf = { betreff: t.subject, text: neMailText(greeting, t.paragraphs) };
+  return { ...t, greeting, entwurf };
+}
+
+/** Vorschau für das Fenster „Eintragen“: genau die Texte, die beim Speichern rausgingen. Wirft nicht. */
+export async function nichtErreichtVorschau(contactId: string, now = new Date()): Promise<NichtErreichtVorschau> {
   try {
-    const c = await prisma.salesContact.findUnique({
-      where: { id: contactId },
-      select: { id: true, email: true, name: true, salutation: true, firstName: true, lastName: true, customerSource: true, art17GeloeschtAt: true },
-    });
-    if (!c) return { stopp: "kein Kontakt" };
-    const [gesperrt, inbound, termin, angebot, mailIn, waIn, waErlaubt, letzte] = await Promise.all([
-      kontaktGesperrt(contactId),
-      prisma.salesInboundLead.findFirst({ where: { contactId }, select: { id: true } }),
-      prisma.salesMeeting.findFirst({ where: { contactId }, select: { id: true } }),
-      prisma.offer.findFirst({ where: { salesContactId: contactId, isTest: false }, select: { id: true } }),
-      prisma.salesEmail.findFirst({ where: { contactId, direction: "IN", isAutoReply: false }, select: { id: true } }),
-      prisma.message.findFirst({ where: { direction: "inbound", conversation: { customerId: SUPPORT_CUSTOMER_ID, salesContactId: contactId } }, select: { id: true } }),
-      whatsappErlaubtStand(contactId),
-      prisma.salesActivity.findFirst({
-        where: { contactId, outcome: { in: [NE_MAIL_AKTIVITAET, NE_WA_AKTIVITAET] } },
-        orderBy: { occurredAt: "desc" },
-        select: { occurredAt: true },
-      }),
-    ]);
-    const warm = istWarm({ inbound: !!inbound, termin: !!termin, angebot: !!angebot, antwort: !!mailIn || !!waIn, whatsappErlaubt: waErlaubt.erlaubt, source: c.customerSource });
-    const stopp = nichtErreichtStopp({ gesperrt: gesperrt || !!c.art17GeloeschtAt, warm, letzteNachricht: letzte?.occurredAt ?? null }, now);
-    if (stopp) return { stopp };
+    const p = await plane(contactId, now);
+    if ("stopp" in p) return { stopp: p.stopp, hinweis: ergebnisText(p) ?? "Keine Nachricht." };
+    const k = p.kontakt;
+    let mail: Extract<NichtErreichtVorschau, { fassung: NeFassung }>["mail"] = null;
+    if (mailMoeglich(k.email)) {
+      const sie = mailVorschlag(k, p.buchungslink, p.fassung, false);
+      mail = { an: k.email!, sie: sie.entwurf, du: mailVorschlag(k, p.buchungslink, p.fassung, true).entwurf, knopf: sie.button?.label ?? null };
+    }
+    // WhatsApp: dieselben Hürden wie sendeVorlageAnKontakt
+    let waGrund: string | null = p.buchungslink ? null : "kein_buchungslink";
+    let whatsapp: Extract<NichtErreichtVorschau, { fassung: NeFassung }>["whatsapp"] = null;
+    const phone = k.phone ? normalizePhone(k.phone) : null;
+    if (!waGrund) {
+      const { istFestnetz } = await import("@/lib/telefon-typ");
+      const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: SUPPORT_CUSTOMER_ID }, select: { status: true, apiKeyEnc: true } });
+      const v = neVorlage(p.fassung, false);
+      const abgemeldet = phone
+        ? !!(await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: phone } }, select: { optedOutAt: true } }))?.optedOutAt
+        : false;
+      waGrund = whatsappHindernis({
+        phone,
+        festnetz: phone ? await istFestnetz(phone) : false,
+        kontoVerbunden: acc?.status === "connected" && !!acc.apiKeyEnc,
+        vorlage: p.nutzbar(v.name, 2),
+        optedOut: abgemeldet,
+      });
+      if (!waGrund && phone) {
+        const text = (vorlage: { body: string }, du: boolean) =>
+          renderTemplate(vorlage.body, vorlagenParams((anrede) => [anrede, p.buchungslink!], vorlagenAnrede(k, du, kontaktName(k))));
+        const vDu = neVorlage(p.fassung, true);
+        whatsapp = { an: `+${phone}`, sie: text(v, false), du: p.nutzbar(vDu.name, 2) ? text(vDu, true) : null };
+      }
+    }
+    return {
+      fassung: p.fassung,
+      duStandard: p.duStandard,
+      mail,
+      mailGrund: mail ? null : "Keine E-Mail-Adresse",
+      whatsapp,
+      waGrund: waGrund ? (WA_GRUND[waGrund] ?? waGrund) : null,
+    };
+  } catch (err) {
+    reportError(err, "nicht-erreicht-vorschau", { contact: contactId });
+    return { stopp: "Fehler", hinweis: "Vorschau gerade nicht möglich." };
+  }
+}
 
-    const { loadFollowupSettings } = await import("@/lib/vertrieb/followup");
-    const { publicSalesBookingUrl, vertriebsLinkFuerKontakt } = await import("@/lib/vertrieb/buchung");
-    // Eingestellter Buchungslink (Follow-up-Einstellungen), sonst unsere Buchungsseite; persönlich, wenn online buchbar
-    const eingestellt = (await loadFollowupSettings()).bookingUrl?.trim() || publicSalesBookingUrl();
-    const buchungslink = await vertriebsLinkFuerKontakt(eingestellt, contactId).catch(() => eingestellt);
+/** Eingaben aus dem Fenster: Du/Sie (fehlt = Standard des Kontakts) und der bearbeitete Mailtext (fehlt = Vorschlag). */
+export type NichtErreichtEingabe = { du?: boolean; betreff?: string | null; text?: string | null };
 
-    // A/B-Test: Fassung fest je Kontakt, Rückfall auf A, solange nur Vorlage A freigegeben ist (lib/vertrieb/nicht-erreicht.ts)
-    const { supportVorlagenNutzbar } = await import("@/lib/vertrieb/termin-whatsapp");
-    const nutzbar = await supportVorlagenNutzbar().catch(() => () => false);
-    const fassung: NeFassung = neFassung(contactId, { a: nutzbar(NE_TEMPLATE_NAME, 2), b: nutzbar(NE_TEMPLATE_NAME_B, 2) });
-    const vermerk = neFassungVermerk(fassung);
+/**
+ * Nach dem Ergebnis „Nicht erreicht“ (Anruf): Mail und WhatsApp senden, wenn die Regeln es erlauben und sie im Fenster
+ * angehakt sind (wahl, Standard beide). Bearbeiteter Mailtext geht so raus, der Knopf mit dem Buchungslink bleibt
+ * darunter; die Sendung wird als „bearbeitet“ vermerkt und zählt nicht im A/B-Test. Wirft nicht.
+ */
+export async function nachNichtErreicht(
+  contactId: string,
+  now = new Date(),
+  wahl: { mail: boolean; whatsapp: boolean } = { mail: true, whatsapp: true },
+  eingabe: NichtErreichtEingabe = {},
+): Promise<NichtErreichtErgebnis> {
+  try {
+    if (!wahl.mail && !wahl.whatsapp) return { stopp: "abgewählt" };
+    const p = await plane(contactId, now);
+    if ("stopp" in p) return p;
+    const { fassung, buchungslink, kontakt: c, nutzbar } = p;
+    const du = eingabe.du ?? p.duStandard;
 
     // E-Mail
-    let mail = "keine_adresse";
-    if (c.email && !c.email.endsWith("@kontakt.invalid")) {
-      const text = nichtErreichtMail({ buchungslink, fassung });
-      const anrede = anredeName("sie", { salutation: c.salutation, firstName: c.firstName, lastName: c.lastName, fullName: null });
+    let mail = wahl.mail ? "keine_adresse" : "abgewaehlt";
+    let bearbeitet = false;
+    if (wahl.mail && mailMoeglich(c.email)) {
+      const v = mailVorschlag(c, buchungslink, fassung, du);
+      bearbeitet = neBearbeitet(v.entwurf, eingabe);
+      const subject = (bearbeitet && eingabe.betreff?.trim()) || v.subject;
+      const eigen = bearbeitet && eingabe.text?.trim() ? neMailAusText(eingabe.text) : null;
       const r = await sendCustomerMail({
-        to: c.email,
-        subject: text.subject,
-        greeting: anrede ? `Guten Tag ${anrede},` : "Guten Tag,",
-        paragraphs: text.paragraphs,
-        ...(text.button ? { button: text.button } : {}),
+        to: c.email!,
+        subject,
+        greeting: eigen ? eigen.greeting : v.greeting,
+        paragraphs: eigen ? eigen.paragraphs : v.paragraphs,
+        ...(v.button ? { button: v.button } : {}),
       });
       mail = r.ok ? "sent" : "failed";
       await prisma.salesActivity.create({
-        data: { contactId, type: "EMAIL", outcome: r.ok ? NE_MAIL_AKTIVITAET : "Nicht erreicht: E-Mail fehlgeschlagen", note: r.ok ? `An ${c.email}, Betreff: ${text.subject}, ${vermerk}` : r.error },
+        data: {
+          contactId,
+          type: "EMAIL",
+          outcome: r.ok ? NE_MAIL_AKTIVITAET : "Nicht erreicht: E-Mail fehlgeschlagen",
+          note: r.ok ? `An ${c.email}, Betreff: ${subject}, ${neFassungVermerk(fassung, { du, bearbeitet })}` : r.error,
+        },
       });
     }
 
     // WhatsApp: nur mit Buchungslink (Pflichtfeld der Vorlage), Mobilnummer und freigegebener Vorlage
-    let whatsapp = "kein_buchungslink";
-    if (buchungslink) {
+    let whatsapp = wahl.whatsapp ? "kein_buchungslink" : "abgewaehlt";
+    if (wahl.whatsapp && buchungslink) {
+      // Du-Vorlage, wenn gewählt und freigegeben; sonst die Sie-Vorlage derselben Fassung (Hinweis im Fenster).
+      // Ein bearbeiteter Mailtext markiert auch die WhatsApp, weil die Einheit des Tests der Kontakt ist.
+      const waDu = du && nutzbar(neVorlage(fassung, true).name, 2);
+      const v = neVorlage(fassung, waDu);
       whatsapp = await sendeVorlageAnKontakt({
         salesContactId: contactId,
-        contactName: [c.firstName, c.lastName].filter(Boolean).join(" ") || c.name,
-        du: false,
-        vorlage: async () => {
-          const v = fassung === "b" ? { name: NE_TEMPLATE_NAME_B, body: NE_TEMPLATE_BODY_B } : { name: NE_TEMPLATE_NAME, body: NE_TEMPLATE_BODY };
-          return nutzbar(v.name, 2) ? v : null;
-        },
+        contactName: kontaktName(c),
+        du: waDu,
+        vorlage: async () => (nutzbar(v.name, 2) ? v : null),
         params: (anrede) => [anrede, buchungslink],
         activity: NE_WA_AKTIVITAET,
-        activityNote: `Vorlage ${fassung === "b" ? NE_TEMPLATE_NAME_B : NE_TEMPLATE_NAME}, ${vermerk}`,
+        activityNote: `Vorlage ${v.name}, ${neFassungVermerk(fassung, { du: waDu, bearbeitet })}`,
         logRef: { dealId: null, salesContactId: contactId },
         errorLabel: "nicht-erreicht-whatsapp",
         now,
@@ -126,10 +278,11 @@ export async function nichtErreichtAbDiagnose(now = new Date()) {
     orderBy: { occurredAt: "asc" },
     select: { contactId: true, occurredAt: true, note: true },
   });
-  const erste = new Map<string, { fassung: NeFassung; gesendet: Date }>();
+  // Bearbeitete Sendungen (Mailtext im Fenster geändert) zählen nicht: der Kontakt fällt ganz aus dem Test
+  const erste = new Map<string, { fassung: NeFassung; gesendet: Date; bearbeitet: boolean }>();
   for (const x of akt) {
     const f = neFassungAusNotiz(x.note);
-    if (f && !erste.has(x.contactId)) erste.set(x.contactId, { fassung: f, gesendet: x.occurredAt });
+    if (f && !erste.has(x.contactId)) erste.set(x.contactId, { fassung: f, gesendet: x.occurredAt, bearbeitet: neBearbeitetAusNotiz(x.note) });
   }
   const ids = [...erste.keys()];
   const ab = new Date(Math.min(now.getTime(), ...[...erste.values()].map((e) => e.gesendet.getTime())));
@@ -158,6 +311,7 @@ export async function nichtErreichtAbDiagnose(now = new Date()) {
     fassungA: { kontakte: st.a.n, treffer: st.a.treffer, quoteProzent: pct(st.quoteA), termin: st.a.termin, terminProzent: pct(st.terminQuoteA) },
     fassungB: { kontakte: st.b.n, treffer: st.b.treffer, quoteProzent: pct(st.quoteB), termin: st.b.termin, terminProzent: pct(st.terminQuoteB) },
     nochNicht72h: st.unreif,
+    bearbeitetNichtGezaehlt: st.bearbeitet,
     p: Number(st.p.toFixed(4)),
     terminP: Number(st.terminP.toFixed(4)),
     stand:
@@ -179,15 +333,7 @@ export function ergebnisText(r: NichtErreichtErgebnis): string | null {
   }
   const teile = [r.mail === "sent" ? "E-Mail" : null, r.whatsapp === "sent" ? "WhatsApp" : null].filter(Boolean);
   const mailGrund = r.mail === "failed" ? "E-Mail fehlgeschlagen" : r.mail === "keine_adresse" ? "keine E-Mail-Adresse" : null;
-  const waGrund: Record<string, string> = {
-    festnetz: "WhatsApp nicht möglich (Festnetz)",
-    no_phone: "WhatsApp nicht möglich (keine Nummer)",
-    no_template: "WhatsApp wartet auf Freigabe der Vorlage bei Meta",
-    no_account: "WhatsApp nicht verbunden",
-    opted_out: "WhatsApp abgemeldet",
-    kein_buchungslink: "WhatsApp braucht einen Buchungslink",
-  };
-  const extra = [mailGrund, r.whatsapp !== "sent" ? waGrund[r.whatsapp] : null].filter(Boolean).join(", ");
+  const extra = [mailGrund, r.whatsapp !== "sent" ? WA_GRUND[r.whatsapp] : null].filter(Boolean).join(", ");
   const haupt = teile.length ? `${teile.join(" und ")} gesendet.` : "Keine Nachricht gesendet.";
   return extra ? `${haupt} ${extra[0].toUpperCase()}${extra.slice(1)}.` : haupt;
 }

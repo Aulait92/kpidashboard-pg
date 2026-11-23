@@ -7,6 +7,7 @@ import { adminEndPauseAction, adminPlanPauseAction, goLiveAction, resendWelcomeA
 import { KEINE_ANGABE } from "@/lib/platzhalter";
 import { ERSTINFO_STATT_WEBSITE, erstinfoStattWebsite } from "@/lib/impressum-ersatz";
 import { EinladungslinkKopieren } from "@/components/vertrieb/einladungslink-kopieren";
+import { OnboardingTermin } from "@/components/vertrieb/onboarding-termin";
 
 const OWNER: Record<ChecklistItem["owner"], { label: string; cls: string }> = {
   kunde: { label: "Kunde", cls: "bg-sky-50 text-sky-700" },
@@ -24,6 +25,8 @@ export function OnboardingCard({
   loginEmail,
   feedback = [],
   websiteInfo = null,
+  zurueck = "/admin/neu",
+  terminMeldung = null,
 }: {
   onboarding: { id: string; package: string; startDate: Date | null; liveAt: Date | null; helpCallAt?: Date | null; helpCallUrl?: string | null };
   items: ChecklistItem[];
@@ -31,6 +34,9 @@ export function OnboardingCard({
   loginEmail: string | null;
   feedback?: { kind: string; score: number | null; comment: string | null; answeredAt: Date | null }[];
   websiteInfo?: ImpressumInfo | null;
+  /** Seite, auf die das Buchen des Onboarding-Termins zurückführt */
+  zurueck?: string;
+  terminMeldung?: string | null;
 }) {
   const p = checklistProgress(items);
   const open = items.filter((i) => !i.done);
@@ -39,7 +45,7 @@ export function OnboardingCard({
   // Ohne Website: vollständige Erstinformation statt Impressum (lib/impressum-ersatz.ts)
   const ohneWebsite = items.some((i) => i.note === ERSTINFO_STATT_WEBSITE) || erstinfoStattWebsite(websiteInfo, !!items.find((i) => i.key === "erstinfo")?.done);
   return (
-    <section className="card">
+    <section className="card" id="onboarding">
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
         <div>
           <h2 className="font-medium">Onboarding</h2>
@@ -112,7 +118,9 @@ export function OnboardingCard({
             </>
           ) : null}
         </p>
-      ) : null}
+      ) : (
+        <OnboardingTermin onboardingId={onboarding.id} zurueck={zurueck} meldung={terminMeldung} />
+      )}
       <ImpressumBlock info={websiteInfo} ohneWebsite={ohneWebsite} />
       {feedback.length > 0 && (
         <ul className="space-y-1 border-t border-slate-100 px-4 py-3 text-sm">

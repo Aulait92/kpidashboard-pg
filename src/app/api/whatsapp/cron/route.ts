@@ -197,6 +197,14 @@ async function handle(req: Request): Promise<Response> {
         reportError(e, "cron-ppl-bestellerinnerung");
         return null;
       }),
+    // Erste Woche zum Starttermin: wartende Bestellungen abbuchen, sobald ihre Startwoche begonnen hat (lib/ppl/erste-woche.ts)
+    // einmal je Stunde (nicht bei jedem 5-Minuten-Lauf, wegen der Zahlungsart-Abfrage bei Stripe)
+    ersteWoche: now.getUTCMinutes() >= 5 ? null : await import("@/lib/ppl/erste-woche")
+      .then((m) => m.faelligeErsteWochenFreigeben(now))
+      .catch((e: unknown) => {
+        reportError(e, "cron-ppl-erste-woche");
+        return null;
+      }),
     redistributed: await redistributeParked(undefined, now).catch(() => null),
     // geparkte Leads ab 48 h (PPL_PARK_MAX_HOURS) endgültig verwerfen, Kontaktdaten entfernen (Ole, 20.11.2026)
     expired: await expireParked(now).catch((e: unknown) => {
@@ -498,6 +506,12 @@ async function handle(req: Request): Promise<Response> {
   // Mails an die Beleg-Adresse bei Resend abholen (alle 15 Minuten, lib/belege/eingang.ts), auch ohne aktives Webhook-Ereignis
   if (now.getUTCMinutes() % 15 < 5 && process.env.RESEND_API_KEY) {
     after(() => import("@/lib/belege/eingang").then((m) => m.belegePostfachAbholen()).catch((e: unknown) => reportError(e, "cron-belege-postfach")));
+    // Hochgeladene, noch nicht ausgelesene Belege (große ZIP-Pakete) nachholen
+    after(async () => {
+      const { belegeAuslesenOffen } = await import("@/lib/belege/ablage");
+      const r = await belegeAuslesenOffen(100);
+      if (r.ausgelesen) await (await import("@/lib/belege/server")).belegeAbgleichen();
+    });
   }
   // Ausgangsrechnungen aus Stripe als Belege (nachts gegen 3/4 Uhr Berlin, lib/belege/stripe.ts)
   if (now.getUTCHours() === 2 && now.getUTCMinutes() >= 5 && now.getUTCMinutes() < 10 && process.env.STRIPE_SECRET_KEY) {

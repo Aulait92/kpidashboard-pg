@@ -1844,6 +1844,9 @@ model Offer {
   bonusWhatsAppAt         DateTime?
   bonusWhatsAppStatus     String?
   createdById             String?
+  // Stichtag für die Garantien (Ole, 23.11.2026): Erstellungsdatum der ersten Version desselben Angebots. Neue Versionen
+  // eines Angebots von vor GUARANTEES_UNTIL behalten so ihre Garantien (lib/garantien.ts garantieDatum).
+  garantieStichtag        DateTime?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 
@@ -2081,6 +2084,20 @@ model SalesActivity {
   occurredAt DateTime          @default(now())
 
   @@index([contactId, occurredAt])
+}
+
+// Vorlagen für E-Mails aus der Kontaktakte im Vertrieb (Ole, 23.11.2026, lib/vertrieb/crm-vorlagen.ts).
+// Platzhalter {anrede}, {vorname}, {nachname}, {firma}, {angebotslink}, {ole}. bodyDu = Du-Fassung (leer: wie body).
+// Gesendet wird über das verbundene Postfach des Admins (AdminMailbox, purpose „crm:<userId>“).
+model SalesMailTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String
+  body      String
+  bodyDu    String?
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model SalesTask {
@@ -5131,7 +5148,8 @@ model HvkReklamation {
   @@index([status])
 }
 
-/// Postfach, aus dem die App nur liest (Microsoft Graph, Mail.Read), z. B. für die HvK-Abrechnung. Eine Zeile je Zweck.
+/// Postfach eines Admin-Zwecks (Microsoft Graph bzw. Gmail), z. B. HvK-Abrechnung (nur lesen), PPL-Versand oder je Admin
+/// das eigene Postfach für E-Mails aus der Kontaktakte (purpose „crm:<userId>“, Mail.Send). Eine Zeile je Zweck.
 model AdminMailbox {
   id              String    @id @default(cuid())
   purpose         String    @unique

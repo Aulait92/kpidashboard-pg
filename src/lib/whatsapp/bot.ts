@@ -78,6 +78,7 @@ import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
 import { logTestLead } from "@/lib/testlead";
 import { nennungsRegel, vermittlerNennungKorrigieren } from "@/lib/vermittler-nennung";
 import { nenntTerminwunsch, zwischenfrageText, zwischenHinweis, zwischenKnoepfe, zwischenNachfrageText, ZWISCHENFRAGE_AKTIV } from "@/lib/whatsapp/zwischenfrage";
+import { ABSAGE_IM_CHAT_VERZOEGERUNG_MIN } from "@/lib/absage-nachfassen";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -1443,7 +1444,8 @@ export async function runBotTurn(
           content = "Es gibt keinen offenen Termin, der abgesagt werden könnte.";
         } else {
           try {
-            await cancelAppointment(upcoming.id, conversation.customerId, "lead");
+            // Nachfassen erst nach 2 Std.: der Assistent bietet gleich selbst einen neuen Termin an (lib/absage-nachfassen.ts)
+            await cancelAppointment(upcoming.id, conversation.customerId, "lead", true, { nachfassenNachMin: ABSAGE_IM_CHAT_VERZOEGERUNG_MIN });
             await persistInternal(conversation.id, "appointment_cancelled", {
               via: "whatsapp",
               grund: (tu.input as { grund?: unknown }).grund ?? null,

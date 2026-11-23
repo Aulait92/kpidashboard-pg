@@ -108,7 +108,8 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
     // 22 Zwecke je 3 Fassungen (inkl. Show-up: 15 Min., Wartet, Halbzeit-Erinnerung; Angebot senden, Nachfassen selbst gesendet, Glückwunsch, Bedenkzeit,
     // Erstanschreiben Hausrat), dazu A/B-Fassung b für followup_last und (v11, Ole 19.11.2026) für die 6 Erstanschreiben;
     // Erstanschreiben ab v7 nur mit PDF-Kopf; Kfz-Einstiegsfrage (Ole, 21.11.2026): 3 Zwecke je 3 Fassungen, a und b
-    expect(names).toHaveLength(105);
+    // Nachfassen nach Absage (Ole, 23.11.2026): followup_absage in Du, Sie, Sie ohne Namen
+    expect(names).toHaveLength(108);
     expect(names).toContain("pg_outreach_tkv_v2_b_sie");
     expect(names.some((n) => n.includes("ohnepdf"))).toBe(false);
     expect(names).toContain("pg_followup_last_v2_b_sie");

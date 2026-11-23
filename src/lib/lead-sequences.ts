@@ -51,6 +51,7 @@ import { displayProduct } from "@/lib/products";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
+import { waNummerFuerLead } from "@/lib/whatsapp/buchungsnummer";
 import { a, anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -61,6 +62,7 @@ import type { VorlageKey } from "@/lib/mail/vorlagen";
 import type { Werte } from "@/lib/mail/platzhalter";
 import { hatMailAntwort } from "@/lib/mail/kontakt-mail";
 import { BEDENKZEIT_AUFGABE, bedenkzeitNeustartText, tagKurz } from "@/lib/bedenkzeit";
+import { ABSAGE_FALLBACK_NOTE, ABSAGE_VERZOEGERUNG_MIN, absageText, absageZeitenText } from "@/lib/absage-nachfassen";
 
 export type SequenceKind =
   | "not_reached"
@@ -72,7 +74,10 @@ export type SequenceKind =
   | "silent"
   | "recall"
   | "nicht_erreicht_mail"
-  | "unterlagen";
+  | "unterlagen"
+  // Nachfassen nach einer Absage durch den Lead (Ole, 23.11.2026), Fassung A bzw. B des Splittests absage_nachfassen
+  | "absage"
+  | "absage_b";
 
 /** Abfolgen zum Angebot (Nachfassen, Vorab-Check, Thema aus dem Termin). */
 export const ANGEBOT_KINDS: SequenceKind[] = ["offer", "offer_selbst", "offer_bedenkzeit", "offer_selbst_bedenkzeit"];
@@ -83,6 +88,9 @@ export const istBedenkzeitAbfolge = (kind: string | null | undefined) => (BEDENK
 /** Begleit-Abfolgen (Pakete M4/M6): nur E-Mail bzw. Aufgabe, laufen neben den anderen und beenden keine. */
 export const BEGLEIT_KINDS: SequenceKind[] = ["nicht_erreicht_mail", "unterlagen"];
 export const istBegleitAbfolge = (kind: string | null | undefined) => (BEGLEIT_KINDS as string[]).includes(kind ?? "");
+/** Nachfassen nach einer Absage durch den Lead (lib/absage-nachfassen.ts), Fassung A bzw. B. */
+export const ABSAGE_KINDS: SequenceKind[] = ["absage", "absage_b"];
+export const istAbsageAbfolge = (kind: string | null | undefined) => (ABSAGE_KINDS as string[]).includes(kind ?? "");
 /** Aufgabe nach der Erinnerung „Unterlagen fehlen“ (gleicher Text wie UNTERLAGEN_NOTE in lib/mail/termin-erinnerung.ts). */
 export const UNTERLAGEN_AUFGABE = "Unterlagen nachfassen";
 /** Aufgabe, wenn der Assistent keine freien Zeiten findet (Ole, 22.11.2026, lib/whatsapp/bot.ts): persönlich melden. */
@@ -300,6 +308,41 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         slotText: (c, [z1, z2]) =>
           a(c.an, `${c.hi} kurze Nachfrage zum neuen Termin: Passt dir ${z1} oder ${z2}?`, `${c.hi} kurze Nachfrage zum neuen Termin: Passt Ihnen ${z1} oder ${z2}?`),
         fallbackNote: "Nicht erschienen: neuen Termin vereinbaren",
+      },
+    ],
+  },
+  // Nachfassen nach einer Absage durch den Lead (Ole, 23.11.2026: „Ja, bei jeder Absage nachfassen.“, lib/absage-nachfassen.ts):
+  // ein Schritt, 20 Minuten nach der Absage (im Chat abgesagt: 2 Stunden), im Versandfenster. Fassung A: offene Frage mit
+  // [Ja, neuer Termin] [Kein Bedarf mehr], außerhalb des Fensters die freigegebene Vorlage followup_noshow.
+  absage: {
+    label: "Termin abgesagt",
+    steps: [
+      {
+        day: ABSAGE_VERZOEGERUNG_MIN / (24 * 60),
+        action: "whatsapp",
+        purpose: "followup_absage",
+        params: (c) => [c.firstName],
+        // bis Meta die Absage-Vorlage freigibt: die freigegebene Vorlage „Nachfassen nach verpasstem Termin“
+        fallback: { purpose: "followup_noshow", params: (c) => [c.firstName] },
+        text: (c) => absageText({ an: c.an, hi: c.hi, person: vom(c) }),
+        fallbackNote: ABSAGE_FALLBACK_NOTE,
+      },
+    ],
+  },
+  // Fassung B: direkt zwei konkrete neue Zeiten (Zeit-Knöpfe), außerhalb des Fensters die freigegebene Vorlage followup
+  // mit zwei Terminvorschlägen; ohne Kalender die kurze Nachfrage
+  absage_b: {
+    label: "Termin abgesagt",
+    steps: [
+      {
+        day: ABSAGE_VERZOEGERUNG_MIN / (24 * 60),
+        action: "whatsapp",
+        purpose: "followup",
+        params: (c) => [c.firstName],
+        text: (c) => absageText({ an: c.an, hi: c.hi, person: vom(c) }),
+        slotText: (c, zeiten) => absageZeitenText({ an: c.an, hi: c.hi, person: vom(c) }, zeiten),
+        fallback: { purpose: "followup_noshow", params: (c) => [c.firstName] },
+        fallbackNote: ABSAGE_FALLBACK_NOTE,
       },
     ],
   },
@@ -937,20 +980,22 @@ async function sendStep(
     prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true, waConsent: true, waUnavailableAt: true } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: seq.customerId }, select: { status: true } }),
   ]);
+  // WhatsApp-Nummer: aus der Online-Buchung übernommen (Formular-Nummer ohne WhatsApp, lib/whatsapp/buchungsnummer.ts), sonst Lead.phone
+  const phone = lead ? await waNummerFuerLead({ id: seq.leadId, customerId: seq.customerId, phone: lead.phone }) : null;
   // Kein WhatsApp (Nummer nicht erreichbar, lib/whatsapp/kein-whatsapp.ts): Anruf statt WhatsApp, außer der Lead hat selbst geschrieben
-  const noWa = !!lead?.waUnavailableAt && lead.phone
-    ? (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId: seq.customerId, contactPhone: lead.phone } } })) === 0
+  const noWa = !!lead?.waUnavailableAt && phone
+    ? (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId: seq.customerId, contactPhone: phone } } })) === 0
     : false;
-  if (!lead?.phone || account?.status !== "connected" || lead.waConsent === "nein" || noWa) {
+  if (!lead || !phone || account?.status !== "connected" || lead.waConsent === "nein" || noWa) {
     const r = await createCallTask(seq.leadId, step.fallbackNote, now);
     return {
       ...base,
       result: r,
-      detail: !lead?.phone ? "Keine Handynummer" : lead.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : noWa ? "Nicht per WhatsApp erreichbar" : "WhatsApp nicht verbunden",
+      detail: !phone ? "Keine Handynummer" : lead?.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : noWa ? "Nicht per WhatsApp erreichbar" : "WhatsApp nicht verbunden",
     };
   }
   const an = await anspracheOf(seq.customerId);
-  const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone: lead.phone, name: lead.name });
+  const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone, name: lead.name });
   const angebot = istAngebotsAbfolge(seq.kind);
   const ctx: Ctx = {
     firstName: firstNameOf(lead.name),
@@ -964,7 +1009,7 @@ async function sendStep(
   let fensterZu = false;
   if (step.onlyInWindow) {
     const conv = await prisma.conversation.findUnique({
-      where: { customerId_contactPhone: { customerId: seq.customerId, contactPhone: lead.phone } },
+      where: { customerId_contactPhone: { customerId: seq.customerId, contactPhone: phone } },
       select: { windowExpiresAt: true },
     });
     if (!conv?.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) {
@@ -987,6 +1032,11 @@ async function sendStep(
       text = step.slotText ? step.slotText(ctx, zeiten.labels) : noticeText("followup", ctx.an, who, ctx.kontakt, zeiten.labels);
       // Ältere freigegebene „followup“-Fassung (nur Name): ohne Zeiten
       buttons = { buttonPayloads: zeiten.payloads, legacyParams: [ctx.firstName] };
+    } else if (istAbsageAbfolge(seq.kind)) {
+      // Absage, Fassung B ohne freie Zeiten: wie Fassung A (Frage nach neuem Termin, Vorlage followup_absage,
+      // bis zur Freigabe followup_noshow über step.fallback)
+      purpose = "followup_absage";
+      params = [ctx.firstName];
     } else {
       purpose = "followup_nudge";
       buttons = { textButtons: [] };
@@ -1005,7 +1055,7 @@ async function sendStep(
   try {
     const { mode } = await sendWhatsAppNotice({
       customerId: seq.customerId,
-      to: lead.phone,
+      to: phone,
       purpose,
       params,
       text,
@@ -1021,7 +1071,7 @@ async function sendStep(
       try {
         const { mode } = await sendWhatsAppNotice({
           customerId: seq.customerId,
-          to: lead.phone,
+          to: phone,
           purpose: step.fallback.purpose,
           params: step.fallback.params(ctx),
           text,

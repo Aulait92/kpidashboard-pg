@@ -49,7 +49,7 @@ export type ErsteWocheWahl = Pick<ErsteWoche, "productKey" | "price" | "quantity
 export const eurCent = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** Abbuchungszeitpunkt der ersten Woche. */
-export const ERSTE_WOCHE_ABBUCHUNG = "Abbuchung nach Prüfung Ihrer Registernummer";
+export const ERSTE_WOCHE_ABBUCHUNG = "Abbuchung zum Start, nach Prüfung Ihrer Registernummer";
 
 /** Steuerhinweis zum Betrag der ersten Woche (ausführlich, mit Bedingung). */
 export function ersteWocheSteuerText(steuer: Steuer): string {
@@ -71,7 +71,7 @@ export function ersteWocheZahlen(w: Pick<ErsteWocheWahl, "productKey" | "price" 
 /**
  * Punkt in „Das vereinbaren Sie mit dem Klick“ und in der Auftragsbestätigung:
  * „Erste Woche: 30 Leads TKV-Katze zu je 17,00 €, zusammen 510,00 €, umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte
- * Versicherungsvermittler (sonst zzgl. 19 % USt.), eigene Rechnung, Abbuchung nach Prüfung Ihrer Registernummer.
+ * Versicherungsvermittler (sonst zzgl. 19 % USt.), eigene Rechnung, Abbuchung zum Start, nach Prüfung Ihrer Registernummer.
  * Danach jede Woche dieselbe Menge, in der App jederzeit änderbar.“
  */
 export function ersteWocheVertragszeile(w: ErsteWocheWahl): string {
@@ -82,7 +82,7 @@ export function ersteWocheVertragszeile(w: ErsteWocheWahl): string {
 
 /**
  * Zeile über dem Annahmeknopf statt „Jetzt fällig: 0 €“: Betrag fett, Rest als Zusatz.
- * „Erste Woche: 510,00 € (30 Leads, umsatzsteuerfrei), Abbuchung nach Prüfung Ihrer Registernummer“
+ * „Erste Woche: 510,00 € (30 Leads, umsatzsteuerfrei), Abbuchung zum Start, nach Prüfung Ihrer Registernummer“
  */
 export function ersteWocheFaellig(w: Pick<ErsteWocheWahl, "productKey" | "price" | "quantity">): { label: string; betrag: string; zusatz: string } {
   const z = ersteWocheZahlen(w);
@@ -92,12 +92,12 @@ export function ersteWocheFaellig(w: Pick<ErsteWocheWahl, "productKey" | "price"
 /**
  * Zeile in der Angebotsmail (Sie oder Du, ohne Gedankenstriche): „Erste Woche: 20 Leads TKV-Katze zu je 17,00 €,
  * zusammen 340,00 €, umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler (sonst zzgl. 19 % USt.).
- * Die Anzahl wählen Sie bei der Annahme, abgebucht wird erst nach Prüfung Ihrer Registernummer.“
+ * Die Anzahl wählen Sie bei der Annahme, abgebucht wird zum Start, nach Prüfung Ihrer Registernummer.“
  */
 export function ersteWocheMailzeile(w: Omit<ErsteWocheWahl, "autoRenew">, du: boolean): string {
   const z = ersteWocheZahlen(w);
   const wahl = du
-    ? "Die Anzahl wählst du bei der Annahme, abgebucht wird erst nach Prüfung deiner Registernummer."
-    : "Die Anzahl wählen Sie bei der Annahme, abgebucht wird erst nach Prüfung Ihrer Registernummer.";
+    ? "Die Anzahl wählst du bei der Annahme, abgebucht wird zum Start, nach Prüfung deiner Registernummer."
+    : "Die Anzahl wählen Sie bei der Annahme, abgebucht wird zum Start, nach Prüfung Ihrer Registernummer.";
   return `Erste Woche: ${w.quantity} Leads ${w.name} zu je ${eurCent(z.jeLead)}, zusammen ${eurCent(z.summe)}${steuerAnhang(z.steuer)}. ${wahl}`;
 }

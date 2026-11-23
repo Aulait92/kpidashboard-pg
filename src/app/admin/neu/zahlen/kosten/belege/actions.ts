@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { audit } from "@/lib/audit";
 
@@ -21,22 +22,32 @@ export async function belegeJetztAbgleichenAction() {
   redirect(`${ZIEL}?ok=${r.zugeordnet}`);
 }
 
-/** Belege hochladen (PDF, Bilder, ZIP, mehrere auf einmal). */
+/**
+ * Belege hochladen (PDF, Bilder, ZIP, mehrere auf einmal). Dateien werden sofort gespeichert; das Auslesen und Zuordnen
+ * läuft danach im Hintergrund (große ZIP-Pakete würden sonst die Anfrage sprengen).
+ */
 export async function belegeHochladenAction(form: FormData) {
   const session = await requireAuth();
   const dateien = form.getAll("dateien").filter((f): f is File => typeof f === "object" && "arrayBuffer" in f && f.size > 0);
   if (!dateien.length) redirect(`${ZIEL}?fehler=${encodeURIComponent("Keine Datei gewählt.")}`);
-  const { belegAblegen, zaehle } = await import("@/lib/belege/ablage");
+  const { belegAblegen, zaehle, belegeAuslesenOffen } = await import("@/lib/belege/ablage");
   const alle = [];
   for (const f of dateien.slice(0, 50)) {
-    alle.push(...(await belegAblegen({ daten: new Uint8Array(await f.arrayBuffer()), name: f.name, quelle: "upload", absender: session.email })));
+    alle.push(...(await belegAblegen({ daten: new Uint8Array(await f.arrayBuffer()), name: f.name, quelle: "upload", absender: session.email, spaeter: true })));
   }
-  const { belegeAbgleichen } = await import("@/lib/belege/server");
-  const zugeordnet = await belegeAbgleichen().catch(() => 0);
   const z = zaehle(alle);
-  await audit("belege.upload", { details: { ...z, zugeordnet } });
+  await audit("belege.upload", { details: { ...z } });
+  after(async () => {
+    const { belegeAbgleichen } = await import("@/lib/belege/server");
+    // in Runden, damit auch Hunderte Belege durchlaufen
+    for (let i = 0; i < 20; i++) {
+      const r = await belegeAuslesenOffen(50).catch(() => ({ ausgelesen: 0, doppelt: 0, fehler: 0 }));
+      if (!r.ausgelesen && !r.doppelt && !r.fehler) break;
+    }
+    await belegeAbgleichen().catch(() => 0);
+  });
   revalidatePath("/admin/neu/zahlen", "layout");
-  redirect(`${ZIEL}?hochgeladen=${z.neu}&doppelt=${z.doppelt}&fehlerhaft=${z.kein_beleg + z.fehler + z.virus}&ok=${zugeordnet}`);
+  redirect(`${ZIEL}?hochgeladen=${z.neu}&doppelt=${z.doppelt}&fehlerhaft=${z.kein_beleg + z.fehler + z.virus}&imHintergrund=1`);
 }
 
 /** Monatspaket an das Steuerbüro senden (nur auf diesen Klick). */

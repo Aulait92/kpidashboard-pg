@@ -230,6 +230,18 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     expect(await rescheduleSalesMeeting(res.manageToken, at("17:00", 2))).toEqual({ ok: false, error: "closed" });
   });
 
+  it("nicht öffentlich buchbarer Typ (z. B. Entscheidungs-Call): Verschieben per Link geht trotzdem (23.11.2026)", async () => {
+    const res = await bookSalesMeeting({ type, start: at("10:00", 2), input: input("privat") });
+    if (!res.ok) throw new Error("Buchung fehlgeschlagen");
+    await prisma.salesBookingType.update({ where: { id: type.id }, data: { active: false } });
+    try {
+      const moved = await rescheduleSalesMeeting(res.manageToken, at("15:00", 2));
+      expect(moved.ok).toBe(true);
+    } finally {
+      await prisma.salesBookingType.update({ where: { id: type.id }, data: { active: true } });
+    }
+  });
+
   it("absagen per Link: abgesagt, Kalender gelöscht, Aufgabe zum Nachfassen, Mail mit Link zur Buchungsseite", async () => {
     const res = await bookSalesMeeting({ type, start: at("08:00", 2), input: input("absage") });
     if (!res.ok) throw new Error("Buchung fehlgeschlagen");

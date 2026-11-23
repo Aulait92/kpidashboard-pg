@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef, useState, useTransition } from "reac
 import { GitMerge, Pencil, Star, X } from "lucide-react";
 import {
   addContactEmailAction,
+  addContactPhoneAction,
   makePrimaryEmailAction,
   makePrimaryPhoneAction,
   mergeContactsAction,
@@ -69,6 +70,16 @@ export type ExtraPhone = { id: string; phone: string; display: string; kind: str
 /** Haupt- und weitere Telefonnummern (automatisch erkannt aus Buchungen, Signaturen, Formularen). */
 export function ContactPhones({ contactId, phone, extras }: { contactId: string; phone: string | null; extras: ExtraPhone[] }) {
   const [pending, start] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const [state, action, adding] = useActionState<ContactEmailState, FormData>(async (prev, f) => {
+    const r = await addContactPhoneAction(prev, f);
+    if (r?.ok) {
+      formRef.current?.reset();
+      if (detailsRef.current) detailsRef.current.open = false;
+    }
+    return r;
+  }, null);
   return (
     <div className={clsx("space-y-1.5", pending && "opacity-60")} data-kontakt-telefon>
       {phone ? (
@@ -93,6 +104,16 @@ export function ContactPhones({ contactId, phone, extras }: { contactId: string;
           />
         )}
       />
+      {/* Wie „+ Weitere E-Mail“: von Hand eine zusätzliche Nummer (Ole, 23.11.2026) */}
+      <details ref={detailsRef} open={!!state?.error || undefined} data-weitere-telefon>
+        <summary className="cursor-pointer list-none text-xs text-slate-500 hover:text-slate-700 [&::-webkit-details-marker]:hidden">+ Weitere Telefonnummer</summary>
+        <form ref={formRef} action={action} className="flex flex-wrap gap-2 pt-1">
+          <input type="hidden" name="contactId" value={contactId} />
+          <input name="phone" type="tel" inputMode="tel" autoComplete="off" required placeholder="z. B. 0171 1234567" className="input h-8 min-w-[11rem] flex-1 text-sm" />
+          <button className="btn-ghost h-8 text-sm" disabled={adding}>Hinzufügen</button>
+        </form>
+        {state?.error ? <p className="mt-1 text-xs text-rose-600">{state.error}</p> : null}
+      </details>
     </div>
   );
 }

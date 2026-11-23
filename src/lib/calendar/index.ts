@@ -554,6 +554,8 @@ export async function cancelAppointment(
   customerId: string,
   by: "lead" | "advisor" | "team" | "system" = "team",
   notifyLead = true,
+  /** Absage durch den Lead: Nachfassen per WhatsApp nach so vielen Minuten (Standard 20, lib/absage-nachfassen.ts). */
+  opts: { nachfassenNachMin?: number } = {},
 ): Promise<{ calendarDeleted: boolean; note?: string }> {
   const appt = await prisma.appointment.findFirst({
     where: { id: appointmentId, customerId },
@@ -598,6 +600,13 @@ export async function cancelAppointment(
   }
   if (notifyLead) {
     await sendLeadEmail(appt.id, "cancelled").catch((e) => console.error("[lead email]", e));
+  }
+  // Nachfassen nach jeder Absage durch den Lead (Ole, 23.11.2026, lib/absage-nachfassen.ts). Nicht beim Verschieben
+  // (rescheduleAppointment sagt die alte Zeit ohne Mail ab, notifyLead = false).
+  if (by === "lead" && notifyLead && appt.leadId) {
+    await import("@/lib/absage-nachfassen-server")
+      .then((m) => m.startAbsageNachfassen(appt.id, { verzoegerungMin: opts.nachfassenNachMin }))
+      .catch((e) => console.error("[absage-nachfassen]", e));
   }
   return { calendarDeleted, note };
 }

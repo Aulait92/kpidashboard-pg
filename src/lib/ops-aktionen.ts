@@ -168,6 +168,31 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r === "nichts" ? { ok: false, error: "Nichts versucht (keine Sperre „kein WhatsApp“ oder keine Nummer)." } : { ok: true, info: r === "termin" ? "Terminbestätigung per WhatsApp versucht." : "Erstanschreiben per WhatsApp versucht." };
     },
   },
+  whatsapp_buchungsnummer: {
+    beschreibung: "Lead mit „kein WhatsApp“ auf der Formular-Nummer hat online mit anderer Handynummer gebucht: diese Nummer als WhatsApp-Kontakt übernehmen (Sperre und SMS-Strecke aus), dann mit Termin die Terminbestätigung, nach einer Absage das Nachfassen per freigegebener Vorlage (followup_noshow, sonst followup bzw. followup_nudge)",
+    felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
+    run: async (p) => {
+      const name = text(p.name);
+      if (name.length < 3) return { ok: false, error: "Name zu kurz." };
+      const leads = await prisma.lead.findMany({ where: { customerId: text(p.customerId), name: { contains: name, mode: "insensitive" }, erasedAt: null }, select: { id: true }, take: 3 });
+      if (leads.length !== 1) return { ok: false, error: `${leads.length} passende Leads, bitte genauer.` };
+      const r = await (await import("@/lib/whatsapp/buchungsnummer")).buchungsnummerNachtragen(leads[0].id);
+      if (!r.ok) return r;
+      const n = r.nachricht;
+      await audit("lead.whatsapp_buchungsnummer", {
+        entity: "Lead",
+        entityId: leads[0].id,
+        details: { nummer: `…${r.nummer.slice(-4)}`, uebernommen: r.uebernommen, nachricht: n === null ? null : n === "terminbestaetigung" ? n : n.gesendet ? n.zweck : `nicht: ${n.grund}` },
+        actor: OPS_ACTOR,
+      });
+      const kopf = `${r.uebernommen ? "Nummer übernommen" : "Nummer war schon übernommen"} (…${r.nummer.slice(-4)}).`;
+      if (n === null) return { ok: true, info: `${kopf} ${r.hinweis ?? ""}`.trim() };
+      if (n === "terminbestaetigung") return { ok: true, info: `${kopf} Terminbestätigung per WhatsApp versucht.` };
+      return n.gesendet
+        ? { ok: true, info: `${kopf} Nachfassen nach der Absage gesendet: ${n.modus === "template" ? `Vorlage ${n.zweck}` : `Freitext (${n.zweck}, 24-h-Fenster offen)`}.` }
+        : { ok: false, error: `${kopf} Nachfassen nicht gesendet: ${n.grund}` };
+    },
+  },
   eigenbeleg_erstellen: {
     beschreibung: "Eigenbeleg (PDF) für eine Ausgabe ohne Originalbeleg erstellen, ablegen und fest zuordnen (kleine Beträge, auf Oles Anweisung)",
     felder: { umsatzId: "ID der Zahlung (diagnose q=belege&liste=offen)", gegenstand: "was gekauft wurde", zweck: "betrieblicher Zweck", empfaenger: "optional: Name des Empfängers", grund: "optional" },

@@ -45,5 +45,8 @@ export const SPLITTEST_HYPOTHESE: Record<string, string> = {
   // lib/vertrieb/nicht-erreicht.ts, Auswertung Diagnose q=vertrieb-nicht-erreicht)
   vertrieb_nicht_erreicht:
     "Eine Entweder-oder-Frage („Erreiche ich Sie besser vormittags oder nachmittags?“) lässt sich mit einem Wort beantworten und holt mehr Antworten bzw. Termine binnen 72 Stunden als die offene Bitte, eine passende Zeit zu nennen.",
+  // Ole 23.11.2026 (lib/experimente.ts absage_nachfassen, Texte lib/absage-nachfassen.ts)
+  absage_nachfassen:
+    "Wer nach einer Absage gleich zwei konkrete neue Zeiten sieht, muss nichts überlegen und bucht öfter neu als nach der offenen Frage nach einem neuen Termin.",
   termin_zusage: "Endet die Buchungsbestätigung mit der Zusage-Frage „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], erscheinen mehr Leads zum Termin.",
 };

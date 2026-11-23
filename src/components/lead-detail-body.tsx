@@ -1,4 +1,5 @@
 import { LeadLegalCard } from "@/components/lead-legal-card";
+import { DochWhatsAppButton } from "@/components/doch-whatsapp-button";
 import { isHealthLabel, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { AlertTriangle, ClipboardList, MessageCircle, PhoneCall } from "lucide-react";
 import { NextStepButton, NextStepPrompt } from "@/components/next-step";
@@ -558,9 +559,11 @@ export async function LeadDetailBody({
       ) : null}
 
       {noWhatsApp ? (
-        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-900" data-kein-whatsapp>
-          <PhoneCall className="h-4 w-4 shrink-0" />
-          <span className="min-w-0 flex-1">
+        // Handy (23.11.2026): Text über die volle Breite, Aktionen darunter (vorher Text in schmaler Spalte neben der Nummer)
+        <div className="mb-5 flex items-start gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900" data-kein-whatsapp>
+          <PhoneCall className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="min-w-0 flex-1">
+          <p>
             {festnetz ? (
               <>
                 <b>Keine Handynummer:</b> Festnetznummer ohne WhatsApp, der Assistent schreibt nicht. Bitte anrufen.
@@ -581,12 +584,16 @@ export async function LeadDetailBody({
               : lead.waUnavailableMailAt
                 ? " Eine E-Mail mit Ihrem Terminlink ist raus."
                 : ""}
-          </span>
-          {lead.phone ? (
-            <a href={`tel:+${lead.phone}`} className="font-semibold">
-              {formatPhone(lead.phone)} anrufen
-            </a>
-          ) : null}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-5">
+            {lead.phone ? (
+              <a href={`tel:+${lead.phone}`} className="inline-flex min-h-10 items-center font-semibold">
+                {formatPhone(lead.phone)} anrufen
+              </a>
+            ) : null}
+            {festnetz || !team.userId ? null : <DochWhatsAppButton leadId={lead.id} />}
+          </div>
+          </div>
         </div>
       ) : null}
 

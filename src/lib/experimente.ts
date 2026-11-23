@@ -139,6 +139,15 @@ export const EXPERIMENTE = {
     a: "Standard (Ole): „Kein Problem! Suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link> Oder schreiben Sie mir einfach Ihren Wunschtag.“",
     b: "Neu: Wunschtag im Chat zuerst, Link am Ende: „Kein Problem! Schreiben Sie mir einfach Ihren Wunschtag, oder suchen Sie sich hier selbst eine passende Zeit bei Herrn Kannapinn aus: <Link>“",
   },
+  // Nachfassen nach einer Absage durch den Lead (Ole, 23.11.2026: „Ja, bei jeder Absage nachfassen.“; Lernbuch
+  // docs/firma/ab-tests.md, Hypothese lib/ab-hypothesen.ts, Texte lib/absage-nachfassen.ts). Einheit Lead-ID, zugeteilt
+  // beim Planen des Nachfassens (lib/absage-nachfassen-server.ts): Fassung a = Abfolge „absage“, b = „absage_b“.
+  absage_nachfassen: {
+    titel: "Nachfassen nach einer Absage durch den Lead",
+    ziel: "termin_gebucht",
+    a: "Standard (Ole): „Schade, dass es mit dem Termin nicht geklappt hat. Sollen wir einen neuen Termin mit Herrn Kannapinn finden?“ [Ja, neuer Termin] [Kein Bedarf mehr]; als Vorlage followup_absage (bis zur Meta-Freigabe followup_noshow)",
+    b: "Neu: gleich, aber direkt mit zwei konkreten Zeiten „Passt Ihnen Di 10 Uhr oder Mi 16 Uhr für einen neuen Termin mit Herrn Kannapinn?“ (Zeit-Knöpfe); als Vorlage followup mit zwei Terminvorschlägen",
+  },
   // „Entscheidet noch jemand mit?“ vor dem Terminvorschlag: kein Splittest mehr (Ole, 22.11.2026: immer eigene Frage vor der
   // Buchung), siehe docs/firma/ab-tests.md.
   // Eigener PKV-Funnel (lib/funnel, Ole 20.11.2026): Beispiel, AUS und an keinem Schritt mehr (nur Muster).

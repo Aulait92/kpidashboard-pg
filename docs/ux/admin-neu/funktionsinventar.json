@@ -5458,5 +5458,17 @@
   "bereich": "verkaufen",
   "status_neu": "vorhanden",
   "ort_neu": "src/components/admin-neu/vertrieb/whatsapp-verlauf.tsx"
+ },
+ {
+  "heute": "neu (22.11.2026)",
+  "funktion": "Knöpfe Gewonnen und Verloren in der Kontaktakte",
+  "quelle": "app/admin/vertrieb/actions.ts:gewonnenVerlorenAction",
+  "neu": "Kontaktakte › Kopf",
+  "status": "ergänzen",
+  "demo_view": "kontakt",
+  "id": "actions-gewonnenverlorenaction--gewonnen-verloren-knoepfe",
+  "bereich": "verkaufen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  }
 ]

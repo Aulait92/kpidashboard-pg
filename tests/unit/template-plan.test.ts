@@ -25,11 +25,12 @@ describe("Vorlagen-Plan", () => {
   it("Kampagnen-Vorlagen nur mit Bestandskunden-Modul", () => {
     // inkl. Show-up-Paket (freigegeben 17.11.2026): 15 Minuten vorher, „wartet im Videoraum“; Angebot (P3, 17.11.2026); Halbzeit-Erinnerung (20.11.2026)
     // Kfz-Einstiegsfrage je Anlass (Ole, 21.11.2026): outreach_kfz, outreach_kfz_wechsel, outreach_kfz_neu
-    expect(purposesFor({ bestand: false })).toHaveLength(25);
+    // Nachfassen nach Absage (Ole, 23.11.2026): followup_absage
+    expect(purposesFor({ bestand: false })).toHaveLength(26);
     expect(purposesFor({ bestand: false })).toContain("reschedule");
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["reminder_start", "appt_waiting", "appt_halbzeit"]));
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(29);
+    expect(purposesFor({ bestand: true })).toHaveLength(30);
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat", "outreach_kfz", "outreach_kfz_wechsel", "outreach_kfz_neu"]));
   });
 

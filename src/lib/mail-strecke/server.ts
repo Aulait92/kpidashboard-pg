@@ -182,6 +182,7 @@ async function leadKontext(streckeId: string) {
           needData: true,
           erasedAt: true,
           reached: true,
+          waUnavailableAt: true,
           customer: { select: { leadAddress: true, name: true, onboarding: { select: { websiteInfo: true } }, calendarConnection: { select: { status: true, bookingSlug: true } } } },
         },
       },
@@ -741,7 +742,11 @@ export async function terminFestmachen(streckeId: string, o: { start: string; mo
   }
   try {
     if (neueNummer && !lead.phone) await prisma.lead.update({ where: { id: lead.id }, data: { phone: neueNummer } });
-    const phone = lead.phone ?? neueNummer;
+    // Andere Nummer und die bisherige hat kein WhatsApp (Ole, 23.11.2026): neue Nummer als WhatsApp-Kontakt
+    // (übernommen wird erst nach erfolgreicher Buchung, lib/whatsapp/buchungsnummer.ts)
+    const bn = await import("@/lib/whatsapp/buchungsnummer");
+    const uebernehmen = !!neueNummer && !!lead.phone && bn.buchungsnummerUebernehmen({ formPhone: lead.phone, neu: neueNummer, waUnavailableAt: lead.waUnavailableAt });
+    const phone = uebernehmen ? neueNummer : (lead.phone ?? neueNummer);
     const conv = phone ? await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId: lead.customerId, contactPhone: phone } }, select: { id: true } }) : null;
     const { bookAppointment } = await import("@/lib/calendar");
     const { buildEventDescription, eventSummary } = await import("@/lib/whatsapp/event-text");
@@ -760,7 +765,8 @@ export async function terminFestmachen(streckeId: string, o: { start: string; mo
       notifyLead: false,
       bookedVia: "mail_strecke",
     });
-    await prisma.appointment.update({ where: { id: res.appointmentId }, data: { einladungAusstehend: now } });
+    const u = uebernehmen ? await bn.uebernimmBuchungsnummer(lead.id, neueNummer!, { now }).catch(() => null) : null;
+    await prisma.appointment.update({ where: { id: res.appointmentId }, data: { einladungAusstehend: now, ...(u?.ok && !conv ? { conversationId: u.conversationId } : {}) } });
     await prisma.leadMailStrecke.update({ where: { id: s.id }, data: { appointmentId: res.appointmentId, gebuchtAt: now, buchungAt: null, schritt: "gebucht", antwortAt: now, reaktionAt: s.reaktionAt ?? now } });
     const { slotLabel } = await import("@/lib/whatsapp/termin-vorschlaege");
     await logLeadHistory(lead.id, "status", `Termin über die E-Mail-Strecke gebucht: ${slotLabel(res.start)}, ${o.mode === "video" ? "Video" : "Telefon"}.`, { customerId: lead.customerId, userId: null }).catch(() => null);

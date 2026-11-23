@@ -188,3 +188,36 @@ export async function adminEndPauseAction(fd: FormData) {
   await endPauseNow(customerId, { admin: true });
   refresh(contactId);
 }
+
+/** „2026-11-25T10:00“ (deutsche Ortszeit) → Zeitpunkt. */
+function berlinLokal(s: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) return null;
+  const roh = new Date(`${s}:00Z`);
+  const tz = (zone: string) => new Date(roh.toLocaleString("en-US", { timeZone: zone })).getTime();
+  return new Date(roh.getTime() - (tz("Europe/Berlin") - tz("UTC")));
+}
+
+/**
+ * Onboarding-Termin (60 Minuten) für den Kunden buchen (Ole, 23.11.2026): im Team-Kalender mit Video-Link, Einladung an
+ * den Login des Kunden, gespeichert wie der Hilfetermin (Onboarding.helpCallAt, lib/help-call.ts).
+ */
+export async function onboardingTerminBuchenAction(fd: FormData) {
+  const session = await requireAuth();
+  const id = String(fd.get("id") ?? "");
+  const zurueck = String(fd.get("zurueck") ?? "/admin/neu");
+  const ob = await prisma.onboarding.findUnique({ where: { id }, select: { customerId: true, salesContactId: true, customer: { select: { name: true } } } });
+  if (!ob) redirect(zurueck);
+  const andere = String(fd.get("andereZeit") ?? "").trim();
+  const start = andere ? berlinLokal(andere) : new Date(String(fd.get("start") ?? ""));
+  const ziel = (p: string) => `${zurueck}${zurueck.includes("?") ? "&" : "?"}${p}#onboarding`;
+  if (!start || Number.isNaN(start.getTime())) redirect(ziel(`onboardingTermin=${encodeURIComponent("Bitte eine Zeit wählen.")}`));
+  const { bookHelpCall } = await import("@/lib/help-call");
+  const r = await bookHelpCall(ob.customerId, start.toISOString(), null, {
+    minutes: 60,
+    summary: `performancegrowth: Onboarding (${ob.customer.name})`,
+    description: "60 Minuten per Video: Wir richten Ihr Konto gemeinsam ein und gehen alle Schritte bis zum Start durch. Bitte am Computer teilnehmen, damit Sie Ihren Bildschirm teilen können.",
+  });
+  await audit("onboarding.termin", { entity: "Onboarding", entityId: id, details: { start: start.toISOString(), ok: r.ok, ...(r.ok ? {} : { error: r.error }) }, actor: { email: session.email, role: "admin" } }).catch(() => null);
+  refresh(ob.salesContactId);
+  redirect(ziel(r.ok ? "onboardingTermin=ok" : `onboardingTermin=${encodeURIComponent(r.error)}`));
+}

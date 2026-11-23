@@ -17,6 +17,10 @@ import { pauseAufhebenAction, zdrNachweisAction } from "./policen-actions";
 import { placesDailyLimit, placesKey, placesUsedToday } from "@/lib/vertrieb/contact-enrich";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
 import { zugang as carddavZugang } from "@/lib/carddav/dav";
+import { CRM_ANBIETER_LABEL, crmAnbieterVerfuegbar, crmPostfachVon } from "@/lib/vertrieb/crm-postfach";
+import { CRM_POSTFACH_MELDUNG } from "@/lib/vertrieb/crm-postfach-routes";
+import { crmPostfachTrennenAction } from "@/app/admin/neu/vertrieb/crm-mail-actions";
+import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Anbindungen & Import | performancegrowth Admin" };
@@ -27,6 +31,8 @@ export const metadata = { title: "Anbindungen & Import | performancegrowth Admin
 // Webhook für Kundenformulare) und /admin/marketing/linkedin (Verbindung). Bausteine und Server Actions wie dort.
 // UX-Umbau 20.11.2026: Zapier- und Airtable-Texte raus (Webhooks heißen nach dem, was ankommt), „KI für Unterlagen“
 // als Zeile in derselben Liste statt eigener Karte; der Team-Kalender liegt unter Einrichtung neuer Kunden.
+// „E-Mail-Postfach“ (23.11.2026): je Admin das eigene Postfach für E-Mails aus der Kontaktakte (lib/vertrieb/crm-postfach.ts),
+// steht oben, weil es die einzige Anbindung je Person ist; ?postfach=<stand> kommt vom Verbinden zurück.
 
 function Quelle({
   name,
@@ -87,9 +93,13 @@ function Check({ ok, label }: { ok: boolean; label: string }) {
 
 const zuletzt = (d?: Date | null) => (d ? `Zuletzt ${fmtDateTime(d)}` : "Noch nichts empfangen");
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ postfach?: string }> }) {
   await connection();
-  await requireAuth();
+  const session = await requireAuth();
+  const postfachStand = (await searchParams).postfach;
+  const postfachMeldung = postfachStand ? (CRM_POSTFACH_MELDUNG[postfachStand] ?? null) : null;
+  const crm = await crmPostfachVon(session.userId);
+  const crmAnbieter = crmAnbieterVerfuegbar();
   const h = await headers();
   const origin = process.env.APP_URL?.replace(/\/$/, "") || `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
   const token = process.env.VERTRIEB_WEBHOOK_TOKEN;
@@ -149,6 +159,40 @@ export default async function Page() {
       <Card>
         <CardHeader title="Dienste" hint="grün: läuft" />
         <ul className={LISTE} data-funktion="page--status-je-quelle-instantly-calendly-formulare page-copyfield--webhook-adressen-kopieren-und-anleitung">
+          <Quelle
+            name="E-Mail-Postfach"
+            was="Ihr eigenes Postfach für E-Mails aus dem Kontakt. Gesendetes liegt in Ihrem Gesendet-Ordner und im Verlauf."
+            ok={!!crm && crm.status === "ok"}
+            status={crm ? (crm.status === "ok" ? `${crm.email} verbunden` : `${crm.email}: bitte neu verbinden`) : "Nicht verbunden"}
+          >
+            {postfachMeldung ? <p className={postfachMeldung.ok ? "text-emerald-700" : "text-amber-800"}>{postfachMeldung.text}</p> : null}
+            {crm?.lastError && crm.status !== "ok" ? <p className="text-amber-800">Letzter Fehler: {crm.lastError}</p> : null}
+            <div className="flex flex-wrap items-center gap-2">
+              {crm ? <span className="min-w-0 flex-1">{CRM_ANBIETER_LABEL[crm.provider]}</span> : null}
+              {crmAnbieter.map((a, i) => (
+                <a key={a} href={`/api/admin/crm-postfach/verbinden?anbieter=${a}`} className={buttonClass(!crm && i === 0 ? "primary" : "secondary", "md")}>
+                  {crm && crm.provider === a ? "Neu verbinden" : a === "google" ? "Mit Google verbinden" : "Mit Microsoft verbinden"}
+                </a>
+              ))}
+              {crm ? (
+                <form action={crmPostfachTrennenAction}>
+                  <Button type="submit" variant="ghost">
+                    Trennen
+                  </Button>
+                </form>
+              ) : null}
+            </div>
+            {!crmAnbieter.length ? <p className="text-amber-700">MICROSOFT_CLIENT_ID/SECRET/REDIRECT_URI fehlen in Railway.</p> : null}
+            {microsoftAdminConsentUrl(base || undefined) ? (
+              <p className="text-[color:var(--muted)]">
+                Meldet Microsoft „Genehmigung erforderlich“: einmal mit dem Microsoft-Administratorkonto die{" "}
+                <a href={microsoftAdminConsentUrl(base || undefined)!} target="_blank" rel="noreferrer" className="text-[color:var(--brand)] hover:underline">
+                  Microsoft-Freigabe
+                </a>{" "}
+                erteilen, danach verbinden.
+              </p>
+            ) : null}
+          </Quelle>
           <Quelle name="Instantly" was="Cold Mails: gesendet, geöffnet, Antworten. Grün, wenn in den letzten 7 Tagen etwas ankam." ok={isWithinDays(lastMail?.createdAt, 7)} status={zuletzt(lastMail?.createdAt)}>
             {adresse(hook("/api/vertrieb/instantly/webhook"))}
             <Schritte steps={["Instantly › Settings › Integrations › Webhooks", "Bestehenden Webhook bearbeiten, Adresse ersetzen, „All Events“"]} />
