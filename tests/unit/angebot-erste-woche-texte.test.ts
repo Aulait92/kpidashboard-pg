@@ -49,9 +49,9 @@ describe("Texte zur ersten Woche", () => {
   });
   it("Angebotsmail in Sie- und Du-Form", () => {
     expect(nb(ersteWocheMailzeile({ ...katze, quantity: 20 }, false))).toBe(
-      "Erste Woche: 20 Leads TKV-Katze zu je 17,00 €, zusammen 340,00 €, umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler (sonst zzgl. 19 % USt.). Die Anzahl wählen Sie bei der Annahme, abgebucht wird erst nach Prüfung Ihrer Registernummer.",
+      "Erste Woche: 20 Leads TKV-Katze zu je 17,00 €, zusammen 340,00 €, umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler (sonst zzgl. 19 % USt.). Die Anzahl wählen Sie bei der Annahme, abgebucht wird zum Start, nach Prüfung Ihrer Registernummer.",
     );
-    expect(nb(ersteWocheMailzeile({ ...katze, quantity: 20 }, true))).toMatch(/Die Anzahl wählst du bei der Annahme, abgebucht wird erst nach Prüfung deiner Registernummer\.$/);
+    expect(nb(ersteWocheMailzeile({ ...katze, quantity: 20 }, true))).toMatch(/Die Anzahl wählst du bei der Annahme, abgebucht wird zum Start, nach Prüfung deiner Registernummer\.$/);
   });
   it("keine Gedankenstriche", () => {
     for (const t of [ersteWocheVertragszeile(katze), ersteWocheVertragszeile({ ...spar, autoRenew: false }), ersteWocheMailzeile(katze, true), ersteWocheMailzeile(spar, false)]) {
