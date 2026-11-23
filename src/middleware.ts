@@ -22,6 +22,8 @@ const PUBLIC_PREFIXES = [
   "/api/sync", // cron-job.org braucht Zugriff (per Token gesichert)
   "/api/media-buyer", // cron-job.org, stündlich (per SYNC_TOKEN im Header gesichert, Route prüft selbst)
   "/api/push", // service worker registriert Subscriptions
+  "/api/app/handoff", // Einmal-Link App → System-Browser (dort noch ohne Sitzung; GET prüft Token, POST prüft Sitzung selbst)
+  "/api/app/login-handoff", // Google/Microsoft-Login in der App: Einmal-Code aus dem System-Browser einlösen (lib/app-handoff.ts)
   "/api/telegram", // Telegram Bot webhook (Whitelist intern via TELEGRAM_ADMIN_USER_ID + Secret-Token-Header)
   "/api/whatsapp", // 360dialog-Webhook + Dev-Seed (per WHATSAPP_WEBHOOK_SECRET-Token gesichert)
   "/book", // öffentliche Terminbuchung für Leads (lesbarer Slug je Kunde)

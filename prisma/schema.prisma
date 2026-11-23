@@ -3510,6 +3510,8 @@ model AppHandoff {
   tokenHash String    @unique
   userId    String
   next      String
+  /// browser = App → System-Browser (api/app/handoff); app-sso:google|microsoft = Google/Microsoft-Login im System-Browser → App (api/app/login-handoff)
+  purpose   String    @default("browser")
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())

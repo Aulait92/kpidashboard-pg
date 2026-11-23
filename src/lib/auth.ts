@@ -459,7 +459,15 @@ export async function consumePasswordResetToken(
 // einem Konto passen. Neue Konten entstehen weiterhin nur per Einladung.
 const SSO_COOKIE = "kpi_sso";
 
-export type SsoState = { provider: string; state: string; nonce: string; verifier: string; next: string };
+export type SsoState = {
+  provider: string;
+  state: string;
+  nonce: string;
+  verifier: string;
+  next: string;
+  /** Start aus der App (?app=1): nach der Anmeldung Einmal-Code per performancegrowth:// statt Sitzung im Browser. */
+  app?: boolean;
+};
 
 export async function setSsoState(s: SsoState) {
   const token = await new SignJWT({ ...s, purpose: "sso" }).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("10m").sign(getSecret());
@@ -498,22 +506,40 @@ async function gmailPlusLogin(email: string) {
   return hits.length === 1 ? hits[0] : null;
 }
 
-/** Login mit vom Anbieter bestätigter E-Mail. Mit aktivem 2FA folgt der Code-Schritt. */
-export async function loginWithVerifiedEmail(emailRaw: string, method: "google" | "microsoft"): Promise<LoginResult> {
+/**
+ * Login zur vom Anbieter bestätigten E-Mail suchen (ohne Cookies). Kein Treffer wird protokolliert.
+ * Genutzt auch für die Anmeldung in der App: dort entsteht die Sitzung erst in der App (lib/app-handoff.ts).
+ */
+export async function findSsoUser(emailRaw: string, method: "google" | "microsoft") {
   const email = normalizeLoginEmail(emailRaw);
   const user = (await prisma.user.findUnique({ where: { email } })) ?? (method === "google" ? await gmailPlusLogin(email) : null);
-  const { audit } = await import("@/lib/audit");
   if (!user) {
+    const { audit } = await import("@/lib/audit");
     await audit("login.failed", { actor: { email, role: null }, details: { method } });
-    return { ok: false, error: `Für ${email} gibt es keinen Zugang. Bitte mit der E-Mail-Adresse anmelden, mit der Sie eingeladen wurden.` };
+    return { ok: false as const, error: `Für ${email} gibt es keinen Zugang. Bitte mit der E-Mail-Adresse anmelden, mit der Sie eingeladen wurden.` };
   }
+  return { ok: true as const, user };
+}
+
+type SsoLoginUser = { id: string; email: string; role: string; customerId: string | null; sessionVersion: number; totpEnabledAt: Date | null; totpSecretEnc: string | null };
+
+/** Anmeldung eines per Google/Microsoft bestätigten Logins abschließen: 2FA-Schritt oder Sitzungs-Cookie. */
+export async function completeSsoLogin(user: SsoLoginUser, method: "google" | "microsoft"): Promise<LoginResult> {
   if (user.totpEnabledAt && user.totpSecretEnc && !(await isTrustedDevice(user))) {
     await setPendingTotp(user.id, 0);
     return { ok: false, needsTotp: true };
   }
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+  const { audit } = await import("@/lib/audit");
   await audit("login", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role }, details: { method } });
   const payload = sessionPayloadFor(user);
   await setSessionCookie(payload);
   return { ok: true, payload };
+}
+
+/** Login mit vom Anbieter bestätigter E-Mail. Mit aktivem 2FA folgt der Code-Schritt. */
+export async function loginWithVerifiedEmail(emailRaw: string, method: "google" | "microsoft"): Promise<LoginResult> {
+  const found = await findSsoUser(emailRaw, method);
+  if (!found.ok) return { ok: false, error: found.error };
+  return completeSsoLogin(found.user, method);
 }

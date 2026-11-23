@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
-import { isNativeApp } from "@/lib/native-bridge";
+import { useActionState, useEffect, useState, type MouseEvent } from "react";
+import { isNativeApp, startSsoInSystemBrowser } from "@/lib/native-bridge";
 import { loginAction, totpAction, type LoginActionState } from "./actions";
 
 export function LoginForm({
@@ -72,20 +72,26 @@ export function LoginForm({
   }
 
   const ssoHref = (p: string) => `/api/auth/${p}/start${next ? `?next=${encodeURIComponent(next)}` : ""}`;
-  // In der App-Store-App erlauben Google/Microsoft die Anmeldung nicht im eingebetteten Fenster.
-  const anySso = (sso.google || sso.microsoft) && !inApp;
+  // In der App-Store-App erlauben Google/Microsoft die Anmeldung nicht im eingebetteten Fenster:
+  // dort im System-Browser starten, die Rückkehr übernimmt die App (lib/native-bridge.ts).
+  const ssoClick = (p: "google" | "microsoft") => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (!inApp) return;
+    e.preventDefault();
+    startSsoInSystemBrowser(p, next);
+  };
+  const anySso = sso.google || sso.microsoft;
 
   return (
     <>
       {anySso ? (
         <div className="mb-6 space-y-2.5">
           {sso.microsoft ? (
-            <a href={ssoHref("microsoft")} className={SSO_BTN}>
+            <a href={ssoHref("microsoft")} onClick={ssoClick("microsoft")} className={SSO_BTN}>
               <MicrosoftLogo /> Mit Microsoft anmelden
             </a>
           ) : null}
           {sso.google ? (
-            <a href={ssoHref("google")} className={SSO_BTN}>
+            <a href={ssoHref("google")} onClick={ssoClick("google")} className={SSO_BTN}>
               <GoogleLogo /> Mit Google anmelden
             </a>
           ) : null}

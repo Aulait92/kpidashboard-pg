@@ -146,6 +146,53 @@ export function forgetNativeDevice(): void {
   setAppBadge(0);
 }
 
+// ─── Anmeldung mit Google/Microsoft in der App ─────────────────────────
+// Google verbietet OAuth in eingebetteten Ansichten. Darum: Start im System-Browser
+// (/api/auth/<anbieter>/start?app=1), der Callback leitet mit Einmal-Code auf
+// performancegrowth://login?code=… zurück, die App fängt das ab (App-Plugin
+// „appUrlOpen“), schließt den Browser und löst den Code in der App-Ansicht ein.
+
+const SSO_LOGIN_FEHLER = new Set(["abgebrochen", "abgelaufen", "kein-konto", "fehlgeschlagen", "admin-freigabe", "einstellung"]);
+
+/** Ziel in der App-Ansicht für eine performancegrowth://login-Adresse; null = nicht unsere. */
+export function appLoginTarget(url: string): string | null {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== "performancegrowth:" || u.hostname !== "login") return null;
+  const code = u.searchParams.get("code");
+  if (code) return /^[A-Za-z0-9_-]{20,100}$/.test(code) ? `/api/app/login-handoff?code=${encodeURIComponent(code)}` : "/login?fehler=abgelaufen";
+  const fehler = u.searchParams.get("fehler") ?? "";
+  return `/login?fehler=${SSO_LOGIN_FEHLER.has(fehler) ? fehler : "fehlgeschlagen"}`;
+}
+
+/** Google/Microsoft-Anmeldung aus der App im System-Browser starten. */
+export function startSsoInSystemBrowser(provider: "google" | "microsoft", next: string): void {
+  const u = new URL(`/api/auth/${provider}/start`, window.location.origin);
+  u.searchParams.set("app", "1");
+  if (next) u.searchParams.set("next", next);
+  void openInSystemBrowser(u.toString());
+}
+
+let appLoginReady = false;
+
+/** Rücksprung aus dem System-Browser abfangen (einmalig): Browser schließen, Code einlösen. */
+export function initAppLoginListener(): void {
+  const app = plugin("App");
+  if (!app?.addListener || appLoginReady) return;
+  appLoginReady = true;
+  void app.addListener("appUrlOpen", ((d: { url?: string }) => {
+    const target = d?.url ? appLoginTarget(d.url) : null;
+    if (!target) return;
+    void call("Browser", "close");
+    // Volle Navigation (nicht router.push): die Route setzt das Sitzungs-Cookie und leitet weiter.
+    window.location.assign(new URL(target, window.location.origin).toString());
+  }) as never);
+}
+
 /** Pfade, die Google/Microsoft-Anmeldung auslösen und in der App nicht gehen. */
 export function needsSystemBrowser(href: string): boolean {
   try {
