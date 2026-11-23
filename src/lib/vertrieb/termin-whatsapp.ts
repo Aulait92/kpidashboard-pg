@@ -31,7 +31,19 @@ import {
   ZAHLUNG_TEMPLATE_SIE_V2,
 } from "@/lib/angebot-zahlungserinnerung";
 import { BONUS_TEMPLATE_PURPOSE, BONUS_VORLAGEN } from "@/lib/vertrieb/bonus-erinnerung";
-import { NE_TEMPLATE_BODY, NE_TEMPLATE_BODY_B, NE_TEMPLATE_EXAMPLES, NE_TEMPLATE_NAME, NE_TEMPLATE_NAME_B, NE_TEMPLATE_PURPOSE } from "@/lib/vertrieb/nicht-erreicht";
+import {
+  NE_TEMPLATE_BODY,
+  NE_TEMPLATE_BODY_B,
+  NE_TEMPLATE_BODY_B_DU,
+  NE_TEMPLATE_BODY_DU,
+  NE_TEMPLATE_EXAMPLES,
+  NE_TEMPLATE_EXAMPLES_DU,
+  NE_TEMPLATE_NAME,
+  NE_TEMPLATE_NAME_B,
+  NE_TEMPLATE_NAME_B_DU,
+  NE_TEMPLATE_NAME_DU,
+  NE_TEMPLATE_PURPOSE,
+} from "@/lib/vertrieb/nicht-erreicht";
 
 export const TERMIN_TEMPLATE_NAME = "pg_vertrieb_termin_v1";
 export const TERMIN_TEMPLATE_PURPOSE = "vertrieb_termin";
@@ -167,6 +179,9 @@ export const SUPPORT_TEMPLATES: SupportTemplate[] = [
   { name: NE_TEMPLATE_NAME, body: NE_TEMPLATE_BODY, examples: NE_TEMPLATE_EXAMPLES, purpose: NE_TEMPLATE_PURPOSE },
   // Fassung B des A/B-Tests (A/B-Test-Labor 22.11.2026): Entweder-oder-Frage statt offener Bitte
   { name: NE_TEMPLATE_NAME_B, body: NE_TEMPLATE_BODY_B, examples: NE_TEMPLATE_EXAMPLES, purpose: NE_TEMPLATE_PURPOSE },
+  // Du-Form beider Fassungen (Ole 23.11.2026: Du/Sie im Fenster „Eintragen“ wählbar)
+  { name: NE_TEMPLATE_NAME_DU, body: NE_TEMPLATE_BODY_DU, examples: NE_TEMPLATE_EXAMPLES_DU, purpose: NE_TEMPLATE_PURPOSE },
+  { name: NE_TEMPLATE_NAME_B_DU, body: NE_TEMPLATE_BODY_B_DU, examples: NE_TEMPLATE_EXAMPLES_DU, purpose: NE_TEMPLATE_PURPOSE },
 ];
 
 export function supportTemplateRequest(t: SupportTemplate): CreateTemplateInput {

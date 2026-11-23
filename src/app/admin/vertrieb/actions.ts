@@ -114,7 +114,14 @@ export async function logActivity(fd: FormData): Promise<{ hinweis: string | nul
     const { nachNichtErreicht, ergebnisText } = await import("@/lib/vertrieb/nicht-erreicht-server");
     const mitWahl = fd.get("neWahl") === "1";
     const wahl = mitWahl ? { mail: fd.get("neMail") === "on", whatsapp: fd.get("neWa") === "on" } : { mail: true, whatsapp: true };
-    hinweis = ergebnisText(await nachNichtErreicht(contactId, new Date(), wahl));
+    // Du/Sie und bearbeiteter Mailtext aus dem Fenster (Ole, 23.11.2026); ohne Felder: Standard des Kontakts und Vorschlag
+    const neDu = fd.get("neDu");
+    const eingabe = {
+      du: neDu === "1" ? true : neDu === "0" ? false : undefined,
+      betreff: typeof fd.get("neBetreff") === "string" ? (fd.get("neBetreff") as string) : null,
+      text: typeof fd.get("neText") === "string" ? (fd.get("neText") as string) : null,
+    };
+    hinweis = ergebnisText(await nachNichtErreicht(contactId, new Date(), wahl, eingabe));
   }
   refresh(contactId);
   return { hinweis };
