@@ -6,7 +6,7 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { liesBelegAus, type BelegDaten } from "./auslesen";
-import { entpackeZip, istZip } from "./zip";
+import { entpackeZipEinzeln, istZip } from "./zip";
 
 export const BELEG_MAX_BYTES = 15 * 1024 * 1024;
 export const ZIP_MAX_BYTES = 100 * 1024 * 1024;
@@ -32,14 +32,13 @@ export async function belegAblegen(o: { daten: Uint8Array; name: string | null; 
   // ZIP-Pakete (z. B. alle Meta-Rechnungen eines Jahres) dürfen groß sein, einzelne Belege nicht
   if (o.daten.length > ZIP_MAX_BYTES) return [{ name, ergebnis: "fehler" }];
   if (istZip(o.daten)) {
-    let dateien;
-    try {
-      dateien = entpackeZip(o.daten);
-    } catch {
-      return [{ name, ergebnis: "fehler" }];
-    }
+    // Datei für Datei entpacken (große Meta-ZIPs), defekte Einträge überspringen
     const out: AblageErgebnis[] = [];
-    for (const d of dateien) out.push(...(await belegAblegen({ daten: d.daten, name: d.name, quelle: o.quelle, absender: o.absender, spaeter: o.spaeter })));
+    try {
+      for (const d of entpackeZipEinzeln(o.daten)) out.push(...(await belegAblegen({ daten: d.daten, name: d.name, quelle: o.quelle, absender: o.absender, spaeter: o.spaeter })));
+    } catch {
+      out.push({ name, ergebnis: "fehler" });
+    }
     return out;
   }
   if (o.daten.length > BELEG_MAX_BYTES) return [{ name, ergebnis: "fehler" }];

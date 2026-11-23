@@ -45,6 +45,18 @@ export function demoWeiche(opts: { pathname: string; method: string; serverActio
   return { kind: "rewrite", pathname: `/buyer${rest}` };
 }
 
+/**
+ * Kennzeichen-Cookie der App-Store-Prüfer (lib/app-demo/app-review.ts): Ohne Sitzung führt /buyer/… dann in die Demo
+ * statt zur Anmeldung, auch nach einem Neustart der App. Gewährt nichts, was nicht ohnehin öffentlich ist.
+ */
+export const APP_REVIEW_COOKIE = "pg_app_review";
+
+/** Ziel für /buyer/… ohne Sitzung: mit Prüfer-Kennzeichen die passende Demo-Seite, sonst null (normale Anmeldung). */
+export function prueferDemoZiel(pathname: string, opts: { hatSitzung: boolean; prueferCookie: string | undefined }): string | null {
+  if (opts.hatSitzung || opts.prueferCookie !== "1") return null;
+  return buyerZuDemo(pathname);
+}
+
 /** /buyer/… → /app-demo/… (Links der echten Seiten, die in der Demo angeklickt werden). */
 export function buyerZuDemo(pathname: string): string | null {
   if (pathname !== "/buyer" && !pathname.startsWith("/buyer/")) return null;
