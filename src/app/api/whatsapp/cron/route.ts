@@ -197,6 +197,14 @@ async function handle(req: Request): Promise<Response> {
         reportError(e, "cron-ppl-bestellerinnerung");
         return null;
       }),
+    // Erste Woche zum Starttermin: wartende Bestellungen abbuchen, sobald ihre Startwoche begonnen hat (lib/ppl/erste-woche.ts)
+    // einmal je Stunde (nicht bei jedem 5-Minuten-Lauf, wegen der Zahlungsart-Abfrage bei Stripe)
+    ersteWoche: now.getUTCMinutes() >= 5 ? null : await import("@/lib/ppl/erste-woche")
+      .then((m) => m.faelligeErsteWochenFreigeben(now))
+      .catch((e: unknown) => {
+        reportError(e, "cron-ppl-erste-woche");
+        return null;
+      }),
     redistributed: await redistributeParked(undefined, now).catch(() => null),
     // geparkte Leads ab 48 h (PPL_PARK_MAX_HOURS) endgültig verwerfen, Kontaktdaten entfernen (Ole, 20.11.2026)
     expired: await expireParked(now).catch((e: unknown) => {

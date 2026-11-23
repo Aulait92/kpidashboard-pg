@@ -49,7 +49,7 @@ export type ErsteWocheWahl = Pick<ErsteWoche, "productKey" | "price" | "quantity
 export const eurCent = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** Abbuchungszeitpunkt der ersten Woche. */
-export const ERSTE_WOCHE_ABBUCHUNG = "Abbuchung nach Prüfung Ihrer Registernummer";
+export const ERSTE_WOCHE_ABBUCHUNG = "Abbuchung zum Start, nach Prüfung Ihrer Registernummer";
 
 /** Steuerhinweis zum Betrag der ersten Woche (ausführlich, mit Bedingung). */
 export function ersteWocheSteuerText(steuer: Steuer): string {

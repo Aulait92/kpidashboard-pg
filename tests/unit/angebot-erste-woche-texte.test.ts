@@ -27,7 +27,7 @@ const spar = { productKey: "Kindersparplan", name: "Kindersparplan", price: 20, 
 describe("Texte zur ersten Woche", () => {
   it("steuerfrei, jede Woche: Menge, Preis je Lead, Summe, Bedingung, eigene Rechnung, Abbuchung", () => {
     expect(nb(ersteWocheVertragszeile(katze))).toBe(
-      "Erste Woche: 30 Leads TKV-Katze zu je 17,00 €, zusammen 510,00 €, umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler (sonst zzgl. 19 % USt.), eigene Rechnung, Abbuchung nach Prüfung Ihrer Registernummer. Danach jede Woche dieselbe Menge, in der App jederzeit änderbar.",
+      "Erste Woche: 30 Leads TKV-Katze zu je 17,00 €, zusammen 510,00 €, umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler (sonst zzgl. 19 % USt.), eigene Rechnung, Abbuchung zum Start, nach Prüfung Ihrer Registernummer. Danach jede Woche dieselbe Menge, in der App jederzeit änderbar.",
     );
   });
   it("ohne Wiederholen: einmalig", () => {
@@ -43,9 +43,9 @@ describe("Texte zur ersten Woche", () => {
   });
   it("Zeile über dem Knopf statt „Jetzt fällig: 0 €“", () => {
     const f = ersteWocheFaellig(katze);
-    expect(nb(`${f.label}${f.betrag}${f.zusatz}`)).toBe("Erste Woche: 510,00 € (30 Leads, umsatzsteuerfrei), Abbuchung nach Prüfung Ihrer Registernummer");
+    expect(nb(`${f.label}${f.betrag}${f.zusatz}`)).toBe("Erste Woche: 510,00 € (30 Leads, umsatzsteuerfrei), Abbuchung zum Start, nach Prüfung Ihrer Registernummer");
     const s = ersteWocheFaellig(spar);
-    expect(nb(`${s.label}${s.betrag}${s.zusatz}`)).toBe("Erste Woche: 476,00 € (20 Leads, inkl. 19 % USt.), Abbuchung nach Prüfung Ihrer Registernummer");
+    expect(nb(`${s.label}${s.betrag}${s.zusatz}`)).toBe("Erste Woche: 476,00 € (20 Leads, inkl. 19 % USt.), Abbuchung zum Start, nach Prüfung Ihrer Registernummer");
   });
   it("Angebotsmail in Sie- und Du-Form", () => {
     expect(nb(ersteWocheMailzeile({ ...katze, quantity: 20 }, false))).toBe(
@@ -132,7 +132,7 @@ describe("Annahme-Formular", () => {
 
   it("Leadkosten statt „Jetzt fällig: 0 €“, Zusatz keine Einrichtungsgebühr", () => {
     const t = render();
-    expect(t).toMatch(/Erste Woche: 510,00 € \(30 Leads, umsatzsteuerfrei\), Abbuchung nach Prüfung Ihrer Registernummer Keine Einrichtungsgebühr/);
+    expect(t).toMatch(/Erste Woche: 510,00 € \(30 Leads, umsatzsteuerfrei\), Abbuchung zum Start, nach Prüfung Ihrer Registernummer Keine Einrichtungsgebühr/);
     expect(t).not.toMatch(/Jetzt fällig: 0/);
   });
   it("Zusammenfassung mit Leadpunkt zur gewählten Menge und Wiederholung", () => {
@@ -193,7 +193,7 @@ describe("Angebotsdokument und Angebotsmail", () => {
     const t = angebotstext();
     expect(t).toMatch(/Erste Woche 510,00 € 30 Leads TKV-Katze à 17,00 €, umsatzsteuerfrei für geprüfte Vermittler · Anzahl wählen Sie bei der Annahme/);
     expect(t).not.toMatch(/Einrichtung 0 € keine Einrichtungsgebühr/);
-    expect(t).toMatch(/Leads der ersten Woche: 510,00 € \(30 Leads, umsatzsteuerfrei\), eigene Rechnung, Abbuchung nach Prüfung Ihrer Registernummer\./);
+    expect(t).toMatch(/Leads der ersten Woche: 510,00 € \(30 Leads, umsatzsteuerfrei\), eigene Rechnung, Abbuchung zum Start, nach Prüfung Ihrer Registernummer\./);
     expect(hatGedankenstrich(t)).toBe(false);
   });
   it("angenommen: keine Einrichtungsgebühr als Zusatz; steuerpflichtig mit Bruttobetrag", () => {
