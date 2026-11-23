@@ -18,7 +18,8 @@ const norm = (s: string | null) =>
 export async function bankAnbieter(p: URLSearchParams) {
   const ab = /^\d{4}-\d{2}-\d{2}$/.test(p.get("ab") ?? "") ? new Date(`${p.get("ab")}T00:00:00Z`) : new Date("2026-01-01T00:00:00Z");
   const rows = await prisma.bankTransaction.findMany({
-    where: { bookingDate: { gte: ab }, amount: { lt: 0 } },
+    // &eingang=1: Zahlungseingänge je Zahler statt Ausgaben je Anbieter (Ole, 23.11.2026: Umsatz je Kunde)
+    where: { bookingDate: { gte: ab }, amount: p.get("eingang") === "1" ? { gt: 0 } : { lt: 0 } },
     select: { accountKey: true, bookingDate: true, amount: true, counterparty: true, purpose: true, costPurpose: true, status: true, note: true },
   });
   const m = new Map<string, { anbieter: string; anzahl: number; summe: number; konten: Set<string>; kostenarten: Set<string>; status: Set<string>; erster: string; letzter: string }>();
