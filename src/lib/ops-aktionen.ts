@@ -225,6 +225,22 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${konto}: ${parsed.rows.length} Umsätze gelesen (${parsed.skipped} übersprungen), ${r.created} neu, ${r.existing} schon da, ${r.assigned} per Regel zugeordnet, ${r.open} offen zum Zuordnen.` };
     },
   },
+  bank_regel: {
+    beschreibung: "Zuordnungsregel für Kontoumsätze anlegen oder ändern (Muster in Gegenpartei/Verwendungszweck → Kostenart oder ignore, z. B. Darlehenstilgung); wirkt auf offene und künftige Umsätze",
+    felder: { muster: "Teil der Gegenpartei, z. B. rafael frenk", kostenart: "ppl | software | ki | akquise | betrieb | ignore", label: "Bezeichnung, z. B. Darlehen Rafael Frenk (Tilgung)" },
+    run: async (p) => {
+      const muster = text(p.muster, 80).toLowerCase();
+      const { COST_ACTIONS } = await import("@/lib/bank/rules");
+      const aktion = text(p.kostenart, 20) as (typeof COST_ACTIONS)[number];
+      if (muster.length < 3 || !(COST_ACTIONS as readonly string[]).includes(aktion)) return { ok: false, error: "Muster oder Kostenart ungültig." };
+      const label = text(p.label, 120) || null;
+      const rule = await prisma.costRule.upsert({ where: { pattern: muster }, create: { pattern: muster, action: aktion, label, counterpartyOnly: true }, update: { action: aktion, label, counterpartyOnly: true } });
+      const { applyRuleToOpen } = await import("@/lib/bank/server");
+      const n = await applyRuleToOpen(rule.id);
+      await audit("bank.regel", { details: { muster, aktion, angewendet: n }, actor: OPS_ACTOR });
+      return { ok: true, info: `Regel „${muster}“ → ${aktion} gespeichert, auf ${n} offene Umsätze angewendet.` };
+    },
+  },
   bank_zuordnen: {
     beschreibung: "Importierte Umsätze eines CSV-Kontos (z. B. n26) nach Gegenpartei einer Kostenart zuordnen: ppl, software, ki, akquise, betrieb oder ignore; legt keine Regel an",
     felder: { konto: "Kurzname, z. B. n26", muster: "Teil der Gegenpartei, z. B. outbrain", kostenart: "ppl | software | ki | akquise | betrieb | ignore" },
