@@ -62,6 +62,7 @@ import type { VorlageKey } from "@/lib/mail/vorlagen";
 import type { Werte } from "@/lib/mail/platzhalter";
 import { hatMailAntwort } from "@/lib/mail/kontakt-mail";
 import { BEDENKZEIT_AUFGABE, bedenkzeitNeustartText, tagKurz } from "@/lib/bedenkzeit";
+import { ABSAGE_FALLBACK_NOTE, ABSAGE_VERZOEGERUNG_MIN, absageText, absageZeitenText } from "@/lib/absage-nachfassen";
 
 export type SequenceKind =
   | "not_reached"
@@ -73,7 +74,10 @@ export type SequenceKind =
   | "silent"
   | "recall"
   | "nicht_erreicht_mail"
-  | "unterlagen";
+  | "unterlagen"
+  // Nachfassen nach einer Absage durch den Lead (Ole, 23.11.2026), Fassung A bzw. B des Splittests absage_nachfassen
+  | "absage"
+  | "absage_b";
 
 /** Abfolgen zum Angebot (Nachfassen, Vorab-Check, Thema aus dem Termin). */
 export const ANGEBOT_KINDS: SequenceKind[] = ["offer", "offer_selbst", "offer_bedenkzeit", "offer_selbst_bedenkzeit"];
@@ -84,6 +88,9 @@ export const istBedenkzeitAbfolge = (kind: string | null | undefined) => (BEDENK
 /** Begleit-Abfolgen (Pakete M4/M6): nur E-Mail bzw. Aufgabe, laufen neben den anderen und beenden keine. */
 export const BEGLEIT_KINDS: SequenceKind[] = ["nicht_erreicht_mail", "unterlagen"];
 export const istBegleitAbfolge = (kind: string | null | undefined) => (BEGLEIT_KINDS as string[]).includes(kind ?? "");
+/** Nachfassen nach einer Absage durch den Lead (lib/absage-nachfassen.ts), Fassung A bzw. B. */
+export const ABSAGE_KINDS: SequenceKind[] = ["absage", "absage_b"];
+export const istAbsageAbfolge = (kind: string | null | undefined) => (ABSAGE_KINDS as string[]).includes(kind ?? "");
 /** Aufgabe nach der Erinnerung „Unterlagen fehlen“ (gleicher Text wie UNTERLAGEN_NOTE in lib/mail/termin-erinnerung.ts). */
 export const UNTERLAGEN_AUFGABE = "Unterlagen nachfassen";
 /** Aufgabe, wenn der Assistent keine freien Zeiten findet (Ole, 22.11.2026, lib/whatsapp/bot.ts): persönlich melden. */
@@ -301,6 +308,38 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         slotText: (c, [z1, z2]) =>
           a(c.an, `${c.hi} kurze Nachfrage zum neuen Termin: Passt dir ${z1} oder ${z2}?`, `${c.hi} kurze Nachfrage zum neuen Termin: Passt Ihnen ${z1} oder ${z2}?`),
         fallbackNote: "Nicht erschienen: neuen Termin vereinbaren",
+      },
+    ],
+  },
+  // Nachfassen nach einer Absage durch den Lead (Ole, 23.11.2026: „Ja, bei jeder Absage nachfassen.“, lib/absage-nachfassen.ts):
+  // ein Schritt, 20 Minuten nach der Absage (im Chat abgesagt: 2 Stunden), im Versandfenster. Fassung A: offene Frage mit
+  // [Ja, neuer Termin] [Kein Bedarf mehr], außerhalb des Fensters die freigegebene Vorlage followup_noshow.
+  absage: {
+    label: "Termin abgesagt",
+    steps: [
+      {
+        day: ABSAGE_VERZOEGERUNG_MIN / (24 * 60),
+        action: "whatsapp",
+        purpose: "followup_noshow",
+        params: (c) => [c.firstName],
+        text: (c) => absageText({ an: c.an, hi: c.hi, person: vom(c) }),
+        fallbackNote: ABSAGE_FALLBACK_NOTE,
+      },
+    ],
+  },
+  // Fassung B: direkt zwei konkrete neue Zeiten (Zeit-Knöpfe), außerhalb des Fensters die freigegebene Vorlage followup
+  // mit zwei Terminvorschlägen; ohne Kalender die kurze Nachfrage
+  absage_b: {
+    label: "Termin abgesagt",
+    steps: [
+      {
+        day: ABSAGE_VERZOEGERUNG_MIN / (24 * 60),
+        action: "whatsapp",
+        purpose: "followup",
+        params: (c) => [c.firstName],
+        text: (c) => absageText({ an: c.an, hi: c.hi, person: vom(c) }),
+        slotText: (c, zeiten) => absageZeitenText({ an: c.an, hi: c.hi, person: vom(c) }, zeiten),
+        fallbackNote: ABSAGE_FALLBACK_NOTE,
       },
     ],
   },
@@ -990,6 +1029,10 @@ async function sendStep(
       text = step.slotText ? step.slotText(ctx, zeiten.labels) : noticeText("followup", ctx.an, who, ctx.kontakt, zeiten.labels);
       // Ältere freigegebene „followup“-Fassung (nur Name): ohne Zeiten
       buttons = { buttonPayloads: zeiten.payloads, legacyParams: [ctx.firstName] };
+    } else if (istAbsageAbfolge(seq.kind)) {
+      // Absage, Fassung B ohne freie Zeiten: wie Fassung A (Frage nach neuem Termin, Vorlage followup_noshow)
+      purpose = "followup_noshow";
+      params = [ctx.firstName];
     } else {
       purpose = "followup_nudge";
       buttons = { textButtons: [] };
