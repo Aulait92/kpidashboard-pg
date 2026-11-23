@@ -3,6 +3,14 @@
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
 ## 23.11.2026
+- **VORLÄUFIG BESCHLOSSEN (Ole, 23.11.2026, Simulation Beratertermin, vor Prüfung durch Steuerberater, Notar, Anwalt):
+  Holding gehört Ole allein, Mirkos Iron Brain Ltd. (Zypern, Director Mirko) direkt 50 % an der operativen GmbH.**
+  Reihenfolge: erst 100 % der UG steuerneutral in Oles Holding, dann Eintritt der Ltd per Kapitalerhöhung. Gewinnvorab,
+  Reverse Vesting, Patt- und Ausschüttungsregel in der operativen Gesellschaft. Ole alleiniger Geschäftsführer („top so
+  machen wir es“), Mirko über Vertriebsvereinbarung, Geschäftsführung für Mirko frühestens nach Prüfung in Zypern. UG
+  zunächst unverändert einbringen, Umwandlung zur GmbH mit geprüfter Bilanz 2026. Gehalt und Miete in der operativen
+  Gesellschaft. Private Entnahmen 2026 höchstens 3.000 €. Ziel: Ole und Mirko ziehen gleich viel aus der Firma.
+  Grundlage und offene Punkte: Claude-Docs-Dokument „Grundlage Beratertermin“ (Abschnitt „Ergebnis der Simulation“).
 - **BESCHLOSSEN (Ole, 23.11.2026): „Ja, bei jeder Absage nachfassen.“** Sagt ein Lead seinen Termin selbst ab (Link
   „Termin verwalten“, im Chat, Absage der Kalendereinladung), fragt der Assistent einmal per WhatsApp nach einem neuen
   Termin: 20 Minuten danach (im Chat abgesagt: 2 Stunden), nur Mo bis Sa 9 bis 19 Uhr, vorher in „Nächste Nachrichten“
