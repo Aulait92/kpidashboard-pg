@@ -13,6 +13,16 @@ import { STAGE_COLOR, STAGE_LABEL, TASK_LABEL, TERMIN_REVIEW_CHOICES, isTerminRe
 import { meetingOutcomeAction } from "@/app/admin/heute/actions";
 import { dayKey, fmtDateTime, relDay, todayKey } from "@/lib/vertrieb/dates";
 import type { TaskWithContact } from "@/components/vertrieb/ui";
+import type { Grund, GrundTon } from "@/lib/vertrieb/aufgaben-prioritaet";
+
+// Farben wie die Stufen-Badges (lib/vertrieb/crm.ts)
+const GRUND_FARBE: Record<GrundTon, string> = {
+  rose: "bg-rose-100 text-rose-800",
+  amber: "bg-amber-100 text-amber-800",
+  emerald: "bg-emerald-100 text-emerald-800",
+  violet: "bg-violet-100 text-violet-800",
+  slate: "bg-slate-100 text-slate-700",
+};
 
 const fd = (o: Record<string, string>) => {
   const f = new FormData();
@@ -24,8 +34,9 @@ const fd = (o: Record<string, string>) => {
  * Aufgabe: Haken = erledigt; „+1 Tag“/„+1 Woche“ verschieben direkt.
  * Zeile antippen: in Aufgabenlisten (mit Kontakt) öffnet den Kontakt, in der
  * Kontaktakte das Menü (Anrufen, Löschen). „…“ öffnet immer das Menü.
+ * `grund`: Grund-Chip vorne in der Zeile (nur in „Zuerst erledigen“).
  */
-export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showContact?: boolean }) {
+export function TaskRow({ t, showContact = true, grund }: { t: TaskWithContact; showContact?: boolean; grund?: Grund }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
@@ -81,6 +92,8 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
               <div className="min-w-0 flex-1">
                 <div className={clsx("font-medium", doneLocal && "text-slate-400 line-through")}>{t.title}</div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-slate-500">
+                  {/* Grund in „Zuerst erledigen“ (components/admin/aufgaben-liste.tsx) */}
+                  {grund ? <span className={clsx("badge font-semibold", GRUND_FARBE[grund.ton])} data-grund>{grund.label}</span> : null}
                   <span className={clsx(overdue ? "font-medium text-rose-600" : today ? "font-medium text-amber-700" : "")}>
                     {t.doneAt ? `erledigt ${fmtDateTime(t.doneAt)}` : `${relDay(t.dueAt)}, ${fmtDateTime(t.dueAt).split(", ").pop()}`}
                   </span>
