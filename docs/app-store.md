@@ -88,6 +88,8 @@ kein grauer Tipp-Blitz, Knöpfe geben beim Drücken leicht nach (97 %).
 - APNs-Schlüssel „performancegrowth Push“, Key ID `A734GR4PSM` (.p8 nur bei Ole). Railway: `APNS_KEY_ID`, `APNS_TEAM_ID`,
   `APNS_BUNDLE_ID`, `APNS_PRODUCTION=1` gesetzt; `APNS_PRIVATE_KEY` trägt Ole selbst ein.
 - App Store Connect: App „performancegrowth“ angelegt, Apple-ID der App **6838442707** (für Codemagic `APP_STORE_APPLE_ID`).
+- App Store Connect API Team-Schlüssel „Codemagic“ (App-Manager): Key ID `TL3574822A`, Issuer ID
+  `5a11393d-570f-4b3a-997e-34045b2f35bf` (.p8 nur bei Ole, in Codemagic als `PG_ASC_KEY`).
 
 ## Was Ole tun muss (sobald das Apple-Konto freigeschaltet ist)
 
