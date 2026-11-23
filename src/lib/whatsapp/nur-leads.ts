@@ -11,8 +11,22 @@
 // Standard aus), und auch dann nie für Nummern aus der Business-App (WhatsAppAppContact).
 // Manuelle Sendungen (Vermittler bzw. Admin klickt selbst) laufen über `manuell: true` und sind nicht betroffen.
 
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
+import { isSupportCustomer, SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
+
+/**
+ * Was Admins in den Chats sehen (Ole, 23.11.2026): die Support-Nummer und bei Kunden-Nummern nur Pipeline-Chats (Lead
+ * zugeordnet oder selbst gebucht, wie istPipelineChat). Private Chats und Bestandskunden der Vermittler (Coexistence)
+ * bleiben verborgen; sobald der Vermittler „Als Lead übernehmen“ klickt, erscheint der Chat.
+ */
+export const ADMIN_CHAT_SICHTBAR: Prisma.ConversationWhereInput = {
+  OR: [
+    { customerId: SUPPORT_CUSTOMER_ID },
+    { leadId: { not: null } },
+    { messages: { some: { direction: "internal", kind: "appointment_booked", sentBy: "lead" } } },
+  ],
+};
 
 /** Automatische Nachricht an einen Kontakt ohne Lead-Zuordnung (Allowlist). */
 export class WhatsAppKeinLeadError extends Error {

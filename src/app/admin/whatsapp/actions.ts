@@ -1,5 +1,6 @@
 "use server";
 
+import { ADMIN_CHAT_SICHTBAR } from "@/lib/whatsapp/nur-leads";
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -29,8 +30,8 @@ export async function toggleBotAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const conversationId = String(formData.get("conversationId") ?? "");
   if (!conversationId) return;
-  const conv = await prisma.conversation.findUnique({
-    where: { id: conversationId },
+  const conv = await prisma.conversation.findFirst({
+    where: { id: conversationId, ...ADMIN_CHAT_SICHTBAR },
     select: { botActive: true },
   });
   if (!conv) return;
@@ -55,8 +56,8 @@ export async function sendReplyAction(conversationId: string, rawBody: string): 
   const body = typeof rawBody === "string" ? rawBody.trim() : "";
   if (typeof conversationId !== "string" || !conversationId || !body) return { ok: false, error: "Bitte eine Nachricht eingeben." };
 
-  const conv = await prisma.conversation.findUnique({
-    where: { id: conversationId },
+  const conv = await prisma.conversation.findFirst({
+    where: { id: conversationId, ...ADMIN_CHAT_SICHTBAR },
     select: { customerId: true, contactPhone: true, windowExpiresAt: true },
   });
   if (!conv) return { ok: false, error: "Chat nicht gefunden." };
@@ -92,8 +93,8 @@ export async function sendTemplateAction(conversationId: string, purpose: string
   await requireAdmin();
   if (typeof conversationId !== "string" || !conversationId) return { ok: false, error: "Chat nicht gefunden." };
   if (!(ADMIN_FOLLOWUP_PURPOSES as readonly string[]).includes(purpose)) return { ok: false, error: "Bitte eine Vorlage wählen." };
-  const conv = await prisma.conversation.findUnique({
-    where: { id: conversationId },
+  const conv = await prisma.conversation.findFirst({
+    where: { id: conversationId, ...ADMIN_CHAT_SICHTBAR },
     select: { id: true, customerId: true, contactPhone: true, contactName: true, leadId: true },
   });
   if (!conv) return { ok: false, error: "Chat nicht gefunden." };

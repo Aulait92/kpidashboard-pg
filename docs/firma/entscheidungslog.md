@@ -200,6 +200,10 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Plan: `protokolle/2026-11-20-hvk-leads.md`. Start erst nach Rechtsprüfung der Texte und Oles Go.
 - **Pay-per-Lead + Software** live (nur monatlich kündbar, erste Woche im Angebot, USt-Umbau, AGB „Umsatzsteuer auf Leads“).
 - **Ergebnis-Präsentation** nach jedem Meeting/Team-Einsatz (README).
+- **23.11.2026, Admin-Chats nur Leads:** Admins sehen in Betreuen → Chats bei Kunden-Nummern nur Pipeline-Chats (Lead
+  zugeordnet oder selbst gebucht) und die Support-Nummer, keine privaten Chats bzw. Bestandskunden der Vermittler
+  (Coexistence). Regel `ADMIN_CHAT_SICHTBAR` in `lib/whatsapp/nur-leads.ts`, gilt für Liste, Chat-Adresse, Aktionen und
+  „Mein Tag“. Dazu Filter je Kunde. Ole: „das sollte ich nicht sehen, nur seine leads“.
 - **22.11.2026, Partnerfrage:** im WhatsApp-Assistenten immer als eigene Frage vor dem Terminvorschlag, Splittest `partner_vor_termin` beendet (Fassung B aus). Ole: „ich möchte die frage nach partner immer eigenständig vor der buchung“.
 - **22.11.2026, Kfz-Unterlagen prüfen:** Keine KI-Einordnung hochgeladener Fotos ohne ZDR-Nachweis (Datenschutz: Rot, K2,
   Fassung `.s1` ohne Gesundheitssatz). Stattdessen fragt die Bestätigung bei Kfz-Leads nach, ob Fahrzeugschein und letzte
