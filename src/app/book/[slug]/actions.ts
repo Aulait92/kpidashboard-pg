@@ -19,6 +19,7 @@ import {
   type FormularLead,
 } from "@/lib/buchung-formular";
 import { phoneKey } from "@/lib/vertrieb/dubletten";
+import { buchungsnummerUebernehmen } from "@/lib/whatsapp/buchungsnummer";
 
 // Öffentliche Buchung (Buchungsseite / Meta-Leadformular). Kein Login — daher
 // alles serverseitig validieren, Slot direkt vor dem Anlegen neu prüfen
@@ -134,13 +135,14 @@ export async function bookPublicAction(
   // letzte 2 Stunden), hängt der Termin an diesem Lead. Die Formular-Nummer bleibt, die neue kommt in den Verlauf; hat
   // der Lead schon einen WhatsApp-Chat mit der Formular-Nummer, läuft die Buchung dort (Assistent kennt den Termin).
   // Nichts davon wird angezeigt. Kein Treffer: Buchung wie bisher.
-  let abweichendeNummer: { neu: string; chatWeiter: boolean } | null = null;
+  let abweichendeNummer: { neu: string; chatWeiter: boolean; uebernehmen: boolean } | null = null;
   if (!formularLead && !chatToken && !bkGesetzt(formData)) {
     const perMail = await findeFormularLead(customerId, { email: emailRaw }).catch(() => null);
     if (perMail && phoneKey(perMail.phone) !== phoneKey(phone)) {
       formularLead = perMail;
       const neu = phone!;
       let chatWeiter = false;
+      let uebernehmen = false;
       if (perMail.phone) {
         const [chat, l] = await Promise.all([
           prisma.conversation.findUnique({
@@ -151,8 +153,11 @@ export async function bookPublicAction(
         ]);
         chatWeiter = formularChatWeiterNutzen(chat ? { optedOutAt: chat.optedOutAt, ausgehend: chat._count.messages } : null, { waUnavailableAt: l?.waUnavailableAt ?? null });
         if (chatWeiter) phone = perMail.phone;
+        // Formular-Nummer ohne WhatsApp (Ole, 23.11.2026): die neue Nummer wird der WhatsApp-Kontakt des Leads
+        // (lib/whatsapp/buchungsnummer.ts), Bestätigung, Erinnerungen und Nachfassen laufen dann über sie
+        uebernehmen = !chatWeiter && buchungsnummerUebernehmen({ formPhone: perMail.phone, neu, waUnavailableAt: l?.waUnavailableAt ?? null });
       }
-      abweichendeNummer = { neu, chatWeiter };
+      abweichendeNummer = { neu, chatWeiter, uebernehmen };
     } else if (perMail) {
       formularLead = perMail;
     }
@@ -275,6 +280,12 @@ export async function bookPublicAction(
         })
         .catch(() => null);
     }
+    // Nummer aus der Buchung als WhatsApp-Kontakt übernehmen (vor der Bestätigung, sonst sperrt „kein WhatsApp“)
+    if (abweichendeNummer?.uebernehmen && leadId) {
+      await import("@/lib/whatsapp/buchungsnummer")
+        .then((m) => m.uebernimmBuchungsnummer(leadId!, abweichendeNummer!.neu))
+        .catch((e) => console.error("[booking page buchungsnummer]", e instanceof Error ? e.name : "Fehler"));
+    }
     // WhatsApp-Bestätigung (Freitext im 24h-Fenster, sonst freigegebene
     // Vorlage). Fehler dürfen die Buchung nicht scheitern lassen — die
     // Google-Einladung per E-Mail ist ohnehin raus.
@@ -300,7 +311,8 @@ export async function bookPublicAction(
   // Für Leads ohne Sitzung schreibt recordUsage nichts.
   await recordUsage("action", "appointment.book_by_advisor");
   // Andere Nummer als im Formular: im Verlauf des Leads vermerken (Formular-Nummer wird nicht überschrieben)
-  if (abweichendeNummer && leadId) {
+  // (bei übernommener Nummer steht schon „WhatsApp jetzt über die Nummer aus der Online-Buchung …“ im Verlauf)
+  if (abweichendeNummer && !abweichendeNummer.uebernehmen && leadId) {
     const { logLeadHistory } = await import("@/lib/lead-history");
     await logLeadHistory(leadId, "notiz", abweichendeNummerNotiz(abweichendeNummer.neu, abweichendeNummer.chatWeiter), { customerId, userId: null }).catch(() => null);
   }
@@ -324,14 +336,16 @@ async function bookViaStrecke(
   if (f.mode === "phone" && !f.phone) fail("phone");
   const s = await prisma.leadMailStrecke.findUnique({ where: { id: streckeId }, select: { id: true, leadId: true, customerId: true, appointmentId: true } });
   if (!s || s.customerId !== customerId) fail("invalid");
-  const lead = await prisma.lead.findUnique({ where: { id: s!.leadId }, select: { id: true, phone: true, email: true, source: true, erasedAt: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: s!.leadId }, select: { id: true, phone: true, email: true, source: true, erasedAt: true, waUnavailableAt: true } });
   if (!lead || lead.erasedAt) fail("invalid");
   const existing = await prisma.appointment.findFirst({ where: { leadId: lead!.id, status: "booked", startsAt: { gt: new Date() } }, select: { id: true } });
   if (existing) redirect(`/t/${token}`);
   // Doppelklick: nur ein Lauf zur Zeit (wie auf der Antwortseite)
   const claim = await prisma.leadMailStrecke.updateMany({ where: { id: s!.id, appointmentId: null, OR: [{ buchungAt: null }, { buchungAt: { lt: new Date(Date.now() - 120_000) } }] }, data: { buchungAt: new Date() } });
   if (!claim.count) redirect(`/t/${token}`);
-  const phone = lead!.phone ?? f.phone;
+  // Andere Nummer und die bisherige hat kein WhatsApp (Ole, 23.11.2026): neue Nummer als WhatsApp-Kontakt (lib/whatsapp/buchungsnummer.ts)
+  const uebernehmen = !!lead!.phone && buchungsnummerUebernehmen({ formPhone: lead!.phone, neu: f.phone, waUnavailableAt: lead!.waUnavailableAt });
+  const phone = uebernehmen ? f.phone : (lead!.phone ?? f.phone);
   if (!lead!.phone && f.phone) await prisma.lead.update({ where: { id: lead!.id }, data: { phone: f.phone } });
   if (lead!.email?.toLowerCase() !== f.email) {
     const { mitNeuerEmail } = await import("@/lib/lead-emails");
@@ -353,6 +367,11 @@ async function bookViaStrecke(
       leadPhone: phone,
       bookedVia: "mail_strecke",
     });
+    // Erst nach erfolgreicher Buchung übernehmen (Chat der neuen Nummer an den Termin, Erinnerungen laufen darüber)
+    if (uebernehmen) {
+      const u = await import("@/lib/whatsapp/buchungsnummer").then((m) => m.uebernimmBuchungsnummer(lead!.id, f.phone!)).catch(() => null);
+      if (u?.ok && !conv) await prisma.appointment.update({ where: { id: res.appointmentId }, data: { conversationId: u.conversationId } }).catch(() => null);
+    }
     await prisma.leadMailStrecke.update({ where: { id: s!.id }, data: { appointmentId: res.appointmentId, gebuchtAt: new Date(), buchungAt: null, schritt: "gebucht", reaktionAt: new Date(), antwortAt: new Date() } });
     // Splittests: Buchung über die Seite, als Nächstes zeigt /t die Komplettcheck-Frage (Zuteilung beim Klick)
     await import("@/lib/experimente")
