@@ -3495,11 +3495,16 @@ model BankTransaction {
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   zahlungsVorschlaege ZahlungsVorschlag[]
-  beleg               Beleg?
+  beleg               Beleg?              @relation("BelegZahlung")
+  /// Teilzahlung zu einem Beleg, der schon an einer anderen Abbuchung hängt (z. B. eine Rechnung in zwei Lastschriften,
+  /// Ole 24.11.2026); gilt für „ohne Beleg“ als belegt
+  belegTeilVonId      String?
+  belegTeilVon        Beleg?              @relation("BelegTeilzahlungen", fields: [belegTeilVonId], references: [id], onDelete: SetNull)
 
   @@unique([accountKey, externalId])
   @@index([status, bookingDate])
   @@index([bookingDate])
+  @@index([belegTeilVonId])
 }
 
 /// Geräte der App-Store-App (iOS/Android) für native Push-Benachrichtigungen
@@ -5608,7 +5613,9 @@ model Beleg {
   dateiname         String?
   ocrFertig         Boolean          @default(false)
   bankTransactionId String?          @unique
-  bankTransaction   BankTransaction? @relation(fields: [bankTransactionId], references: [id], onDelete: SetNull)
+  bankTransaction   BankTransaction? @relation("BelegZahlung", fields: [bankTransactionId], references: [id], onDelete: SetNull)
+  /// weitere Abbuchungen zu diesem Beleg (Teilzahlungen, nur von Hand)
+  teilzahlungen     BankTransaction[] @relation("BelegTeilzahlungen")
   // auto | hand
   zuordnung         String?
   createdAt         DateTime         @default(now())

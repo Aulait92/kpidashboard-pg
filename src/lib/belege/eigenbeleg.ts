@@ -80,11 +80,11 @@ export async function eigenbelegPdf(d: EigenbelegDaten): Promise<Uint8Array> {
 export async function eigenbelegErstellen(o: { umsatzId: string; gegenstand: string; zweck: string; grund?: string; empfaenger?: string; now?: Date }): Promise<{ ok: true; id: string; nummer: string } | { ok: false; error: string }> {
   const u = await prisma.bankTransaction.findUnique({
     where: { id: o.umsatzId },
-    select: { id: true, bookingDate: true, amount: true, counterparty: true, purpose: true, accountKey: true, beleg: { select: { id: true } } },
+    select: { id: true, bookingDate: true, amount: true, counterparty: true, purpose: true, accountKey: true, belegTeilVonId: true, beleg: { select: { id: true } } },
   });
   if (!u) return { ok: false, error: "Zahlung nicht gefunden." };
   if (Number(u.amount) >= 0) return { ok: false, error: "Keine Ausgabe." };
-  if (u.beleg) return { ok: false, error: "Zahlung hat schon einen Beleg." };
+  if (u.beleg || u.belegTeilVonId) return { ok: false, error: "Zahlung hat schon einen Beleg." };
   const now = o.now ?? new Date();
   const erstelltAm = now.toISOString().slice(0, 10);
   const anzahl = await prisma.beleg.count({ where: { quelle: "eigenbeleg" } });

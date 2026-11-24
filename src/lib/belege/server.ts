@@ -71,14 +71,14 @@ export async function belegeAbgleichen(): Promise<number> {
   await prisma.beleg.updateMany({ where: { zuordnung: "auto" }, data: { bankTransactionId: null, zuordnung: null } });
   const [umsaetze, belege] = await Promise.all([
     prisma.bankTransaction.findMany({
-      where: { bookingDate: { gte: new Date(ab.getTime() - 7 * 86_400_000) }, amount: { lt: 0 }, beleg: { is: null } },
+      where: { bookingDate: { gte: new Date(ab.getTime() - 7 * 86_400_000) }, amount: { lt: 0 }, beleg: { is: null }, belegTeilVonId: null },
       select: { id: true, bookingDate: true, amount: true, counterparty: true, purpose: true, status: true },
     }),
-    prisma.beleg.findMany({ where: { bankTransactionId: null }, select: { id: true, typ: true, firma: true, datum: true, brutto: true, waehrung: true } }),
+    prisma.beleg.findMany({ where: { bankTransactionId: null }, select: { id: true, typ: true, firma: true, nummer: true, datum: true, brutto: true, waehrung: true } }),
   ]);
   const paare = belegeZuordnen(
     umsaetze.map((u) => ({ id: u.id, datum: tag(u.bookingDate), betrag: Number(u.amount), gegenpartei: u.counterparty, zweck: u.purpose, status: u.status })),
-    belege.map((b) => ({ id: b.id, typ: b.typ, firma: b.firma, datum: b.datum ? tag(b.datum) : null, brutto: b.brutto == null ? null : Number(b.brutto), waehrung: b.waehrung })),
+    belege.map((b) => ({ id: b.id, typ: b.typ, firma: b.firma, nummer: b.nummer, datum: b.datum ? tag(b.datum) : null, brutto: b.brutto == null ? null : Number(b.brutto), waehrung: b.waehrung })),
   );
   for (const p of paare) {
     await prisma.beleg.update({ where: { id: p.belegId }, data: { bankTransactionId: p.umsatzId, zuordnung: "auto" } }).catch(() => null);
@@ -96,7 +96,7 @@ export async function ausgabenOhneBeleg(): Promise<{ anzahl: number; summe: numb
   const [rows, belegeOhneZahlung] = await Promise.all([
     prisma.bankTransaction.findMany({
       where: { bookingDate: { gte: ab }, amount: { lt: 0 } },
-      select: { bookingDate: true, amount: true, counterparty: true, purpose: true, status: true, beleg: { select: { id: true } } },
+      select: { bookingDate: true, amount: true, counterparty: true, purpose: true, status: true, belegTeilVonId: true, beleg: { select: { id: true } } },
     }),
     prisma.beleg.count({ where: { bankTransactionId: null, typ: { in: [...EINGANGS_TYPEN] }, datum: { gte: ab } } }),
   ]);
@@ -107,7 +107,7 @@ export async function ausgabenOhneBeleg(): Promise<{ anzahl: number; summe: numb
   for (const r of rows) {
     const u = { betrag: Number(r.amount), gegenpartei: r.counterparty, zweck: r.purpose, status: r.status };
     if (!brauchtBeleg(u)) continue;
-    if (r.beleg) {
+    if (r.beleg || r.belegTeilVonId) {
       mitBeleg++;
       continue;
     }
