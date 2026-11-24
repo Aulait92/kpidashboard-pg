@@ -8,6 +8,7 @@ import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/quali
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { abschnitte, offenePunkte, spartenAus, tierWunsch, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import { sparteAusText, spartenAusFormular, type Katalog } from "@/lib/tarifkatalog";
+import { TKV_WUNSCH_KURZ, tkvUmfangVon } from "@/lib/tkv-umfang";
 
 /** Neue Terminvorbereitung für alle Kunden? (Ole, 15.11.2026: erst Admin und Testkunde) */
 export const TERMINVORBEREITUNG_NEU_FUER_ALLE = true;
@@ -39,8 +40,10 @@ export function spartenFuerTermin(d: VorbereitungDaten, k?: Pick<Katalog, "spart
   const kat = produktCheckliste(d.lead.produkt)?.key ?? null;
   const tierText = [formWert(d, /tierart/i), q.tier, d.lead.produkt].filter(Boolean).join(" ");
   const tierArt = tierartAus(tierText);
-  const op = /\bop\b|op-|operation/i.test([q.tarifwunsch, d.lead.produkt].filter(Boolean).join(" ")) && !/voll|kranken(voll|schutz)/i.test(q.tarifwunsch ?? "");
-  if (kat === "tier") return [`${tierArt}-${op ? "op" : "kranken"}`];
+  // Gewünschter Umfang (lib/tkv-umfang.ts): OP bzw. Kranken vorausgewählt, unentschieden beide zum Vergleich
+  const umfang = tkvUmfangVon({ gespeichert: d.lead.tkvUmfang, angaben: d.angaben, source: d.lead.produkt });
+  const op = umfang === "op";
+  if (kat === "tier") return umfang === "offen" ? [`${tierArt}-kranken`, `${tierArt}-op`] : [`${tierArt}-${op ? "op" : "kranken"}`];
   if (kat === "privatschutz") {
     const interesse = [formWert(d, /versicherungsinteresse|interesse/i), q.interesse].filter(Boolean).join(" ");
     const sp = spartenAus(interesse);
@@ -54,7 +57,7 @@ export function spartenFuerTermin(d: VorbereitungDaten, k?: Pick<Katalog, "spart
       }
       const tw = tierWunsch(q.interesse ?? null);
       const t = [interesse, q.tier].filter(Boolean).join(" ");
-      if (tw.kranken) out.push(`${tierartAus(t)}-${op ? "op" : "kranken"}`);
+      if (tw.kranken) out.push(...(umfang === "offen" ? [`${tierartAus(t)}-kranken`, `${tierartAus(t)}-op`] : [`${tierartAus(t)}-${op ? "op" : "kranken"}`]));
       if (tw.halter) out.push(/pferd/i.test(t) ? "tierhalter-pferd" : "tierhalter-hund");
     }
     return [...new Set([...out, ...ausKatalog])];
@@ -89,7 +92,10 @@ export function kundeWill(d: VorbereitungDaten): { punkte: string[]; quelle: str
   if (q.versichern) dazu(`Versichert werden soll: ${q.versichern}`);
   if (q.vorhanden) dazu(`Bisher: ${q.vorhanden}`);
   if (q.anlass) dazu(`Anlass: ${q.anlass}`);
-  if (q.tarifwunsch) dazu(`Wunsch: ${q.tarifwunsch}`);
+  // Tierkranken: „Wunsch: OP-Schutz“ statt der Antwort im Wortlaut („OPeration“)
+  const umfang = produktCheckliste(d.lead.produkt)?.key === "tier" || (q.tarifwunsch && /tier/i.test(`${q.interesse ?? ""} ${q.tier ?? ""}`)) ? tkvUmfangVon({ gespeichert: d.lead.tkvUmfang, angaben: d.angaben }) : null;
+  if (umfang) dazu(`Wunsch: ${TKV_WUNSCH_KURZ[umfang]}`);
+  else if (q.tarifwunsch) dazu(`Wunsch: ${q.tarifwunsch}`);
   if (q.einwaende) dazu(`Bedenken: ${q.einwaende}`);
   if (q.entscheidung && !mitEntscheider) dazu(q.entscheidung);
   if (p.length < 3 && d.zusammenfassung) for (const satz of d.zusammenfassung.split(/(?<=[.!?])\s+/).slice(0, 3 - p.length)) dazu(satz);

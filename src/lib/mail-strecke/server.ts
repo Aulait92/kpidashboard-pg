@@ -180,6 +180,7 @@ async function leadKontext(streckeId: string) {
           status: true,
           formData: true,
           needData: true,
+          tkvUmfang: true,
           erasedAt: true,
           reached: true,
           waUnavailableAt: true,
@@ -288,7 +289,7 @@ export async function sendeStreckenMail(streckeId: string, art: MailArtStrecke, 
     let nutzen: string | null = null;
     if (art === "nutzen") {
       const { terminNutzenSatz } = await import("@/lib/whatsapp/gespraech");
-      nutzen = terminNutzenSatz({ source: lead.source, formular, angaben: lead.needData, an, person, video: true });
+      nutzen = terminNutzenSatz({ source: lead.source, formular, angaben: lead.needData, an, person, video: true, tkvUmfang: lead.tkvUmfang });
     }
     const kontakt = who.kontakt;
     const res = await sendeLeadMail(kontext, {

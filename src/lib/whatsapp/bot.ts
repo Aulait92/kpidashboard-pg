@@ -72,6 +72,8 @@ import { fernerTerminwunsch, mehrAls7Tage, wiedervorlageAm } from "@/lib/whatsap
 import { lehntZeitenAb } from "@/lib/whatsapp/buchungslink";
 import { folgefragen, spartenDesLeads } from "@/lib/preise/rechner-angaben";
 import { istTierStrecke } from "@/lib/whatsapp/tier-fragen";
+import { alsTkvUmfang, TKV_WUNSCH_TEXT, tkvAngabenNormal, tkvUmfangAusVerlauf, tkvUmfangVon } from "@/lib/tkv-umfang";
+import { tkvUmfangMerken } from "@/lib/tkv-umfang-server";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { angabenOhneGesundheit, GESUNDHEITS_REGEL, istTierLead, ohneGesundheitsangaben, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
@@ -656,7 +658,7 @@ export async function runBotTurn(
   const lead = conversation.leadId
     ? await prisma.lead.findUnique({
         where: { id: conversation.leadId },
-        select: { id: true, source: true, formData: true, isTest: true, name: true, email: true },
+        select: { id: true, source: true, formData: true, isTest: true, name: true, email: true, tkvUmfang: true },
       })
     : null;
   // Testlead (lib/testlead.ts): Logzeilen ohne Inhalte
@@ -1213,11 +1215,22 @@ export async function runBotTurn(
     // Splittest terminvorschlag_kostenlos (lib/experimente.ts): nur der erste Vorschlag (mit Nutzensatz) zählt
     const kostenlos =
       input.erneut === true ? false : (await import("@/lib/experimente").then((m) => m.variante("terminvorschlag_kostenlos", conversation.leadId ?? conversation.id)).catch(() => "a")) === "b";
+    // Tierkranken: gewählter Umfang (OP, voll, offen); hat der Assistent die Antwort nicht festgehalten, aus dem Verlauf
+    let tkvUmfang = istTierStrecke(lead?.source) ? tkvUmfangVon({ gespeichert: lead?.tkvUmfang, angaben: angabenJetzt }) : alsTkvUmfang(lead?.tkvUmfang);
+    if (istTierStrecke(lead?.source) && !tkvUmfang) {
+      tkvUmfang = tkvUmfangAusVerlauf(history);
+      if (tkvUmfang) {
+        const { zwischenAngabeSpeichern } = await import("@/lib/whatsapp/zwischenfrage-server");
+        await zwischenAngabeSpeichern(conversation.id, { tarifwunsch: TKV_WUNSCH_TEXT[tkvUmfang] }, { tier: true });
+        await tkvUmfangMerken(lead?.id, tkvUmfang);
+      }
+    }
     const text = terminVorschlagText({
       an: ansprache,
       source: lead?.source ?? null,
       formular: form.normal,
       angaben: angabenJetzt,
+      tkvUmfang,
       person,
       zeiten: [zeitKurz(new Date(pair[0]), now), zeitKurz(new Date(pair[1]), now)],
       einleitung: typeof input.einleitung === "string" ? input.einleitung : null,
@@ -1303,7 +1316,16 @@ export async function runBotTurn(
         // Zahnzusatz: Knopfantworten nur als neutrales Produktinteresse speichern (Art. 9 DSGVO, erstanschreiben.ts)
         // Sicherheitsnetz: keine Gesundheitsangaben in Feldern, Zusammenfassung und Protokoll (lib/gesundheitsdaten.ts)
         const tier = istTierLead(lead?.source);
-        const angaben = angabenOhneGesundheit(istZahnLead(lead?.source) ? neutralZahnAngaben(input.angaben) : input.angaben, { tier });
+        const ohneGesundheit = angabenOhneGesundheit(istZahnLead(lead?.source) ? neutralZahnAngaben(input.angaben) : input.angaben, { tier });
+        // Tierkranken: gewünschten Umfang (OP, voll, offen) einheitlich festhalten und am Lead speichern (lib/tkv-umfang.ts)
+        // (auch im Privatschutz, wenn es um ein Tier geht)
+        const tierWeg =
+          istTierStrecke(lead?.source) ||
+          (outreachProdukt(lead?.source)?.purpose === "outreach_privatschutz" &&
+            /tierkranken|tier-?op|katze|kater|hund|pferd/i.test(JSON.stringify([ohneGesundheit, conversation.qualificationData, form.normal])));
+        const tkv = tierWeg ? tkvAngabenNormal(ohneGesundheit) : null;
+        const angaben = tkv ? tkv.angaben : ohneGesundheit;
+        if (tkv?.umfang) await tkvUmfangMerken(lead?.id, tkv.umfang);
         if (typeof input.zusammenfassung === "string") input.zusammenfassung = ohneGesundheitsangaben(input.zusammenfassung, { tier });
         const prevData = (
           await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } })

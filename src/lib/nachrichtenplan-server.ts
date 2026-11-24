@@ -72,6 +72,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
       email: true,
       source: true,
       formData: true,
+      tkvUmfang: true,
       contactOverrides: true,
       erasedAt: true,
       waConsent: true,
@@ -133,7 +134,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
   const mailBetreff: Record<string, string> = {};
   const { erinnerungsBetreff } = await import("@/lib/calendar/lead-email");
   for (const t of termine) {
-    nutzen[t.id] = terminNutzenSatz({ source: lead.source, formular, angaben: conv?.qualificationData, an, person, video: t.mode === "video" });
+    nutzen[t.id] = terminNutzenSatz({ source: lead.source, formular, angaben: conv?.qualificationData, an, person, video: t.mode === "video", tkvUmfang: lead.tkvUmfang });
     // Gesendet wird ca. 24 h vorher: aus dieser Sicht „morgen um …“
     const vortag = new Date(t.startsAt.getTime() - 24 * 60 * 60 * 1000);
     wann[t.id] = zeitKurz(t.startsAt, vortag);

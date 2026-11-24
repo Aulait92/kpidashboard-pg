@@ -72,6 +72,8 @@ import {
 } from "@/lib/whatsapp/gespraech";
 import { detailNachfrageText, detailVerstaendlich, istTierStrecke, offeneTierFragen, tierAntwortAuswerten, tierFrage, type TierFrageKey } from "@/lib/whatsapp/tier-fragen";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
+import { tkvAngabenNormal } from "@/lib/tkv-umfang";
+import { tkvUmfangMerken } from "@/lib/tkv-umfang-server";
 import { ZWISCHEN_TEXT } from "@/lib/whatsapp/zwischenfrage";
 import { DATUM_NACHFRAGE_RE, datumMerkerAus, datumSchritt } from "@/lib/whatsapp/datum-nachfrage";
 import type { DatumArt } from "@/lib/datum-antwort";
@@ -722,6 +724,12 @@ export async function tierAntwort(conversationId: string, text: string, knopf: {
   }
   const r = tierAntwortAuswerten(key, antwort, knopf?.wert ?? null, quelle, now, { ungeprueft });
   if (!r) return false;
+  // Gewünschter Umfang (OP, voll, offen): einheitlicher Text und Merkmal am Lead (lib/tkv-umfang.ts)
+  const tkv = tkvAngabenNormal(r.angaben);
+  if (tkv.umfang) {
+    r.angaben = tkv.angaben as typeof r.angaben;
+    await tkvUmfangMerken(k.leadId, tkv.umfang);
+  }
   const neu = mergeQualificationData(k.angaben, r.angaben);
   await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: (neu ?? undefined) as Prisma.InputJsonValue | undefined } });
   k.angaben = neu;
