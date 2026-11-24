@@ -5675,6 +5675,21 @@ model Beleg {
   @@index([datum])
 }
 
+// Belegpaket zum Herunterladen per Link (Ole, 24.11.2026: Download-Link statt 11 Mails). Hält fest, welche Belege
+// verschickt wurden (Monatspaket oder Nachtrag); der Link ist signiert und läuft ab (lib/belege/paket-link.ts).
+model BelegPaket {
+  id         String    @id @default(cuid())
+  titel      String
+  // monat | nachtrag
+  art        String
+  monat      String?
+  belegIds   String[]
+  empfaenger String?
+  gesendetAm DateTime?
+  abgerufen  Int       @default(0)
+  createdAt  DateTime  @default(now())
+}
+
 // Monatspaket an das Steuerbüro (Ole, 23.11.2026): Belege eines Monats als ZIP plus Liste und USt-Vorschau, gesendet
 // erst auf Klick (lib/belege/monatspaket.ts).
 model MonatsPaket {

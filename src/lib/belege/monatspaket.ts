@@ -132,39 +132,45 @@ export function belegeCsv(belege: PaketBeleg[], dateinamen: Map<string, string>)
 
 const sauber = (s: string) => s.replace(/[\\/:*?"<>|\n\r]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
 
+const BELEG_FELDER = { id: true, datum: true, typ: true, quelle: true, firma: true, nummer: true, netto: true, ustSatz: true, brutto: true, waehrung: true, bankTransactionId: true, mimeType: true, dateiname: true } as const;
+type BelegZeile = { id: string; datum: Date | null; typ: string; quelle: string; firma: string | null; nummer: string | null; netto: unknown; ustSatz: unknown; brutto: unknown; waehrung: string; bankTransactionId: string | null; mimeType: string | null; dateiname: string | null };
+const alsPaketBeleg = (b: BelegZeile): PaketBeleg => ({
+  id: b.id,
+  datum: b.datum ? b.datum.toISOString().slice(0, 10) : "",
+  typ: b.typ,
+  quelle: b.quelle,
+  firma: b.firma,
+  nummer: b.nummer,
+  netto: b.netto == null ? null : Number(b.netto),
+  ustSatz: b.ustSatz == null ? null : Number(b.ustSatz),
+  brutto: b.brutto == null ? null : Number(b.brutto),
+  waehrung: b.waehrung,
+  zugeordnet: !!b.bankTransactionId,
+  mimeType: b.mimeType,
+  dateiname: b.dateiname,
+});
+
 export async function paketBelege(monat: string): Promise<PaketBeleg[]> {
   const von = new Date(`${monat}-01T00:00:00Z`);
   const bis = new Date(Date.UTC(von.getUTCFullYear(), von.getUTCMonth() + 1, 1));
-  const rows = await prisma.beleg.findMany({
-    // Kontoauszüge und Kreditkartenabrechnungen gehen mit (Ole, 24.11.2026: Barclays-Abrechnung fürs Steuerbüro);
-    // die USt-Vorschau zählt sie nicht.
-    where: { datum: { gte: von, lt: bis } },
-    orderBy: [{ datum: "asc" }, { firma: "asc" }],
-    select: { id: true, datum: true, typ: true, quelle: true, firma: true, nummer: true, netto: true, ustSatz: true, brutto: true, waehrung: true, bankTransactionId: true, mimeType: true, dateiname: true },
-  });
-  return ohneDoppel(
-    rows.map((b) => ({
-      id: b.id,
-      datum: b.datum!.toISOString().slice(0, 10),
-      typ: b.typ,
-      quelle: b.quelle,
-      firma: b.firma,
-      nummer: b.nummer,
-      netto: b.netto == null ? null : Number(b.netto),
-      ustSatz: b.ustSatz == null ? null : Number(b.ustSatz),
-      brutto: b.brutto == null ? null : Number(b.brutto),
-      waehrung: b.waehrung,
-      zugeordnet: !!b.bankTransactionId,
-      mimeType: b.mimeType,
-      dateiname: b.dateiname,
-    })),
-  );
+  // Kontoauszüge und Kreditkartenabrechnungen gehen mit (Ole, 24.11.2026: Barclays-Abrechnung fürs Steuerbüro);
+  // die USt-Vorschau zählt sie nicht.
+  const rows = await prisma.beleg.findMany({ where: { datum: { gte: von, lt: bis } }, orderBy: [{ datum: "asc" }, { firma: "asc" }], select: BELEG_FELDER });
+  return ohneDoppel(rows.map(alsPaketBeleg));
 }
 
-/** ZIP mit Belegen, belege.csv und ust-vorschau.txt. */
-/** Dateien des Pakets (ohne Liste und Vorschau) samt Belegliste und USt-Vorschau. */
+/** Genau diese Belege (Nachtrag oder festgehaltenes Paket), nach Datum. */
+export async function belegeNachIds(ids: string[]): Promise<PaketBeleg[]> {
+  const rows = await prisma.beleg.findMany({ where: { id: { in: ids } }, orderBy: [{ datum: "asc" }, { firma: "asc" }], select: BELEG_FELDER });
+  return rows.map(alsPaketBeleg);
+}
+
 async function paketInhalt(monat: string): Promise<{ dateien: ZipEntry[]; liste: ZipEntry[]; belege: PaketBeleg[]; vorschau: UstVorschau }> {
-  const belege = await paketBelege(monat);
+  return inhaltFuer(await paketBelege(monat), monatName(monat));
+}
+
+/** Dateien, Belegliste und USt-Vorschau zu einer Belegliste; titel z. B. „August 2026“ oder „Nachtrag Januar bis Juli 2026“. */
+async function inhaltFuer(belege: PaketBeleg[], titel: string): Promise<{ dateien: ZipEntry[]; liste: ZipEntry[]; belege: PaketBeleg[]; vorschau: UstVorschau }> {
   const vorschau = ustVorschau(belege);
   const dateinamen = new Map<string, string>();
   const dateien: ZipEntry[] = [];
@@ -182,7 +188,7 @@ async function paketInhalt(monat: string): Promise<{ dateien: ZipEntry[]; liste:
   }
   const liste: ZipEntry[] = [
     { name: "belege.csv", data: belegeCsv(belege, dateinamen) },
-    { name: "ust-vorschau.txt", data: vorschauText(monat, vorschau, belege.length) },
+    { name: "ust-vorschau.txt", data: vorschauText(titel, vorschau, belege.length) },
   ];
   return { dateien, liste, belege, vorschau };
 }
@@ -191,6 +197,12 @@ async function paketInhalt(monat: string): Promise<{ dateien: ZipEntry[]; liste:
 export async function paketZip(monat: string): Promise<{ zip: Buffer; belege: PaketBeleg[]; vorschau: UstVorschau }> {
   const { dateien, liste, belege, vorschau } = await paketInhalt(monat);
   return { zip: buildZip([...dateien, ...liste]), belege, vorschau };
+}
+
+/** ZIP zu einem festgehaltenen Belegpaket (Download-Link). */
+export async function belegPaketZip(belegIds: string[], titel: string): Promise<Buffer> {
+  const { dateien, liste } = await inhaltFuer(await belegeNachIds(belegIds), titel);
+  return buildZip([...dateien, ...liste]);
 }
 
 const groesse = (e: ZipEntry) => (typeof e.data === "string" ? Buffer.byteLength(e.data) : e.data.length);
@@ -220,9 +232,9 @@ export function inTeile<T extends ZipEntry>(dateien: T[], maxBytes: number): T[]
 const eur = (n: number) => `${n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR`;
 export const monatName = (monat: string) => new Date(`${monat}-01T00:00:00Z`).toLocaleDateString("de-DE", { month: "long", year: "numeric", timeZone: "UTC" });
 
-export function vorschauText(monat: string, v: UstVorschau, anzahl: number): string {
+export function vorschauText(titel: string, v: UstVorschau, anzahl: number): string {
   return [
-    `Umsatzsteuer-Vorschau ${monatName(monat)} (aus ${anzahl} Belegen, nach Belegdatum; maßgeblich ist Ihre Buchung)`,
+    `Umsatzsteuer-Vorschau ${/^\d{4}-\d{2}$/.test(titel) ? monatName(titel) : titel} (aus ${anzahl} Belegen, nach Belegdatum; maßgeblich ist Ihre Buchung)`,
     "",
     `Umsatzsteuer aus Ausgangsrechnungen und Gutschriften: ${eur(v.umsatzsteuer)} (steuerpflichtig netto ${eur(v.steuerpflichtigNetto)})`,
     `Steuerfreie Umsätze (§ 4 Nr. 11 UStG) netto: ${eur(v.steuerfreiNetto)}`,
@@ -243,49 +255,96 @@ export function vormonat(now = new Date()): string {
 }
 
 /** Paket an das Steuerbüro senden (nur auf Klick). */
-/** Höchstgröße der Anhänge je Mail (Resend erlaubt 40 MB inkl. Base64, viele Postfächer nur 25 MB). */
-export const MAIL_TEIL_BYTES = 18 * 1024 * 1024;
-
-export async function paketSenden(monat: string, o: { antwortAn: string | null }): Promise<{ ok: true; anzahl: number; teile: number } | { ok: false; error: string }> {
-  const { dateien, liste, belege, vorschau } = await paketInhalt(monat);
-  if (!belege.length) return { ok: false, error: "Keine Belege für diesen Monat." };
-  const teile = inTeile(dateien, MAIL_TEIL_BYTES);
+/**
+ * Paket festhalten und per Mail mit Download-Link senden (Ole, 24.11.2026: Link statt vieler Mails). Anhänge nur die
+ * Belegliste und die USt-Vorschau; der Link läuft nach PAKET_LINK_TAGE ab.
+ */
+async function paketMitLinkSenden(o: {
+  art: "monat" | "nachtrag";
+  monat?: string;
+  titel: string;
+  belege: PaketBeleg[];
+  liste: ZipEntry[];
+  antwortAn: string | null;
+  einleitung: string;
+}): Promise<{ ok: true; anzahl: number; link: string } | { ok: false; error: string }> {
+  const { getAppUrl, sendPlainMail } = await import("@/lib/email");
+  const { paketAblauf, paketPfad, PAKET_LINK_TAGE } = await import("./paket-link");
   const an = STEUERBUERO_EMAIL();
+  const paket = await prisma.belegPaket.create({ data: { titel: o.titel, art: o.art, monat: o.monat ?? null, belegIds: o.belege.map((b) => b.id), empfaenger: an } });
+  const ablauf = paketAblauf();
+  const link = `${getAppUrl()}${paketPfad(paket.id, ablauf)}`;
+  const bis = new Date(ablauf * 1000).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
+  const r = await sendPlainMail({
+    to: an,
+    replyTo: o.antwortAn,
+    subject: `Belege Ole Kannapinn UG ${o.titel}`,
+    text: [
+      "Sehr geehrte Frau Schulze,",
+      "",
+      o.einleitung,
+      "",
+      `Alle Belege als ZIP zum Herunterladen (gültig bis ${bis}, ${PAKET_LINK_TAGE} Tage):`,
+      link,
+      "",
+      "Im Anhang: belege.csv (je Beleg Datum, Art, Aussteller bzw. Empfänger, Nummer, Netto, Umsatzsteuer, Brutto und ob die Zahlung zugeordnet ist) und ust-vorschau.txt (vorläufige Umsatzsteuer-Übersicht).",
+      "",
+      "Viele Grüße",
+      "Ole Kannapinn",
+    ].join("\n"),
+    attachments: o.liste.map((e) => ({ filename: e.name, content: typeof e.data === "string" ? e.data : Buffer.from(e.data), contentType: e.name.endsWith(".csv") ? "text/csv; charset=utf-8" : "text/plain; charset=utf-8" })),
+  });
+  if (!r.ok) return { ok: false, error: r.error ?? "Versand fehlgeschlagen." };
+  if (r.blocked) return { ok: false, error: "Versand an diese Adresse ist auf dem Server gesperrt (MAIL_NUR_AN)." };
+  await prisma.belegPaket.update({ where: { id: paket.id }, data: { gesendetAm: new Date() } });
+  return { ok: true, anzahl: o.belege.length, link };
+}
+
+const zaehlen = (belege: PaketBeleg[]) => ({
+  eingang: belege.filter((b) => EINGANG.has(b.typ) && b.quelle !== "eigenbeleg").length,
+  ausgang: belege.filter((b) => AUSGANG.has(b.typ) || b.typ === "CREDIT_NOTE" || b.typ === "SALES_INVOICE_VOID").length,
+  eigen: belege.filter((b) => b.quelle === "eigenbeleg").length,
+});
+
+export async function paketSenden(monat: string, o: { antwortAn: string | null }): Promise<{ ok: true; anzahl: number } | { ok: false; error: string }> {
+  const belege = await paketBelege(monat);
+  if (!belege.length) return { ok: false, error: "Keine Belege für diesen Monat." };
+  const { liste, vorschau } = await inhaltFuer(belege, monatName(monat));
+  const n = zaehlen(belege);
   const name = monatName(monat);
-  const eingang = belege.filter((b) => EINGANG.has(b.typ) && b.quelle !== "eigenbeleg").length;
-  const ausgang = belege.filter((b) => AUSGANG.has(b.typ) || b.typ === "CREDIT_NOTE" || b.typ === "SALES_INVOICE_VOID").length;
-  const eigen = belege.filter((b) => b.quelle === "eigenbeleg").length;
-  const { sendPlainMail } = await import("@/lib/email");
-  for (const [i, teil] of teile.entries()) {
-    const mehr = teile.length > 1;
-    const zip = buildZip(i === 0 ? [...teil, ...liste] : teil);
-    const r = await sendPlainMail({
-      to: an,
-      replyTo: o.antwortAn,
-      subject: `Belege Ole Kannapinn UG ${name}${mehr ? ` (Teil ${i + 1} von ${teile.length})` : ""}`,
-      text: [
-        "Sehr geehrte Frau Schulze,",
-        "",
-        i === 0
-          ? `anbei die Belege der Ole Kannapinn UG für ${name}: ${eingang} Eingangsbelege, ${ausgang} Ausgangsbelege${eigen ? `, ${eigen} Eigenbelege` : ""}.${mehr ? ` Wegen der Größe kommen sie in ${teile.length} Mails, dies ist Teil 1.` : ""}`
-          : `anbei Teil ${i + 1} von ${teile.length} der Belege für ${name}.`,
-        ...(i === 0
-          ? ["Die Datei belege.csv listet je Beleg Datum, Art, Aussteller bzw. Empfänger, Nummer, Netto, Umsatzsteuer, Brutto und ob die Zahlung zugeordnet ist. In ust-vorschau.txt steht eine vorläufige Umsatzsteuer-Übersicht."]
-          : []),
-        "",
-        "Viele Grüße",
-        "Ole Kannapinn",
-      ].join("\n"),
-      attachments: [{ filename: `Belege ${monat}${mehr ? ` Teil ${i + 1}` : ""}.zip`, content: zip, contentType: "application/zip" }],
-    });
-    const schon = i ? ` Teil 1 bis ${i} wurden gesendet.` : "";
-    if (!r.ok) return { ok: false, error: `${r.error ?? "Versand fehlgeschlagen."}${schon}` };
-    if (r.blocked) return { ok: false, error: `Versand an diese Adresse ist auf dem Server gesperrt (MAIL_NUR_AN).${schon}` };
-  }
+  const r = await paketMitLinkSenden({
+    art: "monat",
+    monat,
+    titel: name,
+    belege,
+    liste,
+    antwortAn: o.antwortAn,
+    einleitung: `anbei die Belege der Ole Kannapinn UG für ${name}: ${n.eingang} Eingangsbelege, ${n.ausgang} Ausgangsbelege${n.eigen ? `, ${n.eigen} Eigenbelege` : ""}.`,
+  });
+  if (!r.ok) return r;
   await prisma.monatsPaket.upsert({
     where: { monat },
-    create: { monat, gesendetAm: new Date(), empfaenger: an, anzahl: belege.length, zahllast: vorschau.zahllast },
-    update: { gesendetAm: new Date(), empfaenger: an, anzahl: belege.length, zahllast: vorschau.zahllast },
+    create: { monat, gesendetAm: new Date(), empfaenger: STEUERBUERO_EMAIL(), anzahl: belege.length, zahllast: vorschau.zahllast },
+    update: { gesendetAm: new Date(), empfaenger: STEUERBUERO_EMAIL(), anzahl: belege.length, zahllast: vorschau.zahllast },
   });
-  return { ok: true, anzahl: belege.length, teile: teile.length };
+  return { ok: true, anzahl: belege.length };
+}
+
+/** Nachtrag: genau diese Belege (z. B. zu bereits gebuchten Monaten) mit Hinweis, dass einzelne schon vorliegen können. */
+export async function nachtragSenden(belegIds: string[], o: { titel: string; antwortAn: string | null; hinweis?: string }): Promise<{ ok: true; anzahl: number } | { ok: false; error: string }> {
+  const belege = await belegeNachIds(belegIds);
+  if (!belege.length) return { ok: false, error: "Keine Belege gefunden." };
+  const { liste } = await inhaltFuer(belege, o.titel);
+  const n = zaehlen(belege);
+  return paketMitLinkSenden({
+    art: "nachtrag",
+    titel: o.titel,
+    belege,
+    liste,
+    antwortAn: o.antwortAn,
+    einleitung: [
+      `anbei ein Nachtrag mit ${belege.length} Belegen (${n.eingang} Eingangsbelege${n.eigen ? `, ${n.eigen} Eigenbelege` : ""}${n.ausgang ? `, ${n.ausgang} Ausgangsbelege` : ""}). Alle gehören zu Zahlungen auf unseren Konten.`,
+      o.hinweis ?? "Einzelne davon liegen Ihnen eventuell schon vor; bitte nur ergänzen, was noch fehlt.",
+    ].join(" "),
+  });
 }
