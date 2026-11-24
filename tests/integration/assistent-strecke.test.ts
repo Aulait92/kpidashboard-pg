@@ -300,10 +300,10 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(gesendet().slice(ab2).map((s) => s.body)).toEqual(["Super! Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig?"]);
     expect(mails).toHaveLength(0);
 
-    // Letzte Angabe → Vertragsfrage
+    // Letzte Angabe → Vertragsfrage (Frage fett, Ole 22.11.2026: damit sie zwischen Grund und Beispielen auffällt)
     st.queue.push([{ type: "tool_use", id: "q1", name: "record_qualification", input: { zusammenfassung: "x", angaben: { beruf: "nicht im öffentlichen Dienst" } } }], [{ type: "text", text: "Danke, notiert." }]);
     await knopf(phone, "folge:oeffentlicherDienst:nein", "Nein");
-    expect(gesendet().at(-1)!.body).toMatch(/^Danke! (Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: )?Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
+    expect(gesendet().at(-1)!.body).toMatch(/^Danke! (Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: )?\*Welche Versicherungen haben Sie und Ihre Familie heute schon\?\* Zum Beispiel /);
 
     // Verträge ohne Gesellschaft bei BU und Kfz → genau eine Nachfrage (Ole, 19.11.2026)
     await text(phone, "Haftpflicht bei der HUK, eine BU und Kfz");
@@ -412,12 +412,14 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await text(phone, "22.08.1992");
     const nachDatum = gesendet().slice(abDatum).map((s) => s.body);
     expect(nachDatum).toHaveLength(1);
-    expect(nachDatum[0]).toMatch(/Wohnfläche/);
-    expect(await antwort("95", { wohnflaeche: "95 m²" }, "Danke! Sind Sie im öffentlichen Dienst tätig?")).toEqual(["Danke! Sind Sie im öffentlichen Dienst tätig?"]);
-    // Letzte Angebotsfrage: statt eigener Worte die Vertragsfrage der App
+    expect(nachDatum[0]).toMatch(/^Danke! .*Wohnfläche/);
+    // Keine Dank-Floskel bei jeder Angebotsfrage (Ole, 22.11.2026, gespraech.ts angebotsfrageEntschlackt): Die Nachricht
+    // davor begann schon mit „Danke!“, also geht die nächste Frage des Assistenten ohne zweiten Dank raus
+    expect(await antwort("95", { wohnflaeche: "95 m²" }, "Danke! Sind Sie im öffentlichen Dienst tätig?")).toEqual(["Sind Sie im öffentlichen Dienst tätig?"]);
+    // Letzte Angebotsfrage: statt eigener Worte die Vertragsfrage der App (Frage fett, Ole 22.11.2026)
     const letzte = await antwort("Nein", { beruf: "nicht im öffentlichen Dienst" }, "Danke, notiert.");
     expect(letzte).toHaveLength(1);
-    expect(letzte[0]).toMatch(/^Danke! (Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: )?Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
+    expect(letzte[0]).toMatch(/^Danke! (Damit Herr Kannapinn sieht, ob Sie irgendwo doppelt zahlen: )?\*Welche Versicherungen haben Sie und Ihre Familie heute schon\?\* Zum Beispiel /);
 
     const q = (await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id }, select: { qualificationData: true } })).qualificationData as Record<string, string>;
     expect(q).toMatchObject({ geburt: "22.08.1992", wohnflaeche: "95 m²" });
@@ -492,15 +494,18 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await prisma.appointment.update({ where: { id: appt.id }, data: { einladungAusstehend: null } });
   });
 
-  // Ole, 21.11.2026 spät: Frage als eigene Nachricht VOR dem Terminvorschlag (Fassung a, Standard); Fassung b: Halbsatz im
-  // Terminvorschlag und Frage nach der Buchung (Splittest partner_vor_termin, Einheit Lead-ID)
-  describe("Splittest partner_vor_termin: Mitentscheider vor dem Terminvorschlag", () => {
+  // Ole, 21.11.2026 spät: Frage als eigene Nachricht VOR dem Terminvorschlag. Seit 22.11.2026 für jeden Lead (Ole: „ich
+  // möchte die Frage nach Partner immer eigenständig vor der Buchung“): Der Splittest partner_vor_termin ist beendet,
+  // Fassung b (Halbsatz im Terminvorschlag, Frage erst nach der Buchung) ist aus, zugeteilt wird nichts mehr.
+  describe("Mitentscheider vor dem Terminvorschlag: immer eigene Frage (Splittest partner_vor_termin beendet)", () => {
+    /** Lead-ID, die der frühere Splittest der Fassung v zugeteilt hätte (Einheit Lead-ID) */
     const idFuer = (v: "a" | "b") => {
       for (;;) {
         const id = `partner${uid()}${uid()}`;
         if (zuteilen("partner_vor_termin", id) === v) return id;
       }
     };
+    // Auch eine noch aktive Zeile des beendeten Splittests in der Datenbank ändert nichts
     beforeAll(async () => {
       await prisma.experiment.update({ where: { key: "partner_vor_termin" }, data: { aktiv: true } });
       experimenteCacheLeeren();
@@ -512,15 +517,16 @@ describe("Termin-Strecke mit Knöpfen", () => {
     const zuteilung = (leadId: string) => prisma.experimentZuteilung.findUnique({ where: { experiment_einheit: { experiment: "partner_vor_termin", einheit: leadId } } });
     const q = { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95" };
 
-    it("Fassung a: Frage statt des ersten Vorschlags, „Ja, gemeinsam“ → Zeiten „für Sie beide“; nach der Buchung keine Frage mehr", async () => {
-      const x = await leadMitChat({ id: idFuer("a"), entscheidungOffen: true, qualificationData: q });
+    it.each(["a", "b"] as const)("Lead-ID der früheren Fassung %s: Frage statt des ersten Vorschlags, „Ja, gemeinsam“ → Zeiten „für Sie beide“; nach der Buchung keine Frage mehr; keine Zuteilung", async (fruehereFassung) => {
+      const x = await leadMitChat({ id: idFuer(fruehereFassung), entscheidungOffen: true, qualificationData: q });
       st.queue.push([{ type: "tool_use", id: "t1", name: "termin_vorschlagen", input: {} }], [{ type: "text", text: "(ignoriert)" }]);
       await runBotTurn(x.conv.id);
       const frage = gesendet().at(-1)!;
       expect(frage.body).toBe("Danke! Entscheiden Sie bei der Versicherung gemeinsam mit Ihrem Partner?");
       expect(frage.buttons!.map((b) => b.id)).toEqual(["partner:ja", "partner:nein"]);
       expect(await prisma.message.count({ where: { conversationId: x.conv.id, kind: STRECKE.vorschlag } })).toBe(0);
-      expect(await zuteilung(x.lead.id)).toMatchObject({ variante: "a" });
+      // Kein Splittest mehr: dem Lead wird keine Fassung zugeteilt
+      expect(await zuteilung(x.lead.id)).toBeNull();
 
       st.ai = 0;
       await knopf(x.phone, "partner:ja", "Ja, gemeinsam");
