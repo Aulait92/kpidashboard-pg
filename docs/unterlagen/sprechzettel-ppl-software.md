@@ -74,7 +74,7 @@ wechseln, Bausteine an und aus, der Beitrag rechnet sofort mit. Am Ende bekommt 
 ## 15. Exklusive Leads, Woche für Woche
 Preise je Lead: Katze 17 €, Hund 22 €, Privatschutz 35 € (die Interessenten fragen mehrere Versicherungen an), Kindersparplan 65 €.
 Exklusiv: jeder Lead geht nur an ihn. Bestellt wird wöchentlich ab 5 Leads, im Voraus bezahlt; „Jede Woche wiederholen“ ist optional und jederzeit änderbar.
-Storno: innerhalb der Frist mit Grund melden, die Gutschrift wird mit der nächsten Bestellung verrechnet (Grund „Sonstiges“: halbe Gutschrift).
+Reklamation: innerhalb der Frist mit Grund melden, für jede anerkannte Reklamation liefern wir kostenlos einen Ersatzlead nach. Bezahlte Leads verfallen nicht: was in der Woche nicht kommt, liefern wir nach (keine Erstattung).
 „Sie können klein anfangen, zum Beispiel mit 5 oder 10 Leads diese Woche, und dann selbst entscheiden.“
 
 ## 16. Rechnen Sie mit Ihren Zahlen
@@ -107,4 +107,4 @@ Bei Bedenkzeit: Folgetermin direkt im Kalender festmachen.
 |---|---|
 | „Ich will erst nur Leads kaufen, die Software brauche ich nicht.“ | „Können Sie machen. Die Frage ist nur: Wie viele davon erreichen Sie? Jeder Lead, den Sie nicht erreichen, ist bezahlt und weg. Die Software ist monatlich kündbar, ohne Einrichtungsgebühr. Testen Sie beides zusammen einen Monat und vergleichen Sie dann selbst.“ |
 | „349 € im Monat sind mir zu viel für ein paar Leads.“ | „Verstehe. Rechnen wir mit Ihren Zahlen: Was bringt Ihnen ein Abschluss? Wenn die Software Ihnen im Monat einen zusätzlichen Termin bringt, der zum Abschluss wird, wie sieht es dann aus? Das kann ich Ihnen nicht versprechen, aber Sie sehen es nach einem Monat schwarz auf weiß in der App, und Sie können monatlich kündigen.“ |
-| „Wie gut sind die Leads, und was ist, wenn sie nichts taugen?“ | „Jeder Lead geht nur an Sie, und er hat selbst ein Formular ausgefüllt. Ist ein Lead unbrauchbar, zum Beispiel eine falsche Nummer, melden Sie ihn innerhalb der Frist, und Sie bekommen eine Gutschrift für die nächste Bestellung. Starten Sie klein, ab 5 Leads, und entscheiden Sie Woche für Woche.“ |
+| „Wie gut sind die Leads, und was ist, wenn sie nichts taugen?“ | „Jeder Lead geht nur an Sie, und er hat selbst ein Formular ausgefüllt. Ist ein Lead unbrauchbar, zum Beispiel eine falsche Nummer, melden Sie ihn innerhalb der Frist, und wir liefern Ihnen kostenlos einen Ersatzlead nach. Starten Sie klein, ab 5 Leads, und entscheiden Sie Woche für Woche.“ |

@@ -19,7 +19,7 @@ describe("Pay-per-Lead: Storno eintragen (Admin) und zurücknehmen", () => {
     customerId = (await makeCustomer()).id;
     // wie Heinrich von Kleist: Lieferung per E-Mail, Monatsziel, Storno-Fenster 7 Tage
     const sub = await prisma.leadSubscription.create({
-      data: { customerId, productKey: `PKV-HvK-${tag}`, price: 40, period: "month", goal: 50, delivery: "email", deliveryEmail: "hvk@test.local", stornoDays: 7, stornoReasons: ["Falsche Nummer"] },
+      data: { customerId, productKey: `PKV-HvK-${tag}`, price: 40, period: "month", stornoErsatz: false, goal: 50, delivery: "email", deliveryEmail: "hvk@test.local", stornoDays: 7, stornoReasons: ["Falsche Nummer"] },
     });
     subId = sub.id;
     otherSubId = (await prisma.leadSubscription.create({ data: { customerId, productKey: `PKV-Andere-${tag}`, price: 30, period: "month" } })).id;

@@ -44,7 +44,7 @@ describe("HvK-Abrechnung mit Datenbank", () => {
     customerId = (await makeCustomer({ name: `HvK Test ${tag}` })).id;
     otherCustomerId = (await makeCustomer()).id;
     const sub = await prisma.leadSubscription.create({
-      data: { customerId, productKey: process.env.HVK_PRODUCT, price: 45, period: "month", delivery: "email", deliveryEmail: "hvk@test.local", stornoDays: 7 },
+      data: { customerId, productKey: process.env.HVK_PRODUCT, price: 45, period: "month", stornoErsatz: false, delivery: "email", deliveryEmail: "hvk@test.local", stornoDays: 7 },
     });
     const mk = async (key: string, data: { day: string; plz: string; ort: string; app?: boolean; customer?: string }) => {
       const l = await prisma.lead.create({

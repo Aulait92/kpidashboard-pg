@@ -62,6 +62,13 @@
    dann bekommt der Admin eine Push-Meldung, um mit dem Kunden zu sprechen. „Sonstiges“ →
    automatisch 50:50 (halbe Gutschrift, Umsatz zur Hälfte bleibt), keine Prüfung mehr.
    Bezug mit „immer automatisch anerkennen“ (`stornoAutoApprove`): alles voll.
+   **Seit 24.11.2026 Nachlieferung** (Ole: „wir liefern Leads immer nach und erstatten nichts“), Schalter
+   `stornoErsatz` am Bezug (neue Bezüge an, alle vorher bestehenden aus = alte Regel oben): jede anerkannte
+   Reklamation, auch „Sonstiges“, schuldet einen kostenlosen Ersatzlead (`Lead.ersatzGeschuldet`, der Ersatz trägt
+   `ersatzFuerId`, keinen Umsatz, keine Bestellung). Keine Gutschrift, der Umsatz des reklamierten Leads bleibt.
+   Die Verteilung (`engine.ts` `quotaFor`, `nachlieferung.ts`) liefert offene Ersatzleads zuerst, dann Reste bezahlter
+   Wochenbestellungen auch aus Vorwochen (älteste zuerst). Erstattung nur in den Ausnahmen der AGB (Anbieter kündigt,
+   Erlaubnis fällt weg, dauerhaft keine Lieferung): von Hand, offene Bestellung dann auf „storniert“ setzen.
 6. **Reklamationen Heinrich von Kleist** (`hvk-abrechnung.ts`): kommen über die wöchentliche
    Abrechnung (PDF), nicht über die App. Zuordnung zu unserem Lead automatisch, siehe
    `docs/ppl-abloesung-plan.md` Abschnitt 4; nur Unklares landet unter **Storno prüfen**.

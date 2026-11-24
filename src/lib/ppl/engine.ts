@@ -14,6 +14,8 @@ import { adData, cleanAd, hasAd, type LeadAd } from "@/lib/anzeige";
 import { leadNachweisAus, poolEinwilligung, type PoolEinwilligung } from "@/lib/ppl/einwilligung-nachweis";
 import { EXPIRED_STATUS, expiredReason, parkCutoff, parkDeadlineHint, parkExpired } from "@/lib/ppl/parken";
 import { DISCARD_STATUSES, discardCutoff, discardDeleteDays } from "@/lib/ppl/loeschfrist";
+import { planNachlieferung } from "@/lib/ppl/nachlieferung";
+import { offeneErsatzWhere } from "@/lib/ppl/storno";
 
 const DAY = 86_400_000;
 export const DUPLICATE_DAYS = 30;
@@ -81,15 +83,41 @@ export function factsFrom(fields: Record<string, string>, extra: { smsVerified?:
 
 type SubRow = Prisma.LeadSubscriptionGetPayload<object>;
 
-/** Kontingent und Geliefertes des laufenden Zeitraums. null = nicht lieferbar. */
-export async function quotaFor(sub: SubRow, now = new Date()): Promise<(Candidate & { orderId: string | null }) | null> {
+/**
+ * Kontingent und Geliefertes des laufenden Zeitraums. null = nicht lieferbar.
+ * Bezüge mit Nachlieferung (stornoErsatz, Ole 24.11.2026; lib/ppl/nachlieferung.ts): offene Ersatzleads zuerst
+ * (ersatzFuerId, kostenlos, ohne Bestellung), dann Reste bezahlter Bestellungen auch aus Vorwochen (älteste zuerst).
+ * Ersatzleads zählen nie gegen Bestellung oder Ziel.
+ */
+export async function quotaFor(sub: SubRow, now = new Date()): Promise<(Candidate & { orderId: string | null; ersatzFuerId?: string | null }) | null> {
   if (!sub.active || (sub.startDate && sub.startDate > now)) return null;
   const testInfo = async () => {
     if (sub.status !== "test" || !sub.testQuantity) return null;
-    const delivered = await prisma.lead.count({ where: { subscriptionId: sub.id, isTest: false } });
+    const delivered = await prisma.lead.count({ where: { subscriptionId: sub.id, isTest: false, ersatzFuerId: null } });
     const started = sub.startDate ?? sub.createdAt;
     return { quantity: sub.testQuantity, delivered, days: sub.testDays, startedDaysAgo: Math.floor((now.getTime() - started.getTime()) / DAY) };
   };
+  const ersatzFuer = sub.stornoErsatz
+    ? (await prisma.lead.findMany({ where: offeneErsatzWhere(sub.id), orderBy: { stornoDecidedAt: "asc" }, select: { id: true }, take: 500 })).map((l) => l.id)
+    : [];
+  if (sub.period === "week" && sub.stornoErsatz) {
+    const { start } = weekRange(now);
+    const orders = await prisma.leadOrder.findMany({
+      where: { subscriptionId: sub.id, status: { in: ["paid", "processing"] }, periodStart: { lte: start } },
+      select: { id: true, periodStart: true, quantity: true },
+    });
+    const counts = orders.length
+      ? await prisma.lead.groupBy({ by: ["orderId"], where: { orderId: { in: orders.map((o) => o.id) }, isTest: false }, _count: { _all: true } })
+      : [];
+    const deliveredOf = (id: string) => counts.find((c) => c.orderId === id)?._count._all ?? 0;
+    const stand = orders.map((o) => ({ ...o, delivered: deliveredOf(o.id) }));
+    const plan = planNachlieferung(stand, ersatzFuer);
+    const current = stand.find((o) => o.periodStart.getTime() === start.getTime());
+    if (!plan.offen && !current) return null;
+    // quota − delivered = alles Offene; delivered = Geliefertes der laufenden Woche (für die Verteilung nach d'Hondt)
+    const delivered = current?.delivered ?? 0;
+    return { id: sub.id, quota: delivered + plan.offen, delivered, orderId: plan.orderId ?? current?.id ?? null, ersatzFuerId: plan.ersatzFuerId, test: await testInfo() };
+  }
   if (sub.period === "week") {
     const { start } = weekRange(now);
     const order = await prisma.leadOrder.findUnique({ where: { subscriptionId_periodStart: { subscriptionId: sub.id, periodStart: start } } });
@@ -100,8 +128,9 @@ export async function quotaFor(sub: SubRow, now = new Date()): Promise<(Candidat
   const test = await testInfo();
   const goal = sub.goal ?? (test ? test.quantity : 0);
   const range = sub.period === "month" ? monthRange(now) : { start: sub.startDate ?? new Date(0), end: new Date(8.64e15) };
-  const delivered = await prisma.lead.count({ where: { subscriptionId: sub.id, isTest: false, deliveredAt: { gte: range.start, lt: range.end } } });
-  return { id: sub.id, quota: goal, delivered, orderId: null, test };
+  const delivered = await prisma.lead.count({ where: { subscriptionId: sub.id, isTest: false, ersatzFuerId: null, deliveredAt: { gte: range.start, lt: range.end } } });
+  // Offene Ersatzleads kommen zum Ziel dazu und gehen zuerst raus
+  return { id: sub.id, quota: goal + ersatzFuer.length, delivered, orderId: null, ersatzFuerId: ersatzFuer[0] ?? null, test };
 }
 
 type AreaRow = Prisma.SubscriptionAreaGetPayload<object>;
@@ -202,7 +231,7 @@ async function slack(poolLeadId: string, extra: { delivery?: DeliveryReport | nu
 }
 
 /** Freien Bezug suchen und ausliefern; sonst geparkt lassen (Admin-Hinweis). */
-export async function distribute(poolLeadId: string, now = new Date(), notify = true): Promise<Omit<PoolResult, "poolLeadId">> {
+export async function distribute(poolLeadId: string, now = new Date(), notify = true, retried = false): Promise<Omit<PoolResult, "poolLeadId">> {
   const pl = await prisma.poolLead.findUniqueOrThrow({ where: { id: poolLeadId } });
   // Nur geparkte Leads innerhalb der Frist (lib/ppl/parken.ts); verfallene nie wieder ausliefern
   if (pl.status !== "parked") return { status: pl.status as PoolResult["status"], reason: pl.reason ?? undefined };
@@ -224,7 +253,7 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
     where: { productKey: pl.productKey, active: true, customer: { dormantSince: null, ...(nurPartner ? { isTest: false } : {}) } },
     include: { areas: true },
   });
-  const cands: (AreaCandidate & { orderId: string | null; sub: SubRow })[] = [];
+  const cands: (AreaCandidate & { orderId: string | null; ersatzFuerId?: string | null; sub: SubRow })[] = [];
   const reasons: string[] = [];
   for (const sub of subs) {
     // Gebietskunden bedienen nur ihre Gebiete (eigener PLZ-Filter hat Vorrang)
@@ -252,12 +281,21 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
     }).catch(() => {});
     return { status: "parked", reason };
   }
-  const leadId = await deliver(pl.id, pick.sub, pick.orderId, now, pick.area?.id ?? null);
-  return { status: "delivered", leadId };
+  try {
+    const leadId = await deliver(pl.id, pick.sub, pick.orderId, now, pick.area?.id ?? null, pick.ersatzFuerId ?? null);
+    return { status: "delivered", leadId };
+  } catch (err) {
+    // Ersatz für diese Reklamation kam parallel schon raus: einmal neu verteilen
+    if (err instanceof ErsatzSchonGeliefertError && !retried) return distribute(poolLeadId, now, notify, true);
+    throw err;
+  }
 }
 
-/** Lead beim Käufer anlegen und über den gewählten Weg zustellen. */
-export async function deliver(poolLeadId: string, sub: SubRow, orderId: string | null, now = new Date(), areaId: string | null = null): Promise<string> {
+/**
+ * Lead beim Käufer anlegen und über den gewählten Weg zustellen. ersatzFuerId (Nachlieferung, lib/ppl/storno.ts):
+ * kostenloser Ersatzlead für diese Reklamation, ohne Bestellung und ohne Umsatz.
+ */
+export async function deliver(poolLeadId: string, sub: SubRow, orderId: string | null, now = new Date(), areaId: string | null = null, ersatzFuerId: string | null = null): Promise<string> {
   const pl = await prisma.poolLead.findUniqueOrThrow({ where: { id: poolLeadId } });
   // Sperre (auch für Admin-Knöpfe): nur geparkte Leads innerhalb der Frist, verfallene nie wieder verkaufen
   assertDeliverable(pl, now);
@@ -266,6 +304,7 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
   const price = sub.price;
   const lead = await prisma.lead.create({
     data: {
+      ...(ersatzFuerId ? { ersatzFuerId } : {}),
       customerId: sub.customerId,
       source: pl.productKey,
       name: pl.name,
@@ -274,7 +313,7 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
       formData: pl.answers ?? Prisma.DbNull,
       status: "Neuer Lead",
       subscriptionId: sub.id,
-      orderId,
+      orderId: ersatzFuerId ? null : orderId,
       deliveredAt: now,
       createdAt: now,
       // Anzeige/UTM aus dem Funnel (lib/anzeige.ts)
@@ -283,13 +322,18 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
       ...(einw ? { consentData: leadNachweisAus(einw) as unknown as Prisma.InputJsonValue, ...(einw.kanaele.includes("WhatsApp") ? { waConsent: "ja" } : {}) } : {}),
     },
     select: { id: true },
+  }).catch((err: unknown) => {
+    // Eindeutig je Reklamation (Lead.ersatzFuerId): der Ersatz ist schon geliefert
+    if (ersatzFuerId && err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") throw new ErsatzSchonGeliefertError("Ersatzlead ist schon geliefert");
+    throw err;
   });
   try {
     await prisma.$transaction(async (tx) => {
       // nur, wenn der Lead noch geparkt ist (kein paralleler Verfall bzw. keine Doppelauslieferung)
       const claimed = await tx.poolLead.updateMany({ where: { id: pl.id, status: "parked" }, data: { status: "delivered", reason: null, leadId: lead.id, deliveredAt: now, areaId } });
       if (claimed.count !== 1) throw new NotDeliverableError("Lead ist nicht mehr geparkt");
-      await tx.revenue.create({ data: { customerId: sub.customerId, leadId: lead.id, amount: price, occurredAt: now } });
+      // Ersatzlead (Nachlieferung) ist kostenlos: kein Umsatz
+      if (!ersatzFuerId) await tx.revenue.create({ data: { customerId: sub.customerId, leadId: lead.id, amount: price, occurredAt: now } });
     });
   } catch (err) {
     await prisma.lead.delete({ where: { id: lead.id } }).catch(() => {});
@@ -316,6 +360,7 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
 }
 
 export class NotDeliverableError extends Error {}
+export class ErsatzSchonGeliefertError extends NotDeliverableError {}
 
 /** Wirft, wenn ein Pool-Lead nicht (mehr) ausgeliefert werden darf: nicht geparkt oder Frist abgelaufen. */
 export function assertDeliverable(pl: { status: string; createdAt: Date }, now = new Date()): void {

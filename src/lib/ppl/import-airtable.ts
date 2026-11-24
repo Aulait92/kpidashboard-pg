@@ -245,7 +245,8 @@ export async function importSubscriptions(opts: { dryRun: boolean }): Promise<Im
       // Nur Airtable-Felder; Zeitraum, Lieferweg, Vorlage usw. aus der App bleiben (KEEP_ON_REIMPORT)
       await prisma.leadSubscription.update({ where: { id: existing.id }, data: { ...plan.data, airtableId: b.id } as Parameters<typeof prisma.leadSubscription.update>[0]["data"] });
     } else {
-      await prisma.leadSubscription.create({ data: { ...row, ...(webhookSecret && delivery === "webhook" ? { webhookSecretEnc: encryptSecret(webhookSecret) } : {}) } });
+      // Airtable-Bezüge stammen aus Verträgen vor der Nachlieferung (Ole, 24.11.2026): alte Bedingungen (Gutschrift)
+      await prisma.leadSubscription.create({ data: { ...row, stornoErsatz: false, ...(webhookSecret && delivery === "webhook" ? { webhookSecretEnc: encryptSecret(webhookSecret) } : {}) } });
     }
   }
   return out;

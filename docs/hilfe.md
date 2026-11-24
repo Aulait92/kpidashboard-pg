@@ -553,7 +553,9 @@ Seiten aus der Liste „Seiten“ unten.
 - Lead öffnen → „Mehr“ → **Stornieren**. Grund aus der Liste wählen (z. B. falsche Nummer, doppelt), bei Bedarf Bemerkung.
 - Gelistete Gründe werden meist sofort anerkannt. Ist die Reklamationsquote hoch oder der Grund „Sonstiges“,
   prüfen wir von Hand (1–2 Werktage). Der Status steht dann beim Lead („in Prüfung“ / „abgelehnt“).
-- Die Gutschrift wird bei der nächsten Bestellung abgezogen.
+- Für jede anerkannte Reklamation liefern wir kostenlos einen Ersatzlead nach (Verträge ab 24.11.2026). Eine Gutschrift
+  oder Erstattung gibt es dafür nicht. Unter **Bestellen** steht, wie viele Ersatzleads noch kommen.
+- Ältere Verträge (vor dem 24.11.2026): Die Gutschrift wird bei der nächsten Bestellung abgezogen.
 - Reklamieren geht nur innerhalb weniger Tage nach Lieferung (die Frist steht in Ihrem Vertrag).
 
 ## Leads bestellen (Pay-per-Lead)
@@ -561,6 +563,8 @@ Seiten aus der Liste „Seiten“ unten.
 - „Bestellen“: einmal Zahlungsart hinterlegen, dann Anzahl wählen, ab sofort oder für nächste Woche.
 - „Jede Woche wiederholen“ verlängert die Bestellung freitags automatisch; beenden jederzeit möglich.
 - Status: bezahlt, Lastschrift läuft, Zahlung offen, fehlgeschlagen, storniert. Geliefert wird nur bei bezahlter Bestellung.
+- Bezahlte Leads verfallen nicht: Was in der bestellten Woche nicht geliefert wird, liefern wir danach nach (Verträge ab
+  24.11.2026). Bezahlte Bestellungen werden nicht erstattet, auch nicht, wenn Sie den Vertrag beenden.
 
 ## Neuigkeiten
 

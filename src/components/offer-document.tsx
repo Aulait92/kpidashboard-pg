@@ -2,7 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 import { InfoHinweis } from "@/components/info-hinweis";
 import { PREISSTUFE_ERKLAERT } from "@/lib/begriffe";
 import { LegalSections } from "@/components/legal-sections";
-import { AGB, PPL_KUNDENKONTO_BEDINGUNGEN, PPL_NUR_LEADS_BEDINGUNGEN, PROVIDER } from "@/lib/legal-texts";
+import { agbFuerAngebot, PPL_KUNDENKONTO_BEDINGUNGEN, PPL_NUR_LEADS_BEDINGUNGEN_ALT, PROVIDER } from "@/lib/legal-texts";
 import {
   beispielRechnung,
   KUNDENKONTO_ABRECHNUNG,
@@ -45,7 +45,7 @@ import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } f
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
 import { ersteWocheAus, ersteWocheBetrag, ersteWocheName, ersteWocheSteuerKurz, ersteWocheZahlen, eurCent, ERSTE_WOCHE_ABBUCHUNG, NUR_LEADS_ABBUCHUNG } from "@/lib/ppl/erste-woche-shared";
 import { bruttoJeLead } from "@/lib/ppl/steuer";
-import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, PPL_NUR_LEADS_REKLAMATION, PPL_NUR_LEADS_SEPARAT, PPL_REKLAMATION, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, PPL_NACHLIEFERUNG, PPL_NUR_LEADS_REKLAMATION, PPL_NUR_LEADS_REKLAMATION_ALT, PPL_NUR_LEADS_SEPARAT, PPL_REKLAMATION, PPL_REKLAMATION_ALT, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -55,6 +55,8 @@ export type OfferDoc = {
   number: string;
   version: number;
   status: string;
+  /** Leadangebot vor der Nachlieferung angenommen (24.11.2026): alte Bedingungen und volle AGB anzeigen */
+  leadAltBedingungen?: boolean;
   contactName: string;
   company: string | null;
   street: string | null;
@@ -298,6 +300,14 @@ export function OfferDocument({
   const vorausWort = halb ? "Vorauszahlung" : "Jahreszahlung";
   const hasExtras = add.seatsFee > 0 || add.bestandFee > 0 || add.empfehlungFee > 0;
   const hasIntro = offer.introMonthlyFee != null && !!offer.introMonths;
+  // AGB fürs Angebot (Ole, 24.11.2026): Leadangebote nur mit den geltenden Abschnitten, fortlaufend nummeriert
+  const agbAngebot = agbFuerAngebot({
+    package: offer.package,
+    kundenkonto: !!kk,
+    leadAltBedingungen: !!offer.leadAltBedingungen,
+    zugaenge: add.hasSeats,
+    zusatzmodule: add.bestandActive || add.empfehlungActive,
+  });
   // Erster Monatsbetrag inkl. Zusätze (Startpreis gilt nur für das Paket)
   const firstMonth = round2((hasIntro ? offer.introMonthlyFee! : offer.monthlyFee) + add.seatsFee + add.bestandFee + add.empfehlungFee);
   const firstCharge = add.annualTotal ?? firstMonth;
@@ -878,7 +888,7 @@ export function OfferDocument({
               </>
             ) : null}
           </p>
-          <LegalSections sections={AGB} compact />
+          <LegalSections sections={agbAngebot.agb} compact />
         </div>
 
             </div>
@@ -898,7 +908,7 @@ export function OfferDocument({
               </>
             ) : null}
           </p>
-          <LegalSections sections={AGB} compact />
+          <LegalSections sections={agbAngebot.agb} compact />
         </div>
 
         )}
@@ -1027,8 +1037,13 @@ function PplSoftwareBody({
           <ErsteWocheNote offer={offer} />
           <Note>Bestellt wird im Kundenbereich unter „Leads bestellen“. Ihr Assistent übernimmt jeden gelieferten Lead automatisch.</Note>
           <Note>
-            <span data-offer-ppl-reklamation>{PPL_REKLAMATION}</span>
+            <span data-offer-ppl-reklamation>{offer.leadAltBedingungen ? PPL_REKLAMATION_ALT : PPL_REKLAMATION}</span>
           </Note>
+          {offer.leadAltBedingungen ? null : (
+            <Note>
+              <span data-offer-ppl-nachlieferung>{PPL_NACHLIEFERUNG}</span>
+            </Note>
+          )}
         </Tr>
         )}
         {add.hasSeats ? (
@@ -1197,8 +1212,13 @@ function NurLeadsBody({ offer, collapse }: { offer: OfferDoc; collapse: boolean 
           <span data-offer-nur-leads>{PPL_NUR_LEADS_SEPARAT}</span>
           <ErsteWocheNote offer={offer} nurLeads />
           <Note>
-            <span data-offer-ppl-reklamation>{PPL_NUR_LEADS_REKLAMATION}</span>
+            <span data-offer-ppl-reklamation>{offer.leadAltBedingungen ? PPL_NUR_LEADS_REKLAMATION_ALT : PPL_NUR_LEADS_REKLAMATION}</span>
           </Note>
+          {offer.leadAltBedingungen ? null : (
+            <Note>
+              <span data-offer-ppl-nachlieferung>{PPL_NACHLIEFERUNG}</span>
+            </Note>
+          )}
         </Tr>
         <Tr k="Kundenbereich">
           Alle Leads mit Kontaktdaten und Formularangaben, einfacher Bearbeitungsstand (z. B. erreicht, Termin, Abschluss), Reklamation, Bestellungen und
@@ -1225,15 +1245,16 @@ function NurLeadsBody({ offer, collapse }: { offer: OfferDoc; collapse: boolean 
           ) : null}
         </Tr>
       </Table>
-      <NurLeadsBedingungen collapse={collapse} />
+      {/* Ab 24.11.2026 stehen die Regeln für Leads in den AGB des Angebots (agbFuerAngebot); alte Angebote behalten ihren Block */}
+      {offer.leadAltBedingungen ? <NurLeadsBedingungen collapse={collapse} /> : null}
     </>
   );
 }
 
-/** Besondere Bedingungen „Nur Leads“ (Bestandteil des Angebots, lib/legal-texts.ts PPL_NUR_LEADS_BEDINGUNGEN). */
+/** Besondere Bedingungen „Nur Leads“ alter Angebote (vor 24.11.2026 angenommen, lib/legal-texts.ts PPL_NUR_LEADS_BEDINGUNGEN_ALT). */
 function NurLeadsBedingungen({ collapse }: { collapse: boolean }) {
   const titel = "Besondere Bedingungen: Nur Leads";
-  const inhalt = <LegalSections sections={PPL_NUR_LEADS_BEDINGUNGEN} compact />;
+  const inhalt = <LegalSections sections={PPL_NUR_LEADS_BEDINGUNGEN_ALT} compact />;
   return collapse ? (
     <details className="group mt-10 rounded-xl border border-[#e5e7eb] [&>summary::-webkit-details-marker]:hidden" data-offer-nur-leads-bedingungen>
       <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">

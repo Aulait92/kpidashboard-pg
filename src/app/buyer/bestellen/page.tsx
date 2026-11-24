@@ -5,7 +5,8 @@ import { Badge, Button, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { fmtWeek, monthRange, weekRange } from "@/lib/ppl/periods";
-import { openCredits } from "@/lib/ppl/storno";
+import { offeneErsatzleads, openCredits } from "@/lib/ppl/storno";
+import { quotaFor } from "@/lib/ppl/engine";
 import { MIN_ORDER } from "@/lib/ppl/orders";
 import { bruttoJeLead, effektiveSteuer, isSteuer, STEUERFREI_PREISHINWEIS, type Steuer } from "@/lib/ppl/steuer";
 import { OrderForm } from "./order-form";
@@ -70,7 +71,12 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
         prisma.lead.count({ where: { ...where, stornoState: { in: ["approved", "review"] } } }),
       ]);
       const quota = s.period === "week" ? (current?.quantity ?? 0) : (s.goal ?? s.testQuantity ?? 0);
-      return { s, current, next, credits, delivered, stornos, quota };
+      // Nachlieferung (Ole, 24.11.2026): offene Ersatzleads und Reste aus Vorwochen
+      const ersatzOffen = s.stornoErsatz ? await offeneErsatzleads(s.id) : 0;
+      const q = s.stornoErsatz && s.period === "week" ? await quotaFor(s, now) : null;
+      const laufendOffen = current && ["paid", "processing"].includes(current.status) ? Math.max(0, current.quantity - delivered) : 0;
+      const vorwochenOffen = q ? Math.max(0, q.quota - q.delivered - ersatzOffen - laufendOffen) : 0;
+      return { s, current, next, credits, delivered, stornos, quota, ersatzOffen, vorwochenOffen };
     }),
   );
 
@@ -106,7 +112,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
           </Card>
         ) : null}
 
-        {cards.map(({ s, current, next, credits, delivered, stornos, quota }) => {
+        {cards.map(({ s, current, next, credits, delivered, stornos, quota, ersatzOffen, vorwochenOffen }) => {
           const pct = quota ? Math.min(100, Math.round((delivered / quota) * 100)) : 0;
           const price = Number(s.price);
           const steuer = effektiveSteuer(s, zahlerReg(s.customerId)).steuer;
@@ -150,6 +156,19 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
                 {credits.amount > 0 ? (
                   <p className="rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-emerald-900">
                     Gutschrift {brutto(credits.amount, steuer)} aus {credits.leadIds.length} Storno(s) wird mit der nächsten Bestellung verrechnet.
+                  </p>
+                ) : null}
+
+                {ersatzOffen > 0 || vorwochenOffen > 0 ? (
+                  <p className="rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-emerald-900" data-nachlieferung>
+                    Wir liefern nach:{" "}
+                    {[
+                      ersatzOffen > 0 ? `${ersatzOffen} ${ersatzOffen === 1 ? "Ersatzlead" : "Ersatzleads"} für Reklamationen, kostenlos` : null,
+                      vorwochenOffen > 0 ? `${vorwochenOffen} ${vorwochenOffen === 1 ? "Lead" : "Leads"} aus früheren Bestellungen` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" und ")}
+                    .
                   </p>
                 ) : null}
 
@@ -214,9 +233,13 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
         })}
         {subs.length ? (
           <p className="text-xs text-[color:var(--muted)]">
-            {istHauptkunde && !own.length
-              ? "Stornos meldet Ihr Partner innerhalb der Frist im Lead. Die Gutschrift wird mit Ihrer nächsten Bestellung verrechnet."
-              : "Storno: innerhalb der vereinbarten Frist im Lead unter „Mehr“ → „Stornieren“ mit Grund. Stornierte Leads werden ersatzlos gutgeschrieben."}
+            {subs.every((s) => s.stornoErsatz)
+              ? istHauptkunde && !own.length
+                ? "Reklamationen meldet Ihr Partner innerhalb der Frist im Lead. Für jede anerkannte Reklamation liefern wir kostenlos einen Ersatzlead nach."
+                : "Reklamation: innerhalb der vereinbarten Frist im Lead unter „Mehr“ → „Stornieren“ mit Grund. Für jede anerkannte Reklamation liefern wir kostenlos einen Ersatzlead nach."
+              : istHauptkunde && !own.length
+                ? "Stornos meldet Ihr Partner innerhalb der Frist im Lead. Die Gutschrift wird mit Ihrer nächsten Bestellung verrechnet."
+                : "Storno: innerhalb der vereinbarten Frist im Lead unter „Mehr“ → „Stornieren“ mit Grund. Stornierte Leads werden ersatzlos gutgeschrieben."}
           </p>
         ) : null}
       </div>

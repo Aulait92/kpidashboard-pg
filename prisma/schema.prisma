@@ -884,9 +884,16 @@ model Lead {
   stornoNote           String?
   stornoRequestedAt    DateTime?
   stornoDecidedAt      DateTime?
-  // Gutschrift für genehmigten Storno (EUR) und wann sie auf eine Rechnung kam
+  // Gutschrift für genehmigten Storno (EUR) und wann sie auf eine Rechnung kam (nur Bezüge mit alten Bedingungen,
+  // LeadSubscription.stornoErsatz = false)
   creditAmount         Decimal?          @db.Decimal(10, 2)
   creditedAt           DateTime?
+  // Nachlieferung statt Gutschrift (Ole, 24.11.2026, lib/ppl/storno.ts): anerkannte Reklamation schuldet einen
+  // kostenlosen Ersatzlead. ersatzFuerId am Ersatzlead zeigt auf den reklamierten Lead (je Reklamation genau einer).
+  ersatzGeschuldet     Boolean           @default(false)
+  ersatzFuerId         String?           @unique
+  ersatzFuer           Lead?             @relation("LeadErsatz", fields: [ersatzFuerId], references: [id], onDelete: SetNull)
+  ersatz               Lead?             @relation("LeadErsatz")
   // DSGVO-Löschung (Art. 17): personenbezogene Felder geleert, Zeile bleibt
   // für Abrechnung und Statistik. Der Airtable-Sync überschreibt sie nicht mehr.
   erasedAt             DateTime?
@@ -1847,6 +1854,9 @@ model Offer {
   // Stichtag für die Garantien (Ole, 23.11.2026): Erstellungsdatum der ersten Version desselben Angebots. Neue Versionen
   // eines Angebots von vor GUARANTEES_UNTIL behalten so ihre Garantien (lib/garantien.ts garantieDatum).
   garantieStichtag        DateTime?
+  // Leadangebote (Nur Leads, Pay-per-Lead + Software), vor der Nachlieferung angenommen (Ole, 24.11.2026): zeigen weiter
+  // die alten Bedingungen (Gutschrift bzw. Erstattung, volle AGB). Nur per Migration gesetzt, neue Angebote false.
+  leadAltBedingungen      Boolean       @default(false)
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 
@@ -2747,6 +2757,11 @@ model LeadSubscription {
   // true = jede Reklamation im Fenster sofort anerkennen (auch „Sonstiges“ und
   // hohe Quote), sonst gehen diese in die Prüfung durch den Admin
   stornoAutoApprove   Boolean   @default(false)
+  // Reklamation und offene Bestellungen (Ole, 24.11.2026: „wir liefern Leads immer nach und erstatten nichts“):
+  // true = anerkannte Reklamation → kostenloser Ersatzlead, nicht gelieferte Reste bezahlter Wochenbestellungen werden
+  // in den Folgewochen nachgeliefert. false = alte Bedingungen (Gutschrift auf die nächste Bestellung, nur laufende Woche);
+  // alle bei Einführung bestehenden Bezüge stehen auf false (Migration 20261124150000_ppl_nachlieferung).
+  stornoErsatz        Boolean   @default(true)
   // Auslieferung: app (Kundenbereich, Push, E-Mail) | email (nur E-Mail) | webhook
   delivery            String    @default("app")
   deliveryEmail       String?

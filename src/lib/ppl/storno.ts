@@ -1,11 +1,21 @@
-// Storno beim Pay-per-Lead: innerhalb des Storno-Fensters, nur mit erlaubtem
-// Grund. Ersatzlos – der Käufer bekommt eine Gutschrift (nächste Rechnung).
+// Storno (Reklamation) beim Pay-per-Lead: innerhalb des Storno-Fensters, nur mit erlaubtem Grund.
+//
+// Nachlieferung (Ole, 24.11.2026: „Bei Leadbestellungen … wir liefern Leads immer nach und erstatten nichts“), für
+// Bezüge mit stornoErsatz (alle seit der Einführung angelegten): jede anerkannte Reklamation, auch der Grenzfall
+// „Sonstiges“, schuldet genau einen kostenlosen Ersatzlead (Lead.ersatzGeschuldet). Keine Gutschrift, keine Erstattung;
+// der Umsatz des reklamierten Leads bleibt, der Ersatzlead hat keinen Umsatz. Die Verteilung (lib/ppl/engine.ts
+// quotaFor) liefert offene Ersatzleads vor allem anderen. Ein halber Ersatzlead geht nicht, darum kein 50:50 mehr;
+// die Meldung bei hoher Stornoquote bleibt als Schutz vor Missbrauch.
+//
+// Alte Bedingungen (stornoErsatz = false, alle Bezüge vor dem 24.11.2026), unverändert:
+// Ersatzlos, der Käufer bekommt eine Gutschrift (nächste Rechnung).
 // Ole, 17.11.2026: „klare Stornos einfach annehmen, bei Grenzfällen 50:50“.
 // Klar = erlaubter Grund → volle Gutschrift, auch bei Stornoquote > 20 % (letzte 30 Tage);
 // dann bekommt der Admin eine Meldung, um mit dem Kunden zu sprechen.
 // Grenzfall = „Sonstiges“ → automatisch halbe Gutschrift (Umsatz zur Hälfte bleibt), keine Prüfung mehr. Am Bezug (`stornoAutoApprove`): jede Reklamation
 // im Fenster voll anerkannt.
 
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { sendToAdmins } from "@/lib/push";
@@ -17,7 +27,7 @@ export const PPL_REASON_PREFIX = "ppl:";
 /** Anteil der Gutschrift bei Grenzfällen (Ole, 17.11.2026: 50:50) */
 export const GRENZFALL_ANTEIL = 0.5;
 
-export type StornoOutcome = { ok: true; state: "approved" | "review"; anteil?: number } | { ok: false; error: string };
+export type StornoOutcome = { ok: true; state: "approved" | "review"; anteil?: number; ersatz?: boolean } | { ok: false; error: string };
 
 export function stornoWindowOpen(deliveredAt: Date | null, days: number | null, now = new Date()): boolean {
   if (!deliveredAt || !days) return false;
@@ -50,7 +60,7 @@ export async function requestStorno(
     where: { id: leadId },
     select: {
       id: true, customerId: true, name: true, deliveredAt: true, stornoState: true, source: true, status: true,
-      subscription: { select: { id: true, label: true, stornoDays: true, stornoReasons: true, stornoAutoApprove: true } },
+      subscription: { select: { id: true, label: true, productKey: true, stornoDays: true, stornoReasons: true, stornoAutoApprove: true, stornoErsatz: true } },
       revenues: { select: { id: true, amount: true }, take: 1 },
     },
   });
@@ -73,26 +83,30 @@ export async function requestStorno(
   const quota = delivered ? (stornos + 1) / delivered : 1;
   // Grenzfall nur „Sonstiges“ → 50:50; zugelassene Gründe immer voll (Ole, 17.11.2026), auch bei hoher Quote.
   // Am Bezug „immer automatisch anerkennen“ → alles voll.
+  // Nachlieferung: jede anerkannte Reklamation = 1 Ersatzlead, auch „Sonstiges“ (kein 50:50)
+  const ersatz = sub.stornoErsatz;
   const grenzfall = !sub.stornoAutoApprove && other;
   const hoheQuote = quota > REVIEW_QUOTA;
-  const anteil = grenzfall ? GRENZFALL_ANTEIL : 1;
+  const anteil = grenzfall && !ersatz ? GRENZFALL_ANTEIL : 1;
 
   await prisma.lead.update({
     where: { id: lead.id },
     data: { stornoState: "approved", stornoReason: reason, stornoNote: note.trim() || null, stornoRequestedAt: now },
   });
-  await approve(lead.id, now, anteil);
-  await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { reason, grenzfall, hoheQuote, anteil, quota: Math.round(quota * 100), prevStatus: lead.status } });
+  if (ersatz) await approveErsatz(lead.id, now);
+  else await approve(lead.id, now, anteil);
+  await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { reason, grenzfall, hoheQuote, ...(ersatz ? { ersatz: true } : { anteil }), quota: Math.round(quota * 100), prevStatus: lead.status } });
   const bezug = sub.label ?? lead.source ?? "Pay-per-Lead";
+  if (ersatz) await nachliefern(sub.productKey, now);
   if (hoheQuote) {
-    // Hohe Quote: gutgeschrieben, Ole spricht mit dem Kunden (eine Meldung je Bezug, ersetzt die vorige)
+    // Hohe Quote: anerkannt, Ole spricht mit dem Kunden (eine Meldung je Bezug, ersetzt die vorige)
     await sendToAdmins({
       title: `Stornoquote ${Math.round(quota * 100)} %: mit dem Kunden sprechen`,
-      body: `${bezug}: ${reason}${grenzfall ? " (50:50)" : " (voll gutgeschrieben)"}`,
+      body: `${bezug}: ${reason}${ersatz ? " (Ersatzlead)" : grenzfall ? " (50:50)" : " (voll gutgeschrieben)"}`,
       url: "/admin/neu/leads/ppl?ansicht=geliefert",
       tag: `ppl-storno-quote:${sub.id}`,
     }).catch(() => {});
-  } else if (grenzfall) {
+  } else if (grenzfall && !ersatz) {
     await sendToAdmins({
       title: `Storno 50:50: ${bezug}`,
       body: `${reason}: ${note.trim().slice(0, 80)} · Quote ${Math.round(quota * 100)} %`,
@@ -100,7 +114,36 @@ export async function requestStorno(
       tag: `ppl-storno:${lead.id}`,
     }).catch(() => {});
   }
-  return { ok: true, state: "approved", anteil };
+  return ersatz ? { ok: true, state: "approved", ersatz: true } : { ok: true, state: "approved", anteil };
+}
+
+/**
+ * Storno mit Nachlieferung anerkennen: Status „Storno“, ein Ersatzlead geschuldet. Keine Gutschrift, der Umsatz des
+ * reklamierten Leads bleibt (bezahlt ist die Bestellung, der Ersatzlead kostet nichts).
+ */
+async function approveErsatz(leadId: string, now: Date) {
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: { stornoState: "approved", stornoDecidedAt: now, status: "Storno", ersatzGeschuldet: true, creditAmount: null },
+  });
+}
+
+/** Geparkte Leads des Produkts sofort verteilen, damit der Ersatzlead schnell kommt (wirft nie). */
+async function nachliefern(productKey: string, now: Date) {
+  try {
+    const { redistributeParked } = await import("@/lib/ppl/engine");
+    await redistributeParked(productKey, now);
+  } catch {
+    // Verteilung läuft beim nächsten Eingang ohnehin
+  }
+}
+
+/** Offene Ersatzleads eines Bezugs: anerkannte Reklamationen mit Nachlieferung, für die noch kein Ersatz geliefert ist. */
+export const offeneErsatzWhere = (subscriptionId: string) =>
+  ({ subscriptionId, ersatzGeschuldet: true, stornoState: "approved", ersatz: { is: null } }) satisfies Prisma.LeadWhereInput;
+
+export async function offeneErsatzleads(subscriptionId: string): Promise<number> {
+  return prisma.lead.count({ where: offeneErsatzWhere(subscriptionId) });
 }
 
 /**
@@ -124,9 +167,13 @@ async function approve(leadId: string, now: Date, anteil = 1) {
 
 /** Admin entscheidet über einen Storno in Prüfung (Altfälle vor der 50:50-Regel). "half" = Grenzfall 50:50. */
 export async function decideStorno(leadId: string, accept: boolean | "half", now = new Date()) {
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { stornoState: true, customerId: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { stornoState: true, customerId: true, subscription: { select: { stornoErsatz: true, productKey: true } } } });
   if (lead?.stornoState !== "review") return false;
-  if (accept) await approve(leadId, now, accept === "half" ? GRENZFALL_ANTEIL : 1);
+  // Nachlieferung: anerkannt heißt immer ein ganzer Ersatzlead (auch „half“)
+  if (accept && lead.subscription?.stornoErsatz) {
+    await approveErsatz(leadId, now);
+    await nachliefern(lead.subscription.productKey, now);
+  } else if (accept) await approve(leadId, now, accept === "half" ? GRENZFALL_ANTEIL : 1);
   else await prisma.lead.update({ where: { id: leadId }, data: { stornoState: "rejected", stornoDecidedAt: now } });
   await audit(accept === "half" ? "storno.half" : accept ? "storno.approve" : "storno.reject", { entity: "Lead", entityId: leadId, customerId: lead.customerId });
   return true;
@@ -156,10 +203,36 @@ export async function adminRecordStorno(
   if (!grund) return { ok: false, error: "Bitte einen Stornogrund angeben." };
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { id: true, customerId: true, status: true, deliveredAt: true, stornoState: true, airtableId: true, creditAmount: true, creditedAt: true, subscription: { select: { stornoDays: true } } },
+    select: { id: true, customerId: true, status: true, deliveredAt: true, stornoState: true, airtableId: true, creditAmount: true, creditedAt: true, subscription: { select: { stornoDays: true, stornoErsatz: true, productKey: true } } },
   });
   if (!lead || (!lead.subscription && !(opts.allowAirtableLead && lead.airtableId))) return { ok: false, error: "Kein Pay-per-Lead aus der App." };
   const outsideWindow = !stornoWindowOpen(lead.deliveredAt, lead.subscription?.stornoDays ?? null, now);
+  if (lead.subscription?.stornoErsatz) {
+    // Nachlieferung (Ole, 24.11.2026): Ersatzlead statt Gutschrift, Umsatz bleibt
+    if (lead.stornoState === "approved") return { ok: true, already: true, outsideWindow };
+    const r = await prisma.lead.updateMany({
+      where: { id: lead.id, OR: [{ stornoState: null }, { stornoState: { not: "approved" } }] },
+      data: {
+        stornoState: "approved",
+        stornoReason: grund,
+        stornoNote: note.trim().slice(0, 1000) || null,
+        stornoRequestedAt: now,
+        stornoDecidedAt: now,
+        status: "Storno",
+        ersatzGeschuldet: true,
+      },
+    });
+    if (!r.count) return { ok: true, already: true, outsideWindow };
+    await audit("storno.admin", {
+      entity: "Lead",
+      entityId: lead.id,
+      customerId: lead.customerId,
+      actor,
+      details: { reason: grund, note: note.trim() || null, outsideWindow, ersatz: true, prevStatus: lead.status, prevStornoState: lead.stornoState },
+    });
+    await nachliefern(lead.subscription.productKey, now);
+    return { ok: true, already: false, outsideWindow };
+  }
   const rev = await prisma.revenue.findFirst({ where: { leadId: lead.id }, select: { id: true, amount: true, cancelled: true } });
   if (lead.stornoState === "approved") {
     // Grenzfall 50:50 nachträglich voll anerkennen (Gutschrift noch nicht verrechnet)
@@ -211,9 +284,10 @@ export async function undoStorno(
   leadId: string,
   actor: { id?: string | null; email?: string | null; role?: string | null },
 ): Promise<{ ok: true; already: boolean } | { ok: false; error: string }> {
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, stornoState: true, creditedAt: true, subscriptionId: true, creditAmount: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, stornoState: true, creditedAt: true, subscriptionId: true, creditAmount: true, ersatzGeschuldet: true, ersatz: { select: { id: true } } } });
   if (!lead?.subscriptionId) return { ok: false, error: "Kein Pay-per-Lead aus der App." };
   if (lead.stornoState !== "approved") return { ok: true, already: true };
+  if (lead.ersatz) return { ok: false, error: "Der Ersatzlead ist schon geliefert." };
   if (lead.creditedAt) return { ok: false, error: "Die Gutschrift ist schon mit einer Bestellung verrechnet." };
   const last = await prisma.auditLog.findFirst({
     where: { entity: "Lead", entityId: lead.id, action: { in: ["storno.admin", "lead.storno"] } },
@@ -225,9 +299,10 @@ export async function undoStorno(
   const done = await prisma.$transaction(async (tx) => {
     const r = await tx.lead.updateMany({
       where: { id: lead.id, stornoState: "approved", creditedAt: null },
-      data: { stornoState: null, stornoReason: null, stornoNote: null, stornoRequestedAt: null, stornoDecidedAt: null, creditAmount: null, status },
+      data: { stornoState: null, stornoReason: null, stornoNote: null, stornoRequestedAt: null, stornoDecidedAt: null, creditAmount: null, ersatzGeschuldet: false, status },
     });
-    if (r.count) {
+    // Nachlieferung: Umsatz war nie storniert, nichts zurückzurechnen
+    if (r.count && !lead.ersatzGeschuldet) {
       const restored = await tx.revenue.updateMany({ where: { leadId: lead.id, cancelled: true }, data: { cancelled: false } });
       // 50:50: Umsatz war nicht storniert, sondern um die Gutschrift gekürzt → zurückrechnen
       if (!restored.count && Number(lead.creditAmount ?? 0) > 0) {
@@ -242,7 +317,10 @@ export async function undoStorno(
   return { ok: true, already: false };
 }
 
-/** Offene Gutschriften eines Bezugs (noch auf keiner Rechnung). */
+/**
+ * Offene Gutschriften eines Bezugs (noch auf keiner Rechnung). Nur alte Bedingungen: Stornos mit Nachlieferung schreiben
+ * nichts gut (creditAmount bleibt leer), daher zieht die Bestellung (lib/ppl/orders.ts) für sie nichts ab.
+ */
 export async function openCredits(subscriptionId: string) {
   const rows = await prisma.lead.findMany({
     where: { subscriptionId, stornoState: "approved", creditedAt: null, creditAmount: { gt: 0 } },
