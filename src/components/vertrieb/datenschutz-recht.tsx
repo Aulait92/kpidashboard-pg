@@ -33,6 +33,7 @@ const STATUS: Record<FallZeile["status"], { label: string; tone: "danger" | "war
 
 /** Passende Vorlage je Art (Abmahnung: keine, Ole gibt sie zur Prüfung weiter). */
 const VORLAGE_FUER: Record<FallZeile["art"], VorlagenArt | null> = { auskunft: "auskunft", loeschung: "loeschung", widerspruch: "widerspruch", abmahnung: null };
+const NEU_LADEN = "Hat nicht geklappt. Falls die App gerade aktualisiert wurde: Seite neu laden und erneut versuchen.";
 
 export function DatenschutzRechtKarte({ contactId, faelle }: { contactId: string; faelle: FallZeile[] }) {
   const router = useRouter();
@@ -46,7 +47,7 @@ export function DatenschutzRechtKarte({ contactId, faelle }: { contactId: string
       setMeldung(null);
       setEntwurf(null);
       setOffen({ fallId, vorlage });
-      const r = await rechtsEntwurfAction(contactId, vorlage).catch(() => ({ ok: false as const, fehler: "Entwurf konnte nicht geladen werden." }));
+      const r = await rechtsEntwurfAction(contactId, vorlage).catch(() => ({ ok: false as const, fehler: NEU_LADEN }));
       if (r.ok) setEntwurf({ betreff: r.betreff, text: r.text, hinweis: r.hinweis, sendbar: r.sendbar });
       else setMeldung(r.fehler);
     });
@@ -54,7 +55,7 @@ export function DatenschutzRechtKarte({ contactId, faelle }: { contactId: string
     offen &&
     entwurf &&
     start(async () => {
-      const r = await rechtsSendenAction({ contactId, fallId: offen.fallId, vorlage: offen.vorlage, betreff: entwurf.betreff, text: entwurf.text }).catch(() => ({ ok: false as const, fehler: "Senden fehlgeschlagen." }));
+      const r = await rechtsSendenAction({ contactId, fallId: offen.fallId, vorlage: offen.vorlage, betreff: entwurf.betreff, text: entwurf.text }).catch(() => ({ ok: false as const, fehler: "Senden fehlgeschlagen. Falls die App gerade aktualisiert wurde: Text kopieren, Seite neu laden, erneut senden." }));
       if (r.ok) {
         setOffen(null);
         router.refresh();
@@ -62,7 +63,7 @@ export function DatenschutzRechtKarte({ contactId, faelle }: { contactId: string
     });
   const vermerken = (fallId: string) =>
     start(async () => {
-      const r = await rechtsBeantwortetAction(contactId, fallId).catch(() => ({ ok: false as const, fehler: "Speichern fehlgeschlagen." }));
+      const r = await rechtsBeantwortetAction(contactId, fallId).catch(() => ({ ok: false as const, fehler: NEU_LADEN }));
       if (r.ok) {
         setOffen(null);
         router.refresh();
