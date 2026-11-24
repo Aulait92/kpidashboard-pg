@@ -481,27 +481,27 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     expect(created).toHaveLength(108);
     // Server liefert je Abruf höchstens 20: früher fehlten die neuesten Vorlagen, sie wurden bei jedem Lauf neu eingereicht
     listCap = 20;
-    remote.find((t) => t.name === "pg_outreach_privatschutz_v13_sie")!.status = "APPROVED";
+    remote.find((t) => t.name === "pg_outreach_privatschutz_v14_sie")!.status = "APPROVED";
     posts = [];
     const s = await submitTemplatesForCustomer(customerId);
     expect(posts).toEqual([]);
     expect(s.ok).toBe(true);
-    expect(s.approved).toContain("pg_outreach_privatschutz_v13_sie");
-    expect((await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_privatschutz_v13_sie" } })).status).toBe("approved");
+    expect(s.approved).toContain("pg_outreach_privatschutz_v14_sie");
+    expect((await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_privatschutz_v14_sie" } })).status).toBe("approved");
 
     // Vorlage gibt es bei Meta, die Liste zeigt sie nicht: kein erneutes Einreichen (lokal bekannt)
-    hidden = ["pg_outreach_privatschutz_v13"];
+    hidden = ["pg_outreach_privatschutz_v14"];
     posts = [];
     const s2 = await submitTemplatesForCustomer(customerId);
     expect(posts).toEqual([]);
     expect(s2.ok).toBe(true);
     // Lokal fehlt der Datensatz auch: einmal eingereicht, „already in use“ → übernommen statt Fehler, nächster Lauf ruhig
-    await prisma.messageTemplate.deleteMany({ where: { customerId, name: "pg_outreach_privatschutz_v13" } });
+    await prisma.messageTemplate.deleteMany({ where: { customerId, name: "pg_outreach_privatschutz_v14" } });
     posts = [];
     const s3 = await submitTemplatesForCustomer(customerId);
-    expect(posts).toEqual(["pg_outreach_privatschutz_v13"]);
+    expect(posts).toEqual(["pg_outreach_privatschutz_v14"]);
     expect(s3.ok).toBe(true);
-    expect(await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_privatschutz_v13" } })).toMatchObject({ status: "pending", headerFormat: "DOCUMENT" });
+    expect(await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_privatschutz_v14" } })).toMatchObject({ status: "pending", headerFormat: "DOCUMENT" });
     posts = [];
     await submitTemplatesForCustomer(customerId);
     expect(posts).toEqual([]);
