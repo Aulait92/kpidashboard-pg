@@ -388,6 +388,29 @@ export const AKTIONEN: Record<string, Aktion> = {
       };
     },
   },
+  vertrieb_zentrale_nummern: {
+    beschreibung:
+      "Zentralen und Sammelnummern von Versicherern (z. B. SIGNAL IDUNA 0231 135-0, 040 4124-0, oder Festnetznummern bei mindestens 3 Kontakten) aus den automatisch erkannten weiteren Nummern der Vertriebskontakte entfernen (nur Herkunft „aus E-Mail“ und „aus Verlauf“, nie von Hand; Hauptnummer nur, wenn sie automatisch gesetzt wurde und eine andere Nummer da ist). Entfernte Nummern werden nicht wieder übernommen, Verlaufseintrag „Zentrale Nummer entfernt“. Ohne speichern=true nur Probelauf mit Zahlen und Beispielen.",
+    felder: { speichern: "true = entfernen, sonst nur Probelauf", contactId: "optional: nur dieser Vertriebskontakt" },
+    run: async (p) => {
+      const speichern = text(p.speichern) === "true";
+      const id = text(p.contactId, 40);
+      const { removeSharedPhones } = await import("@/lib/vertrieb/kontaktdaten-server");
+      const r = await removeSharedPhones({ dryRun: !speichern, contactIds: id ? [id] : undefined });
+      if (speichern) {
+        await audit("vertrieb.zentrale_nummern", {
+          entity: "SalesContact",
+          details: { kontakte: r.contacts, weitere: r.extrasRemoved, haupt: r.mainReplaced, nummern: r.sharedNumbers.slice(0, 30) },
+          actor: OPS_ACTOR,
+        });
+      }
+      return {
+        ok: true,
+        info: `${speichern ? "Entfernt" : "Probelauf"}: ${r.sharedNumbers.length} Zentral-/Sammelnummern, ${r.contacts} Kontakte, ${r.extrasRemoved} weitere Nummern, ${r.mainReplaced} Hauptnummern ersetzt (${r.mainKept} Hauptnummern bleiben: von Hand oder keine andere Nummer)${speichern ? "" : " (nichts gespeichert)"}.`,
+        daten: { nummern: r.sharedNumbers.slice(0, 40), beispiele: r.examples },
+      };
+    },
+  },
   produkte_auflisten: {
     beschreibung: "Produktbuchungen eines Kunden auflisten (nur lesen, für IDs)",
     felder: { customerId: "Kunden-ID" },

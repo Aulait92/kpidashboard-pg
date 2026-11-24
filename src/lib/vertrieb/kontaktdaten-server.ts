@@ -23,9 +23,13 @@ import {
   emailDomain,
   extractHistoryPhones,
   extractMailPhones,
+  SHARED_MIN_CONTACTS,
+  centralPhone,
   newPhonesFor,
   ownPhones,
   phoneKeysIn,
+  sharedPhoneKeys,
+  sharedPhoneReason,
   skipHistoryEntry,
   sourceLabel,
   usableEmail,
@@ -82,6 +86,25 @@ export async function loadOwnContext(fresh = false): Promise<OwnContext> {
 export type AddResult = "main" | "added" | "known" | "skipped";
 type Opts = { source: ContactDataSource; at?: Date; own?: OwnContext };
 
+/** Quellen, aus denen Nummern automatisch erkannt werden (nicht von Hand, nicht beim Zusammenführen). */
+const AUTO_SOURCES = new Set<ContactDataSource>(["BUCHUNG", "CALENDLY", "MAIL", "FORMULAR", "INSTANTLY", "VERLAUF"]);
+
+/**
+ * Zentrale oder Sammelnummer? Bekannte Versicherer-Zentrale, oder eine Festnetznummer, die schon bei
+ * SHARED_MIN_CONTACTS − 1 anderen Kontakten als weitere Nummer steht (mit diesem wären es SHARED_MIN_CONTACTS).
+ */
+export async function isSharedPhone(contactId: string, e164: string): Promise<boolean> {
+  if (centralPhone(e164)) return true;
+  if (phoneKind(e164) === "MOBIL") return false;
+  const others = await prisma.salesContactPhone.findMany({
+    where: { phone: e164, contactId: { not: contactId } },
+    distinct: ["contactId"],
+    select: { contactId: true },
+    take: SHARED_MIN_CONTACTS - 1,
+  });
+  return others.length >= SHARED_MIN_CONTACTS - 1;
+}
+
 /**
  * Telefonnummer übernehmen: fehlt die Hauptnummer, wird sie Haupt; sonst weitere Nummer.
  * Gleiche Nummer in anderer Schreibweise, eigene oder von Hand entfernte Nummern: nichts.
@@ -97,6 +120,8 @@ export async function addContactPhone(contactId: string, raw: string | null | un
   if (phoneKey(c.phone) === key || c.phones.some((p) => phoneKey(p.phone) === key)) return "known";
   // Entfernte Nummern nicht automatisch zurückholen; von Hand (MANUELL) wieder eintragen geht
   if (opts.source !== "MANUELL" && detectedDataOf(c.detectedData).removed?.some((r) => phoneKey(r) === key)) return "known";
+  // Zentralen und Sammelnummern nie automatisch (Ole, 24.11.2026); von Hand eintragen geht
+  if (AUTO_SOURCES.has(opts.source) && (await isSharedPhone(contactId, e164))) return "skipped";
   const kind = opts.kind ?? phoneKind(e164, opts.label);
   const at = opts.at ?? new Date();
   const what = `${KIND_LABEL[kind]}, ${sourceLabel("phone", opts.source, at)}`;
@@ -303,6 +328,7 @@ export type HistoryBackfillResult = {
 export async function backfillPhonesFromHistory(opts: { dryRun?: boolean; contactIds?: string[]; batch?: number } = {}): Promise<HistoryBackfillResult> {
   const own = await loadOwnContext(true);
   const out: HistoryBackfillResult = { contacts: 0, entries: 0, phones: 0, examples: [] };
+  const shared = opts.dryRun ? sharedPhoneKeys(await prisma.salesContactPhone.findMany({ select: { contactId: true, phone: true } }), SHARED_MIN_CONTACTS - 1) : undefined;
   // Vorauswahl in der Datenbank: Einträge mit einer Ziffernfolge, die nach Rufnummer aussieht
   const rows = await prisma.$queryRaw<{ contactId: string }[]>`
     SELECT DISTINCT "contactId" FROM "SalesActivity"
@@ -333,7 +359,7 @@ export async function backfillPhonesFromHistory(opts: { dryRun?: boolean; contac
         if (!found.length) continue;
         out.entries++;
         if (opts.dryRun) {
-          const neu = newPhonesFor(found, { phone: c.phone, extras, removed: detectedDataOf(c.detectedData).removed, ownKeys: own.phoneKeys });
+          const neu = newPhonesFor(found, { phone: c.phone, extras, removed: detectedDataOf(c.detectedData).removed, ownKeys: own.phoneKeys, shared });
           for (const p of neu) {
             extras.push(p.e164);
             out.phones++;
@@ -396,6 +422,123 @@ export async function rememberRemoved(contactId: string, value: string): Promise
   const emails = { ...d.emails };
   delete emails[v];
   await prisma.salesContact.update({ where: { id: contactId }, data: { detectedData: asJson({ emails, removed: [...(d.removed ?? []), v] }) } });
+}
+
+// ─── Zentrale Nummern aufräumen (Ole, 24.11.2026) ───────────────────────
+
+export type SharedCleanupResult = {
+  /** Nummern, die als Zentrale/Sammelnummer gelten (bekannte Zentralen, die vorkommen, und häufige Festnetznummern) */
+  sharedNumbers: { phone: string; contacts: number; reason: string }[];
+  /** Entfernte (bzw. im Probelauf zu entfernende) weitere Nummern */
+  extrasRemoved: number;
+  /** Hauptnummern, die durch eine andere echte Nummer des Kontakts ersetzt wurden */
+  mainReplaced: number;
+  /** Hauptnummern, die Zentrale sind, aber bleiben (von Hand, Herkunft unklar oder keine andere Nummer) */
+  mainKept: number;
+  contacts: number;
+  examples: { contactId: string; name: string; phone: string; what: "weitere" | "Haupt"; reason: string; newMain?: string }[];
+};
+
+/** Quellen automatisch erkannter weiterer Nummern, die aufgeräumt werden dürfen (nie „von Hand“). */
+const CLEANUP_SOURCES = ["MAIL", "VERLAUF"];
+/** Herkunft einer automatisch gesetzten Hauptnummer im Verlaufseintrag („… (Festnetz, aus E-Mail-Signatur 12.11.), als Hauptnummer übernommen“). */
+const AUTO_MAIN_NOTE = /\((Mobil|Festnetz), (aus E-Mail-Signatur|aus Verlauf)[^)]*\), als Hauptnummer übernommen/;
+
+/**
+ * Zentralen und Sammelnummern entfernen, die automatisch (aus E-Mail, aus Verlauf) als weitere Nummer übernommen
+ * wurden. Hauptnummer nur, wenn sie selbst automatisch aus einer solchen Quelle gesetzt wurde und der Kontakt eine
+ * andere echte Nummer hat (die wird Haupt). Entfernte Nummern kommen auf die Liste „entfernt“ (nicht wieder
+ * übernehmen), je Kontakt ein Verlaufseintrag „Zentrale Nummer entfernt“. `dryRun`: nur zählen.
+ * Ops-Aktion `vertrieb_zentrale_nummern` (lib/ops-aktionen.ts).
+ */
+export async function removeSharedPhones(opts: { dryRun?: boolean; contactIds?: string[] } = {}): Promise<SharedCleanupResult> {
+  const out: SharedCleanupResult = { sharedNumbers: [], extrasRemoved: 0, mainReplaced: 0, mainKept: 0, contacts: 0, examples: [] };
+  const all = await prisma.salesContactPhone.findMany({ select: { id: true, contactId: true, phone: true, source: true, kind: true } });
+  const shared = sharedPhoneKeys(all);
+  const counts = new Map<string, Set<string>>();
+  for (const r of all) {
+    const k = phoneKey(r.phone);
+    if (k && (shared.has(k) || centralPhone(r.phone))) counts.set(k, (counts.get(k) ?? new Set()).add(r.contactId));
+  }
+  out.sharedNumbers = [...counts]
+    .map(([k, s]) => {
+      const phone = all.find((r) => phoneKey(r.phone) === k)!.phone;
+      return { phone: formatPhone(phone), contacts: s.size, reason: sharedPhoneReason(phone, shared)! };
+    })
+    .sort((a, b) => b.contacts - a.contacts);
+
+  const filter = opts.contactIds ? new Set(opts.contactIds) : null;
+  const byContact = new Map<string, typeof all>();
+  for (const r of all) {
+    if (filter && !filter.has(r.contactId)) continue;
+    const list = byContact.get(r.contactId) ?? [];
+    list.push(r);
+    byContact.set(r.contactId, list);
+  }
+  // Kontakte mit Zentrale als Hauptnummer (Hauptnummer steht in beliebiger Schreibweise im Feld phone)
+  const mains = await prisma.salesContact.findMany({
+    where: { phone: { not: null }, ...(filter ? { id: { in: [...filter] } } : {}) },
+    select: { id: true, phone: true },
+  });
+  const mainShared = new Set(mains.filter((c) => sharedPhoneReason(c.phone, shared)).map((c) => c.id));
+  const ids = [...new Set([...[...byContact].filter(([, l]) => l.some((r) => sharedPhoneReason(r.phone, shared))).map(([id]) => id), ...mainShared])];
+
+  for (let i = 0; i < ids.length; i += 100) {
+    const page = await prisma.salesContact.findMany({
+      where: { id: { in: ids.slice(i, i + 100) } },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        activities: { where: { outcome: "Neue Telefonnummer erkannt", note: { contains: "als Hauptnummer übernommen" } }, select: { note: true } },
+      },
+    });
+    for (const c of page) {
+      const extras = byContact.get(c.id) ?? [];
+      const drop = extras.filter((r) => CLEANUP_SOURCES.includes(r.source) && sharedPhoneReason(r.phone, shared));
+      const notes: string[] = [];
+      for (const r of drop) {
+        const reason = sharedPhoneReason(r.phone, shared)!;
+        notes.push(`${formatPhone(r.phone)} (${reason})`);
+        out.extrasRemoved++;
+        if (out.examples.length < 50) out.examples.push({ contactId: c.id, name: c.name, phone: formatPhone(r.phone), what: "weitere", reason });
+      }
+      // Hauptnummer: nur automatisch gesetzte, und nur wenn eine andere echte Nummer da ist
+      let newMain: (typeof extras)[number] | undefined;
+      const mainReason = sharedPhoneReason(c.phone, shared);
+      if (mainReason) {
+        const mainKey = phoneKey(c.phone);
+        const auto = c.activities.some((a) => {
+          const m = a.note?.match(AUTO_MAIN_NOTE);
+          return !!m && phoneKey(a.note!.slice(0, a.note!.indexOf(" ("))) === mainKey;
+        });
+        const real = extras.filter((r) => !drop.includes(r) && !sharedPhoneReason(r.phone, shared) && phoneKey(r.phone) !== mainKey);
+        newMain = auto ? (real.find((r) => r.kind === "MOBIL") ?? real[0]) : undefined;
+        if (newMain) {
+          out.mainReplaced++;
+          notes.push(`${c.phone} (Hauptnummer, ${mainReason}); neue Hauptnummer ${formatPhone(newMain.phone)}`);
+          if (out.examples.length < 50) out.examples.push({ contactId: c.id, name: c.name, phone: c.phone!, what: "Haupt", reason: mainReason, newMain: formatPhone(newMain.phone) });
+        } else out.mainKept++;
+      }
+      if (!notes.length) continue;
+      out.contacts++;
+      if (opts.dryRun) continue;
+      try {
+        if (drop.length) await prisma.salesContactPhone.deleteMany({ where: { id: { in: drop.map((r) => r.id) }, contactId: c.id } });
+        if (newMain) {
+          await prisma.$transaction([
+            prisma.salesContactPhone.deleteMany({ where: { id: newMain.id, contactId: c.id } }),
+            prisma.salesContact.update({ where: { id: c.id }, data: { phone: formatPhone(newMain.phone) } }),
+          ]);
+        }
+        for (const v of [...drop.map((r) => r.phone), ...(newMain && c.phone ? [phoneE164(c.phone) ?? c.phone] : [])]) await rememberRemoved(c.id, v);
+        await prisma.salesActivity.create({ data: { contactId: c.id, type: "NOTIZ", outcome: "Zentrale Nummer entfernt", note: notes.join("\n") } });
+      } catch (err) {
+        reportError(err, "kontaktdaten-zentrale-nummern");
+      }
+    }
+  }
+  return out;
 }
 
 // ─── Einmalig rückwirkend ───────────────────────────────────────────────

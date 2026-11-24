@@ -94,7 +94,7 @@ export function ownPart(text: string | null | undefined): string {
   return lines.join("\n").trim();
 }
 
-/** Signatur: ab der letzten Grußformel, sonst die letzten 12 Zeilen des eigenen Teils. */
+/** Signatur: ab der letzten Grußformel, sonst die letzten 12 Zeilen des eigenen Teils. Ohne Pflichtangaben des Versicherers. */
 export function signatureBlock(text: string | null | undefined): string {
   const own = ownPart(text);
   if (!own) return "";
@@ -103,7 +103,91 @@ export function signatureBlock(text: string | null | undefined): string {
   lines.forEach((l, i) => {
     if (GREETING.test(l)) start = i;
   });
-  return (start >= 0 ? lines.slice(start) : lines.slice(-12)).join("\n");
+  return withoutCompanyFooter((start >= 0 ? lines.slice(start) : lines.slice(-12)).join("\n"));
+}
+
+// ─── Zentrale Nummern von Versicherern (Ole, 24.11.2026) ────────────────
+// Unter Signaturen von Vertretern stehen oft die Pflichtangaben der Gesellschaft (Sitz, Vorstand, Aufsichtsrat,
+// Registergericht) mit der Zentrale (z. B. SIGNAL IDUNA Dortmund 0231 135-0, Hamburg 040 4124-0). Diese Nummern
+// gehören nicht zum Kontakt und landeten bei vielen Kontakten als weitere Nummer („gleiche Telefonnummer“).
+// Regeln: Pflichtangaben-Block der Signatur wird abgeschnitten, Zeilen mit „Zentrale“, „Hauptverwaltung“ oder
+// Rechtsform des Versicherers zählen nicht, bekannte Zentralen und Festnetznummern, die bei mindestens 3 Kontakten
+// stehen, werden nie automatisch übernommen (kontaktdaten-server.ts, Aufräumen: Ops-Aktion vertrieb_zentrale_nummern).
+
+/** Pflichtangaben der Gesellschaft: ab dieser Zeile gehört nichts mehr zur Person. */
+const COMPANY_FOOTER = /sitz\s+(der\s+gesellschaft|des\s+unternehmens)|\bvorstand\b|vorstandsvorsitz|\baufsichtsrat|registergericht|\bvvag\b|versicherungsverein/i;
+/** Einzelne Zeile mit Nummer der Gesellschaft, nicht der Person (die Nummer der Agentur steht in eigenen Zeilen). */
+const COMPANY_LINE =
+  /zentrale|hauptverwaltung|hauptsitz|hauptgesch(ä|ae)ftsstelle|generaldirektion|\ba\.\s?g\.(?=[\s,;]|$)|\b(lebens|kranken|unfall|sach|allgemeine)[\s-]?versicherung(s-?gesellschaft)?\s+(ag|a\.\s?g\.)|versicherungs-?ag\b/i;
+
+/**
+ * Signaturtext ohne Pflichtangaben des Versicherers: ab der ersten Zeile mit Sitz der Gesellschaft, Vorstand,
+ * Aufsichtsrat oder Registergericht. Zeilen davor bleiben (dort steht die Nummer der Person); Zentralen davor
+ * fallen über companyLine, centralPhone und die Häufigkeitsregel weg.
+ */
+export function withoutCompanyFooter(signature: string): string {
+  const lines = signature.split("\n");
+  const i = lines.findIndex((l) => COMPANY_FOOTER.test(l));
+  return i < 0 ? signature : lines.slice(0, i).join("\n").trimEnd();
+}
+
+/** Zeile mit Zentrale, Hauptverwaltung oder Rechtsform des Versicherers (keine Nummer der Person). */
+export const companyLine = (line: string) => COMPANY_LINE.test(line) || COMPANY_FOOTER.test(line);
+
+/**
+ * Bekannte Zentralen (Vergleichsschlüssel ohne +49/0, siehe phoneKey). Nur sicher bekannte Nummern; alles andere
+ * erkennt die Häufigkeitsregel (sharedPhoneKeys).
+ */
+export const CENTRAL_PHONES: Record<string, string> = {
+  "2311350": "SIGNAL IDUNA Dortmund", // 0231 135-0
+  "4041240": "SIGNAL IDUNA Hamburg", // 040 4124-0
+  "8938000": "Allianz München", // 089 3800-0
+  "2114770": "ERGO Düsseldorf", // 0211 477-0
+  "2211480": "AXA Köln", // 0221 148-0
+  "6115330": "R+V Wiesbaden", // 0611 533-0
+  "9561960": "HUK-COBURG", // 09561 96-0
+  "6923840": "DVAG Frankfurt", // 069 2384-0
+  "8951210": "Generali München", // 089 5121-0
+};
+/** Durchwahlblöcke der Hauptverwaltung (alle Nummern mit diesem Anfang gehören dem Versicherer). */
+const CENTRAL_BLOCKS: [prefix: string, name: string][] = [
+  ["231135", "SIGNAL IDUNA Dortmund"], // 0231 135-…
+  ["404124", "SIGNAL IDUNA Hamburg"], // 040 4124-…
+];
+
+/** Name der Zentrale, wenn die Nummer eine bekannte Versicherer-Zentrale (oder deren Durchwahl) ist, sonst null. */
+export function centralPhone(raw: string | null | undefined): string | null {
+  const k = phoneKey(raw);
+  if (!k) return null;
+  return CENTRAL_PHONES[k] ?? CENTRAL_BLOCKS.find(([p]) => k.startsWith(p))?.[1] ?? null;
+}
+
+/** Ab so vielen Kontakten (als weitere Nummer) gilt eine Festnetznummer als Sammel-/Zentralnummer. */
+export const SHARED_MIN_CONTACTS = 3;
+
+/**
+ * Festnetznummern, die bei mindestens `min` verschiedenen Kontakten stehen (Vergleichsschlüssel). Mobilnummern
+ * zählen nicht: die gehören einer Person (mehrfach = Dublette, kein Zentralanschluss).
+ */
+export function sharedPhoneKeys(rows: { contactId: string; phone: string }[], min = SHARED_MIN_CONTACTS): Set<string> {
+  const by = new Map<string, Set<string>>();
+  for (const r of rows) {
+    const e = phoneE164(r.phone);
+    const k = phoneKey(e);
+    if (!e || !k || phoneKind(e) === "MOBIL") continue;
+    const set = by.get(k) ?? new Set<string>();
+    set.add(r.contactId);
+    by.set(k, set);
+  }
+  return new Set([...by].filter(([, s]) => s.size >= min).map(([k]) => k));
+}
+
+/** Zentrale oder Sammelnummer? `shared`: Ergebnis von sharedPhoneKeys. Grund für den Verlaufseintrag, sonst null. */
+export function sharedPhoneReason(raw: string | null | undefined, shared?: Set<string>): string | null {
+  const central = centralPhone(raw);
+  if (central) return `Zentrale ${central}`;
+  const k = phoneKey(raw);
+  return k && shared?.has(k) ? `steht bei mindestens ${SHARED_MIN_CONTACTS} Kontakten` : null;
 }
 
 // ─── Telefonnummern ─────────────────────────────────────────────────────
@@ -152,7 +236,7 @@ export function extractMailPhones(text: string | null | undefined, exclude: stri
     const e164 = phoneE164(raw)!;
     const key = phoneKey(e164)!;
     seen.add(key);
-    if (skip.has(key) || found.has(key)) return;
+    if (skip.has(key) || found.has(key) || centralPhone(e164)) return;
     const p = { raw: tidy(raw), e164, kind: phoneKind(e164, label), label };
     found.set(key, p);
     into.push(p);
@@ -160,7 +244,7 @@ export function extractMailPhones(text: string | null | undefined, exclude: stri
   const segments = signature.split("\n").flatMap((l) => l.split(/\s[|·•]\s/));
   const labelled: FoundPhone[] = [];
   const bare: FoundPhone[] = [];
-  const usable = (seg: string) => !SKIP_LINE.test(seg) && !SERVICE_LINE.test(seg);
+  const usable = (seg: string) => !SKIP_LINE.test(seg) && !SERVICE_LINE.test(seg) && !companyLine(seg);
   for (const seg of segments) {
     if (!usable(seg)) continue;
     // Fax-Teil abschneiden (Telefon vor dem Fax bleibt)
@@ -220,6 +304,9 @@ const ID_WORDS = /kunden|vertrag|versicherungs|police|auftrag|vorgang|rechnung|b
 const BARE_HISTORY = /(?<![\w+/.=#:-])(?:\+|00|0)[1-9][\d \t/()\-–]{5,19}\d(?!\d)/g;
 const DATE_IN = /\d{1,2}\.\d{1,2}\.(\d{2,4})?/;
 
+/** Pflichtangaben einer Gesellschaft in einem Verlaufseintrag (ohne „Vorstand“: kommt in Anrufnotizen vor). */
+const LEGAL_FOOTER = /sitz\s+der\s+gesellschaft|\baufsichtsrat|registergericht|\bvvag\b|versicherungsverein/i;
+
 /** Text eines Verlaufseintrags ohne zitierten Verlauf, Links und E-Mail-Adressen. */
 export function historyText(text: string | null | undefined): string {
   if (!text) return "";
@@ -237,11 +324,11 @@ export function extractHistoryPhones(text: string | null | undefined, exclude: s
     if (DATE_IN.test(r) || r.replace(/\D/g, "").length < minDigits || !plausiblePhone(r)) return;
     const e164 = phoneE164(r)!;
     const key = phoneKey(e164);
-    if (!key || skip.has(key) || found.has(key)) return;
+    if (!key || skip.has(key) || found.has(key) || centralPhone(e164)) return;
     found.set(key, { raw: tidy(r), e164, kind: phoneKind(e164, label), label });
   };
   for (const full of historyText(text).split("\n")) {
-    if (SKIP_LINE.test(full) || SERVICE_LINE.test(full)) continue;
+    if (SKIP_LINE.test(full) || SERVICE_LINE.test(full) || COMPANY_LINE.test(full) || LEGAL_FOOTER.test(full)) continue;
     const line = FAX_LABEL.test(full) ? full.slice(0, full.search(FAX_LABEL)) : full;
     // Frage und Antwort („Telefonnummer: …“, „Ihre Handynummer für Rückfragen: …“)
     const i = line.indexOf(":");
@@ -259,7 +346,7 @@ export function extractHistoryPhones(text: string | null | undefined, exclude: s
 /** Einträge, die keine Nummer des Kontakts enthalten: unsere eigenen Mails und Meldungen, Stufenwechsel, Abwesenheitsnotizen. */
 export function skipHistoryEntry(a: { type: string; outcome?: string | null; note?: string | null }): boolean {
   if (a.type === "STATUS" || a.type === "EMAIL") return true;
-  return /^(Neue (Telefonnummer|E-Mail-Adresse) erkannt|Automatische Antwort|Antwort gesendet|Gesendet|Nicht erreicht|E-Mail:|Auskunft|Löschung)/i.test((a.outcome ?? "").trim());
+  return /^(Neue (Telefonnummer|E-Mail-Adresse) erkannt|Zentrale Nummer entfernt|Automatische Antwort|Antwort gesendet|Gesendet|Nicht erreicht|E-Mail:|Auskunft|Löschung)/i.test((a.outcome ?? "").trim());
 }
 
 /**
@@ -268,7 +355,7 @@ export function skipHistoryEntry(a: { type: string; outcome?: string | null; not
  */
 export function newPhonesFor(
   found: FoundPhone[],
-  known: { phone?: string | null; extras?: string[]; removed?: string[]; ownKeys?: Set<string> },
+  known: { phone?: string | null; extras?: string[]; removed?: string[]; ownKeys?: Set<string>; shared?: Set<string> },
 ): FoundPhone[] {
   const seen = new Set<string>(known.ownKeys ?? []);
   for (const p of [known.phone, ...(known.extras ?? []), ...(known.removed ?? [])]) {
@@ -278,7 +365,7 @@ export function newPhonesFor(
   const out: FoundPhone[] = [];
   for (const p of found) {
     const k = phoneKey(p.e164);
-    if (!k || seen.has(k)) continue;
+    if (!k || seen.has(k) || sharedPhoneReason(p.e164, known.shared)) continue;
     seen.add(k);
     out.push(p);
   }
