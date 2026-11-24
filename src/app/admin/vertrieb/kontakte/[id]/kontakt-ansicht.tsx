@@ -8,7 +8,7 @@ import { TaskRow } from "@/components/vertrieb/ui";
 import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
 import { ContactEmails, ContactPhones, DuplicateHint } from "@/components/vertrieb/contact-merge";
 import { DatenschutzRechtKarte } from "@/components/vertrieb/datenschutz-recht";
-import { fallZeilen, rechtsFaelleVon } from "@/lib/vertrieb/datenschutz-recht-server";
+import { kartenFaelle } from "@/lib/vertrieb/datenschutz-recht-server";
 import { KATEGORIE_RECHT, RECHTS_ART_LABEL, istRechtsArt } from "@/lib/vertrieb/datenschutz-recht";
 import { enrichedLine as enrichedLineOf, ladeKontakt, ladeKontaktakte, waConfirmLabel } from "@/lib/vertrieb/kontaktakte";
 import { ArrowLeft, Mail, Phone, Presentation, Trash2 } from "lucide-react";
@@ -53,7 +53,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
     referral, referralBenefit, referralDiscount, pdfs, appUrl, praesLink, praesAufrufe, praesFassung,
   } = await ladeKontaktakte(c);
   // Datenschutz und Recht (Ole, 19.11.2026): Fälle mit Frist und Antwortvorlagen
-  const rechtsFaelle = fallZeilen(await rechtsFaelleVon(c.id));
+  const rechtsFaelle = await kartenFaelle(c.id);
   const praesDatum = (d: Date, mitZeit = false) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: mitZeit ? "2-digit" : "numeric", month: mitZeit ? "2-digit" : "long", ...(mitZeit ? { year: "numeric", hour: "2-digit", minute: "2-digit" } : {}) }).format(d);
 

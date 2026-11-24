@@ -386,7 +386,7 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
       const art = rechtsArtAusBefund(b);
       if (art) {
         await prisma.salesEmail.update({ where: { id: dup.id }, data: { isAutoReply: false, sentiment: "NEGATIV" } });
-        await rechtsFallAusAntwort(contactId, { ...r, instantlyId: dup.instantlyId ?? r.instantlyId, eaccount: dup.eaccount ?? r.eaccount }, dup.id, art, b.grund);
+        await rechtsFallAusAntwort(contactId, { ...r, instantlyId: dup.instantlyId ?? r.instantlyId, eaccount: dup.eaccount ?? r.eaccount }, dup.id, art, b.grund, b.auskunft);
         // Abmahnung (Ole, 19.11.2026): nie automatisch löschen, Belege sichern; Löschung erst nach Prüfung per Knopf
         if (b.loeschen && art !== "abmahnung") {
           await import("@/lib/vertrieb/art17")
@@ -483,7 +483,7 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
   await captureFromActivity(contactId, { type: "COLD_MAIL", outcome: label, note: snippet, occurredAt: r.sentAt });
   // Sperren (Follow-up stoppen, bei Datenschutzfragen Aufgabe „Auskunft nach Art. 15“, Instantly-Blocklist). Rechtsfall:
   // zusätzlich eigene Domain, Aufgabe mit Frist, bei Abmahnung Push, Nachweisprotokoll (lib/vertrieb/datenschutz-recht-server.ts)
-  if (rechtsArt) await rechtsFallAusAntwort(contactId, r, saved.id, rechtsArt, sperrGrund);
+  if (rechtsArt) await rechtsFallAusAntwort(contactId, r, saved.id, rechtsArt, sperrGrund, !!befund?.auskunft);
   else if (sperrGrund) {
     await nieKontaktierenSetzen(contactId, sperrGrund, { at: r.sentAt, quelle: "Antwort per Mail" }).catch((e) => reportError(e, "nie-kontaktieren"));
   }
@@ -509,7 +509,7 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
 }
 
 /** Fall „Datenschutz und Recht“ aus einer Antwort; bei einem Fehler wenigstens sperren (Vorrang). */
-async function rechtsFallAusAntwort(contactId: string, r: Reply, emailId: string, art: RechtsArt, grund: AntwortSperrGrund | null) {
+async function rechtsFallAusAntwort(contactId: string, r: Reply, emailId: string, art: RechtsArt, grund: AntwortSperrGrund | null, auskunft = false) {
   try {
     const { rechtsFallAnlegen } = await import("@/lib/vertrieb/datenschutz-recht-server");
     await rechtsFallAnlegen(contactId, {
@@ -521,6 +521,11 @@ async function rechtsFallAusAntwort(contactId: string, r: Reply, emailId: string
       instantlyEmailId: r.instantlyId ?? null,
       postfach: r.eaccount ?? null,
     });
+    // Abmahnung mit Auskunftsverlangen (Art. 15): eigener Fall „Auskunft“ mit Vorlage und Frist (Ole, 24.11.2026). Die
+    // Auskunft ist eine eigene Pflicht und erledigt sich nicht mit der Abmahnung (Rechtsprüfung 24.11.2026).
+    if (art === "abmahnung" && auskunft) {
+      await rechtsFallAnlegen(contactId, { art: "auskunft", grund: "datenschutz", eingang: r.sentAt, quelle: "antwort", instantlyEmailId: r.instantlyId ?? null, postfach: r.eaccount ?? null });
+    }
   } catch (e) {
     reportError(e, "datenschutz-recht");
     await nieKontaktierenSetzen(contactId, grund ?? "widerspruch", { at: r.sentAt, quelle: "Antwort per Mail" }).catch((err) => reportError(err, "nie-kontaktieren"));

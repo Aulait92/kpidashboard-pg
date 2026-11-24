@@ -43,6 +43,12 @@ describe("Unterart", () => {
     ["Ich werde mich bei der Aufsichtsbehörde beschweren.", "abmahnung"],
     // Abmahnung hat Vorrang vor Auskunft
     ["Auskunft nach Art. 15 DSGVO, sonst schalte ich meinen Anwalt ein.", "abmahnung"],
+    // „§ 7 UWG“ allein ist eine Rüge, keine Abmahnung (Ole, 24.11.2026; Fall einer Agentur, gekürzt)
+    [
+      "Unzulässige Werbung (§ 7 UWG) und Auskunftsersuchen nach Art. 15 DSGVO\nDa weder eine Geschäftsbeziehung noch eine ausdrückliche Einwilligung vorliegt, stellt dies eine unzumutbare Belästigung nach § 7 Abs. 2 Nr. 2 UWG dar. Ich fordere Sie auf, jegliche weitere Kontaktaufnahme zu Werbezwecken zu unterlassen, mir gemäß Art. 15 DSGVO mitzuteilen, aus welcher Quelle meine Daten stammen, und meine Daten im Anschluss gemäß Art. 17 DSGVO zu löschen.",
+      "auskunft",
+    ],
+    ["Ihre Mail verstößt gegen das UWG. Bitte keine Werbung mehr.", "widerspruch"],
   ] as const)("%s → %s", (t, erwartet) => {
     expect(art(t)).toBe(erwartet);
   });
