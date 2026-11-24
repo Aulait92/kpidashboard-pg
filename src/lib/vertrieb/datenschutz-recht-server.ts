@@ -225,6 +225,12 @@ export async function antwortProtokollieren(fallId: string, opts: { at: Date; we
   const e = await prisma.datenschutzFallEreignis.findFirst({ where: { fallId, ereignis: "eingang" } });
   if (!e) return false;
   await prisma.datenschutzFallEreignis.create({ data: { fallId, contactId: e.contactId, ereignis: "antwort", art: e.art, eingangAt: e.eingangAt, fristAt: e.fristAt, at: opts.at, wer: opts.wer, detail: opts.detail } });
+  // Ein Klick erledigt alles (Ole, 24.11.2026): Mit der Antwort auch die zugehörige offene Aufgabe schließen (nach der
+  // Fall-Art, nicht der gewählten Vorlage), damit der Fall nicht in der Karte beantwortet, als Aufgabe aber offen bleibt.
+  // Wichtig für die Abmahnung, die nur über „Als erledigt vermerken“ (ohne Vorlage) läuft.
+  if (istRechtsArt(e.art)) {
+    await prisma.salesTask.updateMany({ where: { contactId: e.contactId, doneAt: null, title: { startsWith: RECHT_AUFGABE[e.art] } }, data: { doneAt: opts.at } });
+  }
   return true;
 }
 
@@ -405,7 +411,7 @@ export async function rechtsVorlageSenden(
       .create({ data: { contactId, type: "EMAIL", outcome: "Datenschutz-Antwort gesendet", note: `${betreff}\n\n${text}`, occurredAt: now } })
       .catch((e) => reportError(e, "recht-vorlage-speichern"));
   }
-  await prisma.salesTask.updateMany({ where: { contactId, doneAt: null, title: { startsWith: RECHT_AUFGABE[opts.vorlage] } }, data: { doneAt: now } });
+  // Die zugehörige Aufgabe schließt antwortProtokollieren (nach der Fall-Art) schon mit.
   await audit("vertrieb.datenschutz_antwort", { entity: "SalesContact", entityId: contactId, details: { fallId: opts.fallId, vorlage: opts.vorlage } });
   return { ok: true };
 }

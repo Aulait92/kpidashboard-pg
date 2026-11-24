@@ -136,6 +136,19 @@ describe("Datenschutz und Recht: Erkennen und Fall anlegen", () => {
     expect(await rechtsFaelleVon(c.id)).toHaveLength(1);
   });
 
+  it("Ein Klick erledigt alles (Ole, 24.11.2026): „Als erledigt vermerken“ schließt die Abmahnungs-Aufgabe mit", async () => {
+    const c = await makeContact(`buero@${dom("abmahn-klick")}`);
+    const nach = await antwort(c.id, "Das ist unzulässige Werbung nach § 7 UWG, meine Anwältin prüft das.");
+    const aufgabe = nach.tasks.find((t) => t.title.startsWith("Abmahnung bzw. rechtliche Drohung"));
+    expect(aufgabe?.doneAt).toBeNull(); // vorher offen
+    const [fall] = await rechtsFaelleVon(c.id);
+    // „Als erledigt vermerken“ in der Karte (ohne Vorlage) läuft über antwortProtokollieren
+    expect(await antwortProtokollieren(fall.fallId, { at: new Date(), wer: "admin@growth.test", detail: "manuell" })).toBe(true);
+    const danach = await prisma.salesTask.findUniqueOrThrow({ where: { id: aufgabe!.id } });
+    expect(danach.doneAt).not.toBeNull(); // Aufgabe mitgeschlossen, nicht nur der Fall
+    expect(await prisma.salesTask.count({ where: { contactId: c.id, doneAt: null, title: { startsWith: "Abmahnung" } } })).toBe(0);
+  });
+
   it("Abmahnung mit Löschverlangen: keine automatische Löschung, nur Sperre, Aufgabe mit Hinweis (Ole, 19.11.2026)", async () => {
     const c = await makeContact(`chef@${dom("abmahnloesch")}`);
     const nach = await antwort(c.id, "Löschen Sie umgehend meine Daten. Ich habe die Sache an meinen Anwalt übergeben, Schadensersatz behalte ich mir vor.");
