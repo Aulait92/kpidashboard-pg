@@ -8,6 +8,8 @@ import {
   resolveComicPlaceholders,
   resolvePhotoPlaceholders,
 } from "@/lib/openai-image";
+import { bildideeText } from "@/lib/kampagnen/bildidee";
+import type { Bildidee } from "@/lib/kampagnen/types";
 
 // Brief der Creative-Generation. Claude designt komplette HTML-Creatives,
 // Playwright rendert zu PNG, Upload zu R2.
@@ -1733,15 +1735,27 @@ export async function renderProductCreative(opts: {
   angle: string;
   requestId: string;
   index: number;
-  /** Bild einer eigenen Gewinner-Anzeige des Kunden als Stilvorlage (Ole, 21.11.2026) */
+  /** Bild einer EIGENEN Gewinner-Anzeige des Kunden als Stilvorlage (Ole, 21.11.2026). Nie ein Bild aus einem anderen Werbekonto. */
   referenceImageUrl?: string | null;
   styleHint?: string | null;
+  /**
+   * Abstrakte Bildidee bei Mustern aus einem anderen Werbekonto (gemeinsames Anzeigenlernen, Ole, 24.11.2026,
+   * lib/kampagnen/bildidee.ts): nur Schlüssel fester Kategorien, der Hinweistext entsteht hier aus der festen Liste
+   * (kein freier Text von außen). Dann wird kein Vorlagenbild angehängt und kein Stilhinweis genutzt.
+   */
+  bildidee?: Bildidee | null;
 }): Promise<{ imageUrl: string; imagePrompt: string }> {
-  const ref = opts.referenceImageUrl && /^https:\/\//i.test(opts.referenceImageUrl) ? opts.referenceImageUrl : null;
+  const bildidee = bildideeText(opts.bildidee);
+  // Mit Bildidee (Muster aus einem anderen Werbekonto) nie ein Vorlagenbild, auch wenn eines übergeben würde
+  const ref = !opts.bildidee && opts.referenceImageUrl && /^https:\/\//i.test(opts.referenceImageUrl) ? opts.referenceImageUrl : null;
   const vorlage = (mitBild: boolean) =>
-    opts.styleHint
-      ? `\nBILDSTIL-VORLAGE (bestlaufende eigene Anzeige des Kunden${mitBild ? ", Bild oben angehängt" : ""}): ${opts.styleHint}\n`
-      : "";
+    opts.bildidee
+      ? bildidee
+        ? `\nBILDIDEE (abstraktes Muster aus gut laufenden Anzeigen, es gibt kein Vorlagenbild): ${bildidee}. Nur diese Gestaltungsidee aufgreifen und ein eigenes Motiv für Produkt und Winkel gestalten. Keine Personen, Namen, Logos, Zahlen oder Texte aus anderen Anzeigen.\n`
+        : ""
+      : opts.styleHint
+        ? `\nBILDSTIL-VORLAGE (bestlaufende eigene Anzeige des Kunden${mitBild ? ", Bild oben angehängt" : ""}): ${opts.styleHint}\n`
+        : "";
   const userPrompt = (mitBild: boolean) => `Erstelle EIN Meta-Ad-Creative.
 
 PRODUKT: ${opts.product}

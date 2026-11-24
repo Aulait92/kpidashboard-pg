@@ -168,6 +168,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "bericht.skip": "Monatsbericht ausgesetzt",
   "bericht.kunde": "Monatsberichte für Kunden an/aus",
   "kampagne.start": "Kampagnen-Agenten gestartet",
+  "kampagne.leitplanken": "Kampagnen-Agenten: Muster aus einem anderen Werbekonto bereinigt bzw. entfernt (Leitplanken)",
   "kampagne.angelegt": "Kampagne pausiert bei Meta angelegt (Kampagnen-Agenten)",
   "kampagne.aufgeraeumt": "Kampagne der Agenten bei Meta aufgeräumt",
   "kampagne.seite": "Facebook-Seite des Kunden hinterlegt",
