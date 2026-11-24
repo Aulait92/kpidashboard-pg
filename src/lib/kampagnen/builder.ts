@@ -115,6 +115,12 @@ async function bildFuerAnzeige(api: MetaApi, act: string, imageUrl: string): Pro
 /** link_data-Feld zum gespeicherten Bild: Hash bzw. Adresse (picture). */
 const bildFeld = (ref: string): Record<string, string> => (ref.startsWith("url:") ? { picture: ref.slice(4) } : { image_hash: ref });
 
+/** Formularname mit Zeitstempel (Berlin), z. B. „PG | Privatschutz | Formular | 24.11.26 09:15“. */
+export function eindeutigerFormName(name: string, now = new Date()): string {
+  const t = now.toLocaleString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }).replace(",", "");
+  return `${name.trim()} | ${t}`.slice(0, 100);
+}
+
 /** Payload für POST /{page_id}/leadgen_forms (Felder laut Graph-Referenz „Page leadgen_forms“). */
 export function leadFormPayload(
   form: LeadFormDraft,
@@ -122,7 +128,9 @@ export function leadFormPayload(
 ): Record<string, unknown> {
   if (!ctx.privacyUrl) throw new Error("Datenschutz-URL fehlt.");
   return {
-    name: form.formName,
+    // Meta verlangt je Seite eindeutige Formularnamen (Ole, 24.11.2026: zweiter Lauf scheiterte an „Formularname
+    // existiert bereits“): Datum und Uhrzeit anhängen
+    name: eindeutigerFormName(form.formName),
     locale: "DE_DE",
     block_display_for_non_targeted_viewer: true,
     questions: [
