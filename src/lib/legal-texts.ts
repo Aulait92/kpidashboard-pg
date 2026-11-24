@@ -322,13 +322,13 @@ export const PPL_KUNDENKONTO_BEDINGUNGEN: LegalSection[] = [
 /**
  * Besondere Bedingungen „Nur Leads“ (Ole, 24.11.2026): Leads per Stück ohne Software, ohne Monatsgebühr und ohne Laufzeit.
  * Bestandteil des Angebots, gehen den AGB vor (wie PPL_KUNDENKONTO_BEDINGUNGEN). Interne Rechtsprüfung mit Auflagen:
- * docs/recht/2026-11-24-nur-leads.md (Freigabe des Wortlauts durch Ole steht aus, Stufe A).
+ * docs/recht/2026-11-24-nur-leads.md (Wortlaut von Ole freigegeben am 24.11.2026, Exklusivität bestätigt).
  */
 export const PPL_NUR_LEADS_BEDINGUNGEN: LegalSection[] = [
   {
     title: "Leistung",
     items: [
-      "Diese Bedingungen gelten für das Paket „Nur Leads“ und gehen den AGB vor. Der Anbieter liefert dem Kunden Leads per Stück: Kontaktdaten und Formularangaben von Interessenten, die über Werbeanzeigen eine Beratung zum bestellten Produkt angefragt und in die Kontaktaufnahme durch den Kunden eingewilligt haben. Die Leads stehen im Kundenbereich bereit; dort pflegt der Kunde den Bearbeitungsstand und reklamiert Leads. Software mit digitalem Assistenten, Betreuung und eigene Werbekampagnen sind nicht enthalten. Die Regeln der AGB zu Kampagnen, Werbebudget, Pause, Testphasen, Setupgebühr, monatlicher Vergütung sowie Laufzeit und Kündigung gelten nicht; für den Kundenbereich gelten die Regeln der AGB zur Software entsprechend. Ein bestimmtes Ergebnis, etwa Erreichbarkeit oder Abschlüsse, schuldet der Anbieter nicht.",
+      "Diese Bedingungen gelten für das Paket „Nur Leads“ und gehen den AGB vor. Der Anbieter liefert dem Kunden Leads per Stück: Kontaktdaten und Formularangaben von Interessenten, die über Werbeanzeigen eine Beratung zum bestellten Produkt angefragt und in die Kontaktaufnahme durch den Kunden eingewilligt haben. Jeder Lead wird exklusiv nur an einen Kunden geliefert. Die Leads stehen im Kundenbereich bereit; dort pflegt der Kunde den Bearbeitungsstand und reklamiert Leads. Software mit digitalem Assistenten, Betreuung und eigene Werbekampagnen sind nicht enthalten. Die Regeln der AGB zu Kampagnen, Werbebudget, Pause, Testphasen, Setupgebühr, monatlicher Vergütung sowie Laufzeit und Kündigung gelten nicht; für den Kundenbereich gelten die Regeln der AGB zur Software entsprechend. Ein bestimmtes Ergebnis, etwa Erreichbarkeit oder Abschlüsse, schuldet der Anbieter nicht.",
     ],
   },
   {

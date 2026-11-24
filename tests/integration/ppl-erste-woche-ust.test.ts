@@ -108,7 +108,7 @@ import { createCheckoutForOffer } from "@/lib/billing";
 import { handleStripeEvent } from "@/lib/billing-webhook";
 import { addDaysIso, berlinTodayIso } from "@/lib/offer-pricing";
 import { placeOrder } from "@/lib/ppl/orders";
-import { registerGeprueft } from "@/lib/ppl/erste-woche";
+import { registerGeprueft, wartendeFreigeben } from "@/lib/ppl/erste-woche";
 import { ersteWocheBetrag } from "@/lib/ppl/erste-woche-shared";
 import { bestellBetrag } from "@/lib/ppl/steuer";
 import { requireTestDb } from "./db";
@@ -210,7 +210,12 @@ describe("Erste Woche und Umsatzsteuer beim Leadverkauf", () => {
 
     // Registerprüfung (Makler) → Abbuchung steuerfrei mit Hinweis, Betrag = Anzeige
     await prisma.customer.update({ where: { id: kunde.id }, data: { vermittlerRegisterStatus: "makler", vermittlerGeprueftAt: new Date(), vermittlerGeprueftVon: "ole@test" } });
-    const fr = await registerGeprueft(kunde.id);
+    // Start liegt 10 Tage in der Zukunft: erst in der Startwoche abbuchen (Ole, 23.11.2026), vorher nur vorgemerkt
+    const fr0 = await registerGeprueft(kunde.id);
+    expect(fr0).toMatchObject({ released: 0, waiting: 1, failed: 0 });
+    expect(s.invoices).toHaveLength(0);
+    const wartend = await prisma.leadOrder.findFirstOrThrow({ where: { subscriptionId: sub.id, status: "wartet" }, orderBy: { periodStart: "asc" } });
+    const fr = await wartendeFreigeben(kunde.id, undefined, new Date(wartend.periodStart.getTime() + 3_600_000));
     expect(fr).toMatchObject({ released: 1, failed: 0 });
     expect(s.invoices).toHaveLength(1);
     const inv = s.invoices[0];

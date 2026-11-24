@@ -94,6 +94,9 @@ describe("Importgrenze Chat-Assistent / Dokument-KI", () => {
       /^src\/app\/admin\/neu\/einstellungen\/anbindungen\//,
       /^src\/lib\/policen\/texterkennung\.ts$/, // Texterkennung lokal (22.11.2026): nur spartenImText aus auslesen/sparte (Stichworte, keine KI)
       /^src\/lib\/policen\/flow\/server\.ts$/, // Policen-Strecke v2: nur Status (an, freigegebene Sparten, Pause) für den KI-Satz, nur dynamisch, keine Dokumente
+      // Beleg-Ablage (22.11.2026): liest nur Rechnungen der eigenen Firma (keine Kundendaten), nutzt Seitenauszug und Modellname;
+      // nur im Admin, nicht in der Importkette des Chats (erster Test)
+      /^src\/lib\/belege\/auslesen\.ts$/,
     ];
     const verstoesse: string[] = [];
     for (const d of dateien(SRC)) {
@@ -116,7 +119,8 @@ describe("Importgrenze Chat-Assistent / Dokument-KI", () => {
       const i = importe(d);
       return [...i.pakete, ...i.dynamisch].some((p) => p === "openai" || p.startsWith("openai/"));
     });
-    expect(nutzer.map(rel)).toEqual(["src/lib/policen/auslesen/anbieter/openai-eu.ts"]);
+    // Dazu die Beleg-Ablage (eigene Rechnungen, keine Kundendaten, nur Admin; siehe oben)
+    expect(nutzer.map(rel).sort()).toEqual(["src/lib/belege/auslesen.ts", "src/lib/policen/auslesen/anbieter/openai-eu.ts"]);
   });
 
   it("KI-Clients nur in den Adaptern (lib/policen/auslesen/anbieter), sonst nirgends in lib/policen", () => {

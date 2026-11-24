@@ -224,7 +224,7 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Zahlungsart hinterlegen → Registerprüfung → erste Bestellung abgebucht (Ole: „Nach Registerprüfung“) → Kundenbereich nur
   mit Leads, Pipeline, Bestellen, Konto (Ole: „Dazu einfache Pipeline“). Paket `ppl` (`lib/offer-pricing.ts`,
   `lib/nur-leads.ts`), Besondere Bedingungen nach interner Rechtsprüfung (`docs/recht/2026-11-24-nur-leads.md`, Auflagen
-  A1 bis A5). Wortlaut der Bedingungen: Freigabe Ole steht aus.
+  A1 bis A5). Wortlaut freigegeben, Einwilligung (A1) bestätigt, Leads exklusiv (Ole: „1 ok, 2 ok, 3 sind exklusiv!“).
 - **24.11.2026, Reklamation im Pay-per-Lead-Angebot:** Angebote „Pay-per-Lead + Software“ nennen die Reklamation
   (7 Tage nach Zustellung in der App, Beispiele falsche Nummer, Dublette 30 Tage, Fake; Gutschrift auf der nächsten
   Rechnung, Grenzfälle zur Hälfte), im Angebot, am Annahme-Knopf und in der Auftragsbestätigung (`PPL_REKLAMATION`,

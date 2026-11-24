@@ -353,7 +353,7 @@ export function OfferDocument({
             </h1>
             <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-[#c9d2e3]">
               {nurLeads
-                ? "Anfragen zu Versicherungen, genau so viele, wie Sie möchten. Jeden Lead sehen Sie mit Kontaktdaten im Kundenbereich, halten dort den Stand fest und reklamieren mit einem Klick."
+                ? "Exklusive Anfragen zu Versicherungen, genau so viele, wie Sie möchten. Jeden Lead sehen Sie mit Kontaktdaten im Kundenbereich, halten dort den Stand fest und reklamieren mit einem Klick."
                 : kk
                 ? "Kampagnen in Ihrem eigenen Meta-Werbekonto, abgerechnet je Lead. Ihr digitaler Assistent schreibt jeden Lead per WhatsApp an und bucht Termine direkt in Ihren Kalender."
                 : ppl
