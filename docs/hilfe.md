@@ -1348,7 +1348,7 @@ Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, d
 
 ## WhatsApp verbinden: Schritt für Schritt
 
-**Video:** Ein Video (ca. 3:20 Minuten) macht den ganzen Ablauf mit einer neuen Nummer einmal vor (und kurz den Weg mit der WhatsApp Business App). Es steht oben auf der Seite
+**Video:** Ein Video (ca. 3:40 Minuten) macht den ganzen Ablauf mit einer neuen Nummer einmal vor (und kurz den Weg mit der WhatsApp Business App). Es steht oben auf der Seite
 „Ausführliche Anleitung“ (/buyer/hilfe/whatsapp), aufklappbar direkt über dem Knopf „Jetzt WhatsApp verbinden“
 in der Einrichtung und für Inhaber unter Profilmenü → **Einführung ansehen**.
 

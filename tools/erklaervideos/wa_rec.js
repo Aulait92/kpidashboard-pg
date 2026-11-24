@@ -53,9 +53,13 @@ const A={
  card_intro: async p=>{await p.goto(CARDS+'wa_intro.html');await p.evaluate(()=>sessionStorage.clear());},
  card_outro: async p=>{await p.goto(CARDS+'wa_outro.html');await p.evaluate(()=>{sessionStorage.clear();const c=document.getElementById('__cap');if(c)c.classList.remove('on')});},
  bereit: async p=>{await mock(p,'bereit');await p.mouse.move(-50,-50);},
+ // Stand 24.11.2026: „Vorher kurz prüfen“ mit erstem Punkt „bei keinem anderen Anbieter“ steht im Guide über der Nummernwahl
  app_open: async p=>{state('neu');await go(p,'/buyer/einrichtung?schritt=whatsapp#whatsapp');await scrollTo(p,'#whatsapp',20,10);await sleep(900);
+   await hover(p,p.locator('[data-wa-pruefpunkt-anbieter]').first(),1000);await sleep(3200);
    await clickLoc(p,p.locator('[data-weg="neu"]').first(),1100);await sleep(900);await scrollBy(p,330,1500);},
- app_start: async p=>{await scrollTo(p,'a[href^="/buyer/whatsapp-verbinden"]',520,1300);await sleep(500);
+ // Stand 24.11.2026: über dem Knopf steht, an welche E-Mail die Einladung von 360dialog geht (data-wa-einladung-email)
+ app_start: async p=>{await scrollTo(p,'a[href^="/buyer/whatsapp-verbinden"]',560,1300);await sleep(500);
+   await hover(p,p.locator('[data-wa-einladung-email] b, [data-wa-einladung-email] input').first(),1000);await sleep(5200);
    await fakeClick(p,'a[href^="/buyer/whatsapp-verbinden"]');await sleep(700);state('invited');await go(p,INVITED);await scrollTo(p,'#whatsapp',20,10);},
  app_invited: async p=>{await sleep(600);await hover(p,p.locator('[data-wa-invite-mail] p').first(),1000);await sleep(1500);
    await hover(p,p.getByText('max.mustermann@gmail.com').first(),900);await sleep(1600);await hover(p,p.locator('[data-wa-invite-mail] a').first(),900);},
@@ -75,9 +79,9 @@ const A={
  minfo: async p=>{await mock(p,'m',4);await sleep(1000);await tap(p,'tz',['tzopen']);await sleep(500);await tap(p,'tz_b',['tzb']);await sleep(900);await tap(p,'b_m4');},
  mreview: async p=>{await mock(p,'m',5);await sleep(600);await hover(p,p.locator('#m5 .hint'),900);await sleep(1300);await tap(p,'b_m5');},
  mfinish: async p=>{await mock(p,'m',6);await sleep(800);await tap(p,'c1',['uncheck','c1']);await sleep(300);await tap(p,'c2',['uncheck','c2']);await sleep(400);await tap(p,'b_m6');},
- app_done: async p=>{state('pending');await go(p,'/buyer/einrichtung?wa=pending#whatsapp');await scrollTo(p,'#whatsapp',20,10);await sleep(400);
-   await hover(p,p.getByText('Fast geschafft').first(),1000);await sleep(4200);state('connected');
-   CUR='Nach wenigen Minuten: „Verbunden“';await go(p,'/buyer/einrichtung?schritt=whatsapp#whatsapp');await scrollTo(p,'#whatsapp',20,10);await sleep(400);await hover(p,p.getByText('Verbunden:').first(),900);},
+ app_done: async p=>{state('pending');await go(p,'/buyer/einrichtung?wa=pending#whatsapp');await sleep(300);await scrollTo(p,'#whatsapp',20,300);await sleep(300);
+   await hover(p,p.getByText('Fast geschafft').first(),1000);await sleep(3600);state('connected');
+   CUR='Nach wenigen Minuten: „Verbunden“';await go(p,'/buyer/einrichtung?schritt=whatsapp#whatsapp');await sleep(300);await scrollTo(p,'#whatsapp',20,300);await sleep(200);await hover(p,p.getByText('Verbunden:').first(),900);},
  business: async p=>{await mock(p,'question');await sleep(900);await tap(p,'q_biz',['sel','q_biz']);await sleep(900);await p.mouse.move(-50,-50);cur={x:-50,y:-50};await S(p,'show','qr');await p.evaluate(()=>{window.__run=window.S.qr();});},
 };
 
