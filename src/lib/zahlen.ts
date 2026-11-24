@@ -136,8 +136,13 @@ export function retainerInputFor(
   };
 }
 
-export async function loadLedger(now = new Date()) {
-  const from = monthStart(addMonths(FIRST_MONTH, 0));
+/**
+ * Umsatzbuch. firstMonth: ab wann gezählt wird (Standard FIRST_MONTH für Kennzahlen; die BWA rechnet ab Januar, damit
+ * Betreuungsumsätze und Nachträge vor dem Pay-per-Lead-Start nicht fehlen, Ole 24.11.2026).
+ */
+export async function loadLedger(now = new Date(), opts: { firstMonth?: string } = {}) {
+  const ersterMonat = opts.firstMonth ?? FIRST_MONTH;
+  const from = monthStart(addMonths(ersterMonat, 0));
   // Interne Kunden (Paket „internal“, z. B. eigene Test- oder Firmenkäufer) sind keine
   // Kunden: weder Umsatz noch „Aktive Kunden“ noch MRR.
   const [ppl, retainerCustomers, acceptedOffers, manualRows] = await Promise.all([
@@ -212,7 +217,7 @@ export async function loadLedger(now = new Date()) {
 
   const ledger = buildLedger({
     now,
-    firstMonth: FIRST_MONTH,
+    firstMonth: ersterMonat,
     ppl: ppl.map((p) => ({ customerId: p.customerId, month: p.month, amount: p.amount })),
     retainers,
     setups,
