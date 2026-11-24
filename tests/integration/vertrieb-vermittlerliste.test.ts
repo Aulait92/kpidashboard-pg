@@ -39,7 +39,8 @@ describe("Vermittlerliste", () => {
     await prisma.user.deleteMany({ where: { id: { in: users } } });
     delete process.env.VERTRIEB_SPERRLISTE;
     vi.unstubAllGlobals();
-  });
+    // 30.000 Kontakte löschen dauert auf einer ausgelasteten Maschine länger als die üblichen 10 Sekunden für Hooks
+  }, 120_000);
 
   it("bildet Namen und Gesellschaft ab", () => {
     expect(teileName("Alfons Michael Keil")).toEqual({ firstName: "Alfons Michael", lastName: "Keil" });
