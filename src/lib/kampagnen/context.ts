@@ -42,6 +42,11 @@ export async function loadCampaignContext(
     dailyBudgetEur?: number | null;
     /** false: ohne Vorlagen (eigene Gewinner, Werbebibliothek), z. B. für Vorgabewerte beim Seitenaufruf */
     vorlagen?: boolean;
+    /**
+     * Gewinner-Anzeigen eines anderen Kunden als Vorlage (Ole, 24.11.2026: Schwarzkopf „stark an Lohmanns Winnern
+     * anlehnen“, auch die Bilder). Kunden-ID; dessen Werbekonto liefert die Vorlagen statt des eigenen.
+     */
+    vorlagenVon?: string | null;
     /** ersetzbar für Tests */
     eigeneGewinner?: (input: { customerId: string; adAccountId: string | null; product: string }) => Promise<EigeneGewinnerErgebnis>;
   } = {},
@@ -78,7 +83,14 @@ export async function loadCampaignContext(
   const vorlagen = opts.vorlagen !== false;
   // Eigene Gewinner aus dem angebundenen Werbekonto (Ole, 21.11.2026): Vorrang vor der Werbebibliothek
   const eigene: EigeneGewinnerErgebnis = vorlagen
-    ? await (opts.eigeneGewinner ?? ladeEigeneGewinnerStandard)({ customerId, adAccountId: c.metaAdAccountId, product }).catch((err) => ({
+    ? await (async () => {
+        const fremd = opts.vorlagenVon && opts.vorlagenVon !== customerId
+          ? await prisma.customer.findUnique({ where: { id: opts.vorlagenVon }, select: { id: true, name: true, metaAdAccountId: true } })
+          : null;
+        const quelle = fremd?.metaAdAccountId ? { customerId: fremd.id, adAccountId: fremd.metaAdAccountId } : { customerId, adAccountId: c.metaAdAccountId };
+        const r = await (opts.eigeneGewinner ?? ladeEigeneGewinnerStandard)({ ...quelle, product });
+        return fremd?.metaAdAccountId ? { ...r, hinweis: [`Vorlagen aus dem Werbekonto von ${fremd.name}`, r.hinweis].filter(Boolean).join(" · ") } : r;
+      })().catch((err) => ({
         gewinner: [],
         hinweis: `Eigene Gewinner nicht genutzt: ${redactTokens(err instanceof Error ? err.message : String(err)).slice(0, 160)}`,
       }))

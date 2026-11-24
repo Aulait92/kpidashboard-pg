@@ -12,7 +12,7 @@ import { findCustomer, katalogAliase, produktZeilen, resolveProduct, runOverview
 // Schlüssel wie /api/ops/unterlagen (OPS_UPLOAD_TOKEN) oder der Aktions-Schlüssel (OPS_ACTION_TOKEN), im Header
 // X-Ops-Token bzw. Bearer. Ohne gesetzten Schlüssel ist die Route aus. Alles wird bei Meta PAUSED angelegt.
 //   GET  /api/ops/kampagne?kunde=<id|Name>      → Produkte (Budget-Zeilen) und Läufe (Status, Schritte, Fehler, Meta-IDs, Links)
-//   POST /api/ops/kampagne  { kunde, produkt, wunsch?, autoBuild? (Standard true), budget? }  (auch als Query)
+//   POST /api/ops/kampagne  { kunde, produkt, wunsch?, autoBuild? (Standard true), budget?, vorlagenVon? }  (auch als Query)
 //        → { ok, runId } | { ok:false, problems } ; läuft schon ein Lauf: 409 { error: "läuft schon", runId } (später erneut)
 export const dynamic = "force-dynamic";
 
@@ -112,6 +112,8 @@ export async function POST(req: Request): Promise<Response> {
     dailyBudgetEur: budget,
     createdBy: "ops",
     trigger: "manuell",
+    // Gewinner eines anderen Kunden als Vorlage: { vorlagenVon: <Kunden-ID|Name> }
+    vorlagenVon: get("vorlagenVon") ? await findCustomer(String(get("vorlagenVon"))).then((v) => (v.ok ? v.id : null)) : null,
   });
   if (!r.ok) {
     if (r.problems.some((x) => x.key === "running")) {

@@ -101,12 +101,14 @@ export async function startCampaignRun(
     createdBy?: string | null;
     dailyBudgetEur?: number | null;
     trigger?: "manuell" | "produkt";
+    /** Gewinner eines anderen Kunden als Vorlage (Kunden-ID), siehe loadCampaignContext */
+    vorlagenVon?: string | null;
   },
   deps: CampaignDeps = defaultDeps(),
 ): Promise<StartResult> {
   const running = await prisma.campaignRun.findFirst({ where: { customerId: input.customerId, status: { in: ACTIVE_STATUSES } }, select: { id: true } });
   if (running) return { ok: false, problems: [{ key: "running", message: "Für diesen Kunden läuft schon ein Lauf. Bitte warten, bis er fertig ist." }] };
-  const ctx = await loadCampaignContext(input.customerId, input.product, { wish: input.wish, privacyUrl: input.privacyUrl, dailyBudgetEur: input.dailyBudgetEur });
+  const ctx = await loadCampaignContext(input.customerId, input.product, { wish: input.wish, privacyUrl: input.privacyUrl, dailyBudgetEur: input.dailyBudgetEur, vorlagenVon: input.vorlagenVon });
   const problems = await checkPrerequisites(ctx, { checkAdAccount: deps.checkAdAccount, pageToken: (p) => pageAccessToken(deps.meta, p),
     leadgenTos: async (p) => {
       const t = await pageAccessToken(deps.meta, p);
