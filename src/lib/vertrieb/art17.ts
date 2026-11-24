@@ -146,7 +146,7 @@ type Opts = {
 export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Promise<Art17Ergebnis> {
   const now = opts.now ?? new Date();
   const eingang = opts.eingang ?? now;
-  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true, altEmails: true, sperrHashes: true, art17GeloeschtAt: true, nieKontaktierenAt: true, nieKontaktierenGrund: true } });
+  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true, altEmails: true, sperrHashes: true, art17GeloeschtAt: true, nieKontaktierenAt: true, nieKontaktierenGrund: true, description: true, enrichment: true } });
   if (!c) return { status: "nicht_gefunden" };
   if (c.art17GeloeschtAt) return { status: "schon_geloescht" };
   const ausLoeschprotokoll = opts.quelle === "loeschprotokoll";
@@ -212,7 +212,10 @@ export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Prom
       },
     });
   }
-  if (!ausLoeschprotokoll) {
+  // Altes Cold CRM nur, wenn der Kontakt von dort stammen kann: nicht bei direkt in Instantly hochgeladenen Kontakten
+  // und nicht bei Importen der Vermittlerliste (Ole, 24.11.2026: Aufgabe sonst ohne Treffer von Hand abhaken)
+  const ausColdCrm = !c.description?.startsWith("Über Instantly angelegt") && !(c.enrichment && typeof c.enrichment === "object" && "import" in (c.enrichment as object));
+  if (!ausLoeschprotokoll && ausColdCrm) {
     // Die App schreibt nicht ins alte Cold CRM (nur Lese-Import): dort von Hand löschen
     await prisma.salesTask.create({
       data: {
@@ -223,6 +226,8 @@ export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Prom
         note: "Die App hat alles gelöscht. Im alten Cold CRM bzw. Airtable den Kontakt aus der Löschanfrage (Adresse im Postfach) ebenfalls löschen, falls er dort noch steht.",
       },
     });
+  }
+  if (!ausLoeschprotokoll) {
     // Nachweisprotokoll „Datenschutz und Recht“: Löschdatum am Fall (ohne Fall: neuer Fall „Löschung“)
     await loeschungProtokollieren(contactId, { eingang, at: now, wer: opts.wer, quelle: opts.quelle === "admin" ? "admin" : "antwort", ziel });
     const { protokolliereLoeschung } = await import("@/lib/loeschprotokoll");
@@ -340,6 +345,11 @@ export async function art17HuellenBereinigen(now = new Date()): Promise<number> 
 
 /** Antwort an eine Hülle (Art. 17): Inhalt nicht speichern, Ole liest sie im Instantly-Postfach. */
 export async function art17NeueNachricht(contactId: string, at: Date, now = new Date()): Promise<boolean> {
+  // Dieselbe Mail wie die Löschanfrage (Abgleich sieht sie nach der Löschung erneut): keine Aufgabe (Ole, 24.11.2026)
+  const letzterEingang = await prisma.datenschutzFallEreignis.findFirst({ where: { contactId, ereignis: "eingang" }, orderBy: { eingangAt: "desc" }, select: { eingangAt: true } });
+  if (letzterEingang && at.getTime() <= letzterEingang.eingangAt.getTime() + 60_000) return false;
+  const geloescht = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { art17GeloeschtAt: true } });
+  if (!letzterEingang && geloescht?.art17GeloeschtAt && at.getTime() <= geloescht.art17GeloeschtAt.getTime()) return false;
   const schon = await prisma.salesTask.findFirst({ where: { contactId, doneAt: null, title: { startsWith: NACHRICHT_AUFGABE } }, select: { id: true } });
   if (schon) return false;
   await prisma.salesTask.create({
