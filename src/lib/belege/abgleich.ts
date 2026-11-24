@@ -44,7 +44,9 @@ const META = { test: (t: string) => META_KOMPAKT.test(t.replace(/\s+/g, "")) };
 // Bankentgelte (Kontoauszug genügt) und Darlehensraten (Vertrag liegt einmal vor) brauchen keinen Einzelbeleg.
 // Steuerbüro (PhDr. Müller Treuhand, auch per GoCardless „GC RE PHDRMUELLERSTBG“): bucht seine eigenen Rechnungen und
 // Vorauszahlungen selbst (Ole, 24.11.2026), kein Beleg von uns nötig.
-const OHNE_BELEG = /american express|\bamex\b|zahlung erhalten|stripe|umbuchung|übertrag|finanzamt|bundeskasse|privat|gehalt|kontoführung|kontofuehrung|darlehen|tilgung|entgelt|phdrmueller|m(?:ue|ü)ller treuhand/i;
+// Barclays/Barclaycard: Kreditkarten-Abrechnung (die Kartenumsätze haben eigene Belege, wie Amex), „Rechnungsabschluss“:
+// Kontoentgelte der Bank (Ole, 24.11.2026).
+const OHNE_BELEG = /american express|\bamex\b|zahlung erhalten|stripe|umbuchung|übertrag|finanzamt|bundeskasse|privat|gehalt|kontoführung|kontofuehrung|darlehen|tilgung|entgelt|phdrmueller|m(?:ue|ü)ller treuhand|barclay|rechnungsabschluss/i;
 
 /** Braucht diese Ausgabe einen Beleg? */
 export function brauchtBeleg(u: Pick<AbgleichUmsatz, "betrag" | "gegenpartei" | "zweck" | "status">): boolean {
