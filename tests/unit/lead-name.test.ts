@@ -20,6 +20,21 @@ describe("lead-name", () => {
     expect(andererNachname("Frau Beispiel", "Erika Beispiel")).toBe(false);
   });
 
+  it("Tippfehler und Schreibweisen im Nachnamen sind dieselbe Person, deutlich andere Namen nicht", () => {
+    expect(andererNachname("Max Meier", "Max Meyer")).toBe(false);
+    expect(andererNachname("Erika Schmidt", "Erika Schmitt")).toBe(false);
+    expect(andererNachname("Max Platzhalter", "Max Platzhaltr")).toBe(false);
+    expect(andererNachname("Max Platzhalter", "Max Paltzhalter")).toBe(false);
+    expect(andererNachname("Max Platzhalter", "Max Platzhalterr")).toBe(false);
+    // kurze Namen: schon ein Buchstabe macht einen anderen Namen
+    expect(andererNachname("Max Lang", "Max Lanz")).toBe(false);
+    expect(andererNachname("Max Ahl", "Max Uhl")).toBe(true);
+    // deutlich verschieden
+    expect(andererNachname("Max Meier", "Max Maurer")).toBe(true);
+    expect(andererNachname("Max Schmidt", "Max Schulz")).toBe(true);
+    expect(namensWechsel({ name: "Max Meier" }, "Max Meyer")).toBe("neuer_name");
+  });
+
   it("Namenswechsel bei neuer Anfrage", () => {
     expect(namensWechsel({ name: "Max Platzhalter" }, "max  platzhalter")).toBe("gleich");
     expect(namensWechsel({ name: "Max Platzhalter" }, null)).toBe("gleich");
