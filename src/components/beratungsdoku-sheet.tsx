@@ -12,6 +12,8 @@ import { CheckCircle2, Eye, FileText, Loader2, PencilLine, Send, TriangleAlert }
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { GruendeVorschlag } from "@/components/gruende-vorschlag";
+import { KiAusHinweis } from "@/components/ki-aus-hinweis";
+import type { KiAus } from "@/lib/datennutzung";
 import { cn } from "@/lib/utils";
 import { BD_ABSCHNITTE, BD_PFLICHT, BD_TITEL, BD_VERANTWORTUNG, bdFehlt, bdPdfInhalt, type BdAbschnitt, type BdInhalt } from "@/lib/beratungsdoku";
 import { GRUENDE_ERGAENZEN, hatLuecke, type VorschlagInfo } from "@/lib/mail/beratung";
@@ -185,7 +187,7 @@ function Blatt({ ziel, onClose, onDone, onError }: Props & { ziel: Beratungsdoku
               <CheckCircle2 className="h-4 w-4 shrink-0" /> {stand}
             </p>
           ) : null}
-          {ansicht ? <Ansicht info={info} inhalt={inhalt} pdf={pdf} onBearbeiten={() => setAnsicht(false)} /> : <Bearbeiten inhalt={inhalt} onChange={setInhalt} appointmentId={id} vorschlag={info.vorschlag} onError={onError} />}
+          {ansicht ? <Ansicht info={info} inhalt={inhalt} pdf={pdf} onBearbeiten={() => setAnsicht(false)} /> : <Bearbeiten inhalt={inhalt} onChange={setInhalt} appointmentId={id} vorschlag={info.vorschlag} kiAus={info.kiAus} onError={onError} />}
         </div>
       )}
     </Sheet>
@@ -197,12 +199,15 @@ function Bearbeiten({
   onChange,
   appointmentId,
   vorschlag,
+  kiAus,
   onError,
 }: {
   inhalt: BdInhalt;
   onChange: (i: BdInhalt) => void;
   appointmentId: string;
   vorschlag: VorschlagInfo;
+  /** Widerspruch gegen Amazon Web Services: statt „Begründung vorschlagen“ ein ruhiger Hinweis */
+  kiAus: KiAus | null;
   onError: (m: string) => void;
 }) {
   const refs = useRef<Partial<Record<BdAbschnitt, HTMLTextAreaElement | null>>>({});
@@ -261,6 +266,8 @@ function Bearbeiten({
                 />
               </div>
             ) : null}
+            {/* Ohne Link: ein Tipp würde den Entwurf im Blatt verwerfen */}
+            {k === "empfehlung" && kiAus ? <KiAusHinweis was="KI-Hilfe" hinweis={kiAus} link={false} className="mt-2" /> : null}
           </div>
         );
       })}

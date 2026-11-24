@@ -62,10 +62,33 @@ export type CampaignContext = {
   patterns: string;
   /** Lange laufende Anzeigen anderer aus der Meta-Werbebibliothek (Vorlage, nicht wörtlich übernehmen). */
   libraryWinners?: string | null;
-  /** Bestlaufende Anzeigen aus dem eigenen Werbekonto des Kunden (lib/kampagnen/eigene-gewinner.ts), Vorrang vor der Werbebibliothek. */
+  /**
+   * Bestlaufende Anzeigen aus dem EIGENEN Werbekonto des Kunden (lib/kampagnen/eigene-gewinner.ts), Vorrang vor der
+   * Werbebibliothek. Bei Mustern aus einem anderen Werbekonto (fremdvorlagen) immer leer, siehe fremdMuster.
+   */
   eigeneGewinner?: EigenerGewinner[] | null;
-  /** Warum keine eigenen Gewinner da sind (z. B. keine Berechtigung), nur für den Admin. */
+  /** Warum keine eigenen Gewinner da sind (z. B. keine Berechtigung), nur für den Admin. Nennt nie einen anderen Kunden. */
   eigeneGewinnerHinweis?: string | null;
+  /**
+   * Gemeinsames Anzeigenlernen (Ole, 24.11.2026, lib/kampagnen/fremdvorlagen.ts): Die Vorlagen stammen aus dem Werbekonto
+   * eines ANDEREN Kunden. Dann gelten die Leitplanken: keine Bild-URLs, keine Anzeigen- und Kampagnennamen, keine
+   * Kennzahlen, kein Name der Quelle, weder im Kontext noch in den Anweisungen an die Agenten.
+   */
+  fremdvorlagen?: boolean;
+  /** Bereinigte Muster aus dem anderen Werbekonto, bestes zuerst (nur bei fremdvorlagen). */
+  fremdMuster?: FremdMuster[] | null;
+  /**
+   * Nur intern (Sperre bei Widerspruch, Ausgabeprüfung): Kunden-ID der Quelle. Steht nie in Anweisungen an die Agenten
+   * und in keiner Ansicht; zusätzlich im Audit-Log des Laufs (kampagne.start).
+   */
+  vorlagenQuelleId?: string | null;
+  /**
+   * Ergebnisse dieses Laufs müssen vor dem Anlegen bei Meta neu erzeugt werden (lib/kampagnen/run.ts):
+   * „altformat“: der Lauf entstand vor den Leitplanken, alle Agenten sahen die ungefilterten Gewinner der Quelle
+   * (alles neu, auch Plan und Formular); „entfernt“: die Muster wurden nach einem Widerspruch entfernt (Winkel, Texte
+   * und Bilder neu, Plan und Formular haben die Muster nie gesehen).
+   */
+  fremdAltlast?: "altformat" | "entfernt";
   /** Buchungsseite des Kunden – Pflicht auf der Dankeseite (Ole, 13.11.2026), damit Leads direkt einen Termin buchen. */
   bookingUrl?: string | null;
   /** Paket mit Software: Buchungsseite ist Pflicht (Nur Betreuung: ohne Kalender). */
@@ -98,6 +121,34 @@ export type EigenerGewinner = {
   bildUrl: string | null;
   video: boolean;
   passtZumProdukt: boolean;
+};
+
+/**
+ * Abstrakte Bildidee in festen Kategorien (lib/kampagnen/bildidee.ts): je Feld genau ein Schlüssel aus einer festen
+ * Liste. Kein freier Text, also keine Personenbeschreibung, keine Namen, Logos, Zahlen oder Wortlaut aus dem Bild.
+ */
+export type Bildidee = {
+  motivart: string;
+  bildaufbau: string;
+  bildausschnitt: string;
+  farbwelt: string;
+  textplatzierung: string;
+  textgestaltung: string;
+};
+
+/**
+ * Muster aus einer gut laufenden Anzeige eines ANDEREN Werbekontos (gemeinsames Anzeigenlernen). Bewusst ohne
+ * Anzeigen-ID, Anzeigen- und Kampagnennamen, Kennzahlen und Bild-URL; die Texte sind bereinigt (Namen, Orte, Zahlen,
+ * Links und fremde Versicherer durch Platzhalter ersetzt). Der Rang ist die Position in der Liste.
+ */
+export type FremdMuster = {
+  passtZumProdukt: boolean;
+  video: boolean;
+  primaryText: string | null;
+  headline: string | null;
+  description: string | null;
+  cta: string | null;
+  bildidee: Bildidee | null;
 };
 
 // ─── Agenten-Ergebnisse ─────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { buildCampaignRun, processCampaignRun, startCampaignRun } from "@/lib/kampagnen/run";
 import { ACTIVE_STATUSES } from "@/lib/kampagnen/types";
 import { findCustomer, katalogAliase, produktZeilen, resolveProduct, runOverview } from "@/lib/kampagnen/ops";
+import { ausgenommeneUnter, meldungLernSperre } from "@/lib/kampagnen/lern-sperre";
 
 // Kampagnen-Assistent ohne Admin-Login (Ole, 21.11.2026): Claude startet Läufe und sieht ihren Stand.
 // Schlüssel wie /api/ops/unterlagen (OPS_UPLOAD_TOKEN) oder der Aktions-Schlüssel (OPS_ACTION_TOKEN), im Header
@@ -14,6 +15,9 @@ import { findCustomer, katalogAliase, produktZeilen, resolveProduct, runOverview
 //   GET  /api/ops/kampagne?kunde=<id|Name>      → Produkte (Budget-Zeilen) und Läufe (Status, Schritte, Fehler, Meta-IDs, Links)
 //   POST /api/ops/kampagne  { kunde, produkt, wunsch?, autoBuild? (Standard true), budget?, vorlagenVon? }  (auch als Query)
 //        → { ok, runId } | { ok:false, problems } ; läuft schon ein Lauf: 409 { error: "läuft schon", runId } (später erneut)
+//        vorlagenVon (Kunden-ID oder Name): Muster aus dem Werbekonto eines anderen Kunden (gemeinsames Anzeigenlernen,
+//        mit Leitplanken, lib/kampagnen/fremdvorlagen.ts). Unbekannter Kunde: 404 mit klarer Meldung, nichts wird
+//        gestartet. Hat der Kunde oder der Vorlagen-Kunde widersprochen (lib/kampagnen/lern-sperre.ts): 422.
 export const dynamic = "force-dynamic";
 
 const authorized = (req: Request) => uploadAuthorized(req) || aktionAuthorized(req);
@@ -103,6 +107,23 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: "budget: Tagesbudget in Euro (größer 0, höchstens 1000)." }, { status: 400, headers: noStore });
   }
   const wunsch = get("wunsch");
+  // Muster aus dem Werbekonto eines anderen Kunden: { vorlagenVon: <Kunden-ID|Name> }. Ein unbekannter oder mehrdeutiger
+  // Kunde führt nicht stillschweigend zu eigenen Vorlagen, sondern zu einer klaren Meldung (Ole, 24.11.2026).
+  let vorlagenVon: string | null = null;
+  const vorlagenRoh = get("vorlagenVon");
+  if (vorlagenRoh !== undefined && String(vorlagenRoh).trim()) {
+    const v = await findCustomer(String(vorlagenRoh));
+    if (!v.ok) return Response.json({ ok: false, error: `vorlagenVon: ${v.error} Es wurde nichts gestartet.` }, { status: 404, headers: noStore });
+    if (v.id !== c.id) {
+      // Widerspruch gegen das gemeinsame Anzeigenlernen: weder als Quelle noch als Ziel
+      const raus = await ausgenommeneUnter([c.id, v.id]);
+      if (raus.size) {
+        const message = meldungLernSperre(c.id, raus);
+        return Response.json({ ok: false, error: message, problems: [{ key: "lernSperre", message }] }, { status: 422, headers: noStore });
+      }
+      vorlagenVon = v.id;
+    }
+  }
 
   const r = await startCampaignRun({
     customerId: c.id,
@@ -112,8 +133,7 @@ export async function POST(req: Request): Promise<Response> {
     dailyBudgetEur: budget,
     createdBy: "ops",
     trigger: "manuell",
-    // Gewinner eines anderen Kunden als Vorlage: { vorlagenVon: <Kunden-ID|Name> }
-    vorlagenVon: get("vorlagenVon") ? await findCustomer(String(get("vorlagenVon"))).then((v) => (v.ok ? v.id : null)) : null,
+    vorlagenVon,
   });
   if (!r.ok) {
     if (r.problems.some((x) => x.key === "running")) {
@@ -122,6 +142,6 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ ok: false, product: p.product, problems: r.problems }, { status: 422, headers: noStore });
   }
   after(() => processCampaignRun(r.runId).then(() => undefined));
-  await audit("kampagne.ops-start", { entity: "CampaignRun", entityId: r.runId, customerId: c.id, details: { product: p.product, via: "ops" }, actor: { role: "system", email: "ops" } }).catch(() => undefined);
+  await audit("kampagne.ops-start", { entity: "CampaignRun", entityId: r.runId, customerId: c.id, details: { product: p.product, via: "ops", ...(vorlagenVon ? { vorlagenVon } : {}) }, actor: { role: "system", email: "ops" } }).catch(() => undefined);
   return Response.json({ ok: true, runId: r.runId, kunde: c.name, product: p.product, produktBekannt: p.matched }, { headers: noStore });
 }

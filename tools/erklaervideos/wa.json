@@ -4,146 +4,167 @@
   "cap": "",
   "text": "In diesem Video zeigen wir Ihnen, wie Sie Ihre WhatsApp-Nummer mit Performance Growth verbinden. Das machen Sie nur einmal, es dauert etwa zehn Minuten.",
   "wav": "/var/tmp/ev/wa_00.wav",
-  "dur": 10.5
+  "dur": 10.05,
+  "heard": " In diesem Video zeigen wir Ihnen, wie Sie Ihre WhatsApp-Nummer mit Performance Growth verbinden.  Das machen Sie nur einmal, es dauert etwa 10 Minuten."
  },
  {
   "act": "bereit",
   "cap": "Vorher bereitlegen",
-  "text": "Sie brauchen: Ihren Facebook-Login mit Admin-Rechten, Ihr E-Mail-Postfach, das Telefon zur Nummer und einen Computer, auf dem Pop-ups erlaubt sind.",
+  "text": "Sie brauchen: Ihren Facebook-Login mit Admin-Rechten, Ihr E-Mail-Postfach, das Telefon zur Nummer und einen privaten Computer außerhalb des Firmennetzes, auf dem Pop-ups erlaubt sind.",
   "wav": "/var/tmp/ev/wa_01.wav",
-  "dur": 10.4
+  "dur": 13.1,
+  "heard": " Sie brauchen Ihren Facebook-Loggen mit Adminrechten,  Ihr E-Mail-Postfach, das Telefon zur Nummer und einen privaten Computer außerhalb des Firmennetzes auf dem Pop-Ups erlaubt sind."
  },
  {
   "act": "app_open",
   "cap": "1. Einrichtung: WhatsApp verbinden",
-  "text": "Öffnen Sie in der Einrichtung den Schritt „WhatsApp verbinden“ und wählen Sie Ihre Nummer, in diesem Beispiel eine neue Nummer.",
+  "text": "Öffnen Sie in der Einrichtung den Schritt „WhatsApp verbinden“. Läuft Ihre Nummer noch bei einem anderen Anbieter, lassen Sie sie dort zuerst freigeben. Dann wählen Sie Ihre Nummer, in diesem Beispiel eine neue Nummer.",
   "wav": "/var/tmp/ev/wa_02.wav",
-  "dur": 9.35
+  "dur": 12.8,
+  "heard": " Öffnen Sie in der Einrichtung den Schritt WhatsApp verbinden, läuft Ihre Nummer noch  bei einem anderen Anbieter, lassen Sie sie dort zuerst freigeben.  Dann wählen Sie Ihre Nummer, in diesem Beispiel eine neue Nummer."
  },
  {
   "act": "app_start",
-  "cap": "„Jetzt WhatsApp verbinden“",
-  "text": "Klicken Sie auf „Jetzt WhatsApp verbinden“. Wir legen Ihr Konto bei 360dialog, unserem WhatsApp-Anbieter, kostenlos für Sie an.",
+  "cap": "E-Mail prüfen, dann „Jetzt WhatsApp verbinden“",
+  "text": "Prüfen Sie, an welche E-Mail die Einladung geht. Firmen-Postfächer filtern sie oft, nehmen Sie dann eine private Adresse. Klicken Sie auf „Jetzt WhatsApp verbinden“. Wir legen Ihr Konto bei 360dialog kostenlos für Sie an.",
   "wav": "/var/tmp/ev/wa_03.wav",
-  "dur": 10.05
+  "dur": 17.1,
+  "heard": " Prüfen Sie, an welche E-Mail die Einladung geht.  Firmenpostfächer filtern Sie oft.  Nehmen Sie dann eine private Adresse.  Klicken Sie auf Jetzt WhatsApp verbinden.  Dir legen Ihr Konto bei 360 Dialog kostenlos für Sie an."
  },
  {
   "act": "app_invited",
   "cap": "2. E-Mail von 360dialog öffnen",
   "text": "Jetzt das Wichtigste: Öffnen Sie die E-Mail von 360dialog. Sie ist auf Englisch. Der Knopf öffnet direkt Ihr Postfach.",
   "wav": "/var/tmp/ev/wa_04.wav",
-  "dur": 9.95
+  "dur": 9.8,
+  "heard": " Jetzt das Wichtigste.  Öffnen Sie die E-Mail vom 360 Dialog.  Sie ist auf Englisch.  Der Knopf öffnet direkt Ihr Prostfach."
  },
  {
   "act": "mail",
   "cap": "In der E-Mail: „Join 360Dialog Hub“",
   "text": "Klicken Sie in der E-Mail auf „Join 360Dialog Hub“ und legen Sie ein Passwort fest.",
   "wav": "/var/tmp/ev/wa_05.wav",
-  "dur": 6.25
+  "dur": 7.0,
+  "heard": " Klicken Sie in der E-Mail auf Join 360 Dialog Hub und legen Sie ein Passwort fest."
  },
  {
   "act": "app_check",
   "cap": "3. Häkchen setzen, dann „Weiter“",
   "text": "Zurück in der Software setzen Sie das Häkchen „Erledigt“. Darunter finden Sie alle weiteren Schritte mit Bildern. Dann klicken Sie auf „Weiter: WhatsApp verbinden“.",
   "wav": "/var/tmp/ev/wa_06.wav",
-  "dur": 10.25
+  "dur": 10.85,
+  "heard": " Zurück in der Software setzen Sie das Häkchen erledigt.  Darunter finden Sie alle weiteren Schritte mit Bildern.  Dann klicken Sie auf Weiter WhatsApp verbinden."
  },
  {
   "act": "login",
   "cap": "4. Bei 360dialog anmelden",
   "text": "Bei 360dialog melden Sie sich mit dem neuen Passwort an, über „Log in“. Bitte nicht mit Facebook oder Google.",
   "wav": "/var/tmp/ev/wa_07.wav",
-  "dur": 8.0
+  "dur": 8.35,
+  "heard": " Bei 360 Dialog melden Sie sich mit dem neuen Passwort an über Login.  Bitte nicht mit Facebook oder Google."
  },
  {
   "act": "verify",
   "cap": "Code aus der zweiten E-Mail",
   "text": "Zur Sicherheit kommt eine zweite E-Mail mit einem Code. Tragen Sie ihn ein und klicken Sie auf „Continue“.",
   "wav": "/var/tmp/ev/wa_08.wav",
-  "dur": 7.95
+  "dur": 7.7,
+  "heard": " Zur Sicherheit kommt eine zweite E-Mail mit einem Code.  Tragen Sie ihn ein und klicken Sie auf Continue."
  },
  {
   "act": "number",
   "cap": "5. Nummer: Deutschland +49 statt USA +1",
   "text": "Geben Sie die Nummer ein: Stellen Sie das Land von USA auf Deutschland um, plus neunundvierzig, und tippen Sie die Nummer ohne die Null vorne. Dann „Next“.",
   "wav": "/var/tmp/ev/wa_09.wav",
-  "dur": 11.65
+  "dur": 11.75,
+  "heard": " Geben Sie die Nummer ein, stellen Sie das Land von USA auf Deutschland um, plus 49 und tippen Sie die Nummer ohne die 0 vorne."
  },
  {
   "act": "question",
   "cap": "6. Schon bei WhatsApp?",
   "text": "Bei der Frage, ob die Nummer schon bei WhatsApp ist, wählen Sie für eine neue Nummer „No, It's not connected“.",
   "wav": "/var/tmp/ev/wa_10.wav",
-  "dur": 7.4
+  "dur": 6.8,
+  "heard": " Bei der Frage, ob die Nummer schon bei WhatsApp ist, wählen sie für eine neue Nummer, no  it's not connected."
  },
  {
   "act": "sms",
   "cap": "7. Nummer mit SMS-Code bestätigen",
   "text": "Dann bestätigen Sie die Nummer mit dem Code per SMS, bei Festnetz per „Voice call“.",
   "wav": "/var/tmp/ev/wa_11.wav",
-  "dur": 6.35
+  "dur": 7.7,
+  "heard": " Dann bestätigen Sie die Nummer mit dem Code per SMS bei Festnetz per Voice Call."
  },
  {
   "act": "signup",
   "cap": "8. „Embedded Signup“",
   "text": "Auf der Seite „Meta Business Signup“ klicken Sie unten rechts auf „Embedded Signup“. Es öffnet sich ein Fenster von Meta.",
   "wav": "/var/tmp/ev/wa_12.wav",
-  "dur": 7.9
+  "dur": 8.15,
+  "heard": " Auf der Seite Meta Business Sign-Up, klicken Sie unten rechts auf Embedded Sign-Up.  Es öffnet sich ein Fenster von Meta."
  },
  {
   "act": "mcontinue",
   "cap": "9. Fenster von Meta: „Continue“",
   "text": "Im Fenster von Meta klicken Sie auf „Continue“. Ihre Nummer ist schon ausgewählt, also einfach „Next“.",
   "wav": "/var/tmp/ev/wa_13.wav",
-  "dur": 7.7
+  "dur": 6.7,
+  "heard": " Im Fenster von Meta klicken Sie auf Continue. Ihre Nummer ist schon ausgewählt, also einfach  Next."
  },
  {
   "act": "massets",
   "cap": "10. Portfolio und WhatsApp-Konto",
   "text": "Wählen Sie Ihr eigenes Unternehmensportfolio und beim WhatsApp-Konto „Create a WhatsApp account“.",
   "wav": "/var/tmp/ev/wa_14.wav",
-  "dur": 6.65
+  "dur": 6.15,
+  "heard": " Wählen Sie Ihr eigenes Unternehmensportfolio und beim WhatsApp-Konto create a WhatsApp-Account."
  },
  {
   "act": "minfo",
   "cap": "11. Zeitzone Europe/Berlin",
   "text": "Firmenname wie im Impressum, Kategorie und Land. Bei der Zeitzone wählen Sie Europe, Berlin.",
   "wav": "/var/tmp/ev/wa_15.wav",
-  "dur": 7.05
+  "dur": 7.55,
+  "heard": " Firmenname wie im Impressum, Kategorie und Land.  Bei der Zeitzone wählen Sie Europe Berlin."
  },
  {
   "act": "mreview",
   "cap": "12. Prüfen und „Confirm“",
   "text": "Prüfen Sie, dass überall Ihr Firmenname steht, und klicken Sie auf „Confirm“.",
   "wav": "/var/tmp/ev/wa_16.wav",
-  "dur": 6.0
+  "dur": 5.55,
+  "heard": " Prüfen Sie, dass überall Ihr Firmenname steht und klicken Sie auf Confirm."
  },
  {
   "act": "mfinish",
   "cap": "13. Zwei Häkchen entfernen, dann „Finish“",
   "text": "Zum Schluss entfernen Sie unter „Improve your experience“ beide Häkchen und klicken auf „Finish“.",
   "wav": "/var/tmp/ev/wa_17.wav",
-  "dur": 6.55
+  "dur": 7.8,
+  "heard": " Zum Schluss entfernen Sie unter Improve Your Experience beide Häkchen und klicken auf Finish."
  },
  {
   "act": "app_done",
   "cap": "Fast geschafft",
   "text": "Zurück in der Software steht „Fast geschafft“. Nach wenigen Minuten steht dort von selbst „Verbunden“. Meta prüft Ihr Konto dann noch innerhalb von 24 Stunden.",
   "wav": "/var/tmp/ev/wa_18.wav",
-  "dur": 12.5
+  "dur": 10.9,
+  "heard": " Zurück in der Software steht, fast geschafft.  Nach wenigen Minuten steht dort von selbst, verbunden.  Meta prüft ihr Konto dann noch innerhalb von 24 Stunden."
  },
  {
   "act": "business",
   "cap": "WhatsApp Business App? QR-Code statt SMS",
   "text": "Mit der WhatsApp Business App wählen Sie bei der Frage „Yes, Business app“ und scannen statt des SMS-Codes einen QR-Code mit der App.",
   "wav": "/var/tmp/ev/wa_19.wav",
-  "dur": 9.3
+  "dur": 10.3,
+  "heard": " Mit der WhatsApp Business App wählen Sie bei der Frage Yes Business App und scannen statt des SMS Codes einen QR Code mit der App."
  },
  {
   "act": "card_outro",
   "cap": "",
   "text": "Hakt es irgendwo? Buchen Sie in der Einrichtung einfach den Fünfzehn-Minuten-Hilfetermin. Dann verbinden wir WhatsApp gemeinsam.",
   "wav": "/var/tmp/ev/wa_20.wav",
-  "dur": 10.25
+  "dur": 8.3,
+  "heard": " Hackt es irgendwo?  Buchen sie in der Einrichtung einfach den 15 Minuten Hilfetermin.  Dann verbinden wir WhatsApp gemeinsam."
  }
 ]

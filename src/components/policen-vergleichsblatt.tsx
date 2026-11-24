@@ -32,6 +32,7 @@ import {
   type Zeile,
 } from "@/lib/policen/auslesen/vertragsseite";
 import { FrageNummer, vertragAnker } from "@/components/policen-frage-nummer";
+import { KiAusHinweis } from "@/components/ki-aus-hinweis";
 import type { Frage } from "@/lib/policen/auslesen/zusammenfassung";
 import { alleGeprueftAction, alleUebernehmenAction, auslesenAction, korrigierenAction, sparteAction } from "@/app/buyer/termine/[id]/vorbereitung/vertraege/actions";
 
@@ -54,11 +55,14 @@ export function Vergleichsblatt({
   ohne2fa = false,
   zurueck,
   terminHref,
+  inhaber = true,
 }: {
   terminId: string;
   leadId: string;
   v: Vergleich;
   readOnly: boolean;
+  /** Angemeldeter ist der Inhaber: nur er kann einen Widerspruch gegen Amazon Web Services in den Einstellungen ändern */
+  inhaber?: boolean;
   /** Login ohne Zwei-Faktor: Original öffnet erst nach der Einrichtung (AVV § 5), das steht direkt am Link */
   ohne2fa?: boolean;
   /** Rücksprung nach der Zwei-Faktor-Einrichtung (diese Seite) */
@@ -135,7 +139,7 @@ export function Vergleichsblatt({
         </div>
       ) : null}
 
-      {v.offen.length ? <Offen terminId={terminId} v={v} href={original} ohne2fa={ohne2fa} readOnly={readOnly} terminHref={terminHref} /> : null}
+      {v.offen.length ? <Offen terminId={terminId} v={v} href={original} ohne2fa={ohne2fa} readOnly={readOnly} terminHref={terminHref} inhaber={inhaber} /> : null}
 
       {/* Handy: die eine Hauptaktion fest unten über der Navigation (wie die Aktionsleiste der Terminvorbereitung) */}
       {aktion ? (
@@ -462,7 +466,7 @@ const SPERRE = SPERRE_TEXT;
 /** Sparten, die beim Wählen direkt sichtbar sind; alle anderen hinter „Weitere“. */
 const HAEUFIG: readonly AuslesenSparte[] = ["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz", "unfall"];
 
-function Offen({ terminId, v, href, ohne2fa, readOnly, terminHref }: { terminId: string; v: Vergleich; href: (docId: string) => string; ohne2fa: boolean; readOnly: boolean; terminHref?: string }) {
+function Offen({ terminId, v, href, ohne2fa, readOnly, terminHref, inhaber }: { terminId: string; v: Vergleich; href: (docId: string) => string; ohne2fa: boolean; readOnly: boolean; terminHref?: string; inhaber: boolean }) {
   const toast = useToast();
   const [pending, start] = useTransition();
   const [laeuft, setLaeuft] = useState(false);
@@ -498,7 +502,14 @@ function Offen({ terminId, v, href, ohne2fa, readOnly, terminHref }: { terminId:
       <div className="border-b border-[color:var(--border)] px-5 py-3">
         <h2 className="text-[15px] font-semibold tracking-tight">{v.vertraege.length ? "Weitere Unterlagen" : "Unterlagen vom Kunden"}</h2>
         {/* Sperre (z. B. „ohne KI“) einmal oben statt an jeder Unterlage; die Unterlagen selbst bleiben zu öffnen */}
-        {v.sperre ? <p className={`mt-0.5 text-[13px] ${DT}`} data-sperre={v.sperre}>{SPERRE[v.sperre]}</p> : null}
+        {v.sperre === "widerspruch" && v.widerspruchAm ? (
+          // Vermittler hat Amazon Web Services widersprochen: ruhiger Hinweis mit Datum und Weg zu den Einstellungen
+          <div data-sperre={v.sperre}>
+            <KiAusHinweis was="Automatisches Auslesen" hinweis={{ am: v.widerspruchAm, inhaber }} className="mt-0.5" />
+          </div>
+        ) : v.sperre ? (
+          <p className={`mt-0.5 text-[13px] ${DT}`} data-sperre={v.sperre}>{SPERRE[v.sperre]}</p>
+        ) : null}
       </div>
       <ul className="divide-y divide-[color:var(--border)]">
         {v.offen.map((o) => {

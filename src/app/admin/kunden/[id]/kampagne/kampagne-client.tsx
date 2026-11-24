@@ -271,8 +271,40 @@ function RunPanel({ run, steps, onChange }: { run: RunView; steps: StepInfo[]; o
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 
+/**
+ * Muster aus einem anderen Werbekonto (gemeinsames Anzeigenlernen, Ole, 24.11.2026): Die Ansicht zeigt weder
+ * Vorschaubilder noch Namen oder Zahlen aus dem anderen Werbekonto, und nie, wem es gehört.
+ */
+function Lernmuster({ run }: { run: RunView }) {
+  const m = run.fremdMuster ?? [];
+  if (!m.length) return run.eigeneGewinnerHinweis ? <p className="text-[color:var(--muted)]">{run.eigeneGewinnerHinweis}</p> : null;
+  return (
+    <section>
+      <h3 className="mb-1 font-semibold">Muster aus einem anderen Werbekonto</h3>
+      <ul className="space-y-1">
+        {m.map((w, i) => (
+          <li key={i}>
+            <span className="font-medium">Lernmuster {i + 1}</span>
+            <span className="text-[color:var(--muted)]">
+              {" "}
+              · {w.passtZumProdukt ? "gleiches Produkt" : "anderes Produkt"} · {w.bildidee ? "Text und Bildidee" : "nur Text"}
+            </span>
+            {w.genutzt ? (
+              <span className="ml-2">
+                <Badge tone="success">genutzt</Badge>
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1 text-[color:var(--muted)]">Übernommen werden nur Aufhänger, Textaufbau und Bildidee, ohne Namen, Bilder und Zahlen.</p>
+    </section>
+  );
+}
+
 /** Eigene Gewinner aus dem Werbekonto, die das Team als Vorlage hatte (Ole, 21.11.2026). */
 function EigeneGewinner({ run }: { run: RunView }) {
+  if (run.fremdvorlagen) return <Lernmuster run={run} />;
   const g = run.eigeneGewinner ?? [];
   if (!g.length) return run.eigeneGewinnerHinweis ? <p className="text-[color:var(--muted)]">{run.eigeneGewinnerHinweis}</p> : null;
   const genutzt = new Set(

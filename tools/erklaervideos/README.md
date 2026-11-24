@@ -6,7 +6,7 @@ Werkzeuge für die drei Erklärvideos im Kundenbereich:
 |---|---|---|---|
 | Kurzversion (ca. 1 Min.) | `einfuehrung-kurz.mp4` | `KURZ` in `scenes_oa.py` | `rec_ev.js kurz` |
 | Ausführlich (ca. 3:40 Min.) | `einfuehrung-ausfuehrlich.mp4` | `LANG` in `scenes_oa.py` | `rec_ev.js lang` |
-| WhatsApp verbinden (ca. 3:20 Min.) | `whatsapp-verbinden.mp4` | `wa_scenes.py` | `wa_rec.js` (App-Teile echt, 360dialog/Meta aus `cards/wa_mock.html`) |
+| WhatsApp verbinden (ca. 3:40 Min.) | `whatsapp-verbinden.mp4` | `wa_scenes.py` | `wa_rec.js` (App-Teile echt, 360dialog/Meta aus `cards/wa_mock.html`) |
 
 Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`).
 
@@ -26,7 +26,7 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
 ### Zusatz für die Einführungsvideos (Stand 15.11.2026)
 
 - Nach `seed.ts`, `wa.ts`, `termin.ts`: `DATABASE_URL=… node local/ev_zustand.mjs` (Erstinformation vollständig, Wiedervorlagen gesetzt), sonst stehen Warnhinweis und „Leads ohne nächsten Schritt“ über allem auf „Heute“.
-- `rec_ev.js` klickt vor der Aufnahme die Hinweiskarten weg (Willkommen-Video, Neuigkeiten, Mitteilungen).
+- `rec_ev.js` klickt vor der Aufnahme die Hinweiskarten weg (Willkommen-Video, Neuigkeiten, Mitteilungen), seit 24.11.2026 auch das Banner „KI-Hilfe und gemeinsames Anzeigenlernen“ („Verstanden“).
 - Ton gegenhören: `python3 check_oa.py kurz lang` (faster-whisper, erzeugt Szenen mit falsch gehörten Begriffen neu; englisch „Lead“ hört Whisper als „Lied“, das gilt als richtig).
 - Ausgeblendete Module (z. B. „Empfehlungen & Bewertungen“, `EMPFEHLUNG_MODULE_AVAILABLE = false`, Bestandskunden-Modul, `BESTAND_MODULE_AVAILABLE = false`) nicht zeigen und nicht nennen.
 - Knapper Speicher (16.11.2026, mehrere Dev-Server parallel): „Ausführlich“ in zwei Teilen aufnehmen und den Dev-Server dazwischen neu starten
@@ -49,6 +49,7 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
 - Den Schritt „WhatsApp verbinden“ braucht einen (Schein-)Partnerzugang: `DIALOG360_PARTNER_ID=demo DIALOG360_PARTNER_API_KEY=demo` beim Start von `next dev`. 360dialog wird dabei nie aufgerufen: `wa_rec.js` „klickt“ die Knöpfe ohne Navigation und setzt den Zustand (neu, eingeladen, Fast geschafft, verbunden) selbst über `local/wa_state.mjs`.
 - Aufnahme: `APP=http://localhost:3123 DATABASE_URL=… node wa_rec.js`. Fehlt Playwrights Chromium, `PW_CHROME=/usr/bin/google-chrome`; fehlt Playwrights ffmpeg für die Aufnahme, `PLAYWRIGHT_BROWSERS_PATH=<eigener Ordner> npx playwright install ffmpeg` und denselben `PLAYWRIGHT_BROWSERS_PATH` beim Aufnehmen setzen.
 - Einzelne Szenen neu vertonen: `python3 wa_scenes.py 3 7` (Rest bleibt). `wa_rec.js` meldet Szenen, deren Bild länger braucht als der Ton („lang …“).
+- Stand 24.11.2026 neu aufgenommen und vertont (Szenen 1 bis 3: privater Computer, „Vorher kurz prüfen“ mit anderem Anbieter, E-Mail für die Einladung über „Jetzt WhatsApp verbinden“). Bei knappem Speicher stürzt `next dev --webpack` beim Übersetzen der Einrichtung ab (8 GB); stattdessen `node_modules` per `cp -al` (Hardlinks, kein Platz) statt Symlink in den Worktree legen und `npx next dev -p <Port>` mit Turbopack starten. Playwrights `ffmpeg-1013` liegt unter `/opt/pw-browsers`.
 
 ## Was jedes Video zeigt (für die Prüfung, Stand 16.11.2026)
 
@@ -59,7 +60,7 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
 |---|---|---|
 | Kurz (`kurz.json`, `public/videos/einfuehrung-kurz*`) | /buyer (Heute), Termin im Kontakt, /buyer/chats, /buyer/kontakte, /buyer/wachstum (mit Werbebudget) | Heute, „Wartet auf Sie“, Termin, Assistent, Nachrichten, Kontakte (Liste, Pipeline), Wachstum, Werbebudget, KI-Hilfe |
 | Ausführlich (`lang.json`, `public/videos/einfuehrung-ausfuehrlich*`) | /buyer (Heute mit Kontakt rechts), Terminvorbereitung (/buyer/termine/…/vorbereitung), Anrufliste, /buyer/chats, /buyer/kontakte (Liste, Pipeline), /buyer/wachstum (Trichter, Werbebudget, Produkte, Pause), /buyer/kalender, /buyer/team | Heute, Kontakte, Nachrichten, Wachstum, „Wartet auf Sie“, „Wie lief es?“, Phase, Abschluss, Verloren, Angaben, Notizen, „Vorbereiten: Angebot rechnen“, Tarifrechner, „Präsentation öffnen“, Anrufliste, Wiedervorlagen, „Zu erledigen“, „Festlegen“, Pipeline, „Rechnet sich das?“, „Vom Lead zum Kunden“, Werbebudget, Pause, Mein Kalender, Team, KI-Hilfe |
-| WhatsApp verbinden (`wa.json`, `public/videos/whatsapp-verbinden*`) | /buyer/einrichtung (Schritt WhatsApp), /buyer/whatsapp-verbinden, Seiten von 360dialog und Meta | „WhatsApp verbinden“, „Jetzt WhatsApp verbinden“, „Erledigt“, „Fast geschafft“, Fünfzehn-Minuten-Termin |
+| WhatsApp verbinden (`wa.json`, `public/videos/whatsapp-verbinden*`) | /buyer/einrichtung (Schritt WhatsApp mit „Vorher kurz prüfen“ und E-Mail für die Einladung), /buyer/whatsapp-verbinden, Seiten von 360dialog und Meta | „WhatsApp verbinden“, privater Computer außerhalb des Firmennetzes, anderer Anbieter (freigeben), E-Mail für die Einladung (private Adresse), „Jetzt WhatsApp verbinden“, „Erledigt“, „Fast geschafft“, Fünfzehn-Minuten-Termin |
 
 ## 2. Prüfen, ob sich etwas Grundlegendes geändert hat
 

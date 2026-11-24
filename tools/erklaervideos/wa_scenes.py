@@ -1,4 +1,5 @@
-# Sprechertexte und Ton für das Video „WhatsApp verbinden“ (Ablauf Stand 15.11.2026, Ole).
+# Sprechertexte und Ton für das Video „WhatsApp verbinden“ (Ablauf Stand 15.11.2026, Ole; Szenen 1 bis 3 Stand 24.11.2026:
+# privater Computer, anderer Anbieter, E-Mail für die Einladung).
 # Aufruf: python3 wa_scenes.py            alle Szenen neu
 #         python3 wa_scenes.py 3 7        nur Szene 3 und 7 neu (Rest bleibt aus $EV_DIR/wa.json)
 import os; EV=os.environ.get('EV_DIR','/var/tmp/ev'); os.makedirs(EV,exist_ok=True)
@@ -13,9 +14,9 @@ m=WhisperModel('small',device='cpu',compute_type='int8')
 # (Aktion in wa_rec.js, Untertitel, Sprechertext, Wörter, die die Kontrolle per faster-whisper finden muss)
 L=[
  ("card_intro","","In diesem Video zeigen wir Ihnen, wie Sie Ihre WhatsApp-Nummer mit Performance Growth verbinden. Das machen Sie nur einmal, es dauert etwa zehn Minuten.",["Growth"]),
- ("bereit","Vorher bereitlegen","Sie brauchen: Ihren Facebook-Login mit Admin-Rechten, Ihr E-Mail-Postfach, das Telefon zur Nummer und einen Computer, auf dem Pop-ups erlaubt sind.",["Admin"]),
- ("app_open","1. Einrichtung: WhatsApp verbinden","Öffnen Sie in der Einrichtung den Schritt „WhatsApp verbinden“ und wählen Sie Ihre Nummer, in diesem Beispiel eine neue Nummer.",[]),
- ("app_start","„Jetzt WhatsApp verbinden“","Klicken Sie auf „Jetzt WhatsApp verbinden“. Wir legen Ihr Konto bei 360dialog, unserem WhatsApp-Anbieter, kostenlos für Sie an.",["kostenlos"]),
+ ("bereit","Vorher bereitlegen","Sie brauchen: Ihren Facebook-Login mit Admin-Rechten, Ihr E-Mail-Postfach, das Telefon zur Nummer und einen privaten Computer außerhalb des Firmennetzes, auf dem Pop-ups erlaubt sind.",["Admin","privat"]),
+ ("app_open","1. Einrichtung: WhatsApp verbinden","Öffnen Sie in der Einrichtung den Schritt „WhatsApp verbinden“. Läuft Ihre Nummer noch bei einem anderen Anbieter, lassen Sie sie dort zuerst freigeben. Dann wählen Sie Ihre Nummer, in diesem Beispiel eine neue Nummer.",["Anbieter"]),
+ ("app_start","E-Mail prüfen, dann „Jetzt WhatsApp verbinden“","Prüfen Sie, an welche E-Mail die Einladung geht. Firmen-Postfächer filtern sie oft, nehmen Sie dann eine private Adresse. Klicken Sie auf „Jetzt WhatsApp verbinden“. Wir legen Ihr Konto bei 360dialog kostenlos für Sie an.",["kostenlos","privat"]),
  ("app_invited","2. E-Mail von 360dialog öffnen","Jetzt das Wichtigste: Öffnen Sie die E-Mail von 360dialog. Sie ist auf Englisch. Der Knopf öffnet direkt Ihr Postfach.",["Mail"]),
  ("mail","In der E-Mail: „Join 360Dialog Hub“","Klicken Sie in der E-Mail auf „Join 360Dialog Hub“ und legen Sie ein Passwort fest.",["Join","Passwort"]),
  ("app_check","3. Häkchen setzen, dann „Weiter“","Zurück in der Software setzen Sie das Häkchen „Erledigt“. Darunter finden Sie alle weiteren Schritte mit Bildern. Dann klicken Sie auf „Weiter: WhatsApp verbinden“.",["Häkchen"]),

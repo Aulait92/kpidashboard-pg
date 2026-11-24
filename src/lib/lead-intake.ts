@@ -246,7 +246,9 @@ export async function ingestLead(
     reportError(err, "lead-erneut", { customer: customerId });
     return null;
   });
-  if (reentry) {
+  // Gleiche Nummer bzw. E-Mail, anderer Nachname (lib/lead-name.ts): eigener Lead, danach bekommt er den WhatsApp-Chat
+  const anderePerson = reentry?.status === "andere_person" ? reentry : null;
+  if (reentry && reentry.status !== "andere_person") {
     if (reentry.status === "reentry" && source) {
       await prisma.leadSource
         .update({ where: { id: source.id }, data: { lastLeadAt: new Date(), lastConsentState: waConsent ?? "ohne" } })
@@ -291,6 +293,13 @@ export async function ingestLead(
     });
   }
   if (source) await prisma.leadSource.update({ where: { id: source.id }, data: { lastLeadAt: new Date(), lastConsentState: waConsent ?? "ohne" } });
+
+  if (anderePerson) {
+    const { chatAnNeueAnfrage } = await import("@/lib/lead-name-server");
+    await chatAnNeueAnfrage({ customerId, leadId: lead.id, altLeadId: anderePerson.altLeadId, name, altName: anderePerson.altName, phone, productKey }).catch((err) =>
+      reportError(err, "lead-intake-andere-person", { lead: lead.id }),
+    );
+  }
 
   await processNewLead(lead.id).catch((err) => reportError(err, "lead-intake-process", { lead: lead.id }));
   return { status: "created", leadId: lead.id };

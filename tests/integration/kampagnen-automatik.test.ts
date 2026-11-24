@@ -93,7 +93,9 @@ describe("Kampagnen-Automatik", () => {
     const c = await makeCustomer({ metaAdAccountId: extra.account === undefined ? "111" : extra.account, metaPageId: extra.page === undefined ? "555" : extra.page });
     ids.push(c.id);
     if (extra.budget !== false) await prisma.customerBudget.create({ data: { customerId: c.id, product: PRODUCT, dailyBudget: 30, validFrom: new Date("2026-01-01") } });
-    await prisma.onboarding.create({ data: { customerId: c.id, websiteInfo: extra.privacy === null ? {} : { privacyUrl: extra.privacy ?? "https://agentur.test/datenschutz" } } });
+    // Anschrift und E-Mail aus dem Impressum: Der Einwilligungstext des Formulars braucht beide, sonst startet kein Lauf (Voraussetzung „consent“)
+    const impressum = { address: "Musterstraße 1, 12345 Musterstadt", email: "kontakt@agentur.test" };
+    await prisma.onboarding.create({ data: { customerId: c.id, websiteInfo: { ...(extra.privacy === null ? {} : { privacyUrl: extra.privacy ?? "https://agentur.test/datenschutz" }), ...impressum } } });
     // Verbundener Kalender: Dankeseite des Formulars mit Buchungskalender
     await prisma.calendarConnection.create({ data: { customerId: c.id, status: "connected" } });
     return c;

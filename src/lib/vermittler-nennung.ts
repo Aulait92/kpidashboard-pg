@@ -35,6 +35,11 @@ export function vermittlerName(an: Ansprache, opts: { name?: string | null; anre
   return { nom: name, dat: name };
 }
 
+/** „Versicherungsvermittlerin“, wenn der Vermittler als „Frau …“ genannt wird, sonst „Versicherungsvermittler“ (Go-live-Prüfung 19.11.2026). */
+export function vermittlerBeruf(genannt: string | null | undefined): string {
+  return /^Frau\s\S/.test((genannt ?? "").trim()) ? "Versicherungsvermittlerin" : "Versicherungsvermittler";
+}
+
 /** Wird der Vermittler mit Herr/Frau genannt (dann gilt die Regel „nie Vorname Nachname“)? */
 export function mitAnrede(person: VermittlerName): boolean {
   return /^(Herr|Frau) \S/.test(person.nom);

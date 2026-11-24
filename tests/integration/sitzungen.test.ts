@@ -6,6 +6,7 @@ const jar = new Map<string, string>();
 vi.mock("next/headers", () => ({
   cookies: async () => ({
     get: (name: string) => (jar.has(name) ? { name, value: jar.get(name)! } : undefined),
+    has: (name: string) => jar.has(name),
     set: (name: string, value: string) => void jar.set(name, value),
     delete: (arg: string | { name: string }) => void jar.delete(typeof arg === "string" ? arg : arg.name),
   }),

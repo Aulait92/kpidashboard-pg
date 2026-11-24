@@ -54,7 +54,7 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
     // Angebot nach dem Termin (Paket P3): abgelegt bzw. gesendet
     prisma.appointment.findUnique({ where: { id: d.id }, select: { startsAt: true, angebotAbgelegtAt: true, angebotGesendetAt: true, angebotVersand: true, angebotKanaele: true } }),
     // Spickzettel „Verträge des Kunden“ (Policen auslesen, Paket 3): oben in „Das will der Kunde“
-    ladeSpickzettelDaten({ leadId: d.leadId, customerId: ctx.customerId, preview: ctx.preview }),
+    ladeSpickzettelDaten({ leadId: d.leadId, customerId: ctx.customerId, preview: ctx.preview, inhaber: ctx.teamRole !== "advisor" }),
   ]);
   if (!tv || !p) return null;
   // Beiträge rechnen (Pilot, docs/preise-pilot.md): nur Rechner-Angaben der freigeschalteten Sparten

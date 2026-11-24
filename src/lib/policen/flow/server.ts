@@ -139,7 +139,8 @@ function auslesenSpartenDesLeads(source: string | null, formular: { label: strin
 
 /**
  * KI-Satz „damit Ihr Vergleich zum Termin schon fertig ist“ (texte-v2.md, Regel 8): nur wenn das Auslesen läuft
- * (Schlüssel, kein Notschalter, keine Pause), für diesen Kunden freigeschaltet ist und für mindestens eine Sparte des
+ * (Schlüssel, kein Notschalter, keine Pause), für diesen Kunden freigeschaltet ist (und er Amazon Web Services nicht
+ * widersprochen hat) und für mindestens eine Sparte des
  * Leads gilt (Sach sofort, Kranken/BU/Leben nur mit Nachweis „keine Speicherung“, K2). Die Terminvorbereitung zeigt
  * das Vergleichsblatt vor dem Termin (components/policen-vergleich-kurz.tsx, /buyer/termine/[id]/vorbereitung/vertraege),
  * ausgelesen wird direkt nach dem Eingang (gateway.ts → auslesen/server.ts nachEingang).
@@ -147,6 +148,10 @@ function auslesenSpartenDesLeads(source: string | null, formular: { label: strin
 export async function kiSatzAktiv(o: { customerId: string; source: string | null; formular: { label: string; value: string }[]; angaben: unknown }, env: Env = process.env): Promise<boolean> {
   const konfig = await import("@/lib/policen/auslesen/konfig");
   if (!konfig.auslesenAn(env) || !konfig.kundeFreigeschaltet(o.customerId, env)) return false;
+  // Widerspruch des Vermittlers gegen Amazon Web Services (lib/datennutzung-sperre.ts): für sein Konto wird nichts
+  // ausgelesen, also auch kein „damit Ihr Vergleich schon fertig ist“ an den Lead
+  const { awsWiderspruchAm } = await import("@/lib/datennutzung-sperre");
+  if (await awsWiderspruchAm(o.customerId)) return false;
   const srv = await import("@/lib/policen/auslesen/server");
   if (await srv.pausiert().catch(() => true)) return false;
   const frei = konfig.freigegebeneSparten({ zdr: await srv.zdrHinterlegt().catch(() => false) }, env) as string[];

@@ -24,11 +24,19 @@ const ARTIKEL: Record<"dat" | "akk", Record<Genus, string>> = {
   akk: { f: "die", m: "den", n: "das", pl: "die" },
 };
 
+/** Ist der Artikel zu diesem Thema sicher bekannt (Endung erkannt)? Sonst bleibt es ohne Artikel bzw. wird nicht genannt. */
+export function artikelBekannt(thema: string | null | undefined): boolean {
+  return !!genus(thema ?? "");
+}
+
+/** Dativ Plural: „Kindersparpläne“ → „Kindersparplänen“ (nach „mit“ und „zu“). */
+const dativPlural = (t: string) => (/e$/.test(t) ? `${t}n` : t);
+
 /** „mit der Kfz-Versicherung“, „für den Privatschutz“, „zur Kfz-Versicherung“, „zum Sterbegeld“; sonst ohne Artikel. */
 export function mitThema(praep: "mit" | "zu" | "für", thema: string): string {
   const g = genus(thema);
   const t = thema.trim();
   if (!g) return `${praep} ${t}`;
-  if (praep === "zu") return g === "f" ? `zur ${t}` : g === "pl" ? `zu den ${t}` : `zum ${t}`;
-  return `${praep} ${ARTIKEL[praep === "mit" ? "dat" : "akk"][g]} ${t}`;
+  if (praep === "zu") return g === "f" ? `zur ${t}` : g === "pl" ? `zu den ${dativPlural(t)}` : `zum ${t}`;
+  return `${praep} ${ARTIKEL[praep === "mit" ? "dat" : "akk"][g]} ${praep === "mit" && g === "pl" ? dativPlural(t) : t}`;
 }

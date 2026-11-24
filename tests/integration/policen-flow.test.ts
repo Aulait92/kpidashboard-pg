@@ -205,7 +205,14 @@ describe("Policen-Strecke v2 (WhatsApp Flow)", () => {
     const rec = await prisma.policenFlow.findUniqueOrThrow({ where: { customerId } });
     expect(rec).toMatchObject({ flowId: "flow-neu", status: "veroeffentlicht", jsonHash: flowJsonHash() });
     const v = rec.vorlagen as Record<string, { status: string; category: string }>;
-    expect(Object.keys(v)).toHaveLength(4);
+    // 12 Vorlagen je Kunde: Bitte und Erinnerung 1 (4, je Sie und Du) plus die Kfz-Vorlagen (8, Ole 22.11.2026: Bitte und
+    // Erinnerung 1 für Kfz-Leads, je ohne und mit „anderen Policen“, Knopf „Unterlagen senden“). Keine für Erinnerung 2.
+    const arten = Object.keys(v).map((n) => n.replace(/^pg_policen_(.+)_[0-9a-f]{6}_[0-9a-f]{4}_(sie|du)$/, "$1 $2"));
+    expect(arten.sort()).toEqual(
+      ["bitte", "erinn1", "bitte_kfz", "bitte_kfz_andere", "erinn1_kfz", "erinn1_kfz_andere"].flatMap((art) => [`${art} du`, `${art} sie`]).sort(),
+    );
+    expect(Object.keys(v).sort()).toEqual([...flow.aktuelleVorlagenNamen(flowJsonHash())].sort());
+    expect(Object.keys(v)).toHaveLength(12);
     expect(Object.values(v).every((x) => x.category === "utility")).toBe(true);
     expect(await prisma.policenFlow.count({ where: { customerId: pplId } })).toBe(0);
     // Pay-per-Lead nie aktiv, auch mit veröffentlichtem Flow

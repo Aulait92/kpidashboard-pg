@@ -4,6 +4,7 @@
 
 import { runAgent, type AgentUsage, type LlmCall } from "@/lib/kampagnen/llm";
 import { eigeneGewinnerBlock, winkelMitEigenemGewinner } from "@/lib/kampagnen/eigene-gewinner";
+import { fremdMusterBlock, leitplankenKontext, ohneNamen, pruefeAusgabe, sichereWinkelSchluessel, winkelFehler, winkelMitLernmuster, type Namensteil } from "@/lib/kampagnen/fremdvorlagen";
 import { formularMitVorgaben, leadsDuzen, vorgabenHinweis } from "@/lib/kampagnen/formular-vorgaben";
 import {
   CTAS,
@@ -22,6 +23,7 @@ import {
   type Finding,
   type LeadFormDraft,
   type ReviewResult,
+  type Valid,
 } from "@/lib/kampagnen/types";
 
 // ─── Bewährte Muster aus unseren eigenen Kampagnen ──────────────────────
@@ -55,8 +57,23 @@ const RULES = `Regeln für alle Werbetexte (Deutschland, Versicherungsvermittlun
 - Keine Angstmache, keine Dringlichkeits-Lügen („nur heute“).
 - Korrektes Deutsch, Anrede durchgehend wie vorgegeben (Sie oder Du).`;
 
-function contextBlock(c: CampaignContext): string {
+/**
+ * Gemeinsamer Rahmen für alle Agenten. Kontexte mit Mustern aus einem anderen Werbekonto gehen hier nie ungefiltert
+ * hinein (leitplankenKontext, auch für Läufe im alten Format): keine Namen, Kennzahlen oder Bild-Adressen der Quelle.
+ * `muster: false`: ohne die Lernmuster (Stratege und Formular-Agent brauchen sie nicht).
+ */
+function contextBlock(roh: CampaignContext, o: { muster?: boolean } = {}): string {
+  const c = leitplankenKontext(roh);
   const ort = [c.zip, c.city].filter(Boolean).join(" ") || c.region || "Deutschland";
+  const mitMuster = !!c.fremdvorlagen && o.muster !== false && !!c.fremdMuster?.length;
+  const vorlagen = c.fremdvorlagen ? (mitMuster ? fremdMusterAbschnitt(c) : "") : eigeneGewinnerAbschnitt(c);
+  const vorrang = c.fremdvorlagen
+    ? mitMuster
+      ? " Die Lernmuster oben haben Vorrang, die Werbebibliothek ist nur Ergänzung."
+      : ""
+    : eigeneGewinnerBlock(c.eigeneGewinner)
+      ? " Die eigenen Gewinner oben haben Vorrang, die Werbebibliothek ist nur Ergänzung."
+      : "";
   return `KUNDE (Werbetreibender):
 - Agentur/Kunde: ${c.customerName}
 - Vermittler: ${c.advisorName} (${c.vermittlerTyp === "makler" ? "Versicherungsmakler, unabhängig, vergleicht mehrere Versicherer" : c.vermittlerTyp === "mehrfachvertreter" ? "Mehrfachvertreter, vermittelt für mehrere Versicherer" : `Versicherungsvertreter${c.insurer ? ` der ${c.insurer}` : ""}`})
@@ -69,15 +86,13 @@ ${c.special ? `- Besonderheiten laut Kunde: ${c.special}` : ""}
 ${c.wish ? `- Zusatzwunsch von Ole: ${c.wish}` : ""}
 
 BEWÄHRTE MUSTER (unsere eigenen Kampagnen):
-${c.patterns}${eigeneGewinnerAbschnitt(c)}${
+${c.patterns}${vorlagen}${
     c.libraryWinners
       ? `
 
 GEWINNER AUS DER META-WERBEBIBLIOTHEK (Anzeigen anderer, die in Deutschland seit mindestens 30 Tagen laufen, lange Laufzeit heißt meist: sie rechnen sich):
 ${c.libraryWinners}
-So nutzen: Hook, Aufbau, Tonfall und Winkel dieser Gewinner als Vorlage nehmen und leicht abwandeln, auf den Vermittler, seinen Ort und die Anrede zuschneiden. Nie wörtlich übernehmen, keine fremden Firmen-, Marken- oder Personennamen, keine Preise oder Versprechen daraus übernehmen.${
-          eigeneGewinnerBlock(c.eigeneGewinner) ? " Die eigenen Gewinner oben haben Vorrang, die Werbebibliothek ist nur Ergänzung." : ""
-        }`
+So nutzen: Hook, Aufbau, Tonfall und Winkel dieser Gewinner als Vorlage nehmen und leicht abwandeln, auf den Vermittler, seinen Ort und die Anrede zuschneiden. Nie wörtlich übernehmen, keine fremden Firmen-, Marken- oder Personennamen, keine Preise oder Versprechen daraus übernehmen.${vorrang}`
       : ""
   }`;
 }
@@ -91,6 +106,21 @@ export function eigeneGewinnerAbschnitt(c: Pick<CampaignContext, "eigeneGewinner
 EIGENE GEWINNER AUS IHREM WERBEKONTO (echte Zahlen der letzten 90 Tage, bestlaufende Anzeigen dieses Kunden, beste zuerst):
 ${block}
 So nutzen (Vorrang vor allen anderen Vorlagen): Hook, Aufbau, Länge, Tonfall, Winkel und Bildstil dieser Gewinner übernehmen und für das neue Produkt abwandeln. Es sind die eigenen Anzeigen des Kunden, Formulierungen dürfen deshalb näher übernommen werden als bei fremden Anzeigen. Trotzdem gelten alle Regeln: keine Preise, Prozentzahlen, Ersparnisse oder Versprechen erfinden oder ungeprüft übernehmen, keine Gedankenstriche, Anrede durchgehend „${c.anrede}“ (auch wenn der Gewinner anders anspricht), Einwilligung und Rechtliches bleiben unverändert. Gewinner für ein anderes Produkt: nur Stil, Aufbau und Tonfall übertragen, keine Produktaussagen.`;
+}
+
+/**
+ * Abschnitt „Lernmuster“ (gemeinsames Anzeigenlernen, Ole, 24.11.2026): bereinigte Muster aus einem ANDEREN Werbekonto.
+ * Dem Modell wird nie gesagt, es seien die eigenen Anzeigen des Kunden. Der Block enthält keine Anzeigen- und
+ * Kampagnennamen und keine Kennzahlen, nur die Rangfolge (lib/kampagnen/fremdvorlagen.ts).
+ */
+export function fremdMusterAbschnitt(c: Pick<CampaignContext, "fremdMuster" | "anrede">): string {
+  const block = fremdMusterBlock(c.fremdMuster);
+  if (!block) return "";
+  return `
+
+LERNMUSTER AUS DEM GEMEINSAMEN ANZEIGENLERNEN (gut laufende Anzeigen aus einem anderen Werbekonto, beste zuerst; es sind nicht die Anzeigen dieses Kunden; Namen, Orte, Zahlen, Links und Versicherer sind durch Platzhalter in eckigen Klammern ersetzt):
+${block}
+So nutzen (Vorrang vor der Werbebibliothek): Nur die Art des Aufhängers, den Aufbau, die Länge, den Tonfall und die Art der Aufforderung als Muster nehmen und mit eigenen Worten für diesen Kunden und dieses Produkt neu schreiben. Nichts wörtlich übernehmen, keine Sätze und keine längeren Wortfolgen. Keine Namen, Orte, Versicherer-Zusätze, Zahlen oder Preise aus den Mustern: Die Platzhalter stehen für entfernte Angaben und werden weder übernommen noch erraten; Name, Ort und Versicherer kommen ausschließlich aus dem Abschnitt KUNDE. Es gelten alle Regeln: keine Preise, Prozentzahlen, Ersparnisse oder Versprechen erfinden, keine Gedankenstriche, Anrede durchgehend „${c.anrede}“ (auch wenn ein Muster anders anspricht), Einwilligung und Rechtliches bleiben unverändert. Muster für ein anderes Produkt: nur Aufbau und Tonfall übertragen, keine Produktaussagen.`;
 }
 
 // ─── 1. Stratege ───────────────────────────────────────────────────────
@@ -129,7 +159,7 @@ export async function strategist(llm: LlmCall, c: CampaignContext, name: string)
     {
       agent: "Stratege",
       system: `Du bist Senior Media Buyer für Meta Lead Ads (Instant Forms) für Versicherungsvermittler in Deutschland. Du planst Kampagnen, die mit kleinem Budget planbar Leads liefern.\n\n${RULES}`,
-      user: `${contextBlock(c)}
+      user: `${contextBlock(c, { muster: false })}
 
 AUFGABE: Plane die Kampagne (Ziel: Leads über ein Meta-Sofortformular, eine Kampagne mit Kampagnenbudget).
 - Tagesbudget: übernimm das Vertragsbudget (${c.dailyBudgetEur} €), außer der Zusatzwunsch sagt etwas anderes; Spanne ${LIMITS.dailyBudgetMin}–${LIMITS.dailyBudgetMax} €.
@@ -173,15 +203,23 @@ const ANGLES_SCHEMA = {
   },
 } as const;
 
-export async function angleResearcher(llm: LlmCall, c: CampaignContext, plan: CampaignPlan): Promise<{ value: Angle[]; usage: AgentUsage }> {
-  return runAgent(
+export async function angleResearcher(
+  llm: LlmCall,
+  roh: CampaignContext,
+  plan: CampaignPlan,
+  /** Namensteile der Quelle bei Mustern aus einem anderen Werbekonto (nur für die feste Prüfung, nie in der Anweisung) */
+  o: { fremdNamensteile?: Namensteil[] } = {},
+): Promise<{ value: Angle[]; usage: AgentUsage }> {
+  const c = leitplankenKontext(roh);
+  const pruef = c.fremdvorlagen ? { muster: c.fremdMuster, teile: o.fremdNamensteile ?? [], erlaubteTexte: erlaubteTexte(c) } : null;
+  const r = await runAgent(
     llm,
     {
       agent: "Angle-Rechercheur",
       system: `Du bist Direct-Response-Stratege für Versicherungs-Leadgenerierung auf Facebook und Instagram. Du findest Werbe-Winkel, die echte Gründe zum Handeln liefern.\n\n${RULES}`,
       user: `${contextBlock(c)}
 
-ZIELGRUPPE LAUT PLAN: ${plan.zielgruppe}
+ZIELGRUPPE LAUT PLAN: ${pruef ? ohneNamen(plan.zielgruppe, pruef.teile) : plan.zielgruppe}
 
 AUFGABE: Leite ${plan.adsPerAdSet} unterschiedliche Werbe-Winkel ab (3–5). Jeder Winkel braucht:
 - key: kurzer Schlüssel (kleinbuchstaben-mit-bindestrich)
@@ -189,7 +227,9 @@ AUFGABE: Leite ${plan.adsPerAdSet} unterschiedliche Werbe-Winkel ab (3–5). Jed
 - hook: die erste Zeile bzw. Kernbotschaft, die im Feed stoppt
 - insight: warum das bei dieser Zielgruppe in dieser Region wirkt
 Die Winkel sollen sich klar unterscheiden (z. B. Kosten-Realität, Regionalität/persönlicher Berater, Neugier/Wissenslücke, Alltagsszene, Vergleich).${
-        c.eigeneGewinner?.length
+        c.fremdMuster?.length
+          ? `\nMindestens zwei Winkel (bei nur einem Lernmuster: mindestens einer) greifen die Art des Aufhängers und den Aufbau eines Lernmusters auf, mit eigenen Worten für dieses Produkt; schreibe im insight wörtlich „Lernmuster <Nummer>“ und warum. Keine Namen, Orte oder Zahlen aus den Mustern, auch nicht im key.`
+          : c.eigeneGewinner?.length
           ? `\nMindestens zwei Winkel (bei nur einem eigenen Gewinner: mindestens einer) bauen auf den eigenen Gewinnern aus dem Werbekonto auf (Hook und Aufbau übernehmen, für das Produkt abwandeln); schreibe im insight wörtlich „Eigener Gewinner <Nummer>“ und warum.`
           : c.libraryWinners
             ? "\nMindestens zwei Winkel lehnen sich an die Gewinner aus der Werbebibliothek an (leicht abgewandelt); nenne im insight, an welchen."
@@ -197,8 +237,16 @@ Die Winkel sollen sich klar unterscheiden (z. B. Kosten-Realität, Regionalität
       }`,
       schema: ANGLES_SCHEMA,
     },
-    validateAngles,
+    (x): Valid<Angle[]> => {
+      const v = validateAngles(x);
+      if (!v.ok || !pruef) return v;
+      // Leitplanken (fest, kein Modell): bei einem Treffer bekommt der Agent die Befunde für den zweiten Versuch
+      const fehler = winkelFehler(v.value, pruef);
+      return fehler.length ? { ok: false, errors: fehler } : v;
+    },
   );
+  // Der Schlüssel landet im Anzeigennamen bei Meta: nie mit einem Namensteil der Quelle
+  return pruef ? { ...r, value: sichereWinkelSchluessel(r.value, pruef.teile) } : r;
 }
 
 // ─── 3. Texter ─────────────────────────────────────────────────────────
@@ -237,7 +285,8 @@ const COPY_SPEC = `Je Anzeige:
 - imageSubline: kleinere Zeile IM Bild (höchstens ${LIMITS.imageSubline} Zeichen)
 - cta: Button, einer von ${CTAS.join(", ")} (Standard GET_QUOTE oder LEARN_MORE)`;
 
-export async function copywriter(llm: LlmCall, c: CampaignContext, plan: CampaignPlan, angles: Angle[]): Promise<{ value: AdCopy[]; usage: AgentUsage }> {
+export async function copywriter(llm: LlmCall, roh: CampaignContext, plan: CampaignPlan, angles: Angle[]): Promise<{ value: AdCopy[]; usage: AgentUsage }> {
+  const c = leitplankenKontext(roh);
   return runAgent(
     llm,
     {
@@ -249,7 +298,9 @@ WINKEL:
 ${angles.map((a) => `- ${a.key}: ${a.title}, Hook: ${a.hook} (${a.insight})`).join("\n")}
 
 AUFGABE: Schreibe genau eine Anzeige je Winkel (${angles.length} Anzeigen), Anrede „${c.anrede}“.${
-        c.eigeneGewinner?.length
+        c.fremdMuster?.length
+          ? "\nWinkel mit „Lernmuster N“: Art des Aufhängers, Aufbau, Länge, Tonfall und Art der Aufforderung des genannten Musters als Vorbild nehmen, aber vollständig neu formulieren (nichts wörtlich), mit Produkt, Ort, Namen und Anrede dieses Kunden. Platzhalter in eckigen Klammern nie übernehmen."
+          : c.eigeneGewinner?.length
           ? "\nWinkel mit „Eigener Gewinner N“: Primärtext, Überschrift und Bildzeilen eng am genannten Gewinner ausrichten (Hook, Satzbau, Länge, Tonfall, Aufforderung), Produkt, Ort und Anrede anpassen."
           : ""
       }
@@ -325,7 +376,7 @@ export async function formAgent(llm: LlmCall, c: CampaignContext): Promise<{ val
     {
       agent: "Formular-Agent",
       system: `Du baust Meta-Sofortformulare (Lead Ads) für Versicherungsvermittler: kurz, qualifizierend, DSGVO-sauber. Die Antworten gehen an einen WhatsApp-Assistenten, der danach das Gespräch führt.\n\n${RULES}`,
-      user: `${contextBlock(c)}
+      user: `${contextBlock(c, { muster: false })}
 
 WISSEN DES WHATSAPP-ASSISTENTEN DIESES KUNDEN (gekürzt, für passende Fragen):
 ${c.assistantKnowledge ?? "(nicht hinterlegt)"}
@@ -355,7 +406,7 @@ export async function reviseForm(llm: LlmCall, c: CampaignContext, form: LeadFor
     {
       agent: "Formular-Agent (Überarbeitung)",
       system: `Du überarbeitest ein Meta-Sofortformular nach einer Prüfung.\n\n${RULES}`,
-      user: `${contextBlock(c)}
+      user: `${contextBlock(c, { muster: false })}
 
 BISHERIGES FORMULAR (JSON):
 ${JSON.stringify(form, null, 2)}
@@ -411,11 +462,37 @@ export const CHECKLIST = [
 export const CHECK_EIGENE_GEWINNER =
   "Eigene Gewinner: Mindestens zwei Winkel (bei nur einem Gewinner: einer) orientieren sich erkennbar an den eigenen Gewinnern aus dem Werbekonto (insight nennt „Eigener Gewinner N“), ohne deren Preise oder Versprechen ungeprüft zu übernehmen; sonst gelb.";
 
-export async function reviewer(
-  llm: LlmCall,
-  c: CampaignContext,
-  input: { plan: CampaignPlan; copies: AdCopy[]; form: LeadFormDraft; images: CreativeImage[]; angles?: Angle[] },
-): Promise<{ value: ReviewResult; usage: AgentUsage }> {
+export const CHECK_LERNMUSTER =
+  "Lernmuster: Mindestens zwei Winkel (bei nur einem Muster: einer) greifen erkennbar die Art des Aufhängers und den Aufbau eines Lernmusters auf (insight nennt „Lernmuster N“), sonst gelb. Rot, wenn ein Text ein Lernmuster wörtlich übernimmt, einen Platzhalter in eckigen Klammern enthält oder Namen, Orte, Versicherer, Zahlen oder Preise nennt, die nicht aus dem Abschnitt KUNDE stammen.";
+
+/** Eigene feste Texte, deren Wortfolgen bei der Prüfung auf wörtliche Übernahmen nicht zählen (stehen in jeder Anweisung). */
+const erlaubteTexte = (c: CampaignContext) => [c.patterns, COPY_SPEC, BOOKING_THANKS];
+
+/**
+ * Feste Ausgabeprüfung bei Mustern aus einem anderen Werbekonto (kein Modell, lib/kampagnen/fremdvorlagen.ts): keine
+ * Namensteile der Quelle, keine längeren wörtlichen Übernahmen, keine Platzhalter, auch nicht im Schlüssel des Winkels.
+ * Ohne Fremdvorlagen: nie ein Befund.
+ */
+export function leitplankenBefunde(roh: CampaignContext, copies: AdCopy[] | null | undefined, fremdNamensteile: Namensteil[] = []): Finding[] {
+  const c = leitplankenKontext(roh);
+  if (!c.fremdvorlagen) return [];
+  return pruefeAusgabe({ muster: c.fremdMuster, teile: fremdNamensteile, erlaubteTexte: erlaubteTexte(c), copies });
+}
+
+export type ReviewInput = {
+  plan: CampaignPlan;
+  copies: AdCopy[];
+  form: LeadFormDraft;
+  images: CreativeImage[];
+  angles?: Angle[];
+  /** Namensteile der Quelle bei Mustern aus einem anderen Werbekonto (nur für die festen Prüfungen, nie in der Anweisung) */
+  fremdNamensteile?: Namensteil[];
+};
+
+export async function reviewer(llm: LlmCall, roh: CampaignContext, input: ReviewInput): Promise<{ value: ReviewResult; usage: AgentUsage }> {
+  const c = leitplankenKontext(roh);
+  // Plan und Formular eines Laufs aus dem alten Format könnten die Quelle nennen: in der Anweisung ohne deren Namen
+  const ohneQuelle = (text: string) => (c.fremdvorlagen ? (ohneNamen(text, input.fremdNamensteile ?? []) ?? text) : text);
   const r = await runAgent(
     llm,
     {
@@ -424,11 +501,11 @@ export async function reviewer(
       user: `${contextBlock(c)}
 
 CHECKLISTE:
-${[...CHECKLIST, ...(c.eigeneGewinner?.length ? [CHECK_EIGENE_GEWINNER] : [])].map((x, i) => `${i + 1}. ${x}`).join("\n")}
+${[...CHECKLIST, ...(c.fremdMuster?.length ? [CHECK_LERNMUSTER] : c.eigeneGewinner?.length ? [CHECK_EIGENE_GEWINNER] : [])].map((x, i) => `${i + 1}. ${x}`).join("\n")}
 ${input.angles?.length ? `\nWINKEL: ${JSON.stringify(input.angles)}\n` : ""}
-PLAN: ${JSON.stringify({ dailyBudgetEur: input.plan.dailyBudgetEur, adSets: input.plan.adSets, zielgruppe: input.plan.zielgruppe })}
+PLAN: ${ohneQuelle(JSON.stringify({ dailyBudgetEur: input.plan.dailyBudgetEur, adSets: input.plan.adSets, zielgruppe: input.plan.zielgruppe }))}
 ANZEIGEN (index ab 0): ${JSON.stringify(input.copies)}
-FORMULAR: ${JSON.stringify(input.form)}${vorgaben(c) ? `
+FORMULAR: ${ohneQuelle(JSON.stringify(input.form))}${vorgaben(c) ? `
 ${vorgaben(c)}` : ""}
 BILDER: ${input.images.length} Stück erzeugt.
 
@@ -442,8 +519,20 @@ Gib status, summary (1–3 Sätze) und findings zurück (index = Anzeige ab 0 bz
 }
 
 /** Feste Prüfungen ohne KI (laufen immer zusätzlich zum Prüfer). */
-export function staticChecks(c: CampaignContext, input: { plan: CampaignPlan; copies: AdCopy[]; form: LeadFormDraft; images: CreativeImage[]; angles?: Angle[] }): Finding[] {
+export function staticChecks(roh: CampaignContext, input: ReviewInput): Finding[] {
+  const c = leitplankenKontext(roh);
   const out: Finding[] = [];
+  if (c.fremdvorlagen) {
+    // Leitplanken gemeinsames Anzeigenlernen: Namensteile der Quelle, wörtliche Übernahmen, Platzhalter (rot)
+    out.push(...leitplankenBefunde(c, input.copies, input.fremdNamensteile));
+    if (c.fremdMuster?.length && input.angles?.length) {
+      const soll = Math.min(2, c.fremdMuster.length);
+      const ist = winkelMitLernmuster(input.angles);
+      if (ist < soll) {
+        out.push({ severity: "gelb", area: "text", index: null, issue: `Nur ${ist} Winkel orientieren sich an den Lernmustern (Soll: ${soll}).`, fix: "Winkel bzw. Anzeigen stärker an Aufhänger-Art und Aufbau der Lernmuster ausrichten, mit eigenen Worten." });
+      }
+    }
+  }
   if (c.eigeneGewinner?.length && input.angles?.length) {
     const soll = Math.min(2, c.eigeneGewinner.length);
     const ist = winkelMitEigenemGewinner(input.angles);

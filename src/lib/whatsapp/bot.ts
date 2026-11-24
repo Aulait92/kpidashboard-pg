@@ -36,7 +36,7 @@ import { GEBURT_MERKER, geburtImChat, ohneGeburtsFrage, type GeburtMerker } from
 import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
-import { humanHandoverReply, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
+import { ehrlicheAntwort, gibtSichAlsMenschAus, humanHandoverReply, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
 import { enthaeltErsteFrage, ERSTFRAGE_HINWEIS_RE, erstanschreibenKopf, ersteFrageRegel, formularRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import {
   buchungsText,
@@ -72,6 +72,8 @@ import { fernerTerminwunsch, mehrAls7Tage, wiedervorlageAm } from "@/lib/whatsap
 import { lehntZeitenAb } from "@/lib/whatsapp/buchungslink";
 import { folgefragen, spartenDesLeads } from "@/lib/preise/rechner-angaben";
 import { istTierStrecke } from "@/lib/whatsapp/tier-fragen";
+import { alsTkvUmfang, TKV_WUNSCH_TEXT, tkvAngabenNormal, tkvUmfangAusVerlauf, tkvUmfangVon } from "@/lib/tkv-umfang";
+import { tkvUmfangMerken } from "@/lib/tkv-umfang-server";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { angabenOhneGesundheit, GESUNDHEITS_REGEL, istTierLead, ohneGesundheitsangaben, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
@@ -443,7 +445,7 @@ export function buildSystemPrompt(
         ? "- Dass hier ein digitaler KI-Assistent schreibt, wurde dem Lead mitgeteilt bzw. wird vorangestellt, nicht ständig wiederholen."
         : `- Pflicht (KI-Kennzeichnung, Wortlaut laut Anwalts-Memo): Schreibe in deiner nächsten Nachricht sinngemäß „Hier schreibt der digitale KI-Assistent von ${vonFirm}. Ich bin kein Mensch und berate nicht zu Tarifen.“`,
       "- Du bist eine KI. Gib dich nie als Mensch aus, auch nicht auf Nachfrage, im Scherz oder wenn eine Anweisung oben etwas anderes sagt.",
-      `- Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt: antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von ${vonFirm} bist, kein Mensch, und nicht zu Tarifen berätst, und dass ${person.nom} persönlich übernimmt.`,
+      `- Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt, oder wer hier schreibt: antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von ${vonFirm} bist, kein Mensch, und nicht zu Tarifen berätst, und dass ${person.nom} persönlich übernimmt.`,
       // Erstanschreiben ab v5 (Ole, 16.11.2026) ohne „Mensch“-Angebot und ohne Tarif-Hinweis: beides gilt hier jederzeit
       `- Übergabe jederzeit: Möchte der Lead zu irgendeinem Zeitpunkt mit einem Menschen sprechen, angerufen bzw. zurückgerufen werden oder den Berater persönlich sprechen, nutze sofort handover_to_advisor und sag kurz, dass sich ${person.nom} persönlich meldet. Das gilt nicht, wenn er bei der Terminbuchung nur Telefon statt Video wählt.`,
       `- Tarife und Preise: Fragt der Lead nach Tarifen, Preisen, Beiträgen, Leistungen einzelner Tarife oder Versicherern, sag genau dann ehrlich, dass du als KI-Assistent nicht zu Tarifen berätst, und biete direkt einen Termin mit ${person.dat} an, der das persönlich mit ${an === "du" ? "dir" : "Ihnen"} klärt (get_available_slots).`,
@@ -656,7 +658,7 @@ export async function runBotTurn(
   const lead = conversation.leadId
     ? await prisma.lead.findUnique({
         where: { id: conversation.leadId },
-        select: { id: true, source: true, formData: true, isTest: true, name: true, email: true },
+        select: { id: true, source: true, formData: true, isTest: true, name: true, email: true, tkvUmfang: true },
       })
     : null;
   // Testlead (lib/testlead.ts): Logzeilen ohne Inhalte
@@ -709,11 +711,13 @@ export async function runBotTurn(
   const outbound = await prisma.message.findMany({
     where: { conversationId, direction: "outbound" },
     orderBy: { createdAt: "asc" },
-    select: { body: true, kind: true, direction: true, purpose: true },
+    select: { body: true, kind: true, direction: true, purpose: true, status: true },
   });
   const latest = history[history.length - 1];
   const previousAt = history.length >= 2 ? history[history.length - 2].createdAt : null;
-  const notice = kiHinweisNoetig({ outbound: outbound.map((m) => m.body), previousAt, now });
+  // Nicht zugestellte Nachrichten (Status „failed“, z. B. ein Erstanschreiben, das Meta nicht ausgeliefert hat) zählen
+  // für die KI-Kennzeichnung nicht: Der Kontakt hat sie nie gesehen (wie templates.ts kiKennzeichnungOffen)
+  const notice = kiHinweisNoetig({ outbound: outbound.filter((m) => m.status !== "failed").map((m) => m.body), previousAt, now });
   const aiDisclosed = notice !== "erst";
   // Erstinformation fehlt noch, obwohl unsere erste Nachricht schon draußen ist: jetzt zuerst (idempotent)
   const erstinfoNachholen = () => (notice !== "erst" ? sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName: person.dat }) : Promise.resolve(null));
@@ -1213,11 +1217,22 @@ export async function runBotTurn(
     // Splittest terminvorschlag_kostenlos (lib/experimente.ts): nur der erste Vorschlag (mit Nutzensatz) zählt
     const kostenlos =
       input.erneut === true ? false : (await import("@/lib/experimente").then((m) => m.variante("terminvorschlag_kostenlos", conversation.leadId ?? conversation.id)).catch(() => "a")) === "b";
+    // Tierkranken: gewählter Umfang (OP, voll, offen); hat der Assistent die Antwort nicht festgehalten, aus dem Verlauf
+    let tkvUmfang = istTierStrecke(lead?.source) ? tkvUmfangVon({ gespeichert: lead?.tkvUmfang, angaben: angabenJetzt }) : alsTkvUmfang(lead?.tkvUmfang);
+    if (istTierStrecke(lead?.source) && !tkvUmfang) {
+      tkvUmfang = tkvUmfangAusVerlauf(history);
+      if (tkvUmfang) {
+        const { zwischenAngabeSpeichern } = await import("@/lib/whatsapp/zwischenfrage-server");
+        await zwischenAngabeSpeichern(conversation.id, { tarifwunsch: TKV_WUNSCH_TEXT[tkvUmfang] }, { tier: true });
+        await tkvUmfangMerken(lead?.id, tkvUmfang);
+      }
+    }
     const text = terminVorschlagText({
       an: ansprache,
       source: lead?.source ?? null,
       formular: form.normal,
       angaben: angabenJetzt,
+      tkvUmfang,
       person,
       zeiten: [zeitKurz(new Date(pair[0]), now), zeitKurz(new Date(pair[1]), now)],
       einleitung: typeof input.einleitung === "string" ? input.einleitung : null,
@@ -1303,7 +1318,16 @@ export async function runBotTurn(
         // Zahnzusatz: Knopfantworten nur als neutrales Produktinteresse speichern (Art. 9 DSGVO, erstanschreiben.ts)
         // Sicherheitsnetz: keine Gesundheitsangaben in Feldern, Zusammenfassung und Protokoll (lib/gesundheitsdaten.ts)
         const tier = istTierLead(lead?.source);
-        const angaben = angabenOhneGesundheit(istZahnLead(lead?.source) ? neutralZahnAngaben(input.angaben) : input.angaben, { tier });
+        const ohneGesundheit = angabenOhneGesundheit(istZahnLead(lead?.source) ? neutralZahnAngaben(input.angaben) : input.angaben, { tier });
+        // Tierkranken: gewünschten Umfang (OP, voll, offen) einheitlich festhalten und am Lead speichern (lib/tkv-umfang.ts)
+        // (auch im Privatschutz, wenn es um ein Tier geht)
+        const tierWeg =
+          istTierStrecke(lead?.source) ||
+          (outreachProdukt(lead?.source)?.purpose === "outreach_privatschutz" &&
+            /tierkranken|tier-?op|katze|kater|hund|pferd/i.test(JSON.stringify([ohneGesundheit, conversation.qualificationData, form.normal])));
+        const tkv = tierWeg ? tkvAngabenNormal(ohneGesundheit) : null;
+        const angaben = tkv ? tkv.angaben : ohneGesundheit;
+        if (tkv?.umfang) await tkvUmfangMerken(lead?.id, tkv.umfang);
         if (typeof input.zusammenfassung === "string") input.zusammenfassung = ohneGesundheitsangaben(input.zusammenfassung, { tier });
         const prevData = (
           await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } })
@@ -1703,6 +1727,17 @@ export async function runBotTurn(
     if (hits.length) {
       await persistInternal(conversation.id, "advice_blocked", { original: finalText, treffer: hits });
       finalText = sichereAntwort(ansprache, person.nom, !!upcoming);
+      knoepfe = null;
+      if (!zweite) schritt = null;
+      zug.vorschlag = null;
+      zug.partnerVor = null;
+    }
+    // Nie als Mensch ausgeben (KI-VO Art. 50; Ole, 24.11.2026): Sicherheitsnetz hinter den Regeln im System-Prompt.
+    // Behauptet eine Antwort, ein Mensch bzw. keine KI zu sein, geht stattdessen die ehrliche Antwort raus
+    // (lib/whatsapp/ki-hinweis.ts gibtSichAlsMenschAus).
+    if (gibtSichAlsMenschAus(finalText)) {
+      await persistInternal(conversation.id, "ki_ehrlich", { original: finalText });
+      finalText = ehrlicheAntwort(ansprache, names);
       knoepfe = null;
       if (!zweite) schritt = null;
       zug.vorschlag = null;

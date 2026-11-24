@@ -81,10 +81,22 @@
 // (Ausnahme: Kündigung durch den Anbieter oder dauerhaft keine Lieferung). Öffentliche AGB: Absatz „Paket Pay-per-Lead +
 // Software“ verweist für Leads auf diese Bedingungen. Vor dem 24.11.2026 angenommene Leadangebote behalten ihre alte
 // Fassung (Offer.leadAltBedingungen, PPL_NUR_LEADS_BEDINGUNGEN_ALT). Prüfung: docs/recht/2026-11-24-nachlieferung-statt-erstattung.md.
+// 24.11.2026 (Fassung 2, neuer Stand „24.11.2026 (Fassung 2)“, Ole; Rechtsprüfung docs/recht/rechtspruefung-2026-11-23.md F12):
+// AVV Anlage 2 um Amazon Web Services EMEA SARL (Bedrock, Region Frankfurt) ergänzt: KI-Dienst für
+// Gesprächszusammenfassungen, Beratungsdokumentation und das Auslesen von Versicherungsunterlagen. AVV
+// „Unterauftragsverarbeiter“: Änderungen teilt der Auftragnehmer „in Textform oder im Kundenbereich“ mit. AGB unverändert.
+// Die Fassung gilt für Neukunden ab Annahme. Bestandskunden sind über das Banner „Neu: KI-Hilfe und gemeinsames
+// Anzeigenlernen“ im Kundenbereich informiert (lib/datennutzung.ts: erste Anzeige, „Verstanden“ und Widerspruch je Punkt
+// mit Nachweis; ein Widerspruch gegen Amazon Web Services schaltet die Funktionen für das Konto ab).
+// LEGAL_VERSION steht nur als „Stand“ auf /rechtliches/agb, /rechtliches/avv und im PDF der Unterauftragnehmer. Es ist
+// an keinem Kunden gespeichert und löst nichts aus (keine erneute Zustimmung, kein Hinweis, keine Sperre;
+// Test tests/unit/datennutzung-avv.test.ts). Die Version der Anlage „Versicherungsunterlagen über WhatsApp“
+// (AVV_POLICEN_VERSION in lib/policen/regeln.ts) bleibt unverändert: eine neue Version würde Kranken, BU und Leben bei
+// allen sperren, die schon zugestimmt haben.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "24.11.2026";
+export const LEGAL_VERSION = "24.11.2026 (Fassung 2)";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -623,7 +635,8 @@ export const AVV: LegalSection[] = [
   {
     title: "Unterauftragsverarbeiter",
     items: [
-      "Der Auftraggeber genehmigt die in Anlage 2 genannten Unterauftragsverarbeiter. Über beabsichtigte Änderungen informiert der Auftragnehmer in Textform; der Auftraggeber kann innerhalb von 14 Tagen aus wichtigem datenschutzrechtlichem Grund widersprechen.",
+      // 24.11.2026 (Fassung 2): „oder im Kundenbereich“ (Mitteilung per Banner mit Widerspruch, lib/datennutzung.ts)
+      "Der Auftraggeber genehmigt die in Anlage 2 genannten Unterauftragsverarbeiter. Über beabsichtigte Änderungen informiert der Auftragnehmer in Textform oder im Kundenbereich; der Auftraggeber kann innerhalb von 14 Tagen aus wichtigem datenschutzrechtlichem Grund widersprechen.",
       "Der Auftragnehmer verpflichtet Unterauftragsverarbeiter vertraglich auf ein gleichwertiges Schutzniveau, einschließlich der Verschwiegenheit nach § 203 StGB, soweit diese einschlägig ist.",
     ],
   },
@@ -692,6 +705,9 @@ export function policenSpeicherAnbieter(endpoint = process.env.POLICEN_S3_ENDPOI
 
 const speicher = policenSpeicherAnbieter();
 
+/** Anlage 2 als PDF (app/rechtliches/unterauftragnehmer/pdf, lib/unterauftragnehmer-pdf.ts), öffentlich wie /rechtliches/avv. */
+export const SUBPROCESSORS_PDF_PFAD = "/rechtliches/unterauftragnehmer/pdf";
+
 export const SUBPROCESSORS: { name: string; purpose: string; location: string }[] = [
   { name: "Railway Corporation", purpose: "Hosting von Anwendung und Datenbank", location: "Serverstandort EU (Amsterdam); Unternehmen USA" },
   { name: "Anthropic, PBC", purpose: "KI-System für den digitalen Assistenten: Verarbeitung der Chatnachrichten (ohne Gesundheitsangaben aus Lead-Formularen); Auslesen vom Auftraggeber hochgeladener Versicherungsangebote (nur Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierversicherungen); keine Nutzung zum Training", location: "USA" },
@@ -706,6 +722,12 @@ export const SUBPROCESSORS: { name: string; purpose: string; location: string }[
     name: "OpenAI Ireland Ltd.",
     purpose: "Auslesen von Versicherungsunterlagen, die Leads oder Kunden des Auftraggebers schicken (Sachversicherungen; Kranken-, BU- und Lebensversicherungen nur nach gesonderter Freischaltung), über den EU-Endpunkt mit Datenresidenz EU; keine Nutzung zum Training",
     location: "EU (Datenresidenz EU); Konzern USA",
+  },
+  // 24.11.2026 (Fassung 2, Rechtsprüfung F12): Bedrock als KI-Dienst; Kunden per Banner informiert (lib/datennutzung.ts)
+  {
+    name: "Amazon Web Services EMEA SARL (Bedrock)",
+    purpose: "KI-Dienst für Gesprächszusammenfassungen, Beratungsdokumentation und das Auslesen von Versicherungsunterlagen; keine Nutzung zum Training",
+    location: "Region Frankfurt (EU); Konzern USA",
   },
   ...(speicher ? [{ name: speicher.name, purpose: "Verschlüsselte Ablage der Versicherungsunterlagen, die Leads oder Kunden des Auftraggebers schicken", location: speicher.location }] : []),
   { name: "Cloudflare, Inc. (R2)", purpose: "Speicherung der Werbemotive für die Kampagnen; keine Lead-Daten", location: "EU / USA" },

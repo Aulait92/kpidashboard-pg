@@ -11,6 +11,7 @@ const UNTERSEITEN: Record<string, string> = {
   "einstellungen/meta": "/buyer/einstellungen",
   "einstellungen/assistent": "/buyer/einstellungen",
   "einstellungen/assistent/ablauf": "/buyer/einstellungen/assistent",
+  "einstellungen/datennutzung": "/buyer/einstellungen",
   "konto": "/buyer/einstellungen",
   "konto/sicherheit": "/buyer/einstellungen",
   "team": "/buyer/einstellungen",

@@ -24,8 +24,8 @@ const input =
 const card = "overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]";
 
 const FELDER: { key: keyof SignaturAngaben; label: string; placeholder: string }[] = [
-  { key: "name", label: "Vor- und Nachname", placeholder: "z. B. Ole Kannapinn" },
-  { key: "firma", label: "Agentur", placeholder: "z. B. Kannapinn Versicherungen" },
+  { key: "name", label: "Vor- und Nachname", placeholder: "z. B. Max Mustermann" },
+  { key: "firma", label: "Agentur", placeholder: "z. B. Mustermann Versicherungen" },
   { key: "telefon", label: "Telefon", placeholder: "z. B. 089 123456" },
   { key: "anschrift", label: "Anschrift", placeholder: "Straße, PLZ Ort" },
 ];
@@ -109,7 +109,7 @@ function Erklaerschritt(p: Parameters<typeof ServiceMails>[0]) {
           {p.anredeFehlt ? (
             <label className="mb-3 block" data-signatur-feld="anrede">
               <span className="mb-1 block text-xs font-medium text-[color:var(--muted)]">
-                Anrede (Ihre Kunden lesen z. B. „Herr Kannapinn“){p.vorschlaege?.anrede && anrede === p.vorschlaege.anrede ? ", vorausgewählt, bitte prüfen" : ""}
+                Anrede (Ihre Kunden lesen z. B. „Herr Mustermann“){p.vorschlaege?.anrede && anrede === p.vorschlaege.anrede ? ", vorausgewählt, bitte prüfen" : ""}
               </span>
               <select value={anrede} onChange={(e) => setAnrede(e.target.value)} className={`${input} sm:w-48`} required>
                 <option value="">Bitte wählen</option>

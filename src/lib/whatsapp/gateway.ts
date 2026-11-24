@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
 import { sendButtons, sendFlow, sendTemplate, sendText, type SendResult } from "@/lib/whatsapp/dialog360";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
+import { profilNameErlaubt } from "@/lib/lead-name";
 import type { StatusError } from "@/lib/whatsapp/zustellfehler";
 import { waOhneMarker } from "@/lib/wa-format";
 
@@ -237,7 +238,14 @@ async function persistInbound(
 
   // Allowlist (lib/whatsapp/nur-leads.ts): Ein neuer Chat startet mit Assistent AUS. Eingeschaltet wird er erst,
   // wenn ein Lead zugeordnet ist (unten bzw. später beim Lead-Import) oder der Schalter für neue Kontakte greift.
-  const isNew = !(await prisma.conversation.count({ where: { customerId, contactPhone: from } }));
+  const before = await prisma.conversation.findUnique({
+    where: { customerId_contactPhone: { customerId, contactPhone: from } },
+    select: { lead: { select: { name: true } } },
+  });
+  const isNew = !before;
+  // Name (Ole, 19.11.2026, lib/lead-name.ts): Der WhatsApp-Profilname füllt nur Chats ohne Lead bzw. mit einem Lead ohne
+  // Namen. Formularname und von Hand geänderter Name (Lead.name) überschreibt er nie.
+  const profilName = contactName && profilNameErlaubt(before?.lead) ? contactName : null;
   const conversation = await prisma.conversation.upsert({
     where: { customerId_contactPhone: { customerId, contactPhone: from } },
     create: {
@@ -254,7 +262,7 @@ async function persistInbound(
       status: "open",
       lastMessageAt: now,
       windowExpiresAt,
-      ...(contactName ? { contactName } : {}),
+      ...(profilName ? { contactName: profilName } : {}),
     },
   });
 

@@ -315,6 +315,16 @@ export function historyText(text: string | null | undefined): string {
   return (cut >= 0 ? t.slice(0, cut) : t).replace(LINK_OR_MAIL, " ");
 }
 
+/**
+ * Text eines Verlaufseintrags für die Nummernsuche. Mail-Antworten (COLD_MAIL) nur mit dem eigenen Teil: ohne zitierten
+ * Verlauf und ohne Tool-Fußzeilen, denn dort stehen Support-Nummern von Calendly und Co., nicht die des Kontakts
+ * (Test kontaktdaten „Tool-Fußzeilen … ergeben nichts“, 24.11.2026). Notizen und Buchungen bleiben vollständig, sonst
+ * verlöre die Calendly-Buchungsnotiz ihre „Telefonnummer: …“.
+ */
+export function historyPhoneText(a: { type: string; outcome?: string | null; note?: string | null }): string {
+  return [a.outcome, a.type === "COLD_MAIL" ? ownPart(a.note) : a.note].filter(Boolean).join("\n");
+}
+
 /** Telefonnummern in einem Verlaufseintrag. `exclude`: eigene Nummern (beliebige Schreibweise). */
 export function extractHistoryPhones(text: string | null | undefined, exclude: string[] = []): FoundPhone[] {
   const skip = new Set(exclude.map((e) => phoneKey(e)).filter((k): k is string => !!k));

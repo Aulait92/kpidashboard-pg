@@ -377,6 +377,11 @@ const TIER_AKK: Record<Tier, { sie: string; du: string }> = {
  * → „Minka und Felix“, ab drei „A, B und C“), sonst „Ihre Katze“ bzw. „deinen Hund“ (Akkusativ).
  */
 export function tierFuerErstanschreiben(source: string | null | undefined, an: Ansprache, formular?: FormAntwort[] | null): string {
+  return tierNamen(formular) ?? TIER_AKK[outreachProdukt(source)?.tier ?? "tier"][an];
+}
+
+/** Tiername(n) aus dem Formular („Minka“, „Minka und Felix“, ab drei „A, B und C“), ohne Angabe null. */
+export function tierNamen(formular?: FormAntwort[] | null): string | null {
   const roh = (formular ?? []).find((x) => /tiername|name des tieres/i.test(x.label))?.value?.trim() ?? "";
   const namen = roh
     .split(/\s*(?:,|;|\/|&|\+|\bund\b)\s*/i)
@@ -384,7 +389,7 @@ export function tierFuerErstanschreiben(source: string | null | undefined, an: A
     .filter(Boolean);
   if (namen.length === 1) return namen[0];
   if (namen.length > 1) return `${namen.slice(0, -1).join(", ")} und ${namen.at(-1)}`;
-  return TIER_AKK[outreachProdukt(source)?.tier ?? "tier"][an];
+  return null;
 }
 
 /** Frage für den Platzhalter {{4}} (v6): ohne abschließendes „?“ (steht fest in der Vorlage). */
@@ -609,7 +614,7 @@ export type Frageplan = {
 };
 
 /** Sparten aus „Haftpflicht, Hausrat“ als Wörter für die Frage nach bestehenden Verträgen. */
-function spartenWoerter(interesse: string | null): string[] {
+export function spartenWoerter(interesse: string | null): string[] {
   const t = interesse ?? "";
   const out: string[] = [];
   if (/haftpflicht/i.test(t.replace(/tierhalter-?\s*haftpflicht/gi, ""))) out.push("Haftpflicht");

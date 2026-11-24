@@ -41,7 +41,7 @@ export async function loadVorbereitung(appointmentId: string, ctx: TeamCtx): Pro
       confirmedAt: true,
       komplettcheck: true,
       customer: { select: { name: true } },
-      lead: { select: { name: true, phone: true, email: true, source: true, formData: true, contactOverrides: true, assignedUserId: true, vorvertraege: true } },
+      lead: { select: { name: true, phone: true, email: true, source: true, formData: true, contactOverrides: true, assignedUserId: true, vorvertraege: true, tkvUmfang: true } },
     },
   });
   if (!appt) return null;
@@ -63,6 +63,7 @@ export async function loadVorbereitung(appointmentId: string, ctx: TeamCtx): Pro
       email: appt.lead?.email ?? null,
       adresse,
       produkt: appt.lead?.source ? displayProduct(appt.lead.source) : "Beratung",
+      tkvUmfang: appt.lead?.tkvUmfang ?? null,
     },
     termin: { startsAt: appt.startsAt, mode: appt.mode, berater: berater || personFromCustomerName(appt.customer.name), meetUrl: appt.meetUrl },
     zusammenfassung: conv?.qualificationSummary ?? null,
@@ -172,10 +173,35 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
   if (!d) return null;
   const [ang, kunde] = await Promise.all([
     loadAngebote(appointmentId, ctx),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true, maklerMarkthinweis: true, leadAddress: true, brandLogo: true, brandLogoType: true, brandLogoConfirmedAt: true } }),
+    prisma.customer.findUnique({
+      where: { id: ctx.customerId },
+      select: {
+        name: true,
+        vermittlerTyp: true,
+        maklerMarkthinweis: true,
+        leadAddress: true,
+        brandLogo: true,
+        brandLogoType: true,
+        brandLogoConfirmedAt: true,
+        tarifGesellschaften: true,
+        erstinformation: { select: { firma: true, name: true, bestaetigtAt: true } },
+      },
+    }),
   ]);
   const logo = kunde?.brandLogo && kunde.brandLogoType && kunde.brandLogoConfirmedAt ? logoDataUri(new Uint8Array(kunde.brandLogo), kunde.brandLogoType) : null;
-  const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp, maklerMarkthinweis: kunde?.maklerMarkthinweis }, logo);
+  // Absender für Endkunden (Go-live-Prüfung 19.11.2026, W7): bestätigte Firma bzw. Name aus der Erstinformation, sonst Kundenname
+  const ei = kunde?.erstinformation?.bestaetigtAt ? kunde.erstinformation : null;
+  const absender = ei?.firma?.trim() || ei?.name?.trim() || kunde?.name || "Ihre Beratung";
+  const marke = markeFuer(
+    {
+      name: absender,
+      markenText: kunde?.name ?? absender,
+      gesellschaft: kunde?.tarifGesellschaften?.[0] ?? null,
+      vermittlerTyp: kunde?.vermittlerTyp,
+      maklerMarkthinweis: kunde?.maklerMarkthinweis,
+    },
+    logo,
+  );
   const an = asAnsprache(kunde?.leadAddress);
   const angebote = ang?.bestaetigt ? ang.angebote : null;
   // Fassung (lib/praesentation-variante-server.ts): B Standard, C im Splittest; beim Laden nur lesen, nicht zuteilen

@@ -14,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { logLeadHistory } from "@/lib/lead-history";
 import { advisorDisplayName } from "@/lib/advisor-name";
 import { HEALTH_REDACTED, istTierLead, redactHealthText } from "@/lib/gesundheitsdaten";
+import { tkvUmfangAusText } from "@/lib/tkv-umfang";
 import { QUALIFICATION_FIELDS, cleanQualificationData, mergeQualificationData, type QualificationData } from "@/lib/whatsapp/qualification";
 import {
   anrufLaeuft,
@@ -106,6 +107,8 @@ export async function bedarfSpeichern(
     where: { id: l.id },
     data: {
       ...(neu ? { needData: mergeQualificationData(l.needData, eingaben) ?? undefined } : {}),
+      // Tierkranken: gewünschter Umfang aus dem Telefonat (lib/tkv-umfang.ts)
+      ...(istTierLead(l.source) && tkvUmfangAusText(eingaben.tarifwunsch) ? { tkvUmfang: tkvUmfangAusText(eingaben.tarifwunsch) } : {}),
       ...(stand ? { needState: stand, needAt: now } : {}),
       reached: true,
       ...(!l.firstContactAt ? { firstContactAt: now } : {}),

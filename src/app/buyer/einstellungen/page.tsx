@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BellRing, CalendarDays, Image as ImageIcon, ChevronRight, CreditCard, Gift, Mail, MessageSquareText, Percent, Send, ShieldCheck, UsersRound } from "lucide-react";
+import { BellRing, CalendarDays, Image as ImageIcon, ChevronRight, CreditCard, Gift, Mail, MessageSquareText, Percent, Send, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { loadReferralSettings } from "@/lib/kollegen";
@@ -11,6 +11,8 @@ import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
 import { analysePseudonym } from "@/lib/nutzungsanalyse-server";
 import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 import { BeratungsdokuSchalter } from "@/components/beratungsdoku-schalter";
+import { DATENNUTZUNG_EINTRAG, DATENNUTZUNG_PFAD, eintragText } from "@/lib/datennutzung";
+import { ladeStand as ladeDatennutzung } from "@/lib/datennutzung-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -28,6 +30,9 @@ export default async function EinstellungenPage() {
   const kunde = owner ? await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { plan: true, beratungsdokuAn: true } }) : null;
   const bdSchalter = kunde && kunde.plan !== "service" ? { an: kunde.beratungsdokuAn } : null;
   const analyse = ctx.userId && !ctx.preview ? asAnalyseStatus((await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true } }))?.analyseEinwilligung) : null;
+  // „KI-Hilfe und Anzeigenlernen“ (lib/datennutzung.ts): nur Inhaber von Software-Kunden; führt zur Detailseite mit
+  // dem ganzen Text, „Widersprechen“ und „Widerspruch zurücknehmen“
+  const datennutzung = await ladeDatennutzung(ctx).catch(() => null);
   const groups: { title: string; items: Item[] }[] = [
     {
       title: "Mein Konto",
@@ -97,6 +102,11 @@ export default async function EinstellungenPage() {
         {ctx.userId && !ctx.preview ? (
           <section>
             <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Datenschutz</h2>
+            {datennutzung?.darf ? (
+              <div className="mb-3 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" data-einstellungen-datennutzung>
+                <Zeile i={{ href: DATENNUTZUNG_PFAD, icon: Sparkles, color: "bg-sky-600", title: DATENNUTZUNG_EINTRAG, text: eintragText(datennutzung.widerspruch) }} />
+              </div>
+            ) : null}
             <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
               <AnalyseSchalter status={analyse} pseudonym={ctx.userId ? analysePseudonym(ctx.userId) : null} />
             </div>

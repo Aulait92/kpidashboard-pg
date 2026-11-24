@@ -77,7 +77,7 @@ describe("Ereignisse", () => {
     expect(ereignisVon("komplettcheck_frage", "{}")).toBeNull();
   });
   it("keine Gedankenstriche in den Texten", () => {
-    for (const k of ["qualification", "appointment_booked", "appointment_confirmed", "handover", "ki_handover", "advice_blocked", "opt_out", "lead_lost", "followup_scheduled"]) {
+    for (const k of ["qualification", "appointment_booked", "appointment_confirmed", "handover", "ki_handover", "advice_blocked", "ki_ehrlich", "opt_out", "lead_lost", "followup_scheduled"]) {
       expect(hatGedankenstrich(ereignisVon(k, "{}")!.label)).toBe(false);
     }
   });

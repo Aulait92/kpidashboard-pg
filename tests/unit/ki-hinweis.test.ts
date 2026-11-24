@@ -1,8 +1,10 @@
 // KI-Kennzeichnung des WhatsApp-Assistenten (KI-VO Art. 50) und harte Sperre gegen Beratung (Vermittlerrecht).
 import { describe, expect, it } from "vitest";
 import {
+  ehrlicheAntwort,
   ERSTINFO_KOPF,
   erstinfoZeile,
+  gibtSichAlsMenschAus,
   hasErstinfoPdf,
   hasErstinfoLink,
   hasKiHinweis,
@@ -113,6 +115,86 @@ describe("KI-Hinweis", () => {
     }
   });
 
+  it("Frage in der dritten Person (Ole, 24.11.2026: die Erinnerung nennt den Assistenten nicht mehr) wird ebenso erkannt", () => {
+    for (const t of [
+      "Schreibe ich hier mit einem Menschen?",
+      "Schreibe ich mit einem echten Menschen?",
+      "Spreche ich mit einem Menschen?",
+      "Schreibt hier ein Mensch?",
+      "schreibt hier ein mensch",
+      "Schreibt da eine KI?",
+      "Antwortet hier ein Mensch oder ein Computer?",
+      "Antwortet da eine KI oder ein Mensch?",
+      "Antwortet mir ein Mensch?",
+      "Schreibt mir gerade ein Mensch?",
+      "Ist hier ein echter Mensch?",
+      "Ist da ein Mensch dran?",
+      "Sitzt da ein Mensch?",
+      "Seid ihr echte Menschen?",
+      "Hallo, sind Sie ein echter Mitarbeiter?",
+    ]) {
+      expect(wantsHuman(t), t).toBe(true);
+    }
+    // keine Fehlalarme bei Sätzen zur Versicherung
+    for (const t of [
+      "Ist da eine Person mitversichert?",
+      "Ist da ein Mensch mitversichert?",
+      "Ist da ein Computer mitversichert?",
+      "Meine Frau schreibt Ihnen gleich",
+      "Ist hier noch etwas offen?",
+      "Sind Sie Mitarbeiter im öffentlichen Dienst?",
+      "Der Hund ist da wirklich ein Mensch für uns",
+    ]) {
+      expect(wantsHuman(t), t).toBe(false);
+    }
+  });
+
+  it("Sicherheitsnetz: Antworten, die sich als Mensch ausgeben, werden erkannt; ehrliche Antworten nicht", () => {
+    for (const t of [
+      "Ja, ich bin ein Mensch.",
+      "Ich bin ein echter Mitarbeiter von Herrn Lohmann.",
+      "Nein, ich bin kein Bot.",
+      "Ich bin keine KI, keine Sorge!",
+      "Hier schreibt ein echter Mensch.",
+      "Sie schreiben hier mit einem Menschen.",
+      "Du schreibst gerade mit einer echten Person.",
+      "Ich bin natürlich eine echte Person",
+      "Ich bin aus Fleisch und Blut",
+    ]) {
+      expect(gibtSichAlsMenschAus(t), t).toBe(true);
+    }
+    for (const t of [
+      "Ich bin der digitale KI-Assistent von Agentur Meier, kein Mensch.",
+      "Ich bin kein Mensch und berate nicht zu Tarifen.",
+      "Hier schreibt der digitale KI-Assistent von Herrn Lohmann.",
+      "Herr Lohmann meldet sich persönlich bei Ihnen.",
+      "Ich bin ein digitaler Assistent, kein Mensch.",
+      "Ich bin eine KI.",
+      "Sie schreiben hier nicht mit einem Menschen, sondern mit dem digitalen KI-Assistenten.",
+      "Sie fragen, ob ich ein Mensch bin: Nein.",
+      "Ich bin echt froh, dass es passt.",
+      "Ich bin keine echte Person.",
+      "Als KI-Assistent berate ich nicht zu Tarifen.",
+      "Gern, wann passt es Ihnen?",
+      "",
+      null,
+    ]) {
+      expect(gibtSichAlsMenschAus(t), String(t)).toBe(false);
+    }
+    // Ersatz: ehrlich, in beiden Ansprachen, ohne Übergabe zu behaupten
+    const person = { nom: "Frau Meier", dat: "Frau Meier" };
+    expect(ehrlicheAntwort("sie", { ...names, person })).toBe("Ich bin der digitale KI-Assistent von Agentur Susanne Meier, kein Mensch. Wenn Sie direkt mit Frau Meier sprechen möchten, schreiben Sie ‚Mensch‘.");
+    expect(ehrlicheAntwort("du", names)).toBe("Ich bin der digitale KI-Assistent von Agentur Susanne Meier, kein Mensch. Wenn du direkt mit Susanne Meier sprechen möchtest, schreib ‚Mensch‘.");
+    for (const an of ["sie", "du"] as const) {
+      const t = ehrlicheAntwort(an, names);
+      expect(t).not.toMatch(/[–—]/);
+      expect(gibtSichAlsMenschAus(t)).toBe(false);
+      expect(hasKiHinweis(t)).toBe(true);
+      // „Mensch“ führt wie immer zur Übergabe an den Vermittler
+      expect(wantsHuman("Mensch")).toBe(true);
+    }
+  });
+
   it("Antwort bei der Übergabe ist wahrheitsgemäß (KI, kein Mensch), erste Nachricht mit Anrede", () => {
     expect(humanHandoverReply("sie", names)).toBe(
       "Ich bin der digitale KI-Assistent von Agentur Susanne Meier, kein Mensch. Ich habe Susanne Meier Bescheid gegeben, Susanne Meier meldet sich persönlich bei Ihnen.",
@@ -137,6 +219,8 @@ describe("KI-Hinweis", () => {
     });
     expect(p).toContain("Gib dich nie als Mensch aus");
     expect(p).toContain("antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von Agentur Susanne Meier bist, kein Mensch, und nicht zu Tarifen berätst");
+    // auch auf die offene Frage, wer hier schreibt (Ole, 24.11.2026: die Erinnerung nennt nur noch die Agentur)
+    expect(p).toContain("Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt, oder wer hier schreibt: antworte immer wahrheitsgemäß");
     expect(p).toContain("Nenne keine Versicherer, Tarife oder Produktnamen, keine Preise");
     expect(p).toContain("„Das klärt Susanne Meier im Termin mit Ihnen.“");
     expect(p).toContain("Frage nie nach Gesundheitsangaben");

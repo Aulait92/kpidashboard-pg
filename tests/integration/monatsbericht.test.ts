@@ -23,13 +23,15 @@ import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const MONTH = "2026-10";
 const NOW = new Date("2026-11-02T08:00:00Z");
+/** Berichte gibt es erst ab 30 Tagen Laufzeit (Ole, 23.11.2026); ohne Einrichtung zählt das Anlegedatum des Kunden. */
+const KUNDE_SEIT = new Date("2026-08-01T08:00:00Z");
 
 /** Maßnahme von Hand im Oktober (ohne Maßnahme geht kein Bericht automatisch raus). */
 const addMeasure = (customerId: string) =>
   addManualMeasure({ customerId, topic: "anzeigen", title: "Zwei neue Motive für die Katzenkampagne", executedAt: new Date("2026-10-15T10:00:00Z") }, { email: "ole@test.local" }, NOW);
 
 async function setupCustomer(leads: number, termine: number, activeDays = 25) {
-  const c = await makeCustomer({ plan: "software", retainerMonthly: 990 });
+  const c = await makeCustomer({ plan: "software", retainerMonthly: 990, createdAt: KUNDE_SEIT });
   await makeBuyer(c.id, "owner");
   await prisma.customerAdSpend.createMany({
     data: Array.from({ length: activeDays }, (_, i) => ({ customerId: c.id, accountId: "act_test", date: new Date(Date.UTC(2026, 9, i + 2, 12)), amount: 24 })),
@@ -127,7 +129,9 @@ describe("Monatsberichte", () => {
   it("zu wenige aktive Tage → kein Bericht", async () => {
     const id = await setupCustomer(20, 2, 9);
     ids.push(id);
-    await runMonthlyReports(NOW, { month: MONTH, llm: fakeLlm(), customerIds: [id] });
+    const res = await runMonthlyReports(NOW, { month: MONTH, llm: fakeLlm(), customerIds: [id] });
+    // Der Kunde wird geprüft und scheidet an den aktiven Tagen aus (nicht schon vorher, etwa wegen der Laufzeit)
+    expect(res.skippedIneligible).toBe(1);
     expect(await prisma.monthlyReport.count({ where: { customerId: id } })).toBe(0);
   });
 

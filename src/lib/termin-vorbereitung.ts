@@ -17,7 +17,8 @@ export type Feld = { label: string; wert: string | null };
 export type Abschnitt = { titel: string; hinweis?: string; felder: Feld[] };
 
 export type VorbereitungDaten = {
-  lead: { name: string; telefon: string | null; email: string | null; adresse: string | null; produkt: string };
+  /** tkvUmfang: Tierkranken, gewünschter Umfang (Lead.tkvUmfang, lib/tkv-umfang.ts) */
+  lead: { name: string; telefon: string | null; email: string | null; adresse: string | null; produkt: string; tkvUmfang?: string | null };
   termin: { startsAt: Date; mode: string; berater: string; meetUrl: string | null };
   zusammenfassung: string | null;
   formular: { label: string; value: string }[];

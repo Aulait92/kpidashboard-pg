@@ -49,7 +49,8 @@ import { prisma } from "@/lib/prisma";
 import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
 import { displayProduct } from "@/lib/products";
 import { interesseAusFormular } from "@/lib/interesse-formular";
-import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { firstNameOf, NoTemplateError, noticeBody, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { anfrageMitSparte } from "@/lib/whatsapp/anfrage-sparte";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { waNummerFuerLead } from "@/lib/whatsapp/buchungsnummer";
@@ -103,7 +104,18 @@ const STOP_WORDS = /^\s*(stopp?|stop|abmelden|keine (weiteren )?nachrichten|nich
 
 /** hi = Anrede-Zeile nach Regel („Hallo Julia,“ bzw. „Guten Tag Frau Schneider,“ / „Guten Tag,“). */
 // Kein Buchungslink in Nachrichten an Leads (Ole, 15.11.2026: „nur per Chat“): Termine bucht der Assistent im Gespräch.
-type Ctx = { firstName: string; hi: string; kontakt: AnredeKontakt; topic: string; an: Ansprache; person?: VermittlerName };
+type Ctx = {
+  firstName: string;
+  hi: string;
+  kontakt: AnredeKontakt;
+  topic: string;
+  an: Ansprache;
+  person?: VermittlerName;
+  /** Firmenname des Kunden („hier ist noch einmal …“, wie [Firma] in den Vorlagen, lib/lead-anrede.ts ansprechpartner) */
+  firm?: string;
+  /** „Ihrer Anfrage zur Kfz-Versicherung“ bzw. ohne Sparte „Ihrer Anfrage“ (lib/whatsapp/anfrage-sparte.ts) */
+  anfrage?: string;
+};
 /** Angaben für die Texte einer Abfolge (auch für die Vorschau im Nachrichtenplan, lib/nachrichtenplan.ts). */
 export type SequenceCtx = Ctx;
 const HOUR = 60 * 60 * 1000;
@@ -151,6 +163,21 @@ type Step =
 
 /** Vermittler für „das Angebot, das Herr Kannapinn Ihnen geschickt hat“ (ohne Namen neutral). */
 const vom = (c: Ctx): VermittlerName => c.person ?? { nom: a(c.an, "dein Berater", "Ihr Berater"), dat: a(c.an, "deinem Berater", "Ihrem Berater") };
+
+/** Platzhalter der Erinnerung (followup_nudge ab v5): die Anfrage samt Sparte, ohne Angabe „Ihrer Anfrage“ (nie leer). */
+const anfrageVon = (c: Ctx): string => c.anfrage?.trim() || anfrageMitSparte(c.an, null);
+
+/**
+ * Erinnerung an Leads, die nicht antworten (Ole, 24.11.2026, Wortlaut vorgegeben; derselbe Text wie die Vorlage
+ * followup_nudge v5): „Guten Tag Herr Kranert, hier ist noch einmal Versicherungsagentur Henrik Lohmann. Sollen wir mit
+ * Ihrer Anfrage zur Kfz-Versicherung weitermachen? Es dauert nur ein paar Minuten.“ Ohne „digitaler KI-Assistent“: Die
+ * Kennzeichnung steht nur in der ersten Nachricht (templates.ts KI_ERST). Ohne bekannten Firmennamen (nur Vorschauen
+ * ohne Kundendaten) entfällt der Satz „hier ist noch einmal …“.
+ */
+export function erinnerungText(c: Ctx): string {
+  if (c.firm?.trim()) return `${c.hi} ${noticeBody("followup_nudge", c.an, c.firm.trim(), [anfrageVon(c)])}`;
+  return `${c.hi} sollen wir mit ${anfrageVon(c)} weitermachen? Es dauert nur ein paar Minuten.`;
+}
 
 /** Angebot nach dem Termin, Tag 2: WhatsApp (gleiche Frage wie die freigegebene Vorlage followup_offer). */
 const angebotTag2: Extract<Step, { action: "whatsapp" }> = {
@@ -372,13 +399,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         day: 8 / 24,
         action: "whatsapp",
         purpose: "followup_nudge",
-        params: (c) => [c.firstName],
-        text: (c) =>
-          a(
-            c.an,
-            `${c.hi} sollen wir ${mitThema("mit", c.topic)} weitermachen? Es dauert nur ein paar Minuten.`,
-            `${c.hi} sollen wir ${mitThema("mit", c.topic)} weitermachen? Es dauert nur ein paar Minuten.`,
-          ),
+        params: (c) => [c.firstName, anfrageVon(c)],
+        text: (c) => erinnerungText(c),
         fallbackNote: "Keine Reaktion im Chat: anrufen",
       },
       {
@@ -983,7 +1005,7 @@ async function sendStep(
 ): Promise<SequenceLogEntry> {
   const base = { at: now.toISOString(), step: seq.step, action: "whatsapp" as const };
   const [lead, account] = await Promise.all([
-    prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true, waConsent: true, waUnavailableAt: true } }),
+    prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true, waConsent: true, waUnavailableAt: true, tkvUmfang: true } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: seq.customerId }, select: { status: true } }),
   ]);
   // WhatsApp-Nummer: aus der Online-Buchung übernommen (Formular-Nummer ohne WhatsApp, lib/whatsapp/buchungsnummer.ts), sonst Lead.phone
@@ -1003,6 +1025,7 @@ async function sendStep(
   const an = await anspracheOf(seq.customerId);
   const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone, name: lead.name });
   const angebot = istAngebotsAbfolge(seq.kind);
+  const anfrageLead = { source: lead.source, formular: lead.formData, tkvUmfang: lead.tkvUmfang };
   const ctx: Ctx = {
     firstName: firstNameOf(lead.name),
     hi: anredeZeile(an, who.kontakt),
@@ -1011,6 +1034,9 @@ async function sendStep(
     topic: (angebot ? await import("@/lib/angebot-senden-server").then((m) => m.angebotThemaFuerLead(seq.leadId)).catch(() => null) : null) ?? topicOf(lead.formData, lead.source, an),
     an,
     person: (await import("@/lib/whatsapp/gespraech")).vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm }),
+    firm: who.firm,
+    // Erinnerung: die Anfrage samt Sparte aus dem Produkt des Leads („Ihrer Anfrage zur Kfz-Versicherung“)
+    anfrage: anfrageMitSparte(an, anfrageLead),
   };
   let fensterZu = false;
   if (step.onlyInWindow) {
@@ -1044,7 +1070,10 @@ async function sendStep(
       purpose = "followup_absage";
       params = [ctx.firstName];
     } else {
+      // Als Vorlage die Erinnerung (v5 mit der Anfrage samt Sparte, ältere freigegebene Fassung nur mit dem Namen); im
+      // offenen Fenster bleibt der Text dieses Schritts, ohne die Knöpfe der Vorlage
       purpose = "followup_nudge";
+      params = [ctx.firstName, anfrageVon(ctx)];
       buttons = { textButtons: [] };
     }
   } else if (step.slots && step.slotText) {
@@ -1057,6 +1086,16 @@ async function sendStep(
       buttons = { textButtons: knoepfe.map((b) => b.title), buttonPayloads: knoepfe.map((b) => b.id) };
     }
   }
+  // Erinnerung als Vorlage: Die ältere freigegebene Fassung (v4) hat nur den Namen. Die Anfrage folgt der Ansprache der
+  // gewählten Vorlage (ist ausnahmsweise nur die andere Fassung freigegeben, bleibt der Satz stimmig: „Guten Tag … mit
+  // Ihrer Anfrage“, nie „… mit deiner Anfrage“)
+  const erinnerung =
+    purpose === "followup_nudge"
+      ? {
+          legacyParams: [ctx.firstName],
+          paramsFor: (t: { ansprache: Ansprache }) => [ctx.firstName, t.ansprache === ctx.an ? anfrageVon(ctx) : anfrageMitSparte(t.ansprache, anfrageLead)],
+        }
+      : {};
   if (fensterZu && vorlageSchonGesendet(seq, purpose)) return { ...base, result: "skipped", detail: "24h-Fenster geschlossen, Vorlage schon gesendet" };
   try {
     const { mode } = await sendWhatsAppNotice({
@@ -1069,6 +1108,7 @@ async function sendStep(
       contactName: lead.name,
       anrede: ctx.kontakt,
       ...buttons,
+      ...erinnerung,
     });
     return { ...base, result: mode === "template" ? "template" : "sent", purpose };
   } catch (err) {

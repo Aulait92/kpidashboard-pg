@@ -70,8 +70,9 @@ describe("Nachfass-Abfolgen", () => {
 
     await runSequences(T0);
     expect(send).toHaveBeenCalledTimes(1);
-    // Ohne Kalender keine Terminvorschläge: kurze Nachfrage ohne Knöpfe im Freitext
-    expect(send.mock.calls[0][0]).toMatchObject({ purpose: "followup_nudge", leadId: lead.id, params: ["Lisa"], textButtons: [] });
+    // Ohne Kalender keine Terminvorschläge: kurze Nachfrage ohne Knöpfe im Freitext; als Vorlage die Erinnerung v5 mit
+    // der Anfrage als Platzhalter (ohne Produkt „Ihrer Anfrage“), die ältere freigegebene Fassung nur mit dem Namen
+    expect(send.mock.calls[0][0]).toMatchObject({ purpose: "followup_nudge", leadId: lead.id, params: ["Lisa", "Ihrer Anfrage"], legacyParams: ["Lisa"], textButtons: [] });
     await runSequences(T0); // nicht fällig → nichts
     expect(send).toHaveBeenCalledTimes(1);
 
@@ -337,7 +338,7 @@ describe("Nachfass-Abfolgen", () => {
     await runSequences(at);
     expect(mine()).toHaveLength(1);
     expect(mine()[0][0]).toMatchObject({ purpose: "followup_nudge", leadId: lead.id });
-    expect((mine()[0][0] as { text: string }).text).toContain("wie besprochen melde ich mich wieder zu Hausrat");
+    expect((mine()[0][0] as { text: string }).text).toContain("wie besprochen melde ich mich wieder zum Hausrat");
     const done = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
     expect(done.stopReason).toBe("Abgeschlossen");
     await cleanupCustomer(other);

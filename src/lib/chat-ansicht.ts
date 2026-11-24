@@ -107,10 +107,15 @@ const EREIGNISSE: Record<string, Ereignis> = {
   handover: { label: "An Sie übergeben", ton: "achtung", icon: "person" },
   ki_handover: { label: "Möchte einen Menschen: an Sie übergeben, Assistent pausiert", ton: "achtung", icon: "person" },
   advice_blocked: { label: "Antwort ersetzt: keine Tarif-, Preis- oder Versichereraussagen", ton: "achtung", icon: "schild" },
+  // lib/whatsapp/ki-hinweis.ts gibtSichAlsMenschAus: der Assistent gibt sich nie als Mensch aus (KI-VO Art. 50)
+  ki_ehrlich: { label: "Antwort ersetzt: Assistent sagt ehrlich, dass er eine KI ist", ton: "achtung", icon: "schild" },
   opt_out: { label: "„STOPP“: keine weiteren WhatsApp-Nachrichten", ton: "stopp", icon: "stopp" },
   // lib/whatsapp/buchungsnummer.ts: Formular-Nummer ohne WhatsApp, Lead hat online mit dieser Nummer gebucht
   wa_nummer_uebernommen: { label: "WhatsApp über die Nummer aus der Online-Buchung", ton: "info", icon: "person" },
   erneut_eingetragen: { label: "Hat sich erneut eingetragen", ton: "info", icon: "person" },
+  // Neue Anfrage einer anderen Person mit derselben Nummer (lib/lead-name-server.ts): ab hier gehört der Chat zur neuen Anfrage
+  neue_anfrage: { label: "Neue Anfrage, ab hier eigener Kontakt", ton: "info", icon: "person" },
+  neue_anfrage_termin: { label: "Neue Anfrage einer anderen Person mit dieser Nummer", ton: "achtung", icon: "person" },
   followup_scheduled: { label: "Wiedervorlage geplant", ton: "info", icon: "uhr" },
   email_updated: { label: "E-Mail-Adresse aktualisiert", ton: "info", icon: "post" },
   lead_lost: { label: "Kein Bedarf, als verloren markiert", ton: "stopp", icon: "stopp" },
@@ -158,7 +163,8 @@ export function ereignisVon(kind: string, body: string | null, termine?: Map<str
   if (kind === "appointment_booked") wann = datum(p.start) ?? datum(p.starts);
   else if (kind === "appointment_rescheduled") wann = datum(p.auf);
   if (!wann && typeof p.appointmentId === "string" && (kind === "appointment_booked" || kind === "appointment_confirmed")) wann = termine?.get(p.appointmentId) ?? null;
-  const detail = wann ? (kind === "appointment_rescheduled" ? `auf ${terminZeit(wann)}` : terminZeit(wann)) : null;
+  const name = (kind === "neue_anfrage" || kind === "neue_anfrage_termin") && typeof p.name === "string" ? p.name : null;
+  const detail = wann ? (kind === "appointment_rescheduled" ? `auf ${terminZeit(wann)}` : terminZeit(wann)) : name;
   return { ...e, detail };
 }
 

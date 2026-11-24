@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { erstinfoName, type ErstinfoWeb } from "@/lib/erstinformation-shared";
 import { CheckCircle2, ChevronRight, Clock, FileText, Info, MessageCircle, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
+import { HilfeChatButton } from "@/components/hilfe-chat";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { CUSTOMER_TITLES, exampleRestFor, exampleValuesFor, formOf, previewBodyFor, purposesFor, templateNameFor, templateNamesOf, TEMPLATE_VERSION, isTemplateRevisionOf } from "@/lib/whatsapp/template-plan";
@@ -169,9 +169,8 @@ export default async function VorlagenPage() {
           })}
           <p className="text-sm text-[color:var(--muted)]">
             Sie möchten einen Text anders formulieren?{" "}
-            <Link href="/buyer/hilfe" className="font-medium text-[color:var(--brand)] hover:underline">
-              Schreiben Sie uns
-            </Link>
+            {/* Kein /buyer/hilfe (404, Go-live-Prüfung 19.11.2026, W4): Hilfe-Chat, der bei Bedarf an unser Team weitergibt */}
+            <HilfeChatButton className="font-medium text-[color:var(--brand)] hover:underline">Schreiben Sie uns</HilfeChatButton>
             , wir passen ihn an und reichen ihn neu ein.
           </p>
         </div>
