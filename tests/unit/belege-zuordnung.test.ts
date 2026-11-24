@@ -77,3 +77,11 @@ describe("Steuerbüro bucht seine Rechnungen selbst", () => {
     expect(brauchtBeleg(u("1", "2026-11-16", -50, "Müller Bau GmbH"))).toBe(true);
   });
 });
+
+describe("Kreditkarte Barclays und Bankentgelte", () => {
+  it("brauchen keinen Beleg", () => {
+    expect(brauchtBeleg(u("1", "2026-01-08", -76.83, "Barclays"))).toBe(false);
+    expect(brauchtBeleg(u("1", "2026-07-28", -74.63, "Barclaycard"))).toBe(false);
+    expect(brauchtBeleg(u("1", "2026-04-30", -0.11, "Rechnungsabschluss"))).toBe(false);
+  });
+});
