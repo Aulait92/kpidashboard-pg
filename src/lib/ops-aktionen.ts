@@ -57,6 +57,20 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${c.name}: Anschrift gesetzt (${anschrift}).` };
     },
   },
+  vertrieb_anrede_setzen: {
+    beschreibung: "Anrede (Herr/Frau) eines Vertriebskontakts setzen, z. B. für „Hallo Herr Kuhn“ in der Angebotsmail",
+    felder: { salesContactId: "ID des Vertriebskontakts", anrede: "Herr oder Frau" },
+    run: async (p) => {
+      const id = text(p.salesContactId);
+      const anrede = text(p.anrede, 10);
+      if (!/^(Herr|Frau)$/.test(anrede)) return { ok: false, error: "anrede: Herr oder Frau." };
+      const c = await prisma.salesContact.findUnique({ where: { id }, select: { id: true, lastName: true } });
+      if (!c) return { ok: false, error: "Kontakt nicht gefunden." };
+      await prisma.salesContact.update({ where: { id }, data: { salutation: anrede } });
+      await audit("vertrieb.anrede", { entity: "SalesContact", entityId: id, details: { anrede }, actor: OPS_ACTOR });
+      return { ok: true, info: `Anrede gesetzt: ${anrede} ${c.lastName ?? ""}`.trim() };
+    },
+  },
   produkt_starten: {
     beschreibung: "Produkt in Einrichtung auf „Gestartet“ setzen (Budgetzeile, Mail an den Kunden)",
     felder: { bookingId: "ID der Produktbuchung" },

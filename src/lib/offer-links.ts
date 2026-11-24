@@ -135,5 +135,6 @@ export async function customerGreeting(o: { salesContactId: string | null; conta
       return `Hallo ${sal[0].toUpperCase()}${sal.slice(1).toLowerCase()} ${c.lastName.trim()},`;
     }
   }
-  return o.contactName?.trim() ? `Hallo ${o.contactName.trim()},` : "Hallo,";
+  // Ohne Anrede (Herr/Frau) im Kontakt: neutral statt „Hallo Vorname Nachname“ (Ole, 24.11.2026, Kuhn)
+  return o.contactName?.trim() ? `Guten Tag ${o.contactName.trim()},` : "Guten Tag,";
 }
