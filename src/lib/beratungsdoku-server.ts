@@ -31,6 +31,7 @@ import { beraterName } from "@/lib/mail/beratung-pdf";
 import type { VorschlagInfo } from "@/lib/mail/beratung";
 import { vorschlagInfo } from "@/lib/mail/gruende-ki";
 import { bedrockEu } from "@/lib/ki-eu-konfig";
+import type { KiAus } from "@/lib/datennutzung";
 import {
   BD_ABSCHNITTE,
   BD_LINK_TAGE,
@@ -127,7 +128,7 @@ async function termin(appointmentId: string, ctx: TeamCtx) {
           formData: true,
           vorvertraege: true,
           erasedAt: true,
-          customer: { select: { leadAddress: true, mailFeaturesOff: true, beratungsdokuAn: true } },
+          customer: { select: { leadAddress: true, mailFeaturesOff: true, beratungsdokuAn: true, awsWiderspruchAt: true } },
         },
       },
     },
@@ -188,6 +189,11 @@ export type BdInfo = {
   letzte: BdLetzte | null;
   /** „Vorschlag erstellen“ für die Begründung (null = keine EU-KI) */
   vorschlag: VorschlagInfo;
+  /**
+   * KI-Hilfe für dieses Konto abgeschaltet (Widerspruch gegen Amazon Web Services, lib/datennutzung.ts): dann ist
+   * vorschlag aus und das Blatt zeigt an der Stelle einen ruhigen Hinweis. null = kein Widerspruch (bzw. keine EU-KI).
+   */
+  kiAus: KiAus | null;
 };
 
 async function letzteFassung(appointmentId: string): Promise<BdLetzte | null> {
@@ -260,6 +266,11 @@ async function infoFuer(t: Termin, ctx: TeamCtx, now: Date): Promise<BdInfo> {
       : !weg
         ? "Der Versand über die App ist gerade nicht eingerichtet."
         : null;
+  // KI-Vorschlag für die Begründung: bei Widerspruch gegen Amazon Web Services aus, dafür der Hinweis im Blatt.
+  // Der Aufruf selbst ist in lib/zusammenfassung-server.ts gruendeVorschlag gesperrt.
+  const vorschlag = vorschlagInfo({ konfig: bedrockEu(), themen: [lead.source, thema], auswahl });
+  const awsAus = lead.customer.awsWiderspruchAt;
+  const kiAus: KiAus | null = vorschlag && awsAus ? { am: awsAus.toISOString(), inhaber: ctx.teamRole !== "advisor" } : null;
   return {
     leadId: lead.id,
     an,
@@ -269,7 +280,8 @@ async function infoFuer(t: Termin, ctx: TeamCtx, now: Date): Promise<BdInfo> {
     appVersand: !ohneVersand,
     ohneVersand,
     letzte,
-    vorschlag: vorschlagInfo({ konfig: bedrockEu(), themen: [lead.source, thema], auswahl }),
+    vorschlag: kiAus ? null : vorschlag,
+    kiAus,
   };
 }
 

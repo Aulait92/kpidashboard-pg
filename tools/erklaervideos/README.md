@@ -26,7 +26,7 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
 ### Zusatz für die Einführungsvideos (Stand 15.11.2026)
 
 - Nach `seed.ts`, `wa.ts`, `termin.ts`: `DATABASE_URL=… node local/ev_zustand.mjs` (Erstinformation vollständig, Wiedervorlagen gesetzt), sonst stehen Warnhinweis und „Leads ohne nächsten Schritt“ über allem auf „Heute“.
-- `rec_ev.js` klickt vor der Aufnahme die Hinweiskarten weg (Willkommen-Video, Neuigkeiten, Mitteilungen).
+- `rec_ev.js` klickt vor der Aufnahme die Hinweiskarten weg (Willkommen-Video, Neuigkeiten, Mitteilungen), seit 24.11.2026 auch das Banner „KI-Hilfe und gemeinsames Anzeigenlernen“ („Verstanden“).
 - Ton gegenhören: `python3 check_oa.py kurz lang` (faster-whisper, erzeugt Szenen mit falsch gehörten Begriffen neu; englisch „Lead“ hört Whisper als „Lied“, das gilt als richtig).
 - Ausgeblendete Module (z. B. „Empfehlungen & Bewertungen“, `EMPFEHLUNG_MODULE_AVAILABLE = false`, Bestandskunden-Modul, `BESTAND_MODULE_AVAILABLE = false`) nicht zeigen und nicht nennen.
 - Knapper Speicher (16.11.2026, mehrere Dev-Server parallel): „Ausführlich“ in zwei Teilen aufnehmen und den Dev-Server dazwischen neu starten

@@ -6,11 +6,13 @@
 // Senden und Ablegen gibt das Blatt erst frei, wenn die aktuelle Fassung angesehen wurde (zfBereit). „Mit KI
 // formulieren“ nur, wenn der Server es erlaubt (EU-KI, keine Gesundheitssparte); das Ergebnis trägt das Kennzeichen
 // „Entwurf der KI, bitte prüfen“. „Gründe vorschlagen“ am Feld Rat und Gründe: components/gruende-vorschlag.tsx.
+// Hat der Kunde Amazon Web Services widersprochen (info.kiAus), steht statt beider Knöpfe ein Hinweis.
 
 import { useEffect, useState } from "react";
 import { Eye, FileText, Loader2, PencilLine, Sparkles, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui";
 import { GruendeVorschlag } from "@/components/gruende-vorschlag";
+import { KiAusHinweis } from "@/components/ki-aus-hinweis";
 import { beratungsPdfInhalt, hatLuecke, zusammenfassungFehlt, GRUENDE_ERGAENZEN } from "@/lib/mail/beratung";
 import type { ZusammenfassungInfo } from "@/lib/zusammenfassung-server";
 import { zusammenfassungKiResult, zusammenfassungPdfResult } from "@/app/buyer/angebot-actions";
@@ -163,6 +165,8 @@ export function ZusammenfassungEditor({
           </Button>
         ) : null}
       </div>
+      {/* Widerspruch gegen Amazon Web Services: statt der KI-Knöpfe ein ruhiger Hinweis (ohne Link, der Entwurf bliebe sonst nicht) */}
+      {info.kiAus ? <KiAusHinweis was="KI-Hilfe" hinweis={info.kiAus} link={false} /> : null}
     </div>
   );
 }

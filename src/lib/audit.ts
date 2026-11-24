@@ -221,6 +221,11 @@ export const AUDIT_LABEL: Record<string, string> = {
   "policen.auslesen_pause_aufgehoben": "KI für Unterlagen: Pause aufgehoben",
   "policen.auslesen_korrigiert": "Policen: ausgelesene Werte korrigiert",
   "policen.auslesen_bestand": "Policen: in den Bestand übernommen",
+  // Hinweis „KI-Hilfe und gemeinsames Anzeigenlernen“ im Kundenbereich (lib/datennutzung-server.ts; Nachweis: DatennutzungNachweis)
+  "datennutzung.angezeigt": "Hinweis KI-Hilfe und Anzeigenlernen: Banner erstmals angezeigt",
+  "datennutzung.verstanden": "Hinweis KI-Hilfe und Anzeigenlernen: „Verstanden“",
+  "datennutzung.widerspruch": "Hinweis KI-Hilfe und Anzeigenlernen: Widerspruch",
+  "datennutzung.ruecknahme": "Hinweis KI-Hilfe und Anzeigenlernen: Widerspruch zurückgenommen",
   "calendar.remind": "Kalender-Erinnerung gesendet",
   "lead.test_create": "Test-Lead angelegt",
 };

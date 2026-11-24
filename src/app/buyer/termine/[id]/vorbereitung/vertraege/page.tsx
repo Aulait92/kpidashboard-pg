@@ -52,7 +52,7 @@ export default async function VergleichsblattPage({ params }: { params: Promise<
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-36 pt-6 sm:px-6 md:pb-10 lg:px-8">
       {kopf}
       {v.vertraege.length || v.offen.length ? (
-        <Vergleichsblatt terminId={t.id} leadId={t.leadId} v={v} readOnly={false} ohne2fa={!zweiFaktor} zurueck={hier} terminHref={zurueck} />
+        <Vergleichsblatt terminId={t.id} leadId={t.leadId} v={v} readOnly={false} ohne2fa={!zweiFaktor} zurueck={hier} terminHref={zurueck} inhaber={ctx.teamRole !== "advisor"} />
       ) : (
         <Card>
           <EmptyState

@@ -8,12 +8,15 @@
 import type { AuslesenSparte } from "@/lib/policen/auslesen/felder";
 import type { Frage, Zusammenfassung } from "@/lib/policen/auslesen/zusammenfassung";
 import { GRUND_TEXT, kopfZeile, SICHTBARE_FRAGEN, SPERRE_TEXT } from "@/lib/policen/auslesen/vertragsseite";
+import { kiAusText } from "@/lib/datennutzung";
 
 export type SpickzettelZustand = "nie_gebeten" | "gebeten" | "sparte_offen" | "wird_ausgelesen" | "ohne_ki" | "gesperrt" | "fertig";
 
 /** Was der Spickzettel vom Vergleich braucht (Teilmenge von Vergleich aus server.ts). */
 export type SpickzettelEingabe = {
   sperre: string | null;
+  /** Sperre „widerspruch“ (Vermittler hat Amazon Web Services widersprochen): seit wann, für den Hinweis mit Datum */
+  widerspruchAm?: string | null;
   vertraege: { geprueft: boolean }[];
   offen: { documentId: string; status: string; datum: string }[];
   zusammenfassung: Pick<Zusammenfassung, "monatSumme" | "jahrSumme" | "vertraege" | "ungeprueft" | "fragen">;
@@ -80,7 +83,7 @@ const leer = (zustand: SpickzettelZustand, text: string, x: Partial<Spickzettel>
  * Policen-Bitte im Chat (ISO, aus den vorhandenen Strecken-Einträgen), policenAn = Policen per WhatsApp eingerichtet.
  * null = nichts anzeigen.
  */
-export function spickzettel(v: SpickzettelEingabe | null, o: { gebetenAm: string | null; policenAn: boolean }): Spickzettel | null {
+export function spickzettel(v: SpickzettelEingabe | null, o: { gebetenAm: string | null; policenAn: boolean; /** Angemeldeter ist der Inhaber (Standard) */ inhaber?: boolean }): Spickzettel | null {
   const offen = v?.offen ?? [];
   if (!v || (!v.vertraege.length && !offen.length)) {
     if (o.gebetenAm) return leer("gebeten", SPICKZETTEL_TEXT.gebeten(o.gebetenAm), { hinweis: SPICKZETTEL_TEXT.gebetenHinweis });
@@ -115,6 +118,9 @@ export function spickzettel(v: SpickzettelEingabe | null, o: { gebetenAm: string
   // Ohne ausgelesene Verträge, aber mit Unterlagen
   if (sperre === "ohne_ki") return leer("ohne_ki", SPERRE_TEXT.ohne_ki, { aktion: { art: "unterlagen", text: SPICKZETTEL_TEXT.unterlagenAnsehen } });
   if (sperre && STILL.has(sperre)) return null;
+  // Widerspruch des Vermittlers gegen Amazon Web Services: ruhiger Hinweis mit Datum und nächstem Schritt
+  if (sperre === "widerspruch" && v.widerspruchAm)
+    return leer("gesperrt", kiAusText("Automatisches Auslesen", { am: v.widerspruchAm, inhaber: o.inhaber !== false }), { aktion: { art: "unterlagen", text: SPICKZETTEL_TEXT.unterlagenAnsehen } });
   if (sperre) return leer("gesperrt", SPERRE_TEXT[sperre] ?? GRUND_TEXT.limit, { aktion: { art: "unterlagen", text: SPICKZETTEL_TEXT.unterlagenAnsehen } });
   if (sparteWahl) return leer("sparte_offen", SPICKZETTEL_TEXT.sparteOffen(nWahl), { sparteWahl, neben });
   if (nLaufend) return leer("wird_ausgelesen", GRUND_TEXT.neu);
