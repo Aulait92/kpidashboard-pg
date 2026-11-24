@@ -11,23 +11,14 @@
 export type LernSperre = (ids: string[]) => Promise<Set<string>>;
 
 /**
- * Vom gemeinsamen Anzeigenlernen ausgenommene Kunden (Widerspruch) unter den übergebenen IDs.
- *
- * ACHTUNG: wird beim Zusammenführen an das Kundenfeld angeschlossen. Das Feld für den Widerspruch am Kunden legt ein
- * anderer Arbeitsgang an; bis dahin ist niemand ausgenommen (leere Menge). Beim Anschließen genügt es, den Rumpf
- * dieser Funktion zu ersetzen, zum Beispiel:
- *
- *   const { prisma } = await import("@/lib/prisma");
- *   const rows = await prisma.customer.findMany({ where: { id: { in: ids }, <Feld für den Widerspruch>: true }, select: { id: true } });
- *   return new Set(rows.map((r) => r.id));
- *
- * Für Tests ist die Funktion überall per Parameter bzw. Abhängigkeit ersetzbar (CampaignDeps.lernSperre,
+ * Vom gemeinsamen Anzeigenlernen ausgenommene Kunden (Widerspruch im Kundenbereich, Customer.anzeigenlernenWiderspruchAt)
+ * unter den übergebenen IDs. Angeschlossen an lib/anzeigenlernen.ts (24.11.2026). Wirft bei einem Datenbankfehler: ohne
+ * sichere Auskunft gilt niemand als „nicht ausgenommen“. Für Tests überall ersetzbar (CampaignDeps.lernSperre,
  * loadCampaignContext({ lernSperre }), sichereKontext({ sperre })).
  */
 export async function vomLernenAusgenommen(ids: string[]): Promise<Set<string>> {
-  // wird beim Zusammenführen an das Kundenfeld angeschlossen
-  void ids;
-  return new Set<string>();
+  const { vomLernenAusgenommen: ausKundenfeld } = await import("@/lib/anzeigenlernen");
+  return ausKundenfeld(ids);
 }
 
 /** Klare Meldung, warum ein Start mit `vorlagenVon` abgelehnt wird (`ausgenommen`: Ergebnis für Ziel und Quelle). */
