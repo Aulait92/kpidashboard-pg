@@ -448,10 +448,12 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
     select: { id: true },
   });
 
+  // Datenschutz, Widerspruch, Austragen (Ole, 24.11.2026): aus solchen Mails keine Kontaktdaten übernehmen. Sonst sammelt
+  // die App aus einer Beschwerde neue Nummern (Fall Signal Iduna: zwei Nummern aus der Signatur, eine davon falsch).
   // Telefonsuche: Nummern aus der Signatur am Mail-Eintrag (findet den Kontakt, auch wenn die Nummer nicht übernommen wird)
-  await indexMailPhones(saved.id).catch((e) => reportError(e, "telefonsuche-index"));
+  if (!sperrGrund) await indexMailPhones(saved.id).catch((e) => reportError(e, "telefonsuche-index"));
   // Absenderadresse und Telefonnummern aus der Signatur übernehmen (nicht aus Abwesenheitsnotizen, lib/vertrieb/kontaktdaten-server.ts)
-  if (!r.isAutoReply) {
+  if (!r.isAutoReply && !sperrGrund) {
     await captureFromMail(contactId, { direction: "IN", fromEmail: r.fromEmail, text: r.text, html: r.html, isAutoReply: false, sentAt: r.sentAt }).catch((e) =>
       reportError(e, "kontaktdaten-mail"),
     );

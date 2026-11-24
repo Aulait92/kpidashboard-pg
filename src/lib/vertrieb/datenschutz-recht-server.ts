@@ -25,6 +25,7 @@ import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import {
   ABMAHNUNG_HINWEIS,
   herkunftVollstaendig,
+  hatPlatzhalter,
   vorlageAuskunft,
   vorlageLoeschung,
   vorlageWiderspruch,
@@ -403,6 +404,8 @@ export async function rechtsVorlageSenden(
   const text = ohneGedankenstriche(opts.text.replace(/\r/g, "").trim());
   const betreff = ohneGedankenstriche(opts.betreff.trim()) || "Ihre Anfrage";
   if (!text) return { ok: false, fehler: "Der Text ist leer." };
+  // Platzhalter (z. B. Herkunft) nicht ersetzt: nicht senden (Ole, 24.11.2026)
+  if (hatPlatzhalter(text)) return { ok: false, fehler: "Bitte zuerst den Platzhalter in eckigen Klammern ersetzen (z. B. die Herkunft der Adresse)." };
   const manuell = "Text kopieren, im Instantly-Postfach als Antwort senden und hier als beantwortet vermerken.";
   if (!process.env.INSTANTLY_API_KEY) return { ok: false, fehler: `Instantly ist nicht verbunden. ${manuell}` };
   const ziel = await antwortZiel(contactId, opts.fallId);

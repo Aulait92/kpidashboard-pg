@@ -6,6 +6,9 @@ import {
   ABMAHNUNG_HINWEIS,
   KONZERN_AB_KONTAKTEN,
   herkunftVollstaendig,
+  herkunftSatz,
+  hatPlatzhalter,
+  HERKUNFT_PLATZHALTER,
   istKonzernDomainFest,
   rechtsArtAusBefund,
   rechtsAufgabeNotiz,
@@ -149,7 +152,9 @@ describe("Antwortvorlagen", () => {
       "Anbieter in den USA",
       "Standardvertragsklauseln",
       "Google",
-      "Löschkonzept",
+      "Anthropic",
+      "nicht mehr zu Werbezwecken kontaktieren",
+      "Auf Ihren Wunsch löschen wir Ihre Daten",
       "Sperrvermerk",
       "Berichtigung",
       "Löschung",
@@ -162,5 +167,15 @@ describe("Antwortvorlagen", () => {
     }
     expect(herkunftVollstaendig(AKTE.herkunft)).toBe(true);
     expect(herkunftVollstaendig({ art: "Import Cold CRM bzw. von Hand angelegt", angelegt: "2026-10-01" })).toBe(false);
+  });
+
+  it("Herkunft unbekannt (direkt in Instantly): Platzhalter statt „Adressliste“, Senden gesperrt (Ole, 24.11.2026)", () => {
+    const h = { art: "Instantly (Kampagne „Signal Iduna“)", angelegt: "2026-11-19", verlauf: [{ datum: "2026-11-19", notiz: "Aus Instantly übernommen" }] };
+    const satz = herkunftSatz(h);
+    expect(satz).toContain(HERKUNFT_PLATZHALTER);
+    expect(satz).not.toContain("Adressliste");
+    expect(hatPlatzhalter(satz)).toBe(true);
+    expect(hatPlatzhalter(satz.replace(HERKUNFT_PLATZHALTER, "der Vertretersuche der SIGNAL IDUNA (abgerufen am 04.11.2026)"))).toBe(false);
+    expect(satz).not.toMatch(/[–—]/);
   });
 });
