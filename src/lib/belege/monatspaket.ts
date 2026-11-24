@@ -162,11 +162,12 @@ export async function paketBelege(monat: string): Promise<PaketBeleg[]> {
 }
 
 /** ZIP mit Belegen, belege.csv und ust-vorschau.txt. */
-export async function paketZip(monat: string): Promise<{ zip: Buffer; belege: PaketBeleg[]; vorschau: UstVorschau }> {
+/** Dateien des Pakets (ohne Liste und Vorschau) samt Belegliste und USt-Vorschau. */
+async function paketInhalt(monat: string): Promise<{ dateien: ZipEntry[]; liste: ZipEntry[]; belege: PaketBeleg[]; vorschau: UstVorschau }> {
   const belege = await paketBelege(monat);
   const vorschau = ustVorschau(belege);
   const dateinamen = new Map<string, string>();
-  const eintraege: ZipEntry[] = [];
+  const dateien: ZipEntry[] = [];
   const benutzt = new Set<string>();
   for (const b of belege) {
     const d = await prisma.beleg.findUnique({ where: { id: b.id }, select: { datei: true } });
@@ -177,11 +178,43 @@ export async function paketZip(monat: string): Promise<{ zip: Buffer; belege: Pa
     for (let i = 2; benutzt.has(name); i++) name = name.replace(/(\.\w+)$/, ` (${i})$1`);
     benutzt.add(name);
     dateinamen.set(b.id, name);
-    eintraege.push({ name, data: new Uint8Array(d.datei) });
+    dateien.push({ name, data: new Uint8Array(d.datei) });
   }
-  eintraege.push({ name: "belege.csv", data: belegeCsv(belege, dateinamen) });
-  eintraege.push({ name: "ust-vorschau.txt", data: vorschauText(monat, vorschau, belege.length) });
-  return { zip: buildZip(eintraege), belege, vorschau };
+  const liste: ZipEntry[] = [
+    { name: "belege.csv", data: belegeCsv(belege, dateinamen) },
+    { name: "ust-vorschau.txt", data: vorschauText(monat, vorschau, belege.length) },
+  ];
+  return { dateien, liste, belege, vorschau };
+}
+
+/** ZIP mit Belegen, belege.csv und ust-vorschau.txt (Download). */
+export async function paketZip(monat: string): Promise<{ zip: Buffer; belege: PaketBeleg[]; vorschau: UstVorschau }> {
+  const { dateien, liste, belege, vorschau } = await paketInhalt(monat);
+  return { zip: buildZip([...dateien, ...liste]), belege, vorschau };
+}
+
+const groesse = (e: ZipEntry) => (typeof e.data === "string" ? Buffer.byteLength(e.data) : e.data.length);
+
+/**
+ * Dateien der Reihe nach auf Teile mit höchstens maxBytes verteilen (Ole, 24.11.2026: August 2026 hatte über 35 MB, eine
+ * Mail darf nicht so groß werden). Eine einzelne größere Datei bekommt einen eigenen Teil. Getestet.
+ */
+export function inTeile<T extends ZipEntry>(dateien: T[], maxBytes: number): T[][] {
+  const teile: T[][] = [];
+  let akt: T[] = [];
+  let summe = 0;
+  for (const d of dateien) {
+    const g = groesse(d);
+    if (akt.length && summe + g > maxBytes) {
+      teile.push(akt);
+      akt = [];
+      summe = 0;
+    }
+    akt.push(d);
+    summe += g;
+  }
+  if (akt.length || !teile.length) teile.push(akt);
+  return teile;
 }
 
 const eur = (n: number) => `${n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR`;
@@ -210,37 +243,49 @@ export function vormonat(now = new Date()): string {
 }
 
 /** Paket an das Steuerbüro senden (nur auf Klick). */
-export async function paketSenden(monat: string, o: { antwortAn: string | null }): Promise<{ ok: true; anzahl: number } | { ok: false; error: string }> {
-  const { zip, belege, vorschau } = await paketZip(monat);
+/** Höchstgröße der Anhänge je Mail (Resend erlaubt 40 MB inkl. Base64, viele Postfächer nur 25 MB). */
+export const MAIL_TEIL_BYTES = 18 * 1024 * 1024;
+
+export async function paketSenden(monat: string, o: { antwortAn: string | null }): Promise<{ ok: true; anzahl: number; teile: number } | { ok: false; error: string }> {
+  const { dateien, liste, belege, vorschau } = await paketInhalt(monat);
   if (!belege.length) return { ok: false, error: "Keine Belege für diesen Monat." };
-  if (zip.length > 35 * 1024 * 1024) return { ok: false, error: "Paket größer als 35 MB: bitte herunterladen und aufteilen." };
+  const teile = inTeile(dateien, MAIL_TEIL_BYTES);
   const an = STEUERBUERO_EMAIL();
   const name = monatName(monat);
   const eingang = belege.filter((b) => EINGANG.has(b.typ) && b.quelle !== "eigenbeleg").length;
   const ausgang = belege.filter((b) => AUSGANG.has(b.typ) || b.typ === "CREDIT_NOTE" || b.typ === "SALES_INVOICE_VOID").length;
   const eigen = belege.filter((b) => b.quelle === "eigenbeleg").length;
   const { sendPlainMail } = await import("@/lib/email");
-  const r = await sendPlainMail({
-    to: an,
-    replyTo: o.antwortAn,
-    subject: `Belege Ole Kannapinn UG ${name}`,
-    text: [
-      "Sehr geehrte Frau Schulze,",
-      "",
-      `anbei die Belege der Ole Kannapinn UG für ${name}: ${eingang} Eingangsbelege, ${ausgang} Ausgangsbelege${eigen ? `, ${eigen} Eigenbelege` : ""}.`,
-      "Die Datei belege.csv listet je Beleg Datum, Art, Aussteller bzw. Empfänger, Nummer, Netto, Umsatzsteuer, Brutto und ob die Zahlung zugeordnet ist. In ust-vorschau.txt steht eine vorläufige Umsatzsteuer-Übersicht.",
-      "",
-      "Viele Grüße",
-      "Ole Kannapinn",
-    ].join("\n"),
-    attachments: [{ filename: `Belege ${monat}.zip`, content: zip, contentType: "application/zip" }],
-  });
-  if (!r.ok) return { ok: false, error: r.error ?? "Versand fehlgeschlagen." };
-  if (r.blocked) return { ok: false, error: "Versand an diese Adresse ist auf dem Server gesperrt (MAIL_NUR_AN)." };
+  for (const [i, teil] of teile.entries()) {
+    const mehr = teile.length > 1;
+    const zip = buildZip(i === 0 ? [...teil, ...liste] : teil);
+    const r = await sendPlainMail({
+      to: an,
+      replyTo: o.antwortAn,
+      subject: `Belege Ole Kannapinn UG ${name}${mehr ? ` (Teil ${i + 1} von ${teile.length})` : ""}`,
+      text: [
+        "Sehr geehrte Frau Schulze,",
+        "",
+        i === 0
+          ? `anbei die Belege der Ole Kannapinn UG für ${name}: ${eingang} Eingangsbelege, ${ausgang} Ausgangsbelege${eigen ? `, ${eigen} Eigenbelege` : ""}.${mehr ? ` Wegen der Größe kommen sie in ${teile.length} Mails, dies ist Teil 1.` : ""}`
+          : `anbei Teil ${i + 1} von ${teile.length} der Belege für ${name}.`,
+        ...(i === 0
+          ? ["Die Datei belege.csv listet je Beleg Datum, Art, Aussteller bzw. Empfänger, Nummer, Netto, Umsatzsteuer, Brutto und ob die Zahlung zugeordnet ist. In ust-vorschau.txt steht eine vorläufige Umsatzsteuer-Übersicht."]
+          : []),
+        "",
+        "Viele Grüße",
+        "Ole Kannapinn",
+      ].join("\n"),
+      attachments: [{ filename: `Belege ${monat}${mehr ? ` Teil ${i + 1}` : ""}.zip`, content: zip, contentType: "application/zip" }],
+    });
+    const schon = i ? ` Teil 1 bis ${i} wurden gesendet.` : "";
+    if (!r.ok) return { ok: false, error: `${r.error ?? "Versand fehlgeschlagen."}${schon}` };
+    if (r.blocked) return { ok: false, error: `Versand an diese Adresse ist auf dem Server gesperrt (MAIL_NUR_AN).${schon}` };
+  }
   await prisma.monatsPaket.upsert({
     where: { monat },
     create: { monat, gesendetAm: new Date(), empfaenger: an, anzahl: belege.length, zahllast: vorschau.zahllast },
     update: { gesendetAm: new Date(), empfaenger: an, anzahl: belege.length, zahllast: vorschau.zahllast },
   });
-  return { ok: true, anzahl: belege.length };
+  return { ok: true, anzahl: belege.length, teile: teile.length };
 }
