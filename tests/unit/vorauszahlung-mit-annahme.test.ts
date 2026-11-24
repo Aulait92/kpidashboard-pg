@@ -117,7 +117,7 @@ describe("Paket „Nur Leads“ (Ole, 24.11.2026)", () => {
     const text = l.join(" ").replace(/\s/g, " ");
     expect(l[0]).toMatch(/^Paket: Nur Leads/);
     expect(text).toContain("Erste Bestellung: 10 Leads");
-    expect(text).toContain("Abbuchung nach Prüfung Ihrer Registernummer");
+    expect(text).toContain("Abbuchung zum Lieferstart, frühestens nach Prüfung Ihrer Registernummer");
     expect(l).toContain(PPL_NUR_LEADS_SEPARAT);
     expect(l).toContain(PPL_NUR_LEADS_REKLAMATION);
     expect(text).not.toContain(KUENDIGUNG_SATZ);

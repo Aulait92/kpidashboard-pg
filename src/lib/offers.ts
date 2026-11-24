@@ -214,8 +214,13 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
   if (ppl) products.length = 0;
   else if (products.length === 0) throw new Error("Bitte mindestens ein Produkt angeben.");
   const vermittlerTyp = input.vermittlerTyp === "makler" ? "makler" : input.vermittlerTyp === "mehrfachvertreter" ? "mehrfachvertreter" : "vertreter";
-  // „Nur Leads“: kein Start (keine Monatsgebühr); die erste Bestellung startet nach der Registerprüfung
-  if (nurLeads) input = { ...input, startDate: berlinTodayIso(), customerChoice: false, billingDay: null, billingFreeStart: false, paymentInArrears: false };
+  // „Nur Leads“: keine Monatsgebühr. Lieferstart wählbar (Ole, 24.11.2026: „bei Kuhn noch keinen Startzeitpunkt“),
+  // leer oder in der Vergangenheit = sofort; geliefert und abgebucht wird frühestens nach der Registerprüfung
+  if (nurLeads) {
+    const heute = berlinTodayIso();
+    const start = input.startDate && /^\d{4}-\d{2}-\d{2}$/.test(input.startDate) && input.startDate > heute ? input.startDate : heute;
+    input = { ...input, startDate: start, customerChoice: false, billingDay: null, billingFreeStart: false, paymentInArrears: false };
+  }
   if (!input.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.startDate)) {
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }

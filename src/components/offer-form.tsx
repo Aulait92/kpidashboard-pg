@@ -496,8 +496,12 @@ export function OfferForm({
                   ) : null}
                 </Field>
               ) : null}
-              {/* „Nur Leads“: kein Start und keine Abrechnung, geliefert wird nach der Registerprüfung */}
-              {nurLeads ? null : (
+              {/* „Nur Leads“: keine Abrechnung, aber Lieferstart wählbar (Ole, 24.11.2026); leer = sofort nach der Registerprüfung */}
+              {nurLeads ? (
+                <Field l="Lieferung ab (leer = sofort nach der Prüfung)">
+                  <input className={input} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </Field>
+              ) : (
               <div className="space-y-2">
                 <Field l="Start * (ab dann läuft die Monatsgebühr)">
                   <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />

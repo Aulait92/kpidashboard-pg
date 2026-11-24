@@ -51,8 +51,8 @@ export const eurCent = (n: number) => n.toLocaleString("de-DE", { style: "curren
 
 /** Abbuchungszeitpunkt der ersten Woche. */
 export const ERSTE_WOCHE_ABBUCHUNG = "Abbuchung zum Start, nach Prüfung Ihrer Registernummer";
-/** „Nur Leads“: kein Start, abgebucht wird direkt nach der Prüfung. */
-export const NUR_LEADS_ABBUCHUNG = "Abbuchung nach Prüfung Ihrer Registernummer";
+/** „Nur Leads“: abgebucht wird zum Lieferstart, frühestens nach der Prüfung (Lieferstart wählbar seit 24.11.2026). */
+export const NUR_LEADS_ABBUCHUNG = "Abbuchung zum Lieferstart, frühestens nach Prüfung Ihrer Registernummer";
 
 /** Steuerhinweis zum Betrag der ersten Woche (ausführlich, mit Bedingung). */
 export function ersteWocheSteuerText(steuer: Steuer): string {

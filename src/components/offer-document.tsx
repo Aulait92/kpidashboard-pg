@@ -43,7 +43,7 @@ import {
 import { GUARANTEES_FROM, angebotMitGarantien, garantieDatum, isGuaranteeProduct } from "@/lib/garantien";
 import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
-import { ersteWocheAus, ersteWocheBetrag, ersteWocheName, ersteWocheSteuerKurz, ersteWocheZahlen, eurCent, ERSTE_WOCHE_ABBUCHUNG } from "@/lib/ppl/erste-woche-shared";
+import { ersteWocheAus, ersteWocheBetrag, ersteWocheName, ersteWocheSteuerKurz, ersteWocheZahlen, eurCent, ERSTE_WOCHE_ABBUCHUNG, NUR_LEADS_ABBUCHUNG } from "@/lib/ppl/erste-woche-shared";
 import { bruttoJeLead } from "@/lib/ppl/steuer";
 import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, PPL_NUR_LEADS_REKLAMATION, PPL_NUR_LEADS_SEPARAT, PPL_REKLAMATION, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 
@@ -1213,11 +1213,14 @@ function NurLeadsBody({ offer, collapse }: { offer: OfferDoc; collapse: boolean 
           <Note>Keine Software, keine Einrichtung, keine Laufzeit.</Note>
         </Tr>
         <Tr k="Leads">Per Stück zum Preis je Lead laut Bestellung, jede Bestellung mit eigener Rechnung. Keine Mindestabnahme.</Tr>
+        {offer.startDate && offer.startDate.toISOString().slice(0, 10) > offer.createdAt.toISOString().slice(0, 10) ? (
+          <Tr k="Lieferung ab">{date(offer.startDate)}, frühestens nach Prüfung Ihrer Registernummer</Tr>
+        ) : null}
         <Tr k="Bei Annahme fällig">
           <b className="text-[#111827]">{eur(0)}</b>, Sie hinterlegen nur Ihre Zahlungsart
           {w && z ? (
             <Note>
-              <span data-offer-erste-woche-faellig>{`Erste Bestellung: ${eurCent(z.summe)} (${w.quantity} Leads, ${ersteWocheSteuerKurz(z.steuer)}), eigene Rechnung, Abbuchung nach Prüfung Ihrer Registernummer.`}</span>
+              <span data-offer-erste-woche-faellig>{`Erste Bestellung: ${eurCent(z.summe)} (${w.quantity} Leads, ${ersteWocheSteuerKurz(z.steuer)}), eigene Rechnung, ${NUR_LEADS_ABBUCHUNG}.`}</span>
             </Note>
           ) : null}
         </Tr>
