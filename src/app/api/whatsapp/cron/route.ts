@@ -433,6 +433,8 @@ async function handle(req: Request): Promise<Response> {
         const { ensureInterestTasks, syncReplies } = await import("@/lib/vertrieb/instantly");
         await syncReplies(false);
         await ensureInterestTasks();
+        // Eigene Antwort in der Unibox: Aufgabe auf „Nachfassen: Video angesehen?“ in 2 Werktagen umstellen (24.11.2026)
+        await (await import("@/lib/vertrieb/instantly-eigene-antwort")).eigeneAntwortenAbgleichen();
       } catch (e) {
         reportError(e, "cron-instantly");
       }
