@@ -175,8 +175,9 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   outreach_zahn: "v12",
   outreach_pkv: "v12",
   // v13 (Ole, 21.11.2026): „zu Haftpflicht und Hausrat“ statt „zum Privatschutz“ (erstanschreiben.ts); bis zur Freigabe
-  // bei Meta sendet die App v12 (rankOutreach)
-  outreach_privatschutz: "v13",
+  // bei Meta sendet die App die zuletzt freigegebene Fassung (rankOutreach)
+  // v14 (Ole, 24.11.2026): {{2}} = gewählte Sparten statt fest „Haftpflicht und Hausrat" (Produktionsfehler)
+  outreach_privatschutz: "v14",
   // Reine Hausrat-Leads (Ole, 18.11.2026, zur Einreichung freigegeben): „zu Ihrer Hausratversicherung“ statt „zum
   // Privatschutz“; bis zur Freigabe bei Meta die allgemeine bzw. die Privatschutz-Fassung (outreach.ts fallbackPurposes)
   outreach_hausrat: "v12",
@@ -242,7 +243,9 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   outreach_tkv: ["Tier"],
   outreach_zahn: [],
   outreach_pkv: [],
-  outreach_privatschutz: [],
+  // v14 (Ole, 24.11.2026): {{2}} Thema = die gewählten Sparten bzw. neutral (erstanschreiben.ts privatschutzThema).
+  // Fassung a und b haben beide {{2}} (gleiche Platzhalter-Zahl, Beispielwert aus V6_BEISPIEL.thema).
+  outreach_privatschutz: ["Thema"],
   outreach_hausrat: [],
   outreach_kfz: [],
   outreach_kfz_wechsel: [],

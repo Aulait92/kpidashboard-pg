@@ -142,7 +142,7 @@ describe("Erstanschreiben (seit v6): Vorlage (Meta)", () => {
     expect(ERSTINFO_FOOTER_V10).toBe("KI-Assistent");
     for (const { purpose, form, variant, kopf } of plannedTemplates([...OUTREACH_PURPOSES])) {
       const req = buildTemplateRequest(purpose, names, undefined, form, { variant, documentExample: "https://x.de/erstinformation/abc/pdf", kopf });
-      expect(req.name).toMatch(/_v1[23](_|$)/); // v13 Privatschutz bis zur Freigabe als nächste Fassung
+      expect(req.name).toMatch(/_v1[234](_|$)/); // v14 Privatschutz bis zur Freigabe als nächste Fassung
       expect(kopf).toBe(true);
       const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
       expect(comps[0].type).toBe(kopf ? "HEADER" : "BODY");

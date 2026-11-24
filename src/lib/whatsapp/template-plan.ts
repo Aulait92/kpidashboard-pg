@@ -295,7 +295,17 @@ export function exampleRestFor(purpose: NoticePurpose, an: Ansprache, version?: 
   // Erstanschreiben v6/v7 (noch bei Meta freigegeben): Thema, Vermittler, Erste Frage; v8 Vermittler, Erste Frage
   // (Ole, 19.11.2026: seit v10 steht in PLATZHALTER_AB die Belegung der v9)
   const outreachAlt =
-    version !== undefined && isOutreachPurpose(purpose) ? (version >= 6 && version < 8 ? ERSTANSCHREIBEN_V6_PARAMS : version === 8 ? ERSTANSCHREIBEN_V8_PARAMS : undefined) : undefined;
+    version !== undefined && isOutreachPurpose(purpose)
+      ? version >= 6 && version < 8
+        ? ERSTANSCHREIBEN_V6_PARAMS
+        : version === 8
+          ? ERSTANSCHREIBEN_V8_PARAMS
+          : // Privatschutz hatte v10 bis v13 die feste Frage „Haftpflicht und Hausrat" ohne Platzhalter; das Thema {{2}}
+            // kam erst mit v14 (Ole, 24.11.2026). Ältere freigegebene Fassungen daher ohne Rest-Platzhalter.
+            purpose === "outreach_privatschutz" && version >= 10 && version < 14
+            ? []
+            : undefined
+      : undefined;
   const alt = outreachAlt ?? (version !== undefined && !neuePlatzhalter(purpose, version) ? PLATZHALTER_AB[purpose]?.frueher : undefined);
   if (alt) return exampleValuesFor(purpose, f, null, alt);
   return f === "du" ? exampleValuesFor(purpose, "du").slice(1) : exampleValuesFor(purpose, "sie_ohne_name");

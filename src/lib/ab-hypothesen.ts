@@ -7,7 +7,7 @@ export const VORLAGEN_HYPOTHESE: Record<string, string> = {
   outreach_tkv: "Steht die Frage direkt hinter der Anrede, ist sie in Benachrichtigung und Chatliste sichtbar und es antworten mehr Leads.",
   outreach_zahn: "Steht die Frage direkt hinter der Anrede, ist sie in Benachrichtigung und Chatliste sichtbar und es antworten mehr Leads.",
   outreach_pkv: "Steht die Frage direkt hinter der Anrede, ist sie in Benachrichtigung und Chatliste sichtbar und es antworten mehr Leads.",
-  outreach_privatschutz: "Steht die Frage direkt hinter der Anrede, ist sie in Benachrichtigung und Chatliste sichtbar und es antworten mehr Leads.",
+  outreach_privatschutz: "Beide Fassungen nennen die vom Lead gewählten Sparten (v14, kein falsches „Haftpflicht und Hausrat“ mehr). Steht die Frage direkt hinter der Anrede (b), ist sie in Benachrichtigung und Chatliste sichtbar und es antworten mehr Leads.",
   outreach_hausrat: "Steht die Frage direkt hinter der Anrede, ist sie in Benachrichtigung und Chatliste sichtbar und es antworten mehr Leads.",
   // Kfz-Einstiegsfrage (A/B-Test-Labor 21.11.2026, docs/firma/ab-tests.md): gleiche Hypothese, eigener Test je Anlass
   outreach_kfz: "Kfz: Steht die Einstiegsfrage (jetziges oder neues Auto) direkt hinter der Anrede, sehen Kfz-Leads sie schon in der Benachrichtigung und antworten öfter.",

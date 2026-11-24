@@ -95,7 +95,7 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
     expect(anredeName("sie", { fullName: "Kim Mustermann", salutation: "divers" })).toBe("Kim Mustermann");
     expect(anredeName("sie", { fullName: "Kim Mustermann" })).toBe("Kim Mustermann");
     expect(V9("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *{{1}}?*");
-    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*");
+    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zu {{1}}! *Ist davon schon etwas versichert?*");
   });
 
   it("alle Produkte: gleicher kurzer Aufbau, bestehende Öffnungsfrage, kurz genug für WhatsApp Desktop", () => {
@@ -110,7 +110,7 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
       expect(f).toBe(frage);
     }
     for (const p of OUTREACH_PURPOSES) {
-      expect(PURPOSE_VERSION[p]).toBe(p === "outreach_privatschutz" || p === "outreach_kfz" ? "v13" : "v12");
+      expect(PURPOSE_VERSION[p]).toBe(p === "outreach_privatschutz" ? "v14" : p === "outreach_kfz" ? "v13" : "v12");
       for (const form of ["du", "sie", "sie_ohne_name"] as const) {
         const req = buildTemplateRequest(p, templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", "Herr"), undefined, form, { documentExample: "https://x.de/e.pdf" });
         const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
@@ -118,7 +118,7 @@ describe("A) Erstnachricht v9 (seit v10 Rückfall)", () => {
         expect(metaTemplateProblems(body.text!, body.example?.body_text[0] ?? [])).toEqual([]);
         expect(comps.find((c) => c.type === "FOOTER")?.text).toBe(ERSTINFO_FOOTER_V12);
         expect(comps.find((c) => c.type === "HEADER")).toBeTruthy();
-        expect(req.name).toMatch(/_v1[23](_|$)/);
+        expect(req.name).toMatch(/_v1[234](_|$)/);
         // gerendert mit Beispielwerten kurz (v7 lag bei rund 230 Zeichen und klappte ein)
         expect(renderTemplate(body.text!, body.example?.body_text[0] ?? []).length).toBeLessThanOrEqual(190);
       }

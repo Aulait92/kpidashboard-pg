@@ -5,9 +5,10 @@
 // Fix: gemeinsame Erkennung (lib/interesse-formular.ts), die Assistent und Angebots-Sparten teilen. Rein, ohne LLM.
 import { describe, expect, it } from "vitest";
 import { INTERESSE_LABEL_RE, interesseAusFormular } from "@/lib/interesse-formular";
-import { frageplan, ersteFrageRegel, nurHausrat, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { frageplan, ersteFrageRegel, nurHausrat, outreachProdukt, privatschutzThema, erstanschreibenV10Params } from "@/lib/whatsapp/erstanschreiben";
 import { spartenDesLeads } from "@/lib/preise/rechner-angaben";
 import { buildSystemPrompt } from "@/lib/whatsapp/bot";
+import { TEMPLATE_BODY, TEMPLATE_BODY_B, renderTemplate } from "@/lib/whatsapp/templates";
 
 const RS_FORM = [
   { label: "Welche Versicherung interessiert Sie am meisten?", value: "rechtsschutz" },
@@ -69,5 +70,28 @@ describe("Rechtsschutz-Lead wird nicht als Haftpflicht/Hausrat behandelt", () =>
     expect(nurHausrat("Privatschutz", [{ label: "Welche Versicherung interessiert Sie am meisten?", value: "Hausrat" }])).toBe(true);
     // Produkt bleibt Privatschutz (nicht Tier)
     expect(outreachProdukt("Privatschutz")?.purpose).toBe("outreach_privatschutz");
+  });
+});
+
+describe("Eröffnungsvorlage v14: {{2}} = gewählte Sparten statt fest Haftpflicht/Hausrat", () => {
+  it("privatschutzThema: gewählte Sparten in Worten, sonst neutraler Rückfall", () => {
+    expect(privatschutzThema("Privatschutz", RS_FORM, "sie")).toBe("Rechtsschutz");
+    expect(privatschutzThema("Privatschutz", [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }], "sie")).toBe("Haftpflicht und Hausrat");
+    expect(privatschutzThema("Privatschutz", [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat, Rechtsschutz" }], "sie")).toBe("Haftpflicht, Hausrat und Rechtsschutz");
+    // mehr als drei bzw. unbekannt: neutral (nie leer, nie falsche Sparte), je Ansprache
+    expect(privatschutzThema("Privatschutz", [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat, Rechtsschutz, Unfall" }], "sie")).toBe("Ihren gewünschten Versicherungen");
+    expect(privatschutzThema("Privatschutz", [{ label: "Postleitzahl", value: "12209" }], "du")).toBe("deinen gewünschten Versicherungen");
+  });
+
+  it("erstanschreibenV10Params liefert das Thema; gerenderte a/b nennen die echte Sparte, nicht Haftpflicht/Hausrat", () => {
+    const thema = erstanschreibenV10Params({ source: "Privatschutz", an: "sie", formular: RS_FORM, purpose: "outreach_privatschutz" });
+    expect(thema).toEqual(["Rechtsschutz"]);
+    // a „Dank zuerst", b „Frage zuerst" – beide mit der echten Sparte
+    const a = renderTemplate(`Hallo {{1}}, ${TEMPLATE_BODY.outreach_privatschutz.sie}`, ["Herr Haid", ...thema]);
+    const b = renderTemplate(`Hallo {{1}}, ${TEMPLATE_BODY_B.outreach_privatschutz!.sie}`, ["Herr Haid", ...thema]);
+    expect(a).toBe("Hallo Herr Haid, danke für Ihre Anfrage zu Rechtsschutz! *Ist davon schon etwas versichert?*");
+    expect(b).toBe("Hallo Herr Haid, *Ist bei Rechtsschutz schon etwas versichert?* Danke für Ihre Anfrage!");
+    expect(a).not.toMatch(/Haftpflicht|Hausrat/);
+    expect(b).not.toMatch(/Haftpflicht|Hausrat/);
   });
 });

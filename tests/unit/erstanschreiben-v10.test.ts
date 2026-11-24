@@ -68,14 +68,14 @@ const BEANTWORTET: Record<Exclude<ErstanschreibenZweck, "outreach" | "outreach_z
 describe("v10/v11: Texte und Knöpfe", () => {
   it("Texte wie von Ole vorgegeben (Sie)", () => {
     expect(TEMPLATE_BODY.outreach_tkv.sie).toBe("schön, dass Sie {{2}} gut absichern möchten 🐾 *Was soll abgesichert sein?*");
-    expect(TEMPLATE_BODY.outreach_privatschutz.sie).toBe("danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*");
+    expect(TEMPLATE_BODY.outreach_privatschutz.sie).toBe("danke für Ihre Anfrage zu {{2}}! *Ist davon schon etwas versichert?*");
     expect(TEMPLATE_BODY.outreach_hausrat.sie).toBe("danke für Ihre Anfrage zu Ihrer Hausratversicherung! *Haben Sie schon eine Hausrat?*");
     expect(TEMPLATE_BODY.outreach_zahn.sie).toBe("danke für Ihre Anfrage zur Zahnzusatzversicherung! *Was ist Ihnen am wichtigsten?*");
     expect(TEMPLATE_BODY.outreach_pkv.sie).toBe("danke für Ihre Anfrage zur privaten Krankenversicherung! *Wie sind Sie beruflich aufgestellt?*");
     expect(TEMPLATE_BODY.outreach.sie).toBe("danke für Ihre Anfrage! *Wann passt Ihnen ein kurzes Telefonat?*");
     expect(TEMPLATE_BODY.outreach_tkv.du).toBe("schön, dass du {{2}} gut absichern möchtest 🐾 *Was soll abgesichert sein?*");
     expect(TEMPLATE_BODY_B.outreach_tkv!.sie).toBe("*was soll für {{2}} abgesichert sein?* 🐾");
-    expect(TEMPLATE_BODY_B.outreach_privatschutz!.sie).toBe("*ist bei Haftpflicht und Hausrat schon etwas versichert?* Danke für Ihre Anfrage!");
+    expect(TEMPLATE_BODY_B.outreach_privatschutz!.sie).toBe("*Ist bei {{2}} schon etwas versichert?* Danke für Ihre Anfrage!");
   });
 
   it.each(ZWECKE)("%s: kurz (ca. 90 Zeichen nach der Anrede), eine Zeile, Frage fett, keine Gedankenstriche, richtige Ansprache", (z) => {
@@ -91,8 +91,8 @@ describe("v10/v11: Texte und Knöpfe", () => {
         expect(t, was).toMatch(/\*[^*]+\?\*/);
         if (an === "du") expect(t, was).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
         else expect(t, was).not.toMatch(/\b(du|dir|dich|deine?)\b/);
-        // Platzhalter: nur TKV hat das Tier
-        expect((t.match(/\{\{\d+\}\}/g) ?? []).length, was).toBe(z === "outreach_tkv" ? 1 : 0);
+        // Platzhalter: TKV hat das Tier, Privatschutz ab v14 das Thema (die gewählten Sparten), sonst keiner
+        expect((t.match(/\{\{\d+\}\}/g) ?? []).length, was).toBe(z === "outreach_tkv" || z === "outreach_privatschutz" ? 1 : 0);
       }
     }
     // v11 „Frage zuerst“: die Frage steht direkt hinter der Anrede
@@ -117,7 +117,8 @@ describe("v10/v11: Texte und Knöpfe", () => {
 describe("v10: Platzhalter je Version und Fußzeile", () => {
   it("REST_PARAMS ab v10, ältere Fassungen behalten ihre Belegung (PLATZHALTER_AB)", () => {
     for (const p of OUTREACH_PURPOSES) {
-      expect(REST_PARAMS[p], p).toEqual(p === "outreach_tkv" ? ["Tier"] : []);
+      // Privatschutz ab v14: Thema {{2}} (die gewählten Sparten); TKV: Tier; sonst keiner
+      expect(REST_PARAMS[p], p).toEqual(p === "outreach_tkv" ? ["Tier"] : p === "outreach_privatschutz" ? ["Thema"] : []);
       expect(PLATZHALTER_AB[p], p).toEqual({ version: 10, frueher: p === "outreach_tkv" ? ["Tier", "Erste Frage"] : ["Erste Frage"] });
     }
     expect(exampleValuesFor("outreach_tkv", "sie")).toEqual(["Frau Schneider", "Minka"]);
