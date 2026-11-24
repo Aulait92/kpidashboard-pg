@@ -213,7 +213,7 @@ const offerMeta = (offer: OfferRow) => ({
 });
 
 const packageName = (offer: Pick<OfferRow, "package">) =>
-  offer.package === "service" ? "Leadgenerierung" : offer.package === "ppl_software" ? "Pay-per-Lead + Software" : "Leadgenerierung + Software";
+  offer.package === "service" ? "Leadgenerierung" : offer.package === "ppl_software" ? "Pay-per-Lead + Software" : offer.package === "ppl" ? "Nur Leads" : "Leadgenerierung + Software";
 /** „Leadgenerierung + Software (TKV-Katze)“; ohne Produkte (Pay-per-Lead + Software) nur der Paketname. */
 export const paketMitProdukten = (offer: Pick<OfferRow, "package">, products: string) => (products ? `${packageName(offer)} (${products})` : packageName(offer));
 
@@ -582,6 +582,8 @@ export async function createScheduleForOffer(
     const d = await loadInvoiceDefaults();
     await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: pm, ...customerInvoiceSettingsUpdate(d) } });
   }
+  // „Nur Leads“ (Ole, 24.11.2026): kein Abo, nur die Zahlungsart für die Lead-Bestellungen (lib/ppl/orders.ts placeOrder)
+  if (offer.package === "ppl") return;
 
   const monthly = Number(offer.monthlyFee);
   const taxRates = tax.automatic ? undefined : [tax.rateId!];

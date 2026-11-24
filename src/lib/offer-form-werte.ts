@@ -10,7 +10,8 @@ import {
   defaultStartDate,
   normalizePackage,
   normalizeTerm,
-  PPL_SOFTWARE,
+  istPpl,
+  mitSoftware,
   PRICE_LIST,
   prepayPossible,
   type OfferPackage,
@@ -210,7 +211,7 @@ function produkteAus(raw: unknown): { name: string; dailyBudget: number }[] {
 export function entwurfZuFormWerte(o: OfferEntwurf, referralDiscount: { amount: number } | null, now = new Date()): OfferFormWerte {
   const pkg = normalizePackage(o.package);
   const term = normalizeTerm(o.term);
-  const ppl = pkg === PPL_SOFTWARE;
+  const ppl = istPpl(pkg);
   const test = o.isTest;
   const produkte = produkteAus(o.products);
   const seats = o.seats ?? PRICE_LIST.seatsIncluded;
@@ -303,13 +304,13 @@ export function produktWahlMoeglich(w: OfferFormWerte, individual: boolean): boo
 
 /** Vorauszahlung möglich: 6 oder 12 Monate, ohne Startpreis, nicht Pay-per-Lead. */
 export function vorauszahlungMoeglich(w: Pick<OfferFormWerte, "pkg" | "term" | "introFee">): boolean {
-  return w.pkg !== PPL_SOFTWARE && prepayPossible(w.term) && num(w.introFee) == null;
+  return !istPpl(w.pkg) && prepayPossible(w.term) && num(w.introFee) == null;
 }
 
 /** Eingabe für createOffer/updateDraftOffer aus den Formularwerten. */
 export function formWerteZuInput(w: OfferFormWerte, opts: { referral: boolean; ueberweisungVerfuegbar: boolean }): OfferFormInput {
-  const ppl = w.pkg === PPL_SOFTWARE;
-  const softwarePkg = w.pkg !== "service";
+  const ppl = istPpl(w.pkg);
+  const softwarePkg = mitSoftware(w.pkg);
   const parsedProducts = w.products.map((p) => ({ name: p.name, dailyBudget: num(p.daily) ?? 0 }));
   const annualPossible = vorauszahlungMoeglich(w);
   const price = computeOfferPrice({

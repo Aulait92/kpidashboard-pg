@@ -2,7 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 import { InfoHinweis } from "@/components/info-hinweis";
 import { PREISSTUFE_ERKLAERT } from "@/lib/begriffe";
 import { LegalSections } from "@/components/legal-sections";
-import { AGB, PPL_KUNDENKONTO_BEDINGUNGEN, PROVIDER } from "@/lib/legal-texts";
+import { AGB, PPL_KUNDENKONTO_BEDINGUNGEN, PPL_NUR_LEADS_BEDINGUNGEN, PROVIDER } from "@/lib/legal-texts";
 import {
   beispielRechnung,
   KUNDENKONTO_ABRECHNUNG,
@@ -20,6 +20,7 @@ import {
   computeOfferPrice,
   eur,
   PPL_SOFTWARE,
+  PPL_NUR_LEADS,
   normalizeTerm,
   staffelDesPreises,
   TERM_MONTHS,
@@ -44,7 +45,7 @@ import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } f
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
 import { ersteWocheAus, ersteWocheBetrag, ersteWocheName, ersteWocheSteuerKurz, ersteWocheZahlen, eurCent, ERSTE_WOCHE_ABBUCHUNG } from "@/lib/ppl/erste-woche-shared";
 import { bruttoJeLead } from "@/lib/ppl/steuer";
-import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, PPL_REKLAMATION, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, PPL_NUR_LEADS_REKLAMATION, PPL_NUR_LEADS_SEPARAT, PPL_REKLAMATION, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -250,7 +251,9 @@ export function OfferDocument({
   const term: OfferTerm = normalizeTerm(offer.term);
   const serviceOnly = offer.package === "service";
   // Pay-per-Lead + Software (Ole, 19.11.2026): nur Software, keine Einrichtung, kein Werbebudget, keine Garantien
-  const ppl = offer.package === PPL_SOFTWARE;
+  const ppl = offer.package === PPL_SOFTWARE || offer.package === PPL_NUR_LEADS;
+  // „Nur Leads“ (Ole, 24.11.2026): Leads per Stück ohne Software, ohne Monatsgebühr, ohne Laufzeit
+  const nurLeads = offer.package === PPL_NUR_LEADS;
   // Abschnitt 2.2 Garantie(n) gibt es nur in Angeboten vor GUARANTEES_UNTIL (Ole, 22.11.2026: ohne Garantie verkaufen)
   const mitGarantieAbschnitt =
     !ppl && angebotMitGarantien(garantieDatum(offer)) && (garantieDatum(offer) < GUARANTEES_FROM || products.some((p) => isGuaranteeProduct(p.name)));
@@ -340,7 +343,7 @@ export function OfferDocument({
               Angebot · {date(offer.createdAt)}
             </p>
             <h1 lang="de" className="mt-5 hyphens-auto break-words text-[28px] font-bold leading-[1.15] tracking-tight sm:text-[38px]">
-              {ppl ? "Pay-per-Lead + Software" : serviceOnly ? "Leadgenerierung" : "Leadgenerierung + Software"}
+              {nurLeads ? "Leads per Stück" : ppl ? "Pay-per-Lead + Software" : serviceOnly ? "Leadgenerierung" : "Leadgenerierung + Software"}
               {productNames && !ppl ? (
                 <>
                   <br />
@@ -349,7 +352,9 @@ export function OfferDocument({
               ) : null}
             </h1>
             <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-[#c9d2e3]">
-              {kk
+              {nurLeads
+                ? "Anfragen zu Versicherungen, genau so viele, wie Sie möchten. Jeden Lead sehen Sie mit Kontaktdaten im Kundenbereich, halten dort den Stand fest und reklamieren mit einem Klick."
+                : kk
                 ? "Kampagnen in Ihrem eigenen Meta-Werbekonto, abgerechnet je Lead. Ihr digitaler Assistent schreibt jeden Lead per WhatsApp an und bucht Termine direkt in Ihren Kalender."
                 : ppl
                 ? "Ihr digitaler Assistent schreibt Ihre Pay-per-Lead-Leads per WhatsApp an, fragt den Bedarf ab und bucht Termine direkt in Ihren Kalender."
@@ -364,7 +369,7 @@ export function OfferDocument({
               <Stat k="Startpaket" v={eurCent(kk.startUmsatz)} sub={`${startMengeText(kk.produkte)}, inkl. USt. · abgerechnet nach Lieferung`} />
             ) : ppl && offer.setupFee === 0 && woche ? (
               // Faire Anzeige (Ole, 20.11.2026): Leadkosten der ersten Woche statt „0 € Einrichtung“
-              <Stat k="Erste Woche" v={eurCent(woche.summe)} sub={wocheSub} />
+              <Stat k={nurLeads ? "Erste Bestellung" : "Erste Woche"} v={eurCent(woche.summe)} sub={wocheSub} />
             ) : ppl && offer.setupFee === 0 ? (
               <Stat k="Einrichtung" v={eur(0)} sub="keine Einrichtungsgebühr" />
             ) : (
@@ -374,7 +379,9 @@ export function OfferDocument({
                 sub={disc ? `einmalig, netto zzgl. 19 % USt. · statt ${eur(disc.list)} (${discLabel})` : "einmalig, netto zzgl. 19 % USt."}
               />
             )}
-            {kk ? (
+            {nurLeads ? (
+              <Stat k="Monatsgebühr" v={eur(0)} sub="keine Software, keine Grundgebühr" accent />
+            ) : kk ? (
               <Stat k="Software" v="inklusive" sub={`solange Sie mindestens ${eur(MINDESTBESTELLUNG_KUNDENKONTO)} Leads im Monat beziehen, sonst ${eur(add.monthlyTotal)} netto im Monat`} accent />
             ) : add.annualTotal != null ? (
               <Stat
@@ -397,11 +404,15 @@ export function OfferDocument({
                 accent
               />
             )}
+            {nurLeads ? (
+              <Stat k="Laufzeit" v="Keine" sub="weitere Leads nur, wenn Sie bestellen" />
+            ) : (
             <Stat
               k="Laufzeit"
               v={TERM_MONTHS[term] > 0 ? `${TERM_MONTHS[term]} Monate` : "Monatlich kündbar"}
               sub={termOpen ? "Vorschlag, Laufzeit wählen Sie unten bei der Annahme" : ppl ? (TERM_MONTHS[term] > 0 ? "danach monatlich kündbar" : "keine Mindestlaufzeit") : "Pause jederzeit möglich"}
             />
+            )}
           </div>
 
           <div className="mt-8 grid gap-6 text-sm sm:grid-cols-2 print:grid-cols-2">
@@ -438,7 +449,9 @@ export function OfferDocument({
       {/* ── Inhalt ────────────────────────────────────────────────── */}
       {part !== "cover" ? (
       <div className="offer-body mt-6 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-10 text-[15px] leading-relaxed sm:px-12 print:mt-0 print:rounded-none print:border-0 print:p-0">
-        {ppl ? (
+        {nurLeads ? (
+          <NurLeadsBody offer={offer} collapse={collapseAgb} />
+        ) : ppl ? (
           <PplSoftwareBody offer={offer} term={term} add={add} firstMonth={firstMonth} termOpen={termOpen} startOpen={startOpen} arrears={arrears} ersteText={ersteText} billingDiffers={billingDiffers} plan={plan} kk={kk} collapse={collapseAgb} />
         ) : (
         <>
@@ -919,7 +932,7 @@ export function OfferDocument({
 }
 
 /** Erste Woche im Angebot (Pay-per-Lead + Software): Produkt, Anzahl, Preis je Lead mit Steuerhinweis, eigene Rechnung. */
-function ErsteWocheNote({ offer }: { offer: OfferDoc }) {
+function ErsteWocheNote({ offer, nurLeads = false }: { offer: OfferDoc; nurLeads?: boolean }) {
   const w = ersteWocheAus(offer);
   if (!w) return null;
   const b = ersteWocheBetrag(w, w.quantity);
@@ -928,7 +941,7 @@ function ErsteWocheNote({ offer }: { offer: OfferDoc }) {
   return (
     <Note>
       <span data-offer-erste-woche>
-        Ihre erste Woche: {w.quantity} Leads {ersteWocheName(w)} à {eur(bruttoJeLead(w.price, b.steuer))}, zusammen {eur(b.brutto)}
+        {nurLeads ? "Ihre erste Bestellung" : "Ihre erste Woche"}: {w.quantity} Leads {ersteWocheName(w)} à {eur(bruttoJeLead(w.price, b.steuer))}, zusammen {eur(b.brutto)}
         {frei ? ", umsatzsteuerfrei nach § 4 Nr. 11 UStG für geprüfte Versicherungsvermittler" : " inkl. 19 % USt."}.
         {offer.acceptedAt ? "" : " Die Anzahl wählen Sie bei der Annahme."} Leads stehen auf einer eigenen Rechnung.
       </span>
@@ -1166,6 +1179,75 @@ function PplSoftwareBody({
       </p>
       {kk ? <KundenkontoBedingungen collapse={collapse} /> : null}
     </>
+  );
+}
+
+/** Inhalt „Nur Leads“ (Ole, 24.11.2026): Gegenstand, Preise, Reklamation, Besondere Bedingungen. */
+function NurLeadsBody({ offer, collapse }: { offer: OfferDoc; collapse: boolean }) {
+  const w = ersteWocheAus(offer);
+  const z = w ? ersteWocheZahlen(w) : null;
+  return (
+    <>
+      <H2>1. Angebotsgegenstand und Umfang</H2>
+      <p className="mt-3 text-[#374151]">
+        Gegenstand dieses Angebots sind Interessenten-Datensätze („Leads“) per Stück, ohne Software, ohne Betreuung und ohne eigene Werbekampagnen.
+      </p>
+      <Table>
+        <Tr k="Leads">
+          <span data-offer-nur-leads>{PPL_NUR_LEADS_SEPARAT}</span>
+          <ErsteWocheNote offer={offer} nurLeads />
+          <Note>
+            <span data-offer-ppl-reklamation>{PPL_NUR_LEADS_REKLAMATION}</span>
+          </Note>
+        </Tr>
+        <Tr k="Kundenbereich">
+          Alle Leads mit Kontaktdaten und Formularangaben, einfacher Bearbeitungsstand (z. B. erreicht, Termin, Abschluss), Reklamation, Bestellungen und
+          Rechnungen. Ohne Einrichtung: Sie loggen sich ein und legen los.
+        </Tr>
+      </Table>
+
+      <H2 className="mt-12">2. Preise und Zahlungsbedingungen</H2>
+      <Table>
+        <Tr k="Monatsgebühr">
+          <b className="text-[#111827]">Keine</b>
+          <Note>Keine Software, keine Einrichtung, keine Laufzeit.</Note>
+        </Tr>
+        <Tr k="Leads">Per Stück zum Preis je Lead laut Bestellung, jede Bestellung mit eigener Rechnung. Keine Mindestabnahme.</Tr>
+        <Tr k="Bei Annahme fällig">
+          <b className="text-[#111827]">{eur(0)}</b>, Sie hinterlegen nur Ihre Zahlungsart
+          {w && z ? (
+            <Note>
+              <span data-offer-erste-woche-faellig>{`Erste Bestellung: ${eurCent(z.summe)} (${w.quantity} Leads, ${ersteWocheSteuerKurz(z.steuer)}), eigene Rechnung, Abbuchung nach Prüfung Ihrer Registernummer.`}</span>
+            </Note>
+          ) : null}
+        </Tr>
+      </Table>
+      <NurLeadsBedingungen collapse={collapse} />
+    </>
+  );
+}
+
+/** Besondere Bedingungen „Nur Leads“ (Bestandteil des Angebots, lib/legal-texts.ts PPL_NUR_LEADS_BEDINGUNGEN). */
+function NurLeadsBedingungen({ collapse }: { collapse: boolean }) {
+  const titel = "Besondere Bedingungen: Nur Leads";
+  const inhalt = <LegalSections sections={PPL_NUR_LEADS_BEDINGUNGEN} compact />;
+  return collapse ? (
+    <details className="group mt-10 rounded-xl border border-[#e5e7eb] [&>summary::-webkit-details-marker]:hidden" data-offer-nur-leads-bedingungen>
+      <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">
+        <span>
+          <span className="block text-lg font-bold">{titel}</span>
+          <span className="text-sm text-[#6b7280]">Bestandteil dieses Angebots, gehen den AGB vor. Zum Lesen antippen.</span>
+        </span>
+        <span className="text-xl text-[#6b7280] transition group-open:rotate-45">+</span>
+      </summary>
+      <div className="border-t border-[#e5e7eb] px-5 pb-5 pt-4">{inhalt}</div>
+    </details>
+  ) : (
+    <div className="mt-10" data-offer-nur-leads-bedingungen>
+      <H2>{titel}</H2>
+      <p className="mb-4 mt-1 text-sm text-[#6b7280]">Bestandteil dieses Angebots, gehen den AGB vor.</p>
+      {inhalt}
+    </div>
   );
 }
 

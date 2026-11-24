@@ -109,7 +109,8 @@ export function AcceptForm({
   const [produkte, setProdukte] = useState<OfferProduct[]>(choice?.products ?? []);
   // Erste Woche: Anzahl und Wiederholung hier, damit Zusammenfassung und fälliger Betrag live mitgehen
   const [wocheQty, setWocheQty] = useState(Math.max(ERSTE_WOCHE_MIN, ersteWoche?.quantity ?? ERSTE_WOCHE_MIN));
-  const [wocheRenew, setWocheRenew] = useState(true);
+  // „Nur Leads“: einmalige Bestellung als Standard (wiederholen nur auf Wunsch)
+  const [wocheRenew, setWocheRenew] = useState(!ersteWoche?.nurLeads);
   const wocheWahl = ersteWoche
     ? { productKey: ersteWoche.productKey, name: ersteWoche.name, price: ersteWoche.price, quantity: Math.max(ERSTE_WOCHE_MIN, wocheQty), autoRenew: wocheRenew }
     : null;
@@ -170,7 +171,7 @@ export function AcceptForm({
     <form action={action} className="space-y-4">
       {ersteWoche ? <ErsteWocheFelder {...ersteWoche} qty={wocheQty} setQty={setWocheQty} autoRenew={wocheRenew} setAutoRenew={setWocheRenew} /> : null}
       {choice && hasChoice ? (
-        <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} payLater={payLater} faellig={wocheWahl ? ersteWocheFaellig(wocheWahl) : kundenkontoFaellig} />
+        <ChoiceFields choice={{ ...choice, monthlyTotal }} produkte={produkte} setProdukte={setProdukte} individuell={individuell} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} annual={annualPick} setAnnual={setAnnualPick} arrears={!!pricing.paymentInArrears} payLater={payLater} faellig={wocheWahl ? ersteWocheFaellig(wocheWahl, !!ersteWoche?.nurLeads) : kundenkontoFaellig} />
       ) : null}
       <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm sm:p-5" data-accept-summary aria-live="polite">
         <div className="font-semibold">Das vereinbaren Sie mit dem Klick</div>

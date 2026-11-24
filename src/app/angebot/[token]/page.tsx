@@ -108,6 +108,7 @@ export default async function OfferPage({
         quantity: woche.quantity,
         softwareMonatlich: offerAddOns(offerAddOnsOf(offer)).monthlyTotal,
         registerVorschlag: await registerVorschlag(offer.salesContactId).catch(() => null),
+        nurLeads: offer.package === "ppl",
       }
     : null;
 
@@ -257,7 +258,7 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
       list: discount ? (offer.customerChoosesTerm ? setupForChoice(t, count, null, offer.package) : fixedList) : null,
     })),
     // Pay-per-Lead + Software: keine Einrichtung, Start ohne Einrichtungszeit von unserer Seite
-    ohneEinrichtung: offer.package === "ppl_software" && Number(offer.setupFee) === 0,
+    ohneEinrichtung: (offer.package === "ppl_software" || offer.package === "ppl") && Number(offer.setupFee) === 0,
     softwareMonatlich: !!kundenkontoAus(offer),
     monthlyTotal: add.monthlyTotal,
     // Produkte und Tagesbudget (Ole, 19.11.2026): Monatsgebühr nach Staffel, Zusätze (Verkäufer, Module) bleiben

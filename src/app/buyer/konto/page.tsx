@@ -112,7 +112,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const today = todayBerlin();
   const service = customer.plan === "service";
   // Pay-per-Lead + Software: kein Werbebudget, keine Produkte, keine Pause (monatlich kündbar)
-  const ppl = customer.plan === "ppl_software";
+  // „Nur Leads“ (24.11.2026) wie Pay-per-Lead + Software: kein Werbebudget, keine Pause; dazu ohne Monatsgebühr
+  const nurLeads = customer.plan === "ppl";
+  const ppl = customer.plan === "ppl_software" || nurLeads;
   // Zusätze (weitere aktive Verkäufer, Bestandskunden-Modul) und Zahlweise
   // Testkunden (Testangebot 0 €) sehen den regulären Platzpreis wie echte Kunden, berechnet wird nichts
   const seatMonthly = customer.isTest ? PRICE_LIST.seatMonthly : customer.seatMonthly != null ? Number(customer.seatMonthly) : null;
@@ -191,7 +193,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           ) : null}
           <dl className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-2 p-5 text-[15px] sm:grid-cols-[150px_1fr]">
             <dt className="text-[color:var(--muted)]">Paket</dt>
-            <dd>{service ? "Leadgenerierung (Betreuung)" : ppl ? "Pay-per-Lead + Software (Leads separat pro Stück)" : "Leadgenerierung + Software"}</dd>
+            <dd>{service ? "Leadgenerierung (Betreuung)" : nurLeads ? "Nur Leads (per Stück, ohne Monatsgebühr)" : ppl ? "Pay-per-Lead + Software (Leads separat pro Stück)" : "Leadgenerierung + Software"}</dd>
             {monthly != null && (seatsFee || bestandFee || empfehlungFee) ? (
               <>
                 <dt className="text-[color:var(--muted)]">Paket monatlich</dt>
@@ -264,7 +266,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               <>
                 <dt className="text-[color:var(--muted)]">Laufzeit</dt>
                 <dd>
-                  {annual
+                  {nurLeads
+                    ? "Keine, Leads nur bei Bestellung"
+                    : annual
                     ? `${prepayMonths} Monate, verlängert sich um ${prepayMonths} Monate, wenn nicht 1 Monat vor Ende gekündigt`
                     : TERM_MONTHS[normalizeTerm(offer.term)] > 0
                       ? `${TERM_MONTHS[normalizeTerm(offer.term)]} Monate, danach monatlich kündbar`

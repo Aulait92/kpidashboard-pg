@@ -144,7 +144,7 @@ export function DealOffersCard({
   const [ohneCall, setOhneCall] = useState(false);
   const current0 = offers.find((o) => o.status !== "superseded");
   // Pay-per-Lead + Software: immer die eigene Präsentation (wie beim Versand, offer-actions.ts)
-  const nurPpl = current0?.paket === "ppl_software";
+  const nurPpl = current0?.paket === "ppl_software" || current0?.paket === "ppl";
   const audience: Audience = nurPpl ? "ppl" : gewaehlt;
   const pdfDa = !!mail.pdf[audience];
   const [msg, setMsg] = useState<string | null>(null);

@@ -28,6 +28,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { istReinesBestellkonto } from "@/lib/ppl/bestellkonto";
+import Link from "next/link";
+import { istNurLeadsKonto, NUR_LEADS_MENUE, nurLeadsAktiv, nurLeadsPfadErlaubt } from "@/lib/nur-leads";
 
 // Seiten, die bei jeder Änderung (Lead, Chat, Termin) sofort neu laden; überall sonst nur der Zähler „Braucht dich“.
 const LIVE_PATHS = ["/buyer", "/buyer/leads", "/buyer/kanban", "/buyer/kontakte", "/buyer/chats"];
@@ -74,6 +76,17 @@ export default async function BuyerLayout({
     const pfad = (await headers()).get("x-buyer-pfad");
     if (pfad && pfad !== "/buyer/bestellen") redirect("/buyer/bestellen");
     return <BestellkontoRahmen name={customerName ?? ""} previewName={ctx.preview ? customerName : null}>{children}</BestellkontoRahmen>;
+  }
+  // „Nur Leads“ (Ole, 24.11.2026, lib/nur-leads.ts): Leads, Pipeline, Bestellen, Konto in einem schlichten Rahmen
+  if (ctx && !ctx.demo && (await istNurLeadsKonto(ctx.customerId))) {
+    const pfad = (await headers()).get("x-buyer-pfad");
+    if (pfad && !nurLeadsPfadErlaubt(pfad)) redirect("/buyer/leads");
+    return (
+      <NurLeadsRahmen name={customerName ?? ""} previewName={ctx.preview ? customerName : null} aktiv={nurLeadsAktiv(pfad)}>
+        {children}
+        {modal}
+      </NurLeadsRahmen>
+    );
   }
   const gruss = hilfeGruss(
     ctx && ctx.teamRole === "owner"
@@ -215,6 +228,53 @@ function BestellkontoRahmen({ name, previewName, children }: { name: string; pre
             </form>
           )}
         </div>
+      </header>
+      {children}
+    </div>
+  );
+}
+
+/** Rahmen „Nur Leads“: Name, Abmelden und vier Reiter (am Handy waagrecht wischbar), kein CRM-Menü. */
+function NurLeadsRahmen({ name, previewName, aktiv, children }: { name: string; previewName: string | null; aktiv: string | null; children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-dvh flex-col bg-[color:var(--background)]" data-nur-leads-rahmen>
+      {previewName ? (
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 bg-amber-400 px-4 py-2 text-sm font-medium text-amber-950">
+          <span>
+            Vorschau: Kundenbereich „Nur Leads“ von <b>{previewName}</b>, nur lesend.
+          </span>
+          <form action={endPreviewAction}>
+            <button type="submit" className="rounded-md bg-amber-950 px-3 py-1 text-xs font-semibold text-amber-50 hover:bg-black">
+              Vorschau beenden
+            </button>
+          </form>
+        </div>
+      ) : null}
+      <header className="border-b border-[color:var(--border)] bg-white">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 pt-3 sm:px-6 lg:px-8">
+          <span className="min-w-0 truncate text-sm font-semibold">{name}</span>
+          {previewName ? null : (
+            <form action="/api/auth/logout" method="post">
+              <button type="submit" className="inline-flex min-h-10 items-center gap-2 text-sm text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
+                <LogOut className="h-4 w-4" /> Abmelden
+              </button>
+            </form>
+          )}
+        </div>
+        <nav className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-2 sm:px-4 lg:px-6 [scrollbar-width:none]" aria-label="Bereiche">
+          {NUR_LEADS_MENUE.map((m) => (
+            <Link
+              key={m.href}
+              href={m.href}
+              aria-current={aktiv === m.href ? "page" : undefined}
+              className={`inline-flex min-h-11 shrink-0 items-center border-b-2 px-3 text-sm font-medium ${
+                aktiv === m.href ? "border-[color:var(--brand)] text-[color:var(--foreground)]" : "border-transparent text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
+              }`}
+            >
+              {m.label}
+            </Link>
+          ))}
+        </nav>
       </header>
       {children}
     </div>

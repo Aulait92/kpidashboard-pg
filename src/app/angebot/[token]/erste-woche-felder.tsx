@@ -21,6 +21,8 @@ export type ErsteWocheProps = {
   softwareMonatlich: number;
   /** Vorschlag aus Erstinformation bzw. Kundenkonto */
   registerVorschlag: string | null;
+  /** „Nur Leads“ (24.11.2026): „Ihre erste Bestellung“, ohne Software, Wiederholung standardmäßig aus */
+  nurLeads?: boolean;
 };
 
 /** Gewählte Anzahl und Wiederholung liegen im Annahmeformular (für „Das vereinbaren Sie mit dem Klick“). */
@@ -33,7 +35,7 @@ export function ErsteWocheFelder({ qty, setQty, autoRenew, setAutoRenew, ...p }:
   return (
     <div className="rounded-xl border border-[#e5e7eb] bg-white p-4 text-sm sm:p-5" data-erste-woche>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="text-base font-semibold">Ihre erste Woche</div>
+        <div className="text-base font-semibold">{p.nurLeads ? "Ihre erste Bestellung" : "Ihre erste Woche"}</div>
         <div className="text-[color:var(--muted)]">
           {p.name} · {eur(bruttoJeLead(p.price, betrag.steuer))} je Lead
         </div>
@@ -50,7 +52,7 @@ export function ErsteWocheFelder({ qty, setQty, autoRenew, setAutoRenew, ...p }:
             onChange={(e) => setQty(Math.min(ERSTE_WOCHE_MAX, Number(e.target.value.replace(/\D/g, "")) || 0))}
             onBlur={() => setQty((q) => Math.max(ERSTE_WOCHE_MIN, q))}
             className="h-11 w-16 border-x border-[color:var(--border)] text-center text-base font-semibold tabular-nums outline-none"
-            aria-label="Anzahl Leads in der ersten Woche"
+            aria-label={p.nurLeads ? "Anzahl Leads in der ersten Bestellung" : "Anzahl Leads in der ersten Woche"}
           />
           <button type="button" aria-label="Mehr" onClick={() => setQty((q) => Math.min(ERSTE_WOCHE_MAX, q + step))} className="flex h-11 w-11 items-center justify-center text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
             <Plus className="h-4 w-4" />
@@ -62,10 +64,12 @@ export function ErsteWocheFelder({ qty, setQty, autoRenew, setAutoRenew, ...p }:
           </div>
           <div className="text-[color:var(--muted)]">{frei ? "umsatzsteuerfrei nach § 4 Nr. 11 UStG" : "inkl. 19 % USt."}</div>
         </div>
+        {p.nurLeads ? null : (
         <div className="text-[color:var(--muted)] sm:ml-auto sm:text-right">
           dazu Software {eur(p.softwareMonatlich)} netto im Monat
           <span className="block text-xs">eigene Rechnung</span>
         </div>
+        )}
       </div>
       {qty < ERSTE_WOCHE_MIN ? <p className="mt-2 text-rose-700">Bitte mindestens {ERSTE_WOCHE_MIN} Leads wählen.</p> : null}
       <label className="mt-3 flex min-h-10 items-center gap-2">

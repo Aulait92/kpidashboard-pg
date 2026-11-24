@@ -595,7 +595,7 @@ export function setupSteps(
 ): SetupStep[] {
   const software = ob.package !== "service";
   // Pay-per-Lead + Software: kein Testlead über eine eigene Kampagne (Meta und Einwilligung fehlen in der Checkliste)
-  const kampagnen = ob.package !== "ppl_software";
+  const kampagnen = ob.package !== "ppl_software" && ob.package !== "ppl";
   const item = (k: string) => items.find((i) => i.key === k);
   const steps: SetupStep[] = [];
   for (const s of SETUP_STEPS) {

@@ -12,6 +12,9 @@ import {
   computeOfferPrice,
   eur,
   PPL_SOFTWARE_TERMS,
+  PPL_NUR_LEADS,
+  istPpl,
+  mitSoftware,
   PRICE_LIST,
   prepayPossible,
   PRODUKT_VORSCHLAEGE,
@@ -145,9 +148,11 @@ export function OfferForm({
     setupDiscount: referralDiscount ? num(discount) : null,
   });
   // Paket mit Software (Betreuung + Software oder Pay-per-Lead + Software): Verkäufer und Module buchbar
-  const softwarePkg = pkg !== "service";
+  const softwarePkg = mitSoftware(pkg);
   // Pay-per-Lead + Software (Ole, 19.11.2026): keine Produkte, kein Werbebudget, keine Einrichtung, Laufzeit ohne oder 3 Monate
-  const ppl = pkg === "ppl_software";
+  const ppl = istPpl(pkg);
+  // „Nur Leads“ (Ole, 24.11.2026): Leads per Stück ohne Software und ohne Monatsgebühr, erste Bestellung Pflicht
+  const nurLeads = pkg === PPL_NUR_LEADS;
   // Kurzfassung der zugeklappten „Preise und Sonderkonditionen“: was gerade vom Standard abweicht oder gilt
   const sonderText = test
     ? "Testangebot: alle Beträge 0 €"
@@ -170,7 +175,7 @@ export function OfferForm({
         .join(" · ");
   const waehlePaket = (k: OfferPackage) => {
     setPkg(k);
-    if (k === "ppl_software" && !PPL_SOFTWARE_TERMS.includes(term)) setTerm("none");
+    if (istPpl(k) && !PPL_SOFTWARE_TERMS.includes(term)) setTerm("none");
   };
   // Produktwahl durch den Kunden nur zum Listenpreis (wie lib/offers.ts createOffer)
   const produktWahlMoeglich = produktWahlMoeglichAus(werte, price.individual);
@@ -183,7 +188,7 @@ export function OfferForm({
   const wocheSteuer = bezugSteuer({ productKey: wocheProdukt });
   const wocheNetto = wocheNettoAus(werte);
   // Kampagnen im eigenen Werbekonto: Startpaket (Menge × Preis je Lead, brutto) ab 1.500 €
-  const kk = ppl && pplModell === "kundenkonto";
+  const kk = pkg === "ppl_software" && pplModell === "kundenkonto";
   const kkSumme = startUmsatz(kkProdukte.map((p) => ({ preis: num(p.preis) ?? 0, menge: Math.max(0, Math.round(num(p.menge) ?? 0)) })));
   const kkFehlt = Math.max(0, Math.round((MINDESTBESTELLUNG_KUNDENKONTO - kkSumme) * 100) / 100);
   const kkVorschlaege = KUNDENKONTO_VORSCHLAEGE.filter((v) => !kkProdukte.some((p) => p.name.trim().toLowerCase() === v.name.toLowerCase()));
@@ -197,6 +202,10 @@ export function OfferForm({
         setError(pruef.error);
         return;
       }
+    }
+    if (nurLeads && !wocheProdukt.trim()) {
+      setError("Bei „Nur Leads“ bitte die erste Bestellung angeben (Produkt, Preis je Lead, Anzahl).");
+      return;
     }
     if (ppl && !kk && wocheProdukt.trim() && (wocheNetto == null || wocheNetto <= 0)) {
       setError("Bitte einen Preis je Lead für die erste Woche angeben.");
@@ -268,12 +277,13 @@ export function OfferForm({
 
         <Card>
           <CardHeader title="Paket" />
-          <div className="grid gap-2 p-5 sm:grid-cols-3" data-paket-wahl>
+          <div className="grid gap-2 p-5 sm:grid-cols-2 xl:grid-cols-4" data-paket-wahl>
             {(
               [
                 ["software", "Betreuung + Software", "Leads, WhatsApp-Assistent, Terminbuchung, Pipeline"],
                 ["service", "Nur Betreuung", `Leads per E-Mail + Kundenbereich · ${eur(PRICE_LIST.serviceOnlyMonthly)} / Monat · Pause 0 €`],
                 ["ppl_software", "Pay-per-Lead + Software", `Nur Software · ${eur(PRICE_LIST.softwareFee)} / Monat · ohne Einrichtung · Leads separat pro Stück`],
+                ["ppl", "Nur Leads", "Leads per Stück · ohne Software · ohne Monatsgebühr"],
               ] as const
             ).map(([k, t, s]) => (
               <button
@@ -290,7 +300,7 @@ export function OfferForm({
           </div>
         </Card>
 
-        {ppl ? (
+        {pkg === "ppl_software" ? (
           <Card>
             <CardHeader title="Woher kommen die Leads?" />
             <div className="grid gap-2 p-5 sm:grid-cols-2" role="radiogroup" aria-label="Variante Pay-per-Lead" data-ppl-modell-wahl>
@@ -371,7 +381,7 @@ export function OfferForm({
           </Card>
         ) : ppl ? (
           <Card>
-            <CardHeader title="Erste Woche" hint="Anzahl wählt der Kunde bei der Annahme. Leer = ohne." />
+            <CardHeader title={nurLeads ? "Erste Bestellung" : "Erste Woche"} hint={nurLeads ? "Pflicht. Die Anzahl wählt der Kunde bei der Annahme." : "Anzahl wählt der Kunde bei der Annahme. Leer = ohne."} />
             <div className="grid gap-3 p-5 sm:grid-cols-2" data-erste-woche-admin>
               <datalist id="ppl-lead-produkte">
                 {ERSTE_WOCHE_PRODUKTE.map((p) => <option key={p} value={p} />)}
@@ -448,7 +458,7 @@ export function OfferForm({
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {(ppl
                 ? ([
-                    ["none", "Ohne Laufzeit", "monatlich kündbar · ohne Einrichtung"],
+                    ["none", nurLeads ? "Keine Laufzeit" : "Ohne Laufzeit", nurLeads ? "ohne Monatsgebühr · ohne Einrichtung" : "monatlich kündbar · ohne Einrichtung"],
                   ] as const)
                 : ([
                   ["12m", "12 Monate", `Setup ${eur(PRICE_LIST.setup12m)}`],
@@ -486,12 +496,15 @@ export function OfferForm({
                   ) : null}
                 </Field>
               ) : null}
+              {/* „Nur Leads“: kein Start und keine Abrechnung, geliefert wird nach der Registerprüfung */}
+              {nurLeads ? null : (
               <div className="space-y-2">
                 <Field l="Start * (ab dann läuft die Monatsgebühr)">
                   <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                 </Field>
                 <AbrechnungstagFeld startDate={startDate} day={billingDay} setDay={setBillingDay} free={billingFree} setFree={setBillingFree} voraus={annual && annualPossible} />
               </div>
+              )}
             </div>
             {/* Selten Geändertes (SUS-Prüfung 20.11.2026): Preise, Zahlungsoptionen, Test und Sondervereinbarung
                 zugeklappt; die Zeile darunter zeigt, was gerade gilt. Offen, wenn ein Preis eingetragen werden muss. */}
@@ -510,9 +523,11 @@ export function OfferForm({
                 <input className={input} inputMode="decimal" placeholder="leer = Listenpreis" value={setupOverride} onChange={(e) => setSetupOverride(e.target.value)} />
               </Field>
               )}
+              {nurLeads ? null : (
               <Field l={`Monatlich abweichend (Liste: ${price.listMonthly == null ? "individuell" : eur(price.listMonthly)})`}>
                 <input className={input} inputMode="decimal" placeholder={price.listMonthly == null ? "bitte eintragen" : "leer = Listenpreis"} value={monthlyOverride} onChange={(e) => setMonthlyOverride(e.target.value)} />
               </Field>
+              )}
               {ppl ? null : (
               <>
               <Field l="Startpreis pro Monat (optional, Rabatt zum Einstieg)">
@@ -764,6 +779,8 @@ export function OfferForm({
           <div className="space-y-3 p-5 text-sm">
             {kk ? (
               <Sum k="Paket" v="Pay-per-Lead + Software" sub={`${KUNDENKONTO_NAME} · Startpaket ${eur(kkSumme)} · Software inklusive ab ${eur(MINDESTBESTELLUNG_KUNDENKONTO)} im Monat`} />
+            ) : nurLeads ? (
+              <Sum k="Paket" v="Nur Leads" sub="Leads per Stück, ohne Software, ohne Monatsgebühr" />
             ) : ppl ? (
               <Sum k="Paket" v="Pay-per-Lead + Software" sub="Leads separat pro Stück, kein Werbebudget" />
             ) : (
@@ -777,11 +794,11 @@ export function OfferForm({
             {num(introFee) != null ? (
               <Sum k={`Monat 1–${num(introMonths) ?? "?"}`} v={eur(num(introFee)!)} sub={`${eur(withVat(num(introFee)!))} brutto`} />
             ) : null}
-            <Sum
+            {nurLeads ? null : <Sum
               k={startDate ? `Paket monatlich ab ${ersterAbrechnungstag(startDate, num(billingDay)).split("-").reverse().join(".")}` : "Paket monatlich"}
               v={price.monthlyFee == null ? "individuell" : eur(price.monthlyFee)}
               sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto${ppl ? " · monatlich kündbar" : ` · Pause: ${eur(price.softwareFee)}`}`}
-            />
+            />}
             {price.extraSeats > 0 ? (
               <Sum
                 k={`${price.extraSeats} ${price.extraSeats === 1 ? "weiterer Verkäufer" : "weitere Verkäufer"}`}

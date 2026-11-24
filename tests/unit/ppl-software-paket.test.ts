@@ -64,8 +64,10 @@ describe("Laufzeitwahl", () => {
 describe("Paketname und Nachrichten (nie als reiner Pay-per-Lead-Kunde gesperrt)", () => {
   /** Mini-Auswertung von NUR_PPL_WHERE für einen Kunden (gleiche Bedingungen wie in Prisma). */
   const passtNurPpl = (c: { plan: string; retainerMonthly: number | null; onboarding: { id: string } | null }) => {
-    const w = NUR_PPL_WHERE as { plan: { notIn: string[] }; onboarding: { is: null }; OR: unknown[] };
-    return !w.plan.notIn.includes(c.plan) && c.onboarding === null && (c.retainerMonthly == null || c.retainerMonthly <= 0);
+    // Zwei Zweige (24.11.2026): Paket „Nur Leads“ immer, sonst reine Pay-per-Lead-Kunden ohne Onboarding und Gebühr
+    const [nurLeads, rein] = (NUR_PPL_WHERE as { OR: [{ plan: string }, { plan: { notIn: string[] }; onboarding: { is: null } }] }).OR;
+    if (c.plan === nurLeads.plan) return true;
+    return !rein.plan.notIn.includes(c.plan) && c.onboarding === null && (c.retainerMonthly == null || c.retainerMonthly <= 0);
   };
   it("packageLabel liefert „Pay-per-Lead + Software“, mit CRM", () => {
     expect(packageLabel({ plan: "ppl_software", retainerMonthly: 349, onboarding: { id: "o" } })).toBe("Pay-per-Lead + Software");
@@ -84,6 +86,9 @@ describe("Paketname und Nachrichten (nie als reiner Pay-per-Lead-Kunde gesperrt)
     }
     expect(passtNurPpl({ plan: "software", retainerMonthly: null, onboarding: null })).toBe(true);
     expect(istNurPayPerLead({ plan: "software", retainerMonthly: null, onboarding: null })).toBe(true);
+    // „Nur Leads“ (24.11.2026): ohne CRM, also wie reine Pay-per-Lead-Kunden keine CRM-Erinnerungen
+    expect(passtNurPpl({ plan: "ppl", retainerMonthly: 0, onboarding: { id: "o" } })).toBe(true);
+    expect(istNurPayPerLead({ plan: "ppl", retainerMonthly: 0, onboarding: { id: "o" } })).toBe(true);
   });
 });
 

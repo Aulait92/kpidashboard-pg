@@ -151,7 +151,7 @@ async function angebotsMailVorbereiten(
   }
   const hinweise: string[] = [];
   // Pay-per-Lead + Software: immer die eigene Präsentation (Ole, 20.11.2026)
-  const audience: Audience = offer.package === "ppl_software" ? "ppl" : isAudience(extras.audience) ? extras.audience : "vertreter";
+  const audience: Audience = offer.package === "ppl_software" || offer.package === "ppl" ? "ppl" : isAudience(extras.audience) ? extras.audience : "vertreter";
   let attachment: { filename: string; content?: Buffer } | null = null;
   if (extras.praesentation) {
     const nichtDa = `Für ${AUDIENCE_LABEL[audience]} ist noch keine PDF-Präsentation hinterlegt (Vertrieb → Unterlagen).`;

@@ -15,7 +15,8 @@ export type ErsteWoche = { productKey: string; label: string | null; price: numb
 
 /** Erste Woche aus einem Angebot (null = ohne). */
 export function ersteWocheAus(o: { package?: string | null; pplProductKey?: string | null; pplLabel?: string | null; pplPrice?: unknown; pplQuantity?: number | null }): ErsteWoche | null {
-  if (o.package !== "ppl_software" || !o.pplProductKey?.trim() || o.pplPrice == null) return null;
+  // Pay-per-Lead + Software und „Nur Leads“ (dort heißt sie „Erste Bestellung“)
+  if ((o.package !== "ppl_software" && o.package !== "ppl") || !o.pplProductKey?.trim() || o.pplPrice == null) return null;
   const price = Number(o.pplPrice);
   if (!Number.isFinite(price) || price <= 0) return null;
   return { productKey: o.pplProductKey.trim(), label: o.pplLabel?.trim() || null, price, quantity: o.pplQuantity ?? ERSTE_WOCHE_STANDARD };
@@ -50,6 +51,8 @@ export const eurCent = (n: number) => n.toLocaleString("de-DE", { style: "curren
 
 /** Abbuchungszeitpunkt der ersten Woche. */
 export const ERSTE_WOCHE_ABBUCHUNG = "Abbuchung zum Start, nach Prüfung Ihrer Registernummer";
+/** „Nur Leads“: kein Start, abgebucht wird direkt nach der Prüfung. */
+export const NUR_LEADS_ABBUCHUNG = "Abbuchung nach Prüfung Ihrer Registernummer";
 
 /** Steuerhinweis zum Betrag der ersten Woche (ausführlich, mit Bedingung). */
 export function ersteWocheSteuerText(steuer: Steuer): string {
@@ -74,19 +77,22 @@ export function ersteWocheZahlen(w: Pick<ErsteWocheWahl, "productKey" | "price" 
  * Versicherungsvermittler (sonst zzgl. 19 % USt.), eigene Rechnung, Abbuchung zum Start, nach Prüfung Ihrer Registernummer.
  * Danach jede Woche dieselbe Menge, in der App jederzeit änderbar.“
  */
-export function ersteWocheVertragszeile(w: ErsteWocheWahl): string {
+/** Überschrift der ersten Bestellung: „Erste Woche“ (Pay-per-Lead + Software) bzw. „Erste Bestellung“ („Nur Leads“). */
+export const ersteBestellungTitel = (nurLeads: boolean) => (nurLeads ? "Erste Bestellung" : "Erste Woche");
+
+export function ersteWocheVertragszeile(w: ErsteWocheWahl, nurLeads = false): string {
   const z = ersteWocheZahlen(w);
   const danach = w.autoRenew ? "Danach jede Woche dieselbe Menge, in der App jederzeit änderbar." : "Einmalig, ohne automatische Wiederholung. Weitere Leads bestellen Sie in der App.";
-  return `Erste Woche: ${w.quantity} Leads ${w.name} zu je ${eurCent(z.jeLead)}, zusammen ${eurCent(z.summe)}${steuerAnhang(z.steuer)}, eigene Rechnung, ${ERSTE_WOCHE_ABBUCHUNG}. ${danach}`;
+  return `${ersteBestellungTitel(nurLeads)}: ${w.quantity} Leads ${w.name} zu je ${eurCent(z.jeLead)}, zusammen ${eurCent(z.summe)}${steuerAnhang(z.steuer)}, eigene Rechnung, ${nurLeads ? NUR_LEADS_ABBUCHUNG : ERSTE_WOCHE_ABBUCHUNG}. ${danach}`;
 }
 
 /**
  * Zeile über dem Annahmeknopf statt „Jetzt fällig: 0 €“: Betrag fett, Rest als Zusatz.
  * „Erste Woche: 510,00 € (30 Leads, umsatzsteuerfrei), Abbuchung zum Start, nach Prüfung Ihrer Registernummer“
  */
-export function ersteWocheFaellig(w: Pick<ErsteWocheWahl, "productKey" | "price" | "quantity">): { label: string; betrag: string; zusatz: string } {
+export function ersteWocheFaellig(w: Pick<ErsteWocheWahl, "productKey" | "price" | "quantity">, nurLeads = false): { label: string; betrag: string; zusatz: string } {
   const z = ersteWocheZahlen(w);
-  return { label: "Erste Woche: ", betrag: eurCent(z.summe), zusatz: ` (${w.quantity} Leads, ${ersteWocheSteuerKurz(z.steuer)}), ${ERSTE_WOCHE_ABBUCHUNG}` };
+  return { label: `${ersteBestellungTitel(nurLeads)}: `, betrag: eurCent(z.summe), zusatz: ` (${w.quantity} Leads, ${ersteWocheSteuerKurz(z.steuer)}), ${nurLeads ? NUR_LEADS_ABBUCHUNG : ERSTE_WOCHE_ABBUCHUNG}` };
 }
 
 /**

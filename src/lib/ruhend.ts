@@ -633,7 +633,7 @@ async function packageText(customerId: string): Promise<string> {
     select: { plan: true, existingCustomersEnabled: true, empfehlungEnabled: true, customerProducts: { select: { product: { select: { name: true } } } } },
   });
   if (!c) return "unbekannt";
-  const base = c.plan === "service" ? "Nur Betreuung" : c.plan === "software" ? "Betreuung + Software" : c.plan === "ppl_software" ? "Pay-per-Lead + Software" : c.plan;
+  const base = c.plan === "service" ? "Nur Betreuung" : c.plan === "software" ? "Betreuung + Software" : c.plan === "ppl_software" ? "Pay-per-Lead + Software" : c.plan === "ppl" ? "Nur Leads" : c.plan;
   const products = c.customerProducts.map((p) => p.product.name).filter(Boolean);
   return [base, products.length ? products.join(", ") : null, c.existingCustomersEnabled ? "Bestandskunden-Modul" : null, c.empfehlungEnabled ? "Empfehlungen & Bewertungen" : null].filter(Boolean).join(", ");
 }

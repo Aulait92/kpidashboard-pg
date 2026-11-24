@@ -175,6 +175,14 @@ export const KUENDIGUNG_SATZ = "Kündigen können Sie jederzeit im Kundenbereich
 export const PPL_LEADS_SEPARAT =
   "Leads bestellen Sie wie gewohnt per Stück (Pay-per-Lead), ohne Mindestabnahme. Sie werden separat zum Preis je Lead laut Bestellung abgerechnet und sind nicht Teil der Monatsgebühr.";
 
+/** Reklamation bei „Nur Leads“: ohne Folgerechnung verrechnet mit der nächsten Bestellung, auf Wunsch erstattet (Rechtsprüfung 24.11.2026, A4). */
+export const PPL_NUR_LEADS_REKLAMATION =
+  "Reklamation: Ungültige Leads können Sie innerhalb von 7 Tagen nach Zustellung in der App reklamieren, z. B. falsche oder nicht vergebene Telefonnummer, Dublette innerhalb von 30 Tagen oder erkennbarer Fake. Anerkannte Reklamationen verrechnen wir mit Ihrer nächsten Bestellung oder erstatten sie auf Wunsch. In Grenzfällen erhalten Sie die Hälfte gutgeschrieben.";
+
+/** „Nur Leads“: Leads per Stück ohne Monatsgebühr (Angebot, Annahme, Auftragsbestätigung). */
+export const PPL_NUR_LEADS_SEPARAT =
+  "Weitere Leads bestellen Sie im Kundenbereich unter „Leads bestellen“, ohne Mindestabnahme, zum Preis je Lead laut Bestellung. Jede Bestellung hat eine eigene Rechnung.";
+
 /**
  * Reklamation gekaufter Leads (Ole, 24.11.2026: „Ja passt“, nur Pay-per-Lead), im Angebot, am Annahme-Knopf und in der
  * Auftragsbestätigung. Entspricht der Storno-Regel (lib/ppl/storno.ts: 7 Tage, klare Gründe voll, Grenzfälle 50:50).
@@ -332,10 +340,13 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   // Zahlung nachträglich (Ole, 19.11.2026): nur monatlich, ohne eigenen Abrechnungstag
   const arrears = !!i.paymentInArrears && !annual;
   const ersteNachtraeglich = arrears && i.startIso ? `am ${fmtIso(nachtraeglichErsteIso(i.startIso))}` : "einen Monat nach dem Start";
-  const ppl = i.paket === "ppl_software";
+  const ppl = i.paket === "ppl_software" || i.paket === "ppl";
+  // „Nur Leads“ (Ole, 24.11.2026): ohne Software, ohne Monatsgebühr und ohne Laufzeit
+  const nurLeads = i.paket === "ppl";
   const kk = ppl && i.kundenkonto ? i.kundenkonto : null;
   // Variante „Kampagnen im eigenen Werbekonto“: eigene Zeilen statt Paketzeile und Hinweis „Leads per Stück“
   if (kk) lines.push(...kundenkontoVertragszeilen(kk));
+  else if (nurLeads) lines.push("Paket: Nur Leads. Sie kaufen Leads per Stück, ohne Software, ohne Monatsgebühr und ohne Einrichtungsgebühr.");
   else if (ppl) lines.push("Paket: Pay-per-Lead + Software (Software ohne Betreuung und ohne eigene Kampagnen), ohne Einrichtungsgebühr.");
   if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, ${i.payLater ? ZAHLBAR_SPAETER : "fällig mit der Annahme"}.`);
   else if (ppl) {
@@ -395,6 +406,8 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     );
   } else if (arrears) {
     // Laufzeit steht schon oben (nachträgliche Zahlung)
+  } else if (nurLeads) {
+    lines.push("Keine Laufzeit: Sie bestellen weitere Leads nur, wenn Sie möchten.");
   } else if (i.term === "none") {
     lines.push("Ohne Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats.");
   } else {
@@ -402,9 +415,11 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     const end = billIso ? periodEndIso(billIso, months) : null;
     lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach kündbar zum Ende des jeweiligen Abrechnungsmonats.`);
   }
-  if (ppl && !kk && i.ersteWoche) lines.push(ersteWocheVertragszeile(i.ersteWoche));
-  if (ppl && !kk) lines.push(PPL_LEADS_SEPARAT, PPL_REKLAMATION);
-  // Pay-per-Lead + Software: 19 % gelten für die Software; die Steuer der Leads steht an der ersten Woche bzw. an der Bestellung
-  lines.push(`${KUENDIGUNG_SATZ} ${ppl ? "Preise der Software zzgl. 19 % USt." : "Alle Preise zzgl. 19 % USt."}`);
+  if (ppl && !kk && i.ersteWoche) lines.push(ersteWocheVertragszeile(i.ersteWoche, nurLeads));
+  if (nurLeads) lines.push(PPL_NUR_LEADS_SEPARAT, PPL_NUR_LEADS_REKLAMATION);
+  else if (ppl && !kk) lines.push(PPL_LEADS_SEPARAT, PPL_REKLAMATION);
+  // Pay-per-Lead + Software: 19 % gelten für die Software; die Steuer der Leads steht an der ersten Woche bzw. an der Bestellung.
+  // „Nur Leads“: keine Software, also weder Kündigung noch Softwarepreis; Steuer steht an der Bestellung.
+  if (!nurLeads) lines.push(`${KUENDIGUNG_SATZ} ${ppl ? "Preise der Software zzgl. 19 % USt." : "Alle Preise zzgl. 19 % USt."}`);
   return lines;
 }

@@ -410,7 +410,7 @@ export type WillkommensMailOpts = {
   /** z. B. „Hallo Herr Weber,“ */
   greeting: string;
   /** „ppl_software“ = Pay-per-Lead + Software: ohne Meta-Freigabe und ohne Kampagne. */
-  packageType: "software" | "service" | "ppl_software";
+  packageType: "software" | "service" | "ppl_software" | "ppl";
   startDate: Date | null;
   products: string[];
   setPasswordUrl: string | null;
@@ -427,10 +427,18 @@ export function willkommensMailInhalt(opts: WillkommensMailOpts): { subject: str
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.startDate)
     : null;
   const ppl = opts.packageType === "ppl_software";
+  // „Nur Leads“ (Ole, 24.11.2026): keine Einrichtung, nur Login, Registerprüfung, Lieferung
+  const nurLeads = opts.packageType === "ppl";
   const software = opts.packageType === "software" || ppl;
   const products = opts.products.length ? opts.products.join(", ") : null;
   const accessUrl = opts.setPasswordUrl ?? opts.loginUrl;
-  const steps = [
+  const steps = nurLeads ? [
+    opts.setPasswordUrl
+      ? "Zugang einrichten: Über den Button legen Sie Ihr Passwort fest (Link 7 Tage gültig)."
+      : `Einloggen unter ${opts.loginUrl} mit ${opts.to}.`,
+    "Wir prüfen Ihre Registernummer im Vermittlerregister. Danach buchen wir Ihre erste Bestellung ab und liefern die Leads nach und nach.",
+    "Jeden Lead sehen Sie im Kundenbereich mit Kontaktdaten. Dort halten Sie den Stand fest, reklamieren ungültige Leads und bestellen weitere.",
+  ] : [
     opts.setPasswordUrl
       ? "Zugang einrichten: Über den Button legen Sie Ihr Passwort fest (Link 7 Tage gültig)."
       : `Einloggen unter ${opts.loginUrl} mit ${opts.to}.`,
@@ -461,7 +469,7 @@ export function willkommensMailInhalt(opts: WillkommensMailOpts): { subject: str
       ...steps.map((s, i) => `${i + 1}. ${s}`),
       "",
       opts.setPasswordUrl ? `Passwort festlegen: ${opts.setPasswordUrl}` : `Login: ${opts.loginUrl}`,
-      `Einrichtung: ${opts.setupUrl}`,
+      ...(nurLeads ? [] : [`Einrichtung: ${opts.setupUrl}`]),
       "",
       "Bei Fragen antworten Sie einfach auf diese E-Mail.",
       "",
@@ -476,7 +484,7 @@ export function willkommensMailInhalt(opts: WillkommensMailOpts): { subject: str
         </ol>
         <p style="margin:24px 0"><a href="${accessUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">${opts.setPasswordUrl ? "Zugang einrichten" : "Zum Kundenbereich"}</a></p>
         <p style="margin:0 0 4px;font-size:13px;color:#5b5e68">Login-E-Mail: ${escapeHtml(opts.to)}</p>
-        ${start ? `<p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Start: ${start}</p>` : ""}
+        ${start && !nurLeads ? `<p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Start: ${start}</p>` : ""}
         <p style="margin:16px 0 0;font-size:15px;line-height:1.6">Bei Fragen antworten Sie einfach auf diese E-Mail.</p>
         ${signatureHtml()}
       </div>`,

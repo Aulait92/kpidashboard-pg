@@ -14,6 +14,7 @@ export function packageLabel(c: PackageInput): string {
   if (c.plan === "internal") return "Intern";
   if (c.plan === "service") return "Nur Betreuung";
   if (c.plan === "ppl_software") return "Pay-per-Lead + Software";
+  if (c.plan === "ppl") return "Nur Leads";
   const hasRetainer = c.retainerMonthly != null && Number(c.retainerMonthly) > 0;
   if (!hasRetainer && !c.onboarding) return "Pay-per-Lead";
   return "Betreuung + Software";
@@ -31,13 +32,20 @@ export function testKennung(c: { plan: string; isTest?: boolean | null }): "Inte
  * ohne Betreuungsgebühr und ohne Onboarding. Ole, 18.11.2026: CRM-Erinnerungen gehen nicht an reine PPL-Kunden.
  */
 export const NUR_PPL_WHERE: Prisma.CustomerWhereInput = {
-  plan: { notIn: ["service", "internal", "ppl_software"] },
-  onboarding: { is: null },
-  OR: [{ retainerMonthly: null }, { retainerMonthly: { lte: 0 } }],
+  OR: [
+    // „Nur Leads“ (24.11.2026): Paket mit Onboarding, aber ohne Software und CRM
+    { plan: "ppl" },
+    {
+      plan: { notIn: ["service", "internal", "ppl_software", "ppl"] },
+      onboarding: { is: null },
+      OR: [{ retainerMonthly: null }, { retainerMonthly: { lte: 0 } }],
+    },
+  ],
 };
 
 export function istNurPayPerLead(c: PackageInput): boolean {
-  return packageLabel(c) === "Pay-per-Lead";
+  const l = packageLabel(c);
+  return l === "Pay-per-Lead" || l === "Nur Leads";
 }
 
 /** Paket mit CRM (Betreuung + Software bzw. Pay-per-Lead + Software): nur dann sagt die Quote „Nächster Schritt“ etwas aus. */

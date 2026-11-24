@@ -18,6 +18,9 @@ import {
   normalizePackage,
   normalizeTerm,
   PPL_SOFTWARE,
+  PPL_NUR_LEADS,
+  PACKAGE_LABEL,
+  istPpl,
   PPL_SOFTWARE_TERMS,
   offerAddOns,
   PRICE_LIST,
@@ -204,22 +207,26 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
   const email = normalizeLoginEmail(input.email ?? "");
   if (!LOGIN_EMAIL_RE.test(email) || email.endsWith(".invalid")) throw new Error("Bitte eine gültige E-Mail-Adresse des Empfängers angeben.");
   const pkg: OfferPackage = normalizePackage(input.package);
-  // Pay-per-Lead + Software (Ole, 19.11.2026): keine Produkte und kein Werbebudget (Leads kommen per Stück aus Pay-per-Lead)
-  const ppl = pkg === PPL_SOFTWARE;
+  // Pay-per-Lead + Software (Ole, 19.11.2026) und „Nur Leads“ (24.11.2026): keine Produkte und kein Werbebudget (Leads
+  // kommen per Stück aus Pay-per-Lead)
+  const ppl = istPpl(pkg);
+  const nurLeads = pkg === PPL_NUR_LEADS;
   if (ppl) products.length = 0;
   else if (products.length === 0) throw new Error("Bitte mindestens ein Produkt angeben.");
   const vermittlerTyp = input.vermittlerTyp === "makler" ? "makler" : input.vermittlerTyp === "mehrfachvertreter" ? "mehrfachvertreter" : "vertreter";
+  // „Nur Leads“: kein Start (keine Monatsgebühr); die erste Bestellung startet nach der Registerprüfung
+  if (nurLeads) input = { ...input, startDate: berlinTodayIso(), customerChoice: false, billingDay: null, billingFreeStart: false, paymentInArrears: false };
   if (!input.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.startDate)) {
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }
   const term = normalizeTerm(input.term);
-  if (ppl && !PPL_SOFTWARE_TERMS.includes(term)) throw new Error("Pay-per-Lead + Software gibt es nur ohne Mindestlaufzeit (monatlich kündbar).");
-  if (ppl && (input.introMonthlyFee != null || input.annual)) throw new Error("Pay-per-Lead + Software hat keinen Startpreis und keine Vorauszahlung.");
+  if (ppl && !PPL_SOFTWARE_TERMS.includes(term)) throw new Error(`${PACKAGE_LABEL[pkg]} gibt es nur ohne Mindestlaufzeit (monatlich kündbar).`);
+  if (ppl && (input.introMonthlyFee != null || input.annual)) throw new Error(`${PACKAGE_LABEL[pkg]} hat keinen Startpreis und keine Vorauszahlung.`);
   const abrechnungstag = parseAbrechnungstag(input.billingDay);
   if (!abrechnungstag.ok) throw new Error(abrechnungstag.error);
   // Variante „Kampagnen im eigenen Werbekonto“ (Ole, 20.11.2026): Produkte mit Preis je Lead und Startpaket ab 1.500 €,
   // ohne erste Woche aus unserem Pool
-  const kundenkonto = ppl && normalizePplModell(input.pplModell) === PPL_MODELL_KUNDENKONTO;
+  const kundenkonto = pkg === PPL_SOFTWARE && normalizePplModell(input.pplModell) === PPL_MODELL_KUNDENKONTO;
   let kundenkontoProdukte: KundenkontoProdukt[] | null = null;
   if (kundenkonto) {
     const k = pruefeKundenkontoProdukte(input.kundenkontoProdukte);
@@ -236,6 +243,8 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
     if (quantity == null) throw new Error(`Die erste Woche braucht mindestens ${ERSTE_WOCHE_MIN} Leads.`);
     ersteWoche = { productKey: w.productKey.trim().slice(0, 120), label: w.label?.trim().slice(0, 120) || null, price: Math.round(wPrice * 100) / 100, quantity };
   }
+  // „Nur Leads“: ohne erste Bestellung gäbe es nichts zu kaufen
+  if (nurLeads && !ersteWoche) throw new Error("Bei „Nur Leads“ bitte die erste Bestellung angeben (Produkt, Preis je Lead, Anzahl).");
   // Empfehlungsrabatt: automatisch für gültig empfohlene Kontakte, vom Admin übersteuerbar
   let discount: { amount: number; label: string; referralId: string } | null = null;
   const wanted = ppl ? null : input.setupDiscount;

@@ -41,7 +41,7 @@ export async function loadRetainerConfig(customerId: string): Promise<RetainerCo
   if (!c) return null;
   // Pay-per-Lead + Software: Lead-Kosten = Lead-Preise (wie Pro-Lead-Kunden), die Software-Gebühr zählt zu den
   // Agenturkosten (lib/agenturkosten.ts), nicht als Retainer in den Lead-Kosten
-  if (c.plan === "ppl_software") return null;
+  if (c.plan === "ppl_software" || c.plan === "ppl") return null;
   const retainerMonthly = c.retainerMonthly == null ? null : toNumber(c.retainerMonthly);
   if (!retainerMonthly && !c.metaAdAccountId) return null;
   return { retainerMonthly, retainerStart: c.retainerStart, retainerEnd: c.retainerEnd, metaAdAccountId: c.metaAdAccountId };

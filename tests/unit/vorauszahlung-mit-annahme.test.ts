@@ -99,3 +99,47 @@ describe("Reklamation bei Pay-per-Lead (Ole, 24.11.2026)", () => {
     expect(hatGedankenstrich(PPL_REKLAMATION)).toBe(false);
   });
 });
+
+describe("Paket „Nur Leads“ (Ole, 24.11.2026)", () => {
+  it("ohne Monatsgebühr, ohne Kündigungssatz, mit erster Bestellung und eigener Reklamation", async () => {
+    const { PPL_NUR_LEADS_REKLAMATION, PPL_NUR_LEADS_SEPARAT, KUENDIGUNG_SATZ } = await import("@/lib/vertrag-laufzeit");
+    const l = contractSummaryLines({
+      term: "none",
+      startIso: "2026-11-24",
+      setup: 0,
+      monthlyTotal: 0,
+      intro: null,
+      annual: false,
+      freeMonths: 0,
+      paket: "ppl",
+      ersteWoche: { productKey: "PKV-Tarifoptimierung", name: "PKV-Tarifoptimierung", price: 50, quantity: 10, autoRenew: false },
+    });
+    const text = l.join(" ").replace(/\s/g, " ");
+    expect(l[0]).toMatch(/^Paket: Nur Leads/);
+    expect(text).toContain("Erste Bestellung: 10 Leads");
+    expect(text).toContain("Abbuchung nach Prüfung Ihrer Registernummer");
+    expect(l).toContain(PPL_NUR_LEADS_SEPARAT);
+    expect(l).toContain(PPL_NUR_LEADS_REKLAMATION);
+    expect(text).not.toContain(KUENDIGUNG_SATZ);
+    expect(text).not.toContain("Monatsgebühr ab");
+    for (const x of l) expect(hatGedankenstrich(x)).toBe(false);
+  });
+
+  it("Preis: keine Einrichtung, keine Monatsgebühr; Pakethelfer", async () => {
+    const { computeOfferPrice, istPpl, mitSoftware, mitKampagnen, PACKAGE_LABEL, normalizePackage, setupForChoice } = await import("@/lib/offer-pricing");
+    const p = computeOfferPrice({ package: "ppl", term: "none", products: [], seats: 5, bestandModule: true });
+    expect([p.setupFee, p.monthlyFee, p.monthlyTotal, p.seatsFee, p.softwareFee]).toEqual([0, 0, 0, 0, 0]);
+    expect([istPpl("ppl"), mitSoftware("ppl"), mitKampagnen("ppl")]).toEqual([true, false, false]);
+    expect([mitSoftware("ppl_software"), mitKampagnen("ppl_software")]).toEqual([true, false]);
+    expect(PACKAGE_LABEL.ppl).toBe("Nur Leads");
+    expect(normalizePackage("ppl")).toBe("ppl");
+    expect(setupForChoice("none", 1, null, "ppl")).toBe(0);
+  });
+
+  it("Besondere Bedingungen ohne Gedankenstriche und ohne „Garantie“", async () => {
+    const { PPL_NUR_LEADS_BEDINGUNGEN } = await import("@/lib/legal-texts");
+    const t = JSON.stringify(PPL_NUR_LEADS_BEDINGUNGEN);
+    expect(hatGedankenstrich(t)).toBe(false);
+    expect(t).not.toMatch(/garantie/i);
+  });
+});

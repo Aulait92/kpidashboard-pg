@@ -50,7 +50,7 @@ export function OnboardingCard({
         <div>
           <h2 className="font-medium">Onboarding</h2>
           <p className="text-xs text-slate-500">
-            {customerName} · {onboarding.package === "service" ? "Nur Betreuung" : onboarding.package === "ppl_software" ? "Pay-per-Lead + Software" : "Betreuung + Software"}
+            {customerName} · {onboarding.package === "service" ? "Nur Betreuung" : onboarding.package === "ppl_software" ? "Pay-per-Lead + Software" : onboarding.package === "ppl" ? "Nur Leads" : "Betreuung + Software"}
             {onboarding.startDate ? ` · Start ${onboarding.startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}` : ""}
           </p>
         </div>

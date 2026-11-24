@@ -29,7 +29,7 @@ import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { validLoginEmail } from "@/lib/login-email";
 import { videoLinkNoetig } from "@/lib/video-raum";
 import { ersterAbrechnungstag } from "@/lib/abrechnungstag";
-import { mitKampagnen, mitSoftware, normalizePackage, PACKAGE_LABEL, prepayFreeMonthsFor, rhythmusFuer } from "@/lib/offer-pricing";
+import { istPpl, mitKampagnen, mitSoftware, normalizePackage, PACKAGE_LABEL, PPL_NUR_LEADS, prepayFreeMonthsFor, rhythmusFuer } from "@/lib/offer-pricing";
 
 const DAY = 24 * 60 * 60 * 1000;
 const INVITE_TTL_MS = 7 * DAY;
@@ -253,7 +253,8 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
                 dueAt: dueBefore(null, 0, 1),
               }
             : { title: "Onboarding: Pay-per-Lead-Bezug einrichten (Produkt, Preis, Gebiet, Lieferung in den Kundenbereich)", dueAt: dueBefore(start, 5, 1) },
-          { title: "Onboarding: Go-live: WhatsApp und Vorlage prüfen, live schalten", dueAt: dueBefore(start, 0, 2) },
+          // „Nur Leads“: kein WhatsApp, kein Assistent, nichts live zu schalten
+          ...(pkg === PPL_NUR_LEADS ? [] : [{ title: "Onboarding: Go-live: WhatsApp und Vorlage prüfen, live schalten", dueAt: dueBefore(start, 0, 2) }]),
         ].map((t) => ({ ...t, contactId: contact.id, type: "SONSTIGES" as const })),
       })
       .catch((err) => reportError(err, "onboarding-tasks"));
@@ -356,7 +357,7 @@ async function upgradeExistingCustomer(
   });
   await prisma.onboarding.update({ where: { id: onboardingId }, data: { offerId: offer.id, package: pkg, ...(offer.startDate ? { startDate: offer.startDate } : {}) } });
   // Erste Woche aus dem Angebot (Pay-per-Lead + Software): Bezug und wartende Bestellung anlegen
-  if (pkg === "ppl_software") {
+  if (istPpl(pkg)) {
     await import("@/lib/ppl/erste-woche")
       .then((m) => m.ersteWocheAnlegen(offer.id, customerId))
       .catch((err) => reportError(err, "upgrade-erste-woche", { offer: offer.number }));
@@ -372,6 +373,8 @@ async function upgradeExistingCustomer(
               ? "Software einrichten (WhatsApp, Kalender, App, Team)"
               : pkg === "ppl_software"
                 ? "Pay-per-Lead + Software: Software einrichten, Kampagnen beenden, Pay-per-Lead-Bezug prüfen"
+                : pkg === PPL_NUR_LEADS
+                  ? "Nur Leads: Kampagnen bzw. Software beenden, Pay-per-Lead-Bezug prüfen"
                 : "auf Nur Betreuung umstellen"
           }`,
           dueAt: dueBefore(null, 0, 0),
@@ -548,8 +551,10 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
   items.push(
     { key: "welcome", label: "Willkommens-Mail verschickt", owner: "auto", done: !!ob.welcomeSentAt, at: ob.welcomeSentAt },
     { key: "login", label: "Kunde hat sich eingeloggt", owner: "kunde", done: !!firstLogin, at: firstLogin },
-    { key: "questionnaire", label: "Fragebogen ausgefüllt", owner: "kunde", done: !!ob.questionnaireAt, at: ob.questionnaireAt },
   );
+  // „Nur Leads“ (Ole, 24.11.2026): keine Einrichtung beim Kunden; die Registerprüfung läuft über den Bezug (erste Bestellung)
+  if (ob.package === PPL_NUR_LEADS) return items;
+  items.push({ key: "questionnaire", label: "Fragebogen ausgefüllt", owner: "kunde", done: !!ob.questionnaireAt, at: ob.questionnaireAt });
   if (kampagnen) {
     items.push({ key: "metaAccess", label: "Meta-Zugriff (Werbekonto + Seite) erteilt", owner: "kunde", done: !!ob.metaAccessAt, at: ob.metaAccessAt, manual: "metaAccess" });
   }
@@ -871,6 +876,8 @@ export async function sendGoLiveMail(onboardingId: string) {
   const software = mitSoftware(ob.package);
   const q = (ob.questionnaire ?? {}) as { leadEmails?: string[] };
   const greeting = await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null });
+  // „Nur Leads“: nichts live zu schalten (kein Assistent); die Lieferung startet mit der Abbuchung der ersten Bestellung
+  if (ob.package === PPL_NUR_LEADS) return;
   if (!mitKampagnen(ob.package)) {
     // Pay-per-Lead + Software: keine Kampagne, der Assistent übernimmt die bestellten Leads
     const r = await sendCustomerMail({

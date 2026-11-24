@@ -319,6 +319,44 @@ export const PPL_KUNDENKONTO_BEDINGUNGEN: LegalSection[] = [
   },
 ];
 
+/**
+ * Besondere Bedingungen „Nur Leads“ (Ole, 24.11.2026): Leads per Stück ohne Software, ohne Monatsgebühr und ohne Laufzeit.
+ * Bestandteil des Angebots, gehen den AGB vor (wie PPL_KUNDENKONTO_BEDINGUNGEN). Interne Rechtsprüfung mit Auflagen:
+ * docs/recht/2026-11-24-nur-leads.md (Freigabe des Wortlauts durch Ole steht aus, Stufe A).
+ */
+export const PPL_NUR_LEADS_BEDINGUNGEN: LegalSection[] = [
+  {
+    title: "Leistung",
+    items: [
+      "Diese Bedingungen gelten für das Paket „Nur Leads“ und gehen den AGB vor. Der Anbieter liefert dem Kunden Leads per Stück: Kontaktdaten und Formularangaben von Interessenten, die über Werbeanzeigen eine Beratung zum bestellten Produkt angefragt und in die Kontaktaufnahme durch den Kunden eingewilligt haben. Die Leads stehen im Kundenbereich bereit; dort pflegt der Kunde den Bearbeitungsstand und reklamiert Leads. Software mit digitalem Assistenten, Betreuung und eigene Werbekampagnen sind nicht enthalten. Die Regeln der AGB zu Kampagnen, Werbebudget, Pause, Testphasen, Setupgebühr, monatlicher Vergütung sowie Laufzeit und Kündigung gelten nicht; für den Kundenbereich gelten die Regeln der AGB zur Software entsprechend. Ein bestimmtes Ergebnis, etwa Erreichbarkeit oder Abschlüsse, schuldet der Anbieter nicht.",
+    ],
+  },
+  {
+    title: "Bestellung, Preis und Zahlung",
+    items: [
+      "Der Kunde bestellt Leads im Kundenbereich, ohne Mindestabnahme. Es gilt der Preis je Lead, der bei der Bestellung steht; die Umsatzsteuer richtet sich nach dem Abschnitt „Umsatzsteuer auf Leads“ der AGB und steht ebenfalls an der Bestellung. Jede Bestellung erhält eine eigene Rechnung und wird mit der Bestellung per Lastschrift oder Karte bezahlt, die erste erst nach Prüfung des Registereintrags des Kunden. Der Anbieter liefert nach und nach, sobald passende Anfragen eingehen; eine bestimmte Lieferzeit schuldet er nicht. Den noch nicht gelieferten Teil einer Bestellung kann der Kunde jederzeit im Kundenbereich oder in Textform stornieren; der Anbieter erstattet ihn innerhalb von 14 Tagen.",
+    ],
+  },
+  {
+    title: "Abrechenbare Leads und Reklamation",
+    items: [
+      "Abrechenbar ist ein Lead mit vollständig ausgefülltem Formular und gültiger Telefonnummer, der weder eine Dublette innerhalb von 30 Tagen noch ein erkennbarer Fake ist. Der Kunde kann einen Lead innerhalb von 7 Tagen nach Zustellung im Kundenbereich reklamieren. Ist der Lead nicht abrechenbar, schreibt der Anbieter den vollen Preis gut, bei anderen Gründen (Grenzfall) die Hälfte. Gutschriften verrechnet der Anbieter mit der nächsten Bestellung; auf Wunsch erstattet er sie.",
+    ],
+  },
+  {
+    title: "Voraussetzungen und Nutzung der Leads",
+    items: [
+      "Der Kunde hat eine Erlaubnis nach § 34d GewO, für Kindersparpläne eine Erlaubnis nach § 34f GewO oder ein Haftungsdach, und ist im jeweiligen Register eingetragen. Er stellt sicher, dass sein Vermittler- oder Agenturvertrag den Bezug der Leads erlaubt, und teilt den Wegfall seiner Erlaubnis unverzüglich mit; dann endet die Lieferung. Mit der Zustellung ist der Kunde für die Leads eigener Verantwortlicher nach der DSGVO; im Kundenbereich verarbeitet der Anbieter sie für ihn nach dem Auftragsverarbeitungsvertrag. Der Kunde kontaktiert Leads nur zu ihrer Anfrage und auf den Wegen, in die sie eingewilligt haben. Bei der ersten Kontaktaufnahme gibt er seine Erstinformation (§ 15 VersVermV) und seine Datenschutzhinweise (Art. 14 DSGVO). Widerrufe beachtet er sofort, und er gibt Leads nicht an Dritte weiter. Den Nachweis der Einwilligung stellt der Anbieter je Lead im Kundenbereich bereit.",
+    ],
+  },
+  {
+    title: "Laufzeit und Kundenbereich",
+    items: [
+      "Es gibt keine Laufzeit und keine Grundgebühr; der Kundenbereich ist enthalten. Der Kunde kann den Vertrag jederzeit im Kundenbereich oder in Textform beenden, der Anbieter mit einer Frist von 14 Tagen in Textform; das Recht zur außerordentlichen Kündigung bleibt unberührt. Den bezahlten, noch nicht gelieferten Teil offener Bestellungen erstattet der Anbieter dann. Für die Daten bei Vertragsende gelten die AGB; bis zur Löschung kann der Kunde seine Leads exportieren.",
+    ],
+  },
+];
+
 export const AVV: LegalSection[] = [
   {
     title: "Gegenstand und Dauer",

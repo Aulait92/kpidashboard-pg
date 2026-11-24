@@ -164,7 +164,7 @@ export type AngebotFuerFolien = {
 
 /** Zielgruppe: Angebot (Makler/Vertreter) geht vor, sonst der Kontakt („Makler“ laut Anreicherung), sonst Vertreter. */
 export function audienceFuer(contact: { insurer?: string | null } | null, angebot: (Pick<AngebotFuerFolien, "vermittlerTyp"> & { package?: string }) | null): VerkaufsAudience {
-  if (angebot?.package === "ppl_software") return "ppl";
+  if (angebot?.package === "ppl_software" || angebot?.package === "ppl") return "ppl";
   if (angebot) return angebot.vermittlerTyp === "makler" ? "makler" : "vertreter";
   return contact?.insurer === "Makler" ? "makler" : "vertreter";
 }
@@ -291,7 +291,7 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     : [{ label: TERM_KURZ[term], betrag: angebot.setupFee, markiert: true }];
   const monatlich: PaketDaten["monatlich"] = [
     {
-      label: PACKAGE_LABEL[angebot.package === "ppl_software" ? "ppl_software" : software ? "software" : "service"],
+      label: PACKAGE_LABEL[angebot.package === "ppl_software" || angebot.package === "ppl" ? angebot.package : software ? "software" : "service"],
       detail: produkte.length ? produkte.map((p) => `${p.name}${p.tagesbudget ? ` (${eur0(p.tagesbudget)} pro Tag)` : ""}`).join(", ") : undefined,
       betrag: `${eur0(angebot.monthlyFee)} netto`,
     },
@@ -349,7 +349,7 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
  * wählbar sind; nicht mit Startpreis und nicht bei Pay-per-Lead (dort gibt es keine Vorauszahlung).
  */
 function jahresplanImAngebot(angebot: AngebotFuerFolien, term: OfferTerm, monatlich: number): Jahresplan | null {
-  if (angebot.package === "ppl_software" || angebot.introMonthlyFee != null || !(monatlich > 0)) return null;
+  if (angebot.package === "ppl_software" || angebot.package === "ppl" || angebot.introMonthlyFee != null || !(monatlich > 0)) return null;
   const angeboten = angebot.annualPrepay || !!angebot.annualChoice;
   const zwoelf = term === "12m" || (angebot.customerChoosesTerm && !!angebot.annualChoice);
   if (!angeboten || !zwoelf) return null;
