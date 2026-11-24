@@ -321,7 +321,7 @@ describe("Nachfass-Abfolgen", () => {
     await runSequences(at);
     expect(mine()).toHaveLength(1);
     expect(mine()[0][0]).toMatchObject({ purpose: "followup_nudge", leadId: lead.id });
-    expect((mine()[0][0] as { text: string }).text).toContain("wie besprochen melde ich mich wieder zu Hausrat");
+    expect((mine()[0][0] as { text: string }).text).toContain("wie besprochen melde ich mich wieder zum Hausrat");
     const done = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
     expect(done.stopReason).toBe("Abgeschlossen");
     await cleanupCustomer(other);

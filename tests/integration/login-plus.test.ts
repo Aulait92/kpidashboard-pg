@@ -4,7 +4,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/headers", () => ({
-  cookies: async () => ({ get: () => undefined, set: () => undefined, delete: () => undefined }),
+  cookies: async () => ({ get: () => undefined, has: () => false, set: () => undefined, delete: () => undefined }),
   headers: async () => new Headers(),
 }));
 vi.mock("@/lib/push", () => ({ sendToAdmins: vi.fn(async () => ({ sent: 0, removed: 0, errors: [] })), sendToCustomer: vi.fn(async () => ({ sent: 0 })) }));
