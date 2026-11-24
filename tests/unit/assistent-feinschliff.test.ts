@@ -332,8 +332,8 @@ describe("Erstanschreiben v9 (vorher v8, seit v10 Rückfall): Text und Parameter
     expect(erstanschreibenV9("outreach").du).toBe("danke für deine Anfrage! *{{2}}?*");
     expect(erstanschreibenV9("outreach_tkv").sie).toBe("schön, dass Sie {{2}} gut absichern möchten 🐾 *{{3}}?*");
     // v10 (Ole, 19.11.2026): feste Frage
-    expect(templateTextFor("outreach_privatschutz", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*");
-    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*");
+    expect(templateTextFor("outreach_privatschutz", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zu {{2}}! *Ist davon schon etwas versichert?*");
+    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zu {{1}}! *Ist davon schon etwas versichert?*");
     expect(templateTextFor("outreach", "du")).toBe("Hallo {{1}}, danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*");
     expect(templateTextFor("outreach_tkv", "sie")).toBe("Hallo {{1}}, schön, dass Sie {{2}} gut absichern möchten 🐾 *Was soll abgesichert sein?*");
   });
@@ -434,7 +434,7 @@ describe("Erstanschreiben v10: Einreichung, Auswahl und Erstinformation (Live-Te
       expect(kopf).toBe(true);
       const req = buildTemplateRequest(purpose, names, undefined, form, { variant, documentExample: "https://x.de/erstinformation/abc/pdf", kopf });
       expect(req.name).toBe(templateNameFor(purpose, undefined, form, variant, kopf));
-      expect(req.name).toMatch(/_v1[23](_b)?(_sie(_ohne_name)?)?$/);
+      expect(req.name).toMatch(/_v1[234](_b)?(_sie(_ohne_name)?)?$/);
       expect(req.category).toBe("MARKETING");
       const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
       expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);

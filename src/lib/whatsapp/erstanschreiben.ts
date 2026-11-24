@@ -203,10 +203,14 @@ export const ERSTANSCHREIBEN_V10: Record<ErstanschreibenZweck, V10Frage> = {
     werte: { "Nur Operationen": "nur OP-Schutz", "Auch Behandlungen": "volle Krankenversicherung (auch Tierarztbehandlung)", "Noch unsicher": "offen" },
   },
   outreach_privatschutz: {
-    // v13 (Ole, 21.11.2026: „Kunde weiß nicht genau, was mit Privatschutz gemeint ist“): Thema in Worten, wie überall in
-    // der App („Haftpflicht und Hausrat“), in Fassung a und b. Bis zur Freigabe bei Meta geht die v12 raus.
-    a: { sie: "danke für Ihre Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*", du: "danke für deine Anfrage zu Haftpflicht und Hausrat! *Ist davon schon etwas versichert?*" },
-    b: { sie: "*ist bei Haftpflicht und Hausrat schon etwas versichert?* Danke für Ihre Anfrage!", du: "*ist bei Haftpflicht und Hausrat schon etwas versichert?* Danke für deine Anfrage!" },
+    // v14 (Ole, 24.11.2026, Produktionsfehler: Ein Lead mit Interesse Rechtsschutz wurde nach Haftpflicht und Hausrat
+    // gefragt): Die Eröffnung nennt nicht mehr fest „Haftpflicht und Hausrat”, sondern die vom Lead im Formular gewählten
+    // Sparten als {{2}} (Thema, erstanschreibenV10Params → privatschutzThema; höchstens drei, sonst neutral „Ihren
+    // gewünschten Versicherungen”). So steht nie eine falsche Sparte im ersten Satz. a „Dank zuerst”, b „Frage zuerst”
+    // (A/B, docs/firma/ab-tests.md). Bis zur Freigabe von v14 bei Meta sendet die App die zuletzt freigegebene Fassung
+    // (v13/v12, ohne {{2}}); deren überzähliger Thema-Wert fällt beim Füllen weg (placeholderCount, templates.ts).
+    a: { sie: "danke für Ihre Anfrage zu {{2}}! *Ist davon schon etwas versichert?*", du: "danke für deine Anfrage zu {{2}}! *Ist davon schon etwas versichert?*" },
+    b: { sie: "*Ist bei {{2}} schon etwas versichert?* Danke für Ihre Anfrage!", du: "*Ist bei {{2}} schon etwas versichert?* Danke für deine Anfrage!" },
     knoepfe: ["Alles neu", "Schon versichert", "Teils, teils"],
     feld: "vorhanden",
     planKey: "vorhanden",
@@ -985,9 +989,24 @@ export function v10Moeglich(source: string | null | undefined, formular?: FormAn
   return !!f && !f.bekannt;
 }
 
-/** Parameter der v10/v11-Vorlage nach dem Namen (rein, testbar): TKV [Tier], sonst keine. */
+/**
+ * Thema {{2}} der Privatschutz-Eröffnung ab v14 (Ole, 24.11.2026): die vom Lead gewählten Sparten in Worten
+ * („Rechtsschutz", „Haftpflicht und Hausrat", höchstens drei), sonst neutral „Ihren/deinen gewünschten Versicherungen".
+ * Nie leer (Meta verlangt belegte Platzhalter), nie eine Sparte, die der Lead nicht gewählt hat.
+ */
+export function privatschutzThema(source: string | null | undefined, formular: FormAntwort[] | null | undefined, an: Ansprache): string {
+  const neutral = a(an, "deinen gewünschten Versicherungen", "Ihren gewünschten Versicherungen");
+  const interesse = interesseAusFormular(formular) ?? (/privatschutz/i.test(source ?? "") ? null : (source ?? null));
+  const w = spartenWoerter(interesse);
+  if (!w.length || w.length > 3) return neutral;
+  return w.length === 1 ? w[0] : `${w.slice(0, -1).join(", ")} und ${w.at(-1)}`;
+}
+
+/** Parameter der v10/v11-Vorlage nach dem Namen (rein, testbar): TKV [Tier], Privatschutz [Thema/Sparten], sonst keine. */
 export function erstanschreibenV10Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; purpose: NoticePurpose }): string[] {
-  return o.purpose === "outreach_tkv" ? [tierFuerErstanschreiben(o.source, o.an, o.formular)] : [];
+  if (o.purpose === "outreach_tkv") return [tierFuerErstanschreiben(o.source, o.an, o.formular)];
+  if (o.purpose === "outreach_privatschutz") return [privatschutzThema(o.source, o.formular, o.an)];
+  return [];
 }
 
 /**
