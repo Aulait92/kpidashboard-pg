@@ -1,5 +1,5 @@
 import { LegalSections } from "@/components/legal-sections";
-import { AVV, LEGAL_VERSION, PROVIDER, SUBPROCESSORS, TOMS } from "@/lib/legal-texts";
+import { AVV, LEGAL_VERSION, PROVIDER, SUBPROCESSORS, SUBPROCESSORS_PDF_PFAD, TOMS } from "@/lib/legal-texts";
 
 export const metadata = { title: "Auftragsverarbeitungsvertrag · performancegrowth", robots: { index: false, follow: true } };
 
@@ -27,6 +27,11 @@ export default function AvvPage() {
         </section>
         <section className="mt-10">
           <h2 className="text-lg font-bold">Anlage 2: Unterauftragsverarbeiter</h2>
+          <p className="mt-1 text-sm">
+            <a href={SUBPROCESSORS_PDF_PFAD} target="_blank" rel="noopener" className="font-medium text-[#2563EB] hover:underline">
+              Liste als PDF
+            </a>
+          </p>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>

@@ -38,14 +38,14 @@ Neu aufgenommen und vertont am 19.11.2026 (Phase „Abschluss“ statt „Gewonn
 - **Team**: Arbeiten Sie im Team? Dann laden Sie unter ‚Team‘ Ihre Berater ein. Neue Leads werden automatisch reihum verteilt.
 - **outro**: Wenn Sie Fragen haben, hilft Ihnen die KI-Hilfe unten links sofort weiter, und mit einem Klick erreichen Sie unser Team. Viel Erfolg mit Performance Growth!
 
-## WhatsApp verbinden (ca. 3:20 Min.)
+## WhatsApp verbinden (ca. 3:40 Min.)
 
-Ablauf Stand 15.11.2026 (Ole): Einladung von 360dialog per E-Mail, Anmeldung mit Code, Nummer (+49 statt +1), SMS-Code, „Embedded Signup“, Fenster von Meta, zwei Häkchen entfernen, „Fast geschafft“. Hauptweg neue Nummer, kurz der Weg mit der WhatsApp Business App (QR-Code). App-Teile in der echten App mit Demo-Daten, 360dialog und Meta als vereinfachte Darstellung (im Video gekennzeichnet). Neu aufnehmen: tools/erklaervideos (wa_scenes.py, wa_rec.js, cards/wa_mock.html).
+Neu aufgenommen und vertont am 24.11.2026 (Vorbereitung: privater Computer außerhalb des Firmennetzes; „Vorher kurz prüfen“ mit dem Punkt „bei keinem anderen Anbieter“; E-Mail für die Einladung über „Jetzt WhatsApp verbinden“, am besten privat). Ablauf Stand 15.11.2026 (Ole): Einladung von 360dialog per E-Mail, Anmeldung mit Code, Nummer (+49 statt +1), SMS-Code, „Embedded Signup“, Fenster von Meta, zwei Häkchen entfernen, „Fast geschafft“. Hauptweg neue Nummer, kurz der Weg mit der WhatsApp Business App (QR-Code). App-Teile in der echten App mit Demo-Daten, 360dialog und Meta als vereinfachte Darstellung (im Video gekennzeichnet). Neu aufnehmen: tools/erklaervideos (wa_scenes.py, wa_rec.js, cards/wa_mock.html).
 
 - **card_intro**: In diesem Video zeigen wir Ihnen, wie Sie Ihre WhatsApp-Nummer mit Performance Growth verbinden. Das machen Sie nur einmal, es dauert etwa zehn Minuten.
-- **Vorher bereitlegen**: Sie brauchen: Ihren Facebook-Login mit Admin-Rechten, Ihr E-Mail-Postfach, das Telefon zur Nummer und einen Computer, auf dem Pop-ups erlaubt sind.
-- **1. Einrichtung: WhatsApp verbinden**: Öffnen Sie in der Einrichtung den Schritt „WhatsApp verbinden“ und wählen Sie Ihre Nummer, in diesem Beispiel eine neue Nummer.
-- **„Jetzt WhatsApp verbinden“**: Klicken Sie auf „Jetzt WhatsApp verbinden“. Wir legen Ihr Konto bei 360dialog, unserem WhatsApp-Anbieter, kostenlos für Sie an.
+- **Vorher bereitlegen**: Sie brauchen: Ihren Facebook-Login mit Admin-Rechten, Ihr E-Mail-Postfach, das Telefon zur Nummer und einen privaten Computer außerhalb des Firmennetzes, auf dem Pop-ups erlaubt sind.
+- **1. Einrichtung: WhatsApp verbinden**: Öffnen Sie in der Einrichtung den Schritt „WhatsApp verbinden“. Läuft Ihre Nummer noch bei einem anderen Anbieter, lassen Sie sie dort zuerst freigeben. Dann wählen Sie Ihre Nummer, in diesem Beispiel eine neue Nummer.
+- **E-Mail prüfen, dann „Jetzt WhatsApp verbinden“**: Prüfen Sie, an welche E-Mail die Einladung geht. Firmen-Postfächer filtern sie oft, nehmen Sie dann eine private Adresse. Klicken Sie auf „Jetzt WhatsApp verbinden“. Wir legen Ihr Konto bei 360dialog kostenlos für Sie an.
 - **2. E-Mail von 360dialog öffnen**: Jetzt das Wichtigste: Öffnen Sie die E-Mail von 360dialog. Sie ist auf Englisch. Der Knopf öffnet direkt Ihr Postfach.
 - **In der E-Mail: „Join 360Dialog Hub“**: Klicken Sie in der E-Mail auf „Join 360Dialog Hub“ und legen Sie ein Passwort fest.
 - **3. Häkchen setzen, dann „Weiter“**: Zurück in der Software setzen Sie das Häkchen „Erledigt“. Darunter finden Sie alle weiteren Schritte mit Bildern. Dann klicken Sie auf „Weiter: WhatsApp verbinden“.

@@ -8,6 +8,9 @@
 // - WhatsApp: Gab es schon ein Gespräch mit der Nummer, geht keine zweite Begrüßung raus (nur ein Hinweis im Chat).
 //   Gab es nie eins, gilt das normale Erstanschreiben (sofort, mit dem Produkt der neuen Eintragung).
 // - Zahlen: kein neuer Lead-Datensatz, also kein zweiter Lead in Kennzahlen und keine zweite Lead-Gebühr (Revenue).
+// - Name (Ole, 19.11.2026, lib/lead-name.ts): Der Name der neuen Anfrage gilt (Verlauf „Neue Anfrage als … (vorher: …)“),
+//   außer er wurde im Kontakt von Hand geändert. Offensichtlich andere Person (beide Nachnamen bekannt, verschieden):
+//   keine erneute Eintragung, sondern ein eigener Lead; lead-intake übergibt ihm danach den WhatsApp-Chat (lib/lead-name-server.ts).
 //
 // Sicherheit: lead-intake ruft das nur über tryReentry auf. Jeder Fehler vor dem Speichern führt zum normalen Weg
 // (neuer Lead); nach dem Speichern scheitern Folgeschritte (Verlauf, Push, WhatsApp) einzeln, ohne den Eingang.
@@ -19,6 +22,9 @@ import { isLostStatus, lostReasonLabel, lostReasonOf } from "@/lib/lead-lost";
 import { POLICY_TODO } from "@/lib/lead-followup";
 import { CROSS_SELL_TODO, POLICE_TODO } from "@/lib/vertraege-shared";
 import { adData, type LeadAd } from "@/lib/anzeige";
+import { anredeAusVorname } from "@/lib/vorname-anrede";
+import { anredeRohAusForm, istPersonenAngabe, kontaktParts } from "@/lib/ansprache";
+import { namensWechsel } from "@/lib/lead-name";
 
 /** Text der Wiedervorlage bzw. Grund auf der Anrufliste. */
 export const ERNEUT_TODO = "Hat sich erneut eingetragen";
@@ -43,6 +49,8 @@ export type ReentryInput = {
 };
 
 export type ReentryResult = { status: "reentry" | "duplicate"; leadId: string };
+/** Gleiche Nummer bzw. E-Mail, aber offensichtlich eine andere Person: lead-intake legt einen eigenen Lead an. */
+export type AnderePerson = { status: "andere_person"; altLeadId: string; altName: string | null };
 
 const MATCH_SELECT = {
   id: true,
@@ -97,12 +105,26 @@ const berlinDay = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Eur
 /**
  * Formularantworten zusammenführen: Bisherige bleiben vorn (Name, Anrede usw. nehmen den ersten Treffer), danach
  * „Erneut eingetragen“ mit Datum und Produkt, neue bzw. geänderte Antworten und abweichende Kontaktdaten.
+ * Mit neuem Namen (opts.neuerName, lib/lead-name.ts) stehen Anrede, Vor- und Nachname der neuen Anfrage ganz vorn, damit
+ * die Anrede („Herr Platzhalter“) zur neuen Anfrage passt. Fehlt dort die Anrede, gilt die alte nicht weiter: Anrede aus
+ * dem neuen Vornamen, wenn eindeutig, sonst „keine Angabe“.
  */
-export function mergeFormData(old: unknown, inc: Pick<ReentryInput, "answers" | "productKey">, extras: Answer[], now: Date): Answer[] {
+export function mergeFormData(
+  old: unknown,
+  inc: Pick<ReentryInput, "answers" | "productKey">,
+  extras: Answer[],
+  now: Date,
+  opts: { neuerName?: string | null } = {},
+): Answer[] {
   const base = Array.isArray(old) ? old.filter(isAnswer) : [];
   const have = new Set(base.map(key));
-  const add = [...inc.answers, ...extras].filter((a) => a.value.trim() && !have.has(key(a)));
-  return [...base, { label: "Erneut eingetragen", value: `${berlinDate(now)}, ${inc.productKey}` }, ...add];
+  const neu = inc.answers.filter((a) => a.value.trim());
+  const vorn = opts.neuerName ? neu.filter((a) => istPersonenAngabe(a.label)) : [];
+  if (opts.neuerName && !anredeRohAusForm(vorn) && anredeRohAusForm(base)) {
+    vorn.unshift({ label: "Anrede", value: anredeAusVorname(kontaktParts({ fullName: opts.neuerName }).first) ?? "keine Angabe" });
+  }
+  const add = [...neu.filter((a) => !vorn.includes(a)), ...extras].filter((a) => a.value.trim() && !have.has(key(a)));
+  return [...vorn, ...base, { label: "Erneut eingetragen", value: `${berlinDate(now)}, ${inc.productKey}` }, ...add];
 }
 
 /** WhatsApp-Erstanschreiben möglich (Assistent an, Erstanschreiben an, Nummer verbunden)? */
@@ -121,7 +143,7 @@ const isUniqueError = (err: unknown) =>
  * Erneute Eintragung erkennen und verarbeiten. null = keine Dublette oder Fehler vor dem Speichern: dann legt
  * lead-intake wie bisher einen neuen Lead an (Fehler werden gemeldet, nie geworfen).
  */
-export async function tryReentry(inc: ReentryInput, now = new Date()): Promise<ReentryResult | null> {
+export async function tryReentry(inc: ReentryInput, now = new Date()): Promise<ReentryResult | AnderePerson | null> {
   let lead: MatchLead | null;
   try {
     lead = await findReentryLead(inc.customerId, inc.phone, inc.email);
@@ -130,6 +152,8 @@ export async function tryReentry(inc: ReentryInput, now = new Date()): Promise<R
     return null;
   }
   if (!lead) return null;
+  // Anderer Nachname: eigener Lead (lead-intake), der bestehende bleibt unverändert
+  if (namensWechsel(lead, inc.name) === "andere_person") return { status: "andere_person", altLeadId: lead.id, altName: lead.name };
 
   let saved: Awaited<ReturnType<typeof saveReentry>>;
   try {
@@ -152,9 +176,14 @@ async function saveReentry(lead: MatchLead, inc: ReentryInput, now: Date) {
   const keepContact = !!lead.contactEditedAt;
   const extras: Answer[] = [];
   const fill: Prisma.LeadUpdateInput = {};
+  // Name (lib/lead-name.ts): der Name der neuen Anfrage gilt, außer er wurde im Kontakt von Hand geändert
+  const wechsel = namensWechsel(lead, inc.name);
+  const neuerName = wechsel === "neuer_name" ? inc.name!.replace(/\s+/g, " ").trim() : null;
+  if (neuerName) {
+    fill.name = neuerName;
+    if (lead.name) extras.push({ label: "Name vorher", value: lead.name });
+  } else if (wechsel === "von_hand") extras.push({ label: "Name in der neuen Eintragung", value: inc.name! });
   // Fehlende Kontaktdaten ergänzen (nicht nach einer Korrektur im Kontakt), abweichende als weitere Angabe
-  if (inc.name && !lead.name && !keepContact) fill.name = inc.name;
-  else if (inc.name && lead.name && inc.name.trim().toLowerCase() !== lead.name.trim().toLowerCase()) extras.push({ label: "Name in der neuen Eintragung", value: inc.name });
   if (inc.phone && !lead.phone && !keepContact) fill.phone = inc.phone;
   else if (inc.phone && inc.phone !== lead.phone) extras.push({ label: "Weitere Telefonnummer", value: `+${inc.phone}` });
   if (inc.email && !lead.email && !keepContact) fill.email = inc.email;
@@ -180,7 +209,7 @@ async function saveReentry(lead: MatchLead, inc: ReentryInput, now: Date) {
 
   const data: Prisma.LeadUpdateInput = {
     ...fill,
-    formData: mergeFormData(lead.formData, inc, extras, now) as unknown as Prisma.InputJsonValue,
+    formData: mergeFormData(lead.formData, inc, extras, now, { neuerName }) as unknown as Prisma.InputJsonValue,
     // Einwilligung zu WhatsApp nur ergänzen, nie zurücknehmen (Widerruf geht per „STOPP“)
     ...(inc.waConsent === "ja" && lead.waConsent !== "ja" ? { waConsent: "ja" } : {}),
     callbackSnoozedUntil: null,
@@ -202,8 +231,10 @@ async function saveReentry(lead: MatchLead, inc: ReentryInput, now: Date) {
       },
     }),
     prisma.lead.update({ where: { id: lead.id }, data }),
+    // Chatliste und Chat zeigen den neuen Namen (statt des alten bzw. des WhatsApp-Profilnamens)
+    ...(neuerName ? [prisma.conversation.updateMany({ where: { customerId: lead.customerId, leadId: lead.id }, data: { contactName: neuerName } })] : []),
   ]);
-  return { lost, won, keepTodo, replaced, chats, outreach };
+  return { lost, won, keepTodo, replaced, chats, outreach, neuerName, wechsel };
 }
 
 /** Folgeschritte nach dem Speichern: jeder für sich, Fehler werden gemeldet. */
@@ -218,6 +249,8 @@ async function afterReentry(lead: MatchLead, inc: ReentryInput, s: Awaited<Retur
 
   // Verlauf
   const parts = [`${ERNEUT_TODO} (${inc.productKey}).`];
+  if (s.neuerName) parts.push(lead.name ? `Neue Anfrage als ${s.neuerName} (vorher: ${lead.name}).` : `Neue Anfrage als ${s.neuerName}.`);
+  else if (s.wechsel === "von_hand") parts.push(`Neue Anfrage als ${inc.name}, der von Hand geänderte Name ${lead.name ?? ""} bleibt.`.replace(" Name  bleibt", " Name bleibt"));
   if (s.lost) {
     const grund = lostReasonLabel(lostReasonOf(lead)) ?? lead.status;
     parts.push(`Zurück auf „Neuer Lead“, vorher verloren: ${grund}${lead.lostNote ? ` (${lead.lostNote})` : ""}.`);
@@ -251,7 +284,7 @@ async function afterReentry(lead: MatchLead, inc: ReentryInput, s: Awaited<Retur
   await step("push", async () => {
     const { notifyLeadPush } = await import("@/lib/team");
     await notifyLeadPush(lead.id, {
-      title: `🔁 Erneut eingetragen: ${lead.name ?? inc.name ?? "ohne Name"}`,
+      title: `🔁 Erneut eingetragen: ${s.neuerName ?? lead.name ?? inc.name ?? "ohne Name"}`,
       body: s.keepTodo ? `${inc.productKey}. Mehr im Verlauf des Kontakts.` : `${inc.productKey}. Steht heute oben auf Ihrer Anrufliste.`,
       tag: `lead-erneut:${lead.id}`,
       url: "/buyer",

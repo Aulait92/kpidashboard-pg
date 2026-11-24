@@ -27,3 +27,7 @@ Rechts-Agenten, Ergebnis ohne Anwaltsfreigabe (AGENTS.md, interne Rechtsprüfung
 3. Erinnerungen nur an Leads, die das PDF schon haben, sonst mit PDF-Kopf.
 4. Zustimmung zur elektronischen Erstinformation im Lead-Formular; alte Meta-Formulare umstellen.
 5. Wahrheitsgemäße Antwort auf „Bist du ein Bot?“, Wiederholung des KI-Hinweises nach 30 Tagen (`ki-hinweis.ts`).
+
+Nachtrag 24.11.2026: Der Hinweis steht nur in der ersten Nachricht, die Erinnerung (`followup_nudge` v5) wiederholt ihn
+nicht mehr. Alle Wege zur ersten Nachricht und die Fassung mit KI-Fußzeile für Terminbestätigung und Erinnerung:
+`docs/recht/2026-11-24-ki-hinweis-erste-nachricht.md`.

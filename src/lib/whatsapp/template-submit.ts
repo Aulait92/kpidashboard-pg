@@ -203,16 +203,16 @@ async function submitTemplatesOnce(customerId: string, now: Date): Promise<Submi
   // Je Zweck alle Fassungen (Du, Sie, Sie ohne Namen; A/B) – unabhängig von der gewählten Ansprache, damit ein
   // Wechsel sofort greift. Bis eine neue Fassung freigegeben ist, sendet die App die bisherige freigegebene.
   const planned = plannedTemplates(purposes);
-  const missing = planned.some((t) => !findRemote(remote, templateNameFor(t.purpose, TEMPLATE_VERSION, t.form, t.variant, t.kopf)));
+  const missing = planned.some((t) => !findRemote(remote, templateNameFor(t.purpose, TEMPLATE_VERSION, t.form, t.variant, t.kopf, t.ki)));
   const { names, documentExample } = missing ? await submitContext(customer.id, customer.name) : { names: templateNamesOf(customer.name), documentExample: null };
-  for (const { purpose, form, variant, kopf } of planned) {
+  for (const { purpose, form, variant, kopf, ki } of planned) {
     const manual = customer.messageTemplates.find((t) => !t.auto && t.purpose === purpose && (t.status === "approved" || t.status === "pending"));
     if (manual) {
       if (!summary.skipped.includes(purpose)) summary.skipped.push(purpose);
       continue;
     }
-    const name = templateNameFor(purpose, TEMPLATE_VERSION, form, variant, kopf);
-    let req = buildTemplateRequest(purpose, names, TEMPLATE_VERSION, form, { variant, documentExample, kopf });
+    const name = templateNameFor(purpose, TEMPLATE_VERSION, form, variant, kopf, ki);
+    let req = buildTemplateRequest(purpose, names, TEMPLATE_VERSION, form, { variant, documentExample, kopf, ki });
     const body = templateBodyFor(purpose, names, form, variant);
     let hit = findRemote(remote, name);
     let submittedAt: Date | undefined;
@@ -264,7 +264,7 @@ async function submitTemplatesOnce(customerId: string, now: Date): Promise<Submi
   }
 
   // Ältere automatisch eingereichte Versionen (andere Namen, z. B. v1) ebenfalls nachziehen.
-  const current = new Set(planned.map((t) => templateNameFor(t.purpose, TEMPLATE_VERSION, t.form, t.variant, t.kopf)));
+  const current = new Set(planned.map((t) => templateNameFor(t.purpose, TEMPLATE_VERSION, t.form, t.variant, t.kopf, t.ki)));
   for (const t of customer.messageTemplates.filter((x) => x.auto && !current.has(x.name))) {
     const hit = findRemote(remote, t.name);
     if (!hit) continue;
@@ -335,8 +335,8 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
     const tpls = acc.customer.messageTemplates;
     const purposes = purposesFor({ bestand: acc.customer.existingCustomersEnabled, empfehlung: acc.customer.empfehlungEnabled, makler: acc.customer.vermittlerTyp === "makler" });
     // Erledigt, wenn je Zweck jede Fassung freigegeben ist (oder der Admin eine eigene angelegt hat)
-    const settled = plannedTemplates(purposes).every(({ purpose: p, form, variant, kopf }) => {
-      const wanted = templateNameFor(p, TEMPLATE_VERSION, form, variant, kopf);
+    const settled = plannedTemplates(purposes).every(({ purpose: p, form, variant, kopf, ki }) => {
+      const wanted = templateNameFor(p, TEMPLATE_VERSION, form, variant, kopf, ki);
       return tpls.some((t) => t.purpose === p && ((t.auto && isTemplateRevisionOf(t.name, wanted) && t.status === "approved") || (!t.auto && (t.status === "approved" || t.status === "pending"))));
     });
     const recent = acc.templatesCheckedAt && now.getTime() - acc.templatesCheckedAt.getTime() < CHECK_INTERVAL_IDLE_MS;
@@ -369,17 +369,17 @@ export async function resubmitTemplate(customerId: string, purpose: NoticePurpos
   // Fassungen, deren letzte Revision abgelehnt bzw. pausiert ist (ohne Angabe: sonst die erste)
   const latest = (base: string) => customer.messageTemplates.filter((t) => isTemplateRevisionOf(t.name, base)).sort((x, y) => revisionNo(y.name) - revisionNo(x.name))[0];
   const todo = planned.filter((t) => {
-    const l = latest(templateNameFor(purpose, TEMPLATE_VERSION, t.form, t.variant, t.kopf));
+    const l = latest(templateNameFor(purpose, TEMPLATE_VERSION, t.form, t.variant, t.kopf, t.ki));
     return !!form || !l || l.status === "rejected" || l.status === "paused";
   });
   const chosen = todo[0] ?? planned[0];
   if (!chosen) return { ok: false, error: "Keine Fassung zum Einreichen" };
-  const base = templateNameFor(purpose, TEMPLATE_VERSION, chosen.form, chosen.variant, chosen.kopf);
+  const base = templateNameFor(purpose, TEMPLATE_VERSION, chosen.form, chosen.variant, chosen.kopf, chosen.ki);
   const existing = customer.messageTemplates.filter((t) => t.name.startsWith(`${base}_r`) && isTemplateRevisionOf(t.name, base)).length;
   const name = `${base}_r${existing + 2}`;
   // Erstanschreiben auch als Revision immer mit PDF-Kopf (nie ohne Erstinformation, Live-Test 17.11.2026)
   if (TEMPLATE_HEADER[purpose] && !documentExample) return { ok: false, error: "Beispiel-PDF der Erstinformation fehlt, bitte später erneut versuchen" };
-  const full = { ...buildTemplateRequest(purpose, names, TEMPLATE_VERSION, chosen.form, { variant: chosen.variant, documentExample, kopf: chosen.kopf }), name };
+  const full = { ...buildTemplateRequest(purpose, names, TEMPLATE_VERSION, chosen.form, { variant: chosen.variant, documentExample, kopf: chosen.kopf, ki: chosen.ki }), name };
   try {
     const { hit, req } = await createWithFallback(decryptSecret(account.apiKeyEnc), full, purpose);
     await applyRemote(customer, purpose, name, templateBodyFor(purpose, names, chosen.form, variantOfName(name)), req.category, { ...hit, name }, { submittedAt: now, shape: requestShape(req) });

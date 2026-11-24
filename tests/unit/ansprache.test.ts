@@ -104,12 +104,16 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
   it("je Zweck alle Fassungen: Du, Sie, Sie ohne Namen (Kampagnen/Empfehlungen nur Sie)", () => {
     expect(formsFor("outreach")).toEqual(["du", "sie", "sie_ohne_name"]);
     expect(formsFor("campaign_review")).toEqual(["sie", "sie_ohne_name"]);
-    const names = plannedTemplates(purposesFor({ bestand: false })).map((t) => templateNameFor(t.purpose, "v2", t.form, t.variant, t.kopf));
+    const names = plannedTemplates(purposesFor({ bestand: false })).map((t) => templateNameFor(t.purpose, "v2", t.form, t.variant, t.kopf, t.ki));
     // 22 Zwecke je 3 Fassungen (inkl. Show-up: 15 Min., Wartet, Halbzeit-Erinnerung; Angebot senden, Nachfassen selbst gesendet, Glückwunsch, Bedenkzeit,
     // Erstanschreiben Hausrat), dazu A/B-Fassung b für followup_last und (v11, Ole 19.11.2026) für die 6 Erstanschreiben;
     // Erstanschreiben ab v7 nur mit PDF-Kopf; Kfz-Einstiegsfrage (Ole, 21.11.2026): 3 Zwecke je 3 Fassungen, a und b
     // Nachfassen nach Absage (Ole, 23.11.2026): followup_absage in Du, Sie, Sie ohne Namen
-    expect(names).toHaveLength(108);
+    // Fassung mit KI-Fußzeile für die erste Nachricht (Ole, 24.11.2026): Terminbestätigung und Erinnerung, je 3 Fassungen
+    expect(names).toHaveLength(114);
+    expect(names).toContain("pg_booking_confirmation_v2_ki_sie");
+    expect(names).toContain("pg_followup_nudge_v2_ki_sie_ohne_name");
+    expect(names.filter((n) => /_ki(_|$)/.test(n))).toHaveLength(6);
     expect(names).toContain("pg_outreach_tkv_v2_b_sie");
     expect(names.some((n) => n.includes("ohnepdf"))).toBe(false);
     expect(names).toContain("pg_followup_last_v2_b_sie");
@@ -167,7 +171,9 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
     const names = templateNamesOf("Agentur Susanne Meier");
     expect(names).toMatchObject({ firm: "Agentur Susanne Meier", advisor: "Susanne Meier", kurz: "Agentur Susanne Meier" });
     expect(templateBodyFor("booking_confirmation", names, "sie")).toContain("Ihr Termin bei Agentur Susanne Meier ist bestätigt");
-    expect(templateBodyFor("followup_nudge", names, "du")).toContain("digitale KI-Assistent von Agentur Susanne Meier");
+    // Erinnerung v5 (Ole, 24.11.2026): „hier ist noch einmal [Firma]“, ohne „digitaler KI-Assistent“
+    expect(templateBodyFor("followup_nudge", names, "du")).toBe("Hallo {{1}}, hier ist noch einmal Agentur Susanne Meier. Sollen wir mit {{2}} weitermachen? Es dauert nur ein paar Minuten.");
+    expect(templateBodyFor("followup", names, "du")).toContain("digitale KI-Assistent von Agentur Susanne Meier");
     // Erstanschreiben v10: ohne Vermittler (auch nicht in der Vorschau)
     expect(templateBodyFor("outreach", names, "du")).toBe("Hallo {{1}}, danke für deine Anfrage! *Wann passt dir ein kurzes Telefonat?*");
     expect(previewBodyFor("outreach", names, "sie")).not.toContain("Susanne Meier");

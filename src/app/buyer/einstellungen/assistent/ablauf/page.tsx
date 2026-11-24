@@ -54,7 +54,7 @@ export default async function AblaufPage({ searchParams }: { searchParams: Promi
   const who = await ansprechpartner({ customerId: ctx.customerId });
   const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || advisorDisplayName(customer?.name) || a(an, "dein Berater", "Ihr Berater") });
   const montag = beispielMontag(new Date());
-  const phasen = standardAblauf({ an, person, beispielTermin: montag, anrufStart: montag });
+  const phasen = standardAblauf({ an, person, firma: who.firm, beispielTermin: montag, anrufStart: montag });
   const nachfassenAus = agent ? !agent.followUpSequencesEnabled : false;
   // P8: Überblick mit drei Spuren und Beispielchat (dieselben Daten wie im Onboarding)
   const soArbeitet = await ladeSoArbeitet(ctx.customerId, (await searchParams).produkt);

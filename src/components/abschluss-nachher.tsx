@@ -144,7 +144,11 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
 
       {istChips ? (
         <div>
-          <p className="text-sm text-[color:var(--muted)]">{stand.ersparnis ? "Ersparnis im Monat?" : stand.einheit === "/Monat" ? "Monatsbeitrag?" : "Jahresbeitrag?"}</p>
+          <p className="text-sm text-[color:var(--muted)]">
+            {stand.ersparnis ? "Ersparnis im Monat?" : stand.einheit === "/Monat" ? "Monatsbeitrag?" : "Jahresbeitrag?"}{" "}
+            {/* Go-live-Prüfung 19.11.2026: gespeichert ist schon ein typischer Wert, das soll erkennbar sein */}
+            <span data-abschluss-schaetzwert>Ohne Auswahl bleibt ein Schätzwert gespeichert, später änderbar.</span>
+          </p>
           <div className="mt-2 flex flex-wrap gap-2" data-abschluss-chips>
             {stand.chips.map((c) => (
               <button

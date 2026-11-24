@@ -267,6 +267,11 @@ Seiten aus der Liste „Seiten“ unten.
   (z. B. „Di., 17.11. um 10:00 Uhr oder Mi., 18.11. um 16:00 Uhr“) mit den Knöpfen **Erste Zeit passt**, **Zweite Zeit
   passt** und **Andere Zeit**. Der Assistent bucht dann genau diese Zeit (er fragt vorher nur, ob Telefon oder Video).
   Ohne Kalender kommt eine kurze Nachfrage.
+- **Erinnerung, wenn ein Lead nicht antwortet (seit 24.11.2026):** „Guten Tag Herr Kranert, hier ist noch einmal [Ihre
+  Agentur]. Sollen wir mit Ihrer Anfrage zur Kfz-Versicherung weitermachen? Es dauert nur ein paar Minuten.“ mit den
+  Knöpfen **Ja, weitermachen** und **Kein Bedarf mehr**. Die Sparte kommt aus dem Produkt des Leads (bei der
+  Tierkrankenversicherung mit dem Tiernamen); ist sie nicht eindeutig, heißt es nur „mit Ihrer Anfrage“. Bis Meta die
+  neue Fassung freigegeben hat, geht außerhalb des 24-Stunden-Fensters die bisherige Vorlage raus.
 - Bittet ein Lead, sich später zu melden („morgen nochmal“, „nächste Woche“), legt der Assistent sich selbst eine
   **Wiedervorlage** und meldet sich zur vereinbarten Zeit per WhatsApp. Sie sehen sie im Kontakt unter den
   Aktionen („Wiedervorlage vom Assistenten …“); der Lead zählt damit nicht als „ohne nächsten Schritt“.
@@ -323,6 +328,10 @@ Seiten aus der Liste „Seiten“ unten.
   Hinweis (berät nicht zu Tarifen, „Mensch“ schreiben). Das lässt sich nicht abschalten. Nach mehr als 30 Tagen Pause wiederholt der Assistent den Hinweis kurz.
   Fragt jemand „Bist du ein Bot?“ oder schreibt „Mensch“ bzw. „Mitarbeiter“, antwortet der Assistent ehrlich, dass er eine KI
   ist, pausiert in diesem Chat, und Sie bekommen den Chat unter „Wartet auf Sie“ mit einer Mitteilung.
+  Seit 24.11.2026 steht der Hinweis nur noch in der ersten Nachricht und nicht mehr in jeder Erinnerung. Ist die erste
+  Nachricht eine Terminbestätigung (der Lead hat schon online gebucht) oder die Erinnerung selbst, steht darunter klein
+  „Digitaler KI-Assistent“ (außerhalb des 24-Stunden-Fensters, sobald Meta diese Fassung freigegeben hat). Der Assistent
+  gibt sich nie als Mensch aus, auch nicht auf Nachfrage.
 - **Keine Beratung durch den Assistenten:** Er nennt keine Versicherer, Tarife, Preise oder Beiträge, vergleicht nicht und
   sagt nichts dazu, was für jemanden passt. Jede Antwort wird vor dem Senden geprüft; fragt ein Lead danach, antwortet er
   „Das klärt [Ihr Name] im Termin mit Ihnen.“ und bietet einen Termin an.
@@ -1348,7 +1357,7 @@ Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, d
 
 ## WhatsApp verbinden: Schritt für Schritt
 
-**Video:** Ein Video (ca. 3:20 Minuten) macht den ganzen Ablauf mit einer neuen Nummer einmal vor (und kurz den Weg mit der WhatsApp Business App). Es steht oben auf der Seite
+**Video:** Ein Video (ca. 3:40 Minuten) macht den ganzen Ablauf mit einer neuen Nummer einmal vor (und kurz den Weg mit der WhatsApp Business App). Es steht oben auf der Seite
 „Ausführliche Anleitung“ (/buyer/hilfe/whatsapp), aufklappbar direkt über dem Knopf „Jetzt WhatsApp verbinden“
 in der Einrichtung und für Inhaber unter Profilmenü → **Einführung ansehen**.
 

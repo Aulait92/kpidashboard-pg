@@ -302,11 +302,35 @@ export async function rechtsFaelleVon(contactId: string, now = new Date()): Prom
 
 /** Zeilen der Karte „Datenschutz und Recht“ eines Kontakts (mit offener Auskunftsaufgabe, siehe fallZeilen). */
 export async function kartenFaelle(contactId: string, now = new Date()) {
-  const [faelle, auskunft] = await Promise.all([
+  const [ersteFaelle, auskunft] = await Promise.all([
     rechtsFaelleVon(contactId, now),
-    prisma.salesTask.count({ where: { contactId, doneAt: null, title: { startsWith: RECHT_AUFGABE.auskunft } } }),
+    prisma.salesTask.findFirst({ where: { contactId, doneAt: null, title: { startsWith: RECHT_AUFGABE.auskunft } }, select: { createdAt: true } }),
   ]);
-  return fallZeilen(faelle, { auskunftOffen: auskunft > 0 });
+  let faelle = ersteFaelle;
+  // Offene Auskunftsaufgabe ohne Fall (z. B. aus dem Nachhol-Lauf vom 19.11.2026): Fall nachtragen, damit Karte und
+  // Vorlage erscheinen (Ole, 24.11.2026). Eingang = letzte Antwort per Mail, sonst Anlage der Aufgabe.
+  if (auskunft && !faelle.length) {
+    try {
+      const mail = await prisma.salesEmail.findFirst({
+        where: { contactId, direction: "IN" },
+        orderBy: [{ rechtsArt: { sort: "asc", nulls: "last" } }, { sentAt: "desc" }],
+        select: { id: true, sentAt: true, instantlyId: true, eaccount: true },
+      });
+      await rechtsFallAnlegen(contactId, {
+        art: "auskunft",
+        eingang: mail?.sentAt ?? auskunft.createdAt,
+        quelle: "antwort",
+        emailId: mail?.id ?? null,
+        instantlyEmailId: mail?.instantlyId ?? null,
+        postfach: mail?.eaccount ?? null,
+        now,
+      });
+      faelle = await rechtsFaelleVon(contactId, now);
+    } catch (e) {
+      reportError(e, "recht-fall-nachtragen");
+    }
+  }
+  return fallZeilen(faelle, { auskunftOffen: !!auskunft });
 }
 
 /**

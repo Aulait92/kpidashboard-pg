@@ -32,6 +32,8 @@ import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const MONTH = "2026-10";
 const NOW = new Date("2026-11-02T08:00:00Z");
+/** Berichte gibt es erst ab 30 Tagen Laufzeit ab Livegang (Ole, 23.11.2026): Der Kunde ist seit August live. */
+const LIVE_SEIT = new Date("2026-08-01T08:00:00Z");
 const oct = (day: number, h = 10) => new Date(Date.UTC(2026, 9, day, h));
 const POOL = `Testpool Bericht ${Math.random().toString(36).slice(2, 8)}`;
 
@@ -40,7 +42,7 @@ const POOL = `Testpool Bericht ${Math.random().toString(36).slice(2, 8)}`;
  * Werbeausgaben an 25 Tagen, 10 Leads im September; optional Empfehlung/Bestandskampagne und Lead-Kosten.
  */
 async function setupCustomer(o: { extras?: boolean; leadCost?: number } = {}) {
-  const c = await makeCustomer({ plan: "software", onboarding: { create: {} } });
+  const c = await makeCustomer({ plan: "software", onboarding: { create: { liveAt: LIVE_SEIT } } });
   await makeBuyer(c.id, "owner");
   await prisma.customerAdSpend.createMany({ data: Array.from({ length: 25 }, (_, i) => ({ customerId: c.id, accountId: "act_test", date: oct(i + 2, 12), amount: 24 })) });
   await prisma.lead.createMany({

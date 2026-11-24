@@ -771,6 +771,7 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=policen-gesundheit[&kunde=<id>]       Kranken/BU/Leben je Kunde: AVV-Ergänzung, Datenschutz-URL, freigegeben (lib/ops/policen-gesundheit.ts)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
 //   q=vermittler-anrede[&alle=1]  Kunden ohne Anrede in den Anbieterangaben, nur ID und Name (lib/ops/vermittler-anrede.ts)
+//   q=erstinfo-namen[&alle=1]              Erstinformationen mit Kunden- bzw. Firmennamen als Vor- und Nachname, nur Zählung und Kunden-IDs (lib/ops/erstinfo-namen.ts)
 //   q=admin-nutzung[&tage=30]              Nutzung des Admins: Änderungsprotokoll je Aktion, Klicks je Funktion und Seite, nur Zahlen (lib/ops/admin-nutzung.ts)
 //   q=mail-strecke[&tage=7]                Mail-Strecke ohne WhatsApp: Schalter, Schritte, Auslöser, Gründe, Termine, SMS, Kandidaten (lib/ops/mail-strecke.ts)
 //   q=investoren[&sicht=gesamt]           Investoren-Kennzahlen (Geld › Auswertung): Datenlücken, Kennzahlen, KI-Kosten, Gegenprobe mit der Übersicht (lib/ops/investoren.ts)
@@ -794,12 +795,15 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //                                          beim Vermittler an (idempotent je Nachricht, Audit-Eintrag), sendet nichts
 //   q=policen-flow[&meta=1]                Policen-Strecke v2: Schalter, Flow je Kunde (Status, Hash aktuell?, Einstieg, Fehler, Vorlagen
 //                                          je Status); &meta=1 fragt den Status bei Meta live ab (nur lesend)
+//   q=lead-namen[&tage=7]                  Name am Lead gegen Chatname (WhatsApp-Profilname), Formularname und erneute Eintragungen mit
+//                                          anderem Namen, echte Leads und Testleads getrennt, nur IDs (lib/lead-name-server.ts)
 //   q=cash[&jahr=2026]                      Geld: Bankverbindungen mit Live-Kontostand, Bewegungen 30/90 Tage je Konto und Zweck, Kosten je Monat, Stripe-Guthaben und offene Rechnungen, USt-Schätzung aus den Kontoauszügen; nur Summen (lib/ops/cash.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "bot-stumm": async (p) => {
     const tage = Math.min(30, Math.max(1, Math.round(Number(p.get("tage") ?? 7)) || 7));
     return (await import("@/lib/whatsapp/bot-stumm")).botStummDiagnose({ tage, aufgaben: p.get("aufgaben") === "1" });
   },
+  "lead-namen": async (p) => (await import("@/lib/lead-name-server")).leadNamenDiagnose(p),
   "policen-flow": async (p) => (await import("@/lib/policen/flow/server")).policenFlowDiagnose({ meta: p.get("meta") === "1" }),
   pakete: async () => (await import("@/lib/ops/pakete")).paketeDiagnose(),
   investoren: async (p) => (await import("@/lib/ops/investoren")).investorenDiagnose(p),
@@ -807,6 +811,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "mail-strecke": async (p) => (await import("@/lib/ops/mail-strecke")).mailStreckeDiagnose(p),
   "anzeige-abdeckung": async (p) => (await import("@/lib/ops/anzeige-abdeckung")).anzeigeAbdeckung(p),
   "vermittler-anrede": async (p) => (await import("@/lib/ops/vermittler-anrede")).vermittlerAnrede(p),
+  "erstinfo-namen": async (p) => (await import("@/lib/ops/erstinfo-namen")).erstinfoNamenDiagnose(p),
   "admin-nutzung": async (p) => (await import("@/lib/ops/admin-nutzung")).adminNutzung(p),
   "tarif-vorschlaege": async () => (await import("@/lib/ops/tarif-vorschlaege")).tarifVorschlaegeDiagnose(),
   "preise-offen": async () => (await import("@/lib/ops/preise-offen")).preiseOffenDiagnose(),

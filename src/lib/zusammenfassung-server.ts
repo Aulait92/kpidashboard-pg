@@ -30,6 +30,7 @@ import { leseMailAblauf } from "@/lib/mail/ablauf";
 import { fuelle, werteFuer } from "@/lib/mail/platzhalter";
 import { vorlageFuer } from "@/lib/mail/vorlagen-mail";
 import { saveLeadFile } from "@/lib/lead-files";
+import { kiAusText, type KiAus } from "@/lib/datennutzung";
 
 export type ZusammenfassungText = { wuensche: string; rat: string; /** Text kam (zuletzt) von der KI */ ki?: boolean };
 
@@ -42,6 +43,12 @@ export type ZusammenfassungInfo = {
   ki: boolean;
   /** „Vorschlag erstellen“ für die Gründe (null = keine EU-KI) */
   vorschlag: VorschlagInfo;
+  /**
+   * KI-Hilfe für dieses Konto abgeschaltet (Widerspruch gegen Amazon Web Services, lib/datennutzung.ts): dann sind ki
+   * und vorschlag aus, und das Blatt zeigt an ihrer Stelle einen ruhigen Hinweis. null = kein Widerspruch (bzw. es
+   * gäbe hier ohnehin keine KI-Hilfe).
+   */
+  kiAus: KiAus | null;
   /** Über die App senden möglich (Adresse, Versandweg, E-Mail-Funktionen an) */
   appVersand: boolean;
   email: string | null;
@@ -73,7 +80,7 @@ async function termin(appointmentId: string, ctx: TeamCtx) {
           formData: true,
           vorvertraege: true,
           erasedAt: true,
-          customer: { select: { leadAddress: true, mailAblauf: true, mailFeaturesOff: true } },
+          customer: { select: { leadAddress: true, mailAblauf: true, mailFeaturesOff: true, awsWiderspruchAt: true } },
         },
       },
     },
@@ -94,6 +101,15 @@ function auswahlAus(offersJson: unknown, fallbackThema: string) {
     schutz: d.schutz ?? [],
   };
 }
+
+/**
+ * Widerspruch des Kunden gegen Amazon Web Services (lib/datennutzung-sperre.ts): keine KI für Zusammenfassung und
+ * Gründe, unabhängig vom eingestellten Anbieter. Der Zeitpunkt kommt mit dem Termin aus derselben Abfrage.
+ */
+const kiAusFuer = (t: Termin, ctx: TeamCtx): KiAus | null => {
+  const am = t.lead?.customer.awsWiderspruchAt;
+  return am ? { am: am.toISOString(), inhaber: ctx.teamRole !== "advisor" } : null;
+};
 
 /** Stufe der Vorlage „Gesprächszusammenfassung“ (aus = kein Haken, kein Vorschlag). */
 const stufeAn = (mailAblauf: unknown) => leseMailAblauf(mailAblauf).stufen.beratungsdoku !== "aus";
@@ -156,12 +172,18 @@ async function zusammenfassungFuer(t: Termin, ctx: TeamCtx, now: Date): Promise<
     wuensche: "{wuensche}",
     rat: "{rat}",
   };
+  // KI-Hilfe: „Mit KI formulieren“ und „Gründe vorschlagen“. Bei Widerspruch gegen Amazon Web Services beides aus,
+  // dafür der Hinweis (nur wenn es die Knöpfe sonst gäbe)
+  const kiMoeglich = kiZusammenfassungStatus({ konfig: bedrockEu(), produkt: lead.source, sparten }).moeglich;
+  const vorschlag = vorschlagInfo({ konfig: bedrockEu(), themen: [lead.source, thema], auswahl });
+  const kiAus = kiMoeglich || vorschlag ? kiAusFuer(t, ctx) : null;
   return {
     an,
     entwurf,
     kopf: { kunde: lead.name?.trim() || "", produkt: thema, berater: await beraterName(ctx.userId, vorbereitung?.termin.berater || k.daten.name) },
-    ki: kiZusammenfassungStatus({ konfig: bedrockEu(), produkt: lead.source, sparten }).moeglich,
-    vorschlag: vorschlagInfo({ konfig: bedrockEu(), themen: [lead.source, thema], auswahl }),
+    ki: kiAus ? false : kiMoeglich,
+    vorschlag: kiAus ? null : vorschlag,
+    kiAus,
     appVersand: !!email && !lead.customer.mailFeaturesOff && (!!k.postfach || resendBereit()),
     email,
     mail: { subject: fuelle(vorlage.subject, werte).replace(/\s+/g, " ").trim(), body: fuelle(vorlage.body, werte) },
@@ -176,6 +198,9 @@ export async function zusammenfassungKi(appointmentId: string, ctx: TeamCtx, tex
   const t = await termin(appointmentId, ctx);
   const lead = t?.lead;
   if (!t || !lead || lead.erasedAt) return { ok: false, error: "Termin nicht gefunden." };
+  // Widerspruch gegen Amazon Web Services: nichts geht an den Dienst
+  const aus = kiAusFuer(t, ctx);
+  if (aus) return { ok: false, error: kiAusText("KI-Hilfe", aus) };
   const an = asAnsprache(lead.customer.leadAddress);
   const { sparten } = auswahlAus(t.offersJson, "");
   const konfig = bedrockEu();
@@ -196,6 +221,9 @@ export async function gruendeVorschlag(
   const t = await termin(appointmentId, ctx);
   const lead = t?.lead;
   if (!t || !lead || lead.erasedAt) return { ok: false, error: "Termin nicht gefunden." };
+  // Widerspruch gegen Amazon Web Services: nichts geht an den Dienst (gilt auch für die Beratungsdokumentation)
+  const aus = kiAusFuer(t, ctx);
+  if (aus) return { ok: false, error: kiAusText("KI-Hilfe", aus) };
   const an = asAnsprache(lead.customer.leadAddress);
   const { thema, auswahl } = auswahlAus(t.offersJson, topicOf(lead.formData, lead.source, an));
   return gruendeVorschlagen(

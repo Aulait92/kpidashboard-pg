@@ -44,7 +44,8 @@ export async function linkLeadToConversation(conversationId: string): Promise<vo
     where: { id: conversationId },
     data: {
       leadId: lead.id,
-      ...(!conv.contactName && lead.name ? { contactName: lead.name } : {}),
+      // Name aus dem Formular bzw. von Hand geändert vor dem WhatsApp-Profilnamen (lib/lead-name.ts)
+      ...(lead.name?.trim() ? { contactName: lead.name.trim() } : {}),
       ...(!conv.contactEmail && lead.email ? { contactEmail: lead.email } : {}),
     },
   });
@@ -63,7 +64,7 @@ export async function linkLeadToConversation(conversationId: string): Promise<vo
 export async function attachLeadToContact(leadId: string): Promise<void> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { customerId: true, phone: true, email: true },
+    select: { customerId: true, phone: true, email: true, name: true },
   });
   if (!lead?.customerId) return;
   const or: object[] = [];
@@ -83,7 +84,8 @@ export async function attachLeadToContact(leadId: string): Promise<void> {
   });
   if (!conv) return;
 
-  await prisma.conversation.update({ where: { id: conv.id }, data: { leadId } });
+  // Formularname vor dem WhatsApp-Profilnamen, den der Chat bis hier trug (lib/lead-name.ts)
+  await prisma.conversation.update({ where: { id: conv.id }, data: { leadId, ...(lead.name?.trim() ? { contactName: lead.name.trim() } : {}) } });
   // Rennen Webhook vor Lead-Import: Der Kontakt hat schon geschrieben, solange er noch unbekannt war. Jetzt übernimmt
   // der Assistent und beantwortet die offene Nachricht (lib/whatsapp/nur-leads.ts).
   const { nachLeadZuordnung } = await import("@/lib/whatsapp/nur-leads");

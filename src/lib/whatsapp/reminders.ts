@@ -231,7 +231,7 @@ async function erinnerungsKontext(appt: TerminZeile) {
   if (!conv?.contactPhone) return null;
   const [an, lead, customer] = await Promise.all([
     anspracheOf(appt.customerId),
-    appt.leadId ? prisma.lead.findUnique({ where: { id: appt.leadId }, select: { source: true, formData: true, name: true } }).catch(() => null) : null,
+    appt.leadId ? prisma.lead.findUnique({ where: { id: appt.leadId }, select: { source: true, formData: true, name: true, tkvUmfang: true } }).catch(() => null) : null,
     prisma.customer.findUnique({ where: { id: appt.customerId }, select: { name: true } }).catch(() => null),
   ]);
   const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv.contactPhone, name: lead?.name ?? conv.contactName });
@@ -239,7 +239,7 @@ async function erinnerungsKontext(appt: TerminZeile) {
   const fallback = who.advisor || advisorDisplayName(customer?.name) || a(an, "dein Berater", "Ihr Berater");
   const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback });
   const formular = splitHealthAnswers(formAnswers(lead?.formData)).normal;
-  return { conv, an, who, person, source: lead?.source ?? null, formular, angaben: conv.qualificationData, hi: anredeZeile(an, who.kontakt), optedOut: !!conv.optedOutAt };
+  return { conv, an, who, person, source: lead?.source ?? null, tkvUmfang: lead?.tkvUmfang ?? null, formular, angaben: conv.qualificationData, hi: anredeZeile(an, who.kontakt), optedOut: !!conv.optedOutAt };
 }
 
 /**
@@ -291,7 +291,7 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
     const remParams = [alt[0], formatWhenDE(appt.startsAt), alt[2], alt[3]];
     const remAelter = [...remParams.slice(0, 3), `${remParams[3]} ${chatHint(k.an)}`];
     const remV5 = () => {
-      const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video" });
+      const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video", tkvUmfang: k.tkvUmfang });
       return [alt[0], ...vortagParams({ an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, ort: appt.ort, person: k.person })];
     };
     const send = (purpose: "reminder_soon" | "reminder") =>
@@ -404,7 +404,7 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
   for (const appt of due) {
     const k = await erinnerungsKontext(appt);
     if (!k) continue;
-    const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video" });
+    const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video", tkvUmfang: k.tkvUmfang });
     // Policen-Erinnerung im Nutzensatz (P2: höchstens 2 insgesamt, Schluss bei der ersten Police oder „habe keine“)
     const policen = await import("@/lib/whatsapp/termin-strecke").then((m) => m.policenVortagSatzFuer(appt, k.an, { person: k.person })).catch(() => null);
     const eingabe = { an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, ort: appt.ort, person: k.person, policen };

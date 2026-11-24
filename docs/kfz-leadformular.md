@@ -34,3 +34,43 @@ Die Antwort auf „Worum geht es?“ wählt die Einstiegsfrage im Erstanschreibe
 `outreach_kfz_wechsel`, `outreach_kfz_neu`, ohne Angabe `outreach_kfz`): Wechsel „Wann läuft Ihr jetziger Vertrag aus?“,
 neues Auto „Ist das neue Auto schon da?“, sonst „Für Ihr jetziges Auto oder ein neues?“. Die Werte der Antworten
 („Versicherung wechseln (jetziges Auto)“, „Neues Auto versichern“) bitte so lassen, die App erkennt „wechsel“ bzw. „neu“.
+
+## Anzeigen: bessere Kfz-Leads (Ole, 24.11.2026)
+
+Stand 24.11.: Kampagne „PG | Kfz | 2026-11-21“ (40 € am Tag, Deutschland, 20 bis 65, Advantage+), 11 Leads für rund
+12 € je Lead; über Kfz und Privatschutz zusammen antworten 40 %, 20 % buchen. Entscheidung Ole: Die Gruppe läuft
+weiter, damit die Lernphase nicht neu beginnt; bestehende Anzeigen werden nicht bearbeitet. Zwei neue Anzeigen kommen
+als zusätzliche Anzeigen dazu (das hat die Lernphase dieser Gruppe am 22. und 23.11. laut Meta nicht zurückgesetzt).
+Messgröße: Kosten je wahrgenommenem Termin, nicht je Lead.
+
+Beide Anzeigen: Formular wie die aktiven Anzeigen (v6, WhatsApp-Nummer), Knopf „Angebot einholen“.
+
+**Anzeige 1 `beitrag-gestiegen | whatsapp`: erst ab 1.12.2026 einschalten** (Ole). Bild wie „foto-rechnung“.
+
+> Kfz-Rechnung für 2027 bekommen und der Beitrag ist gestiegen? Dann können Sie in der Regel noch wechseln, auch nach
+> dem 30.11.: einen Monat lang ab Erhalt der Rechnung.
+>
+> So läuft es: Sie wählen einen kurzen Termin und schicken uns vorab per WhatsApp ein Foto der Rechnung. Im Termin
+> zeigen wir Ihnen den Allianz-Beitrag für Ihr Fahrzeug im direkten Vergleich. Sind wir nicht besser, sagen wir es
+> Ihnen ehrlich.
+
+Überschrift: „Kfz-Beitrag gestiegen? Jetzt vergleichen“. Rechtlich: Sonderkündigungsrecht bei Beitragserhöhung, ein
+Monat ab Zugang der Mitteilung (§ 40 VVG); „in der Regel“ deckt den Fall ab, dass der Beitrag nur wegen eines Schadens
+steigt.
+
+**Anzeige 2 `vollkasko-neues-auto | whatsapp`: kann sofort live, mit neuem Bild** (Ole; Motiv neues Auto, Vollkasko).
+
+> Vollkasko für ein neues, geleastes oder finanziertes Auto? Dann zählt nicht nur der Preis, sondern auch, was im
+> Schadenfall gezahlt wird.
+>
+> Wir rechnen den Allianz-Tarif für Ihr Fahrzeug. Im kurzen Termin sehen Sie schwarz auf weiß, was er kostet und was er
+> leistet. Ein Foto vom Fahrzeugschein genügt. Sind wir nicht die bessere Wahl, sagen wir es Ihnen ehrlich.
+
+Überschrift: „Vollkasko fürs neue Auto vergleichen“.
+
+**Am 30.11.2026 abends:** Anzeige „Kfz-Wechsel nur bis 30.11.“ ausschalten (ab 1.12. unzutreffend).
+
+Weitere Hebel, noch nicht umgesetzt (erst nach etwa zwei Wochen Ruhe und mit mehr Daten): Formular mit Frage „Was zahlen
+Sie heute im Jahr?“ und Formularart „höhere Absicht“; Zielgruppe im Umkreis des Büros gegen Deutschland testen; Meta auf
+„Termin gebucht“ statt auf „Formular abgeschickt“ optimieren (Rückmeldung an Meta läuft schon); Anzeige und Dankeseite
+erzählen dieselbe Geschichte (Foto schicken, kurzer Termin, Ergebnis).

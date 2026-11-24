@@ -6,7 +6,8 @@
 import { prisma } from "@/lib/prisma";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { displayProduct } from "@/lib/products";
-import { firstNameOf, noticeText, pickTemplate, renderTemplate, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { firstNameOf, kiKennzeichnungOffen, noticeText, pickTemplate, renderTemplate, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { anfrageMitSparte } from "@/lib/whatsapp/anfrage-sparte";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { a, type AnredeKontakt } from "@/lib/ansprache";
@@ -22,6 +23,10 @@ export type FollowupChoice =
     });
 
 const DONE = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
+
+/** Angaben des Leads für „Ihrer Anfrage zur …“ (lib/whatsapp/anfrage-sparte.ts). */
+const anfrageLead = (lead: { source?: string | null; formData?: unknown; tkvUmfang?: string | null } | null | undefined) =>
+  lead ? { source: lead.source ?? null, formular: lead.formData, tkvUmfang: lead.tkvUmfang ?? null } : null;
 
 function interestFrom(formData: unknown, source: string | null, an: "sie" | "du" = "sie"): string {
   if (Array.isArray(formData)) {
@@ -40,7 +45,7 @@ export async function chooseFollowup(conversationId: string): Promise<FollowupCh
       contactPhone: true,
       leadId: true,
       optedOutAt: true,
-      lead: { select: { status: true, formData: true, source: true, waConsent: true } },
+      lead: { select: { status: true, formData: true, source: true, waConsent: true, tkvUmfang: true } },
       _count: { select: { messages: { where: { direction: "inbound" } } } },
     },
   });
@@ -95,7 +100,7 @@ export async function chooseFollowup(conversationId: string): Promise<FollowupCh
     purpose = "followup_offer";
     rest = [interestFrom(conv.lead?.formData, conv.lead?.source ?? null, an)];
   }
-  const send = await prepareFollowup({ customerId: conv.customerId, leadId: conv.leadId, purpose, first, rest, an, who });
+  const send = await prepareFollowup({ customerId: conv.customerId, leadId: conv.leadId, conversationId, purpose, first, rest, an, who, anfrage: anfrageMitSparte(an, anfrageLead(conv.lead)) });
   const labels: Partial<Record<NoticePurpose, string>> = {
     followup: "Zwei Terminvorschläge",
     followup_nudge: "Kurz nachfragen",
@@ -125,11 +130,15 @@ export type FollowupSend = {
 async function prepareFollowup(o: {
   customerId: string;
   leadId: string | null;
+  /** Chat, in den gesendet wird (für die Wahl der Fassung mit KI-Kennzeichnung, falls es die erste Nachricht ist) */
+  conversationId: string;
   purpose: NoticePurpose;
   first: string;
   rest: string[];
   an: "sie" | "du";
   who: Awaited<ReturnType<typeof ansprechpartner>>;
+  /** „Ihrer Anfrage zur Kfz-Versicherung“ für die kurze Nachfrage (followup_nudge ab v5) */
+  anfrage: string;
 }): Promise<FollowupSend> {
   let purpose = o.purpose;
   let rest = o.rest;
@@ -140,12 +149,17 @@ async function prepareFollowup(o: {
       rest = zeiten.labels;
       extra = { legacyParams: [o.first], buttonPayloads: zeiten.payloads };
     } else {
+      // Kurze Nachfrage (Erinnerung): ab v5 mit der Anfrage samt Sparte, die ältere freigegebene Fassung nur mit dem Namen
       purpose = "followup_nudge";
+      rest = [o.anfrage];
+      extra = { legacyParams: [o.first] };
     }
   }
   const params = [o.first, ...rest];
-  // Vorlage, die tatsächlich gesendet würde (passend zu Ansprache und Anrede); sonst der aktuelle Text
-  const pick = await pickTemplate(o.customerId, purpose, o.who.kontakt);
+  // Vorlage, die tatsächlich gesendet würde (passend zu Ansprache und Anrede, als erste Nachricht im Chat die Fassung
+  // mit KI-Kennzeichnung wie in sendWhatsAppNotice); sonst der aktuelle Text
+  const kiErst = await kiKennzeichnungOffen({ customerId: o.customerId, conversationId: o.conversationId, purpose }).catch(() => false);
+  const pick = await pickTemplate(o.customerId, purpose, o.who.kontakt, { kiErst });
   const restFor = pick && !pick.current && extra.legacyParams ? extra.legacyParams.slice(1) : rest;
   const preview = pick ? renderTemplate(pick.tpl.body, pick.params(restFor)) : noticeText(purpose, o.an, o.who, o.who.kontakt, rest);
   return { purpose, params, ...extra, preview, approved: !!pick };
@@ -175,7 +189,7 @@ export async function followupOptions(conversationId: string): Promise<FollowupO
       leadId: true,
       contactName: true,
       contactPhone: true,
-      lead: { select: { formData: true, source: true } },
+      lead: { select: { formData: true, source: true, tkvUmfang: true } },
     },
   });
   if (!conv) return [];
@@ -191,7 +205,7 @@ export async function followupOptions(conversationId: string): Promise<FollowupO
   return Promise.all(
     ADMIN_FOLLOWUP_PURPOSES.map(async (key) => {
       const rest = key === "followup_offer" ? [interestFrom(conv.lead?.formData, conv.lead?.source ?? null, an)] : [];
-      const send = await prepareFollowup({ customerId: conv.customerId, leadId: conv.leadId, purpose: key, first, rest, an, who });
+      const send = await prepareFollowup({ customerId: conv.customerId, leadId: conv.leadId, conversationId, purpose: key, first, rest, an, who, anfrage: anfrageMitSparte(an, anfrageLead(conv.lead)) });
       return { key, label: send.purpose === "followup_nudge" ? "Kurz nachfragen" : labels[key], anrede: who.kontakt, ...send };
     }),
   );

@@ -32,6 +32,9 @@ Interne Rechtsprüfung (Rechts- und Datenschutz-Agent, keine Anwaltsfreigabe, AG
 - Erstinformation (§ 15 VersVermV): Die Antwortseite `/t/<token>` zeigt im Fuß die Anbieterangaben; die Erstinformation geht
   wie bisher mit der Terminbestätigung bzw. spätestens vor der Beratung raus. Die SMS selbst ist keine Beratung.
 - KI-VO Art. 50: erste SMS nennt „KI-Assistent von …“ (wie die übrigen Texte der Strecke).
+  Nachtrag 24.11.2026: Der Satz wurde noch am 22.11.2026 auf Oles Wunsch gestrichen (4281a7c, „Anfrage … bei Herrn
+  Lohmann“: feste Nachricht mit Link zur Terminwahl, kein KI-Gespräch). Die Nur-SMS trägt also keinen KI-Hinweis;
+  Einordnung und offene Entscheidung in `2026-11-24-ki-hinweis-erste-nachricht.md` (Offen, Punkt 1).
 
 ## Auflagen (alle umgesetzt)
 1. Nur bei „kein WhatsApp“ (Meta 131026) und nur an **Handynummern**; Festnetz nie. Nur Leads mit eigener Anfrage

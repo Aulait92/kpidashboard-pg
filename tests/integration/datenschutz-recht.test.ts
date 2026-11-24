@@ -175,6 +175,17 @@ describe("Datenschutz und Recht: Erkennen und Fall anlegen", () => {
     expect((await kartenFaelle(c.id))[0]).toMatchObject({ art: "abmahnung", auskunftOffen: true });
   });
 
+  it("offene Auskunftsaufgabe ohne Fall (Nachhol-Lauf): Karte trägt den Fall nach, Frist ab der Antwort (Ole, 24.11.2026)", async () => {
+    const c = await makeContact(`info@${dom("nachhol")}`);
+    await prisma.salesEmail.create({ data: { contactId: c.id, direction: "IN", subject: "AW", text: "Woher haben Sie meine Daten?", fromEmail: c.email, eaccount: BOX, instantlyId: `in-nachhol-${c.id}`, sentAt: new Date("2026-10-24T09:00:00Z") } });
+    await prisma.salesTask.create({ data: { contactId: c.id, title: "Auskunft nach Art. 15 beantworten, Frist 24.11.2026", type: "SONSTIGES", dueAt: new Date() } });
+    const zeilen = await kartenFaelle(c.id);
+    expect(zeilen).toHaveLength(1);
+    expect(zeilen[0]).toMatchObject({ art: "auskunft", eingang: "24.10.2026" });
+    expect(await prisma.salesTask.count({ where: { contactId: c.id, doneAt: null } })).toBe(1);
+    expect(await kartenFaelle(c.id)).toHaveLength(1);
+  });
+
   it("§ 7 UWG ohne Anwalt mit Auskunftsverlangen: nur Fall „Auskunft“, keine Abmahnung", async () => {
     const c = await makeContact(`info@${dom("uwg-ruege")}`);
     await antwort(c.id, "Das ist unzulässige Werbung nach § 7 UWG. Teilen Sie mir gemäß Art. 15 DSGVO mit, aus welcher Quelle meine Daten stammen.");

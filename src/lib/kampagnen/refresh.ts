@@ -12,9 +12,26 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { reportError } from "@/lib/monitoring";
-import { angleResearcher, copywriter, reviewer, reviseCopies } from "@/lib/kampagnen/agents";
+import { audit } from "@/lib/audit";
+import { angleResearcher, copywriter, leitplankenBefunde, reviewer, reviseCopies } from "@/lib/kampagnen/agents";
 import { adsManagerUrl, buildRefreshAds, type MetaApi } from "@/lib/kampagnen/builder";
-import { defaultDeps, failRun, lockRun, renderRunImages, saveRunStep, unlockRun, type CampaignDeps } from "@/lib/kampagnen/run";
+import { ohneNamen, type FremdDeps } from "@/lib/kampagnen/fremdvorlagen";
+import type { LernSperre } from "@/lib/kampagnen/lern-sperre";
+import {
+  ALTLAST_BEI_META,
+  defaultDeps,
+  failRun,
+  hatInhaltBeiMeta,
+  laufKontext,
+  leitplankenStopp,
+  lockRun,
+  neuErzeugen,
+  renderRunImages,
+  saveRunStep,
+  texteMitLeitplanken,
+  unlockRun,
+  type CampaignDeps,
+} from "@/lib/kampagnen/run";
 import { loadAutomationSettings, type AutomationSettings } from "@/lib/kampagnen/settings";
 import {
   ACTIVE_STATUSES,
@@ -222,7 +239,7 @@ async function checkCampaign(sourceRunId: string, customerId: string, campaignId
   const counts = new Map<string, number>();
   for (const f of fatigued) counts.set(f.adSetId, (counts.get(f.adSetId) ?? 0) + 1);
   const adSetId = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? srcBuilt.adSetIds[0];
-  const runId = await createRefreshRun({ sourceRunId, customerId, campaignId, adSetId, fatigued, createdBy: "automatik", now });
+  const runId = await createRefreshRun({ sourceRunId, customerId, campaignId, adSetId, fatigued, createdBy: "automatik", now, lernSperre: deps.lernSperre, fremd: deps.fremd });
   if (!runId) return false;
   const status = await processRefreshRun(runId, deps);
   return status === "built";
@@ -241,12 +258,23 @@ export async function createRefreshRun(input: {
   fatigued: Fatigued[];
   createdBy: string;
   now?: Date;
+  /** Widerspruch gegen das gemeinsame Anzeigenlernen (Standard: lib/kampagnen/lern-sperre.ts), ersetzbar für Tests */
+  lernSperre?: LernSperre;
+  /** Kundendaten der Quelle bei Mustern aus einem anderen Werbekonto, ersetzbar für Tests */
+  fremd?: Pick<FremdDeps, "quelle" | "quelleNachName">;
 }): Promise<string | null> {
   const src = await prisma.campaignRun.findUniqueOrThrow({ where: { id: input.sourceRunId } });
   const srcBuilt = src.built as unknown as BuiltState;
   const adSetId = input.adSetId ?? srcBuilt.adSetIds[0];
   if (!adSetId || !srcBuilt.formId) return null;
   const { customerId, campaignId, fatigued } = input;
+  // Der Kontext wird kopiert: vorher absichern (Leitplanken für Muster aus einem anderen Werbekonto). Läufe im alten
+  // Format bekommen die sichere Form, bei Widerspruch von Quelle oder Ziel werden die Muster entfernt. laufKontext
+  // speichert den bereinigten Stand auch am Ursprungslauf, damit dort nichts aus dem anderen Werbekonto liegen bleibt.
+  const { ctx: gesicherterKontext, gesichert } = await laufKontext(src, { lernSperre: input.lernSperre, fremd: input.fremd });
+  // Der neue Lauf hat noch keine Winkel, Texte oder Bilder: ohne das Kennzeichen des Ursprungslaufs
+  const context = { ...gesicherterKontext };
+  delete context.fremdAltlast;
   const steps: RunStep[] = initialSteps().map((s) => (["stratege", "formular"].includes(s.key) ? { ...s, status: "uebersprungen", note: "Auffrischung: Plan und Formular bleiben" } : s));
   const run = await prisma.campaignRun.create({
     data: {
@@ -260,7 +288,7 @@ export async function createRefreshRun(input: {
       refreshAdSetId: adSetId,
       fatigue: json(fatigued),
       steps: json(steps),
-      context: json(src.context),
+      context: json(context),
       plan: json(src.plan),
       form: json(src.form),
       built: json({ ...emptyBuilt(), campaignId, adSetIds: [adSetId], formId: srcBuilt.formId }),
@@ -269,6 +297,16 @@ export async function createRefreshRun(input: {
   });
   const now = input.now ?? new Date();
   await prisma.campaignHealth.upsert({ where: { campaignId }, create: { campaignId, customerId, lastRefreshAt: now }, update: { lastRefreshAt: now } });
+  // Muster aus einem anderen Werbekonto: Quelle nur hier im Audit-Log des Laufs (nie in einer Ansicht oder Anweisung)
+  if (gesichert.fremd || gesichert.entfernt) {
+    await audit("kampagne.start", {
+      entity: "CampaignRun",
+      entityId: run.id,
+      customerId,
+      details: { product: src.product, kind: "auffrischung", ...(gesichert.quelleId ? { vorlagenVon: gesichert.quelleId } : {}), ...(gesichert.entfernt ? { musterEntfernt: true } : {}) },
+      actor: { role: "system" },
+    }).catch(() => undefined);
+  }
   return run.id;
 }
 
@@ -286,32 +324,55 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
     await prisma.campaignRun.update({ where: { id }, data: { status: "running", error: null } });
     const plan = { ...(row.plan as unknown as CampaignPlan), adsPerAdSet: 3 };
     const form = row.form as unknown as LeadFormDraft;
+    const contactId = row.customer.salesContact?.id ?? row.customer.onboarding?.salesContactId ?? null;
+    const taskFn = "task" in deps ? deps.task : defaultRefreshDeps().task;
+    const leitplankenAufgabe = () =>
+      taskFn(contactId, `Auffrischung ${row.customer.name}: Prüfung rot`, `Neue Anzeigen wurden nicht angelegt (Leitplanken für Muster aus einem anderen Werbekonto).\nKundenakte → Kampagne (KI): /admin/neu/kunden/${row.customerId}/kampagne`, new Date());
     const src = row.sourceRunId ? await prisma.campaignRun.findUnique({ where: { id: row.sourceRunId }, select: { copies: true } }) : null;
-    const before = ((src?.copies ?? []) as unknown as AdCopy[]).map((c) => `„${c.headline}“ / „${c.imageHeadline}“`).join("; ");
-    const baseCtx = row.context as unknown as CampaignContext;
+    const bisher = ((src?.copies ?? []) as unknown as AdCopy[]).map((c) => `„${c.headline}“ / „${c.imageHeadline}“`).join("; ");
+    // Leitplanken für Muster aus einem anderen Werbekonto: Kontext absichern (altes Format, Widerspruch)
+    const gesichert = await laufKontext(row, deps);
+    const teile = gesichert.teile;
+    let baseCtx = gesichert.ctx;
+    if (gesichert.altlast) {
+      if (hatInhaltBeiMeta(row.built)) return await leitplankenStopp({ id, state, schritt: "anlegen", befunde: [], meldung: ALTLAST_BEI_META, review: row.review as unknown as ReviewResult | null });
+      // Winkel, Texte und Bilder aus der Zeit vor den Leitplanken bzw. aus entfernten Mustern: neu erzeugen
+      baseCtx = await neuErzeugen(state, baseCtx);
+      await prisma.campaignRun.update({ where: { id }, data: { status: "running" } });
+    }
+    const alt = <T,>(v: unknown) => (gesichert.altlast ? null : (v as T | null));
+    // Die bisherigen Anzeigen eines Laufs aus dem alten Format könnten die Quelle nennen: in der Anweisung ohne deren Namen
+    const before = teile.length ? (ohneNamen(bisher, teile) ?? bisher) : bisher;
     const ctx: CampaignContext = {
       ...baseCtx,
       wish: [baseCtx.wish, `Auffrischung wegen Anzeigenermüdung: neue Winkel und Bilder, die sich klar von den bisherigen unterscheiden. Bisherige Anzeigen: ${before || "–"}`].filter(Boolean).join("\n"),
     };
 
     current = "winkel";
-    let angles = row.angles as unknown as Angle[] | null;
+    let angles = alt<Angle[]>(row.angles);
     if (!angles) {
       await saveRunStep(state, current, { status: "laeuft", startedAt: t() });
-      const r = await angleResearcher(deps.llm, ctx, plan);
+      const r = await angleResearcher(deps.llm, ctx, plan, { fremdNamensteile: teile });
       angles = r.value.slice(0, 3);
       await saveRunStep(state, current, { status: "fertig", finishedAt: t() }, { angles: json(angles) }, r.usage);
     }
     current = "texter";
-    let copies = row.copies as unknown as AdCopy[] | null;
+    let copies = alt<AdCopy[]>(row.copies);
     if (!copies) {
       await saveRunStep(state, current, { status: "laeuft", startedAt: t() });
       const r = await copywriter(deps.llm, ctx, plan, angles);
-      copies = r.value.slice(0, 3);
-      await saveRunStep(state, current, { status: "fertig", finishedAt: t() }, { copies: json(copies) }, r.usage);
+      // Leitplanken (fest, kein Modell; ohne Fremdvorlagen nie ein Befund): Treffer → einmal überarbeiten, sonst Prüfung rot
+      const p = await texteMitLeitplanken(deps.llm, ctx, r.value.slice(0, 3), angles.map((a) => a.key), teile, r.usage);
+      copies = p.copies.slice(0, 3);
+      const offen = p.befunde.filter((f) => f.index == null || f.index < copies!.length);
+      if (offen.length) {
+        await leitplankenAufgabe();
+        return await leitplankenStopp({ id, state, schritt: current, befunde: offen, copies, usage: p.usage });
+      }
+      await saveRunStep(state, current, { status: "fertig", finishedAt: t(), ...(p.ueberarbeitet ? { note: "nach den Leitplanken für Lernmuster überarbeitet" } : {}) }, { copies: json(copies) }, p.usage);
     }
     current = "bilder";
-    let images = row.creatives as unknown as CreativeImage[] | null;
+    let images = alt<CreativeImage[]>(row.creatives);
     if (!images) {
       await saveRunStep(state, current, { status: "laeuft", startedAt: t() });
       images = await renderRunImages(deps, ctx, angles, copies, id);
@@ -319,10 +380,10 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
       await saveRunStep(state, current, { status: "fertig", finishedAt: t(), note: `${images.length} Bilder` }, { creatives: json(images) });
     }
     current = "pruefer";
-    let review = row.review as unknown as ReviewResult | null;
+    let review = alt<ReviewResult>(row.review);
     if (!review) {
       await saveRunStep(state, current, { status: "laeuft", startedAt: t() });
-      let r = await reviewer(deps.llm, ctx, { plan, copies, form, images, angles });
+      let r = await reviewer(deps.llm, ctx, { plan, copies, form, images, angles, fremdNamensteile: teile });
       await saveRunStep(state, current, {}, {}, r.usage);
       review = r.value;
       if (review.status === "rot") {
@@ -334,14 +395,12 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
           images = await renderRunImages(deps, ctx, angles, copies, id, images, copies.map(() => true));
           await prisma.campaignRun.update({ where: { id }, data: { creatives: json(images) } });
         }
-        r = await reviewer(deps.llm, ctx, { plan, copies, form, images, angles });
+        r = await reviewer(deps.llm, ctx, { plan, copies, form, images, angles, fremdNamensteile: teile });
         review = { ...r.value, revised: true };
         await saveRunStep(state, current, {}, {}, r.usage);
       }
       await saveRunStep(state, current, { status: review.status === "rot" ? "fehler" : "fertig", finishedAt: t(), note: review.summary.slice(0, 200) }, { review: json(review) });
     }
-    const contactId = row.customer.salesContact?.id ?? row.customer.onboarding?.salesContactId ?? null;
-    const taskFn = "task" in deps ? deps.task : defaultRefreshDeps().task;
     if (review.status === "rot") {
       await saveRunStep(state, "anlegen", { status: "uebersprungen", note: "Prüfung rot, nichts bei Meta angelegt" });
       await prisma.campaignRun.update({ where: { id }, data: { status: "blocked", finishedAt: new Date(), error: `Prüfung rot: ${review.summary}`.slice(0, 1000) } });
@@ -350,6 +409,12 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
     }
 
     current = "anlegen";
+    // Letzte Sperre vor dem Anlegen: feste Ausgabeprüfung (auch für fortgesetzte Läufe)
+    const befunde = leitplankenBefunde(ctx, copies, teile);
+    if (befunde.length) {
+      await leitplankenAufgabe();
+      return await leitplankenStopp({ id, state, schritt: current, befunde, review });
+    }
     await prisma.campaignRun.update({ where: { id }, data: { status: "building" } });
     await saveRunStep(state, current, { status: "laeuft", startedAt: t() });
     const prev = { ...emptyBuilt(), ...((row.built as unknown as BuiltState | null) ?? {}) };

@@ -323,7 +323,8 @@ export async function likelyDuplicates(contactId: string, limit = 3): Promise<(M
   if (!c) return [];
   const t = signalsOf(c);
   const emails = [...t.emails];
-  const notSelf = { id: { not: contactId } };
+  // Gelöschte Hüllen (Art. 17, „Gelöscht auf Verlangen“) sind keine Dubletten (Ole, 24.11.2026)
+  const notSelf = { id: { not: contactId }, art17GeloeschtAt: null };
   const or: Prisma.SalesContactWhereInput[] = [];
   if (emails.length) {
     or.push({ email: { in: emails, mode: "insensitive" } }, { altEmails: { hasSome: emails } });
@@ -339,7 +340,7 @@ export async function likelyDuplicates(contactId: string, limit = 3): Promise<(M
   const ignoreDomains = new Set<string>();
   for (const d of t.domains) {
     const rows = await prisma.$queryRaw<{ id: string }[]>`
-      SELECT id FROM "SalesContact" WHERE id <> ${contactId}
+      SELECT id FROM "SalesContact" WHERE id <> ${contactId} AND "art17GeloeschtAt" IS NULL
       AND (lower(email) LIKE ${`%@${d}`} OR EXISTS (SELECT 1 FROM unnest("altEmails") a WHERE lower(a) LIKE ${`%@${d}`}))
       LIMIT ${SHARED_DOMAIN_MIN}`;
     if (rows.length >= SHARED_DOMAIN_MIN) ignoreDomains.add(d);

@@ -162,6 +162,9 @@ export const SPERRE_TEXT: Record<string, string> = {
   aus: "Automatisches Auslesen ist gerade nicht verfügbar.",
   pause: "Automatisches Auslesen ist gerade nicht verfügbar.",
   kunde: "Automatisches Auslesen ist für Ihr Konto noch nicht freigeschaltet.",
+  // Widerspruch des Vermittlers gegen Amazon Web Services: Oberfläche zeigt den Satz mit Datum und nächstem Schritt
+  // (lib/datennutzung.ts kiAusText), dies ist nur die Fassung ohne Datum
+  widerspruch: "Automatisches Auslesen ist für Ihr Konto abgeschaltet.",
 };
 
 const euroKopf = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);

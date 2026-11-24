@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractHistoryPhones, historyText, newPhonesFor, skipHistoryEntry, sourceLabel } from "@/lib/vertrieb/kontaktdaten";
+import { extractHistoryPhones, historyPhoneText, historyText, newPhonesFor, skipHistoryEntry, sourceLabel } from "@/lib/vertrieb/kontaktdaten";
 
 // Telefonnummern aus dem Verlauf (Ole, 24.11.2026): Beispiel Thomas Horn (Allianz), Mobilnummer stand nur in der Calendly-Notiz
 const nums = (t: string, ex: string[] = []) => extractHistoryPhones(t, ex).map((p) => `${p.e164} ${p.kind}`);
@@ -51,6 +51,16 @@ describe("Nummern im Verlauf erkennen", () => {
     const t = "Gerne, rufen Sie mich an: 0171 2345678\n\nAm 12.11.2026 schrieb Ole Muster:\n> Mobil: 0160 9999999";
     expect(nums(t)).toEqual(["+491712345678 MOBIL"]);
     expect(historyText("a\n> b")).toBe("a\n");
+  });
+
+  it("Tool-Fußzeile einer Mail-Antwort zählt nicht, die Nummer im Antworttext schon; Buchungsnotizen bleiben vollständig", () => {
+    const fuss = "Danke, das passt.\n\nPowered by Calendly.com\nSupport: +1 415 555 0100";
+    expect(nums(historyPhoneText({ type: "COLD_MAIL", outcome: "Antwort erhalten", note: fuss }))).toEqual([]);
+    const mitNummer = "Rufen Sie mich gern an: 0171 2345678\n\nPowered by Calendly.com\nSupport: +1 415 555 0100";
+    expect(nums(historyPhoneText({ type: "COLD_MAIL", outcome: "Antwort erhalten", note: mitNummer }))).toEqual(["+491712345678 MOBIL"]);
+    // Calendly-Buchung (kein COLD_MAIL): die Nummer aus der Notiz bleibt, obwohl „Calendly“ im Text steht
+    const buchung = "Neuer Kontakt aus Calendly\nGebucht von Max Muster (max@agentur.test)\nTelefonnummer: +49 176 60125010";
+    expect(nums(historyPhoneText({ type: "TERMIN", outcome: null, note: buchung }))).toEqual(["+4917660125010 MOBIL"]);
   });
 });
 

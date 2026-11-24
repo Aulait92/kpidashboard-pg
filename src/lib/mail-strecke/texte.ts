@@ -7,6 +7,7 @@
 // Erstinformation als PDF im Anhang, Impressum, Datenschutz und Abmeldelink. Jeder Knopf ist ein Link auf die
 // Antwortseite /t/<token>; gespeichert wird dort erst mit einem Klick im Browser (Link-Scanner rufen Links nur ab).
 
+import { vermittlerBeruf } from "@/lib/vermittler-nennung";
 import { a, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import { erstanschreibenZweck, frageplan, outreachProdukt, v8Thema, type ErstanschreibenZweck, type FormAntwort } from "@/lib/whatsapp/erstanschreiben";
 import { erstanschreibenThema } from "@/lib/whatsapp/erstanschreiben";
@@ -163,9 +164,9 @@ export function erstmailInhalt(o: ErstmailInput): { subject: string; text: strin
     art !== "erst"
       ? null
       : o.erstinfoPdf
-        ? a(an, `Im Anhang findest du die Erstinformation zu ${o.person.dat} als Versicherungsvermittler (PDF).`, `Im Anhang finden Sie die Erstinformation zu ${o.person.dat} als Versicherungsvermittler (PDF).`)
+        ? a(an, `Im Anhang findest du die Erstinformation zu ${o.person.dat} als ${vermittlerBeruf(o.person.dat)} (PDF).`, `Im Anhang finden Sie die Erstinformation zu ${o.person.dat} als ${vermittlerBeruf(o.person.dat)} (PDF).`)
         : o.erstinfoUrl
-          ? a(an, `Die Erstinformation zu ${o.person.dat} als Versicherungsvermittler findest du hier: ${o.erstinfoUrl}`, `Die Erstinformation zu ${o.person.dat} als Versicherungsvermittler finden Sie hier: ${o.erstinfoUrl}`)
+          ? a(an, `Die Erstinformation zu ${o.person.dat} als ${vermittlerBeruf(o.person.dat)} findest du hier: ${o.erstinfoUrl}`, `Die Erstinformation zu ${o.person.dat} als ${vermittlerBeruf(o.person.dat)} finden Sie hier: ${o.erstinfoUrl}`)
           : null;
   // Nachfassen: KI-Kennzeichnung klein unter dem Text (KI-VO Art. 50)
   const kiZeile = art === "erst" ? null : `${ki.replace(/\.$/, "")}.`;

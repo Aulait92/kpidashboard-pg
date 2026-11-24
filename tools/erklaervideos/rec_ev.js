@@ -81,6 +81,8 @@ const A={
  const q=await c0.newPage();await q.goto(B+'/login');await q.fill('input[type=email]','demo@pg.local');await q.fill('input[type=password]','Demo12345!');await q.click('button[type=submit]');await q.waitForURL(u=>!u.pathname.startsWith('/login'),{timeout:90000}).catch(()=>{});await q.waitForTimeout(1500);
  await q.goto(B+'/buyer',{waitUntil:'networkidle'}).catch(()=>{});await q.waitForTimeout(1500);
  for(let i=0;i<4;i++){const l=q.locator('button[aria-label="Video ausblenden"], button[aria-label="Hinweis ausblenden"]').filter({visible:true}).first();if(!(await l.count()))break;await l.click().catch(()=>{});await q.waitForTimeout(900);}
+ // Banner „KI-Hilfe und gemeinsames Anzeigenlernen“ (24.11.2026) vor der Aufnahme bestätigen, sonst steht es über jeder Seite
+ {const b=q.locator('[data-datennutzung-verstanden]').filter({visible:true}).first();if(await b.count()){await b.click().catch(()=>{});await q.waitForTimeout(1500);}}
  for(const u of (process.env.EV_WARM?process.env.EV_WARM.split(','):['/buyer','/buyer/chats','/buyer/kontakte','/buyer/kontakte?modus=pipeline','/buyer/kalender','/buyer/wachstum','/buyer/team'])){await q.goto(B+u,{waitUntil:'networkidle'}).catch(()=>{});}
  const state=await c0.storageState();await c0.close();
  const ctx=await b.newContext({viewport:{width:W,height:H},locale:'de-DE',timezoneId:'Europe/Berlin',storageState:state,recordVideo:{dir:EV+'/raw_'+PART,size:{width:W,height:H}}});

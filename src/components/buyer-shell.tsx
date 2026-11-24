@@ -68,10 +68,13 @@ export function BuyerShell({
   updatesUnread = 0,
   noStepBadge = 0,
   demo = false,
+  hinweisOffen = false,
   children,
 }: {
   /** Öffentliche App-Demo (/app-demo): ohne Suche, KI-Hilfe, Profilmenü, Push und Nutzungsmessung. */
   demo?: boolean;
+  /** Über der Seite steht schon ein Hinweis (components/datennutzung-banner.tsx): dann kein Hinweis auf Mitteilungen dazu. */
+  hinweisOffen?: boolean;
   /** Neue Leads, die auf den Vermittler warten (Zähler „N neu“ an „Kontakte“ bzw. „Leads“, lib/neue-leads.ts). */
   noStepBadge?: number;
   /** Ungelesene Neuigkeiten des Logins (Profilmenü). */
@@ -120,6 +123,7 @@ export function BuyerShell({
         updatesUnread={updatesUnread}
         noStepBadge={noStepBadge}
         empfehlungReady={empfehlungReady}
+        hinweisOffen={hinweisOffen}
       >
         {children}
       </BuyerShellA>
@@ -198,7 +202,7 @@ export function BuyerShell({
       <div className="flex-1 pb-20 md:pb-0">
         {absence ? <AbsenceControl data={absence} /> : null}
         {/* Einrichtung hat dafür einen eigenen Schritt („App aufs Handy und Mitteilungen“), dort kein zweiter Hinweis */}
-        {pathname.startsWith("/buyer/einrichtung") ? null : <PushHint />}
+        {pathname.startsWith("/buyer/einrichtung") || hinweisOffen ? null : <PushHint />}
         {children}
       </div>
       <BuyerSearch storageKey={displayName} />
@@ -503,8 +507,10 @@ function BuyerShellA({
   updatesUnread,
   noStepBadge,
   empfehlungReady = null,
+  hinweisOffen = false,
   children,
 }: {
+  hinweisOffen?: boolean;
   absence: ShellAbsence | null;
   updatesUnread: number;
   noStepBadge: number;
@@ -617,7 +623,7 @@ function BuyerShellA({
 
         <div className="pb-20 md:pb-0">
           {absence ? <AbsenceControl data={absence} /> : null}
-          {demo || pathname.startsWith("/buyer/einrichtung") ? null : <PushHint />}
+          {demo || hinweisOffen || pathname.startsWith("/buyer/einrichtung") ? null : <PushHint />}
           {children}
         </div>
         {demo ? null : <BuyerSearch storageKey={displayName} />}

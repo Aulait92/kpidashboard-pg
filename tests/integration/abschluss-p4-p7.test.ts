@@ -130,7 +130,12 @@ describe("P4 Abschluss erkennen und melden, P7 nach dem Abschluss", () => {
 
   it("Glückwunsch: Text, Vorauswahl bis 3 Tage, nur im offenen Fenster, einmal", async () => {
     const l = await lead();
-    await chat(l);
+    const c = await chat(l);
+    // wie im echten Verlauf: die erste Nachricht an den Lead (Erstanschreiben) trug die KI-Kennzeichnung; ohne sie bekäme
+    // die erste Systemnachricht im Chat die Zeile „Digitaler KI-Assistent“ (tests/integration/ki-erste-nachricht.test.ts)
+    await prisma.message.create({
+      data: { conversationId: c.id, direction: "outbound", kind: "template", sentBy: "system", purpose: "outreach_privatschutz", status: "read", body: "[Erstinformation als PDF]\nHallo Frau Becker, danke für Ihre Anfrage! *Ist davon schon etwas versichert?*\n\nDigitaler KI-Assistent", createdAt: new Date(Date.now() - 6 * DAY) },
+    });
     await prisma.appointment.create({ data: { customerId, leadId: l.id, mode: "video", startsAt: new Date(Date.now() - 2 * DAY), status: "completed" } });
     await schliessen(l.id);
     const g = await glueckwunschStand(l.id, customerId);

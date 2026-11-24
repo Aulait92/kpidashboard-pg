@@ -314,7 +314,9 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
       const booked = await hasAppointment(lead.id, conv?.id);
       // Testlead (lib/testlead.ts): der Chat wurde vorher frisch begonnen; schreibt der Admin dazwischen selbst, kommt
       // das Erstanschreiben trotzdem (Ziel ist, den ganzen Ablauf zu erleben).
-      if (conv && conv._count.messages > 0 && !lead.isTest) {
+      // Ausnahme: Chat gerade an diese neue Anfrage einer anderen Person übergeben (lib/lead-name-server.ts), seitdem still
+      const neueAnfrage = !!conv && conv.leadId === lead.id && conv._count.messages > 0 && (await import("@/lib/lead-name-server").then((m) => m.chatFuerNeueAnfrageFrei(conv.id, lead.id)));
+      if (conv && conv._count.messages > 0 && !lead.isTest && !neueAnfrage) {
         // Lead hat schon selbst geschrieben → der Assistent ist bereits im Gespräch (bzw. übernimmt jetzt).
         await prisma.lead.update({
           where: { id: lead.id },

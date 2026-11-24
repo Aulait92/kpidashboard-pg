@@ -10,7 +10,11 @@ const createCheckoutForOffer = vi.fn();
 const reportError = vi.fn();
 const sendToAdmins = vi.fn(async () => ({ sent: 1, removed: 0, errors: [] }));
 
-vi.mock("next/headers", () => ({ headers: async () => new Map([["user-agent", "test"]]) }));
+// cookies: nach der Annahme merkt sich der Browser das Angebot (lib/annahme-direktzugang-server.ts, 20.11.2026)
+vi.mock("next/headers", () => ({
+  headers: async () => new Map([["user-agent", "test"]]),
+  cookies: async () => ({ get: () => undefined, has: () => false, set: () => undefined, delete: () => undefined }),
+}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: (url: string) => redirect(url) }));
 vi.mock("@/lib/rate-limit", () => ({ checkLimit: () => ({ ok: true }), clientIp: () => "1.2.3.4", RATE_LIMIT_MESSAGE: "x" }));

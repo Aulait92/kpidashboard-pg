@@ -9,6 +9,7 @@ import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { bookingPageUrl } from "@/lib/public-url";
 import { prisma } from "@/lib/prisma";
+import { vertriebFuer } from "@/lib/tarifauswahl-server";
 import { disconnectOwnCalendarAction } from "./actions";
 import { BeraterAllianzForm, BlockTimes, LeadTimesForm, RemindButton, SourcePicker, VideoRaumForm } from "@/components/calendar-sources";
 import { loadBeraterPersonen } from "@/lib/calendar/berater-allianz";
@@ -56,6 +57,10 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
   const ownApp = own?.provider === "app";
   const person = ownApp ? (personen?.resources.find((r) => r.id === own?.allianzResourceId) ?? null) : null;
   const makler = customer?.vermittlerTyp === "makler";
+  // W2 wie in der Einrichtung (Ole, 22.11.2026): Allianz-Online-Kalender nur, wenn Allianz möglich ist. Gesellschaften bekannt
+  // und keine davon die Allianz: weg; unbekannt: anbieten; schon verbunden bleibt sichtbar (SourcePicker).
+  const gesellschaften = makler ? [] : ((await vertriebFuer(ctx.customerId).catch(() => null))?.vertrieb.gesellschaften ?? []);
+  const allianzKalender = !makler && (!gesellschaften.length || gesellschaften.some((g) => /allianz/i.test(g)));
   // Inhaber: Kalender des Kundenkontos. Berater: eigener (nur wenn verbunden gibt es Lead-Zeiten/Blockierungen).
   const key = owner ? ctx.customerId : ownConnected ? userCalendarKey(ctx.userId!) : null;
   const setup = key ? await loadCalendarSetup(ctx.customerId, key) : null;
@@ -130,7 +135,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
                   allianzAction={connectAllianzAction}
                   disconnectAllianzAction={disconnectAllianzAction}
                   disconnectNativeAction={disconnectNativeCalendarAction}
-                  allianzOption={!makler}
+                  allianzOption={allianzKalender}
                 />
               ) : null}
               {setup ? (

@@ -27,17 +27,17 @@ export type SpickzettelDaten = {
 };
 
 /** Daten laden; null in der Admin-Vorschau bzw. ohne Lead (keine Inhalte, Rechtsprüfung). */
-export async function ladeSpickzettelDaten({ leadId, customerId, preview }: { leadId: string | null; customerId: string; preview: boolean }): Promise<SpickzettelDaten | null> {
+export async function ladeSpickzettelDaten({ leadId, customerId, preview, inhaber }: { leadId: string | null; customerId: string; preview: boolean; /** Angemeldeter ist der Inhaber (für den nächsten Schritt im Hinweis) */ inhaber?: boolean }): Promise<SpickzettelDaten | null> {
   if (!leadId || preview) return null;
   const d = await ladeSpickzettel(leadId, customerId).catch(() => null);
   if (!d) return null;
-  return spickzettelDaten(d);
+  return spickzettelDaten(d, { inhaber });
 }
 
 /** Aus geladenen Daten (auch für Tests und statische Aufnahmen). */
-export function spickzettelDaten(d: Awaited<ReturnType<typeof ladeSpickzettel>>): SpickzettelDaten {
+export function spickzettelDaten(d: Awaited<ReturnType<typeof ladeSpickzettel>>, o: { inhaber?: boolean } = {}): SpickzettelDaten {
   return {
-    s: spickzettel(d.v, { gebetenAm: d.gebetenAm, policenAn: d.policenAn }),
+    s: spickzettel(d.v, { gebetenAm: d.gebetenAm, policenAn: d.policenAn, inhaber: o.inhaber }),
     chatAusgelesen: d.v ? chatSpartenAusgelesen(d.v.vertraege) : [],
     sparten: (d.v?.sparten ?? []).map((s) => ({ wert: s, label: SPARTE_LABEL[s] })),
   };
@@ -179,9 +179,9 @@ export function PolicenSpickzettel({
 }
 
 /** Alte Terminvorbereitung (page.tsx): lädt selbst und zeigt den Spickzettel. */
-export async function PolicenVergleichKurz({ terminId, leadId, customerId, preview, ohne2fa = false }: { terminId: string; leadId: string | null; customerId: string; preview: boolean; ohne2fa?: boolean }) {
+export async function PolicenVergleichKurz({ terminId, leadId, customerId, preview, ohne2fa = false, inhaber }: { terminId: string; leadId: string | null; customerId: string; preview: boolean; ohne2fa?: boolean; inhaber?: boolean }) {
   if (!leadId) return null;
-  const daten = await ladeSpickzettelDaten({ leadId, customerId, preview });
+  const daten = await ladeSpickzettelDaten({ leadId, customerId, preview, inhaber });
   // Dort sagt die Dokumentenkarte schon „Ihr Assistent bittet vor dem Termin darum“
   if (daten?.s?.zustand === "nie_gebeten") return null;
   return <PolicenSpickzettel terminId={terminId} leadId={leadId} daten={daten} ohne2fa={ohne2fa} readOnly={preview} />;

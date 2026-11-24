@@ -4,11 +4,24 @@ import { publicUrl } from "@/lib/public-url";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
 import { libraryWinners, winnersBlock } from "@/lib/kampagnen/ad-library";
 import { ladeEigeneGewinnerStandard, type EigeneGewinnerErgebnis } from "@/lib/kampagnen/eigene-gewinner";
+import {
+  HINWEIS_GESPERRT,
+  fremdMusterAus,
+  hinweisFremd,
+  ladeQuelle,
+  ladeSeiten,
+  namensteileDerQuelle,
+  ohneNamen,
+  type Namensteil,
+  type QuelleDaten,
+  type ZielDaten,
+} from "@/lib/kampagnen/fremdvorlagen";
+import { ausgenommeneUnter, meldungLernSperre, vomLernenAusgenommen, type LernSperre } from "@/lib/kampagnen/lern-sperre";
 import { prisma } from "@/lib/prisma";
 import { redactTokens } from "@/lib/meta-leads";
 import { currentBudgets, customerCpl } from "@/lib/budget";
 import { productPatterns } from "@/lib/kampagnen/agents";
-import type { CampaignContext } from "@/lib/kampagnen/types";
+import type { Bildidee, CampaignContext, EigenerGewinner, FremdMuster } from "@/lib/kampagnen/types";
 import { consentAngabenFor } from "@/lib/einwilligung-leadformular-server";
 import { consentMissing, leadFormConsentText } from "@/lib/einwilligung-leadformular";
 
@@ -27,6 +40,90 @@ const httpUrl = (u: string | null | undefined): string | null => {
   }
 };
 
+type GewinnerLader = (input: { customerId: string; adAccountId: string | null; product: string }) => Promise<EigeneGewinnerErgebnis>;
+
+/** Klare Meldung, warum `vorlagenVon` nicht geht (Kunde nicht gefunden, kein Werbekonto). Nie stillschweigend eigene Vorlagen. */
+export class VorlagenFehler extends Error {}
+
+export const MELDUNG_QUELLE_FEHLT = "vorlagenVon: Der Kunde, dessen Anzeigen als Muster dienen sollen, wurde nicht gefunden. Es wurde nichts gestartet.";
+export const MELDUNG_QUELLE_OHNE_KONTO = "vorlagenVon: Für den Kunden, dessen Anzeigen als Muster dienen sollen, ist kein Meta-Werbekonto hinterlegt. Es wurde nichts gestartet.";
+
+/**
+ * Vor dem Start mit `vorlagenVon` prüfen (Ole, 24.11.2026): Quelle vorhanden, mit Werbekonto, und weder Quelle noch Ziel
+ * vom gemeinsamen Anzeigenlernen ausgenommen. null = in Ordnung, sonst die Meldung für den Aufrufer.
+ */
+export async function pruefeVorlagenQuelle(
+  zielId: string,
+  quelleId: string,
+  deps: { lernSperre?: LernSperre; quelle?: (id: string) => Promise<QuelleDaten | null> } = {},
+): Promise<Problem | null> {
+  if (!quelleId || quelleId === zielId) return null;
+  const quelle = await (deps.quelle ?? ladeQuelle)(quelleId);
+  if (!quelle) return { key: "vorlagenVon", message: MELDUNG_QUELLE_FEHLT };
+  const raus = await ausgenommeneUnter([zielId, quelle.id], deps.lernSperre);
+  if (raus.size) return { key: "lernSperre", message: meldungLernSperre(zielId, raus) };
+  if (!quelle.adAccountId) return { key: "vorlagenVon", message: MELDUNG_QUELLE_OHNE_KONTO };
+  return null;
+}
+
+type FremdErgebnis = {
+  /** false: Quelle oder Ziel ist ausgenommen, es wurde nichts geladen */
+  fremd: boolean;
+  quelleId: string;
+  muster: FremdMuster[];
+  hinweis: string;
+  teile: Namensteil[];
+};
+
+/**
+ * Muster aus dem Werbekonto eines anderen Kunden laden (gemeinsames Anzeigenlernen, lib/kampagnen/fremdvorlagen.ts).
+ * Zurück kommen nur bereinigte Muster: keine Anzeigen- und Kampagnennamen, keine Kennzahlen, keine Bild-Adresse. Das
+ * Vorlagenbild sieht höchstens der Bildidee-Aufruf (feste Kategorien, lib/kampagnen/bildidee.ts), sonst niemand.
+ */
+async function ladeFremdMuster(o: {
+  zielId: string;
+  quelleId: string;
+  product: string;
+  ziel: ZielDaten;
+  lernSperre?: LernSperre;
+  ladeGewinner: GewinnerLader;
+  bildidee?: (bildUrl: string) => Promise<Bildidee | null>;
+  quelle?: (id: string) => Promise<QuelleDaten | null>;
+}): Promise<FremdErgebnis> {
+  const quelle = await (o.quelle ?? ladeQuelle)(o.quelleId);
+  if (!quelle) throw new VorlagenFehler(MELDUNG_QUELLE_FEHLT);
+  const teile = namensteileDerQuelle(quelle, o.ziel);
+  // Widerspruch von Quelle oder Ziel: nichts laden (und nicht stillschweigend auf eigene Vorlagen ausweichen)
+  if ((await ausgenommeneUnter([o.zielId, quelle.id], o.lernSperre)).size) return { fremd: false, quelleId: quelle.id, muster: [], hinweis: HINWEIS_GESPERRT, teile };
+  if (!quelle.adAccountId) throw new VorlagenFehler(MELDUNG_QUELLE_OHNE_KONTO);
+  let gewinner: EigenerGewinner[] = [];
+  try {
+    const r = await o.ladeGewinner({ customerId: quelle.id, adAccountId: quelle.adAccountId, product: o.product });
+    gewinner = r.gewinner;
+    // Der Hinweis des Laders nennt das Werbekonto der Quelle: nur ins Server-Log, nie in den Kontext des Zielkunden
+    if (r.hinweis) console.error("[fremdvorlagen]", redactTokens(r.hinweis));
+  } catch (err) {
+    console.error("[fremdvorlagen]", redactTokens(err instanceof Error ? err.message : String(err)).slice(0, 200));
+  }
+  const bildideen = await Promise.all(gewinner.map((w) => (w.bildUrl && o.bildidee ? o.bildidee(w.bildUrl).catch(() => null) : null)));
+  const muster = fremdMusterAus(gewinner, { teile, versicherer: o.ziel.insurer }, bildideen);
+  return { fremd: true, quelleId: quelle.id, muster, hinweis: hinweisFremd(muster.length), teile };
+}
+
+/**
+ * Seiten, die in der Werbebibliothek nicht als Vorlage dienen dürfen: die Seiten eigener Kunden, die vom gemeinsamen
+ * Anzeigenlernen ausgenommen sind; ist der Zielkunde selbst ausgenommen, die Seiten aller eigenen Kunden; dazu immer
+ * die Quelle dieses Laufs (sie wird nie gezeigt, auch nicht über ihren Seitennamen).
+ */
+async function gesperrteSeiten(zielId: string, quelleId: string | null, lernSperre?: LernSperre): Promise<{ namen: string[]; seiten: string[] }> {
+  const ids = (await prisma.customer.findMany({ select: { id: true } })).map((c) => c.id);
+  const ausgenommen = await ausgenommeneUnter(ids, lernSperre);
+  const raus = new Set(ausgenommen.has(zielId) ? ids : ausgenommen);
+  if (quelleId) raus.add(quelleId);
+  raus.delete(zielId);
+  return raus.size ? ladeSeiten([...raus]) : { namen: [], seiten: [] };
+}
+
 /** Produkte mit Werbebudget (Angebot bzw. „Budget ändern“) – Auswahl in der Kampagnen-Karte. */
 export async function campaignProducts(customerId: string): Promise<{ product: string; dailyBudget: number }[]> {
   const { lines } = await currentBudgets(customerId).catch(() => ({ lines: [] }));
@@ -43,12 +140,20 @@ export async function loadCampaignContext(
     /** false: ohne Vorlagen (eigene Gewinner, Werbebibliothek), z. B. für Vorgabewerte beim Seitenaufruf */
     vorlagen?: boolean;
     /**
-     * Gewinner-Anzeigen eines anderen Kunden als Vorlage (Ole, 24.11.2026: Schwarzkopf „stark an Lohmanns Winnern
-     * anlehnen“, auch die Bilder). Kunden-ID; dessen Werbekonto liefert die Vorlagen statt des eigenen.
+     * Gewinner-Anzeigen eines anderen Kunden als Muster (Ole, 24.11.2026, gemeinsames Anzeigenlernen). Kunden-ID; dessen
+     * Werbekonto liefert die Muster statt des eigenen. Es gelten die Leitplanken (lib/kampagnen/fremdvorlagen.ts): nur
+     * bereinigte Muster, keine Namen, Kennzahlen oder Bild-Adressen der Quelle im Kontext. Wirft VorlagenFehler, wenn
+     * es den Kunden nicht gibt oder er kein Werbekonto hat (nie stillschweigend eigene Vorlagen).
      */
     vorlagenVon?: string | null;
     /** ersetzbar für Tests */
-    eigeneGewinner?: (input: { customerId: string; adAccountId: string | null; product: string }) => Promise<EigeneGewinnerErgebnis>;
+    eigeneGewinner?: GewinnerLader;
+    /** Widerspruch gegen das gemeinsame Anzeigenlernen (Standard: lib/kampagnen/lern-sperre.ts), ersetzbar für Tests */
+    lernSperre?: LernSperre;
+    /** Abstrakte Bildidee aus einem Vorlagenbild der Quelle (lib/kampagnen/bildidee.ts); ohne: Muster ohne Bildidee */
+    bildidee?: (bildUrl: string) => Promise<Bildidee | null>;
+    /** Kundendaten der Quelle, ersetzbar für Tests */
+    quelle?: (id: string) => Promise<QuelleDaten | null>;
   } = {},
 ): Promise<CampaignContext> {
   const c = await prisma.customer.findUniqueOrThrow({
@@ -81,30 +186,50 @@ export async function loadCampaignContext(
   // Einwilligung im Formular: fester Wortlaut mit Vermittler, Anschrift, KI-Assistent, Widerruf (Ole, 15.11.2026)
   const angaben = await consentAngabenFor(customerId).catch(() => null);
   const vorlagen = opts.vorlagen !== false;
+  const ladeGewinner = opts.eigeneGewinner ?? ladeEigeneGewinnerStandard;
+  const advisorName = person || sc?.name || c.name;
+  const insurer = sc?.insurer && sc.insurer !== "Makler" ? sc.insurer : null;
+  const fremdId = vorlagen && opts.vorlagenVon && opts.vorlagenVon !== customerId ? opts.vorlagenVon : null;
+  // Muster aus dem Werbekonto eines anderen Kunden (gemeinsames Anzeigenlernen): nur bereinigt, siehe ladeFremdMuster
+  const fremd = fremdId
+    ? await ladeFremdMuster({
+        zielId: customerId,
+        quelleId: fremdId,
+        product,
+        ziel: { customerName: c.name, advisorName, city: sc?.city ?? null, zip: sc?.zip ?? null, region: c.region, insurer, product, patterns: productPatterns(product), special: q.special ?? null },
+        lernSperre: opts.lernSperre,
+        ladeGewinner,
+        bildidee: opts.bildidee,
+        quelle: opts.quelle,
+      })
+    : null;
   // Eigene Gewinner aus dem angebundenen Werbekonto (Ole, 21.11.2026): Vorrang vor der Werbebibliothek
-  const eigene: EigeneGewinnerErgebnis = vorlagen
+  const eigene: EigeneGewinnerErgebnis =
+    vorlagen && !fremd
+      ? await (async () => ladeGewinner({ customerId, adAccountId: c.metaAdAccountId, product }))().catch((err) => ({
+          gewinner: [],
+          hinweis: `Eigene Gewinner nicht genutzt: ${redactTokens(err instanceof Error ? err.message : String(err)).slice(0, 160)}`,
+        }))
+      : { gewinner: [], hinweis: null };
+  // Werbebibliothek ohne die Seiten ausgenommener eigener Kunden; lässt sich das nicht klären, lieber ohne Bibliothek
+  const bibliothek = vorlagen
     ? await (async () => {
-        const fremd = opts.vorlagenVon && opts.vorlagenVon !== customerId
-          ? await prisma.customer.findUnique({ where: { id: opts.vorlagenVon }, select: { id: true, name: true, metaAdAccountId: true } })
-          : null;
-        const quelle = fremd?.metaAdAccountId ? { customerId: fremd.id, adAccountId: fremd.metaAdAccountId } : { customerId, adAccountId: c.metaAdAccountId };
-        const r = await (opts.eigeneGewinner ?? ladeEigeneGewinnerStandard)({ ...quelle, product });
-        return fremd?.metaAdAccountId ? { ...r, hinweis: [`Vorlagen aus dem Werbekonto von ${fremd.name}`, r.hinweis].filter(Boolean).join(" · ") } : r;
-      })().catch((err) => ({
-        gewinner: [],
-        hinweis: `Eigene Gewinner nicht genutzt: ${redactTokens(err instanceof Error ? err.message : String(err)).slice(0, 160)}`,
-      }))
-    : { gewinner: [], hinweis: null };
+        const raus = await gesperrteSeiten(customerId, fremd?.quelleId ?? null, opts.lernSperre ?? vomLernenAusgenommen);
+        return winnersBlock(await libraryWinners(product, { excludePages: [c.name, ...raus.namen], excludePageIds: raus.seiten }));
+      })().catch(() => null)
+    : null;
+  const wish = opts.wish?.trim() || null;
   const consentText = angaben ? leadFormConsentText({ ...angaben, datenschutzUrl: privacyUrl ?? angaben.datenschutzUrl }) : null;
   const consentFehlt = angaben ? consentMissing({ ...angaben, datenschutzUrl: privacyUrl ?? angaben.datenschutzUrl }) : [];
   return {
     customerId: c.id,
     customerName: c.name,
-    advisorName: person || sc?.name || c.name,
+    advisorName,
     vermittlerTyp: c.vermittlerTyp === "makler" ? "makler" : c.vermittlerTyp === "mehrfachvertreter" ? "mehrfachvertreter" : "vertreter",
-    insurer: sc?.insurer && sc.insurer !== "Makler" ? sc.insurer : null,
+    insurer,
     product,
-    wish: opts.wish?.trim() || null,
+    // Der Zusatzwunsch darf die Quelle nicht nennen („an Lohmanns Gewinnern anlehnen“): Namensteile raus
+    wish: fremd ? ohneNamen(wish, fremd.teile) : wish,
     anrede: q.anrede === "Du" ? "Du" : "Sie",
     leadAddress: c.leadAddress === "du" ? "du" : "sie",
     city: sc?.city?.trim() || null,
@@ -129,10 +254,12 @@ export async function loadCampaignContext(
         ? publicUrl(`/book/${await getOrCreateBookingSlug(c.id)}`)
         : null,
     // Gewinner anderer aus der Meta-Werbebibliothek (ohne Zugang zur Bibliothek: leer)
-    libraryWinners: vorlagen ? winnersBlock(await libraryWinners(product, { excludePages: [c.name] }).catch(() => [])) : null,
+    libraryWinners: bibliothek,
     // Bestlaufende Anzeigen aus dem eigenen Werbekonto (ohne Konto/Daten/Berechtigung: leer, Hinweis für den Admin)
     eigeneGewinner: eigene.gewinner.length ? eigene.gewinner : null,
-    eigeneGewinnerHinweis: eigene.hinweis,
+    eigeneGewinnerHinweis: fremd ? fremd.hinweis : eigene.hinweis,
+    // Muster aus einem anderen Werbekonto: Kennzeichen, bereinigte Muster und (nur intern) die Kunden-ID der Quelle
+    ...(fremd ? { fremdvorlagen: fremd.fremd, fremdMuster: fremd.muster.length ? fremd.muster : null, vorlagenQuelleId: fremd.fremd ? fremd.quelleId : null } : {}),
   };
 }
 

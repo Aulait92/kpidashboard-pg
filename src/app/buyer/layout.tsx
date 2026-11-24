@@ -30,6 +30,8 @@ import { LogOut } from "lucide-react";
 import { istReinesBestellkonto } from "@/lib/ppl/bestellkonto";
 import Link from "next/link";
 import { istNurLeadsKonto, NUR_LEADS_MENUE, nurLeadsAktiv, nurLeadsPfadErlaubt } from "@/lib/nur-leads";
+import { ladeStand as ladeDatennutzung } from "@/lib/datennutzung-server";
+import { DatennutzungBanner } from "@/components/datennutzung-banner";
 
 // Seiten, die bei jeder Änderung (Lead, Chat, Termin) sofort neu laden; überall sonst nur der Zähler „Braucht dich“.
 const LIVE_PATHS = ["/buyer", "/buyer/leads", "/buyer/kanban", "/buyer/kontakte", "/buyer/chats"];
@@ -107,7 +109,7 @@ export default async function BuyerLayout({
         hasWhatsAppInbox(ctx.customerId).then(async (inbox) => inbox || (await showChatsTeaser(ctx.customerId))),
         attentionCount(ctx),
         advisor ? 0 : customerSetupOpenCount(ctx.customerId),
-        advisor && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,
+        ctx.userId && (advisor || !ctx.preview) ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,
         prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } }),
         advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } }),
         // Bestand: nur Inhaber, und vorerst nur mit Schalter oder aktivem Modul (lib/bestand/sichtbar.ts)
@@ -116,7 +118,17 @@ export default async function BuyerLayout({
     : [false, 0, 0, null, 0, 0, false];
   // Anzeigename ohne Gesellschafts-Präfix („Allianz Anid Schwarzkopf").
   // Berater sehen ihren eigenen Namen.
-  const displayName = me ? (me.displayName?.trim() || me.email) : (customerName ?? "").replace(/^Allianz\s+/i, "");
+  // Inhaber (Go-live-Prüfung 19.11.2026, W7): eigener Anzeigename, sonst Name aus der bestätigten Erstinformation, sonst Kundenname.
+  const inhaberName =
+    !advisor && ctx && !me?.displayName?.trim()
+      ? await prisma.erstinformation
+          .findUnique({ where: { customerId: ctx.customerId }, select: { name: true, bestaetigtAt: true } })
+          .then((e) => (e?.bestaetigtAt ? e.name?.trim() || null : null))
+          .catch(() => null)
+      : null;
+  const displayName = advisor && me
+    ? me.displayName?.trim() || me.email
+    : me?.displayName?.trim() || inhaberName || (customerName ?? "").replace(/^Allianz\s+/i, "");
   // „Ich bin abwesend“: eigene Abwesenheit + Kollegen für die Vertretung (nicht in der Vorschau)
   let absence: ShellAbsence | null = null;
   if (ctx?.userId && !ctx.preview) {
@@ -141,6 +153,11 @@ export default async function BuyerLayout({
   const noStepBadge = ctx ? await wartendeNeueLeads(ctx).then((l) => l.length).catch(() => 0) : 0;
   // Zusatzmodul Empfehlungen (Paket 2): Menüeintrag nur bei aktivem Modul bzw. Testphase, mit „n bereit“
   const empfehlungReady = await empfehlungMenuCount(ctx);
+  // Banner „KI-Hilfe und gemeinsames Anzeigenlernen“ (Ole, 24.11.2026, lib/datennutzung.ts): nur Inhaber von
+  // Software-Kunden, bis „Verstanden“ gespeichert ist. Solange es steht, treten der Hinweis auf Mitteilungen und die
+  // Frage zur Nutzungsanalyse zurück (ein Hinweis zur Zeit).
+  const datennutzung = ctx ? await ladeDatennutzung(ctx).catch(() => null) : null;
+  const datennutzungBanner = !!datennutzung?.banner;
 
   return (
     <>
@@ -162,7 +179,7 @@ export default async function BuyerLayout({
       ) : null}
       {ctx ? (
         <ProvisionRatesProvider rates={provision?.rates ?? {}} products={provision?.products ?? []}>
-          <BuyerShell demo={demo} newUi={newUi} displayName={displayName} hilfeGruss={gruss} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} empfehlungReady={empfehlungReady} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge}>
+          <BuyerShell demo={demo} newUi={newUi} displayName={displayName} hilfeGruss={gruss} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} empfehlungReady={empfehlungReady} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge} hinweisOffen={datennutzungBanner}>
             {demo ? (
               <>
                 <meta name="robots" content="noindex, nofollow" />
@@ -182,8 +199,9 @@ export default async function BuyerLayout({
             <Nutzungsanalyse
               status={analyse}
               pseudonym={analysePseudo}
-              darfFragen={!ctx.preview && !!analyseUser && darfAnalyseFragen({ createdAt: analyseUser.createdAt, einrichtungOffen: setupOpen })}
+              darfFragen={!ctx.preview && !!analyseUser && !datennutzungBanner && darfAnalyseFragen({ createdAt: analyseUser.createdAt, einrichtungOffen: setupOpen })}
             />
+            {datennutzungBanner ? <DatennutzungBanner angezeigt={!!datennutzung?.angezeigtAm} /> : null}
             {children}
             {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
             {modal}
