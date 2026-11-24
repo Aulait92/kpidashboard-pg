@@ -175,21 +175,29 @@ export const KUENDIGUNG_SATZ = "Kündigen können Sie jederzeit im Kundenbereich
 export const PPL_LEADS_SEPARAT =
   "Leads bestellen Sie wie gewohnt per Stück (Pay-per-Lead), ohne Mindestabnahme. Sie werden separat zum Preis je Lead laut Bestellung abgerechnet und sind nicht Teil der Monatsgebühr.";
 
-/** Reklamation bei „Nur Leads“: ohne Folgerechnung verrechnet mit der nächsten Bestellung, auf Wunsch erstattet (Rechtsprüfung 24.11.2026, A4). */
-export const PPL_NUR_LEADS_REKLAMATION =
+/**
+ * Reklamation gekaufter Leads mit Nachlieferung (Ole, 24.11.2026: „wir liefern Leads immer nach und erstatten nichts“),
+ * für „Nur Leads“ und „Pay-per-Lead + Software“: im Angebot, am Annahme-Knopf und in der Auftragsbestätigung. Entspricht
+ * lib/ppl/storno.ts (7 Tage, jede anerkannte Reklamation ein Ersatzlead). „Kampagnen im eigenen Werbekonto“ regelt das in
+ * den Besonderen Bedingungen (Abrechenbare Leads).
+ */
+export const PPL_REKLAMATION =
+  "Reklamation: Ungültige Leads können Sie innerhalb von 7 Tagen nach Zustellung in der App reklamieren, z. B. falsche oder nicht vergebene Telefonnummer, Dublette innerhalb von 30 Tagen oder erkennbarer Fake. Für jede anerkannte Reklamation liefern wir Ihnen kostenlos einen Ersatzlead nach.";
+export const PPL_NUR_LEADS_REKLAMATION = PPL_REKLAMATION;
+
+/** Nachlieferung statt Erstattung (Ole, 24.11.2026); Ausnahmen stehen in den AGB (Abschnitt „Lieferung, Nachlieferung und Erstattung“). */
+export const PPL_NACHLIEFERUNG =
+  "Bezahlte Leads verfallen nicht: Was von einer Bestellung noch nicht geliefert ist, liefern wir Ihnen nach, auch nach der Bestellwoche. Eine Erstattung gibt es dafür nicht.";
+
+/** Alte Fassungen für vor dem 24.11.2026 angenommene Angebote (Offer.leadAltBedingungen), nur zur Anzeige. */
+export const PPL_NUR_LEADS_REKLAMATION_ALT =
   "Reklamation: Ungültige Leads können Sie innerhalb von 7 Tagen nach Zustellung in der App reklamieren, z. B. falsche oder nicht vergebene Telefonnummer, Dublette innerhalb von 30 Tagen oder erkennbarer Fake. Anerkannte Reklamationen verrechnen wir mit Ihrer nächsten Bestellung oder erstatten sie auf Wunsch. In Grenzfällen erhalten Sie die Hälfte gutgeschrieben.";
+export const PPL_REKLAMATION_ALT =
+  "Reklamation: Ungültige Leads können Sie innerhalb von 7 Tagen nach Zustellung in der App reklamieren, z. B. falsche oder nicht vergebene Telefonnummer, Dublette innerhalb von 30 Tagen oder erkennbarer Fake. Anerkannte Reklamationen schreiben wir Ihnen auf der nächsten Rechnung gut. In Grenzfällen erhalten Sie die Hälfte gutgeschrieben.";
 
 /** „Nur Leads“: Leads per Stück ohne Monatsgebühr (Angebot, Annahme, Auftragsbestätigung). */
 export const PPL_NUR_LEADS_SEPARAT =
   "Weitere Leads bestellen Sie im Kundenbereich unter „Leads bestellen“, ohne Mindestabnahme, zum Preis je Lead laut Bestellung. Jede Bestellung hat eine eigene Rechnung.";
-
-/**
- * Reklamation gekaufter Leads (Ole, 24.11.2026: „Ja passt“, nur Pay-per-Lead), im Angebot, am Annahme-Knopf und in der
- * Auftragsbestätigung. Entspricht der Storno-Regel (lib/ppl/storno.ts: 7 Tage, klare Gründe voll, Grenzfälle 50:50).
- * „Kampagnen im eigenen Werbekonto“ regelt das in den Besonderen Bedingungen (Abrechenbare Leads).
- */
-export const PPL_REKLAMATION =
-  "Reklamation: Ungültige Leads können Sie innerhalb von 7 Tagen nach Zustellung in der App reklamieren, z. B. falsche oder nicht vergebene Telefonnummer, Dublette innerhalb von 30 Tagen oder erkennbarer Fake. Anerkannte Reklamationen schreiben wir Ihnen auf der nächsten Rechnung gut. In Grenzfällen erhalten Sie die Hälfte gutgeschrieben.";
 
 /**
  * Erster Abrechnungstag: ab hier zählen Startpreis-Monate, Mindestlaufzeit und Abrechnungsmonate
@@ -416,8 +424,8 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach kündbar zum Ende des jeweiligen Abrechnungsmonats.`);
   }
   if (ppl && !kk && i.ersteWoche) lines.push(ersteWocheVertragszeile(i.ersteWoche, nurLeads));
-  if (nurLeads) lines.push(PPL_NUR_LEADS_SEPARAT, PPL_NUR_LEADS_REKLAMATION);
-  else if (ppl && !kk) lines.push(PPL_LEADS_SEPARAT, PPL_REKLAMATION);
+  if (nurLeads) lines.push(PPL_NUR_LEADS_SEPARAT, PPL_NUR_LEADS_REKLAMATION, PPL_NACHLIEFERUNG);
+  else if (ppl && !kk) lines.push(PPL_LEADS_SEPARAT, PPL_REKLAMATION, PPL_NACHLIEFERUNG);
   // Pay-per-Lead + Software: 19 % gelten für die Software; die Steuer der Leads steht an der ersten Woche bzw. an der Bestellung.
   // „Nur Leads“: keine Software, also weder Kündigung noch Softwarepreis; Steuer steht an der Bestellung.
   if (!nurLeads) lines.push(`${KUENDIGUNG_SATZ} ${ppl ? "Preise der Software zzgl. 19 % USt." : "Alle Preise zzgl. 19 % USt."}`);

@@ -6,7 +6,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { encryptSecret } from "@/lib/encryption";
-import { deliver, NotDeliverableError } from "@/lib/ppl/engine";
+import { deliver, NotDeliverableError, quotaFor } from "@/lib/ppl/engine";
 import { parkExpired } from "@/lib/ppl/parken";
 import { adminRecordStorno, decideStorno, undoStorno } from "@/lib/ppl/storno";
 import { placeOrder } from "@/lib/ppl/orders";
@@ -101,6 +101,7 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
     stornoDays: int(fd.get("stornoDays")),
     stornoReasons: list(fd.get("stornoReasons")),
     stornoAutoApprove: fd.get("stornoAutoApprove") === "on",
+    stornoErsatz: fd.get("stornoErsatz") === "on",
     delivery: ["app", "app_pdf", "email", "webhook"].includes(delivery) ? delivery : "app",
     deliveryEmail: addresses.length ? addresses.join(", ") : null,
     ...(mailKind === "maschinenlesbar" ? {} : { emailSubject: String(fd.get("emailSubject") ?? "").trim() || null }),
@@ -227,7 +228,10 @@ export async function assignParkedAction(fd: FormData): Promise<void> {
     sub.period === "week"
       ? await prisma.leadOrder.findUnique({ where: { subscriptionId_periodStart: { subscriptionId: sub.id, periodStart: weekRange().start } } })
       : null;
-  await deliver(pool.id, sub, order?.id ?? null).catch((err: unknown) => {
+  // Nachlieferung (stornoErsatz): offener Ersatzlead bzw. älteste offene Bestellung zuerst, wie die Verteilung
+  const q = sub.stornoErsatz ? await quotaFor(sub) : null;
+  const ziel = q && q.quota > q.delivered ? { orderId: q.orderId, ersatzFuerId: q.ersatzFuerId ?? null } : { orderId: order?.id ?? null, ersatzFuerId: null };
+  await deliver(pool.id, sub, ziel.orderId, new Date(), null, ziel.ersatzFuerId).catch((err: unknown) => {
     if (!(err instanceof NotDeliverableError)) throw err;
   });
   revalidatePath("/admin/neu/leads/ppl", "layout");

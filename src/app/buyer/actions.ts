@@ -98,7 +98,9 @@ export async function cancelLeadAction(
     revalidatePath("/buyer", "layout");
     return { ok: true, leadId, ...(res.state === "review"
         ? { message: "Storno ist eingereicht und wird geprüft." }
-        : res.anteil && res.anteil < 1
+        : res.ersatz
+          ? { message: "Reklamation ist anerkannt. Wir liefern Ihnen kostenlos einen Ersatzlead nach." }
+          : res.anteil && res.anteil < 1
           ? { message: `Storno ist erfasst. Als Kulanz schreiben wir Ihnen ${Math.round(res.anteil * 100)} % des Leadpreises gut.` }
           : {}) };
   }

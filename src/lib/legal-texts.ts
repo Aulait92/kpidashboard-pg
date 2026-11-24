@@ -75,10 +75,16 @@
 // Verträge aus Angeboten, die vor dem 22.11.2026, 19:15 Uhr erstellt wurden (GUARANTEES_UNTIL in lib/garantien.ts);
 // spätere Angebote enthalten keine Garantien, außer das Angebot sagt sie ausdrücklich zu (Sondervereinbarung).
 // Bestehende Verträge unverändert, darum keine Mitteilung nötig.
+// 24.11.2026 (neuer Stand „24.11.2026“, Ole: „Bei Leadbestellungen … wir liefern Leads immer nach und erstatten nichts“
+// und „Die Garantien etc. können aus Leadangeboten raus“): Leadangebote (Nur Leads, Pay-per-Lead + Software) zeigen
+// nur noch die Abschnitte, die für sie gelten (agbFuerAngebot), mit Nachlieferung statt Gutschrift und Erstattung
+// (Ausnahme: Kündigung durch den Anbieter oder dauerhaft keine Lieferung). Öffentliche AGB: Absatz „Paket Pay-per-Lead +
+// Software“ verweist für Leads auf diese Bedingungen. Vor dem 24.11.2026 angenommene Leadangebote behalten ihre alte
+// Fassung (Offer.leadAltBedingungen, PPL_NUR_LEADS_BEDINGUNGEN_ALT). Prüfung: docs/recht/2026-11-24-nachlieferung-statt-erstattung.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "22.11.2026";
+export const LEGAL_VERSION = "24.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -140,7 +146,7 @@ export const AGB: LegalSection[] = [
       { sub: "Zugänge", text: "Enthalten ist die im Angebot genannte Zahl aktiver Verkäufer. Aktiv ist ein Zugang, der Leads zugeteilt bekommt; Zugänge ohne Leads sind kostenlos. Jeder weitere aktive Verkäufer kostet den im Angebot genannten Preis je Monat, tagesgenau anteilig." },
       // Prüfen: Zusatzmodule, Kündigung bei jährlicher Vorauszahlung zum Ende des bezahlten Jahres (12.11.2026)
       // Prüfen: Paket Pay-per-Lead + Software (19.11.2026, Fassung 3)
-      { sub: "Paket Pay-per-Lead + Software", text: "In diesem Paket nutzt der Kunde die Software für die Leads, die er per Stück (Pay-per-Lead) beim Anbieter kauft. Der Anbieter stellt nur die Software bereit, ohne Betreuung und ohne eigene Werbekampagnen; die Regeln zu Leadgenerierung, Werbebudget, Preisstaffel, Meta-Zugriff, Pause und Garantien gelten dafür nicht. Leads bestellt und bezahlt der Kunde gesondert zu dem bei der Bestellung genannten Preis je Lead; sie sind nicht Teil der monatlichen Vergütung, eine Mindestabnahme besteht nicht. Der Vertrag läuft ohne Mindestlaufzeit und ist zum Ende jedes Abrechnungsmonats kündbar; im Übrigen gilt „Laufzeit und Kündigung“." },
+      { sub: "Paket Pay-per-Lead + Software", text: "In diesem Paket nutzt der Kunde die Software für die Leads, die er per Stück (Pay-per-Lead) beim Anbieter kauft. Der Anbieter stellt nur die Software bereit, ohne Betreuung und ohne eigene Werbekampagnen; die Regeln zu Leadgenerierung, Werbebudget, Preisstaffel, Meta-Zugriff, Pause und Garantien gelten dafür nicht. Leads bestellt und bezahlt der Kunde gesondert zu dem bei der Bestellung genannten Preis je Lead; sie sind nicht Teil der monatlichen Vergütung, eine Mindestabnahme besteht nicht. Der Vertrag läuft ohne Mindestlaufzeit und ist zum Ende jedes Abrechnungsmonats kündbar; im Übrigen gilt „Laufzeit und Kündigung“. Für Verträge aus Angeboten, die ab dem 24.11.2026 angenommen werden, gelten für Bestellung, Lieferung und Reklamation der Leads die im Angebot enthaltenen Bedingungen: Anerkannte Reklamationen gleicht der Anbieter mit einem kostenlosen Ersatzlead aus, bezahlte Leads liefert er nach." },
       { sub: "Zusatzmodule", text: "Zusatzmodule gelten nur, wenn sie im Angebot vereinbart oder im Kundenbereich bzw. in Textform gebucht sind. Sie werden tagesgenau anteilig berechnet und sind zum Ende des laufenden Abrechnungszeitraums kündbar, bei Vorauszahlung (jährlich bzw. für 6 Monate) zum Ende des bezahlten Zeitraums; eine anteilige Erstattung erfolgt nicht." },
     ],
   },
@@ -323,8 +329,10 @@ export const PPL_KUNDENKONTO_BEDINGUNGEN: LegalSection[] = [
  * Besondere Bedingungen „Nur Leads“ (Ole, 24.11.2026): Leads per Stück ohne Software, ohne Monatsgebühr und ohne Laufzeit.
  * Bestandteil des Angebots, gehen den AGB vor (wie PPL_KUNDENKONTO_BEDINGUNGEN). Interne Rechtsprüfung mit Auflagen:
  * docs/recht/2026-11-24-nur-leads.md (Wortlaut von Ole freigegeben am 24.11.2026, Exklusivität bestätigt).
+ * Seit der Nachlieferung (24.11.2026) nur noch für vorher angenommene Angebote (Offer.leadAltBedingungen); neue Angebote:
+ * AGB_NUR_LEADS.
  */
-export const PPL_NUR_LEADS_BEDINGUNGEN: LegalSection[] = [
+export const PPL_NUR_LEADS_BEDINGUNGEN_ALT: LegalSection[] = [
   {
     title: "Leistung",
     items: [
@@ -356,6 +364,190 @@ export const PPL_NUR_LEADS_BEDINGUNGEN: LegalSection[] = [
     ],
   },
 ];
+
+// ─── AGB für Leadangebote (Ole, 24.11.2026) ──────────────────────────────────────────────────────────────────────
+// „Die Garantien etc. können aus Leadangeboten raus“: Leadangebote zeigen nur die Abschnitte, die gelten, fortlaufend
+// nummeriert (LegalSections zählt selbst). „Wir liefern Leads immer nach und erstatten nichts“: Abschnitte
+// LEAD_LIEFERUNG und LEAD_REKLAMATION. Prüfung und Risiko (§ 307 BGB): docs/recht/2026-11-24-nachlieferung-statt-erstattung.md.
+
+/** Abschnitt der allgemeinen AGB nach Titel (wirft, wenn er umbenannt wurde, damit Leadangebote nichts verlieren). */
+function agbAbschnitt(title: string): LegalSection {
+  const s = AGB.find((x) => x.title === title);
+  if (!s) throw new Error(`AGB-Abschnitt fehlt: ${title}`);
+  return s;
+}
+function agbPunkt(title: string, sub: string): string {
+  const it = agbAbschnitt(title).items.find((i) => typeof i !== "string" && i.sub === sub);
+  if (!it || typeof it === "string") throw new Error(`AGB-Absatz fehlt: ${title} / ${sub}`);
+  return it.text;
+}
+
+/** Titel des Abschnitts zu Nachlieferung und Erstattung (Verweise in anderen Abschnitten). */
+export const LEAD_LIEFERUNG_TITEL = "Lieferung, Nachlieferung und Erstattung";
+
+// Prüfen: Ausschluss der Erstattung mit enger Ausnahme (§ 307 BGB; Ole 24.11.2026, docs/recht/2026-11-24-nachlieferung-statt-erstattung.md)
+const LEAD_LIEFERUNG: LegalSection = {
+  title: LEAD_LIEFERUNG_TITEL,
+  items: [
+    "Der Anbieter liefert nach und nach, sobald passende Anfragen eingehen; eine bestimmte Lieferzeit schuldet er nicht. Was von einer bezahlten Bestellung in ihrem Zeitraum nicht geliefert wird, liefert er danach nach, ebenso Ersatzleads für anerkannte Reklamationen. Ersatzleads und ältere Bestellungen liefert er zuerst.",
+    "Bezahlte Bestellungen kann der Kunde nicht stornieren; der Anbieter erstattet sie nicht, auch nicht anteilig. Beendet der Kunde den Vertrag, führt der Anbieter keine neuen Bestellungen mehr aus, liefert bezahlte offene Leads und Ersatzleads aber noch aus; bis zur letzten Lieferung bleibt der Kundenbereich dafür nutzbar.",
+    "Abweichend davon erstattet der Anbieter den Preis bezahlter, noch nicht gelieferter Leads und offener Ersatzleads innerhalb von 14 Tagen, wenn er den Vertrag kündigt, wenn die Lieferung endet, weil die Erlaubnis des Kunden wegfällt, oder wenn er dauerhaft nicht liefern kann. Dauerhaft ist das insbesondere, wenn er das bestellte Produkt einstellt oder länger als 3 Monate keinen der offenen Leads liefert. Das Recht zur außerordentlichen Kündigung und gesetzliche Ansprüche bei Verschulden des Anbieters bleiben unberührt.",
+  ],
+};
+
+const LEAD_REKLAMATION: LegalSection = {
+  title: "Abrechenbare Leads und Reklamation",
+  items: [
+    `Abrechenbar ist ein Lead mit vollständig ausgefülltem Formular und gültiger Telefonnummer, der weder eine Dublette innerhalb von 30 Tagen noch ein erkennbarer Fake ist. Der Kunde kann einen Lead innerhalb von 7 Tagen nach Zustellung im Kundenbereich reklamieren. Erkennt der Anbieter die Reklamation an, liefert er kostenlos einen Ersatzlead desselben Produkts nach; eine Gutschrift oder Erstattung des Preises erfolgt dafür nicht. Kann er den Ersatzlead dauerhaft nicht liefern, gilt der Abschnitt „${LEAD_LIEFERUNG_TITEL}“.`,
+  ],
+};
+
+const UST_LEADS: LegalSection = { title: "Umsatzsteuer auf Leads", items: [agbPunkt("Vergütung und Zahlung", "Umsatzsteuer auf Leads")] };
+
+/**
+ * Bedingungen für das Paket „Nur Leads“ ab 24.11.2026 (ersetzen AGB plus Besondere Bedingungen in einem): nur, was für
+ * Leads per Stück gilt. Wortlaut zu Leistung, Bestellung, Voraussetzungen und Laufzeit aus PPL_NUR_LEADS_BEDINGUNGEN_ALT
+ * (von Ole freigegeben), ohne Verweise auf nicht geltende AGB-Regeln.
+ */
+export const AGB_NUR_LEADS: LegalSection[] = [
+  {
+    title: "Geltungsbereich",
+    items: [
+      `Diese AGB gelten für Verträge zwischen der ${PROVIDER.name}, ${PROVIDER.street}, ${PROVIDER.city} („Anbieter“) und ihren Kunden über den Kauf von Leads per Stück im Paket „Nur Leads“.`,
+      agbAbschnitt("Geltungsbereich").items[1] as string,
+    ],
+  },
+  agbAbschnitt("Vertragsschluss und Rangfolge"),
+  {
+    title: "Leistung",
+    items: [
+      "Der Anbieter liefert dem Kunden Leads per Stück: Kontaktdaten und Formularangaben von Interessenten, die über Werbeanzeigen eine Beratung zum bestellten Produkt angefragt und in die Kontaktaufnahme durch den Kunden eingewilligt haben. Jeder Lead wird exklusiv nur an einen Kunden geliefert. Die Leads stehen im Kundenbereich bereit; dort pflegt der Kunde den Bearbeitungsstand und reklamiert Leads. Software mit digitalem Assistenten, Betreuung und eigene Werbekampagnen sind nicht enthalten. Ein bestimmtes Ergebnis, etwa Erreichbarkeit oder Abschlüsse, schuldet der Anbieter nicht.",
+      "Den Kundenbereich stellt der Anbieter als Online-Dienst bereit. Er darf ihn weiterentwickeln, solange die wesentlichen Funktionen erhalten bleiben, und strebt eine Verfügbarkeit von 99 % im Monatsmittel an, ausgenommen angekündigte Wartungen.",
+    ],
+  },
+  {
+    title: "Bestellung, Preis und Zahlung",
+    items: [
+      "Der Kunde bestellt Leads im Kundenbereich, ohne Mindestabnahme. Es gilt der Preis je Lead, der bei der Bestellung steht; die Umsatzsteuer richtet sich nach dem Abschnitt „Umsatzsteuer auf Leads“ und steht ebenfalls an der Bestellung. Jede Bestellung erhält eine eigene Rechnung und wird mit der Bestellung per Lastschrift oder Karte bezahlt, die erste erst nach Prüfung des Registereintrags des Kunden.",
+    ],
+  },
+  UST_LEADS,
+  LEAD_LIEFERUNG,
+  LEAD_REKLAMATION,
+  {
+    title: "Voraussetzungen und Nutzung der Leads",
+    items: [PPL_NUR_LEADS_BEDINGUNGEN_ALT.find((s) => s.title === "Voraussetzungen und Nutzung der Leads")!.items[0]],
+  },
+  {
+    title: "Laufzeit und Vertragsende",
+    items: [
+      `Es gibt keine Laufzeit und keine Grundgebühr; der Kundenbereich ist enthalten. Der Kunde kann den Vertrag jederzeit im Kundenbereich oder in Textform beenden, der Anbieter mit einer Frist von 14 Tagen in Textform; das Recht zur außerordentlichen Kündigung bleibt unberührt. Für bezahlte, noch nicht gelieferte Leads gilt der Abschnitt „${LEAD_LIEFERUNG_TITEL}“.`,
+    ],
+  },
+  agbAbschnitt("Datenschutz"),
+  {
+    title: "Daten bei Vertragsende",
+    items: [
+      agbAbschnitt("Daten bei Vertragsende").items[0],
+      "Nach Vertragsende und der letzten Lieferung ruht das Konto: Die Daten werden nur noch gespeichert. Der Kunde kann sich zum Export anmelden. Die Daten werden 24 Monate aufbewahrt; im Kundenbereich kann der Kunde jederzeit bis zur Löschung 3 Monate oder die sofortige Löschung wählen. Der Anbieter erinnert 30 und 7 Tage vor der Löschung per E-Mail.",
+      agbAbschnitt("Daten bei Vertragsende").items[2],
+    ],
+  },
+  agbAbschnitt("Haftung"),
+  agbAbschnitt("Vertraulichkeit"),
+  agbAbschnitt("Änderungen dieser AGB"),
+  agbAbschnitt("Schlussbestimmungen"),
+];
+
+/**
+ * AGB für „Pay-per-Lead + Software“ ab 24.11.2026 (ohne Kampagnen im eigenen Werbekonto): Software ohne Betreuung, Leads
+ * per Bestellung mit Nachlieferung. Ohne Leadgenerierung, Werbebudget, Preisstaffel, Setupgebühr, Vorauszahlung, Pause,
+ * Halteangebote und Garantien; „Zugänge“ und „Zusatzmodule“ nur, wenn das Angebot sie enthält.
+ */
+export function agbPplSoftware(opt: { zugaenge?: boolean; zusatzmodule?: boolean } = {}): LegalSection[] {
+  const software = agbAbschnitt("Leistungen: Software");
+  const sub = (name: string) => software.items.find((i) => typeof i !== "string" && i.sub === name)!;
+  const mitwirkung = agbAbschnitt("Mitwirkung des Kunden");
+  return [
+    agbAbschnitt("Geltungsbereich"),
+    agbAbschnitt("Vertragsschluss und Rangfolge"),
+    {
+      title: "Leistungen: Software",
+      items: [
+        "Im Paket „Pay-per-Lead + Software“ stellt der Anbieter seine Software als Online-Dienst bereit, für die Leads, die der Kunde per Stück beim Anbieter kauft, insbesondere zur Verwaltung von Leads und Terminen, für Auswertungen und mit einem digitalen Assistenten auf WhatsApp. Betreuung und eigene Werbekampagnen sind nicht enthalten. Der Anbieter darf die Software weiterentwickeln, solange die vereinbarten wesentlichen Funktionen erhalten bleiben. Er strebt eine Verfügbarkeit von 99 % im Monatsmittel an, ausgenommen angekündigte Wartungen; für Dienste Dritter (insbesondere Meta/WhatsApp, Kalender- und KI-Anbieter) übernimmt er keine Gewähr.",
+        sub("Digitaler Assistent (KI)"),
+        sub("Keine Beratung"),
+        ...(opt.zugaenge ? [sub("Zugänge")] : []),
+        ...(opt.zusatzmodule ? [sub("Zusatzmodule")] : []),
+      ],
+    },
+    {
+      title: "Leads: Bestellung, Preis und Zahlung",
+      items: [
+        "Leads bestellt der Kunde im Kundenbereich, ohne Mindestabnahme, zu dem bei der Bestellung genannten Preis je Lead; sie sind nicht Teil der monatlichen Vergütung. Die Umsatzsteuer richtet sich nach dem Abschnitt „Umsatzsteuer auf Leads“ und steht an der Bestellung. Jede Bestellung erhält eine eigene Rechnung und wird mit der Bestellung per Lastschrift oder Karte bezahlt.",
+      ],
+    },
+    LEAD_LIEFERUNG,
+    LEAD_REKLAMATION,
+    {
+      title: "Mitwirkung des Kunden",
+      items: [
+        "Der Kunde verbindet, soweit gebucht, WhatsApp und Kalender. Er prüft Nachrichtenvorlagen vor dem Start, gibt sie frei und bearbeitet Leads zeitnah.",
+        mitwirkung.items[1],
+        mitwirkung.items[2],
+      ],
+    },
+    {
+      title: "Vergütung und Zahlung",
+      items: [
+        "Die monatliche Vergütung für die Software wird ab dem Startdatum monatlich im Voraus fällig. Ist im Angebot nachträgliche Zahlung vereinbart, wird sie abweichend davon jeweils nachträglich für den abgelaufenen Leistungsmonat fällig, erstmals einen Monat nach dem Startdatum; die Vergütung für den letzten Leistungsmonat wird nach Vertragsende fällig. Die Preise der Software sind netto zuzüglich Umsatzsteuer.",
+        "Die Meta-Gebühren für WhatsApp-Nachrichten an Leads sind in der Vergütung enthalten. Rechnungen sind innerhalb von 7 Tagen zu zahlen. Bei mehr als 30 Tagen Zahlungsverzug darf der Anbieter Software und Lieferung nach Ankündigung pausieren, bis die Zahlung eingeht.",
+      ],
+    },
+    UST_LEADS,
+    agbAbschnitt("Testphasen und kostenlose Zeiträume"),
+    {
+      title: "Laufzeit und Kündigung",
+      items: [
+        "Der Vertrag läuft ohne Mindestlaufzeit und ist von beiden Seiten zum Ende jedes Abrechnungsmonats kündbar. Ist im Angebot ausnahmsweise eine Mindestlaufzeit vereinbart, gilt sie ab Start; eine Kündigung wirkt dann frühestens zu ihrem Ende.",
+        { sub: "Fristen", text: "Start ist das im Angebot genannte oder bei der Annahme gewählte Datum. Ein Abrechnungsmonat läuft vom Starttag bis zum Tag vor demselben Kalendertag des Folgemonats (fehlt der Tag, bis zum Monatsletzten). Eine Kündigung wirkt zum Ende des Abrechnungsmonats, in dem sie zugeht." },
+        `Die Kündigung erfolgt in Textform oder im Kundenbereich unter „Konto & Rechnungen“ („Vertrag hier kündigen“), wo der Kunde den Endtermin vorher sieht. Der Anbieter bestätigt Eingang und Vertragsende per E-Mail. Das Recht zur außerordentlichen Kündigung bleibt unberührt. Für bezahlte, noch nicht gelieferte Leads gilt der Abschnitt „${LEAD_LIEFERUNG_TITEL}“.`,
+      ],
+    },
+    agbAbschnitt("Datenschutz"),
+    agbAbschnitt("Kundendaten: Zusicherung und Freistellung"),
+    agbAbschnitt("Daten bei Vertragsende"),
+    agbAbschnitt("Haftung"),
+    agbAbschnitt("Vertraulichkeit"),
+    agbAbschnitt("Änderungen dieser AGB"),
+    agbAbschnitt("Schlussbestimmungen"),
+  ];
+}
+
+/** In Leadangeboten nicht geltende Abschnitte der allgemeinen AGB (Variante „Kampagnen im eigenen Werbekonto“). */
+const NICHT_IN_LEADANGEBOTEN = ["Garantien", "Pause und Urlaub", "Angebote vor einer Kündigung"];
+
+/**
+ * AGB, die ein Angebot zeigt (Angebotsdokument, PDF): Leadangebote nur mit den geltenden Abschnitten und Nachlieferung;
+ * vor dem 24.11.2026 angenommene Leadangebote (leadAltBedingungen) und alle anderen Pakete wie bisher.
+ * besondere = eigener Block „Besondere Bedingungen“ (alte Nur-Leads-Angebote, Kampagnen im eigenen Werbekonto).
+ */
+export function agbFuerAngebot(o: {
+  package: string;
+  kundenkonto?: boolean;
+  leadAltBedingungen?: boolean;
+  zugaenge?: boolean;
+  zusatzmodule?: boolean;
+}): { agb: LegalSection[]; besondere: LegalSection[] | null; lead: boolean } {
+  const nurLeads = o.package === "ppl";
+  const ppl = nurLeads || o.package === "ppl_software";
+  if (!ppl || o.leadAltBedingungen) {
+    return { agb: AGB, besondere: nurLeads ? PPL_NUR_LEADS_BEDINGUNGEN_ALT : o.kundenkonto && ppl ? PPL_KUNDENKONTO_BEDINGUNGEN : null, lead: false };
+  }
+  if (nurLeads) return { agb: AGB_NUR_LEADS, besondere: null, lead: true };
+  if (o.kundenkonto) return { agb: AGB.filter((s) => !NICHT_IN_LEADANGEBOTEN.includes(s.title)), besondere: PPL_KUNDENKONTO_BEDINGUNGEN, lead: true };
+  return { agb: agbPplSoftware({ zugaenge: o.zugaenge, zusatzmodule: o.zusatzmodule }), besondere: null, lead: true };
+}
 
 export const AVV: LegalSection[] = [
   {
@@ -520,4 +712,13 @@ export const SUBPROCESSORS: { name: string; purpose: string; location: string }[
   { name: "Functional Software, Inc. (Sentry)", purpose: "Fehlerüberwachung; Sitzungsaufnahmen im Kundenbereich nur mit Einwilligung des einzelnen Nutzers, mit im Browser unkenntlich gemachten Texten, Eingaben und Bildern und ohne Kennungen von Leads (keine Inhalte aus Leads)", location: "Datenregion EU (Deutschland); Unternehmen USA" },
   { name: "Google Ireland Ltd. / Microsoft Ireland Operations Ltd.", purpose: "Kalenderanbindung und E-Mail-Versand über das Postfach des Auftraggebers (einzelne E-Mails und E-Mail-Kampagnen), sofern vom Auftraggeber genutzt", location: "Irland / USA" },
 ];import { euEndpunkt } from "@/lib/policen/ablage";
+
+/**
+ * AGB-Link an der Annahme (Ole, 24.11.2026): bei Leadangeboten auf die Fassung nur mit den geltenden Abschnitten
+ * (/rechtliches/agb?paket=…). Eigene AGB-URLs (OFFER_TERMS_URL) bleiben unverändert.
+ */
+export function agbLinkFuerAngebot(termsUrl: string, o: { package: string; kundenkonto?: boolean }): string {
+  if ((o.package !== "ppl" && o.package !== "ppl_software") || !/\/rechtliches\/agb$/.test(termsUrl)) return termsUrl;
+  return `${termsUrl}?paket=${o.package}${o.kundenkonto && o.package === "ppl_software" ? "&variante=kundenkonto" : ""}`;
+}
 

@@ -12,7 +12,7 @@ describe("Pay-per-Lead: Storno und Bestellung", () => {
     requireTestDb();
     customerId = (await makeCustomer()).id;
     const sub = await prisma.leadSubscription.create({
-      data: { customerId, productKey: "PKV-Storno-Test", price: 50, period: "week", stornoDays: 7, stornoReasons: ["Bestandskunde", "Nicht erreichbar"] },
+      data: { customerId, productKey: "PKV-Storno-Test", price: 50, period: "week", stornoErsatz: false, stornoDays: 7, stornoReasons: ["Bestandskunde", "Nicht erreichbar"] },
     });
     subId = sub.id;
     for (let i = 0; i < 10; i++) {

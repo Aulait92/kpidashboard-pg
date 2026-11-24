@@ -2,6 +2,14 @@
 
 Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Freigaben von Ole wörtlich oder sinngemäß.
 
+## 24.11.2026
+- **BESCHLOSSEN (Ole, 24.11.2026, Stufe A): Bei Leadbestellungen (Nur Leads, Pay-per-Lead + Software) liefern wir
+  immer nach und erstatten nichts; Garantien und andere nicht geltende AGB-Teile raus aus Leadangeboten.** Umsetzung:
+  jede anerkannte Reklamation = 1 kostenloser Ersatzlead (kein 50:50), Reste bezahlter Bestellungen werden nachgeliefert,
+  Erstattung nur in engen Ausnahmen (Anbieter kündigt, Erlaubnis fällt weg, dauerhaft keine Lieferung, z. B. mehr als
+  3 Monate) wegen § 307 BGB. Nur neue Verträge; bestehende Bezüge und angenommene Angebote behalten die alten
+  Bedingungen. Quelle: docs/recht/2026-11-24-nachlieferung-statt-erstattung.md.
+
 ## 23.11.2026
 - **BESCHLOSSEN (Ole, 23.11.2026, Stufe A, ersetzt den vorläufigen Beschluss unten): Partner-Ltd. erhält eine virtuelle
   Beteiligung statt echter Anteile; Vergütung im Gleichlauf mit dem GF-Gehalt, Start erst ab fester Liquiditäts- und

@@ -45,7 +45,7 @@ function suggestionsFor(path: string, owner: boolean): string[] {
   if (path.startsWith("/buyer/kanban")) return ["Wie ändere ich die Phase?", "Was bedeutet „Kein nächster Schritt“?"];
   if (path.startsWith("/buyer/leads")) return ["Wie finde ich einen Lead?", "Was heißt „Ohne nächsten Schritt“?"];
   if (path.startsWith("/buyer/zahlen")) return ["Wie wird die Hochrechnung berechnet?", "Was zählt als Abschluss?"];
-  if (path.startsWith("/buyer/bestellen")) return ["Wie bestelle ich jede Woche automatisch?", "Wie bekomme ich eine Gutschrift?"];
+  if (path.startsWith("/buyer/bestellen")) return ["Wie bestelle ich jede Woche automatisch?", "Was passiert, wenn ein Lead nicht passt?"];
   if (path.startsWith("/buyer/bestand")) return ["Wie lade ich meine Kundenliste hoch?", "Wann werden Kampagnen verschickt?"];
   if (path.startsWith("/buyer/einrichtung")) return ["Wie gebe ich den Meta-Zugriff frei?", "Wie bekomme ich die App aufs iPhone?"];
   return [

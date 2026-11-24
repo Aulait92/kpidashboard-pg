@@ -35,6 +35,7 @@ import { nachtraeglichErsteIso } from "@/lib/vertrag-laufzeit";
 import { ersteWocheAus, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
 import { registerVorschlag } from "@/lib/ppl/erste-woche";
 import { kundenkontoAus, kundenkontoFaellig } from "@/lib/ppl/kundenkonto";
+import { agbLinkFuerAngebot } from "@/lib/legal-texts";
 
 // Öffentliches Angebot per geheimem Link. ?print=1 liefert die reine
 // Druckansicht (für das PDF).
@@ -169,7 +170,7 @@ export default async function OfferPage({
                   {bonus ? <BonusHinweis bonus={bonus} spaeter={offer.allowPayLater} /> : null}
                   <AcceptForm
                     token={token}
-                    termsUrl={offer.termsUrl!}
+                    termsUrl={agbLinkFuerAngebot(offer.termsUrl!, { package: offer.package, kundenkonto: !!kundenkontoAus(offer) })}
                     dpaUrl={offer.dpaUrl!}
                     defaultName={offer.contactName}
                     defaultCompany={offer.company ?? ""}

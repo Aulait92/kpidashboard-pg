@@ -120,6 +120,7 @@ describe("Paket „Nur Leads“ (Ole, 24.11.2026)", () => {
     expect(text).toContain("Abbuchung zum Lieferstart, frühestens nach Prüfung Ihrer Registernummer");
     expect(l).toContain(PPL_NUR_LEADS_SEPARAT);
     expect(l).toContain(PPL_NUR_LEADS_REKLAMATION);
+    expect(text).toContain("liefern wir Ihnen nach");
     expect(text).not.toContain(KUENDIGUNG_SATZ);
     expect(text).not.toContain("Monatsgebühr ab");
     for (const x of l) expect(hatGedankenstrich(x)).toBe(false);
@@ -136,9 +137,9 @@ describe("Paket „Nur Leads“ (Ole, 24.11.2026)", () => {
     expect(setupForChoice("none", 1, null, "ppl")).toBe(0);
   });
 
-  it("Besondere Bedingungen ohne Gedankenstriche und ohne „Garantie“", async () => {
-    const { PPL_NUR_LEADS_BEDINGUNGEN } = await import("@/lib/legal-texts");
-    const t = JSON.stringify(PPL_NUR_LEADS_BEDINGUNGEN);
+  it("Bedingungen (alt und neu) ohne Gedankenstriche und ohne „Garantie“", async () => {
+    const { PPL_NUR_LEADS_BEDINGUNGEN_ALT, AGB_NUR_LEADS } = await import("@/lib/legal-texts");
+    const t = JSON.stringify([PPL_NUR_LEADS_BEDINGUNGEN_ALT, AGB_NUR_LEADS]);
     expect(hatGedankenstrich(t)).toBe(false);
     expect(t).not.toMatch(/garantie/i);
   });
