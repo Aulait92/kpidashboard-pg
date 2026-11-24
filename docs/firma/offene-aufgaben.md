@@ -43,6 +43,15 @@ Vor jedem Push: fetch, beide Branches mergen, Tests grün. Andere Sitzungen push
 
 Die Branches liegen auf GitHub nur, wenn sie gepusht wurden; sonst lokal in der Sitzung, die sie angelegt hat.
 
+## Kfz-Anzeigen Lohmann (Ole, 24.11.2026)
+
+| Aufgabe | Frist | Wer |
+|---|---|---|
+| Anzeige 2 „vollkasko-neues-auto“ mit neuem Bild in die bestehende Gruppe (Texte in `docs/kfz-leadformular.md`); diese Sitzung hat keinen Schreibzugriff auf Meta bzw. die Kampagnen-Schnittstelle | sofort | Ole / Sitzung mit Kampagnen-Zugriff |
+| Anzeige 1 „beitrag-gestiegen“ pausiert anlegen und am 1.12. einschalten | 01.12.2026 | Ole / Sitzung mit Kampagnen-Zugriff |
+| Anzeige „Kfz-Wechsel nur bis 30.11.“ ausschalten (ab 1.12. unzutreffend) | 30.11.2026 abends | Ole / Sitzung mit Kampagnen-Zugriff |
+| Auswertung nach rund 50 Leads je Anzeige: Kosten je wahrgenommenem Termin je Anzeige; dann Formular-Frage zum heutigen Beitrag und Umkreis-Test entscheiden | Mitte Dezember | Performance Marketer / Data |
+
 ## Erster Kunde live: Allianz Henrik Lohmann (Führungsrunde 21.11.2026)
 
 | Aufgabe | Frist | Wer |
