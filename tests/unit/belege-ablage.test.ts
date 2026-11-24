@@ -123,6 +123,19 @@ describe("Monatspaket", () => {
     expect(csv.startsWith("﻿Datum;Art")).toBe(true);
     expect(csv).toContain("100,00");
   });
+  it("Doppel: Nummer mit Leerzeichen und Meta-Zahlungsbeleg neben der Rechnung", () => {
+    const meta = "Meta Platforms Ireland Limited";
+    const l = ohneDoppel([
+      b({ firma: "Telekom", nummer: "36050663000571", brutto: 49.95 }),
+      b({ firma: "Telekom", nummer: "36 0506 6300 0571", brutto: 49.95 }),
+      b({ firma: meta, nummer: "FBADS-147-1", brutto: 19, datum: "2026-08-05", zugeordnet: false }),
+      b({ firma: meta, nummer: "FSHN4XMR72", brutto: 19, datum: "2026-08-05", zugeordnet: false }),
+      b({ firma: meta, nummer: "FBADS-510-2", brutto: 39, datum: "2026-08-08", zugeordnet: false }),
+      b({ firma: meta, nummer: "L4W5HZMXM2", brutto: 39, datum: "2026-08-10", zugeordnet: true }),
+      b({ firma: meta, nummer: "ABCDEF1234", brutto: 77, datum: "2026-08-10" }),
+    ]);
+    expect(l.map((x) => x.nummer)).toEqual(["36050663000571", "FBADS-147-1", "L4W5HZMXM2", "ABCDEF1234"]);
+  });
   it("Vormonat", () => {
     expect(vormonat(new Date("2026-12-02T08:00:00Z"))).toBe("2026-11");
     expect(vormonat(new Date("2027-01-02T08:00:00Z"))).toBe("2026-12");
