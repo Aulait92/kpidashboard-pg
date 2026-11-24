@@ -181,6 +181,14 @@ describe("Antwortvorlagen", () => {
     expect(hatPlatzhalter(satz)).toBe(false);
     expect(hatPlatzhalter(`aus ${HERKUNFT_PLATZHALTER}`)).toBe(true);
     expect(herkunftSatz({ art: "laut Verlauf", angelegt: null })).not.toContain("am ");
+    // Automatisch ergänzte Angaben (z. B. Telefon) mit Quelle und Datum (Ole, 24.11.2026)
+    const mitTel = herkunftSatz({ ...h, ergaenztVerlauf: ["+49 6187 9023048 (Festnetz, aus E-Mail-Signatur 24.10.) (am 24.10.2026)"] });
+    expect(mitTel).toContain("Weitere Angaben haben wir automatisch");
+    expect(mitTel).toContain("+49 6187 9023048 (Festnetz, aus E-Mail-Signatur 24.10.)");
+    const ausLog = herkunftSatz({ ...h, ergaenzt: [{ quelle: "webseite", url: "https://agentur.example/impressum", am: "2026-11-12", felder: ["Telefon", "Ort"] }, { quelle: "google", url: null, am: "2026-11-12", felder: ["Google-Bewertung"] }] });
+    expect(ausLog).toContain("Telefon, Ort von Ihrer Webseite (https://agentur.example/impressum) am 12.11.2026");
+    expect(ausLog).toContain("Google-Bewertung aus Ihrem öffentlichen Google-Unternehmensprofil");
+    expect(ausLog).not.toMatch(/[–—]/);
     expect(satz).not.toMatch(/[–—]/);
   });
 });

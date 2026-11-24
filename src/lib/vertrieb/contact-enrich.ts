@@ -363,7 +363,7 @@ type EnrichmentLog = {
   openingHoursSource?: "website" | "google";
 };
 
-const LABEL: Record<string, string> = {
+export const ANREICHERUNG_LABEL: Record<string, string> = {
   street: "Straße", zip: "PLZ", city: "Ort", phone: "Telefon", url: "Website", openingHours: "Öffnungszeiten",
   leaderNames: "Inhaber", insurer: "Versicherer", teamSize: "Teamgröße", facebookUrl: "Facebook", instagramUrl: "Instagram",
   xingUrl: "XING", linkedinUrl: "LinkedIn", ratingValue: "Google-Bewertung", googleMapsUrl: "Google Maps", businessStatus: "Betriebsstatus",
@@ -521,8 +521,8 @@ export async function enrichContact(contactId: string, opts: { force?: boolean; 
   if (Object.keys(data).length) data.enrichment = log as Prisma.InputJsonValue;
   if (Object.keys(data).length) await prisma.salesContact.update({ where: { id: c.id }, data });
   const notes: string[] = [];
-  if (web.fields.length) notes.push(`${web.fields.map((f) => LABEL[f] ?? f).join(", ")} (Website${log.website?.url ? `: ${log.website.url}` : ""})`);
-  if (g.fields.length) notes.push(`${g.fields.map((f) => LABEL[f] ?? f).join(", ")} (Google)`);
+  if (web.fields.length) notes.push(`${web.fields.map((f) => ANREICHERUNG_LABEL[f] ?? f).join(", ")} (Website${log.website?.url ? `: ${log.website.url}` : ""})`);
+  if (g.fields.length) notes.push(`${g.fields.map((f) => ANREICHERUNG_LABEL[f] ?? f).join(", ")} (Google)`);
   if (notes.length) await prisma.salesActivity.create({ data: { contactId: c.id, type: "NOTIZ", note: `Automatisch ergänzt: ${notes.join("; ")}.` } });
   if (g.closed) await prisma.salesActivity.create({ data: { contactId: c.id, type: "NOTIZ", note: "Google: Betrieb laut Google-Eintrag dauerhaft geschlossen, bitte prüfen." } });
   return { web: web.status, google: g.status, fields };

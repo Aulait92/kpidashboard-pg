@@ -172,6 +172,10 @@ export type AuskunftAkte = {
     angelegt?: string | null;
     /** Anlage in Instantly (YYYY-MM-DD), bei direkt in Instantly hochgeladenen Kontakten */
     inInstantlySeit?: string | null;
+    /** automatisch ergänzt laut Anreicherung (Webseite, Google) */
+    ergaenzt?: { quelle: "webseite" | "google"; url: string | null; am: string | null; felder: string[] }[];
+    /** automatisch übernommene Kontaktdaten laut Verlauf (Text mit Quelle und Datum) */
+    ergaenztVerlauf?: string[];
     verlauf?: { datum: string | null; notiz: string | null }[];
   };
   /** google | kalender | whatsapp (Instantly und Hosting stehen immer drin) */
@@ -207,8 +211,24 @@ const EMPFAENGER_TEXT: Record<AuskunftAkte["weitereEmpfaenger"][number], string>
 export const HERKUNFT_PLATZHALTER = "[HERKUNFT ERGÄNZEN: konkrete Quelle, z. B. Website bzw. Verzeichnis mit Adresse und Abrufdatum, oder Anbieter der Liste]";
 export const hatPlatzhalter = (text: string) => /\[[A-ZÄÖÜ ]{6,}ERGÄNZEN:/.test(text);
 
-/** Herkunft in einem Satz: Quelle, Quell-URL, Abrufdatum. */
+/** Herkunft: Quelle, Quell-URL, Abrufdatum, dazu automatisch ergänzte Angaben (z. B. Telefon von der Webseite). */
 export function herkunftSatz(h: AuskunftAkte["herkunft"]): string {
+  const zusatz = ergaenztSatz(h);
+  return zusatz ? `${herkunftKern(h)}\n${zusatz}` : herkunftKern(h);
+}
+
+/** Automatisch ergänzte Angaben mit Quelle und Datum (Art. 15 Abs. 1 lit. g: auch für Telefon, Adresse usw.). */
+export function ergaenztSatz(h: AuskunftAkte["herkunft"]): string | null {
+  const ausVerlauf = (h.ergaenztVerlauf ?? []).map((t) => ohneStriche(t));
+  if (ausVerlauf.length) return `Weitere Angaben haben wir automatisch aus öffentlichen Quellen bzw. Ihren E-Mails an uns ergänzt: ${ausVerlauf.join("; ")}.`;
+  const teile = (h.ergaenzt ?? []).map((e) => {
+    const quelle = e.quelle === "google" ? "aus Ihrem öffentlichen Google-Unternehmensprofil" : `von Ihrer Webseite${e.url ? ` (${e.url})` : ""}`;
+    return `${e.felder.join(", ")} ${quelle}${e.am ? ` am ${iso(e.am)}` : ""}`;
+  });
+  return teile.length ? `Weitere Angaben haben wir automatisch ergänzt: ${teile.join("; ")}.` : null;
+}
+
+function herkunftKern(h: AuskunftAkte["herkunft"]): string {
   if (h.art === "öffentliche Vermittlerliste") {
     const teile = [
       h.quelle ? `Quelle: ${wert(h.quelle)}` : null,
@@ -229,7 +249,7 @@ export function herkunftSatz(h: AuskunftAkte["herkunft"]): string {
   if (h.art.startsWith("Instantly") || h.art === "laut Verlauf") {
     const instantly = iso(h.inInstantlySeit);
     return [
-      "Ihre Daten (Name und geschäftliche E-Mail-Adresse) stammen aus öffentlich zugänglichen Angaben im Internet, zum Beispiel Webseiten, Impressum sowie Berater- und Vermittlerprofile. Wir haben sie mit KI-Unterstützung recherchiert.",
+      "Ihr Name und Ihre geschäftliche E-Mail-Adresse stammen aus öffentlich zugänglichen Angaben im Internet, zum Beispiel Webseiten, Impressum sowie Berater- und Vermittlerprofile. Wir haben sie mit KI-Unterstützung recherchiert.",
       "Die genaue Fundstelle und das Abrufdatum haben wir dabei nicht gespeichert.",
       `Für den Versand haben wir sie ${instantly ? `am ${instantly} ` : ""}in unser E-Mail-System (Instantly) übernommen${seit ? `; in unserer Anwendung sind sie seit ${seit} gespeichert` : ""}.`,
     ].join(" ");

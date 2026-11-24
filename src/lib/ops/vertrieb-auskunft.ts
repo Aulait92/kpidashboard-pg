@@ -9,6 +9,7 @@
 import { prisma } from "@/lib/prisma";
 import { findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { geloeschterKontaktId } from "@/lib/vertrieb/sperrliste";
+import { ANREICHERUNG_LABEL } from "@/lib/vertrieb/contact-enrich";
 import { dsgvoAusAntwort, SPERR_GRUND_LABEL, istSperrGrund } from "@/lib/vertrieb/nie-kontaktieren";
 import { LOSS_LABEL, STAGE_LABEL } from "@/lib/vertrieb/crm";
 
@@ -58,9 +59,35 @@ function herkunft(c: { enrichment: unknown; description: string | null; legacySt
     };
   }
   const verlauf = importe.map((i) => ({ datum: tag(i.occurredAt), notiz: i.note }));
-  if (c.description?.startsWith("Über Instantly angelegt")) return { art: "Instantly (Liste direkt in Instantly hochgeladen)", angelegt: tag(c.createdAt), verlauf };
-  if (verlauf.length) return { art: "laut Verlauf", angelegt: tag(c.createdAt), verlauf };
-  return { art: c.legacyStatus ? "Import Cold CRM (alte Anrufliste)" : "Import Cold CRM bzw. von Hand angelegt", angelegt: tag(c.createdAt) };
+  const ergaenzt = ergaenztAus(e);
+  if (c.description?.startsWith("Über Instantly angelegt")) return { art: "Instantly (Liste direkt in Instantly hochgeladen)", angelegt: tag(c.createdAt), verlauf, ergaenzt };
+  if (verlauf.length) return { art: "laut Verlauf", angelegt: tag(c.createdAt), verlauf, ergaenzt };
+  return { art: c.legacyStatus ? "Import Cold CRM (alte Anrufliste)" : "Import Cold CRM bzw. von Hand angelegt", angelegt: tag(c.createdAt), ergaenzt };
+}
+
+/** Verlaufseinträge zu automatisch übernommenen Kontaktdaten (Telefon, E-Mail, Webseite, Google), für die Herkunft. */
+async function ergaenztVerlauf(contactId: string): Promise<string[]> {
+  const rows = await prisma.salesActivity.findMany({
+    where: { contactId, OR: [{ note: { startsWith: "Automatisch ergänzt" } }, { outcome: { in: ["Neue Telefonnummer erkannt", "Neue E-Mail-Adresse erkannt"] } }, { note: { startsWith: "Adresse von der Website ergänzt" } }] },
+    orderBy: { occurredAt: "asc" },
+    select: { note: true, occurredAt: true },
+  });
+  return rows
+    .map((r) => (r.note ?? "").replace(/^Automatisch ergänzt:\s*/, "").replace(/, als Hauptnummer übernommen$/, "").replace(/\.$/, "").trim())
+    .map((n, i) => (n ? `${n} (am ${rows[i].occurredAt.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })})` : ""))
+    .filter(Boolean);
+}
+
+/** Automatisch ergänzte Felder (Webseite bzw. Google-Unternehmensprofil) mit Quelle und Datum, für die Herkunft. */
+function ergaenztAus(e: Record<string, unknown> | null) {
+  const out: { quelle: "webseite" | "google"; url: string | null; am: string | null; felder: string[] }[] = [];
+  const felder = (v: unknown) =>
+    (Array.isArray(v) ? v : []).filter((f): f is string => typeof f === "string" && !["googlePlaceId", "ratingCount", "businessStatus"].includes(f)).map((f) => ANREICHERUNG_LABEL[f] ?? f);
+  const w = obj(e?.website);
+  if (w && felder(w.fields).length) out.push({ quelle: "webseite", url: typeof w.url === "string" ? w.url : null, am: typeof w.at === "string" ? w.at.slice(0, 10) : null, felder: felder(w.fields) });
+  const g = obj(e?.google);
+  if (g && felder(g.fields).length) out.push({ quelle: "google", url: null, am: typeof g.at === "string" ? g.at.slice(0, 10) : null, felder: felder(g.fields) });
+  return out;
 }
 
 export async function vertriebAuskunftDiagnose(params: URLSearchParams) {
@@ -160,7 +187,7 @@ export async function vertriebAuskunftDiagnose(params: URLSearchParams) {
     nachname: c.lastName,
     firma: c.name,
     felder,
-    herkunft: herkunft(c, c.activities),
+    herkunft: { ...herkunft(c, c.activities), ergaenztVerlauf: await ergaenztVerlauf(c.id) },
     empfaenger,
     empfaengerArten,
     mailsAnIhn: raus,
