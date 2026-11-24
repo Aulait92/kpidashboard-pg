@@ -48,6 +48,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
 import { displayProduct } from "@/lib/products";
+import { interesseAusFormular } from "@/lib/interesse-formular";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
@@ -724,8 +725,8 @@ export async function startAngebotNachfassen(leadId: string, weg: "app" | "selbs
 /** Thema für „Angebot zu …“ – wie beim manuellen Nachfassen (lib/whatsapp/followup.ts). */
 export function topicOf(formData: Prisma.JsonValue | null, source: string | null, an: Ansprache = "sie"): string {
   if (Array.isArray(formData)) {
-    const hit = (formData as { label?: unknown; value?: unknown }[]).find((a) => a?.label === "Versicherungsinteresse" && typeof a.value === "string" && a.value.trim());
-    if (hit) return String(hit.value).trim().slice(0, 60);
+    const interesse = interesseAusFormular(formData as { label?: string | null; value?: string | null }[]);
+    if (interesse) return interesse.slice(0, 60);
   }
   return source ? displayProduct(source) : a(an, "deiner Anfrage", "Ihrer Anfrage");
 }

@@ -1639,6 +1639,10 @@ export async function runBotTurn(
     }
     await flagAttention(conversation.id, "Kalender voll: keine freien Zeiten für einen Terminvorschlag, bitte persönlich melden").catch((e) => console.error("[whatsapp bot] Hinweis Kalender voll", e));
     await persistInternal(conversation.id, "kalender_voll", { einleitung: !!zug.kalenderVoll.einleitung });
+    // Assistent pausieren wie bei der Übergabe an den Menschen (Ole, 24.11.2026): Der Vermittler übernimmt die
+    // Terminsuche. Sonst antwortet der Assistent auf jede weitere Höflichkeit („Danke“, „Dankeschön“) erneut mit
+    // „… meldet sich persönlich …“ (Produktionsfehler 24.11.2026: Lead doppelt bedankt).
+    await prisma.conversation.update({ where: { id: conversation.id }, data: { botActive: false } }).catch((e) => console.error("[whatsapp bot] Pause Kalender voll", e));
     logTestLead(lead, "kalender voll, aufgabe für den vermittler");
   } else if (zug.vorschlag) {
     finalText = zug.vorschlag.text;

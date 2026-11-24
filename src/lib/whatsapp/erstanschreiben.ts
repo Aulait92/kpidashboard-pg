@@ -43,6 +43,7 @@ import { displayProduct } from "@/lib/products";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import type { NoticePurpose } from "@/lib/whatsapp/templates";
 import { istKfzProdukt, KFZ_FORMULAR } from "@/lib/whatsapp/produkt-fragen";
+import { INTERESSE_LABEL_RE, interesseAusFormular } from "@/lib/interesse-formular";
 
 /**
  * Erstanschreiben v6 (Ole, 17.11.2026), zentral zum Feilen: Text nach „Hallo {{1}}, “ (ohne Namen „Hallo, “, dann
@@ -527,7 +528,7 @@ const BEKANNT: Partial<Record<NoticePurpose, { frage1?: RegExp; frage2?: RegExp 
   // Gewünschter Schutz (Ole, 19.11.2026: feste Frage in v10) aus Formularfeldern wie „Gewünschter Schutz: OP-Schutz“
   outreach_tkv: { frage1: /geburtsjahr|^alter\b|alter \(tier\)|alter des tieres/i, frage2: /tarifwunsch|gewünschter schutz|^schutz\b|op-schutz|absicherungswunsch|^tarifart\b/i },
   outreach_pkv: { frage1: /^situation\b|berufliche situation|^beruf\b/i, frage2: /gesetzlich oder privat|wie lange in pkv|aktuelle versicherung/i },
-  outreach_privatschutz: { frage1: /versicherungsinteresse/i, frage2: /lebenssituation|familienstand|zu versichernde|für wen soll/i },
+  outreach_privatschutz: { frage1: INTERESSE_LABEL_RE, frage2: /lebenssituation|familienstand|zu versichernde|für wen soll/i },
 };
 
 /** Formularfelder, die schon sagen, ob es bestehende Verträge gibt (Privatschutz: Frage „schon versichert?“). */
@@ -621,7 +622,7 @@ function spartenWoerter(interesse: string | null): string[] {
  */
 export function nurHausrat(source: string | null | undefined, formular?: FormAntwort[] | null): boolean {
   if (outreachProdukt(source)?.purpose !== "outreach_privatschutz") return false;
-  const ausForm = (formular ?? []).find((x) => /versicherungsinteresse/i.test(x.label) && x.value?.trim())?.value ?? null;
+  const ausForm = interesseAusFormular(formular);
   const interesse = ausForm ?? (/privatschutz/i.test(source ?? "") ? null : (source ?? null));
   const w = spartenWoerter(interesse);
   return w.length === 1 && w[0] === "Hausrat";
@@ -681,7 +682,7 @@ export function frageplan(source: string | null | undefined, formular: FormAntwo
     // v8 (Ole, 17.11.2026): zuerst „Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?“, dann die
     // Zwischenfrage „Wer soll mitversichert sein?“ (stellt die App, zwischenfrage.ts); ohne Interesse im Formular gilt
     // Privatschutz als Haftpflicht und Hausrat
-    const ausForm = (formular ?? []).find((x) => /versicherungsinteresse/i.test(x.label))?.value ?? null;
+    const ausForm = interesseAusFormular(formular);
     const ausProdukt = /privatschutz/i.test(source ?? "") ? "Haftpflicht, Hausrat" : spartenWoerter(source ?? null).length ? (source ?? null) : null;
     const v = vorhandenFrage(ausForm ?? ausProdukt);
     fragen.unshift({ key: "vorhanden", feld: "vorhanden", sie: v.sie, du: v.du, bekannt: find(BEKANNT_VORHANDEN) });

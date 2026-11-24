@@ -10,6 +10,7 @@
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
+import { INTERESSE_LABEL_RE } from "@/lib/interesse-formular";
 import { istKfzProdukt, KFZ_FORMULAR } from "@/lib/whatsapp/produkt-fragen";
 
 /** Sparten mit Rechner (Schlüssel wie im Tarifkatalog bzw. RECHNER in pilot.ts). */
@@ -277,7 +278,7 @@ export function spartenDesLeads(source: string | null | undefined, src: AngabenQ
   const a = Object.fromEntries(qualificationPoints(src.angaben).map((p) => [p.key, p.value])) as Partial<Record<QualificationKey, string>>;
   // Interesse aus dem Formular: auch „Welche Versicherung interessiert Sie am meisten?“ und das ältere Lohmann-Formular
   // „An welchen Versicherungen bist Du interessiert?“ (Ole, 21.11.2026); „Alles in einem Paket“ = alle Privatschutz-Bausteine
-  const roh = [src.formular.find((x) => /versicherungsinteresse|^interesse\b|sparte|welche versicherung|an welchen versicherungen|interessiert (sie|dich)/i.test(x.label))?.value, a.interesse, /privatschutz/.test(s) ? "" : source]
+  const roh = [src.formular.find((x) => INTERESSE_LABEL_RE.test(x.label))?.value, a.interesse, /privatschutz/.test(s) ? "" : source]
     .filter(Boolean)
     .join(", ");
   const interesse = /alles in einem|paket|bundle/i.test(roh) ? `${roh}, Haftpflicht, Hausrat, Rechtsschutz, Unfall` : roh;

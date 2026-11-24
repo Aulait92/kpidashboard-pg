@@ -39,6 +39,10 @@ describe("unbeantwortete", () => {
     expect(unbeantwortete([z("internal", -10, { kind: "ki_handover", sentBy: "bot" }), z("inbound", 0)], { now })).toEqual([]);
     expect(unbeantwortete([z("outbound", -10, { sentBy: "agent" }), z("inbound", 0)], { now })).toEqual([]);
   });
+  it("nach „Kalender voll“ übernimmt der Mensch: spätere Höflichkeit gilt nicht als unbeantwortet (Ole, 24.11.2026)", () => {
+    // Lead „Dankeschön“ nach der Übergabe (Kalender voll): der Assistent ist pausiert, kein „bot stumm“-Fall
+    expect(unbeantwortete([z("internal", -10, { kind: "kalender_voll", sentBy: "system" }), z("inbound", 0)], { now })).toEqual([]);
+  });
 });
 
 describe("Texte", () => {

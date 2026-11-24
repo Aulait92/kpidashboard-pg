@@ -27,8 +27,8 @@ export const BOT_STUMM_GRENZE_MS = 2 * 60 * 1000;
 const RUECKBLICK_MS = 3 * 60 * 60 * 1000;
 /** Eingehende Arten ohne Antwortbedarf */
 export const OHNE_ANTWORT_ARTEN = ["reaction", "sticker", "unsupported", "system", "errors", "ephemeral"];
-/** Interne Merker: ab hier antwortet der Mensch (Übergabe, Stopp) */
-const MENSCH_MERKER = ["ki_handover", "handover", "opt_out"];
+/** Interne Merker: ab hier antwortet der Mensch (Übergabe, Stopp, Kalender voll) */
+const MENSCH_MERKER = ["ki_handover", "handover", "opt_out", "kalender_voll"];
 
 const aufgabeArt = (messageId: string) => `${BOT_STUMM_MERKER}:${messageId}`;
 

@@ -10,6 +10,7 @@ import { firstNameOf, noticeText, pickTemplate, renderTemplate, type NoticePurpo
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { a, type AnredeKontakt } from "@/lib/ansprache";
+import { interesseAusFormular } from "@/lib/interesse-formular";
 
 export type FollowupChoice =
   | { kind: "blocked"; reason: string }
@@ -24,10 +25,8 @@ const DONE = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
 
 function interestFrom(formData: unknown, source: string | null, an: "sie" | "du" = "sie"): string {
   if (Array.isArray(formData)) {
-    const hit = (formData as { label?: string; value?: string }[]).find(
-      (a) => a?.label === "Versicherungsinteresse" && typeof a.value === "string",
-    );
-    if (hit?.value) return hit.value;
+    const interesse = interesseAusFormular(formData as { label?: string | null; value?: string | null }[]);
+    if (interesse) return interesse;
   }
   return source ? displayProduct(source) : a(an, "deiner Anfrage", "Ihrer Anfrage");
 }

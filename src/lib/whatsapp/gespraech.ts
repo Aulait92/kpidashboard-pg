@@ -20,6 +20,7 @@ import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import { istKfzProdukt, KFZ_FORMULAR } from "@/lib/whatsapp/produkt-fragen";
 import { angabenFuerSparte, spartenDesLeads, type AngabenQuelle, type Folgefrage, type RechnerSparte } from "@/lib/preise/rechner-angaben";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
+import { INTERESSE_LABEL_RE } from "@/lib/interesse-formular";
 
 // Vermittler-Nennung zentral (Ole, 17.11.2026, lib/vermittler-nennung.ts): Sie „Herr/Frau Nachname“, gebeugt; Du Vorname
 import type { VermittlerName } from "@/lib/vermittler-nennung";
@@ -106,7 +107,7 @@ export function terminNutzenSatz(o: { source: string | null | undefined; formula
   }
   if (purpose === "outreach_zahn") return `${zeigt} was eine Zahnzusatzversicherung für ${a(an, "dich", "Sie")} kostet ${achten}.`;
   if (purpose === "outreach_privatschutz") {
-    const interesse = angabe(o.formular, o.angaben, /versicherungsinteresse/i, ["interesse"]) ?? o.source ?? null;
+    const interesse = angabe(o.formular, o.angaben, INTERESSE_LABEL_RE, ["interesse"]) ?? o.source ?? null;
     const leben = (lebenssituationAus(o.formular, o.angaben) ?? "").toLowerCase();
     const fuer = /kind|familie/.test(leben)
       ? a(an, "deine Familie", "Ihre Familie")
