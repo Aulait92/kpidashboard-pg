@@ -97,7 +97,7 @@ describe("Selbst-Einrichtung: Fortschritt", () => {
 
   it("Software: alle Schritte inkl. App, Provisionen und Testlead", () => {
     const steps = setupSteps({ package: "software" }, items, { appDone: true, provisionDone: false });
-    expect(steps.map((s) => s.key)).toEqual(["login", "questionnaire", "app", "calendar", "provision", "metaAccess", "whatsapp", "consent", "testLead"]);
+    expect(steps.map((s) => s.key)).toEqual(["login", "questionnaire", "calendar", "provision", "metaAccess", "whatsapp", "app", "consent", "testLead"]);
     const p = setupProgress(steps);
     expect(p).toMatchObject({ done: 4, total: 9 });
     expect(steps.find((s) => s.key === "testLead")?.owner).toBe("wir");
@@ -105,7 +105,7 @@ describe("Selbst-Einrichtung: Fortschritt", () => {
 
   it("Nur Betreuung: ohne Kalender, WhatsApp und Einwilligung", () => {
     const steps = setupSteps({ package: "service" }, items, { appDone: false, provisionDone: true });
-    expect(steps.map((s) => s.key)).toEqual(["login", "questionnaire", "app", "provision", "metaAccess", "testLead"]);
+    expect(steps.map((s) => s.key)).toEqual(["login", "questionnaire", "provision", "metaAccess", "app", "testLead"]);
     expect(setupProgress(steps)).toMatchObject({ done: 3, total: 6 });
   });
 

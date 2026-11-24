@@ -37,7 +37,10 @@ import { googleMailAvailable, microsoftMailAvailable } from "@/lib/mail/postfach
 import { mitKampagnen } from "@/lib/offer-pricing";
 import { appInstalled, loadSetupSettings, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
 import { helpCallSlots } from "@/lib/help-call";
-import { InstallApp } from "@/components/install-app";
+import { IphoneAppSchritt } from "@/components/iphone-app";
+import { geraetAusUserAgent } from "@/lib/app-store";
+import { appAngemeldetFuerKunde } from "@/lib/app-store-server";
+import { headers } from "next/headers";
 import { getAppUrl } from "@/lib/email";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { provisionSetupHint } from "@/lib/provision";
@@ -98,7 +101,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const provisionGeladen = await loadCustomerProvision(ctx.customerId);
   // Von uns abgehakt (Kundenakte) zählt wie hinterlegt
   const provision = { ...provisionGeladen, confirmed: provisionGeladen.confirmed || vonUnsAbgehakt(ob.stepSkips, "provision") };
-  const appDone = await appInstalled(ctx.customerId);
+  const [appDone, appAngemeldet] = await Promise.all([appInstalled(ctx.customerId), appAngemeldetFuerKunde(ctx.customerId)]);
+  // Gerät aus dem User-Agent (App, iPhone, Android, Computer) für den Schritt „App aufs Handy“
+  const geraet = geraetAusUserAgent((await headers()).get("user-agent"));
   // Eine Zählung wie auf der Startseite und im Menü: nur Schritte, die der Kunde selbst erledigt
   const progress = customerSetupProgress(items, { appDone, provisionDone: provision.confirmed });
   const overall = { done: progress.done, total: progress.total, percent: progress.percent, open: progress.open };
@@ -119,7 +124,6 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   // Gleiche Reihenfolge wie die Liste oben, die Startseite und die Erinnerungen (SETUP_STEPS)
   const order = [
     "questionnaire",
-    "app",
     ...(software ? ["calendar", "mailbox"] : []),
     "provision",
     ...(software ? ["erstinfo", "assistent"] : []),
@@ -129,6 +133,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     ...(kampagnen ? ["metaAccess"] : []),
     ...(waEnabled ? ["whatsapp"] : []),
     ...["bestandImport", "reviewLink", "team"].filter(has),
+    "app",
   ];
   const isDone = (k: string) => (k === "app" ? appDone : k === "provision" ? provision.confirmed : done(k));
   // „Später“: zum nächsten offenen Schritt nach diesem
@@ -318,16 +323,6 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             allianz={allianz}
             videoRoomUrl={calendar.videoRoomUrl}
           />
-        </Step>
-
-        <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={isOpen("app")} id="app" current={current === "app"}>
-          <VideoHint url={video("app")} />
-          <InstallApp appUrl={appHost()} />
-          {!appDone ? (
-            <div className="mt-4">
-              <SkipButton kind="app" readOnly={readOnly} label="Ich nutze die App ohne Handy, Schritt überspringen" />
-            </div>
-          ) : null}
         </Step>
 
         {software ? (
@@ -852,6 +847,13 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {!done("team") ? <StepExits laterHref={laterHref("team")} readOnly={readOnly} skips={[{ kind: "skip:team:spaeter", label: "Mache ich später" }]} /> : null}
           </Step>
         ) : null}
+
+        {/* Letzter Schritt (Ole, 24.11.2026): iPhone-App aus dem App Store, erledigt mit der ersten Anmeldung in der App
+            oder „Ich habe kein iPhone“ (components/iphone-app.tsx, lib/app-store-server.ts) */}
+        <Step n={nextNo()} title="App aufs Handy" icon={Smartphone} done={appDone} open={isOpen("app")} id="app" current={current === "app"}>
+          <VideoHint url={video("app")} />
+          <IphoneAppSchritt geraet={geraet} appUrl={appHost()} readOnly={readOnly} angemeldet={appAngemeldet} />
+        </Step>
 
         <Step n={nextNo()} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start"} current={current === "start" && !ob.liveAt}>
           {software && waVerbunden && !ob.liveAt ? (

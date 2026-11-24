@@ -8,7 +8,7 @@ const LABEL: Record<string, string> = {
   metaAccess: "Meta freigeben (Partnerzugriff)",
   whatsapp: "WhatsApp verbinden",
   calendar: "Kalender verbinden",
-  app: "App aufs Handy und Mitteilungen",
+  app: "App aufs Handy",
   consent: "Einwilligung im Leadformular",
   provision: "Provisionen prüfen",
 };

@@ -13,13 +13,17 @@ ohne neues Store-Update. Neu bauen muss man die App nur bei Änderungen an
 | Start-URL | `https://app.performancegrowth.de/buyer` (lokal überschreibbar mit `CAP_SERVER_URL`) |
 | In der App erlaubt | `app.performancegrowth.de`, `staging.performancegrowth.de` – alles andere öffnet im System-Browser; `tel:`/`mailto:` öffnen Telefon bzw. Mail |
 | Kennung im User-Agent | `performancegrowthApp/1.0` |
+| App Store (iPhone, seit 24.11.2026) | https://apps.apple.com/de/app/performancegrowth/id6838442707 (Konstante `IOS_APP_STORE_URL` in `src/lib/app-store.ts`) |
+| App-Anmeldung je Login | `User.appLoginAt` (erste Seite im Kundenbereich mit App-User-Agent oder App-Gerät), Kennzahl: Admin › Qualität › Nutzung, Diagnose `q=app-nutzung` |
 | Kein Netz | eingebaute Seite „Keine Verbindung“ mit „Erneut versuchen“ |
 
 ## Was die App kann
 
 - **Native Push** (APNs für iPhone, Firebase Cloud Messaging für Android) – zusätzlich
-  zu Web-Push. Die Anfrage zur Erlaubnis kommt erst, wenn man in der App
-  „Benachrichtigungen einschalten“ tippt (wie bisher im Web). Tippen auf eine
+  zu Web-Push. Auf dem iPhone kommt beim Öffnen der App zuerst ein eigener Hinweis
+  „Keinen neuen Lead verpassen“ ([Erlauben] [Später], `src/components/app-push-frage.tsx`);
+  erst „Erlauben“ löst die iOS-Abfrage aus, „Später“ fragt beim
+  nächsten Öffnen wieder. Läuft aus der Web-Oberfläche, keine neue App-Version nötig. Tippen auf eine
   Benachrichtigung öffnet direkt den Lead/die Seite.
 - **Zähler am App-Symbol**: neue, noch nicht kontaktierte Leads der letzten 14 Tage
   (Berater: nur die eigenen). Aktualisiert bei jedem Push, beim Öffnen und bei

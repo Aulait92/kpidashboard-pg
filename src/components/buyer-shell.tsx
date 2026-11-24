@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { PushHint, PushMenuItem } from "@/components/push-prompt";
+import { AppPushFrage } from "@/components/app-push-frage";
 import { HilfeChat } from "@/components/hilfe-chat";
 import { BuyerSearch, BuyerSearchButton } from "@/components/buyer-search";
 import { AbsenceControl, dayShort, type ShellAbsence } from "@/components/absence-sheet";
@@ -201,8 +202,10 @@ export function BuyerShell({
 
       <div className="flex-1 pb-20 md:pb-0">
         {absence ? <AbsenceControl data={absence} /> : null}
-        {/* Einrichtung hat dafür einen eigenen Schritt („App aufs Handy und Mitteilungen“), dort kein zweiter Hinweis */}
+        {/* Einrichtung hat dafür einen eigenen Schritt („App aufs Handy“), dort kein zweiter Hinweis */}
         {pathname.startsWith("/buyer/einrichtung") || hinweisOffen ? null : <PushHint />}
+        {/* In der iPhone-App: eigener Hinweis vor der iOS-Abfrage für Mitteilungen */}
+        <AppPushFrage />
         {children}
       </div>
       <BuyerSearch storageKey={displayName} />
@@ -624,6 +627,7 @@ function BuyerShellA({
         <div className="pb-20 md:pb-0">
           {absence ? <AbsenceControl data={absence} /> : null}
           {demo || hinweisOffen || pathname.startsWith("/buyer/einrichtung") ? null : <PushHint />}
+          {demo ? null : <AppPushFrage />}
           {children}
         </div>
         {demo ? null : <BuyerSearch storageKey={displayName} />}

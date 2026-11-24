@@ -24,6 +24,7 @@ import { prisma } from "@/lib/prisma";
 import { allStornoStats } from "@/lib/storno-quote";
 import { keinWhatsAppQuote } from "@/lib/whatsapp/kein-whatsapp";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import { appKennzahlenSoftware } from "@/lib/app-store-server";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Qualität | performancegrowth Admin" };
@@ -183,7 +184,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
 /** Ansicht „Nutzung der App“ mit Zeitraum (?tage=7|14|30, Standard 14). */
 async function Nutzung({ tage }: { tage?: string }) {
   const days = [7, 14, 30].includes(Number(tage)) ? Number(tage) : 14;
-  const [report, help, support, bd] = await Promise.all([computeUsageReport(days), loadHelpQuestions(days), loadSupportRequests(days), bdNutzung(days)]);
+  const [report, help, support, bd, app] = await Promise.all([computeUsageReport(days), loadHelpQuestions(days), loadSupportRequests(days), bdNutzung(days), appKennzahlenSoftware()]);
   const stockend = report.customers.filter((c) => c.stalled.outcomesOpen + c.stalled.followUpsOverdue + c.stalled.attentionOver24h > 0).length;
   return (
     <section aria-label="Nutzung der App" className="space-y-4">
@@ -200,6 +201,10 @@ async function Nutzung({ tage }: { tage?: string }) {
           </Link>
         ))}
       </div>
+      {/* iPhone-App (Ole, 24.11.2026): Logins von Software-Kunden mit App-Anmeldung und mit Push-Erlaubnis (lib/app-store-server.ts) */}
+      <Card className="p-4 text-sm" data-app-kennzahl>
+        <span className="font-semibold">iPhone-App:</span> {app.mitApp} von {app.logins} Logins angemeldet ({app.quoteApp} %), Mitteilungen erlaubt: {app.mitPush} ({app.quotePush} %)
+      </Card>
       <div data-funktion="page--hilfe-anfragen-an-das-team">
         <HilfeAnfragenKarte support={support} />
       </div>

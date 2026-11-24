@@ -466,8 +466,8 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Einrichtung (neue Kunden)
 
-- Oben steht **„Einrichtung: x von y erledigt“** mit allen Schritten: Login, Fragebogen, App aufs Handy und Mitteilungen, Kalender,
-  E-Mail-Postfach, Provisionen, Erstinformation, Meta freigeben, WhatsApp verbinden, Einwilligung im Leadformular, Testlead (den macht performancegrowth).
+- Oben steht **„Einrichtung: x von y erledigt“** mit allen Schritten: Login, Fragebogen, Kalender,
+  E-Mail-Postfach, Provisionen, Erstinformation, Meta freigeben, WhatsApp verbinden, zum Schluss App aufs Handy, Einwilligung im Leadformular, Testlead (den macht performancegrowth).
   Nur mit gebuchtem Modul bzw. Team kommen dazu: <!-- bestand-modul -->**Kundenliste hochladen** (Bestandskunden-Modul), <!-- /bestand-modul -->**Google-Bewertungslink hinterlegen**
   (Empfehlungen & Bewertungen) und **Team einladen** (weitere Verkäufer gebucht).
   Offene Schritte sind anklickbar. Bei einigen Schritten gibt es ein kurzes Erklärvideo.
@@ -541,15 +541,25 @@ Seiten aus der Liste „Seiten“ unten.
   kein Nachfassen und keine Termin-Nachrichten per WhatsApp). Er steht auf der Rückrufliste: bitte anrufen oder per E-Mail zu
   genau dieser Anfrage melden. Schreibt der Lead selbst per WhatsApp, antwortet der Assistent. Formulare ganz ohne Häkchen
   laufen wie bisher, im Kontakt steht dann „Einwilligung nicht nachgewiesen“.
-- **App aufs Handy:** gilt als erledigt, sobald Mitteilungen auf einem Gerät erlaubt sind.
+- **App aufs Handy** (letzter Schritt): **iPhone-App installieren** öffnet die App im App Store (am Computer zusätzlich ein QR-Code
+  für die Kamera des iPhones). Erledigt, sobald Sie sich in der App angemeldet haben. Ohne iPhone: **Ich habe kein iPhone**, die
+  Android-App kommt bald, bis dahin sehen Sie alle neuen Leads wie gewohnt im Browser (Web-App auf den Startbildschirm legen).
 - **Erinnerungen:** Bleibt etwas offen, erinnert die App nach 1, 3 und 7 Tagen per E-Mail und Mitteilung. Danach meldet sich
   performancegrowth persönlich. Hilfe jederzeit: 15-Minuten-Hilfetermin in der Einrichtung buchen.
+
+## iPhone-App
+
+- performancegrowth gibt es als App für das iPhone im App Store: https://apps.apple.com/de/app/performancegrowth/id6838442707
+  (Deutschland, Österreich, Schweiz). In der App mit denselben Zugangsdaten anmelden, dann Mitteilungen erlauben.
+- Neue Leads erscheinen sofort als Mitteilung, Tippen öffnet den Lead; Anrufen und WhatsApp mit einem Fingertipp.
+- Auf „Heute“ steht ein Hinweis zur App, bis Sie sich in der App angemeldet haben (wegklickbar). Android-App: kommt bald.
 
 ## Benachrichtigungen (Push)
 
 - Einschalten: oben im Kundenbereich „Benachrichtigungen einschalten“ oder im Profilmenü
   „Benachrichtigungen“. Einmal pro Gerät. Im Profilmenü gibt es „Test senden“.
-- **iPhone:** Nur möglich, wenn die App auf dem Home-Bildschirm liegt: in **Safari** öffnen (nicht aus
+- **iPhone:** Am einfachsten mit der **iPhone-App** aus dem App Store (siehe „iPhone-App“), dort Mitteilungen erlauben.
+  Ohne App nur möglich, wenn die Web-App auf dem Home-Bildschirm liegt: in **Safari** öffnen (nicht aus
   WhatsApp heraus), unten auf die drei Punkte (…) und dann „Teilen“ (bei älteren iOS-Versionen ist „Teilen“
   direkt unten), dann „Zum Home-Bildschirm“, danach die App über das neue Symbol
   öffnen und Benachrichtigungen einschalten. Anleitung auch in der Einrichtung unter „App aufs Handy“.
@@ -1347,7 +1357,7 @@ Empfehlung mit persönlichem **Empfehlungslink**), **Empfehlungen** (Personen, d
 ## Einrichtung
 
 - Schritte: kurzer Fragebogen, Zugriff auf Ihr Meta-Werbekonto (mit Anleitung), Kalender verbinden,
-  App aufs Handy, Start.
+  zum Schluss App aufs Handy (iPhone-App aus dem App Store), Start.
 - Meta-Zugriff: Hat Ihr Business-Konto einen zweiten Admin, muss er die Partner-Freigabe bestätigen.
   Lieber gemeinsam? 15-Minuten-Hilfetermin in der Einrichtung buchen.
 - **WhatsApp verbinden** (nur Inhaber, Paket mit Software): Einrichtung → „WhatsApp verbinden“. Zuerst

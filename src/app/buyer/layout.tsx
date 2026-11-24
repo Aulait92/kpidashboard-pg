@@ -25,6 +25,7 @@ import { AppDemoRahmen } from "@/components/app-demo-rahmen";
 import { demoTourZiele } from "@/lib/app-demo/tour-server";
 import { LiveRefresh } from "@/components/live-refresh";
 import { headers } from "next/headers";
+import { merkeGeraet } from "@/lib/app-store-server";
 import { redirect } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { istReinesBestellkonto } from "@/lib/ppl/bestellkonto";
@@ -96,7 +97,12 @@ export default async function BuyerLayout({
       : null,
   );
   // Nutzungsanalyse: Einwilligung, Erstellt-Datum (erst nach 2 Tagen fragen), Pseudonym für Sentry
-  const analyseUser = ctx?.userId && !ctx.preview ? await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true, createdAt: true } }) : null;
+  const analyseUser =
+    ctx?.userId && !ctx.preview && !ctx.demo
+      ? await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true, createdAt: true, appLoginAt: true, iphoneSeenAt: true } })
+      : null;
+  // iPhone-App (lib/app-store-server.ts): erste Anmeldung in der App und erstes iPhone je Login merken
+  if (ctx?.userId && analyseUser) await merkeGeraet(ctx.userId, (await headers()).get("user-agent"), analyseUser).catch(() => undefined);
   const analyse = asAnalyseStatus(analyseUser?.analyseEinwilligung);
   const analysePseudo = ctx?.userId && analyse === "ja" ? analysePseudonym(ctx.userId) : null;
   const demo = !!ctx?.demo;

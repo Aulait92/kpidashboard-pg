@@ -55,7 +55,8 @@ export async function FirstDay({
     ...(owner && ob && !ob.liveAt
       ? [{ done: false, icon: Rocket, text: `Einrichtung abschließen${progress ? ` (${progress.done} von ${progress.total})` : ""}`, href: "/buyer/einrichtung" }]
       : []),
-    { done: false, icon: Smartphone, text: "App aufs Handy legen und Benachrichtigungen einschalten", href: owner && ob ? "/buyer/einrichtung" : undefined },
+    // iPhone-App (Ole, 24.11.2026): erledigt mit der ersten Anmeldung in der App (lib/app-store-server.ts)
+    { done: !!progress && !progress.open.some((s) => s.key === "app"), icon: Smartphone, text: "iPhone-App installieren, damit Sie jeden neuen Lead sofort sehen", href: owner && ob ? "/buyer/einrichtung?schritt=app#app" : undefined },
     ...(owner && whatsapp ? [{ done: calendarOk, icon: CalendarDays, text: calendarOk ? "Kalender verbunden" : "Kalender verbinden, damit Termine nur in freie Zeiten fallen", href: calendarOk ? undefined : ob ? "/buyer/einrichtung" : "/buyer/kalender" }] : []),
   ];
 
@@ -133,7 +134,7 @@ export const STEP_TEXT: Record<string, { label: string; icon: typeof Rocket }> =
   reviewLink: { label: "Google-Bewertungslink hinterlegen", icon: Star },
   team: { label: "Team einladen", icon: Users },
   whatsapp: { label: "WhatsApp verbinden", icon: MessageCircle },
-  app: { label: "App aufs Handy legen und Benachrichtigungen einschalten", icon: Smartphone },
+  app: { label: "iPhone-App installieren", icon: Smartphone },
   provision: { label: "Provisionen hinterlegen", icon: Percent },
   consent: { label: "Einwilligung im Leadformular bestätigen", icon: ShieldCheck },
   erstinfo: { label: "Erstinformation hinterlegen (Pflicht für den Assistenten)", icon: FileText },

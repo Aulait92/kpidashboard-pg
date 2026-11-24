@@ -8,7 +8,9 @@ import { FirstDay } from "@/components/first-day";
 import { IntroVideoCard } from "@/components/intro-video";
 import { LeadDetailBody } from "@/components/lead-detail-body";
 import { HeuteRechtsSchliessen } from "@/components/heute-rechts";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { AppHinweisKarte } from "@/components/iphone-app";
+import { ladeAppHinweis } from "@/lib/app-store-server";
 import { isNewUi } from "@/lib/new-ui";
 import { EmpfehlungHeuteHint } from "@/components/empfehlung/server";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -69,7 +71,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     );
   }
   const morgen = morgenBerlin(new Date());
-  const [data, customer, me, nudge, vorb, automatisch] = await Promise.all([
+  const ua = (await headers()).get("user-agent");
+  const [data, customer, me, nudge, vorb, automatisch, appHinweis] = await Promise.all([
     loadInbox(ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerDu: true, erstinformation: { select: { name: true, anrede: true } }, onboarding: { select: { offerId: true } } } }),
     ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
@@ -78,6 +81,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     listVorbereitungen(ctx).catch(() => []),
     // „Morgen: 3 automatische Nachrichten“ (Paket P6)
     ladeAutomatischeNachrichten(leadScope(ctx), morgen.von, morgen.bis).catch(() => null),
+    // iPhone-App (lib/app-store-server.ts): Hinweiskarte nur ohne App-Anmeldung, nie in der App, nicht in Vorschau/Demo
+    ctx.userId && !ctx.preview && !ctx.demo ? ladeAppHinweis(ctx.userId, ua).catch(() => null) : null,
   ]);
   // Wiedervorlage „Weiteres Produkt anbieten?“ fällig: kleiner Zusatz-Knopf zum Bestandskunden-Modul (lib/cross-sell-verkauf.ts),
   // nur mit Modul für alle und solange es nicht gebucht ist
@@ -94,6 +99,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   // Hinweise, die nicht dringend sind, stehen unter den Aufgaben (UX, Ole 15.11.2026)
   const hinweise = (
     <div className="mt-6 space-y-4">
+      {appHinweis ? <AppHinweisKarte art={appHinweis} /> : null}
       {/* Freischaltung Kranken/BU/Leben (lib/policen/freischaltung.ts), nur Inhaber, bis zugestimmt oder 3-mal „Später“ */}
       <PolicenFreischaltungKarte ctx={ctx} ort="karte" />
       {/* Makler: „Maklervollmacht: Wer schickt sie?“ bis entschieden (Customer.vollmachtVersand) */}

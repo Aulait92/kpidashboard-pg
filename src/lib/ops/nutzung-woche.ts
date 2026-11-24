@@ -22,7 +22,7 @@ import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Demo-Kunden (Google-Prüfung, öffentliche App-Demo) und interne Support-Nummer zählen nie. */
-const AUSGESCHLOSSEN = ["cust_google_review_demo", "app_demo_max_berger", SUPPORT_CUSTOMER_ID];
+export const AUSGESCHLOSSEN = ["cust_google_review_demo", "app_demo_max_berger", SUPPORT_CUSTOMER_ID];
 const TOP = 15;
 const UNGENUTZT_MAX = 30;
 /** Fenster für „ungenutzt“: Seiten/Aktionen, die in den letzten 60 Tagen genutzt wurden (mindestens 2 × tage). */

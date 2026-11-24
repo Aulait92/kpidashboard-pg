@@ -87,7 +87,7 @@ describe("customerSetupProgress", () => {
 
   it("mit App und Provisionen: dieselbe Zählung wie Einrichtungsseite und Menü", () => {
     const p = customerSetupProgress(fresh("du"), { appDone: true, provisionDone: false });
-    expect(p.steps.map((s) => s.key)).toEqual(["questionnaire", "app", "calendar", "provision", "metaAccess"]);
+    expect(p.steps.map((s) => s.key)).toEqual(["questionnaire", "calendar", "provision", "metaAccess", "app"]);
     expect(p.done).toBe(1);
     expect(p.total).toBe(5);
   });

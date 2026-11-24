@@ -17,6 +17,8 @@ import { leseMailAblauf } from "@/lib/mail/ablauf";
 import crypto from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { appSchrittErledigt } from "@/lib/app-store-server";
+import { IOS_APP_STORE_URL } from "@/lib/app-store";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
 import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail, type WillkommensMailOpts } from "@/lib/email";
@@ -695,7 +697,7 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "assistent", "einwaende", "serviceMails", "policenGesundheit", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "calendar", "mailbox", "provision", "erstinfo", "assistent", "einwaende", "serviceMails", "policenGesundheit", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team", "app"] as const;
 
 /** Übersprungene Schritte (Onboarding.stepSkips): Grund und Zeitpunkt je Schritt. */
 export type StepSkip = { at: string; reason: string };
@@ -729,7 +731,7 @@ export function customerSetupProgress(items: ChecklistItem[], extras?: CustomerE
   // Eine Zählung für Startkarte, Einrichtungsseite und Menü (Ole, 13.11.2026): nur, was der Kunde selbst tut
   const extra: ChecklistItem[] = extras
     ? [
-        { key: "app", label: "App aufs Handy und Mitteilungen", owner: "kunde", done: extras.appDone, at: null },
+        { key: "app", label: "App aufs Handy", owner: "kunde", done: extras.appDone, at: null },
         { key: "provision", label: "Provisionen hinterlegen", owner: "kunde", done: extras.provisionDone, at: null },
       ]
     : [];
@@ -795,15 +797,14 @@ export async function customerSetupOpenCount(customerId: string): Promise<number
 /** Schritte, die auch nach dem Livegang in der Einrichtung offen bleiben. */
 const LIVE_SETUP_KEYS = new Set(["questionnaire", "app", "calendar", "provision", "whatsapp", "erstinfo"]);
 
-/** App installiert (Push-Anmeldung eines Logins) und eigene Provisionssätze hinterlegt. */
+/** App aufs Handy (Anmeldung in der App, „Ich habe kein iPhone“ oder Push, lib/app-store-server.ts) und eigene Provisionssätze. */
 export async function customerExtras(customerId: string): Promise<CustomerExtras> {
-  const users = await prisma.user.findMany({ where: { customerId, role: "BUYER" }, select: { id: true } });
-  const [push, provision, ob] = await Promise.all([
-    users.length ? prisma.pushSubscription.count({ where: { userId: { in: users.map((u) => u.id) } } }) : 0,
+  const [appDone, provision, ob] = await Promise.all([
+    appSchrittErledigt(customerId),
     loadCustomerProvision(customerId),
-    prisma.onboarding.findUnique({ where: { customerId }, select: { appSkippedAt: true, stepSkips: true } }),
+    prisma.onboarding.findUnique({ where: { customerId }, select: { stepSkips: true } }),
   ]);
-  return { appDone: push > 0 || !!ob?.appSkippedAt, provisionDone: provision.confirmed || vonUnsAbgehakt(ob?.stepSkips, "provision") };
+  return { appDone, provisionDone: provision.confirmed || vonUnsAbgehakt(ob?.stepSkips, "provision") };
 }
 
 /**
@@ -887,7 +888,7 @@ export async function sendGoLiveMail(onboardingId: string) {
       paragraphs: [
         "alles ist eingerichtet. Jeder Lead, den Sie per Pay-per-Lead bekommen, erhält ab jetzt innerhalb weniger Minuten eine WhatsApp-Nachricht von Ihrem digitalen Assistenten und kann direkt einen Termin in Ihrem Kalender buchen.",
         "Leads bestellen Sie wie gewohnt im Kundenbereich unter „Wachstum“. Unter „Heute“ sehen Sie, wen Sie anrufen sollten.",
-        "Tipp: Installieren Sie den Kundenbereich auf Ihrem Handy (im Browser „Zum Startbildschirm hinzufügen“). Dann haben Sie neue Leads immer dabei.",
+        APP_TIPP,
       ],
       button: { label: "Zum Kundenbereich", url: `${getAppUrl()}/buyer` },
     });
@@ -903,12 +904,15 @@ export async function sendGoLiveMail(onboardingId: string) {
       software
         ? "Neue Leads bekommen innerhalb weniger Minuten eine WhatsApp-Nachricht von Ihrem digitalen Assistenten und können direkt einen Termin in Ihrem Kalender buchen. Im Kundenbereich sehen Sie unter „Heute“, wen Sie anrufen sollten."
         : `Jeder neue Lead kommt sofort per E-Mail${q.leadEmails?.length ? ` an ${q.leadEmails.join(", ")}` : ""} und steht im Kundenbereich unter „Leads“. Am besten rufen Sie innerhalb der ersten Minuten an.`,
-      "Tipp: Installieren Sie den Kundenbereich auf Ihrem Handy (im Browser „Zum Startbildschirm hinzufügen“). Dann haben Sie neue Leads immer dabei.",
+      APP_TIPP,
     ],
     button: { label: "Zum Kundenbereich", url: `${getAppUrl()}/buyer` },
   });
   if (!res.ok) reportError(new Error(res.error), "onboarding-golive-mail", { onboarding: ob.id });
 }
+
+/** Tipp in der Go-live-Mail (Ole, 24.11.2026): iPhone-App aus dem App Store, ohne iPhone die Web-App. */
+const APP_TIPP = `Tipp: Laden Sie die iPhone-App aus dem App Store (${IOS_APP_STORE_URL}), dann sehen Sie jeden neuen Lead sofort auf dem Handy. Ohne iPhone legen Sie den Kundenbereich im Browser auf den Startbildschirm.`;
 
 /**
  * Konditionen aus dem Angebot an den Kunden: inklusive Logins, Preis je

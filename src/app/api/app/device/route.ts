@@ -1,6 +1,7 @@
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { badgeForUser } from "@/lib/native-push";
+import { merkeGeraet } from "@/lib/app-store-server";
 
 // App-Store-App: Push-Token des Geräts an- bzw. abmelden (nur eingeloggt).
 // Ein Token gehört immer dem zuletzt angemeldeten Login (Gerätewechsel/Abmelden).
@@ -20,6 +21,7 @@ export async function POST(req: Request): Promise<Response> {
     create: { token, platform, userId: session.userId, appVersion },
     update: { platform, userId: session.userId, appVersion, lastSeenAt: new Date() },
   });
+  await prisma.user.updateMany({ where: { id: session.userId, appLoginAt: null }, data: { appLoginAt: new Date() } });
   return Response.json({ ok: true });
 }
 
@@ -34,8 +36,10 @@ export async function DELETE(req: Request): Promise<Response> {
 }
 
 // Zähler am App-Symbol (beim Öffnen/Zurückkehren in die App abgefragt).
-export async function GET(): Promise<Response> {
+// Läuft nur in der App (beim Öffnen): zählt auch als App-Anmeldung (lib/app-store-server.ts, z. B. für „Nur Leads“-Konten).
+export async function GET(req: Request): Promise<Response> {
   const session = await getCurrentSession();
   if (!session) return Response.json({ badge: 0 });
+  await merkeGeraet(session.userId, req.headers.get("user-agent")).catch(() => undefined);
   return Response.json({ badge: (await badgeForUser(session.userId)) ?? 0 });
 }

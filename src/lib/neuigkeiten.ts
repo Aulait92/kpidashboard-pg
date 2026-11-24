@@ -152,7 +152,7 @@ export async function pushUpdate(id: string): Promise<number> {
   return sent;
 }
 
-const plainText = (s: string) => s.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+const plainText = (s: string) => s.replace(/\[([^\]\n]+)\]\(https:\/\/[^\s)]+\)/g, "$1").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
 
 // ─── KI-Entwurf ──────────────────────────────────────────────────────────
 

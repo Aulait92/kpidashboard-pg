@@ -827,6 +827,8 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "ppl-kosten": async (p) => (await import("@/lib/ops/ppl-kosten")).pplKostenDiagnose(p),
   "ppl-kunde": async (p) => (await import("@/lib/ops/ppl-kunde")).pplKunde(p),
   "push-geraete": async () => (await import("@/lib/ops/push-geraete")).pushGeraeteDiagnose(),
+  // iPhone-App (Ole, 24.11.2026): Logins von Software-Kunden mit App-Anmeldung und mit Push-Erlaubnis, nur Zahlen
+  "app-nutzung": async () => (await import("@/lib/app-store-server")).appKennzahlenSoftware(),
   // PKV-Leads nach Beitragsband und Ergebnis (Ole, 22.11.2026: Funnel-Grenze 650 → 700), nur Anzahlen, ?tage=60
   "pkv-beitrag": async (p) => {
     const tage = Math.min(180, Math.max(1, Number(p.get("tage") ?? 60) || 60));

@@ -12,6 +12,7 @@
 
 import { leadFormConsentText } from "@/lib/einwilligung-leadformular";
 import { prisma } from "@/lib/prisma";
+import { appSchrittErledigt } from "@/lib/app-store-server";
 import type { Prisma } from "@/generated/prisma/client";
 import { checkAdAccountAccess } from "@/lib/meta";
 import { cleanToken, redactTokens } from "@/lib/meta-leads";
@@ -37,7 +38,6 @@ export const STUCK_AFTER_DAYS = 7;
 export const SETUP_STEPS = [
   { key: "login", label: "Login" },
   { key: "questionnaire", label: "Ihre Angaben" },
-  { key: "app", label: "App aufs Handy und Mitteilungen" },
   { key: "calendar", label: "Kalender" },
   { key: "mailbox", label: "E-Mail-Postfach" },
   { key: "provision", label: "Provisionen" },
@@ -51,6 +51,8 @@ export const SETUP_STEPS = [
   { key: "bestandImport", label: "Kundenliste hochladen" },
   { key: "reviewLink", label: "Google-Bewertungslink" },
   { key: "team", label: "Team einladen" },
+  // Letzter Schritt (Ole, 24.11.2026): iPhone-App installieren, erledigt mit der ersten Anmeldung in der App
+  { key: "app", label: "App aufs Handy" },
   { key: "consent", label: "Einwilligung im Leadformular" },
   { key: "testLead", label: "Testlead" },
 ] as const;
@@ -619,16 +621,9 @@ export function setupProgress(steps: SetupStep[]) {
   return { done, total: steps.length, percent: steps.length ? Math.round((done / steps.length) * 100) : 100, open: steps.filter((s) => !s.done) };
 }
 
-/** App installiert und Mitteilungen erlaubt = mindestens eine Push-Anmeldung eines Logins des Kunden. */
+/** Schritt „App aufs Handy“ erledigt: Anmeldung in der App, „Ich habe kein iPhone“ oder Push (lib/app-store-server.ts). */
 export async function appInstalled(customerId: string): Promise<boolean> {
-  const ob = await prisma.onboarding.findUnique({ where: { customerId }, select: { appSkippedAt: true } });
-  if (ob?.appSkippedAt) return true;
-  const users = await prisma.user.findMany({ where: { customerId, role: "BUYER" }, select: { id: true } });
-  if (!users.length) return false;
-  const ids = users.map((u) => u.id);
-  // Web-Push oder App-Store-App (native Geräte, lib/native-push.ts): beides zählt als „Mitteilungen an“
-  const [web, nativ] = await Promise.all([prisma.pushSubscription.count({ where: { userId: { in: ids } } }), prisma.deviceToken.count({ where: { userId: { in: ids } } })]);
-  return web + nativ > 0;
+  return appSchrittErledigt(customerId);
 }
 
 export async function loadSetupOverview(customerId: string) {

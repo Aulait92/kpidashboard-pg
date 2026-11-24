@@ -9,7 +9,7 @@ die App erinnert sie und Ole sieht nur noch die Fälle, die wirklich hängen.
 |---|---|
 | Login | der Kunde sich einmal eingeloggt hat |
 | Fragebogen | der Fragebogen gespeichert ist |
-| App aufs Handy und Mitteilungen | auf mindestens einem Gerät Mitteilungen erlaubt sind (Push-Anmeldung) |
+| App aufs Handy (letzter Schritt) | sich ein Login in der iPhone-App angemeldet hat, „Ich habe kein iPhone“ gewählt wurde oder Mitteilungen per Web-Push erlaubt sind |
 | Kalender | Google/Microsoft verbunden oder freie Zeiten per Kalender-Link bzw. Allianz-Online-Kalender |
 | Provisionen | eigene Provisionssätze unter „Meine Provisionen“ hinterlegt sind |
 | Meta freigeben | die Prüfung Werbekonto + Seite + Leads grün ist (oder Ole hakt es in der Kundenakte ab) |
