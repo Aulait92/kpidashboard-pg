@@ -41,8 +41,10 @@ export const EINGANGS_TYPEN = ["INCOMING_INVOICE", "RECEIPT", "PAYMENT_RECEIPT",
 const META_KOMPAKT = /facebook|facebk|metaplatforms|fb\.me\/ads/i;
 // Verwendungszwecke aus der Bank-CSV brechen Wörter um („FACEBOO K PAYMENTS“): ohne Leerzeichen vergleichen
 const META = { test: (t: string) => META_KOMPAKT.test(t.replace(/\s+/g, "")) };
-// Bankentgelte (Kontoauszug genügt) und Darlehensraten (Vertrag liegt einmal vor) brauchen keinen Einzelbeleg
-const OHNE_BELEG = /american express|\bamex\b|zahlung erhalten|stripe|umbuchung|übertrag|finanzamt|bundeskasse|privat|gehalt|kontoführung|kontofuehrung|darlehen|tilgung|entgelt/i;
+// Bankentgelte (Kontoauszug genügt) und Darlehensraten (Vertrag liegt einmal vor) brauchen keinen Einzelbeleg.
+// Steuerbüro (PhDr. Müller Treuhand, auch per GoCardless „GC RE PHDRMUELLERSTBG“): bucht seine eigenen Rechnungen und
+// Vorauszahlungen selbst (Ole, 24.11.2026), kein Beleg von uns nötig.
+const OHNE_BELEG = /american express|\bamex\b|zahlung erhalten|stripe|umbuchung|übertrag|finanzamt|bundeskasse|privat|gehalt|kontoführung|kontofuehrung|darlehen|tilgung|entgelt|phdrmueller|m(?:ue|ü)ller treuhand/i;
 
 /** Braucht diese Ausgabe einen Beleg? */
 export function brauchtBeleg(u: Pick<AbgleichUmsatz, "betrag" | "gegenpartei" | "zweck" | "status">): boolean {

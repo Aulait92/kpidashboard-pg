@@ -13,10 +13,10 @@ export type ZuordnenErgebnis =
 const r2 = (x: number) => Math.round(x * 100) / 100;
 const tag = (d: Date | null) => d?.toISOString().slice(0, 10) ?? "?";
 
-/** Prüft die Eingabe ohne Datenbank: 1 bis 5 verschiedene Zahlungen. */
+/** Prüft die Eingabe ohne Datenbank: 1 bis 20 verschiedene Zahlungen (z. B. Vorauszahlungen per Karte, Outbrain). */
 export function zuordnungPruefen(umsatzIds: unknown): string | null {
   if (!Array.isArray(umsatzIds) || !umsatzIds.length) return "Mindestens eine Zahlung angeben.";
-  if (umsatzIds.length > 5) return "Höchstens 5 Zahlungen je Beleg.";
+  if (umsatzIds.length > 20) return "Höchstens 20 Zahlungen je Beleg.";
   if (!umsatzIds.every((x) => typeof x === "string" && x.length > 0 && x.length < 64)) return "Ungültige Zahlungs-ID.";
   if (new Set(umsatzIds).size !== umsatzIds.length) return "Zahlung doppelt angegeben.";
   return null;
