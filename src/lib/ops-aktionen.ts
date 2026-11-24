@@ -256,7 +256,7 @@ export const AKTIONEN: Record<string, Aktion> = {
       if (antwort && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(antwort)) return { ok: false, error: "Antwortadresse ungültig." };
       const r = await paketSenden(monat, { antwortAn: antwort || process.env.ADMIN_EMAIL?.trim() || null });
       await audit("belege.monatspaket", { details: { monat, ok: r.ok, ...(r.ok ? { anzahl: r.anzahl } : { error: r.error }) }, actor: OPS_ACTOR });
-      return r.ok ? { ok: true, info: `Monatspaket ${monat} mit ${r.anzahl} Belegen gesendet.` } : r;
+      return r.ok ? { ok: true, info: `Monatspaket ${monat} mit ${r.anzahl} Belegen gesendet${r.teile > 1 ? ` (${r.teile} Mails)` : ""}.` } : r;
     },
   },
   belege_stripe: {

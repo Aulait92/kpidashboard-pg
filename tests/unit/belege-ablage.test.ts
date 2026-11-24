@@ -102,7 +102,7 @@ describe("Eigenbeleg", () => {
   });
 });
 
-import { belegeCsv, ohneDoppel, ustVorschau, vormonat, type PaketBeleg } from "@/lib/belege/monatspaket";
+import { belegeCsv, inTeile, ohneDoppel, ustVorschau, vormonat, type PaketBeleg } from "@/lib/belege/monatspaket";
 describe("Monatspaket", () => {
   const b = (o: Partial<PaketBeleg>): PaketBeleg => ({ id: Math.random().toString(), datum: "2026-11-05", typ: "INCOMING_INVOICE", quelle: "mail", firma: "X", nummer: null, netto: 100, ustSatz: 19, brutto: 119, waehrung: "EUR", zugeordnet: true, mimeType: "application/pdf", dateiname: null, ...o });
   it("USt-Vorschau", () => {
@@ -135,6 +135,12 @@ describe("Monatspaket", () => {
       b({ firma: meta, nummer: "ABCDEF1234", brutto: 77, datum: "2026-08-10" }),
     ]);
     expect(l.map((x) => x.nummer)).toEqual(["36050663000571", "FBADS-147-1", "L4W5HZMXM2", "ABCDEF1234"]);
+  });
+  it("Aufteilen nach Größe", () => {
+    const f = (name: string, n: number) => ({ name, data: new Uint8Array(n) });
+    const t = inTeile([f("a", 6), f("b", 6), f("c", 6), f("d", 20), f("e", 1)], 12);
+    expect(t.map((x) => x.map((y) => y.name))).toEqual([["a", "b"], ["c"], ["d"], ["e"]]);
+    expect(inTeile([], 12)).toEqual([[]]);
   });
   it("Vormonat", () => {
     expect(vormonat(new Date("2026-12-02T08:00:00Z"))).toBe("2026-11");
