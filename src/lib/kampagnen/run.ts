@@ -107,7 +107,14 @@ export async function startCampaignRun(
   const running = await prisma.campaignRun.findFirst({ where: { customerId: input.customerId, status: { in: ACTIVE_STATUSES } }, select: { id: true } });
   if (running) return { ok: false, problems: [{ key: "running", message: "Für diesen Kunden läuft schon ein Lauf. Bitte warten, bis er fertig ist." }] };
   const ctx = await loadCampaignContext(input.customerId, input.product, { wish: input.wish, privacyUrl: input.privacyUrl, dailyBudgetEur: input.dailyBudgetEur });
-  const problems = await checkPrerequisites(ctx, { checkAdAccount: deps.checkAdAccount, pageToken: (p) => pageAccessToken(deps.meta, p), env: deps.env });
+  const problems = await checkPrerequisites(ctx, { checkAdAccount: deps.checkAdAccount, pageToken: (p) => pageAccessToken(deps.meta, p),
+    leadgenTos: async (p) => {
+      const t = await pageAccessToken(deps.meta, p);
+      const r = await deps.meta.get<{ leadgen_tos_accepted?: boolean }>(p, { fields: "leadgen_tos_accepted" }, t);
+      return typeof r.leadgen_tos_accepted === "boolean" ? r.leadgen_tos_accepted : null;
+    },
+    env: deps.env,
+  });
   if (problems.length) return { ok: false, problems };
   const run = await prisma.campaignRun.create({
     data: {

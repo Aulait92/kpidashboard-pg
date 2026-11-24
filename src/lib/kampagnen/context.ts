@@ -129,6 +129,8 @@ export type Problem = { key: string; message: string };
 export type PrerequisiteDeps = {
   checkAdAccount: (id: string) => Promise<{ ok: true; name: string } | { ok: false; error: string }>;
   pageToken: (pageId: string) => Promise<string>;
+  /** Hat die Seite die Lead-Ads-Nutzungsbedingungen akzeptiert? null = unbekannt (nicht blockieren). */
+  leadgenTos?: (pageId: string) => Promise<boolean | null>;
   env: () => { anthropic: boolean; r2: boolean; meta: boolean };
 };
 
@@ -176,6 +178,14 @@ export async function checkPrerequisites(ctx: CampaignContext, deps: Prerequisit
   } else if (env.meta) {
     try {
       await deps.pageToken(ctx.pageId);
+      // Lead-Ads-Bedingungen (Ole, 24.11.2026: Schwarzkopf-Lauf scheiterte erst nach 15 Minuten beim Anlegen)
+      const tos = deps.leadgenTos ? await deps.leadgenTos(ctx.pageId).catch(() => null) : null;
+      if (tos === false) {
+        out.push({
+          key: "leadgenTos",
+          message: `Die Facebook-Seite hat die Nutzungsbedingungen für Lead Ads noch nicht akzeptiert. Ein Admin der Seite öffnet einmal https://www.facebook.com/ads/leadgen/tos?page_id=${ctx.pageId} und klickt auf „Akzeptieren“.`,
+        });
+      }
     } catch (err) {
       out.push({
         key: "page",
