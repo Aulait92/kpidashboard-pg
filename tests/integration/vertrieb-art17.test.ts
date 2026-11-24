@@ -2,6 +2,7 @@
 // Instantly gemockt: Blocklist, Lead-Suche, DELETE /leads/{id}.
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { ensureInstantlyContact, recordReply } from "@/lib/vertrieb/instantly";
 import { vertriebArt17Loeschen, art17Email } from "@/lib/vertrieb/art17";
 import { domainHash, emailHash, geloeschteAdressen, kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
@@ -115,11 +116,8 @@ describe("Vertrieb: Löschung auf Verlangen (Art. 17)", () => {
     expect(h.nieKontaktierenGrund).toBe("widerspruch");
     for (const f of ["salutation", "firstName", "lastName", "phone", "street", "zip", "city", "url", "description", "enrichment", "detectedData"] as const) expect(h[f]).toBeNull();
     expect(h.emails).toHaveLength(0);
-    // nur die Aufgaben fürs alte Cold CRM und „Löschung bestätigen“ (Datenschutz und Recht), ohne Adresse
-    expect(h.tasks.map((t) => t.title).sort()).toEqual([
-      expect.stringMatching(/^Im alten Cold CRM \(Airtable\) löschen, Frist \d{2}\.\d{2}\.\d{4}$/),
-      expect.stringMatching(/^Löschung bestätigen \(Art\. 17\), Frist \d{2}\.\d{2}\.\d{4}$/),
-    ]);
+    // nur „Löschung bestätigen“ (Datenschutz und Recht), ohne Adresse; kein Cold CRM (Import der Vermittlerliste)
+    expect(h.tasks.map((t) => t.title).sort()).toEqual([expect.stringMatching(/^Löschung bestätigen \(Art\. 17\), Frist \d{2}\.\d{2}\.\d{4}$/)]);
     for (const t of h.tasks) expect(t.note ?? "").not.toContain(c.email);
     expect(await prisma.salesContact.findUnique({ where: { id: zweiter.id } })).toBeNull();
     expect(await prisma.salesActivity.count({ where: { contactId: zweiter.id } })).toBe(0);
@@ -154,11 +152,11 @@ describe("Vertrieb: Löschung auf Verlangen (Art. 17)", () => {
     // Neue Antwort von der gelöschten Adresse: kein neuer Kontakt, kein Inhalt, nur Aufgabe
     const e = await ensureInstantlyContact(c.email, { firstName: "Max", company: "Agentur Muster" }, campaign);
     expect(e).toEqual({ id: c.id, created: false });
-    expect(await antwort(c.id, "Haben Sie meine Daten wirklich gelöscht?")).toBe(false);
+    expect(await antwort(c.id, "Haben Sie meine Daten wirklich gelöscht?", new Date(Date.now() + 120_000))).toBe(false);
     const nach = await prisma.salesContact.findUniqueOrThrow({ where: { id: c.id }, include: { emails: true, tasks: true } });
     expect(nach.emails).toHaveLength(0);
     expect(nach.tasks.map((t) => t.title)).toContain("Neue Nachricht einer auf Verlangen gelöschten Adresse");
-    expect(nach.tasks).toHaveLength(3); // Cold CRM, „Löschung bestätigen“, neue Nachricht
+    expect(nach.tasks).toHaveLength(2); // „Löschung bestätigen“, neue Nachricht
   });
 
   it("Ausnahme: Adresse ist Lead eines Kunden → nur sperren und Aufgabe „Löschverlangen prüfen“", async () => {
@@ -214,6 +212,26 @@ describe("Vertrieb: Löschung auf Verlangen (Art. 17)", () => {
     expect(titel.some((t) => t.startsWith("Auskunft und Löschverlangen: erst Auskunft schicken"))).toBe(true);
   });
 
+  it("Cold-CRM-Aufgabe nur bei Kontakten, die von dort stammen können (Ole, 24.11.2026)", async () => {
+    const alt = await makeContact({ enrichment: undefined, legacyStatus: "kein Interesse" });
+    await prisma.salesContact.update({ where: { id: alt.id }, data: { enrichment: Prisma.DbNull } });
+    await vertriebArt17Loeschen(alt.id, { quelle: "admin", actor: { role: "admin" } });
+    expect(await prisma.salesTask.count({ where: { contactId: alt.id, title: { startsWith: "Im alten Cold CRM" } } })).toBe(1);
+    const inst = await makeContact({ description: "Über Instantly angelegt (Kampagne „DVAG“)" });
+    await prisma.salesContact.update({ where: { id: inst.id }, data: { enrichment: Prisma.DbNull } });
+    await vertriebArt17Loeschen(inst.id, { quelle: "admin", actor: { role: "admin" } });
+    expect(await prisma.salesTask.count({ where: { contactId: inst.id, title: { startsWith: "Im alten Cold CRM" } } })).toBe(0);
+  });
+
+  it("dieselbe Mail wie die Löschanfrage löst keine Aufgabe „Neue Nachricht“ aus (Ole, 24.11.2026)", async () => {
+    const c = await makeContact();
+    const eingang = new Date(Date.now() - 3600_000);
+    await vertriebArt17Loeschen(c.id, { quelle: "antwort", eingang, actor: { role: "system" } });
+    const { art17NeueNachricht } = await import("@/lib/vertrieb/art17");
+    expect(await art17NeueNachricht(c.id, eingang)).toBe(false);
+    expect(await art17NeueNachricht(c.id, new Date())).toBe(true);
+  });
+
   it("Instantly-Fehler: lokal trotzdem gelöscht, Aufgabe ohne Adresse", async () => {
     instantlyKaputt = true;
     const c = await makeContact();
@@ -221,7 +239,7 @@ describe("Vertrieb: Löschung auf Verlangen (Art. 17)", () => {
     expect(r).toEqual({ status: "geloescht", instantly: "fehler" });
     const h = await prisma.salesContact.findUniqueOrThrow({ where: { id: c.id }, include: { tasks: true } });
     expect(h.name).toBe(ART17_NAME);
-    expect(h.tasks).toHaveLength(2);
+    expect(h.tasks).toHaveLength(1);
     const t = h.tasks.find((x) => x.title === "Instantly: Löschung (Art. 17) von Hand nachholen")!;
     expect(t.note).not.toContain(c.email);
     expect(t.note).toContain("[Adresse]");
