@@ -111,6 +111,9 @@ const EREIGNISSE: Record<string, Ereignis> = {
   // lib/whatsapp/buchungsnummer.ts: Formular-Nummer ohne WhatsApp, Lead hat online mit dieser Nummer gebucht
   wa_nummer_uebernommen: { label: "WhatsApp über die Nummer aus der Online-Buchung", ton: "info", icon: "person" },
   erneut_eingetragen: { label: "Hat sich erneut eingetragen", ton: "info", icon: "person" },
+  // Neue Anfrage einer anderen Person mit derselben Nummer (lib/lead-name-server.ts): ab hier gehört der Chat zur neuen Anfrage
+  neue_anfrage: { label: "Neue Anfrage, ab hier eigener Kontakt", ton: "info", icon: "person" },
+  neue_anfrage_termin: { label: "Neue Anfrage einer anderen Person mit dieser Nummer", ton: "achtung", icon: "person" },
   followup_scheduled: { label: "Wiedervorlage geplant", ton: "info", icon: "uhr" },
   email_updated: { label: "E-Mail-Adresse aktualisiert", ton: "info", icon: "post" },
   lead_lost: { label: "Kein Bedarf, als verloren markiert", ton: "stopp", icon: "stopp" },
@@ -158,7 +161,8 @@ export function ereignisVon(kind: string, body: string | null, termine?: Map<str
   if (kind === "appointment_booked") wann = datum(p.start) ?? datum(p.starts);
   else if (kind === "appointment_rescheduled") wann = datum(p.auf);
   if (!wann && typeof p.appointmentId === "string" && (kind === "appointment_booked" || kind === "appointment_confirmed")) wann = termine?.get(p.appointmentId) ?? null;
-  const detail = wann ? (kind === "appointment_rescheduled" ? `auf ${terminZeit(wann)}` : terminZeit(wann)) : null;
+  const name = (kind === "neue_anfrage" || kind === "neue_anfrage_termin") && typeof p.name === "string" ? p.name : null;
+  const detail = wann ? (kind === "appointment_rescheduled" ? `auf ${terminZeit(wann)}` : terminZeit(wann)) : name;
   return { ...e, detail };
 }
 
