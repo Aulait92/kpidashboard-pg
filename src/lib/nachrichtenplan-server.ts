@@ -11,6 +11,7 @@ import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { firstNameOf } from "@/lib/whatsapp/templates";
 import { terminNutzenSatz, vermittlerName, zeitKurz } from "@/lib/whatsapp/gespraech";
 import { istAngebotsAbfolge, topicOf } from "@/lib/lead-sequences";
+import { anfrageMitSparte } from "@/lib/whatsapp/anfrage-sparte";
 import { leadLabel } from "@/lib/showup";
 import { ANTWORT_WARTEZEIT_MS, anrufStartZeitpunkt } from "@/lib/anruf-ausloeser";
 import { planeNachrichten, zaehleAutomatische, type PlanEintrag, type PlanEingabe } from "@/lib/nachrichtenplan";
@@ -190,6 +191,9 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
         topicOf(lead.formData, lead.source, an),
       an,
       person,
+      // Erinnerung (Ole, 24.11.2026): „hier ist noch einmal [Firma]. Sollen wir mit Ihrer Anfrage zur … weitermachen?“
+      firm: who.firm,
+      anfrage: anfrageMitSparte(an, { source: lead.source, formular: lead.formData, tkvUmfang: lead.tkvUmfang }),
     },
     anrufplan: { followUpAt: lead.followUpAt, followUpNote: lead.followUpNote, callAttempts: lead.callAttempts, callPlanStartedAt: lead.callPlanStartedAt, lastCallAttemptAt: lead.lastCallAttemptAt },
     anrufAusloeserAt,

@@ -30,7 +30,7 @@ import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, typ
 import { vermittlerName, type VermittlerName } from "@/lib/vermittler-nennung";
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
-import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
+import { ERSTINFO_KOPF, hasKiHinweis, KI_FUSSZEILE, KI_KENNZEICHEN, mitKiZeile } from "@/lib/whatsapp/ki-hinweis";
 import { ERSTANSCHREIBEN_V10, erstanschreibenV10, erstanschreibenV11, istKfzZweck, ERSTINFO_FOOTER_V10, ERSTINFO_FOOTER_V12, ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
@@ -209,6 +209,11 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // Nachfassen v5 (Ole, 18.11.2026, zur Einreichung freigegeben): Vermittler als Person („mit Herrn Kannapinn“), vorher
   // in NAECHSTE_FASSUNG vorgemerkt. Platzhalter unverändert, bis zur Freigabe bei Meta bleibt v4 im Einsatz.
   followup: "v5",
+  // Erinnerung v5 (Ole, 24.11.2026, direkt beauftragt): „hier ist noch einmal [Firma]. Sollen wir mit Ihrer Anfrage zur
+  // Kfz-Versicherung weitermachen?“ Ohne „digitaler KI-Assistent“ (die Kennzeichnung steht nur in der ersten Nachricht,
+  // KI_ERST), mit der Sparte als Platzhalter (lib/whatsapp/anfrage-sparte.ts). Bis zur Freigabe bei Meta bleibt die
+  // freigegebene v4 im Einsatz (rankTemplates, PLATZHALTER_AB), im offenen Fenster geht schon der neue Text.
+  followup_nudge: "v5",
   followup_noshow: "v5",
   followup_absage: "v1",
   followup_last: "v5",
@@ -232,6 +237,9 @@ export type TemplateForm = "du" | "sie" | "sie_ohne_name";
 
 /** A/B-Fassung (b nur für Zwecke mit TEMPLATE_BODY_B). */
 export type TemplateVariant = "a" | "b";
+
+/** Platzhalter der Erinnerung (followup_nudge ab v5): „Ihrer Anfrage zur Kfz-Versicherung“ bzw. ohne Sparte „Ihrer Anfrage“. */
+export const ANFRAGE_PARAM = "Anfrage mit Sparte (z. B. Ihrer Anfrage zur Kfz-Versicherung)";
 
 /** Weitere Parameter je Zweck (nach dem Namen; Reihenfolge wie im Text). */
 export const REST_PARAMS: Record<NoticePurpose, string[]> = {
@@ -259,7 +267,8 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   appt_halbzeit: ["Vermittler (Nominativ)", "Termin (Wochentag, Datum, Uhrzeit)"],
   reschedule: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   followup: ["Terminvorschlag 1", "Terminvorschlag 2"],
-  followup_nudge: [],
+  // Ab v5 (Ole, 24.11.2026): die ganze Wendung mit der Sparte, nie leer (anfrage-sparte.ts anfrageMitSparte); v4 ohne (PLATZHALTER_AB)
+  followup_nudge: [ANFRAGE_PARAM],
   followup_offer: ["Thema (z. B. Hausrat, Haftpflicht)"],
   followup_offer_selbst: ["Vermittler (Nominativ)"],
   offer_send: ["Thema (z. B. Haftpflicht und Hausrat)", "Angebotslink"],
@@ -346,9 +355,15 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [BeraterDat] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
     sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [BeraterDat] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
   },
+  // Erinnerung an Leads, die nach der Erstnachricht nicht antworten (v5, Ole 24.11.2026, Wortlaut vorgegeben): „Guten Tag
+  // Herr Kranert, hier ist noch einmal Versicherungsagentur Henrik Lohmann. Sollen wir mit Ihrer Anfrage zur
+  // Kfz-Versicherung weitermachen? Es dauert nur ein paar Minuten.“ {{2}} = „Ihrer Anfrage zur Kfz-Versicherung“ bzw. „deiner
+  // Anfrage …“, ohne Sparte „Ihrer Anfrage“ (anfrage-sparte.ts; eine Meta-Variable darf nicht leer sein, darum trägt sie die
+  // ganze Wendung und Du- und Sie-Text sind gleich). Kein KI-Hinweis im Text: Er steht nur in der ersten Nachricht; ist
+  // die Erinnerung selbst die erste (z. B. „Nicht erreicht“ ohne Erstanschreiben), geht die Fassung mit Fußzeile (KI_ERST).
   followup_nudge: {
-    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit deiner Anfrage weitermachen? Es dauert nur ein paar Minuten.",
-    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit Ihrer Anfrage weitermachen? Es dauert nur ein paar Minuten.",
+    du: "hier ist noch einmal [Firma]. Sollen wir mit {{2}} weitermachen? Es dauert nur ein paar Minuten.",
+    sie: "hier ist noch einmal [Firma]. Sollen wir mit {{2}} weitermachen? Es dauert nur ein paar Minuten.",
   },
   followup_offer: {
     du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zum Thema {{2}} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
@@ -511,6 +526,8 @@ export const ERSTANSCHREIBEN_V9_PARAMS = (purpose: NoticePurpose): string[] => (
 export const PLATZHALTER_AB: Partial<Record<NoticePurpose, { version: number; frueher: string[] }>> = {
   reminder: { version: 5, frueher: ["Datum/Uhrzeit", "Art", "Link/Hinweis"] },
   reminder_soon: { version: 5, frueher: ["Uhrzeit", "Art", "Link/Hinweis"] },
+  // Erinnerung v5 (Ole, 24.11.2026): mit der Anfrage samt Sparte; die freigegebene v4 hat nur den Namen
+  followup_nudge: { version: 5, frueher: [] },
   outreach: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach") },
   outreach_tkv: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_tkv") },
   outreach_zahn: { version: 10, frueher: ERSTANSCHREIBEN_V9_PARAMS("outreach_zahn") },
@@ -734,6 +751,86 @@ export function templateParams(body: string, an: Ansprache, kontakt: AnredeKonta
 
 type Candidate = { name: string; body: string; auto?: boolean | null; headerFormat?: string | null };
 
+/**
+ * KI-Kennzeichnung nur in der ERSTEN Nachricht an einen Kontakt (Ole, 24.11.2026; KI-VO Art. 50 Abs. 1 und 5), nicht in
+ * jeder Erinnerung. Das Erstanschreiben trägt sie in der Fußzeile, alle übrigen Nachfass-Vorlagen im Text. Diese Zwecke
+ * können ebenfalls die erste Nachricht sein, ihr Text trägt sie aber nicht:
+ *   booking_confirmation  Lead bucht online, bevor das Erstanschreiben rausgeht (Dankeseite des Formulars), bzw. der
+ *                         Vermittler bucht für ihn: erste Nachricht ist die Terminbestätigung
+ *   followup_nudge        Erinnerung ab v5 ohne „digitaler KI-Assistent“; erste Nachricht z. B. nach „Nicht erreicht“,
+ *                         wenn kein Erstanschreiben rausging und kein Kalender verbunden ist
+ * Für sie wird je Fassung zusätzlich eine Vorlage mit der Fußzeile „Digitaler KI-Assistent“ eingereicht (Name
+ * …_ki, …_ki_sie, …_ki_sie_ohne_name; template-plan.ts). Sie geht nur raus, wenn im Chat noch keine Kennzeichnung steht
+ * (kiKennzeichnungOffen), sonst die normale Fassung. Bis Meta sie freigegeben hat:
+ *   "bevorzugt"  die normale Fassung (eine Terminbestätigung muss ankommen)
+ *   "pflicht"    nur eine Fassung mit Kennzeichnung (ältere mit „KI-Assistent“ im Text), sonst keine Vorlage
+ *                (NoTemplateError: der Aufrufer legt eine Anruf-Aufgabe an bzw. nimmt die nächste Vorlage)
+ * Im offenen 24-h-Fenster (Freitext) bekommt die erste Nachricht jedes Zwecks die kursive Zeile darunter (mitKiZeile).
+ */
+export const KI_ERST: Partial<Record<NoticePurpose, "pflicht" | "bevorzugt">> = {
+  booking_confirmation: "bevorzugt",
+  followup_nudge: "pflicht",
+};
+
+/** Gibt es für diesen Zweck zusätzlich die Fassung mit KI-Fußzeile? */
+export function hatKiFassung(purpose: NoticePurpose): boolean {
+  return !!KI_ERST[purpose];
+}
+
+/** Fassung mit KI-Fußzeile am Vorlagennamen: pg_booking_confirmation_v4_ki_sie, …_ki, …_ki_sie_ohne_name_r2. */
+export function istKiFassung(name: string): boolean {
+  return /^pg_[a-z0-9_]+_ki(?:_sie(?:_ohne_name)?)?(?:_r\d+)?$/.test(name);
+}
+
+/** Trägt eine Vorlage die KI-Kennzeichnung? Fassung mit Fußzeile oder „KI-Assistent“ im Text (hasKiHinweis). */
+export function traegtKiHinweis(t: { name: string; body: string }): boolean {
+  return istKiFassung(t.name) || hasKiHinweis(t.body);
+}
+
+/** Zwecke im Namen des Vermittlers persönlich (Bestandskampagnen, Empfehlungen, Bewertungen): ohne KI-Kennzeichnung. */
+const OHNE_KI_ZWECKE: readonly NoticePurpose[] = [
+  "campaign_cross_sell",
+  "campaign_review",
+  "campaign_birthday",
+  "campaign_renewal",
+  "review_request",
+  "referral_request",
+  "referral_thanks",
+  "referral_update",
+];
+
+/**
+ * Wäre eine Systemnachricht dieses Zwecks jetzt die erste mit KI-Kennzeichnung in diesem Chat? Dann muss sie sie tragen.
+ * Nur, wo im Chat eine KI antwortet: Assistent beim Kunden an und in diesem Chat nicht pausiert (hat der Vermittler
+ * übernommen, schreibt dort ein Mensch; schaltet er den Assistenten wieder ein, stellt dieser den Hinweis seiner nächsten
+ * Antwort voran, bot.ts). Nicht zugestellte Nachrichten (Status „failed“) zählen nicht: Der Kontakt hat sie nie gesehen.
+ * Hat der Assistent im Chat schon selbst geantwortet, ist die Nachricht nicht mehr die erste: Seine erste Antwort trägt
+ * den Hinweis immer bzw. holt ihn nach (bot.ts kiHinweisNoetig, z. B. in Chats von vor dem 15.11.2026).
+ */
+export async function kiKennzeichnungOffen(o: {
+  customerId: string;
+  conversationId: string | null | undefined;
+  purpose: NoticePurpose;
+  /** Conversation.botActive, falls schon geladen (sonst wird es nachgeschlagen) */
+  botActive?: boolean | null;
+}): Promise<boolean> {
+  if (OHNE_KI_ZWECKE.includes(o.purpose)) return false;
+  const agent = await prisma.agentConfig.findUnique({ where: { customerId: o.customerId }, select: { active: true } });
+  if (!agent?.active) return false;
+  if (!o.conversationId) return true;
+  const botActive = o.botActive ?? (await prisma.conversation.findUnique({ where: { id: o.conversationId }, select: { botActive: true } }))?.botActive;
+  if (botActive === false) return false;
+  const hit = await prisma.message.findFirst({
+    where: {
+      conversationId: o.conversationId,
+      direction: "outbound",
+      AND: [{ OR: [{ status: null }, { status: { not: "failed" } }] }, { OR: [{ body: { contains: KI_KENNZEICHEN, mode: "insensitive" } }, { sentBy: "bot" }] }],
+    },
+    select: { id: true },
+  });
+  return !hit;
+}
+
 /** Ist der Vorlagenname die aktuelle automatisch eingereichte Fassung dieses Zwecks? */
 export function isCurrentTemplateName(name: string, purpose: NoticePurpose): boolean {
   return new RegExp(`^pg_${purpose}_${templateVersionFor(purpose)}(?:_|$)`).test(name);
@@ -746,13 +843,37 @@ export function isCurrentTemplateName(name: string, purpose: NoticePurpose): boo
  * So bleibt bis zur Freigabe der neuen Fassung die bisherige freigegebene im Einsatz.
  * opts.variant: bevorzugte A/B-Fassung (die andere aktuelle Fassung kommt danach, vor älteren).
  * opts.documentHeader: false = Vorlagen mit PDF im Kopf ausschließen (kein PDF verfügbar).
+ * opts.kiErst: Die Nachricht ist die erste mit KI-Kennzeichnung im Chat (KI_ERST): zuerst unter den Vorlagen wählen, die
+ * sie tragen (Fassung mit Fußzeile bzw. „KI-Assistent“ im Text); gibt es keine, bei „pflicht“ keine Vorlage, sonst die
+ * normale. Ohne kiErst nie die Fassung mit Fußzeile, außer es ist sonst keine freigegeben.
  */
 export function rankTemplates<T extends Candidate>(
   list: T[],
   purpose: NoticePurpose,
   ansprache: Ansprache,
   kontakt: AnredeKontakt | null | undefined,
-  opts: { variant?: TemplateVariant; documentHeader?: boolean } = {},
+  opts: { variant?: TemplateVariant; documentHeader?: boolean; kiErst?: boolean } = {},
+): { tpl: T; current: boolean; variant: TemplateVariant; params: (rest: string[]) => string[] } | null {
+  // Erstanschreiben: jede sendbare Fassung trägt die Kennzeichnung (Text bis v7, Fußzeile ab v8), keine Gruppen
+  const gruppen: T[][] = isOutreachPurpose(purpose)
+    ? [list]
+    : opts.kiErst
+      ? [list.filter((t) => traegtKiHinweis(t)), ...(KI_ERST[purpose] === "pflicht" ? [] : [list.filter((t) => !traegtKiHinweis(t))])]
+      : [list.filter((t) => !istKiFassung(t.name)), list.filter((t) => istKiFassung(t.name))];
+  for (const gruppe of gruppen) {
+    const r = rankGruppe(gruppe, purpose, ansprache, kontakt, opts);
+    if (r) return r;
+  }
+  return null;
+}
+
+/** Beste Vorlage innerhalb einer Gruppe (siehe rankTemplates). */
+function rankGruppe<T extends Candidate>(
+  list: T[],
+  purpose: NoticePurpose,
+  ansprache: Ansprache,
+  kontakt: AnredeKontakt | null | undefined,
+  opts: { variant?: TemplateVariant; documentHeader?: boolean },
 ): { tpl: T; current: boolean; variant: TemplateVariant; params: (rest: string[]) => string[] } | null {
   const an = effectiveAnsprache(purpose, ansprache);
   const hasName = !!anredeName("sie", kontakt);
@@ -968,7 +1089,7 @@ export async function pickTemplate(
   customerId: string,
   purpose: NoticePurpose,
   kontakt?: AnredeKontakt | null,
-  opts: { variant?: TemplateVariant; documentHeader?: boolean } = {},
+  opts: { variant?: TemplateVariant; documentHeader?: boolean; kiErst?: boolean } = {},
 ) {
   const [customer, approved] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }),
@@ -1009,12 +1130,20 @@ export function noticeText(
   variant: TemplateVariant = "a",
 ): string {
   const eff = effectiveAnsprache(purpose, an);
-  const b = freitextBodyOf(purpose, variant);
-  const body = fillNames(eff === "du" && b.du ? b.du : b.sie, names, eff);
   // Erstanschreiben: „Hallo Herr Müller,“ bzw. „Hallo,“ (wie die Vorlage ab v5)
   const name = isOutreachPurpose(purpose) ? anredeName(eff, kontakt) : null;
   const zeile = isOutreachPurpose(purpose) ? (name ? `Hallo ${name},` : "Hallo,") : anredeZeile(eff, kontakt);
-  return `${zeile} ${renderTemplate(body, ["", ...rest])}`;
+  return `${zeile} ${noticeBody(purpose, an, names, rest, variant)}`;
+}
+
+/**
+ * Text eines Zwecks NACH der Anrede-Zeile, Namen und Platzhalter eingesetzt (rest = Werte nach dem Namen, REST_PARAMS).
+ * Für Absender mit eigener Anrede-Zeile (z. B. die Nachfass-Abfolgen, lib/lead-sequences.ts).
+ */
+export function noticeBody(purpose: NoticePurpose, an: Ansprache, names: TemplateNames | string, rest: string[], variant: TemplateVariant = "a"): string {
+  const eff = effectiveAnsprache(purpose, an);
+  const b = freitextBodyOf(purpose, variant);
+  return renderTemplate(fillNames(eff === "du" && b.du ? b.du : b.sie, names, eff), ["", ...rest]);
 }
 
 /** Vorname aus „Vorname Nachname" (Fallback neutral). */
@@ -1119,7 +1248,7 @@ export async function sendWhatsAppNotice(opts: {
         contactPhone: opts.to,
       },
     },
-    select: { id: true, windowExpiresAt: true, optedOutAt: true, leadId: true },
+    select: { id: true, windowExpiresAt: true, optedOutAt: true, leadId: true, botActive: true },
   });
   // „STOPP“: keine Nachrichten mehr an diese Nummer (lib/whatsapp/stopp.ts)
   if (existing?.optedOutAt) throw new WhatsAppOptOutError();
@@ -1143,6 +1272,9 @@ export async function sendWhatsAppNotice(opts: {
   }
   const windowOpen =
     !!existing?.windowExpiresAt && existing.windowExpiresAt.getTime() > Date.now();
+  // KI-Kennzeichnung (KI-VO Art. 50 Abs. 1 und 5; Ole, 24.11.2026): Sie gehört in die ERSTE Nachricht an den Kontakt und
+  // wird danach nicht wiederholt. Steht im Chat noch keine, muss diese Nachricht sie tragen (KI_ERST).
+  const kiErst = await kiKennzeichnungOffen({ customerId: opts.customerId, conversationId: existing?.id, botActive: existing?.botActive, purpose: opts.purpose });
 
   const apiKey = decryptSecret(account.apiKeyEnc);
   let mode: "text" | "template";
@@ -1157,14 +1289,15 @@ export async function sendWhatsAppNotice(opts: {
 
   if (windowOpen) {
     mode = "text";
-    body = opts.text;
+    // Erste Nachricht ohne Kennzeichnung im Text: kursive Zeile „Digitaler KI-Assistent“ darunter (wie das Erstanschreiben)
+    body = kiErst ? mitKiZeile(opts.text) : opts.text;
     const buttons = interactiveButtons(opts.textButtons ?? freitextButtonsOf(opts.purpose));
     if (buttons) {
       // Interaktive Knöpfe; die ID trägt den Payload (z. B. Terminvorschlag), sonst den Knopftext
       const ids = buttons.map((b, i) => opts.buttonPayloads?.[i] ?? b);
-      messageId = (await sendButtons(apiKey, opts.to, opts.text, buttons.map((title, i) => ({ id: ids[i], title })))).messageId;
+      messageId = (await sendButtons(apiKey, opts.to, body, buttons.map((title, i) => ({ id: ids[i], title })))).messageId;
     } else {
-      messageId = (await sendText(apiKey, opts.to, opts.text)).messageId;
+      messageId = (await sendText(apiKey, opts.to, body)).messageId;
     }
   } else {
     const kontakt: AnredeKontakt = opts.anrede ?? { fullName: opts.contactName ?? null };
@@ -1183,7 +1316,7 @@ export async function sendWhatsAppNotice(opts: {
       if (r && "wartenAufPdf" in r) throw new ErstinfoPdfFehltError();
       pick = r;
     } else {
-      pick = await pickTemplate(opts.customerId, opts.purpose, kontakt, { variant: wanted, documentHeader: !!opts.document });
+      pick = await pickTemplate(opts.customerId, opts.purpose, kontakt, { variant: wanted, documentHeader: !!opts.document, kiErst });
     }
     if (!pick) throw new NoTemplateError(opts.purpose);
     const { tpl } = pick;
@@ -1211,8 +1344,11 @@ export async function sendWhatsAppNotice(opts: {
     documentHeader = !!doc;
     pdf = doc ? (pick.dokument === "entwurf" ? "entwurf" : "vollstaendig") : null;
     if (pdf === "entwurf") console.warn("[whatsapp] Erstanschreiben mit unvollständiger Erstinformation im Kopf", opts.customerId);
-    // Ab v8 steht die KI-Kennzeichnung in der Fußzeile: mitspeichern, damit Verlauf und kiHinweisNoetig sie sehen
-    const fuss = doc && version >= 8 ? `\n\n${erstinfoFooterFor(version)}` : "";
+    // Ab v8 steht die KI-Kennzeichnung in der Fußzeile: mitspeichern, damit Verlauf und kiHinweisNoetig sie sehen;
+    // ebenso bei der Fassung mit KI-Fußzeile für die erste Nachricht (KI_ERST, Name …_ki…)
+    const fuss = doc && version >= 8 ? `\n\n${erstinfoFooterFor(version)}` : istKiFassung(tpl.name) ? `\n\n${KI_FUSSZEILE}` : "";
+    // Zweck ohne Fassung mit Fußzeile bzw. sie ist bei Meta noch nicht freigegeben: sichtbar machen (ohne Personendaten)
+    if (kiErst && !opts.outreach && !traegtKiHinweis(tpl)) console.warn("[whatsapp] erste Nachricht im Chat ohne KI-Kennzeichnung", opts.customerId, opts.purpose, tpl.name);
     body = `${doc ? `${ERSTINFO_HEADER_MARK}\n` : ""}${renderTemplate(tpl.body, params)}${fuss}`;
     const components = templateComponents({ params, document: doc, buttonPayloads: pick.current ? opts.buttonPayloads : null, buttonCount: buttons });
     messageId = (await sendTemplate(apiKey, opts.to, tpl.name, tpl.language, components)).messageId;

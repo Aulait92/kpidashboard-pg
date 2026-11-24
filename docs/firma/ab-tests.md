@@ -63,6 +63,19 @@ Ziel Termin binnen 7 Tagen). Data prüft nach 4 Wochen die echten Mengen je Test
 ersetzt die Schätzungen hier.
 
 ## Lehren (Querschnitt)
+- Erinnerung an Leads, die nicht antworten (Ole, 24.11.2026, direkt beauftragt, sofort Standard, kein laufender Test auf
+  dieser Nachricht; Zweck `followup_nudge`, Vorlage v5, im offenen Fenster derselbe Text): „Guten Tag Herr Kranert, hier
+  ist noch einmal [Agentur]. Sollen wir mit Ihrer Anfrage zur Kfz-Versicherung weitermachen? Es dauert nur ein paar
+  Minuten.“ (Du: „Hallo [Vorname], hier ist noch einmal [Agentur]. Sollen wir mit deiner Anfrage zur … weitermachen?“).
+  Vorher: „hier ist nochmal der digitale KI-Assistent von [Agentur]. Sollen wir mit Ihrer Anfrage weitermachen?“. Zwei
+  Änderungen: der KI-Hinweis steht nur noch in der ersten Nachricht (nicht in jeder Erinnerung, Art. 50 KI-VO bleibt
+  erfüllt, `docs/recht/2026-11-24-ki-hinweis-erste-nachricht.md`), und die Erinnerung nennt die Sparte aus dem Produkt
+  des Leads mit Artikel („zur Kfz-Versicherung“, „zur Hausratversicherung“, „zur Tierkrankenversicherung für Minka“).
+  Sparten-Treue wie bei v14: nur Sparten, die der Lead gewählt hat; „Privatschutz“ ohne Interesse im Formular, mehr als
+  drei Sparten oder Unbekanntes bleiben neutral („mit Ihrer Anfrage“, `lib/whatsapp/anfrage-sparte.ts`). Bis Meta v5
+  freigibt, geht außerhalb des Fensters die alte v4 raus. Kennzahl zum Ansehen: Antwortquote auf die Erinnerung (Knopf
+  „Ja, weitermachen“ bzw. Text) vor und nach der Freigabe, Gegenprobe „Kein Bedarf mehr“. Eine B-Fassung gibt es noch
+  nicht (nächster Kandidat fürs A/B-Test-Labor, z. B. Sparte am Satzanfang oder ohne „Es dauert nur ein paar Minuten“).
 - Erstanschreiben Privatschutz, Sparten-Treue (Produktionsfehler 24.11.2026): Die feste v13-Eröffnung nannte für ALLE
   Privatschutz-Leads „Haftpflicht und Hausrat“, auch bei Interesse Rechtsschutz, Wohngebäude oder Unfall (Ole: „bei dem
   lead ging es um rechtsschutz und es wurde nach hausrat und haftpflicht gefragt.“). Das Thema in Worten (Lehre v13) muss

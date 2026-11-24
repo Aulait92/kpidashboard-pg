@@ -12,6 +12,7 @@ import { ERINNERUNG, gleichText, leadLabel, startPush, stundeText, uhrKurz, vort
 import { erstanschreibenText } from "@/lib/whatsapp/erstanschreiben";
 import { offeneZwischenfrage, zwischenfrageText, zwischenKnoepfe } from "@/lib/whatsapp/zwischenfrage";
 import { buchungsText, terminNutzenSatz, terminVorschlagText, type VermittlerName } from "@/lib/whatsapp/gespraech";
+import { anfrageMitSparte } from "@/lib/whatsapp/anfrage-sparte";
 import { mailWerte, vorlagenMail } from "@/lib/angebot-senden";
 import { STANDARD_VORLAGEN_JE } from "@/lib/mail/vorlagen";
 import type { PlanKanal } from "@/lib/nachrichtenplan";
@@ -45,6 +46,8 @@ export type AblaufPhase = {
 export type AblaufEingabe = {
   an: Ansprache;
   person: VermittlerName;
+  /** Firmenname des Kunden für die Erinnerung („hier ist noch einmal …“); ohne Angabe entfällt der Satz */
+  firma?: string | null;
   /** Beispielzeit für Termin-Texte (Uhrzeit egal, nur für die Darstellung) */
   beispielTermin: Date;
   /** Beispielstart des Anrufplans (erster Versuch), z. B. Montag 10 Uhr */
@@ -113,7 +116,16 @@ export function standardAblauf(o: AblaufEingabe): AblaufPhase[] {
   const hi = anredeZeile(an, kontakt);
   const label = leadLabel(kontakt, "Frau Becker");
   const topic = "Haftpflicht und Hausrat";
-  const ctx: SequenceCtx = { firstName: "Julia", hi, kontakt, topic, an, person };
+  const ctx: SequenceCtx = {
+    firstName: "Julia",
+    hi,
+    kontakt,
+    topic,
+    an,
+    person,
+    firm: o.firma ?? undefined,
+    anfrage: anfrageMitSparte(an, { source: BEISPIEL_SOURCE, formular: BEISPIEL_FORMULAR }),
+  };
   // Genau eine Zwischenfrage mit Knöpfen, die die App selbst stellt (lib/whatsapp/zwischenfrage.ts, Ole 17.11.2026)
   const zwischen = offeneZwischenfrage(BEISPIEL_SOURCE, BEISPIEL_FORMULAR, null);
   const zeiten: [string, string] = ["morgen um 10 Uhr", "Donnerstag um 16 Uhr"];

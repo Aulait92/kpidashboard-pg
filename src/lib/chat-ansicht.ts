@@ -107,6 +107,8 @@ const EREIGNISSE: Record<string, Ereignis> = {
   handover: { label: "An Sie übergeben", ton: "achtung", icon: "person" },
   ki_handover: { label: "Möchte einen Menschen: an Sie übergeben, Assistent pausiert", ton: "achtung", icon: "person" },
   advice_blocked: { label: "Antwort ersetzt: keine Tarif-, Preis- oder Versichereraussagen", ton: "achtung", icon: "schild" },
+  // lib/whatsapp/ki-hinweis.ts gibtSichAlsMenschAus: der Assistent gibt sich nie als Mensch aus (KI-VO Art. 50)
+  ki_ehrlich: { label: "Antwort ersetzt: Assistent sagt ehrlich, dass er eine KI ist", ton: "achtung", icon: "schild" },
   opt_out: { label: "„STOPP“: keine weiteren WhatsApp-Nachrichten", ton: "stopp", icon: "stopp" },
   // lib/whatsapp/buchungsnummer.ts: Formular-Nummer ohne WhatsApp, Lead hat online mit dieser Nummer gebucht
   wa_nummer_uebernommen: { label: "WhatsApp über die Nummer aus der Online-Buchung", ton: "info", icon: "person" },
