@@ -132,6 +132,32 @@ describe("Getippte Antwort", () => {
   });
 });
 
+describe("Korrektur nach der Antwort", () => {
+  it.each([
+    ["Nein.... In so fern ich alleine", "mit", "allein"],
+    ["nee, ich entscheide allein", "mit", "allein"],
+    ["doch, mit meiner Frau zusammen", "allein", "mit"],
+    ["Nein", "mit", null],
+    ["Ja", "allein", null],
+    ["Nein, Donnerstag passt nicht", "mit", null],
+    ["alleine", "allein", null],
+    ["meine Frau ist auch dabei", "mit", null],
+    ["alleine", null, null],
+  ] as const)("%s (bisher %s) → %s", (t, bisher, erwartet) => {
+    expect(g.partnerKorrektur(t, bisher)).toBe(erwartet);
+  });
+  it("Hinweis passt zur neuen Angabe", () => {
+    expect(g.partnerKorrekturHinweis("allein")).toContain("allein");
+    expect(g.partnerKorrekturHinweis("allein")).toContain("„Sie beide“");
+    expect(g.partnerKorrekturHinweis("mit")).toContain("gemeinsam zum Termin");
+  });
+  it("Bot wertet die Korrektur aus", () => {
+    const bot = readFileSync("src/lib/whatsapp/bot.ts", "utf8");
+    expect(bot).toContain("partnerKorrektur(latest.body, partnerVor.antwortArt)");
+    expect(bot).toContain("partnerHinweis = partnerKorrekturHinweis(neu)");
+  });
+});
+
 describe("Ablauf nach dem Komplettcheck", () => {
   beforeEach(() => {
     db.messages = [];

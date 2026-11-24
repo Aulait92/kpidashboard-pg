@@ -948,6 +948,10 @@ export type PartnerVorStand = {
   bekannt: boolean;
   /** Antwort bzw. Abschluss der Frage (mit, allein, ohne_antwort, termin) */
   antwortAt: Date | null;
+  /** Letzte festgehaltene Angabe nach der Frage (auch eine spätere Korrektur), nur „mit“ bzw. „allein“ */
+  antwortArt: "mit" | "allein" | null;
+  /** Zeitpunkt dieser letzten Angabe */
+  antwortArtAt: Date | null;
   /** Terminvorschlag nach der Frage schon gesendet (z. B. vom Assistenten nach einer Rückfrage) */
   vorschlagDanach: boolean;
   /** Terminvorschläge im Chat insgesamt (die Frage kommt nur vor dem ersten) */
@@ -963,10 +967,15 @@ export async function partnerVorStand(conversationId: string): Promise<PartnerVo
   });
   const frage = rows.filter((r) => r.kind === STRECKE.partnerVorFrage).at(-1) ?? null;
   const nach = (k: string) => (frage ? (rows.find((r) => r.kind === k && r.createdAt >= frage.createdAt) ?? null) : null);
+  const letzteArt = frage
+    ? rows.filter((r) => r.kind === STRECKE.partnerVorAntwort && r.createdAt >= frage.createdAt && ["mit", "allein"].includes(String(daten(r.body).art))).at(-1) ?? null
+    : null;
   return {
     frageAt: frage?.createdAt ?? null,
     bekannt: daten(frage?.body ?? null).bekannt === true,
     antwortAt: nach(STRECKE.partnerVorAntwort)?.createdAt ?? null,
+    antwortArt: letzteArt ? (daten(letzteArt.body).art as "mit" | "allein") : null,
+    antwortArtAt: letzteArt?.createdAt ?? null,
     vorschlagDanach: !!nach(STRECKE.vorschlag),
     vorschlaege: rows.filter((r) => r.kind === STRECKE.vorschlag).length,
   };

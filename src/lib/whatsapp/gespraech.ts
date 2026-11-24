@@ -523,6 +523,26 @@ export function partnerAusText(text: string | null | undefined): "mit" | "allein
 }
 
 /**
+ * Korrektur der Antwort auf „Entscheidet noch jemand mit?“ (Samer Assaf, 24.11.2026: als „gemeinsam“ erfasst, der Lead
+ * schreibt danach „Nein…. In so fern ich alleine“). Nur eine ausdrückliche Angabe (allein, meine Frau …) zählt, ein
+ * bloßes „Nein“ bzw. „Ja“ kann sich auf die Zeiten beziehen. Gibt die neue Angabe zurück, wenn sie von der bisherigen
+ * abweicht, sonst null. Rein.
+ */
+export function partnerKorrektur(text: string | null | undefined, bisher: "mit" | "allein" | null | undefined): "mit" | "allein" | null {
+  if (bisher !== "mit" && bisher !== "allein") return null;
+  if (!PARTNER_AUSDRUECKLICH_RE.test(text ?? "")) return null;
+  const neu = partnerAusText(text);
+  return neu && neu !== bisher ? neu : null;
+}
+
+/** Prompt-Hinweis nach einer Korrektur: kurz bestätigen, nicht mehr von „Sie beide“ sprechen bzw. beide einladen. */
+export function partnerKorrekturHinweis(neu: "mit" | "allein"): string {
+  return neu === "allein"
+    ? "Der Lead hat korrigiert: Er entscheidet allein, niemand entscheidet mit (schon festgehalten). Bestätige das in einem kurzen Halbsatz (z. B. „Alles klar, dann nur für Sie.“), sprich nicht mehr von „Sie beide“ bzw. der Familie als Mitentscheider und frag nicht noch einmal danach. Dann klär, ob eine der vorgeschlagenen Zeiten passt, sonst nutze termin_vorschlagen."
+    : "Der Lead hat korrigiert: Jemand entscheidet mit (schon festgehalten). Bestätige das kurz und empfiehl, gemeinsam zum Termin zu kommen; frag nicht noch einmal danach. Dann klär, ob eine der vorgeschlagenen Zeiten für beide passt, sonst nutze termin_vorschlagen.";
+}
+
+/**
  * Bei Komplettcheck „Ja“ (nach den Angebotsfragen, P2): Frage nach den bestehenden Verträgen (eigene Nachricht, ohne
  * Knöpfe). einleitung: „Super!“ direkt nach dem Knopf, „Danke!“ nach der letzten Angebotsfrage.
  */

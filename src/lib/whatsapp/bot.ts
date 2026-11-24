@@ -53,6 +53,8 @@ import {
   PARTNER_VOR_HINWEIS,
   partnerAusText,
   partnerBekannt,
+  partnerKorrektur,
+  partnerKorrekturHinweis,
   partnerFrageNoetig,
   partnerSatzImVorschlag,
   partnerVorFrageText,
@@ -969,6 +971,24 @@ export async function runBotTurn(
         }
         if (strecke.partnerVorOffen(partnerVor)) partnerHinweis = PARTNER_VOR_HINWEIS;
       }
+    }
+  } else if (
+    partnerVor?.antwortArt &&
+    partnerVor.antwortArtAt &&
+    latest?.direction === "inbound" &&
+    latest.createdAt > partnerVor.antwortArtAt &&
+    !opts.anstoss &&
+    !opts.knopfZeit &&
+    !opts.partnerNachholen
+  ) {
+    // Korrektur nach der Antwort (Samer Assaf, 24.11.2026): „gemeinsam“ erfasst, dann „Nein…. In so fern ich alleine“.
+    // Angabe überschreiben (Terminvorbereitung) und dem Assistenten sagen, dass er sich anpasst.
+    const neu = partnerKorrektur(latest.body, partnerVor.antwortArt);
+    if (neu) {
+      await strecke.merke(conversation.id, strecke.STRECKE.partnerVorAntwort, { art: neu, korrektur: true });
+      await strecke.entscheidungSpeichern(conversation.id, neu, "partner_frage_vor");
+      partnerHinweis = partnerKorrekturHinweis(neu);
+      logTestLead(lead, "partner korrigiert", { art: neu });
     }
   }
   if (opts.partnerNachholen && !partnerJetzt) return;
