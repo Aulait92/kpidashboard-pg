@@ -1,8 +1,8 @@
-# Entwurf: Klausel für anonymisierte Branchenstatistiken und Creative-KI (Stand 18.11.2026)
+# Entwurf: Klausel für anonymisierte Branchenstatistiken und Creative-KI (Stand 24.11.2026)
 
 Status: Entwurf zur anwaltlichen Prüfung. Nicht verwenden, bevor ein Anwalt freigegeben hat. Rechtliche Vorprüfung, keine Rechtsberatung. Recherche über Legal Data Hunter (Queue Nr. 11).
 
-**Kennzeichnung.** [LDH] = Fundstelle aus Legal Data Hunter (Lauf 18.11. Abend). „Ohne Fundstelle“ = eigene Einschätzung; das Tageslimit griff, bevor GeschGehG, UrhG, KUG, BGB und EDSA-Leitlinien abgefragt werden konnten (resets_at 2026-11-19T14:07:00+00:00).
+**Kennzeichnung.** [LDH] = Fundstelle aus Legal Data Hunter (Läufe 18.11. Abend und 24.11.). „Ohne Fundstelle“ = eigene Einschätzung. Am 24.11. belegt: GeschGehG §§ 2, 4, BGB §§ 305c, 307, 310. Weiter ohne Fundstelle (Limit, resets_at 2026-11-25T14:48:00+00:00): UrhG, KUG, EDSA-Leitlinien 07/2020.
 
 **Änderungsmarkierung gegenüber Stand 17.11.:** **[NEU]** neu eingefügt, **[GEÄNDERT]** umformuliert, ~~durchgestrichen~~ entfällt.
 
@@ -16,7 +16,8 @@ performancegrowth will aus den Daten aller Vermittler anonymisierte, zusammengef
 ## Kurzergebnis
 - **Benchmarks: GELB.** Machbar, aber nicht über die bisherige AVV-Klausel „Nutzung für eigene Zwecke“. Ein Auftragsverarbeiter, der Zwecke selbst bestimmt, wird insoweit Verantwortlicher (Art. 28 Abs. 10 DSGVO [LDH]). Lösung: Anonymisierung als Weisung des Vermittlers in der AVV, Nutzung nur der anonymen Ergebnisse im Hauptvertrag, harte Mindestschwellen.
 - **Creative-KI: GELB.** Machbar mit eigener Klausel im Hauptvertrag, Opt-out je Kunde, ohne Lead-Daten, ohne Übernahme von Namen, Bildern, Marken oder wiedererkennbaren Anzeigenteilen anderer Kunden und ohne Anzeige fremder Einzelkennzahlen. Die Kampagnenkennzahlen eines Einzelvermittlers sind personenbezogen; dafür ist performancegrowth selbst Verantwortlicher.
-- **Größte offene Punkte:** GeschGehG und Urheberrecht nur ohne Fundstelle geprüft; Einordnung der Anonymisierung (Auftrag oder eigener Zweck) ist von der Aufsicht nicht abschließend geklärt.
+- **[NEU 24.11.] Code-Prüfung: ROT für den Ist-Zustand.** Das Creative-Lernen läuft nicht nur auf Oles eigenen Konten und Testkunden: Seit 24.11. lädt `vorlagenVon` Gewinner-Anzeigen samt Bildern aus dem Werbekonto eines anderen echten Kunden (Abschnitt „Code-Prüfung 24.11.“). Bis die Klausel gilt bzw. der Quellkunde zugestimmt hat, für Fremdkunden sperren.
+- **Größte offene Punkte:** Urheberrecht und KUG nur ohne Fundstelle geprüft; Einordnung der Anonymisierung (Auftrag oder eigener Zweck) ist von der Aufsicht nicht abschließend geklärt.
 
 ## Rechtliche Einordnung
 
@@ -47,10 +48,10 @@ performancegrowth will aus den Daten aller Vermittler anonymisierte, zusammengef
 - **Anzeigen**: Texte und Bilder enthalten oft Namen, Foto, Telefonnummer oder Stimme des Vermittlers; das sind personenbezogene Daten des Vermittlers. Anzeigen ohne solche Merkmale (Stockbild, Produktaussage) nicht.
 - **Lead-Daten** sind nach der Vorgabe ausgeschlossen. Achtung: Kennzahlen wie „Erscheinensquote“ stammen aus Lead-Datensätzen. Für die Creative-KI nur aggregierte Kampagnenwerte je Anzeige verwenden, nie Einzeldatensätze.
 
-### 5. GeschGehG (ohne Fundstelle, Limit)
-- Welche Anzeige bei einem Kunden gewinnt und zu welchen Kosten, ist für ihn wirtschaftlich wertvoll und nicht öffentlich. Die Anzeigen selbst sind öffentlich (Werbebibliothek), ihre Leistungszahlen nicht. Das kann ein Geschäftsgeheimnis im Sinne von § 2 Nr. 1 GeschGehG sein, wenn der Kunde angemessene Geheimhaltungsmaßnahmen trifft; ein Vertrag mit Vertraulichkeitsklausel spricht dafür.
-- Nutzt performancegrowth diese Zahlen zugunsten anderer Kunden, ohne dass der Vertrag das erlaubt, droht ein Verstoß gegen § 4 Abs. 2 GeschGehG (Nutzung entgegen einer vertraglichen Beschränkung) und gegen die eigene Vertraulichkeitsklausel.
-- Abhilfe: ausdrückliche Gestattung im Hauptvertrag (Baustein A Abs. 2 und 6), nur aggregierte Erfolgssignale über mehrere Kunden, keine Anzeige fremder Einzelkennzahlen, Opt-out. Vor Livegang mit Normtext prüfen.
+### 5. GeschGehG ([LDH] seit 24.11.)
+- Welche Anzeige bei einem Kunden gewinnt und zu welchen Kosten, ist für ihn wirtschaftlich wertvoll und nicht öffentlich. Die Anzeigen selbst sind öffentlich (Werbebibliothek), ihre Leistungszahlen nicht. Das kann ein Geschäftsgeheimnis im Sinne von § 2 Nr. 1 GeschGehG sein ([gesetze-im-internet.de, § 2](https://www.gesetze-im-internet.de/geschgehg/__2.html) [LDH]; Tooltext nur lit. a: Information, die in den Kreisen, die üblicherweise damit umgehen, weder allgemein bekannt noch ohne Weiteres zugänglich ist; lit. b und c, wirtschaftlicher Wert und angemessene Geheimhaltungsmaßnahmen, ohne Fundstelle), wenn der Kunde angemessene Geheimhaltungsmaßnahmen trifft; ein Vertrag mit Vertraulichkeitsklausel oder eine NDA (wie mit Deibel) spricht dafür.
+- Nutzt performancegrowth diese Zahlen zugunsten anderer Kunden, ohne dass der Vertrag das erlaubt, droht ein Verstoß gegen § 4 Abs. 2 Nr. 2 GeschGehG („gegen eine Verpflichtung zur Beschränkung der Nutzung des Geschäftsgeheimnisses verstößt“) bzw. Nr. 3 bei Offenlegung ([gesetze-im-internet.de, § 4](https://www.gesetze-im-internet.de/geschgehg/__4.html) [LDH], Wortlaut bestätigt) und gegen die eigene Vertraulichkeitsklausel. Wo eine NDA Vertragsstrafen vorsieht (NDA Deibel: bis 5.000 € je Verstoß), kommen diese hinzu.
+- Abhilfe: ausdrückliche Gestattung im Hauptvertrag (Baustein A Abs. 2 und 6), nur aggregierte Erfolgssignale über mehrere Kunden, keine Anzeige fremder Einzelkennzahlen, Opt-out. Bestehende NDAs brauchen eine Ausnahme (Baustein E). Normtext geprüft (24.11.).
 
 ### 6. Urheberrecht und Recht am eigenen Bild (ohne Fundstelle, Limit)
 - Anzeigentexte und Bilder können Werke (§ 2 UrhG) oder Lichtbilder (§ 72 UrhG) sein. Wer die Rechte hat, hängt davon ab, wer die Anzeige erstellt hat: performancegrowth (eigenes Team oder eigene KI), der Kunde oder ein Fotograf des Kunden.
@@ -58,12 +59,25 @@ performancegrowth will aus den Daten aller Vermittler anonymisierte, zusammengef
 - Porträts des Vermittlers: § 22 KUG; das Foto darf nicht in Anzeigen anderer Kunden auftauchen.
 - Abhilfe: Rechteeinräumung für Analyse und Training (Baustein A Abs. 3), Ausschluss der Übernahme wiedererkennbarer Teile, Personenbilder nur als abstraktes Gestaltungsmerkmal auswerten, Gewährleistung des Kunden für zugelieferte Inhalte.
 
-### 7. AGB-Kontrolle §§ 305c, 307 BGB (ohne Fundstelle, Limit)
-- Die Kunden sind Unternehmer; § 305c Abs. 1 und § 307 gelten nach § 310 Abs. 1 BGB auch im B2B.
-- **§ 305c Abs. 1 (überraschende Klausel):** Eine Erlaubnis zur Nutzung für eigene Zwecke in einer Anlage zur AVV ist ungewöhnlich, weil eine AVV gerade die Weisungsbindung regelt. Risiko: Die Klausel wird nicht Vertragsbestandteil. Darum in den Hauptvertrag mit eigener Überschrift und Hinweis bei Vertragsschluss.
-- **§ 307 Abs. 1 S. 2 (Transparenz):** Kunde muss erkennen, welche Daten wofür genutzt werden und wie er abschaltet.
+### 7. AGB-Kontrolle §§ 305c, 307 BGB ([LDH] seit 24.11.)
+- Die Kunden sind Unternehmer; § 305c und § 307 Abs. 1 und 2 gelten nach § 310 Abs. 1 BGB auch im B2B; § 310 Abs. 1 nimmt nur § 305 Abs. 2 und 3, § 308 Nr. 1, 2 bis 9 und § 309 aus und verlangt Rücksicht auf Handelsbräuche ([gesetze-im-internet.de, BGB](https://www.gesetze-im-internet.de/bgb/) [LDH]).
+- **§ 305c Abs. 1 (überraschende Klausel):** Wortlaut [LDH]: Bestimmungen, die „nach den Umständen, insbesondere nach dem äußeren Erscheinungsbild des Vertrags, so ungewöhnlich sind, dass der Vertragspartner des Verwenders mit ihnen nicht zu rechnen braucht“, werden nicht Vertragsbestandteil; Abs. 2: Zweifel gehen zulasten des Verwenders. Eine Erlaubnis zur Nutzung für eigene Zwecke in einer Anlage zur AVV ist ungewöhnlich, weil eine AVV gerade die Weisungsbindung regelt. Risiko: Die Klausel wird nicht Vertragsbestandteil. Darum in den Hauptvertrag mit eigener Überschrift und Hinweis bei Vertragsschluss.
+- **§ 307 Abs. 1 S. 2 (Transparenz):** Wortlaut [LDH] ([gesetze-im-internet.de, § 307](https://www.gesetze-im-internet.de/bgb/__307.html)): unangemessene Benachteiligung „kann sich auch daraus ergeben, dass die Bestimmung nicht klar und verständlich ist“. Kunde muss erkennen, welche Daten wofür genutzt werden und wie er abschaltet.
 - **§ 307 Abs. 2 Nr. 1 (Leitbild):** Eine AVV-Klausel, die vom gesetzlichen Leitbild des Art. 28 (keine eigenen Zwecke) abweicht, ist angreifbar. Abhilfe: AVV bleibt weisungsgebunden; die eigene Nutzung bezieht sich nur auf anonyme Ergebnisse und auf eigene Kundendaten; Gegenleistung (Benchmark-Dashboard, bessere Vorschläge) und Opt-out sprechen für Angemessenheit.
 - **Bestandskunden:** Änderung nicht über eine bloße Fiktionsklausel einführen, sondern aktive Zustimmung im Konto (Klick) oder Änderungsmitteilung mit Widerspruchsrecht und Opt-out ab Tag 1.
+
+### 8. **[NEU 24.11.]** Code-Prüfung: Laufen Creative-Lernen und Benchmarks nur auf Oles Konten und Testkunden?
+
+Geprüft: pgmain Live (`origin/claude/facebook-ad-media-buyer-GdTgt`, Stand f3c34b16). **Antwort: nein.**
+
+| Funktion | Code | Datenbasis | Bewertung |
+|---|---|---|---|
+| Creative-Vorlagen aus fremdem Werbekonto (`vorlagenVon`, Commit 6f668ead vom 24.11.) | `src/lib/kampagnen/context.ts:44` bis `:49`, `:87` bis `:92`; `src/app/api/ops/kampagne/route.ts:115` f.; `src/lib/kampagnen/run.ts:105`, `:111` | Gewinner-Anzeigen (Texte, Bilder, Kosten je Lead/Termin) eines anderen echten Kunden, Auslöser Ole („Schwarzkopf an Lohmanns Gewinnern anlehnen, auch die Bilder“) | **ROT** ohne Zustimmung des Quellkunden: § 4 Abs. 2 Nr. 2 GeschGehG [LDH], Vertraulichkeit/NDA, Bildrechte (§§ 2, 72 UrhG, § 22 KUG ohne Fundstelle). Kein Opt-out, kein Ausgabefilter (T4 fehlt). |
+| Eigene Gewinner | `src/lib/kampagnen/eigene-gewinner.ts` | nur das eigene Werbekonto des Kunden | grün |
+| Tipps „Schnitt aller Kunden“ | `src/lib/zahlen-tipps-server.ts:30` bis `:36` | Quoten aller Kunden (bezahlte Leads, 90 Tage), ohne Mindestzahl an Kunden | **GELB**: T1 fehlt; bei wenigen Kunden rückrechenbar (C-413/23 P Rn. 84 bis 86 [LDH]) |
+| Verlustgründe im Vergleich | `src/lib/verlustgruende.ts:59` bis `:69` | anonymer Schnitt ab 5 Kunden mit je 5 Verlusten | GELB bis grün: Fallzahl und Dominanzregel aus T1 fehlen |
+
+Folgen: (1) `vorlagenVon` nur für Quellkunden zulassen, die Ole selbst, Testkunden (`isTest`) oder Kunden mit Zustimmung nach Baustein A bzw. F sind; Bilder fremder Kunden nie als Bildvorlage. (2) T1 im Code für beide Vergleichswerte. (3) Bestehende NDAs mit Ausnahme nach Baustein E.
 
 ## Klauseln (überarbeitet)
 
@@ -108,6 +122,14 @@ Neu: „Wir bilden aus den Ergebnissen aller Kunden anonymisierte Durchschnittsw
 - Pay-per-Lead-Funnel (performancegrowth als Verantwortlicher): derselbe Satz; Prüfung nach Art. 6 Abs. 4 dokumentieren.
 - Datenschutzerklärung performancegrowth (für Kunden): Absatz zur Creative-KI mit Zweck, Daten (Kampagnenkennzahlen, Anzeigeninhalte), Rechtsgrundlage Art. 6 Abs. 1 lit. f, Widerspruch über den Schalter, Speicherdauer.
 
+### E. **[NEU 24.11.]** Ausnahme in bestehenden NDAs (zum Beispiel Ergänzung Deibel, neue Nr. 4)
+
+„4. Zu § 3: Nicht unter die Geheimhaltung fallen anonymisierte, zusammengefasste Auswertungen, die keinen Rückschluss auf den Auftraggeber, seine Kampagnen oder seine Kunden zulassen. Für personenbezogene Daten gilt vorrangig der Auftragsverarbeitungsvertrag.“
+
+### F. **[NEU 24.11.]** Einzelzustimmung des Quellkunden für `vorlagenVon` (Textform genügt)
+
+„Ich bin einverstanden, dass performancegrowth meine Anzeigen und ihre Kennzahlen nutzt, um Anzeigen für andere Kunden zu entwickeln. Mein Name, mein Bild, mein Logo und meine Zahlen werden dabei nicht übernommen oder gezeigt. Ich kann das jederzeit in den Einstellungen abschalten.“
+
 ## Technische Auflagen
 - T1 Schwellen im Code erzwingen: kein Wert unter fünf Kunden, {50} Fällen oder über 40 % Anteil eines Kunden; Zellen unter der Schwelle zusammenfassen oder unterdrücken.
 - T2 Keine Differenzangriffe: Filter (Region, Sparte, Zeitraum) nur so fein, dass Schwellen je Kombination halten; Auswertungen für Partner nur aus festen Berichten, keine freie Abfrage.
@@ -120,7 +142,8 @@ Neu: „Wir bilden aus den Ergebnissen aller Kunden anonymisierte Durchschnittsw
 - ~~Reicht die Schwelle „mindestens fünf Auftraggeber“?~~ Nein, nach C-413/23 P Rn. 84 bis 86 [LDH] zusätzlich Fallzahl und Dominanzregel (eingearbeitet). Konkrete Zahlen ({50}, 40 %) sind fachliche Annahmen, kein Rechtsmaßstab.
 - Pay-per-Lead-Daten: Datenschutzhinweis im Funnel ergänzen (Baustein D); Art. 89 Abs. 1 für kommerzielle Statistik offen.
 - § 203 StGB: Wortlaut jetzt [LDH] ([gesetze-im-internet.de, § 203](https://www.gesetze-im-internet.de/stgb/__203.html)). Benchmarks nutzen keine Geheimnisse im Sinne von § 203 (keine Policen, keine Gesundheitsangaben, nur anonyme Ergebnisse); trotzdem keine Termin-Notizen oder Freitexte einbeziehen.
-- **[NEU]** GeschGehG, § 44b UrhG, § 22 KUG, §§ 305c, 307, 310 BGB mit Normtext und Rechtsprechung über das Tool nachprüfen (nächster Lauf).
+- ~~GeschGehG, §§ 305c, 307, 310 BGB mit Normtext prüfen~~ erledigt 24.11. [LDH]. Weiter offen: § 44b UrhG, § 22 KUG, Rechtsprechung zu AVV-Klauseln für eigene Zwecke.
+- **[NEU 24.11.]** `vorlagenVon` für Fremdkunden sperren oder Zustimmung nach Baustein F einholen (Entscheidung Ole, siehe `docs/recht/rechtspruefung-2026-11-23.md` F9).
 - **[NEU]** EDSA-Leitlinien 07/2020 zu Verantwortlichem und Auftragsverarbeiter (Abschnitt zu eigenen Zwecken des Auftragsverarbeiters) über das Tool suchen.
 - Änderung bestehender Verträge: aktive Zustimmung im Konto oder Änderungsmitteilung mit Widerspruchsrecht; Opt-out für Creative-KI ab Tag 1.
 
@@ -130,4 +153,8 @@ Neu: „Wir bilden aus den Ergebnissen aller Kunden anonymisierte Durchschnittsw
 - [EuGH, Urteil vom 4.9.2025, C-413/23 P, EDSB gegen SRB](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62023CJ0413), Rn. 52, 72 bis 77, 82, 84 bis 86, 100, 108 bis 111
 - [§ 203 StGB](https://www.gesetze-im-internet.de/stgb/__203.html)
 
-Ohne Fundstelle (Limit): GeschGehG, UrhG, KUG, BGB, EDSA-Leitlinien 07/2020.
+[LDH] Legal Data Hunter, Lauf 24.11.2026:
+- [GeschGehG § 2](https://www.gesetze-im-internet.de/geschgehg/__2.html) (Tooltext nur lit. a), [GeschGehG § 4](https://www.gesetze-im-internet.de/geschgehg/__4.html)
+- [BGB § 307](https://www.gesetze-im-internet.de/bgb/__307.html), [BGB §§ 305c, 310](https://www.gesetze-im-internet.de/bgb/)
+
+Ohne Fundstelle (Limit, resets_at 2026-11-25T14:48:00+00:00): UrhG, KUG, EDSA-Leitlinien 07/2020.

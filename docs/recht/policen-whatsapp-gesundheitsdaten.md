@@ -1,6 +1,6 @@
 # Policen per WhatsApp mit Gesundheitsangaben: rechtliche Vorprüfung
 
-Stand: 17.11.2026 (Nachtlauf), ergänzt am 18.11.2026 (Nachrecherche Legal Data Hunter, siehe Abschnitt „Stand Nachrecherche 18.11.“, und Abendlauf mit „Bewertung Kurzfassung 18.11.“). Rechtliche Vorprüfung, keine Rechtsberatung. Ole entscheidet, die Anwältin bestätigt danach.
+Stand: 17.11.2026 (Nachtlauf), ergänzt am 18.11.2026 (Nachrecherche Legal Data Hunter, siehe Abschnitt „Stand Nachrecherche 18.11.“, und Abendlauf mit „Bewertung Kurzfassung 18.11.“), und am 24.11.2026 (Abschnitt „Prüfung Live-Code 24.11.“ am Ende). Rechtliche Vorprüfung, keine Rechtsberatung. Ole entscheidet, die Anwältin bestätigt danach.
 
 Gegenstand: Der WhatsApp-Assistent (WhatsApp Business Cloud API über 360dialog, Meta als Unterauftragnehmer) bittet Leads mit gebuchtem Videotermin, Fotos oder PDFs aktueller Policen in den Chat zu schicken, auch Kranken, BU und Leben. performancegrowth (Ole Kannapinn UG) ist Auftragsverarbeiter des jeweiligen Vermittlers.
 
@@ -485,3 +485,40 @@ Prüfgegenstand: docs/ux/policen-flow/texte-v2.md und mockup-v2.png (Variante A,
 ## Arbeitsweise Recht (Entscheidung Ole, 18.11.)
 
 Bis Budget für eine Anwältin da ist, übernimmt Claude die Rechtsprüfung nach bestem Wissen; umgesetzt wird nach dieser Bewertung. Jede Rechtsanforderung an Texte oder Strecken geht vorher durch die Conversion-Prüfung eines Marketing-Agenten. Das Anwaltspaket (anwalt-paket-2026-11.docx) bleibt als Vorlage für später; bei Budget zuerst A1/A9 (Bündelung), A3 (§ 203 und Meta) und die Benchmark-Klausel vorlegen.
+
+
+## Prüfung Live-Code 24.11.
+
+Geprüft: pgmain Live `origin/claude/facebook-ad-media-buyer-GdTgt` (Stand f3c34b16), `src/lib/policen/*`, `src/lib/policen/flow/*`, `src/lib/policen/auslesen/*`. Gesamtergebnis in `docs/recht/rechtspruefung-2026-11-23.md`, Fund F13.
+
+**Ampel: unverändert GELB, Restrisiko gering bis mittel.** Die Auflagen sind im Code weitgehend erfüllt; offen sind organisatorische Punkte.
+
+**Neue Fundstellen [LDH], 24.11.**
+- BGH, Urteil vom 10.2.2010, VIII ZR 53/09 ([rechtsprechung-im-internet.de](https://www.rechtsprechung-im-internet.de/jportal/?quelle=jlink&docid=KORE302852010&psml=bsjrsprod.psml)): Leitsatz 1, auch der selbständige Versicherungsvertreter ist nach § 203 Abs. 1 Nr. 6 StGB (alte Zählung, heute Nr. 7) zur Geheimhaltung verpflichtet; Leitsatz 2, bei privater Personenversicherung ist schon der Umstand geschützt, dass jemand finanziell vorgesorgt hat. Ersetzt die bisherige [Web]-Fundstelle. Folge: Prüffrage 5 ist für Vertreter bestätigt; Policen aus Kranken, BU, Leben, Unfall und Pflege sind auch ohne Gesundheitsangaben Geheimnisse im Sinne von § 203. Für Makler bleibt Anwaltsfrage 4 offen.
+- BGH, Urteil vom 10.7.2018 ([rechtsprechung-im-internet.de](https://www.rechtsprechung-im-internet.de/jportal/?quelle=jlink&docid=KORE309042018&psml=bsjrsprod.psml)), nach Datum und Leitsatz VI ZR 225/17: Werbung per elektronischer Post ohne Einwilligung greift in das Persönlichkeitsrecht ein; schon eine Kundenzufriedenheitsbefragung ist Werbung. Folge für A8: Erinnerungen und der Policen-Satz in der Vortags-Erinnerung dürfen keinen werblichen Nebenzweck haben (kein Hinweis auf Sparen, Angebote, weitere Produkte), sonst brauchen sie eine Einwilligung. Anwaltsfrage 5 damit teilweise beantwortet.
+- Nicht erreicht (Limit, resets_at 2026-11-25T14:48:00+00:00): EDSA-Leitlinien 05/2020, Messenger-Rechtsprechung, Urteil C-21/23. Die Bewertung zu EDSA 05/2020 bleibt ohne Fundstelle.
+
+**Ist v2 gebaut oder live?** Gebaut und im Live-Code enthalten (`src/lib/policen/flow/texte.ts`, `flow-json.ts`, `server.ts`; Textversion `2026-11-19.g1`/`.s1`), aktiv nur mit `POLICEN_FLOW=1` und, solange `POLICEN_FLOW_KUNDEN` gesetzt ist, nur für diese Kunden (`flow/server.ts:2` bis `:3`, `:81` bis `:86`). Laut `docs/firma/offene-aufgaben.md:37` und Entscheidungslog läuft v2 vorerst nur beim Testkunden; die Freigabe für alle wartet auf Oles Test. Die Railway-Variablen selbst wurden nicht eingesehen. Ohne v2 gilt im Chat die Fassung `2026-11-18.g2`/`.s2` (Bitte plus Einwilligung mit Knöpfen).
+
+**Abgleich Auflagen (Chat-Fassung und v2).**
+
+| Auflage | Live-Code | Ergebnis |
+|---|---|---|
+| A1 Mindestinhalt | Chat: `bitte.ts:81` bis `:88` nennt Vermittler mit Firma, Zweck, „automatisch auslesen lässt (KI-Dienst in der EU)“, „auch wenn sie Gesundheitsangaben enthalten“ (nur bei Freigabe), Meta mit US-Zugriff, performancegrowth, „Widerruf jederzeit mit ‚Widerruf‘“, Link. v2: `flow/texte.ts:183` bis `:198`, Punkte 1 bis 4 plus Erklärungssatz am Knopf. | erfüllt. Hinweis: Der Link hängt in `bitte.ts:85` an einer Bedingung; die Datenschutz-URL wird aber immer über `verantwortlicher.ts` erzeugt (`server.ts` `sprecher`). Empfehlung: ohne URL keine Einwilligung senden (Test). |
+| A2 Tor | `server.ts:12` bis `:13`, `:476` ff., `:816`: vor Einwilligung nur Media-ID (24 Std.), Nachfrage einmal je Lead; v2 ohne data_exchange vor dem Knopf | erfüllt |
+| A3 Nachweis | `PolicenNachweis` nur anhängen, Wortlaut, Textversion, Hash (`flow/texte.ts` `textHash`), Datenschutz-URL, Vermittler | erfüllt |
+| A4 Widerruf | `server.ts:1037` ff. sofort löschen, Bestätigung, Vermittler informiert; Crypto-Shredding je Datei | erfüllt |
+| A5 Freischaltung | `freischaltung.ts`: Gesundheitssparten nur nach AVV-Zustimmung des Inhabers mit 2FA, Nachweis; `regeln.ts:86` ff. | erfüllt. **Offen:** Anlage 2 (Auslesen per KI) für Sach-Sparten nicht bei allen Kunden (Auflage aus Entscheidung 19.11.) |
+| A6 Speicher | eigener Bucket, EU-Endpunkt geprüft (`ablage.ts` `euEndpunkt`), Unterauftragnehmer dynamisch (`legal-texts.ts:685` ff.) | erfüllt |
+| A7 Logs | `server.ts:14`, `:188`, `:579`: keine Inhalte, Dateinamen, URLs; Push neutral | erfüllt |
+| A8 Erinnerungen | v2: höchstens 2 mit „Nein, danke“ und STOP (`flow/texte.ts:311` ff., `:323`); Opt-in-Prüfung `server.ts:281` ff. | erfüllt. A8a (ein Satz in der Vortags-Erinnerung ohne Opt-in, Ole 19.11.) bleibt gering, aber nach BGH 10.7.2018 ohne werblichen Zusatz formulieren |
+| A9 ohne KI | Chat: Satz im Haupttext (`bitte.ts:90` f.), Stichworterkennung `:261` ff.; v2: Häkchen „Lieber ohne KI: nur speichern“ (leer) | erfüllt (v2 besser) |
+| K1, K2 | `auslesen/konfig.ts:42` bis `:50`, `:100` bis `:104`: nur KI-Textversionen, Gesundheitssparten nur mit `zdrNachweisAm` | erfüllt. ZDR bei OpenAI beantragt (23.11.), nicht bestätigt: Kranken, BU, Leben werden nicht ausgelesen |
+| K3 | OpenAI EU-Projekt bzw. Bedrock EU (`auslesen/anbieter/*`) | erfüllt; AWS Bedrock fehlt in der Unterauftragnehmerliste (F12) |
+| K4, K5 | `auslesen/felder.ts:2`, `prompt.ts:9`: keine Gesundheitsfelder, kein Freitext | erfüllt |
+| K6 bis K8 | Kennzeichnung und Prüfung in der Vertragsseite, Löschung mit den Policen, kein Scoring gefunden | erfüllt nach Stichprobe |
+| Neu 21.11. | volle Versicherungsscheinnummer nur Kfz (Ole) | vertretbar (Zweck SF-Übernahme) |
+| Neu 22.11. | lokale Texterkennung (`texterkennung.ts`), kein Drittanbieter, Text nicht gespeichert | unbedenklich |
+| Tier | Tierkranken: kein Gesundheits-Halbsatz (`flow/texte.ts:39`), Tiergesundheit keine Art.-9-Daten | richtig; aber Filter vor der KI bei Tier-Leads für die ganze Nachricht aus (`gesundheitsdaten.ts:57`, F11) |
+
+**Was vor „v2 für alle“ noch fehlt:** (1) Anlage 2 der AVV an alle betroffenen Kunden; (2) Oles Test als Testkunde; (3) Satz in der Vortags-Erinnerung ohne werblichen Zusatz; (4) AWS Bedrock in die Unterauftragnehmerliste. E1 (EU-Upload-Link für Gesundheitssparten) bleibt Empfehlung.
