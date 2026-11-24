@@ -10,6 +10,9 @@ import { monthlyFeeCosts } from "@/lib/whatsapp/fees";
 import { netCost } from "@/lib/bank/rules";
 import { buildBwa, groupSmallBetrieb, type Bwa, type BwaInput, type BwaItem } from "@/lib/bwa-shared";
 
+/** Ab hier rechnet die BWA (Ole, 24.11.2026: auch die Umsätze vor dem Pay-per-Lead-Start im Juni). */
+export const BWA_AB = "2026-01";
+
 export type BwaRange = { key: string; label: string };
 export type BwaData = {
   range: string;
@@ -50,7 +53,7 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
   const items: BwaItem[] = [];
 
   // ── Umsatz (Umsatzbuch; Pay-per-Lead ohne Hochrechnung) ──
-  const [{ ledger, pplCounts }, settings] = await Promise.all([loadLedger(now), loadKpiSettings()]);
+  const [{ ledger, pplCounts }, settings] = await Promise.all([loadLedger(now, { firstMonth: BWA_AB }), loadKpiSettings()]);
   const ids = new Set<string>([...ledger.rows.map((r) => r.customerId), ...pplCounts.map((p) => p.customerId)]);
   const names = new Map(
     (await prisma.customer.findMany({ where: { id: { in: [...ids].filter((x) => !x.includes(":")) } }, select: { id: true, name: true } })).map((c) => [c.id, c.name]),

@@ -274,6 +274,39 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r.ok ? { ok: true, info: `Nachtrag „${titel}“ mit ${r.anzahl} Belegen gesendet (Download-Link).` } : r;
     },
   },
+  umsatz_nachtragen: {
+    beschreibung: "Umsatz (netto) für einen Monat nachtragen, z. B. Monate vor dem Pay-per-Lead-Start ohne Umsatzbuch (BWA), nur auf Oles Anweisung",
+    felder: { monat: "YYYY-MM", betragNetto: "Netto in €", customerId: "optional: Kunden-ID", art: "setup | betreuung | sonstiges", notiz: "Herkunft, z. B. Rechnung R-00070" },
+    run: async (p) => {
+      const monat = text(p.monat, 7);
+      const betrag = zahl(p.betragNetto);
+      const art = text(p.art, 20) || "sonstiges";
+      const notiz = text(p.notiz, 300);
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(monat) || !(betrag > 0) || betrag > 1_000_000 || notiz.length < 3) return { ok: false, error: "Monat, Betrag (netto > 0) und Notiz nötig." };
+      if (!["setup", "betreuung", "sonstiges"].includes(art)) return { ok: false, error: "art: setup | betreuung | sonstiges" };
+      const c = await kunde(text(p.customerId, 40));
+      if (text(p.customerId, 40) && !c) return { ok: false, error: "Kunde nicht gefunden." };
+      // Arten wie im Admin (Zahlen → Nachtrag): „setup“ (Einrichtung) oder „other“ (Sonstiges); Betreuung steht in der Notiz
+      const m = await prisma.manualRevenue.create({ data: { month: monat, customerId: c?.id ?? null, amount: Math.round(betrag * 100) / 100, kind: art === "setup" ? "setup" : "other", note: art === "betreuung" ? `Betreuung: ${notiz}` : notiz, createdBy: OPS_ACTOR.email } });
+      await audit("kpi.nachtrag", { entity: "ManualRevenue", entityId: m.id, customerId: c?.id ?? null, details: { monat, betrag, art, notiz }, actor: OPS_ACTOR });
+      return { ok: true, info: `${monat}: ${betrag.toFixed(2)} € netto${c ? ` (${c.name})` : ""} nachgetragen.`, daten: { id: m.id } };
+    },
+  },
+  bank_buchung_zuordnen: {
+    beschreibung: "Eine einzelne Bankbuchung einer Kostenart zuordnen (ppl, software, ki, akquise, betrieb, ignore), ohne Regel",
+    felder: { umsatzId: "ID der Buchung (diagnose q=bwa&liste=neu)", kostenart: "ppl | software | ki | akquise | betrieb | ignore", inklUst: "true, wenn der Betrag deutsche USt enthält" },
+    run: async (p) => {
+      const { COST_ACTIONS } = await import("@/lib/bank/rules");
+      const aktion = text(p.kostenart, 20) as (typeof COST_ACTIONS)[number];
+      if (!(COST_ACTIONS as readonly string[]).includes(aktion)) return { ok: false, error: "Kostenart ungültig." };
+      const tx = await prisma.bankTransaction.findUnique({ where: { id: text(p.umsatzId, 40) }, select: { id: true, counterparty: true, amount: true } });
+      if (!tx) return { ok: false, error: "Buchung nicht gefunden." };
+      const { assignTransaction } = await import("@/lib/bank/server");
+      await assignTransaction(tx.id, aktion, { vatIncluded: p.inklUst === true });
+      await audit("bank.zuordnen", { details: { umsatzId: tx.id, aktion, inklUst: p.inklUst === true }, actor: OPS_ACTOR });
+      return { ok: true, info: `${tx.counterparty ?? "Buchung"} ${Number(tx.amount).toFixed(2)} € → ${aktion}.` };
+    },
+  },
   belege_stripe: {
     beschreibung: "Ausgangsrechnungen und Gutschriften aus Stripe jetzt als Belege übernehmen (sonst nachts)",
     felder: {},
