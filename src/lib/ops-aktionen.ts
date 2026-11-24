@@ -243,6 +243,20 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `Eigenbeleg ${r.nummer} erstellt und zugeordnet.` };
     },
   },
+  monatspaket_senden: {
+    beschreibung: "Monatspaket (Belege als ZIP, Liste, USt-Vorschau) eines abgeschlossenen Monats an das Steuerbüro senden, Antworten an Ole (nur auf Oles Anweisung)",
+    felder: { monat: "YYYY-MM, höchstens der Vormonat", erneut: "optional true: auch wenn schon gesendet" },
+    run: async (p) => {
+      const monat = text(p.monat, 7);
+      const { paketSenden, vormonat } = await import("@/lib/belege/monatspaket");
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(monat) || monat > vormonat()) return { ok: false, error: "Monat ungültig oder noch nicht abgeschlossen." };
+      const alt = await prisma.monatsPaket.findUnique({ where: { monat }, select: { gesendetAm: true } });
+      if (alt?.gesendetAm && p.erneut !== true) return { ok: false, error: `Schon gesendet am ${alt.gesendetAm.toISOString().slice(0, 10)} (erneut: true zum nochmal Senden).` };
+      const r = await paketSenden(monat, { antwortAn: process.env.ADMIN_EMAIL?.trim() || null });
+      await audit("belege.monatspaket", { details: { monat, ok: r.ok, ...(r.ok ? { anzahl: r.anzahl } : { error: r.error }) }, actor: OPS_ACTOR });
+      return r.ok ? { ok: true, info: `Monatspaket ${monat} mit ${r.anzahl} Belegen gesendet.` } : r;
+    },
+  },
   belege_stripe: {
     beschreibung: "Ausgangsrechnungen und Gutschriften aus Stripe jetzt als Belege übernehmen (sonst nachts)",
     felder: {},

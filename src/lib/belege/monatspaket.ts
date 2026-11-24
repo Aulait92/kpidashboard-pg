@@ -51,15 +51,36 @@ export const ART: Record<string, string> = {
 };
 
 /** Doppel (gleiche Nummer und gleicher Betrag) nur einmal. Getestet. */
-export function ohneDoppel<T extends { nummer: string | null; brutto: number | null; firma: string | null }>(belege: T[]): T[] {
+const nrKurz = (n: string | null) => (n ?? "").replace(/[^0-9a-z]/gi, "").toLowerCase();
+const tageAbstand = (a: string, b: string) => Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000;
+const istMeta = (firma: string | null) => /meta platforms|facebook/i.test(firma ?? "");
+
+/**
+ * Doppelt erfasste Belege nur einmal ins Paket: gleiche Nummer (ohne Leerzeichen, „36 0506 …“ = „360506…“), Betrag und
+ * Aussteller. Dazu Meta (Ole, 24.11.2026): zu einer Abbuchung gibt es oft Rechnung (FBADS-…) und Zahlungsbeleg (Kürzel
+ * wie „FSHN4XMR72“) mit gleichem Betrag am selben Tag; das Steuerbüro bekommt nur einen davon (den zugeordneten, sonst die
+ * Rechnung). Getestet.
+ */
+export function ohneDoppel<T extends { nummer: string | null; brutto: number | null; firma: string | null; datum?: string | null; zugeordnet?: boolean }>(belege: T[]): T[] {
   const seen = new Set<string>();
-  return belege.filter((b) => {
+  const ohneNummernDoppel = belege.filter((b) => {
     if (!b.nummer) return true;
-    const k = `${b.nummer}|${b.brutto}|${(b.firma ?? "").slice(0, 6).toLowerCase()}`;
+    const k = `${nrKurz(b.nummer)}|${b.brutto}|${(b.firma ?? "").slice(0, 6).toLowerCase()}`;
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
   });
+  const weg = new Set<T>();
+  const rechnungen = ohneNummernDoppel.filter((b) => istMeta(b.firma) && /^FBADS-/i.test(b.nummer ?? "") && b.datum && b.brutto != null);
+  const belegt = new Set<T>();
+  for (const z of ohneNummernDoppel) {
+    if (!istMeta(z.firma) || /^FBADS-/i.test(z.nummer ?? "") || !z.datum || z.brutto == null) continue;
+    const r = rechnungen.find((x) => !belegt.has(x) && x.brutto === z.brutto && tageAbstand(x.datum!, z.datum!) <= 2);
+    if (!r) continue;
+    belegt.add(r);
+    weg.add(z.zugeordnet && !r.zugeordnet ? r : z);
+  }
+  return ohneNummernDoppel.filter((b) => !weg.has(b));
 }
 
 /** USt-Vorschau aus den Belegen (Belegdatum; bei Ist-Versteuerung zählt der Zahlungseingang). Getestet. */
