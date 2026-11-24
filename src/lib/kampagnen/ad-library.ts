@@ -34,6 +34,7 @@ function token(): string | null {
 }
 
 type ArchiveAd = {
+  page_id?: string;
   page_name?: string;
   ad_creative_bodies?: string[];
   ad_creative_link_titles?: string[];
@@ -41,16 +42,21 @@ type ArchiveAd = {
   ad_delivery_stop_time?: string;
 };
 
-/** Lange laufende, aktive Anzeigen zum Produkt (höchstens `max`), längste zuerst. Ohne Token oder bei Fehlern: []. */
+/**
+ * Lange laufende, aktive Anzeigen zum Produkt (höchstens `max`), längste zuerst. Ohne Token oder bei Fehlern: [].
+ * `excludePages` (Seitennamen) und `excludePageIds` (Seiten-IDs): die eigene Seite des Kunden und die Seiten eigener
+ * Kunden, die vom gemeinsamen Anzeigenlernen ausgenommen sind (lib/kampagnen/lern-sperre.ts, context.ts).
+ */
 export async function libraryWinners(
   product: string,
-  opts: { max?: number; now?: Date; fetchFn?: typeof fetch; excludePages?: string[] } = {},
+  opts: { max?: number; now?: Date; fetchFn?: typeof fetch; excludePages?: string[]; excludePageIds?: string[] } = {},
 ): Promise<LibraryAd[]> {
   const t = token();
   if (!t) return [];
   const f = opts.fetchFn ?? fetch;
   const now = (opts.now ?? new Date()).getTime();
-  const exclude = new Set((opts.excludePages ?? []).map((p) => p.toLowerCase()));
+  const exclude = new Set((opts.excludePages ?? []).map((p) => p.trim().toLowerCase()).filter(Boolean));
+  const excludeIds = new Set((opts.excludePageIds ?? []).map((p) => String(p).trim()).filter(Boolean));
   const seen = new Set<string>();
   const out: LibraryAd[] = [];
   for (const term of suchbegriffe(product)) {
@@ -60,7 +66,7 @@ export async function libraryWinners(
       ad_active_status: "ACTIVE",
       ad_type: "ALL",
       languages: '["de"]',
-      fields: "page_name,ad_creative_bodies,ad_creative_link_titles,ad_delivery_start_time,ad_delivery_stop_time",
+      fields: "page_id,page_name,ad_creative_bodies,ad_creative_link_titles,ad_delivery_start_time,ad_delivery_stop_time",
       limit: "100",
       access_token: t,
     });
@@ -78,7 +84,7 @@ export async function libraryWinners(
         const days = Math.floor((now - start) / 86_400_000);
         if (days < MIN_TAGE) continue;
         const page = (a.page_name ?? "").trim();
-        if (exclude.has(page.toLowerCase())) continue;
+        if (exclude.has(page.toLowerCase()) || (a.page_id && excludeIds.has(String(a.page_id)))) continue;
         const key = body.toLowerCase().replace(/\s+/g, " ").slice(0, 120);
         if (seen.has(key)) continue;
         seen.add(key);

@@ -10,7 +10,15 @@ import type { Valid } from "@/lib/kampagnen/types";
 export const CAMPAIGN_MODEL = process.env.CAMPAIGN_AGENT_MODEL ?? "claude-opus-5-5";
 
 export type AgentUsage = { tokensIn: number; tokensOut: number; costCents: number };
-export type LlmRequest = { agent: string; system: string; user: string; schema: Record<string, unknown>; maxTokens?: number };
+export type LlmRequest = {
+  agent: string;
+  system: string;
+  user: string;
+  schema: Record<string, unknown>;
+  maxTokens?: number;
+  /** Bilder (öffentliche https-Adressen), die das Modell vor dem Text sieht. Nur für den Bildidee-Aufruf (lib/kampagnen/bildidee.ts). */
+  imageUrls?: string[];
+};
 export type LlmCall = (req: LlmRequest) => Promise<{ text: string; usage: AgentUsage; refused?: boolean }>;
 
 /** Grobe Kosten in US-Cent (Preise je Mio. Tokens: CAMPAIGN_PRICE_IN_USD / CAMPAIGN_PRICE_OUT_USD). */
@@ -28,7 +36,14 @@ export const claudeCall: LlmCall = async (req) => {
     max_tokens: req.maxTokens ?? 16000,
     thinking: { type: "adaptive" },
     system: req.system,
-    messages: [{ role: "user", content: req.user }],
+    messages: [
+      {
+        role: "user",
+        content: req.imageUrls?.length
+          ? [...req.imageUrls.map((url) => ({ type: "image" as const, source: { type: "url" as const, url } })), { type: "text" as const, text: req.user }]
+          : req.user,
+      },
+    ],
     output_config: { format: { type: "json_schema", schema: req.schema } },
   });
   const msg = await stream.finalMessage();
