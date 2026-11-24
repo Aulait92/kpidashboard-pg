@@ -22,7 +22,7 @@ import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPo
 import { audit } from "@/lib/audit";
 import { planFollowup, planFromOutcome, stopFollowup, stopFollowupOnStage } from "@/lib/vertrieb/followup";
 import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates, updatePrimaryEmail } from "@/lib/vertrieb/contact-merge";
-import { addContactPhone, backfillContactData, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
+import { addContactPhone, backfillContactData, captureFromActivity, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
 import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 import { nachholenAntworten, type NachholenErgebnis } from "@/lib/vertrieb/instantly-nachholen";
 
@@ -97,6 +97,8 @@ export async function logActivity(fd: FormData): Promise<{ hinweis: string | nul
       });
     }
   });
+  // Nummer in der Notiz („Mobil: 0171 …“) als weitere Telefonnummer, Herkunft „aus Verlauf“ (Ole, 24.11.2026)
+  await captureFromActivity(contactId, { type, outcome: outcome.id === "notiz" ? null : outcome.label, note });
   if (stage === "GEWONNEN") await ensureSource(contactId);
   if (stage) await stopFollowupOnStage(contactId, stage);
   // Verloren mit offenem Angebot: „Offenes Angebot auch als abgelehnt markieren?“ (Ole, 18.11.2026)

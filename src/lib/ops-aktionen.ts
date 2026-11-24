@@ -371,6 +371,23 @@ export const AKTIONEN: Record<string, Aktion> = {
       return r.ergebnis === "gestartet" || r.ergebnis === "schon" ? { ok: true, info: JSON.stringify(r) } : { ok: false, error: JSON.stringify(r) };
     },
   },
+  vertrieb_nummern_aus_verlauf: {
+    beschreibung:
+      "Telefonnummern aus dem Verlauf der Vertriebskontakte (Buchungsnotizen, Anrufnotizen, Importe, Antworten) als weitere Nummer übernehmen (Herkunft „aus Verlauf“, Verlaufseintrag „Neue Telefonnummer erkannt“). Ohne speichern=true nur Probelauf mit Zahlen und Beispielen.",
+    felder: { speichern: "true = übernehmen, sonst nur Probelauf", contactId: "optional: nur dieser Vertriebskontakt" },
+    run: async (p) => {
+      const speichern = text(p.speichern) === "true";
+      const id = text(p.contactId, 40);
+      const { backfillPhonesFromHistory } = await import("@/lib/vertrieb/kontaktdaten-server");
+      const r = await backfillPhonesFromHistory({ dryRun: !speichern, contactIds: id ? [id] : undefined });
+      if (speichern) await audit("vertrieb.nummern_aus_verlauf", { entity: "SalesContact", details: { kontakte: r.contacts, eintraege: r.entries, nummern: r.phones }, actor: OPS_ACTOR });
+      return {
+        ok: true,
+        info: `${speichern ? "Übernommen" : "Probelauf"}: ${r.contacts} Kontakte mit möglicher Nummer im Verlauf, ${r.entries} Einträge mit Nummer, ${r.phones} neue Nummer${r.phones === 1 ? "" : "n"}${speichern ? "" : " (nichts gespeichert)"}.`,
+        daten: r.examples,
+      };
+    },
+  },
   produkte_auflisten: {
     beschreibung: "Produktbuchungen eines Kunden auflisten (nur lesen, für IDs)",
     felder: { customerId: "Kunden-ID" },

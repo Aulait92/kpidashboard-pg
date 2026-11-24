@@ -3,7 +3,7 @@ import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
 import { contactIdsByEmails, findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { CAMPAIGN_STATUS } from "@/lib/vertrieb/crm";
-import { captureFromLead, captureFromMail } from "@/lib/vertrieb/kontaktdaten-server";
+import { captureFromActivity, captureFromLead, captureFromMail } from "@/lib/vertrieb/kontaktdaten-server";
 import { indexMailPhones } from "@/lib/telefonsuche-server";
 import { classifyReply, isAutoReplyText, sentimentFromInstantly, type Sentiment } from "@/lib/vertrieb/sentiment";
 import { dsgvoAusAntwort, type AntwortSperrGrund } from "@/lib/vertrieb/nie-kontaktieren";
@@ -479,6 +479,8 @@ export async function recordReply(contactId: string, r: Reply, opts: { planen?: 
       data: { contactId, type: "COLD_MAIL", outcome: label, note: r.subject ? `${r.subject}\n\n${snippet}` : snippet, occurredAt: r.sentAt },
     });
   }
+  // Nummern im Text der Antwort („erreichen Sie mich unter …“), Abwesenheitsnotizen nicht (dort steht die Vertretung)
+  await captureFromActivity(contactId, { type: "COLD_MAIL", outcome: label, note: snippet, occurredAt: r.sentAt });
   // Sperren (Follow-up stoppen, bei Datenschutzfragen Aufgabe „Auskunft nach Art. 15“, Instantly-Blocklist). Rechtsfall:
   // zusätzlich eigene Domain, Aufgabe mit Frist, bei Abmahnung Push, Nachweisprotokoll (lib/vertrieb/datenschutz-recht-server.ts)
   if (rechtsArt) await rechtsFallAusAntwort(contactId, r, saved.id, rechtsArt, sperrGrund);

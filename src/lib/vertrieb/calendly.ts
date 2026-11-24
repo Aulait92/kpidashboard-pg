@@ -6,7 +6,7 @@ import { findContactIdByEmail, findContactIdByPhone } from "@/lib/vertrieb/conta
 import { Matcher } from "@/lib/vertrieb/linkedin";
 import { scheduleAddressEnrichment } from "@/lib/vertrieb/address-enrich";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
-import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
+import { captureFromActivity, captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
 import { reportError } from "@/lib/monitoring";
 import type { SalesStage as Stage } from "@/generated/prisma/enums";
 
@@ -163,7 +163,7 @@ export async function recordBooking(inv: Invitee, ev: ScheduledEvent, matcher?: 
       taskId: task.id,
     },
   });
-  await prisma.salesActivity.create({
+  const activity = await prisma.salesActivity.create({
     data: {
       contactId,
       type: "TERMIN",
@@ -175,6 +175,8 @@ export async function recordBooking(inv: Invitee, ev: ScheduledEvent, matcher?: 
   await captureFromBooking(contactId, { email: inv.email, phone: phone ? `+${phone}` : null, answers: answersText(inv), source: "CALENDLY" }).catch((e) =>
     reportError(e, "kontaktdaten-calendly"),
   );
+  // Weitere Nummern im Text der Buchung (z. B. in einer Frage ohne „Telefon“ im Titel), Herkunft „aus Verlauf“
+  await captureFromActivity(contactId, activity);
   // Pipeline: auf "Termin" (Gewonnene Kunden bleiben, wo sie sind)
   const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { stage: true } });
   if (c.stage !== "GEWONNEN" && c.stage !== "TERMIN") {

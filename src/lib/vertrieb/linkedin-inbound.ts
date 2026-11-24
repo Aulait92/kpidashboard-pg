@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { Matcher, flatten, normalizeLinkedInUrl } from "@/lib/vertrieb/linkedin";
 import { handleInboundLead } from "@/lib/vertrieb/inbound";
+import { captureFromActivity } from "@/lib/vertrieb/kontaktdaten-server";
 import { classifyReply, type Sentiment } from "@/lib/vertrieb/sentiment";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -153,6 +154,7 @@ export async function handleLinkedInMessage(raw: unknown) {
     await prisma.salesActivity.create({
       data: { contactId, type: "LINKEDIN", outcome: `LinkedIn-Nachricht erhalten (${label})`, note: msg.message },
     });
+    await captureFromActivity(contactId, { type: "LINKEDIN", note: msg.message });
     await prisma.salesInboundLead.create({
       data: {
         contactId, source: "LINKEDIN", name: msg.name, campaign: "LinkedIn-Nachricht", answers: msg.message, created: false,

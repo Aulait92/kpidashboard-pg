@@ -6,6 +6,7 @@ import { normalizeEmail } from "@/lib/vertrieb/contact-merge";
 import { detectInsurer } from "@/lib/vertrieb/contact-enrich";
 import { ownEmailDomain } from "@/lib/vertrieb/dubletten";
 import { emailGesperrt, geloeschteAdressen } from "@/lib/vertrieb/sperrliste";
+import { captureFromActivity } from "@/lib/vertrieb/kontaktdaten-server";
 import { sperrDomainVon } from "@/lib/vertrieb/datenschutz-recht";
 import { mailDomain, mischen } from "@/lib/vertrieb/mischen";
 import { LISTEN_GRUENDE, istVermittlerListe, type ListenErgebnis, type ListenGrund } from "@/lib/vertrieb/vermittler-format";
@@ -179,6 +180,11 @@ export async function importContactsCsv(text: string): Promise<ImportStats> {
       }
     }
     await prisma.$transaction(ops);
+    // Nummern aus den importierten Texten (Herkunft „aus Verlauf“); ohne Nummer im Text keine Abfrage
+    for (const w of withLegacy.slice(i, i + 100)) {
+      const id = ids.get(w.email);
+      if (id) await captureFromActivity(id, { type: "IMPORT", note: w.legacy.text, occurredAt: w.legacy.date ?? now });
+    }
   }
   return stats;
 }
