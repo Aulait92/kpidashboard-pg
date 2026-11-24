@@ -26,10 +26,15 @@ export function BuyerFilterBar({
   currentRange,
   customFrom,
   customTo,
+  produkte,
+  currentProdukt,
 }: {
   currentRange: RangeKey;
   customFrom?: string;
   customTo?: string;
+  /** Produktfilter (Ole, 24.11.2026): nur gezeigt, wenn der Kunde mehr als ein Produkt hat */
+  produkte?: { value: string; label: string }[];
+  currentProdukt?: string | null;
 }) {
   const router = useRouter();
   const pathname = usePathname() ?? "/buyer";
@@ -106,6 +111,36 @@ export function BuyerFilterBar({
           </>
         )}
       </Dropdown>
+      {produkte && produkte.length > 1 ? (
+        <Dropdown label="Produkt" value={produkte.find((x) => x.value === currentProdukt)?.label ?? "Alle"}>
+          {(close) => (
+            <>
+              <DropdownItem
+                active={!currentProdukt}
+                onClick={() => {
+                  update({ produkt: null });
+                  close();
+                }}
+              >
+                Alle Produkte
+              </DropdownItem>
+              <DropdownDivider />
+              {produkte.map((x) => (
+                <DropdownItem
+                  key={x.value}
+                  active={currentProdukt === x.value}
+                  onClick={() => {
+                    update({ produkt: x.value });
+                    close();
+                  }}
+                >
+                  {x.label}
+                </DropdownItem>
+              ))}
+            </>
+          )}
+        </Dropdown>
+      ) : null}
       {isPending ? (
         <span className="text-[11px] text-[color:var(--brand)]">
           Aktualisiere…

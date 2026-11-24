@@ -34,7 +34,7 @@ import { nochOhneLeads, ZahlenNochLeer } from "@/components/zahlen-noch-leer";
 import { VerlustKarte } from "@/components/verlust-karte";
 import { verlustKarte } from "@/lib/verlustgruende-server";
 import { LOST_STATUSES } from "@/lib/lead-lost";
-import { CLOSED_STATUS } from "@/lib/products";
+import { CLOSED_STATUS, displayProduct } from "@/lib/products";
 import { loadOffeneChancen } from "@/lib/offene-chancen-server";
 import { chancenAufteilung } from "@/lib/offene-chancen";
 import { antwort, euro, euroCent, euroMitVorzeichen, rechnetSich } from "@/lib/wachstum";
@@ -52,6 +52,8 @@ type SearchParams = Promise<{
   /** Filter der Karte „Warum Leads verloren gehen“: Produkt und Berater */
   vgp?: string;
   vgb?: string;
+  /** Produktfilter der ganzen Seite (Ole, 24.11.2026), Wert = Lead.source */
+  produkt?: string;
 }>;
 
 export const dynamic = "force-dynamic";
@@ -83,6 +85,10 @@ export default async function BuyerPage({
   // Pay-per-Lead + Software (Ole, 19.11.2026): kein Werbebudget, keine Produkte, keine Pause; Leads per Stück bestellen
   const kampagnen = mitKampagnen(kundeInfo?.plan);
   const bestellbar = (await prisma.leadSubscription.count({ where: { customerId: session.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } })) > 0;
+  // Produktfilter (Ole, 24.11.2026): Produkte aus den Leads des Kunden; Auswahl nur, wenn es mehr als eins gibt
+  const quellen = await prisma.lead.groupBy({ by: ["source"], where: { customerId: session.customerId, isTest: false, erasedAt: null, source: { not: null } }, _count: { _all: true }, orderBy: { _count: { source: "desc" } } });
+  const produkte = quellen.filter((q): q is typeof q & { source: string } => !!q.source).map((q) => ({ value: q.source, label: displayProduct(q.source) }));
+  const produkt = produkte.length > 1 && sp.produkt && produkte.some((x) => x.value === sp.produkt) ? sp.produkt : null;
 
   // Vor dem ersten Lead: Hinweis statt Nullen (Ole, 15.11.2026)
   if (await nochOhneLeads(session.customerId)) {
@@ -113,6 +119,8 @@ export default async function BuyerPage({
               currentRange={rangeKey}
               customFrom={sp.from}
               customTo={sp.to}
+              produkte={produkte}
+              currentProdukt={produkt}
             />
           }
         />
@@ -146,6 +154,8 @@ export default async function BuyerPage({
             customerId={session.customerId}
             range={range}
             params={sp}
+            produkt={produkt}
+            produktLabel={produkte.find((x) => x.value === produkt)?.label ?? null}
             bestandAn={bestandAn}
             canDismiss={!session.preview && session.teamRole === "owner"}
           />
@@ -178,12 +188,17 @@ async function BuyerDashboardBody({
   customerId,
   range,
   params,
+  produkt,
+  produktLabel,
   bestandAn,
   canDismiss,
 }: {
   customerId: string;
   range: { from: Date; to: Date };
   params: Record<string, string | undefined>;
+  /** Produktfilter (Lead.source) bzw. null = alle Produkte */
+  produkt: string | null;
+  produktLabel: string | null;
   /** Bestandskunden-Modul freigeschaltet: sonst keine Bestandskampagnen und keine Kundenliste erwähnen. */
   bestandAn: boolean;
   /** Hebel ausblenden: nur Inhaber, nicht in der Admin-Vorschau. */
@@ -195,20 +210,20 @@ async function BuyerDashboardBody({
   // Provision und Gewinn zählen alle Herkünfte (Empfehlungen, Bestandskampagnen). Rechnung: lib/ertrag.
   const retainerCfg = await loadRetainerConfig(customerId);
   const [k, p, forecast, spend, spendPrev, data, extraClosed, mitBestand, verlust, keinWhatsApp, dismissed] = await Promise.all([
-    computeKpis({ range, customerId, product: null, origin: "paid" }) as Promise<Kpis>,
-    computeKpis({ range: prev, customerId, product: null, origin: "paid" }) as Promise<Kpis>,
+    computeKpis({ range, customerId, product: produkt, origin: "paid" }) as Promise<Kpis>,
+    computeKpis({ range: prev, customerId, product: produkt, origin: "paid" }) as Promise<Kpis>,
     computeMonthlyForecast({ customerId, includeCloseValue: true }),
     retainerCfg ? computeCustomerSpend(customerId, range, retainerCfg) : null,
     retainerCfg ? computeCustomerSpend(customerId, prev, retainerCfg) : null,
-    loadErtragData(customerId),
+    loadErtragData(customerId, produkt ? { leadWhere: { source: produkt } } : {}),
     Promise.all(
       (["empfehlung", "bestand"] as const).map((o) =>
-        prisma.lead.count({ where: { customerId, createdAt: { gte: range.from, lte: range.to }, closedAt: { not: null }, ...originWhere(o) } }),
+        prisma.lead.count({ where: { customerId, createdAt: { gte: range.from, lte: range.to }, closedAt: { not: null }, ...(produkt ? { source: produkt } : {}), ...originWhere(o) } }),
       ),
     ),
     // „Inkl. Bestand (5 Jahre)“ / „Nur Abschlussprovision“ (je Login gespeichert)
     getBuyerContext().then((c) => loadGewinnMitBestand(c)),
-    verlustKarte(customerId, range, { produkt: params.vgp ?? null, berater: params.vgb ?? null }),
+    verlustKarte(customerId, range, { produkt: produkt ?? params.vgp ?? null, berater: params.vgb ?? null }),
     // Offene Leads ohne WhatsApp, noch nicht erreicht: Hebel „anrufen“ (stehen oben auf der Anrufliste)
     prisma.lead.count({
       where: {
@@ -227,13 +242,24 @@ async function BuyerDashboardBody({
 
   // Lead-Kosten aus Kundensicht: Pro-Lead-Kunden = Lead-Preis (Revenue),
   // Paket-Kunden (Retainer) = eigenes Werbebudget + Retainer.
-  const cost = spend ? spend.total : Number(k.revenue);
-  const costPrev = spendPrev ? spendPrev.total : Number(p.revenue);
+  // Produktfilter: Lead-Preise je Lead sind schon nach Produkt gefiltert (computeKpis); Werbebudget und Betreuung gibt es
+  // nur je Kunde, darum anteilig nach den bezahlten Leads des Produkts (Hinweis unter der Rechnung)
+  const [alleK, alleP] = produkt
+    ? await Promise.all([
+        computeKpis({ range, customerId, product: null, origin: "paid" }) as Promise<Kpis>,
+        computeKpis({ range: prev, customerId, product: null, origin: "paid" }) as Promise<Kpis>,
+      ])
+    : [k, p];
+  const anteilVon = (teil: Kpis, ganz: Kpis) => (ganz.nettoLeads > 0 ? teil.nettoLeads / ganz.nettoLeads : 0);
+  const anteil = produkt ? anteilVon(k, alleK) : undefined;
+  const anteilPrev = produkt ? anteilVon(p, alleP) : undefined;
+  const cost = spend ? spend.total * (anteil ?? 1) : Number(k.revenue);
+  const costPrev = spendPrev ? spendPrev.total * (anteilPrev ?? 1) : Number(p.revenue);
 
   const [cur, before, chancen, tipSignals] = await Promise.all([
-    ertragForRange(customerId, data, range, now, cost),
-    ertragForRange(customerId, data, prev, now, costPrev),
-    loadOffeneChancen(customerId, data.rates, now),
+    ertragForRange(customerId, data, range, now, cost, { anteil }),
+    ertragForRange(customerId, data, prev, now, costPrev, { anteil: anteilPrev }),
+    loadOffeneChancen(customerId, data.rates, now, { produkt }),
     loadTipSignals(customerId, data, now).catch(() => null),
   ]);
   // Gesamtbestand (alle bisherigen Verträge) nur in den Details; im Hero nur der Bestand dieser Kunden (prov.futureTrail)
@@ -290,6 +316,7 @@ async function BuyerDashboardBody({
   const top = verlust.verteilung.gruende.find((g) => g.key !== "ohne") ?? verlust.verteilung.gruende[0];
   const keep = new URLSearchParams();
   keep.set("range", "max");
+  if (produkt) keep.set("produkt", produkt);
 
   // Details „Kosten und Gewinn“
   const breakdown: [string, number][] = [
@@ -337,6 +364,11 @@ async function BuyerDashboardBody({
         makler={makler}
         aktion={rechnung.status === "ohne_kosten" ? { href: "#budget", label: "Werbebudget ansehen" } : null}
       />
+      {produktLabel && (paket || cur.agency.total !== 0) ? (
+        <p className="-mt-2 text-sm text-[color:var(--muted)]" data-produkt-hinweis>
+          Nur {produktLabel}. Werbebudget und Betreuung anteilig nach Leads ({Math.round((anteil ?? 0) * 100)} %).
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4" data-kennzahlen>
         <Kennzahl
@@ -391,7 +423,7 @@ async function BuyerDashboardBody({
         aria-label="Details"
         data-details
       >
-        <VerlustKarte customerId={customerId} range={range} params={params} daten={verlust} eingebettet />
+        <VerlustKarte customerId={customerId} range={range} params={params} daten={produkt ? { ...verlust, produkte: [] } : verlust} eingebettet />
 
         <details className="group [&>summary::-webkit-details-marker]:hidden" id="kosten-gewinn" data-kosten-gewinn>
           <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">

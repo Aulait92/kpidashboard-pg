@@ -56,7 +56,7 @@ async function quotenFaelle(customerId: string, now: Date): Promise<QuotenFall[]
 }
 
 /** Offene Chancen eines Kunden (Stand jetzt), mit eigenen bzw. Standardquoten. */
-export async function loadOffeneChancen(customerId: string, rates: ProvisionOverrides | undefined, now = new Date()): Promise<Chancen> {
+export async function loadOffeneChancen(customerId: string, rates: ProvisionOverrides | undefined, now = new Date(), opts: { produkt?: string | null } = {}): Promise<Chancen> {
   const [standard, faelle, rows] = await Promise.all([
     loadStandardQuoten(),
     quotenFaelle(customerId, now),
@@ -67,6 +67,7 @@ export async function loadOffeneChancen(customerId: string, rates: ProvisionOver
         erasedAt: null,
         closedAt: null,
         lostAt: null,
+        ...(opts.produkt ? { source: opts.produkt } : {}),
         OR: [{ status: { in: ANGEBOT_STATUS } }, { appointments: { some: { status: "booked" } } }, { followUpAt: { not: null } }],
       },
       select: {

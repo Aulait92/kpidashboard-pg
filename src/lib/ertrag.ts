@@ -284,11 +284,21 @@ export async function customerLeadCosts(customerId: string, range: Range): Promi
   return { total: Number(agg._sum.amount ?? 0), hint: null, adSpend: null, retainer: null };
 }
 
-/** Kosten & Ertrag eines Zeitraums (mit vorgeladenen Daten). leadCosts optional vorgegeben. */
-export async function ertragForRange(customerId: string, data: ErtragData, range: Range, now = new Date(), leadCosts?: number): Promise<ErtragPeriod> {
+/**
+ * Agenturkosten anteilig (Produktfilter auf „Wachstum“, Ole 24.11.2026): Werbebudget und Betreuung werden je Kunde,
+ * nicht je Produkt erfasst, darum anteilig nach den bezahlten Leads des Produkts im Zeitraum.
+ */
+export function agencyAnteilig(a: AgencyCosts, anteil: number): AgencyCosts {
+  const f = (x: number) => r2(x * anteil);
+  return { ...a, betreuung: f(a.betreuung), logins: f(a.logins), module: f(a.module), whatsapp: f(a.whatsapp), setup: f(a.setup), gutschrift: f(a.gutschrift), total: f(a.total) };
+}
+
+/** Kosten & Ertrag eines Zeitraums (mit vorgeladenen Daten). leadCosts optional vorgegeben; opts.anteil skaliert die Agenturkosten. */
+export async function ertragForRange(customerId: string, data: ErtragData, range: Range, now = new Date(), leadCosts?: number, opts: { anteil?: number } = {}): Promise<ErtragPeriod> {
   const provision = summarizeProvision(data.contracts, data.rates, range, { now, storno: data.storno });
   const lc = leadCosts ?? (await customerLeadCosts(customerId, range)).total;
-  const agency = data.agencyCfg ? agencyCostsForRange(data.agencyCfg, range, now) : NO_AGENCY;
+  const voll = data.agencyCfg ? agencyCostsForRange(data.agencyCfg, range, now) : NO_AGENCY;
+  const agency = opts.anteil === undefined ? voll : agencyAnteilig(voll, opts.anteil);
   const gewinn = gewinnOf(provision.firstYear, lc, agency.total);
   return { provision, leadCosts: r2(lc), leadCostHint: null, agency, costs: r2(lc + agency.total), gewinn, gewinnMitBestand: r2(gewinn + provision.futureTrail) };
 }
