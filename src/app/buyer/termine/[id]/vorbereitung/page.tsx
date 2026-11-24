@@ -103,7 +103,7 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
           <div className="px-5 py-3.5 text-sm">
             <UnterlagenVomKunden leadId={d.leadId} unterlagen={unterlagenVomKunden} titel={false} zurueck={`/buyer/termine/${id}/vorbereitung`} />
             <div className="mt-2.5">
-              <PolicenVergleichKurz terminId={d.id} leadId={d.leadId} customerId={ctx.customerId} preview={ctx.preview} />
+              <PolicenVergleichKurz terminId={d.id} leadId={d.leadId} customerId={ctx.customerId} preview={ctx.preview} inhaber={ctx.teamRole !== "advisor"} />
             </div>
           </div>
         </Card>

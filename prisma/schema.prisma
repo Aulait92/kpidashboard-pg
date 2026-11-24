@@ -430,6 +430,50 @@ model Customer {
   beratungsdokuGefragtAt         DateTime?
   beratungsdokus                 Beratungsdoku[]
   praesentationEreignisse        PraesentationEreignis[]
+  // ─── Hinweis „KI-Hilfe und gemeinsames Anzeigenlernen“ (Ole, 24.11.2026, lib/datennutzung.ts) ───
+  // Banner im Kundenbereich für Inhaber von Software-Kunden: neuer Unterauftragsverarbeiter (Amazon Web Services,
+  // Bedrock Frankfurt) und gemeinsames Anzeigenlernen, mit Widerspruch je Punkt. Hier der Stand für die schnelle
+  // Prüfung, der Nachweis (wer, wann, Textversion, Wortlaut) steht in DatennutzungNachweis (nur anhängen).
+  // Erste Anzeige des Banners bei einem Inhaber (Beginn der 14 Tage), je Textversion
+  datennutzungAngezeigtAt        DateTime?
+  datennutzungAngezeigtVersion   String?
+  // „Verstanden“: Zeitpunkt, Textversion (DATENNUTZUNG_VERSION) und Login. Banner weg, solange die Version passt.
+  datennutzungVerstandenAt       DateTime?
+  datennutzungVerstandenVersion  String?
+  datennutzungVerstandenUserId   String?
+  // Widerspruch gegen das gemeinsame Anzeigenlernen (null = kein Widerspruch): vom Lernen ausgenommen, eigene
+  // Anzeigen werden nicht für andere Kunden genutzt (lib/anzeigenlernen.ts vomLernenAusgenommen)
+  anzeigenlernenWiderspruchAt     DateTime?
+  anzeigenlernenWiderspruchUserId String?
+  // Widerspruch gegen Amazon Web Services (null = kein Widerspruch): KI für Gesprächszusammenfassungen, KI-Vorschläge
+  // der Beratungsdokumentation und Auslesen von Unterlagen laufen für diesen Kunden nicht (lib/datennutzung-sperre.ts)
+  awsWiderspruchAt               DateTime?
+  awsWiderspruchUserId           String?
+}
+
+// Nachweis zum Hinweis „KI-Hilfe und gemeinsames Anzeigenlernen“ (Ole, 24.11.2026, lib/datennutzung-server.ts). Nur
+// anhängen (Trigger "DatennutzungNachweis_nur_anhaengen", Migration 20261124231600): erste Anzeige des Banners,
+// „Verstanden“, Widerspruch und Rücknahme je Punkt, jeweils mit Login, Zeitpunkt, Textversion und Wortlaut. Ohne
+// Fremdschlüssel wie PolicenNachweis: der Nachweis bleibt, auch wenn Login oder Kunde gelöscht werden. Das
+// Änderungsprotokoll (AuditLog) wird nach einem Jahr gelöscht, dieser Nachweis nicht.
+model DatennutzungNachweis {
+  id          String   @id @default(cuid())
+  customerId  String
+  // angezeigt | verstanden | widerspruch | ruecknahme
+  art         String
+  // anzeigenlernen | aws (nur bei widerspruch und ruecknahme)
+  punkt       String?
+  textVersion String
+  // Wortlaut, wie angezeigt: Banner (Überschrift und Text) bzw. die Zeile im Dialog
+  wortlaut    String?
+  // Login des Inhabers (E-Mail als Text, damit der Nachweis ohne den Login lesbar bleibt)
+  userId      String?
+  userEmail   String?
+  // Wo: banner | detailseite | widerspruch („Verstanden“ durch einen Widerspruch, ohne Klick auf den Knopf)
+  quelle      String?
+  createdAt   DateTime @default(now())
+
+  @@index([customerId, createdAt])
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das

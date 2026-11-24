@@ -5,7 +5,9 @@
 // Ein Dokument wird nur ausgelesen, wenn ALLES zutrifft (sonst kein Aufruf beim Anbieter):
 //   0. Privater Policen-Bucket eingerichtet (lib/policen/ablage.ts, sonst ist Policen per WhatsApp aus),
 //   1. Anbieter eingerichtet (POLICEN_OPENAI_API_KEY bzw. ausdrücklich Bedrock), kein Notschalter, nicht pausiert (401),
-//   2. Kunde freigeschaltet (POLICEN_AUSLESEN_KUNDEN leer oder enthält ihn),
+//   2. Kunde freigeschaltet (POLICEN_AUSLESEN_KUNDEN leer oder enthält ihn) und kein Widerspruch des Vermittlers gegen
+//      Amazon Web Services (Hinweis „KI-Hilfe und gemeinsames Anzeigenlernen“, lib/datennutzung-sperre.ts; gilt
+//      unabhängig vom eingestellten Anbieter, Sperre „widerspruch“),
 //   3. Einwilligung des Leads mit KI (PolicenNachweis: art einwilligung, ki = true, Textversion ab
 //      AUSLESEN_MIN_TEXTVERSION; ein späterer Widerruf oder eine Ablehnung hebt sie auf) und kein Stichwort „ohne KI“
 //      (Auflage A9, lib/policen/ohne-ki.ts; dann Sperre „ohne_ki“, Vergleichsblatt ohne Werte),
@@ -47,6 +49,7 @@ import {
 import { ausUnterlagenSparte, ersteSeiteText, sparteVorab } from "@/lib/policen/auslesen/sparte";
 import { plausibel } from "@/lib/policen/auslesen/plausibel";
 import { kiAbgelehnt } from "@/lib/policen/ohne-ki";
+import { awsWiderspruchAm } from "@/lib/datennutzung-sperre";
 import { heuteBerlin, KUENDIGUNG_SPARTEN, kuendigungsfenster, zusammenfassung, type Zusammenfassung } from "@/lib/policen/auslesen/zusammenfassung";
 import type { DokumentTyp } from "@/lib/policen/auslesen/anbieter/typ";
 
@@ -87,12 +90,20 @@ export async function kiEinwilligung(leadId: string): Promise<{ gesundheit: bool
   return textVersionKi(r.textVersion);
 }
 
-/** ohne_ki = der Kunde hat das Auslesen abgelehnt (Stichwort „ohne KI“, A9). */
-export type Sperre = "aus" | "kunde" | "pause" | "einwilligung" | "ohne_ki";
+/**
+ * ohne_ki = der Kunde hat das Auslesen abgelehnt (Stichwort „ohne KI“, A9). widerspruch = der Vermittler hat Amazon Web
+ * Services widersprochen (Einstellungen → KI-Hilfe und Anzeigenlernen): für sein Konto wird nichts ausgelesen.
+ */
+export type Sperre = "aus" | "kunde" | "pause" | "einwilligung" | "ohne_ki" | "widerspruch";
 
-/** Darf für diesen Lead überhaupt ausgelesen werden? null = ja, sonst der Grund („ohne KI“ geht allen vor). */
+/**
+ * Darf für diesen Lead überhaupt ausgelesen werden? null = ja, sonst der Grund („ohne KI“ geht allen vor, danach der
+ * Widerspruch des Vermittlers: beides sagt dem Vermittler mehr als „gerade nicht verfügbar“).
+ */
 export async function sperreFuer(customerId: string, leadId: string): Promise<Sperre | null> {
   if (await kiAbgelehnt(leadId).catch(() => true)) return "ohne_ki";
+  // Wirft bei einem Datenbankfehler: dann wird nicht ausgelesen (kein Aufruf beim Anbieter)
+  if (await awsWiderspruchAm(customerId)) return "widerspruch";
   if (!auslesenAn()) return "aus";
   // Ohne privaten Policen-Bucket ist Policen per WhatsApp aus, dann auch das Auslesen
   const { ablageBereit } = await import("@/lib/policen/ablage");
@@ -317,6 +328,8 @@ export type OffeneUnterlage = { documentId: string; auszugId: string | null; tit
 export type Vergleich = {
   an: boolean;
   sperre: Sperre | null;
+  /** Sperre „widerspruch“: Zeitpunkt des Widerspruchs (für den Hinweis mit Datum), sonst null */
+  widerspruchAm: string | null;
   vertraege: VertragKarte[];
   offen: OffeneUnterlage[];
   zusammenfassung: Zusammenfassung;
@@ -395,6 +408,7 @@ export async function ladeVergleich(leadId: string, customerId: string, now = ne
   return {
     an: auslesenAn(),
     sperre,
+    widerspruchAm: sperre === "widerspruch" ? ((await awsWiderspruchAm(customerId))?.toISOString() ?? null) : null,
     vertraege,
     offen,
     zusammenfassung: zusammenfassung(

@@ -71,6 +71,17 @@ describe("Zustände mit Unterlagen, aber ohne ausgelesene Verträge", () => {
       expect(unterlagenAufgeklappt(s, 1)).toBe(true);
     }
   });
+  it("Vermittler hat Amazon Web Services widersprochen: ruhiger Hinweis mit Datum und nächstem Schritt, Unterlagen bleiben zu öffnen", () => {
+    const v = ein({ sperre: "widerspruch", widerspruchAm: "2026-11-24T10:00:00Z", offen: [doc("d1", "nicht_ausgelesen")] });
+    const s = spickzettel(v, AUS)!;
+    expect(s).toMatchObject({ zustand: "gesperrt", sparteWahl: null, aktion: { art: "unterlagen", text: "Unterlagen ansehen" } });
+    expect(s.text).toBe("Automatisches Auslesen ist für Ihr Konto abgeschaltet (Widerspruch vom 24.11.2026). In den Einstellungen können Sie das ändern.");
+    // Mitarbeiter kommen nicht an die Einstellung
+    expect(spickzettel(v, { ...AUS, inhaber: false })!.text).toBe("Automatisches Auslesen ist für Ihr Konto abgeschaltet (Widerspruch vom 24.11.2026). Ihr Inhaber kann das in den Einstellungen ändern.");
+    expect(unterlagenAufgeklappt(s, 1)).toBe(true);
+    // Ohne Datum (sollte nicht vorkommen): der Satz ohne Datum aus der Vertragsseite
+    expect(spickzettel(ein({ sperre: "widerspruch", offen: [doc("d1", "nicht_ausgelesen")] }), AUS)!.text).toBe(SPERRE_TEXT.widerspruch);
+  });
   it("Sperre geht der Sparten-Wahl vor (keine Chips ohne Erlaubnis)", () => {
     expect(spickzettel(ein({ sperre: "einwilligung", offen: [doc("d1", "sparte_offen")] }), AUS)?.sparteWahl).toBeNull();
   });
