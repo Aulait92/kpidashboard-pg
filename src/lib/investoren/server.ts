@@ -28,6 +28,8 @@ export type InvestorenDaten = {
   luecken: Luecke[];
   /** KI-Dienste je Monat aus Bank & Karten (netto, in den Software-Kosten enthalten) */
   kiJeMonat: { month: string; ki: number }[];
+  /** Kosten je Monat und Zweck (netto), für die Liquiditätsplanung in der Diagnose */
+  kostenJeMonat: MonthCosts[];
 };
 
 const DAY = 86_400_000;
@@ -60,6 +62,8 @@ export async function loadInvestoren(now = new Date(), sicht: Sicht = "kern"): P
     pplPilot: { from: FIRST_MONTH, to: settings.pplPilotEnd },
     luecken: await datenluecken(k, costs, now),
     kiJeMonat: costs.map((c) => ({ month: c.month, ki: c.ki ?? 0 })),
+    // Für die Liquiditätsplanung (Diagnose q=investoren): Kosten je Monat und Zweck (netto)
+    kostenJeMonat: costs,
   };
 }
 

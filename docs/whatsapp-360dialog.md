@@ -173,7 +173,7 @@ Stand 16.11.2026:
   `<Phone-Number-ID>/whatsapp_business_profile?fields=about` (die Testnummer der App braucht eine Zahlungsmethode
   zum Senden; ein lesender Aufruf reicht). Data handling: Dienstleister 360dialog (DE), Railway (NL/US),
   Anthropic (US), alle „IT solutions and services“.
-- Offen: App Review abschicken (sobald Meta die Testaufrufe verbucht, bis 24 h), nach Freigabe App unter
+- App Review eingereicht, Stand 23.11.2026 „Review in progress“ (Meta: meist bis 20 Tage). Nach Freigabe App unter
   **Publish** auf Live stellen (sonst bricht Embedded Signup ab), Partner Solution muss „Active“ zeigen.
 - 17.11.2026: Ungenutzte Testnummer +1 618 202 4132 (360dialog-Channel JGeqqrCH, Client „Ole Agentur“/test2,
   49 €/Monat) gekündigt, um bis zur Tech-Provider-Freigabe einen Platz freizumachen. Verbunden bleiben

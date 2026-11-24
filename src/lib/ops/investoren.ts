@@ -30,6 +30,9 @@ export async function investorenDiagnose(params: URLSearchParams) {
       stroeme: k.stroeme,
     },
     kiKostenJeMonat: Object.fromEntries(d.kiJeMonat.map((c) => [c.month, c.ki])),
+    // Verlauf je Monat (netto, laufender Monat hochgerechnet), nur Summen ohne Namen; für die Liquiditätsplanung
+    umsatzJeMonat: k.totals,
+    kostenJeMonat: d.kostenJeMonat,
     gegenprobe: { stimmt: abgleich.every((a) => a.gleich), abweichungen: abgleich.filter((a) => !a.gleich), alle: abgleich },
   };
 }
