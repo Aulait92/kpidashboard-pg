@@ -201,6 +201,10 @@ const EMPFAENGER_TEXT: Record<AuskunftAkte["weitereEmpfaenger"][number], string>
   whatsapp: "360dialog (WhatsApp-Nachrichten über unsere Support-Nummer)",
 };
 
+/** Platzhalter für die Herkunft, die Ole vor dem Senden ersetzen muss (rechtsVorlageSenden prüft das). */
+export const HERKUNFT_PLATZHALTER = "[HERKUNFT ERGÄNZEN: konkrete Quelle, z. B. Website bzw. Verzeichnis mit Adresse und Abrufdatum, oder Anbieter der Liste]";
+export const hatPlatzhalter = (text: string) => /\[[A-ZÄÖÜ ]{6,}ERGÄNZEN:/.test(text);
+
 /** Herkunft in einem Satz: Quelle, Quell-URL, Abrufdatum. */
 export function herkunftSatz(h: AuskunftAkte["herkunft"]): string {
   if (h.art === "öffentliche Vermittlerliste") {
@@ -215,8 +219,12 @@ export function herkunftSatz(h: AuskunftAkte["herkunft"]): string {
   }
   const seit = iso(h.angelegt);
   const notizen = (h.verlauf ?? []).map((v) => v.notiz?.trim()).filter(Boolean);
-  const art = h.art.startsWith("Instantly") ? "Adressliste, übernommen in unser Versandsystem (Instantly)" : h.art === "laut Verlauf" ? "Import" : h.art;
-  return `Ihre Daten sind bei uns${seit ? ` seit ${seit}` : ""} gespeichert. Herkunft laut unseren Unterlagen: ${art}${notizen.length ? ` (${notizen.join("; ")})` : ""}.`;
+  // Ohne belegte Quelle (z. B. direkt in Instantly hochgeladen): deutlicher Platzhalter, Senden ist gesperrt, bis Ole die
+  // konkrete Quelle einträgt (Art. 15 Abs. 1 lit. g verlangt „alle verfügbaren Informationen über die Herkunft“)
+  if (h.art.startsWith("Instantly") || h.art === "laut Verlauf") {
+    return `Ihre Daten stammen aus ${HERKUNFT_PLATZHALTER}. Wir haben sie für den Versand in unser E-Mail-System (Instantly) übernommen${seit ? `; in unserer Anwendung sind sie seit ${seit} gespeichert` : ""}.`;
+  }
+  return `Ihre Daten sind bei uns${seit ? ` seit ${seit}` : ""} gespeichert. Herkunft laut unseren Unterlagen: ${h.art}${notizen.length ? ` (${notizen.join("; ")})` : ""}.`;
 }
 
 /** Herkunft mit Quelle bzw. Quell-URL und Abrufdatum? Sonst muss Ole sie vor dem Senden ergänzen (Art. 15 Abs. 1 g). */
@@ -237,6 +245,8 @@ export function vorlageAuskunft(anrede: string, akte: AuskunftAkte): Vorlage {
   const empfaenger = [
     "- Instantly (Versand unserer E-Mails), Anbieter in den USA; die Übermittlung erfolgt auf Grundlage von Standardvertragsklauseln der EU-Kommission",
     "- Railway (Betrieb unserer Anwendung und Datenbank, Speicherort in der EU)",
+    // Vertrieb nutzt Claude direkt bei Anthropic (lib/kampagnen/llm.ts), nicht über Bedrock in der EU (Ole, 24.11.2026)
+    "- Anthropic (KI-gestützte Auswertung Ihrer Antworten an uns, z. B. Erkennen von Abmeldewünschen), Anbieter in den USA; die Übermittlung erfolgt auf Grundlage von Standardvertragsklauseln der EU-Kommission",
     ...akte.weitereEmpfaenger.map((e) => `- ${EMPFAENGER_TEXT[e]}`),
   ];
   const text = [
@@ -247,7 +257,8 @@ export function vorlageAuskunft(anrede: string, akte: AuskunftAkte): Vorlage {
     "3. Zweck\nGeschäftliche Ansprache für unsere eigene Dienstleistung (Gewinnung von Kunden für unsere Leistungen für Versicherungsvermittler).",
     "4. Rechtsgrundlage\nArt. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der geschäftlichen Ansprache).",
     `5. Empfänger\n${empfaenger.join("\n")}`,
-    "6. Speicherdauer\nWir speichern die Daten, bis Sie widersprechen oder bis sie nach unserem Löschkonzept gelöscht werden. Nach einem Widerspruch oder einer Löschung bleibt dauerhaft nur ein Sperrvermerk, damit Sie keine Werbung mehr von uns erhalten.",
+    // Zusage ohne Unterlassungserklärung und Löschung auf Wunsch (Ole, 24.11.2026; Rechtsprüfung docs/recht/)
+    `6. Werbung und Speicherdauer\nWir werden Sie nicht mehr zu Werbezwecken kontaktieren; Ihre Adresse ist ${akte.gesperrtSeit ? `seit ${iso(akte.gesperrtSeit)} ` : ""}gesperrt. Auf Ihren Wunsch löschen wir Ihre Daten. Dauerhaft bleibt dann nur ein Sperrvermerk in nicht lesbarer Form (ein Prüfwert Ihrer E-Mail-Adresse), damit Sie auch künftig keine Werbung von uns erhalten.`,
     "7. Ihre Rechte\nSie können Berichtigung (Art. 16), Löschung (Art. 17) und Einschränkung der Verarbeitung (Art. 18) verlangen und der Verarbeitung widersprechen (Art. 21 DSGVO). Außerdem können Sie sich bei einer Datenschutz-Aufsichtsbehörde beschweren (Art. 77 DSGVO). Eine automatisierte Entscheidungsfindung findet nicht statt.",
     `8. Verantwortlicher\n${PROVIDER.name}, ${PROVIDER.street}, ${PROVIDER.city}, ${PROVIDER.email}\nWir haben keinen Datenschutzbeauftragten bestellt. Ansprechpartner: ${PROVIDER.manager}`,
     GRUSS,

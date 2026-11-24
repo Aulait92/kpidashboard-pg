@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { geloeschterKontaktId } from "@/lib/vertrieb/sperrliste";
 import { dsgvoAusAntwort, SPERR_GRUND_LABEL, istSperrGrund } from "@/lib/vertrieb/nie-kontaktieren";
-import { STAGE_LABEL } from "@/lib/vertrieb/crm";
+import { LOSS_LABEL, STAGE_LABEL } from "@/lib/vertrieb/crm";
 
 /** Gespeicherte Felder mit Bezeichnung (Reihenfolge der Ausgabe). Technische Felder (IDs, Zähler, Prüfzeitpunkte) fehlen. */
 const FELDER: [string, string][] = [
@@ -20,7 +20,7 @@ const FELDER: [string, string][] = [
   ["agencyType", "Agenturtyp"], ["teamSize", "Teamgröße"], ["openingHours", "Öffnungszeiten"], ["ratingValue", "Google-Bewertung"], ["ratingCount", "Anzahl Google-Bewertungen"],
   ["googleMapsUrl", "Google-Maps-Eintrag"], ["businessStatus", "Google-Geschäftsstatus"],
   ["facebookUrl", "Facebook"], ["instagramUrl", "Instagram"], ["xingUrl", "Xing"], ["linkedinUrl", "LinkedIn"],
-  ["linkedinStatus", "LinkedIn-Status"], ["stage", "Vertriebsstufe"], ["lossReason", "Absagegrund"], ["competitor", "Wettbewerber"],
+  ["linkedinStatus", "LinkedIn-Status"], ["stage", "Status bei uns"], ["lossReason", "Grund"], ["competitor", "Wettbewerber"],
   ["lastContactAt", "letzter Kontakt"], ["legacyStatus", "Status aus der alten Anrufliste"], ["products", "Produkte"], ["createdAt", "angelegt am"],
 ];
 
@@ -115,7 +115,8 @@ export async function vertriebAuskunftDiagnose(params: URLSearchParams) {
   for (const [f, label] of FELDER) {
     const v = rec[f];
     if (v == null || v === "" || (Array.isArray(v) && !v.length)) continue;
-    felder[label] = v instanceof Date ? tag(v) : f === "stage" ? STAGE_LABEL[v as keyof typeof STAGE_LABEL] : v;
+    // Klartext statt interner Kürzel (Ole, 24.11.2026: „KEIN_INTERESSE“ stand so in der Auskunft)
+    felder[label] = v instanceof Date ? tag(v) : f === "stage" ? STAGE_LABEL[v as keyof typeof STAGE_LABEL] : f === "lossReason" ? (LOSS_LABEL[v as keyof typeof LOSS_LABEL] ?? v) : v;
   }
   if (c.phones.length) felder["weitere Telefonnummern"] = c.phones.map((p) => p.phone);
 
