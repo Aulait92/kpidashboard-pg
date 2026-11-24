@@ -91,7 +91,10 @@ const KANZLEI_VERB =
 export const ABMAHNUNG: RegExp[] = [
   /\babmahn\w*/,
   /\bunterlassungs-?erklärung\w*/, /\bstrafbewehrt\w*/, /\bvertragsstrafe\w*/, /\bunterlassungsanspruch\w*/,
-  /\buwg\b/,
+  // „§ 7 UWG“ allein ist eine Rüge, keine Abmahnung (Ole, 24.11.2026: „bisher keine echte Abmahnung, nur Drohungen“):
+  // Abmahnung nur bei echter Eskalation (Anwalt, Kanzlei, Unterlassungserklärung, Kosten, Schadensersatz, Aufsicht) oder
+  // wenn der Absender selbst abmahnt („ich mahne Sie hiermit ab“)
+  /\bmahne\w* (\S+ ){0,3}?ab\b/,
   /\bschadens?ersatz\w*/, /\bart(ikel|\.)?\s?82\b/,
   /\blandesdatenschutz\w*/, /\bdatenschutzbehörde\w*/, /\blandesbeauftragte\w* für (den )?datenschutz/, /\bbeschwerde (bei|an) (der|die|den) (\S+ )?(aufsicht|datenschutz|behörde)/,
   /\banwaltlich\w*/, /\banwaltskosten\b/, /\brechtliche schritte\b/, /\bnamens und in vollmacht\b/,

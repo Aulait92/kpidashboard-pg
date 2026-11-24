@@ -585,6 +585,8 @@ export async function restartSilentSequence(leadId: string, now = new Date()) {
   if (!(await enabledFor(lead.customerId))) return null;
   const upcoming = await prisma.appointment.count({ where: { leadId, status: "booked", startsAt: { gt: now } } });
   if (upcoming > 0) return null;
+  // Chat wartet auf den Vermittler (Übergabe, falsche Nummer …): kein neues „Chat ruht“ (Ole, 24.11.2026)
+  if (await prisma.conversation.count({ where: { leadId, needsAttention: true } })) return null;
   const running = await prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true } });
   if (running.some((r) => r.kind !== "silent" && !istBegleitAbfolge(r.kind))) return null;
   const nextAt = new Date(now.getTime() + SEQUENCES.silent.steps[0].day * DAY);
@@ -800,10 +802,13 @@ export async function stopReasonFor(seq: { leadId: string; customerId: string; s
     const conv = await prisma.conversation.findFirst({
       where: { customerId: seq.customerId, OR: [{ leadId: seq.leadId }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] },
       orderBy: { lastMessageAt: "desc" },
-      select: { id: true, botActive: true, optedOutAt: true },
+      select: { id: true, botActive: true, optedOutAt: true, needsAttention: true },
     });
     if (conv?.optedOutAt) return "Abgemeldet („Stopp“)";
     if (conv && !conv.botActive) return "Assistent pausiert";
+    // An den Vermittler übergeben bzw. „Wartet auf Sie“ (Ole, 24.11.2026: falsche Nummer, Assistent sagte „wir melden uns
+    // nicht weiter“, 2 Std. später kam trotzdem „kurze Nachfrage“): kein Nachfassen, bis der Vermittler den Chat erledigt
+    if (conv?.needsAttention) return "Wartet auf den Vermittler";
     if (conv) {
       const human = await prisma.message.count({
         where: { conversationId: conv.id, direction: "outbound", createdAt: { gt: seq.startedAt }, NOT: { sentBy: { in: ["bot", "system"] } } },

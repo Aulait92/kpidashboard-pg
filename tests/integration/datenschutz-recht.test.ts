@@ -20,7 +20,7 @@ import { nieKontaktierenAufheben, vorUploadPruefen } from "@/lib/vertrieb/nie-ko
 import { planFollowup, sendFollowupStep } from "@/lib/vertrieb/followup";
 import { importContactsCsv, importVermittlerListe } from "@/lib/vertrieb/import-contacts";
 import { instantlyPortion } from "@/lib/vertrieb/instantly-portion";
-import { rechtsFaelle, rechtsFaelleVon, rechtsVorlageEntwurf, rechtsVorlageSenden, antwortProtokollieren } from "@/lib/vertrieb/datenschutz-recht-server";
+import { rechtsFaelle, rechtsFaelleVon, rechtsVorlageEntwurf, rechtsVorlageSenden, antwortProtokollieren, kartenFaelle } from "@/lib/vertrieb/datenschutz-recht-server";
 import { vertriebArt17Loeschen } from "@/lib/vertrieb/art17";
 import { requireTestDb } from "./db";
 
@@ -147,6 +147,38 @@ describe("Datenschutz und Recht: Erkennen und Fall anlegen", () => {
     const danach = await prisma.salesTask.findUniqueOrThrow({ where: { id: aufgabe!.id } });
     expect(danach.doneAt).not.toBeNull(); // Aufgabe mitgeschlossen, nicht nur der Fall
     expect(await prisma.salesTask.count({ where: { contactId: c.id, doneAt: null, title: { startsWith: "Abmahnung" } } })).toBe(0);
+  });
+
+  it("Abmahnung mit Auskunftsverlangen: zwei Fälle (Abmahnung und Auskunft) mit eigener Aufgabe (Ole, 24.11.2026)", async () => {
+    const c = await makeContact(`kontakt@${dom("abmahn-auskunft")}`);
+    const nach = await antwort(c.id, "Ich habe Ihre Mail an meine Kanzlei weitergeleitet. Teilen Sie mir gemäß Art. 15 DSGVO mit, woher Sie meine Daten haben.");
+    const arten = (await rechtsFaelleVon(c.id)).map((f) => f.art).sort();
+    expect(arten).toEqual(["abmahnung", "auskunft"]);
+    expect(nach.emails[0].rechtsArt).toBe("abmahnung");
+    const titel = (await prisma.salesTask.findMany({ where: { contactId: c.id, doneAt: null } })).map((t) => t.title);
+    expect(titel.some((t) => t.startsWith("Abmahnung bzw. rechtliche Drohung"))).toBe(true);
+    expect(titel.some((t) => t.startsWith("Auskunft nach Art. 15"))).toBe(true);
+    // Abmahnung erledigt: die Auskunft bleibt offen (eigene Pflicht)
+    const abm = (await rechtsFaelleVon(c.id)).find((f) => f.art === "abmahnung")!;
+    await antwortProtokollieren(abm.fallId, { at: new Date(), wer: "admin@growth.test", detail: "manuell" });
+    const offen = (await prisma.salesTask.findMany({ where: { contactId: c.id, doneAt: null } })).map((t) => t.title);
+    expect(offen.some((t) => t.startsWith("Auskunft nach Art. 15"))).toBe(true);
+    expect(offen.some((t) => t.startsWith("Abmahnung"))).toBe(false);
+  });
+
+  it("ältere Abmahnung mit offener Auskunftsaufgabe: Karte bietet die Auskunftsvorlage an", async () => {
+    const c = await makeContact(`buero@${dom("alt-abmahn")}`);
+    const { rechtsFallAnlegen } = await import("@/lib/vertrieb/datenschutz-recht-server");
+    await rechtsFallAnlegen(c.id, { art: "abmahnung", grund: "widerspruch", eingang: new Date("2026-11-23T11:06:00Z"), quelle: "antwort" });
+    expect((await kartenFaelle(c.id))[0].auskunftOffen).toBe(false);
+    await prisma.salesTask.create({ data: { contactId: c.id, title: "Auskunft nach Art. 15 beantworten, Frist 30.11.2026", type: "SONSTIGES", dueAt: new Date() } });
+    expect((await kartenFaelle(c.id))[0]).toMatchObject({ art: "abmahnung", auskunftOffen: true });
+  });
+
+  it("§ 7 UWG ohne Anwalt mit Auskunftsverlangen: nur Fall „Auskunft“, keine Abmahnung", async () => {
+    const c = await makeContact(`info@${dom("uwg-ruege")}`);
+    await antwort(c.id, "Das ist unzulässige Werbung nach § 7 UWG. Teilen Sie mir gemäß Art. 15 DSGVO mit, aus welcher Quelle meine Daten stammen.");
+    expect((await rechtsFaelleVon(c.id)).map((f) => f.art)).toEqual(["auskunft"]);
   });
 
   it("Abmahnung mit Löschverlangen: keine automatische Löschung, nur Sperre, Aufgabe mit Hinweis (Ole, 19.11.2026)", async () => {

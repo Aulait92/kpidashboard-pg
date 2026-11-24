@@ -129,7 +129,8 @@ export async function rechtsFallAnlegen(contactId: string, opts: FallOpts): Prom
   if (opts.emailId) await prisma.salesEmail.update({ where: { id: opts.emailId }, data: { rechtsArt: opts.art } }).catch((e) => reportError(e, "recht-einordnung"));
 
   // Gleicher Eingang schon erfasst (Webhook und Abgleich) bzw. offener Fall gleicher Art
-  const schon = await prisma.datenschutzFallEreignis.findFirst({ where: { contactId, ereignis: "eingang", eingangAt: opts.eingang }, select: { fallId: true } });
+  // Je Art: eine Mail kann Abmahnung UND Auskunft enthalten (Ole, 24.11.2026), dann zwei Fälle mit eigener Frist
+  const schon = await prisma.datenschutzFallEreignis.findFirst({ where: { contactId, ereignis: "eingang", eingangAt: opts.eingang, art: opts.art }, select: { fallId: true } });
   let fallId = schon?.fallId ?? null;
   if (!fallId && opts.art !== "abmahnung") {
     const offen = await prisma.datenschutzFallEreignis.findMany({ where: { contactId, ereignis: "eingang", art: opts.art }, select: { fallId: true } });
@@ -298,9 +299,23 @@ export async function rechtsFaelleVon(contactId: string, now = new Date()): Prom
   return zuFaellen(await prisma.datenschutzFallEreignis.findMany({ where: { contactId } }), now);
 }
 
-/** Fälle für die Karte in der Kontaktakte (Datum als Text, Berliner Zeit). */
-export function fallZeilen(faelle: RechtsFall[]) {
+/** Zeilen der Karte „Datenschutz und Recht“ eines Kontakts (mit offener Auskunftsaufgabe, siehe fallZeilen). */
+export async function kartenFaelle(contactId: string, now = new Date()) {
+  const [faelle, auskunft] = await Promise.all([
+    rechtsFaelleVon(contactId, now),
+    prisma.salesTask.count({ where: { contactId, doneAt: null, title: { startsWith: RECHT_AUFGABE.auskunft } } }),
+  ]);
+  return fallZeilen(faelle, { auskunftOffen: auskunft > 0 });
+}
+
+/**
+ * Fälle für die Karte in der Kontaktakte (Datum als Text, Berliner Zeit). auskunftOffen: offene Auskunftsaufgabe ohne
+ * eigenen Auskunfts-Fall (ältere Abmahnungen mit Art.-15-Verlangen): die Abmahnung bietet dann auch die Auskunftsvorlage.
+ */
+export function fallZeilen(faelle: RechtsFall[], opts: { auskunftOffen?: boolean } = {}) {
+  const ohneAuskunftsFall = !faelle.some((f) => f.art === "auskunft" && f.status !== "beantwortet");
   return faelle.map((f) => ({
+    auskunftOffen: f.art === "abmahnung" && !!opts.auskunftOffen && ohneAuskunftsFall,
     fallId: f.fallId,
     art: f.art,
     artLabel: f.artLabel,
@@ -411,7 +426,9 @@ export async function rechtsVorlageSenden(
       .create({ data: { contactId, type: "EMAIL", outcome: "Datenschutz-Antwort gesendet", note: `${betreff}\n\n${text}`, occurredAt: now } })
       .catch((e) => reportError(e, "recht-vorlage-speichern"));
   }
-  // Die zugehörige Aufgabe schließt antwortProtokollieren (nach der Fall-Art) schon mit.
+  // Die Aufgabe der Fall-Art schließt antwortProtokollieren; zusätzlich die der gesendeten Vorlage (z. B. Auskunft auf
+  // einem Fall „Abmahnung“, der vor dem 24.11.2026 ohne eigenen Auskunfts-Fall angelegt wurde)
+  await prisma.salesTask.updateMany({ where: { contactId, doneAt: null, title: { startsWith: RECHT_AUFGABE[opts.vorlage] } }, data: { doneAt: now } });
   await audit("vertrieb.datenschutz_antwort", { entity: "SalesContact", entityId: contactId, details: { fallId: opts.fallId, vorlage: opts.vorlage } });
   return { ok: true };
 }

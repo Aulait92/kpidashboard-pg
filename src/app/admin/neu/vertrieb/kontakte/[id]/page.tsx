@@ -7,7 +7,7 @@ import { EintragenKnopf } from "@/components/admin-neu/vertrieb/eintragen-knopf"
 import { ContactMore, GewonnenVerlorenKnoepfe, StagePicker } from "@/components/vertrieb/contact-controls";
 import { DuplicateHint } from "@/components/vertrieb/contact-merge";
 import { DatenschutzRechtKarte } from "@/components/vertrieb/datenschutz-recht";
-import { fallZeilen, rechtsFaelleVon } from "@/lib/vertrieb/datenschutz-recht-server";
+import { kartenFaelle } from "@/lib/vertrieb/datenschutz-recht-server";
 import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card";
 import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
 import { TaskForm } from "@/components/vertrieb/task-form";
@@ -80,7 +80,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   const aufgaben = a.open.filter((t) => t !== nachfrage);
   const feedback = a.onboarding ? await prisma.customerFeedback.findMany({ where: { customerId: a.onboarding.customerId }, orderBy: { sentAt: "asc" } }) : [];
   // Datenschutz und Recht (Ole, 19.11.2026): Fälle mit Frist und Antwortvorlagen
-  const rechtsFaelle = fallZeilen(await rechtsFaelleVon(c.id));
+  const rechtsFaelle = await kartenFaelle(c.id);
   // Nächste automatische Nachricht an diesen Kontakt (lib/vertrieb/geplante-nachrichten.ts), Liste unter Verkaufen → Geplante Nachrichten
   const jetzt = new Date();
   const naechsteNachricht = (await ladeGeplanteNachrichten({ now: jetzt, contactId: c.id }).catch(() => []))[0] ?? null;

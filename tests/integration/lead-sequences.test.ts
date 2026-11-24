@@ -242,6 +242,22 @@ describe("Nachfass-Abfolgen", () => {
     expect(done.stopReason).toBe("Abgeschlossen");
   });
 
+  it("„Chat ruht“ nicht, solange der Chat auf den Vermittler wartet (Übergabe, falsche Nummer; Ole, 24.11.2026)", async () => {
+    const HOUR = 60 * 60 * 1000;
+    const lead = await newLead();
+    const seq = await restartSilentSequence(lead.id, T0);
+    expect(seq).not.toBeNull();
+    // Assistent übergibt („falsche Nummer, wir melden uns nicht weiter“): Chat wartet auf den Vermittler
+    const conv = await prisma.conversation.create({ data: { customerId, contactPhone: lead.phone!, leadId: lead.id, needsAttention: true, lastMessageAt: T0 } });
+    const mine = () => send.mock.calls.filter((c) => (c[0] as { leadId?: string }).leadId === lead.id);
+    await runSequences(new Date(T0.getTime() + 2 * HOUR));
+    expect(mine()).toHaveLength(0);
+    expect((await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } })).stopReason).toBe("Wartet auf den Vermittler");
+    // weitere Antwort des Assistenten („Gern geschehen“) startet nichts neu
+    expect(await restartSilentSequence(lead.id, new Date(T0.getTime() + 3 * HOUR))).toBeNull();
+    await prisma.conversation.delete({ where: { id: conv.id } });
+  });
+
   it("„Chat ruht“: Schritt 1 übersprungen, Schritt 3 bei geschlossenem Fenster als Vorlage (Ole, 22.11.2026)", async () => {
     const HOUR = 60 * 60 * 1000;
     const lead = await newLead();

@@ -36,6 +36,7 @@ import { verlustKarte } from "@/lib/verlustgruende-server";
 import { LOST_STATUSES } from "@/lib/lead-lost";
 import { CLOSED_STATUS, displayProduct } from "@/lib/products";
 import { loadOffeneChancen } from "@/lib/offene-chancen-server";
+import { ladeWerbeAnteil } from "@/lib/werbebudget-produkt";
 import { chancenAufteilung } from "@/lib/offene-chancen";
 import { antwort, euro, euroCent, euroMitVorzeichen, rechnetSich } from "@/lib/wachstum";
 import { RechnetSich, type RechnungZeile } from "@/components/wachstum/rechnet-sich";
@@ -253,8 +254,18 @@ async function BuyerDashboardBody({
   const anteilVon = (teil: Kpis, ganz: Kpis) => (ganz.nettoLeads > 0 ? teil.nettoLeads / ganz.nettoLeads : 0);
   const anteil = produkt ? anteilVon(k, alleK) : undefined;
   const anteilPrev = produkt ? anteilVon(p, alleP) : undefined;
-  const cost = spend ? spend.total * (anteil ?? 1) : Number(k.revenue);
-  const costPrev = spendPrev ? spendPrev.total * (anteilPrev ?? 1) : Number(p.revenue);
+  // Werbebudget je Produkt aus den Kampagnen des Produkts (Ole, 24.11.2026, lib/werbebudget-produkt.ts); ohne
+  // Kampagnenkosten anteilig nach Leads. Betreuung (Retainer) bleibt anteilig nach Leads.
+  const [werbe, werbePrev] = produkt && spend
+    ? await Promise.all([
+        ladeWerbeAnteil(customerId, range, produkt, anteil ?? 0).catch(() => null),
+        ladeWerbeAnteil(customerId, prev, produkt, anteilPrev ?? 0).catch(() => null),
+      ])
+    : [null, null];
+  const teil = (s: { adSpend: number; retainer: number }, werbeA: number | null, leadA: number | undefined) =>
+    leadA === undefined ? s.adSpend + s.retainer : s.adSpend * (werbeA ?? leadA) + s.retainer * leadA;
+  const cost = spend ? teil(spend, werbe, anteil) : Number(k.revenue);
+  const costPrev = spendPrev ? teil(spendPrev, werbePrev, anteilPrev) : Number(p.revenue);
 
   const [cur, before, chancen, tipSignals] = await Promise.all([
     ertragForRange(customerId, data, range, now, cost, { anteil }),
@@ -366,7 +377,10 @@ async function BuyerDashboardBody({
       />
       {produktLabel && (paket || cur.agency.total !== 0) ? (
         <p className="-mt-2 text-sm text-[color:var(--muted)]" data-produkt-hinweis>
-          Nur {produktLabel}. Werbebudget und Betreuung anteilig nach Leads ({Math.round((anteil ?? 0) * 100)} %).
+          Nur {produktLabel}.{" "}
+          {paket && werbe !== null
+            ? `Werbebudget aus den Kampagnen dieses Produkts, Betreuung anteilig nach Leads (${Math.round((anteil ?? 0) * 100)} %).`
+            : `Werbebudget und Betreuung anteilig nach Leads (${Math.round((anteil ?? 0) * 100)} %).`}
         </p>
       ) : null}
 

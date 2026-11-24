@@ -21,6 +21,8 @@ export type FallZeile = {
   antwort: string | null;
   loeschung: string | null;
   status: "offen" | "ueberfaellig" | "beantwortet";
+  /** Abmahnung mit offener Auskunftsaufgabe ohne eigenen Fall: zusätzlich „Auskunft (Art. 15)“ anbieten */
+  auskunftOffen?: boolean;
 };
 
 const STATUS: Record<FallZeile["status"], { label: string; tone: "danger" | "warning" | "success" }> = {
@@ -92,9 +94,16 @@ export function DatenschutzRechtKarte({ contactId, faelle }: { contactId: string
                       {VORLAGE_LABEL[vorlage]}
                     </Button>
                   ) : (
-                    <Button variant="secondary" size="md" disabled={pending} onClick={() => confirm("Als erledigt vermerken? Nur, wenn die Prüfung abgeschlossen ist.") && vermerken(f.fallId)}>
-                      Als erledigt vermerken
-                    </Button>
+                    <>
+                      {f.auskunftOffen ? (
+                        <Button variant="secondary" size="md" disabled={pending} onClick={() => oeffnen(f.fallId, "auskunft")}>
+                          {VORLAGE_LABEL.auskunft}
+                        </Button>
+                      ) : null}
+                      <Button variant="secondary" size="md" disabled={pending} onClick={() => confirm("Als erledigt vermerken? Nur, wenn die Prüfung abgeschlossen ist.") && vermerken(f.fallId)}>
+                        Als erledigt vermerken
+                      </Button>
+                    </>
                   )}
                 </div>
               ) : null}
