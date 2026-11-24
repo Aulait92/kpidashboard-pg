@@ -115,7 +115,9 @@ export async function paketBelege(monat: string): Promise<PaketBeleg[]> {
   const von = new Date(`${monat}-01T00:00:00Z`);
   const bis = new Date(Date.UTC(von.getUTCFullYear(), von.getUTCMonth() + 1, 1));
   const rows = await prisma.beleg.findMany({
-    where: { datum: { gte: von, lt: bis }, typ: { notIn: ["STATEMENT"] } },
+    // Kontoauszüge und Kreditkartenabrechnungen gehen mit (Ole, 24.11.2026: Barclays-Abrechnung fürs Steuerbüro);
+    // die USt-Vorschau zählt sie nicht.
+    where: { datum: { gte: von, lt: bis } },
     orderBy: [{ datum: "asc" }, { firma: "asc" }],
     select: { id: true, datum: true, typ: true, quelle: true, firma: true, nummer: true, netto: true, ustSatz: true, brutto: true, waehrung: true, bankTransactionId: true, mimeType: true, dateiname: true },
   });
