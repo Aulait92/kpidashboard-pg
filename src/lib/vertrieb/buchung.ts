@@ -25,7 +25,7 @@ import { findOrCreateContact, type Invitee } from "@/lib/vertrieb/calendly";
 import { Matcher } from "@/lib/vertrieb/linkedin";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
 import { erinnerungsFenster, vorlaufOk } from "@/lib/vertrieb/termin-erinnerungen";
-import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
+import { captureFromActivity, captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
 import { anredeZeile } from "@/lib/ansprache";
 import { PROVIDER } from "@/lib/legal-texts";
 import { legalUrls } from "@/lib/offers";
@@ -447,7 +447,8 @@ async function recordCrm(contactId: string, meetingId: string, t: SalesBookingTy
     data: { contactId, title: `Termin: ${t.title}`, type: "TERMIN", dueAt: startAt, note: [joinUrl ? `Link: ${joinUrl}` : null, note].filter(Boolean).join("\n") || null },
   });
   await prisma.salesMeeting.update({ where: { id: meetingId }, data: { taskId: task.id } });
-  await prisma.salesActivity.create({ data: { contactId, type: "TERMIN", outcome, note } });
+  const activity = await prisma.salesActivity.create({ data: { contactId, type: "TERMIN", outcome, note } });
+  await captureFromActivity(contactId, activity);
   const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { stage: true } });
   if (c.stage !== "GEWONNEN" && c.stage !== "TERMIN") {
     await prisma.salesContact.update({ where: { id: contactId }, data: { stage: "TERMIN", lossReason: null } });

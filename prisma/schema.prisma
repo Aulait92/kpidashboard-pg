@@ -2062,7 +2062,7 @@ model SalesContactPhone {
   phoneDigitsRev String?
   /// MOBIL | FESTNETZ
   kind           String       @default("FESTNETZ")
-  /// BUCHUNG | CALENDLY | MAIL | FORMULAR | INSTANTLY | ZUSAMMENGEFUEHRT | HAUPT (frühere Hauptnummer) | MANUELL
+  /// BUCHUNG | CALENDLY | MAIL | FORMULAR | INSTANTLY | VERLAUF (aus dem Verlauf) | ZUSAMMENGEFUEHRT | HAUPT (frühere Hauptnummer) | MANUELL
   source         String
   /// Zeitpunkt der Quelle (Buchung, Mail), sonst Erkennungszeitpunkt
   detectedAt     DateTime     @default(now())

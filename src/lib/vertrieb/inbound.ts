@@ -8,7 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { SOURCE_LABEL } from "@/lib/vertrieb/crm";
 import { normalizeLinkedInUrl } from "@/lib/vertrieb/linkedin";
 import { scheduleAddressEnrichment } from "@/lib/vertrieb/address-enrich";
-import { captureFromLead } from "@/lib/vertrieb/kontaktdaten-server";
+import { captureFromActivity, captureFromLead } from "@/lib/vertrieb/kontaktdaten-server";
 import { reportError } from "@/lib/monitoring";
 import { meldeVertriebLead } from "@/lib/vertrieb/lead-meldung";
 
@@ -261,7 +261,7 @@ export async function handleInboundLead(
     }
     throw err;
   }
-  await prisma.salesActivity.create({
+  const activity = await prisma.salesActivity.create({
     data: {
       contactId,
       type: source === "LINKEDIN" ? "LINKEDIN" : "NOTIZ",
@@ -269,6 +269,7 @@ export async function handleInboundLead(
       note: info || null,
     },
   });
+  await captureFromActivity(contactId, activity);
   await prisma.salesTask.create({
     data: { contactId, title: opts.taskTitle ?? `Neuen ${label}-Lead anrufen`, type: "ANRUF", dueAt: new Date(), note: info.slice(0, 500) || null },
   });

@@ -9,7 +9,7 @@ import { FREEMAIL, insurerRoot, phoneE164, phoneKey, phoneKind, type PhoneKind }
 
 // ─── Quellen ────────────────────────────────────────────────────────────
 
-export type ContactDataSource = "BUCHUNG" | "CALENDLY" | "MAIL" | "FORMULAR" | "INSTANTLY" | "ZUSAMMENGEFUEHRT" | "HAUPT" | "MANUELL";
+export type ContactDataSource = "BUCHUNG" | "CALENDLY" | "MAIL" | "FORMULAR" | "INSTANTLY" | "VERLAUF" | "ZUSAMMENGEFUEHRT" | "HAUPT" | "MANUELL";
 
 const SOURCE_TEXT: Record<ContactDataSource, { phone: string; email: string }> = {
   BUCHUNG: { phone: "aus Buchung", email: "aus Buchung" },
@@ -17,6 +17,7 @@ const SOURCE_TEXT: Record<ContactDataSource, { phone: string; email: string }> =
   MAIL: { phone: "aus E-Mail-Signatur", email: "aus E-Mail" },
   FORMULAR: { phone: "aus Formular", email: "aus Formular" },
   INSTANTLY: { phone: "aus Instantly", email: "aus Instantly" },
+  VERLAUF: { phone: "aus Verlauf", email: "aus Verlauf" },
   ZUSAMMENGEFUEHRT: { phone: "aus Zusammenführen", email: "aus Zusammenführen" },
   HAUPT: { phone: "frühere Hauptnummer", email: "frühere Hauptadresse" },
   MANUELL: { phone: "von Hand", email: "von Hand" },
@@ -194,6 +195,92 @@ export function phoneKeysIn(text: string): Set<string> {
   for (const m of text.matchAll(ANY_NUMBER)) {
     const k = plausiblePhone(m[0]) ? phoneKey(m[0]) : null;
     if (k) out.add(k);
+  }
+  return out;
+}
+
+// ─── Telefonnummern aus dem Verlauf (Ole, 24.11.2026) ───────────────────
+// „hier müssen aus dem Verlauf Nummern erkannt werden, als weitere Telefonnummer hinzugefügt werden“: Nummern in
+// Einträgen des Verlaufs (Buchungsnotizen, Anrufnotizen, importierte Texte, Antworten auf Kalt-Mails). Strenger als in
+// der Signatur, weil im Verlauf auch Daten, Uhrzeiten, Kunden- und Vertragsnummern stehen:
+// - beschriftet („Telefon:“, „Mobil:“, „Telefonnummer (für SMS): …“) oder
+// - unbeschriftet nur mit Vorwahl (+49, 0049, 0…), mindestens 9 Ziffern, ohne Punkte (kein Datum) und nicht in Zeilen
+//   mit Kunden-, Vertrags- oder Bankangaben.
+// Zitierter Verlauf anderer Personen, Links und E-Mail-Adressen werden vorher entfernt.
+
+/** Beginn von zitiertem oder weitergeleitetem Text (nur eindeutige Marken; „Datum:“ o. Ä. kommt in Buchungsnotizen vor). */
+const HISTORY_QUOTE = /^\s*(>|Am .{3,120}(schrieb|wrote)|On .{3,120}wrote|-{2,}\s*(Original|Ursprüngliche|Weitergeleitete|Forwarded)|Begin forwarded message|Anfang der weitergeleiteten)/im;
+const LINK_OR_MAIL = /\b(?:https?:\/\/|www\.)\S+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+/gi;
+const HISTORY_LABEL = String.raw`(Telefon(?:nummer)?|Tel(?:\.?\s?-?\s?Nr)?|Rufnummer|Handy(?:nummer)?|Mobil(?:nummer|funk|telefon)?|Mobile|Phone|Fon|Festnetz|Büro|WhatsApp|Nummer|Durchwahl|Cell|Mob)`;
+const HISTORY_LABELLED = new RegExp(String.raw`(?:^|[\s|·•,;(])${HISTORY_LABEL}\.?(?:\s*\([^)]{0,40}\))?\s*[:.]?\s*(?:ist\s+|lautet\s+)?${NUMBER}`, "gi");
+/** Frage-Antwort-Zeile einer Buchung („Unter welcher Nummer erreichen wir Sie?: 0176 …“). */
+const PHONE_QUESTION = /telefon|handy|mobil|whatsapp|phone|rufnummer|nummer/i;
+/** Nummern, die keine Rufnummern sind. */
+const ID_WORDS = /kunden|vertrag|versicherungs|police|auftrag|vorgang|rechnung|bestell|referenz|ticket|vermittler|steuer|register|konto|mitglied|\bid\b|aktenzeichen|schein/i;
+const BARE_HISTORY = /(?<![\w+/.=#:-])(?:\+|00|0)[1-9][\d \t/()\-–]{5,19}\d(?!\d)/g;
+const DATE_IN = /\d{1,2}\.\d{1,2}\.(\d{2,4})?/;
+
+/** Text eines Verlaufseintrags ohne zitierten Verlauf, Links und E-Mail-Adressen. */
+export function historyText(text: string | null | undefined): string {
+  if (!text) return "";
+  const t = text.replace(/\r\n?/g, "\n");
+  const cut = t.search(HISTORY_QUOTE);
+  return (cut >= 0 ? t.slice(0, cut) : t).replace(LINK_OR_MAIL, " ");
+}
+
+/** Telefonnummern in einem Verlaufseintrag. `exclude`: eigene Nummern (beliebige Schreibweise). */
+export function extractHistoryPhones(text: string | null | undefined, exclude: string[] = []): FoundPhone[] {
+  const skip = new Set(exclude.map((e) => phoneKey(e)).filter((k): k is string => !!k));
+  const found = new Map<string, FoundPhone>();
+  const take = (raw: string, label: string | null, minDigits = 7) => {
+    const r = raw.trim();
+    if (DATE_IN.test(r) || r.replace(/\D/g, "").length < minDigits || !plausiblePhone(r)) return;
+    const e164 = phoneE164(r)!;
+    const key = phoneKey(e164);
+    if (!key || skip.has(key) || found.has(key)) return;
+    found.set(key, { raw: tidy(r), e164, kind: phoneKind(e164, label), label });
+  };
+  for (const full of historyText(text).split("\n")) {
+    if (SKIP_LINE.test(full) || SERVICE_LINE.test(full)) continue;
+    const line = FAX_LABEL.test(full) ? full.slice(0, full.search(FAX_LABEL)) : full;
+    // Frage und Antwort („Telefonnummer: …“, „Ihre Handynummer für Rückfragen: …“)
+    const i = line.indexOf(":");
+    if (i > 0 && PHONE_QUESTION.test(line.slice(0, i)) && !ID_WORDS.test(line.slice(0, i))) {
+      const m = line.slice(i + 1).match(new RegExp(NUMBER));
+      if (m) take(m[1], line.slice(0, i).trim());
+    }
+    for (const m of line.matchAll(HISTORY_LABELLED)) take(m[2], m[1]);
+    if (ID_WORDS.test(line)) continue;
+    for (const m of line.matchAll(BARE_HISTORY)) take(m[0], null, 9);
+  }
+  return [...found.values()];
+}
+
+/** Einträge, die keine Nummer des Kontakts enthalten: unsere eigenen Mails und Meldungen, Stufenwechsel, Abwesenheitsnotizen. */
+export function skipHistoryEntry(a: { type: string; outcome?: string | null; note?: string | null }): boolean {
+  if (a.type === "STATUS" || a.type === "EMAIL") return true;
+  return /^(Neue (Telefonnummer|E-Mail-Adresse) erkannt|Automatische Antwort|Antwort gesendet|Gesendet|Nicht erreicht|E-Mail:|Auskunft|Löschung)/i.test((a.outcome ?? "").trim());
+}
+
+/**
+ * Welche gefundenen Nummern sind neu für den Kontakt? Ohne Hauptnummer, weitere Nummern, von Hand entfernte und
+ * eigene Nummern, jede Nummer nur einmal (Schreibweise egal).
+ */
+export function newPhonesFor(
+  found: FoundPhone[],
+  known: { phone?: string | null; extras?: string[]; removed?: string[]; ownKeys?: Set<string> },
+): FoundPhone[] {
+  const seen = new Set<string>(known.ownKeys ?? []);
+  for (const p of [known.phone, ...(known.extras ?? []), ...(known.removed ?? [])]) {
+    const k = phoneKey(p);
+    if (k) seen.add(k);
+  }
+  const out: FoundPhone[] = [];
+  for (const p of found) {
+    const k = phoneKey(p.e164);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(p);
   }
   return out;
 }

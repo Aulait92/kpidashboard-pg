@@ -21,9 +21,12 @@ import {
   EMPTY_OWN,
   KIND_LABEL,
   emailDomain,
+  extractHistoryPhones,
   extractMailPhones,
+  newPhonesFor,
   ownPhones,
   phoneKeysIn,
+  skipHistoryEntry,
   sourceLabel,
   usableEmail,
   type ContactDataSource,
@@ -258,6 +261,100 @@ export async function captureFromMail(contactId: string, m: MailInput, opts: { o
   }
   for (const p of phones) n = plus(n, { emails: 0, phones: counted(await addContactPhone(contactId, p.raw, { ...o, kind: p.kind })) });
   return n;
+}
+
+// ─── Nummern aus dem Verlauf (Ole, 24.11.2026) ──────────────────────────
+
+export type HistoryEntry = { type: string; outcome?: string | null; note?: string | null; occurredAt?: Date | null };
+
+/**
+ * Telefonnummern aus einem Verlaufseintrag als weitere Nummer übernehmen (Herkunft „aus Verlauf“, Verlaufseintrag
+ * „Neue Telefonnummer erkannt“). Ohne Nummer im Text keine Datenbankabfrage. Fehler werden gemeldet, nie geworfen:
+ * Aufruf direkt nach dem Anlegen eines Eintrags (Calendly, Buchung, Anrufnotiz, Instantly-Antwort, Formular, Import).
+ */
+export async function captureFromActivity(contactId: string, a: HistoryEntry, own?: OwnContext): Promise<number> {
+  try {
+    if (skipHistoryEntry(a)) return 0;
+    const found = extractHistoryPhones([a.outcome, a.note].filter(Boolean).join("\n"), ownPhones());
+    if (!found.length) return 0;
+    const o = { source: "VERLAUF" as const, at: a.occurredAt ?? undefined, own: own ?? (await loadOwnContext()) };
+    let n = 0;
+    for (const p of found) n += counted(await addContactPhone(contactId, p.raw, { ...o, kind: p.kind }));
+    return n;
+  } catch (err) {
+    reportError(err, "kontaktdaten-verlauf");
+    return 0;
+  }
+}
+
+export type HistoryBackfillResult = {
+  contacts: number;
+  entries: number;
+  phones: number;
+  /** Beispiele (höchstens 50): Kontakt, Nummer, Art */
+  examples: { contactId: string; name: string; phone: string; kind: string }[];
+};
+
+/**
+ * Einmalig rückwirkend: alle Verlaufseinträge mit einer möglichen Telefonnummer durchgehen. `dryRun`: nur zählen und
+ * Beispiele nennen, nichts speichern. Idempotent (bekannte, entfernte und eigene Nummern werden übersprungen).
+ * Ops-Aktion `vertrieb_nummern_aus_verlauf` (lib/ops-aktionen.ts).
+ */
+export async function backfillPhonesFromHistory(opts: { dryRun?: boolean; contactIds?: string[]; batch?: number } = {}): Promise<HistoryBackfillResult> {
+  const own = await loadOwnContext(true);
+  const out: HistoryBackfillResult = { contacts: 0, entries: 0, phones: 0, examples: [] };
+  // Vorauswahl in der Datenbank: Einträge mit einer Ziffernfolge, die nach Rufnummer aussieht
+  const rows = await prisma.$queryRaw<{ contactId: string }[]>`
+    SELECT DISTINCT "contactId" FROM "SalesActivity"
+    WHERE "type"::text NOT IN ('STATUS', 'EMAIL')
+      AND (coalesce("note", '') || ' ' || coalesce("outcome", '')) ~ '([+]|00|0)[1-9][0-9 /()\\u2013-]{5,}[0-9]'
+    ORDER BY "contactId"`;
+  const filter = opts.contactIds ? new Set(opts.contactIds) : null;
+  const ids = rows.map((r) => r.contactId).filter((id) => !filter || filter.has(id));
+  const size = opts.batch ?? 100;
+  for (let i = 0; i < ids.length; i += size) {
+    const page = await prisma.salesContact.findMany({
+      where: { id: { in: ids.slice(i, i + size) } },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        detectedData: true,
+        phones: { select: { phone: true } },
+        activities: { orderBy: { occurredAt: "asc" }, select: { type: true, outcome: true, note: true, occurredAt: true } },
+      },
+    });
+    for (const c of page) {
+      out.contacts++;
+      const extras = c.phones.map((p) => p.phone);
+      for (const a of c.activities) {
+        if (skipHistoryEntry(a)) continue;
+        const found = extractHistoryPhones([a.outcome, a.note].filter(Boolean).join("\n"), ownPhones());
+        if (!found.length) continue;
+        out.entries++;
+        if (opts.dryRun) {
+          const neu = newPhonesFor(found, { phone: c.phone, extras, removed: detectedDataOf(c.detectedData).removed, ownKeys: own.phoneKeys });
+          for (const p of neu) {
+            extras.push(p.e164);
+            out.phones++;
+            if (out.examples.length < 50) out.examples.push({ contactId: c.id, name: c.name, phone: formatPhone(p.e164), kind: KIND_LABEL[p.kind] });
+          }
+        } else {
+          for (const p of found) {
+            const r = await addContactPhone(c.id, p.raw, { source: "VERLAUF", at: a.occurredAt, own, kind: p.kind }).catch((err) => {
+              reportError(err, "kontaktdaten-verlauf-rueckwirkend");
+              return "skipped" as const;
+            });
+            if (r === "main" || r === "added") {
+              out.phones++;
+              if (out.examples.length < 50) out.examples.push({ contactId: c.id, name: c.name, phone: formatPhone(p.e164), kind: KIND_LABEL[p.kind] });
+            }
+          }
+        }
+      }
+    }
+  }
+  return out;
 }
 
 // ─── Am Kontakt: Haupt setzen, entfernen ────────────────────────────────
