@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { belegeZuordnen, type AbgleichBeleg, type AbgleichUmsatz } from "@/lib/belege/abgleich";
+import { belegeZuordnen, brauchtBeleg, type AbgleichBeleg, type AbgleichUmsatz } from "@/lib/belege/abgleich";
 import { zuordnungPruefen } from "@/lib/belege/zuordnen";
 
 // Ole, 24.11.2026: gleichartige Meta-Belege, weites Fenster bei Eindeutigkeit, Zuordnung von Hand
@@ -30,8 +30,8 @@ describe("gleichartige Belege mit eigener Nummer (Meta)", () => {
 });
 
 describe("weites Fenster nur bei Eindeutigkeit", () => {
-  it("Steuerbüro: Rechnung 47 Tage vor der Zahlung", () => {
-    expect(paare([u("u1", "2026-05-13", -3430.98, "PhDr. Mueller Treuhand GmbH")], [b("b1", "2026-03-27", 3430.98, "PhDr. Müller Treuhand GmbH", "0327")])).toEqual(["u1:b1"]);
+  it("langes Zahlungsziel: Rechnung 47 Tage vor der Zahlung", () => {
+    expect(paare([u("u1", "2026-05-13", -3430.98, "Kanzlei Beispiel GmbH")], [b("b1", "2026-03-27", 3430.98, "Kanzlei Beispiel GmbH", "0327")])).toEqual(["u1:b1"]);
   });
   it("Rechnung deutlich nach der Abbuchung (Folgemonat) auch im zweiten Durchgang nie", () => {
     expect(belegeZuordnen([u("u1", "2026-01-26", -49.95, "Telekom Deutschland GmbH")], [b("b1", "2026-02-11", 49.95, "Telekom Deutschland GmbH", "36 0506")])).toEqual([]);
@@ -58,12 +58,22 @@ describe("weites Fenster nur bei Eindeutigkeit", () => {
 });
 
 describe("Zuordnung von Hand: Eingabe", () => {
-  it("1 bis 5 verschiedene Zahlungen", () => {
+  it("1 bis 20 verschiedene Zahlungen", () => {
     expect(zuordnungPruefen(["a"])).toBeNull();
     expect(zuordnungPruefen(["a", "b"])).toBeNull();
     expect(zuordnungPruefen([])).not.toBeNull();
     expect(zuordnungPruefen(["a", "a"])).not.toBeNull();
-    expect(zuordnungPruefen(["a", "b", "c", "d", "e", "f"])).not.toBeNull();
+    expect(zuordnungPruefen(Array.from({ length: 20 }, (_, i) => `u${i}`))).toBeNull();
+    expect(zuordnungPruefen(Array.from({ length: 21 }, (_, i) => `u${i}`))).not.toBeNull();
     expect(zuordnungPruefen("a")).not.toBeNull();
+  });
+});
+
+describe("Steuerbüro bucht seine Rechnungen selbst", () => {
+  it("Zahlungen an PhDr. Müller Treuhand brauchen keinen Beleg", () => {
+    expect(brauchtBeleg(u("1", "2026-11-13", -297.5, "GC RE PHDRMUELLERSTBG"))).toBe(false);
+    expect(brauchtBeleg(u("1", "2026-11-16", -160.65, "PhDr. Mueller Treuhand GmbH Steuerberatungsgesellschaft"))).toBe(false);
+    expect(brauchtBeleg(u("1", "2026-11-16", -50, "Müller Treuhand GmbH"))).toBe(false);
+    expect(brauchtBeleg(u("1", "2026-11-16", -50, "Müller Bau GmbH"))).toBe(true);
   });
 });

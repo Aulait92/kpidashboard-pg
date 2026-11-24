@@ -61,31 +61,54 @@ export async function syncBelege(): Promise<BelegLauf> {
   return { geholt: docs.length, neu, zugeordnet };
 }
 
+/** Sperre für den Abgleich (pg_advisory_xact_lock): mehrere gleichzeitige Läufe warten aufeinander. */
+const ABGLEICH_SPERRE = 815_001;
+
 /**
  * Belege den Ausgaben zuordnen (eindeutige Treffer). Automatische Zuordnungen werden jedes Mal neu berechnet, damit ein
  * später eintreffender Beleg seinen richtigen Monat bekommt; von Hand Zugeordnetes bleibt.
+ * Ole, 24.11.2026: in einer Transaktion mit Sperre. Früher wurden erst alle automatischen Zuordnungen gelöscht und dann
+ * neu gesetzt; brach ein Lauf ab (Deploy, Neustart) oder liefen mehrere Uploads gleichzeitig, fehlten danach hunderte
+ * Zuordnungen. Jetzt wird nur der Unterschied geschrieben, alles oder nichts, ein Lauf nach dem anderen.
  */
 export async function belegeAbgleichen(): Promise<number> {
   const ab = new Date(`${BELEGE_AB}T00:00:00Z`);
-  const vorher = await prisma.beleg.findMany({ where: { zuordnung: "auto" }, select: { id: true, bankTransactionId: true } });
-  await prisma.beleg.updateMany({ where: { zuordnung: "auto" }, data: { bankTransactionId: null, zuordnung: null } });
-  const [umsaetze, belege] = await Promise.all([
-    prisma.bankTransaction.findMany({
-      where: { bookingDate: { gte: new Date(ab.getTime() - 7 * 86_400_000) }, amount: { lt: 0 }, beleg: { is: null }, belegTeilVonId: null },
-      select: { id: true, bookingDate: true, amount: true, counterparty: true, purpose: true, status: true },
-    }),
-    prisma.beleg.findMany({ where: { bankTransactionId: null }, select: { id: true, typ: true, firma: true, nummer: true, datum: true, brutto: true, waehrung: true } }),
-  ]);
-  const paare = belegeZuordnen(
-    umsaetze.map((u) => ({ id: u.id, datum: tag(u.bookingDate), betrag: Number(u.amount), gegenpartei: u.counterparty, zweck: u.purpose, status: u.status })),
-    belege.map((b) => ({ id: b.id, typ: b.typ, firma: b.firma, nummer: b.nummer, datum: b.datum ? tag(b.datum) : null, brutto: b.brutto == null ? null : Number(b.brutto), waehrung: b.waehrung })),
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${ABGLEICH_SPERRE})`;
+      const [vorher, umsaetze, belege] = await Promise.all([
+        tx.beleg.findMany({ where: { zuordnung: "auto", bankTransactionId: { not: null } }, select: { id: true, bankTransactionId: true } }),
+        // Zahlungen ohne Beleg oder mit automatisch zugeordnetem (wird neu berechnet); von Hand Zugeordnetes und Teilzahlungen bleiben
+        tx.bankTransaction.findMany({
+          where: {
+            bookingDate: { gte: new Date(ab.getTime() - 7 * 86_400_000) },
+            amount: { lt: 0 },
+            belegTeilVonId: null,
+            OR: [{ beleg: { is: null } }, { beleg: { is: { zuordnung: "auto" } } }],
+          },
+          select: { id: true, bookingDate: true, amount: true, counterparty: true, purpose: true, status: true },
+        }),
+        tx.beleg.findMany({
+          where: { OR: [{ bankTransactionId: null }, { zuordnung: "auto" }] },
+          select: { id: true, typ: true, firma: true, nummer: true, datum: true, brutto: true, waehrung: true },
+        }),
+      ]);
+      const paare = belegeZuordnen(
+        umsaetze.map((u) => ({ id: u.id, datum: tag(u.bookingDate), betrag: Number(u.amount), gegenpartei: u.counterparty, zweck: u.purpose, status: u.status })),
+        belege.map((b) => ({ id: b.id, typ: b.typ, firma: b.firma, nummer: b.nummer, datum: b.datum ? tag(b.datum) : null, brutto: b.brutto == null ? null : Number(b.brutto), waehrung: b.waehrung })),
+      );
+      const alt = new Set(vorher.map((v) => `${v.id}:${v.bankTransactionId}`));
+      const neu = new Set(paare.map((p) => `${p.belegId}:${p.umsatzId}`));
+      // erst lösen, was wegfällt oder sich ändert (Eindeutigkeit der Zahlung), dann neu setzen
+      const loesen = vorher.filter((v) => !neu.has(`${v.id}:${v.bankTransactionId}`)).map((v) => v.id);
+      if (loesen.length) await tx.beleg.updateMany({ where: { id: { in: loesen } }, data: { bankTransactionId: null, zuordnung: null } });
+      const dazu = paare.filter((p) => !alt.has(`${p.belegId}:${p.umsatzId}`));
+      for (const p of dazu) await tx.beleg.update({ where: { id: p.belegId }, data: { bankTransactionId: p.umsatzId, zuordnung: "auto" } });
+      // Rückgabe: neu hinzugekommene Zuordnungen (nicht die unveränderten)
+      return dazu.length;
+    },
+    { maxWait: 120_000, timeout: 120_000 },
   );
-  for (const p of paare) {
-    await prisma.beleg.update({ where: { id: p.belegId }, data: { bankTransactionId: p.umsatzId, zuordnung: "auto" } }).catch(() => null);
-  }
-  // Rückgabe: neu hinzugekommene Zuordnungen (nicht die unveränderten)
-  const alt = new Set(vorher.map((v) => `${v.id}:${v.bankTransactionId}`));
-  return paare.filter((p) => !alt.has(`${p.belegId}:${p.umsatzId}`)).length;
 }
 
 export type OhneBelegAnbieter = { anbieter: string; anzahl: number; summe: number; letzter: string };
