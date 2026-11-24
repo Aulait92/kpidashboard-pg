@@ -144,8 +144,14 @@ export async function nachAbsageNachfassen(lead: { id: string; customerId: strin
       const zeiten = await zweiTerminvorschlaege(lead.customerId, lead.id);
       if (!zeiten) continue;
       extra = { params: [vorname, ...zeiten.labels], text: noticeText("followup", an, who, who.kontakt, zeiten.labels), buttonPayloads: zeiten.payloads, legacyParams: [vorname] };
+    } else if (zweck === "followup_nudge") {
+      // Erinnerung ab v5 (Ole, 24.11.2026): mit der Anfrage samt Sparte; die ältere freigegebene Fassung hat nur den Namen
+      const { anfrageMitSparte } = await import("@/lib/whatsapp/anfrage-sparte");
+      const l = await prisma.lead.findUnique({ where: { id: lead.id }, select: { source: true, formData: true, tkvUmfang: true } }).catch(() => null);
+      const anfrage = anfrageMitSparte(an, l ? { source: l.source, formular: l.formData, tkvUmfang: l.tkvUmfang } : null);
+      extra = { params: [vorname, anfrage], legacyParams: [vorname], text: noticeText(zweck, an, who, who.kontakt, [anfrage]), textButtons: [] };
     } else {
-      extra = { params: [vorname], text: noticeText(zweck, an, who, who.kontakt, []), ...(zweck === "followup_nudge" ? { textButtons: [] } : {}) };
+      extra = { params: [vorname], text: noticeText(zweck, an, who, who.kontakt, []) };
     }
     geprueft.push(zweck);
     try {

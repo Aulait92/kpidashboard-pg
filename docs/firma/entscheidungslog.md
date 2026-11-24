@@ -9,6 +9,13 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Erstattung nur in engen Ausnahmen (Anbieter kündigt, Erlaubnis fällt weg, dauerhaft keine Lieferung, z. B. mehr als
   3 Monate) wegen § 307 BGB. Nur neue Verträge; bestehende Bezüge und angenommene Angebote behalten die alten
   Bedingungen. Quelle: docs/recht/2026-11-24-nachlieferung-statt-erstattung.md.
+- **BESCHLOSSEN (Ole, 24.11.2026): Der KI-Hinweis steht nur in der ersten Nachricht an den Lead, nicht in jeder
+  Erinnerung; neuer Wortlaut der Erinnerung.** „Guten Tag Herr Kranert, hier ist noch einmal [Agentur]. Sollen wir mit
+  Ihrer Anfrage zur Kfz-Versicherung weitermachen? Es dauert nur ein paar Minuten.“ (Du entsprechend), Sparte aus dem
+  Produkt des Leads, ohne Sparte „mit Ihrer Anfrage“. Fragt der Lead, ob er mit einem Menschen schreibt, antwortet der
+  Assistent immer ehrlich. Umsetzung: Vorlage `followup_nudge` v5 (bis zur Freigabe bei Meta die alte v4), Fassung mit
+  Fußzeile „Digitaler KI-Assistent“ für Terminbestätigung und Erinnerung, wenn sie die erste Nachricht im Chat sind.
+  Kein Splittest (direkter Auftrag). Quelle: docs/recht/2026-11-24-ki-hinweis-erste-nachricht.md, docs/firma/ab-tests.md.
 
 ## 23.11.2026
 - **BESCHLOSSEN (Ole, 23.11.2026, Stufe A, ersetzt den vorläufigen Beschluss unten): Partner-Ltd. erhält eine virtuelle

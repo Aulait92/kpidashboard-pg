@@ -5,6 +5,10 @@
 //     Nutzen-Satz, ohne „Mensch“-Angebot und ohne „berate nicht zu Tarifen“; beides sagt der Assistent im Gespräch.
 //   - Nach einer langen Pause (über 30 Tage ohne Nachricht) wiederholt der Assistent ihn kurz.
 //   - „Mensch“, „Mitarbeiter“, „Bist du ein Bot?“ … → wahrheitsgemäße Antwort und Übergabe an den Vermittler.
+//   - Nur in der ERSTEN Nachricht, nicht in jeder Erinnerung (Ole, 24.11.2026): Die Erinnerung (followup_nudge ab v5) nennt
+//     den Assistenten nicht mehr. Ist eine andere Nachricht die erste im Chat (Terminbestätigung nach einer
+//     Online-Buchung, die Erinnerung selbst), trägt sie die Kennzeichnung als Fußzeile bzw. kursive Zeile (KI_FUSSZEILE,
+//     templates.ts KI_ERST und kiKennzeichnungOffen). Wege zur ersten Nachricht: docs/recht/2026-11-24-ki-hinweis-erste-nachricht.md.
 
 import { vermittlerBeruf } from "@/lib/vermittler-nennung";
 import { a, anredeZeile, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
@@ -82,12 +86,28 @@ export function kiHinweisSatz(an: Ansprache): string {
   return cap(KI_HINWEIS_KERN[an]);
 }
 
+/** Woran die Kennzeichnung in einer gesendeten Nachricht erkannt wird (Groß- und Kleinschreibung egal). */
+export const KI_KENNZEICHEN = "KI-Assistent";
+
 /**
  * Enthält eine ausgehende Nachricht die KI-Kennzeichnung? „digitaler KI-Assistent“ reicht (Erstanschreiben ab v5,
  * Ole 16.11.2026); alte Vorlagen mit „digitaler Assistent“ ohne „KI“ zählen nicht.
  */
 export function hasKiHinweis(body: string | null | undefined): boolean {
-  return /KI-Assistent/i.test(body ?? "");
+  return (body ?? "").toLowerCase().includes(KI_KENNZEICHEN.toLowerCase());
+}
+
+/**
+ * Kennzeichnung unter der ersten Nachricht, wenn ihr Text sie nicht selbst trägt (Ole, 24.11.2026): Fußzeile der Vorlage
+ * (Meta: höchstens 60 Zeichen, ohne Platzhalter) bzw. kursive Zeile im Freitext. Gleicher Wortlaut wie unter dem
+ * Erstanschreiben (erstanschreiben.ts ERSTINFO_FOOTER_V12; Recht: das Wort „KI“ muss bleiben). Meta lässt eine
+ * eingereichte Fußzeile nicht ändern: neuer Wortlaut heißt neue Textversion der betroffenen Vorlagen.
+ */
+export const KI_FUSSZEILE = "Digitaler KI-Assistent";
+
+/** Freitext der ersten Nachricht: kursive Zeile mit der Kennzeichnung darunter, wenn der Text sie nicht schon trägt. */
+export function mitKiZeile(text: string): string {
+  return hasKiHinweis(text) ? text : `${text}\n\n_${KI_FUSSZEILE}_`;
 }
 
 /** Enthält eine ausgehende Nachricht schon den Link zur Erstinformation? */
@@ -120,9 +140,15 @@ const NUR_WORT = /^(ein )?(echte[rnm]? )?(mensch|menschen|mitarbeiter|mitarbeite
 // Fragen nach der Natur des Gegenübers
 const FRAGEN = [
   /\b(bist du|sind sie|ist das|bin ich hier bei|schreibe ich (hier )?mit|rede ich (hier )?mit|spreche ich (hier )?mit)\s+(eine?[mnr]? )?(echte[rnm]? )?(bot|ki|k\.i\.|roboter|maschine|computer|chatbot|chat ?gpt|automat|programm|mensch|person)\b/,
-  /\b(bist du|sind sie)\s+(echt|real|ein echter mensch|eine echte person)\b/,
+  /\b(bist du|sind sie|seid ihr)\s+(echt|real|ein echter mensch|eine echte person|echte menschen|echte personen|(eine? )?(echte[rnm]?|richtige[rnm]?) mitarbeiter(in)?)\b/,
   /\b(automatische|automatisierte|generierte) (antwort|nachricht)\b.*\?/,
   /\bkünstliche intelligenz\s*\?/,
+  // Dritte Person (Ole, 24.11.2026: die Erinnerung nennt den Assistenten nicht mehr, die Frage kommt dann so):
+  // „Schreibt hier ein Mensch?“, „Antwortet da eine KI oder ein Mensch?“, „Schreibt mir gerade ein Mensch?“
+  /\b(schreibt|antwortet|chattet|tippt|spricht)\s+(mir\s+|mit mir\s+)?(hier|da|dort)\s+(mir\s+)?((gerade|jetzt|wirklich|eigentlich|überhaupt)\s+)?(eine?[mnr]?\s+)?((echte[rnm]?|richtige[rnm]?)\s+)?(bot|ki|k\.i\.|roboter|maschine|computer|chatbot|automat|programm|mensch|person|mitarbeiter(in)?)\b/,
+  /\b(schreibt|antwortet)\s+mir\s+((hier|da|gerade|jetzt|wirklich|eigentlich|überhaupt)\s+)*(eine?[mnr]?\s+)?((echte[rnm]?|richtige[rnm]?)\s+)?(bot|ki|k\.i\.|roboter|maschine|computer|chatbot|automat|programm|mensch|person|mitarbeiter(in)?)\b/,
+  // „Ist hier ein echter Mensch?“, „Ist da ein Mensch dran?“, „Sitzt da ein Mensch?“ (nicht: „Ist da eine Person mitversichert?“)
+  /\b(ist|sitzt)\s+(hier|da|dort)\s+((gerade|jetzt|wirklich|eigentlich|überhaupt)\s+)?(eine?[mnr]?\s+)?((echte[rnm]?|richtige[rnm]?)\s+)?(bot|ki|k\.i\.|roboter|maschine|computer|chatbot|mensch)(\s+(dran|am apparat|am anderen ende|am werk))?\s*[?!.]*$/,
 ];
 // Wunsch, mit einem Menschen zu sprechen
 const WUNSCH = [
@@ -161,6 +187,31 @@ export function wantsHuman(text: string | null | undefined, opts: { names?: (str
     new RegExp(`\\b${n} (soll|möge|kann|könnte|darf) mich\\b.{0,20}\\b(anrufen|zurückrufen|kontaktieren|melden)`).test(t) ||
     new RegExp(`\\b(ist|wäre) ${n} (persönlich )?(erreichbar|zu sprechen)\\b`).test(t)
   );
+}
+
+// Behauptet eine Antwort des Assistenten, ein Mensch bzw. keine KI zu sein? Nur bejahende Aussagen: „Ich bin kein
+// Mensch“ und „Hier schreibt der digitale KI-Assistent“ treffen nicht.
+const ALS_MENSCH = [
+  /\bich bin (ja |doch |auch |wirklich |tatsächlich |natürlich |selbstverständlich )*(ein|eine) ((echter|echte|richtiger|richtige|realer|reale) )?(mensch|person|mitarbeiter|mitarbeiterin)\b/,
+  /\bich bin (ja |doch |auch |wirklich |tatsächlich |natürlich |selbstverständlich )*(kein|keine) (bot|ki|k\.i\.|roboter|maschine|chatbot|computer|programm|automat|künstliche intelligenz)(?![a-zäöüß-])/,
+  /\bhier (schreibt|ist|spricht|antwortet|sitzt) (ihnen |dir )?(ja |doch |wirklich |tatsächlich )*(ein|eine) ((echter|echte|richtiger|richtige) )?(mensch|person|mitarbeiter|mitarbeiterin)\b/,
+  /\b(sie schreiben|du schreibst|sie sprechen|du sprichst|sie chatten|du chattest) (hier |gerade )*mit (einem|einer) ((echten|richtigen|realen) )?(menschen|person|mitarbeiter|mitarbeiterin)\b/,
+  /\bich bin (ja |doch |wirklich |tatsächlich )*aus fleisch und blut\b/,
+];
+
+/**
+ * Sicherheitsnetz hinter den Regeln im System-Prompt (Ole, 24.11.2026; KI-VO Art. 50): Gibt sich eine Antwort des
+ * Assistenten als Mensch aus („Ja, ich bin ein Mensch“, „Ich bin kein Bot“)? Dann geht stattdessen ehrlicheAntwort raus
+ * (bot.ts, wie die Beratungssperre). Rein, testbar.
+ */
+export function gibtSichAlsMenschAus(text: string | null | undefined): boolean {
+  const t = norm(text ?? "");
+  return !!t && ALS_MENSCH.some((r) => r.test(t));
+}
+
+/** Ehrliche Antwort statt einer, die sich als Mensch ausgibt (ohne Übergabe; „Mensch“ führt wie immer zum Vermittler). */
+export function ehrlicheAntwort(an: Ansprache, names: KiNamen): string {
+  return `Ich bin der digitale KI-Assistent von ${names.firm}, kein Mensch. ${a(an, `Wenn du direkt mit ${dat(names)} sprechen möchtest, schreib ‚Mensch‘.`, `Wenn Sie direkt mit ${dat(names)} sprechen möchten, schreiben Sie ‚Mensch‘.`)}`;
 }
 
 /**

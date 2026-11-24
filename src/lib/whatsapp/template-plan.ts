@@ -16,9 +16,14 @@
 // Erstinformation raus, die _ohnepdf-Fassungen werden nicht mehr gesendet und ab v7 nicht mehr eingereicht.
 // Erstanschreiben v10 (Ole, 19.11.2026): je Zweck die Fassungen a (v10) und b (v11, pg_<zweck>_v10_b_…) mit PDF-Kopf,
 // Fußzeile „KI-Assistent“ und den Antwortknöpfen der festen Frage (TEMPLATE_BUTTONS); Platzhalter nur Name (TKV + Tier).
+// Fassung mit KI-Fußzeile (Ole, 24.11.2026, templates.ts KI_ERST): Zwecke, die die erste Nachricht an einen Kontakt sein
+// können, deren Text die KI-Kennzeichnung aber nicht trägt (Terminbestätigung, Erinnerung), gibt es je Fassung zusätzlich
+// mit der Fußzeile „Digitaler KI-Assistent“: pg_<zweck>_<version>_ki, …_ki_sie, …_ki_sie_ohne_name. Gesendet wird sie nur
+// als erste Nachricht im Chat, sonst die normale Fassung.
 
 import {
   erstinfoFooterFor,
+  hatKiFassung,
   TEMPLATE_BUTTONS,
   TEMPLATE_HEADER,
   TEMPLATE_VERSION,
@@ -44,6 +49,7 @@ import { salutationOf, type Ansprache } from "@/lib/ansprache";
 import { vermittlerName } from "@/lib/vermittler-nennung";
 import { firmDisplayName, kurzNameFuerLeads, personFromCustomerName } from "@/lib/advisor-name";
 import type { CreateTemplateInput, RemoteTemplate } from "@/lib/whatsapp/dialog360";
+import { KI_FUSSZEILE } from "@/lib/whatsapp/ki-hinweis";
 
 export { TEMPLATE_VERSION };
 export const TEMPLATE_LANGUAGE = "de";
@@ -140,23 +146,34 @@ export function kopfFassungen(purpose: NoticePurpose, version = templateVersionF
   return TEMPLATE_HEADER[purpose] && OHNE_KOPF_VERSIONEN.includes(v) ? [true, false] : [true];
 }
 
-/** Alle einzureichenden Vorlagen eines Kunden: je Zweck jede Fassung (Ansprache), jede A/B-Fassung und Kopf-Fassung. */
-export function plannedTemplates(purposes: NoticePurpose[]): { purpose: NoticePurpose; form: TemplateForm; variant: TemplateVariant; kopf: boolean }[] {
+/** KI-Fassungen eines Zwecks: die normale (false), bei Zwecken aus KI_ERST zusätzlich die mit KI-Fußzeile (true). */
+export function kiFassungen(purpose: NoticePurpose): boolean[] {
+  return hatKiFassung(purpose) ? [false, true] : [false];
+}
+
+/**
+ * Alle einzureichenden Vorlagen eines Kunden: je Zweck jede Fassung (Ansprache), jede A/B-Fassung und Kopf-Fassung, bei
+ * Zwecken aus KI_ERST zusätzlich die Fassung mit KI-Fußzeile (ki) für die erste Nachricht.
+ */
+export function plannedTemplates(purposes: NoticePurpose[]): { purpose: NoticePurpose; form: TemplateForm; variant: TemplateVariant; kopf: boolean; ki: boolean }[] {
   return purposes.flatMap((purpose) =>
-    variantsFor(purpose).flatMap((variant) => formsFor(purpose).flatMap((form) => kopfFassungen(purpose).map((kopf) => ({ purpose, form, variant, kopf })))),
+    variantsFor(purpose).flatMap((variant) =>
+      formsFor(purpose).flatMap((form) => kopfFassungen(purpose).flatMap((kopf) => kiFassungen(purpose).map((ki) => ({ purpose, form, variant, kopf, ki })))),
+    ),
   );
 }
 
 /**
  * Stabiler Name je Zweck, Textversion und Fassung, z. B. pg_outreach_v2, pg_outreach_v2_sie,
- * pg_outreach_v2_sie_ohne_name (Meta: Kleinbuchstaben, Ziffern, Unterstrich).
+ * pg_outreach_v2_sie_ohne_name (Meta: Kleinbuchstaben, Ziffern, Unterstrich). ki = Fassung mit KI-Fußzeile für die
+ * erste Nachricht (templates.ts KI_ERST, istKiFassung): pg_booking_confirmation_v4_ki_sie.
  */
-export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSION, form: TemplateForm | Ansprache = "du", variant: TemplateVariant = "a", kopf = true): string {
+export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSION, form: TemplateForm | Ansprache = "du", variant: TemplateVariant = "a", kopf = true, ki = false): string {
   // Allgemeine Version → ggf. feste Version des Zwecks (PURPOSE_VERSION, z. B. review_request v3)
   if (version === TEMPLATE_VERSION) version = templateVersionFor(purpose);
   const f = formOf(purpose, form);
   const suffix = f === "du" ? "" : `_${f}`;
-  return `pg_${purpose}_${version}${variant === "b" ? "_b" : ""}${kopf ? "" : "_ohnepdf"}${suffix}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  return `pg_${purpose}_${version}${variant === "b" ? "_b" : ""}${kopf ? "" : "_ohnepdf"}${ki ? "_ki" : ""}${suffix}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
 }
 
 /**
@@ -231,12 +248,15 @@ const EXAMPLES: Record<string, string> = {
   Angebotslink: "https://app.performancegrowth.de/ihr-angebot/abc123",
   // Erstanschreiben v9 der Tierkrankenversicherung: Tiername aus dem Formular
   Tier: "Minka",
+  // Erinnerung ab v5 (Ole, 24.11.2026): die Anfrage samt Sparte (anfrage-sparte.ts; Bezeichnung = templates.ts ANFRAGE_PARAM)
+  "Anfrage mit Sparte (z. B. Ihrer Anfrage zur Kfz-Versicherung)": "Ihrer Anfrage zur Kfz-Versicherung",
   "Vollmacht-Link": "https://dein-beratungstermin.de/vollmacht/abc123",
   "Termin (Wochentag, Datum, Uhrzeit)": "Montag, 14.12. um 10 Uhr",
 };
 
 /** Beispielwerte der Du-Fassung, wo sie sich von der Sie-Fassung unterscheiden. */
 const EXAMPLES_DU: Record<string, string> = {
+  "Anfrage mit Sparte (z. B. Ihrer Anfrage zur Kfz-Versicherung)": "deiner Anfrage zur Kfz-Versicherung",
   "Link/Hinweis": "Wir rufen dich unter deiner Nummer an.",
   "Vermittler (Nominativ)": "Thomas",
   "Vermittler (Dativ)": "Thomas",
@@ -305,16 +325,18 @@ export function exampleRestFor(purpose: NoticePurpose, an: Ansprache, version?: 
  * Antrag für POST /v1/configs/templates. Mit opts.documentExample (öffentliche Adresse eines Beispiel-PDFs) bekommen
  * Zwecke mit TEMPLATE_HEADER einen Dokument-Kopf (example.header_handle mit Link, wie in der 360dialog-Doku
  * „Template Elements“) und die Fußzeile (erstinfoFooterFor). Ohne Beispiel (null): ohne Kopf und Fußzeile.
+ * opts.ki: Fassung mit der Fußzeile „Digitaler KI-Assistent“ für die erste Nachricht (KI_ERST), gleicher Text und Knöpfe.
  */
 export function buildTemplateRequest(
   purpose: NoticePurpose,
   names: TemplateNames | string,
   version = TEMPLATE_VERSION,
   form: TemplateForm | Ansprache = "du",
-  opts: { variant?: TemplateVariant; documentExample?: string | null; kopf?: boolean } = {},
+  opts: { variant?: TemplateVariant; documentExample?: string | null; kopf?: boolean; ki?: boolean } = {},
 ): CreateTemplateInput {
   const variant = opts.variant ?? "a";
   const kopf = opts.kopf !== false;
+  const ki = opts.ki === true;
   const text = templateBodyFor(purpose, names, form, variant);
   const examples = exampleValuesFor(purpose, form);
   const components: unknown[] = [];
@@ -324,10 +346,11 @@ export function buildTemplateRequest(
   if (examples.length) body.example = { body_text: [examples] };
   components.push(body);
   if (header) components.push({ type: "FOOTER", text: erstinfoFooterFor(version === TEMPLATE_VERSION ? templateVersionFor(purpose) : version) });
+  else if (ki) components.push({ type: "FOOTER", text: KI_FUSSZEILE });
   const buttons = TEMPLATE_BUTTONS[purpose] ?? [];
   if (buttons.length) components.push({ type: "BUTTONS", buttons: buttons.map((text) => ({ type: "QUICK_REPLY", text })) });
   return {
-    name: templateNameFor(purpose, version, form, variant, kopf),
+    name: templateNameFor(purpose, version, form, variant, kopf, ki),
     category: categoryFor(purpose),
     language: TEMPLATE_LANGUAGE,
     components,
