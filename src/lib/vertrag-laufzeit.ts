@@ -176,6 +176,14 @@ export const PPL_LEADS_SEPARAT =
   "Leads bestellen Sie wie gewohnt per Stück (Pay-per-Lead), ohne Mindestabnahme. Sie werden separat zum Preis je Lead laut Bestellung abgerechnet und sind nicht Teil der Monatsgebühr.";
 
 /**
+ * Reklamation gekaufter Leads (Ole, 24.11.2026: „Ja passt“, nur Pay-per-Lead), im Angebot, am Annahme-Knopf und in der
+ * Auftragsbestätigung. Entspricht der Storno-Regel (lib/ppl/storno.ts: 7 Tage, klare Gründe voll, Grenzfälle 50:50).
+ * „Kampagnen im eigenen Werbekonto“ regelt das in den Besonderen Bedingungen (Abrechenbare Leads).
+ */
+export const PPL_REKLAMATION =
+  "Reklamation: Ungültige Leads können Sie innerhalb von 7 Tagen nach Zustellung in der App reklamieren, z. B. falsche oder nicht vergebene Telefonnummer, Dublette innerhalb von 30 Tagen oder erkennbarer Fake. Anerkannte Reklamationen schreiben wir Ihnen auf der nächsten Rechnung gut. In Grenzfällen erhalten Sie die Hälfte gutgeschrieben.";
+
+/**
  * Erster Abrechnungstag: ab hier zählen Startpreis-Monate, Mindestlaufzeit und Abrechnungsmonate
  * (= Start, wenn kein eigener Abrechnungstag vereinbart ist).
  */
@@ -395,7 +403,7 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach kündbar zum Ende des jeweiligen Abrechnungsmonats.`);
   }
   if (ppl && !kk && i.ersteWoche) lines.push(ersteWocheVertragszeile(i.ersteWoche));
-  if (ppl && !kk) lines.push(PPL_LEADS_SEPARAT);
+  if (ppl && !kk) lines.push(PPL_LEADS_SEPARAT, PPL_REKLAMATION);
   // Pay-per-Lead + Software: 19 % gelten für die Software; die Steuer der Leads steht an der ersten Woche bzw. an der Bestellung
   lines.push(`${KUENDIGUNG_SATZ} ${ppl ? "Preise der Software zzgl. 19 % USt." : "Alle Preise zzgl. 19 % USt."}`);
   return lines;

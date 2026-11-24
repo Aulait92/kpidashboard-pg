@@ -220,6 +220,10 @@ Neueste oben. Je Eintrag: Datum, Beschluss, Stufe, wer, Begründung, Quelle. Fre
   Plan: `protokolle/2026-11-20-hvk-leads.md`. Start erst nach Rechtsprüfung der Texte und Oles Go.
 - **Pay-per-Lead + Software** live (nur monatlich kündbar, erste Woche im Angebot, USt-Umbau, AGB „Umsatzsteuer auf Leads“).
 - **Ergebnis-Präsentation** nach jedem Meeting/Team-Einsatz (README).
+- **24.11.2026, Reklamation im Pay-per-Lead-Angebot:** Angebote „Pay-per-Lead + Software“ nennen die Reklamation
+  (7 Tage nach Zustellung in der App, Beispiele falsche Nummer, Dublette 30 Tage, Fake; Gutschrift auf der nächsten
+  Rechnung, Grenzfälle zur Hälfte), im Angebot, am Annahme-Knopf und in der Auftragsbestätigung (`PPL_REKLAMATION`,
+  `lib/vertrag-laufzeit.ts`). Gilt auch für das offene Angebot Kuhn (PG-2026-0168). Ole: „Ja passt … nur Pay per Leads“.
 - **23.11.2026, Admin-Chats nur Leads:** Admins sehen in Betreuen → Chats bei Kunden-Nummern nur Pipeline-Chats (Lead
   zugeordnet oder selbst gebucht) und die Support-Nummer, keine privaten Chats bzw. Bestandskunden der Vermittler
   (Coexistence). Regel `ADMIN_CHAT_SICHTBAR` in `lib/whatsapp/nur-leads.ts`, gilt für Liste, Chat-Adresse, Aktionen und

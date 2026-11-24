@@ -89,3 +89,13 @@ describe("Änderungen im bezahlten ersten Zeitraum anteilig", () => {
     expect(vorauszahlungAnteilCent({ ...z, deltaQuantity: 1, unitCents: 44100, todayIso: "2028-01-01" }).cents).toBe(0);
   });
 });
+
+describe("Reklamation bei Pay-per-Lead (Ole, 24.11.2026)", () => {
+  it("steht nur bei Pay-per-Lead + Software, nicht bei Betreuung und nicht im eigenen Werbekonto", async () => {
+    const { PPL_REKLAMATION } = await import("@/lib/vertrag-laufzeit");
+    const base: ContractSummaryInput = { term: "none", startIso: "2027-01-11", setup: 0, monthlyTotal: 349, intro: null, annual: false, freeMonths: 0 };
+    expect(contractSummaryLines({ ...base, paket: "ppl_software" })).toContain(PPL_REKLAMATION);
+    expect(contractSummaryLines({ ...base, paket: "software" })).not.toContain(PPL_REKLAMATION);
+    expect(hatGedankenstrich(PPL_REKLAMATION)).toBe(false);
+  });
+});

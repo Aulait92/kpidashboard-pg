@@ -44,7 +44,7 @@ import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } f
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
 import { ersteWocheAus, ersteWocheBetrag, ersteWocheName, ersteWocheSteuerKurz, ersteWocheZahlen, eurCent, ERSTE_WOCHE_ABBUCHUNG } from "@/lib/ppl/erste-woche-shared";
 import { bruttoJeLead } from "@/lib/ppl/steuer";
-import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
+import { addMonthsIso, fmtIso, nachtraeglichErsteIso, nachtraeglichLeistungsmonat, PPL_LEADS_SEPARAT, PPL_REKLAMATION, vorauszahlungFaellig, VORAUSZAHLUNG_MIT_ANNAHME } from "@/lib/vertrag-laufzeit";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -1013,6 +1013,9 @@ function PplSoftwareBody({
           <span data-offer-ppl-leads>{PPL_LEADS_SEPARAT}</span>
           <ErsteWocheNote offer={offer} />
           <Note>Bestellt wird im Kundenbereich unter „Leads bestellen“. Ihr Assistent übernimmt jeden gelieferten Lead automatisch.</Note>
+          <Note>
+            <span data-offer-ppl-reklamation>{PPL_REKLAMATION}</span>
+          </Note>
         </Tr>
         )}
         {add.hasSeats ? (
