@@ -7,7 +7,7 @@ import { validHeuteKey } from "@/lib/admin-heute";
 import { decideStorno } from "@/lib/ppl/storno";
 import { addDays, verschiebeAufgabe } from "@/lib/vertrieb/dates";
 import { gewaehreFall, lehneFallAb } from "@/lib/garantien-server";
-import { recordMeetingOutcome } from "@/lib/vertrieb/termin-review";
+import { recordMeetingOutcome, undoMeetingOutcome } from "@/lib/vertrieb/termin-review";
 import { TERMIN_REVIEW_CHOICES } from "@/lib/vertrieb/crm";
 
 // Sofort-Aktionen in „Heute“ (Admin-A). Jede Aktion liefert, was „Rückgängig“
@@ -17,7 +17,8 @@ export type HeuteResult = { ok: true; message: string; undo?: HeuteUndo } | { ok
 export type HeuteUndo =
   | { kind: "task-open"; taskId: string }
   | { kind: "task-due"; taskId: string; dueAt: string }
-  | { kind: "undismiss"; key: string; activityId?: string };
+  | { kind: "undismiss"; key: string; activityId?: string }
+  | { kind: "meeting-outcome"; activityId: string };
 
 const DAY = 86_400_000;
 
@@ -46,7 +47,7 @@ export async function meetingOutcomeAction(taskId: string, outcome: string): Pro
   if (!res.ok) return fail(res.error);
   refresh(res.contactId);
   const label = TERMIN_REVIEW_CHOICES.find((c) => c.outcome === outcome)?.label ?? "Ergebnis";
-  return { ok: true, message: `Eingetragen: ${label}` };
+  return { ok: true, message: `Eingetragen: ${label}`, undo: { kind: "meeting-outcome", activityId: res.activityId } };
 }
 
 export async function postponeTaskAction(taskId: string): Promise<HeuteResult> {
@@ -131,6 +132,10 @@ export async function undoHeuteAction(undo: HeuteUndo): Promise<HeuteResult> {
     const t = await prisma.salesTask.update({ where: { id: String(undo.taskId) }, data: { dueAt }, select: { contactId: true } }).catch(() => null);
     if (!t) return fail();
     refresh(t.contactId);
+  } else if (undo.kind === "meeting-outcome") {
+    const r = await undoMeetingOutcome(String(undo.activityId));
+    if (!r.ok) return fail(r.error);
+    refresh(r.contactId);
   } else if (undo.kind === "undismiss") {
     if (!validHeuteKey(undo.key)) return fail();
     await prisma.adminDismissal.deleteMany({ where: { userId: session.userId, key: undo.key } });
@@ -154,4 +159,13 @@ function dismissQuery(userId: string, key: string, days: number) {
     create: { userId, key, until },
     update: { until },
   });
+}
+
+/** „Rückgängig“ am Verlaufseintrag eines Termin-Ergebnisses (Kontaktakte, Ole 24.11.2026). */
+export async function terminErgebnisZuruecknehmen(fd: FormData): Promise<void> {
+  await requireAuth();
+  const id = fd.get("id");
+  if (typeof id !== "string" || !id) return;
+  const r = await undoMeetingOutcome(id);
+  if (r.ok) refresh(r.contactId);
 }

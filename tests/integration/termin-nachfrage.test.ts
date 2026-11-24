@@ -4,7 +4,7 @@ const pushes: { title: string }[] = [];
 vi.mock("@/lib/push", () => ({ sendToAdmins: async (p: { title: string }) => (pushes.push(p), { sent: 1 }) }));
 
 import { prisma } from "@/lib/prisma";
-import { createMeetingReviews, recordMeetingOutcome } from "@/lib/vertrieb/termin-review";
+import { createMeetingReviews, recordMeetingOutcome, undoMeetingOutcome } from "@/lib/vertrieb/termin-review";
 import { requireTestDb } from "./db";
 
 // Nach jedem Termin: Aufgabe „Wie lief der Termin?“ (Ole, 13.11.2026)
@@ -88,6 +88,39 @@ describe("Termin-Nachfrage", () => {
     const r3 = await prisma.salesTask.create({ data: { contactId: ns.id, title: "Wie lief der Termin?", type: "TERMIN", dueAt: new Date() } });
     await recordMeetingOutcome(r3.id, "nicht_erschienen");
     expect(await prisma.salesTask.findFirst({ where: { contactId: ns.id, title: "Neuen Termin vereinbaren", doneAt: null } })).not.toBeNull();
+  });
+
+  it("Rückgängig (Ole, 24.11.2026): versehentlich „Kein Interesse“ stellt alles wieder her, auch ohne Protokoll", async () => {
+    const c = await contact("Versehen");
+    const anruf = await prisma.salesTask.create({ data: { contactId: c.id, title: "Nochmal anrufen", type: "ANRUF", dueAt: new Date() } });
+    const r = await prisma.salesTask.create({ data: { contactId: c.id, title: "Wie lief der Termin?", type: "TERMIN", dueAt: new Date() } });
+    const res = await recordMeetingOutcome(r.id, "verloren");
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(await undoMeetingOutcome(res.activityId)).toMatchObject({ ok: true });
+    const k = await prisma.salesContact.findUniqueOrThrow({ where: { id: c.id } });
+    expect(k.stage).toBe("TERMIN");
+    expect(k.lossReason).toBeNull();
+    expect((await prisma.salesTask.findUniqueOrThrow({ where: { id: r.id } })).doneAt).toBeNull();
+    expect((await prisma.salesTask.findUniqueOrThrow({ where: { id: anruf.id } })).doneAt).toBeNull();
+    expect(await prisma.salesActivity.count({ where: { id: res.activityId } })).toBe(0);
+    expect(await undoMeetingOutcome(res.activityId)).toMatchObject({ ok: false });
+
+    // Folgeaufgabe wird entfernt
+    const r2 = await prisma.salesTask.create({ data: { contactId: c.id, title: "Wie lief der Termin?", type: "TERMIN", dueAt: new Date() } });
+    const res2 = await recordMeetingOutcome(r2.id, "nicht_erschienen");
+    if (!res2.ok) throw new Error("fehlgeschlagen");
+    await undoMeetingOutcome(res2.activityId);
+    expect(await prisma.salesTask.count({ where: { contactId: c.id, title: "Neuen Termin vereinbaren" } })).toBe(0);
+
+    // Älterer Klick ohne Protokoll (vor dem Update): Aufgaben gleichen Zeitpunkts öffnen, Stufe zurück auf Termin
+    const at = new Date(Date.now() - 3600_000);
+    const alt = await prisma.salesTask.create({ data: { contactId: c.id, title: "Wie lief der Termin?", type: "TERMIN", dueAt: at, doneAt: at } });
+    await prisma.salesContact.update({ where: { id: c.id }, data: { stage: "VERLOREN", lossReason: "KEIN_INTERESSE" } });
+    const act = await prisma.salesActivity.create({ data: { contactId: c.id, type: "TERMIN", outcome: "Kein Interesse / Verloren", occurredAt: at } });
+    expect(await undoMeetingOutcome(act.id)).toMatchObject({ ok: true });
+    expect((await prisma.salesTask.findUniqueOrThrow({ where: { id: alt.id } })).doneAt).toBeNull();
+    expect((await prisma.salesContact.findUniqueOrThrow({ where: { id: c.id } })).stage).toBe("TERMIN");
   });
 
   it("Gewonnen wird durch „Bedenkzeit“ nicht zurückgestuft", async () => {

@@ -12,6 +12,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
+import { audit } from "@/lib/audit";
 import { OUTCOME_BY_ID, STAGE_RANK, TERMIN_REVIEW_CHOICES, TERMIN_REVIEW_PREFIX, istTerminAufgabe, shortName } from "@/lib/vertrieb/crm";
 import { addWorkdays, dayKey, fmtDateTime, fromDayKey } from "@/lib/vertrieb/dates";
 import { hatErgebnis } from "@/lib/vertrieb/termine-uebersicht";
@@ -140,10 +141,10 @@ const ALLOWED = new Set(TERMIN_REVIEW_CHOICES.map((c) => c.outcome));
  * Ergebnis eines Termins eintragen: Nachfrage erledigt, Verlauf, Stufe, Folgeaufgabe.
  * Bei „Kein Interesse“ werden alle offenen Aufgaben des Kontakts erledigt.
  */
-export async function recordMeetingOutcome(taskId: string, outcomeId: string, now = new Date()): Promise<{ ok: true; contactId: string } | { ok: false; error: string }> {
+export async function recordMeetingOutcome(taskId: string, outcomeId: string, now = new Date()): Promise<{ ok: true; contactId: string; activityId: string } | { ok: false; error: string }> {
   if (!ALLOWED.has(outcomeId)) return { ok: false, error: "Unbekanntes Ergebnis." };
   const outcome = OUTCOME_BY_ID[outcomeId];
-  const task = await prisma.salesTask.findUnique({ where: { id: taskId }, include: { contact: { select: { id: true, stage: true, customerStage: true } } } });
+  const task = await prisma.salesTask.findUnique({ where: { id: taskId }, include: { contact: { select: { id: true, stage: true, customerStage: true, lossReason: true, lastContactAt: true } } } });
   if (!task || !task.contact) return { ok: false, error: "Die Aufgabe gibt es nicht mehr." };
   if (task.doneAt) return { ok: false, error: "Das Ergebnis ist schon eingetragen." };
   const contact = task.contact;
@@ -152,9 +153,12 @@ export async function recordMeetingOutcome(taskId: string, outcomeId: string, no
   let stage: Stage | undefined;
   if (outcome.stage && (outcome.stage === "VERLOREN" || STAGE_RANK[outcome.stage] >= STAGE_RANK[contact.stage])) stage = outcome.stage;
 
-  await prisma.$transaction(async (tx) => {
+  // Für „Rückgängig“ (Ole, 24.11.2026): Zustand vorher, geschlossene und neue Aufgaben
+  const geschlossen: string[] = [task.id];
+  let neueAufgabe: string | null = null;
+  const activityId = await prisma.$transaction(async (tx) => {
     await tx.salesTask.update({ where: { id: task.id }, data: { doneAt: now } });
-    await tx.salesActivity.create({ data: { contactId: contact.id, type: "TERMIN", outcome: outcome.label, occurredAt: now } });
+    const act = await tx.salesActivity.create({ data: { contactId: contact.id, type: "TERMIN", outcome: outcome.label, occurredAt: now } });
     await tx.salesContact.update({
       where: { id: contact.id },
       data: {
@@ -164,14 +168,91 @@ export async function recordMeetingOutcome(taskId: string, outcomeId: string, no
         lastContactAt: now,
       },
     });
-    if (outcome.closesTasks) await tx.salesTask.updateMany({ where: { contactId: contact.id, doneAt: null }, data: { doneAt: now } });
+    if (outcome.closesTasks) {
+      const offen = await tx.salesTask.findMany({ where: { contactId: contact.id, doneAt: null }, select: { id: true } });
+      geschlossen.push(...offen.map((o) => o.id));
+      await tx.salesTask.updateMany({ where: { id: { in: offen.map((o) => o.id) } }, data: { doneAt: now } });
+    }
     // Folgetermin schon gebucht: keine Aufgabe „Folgetermin buchen“
     const folge = REVIEW_TASK[outcomeId] ?? outcome.task;
     const schonGebucht = outcomeId === "termin" && (await tx.salesMeeting.count({ where: { contactId: contact.id, status: "GEPLANT", startAt: { gt: now } } })) > 0;
     if (folge && !schonGebucht) {
       const due = folge.workdays === 0 ? now : fromDayKey(dayKey(addWorkdays(now, folge.workdays)), "09:00");
-      await tx.salesTask.create({ data: { contactId: contact.id, title: folge.title, type: folge.type, dueAt: due } });
+      neueAufgabe = (await tx.salesTask.create({ data: { contactId: contact.id, title: folge.title, type: folge.type, dueAt: due } })).id;
     }
+    return act.id;
   });
-  return { ok: true, contactId: contact.id };
+  await audit(RUECKGAENGIG_AKTION, {
+    entity: "SalesActivity",
+    entityId: activityId,
+    details: {
+      contactId: contact.id,
+      outcome: outcomeId,
+      vorher: { stage: contact.stage, customerStage: contact.customerStage, lossReason: contact.lossReason, lastContactAt: contact.lastContactAt?.toISOString() ?? null },
+      nachher: { stage: stage ?? null },
+      geschlossen,
+      neueAufgabe,
+    },
+  });
+  return { ok: true, contactId: contact.id, activityId };
+}
+
+const RUECKGAENGIG_AKTION = "vertrieb.termin_ergebnis";
+/** Ergebnis-Bezeichnungen aus „Wie lief der Termin?“ (Verlaufseintrag Typ TERMIN), die sich zurücknehmen lassen. */
+export const TERMIN_ERGEBNIS_LABELS = new Set(TERMIN_REVIEW_CHOICES.map((c) => OUTCOME_BY_ID[c.outcome]?.label).filter(Boolean));
+/** Zurücknehmen bis 30 Tage nach dem Klick. */
+const RUECKGAENGIG_TAGE = 30;
+
+export function terminErgebnisRuecknehmbar(a: { type: string; outcome: string | null; occurredAt: Date }, now = new Date()): boolean {
+  return a.type === "TERMIN" && !!a.outcome && TERMIN_ERGEBNIS_LABELS.has(a.outcome) && now.getTime() - a.occurredAt.getTime() < RUECKGAENGIG_TAGE * 86_400_000;
+}
+
+/**
+ * Ergebnis aus „Wie lief der Termin?“ zurücknehmen (Ole, 24.11.2026: versehentlich „Kein Interesse“): Aufgaben wieder
+ * öffnen, die der Klick geschlossen hat, Folgeaufgabe entfernen (wenn noch offen), Stufe, Verlustgrund und letzten
+ * Kontakt wie vorher, Verlaufseintrag löschen. Ältere Klicks ohne Protokoll: Aufgaben mit gleichem Erledigt-Zeitpunkt
+ * wieder öffnen, Stufe zurück auf „Termin“, wenn sie noch so steht, wie der Klick sie gesetzt hat.
+ */
+export async function undoMeetingOutcome(activityId: string, now = new Date()): Promise<{ ok: true; contactId: string } | { ok: false; error: string }> {
+  const act = await prisma.salesActivity.findUnique({ where: { id: activityId } });
+  if (!act || !terminErgebnisRuecknehmbar(act, now)) return { ok: false, error: "Das lässt sich nicht mehr zurücknehmen." };
+  const log = await prisma.auditLog.findFirst({ where: { action: RUECKGAENGIG_AKTION, entityId: act.id }, orderBy: { at: "desc" } });
+  const d = (log?.details ?? null) as {
+    contactId?: string;
+    vorher?: { stage: Stage; customerStage: string | null; lossReason: string | null; lastContactAt: string | null };
+    nachher?: { stage: Stage | null };
+    geschlossen?: string[];
+    neueAufgabe?: string | null;
+  } | null;
+  if (d?.contactId && d.contactId !== act.contactId) return { ok: false, error: "Das lässt sich nicht mehr zurücknehmen." };
+  const outcomeId = Object.values(OUTCOME_BY_ID).find((o) => o.label === act.outcome)?.id;
+  const gesetzt: Stage | null = d?.nachher ? d.nachher.stage : (outcomeId && OUTCOME_BY_ID[outcomeId]?.stage) || null;
+  const c = await prisma.salesContact.findUnique({ where: { id: act.contactId }, select: { stage: true } });
+  if (!c) return { ok: false, error: "Den Kontakt gibt es nicht mehr." };
+
+  await prisma.$transaction(async (tx) => {
+    // Nur Aufgaben, die genau dieser Klick geschlossen hat (gleicher Zeitpunkt)
+    await tx.salesTask.updateMany({
+      where: { contactId: act.contactId, doneAt: act.occurredAt, ...(d?.geschlossen ? { id: { in: d.geschlossen } } : {}) },
+      data: { doneAt: null },
+    });
+    if (d?.neueAufgabe) await tx.salesTask.deleteMany({ where: { id: d.neueAufgabe, contactId: act.contactId, doneAt: null } });
+    // Stufe nur zurück, wenn sie noch so steht, wie der Klick sie gesetzt hat (sonst hat jemand danach etwas geändert)
+    if (gesetzt && c.stage === gesetzt) {
+      await tx.salesContact.update({
+        where: { id: act.contactId },
+        data: d?.vorher
+          ? {
+              stage: d.vorher.stage,
+              lossReason: (d.vorher.lossReason as never) ?? null,
+              ...(gesetzt === "GEWONNEN" ? { customerStage: (d.vorher.customerStage as never) ?? null } : {}),
+              lastContactAt: d.vorher.lastContactAt ? new Date(d.vorher.lastContactAt) : null,
+            }
+          : { stage: "TERMIN", lossReason: null },
+      });
+    }
+    await tx.salesActivity.delete({ where: { id: act.id } });
+  });
+  await audit("vertrieb.termin_ergebnis_rueckgaengig", { entity: "SalesContact", entityId: act.contactId, details: { outcome: act.outcome, at: act.occurredAt.toISOString() } });
+  return { ok: true, contactId: act.contactId };
 }

@@ -10,7 +10,7 @@ import { success as hapticSuccess } from "@/lib/haptics";
 import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { STAGE_COLOR, STAGE_LABEL, TASK_LABEL, TERMIN_REVIEW_CHOICES, isTerminReview, shortName } from "@/lib/vertrieb/crm";
-import { meetingOutcomeAction } from "@/app/admin/heute/actions";
+import { meetingOutcomeAction, undoHeuteAction } from "@/app/admin/heute/actions";
 import { dayKey, fmtDateTime, relDay, todayKey } from "@/lib/vertrieb/dates";
 import type { TaskWithContact } from "@/components/vertrieb/ui";
 import type { Grund, GrundTon } from "@/lib/vertrieb/aufgaben-prioritaet";
@@ -134,6 +134,20 @@ export function TaskRow({ t, showContact = true, grund }: { t: TaskWithContact; 
                     if (!res.ok) {
                       setDoneLocal(false);
                       toast.show({ message: res.error ?? "Das hat nicht geklappt. Bitte die Seite neu laden.", tone: "error" });
+                    } else if (res.undo) {
+                      // Versehentlich geklickt? Sofort zurücknehmen (Ole, 24.11.2026); später im Verlauf am Eintrag
+                      const undo = res.undo;
+                      toast.show({
+                        message: res.message,
+                        actionLabel: "Rückgängig",
+                        durationMs: 10_000,
+                        onAction: () =>
+                          run(async () => {
+                            const back = await undoHeuteAction(undo).catch(() => null);
+                            if (back?.ok) setDoneLocal(false);
+                            toast.show({ message: back?.ok ? "Rückgängig gemacht" : back && !back.ok ? back.error : "Das hat nicht geklappt. Bitte die Seite neu laden.", tone: back?.ok ? undefined : "error" });
+                          }),
+                      });
                     }
                   });
                 }}

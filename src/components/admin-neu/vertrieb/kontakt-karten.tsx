@@ -1,4 +1,6 @@
-import { CalendarDays, ExternalLink, Pencil, RefreshCw, Trash2, Video } from "lucide-react";
+import { CalendarDays, ExternalLink, Pencil, RefreshCw, Trash2, Undo2, Video } from "lucide-react";
+import { terminErgebnisRuecknehmbar } from "@/lib/vertrieb/termin-review";
+import { terminErgebnisZuruecknehmen } from "@/app/admin/heute/actions";
 import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
 import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
 import { ConfirmButton } from "@/components/vertrieb/confirm-button";
@@ -168,6 +170,15 @@ export function Verlauf({ c }: { c: Kontakt }) {
         <span className="ml-auto text-xs text-[color:var(--muted)]">{fmtDateTime(x.occurredAt)}</span>
       </div>
       {x.note ? <p className="mt-1 whitespace-pre-wrap text-[color:var(--muted)]">{x.note}</p> : null}
+      {terminErgebnisRuecknehmbar(x) ? (
+        // Versehentlich „Kein Interesse“ o. Ä. bei „Wie lief der Termin?“: alles wie vorher (Ole, 24.11.2026)
+        <form action={terminErgebnisZuruecknehmen} className="mt-1 inline-block" data-funktion="termin-ergebnis-rueckgaengig">
+          <input type="hidden" name="id" value={x.id} />
+          <button className="inline-flex min-h-8 items-center gap-1 text-xs text-[color:var(--muted)] hover:text-[color:var(--foreground)]">
+            <Undo2 className="h-3 w-3" /> Rückgängig
+          </button>
+        </form>
+      ) : null}
       <details className="mt-1">
         <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1 text-xs text-[color:var(--muted)] hover:text-[color:var(--foreground)] [&::-webkit-details-marker]:hidden">
           <Pencil className="h-3 w-3" /> Bearbeiten
