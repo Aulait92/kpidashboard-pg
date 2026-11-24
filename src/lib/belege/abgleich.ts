@@ -10,6 +10,11 @@
 //   im Zeitfenster genau einen solchen Beleg und genau einen solchen Umsatz (nur centgenau und nur, wenn der Beleg keinen
 //   erkannten Anbieter hat: ein Beleg von Microsoft gehört nie zu einer Zahlung an Anthropic); bei Fremdwährung Anbieter + Betrag ±20 % (Wechselkurs).
 //   Was nicht eindeutig ist, bleibt offen (Liste „ohne Beleg“) statt geraten.
+// - Zweiter Durchgang (Ole, 24.11.2026): gleicher Anbieter und centgenau, Rechnung bis 75 Tage vor der Buchung (z. B.
+//   Steuerbüro mit langem Zahlungsziel), nur, wenn nach dem ersten Durchgang genau dieser eine Beleg und genau diese eine
+//   Zahlung übrig sind. Nach der Buchung weiter höchstens 7 Tage (eine spätere Rechnung ist meist die des Folgemonats).
+// - Gleichartige Belege mit eigener Rechnungsnummer (z. B. mehrere Meta-Abbuchungen über 4,00 € am selben Tag) sind
+//   eigene Belege, keine Doppel: je Zahlung einer, egal welcher. Doppel sind nur Belege mit gleicher oder fehlender Nummer.
 
 export type AbgleichUmsatz = {
   id: string;
@@ -27,6 +32,8 @@ export type AbgleichBeleg = {
   datum: string | null; // YYYY-MM-DD
   brutto: number | null;
   waehrung: string;
+  /** Rechnungsnummer: unterscheidet gleichartige Belege (Meta) von doppelt erfassten */
+  nummer?: string | null;
 };
 
 export const EINGANGS_TYPEN = ["INCOMING_INVOICE", "RECEIPT", "PAYMENT_RECEIPT", "EXPENSE_REIMBURSEMENT", "MISC"] as const;
@@ -72,6 +79,13 @@ export function anbieterPasst(b: Pick<AbgleichBeleg, "firma">, u: Pick<AbgleichU
 
 const tage = (a: string, b: string) => Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000);
 const imFenster = (beleg: string | null, buchung: string) => !!beleg && tage(buchung, beleg) <= 45 && tage(buchung, beleg) >= -7;
+const imWeitenFenster = (beleg: string | null, buchung: string) => !!beleg && tage(buchung, beleg) <= 75 && tage(buchung, beleg) >= -7;
+/** Gleicher Anbieter, Tag und Betrag (austauschbar für die Zuordnung) */
+const zwilling = (x: AbgleichBeleg, y: AbgleichBeleg) => x.firma === y.firma && x.datum === y.datum && x.brutto === y.brutto && x.waehrung === y.waehrung;
+// Rechnungsnummer ohne Leerzeichen und Zeichen („36 0506 6300 0571“ = „36050663000571“, Mail-Auslesen vs. Portal)
+const nr = (n: string | null | undefined) => (n ?? "").replace(/[^0-9a-z]/gi, "").toLowerCase();
+/** Doppelt erfasst (per Mail und Portal): Zwilling mit gleicher oder ohne Rechnungsnummer */
+const doppel = (x: AbgleichBeleg, y: AbgleichBeleg) => zwilling(x, y) && (!nr(x.nummer) || !nr(y.nummer) || nr(x.nummer) === nr(y.nummer));
 const gleicherBetrag = (b: AbgleichBeleg, u: AbgleichUmsatz) => b.waehrung === "EUR" && b.brutto != null && Math.abs(b.brutto - -u.betrag) <= 0.02;
 // Ohne passenden Anbieter nur centgenau (sonst trifft z. B. 19,99 € auf eine Zahlung über 20,00 €)
 const centgenau = (b: AbgleichBeleg, u: AbgleichUmsatz) => b.waehrung === "EUR" && b.brutto != null && Math.round(b.brutto * 100) === Math.round(-u.betrag * 100);
@@ -106,20 +120,36 @@ export function belegeZuordnen(umsaetze: AbgleichUmsatz[], belege: AbgleichBeleg
   kandidaten.sort((x, y) => y.stufe - x.stufe || x.abstand - y.abstand);
   const belegt = new Set<string>();
   const out: { umsatzId: string; belegId: string }[] = [];
-  // Doppelt erfasste Belege (z. B. per Mail und Portal: gleicher Anbieter, Tag und Betrag) zählen als einer
-  const gleicherBeleg = (x: AbgleichBeleg, y: AbgleichBeleg) => x.firma === y.firma && x.datum === y.datum && x.brutto === y.brutto && x.waehrung === y.waehrung;
   for (const k of kandidaten) {
     if (belegt.has(k.u.id) || belegt.has(k.b.id)) continue;
-    // Gleichstand mit einem anderen (nicht doppelten) Beleg → nicht raten und auch nicht auf einen schlechteren ausweichen
-    const gleich = kandidaten.filter((x) => x !== k && x.u === k.u && x.stufe === k.stufe && x.abstand === k.abstand && !belegt.has(x.b.id) && !gleicherBeleg(x.b, k.b));
+    // Gleichstand mit einem anderen, nicht austauschbaren Beleg → nicht raten und auch nicht auf einen schlechteren ausweichen
+    const gleich = kandidaten.filter((x) => x !== k && x.u === k.u && x.stufe === k.stufe && x.abstand === k.abstand && !belegt.has(x.b.id) && !zwilling(x.b, k.b));
     if (gleich.length) {
       belegt.add(k.u.id);
       continue;
     }
-    for (const x of frei) if (x !== k.b && gleicherBeleg(x, k.b)) belegt.add(x.id);
+    // Doppelt erfasste Belege zählen als einer
+    for (const x of frei) if (x !== k.b && doppel(x, k.b)) belegt.add(x.id);
     belegt.add(k.u.id);
     belegt.add(k.b.id);
     out.push({ umsatzId: k.u.id, belegId: k.b.id });
+  }
+
+  // Zweiter Durchgang: gleicher Anbieter, centgenau, weites Fenster, nur wenn beidseitig eindeutig
+  const restU = offen.filter((u) => !belegt.has(u.id));
+  const restB = frei.filter((b) => !belegt.has(b.id) && b.waehrung === "EUR" && kennwoerter(b.firma).length);
+  const weit = (u: AbgleichUmsatz, b: AbgleichBeleg) => imWeitenFenster(b.datum, u.datum) && centgenau(b, u) && anbieterPasst(b, u);
+  // Doppel als einen Beleg zählen
+  const verschieden = (bs: AbgleichBeleg[]) => bs.filter((b, i) => !bs.slice(0, i).some((x) => doppel(x, b)));
+  for (const u of restU) {
+    const bs = verschieden(restB.filter((b) => !belegt.has(b.id) && weit(u, b)));
+    if (bs.length !== 1) continue;
+    const b = bs[0];
+    if (restU.filter((x) => !belegt.has(x.id) && weit(x, b)).length !== 1) continue;
+    for (const x of restB) if (x !== b && doppel(x, b)) belegt.add(x.id);
+    belegt.add(u.id);
+    belegt.add(b.id);
+    out.push({ umsatzId: u.id, belegId: b.id });
   }
   return out;
 }
