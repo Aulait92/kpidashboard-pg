@@ -33,7 +33,14 @@ export function advisorDisplayName(name: string | null | undefined): string | nu
 /** Firmenname für Texte an Leads (Kundenname ohne vorangestelltes „Allianz“). */
 export function firmDisplayName(customerName: string | null | undefined): string {
   const n = (customerName ?? "").replace(/\s+/g, " ").trim();
-  return n.replace(/^Allianz\s+/i, "").trim() || n;
+  // Ole, 24.11.2026 („Er ist ja nicht die Versicherung“): „Allianz Versicherung Henrik Lohmann Generalvertretung“ →
+  // „Versicherungsagentur Henrik Lohmann“. Der Vermittler ist nicht der Versicherer, Vertretungs-Zusätze fallen weg.
+  const kurz = n
+    .replace(/^Allianz\s+/i, "")
+    .replace(/^Versicherung(en)?\s+(?=\S)/i, "Versicherungsagentur ")
+    .replace(/\s+(General|Haupt)vertretung$/i, "")
+    .trim();
+  return kurz || n;
 }
 
 /**

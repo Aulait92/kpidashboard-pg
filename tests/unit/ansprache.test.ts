@@ -180,6 +180,9 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
     expect(advisorPerson("Agentur Susanne Meier", "Tom Berater")).toBe("Tom Berater");
     expect(advisorPerson("Agentur Susanne Meier", null)).toBe("Susanne Meier");
     expect(firmDisplayName("Allianz Agentur Meier")).toBe("Agentur Meier");
+    // Ole, 24.11.2026: der Vermittler ist nicht „die Versicherung“
+    expect(firmDisplayName("Allianz Versicherung Henrik Lohmann Generalvertretung")).toBe("Versicherungsagentur Henrik Lohmann");
+    expect(firmDisplayName("Agentur Meier Hauptvertretung")).toBe("Agentur Meier");
   });
 
   it("Namen: Sie-Fassungen erkennbar, Revisionen getrennt", () => {
