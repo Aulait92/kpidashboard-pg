@@ -256,7 +256,22 @@ export const AKTIONEN: Record<string, Aktion> = {
       if (antwort && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(antwort)) return { ok: false, error: "Antwortadresse ungültig." };
       const r = await paketSenden(monat, { antwortAn: antwort || process.env.ADMIN_EMAIL?.trim() || null });
       await audit("belege.monatspaket", { details: { monat, ok: r.ok, ...(r.ok ? { anzahl: r.anzahl } : { error: r.error }) }, actor: OPS_ACTOR });
-      return r.ok ? { ok: true, info: `Monatspaket ${monat} mit ${r.anzahl} Belegen gesendet${r.teile > 1 ? ` (${r.teile} Mails)` : ""}.` } : r;
+      return r.ok ? { ok: true, info: `Monatspaket ${monat} mit ${r.anzahl} Belegen gesendet (Download-Link).` } : r;
+    },
+  },
+  belege_nachtrag_senden: {
+    beschreibung: "Nachtrag ans Steuerbüro: genau diese Belege als Download-Link (z. B. fehlende Belege zu schon gebuchten Monaten), nur auf Oles Anweisung",
+    felder: { belegIds: "Liste der Beleg-IDs (diagnose q=belege&liste=belege)", titel: "z. B. Nachtrag Januar bis Juli 2026", antwortAn: "optional: Adresse für Antworten", hinweis: "optional: Satz für die Mail" },
+    run: async (p) => {
+      const ids = Array.isArray(p.belegIds) ? [...new Set(p.belegIds.filter((x): x is string => typeof x === "string" && x.length > 0 && x.length < 40))] : [];
+      const titel = text(p.titel, 80);
+      if (!ids.length || ids.length > 1000 || titel.length < 3) return { ok: false, error: "belegIds (1 bis 1000) und titel nötig." };
+      const antwort = text(p.antwortAn, 120);
+      if (antwort && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(antwort)) return { ok: false, error: "Antwortadresse ungültig." };
+      const { nachtragSenden } = await import("@/lib/belege/monatspaket");
+      const r = await nachtragSenden(ids, { titel, antwortAn: antwort || process.env.ADMIN_EMAIL?.trim() || null, hinweis: text(p.hinweis, 300) || undefined });
+      await audit("belege.nachtrag", { details: { titel, anzahl: ids.length, ok: r.ok }, actor: OPS_ACTOR });
+      return r.ok ? { ok: true, info: `Nachtrag „${titel}“ mit ${r.anzahl} Belegen gesendet (Download-Link).` } : r;
     },
   },
   belege_stripe: {

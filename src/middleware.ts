@@ -50,6 +50,7 @@ const PUBLIC_PREFIXES = [
   "/ihr-angebot", // Angebots-PDF nach dem Termin (geheimer Link je Termin, lib/angebot-senden-server.ts)
   "/rueckruf", // „Rückruf wünschen“ aus der Nachfass-Mail zum Angebot (geheimer Link je Lead)
   "/t", // Antwortseite der Mail-Strecke für Leads ohne WhatsApp (signierter Token, lib/mail-strecke)
+  "/belege/paket", // Belegpaket fürs Steuerbüro als ZIP (signierter Link mit Ablauf, lib/belege/paket-link.ts)
   "/dokumentation", // Beratungsdokumentation für den Kunden mit Bestätigung per Klick (geheimer Link je Fassung, 30 Tage)
   "/api/mail-strecke", // Minuten-Cron der Mail-Strecke (per WHATSAPP_WEBHOOK_SECRET gesichert)
   "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
