@@ -1234,7 +1234,8 @@ export async function sendWhatsAppNotice(opts: {
     },
     update: {
       lastMessageAt: now,
-      ...(opts.leadId ? { leadId: opts.leadId } : {}),
+      // Mit Lead: dessen Name (Formular bzw. von Hand) statt eines früheren WhatsApp-Profilnamens (lib/lead-name.ts)
+      ...(opts.leadId ? { leadId: opts.leadId, ...(opts.contactName?.trim() ? { contactName: opts.contactName.trim() } : {}) } : {}),
     },
     select: { id: true },
   });

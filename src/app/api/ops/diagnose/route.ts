@@ -794,12 +794,15 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //                                          beim Vermittler an (idempotent je Nachricht, Audit-Eintrag), sendet nichts
 //   q=policen-flow[&meta=1]                Policen-Strecke v2: Schalter, Flow je Kunde (Status, Hash aktuell?, Einstieg, Fehler, Vorlagen
 //                                          je Status); &meta=1 fragt den Status bei Meta live ab (nur lesend)
+//   q=lead-namen[&tage=7]                  Name am Lead gegen Chatname (WhatsApp-Profilname), Formularname und erneute Eintragungen mit
+//                                          anderem Namen, echte Leads und Testleads getrennt, nur IDs (lib/lead-name-server.ts)
 //   q=cash[&jahr=2026]                      Geld: Bankverbindungen mit Live-Kontostand, Bewegungen 30/90 Tage je Konto und Zweck, Kosten je Monat, Stripe-Guthaben und offene Rechnungen, USt-Schätzung aus den Kontoauszügen; nur Summen (lib/ops/cash.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "bot-stumm": async (p) => {
     const tage = Math.min(30, Math.max(1, Math.round(Number(p.get("tage") ?? 7)) || 7));
     return (await import("@/lib/whatsapp/bot-stumm")).botStummDiagnose({ tage, aufgaben: p.get("aufgaben") === "1" });
   },
+  "lead-namen": async (p) => (await import("@/lib/lead-name-server")).leadNamenDiagnose(p),
   "policen-flow": async (p) => (await import("@/lib/policen/flow/server")).policenFlowDiagnose({ meta: p.get("meta") === "1" }),
   pakete: async () => (await import("@/lib/ops/pakete")).paketeDiagnose(),
   investoren: async (p) => (await import("@/lib/ops/investoren")).investorenDiagnose(p),

@@ -65,6 +65,12 @@ export function salutationOf(v: unknown): Salutation | null {
 const SALUTATION_LABELS = new Set(["anrede", "ihreanrede", "salutation", "geschlecht", "gender", "title"]);
 const normLabel = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z]/g, "");
 
+/** Frage nach Anrede, Vor- oder Nachname (Formularantwort zur Person, lib/lead-erneut.ts mergeFormData). */
+export function istPersonenAngabe(label: string): boolean {
+  const l = normLabel(label);
+  return SALUTATION_LABELS.has(l) || ["vorname", "firstname", "nachname", "lastname", "familienname"].includes(l);
+}
+
 /** Anrede aus Lead.formData ([{ label, value }]) lesen; null, wenn kein passendes Feld da ist. */
 export function salutationFromForm(formData: unknown): Salutation | null {
   if (!Array.isArray(formData)) return null;
