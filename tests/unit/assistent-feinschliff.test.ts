@@ -527,9 +527,14 @@ describe("Terminnutzen Tier: OP oder Krankenversicherung nach Wunsch des Leads",
   it("auch Behandlungen: Krankenversicherung, auch bei OP-Kampagne", () => {
     expect(satz({ tarifwunsch: "volle Krankenversicherung (auch Tierarztbehandlung)" }, "Katzen-OP-Versicherung")).toContain("eine Krankenversicherung für Minka");
   });
-  it("ohne Angabe oder offen: wie die Kampagne", () => {
+  it("ohne Angabe: wie die Kampagne", () => {
     expect(satz(undefined, "Katzen-OP-Versicherung")).toContain("eine OP-Versicherung");
-    expect(satz({ tarifwunsch: "offen" })).toContain("eine Krankenversicherung");
+    expect(satz(undefined)).toContain("eine Krankenversicherung");
+  });
+  // Unentschieden (Ole, 24.11.2026): beides nennen statt der Kampagne (lib/tkv-umfang.ts)
+  it("offen bzw. beides: OP- und Krankenschutz", () => {
+    expect(satz({ tarifwunsch: "offen" }, "Katzen-OP-Versicherung")).toContain("was OP- und Krankenschutz für Minka kosten");
+    expect(satz({ tarifwunsch: "beides" })).toContain("was OP- und Krankenschutz für Minka kosten");
   });
 });
 

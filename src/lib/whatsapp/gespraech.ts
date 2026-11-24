@@ -21,6 +21,7 @@ import { istKfzProdukt, KFZ_FORMULAR } from "@/lib/whatsapp/produkt-fragen";
 import { angabenFuerSparte, spartenDesLeads, type AngabenQuelle, type Folgefrage, type RechnerSparte } from "@/lib/preise/rechner-angaben";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { INTERESSE_LABEL_RE } from "@/lib/interesse-formular";
+import { alsTkvUmfang, tkvBaustein, tkvUmfangAusText, tkvUmfangVon, tkvWasKostet } from "@/lib/tkv-umfang";
 
 // Vermittler-Nennung zentral (Ole, 17.11.2026, lib/vermittler-nennung.ts): Sie „Herr/Frau Nachname“, gebeugt; Du Vorname
 import type { VermittlerName } from "@/lib/vermittler-nennung";
@@ -82,7 +83,7 @@ const TIER_AKK = { katze: ["deine Katze", "Ihre Katze"], hund: ["deinen Hund", "
  * zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten.“
  * Kein „doppelt zahlen“, keine Versprechen zu Preisen, Ersparnis oder Eignung.
  */
-export function terminNutzenSatz(o: { source: string | null | undefined; formular: Form; angaben?: unknown; an: Ansprache; person: VermittlerName; video?: boolean; kostenlos?: boolean }): string {
+export function terminNutzenSatz(o: { source: string | null | undefined; formular: Form; angaben?: unknown; an: Ansprache; person: VermittlerName; video?: boolean; kostenlos?: boolean; tkvUmfang?: string | null }): string {
   const { an, person } = o;
   const p = outreachProdukt(o.source);
   const purpose = p?.purpose ?? null;
@@ -94,11 +95,11 @@ export function terminNutzenSatz(o: { source: string | null | undefined; formula
   if (purpose === "outreach_tkv") {
     const name = wert(o.formular, /tiername|name des tieres/i);
     const tier = name ?? TIER_AKK[p?.tier ?? "tier"][an === "du" ? 0 : 1];
-    // Gewünschter Umfang aus Formular bzw. Chat geht vor der Kampagne (Ole, 19.11.2026: Lead „nur OP“, Satz sagte „Krankenversicherung“)
-    const wunsch = angabe(o.formular, o.angaben, /tarifwunsch|umfang|gewünschter schutz|op oder voll/i, ["tarifwunsch"]) ?? "";
-    const op = /voll|behandlung|krankenversicherung/i.test(wunsch) ? false : /\bop\b|op-|operation/i.test(wunsch) || /\bop\b|op-|operation/i.test(o.source ?? "");
-    const was = op ? "eine OP-Versicherung" : "eine Krankenversicherung";
-    return `${zeigt} was ${was} für ${tier} kostet ${achten}.`;
+    // Gewünschter Umfang (OP, voll, offen) geht vor der Kampagne (Ole, 19.11.2026: Lead „OPeration“, Satz sagte
+    // „Krankenversicherung“): Lead.tkvUmfang, sonst Formular bzw. Chat (angaben.tarifwunsch), sonst das Produkt (lib/tkv-umfang.ts)
+    const wunsch = angabe(o.formular, o.angaben, /tarifwunsch|umfang|gewünschter schutz|op oder voll/i, ["tarifwunsch"]);
+    const umfang = alsTkvUmfang(o.tkvUmfang) ?? tkvUmfangAusText(wunsch) ?? tkvUmfangVon({ source: o.source });
+    return `${zeigt} ${tkvWasKostet(umfang, tier)} ${achten}.`;
   }
   if (purpose === "outreach_pkv") {
     const privat = /privat/i.test(angabe(o.formular, o.angaben, /gesetzlich oder privat|aktuelle versicherung/i, ["vorhanden"]) ?? "");
@@ -115,6 +116,15 @@ export function terminNutzenSatz(o: { source: string | null | undefined; formula
         ? a(an, "euch beide", "Sie beide")
         : a(an, "dich", "Sie");
     const w = spartenWorte(interesse);
+    // Tierkranken im Privatschutz (Formularauswahl „Tierkrankenversicherung / Tierhalterhaftpflicht“): nur mit geklärtem
+    // Umfang, dann genau dieser (OP, voll, offen), lib/tkv-umfang.ts
+    const tkv = /tierkranken|tier-?op/i.test(interesse ?? "") ? tkvUmfangVon({ gespeichert: o.tkvUmfang, angaben: o.angaben }) : null;
+    if (tkv && !w.length) {
+      const tierTxt = (qualificationPoints(o.angaben).find((x) => x.key === "tier")?.value ?? "").toLowerCase();
+      const art = /katze|kater/.test(tierTxt) ? "katze" : /hund/.test(tierTxt) ? "hund" : /pferd/.test(tierTxt) ? "pferd" : "tier";
+      return `${zeigt} ${tkvWasKostet(tkv, TIER_AKK[art][an === "du" ? 0 : 1])} ${achten}.`;
+    }
+    if (tkv) w.push(tkvBaustein(tkv));
     if (!w.length) return `${zeigt} was ein guter Schutz für ${fuer} kostet ${achten}.`;
     return `${zeigt} was ${liste(w)} für ${fuer} ${w.length > 1 ? "kosten" : "kostet"} ${achten}.`;
   }
@@ -199,10 +209,12 @@ export function terminVorschlagText(o: {
   kostenlos?: boolean;
   /** Splittest partner_vor_termin, Fassung b: Halbsatz zum Mitentscheider nach der Zeitfrage (partnerSatzImVorschlag) */
   partnerSatz?: string | null;
+  /** Tierkranken: gewählter Umfang (Lead.tkvUmfang, lib/tkv-umfang.ts) */
+  tkvUmfang?: string | null;
 }): string {
   const frage = a(o.an, `Passt dir ${o.zeiten[0]} oder ${o.zeiten[1]}?`, `Passt Ihnen ${o.zeiten[0]} oder ${o.zeiten[1]}?`);
   const einleitung = o.einleitung?.replace(/\s+/g, " ").trim() || (o.dank === false || o.erneut ? null : "Danke!");
-  const nutzen = o.erneut ? null : terminNutzenSatz({ source: o.source, formular: o.formular, angaben: o.angaben, an: o.an, person: o.person, video: o.video, kostenlos: o.kostenlos });
+  const nutzen = o.erneut ? null : terminNutzenSatz({ source: o.source, formular: o.formular, angaben: o.angaben, an: o.an, person: o.person, video: o.video, kostenlos: o.kostenlos, tkvUmfang: o.tkvUmfang });
   return [einleitung, nutzen, frage, o.erneut ? null : o.partnerSatz].filter(Boolean).join(" ");
 }
 

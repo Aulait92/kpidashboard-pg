@@ -8,6 +8,7 @@
 // Lebensbereiche (Rechtsschutz, P2): Der Rechner braucht sie für den Beitrag (docs/preise-pilot.md), der Lead kann sie
 // beantworten, also fragt der Assistent danach (nicht mehr „termin“).
 
+import { tkvUmfangVon } from "@/lib/tkv-umfang";
 import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { INTERESSE_LABEL_RE } from "@/lib/interesse-formular";
@@ -264,15 +265,17 @@ export function spartenDesLeads(source: string | null | undefined, src: AngabenQ
   const s = (source ?? "").toLowerCase();
   // Kfz-Versicherung als Produkt (lib/whatsapp/produkt-fragen.ts istKfzProdukt)
   if (istKfzProdukt(source)) return ["kfz"];
-  const op = /\bop\b|op-/.test(s);
   if (!/privatschutz/.test(s) && /\btkv\b|tierkranken|tier-?op|katze|hundekranken|hunde-?op|pferd/.test(s) && !/futter|halter/.test(s)) {
+    // Gewünschter Umfang (lib/tkv-umfang.ts) vor dem Produkt: OP, Kranken, unentschieden beides
+    const u = tkvUmfangVon({ angaben: src.angaben, source });
+    const tkv = (art: "katze" | "hund"): RechnerSparte[] => (u === "offen" ? [`${art}-kranken`, `${art}-op`] : [u === "op" ? `${art}-op` : `${art}-kranken`]);
     if (/katze/.test(s) || /\btkv\b|tierkranken|tier-?op/.test(s)) {
       const art = (src.formular.find((x) => /tierart/i.test(x.label))?.value ?? (/hund/.test(s) ? "hund" : "katze")).toLowerCase();
-      if (/hund/.test(art)) return [op ? "hund-op" : "hund-kranken"];
+      if (/hund/.test(art)) return tkv("hund");
       if (/pferd/.test(art)) return [];
-      return [op ? "katze-op" : "katze-kranken"];
+      return tkv("katze");
     }
-    if (/hund/.test(s)) return [op ? "hund-op" : "hund-kranken"];
+    if (/hund/.test(s)) return tkv("hund");
     return []; // Pferdekranken: noch kein Rechner im Pilot
   }
   const a = Object.fromEntries(qualificationPoints(src.angaben).map((p) => [p.key, p.value])) as Partial<Record<QualificationKey, string>>;
@@ -296,10 +299,12 @@ export function spartenDesLeads(source: string | null | undefined, src: AngabenQ
   // Tierkranken im Privatschutz (Formularauswahl „Tierkrankenversicherung / Tierhalterhaftpflicht“): Tierart und
   // Kranken klärt der Assistent im Chat (angaben.tier, z. B. „Katze, Krankenversicherung“), Ole 21.11.2026
   const tierAngabe = a.tier ?? "";
-  if (/kranken|\bop\b|op-schutz/i.test(tierAngabe)) {
-    const op = /\bop\b|op-schutz|nur op/i.test(tierAngabe) && !/voll|behandlung/i.test(tierAngabe);
-    if (/katze|kater/i.test(tierAngabe)) out.push(op ? "katze-op" : "katze-kranken");
-    if (/hund/i.test(tierAngabe) && !/halter/i.test(tierAngabe.replace(/[^;]*kranken[^;]*/gi, ""))) out.push(op ? "hund-op" : "hund-kranken");
+  // Umfang aus angaben.tarifwunsch bzw. angaben.tier (lib/tkv-umfang.ts): OP, Kranken, unentschieden beides
+  const umfang = tkvUmfangVon({ angaben: src.angaben });
+  if (/kranken|\bop\b|op-schutz/i.test(tierAngabe) || (umfang && /tierkranken/i.test(interesse))) {
+    const varianten = (art: "katze" | "hund"): RechnerSparte[] => (umfang === "offen" ? [`${art}-kranken`, `${art}-op`] : [umfang === "op" ? `${art}-op` : `${art}-kranken`]);
+    if (/katze|kater/i.test(tierAngabe)) out.push(...varianten("katze"));
+    if (/hund/i.test(tierAngabe) && !/halter/i.test(tierAngabe.replace(/[^;]*kranken[^;]*/gi, ""))) out.push(...varianten("hund"));
   }
   return out;
 }
