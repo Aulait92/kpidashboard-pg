@@ -23,6 +23,7 @@ import {
   emailDomain,
   extractHistoryPhones,
   extractMailPhones,
+  historyPhoneText,
   SHARED_MIN_CONTACTS,
   centralPhone,
   newPhonesFor,
@@ -300,7 +301,7 @@ export type HistoryEntry = { type: string; outcome?: string | null; note?: strin
 export async function captureFromActivity(contactId: string, a: HistoryEntry, own?: OwnContext): Promise<number> {
   try {
     if (skipHistoryEntry(a)) return 0;
-    const found = extractHistoryPhones([a.outcome, a.note].filter(Boolean).join("\n"), ownPhones());
+    const found = extractHistoryPhones(historyPhoneText(a), ownPhones());
     if (!found.length) return 0;
     const o = { source: "VERLAUF" as const, at: a.occurredAt ?? undefined, own: own ?? (await loadOwnContext()) };
     let n = 0;
@@ -355,7 +356,7 @@ export async function backfillPhonesFromHistory(opts: { dryRun?: boolean; contac
       const extras = c.phones.map((p) => p.phone);
       for (const a of c.activities) {
         if (skipHistoryEntry(a)) continue;
-        const found = extractHistoryPhones([a.outcome, a.note].filter(Boolean).join("\n"), ownPhones());
+        const found = extractHistoryPhones(historyPhoneText(a), ownPhones());
         if (!found.length) continue;
         out.entries++;
         if (opts.dryRun) {
