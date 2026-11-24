@@ -30,7 +30,8 @@ export async function signaturAngaben(customerId: string): Promise<SignaturAngab
     prisma.erstinformation.findUnique({ where: { customerId }, select: { name: true, firma: true, anschrift: true, telefon: true } }),
     prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, vermittlerTyp: true, onboarding: { select: { websiteInfo: true } } } }),
   ]);
-  const d = erstinfoDaten(record, (customer?.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, { name: customer?.name, vermittlerTyp: customer?.vermittlerTyp });
+  const inhaber = record?.name ? null : await (await import("@/lib/erstinformation")).inhaberName(customerId);
+  const d = erstinfoDaten(record, (customer?.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, { name: customer?.name, vermittlerTyp: customer?.vermittlerTyp, inhaberName: inhaber });
   return { name: d.name, firma: d.firma, telefon: d.telefon, anschrift: (record?.anschrift ?? d.anschrift ?? "").trim() };
 }
 

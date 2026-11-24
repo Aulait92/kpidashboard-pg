@@ -6,6 +6,7 @@
 //   - Nach einer langen Pause (über 30 Tage ohne Nachricht) wiederholt der Assistent ihn kurz.
 //   - „Mensch“, „Mitarbeiter“, „Bist du ein Bot?“ … → wahrheitsgemäße Antwort und Übergabe an den Vermittler.
 
+import { vermittlerBeruf } from "@/lib/vermittler-nennung";
 import { a, anredeZeile, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 
 /** Ab so vielen Tagen Pause wird der Hinweis wiederholt. */
@@ -40,7 +41,7 @@ const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 /** Satz zur Erstinformation (§ 15 VersVermV) mit Link. */
 /** advisor im Dativ nach der Nennungsregel („zu Herrn Kannapinn“, lib/vermittler-nennung.ts). */
 export function erstinfoZeile(advisor: string, url: string): string {
-  return `Erstinformation zu ${advisor} als Versicherungsvermittler: ${url}`;
+  return `Erstinformation zu ${advisor} als ${vermittlerBeruf(advisor)}: ${url}`;
 }
 
 /**

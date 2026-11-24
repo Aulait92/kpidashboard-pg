@@ -107,7 +107,7 @@ export default async function BuyerLayout({
         hasWhatsAppInbox(ctx.customerId).then(async (inbox) => inbox || (await showChatsTeaser(ctx.customerId))),
         attentionCount(ctx),
         advisor ? 0 : customerSetupOpenCount(ctx.customerId),
-        advisor && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,
+        ctx.userId && (advisor || !ctx.preview) ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,
         prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } }),
         advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } }),
         // Bestand: nur Inhaber, und vorerst nur mit Schalter oder aktivem Modul (lib/bestand/sichtbar.ts)
@@ -116,7 +116,17 @@ export default async function BuyerLayout({
     : [false, 0, 0, null, 0, 0, false];
   // Anzeigename ohne Gesellschafts-Präfix („Allianz Anid Schwarzkopf").
   // Berater sehen ihren eigenen Namen.
-  const displayName = me ? (me.displayName?.trim() || me.email) : (customerName ?? "").replace(/^Allianz\s+/i, "");
+  // Inhaber (Go-live-Prüfung 19.11.2026, W7): eigener Anzeigename, sonst Name aus der bestätigten Erstinformation, sonst Kundenname.
+  const inhaberName =
+    !advisor && ctx && !me?.displayName?.trim()
+      ? await prisma.erstinformation
+          .findUnique({ where: { customerId: ctx.customerId }, select: { name: true, bestaetigtAt: true } })
+          .then((e) => (e?.bestaetigtAt ? e.name?.trim() || null : null))
+          .catch(() => null)
+      : null;
+  const displayName = advisor && me
+    ? me.displayName?.trim() || me.email
+    : me?.displayName?.trim() || inhaberName || (customerName ?? "").replace(/^Allianz\s+/i, "");
   // „Ich bin abwesend“: eigene Abwesenheit + Kollegen für die Vertretung (nicht in der Vorschau)
   let absence: ShellAbsence | null = null;
   if (ctx?.userId && !ctx.preview) {

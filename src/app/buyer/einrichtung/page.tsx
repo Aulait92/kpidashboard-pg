@@ -3,7 +3,7 @@ import { gesundheitFreigegeben } from "@/lib/policen/regeln";
 import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
-import { CalendarDays, CheckCircle2, ShieldCheck, ChevronDown, ClipboardCheck, ClipboardList, FileSignature, FileText, KeyRound, Mail, MessageCircle, MessageCircleQuestion, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, ShieldCheck, ChevronDown, ClipboardCheck, ClipboardList, FileSignature, FileText, KeyRound, Mail, MessageCircle, MessageCircleQuestion, Percent, Phone, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -13,6 +13,8 @@ import { customerSetupProgress, EINLADUNG_TEST_KEY, loadOnboarding, onboardingCh
 import { einladungAbsender } from "@/lib/calendar/app-kalender";
 import { TestEinladung } from "./test-einladung";
 import { prisma } from "@/lib/prisma";
+import { supportConfig } from "@/lib/support";
+import { PROVIDER } from "@/lib/legal-texts";
 import { DatenschutzUrlForm, HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits, WeiterButton, type AngabenInitial } from "./forms";
 import { istAllianzVertreter } from "@/lib/vertreter-seite";
 import { schrittAuswege, zeigePostfachVersichererHinweis } from "@/lib/einrichtung-auswege";
@@ -215,6 +217,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   };
   const timeFmt = (d: Date) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
+  // Rückruf ohne freie Hilfetermine (W6): WhatsApp an unser Team, sonst E-Mail
+  const support = supportConfig();
+  const rueckrufText = "Hallo, bitte rufen Sie mich zur Einrichtung zurück. Meine Nummer:";
+  const rueckrufHref = support.whatsapp
+    ? `https://wa.me/${support.whatsapp}?text=${encodeURIComponent(rueckrufText)}`
+    : support.email
+      ? `mailto:${support.email}?subject=${encodeURIComponent("Rückruf zur Einrichtung")}&body=${encodeURIComponent(rueckrufText)}`
+      : null;
   // Hilfetermin: bei Paketen mit Kampagne im Schritt „Meta freigeben“, bei Pay-per-Lead + Software im Schritt „WhatsApp verbinden“
   const hilfeBox = (
       <div id="hilfetermin" className="mt-5 scroll-mt-20 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
@@ -236,7 +246,21 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">15 Minuten per Video, wir machen es gemeinsam.</p>
             <HelpCallPicker slots={slots} readOnly={readOnly} />
           </>
-        ) : null}
+        ) : (
+          // Keine freien Zeiten (Kalender voll oder nicht erreichbar): anrufen oder Rückruf anfragen (Go-live-Prüfung 19.11.2026, W6)
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2" data-hilfetermin-ohne-zeiten>
+            {PROVIDER.phone ? (
+              <a href={`tel:${PROVIDER.phone.replace(/[^\d+]/g, "")}`} className={buttonClass("secondary", "md")}>
+                <Phone className="h-4 w-4" /> {PROVIDER.phone} anrufen
+              </a>
+            ) : null}
+            {rueckrufHref ? (
+              <a href={rueckrufHref} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[color:var(--brand)] underline">
+                Rückruf anfragen
+              </a>
+            ) : null}
+          </div>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
           <span>Schnelle Frage zwischendurch?</span>
           <HilfeChatButton className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--brand)]" />
@@ -726,7 +750,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               öffnen.
             </li>
             <li>
-              <b>Hinzufügen</b> → „Einem Partner Zugriff auf deine Assets gewähren“.
+              <b>Hinzufügen</b> → „Einem Partner Zugriff auf deine Assets gewähren“ (so heißt der Knopf bei Meta).
             </li>
             <li>
               Unsere Business-ID eingeben: <b className="select-all">{businessId}</b>
@@ -840,8 +864,10 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <p className="text-sm text-[color:var(--muted)]">
                 {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
                 gehen die Anzeigen live.{" "}
-                {software
+                {software && waVerbunden
                   ? "Neue Leads bekommen innerhalb weniger Minuten eine WhatsApp-Nachricht und können direkt einen Termin buchen."
+                  : software
+                    ? "Jeder neue Lead steht sofort in Ihrer App. Sobald WhatsApp verbunden ist, schreibt Ihr Assistent ihn innerhalb weniger Minuten an."
                   : "Jeder neue Lead kommt sofort per E-Mail und steht hier im Kundenbereich unter „Leads“."}
               </p>
               <p className="mt-2 text-sm text-[color:var(--muted)]">

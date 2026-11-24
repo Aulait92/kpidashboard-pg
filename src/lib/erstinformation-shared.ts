@@ -26,6 +26,7 @@
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { advisorDisplayName } from "@/lib/advisor-name";
+import { gesellschaftName } from "@/lib/tarifkatalog";
 
 export type VermittlerStatus = "vertreter" | "mehrfachvertreter" | "makler";
 export type Erlaubnis = "abs1" | "abs7";
@@ -269,33 +270,60 @@ export function siehtNachPersonAus(name: string | null | undefined): boolean {
   return words.length >= 2 && !words.some((w) => FIRMEN_WORT.test(w.replace(/[(),.]/g, "")));
 }
 
-/** Name der Person: Gespeichertes, sonst Inhaber laut Impressum, sonst Kundenname nur wenn er nach Person aussieht, sonst leer (Pflichtfeld). */
-export function erstinfoName(saved: string | null | undefined, web: ErstinfoWeb | undefined, customerName: string | null | undefined): string {
+/**
+ * Name der Person: Gespeichertes, sonst Inhaber laut Impressum, sonst Anzeigename des Inhabers-Logins (Go-live-Prüfung
+ * 19.11.2026, B1), sonst Kundenname nur wenn er nach Person aussieht, sonst leer (Pflichtfeld).
+ */
+export function erstinfoName(saved: string | null | undefined, web: ErstinfoWeb | undefined, customerName: string | null | undefined, inhaberName?: string | null): string {
   if (saved != null) return saved.trim();
   const vertreter = clean(web?.representative);
   if (vertreter && siehtNachPersonAus(vertreter)) return vertreter;
+  const inhaber = clean(inhaberName);
+  if (inhaber && siehtNachPersonAus(inhaber) && !inhaber.includes("@")) return inhaber;
   const person = advisorDisplayName(customerName);
   if (person && siehtNachPersonAus(person)) return person.trim();
   return "";
 }
 
 /**
+ * Wirkt ein gespeicherter Name wie eine Firma statt wie eine Person („Versicherungsbüro Sonnberg“, „Meier GmbH“, „Allianz
+ * Max Berger“)? Breiter als siehtNachPersonAus (auch Versicherermarken), für die Diagnose q=erstinfo-namen (B1).
+ */
+export function wirktWieFirma(name: string | null | undefined): boolean {
+  const s = (name ?? "").replace(/\s+/g, " ").trim();
+  if (!s) return false;
+  if (/agentur|b(ü|ue)ro|versicherung|vertretung|makler|finanz|vorsorge|assekuranz|kanzlei|consulting|service/i.test(s)) return true;
+  if (/(^|[\s,.&])(gmbh|mbh|ug|ag|kg|ohg|gbr|e\.\s?k\.?|co\.?)(?=$|[\s,.)])/i.test(s)) return true;
+  return BRANDS.some(([re]) => re.test(s));
+}
+
+/**
  * Angaben zusammenführen: Gespeichertes hat Vorrang, sonst Vorschlag aus Impressum und Angebot (Ole: nichts
  * abfragen, was wir schon wissen; vorausfüllen und nur prüfen lassen).
+ * Vor- und Nachname (Go-live-Prüfung 19.11.2026, B1): siehe erstinfoName, mit dem Anzeigenamen des Inhabers als Vorschlag.
+ * Versicherer (W1): bei Vertretern zuerst die in der Einrichtung gewählte Gesellschaft (Customer.tarifGesellschaften).
  */
 export function erstinfoDaten(
   e: ErstinfoRecord | null | undefined,
   web: ErstinfoWeb | undefined,
-  customer: { name?: string | null; vermittlerTyp?: string | null },
+  customer: { name?: string | null; vermittlerTyp?: string | null; inhaberName?: string | null; gesellschaften?: string[] | null },
 ): ErstinfoDaten {
   const status = asVermittlerStatus(customer.vermittlerTyp);
   const w = web ?? {};
-  const name = erstinfoName(e?.name, w, customer.name);
+  const name = erstinfoName(e?.name, w, customer.name, customer.inhaberName);
   const firmaVorschlag = clean(w.companyName) || clean(customer.name);
   const firma = e?.firma ?? (firmaVorschlag && firmaVorschlag !== name ? firmaVorschlag : "");
   const gespeicherteVersicherer = (e?.versicherer ?? []).filter((v) => v.trim());
-  const vorschlag = status === "vertreter" ? versichererVorschlag(customer.name, w.sourceUrl || w.impressumUrl) : null;
-  const versicherer = status === "makler" ? [] : gespeicherteVersicherer.length ? gespeicherteVersicherer : vorschlag ? [vorschlag] : [];
+  const gewaehlt = (customer.gesellschaften ?? []).map((g) => g.trim()).filter(Boolean);
+  const vorschlaege =
+    status === "makler"
+      ? []
+      : gewaehlt.length
+        ? (status === "vertreter" ? gewaehlt.slice(0, 1) : gewaehlt).map(gesellschaftName)
+        : status === "vertreter"
+          ? [versichererVorschlag(customer.name, w.sourceUrl || w.impressumUrl)].filter((v): v is string => !!v)
+          : [];
+  const versicherer = status === "makler" ? [] : gespeicherteVersicherer.length ? gespeicherteVersicherer : vorschlaege;
   const verguetung = asVerguetung(e?.verguetung);
   const erlaubnis: Erlaubnis =
     status === "makler" ? "abs1" : status === "vertreter" ? "abs7" : e?.erlaubnis === "abs7" || e?.erlaubnis === "abs1" ? e.erlaubnis : (erlaubnisFromImpressum(w.registerType) ?? "abs1");

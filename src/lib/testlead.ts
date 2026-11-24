@@ -152,6 +152,8 @@ export async function kundenProdukte(customerId: string): Promise<string[]> {
     }),
     prisma.onboarding.findUnique({ where: { customerId }, select: { offerId: true } }).catch(() => null),
   ]);
+  // Gebuchte Lead-Bezüge (Pay-per-Lead) zählen ebenfalls als gebuchte Produkte (Go-live-Prüfung 19.11.2026)
+  const bezuege = await prisma.leadSubscription.findMany({ where: { customerId, active: true }, select: { productKey: true } }).catch(() => []);
   const offer = ob?.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { products: true } }).catch(() => null) : null;
   const ausAngebot = (Array.isArray(offer?.products) ? (offer!.products as unknown[]) : [])
     .map((p) => (p && typeof p === "object" && typeof (p as { name?: unknown }).name === "string" ? String((p as { name: string }).name).trim() : ""))
@@ -160,6 +162,7 @@ export async function kundenProdukte(customerId: string): Promise<string[]> {
     cps.map((c) => c.product.name),
     sources.map((s) => s.productKey),
     ausAngebot,
+    bezuege.map((b) => b.productKey),
     recent.map((l) => l.source ?? ""),
   );
 }
