@@ -172,10 +172,35 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
   if (!d) return null;
   const [ang, kunde] = await Promise.all([
     loadAngebote(appointmentId, ctx),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true, maklerMarkthinweis: true, leadAddress: true, brandLogo: true, brandLogoType: true, brandLogoConfirmedAt: true } }),
+    prisma.customer.findUnique({
+      where: { id: ctx.customerId },
+      select: {
+        name: true,
+        vermittlerTyp: true,
+        maklerMarkthinweis: true,
+        leadAddress: true,
+        brandLogo: true,
+        brandLogoType: true,
+        brandLogoConfirmedAt: true,
+        tarifGesellschaften: true,
+        erstinformation: { select: { firma: true, name: true, bestaetigtAt: true } },
+      },
+    }),
   ]);
   const logo = kunde?.brandLogo && kunde.brandLogoType && kunde.brandLogoConfirmedAt ? logoDataUri(new Uint8Array(kunde.brandLogo), kunde.brandLogoType) : null;
-  const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp, maklerMarkthinweis: kunde?.maklerMarkthinweis }, logo);
+  // Absender für Endkunden (Go-live-Prüfung 19.11.2026, W7): bestätigte Firma bzw. Name aus der Erstinformation, sonst Kundenname
+  const ei = kunde?.erstinformation?.bestaetigtAt ? kunde.erstinformation : null;
+  const absender = ei?.firma?.trim() || ei?.name?.trim() || kunde?.name || "Ihre Beratung";
+  const marke = markeFuer(
+    {
+      name: absender,
+      markenText: kunde?.name ?? absender,
+      gesellschaft: kunde?.tarifGesellschaften?.[0] ?? null,
+      vermittlerTyp: kunde?.vermittlerTyp,
+      maklerMarkthinweis: kunde?.maklerMarkthinweis,
+    },
+    logo,
+  );
   const an = asAnsprache(kunde?.leadAddress);
   const angebote = ang?.bestaetigt ? ang.angebote : null;
   // Fassung (lib/praesentation-variante-server.ts): B Standard, C im Splittest; beim Laden nur lesen, nicht zuteilen

@@ -135,7 +135,7 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
                       />
                       <span>€</span>
                     </label>
-                    <div className="text-sm text-[color:var(--muted)]">pro Tag · zum Eintippen antippen</div>
+                    <div className="text-sm text-[color:var(--muted)]">pro Tag · Betrag zum Ändern antippen</div>
                   </div>
                   <button
                     type="button"

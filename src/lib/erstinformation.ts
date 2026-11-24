@@ -110,11 +110,20 @@ export type ErstinfoView = {
   impressum: { companyName: string | null; address: string | null; registerType: string | null; registerNumber: string | null; status: VermittlerStatus | null } | null;
 };
 
+/** Anzeigename des Inhabers (erster Login mit Rolle Inhaber), Vorschlag für Vor- und Nachname (Go-live-Prüfung 19.11.2026). */
+export async function inhaberName(customerId: string): Promise<string | null> {
+  const u = await prisma.user
+    .findFirst({ where: { customerId, role: "BUYER", teamRole: "owner", displayName: { not: null } }, orderBy: { createdAt: "asc" }, select: { displayName: true } })
+    .catch(() => null);
+  return u?.displayName?.trim() || null;
+}
+
 export async function loadErstinfo(customerId: string): Promise<ErstinfoView> {
   const [c, e] = await Promise.all([
-    prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, vermittlerTyp: true, onboarding: { select: { websiteInfo: true } } } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, vermittlerTyp: true, tarifGesellschaften: true, onboarding: { select: { websiteInfo: true } } } }),
     prisma.erstinformation.findUnique({ where: { customerId }, select: RECORD_SELECT }),
   ]);
+  const inhaber = e?.name ? null : await inhaberName(customerId);
   const web = (c?.onboarding?.websiteInfo ?? null) as ErstinfoWeb;
   const impressum = web
     ? {
@@ -131,7 +140,7 @@ export async function loadErstinfo(customerId: string): Promise<ErstinfoView> {
     await getOrCreateErstinfo(customerId).catch(() => null);
     await prisma.erstinformation.update({ where: { customerId }, data: { registerNummer: impressum.registerNumber } }).catch(() => null);
   }
-  const daten = erstinfoDaten(e, web, { name: c?.name, vermittlerTyp: c?.vermittlerTyp });
+  const daten = erstinfoDaten(e, web, { name: c?.name, vermittlerTyp: c?.vermittlerTyp, inhaberName: inhaber, gesellschaften: c?.tarifGesellschaften });
   const fehlt = erstinfoFehlt(daten, { upload: !!e?.fileName, bestaetigt: !!e?.bestaetigtAt });
   return {
     token: e?.token ?? null,
@@ -222,7 +231,7 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
   // Anrede Pflicht in der Einrichtung (Ole, 17.11.2026, Vermittler-Nennung „Herr Kannapinn“): Herr, Frau oder bewusst
   // keine („keine“: Vor- und Nachname). Nur geprüft, wenn das Formular sie mitschickt (undefined = unverändert).
   if (input.anrede !== undefined && !["Herr", "Frau", "keine"].includes(input.anrede ?? "")) {
-    return { ok: false, error: "Bitte Ihre Anrede wählen. Der Assistent nennt Sie gegenüber Kunden z. B. „Herr Kannapinn“." };
+    return { ok: false, error: "Bitte Ihre Anrede wählen. Der Assistent nennt Sie gegenüber Kunden z. B. „Herr Mustermann“." };
   }
   const anrede = input.anrede === undefined ? undefined : input.anrede === "Herr" || input.anrede === "Frau" || input.anrede === "keine" ? input.anrede : null;
   // Ohne eigenes PDF erzeugen wir die Erstinformation aus den Angaben: dann alle Pflichtangaben prüfen

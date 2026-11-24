@@ -771,6 +771,7 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=policen-gesundheit[&kunde=<id>]       Kranken/BU/Leben je Kunde: AVV-Ergänzung, Datenschutz-URL, freigegeben (lib/ops/policen-gesundheit.ts)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
 //   q=vermittler-anrede[&alle=1]  Kunden ohne Anrede in den Anbieterangaben, nur ID und Name (lib/ops/vermittler-anrede.ts)
+//   q=erstinfo-namen[&alle=1]              Erstinformationen mit Kunden- bzw. Firmennamen als Vor- und Nachname, nur Zählung und Kunden-IDs (lib/ops/erstinfo-namen.ts)
 //   q=admin-nutzung[&tage=30]              Nutzung des Admins: Änderungsprotokoll je Aktion, Klicks je Funktion und Seite, nur Zahlen (lib/ops/admin-nutzung.ts)
 //   q=mail-strecke[&tage=7]                Mail-Strecke ohne WhatsApp: Schalter, Schritte, Auslöser, Gründe, Termine, SMS, Kandidaten (lib/ops/mail-strecke.ts)
 //   q=investoren[&sicht=gesamt]           Investoren-Kennzahlen (Geld › Auswertung): Datenlücken, Kennzahlen, KI-Kosten, Gegenprobe mit der Übersicht (lib/ops/investoren.ts)
@@ -807,6 +808,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "mail-strecke": async (p) => (await import("@/lib/ops/mail-strecke")).mailStreckeDiagnose(p),
   "anzeige-abdeckung": async (p) => (await import("@/lib/ops/anzeige-abdeckung")).anzeigeAbdeckung(p),
   "vermittler-anrede": async (p) => (await import("@/lib/ops/vermittler-anrede")).vermittlerAnrede(p),
+  "erstinfo-namen": async (p) => (await import("@/lib/ops/erstinfo-namen")).erstinfoNamenDiagnose(p),
   "admin-nutzung": async (p) => (await import("@/lib/ops/admin-nutzung")).adminNutzung(p),
   "tarif-vorschlaege": async () => (await import("@/lib/ops/tarif-vorschlaege")).tarifVorschlaegeDiagnose(),
   "preise-offen": async () => (await import("@/lib/ops/preise-offen")).preiseOffenDiagnose(),

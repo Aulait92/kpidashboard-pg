@@ -72,6 +72,13 @@ export async function connectRoute(
     if (session.role === "ADMIN") headers.append("Set-Cookie", neuRuecksprungCookie(neuPfadAusReferer(req.headers.get("referer"))));
     return new Response(null, { status: 302, headers });
   } catch (err) {
+    // Kunden sehen kein rohes JSON (Go-live-Prüfung 19.11.2026): zurück in die App mit „Das hat nicht geklappt …“
+    if (session.role === "BUYER") {
+      console.error("[calendar connect]", err instanceof Error ? err.message.slice(0, 160) : err);
+      const back = new URL(req.url).searchParams.get("zurueck");
+      const ziel = back === "kalender" ? "/buyer/kalender?gcal=error" : "/buyer/einrichtung?gcal=error&schritt=calendar#calendar";
+      return new Response(null, { status: 302, headers: { Location: ziel } });
+    }
     return Response.json(
       { error: err instanceof Error ? err.message : "Fehler" },
       { status: 500 },

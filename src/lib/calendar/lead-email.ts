@@ -6,6 +6,7 @@
 // Vermittler im Text wie im WhatsApp-Assistenten (vermittlerName): Sie „Herrn Kannapinn“, Du „Ole“, ohne Anrede der
 // volle Name.
 
+import { vermittlerBeruf } from "@/lib/vermittler-nennung";
 import { a, anredeZeile, asAnsprache, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { leseMailAblauf } from "@/lib/mail/ablauf";
@@ -149,8 +150,8 @@ export function content(kind: LeadEmailKind, ev: CustomerEvent, kontakt: AnredeK
             ? [
                 a(
                   an,
-                  `Die Erstinformation zu ${person.dat} als Versicherungsvermittler findest du hier: ${url}`,
-                  `Die Erstinformation zu ${person.dat} als Versicherungsvermittler finden Sie hier: ${url}`,
+                  `Die Erstinformation zu ${person.dat} als ${vermittlerBeruf(person.dat)} findest du hier: ${url}`,
+                  `Die Erstinformation zu ${person.dat} als ${vermittlerBeruf(person.dat)} finden Sie hier: ${url}`,
                 ),
               ]
             : [];
@@ -365,8 +366,8 @@ async function vorbereitungFuer(
 export function erstinfoMailZeile(an: Ansprache, advisor: string): string {
   return a(
     an,
-    `Im Anhang findest du die Erstinformation zu ${advisor} als Versicherungsvermittler (PDF).`,
-    `Im Anhang finden Sie die Erstinformation zu ${advisor} als Versicherungsvermittler (PDF).`,
+    `Im Anhang findest du die Erstinformation zu ${advisor} als ${vermittlerBeruf(advisor)} (PDF).`,
+    `Im Anhang finden Sie die Erstinformation zu ${advisor} als ${vermittlerBeruf(advisor)} (PDF).`,
   );
 }
 

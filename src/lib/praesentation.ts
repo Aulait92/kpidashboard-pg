@@ -46,10 +46,19 @@ export function markthinweisText(vorlage: string | null | undefined, items: Pick
   return gs.length ? vorlage.replaceAll("{gesellschaften}", aufzaehlung(gs)) : null;
 }
 
-/** Branding nach Gesellschaft (aus dem Kundennamen, z. B. „Allianz Agentur Lohmann“), sonst PG. */
-export function markeFuer(kunde: { name: string; vermittlerTyp?: string | null; maklerMarkthinweis?: string | null }, logoUrl: string | null = null): Marke {
-  const n = kunde.name;
-  const name = n.trim();
+/**
+ * Branding nach Gesellschaft, sonst PG. Vertreter: die in der Einrichtung gewählte Gesellschaft (Go-live-Prüfung
+ * 19.11.2026, W1), sonst aus dem Kundennamen („Allianz Agentur Lohmann“). name = Absender auf den Folien (W7: Firma bzw.
+ * Name aus der Erstinformation, Rückfall Kundenname); markenText = Text für die Erkennung (Standard: name).
+ */
+export function markeFuer(
+  kunde: { name: string; vermittlerTyp?: string | null; maklerMarkthinweis?: string | null; gesellschaft?: string | null; markenText?: string | null },
+  logoUrl: string | null = null,
+): Marke {
+  const g = kunde.vermittlerTyp === "makler" ? "" : (kunde.gesellschaft ?? "").trim().toLowerCase();
+  // Gewählte Gesellschaft geht vor; eine andere als die drei mit eigenem Design ergibt das neutrale Design
+  const n = g ? (g === "allianz" ? "allianz" : g === "axa" ? "axa" : g === "signal-iduna" ? "signal iduna" : "") : (kunde.markenText ?? kunde.name);
+  const name = kunde.name.trim();
   const markthinweis = markthinweisVorlage(kunde.vermittlerTyp, kunde.maklerMarkthinweis);
   if (/allianz/i.test(n)) return { name, gesellschaft: "Allianz", farbe: "#003781", farbeHell: "#e6eef7", akzent: "#003781", logoUrl, markthinweis };
   if (/\baxa\b/i.test(n)) return { name, gesellschaft: "AXA", farbe: "#00008f", farbeHell: "#e8e8f6", akzent: "#ff1721", logoUrl, markthinweis };
