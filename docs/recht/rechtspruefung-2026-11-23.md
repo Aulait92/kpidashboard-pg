@@ -235,3 +235,8 @@ Siehe `docs/recht/legal-data-hunter-queue.md` (aktualisiert 24.11.2026). Neu bel
 - [GeschGehG § 2](https://www.gesetze-im-internet.de/geschgehg/__2.html) (nur lit. a im Tooltext), [GeschGehG § 4](https://www.gesetze-im-internet.de/geschgehg/__4.html)
 - [BGB § 307](https://www.gesetze-im-internet.de/bgb/__307.html), [BGB §§ 305c, 310](https://www.gesetze-im-internet.de/bgb/)
 - Aus früheren Läufen weiter genutzt: DSGVO-Volltext [EUR-Lex 32016R0679](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679), EuGH C-413/23 P [CELEX:62023CJ0413](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62023CJ0413).
+
+## Entscheidungen Ole 24.11.2026
+- Instantly „gemischt“: nur die Erfolgsgarantie entfernt (in Mail 1 und Mail 2, per API am 24.11. erledigt). Allianz-Referenz, Zahlen, Re:-Betreff und Zitat bleiben vorerst (Restrisiko F2 bis F4 bewusst getragen). Neufassung liegt in docs/vertrieb/instantly-gemischt-v2.md.
+- vorlagenVon (Anzeigen eines Kunden für andere): grundsätzlich gewollt. Claude-Vorschlag dazu: Leitplanken (keine Personenbilder, Logos, Namen oder Zahlen des Quellkunden, Quelle anonym) und vertragliche Grundlage über Banner mit Widerspruch.
+- AWS Bedrock: keine Mail an Kunden, Information höchstens per Banner bzw. Hinweis im Kundenbereich.
