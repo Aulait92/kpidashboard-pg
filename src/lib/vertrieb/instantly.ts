@@ -199,6 +199,36 @@ export async function letzteAntwortInInstantly(email: string): Promise<{ id: str
   }
 }
 
+/**
+ * Empfangene Mail einer gelöschten Adresse wiederfinden: Absender als Hash (wie im Sperrvermerk) vergleichen, nur Mails
+ * vom Eingangstag (± 1 Tag). Blättert höchstens 60 Seiten zurück. Nur lesend; ohne Treffer null.
+ */
+export async function antwortPerHash(hashes: Set<string>, eingang: Date): Promise<{ id: string; eaccount: string; threadId: string | null } | null> {
+  const { emailHash } = await import("@/lib/vertrieb/sperrliste");
+  const von = eingang.getTime() - 86_400_000;
+  const bis = eingang.getTime() + 86_400_000;
+  let cursor: string | undefined;
+  try {
+    for (let seite = 0; seite < 60; seite++) {
+      const q = new URLSearchParams({ email_type: "received", limit: "100" });
+      if (cursor) q.set("starting_after", cursor);
+      const page = await listEmails(q);
+      const items = page.items ?? [];
+      for (const e of items) {
+        const t = Date.parse(e.timestamp_email);
+        if (t < von || t > bis || !e.from_address_email || !e.eaccount || e.is_auto_reply) continue;
+        if (hashes.has(emailHash(e.from_address_email))) return { id: e.id, eaccount: e.eaccount, threadId: e.thread_id };
+      }
+      const letzte = items.length ? Date.parse(items[items.length - 1].timestamp_email) : 0;
+      if (!items.length || letzte < von || !page.next_starting_after) return null;
+      cursor = page.next_starting_after;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 /** Interessenstatus eines Leads laut Instantly je Kampagne (Diagnose, nur lesend). */
 export async function leadInterest(email: string): Promise<{ kampagne: string | null; interesse: string | null; status: number | null; antworten: number }[]> {
   const page = await api<{ items: (ApiLead & { campaign?: string | null })[] }>("/leads/list", { method: "POST", body: JSON.stringify({ search: email, limit: 10 }) });

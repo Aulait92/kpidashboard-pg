@@ -196,6 +196,8 @@ export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Prom
     }
   }
 
+  // Antwortziel in Instantly sichern, solange die Adresse noch da ist: Löschbestätigung danach mit einem Klick (Ole, 24.11.2026)
+  const ziel = ausLoeschprotokoll ? null : await antwortZielVorLoeschung(contactId, c.email).catch(() => null);
   await huelleSchreiben(contactId, hashes, c.nieKontaktierenAt ?? eingang, c.nieKontaktierenGrund ?? opts.grund ?? "widerspruch", now);
   for (const id of weitere) await kontaktGanzLoeschen(id);
 
@@ -222,7 +224,7 @@ export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Prom
       },
     });
     // Nachweisprotokoll „Datenschutz und Recht“: Löschdatum am Fall (ohne Fall: neuer Fall „Löschung“)
-    await loeschungProtokollieren(contactId, { eingang, at: now, wer: opts.wer, quelle: opts.quelle === "admin" ? "admin" : "antwort" });
+    await loeschungProtokollieren(contactId, { eingang, at: now, wer: opts.wer, quelle: opts.quelle === "admin" ? "admin" : "antwort", ziel });
     const { protokolliereLoeschung } = await import("@/lib/loeschprotokoll");
     await protokolliereLoeschung(
       [{ art: "vertriebskontakt_art17", entityId: contactId, grund: "art17" }, ...weitere.map((id) => ({ art: "vertriebskontakt" as const, entityId: id, grund: "art17" }))],
@@ -236,6 +238,20 @@ export async function vertriebArt17Loeschen(contactId: string, opts: Opts): Prom
     actor: opts.actor ?? (opts.quelle === "admin" ? undefined : { role: "system" }),
   });
   return { status: "geloescht", instantly };
+}
+
+/** Letzte Antwort des Kontakts mit Instantly-ID und Postfach (gespeichert, sonst aus der Unibox). */
+async function antwortZielVorLoeschung(contactId: string, email: string | null): Promise<{ instantlyEmailId: string; postfach: string } | null> {
+  const mail = await prisma.salesEmail.findFirst({
+    where: { contactId, direction: "IN", instantlyId: { not: null }, eaccount: { not: null } },
+    orderBy: { sentAt: "desc" },
+    select: { instantlyId: true, eaccount: true },
+  });
+  if (mail?.instantlyId && mail.eaccount) return { instantlyEmailId: mail.instantlyId, postfach: mail.eaccount };
+  if (!email || !process.env.INSTANTLY_API_KEY) return null;
+  const { letzteAntwortInInstantly } = await import("@/lib/vertrieb/instantly");
+  const t = await letzteAntwortInInstantly(email);
+  return t ? { instantlyEmailId: t.id, postfach: t.eaccount } : null;
 }
 
 /** Weitere Vertriebskontakte mit einer dieser Adressen (Haupt- oder Zusatzadresse), ohne Hüllen. */

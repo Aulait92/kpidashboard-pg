@@ -58,6 +58,7 @@ async function antwort(contactId: string, text: string, sentAt = new Date()) {
   return prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, include: { tasks: true, emails: true } });
 }
 
+let unibox: Record<string, unknown>[] = [];
 const posts = (p: string) => calls.filter((c) => c.method === "POST" && c.path.startsWith(p));
 const blockWerte = () => posts("/block-lists-entries").map((p) => String(p.body?.bl_value));
 
@@ -83,6 +84,7 @@ beforeAll(async () => {
     if (path.startsWith("/leads/list")) return json({ items: [{ id: "lead-a", email: body?.search }] });
     if (path.startsWith("/leads/") && method === "DELETE") return json({ id: path.split("/")[2] });
     if (path.startsWith("/emails/reply")) return json({ id: `out-${Math.random()}`, thread_id: "thr-x" });
+    if (path.startsWith("/emails?") && method === "GET") return json({ items: unibox });
     if (path.startsWith("/accounts/")) return json({ email: BOX, first_name: "Ole", last_name: "Muster", signature: "Ole" });
     return json({ items: [] });
   });
@@ -371,6 +373,35 @@ describe("Löschung, Auskunft und Antwortvorlagen", () => {
     expect(fall.loeschAt).not.toBeNull();
     const h = await prisma.salesContact.findUniqueOrThrow({ where: { id: c.id } });
     expect(h.sperrHashes).toContain(domainHash(dom("knopf")));
+  });
+
+  it("Löschbestätigung mit einem Klick (Ole, 24.11.2026): Ziel vor der Löschung gesichert, ältere Hülle über den Hash gefunden", async () => {
+    // (a) Antwort gespeichert, Fall per Knopf ohne Instantly-ID: Löschung sichert das Ziel
+    const a = await makeContact(`klick@${dom("klick")}`);
+    await prisma.salesEmail.create({ data: { contactId: a.id, direction: "IN", subject: "AW", text: "Bitte löschen", fromEmail: a.email, eaccount: BOX, instantlyId: `in-klick-${a.id}`, sentAt: new Date() } });
+    expect((await vertriebArt17Loeschen(a.id, { quelle: "admin", wer: "admin@growth.test" })).status).toBe("geloescht");
+    const ea = await rechtsVorlageEntwurf(a.id, "loeschung");
+    expect(ea.ok && ea.sendbar).toBe(true);
+
+    // (b) Hülle von vor dem Update (kein Ziel gespeichert): Unibox am Eingangstag, Absender per Hash erkannt
+    const b = await makeContact(`alt@${dom("althuelle")}`);
+    const adresse = b.email;
+    expect((await vertriebArt17Loeschen(b.id, { quelle: "admin", wer: "admin@growth.test" })).status).toBe("geloescht");
+    expect(await prisma.datenschutzFallEreignis.count({ where: { contactId: b.id, instantlyEmailId: { not: null } } })).toBe(0);
+    unibox = [
+      { id: "fremd", eaccount: BOX, timestamp_email: new Date().toISOString(), from_address_email: `jemand@${dom("andere")}`, thread_id: "t0", is_auto_reply: 0 },
+      { id: "treffer", eaccount: BOX, timestamp_email: new Date().toISOString(), from_address_email: adresse, thread_id: "t1", is_auto_reply: 0 },
+    ];
+    const eb = await rechtsVorlageEntwurf(b.id, "loeschung");
+    unibox = [];
+    expect(eb.ok && eb.sendbar).toBe(true);
+    expect(await prisma.datenschutzFallEreignis.findFirst({ where: { contactId: b.id, ereignis: "ziel" } })).toMatchObject({ instantlyEmailId: "treffer", postfach: BOX });
+    // danach ohne neue Suche (Ziel am Fall)
+    calls = [];
+    expect(((await rechtsVorlageEntwurf(b.id, "loeschung")) as { sendbar?: boolean }).sendbar).toBe(true);
+    expect(calls.filter((c) => c.path.startsWith("/emails?"))).toHaveLength(0);
+    // Status bleibt „offen“ (Ziel ist kein Antwort-Ereignis)
+    expect((await rechtsFaelleVon(b.id))[0].status).not.toBe("beantwortet");
   });
 
   it("Auskunft: Entwurf aus der Akte, Senden nur auf Knopfdruck, danach beantwortet", async () => {

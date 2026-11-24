@@ -5551,7 +5551,7 @@ model DatenschutzFallEreignis {
   fallId     String
   /// Vertriebskontakt bzw. Hülle (ohne Fremdschlüssel)
   contactId  String?
-  /// eingang | antwort | loeschung
+  /// eingang | antwort | loeschung | ziel (Antwortziel in Instantly nachträglich gefunden)
   ereignis   String
   /// auskunft | loeschung | widerspruch | abmahnung
   art        String

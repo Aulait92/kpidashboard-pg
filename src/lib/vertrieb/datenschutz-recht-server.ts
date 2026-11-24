@@ -204,13 +204,17 @@ export async function rechtsFallAnlegen(contactId: string, opts: FallOpts): Prom
  * Löschung (Art. 17) im Protokoll vermerken: an jedem Fall des Kontakts ohne Löschung; ohne Fall (Knopf in der
  * Kontaktakte, Anruf) entsteht ein Fall „Löschung“.
  */
-export async function loeschungProtokollieren(contactId: string, opts: { eingang: Date; at: Date; wer?: string; quelle: "antwort" | "admin" }): Promise<void> {
+export async function loeschungProtokollieren(
+  contactId: string,
+  opts: { eingang: Date; at: Date; wer?: string; quelle: "antwort" | "admin"; ziel?: { instantlyEmailId: string; postfach: string } | null },
+): Promise<void> {
+  const ziel = { instantlyEmailId: opts.ziel?.instantlyEmailId ?? null, postfach: opts.ziel?.postfach ?? null };
   const wer = opts.wer ?? AUTOMATISCH;
   const eingaenge = await prisma.datenschutzFallEreignis.findMany({ where: { contactId, ereignis: "eingang" }, orderBy: { at: "asc" } });
   if (!eingaenge.length) {
     const fallId = randomUUID();
     const fristAt = rechtsFrist("loeschung", opts.eingang);
-    await prisma.datenschutzFallEreignis.create({ data: { fallId, contactId, ereignis: "eingang", art: "loeschung", eingangAt: opts.eingang, fristAt, at: opts.at, wer, detail: opts.quelle } });
+    await prisma.datenschutzFallEreignis.create({ data: { fallId, contactId, ereignis: "eingang", art: "loeschung", eingangAt: opts.eingang, fristAt, at: opts.at, wer, detail: opts.quelle, ...ziel } });
     eingaenge.push((await prisma.datenschutzFallEreignis.findFirstOrThrow({ where: { fallId } })));
   }
   const geloescht = new Set(
@@ -218,7 +222,7 @@ export async function loeschungProtokollieren(contactId: string, opts: { eingang
   );
   for (const e of eingaenge) {
     if (geloescht.has(e.fallId)) continue;
-    await prisma.datenschutzFallEreignis.create({ data: { fallId: e.fallId, contactId, ereignis: "loeschung", art: e.art, eingangAt: e.eingangAt, fristAt: e.fristAt, at: opts.at, wer } });
+    await prisma.datenschutzFallEreignis.create({ data: { fallId: e.fallId, contactId, ereignis: "loeschung", art: e.art, eingangAt: e.eingangAt, fristAt: e.fristAt, at: opts.at, wer, ...ziel } });
   }
 }
 
@@ -373,18 +377,33 @@ async function antwortZiel(contactId: string, fallId: string | null): Promise<Zi
     select: { instantlyId: true, eaccount: true, threadId: true },
   });
   if (mail?.instantlyId && mail.eaccount) return { replyToUuid: mail.instantlyId, eaccount: mail.eaccount, threadId: mail.threadId };
+  // Eingang oder Löschung (dort sichert die Löschung das Ziel, solange die Adresse noch da ist)
   const e = await prisma.datenschutzFallEreignis.findFirst({
-    where: { contactId, ereignis: "eingang", instantlyEmailId: { not: null }, postfach: { not: null }, ...(fallId ? { fallId } : {}) },
+    where: { contactId, ereignis: { in: ["eingang", "loeschung", "ziel"] }, instantlyEmailId: { not: null }, postfach: { not: null }, ...(fallId ? { fallId } : {}) },
     orderBy: { eingangAt: "desc" },
   });
   if (e?.instantlyEmailId && e.postfach) return { replyToUuid: e.instantlyEmailId, eaccount: e.postfach, threadId: null };
   // Mail ohne Instantly-ID gespeichert (z. B. Nachhol-Lauf): Antwort direkt in der Unibox suchen (Ole, 24.11.2026)
   if (!process.env.INSTANTLY_API_KEY) return null;
-  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true } });
-  if (!c?.email) return null;
-  const { letzteAntwortInInstantly } = await import("@/lib/vertrieb/instantly");
-  const t = await letzteAntwortInInstantly(c.email);
-  return t ? { replyToUuid: t.id, eaccount: t.eaccount, threadId: t.threadId } : null;
+  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true, art17GeloeschtAt: true, sperrHashes: true } });
+  if (!c) return null;
+  const { letzteAntwortInInstantly, antwortPerHash } = await import("@/lib/vertrieb/instantly");
+  if (!c.art17GeloeschtAt) {
+    if (!c.email) return null;
+    const t = await letzteAntwortInInstantly(c.email);
+    return t ? { replyToUuid: t.id, eaccount: t.eaccount, threadId: t.threadId } : null;
+  }
+  // Hülle ohne gesichertes Ziel (Löschung vor dem 24.11.2026): Antwort am Eingangstag über den Sperrvermerk (Hash der
+  // Adresse) in der Unibox wiederfinden; die Adresse selbst wird nicht gespeichert
+  const eingang = await prisma.datenschutzFallEreignis.findFirst({ where: { contactId, ereignis: "eingang", ...(fallId ? { fallId } : {}) }, orderBy: { eingangAt: "desc" } });
+  if (!eingang || !c.sperrHashes.length) return null;
+  const t = await antwortPerHash(new Set(c.sperrHashes), eingang.eingangAt);
+  if (!t) return null;
+  // Treffer am Fall merken (Ereignis „ziel“, nur Instantly-ID und Postfach), damit nicht jedes Öffnen neu sucht
+  await prisma.datenschutzFallEreignis
+    .create({ data: { fallId: eingang.fallId, contactId, ereignis: "ziel", art: eingang.art, eingangAt: eingang.eingangAt, fristAt: eingang.fristAt, wer: AUTOMATISCH, instantlyEmailId: t.id, postfach: t.eaccount } })
+    .catch((e) => reportError(e, "recht-ziel"));
+  return { replyToUuid: t.id, eaccount: t.eaccount, threadId: t.threadId };
 }
 
 /** Entwurf einer Antwortvorlage aus der Akte (nichts wird gesendet). */
