@@ -377,7 +377,14 @@ async function antwortZiel(contactId: string, fallId: string | null): Promise<Zi
     where: { contactId, ereignis: "eingang", instantlyEmailId: { not: null }, postfach: { not: null }, ...(fallId ? { fallId } : {}) },
     orderBy: { eingangAt: "desc" },
   });
-  return e?.instantlyEmailId && e.postfach ? { replyToUuid: e.instantlyEmailId, eaccount: e.postfach, threadId: null } : null;
+  if (e?.instantlyEmailId && e.postfach) return { replyToUuid: e.instantlyEmailId, eaccount: e.postfach, threadId: null };
+  // Mail ohne Instantly-ID gespeichert (z. B. Nachhol-Lauf): Antwort direkt in der Unibox suchen (Ole, 24.11.2026)
+  if (!process.env.INSTANTLY_API_KEY) return null;
+  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true } });
+  if (!c?.email) return null;
+  const { letzteAntwortInInstantly } = await import("@/lib/vertrieb/instantly");
+  const t = await letzteAntwortInInstantly(c.email);
+  return t ? { replyToUuid: t.id, eaccount: t.eaccount, threadId: t.threadId } : null;
 }
 
 /** Entwurf einer Antwortvorlage aus der Akte (nichts wird gesendet). */
@@ -397,6 +404,14 @@ export async function rechtsVorlageEntwurf(contactId: string, vorlage: VorlagenA
   const d = (await vertriebAuskunftDiagnose(new URLSearchParams({ id: contactId }))) as Record<string, unknown>;
   if (!d.gefunden) return { ok: false, fehler: "Kontakt nicht gefunden." };
   const herkunft = d.herkunft as AuskunftAkte["herkunft"];
+  // Direkt in Instantly hochgeladen: Übernahmedatum aus Instantly (Ole, 24.11.2026)
+  if (herkunft.art !== "öffentliche Vermittlerliste" && process.env.INSTANTLY_API_KEY) {
+    const mail = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { email: true } });
+    if (mail?.email) {
+      const { leadAngelegtAm } = await import("@/lib/vertrieb/instantly");
+      herkunft.inInstantlySeit = await leadAngelegtAm(mail.email);
+    }
+  }
   const akte: AuskunftAkte = {
     felder: (d.felder ?? {}) as Record<string, unknown>,
     herkunft,
@@ -408,7 +423,7 @@ export async function rechtsVorlageEntwurf(contactId: string, vorlage: VorlagenA
   return {
     ok: true,
     ...vorlageAuskunft(anrede, akte),
-    hinweis: herkunftVollstaendig(herkunft) ? null : "Herkunft ohne Quelle bzw. Abrufdatum: vor dem Senden unter „2. Herkunft“ ergänzen.",
+    hinweis: herkunftVollstaendig(herkunft) ? null : "Herkunft automatisch: öffentliche Angaben im Internet, Fundstelle nicht gespeichert. Kennen Sie die genaue Quelle, unter „2. Herkunft“ ergänzen.",
     sendbar,
   };
 }

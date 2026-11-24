@@ -170,6 +170,8 @@ export type AuskunftAkte = {
     abgerufenAm?: unknown;
     importiertAm?: unknown;
     angelegt?: string | null;
+    /** Anlage in Instantly (YYYY-MM-DD), bei direkt in Instantly hochgeladenen Kontakten */
+    inInstantlySeit?: string | null;
     verlauf?: { datum: string | null; notiz: string | null }[];
   };
   /** google | kalender | whatsapp (Instantly und Hosting stehen immer drin) */
@@ -221,8 +223,16 @@ export function herkunftSatz(h: AuskunftAkte["herkunft"]): string {
   const notizen = (h.verlauf ?? []).map((v) => v.notiz?.trim()).filter(Boolean);
   // Ohne belegte Quelle (z. B. direkt in Instantly hochgeladen): deutlicher Platzhalter, Senden ist gesperrt, bis Ole die
   // konkrete Quelle einträgt (Art. 15 Abs. 1 lit. g verlangt „alle verfügbaren Informationen über die Herkunft“)
+  // Direkt in Instantly hochgeladen: Die Listen wurden aus öffentlichen Angaben im Internet KI-gestützt recherchiert
+  // (Ole, 24.11.2026: „die kontakte wurden alle von claude gescraped“). Fundstelle und Abrufdatum wurden nicht
+  // gespeichert; Art. 15 Abs. 1 lit. g verlangt die verfügbaren Informationen, das sagt der Text offen.
   if (h.art.startsWith("Instantly") || h.art === "laut Verlauf") {
-    return `Ihre Daten stammen aus ${HERKUNFT_PLATZHALTER}. Wir haben sie für den Versand in unser E-Mail-System (Instantly) übernommen${seit ? `; in unserer Anwendung sind sie seit ${seit} gespeichert` : ""}.`;
+    const instantly = iso(h.inInstantlySeit);
+    return [
+      "Ihre Daten (Name und geschäftliche E-Mail-Adresse) stammen aus öffentlich zugänglichen Angaben im Internet, zum Beispiel Webseiten, Impressum sowie Berater- und Vermittlerprofile. Wir haben sie mit KI-Unterstützung recherchiert.",
+      "Die genaue Fundstelle und das Abrufdatum haben wir dabei nicht gespeichert.",
+      `Für den Versand haben wir sie ${instantly ? `am ${instantly} ` : ""}in unser E-Mail-System (Instantly) übernommen${seit ? `; in unserer Anwendung sind sie seit ${seit} gespeichert` : ""}.`,
+    ].join(" ");
   }
   return `Ihre Daten sind bei uns${seit ? ` seit ${seit}` : ""} gespeichert. Herkunft laut unseren Unterlagen: ${h.art}${notizen.length ? ` (${notizen.join("; ")})` : ""}.`;
 }

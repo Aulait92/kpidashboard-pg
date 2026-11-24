@@ -169,13 +169,18 @@ describe("Antwortvorlagen", () => {
     expect(herkunftVollstaendig({ art: "Import Cold CRM bzw. von Hand angelegt", angelegt: "2026-10-01" })).toBe(false);
   });
 
-  it("Herkunft unbekannt (direkt in Instantly): Platzhalter statt „Adressliste“, Senden gesperrt (Ole, 24.11.2026)", () => {
-    const h = { art: "Instantly (Kampagne „Signal Iduna“)", angelegt: "2026-11-19", verlauf: [{ datum: "2026-11-19", notiz: "Aus Instantly übernommen" }] };
+  it("Herkunft direkt in Instantly: automatisch öffentliche Angaben, offen ohne Fundstelle, kein Platzhalter (Ole, 24.11.2026)", () => {
+    const h = { art: "Instantly (Liste direkt in Instantly hochgeladen)", angelegt: "2026-11-11", inInstantlySeit: "2026-06-07" };
     const satz = herkunftSatz(h);
-    expect(satz).toContain(HERKUNFT_PLATZHALTER);
+    expect(satz).toContain("öffentlich zugänglichen Angaben im Internet");
+    expect(satz).toContain("KI-Unterstützung");
+    expect(satz).toContain("nicht gespeichert");
+    expect(satz).toContain("am 07.06.2026 in unser E-Mail-System (Instantly)");
+    expect(satz).toContain("seit 11.11.2026");
     expect(satz).not.toContain("Adressliste");
-    expect(hatPlatzhalter(satz)).toBe(true);
-    expect(hatPlatzhalter(satz.replace(HERKUNFT_PLATZHALTER, "der Vertretersuche der SIGNAL IDUNA (abgerufen am 04.11.2026)"))).toBe(false);
+    expect(hatPlatzhalter(satz)).toBe(false);
+    expect(hatPlatzhalter(`aus ${HERKUNFT_PLATZHALTER}`)).toBe(true);
+    expect(herkunftSatz({ art: "laut Verlauf", angelegt: null })).not.toContain("am ");
     expect(satz).not.toMatch(/[–—]/);
   });
 });

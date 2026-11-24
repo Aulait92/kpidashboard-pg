@@ -168,6 +168,37 @@ export async function leadDetails(email: string): Promise<Parameters<typeof ensu
   }
 }
 
+/** Anlage des Leads in Instantly (früheste über alle Kampagnen, YYYY-MM-DD); ohne Treffer null. Nur lesend. */
+export async function leadAngelegtAm(email: string): Promise<string | null> {
+  try {
+    const page = await api<{ items: (ApiLead & { timestamp_created?: string | null })[] }>("/leads/list", { method: "POST", body: JSON.stringify({ search: email, limit: 10 }) });
+    const daten = (page.items ?? [])
+      .filter((x) => x.email?.trim().toLowerCase() === email.trim().toLowerCase() && x.timestamp_created)
+      .map((x) => x.timestamp_created!.slice(0, 10))
+      .sort();
+    return daten[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Letzte Mail des Kontakts in der Instantly-Unibox (Antwortziel), wenn die App sie ohne Instantly-ID bzw. Postfach
+ * gespeichert hat (z. B. Nachhol-Lauf). Nur lesend; ohne Treffer null.
+ */
+export async function letzteAntwortInInstantly(email: string): Promise<{ id: string; eaccount: string; threadId: string | null } | null> {
+  try {
+    const page = await listEmails(new URLSearchParams({ search: email, limit: "50" }));
+    const von = email.trim().toLowerCase();
+    const treffer = (page.items ?? [])
+      .filter((e) => e.from_address_email?.trim().toLowerCase() === von && e.eaccount && !e.is_auto_reply)
+      .sort((a, b) => b.timestamp_email.localeCompare(a.timestamp_email))[0];
+    return treffer ? { id: treffer.id, eaccount: treffer.eaccount!, threadId: treffer.thread_id } : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Interessenstatus eines Leads laut Instantly je Kampagne (Diagnose, nur lesend). */
 export async function leadInterest(email: string): Promise<{ kampagne: string | null; interesse: string | null; status: number | null; antworten: number }[]> {
   const page = await api<{ items: (ApiLead & { campaign?: string | null })[] }>("/leads/list", { method: "POST", body: JSON.stringify({ search: email, limit: 10 }) });
