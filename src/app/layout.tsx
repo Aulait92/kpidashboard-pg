@@ -53,6 +53,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const SPLASH_HIDE = '(function(){function h(){try{var p=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SplashScreen;if(p&&p.hide)p.hide({fadeOutDuration:200})}catch(e){}}if(document.readyState!=="loading")requestAnimationFrame(h);else document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(h)})})();';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -73,6 +75,10 @@ export default function RootLayout({
         <NativeAppBridge />
         <NeueVersion />
         <DatumKlick />
+        {/* App-Store-App (Ole, 24.11.2026: „braucht sehr lange zum Öffnen, nur ein weißer Screen“): Startbildschirm
+            ausblenden, sobald das HTML gezeichnet ist, nicht erst nach dem Laden der Skripte (mobile/capacitor.config.ts).
+            Im Browser ohne Wirkung. */}
+        <script id="pg-splash-hide" dangerouslySetInnerHTML={{ __html: SPLASH_HIDE }} />
       </body>
     </html>
   );

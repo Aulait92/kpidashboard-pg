@@ -38,6 +38,8 @@ export function NativeAppBridge() {
     const plugins = (window as unknown as { Capacitor?: { Plugins?: Record<string, Record<string, (o?: unknown) => Promise<unknown>> | undefined> } }).Capacitor?.Plugins;
     void plugins?.Keyboard?.setAccessoryBarVisible?.({ isVisible: true }).catch(() => {});
     void plugins?.StatusBar?.setStyle?.({ style: "LIGHT" }).catch(() => {});
+    // Sicherheitsnetz zum Inline-Skript im Root-Layout: Startbildschirm spätestens jetzt ausblenden
+    void plugins?.SplashScreen?.hide?.({ fadeOutDuration: 200 }).catch(() => {});
     void initNativePushListeners((url) => router.push(url));
     // Rücksprung nach Google/Microsoft-Anmeldung im System-Browser (performancegrowth://login)
     initAppLoginListener();

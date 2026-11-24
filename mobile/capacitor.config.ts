@@ -31,9 +31,12 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
   },
   plugins: {
+    // Startbildschirm bis die Seite gezeichnet ist (Ole, 24.11.2026: vorher nach 0,6 s weiß, bis die Seite kam). Die
+    // Web-App blendet ihn selbst aus (src/app/layout.tsx, SPLASH_HIDE, und native-app-bridge.tsx); spätestens nach 8 s.
     SplashScreen: {
-      launchShowDuration: 600,
+      launchShowDuration: 8000,
       launchAutoHide: true,
+      launchFadeOutDuration: 200,
       backgroundColor: "#ffffff",
       showSpinner: false,
     },
