@@ -83,5 +83,6 @@ describe("Kreditkarte Barclays und Bankentgelte", () => {
     expect(brauchtBeleg(u("1", "2026-01-08", -76.83, "Barclays"))).toBe(false);
     expect(brauchtBeleg(u("1", "2026-07-28", -74.63, "Barclaycard"))).toBe(false);
     expect(brauchtBeleg(u("1", "2026-04-30", -0.11, "Rechnungsabschluss"))).toBe(false);
+    expect(brauchtBeleg(u("1", "2026-03-09", -75.43, "BAWAG AG Niederlassung Deutschland"))).toBe(false);
   });
 });
