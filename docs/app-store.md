@@ -12,7 +12,7 @@ ohne neues Store-Update. Neu bauen muss man die App nur bei Änderungen an
 | Bundle-ID / Paketname | `de.performancegrowth.app` |
 | Start-URL | `https://app.performancegrowth.de/buyer` (lokal überschreibbar mit `CAP_SERVER_URL`) |
 | In der App erlaubt | `app.performancegrowth.de`, `staging.performancegrowth.de` – alles andere öffnet im System-Browser; `tel:`/`mailto:` öffnen Telefon bzw. Mail |
-| Kennung im User-Agent | `performancegrowthApp/1.0` |
+| Kennung im User-Agent | `performancegrowthApp/<Version>` (ab 1.1 mit Face ID) |
 | App Store (iPhone, seit 24.11.2026) | https://apps.apple.com/de/app/performancegrowth/id6838442707 (Konstante `IOS_APP_STORE_URL` in `src/lib/app-store.ts`) |
 | App-Anmeldung je Login | `User.appLoginAt` (erste Seite im Kundenbereich mit App-User-Agent oder App-Gerät), Kennzahl: Admin › Qualität › Nutzung, Diagnose `q=app-nutzung` |
 | Kein Netz | eingebaute Seite „Keine Verbindung“ mit „Erneut versuchen“ |
