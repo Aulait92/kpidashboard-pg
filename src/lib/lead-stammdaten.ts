@@ -174,13 +174,22 @@ export type SaveStammdatenResult =
  * automatische Erstanschreiben (Assistent an, WhatsApp verbunden, Einwilligung). Text für die Meldung.
  */
 export async function erstnachrichtAnNeueNummer(leadId: string, customerId: string): Promise<{ ok: boolean; text: string }> {
-  const l = await prisma.lead.findFirst({ where: { id: leadId, customerId, erasedAt: null }, select: { id: true, phone: true, outreachStatus: true } });
-  if (!l?.phone) return { ok: false, text: "Keine Telefonnummer hinterlegt." };
-  if (l.outreachStatus?.startsWith("sent")) return { ok: false, text: "Die Erstnachricht ist schon rausgegangen." };
-  await prisma.lead.update({ where: { id: l.id }, data: { outreachAt: null, outreachStatus: null, waUnavailableAt: null } });
-  const r = await import("@/lib/whatsapp/outreach").then((m) => m.runOutreach(customerId, { leadIds: [l.id] })).catch(() => null);
-  if (r?.sent) return { ok: true, text: "Die WhatsApp-Erstnachricht ist rausgegangen." };
-  const st = (await prisma.lead.findUnique({ where: { id: l.id }, select: { outreachStatus: true } }))?.outreachStatus;
+  // Unter Sperre je Lead (Ole, 25.11.2026, doppelte Erstnachricht): ein zweiter Klick wartet und sieht dann „schon raus“.
+  // Die Transaktion hält nur die Sperre; Lesen, Zurücksetzen und Senden laufen außerhalb (sofort sichtbar für runOutreach).
+  const r = await prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`erstnachricht:${leadId}`}))`;
+      const l = await prisma.lead.findFirst({ where: { id: leadId, customerId, erasedAt: null }, select: { id: true, phone: true, outreachStatus: true } });
+      if (!l?.phone) return { abbruch: "Keine Telefonnummer hinterlegt." };
+      if (l.outreachStatus?.startsWith("sent")) return { abbruch: "Die Erstnachricht ist schon rausgegangen." };
+      await prisma.lead.update({ where: { id: l.id }, data: { outreachAt: null, outreachStatus: null, waUnavailableAt: null } });
+      return { abbruch: null, lauf: await import("@/lib/whatsapp/outreach").then((m) => m.runOutreach(customerId, { leadIds: [l.id] })).catch(() => null) };
+    },
+    { maxWait: 60_000, timeout: 90_000 },
+  );
+  if (r.abbruch) return { ok: false, text: r.abbruch };
+  if ("lauf" in r && r.lauf?.sent) return { ok: true, text: "Die WhatsApp-Erstnachricht ist rausgegangen." };
+  const st = (await prisma.lead.findUnique({ where: { id: leadId }, select: { outreachStatus: true } }))?.outreachStatus;
   return { ok: false, text: st ? `Nicht gesendet (${st}). Bitte rufen Sie an.` : "Nicht gesendet: Assistent oder WhatsApp ist nicht aktiv. Bitte rufen Sie an." };
 }
 

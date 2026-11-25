@@ -213,11 +213,14 @@ export function ChatVerlauf<M extends VerlaufNachricht>({
   );
 }
 
-/** Kleiner Hinweis neben der Uhrzeit, wenn eine Nachricht nicht ankam. */
-export function NichtZugestellt() {
+/**
+ * Kleiner Hinweis neben der Uhrzeit, wenn eine Nachricht nicht ankam. erneut: dieselbe Nachricht ging danach noch einmal
+ * raus (lib/chat-zustellung.ts), dann ruhiger statt rot.
+ */
+export function NichtZugestellt({ erneut = false }: { erneut?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-0.5 text-rose-700">
-      <Info className="h-3 w-3" /> nicht zugestellt
+    <span className={cn("inline-flex items-center gap-0.5", erneut ? "text-[color:var(--muted)]" : "text-rose-700")} data-nicht-zugestellt={erneut ? "erneut" : "offen"}>
+      <Info className="h-3 w-3" /> {erneut ? "nicht zugestellt, erneut gesendet" : "nicht zugestellt"}
     </span>
   );
 }

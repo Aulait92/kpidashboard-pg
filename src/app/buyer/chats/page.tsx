@@ -37,6 +37,10 @@ import { chatKopfTermin, chatNaechsterSchritt, KOPF_STATT_LEISTE, type ChatSchri
 import { ChatAvatar, ChatVerlauf, NichtZugestellt, StatusPunkt } from "@/components/chat/chat-verlauf";
 import { ChatDetailsKnopf, MerkFormular, SchreibHinweis, SprungKnopf, TerminBuchenKnopf } from "@/components/chat/chat-knoepfe";
 import { cn } from "@/lib/utils";
+import { dateiVorschau, type VermittlerDatei } from "@/lib/chat-dateien";
+import { vermittlerDateienImVerlauf } from "@/lib/chat-dateien-vermittler";
+import { erneutGesendet } from "@/lib/chat-zustellung";
+import { VermittlerDateiKarte } from "@/components/chat/datei-karte";
 import { waFormatKnoten, waOhneMarker } from "@/lib/wa-format";
 
 // WhatsApp-Chats im Kunden-CRM. Nur für Kunden mit WhatsApp-Assistent.
@@ -170,7 +174,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         where: { direction: { in: ["inbound", "outbound"] } },
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { body: true, direction: true, sentBy: true },
+        select: { body: true, direction: true, sentBy: true, kind: true, mediaName: true },
       },
     },
   });
@@ -206,7 +210,23 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           },
           messages: {
             orderBy: { createdAt: "asc" },
-            select: { id: true, direction: true, kind: true, body: true, sentBy: true, sentByUserId: true, status: true, createdAt: true },
+            select: {
+              id: true,
+              direction: true,
+              kind: true,
+              body: true,
+              sentBy: true,
+              sentByUserId: true,
+              status: true,
+              purpose: true,
+              createdAt: true,
+              // Dateien im Chat (lib/chat-dateien.ts dateiFuerVermittler): Name, Art, Größe, Abruf
+              mediaId: true,
+              mediaName: true,
+              mediaMime: true,
+              mediaSize: true,
+              mediaLink: true,
+            },
           },
         },
       })
@@ -244,6 +264,15 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       : null;
 
   const name = active ? chatName(active) : "";
+  // Dateien im Verlauf: Name, Art, Größe, Zeit, „Öffnen“ (lib/chat-dateien-vermittler.ts); nicht zugestellte, die
+  // danach erneut gesendet wurden (lib/chat-zustellung.ts)
+  const dateien = active
+    ? await vermittlerDateienImVerlauf({ id: active.id, leadId: active.lead?.id ?? null, lead: active.lead ? { source: active.lead.source } : null }, active.messages, {
+        vorschau: ctx.preview,
+        now: new Date(now),
+      })
+    : new Map<string, VermittlerDatei>();
+  const erneut = active ? erneutGesendet(active.messages) : new Set<string>();
   // Handy-Kopfzeile: „Termin heute 11:00“ und „Vorbereiten“ (24 Stunden vorher bzw. während des Termins)
   const kopfTermin = chatKopfTermin(appointments[0] ?? null, now);
   // Hinweis „Wenn Sie schreiben, pausiert …“: am Handy weg, sobald der Vermittler hier schon selbst geschrieben hat
@@ -622,7 +651,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         <span className={cn("truncate text-[15px]", c.needsAttention ? "font-bold" : "font-semibold")}>{cname}</span>
                         <span className="shrink-0 text-xs text-[color:var(--muted)]">{c.lastMessageAt ? listenZeit(c.lastMessageAt, now) : ""}</span>
                       </div>
-                      <p className="mt-0.5 truncate text-[13px] text-[color:var(--muted)]">{last ? `${von}${waOhneMarker(last.body ?? "")}` : ""}</p>
+                      <p className="mt-0.5 truncate text-[13px] text-[color:var(--muted)]">{last ? `${von}${dateiVorschau(last) ?? waOhneMarker(last.body ?? "")}` : ""}</p>
                       <div className="mt-1 flex min-w-0 items-center">
                         {c.needsAttention ? (
                           <StatusPunkt farbe="bg-rose-500" className="font-semibold text-rose-700">
@@ -784,7 +813,11 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   messages={active.messages}
                   now={now}
                   termine={terminZeiten}
-                  fuss={(m) => (m.direction === "outbound" && m.status === "failed" ? <NichtZugestellt /> : null)}
+                  fuss={(m) => (m.direction === "outbound" && m.status === "failed" ? <NichtZugestellt erneut={erneut.has(m.id)} /> : null)}
+                  datei={(m) => {
+                    const d = dateien.get(m.id);
+                    return d ? <VermittlerDateiKarte d={d} /> : null;
+                  }}
                 />
                 <StickToBottom count={active.messages.length} chatId={active.id} />
               </div>

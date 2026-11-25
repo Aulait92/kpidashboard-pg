@@ -65,6 +65,9 @@ describe("KI-Hinweis", () => {
     expect(hasErstinfoPdf([{ direction: "outbound", kind: "template", body: `${ERSTINFO_KOPF}\nGuten Tag …` }])).toBe(true);
     expect(hasErstinfoPdf([{ direction: "outbound", kind: "template", body: "Erstinformation zu X als Versicherungsvermittler: https://x.de/erstinformation/abc" }])).toBe(false);
     expect(hasErstinfoPdf([{ direction: "outbound", kind: "document", body: "Hier ist die Erstinformation …" }])).toBe(true);
+    // Nicht zugestellt (Status failed, Ole 25.11.2026): zählt nicht, ein neuer Versuch ist erlaubt
+    expect(hasErstinfoPdf([{ direction: "outbound", kind: "document", body: "Hier ist die Erstinformation …", status: "failed" }])).toBe(false);
+    expect(hasErstinfoPdf([{ direction: "outbound", kind: "template", body: `${ERSTINFO_KOPF}\nGuten Tag …`, status: "failed" }])).toBe(false);
     // Kein Link mehr im Text des Erstanschreibens (PDF im Kopf)
     expect(hasErstinfoLink(t)).toBe(false);
     expect(erstinfoZeile("Susanne Meier", "https://x.de/erstinformation/abc123")).toBe("Erstinformation zu Susanne Meier als Versicherungsvermittler: https://x.de/erstinformation/abc123");

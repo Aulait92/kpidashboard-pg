@@ -194,20 +194,32 @@ export async function ladeZugriffInhalt(zugriffId: string, now = new Date()): Pr
     select: { mediaId: true, mediaLink: true, mediaMime: true, mediaName: true, conversation: { select: { customerId: true } } },
   });
   if (!m || m.conversation.customerId !== z.customerId) return null;
+  return ladeDateiInhalt(z.customerId, m, "support-zugriff");
+}
+
+/**
+ * Inhalt einer Chat-Datei: eigene Adresse (Erstinformation) bzw. Medien-ID über das WhatsApp-Konto des Kunden.
+ * Gemeinsam für den Support-Zugriff und den Abruf durch den Vermittler (lib/chat-dateien-vermittler.ts). null = nicht abrufbar.
+ */
+export async function ladeDateiInhalt(
+  customerId: string,
+  m: { mediaId: string | null; mediaLink: string | null; mediaMime: string | null; mediaName: string | null },
+  log = "chat-datei",
+): Promise<{ name: string; mime: string; data: Buffer } | null> {
   const name = m.mediaName ?? "Dokument";
   if (m.mediaLink) {
     const data = await ladeEigenenLink(m.mediaLink);
     return data ? { name, mime: m.mediaMime ?? "application/pdf", data } : null;
   }
   if (!m.mediaId) return null;
-  const konto = await prisma.whatsAppAccount.findUnique({ where: { customerId: z.customerId }, select: { apiKeyEnc: true } });
+  const konto = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { apiKeyEnc: true } });
   if (!konto?.apiKeyEnc) return null;
   const { decryptSecret } = await import("@/lib/encryption");
   const { ladeMedia } = await import("@/lib/policen/media");
   const dl = await ladeMedia(decryptSecret(konto.apiKeyEnc), m.mediaId, ZUGRIFF_MAX_BYTES);
   if (!dl.ok) {
     // Ohne Detail (kann die Medien-Adresse enthalten, A7)
-    console.error("[support-zugriff] laden", dl.grund);
+    console.error(`[${log}] laden`, dl.grund);
     return null;
   }
   return { name, mime: m.mediaMime ?? dl.mime ?? "application/octet-stream", data: dl.data };
