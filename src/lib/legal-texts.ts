@@ -7,6 +7,7 @@
 // Kampagnen-Kontingent, WhatsApp-Gebühren im Preis enthalten.
 // 12.11.2026: Bestandskunden-Modul bei jährlicher Vorauszahlung: Kündigung zum Ende
 // des bezahlten Jahres, keine anteilige Erstattung (wie die Stripe-Abrechnung).
+// 25.11.2026: TOMs um Support-Zugriff auf Chat-Dokumente ergänzt (Ole: „mach so, wie du es für richtig hältst“).
 // 14.11.2026: Statt Logins zählen aktive Verkäufer (bekommen Leads); Mitglieder ohne Leads kostenlos.
 // 14.11.2026: AVV: Verschwiegenheit nach § 203 StGB, E-Mail-Kampagnen im Bestandskunden-Modul.
 // 14.11.2026 (Fassung 2): Abschnitt „Testphasen und kostenlose Zeiträume“ (Ole).
@@ -96,7 +97,7 @@
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "24.11.2026 (Fassung 2)";
+export const LEGAL_VERSION = "25.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -685,11 +686,12 @@ export const TOMS: string[] = [
   "Löschfunktion je Lead für Betroffenenanfragen; nach Vertragsende Ruhephase mit reiner Speicherung (kein Zugang außer Export und Reaktivierung, keine automatische Verarbeitung) und automatische, protokollierte Löschung nach der gewählten Aufbewahrung.",
   "Pseudonyme Nutzungsstatistik ohne Lead-Inhalte, automatische Löschung nach 180 Tagen.",
   "Zugriff auf Kundendaten nur durch berechtigte, zur Vertraulichkeit und zur Verschwiegenheit nach § 203 StGB verpflichtete und belehrte Personen und nur, soweit für Betrieb und Support erforderlich.",
+  "Support-Zugriff auf Dokumente in Chats nur im Einzelfall und nur, wenn es für die Hilfe nötig ist: mit angegebenem Grund, unveränderbar protokolliert (Person, Zeitpunkt, Grund, Datei; Aufbewahrung 1 Jahr), mit sofortiger Mitteilung an den Auftraggeber per E-Mail und im Protokoll in der Software einsehbar. Der Inhalt ist dafür nur über einen kurz gültigen, persönlichen Link abrufbar. Unterlagen mit Gesundheitsbezug sind davon ausgenommen.",
   // Prüfen: TOMs für Unterlagen vom Kunden, Unterschriften und Gesundheitsdaten (Art. 9 DSGVO), Ole 18.11.2026
   "Verschlüsselung im Ruhezustand: Versicherungsunterlagen vom Kunden werden je Datei verschlüsselt (AES-256-GCM, eigener Schlüssel je Datei, verpackt mit einem Schlüssel je Auftraggeber, Schlüssel getrennt von der Datenbank) und nur in einem privaten Speicher in der EU abgelegt; kein öffentlicher Link, Abruf nur über kurz gültige, an die Anmeldung gebundene Links. Mit dem Löschen wird der Schlüssel der Datei vernichtet, so dass auch Kopien in Sicherungen nicht mehr lesbar sind. Unterschriftsbilder und unterschriebene Dokumente werden verschlüsselt in der Datenbank in der EU gespeichert.",
   "Zugriff auf diese Unterlagen nur für den Auftraggeber und seine berechtigten Mitarbeiter (Inhaber und zuständiger Berater), Öffnen von Unterlagen mit Gesundheitsbezug nur mit Zwei-Faktor-Anmeldung. Personal des Auftragnehmers sieht weder Inhalt noch Dateinamen; ein Zugriff im dokumentierten Notfall wird protokolliert und dem Auftraggeber mitgeteilt.",
   "Zugriffsprotokoll: Jedes Öffnen und Herunterladen von Versicherungsunterlagen sowie Einwilligung, Widerruf, Unterschrift und Löschung werden mit Person und Zeitpunkt ohne Inhalte protokolliert (Aufbewahrung 1 Jahr); Nachweise von Einwilligungen werden nur ergänzt, nicht nachträglich geändert.",
-  "Keine Inhalte von Unterlagen, keine Gesundheitsdaten und keine Dateinamen in Anwendungsprotokollen, Fehlerberichten, Benachrichtigungen oder Sitzungsaufnahmen; die Seiten für Interessenten und Kunden (z. B. Unterschrift der Maklervollmacht) werden nicht aufgezeichnet.",
+  "Keine Inhalte von Unterlagen, keine Gesundheitsdaten und keine Dateinamen in Anwendungsprotokollen, Fehlerberichten, Benachrichtigungen oder Sitzungsaufnahmen (ausgenommen der Name eines Dokuments ohne Gesundheitsbezug in der Mitteilung über einen Support-Zugriff an den Auftraggeber); die Seiten für Interessenten und Kunden (z. B. Unterschrift der Maklervollmacht) werden nicht aufgezeichnet.",
   "Prüfung eingehender Dateien auf Schadsoftware vor der Ablage; ungeprüfte Dateien werden nicht angeboten.",
   "Automatische, protokollierte Löschung der Unterlagen nach den Fristen im Abschnitt „Löschung und Rückgabe“; das Löschprotokoll wird nach einer Wiederherstellung aus der Sicherung erneut angewendet.",
 ];

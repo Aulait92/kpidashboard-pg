@@ -269,5 +269,12 @@ export async function pruneAudit(now = new Date()) {
       ],
     },
   });
-  return r.count;
+  // Protokoll der Support-Zugriffe (Ole, 25.11.2026): Aufbewahrung 1 Jahr wie das Änderungsprotokoll. Der Trigger
+  // erlaubt das Löschen nur mit dem Schalter in derselben Transaktion.
+  const grenze = new Date(now.getTime() - 365 * DAY_MS);
+  const [, s] = await prisma.$transaction([
+    prisma.$executeRaw`SELECT set_config('app.support_zugriff_loeschen', 'ja', true)`,
+    prisma.supportZugriff.deleteMany({ where: { createdAt: { lt: grenze } } }),
+  ]);
+  return r.count + s.count;
 }

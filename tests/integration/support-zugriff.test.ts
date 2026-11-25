@@ -228,3 +228,21 @@ describe("Support-Zugriff auf Dokumente im Chat", () => {
     expect(alles).not.toContain("lookaside");
   });
 });
+
+describe("Support-Zugriffe: Aufbewahrung 1 Jahr (Ole, 25.11.2026)", () => {
+  it("pruneAudit löscht Protokolleinträge älter als 1 Jahr, neuere bleiben", async () => {
+    const { prisma } = await import("@/lib/prisma");
+    const { pruneAudit } = await import("@/lib/audit");
+    const tag = Math.random().toString(36).slice(2, 8);
+    const alt = new Date(Date.now() - 400 * 86_400_000);
+    await prisma.supportZugriff.createMany({
+      data: [
+        { customerId: `k-${tag}`, conversationId: "c", messageId: "m1", adminUserId: "a", adminName: "A", grund: "Test alt genug", dateiName: "x.pdf", mitteilung: "x", createdAt: alt },
+        { customerId: `k-${tag}`, conversationId: "c", messageId: "m2", adminUserId: "a", adminName: "A", grund: "Test neu genug", dateiName: "y.pdf", mitteilung: "y" },
+      ],
+    });
+    await pruneAudit(new Date());
+    const rest = await prisma.supportZugriff.findMany({ where: { customerId: `k-${tag}` }, select: { messageId: true } });
+    expect(rest.map((r) => r.messageId)).toEqual(["m2"]);
+  });
+});
