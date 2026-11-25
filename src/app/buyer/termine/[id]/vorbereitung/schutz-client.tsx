@@ -377,10 +377,10 @@ export function SchutzBereich({
             {vorschau.length ? (
               // Ampel wie auf der Folie „Ihr Schutz im Überblick“ (Begriffe der Präsentation), selten gebraucht
               <details className="min-w-0 flex-1" data-ampel-vorschau>
-                <summary className="cursor-pointer py-1 text-[12px] font-medium text-[color:var(--muted)]">So sieht es der Kunde</summary>
+                <summary className="cursor-pointer py-1 text-xs font-medium text-[color:var(--muted)]">So sieht es der Kunde</summary>
                 <ul className="mt-1 grid max-w-sm gap-y-0.5 pb-1">
                   {vorschau.map((z) => (
-                    <li key={z.key} className="flex min-w-0 items-center gap-1.5 text-[12px]" data-ampel={z.key} data-ampel-status={z.status}>
+                    <li key={z.key} className="flex min-w-0 items-center gap-1.5 text-xs" data-ampel={z.key} data-ampel-status={z.status}>
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: z.farbe }} aria-hidden />
                       <span className="min-w-0 truncate font-medium">{z.label}</span>
                       <span className="ml-auto shrink-0" style={{ color: z.farbe }}>
@@ -510,7 +510,7 @@ function SparteSuche({ ohne, dazu }: { ohne: string[]; dazu: (key: string) => vo
         ) : (
           spartenGruppiert(treffer).map((g) => (
             <li key={g.label} role="presentation" data-sparten-gruppe={g.label}>
-              <div className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.label}</div>
+              <div className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.label}</div>
               <ul role="group" aria-label={g.label}>
                 {g.sparten.map(option)}
               </ul>
@@ -684,7 +684,7 @@ function WoandersFelder({
 
   return (
     <div className="mt-2 grid grid-cols-2 gap-x-1.5 gap-y-2" data-woanders>
-      <label className="grid min-w-0 gap-0.5 text-[11px] font-medium text-[color:var(--muted)]">
+      <label className="grid min-w-0 gap-0.5 text-xs font-medium text-[color:var(--muted)]">
         Versicherer
         <input
           list={`schutz-ges-${s.key}`}
@@ -715,7 +715,7 @@ function WoandersFelder({
           ))}
         </datalist>
       </label>
-      <label className="grid min-w-0 gap-0.5 text-[11px] font-medium text-[color:var(--muted)]">
+      <label className="grid min-w-0 gap-0.5 text-xs font-medium text-[color:var(--muted)]">
         Tarif
         {liste.length && !freiText ? (
           <select
@@ -770,7 +770,7 @@ function WoandersFelder({
           />
         )}
       </label>
-      <label className="grid min-w-0 gap-0.5 text-[11px] font-medium text-[color:var(--muted)]">
+      <label className="grid min-w-0 gap-0.5 text-xs font-medium text-[color:var(--muted)]">
         Ablauf
         <input
           type="month"
@@ -786,7 +786,7 @@ function WoandersFelder({
           className={FELD}
         />
       </label>
-      <label className="grid min-w-0 gap-0.5 text-[11px] font-medium text-[color:var(--muted)]">
+      <label className="grid min-w-0 gap-0.5 text-xs font-medium text-[color:var(--muted)]">
         Beitrag im Monat
         <input
           inputMode="decimal"

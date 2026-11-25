@@ -57,7 +57,7 @@ export function EinwilligungEtikett({ stand }: { stand: EinwilligungStand }) {
         onClick={() => setOpen(true)}
         title="Einwilligung anzeigen"
         // Tippfläche unsichtbar vergrößert (40 px), das Etikett bleibt klein
-        className="relative inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium tracking-normal text-emerald-700 ring-1 ring-inset ring-emerald-200 transition after:absolute after:-inset-2.5 after:content-[''] hover:bg-emerald-100"
+        className="relative inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium tracking-normal text-emerald-700 ring-1 ring-inset ring-emerald-200 transition after:absolute after:-inset-2.5 after:content-[''] hover:bg-emerald-100"
         data-einwilligung-etikett
       >
         <Check className="h-3 w-3" strokeWidth={3} /> Einwilligung

@@ -487,7 +487,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                     <div key={t.label} className="min-w-0 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5">
                       <dt className="text-xs text-[color:var(--muted)]">{t.label}</dt>
                       <dd className="truncate text-lg font-semibold tabular-nums sm:text-xl">{t.value}</dd>
-                      <dd className="text-[11px] leading-tight text-[color:var(--muted)]">{t.sub}</dd>
+                      <dd className="text-xs leading-tight text-[color:var(--muted)]">{t.sub}</dd>
                     </div>
                   ))}
                 </dl>
@@ -523,7 +523,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                           <Link href={`/buyer/bestand/kampagnen/${k.id}`} className="truncate font-medium hover:underline">
                             {name}
                           </Link>
-                          {!sameAsName ? <span className="rounded-full bg-[color:var(--surface-sunken)] px-2 py-0.5 text-[11px] text-[color:var(--muted)]">{anlass}</span> : null}
+                          {!sameAsName ? <span className="rounded-full bg-[color:var(--surface-sunken)] px-2 py-0.5 text-xs text-[color:var(--muted)]">{anlass}</span> : null}
                           <Badge tone={STATUS[k.status]?.tone ?? "neutral"}>{quotaStop ? "pausiert: Kontingent" : (STATUS[k.status]?.label ?? k.status)}</Badge>
                         </div>
                         <div className="text-xs text-[color:var(--muted)] tabular-nums">

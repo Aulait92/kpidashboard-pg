@@ -870,7 +870,7 @@ function Angebote(p: {
               {/* Gruppiert (Ole, 17.11.2026: alle Versicherungsprodukte, z. B. BU und PKV nach dem Komplettcheck) */}
               {spartenGruppiert(nochFrei).map((g) => (
                 <div key={g.label} data-sparten-gruppe={g.label}>
-                  <div className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.label}</div>
+                  <div className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.label}</div>
                   {g.sparten.map((s) => (
                     <button
                       key={s.key}
@@ -1168,7 +1168,7 @@ function TarifKarte({
       data-tarif-karte={t.id}
     >
       <div className="flex items-center gap-2.5">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6eef7] text-[11px] font-bold text-[#003781]">{kuerzel(t.gesellschaft || t.kurz || "?")}</span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6eef7] text-xs font-bold text-[#003781]">{kuerzel(t.gesellschaft || t.kurz || "?")}</span>
         <span className="min-w-0 flex-1">
           <b className="block truncate text-[15px]">{t.kurz}</b>
           <span className="block truncate text-xs text-[color:var(--muted)]">
@@ -1355,7 +1355,7 @@ function Auswahl({
       <div className="mt-2 flex flex-wrap gap-1.5">
         {an.map((k, i) => (
           <span key={k} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[color:var(--brand)] bg-[color:var(--brand-soft)] pl-2.5 pr-1 text-[13px] font-medium text-[color:var(--brand-dark)]">
-            {nummern ? <span className="text-[11px] font-bold opacity-70">{i + 1}</span> : null}
+            {nummern ? <span className="text-xs font-bold opacity-70">{i + 1}</span> : null}
             {name(k)}
             {!ro ? (
               <button type="button" aria-label={`${name(k)} entfernen`} onClick={() => setze(auswahlWeg(an, k))} className="relative flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/60 after:absolute after:-inset-2 after:content-['']">

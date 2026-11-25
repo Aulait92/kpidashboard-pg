@@ -200,7 +200,7 @@ export function ChatVerlauf<M extends VerlaufNachricht>({
                 </div>
               );
             })()}
-            <div className="mt-1 flex items-center gap-1.5 px-1.5 text-[11px] text-[color:var(--muted)]" data-message-meta>
+            <div className="mt-1 flex items-center gap-1.5 px-1.5 text-xs text-[color:var(--muted)]" data-message-meta>
               <time dateTime={m.createdAt.toISOString()} title={formatDateTime(m.createdAt)}>
                 {uhrzeit(m.createdAt)}
               </time>

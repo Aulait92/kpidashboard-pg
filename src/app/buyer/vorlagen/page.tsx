@@ -139,7 +139,7 @@ export default async function VorlagenPage() {
                           <FileText className="h-4 w-4 shrink-0" /> Erstinformation.pdf
                         </div>
                       ) : null}
-                      <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
+                      <div className="mb-1 flex items-center gap-1 text-xs font-semibold text-emerald-700">
                         <MessageCircle className="h-3 w-3" /> {names.firm}
                       </div>
                       {r.text}

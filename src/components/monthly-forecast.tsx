@@ -117,7 +117,7 @@ export function MonthlyForecast({ forecast }: { forecast: Forecast }) {
         </table>
       </div>
 
-      <p className="mt-3 text-[11px] text-[color:var(--muted)]">
+      <p className="mt-3 text-xs text-[color:var(--muted)]">
         Lineare Hochrechnung: aktueller Tagesschnitt × Tage im Monat. Letzte
         Tage des Monats werden präziser, je mehr Daten reinkommen.
       </p>

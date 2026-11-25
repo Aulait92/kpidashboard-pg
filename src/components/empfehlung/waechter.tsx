@@ -123,7 +123,7 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
             {s.months.map((m) => (
               <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
                 <div className="w-full rounded-t bg-[color:var(--brand)]/70" style={{ height: `${Math.max(4, (m.count / max) * 60)}px` }} title={`${m.count}`} />
-                <span className="text-[10px] text-[color:var(--muted)]">{monthLabel(m.month)}</span>
+                <span className="text-xs text-[color:var(--muted)]">{monthLabel(m.month)}</span>
               </div>
             ))}
           </div>

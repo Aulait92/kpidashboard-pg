@@ -19,7 +19,7 @@ const LABEL: Record<string, string> = { ja: "ja", nein: "nein", unbekannt: "unbe
 export function ConsentBadges({ email, whatsapp, emailOptOut, uwg }: { email: Value; whatsapp: Value; emailOptOut: boolean; uwg: boolean }) {
   const chip = (label: string, tone: "ok" | "mid" | "no") => (
     <span
-      className={`rounded-full px-1.5 py-px text-[11px] font-medium ${tone === "ok" ? "bg-emerald-50 text-emerald-800" : tone === "mid" ? "bg-sky-50 text-sky-800" : "bg-slate-100 text-slate-500"}`}
+      className={`rounded-full px-1.5 py-px text-xs font-medium ${tone === "ok" ? "bg-emerald-50 text-emerald-800" : tone === "mid" ? "bg-sky-50 text-sky-800" : "bg-slate-100 text-slate-500"}`}
     >
       {label}
     </span>

@@ -59,7 +59,7 @@ export function FeedbackForm({ token, initialScore, nps = false }: { token: stri
               </button>
             ))}
           </div>
-          <div className="mt-1.5 flex justify-between text-[11px] text-[color:var(--muted)]">
+          <div className="mt-1.5 flex justify-between text-xs text-[color:var(--muted)]">
             <span>gar nicht wahrscheinlich</span>
             <span>äußerst wahrscheinlich</span>
           </div>
@@ -75,7 +75,7 @@ export function FeedbackForm({ token, initialScore, nps = false }: { token: stri
             className={`flex min-w-0 flex-col items-center gap-1 rounded-xl border px-0.5 py-3 text-[28px] transition ${score === i + 1 ? "border-[color:var(--brand)] bg-[#EFF6FF] ring-2 ring-[color:var(--brand)]/20" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"}`}
           >
             {s}
-            <span className="text-center text-[10px] leading-tight text-[color:var(--muted)]">{LABELS[i]}</span>
+            <span className="text-center text-xs leading-tight text-[color:var(--muted)]">{LABELS[i]}</span>
           </button>
         ))}
       </div>

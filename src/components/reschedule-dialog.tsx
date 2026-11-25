@@ -295,7 +295,7 @@ function RescheduleContent({
               <div className="truncate text-sm font-semibold" data-day-label>
                 {day.label}
               </div>
-              <div className="text-[11px] text-[color:var(--muted)]">
+              <div className="text-xs text-[color:var(--muted)]">
                 {day.slots.length === 1 ? "1 freie Zeit" : `${day.slots.length} freie Zeiten`}
               </div>
             </div>

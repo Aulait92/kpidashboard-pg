@@ -158,7 +158,7 @@ function Zeile({ i }: { i: Item }) {
         <span className="line-clamp-2 block text-sm text-[color:var(--muted)]">{i.text}</span>
       </span>
       {i.badge ? (
-        <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white">{i.badge}</span>
+        <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-xs font-bold text-white">{i.badge}</span>
       ) : null}
       <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
     </Link>

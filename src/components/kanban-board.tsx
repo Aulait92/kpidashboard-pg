@@ -515,7 +515,7 @@ function CloseValueDialog({
               placeholder={field.placeholder}
               className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
             />
-            {field.hint ? <p className="mt-1 text-[11px] text-[color:var(--muted)]">{field.hint}</p> : null}
+            {field.hint ? <p className="mt-1 text-xs text-[color:var(--muted)]">{field.hint}</p> : null}
           </label>
         </div>
         <footer className="flex items-center justify-end gap-2 border-t border-[color:var(--border)] bg-zinc-50 px-5 py-3">
@@ -579,7 +579,7 @@ function KanbanColumn({
             <span className={cn("h-2 w-2 shrink-0 rounded-full", dot ?? "bg-zinc-400")} />
             <span className="leading-tight">{label}</span>
           </span>
-          {sum > 0 ? <span title="Geschätzte Provision" className="mt-0.5 block pl-4 text-[11px] font-semibold tabular-nums text-emerald-700">Provision ≈ {formatEUR(sum)}</span> : null}
+          {sum > 0 ? <span title="Geschätzte Provision" className="mt-0.5 block pl-4 text-xs font-semibold tabular-nums text-emerald-700">Provision ≈ {formatEUR(sum)}</span> : null}
         </span>
         <span className="shrink-0 text-xs font-medium tabular-nums text-[color:var(--muted)]">{count}</span>
       </header>
@@ -639,23 +639,23 @@ function KanbanCard({
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           {/* Als Text statt nur Warndreieck mit Tooltip (am Handy gibt es kein Überfahren mit der Maus) */}
           {lead.waiting ? (
-            <span className="text-[11px] font-semibold text-rose-600" data-kanban-hinweis="antwort">
+            <span className="text-xs font-semibold text-rose-600" data-kanban-hinweis="antwort">
               Antwort wartet
             </span>
           ) : lead.noNextStep ? (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700" data-kanban-hinweis>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700" data-kanban-hinweis>
               <AlertTriangle className="h-3.5 w-3.5" />
               {lead.resultMissing ? "Ergebnis fehlt" : "Nächster Schritt fehlt"}
             </span>
           ) : null}
           {subStatus ? (
-            <span className="rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)]">
+            <span className="rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-xs font-semibold text-[color:var(--brand-dark)]">
               {subStatus}
             </span>
           ) : null}
         </div>
       ) : null}
-      <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
+      <div className="mt-1 flex items-center justify-between gap-2 text-xs text-[color:var(--muted)]">
         {hideProduct ? (
           <span suppressHydrationWarning>Eingang {eingangKurz(new Date(lead.createdAt))}</span>
         ) : (
@@ -673,7 +673,7 @@ function KanbanCard({
       {(() => {
         const d = lead.daysInPhase ?? null;
         return d != null && d >= 7 && lead.status !== CLOSED_STATUS ? (
-          <div className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-amber-700" title="Tage in dieser Phase">
+          <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-amber-700" title="Tage in dieser Phase">
             <Clock className="h-3 w-3" />
             {d} Tage
           </div>
@@ -685,7 +685,7 @@ function KanbanCard({
         </div>
       ) : null}
       {lead.appointment ? (
-        <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
+        <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700">
           {new Intl.DateTimeFormat("de-DE", {
             timeZone: "Europe/Berlin",
             weekday: "short",
@@ -698,7 +698,7 @@ function KanbanCard({
         </div>
       ) : null}
       {lead.followUpAt && !lead.appointment ? (
-        <div className="mt-1.5 inline-flex items-center rounded-md bg-violet-50 px-1.5 py-0.5 text-[11px] font-medium text-violet-700">
+        <div className="mt-1.5 inline-flex items-center rounded-md bg-violet-50 px-1.5 py-0.5 text-xs font-medium text-violet-700">
           Wiedervorlage{" "}
           {new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(
             new Date(lead.followUpAt),
@@ -709,7 +709,7 @@ function KanbanCard({
       {/* Provision nur zeigen, wenn der Lead wirklich im Abschluss ist —
           ein aus „Abschluss" zurückgezogener Lead soll keine Provision tragen. */}
       {lead.status === CLOSED_STATUS && (lead.contractLabel ?? closeValueLabel(lead.source, lead.closeValue, provisionRates)) ? (
-        <div className="mt-1.5 inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-800">
+        <div className="mt-1.5 inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-emerald-800">
           {lead.contractLabel ?? closeValueLabel(lead.source, lead.closeValue, provisionRates)}
         </div>
       ) : null}
@@ -738,7 +738,7 @@ function MoveButton({
           e.stopPropagation();
           setOpen(true);
         }}
-        className="ml-auto inline-flex h-10 shrink-0 items-center gap-1 rounded-full border border-[color:var(--border)] bg-white px-3 text-xs font-semibold text-[color:var(--foreground)] sm:h-auto sm:px-2.5 sm:py-1 sm:text-[11px]"
+        className="ml-auto inline-flex h-10 shrink-0 items-center gap-1 rounded-full border border-[color:var(--border)] bg-white px-3 text-xs font-semibold text-[color:var(--foreground)] sm:h-auto sm:px-2.5 sm:py-1"
       >
         {/* „Verschieben“ hieß sonst Termin verschieben; hier geht es um die Phase (UX Runde 4) */}
         Phase ändern <ArrowRightLeft className="h-3 w-3" />

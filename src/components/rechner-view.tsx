@@ -533,7 +533,7 @@ function MaklerErgebnis({
                         <td className="px-3 py-1.5">{eur(z.budget)}{aktiv ? <span className="ml-1 text-xs font-normal text-[color:var(--muted)]">Ihre Wahl</span> : null}</td>
                         <td className="px-3 py-1.5 text-right">
                           {z.kostenJeVertrag != null ? eur(z.kostenJeVertrag) : "keine Verträge"}
-                          {stufe ? <span className="block text-[11px] font-normal text-[color:var(--muted)]">höhere Betreuungsstufe</span> : null}
+                          {stufe ? <span className="block text-xs font-normal text-[color:var(--muted)]">höhere Betreuungsstufe</span> : null}
                         </td>
                         <td className="px-3 py-1.5 text-right">{eur(z.courtageJahrNach12)}</td>
                       </tr>
@@ -855,7 +855,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
     <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2">
       <div className="text-xs text-[color:var(--muted)]">{label}</div>
       <div className="font-semibold tabular-nums">{value}</div>
-      {sub ? <div className="text-[11px] text-[color:var(--muted)]">{sub}</div> : null}
+      {sub ? <div className="text-xs text-[color:var(--muted)]">{sub}</div> : null}
     </div>
   );
 }

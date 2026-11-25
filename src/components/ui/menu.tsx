@@ -55,7 +55,7 @@ export function ActionMenu({
             it.type === "label" ? (
               <div
                 key={i}
-                className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]"
+                className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]"
               >
                 {it.label}
               </div>
@@ -75,7 +75,7 @@ export function ActionMenu({
                 {it.icon ? <it.icon className="mt-0.5 h-4 w-4 shrink-0 opacity-70" /> : null}
                 <span>
                   {it.label}
-                  {it.hint ? <span className="block text-[11px] text-[color:var(--muted)]">{it.hint}</span> : null}
+                  {it.hint ? <span className="block text-xs text-[color:var(--muted)]">{it.hint}</span> : null}
                 </span>
               </button>
             ),

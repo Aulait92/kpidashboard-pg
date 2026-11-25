@@ -367,7 +367,7 @@ export function GuideStepItem({ step: s, n }: { step: GuideStep; n: number }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[15px] font-medium">{s.title}</span>
-          <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", WHERE_CLASS[s.where])}>{WHERE_LABEL[s.where]}</span>
+          <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", WHERE_CLASS[s.where])}>{WHERE_LABEL[s.where]}</span>
         </div>
         <p className="mt-0.5 text-sm text-[color:var(--muted)]">{s.text}</p>
         {s.pitfall ? <p className="mt-1 text-sm text-amber-800">Falls es hakt: {s.pitfall}</p> : null}

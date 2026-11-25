@@ -17,7 +17,7 @@ export function KeinWhatsAppBadge({ phone, className }: { phone: string; classNa
       title="Kein WhatsApp: anrufen"
       aria-label="Kein WhatsApp: anrufen"
       className={cn(
-        "inline-flex h-8 shrink-0 items-center gap-1 rounded-md bg-orange-50 px-2 text-xs font-medium text-orange-700 ring-1 ring-inset ring-orange-200 transition hover:bg-orange-100 sm:h-auto sm:px-1.5 sm:py-0.5 sm:text-[11px]",
+        "inline-flex h-8 shrink-0 items-center gap-1 rounded-md bg-orange-50 px-2 text-xs font-medium text-orange-700 ring-1 ring-inset ring-orange-200 transition hover:bg-orange-100 sm:h-auto sm:px-1.5 sm:py-0.5",
         className,
       )}
     >

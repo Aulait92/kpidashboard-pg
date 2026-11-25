@@ -45,7 +45,7 @@ export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: str
         <span className="flex flex-wrap items-center gap-x-2">
           {label}
           {important ? (
-            <span className="rounded-full bg-[color:var(--brand-soft)] px-1.5 py-px text-[11px] font-medium text-[color:var(--brand-dark,var(--brand))]">empfohlen</span>
+            <span className="rounded-full bg-[color:var(--brand-soft)] px-1.5 py-px text-xs font-medium text-[color:var(--brand-dark,var(--brand))]">empfohlen</span>
           ) : null}
         </span>
         <select

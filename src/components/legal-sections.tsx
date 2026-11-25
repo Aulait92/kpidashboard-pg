@@ -12,7 +12,7 @@ export function LegalSections({
   compact?: boolean;
 }) {
   return (
-    <div className={compact ? "legal-compact columns-1 gap-10 text-[12.5px] leading-[1.6] sm:columns-2 print:columns-2" : "space-y-8 text-[15px] leading-relaxed"}>
+    <div className={compact ? "legal-compact columns-1 gap-10 text-[13px] leading-[1.6] sm:columns-2 print:columns-2" : "space-y-8 text-[15px] leading-relaxed"}>
       {sections.map((s, i) => (
         <section key={s.title} className={compact ? "mb-5 break-inside-avoid" : undefined}>
           <h3 className={compact ? "mb-1.5 text-[14px] font-bold text-[#111827]" : "mb-3 text-lg font-bold text-[#111827]"}>

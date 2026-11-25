@@ -306,7 +306,7 @@ export function HilfeChat({
                 <SendHorizontal className="h-5 w-5" />
               </button>
             </form>
-            <p className="flex items-center justify-center gap-1 bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1.5 text-center text-[11px] text-[color:var(--muted)]">
+            <p className="flex items-center justify-center gap-1 bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1.5 text-center text-xs text-[color:var(--muted)]">
               <LifeBuoy className="h-3 w-3" /> Kennt nur die Anleitung der App. Bitte keine Kundendaten eingeben.
             </p>
           </section>
@@ -438,7 +438,7 @@ function EscalationCard({ e }: { e: Escalation }) {
             : `${done === "team" ? "Weitergegeben. Wir melden uns bei Ihnen." : "Unser Team ist informiert. Schicken Sie die Nachricht einfach ab."} Referenz ${e.ref}`}
         </p>
       ) : (
-        <p className="mt-2 text-[11px] text-[color:var(--muted)]">
+        <p className="mt-2 text-xs text-[color:var(--muted)]">
           Anliegen: {e.summary} · Referenz {e.ref}
         </p>
       )}

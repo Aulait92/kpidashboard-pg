@@ -3,7 +3,7 @@
 
 export function FrageNummer({ n }: { n: number }) {
   return (
-    <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 px-1 text-[11px] font-semibold text-amber-900" aria-label={`Frage ${n}`}>
+    <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 px-1 text-xs font-semibold text-amber-900" aria-label={`Frage ${n}`}>
       {n}
     </span>
   );

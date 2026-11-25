@@ -591,7 +591,7 @@ function ActionTile({
   const [why, setWhy] = useState(false);
   const disabled = !href && !onClick;
   const cls = cn(
-    "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] px-1.5 py-2.5 text-center text-[11px] font-semibold leading-tight transition sm:text-xs @2xl:flex-row @2xl:gap-2 @2xl:px-4 @2xl:text-sm",
+    "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] px-1.5 py-2.5 text-center text-xs font-semibold leading-tight transition @2xl:flex-row @2xl:gap-2 @2xl:px-4 @2xl:text-sm",
     primary
       ? "bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
       : "border border-[color:var(--border)] bg-white text-[color:var(--foreground)] shadow-[var(--shadow-sm)] hover:border-[color:var(--border-strong)]",

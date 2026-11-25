@@ -421,7 +421,7 @@ function AttributionCard({
               </p>
             ) : (
               <>
-                <p className="mb-1.5 text-[11px] text-[color:var(--muted)]">
+                <p className="mb-1.5 text-xs text-[color:var(--muted)]">
                   Werbekosten aus dem letzten Abgleich. Fehlt hier ein Produkt,
                   passt der Kampagnenname noch zu keinem Produkt (Name, Kurzname
                   oder Stichwort des Produkts).

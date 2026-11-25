@@ -175,7 +175,7 @@ function HandyQr() {
 
 function Num({ n }: { n: number }) {
   return (
-    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-[11px] font-bold text-[color:var(--brand-dark)]">
+    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
       {n}
     </span>
   );

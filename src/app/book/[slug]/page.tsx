@@ -411,7 +411,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
                     className="relative flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-3 text-sm font-semibold transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand-soft)] has-checked:text-[color:var(--brand-dark)]"
                   >
                     {o.empfohlen ? (
-                      <span className="absolute -top-2 right-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white" data-empfohlen>
+                      <span className="absolute -top-2 right-2 rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white" data-empfohlen>
                         Empfohlen
                       </span>
                     ) : null}
@@ -631,7 +631,7 @@ function Field({
 
 function StepNo({ n }: { n: number }) {
   return (
-    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--foreground)] text-[11px] font-bold text-white">
+    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--foreground)] text-xs font-bold text-white">
       {n}
     </span>
   );

@@ -358,7 +358,7 @@ export function OfferDocument({
           </div>
 
           <div className="mt-24 sm:mt-32">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7aa2ff]">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#7aa2ff]">
               Angebot · {date(offer.createdAt)}
             </p>
             <h1 lang="de" className="mt-5 hyphens-auto break-words text-[28px] font-bold leading-[1.15] tracking-tight sm:text-[38px]">
@@ -436,14 +436,14 @@ export function OfferDocument({
 
           <div className="mt-8 grid gap-6 text-sm sm:grid-cols-2 print:grid-cols-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">Anbieter</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">Anbieter</p>
               <p className="mt-3 font-semibold">{SHORT_NAME}</p>
               <p className="text-[#c9d2e3]">
                 {PROVIDER.street}, {PROVIDER.city}
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">Angebot an</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">Angebot an</p>
               <p className="mt-3 font-semibold">{offer.contactName}</p>
               {offer.company ? <p className="text-[#c9d2e3]">{offer.company}</p> : null}
               {offer.street || offer.city ? (
@@ -454,7 +454,7 @@ export function OfferDocument({
             </div>
           </div>
 
-          <div className="mt-auto flex flex-wrap justify-between gap-2 pt-12 text-[11px] text-[#6b7894]">
+          <div className="mt-auto flex flex-wrap justify-between gap-2 pt-12 text-xs text-[#6b7894]">
             <span>{PROVIDER_FOOTER}</span>
             <span>
               {offer.number}
@@ -1347,9 +1347,9 @@ function KundenkontoBedingungen({ collapse }: { collapse: boolean }) {
 function Stat({ k, v, sub, accent }: { k: string; v: string; sub: string; accent?: boolean }) {
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">{k}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">{k}</p>
       <p className={`mt-2 text-xl font-bold ${accent ? "text-[#7aa2ff]" : ""}`}>{v}</p>
-      <p className="mt-1 text-[11px] text-[#9aa6bd]">{sub}</p>
+      <p className="mt-1 text-xs text-[#9aa6bd]">{sub}</p>
     </div>
   );
 }

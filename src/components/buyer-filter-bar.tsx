@@ -85,7 +85,7 @@ export function BuyerFilterBar({
             ))}
             <DropdownDivider />
             <div className="px-2 pt-1 pb-2">
-              <div className="mb-1.5 px-1 text-[11px] uppercase tracking-wide text-[color:var(--muted)]">
+              <div className="mb-1.5 px-1 text-xs uppercase tracking-wide text-[color:var(--muted)]">
                 Eigener Zeitraum
               </div>
               <div className="flex items-center gap-1.5">
@@ -142,7 +142,7 @@ export function BuyerFilterBar({
         </Dropdown>
       ) : null}
       {isPending ? (
-        <span className="text-[11px] text-[color:var(--brand)]">
+        <span className="text-xs text-[color:var(--brand)]">
           Aktualisiere…
         </span>
       ) : null}

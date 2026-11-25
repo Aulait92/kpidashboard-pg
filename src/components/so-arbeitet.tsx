@@ -129,7 +129,7 @@ export function BeispielChat({ zeilen, absender, hoehe = "max-h-[560px]" }: { ze
                     </span>
                   ) : null}
                   {z.text ? <Text text={z.text} /> : null}
-                  {z.fusszeile ? <span className="mt-1 block text-[12px] text-slate-500">{z.fusszeile}</span> : null}
+                  {z.fusszeile ? <span className="mt-1 block text-xs text-slate-500">{z.fusszeile}</span> : null}
                   <span className="mt-0.5 flex items-center justify-end gap-1 text-xs text-slate-500">
                     {z.zeit}
                     {z.von === "lead" ? <CheckCheck className="h-3.5 w-3.5 text-sky-500" /> : null}

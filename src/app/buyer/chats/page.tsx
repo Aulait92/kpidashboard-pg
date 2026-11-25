@@ -403,7 +403,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 <div key={a.id} data-chat-termin>
                   <div className="flex items-center gap-3">
                     <span className="flex h-[52px] w-12 shrink-0 flex-col items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--brand)] text-white" aria-hidden>
-                      <span className="text-[10px] font-semibold leading-none opacity-85">{blatt.wochentag}</span>
+                      <span className="text-xs font-semibold leading-none opacity-85">{blatt.wochentag}</span>
                       <span className="mt-1 text-lg font-bold leading-none">{blatt.tag}</span>
                     </span>
                     <div className="min-w-0">
@@ -733,7 +733,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 </div>
                 {/* Handy: Termin in den nächsten 24 Stunden → kleiner Knopf statt eigener Leiste */}
                 {kopfTermin?.vorbereiten ? (
-                  <Link href={kopfTermin.vorbereiten} className={buttonClass("primary", "sm", "shrink-0 px-2.5 text-[12px] md:hidden")} data-chat-vorbereiten>
+                  <Link href={kopfTermin.vorbereiten} className={buttonClass("primary", "sm", "shrink-0 px-2.5 text-xs md:hidden")} data-chat-vorbereiten>
                     Vorbereiten
                   </Link>
                 ) : null}

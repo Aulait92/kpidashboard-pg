@@ -901,7 +901,7 @@ function ReadOnlyCard({
       </dl>
       {extra.length > 0 ? (
         <>
-          <div className="bg-[color:var(--brand-soft)]/30 px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+          <div className="bg-[color:var(--brand-soft)]/30 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-[color:var(--muted)]">
             Weitere Angaben
           </div>
           <dl className="divide-y divide-[color:var(--border)]">

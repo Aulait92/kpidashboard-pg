@@ -222,7 +222,7 @@ export function BuyerShell({
                   href={it.href}
                   data-haptic="selection"
                   className={cn(
-                    "flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
+                    "flex flex-col items-center gap-0.5 py-2 text-xs font-medium",
                     active ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]",
                   )}
                 >
@@ -265,7 +265,7 @@ function Badge({ n, label }: { n: number; label?: string }) {
   const zahl = n > 99 ? "99+" : String(n);
   return (
     <span
-      className="inline-flex h-[18px] min-w-[18px] items-center justify-center whitespace-nowrap rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white"
+      className="inline-flex h-5 min-w-5 items-center justify-center whitespace-nowrap rounded-full bg-rose-600 px-1.5 text-xs font-bold leading-none text-white"
       {...(label ? { "aria-label": `${zahl} ${label}`, "data-badge-label": label } : {})}
     >
       {label ? `${zahl} ${label}` : zahl}
@@ -388,7 +388,7 @@ function ProfileMenu({
           >
             <Settings className="h-4 w-4" /> Einstellungen
             {owner && EMPFEHLUNG_MODULE_AVAILABLE && showNewBadge() ? (
-              <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800" title="Neu: Zusatzmodul Empfehlungen & Bewertungen">
+              <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800" title="Neu: Zusatzmodul Empfehlungen & Bewertungen">
                 Neu
               </span>
             ) : null}
@@ -455,7 +455,7 @@ function ProfileMenu({
             >
               <MessageSquareHeart className="h-4 w-4" /> Empfehlungen
               {empfehlungReady > 0 ? (
-                <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800" title="Kunden bereit für eine Empfehlung">
+                <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800" title="Kunden bereit für eine Empfehlung">
                   {empfehlungReady} bereit
                 </span>
               ) : null}
@@ -644,7 +644,7 @@ function BuyerShellA({
                     href={it.href}
                     data-haptic="selection"
                     aria-current={active ? "page" : undefined}
-                    className={cn("flex flex-col items-center gap-0.5 py-2 text-[12px] font-medium", active ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]")}
+                    className={cn("flex flex-col items-center gap-0.5 py-2 text-xs font-medium", active ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]")}
                   >
                     <span className="relative">
                       <Icon className="h-6 w-6" strokeWidth={active ? 2.4 : 1.9} />

@@ -178,7 +178,7 @@ export function BuyerLeadsTable({
                     </div>
                     {schritt ? <div className={cn("mt-1 text-[13px]", schritt.cls)}>{schritt.text}</div> : null}
                   </div>
-                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset", statusToneClass(cancelled ? "Storno" : l.status))}>
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset", statusToneClass(cancelled ? "Storno" : l.status))}>
                     {label}
                   </span>
                 </button>
@@ -197,7 +197,7 @@ export function BuyerLeadsTable({
 
         <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
-            <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+            <thead className="bg-[color:var(--brand-soft)]/30 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
               <tr>
                 <th className="px-3 py-2.5 text-left">Eingang</th>
                 <th className="px-3 py-2.5 text-left">Name</th>
@@ -243,7 +243,7 @@ export function BuyerLeadsTable({
                     <td className="px-3 py-2.5">
                         <span
                           className={cn(
-                            "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset",
+                            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
                             statusToneClass(cancelled ? "Storno" : closed ? "Abschluss" : l.status),
                           )}
                         >
@@ -267,14 +267,14 @@ export function BuyerLeadsTable({
                     ) : null}
                     <td className="px-3 py-2.5 text-right">
                       {cancelled ? (
-                        <span className="text-[11px] text-[color:var(--muted)]">
+                        <span className="text-xs text-[color:var(--muted)]">
                           storniert
                         </span>
                       ) : l.stornoOptions.length === 0 ? null : (
                         <button
                           type="button"
                           onClick={() => setOpenStorno(l)}
-                          className="inline-flex items-center gap-1 rounded-md border border-[color:var(--border)] px-2 py-1 text-[11px] font-medium text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
+                          className="inline-flex items-center gap-1 rounded-md border border-[color:var(--border)] px-2 py-1 text-xs font-medium text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
                         >
                           <Ban className="h-3 w-3" />
                           Stornieren

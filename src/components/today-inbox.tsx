@@ -513,7 +513,7 @@ export function TodayInbox({
                 >
                   <div className="w-12 shrink-0">
                     <div className="text-lg font-semibold leading-none tabular-nums">{time(a.startsAt)}</div>
-                    <div className="mt-1 text-[11px] text-[color:var(--muted)]">{a.isToday ? "heute" : day(a.startsAt)}</div>
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">{a.isToday ? "heute" : day(a.startsAt)}</div>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{a.name}</div>

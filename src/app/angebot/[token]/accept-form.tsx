@@ -575,7 +575,7 @@ function ZahlweiseWahl({
           <span className="min-w-0">
             <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="font-semibold">{halb ? "6 Monate im Voraus" : "Jährlich im Voraus"}</span>
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">Empfohlen</span>
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Empfohlen</span>
             </span>
             <span className="block text-[13px] text-[#374151]">{eur(v.total)} netto {halb ? "für 6 Monate" : "im Jahr"}</span>
             <span className="block text-xs font-medium text-emerald-700">

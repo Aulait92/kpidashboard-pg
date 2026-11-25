@@ -80,7 +80,7 @@ export function PhoneField({
           <span aria-hidden="true" className="text-xl leading-none">
             {country.flag}
           </span>
-          <span aria-hidden="true" className="text-[10px] text-[color:var(--muted)]">
+          <span aria-hidden="true" className="text-xs text-[color:var(--muted)]">
             ▾
           </span>
           {/* Natives Select über der Flagge: zugänglich + mobil gut bedienbar */}

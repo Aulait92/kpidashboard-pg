@@ -169,7 +169,7 @@ function GoalEditForm({
       <input type="hidden" name="monthKey" value={initial.monthKey} />
       <input type="hidden" name="product" value={initial.product ?? ""} />
 
-      <p className="text-[11px] text-[color:var(--muted)]">
+      <p className="text-xs text-[color:var(--muted)]">
         Lead- und Umsatzziele kommen aus Airtable (read-only; Umsatz = Lead-Ziel
         × Preis).{" "}
         {isTotal
