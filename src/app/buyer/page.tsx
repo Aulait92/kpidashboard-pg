@@ -7,6 +7,7 @@ import { TodayInbox } from "@/components/today-inbox";
 import { FirstDay } from "@/components/first-day";
 import { IntroVideoCard } from "@/components/intro-video";
 import { LeadDetailBody } from "@/components/lead-detail-body";
+import { KontaktRahmen } from "@/components/kontakt-rahmen";
 import { HeuteRechtsSchliessen } from "@/components/heute-rechts";
 import { cookies, headers } from "next/headers";
 import { AppHinweisKarte } from "@/components/iphone-app";
@@ -186,9 +187,9 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
                   Heute
                 </Link>
                 {/* Platz für das X (oben rechts), sonst liegt es über „Verloren“ */}
-                <div className="xl:pr-9">
+                <KontaktRahmen key={rechts} leadId={rechts} className="xl:pr-9">
                   <LeadDetailBody leadId={rechts} team={ctx} newUi />
-                </div>
+                </KontaktRahmen>
               </>
             ) : (
               <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border-strong)] px-6 text-center text-[color:var(--muted)]">

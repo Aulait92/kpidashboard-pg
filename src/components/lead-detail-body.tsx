@@ -652,6 +652,7 @@ export async function LeadDetailBody({
       {team.userId ? <NextStepPrompt leadId={lead.id} name={lead.name ?? "Lead"} source={lead.source} resultMissingAppointmentId={resultMissingAppt} /> : null}
       {lead.erasedAt ? null : (
         <LeadMailComposer
+          key={lead.id}
           leadId={lead.id}
           lead={{ name: lead.name, source: lead.source, salutation: anredeRohAusForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) }}
           to={lead.email}
