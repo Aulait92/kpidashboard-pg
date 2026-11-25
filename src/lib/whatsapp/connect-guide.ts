@@ -72,7 +72,9 @@ const FB_LOGIN =
 /** Verifizierung des Portfolios (Ole, 15.11.2026, aus dem Durchlauf): fürs Verbinden nicht nötig. */
 const VERIFIED =
   "Wissen, ob Ihr Portfolio verifiziert ist: business.facebook.com → Einstellungen → Sicherheitscenter → „Unternehmensverifizierung“. Zum Verbinden ist das nicht nötig. Ohne Verifizierung gelten bei Meta aber engere Grenzen, zum Beispiel beim Anzeigenamen und bei der Zahl der Nachrichten an neue Kontakte. Starten Sie die Verifizierung am besten parallel (Handelsregisterauszug oder Gewerbeanmeldung, Adresse, Telefon, Website mit Impressum), sie dauert meist einige Tage.";
-const MAILBOX = "Zugang zu Ihrem E-Mail-Postfach. Von 360dialog kommen eine Einladung und später ein Anmeldecode.";
+/** Prüfpunkte, die fürs Verbinden nicht nötig sind: nur unter „Mehr anzeigen“ (Usability-Check 25.11.2026). */
+export const NUR_IN_DETAILS: readonly string[] = [VERIFIED];
+const MAILBOX = "Zugang zu Ihrem E-Mail-Postfach. Von unserem WhatsApp-Partner (360dialog) kommen eine Einladung und später ein Anmeldecode.";
 /**
  * Firmengerät (Go-live-Prüfung 20./21.11.2026, Allianz-Generalvertretung): Auf Konzernrechnern und im Firmennetz sind
  * Facebook und das Fenster von Meta oft gesperrt. Gleicher Satz in der Vorprüfung von Meta- und WhatsApp-Schritt.
@@ -371,4 +373,10 @@ export const PROVIDER_UNSURE = [
 /** Darf der Kunde beim Business-Weg selbst starten? Nur, wenn die Nummer bei keinem anderen Anbieter hängt. */
 export function businessCanStart(provider: ProviderAnswer | null): boolean {
   return provider === "nein";
+}
+
+/** Erster Satz eines Prüfpunkts für die kurze Liste; der ganze Text steht unter „Mehr anzeigen“. */
+export function ersterSatz(t: string): string {
+  const m = /^(.+?[A-Za-zÄÖÜäöüß)“\d]{2}[.!?])\s+[A-ZÄÖÜ„]/.exec(t);
+  return m ? m[1] : t;
 }

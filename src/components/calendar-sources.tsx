@@ -707,7 +707,10 @@ export function SourcePicker({
   /** Persönliche Termin-Adresse (nur App-Kalender), mit Kurzanleitung */
   terminAdresse?: string | null;
 }) {
+  // Ein Weg für „kein Google oder Outlook“ (Usability-Check 25.11.2026, U8): eine Frage, zwei Antworten
+  // (Firmenkalender bzw. gar kein Online-Kalender) statt „Ich habe keinen Online-Kalender“ neben „Andere Quelle“.
   const [ohneOffen, setOhneOffen] = useState(false);
+  const [anderswo, setAnderswo] = useState<"firma" | "ohne" | null>(null);
   const showAllianz = !ohneAllianz && (allianzOption || !!status.allianz);
   const [way, setWay] = useState<"ics" | "allianz">(status.allianz ? "allianz" : status.hasIcs || !showAllianz ? "ics" : "allianz");
   const hiddenInputs = hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null;
@@ -716,6 +719,59 @@ export function SourcePicker({
     ["ics", "Kalender-Link (ICS)", "Ein veröffentlichter Link zeigt uns, wann Sie belegt sind.", status.hasIcs],
   ];
   if (showAllianz) options.unshift(["allianz", "Allianz-Online-Kalender", "Wir lesen Ihre freien Termine aus der Online-Terminbuchung Ihrer Vertreter-Seite.", !!status.allianz]);
+  const firmenkalender = (
+    <>
+          {options.length > 1 ? (
+        <div className="grid gap-2 sm:grid-cols-2" role="radiogroup">
+          {options.map(([k, title, text, active]) => (
+            <button
+              key={k}
+              type="button"
+              role="radio"
+              aria-checked={way === k}
+              onClick={() => setWay(k)}
+              className={`rounded-[var(--radius-md)] border px-4 py-3 text-left transition ${
+                way === k ? "border-[color:var(--brand)] bg-[#EFF6FF]" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"
+              }`}
+            >
+              <span className="flex items-center gap-1.5 text-[15px] font-semibold">
+                {title}
+                {active ? <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-label="eingerichtet" /> : null}
+              </span>
+              <span className="mt-1 block text-sm text-[color:var(--muted)]">{text}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {way === "ics" ? (
+        status.hasIcs ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+              <CheckCircle2 className="h-4 w-4" /> Kalender-Link hinterlegt
+            </span>
+            <form action={removeIcsAction}>
+              {hiddenInputs}
+              <button type="submit" disabled={readOnly} className={buttonClass("ghost", "sm")}>
+                Entfernen
+              </button>
+            </form>
+          </div>
+        ) : (
+          <IcsForm action={icsAction} readOnly={readOnly} hidden={hidden} />
+        )
+      ) : null}
+
+      {way === "allianz" ? (
+        status.allianz ? (
+          <AllianzVerbunden allianz={status.allianz} disconnectAction={disconnectAllianzAction} readOnly={readOnly} hidden={hidden} />
+        ) : (
+          <AllianzForm action={allianzAction} readOnly={readOnly} hidden={hidden} onUseIcs={() => setWay("ics")} />
+        )
+      ) : null}
+    </>
+  );
+  const nichtsVerbunden = !status.native.app && !status.native.connected;
   return (
     <div className="space-y-4">
       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-ihr-kalender>
@@ -779,16 +835,62 @@ export function SourcePicker({
                 Outlook / Microsoft 365 verbinden
               </a>
             </div>
-            {ohneKalenderAction ? (
-              <OhneOnlineKalender
-                offen={ohneOffen}
-                setOffen={setOhneOffen}
-                action={ohneKalenderAction}
-                readOnly={readOnly}
-                hidden={hidden}
-                beratungszeiten={beratungszeiten ?? null}
-                einladungAn={einladungAn ?? null}
-              />
+            {/* Ohne Allianz-Weg darüber: eine Frage für alle, die kein Google oder Outlook haben */}
+            {ohneKalenderAction || !ohneAllianz ? (
+              <div data-ohne-kalender>
+                <button
+                  type="button"
+                  aria-expanded={ohneOffen || otherActive}
+                  onClick={() => setOhneOffen(!ohneOffen)}
+                  className="inline-flex min-h-10 items-center gap-1 text-left text-sm font-semibold text-[color:var(--brand)] hover:underline"
+                  data-ohne-kalender-oeffnen
+                >
+                  Kein Google- oder Outlook-Kalender?
+                  <ChevronDown className={`h-4 w-4 transition ${ohneOffen || otherActive ? "rotate-180" : ""}`} />
+                </button>
+                {ohneOffen || otherActive ? (
+                  <div className="mt-2 space-y-3 border-t border-[color:var(--border)] pt-3">
+                    {ohneKalenderAction && !ohneAllianz ? (
+                      <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Wo stehen Ihre Termine?">
+                        {(
+                          [
+                            ["firma", "In einem Firmenkalender", showAllianz ? "z. B. Allianz-Online-Kalender oder Kalender-Link" : "über einen Kalender-Link"],
+                            ["ohne", "Ich habe keinen Online-Kalender", "Termine kommen als Einladung per Mail"],
+                          ] as const
+                        ).map(([k, title, text]) => {
+                          const an = (anderswo ?? (otherActive ? "firma" : null)) === k;
+                          return (
+                            <button
+                              key={k}
+                              type="button"
+                              role="radio"
+                              aria-checked={an}
+                              onClick={() => setAnderswo(k)}
+                              className={`rounded-[var(--radius-md)] border px-4 py-3 text-left transition ${
+                                an ? "border-[color:var(--brand)] bg-[#EFF6FF]" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"
+                              }`}
+                              data-anderswo={k}
+                            >
+                              <span className="block text-[15px] font-semibold">{title}</span>
+                              <span className="mt-1 block text-sm text-[color:var(--muted)]">{text}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                    {ohneKalenderAction && (ohneAllianz || (anderswo ?? (otherActive ? "firma" : null)) === "ohne") ? (
+                      <OhneOnlineKalender
+                        action={ohneKalenderAction}
+                        readOnly={readOnly}
+                        hidden={hidden}
+                        beratungszeiten={beratungszeiten ?? null}
+                        einladungAn={einladungAn ?? null}
+                      />
+                    ) : null}
+                    {!ohneAllianz && (!ohneKalenderAction || (anderswo ?? (otherActive ? "firma" : null)) === "firma") ? firmenkalender : null}
+                  </div>
+                ) : null}
+              </div>
             ) : null}
           </div>
         )}
@@ -814,7 +916,7 @@ export function SourcePicker({
             <IcsForm action={icsAction} readOnly={readOnly} hidden={hidden} />
           )}
         </div>
-      ) : (
+      ) : nichtsVerbunden ? null : (
       <details open={otherActive} className="group rounded-[var(--radius-md)] border border-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden">
         <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
           <span className="flex items-center gap-1.5 text-[15px] font-medium">
@@ -825,56 +927,10 @@ export function SourcePicker({
         </summary>
         <div className="space-y-3 border-t border-[color:var(--border)] p-4">
           <p className="text-sm text-[color:var(--muted)]">
-            Dürfen wir Ihren Firmenkalender nicht direkt lesen, erkennen wir Ihre belegten Zeiten auch so. Termine tragen wir trotzdem in den oben verbundenen Kalender ein.
+            Dürfen wir Ihren Firmenkalender nicht direkt lesen, erkennen wir Ihre belegten Zeiten auch so.
+            {status.native.connected ? " Termine tragen wir trotzdem in den oben verbundenen Kalender ein." : status.native.app ? " Termine kommen weiter als Einladung per Mail." : ""}
           </p>
-          {options.length > 1 ? (
-            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup">
-              {options.map(([k, title, text, active]) => (
-                <button
-                  key={k}
-                  type="button"
-                  role="radio"
-                  aria-checked={way === k}
-                  onClick={() => setWay(k)}
-                  className={`rounded-[var(--radius-md)] border px-4 py-3 text-left transition ${
-                    way === k ? "border-[color:var(--brand)] bg-[#EFF6FF]" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5 text-[15px] font-semibold">
-                    {title}
-                    {active ? <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-label="eingerichtet" /> : null}
-                  </span>
-                  <span className="mt-1 block text-sm text-[color:var(--muted)]">{text}</span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          {way === "ics" ? (
-            status.hasIcs ? (
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-                  <CheckCircle2 className="h-4 w-4" /> Kalender-Link hinterlegt
-                </span>
-                <form action={removeIcsAction}>
-                  {hiddenInputs}
-                  <button type="submit" disabled={readOnly} className={buttonClass("ghost", "sm")}>
-                    Entfernen
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <IcsForm action={icsAction} readOnly={readOnly} hidden={hidden} />
-            )
-          ) : null}
-
-          {way === "allianz" ? (
-            status.allianz ? (
-              <AllianzVerbunden allianz={status.allianz} disconnectAction={disconnectAllianzAction} readOnly={readOnly} hidden={hidden} />
-            ) : (
-              <AllianzForm action={allianzAction} readOnly={readOnly} hidden={hidden} onUseIcs={() => setWay("ics")} />
-            )
-          ) : null}
+          {firmenkalender}
         </div>
       </details>
       )}
@@ -886,18 +942,15 @@ export function SourcePicker({
  * „Ich habe keinen Online-Kalender“ (Ole, 25.11.2026, z. B. Vertreter ohne freigegebenen Firmenkalender): App-Kalender
  * mit festen Beratungszeiten. Gebuchte Termine kommen als Einladung per Mail, eigene Termine blockiert der Vermittler per
  * Weiterleitung an seine Termin-Adresse. Aufgeklappt wird die Wahl zur Hauptaktion (Google/Outlook werden zweitrangig).
+ * Seit 25.11.2026 eine der zwei Antworten auf „Kein Google- oder Outlook-Kalender?“ (SourcePicker).
  */
 function OhneOnlineKalender({
-  offen,
-  setOffen,
   action,
   readOnly,
   hidden,
   beratungszeiten,
   einladungAn,
 }: {
-  offen: boolean;
-  setOffen: (v: boolean) => void;
   action: FormAction;
   readOnly: boolean;
   hidden?: Record<string, string>;
@@ -906,19 +959,8 @@ function OhneOnlineKalender({
 }) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
   return (
-    <div data-ohne-kalender>
-      <button
-        type="button"
-        aria-expanded={offen}
-        onClick={() => setOffen(!offen)}
-        className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-[color:var(--brand)] hover:underline"
-        data-ohne-kalender-oeffnen
-      >
-        Ich habe keinen Online-Kalender
-        <ChevronDown className={`h-4 w-4 transition ${offen ? "rotate-180" : ""}`} />
-      </button>
-      {offen ? (
-        <form action={formAction} className="mt-2 space-y-3 border-t border-[color:var(--border)] pt-3">
+    <div data-ohne-kalender-form>
+        <form action={formAction} className="space-y-3">
           {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
           <ul className="space-y-2 text-sm">
             <li className="flex items-start gap-2">
@@ -950,7 +992,6 @@ function OhneOnlineKalender({
             <Result state={state} />
           </div>
         </form>
-      ) : null}
     </div>
   );
 }

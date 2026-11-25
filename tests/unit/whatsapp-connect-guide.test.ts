@@ -4,6 +4,7 @@ import {
   ANBIETER_OPTION,
   businessCanStart,
   CONNECT_PATHS,
+  ersterSatz,
   FIRMENGERAET,
   ERROR_HELP,
   GUIDES,
@@ -153,5 +154,19 @@ describe("Anleitung WhatsApp verbinden", () => {
       ...ERROR_HELP,
     ];
     for (const t of all) expect(t).not.toMatch(/[–—]/);
+  });
+});
+
+describe("Kurze Liste „Halten Sie bereit“ (Usability-Check 25.11.2026)", () => {
+  it("zeigt je Punkt den ersten Satz, ohne an „z. B.“ abzuschneiden", () => {
+    expect(ersterSatz("Einen Computer statt des Handys. Nutzen Sie einen privaten Computer.")).toBe("Einen Computer statt des Handys.");
+    expect(ersterSatz("Eine Nummer (z. B. zweite SIM). Danach weiter.")).toBe("Eine Nummer (z. B. zweite SIM).");
+    expect(ersterSatz("Etwa 10 Minuten Zeit.")).toBe("Etwa 10 Minuten Zeit.");
+    for (const p of CONNECT_PATHS)
+      for (const c of GUIDES[p].checklist) {
+        const k = ersterSatz(c);
+        expect(c.startsWith(k), c).toBe(true);
+        expect(k.length, c).toBeLessThanOrEqual(140);
+      }
   });
 });

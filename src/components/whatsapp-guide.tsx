@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CheckCircle2, Circle, LifeBuoy, ListChecks, PlayCircle } from "lucide-react";
+import { CheckCircle2, ChevronDown, Circle, LifeBuoy, ListChecks, PlayCircle } from "lucide-react";
 import { IntroVideo } from "@/components/intro-video";
 import { VIDEOS } from "@/lib/intro-videos";
 import { buttonClass } from "@/components/ui";
@@ -12,12 +12,13 @@ import {
   ANBIETER_GUIDE,
   ANBIETER_OPTION,
   businessCanStart,
+  ersterSatz,
+  NUR_IN_DETAILS,
   GUIDES,
   PATH_OPTIONS,
   PROVIDER_QUESTION,
   PROVIDER_UNSURE,
   PROVIDER_YES,
-  VORPRUEFUNG_ANBIETER,
   type ConnectPath,
   type GuideStep,
   type ProviderAnswer,
@@ -29,7 +30,7 @@ type Wahl = ConnectPath | "anbieter";
 const WHERE_LABEL: Record<GuideStep["where"], string> = {
   app: "Bei uns",
   mail: "Ihr E-Mail-Postfach",
-  "360dialog": "360dialog",
+  "360dialog": "WhatsApp-Partner",
   meta: "Fenster von Meta",
   whatsapp: "WhatsApp Business App",
 };
@@ -73,6 +74,8 @@ export function WhatsAppGuide({
   showVideo?: boolean;
 }) {
   const [wahl, setWahl] = useState<Wahl | null>(initialPath);
+  // Nach der Wahl nur die gewählte Nummer zeigen, die übrigen hinter „Andere Nummer wählen“ (am Handy kürzer)
+  const [auswahlOffen, setAuswahlOffen] = useState(!initialPath);
   const anbieter = wahl === "anbieter";
   const path: ConnectPath | null = wahl && wahl !== "anbieter" ? wahl : null;
   // Firmen- bzw. Konzernadresse vorbelegt (Go-live-Prüfung 20./21.11.2026): Die Einladung von 360dialog bleibt dort oft im
@@ -96,26 +99,20 @@ export function WhatsAppGuide({
   const showSteps = !!guide && (!isBusiness || canStart);
   const needsHelp = anbieter || (isBusiness && provider === "unklar");
   const hilfeKnopf = (
-    <Link href={helpHref} className={buttonClass(needsHelp ? "primary" : "secondary", "md", "justify-center gap-1.5")}>
+    <Link href={helpHref} className={buttonClass(needsHelp ? "primary" : "secondary", "md", "h-auto min-h-10 justify-center gap-1.5 whitespace-normal py-2 text-center")}>
       <LifeBuoy className="h-4 w-4" /> Lieber gemeinsam? 15-Minuten-Hilfetermin buchen
     </Link>
   );
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3" data-wa-checklist>
-        <p className="text-[15px] font-medium">Vorher kurz prüfen:</p>
-        <ul className="mt-2 space-y-1.5 text-[15px]">
-          <li className="flex gap-2" data-wa-pruefpunkt-anbieter><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>{VORPRUEFUNG_ANBIETER}</span></li>
-          <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>Eine Nummer, die <b>nicht</b> in der normalen WhatsApp-App genutzt wird (z. B. zweite SIM, Festnetz oder neue Nummer).</span></li>
-          <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>Sie können an dieser Nummer jetzt eine SMS oder einen Anruf mit Bestätigungscode empfangen.</span></li>
-          <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>Sie sind bei Facebook angemeldet und Admin Ihres Business Managers.</span></li>
-        </ul>
-      </div>
+      {/* „Vorher kurz prüfen“ entfällt (Usability-Check 25.11.2026, U7): Die Liste widersprach den Wahlmöglichkeiten.
+          Erst die Nummer wählen, dann nur die passende Liste „Halten Sie bereit“. Der Anbieter-Fall ist eine eigene Wahl
+          bzw. die Frage beim Business-Weg. */}
       <fieldset>
         <legend className="mb-2 text-[15px] font-semibold">Welche Nummer soll Ihr Assistent nutzen?</legend>
         <div className="grid gap-2" role="radiogroup" aria-label="Welche Nummer soll Ihr Assistent nutzen?">
-          {[...PATH_OPTIONS, { path: "anbieter" as const, ...ANBIETER_OPTION }].map((o) => {
+          {[...PATH_OPTIONS, { path: "anbieter" as const, ...ANBIETER_OPTION }].filter((o) => auswahlOffen || !wahl || wahl === o.path).map((o) => {
             const on = wahl === o.path;
             return (
               <button
@@ -124,7 +121,10 @@ export function WhatsAppGuide({
                 role="radio"
                 aria-checked={on}
                 data-weg={o.path}
-                onClick={() => setWahl(o.path)}
+                onClick={() => {
+                  setWahl(o.path);
+                  setAuswahlOffen(false);
+                }}
                 className={cn(
                   "flex w-full items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]",
                   on ? "border-[color:var(--brand)] bg-[color:var(--brand-soft,#eef3ff)]" : "border-[color:var(--border)] hover:border-[color:var(--brand)]",
@@ -143,6 +143,11 @@ export function WhatsAppGuide({
             );
           })}
         </div>
+        {wahl && !auswahlOffen ? (
+          <button type="button" onClick={() => setAuswahlOffen(true)} className="mt-1 inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline" data-wa-andere-nummer>
+            Andere Nummer wählen
+          </button>
+        ) : null}
       </fieldset>
 
       {anbieter ? (
@@ -196,64 +201,27 @@ export function WhatsAppGuide({
           ) : null}
 
           {showSteps ? (
-            <div>
+            <div data-wa-bereit>
               <h3 className="mb-2 flex items-center gap-2 text-[15px] font-semibold">
                 <ListChecks className="h-4 w-4 text-[color:var(--muted)]" />
                 Halten Sie bereit
               </h3>
               <ul className="space-y-1.5 text-[15px]">
-                {guide.checklist.map((c) => (
+                {guide.checklist.filter((c) => !NUR_IN_DETAILS.includes(c)).map((c) => (
                   <li key={c} className="flex gap-2">
                     <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
-                    <span className="min-w-0">{c}</span>
+                    <span className="min-w-0">{ersterSatz(c)}</span>
                   </li>
                 ))}
               </ul>
             </div>
           ) : null}
-
-          {canStart && showVideo ? (
-            <div data-whatsapp-video>
-              <h3 className="mb-2 flex items-center gap-2 text-[15px] font-semibold">
-                <PlayCircle className="h-4 w-4 text-[color:var(--brand)]" /> So läuft es ab: {VIDEOS.whatsapp.title}
-              </h3>
-              <IntroVideo kind="whatsapp" />
-            </div>
-          ) : null}
-
-          {/* Video statt langer Schrittliste (Ole, 15.11.2026); die Schritte bleiben zum Nachlesen eingeklappt. */}
-          {showSteps && guide.steps.length ? (
-            canStart && showVideo ? (
-              <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-whatsapp-steps>
-                <summary className="flex cursor-pointer items-center gap-2 text-[15px] font-medium text-[color:var(--brand)]">
-                  <ListChecks className="h-4 w-4" /> Alle Schritte zum Nachlesen ({guide.steps.length})
-                </summary>
-                <div className="mt-3">
-              <ol className="space-y-3">
-                {guide.steps.map((s, i) => (
-                  <GuideStepItem key={s.title} step={s} n={i + 1} />
-                ))}
-              </ol>
-                </div>
-              </details>
-            ) : (
-              <div>
-                <h3 className="mb-2 text-[15px] font-semibold">So läuft es ab</h3>
-              <ol className="space-y-3">
-                {guide.steps.map((s, i) => (
-                  <GuideStepItem key={s.title} step={s} n={i + 1} />
-                ))}
-              </ol>
-              </div>
-            )
-          ) : null}
-
           {canStart && inviteEmail ? (
             <div className="text-sm" data-wa-einladung-email>
               {emailAendern ? (
                 <label className="block">
                   <span className="font-medium">
-                    {firmenAdresse ? "An welche private E-Mail soll die Einladung gehen? Firmen-Postfächer blockieren sie oft." : "Einladung von 360dialog an"}
+                    {firmenAdresse ? "An welche private E-Mail soll die Einladung gehen? Firmen-Postfächer blockieren sie oft." : "Einladung unseres WhatsApp-Partners an"}
                   </span>
                   <input
                     type="email"
@@ -267,7 +235,7 @@ export function WhatsAppGuide({
                 </label>
               ) : (
                 <p>
-                  Einladung von 360dialog an <b className="break-all">{email}</b>{" "}
+                  Einladung unseres WhatsApp-Partners an <b className="break-all">{email}</b>{" "}
                   <button type="button" onClick={() => setEmailAendern(true)} className="font-medium text-[color:var(--brand)] underline" disabled={readOnly}>
                     Ändern
                   </button>
@@ -298,6 +266,42 @@ export function WhatsAppGuide({
           </div>
           {canStart ? (
             <p className="text-sm text-[color:var(--muted)]">Dauer: etwa {guide.minutes} Minuten. Sie können jederzeit abbrechen und später weitermachen.</p>
+          ) : null}
+
+          {/* Details hinter „Mehr anzeigen“ (Usability-Check 25.11.2026, U7: am Handy vorher über 3.000 px lang) */}
+          {showSteps ? (
+            <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden" data-whatsapp-mehr>
+              <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-[15px] font-medium text-[color:var(--brand)]">
+                <span className="group-open:hidden">Mehr anzeigen: Video, Details und alle Schritte</span>
+                <span className="hidden group-open:inline">Weniger anzeigen</span>
+                <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
+              </summary>
+              <div className="space-y-5 border-t border-[color:var(--border)] p-4">
+                <ul className="space-y-2 text-sm text-[color:var(--muted)]" data-wa-checklist-details>
+                  {guide.checklist.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+                {canStart && showVideo ? (
+                  <div data-whatsapp-video>
+                    <h3 className="mb-2 flex items-center gap-2 text-[15px] font-semibold">
+                      <PlayCircle className="h-4 w-4 text-[color:var(--brand)]" /> So läuft es ab: {VIDEOS.whatsapp.title}
+                    </h3>
+                    <IntroVideo kind="whatsapp" />
+                  </div>
+                ) : null}
+                {guide.steps.length ? (
+                  <div data-whatsapp-steps>
+                    <h3 className="mb-2 text-[15px] font-semibold">Alle Schritte ({guide.steps.length})</h3>
+                    <ol className="space-y-3">
+                      {guide.steps.map((s, i) => (
+                        <GuideStepItem key={s.title} step={s} n={i + 1} />
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
+              </div>
+            </details>
           ) : null}
         </div>
       ) : (

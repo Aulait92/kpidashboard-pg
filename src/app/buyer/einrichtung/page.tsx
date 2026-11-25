@@ -1081,7 +1081,7 @@ function WhatsAppStep({
           <p className="mb-4 text-sm text-[color:var(--muted)]">
             Über diese Nummer schreibt Ihr Assistent neuen Leads in Ihrem Namen. Das Verbinden machen Sie einmal, es dauert etwa 10 Minuten.
           </p>
-          {/* „Vorher kurz prüfen“ steht jetzt in WhatsAppGuide (erster Punkt: Nummer bei keinem anderen Anbieter, 22.11.2026) */}
+          {/* Erst die Nummer wählen, dann die passende Liste (WhatsAppGuide, Usability-Check 25.11.2026) */}
           <WhatsAppGuide initialPath={parseConnectPath(weg)} readOnly={readOnly} inviteEmail={email || undefined} helpHref={`/buyer/einrichtung?schritt=${hilfeSchritt}#hilfetermin`} />
           <WaCheckButton readOnly={readOnly} />
         </>
