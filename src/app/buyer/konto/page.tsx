@@ -476,11 +476,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             {billingEnabled() && customer.stripeCustomerId ? (
               <form action={paymentSetupAction} className="max-w-md space-y-4" data-konto-zahlart>
                 <ZahlartAuswahl />
-                <button
-                  type="submit"
-                  disabled={ctx.preview}
-                  className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
-                >
+                <button type="submit" disabled={ctx.preview} className={buttonClass("primary", "md")}>
                   Zahlungsart hinterlegen
                 </button>
               </form>

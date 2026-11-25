@@ -1046,7 +1046,8 @@ export function VideoRaumForm({ action, readOnly, initial, noetig }: { action: F
       )}
       <div className="flex flex-col gap-2 sm:flex-row">
         <input id="videoRoomUrl" name="videoRoomUrl" inputMode="url" defaultValue={initial ?? ""} className={input} placeholder="https://allianz.webex.com/meet/vorname.nachname" autoComplete="off" />
-        <Submit pending={pending} disabled={readOnly}>
+        {/* Nebenaktion im Kalender-Schritt: blau ist dort nur „Kalender verbinden“ bzw. „Zeiten speichern“ */}
+        <Submit pending={pending} disabled={readOnly} variant="secondary">
           Speichern
         </Submit>
       </div>

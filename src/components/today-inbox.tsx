@@ -736,8 +736,8 @@ export function TodayInbox({
             count={restCalls.length}
             actions={
               newUi && calls.some((c) => c.phone) ? (
-                // Eine Hauptaktion je Seite: Gibt es neue Leads, ist deren „Anrufen“ die Hauptaktion
-                <Button variant={neueLeads.length ? "secondary" : "primary"} icon={PlayCircle} onClick={() => setCallMode({ queue: calls.filter((c) => c.phone), i: 0 })}>
+                // Eine Hauptaktion je Seite (Usability-Check 25.11.2026): immer sekundär, Hauptaktion ist „Anrufen“ bzw. der Kontakt rechts
+                <Button variant="secondary" icon={PlayCircle} onClick={() => setCallMode({ queue: calls.filter((c) => c.phone), i: 0 })}>
                   Anrufliste starten
                 </Button>
               ) : undefined

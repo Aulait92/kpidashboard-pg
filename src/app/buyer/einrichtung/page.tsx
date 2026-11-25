@@ -202,6 +202,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const allianzMoeglich = !makler && (!!calendar.status.allianz || !genannteGesellschaften.length || genannteGesellschaften.some((g) => /allianz/i.test(g)));
   // Allianz-Vertreter ohne Online-Kalender: wie alle anderen über den SourcePicker statt der Vertreternummer
   const allianzWeg = allianz && !calendar.status.ohneOnlineKalender;
+  // Ein blauer Knopf im Kalender-Schritt (Usability-Check 25.11.2026): erst „Kalender verbinden“, danach „Zeiten speichern“
+  const kalenderDa = !!calendar.status.allianz || calendar.status.native.connected || !!calendar.status.native.app || calendar.status.hasIcs;
+  const zeitenZweitrangig = !kalenderDa;
   // Videoraum (Go-live-Prüfung 22.11.2026): fester Link Pflicht, solange weder Google noch Microsoft verbunden ist, auch bei
   // Kalender-Link (ICS) und nach „Mein Versicherer erlaubt das nicht“ (gleiche Regel wie kalenderSchrittFertig).
   const videoNoetig = !calendar.status.native.meetOderTeams;
@@ -411,7 +414,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 </Link>
                 .
               </p>
-              <LeadTimesForm initial={calendar.leadTimes} action={saveLeadTimesAction} readOnly={readOnly} source={calendar.source} zweitrangig={allianzWeg && !calendar.status.allianz} />
+              <LeadTimesForm initial={calendar.leadTimes} action={saveLeadTimesAction} readOnly={readOnly} source={calendar.source} zweitrangig={zeitenZweitrangig} />
             </div>
             {allianzWeg ? (
               // Selten gebraucht: Google, Outlook oder Kalender-Link nur eingeklappt

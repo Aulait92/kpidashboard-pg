@@ -11,7 +11,7 @@
 import { useActionState, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
-import { Button, buttonClass } from "@/components/ui";
+import { buttonClass } from "@/components/ui";
 import { CHURN_OFFERS, CHURN_REASONS, churnReasonLabel, isHalteKind, offersFor, type ChurnReason } from "@/lib/anti-churn";
 import type { OfferView } from "@/lib/halteangebote";
 import { RETENTION_CHOICES, RETENTION_DEFAULT, RETENTION_NOTICE, type RetentionChoice } from "@/lib/ruhend-shared";
@@ -90,9 +90,17 @@ export function VertragKuendigen({
 
   return (
     <>
-      <Button disabled={readOnly} onClick={() => setOpen(true)} data-vertrag-kuendigen>
+      {/* Dezenter Textlink unten in der Karte (Usability-Check 25.11.2026): kein Knopf als erste Aktion in „Ihr Vertrag“,
+          aber gut lesbar und mit eindeutiger Beschriftung */}
+      <button
+        type="button"
+        disabled={readOnly}
+        onClick={() => setOpen(true)}
+        className="inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--muted)] underline underline-offset-2 hover:text-[color:var(--foreground)] disabled:opacity-50"
+        data-vertrag-kuendigen
+      >
         Vertrag hier kündigen
-      </Button>
+      </button>
       <Sheet open={open} onClose={close} title="Vertrag kündigen">
         {view === "grund" ? (
           <form action={intentAction} className="max-h-[70dvh] space-y-4 overflow-y-auto px-5 py-4 text-sm" data-churn-grund>
