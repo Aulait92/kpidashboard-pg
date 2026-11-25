@@ -71,7 +71,7 @@ export function datenschutzVermittler(v: VermittlerAngaben): { title: string; it
       items: [
         "Der Vermittler nutzt einen digitalen KI-Assistenten, der per WhatsApp auf die Anfrage antwortet, Fragen zum Bedarf stellt, Termine anbietet und an Termine erinnert. Verarbeitet werden Telefonnummer, WhatsApp-Profilname, Nachrichten und Zeitpunkte. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.",
         "Der Vermittler sieht den Verlauf und kann das Gespräch jederzeit selbst übernehmen. Der Assistent trifft keine Entscheidungen mit rechtlicher Wirkung (Art. 22 DSGVO); Beratung und Angebote kommen vom Vermittler.",
-        "Ist eine Nummer nicht per WhatsApp erreichbar, kann einmalig eine SMS mit einem Link zur Terminwahl gesendet werden.",
+        "Ist eine Nummer nicht per WhatsApp erreichbar, kann eine SMS mit einem Link zur Terminwahl bzw. eine Erinnerung an einen gebuchten Termin gesendet werden.",
       ],
     },
     {

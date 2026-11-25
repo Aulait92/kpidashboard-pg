@@ -72,6 +72,9 @@ export async function handleFailedStatus(waMessageId: string, errors: StatusErro
   // Terminnachricht im Vertrieb (Support-Nummer): derselbe Text per SMS (lib/sms/ersatz.ts)
   const { smsErsatz, smsErsatzZweck } = await import("@/lib/sms/ersatz");
   if (smsErsatzZweck(msg.purpose)) out.sms = await smsErsatz(waMessageId, error.code, now);
+  // Terminerinnerung an einen Lead nicht zustellbar: kurze SMS-Erinnerung, einmal je Erinnerung (lib/sms/termin-erinnerung-server.ts)
+  const { istTerminErinnerung } = await import("@/lib/sms/termin-erinnerung");
+  if (istTerminErinnerung(msg.purpose)) out.sms = await (await import("@/lib/sms/termin-erinnerung-server")).terminSmsErsatz(waMessageId, error, now);
   const conv = msg.conversation;
 
   if (error.art === "kein_whatsapp") {

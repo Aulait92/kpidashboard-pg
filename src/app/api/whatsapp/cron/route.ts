@@ -335,6 +335,12 @@ async function handle(req: Request): Promise<Response> {
           return null;
         })
       : undefined;
+  // Termin ohne Ergebnis: am nächsten Werktag ab 8 Uhr je Termin ein Push „Wie lief der Termin mit …?“ (lib/termin-ergebnis-push.ts);
+  // vor der Sammel-Erinnerung, damit angekommene Pushes dort nicht doppelt zählen
+  const terminErgebnisPush = await import("@/lib/termin-ergebnis-push").then((m) => m.runTerminErgebnisPush(now)).catch((e: unknown) => {
+    reportError(e, "cron-termin-ergebnis-push");
+    return null;
+  });
   // Nächster Schritt: tägliche Erinnerung ab 8 Uhr Berlin an den zuständigen Berater (Sperre je Tag und Login)
   const naechsterSchritt = await import("@/lib/next-step-reminder").then((m) => m.runNextStepReminders(now)).catch((e: unknown) => {
     reportError(e, "cron-next-step-reminder");
@@ -473,6 +479,9 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-kampagnen");
     }
   });
+  // Buchungsseiten ohne freie Zeiten erkennen (tagsüber, je Kunde höchstens alle 30 Min.; Admin „Heute“ liest nur das
+  // gespeicherte „leer seit“, lib/buchungsseite-leer-server.ts)
+  after(() => import("@/lib/buchungsseite-leer-server").then((m) => m.pruefeBuchungsseiten(now)).catch((e: unknown) => reportError(e, "cron-buchungsseite-leer")));
   // Optimierung je Werbekonto: Freigegebenes ausführen, wöchentlich planen (wenige Konten je Lauf),
   // Meta-Änderungsprotokoll holen, ab dem 20. Frühwarnung (nach der Antwort, lib/optimierung)
   after(() => import("@/lib/optimierung/server").then((m) => m.runOptimizationCron(now)).catch((e: unknown) => reportError(e, "cron-optimierung")));
@@ -613,7 +622,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, vertriebAbZiele, experimente, naechsterSchritt, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, vertriebAbZiele, experimente, naechsterSchritt, terminErgebnisPush, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
 }
 
 export const GET = handle;

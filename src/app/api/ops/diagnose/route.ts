@@ -778,7 +778,7 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=investoren[&sicht=gesamt]           Investoren-Kennzahlen (Geld › Auswertung): Datenlücken, Kennzahlen, KI-Kosten, Gegenprobe mit der Übersicht (lib/ops/investoren.ts)
 //   q=tarif-vorschlaege                    Tarifkatalog lernt von Vermittlern: Vorschläge je Status und Quelle, offene, empfohlene, übernommene, nur Anzahlen (lib/ops/tarif-vorschlaege.ts)
 //   q=mail-eingang[&tage=7]                Antwortadresse mit Eingang: Schalter, Einrichtung, Zählung, letzte Eingänge, Fehler, ohne Inhalte (lib/ops/mail-eingang.ts)
-//   q=kampagnen&kunde=<ID>[&suche=…]       Kampagnen, Anzeigengruppen, Anzeigen eines Kunden-Werbekontos live aus Meta (lib/ops/kampagnen.ts)
+//   q=kampagnen&kunde=<ID>[&suche=…][&heute=1]  Kampagnen, Anzeigengruppen, Anzeigen eines Kunden-Werbekontos live aus Meta; &heute=1 dazu Leads und Ausgaben seit 0 Uhr je Kampagne und aktiver Anzeige (lib/ops/kampagnen.ts)
 //   q=angebot&nummer=PG-…                  Alle Angebote desselben Kontakts: Status, Version, Annahme, Zahlung, Audit (lib/ops/angebot.ts)
 //   q=preise-offen                         Neue Listenpreise 990/1.390/1.790 €: umgestellte und noch alte offene Angebote (Nummer, Name, alt, neu; lib/ops/preise-offen.ts)
 //   q=praesentation-quote[&tage=30][&kunde=<id>]  Beratungspräsentation: Abschlussquote je Präsentation je Vermittler und Splittest-Variante (A alt, B Standard, C Herausforderer im Experiment „praesentation“), Zusagen im Termin und im Kundenlink (lib/praesentation-messung.ts)
@@ -799,7 +799,11 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=lead-namen[&tage=7]                  Name am Lead gegen Chatname (WhatsApp-Profilname), Formularname und erneute Eintragungen mit
 //                                          anderem Namen, echte Leads und Testleads getrennt, nur IDs (lib/lead-name-server.ts)
 //   q=cash[&jahr=2026]                      Geld: Bankverbindungen mit Live-Kontostand, Bewegungen 30/90 Tage je Konto und Zweck, Kosten je Monat, Stripe-Guthaben und offene Rechnungen, USt-Schätzung aus den Kontoauszügen; nur Summen (lib/ops/cash.ts)
+//   q=lead-zeitleiste&kunde=<id>[&tage=14]  Je Lead (L1, L2 …) Eingang, Produkt, erster Kontakt, Zustellfehler, erste Antwort,
+//                                          erste menschliche Reaktion, Anrufe, Status, Termin, Ergebnis, Angebot, nächste Aufgabe,
+//                                          Berater (B1 …); Summen je Berater. Anonym, ohne Namen, Nummern, Inhalte (lib/ops/lead-zeitleiste.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
+  "lead-zeitleiste": async (p) => (await import("@/lib/ops/lead-zeitleiste")).leadZeitleisteDiagnose(p),
   "bot-stumm": async (p) => {
     const tage = Math.min(30, Math.max(1, Math.round(Number(p.get("tage") ?? 7)) || 7));
     return (await import("@/lib/whatsapp/bot-stumm")).botStummDiagnose({ tage, aufgaben: p.get("aufgaben") === "1" });
