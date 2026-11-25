@@ -20,6 +20,7 @@ import { variante, type Variante } from "@/lib/experimente";
 import { nowMs } from "@/lib/now";
 import { erinnerungOptin } from "@/lib/policen/regeln";
 import { dankeKennung, istVonFormular, nummerAusToken } from "@/lib/buchung-formular";
+import { anbieterAnzeigeName } from "@/lib/erstinformation-shared";
 
 // Öffentliche Buchungsseite je Kunde — z. B. als „Custom"-Scheduling-Link im
 // Meta-Leadformular. Zeigt echte freie Zeiten aus dem Google-Kalender.
@@ -89,7 +90,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
     select: {
       customerId: true,
       status: true,
-      customer: { select: { name: true, leadAddress: true, onboarding: { select: { websiteInfo: true } } } },
+      customer: { select: { name: true, leadAddress: true, onboarding: { select: { websiteInfo: true } }, erstinformation: { select: { firma: true, name: true } } } },
     },
   });
   // Früherer Kurzname (Link geändert, Ole 17.11.2026): auf den aktuellen weiterleiten, Parameter bleiben
@@ -180,7 +181,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
     );
   }
 
-  const advisor = conn.customer.name;
+  // Nicht der interne Kundenname („Allianz Max Berger“), sondern die Firma aus der Erstinformation (Usability-Check 25.11.2026)
+  const advisor = anbieterAnzeigeName(conn.customer.erstinformation, conn.customer.name);
   const an = asAnsprache(conn.customer.leadAddress);
 
   // ── Bestätigung ───────────────────────────────────────────────────────

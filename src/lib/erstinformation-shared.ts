@@ -298,6 +298,34 @@ export function wirktWieFirma(name: string | null | undefined): boolean {
 }
 
 /**
+ * Interne Kundenbezeichnung nach dem Muster „Gesellschaft + Person“ („Allianz Max Berger“, „ERGO Anna Meier“)? So legen
+ * wir Kunden intern an; Leads sollen das nicht sehen (Usability-Check 25.11.2026, Rest von W7).
+ */
+export function interneKundenbezeichnung(customerName: string | null | undefined): boolean {
+  const words = clean(customerName).split(/\s+/).filter(Boolean);
+  // Marke aus ein oder zwei Wörtern vorn („Allianz“, „Signal Iduna“), danach nur noch ein Personenname
+  for (const n of [1, 2]) {
+    const marke = words.slice(0, n).join(" ");
+    const rest = words.slice(n).join(" ");
+    if (BRANDS.some(([re]) => re.test(marke)) && siehtNachPersonAus(rest) && !BRANDS.some(([re]) => re.test(rest))) return true;
+  }
+  return false;
+}
+
+/**
+ * Name des Vermittlers gegenüber Leads (öffentliche Seiten wie /book, Untertitel im Konto): Firma aus der
+ * Erstinformation (Anbieterangaben), sonst der Name daraus, sonst wie bisher der Kundenname (intern „Allianz Max Berger“
+ * ohne Marke: „Max Berger“). Eine gespeicherte Firma, die
+ * nur der interne Kundenname ist (alter Vorschlag), zählt nicht.
+ */
+export function anbieterAnzeigeName(e: { firma?: string | null; name?: string | null } | null | undefined, customerName: string | null | undefined): string {
+  const kunde = clean(customerName);
+  const firma = clean(e?.firma);
+  const firmaOk = firma && !(firma === kunde && interneKundenbezeichnung(kunde));
+  return (firmaOk ? firma : "") || clean(e?.name) || (interneKundenbezeichnung(kunde) ? (advisorDisplayName(kunde) ?? kunde) : kunde);
+}
+
+/**
  * Angaben zusammenführen: Gespeichertes hat Vorrang, sonst Vorschlag aus Impressum und Angebot (Ole: nichts
  * abfragen, was wir schon wissen; vorausfüllen und nur prüfen lassen).
  * Vor- und Nachname (Go-live-Prüfung 19.11.2026, B1): siehe erstinfoName, mit dem Anzeigenamen des Inhabers als Vorschlag.
@@ -311,7 +339,8 @@ export function erstinfoDaten(
   const status = asVermittlerStatus(customer.vermittlerTyp);
   const w = web ?? {};
   const name = erstinfoName(e?.name, w, customer.name, customer.inhaberName);
-  const firmaVorschlag = clean(w.companyName) || clean(customer.name);
+  // Interner Kundenname („Allianz Max Berger“) ist kein Firmenname für Leads (Usability-Check 25.11.2026)
+  const firmaVorschlag = clean(w.companyName) || (interneKundenbezeichnung(customer.name) ? "" : clean(customer.name));
   const firma = e?.firma ?? (firmaVorschlag && firmaVorschlag !== name ? firmaVorschlag : "");
   const gespeicherteVersicherer = (e?.versicherer ?? []).filter((v) => v.trim());
   const gewaehlt = (customer.gesellschaften ?? []).map((g) => g.trim()).filter(Boolean);
