@@ -17,6 +17,7 @@ import { NextStepButton } from "@/components/next-step";
 import { KeinWhatsAppBadge } from "@/components/kein-whatsapp-badge";
 import { TestLeadBadge } from "@/components/test-lead-badge";
 import { eingangKurz, frischUnberuehrt } from "@/lib/kontakt-liste";
+import { PplRueckmeldung, sichtbareRueckmeldung } from "@/components/ppl-rueckmeldung";
 
 export type { StornogrundOption };
 
@@ -51,6 +52,8 @@ export type BuyerLeadRow = {
   waiting?: boolean;
   /** Assistent ist im Gespräch (zählt als nächster Schritt). */
   botActive?: boolean;
+  /** Pay-per-Lead (offen): Rückmeldung mit einem Tipp (Erreicht, Nicht erreicht, Termin vereinbart). */
+  ppl?: boolean;
 };
 
 function formatAppt(d: Date): string {
@@ -160,6 +163,8 @@ export function BuyerLeadsTable({
             const cancelled = isCancelled(l.status);
             const label = statusText(l, statusLabels, cancelled);
             const schritt = naechsterSchritt(l, formatAppt);
+            // Pay-per-Lead in früher Phase: Rückmeldung statt „Nächsten Schritt festlegen“ (eine Aktion je Zeile)
+            const rueckmeldung = !!l.ppl && !cancelled && !!sichtbareRueckmeldung(l.status);
             return (
               <li key={l.id}>
                 <button
@@ -182,10 +187,11 @@ export function BuyerLeadsTable({
                     {label}
                   </span>
                 </button>
-                {(l.noNextStep && !schritt) || (l.noWhatsApp && l.phone) ? (
+                {(l.noNextStep && !schritt) || (l.noWhatsApp && l.phone) || rueckmeldung ? (
                   <div className="-mt-1 flex flex-wrap items-center gap-2 px-4 pb-3">
+                    {rueckmeldung ? <PplRueckmeldung leadId={l.id} name={l.name ?? "Lead"} status={l.status} /> : null}
                     {l.noWhatsApp && l.phone ? <KeinWhatsAppBadge phone={l.phone} /> : null}
-                    {l.noNextStep && !schritt ? (
+                    {l.noNextStep && !schritt && !rueckmeldung ? (
                       <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label={l.resultMissing ? "Ergebnis eintragen" : "Nächsten Schritt festlegen"} />
                     ) : null}
                   </div>
@@ -253,7 +259,13 @@ export function BuyerLeadsTable({
                     <td className="px-3 py-2.5">
                       {(() => {
                         const schritt = naechsterSchritt(l, (d) => `${formatAppt(d)} Uhr`);
-                        return schritt ? (
+                        const rueckmeldung = !!l.ppl && !cancelled && !!sichtbareRueckmeldung(l.status);
+                        return rueckmeldung ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <PplRueckmeldung leadId={l.id} name={l.name ?? "Lead"} status={l.status} />
+                            {schritt ? <span className={cn("text-[13px]", schritt.cls)}>{schritt.text}</span> : null}
+                          </div>
+                        ) : schritt ? (
                           <span className={cn("text-[13px]", schritt.cls)}>{schritt.text}</span>
                         ) : l.noNextStep ? (
                           <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label={l.resultMissing ? "Ergebnis eintragen" : "Festlegen"} />

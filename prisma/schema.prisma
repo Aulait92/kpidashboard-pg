@@ -888,6 +888,11 @@ model Lead {
   orderId              String?
   order                LeadOrder?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
   deliveredAt          DateTime?
+  // Rückmeldung des Käufers mit einem Tipp (Ole, 25.11.2026, lib/ppl/rueckmeldung.ts): erreicht | nicht_erreicht | termin,
+  // wann und woher (mail = Knopf in der Liefer-E-Mail ohne Login, app = Leadliste im Kundenbereich)
+  kaeuferRueckmeldung       String?
+  kaeuferRueckmeldungAt     DateTime?
+  kaeuferRueckmeldungQuelle String?
   // Storno beim Pay-per-Lead: requested → approved | rejected | review (Prüfung durch Admin)
   stornoState          String?
   /// Lead-ID bei Heinrich von Kleist (HvK-Abrechnung, lib/ppl/hvk-abrechnung.ts): nur sicher zugeordnete, nie überschrieben

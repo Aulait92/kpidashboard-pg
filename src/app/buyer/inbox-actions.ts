@@ -33,6 +33,8 @@ type LeadPrev = {
   /** Dokumentierte Anrufversuche (lib/call-attempts.ts) */
   callAttempts?: number;
   lastCallAttemptAt?: string | null;
+  /** Rückmeldung des Pay-per-Lead-Käufers (lib/ppl/rueckmeldung.ts) */
+  rueckmeldung?: { art: string | null; at: string | null; quelle: string | null };
   /** Verloren-Grund (lib/lead-lost.ts) */
   lost?: { reason: string | null; note: string | null; at: string | null; early: boolean; disqualifyReason: string | null };
 };
@@ -355,6 +357,9 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
         : {}),
       ...(p.callAttempts !== undefined
         ? { callAttempts: p.callAttempts, lastCallAttemptAt: p.lastCallAttemptAt ? new Date(p.lastCallAttemptAt) : null }
+        : {}),
+      ...(p.rueckmeldung
+        ? { kaeuferRueckmeldung: p.rueckmeldung.art, kaeuferRueckmeldungAt: p.rueckmeldung.at ? new Date(p.rueckmeldung.at) : null, kaeuferRueckmeldungQuelle: p.rueckmeldung.quelle }
         : {}),
       ...(p.lost
         ? { lostReason: p.lost.reason, lostNote: p.lost.note, lostAt: p.lost.at ? new Date(p.lost.at) : null, lostEarly: p.lost.early, disqualifyReason: p.lost.disqualifyReason }
