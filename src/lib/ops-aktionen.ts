@@ -339,6 +339,20 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${r.count} von ${nummern.length} Rechnungen auf ${bereich ?? "Vorschlag"} gesetzt.` };
     },
   },
+  ausgangsrechnung_storniert: {
+    beschreibung: "Ausgangsrechnung als storniert markieren, zählt dann nicht mehr in der BWA (nur auf Oles Anweisung; die Stornorechnung in Papierkram bleibt nötig, der nächste Import überschreibt den Status)",
+    felder: { nummer: "Rechnungsnummer, z. B. R-00089", grund: "kurz, z. B. Auftrag nie zustande gekommen" },
+    run: async (p) => {
+      const nummer = text(p.nummer, 40);
+      const grund = text(p.grund, 200);
+      if (!nummer || grund.length < 3) return { ok: false, error: "nummer und grund nötig." };
+      const r = await prisma.ausgangsrechnung.findUnique({ where: { nummer }, select: { id: true, status: true, notiz: true } });
+      if (!r) return { ok: false, error: "Rechnung nicht gefunden." };
+      await prisma.ausgangsrechnung.update({ where: { id: r.id }, data: { status: "storniert", notiz: [r.notiz, `Storniert (Ole): ${grund}`].filter(Boolean).join(" · ").slice(0, 500) } });
+      await audit("bwa.rechnung_storniert", { details: { nummer, vorher: r.status, grund }, actor: OPS_ACTOR });
+      return { ok: true, info: `${nummer} storniert (vorher „${r.status}“).` };
+    },
+  },
   umsatz_nachtrag_loeschen: {
     beschreibung: "Einen von Claude angelegten Umsatz-Nachtrag (ManualRevenue) wieder löschen",
     felder: { id: "ID des Nachtrags (Ergebnis von umsatz_nachtragen)" },

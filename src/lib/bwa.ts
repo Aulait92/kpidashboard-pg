@@ -64,7 +64,7 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
   if (nachRechnungen) {
     const { bereichVorschlag, istBereich } = await import("@/lib/ausgangsrechnungen");
     const [rechnungen, hvk, appKunden] = await Promise.all([
-      prisma.ausgangsrechnung.findMany({ where: { datum: { gte: from } }, select: { nummer: true, datum: true, kunde: true, netto: true, typ: true, bereich: true } }),
+      prisma.ausgangsrechnung.findMany({ where: { datum: { gte: from } }, select: { nummer: true, datum: true, kunde: true, netto: true, typ: true, bereich: true, status: true } }),
       prisma.hvkInvoice.findMany({ where: { periodEnd: { gte: fromQ } }, select: { invoiceNo: true, invoiceDate: true, periodEnd: true, netCents: true } }),
       // Nur Software-Kunden (Ole, 25.11.2026): Pay-per-Lead-Käufer mit Bestellkonto in der App (Nico Yagci, verrata24,
       // Marco Rutsch) sind keine Software-Kunden; ihre Rechnungen bleiben Pay-per-Lead.
@@ -77,9 +77,11 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
     for (const r of rechnungen) {
       const m = r.datum.toISOString().slice(0, 7);
       if (!inRange(m) || !Number(r.netto)) continue;
+      // Stornierte Rechnungen und Stornorechnungen zählen nicht (Ole, 25.11.2026: R-00089 nie zustande gekommen)
+      if (/storn/i.test(r.status) || /storn/i.test(r.typ)) continue;
       const datum = r.datum.toISOString().slice(0, 10);
       const bereich = istBereich(r.bereich) ? r.bereich : bereichVorschlag({ kunde: r.kunde, datum, typ: r.typ }, kundenSeit);
-      items.push({ month: m, line: `umsatz:${bereich}`, label: r.kunde, net: r2(Number(r.netto)), detail: `${r.nummer}${istBereich(r.bereich) ? "" : " · Bereich vorgeschlagen"}` });
+      items.push({ month: m, line: `umsatz:${bereich}`, label: r.kunde, date: datum, net: r2(Number(r.netto)), detail: `${r.nummer}${istBereich(r.bereich) ? "" : " · Bereich vorgeschlagen"}` });
     }
     for (const h of hvk) {
       const m = (h.invoiceDate ?? h.periodEnd).toISOString().slice(0, 7);

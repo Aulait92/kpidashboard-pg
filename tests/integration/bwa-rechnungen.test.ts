@@ -40,5 +40,15 @@ describe("BWA nach Rechnungen", () => {
     const d = await loadBwa("2026", new Date("2026-11-25T12:00:00Z"));
     const r = d.items.find((i) => i.label === `Kunde ${tag}` && i.detail?.startsWith(`T-${tag}-2`));
     expect(r?.line).toBe("umsatz:software");
+    expect(r?.date).toBe("2026-03-20");
+  });
+
+  it("stornierte Rechnung zählt nicht (Ole, 25.11.2026)", async () => {
+    await importAusgangsrechnungen([{ nummer: `T-${tag}-3`, datum: "2026-04-02", kunde: `Kunde ${tag}`, kundennr: null, land: null, netto: 2750, ust: 522.5, brutto: 3272.5, status: "Unbezahlt", typ: "Rechnung", notiz: null }]);
+    const { AKTIONEN } = await import("@/lib/ops-aktionen");
+    const res = await AKTIONEN.ausgangsrechnung_storniert.run({ nummer: `T-${tag}-3`, grund: "nie zustande gekommen" });
+    expect(res.ok).toBe(true);
+    const d = await loadBwa("2026", new Date("2026-11-25T12:00:00Z"));
+    expect(d.items.some((i) => i.detail?.startsWith(`T-${tag}-3`))).toBe(false);
   });
 });

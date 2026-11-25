@@ -1233,7 +1233,7 @@ function BwaDrill({ row, items, months, onClose }: { row: BwaRow; items: BwaItem
                         i.label
                       )}
                     </td>
-                    <td className="whitespace-nowrap py-1.5 pr-2">{i.date ? new Date(`${i.date}T12:00:00Z`).toLocaleDateString("de-DE") : NOCH_KEINE_DATEN}</td>
+                    <td className="whitespace-nowrap py-1.5 pr-2">{i.date ? new Date(`${i.date}T12:00:00Z`).toLocaleDateString("de-DE") : ""}</td>
                     <td className="py-1.5 pr-2 text-[color:var(--muted)]">{i.detail ?? ""}</td>
                     {hasGross ? <td className="whitespace-nowrap px-2 text-right">{i.gross != null ? eur(i.gross, 2) : ""}</td> : null}
                     <td className="whitespace-nowrap px-2 text-right">{eur(i.net, 2)}</td>
