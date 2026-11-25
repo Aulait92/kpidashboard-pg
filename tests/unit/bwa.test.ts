@@ -76,4 +76,10 @@ describe("BWA: Zeitraum und Gruppen", () => {
     expect(betriebGroup("Standardregel", "DATEV eG")).toBe("DATEV eG");
     expect(betriebGroup(null, null)).toBe("Ohne Empfänger");
   });
+  it("Steuerberater in einer Zeile (Ole, 25.11.2026)", () => {
+    expect(betriebGroup("Standardregel", "PhDr. Mueller Treuhand GmbH Steuerberatungsgesellschaft")).toBe("Steuerberater");
+    expect(betriebGroup(null, "GC RE PHDRMUELLERSTBG")).toBe("Steuerberater");
+    expect(betriebGroup("Steuerberater (umsatzsteuerpflichtig)", "Irgendwer")).toBe("Steuerberater");
+    expect(betriebGroup("Standardregel", "Müller Bau GmbH")).toBe("Müller Bau GmbH");
+  });
 });

@@ -121,3 +121,39 @@ export async function importAusgangsrechnungen(zeilen: AusgangsrechnungZeile[], 
   }
   return { neu, aktualisiert };
 }
+
+// ── Geschäftsbereiche (Ole, 25.11.2026): Anfang 2026 Funnelprojekte (VENTIS, Bahmann …), ab Juni Pay-per-Lead, ab
+// November Software & Betreuung. Fest gesetzter Bereich (Spalte „bereich“) gewinnt, sonst dieser Vorschlag.
+export const BEREICHE = { funnel: "Funnelprojekte", ppl: "Pay-per-Lead", software: "Software & Betreuung", sonstiges: "Sonstiges" } as const;
+export type Bereich = keyof typeof BEREICHE;
+export const istBereich = (x: unknown): x is Bereich => typeof x === "string" && x in BEREICHE;
+
+const PPL_AB = "2026-06-01";
+const SOFTWARE_AB = "2026-11-01";
+const FUNNEL_KUNDEN = /ventis|bahmann|futterpro/i;
+const SONSTIGE_KUNDEN = /digistore/i;
+const FUELLWOERTER = new Set(["allianz", "allianzvertretung", "versicherung", "hauptvertretung", "generalvertretung", "vertretung", "agentur", "gmbh", "team", "beratungs", "vertriebs"]);
+const woerter = (s: string) => new Set(s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length >= 4 && !FUELLWOERTER.has(w)));
+
+/** Kunde der App, wenn ein markantes Namenswort übereinstimmt (z. B. „Marco Rutsch Allianzvertretung“ ↔ „Allianz Hauptvertretung Marco Rutsch“). */
+export function appKundeZu<T extends { name: string }>(kunde: string, appKunden: T[]): T | null {
+  const w = woerter(kunde);
+  return appKunden.find((k) => [...woerter(k.name)].some((x) => w.has(x))) ?? null;
+}
+
+/**
+ * Bereich-Vorschlag für eine Rechnung. Software & Betreuung: ab November an einen App-Kunden, frühestens 2 Tage vor dessen
+ * Anlage. Gutschriften von Lead-Käufern: Pay-per-Lead. Vor Juni und bekannte Projektkunden: Funnelprojekte.
+ */
+export function bereichVorschlag(r: { kunde: string; datum: string; typ: string }, appKunden: { name: string; seit: string }[]): Bereich {
+  if (SONSTIGE_KUNDEN.test(r.kunde)) return "sonstiges";
+  if (FUNNEL_KUNDEN.test(r.kunde)) return "funnel";
+  if (r.datum < PPL_AB) return "funnel";
+  const app = appKundeZu(r.kunde, appKunden);
+  if (app && r.datum >= SOFTWARE_AB) {
+    const ab = new Date(`${app.seit}T00:00:00Z`);
+    ab.setUTCDate(ab.getUTCDate() - 2);
+    if (r.datum >= ab.toISOString().slice(0, 10)) return "software";
+  }
+  return "ppl";
+}

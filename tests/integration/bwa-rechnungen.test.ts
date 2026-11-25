@@ -28,8 +28,17 @@ describe("BWA nach Rechnungen", () => {
     const d = await loadBwa("2026", new Date("2026-11-25T12:00:00Z"));
     const maerz = d.items.filter((i) => i.month === "2026-03" && i.line.startsWith("umsatz:"));
     const summe = (line: string) => maerz.filter((i) => i.line === line && (i.label === `Kunde ${tag}` || i.detail === `HVK-${tag}`)).reduce((s, i) => s + i.net, 0);
-    expect(summe("umsatz:rechnungen")).toBe(3500);
-    expect(summe("umsatz:hvk")).toBe(270);
-    expect(d.items.some((i) => i.line === "umsatz:service" || i.line === "umsatz:ppl")).toBe(false);
+    // vor Juni: Funnelprojekte (Vorschlag); HvK-Gutschriften zählen zu Pay-per-Lead
+    expect(summe("umsatz:funnel")).toBe(3500);
+    expect(summe("umsatz:ppl")).toBe(270);
+    expect(d.items.some((i) => i.line === "umsatz:service" || i.line === "umsatz:setup" || i.line === "umsatz:hvk")).toBe(false);
+  });
+
+  it("fest gesetzter Bereich gewinnt und bleibt beim erneuten Import", async () => {
+    await prisma.ausgangsrechnung.update({ where: { nummer: `T-${tag}-2` }, data: { bereich: "software" } });
+    await importAusgangsrechnungen([{ nummer: `T-${tag}-2`, datum: "2026-03-20", kunde: `Kunde ${tag}`, kundennr: null, land: null, netto: 500, ust: 0, brutto: 500, status: "Bezahlt", typ: "Rechnung", notiz: null }]);
+    const d = await loadBwa("2026", new Date("2026-11-25T12:00:00Z"));
+    const r = d.items.find((i) => i.label === `Kunde ${tag}` && i.detail?.startsWith(`T-${tag}-2`));
+    expect(r?.line).toBe("umsatz:software");
   });
 });

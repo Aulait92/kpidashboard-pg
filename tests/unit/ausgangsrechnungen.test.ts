@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { betrag, parsePapierkramCsv } from "@/lib/ausgangsrechnungen";
+import { appKundeZu, betrag, bereichVorschlag, parsePapierkramCsv } from "@/lib/ausgangsrechnungen";
 
 // Papierkram-Export „Rechnungen“ (Ole, 25.11.2026): Entwürfe raus, deutsche Zahlen und Daten, Anführungszeichen.
 const kopf = "Rechnungsnr.;Betreff;Kunde;Land;Projekt;Kundennummer;Datum;Fälligkeitsdatum;Status;Typ;Netto;USt.;Brutto;Skonto;Bezahlt;letztes Bezahldatum;Notiz;Mahnungsdatum;Waren & Dienstleistungen";
@@ -26,5 +26,34 @@ describe("Papierkram-CSV", () => {
   });
   it("falsche Datei: klare Meldung", () => {
     expect(() => parsePapierkramCsv("Datum;Betrag\n01.01.2026;5")).toThrow(/Spalte fehlt/);
+  });
+});
+
+describe("Bereich-Vorschlag (Ole, 25.11.2026: Funnelprojekte, dann Pay-per-Lead, jetzt Software & Betreuung)", () => {
+  const app = [
+    { name: "Allianz Hauptvertretung Marco Rutsch", seit: "2026-07-07" },
+    { name: "verrata24 GmbH", seit: "2026-11-16" },
+    { name: "Tobias D'Angelo", seit: "2026-11-22" },
+  ];
+  const v = (kunde: string, datum: string, typ = "Rechnung") => bereichVorschlag({ kunde, datum, typ }, app);
+  it("Projektkunden und alles vor Juni: Funnelprojekte", () => {
+    expect(v("VENTIS Holding AG", "2026-07-28")).toBe("funnel");
+    expect(v("Bahmann Coaching GmbH", "2026-06-05")).toBe("funnel");
+    expect(v("Irgendwer", "2026-03-08")).toBe("funnel");
+  });
+  it("ab November an App-Kunden: Software & Betreuung, vorher Pay-per-Lead", () => {
+    expect(v("Marco Rutsch Allianzvertretung", "2026-11-02")).toBe("software");
+    expect(v("Marco Rutsch Allianzvertretung", "2026-07-07")).toBe("ppl");
+    expect(v("verrata24 GmbH", "2026-11-16")).toBe("software");
+    expect(v("Tobias D'Angelo", "2026-11-16")).toBe("ppl");
+    expect(v("PKV-Hilfe GmbH", "2026-11-10")).toBe("ppl");
+  });
+  it("Gutschriften: Lead-Käufer Pay-per-Lead, Digistore Sonstiges", () => {
+    expect(v("garantiertmehrit GmbH", "2026-08-06", "Gutschrift")).toBe("ppl");
+    expect(v("Digistore24 GmbH", "2026-06-09", "Gutschrift")).toBe("sonstiges");
+  });
+  it("Namensabgleich ignoriert Allerweltswörter", () => {
+    expect(appKundeZu("Allianz Versicherung Norman Hesse", app)).toBeNull();
+    expect(appKundeZu("Marco Rutsch Allianzvertretung", app)?.name).toBe("Allianz Hauptvertretung Marco Rutsch");
   });
 });

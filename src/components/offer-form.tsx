@@ -861,7 +861,7 @@ function AbrechnungstagFeld({
   voraus: boolean;
 }) {
   const startDay = /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? Number(startDate.slice(8, 10)) : null;
-  const plan = abrechnungsplan({ startIso: startDay ? startDate : null, billingDay: day ? Number(day) : null, freeStart: free });
+  const plan = abrechnungsplan({ startIso: startDay ? startDate : null, billingDay: day ? Number(day) : null, freeStart: free, freeMaxTage: 31 });
   const differs = !!plan?.differs;
   return (
     <details className="group text-sm" data-abrechnungstag>

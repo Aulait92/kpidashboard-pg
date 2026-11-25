@@ -628,6 +628,7 @@ export async function createScheduleForOffer(
     startIso: startIso && startIso < todayIso ? todayIso : startIso,
     billingDay: offer.billingDay,
     freeStart: offer.billingFreeStart,
+    freeMaxTage: offer.billingFreeStartTage,
     annual: rhythmus !== "month",
   });
   const noon = (iso: string) => Math.floor(new Date(`${iso}T12:00:00Z`).getTime() / 1000);

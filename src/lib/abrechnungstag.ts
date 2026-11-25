@@ -15,11 +15,17 @@
 //   nichts anteilig und kein kostenloser Start. Der Abrechnungstag gilt nur, wenn monatlich gezahlt wird.
 //   Seit 19.11.2026 (Ole) ist die Vorauszahlung schon mit der Annahme fällig (lib/billing.ts), der Zeitraum beginnt
 //   weiter am Start (Offer.prepayAtAcceptance; ältere Annahmen: zum Start).
+// - Kostenloser Start nie länger als im Angebot gesetzt (Ole, 25.11.2026): Wählt der Kunde einen späteren Start (z. B.
+//   18.1. statt 1.1. bei Abbuchung am 15.), wäre sonst fast ein ganzer Monat geschenkt. Die Tage aus Oles Start werden am
+//   Angebot eingefroren (Offer.billingFreeStartTage); längere Zeit bis zum ersten Abrechnungstag wird anteilig berechnet.
+//   Setzt Ole selbst einen späten Start, gilt seine Wahl. Ohne eingefrorenen Wert: höchstens {@link KOSTENLOS_MAX_TAGE} Tage.
 
 import { eur } from "@/lib/offer-pricing";
 
 export const ABRECHNUNGSTAG_MIN = 1;
 export const ABRECHNUNGSTAG_MAX = 28;
+/** Längster kostenloser Start in Tagen, wenn am Angebot nichts eingefroren ist. */
+export const KOSTENLOS_MAX_TAGE = 15;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const isoOf = (y: number, m: number, d: number) => {
@@ -33,6 +39,19 @@ const ymd = (s: string): [number, number, number] => {
   const [y, m, d] = parts(s);
   return [y, m - 1, d];
 };
+
+/** Kostenloser Start greift nur, wenn die Zeit bis zum ersten Abrechnungstag höchstens maxTage Tage ist. */
+export const kostenlosMoeglich = (startIso: string, firstIso: string, maxTage: number | null | undefined = null) => {
+  const tage = daysBetween(startIso, firstIso);
+  return tage > 0 && tage <= (maxTage ?? KOSTENLOS_MAX_TAGE);
+};
+
+/** Tage kostenloser Start beim Start aus dem Angebot (zum Einfrieren am Angebot); null ohne Start, Tag oder Haken. */
+export function kostenlosTage(startIso: string | null, billingDay: number | null | undefined, freeStart: boolean): number | null {
+  if (!startIso || !billingDay || !freeStart) return null;
+  const tage = daysBetween(startIso, ersterAbrechnungstag(startIso, billingDay));
+  return tage > 0 ? tage : null;
+}
 
 /** Eingabe prüfen: 1 bis 28, leer = wie Start (null). Ungültig → Fehlertext. */
 export function parseAbrechnungstag(v: unknown): { ok: true; day: number | null } | { ok: false; error: string } {
@@ -74,12 +93,12 @@ export type Abrechnungsplan = {
  * Plan aus Start, Abrechnungstag und „kostenloser Start“. annual: Vorauszahlung (jährlich oder 6 Monate im Voraus):
  * dann gilt der Abrechnungstag nicht, der Zeitraum beginnt am Start (Ole, 18.11.2026). null ohne Start.
  */
-export function abrechnungsplan(o: { startIso: string | null; billingDay?: number | null; freeStart?: boolean; annual?: boolean }): Abrechnungsplan | null {
+export function abrechnungsplan(o: { startIso: string | null; billingDay?: number | null; freeStart?: boolean; freeMaxTage?: number | null; annual?: boolean }): Abrechnungsplan | null {
   if (!o.startIso) return null;
   const vorauszahlung = !!o.annual;
   const firstIso = ersterAbrechnungstag(o.startIso, vorauszahlung ? null : o.billingDay);
   const differs = firstIso !== o.startIso;
-  const free = differs && !!o.freeStart;
+  const free = differs && !!o.freeStart && kostenlosMoeglich(o.startIso, firstIso, o.freeMaxTage);
   let ratio = 0;
   if (differs && !free) {
     // Monat, den die erste volle Abbuchung abdecken würde, rückwärts vom ersten Abrechnungstag

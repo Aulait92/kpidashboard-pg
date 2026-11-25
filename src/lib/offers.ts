@@ -43,7 +43,7 @@ import { audit } from "@/lib/audit";
 import { referralSetupDiscount } from "@/lib/kollegen";
 import { checkBusiness, type BusinessInput } from "@/lib/unternehmer";
 import { contractSummaryLines, hasPriceStep, NACHTRAEGLICH_MAX_STARTTAG, nachtraeglichStartOk, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
-import { parseAbrechnungstag } from "@/lib/abrechnungstag";
+import { kostenlosTage, parseAbrechnungstag } from "@/lib/abrechnungstag";
 import { ERSTE_WOCHE_MIN, ERSTE_WOCHE_STANDARD, ersteWocheAus, ersteWocheMenge, ersteWocheName } from "@/lib/ppl/erste-woche-shared";
 import { normalizeRegisterNummer } from "@/lib/erstinformation-shared";
 import { kundenkontoAus, normalizePplModell, PPL_MODELL_KUNDENKONTO, pruefeKundenkontoProdukte, type KundenkontoProdukt } from "@/lib/ppl/kundenkonto";
@@ -360,6 +360,7 @@ async function angebotsDaten(owner: OfferOwner, input: OfferFormInput) {
     billingDay: abrechnungstag.day,
     // „Gratis“ nur mit eigenem Abrechnungstag (sonst gibt es keine Zeit davor)
     billingFreeStart: abrechnungstag.day != null && input.billingFreeStart === true,
+    billingFreeStartTage: kostenlosTage(input.startDate ?? null, abrechnungstag.day, input.billingFreeStart === true),
     paymentInArrears: nachtraeglich,
     customerChoosesTerm: choosesTerm && !ppl,
     customerChoosesStart: choosesStart,
@@ -706,7 +707,7 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
   offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
-    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "allowPayLater" | "isTest" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew" | "pplModell" | "pplProdukte">> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart" | "billingFreeStartTage" | "acceptedAt" | "prepayAtAcceptance" | "paymentInArrears" | "allowPayLater" | "isTest" | "package" | "pplProductKey" | "pplLabel" | "pplPrice" | "pplQuantity" | "pplAutoRenew" | "pplModell" | "pplProdukte">> &
     Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null; ersteWoche: { quantity: number; autoRenew: boolean } | null }> = {},
 ): ContractSummaryInput {
@@ -729,6 +730,7 @@ export function offerSummaryInput(
     freeMonths: chosen.freeMonths ?? offer.annualFreeMonths ?? prepayFreeMonthsFor(chosen.term ?? offer.term),
     billingDay: offer.billingDay ?? null,
     freeStart: !!offer.billingFreeStart,
+    freeMaxTage: offer.billingFreeStartTage ?? null,
     prepayAtAcceptance: vorauszahlungMitAnnahme(offer),
     paymentInArrears: !!offer.paymentInArrears,
     paket: offer.package ?? null,
