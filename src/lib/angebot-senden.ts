@@ -28,6 +28,17 @@ export const SELBST_UPLOAD_HINWEIS = "Freiwillig, hilft bei Ihren Zahlen.";
 
 /** Notiz der klassischen Wiedervorlage (lib/lead-followup.ts), die mit dem Versand entfällt. */
 export const ANGEBOT_WIEDERVORLAGE = "Angebot nachfassen";
+
+/**
+ * Doppelter Kontakt auf „Heute“ (Usability-Check 25.11.2026): Steht ein Kontakt unter „Angebote senden“, ist das der
+ * dringendere Schritt (Nachfassen setzt ein gesendetes Angebot voraus). Seine Wiedervorlage „Angebot nachfassen“ bzw.
+ * „Bedenkzeit vorbei: Angebot nachfassen“ erscheint dann nicht zusätzlich. Andere Wiedervorlagen bleiben. Rein.
+ */
+export function ohneDoppeltesNachfassen<T extends { id: string; followUpNote: string | null }>(wiedervorlagen: T[], angebotSendenLeadIds: Iterable<string>): T[] {
+  const senden = new Set(angebotSendenLeadIds);
+  if (!senden.size) return wiedervorlagen;
+  return wiedervorlagen.filter((f) => !(senden.has(f.id) && /angebot nachfassen\s*$/i.test((f.followUpNote ?? "").trim())));
+}
 /** Gültigkeit des Links auf das Angebots-PDF. */
 export const ANGEBOT_LINK_TAGE = 60;
 

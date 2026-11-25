@@ -82,4 +82,22 @@ describe("Heute ohne doppelte Personen", () => {
     await appointmentOutcomeResult(t3.id, "no_show");
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: ns.id } })).followUpNote).toBe("Zurückrufen");
   });
+
+  it("„Angebot senden“ geht vor: kein zusätzliches „Angebot nachfassen“ (Usability-Check 25.11.2026); andere Wiedervorlagen bleiben", async () => {
+    const now = Date.now();
+    const doppelt = await lead({ status: "Angebot gesendet", followUpAt: new Date(now - 2 * DAY), followUpNote: "Angebot nachfassen" });
+    await prisma.appointment.create({ data: { customerId, leadId: doppelt.id, startsAt: new Date(now - 5 * DAY), mode: "phone", status: "completed" } });
+    const anders = await lead({ status: "Angebot gesendet", followUpAt: new Date(now - 2 * DAY), followUpNote: "Unterlagen anfordern" });
+    await prisma.appointment.create({ data: { customerId, leadId: anders.id, startsAt: new Date(now - 5 * DAY), mode: "phone", status: "completed" } });
+    const nurNachfassen = await lead({ status: "Angebot gesendet", followUpAt: new Date(now - 2 * DAY), followUpNote: "Angebot nachfassen" });
+
+    const inbox = await loadInbox({ customerId, userId: null, teamRole: "owner" });
+    const senden = inbox.angebote.map((g) => g.leadId);
+    const wv = inbox.followUps.map((f) => f.leadId);
+    expect(senden).toContain(doppelt.id);
+    expect(wv).not.toContain(doppelt.id);
+    expect(senden).toContain(anders.id);
+    expect(wv).toContain(anders.id);
+    expect(wv).toContain(nurNachfassen.id);
+  });
 });
