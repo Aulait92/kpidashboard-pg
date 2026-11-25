@@ -1,6 +1,8 @@
 // Diagnose q=ppl-rueckmeldung[&produkt=PKV-Tarifoptimierung&tage=30] (Ole, 21.11.2026: „ob alle Vermittler von PKV die
 // Leads auf erreicht und Termin ziehen“). Je Kunde mit aktivem Bezug: gelieferte Leads im Zeitraum, davon mit Status-
 // wechsel, erreicht, Termin, Abschluss, Storno, dazu letzte Anmeldung. Nur Zahlen, keine Namen von Leads.
+// Dazu (25.11.2026, lib/ppl/rueckmeldung.ts): Rückmeldungen mit einem Tipp je Weg (Liefer-E-Mail ohne Login, Leadliste)
+// und überfällige Wiedervorlagen (älter als 24 Stunden).
 import { prisma } from "@/lib/prisma";
 
 const DAY = 86_400_000;
@@ -26,7 +28,7 @@ export async function pplRueckmeldung(p: URLSearchParams) {
   for (const [customerId, k] of jeKunde) {
     const leads = await prisma.lead.findMany({
       where: { customerId, subscriptionId: { in: k.subs }, deliveredAt: { gte: seit }, isTest: false },
-      select: { status: true, reached: true, closedAt: true, stornoState: true, deliveredAt: true, statusChangedAt: true, firstContactAt: true, _count: { select: { appointments: true } } },
+      select: { status: true, reached: true, closedAt: true, stornoState: true, deliveredAt: true, statusChangedAt: true, firstContactAt: true, kaeuferRueckmeldungQuelle: true, followUpAt: true, _count: { select: { appointments: true } } },
     });
     const n = leads.length;
     const statusGeaendert = leads.filter((l) => l.deliveredAt && l.statusChangedAt.getTime() - l.deliveredAt.getTime() > 60_000).length;
@@ -43,6 +45,9 @@ export async function pplRueckmeldung(p: URLSearchParams) {
       termin: leads.filter((l) => l._count.appointments > 0 || /termin/i.test(l.status ?? "")).length,
       abschluss: leads.filter((l) => l.closedAt).length,
       storno: leads.filter((l) => l.stornoState).length,
+      rueckmeldungMail: leads.filter((l) => l.kaeuferRueckmeldungQuelle === "mail").length,
+      rueckmeldungApp: leads.filter((l) => l.kaeuferRueckmeldungQuelle === "app").length,
+      wiedervorlageUeber24h: leads.filter((l) => l.followUpAt && l.followUpAt.getTime() < Date.now() - DAY && !l.closedAt).length,
       status,
     });
   }
