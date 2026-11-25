@@ -45,7 +45,7 @@ describe("Heute: neue Leads oben", () => {
     expect(karte).toBeLessThan(src.indexOf('title="Wartet auf Sie"'));
   });
 
-  it("nur eine Hauptaktion: Anrufliste wird zweitrangig, solange neue Leads warten", () => {
-    expect(src).toContain('variant={neueLeads.length ? "secondary" : "primary"}');
+  it("nur eine Hauptaktion: Anrufliste ist immer zweitrangig (Usability-Check 25.11.2026)", () => {
+    expect(src).toContain('<Button variant="secondary" icon={PlayCircle}');
   });
 });
