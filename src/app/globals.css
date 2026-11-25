@@ -18,6 +18,10 @@
   --success: #059669;
   --warning: #d97706;
   --danger: #e11d48;
+  /* WhatsApp-Grün als Fläche mit weißer Schrift: dunkler als #25D366 (2,0:1), 5,4:1 nach WCAG AA (Usability-Check
+     25.11.2026; Prüfung in lib/kontrast.ts, Test tests/unit/kontrast.test.ts) */
+  --whatsapp: #0f7a4a;
+  --whatsapp-dark: #0b5e39;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;

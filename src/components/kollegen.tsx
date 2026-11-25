@@ -63,7 +63,7 @@ export function ReferralShare({ url, defaultText, readOnly }: { url: string; def
           rel="noopener noreferrer"
           onClick={() => selection()}
           aria-disabled={readOnly}
-          className={`${btn} ${canShare ? "border border-[color:var(--border)] bg-white" : "bg-[#25D366] text-white"} ${readOnly ? "pointer-events-none opacity-50" : ""}`}
+          className={`${btn} ${canShare ? "border border-[color:var(--border)] bg-white" : "bg-[color:var(--whatsapp)] text-white hover:bg-[color:var(--whatsapp-dark)]"} ${readOnly ? "pointer-events-none opacity-50" : ""}`}
         >
           <MessageCircle className="h-4 w-4" /> WhatsApp
         </a>

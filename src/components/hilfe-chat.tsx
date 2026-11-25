@@ -415,7 +415,7 @@ function EscalationCard({ e }: { e: Escalation }) {
       ) : null}
       <div className="mt-2.5 space-y-2">
         {e.whatsappUrl ? (
-          <a href={e.whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => contact("whatsapp")} className={cn(btn, "bg-[#25D366] text-white")}>
+          <a href={e.whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => contact("whatsapp")} className={cn(btn, "bg-[color:var(--whatsapp)] text-white hover:bg-[color:var(--whatsapp-dark)]")}>
             <MessageCircle className="h-5 w-5" /> Per WhatsApp an unser Team
           </a>
         ) : null}
