@@ -81,15 +81,19 @@ describe("Wege zu Amazon Web Services (Bedrock)", () => {
   });
 });
 
-describe("Banner im gemeinsamen Rahmen von /buyer", () => {
-  it("das Layout zeigt es über jeder Seite und lässt die anderen Hinweise zurücktreten", () => {
+describe("Banner nur auf „Heute“ (Usability-Check 25.11.2026)", () => {
+  it("nur die Seite „Heute“ bindet es ein, unter der Überschrift; das Layout lässt die anderen Hinweise zurücktreten", () => {
     const layout = code("src/app/buyer/layout.tsx");
-    expect(layout).toContain("{datennutzungBanner ? <DatennutzungBanner angezeigt={!!datennutzung?.angezeigtAm} /> : null}");
-    vor(layout, "<DatennutzungBanner", "{children}\n            {/* Lead-Detail-Modal");
+    expect(layout).not.toContain("<DatennutzungBanner");
     expect(layout).toContain("hinweisOffen={datennutzungBanner}");
     expect(layout).toContain("!datennutzungBanner && darfAnalyseFragen(");
     // Bestellkonto und „Nur Leads“ haben ihren eigenen Rahmen und kommen vorher zurück
     vor(layout, "istReinesBestellkonto(ctx.customerId)", "ladeDatennutzung(ctx)");
     vor(layout, "istNurLeadsKonto(ctx.customerId)", "ladeDatennutzung(ctx)");
+    // Eingebunden nur auf „Heute“ (alle drei Fassungen: erster Tag, neue und alte Oberfläche)
+    expect(mit(/<DatennutzungHeute\b/)).toEqual(["src/app/buyer/page.tsx"]);
+    expect(mit(/<DatennutzungBanner\b/)).toEqual(["src/components/datennutzung-heute.tsx"]);
+    const heute = code("src/app/buyer/page.tsx");
+    expect(heute.match(/<DatennutzungHeute ctx=\{ctx\} \/>/g)?.length).toBe(3);
   });
 });

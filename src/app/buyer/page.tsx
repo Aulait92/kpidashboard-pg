@@ -31,6 +31,7 @@ import { VollmachtVersandHinweis } from "@/components/vollmacht-versand-hinweis"
 import { grussName } from "@/lib/vermittler-nennung";
 import { vermittlerDuAus } from "@/lib/vermittler-ansprache";
 import { TeamHeuteKarte } from "@/components/team-heute";
+import { DatennutzungHeute } from "@/components/datennutzung-heute";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -64,6 +65,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <PageHeader title="Willkommen" subtitle="Schön, dass Sie da sind." />
+        <DatennutzungHeute ctx={ctx} />
         {vorStart ? null : introCard}
         {vorStart ? null : erstinfoHint}
         <FirstDay customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} whatsapp={whatsapp} />
@@ -165,6 +167,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
         <div className={breit ? "mx-auto max-w-3xl" : "xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start xl:gap-6"}>
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
+            <DatennutzungHeute ctx={ctx} />
             {erstinfoHint}
             {teamKarte}
             <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />
@@ -208,6 +211,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
+      <DatennutzungHeute ctx={ctx} />
       {erstinfoHint}
       {teamKarte}
       <TodayInbox data={data} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />

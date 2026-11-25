@@ -11,7 +11,7 @@ import {
   DIALOG_TEXT,
   MELDUNG,
   WIDERSPRUCH_PUNKTE,
-  bannerAufSeiteAus,
+  bannerAufSeite,
   bannerFaellig,
   eintragText,
   istInhaberLogin,
@@ -26,16 +26,13 @@ import { packageLabel } from "@/lib/customer-package";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
 
 describe("Wortlaute (von Ole freigegeben, wörtlich)", () => {
-  it("Banner: Überschrift, Text mit dem Satz „So werden die Anzeigen für alle besser.“ und zwei Knöpfe", () => {
-    expect(BANNER_TEXT.titel).toBe("Neu: KI-Hilfe und gemeinsames Anzeigenlernen");
+  it("Banner: ein Absatz (gekürzt 25.11.2026) und zwei Knöpfe", () => {
     expect(BANNER_TEXT.text).toBe(
-      "Für Gesprächszusammenfassungen und das Auslesen von Unterlagen nutzen wir zusätzlich Amazon Web Services EMEA SARL, Rechenzentrum Frankfurt. Ihre Anzeigen nutzen außerdem Muster und Ergebnisse aller Kunden und umgekehrt, ohne Namen, Personenfotos, Logos oder Zahlen einzelner Kunden. So werden die Anzeigen für alle besser. Widersprechen können Sie innerhalb von 14 Tagen über „Mehr erfahren“.",
+      "Neu: Wir nutzen zusätzlich Amazon Web Services (Frankfurt) für KI-Funktionen, und Ihre Anzeigen lernen anonym aus den Ergebnissen aller Kunden. So werden die Anzeigen für alle besser. Widerspruch innerhalb von 14 Tagen möglich.",
     );
     expect(BANNER_TEXT.verstanden).toBe("Verstanden");
-    // Der Text verweist auf den Knopf: beide müssen gleich heißen
     expect(BANNER_TEXT.mehr).toBe("Mehr erfahren");
-    expect(BANNER_TEXT.text).toContain(`„${BANNER_TEXT.mehr}“`);
-    expect(BANNER_WORTLAUT).toBe(`${BANNER_TEXT.titel}\n${BANNER_TEXT.text}`);
+    expect(BANNER_WORTLAUT).toBe(BANNER_TEXT.text);
   });
 
   it("Detailseite: Titel und die sechs Punkte in dieser Reihenfolge, mit dem PDF-Link am letzten", () => {
@@ -75,7 +72,6 @@ describe("Wortlaute (von Ole freigegeben, wörtlich)", () => {
 
   it("alle Texte: Sie-Form, keine Gedankenstriche, keine „Garantie“, keine internen Namen", () => {
     const alle = [
-      BANNER_TEXT.titel,
       BANNER_TEXT.text,
       DETAIL_TEXT.titel,
       ...DETAIL_TEXT.punkte.flatMap((p) => [p.label, p.text, p.pdf ?? ""]),
@@ -143,10 +139,9 @@ describe("Wer sieht das Banner", () => {
     expect(istVerstanden({ datennutzungVerstandenAt: null, datennutzungVerstandenVersion: DATENNUTZUNG_VERSION })).toBe(false);
   });
 
-  it("nicht auf der Detailseite und nicht in der Beratungspräsentation, sonst auf jeder Seite", () => {
-    expect(bannerAufSeiteAus(DATENNUTZUNG_PFAD)).toBe(true);
-    expect(bannerAufSeiteAus("/buyer/termine/cm123/praesentation")).toBe(true);
-    for (const p of ["/buyer", "/buyer/leads", "/buyer/chats", "/buyer/einstellungen", "/buyer/termine/cm123/vorbereitung", "/buyer/neuigkeiten", "/buyer/konto"]) expect(bannerAufSeiteAus(p), p).toBe(false);
+  it("nur auf „Heute“: nicht auf Kontakt, Chat, Unterseiten, Detailseite oder Beratungspräsentation", () => {
+    expect(bannerAufSeite("/buyer")).toBe(true);
+    for (const p of [DATENNUTZUNG_PFAD, "/buyer/termine/cm123/praesentation", "/buyer/leads", "/buyer/leads/cm1", "/buyer/chats", "/buyer/kontakte", "/buyer/einstellungen", "/buyer/termine/cm123/vorbereitung", "/buyer/neuigkeiten", "/buyer/konto", "/buyer/"]) expect(bannerAufSeite(p), p).toBe(false);
   });
 });
 

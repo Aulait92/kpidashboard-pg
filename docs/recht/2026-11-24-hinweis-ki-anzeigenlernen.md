@@ -15,7 +15,7 @@ Inhaber von Software-Kunden (Betreuung + Software, Pay-per-Lead + Software). Nic
 Prüferzugang der App-Stores). Regeln: `src/lib/datennutzung.ts`.
 
 ## Wortlaute
-Von Ole freigegeben, wörtlich in `src/lib/datennutzung.ts` (Banner, sechs Punkte der Detailseite, Dialog), Textversion
+Von Ole freigegeben, wörtlich in `src/lib/datennutzung.ts` (Banner, am 25.11.2026 auf Oles Wunsch gekürzt und nur noch auf „Heute“, sechs Punkte der Detailseite, Dialog), Textversion
 `DATENNUTZUNG_VERSION = 2026-11-24`. Der Test `tests/unit/datennutzung.test.ts` hält die Wortlaute fest. Eine neue
 Textversion zeigt das Banner erneut.
 

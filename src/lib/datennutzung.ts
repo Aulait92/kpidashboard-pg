@@ -27,15 +27,17 @@ export const DATENNUTZUNG_PFAD = "/buyer/einstellungen/datennutzung";
 /** Eintrag in den Einstellungen (so nennt ihn auch die Neuigkeit). */
 export const DATENNUTZUNG_EINTRAG = "KI-Hilfe und Anzeigenlernen";
 
+// Banner-Wortlaut gekürzt (Ole, 25.11.2026, Usability-Check U2): ein Absatz statt Überschrift und fünf Zeilen, alle
+// Pflichtangaben stehen weiter auf der Detailseite. Die Textversion bleibt, weil sich am Inhalt (zwei Punkte, 14 Tage
+// Widerspruch) nichts ändert; der Nachweis speichert den angezeigten Wortlaut je Eintrag.
 export const BANNER_TEXT = {
-  titel: "Neu: KI-Hilfe und gemeinsames Anzeigenlernen",
-  text: "Für Gesprächszusammenfassungen und das Auslesen von Unterlagen nutzen wir zusätzlich Amazon Web Services EMEA SARL, Rechenzentrum Frankfurt. Ihre Anzeigen nutzen außerdem Muster und Ergebnisse aller Kunden und umgekehrt, ohne Namen, Personenfotos, Logos oder Zahlen einzelner Kunden. So werden die Anzeigen für alle besser. Widersprechen können Sie innerhalb von 14 Tagen über „Mehr erfahren“.",
+  text: "Neu: Wir nutzen zusätzlich Amazon Web Services (Frankfurt) für KI-Funktionen, und Ihre Anzeigen lernen anonym aus den Ergebnissen aller Kunden. So werden die Anzeigen für alle besser. Widerspruch innerhalb von 14 Tagen möglich.",
   verstanden: "Verstanden",
   mehr: "Mehr erfahren",
 } as const;
 
-/** Wortlaut des Banners für den Nachweis (Überschrift und Text, wie angezeigt). */
-export const BANNER_WORTLAUT = `${BANNER_TEXT.titel}\n${BANNER_TEXT.text}`;
+/** Wortlaut des Banners für den Nachweis (wie angezeigt). */
+export const BANNER_WORTLAUT = BANNER_TEXT.text;
 
 export type DetailPunkt = { label: string; text: string; pdf?: string };
 
@@ -137,11 +139,12 @@ export function bannerFaellig(
 }
 
 /**
- * Seiten, auf denen das Banner nicht erscheint: die Detailseite selbst (dort steht der ganze Text mit „Verstanden“)
- * und die Beratungspräsentation (der Vermittler teilt dabei seinen Bildschirm mit dem Kunden).
+ * Das Banner steht nur auf „Heute“ (Usability-Check 25.11.2026, U2): dort beginnt der Arbeitstag, auf Kontakt, Chat und
+ * Unterseiten nähme es am Handy den ersten Bildschirm weg. Nie auf der Detailseite (dort steht der ganze Text mit
+ * „Verstanden“) und nie in der Beratungspräsentation.
  */
-export function bannerAufSeiteAus(pfad: string): boolean {
-  return pfad === DATENNUTZUNG_PFAD || /^\/buyer\/termine\/[^/]+\/praesentation(\/|$)/.test(pfad);
+export function bannerAufSeite(pfad: string): boolean {
+  return pfad === "/buyer";
 }
 
 // ─── Hinweis an den abgeschalteten Stellen (Widerspruch Amazon Web Services) ─────────────────
