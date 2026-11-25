@@ -5691,6 +5691,9 @@ model Ausgangsrechnung {
   typ         String
   notiz       String?
   quelle      String   @default("papierkram")
+  // Geschäftsbereich für die BWA (Ole, 25.11.2026): funnel | ppl | software | sonstiges; leer = Vorschlag aus
+  // lib/ausgangsrechnungen.ts (bereichVorschlag)
+  bereich     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
