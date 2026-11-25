@@ -112,6 +112,13 @@ async function empfaenger(key: string, attendees: string[]): Promise<string[]> {
   return [...new Set(users.map((u) => u.email?.trim().toLowerCase()).filter((e): e is string => !!e))].slice(0, 1);
 }
 
+/** Adresse, an die Einladungen des Agentur-Kalenders gehen (Berater-Adresse, sonst erster Login), für die Anzeige. */
+export async function einladungsAdresse(customerId: string): Promise<string | null> {
+  const agent = await prisma.agentConfig.findUnique({ where: { customerId }, select: { advisorEmail: true } });
+  const advisor = agent?.advisorEmail?.trim().toLowerCase();
+  return (await empfaenger(customerId, advisor ? [advisor] : []))[0] ?? null;
+}
+
 async function sendeEinladung(customerId: string, e: Omit<EinladungIcs, "organizer" | "attendees">, attendees: string[]): Promise<void> {
   const to = await empfaenger(customerId, attendees);
   if (!to.length) {
@@ -302,13 +309,17 @@ export async function appKalenderEinschalten(customerId: string): Promise<boolea
   return true;
 }
 
-/** Ohne Quelle für belegte Zeiten (Allianz/ICS getrennt) den App-Kalender wieder ausschalten. */
+/**
+ * Ohne Quelle für belegte Zeiten (Allianz/ICS getrennt) den App-Kalender wieder ausschalten. Die Wahl „Ich habe keinen
+ * Online-Kalender“ (ohneOnlineKalenderAt, 25.11.2026) zählt als Quelle: feste Beratungszeiten, Termine der App und
+ * weitergeleitete eigene Termine.
+ */
 export async function appKalenderPruefen(customerId: string): Promise<void> {
   const [conn, agent] = await Promise.all([
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { provider: true, status: true } }),
-    prisma.agentConfig.findUnique({ where: { customerId }, select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } }),
+    prisma.agentConfig.findUnique({ where: { customerId }, select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, ohneOnlineKalenderAt: true } }),
   ]);
   if (conn?.provider !== APP_PROVIDER || conn.status !== "connected") return;
-  if (agent?.availabilityIcsUrlEnc || agent?.allianzCalendarEnc) return;
+  if (agent?.availabilityIcsUrlEnc || agent?.allianzCalendarEnc || agent?.ohneOnlineKalenderAt) return;
   await prisma.calendarConnection.update({ where: { customerId }, data: { status: "pending" } });
 }

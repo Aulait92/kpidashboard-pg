@@ -54,10 +54,12 @@ import { WaInvited } from "./wa-invited";
 import { AllianzForm, AllianzVerbunden, LeadTimesForm, SourcePicker, VideoRaumForm } from "@/components/calendar-sources";
 import { loadTerminFormate } from "@/lib/termin-formate-server";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
+import { terminAdresseFuer } from "@/lib/calendar/termin-weiterleitung-server";
 import {
   connectAllianzAction,
   disconnectAllianzAction,
   disconnectNativeCalendarAction,
+  ohneOnlineKalenderAction,
   removeIcsAction,
   saveIcsAction,
   saveVideoRaumAction,
@@ -150,6 +152,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
   const calendar = await loadCalendarSetup(ctx.customerId, ctx.customerId);
+  // „Ich habe keinen Online-Kalender“ (25.11.2026): persönliche Termin-Adresse gleich im Kalenderschritt zeigen
+  const terminAdresse =
+    calendar.status.ohneOnlineKalender ? await terminAdresseFuer(ctx.customerId, ctx.customerId).catch(() => null) : null;
   const kundeBasis = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true, leadAddress: true, vollmachtVersand: true } });
   const vermittlerTyp = kundeBasis?.vermittlerTyp ?? "vertreter";
   const makler = vermittlerTyp === "makler";
@@ -193,6 +198,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   // Gesellschaften bekannt und keiner ist die Allianz (z. B. ERGO-Vertreter), fällt die Option weg; unbekannt: anbieten.
   const genannteGesellschaften = [...(erstinfo?.daten.versicherer ?? []), ...(vertrieb?.vertrieb.gesellschaften ?? [])];
   const allianzMoeglich = !makler && (!!calendar.status.allianz || !genannteGesellschaften.length || genannteGesellschaften.some((g) => /allianz/i.test(g)));
+  // Allianz-Vertreter ohne Online-Kalender: wie alle anderen über den SourcePicker statt der Vertreternummer
+  const allianzWeg = allianz && !calendar.status.ohneOnlineKalender;
   // Videoraum (Go-live-Prüfung 22.11.2026): fester Link Pflicht, solange weder Google noch Microsoft verbunden ist, auch bei
   // Kalender-Link (ICS) und nach „Mein Versicherer erlaubt das nicht“ (gleiche Regel wie kalenderSchrittFertig).
   const videoNoetig = !calendar.status.native.meetOderTeams;
@@ -342,7 +349,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               </p>
             ) : null}
             {gcal === "consent" && microsoftAdminConsentUrl() ? <MicrosoftAdminConsent url={microsoftAdminConsentUrl()!} /> : null}
-            {allianz ? (
+            {allianzWeg ? (
               // Allianz-Vertreter (Ole, 20.11.2026): Microsoft 365, Kalenderfreigabe und Vertreter-Seite sind gesperrt, nur die
               // Vertreternummer klappt. Also eine Sache zuerst, Buchungen laufen über den App-Kalender mit Einladung per Mail.
               <div data-kalender-allianz>
@@ -368,6 +375,10 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 disconnectAllianzAction={disconnectAllianzAction}
                 disconnectNativeAction={disconnectNativeCalendarAction}
                 allianzOption={allianzMoeglich}
+                ohneKalenderAction={ohneOnlineKalenderAction}
+                beratungszeiten={calendar.beratungszeiten}
+                einladungAn={calendar.einladungAn}
+                terminAdresse={terminAdresse}
               />
             )}
             {calendar.status.native.app ? (
@@ -395,7 +406,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={videoNoetig} />
               )}
             </div>
-            <div className="mt-6 border-t border-[color:var(--border)] pt-5">
+            <div id="beratungszeiten" className="mt-6 scroll-mt-20 border-t border-[color:var(--border)] pt-5">
               <p className="text-[15px] font-medium">Wann dürfen Leads Termine buchen?</p>
               <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">
                 Unser Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind. Einzelne Zeiten sperren Sie unter{" "}
@@ -404,9 +415,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 </Link>
                 .
               </p>
-              <LeadTimesForm initial={calendar.leadTimes} action={saveLeadTimesAction} readOnly={readOnly} source={calendar.source} zweitrangig={allianz && !calendar.status.allianz} />
+              <LeadTimesForm initial={calendar.leadTimes} action={saveLeadTimesAction} readOnly={readOnly} source={calendar.source} zweitrangig={allianzWeg && !calendar.status.allianz} />
             </div>
-            {allianz ? (
+            {allianzWeg ? (
               // Selten gebraucht: Google, Outlook oder Kalender-Link nur eingeklappt
               <details className="group/anders mt-6 rounded-[var(--radius-md)] border border-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden" data-anderer-kalender>
                 <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-4 py-2.5">
@@ -427,6 +438,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                     disconnectAllianzAction={disconnectAllianzAction}
                     disconnectNativeAction={disconnectNativeCalendarAction}
                     ohneAllianz
+                    ohneKalenderAction={ohneOnlineKalenderAction}
+                    beratungszeiten={calendar.beratungszeiten}
+                    einladungAn={calendar.einladungAn}
                   />
                 </div>
               </details>

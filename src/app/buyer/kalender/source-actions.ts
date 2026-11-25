@@ -13,6 +13,7 @@ import {
   connectAllianz,
   deleteBlock,
   disconnectAllianz,
+  ohneOnlineKalenderEinschalten,
   removeIcsLink,
   saveIcsLink,
   updateLeadTimes,
@@ -90,6 +91,18 @@ export async function saveIcsAction(_prev: SourceResult, fd: FormData): Promise<
   if (res.ok) {
     await audit("calendar.ics_save", { customerId: c.ctx.customerId, entity: "AgentConfig" });
     await nudgeBookingCalendar(c.ctx.customerId, "Kalender-Link hinterlegt");
+    refresh();
+  }
+  return res;
+}
+
+/** „Ich habe keinen Online-Kalender“ (25.11.2026): App-Kalender mit festen Beratungszeiten, Einladung per Mail. */
+export async function ohneOnlineKalenderAction(): Promise<SourceResult> {
+  const c = await ctxOrError(true);
+  if ("error" in c) return { error: c.error };
+  const res = await ohneOnlineKalenderEinschalten(c.ctx.customerId);
+  if (res.ok) {
+    await audit("calendar.ohne_online_kalender", { customerId: c.ctx.customerId, entity: "CalendarConnection" });
     refresh();
   }
   return res;

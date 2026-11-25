@@ -129,6 +129,22 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${c.name}: Video-Link gesetzt${n ? `, ${n} gebuchte Videotermine nachgetragen` : ""}.` };
     },
   },
+  app_kalender_einschalten: {
+    beschreibung:
+      "Kunden ohne Online-Kalender umstellen („Ich habe keinen Online-Kalender“): App-Kalender an, Termine als Einladung per Mail, freie Zeiten aus den Beratungszeiten, eigene Termine per Weiterleitung; bleibt an, auch ohne Allianz oder Kalender-Link",
+    felder: { customerId: "Kunden-ID" },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const { ohneOnlineKalenderEinschalten } = await import("@/lib/calendar/sources");
+      const r = await ohneOnlineKalenderEinschalten(c.id);
+      if (!r.ok) return { ok: false, error: `${c.name}: ${r.error ?? "nicht möglich"}` };
+      await audit("calendar.ohne_online_kalender", { entity: "CalendarConnection", customerId: c.id, actor: OPS_ACTOR });
+      const { terminAdresseFuer } = await import("@/lib/calendar/termin-weiterleitung-server");
+      const adresse = await terminAdresseFuer(c.id, c.id);
+      return { ok: true, info: `${c.name}: App-Kalender an (ohne Online-Kalender). Termin-Adresse: ${adresse}. Test-Einladung bestätigt der Kunde in der Einrichtung.` };
+    },
+  },
   werbekosten_abgleichen: {
     beschreibung: "Werbekosten eines Kunden mit eigenem Werbekonto sofort abgleichen (je Anzeige ab Startdatum und je Tag), statt auf den Lauf um 5 Uhr zu warten",
     felder: { customerId: "Kunden-ID" },

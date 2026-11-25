@@ -3,7 +3,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { userIdOfKey } from "@/lib/calendar/tokens";
-import { loadLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
+import { loadLeadTimes, scheduleFromTimes, type LeadTimes } from "@/lib/calendar/lead-times";
+import { beratungszeitenText } from "@/lib/calendar/zeiten-gleich";
+import { einladungsAdresse } from "@/lib/calendar/app-kalender";
 import { loadSources, upcomingBlocks, type AllianzSummary } from "@/lib/calendar/sources";
 import { meetOderTeams } from "@/lib/video-raum";
 
@@ -14,6 +16,8 @@ export type CalendarSetupView = {
     /** meetOderTeams: Google bzw. Microsoft verbunden, dann entsteht der Videoraum je Termin automatisch (lib/video-raum.ts). */
     native: { connected: boolean; label: string | null; account?: string | null; app?: boolean; meetOderTeams?: boolean };
     hasIcs: boolean;
+    /** „Ich habe keinen Online-Kalender“ gewählt (App-Kalender mit festen Beratungszeiten, 25.11.2026) */
+    ohneOnlineKalender?: boolean;
     allianz: {
       orgName: string;
       templateName: string;
@@ -25,8 +29,12 @@ export type CalendarSetupView = {
   };
   allianz: AllianzSummary | null;
   /** Quelle der belegten Zeiten des Agentur-Kalenders (für den Hinweis bei den Lead-Zeiten). */
-  source: "none" | "ics" | "allianz";
+  source: "none" | "ics" | "allianz" | "ohne";
   leadTimes: LeadTimes;
+  /** Lead-Zeiten als Text („Mo bis Fr, 10 bis 17 Uhr“) für „Ich habe keinen Online-Kalender“ */
+  beratungszeiten: string | null;
+  /** Adresse für Einladungen des App-Kalenders (nur Agentur-Kalender) */
+  einladungAn: string | null;
   /** Fester Video-Link (z. B. Webex) des Agentur-Kalenders */
   videoRoomUrl: string | null;
   blocks: Awaited<ReturnType<typeof upcomingBlocks>>;
@@ -35,7 +43,7 @@ export type CalendarSetupView = {
 /** customerId = Kunde, calendarKey = Agentur-Kalender (customerId) oder user:<id>. */
 export async function loadCalendarSetup(customerId: string, calendarKey: string): Promise<CalendarSetupView> {
   const userId = userIdOfKey(calendarKey);
-  const [sources, native, leadTimes, blocks, agent] = await Promise.all([
+  const [sources, native, leadTimes, blocks, agent, einladungAn] = await Promise.all([
     loadSources(customerId),
     userId
       ? prisma.advisorCalendar.findUnique({ where: { userId }, select: { status: true, provider: true, accountEmail: true } })
@@ -43,6 +51,7 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
     loadLeadTimes(calendarKey),
     upcomingBlocks(calendarKey),
     prisma.agentConfig.findUnique({ where: { customerId }, select: { videoRoomUrl: true } }),
+    userId ? Promise.resolve(null) : einladungsAdresse(customerId).catch(() => null),
   ]);
   const a = sources.allianz;
   // Google/Outlook des Agentur-Kalenders liefert belegte Zeiten auch vor dem frühesten Allianz-Buchungstag (lib/calendar/index.ts)
@@ -58,6 +67,7 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
         meetOderTeams: meetOderTeams(native),
       },
       hasIcs: sources.hasIcs,
+      ohneOnlineKalender: !userId && sources.ohneOnlineKalender && native?.status === "connected" && native.provider === "app",
       allianz: a
         ? {
             orgName: a.orgName,
@@ -71,8 +81,20 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
     allianz: a,
     // ICS und Allianz-Online gelten nur für den Agentur-Kalender.
     // Berater mit App-Kalender: freie Zeiten aus dem Allianz-Online-Kalender (lib/calendar/berater-allianz.ts)
-    source: userId ? (a && native?.provider === "app" ? "allianz" : "none") : a ? "allianz" : sources.hasIcs ? "ics" : "none",
+    source: userId
+      ? a && native?.provider === "app"
+        ? "allianz"
+        : "none"
+      : a
+        ? "allianz"
+        : sources.hasIcs
+          ? "ics"
+          : sources.ohneOnlineKalender && native?.status === "connected" && native.provider === "app"
+            ? "ohne"
+            : "none",
     leadTimes,
+    beratungszeiten: beratungszeitenText(scheduleFromTimes(leadTimes).days),
+    einladungAn,
     videoRoomUrl: agent?.videoRoomUrl ?? null,
     blocks,
   };
