@@ -54,6 +54,8 @@ export const RESERVED_SEGMENTS: ReadonlySet<string> = new Set([
   // App (nur auf der App-Adresse)
   "admin", "angebot", "buyer", "email-bestaetigen", "empfehlen", "feedback", "forgot-password", "login", "logout", "login-karten",
   "microsoft-freigabe", "rechner", "rechtliches", "reset-password", "sicherheit", "status", "videos", "fonts", "sw", "manifest",
+  // Rückmeldung des Pay-per-Lead-Käufers aus der Liefer-E-Mail (nur auf der App-Adresse, lib/ppl/rueckmeldung.ts)
+  "rueckmeldung",
   // Vertriebspräsentation für Interessenten (eigenes Material, nur auf der App-Adresse)
   "praesentation",
   // Vertriebs-Buchungsseite (eigene Marke, nur auf der App-Adresse, eingebettet auf performancegrowth.de)

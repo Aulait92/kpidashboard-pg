@@ -43,6 +43,7 @@ import {
   type InboxResult,
 } from "@/app/buyer/inbox-actions";
 import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import { Button, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { ActionSheet, TapRow, type SheetAction } from "@/components/ui/sheet";
 import type { InboxData } from "@/lib/inbox";
@@ -101,6 +102,8 @@ type CallItem = {
   known?: string | null;
   /** Wiedervorlage: „Erledigt, kein weiterer Anruf nötig“ erlaubt (lib/inbox.ts InboxFollowUp.erledigtOk) */
   erledigtOk?: boolean;
+  /** Wiedervorlage: fällig seit (ISO), für „Überfällig seit gestern“ */
+  dueAt?: string;
   /** Neuer Lead (urgent): Zeile in „Neue Leads“ mit Produkt und Wartezeit */
   neu?: { grund: string; seit: string };
   /** Empfohlene Person: Gesprächseinstieg unter der Zeile (Modul Empfehlungen & Bewertungen) */
@@ -249,6 +252,7 @@ export function TodayInbox({
       conversationId: f.conversationId,
       known: f.known ?? null,
       erledigtOk: f.erledigtOk,
+      dueAt: f.dueAt,
     })),
     ...data.callbacks.filter((c) => !c.urgent).map(toCallback),
   ].filter((c) => !hidden.has(c.key));
@@ -256,7 +260,13 @@ export function TodayInbox({
   // ist die wichtigste Zahl des Tages (UX-Runde 19.11.2026). Die Anrufliste beginnt weiter mit ihnen.
   // Gleiche Regel wie der Zähler „N neu“ an Kontakte (lib/neue-leads.ts)
   const neueLeads = calls.filter(istWartenderNeuerLead);
-  const restCalls = calls.filter((c) => !istWartenderNeuerLead(c));
+  // „Heute fällig“ (Ole, 25.11.2026, Usability-Check: 42 % der Wiedervorlagen über 24 h überfällig): fällige und
+  // überfällige Wiedervorlagen als eigene Karte, überfällige zuerst, je Zeile „Erledigt“ und „Morgen“. Die übrigen Rückrufe
+  // bleiben unter „Anrufen“, die Anrufliste nimmt weiter alle mit.
+  const faellig = calls
+    .filter((c) => c.kind === "followup" && !istWartenderNeuerLead(c))
+    .sort((a, b) => Number(b.overdue) - Number(a.overdue) || (a.dueAt ?? "").localeCompare(b.dueAt ?? ""));
+  const restCalls = calls.filter((c) => c.kind !== "followup" && !istWartenderNeuerLead(c));
   const visibleCalls = showAll ? restCalls : restCalls.slice(0, 6);
   const current = callMode ? callMode.queue[callMode.i] : null;
   const advance = () =>
@@ -426,6 +436,20 @@ export function TodayInbox({
     </TapRow>
   );
 
+  // „Erledigt“: nur wenn danach ein Schritt bleibt (Termin, Abschluss), sonst „Wie geht es weiter?“ (Ole, 16.11.2026)
+  const erledigt = (c: CallItem) =>
+    c.erledigtOk
+      ? run(c.key, `${c.name}: erledigt`, () => clearFollowUpResult(c.leadId))
+      : setSheet({ kind: "step", key: c.key, leadId: c.leadId, name: c.name, source: c.source, appointmentId: null });
+  const anruflisteKnopf =
+    newUi && calls.some((c) => c.phone) ? (
+      // Eine Hauptaktion je Seite (Usability-Check 25.11.2026): immer sekundär, Hauptaktion ist „Anrufen“ bzw. der Kontakt rechts
+      <Button variant="secondary" icon={PlayCircle} onClick={() => setCallMode({ queue: calls.filter((c) => c.phone), i: 0 })}>
+        Anrufliste starten
+      </Button>
+    ) : undefined;
+  const visibleFaellig = showAll ? faellig : faellig.slice(0, 6);
+
   return (
     <div className="space-y-6">
       {nothing ? (
@@ -439,6 +463,49 @@ export function TodayInbox({
           <div id="neue-leads" className="scroll-mt-20" data-neue-leads />
           <CardHeader icon={Phone} title="Neue Leads: jetzt anrufen" count={neueLeads.length} />
           <ul className="divide-y divide-[color:var(--border)]">{neueLeads.map((c) => callRow(c, true))}</ul>
+        </Card>
+      ) : null}
+      {faellig.length > 0 ? (
+        <Card>
+          <div id="faellig" className="scroll-mt-20" data-heute-faellig />
+          <CardHeader icon={BellRing} title="Heute fällig" count={faellig.length} actions={anruflisteKnopf} />
+          <ul className="@container divide-y divide-[color:var(--border)]">
+            {visibleFaellig.map((c) => (
+              // Schmal (Handy, Spalte neben dem Kontakt): Knöpfe in eigener Zeile, sonst wird der Grund abgeschnitten
+              <TapRow key={c.key} className={cn("flex-wrap gap-y-2 @lg:flex-nowrap", sel(c.leadId))} onTap={() => openDetailOnDesktop(c.leadId) || callSheet(c)}>
+                <div className="min-w-0 flex-1 basis-full @lg:basis-auto">
+                  <div className="truncate font-medium">{c.name}</div>
+                  <p className="truncate text-xs text-[color:var(--muted)]">
+                    {c.overdue ? (
+                      <span className="font-medium text-rose-600" data-ueberfaellig>
+                        Überfällig {c.dueAt ? since(c.dueAt) : ""} ·{" "}
+                      </span>
+                    ) : null}
+                    {c.reason}
+                  </p>
+                  {weiteresProdukt && istCrossSellAufgabe(c.reason) ? <CrossSellZusatzKnopf verkauf={weiteresProdukt} /> : null}
+                </div>
+                <span className="flex shrink-0 items-center gap-1.5" onClick={stop} data-faellig-knoepfe>
+                  <Button icon={Check} onClick={() => erledigt(c)} data-erledigt>
+                    Erledigt
+                  </Button>
+                  <Button variant="ghost" icon={Clock} onClick={() => run(c.key, `${c.name}: morgen wieder`, () => setFollowUpResult(c.leadId, { days: 1 }))} data-morgen>
+                    Morgen
+                  </Button>
+                </span>
+                {more}
+              </TapRow>
+            ))}
+          </ul>
+          {faellig.length > 6 ? (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="w-full border-t border-[color:var(--border)] py-2.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]"
+            >
+              {showAll ? "Weniger anzeigen" : `Alle ${faellig.length} anzeigen`}
+            </button>
+          ) : null}
         </Card>
       ) : null}
       {chats.length > 0 ? (
@@ -736,14 +803,7 @@ export function TodayInbox({
             icon={Phone}
             title="Anrufen"
             count={restCalls.length}
-            actions={
-              newUi && calls.some((c) => c.phone) ? (
-                // Eine Hauptaktion je Seite (Usability-Check 25.11.2026): immer sekundär, Hauptaktion ist „Anrufen“ bzw. der Kontakt rechts
-                <Button variant="secondary" icon={PlayCircle} onClick={() => setCallMode({ queue: calls.filter((c) => c.phone), i: 0 })}>
-                  Anrufliste starten
-                </Button>
-              ) : undefined
-            }
+            actions={faellig.length > 0 ? undefined : anruflisteKnopf}
           />
           <ul className="divide-y divide-[color:var(--border)]">{visibleCalls.map((c) => callRow(c))}</ul>
           {restCalls.length > 6 ? (

@@ -84,6 +84,8 @@ export const LIMITS = {
   // Buchung nur mit Handynummer nach dem Leadformular (lib/buchung-formular.ts): Abgleich mit frischen Leads je IP
   formularAbgleich: { limit: 6, windowMs: 10 * MIN },
   offerAccept: { limit: 10, windowMs: 10 * MIN },
+  // Rückmeldung des Käufers per Link aus der Liefer-E-Mail (lib/ppl/rueckmeldung.ts): Aufrufe und Speichern je IP
+  kaeuferRueckmeldung: { limit: 60, windowMs: 10 * MIN },
   publicApi: { limit: 60, windowMs: MIN },
   // Eigene Funnels (lib/funnel): Messung je Schritt (ein Besuch erzeugt rund 25 Ereignisse) und Absenden
   funnelEreignis: { limit: 120, windowMs: MIN },

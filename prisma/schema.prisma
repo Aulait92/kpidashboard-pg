@@ -888,6 +888,11 @@ model Lead {
   orderId              String?
   order                LeadOrder?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
   deliveredAt          DateTime?
+  // Rückmeldung des Käufers mit einem Tipp (Ole, 25.11.2026, lib/ppl/rueckmeldung.ts): erreicht | nicht_erreicht | termin,
+  // wann und woher (mail = Knopf in der Liefer-E-Mail ohne Login, app = Leadliste im Kundenbereich)
+  kaeuferRueckmeldung       String?
+  kaeuferRueckmeldungAt     DateTime?
+  kaeuferRueckmeldungQuelle String?
   // Storno beim Pay-per-Lead: requested → approved | rejected | review (Prüfung durch Admin)
   stornoState          String?
   /// Lead-ID bei Heinrich von Kleist (HvK-Abrechnung, lib/ppl/hvk-abrechnung.ts): nur sicher zugeordnete, nie überschrieben
@@ -1465,6 +1470,11 @@ model Conversation {
   needsAttention       Boolean   @default(false)
   attentionReason      String?
   attentionAt          DateTime?
+  // Beginn der aktuellen Wartephase (Ole, 25.11.2026, lib/antwort-eskalation.ts): gesetzt, wenn needsAttention neu
+  // gesetzt wird (attentionAt wandert mit jeder weiteren Nachricht mit). Push an den Inhaber nach 30 Minuten ohne
+  // menschliche Antwort, höchstens einmal je Wartephase (attentionEscalatedAt >= attentionSince).
+  attentionSince       DateTime?
+  attentionEscalatedAt DateTime?
   windowExpiresAt      DateTime? // Ende des 24h-Service-Fensters
   lastMessageAt        DateTime?
   // „STOPP“ per WhatsApp (lib/whatsapp/stopp.ts): ab hier keine Nachrichten mehr an diese Nummer (Assistent,
