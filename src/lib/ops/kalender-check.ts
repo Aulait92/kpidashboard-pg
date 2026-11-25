@@ -31,6 +31,17 @@ export async function kalenderCheckDiagnose(p: URLSearchParams) {
       allianzFrei = { fehler: e instanceof Error ? e.message : String(e) };
     }
   }
+  // Alle Termin-Arten, je einmal für alle Personen und je Person (findet, wo die Allianz wirklich frei ist)
+  const jeTerminArt: { terminArt: string; person: string; frei: number | string }[] = [];
+  if (cal && p.get("alle") === "1") {
+    for (const t of cal.templates) {
+      for (const r of [null, ...cal.resources]) {
+        const c = { ...cal, templateId: t.id, durationMin: t.durationMin, resourceId: r?.id ?? null };
+        const frei = await fetchFreeSlots(c, now, max).then((x) => x.length).catch((e: unknown) => (e instanceof Error ? e.message : "Fehler"));
+        jeTerminArt.push({ terminArt: t.name, person: r?.name ?? "alle", frei });
+      }
+    }
+  }
   const kalender = [];
   for (const key of keys) {
     const lt = await loadLeadTimes(key).catch(() => null);
@@ -66,6 +77,7 @@ export async function kalenderCheckDiagnose(p: URLSearchParams) {
           freieSlotsAllianz14Tage: allianzFrei,
         }
       : null,
+    jeTerminArt,
     ics: !!agent?.availabilityIcsUrlEnc,
     buchungsKalender: kalender,
     vorschlaegeBuchungsseite: vorschlaege,
