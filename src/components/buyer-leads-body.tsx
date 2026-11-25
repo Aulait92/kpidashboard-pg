@@ -116,6 +116,7 @@ export async function BuyerLeadsBody({
       lostReason: true,
       disqualifyReason: true,
       callAttempts: true,
+      subscriptionId: true,
       revenues: { select: { amount: true }, take: 1 },
     },
   });
@@ -182,6 +183,8 @@ export async function BuyerLeadsBody({
     followUpAt: l.followUpAt ? l.followUpAt.toISOString() : null,
     ...(noWhatsApp.has(l.id) ? { phone: l.phone, noWhatsApp: true } : {}),
     ...(l.isTest ? { isTest: true } : {}),
+    // Pay-per-Lead: Rückmeldung mit einem Tipp (components/ppl-rueckmeldung.tsx), nicht nach Storno, Abschluss, Löschung
+    ...(l.subscriptionId && !l.stornoState && !l.closedAt && !l.erasedAt ? { ppl: true } : {}),
     ...(waiting.has(l.id) ? { waiting: true } : {}),
     ...(flags.get(l.id)?.botActive ? { botActive: true } : {}),
     ...nextStepFields(stateFor(l, flags), pastByLead.get(l.id) ?? null),

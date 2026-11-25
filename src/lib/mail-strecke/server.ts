@@ -16,6 +16,10 @@
 //                 WhatsApp: statt nichts höchstens 2 SMS an die Handynummer, nur zu Geschäftszeiten (sonst wartet die
 //                 SMS bis zum nächsten Fenster), die zweite nach 2 Geschäftstagen; Rückruf zu Geschäftszeiten in der SMS.
 //                 Gleiche Sperren und Stopps wie oben, Festnetz nie. Schalter STRECKE_NUR_SMS=aus.
+//   Erst-SMS      (Ole, 25.11.2026, Auswertung Lohmann: 9 von 18 Erstnachrichten mit 131026, nur 3 bekamen eine SMS)
+//                 Bei „kein WhatsApp“ auf das Erstanschreiben läuft die Nur-SMS-Strecke auch ohne gültige E-Mail-Adresse
+//                 und wenn die Erstmail nicht raus konnte (Sperre der Adresse, Versandfehler). Der Minuten-Cron holt
+//                 Starts nach, die im Status-Webhook ausfielen (48 Stunden, nur Handynummern).
 //   E3/E4 Seite   app/t/[token]: Antworten und Buchung nur per POST (Server-Aktion) nach Klick im Browser; Termin über
 //                 bookAppointment (Kalender sofort geblockt, Zeit beim Klick neu geprüft). Danach Komplettcheck,
 //                 Angebotsfragen, Bereitlegen, Adresse, Einladung genau einmal (lib/calendar/einladung.ts).
@@ -52,6 +56,9 @@ const OFFEN = new Set(["", "neuer lead", "nicht erreicht", "im gespräch"]);
 const istOffen = (status: string | null | undefined) => OFFEN.has((status ?? "").trim().toLowerCase());
 const istEindeutigFehler = (e: unknown) => !!e && typeof e === "object" && (e as { code?: string }).code === "P2002";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Gründe, aus denen die Erstmail nicht raus ging und auch keine Ersatz-SMS gehen darf (Abmeldung, Status, Antwort …). */
+const KEIN_SMS_ERSATZ = new Set(["abgemeldet", "geloescht", "ruhend", "status", "antwort", "stufe", "schon_gesendet", "nicht_gefunden"]);
 
 /** Mail-Strecke an? (Standard an; MAIL_STRECKE=aus schaltet alles ab.) */
 export function streckeAn(env: Record<string, string | undefined> = process.env): boolean {
@@ -108,9 +115,12 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
       },
     });
     if (!lead || lead.erasedAt) return { ergebnis: "nicht_moeglich", grund: "nicht_gefunden" };
-    // Nur SMS (Ole, 22.11.2026): E-Mail-Funktionen aus und Nummer nicht bei WhatsApp (Festnetz kann keine SMS)
-    const nurSms = !!lead.customer.mailFeaturesOff && ausloeser === "kein_whatsapp";
-    if (!nurSms && !EMAIL_RE.test(lead.email?.trim() ?? "")) return { ergebnis: "nicht_moeglich", grund: "keine_adresse" };
+    // Nur SMS (Ole, 22.11.2026): E-Mail-Funktionen aus und Nummer nicht bei WhatsApp (Festnetz kann keine SMS).
+    // Erst-SMS (Ole, 25.11.2026, Auswertung Lohmann): auch ohne gültige E-Mail-Adresse geht bei „kein WhatsApp“ die SMS
+    // statt gar nichts (bisher Abbruch „keine_adresse“, der Lead bekam keine Nachricht).
+    const ohneAdresse = !EMAIL_RE.test(lead.email?.trim() ?? "");
+    const nurSms = ausloeser === "kein_whatsapp" && (!!lead.customer.mailFeaturesOff || ohneAdresse);
+    if (!nurSms && ohneAdresse) return { ergebnis: "nicht_moeglich", grund: "keine_adresse" };
     if (!istOffen(lead.status)) return { ergebnis: "nicht_moeglich", grund: "status" };
     // Rechtsgrundlage wie beim WhatsApp-Erstkontakt (lib/lead-manual.ts startLeadChat): nur eigene Anfrage des Leads
     // (Formular, Meta, Empfehlung); von Hand angelegte Kontakte nicht. Bei „kein WhatsApp“ lief das Erstanschreiben schon.
@@ -121,7 +131,8 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
     // Produkt ohne automatische Nachrichten (Ole, 20.11.2026: PKV-Tarifoptimierung, lib/lead-kontakt-sperre.ts)
     if (ohneAutoNachrichten(lead.source)) return { ergebnis: "nicht_moeglich", grund: "produkt" };
     if (c.dormantSince || c.dataDeletedAt) return { ergebnis: "nicht_moeglich", grund: "ruhend" };
-    if (c.mailFeaturesOff && (!nurSms || !nurSmsAn())) return { ergebnis: "nicht_moeglich", grund: "mail_aus" };
+    if (c.mailFeaturesOff && !nurSms) return { ergebnis: "nicht_moeglich", grund: "mail_aus" };
+    if (nurSms && !nurSmsAn()) return { ergebnis: "nicht_moeglich", grund: c.mailFeaturesOff ? "mail_aus" : "keine_adresse" };
     if (!c.agentConfig?.active || !c.agentConfig.outreachEnabled) return { ergebnis: "nicht_moeglich", grund: "assistent_aus" };
     const termin = await prisma.appointment.count({ where: { leadId, status: "booked", startsAt: { gt: now } } });
     if (termin) return { ergebnis: "nicht_moeglich", grund: "termin" };
@@ -145,7 +156,7 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
       await logLeadHistory(
         leadId,
         "status",
-        `SMS-Strecke gestartet (Nummer nicht bei WhatsApp, E-Mail-Funktionen aus): bis zu 2 SMS mit Terminlink und Ihrer Nummer für den Rückruf, nur zu Geschäftszeiten (${geschaeftszeitText(gz)}).`,
+        `SMS-Strecke gestartet (Nummer nicht bei WhatsApp, ${c.mailFeaturesOff ? "E-Mail-Funktionen aus" : "keine E-Mail-Adresse"}): bis zu 2 SMS mit Terminlink und Ihrer Nummer für den Rückruf, nur zu Geschäftszeiten (${geschaeftszeitText(gz)}).`,
         { customerId: lead.customerId, userId: null },
       ).catch(() => null);
       // Sofort, wenn Geschäftszeit ist; sonst zum nächsten Fenster per Cron
@@ -156,6 +167,14 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
     const r = await sendeStreckenMail(id, "erst", now);
     // Tag 1: SMS sofort mit (nur Handynummer, nur mit Schalter, nicht in der Ruhezeit; sonst morgens per Cron)
     if (r.sent) await sendeStreckenSms(id, "erst", now).catch(() => null);
+    // Erst-SMS (Ole, 25.11.2026): Erstmail bei „kein WhatsApp“ nicht raus (Sperre der Adresse, Fehler beim Versand):
+    // weiter als Nur-SMS-Strecke, damit der Lead trotzdem den Terminlink bekommt (nur Handynummer, Schalter STRECKE_NUR_SMS)
+    else if (ausloeser === "kein_whatsapp" && !KEIN_SMS_ERSATZ.has(r.reason) && nurSmsAn() && lead.phone && (await istMobil(lead.phone)) && !(await nummerAbgemeldet(lead.customerId, lead.phone))) {
+      await prisma.leadMailStrecke.update({ where: { id }, data: { nurSms: true, schritt: "sms" } });
+      await logLeadHistory(leadId, "status", "Die E-Mail an den Lead ging nicht raus: stattdessen bis zu 2 SMS mit Terminlink, nur zu Geschäftszeiten.", { customerId: lead.customerId, userId: null }).catch(() => null);
+      const sms = await sendeStreckenSms(id, "erst", now);
+      return { ergebnis: "gestartet", kanal: "sms", gesendet: sms === "sent", ...(sms === "sent" ? {} : { grund: sms }) };
+    }
     return { ergebnis: "gestartet", kanal: "email", gesendet: r.sent, ...(r.sent ? {} : { grund: r.reason }) };
   } catch (err) {
     console.error("[mail-strecke] Start", err instanceof Error ? err.message.slice(0, 160) : err);
@@ -465,6 +484,24 @@ export async function runMailStrecke(now = new Date()): Promise<CronErgebnis> {
   ]);
   const kandidaten: { id: string; ausloeser: Ausloeser }[] = ohne.map((l) => ({ id: l.id, ausloeser: !l.phone?.trim() ? "keine_nummer" : "keine_einwilligung" }));
   for (const l of mitNummer) if (await istFestnetz(l.phone)) kandidaten.push({ id: l.id, ausloeser: "festnetz" });
+  // 1b. Erst-SMS nachholen (Ole, 25.11.2026, Auswertung Lohmann): Lead seit höchstens 48 Stunden „kein WhatsApp“
+  //     (Meta 131026), Handynummer, aber keine Strecke (Start im Status-Webhook ausgefallen oder verpasst). Gleiche
+  //     Prüfungen wie beim Start (starteMailStrecke: offen, kein Termin, Sperren, Pay-per-Lead, Assistent an).
+  const ohneStart = await prisma.lead.findMany({
+    where: {
+      erasedAt: null,
+      mailStrecke: { is: null },
+      phone: { not: null },
+      waUnavailableAt: { gte: new Date(now.getTime() - 48 * 3600_000), lte: new Date(now.getTime() - 60_000) },
+      OR: [{ status: null }, { status: { in: ["", "Neuer Lead", "Nicht erreicht", "Im Gespräch"] } }],
+      appointments: { none: { status: "booked", startsAt: { gt: now } } },
+      customer: { dormantSince: null, dataDeletedAt: null, agentConfig: { is: { active: true, outreachEnabled: true } }, NOT: NUR_PPL_WHERE },
+    },
+    select: { id: true, phone: true },
+    orderBy: { waUnavailableAt: "asc" },
+    take: 50,
+  });
+  for (const l of ohneStart) if (!(await istFestnetz(l.phone)) && (await istMobil(l.phone))) kandidaten.push({ id: l.id, ausloeser: "kein_whatsapp" });
   out.kandidaten = kandidaten.length;
   for (const c of kandidaten) {
     const r = await starteMailStrecke(c.id, c.ausloeser, { now });

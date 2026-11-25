@@ -13,6 +13,8 @@
 //      der Takt über 10 Tage. Nur wenn die Strecke aus ist: wie bisher einmal je Lead eine kurze E-Mail mit Terminlink
 //      im Namen des Vermittlers (lib/whatsapp/kein-whatsapp-mail.ts). Sind die E-Mail-Funktionen beim Kunden aus
 //      (Ole, 22.11.2026), läuft die Strecke nur mit SMS (höchstens 2, zu Geschäftszeiten, lib/mail-strecke/nur-sms.ts).
+//      Ebenso ohne gültige E-Mail-Adresse bzw. wenn die Erstmail nicht raus konnte (Ole, 25.11.2026, Erst-SMS); verpasste
+//      Starts holt der Minuten-Cron nach (lib/mail-strecke/server.ts runMailStrecke, 48 Stunden).
 //      Rechtsgrundlage: Antwort auf die eigene Anfrage des Leads (er hat seine E-Mail-Adresse im Formular dafür
 //      angegeben), nur zur konkreten Anfrage und ohne Werbung für anderes, also keine Werbe-E-Mail im Sinne von
 //      § 7 Abs. 2 Nr. 2 UWG (keine Einwilligung nötig, wie die Terminbestätigung). Trotzdem nicht, wenn die Adresse

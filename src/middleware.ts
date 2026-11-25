@@ -68,6 +68,7 @@ const PUBLIC_PREFIXES = [
   "/api/funnel", // Messung je Schritt und Absenden der eigenen Funnels (Rate-Limit, Bot-Schutz)
   "/marken", // Logo, Icons und Bilder der Funnel-Marken (public/marken, lib/funnel/marken.ts)
   "/feedback", // Kunden-Feedback per Mail-Link (geheimer Token, ohne Login)
+  "/rueckmeldung", // Rückmeldung des Pay-per-Lead-Käufers aus der Liefer-E-Mail (signierter Link je Lead, 30 Tage)
   "/api/vertrieb", // Vertriebs-Webhooks (Instantly, Calendly, Leads, LinkedIn) – per Token gesichert
   "/api/carddav", // Adressbuch fürs iPhone (CardDAV, nur lesend, HTTP Basic mit CARDDAV_PASSWORD, lib/carddav/dav.ts)
   "/manifest.webmanifest",
@@ -345,7 +346,8 @@ export async function middleware(req: NextRequest) {
     pathname === "/microsoft-freigabe" ||
     pathname === "/status" ||
     pathname.startsWith("/empfehlen/") ||
-    pathname.startsWith("/feedback/")
+    pathname.startsWith("/feedback/") ||
+    pathname.startsWith("/rueckmeldung/")
   ) {
     const headers = new Headers(req.headers);
     headers.set("x-bare-layout", "1");

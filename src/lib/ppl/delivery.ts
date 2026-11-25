@@ -97,6 +97,23 @@ async function sendLatin1(mail: { to: string; subject: string; text: string }): 
   return r.ok ? { ok: true, hinweis } : { ok: false, error: `${VERSAND_NICHT_VERBUNDEN}, Ersatzweg Resend: ${r.error ?? "Fehler"}` };
 }
 
+/**
+ * Rückmeldung mit einem Klick (Ole, 25.11.2026, lib/ppl/rueckmeldung.ts): drei Knöpfe je Lead in der lesbaren Lead-Mail
+ * und in der PDF-Mail. Nicht in Vorlagen und maschinenlesbaren Mails (die liest ein System aus), nicht bei Tests,
+ * nicht ohne App-Adresse bzw. AUTH_SECRET (lokal).
+ */
+export async function rueckmeldungBlock(sub: Pick<Sub, "customerId">, lead: Pick<DeliveryLead, "id" | "test">): Promise<{ html: string; text: string[] } | null> {
+  if (lead.test) return null;
+  try {
+    const { getAppUrl } = await import("@/lib/email");
+    const { rueckmeldungMailBlock } = await import("@/lib/ppl/rueckmeldung");
+    const { rueckmeldungToken } = await import("@/lib/ppl/rueckmeldung-token");
+    return rueckmeldungMailBlock(getAppUrl(), rueckmeldungToken(lead.id, sub.customerId));
+  } catch {
+    return null;
+  }
+}
+
 const failText = (targets: DeliveryTarget[]) =>
   targets
     .filter((t) => !t.ok)
@@ -123,6 +140,12 @@ async function sendPdfMails(sub: Sub, lead: DeliveryLead, answers: Answer[]): Pr
   const pdf = Buffer.from(await leadPdf({ ...lead, answers, consentText: c.text, consentAt: c.at, consentDetail: c.detail }));
   const filename = `${lead.test ? "TEST_" : ""}${leadPdfName(lead)}`;
   const mail = leadPdfMail(lead);
+  // Rückmeldung mit einem Klick nach den Schlusssätzen
+  const rm = await rueckmeldungBlock(sub, lead);
+  if (rm) {
+    mail.html = `${mail.html}${rm.html}`;
+    mail.textBlocks = [...mail.textBlocks, "", ...rm.text];
+  }
   return sendEach(to, (address) =>
     sendCustomerMail({
       to: address,
@@ -206,6 +229,7 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
       const { brauchtLatin1 } = await import("@/lib/mail/latin1");
       send = (address) => (brauchtLatin1(address) ? sendLatin1({ to: address, subject, text: body }) : sendPlainMail({ to: address, subject, text: body }));
     } else {
+      const rm = await rueckmeldungBlock(sub, lead);
       send = (address) =>
         sendCustomerMail({
           to: address,
@@ -220,6 +244,7 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
             ...(einw.nachweis ? [`Einwilligung (${einw.detail ?? ""}, ${einw.nachweis.at}): „${einw.nachweis.text}“`] : []),
             `Lead-ID: ${lead.id}`,
           ],
+          ...(rm ? { html: rm.html, textBlocks: rm.text } : {}),
           replyTo: null,
           signature: "performancegrowth",
         });
