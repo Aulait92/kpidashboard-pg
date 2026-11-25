@@ -335,6 +335,13 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         continue;
       }
 
+      // Atomar beanspruchen (Ole, 25.11.2026, doppelte Erstnachricht): laufen Cron und Eingang (bzw. ein Klick) gleichzeitig,
+      // schreibt nur einer an. Wartet der Versand (Vorlage bzw. PDF fehlt), wird outreachAt unten wieder freigegeben.
+      const claim = await prisma.lead.updateMany({ where: { id: lead.id, outreachAt: null }, data: { outreachAt: new Date() } });
+      if (!claim.count) {
+        result.skipped++;
+        continue;
+      }
       try {
         const notice = await sendOutreach({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name, an, source });
         logTestLead(lead, "outreach sent", { mode: notice.mode, waMessageId: notice.messageId ?? "none", conversation: notice.conversationId, variant: notice.variant, pdfHeader: notice.documentHeader, purpose: notice.purpose, version: notice.version, pdf: notice.pdf });
@@ -354,7 +361,7 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         if (err instanceof WhatsAppUnavailableError) {
           // Festnetznummer (lib/whatsapp/festnetz.ts) bzw. inzwischen „kein WhatsApp“: nichts gesendet, kein neuer Versuch.
           // markLeadNoWhatsApp hat outreachStatus „no_whatsapp“ gesetzt; sonst hier nachtragen.
-          await prisma.lead.updateMany({ where: { id: lead.id, outreachAt: null }, data: { outreachAt: new Date(), outreachStatus: "no_whatsapp" } });
+          await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: new Date(), outreachStatus: "no_whatsapp" } });
           result.skipped++;
           continue;
         }
@@ -362,13 +369,13 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
           // PDF der Erstinformation nicht erzeugbar: nicht senden, erneut versuchen, Vermittler und Admin einmal je Lead
           // Bescheid geben („Erstinformation vervollständigen“)
           const vorher = await prisma.lead.findUnique({ where: { id: lead.id }, select: { outreachStatus: true } }).catch(() => null);
-          await prisma.lead.update({ where: { id: lead.id }, data: { outreachStatus: "no_pdf" } });
+          await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: null, outreachStatus: "no_pdf" } });
           if (vorher?.outreachStatus !== "no_pdf") await meldeErstinfoFehlt(agent.customerId).catch((e) => console.error("[outreach] Hinweis Erstinformation", e));
         } else if (err instanceof NoTemplateError) {
           // Kein outreachAt → wird erneut versucht, sobald die Vorlage da ist.
           await prisma.lead.update({
             where: { id: lead.id },
-            data: { outreachStatus: "no_template" },
+            data: { outreachAt: null, outreachStatus: "no_template" },
           });
         } else {
           await prisma.lead.update({
