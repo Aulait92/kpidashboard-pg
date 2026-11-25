@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
     errorPath: "offline.html",
     cleartext: false,
   },
-  appendUserAgent: "performancegrowthApp/1.0",
+  appendUserAgent: "performancegrowthApp/1.1",
   backgroundColor: "#ffffff",
   ios: {
     contentInset: "never",
