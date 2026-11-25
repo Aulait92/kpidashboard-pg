@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import { reportError } from "@/lib/monitoring";
+import { instantlyFetch } from "@/lib/vertrieb/instantly-drossel";
 import { prisma } from "@/lib/prisma";
 import { contactIdsByEmails, findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { CAMPAIGN_STATUS } from "@/lib/vertrieb/crm";
@@ -10,7 +11,6 @@ import { dsgvoAusAntwort, type AntwortSperrGrund } from "@/lib/vertrieb/nie-kont
 import { KATEGORIE_RECHT, RECHTS_ART_LABEL, rechtsArtAusBefund, type RechtsArt } from "@/lib/vertrieb/datenschutz-recht";
 import { instantlySperreErneuern, nieKontaktierenSetzen } from "@/lib/vertrieb/nie-kontaktieren-server";
 
-const API = "https://api.instantly.ai/api/v2";
 
 const INTEREST: Record<number, string> = {
   0: "Abwesend", 1: "Interessiert", 2: "Termin gebucht", 3: "Termin stattgefunden", 4: "Gewonnen",
@@ -20,16 +20,8 @@ const INTEREST: Record<number, string> = {
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const key = process.env.INSTANTLY_API_KEY;
   if (!key) throw new Error("INSTANTLY_API_KEY ist nicht gesetzt.");
-  let res: Response;
-  for (let attempt = 0; ; attempt++) {
-    res = await fetch(API + path, {
-      ...init,
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", ...init?.headers },
-      cache: "no-store",
-    });
-    if (res.status !== 429 || attempt >= 5) break;
-    await new Promise((r) => setTimeout(r, 4000));
-  }
+  // Drossel und Retry-After (lib/vertrieb/instantly-drossel.ts)
+  const res = await instantlyFetch(path, init);
   if (!res.ok) throw new Error(`Instantly ${path}: ${res.status} ${await res.text().catch(() => "")}`.slice(0, 300));
   return res.json() as Promise<T>;
 }

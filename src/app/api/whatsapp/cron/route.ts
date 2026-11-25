@@ -442,12 +442,13 @@ async function handle(req: Request): Promise<Response> {
         // Eigene Antwort in der Unibox: Aufgabe auf „Nachfassen: Video angesehen?“ in 2 Werktagen umstellen (24.11.2026)
         await (await import("@/lib/vertrieb/instantly-eigene-antwort")).eigeneAntwortenAbgleichen();
       } catch (e) {
-        reportError(e, "cron-instantly");
+        // 429 (gedrosselt) höchstens einmal je Lauf nach Sentry (lib/vertrieb/instantly-drossel.ts)
+        (await import("@/lib/vertrieb/instantly-drossel")).meldeInstantlyFehler(e, "cron-instantly");
       }
       // „Nie kontaktieren“: offene bzw. fehlgeschlagene Sperren in Instantly (Blocklist, Kampagnen) wiederholen
       await import("@/lib/vertrieb/nie-kontaktieren-server")
         .then((m) => m.instantlySperrenNachholen())
-        .catch((e: unknown) => reportError(e, "cron-nie-kontaktieren"));
+        .catch(async (e: unknown) => (await import("@/lib/vertrieb/instantly-drossel")).meldeInstantlyFehler(e, "cron-nie-kontaktieren"));
     });
   }
   // Calendly: stündlich die Termine abgleichen (Sicherheitsnetz, falls ein Webhook nicht ankommt; Ole 16.11.2026:
