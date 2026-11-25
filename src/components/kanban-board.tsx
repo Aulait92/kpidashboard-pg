@@ -26,6 +26,7 @@ import { LostSheet, useStepDone } from "@/components/next-step";
 import { KeinWhatsAppBadge } from "@/components/kein-whatsapp-badge";
 import { TestLeadBadge } from "@/components/test-lead-badge";
 import { eingangKurz } from "@/lib/kontakt-liste";
+import { gebeugt } from "@/lib/ansprache";
 
 export type KanbanLead = {
   id: string;
@@ -746,7 +747,7 @@ function MoveButton({
         <ActionSheet
           open={open}
           onClose={() => setOpen(false)}
-          title={`Phase für ${name ?? "Kontakt"}`}
+          title={`Phase für ${gebeugt(name) ?? "Kontakt"}`}
           actions={columns.map((c) => ({
             label: c.label,
             tone: c.key === currentKey ? "primary" : undefined,

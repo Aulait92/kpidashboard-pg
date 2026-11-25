@@ -14,6 +14,7 @@ import { needFromNoteAction, needLoadAction, needSaveAction } from "@/app/buyer/
 import type { BedarfFeld, NeedState } from "@/lib/telefonat";
 import type { QualificationData } from "@/lib/whatsapp/qualification";
 import { cn } from "@/lib/utils";
+import { gebeugt } from "@/lib/ansprache";
 
 const STAND: { key: NeedState; label: string }[] = [
   { key: "komplett", label: "Ja, komplett" },
@@ -82,7 +83,7 @@ export function BedarfSheet({
 
   const nurTermin = stand === "nein";
   return (
-    <Sheet open onClose={onClose} title={`Was haben Sie mit ${name} besprochen?`}>
+    <Sheet open onClose={onClose} title={`Was haben Sie mit ${gebeugt(name)} besprochen?`}>
       {!felder ? (
         <p className="px-5 py-4 text-sm text-[color:var(--muted)]">{error ?? "Einen Moment …"}</p>
       ) : (

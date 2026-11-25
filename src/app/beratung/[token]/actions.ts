@@ -6,6 +6,7 @@
 import { ereignisSpeichern, FOLIE_ID } from "@/lib/praesentation-messung";
 import { kundenlinkPaketWaehlen, kundenlinkTermin } from "@/lib/termin-vorbereitung-server";
 import { reportError } from "@/lib/monitoring";
+import { gebeugt } from "@/lib/ansprache";
 
 export async function kundenlinkFolieAction(token: string, folie: string): Promise<void> {
   if (typeof token !== "string" || typeof folie !== "string" || !FOLIE_ID.test(folie)) return;
@@ -24,7 +25,7 @@ export async function kundenlinkZusageAction(token: string): Promise<{ ok: boole
     await (await import("@/lib/team"))
       .notifyLeadPush(t.leadId, {
         title: `Zusage: ${name}`,
-        body: `${name} hat im Beratungslink „Ja, so machen wir es“ gewählt. Jetzt den Antrag mit ${name} ausfüllen.`,
+        body: `${name} hat im Beratungslink „Ja, so machen wir es“ gewählt. Jetzt den Antrag mit ${gebeugt(name)} ausfüllen.`,
         tag: `praesentation-zusage:${t.appointmentId}`,
         url: `/buyer/termine/${t.appointmentId}/praesentation`,
       })

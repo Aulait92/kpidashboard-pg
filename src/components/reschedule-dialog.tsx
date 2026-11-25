@@ -17,6 +17,7 @@ import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { gebeugt } from "@/lib/ansprache";
 
 const TZ = "Europe/Berlin";
 const fmt = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("de-DE", { timeZone: TZ, ...opts }).format(new Date(iso));
@@ -222,7 +223,7 @@ function RescheduleContent({
     <div className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-4 py-3" data-current-appointment>
       <ModeIcon className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand)]" />
       <div className="min-w-0">
-        <div className="text-xs text-[color:var(--muted)]">{d.name ? `Aktueller Termin mit ${d.name}` : "Aktueller Termin"}</div>
+        <div className="text-xs text-[color:var(--muted)]">{d.name ? `Aktueller Termin mit ${gebeugt(d.name)}` : "Aktueller Termin"}</div>
         <div className="font-semibold">
           {longDay(d.startsAt)}, {clock(d.startsAt)} Uhr
         </div>

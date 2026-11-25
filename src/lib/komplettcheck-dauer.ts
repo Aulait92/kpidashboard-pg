@@ -12,6 +12,7 @@ import { logLeadHistory } from "@/lib/lead-history";
 import { KOMPLETTCHECK_DAUER_MIN, leadLabel, terminEnde } from "@/lib/showup";
 import { standardPush, terminSelect, zustaendig, type PushFn } from "@/lib/showup-server";
 import type { Busy } from "@/lib/calendar/tokens";
+import { gebeugt } from "@/lib/ansprache";
 
 const MIN = 60 * 1000;
 
@@ -80,7 +81,7 @@ export async function komplettcheckHinweis(appointmentId: string, deps: { push?:
     await prisma.appointment.update({ where: { id: t.id }, data: { verlaengerung: "hinweis", verlaengerungAt: now } });
     const push = deps.push ?? standardPush;
     await push(zustaendig(t), t.customerId, {
-      title: `Komplettcheck mit ${name}`,
+      title: `Komplettcheck mit ${gebeugt(name)}`,
       body: `${name} wünscht einen Komplettcheck. Der Termin ließ sich nicht auf ${KOMPLETTCHECK_DAUER_MIN} Minuten verlängern, bitte planen Sie mehr Zeit ein.`,
       url: `/buyer/termine/${t.id}`,
       tag: `komplettcheck:${t.id}`,

@@ -66,6 +66,7 @@ import { eingangAlter, neuerLeadGrund } from "@/lib/eingang-alter";
 import { istWartenderNeuerLead } from "@/lib/neue-leads-shared";
 import { bestandWarmErledigtAction } from "@/app/buyer/bestand/actions";
 import { WARM_TITLE } from "@/lib/bestand/warm-shared";
+import { gebeugt } from "@/lib/ansprache";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -592,7 +593,7 @@ export function TodayInbox({
               const open = () =>
                 setSheet({
                   kind: "actions",
-                  title: `Wie lief der Termin mit ${o.name}?`,
+                  title: `Wie lief der Termin mit ${gebeugt(o.name)}?`,
                   actions: [
                     // Paket P3: „Angebot gesendet“ startet das Nachfassen nicht mehr ohne Versand, sondern führt auf die zwei Wege
                     {

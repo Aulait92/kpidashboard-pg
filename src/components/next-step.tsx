@@ -67,6 +67,7 @@ import { mailSelbstGesendetAction } from "@/app/buyer/postfach/actions";
 import { fmtAttemptAt } from "@/lib/call-plan";
 import { CALL_ATTEMPTS_TARGET, LOST_REASONS, lostWarningText, needsLostWarning, type LostReasonKey } from "@/lib/lead-lost";
 import { cn } from "@/lib/utils";
+import { gebeugt } from "@/lib/ansprache";
 
 /** Nach einer Aktion im Kontakt (Anruf, Notiz, E-Mail …): fragt NextStepPrompt nach dem nächsten Schritt. */
 export const LEAD_ACTION_EVENT = "pg-lead-action";
@@ -670,7 +671,7 @@ export function NextStepSheet({
     return (
       <LaterDateSheet
         open
-        title={`Wiedervorlage für ${name}`}
+        title={`Wiedervorlage für ${gebeugt(name)}`}
         onClose={() => setStep("pick")}
         onPick={(date, time) => run(time ? `${name}: Rückruf ${fmtDay(date)} ${time} Uhr` : `${name}: Wiedervorlage am ${fmtDay(date)}`, () => setFollowUpResult(leadId, { date, time }))}
       />

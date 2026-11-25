@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/toast";
 import { anwesenheitAction } from "@/app/buyer/showup-actions";
 import { undoInboxAction } from "@/app/buyer/inbox-actions";
 import type { WartetErgebnis } from "@/lib/showup-server";
+import { gebeugt } from "@/lib/ansprache";
 
 export type AnwesenheitsStand = "start" | "wartet" | "nachher";
 
@@ -55,7 +56,7 @@ export function TerminAnwesenheit({
       }
       if (antwort === "fehlt") {
         setLokal({ stand: "wartet", wa: r.wa ?? null });
-        toast.show({ message: r.wa === "nicht_moeglich" ? `WhatsApp an ${label} nicht möglich. Bitte anrufen.` : `${label} hat den Link per WhatsApp bekommen.` });
+        toast.show({ message: r.wa === "nicht_moeglich" ? `WhatsApp an ${gebeugt(label)} nicht möglich. Bitte anrufen.` : `${label} hat den Link per WhatsApp bekommen.` });
       } else {
         setLokal({ stand: "fertig", wa: null });
         const undo = r.undo;
