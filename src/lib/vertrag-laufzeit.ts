@@ -148,6 +148,8 @@ export type ContractSummaryInput = {
   /** Abrechnungstag (lib/abrechnungstag.ts): null/fehlt = wie Start; freeStart = Zeit davor kostenlos */
   billingDay?: number | null;
   freeStart?: boolean;
+  /** Längster kostenloser Start in Tagen (Offer.billingFreeStartTage) */
+  freeMaxTage?: number | null;
   /**
    * Vorauszahlung mit der Annahme fällig (Ole, 19.11.2026; offene und ab dann angenommene Angebote,
    * lib/offer-pricing.ts vorauszahlungMitAnnahme). Fehlt = wie vorher: zum Start.
@@ -342,7 +344,7 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   const prepayTotal = Math.round(i.monthlyTotal * (pm - i.freeMonths) * 100) / 100;
   // Eigener Abrechnungstag: Beträge und Fristen zählen ab dem ersten Abrechnungstag (lib/abrechnungstag.ts);
   // bei Vorauszahlung gilt er nicht (voller Betrag zum Start, Zeitraum ab Start)
-  const plan = abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, freeStart: i.freeStart, annual });
+  const plan = abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, freeStart: i.freeStart, freeMaxTage: i.freeMaxTage, annual });
   const billIso = plan?.firstIso ?? i.startIso;
   const start = billIso ? fmtIso(billIso) : null;
   // Zahlung nachträglich (Ole, 19.11.2026): nur monatlich, ohne eigenen Abrechnungstag

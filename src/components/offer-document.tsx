@@ -103,6 +103,7 @@ export type OfferDoc = {
   /** Abrechnungstag (1 bis 28, null = wie Start) und kostenloser Start bis dahin (lib/abrechnungstag.ts). */
   billingDay?: number | null;
   billingFreeStart?: boolean;
+  billingFreeStartTage?: number | null;
   /** Vorauszahlung mit der Annahme fällig (seit 19.11.2026; Annahmen davor: zum Start). */
   prepayAtAcceptance?: boolean;
   /** Zahlung nachträglich für den abgelaufenen Leistungsmonat (Ole, 19.11.2026; nur monatlich). */
@@ -318,6 +319,7 @@ export function OfferDocument({
     startIso,
     billingDay: offer.billingDay,
     freeStart: offer.billingFreeStart,
+    freeMaxTage: offer.billingFreeStartTage,
     annual: add.annualTotal != null,
   });
   const billingDiffers = !!plan?.differs;
