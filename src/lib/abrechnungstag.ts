@@ -15,11 +15,16 @@
 //   nichts anteilig und kein kostenloser Start. Der Abrechnungstag gilt nur, wenn monatlich gezahlt wird.
 //   Seit 19.11.2026 (Ole) ist die Vorauszahlung schon mit der Annahme fällig (lib/billing.ts), der Zeitraum beginnt
 //   weiter am Start (Offer.prepayAtAcceptance; ältere Annahmen: zum Start).
+// - Kostenloser Start höchstens {@link KOSTENLOS_MAX_TAGE} Tage (Ole, 25.11.2026): Wählt der Kunde einen Start kurz nach
+//   dem Abrechnungstag (z. B. 18.1. bei Abbuchung am 15.), wäre sonst fast ein ganzer Monat geschenkt. Längere Zeit bis
+//   zum ersten Abrechnungstag wird anteilig berechnet, auch wenn „kostenloser Start“ angehakt ist.
 
 import { eur } from "@/lib/offer-pricing";
 
 export const ABRECHNUNGSTAG_MIN = 1;
 export const ABRECHNUNGSTAG_MAX = 28;
+/** Längster kostenloser Start in Tagen (Ole, 25.11.2026: kein geschenkter Monat, wenn der Kunde den Start wählt). */
+export const KOSTENLOS_MAX_TAGE = 15;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const isoOf = (y: number, m: number, d: number) => {
@@ -32,6 +37,12 @@ const daysBetween = (a: string, b: string) => Math.round((Date.UTC(...ymd(b)) - 
 const ymd = (s: string): [number, number, number] => {
   const [y, m, d] = parts(s);
   return [y, m - 1, d];
+};
+
+/** Kostenloser Start greift nur, wenn die Zeit bis zum ersten Abrechnungstag höchstens {@link KOSTENLOS_MAX_TAGE} Tage ist. */
+export const kostenlosMoeglich = (startIso: string, firstIso: string) => {
+  const tage = daysBetween(startIso, firstIso);
+  return tage > 0 && tage <= KOSTENLOS_MAX_TAGE;
 };
 
 /** Eingabe prüfen: 1 bis 28, leer = wie Start (null). Ungültig → Fehlertext. */
@@ -79,7 +90,7 @@ export function abrechnungsplan(o: { startIso: string | null; billingDay?: numbe
   const vorauszahlung = !!o.annual;
   const firstIso = ersterAbrechnungstag(o.startIso, vorauszahlung ? null : o.billingDay);
   const differs = firstIso !== o.startIso;
-  const free = differs && !!o.freeStart;
+  const free = differs && !!o.freeStart && kostenlosMoeglich(o.startIso, firstIso);
   let ratio = 0;
   if (differs && !free) {
     // Monat, den die erste volle Abbuchung abdecken würde, rückwärts vom ersten Abrechnungstag

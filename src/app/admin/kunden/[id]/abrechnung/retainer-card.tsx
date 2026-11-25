@@ -1,5 +1,6 @@
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
+import { kostenlosMoeglich } from "@/lib/abrechnungstag";
 import { saveRetainerAction } from "./retainer-actions";
 import { CHURN_OFFERS, churnReasonLabel, isChurnOffer, isHalteKind } from "@/lib/anti-churn";
 import { HALTE_LABEL } from "@/lib/halteangebote";
@@ -74,7 +75,7 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
           {c.billingDay != null
             ? `jeweils am ${c.billingDay}.${c.billingStart ? `, erste Abbuchung ${dmy(c.billingStart)}` : ""}${
                 c.billingStart && c.retainerStart && ymd(c.billingStart) !== ymd(c.retainerStart)
-                  ? offer?.billingFreeStart
+                  ? offer?.billingFreeStart && kostenlosMoeglich(ymd(c.retainerStart), ymd(c.billingStart))
                     ? `, kostenloser Start ab ${dmy(c.retainerStart)}`
                     : `, ${dmy(c.retainerStart)} bis davor anteilig`
                   : ""

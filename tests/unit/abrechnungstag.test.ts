@@ -139,3 +139,18 @@ describe("Auftragsbestätigung und Annahme-Zusammenfassung", () => {
     expect(priceStepAckText(i)).toContain("ab dem 15.04.2027");
   });
 });
+
+describe("kostenloser Start höchstens 15 Tage (Ole, 25.11.2026)", () => {
+  it("Kunde wählt Start 18.01., Abbuchung am 15.: kein geschenkter Monat, sondern anteilig", () => {
+    const p = abrechnungsplan({ startIso: "2027-01-18", billingDay: 15, freeStart: true })!;
+    expect(p).toMatchObject({ firstIso: "2027-02-15", differs: true, free: false, stubEndIso: "2027-02-14" });
+    expect(p.ratio).toBeCloseTo(28 / 31, 5);
+    expect(abrechnungstagSaetze(p, { firstNet: 990 }).join(" ")).toContain("anteilig");
+    expect(abrechnungstagSaetze(p, { firstNet: 990 }).join(" ")).not.toContain("kostenlos");
+  });
+  it("bis 15 Tage bleibt der Start kostenlos", () => {
+    expect(abrechnungsplan({ startIso: "2027-01-31", billingDay: 15, freeStart: true })).toMatchObject({ firstIso: "2027-02-15", free: true, ratio: 0 });
+    expect(abrechnungsplan({ startIso: "2027-01-30", billingDay: 15, freeStart: true })).toMatchObject({ firstIso: "2027-02-15", free: false });
+  });
+});
+
