@@ -1609,6 +1609,9 @@ model Appointment {
   // Push „Wie lief der Termin mit …?“ am nächsten Werktag ab 8 Uhr, solange das Ergebnis fehlt (Ole, 25.11.2026,
   // lib/termin-ergebnis-push.ts): höchstens einmal je Termin
   ergebnisPushAt        DateTime?
+  // Dieser Push ist bei mindestens einem Gerät angekommen: dann fällt der Termin aus der Sammel-Erinnerung um 8 Uhr
+  // (lib/next-step-reminder.ts), sonst bleibt er dort (Ole, 25.11.2026)
+  ergebnisPushOkAt      DateTime?
   // Vom Vermittler übersprungene Erinnerungen (Paket P6): vortag | vortag_mail | stunde | gleich
   erinnerungenUebersprungen String[] @default([])
   // Komplettcheck = Ja: auf 45 Min. verlängert („verlaengert“) bzw. Hinweis an den Vermittler („hinweis“)

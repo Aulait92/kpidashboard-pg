@@ -335,14 +335,15 @@ async function handle(req: Request): Promise<Response> {
           return null;
         })
       : undefined;
+  // Termin ohne Ergebnis: am nächsten Werktag ab 8 Uhr je Termin ein Push „Wie lief der Termin mit …?“ (lib/termin-ergebnis-push.ts);
+  // vor der Sammel-Erinnerung, damit angekommene Pushes dort nicht doppelt zählen
+  const terminErgebnisPush = await import("@/lib/termin-ergebnis-push").then((m) => m.runTerminErgebnisPush(now)).catch((e: unknown) => {
+    reportError(e, "cron-termin-ergebnis-push");
+    return null;
+  });
   // Nächster Schritt: tägliche Erinnerung ab 8 Uhr Berlin an den zuständigen Berater (Sperre je Tag und Login)
   const naechsterSchritt = await import("@/lib/next-step-reminder").then((m) => m.runNextStepReminders(now)).catch((e: unknown) => {
     reportError(e, "cron-next-step-reminder");
-    return null;
-  });
-  // Termin ohne Ergebnis: am nächsten Werktag ab 8 Uhr je Termin ein Push „Wie lief der Termin mit …?“ (lib/termin-ergebnis-push.ts)
-  const terminErgebnisPush = await import("@/lib/termin-ergebnis-push").then((m) => m.runTerminErgebnisPush(now)).catch((e: unknown) => {
-    reportError(e, "cron-termin-ergebnis-push");
     return null;
   });
   // Abschluss erkennen (P4): am Vorabend „Hat Frau Becker abgeschlossen?“ an den zuständigen Berater (18 bis 21 Uhr)

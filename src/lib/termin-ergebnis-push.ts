@@ -4,6 +4,9 @@
 // Bisher gab es dazu nur die Sammel-Erinnerung um 8 Uhr („bei 2 Terminen fehlt das Ergebnis“, lib/next-step-reminder.ts)
 // ohne Weg zum einzelnen Termin. Höchstens ein Push je Termin (Appointment.ergebnisPushAt), nur werktags 8 bis 20 Uhr,
 // nicht an reine Pay-per-Lead-Kunden, nicht an Logins mit ausgeschalteter „Täglicher Erinnerung um 8 Uhr“.
+// Kommt der Push an (Appointment.ergebnisPushOkAt), fällt der Termin aus der Sammel-Erinnerung (nichts doppelt am
+// Morgen); kommt er nicht an (kein Gerät, Erinnerung aus), bleibt er dort. Der Cron ruft diesen Lauf vor der
+// Sammel-Erinnerung auf.
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -50,12 +53,15 @@ export function ergebnisPushText(o: { appointmentId: string; vorname: string | n
 }
 
 type PushPayload = { title: string; body: string; url: string; tag: string };
-export type ErgebnisPushFn = (userIds: string[] | null, customerId: string, p: PushPayload) => Promise<unknown>;
+/** Push senden; Rückgabe: an so viele Geräte zugestellt (0 = niemand hat ein Gerät mit Mitteilungen). */
+export type ErgebnisPushFn = (userIds: string[] | null, customerId: string, p: PushPayload) => Promise<number>;
 
 const standardPush: ErgebnisPushFn = async (userIds, customerId, p) => {
   const m = await import("@/lib/push");
-  if (!userIds) return m.sendToBuyersOfCustomer(customerId, p);
-  for (const id of userIds) await m.sendToUser(id, p);
+  if (!userIds) return (await m.sendToBuyersOfCustomer(customerId, p)).sent;
+  let sent = 0;
+  for (const id of userIds) sent += (await m.sendToUser(id, p)).sent;
+  return sent;
 };
 
 /** Empfänger: zuständiger Berater (Lead, sonst Kalender des Termins), sonst Inhaber; null = alle Logins des Kunden. */
@@ -101,7 +107,12 @@ export async function runTerminErgebnisPush(now = new Date(), deps: { push?: Erg
     const p = ergebnisPushText({ appointmentId: t.id, vorname: kontaktParts(kontakt).first || null, label: leadLabel(kontakt, t.lead?.name) });
     const an = await empfaenger(t);
     if (an && an.length === 0) continue;
-    await push(an, t.customerId, p).catch((e) => console.error("[termin-ergebnis push]", e instanceof Error ? e.message : e));
+    const sent = await push(an, t.customerId, p).catch((e) => {
+      console.error("[termin-ergebnis push]", e instanceof Error ? e.message : e);
+      return 0;
+    });
+    // Angekommen: Termin fällt aus der Sammel-Erinnerung um 8 Uhr (lib/next-step-reminder.ts); sonst bleibt er dort
+    if (sent > 0) await prisma.appointment.update({ where: { id: t.id }, data: { ergebnisPushOkAt: now } });
     res.pushes++;
   }
   return res;

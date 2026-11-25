@@ -14,7 +14,7 @@ describe("Push „Wie lief der Termin?“", () => {
   let ppl = "";
   let inhaber = "";
   let berater = "";
-  const push = vi.fn<(userIds: string[] | null, customerId: string, p: { title: string; body: string; url: string; tag: string }) => Promise<unknown>>(async () => null);
+  const push = vi.fn<(userIds: string[] | null, customerId: string, p: { title: string; body: string; url: string; tag: string }) => Promise<number>>(async () => 1);
 
   const termin = async (customerId: string, o: { startsAt: Date; assigned?: string | null; status?: string; attendance?: string | null; leadStatus?: string | null }) => {
     const lead = await prisma.lead.create({
@@ -52,7 +52,9 @@ describe("Push „Wie lief der Termin?“", () => {
     expect(an.get(zugeteilt.id)?.[2]).toEqual({ title: "Wie lief der Termin mit Anna?", body: "Das Ergebnis fehlt noch. Ein Tipp genügt, den Rest trägt die App ein.", url: `/buyer/termine/${zugeteilt.id}`, tag: `termin-ergebnis:${zugeteilt.id}` });
     expect(an.get(offen.id)?.[0]).toEqual([inhaber]);
     for (const t of [heute, erledigt, nichtDa, verloren, alt, pplTermin]) expect(an.has(t.id)).toBe(false);
-    expect((await prisma.appointment.findUnique({ where: { id: zugeteilt.id } }))?.ergebnisPushAt).not.toBeNull();
+    const z = await prisma.appointment.findUnique({ where: { id: zugeteilt.id } });
+    expect(z?.ergebnisPushAt).not.toBeNull();
+    expect(z?.ergebnisPushOkAt).not.toBeNull();
 
     push.mockClear();
     await runTerminErgebnisPush(new Date(NOW.getTime() + 2 * H), { push });
@@ -67,6 +69,9 @@ describe("Push „Wie lief der Termin?“", () => {
     const t = await termin(kunde, { startsAt: new Date(NOW.getTime() - 19 * H), assigned: berater });
     await runTerminErgebnisPush(NOW, { push });
     expect(push.mock.calls.some((c) => String((c[2] as { url: string }).url).endsWith(t.id))).toBe(false);
-    expect((await prisma.appointment.findUnique({ where: { id: t.id } }))?.ergebnisPushAt).not.toBeNull();
+    const a = await prisma.appointment.findUnique({ where: { id: t.id } });
+    expect(a?.ergebnisPushAt).not.toBeNull();
+    // nicht angekommen: bleibt in der Sammel-Erinnerung
+    expect(a?.ergebnisPushOkAt).toBeNull();
   });
 });
