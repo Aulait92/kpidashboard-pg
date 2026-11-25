@@ -26,8 +26,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) return new Response("E-Mail-Versand ist nicht eingerichtet.", { status: 503 });
   try {
-    const { eingangApi } = await import("@/lib/mail/eingang-api");
-    const api = eingangApi(apiKey);
+    // Lesen nur mit Leserecht: eigener Empfangsschlüssel vor dem Versandschlüssel (wie lib/mail/eingang.ts)
+    const { eingangApi, empfangsSchluessel } = await import("@/lib/mail/eingang-api");
+    const api = eingangApi(empfangsSchluessel() ?? apiKey);
     const a = await api.anhang(eingang.resendEmailId, anhangId);
     if (!a?.downloadUrl) return new Response("Der Anhang ist nicht mehr verfügbar.", { status: 410 });
     const data = await api.datei(a.downloadUrl, Math.max(ANHANG_LIMIT, 50 * 1024 * 1024));
