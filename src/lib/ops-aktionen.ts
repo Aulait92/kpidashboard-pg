@@ -207,6 +207,23 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `Nummer korrigiert (…${neu.slice(-4)})${r ? `, Erstanschreiben: ${r.sent} gesendet, ${r.failed} Fehler, ${r.skipped} übersprungen${r.errors.length ? ` (${r.errors.slice(0, 2).join("; ").slice(0, 300)})` : ""}` : ""}` };
     },
   },
+  erstanschreiben_erneut: {
+    beschreibung: "Erstanschreiben erneut schicken, wenn das erste nachweislich nicht ankam (z. B. an eine falsche Nummer, inzwischen korrigiert): nur ohne zugestellte oder gelesene Nachricht und ohne Antwort des Leads",
+    felder: { leadId: "ID des Leads" },
+    run: async (p) => {
+      const l = await prisma.lead.findUnique({ where: { id: text(p.leadId) }, select: { id: true, customerId: true, phone: true, erasedAt: true, outreachStatus: true } });
+      if (!l?.customerId || !l.phone || l.erasedAt) return { ok: false, error: "Lead nicht gefunden oder ohne Nummer." };
+      const convs = (await prisma.conversation.findMany({ where: { customerId: l.customerId, leadId: l.id }, select: { id: true } })).map((c) => c.id);
+      const msgs = convs.length ? await prisma.message.findMany({ where: { conversationId: { in: convs }, direction: { in: ["inbound", "outbound"] } }, select: { direction: true, status: true } }) : [];
+      if (msgs.some((m) => m.direction === "inbound")) return { ok: false, error: "Der Lead hat schon geantwortet." };
+      if (msgs.some((m) => m.status === "delivered" || m.status === "read")) return { ok: false, error: "Eine Nachricht ist schon angekommen, kein zweites Erstanschreiben." };
+      await prisma.lead.update({ where: { id: l.id }, data: { outreachAt: null, outreachStatus: null, waUnavailableAt: null } });
+      const r = await (await import("@/lib/whatsapp/outreach")).runOutreach(l.customerId, { leadIds: [l.id] });
+      await audit("lead.erstanschreiben_erneut", { entity: "Lead", entityId: l.id, details: { vorher: l.outreachStatus, bisher: msgs.map((m) => m.status), ergebnis: { sent: r.sent, failed: r.failed, skipped: r.skipped } }, actor: OPS_ACTOR });
+      const info = `bisher: ${msgs.map((m) => m.status ?? "?").join(", ") || "keine Nachricht"}; jetzt ${r.sent} gesendet, ${r.failed} Fehler, ${r.skipped} übersprungen${r.errors.length ? ` (${r.errors.slice(0, 2).join("; ").slice(0, 300)})` : ""}`;
+      return r.sent > 0 ? { ok: true, info } : { ok: false, error: info };
+    },
+  },
   whatsapp_neu_versuchen: {
     beschreibung: "Lead galt als „kein WhatsApp“ (z. B. falsche Nummer, inzwischen korrigiert): Sperre aufheben und neu versuchen, mit Termin die Terminbestätigung, sonst das Erstanschreiben",
     felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
