@@ -203,7 +203,7 @@ export const BEREICHE: NeuBereich[] = [
     handy: "profil",
     seiten: [
       { view: "einstellungen", pfad: n("/einstellungen"), titel: "Einstellungen", alt: ["/admin/einstellungen"], suchwoerter: "Werkzeuge Technik", fertig: true },
-      { view: "e-sicherheit", pfad: n("/einstellungen/sicherheit"), titel: "Zwei-Faktor & Geräte", gruppe: "Konto & Sicherheit", alt: ["/admin/einstellungen/sicherheit"], suchwoerter: "Sicherheit 2FA", untertitel: "Anmeldung schützen.", fertig: true },
+      { view: "e-sicherheit", pfad: n("/einstellungen/sicherheit"), titel: "Zwei-Faktor & Geräte", gruppe: "Konto & Sicherheit", alt: ["/admin/einstellungen/sicherheit"], suchwoerter: "Sicherheit 2FA Face ID", untertitel: "Anmeldung schützen.", fertig: true },
       { view: "e-admins", pfad: n("/einstellungen/admins"), titel: "Admins & Rechte", gruppe: "Konto & Sicherheit", alt: [], untertitel: "Wer Zugang zum Admin hat.", fertig: true },
       { view: "e-buchung", pfad: n("/einstellungen/buchungsseiten"), titel: "Buchungsseiten", gruppe: "Verkaufen", alt: ["/admin/vertrieb/buchungsseite"], suchwoerter: "Kalender Termintypen Zeiten", untertitel: "Interessenten buchen Vertriebstermine direkt in Ihrem Kalender.", fertig: true },
       { view: "e-followups", pfad: n("/einstellungen/follow-ups"), titel: "Später-Follow-ups", gruppe: "Verkaufen", alt: ["/admin/vertrieb/follow-ups"], untertitel: "Kontakte, die „später“ gesagt haben, bekommen zum Zeitpunkt zwei Mails.", fertig: true },
