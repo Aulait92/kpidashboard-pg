@@ -307,6 +307,36 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${tx.counterparty ?? "Buchung"} ${Number(tx.amount).toFixed(2)} € → ${aktion}.` };
     },
   },
+  ausgangsrechnungen_import: {
+    beschreibung: "Ausgangsrechnungen aus dem Papierkram-CSV-Export übernehmen (gleiche Nummer = aktualisieren, Entwürfe nicht); die BWA zählt den Umsatz dann nach Rechnungen",
+    felder: { csv: "Inhalt der Papierkram-Datei rechnungen.csv" },
+    run: async (p) => {
+      const csv = typeof p.csv === "string" ? p.csv : "";
+      if (csv.length < 20 || csv.length > 2_000_000) return { ok: false, error: "csv fehlt oder ist zu groß." };
+      const { importAusgangsrechnungen, parsePapierkramCsv } = await import("@/lib/ausgangsrechnungen");
+      let zeilen;
+      try {
+        zeilen = parsePapierkramCsv(csv);
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "CSV nicht lesbar." };
+      }
+      const r = await importAusgangsrechnungen(zeilen);
+      await audit("bwa.rechnungen_import", { details: { zeilen: zeilen.length, ...r }, actor: OPS_ACTOR });
+      return { ok: true, info: `${zeilen.length} Rechnungen: ${r.neu} neu, ${r.aktualisiert} aktualisiert.` };
+    },
+  },
+  umsatz_nachtrag_loeschen: {
+    beschreibung: "Einen von Claude angelegten Umsatz-Nachtrag (ManualRevenue) wieder löschen",
+    felder: { id: "ID des Nachtrags (Ergebnis von umsatz_nachtragen)" },
+    run: async (p) => {
+      const row = await prisma.manualRevenue.findUnique({ where: { id: text(p.id, 40) } });
+      if (!row) return { ok: false, error: "Nachtrag nicht gefunden." };
+      if (row.createdBy !== OPS_ACTOR.email) return { ok: false, error: "Nur eigene Nachträge (von Claude angelegt) löschen." };
+      await prisma.manualRevenue.delete({ where: { id: row.id } });
+      await audit("kpi.nachtrag", { entity: "ManualRevenue", entityId: row.id, customerId: row.customerId, details: { deleted: true, month: row.month, amount: Number(row.amount) }, actor: OPS_ACTOR });
+      return { ok: true, info: `Nachtrag ${row.month} über ${Number(row.amount).toFixed(2)} € gelöscht.` };
+    },
+  },
   belege_stripe: {
     beschreibung: "Ausgangsrechnungen und Gutschriften aus Stripe jetzt als Belege übernehmen (sonst nachts)",
     felder: {},

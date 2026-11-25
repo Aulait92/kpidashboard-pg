@@ -5675,6 +5675,28 @@ model Beleg {
   @@index([datum])
 }
 
+// Ausgangsrechnungen aus Papierkram (Ole, 25.11.2026: BWA nach Rechnungen statt nach dem Umsatzbuch-Modell).
+// Import per CSV-Export (lib/ausgangsrechnungen.ts), Entwürfe werden nicht übernommen. Beträge wie in Papierkram.
+model Ausgangsrechnung {
+  id          String   @id @default(cuid())
+  nummer      String   @unique
+  datum       DateTime @db.Date
+  kunde       String
+  kundennr    String?
+  land        String?
+  netto       Decimal  @db.Decimal(12, 2)
+  ust         Decimal  @db.Decimal(12, 2)
+  brutto      Decimal  @db.Decimal(12, 2)
+  status      String
+  typ         String
+  notiz       String?
+  quelle      String   @default("papierkram")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([datum])
+}
+
 // Belegpaket zum Herunterladen per Link (Ole, 24.11.2026: Download-Link statt 11 Mails). Hält fest, welche Belege
 // verschickt wurden (Monatspaket oder Nachtrag); der Link ist signiert und läuft ab (lib/belege/paket-link.ts).
 model BelegPaket {
