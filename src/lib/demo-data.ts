@@ -143,7 +143,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
     select: { name: true, metaAdAccountId: true, whatsAppAccount: { select: { id: true } } },
   });
   if (!customer) throw new Error("Kunde nicht gefunden.");
-  const advisorFirst = customer.name.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? "dein Berater";
+  const advisorFirst = customer.name.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? "Ihr Berater";
   const accountId = customer.whatsAppAccount?.id ?? null;
   const rand = rng(42);
   const now = Date.now();
@@ -194,7 +194,6 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
       return d.getTime() > now - 30 * 60 * 1000 ? new Date(now - (40 + rand() * 120) * 60 * 1000) : d;
     })();
     const name = NAMES[i % NAMES.length];
-    const first = name.split(" ")[0];
     const phone = `${DEMO_PREFIX}${String(i + 10).padStart(2, "0")}`;
     const email = `${name.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/\s+/g, ".")}@example.com`;
     const outreachAt = new Date(createdAt.getTime() + 10 * 60 * 1000);
@@ -263,12 +262,12 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         : ["Rechtsschutz hatte ich mal, ist aber ausgelaufen", "Rechtsschutz ausgelaufen", "Rechtsschutz (ausgelaufen)"];
     const situationQA: Record<string, [string, string]> = {
       Single: hasHausrat
-        ? ["Wohnst du zur Miete oder im Eigentum? Das ist für die Hausrat wichtig.", "Zur Miete, 2-Zimmer-Wohnung"]
+        ? ["Wohnen Sie zur Miete oder im Eigentum? Das ist für die Hausrat wichtig.", "Zur Miete, 2-Zimmer-Wohnung"]
         : ["Gibt es einen konkreten Anlass, z. B. ein Umzug oder ein Schaden?", "Bin gerade umgezogen und will das mal sauber haben"],
-      "Paar ohne Kinder": ["Soll der Schutz auch für deinen Partner bzw. deine Partnerin gelten?", "Ja, für uns beide"],
+      "Paar ohne Kinder": ["Soll der Schutz auch für Ihren Partner bzw. Ihre Partnerin gelten?", "Ja, für uns beide"],
       "Familie mit Kindern": ["Soll der Schutz für die ganze Familie gelten? Wie alt sind die Kinder ungefähr?", "Ja, für alle, die Kinder sind 4 und 7"],
-      Alleinerziehend: ["Sollen deine Kinder mitversichert sein?", "Ja, mein Sohn ist 9"],
-      "Paar, Kinder aus dem Haus": ["Soll der Schutz für euch beide gelten?", "Ja, für uns beide"],
+      Alleinerziehend: ["Sollen Ihre Kinder mitversichert sein?", "Ja, mein Sohn ist 9"],
+      "Paar, Kinder aus dem Haus": ["Soll der Schutz für Sie beide gelten?", "Ja, für uns beide"],
     };
     const [sitQ, sitA] = situationQA[situation] ?? ["Für wen soll der Schutz gelten?", "Für mich"];
     // Strukturierte Qualifizierung wie vom Bot (record_qualification → angaben)
@@ -291,7 +290,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         dir: "outbound",
         by: "system",
         kind: "template",
-        body: `Hallo ${first}, danke für deine Anfrage zum Privatschutz! Hier ist der digitale Assistent von ${advisorFirst}. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?`,
+        body: `Hallo ${name}, danke für Ihre Anfrage zum Privatschutz! Hier ist der digitale Assistent von ${advisorFirst}. Haben Sie kurz Zeit für zwei Fragen, damit wir Ihnen ein passendes Angebot machen können?`,
       },
     ];
     if (scenario === "not_reached") {
@@ -299,7 +298,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         dir: "outbound",
         by: "system",
         kind: "template",
-        body: `Hallo ${first}, kurze Erinnerung: Wenn du magst, schauen wir gemeinsam in 15 Minuten, welcher Schutz für dich sinnvoll ist. Antworte einfach hier.`,
+        body: `Hallo ${name}, kurze Erinnerung: Wenn Sie mögen, schauen wir gemeinsam in 15 Minuten, welcher Schutz für Sie sinnvoll ist. Antworten Sie einfach hier.`,
       });
     }
     if (replied) {
@@ -308,13 +307,13 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         {
           dir: "outbound",
           by: "bot",
-          body: `Super, danke dir! Du hattest angegeben, dass du dich für ${interest} interessierst. Hast du dafür aktuell schon einen Vertrag?`,
+          body: `Super, danke Ihnen! Sie hatten angegeben, dass Sie sich für ${interest} interessieren. Haben Sie dafür aktuell schon einen Vertrag?`,
         },
         { dir: "inbound", by: null, body: contractAnswer },
         { dir: "outbound", by: "bot", body: `Danke, das hilft schon mal. ${sitQ}` },
         { dir: "inbound", by: null, body: sitA },
       );
-      const askMode = `Alles klar! Am besten schaut ${advisorFirst} das kurz persönlich mit dir an, dauert etwa 15 Minuten. Passt dir eher ein Telefonat oder ein kurzer Videocall?`;
+      const askMode = `Alles klar! Am besten schaut ${advisorFirst} das kurz persönlich mit Ihnen an, dauert etwa 15 Minuten. Passt Ihnen eher ein Telefonat oder ein kurzer Videotermin?`;
       if (scenario === "new_replied" && !handoverDone) {
         // Ein Chat mit Übergabe an den Berater („Braucht dich").
         handoverDone = true;
@@ -325,7 +324,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
           {
             dir: "outbound",
             by: "bot",
-            body: `Gute Frage! Der Beitrag hängt von ein paar Details ab, das rechnet ${advisorFirst} dir am besten genau aus. Ich gebe ihm Bescheid, er meldet sich persönlich bei dir.`,
+            body: `Gute Frage! Der Beitrag hängt von ein paar Details ab, das rechnet ${advisorFirst} Ihnen am besten genau aus. Ich gebe ihm Bescheid, er meldet sich persönlich bei Ihnen.`,
           },
         );
       } else if (scenario === "new_replied") {
@@ -334,7 +333,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         msgs.push(
           { dir: "outbound", by: "bot", body: askMode },
           { dir: "inbound", by: null, body: "Nein danke, ich hab mich inzwischen schon woanders entschieden." },
-          { dir: "outbound", by: "bot", body: "Alles klar, danke für deine Rückmeldung und alles Gute! 🙂" },
+          { dir: "outbound", by: "bot", body: "Alles klar, danke für Ihre Rückmeldung und alles Gute! 🙂" },
         );
       } else if (startsAt) {
         const alt1 = atHour(businessDay(new Date(startsAt.getTime() - DAY), true), slotHour === 10 ? 15 : 10);
@@ -344,22 +343,22 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         msgs.push(
           { dir: "outbound", by: "bot", body: askMode },
           { dir: "inbound", by: null, body: mode === "phone" ? "Telefon ist gut" : "Video passt" },
-          { dir: "outbound", by: "bot", body: `Ich hätte ${offer} frei. Was passt dir am besten?` },
+          { dir: "outbound", by: "bot", body: `Ich hätte ${offer} frei. Was passt Ihnen am besten?` },
           { dir: "inbound", by: null, body: `${dayFmt(startsAt).split(",")[0]} um ${timeFmt(startsAt).replace(":00", "")} Uhr passt` },
           {
             dir: "outbound",
             by: "bot",
             body:
-              `Perfekt, dein ${mode === "phone" ? "Telefontermin" : "Videocall"} mit ${advisorFirst} am ${dayFmt(startsAt)} um ${timeFmt(startsAt)} Uhr ist gebucht ✅ ` +
+              `Perfekt, Ihr ${mode === "phone" ? "Telefontermin" : "Videotermin"} mit ${advisorFirst} am ${dayFmt(startsAt)} um ${timeFmt(startsAt)} Uhr ist gebucht ✅ ` +
               (mode === "phone"
-                ? `${advisorFirst} ruft dich unter dieser Nummer an.`
-                : "Den Video-Link bekommst du mit der Bestätigung per WhatsApp und E-Mail."),
+                ? `${advisorFirst} ruft Sie unter dieser Nummer an.`
+                : "Den Video-Link bekommen Sie mit der Bestätigung per WhatsApp und E-Mail."),
           },
         );
         if (scenario === "cancelled") {
           msgs.push(
             { dir: "inbound", by: null, body: "Sorry, mir ist was dazwischengekommen, ich muss den Termin leider absagen" },
-            { dir: "outbound", by: "bot", body: "Kein Problem, ich habe den Termin abgesagt. Melde dich gern, wenn du einen neuen möchtest!" },
+            { dir: "outbound", by: "bot", body: "Kein Problem, ich habe den Termin abgesagt. Melden Sie sich gern, wenn Sie einen neuen möchten!" },
           );
         }
         if (scenario === "offer" || scenario === "closed") {
@@ -368,7 +367,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
             dir: "outbound",
             by: "agent",
             at: after,
-            body: `Hallo ${first}, danke für das nette Gespräch! Wie besprochen habe ich dir das Angebot für ${interest} per E-Mail geschickt. Bei Fragen melde dich gern direkt hier. Viele Grüße, ${advisorFirst}`,
+            body: `Hallo ${name}, danke für das nette Gespräch! Wie besprochen habe ich Ihnen das Angebot für ${interest} per E-Mail geschickt. Bei Fragen melden Sie sich gern direkt hier. Viele Grüße, ${advisorFirst}`,
           });
           if (scenario === "closed") {
             msgs.push({

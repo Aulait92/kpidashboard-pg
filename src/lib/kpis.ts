@@ -429,7 +429,16 @@ function isTerminLead(
   l: { id: string; status: string | null },
   e: Engagement,
 ): boolean {
-  return (l.status != null && TERMIN_STATUSES.has(l.status)) || e.booked.has(l.id);
+  return zaehltAlsTermin(l.status, e.booked.has(l.id));
+}
+
+/**
+ * Eine Definition für „Termin“ in Zahlen, Wachstum und Kontakte (Usability-Check 25.11.2026): nicht storniert und
+ * Phase „Termin …“ oder ein gebuchter bzw. stattgefundener Termin (abgesagte zählen nicht).
+ */
+export function zaehltAlsTermin(status: string | null, gebuchterTermin: boolean): boolean {
+  if (isLeadCancelled(status)) return false;
+  return (status != null && TERMIN_STATUSES.has(status)) || gebuchterTermin;
 }
 
 export async function listCustomers() {

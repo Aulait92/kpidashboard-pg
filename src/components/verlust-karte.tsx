@@ -120,7 +120,7 @@ export async function VerlustKarte({
           </p>
         ) : null}
         <p className="text-xs text-[color:var(--muted)]">
-          Vorher: Vorzeitraum.{mitSchnitt ? " Schnitt und Strich im Balken: alle Kunden, anonym, letzte 90 Tage." : ""} Grund antippen zeigt diese Kontakte.
+          Vorher: Vorzeitraum.{mitSchnitt ? " Schnitt und Strich im Balken: alle Kunden, anonym, letzte 90 Tage." : ""} Grund auswählen zeigt diese Kontakte.
         </p>
         {d.tipps.length ? <ZahlenTippsCard tips={d.tipps} intro={null} canDismiss={false} /> : null}
       </div>

@@ -133,6 +133,10 @@ export function IphoneAppSchritt({ geraet, appUrl, readOnly, angemeldet }: { ger
       >
         Ich habe kein iPhone
       </button>
+      {/* Usability-Check 25.11.2026: Android-Nutzer sehen schon vor dem Klick, wie es für sie weitergeht */}
+      <p className="mt-1 text-sm text-[color:var(--muted)]" data-android-hinweis>
+        Android-App folgt, bis dahin nutzen Sie die Web-App.
+      </p>
     </div>
   );
 }

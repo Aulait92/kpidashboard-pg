@@ -886,7 +886,7 @@ export function OfferDocument({
             <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">
               <span>
                 <span className="block text-lg font-bold">Allgemeine Geschäftsbedingungen (AGB)</span>
-                <span className="text-sm text-[#6b7280]">Bestandteil dieses Angebots. Zum Lesen antippen.</span>
+                <span className="text-sm text-[#6b7280]">Bestandteil dieses Angebots. Zum Lesen öffnen.</span>
               </span>
               <span className="text-xl text-[#6b7280] transition group-open:rotate-45">+</span>
             </summary>
@@ -1277,7 +1277,7 @@ function NurLeadsBedingungen({ collapse }: { collapse: boolean }) {
       <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">
         <span>
           <span className="block text-lg font-bold">{titel}</span>
-          <span className="text-sm text-[#6b7280]">Bestandteil dieses Angebots, gehen den AGB vor. Zum Lesen antippen.</span>
+          <span className="text-sm text-[#6b7280]">Bestandteil dieses Angebots, gehen den AGB vor. Zum Lesen öffnen.</span>
         </span>
         <span className="text-xl text-[#6b7280] transition group-open:rotate-45">+</span>
       </summary>
@@ -1329,7 +1329,7 @@ function KundenkontoBedingungen({ collapse }: { collapse: boolean }) {
       <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">
         <span>
           <span className="block text-lg font-bold">{titel}</span>
-          <span className="text-sm text-[#6b7280]">Bestandteil dieses Angebots, gehen den AGB vor. Zum Lesen antippen.</span>
+          <span className="text-sm text-[#6b7280]">Bestandteil dieses Angebots, gehen den AGB vor. Zum Lesen öffnen.</span>
         </span>
         <span className="text-xl text-[#6b7280] transition group-open:rotate-45">+</span>
       </summary>

@@ -376,7 +376,7 @@ export function GuideStepItem({ step: s, n }: { step: GuideStep; n: number }) {
         <p className="mt-0.5 text-sm text-[color:var(--muted)]">{s.text}</p>
         {s.pitfall ? <p className="mt-1 text-sm text-amber-800">Falls es hakt: {s.pitfall}</p> : null}
         {s.image ? (
-          <a href={s.image.src} target="_blank" rel="noopener noreferrer" className="mt-2 block max-w-md" title="Zum Vergrößern antippen" data-guide-image>
+          <a href={s.image.src} target="_blank" rel="noopener noreferrer" className="mt-2 block max-w-md" title="Zum Vergrößern öffnen" data-guide-image>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={s.image.src} alt={s.image.alt} loading="lazy" className="w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] shadow-sm" />
           </a>

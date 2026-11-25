@@ -640,6 +640,8 @@ export function TodayInbox({
                     icon={Trophy}
                     onClick={(e) => {
                       e.stopPropagation();
+                      // Usability-Check 25.11.2026 (U6): am Rechner gleich die Ergebnis-Auswahl, der Kontakt geht rechts mit auf
+                      openDetailOnDesktop(o.leadId);
                       open();
                     }}
                   >

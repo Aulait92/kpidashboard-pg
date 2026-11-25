@@ -757,6 +757,7 @@ function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean })
   const u = data.unit;
   const m = data.margins;
   const fmtMonths = (v: number | null) => (v == null ? NOCH_KEINE_DATEN : `${v.toLocaleString("de-DE", { maximumFractionDigits: 1 })} Mon.`);
+  const fmtX = (v: number) => `${v.toLocaleString("de-DE", { maximumFractionDigits: v < 10 ? 1 : 0 })}×`;
   const PURPOSE: Record<string, string> = { ppl: "direkt (Pay-per-Lead)", software: "direkt (Software)", akquise: "Kundengewinnung", betrieb: "sonstiger Betrieb" };
   return (
     <div className="space-y-3.5">
@@ -767,7 +768,13 @@ function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean })
               { k: "Kosten je Neukunde (CAC)", v: u.cac != null ? eur(u.cac) : NOCH_KEINE_DATEN, s: u.cacFounder != null ? `mit Gründerzeit ${eur(u.cacFounder)}` : `${u.newCustomers} ${u.newCustomers === 1 ? "neuer Kunde" : "neue Kunden"}` },
               { k: "Rohertrag je Kunde/Monat", v: u.grossProfitPerCustomer != null ? eur(u.grossProfitPerCustomer) : NOCH_KEINE_DATEN, s: "Umsatz − direkte Kosten" },
               { k: "Amortisation", v: fmtMonths(u.payback), s: u.paybackFounder != null ? `mit Gründerzeit ${fmtMonths(u.paybackFounder)}` : undefined },
-              { k: "Kundenwert / CAC", v: u.ltvCac != null ? `${u.ltvCac.toLocaleString("de-DE", { maximumFractionDigits: 0 })}×` : NOCH_KEINE_DATEN, s: "LTV auf 24 Mon. gedeckelt, mit Gründerzeit · Ziel > 3×" },
+              // Eine Rechenbasis je Spalte (Usability-Check 25.11.2026): Wert ohne Gründerzeit wie CAC und Amortisation,
+              // darunter „mit Gründerzeit“. Ohne Kosten der Kundengewinnung ist das Verhältnis nicht sinnvoll.
+              {
+                k: "Kundenwert / CAC",
+                v: u.ltvCacOhne != null ? fmtX(u.ltvCacOhne) : u.cac === 0 ? "keine Kosten" : NOCH_KEINE_DATEN,
+                s: `${u.ltvCac != null ? `mit Gründerzeit ${fmtX(u.ltvCac)} · ` : ""}LTV höchstens 24 Mon. · Ziel > 3×`,
+              },
             ]}
           />
           <div className="mt-3 rounded-[10px] bg-[color:var(--brand-soft)] px-3 py-2.5 text-[13px]">

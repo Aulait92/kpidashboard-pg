@@ -18,14 +18,14 @@ const SCREENS: { where: string; tone: string; title: string; lines: string[]; ac
     where: "Bei uns: Einrichtung",
     tone: "border-t-blue-600",
     title: "WhatsApp verbinden",
-    lines: ["Sie wählen, welche Nummer Ihr Assistent nutzt.", "Dann tippen Sie auf den Knopf."],
+    lines: ["Sie wählen, welche Nummer Ihr Assistent nutzt.", "Dann klicken Sie auf den Knopf."],
     action: "Jetzt WhatsApp verbinden",
   },
   {
     where: "Ihr E-Mail-Postfach",
     tone: "border-t-amber-500",
     title: "Join [Ihr Firmenname] on the 360Dialog Hub",
-    lines: ["Von: 360Dialog <no-reply@360dialog.com>", "Knopf antippen und Passwort festlegen."],
+    lines: ["Von: 360Dialog <no-reply@360dialog.com>", "Knopf anklicken und Passwort festlegen."],
     action: "Join 360Dialog Hub",
   },
   {
@@ -54,7 +54,7 @@ const SCREENS: { where: string; tone: string; title: string; lines: string[]; ac
     tone: "border-t-teal-600",
     title: "Is +49 151 23456789 already on WhatsApp?",
     lines: ["Neue Nummer: „No, It's not connected“", "Business App: „Yes, Business app“"],
-    action: "Auswahl antippen",
+    action: "Auswahl anklicken",
   },
   {
     where: "360dialog (unser WhatsApp-Anbieter)",

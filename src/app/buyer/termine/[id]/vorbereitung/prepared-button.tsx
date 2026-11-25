@@ -24,7 +24,7 @@ export function PreparedButton({ id, prepared, readOnly }: { id: string; prepare
       disabled={pending || readOnly}
       onClick={() => run(!prepared)}
       className={prepared ? "border-emerald-300 bg-emerald-50 text-emerald-800" : undefined}
-      title={prepared ? "Antippen, um es zurückzunehmen" : undefined}
+      title={prepared ? "Erneut wählen, um es zurückzunehmen" : undefined}
       data-termin-vorbereitet
     >
       {prepared ? "Vorbereitet" : "Als vorbereitet abhaken"}

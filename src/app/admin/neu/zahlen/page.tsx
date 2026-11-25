@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
 import { punkteDerRolle } from "@/lib/admin-neu/rollen-server";
+import type { HeuteItem } from "@/lib/admin-heute";
 import { KundenNachKanal } from "@/components/admin-neu/zahlen/kunden-nach-kanal";
 import { GeldUebersicht } from "@/components/admin-neu/zahlen/uebersicht";
 import { loadBwa, type BwaData } from "@/lib/bwa";
@@ -26,6 +27,21 @@ function ergebnisIm(bwa: BwaData, m: string): { monat: string; wert: number } | 
   return { monat: m, wert: v };
 }
 
+/** Punkt „Ergebnis Vormonat fehlt“ für „Braucht Aufmerksamkeit“. */
+function ergebnisFehltPunkt(monat: string): HeuteItem {
+  const [j, m] = monat.split("-").map(Number);
+  const label = j && m ? new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(j, m - 1, 1))) : monat;
+  return {
+    key: `geld:ergebnis-fehlt:${monat}`,
+    area: "System",
+    tone: "warn",
+    icon: "euro",
+    title: `Ergebnis ${label} fehlt`,
+    detail: "Kosten vervollständigen, dann steht das Ergebnis in der Übersicht.",
+    action: { label: "Kosten ergänzen", href: "/admin/neu/zahlen/kosten" },
+  };
+}
+
 export default async function Page({ searchParams }: { searchParams: Promise<{ zeitraum?: string; vzeitraum?: string; bwa?: string; sicht?: string }> }) {
   await connection();
   const session = await requireAuth();
@@ -40,11 +56,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ z
   ]);
   // Im Januar liegt der Vormonat nicht in der Jahres-BWA: dann die letzten 12 Monate nachladen
   const ergebnis = bwa.bwa.months.includes(data.lastComplete) ? ergebnisIm(bwa, data.lastComplete) : ergebnisIm(await loadBwa("12m"), data.lastComplete);
+  // Kein „Alles erledigt“ über „Ergebnis Vormonat: fehlt“ (Usability-Check 25.11.2026): der fehlende Abschluss ist ein Punkt
+  const allePunkte = punkte && !ergebnis ? [...punkte, ergebnisFehltPunkt(data.lastComplete)] : punkte;
 
   return (
     <Seite titel="Geld" reiter="geld" breit>
       <div className="space-y-4">
-        <Aufmerksamkeit punkte={punkte} />
+        <Aufmerksamkeit punkte={allePunkte} />
         <GeldUebersicht
           data={data}
           produkte={produkte}

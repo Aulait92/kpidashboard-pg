@@ -11,6 +11,9 @@ import { kundenProdukte, testLeadAnswers } from "@/lib/testlead";
 import { DEFAULT_LEAD_TIMES, loadLeadTimes } from "@/lib/calendar/lead-times";
 import { assistentMomente, beispielVerlauf, type ChatZeile, type Moment } from "@/lib/so-arbeitet";
 
+/** Beispielprodukt, wenn der Kunde noch keine Produkte hat: allgemeine Anfrage ohne Sparte. */
+export const OHNE_PRODUKT = "Versicherung";
+
 export type SoArbeitetDaten = {
   momente: Moment[];
   zeilen: ChatZeile[];
@@ -33,7 +36,9 @@ export async function ladeSoArbeitet(customerId: string, wunsch?: string | null,
   ]);
   const an = asAnsprache(customer?.leadAddress);
   const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || advisorDisplayName(customer?.name) || a(an, "dein Berater", "Ihr Berater") });
-  const produkte = produkteRoh.length ? produkteRoh : ["Privatschutz"];
+  // Ohne gebuchte oder genutzte Produkte kein fremdes Beispielprodukt („Privatschutz“), sondern eine allgemeine Anfrage
+  // (Usability-Check 25.11.2026, KLEIN 3)
+  const produkte = produkteRoh.length ? produkteRoh : [OHNE_PRODUKT];
   const produkt = produkte.find((p) => p === wunsch) ?? produkte[0];
   const firma = erst?.firma?.trim() || firmDisplayName(customer?.name) || null;
   const policen = await import("@/lib/policen/server").then((m) => m.policenAn()).catch(() => false);

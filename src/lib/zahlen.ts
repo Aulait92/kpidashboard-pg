@@ -356,7 +356,10 @@ export type ZahlenData = {
     payback: number | null;
     paybackFounder: number | null;
     ltv: number | null;
+    /** LTV ÷ CAC mit Gründerzeit */
     ltvCac: number | null;
+    /** LTV ÷ CAC ohne Gründerzeit (gleiche Basis wie „Kosten je Neukunde“); null ohne Kosten der Kundengewinnung */
+    ltvCacOhne: number | null;
     settings: { hours: number; rate: number };
   };
   margins: { ppl: number | null; service: number | null; software: number | null; total: number | null };
@@ -756,6 +759,7 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
       paybackFounder: cacFounder != null && gpPerCustomer ? cacFounder / gpPerCustomer : null,
       ltv: ltv == null ? null : r2(ltv),
       ltvCac: ltv != null && cacFounder ? ltv / cacFounder : null,
+      ltvCacOhne: ltv != null && cac ? ltv / cac : null,
       settings: { hours: settings.founderHoursPerWeek, rate: settings.founderHourlyRate },
     },
     margins: {

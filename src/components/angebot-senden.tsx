@@ -363,7 +363,7 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
             ) : null}
           </details>
           {kanalFehlt ? (
-            <p className="text-sm text-amber-800">Weder WhatsApp noch E-Mail möglich. Senden Sie es selbst und tippen Sie danach „Habe ich selbst gesendet“.</p>
+            <p className="text-sm text-amber-800">Weder WhatsApp noch E-Mail möglich. Senden Sie es selbst und wählen Sie danach „Habe ich selbst gesendet“.</p>
           ) : null}
           {zfMit && zf && zfHinweis(zf) ? <p className="text-xs text-[color:var(--muted)]" data-zf-hinweis>{zfHinweis(zf)}</p> : null}
           <Button

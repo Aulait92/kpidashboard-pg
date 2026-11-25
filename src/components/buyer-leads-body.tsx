@@ -23,6 +23,7 @@ import { CROSS_SELL_FILTER, CROSS_SELL_LABEL, crossSellOffenWhere } from "@/lib/
 import { ladeCrossSellVerkauf } from "@/lib/cross-sell-verkauf-server";
 import { CrossSellLeiste } from "@/components/bestand/cross-sell-angebot";
 import { istZuTun, kontaktAnsicht, zuTunRang } from "@/lib/kontakt-liste";
+import { zaehltAlsTermin } from "@/lib/kpis";
 
 export async function BuyerLeadsBody({
   customerId,
@@ -136,7 +137,7 @@ export async function BuyerLeadsBody({
   // Termine für alle Kunden (nicht nur mit WhatsApp-Assistent): ohne sie zeigte die Liste bei
   // „Termin vereinbart“ mit künftigem Termin fälschlich „Kein nächster Schritt“.
   const leadIds = leadRows.map((l) => l.id);
-  const [appointments, flags, pastAppts, noWhatsApp, waitingChats] = await Promise.all([
+  const [appointments, flags, pastAppts, noWhatsApp, waitingChats, gebuchteTermine] = await Promise.all([
     prisma.appointment.findMany({
       where: { customerId, leadId: { in: leadIds }, ...upcomingAppointmentWhere(now) },
       orderBy: { startsAt: "asc" },
@@ -151,7 +152,10 @@ export async function BuyerLeadsBody({
     keinWhatsAppIds(leadRows),
     // Lead hat im Chat geschrieben und wartet (UX-Runde 19.11.2026: in der Liste sichtbar, Reaktionszeit)
     prisma.conversation.findMany({ where: { customerId, leadId: { in: leadIds }, needsAttention: true }, select: { leadId: true } }),
+    // Ansicht „Termin“ wie Wachstum und Zahlen (lib/kpis.ts zaehltAlsTermin): gebuchte oder stattgefundene Termine
+    prisma.appointment.findMany({ where: { customerId, leadId: { in: leadIds }, status: { in: ["booked", "completed"] } }, select: { leadId: true }, distinct: ["leadId"] }),
   ]);
+  const mitTermin = new Set(gebuchteTermine.map((a) => a.leadId));
   const waiting = new Set(waitingChats.map((c) => c.leadId));
   const apptByLead = new Map<string, { startsAt: Date; mode: string }>();
   for (const a of appointments) {
@@ -201,7 +205,8 @@ export async function BuyerLeadsBody({
     { key: "alle", label: "Alle", match: imZeitraum },
     // Neu: noch niemand hat gesprochen (wie der Zähler an „Kontakte“)
     { key: "neu", label: "Neu", match: (l: BuyerLeadRow) => imZeitraum(l) && !l.reached && !l.closedAt && (!l.status || l.status === "Neuer Lead") },
-    { key: "termin", label: "Termin", match: (l: BuyerLeadRow) => imZeitraum(l) && !!l.appointment },
+    // Gleiche Zählweise wie „Termine“ auf Wachstum (Usability-Check 25.11.2026): auch schon stattgefundene Termine
+    { key: "termin", label: "Termin", match: (l: BuyerLeadRow) => imZeitraum(l) && (!!l.appointment || zaehltAlsTermin(l.status, mitTermin.has(l.id))) },
     { key: "rueckruf", label: "Rückruf nötig", match: (l: BuyerLeadRow) => !!l.callback, nurOffen: true },
     { key: "ohne-whatsapp", label: "Ohne WhatsApp", match: (l: BuyerLeadRow) => !!l.noWhatsApp, nurOffen: true },
     { key: "wiedervorlage", label: "Wiedervorlage fällig", match: (l) => !!l.followUpAt && new Date(l.followUpAt) <= today, nurOffen: true },

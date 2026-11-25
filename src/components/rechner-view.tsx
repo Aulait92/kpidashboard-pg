@@ -142,7 +142,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                   className="mt-2 w-full accent-[color:var(--brand)]"
                 />
                 <p className="text-xs text-[color:var(--muted)]">
-                  ≈ {eur(input.budget * DAYS_PER_MONTH)} im Monat, zahlen Sie direkt an Meta · Betrag antippen für mehr als {eur(BUDGET_MAX)}
+                  ≈ {eur(input.budget * DAYS_PER_MONTH)} im Monat, zahlen Sie direkt an Meta · Betrag auswählen für mehr als {eur(BUDGET_MAX)}
                 </p>
                 {input.budget * DAYS_PER_MONTH > PRICE_LIST.individualFrom ? (
                   <p className="mt-1 text-xs text-[color:var(--muted)]" data-budget-individuell>
