@@ -355,6 +355,27 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${r.count} von ${nummern.length} Rechnungen auf ${bereich ?? "Vorschlag"} gesetzt.` };
     },
   },
+  allianz_termin_art: {
+    beschreibung: "Allianz-Online-Kalender eines Kunden auf eine andere Termin-Art bzw. Person umstellen (wie im Admin unter Kalender), nur auf Oles Anweisung",
+    felder: { customerId: "Kunden-ID", terminArt: "Name der Termin-Art, z. B. Online-Beratung", person: "Name der Person oder „alle“" },
+    run: async (p) => {
+      const customerId = text(p.customerId, 40);
+      const { decodeAllianzCalendar } = await import("@/lib/calendar/allianz-online");
+      const agent = await prisma.agentConfig.findUnique({ where: { customerId }, select: { allianzCalendarEnc: true } });
+      const cal = decodeAllianzCalendar(agent?.allianzCalendarEnc);
+      if (!cal) return { ok: false, error: "Kein Allianz-Online-Kalender verbunden." };
+      const t = cal.templates.find((x) => x.name.toLowerCase() === text(p.terminArt, 120).toLowerCase());
+      if (!t) return { ok: false, error: `Termin-Art unbekannt. Möglich: ${cal.templates.map((x) => x.name).join(", ")}` };
+      const personName = text(p.person, 120).toLowerCase();
+      const r = personName === "alle" || !personName ? null : cal.resources.find((x) => x.name.toLowerCase() === personName);
+      if (r === undefined) return { ok: false, error: `Person unbekannt. Möglich: alle, ${cal.resources.map((x) => x.name).join(", ")}` };
+      const { changeAllianz } = await import("@/lib/calendar/sources");
+      const res = await changeAllianz(customerId, t.id, r?.id ?? null);
+      if (res.error) return { ok: false, error: res.error };
+      await audit("calendar.allianz_termin_art", { customerId, details: { terminArt: t.name, person: r?.name ?? "alle" }, actor: OPS_ACTOR });
+      return { ok: true, info: `${res.info ?? "Umgestellt."} Person: ${r?.name ?? "alle"}.` };
+    },
+  },
   ausgangsrechnung_storniert: {
     beschreibung: "Ausgangsrechnung als storniert markieren, zählt dann nicht mehr in der BWA (nur auf Oles Anweisung; die Stornorechnung in Papierkram bleibt nötig, der nächste Import überschreibt den Status)",
     felder: { nummer: "Rechnungsnummer, z. B. R-00089", grund: "kurz, z. B. Auftrag nie zustande gekommen" },
