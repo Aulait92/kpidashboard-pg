@@ -77,3 +77,20 @@ describe("Admin-Heute", () => {
     for (const bad of ["", "Pay:c1", "pay:c 1", "pay:c1:x", "a".repeat(130), 42, null]) expect(validHeuteKey(bad)).toBe(false);
   });
 });
+
+describe("ohneTestkunden (Ole, 25.11.2026)", () => {
+  const item = (key: string, href: string) => ({ key, area: "Kunden" as const, tone: "warn" as const, icon: "check" as const, title: key, detail: "", action: { label: "Öffnen", href } });
+  it("nimmt Punkte von Testkunden heraus (Link auf Kundenakte oder Kunden-ID im Schlüssel)", async () => {
+    const { ohneTestkunden } = await import("@/lib/admin-heute");
+    const test = new Set(["test1"]);
+    const items = [
+      item("ob:test1", "/admin/neu/kunden/test1"),
+      item("modul:test1", "/admin/neu/kunden/test1/abrechnung"),
+      item("stale:test1", "/admin/neu/kunden/x"),
+      item("ob:echt", "/admin/neu/kunden/echt"),
+      item("berichte:2026-11-3", "/admin/neu/kunden/berichte?monat=2026-11"),
+    ];
+    expect(ohneTestkunden(items as never, test).map((i) => i.key)).toEqual(["ob:echt", "berichte:2026-11-3"]);
+    expect(ohneTestkunden(items as never, new Set()).length).toBe(5);
+  });
+});

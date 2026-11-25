@@ -69,6 +69,19 @@ export function withoutDismissed(items: HeuteItem[], dismissedKeys: Iterable<str
 }
 
 /** Schlüssel aus „Heute“: kurz, ohne Leerzeichen (Schutz vor Unsinn aus dem Formular). */
+/**
+ * Testkunden (Customer.isTest) gehören nicht in „Heute“ (Ole, 25.11.2026). Ein Punkt gilt als Testpunkt, wenn sein
+ * Link auf die Kundenakte eines Testkunden zeigt oder sein Schlüssel die Kunden-ID enthält (z. B. „ob:<id>“).
+ */
+export function ohneTestkunden(items: HeuteItem[], testIds: ReadonlySet<string>): HeuteItem[] {
+  if (!testIds.size) return items;
+  return items.filter((i) => {
+    const ausLink = /\/kunden\/([^/?#]+)/.exec(i.action.href)?.[1];
+    if (ausLink && testIds.has(ausLink)) return false;
+    return !i.key.split(":").some((teil) => testIds.has(teil));
+  });
+}
+
 export function validHeuteKey(key: unknown): key is string {
   return typeof key === "string" && /^[a-z]+(?::[A-Za-z0-9_-]+)?$/.test(key) && key.length <= 120;
 }
@@ -140,6 +153,7 @@ const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", curren
 export async function loadAdminHeute(now = new Date(), userId?: string) {
   const { start, tomorrow } = dayBounds();
   const week = new Date(now.getTime() - 7 * DAY);
+  const testIds = new Set((await prisma.customer.findMany({ where: { isTest: true }, select: { id: true } })).map((c) => c.id));
   const [
     alleTasks,
     meetings,
@@ -172,7 +186,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       select: { id: true, company: true, contactName: true, sentAt: true, viewedAt: true, monthlyFee: true, salesContactId: true },
     }),
     prisma.customer.findMany({
-      where: { archived: false, paymentOverdueSince: { not: null } },
+      where: { archived: false, isTest: false, paymentOverdueSince: { not: null } },
       select: { id: true, name: true, paymentOverdueSince: true, pauses: { where: { status: "active", kind: "dunning" }, select: { id: true }, take: 1 } },
     }),
     prisma.onboarding.findMany({ where: { status: "running", liveAt: null }, select: { customerId: true, startDate: true, customer: { select: { name: true } } } }),
@@ -195,12 +209,12 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     }),
     prisma.poolLead.findMany({ where: { status: "parked" }, orderBy: { createdAt: "asc" }, select: { createdAt: true, productKey: true } }),
     prisma.lead.findMany({
-      where: { stornoState: "review" },
+      where: { stornoState: "review", NOT: { customer: { isTest: true } } },
       orderBy: { stornoRequestedAt: "asc" },
       select: { id: true, name: true, stornoReason: true, stornoNote: true, stornoRequestedAt: true, customer: { select: { name: true } } },
     }),
     prisma.leadOrder.findMany({
-      where: { status: "failed", periodEnd: { gte: now } },
+      where: { status: "failed", periodEnd: { gte: now }, NOT: { subscription: { customer: { isTest: true } } } },
       select: { id: true, amount: true, updatedAt: true, subscription: { select: { customer: { select: { id: true, name: true } } } } },
     }),
     prisma.unassignedLead.groupBy({ by: ["formId"], where: { resolvedAt: null }, _count: true, _min: { createdAt: true } }),
@@ -636,8 +650,8 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
 
   // ── Freigaben: Monatsberichte, Optimierung, Später-Follow-ups ──
   const [reportDrafts, measures, followupApprovals] = await Promise.all([
-    prisma.monthlyReport.findMany({ where: { status: "draft" }, select: { month: true, rating: true, createdAt: true }, orderBy: { createdAt: "asc" } }),
-    prisma.optimizationMeasure.findMany({ where: { status: "geplant" }, select: { accountId: true, plannedAt: true }, orderBy: { plannedAt: "asc" } }),
+    prisma.monthlyReport.findMany({ where: { status: "draft", customer: { isTest: false } }, select: { month: true, rating: true, createdAt: true }, orderBy: { createdAt: "asc" } }),
+    prisma.optimizationMeasure.findMany({ where: { status: "geplant", NOT: { customer: { isTest: true } } }, select: { accountId: true, plannedAt: true }, orderBy: { plannedAt: "asc" } }),
     prisma.salesFollowup.findMany({ where: { status: "FREIGABE" }, select: { createdAt: true }, orderBy: { createdAt: "asc" } }),
   ]);
   if (reportDrafts.length) {
@@ -695,7 +709,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
   if (tarifItem) items.push(tarifItem);
 
   const dismissed = userId ? await activeDismissals(userId, now) : [];
-  return { items: rankItems(withoutDismissed(items, dismissed)), auto: await loadAuto(now) };
+  return { items: rankItems(withoutDismissed(ohneTestkunden(items, testIds), dismissed)), auto: await loadAuto(now) };
 }
 
 /** Punkt „Rechnungen ohne Steuernummer“, solange das Feld in den Rechnungsangaben leer ist. */
@@ -781,9 +795,9 @@ export async function loadAdminNavCounts(userId?: string): Promise<{ heute: numb
     const [tasks, parked, storno, forms, overdue, garantien, chats, dismissed] = await Promise.all([
       prisma.salesTask.count({ where: { doneAt: null, dueAt: { lt: tomorrow } } }),
       prisma.poolLead.count({ where: { status: "parked" } }),
-      prisma.lead.findMany({ where: { stornoState: "review" }, orderBy: { stornoRequestedAt: "asc" }, select: { id: true } }),
+      prisma.lead.findMany({ where: { stornoState: "review", NOT: { customer: { isTest: true } } }, orderBy: { stornoRequestedAt: "asc" }, select: { id: true } }),
       prisma.unassignedLead.count({ where: { resolvedAt: null } }),
-      prisma.customer.findMany({ where: { archived: false, paymentOverdueSince: { not: null } }, select: { id: true } }),
+      prisma.customer.findMany({ where: { archived: false, isTest: false, paymentOverdueSince: { not: null } }, select: { id: true } }),
       prisma.garantieFall.findMany({ where: { status: "offen" }, select: { id: true } }),
       prisma.conversation.count({ where: { customerId: SUPPORT_CUSTOMER_ID, needsAttention: true, status: "open" } }),
       userId ? activeDismissals(userId) : Promise.resolve([] as string[]),
