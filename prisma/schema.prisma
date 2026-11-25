@@ -1767,6 +1767,9 @@ model Offer {
   // („kostenloser Start“), sonst anteilig mit der ersten Abbuchung.
   billingDay              Int?
   billingFreeStart        Boolean       @default(false)
+  // Längster kostenloser Start in Tagen, eingefroren aus Oles Start (lib/abrechnungstag.ts, Ole 25.11.2026): wählt der
+  // Kunde einen späteren Start, wird die kostenlose Zeit nicht länger, sonst anteilig. null = höchstens 15 Tage
+  billingFreeStartTage    Int?
   // Zahlung nachträglich (Ole, 19.11.2026, Sonderkondition): Vergütung jeweils nachträglich für den abgelaufenen
   // Leistungsmonat, erste Abbuchung Start + 1 Monat (gleicher Tag), auch nach der Mindestlaufzeit; die letzte Zahlung folgt
   // nach Vertragsende. Nur monatlich (nicht mit Vorauszahlung, Abrechnungstag oder kostenlosem Start), Start am 1. bis 28.

@@ -312,7 +312,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
  * Vorauszahlung mit der Annahme bezahlt (prepayRenewal, Ole 19.11.2026): „Jahresbeitrag bezahlt, nächster am …“.
  */
 function monatsgebuehrAb(
-  offer: { startDate: Date | null; billingDay: number | null; billingFreeStart: boolean; annualPrepay: boolean; term: string; paymentInArrears?: boolean },
+  offer: { startDate: Date | null; billingDay: number | null; billingFreeStart: boolean; billingFreeStartTage?: number | null; annualPrepay: boolean; term: string; paymentInArrears?: boolean },
   shiftedTo: string | null,
   prepayRenewal: string | null = null,
 ): string {
@@ -325,7 +325,7 @@ function monatsgebuehrAb(
   if (offer.paymentInArrears && !offer.annualPrepay && startIso) {
     return ` · Monatsgebühr nachträglich, Leistung ab ${startIso.split("-").reverse().join(".")}, erste Abbuchung am ${nachtraeglichErsteIso(startIso).split("-").reverse().join(".")}${shiftedTo ? " (Start verschoben)" : ""}`;
   }
-  const plan = abrechnungsplan({ startIso, billingDay: offer.billingDay, freeStart: offer.billingFreeStart, annual: offer.annualPrepay });
+  const plan = abrechnungsplan({ startIso, billingDay: offer.billingDay, freeStart: offer.billingFreeStart, freeMaxTage: offer.billingFreeStartTage, annual: offer.annualPrepay });
   if (!plan) return "";
   const ab = plan.firstIso.split("-").reverse().join(".");
   const zusatz = plan.differs ? `, jeweils am ${plan.day}.${plan.free ? ", kostenloser Start" : ", Zeit davor anteilig"}` : "";

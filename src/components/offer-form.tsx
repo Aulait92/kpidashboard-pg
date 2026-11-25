@@ -861,7 +861,7 @@ function AbrechnungstagFeld({
   voraus: boolean;
 }) {
   const startDay = /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? Number(startDate.slice(8, 10)) : null;
-  const plan = abrechnungsplan({ startIso: startDay ? startDate : null, billingDay: day ? Number(day) : null, freeStart: free });
+  const plan = abrechnungsplan({ startIso: startDay ? startDate : null, billingDay: day ? Number(day) : null, freeStart: free, freeMaxTage: 31 });
   const differs = !!plan?.differs;
   return (
     <details className="group text-sm" data-abrechnungstag>
@@ -882,7 +882,7 @@ function AbrechnungstagFeld({
         </label>
         <label className={`flex items-start gap-2 ${differs ? "" : "opacity-50"}`}>
           <input type="checkbox" className="mt-0.5 h-4 w-4" checked={free && differs} disabled={!differs} onChange={(e) => setFree(e.target.checked)} name="billingFreeStart" />
-          <span>Zeit bis zum ersten Abrechnungstag gratis (bis 15 Tage, sonst anteilig)</span>
+          <span>Zeit bis zum ersten Abrechnungstag gratis</span>
         </label>
         <p className="text-xs text-[color:var(--muted)]" data-abrechnungstag-hinweis>
           {differs

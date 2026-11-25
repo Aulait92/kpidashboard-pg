@@ -1,7 +1,7 @@
 // Abrechnungstag im Angebot (Ole, 18.11.2026): erster Abrechnungstag, kostenloser Start bzw. anteiliger Betrag,
 // Texte der Kundenseite und der Auftragsbestätigung (Sie-Form, ohne Gedankenstriche, nie „Testphase“).
 import { describe, expect, it } from "vitest";
-import { abrechnungsplan, abrechnungstagKurz, abrechnungstagSaetze, anteilCent, anteilVerteilen, ersterAbrechnungstag, parseAbrechnungstag } from "@/lib/abrechnungstag";
+import { abrechnungsplan, abrechnungstagKurz, kostenlosTage, abrechnungstagSaetze, anteilCent, anteilVerteilen, ersterAbrechnungstag, parseAbrechnungstag } from "@/lib/abrechnungstag";
 import { contractSummaryLines, priceStepAckText, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 
 const STRICHE = /[–—]/;
@@ -140,7 +140,30 @@ describe("Auftragsbestätigung und Annahme-Zusammenfassung", () => {
   });
 });
 
-describe("kostenloser Start höchstens 15 Tage (Ole, 25.11.2026)", () => {
+describe("kostenloser Start nie länger als im Angebot (Ole, 25.11.2026)", () => {
+  it("Ole setzt 01.01., Kunde wählt 18.01. bei Abbuchung am 15.: anteilig statt geschenktem Monat", () => {
+    const tage = kostenlosTage("2027-01-01", 15, true);
+    expect(tage).toBe(14);
+    const p = abrechnungsplan({ startIso: "2027-01-18", billingDay: 15, freeStart: true, freeMaxTage: tage })!;
+    expect(p).toMatchObject({ firstIso: "2027-02-15", differs: true, free: false, stubEndIso: "2027-02-14" });
+    expect(p.ratio).toBeCloseTo(28 / 31, 5);
+    expect(abrechnungstagSaetze(p, { firstNet: 990 }).join(" ")).toContain("anteilig");
+  });
+  it("Ole setzt selbst 18.01.: seine Wahl gilt, Zeit bis 14.02. kostenlos", () => {
+    const tage = kostenlosTage("2027-01-18", 15, true);
+    expect(tage).toBe(28);
+    expect(abrechnungsplan({ startIso: "2027-01-18", billingDay: 15, freeStart: true, freeMaxTage: tage })).toMatchObject({ free: true, ratio: 0 });
+    expect(abrechnungsplan({ startIso: "2027-01-20", billingDay: 15, freeStart: true, freeMaxTage: tage })).toMatchObject({ free: true });
+  });
+  it("ohne Haken oder Abrechnungstag nichts einfrieren", () => {
+    expect(kostenlosTage("2027-01-01", 15, false)).toBeNull();
+    expect(kostenlosTage("2027-01-01", null, true)).toBeNull();
+    expect(kostenlosTage(null, 15, true)).toBeNull();
+    expect(kostenlosTage("2027-01-15", 15, true)).toBeNull();
+  });
+});
+
+describe("ohne eingefrorenen Wert höchstens 15 Tage", () => {
   it("Kunde wählt Start 18.01., Abbuchung am 15.: kein geschenkter Monat, sondern anteilig", () => {
     const p = abrechnungsplan({ startIso: "2027-01-18", billingDay: 15, freeStart: true })!;
     expect(p).toMatchObject({ firstIso: "2027-02-15", differs: true, free: false, stubEndIso: "2027-02-14" });

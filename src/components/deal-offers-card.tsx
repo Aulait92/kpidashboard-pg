@@ -38,6 +38,7 @@ export type DealOfferRow = {
   /** Abrechnungstag (null = wie Start) und kostenloser Start bis dahin (lib/abrechnungstag.ts) */
   billingDay?: number | null;
   billingFreeStart?: boolean;
+  billingFreeStartTage?: number | null;
   /** Jahreszahlung angeboten (Kunde wählt) bzw. jährlich im Voraus (nach der Annahme: Wahl des Kunden) */
   annualChoice?: boolean;
   annualPrepay?: boolean;
@@ -294,7 +295,7 @@ export function DealOffersCard({
               ) : null}
               {current.billingDay != null ? (
                 <li data-angebot-abrechnungstag>
-                  Abrechnung {abrechnungstagKurz(abrechnungsplan({ startIso: current.startDate, billingDay: current.billingDay, freeStart: current.billingFreeStart, annual: !!current.annualPrepay }), { mitAnnahme: !current.acceptedAt || !!current.prepayAtAcceptance })}
+                  Abrechnung {abrechnungstagKurz(abrechnungsplan({ startIso: current.startDate, billingDay: current.billingDay, freeStart: current.billingFreeStart, freeMaxTage: current.billingFreeStartTage, annual: !!current.annualPrepay }), { mitAnnahme: !current.acceptedAt || !!current.prepayAtAcceptance })}
                   {current.annualChoice && current.status !== "accepted" ? <span className="block text-[color:var(--muted)]">{VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG}</span> : null}
                 </li>
               ) : null}

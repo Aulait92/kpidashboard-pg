@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 const OFFER_FELDER = {
   number: true, version: true, status: true, company: true, contactName: true, package: true, vermittlerTyp: true, term: true, products: true,
   setupFee: true, setupListFee: true, setupDiscount: true, setupDiscountLabel: true, monthlyFee: true, softwareFee: true, introMonthlyFee: true,
-  introMonths: true, specialTerms: true, startDate: true, billingDay: true, billingFreeStart: true, customerChoosesTerm: true, customerChoosesStart: true, validUntil: true, sentAt: true,
+  introMonths: true, specialTerms: true, startDate: true, billingDay: true, billingFreeStart: true, billingFreeStartTage: true, customerChoosesTerm: true, customerChoosesStart: true, validUntil: true, sentAt: true,
   acceptedAt: true, acceptedCompany: true, acceptedAsBusiness: true, seats: true, seatsIncluded: true, seatMonthly: true, bestandMonthly: true,
   empfehlungMonthly: true, annualPrepay: true, annualFreeMonths: true, annualChoice: true, abschlussBonus: true, abschlussBonusBis: true, abschlussBonusGewaehrt: true,
   stripeCustomerId: true, stripeSubscriptionId: true, stripeScheduleId: true, paymentStatus: true, subscriptionStatus: true, paidAt: true,

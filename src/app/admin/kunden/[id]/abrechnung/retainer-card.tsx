@@ -16,7 +16,7 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
     select: { retainerMonthly: true, retainerStart: true, retainerEnd: true, billingDay: true, billingStart: true, cancelRequestedAt: true, cancelEffectiveAt: true, cancelRequestedBy: true, cancelReason: true, onboarding: { select: { offerId: true } } },
   });
   if (!c) return null;
-  const offer = c.onboarding?.offerId ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true, billingFreeStart: true } }) : null;
+  const offer = c.onboarding?.offerId ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true, billingFreeStart: true, billingFreeStartTage: true } }) : null;
   const monthly = c.retainerMonthly != null ? Number(c.retainerMonthly) : null;
   // Anti-Churn: letzte Kündigungsabsichten (Grund, gewählte Alternative, Ergebnis)
   const intents = await prisma.churnIntent.findMany({ where: { customerId }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, reason: true, note: true, offer: true, outcome: true, createdAt: true } });
@@ -75,7 +75,7 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
           {c.billingDay != null
             ? `jeweils am ${c.billingDay}.${c.billingStart ? `, erste Abbuchung ${dmy(c.billingStart)}` : ""}${
                 c.billingStart && c.retainerStart && ymd(c.billingStart) !== ymd(c.retainerStart)
-                  ? offer?.billingFreeStart && kostenlosMoeglich(ymd(c.retainerStart), ymd(c.billingStart))
+                  ? offer?.billingFreeStart && kostenlosMoeglich(ymd(c.retainerStart), ymd(c.billingStart), offer.billingFreeStartTage)
                     ? `, kostenloser Start ab ${dmy(c.retainerStart)}`
                     : `, ${dmy(c.retainerStart)} bis davor anteilig`
                   : ""
